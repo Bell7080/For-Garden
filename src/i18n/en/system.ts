@@ -50,6 +50,7 @@ export const SYSTEM_EN = {
   "ops.notice.gain": "{amount} {name} has been granted.",
   "ops.notice.loss": "{amount} {name} has been withdrawn.",
   "ops.notice.mail": "{count} new mail(s) arrived.",
+  "ops.notice.reason": "Reason: {reason}",
   "ops.deleted.title": "Account Notice",
   "ops.deleted.body": "Your account has been deleted.\\nReturning to the title screen.",
   "mail.launch.body": "Thank you for playing our game! Here are special supplies to celebrate the start of your research.",

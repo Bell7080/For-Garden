@@ -1,5 +1,7 @@
 import type { MailDto, MailRewardDto } from "../api/contracts";
 import { WALLET_CAPS } from "../data/economy";
+import { findItem } from "../data/items";
+import { addItemLot, removeItemLot } from "./itemLots";
 import type { Wallet } from "./gacha";
 import type { Session } from "../state/session";
 
@@ -19,7 +21,8 @@ export interface OpsAppliedAdjustment { id: string; applied: number; balance: nu
 
 /** 플레이어에게 한 번 알리는 운영 소식. */
 export type OpsNotice =
-  | { kind: "asset"; asset: keyof Wallet; delta: number; at: string }
+  | { kind: "asset"; asset: keyof Wallet; delta: number; note?: string; at: string }
+  | { kind: "item"; itemId: string; delta: number; note?: string; at: string }
   | { kind: "mail"; title: string; at: string };
 
 export interface OpsJournal {
@@ -45,7 +48,7 @@ export function isValidOpsJournal(value: unknown): value is OpsJournal {
   const ops = value as OpsJournal;
   const ids = (v: unknown): boolean => Array.isArray(v) && v.every((id) => typeof id === "string");
   return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices)
-    && ops.notices.every((n) => !!n && typeof n === "object" && ((n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta)) || (n.kind === "mail" && typeof n.title === "string")));
+    && ops.notices.every((n) => !!n && typeof n === "object" && ((n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta)) || (n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta)) || (n.kind === "mail" && typeof n.title === "string")));
 }
 
 /** 저장의 운영 기록을 꺼낸다. 없으면 만들어 붙인다. */
@@ -56,6 +59,7 @@ export function opsJournalOf(state: Session): OpsJournal {
 }
 
 const walletKeys = new Set<string>(Object.keys(WALLET_CAPS));
+export const OPS_ITEM_PREFIX = "item:";
 export const isWalletKey = (key: string): key is keyof Wallet => walletKeys.has(key);
 
 /**
@@ -66,6 +70,7 @@ export function applyOpsAdjustments(state: Session, adjustments: readonly OpsAdj
   const journal = opsJournalOf(state);
   const results: OpsAppliedAdjustment[] = [];
   for (const adjustment of adjustments) {
+    if (adjustment.asset.startsWith(OPS_ITEM_PREFIX)) { results.push(applyItemAdjustment(state, journal, adjustment, now)); continue; }
     if (!isWalletKey(adjustment.asset) || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) {
       // 알 수 없는 재화는 지갑에 닿지 않는다. 대기함에서 치워 되풀이되지 않게 0으로 확정한다.
       results.push({ id: adjustment.id, applied: 0, balance: 0 });
@@ -79,16 +84,41 @@ export function applyOpsAdjustments(state: Session, adjustments: readonly OpsAdj
     journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
     const applied = after - before;
     results.push({ id: adjustment.id, applied, balance: after });
-    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset" as const, asset: key, delta: applied, at: now.toISOString() }].slice(-NOTICE_KEEP);
+    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset" as const, asset: key, delta: applied, ...(adjustment.note ? { note: adjustment.note } : {}), at: now.toISOString() }].slice(-NOTICE_KEEP);
   }
   return results;
+}
+
+/** 아이템 조정: 가방에 넣거나 뺀다. 쌓을 한도/보유량을 넘는 몫은 깎아서 적용하고, 알 수 없는 아이템은 0으로 확정해 대기함에서 치운다. */
+function applyItemAdjustment(state: Session, journal: OpsJournal, adjustment: OpsAdjustmentSource, now: Date): OpsAppliedAdjustment {
+  const itemId = adjustment.asset.slice(OPS_ITEM_PREFIX.length);
+  const definition = findItem(itemId);
+  const held = (): number => state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
+  if (!definition || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) return { id: adjustment.id, applied: 0, balance: 0 };
+  if (journal.appliedAdjustments.includes(adjustment.id)) return { id: adjustment.id, applied: adjustment.delta, balance: held() };
+  let applied = 0;
+  if (adjustment.delta > 0) {
+    const result = addItemLot(state.itemInventory, itemId, adjustment.delta, { cap: definition.maxStack, now, ...(definition.expiresInDays !== undefined ? { expiryDays: definition.expiresInDays } : {}) });
+    state.itemInventory = result.inventory;
+    applied = result.added;
+  } else {
+    const take = Math.min(held(), -adjustment.delta);
+    const next = take > 0 ? removeItemLot(state.itemInventory, itemId, take) : undefined;
+    if (next) { state.itemInventory = next; applied = -take; }
+  }
+  journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
+  if (applied !== 0) journal.notices = [...journal.notices, { kind: "item" as const, itemId, delta: applied, ...(adjustment.note ? { note: adjustment.note } : {}), at: now.toISOString() }].slice(-NOTICE_KEEP);
+  return { id: adjustment.id, applied, balance: held() };
 }
 
 /** 운영 우편을 게임의 우편 행으로 바꾼다. 읽음 여부는 저장의 기록에서, 수령 여부는 호출한 쪽이 claimedMailIds로 정한다. */
 export function opsMailToDto(source: OpsMailSource, sender: string, readIds: ReadonlySet<string>): MailDto {
   const rewards: MailRewardDto[] = source.rewards
-    .filter((reward) => isWalletKey(reward.asset) && Number.isInteger(reward.amount) && reward.amount > 0)
-    .map((reward) => ({ kind: "currency", currency: reward.asset as keyof Wallet, amount: reward.amount }));
+    .filter((reward) => Number.isInteger(reward.amount) && reward.amount > 0
+      && (isWalletKey(reward.asset) || (reward.asset.startsWith(OPS_ITEM_PREFIX) && findItem(reward.asset.slice(OPS_ITEM_PREFIX.length)) !== undefined)))
+    .map((reward): MailRewardDto => isWalletKey(reward.asset)
+      ? { kind: "currency", currency: reward.asset, amount: reward.amount }
+      : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
   const id = `${OPS_MAIL_PREFIX}${source.id}`;
   return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
 }

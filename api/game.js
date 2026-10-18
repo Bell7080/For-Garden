@@ -2435,6 +2435,7 @@ var SYSTEM_KO = {
   "ops.notice.gain": "{name} {amount}\uAC1C\uAC00 \uC9C0\uAE09\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.loss": "{name} {amount}\uAC1C\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "ops.notice.mail": "\uC0C8 \uC6B0\uD3B8 {count}\uD1B5\uC774 \uB3C4\uCC29\uD588\uC2B5\uB2C8\uB2E4.",
+  "ops.notice.reason": "\uC0AC\uC720: {reason}",
   "ops.deleted.title": "\uACC4\uC815 \uC548\uB0B4",
   "ops.deleted.body": "\uACC4\uC815\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.\n\uD0C0\uC774\uD2C0 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4.",
   "mail.launch.body": "\uC800\uD76C \uAC8C\uC784\uC744 \uD50C\uB808\uC774\uD574 \uC8FC\uC154\uC11C \uAC10\uC0AC\uD569\uB2C8\uB2E4! \uC5F0\uAD6C \uC2DC\uC791\uC744 \uCD95\uD558\uD558\uBA70 \uD2B9\uBCC4\uD55C \uBB3C\uC790\uB97C \uBCF4\uB0C5\uB2C8\uB2E4.",
@@ -17432,6 +17433,144 @@ var WALLET_CAPS = {
   duelEmblem: 9999999
 };
 
+// src/data/items.ts
+init_define_import_meta_env();
+var ITEMS = [
+  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
+  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
+  { id: "gems", name: "\uC82C", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
+  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
+  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
+  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
+  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
+  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
+  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
+  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
+  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
+  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
+  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
+  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
+  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
+  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
+  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
+  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
+];
+function findItem(id) {
+  return ITEMS.find((item3) => item3.id === id);
+}
+for (const item3 of ITEMS) {
+  registerDataText(item3, "name", `item.${item3.id}.name`);
+  registerDataText(item3, "description", `item.${item3.id}.description`);
+}
+
+// src/core/itemLots.ts
+init_define_import_meta_env();
+function repairLegacyLotStacks(inventory) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
+  return [...groups.values()].flatMap((group) => {
+    const first = group[0];
+    const lots = first.lots;
+    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
+      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
+    }
+    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
+  });
+}
+var DAY_MS = 864e5;
+var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
+function clampExpiryDays(days) {
+  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
+}
+function lotExpiresAt(now, days) {
+  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS).toISOString();
+}
+function normalizeLots(lots) {
+  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
+}
+function addItemLot(inventory, itemId, quantity, options) {
+  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
+  const stack = next.find((entry) => entry.itemId === itemId);
+  const held = stack?.quantity ?? 0;
+  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
+  if (added <= 0) return { inventory: next, added: 0 };
+  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
+  if (stack) {
+    stack.quantity += added;
+    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
+  } else {
+    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
+  }
+  return { inventory: next, added };
+}
+function removeItemLot(inventory, itemId, quantity) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    if (!entry.lots) return [{ ...entry, quantity: left }];
+    let owed = count2;
+    const lots = normalizeLots(entry.lots).map((lot) => {
+      const take = Math.min(owed, lot.quantity);
+      owed -= take;
+      return { ...lot, quantity: lot.quantity - take };
+    });
+    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
+  });
+}
+function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
+  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
+    return [{ ...entry, quantity: left, lots }];
+  });
+}
+function purgeExpiredLots(inventory, now) {
+  let expired = 0;
+  const nowMs = now.getTime();
+  const next = inventory.flatMap((entry) => {
+    if (!entry.lots) return [{ ...entry }];
+    const alive = normalizeLots(entry.lots.filter((lot) => {
+      const dead = Date.parse(lot.expiresAt) <= nowMs;
+      if (dead) expired += lot.quantity;
+      return !dead;
+    }));
+    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
+    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
+  });
+  return { inventory: next, expired };
+}
+function isValidLotStack(stack) {
+  if (stack.lots === void 0) return true;
+  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
+  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
+}
+
 // src/core/opsInbox.ts
 var KEEP = 200;
 var NOTICE_KEEP = 20;
@@ -17444,7 +17583,7 @@ function isValidOpsJournal(value) {
   if (!value || typeof value !== "object") return false;
   const ops = value;
   const ids = (v) => Array.isArray(v) && v.every((id) => typeof id === "string");
-  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
 }
 function opsJournalOf(state) {
   state.serverJournal ??= { receipts: {}, raidAdmissions: {} };
@@ -17452,11 +17591,16 @@ function opsJournalOf(state) {
   return state.serverJournal.ops;
 }
 var walletKeys = new Set(Object.keys(WALLET_CAPS));
+var OPS_ITEM_PREFIX = "item:";
 var isWalletKey = (key) => walletKeys.has(key);
 function applyOpsAdjustments(state, adjustments, now) {
   const journal = opsJournalOf(state);
   const results = [];
   for (const adjustment of adjustments) {
+    if (adjustment.asset.startsWith(OPS_ITEM_PREFIX)) {
+      results.push(applyItemAdjustment(state, journal, adjustment, now));
+      continue;
+    }
     if (!isWalletKey(adjustment.asset) || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) {
       results.push({ id: adjustment.id, applied: 0, balance: 0 });
       continue;
@@ -17472,12 +17616,35 @@ function applyOpsAdjustments(state, adjustments, now) {
     journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
     const applied = after - before;
     results.push({ id: adjustment.id, applied, balance: after });
-    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset", asset: key, delta: applied, at: now.toISOString() }].slice(-NOTICE_KEEP);
+    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset", asset: key, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
   }
   return results;
 }
+function applyItemAdjustment(state, journal, adjustment, now) {
+  const itemId = adjustment.asset.slice(OPS_ITEM_PREFIX.length);
+  const definition = findItem(itemId);
+  const held = () => state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
+  if (!definition || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) return { id: adjustment.id, applied: 0, balance: 0 };
+  if (journal.appliedAdjustments.includes(adjustment.id)) return { id: adjustment.id, applied: adjustment.delta, balance: held() };
+  let applied = 0;
+  if (adjustment.delta > 0) {
+    const result = addItemLot(state.itemInventory, itemId, adjustment.delta, { cap: definition.maxStack, now, ...definition.expiresInDays !== void 0 ? { expiryDays: definition.expiresInDays } : {} });
+    state.itemInventory = result.inventory;
+    applied = result.added;
+  } else {
+    const take = Math.min(held(), -adjustment.delta);
+    const next = take > 0 ? removeItemLot(state.itemInventory, itemId, take) : void 0;
+    if (next) {
+      state.itemInventory = next;
+      applied = -take;
+    }
+  }
+  journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
+  if (applied !== 0) journal.notices = [...journal.notices, { kind: "item", itemId, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
+  return { id: adjustment.id, applied, balance: held() };
+}
 function opsMailToDto(source, sender, readIds) {
-  const rewards = source.rewards.filter((reward) => isWalletKey(reward.asset) && Number.isInteger(reward.amount) && reward.amount > 0).map((reward) => ({ kind: "currency", currency: reward.asset, amount: reward.amount }));
+  const rewards = source.rewards.filter((reward) => Number.isInteger(reward.amount) && reward.amount > 0 && (isWalletKey(reward.asset) || reward.asset.startsWith(OPS_ITEM_PREFIX) && findItem(reward.asset.slice(OPS_ITEM_PREFIX.length)) !== void 0)).map((reward) => isWalletKey(reward.asset) ? { kind: "currency", currency: reward.asset, amount: reward.amount } : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
   const id = `${OPS_MAIL_PREFIX}${source.id}`;
   return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
 }
@@ -17897,98 +18064,6 @@ function playerExpForStamina(stamina) {
   return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
 }
 var STARTING_STAMINA = 122;
-
-// src/core/itemLots.ts
-init_define_import_meta_env();
-function repairLegacyLotStacks(inventory) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
-  return [...groups.values()].flatMap((group) => {
-    const first = group[0];
-    const lots = first.lots;
-    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
-      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
-    }
-    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
-  });
-}
-var DAY_MS = 864e5;
-var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
-function clampExpiryDays(days) {
-  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
-}
-function lotExpiresAt(now, days) {
-  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS).toISOString();
-}
-function normalizeLots(lots) {
-  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
-}
-function addItemLot(inventory, itemId, quantity, options) {
-  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
-  const stack = next.find((entry) => entry.itemId === itemId);
-  const held = stack?.quantity ?? 0;
-  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
-  if (added <= 0) return { inventory: next, added: 0 };
-  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
-  if (stack) {
-    stack.quantity += added;
-    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
-  } else {
-    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
-  }
-  return { inventory: next, added };
-}
-function removeItemLot(inventory, itemId, quantity) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    if (!entry.lots) return [{ ...entry, quantity: left }];
-    let owed = count2;
-    const lots = normalizeLots(entry.lots).map((lot) => {
-      const take = Math.min(owed, lot.quantity);
-      owed -= take;
-      return { ...lot, quantity: lot.quantity - take };
-    });
-    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
-  });
-}
-function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
-  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
-    return [{ ...entry, quantity: left, lots }];
-  });
-}
-function purgeExpiredLots(inventory, now) {
-  let expired = 0;
-  const nowMs = now.getTime();
-  const next = inventory.flatMap((entry) => {
-    if (!entry.lots) return [{ ...entry }];
-    const alive = normalizeLots(entry.lots.filter((lot) => {
-      const dead = Date.parse(lot.expiresAt) <= nowMs;
-      if (dead) expired += lot.quantity;
-      return !dead;
-    }));
-    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
-    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
-  });
-  return { inventory: next, expired };
-}
-function isValidLotStack(stack) {
-  if (stack.lots === void 0) return true;
-  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
-  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
-}
 
 // src/data/profileFrames.ts
 init_define_import_meta_env();
@@ -19670,52 +19745,6 @@ function findAdRewardSlot(slotId) {
   return AD_REWARD_SLOTS.find((slot) => slot.id === slotId);
 }
 for (const slot of AD_REWARD_SLOTS) registerDataText(slot, "displayText", `adReward.${slot.id}.text`);
-
-// src/data/items.ts
-init_define_import_meta_env();
-var ITEMS = [
-  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
-  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
-  { id: "gems", name: "\uC82C", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
-  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
-  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
-  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
-  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
-  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
-  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
-  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
-  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
-  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
-  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
-  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
-  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
-  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
-  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
-];
-function findItem(id) {
-  return ITEMS.find((item3) => item3.id === id);
-}
-for (const item3 of ITEMS) {
-  registerDataText(item3, "name", `item.${item3.id}.name`);
-  registerDataText(item3, "description", `item.${item3.id}.description`);
-}
 
 // src/core/relicStory.ts
 init_define_import_meta_env();

@@ -50,6 +50,7 @@ export const SYSTEM_RU = {
   "ops.notice.gain": "Начислено: {name} — {amount}.",
   "ops.notice.loss": "Списано: {name} — {amount}.",
   "ops.notice.mail": "Почта: новых писем — {count}.",
+  "ops.notice.reason": "Причина: {reason}",
   "ops.deleted.title": "Уведомление об аккаунте",
   "ops.deleted.body": "Аккаунт удалён.\nВозврат на титульный экран.",
   "mail.launch.body": "Спасибо, что играете в нашу игру! В честь начала исследований отправляем особые припасы.",

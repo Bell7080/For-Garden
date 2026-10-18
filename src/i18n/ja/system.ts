@@ -56,6 +56,7 @@ export const SYSTEM_JA = {
   "ops.notice.gain": "{name}を{amount}個付与しました。",
   "ops.notice.loss": "{name}を{amount}個回収しました。",
   "ops.notice.mail": "新しいメールが{count}件届きました。",
+  "ops.notice.reason": "理由: {reason}",
   "ops.deleted.title": "アカウントのお知らせ",
   "ops.deleted.body": "アカウントが削除されました。\\nタイトル画面に戻ります。",
   "mail.launch.body": "私たちのゲームを遊んでくださりありがとうございます！研究開始のお祝いに特別な物資をお送りします。",

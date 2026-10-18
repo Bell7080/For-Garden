@@ -3,7 +3,7 @@ import { applyOpsAdjustments, drainOpsNotices, isValidOpsJournal, opsJournalOf, 
 import { handleGameCall, StateConflictError, type StateStore, type StoredState } from "../../src/server/gameHandler";
 import type { OpsInbox } from "../../src/core/opsInbox";
 import { createDefaultSession } from "../../src/state/session";
-import { opsNoticeLines } from "../../src/ui/opsNoticeText";
+import { opsNoticeLines, opsNoticeReceipt } from "../../src/ui/opsNoticeText";
 
 const now = new Date("2026-10-18T00:00:00Z");
 const adj = (id: string, asset: string, delta: number) => ({ id, asset, delta, createdAt: now.toISOString() });
@@ -80,5 +80,26 @@ describe("서버 호출과 운영 연동", () => {
     expect(JSON.stringify(mails.result)).toContain("ops:11111111");
     const second = await handleGameCall(P, { method: "getNotificationSignals" }, deps);
     expect((second.result as { opsNotices?: unknown[] }).opsNotices ?? []).toHaveLength(0);
+  });
+});
+
+describe("운영 아이템 조정·안내 영수증", () => {
+  it("아이템을 가방에 넣고 빼며 사유를 영수증에 싣는다", () => {
+    const s = createDefaultSession();
+    const before = s.itemInventory.find((e) => e.itemId === "sweep-ticket")?.quantity ?? 0;
+    const out = applyOpsAdjustments(s, [{ ...adj("i1", "item:sweep-ticket", 5), note: "보상" }, adj("i2", "item:nope", 1)], now);
+    expect(out[0].applied).toBe(5);
+    expect(out[1].applied).toBe(0);
+    expect(s.itemInventory.find((e) => e.itemId === "sweep-ticket")?.quantity).toBe(before + 5);
+    const back = applyOpsAdjustments(s, [adj("i3", "item:sweep-ticket", -999)], now);
+    expect(back[0].applied).toBe(-(before + 5));
+    const receipt = opsNoticeReceipt([{ kind: "asset", asset: "gems", delta: 10, note: "테스트", at: "" }, { kind: "item", itemId: "sweep-ticket", delta: 2, note: "테스트", at: "" }]);
+    expect(receipt.items).toHaveLength(2);
+    expect(receipt.reason).toContain("테스트");
+  });
+
+  it("우편의 아이템 첨부는 아이템 보상으로 옮긴다", () => {
+    const dto = opsMailToDto({ id: "u2", title: "t", body: "b", rewards: [{ asset: "item:sweep-ticket", amount: 3 }, { asset: "item:nope", amount: 1 }], sentAt: now.toISOString(), expiresAt: null }, "운영팀", new Set());
+    expect(dto.rewards).toEqual([{ kind: "item", itemId: "sweep-ticket", amount: 3 }]);
   });
 });

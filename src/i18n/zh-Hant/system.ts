@@ -50,6 +50,7 @@ export const SYSTEM_ZH_HANT = {
   "ops.notice.gain": "已發放{name}{amount}個。",
   "ops.notice.loss": "已回收{name}{amount}個。",
   "ops.notice.mail": "收到{count}封新郵件。",
+  "ops.notice.reason": "原因:{reason}",
   "ops.deleted.title": "賬號通知",
   "ops.deleted.body": "賬號已被刪除。\n將返回標題畫面。",
   "mail.launch.body": "感謝您遊玩我們的遊戲！謹以這份特別物資慶祝研究開始。",

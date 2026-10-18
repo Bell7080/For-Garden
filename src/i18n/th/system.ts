@@ -50,6 +50,7 @@ export const SYSTEM_TH = {
   "ops.notice.gain": "มอบ{name} {amount} ชิ้นแล้ว",
   "ops.notice.loss": "เรียกคืน{name} {amount} ชิ้นแล้ว",
   "ops.notice.mail": "มีจดหมายใหม่ {count} ฉบับ",
+  "ops.notice.reason": "เหตุผล: {reason}",
   "ops.deleted.title": "ประกาศบัญชี",
   "ops.deleted.body": "บัญชีของคุณถูกลบแล้ว\nกลับสู่หน้าชื่อเกม",
   "mail.launch.body": "ขอบคุณที่เล่นเกมของเรา! ขอมอบเสบียงพิเศษเพื่อฉลองการเริ่มวิจัย",

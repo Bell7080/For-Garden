@@ -50,6 +50,7 @@ export const SYSTEM_ID = {
   "ops.notice.gain": "{amount} {name} telah diberikan.",
   "ops.notice.loss": "{amount} {name} telah ditarik.",
   "ops.notice.mail": "{count} surat baru telah tiba.",
+  "ops.notice.reason": "Alasan: {reason}",
   "ops.deleted.title": "Pemberitahuan Akun",
   "ops.deleted.body": "Akun telah dihapus.\nKembali ke layar judul.",
   "mail.launch.body": "Terima kasih telah memainkan game kami! Kami kirimkan pasokan spesial untuk merayakan awal risetmu.",

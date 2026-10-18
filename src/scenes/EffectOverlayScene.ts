@@ -5,7 +5,8 @@ import { setOverlayEffects } from "../managers/overlayEffects";
 import { setTempAdPlayer } from "../platform/rewardedAds";
 import { playTempAdPopup } from "../ui/TempAdPopup";
 import { PopupLayer } from "../ui/PopupLayer";
-import { opsNoticeLines } from "../ui/opsNoticeText";
+import { opsNoticeReceipt } from "../ui/opsNoticeText";
+import { openRewardPopup } from "../ui/RewardPopup";
 import { managerEvents } from "../managers/ManagerEvents";
 import { onAccountDeleted } from "../api/accountDeleted";
 import { accountApi } from "../api/AccountApi";
@@ -63,15 +64,26 @@ export class EffectOverlayScene extends Phaser.Scene {
   private bindLiveOps(): void {
     const popups = new PopupLayer(this, 3000);
     let showing = false;
-    let queued: string[] = [];
+    type Receipt = ReturnType<typeof opsNoticeReceipt>;
+    let queued: Receipt[] = [];
     const flush = (): void => {
       if (showing || queued.length === 0) return;
-      const lines = queued; queued = []; showing = true;
+      const next = queued.shift() as Receipt;
+      showing = true;
       this.scene.bringToTop();
-      popups.confirm({ title: t("ops.notice.title"), message: lines.join("\n"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, () => { showing = false; flush(); });
+      const done = (): void => { showing = false; flush(); };
+      // 회수된 몫은 글줄로, 받은 몫은 보상 팝업과 같은 액자·수량으로 보여 준다. 사유는 아래에 적는다.
+      const showGains = (): void => {
+        if (next.items.length === 0) { done(); return; }
+        openRewardPopup(this, popups, { title: t("ops.notice.title"), items: next.items, ...(next.reason ? { footnote: next.reason } : {}), onConfirm: done });
+      };
+      if (next.losses.length === 0) showGains();
+      else popups.confirm({ title: t("ops.notice.title"), message: [...next.losses, next.reason].filter(Boolean).join("\n"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, showGains);
     };
     const offNotice = managerEvents.subscribe("opsNotice", ({ notices }) => {
-      for (const line of opsNoticeLines(notices)) if (!queued.includes(line)) queued.push(line);
+      const receipt = opsNoticeReceipt(notices);
+      if (receipt.items.length === 0 && receipt.losses.length === 0) return;
+      queued.push(receipt);
       flush();
     });
     const offDeleted = onAccountDeleted(() => {

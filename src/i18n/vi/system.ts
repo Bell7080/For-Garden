@@ -50,6 +50,7 @@ export const SYSTEM_VI = {
   "ops.notice.gain": "Đã cấp {amount} {name}.",
   "ops.notice.loss": "Đã thu hồi {amount} {name}.",
   "ops.notice.mail": "Có {count} thư mới.",
+  "ops.notice.reason": "Lý do: {reason}",
   "ops.deleted.title": "Thông báo tài khoản",
   "ops.deleted.body": "Tài khoản đã bị xóa.\nQuay về màn hình chính.",
   "mail.launch.body": "Cảm ơn bạn đã chơi game của chúng tôi! Xin gửi tặng vật tư đặc biệt mừng bạn bắt đầu nghiên cứu.",

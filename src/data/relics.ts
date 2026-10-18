@@ -3131,11 +3131,12 @@ export const RELICS: RelicDef[] = [
       channel: { seconds: 5 },
       damageHealingPercent: 25,
     },
+    // 박쥐가 물 때마다 피가 나고(II) 만찬의 범위가 넓어지며(III) 폭주하면 맞춘 만큼 회복하고(IV) 더 많은 적의 피를 빤다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "widenArea", radius: 380 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 15 },
+      passive: { kind: "swarmDeepen", extraHealTargets: 2 },
     },
   },
   {
@@ -3223,11 +3224,12 @@ export const RELICS: RelicDef[] = [
         { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond },
       ],
     },
+    // 채찍이 두 번 들어가고(II) 품이 넓어지며(III) 폭주하면 아군 몫을 대신 맞고(IV) 독이 오래 남는다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "pincerPair", every: 2 },
+      ultimate: { kind: "widenArea", radius: 340 },
+      ferocity: { kind: "feverGuard", percent: 30 },
+      passive: { kind: "lingeringVenom", poisonSeconds: 5 },
     },
   },
   {
@@ -3305,11 +3307,12 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       targeting: "single",
     },
+    // 급소를 찔러 피를 내고(II) 선물이 회복을 막으며(III) 폭주하면 치명타가 터지고(IV) 겨누기가 더 깊어진다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "unhealedMark", seconds: 4, reductionPercent: 50 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "deepAim", extraStacks: 2 },
     },
   },
   {
@@ -3387,11 +3390,12 @@ export const RELICS: RelicDef[] = [
       targeting: "battlefieldAllies",
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 8, maxHpRegenPercentPerSecond: 1.5 },
     },
+    // 날갯짓 파동에 적이 움찔하고(II) 순풍이 오래 불며(III) 폭주하면 맞춘 만큼 회복하고(IV) 울림이 둘에게 걸린다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "shellKnock", seconds: 0.3 },
+      ultimate: { kind: "longGust", seconds: 10 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 10 },
+      passive: { kind: "twinHum" },
     },
   },
   {
@@ -3469,11 +3473,12 @@ export const RELICS: RelicDef[] = [
       targeting: "nearbyEnemies",
       radius: 200,
     },
+    // 곡괭이로 방어를 깎고(II) 영차의 품이 넓어지며(III) 폭주하면 물어뜯어 회복하고(IV) 행렬이 더 든든히 받친다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 4, seconds: 6 },
+      ultimate: { kind: "widenArea", radius: 300 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 12 },
+      passive: { kind: "deeperMarch", regenMaxHpPercentPerAllyPerSecond: 0.6 },
     },
   },
   {

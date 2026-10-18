@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.315.4**
+현재 버전: **v0.315.5**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,13 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.315.5 — 회수조 다섯의 한계 돌파 효과
+
+- **아트라·미르·펄시·네우리·이카닉시아의 돌파 II~V를 모두 채웠다.** 토비처럼 직관적으로, 기존 종류를 최대한 재활용했다. 아트라: 채찍 두 번(`pincerPair`) · 품 340(`widenArea`) · 폭주 아군 몫 대신 받기 30%(`feverGuard`) · 독 5초(`lingeringVenom`). 미르: 방어 깎기(`fangShave`) · 품 300 · 폭주 흡혈 12 · 행렬 재생 0.6(`deeperMarch`). 펄시: 출혈(`bleedingSmash`) · 회복 감소 50%(`unhealedMark`) · 폭주 치명 +20(`sharpStorm`) · 겨누기 상한 +2(`deepAim`). 네우리: 경직 0.3초(`shellKnock`) · 순풍 10초(`longGust`) · 폭주 흡혈 10 · 울림이 가장 센 아군 둘에게(`twinHum`). 이카닉시아: 출혈 · 만찬 범위 380 · 폭주 흡혈 15 · 피를 빠는 적 +2(`swarmDeepen`).
+- 새 종류 여섯(`lingeringVenom`·`deeperMarch`·`deepAim`·`twinHum`·`swarmDeepen`·`longGust`)은 분류표(`breakthroughRules.test`)와 열두 언어 문장을 갖는다. 폭주(IV)에는 궁극기와 엮는 효과를 넣지 않았고, 받는 피해 감소·게이지 환급도 없다.
+- 3장 적은 돌파 2~3이라 II·III(과 일부 IV)가 열린다. 검수 기록(3-5~3-10)은 띠 안에 그대로 있어 갱신하지 않았다. 단위 시험은 `raiderBreakthrough.test.ts`.
+- 순풍을 거는 궁극기가 돌파로 늘어난 사본을 읽도록 `fireUltimateCore`도 같은 경계(`raiderSkillTweaks`)를 지난다.
 
 ## v0.315.4 — 이카닉시아 재설계: 중거리 마법사, 박쥐 떼
 

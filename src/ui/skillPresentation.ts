@@ -1444,6 +1444,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "bigShell") return t("skill.breakthrough.effect.ultimate.bigShell", { name: def.ultimate.name, percent: trim(effect.shieldMaxHpPercent) });
     if (effect.kind === "richBomb") return t("skill.breakthrough.effect.ultimate.richBomb", { name: def.ultimate.name, stacks: trim(effect.stacks) });
     if (effect.kind === "chasingBlink") return t("skill.breakthrough.effect.ultimate.chasingBlink", { name: def.ultimate.name });
+    if (effect.kind === "longGust") return t("skill.breakthrough.effect.ultimate.longGust", { name: def.ultimate.name, seconds: trim(effect.seconds) });
     if (effect.kind === "signatureBurst") return t("skill.breakthrough.effect.ultimate.signatureBurst", { name: def.ultimate.name });
     if (effect.kind === "bleedFeast") return t("skill.breakthrough.effect.ultimate.bleedFeast", { name: def.ultimate.name, percent: trim(effect.damagePercent) });
     if (effect.kind === "splashPaint") return t("skill.breakthrough.effect.ultimate.splashPaint", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
@@ -1509,6 +1510,11 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "pressureCrack") return t("skill.breakthrough.effect.passive.pressureCrack", { seconds: trim(effects.passive.intervalSeconds), percent: trim(effects.passive.powerPercent) });
     if (effects.passive.kind === "scarMight") return t("skill.breakthrough.effect.passive.scarMight", { percent: trim(effects.passive.damagePercentPerStack) });
     if (effects.passive.kind === "lightSleeper") return t("skill.breakthrough.effect.passive.lightSleeper", { name: def.passive.name });
+    if (effects.passive.kind === "lingeringVenom") return t("skill.breakthrough.effect.passive.lingeringVenom", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });
+    if (effects.passive.kind === "deeperMarch") return t("skill.breakthrough.effect.passive.deeperMarch", { percent: trim(effects.passive.regenMaxHpPercentPerAllyPerSecond) });
+    if (effects.passive.kind === "deepAim") return t("skill.breakthrough.effect.passive.deepAim", { stacks: trim(effects.passive.extraStacks) });
+    if (effects.passive.kind === "twinHum") return t("skill.breakthrough.effect.passive.twinHum", { name: def.passive.name });
+    if (effects.passive.kind === "swarmDeepen") return t("skill.breakthrough.effect.passive.swarmDeepen", { name: def.passive.name, count: trim(effects.passive.extraHealTargets) });
     if (effects.passive.kind === "rageGain") return t("skill.breakthrough.effect.passive.rageGain", { name: def.passive.name, value: trim(effects.passive.extraPerHit) });
     if (effects.passive.kind === "thickShell") return t("skill.breakthrough.effect.passive.thickShell", { name: def.passive.name, self: trim(effects.passive.selfShieldMaxHpPercent), ally: trim(effects.passive.allyShieldMaxHpPercent) });
     if (effects.passive.kind === "potentReaction") return t("skill.breakthrough.effect.passive.potentReaction", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });

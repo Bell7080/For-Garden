@@ -3239,7 +3239,8 @@ function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, 
   if (aim && !useUltimate) {
     const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
     const kept = attacker.aim?.targetId === target.id ? attacker.aim.stacks : 0;
-    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks, kept + 1 + bonus) };
+    const deep = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks + (deep?.kind === "deepAim" ? deep.extraStacks : 0), kept + 1 + bonus) };
   }
 }
 
@@ -3261,6 +3262,7 @@ function tickBatSwarm(fighter: Fighter, dt: number, state: SkirmishState, events
   const inRange = state.fighters
     .filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius)
     .sort((a, b) => distance(fighter, a) - distance(fighter, b));
+  const deepen = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   let healBase = 0;
   inRange.forEach((other, index) => {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
@@ -3269,7 +3271,7 @@ function tickBatSwarm(fighter: Fighter, dt: number, state: SkirmishState, events
     const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
     applyDamage(other, resolution.applied, events, state);
     const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-    if (index < plan.healTargets) healBase += resolution.applied;
+    if (index < plan.healTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraHealTargets : 0)) healBase += resolution.applied;
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
       contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
     if (!isFighterAlive(other)) {
@@ -3314,8 +3316,11 @@ function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): Skirmi
       const fast = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "swiftFlight" ? fighter.def.ferocityTrait.intervalReductionPercent : 0;
       fighter.wingHumIn += hum.intervalSeconds * (1 - fast / 100);
       const allies = state.fighters.filter((ally) => ally.side === fighter.side && ally.id !== fighter.id && isFighterAlive(ally));
-      const best = allies.reduce<Fighter | undefined>((top, ally) => !top || ally.def.stats.atk > top.def.stats.atk ? ally : top, undefined);
-      applyTeamBuff(best ?? fighter, { ...hum.resonance, sourceId: fighter.id });
+      const twin = openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "twinHum";
+      const ranked = [...allies].sort((a, b) => b.def.stats.atk - a.def.stats.atk);
+      const picks = ranked.slice(0, twin ? 2 : 1);
+      if (picks.length === 0) picks.push(fighter);
+      for (const pick of picks) applyTeamBuff(pick, { ...hum.resonance, sourceId: fighter.id });
     }
   }
   const march = fighter.def.passive.workerMarch;
@@ -3323,7 +3328,9 @@ function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): Skirmi
     const count = marchAllies(state, fighter);
     if (count > 0) {
       // 프레임마다 숫자를 띄우지 않는다 — 체력 바가 차오르는 것이 이 재생의 표시다.
-      applyHealing(state, fighter, fighter.maxHp * march.regenMaxHpPercentPerAllyPerSecond * count * dt / 100);
+      const deeper = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+      const regen = deeper?.kind === "deeperMarch" ? deeper.regenMaxHpPercentPerAllyPerSecond : march.regenMaxHpPercentPerAllyPerSecond;
+      applyHealing(state, fighter, fighter.maxHp * Math.max(regen, march.regenMaxHpPercentPerAllyPerSecond) * count * dt / 100);
     }
   }
   return events;
@@ -4299,6 +4306,23 @@ function withoutPoison(skill: Skill): Skill {
 
 /** 열린 돌파를 실제 한 타격의 스킬 사본에만 투영해 정적 캐릭터 정의를 보존한다. */
 export function breakthroughSkill(attacker: Fighter, useUltimate: boolean): Skill {
+  return raiderSkillTweaks(attacker, useUltimate, breakthroughSkillBase(attacker, useUltimate));
+}
+
+/** 회수조 돌파가 스킬 사본에 얹는 몫 — 독이 길어지고(`lingeringVenom`) 순풍이 길어진다(`longGust`). */
+function raiderSkillTweaks(attacker: Fighter, useUltimate: boolean, skill: Skill): Skill {
+  const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (passive?.kind === "lingeringVenom" && skill.statusEffects?.some((effect) => effect.kind === "poison")) {
+    skill = { ...skill, statusEffects: skill.statusEffects.map((effect) => effect.kind === "poison" ? { ...effect, seconds: Math.max(effect.seconds, passive.poisonSeconds) } : effect) } as Skill;
+  }
+  if (useUltimate && "teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
+    const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (gust?.kind === "longGust") skill = { ...skill, teamBuff: { ...skill.teamBuff, seconds: Math.max(skill.teamBuff.seconds, gust.seconds) } } as Skill;
+  }
+  return skill;
+}
+
+function breakthroughSkillBase(attacker: Fighter, useUltimate: boolean): Skill {
   let skill: Skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
   if (useUltimate) {
     // 되돌아오는 돌진은 줄어든 위력으로 피해와 뇌진탕만 준다 — 기절까지 다시 걸면 기절이 이어진다.
@@ -9358,7 +9382,8 @@ function fireUltimateCore(
   const attacker = findFighter(state, fighterId);
   if (!attacker || !canFireUltimate(state, attacker)) return events;
 
-  const teamUltimate = attacker.def.ultimate;
+  // 순풍을 거는 궁극기도 돌파가 길게 늘린 사본을 쓴다(`longGust`).
+  const teamUltimate = raiderSkillTweaks(attacker, true, attacker.def.ultimate) as typeof attacker.def.ultimate;
   if (teamUltimate.targeting === "duo" && teamUltimate.teamBuff !== undefined) {
     // 전장 전체가 아니라 듀오 한 명에게만 걸린다. 듀오가 쓰러졌으면 걸 곳이 없다.
     const duo = duoOf(attacker, state);

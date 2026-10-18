@@ -188,6 +188,13 @@ const CATEGORY: Record<EffectKind, Category> = {
   thickShell: "survival",
   potentReaction: "damage",
   doubleAmbush: "crit",
+  // 회수조 — 독이 길어지고, 행렬 재생이 늘고, 겨누기가 깊어지고, 울림이 둘에게 걸리고, 박쥐가 더 빤다.
+  lingeringVenom: "damage",
+  deeperMarch: "survival",
+  deepAim: "damage",
+  twinHum: "support",
+  swarmDeepen: "survival",
+  longGust: "support",
 };
 
 /** 직군이 받을 수 없는 분류. 암살자·원거리 딜러는 은신이 아닌 생존 유틸과 게이지 조작을 받지 않는다. */

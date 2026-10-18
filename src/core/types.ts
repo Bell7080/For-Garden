@@ -3076,6 +3076,10 @@ export type UltimateBreakthrough = {
 } | {
   /** 궁극기를 쓰고 난 직후 곧바로 가장 약한 적에게 순간이동한다(코마). 적 전용. */
   kind: "chasingBlink";
+} | {
+  /** 궁극기가 거는 순풍이 이 시간으로 늘어난다(네우리). 적 전용. */
+  kind: "longGust";
+  seconds: number;
 } | BreakthroughNone;
 
 /**
@@ -3500,6 +3504,25 @@ export type PassiveBreakthrough = {
   kind: "doubleAmbush";
   /** 연달아 확정 치명타가 되는 일반 공격 수. */
   crits: number;
+} | {
+  /** 일반 공격과 궁극기가 바르는 중독이 이 시간으로 늘어난다(아트라). 적 전용. */
+  kind: "lingeringVenom";
+  poisonSeconds: number;
+} | {
+  /** 행렬의 재생이 아군 한 명당 이 비율(최대 체력 %/초)로 늘어난다(미르). 적 전용. */
+  kind: "deeperMarch";
+  regenMaxHpPercentPerAllyPerSecond: number;
+} | {
+  /** 겨누기가 쌓이는 상한이 이만큼 늘어난다(펄시). 적 전용. */
+  kind: "deepAim";
+  extraStacks: number;
+} | {
+  /** 날갯짓 울림이 가장 센 아군 **둘**에게 공명을 건다(네우리). 적 전용. */
+  kind: "twinHum";
+} | {
+  /** 박쥐 떼가 피를 빠는 적이 이만큼 늘어난다(이카닉시아). 적 전용. */
+  kind: "swarmDeepen";
+  extraHealTargets: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

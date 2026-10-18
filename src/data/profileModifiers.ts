@@ -46,3 +46,6 @@ export function findProfileModifier(id: string): ProfileModifierDefinition | und
 for (const modifier of PROFILE_MODIFIERS) {
   registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
 }
+
+/** 프로필에 동시에 장착할 수 있는 수식어 수. 저장 검증·서버·편집 화면이 모두 이 값 하나를 읽는다. */
+export const MAX_EQUIPPED_PROFILE_MODIFIERS = 1;

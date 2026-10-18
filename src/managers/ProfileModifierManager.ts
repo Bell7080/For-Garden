@@ -1,9 +1,9 @@
-import { PROFILE_MODIFIERS, findProfileModifier, type ProfileModifierDefinition, type ProfileModifierRarity } from "../data/profileModifiers";
+import { MAX_EQUIPPED_PROFILE_MODIFIERS, PROFILE_MODIFIERS, findProfileModifier, type ProfileModifierDefinition, type ProfileModifierRarity } from "../data/profileModifiers";
 import { resolveServerApi, type ProfileApi } from "./serverApi";
 import { session, type Session } from "../state/session";
 
 /** 좁은 공개 프로필 헤더가 허용하는 장착 수이며 manager와 UI가 같은 제한을 공유한다. */
-export const MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
+export { MAX_EQUIPPED_PROFILE_MODIFIERS };
 /** API 보상 영수증 중 수식어 조건 판정에 필요한 ID만 받는다. */
 export interface ModifierRewardReceipt { claimedIds: readonly string[]; claimedResearchStageIds: readonly string[]; /** 이번 수령으로 마지막 단계까지 받은 업적. */ completedAchievementIds?: readonly string[]; }
 /** 희귀도를 임의 색 문자열이 아닌 theme 의미 역할로 변환한다. */

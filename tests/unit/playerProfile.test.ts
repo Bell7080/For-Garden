@@ -51,7 +51,7 @@ describe("player profile display", () => {
       { id: "plain", displayName: "관찰자", rarity: "common" },
     ] as const;
     const result = validateEquippedProfileModifiers(catalog, { earnedModifierIds: ["first", "deep", "gold", "plain"], equippedModifierIds: ["first", "locked", "first", "deep", "gold", "plain"] });
-    expect(result.map(({ id }) => id)).toEqual(["first", "deep", "gold"]);
+    expect(result.map(({ id }) => id)).toEqual(["first"]);
     expect(JSON.parse(JSON.stringify(result))).toEqual(result);
   });
 

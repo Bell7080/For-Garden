@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Lote de equipo de excavación",
   "product.premium-excavation.grant.0": "Ticket de estudio",
   "product.premium-raid-bundle.name": "Lote de apoyo de subyugación",
-  "product.premium-raid-bundle.grant.1": "Boleto de incursión a elección",
   "product.premium-raid-bundle.grant.0": "Boleto de incursión",
   "keyword.burn.term": "Quemadura",
   "keyword.burn.description": "Recibe cada segundo daño fijo igual al 4% del Ataque. Volver a aplicarlo solo alarga la duración.",

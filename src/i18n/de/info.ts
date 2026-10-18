@@ -44,7 +44,6 @@ export const INFO_DE = {
   "info.rune.bag": "Runentasche · {part}",
   "info.rune.empty": "Leerer Platz",
   "info.rune.emptySlot": "   Leerer Platz",
-  "info.rune.clear": "Leeren",
   "info.rune.named": "{rarity}e Rune",
   "info.rune.threeSlots": "Drei Runenplätze",
   "info.rune.complete": "Alle drei Teile greifen ineinander.",

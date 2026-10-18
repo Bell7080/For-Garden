@@ -44,7 +44,6 @@ export const INFO_RU = {
   "info.rune.bag": "Сумка рун · {part}",
   "info.rune.empty": "Пустая ячейка",
   "info.rune.emptySlot": "   Пустая ячейка",
-  "info.rune.clear": "Очистить",
   "info.rune.named": "Руна: {rarity}",
   "info.rune.threeSlots": "Три ячейки рун",
   "info.rune.complete": "Все три части сошлись.",

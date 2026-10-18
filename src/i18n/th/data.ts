@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "ชุดอุปกรณ์ขุด",
   "product.premium-excavation.grant.0": "ตั๋วสำรวจ",
   "product.premium-raid-bundle.name": "ชุดสนับสนุนการปราบปราม",
-  "product.premium-raid-bundle.grant.1": "ตั๋วเรดแบบเลือก",
   "product.premium-raid-bundle.grant.0": "ตั๋วเรด",
   "keyword.burn.term": "ไฟลวก",
   "keyword.burn.description": "ได้รับความเสียหายคงที่เท่ากับ 4% ของพลังโจมตีทุกวินาที การติดซ้ำจะยืดเวลาเท่านั้น",

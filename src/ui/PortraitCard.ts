@@ -234,6 +234,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly notchMask: Phaser.GameObjects.Graphics;
   /** 원화를 검게 복제해 머리만 눌러 주는 선택 표시다. 원화가 늦게 오면 그때 만들어진다. */
   private selectedHeadShade?: Phaser.GameObjects.Image;
+  /** 파견 덮개의 몸통 면. 돌출 머리 몫(`awayHeadShade`)은 원화가 올라온 뒤에 이 면 바로 위에 낀다. */
+  private awayVeil?: Phaser.GameObjects.Graphics;
+  private awayHeadShade?: Phaser.GameObjects.Image;
   /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
@@ -613,6 +616,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       crop: { x: card.cropX, y: card.cropY, width: card.cropWidth, height: card.cropHeight },
     };
     for (const overlay of this.managedOverlays) this.attachOverlayHead(overlay);
+    this.attachAwayHead();
     // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
     // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
     const above = this.getIndex(this.backdrop ?? this.chip) + 1;
@@ -736,14 +740,36 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    */
   setAwayOverlay(label: string, remaining: string): Phaser.GameObjects.Text {
     const veil = this.scene.add.graphics();
-    veil.fillStyle(0x05070a, 0.66);
+    veil.fillStyle(AWAY_VEIL.color, AWAY_VEIL.alpha);
     veil.fillPoints(toPoints(this.chipShape), true);
+    this.awayVeil = veil;
     const title = this.scene.add.text(0, -20, label, textStyle({ role: "display", size: Math.round(this.bodyHeight * 0.13), color: "#8fd3f5" })).setOrigin(0.5);
     title.setShadow(0, 2, "#000000", 6, true, true);
     const clock = this.scene.add.text(0, 22, remaining, textStyle({ role: "emphasis", size: Math.round(this.bodyHeight * 0.11), color: "#8fd3f5" })).setOrigin(0.5);
     clock.setShadow(0, 2, "#000000", 6, true, true);
     this.add([veil, title, clock]);
+    this.attachAwayHead();
     return clock;
+  }
+
+  /**
+   * 파견 덮개가 칩 윗변 밖으로 솟은 머리도 눌러 주게 한다.
+   *
+   * 몸통 면(`chipShape`)은 윗변이 닫혀 있어 머리 홈 위로 빠져나온 정수리는 덮지 못한다. 선택 표시와
+   * 같은 방법으로 원화를 검게 복제해 홈 안에서만 보이게 하면 머리 모양 그대로 눌리고 그 옆의
+   * 투명한 빈자리는 밝게 남는다. 원화가 덮개보다 늦게 오면 그때 만들어진다.
+   */
+  private attachAwayHead(): void {
+    if (this.awayHeadShade || !this.awayVeil || !this.portraitPlacement || this.disposed) return;
+    const placement = this.portraitPlacement;
+    const head = this.scene.add.image(placement.x, placement.y, placement.key)
+      .setOrigin(0, 0).setScale(placement.scale).setTint(AWAY_VEIL.color).setAlpha(AWAY_VEIL.alpha);
+    head.setCrop(placement.crop.x, placement.crop.y, placement.crop.width, placement.crop.height);
+    head.setMask(this.notchMask.createGeometryMask());
+    this.awayHeadShade = head;
+    this.portraits.push(head);
+    this.addAt(head, this.getIndex(this.awayVeil) + 1);
+    this.syncMask();
   }
 
   /**
@@ -805,6 +831,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   }
 
 }
+
+/** 다른 곳에 나가 있는 카드를 덮는 어둠. 몸통 면과 머리 복제가 같은 값을 읽는다. */
+const AWAY_VEIL = { color: 0x05070a, alpha: 0.66 } as const;
 
 /** 평평한 좌표 배열을 Phaser가 받는 점 목록으로 바꾼다. */
 function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {

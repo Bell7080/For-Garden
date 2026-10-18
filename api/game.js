@@ -568,7 +568,6 @@ var INFO_KO = {
   "info.rune.bag": "\uB8EC \uAC00\uBC29 \xB7 {part}",
   "info.rune.empty": "\uBE48 \uC790\uB9AC",
   "info.rune.emptySlot": "   \uBE48 \uC790\uB9AC",
-  "info.rune.clear": "\uBE44\uC6B0\uAE30",
   "info.rune.named": "{rarity} \uB8EC",
   "info.rune.threeSlots": "\uB8EC \uC138 \uC790\uB9AC",
   "info.rune.complete": "\uC138 \uC870\uAC01\uC774 \uBAA8\uB450 \uB9DE\uBB3C\uB838\uB2E4.",
@@ -1489,10 +1488,8 @@ var INVENTORY_KO = {
   "inventory.expiry.minutes": "{minutes}\uBD84 {seconds}\uCD08",
   "inventory.guide.effect": "\uD6A8\uACFC",
   "inventory.guide.sources": "\uC5BB\uB294 \uBC29\uBC95",
-  "inventory.source.dungeonDrop": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804\xB7\uD604\uC0C1\uC218\uBC30 \uC2B9\uB9AC\uC640 \uC18C\uD0D5\uC5D0\uC11C \uAC00\uB054 (\uD558\uB8E8 3\uC7A5\uAE4C\uC9C0)",
-  "inventory.source.dungeonDropRare": "\uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804\xB7\uD604\uC0C1\uC218\uBC30 \uC2B9\uB9AC\uC640 \uC18C\uD0D5\uC5D0\uC11C \uB4DC\uBB3C\uAC8C (\uD558\uB8E8 1\uC7A5\uAE4C\uC9C0)",
-  "inventory.source.strata": "\uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC",
-  "inventory.source.strataRare": "\uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC\uC5D0\uC11C \uB4DC\uBB3C\uAC8C",
+  "inventory.source.dungeonDrop": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uD6C4 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804\xB7\uD604\uC0C1\uC218\uBC30 \uC2B9\uB9AC\uC640 \uC18C\uD0D5\uC5D0\uC11C \uAC00\uB054 (\uD558\uB8E8 3\uC7A5\uAE4C\uC9C0)",
+  "inventory.source.strata": "\uB808\uC774\uB4DC \uAC1C\uBC29 \uD6C4 \uACE0\uACE0\uD559 \uC9C0\uCE35 \uD0D0\uC0AC\uC5D0\uC11C \uAC00\uB054",
   "inventory.source.attendance": "\uCD9C\uC11D \uBCF4\uC0C1",
   "inventory.source.premium": "\uD504\uB9AC\uBBF8\uC5C4 \uC0C1\uC810 \uD328\uD0A4\uC9C0",
   "inventory.source.raidPass": "\uB808\uC774\uB4DC \uD328\uC2A4 (\uB9E4\uC77C 1\uC7A5)",
@@ -17161,13 +17158,9 @@ init_define_import_meta_env();
 var RAID_TICKET_DROP = {
   /** 한 판(스테미나 10)마다 일반 토벌권이 떨어질 확률 — 스테미나 100당 약 0.8장. */
   normalChancePerRun: 0.08,
-  /** 한 판마다 선택 토벌권이 떨어질 확률. */
-  selectChancePerRun: 0.012,
   dailyNormalCap: 3,
-  dailySelectCap: 1,
-  /** 지층 탐사판 한 장에 토벌권 칸이 섞일 확률(일반 · 선택). */
-  strataNormalChance: 0.3,
-  strataSelectChance: 0.06
+  /** 지층 탐사판 한 장에 일반 토벌권 칸이 섞일 확률. */
+  strataNormalChance: 0.3
 };
 function createEmptyRaidTicketDropState() {
   return { day: "", normal: 0, select: 0 };
@@ -17180,31 +17173,25 @@ function normalizeRaidTicketDropState(value) {
 function isValidRaidTicketDropState(value) {
   return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
 }
-function rollRaidTicketDrops(state, runs, now, random) {
+function rollRaidTicketDrops(state, runs, now, random, raidOpen) {
+  if (!raidOpen) return { state, drops: [] };
   const today = utcDateKey(now);
   const next = state.day === today ? { ...state } : { day: today, normal: 0, select: 0 };
   let normal = 0;
-  let select = 0;
   for (let run2 = 0; run2 < Math.max(0, Math.floor(runs)); run2 += 1) {
     if (next.normal < RAID_TICKET_DROP.dailyNormalCap && random() > 1 - RAID_TICKET_DROP.normalChancePerRun) {
       next.normal += 1;
       normal += 1;
     }
-    if (next.select < RAID_TICKET_DROP.dailySelectCap && random() > 1 - RAID_TICKET_DROP.selectChancePerRun) {
-      next.select += 1;
-      select += 1;
-    }
   }
   const drops = [];
   if (normal > 0) drops.push({ itemId: RAID_TICKET_ITEM, amount: normal });
-  if (select > 0) drops.push({ itemId: RAID_SELECT_TICKET_ITEM, amount: select });
   return { state: next, drops };
 }
-function strataRaidTicketTile(random) {
+function strataRaidTicketTile(random, raidOpen) {
   const value = random();
-  if (value > 1 - RAID_TICKET_DROP.strataSelectChance) return RAID_SELECT_TICKET_ITEM;
-  if (value > 1 - RAID_TICKET_DROP.strataSelectChance - RAID_TICKET_DROP.strataNormalChance) return RAID_TICKET_ITEM;
-  return null;
+  if (!raidOpen) return null;
+  return value > 1 - RAID_TICKET_DROP.strataNormalChance ? RAID_TICKET_ITEM : null;
 }
 
 // src/core/tutorial.ts
@@ -17525,12 +17512,16 @@ init_define_import_meta_env();
 var PLAYER_LEVEL_CAP = 60;
 var PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 };
 var PLAYER_EXP_PER_STAMINA = 1;
-var EARLY_EXP_TO_NEXT = [18, 36, 60, 85];
+var EARLY_EXP_TO_NEXT = [8, 16, 26, 36, 48, 60, 72, 86, 100];
+var BLEND_START_RATIO = 0.465;
+var BLEND_END_LEVEL = 20;
 function playerExpToNext(level) {
   const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
   if (early !== void 0) return early;
   const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
-  return Math.round(50 + 15 * k + 0.9 * k * k);
+  const formula = 50 + 15 * k + 0.9 * k * k;
+  const blend = Math.min(1, BLEND_START_RATIO + (1 - BLEND_START_RATIO) * (Math.floor(level) - 10) / (BLEND_END_LEVEL - 10));
+  return Math.round(formula * blend);
 }
 function normalizePlayerLevel(progress) {
   const level = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(Number(progress?.level) || 1)));
@@ -18569,7 +18560,7 @@ function createStrataBoard(input) {
     if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
   }
-  const raidTicket = strataRaidTicketTile(input.random);
+  const raidTicket = strataRaidTicketTile(input.random, input.raidOpen === true);
   const plain = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
   if (raidTicket !== null && plain.length > 0) {
     const pick2 = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
@@ -19359,6 +19350,7 @@ function findProfileModifier(id) {
 for (const modifier of PROFILE_MODIFIERS) {
   registerDataText(modifier, "displayName", `modifier.${modifier.id}.name`);
 }
+var MAX_EQUIPPED_PROFILE_MODIFIERS = 1;
 
 // src/data/adRewards.ts
 init_define_import_meta_env();
@@ -24940,7 +24932,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 30,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 800, max: 1800 }, { currency: "fossil", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 100 }],
+    rewards: [{ currency: "gold", min: 800, max: 1800 }, { currency: "cheesecake", min: 1, max: 3 }, { currency: "rawStone", min: 0, max: 100 }],
     clueJournalId: "interaction-doppel-lab-01",
     illustration: "background-interaction-doppel-lab"
   },
@@ -24954,7 +24946,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 240,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gold", min: 2e3, max: 5e3 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gems", min: 0, max: 8 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
     clueJournalId: "interaction-doppel-office-01",
     illustration: "background-interaction-doppel-office"
   },
@@ -24968,7 +24960,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 60,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
-    rewards: [{ currency: "fossil", min: 1, max: 2 }, { currency: "gold", min: 800, max: 2600 }, { currency: "rawStone", min: 0, max: 200 }],
+    rewards: [{ currency: "gold", min: 1500, max: 3500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 200 }],
     clueJournalId: "interaction-rust-garage-01",
     illustration: "background-interaction-rust-garage"
   },
@@ -24982,7 +24974,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 7e3, max: 15e3 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gold", min: 7e3, max: 15e3 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-rust-lease-01",
     illustration: "background-interaction-rust-lease"
   },
@@ -24997,7 +24989,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "fossil", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-doppel-upper-01",
     illustration: "background-interaction-doppel-upper"
   },
@@ -25012,7 +25004,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 9e3, max: 2e4 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gold", min: 9e3, max: 2e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-rust-works-01",
     illustration: "background-interaction-rust-works"
   },
@@ -25027,7 +25019,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "fossil", min: 5, max: 10 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 10 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-odidi-embassy-01",
     illustration: "background-interaction-odidi-embassy"
   }
@@ -25458,7 +25450,7 @@ var SaveManager = class {
     const discoveredInteractionJournalIds = Array.isArray(legacy.discoveredInteractionJournalIds) ? legacy.discoveredInteractionJournalIds.filter((id) => typeof id === "string" && knownJournalIds.has(id)) : [];
     const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds.filter((id) => typeof id === "string" && knownJournalIds.has(id)) : [];
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
-    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
+    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds.slice(0, MAX_EQUIPPED_PROFILE_MODIFIERS) : [];
     const playerResearch = Number(legacy.saveVersion) >= 25 && legacy.playerResearch && typeof legacy.playerResearch === "object" ? normalizePlayerLevel(legacy.playerResearch) : createInitialPlayerResearchProgress();
     const playerCard = normalizePlayerCard(legacy.playerCard);
     const savedArchaeology = legacy.archaeology && typeof legacy.archaeology === "object" ? legacy.archaeology : void 0;
@@ -25622,7 +25614,7 @@ var SaveManager = class {
       const skin = skinId && skinsById.get(skinId);
       return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId;
     })) fail3("\uB810\uB9AD \uC2A4\uD0A8 \uC7A5\uCC29 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail3("\uD504\uB85C\uD544 \uC218\uC2DD\uC5B4 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail3("\uC124\uC815 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail3("\uC644\uB8CC \uC2A4\uD1A0\uB9AC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.observationRecords) || data.observationRecords.some((record2) => !record2 || typeof record2.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record2.date) || !relicIds.has(record2.relicId) || typeof record2.storyId !== "string" || typeof record2.questionId !== "string" || typeof record2.question !== "string" || typeof record2.choiceId !== "string" || typeof record2.answer !== "string" || typeof record2.personalityTag !== "string" || typeof record2.discoveredHabit !== "string")) fail3("\uAD00\uCC30 \uC778\uD130\uBDF0 \uAE30\uB85D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -26454,6 +26446,34 @@ var ATTENDANCE_AD_REWARDS = [
 ];
 var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
 
+// src/core/contentUnlock.ts
+init_define_import_meta_env();
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
+}
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
+}
+
 // src/core/bountyRun.ts
 init_define_import_meta_env();
 function isBountyTierUnlocked(tier, clearedTierIds) {
@@ -26615,7 +26635,6 @@ function resolveServerApi(state, injected, cache2) {
 }
 
 // src/managers/ProfileModifierManager.ts
-var MAX_EQUIPPED_PROFILE_MODIFIERS = 3;
 var ProfileModifierManager = class {
   constructor(state = session, injectedApi) {
     this.state = state;
@@ -27409,7 +27428,7 @@ var PREMIUM_PRODUCTS = [
   freeClaim("premium-free-monthly", "\uC6D4\uAC04 \uBB34\uB8CC \uBCF4\uAE09", "monthly", [currency2("gold", 2e5), currency2("cheesecake", 600), currency2("gems", 200), item2("stamina-tonic", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", 8)]),
   { id: "premium-monthly-fossil", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-fossil", name: "\uC6D4\uAC04 \uD654\uC11D \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-monthly-fossil", 3900), grants: [currency2("fossil", 10), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-monthly-amber", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-amber", name: "\uC6D4\uAC04 \uD638\uBC15\uC11D \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-monthly-amber", 3900), grants: [currency2("amber", 10), currency2("gems", 1e3)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
-  { id: "premium-raid-bundle", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-enhancement", name: "\uD1A0\uBC8C \uC9C0\uC6D0 \uBC88\uB4E4", description: "", acquisition: pay("premium-raid-bundle", 3900), grants: [item2("raid-ticket", "\uD1A0\uBC8C\uAD8C", 5), item2("raid-select-ticket", "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", 2), currency2("gems", 1500), currency2("fossil", 5)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
+  { id: "premium-raid-bundle", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-enhancement", name: "\uD1A0\uBC8C \uC9C0\uC6D0 \uBC88\uB4E4", description: "", acquisition: pay("premium-raid-bundle", 3900), grants: [item2("raid-ticket", "\uD1A0\uBC8C\uAD8C", 8), currency2("gems", 1500), currency2("fossil", 5)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-monthly-mid", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-enhancement", name: "\uC6D4\uAC04 \uBCF5\uC6D0 \uBCF4\uAE09 \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-monthly-mid", 29900), grants: [currency2("gems", 1e4), currency2("fossil", 30), currency2("amber", 30)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-hundred", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-fossil", name: "\uBC31 \uBC88\uC758 \uBCF5\uC6D0 \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-hundred", 39e3), grants: [currency2("fossil", 50), currency2("amber", 50)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
   { id: "premium-monthly-heavy", storefront: "premium", category: "special", premiumCategory: "monthly", iconKey: "shop-product-enhancement", name: "\uC6D4\uAC04 \uBCF5\uC6D0 \uB300\uB7C9 \uD328\uD0A4\uC9C0", description: "", acquisition: pay("premium-monthly-heavy", 59e3), grants: [currency2("gems", 25e3), currency2("fossil", 40), currency2("amber", 40)], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: FROM3, visibleUntil: UNTIL3 },
@@ -27723,34 +27742,6 @@ var sameGuildBadge = (a, b) => a.shape === b.shape && a.shapeColor === b.shapeCo
 
 // src/api/FakeGuildServer.ts
 init_define_import_meta_env();
-
-// src/core/contentUnlock.ts
-init_define_import_meta_env();
-var CONTENT_UNLOCKS = [
-  { id: "excavation", level: 2 },
-  { id: "shop", level: 3 },
-  { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 3 },
-  { id: "bounty", level: 3 },
-  { id: "friends", level: 4 },
-  { id: "interaction", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "guild", level: 7 },
-  { id: "raid", level: 8 },
-  { id: "expedition", level: 9 }
-];
-var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
-var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
-var CONTENT_LEVEL_GATES_ENABLED = true;
-function contentUnlockLevel(id) {
-  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
-}
-function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
-  if (!gates) return true;
-  const stage = CONTENT_STAGE_UNLOCKS[id];
-  if (stage !== void 0) return clearedStages.has(stage);
-  return playerLevel >= contentUnlockLevel(id);
-}
 
 // src/api/guildContracts.ts
 init_define_import_meta_env();
@@ -31660,7 +31651,7 @@ var FakeServer = class {
    * 가방 한도를 넘기는 몫은 깎고, 영수증에는 실제로 들어간 몫만 싣는다.
    */
   rollBonusDrops(runs, items, now) {
-    const rolled = rollRaidTicketDrops(normalizeRaidTicketDropState(this.state.raidTicketDrops), runs, now, this.random);
+    const rolled = rollRaidTicketDrops(normalizeRaidTicketDropState(this.state.raidTicketDrops), runs, now, this.random, isContentUnlocked("raid", this.state.playerResearch.level));
     let inventory = items;
     const drops = [];
     for (const drop of rolled.drops) {
@@ -32931,7 +32922,7 @@ var FakeServer = class {
     this.state.archaeology.charges -= 1;
     this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
     const crystalStage = site ? strataCrystalStage(site, this.state.archaeology.siteLastDigAt[site.id], this.now()) : 0;
-    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, crystalStage, random: this.random });
+    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, crystalStage, random: this.random, raidOpen: isContentUnlocked("raid", this.state.playerResearch.level) });
     this.persist(this.state);
     return this.archaeologyDto();
   }

@@ -147,7 +147,7 @@ describe("stamina admission", () => {
 describe("연구원 경험치", () => {
   it("쓴 스테미나만큼 경험치가 오르고, 레벨이 오르면 스테미나 대신 에너지 드링크+를 한 병 준다", async () => {
     const state = createDefaultSession(); state.wallet.stamina = 60; state.staminaUpdatedAt = "2026-09-01T00:00:00.000Z";
-    state.playerResearch = { level: 1, experience: 14, experienceToNext: 18 };
+    state.playerResearch = { level: 1, experience: 6, experienceToNext: 8 };
     state.itemInventory = state.itemInventory.filter(({ itemId }) => itemId !== PLAYER_LEVEL_UP_REWARD.itemId);
     const api = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-01T00:00:00.000Z") });
     await api.enterStage({ stageId: "1-1", requestId: "exp-1" });
@@ -155,13 +155,13 @@ describe("연구원 경험치", () => {
     expect(state.playerResearch.level).toBe(1);
     const admission = await api.completeStage("1-1", true);
     expect(state.playerResearch.level).toBe(2);
-    expect(state.playerResearch.experience).toBe(14 + CONTENT_STAMINA_COSTS.normalStage - 18);
+    expect(state.playerResearch.experience).toBe(6 + CONTENT_STAMINA_COSTS.normalStage - 8);
     // 채우지 않는다 — 쓴 만큼만 줄고, 병이 가방에 들어간다.
     expect(state.wallet.stamina).toBe(60 - CONTENT_STAMINA_COSTS.normalStage);
     expect(state.itemInventory.find(({ itemId }) => itemId === PLAYER_LEVEL_UP_REWARD.itemId)?.quantity).toBe(1);
-    expect(admission.playerExp).toMatchObject({ before: { level: 1, experience: 14 }, after: { level: 2 }, granted: CONTENT_STAMINA_COSTS.normalStage, levelsGained: 1, levelUpItems: [{ itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: 1 }] });
+    expect(admission.playerExp).toMatchObject({ before: { level: 1, experience: 6 }, after: { level: 2 }, granted: CONTENT_STAMINA_COSTS.normalStage, levelsGained: 1, levelUpItems: [{ itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: 1 }] });
     // 입장 영수증 하나는 한 번만 쓰인다 — 같은 판을 두 번 확정해도 경험치는 한 번이다.
     await api.completeStage("1-1", true);
-    expect(state.playerResearch.experience).toBe(6);
+    expect(state.playerResearch.experience).toBe(8);
   });
 });

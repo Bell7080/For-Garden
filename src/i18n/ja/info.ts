@@ -46,7 +46,6 @@ export const INFO_JA = {
   "info.rune.bag": "ルーンバッグ · {part}",
   "info.rune.empty": "空きスロット",
   "info.rune.emptySlot": "   空きスロット",
-  "info.rune.clear": "外す",
   "info.rune.named": "{rarity}ルーン",
   "info.rune.threeSlots": "ルーン三枠",
   "info.rune.complete": "三つの欠片がすべて噛み合った。",

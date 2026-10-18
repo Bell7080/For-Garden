@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Набор раскопочного снаряжения",
   "product.premium-excavation.grant.0": "Билет разведки",
   "product.premium-raid-bundle.name": "Набор поддержки усмирения",
-  "product.premium-raid-bundle.grant.1": "Билет рейда на выбор",
   "product.premium-raid-bundle.grant.0": "Билет рейда",
   "keyword.burn.term": "Ожог",
   "keyword.burn.description": "Каждую секунду получает фиксированный урон в 4% атаки. Повторное наложение лишь продлевает время.",

@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Bundel Peralatan Gali",
   "product.premium-excavation.grant.0": "Tiket Survei",
   "product.premium-raid-bundle.name": "Bundel Dukungan Penaklukan",
-  "product.premium-raid-bundle.grant.1": "Tiket Raid Pilihan",
   "product.premium-raid-bundle.grant.0": "Tiket Raid",
   "keyword.burn.term": "Terbakar",
   "keyword.burn.description": "Menerima kerusakan tetap sebesar 4% Serangan tiap detik. Pemberian ulang hanya memperpanjang durasi.",

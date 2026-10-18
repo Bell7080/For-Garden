@@ -177,15 +177,13 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
           const label = scene.add.text(unlocked ? 0 : 12, 0, compactProfileText(modifier.displayName, 9), textStyle({ role: "emphasis", size: 24, color: on ? hex(color) : COLOR.inkDim })).setOrigin(0.5);
           if (!unlocked) { label.setAlpha(0.55); item.add(drawGlyph(scene, "lock", -width / 2 + 34, 0, 22, COLOR.inkDimHex)); }
           item.add(label);
-          if (on) item.add(scene.add.text(width / 2 - 14, -cellHeight / 2 + 14, String(order + 1), textStyle({ role: "display", size: 18, color: hex(color) })).setOrigin(1, 0.5));
           const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
           hit.on("pointerup", () => {
             focusModifierId = modifier.id; repaintTop();
             if (!unlocked) return;
             let next: string[];
             if (on) next = equippedIds.filter((id) => id !== modifier.id);
-            else if (equippedIds.length < MAX_EQUIPPED_PROFILE_MODIFIERS) next = [...equippedIds, modifier.id];
-            else return;
+            else next = [...equippedIds, modifier.id].slice(-MAX_EQUIPPED_PROFILE_MODIFIERS);
             void profileModifierManager.equip(next).then(() => { repaintTop(); paintList(); }, () => undefined);
           });
           item.add(hit);

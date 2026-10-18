@@ -19,11 +19,11 @@ export interface ExcavationAdOfferDisplayModel {
 const labelBySlot = (slotId: ExcavationAdOfferId): string =>
   t(slotId === "excavation-harvest" ? "excavation.ad.production" : "excavation.ad.storage");
 
-/** 남은 횟수를 그대로 사용량처럼 보이지 않도록 used = limit - remaining을 명시적으로 계산한다. */
+/** 다른 광고 칸(AdRewardCard)처럼 남은 횟수/한도로 적는다. 처음에는 0/N이 아니라 N/N이어야 한다. */
 export function excavationAdOfferDisplayModel(slotId: ExcavationAdOfferId, limit: number, remaining: number): ExcavationAdOfferDisplayModel {
   // 잘못된 운영 응답도 음수 사용량을 그리지 않도록 표시 범위만 서버 한도 안으로 고정한다.
   const safeLimit = Math.max(0, limit);
   const safeRemaining = Math.min(safeLimit, Math.max(0, remaining));
   const used = safeLimit - safeRemaining;
-  return { label: labelBySlot(slotId), usage: `${used}/${safeLimit}`, used, limit: safeLimit, enabled: safeRemaining > 0 };
+  return { label: labelBySlot(slotId), usage: `${safeRemaining}/${safeLimit}`, used, limit: safeLimit, enabled: safeRemaining > 0 };
 }

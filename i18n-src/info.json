@@ -340,16 +340,6 @@
 "   Leerer Platz",
 "   Пустая ячейка"
 ],
-"info.rune.clear": [
-"清空",
-"ล้าง",
-"Gỡ hết",
-"Kosongkan",
-"Vaciar",
-"Esvaziar",
-"Leeren",
-"Очистить"
-],
 "info.rune.named": [
 "{rarity}符文",
 "รูน{rarity}",

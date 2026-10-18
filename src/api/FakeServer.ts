@@ -17,6 +17,7 @@ import { AD_REWARD_SLOTS, findAdRewardSlot, type AdReward, type AdRewardSlot } f
 import { consumeRestorationEntry, normalizeDailyContent, utcDateKey } from "../core/dailyContent";
 import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, claimAttendanceDay, normalizeAttendanceState, rollAttendance, type AttendanceState } from "../core/attendance";
 import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../data/attendance";
+import { isContentUnlocked } from "../core/contentUnlock";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
 import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
@@ -2121,7 +2122,7 @@ export class FakeServer implements GameApi {
    * 가방 한도를 넘기는 몫은 깎고, 영수증에는 실제로 들어간 몫만 싣는다.
    */
   private rollBonusDrops(runs: number, items: Session["itemInventory"], now: Date): { items: Session["itemInventory"]; drops: BonusItemDrop[] } {
-    const rolled = rollRaidTicketDrops(normalizeRaidTicketDropState(this.state.raidTicketDrops), runs, now, this.random);
+    const rolled = rollRaidTicketDrops(normalizeRaidTicketDropState(this.state.raidTicketDrops), runs, now, this.random, isContentUnlocked("raid", this.state.playerResearch.level));
     let inventory = items;
     const drops: BonusItemDrop[] = [];
     for (const drop of rolled.drops) {
@@ -3409,7 +3410,7 @@ export class FakeServer implements GameApi {
     this.state.archaeology.chargesUpdatedAt = this.now().toISOString();
     // 결정 단계는 판을 여는 이 순간 굳힌다 — 판을 연 뒤에 방치 시간이 더 흘러도 이미 연 판은 그대로다.
     const crystalStage = site ? strataCrystalStage(site, this.state.archaeology.siteLastDigAt[site.id], this.now()) : 0;
-    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, crystalStage, random: this.random });
+    this.state.archaeology.board = createStrataBoard({ layerId, siteId: site?.id, crystalStage, random: this.random, raidOpen: isContentUnlocked("raid", this.state.playerResearch.level) });
     this.persist(this.state);
     return this.archaeologyDto();
   }

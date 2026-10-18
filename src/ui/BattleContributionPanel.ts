@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
 import { CONTRIBUTION_CATEGORIES, contributionCategoryLabel, contributionRenderModel } from "./battleContributionRenderModel";
 import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionCellX, contributionCellY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
-import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
+import { chipPoints, drawLayer, HoloBar } from "./holo";
 import { FaceFrame } from "./FaceFrame";
 import { getRelic } from "../data/relics";
 import { COLOR, textStyle } from "./theme";
@@ -12,6 +12,9 @@ export interface BattleContributionSnapshot {
   category: ContributionCategory;
   rows: readonly BattleContributionRow[];
 }
+
+/** 뒷배경은 전장이 비쳐 보이도록 공용 유리(`HOLO.glass` 0.82)보다 훨씬 옅게 둔다. */
+const CONTRIBUTION_PANEL_ALPHA = 0.42;
 
 /**
  * 한 전투원의 줄.
@@ -37,7 +40,7 @@ interface RowView {
   facePortraitId?: string;
 }
 
-/** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 상단 홀로그램 기여도 판이다. */
+/** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 왼쪽 벽에 붙은 세로 홀로그램 기여도 판이다. */
 export class BattleContributionPanel {
   private readonly panel: Phaser.GameObjects.Container;
   private readonly categoryHits: Phaser.GameObjects.Rectangle[] = [];
@@ -51,10 +54,10 @@ export class BattleContributionPanel {
   private outsideTap?: (pointer: Phaser.Input.Pointer) => void;
 
   constructor(private readonly scene: Phaser.Scene, private readonly onCategory: (category: ContributionCategory) => void) {
-    this.panel = scene.add.container(0, L.slideOutY).setDepth(315);
-    const shape = chipPoints(L.panel.width, L.panel.height, { bevel: { topLeft: 18, topRight: 30, bottomRight: 12, bottomLeft: 22 } });
+    this.panel = scene.add.container(L.slideOutX, 0).setDepth(315);
+    const shape = chipPoints(L.panel.width, L.panel.height, { bevel: { topLeft: 0, topRight: 30, bottomRight: 22, bottomLeft: 0 } });
     // drawLayer가 그림자·HOLO.glass 면·윗변 한 줄만 그려 사방 외곽선을 만들지 않는다.
-    this.panel.add(drawLayer(scene, L.panel.left + L.panel.width / 2, L.panel.top + L.panel.height / 2, shape, { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }));
+    this.panel.add(drawLayer(scene, L.panel.left + L.panel.width / 2, L.panel.top + L.panel.height / 2, shape, { fill: COLOR.panel, alpha: CONTRIBUTION_PANEL_ALPHA, edge: COLOR.accent, edgeAlpha: 0.5 }));
     this.buildCategories();
     this.buildRows();
   }
@@ -79,7 +82,7 @@ export class BattleContributionPanel {
    */
   private buildRows(): void {
     for (let index = 0; index < L.rows.count; index += 1) {
-      const container = this.scene.add.container(contributionCellX(index), contributionCellY());
+      const container = this.scene.add.container(contributionCellX(), contributionCellY(index));
       const name = this.scene.add.text(L.text.x, L.text.nameY, "", textStyle({ role: "body", size: 21, color: COLOR.ink })).setOrigin(0, 0.5);
       const value = this.scene.add.text(L.text.x, L.text.valueY, "0", textStyle({ role: "display", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5);
       const bar = new HoloBar(this.scene, L.rows.width / 2, L.bar.y, L.bar.width, L.bar.height, { color: COLOR.sortie, trackAlpha: 0.48 }).addTo(container);
@@ -153,14 +156,14 @@ export class BattleContributionPanel {
     if (view.slot === slot) return;
     view.slot = slot;
     view.slide?.remove();
-    const x = contributionCellX(slot);
+    const y = contributionCellY(slot);
     view.slide = this.scene.tweens.add({
-      targets: view.container, x, duration: 260, ease: "Cubic.Out",
+      targets: view.container, y, duration: 260, ease: "Cubic.Out",
       onComplete: () => { view.slide = undefined; },
     });
     // 얼굴 액자는 판의 자식이지만 줄 컨테이너 밖에 있어(비동기로 만들어진다) 함께 옮긴다.
     if (view.face) {
-      this.scene.tweens.add({ targets: view.face, x: x + L.face.x, duration: 260, ease: "Cubic.Out" });
+      this.scene.tweens.add({ targets: view.face, y: y + L.face.y, duration: 260, ease: "Cubic.Out" });
     }
   }
 
@@ -174,7 +177,7 @@ export class BattleContributionPanel {
     if (view.facePortraitId === portraitId) return;
     view.face?.destroy();
     view.facePortraitId = portraitId;
-    const face = new FaceFrame(this.scene, contributionCellX(view.slot) + L.face.x, contributionCellY() + L.face.y, {
+    const face = new FaceFrame(this.scene, contributionCellX() + L.face.x, contributionCellY(view.slot) + L.face.y, {
       portraitAssetId: getRelic(portraitId).portraitAssetId, size: L.face.size,
     });
     view.face = face;
@@ -191,7 +194,7 @@ export class BattleContributionPanel {
     if (this.expanded === expanded) return;
     this.expanded = expanded; this.slide?.remove();
     // **접으면 확실히 사라진다.** 그림자까지 화면 위로 밀어낸다.
-    this.slide = this.scene.tweens.add({ targets: this.panel, y: expanded ? 0 : L.slideOutY, duration: 190, ease: "Cubic.Out" });
+    this.slide = this.scene.tweens.add({ targets: this.panel, x: expanded ? 0 : L.slideOutX, duration: 190, ease: "Cubic.Out" });
     if (this.outsideTap) { this.scene.input.off(Phaser.Input.Events.POINTER_UP, this.outsideTap); this.outsideTap = undefined; }
     if (!expanded) return;
     // 투명한 판을 깔지 않고 씬의 포인터를 직접 듣는다 — 전장 위에 입력 면을 한 겹 깔면 그

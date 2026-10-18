@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QA_TOOLS_ENABLED } from "../../src/core/buildFlavor";
+import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../../src/core/tempAd";
 import { presentRewardedAd, setTempAdPlayer } from "../../src/platform/rewardedAds";
 import { platformPayment } from "../../src/platform/payment";
 import { PRODUCTS } from "../../src/data/shopCatalog";
@@ -34,5 +35,11 @@ describe("QA 빌드의 광고·결제 우회", () => {
     } finally {
       setTempAdPlayer(undefined);
     }
+  });
+
+  it("임시 광고 토큰은 슬롯마다 따로 만들어진다", () => {
+    expect(TEMP_AD_REWARD_ENABLED).toBe(true);
+    expect(tempAdToken("gold-ad")).toBe("temp-ad:gold-ad");
+    expect(tempAdToken("gold-ad")).not.toBe(tempAdToken("gem-ad"));
   });
 });

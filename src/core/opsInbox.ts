@@ -93,15 +93,6 @@ export function opsMailToDto(source: OpsMailSource, sender: string, readIds: Rea
   return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
 }
 
-/** 처음 보이는 운영 우편을 한 번만 알린다. */
-export function announceOpsMails(state: Session, mails: readonly MailDto[], now: Date): void {
-  const journal = opsJournalOf(state);
-  const fresh = mails.filter((mail) => !journal.announcedMails.includes(mail.id) && !state.claimedMailIds?.includes(mail.id));
-  if (fresh.length === 0) return;
-  journal.announcedMails = tail([...journal.announcedMails, ...fresh.map(({ id }) => id)]);
-  journal.notices = [...journal.notices, ...fresh.map((mail): OpsNotice => ({ kind: "mail", title: mail.title, at: now.toISOString() }))].slice(-NOTICE_KEEP);
-}
-
 /** 읽음 표시를 저장에 남긴다. */
 export function markOpsMailsRead(state: Session, ids: readonly string[]): void {
   const journal = opsJournalOf(state);

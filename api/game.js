@@ -17481,13 +17481,6 @@ function opsMailToDto(source, sender, readIds) {
   const id = `${OPS_MAIL_PREFIX}${source.id}`;
   return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
 }
-function announceOpsMails(state, mails, now) {
-  const journal = opsJournalOf(state);
-  const fresh = mails.filter((mail) => !journal.announcedMails.includes(mail.id) && !state.claimedMailIds?.includes(mail.id));
-  if (fresh.length === 0) return;
-  journal.announcedMails = tail([...journal.announcedMails, ...fresh.map(({ id }) => id)]);
-  journal.notices = [...journal.notices, ...fresh.map((mail) => ({ kind: "mail", title: mail.title, at: now.toISOString() }))].slice(-NOTICE_KEEP);
-}
 function markOpsMailsRead(state, ids) {
   const journal = opsJournalOf(state);
   const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
@@ -30538,7 +30531,6 @@ var FakeServer = class {
     const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
     const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
     this.mails.unshift(...mails);
-    announceOpsMails(this.state, mails, this.now());
     this.applySavedMailClaims();
   }
   /* ── 출석 ─────────────────────────────────────────────────────────────────── */

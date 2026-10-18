@@ -55,7 +55,7 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { announceOpsMails, isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
@@ -412,7 +412,6 @@ export class FakeServer implements GameApi {
     const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
     const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
     this.mails.unshift(...mails);
-    announceOpsMails(this.state, mails, this.now());
     this.applySavedMailClaims();
   }
 

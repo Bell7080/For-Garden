@@ -3203,11 +3203,13 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "atra-basic",
       name: "저, 저기 채찍",
-      power: 190,
+      // 한 방을 낮추고(190→130) 소매 속 가시의 독으로 시간에 나눠 준다 — 풀 속성 탱커의 딜이 한 방에만 몰리지 않게 한다.
+      power: 130,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
     },
     ultimate: {
       id: "atra-ult",
@@ -3219,7 +3221,11 @@ export const RELICS: RelicDef[] = [
       cost: 150,
       targeting: "nearbyEnemies",
       radius: 260,
-      statusEffects: [{ kind: "taunt", seconds: 3 }, { kind: "stagger", seconds: 0.1 }],
+      statusEffects: [
+        { kind: "taunt", seconds: 3 },
+        { kind: "stagger", seconds: 0.1 },
+        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond },
+      ],
     },
     breakthroughEffects: {
       basic: { kind: "none" },

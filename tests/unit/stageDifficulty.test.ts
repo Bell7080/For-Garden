@@ -134,7 +134,7 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
 /** 같은 셋이 아닌 편성이 서는 관문 — 2장 후반의 정예 둘과 3장의 회수조. */
-const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10"]);
+const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10"]);
 
 /**
  * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.

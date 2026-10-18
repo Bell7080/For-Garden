@@ -220,10 +220,11 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     /*
      * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계
      * (상한 30)이고, 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과 하나뿐이라
-     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장은 새 적으로 따로 설계하므로 여기서 돌파를 적지 않는다.
+     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장(36~47)도 같은 함수로 2~3단계가 나온다 — 0으로 적어 두었을 때는
+     * 정보창이 `LV.40 / 상한 20`을 세웠다. 돌파는 늘 그 레벨이 요구하는 단계 이상이어야 한다.
      */
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
+    const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
     const laterChapterEnemies = lateFormation
       ? lateFormation.map(([relicId, slot]) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot))
       : laterChapterIds.map((relicId, slot) =>

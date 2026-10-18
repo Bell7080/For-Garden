@@ -169,7 +169,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "segment-barrier", term: "마디 방벽", kind: "buff",
-    description: "최대 체력의 5%짜리 [[shield|보호막]] 마디 4개를 두른다. 막이 모자라면 6초마다 마디 하나가 되살아나고, 맞을 때마다 복구가 0.15초 앞당겨진다. 막이 깎이면 그만큼 피해를 받는다.",
+    description: "최대 체력의 4%짜리 [[shield|보호막]] 마디 4개를 두른다. 막이 모자라면 7초마다 마디 하나가 되살아나고, 맞을 때마다 복구가 0.1초 앞당겨진다. 막이 깎이면 그만큼 피해를 받는다.",
   },
   {
     id: "vital-aim", term: "겨누기", kind: "buff",

@@ -324,7 +324,8 @@ export class FakeServer implements GameApi {
       dispatch.claimed = true; this.state.interaction.claimedRequestIds.push(request.requestId);
       // 도시의 단서 일지는 수령과 같은 처리 안에서 발견 처리한다 — 클라이언트가 따로 기록하지 않는다.
       const city = findInteractionCity(dispatch.cityId);
-      if (city) journal = this.discoverInteractionJournal(city.clueJournalId);
+      // 일지 원고가 아직 없는 도시(3~8단계)는 일지 없이 보상만 확정한다 — 던지면 지급이 끝난 뒤에 수령이 실패한다.
+      if (city && findInteractionJournal(city.clueJournalId)) journal = this.discoverInteractionJournal(city.clueJournalId);
     }
     const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet }, ...(journal ? { journal } : {}) };
     this.interactionClaimResults.set(request.requestId, structuredClone(response)); saveManager.save(this.state); return response;

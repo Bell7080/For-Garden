@@ -2892,7 +2892,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const clearedRounds = step.kind === "clear" ? BOUNTY.roundCount : step.round;
-    const fighters = this.stageCompleteFighters();
+    // 한 라운드에 한 명만 싸우므로 전장에는 이번 라운드의 한 명뿐이다 — 결산창은 다른 던전과 같이
+    // 이번 판에 나선 편성 전체(진 판이면 진 라운드까지)를 세운다.
+    const fought = step.kind === "clear" ? BOUNTY.roundCount : step.round + 1;
+    const fighters: StageCompleteFighter[] = session.party.slice(0, fought).map((relicId) => ({ relicId, isMvp: false }));
     const popups = new PopupLayer(this, 2200);
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
     let settled;

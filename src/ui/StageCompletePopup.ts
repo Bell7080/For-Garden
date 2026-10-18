@@ -368,14 +368,18 @@ export class StageCompletePopup {
     isDisposed: () => boolean,
     fighters: readonly StageCompleteFighter[],
   ): void {
-    const centerIndex = fighters.findIndex((fighter) => fighter.isMvp);
+    // MVP 자리는 셋이 모두 설 때만 둔다 — 한두 명뿐인 판(현상수배)에서 빈 자리를 읽으면 SD가 서지 못한다.
+    const centerIndex = fighters.length >= 3 ? fighters.findIndex((fighter) => fighter.isMvp) : -1;
     const order = centerIndex < 0 ? fighters : [...fighters.slice(0, centerIndex), ...fighters.slice(centerIndex + 1)];
     // 항상 [왼쪽 보조, MVP, 오른쪽 보조] 순서로 세워 MVP가 어느 슬롯에서 왔든 가운데 자리는 고정한다.
     const layout: Array<{ fighter: StageCompleteFighter; slot: "side" | "mvp" }> = centerIndex < 0
       ? fighters.map((fighter) => ({ fighter, slot: "side" as const }))
       : [{ fighter: order[0], slot: "side" }, { fighter: fighters[centerIndex], slot: "mvp" }, { fighter: order[1], slot: "side" }];
 
-    const totalWidth = SD.side.width * 2 + SD.mvp.width + SD.gap * 2;
+    // 가운데 정렬은 실제로 서는 묶음 기준이다 — 셋이 아닌 판도 한쪽으로 쏠리지 않는다.
+    const totalWidth = centerIndex < 0
+      ? SD.side.width * layout.length + SD.gap * (layout.length - 1)
+      : SD.side.width * 2 + SD.mvp.width + SD.gap * 2;
     const absGroundY = BASE_HEIGHT / 2 + SD.groundY;
     let x = -totalWidth / 2;
     layout.forEach(({ fighter, slot }) => {

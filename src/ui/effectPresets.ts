@@ -88,7 +88,9 @@ export interface BurstSpec {
  */
 export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   basic: {
-    shards: 5, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
+    // 피격 파티클은 난전(치즈케이크 대작전 같은 밀집 전투)에서 한꺼번에 쏟아져 렉을 만들었다 —
+    // 파편 수(5→3)와 같은 종류의 재개방 간격(45→90ms)을 함께 줄여 생성량을 대략 절반 이하로 눌렀다.
+    shards: 3, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
     rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260, ink: { star: 0.78 },
   },
   ultimate: {
@@ -221,7 +223,7 @@ export const EFFECT_BUDGET = {
    * 세공도 막지 않는다 — 손이 누른 만큼 결과가 박혀야 연타가 화면에 남는다. 한 번에 하나씩
    * 서버 응답을 기다려 열리므로 한 프레임에 몰릴 일도 없다.
    */
-  minGapMs: { basic: 45, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
+  minGapMs: { basic: 90, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
   /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
   maxRings: 14,
   /** 살아 있는 수치 글자의 상한. */

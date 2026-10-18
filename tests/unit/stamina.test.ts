@@ -74,7 +74,7 @@ describe("stamina admission", () => {
     const request = { stageId: "1-1", requestId: "admission-1" };
     const first = await api.enterStage(request); const retried = await api.enterStage(request);
     // 이긴 판만 스테미나를 쓴다 — 입장은 값을 확인하고 영수증을 걸어 둘 뿐이다.
-    expect(first.staminaCost).toBe(6); expect(retried).toEqual(first); expect(state.wallet.stamina).toBe(20);
+    expect(first.staminaCost).toBe(10); expect(retried).toEqual(first); expect(state.wallet.stamina).toBe(20);
     expect(retried.refundPolicy).toBe("charged-on-victory");
   });
 
@@ -101,7 +101,7 @@ describe("stamina admission", () => {
 
     shouldFail = false;
     const succeeded = await api.completeStage("1-1", true);
-    expect(succeeded.staminaSpent).toBe(6); expect(state.wallet.stamina).toBe(14);
+    expect(succeeded.staminaSpent).toBe(10); expect(state.wallet.stamina).toBe(10);
   });
 
   it("returns INSUFFICIENT_STAMINA without changing a balance below the admission cost", async () => {
@@ -122,7 +122,7 @@ describe("stamina admission", () => {
     const lost = await api.completeStage("1-1", false);
     // 진 판은 아무것도 빠지지 않고 경험치도 오르지 않는다 — 그 몫이 돌려준 몫이다.
     expect(state.wallet.stamina).toBe(20);
-    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 6 });
+    expect(lost).toMatchObject({ staminaSpent: 0, staminaRefunded: 10 });
     expect(lost.playerExp).toBeUndefined();
     expect(state.playerResearch.experience).toBe(0);
     // 결과 확정 없이 끊긴 판도 빠진 것이 없다.
@@ -130,9 +130,9 @@ describe("stamina admission", () => {
     expect(state.wallet.stamina).toBe(20);
     await api.enterStage({ stageId: "1-1", requestId: "victory" });
     const won = await api.completeStage("1-1", true);
-    expect(state.wallet.stamina).toBe(14);
-    expect(won).toMatchObject({ staminaSpent: 6, staminaRefunded: 0 });
-    expect(won.playerExp?.granted).toBe(6);
+    expect(state.wallet.stamina).toBe(10);
+    expect(won).toMatchObject({ staminaSpent: 10, staminaRefunded: 0 });
+    expect(won.playerExp?.granted).toBe(10);
   });
 
   it("maps insufficient stamina to recharge guidance instead of a party-save failure", () => {
@@ -162,6 +162,6 @@ describe("연구원 경험치", () => {
     expect(admission.playerExp).toMatchObject({ before: { level: 1, experience: 14 }, after: { level: 2 }, granted: CONTENT_STAMINA_COSTS.normalStage, levelsGained: 1, levelUpItems: [{ itemId: PLAYER_LEVEL_UP_REWARD.itemId, quantity: 1 }] });
     // 입장 영수증 하나는 한 번만 쓰인다 — 같은 판을 두 번 확정해도 경험치는 한 번이다.
     await api.completeStage("1-1", true);
-    expect(state.playerResearch.experience).toBe(2);
+    expect(state.playerResearch.experience).toBe(6);
   });
 });

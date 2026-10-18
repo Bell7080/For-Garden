@@ -26552,7 +26552,7 @@ function stageFirstClearRewards(stage) {
 
 // src/data/contentCosts.ts
 init_define_import_meta_env();
-var CONTENT_STAMINA_COSTS = { normalStage: 6, dailyGrowth: 10, normalExpeditionStart: 12 };
+var CONTENT_STAMINA_COSTS = { normalStage: 10, dailyGrowth: 10, normalExpeditionStart: 12 };
 
 // src/core/interactionDispatch.ts
 init_define_import_meta_env();

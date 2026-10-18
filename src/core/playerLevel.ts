@@ -24,8 +24,13 @@ export const PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, ex
 /** 1 스테미나가 주는 경험치. 운영 조정은 이 수 하나만 움직인다. */
 export const PLAYER_EXP_PER_STAMINA = 1;
 
-/** 1→2, 2→3, 3→4, 4→5 레벨의 요구 경험치. 5레벨부터는 아래 공식. */
-const EARLY_EXP_TO_NEXT: readonly number[] = [18, 36, 60, 85];
+/** 1→2 … 9→10 레벨의 요구 경험치(9→10이 100). 10레벨부터는 아래 공식에 이음 배율을 곱한다. */
+const EARLY_EXP_TO_NEXT: readonly number[] = [8, 16, 26, 36, 48, 60, 72, 86, 100];
+
+/** 10→11의 이음 배율. 초반 표(9→10 = 100) 바로 뒤가 공식 값(258)으로 튀지 않게 이만큼 낮춰 시작한다. */
+const BLEND_START_RATIO = 0.465;
+/** 이음 배율이 1(= 공식 그대로)이 되는 레벨. */
+const BLEND_END_LEVEL = 20;
 
 /**
  * 다음 레벨까지 드는 경험치.
@@ -35,11 +40,14 @@ const EARLY_EXP_TO_NEXT: readonly number[] = [18, 36, 60, 85];
  * 60레벨은 매일 채워 쓰는 계정이 몇 달에 걸쳐 닿는다(누적 약 8만 8천).
  */
 export function playerExpToNext(level: number): number {
-  // 1~4레벨은 한 판(스테미나 6)이 주는 6 EXP 기준으로 낮춘다 — 1-3에서 2렙, 상점(3렙)이 1-9쯤이다.
+  // 1~9레벨은 표로 낮춘다 — 6~7레벨에서 막힌다는 피드백으로 9→10을 100까지 내렸다.
   const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
   if (early !== undefined) return early;
-  const k =Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
-  return Math.round(50 + 15 * k + 0.9 * k * k);
+  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
+  const formula = 50 + 15 * k + 0.9 * k * k;
+  // 10레벨부터 20레벨까지 배율이 선형으로 1에 닿는다 — 곡선이 어색하게 꺾이지 않고 원래 공식에 합류한다.
+  const blend = Math.min(1, BLEND_START_RATIO + ((1 - BLEND_START_RATIO) * (Math.floor(level) - 10)) / (BLEND_END_LEVEL - 10));
+  return Math.round(formula * blend);
 }
 
 export interface PlayerLevelProgress { level: number; experience: number; experienceToNext: number; }

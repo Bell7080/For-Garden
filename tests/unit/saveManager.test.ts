@@ -250,7 +250,7 @@ describe("SaveManager", () => {
 
   it("플레이어 연구 진행을 왕복하고 완료되지 않은 레벨 구간만 허용한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.playerResearch = { level: 4, experience: 80, experienceToNext: playerExpToNext(4) };
+    source.playerResearch = { level: 4, experience: 30, experienceToNext: playerExpToNext(4) };
     const manager = new SaveManager(storage); manager.save(source);
     expect(manager.load()?.playerResearch).toEqual(source.playerResearch);
     const invalid = validData(); invalid.playerResearch.experience = invalid.playerResearch.experienceToNext;

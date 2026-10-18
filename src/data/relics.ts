@@ -1383,7 +1383,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "irna-basic",
       name: "장전된 한 발",
-      power: 260,
+      power: 130,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1392,7 +1392,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "irna-ult",
       name: "수평선 저격",
-      power: 650,
+      power: 450,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

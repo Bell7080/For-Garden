@@ -120,16 +120,31 @@ describe("출석", () => {
 
 describe("토벌권 덤", () => {
   it("난수 0에서는 떨어지지 않는다", () => {
-    expect(rollRaidTicketDrops(createEmptyRaidTicketDropState(), 10, day(0), () => 0).drops).toEqual([]);
-    expect(strataRaidTicketTile(() => 0)).toBeNull();
+    expect(rollRaidTicketDrops(createEmptyRaidTicketDropState(), 10, day(0), () => 0, true).drops).toEqual([]);
+    expect(strataRaidTicketTile(() => 0, true)).toBeNull();
   });
 
-  it("하루 상한을 넘지 않고, 날이 바뀌면 다시 센다", () => {
+  it("하루 상한을 넘지 않고, 날이 바뀌면 다시 센다 — 일반 토벌권만 나온다", () => {
     const always = () => 0.999;
-    const first = rollRaidTicketDrops(createEmptyRaidTicketDropState(), 20, day(0), always);
-    expect(first.drops).toEqual([{ itemId: RAID_TICKET_ITEM, amount: RAID_TICKET_DROP.dailyNormalCap }, { itemId: RAID_SELECT_TICKET_ITEM, amount: RAID_TICKET_DROP.dailySelectCap }]);
-    expect(rollRaidTicketDrops(first.state, 5, day(0), always).drops).toEqual([]);
-    expect(rollRaidTicketDrops(first.state, 1, day(1), always).drops).toHaveLength(2);
+    const first = rollRaidTicketDrops(createEmptyRaidTicketDropState(), 20, day(0), always, true);
+    expect(first.drops).toEqual([{ itemId: RAID_TICKET_ITEM, amount: RAID_TICKET_DROP.dailyNormalCap }]);
+    expect(rollRaidTicketDrops(first.state, 5, day(0), always, true).drops).toEqual([]);
+    expect(rollRaidTicketDrops(first.state, 1, day(1), always, true).drops).toHaveLength(1);
+  });
+
+  it("레이드가 닫혀 있으면 굴리지도 세지도 않는다", () => {
+    const empty = createEmptyRaidTicketDropState();
+    const closed = rollRaidTicketDrops(empty, 20, day(0), () => 0.999, false);
+    expect(closed.drops).toEqual([]);
+    expect(closed.state).toEqual(empty);
+    expect(strataRaidTicketTile(() => 0.999, false)).toBeNull();
+    expect(strataRaidTicketTile(() => 0.999, true)).toBe(RAID_TICKET_ITEM);
+  });
+
+  it("선택 토벌권은 어디서도 떨어지지 않는다", () => {
+    const always = () => 0.999;
+    const ids = [...rollRaidTicketDrops(createEmptyRaidTicketDropState(), 50, day(0), always, true).drops.map((drop) => drop.itemId), strataRaidTicketTile(always, true)];
+    expect(ids).not.toContain(RAID_SELECT_TICKET_ITEM);
   });
 });
 

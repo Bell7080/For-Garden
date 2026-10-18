@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Gói thiết bị Khai thác",
   "product.premium-excavation.grant.0": "Vé thám sát",
   "product.premium-raid-bundle.name": "Gói hỗ trợ chinh phạt",
-  "product.premium-raid-bundle.grant.1": "Vé đột kích chọn lọc",
   "product.premium-raid-bundle.grant.0": "Vé đột kích",
   "keyword.burn.term": "Bỏng",
   "keyword.burn.description": "Mỗi giây chịu sát thương cố định bằng 4% Công. Gây lại chỉ kéo dài thời gian.",

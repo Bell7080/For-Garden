@@ -689,7 +689,6 @@ export default {
   "product.premium-excavation.name": "採掘装備バンドル",
   "product.premium-excavation.grant.0": "探査券",
   "product.premium-raid-bundle.name": "討伐支援バンドル",
-  "product.premium-raid-bundle.grant.1": "選択討伐券",
   "product.premium-raid-bundle.grant.0": "討伐券",
 
   // ── ルール用語 ────────────────────────────────────────────────────────

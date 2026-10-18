@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Pacote de equipamento de escavação",
   "product.premium-excavation.grant.0": "Tíquete de pesquisa",
   "product.premium-raid-bundle.name": "Pacote de apoio de subjugação",
-  "product.premium-raid-bundle.grant.1": "Bilhete de raide à escolha",
   "product.premium-raid-bundle.grant.0": "Bilhete de raide",
   "keyword.burn.term": "Queimadura",
   "keyword.burn.description": "Recebe a cada segundo dano fixo igual a 4% do Ataque. Reaplicar só prolonga a duração.",

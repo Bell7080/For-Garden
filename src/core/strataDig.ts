@@ -218,7 +218,7 @@ function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], ran
 }
 
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
-export function createStrataBoard(input: { layerId: string; siteId?: string; crystalStage?: number; random: () => number }): StrataBoard {
+export function createStrataBoard(input: { layerId: string; siteId?: string; crystalStage?: number; random: () => number; raidOpen?: boolean }): StrataBoard {
   const layer = findStrataLayer(input.layerId);
   if (layer === undefined) throw new Error("알 수 없는 지층입니다.");
   const { zones, zoneOf } = assignZones(layer, input.random);
@@ -243,8 +243,8 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
   }
-  // 판 한 장에 가끔 토벌권 칸이 섞인다(화석처럼 드문 덤). 골드·원석 칸 하나를 바꾸어 귀한 칸의 확률을 건드리지 않는다.
-  const raidTicket = strataRaidTicketTile(input.random);
+  // 판 한 장에 가끔(레이드가 열린 계정만) 일반 토벌권 칸이 섞인다(화석처럼 드문 덤). 골드·원석 칸 하나를 바꾸어 귀한 칸의 확률을 건드리지 않는다.
+  const raidTicket = strataRaidTicketTile(input.random, input.raidOpen === true);
   const plain = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
   if (raidTicket !== null && plain.length > 0) {
     const pick = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];

@@ -17,7 +17,7 @@ import { emptyServerJournal, isValidServerJournal } from "../core/serverJournal"
 import { normalizeExpeditionState } from "../core/expeditionPeriods";
 import { maxResearchPoints } from "../core/missions";
 import { createDefaultSession, createEmptyInteractionProgress, createEmptyProgressPassState, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
-import { PROFILE_MODIFIERS } from "../data/profileModifiers";
+import { MAX_EQUIPPED_PROFILE_MODIFIERS, PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
@@ -380,7 +380,7 @@ export class SaveManager {
     const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds.filter((id: unknown) => typeof id === "string" && knownJournalIds.has(id)) : [];
     // 수식어 도입 전 저장은 미획득으로 시작하며 표시 문자열을 ID로 추측하지 않는다.
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
-    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
+    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds.slice(0, MAX_EQUIPPED_PROFILE_MODIFIERS) : [];
     // v25 이전에는 프로필 임시 상수만 있었으므로 모든 기존 저장을 레벨 1, 경험치 0으로 명시 이관한다.
     // 요구 경험치는 저장값이 아니라 늘 공식에서 다시 구한다 — 곡선을 고쳐도 옛 저장이 옛 요구치를 들고 있지 않게.
     const playerResearch = Number(legacy.saveVersion) >= 25 && legacy.playerResearch && typeof legacy.playerResearch === "object"
@@ -632,7 +632,7 @@ export class SaveManager {
     if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail("렐릭 스킨 소유 정보가 올바르지 않습니다.");
     if (!data.equippedRelicSkinIds || typeof data.equippedRelicSkinIds !== "object" || Array.isArray(data.equippedRelicSkinIds) || Object.entries(data.equippedRelicSkinIds).some(([relicId, skinId]) => { const skin = skinId && skinsById.get(skinId); return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId; })) fail("렐릭 스킨 장착 정보가 올바르지 않습니다.");
     // 획득 목록은 알려진 고유 ID만, 장착 목록은 그 부분집합과 공용 상한만 허용한다.
-    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail("프로필 수식어 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail("프로필 수식어 정보가 올바르지 않습니다.");
     // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
     if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("설정 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");

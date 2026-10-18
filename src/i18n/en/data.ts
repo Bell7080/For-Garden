@@ -524,7 +524,6 @@ export default {
   "product.premium-excavation.name": "Excavation Gear Bundle",
   "product.premium-excavation.grant.0": "Survey Ticket",
   "product.premium-raid-bundle.name": "Subjugation Support Bundle",
-  "product.premium-raid-bundle.grant.1": "Select Raid Ticket",
   "product.premium-raid-bundle.grant.0": "Raid Ticket",
 
   // ── Rule keywords ─────────────────────────────────────────────────────────────

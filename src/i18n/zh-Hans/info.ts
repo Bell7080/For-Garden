@@ -44,7 +44,6 @@ export const INFO_ZH_HANS = {
   "info.rune.bag": "符文背包 · {part}",
   "info.rune.empty": "空位",
   "info.rune.emptySlot": "   空位",
-  "info.rune.clear": "清空",
   "info.rune.named": "{rarity}符文",
   "info.rune.threeSlots": "三个符文栏位",
   "info.rune.complete": "三块碎片完美契合。",

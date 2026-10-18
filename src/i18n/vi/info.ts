@@ -44,7 +44,6 @@ export const INFO_VI = {
   "info.rune.bag": "Túi Rune · {part}",
   "info.rune.empty": "Ô trống",
   "info.rune.emptySlot": "   Ô trống",
-  "info.rune.clear": "Gỡ hết",
   "info.rune.named": "Rune {rarity}",
   "info.rune.threeSlots": "Ba ô Rune",
   "info.rune.complete": "Ba mảnh khớp trọn vào nhau.",

@@ -44,7 +44,6 @@ export const INFO_ID = {
   "info.rune.bag": "Tas Rune · {part}",
   "info.rune.empty": "Slot kosong",
   "info.rune.emptySlot": "   Slot kosong",
-  "info.rune.clear": "Kosongkan",
   "info.rune.named": "Rune {rarity}",
   "info.rune.threeSlots": "Tiga Slot Rune",
   "info.rune.complete": "Ketiga keping saling mengunci.",

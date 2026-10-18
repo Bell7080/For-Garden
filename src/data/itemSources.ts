@@ -8,7 +8,7 @@ import type { TextKey } from "../i18n";
  */
 export const ITEM_SOURCE_KEYS: Readonly<Record<string, readonly TextKey[]>> = {
   "raid-ticket": ["inventory.source.dungeonDrop", "inventory.source.strata", "inventory.source.premium"],
-  "raid-select-ticket": ["inventory.source.dungeonDropRare", "inventory.source.strataRare", "inventory.source.raidPass"],
+  "raid-select-ticket": ["inventory.source.raidPass"],
   "stamina-tonic": ["inventory.source.levelUp", "inventory.source.attendance", "inventory.source.shops", "inventory.source.ad"],
   "strata-ticket": ["inventory.source.attendance", "inventory.source.shops", "inventory.source.premium"],
   "sweep-ticket": ["inventory.source.ad", "inventory.source.premium"],

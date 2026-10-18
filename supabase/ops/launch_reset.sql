@@ -36,6 +36,7 @@ declare
     'public.players',
     'public.player_saves',
     'public.player_assets',
+    'public.player_adjustments',
     'public.asset_ledger',
     'public.mail_claims',
     'public.coupon_redemptions',

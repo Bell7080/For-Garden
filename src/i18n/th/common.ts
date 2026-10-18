@@ -31,6 +31,7 @@ export const COMMON_TH = {
   "currency.fossil": "ฟอสซิล",
   "currency.amber": "อำพัน",
   "currency.cheesecake": "ชีสเค้ก",
+  "currency.stamina": "สตามินา",
   "currency.dnaFragments": "ไมล์ DNA",
   "element.fire": "ไฟ",
   "element.water": "น้ำ",

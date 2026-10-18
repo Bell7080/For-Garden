@@ -509,6 +509,7 @@ var COMMON_KO = {
   "currency.fossil": "\uD654\uC11D",
   "currency.amber": "\uD638\uBC15\uC11D",
   "currency.cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C",
+  "currency.stamina": "\uC2A4\uD14C\uBBF8\uB098",
   "currency.dnaFragments": "DNA \uB9C8\uC77C\uB9AC\uC9C0",
   // 속성
   "element.fire": "\uBD88",
@@ -1101,10 +1102,7 @@ var GUILD_KO = {
   "guild.time.hm": "{h}\uC2DC\uAC04 {m}\uBD84",
   "guild.time.m": "{m}\uBD84",
   // 상점
-  "guild.shop.price": "\uCF54\uC778 {price}",
-  "guild.shop.limit": "\uC774\uBC88 \uC8FC {bought}/{limit}",
   "guild.shop.buy": "\uAD6C\uB9E4",
-  "guild.shop.bought": "\uAD6C\uB9E4\uD588\uC2B5\uB2C8\uB2E4",
   "guild.shop.product.guild-gold": "\uACE8\uB4DC \uBB36\uC74C",
   "guild.shop.product.guild-cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C \uBB36\uC74C",
   "guild.shop.product.guild-tonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C",
@@ -1143,6 +1141,18 @@ var GUILD_KO = {
   "guild.menu.browse": "\uB2E4\uB978 \uAE38\uB4DC \uCC3E\uAE30",
   "guild.ranking.title": "\uAE38\uB4DC \uC21C\uC704",
   "guild.shop.title": "\uAE38\uB4DC \uC0C1\uC810",
+  "guild.ranking.prosperity": "\uBD80\uD765\uB3C4 {value}",
+  "guild.ranking.scores": "\uCD1D \uAE30\uC5EC {contribution} \xB7 \uAE38\uB4DC\uC804 {war} \xB7 \uC218\uD638\uC804 {guard}",
+  "guild.ranking.none": "-",
+  "guild.attendance.raceRank": "{rank}\uC704",
+  "guild.attendance.raceLabel": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
+  "guild.attendance.overtake": "\uC5ED\uC804!",
+  "guild.shop.line1": "\uAE38\uB4DC \uCF54\uC778 \uBC1B\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uC8FC \uBB3C\uAC74\uC774\uC5D0\uC694.",
+  "guild.shop.line2": "\uB2E4\uB4E4 \uCD9C\uC11D \uB3C4\uC7A5 \uCC0D\uACE0 \uC624\uC2DC\uB354\uB77C\uACE0\uC694.",
+  "guild.shop.line3": "\uB2E4\uC74C \uC8FC\uC5D0 \uB610 \uCC44\uC6CC \uB458\uAC8C\uC694.",
+  "guild.shop.confirm": "\u300C{name}\u300D{name!\uC744} \uAD6C\uB9E4\uD560\uAE4C\uC694?",
+  "guild.shop.short": "\uAE38\uB4DC \uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4",
+  "guild.shop.failed": "\uAD6C\uB9E4\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "guild.info.me": "\uB0B4 \uC9C1\uCC45 \xB7 {role}",
   "guild.info.contribution": "\uC774\uBC88 \uC8FC \uAE30\uC5EC\uB3C4 {week} \xB7 \uB204\uC801 {total}",
   "guild.info.coin": "\uBCF4\uC720 \uAE38\uB4DC \uCF54\uC778 {coin}",
@@ -2230,6 +2240,8 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|\uD574\uBB34 \uBC29\uBCBD]]\uC774 \uC0C1\uD55C\uAE4C\uC9C0 \uCC28 \uC788\uB294 \uB3D9\uC548 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.status.intimidate": "[[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
   "skill.passive.echoLocation": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
+  "skill.passive.echoBatSwarm": "{seconds}\uCD08\uB9C8\uB2E4 \uC790\uAE30 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uBC15\uC950 \uB5BC\uAC00 \uC8FC\uBB38\uB825\uC758 {power}% [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4. \uAC00\uAE4C\uC6B4 {count}\uBA85\uC774 \uC785\uC740 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4. [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC78\uACE0, \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
+  "skill.ferocity.batStorm": "\uD3ED\uC8FC \uC911 \uBC15\uC950 \uB5BC\uC758 \uBC94\uC704\uAC00 {radius}% \uB113\uC5B4\uC9C0\uACE0 {speed}% \uB354 \uBE68\uB9AC \uB9F4\uB3C8\uB2E4.",
   "skill.passive.segmentBarrier": "\uC804\uD22C\uB97C [[segment-barrier|\uB9C8\uB514 \uBC29\uBCBD]]\uC744 \uB450\uB974\uACE0 \uC2DC\uC791\uD55C\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uB9C8\uB514\uAC00 \uD558\uB098\uC529 \uB418\uC0B4\uC544\uB098\uACE0, \uB9DE\uC744\uC218\uB85D \uB354 \uBE68\uB9AC \uB3CC\uC544\uC628\uB2E4.",
   "skill.passive.vitalAim": "\uAC19\uC740 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uC774\uC5B4 \uCE60 \uB54C\uB9C8\uB2E4 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC5EC \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4. \uD45C\uC801\uC774 \uBC14\uB00C\uBA74 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC313\uB294\uB2E4.",
   "skill.passive.wingHum": "{seconds}\uCD08\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4. \uC9C1\uC811 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {energy} \uCC2C\uB2E4.",
@@ -2238,7 +2250,6 @@ var SKILL_KO = {
   "skill.sentence.roar": "\uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC744 \uACE7\uBC14\uB85C [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uB728\uB9B0\uB2E4. {base}\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0, \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {per}\uC529 \uB354\uD55C\uB2E4(\uCD5C\uB300 {max}\uBA85).",
   "skill.sentence.roar.percent": "\uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%",
   "skill.keyword.shield.fromRoar": "\uD604\uC7AC \uCD5C\uB300 \uCCB4\uB825\uC758 {base}%\uC5D0, \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {per}%(\uCD5C\uB300 {max}\uBA85)\uB97C \uB354\uD574 \uACC4\uC0B0\uD55C \uBCF4\uD638\uB9C9 \uC218\uCE58\uB2E4.",
-  "skill.ferocity.commandStart": "\uD3ED\uC8FC \uC911 [[echo|\uBC18\uD5A5]]\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uB3C4 {seconds}\uCD08 \uB3D9\uC548 [[resonance|\uACF5\uBA85]]\uC744 \uBC1B\uC544 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC624\uB978\uB2E4.",
   "skill.ferocity.thornBristle": "\uD3ED\uC8FC \uC911 [[segment-barrier|\uB9C8\uB514 \uBC29\uBCBD]]\uC758 \uB9C8\uB514\uAC00 {size}% \uCEE4\uC9C0\uACE0 \uBCF5\uAD6C\uAC00 {speed}% \uBE68\uB77C\uC9C4\uB2E4.",
   "skill.ferocity.frenzyTail": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC624\uB974\uACE0 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD55C \uB300\uC5D0 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 {stacks}\uACB9 \uB354 \uC313\uC778\uB2E4.",
   "skill.ferocity.swiftFlight": "\uD3ED\uC8FC \uC911 [[resonance|\uACF5\uBA85]]\uC744 \uAC70\uB294 \uC8FC\uAE30\uAC00 {percent}% \uC9E7\uC544\uC9C4\uB2E4.",
@@ -2354,6 +2365,12 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ultimate.bigShell": "\u300C{name}\u300D\uC774 \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ultimate.richBomb": "\u300C{name}\u300D\uC774 [[reagent|\uC2DC\uC57D]]\uC744 {stacks}\uACB9 \uBB3B\uD78C\uB2E4.",
   "skill.breakthrough.effect.ultimate.chasingBlink": "\u300C{name}\u300D\uC744 \uC4F4 \uC9C1\uD6C4 \uACE7\uBC14\uB85C \uAC00\uC7A5 \uC57D\uD55C \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD55C\uB2E4.",
+  "skill.breakthrough.effect.passive.lingeringVenom": "\u300C{name}\u300D\uC774 \uBC14\uB974\uB294 [[poison|\uC911\uB3C5]]\uC774 {seconds}\uCD08\uB85C \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.passive.deeperMarch": "[[worker-march|\uD589\uB82C]]\uC758 \uC7AC\uC0DD\uC774 \uC544\uAD70 \uD55C \uBA85\uB2F9 \uCD08\uB2F9 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.passive.deepAim": "[[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC774\uB294 \uC0C1\uD55C\uC774 {stacks}\uACB9 \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.passive.twinHum": "\u300C{name}\u300D\uC774 \uAC00\uC7A5 \uC13C \uC544\uAD70 \uB458\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4.",
+  "skill.breakthrough.effect.passive.swarmDeepen": "\u300C{name}\u300D\uC774 \uD53C\uB97C \uBE60\uB294 \uC801\uC774 {count}\uBA85 \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.ultimate.longGust": "\u300C{name}\u300D\uC774 \uAC70\uB294 [[tailwind|\uC21C\uD48D]]\uC774 {seconds}\uCD08\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ferocity.bloodFever": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uAC00\uD55C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverGuard": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.quickReaction": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[reagent|\uC2DC\uC57D]]\uC774 {max}\uACB9\uC5D0 \uB2FF\uC73C\uBA74 \uBC18\uC751\uC774 \uC77C\uC5B4\uB09C\uB2E4.",
@@ -2418,12 +2435,21 @@ var SYSTEM_KO = {
   "product.price.ad": "\uAD11\uACE0 \xB7 \uC77C {count}\uD68C",
   "product.price.currency": "{amount} {currency}",
   "product.price.item": "{amount} {item}",
+  "product.action.guild_coin": "\uAD50\uD658",
+  "product.price.guildCoin": "\uAE38\uB4DC \uCF54\uC778 {amount}",
   // ── 임시 서버가 보내는 우편·알림 ─────────────────────────────────────────
   "mail.launch.title": "\uC5F0\uAD6C \uC2DC\uC791 \uAC10\uC0AC \uD328\uD0A4\uC9C0",
   "mail.expeditionRank.title": "\uC8FC\uAC04 \uC6D0\uC815 \uC21C\uC704 \uBCF4\uC0C1",
   "mail.expeditionRank.sender": "\uC218\uC7A5 \uC9C0\uBD80 \uC870\uC0AC\uB2E8",
   "mail.expeditionRank.body": "\uC9C0\uB09C\uC8FC \uC6D0\uC815 \uCD5C\uACE0 \uC810\uC218 {score}\uC810\uC73C\uB85C {rank}\uC704\uC5D0 \uC62C\uB790\uC2B5\uB2C8\uB2E4. \uC778\uC591\uD574 \uC628 \uBAAB\uC744 \uBCF4\uB0C5\uB2C8\uB2E4.",
   "mail.launch.sender": "\uC5F0\uAD6C\uC9C0\uC6D0\uAD6D",
+  "mail.ops.sender": "\uC6B4\uC601\uD300",
+  "ops.notice.title": "\uC6B4\uC601\uD300 \uC548\uB0B4",
+  "ops.notice.gain": "{name} {amount}\uAC1C\uAC00 \uC9C0\uAE09\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "ops.notice.loss": "{name} {amount}\uAC1C\uAC00 \uD68C\uC218\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "ops.notice.mail": "\uC0C8 \uC6B0\uD3B8 {count}\uD1B5\uC774 \uB3C4\uCC29\uD588\uC2B5\uB2C8\uB2E4.",
+  "ops.deleted.title": "\uACC4\uC815 \uC548\uB0B4",
+  "ops.deleted.body": "\uACC4\uC815\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.\n\uD0C0\uC774\uD2C0 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4.",
   "mail.launch.body": "\uC800\uD76C \uAC8C\uC784\uC744 \uD50C\uB808\uC774\uD574 \uC8FC\uC154\uC11C \uAC10\uC0AC\uD569\uB2C8\uB2E4! \uC5F0\uAD6C \uC2DC\uC791\uC744 \uCD95\uD558\uD558\uBA70 \uD2B9\uBCC4\uD55C \uBB3C\uC790\uB97C \uBCF4\uB0C5\uB2C8\uB2E4.",
   "mail.update.title": "\uC784\uBB34\xB7\uC6B0\uD3B8\uD568 \uC815\uBE44 \uC548\uB0B4",
   "mail.update.sender": "\uB3C4\uC2DC\uAD00\uB9AC\uAD6D",
@@ -2646,6 +2672,7 @@ var RECOLLECTION_KO = {
   "recollection.tab.chapter1": "1\uC7A5",
   "recollection.tab.chapter2": "2\uC7A5",
   "recollection.tab.chapter3": "3\uC7A5",
+  "recollection.tab.chapter4": "4\uC7A5",
   "recollection.tab.side": "\uACC1 \uC774\uC57C\uAE30",
   "recollection.phase.pre": "\uCD9C\uACA9 \uC804",
   "recollection.phase.post": "\uC804\uD22C \uD6C4",
@@ -2697,7 +2724,11 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-3-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0, \uCF54\uB9C8\uB294 \uB05D\uB0B4 \uD3B8\uC774\uB77C \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "recollection.summary.stage-2-10-post": "\u300C\uB530\uB77C\uAC00\uB3C4 \uB3FC?\u300D \uC774\uC81C \uC5F0\uAD6C\uC6D0\uC774 \uB300\uB2F5\uD560 \uCC28\uB840\uB2E4.",
   "recollection.summary.stage-1-5-greenhouse-echo": "\uC228\uC5B4 \uC788\uB358 \uC628\uC2E4\uC5D0\uC11C \uAC70\uB300 \uD638\uBC15\uACFC \uC2A4\uD504\uB9C1\uD074\uB7EC\uAC00 \uC5F0\uB2EC\uC544 \uC0AC\uACE0\uB97C \uCE5C\uB2E4.",
-  "recollection.summary.event-great-auk-report": "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uB098\uC628\uB2E4."
+  "recollection.summary.event-great-auk-report": "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uB098\uC628\uB2E4.",
+  "recollection.summary.stage-4-1-pre": "\uC2B9\uAC15\uC7A5\uC5D0 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uB85C \uC11C\uBA70 \uD569\uB3D9 \uCD94\uACA9\uC774 \uC2DC\uC791\uB41C\uB2E4.",
+  "recollection.summary.stage-4-4-pre": "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0\uC11C \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uAE38\uC744 \uB9C9\uACE0, \uCF54\uB9C8\uAC00 \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB77C\uACE0 \uB9D0\uD55C\uB2E4.",
+  "recollection.summary.stage-4-10-pre": "\uC0AC\uB839\uC2E4\uC5D0\uC11C \uCF54\uB9C8\uC640 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uB098\uB780\uD788 \uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-4-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0 \uCF54\uB9C8\uB294 \uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB098\uC790\uACE0 \uB9D0\uD55C\uB2E4."
 };
 
 // src/i18n/ko/dialogue.ts
@@ -3251,6 +3282,14 @@ var RARITY_LEVEL_GROWTH = {
   SR: 2,
   SSR: 2.2
 };
+var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3 };
+var ENEMY_BIRTH_TIERS = {
+  mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  pulsi: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  neuri: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  atra: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] }
+};
 
 // src/core/relicProgression.ts
 var RELIC_LEVEL_CAP = 20;
@@ -3509,9 +3548,13 @@ function enemyLevelMultiplier(level) {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("\uC801 \uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
 }
-function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count) {
+function equivalentEnemyLevel(referenceLevel, statFactor) {
+  const target = enemyLevelMultiplier(referenceLevel) / statFactor;
+  return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
+}
+function applyEncounterScaling(base, level, role, countOnField = ENCOUNTER_ROLE[role].count, birthFactor = 1) {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level);
+  const growth = enemyLevelMultiplier(level) * birthFactor;
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
@@ -4149,7 +4192,8 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     echo: null,
     aim: null,
     barrierIn: -1,
-    wingHumIn: def.passive.wingHum?.intervalSeconds ?? 0,
+    wingHumIn: def.passive.batSwarm?.intervalSeconds ?? def.passive.wingHum?.intervalSeconds ?? 0,
+    batSwarmIn: def.passive.batSwarm?.intervalSeconds ?? 0,
     shieldFade: null,
     overclockAuraTickIn: 1,
     droneLinkTickIn: 1
@@ -5405,8 +5449,6 @@ function reactRaiders(target, attacker, state, events, useUltimate) {
       const room = attacker.maxHp * plan.capMaxHpPercent / 100 - attacker.shield.amount;
       const amount = Math.min(attacker.maxHp * plan.shieldMaxHpPercent / 100, room);
       if (amount > 0) grantShield(state, attacker, source.id, amount, events);
-      const trait = source.ferocityFever ? source.def.ferocityTrait : void 0;
-      if (trait?.effectId === "commandStart") applyTeamBuff(attacker, { ...trait.resonance, sourceId: source.id });
     }
   }
   if (attacker.def.passive.echoLocation && isFighterAlive(target)) {
@@ -5418,7 +5460,58 @@ function reactRaiders(target, attacker, state, events, useUltimate) {
   if (aim && !useUltimate) {
     const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
     const kept = attacker.aim?.targetId === target.id ? attacker.aim.stacks : 0;
-    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks, kept + 1 + bonus) };
+    const deep = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+    attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks + (deep?.kind === "deepAim" ? deep.extraStacks : 0), kept + 1 + bonus) };
+  }
+}
+function tickBatSwarm(fighter, dt, state, events) {
+  const plan = fighter.def.passive.batSwarm;
+  if (!plan || fighter.stunnedFor > 0) return;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "batStorm" ? fighter.def.ferocityTrait : void 0;
+  fighter.batSwarmIn -= dt;
+  if (fighter.batSwarmIn > 0) return;
+  fighter.batSwarmIn += plan.intervalSeconds / (1 + (trait?.tickSpeedPercent ?? 0) / 100);
+  const radius = plan.radius * (1 + (trait?.radiusPercent ?? 0) / 100);
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const input = { power: plan.powerPercent, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" };
+  const inRange = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius).sort((a, b) => distance(fighter, a) - distance(fighter, b));
+  const deepen = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  let healBase = 0;
+  inRange.forEach((other, index) => {
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp;
+    const shieldBefore = other.shield.amount;
+    const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    if (index < plan.healTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraHealTargets : 0)) healBase += resolution.applied;
+    events.push({
+      kind: "attack",
+      attackerId: fighter.id,
+      targetId: other.id,
+      skill: "basic",
+      amount: resolution.applied,
+      contributionAmount: credited,
+      critical: false,
+      animate: false,
+      damageType: "magical",
+      mitigated: resolution.reduced < resolution.raw
+    });
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+  });
+  if (healBase > 0) applyHealing(state, fighter, healBase * plan.healPercent / 100);
+  if (inRange.length > 0) {
+    events.push({
+      kind: "areaImpact",
+      attackerId: fighter.id,
+      ultimate: false,
+      damageType: "magical",
+      area: { shape: "radial", x: fighter.x, y: fighter.y, radius }
+    });
   }
 }
 function tickRaiders(fighter, dt, state) {
@@ -5442,6 +5535,7 @@ function tickRaiders(fighter, dt, state) {
       }
     }
   }
+  tickBatSwarm(fighter, dt, state, events);
   const hum = fighter.def.passive.wingHum;
   if (hum && fighter.stunnedFor <= 0) {
     fighter.wingHumIn -= dt;
@@ -5449,15 +5543,20 @@ function tickRaiders(fighter, dt, state) {
       const fast = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "swiftFlight" ? fighter.def.ferocityTrait.intervalReductionPercent : 0;
       fighter.wingHumIn += hum.intervalSeconds * (1 - fast / 100);
       const allies = state.fighters.filter((ally) => ally.side === fighter.side && ally.id !== fighter.id && isFighterAlive(ally));
-      const best = allies.reduce((top, ally) => !top || ally.def.stats.atk > top.def.stats.atk ? ally : top, void 0);
-      applyTeamBuff(best ?? fighter, { ...hum.resonance, sourceId: fighter.id });
+      const twin = openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "twinHum";
+      const ranked = [...allies].sort((a, b) => b.def.stats.atk - a.def.stats.atk);
+      const picks = ranked.slice(0, twin ? 2 : 1);
+      if (picks.length === 0) picks.push(fighter);
+      for (const pick2 of picks) applyTeamBuff(pick2, { ...hum.resonance, sourceId: fighter.id });
     }
   }
   const march = fighter.def.passive.workerMarch;
   if (march && dt > 0) {
     const count2 = marchAllies(state, fighter);
     if (count2 > 0) {
-      applyHealing(state, fighter, fighter.maxHp * march.regenMaxHpPercentPerAllyPerSecond * count2 * dt / 100);
+      const deeper = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+      const regen = deeper?.kind === "deeperMarch" ? deeper.regenMaxHpPercentPerAllyPerSecond : march.regenMaxHpPercentPerAllyPerSecond;
+      applyHealing(state, fighter, fighter.maxHp * Math.max(regen, march.regenMaxHpPercentPerAllyPerSecond) * count2 * dt / 100);
     }
   }
   return events;
@@ -6286,6 +6385,20 @@ function withoutPoison(skill) {
   return { ...skill, statusEffects: (skill.statusEffects ?? []).filter((effect) => effect.kind !== "poison") };
 }
 function breakthroughSkill(attacker, useUltimate) {
+  return raiderSkillTweaks(attacker, useUltimate, breakthroughSkillBase(attacker, useUltimate));
+}
+function raiderSkillTweaks(attacker, useUltimate, skill) {
+  const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
+  if (passive?.kind === "lingeringVenom" && skill.statusEffects?.some((effect) => effect.kind === "poison")) {
+    skill = { ...skill, statusEffects: skill.statusEffects.map((effect) => effect.kind === "poison" ? { ...effect, seconds: Math.max(effect.seconds, passive.poisonSeconds) } : effect) };
+  }
+  if (useUltimate && "teamBuff" in skill && skill.teamBuff?.kind === "tailwind") {
+    const gust = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (gust?.kind === "longGust") skill = { ...skill, teamBuff: { ...skill.teamBuff, seconds: Math.max(skill.teamBuff.seconds, gust.seconds) } };
+  }
+  return skill;
+}
+function breakthroughSkillBase(attacker, useUltimate) {
   let skill = useUltimate ? attacker.def.ultimate : currentBasic(attacker);
   if (useUltimate) {
     const back = attacker.bt.dashBack?.running ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
@@ -9863,7 +9976,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
   const events = [];
   const attacker = findFighter(state, fighterId);
   if (!attacker || !canFireUltimate(state, attacker)) return events;
-  const teamUltimate = attacker.def.ultimate;
+  const teamUltimate = raiderSkillTweaks(attacker, true, attacker.def.ultimate);
   if (teamUltimate.targeting === "duo" && teamUltimate.teamBuff !== void 0) {
     const duo = duoOf(attacker, state);
     if (duo === void 0 || !isFighterAlive(duo)) return events;
@@ -11704,7 +11817,7 @@ var RELICS = [
     basic: {
       id: "irna-basic",
       name: "\uC7A5\uC804\uB41C \uD55C \uBC1C",
-      power: 260,
+      power: 130,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -11713,7 +11826,7 @@ var RELICS = [
     ultimate: {
       id: "irna-ult",
       name: "\uC218\uD3C9\uC120 \uC800\uACA9",
-      power: 650,
+      power: 450,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -13381,83 +13494,80 @@ var RELICS = [
     origin: "\uC774\uCE74\uB85C\uB2C9\uD14C\uB9AC\uC2A4",
     element: "wind",
     role: "warrior",
-    reachTier: "melee",
-    strike: "slash",
+    reachTier: "mid",
+    projectile: "bat",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
     /*
-     * **행동대장이라 SR 띠의 위쪽이다**(2319). 날개로 가르는 전사라 공격력과 체력에 얹고, 주문력은 쓰는 스킬이 없어 낮게 둔다.
+     * **행동대장이라 SR 띠의 위쪽이다.** 날개로 가르던 전사에서 박쥐 떼를 부리는 마법사로 다시 짰다 — 공격력은 거의 쓰지 않고
+     * 주문력이 모든 딜을 낸다. 느리고 두꺼워서(체력·저항) 한가운데에 서서 박쥐로 훑는 자리다. 직군은 전사 그대로 둔다
+     * (마법사 직군이 없다 — 케리스와 같다).
      */
     stats: {
-      hp: 800,
-      def: 65,
-      res: 55,
-      atk: 200,
-      ap: 20,
-      attackSpeed: 135,
-      moveSpeed: 110,
+      hp: 950,
+      def: 70,
+      res: 90,
+      atk: 30,
+      ap: 190,
+      attackSpeed: 90,
+      moveSpeed: 90,
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0
     },
-    ferocityTrait: { name: "\uB9CC\uCC2C \uAC1C\uC2DC", effectId: "commandStart", resonance: { kind: "resonance", attackSpeedPercent: 25, seconds: 4 } },
+    ferocityTrait: { name: "\uBC15\uC950 \uD3ED\uD48D", effectId: "batStorm", radiusPercent: 40, tickSpeedPercent: 50 },
     passive: {
       id: "ikanixia-passive",
-      name: "\uADC0\uC871\uC758 \uCCAD\uAC01",
+      name: "\uADC0\uC871\uC758 \uBC15\uC950 \uB5BC",
       kind: "echoLocation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      desc: "\uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
+      // 몸 주위를 맴도는 박쥐가 초마다 넓게 훑는다 — 다수 대 일에 강한 지속 탱의 뼈대다.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, healTargets: 3, healPercent: 30 },
+      desc: "\uBC15\uC950 \uB5BC\uAC00 \uC8FC\uC704\uC758 \uC801\uC744 \uB9E4\uCD08 \uD6D1\uB294\uB2E4. \uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
     },
     basic: {
       id: "ikanixia-basic",
-      name: "\uC6B0\uC544\uD55C \uC808\uAC1C",
-      power: 150,
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      damageType: "physical",
-      targeting: "single",
+      name: "\uBC15\uC950 \uB0A0\uB9AC\uAE30",
+      power: 110,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
       /*
-       * **세 번째 날개가 발을 묶는다.** 코마의 후려치기(밀어내기)와 갈리도록 이쪽은 찢어 놓고 붙잡는다 —
-       * 출혈과 짧은 기절이라 회수 대상을 도망치지 못하게 하는 손이다. 주기로 끊어 플레이어가 세 번째를 읽는다.
+       * **박쥐가 표적과 그 곁의 둘까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 셋에게 나눠 얹고, 세 번째
+       * 타격마다 출혈을 남긴다 — 기절은 걷어 냈다(붙잡는 손은 궁극기가 아니라 물량으로 몰아붙이는 쪽이 이 개체다).
        */
+      targeting: "splitShot",
+      maxTargets: 3,
       statusEffectEvery: 3,
-      statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
-        { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
-        { kind: "stun", seconds: 1 }
-      ]
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }]
     },
     ultimate: {
       id: "ikanixia-ult",
-      name: "\uAE09\uAC15\uD558 \uB9CC\uCC2C",
-      power: 340,
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      damageType: "physical",
+      name: "\uD608\uC6D4\uC758 \uB9CC\uCC2C",
+      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다.
+      power: 90,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
       cost: 80,
-      /*
-       * **하늘에서 내리꽂아 줄 전체를 거둔다.** 단일 정예 자리라 한 명만 치는 궁극기로는 셋이 둘러싼 판에서
-       * 달라지는 것이 없다. 나아가는 거리는 이동 속도가 정하므로(`SKIRMISH.chargeSeconds` × 이속) 배율만 얹는다.
-       * 지나간 적은 모두 반향을 달아(패시브) 뒤따르는 평타가 아군의 막이 된다.
-       */
-      targeting: "chargeLine",
-      radius: 85,
-      chargeReachMultiplier: 1.6,
-      // 거두어 가는 손이라 뚫고 지나간 만큼을 되돌려 받는다.
-      damageHealingPercent: 40,
-      // 막을 깨고 박힌다 — 회수 대상이 두른 방벽은 의미가 없다.
-      breaksShield: true
+      targeting: "nearbyEnemies",
+      radius: 300,
+      channel: { seconds: 5 },
+      damageHealingPercent: 25
     },
+    // 박쥐가 물 때마다 피가 나고(II) 만찬의 범위가 넓어지며(III) 폭주하면 맞춘 만큼 회복하고(IV) 더 많은 적의 피를 빤다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "widenArea", radius: 380 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 15 },
+      passive: { kind: "swarmDeepen", extraHealTargets: 2 }
     }
   },
   {
@@ -13477,13 +13587,13 @@ var RELICS = [
       height: "1.74 m",
       weight: "63 kg"
     },
-    catalogSummary: "\uB9C8\uB514\uC9C4 \uC678\uACE8\uACA9\uACFC \uAE34 \uAF2C\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5 \uC544\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uB9C8\uB514\uC9C4 \uC678\uACE8\uACA9\uACFC \uAE34 \uAF2C\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5 \uC544\uB974\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 214. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uC5B4\uAE68\uC640 \uB4F1\uC744 \uB36E\uC740 \uB9C8\uB514 \uC7A5\uC2DD\uC774 \uAC78\uC744 \uB54C\uB9C8\uB2E4 \uCC28\uB840\uB85C \uC6B8\uB838\uACE0, \uB300\uC7A5 \uACC1\uC5D0\uC11C \uBC18 \uAC78\uC74C \uB4A4\uB97C \uC9C0\uCF30\uB2E4. \uB204\uAC00 \uBA3C\uC800 \uB9DE\uC544\uB3C4 \uADF8 \uC55E\uC73C\uB85C \uBAB8\uC744 \uBC00\uC5B4 \uB123\uC5C8\uC73C\uBA70, \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uB418 \uB208\uC740 \uCD9C\uAD6C \uCABD\uC744 \uBCF4\uACE0 \uC788\uC5C8\uB2E4. \uB9C8\uB514\uAC00 \uAE4E\uC5EC \uB098\uAC00\uB3C4 \uC5BC\uAD74\uBE5B\uC744 \uBC14\uAFB8\uC9C0 \uC54A\uC558\uB2E4.' },
     squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uD589\uB3D9\uB300\uC7A5\uC774 \uC55E\uC73C\uB85C \uB098\uAC00\uBA74 \uADF8 \uB4A4\uB97C \uBC1B\uCCD0 \uD68C\uC218 \uB300\uC0C1 \uC55E\uC5D0 \uC120\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
     portraitAssetId: "atra",
-    origin: "\uC544\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C",
+    origin: "\uC544\uB974\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C",
     element: "grass",
     role: "tank",
     reachTier: "melee",
@@ -13515,17 +13625,19 @@ var RELICS = [
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 마디가 되살아나는 주기(초)를 담아 둔다.
       value: 6,
-      segmentBarrier: { segments: 4, segmentMaxHpPercent: 5, restoreSeconds: 6, hitRestoreSeconds: 0.15 },
+      segmentBarrier: { segments: 4, segmentMaxHpPercent: 4, restoreSeconds: 7, hitRestoreSeconds: 0.1 },
       desc: "\uC804\uD22C\uB97C \uB9C8\uB514 \uBC29\uBCBD\uC744 \uB450\uB974\uACE0 \uC2DC\uC791\uD55C\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uB9C8\uB514\uAC00 \uD558\uB098\uC529 \uB418\uC0B4\uC544\uB09C\uB2E4."
     },
     basic: {
       id: "atra-basic",
       name: "\uC800, \uC800\uAE30 \uCC44\uCC0D",
-      power: 190,
+      // 한 방을 낮추고(190→130) 소매 속 가시의 독으로 시간에 나눠 준다 — 풀 속성 탱커의 딜이 한 방에만 몰리지 않게 한다.
+      power: 130,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      targeting: "single"
+      targeting: "single",
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }]
     },
     ultimate: {
       id: "atra-ult",
@@ -13537,13 +13649,18 @@ var RELICS = [
       cost: 150,
       targeting: "nearbyEnemies",
       radius: 260,
-      statusEffects: [{ kind: "taunt", seconds: 3 }, { kind: "stagger", seconds: 0.1 }]
+      statusEffects: [
+        { kind: "taunt", seconds: 3 },
+        { kind: "stagger", seconds: 0.1 },
+        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }
+      ]
     },
+    // 채찍이 두 번 들어가고(II) 품이 넓어지며(III) 폭주하면 아군 몫을 대신 맞고(IV) 독이 오래 남는다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "pincerPair", every: 2 },
+      ultimate: { kind: "widenArea", radius: 340 },
+      ferocity: { kind: "feverGuard", percent: 30 },
+      passive: { kind: "lingeringVenom", poisonSeconds: 5 }
     }
   },
   {
@@ -13621,11 +13738,12 @@ var RELICS = [
       cost: 100,
       targeting: "single"
     },
+    // 급소를 찔러 피를 내고(II) 선물이 회복을 막으며(III) 폭주하면 치명타가 터지고(IV) 겨누기가 더 깊어진다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "unhealedMark", seconds: 4, reductionPercent: 50 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "deepAim", extraStacks: 2 }
     }
   },
   {
@@ -13703,11 +13821,12 @@ var RELICS = [
       targeting: "battlefieldAllies",
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 8, maxHpRegenPercentPerSecond: 1.5 }
     },
+    // 날갯짓 파동에 적이 움찔하고(II) 순풍이 오래 불며(III) 폭주하면 맞춘 만큼 회복하고(IV) 울림이 둘에게 걸린다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "shellKnock", seconds: 0.3 },
+      ultimate: { kind: "longGust", seconds: 10 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 10 },
+      passive: { kind: "twinHum" }
     }
   },
   {
@@ -13785,11 +13904,12 @@ var RELICS = [
       targeting: "nearbyEnemies",
       radius: 200
     },
+    // 곡괭이로 방어를 깎고(II) 영차의 품이 넓어지며(III) 폭주하면 물어뜯어 회복하고(IV) 행렬이 더 든든히 받친다(V).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 4, seconds: 6 },
+      ultimate: { kind: "widenArea", radius: 300 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 12 },
+      passive: { kind: "deeperMarch", regenMaxHpPercentPerAllyPerSecond: 0.6 }
     }
   },
   {
@@ -16066,6 +16186,11 @@ for (const relic of RELICS) {
 // src/data/stages.ts
 init_define_import_meta_env();
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
+function tieredEnemy(relicId, referenceLevel, slot) {
+  const tier = ENEMY_BIRTH_TIERS[relicId];
+  const level = tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel;
+  return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
+}
 function enemyGrowth(relicId, level, breakthrough, formationSlot) {
   return { relicId, level, breakthrough, formationSlot };
 }
@@ -16104,7 +16229,19 @@ var STORY_RECOMMENDED_LEVELS = [
   42,
   43,
   44,
-  47
+  47,
+  // 4장은 테러조 기준 48~56이다. 57~60은 5·6장이 쓴다 — 레벨 사다리는 60에서 멈추므로 아껴 쓴다.
+  // 회수조는 태생 층이 한 띠 위라 같은 자리에서 더 낮은 레벨로 선다(`tieredEnemy`).
+  48,
+  48,
+  49,
+  51,
+  51,
+  51,
+  51,
+  51,
+  54,
+  56
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -16113,14 +16250,28 @@ var CHAPTER_ONE_ELITES = {
 var LATE_CHAPTER_FORMATIONS = {
   "2-7": [["amo", 0], ["ripa", 2]],
   "2-9": [["amo", 0], ["toby", 1]],
+  "3-2": [["amo", 0], ["mir", 1], ["ripa", 2]],
+  "3-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
+  "3-4": [["amo", 0], ["pulsi", 1], ["ripa", 2]],
   "3-5": [["atra", 1]],
   "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
-  "3-10": [["ikanixia", 1]]
+  "3-10": [["ikanixia", 1]],
+  // 4장 — 회수조와 테러조가 섞인다. 무리 5기(4-2·4-8) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6) · 이카닉시아 캐리(4-9) · 투 캐리 마감(4-10).
+  "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
+  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3], ["neuri", 4]],
+  "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
+  "4-4": [["atra", 0], ["amo", 2]],
+  "4-5": [["atra", 0], ["toby", 2]],
+  "4-6": [["ripa", 0], ["koma", 1], ["neuri", 2]],
+  "4-7": [["ripa", 0], ["pulsi", 1], ["mir", 2]],
+  "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
+  "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
+  "4-10": [["koma", 0], ["ikanixia", 2]]
 };
-var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9"]);
+var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
   const chapterOrder = index + 1;
   const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
@@ -16133,13 +16284,17 @@ var STORY_RUNE_REWARDS = {
   "2-5": { kind: "rune", rarity: "uncommon", part: 2 },
   "2-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
   "3-5": { kind: "rune", rarity: "rare", part: 1 },
-  "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true }
+  "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
+  "4-5": { kind: "rune", rarity: "rare", part: 0 },
+  "4-10": { kind: "rune", rarity: "rare", part: 1, trait: true }
 };
 var STORY_RAW_STONE = {
   "2-1": 30,
   "2-6": 40,
   "3-1": 50,
-  "3-6": 60
+  "3-6": 60,
+  "4-1": 60,
+  "4-6": 60
 };
 function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
   const heavy = elite || chapterOrder === 10;
@@ -16173,7 +16328,8 @@ var CHAPTER_SITUATIONS = [
 var CHAPTER_CONTENT = [
   { title: "\uC81C1\uC9C0\uBD80 \uC678\uACFD", subtitle: "\uAC80\uC5ED\uC120 \u2014 \uB3C4\uC2DC\uB85C \uB4E4\uC5B4\uAC00\uB294 \uB9C8\uC9C0\uB9C9 \uAD6C\uAC04", names: ["\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", "\uBD95\uAD34\uD55C \uC628\uC2E4", "\uCE68\uC218\uB41C \uBC30\uC591\uC2E4", "\uD45C\uBCF8 \uBCF4\uAD00\uACE0", "\uC81C1\uAD6C\uC5ED \uAD00\uC81C\uD0D1", "\uBB34\uB108\uC9C4 \uD1B5\uC2E0\uC18C", "\uD3D0\uAE30\uBB3C \uCC98\uB9AC\uC7A5", "\uC9C0\uD558 \uBC30\uC218\uB85C", "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5", "\uAD6C\uC5ED \uACBD\uACC4\uBB38"] },
   { title: "\uC794\uD5A5 \uC9C0\uAD6C", subtitle: "\uCE68\uBB35\uD55C \uC0B0\uC5C5 \uD68C\uB791", names: ["\uC794\uD5A5 \uC9C4\uC785\uB85C", "\uB179\uC2A8 \uC870\uB9BD\uB3D9", "\uB0C9\uAC01 \uC218\uB85C", "\uB3D9\uB825 \uC911\uACC4\uC2E4", "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5", "\uBB34\uC778 \uC0DD\uC0B0\uC120", "\uC555\uB825 \uACA9\uC2E4", "\uC7AC\uCC98\uB9AC \uC6A9\uAD11\uB85C", "\uC911\uC559 \uC6B4\uC1A1\uB85C", "\uC794\uD5A5 \uC9C0\uAD6C \uAD00\uBB38"] },
-  { title: "\uC81C 3 \uAD6C\uC5ED", subtitle: "\uC2EC\uCE35 \uC815\uC6D0 \u2014 \uB3C4\uC2DC \uC544\uB798\uC758 \uBFCC\uB9AC", names: ["\uC2EC\uCE35 \uD558\uAC15\uB85C", "\uBC1C\uAD11 \uADE0\uC0AC\uAD74", "\uACE0\uB300 \uAE09\uC218\uC6D0", "\uBFCC\uB9AC \uAD00\uCE21\uC18C", "\uC720\uC804\uC790 \uC800\uC7A5\uACE0", "\uD3EC\uC790 \uD655\uC0B0\uC2E4", "\uC0DD\uCCB4 \uBC18\uC751\uB85C", "\uC2EC\uCE35 \uC5F0\uAD6C\uB3D9", "\uC815\uC6D0 \uD575\uC2EC\uBD80", "\uC2EC\uCE35 \uC815\uC6D0 \uC81C\uC5B4\uC2E4"] }
+  { title: "\uC81C 3 \uAD6C\uC5ED", subtitle: "\uC2EC\uCE35 \uC815\uC6D0 \u2014 \uB3C4\uC2DC \uC544\uB798\uC758 \uBFCC\uB9AC", names: ["\uC2EC\uCE35 \uD558\uAC15\uB85C", "\uBC1C\uAD11 \uADE0\uC0AC\uAD74", "\uACE0\uB300 \uAE09\uC218\uC6D0", "\uBFCC\uB9AC \uAD00\uCE21\uC18C", "\uC720\uC804\uC790 \uC800\uC7A5\uACE0", "\uD3EC\uC790 \uD655\uC0B0\uC2E4", "\uC0DD\uCCB4 \uBC18\uC751\uB85C", "\uC2EC\uCE35 \uC5F0\uAD6C\uB3D9", "\uC815\uC6D0 \uD575\uC2EC\uBD80", "\uC2EC\uCE35 \uC815\uC6D0 \uC81C\uC5B4\uC2E4"] },
+  { title: "\uC81C 4 \uAD6C\uC5ED", subtitle: "\uD569\uB958\uC120 \u2014 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB2E4", names: ["\uD569\uB958 \uC2B9\uAC15\uC7A5", "\uB04A\uC5B4\uC9C4 \uD658\uC2B9\uB85C", "\uC810\uAC80 \uD1B5\uB85C", "\uBD09\uC778\uB41C \uC218\uC1A1 \uAC31\uB3C4", "\uD68C\uC218 \uB300\uAE30\uC2E4", "\uD3D0\uC1C4 \uACA9\uB0A9\uACE0", "\uC9C0\uD558 \uC815\uBE44\uB3D9", "\uB099\uD558 \uC2B9\uAC15\uAE30", "\uD569\uB958\uC120 \uC885\uC810", "\uCD94\uACA9 \uC0AC\uB839\uC2E4"] }
 ];
 var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
   const chapter = chapterIndex + 1;
@@ -16184,8 +16340,8 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
     const laterChapterIds = [...STAGE_ENEMY_FORMATION];
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
-    const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot)) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
+    const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
+    const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => tieredEnemy(relicId, laterChapterLevel, slot)) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
@@ -16280,7 +16436,7 @@ function getStageEnemies(stage) {
   const role = stageEnemyRole(stage);
   return stageEnemyGrowth(stage).map((enemy) => {
     const base = getRelic(enemy.relicId);
-    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length), enemy.breakthrough) };
+    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
   });
 }
 for (const chapter of CHAPTERS) {
@@ -17155,6 +17311,157 @@ function isExpeditionRelicSnapshot(value) {
   return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
 }
 
+// src/core/opsInbox.ts
+init_define_import_meta_env();
+
+// src/data/economy.ts
+init_define_import_meta_env();
+
+// src/core/stamina.ts
+init_define_import_meta_env();
+
+// src/core/timeAccrual.ts
+init_define_import_meta_env();
+function timeAccrualWindow(lastSettledAt, serverNow2, maxElapsedMs = Number.POSITIVE_INFINITY) {
+  const serverNowMs = serverNow2.getTime();
+  if (!Number.isFinite(serverNowMs)) return { accepted: false, reason: "invalid-server-time" };
+  const parsedStartMs = lastSettledAt === null ? Number.NaN : Date.parse(lastSettledAt);
+  if (!Number.isFinite(parsedStartMs)) {
+    return { accepted: true, initialized: true, window: { startMs: serverNowMs, effectiveEndMs: serverNowMs, elapsedMs: 0, serverNowMs } };
+  }
+  if (serverNowMs < parsedStartMs) return { accepted: false, reason: "clock-regression" };
+  const safeMaximum = Number.isFinite(maxElapsedMs) ? Math.max(0, maxElapsedMs) : Number.POSITIVE_INFINITY;
+  const elapsedMs = Math.min(serverNowMs - parsedStartMs, safeMaximum);
+  return { accepted: true, initialized: false, window: { startMs: parsedStartMs, effectiveEndMs: parsedStartMs + elapsedMs, elapsedMs, serverNowMs } };
+}
+function splitAccrualAt(window2, boundaryAt) {
+  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window2.startMs;
+  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window2.effectiveEndMs, boundaryMs) - window2.startMs) : 0;
+  return { beforeMs, afterMs: window2.elapsedMs - beforeMs };
+}
+
+// src/core/stamina.ts
+var BASE_STAMINA_MAX = 120;
+var STAMINA_PER_RESEARCH_LEVEL = 2;
+var ABSOLUTE_STAMINA_MAX = 240;
+var STAMINA_REGEN_INTERVAL_MS = 5 * 60 * 1e3;
+var STAMINA_HOLD_LIMIT = 9999;
+function staminaMaxForResearchLevel(level) {
+  const safeLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
+  return Math.min(ABSOLUTE_STAMINA_MAX, BASE_STAMINA_MAX + safeLevel * STAMINA_PER_RESEARCH_LEVEL);
+}
+function staminaMaxForPlayer(player) {
+  return staminaMaxForResearchLevel(player.playerResearch.level);
+}
+function paidStaminaApplied(current, requested) {
+  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current));
+}
+function settleStamina(amount, maximum, updatedAt, serverNow2) {
+  const safeMaximum = Math.max(0, Math.floor(maximum));
+  const safeAmount = Math.min(STAMINA_HOLD_LIMIT, Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0)));
+  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, Math.max(0, safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
+  if (!accrual.accepted) return { amount: safeAmount, updatedAt, recovered: 0 };
+  const nowIso = new Date(accrual.window.serverNowMs).toISOString();
+  if (safeAmount >= safeMaximum || accrual.initialized) return { amount: safeAmount, updatedAt: nowIso, recovered: 0 };
+  const intervals = Math.floor(accrual.window.elapsedMs / STAMINA_REGEN_INTERVAL_MS);
+  const recovered = Math.min(safeMaximum - safeAmount, intervals);
+  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STAMINA_REGEN_INTERVAL_MS;
+  return { amount: safeAmount + recovered, updatedAt: new Date(nextUpdatedMs).toISOString(), recovered };
+}
+function staminaTiming(amount, maximum, updatedAt) {
+  if (amount >= maximum) return { nextRecoveryAt: null, fullAt: null };
+  const next = Date.parse(updatedAt) + STAMINA_REGEN_INTERVAL_MS;
+  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, maximum - amount - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
+}
+
+// src/data/economy.ts
+var WALLET_CAPS = {
+  // 발굴의 일반 화석(`fossil`)과 다이아(`gems`)도 다른 API 지급과 같은 계정 상한을 공유한다.
+  fossil: 99999,
+  amber: 9999,
+  gems: 9999999,
+  gold: 999999999,
+  // 시간 회복은 레벨 상한에서 멈추지만 대가를 치른 충전은 그 위로 이 끝까지 쌓인다.
+  stamina: STAMINA_HOLD_LIMIT,
+  dnaFragments: 99999,
+  cheesecake: 9999999,
+  rawStone: 9999999,
+  // 증표는 가끔 들어가 터는 자리의 몫이라 상한이 사실상 걸리지 않게 둔다 — 몇 주치가
+  // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
+  raidSigil: 9999999,
+  salvageRecord: 9999999,
+  duelEmblem: 9999999
+};
+
+// src/core/opsInbox.ts
+var KEEP = 200;
+var NOTICE_KEEP = 20;
+var OPS_MAIL_PREFIX = "ops:";
+var isOpsMailId = (id) => id.startsWith(OPS_MAIL_PREFIX);
+var opsMailUuid = (id) => id.slice(OPS_MAIL_PREFIX.length);
+var emptyOps = () => ({ appliedAdjustments: [], readMails: [], announcedMails: [], notices: [] });
+var tail = (list) => list.slice(-KEEP);
+function isValidOpsJournal(value) {
+  if (!value || typeof value !== "object") return false;
+  const ops = value;
+  const ids = (v) => Array.isArray(v) && v.every((id) => typeof id === "string");
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
+}
+function opsJournalOf(state) {
+  state.serverJournal ??= { receipts: {}, raidAdmissions: {} };
+  state.serverJournal.ops ??= emptyOps();
+  return state.serverJournal.ops;
+}
+var walletKeys = new Set(Object.keys(WALLET_CAPS));
+var isWalletKey = (key) => walletKeys.has(key);
+function applyOpsAdjustments(state, adjustments, now) {
+  const journal = opsJournalOf(state);
+  const results = [];
+  for (const adjustment of adjustments) {
+    if (!isWalletKey(adjustment.asset) || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) {
+      results.push({ id: adjustment.id, applied: 0, balance: 0 });
+      continue;
+    }
+    const key = adjustment.asset;
+    if (journal.appliedAdjustments.includes(adjustment.id)) {
+      results.push({ id: adjustment.id, applied: adjustment.delta, balance: state.wallet[key] });
+      continue;
+    }
+    const before = state.wallet[key];
+    const after = Math.max(0, Math.min(WALLET_CAPS[key], before + adjustment.delta));
+    state.wallet[key] = after;
+    journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
+    const applied = after - before;
+    results.push({ id: adjustment.id, applied, balance: after });
+    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset", asset: key, delta: applied, at: now.toISOString() }].slice(-NOTICE_KEEP);
+  }
+  return results;
+}
+function opsMailToDto(source, sender, readIds) {
+  const rewards = source.rewards.filter((reward) => isWalletKey(reward.asset) && Number.isInteger(reward.amount) && reward.amount > 0).map((reward) => ({ kind: "currency", currency: reward.asset, amount: reward.amount }));
+  const id = `${OPS_MAIL_PREFIX}${source.id}`;
+  return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
+}
+function announceOpsMails(state, mails, now) {
+  const journal = opsJournalOf(state);
+  const fresh = mails.filter((mail) => !journal.announcedMails.includes(mail.id) && !state.claimedMailIds?.includes(mail.id));
+  if (fresh.length === 0) return;
+  journal.announcedMails = tail([...journal.announcedMails, ...fresh.map(({ id }) => id)]);
+  journal.notices = [...journal.notices, ...fresh.map((mail) => ({ kind: "mail", title: mail.title, at: now.toISOString() }))].slice(-NOTICE_KEEP);
+}
+function markOpsMailsRead(state, ids) {
+  const journal = opsJournalOf(state);
+  const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
+  if (next.length) journal.readMails = tail([...journal.readMails, ...next]);
+}
+function drainOpsNotices(state) {
+  const journal = state.serverJournal?.ops;
+  if (!journal || journal.notices.length === 0) return [];
+  const notices = journal.notices;
+  journal.notices = [];
+  return notices;
+}
+
 // src/core/serverJournal.ts
 var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
 function isValidServerJournal(value) {
@@ -17162,7 +17469,7 @@ function isValidServerJournal(value) {
   const journal = value;
   const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
-  return (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/raidTicketDrops.ts
@@ -18081,87 +18388,6 @@ function normalizeSettings(value) {
 
 // src/core/idleExcavation.ts
 init_define_import_meta_env();
-
-// src/data/economy.ts
-init_define_import_meta_env();
-
-// src/core/stamina.ts
-init_define_import_meta_env();
-
-// src/core/timeAccrual.ts
-init_define_import_meta_env();
-function timeAccrualWindow(lastSettledAt, serverNow2, maxElapsedMs = Number.POSITIVE_INFINITY) {
-  const serverNowMs = serverNow2.getTime();
-  if (!Number.isFinite(serverNowMs)) return { accepted: false, reason: "invalid-server-time" };
-  const parsedStartMs = lastSettledAt === null ? Number.NaN : Date.parse(lastSettledAt);
-  if (!Number.isFinite(parsedStartMs)) {
-    return { accepted: true, initialized: true, window: { startMs: serverNowMs, effectiveEndMs: serverNowMs, elapsedMs: 0, serverNowMs } };
-  }
-  if (serverNowMs < parsedStartMs) return { accepted: false, reason: "clock-regression" };
-  const safeMaximum = Number.isFinite(maxElapsedMs) ? Math.max(0, maxElapsedMs) : Number.POSITIVE_INFINITY;
-  const elapsedMs = Math.min(serverNowMs - parsedStartMs, safeMaximum);
-  return { accepted: true, initialized: false, window: { startMs: parsedStartMs, effectiveEndMs: parsedStartMs + elapsedMs, elapsedMs, serverNowMs } };
-}
-function splitAccrualAt(window2, boundaryAt) {
-  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window2.startMs;
-  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window2.effectiveEndMs, boundaryMs) - window2.startMs) : 0;
-  return { beforeMs, afterMs: window2.elapsedMs - beforeMs };
-}
-
-// src/core/stamina.ts
-var BASE_STAMINA_MAX = 120;
-var STAMINA_PER_RESEARCH_LEVEL = 2;
-var ABSOLUTE_STAMINA_MAX = 240;
-var STAMINA_REGEN_INTERVAL_MS = 5 * 60 * 1e3;
-var STAMINA_HOLD_LIMIT = 9999;
-function staminaMaxForResearchLevel(level) {
-  const safeLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
-  return Math.min(ABSOLUTE_STAMINA_MAX, BASE_STAMINA_MAX + safeLevel * STAMINA_PER_RESEARCH_LEVEL);
-}
-function staminaMaxForPlayer(player) {
-  return staminaMaxForResearchLevel(player.playerResearch.level);
-}
-function paidStaminaApplied(current, requested) {
-  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current));
-}
-function settleStamina(amount, maximum, updatedAt, serverNow2) {
-  const safeMaximum = Math.max(0, Math.floor(maximum));
-  const safeAmount = Math.min(STAMINA_HOLD_LIMIT, Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0)));
-  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, Math.max(0, safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
-  if (!accrual.accepted) return { amount: safeAmount, updatedAt, recovered: 0 };
-  const nowIso = new Date(accrual.window.serverNowMs).toISOString();
-  if (safeAmount >= safeMaximum || accrual.initialized) return { amount: safeAmount, updatedAt: nowIso, recovered: 0 };
-  const intervals = Math.floor(accrual.window.elapsedMs / STAMINA_REGEN_INTERVAL_MS);
-  const recovered = Math.min(safeMaximum - safeAmount, intervals);
-  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STAMINA_REGEN_INTERVAL_MS;
-  return { amount: safeAmount + recovered, updatedAt: new Date(nextUpdatedMs).toISOString(), recovered };
-}
-function staminaTiming(amount, maximum, updatedAt) {
-  if (amount >= maximum) return { nextRecoveryAt: null, fullAt: null };
-  const next = Date.parse(updatedAt) + STAMINA_REGEN_INTERVAL_MS;
-  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, maximum - amount - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
-}
-
-// src/data/economy.ts
-var WALLET_CAPS = {
-  // 발굴의 일반 화석(`fossil`)과 다이아(`gems`)도 다른 API 지급과 같은 계정 상한을 공유한다.
-  fossil: 99999,
-  amber: 9999,
-  gems: 9999999,
-  gold: 999999999,
-  // 시간 회복은 레벨 상한에서 멈추지만 대가를 치른 충전은 그 위로 이 끝까지 쌓인다.
-  stamina: STAMINA_HOLD_LIMIT,
-  dnaFragments: 99999,
-  cheesecake: 9999999,
-  rawStone: 9999999,
-  // 증표는 가끔 들어가 터는 자리의 몫이라 상한이 사실상 걸리지 않게 둔다 — 몇 주치가
-  // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
-  raidSigil: 9999999,
-  salvageRecord: 9999999,
-  duelEmblem: 9999999
-};
-
-// src/core/idleExcavation.ts
 var EXCAVATION_CURRENCIES = ["gold", "cheesecake", "rawStone", "gems"];
 var RETROACTIVE_EXCAVATION_GRANT_VERSION = 1;
 var EXCAVATION_HARVEST_NOTICE_RATIO = 0.5;
@@ -24974,7 +25200,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 240,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 8 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
     clueJournalId: "interaction-doppel-office-01",
     illustration: "background-interaction-doppel-office"
   },
@@ -25002,7 +25228,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 7e3, max: 15e3 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 7e3, max: 15e3 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-rust-lease-01",
     illustration: "background-interaction-rust-lease"
   },
@@ -25017,7 +25243,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "fossil", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-doppel-upper-01",
     illustration: "background-interaction-doppel-upper"
   },
@@ -25032,7 +25258,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 9e3, max: 2e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 9e3, max: 2e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-rust-works-01",
     illustration: "background-interaction-rust-works"
   },
@@ -25047,7 +25273,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "gems", min: 0, max: 10 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
     clueJournalId: "interaction-odidi-embassy-01",
     illustration: "background-interaction-odidi-embassy"
   }
@@ -27913,10 +28139,24 @@ var FakeGuildServer = class {
   }
   summary(guild) {
     const level = this.level(guild);
-    return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice };
+    return {
+      id: guild.id,
+      name: guild.name,
+      badge: { ...guild.badge },
+      level,
+      memberCount: guild.members.size,
+      capacity: guildCapacity(level),
+      joinMode: guild.joinMode,
+      leaderName: this.leaderOf(guild).name,
+      notice: guild.notice,
+      prosperity: guild.prosperity,
+      contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0),
+      warScore: null,
+      guardScore: null
+    };
   }
   detail(guild) {
-    return { ...this.summary(guild), prosperity: guild.prosperity, createdAt: guild.createdAt, warScore: null, warRank: null, badgeFree: guild.badgeChanges === 0 };
+    return { ...this.summary(guild), createdAt: guild.createdAt, warRank: null, badgeFree: guild.badgeChanges === 0 };
   }
   assertUnlocked(actor) {
     if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
@@ -28994,6 +29234,55 @@ var CHAPTER_3_STORIES = [
   STAGE_3_10_POST
 ];
 
+// src/data/dialogues/chapter4.ts
+init_define_import_meta_env();
+var STAGE_4_1_PRE = {
+  id: "stage-4-1-pre",
+  startNodeId: "radio",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "radio", speaker: "", body: "\uC2B9\uAC15\uC7A5 \uC2A4\uD53C\uCEE4\uC5D0\uC11C \uB0AE\uC740 \uC548\uB0B4\uAC00 \uD750\uB978\uB2E4. \u300C\uD569\uB3D9 \uCD94\uACA9 \uAC1C\uC2DC. \uB300\uC0C1 \uD655\uBCF4 \uD6C4 \uCF54\uB9C8 \uC870 \uBCF5\uADC0.\u300D", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB294 \uC77C\uC774 \uD754\uD558\uC9C0\uB294 \uC54A\uC8E0. \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC9C0\uB9CC, \uC774\uBC88\uC5D0\uB294 \uB204\uAD6C\uB3C4 \uB193\uCE58\uC9C0 \uC54A\uC744 \uAC70\uC608\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uD569\uB3D9\uC774\uB77C\uB2C8, \uC22B\uC790\uAC00 \uB298\uC5C8\uB2E4\uB294 \uC18C\uB9AC\uC796\uC544! \uADF8\uB798\uB3C4 \uD55C \uC904\uB85C \uC11C\uBA74 \uB611\uAC19\uC774 \uB6AB\uC73C\uBA74 \uB3FC!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" }
+  ])
+};
+var STAGE_4_4_PRE = {
+  id: "stage-4-4-pre",
+  startNodeId: "block",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uBE44\uCF1C\uC694\u2026 \uBA85, \uBA85\uB839\uC774\uB77C\uC11C\u2026 \uC8C4, \uC8C4\uC1A1\uD574\uC694\u2026", standing: "atra", act: "tremble" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uB839\uC774\uB2E4. \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_4_10_PRE = {
+  id: "stage-4-10-pre",
+  startNodeId: "end",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "end", speaker: "", body: "\uC0AC\uB839\uC2E4 \uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uCF54\uB9C8\uC640 \uB0A0\uAC1C \uB9DD\uD1A0\uC758 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uD55C \uAC78\uC74C \uC0AC\uC774\uB97C \uB450\uACE0 \uC11C \uC788\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uCF54\uB9C8 \uB2D8\uC774 \uC55E\uC5D0 \uC11C \uC8FC\uC2DC\uB2C8 \uB4E0\uB4E0\uD558\uB124\uC694. \uC800\uB294 \uB4A4\uC5D0\uC11C \uCC9C\uCC9C\uD788 \uD558\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB0B4\uAC00 \uC55E\uC774\uB2E4. \uB4A4\uB294 \uB2F9\uC2E0\uC774 \uB9E1\uC544\uB77C.", standing: "koma", act: "lean" }
+  ])
+};
+var STAGE_4_10_POST = {
+  id: "stage-4-10-post",
+  startNodeId: "retreat",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "retreat", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uC774\uB807\uAC8C\uAE4C\uC9C0 \uD558\uC168\uB294\uB370\uB3C4 \uB2FF\uC9C0 \uC54A\uB2E4\uB2C8. \uC624\uB298\uC740 \uBB3C\uB7EC\uB098\uACA0\uC2B5\uB2C8\uB2E4. \uC815\uB9D0, \uC11C\uB450\uB97C \uC774\uC720\uAC00 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
+    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC00\uACE0, \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uC120\uB85C \uB108\uBA38\uB85C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB09C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "shrink" }
+  ])
+};
+var CHAPTER_4_STORIES = [
+  STAGE_4_1_PRE,
+  STAGE_4_4_PRE,
+  STAGE_4_10_PRE,
+  STAGE_4_10_POST
+];
+
 // src/data/stageStories.ts
 var LINKS = {
   "1-2": { post: "stage-1-2-post" },
@@ -29020,10 +29309,13 @@ var LINKS = {
   "3-6": { post: "stage-3-6-post" },
   "3-8": { post: "stage-3-8-post" },
   "3-9": { post: "stage-3-9-post" },
-  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" }
+  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
+  "4-1": { pre: "stage-4-1-pre" },
+  "4-4": { pre: "stage-4-4-pre" },
+  "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" }
 };
 var STAGE_STORY_LINKS = LINKS;
-var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES];
+var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES];
 
 // src/data/recollectionCatalog.ts
 function buildRecollectionEntries() {
@@ -29032,7 +29324,7 @@ function buildRecollectionEntries() {
     { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" }
   ];
   for (const chapter of CHAPTERS) {
-    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : void 0;
+    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : chapter.id === 4 ? "chapter4" : void 0;
     if (!group) continue;
     for (const stage of chapter.stages) {
       const link = STAGE_STORY_LINKS[stage.id];
@@ -29392,7 +29684,7 @@ var InventoryManager = class {
   applySnapshot(items, expectedWallet) {
     const ids = /* @__PURE__ */ new Set();
     const wallet = {};
-    const walletKeys = /* @__PURE__ */ new Set();
+    const walletKeys2 = /* @__PURE__ */ new Set();
     const runes = [];
     const stacks = [];
     for (const item3 of items) {
@@ -29404,7 +29696,7 @@ var InventoryManager = class {
         runes.push(structuredClone(item3.rune));
       } else if (item3.category === "currency") {
         const walletKey = definition.id;
-        walletKeys.add(walletKey);
+        walletKeys2.add(walletKey);
         wallet[walletKey] = item3.quantity;
       } else {
         if (item3.lots && !isValidLotStack({ itemId: definition.id, quantity: item3.quantity, lots: item3.lots })) throw new Error("INVALID_INVENTORY_RESPONSE");
@@ -29412,7 +29704,7 @@ var InventoryManager = class {
       }
     }
     const requiredWalletKeys = ITEMS.filter(({ category }) => category === "currency").map(({ id }) => id);
-    if (walletKeys.size !== requiredWalletKeys.length || requiredWalletKeys.some((key) => !walletKeys.has(key)) || expectedWallet && requiredWalletKeys.some((key) => expectedWallet[key] !== wallet[key])) throw new Error("INVALID_INVENTORY_RESPONSE");
+    if (walletKeys2.size !== requiredWalletKeys.length || requiredWalletKeys.some((key) => !walletKeys2.has(key)) || expectedWallet && requiredWalletKeys.some((key) => expectedWallet[key] !== wallet[key])) throw new Error("INVALID_INVENTORY_RESPONSE");
     this.state.runeInventory = runes;
     this.state.wallet = wallet;
     this.state.itemInventory = stacks;
@@ -29986,7 +30278,7 @@ var FakeServer = class {
       dispatch.claimed = true;
       this.state.interaction.claimedRequestIds.push(request.requestId);
       const city = findInteractionCity(dispatch.cityId);
-      if (city) journal = this.discoverInteractionJournal(city.clueJournalId);
+      if (city && findInteractionJournal(city.clueJournalId)) journal = this.discoverInteractionJournal(city.clueJournalId);
     }
     const response = { ...this.interactionDispatchResponse(), serverTime: now.toISOString(), granted, alreadyClaimed, wallet: { ...this.state.wallet }, ...journal ? { journal } : {} };
     this.interactionClaimResults.set(request.requestId, structuredClone(response));
@@ -30070,7 +30362,20 @@ var FakeServer = class {
     this.mails.forEach((mail) => {
       if (ids.has(mail.id)) mail.read = true;
     });
+    markOpsMailsRead(this.state, request.mailIds);
     return this.mailListDto();
+  }
+  /**
+   * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
+   * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
+   */
+  attachOpsMails(sources) {
+    for (let index = this.mails.length - 1; index >= 0; index -= 1) if (isOpsMailId(this.mails[index].id)) this.mails.splice(index, 1);
+    const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
+    const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
+    this.mails.unshift(...mails);
+    announceOpsMails(this.state, mails, this.now());
+    this.applySavedMailClaims();
   }
   /* ── 출석 ─────────────────────────────────────────────────────────────────── */
   /** 오늘에 맞춰 넘긴 출석 상태. 바뀌었으면 저장까지 확정한다(신규 출석의 시작일이 처음 정해지는 자리다). */
@@ -34300,6 +34605,7 @@ function serialize(task) {
   chain = next.catch(() => void 0);
   return next;
 }
+var OPS_SYNC_METHODS = /* @__PURE__ */ new Set(["getNotificationSignals", "getMails", "markMailsRead", "claimMailRewards", "getInventory", "getPlayerState"]);
 function handleGameCall(playerId, req, deps) {
   if (!validCall(req)) throw new GameCallError(400, "invalid_request");
   if (deps.strict && !isReadMethod(req.method) && !req.requestId) throw new GameCallError(400, "request_id_required");
@@ -34315,11 +34621,13 @@ async function run(playerId, req, deps) {
   for (let attempt = 1; ; attempt += 1) {
     const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
-    const [cached, stored, identity, context] = await Promise.all([
+    const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
+    const [cached, stored, identity, context, ops] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
-      wantsRaid ? deps.store.raidContext(playerId, now) : void 0
+      wantsRaid ? deps.store.raidContext(playerId, now) : void 0,
+      wantsOps ? deps.store.opsInbox(playerId).catch(() => null) : null
     ]);
     if (cached !== void 0) {
       const receipt = cached;
@@ -34349,6 +34657,12 @@ async function run(playerId, req, deps) {
       playerId
     });
     if (req.requestId) server.useGuildRequestId(req.requestId);
+    const claimedBefore = new Set(state.claimedMailIds ?? []);
+    let applied = [];
+    if (ops) {
+      applied = applyOpsAdjustments(state, ops.adjustments, now);
+      server.attachOpsMails(ops.mails);
+    }
     let result;
     try {
       const timingState = deps.strict && (req.method === "submitRaidDamage" || req.method === "submitExpeditionBossScore") ? structuredClone(state) : state;
@@ -34358,6 +34672,10 @@ async function run(playerId, req, deps) {
       else {
         result = await server[req.method](...args);
         if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...result, pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
+        if (req.method === "getNotificationSignals") {
+          const opsNotices = drainOpsNotices(state);
+          if (opsNotices.length) result = { ...result, opsNotices };
+        }
         if (deps.strict) {
           verifyBossWallTime(timingState, req.method, args, result, now);
           recordBoundaryResult(state, req.method, args, now);
@@ -34382,6 +34700,8 @@ async function run(playerId, req, deps) {
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : void 0
       });
+      const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
+      if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => void 0);
       return { ...response, revision: committed.revision };
     } catch (error) {
       if (error instanceof StateConflictError && attempt < attempts) continue;
@@ -34426,6 +34746,12 @@ function createSupabaseStore(env) {
     },
     async raidContext(playerId, now) {
       return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
+    },
+    async opsInbox(playerId) {
+      return await rpc("server_ops_inbox", { p_player: playerId });
+    },
+    async opsAck(playerId, applied, claimedMails) {
+      await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails });
     },
     async load(playerId) {
       const r = await rpc("server_load_state", { p_player: playerId });

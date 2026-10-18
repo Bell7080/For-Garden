@@ -1,4 +1,5 @@
 import { t, type TextKey } from "../i18n";
+import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
@@ -546,7 +547,7 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; }
+export interface NotificationSignalsResponse { pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 

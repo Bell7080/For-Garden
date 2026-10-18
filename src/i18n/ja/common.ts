@@ -33,6 +33,7 @@ export const COMMON_JA = {
   "currency.fossil": "化石",
   "currency.amber": "琥珀",
   "currency.cheesecake": "チーズケーキ",
+  "currency.stamina": "スタミナ",
   "currency.dnaFragments": "DNAマイレージ",
 
   "element.fire": "火",

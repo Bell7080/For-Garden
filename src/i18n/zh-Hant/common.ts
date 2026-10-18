@@ -31,6 +31,7 @@ export const COMMON_ZH_HANT = {
   "currency.fossil": "化石",
   "currency.amber": "琥珀",
   "currency.cheesecake": "起司蛋糕",
+  "currency.stamina": "體力",
   "currency.dnaFragments": "DNA里程",
   "element.fire": "火",
   "element.water": "水",

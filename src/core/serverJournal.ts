@@ -2,6 +2,7 @@ import type { CombatJournal } from "./combatProtocol";
 import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
 import { isExpeditionRelicSnapshot } from "./expeditionSnapshot";
 import type { PassEntitlementDto } from "../api/contracts";
+import { isValidOpsJournal, type OpsJournal } from "./opsInbox";
 
 /** 지급 결과와 처리 표식을 같은 저장에 담는다. 공개 계정 스냅샷은 영수증에 중복 저장하지 않는다. */
 export interface ServerJournal {
@@ -10,6 +11,8 @@ export interface ServerJournal {
   raidAdmissions: Record<string, { replayVersion?: 2; seed?: string; admittedAt?: string; raidId: string; seasonHp: number; expiresAt: string; relics: { relicId: string; snapshot: ExpeditionRelicSnapshot }[] }>;
   subscriptionEntitlements?: Record<string, PassEntitlementDto>;
   subscriptionBonusDates?: Record<string, string>;
+  /** 운영 도구가 보낸 우편·재화 조정의 처리 기록(`opsInbox`). */
+  ops?: OpsJournal;
   subscriptionMails?: Record<string, { entitlementId: string; productId: string; sentAt: string; expiresAt: string; itemId: string; amount: number }>;
 }
 
@@ -21,7 +24,8 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
   const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v: unknown): boolean => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v))
     || (Array.isArray(v) ? v.every(json) : record(v) && Object.values(v).every(json));
-  return (journal.combat === undefined || record(journal.combat) && record(journal.combat.tickets) && record(journal.combat.records) && json(journal.combat))
+  return (journal.ops === undefined || isValidOpsJournal(journal.ops))
+    && (journal.combat === undefined || record(journal.combat) && record(journal.combat.tickets) && record(journal.combat.records) && json(journal.combat))
     && (journal.subscriptionEntitlements === undefined || record(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record(entry)
     && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt))
     && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string"))

@@ -31,6 +31,7 @@ export const COMMON_EN = {
   "currency.fossil": "Fossil",
   "currency.amber": "Amber",
   "currency.cheesecake": "Cheesecake",
+  "currency.stamina": "Stamina",
   "currency.dnaFragments": "DNA Mileage",
   "element.fire": "Fire",
   "element.water": "Water",

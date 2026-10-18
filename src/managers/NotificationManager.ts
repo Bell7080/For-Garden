@@ -1,6 +1,7 @@
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { deriveNotificationState, EMPTY_NOTIFICATION_STATE, type NotificationKey, type NotificationState } from "../core/notifications";
+import { session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
 
 const FREE_CATEGORIES = ["daily", "weekly", "monthly"] as const;
@@ -39,12 +40,16 @@ export class NotificationManager {
   }
 
   /** 서로 독립된 계약을 병렬 조회하되 최신 refresh만 상태를 확정한다. */
-  async refresh(): Promise<void> {
+  async refresh(options: { readonly light?: boolean } = {}): Promise<void> {
     const generation = ++this.refreshGeneration;
+    // 가벼운 조회(실시간 폴링)는 알림 신호 하나만 묻는다. 임무·발굴은 제 조작이 이미 다시 읽게 한다.
+    const light = options.light === true;
     // **하나가 실패해도 나머지는 확정한다.** 셋을 한꺼번에 기다리던 때는 발굴·알림 조회 하나가 실패하면
     // 받을 임무가 있는데도 임무 점까지 통째로 꺼진 채 남았다. 실패한 쪽만 지난 값을 둔다.
     const [missions, excavation, signals] = await Promise.allSettled([
-      this.api.getMissions(), this.api.getIdleExcavation(), this.api.getNotificationSignals(),
+      light ? Promise.reject(new Error("light")) : this.api.getMissions(),
+      light ? Promise.reject(new Error("light")) : this.api.getIdleExcavation(),
+      this.api.getNotificationSignals(),
     ]);
     if (generation !== this.refreshGeneration) return;
     const previous = this.state;
@@ -62,6 +67,13 @@ export class NotificationManager {
     });
     // 전체 조회 결과도 같은 manager 이벤트 계약으로 발행해 UI 구독 경로를 하나로 유지한다.
     this.state = next; this.events.publishNotification(next);
+    // 운영팀 조정은 서버가 응답 상태(session)에 이미 반영했다. 지갑·가방 표시를 갱신하고 안내를 띄운다.
+    const notices = signals.status === "fulfilled" ? signals.value.opsNotices : undefined;
+    if (notices?.length) {
+      this.events.publish("wallet", { wallet: session.wallet });
+      this.events.publishInventory();
+      this.events.publish("opsNotice", { notices });
+    }
   }
 }
 

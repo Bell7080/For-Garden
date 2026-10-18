@@ -35,5 +35,6 @@
 "element.water": ["水", "น้ำ", "Thủy", "Air", "Agua", "Água", "Wasser", "Вода"],
 "element.grass": ["草", "หญ้า", "Mộc", "Rumput", "Planta", "Planta", "Pflanze", "Трава"],
 "element.earth": ["地", "ดิน", "Thổ", "Tanah", "Tierra", "Terra", "Erde", "Земля"],
-"element.wind": ["风", "ลม", "Phong", "Angin", "Viento", "Vento", "Wind", "Ветер"]
+"element.wind": ["风", "ลม", "Phong", "Angin", "Viento", "Vento", "Wind", "Ветер"],
+"currency.stamina": ["体力", "สตามินา", "Thể lực", "Stamina", "Estamina", "Estamina", "Ausdauer", "Выносливость"]
 }

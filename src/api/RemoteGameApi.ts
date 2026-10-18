@@ -8,6 +8,7 @@ import { SERVER_GAME_METHODS } from "../server/gameMethods";
 import { saveManager } from "../state/SaveManager";
 import type { Session } from "../state/session";
 import type { GameApi } from "./contracts";
+import { reportAccountDeleted } from "./accountDeleted";
 
 export interface RemoteGameApiOptions {
   endpoint?: string;
@@ -70,6 +71,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
       // 서버가 규칙으로 거절한 호출(4xx)은 끝난 일이다. 시간 초과·서버 오류(5xx)는 확정되었는지 모르므로 키를 남긴다.
       if (!res.ok || !json?.ok) {
         if (res.status < 500 && callKey) retryIds.delete(callKey);
+        if (res.status === 403 && json?.code === "account_deleted") reportAccountDeleted();
         throw new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
       }
       if (callKey) retryIds.delete(callKey);

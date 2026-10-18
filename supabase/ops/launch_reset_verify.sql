@@ -4,7 +4,7 @@
 -- 세 목록은 launch_reset.sql과 같아야 하며 tests/unit/launchReset.test.ts가 지킨다.
 with
   reset_tables(t) as (values
-    ('public.player_saves'), ('public.player_assets'), ('public.asset_ledger'), ('public.mail_claims'),
+    ('public.player_saves'), ('public.player_assets'), ('public.player_adjustments'), ('public.asset_ledger'), ('public.mail_claims'),
     ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.request_receipts'),
     ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'),
     ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.server_friend_favorites'),

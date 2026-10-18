@@ -39,6 +39,7 @@ import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { motionPolicy } from "../core/settings";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { saveManager } from "../state/SaveManager";
+import { startLiveOps } from "../managers/liveOps";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 
@@ -479,6 +480,7 @@ export class TitleScene extends Phaser.Scene {
             releaseBusy();
             if (!this.scene.isActive()) return;
             if (connected.ok) {
+              if (connected.mode === "server") startLiveOps();
               startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
               return;
             }

@@ -1,3 +1,4 @@
+import type { OpsInbox } from "../core/opsInbox";
 import { requestBudget } from "./requestPolicy";
 import { worldRaidDefinitions, type SharedRaidContext } from "./sharedRaids";
 import { GameCallError, StateConflictError, type StateStore } from "./gameHandler";
@@ -36,6 +37,8 @@ export function createSupabaseStore(env: Env) {
     },
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
+    async opsInbox(playerId) { return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox; },
+    async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;
       return r ? { revision: r.revision, data: r.data } : null;

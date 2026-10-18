@@ -31,6 +31,7 @@ export const COMMON_ZH_HANS = {
   "currency.fossil": "化石",
   "currency.amber": "琥珀",
   "currency.cheesecake": "芝士蛋糕",
+  "currency.stamina": "体力",
   "currency.dnaFragments": "DNA里程",
   "element.fire": "火",
   "element.water": "水",

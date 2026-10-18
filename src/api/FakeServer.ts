@@ -55,6 +55,7 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
+import { announceOpsMails, isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
@@ -394,7 +395,20 @@ export class FakeServer implements GameApi {
   }
 
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
-  async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); return this.mailListDto(); }
+  async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); markOpsMailsRead(this.state, request.mailIds); return this.mailListDto(); }
+
+  /**
+   * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
+   * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
+   */
+  attachOpsMails(sources: readonly OpsMailSource[]): void {
+    for (let index = this.mails.length - 1; index >= 0; index -= 1) if (isOpsMailId(this.mails[index].id)) this.mails.splice(index, 1);
+    const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
+    const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
+    this.mails.unshift(...mails);
+    announceOpsMails(this.state, mails, this.now());
+    this.applySavedMailClaims();
+  }
 
   /* ── 출석 ─────────────────────────────────────────────────────────────────── */
 

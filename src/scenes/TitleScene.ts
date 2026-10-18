@@ -22,6 +22,11 @@ import packageInfo from "../../package.json";
 import { reconcileLaunchEpoch } from "../api/launchEpoch";
 import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
 import { startScene } from "../ui/screenTransition";
+import { withBusy } from "../ui/BusyOverlay";
+import { dialogueStandingOrder } from "../core/dialogue";
+import { speakerStanding } from "../data/dialogues/speakerStanding";
+import { preloadPuppetAssets } from "../puppets/assets";
+import { standingAsset } from "../ui/DialogueStage";
 import { settingsManager } from "../managers/SettingsManager";
 import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { activeFontFamily, loadGameFonts } from "../ui/fonts";
@@ -457,15 +462,21 @@ export class TitleScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
     const enter = () => {
+      // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
+      // 저장 충돌 창이 뜨면 막이 그 창의 손을 삼키지 않도록 그 순간 막을 걷는다(`releaseBusy`는 여러 번 불려도 한 번만 푼다).
+      let releaseBusy: () => void = () => undefined;
+      void withBusy(this, new Promise<void>((resolve) => { releaseBusy = resolve; }));
       void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
         if (result.gate === "open") {
           // 서버가 출시 초기화를 한 뒤에 처음 여는 기기는 초기화 이전의 토큰·저장을 지우고 처음부터 다시 시작한다.
           if (result.config && reconcileLaunchEpoch(result.config.launchEpoch)) {
+            releaseBusy();
             window.location.reload();
             return;
           }
           // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
-          void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
+          void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { releaseBusy(); if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
+            releaseBusy();
             if (!this.scene.isActive()) return;
             if (connected.ok) {
               startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
@@ -478,12 +489,22 @@ export class TitleScene extends Phaser.Scene {
           return;
         }
         // 막힌 동안에도 다시 누르면 새로 묻는다 — 점검이 끝났는데 앱을 다시 켜게 하지 않는다.
+        releaseBusy();
         this.gate = undefined;
         this.showGateNotice(result);
         tapAnywhere.once("pointerup", enter);
       });
     };
-    if (firstRun) this.showLoginButtons(cx, enter);
+    if (firstRun) {
+      this.showLoginButtons(cx, enter);
+      // 로그인 버튼을 고르는 동안 곧 열릴 오프닝의 스탠딩을 한 장씩 읽어 둔다(캐시에만 — 파싱까지, GPU는 세울 때).
+      void (async () => {
+        for (const id of dialogueStandingOrder(OPENING_TRAIN, speakerStanding)) {
+          if (!this.scene.isActive()) return;
+          await preloadPuppetAssets([standingAsset(id)]).catch(() => undefined);
+        }
+      })();
+    }
     else tapAnywhere.once("pointerup", enter);
 
     // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.

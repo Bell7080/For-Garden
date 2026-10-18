@@ -55,7 +55,7 @@ import { textStyle } from "./theme";
  * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
  * 상점 점원 오비만 도감에 서지 않는 전용 원화라 따로 잇는다.
  */
-function standingAsset(id: DialogueStandingAsset): PuppetAsset {
+export function standingAsset(id: DialogueStandingAsset): PuppetAsset {
   return id === "obi" ? SHOP_CLERK_ASSET : portraitAssetFor(id);
 }
 

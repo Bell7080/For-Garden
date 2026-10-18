@@ -200,6 +200,17 @@ try {
         (error) => error.code === "AD_TOKEN_INVALID",
       );
       assert.deepEqual(state.wallet, wallet);
+      // 출시 전 임시 예외(core/tempAd.ts): 켜져 있는 동안만 temp-ad 토큰을 받는다. 출시 때 꺼야 이 줄이 거절로 바뀐다.
+      const tempAd = await import("../src/core/tempAd.ts");
+      const tempState = createDefaultSession();
+      const tempServer = new FakeServer(tempState, options);
+      const tempRequest = { requestId: "release-temp-ad", slotId: "gold-ad", verificationToken: tempAd.tempAdToken("gold-ad") };
+      if (tempAd.TEMP_AD_REWARD_ENABLED) {
+        await tempServer.claimAdReward(tempRequest);
+        console.warn("[release-fixtures] 경고: 임시 광고 토큰(TEMP_AD_REWARD_ENABLED)이 켜져 있다 — 정식 출시 전에 끈다.");
+      } else {
+        await assert.rejects(() => tempServer.claimAdReward(tempRequest), (error) => error.code === "AD_TOKEN_INVALID");
+      }
       // Explicit validators remain usable for real providers; no test-prefix shortcut is required.
       const liveState = createDefaultSession();
       const verifiedServer = new FakeServer(liveState, {

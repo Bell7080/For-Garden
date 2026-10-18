@@ -83,4 +83,7 @@ export const SYSTEM_JA = {
   "error.persist.expeditionScore": "遠征スコアを保存できませんでした。",
   "mail.subscription.title": "{product} デイリー補給",
   "mail.subscription.body": "本日のログイン報酬です。保管期限内にメールからチケットを受け取ってください。",
+  "ad.temp.title": "仮の広告を再生中！",
+  "ad.temp.done": "見終わったよ！",
+  "ad.temp.claim": "広告報酬を受け取る！",
 } as const;

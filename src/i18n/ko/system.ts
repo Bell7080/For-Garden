@@ -97,4 +97,7 @@ export const SYSTEM_KO = {
   "error.persist.expeditionScore": "원정 점수를 저장하지 못했습니다.",
   "mail.subscription.title": "{product} 일일 보급",
   "mail.subscription.body": "오늘 접속 보상입니다. 우편 보관 기간 안에 티켓을 받아 주세요.",
+  "ad.temp.title": "임시 광고 재생 중!",
+  "ad.temp.done": "다 봤어요!",
+  "ad.temp.claim": "광고 보상 받기!",
 } as const;

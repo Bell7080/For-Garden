@@ -100,4 +100,5 @@ export const SYSTEM_KO = {
   "ad.temp.title": "임시 광고 재생 중!",
   "ad.temp.done": "다 봤어요!",
   "ad.temp.claim": "광고 보상 받기!",
+  "ad.temp.waiting": "보상 받는 중…",
 } as const;

@@ -1,4 +1,5 @@
 import type { ItemLot } from "../core/itemLots";
+import { releaseAdWait } from "../platform/rewardedAds";
 import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
 import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
@@ -78,11 +79,16 @@ export class InventoryManager {
 
   /** 광고 보상도 같은 경계를 지난다. 검증은 서버가 하고 화면은 확정 결과만 다시 읽는다. */
   async claimAdReward(api: GameApi, request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {
-    const response = await api.claimAdReward(request);
-    // 일일 수령 횟수는 지갑이 아니라 별도 기록이라 서버 확정값을 그대로 옮긴다.
-    this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
-    this.applySnapshot((await api.getInventory()).items, response.wallet);
-    return response;
+    try {
+      const response = await api.claimAdReward(request);
+      // 일일 수령 횟수는 지갑이 아니라 별도 기록이라 서버 확정값을 그대로 옮긴다.
+      this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
+      this.applySnapshot((await api.getInventory()).items, response.wallet);
+      return response;
+    } finally {
+      // 광고 팝업이 「받는 중」으로 서 있다가 지급이 끝난 순간(성공·실패 모두) 닫혀 영수증과 빈 틈 없이 이어진다.
+      releaseAdWait();
+    }
   }
 
   /** 전체 DTO를 먼저 검증·정규화하고 모두 성공한 뒤에만 Session 세 영역을 함께 교체한다. */

@@ -79,4 +79,5 @@ export const SYSTEM_VI = {
   "ad.temp.title": "Đang phát quảng cáo tạm thời!",
   "ad.temp.done": "Xem xong rồi!",
   "ad.temp.claim": "Nhận thưởng quảng cáo!",
+  "ad.temp.waiting": "Đang nhận thưởng…",
 } as const;

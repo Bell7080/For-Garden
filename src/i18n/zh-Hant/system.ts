@@ -79,4 +79,5 @@ export const SYSTEM_ZH_HANT = {
   "ad.temp.title": "正在播放臨時廣告！",
   "ad.temp.done": "看完啦！",
   "ad.temp.claim": "領取廣告獎勵！",
+  "ad.temp.waiting": "正在領取獎勵…",
 } as const;

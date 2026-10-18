@@ -734,5 +734,6 @@
   "mail.subscription.body": ["今天的登录奖励。请在邮件过期前领取票券。", "รางวัลเข้าสู่ระบบวันนี้ รับตั๋วก่อนจดหมายหมดอายุ", "Thưởng đăng nhập hôm nay. Nhận vé trước khi Thư hết hạn.", "Hadiah login harianmu. Ambil tiket sebelum Surat kedaluwarsa.", "Tu recompensa diaria. Recoge el boleto antes de que caduque el correo.", "Sua recompensa diária. Receba o bilhete antes que o correio expire.", "Deine tägliche Anmeldebelohnung. Ticket vor Ablauf der Post abholen.", "Награда за ежедневный вход. Заберите билет до истечения срока почты."],
   "ad.temp.title": ["正在播放临时广告！", "กำลังเล่นโฆษณาชั่วคราว!", "Đang phát quảng cáo tạm thời!", "Memutar iklan sementara!", "¡Reproduciendo un anuncio temporal!", "Reproduzindo um anúncio temporário!", "Temporäre Werbung läuft!", "Идёт временная реклама!"],
   "ad.temp.done": ["看完啦！", "เสร็จแล้ว!", "Xem xong rồi!", "Selesai!", "¡Listo!", "Pronto!", "Geschafft!", "Готово!"],
-  "ad.temp.claim": ["领取广告奖励！", "รับรางวัลโฆษณา!", "Nhận thưởng quảng cáo!", "Ambil hadiah iklan!", "¡Reclamar recompensa del anuncio!", "Receber recompensa do anúncio!", "Werbebelohnung abholen!", "Забрать награду за рекламу!"]
+  "ad.temp.claim": ["领取广告奖励！", "รับรางวัลโฆษณา!", "Nhận thưởng quảng cáo!", "Ambil hadiah iklan!", "¡Reclamar recompensa del anuncio!", "Receber recompensa do anúncio!", "Werbebelohnung abholen!", "Забрать награду за рекламу!"],
+  "ad.temp.waiting": ["正在领取奖励…", "กำลังรับรางวัล…", "Đang nhận thưởng…", "Mengambil hadiah…", "Recibiendo recompensa…", "Recebendo recompensa…", "Belohnung wird abgeholt…", "Получаем награду…"]
 }

@@ -79,4 +79,5 @@ export const SYSTEM_EN = {
   "ad.temp.title": "Playing a temporary ad!",
   "ad.temp.done": "All done!",
   "ad.temp.claim": "Claim ad reward!",
+  "ad.temp.waiting": "Getting your reward…",
 } as const;

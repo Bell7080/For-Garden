@@ -2451,7 +2451,8 @@ var SYSTEM_KO = {
   "mail.subscription.body": "\uC624\uB298 \uC811\uC18D \uBCF4\uC0C1\uC785\uB2C8\uB2E4. \uC6B0\uD3B8 \uBCF4\uAD00 \uAE30\uAC04 \uC548\uC5D0 \uD2F0\uCF13\uC744 \uBC1B\uC544 \uC8FC\uC138\uC694.",
   "ad.temp.title": "\uC784\uC2DC \uAD11\uACE0 \uC7AC\uC0DD \uC911!",
   "ad.temp.done": "\uB2E4 \uBD24\uC5B4\uC694!",
-  "ad.temp.claim": "\uAD11\uACE0 \uBCF4\uC0C1 \uBC1B\uAE30!"
+  "ad.temp.claim": "\uAD11\uACE0 \uBCF4\uC0C1 \uBC1B\uAE30!",
+  "ad.temp.waiting": "\uBCF4\uC0C1 \uBC1B\uB294 \uC911\u2026"
 };
 
 // src/i18n/ko/raid.ts
@@ -18073,10 +18074,10 @@ function timeAccrualWindow(lastSettledAt, serverNow2, maxElapsedMs = Number.POSI
   const elapsedMs = Math.min(serverNowMs - parsedStartMs, safeMaximum);
   return { accepted: true, initialized: false, window: { startMs: parsedStartMs, effectiveEndMs: parsedStartMs + elapsedMs, elapsedMs, serverNowMs } };
 }
-function splitAccrualAt(window, boundaryAt) {
-  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window.startMs;
-  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window.effectiveEndMs, boundaryMs) - window.startMs) : 0;
-  return { beforeMs, afterMs: window.elapsedMs - beforeMs };
+function splitAccrualAt(window2, boundaryAt) {
+  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window2.startMs;
+  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window2.effectiveEndMs, boundaryMs) - window2.startMs) : 0;
+  return { beforeMs, afterMs: window2.elapsedMs - beforeMs };
 }
 
 // src/core/stamina.ts
@@ -29137,6 +29138,15 @@ for (const source of STAMINA_RECHARGE_SOURCES) {
 // src/managers/InventoryManager.ts
 init_define_import_meta_env();
 
+// src/platform/rewardedAds.ts
+init_define_import_meta_env();
+var heldAd;
+function releaseAdWait() {
+  const held = heldAd;
+  heldAd = void 0;
+  held?.release();
+}
+
 // src/managers/ManagerEvents.ts
 init_define_import_meta_env();
 
@@ -29236,10 +29246,14 @@ var InventoryManager = class {
   }
   /** 광고 보상도 같은 경계를 지난다. 검증은 서버가 하고 화면은 확정 결과만 다시 읽는다. */
   async claimAdReward(api, request) {
-    const response = await api.claimAdReward(request);
-    this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
-    this.applySnapshot((await api.getInventory()).items, response.wallet);
-    return response;
+    try {
+      const response = await api.claimAdReward(request);
+      this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
+      this.applySnapshot((await api.getInventory()).items, response.wallet);
+      return response;
+    } finally {
+      releaseAdWait();
+    }
   }
   /** 전체 DTO를 먼저 검증·정규화하고 모두 성공한 뒤에만 Session 세 영역을 함께 교체한다. */
   applySnapshot(items, expectedWallet) {
@@ -34299,8 +34313,8 @@ function createSupabaseStore(env) {
   return Object.assign(store, {
     async takeRate(playerId, method) {
       const budget = requestBudget(method);
-      for (const [bucket, window, limit] of [["all", 60, 300], [method, budget.windowSeconds, budget.limit]]) {
-        const out = await rpc("server_take_rate", { p_player: playerId, p_bucket: bucket, p_window: window, p_limit: limit });
+      for (const [bucket, window2, limit] of [["all", 60, 300], [method, budget.windowSeconds, budget.limit]]) {
+        const out = await rpc("server_take_rate", { p_player: playerId, p_bucket: bucket, p_window: window2, p_limit: limit });
         if (!out.allowed) return out;
       }
       return { allowed: true, retryAfter: 0 };

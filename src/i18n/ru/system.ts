@@ -79,4 +79,5 @@ export const SYSTEM_RU = {
   "ad.temp.title": "Идёт временная реклама!",
   "ad.temp.done": "Готово!",
   "ad.temp.claim": "Забрать награду за рекламу!",
+  "ad.temp.waiting": "Получаем награду…",
 } as const;

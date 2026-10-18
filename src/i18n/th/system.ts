@@ -79,4 +79,5 @@ export const SYSTEM_TH = {
   "ad.temp.title": "กำลังเล่นโฆษณาชั่วคราว!",
   "ad.temp.done": "เสร็จแล้ว!",
   "ad.temp.claim": "รับรางวัลโฆษณา!",
+  "ad.temp.waiting": "กำลังรับรางวัล…",
 } as const;

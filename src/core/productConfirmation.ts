@@ -1,6 +1,6 @@
 import type { PlatformPaymentAdapter, PlatformReceipt } from "../api/PlatformPayment";
 import type { ProductAcquisition } from "../data/products";
-import { presentRewardedAd } from "../platform/rewardedAds";
+import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
 
 /** 외부 획득의 완료·취소·중복·한도 결과를 화면과 무관한 고정 상태로 제한한다. */
 export type ProductConfirmation =
@@ -26,5 +26,9 @@ export async function confirmRewardedAdProduct(acquisition: Extract<ProductAcqui
   const presentation = await presentRewardedAd(acquisition.slotId);
   if (presentation.status === "dismissed") return { status: "cancelled" };
   if (presentation.status !== "completed") return { status: "unavailable" };
-  return confirmToken(presentation.verificationToken);
+  try {
+    return await confirmToken(presentation.verificationToken);
+  } finally {
+    releaseAdWait();
+  }
 }

@@ -79,4 +79,5 @@ export const SYSTEM_ZH_HANS = {
   "ad.temp.title": "正在播放临时广告！",
   "ad.temp.done": "看完啦！",
   "ad.temp.claim": "领取广告奖励！",
+  "ad.temp.waiting": "正在领取奖励…",
 } as const;

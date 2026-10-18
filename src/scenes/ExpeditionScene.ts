@@ -46,7 +46,7 @@ import { FaceFrame } from "../ui/FaceFrame";
 import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { completedAdToken } from "../data/adRewards";
-import { presentRewardedAd } from "../platform/rewardedAds";
+import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
@@ -952,6 +952,7 @@ export class ExpeditionScene extends Phaser.Scene {
       // 응답 스냅샷으로 로컬 준비 화면과 상단 지갑의 다음 방문 상태를 함께 갱신한다.
       session.wallet = { ...result.wallet };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
+      releaseAdWait();
       await this.loadQuickExpeditionOffer();
       if (gained === 0) this.hint?.setText(t("expedition.quick.walletFull"));
       else openRewardPopup(this, this.popups, { title: t("expedition.quick.done"), items: [{ icon: "currency-gold", amount: gained, label: t("expedition.quick.walletGain") }] });
@@ -966,6 +967,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this.hint?.setText(message[code ?? ""] ?? t("expedition.quick.retryLater"));
       this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
     } finally {
+      releaseAdWait();
       this.quickClaimPending = false;
     }
   }

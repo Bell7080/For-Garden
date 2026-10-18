@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { releaseAdWait } from "../platform/rewardedAds";
 import { UI_ICON } from "./icons";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
@@ -462,7 +463,7 @@ export class IdleExcavationPopup {
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
       // 광고 적용 뒤에도 임시 응답을 조립하지 않고 비율·알림이 포함된 발굴 API 스냅샷을 다시 받는다.
       this.confirmed = await this.api.getIdleExcavation(); this.adMessage = t("excavation.ad.applied"); this.renderStatus();
-    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); }
+    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); } finally { releaseAdWait(); }
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */

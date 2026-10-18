@@ -79,4 +79,5 @@ export const SYSTEM_ES = {
   "ad.temp.title": "¡Reproduciendo un anuncio temporal!",
   "ad.temp.done": "¡Listo!",
   "ad.temp.claim": "¡Reclamar recompensa del anuncio!",
+  "ad.temp.waiting": "Recibiendo recompensa…",
 } as const;

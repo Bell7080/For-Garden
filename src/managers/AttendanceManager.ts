@@ -2,7 +2,7 @@ import type { AttendanceStatusResponse, ClaimAttendanceResponse, GameApi } from 
 import { gameApi } from "../api/FakeServer";
 import { ATTENDANCE_AD_SLOT_ID } from "../data/attendance";
 import { completedAdToken } from "../data/adRewards";
-import { presentRewardedAd } from "../platform/rewardedAds";
+import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
 import type { AttendanceTrackId } from "../core/attendance";
 import { session, type Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
@@ -34,7 +34,11 @@ export class AttendanceManager {
   async claimAd(present: (slotId: string) => ReturnType<typeof presentRewardedAd> = presentRewardedAd, requestId: string = crypto.randomUUID()): Promise<ClaimAttendanceResponse | undefined> {
     const verificationToken = completedAdToken(await present(ATTENDANCE_AD_SLOT_ID));
     if (!verificationToken) return undefined;
-    return this.apply(await this.api.claimAttendanceAd({ verificationToken, requestId }));
+    try {
+      return this.apply(await this.api.claimAttendanceAd({ verificationToken, requestId }));
+    } finally {
+      releaseAdWait();
+    }
   }
 
   private apply(result: ClaimAttendanceResponse): ClaimAttendanceResponse {

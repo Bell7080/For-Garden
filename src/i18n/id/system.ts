@@ -79,4 +79,5 @@ export const SYSTEM_ID = {
   "ad.temp.title": "Memutar iklan sementara!",
   "ad.temp.done": "Selesai!",
   "ad.temp.claim": "Ambil hadiah iklan!",
+  "ad.temp.waiting": "Mengambil hadiah…",
 } as const;

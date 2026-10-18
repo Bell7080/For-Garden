@@ -79,4 +79,5 @@ export const SYSTEM_DE = {
   "ad.temp.title": "Temporäre Werbung läuft!",
   "ad.temp.done": "Geschafft!",
   "ad.temp.claim": "Werbebelohnung abholen!",
+  "ad.temp.waiting": "Belohnung wird abgeholt…",
 } as const;

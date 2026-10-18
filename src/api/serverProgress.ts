@@ -65,7 +65,10 @@ export function createLinkMarker(storage: Pick<Storage, "getItem" | "setItem" | 
 /** 서버가 보낸 상태를 세션에 얹는다: 계정의 값은 서버 것, 기기 값은 이 기기 것. */
 export function applyServerState(target: Session, next: Session, saves: Pick<SaveManager, "save">): void {
   const settings = mergeServerSettings(target.settings, next.settings);
-  Object.assign(target, next, { settings });
+  // 고른 관문은 지도에서 누른 순간 이 기기가 정한다. 서버 값은 마지막 입장의 관문이라, 편성을 만지는 사이 도착한
+  // 어떤 응답이든 그대로 얹으면 1-2를 골라 놓고 1-1에 입장한다(깬 관문을 다시 깨고 새 관문은 영영 깨지 못한다).
+  const selectedStageId = target.selectedStageId ?? next.selectedStageId;
+  Object.assign(target, next, { settings, selectedStageId });
   saves.save(target);
 }
 

@@ -84,6 +84,18 @@ describe("서버 진행 연결", () => {
     expect(saved).toHaveLength(1);
   });
 
+  it("서버 응답이 이 기기에서 고른 관문을 되돌리지 않는다", () => {
+    const target = createDefaultSession();
+    target.selectedStageId = "1-2";
+    const next = createDefaultSession();
+    next.selectedStageId = "1-1";
+    applyServerState(target, next, { save: () => undefined });
+    expect(target.selectedStageId).toBe("1-2");
+    const fresh = createDefaultSession();
+    applyServerState(fresh, next, { save: () => undefined });
+    expect(fresh.selectedStageId).toBe("1-1");
+  });
+
   it("gameApi는 설치된 구현으로 넘기고 내리면 임시 구현으로 돌아간다", async () => {
     const calls: string[] = [];
     installGameApi({ getInventory: async () => { calls.push("remote"); return { items: [] }; } } as never);

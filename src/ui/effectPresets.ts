@@ -461,6 +461,8 @@ export const INK_PROJECTILE: {
     signal: { shape: "signal", scale: 0.9 },
     card: { shape: "card", scale: 0.95, flip: true },
     feather: { shape: "feather", scale: 0.95, arc: 0.06 },
+    // 박쥐 떼 — 전용 그림이 오기 전까지 날개깃 조각이 물결치며 난다.
+    bat: { shape: "feather", scale: 0.8, wave: 26 },
   },
   /** 탄환 꼬리가 몸 뒤로 떨어진 거리(px)와 진하기. */
   trail: { offset: 76, alpha: 0.8, lighten: 0.35 },

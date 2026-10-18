@@ -640,6 +640,7 @@ export interface Fighter extends Combatant {
   barrierIn: number;
   /** 날갯짓 울림(네우리)이 다음 공명을 걸기까지 남은 시간(초). */
   wingHumIn: number;
+  batSwarmIn: number;
   /**
    * 서서히 줄어드는 보호막(오버클럭). 정해진 시간 동안 **매초 같은 양**이 깎이므로 막이 얼마나
    * 남았는지가 곧 폭주가 얼마나 흘렀는지다. 다른 막을 두르는 규칙은 이 값을 건드리지 않는다.
@@ -1331,7 +1332,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     echo: null,
     aim: null,
     barrierIn: -1,
-    wingHumIn: def.passive.wingHum?.intervalSeconds ?? 0,
+    wingHumIn: def.passive.batSwarm?.intervalSeconds ?? def.passive.wingHum?.intervalSeconds ?? 0,
+    batSwarmIn: def.passive.batSwarm?.intervalSeconds ?? 0,
     shieldFade: null,
     overclockAuraTickIn: 1,
     droneLinkTickIn: 1,
@@ -3225,8 +3227,6 @@ function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, 
       const room = attacker.maxHp * plan.capMaxHpPercent / 100 - attacker.shield.amount;
       const amount = Math.min(attacker.maxHp * plan.shieldMaxHpPercent / 100, room);
       if (amount > 0) grantShield(state, attacker, source.id, amount, events);
-      const trait = source.ferocityFever ? source.def.ferocityTrait : undefined;
-      if (trait?.effectId === "commandStart") applyTeamBuff(attacker, { ...trait.resonance, sourceId: source.id });
     }
   }
   // 평타든 궁극기든 맞은 적에게 건다 — 궁극기가 뚫고 지나간 모두가 반향을 단다.
@@ -3240,6 +3240,47 @@ function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, 
     const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
     const kept = attacker.aim?.targetId === target.id ? attacker.aim.stacks : 0;
     attacker.aim = { targetId: target.id, stacks: Math.min(aim.maxStacks, kept + 1 + bonus) };
+  }
+}
+
+/**
+ * 「박쥐 떼」의 시계. 몸 주위를 맴도는 박쥐가 주기마다 범위 안의 모든 적을 훑는다 — 주문력에서 나오는 보통 마법 피해라 저항과
+ * 속성 상성을 그대로 거친다. 회복은 가까운 몇 명이 입은 피해에서만 센다(여럿을 쓸어도 혼자 무한정 차오르지 않게).
+ * 폭주(`batStorm`)는 범위와 맴도는 속도만 바꾼다.
+ */
+function tickBatSwarm(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
+  const plan = fighter.def.passive.batSwarm;
+  if (!plan || fighter.stunnedFor > 0) return;
+  const trait = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "batStorm" ? fighter.def.ferocityTrait : undefined;
+  fighter.batSwarmIn -= dt;
+  if (fighter.batSwarmIn > 0) return;
+  fighter.batSwarmIn += plan.intervalSeconds / (1 + (trait?.tickSpeedPercent ?? 0) / 100);
+  const radius = plan.radius * (1 + (trait?.radiusPercent ?? 0) / 100);
+  const attacker = { ...fighter, def: offensiveDefinition(fighter) };
+  const input = { power: plan.powerPercent, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+  const inRange = state.fighters
+    .filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius)
+    .sort((a, b) => distance(fighter, a) - distance(fighter, b));
+  let healBase = 0;
+  inRange.forEach((other, index) => {
+    const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
+    const resolution = resolveReceivedDamage(other, raw);
+    const hpBefore = other.hp;
+    const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
+    applyDamage(other, resolution.applied, events, state);
+    const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
+    if (index < plan.healTargets) healBase += resolution.applied;
+    events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
+      contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
+    if (!isFighterAlive(other)) {
+      clearDefeatedStatuses(other);
+      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+    }
+  });
+  if (healBase > 0) applyHealing(state, fighter, healBase * plan.healPercent / 100);
+  if (inRange.length > 0) {
+    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: false, damageType: "magical",
+      area: { shape: "radial", x: fighter.x, y: fighter.y, radius } });
   }
 }
 
@@ -3265,6 +3306,7 @@ function tickRaiders(fighter: Fighter, dt: number, state: SkirmishState): Skirmi
       }
     }
   }
+  tickBatSwarm(fighter, dt, state, events);
   const hum = fighter.def.passive.wingHum;
   if (hum && fighter.stunnedFor <= 0) {
     fighter.wingHumIn -= dt;

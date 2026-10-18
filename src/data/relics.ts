@@ -3063,77 +3063,73 @@ export const RELICS: RelicDef[] = [
     origin: "이카로닉테리스",
     element: "wind",
     role: "warrior",
-    reachTier: "melee",
-    strike: "slash",
+    reachTier: "mid",
+    projectile: "bat",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     /*
-     * **행동대장이라 SR 띠의 위쪽이다**(2319). 날개로 가르는 전사라 공격력과 체력에 얹고, 주문력은 쓰는 스킬이 없어 낮게 둔다.
+     * **행동대장이라 SR 띠의 위쪽이다.** 날개로 가르던 전사에서 박쥐 떼를 부리는 마법사로 다시 짰다 — 공격력은 거의 쓰지 않고
+     * 주문력이 모든 딜을 낸다. 느리고 두꺼워서(체력·저항) 한가운데에 서서 박쥐로 훑는 자리다. 직군은 전사 그대로 둔다
+     * (마법사 직군이 없다 — 케리스와 같다).
      */
     stats: {
-      hp: 800,
-      def: 65,
-      res: 55,
-      atk: 200,
-      ap: 20,
-      attackSpeed: 135,
-      moveSpeed: 110,
+      hp: 950,
+      def: 70,
+      res: 90,
+      atk: 30,
+      ap: 190,
+      attackSpeed: 90,
+      moveSpeed: 90,
       critChance: 10,
       critDamage: 150,
       energyGain: 26,
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "만찬 개시", effectId: "commandStart", resonance: { kind: "resonance", attackSpeedPercent: 25, seconds: 4 } },
+    ferocityTrait: { name: "박쥐 폭풍", effectId: "batStorm", radiusPercent: 40, tickSpeedPercent: 50 },
     passive: {
       id: "ikanixia-passive",
-      name: "귀족의 청각",
+      name: "귀족의 박쥐 떼",
       kind: "echoLocation",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      desc: "기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
+      // 몸 주위를 맴도는 박쥐가 초마다 넓게 훑는다 — 다수 대 일에 강한 지속 탱의 뼈대다.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, healTargets: 3, healPercent: 30 },
+      desc: "박쥐 떼가 주위의 적을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
     },
     basic: {
       id: "ikanixia-basic",
-      name: "우아한 절개",
-      power: 150,
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      damageType: "physical",
-      targeting: "single",
+      name: "박쥐 날리기",
+      power: 110,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
       /*
-       * **세 번째 날개가 발을 묶는다.** 코마의 후려치기(밀어내기)와 갈리도록 이쪽은 찢어 놓고 붙잡는다 —
-       * 출혈과 짧은 기절이라 회수 대상을 도망치지 못하게 하는 손이다. 주기로 끊어 플레이어가 세 번째를 읽는다.
+       * **박쥐가 표적과 그 곁의 둘까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 셋에게 나눠 얹고, 세 번째
+       * 타격마다 출혈을 남긴다 — 기절은 걷어 냈다(붙잡는 손은 궁극기가 아니라 물량으로 몰아붙이는 쪽이 이 개체다).
        */
+      targeting: "splitShot",
+      maxTargets: 3,
       statusEffectEvery: 3,
-      statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
-        { kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 },
-        { kind: "stun", seconds: 1 },
-      ],
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
     },
     ultimate: {
       id: "ikanixia-ult",
-      name: "급강하 만찬",
-      power: 340,
-      iconAssetId: "skill-icon-physical",
-      effectType: "physical",
-      damageType: "physical",
+      name: "혈월의 만찬",
+      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다.
+      power: 90,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
       cost: 80,
-      /*
-       * **하늘에서 내리꽂아 줄 전체를 거둔다.** 단일 정예 자리라 한 명만 치는 궁극기로는 셋이 둘러싼 판에서
-       * 달라지는 것이 없다. 나아가는 거리는 이동 속도가 정하므로(`SKIRMISH.chargeSeconds` × 이속) 배율만 얹는다.
-       * 지나간 적은 모두 반향을 달아(패시브) 뒤따르는 평타가 아군의 막이 된다.
-       */
-      targeting: "chargeLine",
-      radius: 85,
-      chargeReachMultiplier: 1.6,
-      // 거두어 가는 손이라 뚫고 지나간 만큼을 되돌려 받는다.
-      damageHealingPercent: 40,
-      // 막을 깨고 박힌다 — 회수 대상이 두른 방벽은 의미가 없다.
-      breaksShield: true,
+      targeting: "nearbyEnemies",
+      radius: 300,
+      channel: { seconds: 5 },
+      damageHealingPercent: 25,
     },
     breakthroughEffects: {
       basic: { kind: "none" },

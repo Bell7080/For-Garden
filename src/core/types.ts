@@ -38,7 +38,7 @@ export type ReachTier = "melee" | "mid" | "ranged";
 /** 근접 평타가 **어떻게 닿는가** — 표시 전용. 생략하면 강타다. */
 export type StrikeKind = "slash" | "claw" | "bite" | "smash";
 
-export type ProjectileKind = "bullet" | "arrow" | "volley" | "note" | "paper" | "signal" | "card" | "feather";
+export type ProjectileKind = "bat" | "bullet" | "arrow" | "volley" | "note" | "paper" | "signal" | "card" | "feather";
 
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
@@ -1407,8 +1407,8 @@ export type FerocityEffectId =
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
   | "knockbackSlam"
   | "vanguardCharge"
-  /** 이카닉시아 전용: 폭주 중 반향이 든 적을 친 아군이 공명을 받는다. */
-  | "commandStart"
+  /** 이카닉시아 전용: 폭주 중 박쥐 떼의 범위가 넓어지고 더 빨리 맴돈다. */
+  | "batStorm"
   /** 아트라 전용: 폭주 중 마디가 더 크고 더 빨리 차오른다. */
   | "thornBristle"
   /** 펄시 전용: 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
@@ -1690,9 +1690,13 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
     }
   | {
-      /** 지휘 개시(이카닉시아). 폭주 중 **반향이 든 적을 친 아군**이 공명을 받는다. 수치는 공명 계약이 갖는다. */
-      effectId: "commandStart";
-      resonance: Extract<TeamBuff, { kind: "resonance" }>;
+      /**
+       * 박쥐 폭풍(이카닉시아). 폭주 중 박쥐 떼의 범위가 `radiusPercent`%, 맴도는 속도가 `tickSpeedPercent`% 오른다.
+       * 한 번에 들어가는 몫은 건드리지 않는다 — 궁극기와 엮지 않고 지금 하던 일만 넓게·빠르게 한다.
+       */
+      effectId: "batStorm";
+      radiusPercent: number;
+      tickSpeedPercent: number;
     }
   | {
       /** 가시 곤두세우기(아트라). 폭주 중 마디가 이 비율만큼 커지고 복구 시계가 이 비율만큼 빨라진다. */
@@ -2188,6 +2192,17 @@ export interface Passive {
    * 「반향 정위」 계약(이카닉시아). 이 개체가 건 반향이 든 적을 **아군 누구든** 때리면 이 개체가 최대 체력의
    * `shieldMaxHpPercent`%만큼 보호막을 두른다. 막은 `capMaxHpPercent`에 닿은 만큼까지만 쌓이고 다른 막까지 합쳐 잰다.
    */
+  /**
+   * 「박쥐 떼」 계약(이카닉시아). 매 `intervalSeconds`마다 자기 주위 `radius` 안의 모든 적에게 주문력 `powerPercent`% 마법 피해를
+   * 주고, 그중 가까운 `healTargets`명이 입은 피해의 `healPercent`%만큼 회복한다(범위가 넓어도 회복은 셋까지만 센다).
+   */
+  batSwarm?: {
+    radius: number;
+    intervalSeconds: number;
+    powerPercent: number;
+    healTargets: number;
+    healPercent: number;
+  };
   echoLocation?: {
     /** 한 번 맞을 때 두르는 막(최대 체력 비율 %). */
     shieldMaxHpPercent: number;

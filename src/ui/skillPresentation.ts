@@ -285,8 +285,8 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   // 즉시 리필과 마지막 탄 규칙은 태그(리필·마지막 한 방울)가 말한다. 본문은 폭주가 바꾸는 것만 적는다.
   if (trait.effectId === "overtimeRefusal") return t("skill.ferocity.overtimeRefusal");
 
-  if (trait.effectId === "commandStart") {
-    return t("skill.ferocity.commandStart", { percent: trait.resonance.attackSpeedPercent, seconds: trait.resonance.seconds });
+  if (trait.effectId === "batStorm") {
+    return t("skill.ferocity.batStorm", { radius: trait.radiusPercent, speed: trait.tickSpeedPercent });
   }
   if (trait.effectId === "thornBristle") {
     return t("skill.ferocity.thornBristle", { size: trait.segmentSizePercent, speed: trait.restoreSpeedPercent });
@@ -603,7 +603,11 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.looming", { seconds: passive.looming.intervalSeconds });
   }
   // 반향·마디 방벽·겨누기·공명·행렬이 무엇인지는 태그가 말한다(쓰는 개체가 하나뿐이라 태그가 수치를 가진다).
-  if (passive.kind === "echoLocation" && passive.echoLocation !== undefined) return t("skill.passive.echoLocation");
+  if (passive.kind === "echoLocation" && passive.echoLocation !== undefined) {
+    const swarm = passive.batSwarm;
+    if (swarm === undefined) return t("skill.passive.echoLocation");
+    return t("skill.passive.echoBatSwarm", { seconds: swarm.intervalSeconds, power: swarm.powerPercent, count: swarm.healTargets, heal: swarm.healPercent });
+  }
   if (passive.kind === "segmentBarrier" && passive.segmentBarrier !== undefined) return t("skill.passive.segmentBarrier");
   if (passive.kind === "vitalAim" && passive.vitalAim !== undefined) return t("skill.passive.vitalAim");
   if (passive.kind === "wingHum" && passive.wingHum !== undefined) {

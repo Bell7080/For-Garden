@@ -44,7 +44,6 @@ export const INFO_PT_BR = {
   "info.rune.bag": "Bolsa de Runas · {part}",
   "info.rune.empty": "Espaço vazio",
   "info.rune.emptySlot": "   Espaço vazio",
-  "info.rune.clear": "Esvaziar",
   "info.rune.named": "Runa {rarity}",
   "info.rune.threeSlots": "Três espaços de Runa",
   "info.rune.complete": "As três peças se encaixam.",

@@ -49,7 +49,6 @@ export const INFO_KO = {
   "info.rune.bag": "룬 가방 · {part}",
   "info.rune.empty": "빈 자리",
   "info.rune.emptySlot": "   빈 자리",
-  "info.rune.clear": "비우기",
   "info.rune.named": "{rarity} 룬",
   "info.rune.threeSlots": "룬 세 자리",
   "info.rune.complete": "세 조각이 모두 맞물렸다.",

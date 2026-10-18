@@ -318,10 +318,10 @@ const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number 
  * 장착용 룬 가방의 격자.
  *
  * 가방(`INVENTORY_LAYOUT`)과 같은 카드 크기·같은 칸 간격을 쓴다. 같은 룬이 두 화면에서
- * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목과 "비우기" 줄
+ * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목
  * 아래로 첫 줄 카드 **중심**이 서는 자리다.
  */
-const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 272 } as const;
+const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 220 } as const;
 
 /**
  * 능력치 상세가 서는 세로 자리.
@@ -1380,13 +1380,6 @@ export class InfoManager {
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
     this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
-      // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
-      body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
-      body.add(this.scene.add.text(0, top + 128, t("info.rune.clear"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
-      const clearHit = this.scene.add.rectangle(0, top + 128, pickerWidth - 96, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      clearHit.on("pointerup", () => void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); }));
-      body.add(clearHit);
-
       const firstX = -((columns - 1) * RUNE_PICKER.cellWidth) / 2;
       runes.forEach((rune, order) => {
         const x = firstX + (order % columns) * RUNE_PICKER.cellWidth;

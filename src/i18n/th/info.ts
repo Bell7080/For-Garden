@@ -44,7 +44,6 @@ export const INFO_TH = {
   "info.rune.bag": "กระเป๋ารูน · {part}",
   "info.rune.empty": "ช่องว่าง",
   "info.rune.emptySlot": "   ช่องว่าง",
-  "info.rune.clear": "ล้าง",
   "info.rune.named": "รูน{rarity}",
   "info.rune.threeSlots": "ช่องรูนสามช่อง",
   "info.rune.complete": "ชิ้นส่วนทั้งสามประกบกันพอดี",

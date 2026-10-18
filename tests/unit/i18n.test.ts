@@ -1,3 +1,4 @@
+import { DEBUG_KO } from "../../src/i18n/ko/debug";
 import { describe, expect, it } from "vitest";
 import { KO } from "../../src/i18n/ko";
 import { languagesWithCatalog, t } from "../../src/i18n";
@@ -73,7 +74,8 @@ describe("번역 표", () => {
   it("은 선택 가능한 모든 언어에 전체 UI 문구를 갖춘다", () => {
     // 대체 한국어가 화면을 살려 주더라도, 번역 누락 자체가 정상인 것은 아니다.
     for (const [path, catalog] of Object.entries(CATALOGS)) {
-      const missing = Object.keys(KO).filter((key) => !(key in catalog));
+      // QA 디버그 창(`DEBUG_KO`)은 일반 빌드에서 분기째 지워지는 개발 도구라 한국어만 갖는다.
+      const missing = Object.keys(KO).filter((key) => !(key in catalog) && !(key in DEBUG_KO));
       expect(missing, path).toEqual([]);
     }
   });

@@ -55,7 +55,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       if (!isSocialMethod(method)) throw new GameCallError(400,"unknown_method");
       res.status(200).json(await store.socialCall(user.id,method,body.args??[],body.requestId));
     } else {
-      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild}));
+      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:process.env.FORGARDEN_QA_TOOLS==="1"}));
     }
   } catch (error) {
     if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message }); return; }

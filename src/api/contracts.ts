@@ -113,6 +113,7 @@ export interface SetFavoriteRequest { relicId: string; }
 export interface SetRelicBookmarkRequest { relicId: string; bookmarked: boolean; }
 /** 보유 검증을 통과해 반영되었는지만 말한다. */
 export interface RelicMarkResponse { ok: boolean; }
+export type { DebugCommand, DebugCommandResponse } from "../core/debugCommand";
 /** 플레이어 카드의 바뀌는 칸 하나. `identity`는 UID·연구 개시일을 처음 한 번만 정한다. */
 export type UpdatePlayerCardRequest =
   | { kind: "identity" }
@@ -689,7 +690,7 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
   | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
-  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID";
+  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID" | "DEBUG_TOOLS_DISABLED";
 
 /**
  * 급여 응답.
@@ -1041,6 +1042,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   setFavorite(request: SetFavoriteRequest): Promise<RelicMarkResponse>;
   /** 목록을 추리는 즐겨찾기 표시. 애착과 섞이지 않는다. */
   setRelicBookmark(request: SetRelicBookmarkRequest): Promise<RelicMarkResponse>;
+  /** QA 디버그 창의 재화·레벨·보유 조정. 개발 도구가 켜진 서버에서만 실행하고 정식 서버는 거절한다. */
+  applyDebugCommand(command: import("../core/debugCommand").DebugCommand): Promise<import("../core/debugCommand").DebugCommandResponse>;
   /** 닉네임·소개·테두리·프로필 사진·최초 식별값을 서버 규칙으로 바꾼다. */
   updatePlayerCard(request: UpdatePlayerCardRequest): Promise<UpdatePlayerCardResponse>;
   /** 길드를 만든다. 젬 2,000을 같은 호출 안에서 차감한다. */

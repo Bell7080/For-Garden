@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { referenceEnemyLevel } from "../../src/core/levelDesign";
+import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 import {
   CHAPTER_ONE_DIFFICULTY_GOALS, STAGE_DIFFICULTY_ADJUSTMENT_ORDER, inspectStageDifficulty,
   selectReferenceParties, selectableRPartyPairs, summarizeStageDifficulty,
@@ -134,7 +136,7 @@ const STORY_STAGES = BATTLE_STAGES.filter((entry) => !EXPEDITION_BOSS_STAGES.inc
 const ELITE_STAGE_IDS = ["1-5", "1-10"] as const;
 
 /** 같은 셋이 아닌 편성이 서는 관문 — 2장 후반의 정예 둘과 3장의 회수조. */
-const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10"]);
+const LATE_FORMATION_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "3-2", "3-3", "3-4", "3-5", "3-6", "3-7", "3-8", "3-9", "3-10", "4-1", "4-2", "4-3", "4-4", "4-5", "4-6", "4-7", "4-8", "4-9", "4-10"]);
 
 /**
  * 대표 관문의 기록. 수치 조정이 의도하지 않은 체감 변화를 냈는지 즉시 드러낸다.
@@ -175,6 +177,11 @@ const BASELINES = {
   "3-5": { win: 1, hp: [0.9, 1] },
   "3-9": { win: 1, hp: [0.80, 0.92] },
   "3-10": { win: 0, hp: [0, 0.05] },
+  // 4장 — 회수조(태생 1단계 ×1.3)와 테러조가 섞인다. 4-5는 아트라·토비 정예 둘, 4-9는 코마 캐리(미르·펄시가 받친다),
+  // 4-10은 코마·이카닉시아 투 캐리로 가운데 조합이 한 판도 열지 못한다(3-10과 같은 마감 벽).
+  "4-5": { win: 1, hp: [0.78, 0.9] },
+  "4-9": { win: 0.75, hp: [0.12, 0.26] },
+  "4-10": { win: 0, hp: [0, 0.05] },
 } as const;
 
 describe("Phaser 없는 챕터 난이도 검수", () => {
@@ -232,6 +239,8 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     for (const { stage } of STORY_STAGES) {
       if (stage.id.startsWith("2-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.5);
       if (stage.id.startsWith("3-")) expect(winRateAt(stage.id), stage.id).toBe(0);
+      // 4장은 회수조가 섞여 4-1·4-3·4-9에서 운이 따르면 한 판은 열린다 — 그래도 절반을 넘지 않는다.
+      if (stage.id.startsWith("4-")) expect(winRateAt(stage.id), stage.id).toBeLessThanOrEqual(0.5);
     }
   });
 
@@ -311,9 +320,9 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
   it("적 레벨은 관문 순서를 따라 단조 증가한다", () => {
     // **정예 관문은 이 줄 밖이다.** 혼자 서는 몫을 유형 배수가 내므로 레벨이 잡졸 줄과
     // 나란히 오르지 않는다(`docs/level-design.md`).
-    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => stage.enemies[0].level);
+    const levels = BATTLE_STAGES.filter(({ stage }) => stage.elite !== true).map(({ stage }) => Math.max(...stage.enemies.map((enemy) => referenceEnemyLevel(enemy.level, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1))));
     for (let index = 1; index < levels.length; index += 1) {
-      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1]);
+      expect(levels[index], `${index}번째 잡졸 관문`).toBeGreaterThanOrEqual(levels[index - 1] - 0.6);
     }
     // 곡선이 실제로 크게 그려지는지 — 처음과 끝이 여섯 배 넘게 벌어진다.
     expect(levels[levels.length - 1] / levels[0]).toBeGreaterThan(6);

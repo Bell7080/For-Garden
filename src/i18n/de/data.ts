@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "Warum lässt Yuti beim Wort „Boss“ die Stimme verklingen?",
   "product.premium-raid-pass.grant.2": "Raid-Ticket",
 
+  "stage.4-1.name": "Zusammenführungsbahnsteig",
+  "stage.4-2.name": "Unterbrochener Umsteigegang",
+  "stage.4-3.name": "Wartungsgang",
+  "stage.4-4.name": "Versiegelter Transportstollen",
+  "stage.4-5.name": "Bergungswarteraum",
+  "stage.4-6.name": "Gesperrter Hangar",
+  "stage.4-7.name": "Unterirdische Wartungshalle",
+  "stage.4-8.name": "Fallender Fahrstuhl",
+  "stage.4-9.name": "Endpunkt der Zusammenführung",
+  "stage.4-10.name": "Verfolgungs-Kommandoraum",
+  "chapter.4.title": "Zone 4",
+  "chapter.4.subtitle": "Zusammenführung — Zwei Gruppen auf einem Gleis",
 };

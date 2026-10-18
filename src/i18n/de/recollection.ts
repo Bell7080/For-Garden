@@ -6,6 +6,7 @@ export const RECOLLECTION_DE = {
   "recollection.tab.chapter1": "Kapitel 1",
   "recollection.tab.chapter2": "Kapitel 2",
   "recollection.tab.chapter3": "Kapitel 3",
+  "recollection.tab.chapter4": "Kapitel 4",
   "recollection.tab.side": "Nebengeschichten",
   "recollection.phase.pre": "Vor dem Einsatz",
   "recollection.phase.post": "Nach dem Kampf",
@@ -58,4 +59,8 @@ export const RECOLLECTION_DE = {
   "recollection.summary.stage-2-10-post": "„Darf ich mitkommen?“ Nun muss der Forscher antworten.",
   "recollection.summary.stage-1-5-greenhouse-echo": "Im versteckten Gewächshaus sorgen Riesenkürbisse und Sprinkler für ein Missgeschick nach dem anderen.",
   "recollection.summary.event-great-auk-report": "Aus einer nordatlantischen Exemplarkiste taucht ein Skelettschild des Riesenalks auf.",
+  "recollection.summary.stage-4-1-pre": "Auf dem Bahnsteig stehen zwei Trupps auf einem Gleis, die gemeinsame Verfolgung beginnt.",
+  "recollection.summary.stage-4-4-pre": "Atra und Amo versperren den versiegelten Schacht, Koma sagt, er habe keine Seite gewählt.",
+  "recollection.summary.stage-4-10-pre": "Im Kommandoraum versperren Koma und Ikanixia gemeinsam den Weg.",
+  "recollection.summary.stage-4-10-post": "Der Bergungstrupp zieht sich zurück, Koma sagt, man sehe sich auf der nächsten Liste wieder.",
 } as const;

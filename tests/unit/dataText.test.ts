@@ -111,6 +111,7 @@ const NOT_DISPLAYED: Readonly<Record<string, "all" | readonly string[]>> = {
   "../../src/data/dialogues/chapter1.ts": "all",
   "../../src/data/dialogues/chapter2.ts": "all",
   "../../src/data/dialogues/chapter3.ts": "all",
+  "../../src/data/dialogues/chapter4.ts": "all",
   "../../src/data/dialogues/subStories.ts": "all",
   "../../src/data/dialogues/greenhouseEcho.ts": "all",
 };

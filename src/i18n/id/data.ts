@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "Kenapa Yuti melemahkan suaranya di ujung saat memanggil \"Bos\"?",
   "product.premium-raid-pass.grant.2": "Tiket Raid",
 
+  "stage.4-1.name": "Peron Pertemuan",
+  "stage.4-2.name": "Lorong Transfer Terputus",
+  "stage.4-3.name": "Lorong Pemeriksaan",
+  "stage.4-4.name": "Terowongan Angkut Tersegel",
+  "stage.4-5.name": "Ruang Tunggu Pemulihan",
+  "stage.4-6.name": "Hanggar Tertutup",
+  "stage.4-7.name": "Gedung Perawatan Bawah Tanah",
+  "stage.4-8.name": "Lift Jatuh",
+  "stage.4-9.name": "Ujung Jalur Pertemuan",
+  "stage.4-10.name": "Ruang Komando Pengejaran",
+  "chapter.4.title": "Zona 4",
+  "chapter.4.subtitle": "Jalur Pertemuan — Dua Kelompok di Satu Rel",
 };

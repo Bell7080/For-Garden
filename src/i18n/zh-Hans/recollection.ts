@@ -6,6 +6,7 @@ export const RECOLLECTION_ZH_HANS = {
   "recollection.tab.chapter1": "第1章",
   "recollection.tab.chapter2": "第2章",
   "recollection.tab.chapter3": "第3章",
+  "recollection.tab.chapter4": "第4章",
   "recollection.tab.side": "支线故事",
   "recollection.phase.pre": "出击前",
   "recollection.phase.post": "战斗后",
@@ -58,4 +59,8 @@ export const RECOLLECTION_ZH_HANS = {
   "recollection.summary.stage-2-10-post": "“我可以跟着你吗？”现在轮到研究员回答。",
   "recollection.summary.stage-1-5-greenhouse-echo": "隐蔽的温室里，巨型南瓜和喷淋器接连闯祸。",
   "recollection.summary.event-great-auk-report": "北大西洋标本箱中发现大海雀的骨骼标签。",
+  "recollection.summary.stage-4-1-pre": "站台上两支小队并为一条线路，联合追击开始。",
+  "recollection.summary.stage-4-4-pre": "阿特拉和阿莫堵住封印的坑道，科马说他并未选边。",
+  "recollection.summary.stage-4-10-pre": "指挥室里，科马和伊卡尼克西亚并肩拦住去路。",
+  "recollection.summary.stage-4-10-post": "回收组撤退，科马说下次名单上再见。",
 } as const;

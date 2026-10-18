@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "尤蒂為什麼叫“老大”的時候總是含糊其辭？",
   "product.premium-raid-pass.grant.2": "討伐券",
 
+  "stage.4-1.name": "匯合站臺",
+  "stage.4-2.name": "斷裂的換乘通道",
+  "stage.4-3.name": "檢修通道",
+  "stage.4-4.name": "封閉的運輸坑道",
+  "stage.4-5.name": "回收待命室",
+  "stage.4-6.name": "關閉的機庫",
+  "stage.4-7.name": "地下整備棟",
+  "stage.4-8.name": "墜落升降梯",
+  "stage.4-9.name": "匯合線終點",
+  "stage.4-10.name": "追擊指揮室",
+  "chapter.4.title": "第4區域",
+  "chapter.4.subtitle": "匯合線——兩股勢力踏上同一條軌道",
 };

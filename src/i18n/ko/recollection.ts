@@ -6,6 +6,7 @@ export const RECOLLECTION_KO = {
   "recollection.tab.chapter1": "1장",
   "recollection.tab.chapter2": "2장",
   "recollection.tab.chapter3": "3장",
+  "recollection.tab.chapter4": "4장",
   "recollection.tab.side": "곁 이야기",
   "recollection.phase.pre": "출격 전",
   "recollection.phase.post": "전투 후",
@@ -58,4 +59,8 @@ export const RECOLLECTION_KO = {
   "recollection.summary.stage-2-10-post": "「따라가도 돼?」 이제 연구원이 대답할 차례다.",
   "recollection.summary.stage-1-5-greenhouse-echo": "숨어 있던 온실에서 거대 호박과 스프링클러가 연달아 사고를 친다.",
   "recollection.summary.event-great-auk-report": "북대서양 표본함에서 큰바다쇠오리의 골격 표지가 나온다.",
+  "recollection.summary.stage-4-1-pre": "승강장에 두 무리가 한 선로로 서며 합동 추격이 시작된다.",
+  "recollection.summary.stage-4-4-pre": "봉인된 갱도 앞에서 아트라와 아모가 길을 막고, 코마가 편을 정한 건 아니라고 말한다.",
+  "recollection.summary.stage-4-10-pre": "사령실에서 코마와 이카닉시아가 나란히 서 길을 막는다.",
+  "recollection.summary.stage-4-10-post": "회수조가 물러나고 코마는 다음 목록에서 다시 만나자고 말한다.",
 } as const;

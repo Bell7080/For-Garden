@@ -6,6 +6,7 @@ export const RECOLLECTION_JA = {
   "recollection.tab.chapter1": "第1章",
   "recollection.tab.chapter2": "第2章",
   "recollection.tab.chapter3": "第3章",
+  "recollection.tab.chapter4": "第4章",
   "recollection.tab.side": "サイドストーリー",
   "recollection.phase.pre": "出撃前",
   "recollection.phase.post": "戦闘後",
@@ -58,4 +59,8 @@ export const RECOLLECTION_JA = {
   "recollection.summary.stage-2-10-post": "「ついていってもいい？」今度は研究員が答える番だ。",
   "recollection.summary.stage-1-5-greenhouse-echo": "隠れた温室で、巨大カボチャとスプリンクラーが次々と騒動を起こす。",
   "recollection.summary.event-great-auk-report": "北大西洋の標本箱から、オオウミガラスの骨格ラベルが見つかる。",
+  "recollection.summary.stage-4-1-pre": "ホームで二つの部隊が一本の線路に並び、合同追撃が始まる。",
+  "recollection.summary.stage-4-4-pre": "封鎖された坑道の前でアトラとアモが道を塞ぎ、コマは味方になったわけではないと言う。",
+  "recollection.summary.stage-4-10-pre": "司令室でコマとイカニクシアが並んで道を塞ぐ。",
+  "recollection.summary.stage-4-10-post": "回収組が退き、コマは次のリストでまた会おうと告げる。",
 } as const;

@@ -6,6 +6,7 @@ export const RECOLLECTION_RU = {
   "recollection.tab.chapter1": "Глава 1",
   "recollection.tab.chapter2": "Глава 2",
   "recollection.tab.chapter3": "Глава 3",
+  "recollection.tab.chapter4": "Глава 4",
   "recollection.tab.side": "Побочные истории",
   "recollection.phase.pre": "Перед вылазкой",
   "recollection.phase.post": "После боя",
@@ -58,4 +59,8 @@ export const RECOLLECTION_RU = {
   "recollection.summary.stage-2-10-post": "«Можно с вами?» Теперь очередь исследователя отвечать.",
   "recollection.summary.stage-1-5-greenhouse-echo": "В скрытой теплице гигантские тыквы и разбрызгиватели вызывают одну аварию за другой.",
   "recollection.summary.event-great-auk-report": "В североатлантическом ящике экземпляров обнаруживается метка скелета бескрылой гагарки.",
+  "recollection.summary.stage-4-1-pre": "На платформе два отряда встают на одну линию, начинается совместная погоня.",
+  "recollection.summary.stage-4-4-pre": "Атра и Амо перегораживают запечатанный тоннель, Кома говорит, что не выбирал сторону.",
+  "recollection.summary.stage-4-10-pre": "В командной Кома и Иканиксия встают рядом, преграждая путь.",
+  "recollection.summary.stage-4-10-post": "Отряд возврата отступает, Кома говорит, что они встретятся в следующем списке.",
 } as const;

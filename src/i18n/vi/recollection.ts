@@ -6,6 +6,7 @@ export const RECOLLECTION_VI = {
   "recollection.tab.chapter1": "Chương 1",
   "recollection.tab.chapter2": "Chương 2",
   "recollection.tab.chapter3": "Chương 3",
+  "recollection.tab.chapter4": "Chương 4",
   "recollection.tab.side": "Ngoại truyện",
   "recollection.phase.pre": "Trước xuất kích",
   "recollection.phase.post": "Sau trận chiến",
@@ -58,4 +59,8 @@ export const RECOLLECTION_VI = {
   "recollection.summary.stage-2-10-post": "“Cho tôi theo với nhé?” Giờ đến lượt nhà nghiên cứu trả lời.",
   "recollection.summary.stage-1-5-greenhouse-echo": "Trong nhà kính bí mật, bí ngô khổng lồ và vòi phun liên tiếp gây rắc rối.",
   "recollection.summary.event-great-auk-report": "Nhãn bộ xương chim anca lớn xuất hiện trong hộp Mẫu vật Bắc Đại Tây Dương.",
+  "recollection.summary.stage-4-1-pre": "Hai đội đứng chung một tuyến ở sân ga, cuộc truy đuổi phối hợp bắt đầu.",
+  "recollection.summary.stage-4-4-pre": "Atra và Amo chắn đường hầm bị phong tỏa, Koma nói chưa chọn phe.",
+  "recollection.summary.stage-4-10-pre": "Trong phòng chỉ huy, Koma và Ikanixia đứng cạnh nhau chặn đường.",
+  "recollection.summary.stage-4-10-post": "Nhóm thu hồi rút lui, Koma nói sẽ gặp lại ở danh sách tiếp theo.",
 } as const;

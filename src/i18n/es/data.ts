@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "¿Por qué a Yuti se le apaga la voz al decir «Jefe»?",
   "product.premium-raid-pass.grant.2": "Boleto de incursión",
 
+  "stage.4-1.name": "Andén de unión",
+  "stage.4-2.name": "Pasillo de transbordo roto",
+  "stage.4-3.name": "Pasaje de inspección",
+  "stage.4-4.name": "Galería de transporte sellada",
+  "stage.4-5.name": "Sala de espera de recuperación",
+  "stage.4-6.name": "Hangar clausurado",
+  "stage.4-7.name": "Edificio de mantenimiento subterráneo",
+  "stage.4-8.name": "Ascensor de caída",
+  "stage.4-9.name": "Fin de la línea de unión",
+  "stage.4-10.name": "Sala de mando de persecución",
+  "chapter.4.title": "Zona 4",
+  "chapter.4.subtitle": "Línea de unión — Dos grupos en una misma vía",
 };

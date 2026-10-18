@@ -6,6 +6,7 @@ export const RECOLLECTION_ZH_HANT = {
   "recollection.tab.chapter1": "第1章",
   "recollection.tab.chapter2": "第2章",
   "recollection.tab.chapter3": "第3章",
+  "recollection.tab.chapter4": "第4章",
   "recollection.tab.side": "支線故事",
   "recollection.phase.pre": "出擊前",
   "recollection.phase.post": "戰鬥後",
@@ -58,4 +59,8 @@ export const RECOLLECTION_ZH_HANT = {
   "recollection.summary.stage-2-10-post": "“我可以跟著你嗎？”現在輪到研究員回答。",
   "recollection.summary.stage-1-5-greenhouse-echo": "隱蔽的溫室裡，巨型南瓜和噴淋器接連闖禍。",
   "recollection.summary.event-great-auk-report": "北大西洋標本箱中發現大海雀的骨骼標籤。",
+  "recollection.summary.stage-4-1-pre": "站臺上兩支小隊併為一條線路，聯合追擊開始。",
+  "recollection.summary.stage-4-4-pre": "阿特拉和阿莫堵住封印的坑道，科馬說他並未選邊。",
+  "recollection.summary.stage-4-10-pre": "指揮室裡，科馬和伊卡尼克西亞並肩攔住去路。",
+  "recollection.summary.stage-4-10-post": "回收組撤退，科馬說下次名單上再見。",
 } as const;

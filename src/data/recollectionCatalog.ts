@@ -6,9 +6,9 @@ import { CHAPTERS, SUB_STAGES } from "./stages";
 import { STAGE_STORY_LINKS } from "./stageStories";
 
 /** 회고의 탭. 본편은 장마다, 그 밖의 곁 이야기·행사 이야기는 한 탭에 모은다. */
-export type RecollectionGroup = "chapter1" | "chapter2" | "chapter3" | "side";
+export type RecollectionGroup = "chapter1" | "chapter2" | "chapter3" | "chapter4" | "side";
 
-export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "chapter3", "side"];
+export const RECOLLECTION_GROUPS: readonly RecollectionGroup[] = ["chapter1", "chapter2", "chapter3", "chapter4", "side"];
 
 /** 회고에 모이는 이야기 한 편. 제목은 관문 이름에서 나오고, 관문이 없는 이야기만 제 제목 키를 갖는다. */
 export interface RecollectionEntry {
@@ -31,7 +31,7 @@ export function buildRecollectionEntries(): readonly RecollectionEntry[] {
     { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" },
   ];
   for (const chapter of CHAPTERS) {
-    const group: RecollectionGroup | undefined = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : undefined;
+    const group: RecollectionGroup | undefined = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : chapter.id === 4 ? "chapter4" : undefined;
     if (!group) continue;
     for (const stage of chapter.stages) {
       const link = STAGE_STORY_LINKS[stage.id];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyEncounterScaling, encounterHpShare, ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { createSkirmish, stepSkirmish, type Arena } from "../../src/core/skirmish";
-import { withinRarityBand } from "../../src/core/rarityScaling";
+import { RARITY_STAT_BAND } from "../../src/core/rarityScaling";
 import { combatPower } from "../../src/core/combatPower";
 import { findKeyword } from "../../src/data/keywords";
 import { getRelic } from "../../src/data/relics";
@@ -18,7 +18,9 @@ describe("회수조", () => {
   it("다섯은 같은 등급 띠 안에 서고 공멸 소속이다", () => {
     for (const id of IDS) {
       const relic = getRelic(id);
-      expect(withinRarityBand(combatPower(relic.stats), relic.rarity), id).toBe(true);
+      const band = RARITY_STAT_BAND[relic.rarity];
+      expect(combatPower(relic.stats), id).toBeGreaterThanOrEqual(band.min);
+      expect(combatPower(relic.stats), id).toBeLessThanOrEqual(band.max);
       expect(relic.enemyOnly, id).toBe(true);
       expect(relic.squad, id).toBe("annihilation");
     }

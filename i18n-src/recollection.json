@@ -59,6 +59,16 @@
     "Kapitel 3",
     "Глава 3"
   ],
+  "recollection.tab.chapter4": [
+    "第4章",
+    "บทที่ 4",
+    "Chương 4",
+    "Bab 4",
+    "Capítulo 4",
+    "Capítulo 4",
+    "Kapitel 4",
+    "Глава 4"
+  ],
   "recollection.tab.side": [
     "支线故事",
     "เรื่องเสริม",
@@ -578,5 +588,45 @@
     "Surge uma etiqueta óssea do arau-gigante numa caixa de espécimes do Atlântico Norte.",
     "Aus einer nordatlantischen Exemplarkiste taucht ein Skelettschild des Riesenalks auf.",
     "В североатлантическом ящике экземпляров обнаруживается метка скелета бескрылой гагарки."
+  ],
+  "recollection.summary.stage-4-1-pre": [
+    "站台上两支小队并为一条线路，联合追击开始。",
+    "สองหน่วยยืนบนรางเดียวกันที่ชานชาลา การไล่ล่าร่วมเริ่มต้นขึ้น",
+    "Hai đội đứng chung một tuyến ở sân ga, cuộc truy đuổi phối hợp bắt đầu.",
+    "Dua regu berdiri di satu jalur di peron, pengejaran gabungan dimulai.",
+    "En el andén, dos escuadras comparten una vía y empieza la persecución conjunta.",
+    "Na plataforma, dois esquadrões dividem a mesma linha e a perseguição conjunta começa.",
+    "Auf dem Bahnsteig stehen zwei Trupps auf einem Gleis, die gemeinsame Verfolgung beginnt.",
+    "На платформе два отряда встают на одну линию, начинается совместная погоня."
+  ],
+  "recollection.summary.stage-4-4-pre": [
+    "阿特拉和阿莫堵住封印的坑道，科马说他并未选边。",
+    "อาตร้าและอาโมขวางอุโมงค์ที่ถูกปิดผนึก โคมะบอกว่าเขายังไม่ได้เลือกข้าง",
+    "Atra và Amo chắn đường hầm bị phong tỏa, Koma nói chưa chọn phe.",
+    "Atra dan Amo menghalangi terowongan tersegel, Koma bilang belum memilih pihak.",
+    "Atra y Amo bloquean el túnel sellado y Koma dice que no ha elegido bando.",
+    "Atra e Amo bloqueiam o túnel selado, e Koma diz que não escolheu um lado.",
+    "Atra und Amo versperren den versiegelten Schacht, Koma sagt, er habe keine Seite gewählt.",
+    "Атра и Амо перегораживают запечатанный тоннель, Кома говорит, что не выбирал сторону."
+  ],
+  "recollection.summary.stage-4-10-pre": [
+    "指挥室里，科马和伊卡尼克西亚并肩拦住去路。",
+    "ในห้องบัญชาการ โคมะและอิคานิกเซียยืนเคียงกันขวางทาง",
+    "Trong phòng chỉ huy, Koma và Ikanixia đứng cạnh nhau chặn đường.",
+    "Di ruang komando, Koma dan Ikanixia berdiri berdampingan menghalangi jalan.",
+    "En la sala de mando, Koma e Ikanixia se plantan juntos para cerrar el paso.",
+    "Na sala de comando, Koma e Ikanixia ficam lado a lado bloqueando o caminho.",
+    "Im Kommandoraum versperren Koma und Ikanixia gemeinsam den Weg.",
+    "В командной Кома и Иканиксия встают рядом, преграждая путь."
+  ],
+  "recollection.summary.stage-4-10-post": [
+    "回收组撤退，科马说下次名单上再见。",
+    "หน่วยกู้คืนถอนตัว โคมะบอกว่าจะพบกันอีกในรายชื่อถัดไป",
+    "Nhóm thu hồi rút lui, Koma nói sẽ gặp lại ở danh sách tiếp theo.",
+    "Regu penjemput mundur, Koma bilang mereka akan bertemu lagi di daftar berikutnya.",
+    "El grupo de recuperación se retira y Koma dice que se verán en la próxima lista.",
+    "O grupo de recuperação recua, e Koma diz que se encontrarão na próxima lista.",
+    "Der Bergungstrupp zieht sich zurück, Koma sagt, man sehe sich auf der nächsten Liste wieder.",
+    "Отряд возврата отступает, Кома говорит, что они встретятся в следующем списке."
   ]
 }

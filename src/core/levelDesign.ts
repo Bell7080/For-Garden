@@ -245,15 +245,30 @@ export function enemyLevelMultiplier(level: number): number {
 }
 
 /**
+ * 태생 층이 더 높은 적이 **테러조 기준 레벨과 같은 세기가 되는 레벨.** 층이 올린 오각형 배수
+ * (`statFactor`)만큼 레벨 배수를 덜어 낸다. 사다리(`STORY_RECOMMENDED_LEVELS`)는 기준 개체
+ * 하나의 눈금이고, 층이 높은 개체는 같은 자리에서 더 낮은 레벨로 선다.
+ */
+export function equivalentEnemyLevel(referenceLevel: number, statFactor: number): number {
+  const target = enemyLevelMultiplier(referenceLevel) / statFactor;
+  return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
+}
+
+/** `equivalentEnemyLevel`의 거꾸로 — 그 개체의 레벨을 **기준(테러조) 눈금**으로 되돌린다. 사다리 단조 검수가 쓴다. */
+export function referenceEnemyLevel(level: number, statFactor: number): number {
+  return (enemyLevelMultiplier(level) * statFactor - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1;
+}
+
+/**
  * 적 하나의 전투 능력치 — **레벨로 자라고 유형으로 몫을 받는다.**
  *
  * 성장이 올리는 것은 플레이어와 같은 오각형 다섯뿐이고(`GROWTH_STAT_KEYS`), 공속·이속·치명타
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
  * 어디서 무엇이 얹혔는지 읽히게 둔다.
  */
-export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole, countOnField: number = ENCOUNTER_ROLE[role].count): Stats {
+export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole, countOnField: number = ENCOUNTER_ROLE[role].count, birthFactor: number = 1): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level);
+  const growth = enemyLevelMultiplier(level) * birthFactor;
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
   result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));

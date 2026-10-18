@@ -6,6 +6,7 @@ export const RECOLLECTION_EN = {
   "recollection.tab.chapter1": "Chapter 1",
   "recollection.tab.chapter2": "Chapter 2",
   "recollection.tab.chapter3": "Chapter 3",
+  "recollection.tab.chapter4": "Chapter 4",
   "recollection.tab.side": "Side stories",
   "recollection.phase.pre": "Before sortie",
   "recollection.phase.post": "After battle",
@@ -58,4 +59,8 @@ export const RECOLLECTION_EN = {
   "recollection.summary.stage-2-10-post": "“Can I come along?” Now it is the Researcher's turn to answer.",
   "recollection.summary.stage-1-5-greenhouse-echo": "In the hidden greenhouse, giant pumpkins and sprinklers cause one mishap after another.",
   "recollection.summary.event-great-auk-report": "A skeletal label for the great auk emerges from a North Atlantic specimen case.",
+  "recollection.summary.stage-4-1-pre": "On the platform, two squads share one line as the joint pursuit begins.",
+  "recollection.summary.stage-4-4-pre": "Atra and Amo block the sealed shaft, and Koma says he has not chosen a side.",
+  "recollection.summary.stage-4-10-pre": "In the command room, Koma and Ikanixia stand side by side to block the way.",
+  "recollection.summary.stage-4-10-post": "The retrieval squad withdraws, and Koma says they will meet again on the next list.",
 } as const;

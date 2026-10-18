@@ -6,6 +6,7 @@ export const RECOLLECTION_ID = {
   "recollection.tab.chapter1": "Bab 1",
   "recollection.tab.chapter2": "Bab 2",
   "recollection.tab.chapter3": "Bab 3",
+  "recollection.tab.chapter4": "Bab 4",
   "recollection.tab.side": "Kisah sampingan",
   "recollection.phase.pre": "Sebelum berangkat",
   "recollection.phase.post": "Setelah pertempuran",
@@ -58,4 +59,8 @@ export const RECOLLECTION_ID = {
   "recollection.summary.stage-2-10-post": "“Boleh ikut?” Kini giliran Periset menjawab.",
   "recollection.summary.stage-1-5-greenhouse-echo": "Di rumah kaca tersembunyi, labu raksasa dan penyiram terus membuat ulah.",
   "recollection.summary.event-great-auk-report": "Label kerangka auk besar ditemukan dalam kotak spesimen Atlantik Utara.",
+  "recollection.summary.stage-4-1-pre": "Dua regu berdiri di satu jalur di peron, pengejaran gabungan dimulai.",
+  "recollection.summary.stage-4-4-pre": "Atra dan Amo menghalangi terowongan tersegel, Koma bilang belum memilih pihak.",
+  "recollection.summary.stage-4-10-pre": "Di ruang komando, Koma dan Ikanixia berdiri berdampingan menghalangi jalan.",
+  "recollection.summary.stage-4-10-post": "Regu penjemput mundur, Koma bilang mereka akan bertemu lagi di daftar berikutnya.",
 } as const;

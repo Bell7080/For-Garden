@@ -3549,7 +3549,7 @@ export interface StageEnemyDef {
   /** 플레이어 렐릭과 같은 한계 돌파 공식을 적용할 정수 단계다. */
   breakthrough: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
-  formationSlot: 0 | 1 | 2;
+  formationSlot: 0 | 1 | 2 | 3 | 4;
 }
 
 

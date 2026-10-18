@@ -6,6 +6,7 @@ export const RECOLLECTION_TH = {
   "recollection.tab.chapter1": "บทที่ 1",
   "recollection.tab.chapter2": "บทที่ 2",
   "recollection.tab.chapter3": "บทที่ 3",
+  "recollection.tab.chapter4": "บทที่ 4",
   "recollection.tab.side": "เรื่องเสริม",
   "recollection.phase.pre": "ก่อนออกปฏิบัติการ",
   "recollection.phase.post": "หลังต่อสู้",
@@ -58,4 +59,8 @@ export const RECOLLECTION_TH = {
   "recollection.summary.stage-2-10-post": "“ขอตามไปด้วยได้ไหม?” ถึงคราวนักวิจัยตอบแล้ว",
   "recollection.summary.stage-1-5-greenhouse-echo": "ฟักทองยักษ์และสปริงเกลอร์ก่อเรื่องไม่หยุดในเรือนกระจกลับ",
   "recollection.summary.event-great-auk-report": "พบป้ายโครงกระดูกเกรตออคในกล่องตัวอย่างแอตแลนติกเหนือ",
+  "recollection.summary.stage-4-1-pre": "สองหน่วยยืนบนรางเดียวกันที่ชานชาลา การไล่ล่าร่วมเริ่มต้นขึ้น",
+  "recollection.summary.stage-4-4-pre": "อาตร้าและอาโมขวางอุโมงค์ที่ถูกปิดผนึก โคมะบอกว่าเขายังไม่ได้เลือกข้าง",
+  "recollection.summary.stage-4-10-pre": "ในห้องบัญชาการ โคมะและอิคานิกเซียยืนเคียงกันขวางทาง",
+  "recollection.summary.stage-4-10-post": "หน่วยกู้คืนถอนตัว โคมะบอกว่าจะพบกันอีกในรายชื่อถัดไป",
 } as const;

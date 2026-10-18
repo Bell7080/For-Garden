@@ -35,7 +35,7 @@ export const RECOLLECTION_LAYOUT = {
     /** 판 오른쪽에 은은하게 깔리는 대사 한 줄. */
     echo: { size: 34, alpha: 0.2, right: 40, y: -42, maxWidth: 520 },
   },
-  tab: { width: 250, height: 70, gap: 8, y: (BASE_HEIGHT - 210) / 2 - 110 },
+  tab: { width: 190, height: 70, gap: 6, y: (BASE_HEIGHT - 210) / 2 - 110 },
 } as const;
 
 /** 줄 하나의 중심 y(흐르는 목록 좌표, 창 윗변이 0). */

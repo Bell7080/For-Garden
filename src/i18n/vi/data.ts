@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "Sao Yuti lại bỏ lửng cuối câu mỗi khi gọi 「Đại ca」?",
   "product.premium-raid-pass.grant.2": "Vé đột kích",
 
+  "stage.4-1.name": "Sân ga hợp lưu",
+  "stage.4-2.name": "Lối chuyển tuyến bị đứt",
+  "stage.4-3.name": "Hành lang bảo trì",
+  "stage.4-4.name": "Hầm vận chuyển bị phong tỏa",
+  "stage.4-5.name": "Phòng chờ thu hồi",
+  "stage.4-6.name": "Nhà chứa bị đóng",
+  "stage.4-7.name": "Khu bảo dưỡng ngầm",
+  "stage.4-8.name": "Thang máy rơi tự do",
+  "stage.4-9.name": "Ga cuối tuyến hợp lưu",
+  "stage.4-10.name": "Phòng chỉ huy truy kích",
+  "chapter.4.title": "Khu 4",
+  "chapter.4.subtitle": "Tuyến hợp lưu — Hai nhóm trên cùng một đường ray",
 };

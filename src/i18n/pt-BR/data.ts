@@ -6174,4 +6174,16 @@ export default {
   "story.yuti.q.yuti-title.prompt": "Por que a Yuti deixa a frase pela metade ao dizer \"Chefe\"?",
   "product.premium-raid-pass.grant.2": "Bilhete de raide",
 
+  "stage.4-1.name": "Plataforma de junção",
+  "stage.4-2.name": "Passagem de transferência rompida",
+  "stage.4-3.name": "Passagem de inspeção",
+  "stage.4-4.name": "Galeria de transporte lacrada",
+  "stage.4-5.name": "Sala de espera de recolha",
+  "stage.4-6.name": "Hangar fechado",
+  "stage.4-7.name": "Edifício de manutenção subterrâneo",
+  "stage.4-8.name": "Elevador de queda",
+  "stage.4-9.name": "Fim da linha de junção",
+  "stage.4-10.name": "Sala de comando da perseguição",
+  "chapter.4.title": "Zona 4",
+  "chapter.4.subtitle": "Linha de junção — Dois grupos na mesma via",
 };

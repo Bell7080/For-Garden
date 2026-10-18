@@ -6,6 +6,7 @@ export const RECOLLECTION_PT_BR = {
   "recollection.tab.chapter1": "Capítulo 1",
   "recollection.tab.chapter2": "Capítulo 2",
   "recollection.tab.chapter3": "Capítulo 3",
+  "recollection.tab.chapter4": "Capítulo 4",
   "recollection.tab.side": "Histórias paralelas",
   "recollection.phase.pre": "Antes da saída",
   "recollection.phase.post": "Após a batalha",
@@ -58,4 +59,8 @@ export const RECOLLECTION_PT_BR = {
   "recollection.summary.stage-2-10-post": "“Posso ir junto?” Agora é a vez do pesquisador responder.",
   "recollection.summary.stage-1-5-greenhouse-echo": "Na estufa escondida, abóboras gigantes e aspersores causam acidentes em sequência.",
   "recollection.summary.event-great-auk-report": "Surge uma etiqueta óssea do arau-gigante numa caixa de espécimes do Atlântico Norte.",
+  "recollection.summary.stage-4-1-pre": "Na plataforma, dois esquadrões dividem a mesma linha e a perseguição conjunta começa.",
+  "recollection.summary.stage-4-4-pre": "Atra e Amo bloqueiam o túnel selado, e Koma diz que não escolheu um lado.",
+  "recollection.summary.stage-4-10-pre": "Na sala de comando, Koma e Ikanixia ficam lado a lado bloqueando o caminho.",
+  "recollection.summary.stage-4-10-post": "O grupo de recuperação recua, e Koma diz que se encontrarão na próxima lista.",
 } as const;

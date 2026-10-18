@@ -6,6 +6,7 @@ export const RECOLLECTION_ES = {
   "recollection.tab.chapter1": "Capítulo 1",
   "recollection.tab.chapter2": "Capítulo 2",
   "recollection.tab.chapter3": "Capítulo 3",
+  "recollection.tab.chapter4": "Capítulo 4",
   "recollection.tab.side": "Historias secundarias",
   "recollection.phase.pre": "Antes de salir",
   "recollection.phase.post": "Después del combate",
@@ -58,4 +59,8 @@ export const RECOLLECTION_ES = {
   "recollection.summary.stage-2-10-post": "«¿Puedo ir contigo?» Ahora le toca responder al investigador.",
   "recollection.summary.stage-1-5-greenhouse-echo": "En el invernadero oculto, las calabazas y los aspersores encadenan accidentes.",
   "recollection.summary.event-great-auk-report": "Aparece una etiqueta ósea de alca gigante en una caja de especímenes del Atlántico Norte.",
+  "recollection.summary.stage-4-1-pre": "En el andén, dos escuadras comparten una vía y empieza la persecución conjunta.",
+  "recollection.summary.stage-4-4-pre": "Atra y Amo bloquean el túnel sellado y Koma dice que no ha elegido bando.",
+  "recollection.summary.stage-4-10-pre": "En la sala de mando, Koma e Ikanixia se plantan juntos para cerrar el paso.",
+  "recollection.summary.stage-4-10-post": "El grupo de recuperación se retira y Koma dice que se verán en la próxima lista.",
 } as const;

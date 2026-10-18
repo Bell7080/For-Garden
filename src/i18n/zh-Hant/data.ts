@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "採掘裝備組合",
   "product.premium-excavation.grant.0": "探查券",
   "product.premium-raid-bundle.name": "討伐支援組合",
-  "product.premium-raid-bundle.grant.1": "自選討伐券",
   "product.premium-raid-bundle.grant.0": "討伐券",
   "keyword.burn.term": "灼燒",
   "keyword.burn.description": "每秒受到相當於攻擊力4%的固定傷害。重複施加只會延長持續時間。",

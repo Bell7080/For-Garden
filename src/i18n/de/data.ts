@@ -520,7 +520,6 @@ export default {
   "product.premium-excavation.name": "Grabungsausrüstungs-Bündel",
   "product.premium-excavation.grant.0": "Erkundungsticket",
   "product.premium-raid-bundle.name": "Bezwingungs-Unterstützungspaket",
-  "product.premium-raid-bundle.grant.1": "Wahl-Raid-Ticket",
   "product.premium-raid-bundle.grant.0": "Raid-Ticket",
   "keyword.burn.term": "Verbrennung",
   "keyword.burn.description": "Erleidet jede Sekunde fixen Schaden in Höhe von 4% des Angriffs. Erneutes Auftragen verlängert nur die Dauer.",

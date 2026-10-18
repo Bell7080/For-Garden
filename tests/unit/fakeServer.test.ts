@@ -429,6 +429,26 @@ describe("FakeServer", () => {
     expect(state.wallet.cheesecake).toBe(40);
   });
 
+  it("튜토리얼 전투 조작은 관문의 첫 클리어마다 한 칸씩만 열린다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: ["ultimate"] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    // 오프닝 1-1의 클리어는 궁극기 칸이 따로 열었으므로 칸을 더 열지 않는다.
+    await server.completeStage("1-1", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate"]);
+    // 진 판은 열지 않는다.
+    await server.completeStage("1-2", false);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate"]);
+    // 첫 클리어가 한 칸을 연다.
+    await server.completeStage("1-2", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto"]);
+    // 같은 관문을 되풀이해 깨도 더 열리지 않는다.
+    await server.completeStage("1-2", true); await server.completeStage("1-2", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto"]);
+    // 다음 새 관문이 다음 칸을 연다.
+    await server.completeStage("1-3", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "presentation"]);
+  });
+
   it("첫 승리는 미리보기와 같은 초회 보상 전부를 주고, 룬은 보여 준 자리로 발급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
     const expected = stageFirstClearRewards(getBattleStage("1-5"));

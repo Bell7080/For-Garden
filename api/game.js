@@ -17248,6 +17248,12 @@ function isContentIntroId(value) {
 function isContentIntroSeen(state, id) {
   return state.seenIntroIds?.includes(id) ?? false;
 }
+var BATTLE_FEATURE_STEP = {
+  speed: "speed",
+  auto: "auto",
+  presentation: "presentation",
+  contribution: "contribution"
+};
 var TUTORIAL_REWARDS = {
   // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
   gift: { fossil: 8 }
@@ -17291,6 +17297,14 @@ function nextTutorialStep(state) {
 }
 function canCompleteTutorialStep(state, step2) {
   return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
+}
+function stageClearAdvancesTutorial(stage) {
+  return stage !== void 0 && stage.id !== "1-1" && !stage.sub;
+}
+function advanceTutorialOnStageClear(state) {
+  const next = nextTutorialStep(state);
+  const isBattleStep = next !== void 0 && Object.values(BATTLE_FEATURE_STEP).includes(next);
+  return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
 }
 
 // src/core/achievementState.ts
@@ -31566,7 +31580,9 @@ var FakeServer = class {
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress
     ]));
     const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
-    this.persist({ ...this.state, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
+    const currentTutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial = firstClear && !owningEvent && stageClearAdvancesTutorial(stage) ? advanceTutorialOnStageClear(currentTutorial) : currentTutorial;
+    this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared;
     this.state.wallet = nextWallet;
     this.state.relicProgress = nextProgress;
@@ -31574,6 +31590,7 @@ var FakeServer = class {
     this.state.playerResearch = base.playerResearch;
     this.state.itemInventory = base.itemInventory;
     this.state.runeInventory = nextRunes;
+    this.state.tutorial = nextTutorial;
     if (admissionId) pending?.delete(admissionId);
     if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
     const staminaSpent = spent ? cost : 0;

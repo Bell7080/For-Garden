@@ -32,7 +32,7 @@ import {
 } from "../core/skirmish";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStageEnemies, stageEnemyGrowth, STAGES } from "../data/stages";
+import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth, STAGES } from "../data/stages";
 import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
@@ -86,7 +86,7 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { tutorialManager } from "../managers/TutorialManager";
-import { BATTLE_FEATURE_STEP, type BattleTutorialFeature } from "../core/tutorial";
+import { BATTLE_FEATURE_STEP, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
@@ -527,7 +527,7 @@ export class BattleScene extends Phaser.Scene {
     setDebugScene("battle");
     this.introBattleFlag = this.battleInput.mode === "stage"
       && (this.battleInput.epilogueStoryId !== undefined || tutorialManager.next() === "ultimate");
-    this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag ? tutorialManager.featureToTeach() : undefined;
+    this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag && this.stageTeachesTutorial() ? tutorialManager.featureToTeach() : undefined;
     this.featureSpotlight = undefined;
     this.featureTaught = false;
     // Phaser가 같은 Scene 인스턴스를 다시 쓰므로 지난 판의 요청/UI 잠금을 새 전투로 넘기지 않는다.
@@ -1664,10 +1664,17 @@ export class BattleScene extends Phaser.Scene {
     if (feature !== this.teachFeature || !this.featureSpotlight) return;
     this.featureSpotlight.destroy();
     this.featureSpotlight = undefined;
-    // 칸 저장이 늦거나 실패해도 이 판 안에서는 다시 가리키지 않고 조작도 닫히지 않는다.
+    // 칸은 여기서 마치지 않는다 — 서버가 이 관문의 첫 클리어를 확정할 때 한 칸만 연다(`completeStage`).
+    // 이 판 안에서는 다시 가리키지 않고 조작도 닫히지 않으며, 클리어 전에 나가면 다음 입장에서 다시 알려 준다.
     this.featureTaught = true;
     this.lastStepAt = performance.now();
-    void tutorialManager.complete(BATTLE_FEATURE_STEP[feature]);
+  }
+
+  /** 이 관문이 전투 조작을 알려 줄 자리인가: 아직 못 깬 본편 관문만이다(깬 관문·SUB·이벤트는 칸을 열지 못한다). */
+  private stageTeachesTutorial(): boolean {
+    const stageId = session.selectedStageId;
+    if (!stageId || session.cleared.has(stageId)) return false;
+    try { return stageClearAdvancesTutorial(getStage(stageId)); } catch { return false; }
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */

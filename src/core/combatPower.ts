@@ -30,3 +30,20 @@ const WEIGHTS: Readonly<Record<keyof Stats, number>> = {
 export function combatPower(stats: Stats): number {
   return Math.round((Object.keys(WEIGHTS) as (keyof Stats)[]).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
 }
+
+/** 편성이 한 번에 맞서는 자리 수. 아군 전투력 합은 이 수만큼의 개체로 셈한다. */
+export const POWER_COMPARISON_SLOTS = 3;
+
+/**
+ * 적 한 무리의 표시 전투력 — **아군 편성(셋)과 같은 머릿수로 맞춘 합**이다.
+ *
+ * 마주 서는 아군 합은 늘 셋의 합인데, 열다섯이 몰려오는 던전(치즈케이크 대작전)의 적 전투력을
+ * 열다섯의 합으로 적으면 개체 하나하나는 약해도 숫자만 부풀어 아군 합과 같은 척도로 읽히지
+ * 않는다. 셋 이하로 서는 자리(스토리·정예·보스)는 예전처럼 합 그대로이고, 셋보다 많이 서면
+ * 개체 평균 × 셋이다. 표시 전용이며 전투에는 쓰지 않는다.
+ */
+export function groupCombatPower(stats: readonly Stats[], slots: number = POWER_COMPARISON_SLOTS): number {
+  if (stats.length === 0) return 0;
+  const total = stats.reduce((sum, entry) => sum + combatPower(entry), 0);
+  return stats.length <= slots ? total : Math.round(total * slots / stats.length);
+}

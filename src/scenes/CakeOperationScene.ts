@@ -9,7 +9,7 @@ import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
 import { openDungeonSweep } from "./dungeonSweepFlow";
-import { combatPower } from "../core/combatPower";
+import { groupCombatPower } from "../core/combatPower";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
@@ -117,7 +117,7 @@ export class CakeOperationScene extends Phaser.Scene {
           id: entry.id, name: entry.name, level: cakeOperationEnemyDisplayLevel(entry).level,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
-          enemyPower: enemies.reduce((sum, def) => sum + combatPower(def.stats), 0),
+          enemyPower: groupCombatPower(enemies.map((def) => def.stats)),
           unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
         };
       }),

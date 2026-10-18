@@ -800,6 +800,9 @@ export class InteractionCityPopup {
         title: t("interaction.rewardTitle"),
         items: currencyRecordToRewardItems(Object.fromEntries(response.granted.map(({ currency, amount }) => [currency, amount]))),
       });
-    } finally { this.busy = false; }
+    } finally {
+      // 실패해도 버튼이 「수령 중…」에 갇히지 않게 다시 그린다. 성공 뒤에는 판이 닫혀 render가 아무것도 하지 않는다.
+      this.busy = false; this.render();
+    }
   }
 }

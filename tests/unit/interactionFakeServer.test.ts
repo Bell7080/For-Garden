@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
+import { INTERACTION_CITIES } from "../../src/data/interactionCities";
 import { createDefaultSession } from "../../src/state/session";
 
 /** FakeServer도 시작 시각 소유와 완료 수령 멱등성을 실제 API 호출로 고정한다. */
@@ -38,5 +39,19 @@ describe("FakeServer interaction API", () => {
     now = new Date(dispatch.completesAt);
     const claim = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: "all-lines" });
     expect(claim.granted).toEqual(dispatch.rewards);
+  });
+
+  it("일지 원고가 없는 도시도 수령이 실패하지 않고 보상만 확정한다", async () => {
+    for (const { id } of INTERACTION_CITIES) {
+      let now = new Date("2026-09-03T00:00:00.000Z"); const state = createDefaultSession();
+      state.playerResearch = { ...state.playerResearch, level: 99 };
+      const city = INTERACTION_CITIES.find((candidate) => candidate.id === id)!;
+      if (city.unlock.stageId) state.cleared.add(city.unlock.stageId);
+      const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => now });
+      await server.startInteractionDispatch({ cityId: id, party: ["torika"] });
+      const dispatch = (await server.getInteractionDispatch()).dispatches[0]!; now = new Date(dispatch.completesAt);
+      const claim = await server.claimInteractionDispatch({ dispatchId: dispatch.dispatchId, requestId: `claim-${id}` });
+      expect(claim.alreadyClaimed, id).toBe(false);
+    }
   });
 });

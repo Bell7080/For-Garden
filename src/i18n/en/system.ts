@@ -76,4 +76,7 @@ export const SYSTEM_EN = {
   "error.persist.expeditionScore": "Could not save the expedition score.",
   "mail.subscription.title": "{product} daily supply",
   "mail.subscription.body": "Your daily login reward. Claim your ticket before this mail expires.",
+  "ad.temp.title": "Playing a temporary ad!",
+  "ad.temp.done": "All done!",
+  "ad.temp.claim": "Claim ad reward!",
 } as const;

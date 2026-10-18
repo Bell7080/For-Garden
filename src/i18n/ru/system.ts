@@ -76,4 +76,7 @@ export const SYSTEM_RU = {
   "error.persist.expeditionScore": "Не удалось сохранить очки экспедиции.",
   "mail.subscription.title": "Ежедневное снабжение {product}",
   "mail.subscription.body": "Награда за ежедневный вход. Заберите билет до истечения срока почты.",
+  "ad.temp.title": "Идёт временная реклама!",
+  "ad.temp.done": "Готово!",
+  "ad.temp.claim": "Забрать награду за рекламу!",
 } as const;

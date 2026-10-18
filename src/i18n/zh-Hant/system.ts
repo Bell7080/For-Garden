@@ -76,4 +76,7 @@ export const SYSTEM_ZH_HANT = {
   "error.persist.expeditionScore": "無法儲存遠征分數。",
   "mail.subscription.title": "{product}每日補給",
   "mail.subscription.body": "今天的登入獎勵。請在郵件過期前領取票券。",
+  "ad.temp.title": "正在播放臨時廣告！",
+  "ad.temp.done": "看完啦！",
+  "ad.temp.claim": "領取廣告獎勵！",
 } as const;

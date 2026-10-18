@@ -76,4 +76,7 @@ export const SYSTEM_TH = {
   "error.persist.expeditionScore": "บันทึกคะแนนออกสำรวจไม่ได้",
   "mail.subscription.title": "เสบียงประจำวัน {product}",
   "mail.subscription.body": "รางวัลเข้าสู่ระบบวันนี้ รับตั๋วก่อนจดหมายหมดอายุ",
+  "ad.temp.title": "กำลังเล่นโฆษณาชั่วคราว!",
+  "ad.temp.done": "เสร็จแล้ว!",
+  "ad.temp.claim": "รับรางวัลโฆษณา!",
 } as const;

@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { EffectManager } from "../managers/EffectManager";
 import { setOverlayEffects } from "../managers/overlayEffects";
+import { setTempAdPlayer } from "../platform/rewardedAds";
+import { playTempAdPopup } from "../ui/TempAdPopup";
 
 /**
  * 누른 자리에 답하는 얇은 겹 하나.
@@ -33,7 +35,9 @@ export class EffectOverlayScene extends Phaser.Scene {
     // 팝업이 제 씬에 파티클을 만들면 깊이 2000대의 판 아래에 묻히고, 화면마다 매니저를 하나 더
     // 만들면 emitter가 화면 수만큼 늘어난다.
     setOverlayEffects(this.effects);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setOverlayEffects(undefined));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { setOverlayEffects(undefined); setTempAdPlayer(undefined); });
+    // E2E(test 모드)는 3초를 기다리지 않는다 — 팝업 없이 곧바로 광고를 본 것으로 친다.
+    if (import.meta.env?.MODE !== "test") setTempAdPlayer(() => playTempAdPopup(this));
     this.scene.bringToTop();
     // 모바일 우선 입력이라 손이 닿는 순간 답한다 — 떼는 순간까지 기다리면 눌린 느낌이 늦다.
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {

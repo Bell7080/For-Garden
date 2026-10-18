@@ -76,4 +76,7 @@ export const SYSTEM_DE = {
   "error.persist.expeditionScore": "Die Expedition-Punkte konnten nicht gespeichert werden.",
   "mail.subscription.title": "Täglicher Vorrat: {product}",
   "mail.subscription.body": "Deine tägliche Anmeldebelohnung. Ticket vor Ablauf der Post abholen.",
+  "ad.temp.title": "Temporäre Werbung läuft!",
+  "ad.temp.done": "Geschafft!",
+  "ad.temp.claim": "Werbebelohnung abholen!",
 } as const;

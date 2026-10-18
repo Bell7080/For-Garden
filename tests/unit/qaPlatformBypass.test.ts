@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { QA_TOOLS_ENABLED } from "../../src/core/buildFlavor";
-import { presentRewardedAd } from "../../src/platform/rewardedAds";
+import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../../src/core/tempAd";
+import { presentRewardedAd, setTempAdPlayer } from "../../src/platform/rewardedAds";
 import { platformPayment } from "../../src/platform/payment";
 import { PRODUCTS } from "../../src/data/shopCatalog";
 
@@ -13,5 +14,32 @@ describe("QA 빌드의 광고·결제 우회", () => {
     const result = await platformPayment().requestPayment(product.acquisition.platformProductId);
     expect(result.status).toBe("completed");
     if (result.status === "completed") expect(result.receipt.payload.startsWith(`verified-receipt:${product.id}:`)).toBe(true);
+  });
+
+  it("임시 광고 팝업이 걸려 있으면 그것이 끝난 뒤에야 광고 완료와 같은 토큰을 돌려준다", async () => {
+    let finished = false;
+    setTempAdPlayer(async () => { await Promise.resolve(); finished = true; return true; });
+    try {
+      const result = await presentRewardedAd("gold-ad");
+      expect(finished).toBe(true);
+      expect(result).toEqual({ status: "completed", verificationToken: "verified:gold-ad" });
+    } finally {
+      setTempAdPlayer(undefined);
+    }
+  });
+
+  it("임시 광고 팝업이 보상을 받기 전에 닫히면 보상 없이 닫힘으로 끝난다", async () => {
+    setTempAdPlayer(async () => false);
+    try {
+      expect(await presentRewardedAd("gold-ad")).toEqual({ status: "dismissed", reason: "temp_ad_closed" });
+    } finally {
+      setTempAdPlayer(undefined);
+    }
+  });
+
+  it("임시 광고 토큰은 슬롯마다 따로 만들어진다", () => {
+    expect(TEMP_AD_REWARD_ENABLED).toBe(true);
+    expect(tempAdToken("gold-ad")).toBe("temp-ad:gold-ad");
+    expect(tempAdToken("gold-ad")).not.toBe(tempAdToken("gem-ad"));
   });
 });

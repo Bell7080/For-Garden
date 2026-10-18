@@ -76,4 +76,7 @@ export const SYSTEM_VI = {
   "error.persist.expeditionScore": "Không thể lưu điểm Viễn chinh.",
   "mail.subscription.title": "Tiếp tế hằng ngày {product}",
   "mail.subscription.body": "Thưởng đăng nhập hôm nay. Nhận vé trước khi Thư hết hạn.",
+  "ad.temp.title": "Đang phát quảng cáo tạm thời!",
+  "ad.temp.done": "Xem xong rồi!",
+  "ad.temp.claim": "Nhận thưởng quảng cáo!",
 } as const;

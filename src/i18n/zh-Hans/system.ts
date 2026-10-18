@@ -76,4 +76,7 @@ export const SYSTEM_ZH_HANS = {
   "error.persist.expeditionScore": "无法保存远征分数。",
   "mail.subscription.title": "{product}每日补给",
   "mail.subscription.body": "今天的登录奖励。请在邮件过期前领取票券。",
+  "ad.temp.title": "正在播放临时广告！",
+  "ad.temp.done": "看完啦！",
+  "ad.temp.claim": "领取广告奖励！",
 } as const;

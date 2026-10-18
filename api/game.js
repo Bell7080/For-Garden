@@ -2448,7 +2448,10 @@ var SYSTEM_KO = {
   "error.persist.state": "\uAC8C\uC784 \uC0C1\uD0DC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "error.persist.expeditionScore": "\uC6D0\uC815 \uC810\uC218\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "mail.subscription.title": "{product} \uC77C\uC77C \uBCF4\uAE09",
-  "mail.subscription.body": "\uC624\uB298 \uC811\uC18D \uBCF4\uC0C1\uC785\uB2C8\uB2E4. \uC6B0\uD3B8 \uBCF4\uAD00 \uAE30\uAC04 \uC548\uC5D0 \uD2F0\uCF13\uC744 \uBC1B\uC544 \uC8FC\uC138\uC694."
+  "mail.subscription.body": "\uC624\uB298 \uC811\uC18D \uBCF4\uC0C1\uC785\uB2C8\uB2E4. \uC6B0\uD3B8 \uBCF4\uAD00 \uAE30\uAC04 \uC548\uC5D0 \uD2F0\uCF13\uC744 \uBC1B\uC544 \uC8FC\uC138\uC694.",
+  "ad.temp.title": "\uC784\uC2DC \uAD11\uACE0 \uC7AC\uC0DD \uC911!",
+  "ad.temp.done": "\uB2E4 \uBD24\uC5B4\uC694!",
+  "ad.temp.claim": "\uAD11\uACE0 \uBCF4\uC0C1 \uBC1B\uAE30!"
 };
 
 // src/i18n/ko/raid.ts
@@ -25789,6 +25792,13 @@ function serverNow() {
   return new Date(Date.now() + offsetMs);
 }
 
+// src/core/tempAd.ts
+init_define_import_meta_env();
+var TEMP_AD_REWARD_ENABLED = true;
+function tempAdToken(slotId) {
+  return `temp-ad:${slotId}`;
+}
+
 // src/core/gacha.ts
 init_define_import_meta_env();
 function pullCost(banner, count2) {
@@ -29649,7 +29659,7 @@ var FakeServer = class {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
-    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}`);
+    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}` || TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
     this.guildBackend = options.guild ?? localGuildBackend;

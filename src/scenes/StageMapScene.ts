@@ -191,6 +191,17 @@ export class StageMapScene extends Phaser.Scene {
     return isSubNode(stage) ? (stage.chapterOrder ?? 1) - 1 : index;
   }
 
+  /**
+   * 노드의 가로 자리. 본편은 세로축 양옆으로 교차하고, 서브는 **갈라져 나온 본편 관문의 반대편**으로 뻗는다 —
+   * 같은 쪽으로 뻗으면 서브의 가지선이 그 본편 노드를 지나가 두 길이 한 줄로 겹쳐 보인다.
+   */
+  private nodeX(stage: StageDef, index: number): number {
+    const cx = BASE_WIDTH / 2;
+    const mainOffset = (row: number): number => (row % 2 === 0 ? -110 : 110);
+    if (!isSubNode(stage)) return cx + mainOffset(index);
+    return cx + (mainOffset(this.rowOf(stage, index)) < 0 ? 360 : -360);
+  }
+
   /** 서브 노드가 열려 있는가·읽었는가. 전투 관문은 클리어 기록이 말한다. */
   private isCompleted(stage: StageDef): boolean {
     return stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
@@ -227,8 +238,8 @@ export class StageMapScene extends Phaser.Scene {
     chapterStages.forEach((stage, index) => {
       const mainIndex = this.rowOf(stage, index);
       const y = -mainIndex * NODE_GAP;
-      // 서브 칩은 1-5에서 옆으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
-      const x = isSubNode(stage) ? cx + 360 : cx + (index % 2 === 0 ? -110 : 110);
+      // 서브 칩은 갈라진 본편 관문의 반대편으로 뻗고 본편은 기존 세로축의 교차 배치를 유지한다.
+      const x = this.nodeX(stage, index);
       const unlocked = isStageUnlocked(stage.id);
       const cleared = this.isCompleted(stage);
 

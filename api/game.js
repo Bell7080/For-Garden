@@ -392,20 +392,7 @@ var SETTINGS_KO = {
   "settings.action.confirm": "\uD655\uC778",
   "settings.action.reset": "\uCD08\uAE30\uD654",
   "settings.action.next": "\uB2E4\uC74C",
-  "settings.debug.grantAll": "\uBAA8\uB4E0 \uCE90\uB9AD\uD130 \uD68D\uB4DD",
-  "settings.debug.maxLevel": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8 \uB9CC\uB819 \xB7 \uBAA8\uB4E0 \uCF58\uD150\uCE20 \uAC1C\uBC29",
-  "settings.debug.maxLevelDone": "\uD50C\uB808\uC774\uC5B4 \uB808\uBCA8\uC744 LV.{level}\uB85C \uC62C\uB838\uC2B5\uB2C8\uB2E4. \uB85C\uBE44\uB85C \uB3CC\uC544\uAC00\uBA74 \uC5F4\uB9B0 \uCF58\uD150\uCE20\uAC00 \uB098\uD0C0\uB0A9\uB2C8\uB2E4.",
-  "settings.debug.maxLevelAlready": "\uC774\uBBF8 LV.{level}\uC785\uB2C8\uB2E4.",
-  "settings.debug.unlockStories": "\uC720\uB300 10 \xB7 \uC9C8\uBB38/\uC2A4\uD1A0\uB9AC \uC804\uCCB4 \uAC1C\uBC29",
-  "settings.debug.unlockedStories": "\uC720\uB300\uB97C \uC62C\uB9B0 \uCE90\uB9AD\uD130 {count}\uBA85. \uBAA8\uB4E0 \uAD00\uCC30 \uC9C8\uBB38\uACFC \uC560\uCC29 \uC2A4\uD1A0\uB9AC\uAC00 \uC5F4\uB838\uC2B5\uB2C8\uB2E4.",
-  "settings.debug.breakthroughSet": "\uD1A0\uB9AC\uCE74 \uB3CC\uD30C \uC138\uD2B8",
-  "settings.debug.breakthroughTitle": "\uB3CC\uD30C \uC138\uD2B8",
-  "settings.debug.breakthroughSuffix": " \uB3CC\uD30C \uC138\uD2B8",
-  "settings.debug.needOwned": "\uBA3C\uC800 \uADF8 \uCE90\uB9AD\uD130\uB97C \uBCF4\uC720\uD574\uC57C \uD569\uB2C8\uB2E4.",
-  "settings.debug.granted": "{name} \uD30C\uD3B8 {fragments}\uAC1C\uC640 \uCE58\uC988\uCF00\uC774\uD06C {cheesecake}\uAC1C\uB97C \uC9C0\uAE09\uD588\uC2B5\uB2C8\uB2E4. \uAE09\uC5EC\uB85C \uC0C1\uD55C\uAE4C\uC9C0 \uC62C\uB9B0 \uB4A4 \uB3CC\uD30C \uB4F1\uAE09 \uC606\uC758 \uD55C\uACC4 \uB3CC\uD30C\uB97C \uB204\uB985\uB2C8\uB2E4.",
-  "settings.debug.alreadyMax": "\uC774\uBBF8 \uB3CC\uD30C \uB4F1\uAE09 V\uAE4C\uC9C0 \uD0A4\uC6B4 \uCE90\uB9AD\uD130\uC785\uB2C8\uB2E4.",
-  "settings.debug.grantedRelics": "\uC0C8 \uCE90\uB9AD\uD130 {count}\uBA85\uC744 \uBCF4\uC720 \uCC98\uB9AC\uD588\uC2B5\uB2C8\uB2E4.",
-  "settings.debug.alreadyAll": "\uC774\uBBF8 \uBAA8\uB4E0 \uCE90\uB9AD\uD130\uB97C \uBCF4\uC720\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4."
+  "settings.debug.grantedRelics": "\uC0C8 \uCE90\uB9AD\uD130 {count}\uBA85\uC744 \uBCF4\uC720 \uCC98\uB9AC\uD588\uC2B5\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/lobby.ts
@@ -2889,8 +2876,60 @@ var SUPPORT_KO = {
   "settings.support.inquiry": "\uACE0\uAC1D \uBB38\uC758"
 };
 
+// src/i18n/ko/debug.ts
+init_define_import_meta_env();
+var DEBUG_KO = {
+  "settings.debug.open": "\uB514\uBC84\uADF8 \uB3C4\uAD6C",
+  "settings.debug.title": "\uB514\uBC84\uADF8",
+  "settings.debug.menu.currency": "\uC7AC\uD654 \uC9C0\uAE09",
+  "settings.debug.menu.playerLevel": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 \uC124\uC815",
+  "settings.debug.menu.chapters": "\uC2A4\uD14C\uC774\uC9C0 \uD074\uB9AC\uC5B4 \uCC98\uB9AC",
+  "settings.debug.menu.grantRelic": "\uCE90\uB9AD\uD130 \uD68D\uB4DD",
+  "settings.debug.menu.relicLevel": "\uCE90\uB9AD\uD130 \uB808\uBCA8 \uC124\uC815",
+  "settings.debug.menu.relicBreakthrough": "\uCE90\uB9AD\uD130 \uB3CC\uD30C \uB4F1\uAE09 \uC124\uC815",
+  "settings.debug.menu.relicBond": "\uCE90\uB9AD\uD130 \uC720\uB300 \uC124\uC815",
+  "settings.debug.menu.relicFragments": "\uCE90\uB9AD\uD130 \uD30C\uD3B8 \uC9C0\uAE09",
+  "settings.debug.menu.breakthroughSet": "\uB3CC\uD30C \uC7AC\uB8CC \uC138\uD2B8 \uC9C0\uAE09",
+  "settings.debug.menu.unlockStories": "\uC720\uB300 10 \xB7 \uC9C8\uBB38/\uC2A4\uD1A0\uB9AC \uC804\uCCB4 \uAC1C\uBC29",
+  "settings.debug.pick.currency": "\uC7AC\uD654 \uC120\uD0DD",
+  "settings.debug.pick.amount": "\uC218\uB7C9 \uC120\uD0DD",
+  "settings.debug.pick.level": "\uB808\uBCA8 \uC120\uD0DD",
+  "settings.debug.pick.grade": "\uB3CC\uD30C \uB4F1\uAE09 \uC120\uD0DD",
+  "settings.debug.pick.bond": "\uC720\uB300 \uB808\uBCA8 \uC120\uD0DD",
+  "settings.debug.pick.chapter": "\uC5EC\uAE30\uAE4C\uC9C0 \uD074\uB9AC\uC5B4",
+  "settings.debug.pick.relic": "\uCE90\uB9AD\uD130 \uC120\uD0DD",
+  "settings.debug.pick.ownedRelic": "\uBCF4\uC720 \uCE90\uB9AD\uD130 \uC120\uD0DD",
+  "settings.debug.pick.newRelic": "\uBBF8\uBCF4\uC720 \uCE90\uB9AD\uD130 \uC120\uD0DD",
+  "settings.debug.allOwned": "\uBCF4\uC720\uD55C \uBAA8\uB4E0 \uCE90\uB9AD\uD130",
+  "settings.debug.allRelics": "\uBAA8\uB4E0 \uCE90\uB9AD\uD130",
+  "settings.debug.prevPage": "\u25C2 \uC774\uC804",
+  "settings.debug.nextPage": "\uB2E4\uC74C \u25B8",
+  "settings.debug.fill": "\uC0C1\uD55C\uAE4C\uC9C0 \uCC44\uC6B0\uAE30",
+  "settings.debug.zero": "0\uC73C\uB85C \uBE44\uC6B0\uAE30",
+  "settings.debug.chapter": "{chapter}\uC7A5\uAE4C\uC9C0",
+  "settings.debug.grade": "\uB3CC\uD30C \uB4F1\uAE09 {grade}",
+  "settings.debug.bond": "\uC720\uB300 {level}",
+  "settings.debug.level": "LV.{level}",
+  "settings.debug.currency.fossil": "\uD654\uC11D",
+  "settings.debug.currency.amber": "\uD638\uBC15\uC11D",
+  "settings.debug.currency.gems": "\uC82C",
+  "settings.debug.currency.gold": "\uACE8\uB4DC",
+  "settings.debug.currency.stamina": "\uC2A4\uD14C\uBBF8\uB098",
+  "settings.debug.currency.cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C",
+  "settings.debug.currency.rawStone": "\uC6D0\uC11D",
+  "settings.debug.currency.dnaFragments": "DNA \uB9C8\uC77C\uB9AC\uC9C0",
+  "settings.debug.currency.raidSigil": "\uD1A0\uBC8C \uC99D\uD45C",
+  "settings.debug.currency.salvageRecord": "\uC778\uC591 \uAE30\uB85D",
+  "settings.debug.currency.duelEmblem": "\uD22C\uC0AC\uC758 \uD718\uC7A5",
+  "settings.debug.done": "\uC801\uC6A9\uD588\uC2B5\uB2C8\uB2E4. \uBC14\uB010 \uB300\uC0C1 {count}\uAC1C.",
+  "settings.debug.nothing": "\uC774\uBBF8 \uADF8 \uAC12\uC774\uB77C \uBC14\uB010 \uAC83\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.debug.failed": "\uC801\uC6A9\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uAC1C\uBC1C \uB3C4\uAD6C\uAC00 \uCF1C\uC9C4 \uC11C\uBC84\uC778\uC9C0 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "settings.debug.noOwned": "\uBCF4\uC720\uD55C \uCE90\uB9AD\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "settings.debug.noNew": "\uBBF8\uBCF4\uC720 \uCE90\uB9AD\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+};
+
 // src/i18n/ko/index.ts
-var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO };
+var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -4376,8 +4415,8 @@ function initializeSkirmishAugments(state) {
       if (effect.payload.kind !== "shield" || !consumeAugmentTrigger(state, fighter, key, effect)) continue;
       const living = state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally));
       const lowest = living.slice().sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-      const targets = effect.limits.target === "allAllies" ? living : effect.limits.target === "lowestHpAlly" ? lowest ? [lowest] : [] : [fighter];
-      for (const target of targets) {
+      const targets2 = effect.limits.target === "allAllies" ? living : effect.limits.target === "lowestHpAlly" ? lowest ? [lowest] : [] : [fighter];
+      for (const target of targets2) {
         grantShield(state, target, fighter.id, target.maxHp * effect.payload.maxHpPercent / 100, events);
       }
     }
@@ -6267,8 +6306,8 @@ function tickUltimateBreakthrough(fighter, dt, state, events) {
   const radius = "radius" in ultimate && typeof ultimate.radius === "number" ? ultimate.radius : Number.POSITIVE_INFINITY;
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { ...ultimate, power: ultimate.power * effect.powerPercent / 100, isCritical: false, kind: "ultimate" };
-  const targets = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && Math.hypot(other.x - fighter.x, other.y - fighter.y) <= radius);
-  if (targets.length === 0) return;
+  const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && Math.hypot(other.x - fighter.x, other.y - fighter.y) <= radius);
+  if (targets2.length === 0) return;
   events.push({
     kind: "areaImpact",
     attackerId: fighter.id,
@@ -6276,7 +6315,7 @@ function tickUltimateBreakthrough(fighter, dt, state, events) {
     damageType: ultimate.damageType,
     area: Number.isFinite(radius) ? { shape: "radial", x: fighter.x, y: fighter.y, radius } : { shape: "battlefield" }
   });
-  for (const other of targets) {
+  for (const other of targets2) {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
@@ -8392,8 +8431,8 @@ function tickArrowEchoes(fighter, dt, state, events) {
     if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) continue;
     const attacker = { ...fighter, def: offensiveDefinition(fighter) };
     const input = { ...skill, power: skill.power, isCritical: false, kind: "basic" };
-    const targets = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).sort((a, b) => Math.hypot(a.x - echo.x, a.y - echo.y) - Math.hypot(b.x - echo.x, b.y - echo.y)).slice(0, Math.max(1, skill.maxTargets ?? 1));
-    for (const other of targets) {
+    const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).sort((a, b) => Math.hypot(a.x - echo.x, a.y - echo.y) - Math.hypot(b.x - echo.x, b.y - echo.y)).slice(0, Math.max(1, skill.maxTargets ?? 1));
+    for (const other of targets2) {
       const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
       const resolution = resolveReceivedDamage(other, raw);
       const hpBefore = other.hp;
@@ -9044,19 +9083,19 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       skill: { ...skill, power: skill.power * arrowBreakthrough.powerPercent / 100 }
     });
   }
-  const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0) && (!cursed || fighter.curse !== null) && (skill.targeting === "battlefieldEnemies" || skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0) || skill.targeting === "splitShot" && splitTargetIds.has(fighter.id) || skill.targeting === "targetedCircle" && inCircle(fighter) || skill.targeting === "chargeLine" && inCharge(fighter)));
-  const distinctTargets = targets.length;
+  const targets2 = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0) && (!cursed || fighter.curse !== null) && (skill.targeting === "battlefieldEnemies" || skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0) || skill.targeting === "splitShot" && splitTargetIds.has(fighter.id) || skill.targeting === "targetedCircle" && inCircle(fighter) || skill.targeting === "chargeLine" && inCharge(fighter)));
+  const distinctTargets = targets2.length;
   if (skill.repeatOnLone === true && skill.targeting === "splitShot" && distinctTargets > 0 && distinctTargets < forkCount) {
-    for (let fill = 0; targets.length < forkCount; fill += 1) targets.push(targets[fill % distinctTargets]);
+    for (let fill = 0; targets2.length < forkCount; fill += 1) targets2.push(targets2[fill % distinctTargets]);
   }
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== void 0 ? aliveFighters(state, attacker.side).filter(inCircle) : [];
-  if (targets.length === 0 && healingTargets.length === 0) return;
-  const supportiveOnly = targets.length === 0 && healingTargets.length > 0;
+  if (targets2.length === 0 && healingTargets.length === 0) return;
+  const supportiveOnly = targets2.length === 0 && healingTargets.length > 0;
   const impactArea = skill.targeting === "battlefieldEnemies" ? { shape: "battlefield" } : skill.targeting === "splitShot" ? {
     shape: "radial",
     x: requestedCenter.x,
     y: requestedCenter.y,
-    radius: Math.max(SKIRMISH.spacing, ...targets.map((fighter) => Math.hypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y)))
+    radius: Math.max(SKIRMISH.spacing, ...targets2.map((fighter) => Math.hypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y)))
   } : charge ? { shape: "lane", from: charge.from, to: charge.to, halfWidth: skill.radius ?? 0 } : (skill.radius ?? 0) > 0 ? { shape: "radial", x: center.x, y: center.y, radius: skill.radius ?? 0 } : void 0;
   if (impactArea) {
     events.push({
@@ -9092,7 +9131,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   let sharedShieldSource = 0;
   const sutured = !useUltimate && !free && consumeSutureReady(attacker);
   let suturedTotal = 0;
-  for (const [index, target] of targets.entries()) {
+  for (const [index, target] of targets2.entries()) {
     if (index >= distinctTargets && !isFighterAlive(target)) continue;
     const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0) + vitalSketchCritPoints(state, attacker, target) + feverCritPoints(attacker));
     const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen" && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
@@ -9190,7 +9229,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     if (sutured) suturedTotal += hpBefore - target.hp + sutureBonusStrike(attacker, target, state, events);
   }
   if (sutured) stitchSuture(attacker, suturedTotal, state, events);
-  if (!useUltimate) pressNearestStruck(attacker, targets, state, events);
+  if (!useUltimate) pressNearestStruck(attacker, targets2, state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
   shareShieldFromDamage(attacker, "allyShieldFromDamagePercent" in skill ? skill.allyShieldFromDamagePercent : void 0, sharedShieldSource, state, events);
   const ultimateShield = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
@@ -17621,7 +17660,7 @@ init_define_import_meta_env();
 var gems = (amount) => ({ currency: "gems", amount });
 var gold = (amount) => ({ currency: "gold", amount });
 var cheesecake = (amount) => ({ currency: "cheesecake", amount });
-var tiers = (targets, rewards) => targets.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
+var tiers = (targets2, rewards) => targets2.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
 var ACHIEVEMENT_SERIES = [
   // ── 성장 ──
   { id: "wealth", category: "growth", metric: "goldPeak", tiers: tiers([1e4, 1e5, 1e6, 1e7, 1e8], [gems(5), gems(10), gems(20), gems(40), gems(80)]), modifierId: "millionaire" },
@@ -26993,8 +27032,8 @@ function augmentAvailable(augmentId, prior) {
   });
 }
 function generateExpeditionAugmentOffers(input) {
-  const targets = eligibleExpeditionTargets(input.relics);
-  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && (def.target === "party" || targets.length > 0) && augmentAvailable(def.id, input.selections));
+  const targets2 = eligibleExpeditionTargets(input.relics);
+  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && (def.target === "party" || targets2.length > 0) && augmentAvailable(def.id, input.selections));
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const chosen = Math.floor(input.random() * (index + 1));
     [pool[index], pool[chosen]] = [pool[chosen], pool[index]];
@@ -27002,7 +27041,7 @@ function generateExpeditionAugmentOffers(input) {
   const requestedCount = Math.max(0, Math.floor(input.candidateCount ?? 3));
   return pool.slice(0, requestedCount).map((def) => ({
     augmentId: def.id,
-    eligibleTargetRelicIds: def.target === "relic" ? targets : []
+    eligibleTargetRelicIds: def.target === "relic" ? targets2 : []
   }));
 }
 function validateExpeditionAugmentChoice(offer, selection, prior) {
@@ -27905,6 +27944,129 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   next.defenseSimAt = new Date(simMs + due * interval).toISOString();
   next.history = [...[...entries].reverse(), ...next.history].slice(0, DUEL_HISTORY_LIMIT);
   return { state: next, entries, reachedTiers };
+}
+
+// src/core/debugCommand.ts
+init_define_import_meta_env();
+function breakthroughForLevel(level) {
+  for (let b = 0; b <= BREAKTHROUGH_CAP; b += 1) if (relicLevelCap(b) >= level) return b;
+  return BREAKTHROUGH_CAP;
+}
+function ownedProgress(target, relicId) {
+  const progress = target.relicProgress[relicId];
+  if (!target.owned.has(relicId) || !progress) throw new Error(`\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4: ${relicId}`);
+  return progress;
+}
+function targets(target, relicId) {
+  return relicId === "owned" ? [...target.owned].filter((id) => target.relicProgress[id]) : (ownedProgress(target, relicId), [relicId]);
+}
+function integer(value, min, max) {
+  if (!Number.isFinite(value)) throw new RangeError("\uC22B\uC790\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+  return Math.max(min, Math.min(max, Math.floor(value)));
+}
+function applyDebugCommand(target, command, rules) {
+  switch (command.kind) {
+    case "currency": {
+      if (!(command.key in rules.walletCaps)) throw new Error("\uC54C \uC218 \uC5C6\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.");
+      const cap = rules.walletCaps[command.key];
+      const amount = integer(command.amount, 0, cap);
+      const next = command.mode === "set" ? amount : Math.min(cap, target.wallet[command.key] + amount);
+      const changed = next !== target.wallet[command.key];
+      target.wallet[command.key] = next;
+      return changed ? 1 : 0;
+    }
+    case "playerLevel": {
+      const level = integer(command.level, 1, PLAYER_LEVEL_CAP);
+      if (target.playerResearch.level === level) return 0;
+      target.playerResearch = normalizePlayerLevel({ level, experience: 0 });
+      return 1;
+    }
+    case "clearChapters": {
+      let changed = 0;
+      for (const id of rules.stageIdsThrough(integer(command.through, 1, 99))) if (!target.cleared.has(id)) {
+        target.cleared.add(id);
+        changed += 1;
+      }
+      return changed;
+    }
+    case "grantRelics": {
+      const ids = command.relicIds === "all" ? rules.playable.map((relic) => relic.id) : command.relicIds;
+      let changed = 0;
+      for (const id of ids) {
+        if (!rules.playable.some((relic) => relic.id === id)) throw new Error(`\uD68D\uB4DD\uD560 \uC218 \uC5C6\uB294 \uB810\uB9AD\uC785\uB2C8\uB2E4: ${id}`);
+        if (target.owned.has(id)) continue;
+        target.owned.add(id);
+        const base = rules.initialProgress();
+        target.relicProgress[id] ??= { ...base, bondXp: Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], base.bondXp + rules.bondXpFirstAcquisition) };
+        changed += 1;
+      }
+      return changed;
+    }
+    case "relicLevel": {
+      const level = integer(command.level, 1, relicLevelCap(BREAKTHROUGH_CAP));
+      let changed = 0;
+      for (const id of targets(target, command.relicId)) {
+        const p = target.relicProgress[id];
+        const breakthrough = Math.max(p.breakthrough, breakthroughForLevel(level));
+        if (p.level === level && p.breakthrough === breakthrough) continue;
+        target.relicProgress[id] = { ...p, level, exp: 0, breakthrough };
+        changed += 1;
+      }
+      return changed;
+    }
+    case "relicBreakthrough": {
+      const breakthrough = integer(command.breakthrough, 0, BREAKTHROUGH_CAP);
+      let changed = 0;
+      for (const id of targets(target, command.relicId)) {
+        const p = target.relicProgress[id];
+        const floor = breakthrough === 0 ? 1 : relicLevelCap(breakthrough - 1);
+        const level = Math.min(relicLevelCap(breakthrough), Math.max(p.level, floor));
+        if (p.breakthrough === breakthrough && p.level === level) continue;
+        target.relicProgress[id] = { ...p, breakthrough, level, exp: level === p.level ? p.exp : 0 };
+        changed += 1;
+      }
+      return changed;
+    }
+    case "relicBond": {
+      const level = integer(command.level, 0, BOND_LEVEL_CAP);
+      let changed = 0;
+      for (const id of targets(target, command.relicId)) {
+        const p = target.relicProgress[id];
+        if (p.bondLevel === level && p.bondXp === BOND_TOTAL_XP_BY_LEVEL[level]) continue;
+        target.relicProgress[id] = { ...p, bondLevel: level, bondXp: BOND_TOTAL_XP_BY_LEVEL[level] };
+        changed += 1;
+      }
+      return changed;
+    }
+    case "relicFragments": {
+      ownedProgress(target, command.relicId);
+      const amount = integer(command.amount, 0, 99999);
+      if (amount === 0) return 0;
+      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + amount;
+      return 1;
+    }
+    case "breakthroughSet": {
+      const progress = ownedProgress(target, command.relicId);
+      const rarity = rules.playable.find((relic) => relic.id === command.relicId)?.rarity;
+      if (!rarity) throw new Error("\uD50C\uB808\uC774 \uAC00\uB2A5\uD55C \uB810\uB9AD\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
+      const cost = remainingBreakthroughCost(rarity, progress);
+      if (cost.fragments === 0 && cost.cheesecake === 0) return 0;
+      target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + cost.fragments;
+      target.wallet.cheesecake = Math.min(rules.walletCaps.cheesecake, target.wallet.cheesecake + cost.cheesecake);
+      return 1;
+    }
+    case "unlockStories": {
+      let changed = 0;
+      for (const id of target.owned) {
+        const p = target.relicProgress[id];
+        if (!p || p.bondLevel >= BOND_LEVEL_CAP) continue;
+        target.relicProgress[id] = { ...p, bondLevel: BOND_LEVEL_CAP, bondXp: BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP] };
+        changed += 1;
+      }
+      target.relicStory = { ...target.relicStory, metAt: {} };
+      return changed;
+    }
+  }
 }
 
 // src/core/guild.ts
@@ -30057,8 +30219,8 @@ var SettingsManager = class extends EventTarget {
       result = this.update({ notifications: patch });
       const current = result.notifications;
       const kinds = ["staminaFull", "dailyMission"];
-      const targets = !current.enabled ? kinds : kinds.filter((kind) => previous[kind] && !current[kind]);
-      for (const kind of targets) await this.cancelNotification(kind);
+      const targets2 = !current.enabled ? kinds : kinds.filter((kind) => previous[kind] && !current[kind]);
+      for (const kind of targets2) await this.cancelNotification(kind);
       result = this.get();
     };
     const queued = this.notificationChanges.then(apply, apply);
@@ -30101,6 +30263,7 @@ var MAX_RUNE_NAME_LENGTH = 20;
 var FakeServer = class {
   constructor(state = session, options = {}) {
     this.state = state;
+    this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
@@ -30209,6 +30372,7 @@ var FakeServer = class {
   /** 입장했지만 아직 결과가 오지 않은 결투. 결과 확정은 이 표에 있는 판만 받는다. */
   pendingDuels = /* @__PURE__ */ new Map();
   duelResolveResults = /* @__PURE__ */ new Map();
+  developmentTools;
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
   applySavedMailClaims() {
     const claimed = new Set(this.state.claimedMailIds ?? []);
@@ -30323,9 +30487,9 @@ var FakeServer = class {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC6B0\uD3B8 \uC218\uB839 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const ids = [...new Set(request.mailIds)];
     const nowMs = this.now().getTime();
-    const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
-    if (targets.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC6B0\uD3B8\uC785\uB2C8\uB2E4.");
-    const claimable = targets.filter((mail) => !!mail && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
+    const targets2 = ids.map((id) => this.mails.find((mail) => mail.id === id));
+    if (targets2.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC6B0\uD3B8\uC785\uB2C8\uB2E4.");
+    const claimable = targets2.filter((mail) => !!mail && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted = [];
     const candidate = structuredClone(this.state);
     for (const mail of claimable) for (const reward of mail.rewards) {
@@ -31348,6 +31512,35 @@ var FakeServer = class {
     this.persist({ ...this.state, favorite: request.relicId });
     this.state.favorite = request.relicId;
     return { ok: true };
+  }
+  /**
+   * QA 디버그 창의 조정 명령. 개발 도구가 꺼진 서버(일반 빌드·환경 변수 없음)는 아무것도 바꾸지 않고 거절한다.
+   * 로컬 변경은 다음 서버 응답이 덮어쓰므로, 서버 모드에서도 반드시 이 경계를 지나야 남는다.
+   */
+  async applyDebugCommand(command) {
+    await this.delay();
+    if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "\uAC1C\uBC1C \uB3C4\uAD6C\uAC00 \uAEBC\uC9C4 \uC11C\uBC84\uC785\uB2C8\uB2E4.");
+    const patch = {
+      wallet: { ...this.state.wallet },
+      owned: new Set(this.state.owned),
+      relicProgress: Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress }])),
+      relicFragments: { ...this.state.relicFragments },
+      relicStory: { ...this.state.relicStory },
+      playerResearch: { ...this.state.playerResearch },
+      cleared: new Set(this.state.cleared)
+    };
+    const changed = applyDebugCommand(patch, command, {
+      walletCaps: WALLET_CAPS,
+      playable: PLAYABLE_RELICS,
+      stageIdsThrough: (chapter) => STAGES.filter((stage) => stage.chapter !== void 0 && stage.chapter <= chapter).map((stage) => stage.id),
+      initialProgress: createInitialRelicProgress,
+      bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition
+    });
+    if (changed > 0) {
+      this.persist({ ...this.state, ...patch });
+      Object.assign(this.state, patch);
+    }
+    return { ok: true, changed };
   }
   /** 즐겨찾기는 보유한 렐릭만 담는다. 이미 그 상태면 아무것도 쓰지 않는 멱등 성공이다. */
   async setRelicBookmark(request) {
@@ -33982,25 +34175,6 @@ var RelicProgressionManager = class {
     const def = getRelic(relicId);
     return calculateFinalStats(def.stats, progress, gems2, def.rarity);
   }
-  /**
-   * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
-   *
-   * 돌파는 레벨 상한 → 파편 → 치즈케이크 셋이 동시에 맞아야 되는 조작이라, 지급 없이 확인하려면
-   * 연구소에서 같은 개체를 여러 번 뽑고 수십 번 급여해야 한다. 여기서는 **재료만** 주고 돌파
-   * 자체는 사람이 누른다 — 자동으로 뚫어 버리면 확인하려는 그 화면을 지나쳐 버린다.
-   *
-   * 수치는 화면이 아니라 순수 규칙(`remainingBreakthroughCost`)에서 나오므로, 단계표나 등급별
-   * 파편 수를 고치면 지급량도 함께 따라간다. 정식 획득 경로가 충분해지면 이 메서드를 지운다.
-   */
-  grantBreakthroughSetForDebug(relicId) {
-    const def = getRelic(relicId);
-    const progress = this.ownedProgress(relicId);
-    const cost = remainingBreakthroughCost(def.rarity, progress);
-    this.state.relicFragments[relicId] = (this.state.relicFragments[relicId] ?? 0) + cost.fragments;
-    this.state.wallet.cheesecake += cost.cheesecake;
-    this.persistSharedSession();
-    return cost;
-  }
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */
   persistSharedSession() {
     if (this.state === session) saveManager.save(this.state);
@@ -34455,6 +34629,7 @@ var SERVER_GAME_METHODS = [
   "abandonStrataRun",
   "activatePass",
   "answerRelicQuestion",
+  "applyDebugCommand",
   "applyStoryEffect",
   "archaeologyState",
   "beginExpeditionAugment",
@@ -34654,7 +34829,8 @@ async function run(playerId, req, deps) {
       persistSession: () => void 0,
       raidContext: context,
       guild: deps.guild ?? unavailableGuild,
-      playerId
+      playerId,
+      developmentTools: deps.developmentTools === true
     });
     if (req.requestId) server.useGuildRequestId(req.requestId);
     const claimedBefore = new Set(state.claimedMailIds ?? []);
@@ -34943,7 +35119,7 @@ async function handler(req, res) {
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
       res.status(200).json(await store.socialCall(user.id, method, body.args ?? [], body.requestId));
     } else {
-      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild }));
+      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, developmentTools: process.env.FORGARDEN_QA_TOOLS === "1" }));
     }
   } catch (error) {
     if (error instanceof GameCallError) {

@@ -24,7 +24,7 @@ import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentCost, canBreakThrough, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
-import { CHAPTERS, DAILY_RESTORATION, getStage, SUB_STORY_GEM_REWARDS } from "../data/stages";
+import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
@@ -56,6 +56,7 @@ import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
 import { announceOpsMails, isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
@@ -130,6 +131,8 @@ export const MAX_RUNE_NAME_LENGTH = 20;
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
   latencyMs?: number;
+  /** QA 디버그 명령을 받을지. 기본은 빌드 스위치(`QA_TOOLS_ENABLED`)이고, 서버 번들은 환경 변수로 따로 켠다. */
+  developmentTools?: boolean;
   /** 실제 DB의 공유 체력·참가자 스냅샷. 서버 호출 단위에서만 주입한다. */
   raidContext?: SharedRaidContext;
   random?: () => number;
@@ -223,10 +226,13 @@ export class FakeServer implements GameApi {
   private readonly pendingDuels = new Map<string, { opponentId: string; opponentName: string; opponentScore: number; favoriteRelicId: string; units: DuelHistoryUnit[] }>();
   private readonly duelResolveResults = new Map<string, ResolveDuelResponse>();
 
+  private readonly developmentTools: boolean;
+
   constructor(
     private readonly state: Session = session,
     options: FakeServerOptions = {},
   ) {
+    this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
@@ -1393,6 +1399,36 @@ export class FakeServer implements GameApi {
     this.persist({ ...this.state, favorite: request.relicId });
     this.state.favorite = request.relicId;
     return { ok: true };
+  }
+
+  /**
+   * QA 디버그 창의 조정 명령. 개발 도구가 꺼진 서버(일반 빌드·환경 변수 없음)는 아무것도 바꾸지 않고 거절한다.
+   * 로컬 변경은 다음 서버 응답이 덮어쓰므로, 서버 모드에서도 반드시 이 경계를 지나야 남는다.
+   */
+  async applyDebugCommand(command: DebugCommand): Promise<DebugCommandResponse> {
+    await this.delay();
+    if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "개발 도구가 꺼진 서버입니다.");
+    const patch = {
+      wallet: { ...this.state.wallet },
+      owned: new Set(this.state.owned),
+      relicProgress: Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress }])),
+      relicFragments: { ...this.state.relicFragments },
+      relicStory: { ...this.state.relicStory },
+      playerResearch: { ...this.state.playerResearch },
+      cleared: new Set(this.state.cleared),
+    };
+    const changed = applyDebugCommand(patch as unknown as DebugTarget, command, {
+      walletCaps: WALLET_CAPS,
+      playable: PLAYABLE_RELICS,
+      stageIdsThrough: (chapter) => STAGES.filter((stage) => stage.chapter !== undefined && stage.chapter <= chapter).map((stage) => stage.id),
+      initialProgress: createInitialRelicProgress,
+      bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition,
+    });
+    if (changed > 0) {
+      this.persist({ ...this.state, ...patch });
+      Object.assign(this.state, patch);
+    }
+    return { ok: true, changed };
   }
 
   /** 즐겨찾기는 보유한 렐릭만 담는다. 이미 그 상태면 아무것도 쓰지 않는 멱등 성공이다. */

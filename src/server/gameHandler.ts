@@ -76,6 +76,8 @@ export interface GameHandlerDeps {
   /** 같은 계정의 동시 호출이 낙관적 잠금에서 겹칠 때 다시 시도하는 횟수다. */
   maxAttempts?: number;
   strict?: boolean;
+  /** QA 디버그 명령(`applyDebugCommand`)을 실행할지. 서버 번들은 일반 빌드라 환경 변수로만 켠다. */
+  developmentTools?: boolean;
   /** 길드 저장소. 지갑이 얽힌 길드 조작(`createGuild` 등)이 쓰며, 없으면 모든 조작이 `UNAVAILABLE`로 거절된다. */
   guild?: GuildBackend;
 }
@@ -146,6 +148,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       raidContext: context,
       guild: deps.guild ?? unavailableGuild,
       playerId,
+      developmentTools: deps.developmentTools === true,
     });
     // 재전송이 같은 길드 변경을 두 번 반영하지 않도록 길드 백엔드의 멱등 키를 요청 id로 고정한다.
     if (req.requestId) server.useGuildRequestId(req.requestId);

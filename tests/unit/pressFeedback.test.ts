@@ -65,8 +65,10 @@ describe("급여 한 번의 손맛", () => {
     expect(delays[0]).toBe(FEED_TAP.hold.startMs);
     expect(delays.at(-1)).toBe(FEED_TAP.hold.minMs);
     const fullSpeed = delays.findIndex((delay) => delay === FEED_TAP.hold.minMs);
-    expect(delays.slice(0, fullSpeed).reduce((sum, ms) => sum + ms, 0)).toBeLessThan(350);
-    expect(FEED_TAP.hold.minMs).toBeLessThanOrEqual(16);
+    expect(delays.slice(0, fullSpeed).reduce((sum, ms) => sum + ms, 0)).toBeLessThan(900);
+    // 틱 사이가 읽혀야 한다 — 최고 속도에서도 한 틱이 한 번의 급여로 구분된다.
+    expect(FEED_TAP.hold.minMs).toBeGreaterThanOrEqual(80);
+    expect(FEED_TAP.hold.gaugeGlideMs).toBeLessThanOrEqual(FEED_TAP.hold.minMs * 1.5);
   });
 
   it("낮은 FPS에서도 시간을 합산하고 오래 멈췄다가 돌아와도 급여 폭주를 막는다", () => {
@@ -75,7 +77,8 @@ describe("급여 한 번의 손맛", () => {
     const fastCount = Array.from({ length: 60 }, () => fast.advance(1000 / 60)).reduce((a, b) => a + b, 0);
     const slowCount = Array.from({ length: 10 }, () => slow.advance(100)).reduce((a, b) => a + b, 0);
     expect(slowCount).toBe(fastCount);
-    expect(fastCount).toBeGreaterThan(40);
+    expect(fastCount).toBeGreaterThan(6);
+    expect(fastCount).toBeLessThan(14);
     expect(slow.advance(60_000)).toBeLessThanOrEqual(16);
     expect(slow.advance(0)).toBe(0);
   });

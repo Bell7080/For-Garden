@@ -731,7 +731,10 @@ export class LobbyScene extends Phaser.Scene {
     // 칸은 연구소·고고학의 상점 칩과 같은 한 벌·같은 크기다.
     shops.forEach((entry, index) => {
       const x = centerX - width / 2 + shop.pad + shop.cell / 2 + index * (shop.cell + shop.cellGap);
-      body.add(addSideShopButton(this, x, centerY, shop.cell, entry.label, entry.onClick));
+      // 전리품 상점은 일반 상점과 같은 조건으로 열린다 — 잠긴 동안은 칩이 꺼지고 누르면 안내만 뜬다.
+      const chip = addSideShopButton(this, x, centerY, shop.cell, entry.label, () => { if (contentOpen("shop")) entry.onClick(); else showContentLockedToast(this, "shop"); });
+      if (!contentOpen("shop")) chip.setLocked();
+      body.add(chip);
     });
   }
 

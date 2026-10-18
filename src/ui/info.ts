@@ -531,6 +531,9 @@ export class InfoManager {
   private feedQueueRelicId?: string;
   private feedFlushing?: Promise<void>;
   private feeding = false;
+  /** 급여 직후의 다시 칠하기에서만 경험치 줄을 미끄러뜨린다. */
+  private glideExp = false;
+  private expShownLevel = -1;
   /** A feed note is a singleton; this also bridges the async feed lock and popup creation. */
   private feedPopupOpen = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
@@ -1288,6 +1291,7 @@ export class InfoManager {
       // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
       this.feeding = false;
+      this.glideExp = true;
       this.refreshGrowth();
       this.repaintFeedBulk?.();
     }
@@ -2149,7 +2153,12 @@ export class InfoManager {
     // 늦게 도착하면 처음 그린 높이가 다르므로 그릴 때마다 다시 맞춘다.
     this.levelCap.setY(this.levelValue.y + this.levelValue.displayHeight - 4);
     const need = maxed ? 0 : relicExpToNext(progress.level);
-    this.expBar.setValue(maxed ? 1 : progress.exp / need);
+    const expRatio = maxed ? 1 : progress.exp / need;
+    if (this.glideExp && this.expShownLevel >= 0 && !this.publicProfile) {
+      this.expBar.glideTo(this.scene, expRatio, FEED_TAP.hold.gaugeGlideMs, progress.level > this.expShownLevel && !maxed);
+    } else this.expBar.setValue(expRatio);
+    this.glideExp = false;
+    this.expShownLevel = progress.level;
     // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
@@ -2199,7 +2208,32 @@ class Gauge {
     return [this.track, this.fill];
   }
 
+  private shown = 0;
+  private glide?: Phaser.Tweens.Tween;
+
+  /**
+   * 틱마다 값이 차오르게 한다. 레벨이 올라 비율이 되감기면 끝까지 찼다가 비워진 뒤 새 값으로 오른다.
+   * 짧은 트윈을 매번 새로 걸어, 몰아서 한 번에 차오르는 느낌을 없앤다.
+   */
+  glideTo(scene: Phaser.Scene, ratio: number, ms: number, wrapped: boolean): void {
+    this.glide?.remove();
+    const target = Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
+    if (ms <= 0 || !scene.sys.isActive()) { this.setValue(target); return; }
+    const proxy = { v: this.shown };
+    const to = (value: number, done?: () => void) => {
+      this.glide = scene.tweens.add({ targets: proxy, v: value, duration: ms, ease: "Sine.Out", onUpdate: () => this.draw(proxy.v), onComplete: () => { this.draw(value); done?.(); } });
+    };
+    if (wrapped) to(1, () => { proxy.v = 0; this.draw(0); to(target); });
+    else to(target);
+  }
+
   setValue(ratio: number): void {
+    this.glide?.remove();
+    this.draw(ratio);
+  }
+
+  private draw(ratio: number): void {
+    this.shown = Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
     const filled = this.width * Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
     this.fill.clear();
     if (filled <= 0) return;

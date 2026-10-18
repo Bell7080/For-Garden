@@ -35,8 +35,8 @@ describe("광고 보상 정적 정의", () => {
 
   it("발굴 버튼은 서버 문구 대신 슬롯별 라벨과 사용/한도 상태를 표시한다", () => {
     // 남은 횟수 2는 사용량 0으로, 남은 횟수 0은 사용량 2와 비활성 상태로 바뀌어야 한다.
-    expect(excavationAdOfferDisplayModel("excavation-harvest", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "0/2", used: 0, limit: 2, enabled: true });
-    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "2/2", used: 2, limit: 2, enabled: false });
+    expect(excavationAdOfferDisplayModel("excavation-harvest", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "2/2", used: 0, limit: 2, enabled: true });
+    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "0/2", used: 2, limit: 2, enabled: false });
   });
 
   it("광고 취소·SDK 실패·재고 없음은 검증 토큰 없이 기본 흐름으로 돌아간다", () => {

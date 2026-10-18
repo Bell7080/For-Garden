@@ -76,4 +76,7 @@ export const SYSTEM_PT_BR = {
   "error.persist.expeditionScore": "Não foi possível salvar a pontuação da expedição.",
   "mail.subscription.title": "Suprimento diário de {product}",
   "mail.subscription.body": "Sua recompensa diária. Receba o bilhete antes que o correio expire.",
+  "ad.temp.title": "Reproduzindo um anúncio temporário!",
+  "ad.temp.done": "Pronto!",
+  "ad.temp.claim": "Receber recompensa do anúncio!",
 } as const;

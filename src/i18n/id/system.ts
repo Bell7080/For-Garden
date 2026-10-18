@@ -76,4 +76,7 @@ export const SYSTEM_ID = {
   "error.persist.expeditionScore": "Tidak dapat menyimpan skor ekspedisi.",
   "mail.subscription.title": "Suplai harian {product}",
   "mail.subscription.body": "Hadiah login harianmu. Ambil tiket sebelum Surat kedaluwarsa.",
+  "ad.temp.title": "Memutar iklan sementara!",
+  "ad.temp.done": "Selesai!",
+  "ad.temp.claim": "Ambil hadiah iklan!",
 } as const;

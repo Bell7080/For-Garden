@@ -8,11 +8,24 @@ declare global {
   interface Window { __PF_REWARDED_ADS__?: RewardedAdBridge; }
 }
 
+/** 임시 광고 팝업. 끝까지 보고 보상 받기를 눌렀으면 true, 도중에 닫혔으면 false. */
+type TempAdPlayer = () => Promise<boolean>;
+let tempAdPlayer: TempAdPlayer | undefined;
+
+/** 늘 떠 있는 겹이 임시 광고 팝업을 띄우는 손잡이를 건다. 플랫폼 층이 화면을 import하지 않게 하는 경계다. */
+export function setTempAdPlayer(player: TempAdPlayer | undefined): void {
+  tempAdPlayer = player;
+}
+
 /** 씬과 SDK 전역을 분리하고, 미지원 환경에서는 검증 토큰 없는 명시적 실패만 반환한다. */
 export async function presentRewardedAd(slotId: string): Promise<AdPresentationResult> {
   const bridge = typeof window === "undefined" ? undefined : window.__PF_REWARDED_ADS__;
-  // QA 빌드에서만 서는 우회다 — 광고를 본 것으로 치고 FakeServer 기본 검증이 받는 토큰을 돌려준다.
-  if (QA_TOOLS_ENABLED && !bridge) return { status: "completed", verificationToken: `verified:${slotId}` };
+  // QA 빌드에서만 서는 우회다 — 임시 3초 광고 팝업을 보여 준 뒤 광고를 본 것으로 치고
+  // FakeServer 기본 검증이 받는 토큰을 돌려준다. 일반 빌드는 SDK 없이 성공을 흉내 내지 않는다.
+  if (QA_TOOLS_ENABLED && !bridge) {
+    if (tempAdPlayer && !(await tempAdPlayer())) return { status: "dismissed", reason: "temp_ad_closed" };
+    return { status: "completed", verificationToken: `verified:${slotId}` };
+  }
   if (!bridge) return { status: "unavailable", reason: "sdk_not_initialized" };
   return bridge.present(slotId);
 }

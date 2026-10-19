@@ -1,3 +1,5 @@
+import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
+import packageInfo from "../../package.json";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { expeditionBossDamageScore } from "../core/expeditionScore";
 import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";
@@ -89,7 +91,7 @@ import { tutorialManager } from "../managers/TutorialManager";
 import { BATTLE_FEATURE_STEP, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
-import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
+import type { CompleteStageResponse, RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems, dungeonRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
@@ -306,6 +308,7 @@ interface ProfileView {
 export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
   private combatLease?: CombatLease;
+  private stageCompletion?: { stageId: string; result: CompleteStageResponse };
   private combatTicks = 0;
   private combatActions: CombatProof["actions"] = [];
   private combatGeneration = 0;
@@ -506,6 +509,7 @@ export class BattleScene extends Phaser.Scene {
     const generation=++this.combatGeneration;
     this.spawned=false; this.pendingResult=undefined;
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
+    this.stageCompletion = undefined;
     if (usesRemoteGameApi() && ["stage","cake","bounty","expedition"].includes(this.battleInput.mode)) {
       const prepare=(): void => {
         void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1" }).then(lease=>{
@@ -513,8 +517,8 @@ export class BattleScene extends Phaser.Scene {
           if(!lease) throw new Error("combat_not_prepared");
           this.combatLease=lease;
           this.createBattle();
-        }).catch(()=>{
-          if(this.scene.isActive()&&generation===this.combatGeneration) this.showResultFailure(prepare,()=>startScene(this,"lobby"));
+        }).catch((error: unknown)=>{
+          if(this.scene.isActive()&&generation===this.combatGeneration) this.showResultFailure(prepare,()=>startScene(this,"lobby"), error, "prepare");
         });
       };
       prepare();
@@ -735,15 +739,18 @@ export class BattleScene extends Phaser.Scene {
     return true;
   }
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
+    const generation = this.combatGeneration;
     // 전송 중 연타는 같은 멱등 요청조차 병렬 실행하지 않으며, 재시도는 낡은 실패판부터 걷는다.
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
     try {
       const result = await this.bossSettlement.finish(input, actions);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showBossResult(result.score, result.settlement);
     } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
@@ -775,6 +782,7 @@ export class BattleScene extends Phaser.Scene {
    * 실패했을 때의 손짓(같은 요청 ID로 재시도 · 로비로 되돌아가기)은 원정과 같다.
    */
   private async submitRaidRun(actions: ExpeditionBossAction[]): Promise<void> {
+    const generation = this.combatGeneration;
     if (this.battleInput.mode !== "raid") return;
     const raidId = this.battleInput.raidId;
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
@@ -784,9 +792,11 @@ export class BattleScene extends Phaser.Scene {
     const requestId = this.battleInput.requestId;
     try {
       const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, replayVersion: this.battleInput.replayVersion });
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
     } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       console.error("[raid] 피해 제출 실패", error);
       failBossSettlementAttempt(this.bossSettlementFailureState);
       const code = error instanceof GameApiError ? error.code : undefined;
@@ -2694,12 +2704,13 @@ export class BattleScene extends Phaser.Scene {
   private openBattleResult(phase: "victory" | "defeat"): void {
     if(this.combatLease) {
       const lease=this.combatLease;
+      const generation = this.combatGeneration;
       const verify=(): void => { void gameApi.finishCombat({id:lease.id,ticks:this.combatTicks,actions:this.combatActions,abandoned:this.state.phase==="fight"}).then(verdict=>{
-        if(!this.scene.isActive()) return;
+        if(!this.scene.isActive() || generation !== this.combatGeneration || this.combatLease !== lease) return;
         if(!verdict) throw new Error("combat_not_verified");
         this.combatLease=undefined;
         this.openBattleResult(verdict.victory?"victory":"defeat");
-      }).catch(()=>{ if(this.scene.isActive()) this.showResultFailure(verify,()=>startScene(this,"lobby")); }); };
+      }).catch((error: unknown)=>{ if(this.scene.isActive() && generation === this.combatGeneration && this.combatLease === lease) this.showResultFailure(verify,()=>startScene(this,"lobby"), error, "verify"); }); };
       verify();
       return;
     }
@@ -2772,11 +2783,16 @@ export class BattleScene extends Phaser.Scene {
    * 곳이나 눌러도 닫힌다.
    */
   private async finishStageVictory(stage: ReturnType<typeof getBattleStage>): Promise<void> {
+    const generation = this.combatGeneration;
     try {
-      const result = await gameApi.completeStage(stage.id, true);
+      // 저장 뒤 표시만 실패한 재시도는 소비된 전투를 다시 정산하지 않는다.
+      const result = this.stageCompletion?.stageId === stage.id
+        ? this.stageCompletion.result : await gameApi.completeStage(stage.id, true);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      this.stageCompletion = { stageId: stage.id, result };
       // 첫 궁극기 판을 이겼는데 궁극기를 쓰지 못한 채 끝났어도(칸이 비어 있으면) 다음 칸으로 넘어가게 한다.
       if (this.openingBattle()) await tutorialManager.complete("ultimate");
-      if (!this.scene.isActive()) return;
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // 스테미나는 이긴 이 확정에서 빠졌다 — 그 경험치 영수증을 결과판이 꺼내도록 맡긴다.
       rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
@@ -2818,9 +2834,10 @@ export class BattleScene extends Phaser.Scene {
           else goRoute(this, victoryRoute(stage.id, { scene: this.stageExit() }));
         },
       });
-    } catch {
+    } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
-      this.showResultFailure(() => void this.finishStageVictory(stage), () => startScene(this, this.stageExit()));
+      this.showResultFailure(() => void this.finishStageVictory(stage), () => startScene(this, this.stageExit()), error, this.stageCompletion?.stageId === stage.id ? "display" : "stage");
     }
   }
 
@@ -2860,9 +2877,9 @@ export class BattleScene extends Phaser.Scene {
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => { if (!chosen && this.scene.isActive()) back(); },
       });
-    } catch {
+    } catch (error) {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
-      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }));
+      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }), error, "cake");
     }
   }
 
@@ -2901,10 +2918,10 @@ export class BattleScene extends Phaser.Scene {
     let settled;
     try {
       settled = await gameApi.completeBounty({ tierId: input.tierId, requestId: input.requestId, victory: step.kind === "clear", clearedRounds });
-    } catch {
+    } catch (error) {
       // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
       if (!this.scene.isActive()) return;
-      this.showResultFailure(() => void this.finishBountyRound(input, won), () => this.scene.start("bounty", { tierId: input.tierId }));
+      this.showResultFailure(() => void this.finishBountyRound(input, won), () => this.scene.start("bounty", { tierId: input.tierId }), error, "bounty");
       return;
     }
     if (!this.scene.isActive()) return;
@@ -2947,9 +2964,9 @@ export class BattleScene extends Phaser.Scene {
     let settled;
     try {
       settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
-    } catch {
+    } catch (error) {
       if (!this.scene.isActive()) return;
-      this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"));
+      this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"), error, "duel");
       return;
     }
     if (!this.scene.isActive()) return;
@@ -3000,11 +3017,14 @@ export class BattleScene extends Phaser.Scene {
    * 이긴·진 결과를 그리는 모든 모드가 같은 판을 쓴다.
    */
   private resultFailureUi?: Phaser.GameObjects.Container;
-  private showResultFailure(retry: () => void, leave: () => void): void {
+  private showResultFailure(retry: () => void, leave: () => void, error?: unknown, phase: BattleResultPhase = "stage"): void {
+    const failure = battleResultFailure(error, phase);
+    console.error("[battle-result]", { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId, clientVersion: packageInfo.version });
     this.resultFailureUi?.destroy(true);
     const ui = this.add.container(0, 0).setDepth(5000);
     ui.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
-    ui.add(this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5));
+    ui.add(this.add.text(BASE_WIDTH / 2, 860, t(failure.key), textStyle({ role: "body", size: 30, color: COLOR.ink, align: "center", wrap: BASE_WIDTH - 160 })).setOrigin(0.5));
+    ui.add(this.add.text(BASE_WIDTH / 2, 935, `${failure.reference} · v${packageInfo.version}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
     ui.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.result.retry"), variant: "primary", onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; retry(); } }));
     ui.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("stageComplete.exit"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; leave(); } }));
     this.resultFailureUi = ui;
@@ -3080,7 +3100,7 @@ export class BattleScene extends Phaser.Scene {
       }).catch((error: unknown) => {
         // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.
         console.error("[expedition] 노드 결과 정산 실패", error);
-        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"));
+        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"), error, "expedition");
       });
     }
   }

@@ -1,3 +1,4 @@
+import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -43,6 +44,7 @@ export class ExpeditionRankingPopup {
       // 가장자리를 안쪽으로 살짝 눌러 원화가 판 테두리에서 끊기지 않고 가라앉게 한다. 줄여 가며
       // 두르는 옛 비네트는 가로세로 비율이 다른 판에서 검은 잔상을 남기므로 쓰지 않는다.
       body.add(drawFrameVignette(this.scene, 0, 0, width, height, { strength: 0.5, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
+      body.add(new Button(this.scene, 0, -height / 2 + 90, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openCompetitiveRewards(this.scene, this.popups) }));
       void this.refresh();
     });
   }

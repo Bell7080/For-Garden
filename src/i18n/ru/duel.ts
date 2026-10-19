@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_RU = {
+  "ranking.weekly.rules": "Итоги: понедельник 00:00 UTC · Награды по почте\nНужен результат дуэли или экспедиции за эту неделю.",
+  "duel.season.rules": "Сезон: {days} дней · 60% очков с округлением вниз до сотен",
+  "duel.opponents.empty": "Соперников пока нет. Другие исследователи появятся после открытия PvP. Проверьте позже.",
+
   "duel.ranking.me": "Я",
   "duel.pause.forfeitConfirm": "Эта дуэль будет засчитана как поражение.",
   "duel.result.toDuel": "На арену дуэлей",

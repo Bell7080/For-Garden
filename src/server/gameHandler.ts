@@ -1,3 +1,7 @@
+import type { ExpeditionLeaderboardResponse } from "../api/contracts";
+import { isContentUnlocked } from "../core/contentUnlock";
+import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
+import type { PlayerDuelContext, PlayerDuelChange } from "./playerDuels";
 import { prepareCombat, finishCombat } from "./combatAuthority";
 import { authoritativeArgs, recordBoundaryResult, verifyBossWallTime } from "./releaseBoundary";
 import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
@@ -29,6 +33,8 @@ export interface StateStore {
   identity?(playerId: string): Promise<{ uid: string; createdAt: string }>;
   pendingRequests?(playerId: string): Promise<number>;
   raidContext?(playerId: string, now: Date): Promise<SharedRaidContext>;
+  expeditionContext?(playerId: string, now: Date): Promise<{ rank: number | null; entries: ExpeditionLeaderboardResponse["entries"] }>;
+  duelContext?(playerId: string, now: Date): Promise<PlayerDuelContext>;
   /** 운영 도구가 올린 받을 우편과 아직 반영하지 않은 재화 조정. 실패해도 게임 호출은 막지 않는다. */
   opsInbox?(playerId: string): Promise<OpsInbox>;
   /** 상태 확정 뒤 반영한 조정과 수령한 우편을 운영 표에 표시한다(실패해도 상태는 이미 확정이다). */
@@ -44,6 +50,7 @@ export interface StateStore {
     response: unknown;
     publicProfile?: ReturnType<typeof publicProfile>;
     raids?: SharedRaidChange[];
+    duels?: PlayerDuelChange[];
   }): Promise<{ revision: string }>;
 }
 
@@ -116,12 +123,15 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
-    const [cached, stored, identity, context, ops] = await Promise.all([
+    const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
+    const [cached, stored, identity, context, ops, duels, expedition] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
       wantsRaid ? deps.store.raidContext!(playerId, now) : undefined,
       wantsOps ? deps.store.opsInbox!(playerId).catch(() => null) : null,
+      wantsDuel ? deps.store.duelContext!(playerId, now) : undefined,
+      /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : undefined,
     ]);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
@@ -142,6 +152,8 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       state.playerCard.uid = identity.uid;
       state.playerCard.createdAt = identity.createdAt;
     }
+    if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
+    if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
     if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
@@ -149,6 +161,8 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       ...(deps.now ? { now: deps.now } : {}),
       persistSession: () => undefined,
       raidContext: context,
+      duelContext: duels,
+      expeditionRank: expedition?.rank,
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true,
@@ -169,6 +183,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       else if (req.method === "finishCombat") result = finishCombat(state, args[0] as CombatProof, now);
       else {
         result = await (server as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>)[req.method](...args);
+        if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...(result as object), entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
         if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...(result as object), pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
         if (req.method === "getNotificationSignals") { const opsNotices = drainOpsNotices(state); if (opsNotices.length) result = { ...(result as object), opsNotices }; }
         if (deps.strict) { verifyBossWallTime(timingState, req.method, args, result, now); recordBoundaryResult(state, req.method, args, now); }
@@ -192,6 +207,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         response: { ...response, revision: undefined, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : undefined,
+        duels: duels?.changes,
       });
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => undefined);

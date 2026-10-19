@@ -1,5 +1,9 @@
 /** 결투장(3대3 자동전투 방어전)·결투 상점 화면 문구. */
 export const DUEL_KO = {
+  "ranking.weekly.rules": "월요일 00:00 UTC 마감 · 우편 지급\n해당 주 대전·원정 기록이 있어야 보상을 받습니다.",
+  "duel.season.rules": "{days}일마다 시즌 종료 · 점수 60%를 100점 단위로 내림",
+  "duel.opponents.empty": "현재 대전할 상대가 없습니다. PvP를 해금한 다른 연구원이 참가하면 목록에 표시됩니다. 다시 확인해 주세요.",
+
   "duel.ranking.me": "나",
   "duel.pause.forfeitConfirm": "이 결투를 패배로 끝냅니다.",
   "duel.result.toDuel": "결투장으로",

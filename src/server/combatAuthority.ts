@@ -54,6 +54,7 @@ export function combatKey(input: CombatPrepare): string {
     ? `stage:${input.stageId}`
     : b.mode === "expedition"
       ? `expedition:${b.runId}:${b.nodeId}`
+      : b.mode === "duel" ? `duel:${b.requestId}`
       : b.mode === "cake" || b.mode === "bounty"
         ? `${b.mode}:${b.requestId}`
         : fail();
@@ -66,6 +67,17 @@ export function prepareCombat(
   now: Date,
   id: string,
 ): CombatLease {
+  if (request?.input?.mode === "duel") {
+    const key = combatKey(request), records = combatJournal(state), ticket = records.tickets[key];
+    if (!ticket?.duel || ticket.kind !== "duel") return fail();
+    const active = Object.values(records.records).find(row => combatKey(row.input) === key && Date.parse(row.lease.expiresAt) > now.getTime());
+    if (active) return structuredClone(active.lease);
+    const lease: CombatLease = { id, seed: id, setup: structuredClone(ticket.duel.setup), expiresAt: new Date(now.getTime() + 3600000).toISOString() };
+    records.records = Object.fromEntries(Object.entries(records.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    if (Object.keys(records.records).length >= 8) return fail();
+    records.records[id] = { lease, input: structuredClone(request), issuedAt: now.toISOString() };
+    return structuredClone(lease);
+  }
   if (
     !request ||
     !request.input ||

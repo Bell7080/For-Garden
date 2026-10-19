@@ -22,6 +22,7 @@ export function authoritativeArgs(
     )
       return reject();
   }
+  if (method === "resolveDuel") key = `duel:${request?.requestId}`;
   if (method === "completeStage") key = `stage:${args[0]}`;
   if (method === "completeCakeOperation") key = `cake:${request?.requestId}`;
   if (method === "completeBounty") key = `bounty:${request?.requestId}`;
@@ -45,6 +46,7 @@ export function authoritativeArgs(
       (record) => combatKey(record.input) === key && record.verdict,
     );
     if (!records.length) return reject();
+    if (method === "resolveDuel") return [{ ...request, won: records[0].verdict!.victory }];
     if (method === "completeStage")
       return [args[0], records[0].verdict!.victory];
     if (method === "completeBounty") {
@@ -138,6 +140,7 @@ export function recordBoundaryResult(
       requestId: String(request?.requestId),
     };
   }
+  if (method === "resolveDuel") consumeCombat(state, `duel:${request?.requestId}`);
   if (method === "completeStage") consumeCombat(state, `stage:${args[0]}`);
   if (method === "completeCakeOperation")
     consumeCombat(state, `cake:${request?.requestId}`);

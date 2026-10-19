@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { DUEL_TIERS, type DuelTierId } from "../core/duelArena";
+import { DUEL_TIERS, DUEL_SEASON_DAYS, type DuelTierId } from "../core/duelArena";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_TIER_COLOR } from "./duelLayout";
 import { chipPoints, drawLayer, HOLO } from "./holo";
@@ -18,6 +18,7 @@ export function openDuelTierGuide(scene: Phaser.Scene, popups: PopupLayer, curre
   const top = 150;
   const height = top + DUEL_TIERS.length * (ROW.height + ROW.gap) + 60;
   popups.open({ width: 920, height, title: t("duel.link.tiers"), dim: true, closeOnBackdrop: true }, (body) => {
+    body.add(scene.add.text(0, -height / 2 + 105, t("duel.season.rules", { days: DUEL_SEASON_DAYS }), textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 820, align: "center" })).setOrigin(0.5));
     DUEL_TIERS.forEach((tier, index) => {
       const y = -height / 2 + top + ROW.height / 2 + index * (ROW.height + ROW.gap);
       const tone = DUEL_TIER_COLOR[tier.id];

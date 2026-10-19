@@ -47,7 +47,8 @@ export interface CombatVerdict {
   elapsedMs: number;
 }
 export interface CombatTicket {
-  kind: "stage" | "cake" | "bounty";
+  kind: "stage" | "cake" | "bounty" | "duel";
+  duel?: { opponent: import("./duelNpcPool").DuelNpc; setup: CombatSetup };
   target: string;
   requestId: string;
 }

@@ -1,5 +1,9 @@
 /** 決闘場（3対3の自動戦闘による防衛戦）と決闘ショップの文言。 */
 export const DUEL_JA = {
+  "ranking.weekly.rules": "月曜00:00 UTC締切・報酬はメールで配布\nその週の対戦・遠征の記録が報酬の対象です。",
+  "duel.season.rules": "{days}日ごとにシーズン終了・スコアを60%にし100点単位で切り捨て",
+  "duel.opponents.empty": "現在対戦相手がいません。PvPを解放した他の研究員が参加すると表示されます。後ほどご確認ください。",
+
   "duel.ranking.me": "自分",
   "duel.pause.forfeitConfirm": "この決闘を敗北として終了します。",
   "duel.result.toDuel": "決闘場へ",

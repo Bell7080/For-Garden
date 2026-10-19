@@ -1,3 +1,5 @@
+import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
+import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
@@ -50,9 +52,9 @@ import { PRODUCTS } from "../data/shopCatalog";
 import type { ProductListResponse, PurchaseProductRequest, PurchaseProductResponse } from "./contracts";
 import { totalGrantAmount } from "../core/purchase";
 import { getRelicSkin } from "../data/relicSkins";
-import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
+import { applyDuelScore, DUEL_BATTLE_REWARD, DUEL_MAX_BLIND, DUEL_OPPONENT_COUNT, duelStreakBonus, duelBlindCount, duelBlindOrder, duelExtraAttemptPrice, duelHiddenRelicIds, duelNewlyReachedTiers, duelAllOpponentsFought, duelFreeRefreshesLeft, duelRefreshPrice, duelScoreDelta, duelSeasonId, duelTierRose, duelSeasonEndsAt, duelStanding, duelTier, getDuelTier, pickDuelOpponents } from "../core/duelArena";
 import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPeriods, type DuelHistoryEntry, type DuelHistoryUnit, type DuelState } from "../core/duelState";
-import { duelNpcPool, findDuelNpc } from "../core/duelNpcPool";
+import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
@@ -137,6 +139,8 @@ export interface FakeServerOptions {
   developmentTools?: boolean;
   /** 실제 DB의 공유 체력·참가자 스냅샷. 서버 호출 단위에서만 주입한다. */
   raidContext?: SharedRaidContext;
+  duelContext?: PlayerDuelContext;
+  expeditionRank?: number | null;
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
@@ -229,11 +233,15 @@ export class FakeServer implements GameApi {
   private readonly duelResolveResults = new Map<string, ResolveDuelResponse>();
 
   private readonly developmentTools: boolean;
+  private readonly duelContext?: PlayerDuelContext;
+  private readonly remoteExpeditionRank?: number | null;
 
   constructor(
     private readonly state: Session = session,
     options: FakeServerOptions = {},
   ) {
+    this.duelContext = options.duelContext;
+    this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
@@ -249,6 +257,10 @@ export class FakeServer implements GameApi {
       if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, new Set([ticket.requestId]));
       if (ticket.kind === "cake") this.pendingCakeAdmissions.set(ticket.target, new Set([ticket.requestId]));
       if (ticket.kind === "bounty") this.pendingBountyRuns.set(ticket.requestId, ticket.target);
+      if (ticket.kind === "duel" && ticket.duel) {
+        const npc = ticket.duel.opponent;
+        this.pendingDuels.set(ticket.requestId, { opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score, favoriteRelicId: npc.favoriteRelicId, units: npc.units.map(({ relicId, level }) => ({ relicId, level })) });
+      }
     }
     this.raidContext = options.raidContext;
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
@@ -2420,7 +2432,20 @@ export class FakeServer implements GameApi {
    * 날짜·시즌을 넘기고, 상대 후보가 비었거나 다섯 모두와 싸웠으면 새로 세운 상태. 저장까지 확정한다.
    * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
    */
+  private duelPool(now: Date = this.now()) {
+    return this.duelContext ? this.duelContext.records.map(row => duelParticipant(row, now).opponent).filter(row => row.units.length === 3) : duelNpcPool(duelSeasonId(now));
+  }
+
   private duelNow(now: Date): DuelState {
+    if (this.duelContext) {
+      let next = rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now);
+      const pool = this.duelPool(now);
+      if (!next.candidateIds.length || next.candidateIds.some(id => !pool.some(p => p.id === id)) || duelAllOpponentsFought(next.candidateIds, next.foughtIds)) {
+        next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random).map(p => p.id), foughtIds: [] };
+      }
+      this.state.duel = next;
+      return next;
+    }
     // 실제 상대/시즌 서버가 연결되기 전에는 모의 방어전·시즌 보상을 생산하지 않는다.
     if (!QA_TOOLS_ENABLED) return this.state.duel ?? normalizeDuelState(undefined, [...this.state.owned]);
     const current = this.state.duel ?? normalizeDuelState(undefined, [...this.state.owned]);
@@ -2451,7 +2476,7 @@ export class FakeServer implements GameApi {
   private duelStatusDto(duel: DuelState, now: Date): DuelStatusResponse {
     const standing = duelStanding(duel.score);
     const blindCount = duelBlindCount(duel.score);
-    const pool = duelNpcPool(duel.seasonId);
+    const pool = this.duelPool(now);
     const opponents = duel.candidateIds.flatMap((id) => {
       const npc = pool.find((candidate) => candidate.id === id);
       if (!npc) return [];
@@ -2481,16 +2506,17 @@ export class FakeServer implements GameApi {
       blindCount, opponents,
       attack: [...duel.attack], defense: [...duel.defense], defenseIsDefault: !duel.defenseCustomized, blindChoice: [...duel.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel.blindChoice),
-      pendingSeasonReward: QA_TOOLS_ENABLED && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
-      history: (QA_TOOLS_ENABLED ? duel.history : []).map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
+      pendingSeasonReward: (QA_TOOLS_ENABLED || !!this.duelContext) && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
+      history: (QA_TOOLS_ENABLED || this.duelContext ? duel.history : []).map((entry) => ({ ...entry, ...(entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {}) })),
       serverTime: now.toISOString(),
     };
   }
 
   /** 표본과 합친 내 순위. 이번 시즌에 한 판도 치르지 않았으면 순위표에 서지 않는다. */
   private duelMyRank(duel: DuelState): number | null {
+    if (this.duelContext) return this.duelContext.rank;
     if (!QA_TOOLS_ENABLED || duel.wins + duel.losses === 0) return null;
-    return duelNpcPool(duel.seasonId).filter(({ score }) => score > duel.score).length + 1;
+    return this.duelPool().filter(({ score }) => score > duel.score).length + 1;
   }
 
   async getDuelStatus(): Promise<DuelStatusResponse> {
@@ -2501,12 +2527,12 @@ export class FakeServer implements GameApi {
 
   async refreshDuelOpponents(): Promise<DuelStatusResponse> {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel = this.duelNow(now);
     const price = duelRefreshPrice(duel.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "젬이 부족합니다.");
-    const candidateIds = pickDuelOpponents(duelNpcPool(duel.seasonId), duel.score, this.random, duel.candidateIds).map(({ id }) => id);
+    const candidateIds = pickDuelOpponents(this.duelPool(now), duel.score, this.random, this.duelPool(now).length > DUEL_OPPONENT_COUNT ? duel.candidateIds : []).map(({ id }) => id);
     const next: DuelState = { ...duel, candidateIds, foughtIds: [], refreshesUsed: duel.refreshesUsed + 1 };
     const wallet = { ...this.state.wallet, gems: this.state.wallet.gems - price };
     this.persist({ ...this.state, wallet, duel: next });
@@ -2516,7 +2542,7 @@ export class FakeServer implements GameApi {
 
   async buyDuelAttempt(): Promise<DuelStatusResponse> {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel.attemptsPurchased);
@@ -2549,14 +2575,14 @@ export class FakeServer implements GameApi {
 
   async enterDuel(request: EnterDuelRequest): Promise<EnterDuelResponse> {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const now = this.now();
     const duel = this.duelNow(now);
     this.assertDuelTeam(request.relicIds);
-    const npc = duel.candidateIds.includes(request.opponentId) ? findDuelNpc(duel.seasonId, request.opponentId) : undefined;
+    const npc = duel.candidateIds.includes(request.opponentId) ? this.duelPool(now).find(p => p.id === request.opponentId) : undefined;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "지금 세워 둔 상대가 아닙니다.");
     if (duel.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "이미 싸운 상대입니다.");
     if (duelAttemptsLeft(duel) <= 0) throw new GameApiError("DUEL_NO_ATTEMPTS", "오늘의 도전권을 모두 썼습니다.");
@@ -2571,18 +2597,28 @@ export class FakeServer implements GameApi {
       units: npc.units.map(({ relicId, level, breakthrough, stats }) => ({ relicId, level, breakthrough, stats: { ...stats } })),
       hiddenRelicIds: duelHiddenRelicIds(npc.blindOrder, duelBlindCount(duel.score)),
     };
+    if (this.duelContext) {
+      const row = this.duelContext.records.find(row => row.id === npc.id)!;
+      const journal = combatJournal(this.state);
+      for (const [key, ticket] of Object.entries(journal.tickets)) if (ticket.kind === "duel") consumeCombat(this.state, key);
+      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
+    }
     this.duelAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
   }
 
   async resolveDuel(request: ResolveDuelRequest): Promise<ResolveDuelResponse> {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelResolveResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     const pending = this.pendingDuels.get(request.requestId);
     if (!pending) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "입장하지 않은 결투입니다.");
     const now = this.now();
+    if (this.duelContext) {
+      const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
+      recordPlayerDefense(this.duelContext, pending.opponentId, this.state, ticket.duel!.setup.players.map(p => p.id), request.won, now);
+    }
     // 판이 도는 사이에 시즌이 넘어가도 이 판은 새 시즌 점수에 반영한다(넘김이 먼저다).
     const duel = this.duelNow(now);
     const scoreBefore = duel.score;
@@ -2606,7 +2642,7 @@ export class FakeServer implements GameApi {
       winStreak, bestStreak: Math.max(duel.bestStreak, winStreak), seasonBestScore: Math.max(duel.seasonBestScore, scoreAfter),
       // 티어가 오르면 새 티어에 맞는 상대가 선다. 다섯 모두와 싸운 경우는 다음 조회(`duelNow`)가 세운다.
       ...(duelTierRose(scoreBefore, scoreAfter)
-        ? { candidateIds: pickDuelOpponents(duelNpcPool(duel.seasonId), scoreAfter, this.random, duel.candidateIds).map(({ id }) => id), foughtIds: [] }
+        ? { candidateIds: pickDuelOpponents(this.duelPool(now), scoreAfter, this.random, duel.candidateIds).map(({ id }) => id), foughtIds: [] }
         : {}),
       history: [entry, ...duel.history].slice(0, DUEL_HISTORY_LIMIT),
     };
@@ -2627,6 +2663,12 @@ export class FakeServer implements GameApi {
 
   async getDuelRanking(): Promise<DuelRankingResponse> {
     await this.delay();
+    if (this.duelContext) {
+      const duel = this.duelNow(this.now());
+      const entries = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext!.playerId }));
+      const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, isMe: true };
+      return { entries, me, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
+    }
     if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     const now = this.now();
     const duel = this.duelNow(now);
@@ -2634,7 +2676,7 @@ export class FakeServer implements GameApi {
     const meName = this.state.playerCard.nickname || t("duel.ranking.me");
     const favorite = this.state.favorite ?? duel.defense[0] ?? duel.attack[0] ?? "torika";
     const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: favorite, isMe: true };
-    const npcs = [...duelNpcPool(duel.seasonId)].sort((a, b) => b.score - a.score);
+    const npcs = [...this.duelPool(now)].sort((a, b) => b.score - a.score);
     const rows = npcs.map(({ displayName, score, favoriteRelicId }) => ({ displayName, score, tierId: duelTier(score).id, favoriteRelicId, isMe: false }));
     if (me) rows.splice(me.rank - 1, 0, { ...me });
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
@@ -2643,7 +2685,7 @@ export class FakeServer implements GameApi {
 
   async claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse> {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const duel = this.duelNow(this.now());
     const pending = duel.pendingSeasonReward;
     const tier = pending ? getDuelTier(pending.tierId) : undefined;
@@ -3838,6 +3880,7 @@ export class FakeServer implements GameApi {
    * 실제 순위표는 점수·동점 규칙(`earliest-achieved-at`)으로 매긴다(`docs/server-migration.md`).
    */
   private expeditionRank(score: number): number | null {
+    if (this.remoteExpeditionRank !== undefined) return this.remoteExpeditionRank;
     return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
   }
 

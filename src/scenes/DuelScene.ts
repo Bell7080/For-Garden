@@ -285,10 +285,11 @@ export class DuelScene extends Phaser.Scene {
       onClick: () => {
         if (this.busy) return;
         // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
+        if (status.opponents.length === 0) { this.popups.confirm({ title: t("duel.opponents.title"), message: t("duel.opponents.empty"), confirmLabel: t("duel.ok"), cancelLabel: false }, () => void this.run(() => gameApi.getDuelStatus())); return; }
         if (status.attemptsLeft > 0) this.openOpponents(); else this.openTicketPopup();
       },
     });
-    button.setEnabled(status.opponents.length > 0);
+
     this.view.add(button);
   }
 

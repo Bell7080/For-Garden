@@ -23,194 +23,48 @@ init_define_import_meta_env();
 // src/server/gameHandler.ts
 init_define_import_meta_env();
 
-// src/server/combatAuthority.ts
+// src/core/contentUnlock.ts
 init_define_import_meta_env();
-
-// src/data/relics.ts
-init_define_import_meta_env();
-
-// src/core/skirmish.ts
-init_define_import_meta_env();
-
-// src/core/bond.ts
-init_define_import_meta_env();
-var BOND_LEVEL_CAP = 10;
-var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
-var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
-var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
-function bondLevelForXp(xp) {
-  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  let level = 0;
-  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
-  return level;
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
 }
-function grantBondXp(progress, amount) {
-  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
-  const bondLevel = bondLevelForXp(bondXp);
-  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
 }
-function grantDailyLobbyBondXp(progress, utcDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
-  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
-  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
+function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
 }
-function amplifyFerocityGain(amount, bondLevel) {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
-}
-
-// src/core/battleClock.ts
-init_define_import_meta_env();
-var BATTLE_DEATH_CLOCK = {
-  /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 90,
-  /** 몇 초마다 한 번 도는가. */
-  tickSeconds: 1,
-  /**
-   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
-   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
-   */
-  firstTickPercent: 1,
-  /**
-   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
-   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
-   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
-   */
-  rampPercentPerTick: 0.5
-};
-function deathClockTickPercent(tick) {
-  if (tick < 1) return 0;
-  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
-}
-function deathClockCumulativePercent(ticks) {
-  if (ticks < 1) return 0;
-  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
-}
-function deathClockTicksAt(elapsedSeconds) {
-  if (!Number.isFinite(elapsedSeconds)) return 0;
-  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
-  if (past < 0) return 0;
-  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
-}
-function deathClockSurvivalMultiplier(elapsedSeconds) {
-  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
-  return Math.min(1, Math.max(0, 1 - lost / 100));
-}
-function deathClockClosesBySeconds() {
-  let ticks = 1;
-  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
-  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
-}
-var BOSS_REPLAY_SLACK_SECONDS = 30;
-
-// src/core/damage.ts
-init_define_import_meta_env();
-
-// src/core/element.ts
-init_define_import_meta_env();
-var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
-var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
-var ELEMENT_COUNTERS = {
-  fire: ["grass", "wind"],
-  water: ["fire", "earth"],
-  grass: ["water", "earth"],
-  earth: ["wind", "fire"],
-  wind: ["grass", "water"]
-};
-var ICE_ADVANTAGES = ["grass", "water", "earth"];
-var ICE_DISADVANTAGES = ["fire"];
-function elementMultiplier(attacker, defender) {
-  if (attacker === defender) return 1;
-  if (attacker === "ice") {
-    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  if (defender === "ice") {
-    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
-}
-function effectiveElement(relic) {
-  return relic.passive.elementOverride ?? relic.element;
+function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
+  return void 0;
 }
 
-// src/core/ferocity.ts
+// src/core/duelState.ts
 init_define_import_meta_env();
-var FEROCITY_RULES = {
-  min: 0,
-  /** 개체가 `ferocityMax`를 적지 않았을 때의 아군 기본 최대치다. */
-  max: 100,
-  /** 적 전용 개체의 기본 최대치 — 아군보다 조금 더 높게 둬 폭주가 늦게 온다. */
-  enemyMax: 130,
-  basicGain: 12,
-  ultimateGain: 18,
-  hitGain: 8,
-  /** 최대치가 얼마든 가득 찬 피버가 이 시간(초) 만에 모두 소진된다. 높은 개체는 더 빨리 닳는다. */
-  feverSeconds: 8,
-  /** 구간은 최대치에 대한 비율이다 — 최대치가 달라도 같은 진행도에서 같은 보너스가 붙는다. */
-  thresholds: [
-    { ratio: 0.5, damageBonus: 0.1 },
-    { ratio: 0.8, damageBonus: 0.2 },
-    { ratio: 1, damageBonus: 0.35 }
-  ]
-};
-function ferocityMaxOf(def) {
-  return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
-}
-function feverDrainPerSecond(def) {
-  return ferocityMaxOf(def) / FEROCITY_RULES.feverSeconds;
-}
-function ferocityMirrored(from, to) {
-  return from.ferocity / ferocityMaxOf(from.def) * ferocityMaxOf(to.def);
-}
-function ferocityDamageBonus(ferocity, max = FEROCITY_RULES.max) {
-  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ ratio }) => ferocity >= ratio * max);
-  return active3?.damageBonus ?? 0;
-}
-function drainFerocityFever(unit, seconds) {
-  if (!unit.ferocityFever || seconds <= 0) return;
-  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - feverDrainPerSecond(unit.def) * seconds);
-  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
-}
 
-// src/core/damage.ts
-function isCriticalHit(critChance, roll3) {
-  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-  return roll3 < critChance / 100;
-}
-function currentAbilityPower(combatant) {
-  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
-}
-function scalingStatValue(attacker, stat, damageType) {
-  if (stat === "def") return attacker.def.stats.def;
-  if (stat === "res") return attacker.def.stats.res;
-  if (stat === "hp") return attacker.def.stats.hp;
-  if (stat === "atk") return attacker.def.stats.atk;
-  if (stat === "ap") return currentAbilityPower(attacker);
-  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
-}
-function offenseValue(attacker, input) {
-  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
-  if (!input.secondaryScaling) return primary;
-  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
-}
-function computeDamageContribution(attacker, input) {
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
-}
-function computeDamage(attacker, target, input) {
-  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
-  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
-  const afterDefense = raw * 100 / (100 + defense);
-  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
-}
+// src/core/duelArena.ts
+init_define_import_meta_env();
 
 // src/core/relicProgression.ts
 init_define_import_meta_env();
@@ -2596,6 +2450,9 @@ var DUNGEON_KO = {
 // src/i18n/ko/duel.ts
 init_define_import_meta_env();
 var DUEL_KO = {
+  "ranking.weekly.rules": "\uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uD574\uB2F9 \uC8FC \uB300\uC804\xB7\uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "duel.season.rules": "{days}\uC77C\uB9C8\uB2E4 \uC2DC\uC98C \uC885\uB8CC \xB7 \uC810\uC218 60%\uB97C 100\uC810 \uB2E8\uC704\uB85C \uB0B4\uB9BC",
+  "duel.opponents.empty": "\uD604\uC7AC \uB300\uC804\uD560 \uC0C1\uB300\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. PvP\uB97C \uD574\uAE08\uD55C \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uC774 \uCC38\uAC00\uD558\uBA74 \uBAA9\uB85D\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4. \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
   "duel.ranking.me": "\uB098",
   "duel.pause.forfeitConfirm": "\uC774 \uACB0\uD22C\uB97C \uD328\uBC30\uB85C \uB05D\uB0C5\uB2C8\uB2E4.",
   "duel.result.toDuel": "\uACB0\uD22C\uC7A5\uC73C\uB85C",
@@ -3502,6 +3359,444 @@ function calculateFinalStats(base, progress, gems2, rarity) {
   return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems2);
 }
 
+// src/core/duelArena.ts
+var DUEL_DIVISION_SPAN = 100;
+var DUEL_TIERS = [
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1e3 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2e3 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3e3 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4e3 }, firstReachGems: 300 },
+  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5e3 }, firstReachGems: 400 },
+  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 400 }, firstReachGems: 500 },
+  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 500 }, firstReachGems: 700 }
+];
+var DUEL_MAX_BLIND = 2;
+var DUEL_START_SCORE = 0;
+var DUEL_DAILY_ATTEMPTS = 5;
+var DUEL_EXTRA_ATTEMPT_PRICES = [50, 50, 100, 100, 150];
+var DUEL_FREE_REFRESHES = 3;
+var DUEL_REFRESH_PRICES = [20, 40, 60, 80, 100];
+var DUEL_OPPONENT_COUNT = 5;
+var DUEL_STREAK_BONUS = { from: 2, perStep: 2, max: 10 };
+function duelStreakBonus(streak) {
+  if (!Number.isFinite(streak) || streak < DUEL_STREAK_BONUS.from) return 0;
+  return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
+}
+var DUEL_BATTLE_REWARD = { win: 20, loss: 0 };
+var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodo"];
+var DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 };
+function duelDefenseWinChance(mine, theirs) {
+  const total = Math.max(0, mine) + Math.max(0, theirs);
+  const share = total > 0 ? Math.max(0, mine) / total : 0.5;
+  return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
+}
+var DUEL_SEASON_DAYS = 21;
+var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
+var DAY_MS = 864e5;
+function duelTierIndex(score) {
+  let index = 0;
+  DUEL_TIERS.forEach((tier, i) => {
+    if (score >= tier.floor) index = i;
+  });
+  return index;
+}
+function duelTier(score) {
+  return DUEL_TIERS[duelTierIndex(score)];
+}
+function getDuelTier(id) {
+  return DUEL_TIERS.find((tier) => tier.id === id);
+}
+function duelStanding(score) {
+  const index = duelTierIndex(score);
+  const tier = DUEL_TIERS[index];
+  const next = DUEL_TIERS[index + 1];
+  const within = Math.max(0, score - tier.floor);
+  if (tier.divisions > 1) {
+    const step2 = Math.min(tier.divisions - 1, Math.floor(within / DUEL_DIVISION_SPAN));
+    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
+  }
+  return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
+}
+function duelScoreDelta(myScore, opponentScore, won) {
+  const gap = opponentScore - myScore;
+  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
+  return -clamp(Math.round(14 - gap / 25), 6, 24);
+}
+function applyDuelScore(score, delta) {
+  const next = Math.max(0, score + delta);
+  if (delta >= 0) return next;
+  const tier = duelTier(score);
+  return tier.divisions > 1 ? Math.max(tier.floor, next) : next;
+}
+function duelBlindCount(score) {
+  return Math.min(DUEL_MAX_BLIND, duelTier(score).blind);
+}
+function duelBlindOrder(members, chosen = []) {
+  const ids = new Set(members.map(({ relicId }) => relicId));
+  const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
+  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
+  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
+}
+function duelHiddenRelicIds(blindOrder, count2) {
+  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count2)));
+}
+function duelExtraAttemptPrice(purchasedToday) {
+  return DUEL_EXTRA_ATTEMPT_PRICES[purchasedToday];
+}
+function duelRefreshPrice(refreshesUsed) {
+  if (refreshesUsed < DUEL_FREE_REFRESHES) return 0;
+  return DUEL_REFRESH_PRICES[Math.min(refreshesUsed - DUEL_FREE_REFRESHES, DUEL_REFRESH_PRICES.length - 1)];
+}
+function duelFreeRefreshesLeft(refreshesUsed) {
+  return Math.max(0, DUEL_FREE_REFRESHES - refreshesUsed);
+}
+function duelAllOpponentsFought(candidateIds, foughtIds) {
+  return candidateIds.length > 0 && candidateIds.every((id) => foughtIds.includes(id));
+}
+function duelTierRose(scoreBefore, scoreAfter) {
+  return duelTierIndex(scoreAfter) > duelTierIndex(scoreBefore);
+}
+function duelDayKey(now) {
+  return now.toISOString().slice(0, 10);
+}
+function duelSeasonNumber(now) {
+  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
+}
+function duelSeasonId(now) {
+  return `S${duelSeasonNumber(now)}`;
+}
+function duelSeasonEndsAt(now) {
+  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
+}
+function duelSeasonResetScore(score) {
+  return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
+}
+function duelNewlyReachedTiers(before, after, reached) {
+  const from = duelTierIndex(before);
+  const to = duelTierIndex(after);
+  return DUEL_TIERS.slice(from + 1, to + 1).filter((tier) => !reached.includes(tier.id) && tier.firstReachGems > 0);
+}
+function pickDuelOpponents(pool, myScore, random, exclude = []) {
+  const candidates = pool.filter(({ id }) => !exclude.includes(id));
+  const bands = [[-420, -160], [-200, -40], [-60, 60], [40, 200], [160, 440]];
+  const picked = [];
+  for (const [low, high] of bands) {
+    const inBand = candidates.filter((entry) => !picked.includes(entry) && entry.score - myScore >= low && entry.score - myScore <= high);
+    if (inBand.length > 0) picked.push(inBand[Math.floor(random() * inBand.length) % inBand.length]);
+  }
+  const rest = candidates.filter((entry) => !picked.includes(entry)).sort((a, b) => Math.abs(a.score - myScore) - Math.abs(b.score - myScore));
+  while (picked.length < DUEL_OPPONENT_COUNT && rest.length > 0) picked.push(rest.shift());
+  return picked.sort((a, b) => a.score - b.score);
+}
+function duelGrownStats(def, level, breakthrough) {
+  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
+}
+function duelNpcLevel(score) {
+  return clamp(Math.round(10 + score / 3e3 * 50), 8, 60);
+}
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+// src/core/duelState.ts
+var DUEL_HISTORY_LIMIT = 10;
+function cloneDuelState(state) {
+  return {
+    ...state,
+    reachedTierIds: [...state.reachedTierIds],
+    candidateIds: [...state.candidateIds],
+    foughtIds: [...state.foughtIds],
+    attack: [...state.attack],
+    defense: [...state.defense],
+    blindChoice: [...state.blindChoice],
+    pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
+    history: state.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} }))
+  };
+}
+var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
+var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
+function normalizeHistoryEntry(entry) {
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
+  const units = Array.isArray(opponentUnits) ? opponentUnits.filter((unit) => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level })) : [];
+  return {
+    ...base,
+    ...typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {},
+    ...typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {},
+    ...units.length > 0 ? { opponentUnits: units } : {},
+    ...side === "defense" ? { side } : {}
+  };
+}
+function normalizeDuelState(value, ownedRelicIds) {
+  const source = value && typeof value === "object" ? value : {};
+  const owned = new Set(ownedRelicIds);
+  const team = (list) => stringList(list, 3).filter((id) => owned.has(id));
+  const reward = source.pendingSeasonReward;
+  const history = Array.isArray(source.history) ? source.history.filter((entry) => !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore) && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
+  const savedDefense = team(source.defense);
+  const defense = savedDefense.length > 0 ? savedDefense : DUEL_DEFAULT_DEFENSE.filter((id) => owned.has(id));
+  const defenseCustomized = savedDefense.length > 0 && (typeof source.defenseCustomized === "boolean" ? source.defenseCustomized : true);
+  const defenseSimAt = typeof source.defenseSimAt === "string" && Number.isFinite(Date.parse(source.defenseSimAt)) ? source.defenseSimAt : "";
+  const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
+  const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
+  const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId : null;
+  return {
+    seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
+    score,
+    wins: isCount(source.wins) ? source.wins : 0,
+    losses: isCount(source.losses) ? source.losses : 0,
+    reachedTierIds: stringList(source.reachedTierIds, DUEL_TIERS.length).filter((id) => getDuelTier(id) !== void 0),
+    dayKey: typeof source.dayKey === "string" ? source.dayKey : "",
+    attemptsUsed: isCount(source.attemptsUsed) ? source.attemptsUsed : 0,
+    attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
+    attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
+    refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
+    candidateIds,
+    foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
+    attack: team(source.attack),
+    defense,
+    defenseCustomized,
+    defenseSimAt,
+    blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
+    pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId) ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
+    history,
+    winStreak: isCount(source.winStreak) ? source.winStreak : 0,
+    bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
+    // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
+    seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
+    lastSeasonTierId,
+    lastSeasonScore: lastSeasonTierId && isCount(source.lastSeasonScore) ? source.lastSeasonScore : 0
+  };
+}
+function isValidDuelState(value, ownedRelicIds) {
+  if (!value || typeof value !== "object") return false;
+  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
+}
+function rollDuelPeriods(state, now) {
+  const next = cloneDuelState(state);
+  const seasonId = duelSeasonId(now);
+  if (next.seasonId !== seasonId) {
+    const played = next.seasonId !== "" && next.wins + next.losses > 0;
+    if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
+    if (next.seasonId !== "") {
+      next.lastSeasonTierId = played ? duelTier(next.score).id : null;
+      next.lastSeasonScore = played ? next.score : 0;
+    }
+    next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
+    next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
+    next.wins = 0;
+    next.losses = 0;
+    next.winStreak = 0;
+    next.bestStreak = 0;
+    next.seasonBestScore = next.score;
+    next.candidateIds = [];
+    next.foughtIds = [];
+    next.defenseSimAt = "";
+    next.seasonId = seasonId;
+  }
+  const dayKey = duelDayKey(now);
+  if (next.dayKey !== dayKey) {
+    next.dayKey = dayKey;
+    next.attemptsUsed = 0;
+    next.attemptsPurchased = 0;
+    next.attemptsFromAds = 0;
+    next.refreshesUsed = 0;
+  }
+  return next;
+}
+function duelAttemptsLeft(state) {
+  return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
+}
+
+// src/server/combatAuthority.ts
+init_define_import_meta_env();
+
+// src/data/relics.ts
+init_define_import_meta_env();
+
+// src/core/skirmish.ts
+init_define_import_meta_env();
+
+// src/core/bond.ts
+init_define_import_meta_env();
+var BOND_LEVEL_CAP = 10;
+var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
+var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
+var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
+function bondLevelForXp(xp) {
+  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  let level = 0;
+  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
+  return level;
+}
+function grantBondXp(progress, amount) {
+  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
+  const bondLevel = bondLevelForXp(bondXp);
+  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
+}
+function grantDailyLobbyBondXp(progress, utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
+  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
+  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
+}
+function amplifyFerocityGain(amount, bondLevel) {
+  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
+}
+
+// src/core/battleClock.ts
+init_define_import_meta_env();
+var BATTLE_DEATH_CLOCK = {
+  /** 이 시각(초)을 넘기는 순간부터 돈다. */
+  startsAtSeconds: 90,
+  /** 몇 초마다 한 번 도는가. */
+  tickSeconds: 1,
+  /**
+   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
+   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
+   */
+  firstTickPercent: 1,
+  /**
+   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
+   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
+   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
+   */
+  rampPercentPerTick: 0.5
+};
+function deathClockTickPercent(tick) {
+  if (tick < 1) return 0;
+  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
+}
+function deathClockCumulativePercent(ticks) {
+  if (ticks < 1) return 0;
+  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
+}
+function deathClockTicksAt(elapsedSeconds) {
+  if (!Number.isFinite(elapsedSeconds)) return 0;
+  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
+  if (past < 0) return 0;
+  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
+}
+function deathClockSurvivalMultiplier(elapsedSeconds) {
+  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
+  return Math.min(1, Math.max(0, 1 - lost / 100));
+}
+function deathClockClosesBySeconds() {
+  let ticks = 1;
+  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
+  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
+}
+var BOSS_REPLAY_SLACK_SECONDS = 30;
+
+// src/core/damage.ts
+init_define_import_meta_env();
+
+// src/core/element.ts
+init_define_import_meta_env();
+var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
+var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
+var ELEMENT_COUNTERS = {
+  fire: ["grass", "wind"],
+  water: ["fire", "earth"],
+  grass: ["water", "earth"],
+  earth: ["wind", "fire"],
+  wind: ["grass", "water"]
+};
+var ICE_ADVANTAGES = ["grass", "water", "earth"];
+var ICE_DISADVANTAGES = ["fire"];
+function elementMultiplier(attacker, defender) {
+  if (attacker === defender) return 1;
+  if (attacker === "ice") {
+    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    return 1;
+  }
+  if (defender === "ice") {
+    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    return 1;
+  }
+  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
+}
+function effectiveElement(relic) {
+  return relic.passive.elementOverride ?? relic.element;
+}
+
+// src/core/ferocity.ts
+init_define_import_meta_env();
+var FEROCITY_RULES = {
+  min: 0,
+  /** 개체가 `ferocityMax`를 적지 않았을 때의 아군 기본 최대치다. */
+  max: 100,
+  /** 적 전용 개체의 기본 최대치 — 아군보다 조금 더 높게 둬 폭주가 늦게 온다. */
+  enemyMax: 130,
+  basicGain: 12,
+  ultimateGain: 18,
+  hitGain: 8,
+  /** 최대치가 얼마든 가득 찬 피버가 이 시간(초) 만에 모두 소진된다. 높은 개체는 더 빨리 닳는다. */
+  feverSeconds: 8,
+  /** 구간은 최대치에 대한 비율이다 — 최대치가 달라도 같은 진행도에서 같은 보너스가 붙는다. */
+  thresholds: [
+    { ratio: 0.5, damageBonus: 0.1 },
+    { ratio: 0.8, damageBonus: 0.2 },
+    { ratio: 1, damageBonus: 0.35 }
+  ]
+};
+function ferocityMaxOf(def) {
+  return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
+}
+function feverDrainPerSecond(def) {
+  return ferocityMaxOf(def) / FEROCITY_RULES.feverSeconds;
+}
+function ferocityMirrored(from, to) {
+  return from.ferocity / ferocityMaxOf(from.def) * ferocityMaxOf(to.def);
+}
+function ferocityDamageBonus(ferocity, max = FEROCITY_RULES.max) {
+  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ ratio }) => ferocity >= ratio * max);
+  return active3?.damageBonus ?? 0;
+}
+function drainFerocityFever(unit, seconds) {
+  if (!unit.ferocityFever || seconds <= 0) return;
+  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - feverDrainPerSecond(unit.def) * seconds);
+  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
+}
+
+// src/core/damage.ts
+function isCriticalHit(critChance, roll3) {
+  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  return roll3 < critChance / 100;
+}
+function currentAbilityPower(combatant) {
+  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
+}
+function scalingStatValue(attacker, stat, damageType) {
+  if (stat === "def") return attacker.def.stats.def;
+  if (stat === "res") return attacker.def.stats.res;
+  if (stat === "hp") return attacker.def.stats.hp;
+  if (stat === "atk") return attacker.def.stats.atk;
+  if (stat === "ap") return currentAbilityPower(attacker);
+  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
+}
+function offenseValue(attacker, input) {
+  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
+  if (!input.secondaryScaling) return primary;
+  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
+}
+function computeDamageContribution(attacker, input) {
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
+}
+function computeDamage(attacker, target, input) {
+  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
+  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
+  const afterDefense = raw * 100 / (100 + defense);
+  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
+}
+
 // src/core/levelDesign.ts
 init_define_import_meta_env();
 var ENCOUNTER_ROLE = {
@@ -4053,8 +4348,8 @@ var EMERGENCY_RECOVERY = {
 };
 var NO_CRIT = () => 0.999999;
 function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects = []) {
-  const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
-  const flatPoints = (stat) => side === "player" ? flatStatPoints(augmentEffects, def.id, stat) : 0;
+  const multipliers = expeditionAugmentStatMultipliers(augmentEffects, def.id);
+  const flatPoints = (stat) => flatStatPoints(augmentEffects, def.id, stat);
   const passiveBreakthrough = isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "battleMaidAscension" ? def.breakthroughEffects.passive : void 0;
   const durability = 1 + (passiveBreakthrough?.durabilityPercent ?? 0) / 100;
   const battleDef = { ...def, stats: {
@@ -4170,7 +4465,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     tauntHealBudget: def.passive.tauntHeal?.maxPerSecond ?? 0,
     submergedIn: null,
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
-    conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
+    conditionalAttackPowerMultiplier: (hpPercent) => conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent),
     basicAttackCount: 0,
     basicCycleStep: 0,
     feverDamageTaken: 0,
@@ -4304,19 +4599,19 @@ function percentHpDamage(target, percent) {
 function scoreBossFixedDamage(state, target, amount) {
   if (state.boss && state.boss.seasonHp === void 0 && target.id === state.boss.fighterId && amount > 0) state.boss.score += amount;
 }
-function createPackFighters(owners, augmentEffects) {
+function createPackFighters(owners, augmentEffects, enemyEffects = []) {
   return owners.flatMap((owner) => (owner.def.summons ?? []).map((spec, index) => {
     const stats = deriveSummonStats(owner.def.stats, spec);
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
     const y = owner.y + forward * 90;
-    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, augmentEffects);
+    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, owner.side === "player" ? augmentEffects : enemyEffects);
     wolf.id = `${owner.id}:${spec.def.id}`;
     wolf.summonOwnerId = owner.id;
     wolf.resummonRule = spec.resummon;
     wolf.facing = owner.facing;
     return wolf;
-  })).concat(owners.flatMap((owner) => createPupPool(owner, augmentEffects)));
+  })).concat(owners.flatMap((owner) => createPupPool(owner, owner.side === "player" ? augmentEffects : enemyEffects)));
 }
 function isPupFighter(fighter) {
   return fighter.summonOwnerId !== null && fighter.id.includes(":pup-");
@@ -4366,7 +4661,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   });
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
-    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1);
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
     fighter.immortal = options.boss !== void 0 && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
     if (options.boss !== void 0 && fighter.id === bossFighterId && options.boss.percentHpBasis !== void 0) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
     const seasonHp = options.boss?.seasonHp;
@@ -4380,7 +4675,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   });
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("\uBCF4\uC2A4 \uC804\uD22C\uC6D0 ID\uB294 \uC801 \uD3B8\uC131\uC5D0 \uC874\uC7AC\uD574\uC57C \uD569\uB2C8\uB2E4.");
   const party = [...players, ...enemies];
-  const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [])];
+  const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state = {
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
@@ -4391,6 +4686,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
     deathClockTicks: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
+    enemyAugmentEffects: options.enemyAugmentEffects ?? [],
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true, ...options.boss.seasonHp !== void 0 ? { seasonHp: Math.max(1, Math.round(options.boss.seasonHp)) } : {} } : void 0
   };
@@ -4414,18 +4710,21 @@ function stitchedMightMultiplier(state, attacker) {
   const plan = provider ? openedBreakthrough(provider, "passive", (effects) => effects.passive) : void 0;
   return plan?.kind === "stitchedMight" ? 1 + plan.damagePercent / 100 : 1;
 }
+function effectsFor(state, fighter) {
+  return fighter.side === "player" ? state.augmentEffects : state.enemyAugmentEffects ?? [];
+}
 function traitDamageMultiplier(state, attacker, target) {
   return traitDamageMultiplierBase(state, attacker, target) * stitchedMightMultiplier(state, attacker);
 }
 function traitDamageMultiplierBase(state, attacker, target) {
-  const effects = state.augmentEffects;
+  const effects = effectsFor(state, attacker);
   attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
   attacker.traitStreakTargetId = target.id;
   const targetHpPercent = target.maxHp > 0 ? target.hp / target.maxHp * 100 : 0;
   return highHpDamageMultiplier(effects, attacker.def.id, targetHpPercent) * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks);
 }
 function triggeredAugments(state, fighter, trigger) {
-  return state.augmentEffects.flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id) ? [{ effect, key: String(index) }] : []);
+  return effectsFor(state, fighter).flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id) ? [{ effect, key: String(index) }] : []);
 }
 function consumeAugmentTrigger(state, fighter, key, effect) {
   const runtime = fighter.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
@@ -4435,8 +4734,8 @@ function consumeAugmentTrigger(state, fighter, key, effect) {
 }
 function initializeSkirmishAugments(state) {
   const events = [];
-  for (const fighter of state.fighters.filter(({ side }) => side === "player")) {
-    const legacyPercent = expeditionAugmentStatMultipliers(state.augmentEffects, fighter.def.id).initialShieldPercent - 1;
+  for (const fighter of state.fighters) {
+    const legacyPercent = expeditionAugmentStatMultipliers(effectsFor(state, fighter), fighter.def.id).initialShieldPercent - 1;
     if (legacyPercent > 0 && fighter.augmentRuntime.legacyShield === void 0) {
       fighter.augmentRuntime.legacyShield = { triggers: 1, lastAt: state.elapsed };
       grantShield(state, fighter, fighter.id, fighter.maxHp * legacyPercent, events);
@@ -8886,7 +9185,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (forcedCritical && !useUltimate && isFighterAlive(target) && !resolution.ignored && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "clawBleed") {
     refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
   }
-  const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
+  const augmentBleed = bleedOnAttackEffect(effectsFor(state, attacker), attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
     attacker.augmentBleedHitCount = (attacker.augmentBleedHitCount + 1) % augmentBleed.everyNAttacks;
     if (attacker.augmentBleedHitCount === 0) {
@@ -16684,6 +16983,19 @@ init_define_import_meta_env();
 
 // src/data/expedition.ts
 init_define_import_meta_env();
+
+// src/data/competitiveRewards.ts
+init_define_import_meta_env();
+var WEEKLY_RANK_GEMS = [
+  { upTo: 1, gems: 5e3 },
+  { upTo: 3, gems: 4e3 },
+  { upTo: 10, gems: 3e3 },
+  { upTo: 50, gems: 2e3 },
+  { upTo: 100, gems: 1500 },
+  { upTo: null, gems: 800 }
+];
+
+// src/data/expedition.ts
 var EXPEDITION_MAP_BALANCE = {
   /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
   routeFloors: 19,
@@ -16803,14 +17115,7 @@ var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
   { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
-var EXPEDITION_WEEKLY_RANK_REWARDS = [
-  { upTo: 1, rewards: { gems: 500, salvageRecord: 400 } },
-  { upTo: 3, rewards: { gems: 400, salvageRecord: 320 } },
-  { upTo: 10, rewards: { gems: 300, salvageRecord: 250 } },
-  { upTo: 50, rewards: { gems: 200, salvageRecord: 180 } },
-  { upTo: 100, rewards: { gems: 150, salvageRecord: 130 } },
-  { upTo: null, rewards: { gems: 80, salvageRecord: 80 } }
-];
+var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
 function expeditionRankRewards(rank) {
   const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
   return { ...row.rewards };
@@ -17555,13 +17860,13 @@ function repairLegacyLotStacks(inventory) {
     return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
   });
 }
-var DAY_MS = 864e5;
+var DAY_MS2 = 864e5;
 var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
 function clampExpiryDays(days) {
   return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
 }
 function lotExpiresAt(now, days) {
-  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS).toISOString();
+  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS2).toISOString();
 }
 function normalizeLots(lots) {
   return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
@@ -19219,259 +19524,6 @@ var LOCAL_SAVE_STORAGE_KEYS = {
   qa: "eternal-city.qa.local-save",
   test: "eternal-city.test.local-save"
 };
-
-// src/core/duelState.ts
-init_define_import_meta_env();
-
-// src/core/duelArena.ts
-init_define_import_meta_env();
-var DUEL_DIVISION_SPAN = 100;
-var DUEL_TIERS = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 0 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 50 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 100 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 150 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 200 }, firstReachGems: 300 },
-  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 300 }, firstReachGems: 400 },
-  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 400 }, firstReachGems: 500 },
-  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 500 }, firstReachGems: 700 }
-];
-var DUEL_MAX_BLIND = 2;
-var DUEL_START_SCORE = 0;
-var DUEL_DAILY_ATTEMPTS = 5;
-var DUEL_EXTRA_ATTEMPT_PRICES = [50, 50, 100, 100, 150];
-var DUEL_FREE_REFRESHES = 3;
-var DUEL_REFRESH_PRICES = [20, 40, 60, 80, 100];
-var DUEL_OPPONENT_COUNT = 5;
-var DUEL_STREAK_BONUS = { from: 2, perStep: 2, max: 10 };
-function duelStreakBonus(streak) {
-  if (!Number.isFinite(streak) || streak < DUEL_STREAK_BONUS.from) return 0;
-  return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
-}
-var DUEL_BATTLE_REWARD = { win: 20, loss: 0 };
-var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodo"];
-var DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 };
-function duelDefenseWinChance(mine, theirs) {
-  const total = Math.max(0, mine) + Math.max(0, theirs);
-  const share = total > 0 ? Math.max(0, mine) / total : 0.5;
-  return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
-}
-var DUEL_SEASON_DAYS = 28;
-var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
-var DAY_MS2 = 864e5;
-function duelTierIndex(score) {
-  let index = 0;
-  DUEL_TIERS.forEach((tier, i) => {
-    if (score >= tier.floor) index = i;
-  });
-  return index;
-}
-function duelTier(score) {
-  return DUEL_TIERS[duelTierIndex(score)];
-}
-function getDuelTier(id) {
-  return DUEL_TIERS.find((tier) => tier.id === id);
-}
-function duelStanding(score) {
-  const index = duelTierIndex(score);
-  const tier = DUEL_TIERS[index];
-  const next = DUEL_TIERS[index + 1];
-  const within = Math.max(0, score - tier.floor);
-  if (tier.divisions > 1) {
-    const step2 = Math.min(tier.divisions - 1, Math.floor(within / DUEL_DIVISION_SPAN));
-    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
-  }
-  return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
-}
-function duelScoreDelta(myScore, opponentScore, won) {
-  const gap = opponentScore - myScore;
-  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
-  return -clamp(Math.round(14 - gap / 25), 6, 24);
-}
-function applyDuelScore(score, delta) {
-  const next = Math.max(0, score + delta);
-  if (delta >= 0) return next;
-  const tier = duelTier(score);
-  return tier.divisions > 1 ? Math.max(tier.floor, next) : next;
-}
-function duelBlindCount(score) {
-  return Math.min(DUEL_MAX_BLIND, duelTier(score).blind);
-}
-function duelBlindOrder(members, chosen = []) {
-  const ids = new Set(members.map(({ relicId }) => relicId));
-  const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
-  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
-  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
-}
-function duelHiddenRelicIds(blindOrder, count2) {
-  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count2)));
-}
-function duelExtraAttemptPrice(purchasedToday) {
-  return DUEL_EXTRA_ATTEMPT_PRICES[purchasedToday];
-}
-function duelRefreshPrice(refreshesUsed) {
-  if (refreshesUsed < DUEL_FREE_REFRESHES) return 0;
-  return DUEL_REFRESH_PRICES[Math.min(refreshesUsed - DUEL_FREE_REFRESHES, DUEL_REFRESH_PRICES.length - 1)];
-}
-function duelFreeRefreshesLeft(refreshesUsed) {
-  return Math.max(0, DUEL_FREE_REFRESHES - refreshesUsed);
-}
-function duelAllOpponentsFought(candidateIds, foughtIds) {
-  return candidateIds.length > 0 && candidateIds.every((id) => foughtIds.includes(id));
-}
-function duelTierRose(scoreBefore, scoreAfter) {
-  return duelTierIndex(scoreAfter) > duelTierIndex(scoreBefore);
-}
-function duelDayKey(now) {
-  return now.toISOString().slice(0, 10);
-}
-function duelSeasonNumber(now) {
-  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS2)) + 1);
-}
-function duelSeasonId(now) {
-  return `S${duelSeasonNumber(now)}`;
-}
-function duelSeasonEndsAt(now) {
-  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS2);
-}
-function duelSeasonResetScore(score) {
-  return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
-}
-function duelNewlyReachedTiers(before, after, reached) {
-  const from = duelTierIndex(before);
-  const to = duelTierIndex(after);
-  return DUEL_TIERS.slice(from + 1, to + 1).filter((tier) => !reached.includes(tier.id) && tier.firstReachGems > 0);
-}
-function pickDuelOpponents(pool, myScore, random, exclude = []) {
-  const candidates = pool.filter(({ id }) => !exclude.includes(id));
-  const bands = [[-420, -160], [-200, -40], [-60, 60], [40, 200], [160, 440]];
-  const picked = [];
-  for (const [low, high] of bands) {
-    const inBand = candidates.filter((entry) => !picked.includes(entry) && entry.score - myScore >= low && entry.score - myScore <= high);
-    if (inBand.length > 0) picked.push(inBand[Math.floor(random() * inBand.length) % inBand.length]);
-  }
-  const rest = candidates.filter((entry) => !picked.includes(entry)).sort((a, b) => Math.abs(a.score - myScore) - Math.abs(b.score - myScore));
-  while (picked.length < DUEL_OPPONENT_COUNT && rest.length > 0) picked.push(rest.shift());
-  return picked.sort((a, b) => a.score - b.score);
-}
-function duelGrownStats(def, level, breakthrough) {
-  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
-}
-function duelNpcLevel(score) {
-  return clamp(Math.round(10 + score / 3e3 * 50), 8, 60);
-}
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-// src/core/duelState.ts
-var DUEL_HISTORY_LIMIT = 10;
-function cloneDuelState(state) {
-  return {
-    ...state,
-    reachedTierIds: [...state.reachedTierIds],
-    candidateIds: [...state.candidateIds],
-    foughtIds: [...state.foughtIds],
-    attack: [...state.attack],
-    defense: [...state.defense],
-    blindChoice: [...state.blindChoice],
-    pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
-    history: state.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} }))
-  };
-}
-var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
-var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
-function normalizeHistoryEntry(entry) {
-  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
-  const units = Array.isArray(opponentUnits) ? opponentUnits.filter((unit) => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level })) : [];
-  return {
-    ...base,
-    ...typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {},
-    ...typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {},
-    ...units.length > 0 ? { opponentUnits: units } : {},
-    ...side === "defense" ? { side } : {}
-  };
-}
-function normalizeDuelState(value, ownedRelicIds) {
-  const source = value && typeof value === "object" ? value : {};
-  const owned = new Set(ownedRelicIds);
-  const team = (list) => stringList(list, 3).filter((id) => owned.has(id));
-  const reward = source.pendingSeasonReward;
-  const history = Array.isArray(source.history) ? source.history.filter((entry) => !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore) && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
-  const savedDefense = team(source.defense);
-  const defense = savedDefense.length > 0 ? savedDefense : DUEL_DEFAULT_DEFENSE.filter((id) => owned.has(id));
-  const defenseCustomized = savedDefense.length > 0 && (typeof source.defenseCustomized === "boolean" ? source.defenseCustomized : true);
-  const defenseSimAt = typeof source.defenseSimAt === "string" && Number.isFinite(Date.parse(source.defenseSimAt)) ? source.defenseSimAt : "";
-  const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
-  const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
-  const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId : null;
-  return {
-    seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
-    score,
-    wins: isCount(source.wins) ? source.wins : 0,
-    losses: isCount(source.losses) ? source.losses : 0,
-    reachedTierIds: stringList(source.reachedTierIds, DUEL_TIERS.length).filter((id) => getDuelTier(id) !== void 0),
-    dayKey: typeof source.dayKey === "string" ? source.dayKey : "",
-    attemptsUsed: isCount(source.attemptsUsed) ? source.attemptsUsed : 0,
-    attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
-    attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
-    refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
-    candidateIds,
-    foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
-    attack: team(source.attack),
-    defense,
-    defenseCustomized,
-    defenseSimAt,
-    blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
-    pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId) ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
-    history,
-    winStreak: isCount(source.winStreak) ? source.winStreak : 0,
-    bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
-    // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
-    seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
-    lastSeasonTierId,
-    lastSeasonScore: lastSeasonTierId && isCount(source.lastSeasonScore) ? source.lastSeasonScore : 0
-  };
-}
-function isValidDuelState(value, ownedRelicIds) {
-  if (!value || typeof value !== "object") return false;
-  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
-}
-function rollDuelPeriods(state, now) {
-  const next = cloneDuelState(state);
-  const seasonId = duelSeasonId(now);
-  if (next.seasonId !== seasonId) {
-    const played = next.seasonId !== "" && next.wins + next.losses > 0;
-    if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
-    if (next.seasonId !== "") {
-      next.lastSeasonTierId = played ? duelTier(next.score).id : null;
-      next.lastSeasonScore = played ? next.score : 0;
-    }
-    next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
-    next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
-    next.wins = 0;
-    next.losses = 0;
-    next.winStreak = 0;
-    next.bestStreak = 0;
-    next.seasonBestScore = next.score;
-    next.candidateIds = [];
-    next.foughtIds = [];
-    next.defenseSimAt = "";
-    next.seasonId = seasonId;
-  }
-  const dayKey = duelDayKey(now);
-  if (next.dayKey !== dayKey) {
-    next.dayKey = dayKey;
-    next.attemptsUsed = 0;
-    next.attemptsPurchased = 0;
-    next.attemptsFromAds = 0;
-    next.refreshesUsed = 0;
-  }
-  return next;
-}
-function duelAttemptsLeft(state) {
-  return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
-}
 
 // src/core/playerCard.ts
 init_define_import_meta_env();
@@ -26173,6 +26225,89 @@ function isRaidInstance(value) {
 // src/api/FakeServer.ts
 init_define_import_meta_env();
 
+// src/server/playerDuels.ts
+init_define_import_meta_env();
+
+// src/core/combatPower.ts
+init_define_import_meta_env();
+var WEIGHTS = {
+  hp: 0.5,
+  def: 2.4,
+  res: 2.4,
+  atk: 3.4,
+  ap: 3.4,
+  attackSpeed: 3,
+  moveSpeed: 1.2,
+  critChance: 4,
+  critDamage: 1.6,
+  energyGain: 2,
+  lifeSteal: 3,
+  ferocityGain: 2
+};
+function combatPower(stats) {
+  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
+}
+
+// src/core/battleArena.ts
+init_define_import_meta_env();
+var BASE_ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
+var BATTLE_ARENA = {
+  stage: BASE_ARENA,
+  expedition: BASE_ARENA,
+  expeditionBoss: BASE_ARENA,
+  cake: { ...BASE_ARENA, top: 720 },
+  bounty: { ...BASE_ARENA, top: 770 },
+  raid: { ...BASE_ARENA, top: 860 },
+  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
+  // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
+  // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
+  duel: { ...BASE_ARENA, top: 740 }
+};
+function battleArena(mode) {
+  return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
+}
+
+// src/server/playerDuels.ts
+function duelParticipant(row, now) {
+  const base = saveManager.exportData(createDefaultSession());
+  const owned = row.data.ownedRelicIds;
+  const state = saveManager.parse({ ...base, ...row.data, party: owned.slice(0, 3), favorite: owned.includes(String(row.data.favorite)) ? row.data.favorite : owned[0] });
+  state.duel = rollDuelPeriods(normalizeDuelState(state.duel, owned), now);
+  const progression = new RelicProgressionManager(state);
+  const units = state.duel.defense.map((relicId) => {
+    const stats = progression.getFinalStats(relicId), progress = state.relicProgress[relicId];
+    return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
+  });
+  return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t("profile.defaultName"), score: state.duel.score, favoriteRelicId: state.favorite, units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
+}
+function duelCombatSetup(state, opponentState, attack) {
+  const progression = new RelicProgressionManager(state), defenseProgression = new RelicProgressionManager(opponentState);
+  const defense = opponentState.duel.defense;
+  const traits = (s, ids) => partyRuneTraitEffects(ids.map((relicId) => ({ relicId, runes: (s.relicProgress[relicId]?.heartGemSlots ?? []).flatMap((id) => s.runeInventory.filter((r) => r.instanceId === id)) })));
+  return {
+    players: attack.map((id) => ({ ...getRelic(id), stats: progression.getFinalStats(id) })),
+    enemies: defense.map((id) => ({ ...getRelic(id), stats: defenseProgression.getFinalStats(id) })),
+    arena: battleArena("duel"),
+    bonds: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.bondLevel ?? 0])),
+    breakthroughs: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.breakthrough ?? 0])),
+    options: { augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map((id) => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map((id) => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 }
+  };
+}
+function recordPlayerDefense(context, opponentId, attacker, attack, attackerWon, now) {
+  const row = context.records.find((r) => r.id === opponentId);
+  if (!row) throw new Error("DUEL_OPPONENT_NOT_FOUND");
+  const { state } = duelParticipant(row, now), duel2 = state.duel;
+  const before = duel2.score, won = !attackerWon;
+  duel2.score = applyDuelScore(before, won ? DUEL_DEFENSE_SIM.win : -DUEL_DEFENSE_SIM.loss);
+  const reached = duelNewlyReachedTiers(before, duel2.score, duel2.reachedTierIds);
+  duel2.reachedTierIds.push(...reached.map((t2) => t2.id));
+  duel2.seasonBestScore = Math.max(duel2.seasonBestScore, duel2.score);
+  duel2.wins += won ? 1 : 0;
+  duel2.losses += won ? 0 : 1;
+  duel2.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t("profile.defaultName"), opponentScore: attacker.duel.score, won, delta: duel2.score - before, opponentTierId: duelStanding(attacker.duel.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map((relicId) => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: "defense" }, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT);
+  context.changes.push({ playerId: row.id, expectedRevision: row.revision, duel: duel2, gems: reached.reduce((n, t2) => n + t2.firstReachGems, 0) });
+}
+
 // src/api/storyAuthority.ts
 init_define_import_meta_env();
 
@@ -27822,43 +27957,6 @@ var ATTENDANCE_AD_REWARDS = [
 ];
 var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
 
-// src/core/contentUnlock.ts
-init_define_import_meta_env();
-var CONTENT_UNLOCKS = [
-  { id: "excavation", level: 2 },
-  { id: "shop", level: 3 },
-  { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 3 },
-  { id: "bounty", level: 3 },
-  { id: "friends", level: 4 },
-  { id: "interaction", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "guild", level: 7 },
-  { id: "raid", level: 8 },
-  { id: "expedition", level: 9 }
-];
-var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
-var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
-var CONTENT_LEVEL_GATES_ENABLED = true;
-function contentUnlockLevel(id) {
-  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
-}
-function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
-  if (!gates) return true;
-  const stage = CONTENT_STAGE_UNLOCKS[id];
-  if (stage !== void 0) return clearedStages.has(stage);
-  return playerLevel >= contentUnlockLevel(id);
-}
-function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
-}
-function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
-  return void 0;
-}
-
 // src/core/bountyRun.ts
 init_define_import_meta_env();
 function isBountyTierUnlocked(tier, clearedTierIds) {
@@ -28888,26 +28986,6 @@ var DUEL_NPC_NAMES = [
   "\uBFD4\uB098\uD314"
 ];
 
-// src/core/combatPower.ts
-init_define_import_meta_env();
-var WEIGHTS = {
-  hp: 0.5,
-  def: 2.4,
-  res: 2.4,
-  atk: 3.4,
-  ap: 3.4,
-  attackSpeed: 3,
-  moveSpeed: 1.2,
-  critChance: 4,
-  critDamage: 1.6,
-  energyGain: 2,
-  lifeSteal: 3,
-  ferocityGain: 2
-};
-function combatPower(stats) {
-  return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
-}
-
 // src/core/partyAffinity.ts
 init_define_import_meta_env();
 var CENTER_PRIORITY = { tank: 0, warrior: 1, assassin: 2, support: 3 };
@@ -28932,9 +29010,6 @@ function duelNpcPool(seasonId) {
   const pool = Array.from({ length: DUEL_NPC_COUNT }, (_, index) => buildNpc(index, random));
   cache.set(seasonId, pool);
   return pool;
-}
-function findDuelNpc(seasonId, id) {
-  return duelNpcPool(seasonId).find((npc) => npc.id === id);
 }
 function buildNpc(index, random) {
   const score = Math.round(DUEL_NPC_TOP_SCORE * Math.pow(random(), 1.6));
@@ -29992,25 +30067,6 @@ function archaeologySiteAvailability(site, level) {
   return { available: level >= site.minimumLevel, missingLevel: Math.max(0, site.minimumLevel - level) };
 }
 
-// src/core/battleArena.ts
-init_define_import_meta_env();
-var BASE_ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
-var BATTLE_ARENA = {
-  stage: BASE_ARENA,
-  expedition: BASE_ARENA,
-  expeditionBoss: BASE_ARENA,
-  cake: { ...BASE_ARENA, top: 720 },
-  bounty: { ...BASE_ARENA, top: 770 },
-  raid: { ...BASE_ARENA, top: 860 },
-  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
-  // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
-  // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
-  duel: { ...BASE_ARENA, top: 740 }
-};
-function battleArena(mode) {
-  return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
-}
-
 // src/data/staminaRecharge.ts
 init_define_import_meta_env();
 
@@ -30609,6 +30665,8 @@ var MAX_RUNE_NAME_LENGTH = 20;
 var FakeServer = class {
   constructor(state = session, options = {}) {
     this.state = state;
+    this.duelContext = options.duelContext;
+    this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
@@ -30622,6 +30680,10 @@ var FakeServer = class {
       if (ticket.kind === "stage") this.pendingStageAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
       if (ticket.kind === "cake") this.pendingCakeAdmissions.set(ticket.target, /* @__PURE__ */ new Set([ticket.requestId]));
       if (ticket.kind === "bounty") this.pendingBountyRuns.set(ticket.requestId, ticket.target);
+      if (ticket.kind === "duel" && ticket.duel) {
+        const npc = ticket.duel.opponent;
+        this.pendingDuels.set(ticket.requestId, { opponentId: npc.id, opponentName: npc.displayName, opponentScore: npc.score, favoriteRelicId: npc.favoriteRelicId, units: npc.units.map(({ relicId, level }) => ({ relicId, level })) });
+      }
     }
     this.raidContext = options.raidContext;
     this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : void 0);
@@ -30719,6 +30781,8 @@ var FakeServer = class {
   pendingDuels = /* @__PURE__ */ new Map();
   duelResolveResults = /* @__PURE__ */ new Map();
   developmentTools;
+  duelContext;
+  remoteExpeditionRank;
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
   applySavedMailClaims() {
     const claimed = new Set(this.state.claimedMailIds ?? []);
@@ -32909,7 +32973,19 @@ var FakeServer = class {
    * 날짜·시즌을 넘기고, 상대 후보가 비었거나 다섯 모두와 싸웠으면 새로 세운 상태. 저장까지 확정한다.
    * 다섯째 상대와의 판은 입장에서 싸운 것으로 적히므로 그 판이 끝난 뒤의 첫 조회가 새 상대를 세운다.
    */
+  duelPool(now = this.now()) {
+    return this.duelContext ? this.duelContext.records.map((row) => duelParticipant(row, now).opponent).filter((row) => row.units.length === 3) : duelNpcPool(duelSeasonId(now));
+  }
   duelNow(now) {
+    if (this.duelContext) {
+      let next2 = rollDuelPeriods(normalizeDuelState(this.state.duel, [...this.state.owned]), now);
+      const pool2 = this.duelPool(now);
+      if (!next2.candidateIds.length || next2.candidateIds.some((id) => !pool2.some((p) => p.id === id)) || duelAllOpponentsFought(next2.candidateIds, next2.foughtIds)) {
+        next2 = { ...next2, candidateIds: pickDuelOpponents(pool2, next2.score, this.random).map((p) => p.id), foughtIds: [] };
+      }
+      this.state.duel = next2;
+      return next2;
+    }
     if (!QA_TOOLS_ENABLED) return this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
     const current = this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
     let next = rollDuelPeriods(current, now);
@@ -32936,7 +33012,7 @@ var FakeServer = class {
   duelStatusDto(duel2, now) {
     const standing = duelStanding(duel2.score);
     const blindCount = duelBlindCount(duel2.score);
-    const pool = duelNpcPool(duel2.seasonId);
+    const pool = this.duelPool(now);
     const opponents = duel2.candidateIds.flatMap((id) => {
       const npc = pool.find((candidate) => candidate.id === id);
       if (!npc) return [];
@@ -32984,15 +33060,16 @@ var FakeServer = class {
       defenseIsDefault: !duel2.defenseCustomized,
       blindChoice: [...duel2.blindChoice],
       defenseBlindOrder: duelBlindOrder(duel2.defense.map((relicId) => ({ relicId, power: this.duelRelicPower(relicId) })), duel2.blindChoice),
-      pendingSeasonReward: QA_TOOLS_ENABLED && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
-      history: (QA_TOOLS_ENABLED ? duel2.history : []).map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} })),
+      pendingSeasonReward: (QA_TOOLS_ENABLED || !!this.duelContext) && reward && rewardTier ? { ...reward, duelEmblem: rewardTier.seasonReward.duelEmblem, gems: rewardTier.seasonReward.gems } : null,
+      history: (QA_TOOLS_ENABLED || this.duelContext ? duel2.history : []).map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} })),
       serverTime: now.toISOString()
     };
   }
   /** 표본과 합친 내 순위. 이번 시즌에 한 판도 치르지 않았으면 순위표에 서지 않는다. */
   duelMyRank(duel2) {
+    if (this.duelContext) return this.duelContext.rank;
     if (!QA_TOOLS_ENABLED || duel2.wins + duel2.losses === 0) return null;
-    return duelNpcPool(duel2.seasonId).filter(({ score }) => score > duel2.score).length + 1;
+    return this.duelPool().filter(({ score }) => score > duel2.score).length + 1;
   }
   async getDuelStatus() {
     await this.delay();
@@ -33001,12 +33078,12 @@ var FakeServer = class {
   }
   async refreshDuelOpponents() {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel2 = this.duelNow(now);
     const price = duelRefreshPrice(duel2.refreshesUsed);
     if (this.state.wallet.gems < price) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC82C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const candidateIds = pickDuelOpponents(duelNpcPool(duel2.seasonId), duel2.score, this.random, duel2.candidateIds).map(({ id }) => id);
+    const candidateIds = pickDuelOpponents(this.duelPool(now), duel2.score, this.random, this.duelPool(now).length > DUEL_OPPONENT_COUNT ? duel2.candidateIds : []).map(({ id }) => id);
     const next = { ...duel2, candidateIds, foughtIds: [], refreshesUsed: duel2.refreshesUsed + 1 };
     const wallet = { ...this.state.wallet, gems: this.state.wallet.gems - price };
     this.persist({ ...this.state, wallet, duel: next });
@@ -33016,7 +33093,7 @@ var FakeServer = class {
   }
   async buyDuelAttempt() {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const now = this.now();
     const duel2 = this.duelNow(now);
     const price = duelExtraAttemptPrice(duel2.attemptsPurchased);
@@ -33047,14 +33124,14 @@ var FakeServer = class {
   }
   async enterDuel(request) {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const now = this.now();
     const duel2 = this.duelNow(now);
     this.assertDuelTeam(request.relicIds);
-    const npc = duel2.candidateIds.includes(request.opponentId) ? findDuelNpc(duel2.seasonId, request.opponentId) : void 0;
+    const npc = duel2.candidateIds.includes(request.opponentId) ? this.duelPool(now).find((p) => p.id === request.opponentId) : void 0;
     if (!npc) throw new GameApiError("DUEL_OPPONENT_NOT_FOUND", "\uC9C0\uAE08 \uC138\uC6CC \uB454 \uC0C1\uB300\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     if (duel2.foughtIds.includes(npc.id)) throw new GameApiError("DUEL_OPPONENT_FOUGHT", "\uC774\uBBF8 \uC2F8\uC6B4 \uC0C1\uB300\uC785\uB2C8\uB2E4.");
     if (duelAttemptsLeft(duel2) <= 0) throw new GameApiError("DUEL_NO_ATTEMPTS", "\uC624\uB298\uC758 \uB3C4\uC804\uAD8C\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4.");
@@ -33071,17 +33148,27 @@ var FakeServer = class {
       units: npc.units.map(({ relicId, level, breakthrough, stats }) => ({ relicId, level, breakthrough, stats: { ...stats } })),
       hiddenRelicIds: duelHiddenRelicIds(npc.blindOrder, duelBlindCount(duel2.score))
     };
+    if (this.duelContext) {
+      const row = this.duelContext.records.find((row2) => row2.id === npc.id);
+      const journal = combatJournal(this.state);
+      for (const [key, ticket] of Object.entries(journal.tickets)) if (ticket.kind === "duel") consumeCombat(this.state, key);
+      journal.tickets[`duel:${request.requestId}`] = { kind: "duel", target: npc.id, requestId: request.requestId, duel: { opponent: structuredClone(npc), setup: duelCombatSetup(this.state, duelParticipant(row, now).state, request.relicIds) } };
+    }
     this.duelAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
   }
   async resolveDuel(request) {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelResolveResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     const pending = this.pendingDuels.get(request.requestId);
     if (!pending) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "\uC785\uC7A5\uD558\uC9C0 \uC54A\uC740 \uACB0\uD22C\uC785\uB2C8\uB2E4.");
     const now = this.now();
+    if (this.duelContext) {
+      const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
+      recordPlayerDefense(this.duelContext, pending.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+    }
     const duel2 = this.duelNow(now);
     const scoreBefore = duel2.score;
     const winStreak = request.won ? duel2.winStreak + 1 : 0;
@@ -33113,7 +33200,7 @@ var FakeServer = class {
       bestStreak: Math.max(duel2.bestStreak, winStreak),
       seasonBestScore: Math.max(duel2.seasonBestScore, scoreAfter),
       // 티어가 오르면 새 티어에 맞는 상대가 선다. 다섯 모두와 싸운 경우는 다음 조회(`duelNow`)가 세운다.
-      ...duelTierRose(scoreBefore, scoreAfter) ? { candidateIds: pickDuelOpponents(duelNpcPool(duel2.seasonId), scoreAfter, this.random, duel2.candidateIds).map(({ id }) => id), foughtIds: [] } : {},
+      ...duelTierRose(scoreBefore, scoreAfter) ? { candidateIds: pickDuelOpponents(this.duelPool(now), scoreAfter, this.random, duel2.candidateIds).map(({ id }) => id), foughtIds: [] } : {},
       history: [entry, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT)
     };
     const fought = applyMissionEvent(this.state.missions, { type: "battle_completed", victory: request.won }, now);
@@ -33142,6 +33229,12 @@ var FakeServer = class {
   }
   async getDuelRanking() {
     await this.delay();
+    if (this.duelContext) {
+      const duel3 = this.duelNow(this.now());
+      const entries2 = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext.playerId }));
+      const me2 = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel3.score, tierId: duelTier(duel3.score).id, favoriteRelicId: this.state.favorite, isMe: true };
+      return { entries: entries2, me: me2, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
+    }
     if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     const now = this.now();
     const duel2 = this.duelNow(now);
@@ -33149,7 +33242,7 @@ var FakeServer = class {
     const meName = this.state.playerCard.nickname || t("duel.ranking.me");
     const favorite = this.state.favorite ?? duel2.defense[0] ?? duel2.attack[0] ?? "torika";
     const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel2.score, tierId: duelTier(duel2.score).id, favoriteRelicId: favorite, isMe: true };
-    const npcs = [...duelNpcPool(duel2.seasonId)].sort((a, b) => b.score - a.score);
+    const npcs = [...this.duelPool(now)].sort((a, b) => b.score - a.score);
     const rows = npcs.map(({ displayName, score, favoriteRelicId }) => ({ displayName, score, tierId: duelTier(score).id, favoriteRelicId, isMe: false }));
     if (me) rows.splice(me.rank - 1, 0, { ...me });
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
@@ -33157,7 +33250,7 @@ var FakeServer = class {
   }
   async claimDuelSeasonReward() {
     await this.delay();
-    if (!QA_TOOLS_ENABLED) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
+    if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const duel2 = this.duelNow(this.now());
     const pending = duel2.pendingSeasonReward;
     const tier = pending ? getDuelTier(pending.tierId) : void 0;
@@ -34235,6 +34328,7 @@ var FakeServer = class {
    * 실제 순위표는 점수·동점 규칙(`earliest-achieved-at`)으로 매긴다(`docs/server-migration.md`).
    */
   expeditionRank(score) {
+    if (this.remoteExpeditionRank !== void 0) return this.remoteExpeditionRank;
     return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
   }
   /** 빠른 원정·광고 보상이 기준으로 삼는 점수 — 이번 주 최고, 없으면 받지 않은 지난주 기록. */
@@ -34595,9 +34689,20 @@ function combatJournal(state) {
 }
 function combatKey(input) {
   const b = input.input;
-  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail2();
+  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail2();
 }
 function prepareCombat(state, request, now, id) {
+  if (request?.input?.mode === "duel") {
+    const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
+    if (!ticket2?.duel || ticket2.kind !== "duel") return fail2();
+    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
+    if (active4) return structuredClone(active4.lease);
+    const lease2 = { id, seed: id, setup: structuredClone(ticket2.duel.setup), expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    if (Object.keys(records2.records).length >= 8) return fail2();
+    records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
+    return structuredClone(lease2);
+  }
   if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
     return fail2();
   const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
@@ -34777,6 +34882,7 @@ function authoritativeArgs(state, method, args) {
     if (!run2?.nodes.find((node) => node.id === run2.currentNodeId)?.successorIds.includes(String(request?.nodeId)))
       return reject();
   }
+  if (method === "resolveDuel") key = `duel:${request?.requestId}`;
   if (method === "completeStage") key = `stage:${args[0]}`;
   if (method === "completeCakeOperation") key = `cake:${request?.requestId}`;
   if (method === "completeBounty") key = `bounty:${request?.requestId}`;
@@ -34800,6 +34906,7 @@ function authoritativeArgs(state, method, args) {
       (record2) => combatKey(record2.input) === key && record2.verdict
     );
     if (!records.length) return reject();
+    if (method === "resolveDuel") return [{ ...request, won: records[0].verdict.victory }];
     if (method === "completeStage")
       return [args[0], records[0].verdict.victory];
     if (method === "completeBounty") {
@@ -34869,6 +34976,7 @@ function recordBoundaryResult(state, method, args, now = /* @__PURE__ */ new Dat
       requestId: String(request?.requestId)
     };
   }
+  if (method === "resolveDuel") consumeCombat(state, `duel:${request?.requestId}`);
   if (method === "completeStage") consumeCombat(state, `stage:${args[0]}`);
   if (method === "completeCakeOperation")
     consumeCombat(state, `cake:${request?.requestId}`);
@@ -35181,12 +35289,15 @@ async function run(playerId, req, deps) {
     const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
-    const [cached, stored, identity, context, ops] = await Promise.all([
+    const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
+    const [cached, stored, identity, context, ops, duels, expedition] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
       wantsRaid ? deps.store.raidContext(playerId, now) : void 0,
-      wantsOps ? deps.store.opsInbox(playerId).catch(() => null) : null
+      wantsOps ? deps.store.opsInbox(playerId).catch(() => null) : null,
+      wantsDuel ? deps.store.duelContext(playerId, now) : void 0,
+      /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0
     ]);
     if (cached !== void 0) {
       const receipt = cached;
@@ -35206,6 +35317,8 @@ async function run(playerId, req, deps) {
       state.playerCard.uid = identity.uid;
       state.playerCard.createdAt = identity.createdAt;
     }
+    if (wantsDuel && !isContentUnlocked("duel", state.playerResearch.level)) throw new GameCallError(422, "content_locked");
+    if (isContentUnlocked("duel", state.playerResearch.level)) state.duel = rollDuelPeriods(normalizeDuelState(state.duel, [...state.owned]), now);
     if (context) state.raid.instances = context.records.map((row) => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
@@ -35213,6 +35326,8 @@ async function run(playerId, req, deps) {
       ...deps.now ? { now: deps.now } : {},
       persistSession: () => void 0,
       raidContext: context,
+      duelContext: duels,
+      expeditionRank: expedition?.rank,
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true
@@ -35232,6 +35347,7 @@ async function run(playerId, req, deps) {
       else if (req.method === "finishCombat") result = finishCombat(state, args[0], now);
       else {
         result = await server[req.method](...args);
+        if (req.method === "getExpeditionLeaderboard" && expedition) result = { ...result, entries: expedition.entries.slice(0, Math.max(0, Math.min(100, Number(args[0] ?? 100)))) };
         if (req.method === "getNotificationSignals" && deps.store.pendingRequests) result = { ...result, pendingFriendRequestCount: await deps.store.pendingRequests(playerId) };
         if (req.method === "getNotificationSignals") {
           const opsNotices = drainOpsNotices(state);
@@ -35259,7 +35375,8 @@ async function run(playerId, req, deps) {
         requestId: req.requestId ?? null,
         response: { ...response, revision: void 0, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
-        raids: context ? raidChanges(context, state) : void 0
+        raids: context ? raidChanges(context, state) : void 0,
+        duels: duels?.changes
       });
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => void 0);
@@ -35302,6 +35419,13 @@ function createSupabaseStore(env) {
       const response = await rpc("server_social_call", { p_player: playerId, p_method: "getRequests", p_args: [], p_request: null });
       return response.incomingCount;
     },
+    async expeditionContext(playerId, now) {
+      return await rpc("server_expedition_ranking", { p_player: playerId, p_week: expeditionWeekKey(now), p_limit: 100 });
+    },
+    async duelContext(playerId, now) {
+      const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") });
+      return { ...context, changes: [] };
+    },
     async identity(playerId) {
       return await rpc("server_player_identity", { p_player: playerId });
     },
@@ -35309,6 +35433,7 @@ function createSupabaseStore(env) {
       return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
     },
     async opsInbox(playerId) {
+      await rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: EXPEDITION_WEEKLY_RANK_REWARDS[index].rewards.salvageRecord ?? 0 })) });
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {
@@ -35330,7 +35455,7 @@ function createSupabaseStore(env) {
         p_data: input.data,
         p_hash: await sha256Hex(JSON.stringify(input.data)),
         p_version: data.saveVersion ?? 1,
-        p_summary: { _profile: input.publicProfile, _raids: input.raids, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
+        p_summary: { _profile: input.publicProfile, _raids: input.raids, _duels: input.duels, level: data.playerResearch?.level ?? 1, gems: data.wallet?.gems ?? 0, gold: data.wallet?.gold ?? 0 },
         p_method: input.method,
         p_request: input.requestId,
         p_response: input.response

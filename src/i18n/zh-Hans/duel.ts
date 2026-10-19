@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ZH_HANS = {
+  "ranking.weekly.rules": "周一00:00 UTC结算 · 奖励通过邮件发放\n当周须有对战或远征记录才可领奖。",
+  "duel.season.rules": "每{days}天赛季结束 · 积分保留60%，向下取整至百位",
+  "duel.opponents.empty": "暂无对手。其他研究员解锁PvP后将出现在列表中，请稍后查看。",
+
   "duel.ranking.me": "我",
   "duel.pause.forfeitConfirm": "本场决斗将以失败告终。",
   "duel.result.toDuel": "前往决斗场",

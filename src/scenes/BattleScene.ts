@@ -510,7 +510,7 @@ export class BattleScene extends Phaser.Scene {
     this.spawned=false; this.pendingResult=undefined;
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
     this.stageCompletion = undefined;
-    if (usesRemoteGameApi() && ["stage","cake","bounty","expedition"].includes(this.battleInput.mode)) {
+    if (usesRemoteGameApi() && ["stage","cake","bounty","expedition","duel"].includes(this.battleInput.mode)) {
       const prepare=(): void => {
         void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1" }).then(lease=>{
           if(!this.scene.isActive()||generation!==this.combatGeneration) return;
@@ -2958,6 +2958,7 @@ export class BattleScene extends Phaser.Scene {
    * 같은 결산창(`defeat`)에 받은 휘장과 점수 변화가 선다. 닫으면 결투장으로 돌아간다.
    */
   private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {
+    const generation = this.combatGeneration;
     const fighters = this.stageCompleteFighters();
     const popups = new PopupLayer(this, 2200);
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
@@ -2965,11 +2966,11 @@ export class BattleScene extends Phaser.Scene {
     try {
       settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
     } catch (error) {
-      if (!this.scene.isActive()) return;
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"), error, "duel");
       return;
     }
-    if (!this.scene.isActive()) return;
+    if (!this.scene.isActive() || generation !== this.combatGeneration) return;
     const toDuel = (): void => { this.scene.start("duel"); };
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };

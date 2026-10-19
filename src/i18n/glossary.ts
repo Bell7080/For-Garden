@@ -112,6 +112,8 @@ export function glossaryForm(id: GlossaryId, language: LanguageId): string | und
  * **비우려고 적지 않는다.** 새로 더할 때는 왜 사전의 표기를 쓰면 안 되는지를 주석으로 남긴다.
  */
 export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>> = {
+  // 연구원은 플레이어를 가리키며, 확률형 뽑기 기능인 연구가 아니다.
+  "duel.opponents.empty": ["research"],
   // ‘모두 이룬 렐릭’의 ‘이룬’은 동사 이루다의 활용형이며 장비 ‘룬’을 가리키지 않는다.
   "achievement.objective.perfectRelics": ["rune"],
   // 화석을 캐낸 실제 장소이지 방치형 자원 수집 기능이 아니다.

@@ -673,6 +673,7 @@ export interface SkirmishState {
   log: string[];
   /** 원정에서만 주입되는 순수 효과 목록이다. 일반 스토리 전투는 빈 배열이다. */
   augmentEffects: readonly ExpeditionAugmentEffect[];
+  enemyAugmentEffects?: readonly ExpeditionAugmentEffect[];
   /** 생성 직후 UI가 첫 step에서 한 번만 받는 전투 시작 사건이다. */
   initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
@@ -744,6 +745,8 @@ export interface SkirmishRelicResult { relicId: string; currentHp: number; alive
 export interface CreateSkirmishOptions {
   playerInitialStates?: readonly FighterInitialState[];
   augmentEffects?: readonly ExpeditionAugmentEffect[];
+  enemyAugmentEffects?: readonly ExpeditionAugmentEffect[];
+  enemyBondLevels?: readonly number[];
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
   /** 적 슬롯별 돌파 효과를 스테이지 성장 스냅샷 그대로 전투원에게 전달한다. */
@@ -1119,8 +1122,8 @@ const NO_CRIT = (): number => 0.999999;
 
 function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: number, bondLevel = 0, breakthrough = 0, bodyScale = 1, augmentEffects: readonly ExpeditionAugmentEffect[] = []): Fighter {
   // 정적 정의를 복제한 전투 스냅샷에만 단순 능력치 증강을 한 번 반영한다.
-  const multipliers = side === "player" ? expeditionAugmentStatMultipliers(augmentEffects, def.id) : expeditionAugmentStatMultipliers([], def.id);
-  const flatPoints = (stat: "critChance" | "ferocityGain" | "energyGain"): number => side === "player" ? flatStatPoints(augmentEffects, def.id, stat) : 0;
+  const multipliers = expeditionAugmentStatMultipliers(augmentEffects, def.id);
+  const flatPoints = (stat: "critChance" | "ferocityGain" | "energyGain"): number => flatStatPoints(augmentEffects, def.id, stat);
   const passiveBreakthrough = isBreakthroughSlotOpen(breakthrough, "passive")
     && def.breakthroughEffects?.passive?.kind === "battleMaidAscension" ? def.breakthroughEffects.passive : undefined;
   const durability = 1 + (passiveBreakthrough?.durabilityPercent ?? 0) / 100;
@@ -1240,7 +1243,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     tauntHealBudget: def.passive.tauntHeal?.maxPerSecond ?? 0,
     submergedIn: null,
     statusPotencyMultiplier: multipliers.statusPotencyPercent,
-    conditionalAttackPowerMultiplier: (hpPercent) => side === "player" ? conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent) : 1,
+    conditionalAttackPowerMultiplier: (hpPercent) => conditionalAttackPowerMultiplier(augmentEffects, def.id, hpPercent),
     basicAttackCount: 0,
     basicCycleStep: 0,
     feverDamageTaken: 0,
@@ -1422,7 +1425,7 @@ function scoreBossFixedDamage(state: SkirmishState, target: Fighter, amount: num
  * 그대로 갖는다. Fighter 배열에 함께 들어가므로 표적·이동·상태이상·넉백·체력 바가 별도
  * 경로 없이 붙는다.
  */
-function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly ExpeditionAugmentEffect[]): Fighter[] {
+function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly ExpeditionAugmentEffect[], enemyEffects: readonly ExpeditionAugmentEffect[] = []): Fighter[] {
   return owners.flatMap((owner) => (owner.def.summons ?? []).map((spec, index) => {
     const stats = deriveSummonStats(owner.def.stats, spec);
     /*
@@ -1436,14 +1439,14 @@ function createPackFighters(owners: readonly Fighter[], augmentEffects: readonly
     const forward = owner.side === "player" ? -1 : 1;
     const x = owner.x + (index % 2 === 0 ? -70 : 70);
     const y = owner.y + forward * 90;
-    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, augmentEffects);
+    const wolf = makeFighter({ ...spec.def, stats }, owner.side, index, x, y, 0, 0, spec.bodyScale ?? 1, owner.side === "player" ? augmentEffects : enemyEffects);
     // 편성 칸의 ID와 겹치지 않도록 주인 ID를 이름공간으로 쓴다. 기여도가 이 형태를 읽는다.
     wolf.id = `${owner.id}:${spec.def.id}`;
     wolf.summonOwnerId = owner.id;
     wolf.resummonRule = spec.resummon;
     wolf.facing = owner.facing;
     return wolf;
-  })).concat(owners.flatMap((owner) => createPupPool(owner, augmentEffects)));
+  })).concat(owners.flatMap((owner) => createPupPool(owner, owner.side === "player" ? augmentEffects : enemyEffects)));
 }
 
 /** 새끼 늑대는 `:pup-N` 이름공간으로 서고 기여도·승패·도감에서는 주인의 몸으로만 센다. */
@@ -1519,7 +1522,7 @@ export function createSkirmish(
   });
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
-    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1);
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
     // 쓰러지면 판이 끝나는 보스(레이드)는 불사가 아니다 — 체력이 0에 닿는 순간이 곧 처치다.
     fighter.immortal = options.boss !== undefined && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
@@ -1538,7 +1541,7 @@ export function createSkirmish(
   if (options.boss && !enemies.some(({ id }) => id === bossFighterId)) throw new RangeError("보스 전투원 ID는 적 편성에 존재해야 합니다.");
   const party = [...players, ...enemies];
   // 늑대는 편성 뒤에 붙는다. 배열 순서가 곧 동률 판정 순서라 편성 칸이 늘 앞에 온다.
-  const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [])];
+  const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state: SkirmishState = {
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
@@ -1549,6 +1552,7 @@ export function createSkirmish(
     deathClockTicks: 0,
     log: [],
     augmentEffects: options.augmentEffects ?? [],
+    enemyAugmentEffects: options.enemyAugmentEffects ?? [],
     initialEvents: [],
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true, ...(options.boss.seasonHp !== undefined ? { seasonHp: Math.max(1, Math.round(options.boss.seasonHp)) } : {}) } : undefined,
   };
@@ -1583,12 +1587,17 @@ function stitchedMightMultiplier(state: SkirmishState, attacker: Fighter): numbe
   return plan?.kind === "stitchedMight" ? 1 + plan.damagePercent / 100 : 1;
 }
 
+/** 같은 렐릭이 양쪽에 서도 룬 효과가 상대에게 섞이지 않는다. */
+function effectsFor(state: SkirmishState, fighter: Fighter): readonly ExpeditionAugmentEffect[] {
+  return fighter.side === "player" ? state.augmentEffects : state.enemyAugmentEffects ?? [];
+}
+
 function traitDamageMultiplier(state: SkirmishState, attacker: Fighter, target: Fighter): number {
   return traitDamageMultiplierBase(state, attacker, target) * stitchedMightMultiplier(state, attacker);
 }
 
 function traitDamageMultiplierBase(state: SkirmishState, attacker: Fighter, target: Fighter): number {
-  const effects = state.augmentEffects;
+  const effects = effectsFor(state, attacker);
   attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
   attacker.traitStreakTargetId = target.id;
   const targetHpPercent = target.maxHp > 0 ? target.hp / target.maxHp * 100 : 0;
@@ -1600,7 +1609,7 @@ function traitDamageMultiplierBase(state: SkirmishState, attacker: Fighter, targ
 
 /** 현재 전투의 조건부 증강만 안전하게 좁혀 대상 렐릭에 적용되는 항목과 안정적인 키를 돌려준다. */
 function triggeredAugments(state: SkirmishState, fighter: Fighter, trigger: ExpeditionAugmentTrigger): Array<{ effect: ExpeditionTriggeredEffect; key: string }> {
-  return state.augmentEffects.flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id)
+  return effectsFor(state, fighter).flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id)
     ? [{ effect, key: String(index) }] : []);
 }
 
@@ -1615,9 +1624,9 @@ function consumeAugmentTrigger(state: SkirmishState, fighter: Fighter, key: stri
 /** 전투 시작 보호막을 기존 shield 슬롯과 shieldGranted 사건으로만 부여하는 일회성 초기화 단계다. */
 export function initializeSkirmishAugments(state: SkirmishState): SkirmishEvent[] {
   const events: SkirmishEvent[] = [];
-  for (const fighter of state.fighters.filter(({ side }) => side === "player")) {
+  for (const fighter of state.fighters) {
     // 구형 시작 보호막도 동일 사건 경로로 이관해 기존 저장 선택과 UI가 조용히 깨지지 않게 한다.
-    const legacyPercent = expeditionAugmentStatMultipliers(state.augmentEffects, fighter.def.id).initialShieldPercent - 1;
+    const legacyPercent = expeditionAugmentStatMultipliers(effectsFor(state, fighter), fighter.def.id).initialShieldPercent - 1;
     if (legacyPercent > 0 && fighter.augmentRuntime.legacyShield === undefined) {
       fighter.augmentRuntime.legacyShield = { triggers: 1, lastAt: state.elapsed };
       grantShield(state, fighter, fighter.id, fighter.maxHp * legacyPercent, events);
@@ -7759,7 +7768,7 @@ function strike(
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "clawBleed") {
     refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
   }
-  const augmentBleed = bleedOnAttackEffect(state.augmentEffects, attacker.def.id);
+  const augmentBleed = bleedOnAttackEffect(effectsFor(state, attacker), attacker.def.id);
   if (augmentBleed && isFighterAlive(target)) {
     // 증강 전용 카운터가 발동 빈도를 제한하고, 실제 적용은 모든 출혈이 쓰는 단일 슬롯을 지난다.
     attacker.augmentBleedHitCount = (attacker.augmentBleedHitCount + 1) % augmentBleed.everyNAttacks;

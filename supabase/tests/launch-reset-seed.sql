@@ -53,3 +53,8 @@ insert into public.website_notices(id, slug, category, status) values ('66666666
 insert into public.website_notice_translations(notice_id, locale, title, body) values ('66666666-6666-6666-6666-666666666666', 'ko', '안녕', '본문');
 insert into public.website_preregistrations(email, platform, locale) values ('real.person@example.com', 'both', 'ko');
 insert into storage.objects(bucket_id, name) values ('notice-images', 'cover.webp');
+
+-- 경쟁 점수/마감 순위/우편 발송 이력도 초기화 대상이다.
+insert into public.server_competitive_scores values ('duel',current_date,'00000000-0000-0000-0000-000000000001',0,now(),true);
+insert into public.server_competitive_results values ('duel',current_date,'00000000-0000-0000-0000-000000000001',1);
+insert into public.server_competitive_awards values ('duel',current_date,'00000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111111',1,5000);

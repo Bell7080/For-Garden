@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ID = {
+  "ranking.weekly.rules": "Ditutup Senin 00:00 UTC · Hadiah lewat surat\nHarus ada hasil duel atau skor ekspedisi pada minggu itu.",
+  "duel.season.rules": "Musim berakhir tiap {days} hari · Skor 60%, dibulatkan ke bawah per 100",
+  "duel.opponents.empty": "Belum ada lawan. Peneliti lain akan muncul setelah membuka PvP. Periksa lagi nanti.",
+
   "duel.ranking.me": "Saya",
   "duel.pause.forfeitConfirm": "Duel ini akan diakhiri dengan kekalahan.",
   "duel.result.toDuel": "Ke Arena Duel",

@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ES = {
+  "ranking.weekly.rules": "Cierre: lunes 00:00 UTC · Recompensas por correo\nSe requiere un duelo o puntuación de expedición esa semana.",
+  "duel.season.rules": "La temporada dura {days} días · Puntos al 60%, redondeados hacia abajo a centenas",
+  "duel.opponents.empty": "No hay rivales. Aparecerán otros investigadores cuando desbloqueen PvP. Vuelve a consultar más tarde.",
+
   "duel.ranking.me": "Yo",
   "duel.pause.forfeitConfirm": "Este duelo terminará en derrota.",
   "duel.result.toDuel": "A la arena de duelos",

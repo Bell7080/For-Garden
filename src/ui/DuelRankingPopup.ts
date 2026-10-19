@@ -1,3 +1,4 @@
+import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -32,6 +33,7 @@ export class DuelRankingPopup {
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
     this.popups.open({ width, height, title: t("duel.link.ranking"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
       this.body = body;
+      body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openCompetitiveRewards(this.scene, this.popups) }));
       // 티어 안내는 순위표 안에서 연다 — "몇 등인가" 다음에 읽는 것이 "어느 티어부터 무엇을 받나"다.
       body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
         width: DUEL_RANKING_TIER_BUTTON.width, height: DUEL_RANKING_TIER_BUTTON.height, label: t("duel.link.tiers"), icon: "arena-tier", fontSize: 26,

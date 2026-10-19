@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ZH_HANT = {
+  "ranking.weekly.rules": "週一00:00 UTC結算 · 獎勵透過郵件發放\n當週須有對戰或遠征紀錄才可領獎。",
+  "duel.season.rules": "每{days}天賽季結束 · 積分保留60%，向下取整至百位",
+  "duel.opponents.empty": "暫無對手。其他研究員解鎖PvP後將出現在列表中，請稍後查看。",
+
   "duel.ranking.me": "我",
   "duel.pause.forfeitConfirm": "本場決鬥將以失敗告終。",
   "duel.result.toDuel": "前往決鬥場",

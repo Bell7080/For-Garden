@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_DE = {
+  "ranking.weekly.rules": "Ende Montag 00:00 UTC · Belohnungen per Post\nEine Duell- oder Expeditionswertung dieser Woche ist erforderlich.",
+  "duel.season.rules": "Saisonende alle {days} Tage · 60% der Punkte, auf 100 abgerundet",
+  "duel.opponents.empty": "Keine Gegner verfügbar. Andere Forscher erscheinen, sobald sie PvP freischalten. Bitte später erneut prüfen.",
+
   "duel.ranking.me": "Ich",
   "duel.pause.forfeitConfirm": "Dieses Duell wird als Niederlage gewertet.",
   "duel.result.toDuel": "Zur Duell-Arena",

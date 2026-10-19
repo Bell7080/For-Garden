@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_VI = {
+  "ranking.weekly.rules": "Chốt thứ Hai 00:00 UTC · Thưởng qua thư\nCần có kết quả đấu hoặc điểm viễn chinh trong tuần.",
+  "duel.season.rules": "Mùa kéo dài {days} ngày · Giữ 60% điểm, làm tròn xuống hàng trăm",
+  "duel.opponents.empty": "Chưa có đối thủ. Nhà nghiên cứu khác sẽ xuất hiện sau khi mở PvP. Hãy kiểm tra lại sau.",
+
   "duel.ranking.me": "Tôi",
   "duel.pause.forfeitConfirm": "Trận đấu tay đôi này sẽ kết thúc với kết quả thua.",
   "duel.result.toDuel": "Đến đấu trường",

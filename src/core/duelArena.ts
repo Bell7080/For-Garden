@@ -38,12 +38,12 @@ export interface DuelTierDef {
 export const DUEL_DIVISION_SPAN = 100;
 
 export const DUEL_TIERS: readonly DuelTierDef[] = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 0 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 50 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 100 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 150 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 200 }, firstReachGems: 300 },
-  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 300 }, firstReachGems: 400 },
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1000 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2000 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3000 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4000 }, firstReachGems: 300 },
+  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5000 }, firstReachGems: 400 },
   { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 400 }, firstReachGems: 500 },
   { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 500 }, firstReachGems: 700 },
 ];
@@ -107,8 +107,8 @@ export function duelDefenseWinChance(mine: number, theirs: number): number {
   return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
 }
 
-/** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 28일인가다. */
-export const DUEL_SEASON_DAYS = 28;
+/** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 21일인가다. */
+export const DUEL_SEASON_DAYS = 21;
 const DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
 const DAY_MS = 86_400_000;
 

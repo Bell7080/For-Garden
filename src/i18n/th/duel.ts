@@ -1,5 +1,9 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_TH = {
+  "ranking.weekly.rules": "ปิดวันจันทร์ 00:00 UTC · ส่งรางวัลทางจดหมาย\nต้องมีผลดวลหรือคะแนนออกสำรวจในสัปดาห์นั้น",
+  "duel.season.rules": "จบฤดูกาลทุก {days} วัน · เหลือคะแนน 60% ปัดลงหลักร้อย",
+  "duel.opponents.empty": "ยังไม่มีคู่ต่อสู้ นักวิจัยคนอื่นจะปรากฏเมื่อปลดล็อก PvP โปรดตรวจสอบอีกครั้งภายหลัง",
+
   "duel.ranking.me": "ฉัน",
   "duel.pause.forfeitConfirm": "การดวลครั้งนี้จะจบลงด้วยความพ่ายแพ้",
   "duel.result.toDuel": "ไปยังสนามดวล",

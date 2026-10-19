@@ -6,7 +6,7 @@ import { handleGameCall, GameCallError, type StateStore, StateConflictError } fr
 import { STAGES } from '../../src/data/stages';
 import { STAGE_STORY_LINKS } from '../../src/data/stageStories';
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from '../../src/core/playerLevel';
-export function createFixture() {
+export function createFixture(mode: "stage" | "duel" = "stage") {
     const state = createDefaultSession();
     state.completedStoryIds.add(OPENING_TRAIN.id);
     state.party = ['rex', 'mette', 'torika'];
@@ -36,9 +36,17 @@ export function createFixture() {
         status: number;
         message?: string;
     }[] = [];
-    const store: StateStore = { load: async () => structuredClone(stored), findReceipt: async (_id, key) => receipts.get(key), commit: async (input) => {
+    const defender = createDefaultSession();
+    defender.playerResearch = normalizePlayerLevel({ level: 6 });
+    let defenderRevision = "1";
+    const store: StateStore = {
+        ...(mode === "duel" ? { duelContext: async () => ({ playerId: "isolated-browser-player", rank: 1, ranking: [], changes: [], records: [{ id: "actual-guest-defender", revision: defenderRevision, data: saveManager.exportData(defender) as unknown as Record<string, unknown> }] }) } : {}), load: async () => structuredClone(stored), findReceipt: async (_id, key) => receipts.get(key), commit: async (input) => {
             if (input.expectedRevision !== stored.revision)
                 throw new StateConflictError();
+            for (const change of input.duels ?? []) {
+                if (change.expectedRevision !== defenderRevision) throw new StateConflictError();
+                defender.duel = change.duel; defender.wallet.gems += change.gems; defenderRevision = String(Number(defenderRevision) + 1);
+            }
             stored = { revision: String(Number(stored.revision) + 1), data: JSON.parse(JSON.stringify(input.data)) };
             if (input.requestId)
                 receipts.set(input.requestId, { ...input.response as object, revision: stored.revision });
@@ -58,5 +66,5 @@ export function createFixture() {
                 console.log("[browser server]", request.method, error.status, error.message);
                 return { status: error.status, body: { ok: false, code: error.code, domainCode: error.domainCode, message: error.message } };
             }
-        }, state: () => saveManager.parse(stored.data), calls };
+        }, state: () => saveManager.parse(stored.data), defense: () => defender.duel, calls };
 }

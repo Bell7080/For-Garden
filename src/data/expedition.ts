@@ -1,3 +1,4 @@
+import { WEEKLY_RANK_GEMS } from "./competitiveRewards";
 /** 원정 맵에서 보스 외 노드를 뽑을 때 사용하는 정적 밸런스 한 벌이다. */
 export const EXPEDITION_MAP_BALANCE = {
   /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
@@ -205,16 +206,9 @@ export const EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 } as const;
 /**
  * 주간 순위 보상 — 한 주가 끝나면 그 주 최고 점수의 순위로 우편을 보낸다(`pendingRankReward`).
  * `upTo`까지의 순위가 그 줄의 보상을 받고, 마지막 줄은 기록을 남긴 모두의 몫이다. 인양 기록과
- * 보석을 함께 준다 — 순위가 상점 재화까지 끌고 가야 주마다 기록을 다시 쓸 이유가 된다.
+ * 젬을 함께 준다 — 순위가 상점 재화까지 끌고 가야 주마다 기록을 다시 쓸 이유가 된다.
  */
-export const EXPEDITION_WEEKLY_RANK_REWARDS: readonly { upTo: number | null; rewards: Partial<Record<ExpeditionRewardCurrency, number>> }[] = [
-  { upTo: 1, rewards: { gems: 500, salvageRecord: 400 } },
-  { upTo: 3, rewards: { gems: 400, salvageRecord: 320 } },
-  { upTo: 10, rewards: { gems: 300, salvageRecord: 250 } },
-  { upTo: 50, rewards: { gems: 200, salvageRecord: 180 } },
-  { upTo: 100, rewards: { gems: 150, salvageRecord: 130 } },
-  { upTo: null, rewards: { gems: 80, salvageRecord: 80 } },
-];
+export const EXPEDITION_WEEKLY_RANK_REWARDS: readonly { upTo: number | null; rewards: Partial<Record<ExpeditionRewardCurrency, number>> }[] = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
 
 export function expeditionRankRewards(rank: number): Partial<Record<ExpeditionRewardCurrency, number>> {
   const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1)!;

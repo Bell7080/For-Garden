@@ -9,6 +9,7 @@ with
     ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'),
     ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.server_friend_favorites'),
     ('public.server_social_wallets'), ('public.server_rate_windows'), ('public.server_social_receipts'),
+    ('public.server_competitive_scores'), ('public.server_competitive_results'), ('public.server_competitive_awards'),
     ('public.server_raids'), ('public.server_raid_members'),
     ('public.guilds'), ('public.guild_members'), ('public.guild_requests'), ('public.guild_attendance'),
     ('public.guild_left'), ('public.guild_receipts'), ('public.website_registration_limits')

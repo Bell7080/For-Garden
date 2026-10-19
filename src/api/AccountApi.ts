@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 /** 계정 제공자. 인증 비밀이 아니라 화면에 공개해도 되는 분류만 표현한다. */
-export type AccountProvider = "guest" | "google" | "apple";
+export type AccountProvider = "guest" | "password" | "google" | "apple";
 
 /** SDK/서버가 보관하는 계정 상태의 표시용 투영이다. 토큰은 계약에 의도적으로 없다. */
 export interface AccountState {
@@ -37,13 +37,19 @@ export type AccountFailureCode =
   | "guest-merge-unavailable"
   | "save-conflict"
   | "invalid-remote-save"
-  | "conflict-cancelled";
+  | "conflict-cancelled"
+  /** 아이디·비밀번호 계정 입력/인증 실패. 어느 칸이 틀렸는지는 알려 주되 계정 존재 여부는 로그인에서 흘리지 않는다. */
+  | "invalid-id"
+  | "weak-password"
+  | "id-taken"
+  | "invalid-credentials"
+  | "rate-limited";
 
 /** 예외 문자열 대신 UI가 취소·통신 실패·합치기 불가를 구별하게 하는 공통 결과다. */
 export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string };
 
 export interface LoginRequest {
-  provider: Exclude<AccountProvider, "guest">;
+  provider: Exclude<AccountProvider, "guest" | "password">;
   /** true면 플랫폼이 지원하는 경우에만 게스트 진행 합치기를 시도한다. */
   mergeGuestProgress: boolean;
 }
@@ -77,6 +83,13 @@ export interface AccountApi {
   uploadRemoteSave(data: unknown, expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>>;
   deleteRemoteSave(expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>>;
   mergeGuestSave(request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>>;
+  /**
+   * 아이디·비밀번호 계정(메일 인증 없음). 이 기기에 게스트 계정이 있으면 **같은 유저 그대로 승격**해 진행이 따라오고,
+   * 없으면 새 계정을 만든다. 비밀번호는 인증 서비스만 보관한다.
+   */
+  registerWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
+  /** 다른 기기에서 만든 아이디 계정으로 들어간다. 이 기기의 기존 세션은 이 계정으로 바뀐다. */
+  signInWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
 }
 
 /**
@@ -100,6 +113,8 @@ export class UnsupportedAccountApi implements AccountApi {
   async uploadRemoteSave(_data: unknown, _expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>> { return this.unsupported(); }
   async deleteRemoteSave(_expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
+  async registerWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
+  async signInWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
 
   private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: unsupportedMessage() }; }
 }

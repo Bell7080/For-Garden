@@ -19,6 +19,8 @@ import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
 import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { AccountSaveSync } from "../api/AccountSaveSync";
+import { disconnectProgress } from "../api/backendSession";
+import { openAccountIdPopup } from "../ui/AccountIdPopup";
 import { session } from "../state/session";
 import { openSupportPopup } from "../ui/SupportPopup";
 import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
@@ -304,8 +306,13 @@ export class SettingsScene extends Phaser.Scene {
     y = section(t("settings.section.account"));
     const account = this.accountState;
     this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
-    if (account.kind === "guest") { this.addTextAction(90, y, t("settings.account.linkGoogle"), () => void this.login("google")); this.addTextAction(350, y, t("settings.account.linkApple"), () => void this.login("apple")); }
-    else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => accountApi.logout()), true); }
+    if (account.kind === "guest") {
+      // 한 줄에 세 개가 서므로 입력면을 글자 폭만큼만 둔다(겹치면 뒤에 선 줄이 앞 글자를 가로챈다).
+      this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
+      this.addTextAction(400, y, t("settings.account.linkGoogle"), () => void this.login("google"), false, 240);
+      this.addTextAction(680, y, t("settings.account.linkApple"), () => void this.login("apple"), false, 240);
+    }
+    else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true); }
     y += SETTINGS_SUPPORT.accountFootRoom;
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
@@ -326,9 +333,9 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   /** 텍스트형 진입점도 최소 88px 터치 영역과 눌림 확대 규칙을 갖는다. */
-  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false): void {
+  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false, hitWidth = 840): void {
     const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
-    const hit = this.add.rectangle(x + 420, y, 840, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.add.rectangle(x + hitWidth / 2, y, hitWidth, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(button)); hit.on("pointerout", () => pressOut(button, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(button); if (!this.accountBusy) action(); });
     this.content.add([button, hit]);
   }
@@ -373,6 +380,25 @@ export class SettingsScene extends Phaser.Scene {
     this.showAccountFailure(result.code);
   }
 
+  /**
+   * 이 기기의 게스트 계정에 아이디·비밀번호를 붙인다. 유저가 그대로 승격되므로 서버 진행은 그 자리에 있고,
+   * 같은 아이디로 다른 기기에서 로그인하면 이어서 키울 수 있다. 저장 이어받기는 부트가 다시 거친다.
+   */
+  private linkWithId(): void {
+    openAccountIdPopup(this, this.popups, { mode: "link", onDone: () => {
+      this.popups.confirm({ title: t("settings.account.notice"), message: t("settings.account.linkIdDone"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, () => {
+        void accountApi.getState().then((result) => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; this.buildRows(); } });
+      });
+    } });
+  }
+
+  /** 아이디 계정에서 나간다. 이 기기의 저장은 이 계정 것이므로 함께 비워 다음 사람의 진행과 섞이지 않게 한다. */
+  private async signOut(): Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }> {
+    const result = await accountApi.logout();
+    if (result.ok) { disconnectProgress(); saveManager.reset(); }
+    return result;
+  }
+
   /** 로그아웃/탈퇴는 저장 초기화와 별개의 공용 확인 팝업을 통과한다. */
   private confirmAccountAction(title: string, message: string, operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): void {
     this.popups.confirm({ title, message, confirmLabel: title, destructive: true }, () => void this.runAccountAction(operation));
@@ -387,7 +413,7 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
   private showAccountFailure(code: AccountFailureCode): void {
-    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
+    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
     this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 

@@ -1829,6 +1829,33 @@ var MISC_KO = {
   "error.account.authFailed": "\uC778\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. ({status})",
   "error.account.authResponse": "\uC778\uC99D \uC751\uB2F5\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
   "error.account.loginUnsupported": "\uC544\uC9C1 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uB85C\uADF8\uC778\uC785\uB2C8\uB2E4.",
+  "title.login.account": "\uACC4\uC815 \uB85C\uADF8\uC778",
+  "account.id.title": "\uACC4\uC815 \uB85C\uADF8\uC778",
+  "account.id.linkTitle": "\uACC4\uC815 \uC5F0\uB3D9",
+  "account.id.tab.signIn": "\uB85C\uADF8\uC778",
+  "account.id.tab.register": "\uD68C\uC6D0\uAC00\uC785",
+  "account.id.field.id": "\uC544\uC774\uB514",
+  "account.id.field.password": "\uBE44\uBC00\uBC88\uD638",
+  "account.id.field.confirm": "\uBE44\uBC00\uBC88\uD638 \uD655\uC778",
+  "account.id.note.register": "\uC774\uBA54\uC77C \uC778\uC99D\uC774 \uC5C6\uC5B4 \uBE44\uBC00\uBC88\uD638\uB97C \uC78A\uC73C\uBA74 \uB418\uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.\n\uC544\uC774\uB514\uB294 \uC601\uBB38 \uC18C\uBB38\uC790\uB85C \uC2DC\uC791\uD558\uB294 4~20\uC790, \uBE44\uBC00\uBC88\uD638\uB294 8\uC790 \uC774\uC0C1\uC785\uB2C8\uB2E4.",
+  "account.id.hint.signIn": "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uB9CC\uB4E0 \uACC4\uC815\uC73C\uB85C \uC774\uC5B4\uC11C \uD0A4\uC6B8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "account.id.register": "\uAC00\uC785\uD558\uACE0 \uC2DC\uC791",
+  "account.id.link": "\uC774 \uC544\uC774\uB514\uB85C \uC5F0\uB3D9",
+  "account.id.signIn": "\uB85C\uADF8\uC778",
+  "account.id.busy": "\uD655\uC778\uD558\uB294 \uC911\u2026",
+  "account.id.error.id": "\uC544\uC774\uB514\uB294 \uC601\uBB38 \uC18C\uBB38\uC790\uB85C \uC2DC\uC791\uD558\uB294 \uC601\uBB38 \uC18C\uBB38\uC790\xB7\uC22B\uC790\xB7_ 4~20\uC790\uC785\uB2C8\uB2E4.",
+  "account.id.error.password": "\uBE44\uBC00\uBC88\uD638\uB294 8~64\uC790\uC774\uBA70 \uC544\uC774\uB514\uC640 \uB2EC\uB77C\uC57C \uD569\uB2C8\uB2E4.",
+  "account.id.error.mismatch": "\uBE44\uBC00\uBC88\uD638 \uD655\uC778\uC774 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "account.id.error.taken": "\uC774\uBBF8 \uC0AC\uC6A9 \uC911\uC778 \uC544\uC774\uB514\uC785\uB2C8\uB2E4.",
+  "account.id.error.login": "\uC544\uC774\uB514 \uB610\uB294 \uBE44\uBC00\uBC88\uD638\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "account.id.error.rate": "\uC2DC\uB3C4\uAC00 \uB108\uBB34 \uB9CE\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uD574 \uC8FC\uC138\uC694.",
+  "settings.account.linkId": "\uC544\uC774\uB514\uB85C \uC5F0\uB3D9",
+  "settings.account.linkIdDone": "\uACC4\uC815 \uC5F0\uB3D9\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC774 \uC544\uC774\uB514\uB85C \uB85C\uADF8\uC778\uD574 \uC774\uC5B4\uC11C \uD0A4\uC6B8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "error.account.credentials": "\uC544\uC774\uB514 \uB610\uB294 \uBE44\uBC00\uBC88\uD638 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "error.account.alreadyLinked": "\uC774\uBBF8 \uACC4\uC815\uC5D0 \uC5F0\uB3D9\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.",
+  "error.account.idTaken": "\uC774\uBBF8 \uC0AC\uC6A9 \uC911\uC778 \uC544\uC774\uB514\uC785\uB2C8\uB2E4.",
+  "error.account.badLogin": "\uC544\uC774\uB514 \uB610\uB294 \uBE44\uBC00\uBC88\uD638\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "error.account.rateLimited": "\uC2DC\uB3C4\uAC00 \uB108\uBB34 \uB9CE\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uD574 \uC8FC\uC138\uC694.",
   "opening.devSkip": "\uC2A4\uD0B5 (\uAC1C\uBC1C\uC6A9)",
   "opening.skip": "\uC2A4\uD0B5",
   "opening.skip.title": "\uC2A4\uD0B5",
@@ -1918,6 +1945,7 @@ var SKILL_KO = {
   "skill.phrase.farthest": "\uAC00\uC7A5 \uBA3C \uC801\uC5D0\uAC8C",
   "skill.phrase.fewestObservation": "[[observation|\uAD00\uCE21]]\uC774 \uC5C6\uAC70\uB098 \uAC00\uC7A5 \uC801\uC740 \uC801\uC5D0\uAC8C",
   "skill.phrase.nearbyEnemies": "\uC790\uC2E0\uC758 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C",
+  "skill.phrase.nearbyEnemiesCapped": "\uC790\uC2E0\uC758 \uC8FC\uC704 \uAC00\uAE4C\uC6B4 \uC801 {count}\uBA85\uC5D0\uAC8C",
   "skill.phrase.splitShot": "\uD45C\uC801\uACFC \uADF8 \uC8FC\uC704\uC758 \uC801\uC5D0\uAC8C",
   "skill.phrase.battlefieldEnemies": "\uC804\uC7A5\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C",
   "skill.phrase.targetedCircle": "\uC9C0\uC815\uD55C \uC6D0 \uC548\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C",
@@ -2227,7 +2255,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.highTide": "[[fog-guard|\uD574\uBB34 \uBC29\uBCBD]]\uC774 \uC0C1\uD55C\uAE4C\uC9C0 \uCC28 \uC788\uB294 \uB3D9\uC548 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.status.intimidate": "[[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4",
   "skill.passive.echoLocation": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
-  "skill.passive.echoBatSwarm": "{seconds}\uCD08\uB9C8\uB2E4 \uC790\uAE30 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uBC15\uC950 \uB5BC\uAC00 \uC8FC\uBB38\uB825\uC758 {power}% [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4. \uAC00\uAE4C\uC6B4 {count}\uBA85\uC774 \uC785\uC740 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4. [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC78\uACE0, \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
+  "skill.passive.echoBatSwarm": "{seconds}\uCD08\uB9C8\uB2E4 \uC790\uAE30 \uC8FC\uC704\uC758 \uAC00\uAE4C\uC6B4 \uC801 {count}\uBA85\uC5D0\uAC8C \uBC15\uC950 \uB5BC\uAC00 \uC8FC\uBB38\uB825\uC758 {power}% [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC8FC\uACE0, \uADF8 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4. [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C [[echo|\uBC18\uD5A5]]\uC744 \uAC78\uACE0, \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4.",
   "skill.ferocity.batStorm": "\uD3ED\uC8FC \uC911 \uBC15\uC950 \uB5BC\uC758 \uBC94\uC704\uAC00 {radius}% \uB113\uC5B4\uC9C0\uACE0 {speed}% \uB354 \uBE68\uB9AC \uB9F4\uB3C8\uB2E4.",
   "skill.passive.segmentBarrier": "\uC804\uD22C\uB97C [[segment-barrier|\uB9C8\uB514 \uBC29\uBCBD]]\uC744 \uB450\uB974\uACE0 \uC2DC\uC791\uD55C\uB2E4. \uB9C9\uC774 \uAE4E\uC774\uBA74 \uB9C8\uB514\uAC00 \uD558\uB098\uC529 \uB418\uC0B4\uC544\uB098\uACE0, \uB9DE\uC744\uC218\uB85D \uB354 \uBE68\uB9AC \uB3CC\uC544\uC628\uB2E4.",
   "skill.passive.vitalAim": "\uAC19\uC740 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uC774\uC5B4 \uCE60 \uB54C\uB9C8\uB2E4 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC5EC \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4. \uD45C\uC801\uC774 \uBC14\uB00C\uBA74 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC313\uB294\uB2E4.",
@@ -2356,7 +2384,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.deeperMarch": "[[worker-march|\uD589\uB82C]]\uC758 \uC7AC\uC0DD\uC774 \uC544\uAD70 \uD55C \uBA85\uB2F9 \uCD08\uB2F9 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.deepAim": "[[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC774\uB294 \uC0C1\uD55C\uC774 {stacks}\uACB9 \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.twinHum": "\u300C{name}\u300D\uC774 \uAC00\uC7A5 \uC13C \uC544\uAD70 \uB458\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4.",
-  "skill.breakthrough.effect.passive.swarmDeepen": "\u300C{name}\u300D\uC774 \uD53C\uB97C \uBE60\uB294 \uC801\uC774 {count}\uBA85 \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.passive.swarmDeepen": "\u300C{name}\u300D\uC774 \uB9DE\uD788\uB294 \uC801\uC774 {count}\uBA85 \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ultimate.longGust": "\u300C{name}\u300D\uC774 \uAC70\uB294 [[tailwind|\uC21C\uD48D]]\uC774 {seconds}\uCD08\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.ferocity.bloodFever": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uAC00\uD55C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverGuard": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC544\uAD70\uC774 \uBC1B\uB294 \uD53C\uD574\uC758 {percent}%\uB97C \uB300\uC2E0 \uBC1B\uB294\uB2E4.",
@@ -5514,10 +5542,10 @@ function tickBatSwarm(fighter, dt, state, events) {
   const radius = plan.radius * (1 + (trait?.radiusPercent ?? 0) / 100);
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { power: plan.powerPercent, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" };
-  const inRange = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius).sort((a, b) => distance(fighter, a) - distance(fighter, b));
   const deepen = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  const inRange = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius).sort((a, b) => distance(fighter, a) - distance(fighter, b)).slice(0, plan.maxTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraTargets : 0));
   let healBase = 0;
-  inRange.forEach((other, index) => {
+  inRange.forEach((other) => {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
@@ -5525,7 +5553,7 @@ function tickBatSwarm(fighter, dt, state, events) {
     const shieldProviderId = other.shield.providerId;
     applyDamage(other, resolution.applied, events, state);
     const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-    if (index < plan.healTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraHealTargets : 0)) healBase += resolution.applied;
+    healBase += resolution.applied;
     events.push({
       kind: "attack",
       attackerId: fighter.id,
@@ -6199,11 +6227,20 @@ function tickArtChannel(fighter, dt, state, events) {
   ventHeal(fighter, state, events);
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { ...ultimate, isCritical: false, kind: "ultimate" };
-  if (state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other))) {
-    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType, area: { shape: "battlefield" } });
+  const reach = ultimate.targeting === "nearbyEnemies" ? ultimate : void 0;
+  const widened = reach ? openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate) : void 0;
+  const reachRadius = reach ? Math.max(reach.radius, widened?.kind === "widenArea" ? widened.radius : 0) : Infinity;
+  const channelTargets = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= reachRadius).sort((a, b) => distance(fighter, a) - distance(fighter, b)).slice(0, reach?.maxTargets ?? Infinity);
+  if (channelTargets.length > 0) {
+    events.push({
+      kind: "areaImpact",
+      attackerId: fighter.id,
+      ultimate: true,
+      damageType: ultimate.damageType,
+      area: reach ? { shape: "radial", x: fighter.x, y: fighter.y, radius: reachRadius } : { shape: "battlefield" }
+    });
   }
-  for (const other of state.fighters) {
-    if (other.side === fighter.side || !isFighterAlive(other)) continue;
+  for (const other of channelTargets) {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
@@ -9084,7 +9121,10 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       skill: { ...skill, power: skill.power * arrowBreakthrough.powerPercent / 100 }
     });
   }
-  const targets2 = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0) && (!cursed || fighter.curse !== null) && (skill.targeting === "battlefieldEnemies" || skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0) || skill.targeting === "splitShot" && splitTargetIds.has(fighter.id) || skill.targeting === "targetedCircle" && inCircle(fighter) || skill.targeting === "chargeLine" && inCharge(fighter)));
+  const nearbyCapIds = skill.targeting === "nearbyEnemies" && skill.maxTargets !== void 0 ? new Set(
+    state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && distance(attacker, fighter) <= (skill.radius ?? 0)).sort((a, b) => distance(attacker, a) - distance(attacker, b)).slice(0, skill.maxTargets).map((fighter) => fighter.id)
+  ) : void 0;
+  const targets2 = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0) && (!cursed || fighter.curse !== null) && (skill.targeting === "battlefieldEnemies" || skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0) && (nearbyCapIds === void 0 || nearbyCapIds.has(fighter.id)) || skill.targeting === "splitShot" && splitTargetIds.has(fighter.id) || skill.targeting === "targetedCircle" && inCircle(fighter) || skill.targeting === "chargeLine" && inCharge(fighter)));
   const distinctTargets = targets2.length;
   if (skill.repeatOnLone === true && skill.targeting === "splitShot" && distinctTargets > 0 && distinctTargets < forkCount) {
     for (let fill = 0; targets2.length < forkCount; fill += 1) targets2.push(targets2[fill % distinctTargets]);
@@ -13566,9 +13606,9 @@ var RELICS = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      // 몸 주위를 맴도는 박쥐가 초마다 넓게 훑는다 — 다수 대 일에 강한 지속 탱의 뼈대다.
-      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, healTargets: 3, healPercent: 30 },
-      desc: "\uBC15\uC950 \uB5BC\uAC00 \uC8FC\uC704\uC758 \uC801\uC744 \uB9E4\uCD08 \uD6D1\uB294\uB2E4. \uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
+      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, maxTargets: 2, healPercent: 30 },
+      desc: "\uBC15\uC950 \uB5BC\uAC00 \uC8FC\uC704\uC758 \uAC00\uAE4C\uC6B4 \uC801 \uB458\uC744 \uB9E4\uCD08 \uD6D1\uB294\uB2E4. \uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
     },
     basic: {
       id: "ikanixia-basic",
@@ -13579,11 +13619,11 @@ var RELICS = [
       effectType: "magical",
       damageType: "magical",
       /*
-       * **박쥐가 표적과 그 곁의 둘까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 셋에게 나눠 얹고, 세 번째
+       * **박쥐가 표적과 그 곁의 하나까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 둘에게 나눠 얹고, 세 번째
        * 타격마다 출혈을 남긴다 — 기절은 걷어 냈다(붙잡는 손은 궁극기가 아니라 물량으로 몰아붙이는 쪽이 이 개체다).
        */
       targeting: "splitShot",
-      maxTargets: 3,
+      maxTargets: 2,
       statusEffectEvery: 3,
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }]
     },
@@ -13599,6 +13639,8 @@ var RELICS = [
       cost: 80,
       targeting: "nearbyEnemies",
       radius: 300,
+      // 첫 타와 매초 틱 모두 반경 안에서 가까운 둘만 맞힌다.
+      maxTargets: 2,
       channel: { seconds: 5 },
       damageHealingPercent: 25
     },
@@ -13607,7 +13649,7 @@ var RELICS = [
       basic: { kind: "bleedingSmash" },
       ultimate: { kind: "widenArea", radius: 380 },
       ferocity: { kind: "bloodFever", lifeStealPoints: 15 },
-      passive: { kind: "swarmDeepen", extraHealTargets: 2 }
+      passive: { kind: "swarmDeepen", extraTargets: 1 }
     }
   },
   {
@@ -16226,11 +16268,16 @@ for (const relic of RELICS) {
 // src/data/stages.ts
 init_define_import_meta_env();
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
-function tieredEnemy(relicId, referenceLevel, slot) {
+function tieredEnemy(relicId, referenceLevel, slot, levelBonus = 0) {
   const tier = ENEMY_BIRTH_TIERS[relicId];
-  const level = tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel;
+  const level = (tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel) + (tier ? levelBonus : 0);
   return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
 }
+var CHAPTER_FOUR_RAIDER_LEVEL_BONUS = 3;
+var SOLO_ELITE_ENEMIES = {
+  "4-6": ["koma"],
+  "4-9": ["koma"]
+};
 function enemyGrowth(relicId, level, breakthrough, formationSlot) {
   return { relicId, level, breakthrough, formationSlot };
 }
@@ -16299,9 +16346,9 @@ var LATE_CHAPTER_FORMATIONS = {
   "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-10": [["ikanixia", 1]],
-  // 4장 — 회수조와 테러조가 섞인다. 무리 5기(4-2·4-8) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6) · 이카닉시아 캐리(4-9) · 투 캐리 마감(4-10).
+  // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6, 코마만 정예) · 코마 캐리(4-9, 코마만 정예) · 투 캐리 마감(4-10).
   "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
-  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3], ["neuri", 4]],
+  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
   "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
   "4-4": [["atra", 0], ["amo", 2]],
   "4-5": [["atra", 0], ["toby", 2]],
@@ -16381,7 +16428,10 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
-    const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => tieredEnemy(relicId, laterChapterLevel, slot)) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
+    const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => {
+      const enemy = tieredEnemy(relicId, laterChapterLevel, slot, chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0);
+      return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true } : enemy;
+    }) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
@@ -16474,9 +16524,13 @@ function stageEnemyRole(stage) {
 }
 function getStageEnemies(stage) {
   const role = stageEnemyRole(stage);
-  return stageEnemyGrowth(stage).map((enemy) => {
+  const growth = stageEnemyGrowth(stage);
+  const soloElites = growth.filter((enemy) => enemy.elite === true).length;
+  return growth.map((enemy) => {
     const base = getRelic(enemy.relicId);
-    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
+    const enemyRole = enemy.elite === true ? "elite" : role;
+    const count2 = enemy.elite === true ? soloElites : stage.enemies.length;
+    return { ...base, encounterRole: enemyRole, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
   });
 }
 for (const chapter of CHAPTERS) {

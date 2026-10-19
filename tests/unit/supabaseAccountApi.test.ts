@@ -101,4 +101,69 @@ describe("SupabaseAccountApi", () => {
     expect(await api.requestWithdrawal()).toMatchObject({ ok: false, code: "unsupported" });
     expect(await api.mergeGuestSave({ requestId: "r", guestData: {}, expectedRemote: null })).toMatchObject({ ok: false, code: "guest-merge-unavailable" });
   });
+
+  describe("아이디·비밀번호 계정", () => {
+    const jwt = (claims: Record<string, unknown>) => `h.${btoa(JSON.stringify(claims)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}.s`;
+    const sessionWith = (claims: Record<string, unknown>, n = 1) => ({ access_token: jwt(claims), refresh_token: `r${n}`, expires_at: 2_000_000, user: { id: "11111111-2222-3333-4444-555555555555" } });
+
+    it("처음 가입은 합성 주소로 signup하고 연동 상태를 돌려준다(비밀번호는 저장소에 남지 않는다)", async () => {
+      const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
+      const result = await api.registerWithId("Garden_01", "correct horse");
+      expect(result).toEqual({ ok: true, value: { kind: "linked", provider: "password", maskedId: "ga••••" } });
+      expect(calls[0].path).toBe("/auth/v1/signup");
+      expect(JSON.parse(String(calls[0].init.body))).toEqual({ email: "garden_01@id.forgarden.app", password: "correct horse" });
+      expect(JSON.stringify(store.value)).not.toContain("correct horse");
+    });
+
+    it("게스트가 있으면 같은 유저를 승격하고(PUT /user) 토큰을 새로 받는다", async () => {
+      const { api, store, calls } = setup((path, init) => {
+        if (path === "/auth/v1/signup") return json(sessionWith({ is_anonymous: true }));
+        if (path === "/auth/v1/user") return json({ id: "11111111-2222-3333-4444-555555555555" });
+        if (path.includes("grant_type=refresh_token")) return json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" }, 2));
+        throw new Error(`unexpected ${path} ${init.method}`);
+      });
+      expect((await api.getState()).ok).toBe(true);
+      const result = await api.registerWithId("garden_01", "correct horse");
+      expect(result).toMatchObject({ ok: true, value: { kind: "linked", provider: "password" } });
+      const put = calls.find((c) => c.path === "/auth/v1/user");
+      expect(put?.init.method).toBe("PUT");
+      expect(JSON.parse(String(put?.init.body))).toEqual({ email: "garden_01@id.forgarden.app", password: "correct horse" });
+      expect(store.value?.refreshToken).toBe("r2");
+    });
+
+    it("이미 쓰는 아이디·약한 비밀번호·잘못된 로그인·과도한 시도를 코드로 가른다", async () => {
+      const reg = (errorCode: string, status = 422) => setup(() => json({ error_code: errorCode }, status)).api.registerWithId("garden_01", "correct horse");
+      expect(await reg("user_already_exists")).toMatchObject({ ok: false, code: "id-taken" });
+      expect(await reg("weak_password")).toMatchObject({ ok: false, code: "weak-password" });
+      const login = (errorCode: string, status: number) => setup(() => json({ error_code: errorCode }, status)).api.signInWithId("garden_01", "wrong pass");
+      expect(await login("invalid_credentials", 400)).toMatchObject({ ok: false, code: "invalid-credentials" });
+      expect(await login("over_request_rate_limit", 429)).toMatchObject({ ok: false, code: "rate-limited" });
+    });
+
+    it("규칙에 맞지 않는 입력은 서버를 부르지 않는다", async () => {
+      const { api, calls } = setup(() => json({}));
+      expect(await api.registerWithId("ab", "correct horse")).toMatchObject({ ok: false, code: "invalid-id" });
+      expect(await api.registerWithId("garden_01", "short")).toMatchObject({ ok: false, code: "weak-password" });
+      expect(await api.signInWithId("a b", "x")).toMatchObject({ ok: false, code: "invalid-credentials" });
+      expect(calls).toHaveLength(0);
+    });
+
+    it("다른 기기 로그인은 password grant로 들어가 같은 계정의 토큰을 보관한다", async () => {
+      const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
+      const result = await api.signInWithId("GARDEN_01", "correct horse");
+      expect(result).toMatchObject({ ok: true, value: { kind: "linked" } });
+      expect(calls[0].path).toBe("/auth/v1/token?grant_type=password");
+      expect(store.value?.userId).toBe("11111111-2222-3333-4444-555555555555");
+    });
+
+    it("로그아웃은 새 게스트를 만들지 않아 타이틀이 로그인 선택을 다시 보여 준다", async () => {
+      const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
+      await api.signInWithId("garden_01", "correct horse");
+      calls.length = 0;
+      expect((await api.logout()).ok).toBe(true);
+      expect(calls).toHaveLength(0);
+      expect(store.value).toBeNull();
+      expect(await api.hasSession()).toBe(false);
+    });
+  });
 });

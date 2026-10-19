@@ -4,9 +4,12 @@
  * 토큰은 이 파일 밖으로 나가지 않는다 — `Session`·`SaveData`·`localStorage`에 두지 않고, 주입받은
  * 보안 저장소(`TokenStore`: 네이티브 보안 저장소 또는 HttpOnly 서버 세션 어댑터)에만 맡긴다.
  * 보안 저장소가 없는 빌드는 이 클래스를 만들지 않고 `UnsupportedAccountApi`에 머문다(성공을 흉내 내지 않는다).
- * 지금은 게스트(익명) 계정과 저장 동기화만 지원하고, 소셜 로그인·탈퇴는 `unsupported`다.
+ * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 소셜 로그인·탈퇴는 `unsupported`다.
+ * 아이디 계정은 게스트를 **같은 유저 그대로 승격**한다(`PUT /auth/v1/user`) — 유저 ID가 같아 서버 진행이 그대로 따라온다.
+ * 추후 소셜 로그인도 같은 유저에 정체성을 더하는 방식으로 붙여 양방향 연동이 되게 한다.
  */
 import { t } from "../i18n";
+import { accountCredentialProblem, accountIdProblem, accountIdToAuthEmail, authEmailToAccountId, maskAccountId } from "../core/accountCredentials";
 import type {
   AccountApi, AccountFailureCode, AccountResult, AccountState, GuestSaveMergeRequest, LoginRequest,
   RemoteSaveDocument, RemoteSaveMetadata, RemoteSavePrecondition,
@@ -56,7 +59,7 @@ export class SupabaseAccountApi implements AccountApi {
   async getState(): Promise<AccountResult<AccountState>> {
     const auth = await this.ensureTokens();
     if (!auth.ok) return auth;
-    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: `GUEST-${auth.value.userId.slice(0, 4)}••••` } };
+    return { ok: true, value: stateOf(auth.value) };
   }
 
   /** 이 기기에 이미 만들어진 계정(게스트 포함)이 있는가. 네트워크를 쓰지 않는다. 첫 실행 화면이 로그인 버튼을 세울지 정한다. */
@@ -87,7 +90,58 @@ export class SupabaseAccountApi implements AccountApi {
   async logout(): Promise<AccountResult<AccountState>> {
     this.tokens = null;
     try { await this.options.store.clear(); } catch { return fail("network-error", t("error.account.logoutFailed")); }
-    return this.getState();
+    // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
+    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
+  }
+
+  async registerWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
+    const problem = accountCredentialProblem(id, password);
+    if (problem) return fail(problem.startsWith("id") ? "invalid-id" : "weak-password", t("error.account.credentials"));
+    const email = accountIdToAuthEmail(id);
+    try {
+      this.tokens ??= await this.options.store.load();
+      const current = this.tokens;
+      if (current && !isAnonymous(current)) return fail("invalid-credentials", t("error.account.alreadyLinked"));
+      if (!current) {
+        const created = await this.authCall("/auth/v1/signup", JSON.stringify({ email, password }));
+        if (!created.ok) return created;
+        // 메일 인증이 켜져 있으면 세션이 오지 않는다 — authCall이 응답 모양 오류로 걸러 준다.
+        return this.adopt(created.value);
+      }
+      // 게스트 승격: 유저 ID는 그대로이고 이메일·비밀번호만 붙는다. 토큰의 claim을 새로 받기 위해 곧바로 갱신한다.
+      const fresh = await this.ensureTokens();
+      if (!fresh.ok) return fresh;
+      const updated = await this.fetchImpl(`${this.options.url}/auth/v1/user`, {
+        method: "PUT",
+        headers: { apikey: this.options.key, Authorization: `Bearer ${fresh.value.accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!updated.ok) return this.authFailure("/auth/v1/user", updated);
+      const refreshed = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: fresh.value.refreshToken }));
+      if (!refreshed.ok) return refreshed;
+      return this.adopt(refreshed.value);
+    } catch (error) {
+      this.failure = `register-exception:${error instanceof Error ? error.name : "unknown"}`;
+      return fail("network-error", t("error.account.network"));
+    }
+  }
+
+  async signInWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
+    // 로그인에서는 규칙 위반을 '틀린 아이디 또는 비밀번호'와 구별하지 않는다 — 계정 존재 여부를 흘리지 않는다.
+    if (accountIdProblem(id) || password.length === 0) return fail("invalid-credentials", t("error.account.badLogin"));
+    try {
+      const signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
+      return signed.ok ? this.adopt(signed.value) : signed;
+    } catch (error) {
+      this.failure = `signin-exception:${error instanceof Error ? error.name : "unknown"}`;
+      return fail("network-error", t("error.account.network"));
+    }
+  }
+
+  private async adopt(tokens: StoredTokens): Promise<AccountResult<AccountState>> {
+    this.tokens = tokens;
+    await this.options.store.save(tokens);
+    return { ok: true, value: stateOf(tokens) };
   }
 
   async getRemoteSaveMetadata(): Promise<AccountResult<RemoteSaveMetadata | null>> {
@@ -199,13 +253,8 @@ export class SupabaseAccountApi implements AccountApi {
     const res = await this.fetchImpl(`${this.options.url}${path}`, {
       method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body,
     });
+    if (!res.ok) return this.authFailure(path, res);
     const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-    if (!res.ok) {
-      this.failure = `auth:${path.split("?")[0]}:${res.status}:${typeof j?.error_code === "string" ? j.error_code : "-"}`;
-      // 서버에서 익명 가입이 꺼져 있으면 게스트 계정을 만들 수 없다 — 실패를 성공으로 꾸미지 않는다.
-      if (j?.error_code === "anonymous_provider_disabled" || j?.error_code === "signup_disabled") return fail("unsupported", t("error.account.guestDisabled"));
-      return fail("network-error", t("error.account.authFailed", { status: res.status }));
-    }
     const user = j?.user as { id?: string } | undefined;
     if (typeof j?.access_token !== "string" || typeof j?.refresh_token !== "string" || typeof user?.id !== "string") {
       return fail("network-error", t("error.account.authResponse"));
@@ -214,7 +263,42 @@ export class SupabaseAccountApi implements AccountApi {
     return { ok: true, value: { accessToken: j.access_token, refreshToken: j.refresh_token, expiresAtMs: expiresAt, userId: user.id } };
   }
 
+  /** 인증 서비스의 실패 응답을 플레이어가 고칠 수 있는 코드로 옮긴다. 본문의 비밀번호·토큰은 읽지도 남기지도 않는다. */
+  private async authFailure<T>(path: string, res: Response): Promise<AccountResult<T>> {
+    const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+    const code = typeof j?.error_code === "string" ? j.error_code : typeof j?.code === "string" ? j.code : "-";
+    this.failure = `auth:${path.split("?")[0]}:${res.status}:${code}`;
+    // 서버에서 익명 가입이 꺼져 있으면 게스트 계정을 만들 수 없다 — 실패를 성공으로 꾸미지 않는다.
+    if (code === "anonymous_provider_disabled" || code === "signup_disabled") return fail("unsupported", t("error.account.guestDisabled"));
+    if (code === "email_exists" || code === "user_already_exists") return fail("id-taken", t("error.account.idTaken"));
+    if (code === "weak_password" || code === "same_password") return fail("weak-password", t("error.account.credentials"));
+    if (code === "invalid_credentials" || code === "email_not_confirmed") return fail("invalid-credentials", t("error.account.badLogin"));
+    if (res.status === 429 || code === "over_request_rate_limit") return fail("rate-limited", t("error.account.rateLimited"));
+    return fail("network-error", t("error.account.authFailed", { status: res.status }));
+  }
+
   private unsupported<T>(): AccountResult<T> { return fail("unsupported", t("error.account.loginUnsupported")); }
+}
+
+/** 액세스 토큰(JWT)의 공개 claim만 읽는다. 서명 검증은 서버 몫이고, 여기서는 표시에만 쓴다. */
+function claimsOf(tokens: StoredTokens): { email?: unknown; is_anonymous?: unknown } {
+  try {
+    const payload = tokens.accessToken.split(".")[1] ?? "";
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    return JSON.parse(atob(base64)) as { email?: unknown; is_anonymous?: unknown };
+  } catch { return {}; }
+}
+
+function isAnonymous(tokens: StoredTokens): boolean {
+  const claims = claimsOf(tokens);
+  // claim을 못 읽으면 게스트로 본다 — 연동 화면을 잘못 숨기는 것보다 보이는 쪽이 안전하다.
+  return claims.is_anonymous !== false && typeof claims.email !== "string";
+}
+
+function stateOf(tokens: StoredTokens): AccountState {
+  if (isAnonymous(tokens)) return { kind: "guest", provider: "guest", maskedId: `GUEST-${tokens.userId.slice(0, 4)}••••` };
+  const id = authEmailToAccountId(claimsOf(tokens).email);
+  return { kind: "linked", provider: "password", maskedId: id ? maskAccountId(id) : `ID-${tokens.userId.slice(0, 4)}••••` };
 }
 
 function canonical(value: unknown): string {

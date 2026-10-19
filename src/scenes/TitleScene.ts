@@ -33,6 +33,7 @@ import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
 import { accountApi, type AccountFailureCode } from "../api/AccountApi";
+import { openAccountIdPopup } from "../ui/AccountIdPopup";
 import { backendAccount, connectProgress, disconnectProgress } from "../api/backendSession";
 import { Button } from "../ui/Button";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -528,6 +529,8 @@ export class TitleScene extends Phaser.Scene {
       { labelKey: "title.login.google", onClick: soon },
       { labelKey: "title.login.apple", onClick: soon },
       { labelKey: "title.login.email", onClick: soon },
+      // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
+      { labelKey: "title.login.account", onClick: () => { if (this.popups) openAccountIdPopup(this, this.popups, { mode: "both", onDone: () => enter() }); } },
     ];
     const ys = titleLoginSlots(entries.length);
     entries.forEach((entry, i) => {

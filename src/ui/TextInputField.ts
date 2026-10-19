@@ -13,6 +13,10 @@ export interface TextInputFieldOptions {
   /** 여러 줄 입력. 줄바꿈이 들어가고 칸에 다 안 들어가면 캐럿이 있는 줄이 보이도록 윗줄이 밀려난다. */
   multiline?: boolean;
   onChange?: (value: string) => void;
+  /** 비밀번호 칸. 화면에는 글자 수만큼 점만 그리고, 자판은 비밀번호 모드로 연다(자동 완성·미리보기 방지). */
+  mask?: boolean;
+  /** 한 줄 칸의 자동 완성 힌트. 비밀번호 칸은 `current-password`/`new-password`를 넘긴다. */
+  autocomplete?: string;
 }
 
 /**
@@ -65,11 +69,12 @@ export class TextInputField extends Phaser.GameObjects.Container {
     }
 
     this.field = (options.multiline ? document.createElement("textarea") : document.createElement("input")) as HTMLInputElement;
-    if (!options.multiline) this.field.type = "text";
+    if (!options.multiline) this.field.type = options.mask ? "password" : "text";
     this.field.value = options.value;
     this.field.maxLength = options.maxGlyphs * 2;
     this.field.setAttribute("aria-label", options.ariaLabel);
-    this.field.setAttribute("autocomplete", "off");
+    this.field.setAttribute("autocomplete", options.autocomplete ?? "off");
+    if (!options.multiline) { this.field.setAttribute("autocapitalize", "none"); this.field.setAttribute("autocorrect", "off"); this.field.spellcheck = false; }
     this.field.style.cssText = [
       `width:${width - 40}px`, `height:${height - 12}px`, "background:transparent", "border:0", "outline:none",
       "padding:0", "margin:0", "color:transparent", "caret-color:transparent", ...(options.multiline ? ["resize:none", "overflow:hidden"] : []),
@@ -110,7 +115,7 @@ export class TextInputField extends Phaser.GameObjects.Container {
     if (glyphs.length > this.options.maxGlyphs) this.field.value = glyphs.slice(0, this.options.maxGlyphs).join("");
     if (this.options.multiline) this.layoutMultiline();
     else {
-      this.text.setText(this.field.value);
+      this.text.setText(this.options.mask ? "•".repeat(Array.from(this.field.value).length) : this.field.value);
       this.caret.x = this.text.x + this.text.width + 4;
     }
     if (notify) this.options.onChange?.(this.field.value);

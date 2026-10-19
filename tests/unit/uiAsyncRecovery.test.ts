@@ -40,6 +40,22 @@ describe("비동기 UI 실패 복구", () => {
     expect(popup.busy).toBe(false);
   });
 
+  it("이야기 저장 실패 때 다음 장면으로 가지 않고 같은 완료를 재시도한다", async () => {
+    const completeWithReceipt = vi.fn().mockRejectedValueOnce(Error("offline")).mockResolvedValue({ gemsGranted: 0 });
+    const startScene = vi.fn(), showStorySaveFailure = vi.fn();
+    const Scene = sourceClass("src/scenes/StageStoryScene.ts", "StageStoryScene", {
+      Phaser: { Scene: class {} }, storyManager: { completeWithReceipt }, startScene, showStorySaveFailure,
+    });
+    const scene = Object.assign(Object.create(Scene.prototype), {
+      story: { id: "opening-train" }, exitTo: "stageMap", popups: {}, claimChapterGems: async () => undefined,
+    });
+    scene.finish();
+    await vi.waitFor(() => expect(showStorySaveFailure).toHaveBeenCalledOnce());
+    expect(startScene).not.toHaveBeenCalled(); expect(scene.leaving).toBe(false);
+    showStorySaveFailure.mock.calls[0][2]();
+    await vi.waitFor(() => expect(startScene).toHaveBeenCalledWith(scene, "stageMap"));
+  });
+
   it("소개를 닫은 뒤 일반 객체를 대상으로 한 대사 트윈도 Text를 건드리지 않는다", () => {
     let destroyed = false;
     const handles: Array<{ remove: () => void; tick: () => void }> = [];

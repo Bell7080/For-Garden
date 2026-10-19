@@ -92,8 +92,8 @@ export interface CompleteStoryRequest { storyId: string; }
 /** 이야기 서브를 처음 완료하면 젬만 준다(`SUB_STORY_GEM_REWARDS`). 보상이 없는 이야기는 두 필드를 비운다. */
 export interface CompleteStoryResponse { firstCompletion: boolean; gemsGranted?: number; wallet?: Wallet; }
 /** 대사 선택이 일으키는 데이터 명령. 서버가 대상·범위·재관람 중복을 확인하고 이미 완료한 이야기는 보상하지 않는다. */
-export interface ApplyStoryEffectRequest { storyId: string; effect: DialogueEffect; }
-export interface ApplyStoryEffectResponse { xpGained: number; }
+export interface ApplyStoryEffectRequest { storyId: string; nodeId?: string; choiceId?: string; /** 구형 클라이언트 호환용. 카탈로그와 일치해야 한다. */ effect?: DialogueEffect; }
+export interface ApplyStoryEffectResponse { xpGained: number; /** 미보유 개체는 최초 획득 시 지급한다. */ xpDeferred?: number; }
 /** 오늘의 관찰 인터뷰 완료. 날짜는 서버 UTC 날짜여야 한다(재관람은 기록된 날짜를 그대로 받는다). */
 export interface CompleteObservationRequest { relicId: string; utcDate: string; choiceId: string; }
 export interface CompleteObservationResponse { record: ObservationRecord; bondXpEarned: number; firstCompletion: boolean; }

@@ -90,4 +90,5 @@ export const SYSTEM_VI = {
   "ad.temp.done": "Xem xong rồi!",
   "ad.temp.claim": "Nhận thưởng quảng cáo!",
   "ad.temp.waiting": "Đang nhận thưởng…",
+  "story.saveFailed": "Không thể lưu tiến trình cốt truyện. Vui lòng thử lại.",
 } as const;

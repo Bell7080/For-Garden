@@ -90,4 +90,5 @@ export const SYSTEM_RU = {
   "ad.temp.done": "Готово!",
   "ad.temp.claim": "Забрать награду за рекламу!",
   "ad.temp.waiting": "Получаем награду…",
+  "story.saveFailed": "Не удалось сохранить прогресс истории. Попробуйте ещё раз.",
 } as const;

@@ -90,4 +90,5 @@ export const SYSTEM_ZH_HANT = {
   "ad.temp.done": "看完啦！",
   "ad.temp.claim": "領取廣告獎勵！",
   "ad.temp.waiting": "正在領取獎勵…",
+  "story.saveFailed": "劇情進度儲存失敗，請重試。",
 } as const;

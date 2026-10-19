@@ -90,4 +90,5 @@ export const SYSTEM_ZH_HANS = {
   "ad.temp.done": "看完啦！",
   "ad.temp.claim": "领取广告奖励！",
   "ad.temp.waiting": "正在领取奖励…",
+  "story.saveFailed": "剧情进度保存失败，请重试。",
 } as const;

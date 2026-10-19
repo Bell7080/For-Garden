@@ -1,3 +1,4 @@
+import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "./bond";
 import type { CombatJournal } from "./combatProtocol";
 import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
 import { isExpeditionRelicSnapshot } from "./expeditionSnapshot";
@@ -7,6 +8,10 @@ import { isValidOpsJournal, type OpsJournal } from "./opsInbox";
 /** 지급 결과와 처리 표식을 같은 저장에 담는다. 공개 계정 스냅샷은 영수증에 중복 저장하지 않는다. */
 export interface ServerJournal {
   combat?: CombatJournal;
+  /** 노드마다 최초 선택만 기록해 재접속·다른 요청 ID로도 보상을 중복 지급하지 않는다. */
+  storyChoices?: Record<string, Record<string, string>>;
+  /** 아직 만나지 않은 렐릭에게 쌓인 이야기 유대. 최초 획득과 같은 저장에서 소진한다. */
+  pendingStoryBondXp?: Record<string, number>;
   receipts: Record<string, { identity: string; result: Record<string, unknown> }>;
   raidAdmissions: Record<string, { replayVersion?: 2; seed?: string; admittedAt?: string; raidId: string; seasonHp: number; expiresAt: string; relics: { relicId: string; snapshot: ExpeditionRelicSnapshot }[] }>;
   subscriptionEntitlements?: Record<string, PassEntitlementDto>;
@@ -24,7 +29,9 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
   const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v: unknown): boolean => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v))
     || (Array.isArray(v) ? v.every(json) : record(v) && Object.values(v).every(json));
-  return (journal.ops === undefined || isValidOpsJournal(journal.ops))
+  return (journal.storyChoices === undefined || record(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0)))
+    && (journal.pendingStoryBondXp === undefined || record(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP]))
+    && (journal.ops === undefined || isValidOpsJournal(journal.ops))
     && (journal.combat === undefined || record(journal.combat) && record(journal.combat.tickets) && record(journal.combat.records) && json(journal.combat))
     && (journal.subscriptionEntitlements === undefined || record(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record(entry)
     && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt))

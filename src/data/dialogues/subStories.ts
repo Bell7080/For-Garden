@@ -26,7 +26,7 @@ export const STAGE_2_3_LOST_BADGE: DialogueStory = {
     {
       id: "choose", speaker: "", body: "코마가 수로 끝에서 멈춘 채 연구원을 돌아본다.", standing: "koma",
       choices: [
-        { id: "chase", label: "돌려받으러 쫓아간다", nextId: "plunge", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
+        { id: "chase", label: "돌려받으러 쫓아간다", nextId: "plunge", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
         { id: "wound", label: "손의 상처가 마음에 걸린다", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
       ],
     },
@@ -48,8 +48,8 @@ export const STAGE_2_6_SAME_LINE: DialogueStory = {
     {
       id: "choose", speaker: "", body: "연구원이 한 걸음 다가선다.", standing: "koma",
       choices: [
-        { id: "return", label: "돌려 달라", nextId: "returnA", effect: { type: "bondXp", relicId: "lexia", amount: 3 } },
-        { id: "okay", label: "괜찮아?", nextId: "okayB", effect: { type: "bondXp", relicId: "lexia", amount: 3 } },
+        { id: "return", label: "돌려 달라", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "okay", label: "괜찮아?", nextId: "okayB", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
       ],
     },
     { id: "returnA", speaker: "코마", body: "…아직이다. 확인이 끝나면 돌려준다.", standing: "koma", act: "recoil", nextId: "tail" },

@@ -90,4 +90,5 @@ export const SYSTEM_ID = {
   "ad.temp.done": "Selesai!",
   "ad.temp.claim": "Ambil hadiah iklan!",
   "ad.temp.waiting": "Mengambil hadiah…",
+  "story.saveFailed": "Progres cerita tidak dapat disimpan. Silakan coba lagi.",
 } as const;

@@ -90,4 +90,5 @@ export const SYSTEM_PT_BR = {
   "ad.temp.done": "Pronto!",
   "ad.temp.claim": "Receber recompensa do anúncio!",
   "ad.temp.waiting": "Recebendo recompensa…",
+  "story.saveFailed": "Não foi possível salvar o progresso da história. Tente novamente.",
 } as const;

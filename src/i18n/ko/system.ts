@@ -111,4 +111,5 @@ export const SYSTEM_KO = {
   "ad.temp.done": "다 봤어요!",
   "ad.temp.claim": "광고 보상 받기!",
   "ad.temp.waiting": "보상 받는 중…",
+  "story.saveFailed": "이야기 진행을 저장하지 못했습니다. 다시 시도해 주세요.",
 } as const;

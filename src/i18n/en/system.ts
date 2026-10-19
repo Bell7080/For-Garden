@@ -90,4 +90,5 @@ export const SYSTEM_EN = {
   "ad.temp.done": "All done!",
   "ad.temp.claim": "Claim ad reward!",
   "ad.temp.waiting": "Getting your reward…",
+  "story.saveFailed": "Your story progress could not be saved. Please try again.",
 } as const;

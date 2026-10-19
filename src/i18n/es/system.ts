@@ -90,4 +90,5 @@ export const SYSTEM_ES = {
   "ad.temp.done": "¡Listo!",
   "ad.temp.claim": "¡Reclamar recompensa del anuncio!",
   "ad.temp.waiting": "Recibiendo recompensa…",
+  "story.saveFailed": "No se pudo guardar el progreso de la historia. Inténtalo de nuevo.",
 } as const;

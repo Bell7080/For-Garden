@@ -223,7 +223,7 @@ export const STAGE_2_10_POST: DialogueStory = {
       id: "choose", speaker: "토리카", body: "대장님, 뭐라고 하실 거예요?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
       choices: [
         { id: "yes", label: "따라와도 돼", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "own", label: "너희가 정해도 돼", nextId: "answerB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } },
+        { id: "own", label: "너희가 정해도 돼", nextId: "answerB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
       ],
     },
     { id: "answerA", speaker: "아모", body: "…그래. 그럼 따라갈게.", standing: "amo", act: "nod", nextId: "walk" },

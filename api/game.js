@@ -2503,7 +2503,8 @@ var SYSTEM_KO = {
   "ad.temp.title": "\uC784\uC2DC \uAD11\uACE0 \uC7AC\uC0DD \uC911!",
   "ad.temp.done": "\uB2E4 \uBD24\uC5B4\uC694!",
   "ad.temp.claim": "\uAD11\uACE0 \uBCF4\uC0C1 \uBC1B\uAE30!",
-  "ad.temp.waiting": "\uBCF4\uC0C1 \uBC1B\uB294 \uC911\u2026"
+  "ad.temp.waiting": "\uBCF4\uC0C1 \uBC1B\uB294 \uC911\u2026",
+  "story.saveFailed": "\uC774\uC57C\uAE30 \uC9C4\uD589\uC744 \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694."
 };
 
 // src/i18n/ko/raid.ts
@@ -17729,7 +17730,7 @@ function isValidServerJournal(value) {
   const journal = value;
   const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
-  return (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/raidTicketDrops.ts
@@ -18465,6 +18466,10 @@ for (const banner of BANNERS) {
 
 // src/core/stageProgress.ts
 init_define_import_meta_env();
+function isStageUnlockedByProgress(stages, stageId, cleared) {
+  const stage = stages.find((candidate) => candidate.id === stageId);
+  return stage !== void 0 && stage.prerequisiteStageIds.every((id) => cleared.has(id));
+}
 function progressRank(stage) {
   return (stage.chapter ?? 0) * 1e4 + (stage.chapterOrder ?? 0) * 2 + (stage.kind === "story" || stage.sub ? 0 : 1);
 }
@@ -26168,6 +26173,1001 @@ function isRaidInstance(value) {
 // src/api/FakeServer.ts
 init_define_import_meta_env();
 
+// src/api/storyAuthority.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/recollections.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/greatAukReport.ts
+init_define_import_meta_env();
+var GREAT_AUK_REPORT = {
+  id: "event-great-auk-report",
+  startNodeId: "specimen",
+  nodes: [
+    { id: "specimen", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uBC1C\uACAC\uB410\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "site" },
+    { id: "site", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uD574\uC548 \uBC1C\uAD74\uC9C0\uB97C \uD655\uBCF4\uD558\uACE0 \uD6FC\uC190\uB41C \uAE30\uB85D \uC870\uAC01\uC744 \uD68C\uC218\uD558\uC790.", nextId: "result" },
+    { id: "result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC11C\uC2DD\uC9C0\uC640 \uBA78\uC885 \uC6D0\uC778\uC744 \uB300\uC870\uD588\uC5B4\uC694. \uC774\uC81C \uBC1C\uAD74 \uBCF4\uACE0\uC11C\uB97C \uBCF4\uC874 \uAE30\uB85D\uC73C\uB85C \uB118\uAE38\uAC8C\uC694.", standing: "torika", act: "nod" }
+  ]
+};
+registerDialogueTexts(GREAT_AUK_REPORT);
+
+// src/data/dialogues/openingTrain.ts
+init_define_import_meta_env();
+var ROGUE_TRIO = [
+  { id: "dodi", slot: "left" },
+  { id: "torika", slot: "center" },
+  { id: "parua", slot: "right" }
+];
+var RAID_TRIO = [
+  { id: "amo", slot: "left" },
+  { id: "toby", slot: "center" },
+  { id: "ripa", slot: "right" }
+];
+var OPENING_TRAIN = {
+  id: "opening-train",
+  startNodeId: "wake",
+  backdrop: "train",
+  titleCard: { title: "\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", subtitle: "\uC774\uD130\uB110 \uC2DC\uD2F0\uC640 \uC5F0\uAD6C\uC6D0" },
+  nodes: [
+    // ── 열차 안: 토리카 ───────────────────────────────────────────────
+    { id: "wake", speaker: "???", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC5F0\uAD6C\uC6D0\uB2D8! \uB208 \uC880 \uB5A0 \uBCF4\uC138\uC694. \uCC3D\uBC16\uC5D0 \uB3C4\uC2DC\uAC00 \uBCF4\uC5EC\uC694!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
+    { id: "greet", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uB294 \uD1A0\uB9AC\uCE74\uC608\uC694! \uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC9C0\uD0A4\uB294 \uD638\uC704 \uB810\uB9AD\uC774\uC5D0\uC694. \uB3C4\uCC29\uD560 \uB54C\uAE4C\uC9C0 \uC606\uC5D0 \uAF2D \uBD99\uC5B4 \uC788\uC744\uAC8C\uC694.", standing: "torika", act: "nod", nextId: "window" },
+    { id: "window", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uAE30, \uD558\uC580 \uBF08\uCC98\uB7FC \uC19F\uC740 \uD0D1\uB4E4 \uBCF4\uC774\uC138\uC694? \uBA78\uC885\uC758 \uAE30\uC5B5 \uC704\uC5D0 \uC138\uC6B4 \uB3C4\uC2DC, \uC774\uD130\uB110 \uC2DC\uD2F0\uC608\uC694.", standing: "torika", act: "lean", nextId: "answer" },
+    {
+      id: "answer",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB3C4\uCC29\uD558\uBA74 \uC81C\uC77C \uBA3C\uC800 \uBB58 \uD558\uACE0 \uC2F6\uC73C\uC138\uC694?",
+      standing: "torika",
+      choices: [
+        { id: "promise", label: "\uB108\uD76C\uB97C \uB354 \uC54C\uACE0 \uC2F6\uC5B4", nextId: "warm", effect: { type: "bondXp", relicId: "torika", amount: 5 } },
+        { id: "work", label: "\uB3C4\uC2DC\uBD80\uD130 \uB458\uB7EC\uBCFC\uAC8C", nextId: "ready" }
+      ]
+    },
+    { id: "warm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD5E4\uD5E4, \uADF8\uB7FC \uC800\uBD80\uD130 \uC54C\uB824 \uB4DC\uB9B4\uAC8C\uC694! \uC88B\uC544\uD558\uB294 \uAC74 \uAC04\uC2DD\uC774\uB791\u2026 \uC5F0\uAD6C\uC6D0\uB2D8 \uC606\uC790\uB9AC\uC694!", standing: "torika", act: "hopTwice", nextId: "peek" },
+    { id: "ready", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694! \uB9DB\uC788\uB294 \uAC00\uAC8C\uBD80\uD130\u2026 \uC544, \uC544\uB2C8, \uC911\uC694\uD55C \uC5F0\uAD6C\uC18C\uBD80\uD130\uC694!", standing: "torika", act: "shake", nextId: "peek" },
+    // ── 도디: 부끄럽지만 반짝반짝한 1호 팬 ──────────────────────────────
+    { id: "peek", speaker: "???", body: "\uC800, \uC800\uAE30\u2026 \uD1A0\uB9AC\uCE74. \uD639\uC2DC \uADF8\uBD84\uC774\u2026 \uADF8 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC57C?", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "right" }], act: "tremble", nextId: "callDodi" },
+    { id: "callDodi", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB3C4\uB514! \uB4A4\uC5D0 \uC228\uC5B4 \uC788\uC9C0 \uB9D0\uACE0 \uB098\uC640\uC11C \uC778\uC0AC\uD574\uC57C\uC9C0!", standing: "torika", act: "hop", nextId: "fan" },
+    { id: "fan", speaker: "\uB3C4\uB514", body: "\uC640\uC544\u2026 \uC9C4\uC9DC\uB2E4. \uC9C4\uC9DC \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uB2E4! \uC800, \uC800\uB294 \uAE30\uB85D\uBCD1 \uB3C4\uB514\uC608\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC4F0\uC2E0 \uBCF5\uC6D0 \uBCF4\uACE0\uC11C\uB294 \uD55C \uC904\uB3C4 \uBE7C\uB193\uC9C0 \uC54A\uACE0 \uB2E4 \uC77D\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hopTwice", nextId: "shy" },
+    { id: "shy", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC81C \uC77C\uC9C0 \uCCAB \uC7A5\uC5D0\u2026 \uC774\uB984 \uD55C \uBC88\uB9CC \uC801\uC5B4 \uC8FC\uC2DC\uBA74 \uC548 \uB420\uAE4C\uC694\u2026?", standing: "dodi", act: "shrink", nextId: "title" },
+    { id: "title", speaker: "\uB3C4\uB514", body: "\uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC800\uD76C \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694! \uB300\uC7A5\uB2D8, \uB300\uC7A5\uB2D8\u2026 \uD5E4\uD5E4, \uBC8C\uC368 \uC785\uC5D0 \uBD99\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hop", nextId: "halt" },
+    // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
+    { id: "halt", speaker: "???", body: "\uB3C4\uB514. \uB108\uBB34 \uAC00\uAE4C\uC6CC. \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uB4A4\uB85C \uAE30\uC6B8\uC5B4\uC9C0\uACE0 \uC788\uC5B4.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
+    { id: "sorry", speaker: "\uB3C4\uB514", body: "\uC557, \uC8C4, \uC8C4\uC1A1\uD574\uC694! \uB108\uBB34 \uBC18\uAC00\uC6CC\uC11C \uADF8\uB9CC\u2026!", standing: "dodi", act: "recoil", nextId: "parua" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\uC800\uB294 \uD30C\uB8E8\uC544\uC608\uC694. \uB4A4\uB97C \uC0B4\uD53C\uB294 \uAC8C \uC81C \uC77C\uC774\uC5D0\uC694.", standing: "parua", act: "nod", nextId: "sniff" },
+    { id: "sniff", speaker: "\uD30C\uB8E8\uC544", body: "\uADF8\uB7F0\uB370 \uC774\uC0C1\uD574\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uD55C\uD14C\uC11C\uB294 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uB4E4\uC774\uB791 \uB2E4\uB978 \uB0C4\uC0C8\uAC00 \uB098\uC694. \u2026\uC870\uAE08\uB9CC \uB354 \uAC00\uAE4C\uC774 \uBD10\uB3C4 \uB3FC\uC694?", standing: "parua", act: "lean", nextId: "scold" },
+    { id: "scold", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD30C\uB8E8\uC544\uAE4C\uC9C0! \uC5F0\uAD6C\uC6D0\uB2D8 \uACE4\uB780\uD558\uC2DC\uC796\uC544!", standing: "torika", act: "shake", nextId: "quake" },
+    // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
+    { id: "quake", speaker: "", body: "\uCFE0\uAD6C\uAD6C\uAD81\u2026!! \uAC1D\uCC28 \uC804\uCCB4\uAC00 \uD06C\uAC8C \uB4E4\uC369\uC778\uB2E4.", cue: "rumble", nextId: "alarm" },
+    { id: "alarm", speaker: "\uC548\uB0B4 \uBC29\uC1A1", body: "\uACBD\uBCF4. \uACBD\uBCF4. \uC120\uB85C \uC804\uBC29\uC5D0 \uBBF8\uD655\uC778 \uAC1C\uCCB4 \uC811\uADFC. \uC2B9\uAC1D \uC5EC\uB7EC\uBD84\uC740 \uC989\uC2DC \uC790\uB9AC\uB97C \uC9C0\uCF1C \uC8FC\uC2ED\uC2DC\uC624.", cue: "alarm", sign: "broadcast", nextId: "sense" },
+    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC55E\uC5D0\uC11C \uBB54\uAC00 \uC640\uC694. \uD558\uB098\uAC00 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", act: "tremble", nextId: "guard" },
+    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uBB34\uC2A8 \uC77C\uC774 \uC788\uC5B4\uB3C4 \uC81C\uAC00 \uB9C9\uC744\uAC8C\uC694!", standing: "torika", act: "hop", nextId: "veil" },
+    { id: "veil", speaker: "???", body: "\uCC3E\uC558\uB2E4. Garden\uC774 \uB0B4\uB824\uBCF4\uB0B8 \uC5F0\uAD6C\uC6D0.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
+    { id: "order", speaker: "???", body: "\uBAA9\uD45C \uD68C\uC218 \uC791\uC804\uC744 \uAC1C\uC2DC\uD55C\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 \uBC18\uB4DC\uC2DC \uC0AC\uB85C\uC7A1\uC544\uB77C. \u2026\uBC29\uC8FC\uC9F8\uB85C \uB5A8\uC5B4\uB728\uB824.", standing: "koma", act: "nod", nextId: "blast" },
+    // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
+    { id: "blast", speaker: "", body: "\uCF70\uC544\uC544\uC544\uC559!!", cast: [], cue: "explosion", backdrop: "battlefield", nextId: "aftermath" },
+    { id: "aftermath", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF5C\uB85D, \uCF5C\uB85D\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uAD1C\uCC2E\uC73C\uC138\uC694?! \uC5F4\uCC28\uAC00\u2026 \uC120\uB85C \uBC16\uC73C\uB85C \uB5A8\uC5B4\uC84C\uC5B4\uC694\u2026!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
+    { id: "record", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD574\uC694! \uAE30\uB85D\u2026 \uAE30\uB85D\uD574\uC57C \uD558\uB294\uB370\u2026 \uC544\uB2C8, \uC9C0\uAE08\uC740 \uADF8\uB7F4 \uB54C\uAC00 \uC544\uB2C8\uC9C0!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
+    { id: "three", speaker: "\uD30C\uB8E8\uC544", body: "\uC27F. \uC14B\uC774\uC5D0\uC694. \uC5F0\uAE30 \uB108\uBA38\uC5D0\uC11C \uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4\uC694.", standing: "parua", act: "lean", nextId: "toby" },
+    // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCC3E\uC558\uB2E4\uC544! \uC800\uAE30 \uC788\uB2E4, \uADF8 \uC5F0\uAD6C\uC6D0! \uC774\uBC88\uC5D4 \uB0B4\uAC00 \uC81C\uC77C \uBA3C\uC800 \uC7A1\uB294\uB2E4!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\uD1A0, \uD1A0\uBE44\u2026 \uBAA9\uC18C\uB9AC \uC880 \uC904\uC5EC. \uCF54\uB9C8\uAC00 \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC774\uB7AC\uC796\uC544\u2026", standing: "amo", act: "tremble", nextId: "ripa" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uC5B4\uCC28\uD53C \uB2E4 \uB4E4\uCF30\uB294\uAC78? \uC800\uCABD \uC14B \uD45C\uC815 \uC880 \uBD10. \uC644\uC804 \uC7AC\uBC0C\uB2E4!", standing: "ripa", act: "hop", nextId: "demand" },
+    { id: "demand", speaker: "\uD1A0\uBE44", body: "\uC6B0\uB9AC\uB294 \uACF5\uBA78! \uADF8 \uC5F0\uAD6C\uC6D0\uB9CC \uB118\uAE30\uBA74 \uB108\uD76C\uB294 \uACF1\uAC8C \uBCF4\uB0B4 \uC904\uAC8C!", standing: "toby", act: "shake", nextId: "refuse" },
+    // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
+    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2EB\uC5B4\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC740\u2026 \uC6B0\uB9AC \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694. \uD55C \uBC1C\uC9DD\uB3C4 \uBABB \uC9C0\uB098\uAC00\uC694!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },
+    { id: "brave", speaker: "\uB3C4\uB514", body: "\uBB34, \uBB34\uC12D\uC9C0\uB9CC\u2026 \uB300\uC7A5\uB2D8\uC744 \uC9C0\uD0A8 \uCCAB \uAE30\uB85D\uC740 \uC81C\uAC00 \uC4F8 \uAC70\uC608\uC694!", standing: "dodi", act: "tremble", nextId: "aim" },
+    { id: "aim", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD654\uC0B4\uC740 \uC900\uBE44\uB410\uC5B4\uC694. \uC5B8\uC81C\uB4E0\uC9C0\uC694.", standing: "parua", act: "nod", nextId: "end" },
+    // 전투를 여는 외침은 토리카 한 마디뿐이다 — 곧바로 1-1이 시작되므로 구호를 길게 늘이지 않는다.
+    { id: "end", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uC5D0 \uACC4\uC138\uC694. \u2026\uC804\uD22C \uAC1C\uC2DC!", standing: "torika", act: "hop", cue: "impact" }
+  ]
+};
+registerDialogueTexts(OPENING_TRAIN);
+
+// src/data/dialogues/greenhouseEcho.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/linear.ts
+init_define_import_meta_env();
+function linear(nodes) {
+  return nodes.map((node, index) => {
+    const next = nodes[index + 1];
+    if (!next || node.nextId || node.choices?.length) return node;
+    return { ...node, nextId: next.id };
+  });
+}
+
+// src/data/dialogues/greenhouseEcho.ts
+var TRIO = [{ id: "torika", slot: "left" }, { id: "toby", slot: "center" }, { id: "dodi", slot: "right" }];
+var GREENHOUSE_ECHO = {
+  id: "stage-1-5-greenhouse-echo",
+  startNodeId: "hide",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hide", speaker: "\uD1A0\uBE44", body: "\uC27F! \uC870\uC6A9\uD788 \uD574! \uC9C0\uAE08 \uC628\uC2E4\uC5D0 \uC228\uC5B4 \uC788\uB294 \uAC70\uC57C. \uC544\uAE4C \uC7A5\uCE58 \uC77C\uC740\u2026 \uC6B0\uB9AC\uB07C\uB9AC \uBE44\uBC00\uB85C \uD558\uC790!", standing: "toby", cast: TRIO, act: "shrink" },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uC228\uC744 \uAC70\uBA74 \uCFF5\uCFF5\uAC70\uB9AC\uB294 \uBC1C\uC18C\uB9AC\uBD80\uD130 \uC904\uC774\uB294 \uAC8C \uC88B\uC744 \uAC83 \uAC19\uC544\uC694. \uC78E\uC0AC\uADC0\uAC00 \uB2E4 \uD754\uB4E4\uB824\uC694!", standing: "dodi", act: "hop" },
+    { id: "pumpkin", speaker: "\uD1A0\uBE44", body: "\uADF8\uB7F0 \uAC74 \uC0C1\uAD00\uC5C6\uC5B4. \uADF8\uBCF4\uB2E4 \uC800\uAE30 \uB369\uCE58 \uD070 \uB188 \uC880 \uBD10. \uC800\uAC74 \uBD84\uBA85 \uC228\uC5B4 \uC788\uB294 \uC801\uC774\uC57C!", standing: "toby", act: "puff" },
+    { id: "calm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8, \uADF8\uAC70 \uD638\uBC15\uC774\uC5D0\uC694. \uC774 \uC628\uC2E4 \uAD00\uB9AC\uC790\uAC00 \uD0A4\uC6B0\uB358 \uAC70\uB300 \uD638\uBC15\uC694.", standing: "torika", act: "lean" },
+    { id: "charge", speaker: "\uD1A0\uBE44", body: "\uD638\uBC15\uC774\uB4E0 \uBB50\uB4E0 \uC120\uC218\uD544\uC2B9\uC774\uB2E4! \uB0B4 \uBC15\uCE58\uAE30\uB97C \uBC1B\uC544\uB77C!", standing: "toby", act: "rage", cue: "impact" },
+    { id: "splat", speaker: "", body: "\uCF85! \uAC70\uB300 \uD638\uBC15\uC774 \uD130\uC9C0\uBA70 \uC18D\uC0B4\uC774 \uC0AC\uBC29\uC73C\uB85C \uD284\uB2E4. \uC14B \uBAA8\uB450 \uC628\uBAB8\uC774 \uC8FC\uD669\uC0C9 \uBC94\uBC85\uC774 \uB418\uC5C8\uB2E4.", standing: "dodi", act: "squash" },
+    { id: "wet", speaker: "\uB3C4\uB514", body: '\u2026\uAE30\uB85D\uD560\uAC8C\uC694. \uBC29\uAE08 \uC18C\uB9AC\uB294 "\uD37D"\uC774 \uC544\uB2C8\uB77C "\uD478\uC288\uC6B1"\uC774\uC5C8\uC5B4\uC694.', standing: "dodi", act: "tremble" },
+    { id: "sticky", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC73C\u2026 \uB048\uC801\uB048\uC801\uD574. \uC774\uAC70 \uC2A4\uD504\uB9C1\uD074\uB7EC \uCF1C\uBA74 \uC53B\uAE38 \uAC83 \uAC19\uC740\uB370, \uC2A4\uC704\uCE58\uAC00 \uC5B4\uB514 \uC788\uC9C0?", standing: "torika", act: "shake" },
+    { id: "switch", speaker: "\uD1A0\uBE44", body: '\uC544, \uADF8\uAC70\uB77C\uBA74 \uC54C\uC544! \uC544\uAE4C \uB0B4\uAC00 \uB20C\uB800\uB358 \uADF8 "\uC090\u2014" \uD558\uB358 \uBC84\uD2BC\uC774\uC57C!', standing: "toby", act: "bounce" },
+    { id: "beep", speaker: "\uB3C4\uB514", body: "\uADF8 \uBC84\uD2BC\uC774\uBA74\u2026", standing: "dodi", act: "fright" },
+    { id: "rain", speaker: "", body: "\uC628\uC2E4 \uCC9C\uC7A5\uC5D0\uC11C \uC694\uB780\uD558\uAC8C \uBB3C\uC774 \uC3DF\uC544\uC9C4\uB2E4. \uD638\uBC15 \uBC94\uBC85\uC774\uB358 \uC14B\uC740 \uC878\uC9C0\uC5D0 \uBB3C\uC138\uB840\uB97C \uBC1B\uACE0, \uC774\uBC88\uC5D0\uB294 \uBB3C\uC5D0 \uC816\uC740 \uC0DD\uC950 \uAF34\uC774 \uB418\uC5C8\uB2E4.", standing: "torika", act: "recoil" },
+    { id: "end", speaker: "\uD1A0\uBE44", body: "\uC790, \uBD10! \uAE68\uB057\uD574\uC84C\uC796\uC544! \uACB0\uACFC\uB9CC \uC88B\uC73C\uBA74 \uB418\uB294 \uAC70\uC57C!", standing: "toby", act: "hopTwice" },
+    { id: "fine", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uD638\uBC15 \uAC12\uC740 \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC544\uB2C8\uB77C \uB300\uC7A5\uB2D8 \uC6D4\uAE09\uC5D0\uC11C \uBE7C \uB2EC\uB77C\uACE0 \uBCF4\uACE0\uC11C\uC5D0 \uC4F8\uAC8C\uC694.", standing: "torika", act: "nod" }
+  ])
+};
+
+// src/data/dialogues/openingRetreat.ts
+init_define_import_meta_env();
+var OPENING_RETREAT = {
+  id: "opening-retreat",
+  startNodeId: "groan",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "groan", speaker: "\uD1A0\uBE44", body: "\uB044\uC544\uC545! \uC774, \uC774\uB7F4 \uB9AC\uAC00 \uC5C6\uB294\uB370!", standing: "toby", cast: RAID_TRIO, act: "shake", cue: "impact", nextId: "sigh" },
+    { id: "sigh", speaker: "\uC544\uBAA8", body: "\uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC870\uC6A9\uD788 \uAC00\uC790\uACE0 \uD588\uC796\uC544\u2026", standing: "amo", act: "shrink", nextId: "grin" },
+    { id: "grin", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uADF8\uB798\uB3C4 \uC7AC\uBC0C\uC5C8\uC796\uC544? \uC800\uCABD \uC14B, \uC0DD\uAC01\uBCF4\uB2E4 \uC138\uB354\uB77C~", standing: "ripa", act: "hop", nextId: "vow" },
+    { id: "vow", speaker: "\uD1A0\uBE44", body: "\uAE30\uC5B5\uD574 \uB46C, \uC5F0\uAD6C\uC6D0! \uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC04\uB2E4!", standing: "toby", act: "hopTwice", nextId: "away" },
+    { id: "away", speaker: "\uD1A0\uBE44\xB7\uC544\uBAA8\xB7\uB9AC\uD30C", body: "\uB450\uACE0 \uBCF4\uC790\uC544\uC544\uC544~!!", cast: [], leave: "blastOff", cue: "impact", nextId: "gone" },
+    { id: "gone", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uB0A0\uC544\uAC00 \uBC84\uB838\uB124\uC694. \uB300\uC7A5\uB2D8, \uB2E4\uCE58\uC2E0 \uB370\uB294 \uC5C6\uC8E0?", standing: "torika", cast: ROGUE_TRIO, act: "hop", nextId: "log" },
+    { id: "log", speaker: "\uB3C4\uB514", body: "\uCCAB \uC804\uD22C \uAE30\uB85D \uC644\uB8CC! \uC801\uC740 \uD558\uB298\uC758 \uBCC4\uC774 \uB418\uC5C8\uB2E4\u2026 \uC774\uB807\uAC8C \uC801\uC5B4 \uB46C\uC57C\uC9C0!", standing: "dodi", act: "hopTwice", nextId: "watch" },
+    { id: "watch", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB610 \uC62C \uAC70\uC608\uC694. \uD3EC\uAE30\uD560 \uC5BC\uAD74\uC774 \uC544\uB2C8\uC5C8\uC5B4\uC694.", standing: "parua", act: "nod", nextId: "onward" },
+    { id: "onward", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC6B0\uB9AC\uB3C4 \uC11C\uB458\uB7EC\uC694. \uC774\uD130\uB110 \uC2DC\uD2F0\uAE4C\uC9C0 \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694!", standing: "torika", act: "nod" }
+  ]
+};
+registerDialogueTexts(OPENING_RETREAT);
+
+// src/data/dialogues/subStories.ts
+init_define_import_meta_env();
+var SOLO = (id) => [{ id, slot: "center" }];
+var WITH_KOMA = (other) => [{ id: other, slot: "left" }, { id: "koma", slot: "right" }];
+var STAGE_2_3_LOST_BADGE = {
+  id: "stage-2-3-lost-badge",
+  startNodeId: "pass",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "pass", speaker: "", body: "\uB0C9\uAC01 \uC218\uB85C\uC758 \uC5B4\uB460 \uC18D\uC5D0\uC11C \uADF8\uB9BC\uC790 \uD558\uB098\uAC00 \uC2A4\uCE5C\uB2E4. \uAC00\uC2B4\uAED8\uAC00 \uAC00\uBCBC\uC6CC\uC9C4 \uAC83\uC744 \uC54C\uC544\uCC28\uB838\uC744 \uB54C\uB294 \uC774\uBBF8 \uB2A6\uC5C8\uB2E4.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "shake" },
+    { id: "gone", speaker: "\uB3C4\uB514", body: "\uC5F0\uAD6C\uC6D0\uB2D8 \uC0AC\uC6D0\uC99D\uC774\uC694! \uBC29\uAE08 \uADF8\uAC8C \uAC00\uC838\uAC14\uC5B4\uC694!", standing: "dodi", act: "hopTwice" },
+    { id: "turn", speaker: "\uCF54\uB9C8", body: "\u2026\uBC88\uD638\uB97C \uBD24\uC744 \uBFD0\uC774\uB2E4.", standing: "koma", cast: WITH_KOMA("torika"), act: "lean" },
+    { id: "hand", speaker: "", body: "\uC0AC\uC6D0\uC99D\uC744 \uC954 \uC190\uB4F1\uC5D0 \uC544\uBB3C\uC9C0 \uC54A\uC740 \uAE01\uD78C \uC790\uAD6D\uC774 \uAE38\uAC8C \uB098 \uC788\uB2E4.", standing: "koma" },
+    { id: "hurt", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uAE30\u2026 \uB2E4\uCE58\uC168\uC5B4\uC694?", standing: "torika", act: "lean" },
+    { id: "silent", speaker: "\uCF54\uB9C8", body: "\u2026", standing: "koma", act: "recoil" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uCF54\uB9C8\uAC00 \uC218\uB85C \uB05D\uC5D0\uC11C \uBA48\uCD98 \uCC44 \uC5F0\uAD6C\uC6D0\uC744 \uB3CC\uC544\uBCF8\uB2E4.",
+      standing: "koma",
+      choices: [
+        { id: "chase", label: "\uB3CC\uB824\uBC1B\uC73C\uB7EC \uCAD3\uC544\uAC04\uB2E4", nextId: "plunge", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "wound", label: "\uC190\uC758 \uC0C1\uCC98\uAC00 \uB9C8\uC74C\uC5D0 \uAC78\uB9B0\uB2E4", nextId: "plunge", effect: { type: "bondXp", relicId: "torika", amount: 3 } }
+      ]
+    },
+    { id: "plunge", speaker: "", body: "\uB300\uB2F5\uC740 \uC5C6\uB2E4. \uBB3C\uC18C\uB9AC \uD55C \uBC88\uC744 \uB0A8\uAE30\uACE0 \uADF8\uB9BC\uC790\uB294 \uC218\uB85C \uC544\uB798\uB85C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "koma", cast: [], cue: "impact" },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\u2026\uCAD3\uC544\uAC00\uC694. \uC800 \uBC29\uD5A5\uC774\uBA74 \uC0DD\uC0B0\uC120 \uCABD\uC774\uC5D0\uC694.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_2_6_SAME_LINE = {
+  id: "stage-2-6-same-line",
+  startNodeId: "back",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "back", speaker: "", body: "\uBB34\uC778 \uC0DD\uC0B0\uC120 \uB4A4\uD3B8, \uBD88 \uAEBC\uC9C4 \uC815\uBE44 \uD1B5\uB85C. \uCF54\uB9C8\uAC00 \uBCBD\uC5D0 \uAE30\uB300 \uC0AC\uC6D0\uC99D\uACFC \uC81C \uBAA9\uB35C\uBBF8\uC758 \uD3D0\uAE30 \uD45C\uC2DD\uC744 \uBC88\uAC08\uC544 \uBCF8\uB2E4.", standing: "koma", cast: SOLO("koma") },
+    { id: "compare", speaker: "\uCF54\uB9C8", body: "\u2026\uAC19\uC740 \uC904\uC5D0 \uC788\uC5B4\uC11C.", standing: "koma", cast: WITH_KOMA("lexia"), act: "lean" },
+    { id: "what", speaker: "\uB809\uC2DC\uC544", body: "\uC904\uC774\uB77C\uB2C8, \uBB34\uC2A8 \uC904\uC774\uC57C? \uC124\uBA85\uD574!", standing: "lexia", act: "hop" },
+    { id: "count", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0\uC11C\uB294 \uBC88\uD638\uB85C \uC13C\uB2E4. \uB098\uB3C4, \uB2F9\uC2E0\uB3C4.", standing: "koma", act: "nod" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uAC78\uC74C \uB2E4\uAC00\uC120\uB2E4.",
+      standing: "koma",
+      choices: [
+        { id: "return", label: "\uB3CC\uB824 \uB2EC\uB77C", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "okay", label: "\uAD1C\uCC2E\uC544?", nextId: "okayB", effect: { type: "bondXp", relicId: "rex", amount: 3 } }
+      ]
+    },
+    { id: "returnA", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uC9C1\uC774\uB2E4. \uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
+    { id: "okayB", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uC9C8\uBB38, \uC704\uC5D0\uC11C\uB294 \uC5C6\uC5C8\uB2E4. \uC544\uC9C1\uC774\uB2E4. \uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
+    { id: "tail", speaker: "", body: "\uCF54\uB9C8\uB294 \uC0AC\uC6D0\uC99D\uC744 \uD488\uC5D0 \uB123\uACE0 \uC5B4\uB460 \uC18D\uC73C\uB85C \uD55C \uAC78\uC74C \uBB3C\uB7EC\uB09C\uB2E4. \uAF2C\uB9AC\uAC00 \uBC14\uB2E5\uC744 \uB0AE\uAC8C \uC4F4\uB2E4.", standing: "koma", cast: SOLO("koma") }
+  ])
+};
+var STAGE_2_9_SECOND_CHASE = {
+  id: "stage-2-9-second-chase",
+  startNodeId: "edge",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "edge", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB04A\uAE34 \uB9C9\uB2E4\uB978 \uB09C\uAC04. \uC77C\uC9C1\uC120\uC73C\uB85C \uACE7\uAC8C \uB09C \uAE38\uC758 \uB05D\uC5D0 \uCF54\uB9C8\uAC00 \uC11C \uC788\uB2E4.", standing: "koma", cast: WITH_KOMA("torika"), cue: "rumble" },
+    { id: "bait", speaker: "\uCF54\uB9C8", body: "\u2026\uB108\uBB34 \uACE7\uC740 \uAE38\uC774\uB2E4. \uCC98\uC74C\uBD80\uD130 \uC704\uAC00 \uAE54\uC558\uB2E4. \uB098\uB294 \uBBF8\uB07C\uC600\uB2E4.", standing: "koma", act: "recoil" },
+    { id: "know", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC54C\uBA74\uC11C\uB3C4\u2026 \uC5EC\uAE30\uAE4C\uC9C0 \uC624\uC2E0 \uAC70\uC608\uC694?", standing: "torika", act: "lean" },
+    { id: "order", speaker: "\uCF54\uB9C8", body: "\uBA85\uB839\uC774\uC5C8\uB2E4. \uB2F9\uC2E0\uC744 \uC774 \uB05D\uAE4C\uC9C0 \uB04C\uACE0 \uC624\uB77C\uB294.", standing: "koma", act: "shrink" },
+    { id: "clash", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC18C\uB9AC \uC5C6\uC774 \uB6F0\uC5B4\uB4E0\uB2E4. \uC9E7\uACE0 \uB0A0\uCE74\uB85C\uC6B4 \uD55C \uBC88\uC758 \uAD50\uCC28. \uC774\uBC88\uC5D0\uB294 \uC5F0\uAD6C\uC6D0\uC758 \uC9C0\uC2DC\uAC00 \uD55C \uBC15\uC790 \uBE68\uB790\uB2E4.", standing: "koma", cue: "impact", act: "faint" },
+    { id: "kneel", speaker: "\uCF54\uB9C8", body: "\u2026\uC84C\uB2E4. \uB450 \uBC88\uC9F8\uB2E4.", standing: "koma", act: "squash" },
+    { id: "give", speaker: "", body: "\uCF54\uB9C8\uAC00 \uD488\uC5D0\uC11C \uC0AC\uC6D0\uC99D\uC744 \uAEBC\uB0B4 \uB09C\uAC04 \uC704\uC5D0 \uB0B4\uB824\uB193\uB294\uB2E4.", standing: "koma" },
+    { id: "promise", speaker: "\uCF54\uB9C8", body: "\uC57D\uC18D\uC774\uB2E4. \uC704\uC5D0\uB294 \uB0B4\uAC00 \uD588\uB2E4\uACE0 \uD55C\uB2E4. \uD63C\uC790\uC11C.", standing: "koma", act: "nod" },
+    { id: "warn", speaker: "\uCF54\uB9C8", body: "\uC704\uAC00 \uB2F9\uC2E0\uC744 \uCC3E\uB294\uB2E4. \uB0B4 \uBC88\uD638\uAC00 \uC544\uB2C8\uB77C, \uB2F9\uC2E0 \uBC88\uD638\uB85C.", standing: "koma", act: "lean" },
+    { id: "exit", speaker: "", body: "\uCF54\uB9C8\uB294 \uB09C\uAC04 \uC544\uB798 \uAD6C\uBA4D\uC73C\uB85C \uBAB8\uC744 \uB358\uC9C4\uB2E4. \uC5B4\uB460\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC0BC\uD0A8\uB2E4.", standing: "koma", cast: [{ id: "torika", slot: "center" }] }
+  ])
+};
+var STAGE_3_5_BEHIND_SLEEVE = {
+  id: "stage-3-5-behind-sleeve",
+  startNodeId: "hide",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hide", speaker: "", body: "\uC804\uD22C\uAC00 \uB05D\uB09C \uD3D0\uAD00. \uC18C\uB9E4 \uB4A4\uC5D0\uC11C \uB208\uB9CC \uB0B4\uB193\uC740 \uC544\uD2B8\uB77C\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uC62C\uB824\uB2E4\uBCF8\uB2E4. \uC4F0\uB7EC\uC9C0\uC9C0\uB3C4, \uBB3C\uB7EC\uC11C\uC9C0\uB3C4 \uC54A\uB294\uB2E4.", standing: "atra", cast: SOLO("atra") },
+    { id: "list", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uAC8C\u2026 \uC800, \uC800\uB294 \uBAA9\uB85D\uC774 \uC788\uC5B4\uC694. \uB9C8\uC74C\uC5D0 \uB4DC\uB294 \uC0AC\uB78C\u2026 \uC774\uB984 \uC801\uB294 \uBAA9\uB85D.", standing: "atra", act: "tremble" },
+    { id: "you", speaker: "\uC544\uD2B8\uB77C", body: "\uC5F0, \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uC624\uB298\u2026 \uAC70, \uAC70\uAE30\uC5D0 \uC801\uC5C8\uC5B4\uC694. \uC544, \uC544\uD504\uAC8C \uC548 \uD574\uC694. \uC870, \uC870\uAE08\uB9CC\u2026 \uAC19\uC774 \uAC00 \uC8FC\uC2DC\uBA74\u2026", standing: "atra", act: "shrink" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB530\uB77C\uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "no", speaker: "\uC544\uD2B8\uB77C", body: "\uC2DC, \uC2EB\uC5B4\uC694\u2026 \uC120\uBC30\uB294 \uC544\uC9C1 \uD68C\uC218 \uC804\uC774\uB77C\uC11C\u2026 \uADF8, \uADF8\uB7EC\uB2C8\uAE4C \uC81C\uAC00 \uC606\uC5D0, \uC788\uC744\uAC8C\uC694.", standing: "atra", act: "recoil" },
+    { id: "sigh", speaker: "\uCF54\uB9C8", body: "\u2026\uB9C8\uC74C\uB300\uB85C \uD574.", standing: "koma", act: "shrink" },
+    { id: "end", speaker: "", body: "\uCF54\uB9C8\uC758 \uB4B7\uBAA8\uC2B5 \uACC1\uC5D0 \uC18C\uB9E4 \uB4A4\uC758 \uB208\uC774 \uBC14\uC2F9 \uBD99\uC5B4 \uB530\uB77C\uAC04\uB2E4. \uC5F0\uAD6C\uC6D0\uC758 \uC774\uB984\uC740 \uC544\uC9C1 \uBAA9\uB85D\uC5D0\uC11C \uC9C0\uC6CC\uC9C0\uC9C0 \uC54A\uC558\uB2E4.", standing: "atra", cast: SOLO("atra") }
+  ])
+};
+var STAGE_3_8_APOLOGY = {
+  id: "stage-3-8-apology",
+  startNodeId: "wall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wall", speaker: "", body: "\uD30C\uCE58\uAC00 \uB6AB\uC5B4 \uB193\uC740 \uBCBD\uC758 \uD30C\uD3B8 \uB354\uBBF8 \uACC1. \uC5D8\uB77C\uAC00 \uC591\uC190\uC5D0 \uC11C\uB958\uB97C \uB4E0 \uCC44 \uD55C\uC228\uC744 \uC270\uB2E4.", standing: "ella", cast: [{ id: "ella", slot: "left" }, { id: "pachi", slot: "right" }], act: "lean" },
+    { id: "report", speaker: "\uC5D8\uB77C", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uBCBD \uAC74\uC740 \uC81C\uAC00 \uC2DC\uB9D0\uC11C\uB85C \uC815\uB9AC\uD574 \uB450\uACA0\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uB2EC \uC5F4\uB450 \uBC88\uC9F8 \uC7A5\uC774\uC5D0\uC694.", standing: "ella", act: "nod" },
+    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uAE38 \uC5F4\uC5C8\uC73C\uBA74 \uB410\uC9C0! \uADF8 \uC2DC\uB9D0\uC11C \uC548 \uC368\uB3C4 \uBCBD\uC740 \uC774\uBBF8 \uB6AB\uB824 \uC788\uB294\uB370?", standing: "pachi", act: "rage" },
+    { id: "boss", speaker: "\uC5D8\uB77C", body: "\uC11C\uB958\uAC00 \uC5C6\uC73C\uBA74 \uBCBD\uC774 \uC544\uB2C8\uB77C \uC6B0\uB9AC \uCABD \uC608\uC0B0\uC774 \uB6AB\uB9BD\uB2C8\uB2E4, \uD30C\uCE58 \uB2D8.", standing: "ella", act: "shake" },
+    { id: "ark", speaker: "\uC544\uD06C", body: "\u2026\uB9C8\uC2A4\uD130, \uC774 \uAD6C\uAC04\uC740 \uC6B0\uB9AC\uAC00 \uB9E1\uACA0\uC2B5\uB2C8\uB2E4. \uB4A4\uB294 \uC2E0\uACBD \uC4F0\uC9C0 \uB9C8\uC2ED\uC2DC\uC624.", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
+    { id: "yuti", speaker: "\uC720\uD2F0", body: "\uC800, \uC800\uAE30 \uBCF4\uC2A4\u2026 \uC544\uB2C8 \uB9C8\uC2A4\uD130\u2026 \uC544\uB2C8 \uC5F0\uAD6C\uC6D0\uB2D8! \uC774\uCABD \uD1B5\uB85C\uB85C \uCB49 \uAC00\uC2DC\uBA74 \uB3FC\uC694!", standing: "yuti", act: "hopTwice" },
+    { id: "pachi2", speaker: "\uD30C\uCE58", body: "\uBCF4\uC2A4! \uB2E4\uC74C \uBCBD\uC740 \uB610 \uC5B4\uB514\uC57C?", standing: "pachi", cast: [{ id: "ella", slot: "left" }, { id: "pachi", slot: "right" }], act: "hop" },
+    { id: "ella2", speaker: "\uC5D8\uB77C", body: "\u2026\uBA3C\uC800 \uC2DC\uB9D0\uC11C\uBD80\uD130 \uC4F0\uACE0\uC694.", standing: "ella", act: "recoil" }
+  ])
+};
+var STAGE_1_8_SIDE_PRE = {
+  id: "stage-1-8-side-pre",
+  startNodeId: "crate",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "crate", speaker: "", body: "\uC218\uBB38 \uC544\uB798 \uBB3C\uAC00. \uD2F0\uC544\uAC00 \uAC74\uC838 \uC62C\uB9AC\uB358 \uBCF4\uAE09 \uC0C1\uC790 \uC704\uC5D0 \uB0AF\uC775\uC740 \uC138 \uADF8\uB9BC\uC790\uAC00 \uAC78\uD130\uC549\uC544 \uC788\uB2E4.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }] },
+    { id: "found", speaker: "\uD1A0\uBE44", body: "\uCC3E\uC558\uB2E4! \uC774 \uC0C1\uC790 \uC548\uC5D0\uC11C \uB9DB\uC788\uB294 \uB0C4\uC0C8\uAC00 \uB098! \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uBC1C\uACAC\uD55C \uAC70\uC57C!", standing: "toby", act: "bounce" },
+    { id: "tired", speaker: "\uC544\uBAA8", body: "\u2026\uBA3C\uC800\uAC00 \uC544\uB2C8\uB77C \uB5A0\uB0B4\uB824\uC628 \uAC70\uC796\uC544. \uADF8\uB9AC\uACE0 \uBC30\uACE0\uD508 \uAC74 \uB108\uBFD0\uC774\uC57C.", standing: "amo", act: "shrink" },
+    { id: "light", speaker: "\uB9AC\uD30C", body: "\uC5B4? \uC704\uC5D0 \uC5F0\uAD6C\uC6D0\uC774\uB2E4! \uB4E4\uCF30\uB124? \uADFC\uB370 \uC0C1\uC790\uB294 \uC6B0\uB9AC\uAC00 \uBA3C\uC800 \uC549\uC558\uC73C\uB2C8\uAE4C \uC6B0\uB9AC \uAC70\uC9C0?", standing: "ripa", act: "hop" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800 \uC0C1\uC790\uB294 \uD2F0\uC544\uAC00 \uC18C\uC911\uD788 \uAC74\uC838 \uB454 \uAC70\uC608\uC694! \uB3CC\uB824\uC8FC\uC138\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "center" }, { id: "parua", slot: "right" }], act: "puff" },
+    { id: "stand", speaker: "\uD1A0\uBE44", body: "\uADF8\uB7FC \uC815\uC815\uB2F9\uB2F9\uD558\uAC8C \uAC00\uC704\uBC14\uC704\uBCF4\u2026 \uC544\uB2C8, \uD798\uC73C\uB85C \uC815\uD558\uC790! \uC774\uAE34 \uCABD\uC774 \uAC04\uC2DD\uC744 \uBA39\uB294\uB2E4!", standing: "toby", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_1_8_SIDE_POST = {
+  id: "stage-1-8-side-post",
+  startNodeId: "open",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "open", speaker: "", body: "\uC0C1\uC790\uB97C \uC5F4\uC790 \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uC774 \uAC00\uB4DD \uC3DF\uC544\uC9C4\uB2E4. \uAC04\uC2DD\uC740 \uD55C \uC54C\uB3C4 \uC5C6\uB2E4.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "squash" },
+    { id: "cry", speaker: "\uD1A0\uBE44", body: "\uC774\uAC8C \uBB50\uC57C! \uBA39\uC744 \uC218\uAC00 \uC5C6\uC796\uC544! \uB098 \uC544\uAE4C \uB0C4\uC0C8 \uBD84\uBA85\uD788 \uB0AC\uB294\uB370!", standing: "toby", act: "faint" },
+    { id: "sniff", speaker: "\uB9AC\uD30C", body: "\uC74C\u2026 \uADF8 \uB0C4\uC0C8, \uC544\uAE4C \uD2F0\uC544\uAC00 \uC18C\uB9E4\uC5D0 \uB123\uC5B4 \uB454 \uAC04\uC2DD \uB0C4\uC0C8 \uC544\uB2C8\uC5C8\uC5B4?", standing: "ripa", act: "lean" },
+    { id: "sigh", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB7F4 \uC904 \uC54C\uC558\uC5B4. \uC774\uC81C \uADF8\uB9CC \uAC00\uC790. \uCF54\uB9C8\uAC00 \uAE30\uB2E4\uB9AC\uACA0\uB2E4.", standing: "amo", act: "nod" },
+    { id: "tia", speaker: "\uD2F0\uC544", body: "\uC73C\uC544\uC557, \uB0B4 \uBCF4\uBB3C! \uB2E4 \uD769\uC5B4\uC84C\uC796\uC544\uC694! \uC5F0\uAD6C\uC6D0\uB2D8, \uAC19\uC774 \uC8FC\uC6CC \uC8FC\uC2E4 \uAC70\uC8E0?", standing: "tia", cast: [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }], act: "hopTwice" },
+    { id: "pick", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBB3C\uB860\uC774\uC8E0! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC90D\uB294 \uBCF4\uB78C\uC774 \uC788\uB124\uC694.", standing: "torika", act: "hop" }
+  ])
+};
+var SUB_STORIES = [
+  STAGE_1_8_SIDE_PRE,
+  STAGE_1_8_SIDE_POST,
+  STAGE_2_3_LOST_BADGE,
+  STAGE_2_6_SAME_LINE,
+  STAGE_2_9_SECOND_CHASE,
+  STAGE_3_5_BEHIND_SLEEVE,
+  STAGE_3_8_APOLOGY
+];
+
+// src/data/stageStories.ts
+init_define_import_meta_env();
+
+// src/data/dialogues/chapter1.ts
+init_define_import_meta_env();
+var VOICE = (voice, left, right) => [
+  { id: left, slot: "left" },
+  { id: voice, slot: "center", remote: true },
+  { id: right, slot: "right" }
+];
+var TIA_TRIO = [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }];
+var ALONE = (id) => [{ id, slot: "center" }];
+var STAGE_1_2_POST = {
+  id: "stage-1-2-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uD1A0\uBE44", body: "\uC73C\uC73D\u2026 \uC720\uB9AC \uC9C0\uBD95\uC774 \uC774\uB807\uAC8C \uC57D\uD560 \uC904\uC740 \uBAB0\uB790\uC5B4!", standing: "toby", cast: RAID_TRIO, act: "squash", cue: "impact" },
+    { id: "hush", speaker: "\uC544\uBAA8", body: "\uB0B4\uAC00 \uBC1F\uC9C0 \uB9D0\uB7AC\uC796\uC544\u2026 \uC18C\uB9AC \uB098\uBA74 \uB4E4\uD0A8\uB2E4\uACE0.", standing: "amo", act: "shrink" },
+    { id: "late", speaker: "\uB9AC\uD30C", body: "\uC774\uBBF8 \uB4E4\uCF30\uB294\uAC78? \uC704\uC5D0\uC11C \uBCF4\uB2C8\uAE4C \uC7E4\uB124 \uC6B0\uB9AC \uCABD\uC73C\uB85C \uACE7\uC7A5 \uC624\uB358\uB370.", standing: "ripa", act: "hop" },
+    { id: "where", speaker: "\uD1A0\uBE44", body: "\uADF8\uBCF4\uB2E4 \uCF54\uB9C8\uB294 \uC5B4\uB514 \uAC14\uC5B4? \uC544\uC9C1\uB3C4 \uC548 \uC654\uC5B4?", standing: "toby", act: "hopTwice" },
+    { id: "door", speaker: "\uC544\uBAA8", body: "\u2026\uBB38 \uC55E\uC5D0 \uBA3C\uC800 \uAC00 \uC788\uC744 \uAC70\uC57C. \uC5B8\uC81C\uB098 \uADF8\uB7AC\uC796\uC544.", standing: "amo", act: "nod" },
+    { id: "heard", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC800 \uC774\uB984, \uB4E4\uC5C8\uC5B4\uC694. \uCF54\uB9C8. \uC55E\uC5D0\uC11C \uAE38\uC744 \uBCF4\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "lean" },
+    { id: "log", speaker: "\uB3C4\uB514", body: "\uC801\uC5B4 \uB458\uAC8C\uC694! \uC120\uBD09\uC740 \uCF54\uB9C8, \uC800 \uC14B\uC740 \uADF8 \uB4A4\uB97C \uCAD3\uB294 \uCABD\u2026 \uB9DE\uC8E0?", standing: "dodi", act: "hop" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBA3C \uC2E0\uD638\uAC00 \uAD00\uC81C\uD0D1 \uCABD\uC5D0\uC11C \uACC4\uC18D \uAE5C\uBE61\uC774\uB124\uC694. \uB300\uC7A5\uB2D8, \uADF8\uCABD\uC73C\uB85C \uAC00 \uBD10\uC694!", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_1_4_PRE = {
+  id: "stage-1-4-pre",
+  startNodeId: "cases",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "cases", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC774 \uC9C4\uC5F4\uC7A5 \uC880 \uBCF4\uC138\uC694! \uAC19\uC740 \uC190\uC790\uAD6D\uC774 \uC904\uC904\uC774 \uB0A8\uC544 \uC788\uC5B4\uC694.", standing: "dodi", cast: ROGUE_TRIO, act: "hopTwice" },
+    { id: "size", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD06C\uAE30\uAC00 \uAC19\uC544\uC694. \uD55C \uBA85\uC774 \uC774 \uBC29\uC744 \uACC4\uC18D \uB3CC\uC558\uC5B4\uC694.", standing: "parua", act: "lean" },
+    { id: "habit", speaker: "\uB3C4\uB514", body: "\uC190\uAC00\uB77D\uC774 \uBE44\uC2A4\uB4EC\uD558\uACE0, \uC720\uB9AC \uAC00\uC7A5\uC790\uB9AC\uB9C8\uB2E4 \uB20C\uB9B0 \uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uB0AF\uC120 \uAC74 \uC77C\uB2E8 \uBA3C\uC800 \uB9CC\uC9C0\uACE0 \uBCF4\uB294 \uC190\uC774\uC5D0\uC694.", standing: "dodi", act: "nod" },
+    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC29\uAE08 \uB9CC\uB09C \uC0AC\uB78C \uBC84\uB987\uC744 \uC5B4\uB5BB\uAC8C \uC54C\uC544?", standing: "torika", act: "shake" },
+    { id: "train", speaker: "\uB3C4\uB514", body: "\uC544\uAE4C \uC5F4\uCC28\uC5D0\uC11C \uBB38 \uC190\uC7A1\uC774\uB97C \uC81C\uC77C \uBA3C\uC800 \uB9CC\uC9C4 \uC190\uC774\uB791 \uAC19\uC544\uC694. \uAE30\uB85D\uD574 \uB480\uAC70\uB4E0\uC694!", standing: "dodi", act: "hop" },
+    { id: "alarm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC774 \uBC29 \uACBD\uBCF4\uB3C4 \uADF8 \uC560\uAC00 \uCF30\uACA0\uB124\uC694. \uB300\uC7A5\uB2D8, \uC870\uC2EC\uC870\uC2EC \uAC00\uC694!", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_1_5_PRE = {
+  id: "stage-1-5-pre",
+  startNodeId: "hi",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hi", speaker: "\uD1A0\uBE44", body: "\uC5EC\uC5B4, \uC5F0\uAD6C\uC6D0! \uB180\uB790\uC9C0? \uBA3C\uC800 \uC640\uC11C \uBB38\uC744 \uC5F4\uC5B4 \uB450\uACA0\uB2E4\uACE0 \uD588\uAC70\uB4E0!", standing: "toby", cast: ALONE("toby"), act: "bounce" },
+    { id: "torn", speaker: "\uD1A0\uBE44", body: "\u2026\uC5F4\uC5B4 \uB450\uB824\uACE0 \uD588\uB294\uB370, \uC5F4\uB838\uB2E4\uAE30\uBCF4\uB2E4 \uB72F\uACBC\uB2E4\uB294 \uCABD\uC774 \uB9DE\uC744 \uAC70\uC57C.", standing: "toby", act: "shrink" },
+    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uD63C\uC790 \uC624\uC2E0 \uAC70\uC608\uC694? \uB2E4\uB978 \uB450 \uBD84\uC740\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "hop" },
+    { id: "split", speaker: "\uD1A0\uBE44", body: "\uC544\uBAA8\uB791 \uB9AC\uD30C\uB294 \uCF54\uB9C8\uAC00 \uC2DC\uD0A8 \uB300\uB85C \uB534 \uAE38\uB85C \uAC14\uC5B4. \uB098 \uD63C\uC790\uC11C\uB3C4 \uCDA9\uBD84\uD558\uB2E4\uACE0!", standing: "toby", act: "puff" },
+    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB9AC\uACE0 \uC774 \uBC29\uBCBD \uC7A5\uCE58\uB294 \uB0B4\uAC00 \uB9CC\uC9C4 \uAC8C \uC544\uB2C8\uC57C. \uC6D0\uB798 \uCF1C\uC838 \uC788\uC5C8\uC5B4.", standing: "toby", act: "fright" },
+    { id: "beep", speaker: "\uD1A0\uB9AC\uCE74", body: '\uBC29\uAE08 \uC7A5\uCE58\uC5D0\uC11C "\uC090\u2014" \uD558\uACE0 \uC18C\uB9AC\uAC00 \uB0AC\uB294\uB370\uC694.', standing: "torika", act: "recoil" },
+    { id: "fight", speaker: "\uD1A0\uBE44", body: "\uC73C\uC544\uC544 \uBA48\uCD94\uB294 \uBC95\uC774 \uC5B4\uB514 \uC788\uB354\uB77C?! \uC2F8, \uC2F8\uC6B0\uC790! \uC2F8\uC6B0\uB294 \uB3D9\uC548\uC740 \uC7A5\uCE58\uAC00 \uC2E0\uACBD \uC548 \uC4F0\uC774\uB2C8\uAE4C!", standing: "toby", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_1_5_POST = {
+  id: "stage-1-5-post",
+  startNodeId: "tidy",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "tidy", speaker: "", body: "\uB118\uC5B4\uC9C4 \uC7A5\uBE44\uAC00 \uAD6C\uC11D\uC5D0 \uC313\uC5EC \uC788\uB2E4. \uD1A0\uBE44\uAC00 \uC5F0\uAD6C\uC6D0 \uB208\uCE58\uB97C \uBCF4\uBA70 \uD558\uB098\uC529 \uC77C\uC73C\uCF1C \uC138\uC6B4\uB2E4.", standing: "toby", cast: [{ id: "toby", slot: "right" }, { id: "torika", slot: "left" }] },
+    { id: "what", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC9C0\uAE08 \uBB50 \uD558\uC138\uC694?", standing: "torika", act: "lean" },
+    { id: "excuse", speaker: "\uD1A0\uBE44", body: "\uC544, \uC544\uBB34\uAC83\uB3C4! \uC815\uB9AC\uC57C! \uC6D0\uB798 \uC774\uB807\uAC8C \uC788\uC5C8\uB358 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
+    { id: "label", speaker: "\uB3C4\uB514", body: "\uBC29\uAE08 \uC120\uBC18 \uC774\uB984\uD45C\uB791 \uB9DE\uCDB0\uC11C \uB193\uC73C\uC168\uB294\uB370\uC694. \uAF3C\uAF3C\uD558\uC2DC\uB124\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
+    { id: "away", speaker: "\uD1A0\uBE44", body: "\uBCF4, \uBCF4\uC9C0 \uB9C8! \uCF54\uB9C8\uD55C\uD14C\uB294 \uB9D0\uD558\uC9C0 \uB9C8! \uB2E4\uC74C\uC5D4 \uC9C4\uC9DC \uC774\uAE34\uB2E4~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" }
+  ])
+};
+var STAGE_1_6_POST = {
+  id: "stage-1-6-post",
+  startNodeId: "hum",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hum", speaker: "", body: "\uC548\uD14C\uB098\uAC00 \uB0AE\uC740 \uC18C\uB9AC\uB97C \uB0B4\uBA70 \uC77C\uC5B4\uC120\uB2E4. \uC7A1\uC74C \uC0AC\uC774\uB85C \uBAA9\uC18C\uB9AC\uAC00 \uBC88\uC9C4\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "stella", speaker: "\uC2A4\uD14C\uB77C", body: "\u2026\uC5F0\uACB0\uB410\uC5B4\uC694. \uC81C1\uC9C0\uBD80 \uAD00\uC81C\uC758 \uC2A4\uD14C\uB77C\uC608\uC694. \uC704\uCE58 \uC2E0\uD638 \uD655\uC778\uD588\uC5B4\uC694. \uC678\uACFD\uC5D0\uC11C \uC624\uC2DC\uB294 \uBD84\uB4E4\uC774\uC8E0?", cast: VOICE("stella", "torika", "dodi"), act: "nod", cue: "impact" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2A4\uD14C\uB77C \uB2D8! \uC5F4\uCC28\uAC00 \uB5A8\uC5B4\uC84C\uC5B4\uC694. \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD558\uC138\uC694!", standing: "torika", act: "hop" },
+    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uC5EC\uAE30\uB294 \uCF04\uD1A0\uB2E4. \uC678\uBCBD \uCABD\uC774 \uC2DC\uB044\uB7EC\uC6CC\uC11C \uC9C0\uC6D0\uC740 \uC870\uAE08 \uB2A6\uB294\uB2E4. \uC774 \uC548\uCABD \uAE38\uC740 \uC815\uAC70\uC7A5\uAE4C\uC9C0 \uC774\uC5B4\uC838 \uC788\uC5B4.", cast: VOICE("kento", "torika", "dodi"), act: "lean" },
+    { id: "station", speaker: "\uC2A4\uD14C\uB77C", body: "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5\uC774 \uC6D0\uB798 \uBAA9\uC801\uC9C0\uC600\uC5B4\uC694. \uBB38\uC740 \uC7A0\uACBC\uACA0\uC9C0\uB9CC \uC548\uCABD\uC5D0 \uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uC744\uC9C0\uB3C4 \uBAB0\uB77C\uC694.", cast: VOICE("stella", "torika", "dodi") },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uB300\uC694! \uAE30\uB85D\uD574 \uB458\uAC8C\uC694!", standing: "dodi", act: "hopTwice" },
+    { id: "order", speaker: "\uCF04\uD1A0", body: "\uC5F0\uAD6C\uC6D0, \uB4E4\uB9AC\uB098. \uC77C\uB2E8 \uC0B4\uC544\uC11C \uB3C4\uCC29\uD574\uB77C. \uB098\uBA38\uC9C0\uB294 \uB3C4\uCC29\uD558\uACE0 \uB098\uC11C \uC598\uAE30\uD558\uC790.", cast: VOICE("kento", "torika", "dodi"), act: "nod" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB9D0\uC740 \uAC70\uCE5C\uB370 \uBAA9\uC18C\uB9AC\uB294 \uAC71\uC815\uD558\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "nod" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC815\uAC70\uC7A5\uC73C\uB85C \uAC00\uC694! \uC774\uC81C \uAE38\uC7A1\uC774\uB3C4 \uC0DD\uACBC\uC73C\uB2C8\uAE4C\uC694!", standing: "torika", act: "hop" }
+  ])
+};
+var STAGE_1_7_PRE = {
+  id: "stage-1-7-pre",
+  startNodeId: "pile",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "pile", speaker: "", body: "\uCC98\uB9AC\uC7A5 \uD55C\uCABD\uC5D0 \uAC19\uC740 \uBAA8\uC591\uC758 \uCCA0\uC81C \uD45C\uC2DD\uC774 \uC0B0\uCC98\uB7FC \uC313\uC5EC \uC788\uB2E4. \uAC00\uC6B4\uB370\uC5D0 \uAC00\uC704\uD45C \uD648 \uD558\uB098\uAC00 \uC0C8\uACA8\uC838 \uC788\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
+    { id: "mark", speaker: "\uB3C4\uB514", body: '\uC774\uAC74 "\uD3D0\uAE30 \uD45C\uC2DD"\uC774\uC5D0\uC694. \uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uC5D0\uAC8C \uB2EC\uC544\uC11C \uBCF4\uB0B4\uB358 \uAC70\uC608\uC694. \uC81C \uC77C\uC9C0\uC5D0 \uC788\uC5B4\uC694.', standing: "dodi", act: "tremble" },
+    { id: "count", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uB77C\uBA74\u2026 \uC774 \uB354\uBBF8\uB294 \uC804\uBD80\u2026", standing: "torika", act: "faint" },
+    { id: "line", speaker: "\uB3C4\uB514", body: "\uC5EC\uAE30\uB85C \uBCF4\uB0B4\uC9C4 \uC544\uC774\uB4E4\uC758 \uBAAB\uC774\uC5D0\uC694. \uC904\uC774 \uB05D\uC774 \uC5C6\uC5B4\uC694.", standing: "dodi", act: "shrink" },
+    { id: "hood", speaker: "", body: "\uB354\uBBF8 \uB4A4\uC5D0\uC11C \uB450\uAC74\uC774 \uCC9C\uCC9C\uD788 \uC62C\uB77C\uC628\uB2E4. \uC544\uBAA8\uAC00 \uD45C\uC2DD \uD558\uB098\uB97C \uB0B4\uB824\uB2E4\uBCF4\uBA70 \uC11C \uC788\uB2E4.", standing: "amo", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "center" }, { id: "amo", slot: "right" }] },
+    { id: "touch", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uAC70, \uB9CC\uC9C0\uC9C0 \uB9C8.", standing: "amo", act: "shrink" },
+    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528\u2026?", standing: "torika", act: "lean" },
+    { id: "quiet", speaker: "\uC544\uBAA8", body: "\u2026\uC544\uBB34\uAC83\uB3C4 \uC544\uB2C8\uC57C. \uC2F8\uC6B8 \uAC70\uBA74 \uC870\uC6A9\uD788 \uD574. \uB098, \uD070 \uC18C\uB9AC\uB294 \uC2EB\uC5B4.", standing: "amo", act: "tremble" }
+  ])
+};
+var STAGE_1_8_PRE = {
+  id: "stage-1-8-pre",
+  startNodeId: "sit",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "sit", speaker: "", body: "\uC9C0\uD558 \uBC30\uC218\uB85C. \uC218\uBB38 \uC190\uC7A1\uC774 \uC704\uC5D0 \uBCA0\uC77C\uC744 \uC4F4 \uC791\uC740 \uADF8\uB9BC\uC790\uAC00 \uC549\uC544 \uC788\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uC744 \uC18C\uB9E4\uC5D0 \uD558\uB098\uC529 \uB123\uB294 \uC911\uC774\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "tia", speaker: "\uD2F0\uC544", body: "\uC557, \uB4E4\uCF30\uB2E4\u2026! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACC4\uC168\uB124\uC694! \uC800, \uC800\uB294 \uADF8\uB0E5 \uBCF4\uAE09 \uD68C\uC218 \uC911\uC774\uC5D0\uC694! \uC218\uBB38 \uC810\uAC80\uB3C4 \uD558\uB294 \uC911\uC774\uACE0\uC694!", cast: TIA_TRIO, act: "recoil" },
+    { id: "same", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5B4, \uD2F0\uC544\uC796\uC544! \uC5EC\uAE30\uC11C \uBB50 \uD574? \uC124\uB9C8 \uB610 \uBC18\uC9DD\uC774\uB294 \uAC70 \uC8FC\uC6CC?", standing: "torika", act: "hop" },
+    { id: "veil", speaker: "\uD2F0\uC544", body: "\uD1A0\uB9AC\uCE74\uB3C4 \uC788\uC5C8\uB124! \uBC18\uC9DD\uC774\uB294 \uAC83\uB9CC \uC90D\uB294 \uAC74 \uC544\uB2C8\uC5D0\uC694. \uC774 \uC218\uBB38 \uADFC\uCC98\uB85C \uBCF4\uAE09 \uC0C1\uC790\uAC00 \uB5A0\uB0B4\uB824\uC640\uC11C, \uC4F8 \uB9CC\uD55C \uAC74 \uB2E4 \uAC74\uC838 \uB450\uB294 \uC911\uC774\uC5D0\uC694!", act: "bounce" },
+    { id: "useless", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8 \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uB4E4\uC740 \uC5B4\uB514\uC5D0 \uC4F0\uB294 \uAC70\uC57C? \uBCC4 \uC4F8\uBAA8\uB294 \uC5C6\uC5B4 \uBCF4\uC774\uB294\uB370\u2026", standing: "torika", act: "lean" },
+    { id: "droop", speaker: "\uD2F0\uC544", body: "\uC4F8\uBAA8\u2026 \uC5C6\uC5B4? \uC774\uAC70 \uB2E4 \uB0B4 \uBCF4\uBB3C\uC778\uB370\u2026", act: "faint" },
+    { id: "oops", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544, \uC544\uB2C8\uC57C! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC608\uC058\uB2E4\uB294 \uB73B\uC774\uC5C8\uC5B4!", standing: "torika", act: "shake" },
+    { id: "cheer", speaker: "\uD2F0\uC544", body: "\uC815\uB9D0? \uC5D0\uD5E4\uD5E4\u2026 \uADF8\uB7FC \uD1A0\uB9AC\uCE74\uD55C\uD14C\uB3C4 \uD2B9\uBCC4\uD788 \uD558\uB098 \uBCF4\uC5EC \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uAC19\uC774 \uBCF4\uC138\uC694!", act: "hopTwice" },
+    { id: "trail", speaker: "\uD2F0\uC544", body: "\uCF54\uB9C8\uAC00 \uC9C0\uB098\uAC04 \uAE38\uC774\uB77C\uBA74 \uC774 \uC218\uBB38 \uC544\uB798\uB85C \uC774\uC5B4\uC838 \uC788\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uB0B4\uAC00 \uC544\uB294 \uAC74 \uADF8\uAC8C \uB2E4\uC57C, \uC9C4\uC9DC\uB85C!", act: "nod" },
+    { id: "scent", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB3C \uB0C4\uC0C8 \uC704\uB85C \uB2E4\uB978 \uBC1C\uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uC544\uAE4C \uADF8 \uBB3C\uC18D \uC7A5\uB09C\uAFBC \uAC19\uAE30\uB3C4 \uD558\uACE0\uC694.", standing: "parua", act: "lean" },
+    { id: "laugh", speaker: "\uD2F0\uC544", body: "\uC544\uAE4C \uBB3C\uC18D\uC5D0\uC11C \uB204\uAC00 \uC6C3\uC5C8\uC5B4. \uB098 \uC544\uB2C8\uC57C! \uC9C4\uC9DC \uB098 \uC544\uB2C8\uACE0\u2026 \uD30C\uB8E8\uC544\uB3C4 \uC870\uC2EC\uD574. \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4\uC694.", act: "shake" },
+    { id: "gift", speaker: "\uD2F0\uC544", body: "\uC218\uBB38\uC740 \uB0B4\uAC00 \uC5F4\uC5B4 \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uAC00\uB294 \uAE38\uC5D0 \uC4F0\uC138\uC694. \uC544, \uCC98\uC74C \uC8FC\uC6B4 \uC870\uAC01\uC740 \uC548 \uB3FC! \uADF8\uAC74 \uB0B4 \uC18C\uB9E4\uC5D0 \uC788\uC5B4\uC57C \uD574!", act: "puff" }
+  ])
+};
+var STAGE_1_9_PRE = {
+  id: "stage-1-9-pre",
+  startNodeId: "knock",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "knock", speaker: "", body: "\uC624\uD504\uB2DD \uC5F4\uCC28\uAC00 \uB2FF\uC558\uC5B4\uC57C \uD560 \uC815\uAC70\uC7A5. \uD50C\uB7AB\uD3FC \uB05D \uBD09\uC1C4\uBB38\uC774 \uC548\uCABD\uC5D0\uC11C \uCFF5\uCFF5 \uC6B8\uB9B0\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
+    { id: "inside", speaker: "\uC624\uBE44", body: "\uC544\uC640\uC640\u2026 \uB204, \uB204\uAD6C \uC788\uC5B4\uC694? \uC5F4\uCC28\uAC00 \uC624\uB298 \uC548 \uC640\uC11C \uBB38\uC774 \uC7A0\uACA8 \uBC84\uB838\uC5B4\uC694\u2026 \uB3C4\uC640\uC918\u2026!", cast: VOICE("obi", "dodi", "parua"), act: "tremble" },
+    { id: "who", speaker: "\uB3C4\uB514", body: "\uC624\uBE44\uC57C? \uAC70\uAE30 \uAC07\uD78C \uAC70\uC57C? \uC6B0\uB9AC \uC058\uB760 \uB85C\uADF8\uC57C, \uC870\uAE08\uB9CC \uAE30\uB2E4\uB824!", standing: "dodi", act: "hopTwice" },
+    { id: "watch", speaker: "\uC624\uBE44", body: '\uB2E4\uD589\uC774\uB2E4\u2026 \uB3C4\uB514, \uD30C\uB8E8\uC544\uB3C4 \uC788\uAD6C\uB098! \uADF8\uB7F0\uB370 \uBB38 \uC55E\uC5D0 \uBB54\uAC00 \uC11C\uC131\uC774\uB294 \uC18C\uB9AC\uAC00 \uB098. \uC544\uAE4C\uBD80\uD130 "\uC774 \uBB38\uC740 \uC548 \uC5F4\uB824 \uC788\uC5B4\uC57C \uD574" \uD558\uACE0 \uC911\uC5BC\uAC70\uB824\u2026!', act: "fright" },
+    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBC1C\uC18C\uB9AC\uAC00 \uBB38 \uC55E\uC5D0 \uBAA8\uC5EC \uC788\uC5B4\uC694. \uC5F4\uB824\uBA74 \uC2F8\uC6CC\uC57C \uD574\uC694.", standing: "parua", act: "lean" }
+  ])
+};
+var STAGE_1_9_POST = {
+  id: "stage-1-9-post",
+  startNodeId: "open",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "open", speaker: "", body: "\uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uC548\uC5D0\uC11C \uC0C1\uC790\uB97C \uB04C\uC5B4\uC548\uC740 \uC573\uB41C \uC544\uC774\uAC00 \uBE44\uD2C0\uAC70\uB9AC\uBA70 \uB098\uC628\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
+    { id: "obi", speaker: "\uC624\uBE44", body: "\uACE0, \uACE0\uB9C8\uC6CC\u2026! \uC544, \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uC800\uB294 \uC624\uBE44\uC608\uC694. \uC774 \uC815\uAC70\uC7A5 \uBCF4\uAE09 \uAC80\uC218\uB97C \uD558\uB358 \uC911\uC774\uC5C8\uC5B4\uC694.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
+    { id: "store", speaker: "\uD1A0\uB9AC\uCE74", body: "A-LAB24 \uD3B8\uC758\uC810 \uC720\uB2C8\uD3FC\uC774\uB2E4! \uB3C4\uC2DC\uC5D0\uB3C4 \uC788\uC5C8\uC5B4?", standing: "torika", act: "hop" },
+    { id: "lab", speaker: "\uC624\uBE44", body: "\uC751, \uC911\uC559 \uC5F0\uAD6C\uC18C 1\uCE35\uC774\uC57C. \uC624\uB298 \uC5F4\uCC28 \uC7AC\uACE0\uAC00 \uBABB \uB4E4\uC5B4\uC640\uC11C\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uD3D0\uAE30 \uC9C1\uC804\uC774\uB77C \uBAB0\uB798 \uCC59\uAE34 \uAC70\uC608\uC694.", act: "shrink" },
+    { id: "gift", speaker: "\uC624\uBE44", body: "\uCE58\uC988\uCF00\uC774\uD06C\uB791 \uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C\uC608\uC694. \uAE30\uD55C\uC774 \uC624\uB298\uAE4C\uC9C0\uB77C\uC11C\uC694. \uB4DC\uC138\uC694, \uC544\uAE5D\uC796\uC544\uC694.", act: "nod" },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: '\uAE30\uD55C \uC9C1\uC804 \uC7AC\uACE0! \uC774\uAC74 "\uAD6C\uD638 \uBB3C\uC790"\uB85C \uC801\uC5B4 \uB458\uAC8C!', standing: "dodi", act: "hopTwice" },
+    { id: "wait", speaker: "\uC624\uBE44", body: "\uC5F0\uAD6C\uC18C\uC5D0\uC11C \uAE30\uB2E4\uB9B4\uAC8C\uC694. \uAC70\uAE30 \uC624\uC2DC\uBA74 \uC815\uC2DD\uC73C\uB85C \uD314 \uC218 \uC788\uC5B4\uC694!", act: "bounce" }
+  ])
+};
+var STAGE_1_10_PRE = {
+  id: "stage-1-10-pre",
+  startNodeId: "wait",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wait", speaker: "", body: "\uACBD\uACC4\uBB38 \uC55E. \uB2EB\uD78C \uBB38 \uC55E\uC5D0 \uCF54\uB9C8\uAC00 \uC11C \uC788\uB2E4. \uCC98\uC74C\uBD80\uD130 \uAC70\uAE30 \uC788\uC5C8\uB2E4\uB294 \uB4EF\uC774.", standing: "koma", cast: ALONE("koma") },
+    { id: "come", speaker: "\uCF54\uB9C8", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC62C \uC904\uC740 \uBAB0\uB790\uB2E4.", standing: "koma", act: "nod" },
+    { id: "name", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8\u2026 \uB9DE\uC8E0? \uC5F4\uCC28\uB97C \uD3ED\uD30C\uD55C \uBD84.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "goal", speaker: "\uCF54\uB9C8", body: "\uBAA9\uD45C\uB294 \uC5F0\uAD6C\uC6D0. \uADF8\uAC83\uBFD0\uC774\uB2E4. \uD574\uCE58\uC9C0 \uC54A\uB294\uB2E4.", standing: "koma" },
+    { id: "train", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uCE58\uB9CC \uC5F4\uCC28\uB294 \uB5A8\uC5B4\uC84C\uC796\uC544\uC694!", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "koma", slot: "right" }], act: "fright" },
+    { id: "order", speaker: "\uCF54\uB9C8", body: "\u2026\uB5A8\uC5B4\uB728\uB9AC\uB77C\uACE0 \uD588\uB2E4. \uB0B4\uAC00 \uC815\uD55C \uAC8C \uC544\uB2C8\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "who", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB204\uAC00\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }] },
+    { id: "above", speaker: "\uCF54\uB9C8", body: "\u2026\uC704\uC5D0\uC11C. \uBB38\uC740 \uB0B4\uAC00 \uB9C9\uB294\uB2E4. \uB3CC\uC544\uAC00\uB77C, \uC5F0\uAD6C\uC6D0. \uB3CC\uC544\uAC00\uC9C0 \uC54A\uC73C\uBA74 \uB370\uB824\uAC04\uB2E4.", standing: "koma", cue: "impact" }
+  ])
+};
+var STAGE_1_10_POST = {
+  id: "stage-1-10-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "down", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC120 \uCC44\uB85C \uC228\uC744 \uACE0\uB978\uB2E4. \uAF2C\uB9AC \uB05D\uC758 \uD1B1\uB2C8\uAC00 \uAC00\uB298\uAC8C \uB5A8\uB9B0\uB2E4.", standing: "koma", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], nextId: "report" },
+    { id: "report", speaker: "\uCF54\uB9C8", body: "\u2026\uC84C\uB2E4. \uBCF4\uACE0\uB294 \uB0B4\uAC00 \uD55C\uB2E4.", standing: "koma", act: "shrink", nextId: "ask" },
+    {
+      id: "ask",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB300\uC7A5\uB2D8\u2026 \uD55C \uB9D0\uC500 \uD574 \uC8FC\uC2E4\uB798\uC694?",
+      standing: "torika",
+      act: "lean",
+      choices: [
+        { id: "notfail", label: "\uB108\uD76C\uB294 \uC2E4\uD328\uC791\uC774 \uC544\uB2C8\uC57C", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "talk", label: "\uB2E4\uC74C\uC5D4 \uAC19\uC774 \uC774\uC57C\uAE30\uD558\uC790", nextId: "answerB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
+      ]
+    },
+    { id: "answerA", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uB9D0\uC740 \uC704\uC5D0\uC11C \uC544\uBB34\uB3C4 \uC548 \uD588\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30. \uADF8\uAC83\uB3C4 \uC704\uC5D0\uC11C\uB294 \uC5C6\uB358 \uC77C\uC774\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "leave", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0 \uAC00\uC11C \uB9D0\uD558\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBB38 \uB108\uBA38\uB85C \uC544\uC9C1 \uAC00\uC9C0 \uC54A\uC558\uB2E4\uACE0.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
+    { id: "crash", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uBB38\uC9DD\uC774 \uB0A0\uC544\uC640 \uB545\uC5D0 \uBC15\uD78C\uB2E4.", cue: "explosion", nextId: "lexia" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC81C\uAC00 \uC654\uC5B4\uC694! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uC5B4\uC694. \uC815\uD655\uD788\uB294\u2026 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uC5B4\uC694.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
+    { id: "hello", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hopTwice", nextId: "queen" },
+    { id: "queen", speaker: "\uB809\uC2DC\uC544", body: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB809\uC2DC\uC544\uC608\uC694. \uC774\uC81C\uBD80\uD130 \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uC81C\uAC00 \uCC45\uC784\uC9C8\uAC8C\uC694. \uB9C8\uC2A4\uD130, \uB530\uB77C\uC624\uC138\uC694.", standing: "lexia", act: "nod", nextId: "door" },
+    { id: "door", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB38\uC9DD\uC774 \uC544\uC9C1 \uC190\uC5D0 \uC788\uC5B4\uC694.", standing: "parua", cast: [{ id: "parua", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean", nextId: "drop" },
+    { id: "drop", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uB2F9\uB2F9\uD55C \uC785\uC131\uC5D4 \uC18C\uD488\uC774 \uD544\uC694\uD558\uC796\uC544. \uB0B4\uB824\uB193\uC744\uAC8C.", standing: "lexia", act: "shrink", nextId: "go" },
+    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uB3C4\uC2DC\uB85C \uAC00\uC694! \uC774\uBC88\uC5D4 \uC6B0\uB9AC\uC5D0\uAC8C \uB4E0\uB4E0\uD55C \uAE38\uC7A1\uC774\uAC00 \uC788\uC73C\uB2C8\uAE4C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hop" }
+  ]
+};
+var CHAPTER_1_STORIES = [
+  STAGE_1_2_POST,
+  STAGE_1_4_PRE,
+  STAGE_1_5_PRE,
+  STAGE_1_5_POST,
+  STAGE_1_6_POST,
+  STAGE_1_7_PRE,
+  STAGE_1_8_PRE,
+  STAGE_1_9_PRE,
+  STAGE_1_9_POST,
+  STAGE_1_10_PRE,
+  STAGE_1_10_POST
+];
+
+// src/data/dialogues/chapter2.ts
+init_define_import_meta_env();
+var VOICE2 = (voice, left, right) => [{ id: left, slot: "left" }, { id: voice, slot: "center", remote: true }, { id: right, slot: "right" }];
+var SOLO2 = (id) => [{ id, slot: "center" }];
+var PAIR = (id, other = "torika") => [
+  { id: other, slot: "left" },
+  { id, slot: "right" }
+];
+var STAGE_2_1_PRE = {
+  id: "stage-2-1-pre",
+  startNodeId: "enter",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "enter", speaker: "\uB809\uC2DC\uC544", body: "\uBB38\uC740 \uC81C\uAC00 \uC5F4\uC5C8\uC5B4\uC694, \uB9C8\uC2A4\uD130. \uC774\uC81C\uBD80\uD130\uB294 \uC81C\uAC00 \uC55E\uC7A5\uC11C\uC694!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
+    { id: "rule", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8, \uBB38\uC740 \uBF51\uB294 \uAC8C \uC544\uB2C8\uB77C \uC5EC\uB294 \uAC70\uC608\uC694.", standing: "torika", act: "lean" },
+    { id: "huh", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC5EC\uB294 \uAC70\uB098 \uBF51\uB294 \uAC70\uB098 \uACB0\uACFC\uB294 \uAC19\uC544. \uC18C\uB9AC\uAC00 \uB2E4\uB97C \uBFD0\uC774\uC9C0.", standing: "lexia", act: "shrink" },
+    { id: "print", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC5EC\uAE30 \uBC1C\uC790\uAD6D\uC774\uC694. \uCF54\uB9C8\uC758 \uBC1C\uC790\uAD6D\uC774 \uC785\uAD6C\uC5D0\uC11C \uB531 \uBA48\uCDB0 \uC788\uC5B4\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
+    { id: "lost", speaker: "\uB3C4\uB514", body: "\uADF8\uB9AC\uACE0 \uADF8 \uB4A4\uB85C \uC5B4\uC9C0\uB7EC\uC6B4 \uBC1C\uC790\uAD6D\uC774 \uC14B\uC774\uC5D0\uC694. \uC774\uCABD\uC800\uCABD \uD5E4\uB9E8 \uD754\uC801\u2026 \uC7E4\uB124\uB3C4 \uAE38\uC744 \uC783\uC740 \uAC83 \uAC19\uC544\uC694.", standing: "dodi", act: "hopTwice" },
+    { id: "again", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB7FC \uB2E4\uC2DC \uCAD3\uC544\uC624\uACA0\uB124. \uB9DE\uC774\uD560 \uC900\uBE44 \uD574 \uB46C.", standing: "lexia", act: "nod", cue: "rumble" }
+  ])
+};
+var STAGE_2_2_POST = {
+  id: "stage-2-2-post",
+  startNodeId: "line",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "line", speaker: "", body: "\uBA48\uCDB0 \uC788\uB358 \uC870\uB9BD \uB77C\uC778\uC774 \uB35C\uCEF9, \uD558\uACE0 \uB3CC\uAE30 \uC2DC\uC791\uD55C\uB2E4. \uB808\uBC84 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), act: "squash", cue: "rumble" },
+    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uC774, \uC774\uAC74 \uC544\uB2C8\uC57C! \uAE30\uB300\uC5B4 \uC130\uB294\uB370 \uC800\uC808\uB85C \uB0B4\uB824\uAC04 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. \uB77C\uC778\uC774 \uB3CC\uACE0 \uC788\uC73C\uB2C8 \uC18C\uB9AC\uAC00 \uB2E4 \uD37C\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0, \uC0C1\uC790\uB97C \uBC1B\uC544\uB77C. \uC774\uCABD\uC5D0\uC11C \uBCF4\uB0B4\uB294 \uBCF4\uAE09\uC774\uB2E4.", cast: VOICE2("seira", "torika", "toby"), act: "nod" },
+    { id: "box", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uB97C \uD0C0\uACE0 \uC0C1\uC790 \uD558\uB098\uAC00 \uC5F0\uAD6C\uC6D0 \uBC1C\uCE58\uAE4C\uC9C0 \uD758\uB7EC\uC628\uB2E4. \uC548\uC5D0\uB294 \uAC13 \uAD6C\uC6B4 \uCE58\uC988\uCF00\uC774\uD06C \uC2DC\uC81C\uD488\uC774 \uB4E4\uC5B4 \uC788\uB2E4.", standing: "torika" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCE58\uC988\uCF00\uC774\uD06C\uC608\uC694! \uB204\uAC00 \uBCF4\uB0B4\uC2E0 \uAC70\uC8E0?", standing: "torika", act: "hopTwice" },
+    { id: "spina", speaker: "\uC2A4\uD53C\uB098", body: "\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uC778\uC0AC\uB2E4. \uC774 \uD68C\uB791\uC5D0\uC11C\uB294 \uC870\uC6A9\uD788, \uBE68\uB9AC\uAC00 \uADDC\uCE59\uC774\uB2E4. \uD1A0\uBE44\uB77C\uB294 \uC544\uC774\uC5D0\uAC8C\uB3C4 \uC804\uD574\uB77C." },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uB2E4 \uB4E4\uC5C8\uAC70\uB4E0?! \uB098\uB3C4 \uC870\uC6A9\uD788 \uD560 \uC218 \uC788\uC5B4!", standing: "toby", act: "rage" }
+  ])
+};
+var STAGE_2_4_PRE = {
+  id: "stage-2-4-pre",
+  startNodeId: "dark",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dark", speaker: "", body: "\uC911\uACC4\uC2E4\uC740 \uCE84\uCE84\uD558\uB2E4. \uC5B4\uB518\uAC00\uC5D0\uC11C \uC228\uC18C\uB9AC\uAC00 \uC14B \uB4E4\uB9B0\uB2E4.", cast: [] },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uBCBD\uC5D0 \uD45C\uC2DD\uC774 \uC788\uC5B4\uC694. \uC810 \uD558\uB098\uB294 \u300C\uC4F8 \uC218 \uC5C6\uC74C\u300D, \uC120 \uD558\uB098\uB294 \u300C\uC62E\uAE40\u300D\uC774\uB798\uC694.", standing: "dodi", cast: PAIR("dodi", "parua"), act: "lean" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB3C4\uB514, \uC228\uC18C\uB9AC\uAC00 \uC14B\uC774\uC5D0\uC694. \uC6B0\uB9AC \uC228\uC18C\uB9AC \uB9D0\uACE0.", standing: "parua", act: "tremble" },
+    { id: "light", speaker: "", body: "\uC2A4\uC704\uCE58 \uC18C\uB9AC\uC640 \uD568\uAED8 \uBD88\uC774 \uB4E4\uC5B4\uC628\uB2E4. \uB208\uC55E\uC5D0 \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4.", cast: RAID_TRIO, cue: "impact" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC73C\uC545! \uBD88 \uCF1C\uC9C0 \uB9D0\uB7AC\uC796\uC544!", standing: "toby", act: "fright" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uBA3C\uC800 \uCF20 \uAC74 \uC7E4\uB124\uC796\uC544? \uC544, \uADF8\uB0E5 \uC5BC\uAD74 \uBCF4\uB2C8\uAE4C \uBC18\uAC11\uB2E4.", standing: "ripa", act: "hop" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC2F8\uC6CC\uC57C \uD558\uC9C0? \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD574?", standing: "amo", act: "shrink" }
+  ])
+};
+var STAGE_2_5_PRE = {
+  id: "stage-2-5-pre",
+  startNodeId: "end",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "end", speaker: "", body: "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5\uC758 \uB05D. \uB450\uAC74\uC744 \uB20C\uB7EC \uC4F4 \uC544\uBAA8\uAC00 \uC120\uB85C \uD55C\uAC00\uC6B4\uB370\uC5D0 \uD63C\uC790 \uC11C \uC788\uB2E4.", standing: "amo", cast: SOLO2("amo") },
+    { id: "alone", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528 \uD63C\uC790\uC608\uC694? \uD1A0\uBE44 \uC528\uC640 \uB9AC\uD30C \uC528\uB294\uC694?", standing: "torika", cast: PAIR("amo"), act: "lean" },
+    { id: "away", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC624\uC9C0 \uB9D0\uB77C\uACE0 \uD588\uC5B4. \uC5EC\uAE30\uB294 \uB0B4\uAC00 \uD63C\uC790 \uC11C\uC57C \uD558\uB294 \uACF3\uC774\uC57C.", standing: "amo", act: "nod" },
+    { id: "why", speaker: "\uC544\uBAA8", body: "\uC800\uAE30 \uB77C\uC778 \uB05D, \uC800 \uC790\uB9AC\uC5D0\uC11C \uB0B4\uAC00 \uCC98\uC74C \uC62C\uB77C\uAC00 \uD45C\uC2DD\uC744 \uB2EC\uACE0 \uB0B4\uB824\uC84C\uC5B4. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0.", standing: "amo", act: "shrink" },
+    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uB9D0, \uC9C4\uC9DC\uC778\uC9C0 \uD655\uC778\uD558\uB7EC \uC654\uC5B4. \uC9C0\uB098\uAC00\uB824\uBA74\u2026 \uB0B4\uAC00 \uD655\uC778\uD574\uC57C \uD574.", standing: "amo", act: "tremble" }
+  ])
+};
+var STAGE_2_5_POST = {
+  id: "stage-2-5-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "down", speaker: "", body: "\uC544\uBAA8\uAC00 \uBB34\uB98E\uC744 \uAFC7\uC740 \uCC44 \uC228\uC744 \uACE0\uB978\uB2E4. \uB20C\uB7EC \uC4F4 \uB450\uAC74\uC774 \uD758\uB7EC\uB0B4\uB9B0\uB2E4.", standing: "amo", cast: PAIR("amo", "parua") },
+    { id: "hood", speaker: "\uC544\uBAA8", body: "\u2026\uC774\uAC78 \uBC97\uC740 \uC801\uC774 \uC5C6\uC5C8\uC5B4. \uD45C\uC2DD\uC774 \uBCF4\uC77C\uAE4C \uBD10.", standing: "amo", act: "shrink" },
+    { id: "see", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC9C0\uAE08\uC740 \uC548 \uBCF4\uC5EC\uC694. \uBCF4\uC774\uB294 \uAC74 \uC544\uBAA8 \uC528 \uC5BC\uAD74\uC774\uC5D0\uC694.", standing: "parua", act: "lean" },
+    { id: "up", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB807\uAD6C\uB098. \uADF8\uB7FC \uACC4\uC18D \uC62C\uB824 \uB458\uAE4C.", standing: "amo", act: "nod" },
+    { id: "pass", speaker: "\uC544\uBAA8", body: "\uC9C0\uB098\uAC00\uB3C4 \uB3FC. \uB300\uC2E0\u2026 \uD1A0\uBE44\uAC00 \uB2E4\uCE58\uC9C0 \uC54A\uAC8C \uD574 \uC918.", standing: "amo", act: "hop" }
+  ])
+};
+var STAGE_2_6_POST = {
+  id: "stage-2-6-post",
+  startNodeId: "belt",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "belt", speaker: "", body: "\uC544\uBB34\uB3C4 \uC5C6\uB294 \uC0DD\uC0B0\uC120\uC774 \uC0C1\uC790\uB97C \uC26C\uC9C0 \uC54A\uACE0 \uB0B4\uBCF4\uB0B8\uB2E4. \uC0C1\uC790\uB9C8\uB2E4 \uAC19\uC740 \uD45C\uC2DD\uC774 \uBD99\uC5B4 \uC788\uB2E4.", standing: "dodi", cast: PAIR("dodi", "parua") },
+    { id: "delopi", speaker: "\uB378\uB85C\uD53C", body: "\uC73C\uD788\uD788, \uB77C\uC778\uC744 \uAC70\uAFB8\uB85C \uB3CC\uB838\uB354\uB2C8 \uC0C1\uC790\uAC00 \uB2E4 \uC6C3\uC73C\uBA74\uC11C \uB3CC\uC544\uC624\uB124? \uC5F0\uAD6C\uC6D0, \uB180\uB790\uC9C0?", cast: VOICE2("delopi", "parua", "dodi"), act: "bounce" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB378\uB85C\uD53C \uC528, \uADF8\uAC74 \uC800\uD76C\uB97C \uC704\uD5D8\uD558\uAC8C \uD574\uC694.", standing: "parua", act: "tremble" },
+    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uB378\uB85C\uD53C\uB294 \uB0B4\uAC00 \uB9E1\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0, \uC774\uC81C\uBD80\uD130\uB294 \uB0B4 \uC2E0\uD638\uB97C \uB530\uB77C\uC640\uB77C. \uB9D0 \uC5C6\uC774, \uBE68\uB9AC.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" },
+    { id: "hush", speaker: "\uB3C4\uB514", body: '\uADF8, \uADF8\uB7FC \uC228 \uC8FD\uC774\uACE0\u2026 \uC774\uAC74 "\uCE68\uBB35 \uC774\uB3D9"\uC73C\uB85C \uC801\uC5B4 \uB458\uAC8C\uC694!', standing: "dodi", act: "hop" },
+    { id: "quiet", speaker: "\uB8E8\uCE74", body: "\uADF8 \uC18C\uB9AC\uAC00 \uC81C\uC77C \uD06C\uB2E4.", act: "lean" },
+    { id: "tail", speaker: "", body: "\uCC9C\uC7A5 \uBC30\uAD00 \uC0AC\uC774\uB85C \uB9C8\uB514\uC9C4 \uAF2C\uB9AC \uD558\uB098\uAC00 \uC9C0\uB098\uAC04\uB2E4. \uB05D\uC774 \uAC08\uACE0\uB9AC\uCC98\uB7FC \uD71C \uADF8\uB9BC\uC790\uAC00 \uBCBD\uC744 \uD6D1\uACE0 \uC0AC\uB77C\uC9C4\uB2E4.", cast: [{ id: "dodi", slot: "left" }, { id: "pulsi", slot: "right", veiled: true }], cue: "rumble" },
+    { id: "saw", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8! \uBC29\uAE08 \uC704\uC5D0\uC11C \uAF2C\uB9AC\uAC00 \uC9C0\uB098\uAC14\uC5B4\uC694! \uC774\uB807\uAC8C, \uC774\uB807\uAC8C \uD718\uC5B4\uC9C4 \uAC70\uC694!", standing: "dodi", act: "hopTwice" },
+    { id: "who", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB77C\uC778\uC774 \uB3CC\uC544\uAC00\uB294 \uC18C\uB9AC\uC5D0 \uC11E\uC5EC\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uC548 \uB4E4\uB838\uC5B4\uC694. \uB378\uB85C\uD53C \uC528 \uC7A5\uB09C\uC740 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", cast: PAIR("dodi", "parua"), act: "tremble" },
+    { id: "mark", speaker: "\uB8E8\uCE74", body: "\uC0C1\uC790 \uC704 \uD45C\uC2DD\uC744 \uBD10\uB77C. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uC544\uB2C8\uB77C \uD68C\uC218 \uD45C\uC2DD\uC774\uB2E4. \uC774 \uD68C\uB791\uC5D0\uB294 \uC6B0\uB9AC \uB9D0\uACE0\uB3C4 \uBB3C\uAC74\uC744 \uAC70\uB450\uB7EC \uC628 \uC790\uAC00 \uC788\uB2E4.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" }
+  ])
+};
+var STAGE_2_7_PRE = {
+  id: "stage-2-7-pre",
+  startNodeId: "room",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "room", speaker: "", body: "\uC555\uB825 \uACA9\uC2E4\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uB4F1 \uB4A4\uC5D0\uC11C \uBB38\uC774 \uB2EB\uD78C\uB2E4. \uC548\uCABD\uC5D0\uB294 \uC5F0\uAD6C\uC6D0 \uD63C\uC790\uB2E4.", cast: [], cue: "impact" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC5B4, \uC5B4! \uBB38\uC774 \uB2EB\uD614\uC5B4! \uC548\uC5D0\uC11C \uC18C\uB9AC\uAC00 \uC548 \uB098, \uC5F4\uC5B4! \uC5F4\uB77C\uACE0!", standing: "toby", cast: RAID_TRIO, act: "shake" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC548 \uADF8\uB7AC\uC5B4. \uB808\uBC84\uB294 \uC548 \uAC74\uB4DC\uB838\uC5B4.", standing: "amo", act: "shrink" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC124\uBE44\uAC00 \uC624\uC791\uB3D9\uD55C \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC2F8\uC6B0\uB824\uB358 \uAC83\uB3C4 \uC544\uB2CC\uB370?", standing: "ripa", act: "recoil" },
+    { id: "toby2", speaker: "\uD1A0\uBE44", body: "\uBE44\uCF1C \uBD10! \uB0B4\uAC00 \uC5F4\uAC8C!", standing: "toby", act: "rage", cue: "rumble" }
+  ])
+};
+var STAGE_2_7_POST = {
+  id: "stage-2-7-post",
+  startNodeId: "tear",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "tear", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uACA9\uC2E4 \uBB38\uC774 \uBC14\uB2E5\uC5D0 \uC4F0\uB7EC\uC9C4\uB2E4. \uBB38 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC228\uC744 \uBAB0\uC544\uC26C\uBA70 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), cue: "explosion" },
+    { id: "safe", speaker: "\uD1A0\uBE44", body: "\uAD18, \uAD1C\uCC2E\uC544?! \uB2E4\uCE5C \uB370\uB294 \uC5C6\uC9C0?", standing: "toby", act: "fright" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD1A0\uBE44 \uC528\uAC00 \uBB38\uC744 \uB72F\uC5C8\uC5B4\uC694\u2026 \uB300\uC7A5\uB2D8\uC744 \uAD6C\uD558\uB824\uACE0\uC694.", standing: "torika", act: "lean" },
+    { id: "awkward", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uAC8C \uC544\uB2C8\uB77C! \uBB38\uC774 \uAC70\uC2AC\uB824\uC11C \uADF8\uB7F0 \uAC70\uC57C! \u2026\uBCC4 \uB73B \uC5C6\uC5B4!", standing: "toby", act: "tremble" },
+    { id: "silence", speaker: "", body: "\uC544\uBB34\uB3C4 \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4. \uBF51\uD78C \uBB38\uC9DD\uB9CC \uCC9C\uCC9C\uD788 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uC5D0\uC11C \uC2DD\uB294\uB2E4." },
+    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9C8\uC6CC\uC694, \uD1A0\uBE44 \uC528. \uC774\uC81C \uAC00\uC694.", standing: "torika", act: "nod" }
+  ])
+};
+var STAGE_2_8_PRE = {
+  id: "stage-2-8-pre",
+  startNodeId: "furnace",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "furnace", speaker: "", body: "\uAEBC\uC838 \uAC00\uB294 \uC6A9\uAD11\uB85C \uACC1. \uCF54\uB9C8\uAC00 \uCABC\uADF8\uB824 \uC549\uC544 \uBCBD\uC758 \uD3D0\uAE30 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.", standing: "koma", cast: SOLO2("koma") },
+    { id: "see", speaker: "\uCF54\uB9C8", body: "\u2026\uC654\uB098.", standing: "koma", act: "nod" },
+    { id: "fight", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2F8\uC6B0\uC2E4 \uAC74\uAC00\uC694, \uCF54\uB9C8 \uC528?", standing: "torika", cast: PAIR("koma"), act: "lean" },
+    { id: "no", speaker: "\uCF54\uB9C8", body: "\uC2F8\uC6B0\uC9C0 \uC54A\uB294\uB2E4. \uC9C0\uAE08\uC740.", standing: "koma" },
+    { id: "above", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0\uC11C\uB294 \uC544\uC9C1 \uBAA8\uB978\uB2E4. \uC774 \uD45C\uC2DD\uC744 \uB2E6\uB294 \uAC83\uB3C4. \uB108\uD76C\uAC00 \uC5EC\uAE30\uAE4C\uC9C0 \uC628 \uAC83\uB3C4.", standing: "koma", act: "shrink" },
+    { id: "trio", speaker: "\uB9AC\uD30C", body: "\u2026\uCF54\uB9C8, \uB108 \uC9C0\uAE08 \uBB50 \uD558\uB294 \uAC70\uC57C? \uC704\uC5D0\uC11C \uBAA8\uB974\uB294 \uC77C\uC744 \uD574\uB3C4 \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
+    { id: "leave", speaker: "\uCF54\uB9C8", body: "\u2026\uAC00\uB77C. \uB300\uC2E0 \uC774\uCABD\uC73C\uB85C \uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" }
+  ])
+};
+var STAGE_2_8_POST = {
+  id: "stage-2-8-post",
+  startNodeId: "drop",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "\uC6A9\uAD11\uB85C \uC704 \uD30C\uC774\uD504\uC5D0\uC11C \uAC00\uBCBC\uC6B4 \uB0A0\uAC2F\uC18C\uB9AC\uAC00 \uB09C\uB2E4. \uC7A0\uC790\uB9AC\uC758 \uB0A0\uAC1C\uB97C \uC811\uC740 \uADF8\uB9BC\uC790\uC640, \uBAB8\uC9D1\uB9CC \uD55C \uD131\uC744 \uAC00\uC9C4 \uADF8\uB9BC\uC790\uAC00 \uC0AC\uBFD0\uD788 \uB0B4\uB824\uC120\uB2E4.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
+    { id: "hello", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uB2F9\uC2E0\uC774\u2026 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694? \uC5ED\uC2DC\u2026 \uB4E3\uB358 \uB300\uB85C\u2026 \uC5B4\uD760.", standing: "neuri", act: "hop" },
+    { id: "koma", speaker: "\uB124\uC6B0\uB9AC", body: "\uADF8\uAC74 \uADF8\uB807\uACE0, \uCF54\uB9C8 \uB2D8! \uACB0\uAD6D\u2026 \uACB0\uAD6D \uC2E4\uD328\uD558\uC168\uB124\uC694?", standing: "neuri", act: "lean" },
+    { id: "komaReply", speaker: "\uCF54\uB9C8", body: "\u2026\uB124\uC6B0\uB9AC. \uBCF4\uACE0\uD558\uB7EC \uC628 \uAC83\uC778\uAC00.", standing: "koma", act: "shrink" },
+    { id: "polite", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uBCF4\uACE0\uB77C\uB2C8\uC694. \uC800\uD76C \uAC19\uC740 \uB9D0\uB2E8\uC774 \uC5B4\uCC0C \uAC10\uD788. \uB2E4\uB9CC \uC704\uC5D0\uC11C \u300C\uD14C\uB7EC\uC870\uB294 \uC774\uC81C \uC26C\uC154\uB3C4 \uB41C\uB2E4\u300D\uACE0 \uD558\uC154\uC11C\uC694. \uC544\uC8FC, \uC544\uC8FC \uC815\uC911\uD558\uAC8C \uC804\uD574 \uB4DC\uB9AC\uB7EC \uC654\uB2F5\uB2C8\uB2E4.", standing: "neuri", act: "bounce" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\u2026\uAE38. \uB9C9\uD600 \uC788\uB2E4. \uCE58\uC6B4\uB2E4.", standing: "mir", act: "nod" },
+    { id: "bye", speaker: "\uB124\uC6B0\uB9AC", body: "\uC544, \uB9DE\uC544\uC694, \uBBF8\uB974. \uADF8\uB7FC \uC5F0\uAD6C\uC6D0\uB2D8, \uB2E4\uC74C\uC5D0 \uBD59\uC9C0\uC694. \uADF8\uB54C\uB294 \uC800\uD76C \uD68C\uC218\uC870\uAC00 \uC9C1\uC811 \uBAA8\uC2DC\uACA0\uC2B5\uB2C8\uB2E4. \uC5F0\uAD6C\uC6D0\uB2D8.", standing: "neuri", act: "nod", leave: "blastOff", cast: [{ id: "koma", slot: "left" }] },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8 \uC528\u2026 \uC2E4\uD328\uD558\uC168\uB2E4\uB294 \uAC8C \uBB34\uC2A8 \uB9D0\uC774\uC5D0\uC694?", standing: "torika", cast: PAIR("koma"), act: "lean" },
+    { id: "later", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uC911\uC5D0 \uB9D0\uD558\uC9C0. \uC800 \uB458\uC774 \uC774 \uAD6C\uC5ED\uAE4C\uC9C0 \uB0B4\uB824\uC654\uB2E4\uB294 \uAC83\uB9CC \uAE30\uC5B5\uD574\uB77C.", standing: "koma", act: "shrink" }
+  ])
+};
+var STAGE_2_9_POST = {
+  id: "stage-2-9-post",
+  startNodeId: "hole",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hole", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uBC14\uB2E5\uC774 \uC5C6\uB2E4. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uBD99\uC740 \uC0C1\uC790\uB4E4\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC5B4\uB460\uC73C\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", standing: "dodi", cast: PAIR("dodi", "lexia") },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB2E4\uB4E4 \uC774 \uC544\uB798\uB85C \uD758\uB7EC\uAC04 \uAC70\uC608\uC694. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0 \uC801\uD78C \uCC44\uB85C\u2026", standing: "dodi", act: "shrink" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB50\uAC00 \uC788\uC5B4?", standing: "lexia", act: "lean" },
+    { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4. \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C. \uB204\uAD70\uAC00\uAC00 \uC544\uB798\uB85C \uD5A5\uD558\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB480\uC5B4.", cast: VOICE2("deina", "lexia", "dodi"), act: "lean" },
+    { id: "stay", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC740 \uAD6C\uBA4D \uC55E\uC5D0\uC11C \uC624\uB798 \uC11C \uC788\uB2E4. \uB300\uB2F5\uD558\uB294 \uC774\uB294 \uC5C6\uB2E4." },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uAC00\uC694, \uB300\uC7A5\uB2D8. \uC544\uC9C1\uC740 \uC704\uC5D0\uC11C \uD560 \uC77C\uC774 \uC788\uC5B4\uC694.", standing: "torika", cast: PAIR("lexia"), act: "nod" }
+  ])
+};
+var STAGE_2_10_PRE = {
+  id: "stage-2-10-pre",
+  startNodeId: "gate",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "gate", speaker: "", body: "\uC794\uD5A5 \uC9C0\uAD6C\uC758 \uAD00\uBB38. \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C\uC11C \uAE38\uC744 \uB9C9\uACE0 \uC788\uB2E4. \uCF54\uB9C8\uB294 \uBCF4\uC774\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCF54\uB9C8\uD55C\uD14C \uC548 \uBB3C\uC5B4\uBD24\uC5B4. \uC6B0\uB9AC\uAC00 \uC815\uD588\uC5B4. \uC5EC\uAE30\uC11C \uB9C9\uC790\uACE0.", standing: "toby", act: "puff" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB098\uB791 \uD1A0\uBE44\uB791 \uB9AC\uD30C, \uC14B\uC774\uC11C.", standing: "amo", act: "nod" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC774\uAE30\uB824\uB294 \uAC8C \uC544\uB2C8\uC57C. \uD655\uC778\uD558\uB824\uB294 \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC815\uB9D0 \uC6B0\uB9AC\uC778\uC9C0.", standing: "ripa", act: "lean" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC54C\uACA0\uC5B4\uC694. \uBC1B\uC544 \uB0BC\uAC8C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_2_10_POST = {
+  id: "stage-2-10-post",
+  startNodeId: "lose",
+  backdrop: "battlefield",
+  nodes: [
+    { id: "lose", speaker: "", body: "\uC14B\uC740 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC11C\uB85C\uB97C \uBD99\uB4E0 \uCC44 \uC549\uB294\uB2E4. \uC544\uBB34\uB3C4 \uB3C4\uB9DD\uCE58\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO, nextId: "toby" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uC84C\uB124. \uADF8\uB7F0\uB370 \uC774\uC0C1\uD558\uB2E4. \uB418\uAC8C \uC548 \uBD84\uD574.", standing: "toby", act: "shrink", nextId: "ripa" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC6B0\uB9AC\uB07C\uB9AC \uB9C9\uC544 \uB0B8 \uAC74 \uC774\uBC88\uC774 \uCC98\uC74C\uC774\uC57C. \uADF8\uB798\uC11C \uADF8\uB7F0\uAC00.", standing: "ripa", act: "nod", nextId: "amo" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0.", standing: "amo", act: "tremble", nextId: "ask" },
+    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC6B0\uB9AC, \uB530\uB77C\uAC00\uB3C4 \uB3FC? \uC544\uC9C1 \u300C\uADF8\uB798\u300D\uB77C\uACE0\uB294 \uBABB \uD558\uACA0\uB294\uB370\u2026 \uADF8\uB798\uB3C4 \uB530\uB77C\uAC00\uB3C4 \uB3FC?", standing: "amo", act: "lean", nextId: "choose" },
+    {
+      id: "choose",
+      speaker: "\uD1A0\uB9AC\uCE74",
+      body: "\uB300\uC7A5\uB2D8, \uBB50\uB77C\uACE0 \uD558\uC2E4 \uAC70\uC608\uC694?",
+      standing: "torika",
+      cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
+      choices: [
+        { id: "yes", label: "\uB530\uB77C\uC640\uB3C4 \uB3FC", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "own", label: "\uB108\uD76C\uAC00 \uC815\uD574\uB3C4 \uB3FC", nextId: "answerB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } }
+      ]
+    },
+    { id: "answerA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB798. \uADF8\uB7FC \uB530\uB77C\uAC08\uAC8C.", standing: "amo", act: "nod", nextId: "walk" },
+    { id: "answerB", speaker: "\uC544\uBAA8", body: "\u2026\uC6B0\uB9AC\uAC00 \uC815\uD574\uB3C4 \uB41C\uB2E4\uB294 \uB9D0, \uCC98\uC74C \uB4E4\uC5B4 \uBD10.", standing: "amo", act: "nod", nextId: "walk" },
+    { id: "walk", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB807\uB2E4\uACE0 \uC6B0\uB9AC\uAC00 \uD55C\uD3B8 \uB418\uB294 \uAC74 \uC544\uB2C8\uC57C! \uB4A4\uC5D0\uC11C \uB530\uB77C\uAC00\uAE30\uB9CC \uD558\uB294 \uAC70\uC57C!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", nextId: "hole" },
+    { id: "hole", speaker: "", body: "\uC77C\uD589\uC774 \uAC78\uC74C\uC744 \uC62E\uAE34\uB2E4. \uB4A4\uC5D0\uC11C \uAD6C\uBA4D\uC758 \uC5B4\uB460\uC774 \uD55C \uBC88 \uC228\uC744 \uC26C\uB4EF \uC77C\uB801\uC778\uB2E4. \uBB34\uC5B8\uAC00\uAC00 \uC62C\uB824\uB2E4\uBCF4\uACE0 \uC788\uB2E4.", cue: "rumble", nextId: "wing" },
+    { id: "wing", speaker: "", body: "\uAD6C\uBA4D \uC704\uB85C \uAC70\uB300\uD55C \uB0A0\uAC1C\uC758 \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uD3BC\uCCD0\uC84C\uB2E4 \uC811\uD78C\uB2E4. \uC18C\uB9AC\uB294 \uB098\uC9C0 \uC54A\uB294\uB2E4. \uBC15\uC950\uC758 \uB0A0\uAC1C\uCC98\uB7FC \uBCF4\uC778\uB2E4.", cast: [{ id: "ikanixia", slot: "center", veiled: true }], standing: "ikanixia", cue: "impact", nextId: "voice" },
+    { id: "voice", speaker: "???", body: "\u2026\uD68C\uC218 \uAC1C\uC2DC.", standing: "ikanixia", act: "nod" }
+  ]
+};
+var CHAPTER_2_STORIES = [
+  STAGE_2_1_PRE,
+  STAGE_2_2_POST,
+  STAGE_2_4_PRE,
+  STAGE_2_5_PRE,
+  STAGE_2_5_POST,
+  STAGE_2_6_POST,
+  STAGE_2_7_PRE,
+  STAGE_2_7_POST,
+  STAGE_2_8_PRE,
+  STAGE_2_8_POST,
+  STAGE_2_9_POST,
+  STAGE_2_10_PRE,
+  STAGE_2_10_POST
+];
+
+// src/data/dialogues/chapter3.ts
+init_define_import_meta_env();
+var REMOTE_PAIR = (voice, other) => [
+  { id: other, slot: "left" },
+  { id: voice, slot: "right", remote: true }
+];
+var STAGE_3_1_PRE = {
+  id: "stage-3-1-pre",
+  startNodeId: "land",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "land", speaker: "", body: "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8\uC758 \uB4A4\uB85C \uCC22\uC5B4\uC9C4 \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC120\uB2E4. \uC11C\uB450\uB974\uB294 \uAE30\uC0C9\uC774\uB77C\uACE0\uB294 \uC5C6\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
+    { id: "greet", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC218\uACE0\uD558\uC168\uC5B4\uC694, \uCF54\uB9C8 \uB2D8. \uC2E4\uD328\uD55C \uBD84\uC758 \uC5BC\uAD74\uB3C4 \uAC00\uB054\uC740 \uACF1\uB2F5\uB2C8\uB2E4.", standing: "ikanixia", act: "lean" },
+    { id: "mask", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC785\uC744 \uAC00\uB9B0 \uAC00\uB9AC\uAC1C\uB97C \uCC98\uC74C\uC73C\uB85C \uCC9C\uCC9C\uD788 \uB0B4\uB9B0\uB2E4.", standing: "koma", act: "recoil" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uB3FC\uC694\u2026 \uC120, \uC120\uBC30\uB294 \uC544\uC9C1\u2026 \uD68C\uC218 \uC804\uC774\uB77C\uC11C\u2026", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
+    { id: "smile", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC6B0\uB9AC \uC544\uD2B8\uB77C\uB294 \uC0C1\uB0E5\uD558\uAE30\uB3C4 \uD558\uC9C0. \uADF8\uB7FC \uC11C\uB450\uB974\uC9C0 \uC54A\uC744\uAC8C\uC694.", standing: "ikanixia", act: "nod" },
+    { id: "you", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694. \uC18C\uBB38\uC740 \uB9CE\uC774 \uB4E4\uC5C8\uC5B4\uC694. \uC774\uBC88\uC5D0\uB294 \uC81C\uAC00 \uC815\uC911\uD788 \uBAA8\uC154 \uAC00\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_3_4_POST = {
+  id: "stage-3-4-post",
+  startNodeId: "radio",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. 3\uBC88 \uD1B5\uB85C\uC758 \uC870\uBA85\uC744 \uB0B4\uB838\uB2E4. \uB208\uC774 \uC801\uC751\uD558\uBA74 \uC624\uB978\uCABD\uC73C\uB85C \uBE60\uC838\uB77C.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
+    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uBB38 \uC7A0\uAE08\uC740 \uB0B4\uAC00 \uD480\uC5B4 \uB1A8\uC5B4. \uB300\uC2E0 \uC18C\uB9AC\uB294 \uB0B4\uC9C0 \uB9C8. \uC7E4\uB124 \uADC0\uAC00 \uC88B\uAC70\uB4E0.", standing: "luka", cast: REMOTE_PAIR("luka", "dodi"), act: "lean" },
+    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uADF8\uB7F0\uB370 \uB450 \uBD84\uC740 \uC5B4\uB514 \uACC4\uC138\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hop" },
+    { id: "gone", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uC5B4\uB460 \uC18D\uC774\uB2E4. \uADF8\uAC83\uC774 \uC6B0\uB9AC \uC77C\uC774\uB2E4.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "shrink" }
+  ])
+};
+var STAGE_3_5_PRE = {
+  id: "stage-3-5-pre",
+  startNodeId: "block",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "block", speaker: "", body: "\uD1B5\uB85C \uD55C\uBCF5\uD310\uC5D0 \uC18C\uB9E4\uB85C \uC5BC\uAD74\uC744 \uBC18\uCBE4 \uAC00\uB9B0 \uC544\uD2B8\uB77C\uAC00 \uC11C \uC788\uB2E4. \uD55C \uAC78\uC74C\uB3C4 \uBE44\uD0A4\uC9C0 \uC54A\uB294\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "stutter", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uAC19\uC774 \uAC00, \uAC00 \uC8FC\uC2DC\uBA74\u2026 \uC544\uD504\uC9C0 \uC54A\uC544\uC694.", standing: "atra", act: "tremble" },
+    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC8C4\uC1A1\uD574\uC694, \uC9C0\uAE08\uC740 \uAC08 \uC218 \uC5C6\uC5B4\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "atra", slot: "right" }], act: "shake" },
+    { id: "sorry", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC544\uB2C8\uC5D0\uC694\u2026 \uAD1C\uCC2E\uC544\uC694. \uC870, \uC870\uAE08 \uC544\uD50C \uC218\uB294 \uC788\uB294\uB370\u2026", standing: "atra", act: "shrink" }
+  ])
+};
+var STAGE_3_5_POST = {
+  id: "stage-3-5-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "down", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uC544, \uC544\uD504\uC9C0 \uC54A\uC544\uC694. \uC9C0, \uC9C4\uC9DC\u2026 \uC9C0\uB124\uB294 \uB9C8\uB514\uAC00 \uB9CE\uC544\uC11C\u2026 \uAD1C, \uAD1C\uCC2E\uC544\uC694\u2026", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB9CC \uC77C\uC5B4\uB098\uB77C.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC120, \uC120\uBC30\u2026 \uC800, \uC800 \uC84C\uC5B4\uC694\u2026 \uADF8\uB798\uB3C4 \uC120\uBC30\uBCF4\uB2E4\uB294\u2026 \uC624\uB798 \uBC84\uD17C\uC8E0?", standing: "atra", act: "hop" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uAC74 \uB9DE\uB2E4.", standing: "koma", act: "shrink" }
+  ])
+};
+var STAGE_3_6_POST = {
+  id: "stage-3-6-post",
+  startNodeId: "dead",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dead", speaker: "", body: "\uB9C9\uB2E4\uB978 \uAE38. \uB208\uC55E\uC5D0\uB294 \uACA9\uBCBD\uC774 \uCC9C\uC7A5\uAE4C\uC9C0 \uC11C \uC788\uB2E4. \uB4F1 \uB4A4\uC5D0\uC11C\uB294 \uD68C\uC218\uC870\uC758 \uBC1C\uC18C\uB9AC\uAC00 \uAC00\uAE4C\uC6CC\uC9C4\uB2E4.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], cue: "alarm" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5F0\uAD6C\uC6D0\uB2D8~ \uAC70\uAE30 \uACC4\uC168\uB124\uC694! \uAC19\uC774 \uAC00\uC694! \uC800\uD76C\uAC00 \uBAA8\uC2E4\uAC8C\uC694!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hop" },
+    { id: "pulsi", speaker: "\uD384\uC2DC", body: "\uB9C9\uB2E4\uB978 \uAE38\uC774\uC796\uC544? \uB3C4\uB9DD \uC5F0\uC2B5\uC740 \uC774\uCBE4 \uD558\uACE0 \uC774\uC81C \uB180\uC790\uACE0.", standing: "pulsi", cast: [{ id: "pulsi", slot: "center" }], act: "hopTwice" },
+    { id: "crash", speaker: "", body: "\uAD49\uC74C\uACFC \uD568\uAED8 \uACA9\uBCBD \uD55C\uAC00\uC6B4\uB370\uAC00 \uC548\uCABD\uC73C\uB85C \uD130\uC838 \uB098\uC628\uB2E4. \uBA3C\uC9C0 \uC18D\uC5D0\uC11C \uBA38\uB9AC\uB97C \uAC10\uC2FC \uADF8\uB9BC\uC790\uAC00 \uD280\uC5B4\uB098\uC628\uB2E4.", cue: "explosion", cast: [{ id: "pachi", slot: "center" }] },
+    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uBCF4\uC2A4, \uAE38 \uC5F4\uC5C8\uC5B4! \uB2A6\uC5B4\uC11C \uBBF8\uC548!", standing: "pachi", act: "bounce" },
+    { id: "pulsi2", speaker: "\uD384\uC2DC", body: "\u2026\uBCBD\uC744 \uBA38\uB9AC\uB85C \uAE7C\uC5B4? \uC9C4\uC9DC\uB85C?", standing: "pulsi", cast: [{ id: "pulsi", slot: "left" }, { id: "pachi", slot: "right" }], act: "fright" }
+  ])
+};
+var STAGE_3_8_POST = {
+  id: "stage-3-8-post",
+  startNodeId: "ambush",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "ambush", speaker: "\uD384\uC2DC", body: "\uAE5C\uC9DD \uC120\uBB3C\uC774\uC57C, \uC5F0\uAD6C\uC6D0! \uBC1B\uC544!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
+    { id: "block", speaker: "\uC5D8\uB77C", body: "\u2026\uC5F0\uAD6C\uC6D0\uB2D8, \uB4A4\uB85C. \uC774\uCABD\uC740 \uC81C\uAC00 \uB9C9\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uBC29\uBCBD\uC774\uB77C\uB2C8, \uC815\uB9D0 \uC874\uACBD\uC2A4\uB7FD\uB124\uC694. \uB2E4 \uBD80\uC218\uACE0 \uB098\uBA74 \uC5B4\uB5A4 \uC11C\uB958\uAC00 \uB098\uC62C\uC9C0 \uAE30\uB300\uB3FC\uC694.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
+    { id: "ella", speaker: "\uC5D8\uB77C", body: "\uADF8 \uC11C\uB958\uB294 \uC81C\uAC00 \uC4F0\uACA0\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uB2EC \uC2DC\uB9D0\uC11C\uB294 \uC774\uBBF8 \uB2E4 \uC815\uD574 \uB450\uC5C8\uAC70\uB4E0\uC694.", standing: "ella", act: "shake" }
+  ])
+};
+var STAGE_3_9_POST = {
+  id: "stage-3-9-post",
+  startNodeId: "split",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "split", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uD760, \uADF8\uAC74 \uADF8\uB807\uACE0\u2026 \uC5B4\uBA38, \uC67C\uCABD\uC5D0\uC11C \uC624\uB294 \uC800 \uC18C\uB9AC\uB294 \uBB58\uAE4C\uC694?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
+    { id: "yuti", speaker: "\uC720\uD2F0", body: "\uBCF4, \uBCF4\uC2A4! \uC544\uB2C8 \uC5F0\uAD6C\uC6D0\uB2D8! \uC81C\uAC00 \uC606\uC5D0\uC11C \uAC08\uB77C \uB193\uC744\uAC8C\uC694!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
+    { id: "ark", speaker: "\uC544\uD06C", body: "\u2026\uB354\uB294 \uBABB \uC9C0\uB098\uAC11\uB2C8\uB2E4. \uB9C8\uC2A4\uD130, \uC55E\uC740 \uC81C\uAC00 \uC11C\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5D0\uC774, \uB193\uCCE4\uB124\uC694! \uADFC\uB370 \uC774 \uC0AC\uB78C\uB4E4 \uC9C4\uC9DC \uD2BC\uD2BC\uD558\uB2E4!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hopTwice" }
+  ])
+};
+var STAGE_3_10_PRE = {
+  id: "stage-3-10-pre",
+  startNodeId: "hall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "hall", speaker: "", body: "\uD68C\uC218 \uAD6C\uAC04\uC758 \uB9C8\uC9C0\uB9C9 \uD640. \uB192\uC740 \uCC9C\uC7A5\uC5D0\uC11C \uB0A0\uAC1C \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC628\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC624\uC168\uAD70\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC774\uC81C \uCAD3\uB294 \uC2DC\uAC04\uC740 \uB05D\uC774\uC5D0\uC694. \uC81C \uC55E\uC5D0 \uC11C \uC8FC\uC138\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uADF8 \uBD80\uD0C1\uC740 \uAC70\uC808\uC774\uC57C! \uC571\uC194\uB8E8\uD2B8 \uD33D, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
+    { id: "line", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC758 \uC55E\uC5D0 \uB809\uC2DC\uC544, \uC5D8\uB77C, \uD30C\uCE58, \uC544\uD06C, \uC720\uD2F0\uAC00 \uD55C \uC904\uB85C \uB098\uB780\uD788 \uC120\uB2E4.", cast: [{ id: "ella", slot: "left" }, { id: "lexia", slot: "center" }, { id: "pachi", slot: "right" }], cue: "impact" },
+    { id: "ika2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC904\uAE4C\uC9C0 \uC11C \uC8FC\uC2DC\uB2E4\uB2C8. \uC815\uB9D0 \uC815\uC911\uD558\uC2DC\uB124\uC694\u2026 \uC774\uACA0\uC9C0\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" }
+  ])
+};
+var STAGE_3_10_POST = {
+  id: "stage-3-10-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uD6C4\uD6D7. \uC624\uB298\uC740 \uC5EC\uAE30\uAE4C\uC9C0\uB85C \uD574 \uB450\uC8E0. \uC544\uC27D\uC9C0\uB9CC \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
+    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC04\uB2E4. \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uB530\uB77C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2F9\uC2E0\uC740 \uC544\uC9C1 \uBAA9\uB85D\uC5D0 \uC788\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294, \uC9C0\uC6E0\uB2E4. \uADF8\uAC74 \uB0B4\uAC00 \uC815\uD588\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uBB34\uC2A8 \uC18C\uB9B0\uC9C0\uB294 \uBAA8\uB974\uACA0\uC5B4. \uADF8\uB798\uB3C4 \uC55E\uC73C\uB85C \uAC19\uC740 \uD3B8\uC774\uB77C\uBA74 \uD658\uC601\uC774\uC57C.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
+    { id: "koma3", speaker: "\uCF54\uB9C8", body: "\u2026\uD3B8\uC740 \uC544\uB2C8\uB2E4. \uC544\uC9C1\uC740.", standing: "koma", act: "recoil" }
+  ])
+};
+var CHAPTER_3_STORIES = [
+  STAGE_3_1_PRE,
+  STAGE_3_4_POST,
+  STAGE_3_5_PRE,
+  STAGE_3_5_POST,
+  STAGE_3_6_POST,
+  STAGE_3_8_POST,
+  STAGE_3_9_POST,
+  STAGE_3_10_PRE,
+  STAGE_3_10_POST
+];
+
+// src/data/dialogues/chapter4.ts
+init_define_import_meta_env();
+var STAGE_4_1_PRE = {
+  id: "stage-4-1-pre",
+  startNodeId: "radio",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "radio", speaker: "", body: "\uC2B9\uAC15\uC7A5 \uC2A4\uD53C\uCEE4\uC5D0\uC11C \uB0AE\uC740 \uC548\uB0B4\uAC00 \uD750\uB978\uB2E4. \u300C\uD569\uB3D9 \uCD94\uACA9 \uAC1C\uC2DC. \uB300\uC0C1 \uD655\uBCF4 \uD6C4 \uCF54\uB9C8 \uC870 \uBCF5\uADC0.\u300D", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB294 \uC77C\uC774 \uD754\uD558\uC9C0\uB294 \uC54A\uC8E0. \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC9C0\uB9CC, \uC774\uBC88\uC5D0\uB294 \uB204\uAD6C\uB3C4 \uB193\uCE58\uC9C0 \uC54A\uC744 \uAC70\uC608\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uD569\uB3D9\uC774\uB77C\uB2C8, \uC22B\uC790\uAC00 \uB298\uC5C8\uB2E4\uB294 \uC18C\uB9AC\uC796\uC544! \uADF8\uB798\uB3C4 \uD55C \uC904\uB85C \uC11C\uBA74 \uB611\uAC19\uC774 \uB6AB\uC73C\uBA74 \uB3FC!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" }
+  ])
+};
+var STAGE_4_4_PRE = {
+  id: "stage-4-4-pre",
+  startNodeId: "block",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uBE44\uCF1C\uC694\u2026 \uBA85, \uBA85\uB839\uC774\uB77C\uC11C\u2026 \uC8C4, \uC8C4\uC1A1\uD574\uC694\u2026", standing: "atra", act: "tremble" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uB839\uC774\uB2E4. \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_4_10_PRE = {
+  id: "stage-4-10-pre",
+  startNodeId: "end",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "end", speaker: "", body: "\uC0AC\uB839\uC2E4 \uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uCF54\uB9C8\uC640 \uB0A0\uAC1C \uB9DD\uD1A0\uC758 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uD55C \uAC78\uC74C \uC0AC\uC774\uB97C \uB450\uACE0 \uC11C \uC788\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uCF54\uB9C8 \uB2D8\uC774 \uC55E\uC5D0 \uC11C \uC8FC\uC2DC\uB2C8 \uB4E0\uB4E0\uD558\uB124\uC694. \uC800\uB294 \uB4A4\uC5D0\uC11C \uCC9C\uCC9C\uD788 \uD558\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB0B4\uAC00 \uC55E\uC774\uB2E4. \uB4A4\uB294 \uB2F9\uC2E0\uC774 \uB9E1\uC544\uB77C.", standing: "koma", act: "lean" }
+  ])
+};
+var STAGE_4_10_POST = {
+  id: "stage-4-10-post",
+  startNodeId: "retreat",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "retreat", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uC774\uB807\uAC8C\uAE4C\uC9C0 \uD558\uC168\uB294\uB370\uB3C4 \uB2FF\uC9C0 \uC54A\uB2E4\uB2C8. \uC624\uB298\uC740 \uBB3C\uB7EC\uB098\uACA0\uC2B5\uB2C8\uB2E4. \uC815\uB9D0, \uC11C\uB450\uB97C \uC774\uC720\uAC00 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
+    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC00\uACE0, \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uC120\uB85C \uB108\uBA38\uB85C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB09C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "shrink" }
+  ])
+};
+var CHAPTER_4_STORIES = [
+  STAGE_4_1_PRE,
+  STAGE_4_4_PRE,
+  STAGE_4_10_PRE,
+  STAGE_4_10_POST
+];
+
+// src/data/stageStories.ts
+var LINKS = {
+  "1-2": { post: "stage-1-2-post" },
+  "1-4": { pre: "stage-1-4-pre" },
+  "1-5": { pre: "stage-1-5-pre", post: "stage-1-5-post" },
+  "1-6": { post: "stage-1-6-post" },
+  "1-7": { pre: "stage-1-7-pre" },
+  "1-8": { pre: "stage-1-8-pre" },
+  "1-8-side-battle": { pre: "stage-1-8-side-pre", post: "stage-1-8-side-post" },
+  "1-9": { pre: "stage-1-9-pre", post: "stage-1-9-post" },
+  "1-10": { pre: "stage-1-10-pre", post: "stage-1-10-post" },
+  "2-1": { pre: "stage-2-1-pre" },
+  "2-2": { post: "stage-2-2-post" },
+  "2-4": { pre: "stage-2-4-pre" },
+  "2-5": { pre: "stage-2-5-pre", post: "stage-2-5-post" },
+  "2-6": { post: "stage-2-6-post" },
+  "2-7": { pre: "stage-2-7-pre", post: "stage-2-7-post" },
+  "2-8": { pre: "stage-2-8-pre", post: "stage-2-8-post" },
+  "2-9": { post: "stage-2-9-post" },
+  "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" },
+  "3-1": { pre: "stage-3-1-pre" },
+  "3-4": { post: "stage-3-4-post" },
+  "3-5": { pre: "stage-3-5-pre", post: "stage-3-5-post" },
+  "3-6": { post: "stage-3-6-post" },
+  "3-8": { post: "stage-3-8-post" },
+  "3-9": { post: "stage-3-9-post" },
+  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
+  "4-1": { pre: "stage-4-1-pre" },
+  "4-4": { pre: "stage-4-4-pre" },
+  "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" }
+};
+var STAGE_STORY_LINKS = LINKS;
+var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES];
+
+// src/data/dialogues/recollections.ts
+var TRANSLATED_STORIES = [OPENING_TRAIN, OPENING_RETREAT, GREAT_AUK_REPORT];
+var RECOLLECTION_STORIES = [...TRANSLATED_STORIES, GREENHOUSE_ECHO, ...SUB_STORIES, ...MAIN_STORY_BUNDLES];
+function bondStoryById(storyId) {
+  for (const profile of Object.values(RELIC_STORIES)) {
+    for (const story of Object.values(profile.bondStories)) if (story.id === storyId) return story;
+  }
+  return void 0;
+}
+function getRecollectionStory(storyId) {
+  const story = RECOLLECTION_STORIES.find(({ id }) => id === storyId) ?? bondStoryById(storyId);
+  if (!story) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uD68C\uC0C1 \uC2A4\uD1A0\uB9AC id: ${storyId}`);
+  return story;
+}
+for (const story of TRANSLATED_STORIES) registerDialogueTexts(story);
+
+// src/api/contracts.ts
+init_define_import_meta_env();
+var GameApiError = class extends Error {
+  constructor(code, message, options) {
+    super(message, options);
+    this.code = code;
+    this.name = "GameApiError";
+  }
+  code;
+};
+function persistenceFailed(error, messageKey = "error.persist.state") {
+  const message = t(messageKey);
+  return error instanceof GameApiError && error.code === "PERSISTENCE_FAILED" ? error : new GameApiError("PERSISTENCE_FAILED", message, { cause: error });
+}
+
+// src/api/storyAuthority.ts
+function storyDefinition(storyId) {
+  const journal = INTERACTION_JOURNALS.find((entry) => entry.dialogueStory?.id === storyId);
+  if (journal?.dialogueStory) return journal.dialogueStory;
+  try {
+    return getRecollectionStory(storyId);
+  } catch {
+    throw new GameApiError("INVALID_STATE", "\uC54C \uC218 \uC5C6\uB294 \uC774\uC57C\uAE30\uC785\uB2C8\uB2E4.");
+  }
+}
+function assertStoryUnlocked(state, storyId) {
+  const story = storyDefinition(storyId);
+  const completed = new Set(state.cleared);
+  for (const stage of STAGES) if (stage.kind === "story" && state.completedStoryIds.has(stage.storyId)) completed.add(stage.id);
+  const sub = STAGES.find((stage) => stage.kind === "story" && stage.storyId === storyId);
+  const linked = Object.entries(STAGE_STORY_LINKS).find(([, link]) => link.pre === storyId || link.post === storyId);
+  const bond = /^bond\.([^.]+)\.(\d+)$/.exec(storyId);
+  const journal = INTERACTION_JOURNALS.find((entry) => entry.dialogueStory?.id === storyId);
+  const locked = sub ? !isStageUnlockedByProgress(STAGES, sub.id, completed) : linked ? linked[1].post === storyId ? !state.cleared.has(linked[0]) : !isStageUnlockedByProgress(STAGES, linked[0], completed) : bond ? !state.owned.has(bond[1]) || (state.relicProgress[bond[1]]?.bondLevel ?? 0) < Number(bond[2]) : journal ? !state.discoveredInteractionJournalIds.has(journal.id) : false;
+  if (locked) throw new GameApiError("INVALID_STATE", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC774\uC57C\uAE30\uC785\uB2C8\uB2E4.");
+  return story;
+}
+function resolveStoryChoice(story, request) {
+  const sameEffect = (choice) => Boolean(choice.effect && request.effect && choice.effect.type === request.effect.type && choice.effect.relicId === request.effect.relicId && choice.effect.amount === request.effect.amount);
+  const choices = story.nodes.flatMap((node) => (node.choices ?? []).map((choice) => ({ node, choice })));
+  const matches = request.nodeId !== void 0 || request.choiceId !== void 0 ? choices.filter(({ node, choice }) => node.id === request.nodeId && choice.id === request.choiceId && (!request.effect || sameEffect(choice))) : choices.filter(({ choice }) => sameEffect(choice));
+  if (matches.length !== 1) throw new GameApiError("INVALID_STATE", "\uC774\uC57C\uAE30\uC5D0 \uC5C6\uB294 \uC120\uD0DD \uD6A8\uACFC\uC785\uB2C8\uB2E4.");
+  const found = matches[0];
+  if (found.choice.effect && (!PLAYABLE_RELICS.some((relic) => relic.id === found.choice.effect.relicId) || !Number.isInteger(found.choice.effect.amount) || found.choice.effect.amount < 0 || found.choice.effect.amount > 20)) {
+    throw new GameApiError("INVALID_STATE", "\uB300\uC0AC \uD6A8\uACFC \uB300\uC0C1 \uB610\uB294 \uBCF4\uC0C1\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  }
+  return found;
+}
+function assertStoryChoiceReachable(story, selected, target) {
+  let id = story.startNodeId;
+  const visited = /* @__PURE__ */ new Set();
+  while (id && !visited.has(id)) {
+    visited.add(id);
+    const node = story.nodes.find((node2) => node2.id === id);
+    if (!node) break;
+    if (node.id === target) return;
+    id = node.choices?.length ? node.choices.find((choice) => choice.id === selected[node.id])?.nextId : node.nextId;
+  }
+  throw new GameApiError("INVALID_STATE", "\uB3C4\uB2EC\uD558\uC9C0 \uC54A\uC740 \uC774\uC57C\uAE30 \uC120\uD0DD\uC9C0\uC785\uB2C8\uB2E4.");
+}
+function redeemDeferredStoryBond(next, acquired) {
+  const pending = next.serverJournal?.pendingStoryBondXp;
+  if (!pending || !acquired.some((id) => (pending[id] ?? 0) > 0)) return;
+  const journal = structuredClone(next.serverJournal ?? emptyServerJournal());
+  for (const id of new Set(acquired)) {
+    const amount = journal.pendingStoryBondXp?.[id] ?? 0;
+    if (!amount || !next.owned.has(id) || !next.relicProgress[id]) continue;
+    next.relicProgress[id] = grantBondXp(next.relicProgress[id], Math.min(amount, BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])).progress;
+    delete journal.pendingStoryBondXp[id];
+  }
+  next.serverJournal = journal;
+}
+
 // src/api/serverClock.ts
 init_define_import_meta_env();
 var offsetMs = 0;
@@ -27143,21 +28143,6 @@ function expeditionRewardRandom(seed) {
     next ^= next + Math.imul(next ^ next >>> 7, next | 61);
     return ((next ^ next >>> 14) >>> 0) / 4294967296;
   };
-}
-
-// src/api/contracts.ts
-init_define_import_meta_env();
-var GameApiError = class extends Error {
-  constructor(code, message, options) {
-    super(message, options);
-    this.code = code;
-    this.name = "GameApiError";
-  }
-  code;
-};
-function persistenceFailed(error, messageKey = "error.persist.state") {
-  const message = t(messageKey);
-  return error instanceof GameApiError && error.code === "PERSISTENCE_FAILED" ? error : new GameApiError("PERSISTENCE_FAILED", message, { cause: error });
 }
 
 // src/managers/ExpeditionManager.ts
@@ -28769,21 +29754,6 @@ init_define_import_meta_env();
 
 // src/data/events/greatAuk.ts
 init_define_import_meta_env();
-
-// src/data/dialogues/greatAukReport.ts
-init_define_import_meta_env();
-var GREAT_AUK_REPORT = {
-  id: "event-great-auk-report",
-  startNodeId: "specimen",
-  nodes: [
-    { id: "specimen", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uBC1C\uACAC\uB410\uC5B4\uC694.", standing: "torika", act: "lean", nextId: "site" },
-    { id: "site", speaker: "\uC5F0\uAD6C\uC6D0", body: "\uD574\uC548 \uBC1C\uAD74\uC9C0\uB97C \uD655\uBCF4\uD558\uACE0 \uD6FC\uC190\uB41C \uAE30\uB85D \uC870\uAC01\uC744 \uD68C\uC218\uD558\uC790.", nextId: "result" },
-    { id: "result", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC11C\uC2DD\uC9C0\uC640 \uBA78\uC885 \uC6D0\uC778\uC744 \uB300\uC870\uD588\uC5B4\uC694. \uC774\uC81C \uBC1C\uAD74 \uBCF4\uACE0\uC11C\uB97C \uBCF4\uC874 \uAE30\uB85D\uC73C\uB85C \uB118\uAE38\uAC8C\uC694.", standing: "torika", act: "nod" }
-  ]
-};
-registerDialogueTexts(GREAT_AUK_REPORT);
-
-// src/data/events/greatAuk.ts
 var EVENT_STAGE_FORMATION = ["amo", "toby", "ripa"];
 var GREAT_AUK_SHORE = {
   kind: "battle",
@@ -28833,736 +29803,6 @@ init_define_import_meta_env();
 
 // src/data/recollectionCatalog.ts
 init_define_import_meta_env();
-
-// src/data/dialogues/openingTrain.ts
-init_define_import_meta_env();
-var ROGUE_TRIO = [
-  { id: "dodi", slot: "left" },
-  { id: "torika", slot: "center" },
-  { id: "parua", slot: "right" }
-];
-var RAID_TRIO = [
-  { id: "amo", slot: "left" },
-  { id: "toby", slot: "center" },
-  { id: "ripa", slot: "right" }
-];
-var OPENING_TRAIN = {
-  id: "opening-train",
-  startNodeId: "wake",
-  backdrop: "train",
-  titleCard: { title: "\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", subtitle: "\uC774\uD130\uB110 \uC2DC\uD2F0\uC640 \uC5F0\uAD6C\uC6D0" },
-  nodes: [
-    // ── 열차 안: 토리카 ───────────────────────────────────────────────
-    { id: "wake", speaker: "???", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC5F0\uAD6C\uC6D0\uB2D8! \uB208 \uC880 \uB5A0 \uBCF4\uC138\uC694. \uCC3D\uBC16\uC5D0 \uB3C4\uC2DC\uAC00 \uBCF4\uC5EC\uC694!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
-    { id: "greet", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uB294 \uD1A0\uB9AC\uCE74\uC608\uC694! \uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC9C0\uD0A4\uB294 \uD638\uC704 \uB810\uB9AD\uC774\uC5D0\uC694. \uB3C4\uCC29\uD560 \uB54C\uAE4C\uC9C0 \uC606\uC5D0 \uAF2D \uBD99\uC5B4 \uC788\uC744\uAC8C\uC694.", standing: "torika", act: "nod", nextId: "window" },
-    { id: "window", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uAE30, \uD558\uC580 \uBF08\uCC98\uB7FC \uC19F\uC740 \uD0D1\uB4E4 \uBCF4\uC774\uC138\uC694? \uBA78\uC885\uC758 \uAE30\uC5B5 \uC704\uC5D0 \uC138\uC6B4 \uB3C4\uC2DC, \uC774\uD130\uB110 \uC2DC\uD2F0\uC608\uC694.", standing: "torika", act: "lean", nextId: "answer" },
-    {
-      id: "answer",
-      speaker: "\uD1A0\uB9AC\uCE74",
-      body: "\uB3C4\uCC29\uD558\uBA74 \uC81C\uC77C \uBA3C\uC800 \uBB58 \uD558\uACE0 \uC2F6\uC73C\uC138\uC694?",
-      standing: "torika",
-      choices: [
-        { id: "promise", label: "\uB108\uD76C\uB97C \uB354 \uC54C\uACE0 \uC2F6\uC5B4", nextId: "warm", effect: { type: "bondXp", relicId: "torika", amount: 5 } },
-        { id: "work", label: "\uB3C4\uC2DC\uBD80\uD130 \uB458\uB7EC\uBCFC\uAC8C", nextId: "ready" }
-      ]
-    },
-    { id: "warm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD5E4\uD5E4, \uADF8\uB7FC \uC800\uBD80\uD130 \uC54C\uB824 \uB4DC\uB9B4\uAC8C\uC694! \uC88B\uC544\uD558\uB294 \uAC74 \uAC04\uC2DD\uC774\uB791\u2026 \uC5F0\uAD6C\uC6D0\uB2D8 \uC606\uC790\uB9AC\uC694!", standing: "torika", act: "hopTwice", nextId: "peek" },
-    { id: "ready", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694! \uB9DB\uC788\uB294 \uAC00\uAC8C\uBD80\uD130\u2026 \uC544, \uC544\uB2C8, \uC911\uC694\uD55C \uC5F0\uAD6C\uC18C\uBD80\uD130\uC694!", standing: "torika", act: "shake", nextId: "peek" },
-    // ── 도디: 부끄럽지만 반짝반짝한 1호 팬 ──────────────────────────────
-    { id: "peek", speaker: "???", body: "\uC800, \uC800\uAE30\u2026 \uD1A0\uB9AC\uCE74. \uD639\uC2DC \uADF8\uBD84\uC774\u2026 \uADF8 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC57C?", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "right" }], act: "tremble", nextId: "callDodi" },
-    { id: "callDodi", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB3C4\uB514! \uB4A4\uC5D0 \uC228\uC5B4 \uC788\uC9C0 \uB9D0\uACE0 \uB098\uC640\uC11C \uC778\uC0AC\uD574\uC57C\uC9C0!", standing: "torika", act: "hop", nextId: "fan" },
-    { id: "fan", speaker: "\uB3C4\uB514", body: "\uC640\uC544\u2026 \uC9C4\uC9DC\uB2E4. \uC9C4\uC9DC \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uB2E4! \uC800, \uC800\uB294 \uAE30\uB85D\uBCD1 \uB3C4\uB514\uC608\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uC4F0\uC2E0 \uBCF5\uC6D0 \uBCF4\uACE0\uC11C\uB294 \uD55C \uC904\uB3C4 \uBE7C\uB193\uC9C0 \uC54A\uACE0 \uB2E4 \uC77D\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hopTwice", nextId: "shy" },
-    { id: "shy", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC81C \uC77C\uC9C0 \uCCAB \uC7A5\uC5D0\u2026 \uC774\uB984 \uD55C \uBC88\uB9CC \uC801\uC5B4 \uC8FC\uC2DC\uBA74 \uC548 \uB420\uAE4C\uC694\u2026?", standing: "dodi", act: "shrink", nextId: "title" },
-    { id: "title", speaker: "\uB3C4\uB514", body: "\uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC800\uD76C \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694! \uB300\uC7A5\uB2D8, \uB300\uC7A5\uB2D8\u2026 \uD5E4\uD5E4, \uBC8C\uC368 \uC785\uC5D0 \uBD99\uC5C8\uC5B4\uC694!", standing: "dodi", act: "hop", nextId: "halt" },
-    // ── 파루아: 도디를 붙잡으며 연구원에게 흥미를 ───────────────────────
-    { id: "halt", speaker: "???", body: "\uB3C4\uB514. \uB108\uBB34 \uAC00\uAE4C\uC6CC. \uC5F0\uAD6C\uC6D0\uB2D8\uC774 \uB4A4\uB85C \uAE30\uC6B8\uC5B4\uC9C0\uACE0 \uC788\uC5B4.", standing: "parua", cast: ROGUE_TRIO, act: "lean", nextId: "sorry" },
-    { id: "sorry", speaker: "\uB3C4\uB514", body: "\uC557, \uC8C4, \uC8C4\uC1A1\uD574\uC694! \uB108\uBB34 \uBC18\uAC00\uC6CC\uC11C \uADF8\uB9CC\u2026!", standing: "dodi", act: "recoil", nextId: "parua" },
-    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\uC800\uB294 \uD30C\uB8E8\uC544\uC608\uC694. \uB4A4\uB97C \uC0B4\uD53C\uB294 \uAC8C \uC81C \uC77C\uC774\uC5D0\uC694.", standing: "parua", act: "nod", nextId: "sniff" },
-    { id: "sniff", speaker: "\uD30C\uB8E8\uC544", body: "\uADF8\uB7F0\uB370 \uC774\uC0C1\uD574\uC694. \uC5F0\uAD6C\uC6D0\uB2D8\uD55C\uD14C\uC11C\uB294 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uB4E4\uC774\uB791 \uB2E4\uB978 \uB0C4\uC0C8\uAC00 \uB098\uC694. \u2026\uC870\uAE08\uB9CC \uB354 \uAC00\uAE4C\uC774 \uBD10\uB3C4 \uB3FC\uC694?", standing: "parua", act: "lean", nextId: "scold" },
-    { id: "scold", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD30C\uB8E8\uC544\uAE4C\uC9C0! \uC5F0\uAD6C\uC6D0\uB2D8 \uACE4\uB780\uD558\uC2DC\uC796\uC544!", standing: "torika", act: "shake", nextId: "quake" },
-    // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
-    { id: "quake", speaker: "", body: "\uCFE0\uAD6C\uAD6C\uAD81\u2026!! \uAC1D\uCC28 \uC804\uCCB4\uAC00 \uD06C\uAC8C \uB4E4\uC369\uC778\uB2E4.", cue: "rumble", nextId: "alarm" },
-    { id: "alarm", speaker: "\uC548\uB0B4 \uBC29\uC1A1", body: "\uACBD\uBCF4. \uACBD\uBCF4. \uC120\uB85C \uC804\uBC29\uC5D0 \uBBF8\uD655\uC778 \uAC1C\uCCB4 \uC811\uADFC. \uC2B9\uAC1D \uC5EC\uB7EC\uBD84\uC740 \uC989\uC2DC \uC790\uB9AC\uB97C \uC9C0\uCF1C \uC8FC\uC2ED\uC2DC\uC624.", cue: "alarm", sign: "broadcast", nextId: "sense" },
-    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC55E\uC5D0\uC11C \uBB54\uAC00 \uC640\uC694. \uD558\uB098\uAC00 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", act: "tremble", nextId: "guard" },
-    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uBB34\uC2A8 \uC77C\uC774 \uC788\uC5B4\uB3C4 \uC81C\uAC00 \uB9C9\uC744\uAC8C\uC694!", standing: "torika", act: "hop", nextId: "veil" },
-    { id: "veil", speaker: "???", body: "\uCC3E\uC558\uB2E4. Garden\uC774 \uB0B4\uB824\uBCF4\uB0B8 \uC5F0\uAD6C\uC6D0.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },
-    { id: "order", speaker: "???", body: "\uBAA9\uD45C \uD68C\uC218 \uC791\uC804\uC744 \uAC1C\uC2DC\uD55C\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 \uBC18\uB4DC\uC2DC \uC0AC\uB85C\uC7A1\uC544\uB77C. \u2026\uBC29\uC8FC\uC9F8\uB85C \uB5A8\uC5B4\uB728\uB824.", standing: "koma", act: "nod", nextId: "blast" },
-    // ── 폭파: 열차에서 전장으로 ──────────────────────────────────────
-    { id: "blast", speaker: "", body: "\uCF70\uC544\uC544\uC544\uC559!!", cast: [], cue: "explosion", backdrop: "battlefield", nextId: "aftermath" },
-    { id: "aftermath", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF5C\uB85D, \uCF5C\uB85D\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uAD1C\uCC2E\uC73C\uC138\uC694?! \uC5F4\uCC28\uAC00\u2026 \uC120\uB85C \uBC16\uC73C\uB85C \uB5A8\uC5B4\uC84C\uC5B4\uC694\u2026!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "shake", nextId: "record" },
-    { id: "record", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD574\uC694! \uAE30\uB85D\u2026 \uAE30\uB85D\uD574\uC57C \uD558\uB294\uB370\u2026 \uC544\uB2C8, \uC9C0\uAE08\uC740 \uADF8\uB7F4 \uB54C\uAC00 \uC544\uB2C8\uC9C0!", standing: "dodi", cast: ROGUE_TRIO, act: "tremble", nextId: "three" },
-    { id: "three", speaker: "\uD30C\uB8E8\uC544", body: "\uC27F. \uC14B\uC774\uC5D0\uC694. \uC5F0\uAE30 \uB108\uBA38\uC5D0\uC11C \uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4\uC694.", standing: "parua", act: "lean", nextId: "toby" },
-    // ── 공멸의 우당탕탕 삼인조 ──────────────────────────────────────
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCC3E\uC558\uB2E4\uC544! \uC800\uAE30 \uC788\uB2E4, \uADF8 \uC5F0\uAD6C\uC6D0! \uC774\uBC88\uC5D4 \uB0B4\uAC00 \uC81C\uC77C \uBA3C\uC800 \uC7A1\uB294\uB2E4!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", cue: "impact", nextId: "amo" },
-    { id: "amo", speaker: "\uC544\uBAA8", body: "\uD1A0, \uD1A0\uBE44\u2026 \uBAA9\uC18C\uB9AC \uC880 \uC904\uC5EC. \uCF54\uB9C8\uAC00 \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC774\uB7AC\uC796\uC544\u2026", standing: "amo", act: "tremble", nextId: "ripa" },
-    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uC5B4\uCC28\uD53C \uB2E4 \uB4E4\uCF30\uB294\uAC78? \uC800\uCABD \uC14B \uD45C\uC815 \uC880 \uBD10. \uC644\uC804 \uC7AC\uBC0C\uB2E4!", standing: "ripa", act: "hop", nextId: "demand" },
-    { id: "demand", speaker: "\uD1A0\uBE44", body: "\uC6B0\uB9AC\uB294 \uACF5\uBA78! \uADF8 \uC5F0\uAD6C\uC6D0\uB9CC \uB118\uAE30\uBA74 \uB108\uD76C\uB294 \uACF1\uAC8C \uBCF4\uB0B4 \uC904\uAC8C!", standing: "toby", act: "shake", nextId: "refuse" },
-    // ── 맞서는 쁘띠 로그 ──────────────────────────────────────────
-    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2EB\uC5B4\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uC740\u2026 \uC6B0\uB9AC \uB300\uC7A5\uB2D8\uC774\uC5D0\uC694. \uD55C \uBC1C\uC9DD\uB3C4 \uBABB \uC9C0\uB098\uAC00\uC694!", standing: "torika", cast: ROGUE_TRIO, act: "hop", cue: "impact", nextId: "brave" },
-    { id: "brave", speaker: "\uB3C4\uB514", body: "\uBB34, \uBB34\uC12D\uC9C0\uB9CC\u2026 \uB300\uC7A5\uB2D8\uC744 \uC9C0\uD0A8 \uCCAB \uAE30\uB85D\uC740 \uC81C\uAC00 \uC4F8 \uAC70\uC608\uC694!", standing: "dodi", act: "tremble", nextId: "aim" },
-    { id: "aim", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD654\uC0B4\uC740 \uC900\uBE44\uB410\uC5B4\uC694. \uC5B8\uC81C\uB4E0\uC9C0\uC694.", standing: "parua", act: "nod", nextId: "end" },
-    // 전투를 여는 외침은 토리카 한 마디뿐이다 — 곧바로 1-1이 시작되므로 구호를 길게 늘이지 않는다.
-    { id: "end", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uC5D0 \uACC4\uC138\uC694. \u2026\uC804\uD22C \uAC1C\uC2DC!", standing: "torika", act: "hop", cue: "impact" }
-  ]
-};
-registerDialogueTexts(OPENING_TRAIN);
-
-// src/data/dialogues/openingRetreat.ts
-init_define_import_meta_env();
-var OPENING_RETREAT = {
-  id: "opening-retreat",
-  startNodeId: "groan",
-  backdrop: "battlefield",
-  nodes: [
-    { id: "groan", speaker: "\uD1A0\uBE44", body: "\uB044\uC544\uC545! \uC774, \uC774\uB7F4 \uB9AC\uAC00 \uC5C6\uB294\uB370!", standing: "toby", cast: RAID_TRIO, act: "shake", cue: "impact", nextId: "sigh" },
-    { id: "sigh", speaker: "\uC544\uBAA8", body: "\uADF8\uB7EC\uB2C8\uAE4C\u2026 \uC870\uC6A9\uD788 \uAC00\uC790\uACE0 \uD588\uC796\uC544\u2026", standing: "amo", act: "shrink", nextId: "grin" },
-    { id: "grin", speaker: "\uB9AC\uD30C", body: "\uC5D0\uC774, \uADF8\uB798\uB3C4 \uC7AC\uBC0C\uC5C8\uC796\uC544? \uC800\uCABD \uC14B, \uC0DD\uAC01\uBCF4\uB2E4 \uC138\uB354\uB77C~", standing: "ripa", act: "hop", nextId: "vow" },
-    { id: "vow", speaker: "\uD1A0\uBE44", body: "\uAE30\uC5B5\uD574 \uB46C, \uC5F0\uAD6C\uC6D0! \uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC04\uB2E4!", standing: "toby", act: "hopTwice", nextId: "away" },
-    { id: "away", speaker: "\uD1A0\uBE44\xB7\uC544\uBAA8\xB7\uB9AC\uD30C", body: "\uB450\uACE0 \uBCF4\uC790\uC544\uC544\uC544~!!", cast: [], leave: "blastOff", cue: "impact", nextId: "gone" },
-    { id: "gone", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uB0A0\uC544\uAC00 \uBC84\uB838\uB124\uC694. \uB300\uC7A5\uB2D8, \uB2E4\uCE58\uC2E0 \uB370\uB294 \uC5C6\uC8E0?", standing: "torika", cast: ROGUE_TRIO, act: "hop", nextId: "log" },
-    { id: "log", speaker: "\uB3C4\uB514", body: "\uCCAB \uC804\uD22C \uAE30\uB85D \uC644\uB8CC! \uC801\uC740 \uD558\uB298\uC758 \uBCC4\uC774 \uB418\uC5C8\uB2E4\u2026 \uC774\uB807\uAC8C \uC801\uC5B4 \uB46C\uC57C\uC9C0!", standing: "dodi", act: "hopTwice", nextId: "watch" },
-    { id: "watch", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB610 \uC62C \uAC70\uC608\uC694. \uD3EC\uAE30\uD560 \uC5BC\uAD74\uC774 \uC544\uB2C8\uC5C8\uC5B4\uC694.", standing: "parua", act: "nod", nextId: "onward" },
-    { id: "onward", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC6B0\uB9AC\uB3C4 \uC11C\uB458\uB7EC\uC694. \uC774\uD130\uB110 \uC2DC\uD2F0\uAE4C\uC9C0 \uC81C\uAC00 \uC548\uB0B4\uD560\uAC8C\uC694!", standing: "torika", act: "nod" }
-  ]
-};
-registerDialogueTexts(OPENING_RETREAT);
-
-// src/data/stageStories.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/chapter1.ts
-init_define_import_meta_env();
-
-// src/data/dialogues/linear.ts
-init_define_import_meta_env();
-function linear(nodes) {
-  return nodes.map((node, index) => {
-    const next = nodes[index + 1];
-    if (!next || node.nextId || node.choices?.length) return node;
-    return { ...node, nextId: next.id };
-  });
-}
-
-// src/data/dialogues/chapter1.ts
-var VOICE = (voice, left, right) => [
-  { id: left, slot: "left" },
-  { id: voice, slot: "center", remote: true },
-  { id: right, slot: "right" }
-];
-var TIA_TRIO = [{ id: "torika", slot: "left" }, { id: "tia", slot: "center" }, { id: "parua", slot: "right" }];
-var ALONE = (id) => [{ id, slot: "center" }];
-var STAGE_1_2_POST = {
-  id: "stage-1-2-post",
-  startNodeId: "fall",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "fall", speaker: "\uD1A0\uBE44", body: "\uC73C\uC73D\u2026 \uC720\uB9AC \uC9C0\uBD95\uC774 \uC774\uB807\uAC8C \uC57D\uD560 \uC904\uC740 \uBAB0\uB790\uC5B4!", standing: "toby", cast: RAID_TRIO, act: "squash", cue: "impact" },
-    { id: "hush", speaker: "\uC544\uBAA8", body: "\uB0B4\uAC00 \uBC1F\uC9C0 \uB9D0\uB7AC\uC796\uC544\u2026 \uC18C\uB9AC \uB098\uBA74 \uB4E4\uD0A8\uB2E4\uACE0.", standing: "amo", act: "shrink" },
-    { id: "late", speaker: "\uB9AC\uD30C", body: "\uC774\uBBF8 \uB4E4\uCF30\uB294\uAC78? \uC704\uC5D0\uC11C \uBCF4\uB2C8\uAE4C \uC7E4\uB124 \uC6B0\uB9AC \uCABD\uC73C\uB85C \uACE7\uC7A5 \uC624\uB358\uB370.", standing: "ripa", act: "hop" },
-    { id: "where", speaker: "\uD1A0\uBE44", body: "\uADF8\uBCF4\uB2E4 \uCF54\uB9C8\uB294 \uC5B4\uB514 \uAC14\uC5B4? \uC544\uC9C1\uB3C4 \uC548 \uC654\uC5B4?", standing: "toby", act: "hopTwice" },
-    { id: "door", speaker: "\uC544\uBAA8", body: "\u2026\uBB38 \uC55E\uC5D0 \uBA3C\uC800 \uAC00 \uC788\uC744 \uAC70\uC57C. \uC5B8\uC81C\uB098 \uADF8\uB7AC\uC796\uC544.", standing: "amo", act: "nod" },
-    { id: "heard", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC800 \uC774\uB984, \uB4E4\uC5C8\uC5B4\uC694. \uCF54\uB9C8. \uC55E\uC5D0\uC11C \uAE38\uC744 \uBCF4\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "lean" },
-    { id: "log", speaker: "\uB3C4\uB514", body: "\uC801\uC5B4 \uB458\uAC8C\uC694! \uC120\uBD09\uC740 \uCF54\uB9C8, \uC800 \uC14B\uC740 \uADF8 \uB4A4\uB97C \uCAD3\uB294 \uCABD\u2026 \uB9DE\uC8E0?", standing: "dodi", act: "hop" },
-    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBA3C \uC2E0\uD638\uAC00 \uAD00\uC81C\uD0D1 \uCABD\uC5D0\uC11C \uACC4\uC18D \uAE5C\uBE61\uC774\uB124\uC694. \uB300\uC7A5\uB2D8, \uADF8\uCABD\uC73C\uB85C \uAC00 \uBD10\uC694!", standing: "torika", act: "nod" }
-  ])
-};
-var STAGE_1_4_PRE = {
-  id: "stage-1-4-pre",
-  startNodeId: "cases",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "cases", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC774 \uC9C4\uC5F4\uC7A5 \uC880 \uBCF4\uC138\uC694! \uAC19\uC740 \uC190\uC790\uAD6D\uC774 \uC904\uC904\uC774 \uB0A8\uC544 \uC788\uC5B4\uC694.", standing: "dodi", cast: ROGUE_TRIO, act: "hopTwice" },
-    { id: "size", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uD06C\uAE30\uAC00 \uAC19\uC544\uC694. \uD55C \uBA85\uC774 \uC774 \uBC29\uC744 \uACC4\uC18D \uB3CC\uC558\uC5B4\uC694.", standing: "parua", act: "lean" },
-    { id: "habit", speaker: "\uB3C4\uB514", body: "\uC190\uAC00\uB77D\uC774 \uBE44\uC2A4\uB4EC\uD558\uACE0, \uC720\uB9AC \uAC00\uC7A5\uC790\uB9AC\uB9C8\uB2E4 \uB20C\uB9B0 \uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uB0AF\uC120 \uAC74 \uC77C\uB2E8 \uBA3C\uC800 \uB9CC\uC9C0\uACE0 \uBCF4\uB294 \uC190\uC774\uC5D0\uC694.", standing: "dodi", act: "nod" },
-    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBC29\uAE08 \uB9CC\uB09C \uC0AC\uB78C \uBC84\uB987\uC744 \uC5B4\uB5BB\uAC8C \uC54C\uC544?", standing: "torika", act: "shake" },
-    { id: "train", speaker: "\uB3C4\uB514", body: "\uC544\uAE4C \uC5F4\uCC28\uC5D0\uC11C \uBB38 \uC190\uC7A1\uC774\uB97C \uC81C\uC77C \uBA3C\uC800 \uB9CC\uC9C4 \uC190\uC774\uB791 \uAC19\uC544\uC694. \uAE30\uB85D\uD574 \uB480\uAC70\uB4E0\uC694!", standing: "dodi", act: "hop" },
-    { id: "alarm", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC774 \uBC29 \uACBD\uBCF4\uB3C4 \uADF8 \uC560\uAC00 \uCF30\uACA0\uB124\uC694. \uB300\uC7A5\uB2D8, \uC870\uC2EC\uC870\uC2EC \uAC00\uC694!", standing: "torika", act: "nod" }
-  ])
-};
-var STAGE_1_5_PRE = {
-  id: "stage-1-5-pre",
-  startNodeId: "hi",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "hi", speaker: "\uD1A0\uBE44", body: "\uC5EC\uC5B4, \uC5F0\uAD6C\uC6D0! \uB180\uB790\uC9C0? \uBA3C\uC800 \uC640\uC11C \uBB38\uC744 \uC5F4\uC5B4 \uB450\uACA0\uB2E4\uACE0 \uD588\uAC70\uB4E0!", standing: "toby", cast: ALONE("toby"), act: "bounce" },
-    { id: "torn", speaker: "\uD1A0\uBE44", body: "\u2026\uC5F4\uC5B4 \uB450\uB824\uACE0 \uD588\uB294\uB370, \uC5F4\uB838\uB2E4\uAE30\uBCF4\uB2E4 \uB72F\uACBC\uB2E4\uB294 \uCABD\uC774 \uB9DE\uC744 \uAC70\uC57C.", standing: "toby", act: "shrink" },
-    { id: "guard", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC740 \uC81C \uB4A4\uB85C \uC624\uC138\uC694! \uD63C\uC790 \uC624\uC2E0 \uAC70\uC608\uC694? \uB2E4\uB978 \uB450 \uBD84\uC740\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "hop" },
-    { id: "split", speaker: "\uD1A0\uBE44", body: "\uC544\uBAA8\uB791 \uB9AC\uD30C\uB294 \uCF54\uB9C8\uAC00 \uC2DC\uD0A8 \uB300\uB85C \uB534 \uAE38\uB85C \uAC14\uC5B4. \uB098 \uD63C\uC790\uC11C\uB3C4 \uCDA9\uBD84\uD558\uB2E4\uACE0!", standing: "toby", act: "puff" },
-    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB9AC\uACE0 \uC774 \uBC29\uBCBD \uC7A5\uCE58\uB294 \uB0B4\uAC00 \uB9CC\uC9C4 \uAC8C \uC544\uB2C8\uC57C. \uC6D0\uB798 \uCF1C\uC838 \uC788\uC5C8\uC5B4.", standing: "toby", act: "fright" },
-    { id: "beep", speaker: "\uD1A0\uB9AC\uCE74", body: '\uBC29\uAE08 \uC7A5\uCE58\uC5D0\uC11C "\uC090\u2014" \uD558\uACE0 \uC18C\uB9AC\uAC00 \uB0AC\uB294\uB370\uC694.', standing: "torika", act: "recoil" },
-    { id: "fight", speaker: "\uD1A0\uBE44", body: "\uC73C\uC544\uC544 \uBA48\uCD94\uB294 \uBC95\uC774 \uC5B4\uB514 \uC788\uB354\uB77C?! \uC2F8, \uC2F8\uC6B0\uC790! \uC2F8\uC6B0\uB294 \uB3D9\uC548\uC740 \uC7A5\uCE58\uAC00 \uC2E0\uACBD \uC548 \uC4F0\uC774\uB2C8\uAE4C!", standing: "toby", act: "rage", cue: "impact" }
-  ])
-};
-var STAGE_1_5_POST = {
-  id: "stage-1-5-post",
-  startNodeId: "tidy",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "tidy", speaker: "", body: "\uB118\uC5B4\uC9C4 \uC7A5\uBE44\uAC00 \uAD6C\uC11D\uC5D0 \uC313\uC5EC \uC788\uB2E4. \uD1A0\uBE44\uAC00 \uC5F0\uAD6C\uC6D0 \uB208\uCE58\uB97C \uBCF4\uBA70 \uD558\uB098\uC529 \uC77C\uC73C\uCF1C \uC138\uC6B4\uB2E4.", standing: "toby", cast: [{ id: "toby", slot: "right" }, { id: "torika", slot: "left" }] },
-    { id: "what", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC9C0\uAE08 \uBB50 \uD558\uC138\uC694?", standing: "torika", act: "lean" },
-    { id: "excuse", speaker: "\uD1A0\uBE44", body: "\uC544, \uC544\uBB34\uAC83\uB3C4! \uC815\uB9AC\uC57C! \uC6D0\uB798 \uC774\uB807\uAC8C \uC788\uC5C8\uB358 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
-    { id: "label", speaker: "\uB3C4\uB514", body: "\uBC29\uAE08 \uC120\uBC18 \uC774\uB984\uD45C\uB791 \uB9DE\uCDB0\uC11C \uB193\uC73C\uC168\uB294\uB370\uC694. \uAF3C\uAF3C\uD558\uC2DC\uB124\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" },
-    { id: "away", speaker: "\uD1A0\uBE44", body: "\uBCF4, \uBCF4\uC9C0 \uB9C8! \uCF54\uB9C8\uD55C\uD14C\uB294 \uB9D0\uD558\uC9C0 \uB9C8! \uB2E4\uC74C\uC5D4 \uC9C4\uC9DC \uC774\uAE34\uB2E4~!", standing: "toby", cast: [{ id: "dodi", slot: "center" }, { id: "torika", slot: "left" }], act: "hopTwice", leave: "blastOff", cue: "impact" }
-  ])
-};
-var STAGE_1_6_POST = {
-  id: "stage-1-6-post",
-  startNodeId: "hum",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "hum", speaker: "", body: "\uC548\uD14C\uB098\uAC00 \uB0AE\uC740 \uC18C\uB9AC\uB97C \uB0B4\uBA70 \uC77C\uC5B4\uC120\uB2E4. \uC7A1\uC74C \uC0AC\uC774\uB85C \uBAA9\uC18C\uB9AC\uAC00 \uBC88\uC9C4\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
-    { id: "stella", speaker: "\uC2A4\uD14C\uB77C", body: "\u2026\uC5F0\uACB0\uB410\uC5B4\uC694. \uC81C1\uC9C0\uBD80 \uAD00\uC81C\uC758 \uC2A4\uD14C\uB77C\uC608\uC694. \uC704\uCE58 \uC2E0\uD638 \uD655\uC778\uD588\uC5B4\uC694. \uC678\uACFD\uC5D0\uC11C \uC624\uC2DC\uB294 \uBD84\uB4E4\uC774\uC8E0?", cast: VOICE("stella", "torika", "dodi"), act: "nod", cue: "impact" },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2A4\uD14C\uB77C \uB2D8! \uC5F4\uCC28\uAC00 \uB5A8\uC5B4\uC84C\uC5B4\uC694. \uB300\uC7A5\uB2D8\uC740 \uBB34\uC0AC\uD558\uC138\uC694!", standing: "torika", act: "hop" },
-    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uC5EC\uAE30\uB294 \uCF04\uD1A0\uB2E4. \uC678\uBCBD \uCABD\uC774 \uC2DC\uB044\uB7EC\uC6CC\uC11C \uC9C0\uC6D0\uC740 \uC870\uAE08 \uB2A6\uB294\uB2E4. \uC774 \uC548\uCABD \uAE38\uC740 \uC815\uAC70\uC7A5\uAE4C\uC9C0 \uC774\uC5B4\uC838 \uC788\uC5B4.", cast: VOICE("kento", "torika", "dodi"), act: "lean" },
-    { id: "station", speaker: "\uC2A4\uD14C\uB77C", body: "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5\uC774 \uC6D0\uB798 \uBAA9\uC801\uC9C0\uC600\uC5B4\uC694. \uBB38\uC740 \uC7A0\uACBC\uACA0\uC9C0\uB9CC \uC548\uCABD\uC5D0 \uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uC744\uC9C0\uB3C4 \uBAB0\uB77C\uC694.", cast: VOICE("stella", "torika", "dodi") },
-    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uBCF4\uAE09 \uB2F4\uB2F9\uC774 \uAC07\uD600 \uC788\uB300\uC694! \uAE30\uB85D\uD574 \uB458\uAC8C\uC694!", standing: "dodi", act: "hopTwice" },
-    { id: "order", speaker: "\uCF04\uD1A0", body: "\uC5F0\uAD6C\uC6D0, \uB4E4\uB9AC\uB098. \uC77C\uB2E8 \uC0B4\uC544\uC11C \uB3C4\uCC29\uD574\uB77C. \uB098\uBA38\uC9C0\uB294 \uB3C4\uCC29\uD558\uACE0 \uB098\uC11C \uC598\uAE30\uD558\uC790.", cast: VOICE("kento", "torika", "dodi"), act: "nod" },
-    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB9D0\uC740 \uAC70\uCE5C\uB370 \uBAA9\uC18C\uB9AC\uB294 \uAC71\uC815\uD558\uB294 \uCABD\uC774\uC5D0\uC694.", standing: "parua", cast: ROGUE_TRIO, act: "nod" },
-    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uC815\uAC70\uC7A5\uC73C\uB85C \uAC00\uC694! \uC774\uC81C \uAE38\uC7A1\uC774\uB3C4 \uC0DD\uACBC\uC73C\uB2C8\uAE4C\uC694!", standing: "torika", act: "hop" }
-  ])
-};
-var STAGE_1_7_PRE = {
-  id: "stage-1-7-pre",
-  startNodeId: "pile",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "pile", speaker: "", body: "\uCC98\uB9AC\uC7A5 \uD55C\uCABD\uC5D0 \uAC19\uC740 \uBAA8\uC591\uC758 \uCCA0\uC81C \uD45C\uC2DD\uC774 \uC0B0\uCC98\uB7FC \uC313\uC5EC \uC788\uB2E4. \uAC00\uC6B4\uB370\uC5D0 \uAC00\uC704\uD45C \uD648 \uD558\uB098\uAC00 \uC0C8\uACA8\uC838 \uC788\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
-    { id: "mark", speaker: "\uB3C4\uB514", body: '\uC774\uAC74 "\uD3D0\uAE30 \uD45C\uC2DD"\uC774\uC5D0\uC694. \uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uC5D0\uAC8C \uB2EC\uC544\uC11C \uBCF4\uB0B4\uB358 \uAC70\uC608\uC694. \uC81C \uC77C\uC9C0\uC5D0 \uC788\uC5B4\uC694.', standing: "dodi", act: "tremble" },
-    { id: "count", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBCF5\uC6D0\uC774 \uC548 \uB41C \uAC1C\uCCB4\uB77C\uBA74\u2026 \uC774 \uB354\uBBF8\uB294 \uC804\uBD80\u2026", standing: "torika", act: "faint" },
-    { id: "line", speaker: "\uB3C4\uB514", body: "\uC5EC\uAE30\uB85C \uBCF4\uB0B4\uC9C4 \uC544\uC774\uB4E4\uC758 \uBAAB\uC774\uC5D0\uC694. \uC904\uC774 \uB05D\uC774 \uC5C6\uC5B4\uC694.", standing: "dodi", act: "shrink" },
-    { id: "hood", speaker: "", body: "\uB354\uBBF8 \uB4A4\uC5D0\uC11C \uB450\uAC74\uC774 \uCC9C\uCC9C\uD788 \uC62C\uB77C\uC628\uB2E4. \uC544\uBAA8\uAC00 \uD45C\uC2DD \uD558\uB098\uB97C \uB0B4\uB824\uB2E4\uBCF4\uBA70 \uC11C \uC788\uB2E4.", standing: "amo", cast: [{ id: "dodi", slot: "left" }, { id: "torika", slot: "center" }, { id: "amo", slot: "right" }] },
-    { id: "touch", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uAC70, \uB9CC\uC9C0\uC9C0 \uB9C8.", standing: "amo", act: "shrink" },
-    { id: "ask", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528\u2026?", standing: "torika", act: "lean" },
-    { id: "quiet", speaker: "\uC544\uBAA8", body: "\u2026\uC544\uBB34\uAC83\uB3C4 \uC544\uB2C8\uC57C. \uC2F8\uC6B8 \uAC70\uBA74 \uC870\uC6A9\uD788 \uD574. \uB098, \uD070 \uC18C\uB9AC\uB294 \uC2EB\uC5B4.", standing: "amo", act: "tremble" }
-  ])
-};
-var STAGE_1_8_PRE = {
-  id: "stage-1-8-pre",
-  startNodeId: "sit",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "sit", speaker: "", body: "\uC9C0\uD558 \uBC30\uC218\uB85C. \uC218\uBB38 \uC190\uC7A1\uC774 \uC704\uC5D0 \uBCA0\uC77C\uC744 \uC4F4 \uC791\uC740 \uADF8\uB9BC\uC790\uAC00 \uC549\uC544 \uC788\uB2E4. \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uC744 \uC18C\uB9E4\uC5D0 \uD558\uB098\uC529 \uB123\uB294 \uC911\uC774\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
-    { id: "tia", speaker: "\uD2F0\uC544", body: "\uC557, \uB4E4\uCF30\uB2E4\u2026! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACC4\uC168\uB124\uC694! \uC800, \uC800\uB294 \uADF8\uB0E5 \uBCF4\uAE09 \uD68C\uC218 \uC911\uC774\uC5D0\uC694! \uC218\uBB38 \uC810\uAC80\uB3C4 \uD558\uB294 \uC911\uC774\uACE0\uC694!", cast: TIA_TRIO, act: "recoil" },
-    { id: "same", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC5B4, \uD2F0\uC544\uC796\uC544! \uC5EC\uAE30\uC11C \uBB50 \uD574? \uC124\uB9C8 \uB610 \uBC18\uC9DD\uC774\uB294 \uAC70 \uC8FC\uC6CC?", standing: "torika", act: "hop" },
-    { id: "veil", speaker: "\uD2F0\uC544", body: "\uD1A0\uB9AC\uCE74\uB3C4 \uC788\uC5C8\uB124! \uBC18\uC9DD\uC774\uB294 \uAC83\uB9CC \uC90D\uB294 \uAC74 \uC544\uB2C8\uC5D0\uC694. \uC774 \uC218\uBB38 \uADFC\uCC98\uB85C \uBCF4\uAE09 \uC0C1\uC790\uAC00 \uB5A0\uB0B4\uB824\uC640\uC11C, \uC4F8 \uB9CC\uD55C \uAC74 \uB2E4 \uAC74\uC838 \uB450\uB294 \uC911\uC774\uC5D0\uC694!", act: "bounce" },
-    { id: "useless", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8 \uBC18\uC9DD\uC774\uB294 \uC870\uAC01\uB4E4\uC740 \uC5B4\uB514\uC5D0 \uC4F0\uB294 \uAC70\uC57C? \uBCC4 \uC4F8\uBAA8\uB294 \uC5C6\uC5B4 \uBCF4\uC774\uB294\uB370\u2026", standing: "torika", act: "lean" },
-    { id: "droop", speaker: "\uD2F0\uC544", body: "\uC4F8\uBAA8\u2026 \uC5C6\uC5B4? \uC774\uAC70 \uB2E4 \uB0B4 \uBCF4\uBB3C\uC778\uB370\u2026", act: "faint" },
-    { id: "oops", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544, \uC544\uB2C8\uC57C! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC608\uC058\uB2E4\uB294 \uB73B\uC774\uC5C8\uC5B4!", standing: "torika", act: "shake" },
-    { id: "cheer", speaker: "\uD2F0\uC544", body: "\uC815\uB9D0? \uC5D0\uD5E4\uD5E4\u2026 \uADF8\uB7FC \uD1A0\uB9AC\uCE74\uD55C\uD14C\uB3C4 \uD2B9\uBCC4\uD788 \uD558\uB098 \uBCF4\uC5EC \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uAC19\uC774 \uBCF4\uC138\uC694!", act: "hopTwice" },
-    { id: "trail", speaker: "\uD2F0\uC544", body: "\uCF54\uB9C8\uAC00 \uC9C0\uB098\uAC04 \uAE38\uC774\uB77C\uBA74 \uC774 \uC218\uBB38 \uC544\uB798\uB85C \uC774\uC5B4\uC838 \uC788\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uB0B4\uAC00 \uC544\uB294 \uAC74 \uADF8\uAC8C \uB2E4\uC57C, \uC9C4\uC9DC\uB85C!", act: "nod" },
-    { id: "scent", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB3C \uB0C4\uC0C8 \uC704\uB85C \uB2E4\uB978 \uBC1C\uC790\uAD6D\uC774 \uC788\uC5B4\uC694. \uC544\uAE4C \uADF8 \uBB3C\uC18D \uC7A5\uB09C\uAFBC \uAC19\uAE30\uB3C4 \uD558\uACE0\uC694.", standing: "parua", act: "lean" },
-    { id: "laugh", speaker: "\uD2F0\uC544", body: "\uC544\uAE4C \uBB3C\uC18D\uC5D0\uC11C \uB204\uAC00 \uC6C3\uC5C8\uC5B4. \uB098 \uC544\uB2C8\uC57C! \uC9C4\uC9DC \uB098 \uC544\uB2C8\uACE0\u2026 \uD30C\uB8E8\uC544\uB3C4 \uC870\uC2EC\uD574. \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4\uC694.", act: "shake" },
-    { id: "gift", speaker: "\uD2F0\uC544", body: "\uC218\uBB38\uC740 \uB0B4\uAC00 \uC5F4\uC5B4 \uC904\uAC8C! \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uAC00\uB294 \uAE38\uC5D0 \uC4F0\uC138\uC694. \uC544, \uCC98\uC74C \uC8FC\uC6B4 \uC870\uAC01\uC740 \uC548 \uB3FC! \uADF8\uAC74 \uB0B4 \uC18C\uB9E4\uC5D0 \uC788\uC5B4\uC57C \uD574!", act: "puff" }
-  ])
-};
-var STAGE_1_9_PRE = {
-  id: "stage-1-9-pre",
-  startNodeId: "knock",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "knock", speaker: "", body: "\uC624\uD504\uB2DD \uC5F4\uCC28\uAC00 \uB2FF\uC558\uC5B4\uC57C \uD560 \uC815\uAC70\uC7A5. \uD50C\uB7AB\uD3FC \uB05D \uBD09\uC1C4\uBB38\uC774 \uC548\uCABD\uC5D0\uC11C \uCFF5\uCFF5 \uC6B8\uB9B0\uB2E4.", standing: "dodi", cast: ROGUE_TRIO },
-    { id: "inside", speaker: "\uC624\uBE44", body: "\uC544\uC640\uC640\u2026 \uB204, \uB204\uAD6C \uC788\uC5B4\uC694? \uC5F4\uCC28\uAC00 \uC624\uB298 \uC548 \uC640\uC11C \uBB38\uC774 \uC7A0\uACA8 \uBC84\uB838\uC5B4\uC694\u2026 \uB3C4\uC640\uC918\u2026!", cast: VOICE("obi", "dodi", "parua"), act: "tremble" },
-    { id: "who", speaker: "\uB3C4\uB514", body: "\uC624\uBE44\uC57C? \uAC70\uAE30 \uAC07\uD78C \uAC70\uC57C? \uC6B0\uB9AC \uC058\uB760 \uB85C\uADF8\uC57C, \uC870\uAE08\uB9CC \uAE30\uB2E4\uB824!", standing: "dodi", act: "hopTwice" },
-    { id: "watch", speaker: "\uC624\uBE44", body: '\uB2E4\uD589\uC774\uB2E4\u2026 \uB3C4\uB514, \uD30C\uB8E8\uC544\uB3C4 \uC788\uAD6C\uB098! \uADF8\uB7F0\uB370 \uBB38 \uC55E\uC5D0 \uBB54\uAC00 \uC11C\uC131\uC774\uB294 \uC18C\uB9AC\uAC00 \uB098. \uC544\uAE4C\uBD80\uD130 "\uC774 \uBB38\uC740 \uC548 \uC5F4\uB824 \uC788\uC5B4\uC57C \uD574" \uD558\uACE0 \uC911\uC5BC\uAC70\uB824\u2026!', act: "fright" },
-    { id: "sense", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBC1C\uC18C\uB9AC\uAC00 \uBB38 \uC55E\uC5D0 \uBAA8\uC5EC \uC788\uC5B4\uC694. \uC5F4\uB824\uBA74 \uC2F8\uC6CC\uC57C \uD574\uC694.", standing: "parua", act: "lean" }
-  ])
-};
-var STAGE_1_9_POST = {
-  id: "stage-1-9-post",
-  startNodeId: "open",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "open", speaker: "", body: "\uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uC548\uC5D0\uC11C \uC0C1\uC790\uB97C \uB04C\uC5B4\uC548\uC740 \uC573\uB41C \uC544\uC774\uAC00 \uBE44\uD2C0\uAC70\uB9AC\uBA70 \uB098\uC628\uB2E4.", standing: "torika", cast: ROGUE_TRIO },
-    { id: "obi", speaker: "\uC624\uBE44", body: "\uACE0, \uACE0\uB9C8\uC6CC\u2026! \uC544, \uC5F0\uAD6C\uC6D0\uB2D8\uB3C4 \uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uC800\uB294 \uC624\uBE44\uC608\uC694. \uC774 \uC815\uAC70\uC7A5 \uBCF4\uAE09 \uAC80\uC218\uB97C \uD558\uB358 \uC911\uC774\uC5C8\uC5B4\uC694.", cast: [{ id: "torika", slot: "left" }, { id: "obi", slot: "center" }, { id: "dodi", slot: "right" }], act: "bounce" },
-    { id: "store", speaker: "\uD1A0\uB9AC\uCE74", body: "A-LAB24 \uD3B8\uC758\uC810 \uC720\uB2C8\uD3FC\uC774\uB2E4! \uB3C4\uC2DC\uC5D0\uB3C4 \uC788\uC5C8\uC5B4?", standing: "torika", act: "hop" },
-    { id: "lab", speaker: "\uC624\uBE44", body: "\uC751, \uC911\uC559 \uC5F0\uAD6C\uC18C 1\uCE35\uC774\uC57C. \uC624\uB298 \uC5F4\uCC28 \uC7AC\uACE0\uAC00 \uBABB \uB4E4\uC5B4\uC640\uC11C\u2026 \uC5F0\uAD6C\uC6D0\uB2D8, \uC774\uAC74 \uD3D0\uAE30 \uC9C1\uC804\uC774\uB77C \uBAB0\uB798 \uCC59\uAE34 \uAC70\uC608\uC694.", act: "shrink" },
-    { id: "gift", speaker: "\uC624\uBE44", body: "\uCE58\uC988\uCF00\uC774\uD06C\uB791 \uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C\uC608\uC694. \uAE30\uD55C\uC774 \uC624\uB298\uAE4C\uC9C0\uB77C\uC11C\uC694. \uB4DC\uC138\uC694, \uC544\uAE5D\uC796\uC544\uC694.", act: "nod" },
-    { id: "dodi", speaker: "\uB3C4\uB514", body: '\uAE30\uD55C \uC9C1\uC804 \uC7AC\uACE0! \uC774\uAC74 "\uAD6C\uD638 \uBB3C\uC790"\uB85C \uC801\uC5B4 \uB458\uAC8C!', standing: "dodi", act: "hopTwice" },
-    { id: "wait", speaker: "\uC624\uBE44", body: "\uC5F0\uAD6C\uC18C\uC5D0\uC11C \uAE30\uB2E4\uB9B4\uAC8C\uC694. \uAC70\uAE30 \uC624\uC2DC\uBA74 \uC815\uC2DD\uC73C\uB85C \uD314 \uC218 \uC788\uC5B4\uC694!", act: "bounce" }
-  ])
-};
-var STAGE_1_10_PRE = {
-  id: "stage-1-10-pre",
-  startNodeId: "wait",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "wait", speaker: "", body: "\uACBD\uACC4\uBB38 \uC55E. \uB2EB\uD78C \uBB38 \uC55E\uC5D0 \uCF54\uB9C8\uAC00 \uC11C \uC788\uB2E4. \uCC98\uC74C\uBD80\uD130 \uAC70\uAE30 \uC788\uC5C8\uB2E4\uB294 \uB4EF\uC774.", standing: "koma", cast: ALONE("koma") },
-    { id: "come", speaker: "\uCF54\uB9C8", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC62C \uC904\uC740 \uBAB0\uB790\uB2E4.", standing: "koma", act: "nod" },
-    { id: "name", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8\u2026 \uB9DE\uC8E0? \uC5F4\uCC28\uB97C \uD3ED\uD30C\uD55C \uBD84.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
-    { id: "goal", speaker: "\uCF54\uB9C8", body: "\uBAA9\uD45C\uB294 \uC5F0\uAD6C\uC6D0. \uADF8\uAC83\uBFD0\uC774\uB2E4. \uD574\uCE58\uC9C0 \uC54A\uB294\uB2E4.", standing: "koma" },
-    { id: "train", speaker: "\uB3C4\uB514", body: "\uADF8, \uADF8\uCE58\uB9CC \uC5F4\uCC28\uB294 \uB5A8\uC5B4\uC84C\uC796\uC544\uC694!", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "koma", slot: "right" }], act: "fright" },
-    { id: "order", speaker: "\uCF54\uB9C8", body: "\u2026\uB5A8\uC5B4\uB728\uB9AC\uB77C\uACE0 \uD588\uB2E4. \uB0B4\uAC00 \uC815\uD55C \uAC8C \uC544\uB2C8\uB2E4.", standing: "koma", act: "shrink" },
-    { id: "who", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB204\uAC00\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }] },
-    { id: "above", speaker: "\uCF54\uB9C8", body: "\u2026\uC704\uC5D0\uC11C. \uBB38\uC740 \uB0B4\uAC00 \uB9C9\uB294\uB2E4. \uB3CC\uC544\uAC00\uB77C, \uC5F0\uAD6C\uC6D0. \uB3CC\uC544\uAC00\uC9C0 \uC54A\uC73C\uBA74 \uB370\uB824\uAC04\uB2E4.", standing: "koma", cue: "impact" }
-  ])
-};
-var STAGE_1_10_POST = {
-  id: "stage-1-10-post",
-  startNodeId: "down",
-  backdrop: "battlefield",
-  nodes: [
-    { id: "down", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC120 \uCC44\uB85C \uC228\uC744 \uACE0\uB978\uB2E4. \uAF2C\uB9AC \uB05D\uC758 \uD1B1\uB2C8\uAC00 \uAC00\uB298\uAC8C \uB5A8\uB9B0\uB2E4.", standing: "koma", cast: [{ id: "torika", slot: "left" }, { id: "koma", slot: "right" }], nextId: "report" },
-    { id: "report", speaker: "\uCF54\uB9C8", body: "\u2026\uC84C\uB2E4. \uBCF4\uACE0\uB294 \uB0B4\uAC00 \uD55C\uB2E4.", standing: "koma", act: "shrink", nextId: "ask" },
-    {
-      id: "ask",
-      speaker: "\uD1A0\uB9AC\uCE74",
-      body: "\uB300\uC7A5\uB2D8\u2026 \uD55C \uB9D0\uC500 \uD574 \uC8FC\uC2E4\uB798\uC694?",
-      standing: "torika",
-      act: "lean",
-      choices: [
-        { id: "notfail", label: "\uB108\uD76C\uB294 \uC2E4\uD328\uC791\uC774 \uC544\uB2C8\uC57C", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "talk", label: "\uB2E4\uC74C\uC5D4 \uAC19\uC774 \uC774\uC57C\uAE30\uD558\uC790", nextId: "answerB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
-      ]
-    },
-    { id: "answerA", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uB9D0\uC740 \uC704\uC5D0\uC11C \uC544\uBB34\uB3C4 \uC548 \uD588\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
-    { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30. \uADF8\uAC83\uB3C4 \uC704\uC5D0\uC11C\uB294 \uC5C6\uB358 \uC77C\uC774\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
-    { id: "leave", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0 \uAC00\uC11C \uB9D0\uD558\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBB38 \uB108\uBA38\uB85C \uC544\uC9C1 \uAC00\uC9C0 \uC54A\uC558\uB2E4\uACE0.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
-    { id: "crash", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uBB38\uC9DD\uC774 \uB0A0\uC544\uC640 \uB545\uC5D0 \uBC15\uD78C\uB2E4.", cue: "explosion", nextId: "lexia" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC81C\uAC00 \uC654\uC5B4\uC694! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uC5B4\uC694. \uC815\uD655\uD788\uB294\u2026 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uC5B4\uC694.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
-    { id: "hello", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hopTwice", nextId: "queen" },
-    { id: "queen", speaker: "\uB809\uC2DC\uC544", body: "\uC571\uC194\uB8E8\uD2B8 \uD33D\uC758 \uB809\uC2DC\uC544\uC608\uC694. \uC774\uC81C\uBD80\uD130 \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uC81C\uAC00 \uCC45\uC784\uC9C8\uAC8C\uC694. \uB9C8\uC2A4\uD130, \uB530\uB77C\uC624\uC138\uC694.", standing: "lexia", act: "nod", nextId: "door" },
-    { id: "door", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uBB38\uC9DD\uC774 \uC544\uC9C1 \uC190\uC5D0 \uC788\uC5B4\uC694.", standing: "parua", cast: [{ id: "parua", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean", nextId: "drop" },
-    { id: "drop", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uB2F9\uB2F9\uD55C \uC785\uC131\uC5D4 \uC18C\uD488\uC774 \uD544\uC694\uD558\uC796\uC544. \uB0B4\uB824\uB193\uC744\uAC8C.", standing: "lexia", act: "shrink", nextId: "go" },
-    { id: "go", speaker: "\uD1A0\uB9AC\uCE74", body: "\uADF8\uB7FC \uB3C4\uC2DC\uB85C \uAC00\uC694! \uC774\uBC88\uC5D4 \uC6B0\uB9AC\uC5D0\uAC8C \uB4E0\uB4E0\uD55C \uAE38\uC7A1\uC774\uAC00 \uC788\uC73C\uB2C8\uAE4C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "lexia", slot: "right" }], act: "hop" }
-  ]
-};
-var CHAPTER_1_STORIES = [
-  STAGE_1_2_POST,
-  STAGE_1_4_PRE,
-  STAGE_1_5_PRE,
-  STAGE_1_5_POST,
-  STAGE_1_6_POST,
-  STAGE_1_7_PRE,
-  STAGE_1_8_PRE,
-  STAGE_1_9_PRE,
-  STAGE_1_9_POST,
-  STAGE_1_10_PRE,
-  STAGE_1_10_POST
-];
-
-// src/data/dialogues/chapter2.ts
-init_define_import_meta_env();
-var VOICE2 = (voice, left, right) => [{ id: left, slot: "left" }, { id: voice, slot: "center", remote: true }, { id: right, slot: "right" }];
-var SOLO = (id) => [{ id, slot: "center" }];
-var PAIR = (id, other = "torika") => [
-  { id: other, slot: "left" },
-  { id, slot: "right" }
-];
-var STAGE_2_1_PRE = {
-  id: "stage-2-1-pre",
-  startNodeId: "enter",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "enter", speaker: "\uB809\uC2DC\uC544", body: "\uBB38\uC740 \uC81C\uAC00 \uC5F4\uC5C8\uC5B4\uC694, \uB9C8\uC2A4\uD130. \uC774\uC81C\uBD80\uD130\uB294 \uC81C\uAC00 \uC55E\uC7A5\uC11C\uC694!", standing: "lexia", cast: PAIR("lexia"), act: "hop" },
-    { id: "rule", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB809\uC2DC\uC544 \uB2D8, \uBB38\uC740 \uBF51\uB294 \uAC8C \uC544\uB2C8\uB77C \uC5EC\uB294 \uAC70\uC608\uC694.", standing: "torika", act: "lean" },
-    { id: "huh", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC5EC\uB294 \uAC70\uB098 \uBF51\uB294 \uAC70\uB098 \uACB0\uACFC\uB294 \uAC19\uC544. \uC18C\uB9AC\uAC00 \uB2E4\uB97C \uBFD0\uC774\uC9C0.", standing: "lexia", act: "shrink" },
-    { id: "print", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC5EC\uAE30 \uBC1C\uC790\uAD6D\uC774\uC694. \uCF54\uB9C8\uC758 \uBC1C\uC790\uAD6D\uC774 \uC785\uAD6C\uC5D0\uC11C \uB531 \uBA48\uCDB0 \uC788\uC5B4\uC694.", standing: "dodi", cast: [{ id: "dodi", slot: "left" }, { id: "lexia", slot: "right" }], act: "lean" },
-    { id: "lost", speaker: "\uB3C4\uB514", body: "\uADF8\uB9AC\uACE0 \uADF8 \uB4A4\uB85C \uC5B4\uC9C0\uB7EC\uC6B4 \uBC1C\uC790\uAD6D\uC774 \uC14B\uC774\uC5D0\uC694. \uC774\uCABD\uC800\uCABD \uD5E4\uB9E8 \uD754\uC801\u2026 \uC7E4\uB124\uB3C4 \uAE38\uC744 \uC783\uC740 \uAC83 \uAC19\uC544\uC694.", standing: "dodi", act: "hopTwice" },
-    { id: "again", speaker: "\uB809\uC2DC\uC544", body: "\uADF8\uB7FC \uB2E4\uC2DC \uCAD3\uC544\uC624\uACA0\uB124. \uB9DE\uC774\uD560 \uC900\uBE44 \uD574 \uB46C.", standing: "lexia", act: "nod", cue: "rumble" }
-  ])
-};
-var STAGE_2_2_POST = {
-  id: "stage-2-2-post",
-  startNodeId: "line",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "line", speaker: "", body: "\uBA48\uCDB0 \uC788\uB358 \uC870\uB9BD \uB77C\uC778\uC774 \uB35C\uCEF9, \uD558\uACE0 \uB3CC\uAE30 \uC2DC\uC791\uD55C\uB2E4. \uB808\uBC84 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), act: "squash", cue: "rumble" },
-    { id: "denial", speaker: "\uD1A0\uBE44", body: "\uC774, \uC774\uAC74 \uC544\uB2C8\uC57C! \uAE30\uB300\uC5B4 \uC130\uB294\uB370 \uC800\uC808\uB85C \uB0B4\uB824\uAC04 \uAC70\uB77C\uACE0!", standing: "toby", act: "shake" },
-    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. \uB77C\uC778\uC774 \uB3CC\uACE0 \uC788\uC73C\uB2C8 \uC18C\uB9AC\uAC00 \uB2E4 \uD37C\uC9C4\uB2E4. \uC5F0\uAD6C\uC6D0, \uC0C1\uC790\uB97C \uBC1B\uC544\uB77C. \uC774\uCABD\uC5D0\uC11C \uBCF4\uB0B4\uB294 \uBCF4\uAE09\uC774\uB2E4.", cast: VOICE2("seira", "torika", "toby"), act: "nod" },
-    { id: "box", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uB97C \uD0C0\uACE0 \uC0C1\uC790 \uD558\uB098\uAC00 \uC5F0\uAD6C\uC6D0 \uBC1C\uCE58\uAE4C\uC9C0 \uD758\uB7EC\uC628\uB2E4. \uC548\uC5D0\uB294 \uAC13 \uAD6C\uC6B4 \uCE58\uC988\uCF00\uC774\uD06C \uC2DC\uC81C\uD488\uC774 \uB4E4\uC5B4 \uC788\uB2E4.", standing: "torika" },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCE58\uC988\uCF00\uC774\uD06C\uC608\uC694! \uB204\uAC00 \uBCF4\uB0B4\uC2E0 \uAC70\uC8E0?", standing: "torika", act: "hopTwice" },
-    { id: "spina", speaker: "\uC2A4\uD53C\uB098", body: "\uB098\uC774\uD2B8 \uAE30\uC5B4\uC758 \uC778\uC0AC\uB2E4. \uC774 \uD68C\uB791\uC5D0\uC11C\uB294 \uC870\uC6A9\uD788, \uBE68\uB9AC\uAC00 \uADDC\uCE59\uC774\uB2E4. \uD1A0\uBE44\uB77C\uB294 \uC544\uC774\uC5D0\uAC8C\uB3C4 \uC804\uD574\uB77C." },
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uB2E4 \uB4E4\uC5C8\uAC70\uB4E0?! \uB098\uB3C4 \uC870\uC6A9\uD788 \uD560 \uC218 \uC788\uC5B4!", standing: "toby", act: "rage" }
-  ])
-};
-var STAGE_2_4_PRE = {
-  id: "stage-2-4-pre",
-  startNodeId: "dark",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "dark", speaker: "", body: "\uC911\uACC4\uC2E4\uC740 \uCE84\uCE84\uD558\uB2E4. \uC5B4\uB518\uAC00\uC5D0\uC11C \uC228\uC18C\uB9AC\uAC00 \uC14B \uB4E4\uB9B0\uB2E4.", cast: [] },
-    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uBCBD\uC5D0 \uD45C\uC2DD\uC774 \uC788\uC5B4\uC694. \uC810 \uD558\uB098\uB294 \u300C\uC4F8 \uC218 \uC5C6\uC74C\u300D, \uC120 \uD558\uB098\uB294 \u300C\uC62E\uAE40\u300D\uC774\uB798\uC694.", standing: "dodi", cast: PAIR("dodi", "parua"), act: "lean" },
-    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB3C4\uB514, \uC228\uC18C\uB9AC\uAC00 \uC14B\uC774\uC5D0\uC694. \uC6B0\uB9AC \uC228\uC18C\uB9AC \uB9D0\uACE0.", standing: "parua", act: "tremble" },
-    { id: "light", speaker: "", body: "\uC2A4\uC704\uCE58 \uC18C\uB9AC\uC640 \uD568\uAED8 \uBD88\uC774 \uB4E4\uC5B4\uC628\uB2E4. \uB208\uC55E\uC5D0 \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4.", cast: RAID_TRIO, cue: "impact" },
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC73C\uC545! \uBD88 \uCF1C\uC9C0 \uB9D0\uB7AC\uC796\uC544!", standing: "toby", act: "fright" },
-    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uBA3C\uC800 \uCF20 \uAC74 \uC7E4\uB124\uC796\uC544? \uC544, \uADF8\uB0E5 \uC5BC\uAD74 \uBCF4\uB2C8\uAE4C \uBC18\uAC11\uB2E4.", standing: "ripa", act: "hop" },
-    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC2F8\uC6CC\uC57C \uD558\uC9C0? \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD574?", standing: "amo", act: "shrink" }
-  ])
-};
-var STAGE_2_5_PRE = {
-  id: "stage-2-5-pre",
-  startNodeId: "end",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "end", speaker: "", body: "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5\uC758 \uB05D. \uB450\uAC74\uC744 \uB20C\uB7EC \uC4F4 \uC544\uBAA8\uAC00 \uC120\uB85C \uD55C\uAC00\uC6B4\uB370\uC5D0 \uD63C\uC790 \uC11C \uC788\uB2E4.", standing: "amo", cast: SOLO("amo") },
-    { id: "alone", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC544\uBAA8 \uC528 \uD63C\uC790\uC608\uC694? \uD1A0\uBE44 \uC528\uC640 \uB9AC\uD30C \uC528\uB294\uC694?", standing: "torika", cast: PAIR("amo"), act: "lean" },
-    { id: "away", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC624\uC9C0 \uB9D0\uB77C\uACE0 \uD588\uC5B4. \uC5EC\uAE30\uB294 \uB0B4\uAC00 \uD63C\uC790 \uC11C\uC57C \uD558\uB294 \uACF3\uC774\uC57C.", standing: "amo", act: "nod" },
-    { id: "why", speaker: "\uC544\uBAA8", body: "\uC800\uAE30 \uB77C\uC778 \uB05D, \uC800 \uC790\uB9AC\uC5D0\uC11C \uB0B4\uAC00 \uCC98\uC74C \uC62C\uB77C\uAC00 \uD45C\uC2DD\uC744 \uB2EC\uACE0 \uB0B4\uB824\uC84C\uC5B4. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0.", standing: "amo", act: "shrink" },
-    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC5F0\uAD6C\uC6D0\uC774 \uD55C \uB9D0, \uC9C4\uC9DC\uC778\uC9C0 \uD655\uC778\uD558\uB7EC \uC654\uC5B4. \uC9C0\uB098\uAC00\uB824\uBA74\u2026 \uB0B4\uAC00 \uD655\uC778\uD574\uC57C \uD574.", standing: "amo", act: "tremble" }
-  ])
-};
-var STAGE_2_5_POST = {
-  id: "stage-2-5-post",
-  startNodeId: "down",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "down", speaker: "", body: "\uC544\uBAA8\uAC00 \uBB34\uB98E\uC744 \uAFC7\uC740 \uCC44 \uC228\uC744 \uACE0\uB978\uB2E4. \uB20C\uB7EC \uC4F4 \uB450\uAC74\uC774 \uD758\uB7EC\uB0B4\uB9B0\uB2E4.", standing: "amo", cast: PAIR("amo", "parua") },
-    { id: "hood", speaker: "\uC544\uBAA8", body: "\u2026\uC774\uAC78 \uBC97\uC740 \uC801\uC774 \uC5C6\uC5C8\uC5B4. \uD45C\uC2DD\uC774 \uBCF4\uC77C\uAE4C \uBD10.", standing: "amo", act: "shrink" },
-    { id: "see", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC9C0\uAE08\uC740 \uC548 \uBCF4\uC5EC\uC694. \uBCF4\uC774\uB294 \uAC74 \uC544\uBAA8 \uC528 \uC5BC\uAD74\uC774\uC5D0\uC694.", standing: "parua", act: "lean" },
-    { id: "up", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB807\uAD6C\uB098. \uADF8\uB7FC \uACC4\uC18D \uC62C\uB824 \uB458\uAE4C.", standing: "amo", act: "nod" },
-    { id: "pass", speaker: "\uC544\uBAA8", body: "\uC9C0\uB098\uAC00\uB3C4 \uB3FC. \uB300\uC2E0\u2026 \uD1A0\uBE44\uAC00 \uB2E4\uCE58\uC9C0 \uC54A\uAC8C \uD574 \uC918.", standing: "amo", act: "hop" }
-  ])
-};
-var STAGE_2_6_POST = {
-  id: "stage-2-6-post",
-  startNodeId: "belt",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "belt", speaker: "", body: "\uC544\uBB34\uB3C4 \uC5C6\uB294 \uC0DD\uC0B0\uC120\uC774 \uC0C1\uC790\uB97C \uC26C\uC9C0 \uC54A\uACE0 \uB0B4\uBCF4\uB0B8\uB2E4. \uC0C1\uC790\uB9C8\uB2E4 \uAC19\uC740 \uD45C\uC2DD\uC774 \uBD99\uC5B4 \uC788\uB2E4.", standing: "dodi", cast: PAIR("dodi", "parua") },
-    { id: "delopi", speaker: "\uB378\uB85C\uD53C", body: "\uC73C\uD788\uD788, \uB77C\uC778\uC744 \uAC70\uAFB8\uB85C \uB3CC\uB838\uB354\uB2C8 \uC0C1\uC790\uAC00 \uB2E4 \uC6C3\uC73C\uBA74\uC11C \uB3CC\uC544\uC624\uB124? \uC5F0\uAD6C\uC6D0, \uB180\uB790\uC9C0?", cast: VOICE2("delopi", "parua", "dodi"), act: "bounce" },
-    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB378\uB85C\uD53C \uC528, \uADF8\uAC74 \uC800\uD76C\uB97C \uC704\uD5D8\uD558\uAC8C \uD574\uC694.", standing: "parua", act: "tremble" },
-    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uB378\uB85C\uD53C\uB294 \uB0B4\uAC00 \uB9E1\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0, \uC774\uC81C\uBD80\uD130\uB294 \uB0B4 \uC2E0\uD638\uB97C \uB530\uB77C\uC640\uB77C. \uB9D0 \uC5C6\uC774, \uBE68\uB9AC.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" },
-    { id: "hush", speaker: "\uB3C4\uB514", body: '\uADF8, \uADF8\uB7FC \uC228 \uC8FD\uC774\uACE0\u2026 \uC774\uAC74 "\uCE68\uBB35 \uC774\uB3D9"\uC73C\uB85C \uC801\uC5B4 \uB458\uAC8C\uC694!', standing: "dodi", act: "hop" },
-    { id: "quiet", speaker: "\uB8E8\uCE74", body: "\uADF8 \uC18C\uB9AC\uAC00 \uC81C\uC77C \uD06C\uB2E4.", act: "lean" },
-    { id: "tail", speaker: "", body: "\uCC9C\uC7A5 \uBC30\uAD00 \uC0AC\uC774\uB85C \uB9C8\uB514\uC9C4 \uAF2C\uB9AC \uD558\uB098\uAC00 \uC9C0\uB098\uAC04\uB2E4. \uB05D\uC774 \uAC08\uACE0\uB9AC\uCC98\uB7FC \uD71C \uADF8\uB9BC\uC790\uAC00 \uBCBD\uC744 \uD6D1\uACE0 \uC0AC\uB77C\uC9C4\uB2E4.", cast: [{ id: "dodi", slot: "left" }, { id: "pulsi", slot: "right", veiled: true }], cue: "rumble" },
-    { id: "saw", speaker: "\uB3C4\uB514", body: "\uB300, \uB300\uC7A5\uB2D8! \uBC29\uAE08 \uC704\uC5D0\uC11C \uAF2C\uB9AC\uAC00 \uC9C0\uB098\uAC14\uC5B4\uC694! \uC774\uB807\uAC8C, \uC774\uB807\uAC8C \uD718\uC5B4\uC9C4 \uAC70\uC694!", standing: "dodi", act: "hopTwice" },
-    { id: "who", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB77C\uC778\uC774 \uB3CC\uC544\uAC00\uB294 \uC18C\uB9AC\uC5D0 \uC11E\uC5EC\uC11C \uBC1C\uC18C\uB9AC\uAC00 \uC548 \uB4E4\uB838\uC5B4\uC694. \uB378\uB85C\uD53C \uC528 \uC7A5\uB09C\uC740 \uC544\uB2C8\uC5D0\uC694.", standing: "parua", cast: PAIR("dodi", "parua"), act: "tremble" },
-    { id: "mark", speaker: "\uB8E8\uCE74", body: "\uC0C1\uC790 \uC704 \uD45C\uC2DD\uC744 \uBD10\uB77C. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uC544\uB2C8\uB77C \uD68C\uC218 \uD45C\uC2DD\uC774\uB2E4. \uC774 \uD68C\uB791\uC5D0\uB294 \uC6B0\uB9AC \uB9D0\uACE0\uB3C4 \uBB3C\uAC74\uC744 \uAC70\uB450\uB7EC \uC628 \uC790\uAC00 \uC788\uB2E4.", cast: VOICE2("luka", "parua", "dodi"), act: "nod" }
-  ])
-};
-var STAGE_2_7_PRE = {
-  id: "stage-2-7-pre",
-  startNodeId: "room",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "room", speaker: "", body: "\uC555\uB825 \uACA9\uC2E4\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uB4F1 \uB4A4\uC5D0\uC11C \uBB38\uC774 \uB2EB\uD78C\uB2E4. \uC548\uCABD\uC5D0\uB294 \uC5F0\uAD6C\uC6D0 \uD63C\uC790\uB2E4.", cast: [], cue: "impact" },
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC5B4, \uC5B4! \uBB38\uC774 \uB2EB\uD614\uC5B4! \uC548\uC5D0\uC11C \uC18C\uB9AC\uAC00 \uC548 \uB098, \uC5F4\uC5B4! \uC5F4\uB77C\uACE0!", standing: "toby", cast: RAID_TRIO, act: "shake" },
-    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB0B4\uAC00 \uC548 \uADF8\uB7AC\uC5B4. \uB808\uBC84\uB294 \uC548 \uAC74\uB4DC\uB838\uC5B4.", standing: "amo", act: "shrink" },
-    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC124\uBE44\uAC00 \uC624\uC791\uB3D9\uD55C \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC2F8\uC6B0\uB824\uB358 \uAC83\uB3C4 \uC544\uB2CC\uB370?", standing: "ripa", act: "recoil" },
-    { id: "toby2", speaker: "\uD1A0\uBE44", body: "\uBE44\uCF1C \uBD10! \uB0B4\uAC00 \uC5F4\uAC8C!", standing: "toby", act: "rage", cue: "rumble" }
-  ])
-};
-var STAGE_2_7_POST = {
-  id: "stage-2-7-post",
-  startNodeId: "tear",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "tear", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uACA9\uC2E4 \uBB38\uC774 \uBC14\uB2E5\uC5D0 \uC4F0\uB7EC\uC9C4\uB2E4. \uBB38 \uC55E\uC5D0 \uD1A0\uBE44\uAC00 \uC228\uC744 \uBAB0\uC544\uC26C\uBA70 \uC11C \uC788\uB2E4.", standing: "toby", cast: PAIR("toby"), cue: "explosion" },
-    { id: "safe", speaker: "\uD1A0\uBE44", body: "\uAD18, \uAD1C\uCC2E\uC544?! \uB2E4\uCE5C \uB370\uB294 \uC5C6\uC9C0?", standing: "toby", act: "fright" },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uD1A0\uBE44 \uC528\uAC00 \uBB38\uC744 \uB72F\uC5C8\uC5B4\uC694\u2026 \uB300\uC7A5\uB2D8\uC744 \uAD6C\uD558\uB824\uACE0\uC694.", standing: "torika", act: "lean" },
-    { id: "awkward", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uAC8C \uC544\uB2C8\uB77C! \uBB38\uC774 \uAC70\uC2AC\uB824\uC11C \uADF8\uB7F0 \uAC70\uC57C! \u2026\uBCC4 \uB73B \uC5C6\uC5B4!", standing: "toby", act: "tremble" },
-    { id: "silence", speaker: "", body: "\uC544\uBB34\uB3C4 \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4. \uBF51\uD78C \uBB38\uC9DD\uB9CC \uCC9C\uCC9C\uD788 \uC4F0\uB7EC\uC9C4 \uC790\uB9AC\uC5D0\uC11C \uC2DD\uB294\uB2E4." },
-    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9C8\uC6CC\uC694, \uD1A0\uBE44 \uC528. \uC774\uC81C \uAC00\uC694.", standing: "torika", act: "nod" }
-  ])
-};
-var STAGE_2_8_PRE = {
-  id: "stage-2-8-pre",
-  startNodeId: "furnace",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "furnace", speaker: "", body: "\uAEBC\uC838 \uAC00\uB294 \uC6A9\uAD11\uB85C \uACC1. \uCF54\uB9C8\uAC00 \uCABC\uADF8\uB824 \uC549\uC544 \uBCBD\uC758 \uD3D0\uAE30 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.", standing: "koma", cast: SOLO("koma") },
-    { id: "see", speaker: "\uCF54\uB9C8", body: "\u2026\uC654\uB098.", standing: "koma", act: "nod" },
-    { id: "fight", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2F8\uC6B0\uC2E4 \uAC74\uAC00\uC694, \uCF54\uB9C8 \uC528?", standing: "torika", cast: PAIR("koma"), act: "lean" },
-    { id: "no", speaker: "\uCF54\uB9C8", body: "\uC2F8\uC6B0\uC9C0 \uC54A\uB294\uB2E4. \uC9C0\uAE08\uC740.", standing: "koma" },
-    { id: "above", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0\uC11C\uB294 \uC544\uC9C1 \uBAA8\uB978\uB2E4. \uC774 \uD45C\uC2DD\uC744 \uB2E6\uB294 \uAC83\uB3C4. \uB108\uD76C\uAC00 \uC5EC\uAE30\uAE4C\uC9C0 \uC628 \uAC83\uB3C4.", standing: "koma", act: "shrink" },
-    { id: "trio", speaker: "\uB9AC\uD30C", body: "\u2026\uCF54\uB9C8, \uB108 \uC9C0\uAE08 \uBB50 \uD558\uB294 \uAC70\uC57C? \uC704\uC5D0\uC11C \uBAA8\uB974\uB294 \uC77C\uC744 \uD574\uB3C4 \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
-    { id: "leave", speaker: "\uCF54\uB9C8", body: "\u2026\uAC00\uB77C. \uB300\uC2E0 \uC774\uCABD\uC73C\uB85C \uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" }
-  ])
-};
-var STAGE_2_8_POST = {
-  id: "stage-2-8-post",
-  startNodeId: "drop",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "drop", speaker: "", body: "\uC6A9\uAD11\uB85C \uC704 \uD30C\uC774\uD504\uC5D0\uC11C \uAC00\uBCBC\uC6B4 \uB0A0\uAC2F\uC18C\uB9AC\uAC00 \uB09C\uB2E4. \uC7A0\uC790\uB9AC\uC758 \uB0A0\uAC1C\uB97C \uC811\uC740 \uADF8\uB9BC\uC790\uC640, \uBAB8\uC9D1\uB9CC \uD55C \uD131\uC744 \uAC00\uC9C4 \uADF8\uB9BC\uC790\uAC00 \uC0AC\uBFD0\uD788 \uB0B4\uB824\uC120\uB2E4.", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "center" }, { id: "mir", slot: "right" }], cue: "impact" },
-    { id: "hello", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uB2F9\uC2E0\uC774\u2026 \uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694? \uC5ED\uC2DC\u2026 \uB4E3\uB358 \uB300\uB85C\u2026 \uC5B4\uD760.", standing: "neuri", act: "hop" },
-    { id: "koma", speaker: "\uB124\uC6B0\uB9AC", body: "\uADF8\uAC74 \uADF8\uB807\uACE0, \uCF54\uB9C8 \uB2D8! \uACB0\uAD6D\u2026 \uACB0\uAD6D \uC2E4\uD328\uD558\uC168\uB124\uC694?", standing: "neuri", act: "lean" },
-    { id: "komaReply", speaker: "\uCF54\uB9C8", body: "\u2026\uB124\uC6B0\uB9AC. \uBCF4\uACE0\uD558\uB7EC \uC628 \uAC83\uC778\uAC00.", standing: "koma", act: "shrink" },
-    { id: "polite", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uBCF4\uACE0\uB77C\uB2C8\uC694. \uC800\uD76C \uAC19\uC740 \uB9D0\uB2E8\uC774 \uC5B4\uCC0C \uAC10\uD788. \uB2E4\uB9CC \uC704\uC5D0\uC11C \u300C\uD14C\uB7EC\uC870\uB294 \uC774\uC81C \uC26C\uC154\uB3C4 \uB41C\uB2E4\u300D\uACE0 \uD558\uC154\uC11C\uC694. \uC544\uC8FC, \uC544\uC8FC \uC815\uC911\uD558\uAC8C \uC804\uD574 \uB4DC\uB9AC\uB7EC \uC654\uB2F5\uB2C8\uB2E4.", standing: "neuri", act: "bounce" },
-    { id: "mir", speaker: "\uBBF8\uB974", body: "\u2026\uAE38. \uB9C9\uD600 \uC788\uB2E4. \uCE58\uC6B4\uB2E4.", standing: "mir", act: "nod" },
-    { id: "bye", speaker: "\uB124\uC6B0\uB9AC", body: "\uC544, \uB9DE\uC544\uC694, \uBBF8\uB974. \uADF8\uB7FC \uC5F0\uAD6C\uC6D0\uB2D8, \uB2E4\uC74C\uC5D0 \uBD59\uC9C0\uC694. \uADF8\uB54C\uB294 \uC800\uD76C \uD68C\uC218\uC870\uAC00 \uC9C1\uC811 \uBAA8\uC2DC\uACA0\uC2B5\uB2C8\uB2E4. \uC5F0\uAD6C\uC6D0\uB2D8.", standing: "neuri", act: "nod", leave: "blastOff", cast: [{ id: "koma", slot: "left" }] },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uCF54\uB9C8 \uC528\u2026 \uC2E4\uD328\uD558\uC168\uB2E4\uB294 \uAC8C \uBB34\uC2A8 \uB9D0\uC774\uC5D0\uC694?", standing: "torika", cast: PAIR("koma"), act: "lean" },
-    { id: "later", speaker: "\uCF54\uB9C8", body: "\u2026\uB098\uC911\uC5D0 \uB9D0\uD558\uC9C0. \uC800 \uB458\uC774 \uC774 \uAD6C\uC5ED\uAE4C\uC9C0 \uB0B4\uB824\uC654\uB2E4\uB294 \uAC83\uB9CC \uAE30\uC5B5\uD574\uB77C.", standing: "koma", act: "shrink" }
-  ])
-};
-var STAGE_2_9_POST = {
-  id: "stage-2-9-post",
-  startNodeId: "hole",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "hole", speaker: "", body: "\uCEE8\uBCA0\uC774\uC5B4\uAC00 \uB05D\uB098\uB294 \uACF3\uC5D0 \uBC14\uB2E5\uC774 \uC5C6\uB2E4. \uD3D0\uAE30 \uD45C\uC2DD\uC774 \uBD99\uC740 \uC0C1\uC790\uB4E4\uC774 \uC18C\uB9AC \uC5C6\uC774 \uC5B4\uB460\uC73C\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", standing: "dodi", cast: PAIR("dodi", "lexia") },
-    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uB2E4\uB4E4 \uC774 \uC544\uB798\uB85C \uD758\uB7EC\uAC04 \uAC70\uC608\uC694. \uC4F8 \uC218 \uC5C6\uC74C\uC774\uB77C\uACE0 \uC801\uD78C \uCC44\uB85C\u2026", standing: "dodi", act: "shrink" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC544\uB798\uC5D0\uB294 \uBB50\uAC00 \uC788\uC5B4?", standing: "lexia", act: "lean" },
-    { id: "dei", speaker: "\uB370\uC774", body: "\uAD6C\uBA4D \uAC00\uC7A5\uC790\uB9AC\uC5D0 \uB099\uC11C \uAC19\uC740 \uD654\uC0B4\uD45C\uAC00 \uC788\uC5B4. \uB0B4\uAC00 \uADF8\uB9B0 \uAC70 \uC544\uB2C8\uC57C. \uB204\uAD70\uAC00\uAC00 \uC544\uB798\uB85C \uD5A5\uD558\uB294 \uAE38\uC744 \uD45C\uC2DC\uD574 \uB480\uC5B4.", cast: VOICE2("deina", "lexia", "dodi"), act: "lean" },
-    { id: "stay", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC740 \uAD6C\uBA4D \uC55E\uC5D0\uC11C \uC624\uB798 \uC11C \uC788\uB2E4. \uB300\uB2F5\uD558\uB294 \uC774\uB294 \uC5C6\uB2E4." },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uAC00\uC694, \uB300\uC7A5\uB2D8. \uC544\uC9C1\uC740 \uC704\uC5D0\uC11C \uD560 \uC77C\uC774 \uC788\uC5B4\uC694.", standing: "torika", cast: PAIR("lexia"), act: "nod" }
-  ])
-};
-var STAGE_2_10_PRE = {
-  id: "stage-2-10-pre",
-  startNodeId: "gate",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "gate", speaker: "", body: "\uC794\uD5A5 \uC9C0\uAD6C\uC758 \uAD00\uBB38. \uC544\uBAA8\uC640 \uD1A0\uBE44, \uB9AC\uD30C\uAC00 \uB098\uB780\uD788 \uC11C\uC11C \uAE38\uC744 \uB9C9\uACE0 \uC788\uB2E4. \uCF54\uB9C8\uB294 \uBCF4\uC774\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO },
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uCF54\uB9C8\uD55C\uD14C \uC548 \uBB3C\uC5B4\uBD24\uC5B4. \uC6B0\uB9AC\uAC00 \uC815\uD588\uC5B4. \uC5EC\uAE30\uC11C \uB9C9\uC790\uACE0.", standing: "toby", act: "puff" },
-    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB098\uB791 \uD1A0\uBE44\uB791 \uB9AC\uD30C, \uC14B\uC774\uC11C.", standing: "amo", act: "nod" },
-    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC774\uAE30\uB824\uB294 \uAC8C \uC544\uB2C8\uC57C. \uD655\uC778\uD558\uB824\uB294 \uAC70\uC57C. \uC6B0\uB9AC\uAC00 \uC815\uB9D0 \uC6B0\uB9AC\uC778\uC9C0.", standing: "ripa", act: "lean" },
-    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\u2026\uC54C\uACA0\uC5B4\uC694. \uBC1B\uC544 \uB0BC\uAC8C\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "toby", slot: "right" }], act: "nod" }
-  ])
-};
-var STAGE_2_10_POST = {
-  id: "stage-2-10-post",
-  startNodeId: "lose",
-  backdrop: "battlefield",
-  nodes: [
-    { id: "lose", speaker: "", body: "\uC14B\uC740 \uC4F0\uB7EC\uC9C0\uC9C0 \uC54A\uACE0 \uC11C\uB85C\uB97C \uBD99\uB4E0 \uCC44 \uC549\uB294\uB2E4. \uC544\uBB34\uB3C4 \uB3C4\uB9DD\uCE58\uC9C0 \uC54A\uB294\uB2E4.", cast: RAID_TRIO, nextId: "toby" },
-    { id: "toby", speaker: "\uD1A0\uBE44", body: "\u2026\uC84C\uB124. \uADF8\uB7F0\uB370 \uC774\uC0C1\uD558\uB2E4. \uB418\uAC8C \uC548 \uBD84\uD574.", standing: "toby", act: "shrink", nextId: "ripa" },
-    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC6B0\uB9AC\uB07C\uB9AC \uB9C9\uC544 \uB0B8 \uAC74 \uC774\uBC88\uC774 \uCC98\uC74C\uC774\uC57C. \uADF8\uB798\uC11C \uADF8\uB7F0\uAC00.", standing: "ripa", act: "nod", nextId: "amo" },
-    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0.", standing: "amo", act: "tremble", nextId: "ask" },
-    { id: "ask", speaker: "\uC544\uBAA8", body: "\uC6B0\uB9AC, \uB530\uB77C\uAC00\uB3C4 \uB3FC? \uC544\uC9C1 \u300C\uADF8\uB798\u300D\uB77C\uACE0\uB294 \uBABB \uD558\uACA0\uB294\uB370\u2026 \uADF8\uB798\uB3C4 \uB530\uB77C\uAC00\uB3C4 \uB3FC?", standing: "amo", act: "lean", nextId: "choose" },
-    {
-      id: "choose",
-      speaker: "\uD1A0\uB9AC\uCE74",
-      body: "\uB300\uC7A5\uB2D8, \uBB50\uB77C\uACE0 \uD558\uC2E4 \uAC70\uC608\uC694?",
-      standing: "torika",
-      cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }],
-      choices: [
-        { id: "yes", label: "\uB530\uB77C\uC640\uB3C4 \uB3FC", nextId: "answerA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
-        { id: "own", label: "\uB108\uD76C\uAC00 \uC815\uD574\uB3C4 \uB3FC", nextId: "answerB", effect: { type: "bondXp", relicId: "dodi", amount: 3 } }
-      ]
-    },
-    { id: "answerA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB798. \uADF8\uB7FC \uB530\uB77C\uAC08\uAC8C.", standing: "amo", act: "nod", nextId: "walk" },
-    { id: "answerB", speaker: "\uC544\uBAA8", body: "\u2026\uC6B0\uB9AC\uAC00 \uC815\uD574\uB3C4 \uB41C\uB2E4\uB294 \uB9D0, \uCC98\uC74C \uB4E4\uC5B4 \uBD10.", standing: "amo", act: "nod", nextId: "walk" },
-    { id: "walk", speaker: "\uD1A0\uBE44", body: "\uADF8, \uADF8\uB807\uB2E4\uACE0 \uC6B0\uB9AC\uAC00 \uD55C\uD3B8 \uB418\uB294 \uAC74 \uC544\uB2C8\uC57C! \uB4A4\uC5D0\uC11C \uB530\uB77C\uAC00\uAE30\uB9CC \uD558\uB294 \uAC70\uC57C!", standing: "toby", cast: RAID_TRIO, act: "hopTwice", nextId: "hole" },
-    { id: "hole", speaker: "", body: "\uC77C\uD589\uC774 \uAC78\uC74C\uC744 \uC62E\uAE34\uB2E4. \uB4A4\uC5D0\uC11C \uAD6C\uBA4D\uC758 \uC5B4\uB460\uC774 \uD55C \uBC88 \uC228\uC744 \uC26C\uB4EF \uC77C\uB801\uC778\uB2E4. \uBB34\uC5B8\uAC00\uAC00 \uC62C\uB824\uB2E4\uBCF4\uACE0 \uC788\uB2E4.", cue: "rumble", nextId: "wing" },
-    { id: "wing", speaker: "", body: "\uAD6C\uBA4D \uC704\uB85C \uAC70\uB300\uD55C \uB0A0\uAC1C\uC758 \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uD3BC\uCCD0\uC84C\uB2E4 \uC811\uD78C\uB2E4. \uC18C\uB9AC\uB294 \uB098\uC9C0 \uC54A\uB294\uB2E4. \uBC15\uC950\uC758 \uB0A0\uAC1C\uCC98\uB7FC \uBCF4\uC778\uB2E4.", cast: [{ id: "ikanixia", slot: "center", veiled: true }], standing: "ikanixia", cue: "impact", nextId: "voice" },
-    { id: "voice", speaker: "???", body: "\u2026\uD68C\uC218 \uAC1C\uC2DC.", standing: "ikanixia", act: "nod" }
-  ]
-};
-var CHAPTER_2_STORIES = [
-  STAGE_2_1_PRE,
-  STAGE_2_2_POST,
-  STAGE_2_4_PRE,
-  STAGE_2_5_PRE,
-  STAGE_2_5_POST,
-  STAGE_2_6_POST,
-  STAGE_2_7_PRE,
-  STAGE_2_7_POST,
-  STAGE_2_8_PRE,
-  STAGE_2_8_POST,
-  STAGE_2_9_POST,
-  STAGE_2_10_PRE,
-  STAGE_2_10_POST
-];
-
-// src/data/dialogues/chapter3.ts
-init_define_import_meta_env();
-var REMOTE_PAIR = (voice, other) => [
-  { id: other, slot: "left" },
-  { id: voice, slot: "right", remote: true }
-];
-var STAGE_3_1_PRE = {
-  id: "stage-3-1-pre",
-  startNodeId: "land",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "land", speaker: "", body: "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8\uC758 \uB4A4\uB85C \uCC22\uC5B4\uC9C4 \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC120\uB2E4. \uC11C\uB450\uB974\uB294 \uAE30\uC0C9\uC774\uB77C\uACE0\uB294 \uC5C6\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "greet", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC218\uACE0\uD558\uC168\uC5B4\uC694, \uCF54\uB9C8 \uB2D8. \uC2E4\uD328\uD55C \uBD84\uC758 \uC5BC\uAD74\uB3C4 \uAC00\uB054\uC740 \uACF1\uB2F5\uB2C8\uB2E4.", standing: "ikanixia", act: "lean" },
-    { id: "mask", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC785\uC744 \uAC00\uB9B0 \uAC00\uB9AC\uAC1C\uB97C \uCC98\uC74C\uC73C\uB85C \uCC9C\uCC9C\uD788 \uB0B4\uB9B0\uB2E4.", standing: "koma", act: "recoil" },
-    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uB3FC\uC694\u2026 \uC120, \uC120\uBC30\uB294 \uC544\uC9C1\u2026 \uD68C\uC218 \uC804\uC774\uB77C\uC11C\u2026", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
-    { id: "smile", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC6B0\uB9AC \uC544\uD2B8\uB77C\uB294 \uC0C1\uB0E5\uD558\uAE30\uB3C4 \uD558\uC9C0. \uADF8\uB7FC \uC11C\uB450\uB974\uC9C0 \uC54A\uC744\uAC8C\uC694.", standing: "ikanixia", act: "nod" },
-    { id: "you", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694. \uC18C\uBB38\uC740 \uB9CE\uC774 \uB4E4\uC5C8\uC5B4\uC694. \uC774\uBC88\uC5D0\uB294 \uC81C\uAC00 \uC815\uC911\uD788 \uBAA8\uC154 \uAC00\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" }
-  ])
-};
-var STAGE_3_4_POST = {
-  id: "stage-3-4-post",
-  startNodeId: "radio",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. 3\uBC88 \uD1B5\uB85C\uC758 \uC870\uBA85\uC744 \uB0B4\uB838\uB2E4. \uB208\uC774 \uC801\uC751\uD558\uBA74 \uC624\uB978\uCABD\uC73C\uB85C \uBE60\uC838\uB77C.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
-    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uBB38 \uC7A0\uAE08\uC740 \uB0B4\uAC00 \uD480\uC5B4 \uB1A8\uC5B4. \uB300\uC2E0 \uC18C\uB9AC\uB294 \uB0B4\uC9C0 \uB9C8. \uC7E4\uB124 \uADC0\uAC00 \uC88B\uAC70\uB4E0.", standing: "luka", cast: REMOTE_PAIR("luka", "dodi"), act: "lean" },
-    { id: "thanks", speaker: "\uD1A0\uB9AC\uCE74", body: "\uACE0\uB9D9\uC2B5\uB2C8\uB2E4! \uADF8\uB7F0\uB370 \uB450 \uBD84\uC740 \uC5B4\uB514 \uACC4\uC138\uC694?", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hop" },
-    { id: "gone", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uC5B4\uB460 \uC18D\uC774\uB2E4. \uADF8\uAC83\uC774 \uC6B0\uB9AC \uC77C\uC774\uB2E4.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "shrink" }
-  ])
-};
-var STAGE_3_5_PRE = {
-  id: "stage-3-5-pre",
-  startNodeId: "block",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "block", speaker: "", body: "\uD1B5\uB85C \uD55C\uBCF5\uD310\uC5D0 \uC18C\uB9E4\uB85C \uC5BC\uAD74\uC744 \uBC18\uCBE4 \uAC00\uB9B0 \uC544\uD2B8\uB77C\uAC00 \uC11C \uC788\uB2E4. \uD55C \uAC78\uC74C\uB3C4 \uBE44\uD0A4\uC9C0 \uC54A\uB294\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
-    { id: "stutter", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uB7EC\uB2C8\uAE4C\u2026 \uAC19\uC774 \uAC00, \uAC00 \uC8FC\uC2DC\uBA74\u2026 \uC544\uD504\uC9C0 \uC54A\uC544\uC694.", standing: "atra", act: "tremble" },
-    { id: "refuse", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC8C4\uC1A1\uD574\uC694, \uC9C0\uAE08\uC740 \uAC08 \uC218 \uC5C6\uC5B4\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "atra", slot: "right" }], act: "shake" },
-    { id: "sorry", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC544\uB2C8\uC5D0\uC694\u2026 \uAD1C\uCC2E\uC544\uC694. \uC870, \uC870\uAE08 \uC544\uD50C \uC218\uB294 \uC788\uB294\uB370\u2026", standing: "atra", act: "shrink" }
-  ])
-};
-var STAGE_3_5_POST = {
-  id: "stage-3-5-post",
-  startNodeId: "down",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "down", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uC544, \uC544\uD504\uC9C0 \uC54A\uC544\uC694. \uC9C0, \uC9C4\uC9DC\u2026 \uC9C0\uB124\uB294 \uB9C8\uB514\uAC00 \uB9CE\uC544\uC11C\u2026 \uAD1C, \uAD1C\uCC2E\uC544\uC694\u2026", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB9CC \uC77C\uC5B4\uB098\uB77C.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
-    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC120, \uC120\uBC30\u2026 \uC800, \uC800 \uC84C\uC5B4\uC694\u2026 \uADF8\uB798\uB3C4 \uC120\uBC30\uBCF4\uB2E4\uB294\u2026 \uC624\uB798 \uBC84\uD17C\uC8E0?", standing: "atra", act: "hop" },
-    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uAC74 \uB9DE\uB2E4.", standing: "koma", act: "shrink" }
-  ])
-};
-var STAGE_3_6_POST = {
-  id: "stage-3-6-post",
-  startNodeId: "dead",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "dead", speaker: "", body: "\uB9C9\uB2E4\uB978 \uAE38. \uB208\uC55E\uC5D0\uB294 \uACA9\uBCBD\uC774 \uCC9C\uC7A5\uAE4C\uC9C0 \uC11C \uC788\uB2E4. \uB4F1 \uB4A4\uC5D0\uC11C\uB294 \uD68C\uC218\uC870\uC758 \uBC1C\uC18C\uB9AC\uAC00 \uAC00\uAE4C\uC6CC\uC9C4\uB2E4.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], cue: "alarm" },
-    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5F0\uAD6C\uC6D0\uB2D8~ \uAC70\uAE30 \uACC4\uC168\uB124\uC694! \uAC19\uC774 \uAC00\uC694! \uC800\uD76C\uAC00 \uBAA8\uC2E4\uAC8C\uC694!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hop" },
-    { id: "pulsi", speaker: "\uD384\uC2DC", body: "\uB9C9\uB2E4\uB978 \uAE38\uC774\uC796\uC544? \uB3C4\uB9DD \uC5F0\uC2B5\uC740 \uC774\uCBE4 \uD558\uACE0 \uC774\uC81C \uB180\uC790\uACE0.", standing: "pulsi", cast: [{ id: "pulsi", slot: "center" }], act: "hopTwice" },
-    { id: "crash", speaker: "", body: "\uAD49\uC74C\uACFC \uD568\uAED8 \uACA9\uBCBD \uD55C\uAC00\uC6B4\uB370\uAC00 \uC548\uCABD\uC73C\uB85C \uD130\uC838 \uB098\uC628\uB2E4. \uBA3C\uC9C0 \uC18D\uC5D0\uC11C \uBA38\uB9AC\uB97C \uAC10\uC2FC \uADF8\uB9BC\uC790\uAC00 \uD280\uC5B4\uB098\uC628\uB2E4.", cue: "explosion", cast: [{ id: "pachi", slot: "center" }] },
-    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uBCF4\uC2A4, \uAE38 \uC5F4\uC5C8\uC5B4! \uB2A6\uC5B4\uC11C \uBBF8\uC548!", standing: "pachi", act: "bounce" },
-    { id: "pulsi2", speaker: "\uD384\uC2DC", body: "\u2026\uBCBD\uC744 \uBA38\uB9AC\uB85C \uAE7C\uC5B4? \uC9C4\uC9DC\uB85C?", standing: "pulsi", cast: [{ id: "pulsi", slot: "left" }, { id: "pachi", slot: "right" }], act: "fright" }
-  ])
-};
-var STAGE_3_8_POST = {
-  id: "stage-3-8-post",
-  startNodeId: "ambush",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "ambush", speaker: "\uD384\uC2DC", body: "\uAE5C\uC9DD \uC120\uBB3C\uC774\uC57C, \uC5F0\uAD6C\uC6D0! \uBC1B\uC544!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
-    { id: "block", speaker: "\uC5D8\uB77C", body: "\u2026\uC5F0\uAD6C\uC6D0\uB2D8, \uB4A4\uB85C. \uC774\uCABD\uC740 \uC81C\uAC00 \uB9C9\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
-    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uBC29\uBCBD\uC774\uB77C\uB2C8, \uC815\uB9D0 \uC874\uACBD\uC2A4\uB7FD\uB124\uC694. \uB2E4 \uBD80\uC218\uACE0 \uB098\uBA74 \uC5B4\uB5A4 \uC11C\uB958\uAC00 \uB098\uC62C\uC9C0 \uAE30\uB300\uB3FC\uC694.", standing: "neuri", cast: [{ id: "ella", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
-    { id: "ella", speaker: "\uC5D8\uB77C", body: "\uADF8 \uC11C\uB958\uB294 \uC81C\uAC00 \uC4F0\uACA0\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uB2EC \uC2DC\uB9D0\uC11C\uB294 \uC774\uBBF8 \uB2E4 \uC815\uD574 \uB450\uC5C8\uAC70\uB4E0\uC694.", standing: "ella", act: "shake" }
-  ])
-};
-var STAGE_3_9_POST = {
-  id: "stage-3-9-post",
-  startNodeId: "split",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "split", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uD760, \uADF8\uAC74 \uADF8\uB807\uACE0\u2026 \uC5B4\uBA38, \uC67C\uCABD\uC5D0\uC11C \uC624\uB294 \uC800 \uC18C\uB9AC\uB294 \uBB58\uAE4C\uC694?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
-    { id: "yuti", speaker: "\uC720\uD2F0", body: "\uBCF4, \uBCF4\uC2A4! \uC544\uB2C8 \uC5F0\uAD6C\uC6D0\uB2D8! \uC81C\uAC00 \uC606\uC5D0\uC11C \uAC08\uB77C \uB193\uC744\uAC8C\uC694!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
-    { id: "ark", speaker: "\uC544\uD06C", body: "\u2026\uB354\uB294 \uBABB \uC9C0\uB098\uAC11\uB2C8\uB2E4. \uB9C8\uC2A4\uD130, \uC55E\uC740 \uC81C\uAC00 \uC11C\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ark", cast: [{ id: "ark", slot: "left" }, { id: "yuti", slot: "right" }], act: "nod" },
-    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC5D0\uC774, \uB193\uCCE4\uB124\uC694! \uADFC\uB370 \uC774 \uC0AC\uB78C\uB4E4 \uC9C4\uC9DC \uD2BC\uD2BC\uD558\uB2E4!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hopTwice" }
-  ])
-};
-var STAGE_3_10_PRE = {
-  id: "stage-3-10-pre",
-  startNodeId: "hall",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "hall", speaker: "", body: "\uD68C\uC218 \uAD6C\uAC04\uC758 \uB9C8\uC9C0\uB9C9 \uD640. \uB192\uC740 \uCC9C\uC7A5\uC5D0\uC11C \uB0A0\uAC1C \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC628\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
-    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5EC\uAE30\uAE4C\uC9C0 \uC624\uC168\uAD70\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC774\uC81C \uCAD3\uB294 \uC2DC\uAC04\uC740 \uB05D\uC774\uC5D0\uC694. \uC81C \uC55E\uC5D0 \uC11C \uC8FC\uC138\uC694.", standing: "ikanixia", act: "lean" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uADF8 \uBD80\uD0C1\uC740 \uAC70\uC808\uC774\uC57C! \uC571\uC194\uB8E8\uD2B8 \uD33D, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "center" }], act: "hop" },
-    { id: "line", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC758 \uC55E\uC5D0 \uB809\uC2DC\uC544, \uC5D8\uB77C, \uD30C\uCE58, \uC544\uD06C, \uC720\uD2F0\uAC00 \uD55C \uC904\uB85C \uB098\uB780\uD788 \uC120\uB2E4.", cast: [{ id: "ella", slot: "left" }, { id: "lexia", slot: "center" }, { id: "pachi", slot: "right" }], cue: "impact" },
-    { id: "ika2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC904\uAE4C\uC9C0 \uC11C \uC8FC\uC2DC\uB2E4\uB2C8. \uC815\uB9D0 \uC815\uC911\uD558\uC2DC\uB124\uC694\u2026 \uC774\uACA0\uC9C0\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "nod" }
-  ])
-};
-var STAGE_3_10_POST = {
-  id: "stage-3-10-post",
-  startNodeId: "fall",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "fall", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uD6C4\uD6D7. \uC624\uB298\uC740 \uC5EC\uAE30\uAE4C\uC9C0\uB85C \uD574 \uB450\uC8E0. \uC544\uC27D\uC9C0\uB9CC \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
-    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC04\uB2E4. \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uB530\uB77C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2F9\uC2E0\uC740 \uC544\uC9C1 \uBAA9\uB85D\uC5D0 \uC788\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
-    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294, \uC9C0\uC6E0\uB2E4. \uADF8\uAC74 \uB0B4\uAC00 \uC815\uD588\uB2E4.", standing: "koma", act: "shrink" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uBB34\uC2A8 \uC18C\uB9B0\uC9C0\uB294 \uBAA8\uB974\uACA0\uC5B4. \uADF8\uB798\uB3C4 \uC55E\uC73C\uB85C \uAC19\uC740 \uD3B8\uC774\uB77C\uBA74 \uD658\uC601\uC774\uC57C.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
-    { id: "koma3", speaker: "\uCF54\uB9C8", body: "\u2026\uD3B8\uC740 \uC544\uB2C8\uB2E4. \uC544\uC9C1\uC740.", standing: "koma", act: "recoil" }
-  ])
-};
-var CHAPTER_3_STORIES = [
-  STAGE_3_1_PRE,
-  STAGE_3_4_POST,
-  STAGE_3_5_PRE,
-  STAGE_3_5_POST,
-  STAGE_3_6_POST,
-  STAGE_3_8_POST,
-  STAGE_3_9_POST,
-  STAGE_3_10_PRE,
-  STAGE_3_10_POST
-];
-
-// src/data/dialogues/chapter4.ts
-init_define_import_meta_env();
-var STAGE_4_1_PRE = {
-  id: "stage-4-1-pre",
-  startNodeId: "radio",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "radio", speaker: "", body: "\uC2B9\uAC15\uC7A5 \uC2A4\uD53C\uCEE4\uC5D0\uC11C \uB0AE\uC740 \uC548\uB0B4\uAC00 \uD750\uB978\uB2E4. \u300C\uD569\uB3D9 \uCD94\uACA9 \uAC1C\uC2DC. \uB300\uC0C1 \uD655\uBCF4 \uD6C4 \uCF54\uB9C8 \uC870 \uBCF5\uADC0.\u300D", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
-    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB294 \uC77C\uC774 \uD754\uD558\uC9C0\uB294 \uC54A\uC8E0. \uC11C\uB450\uB97C \uC774\uC720\uB294 \uC5C6\uC9C0\uB9CC, \uC774\uBC88\uC5D0\uB294 \uB204\uAD6C\uB3C4 \uB193\uCE58\uC9C0 \uC54A\uC744 \uAC70\uC608\uC694.", standing: "ikanixia", act: "lean" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uD569\uB3D9\uC774\uB77C\uB2C8, \uC22B\uC790\uAC00 \uB298\uC5C8\uB2E4\uB294 \uC18C\uB9AC\uC796\uC544! \uADF8\uB798\uB3C4 \uD55C \uC904\uB85C \uC11C\uBA74 \uB611\uAC19\uC774 \uB6AB\uC73C\uBA74 \uB3FC!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" }
-  ])
-};
-var STAGE_4_4_PRE = {
-  id: "stage-4-4-pre",
-  startNodeId: "block",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
-    { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uBE44\uCF1C\uC694\u2026 \uBA85, \uBA85\uB839\uC774\uB77C\uC11C\u2026 \uC8C4, \uC8C4\uC1A1\uD574\uC694\u2026", standing: "atra", act: "tremble" },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uB839\uC774\uB2E4. \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
-  ])
-};
-var STAGE_4_10_PRE = {
-  id: "stage-4-10-pre",
-  startNodeId: "end",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "end", speaker: "", body: "\uC0AC\uB839\uC2E4 \uBB38\uC774 \uC5F4\uB9B0\uB2E4. \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uCF54\uB9C8\uC640 \uB0A0\uAC1C \uB9DD\uD1A0\uC758 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uD55C \uAC78\uC74C \uC0AC\uC774\uB97C \uB450\uACE0 \uC11C \uC788\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uCF54\uB9C8 \uB2D8\uC774 \uC55E\uC5D0 \uC11C \uC8FC\uC2DC\uB2C8 \uB4E0\uB4E0\uD558\uB124\uC694. \uC800\uB294 \uB4A4\uC5D0\uC11C \uCC9C\uCC9C\uD788 \uD558\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", act: "nod" },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB0B4\uAC00 \uC55E\uC774\uB2E4. \uB4A4\uB294 \uB2F9\uC2E0\uC774 \uB9E1\uC544\uB77C.", standing: "koma", act: "lean" }
-  ])
-};
-var STAGE_4_10_POST = {
-  id: "stage-4-10-post",
-  startNodeId: "retreat",
-  backdrop: "battlefield",
-  nodes: linear([
-    { id: "retreat", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uC774\uB807\uAC8C\uAE4C\uC9C0 \uD558\uC168\uB294\uB370\uB3C4 \uB2FF\uC9C0 \uC54A\uB2E4\uB2C8. \uC624\uB298\uC740 \uBB3C\uB7EC\uB098\uACA0\uC2B5\uB2C8\uB2E4. \uC815\uB9D0, \uC11C\uB450\uB97C \uC774\uC720\uAC00 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
-    { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC00\uACE0, \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uC120\uB85C \uB108\uBA38\uB85C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB09C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "shrink" }
-  ])
-};
-var CHAPTER_4_STORIES = [
-  STAGE_4_1_PRE,
-  STAGE_4_4_PRE,
-  STAGE_4_10_PRE,
-  STAGE_4_10_POST
-];
-
-// src/data/stageStories.ts
-var LINKS = {
-  "1-2": { post: "stage-1-2-post" },
-  "1-4": { pre: "stage-1-4-pre" },
-  "1-5": { pre: "stage-1-5-pre", post: "stage-1-5-post" },
-  "1-6": { post: "stage-1-6-post" },
-  "1-7": { pre: "stage-1-7-pre" },
-  "1-8": { pre: "stage-1-8-pre" },
-  "1-8-side-battle": { pre: "stage-1-8-side-pre", post: "stage-1-8-side-post" },
-  "1-9": { pre: "stage-1-9-pre", post: "stage-1-9-post" },
-  "1-10": { pre: "stage-1-10-pre", post: "stage-1-10-post" },
-  "2-1": { pre: "stage-2-1-pre" },
-  "2-2": { post: "stage-2-2-post" },
-  "2-4": { pre: "stage-2-4-pre" },
-  "2-5": { pre: "stage-2-5-pre", post: "stage-2-5-post" },
-  "2-6": { post: "stage-2-6-post" },
-  "2-7": { pre: "stage-2-7-pre", post: "stage-2-7-post" },
-  "2-8": { pre: "stage-2-8-pre", post: "stage-2-8-post" },
-  "2-9": { post: "stage-2-9-post" },
-  "2-10": { pre: "stage-2-10-pre", post: "stage-2-10-post" },
-  "3-1": { pre: "stage-3-1-pre" },
-  "3-4": { post: "stage-3-4-post" },
-  "3-5": { pre: "stage-3-5-pre", post: "stage-3-5-post" },
-  "3-6": { post: "stage-3-6-post" },
-  "3-8": { post: "stage-3-8-post" },
-  "3-9": { post: "stage-3-9-post" },
-  "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
-  "4-1": { pre: "stage-4-1-pre" },
-  "4-4": { pre: "stage-4-4-pre" },
-  "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" }
-};
-var STAGE_STORY_LINKS = LINKS;
-var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES];
-
-// src/data/recollectionCatalog.ts
 function buildRecollectionEntries() {
   const entries = [
     { storyId: OPENING_TRAIN.id, group: "chapter1", titleKey: "recollection.title.openingTrain" },
@@ -31531,6 +31771,7 @@ var FakeServer = class {
     const id = request.storyId;
     if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "\uC774\uC57C\uAE30 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
+    assertStoryUnlocked(this.state, id);
     const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
     const reward = SUB_STORY_GEM_REWARDS[id] ?? 0;
     const gemsGranted = Math.max(0, Math.min(reward, WALLET_CAPS.gems - this.state.wallet.gems));
@@ -31544,16 +31785,33 @@ var FakeServer = class {
   async applyStoryEffect(request) {
     await this.delay();
     if (this.state.completedStoryIds.has(request.storyId)) return { xpGained: 0 };
-    const effect = request.effect;
-    if (effect?.type !== "bondXp") throw new GameApiError("INVALID_STATE", "\uD5C8\uC6A9\uB418\uC9C0 \uC54A\uC740 \uB300\uC0AC \uD6A8\uACFC\uC785\uB2C8\uB2E4.");
-    const progress = this.state.relicProgress[effect.relicId];
-    if (!PLAYABLE_RELICS.some(({ id }) => id === effect.relicId) || !this.state.owned.has(effect.relicId) || !progress) throw new GameApiError("INVALID_STATE", "\uB300\uC0AC \uD6A8\uACFC \uB300\uC0C1 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Number.isInteger(effect.amount) || effect.amount < 0 || effect.amount > 20) throw new GameApiError("INVALID_STATE", "\uB300\uC0AC \uC720\uB300 \uBCF4\uC0C1\uC740 0~20 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-    const result = grantBondXp(progress, effect.amount);
-    const relicProgress = { ...this.state.relicProgress, [effect.relicId]: result.progress };
-    this.persist({ ...this.state, relicProgress });
+    const story = assertStoryUnlocked(this.state, request.storyId);
+    const { node, choice } = resolveStoryChoice(story, request);
+    const selected = this.state.serverJournal?.storyChoices?.[story.id] ?? {};
+    if (selected[node.id] !== void 0) return { xpGained: 0 };
+    assertStoryChoiceReachable(story, selected, node.id);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    journal.storyChoices = { ...journal.storyChoices, [story.id]: { ...selected, [node.id]: choice.id } };
+    const relicProgress = { ...this.state.relicProgress };
+    let xpGained = 0, xpDeferred = 0;
+    const effect = choice.effect;
+    if (effect) {
+      if (this.state.owned.has(effect.relicId) && relicProgress[effect.relicId]) {
+        const result = grantBondXp(relicProgress[effect.relicId], effect.amount);
+        relicProgress[effect.relicId] = result.progress;
+        xpGained = result.xpGained;
+      } else {
+        const previous = journal.pendingStoryBondXp?.[effect.relicId] ?? 0;
+        const pending = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
+        if (pending > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending };
+        xpDeferred = pending - previous;
+      }
+    }
+    const candidate = { ...this.state, relicProgress, serverJournal: journal };
+    this.persist(candidate);
     this.state.relicProgress = relicProgress;
-    return { xpGained: result.xpGained };
+    this.state.serverJournal = journal;
+    return { xpGained, ...xpDeferred > 0 ? { xpDeferred } : {} };
   }
   /**
    * 관찰 인터뷰 완료. 같은 이야기 재완료는 기록·유대 EXP를 다시 만들지 않는 성공이고, 새 완료는 오늘의 한 번뿐이다.
@@ -31642,8 +31900,10 @@ var FakeServer = class {
       bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition
     });
     if (changed > 0) {
-      this.persist({ ...this.state, ...patch });
-      Object.assign(this.state, patch);
+      const candidate = { ...this.state, ...patch };
+      redeemDeferredStoryBond(candidate, [...candidate.owned].filter((id) => !this.state.owned.has(id)));
+      this.persist(candidate);
+      Object.assign(this.state, candidate);
     }
     return { ok: true, changed };
   }
@@ -32181,7 +32441,9 @@ var FakeServer = class {
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
     const nextState = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
+    this.state.serverJournal = nextState.serverJournal;
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
@@ -33176,7 +33438,7 @@ var FakeServer = class {
     const now = this.now();
     const { storefront, productId, quantity } = request;
     if (!Number.isSafeInteger(quantity) || quantity < 1) throw new GameApiError("INVALID_PURCHASE_QUANTITY", "\uAD6C\uB9E4 \uC218\uB7C9\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    const product = PRODUCTS.find((candidate) => candidate.id === productId);
+    const product = PRODUCTS.find((candidate2) => candidate2.id === productId);
     if (!product) throw new GameApiError("PRODUCT_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC0C1\uD488\uC785\uB2C8\uB2E4.");
     if (product.storefront !== storefront) throw new GameApiError("PRODUCT_STOREFRONT_MISMATCH", "\uC694\uCCAD\uD55C \uC0C1\uC810\uC758 \uC0C1\uD488\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
     const owningEvent = findEventByProductId(productId);
@@ -33232,7 +33494,10 @@ var FakeServer = class {
     const current = this.state.productPurchases[product.id];
     const count2 = (current?.periodKey === periodKey ? current.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
-    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory });
+    const candidate = { ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory };
+    redeemDeferredStoryBond(candidate, newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
     this.state.wallet = nextWallet;
     this.state.runeInventory = nextRunes;
     this.state.itemInventory = nextItems;

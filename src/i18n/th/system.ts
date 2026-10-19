@@ -90,4 +90,5 @@ export const SYSTEM_TH = {
   "ad.temp.done": "เสร็จแล้ว!",
   "ad.temp.claim": "รับรางวัลโฆษณา!",
   "ad.temp.waiting": "กำลังรับรางวัล…",
+  "story.saveFailed": "บันทึกความคืบหน้าเนื้อเรื่องไม่สำเร็จ โปรดลองอีกครั้ง",
 } as const;

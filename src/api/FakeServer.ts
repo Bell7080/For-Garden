@@ -1,3 +1,5 @@
+import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
+import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -1311,6 +1313,7 @@ export class FakeServer implements GameApi {
     const id = request.storyId;
     if (typeof id !== "string" || id.length === 0 || id.length > 120) throw new GameApiError("INVALID_STATE", "이야기 ID가 올바르지 않습니다.");
     if (this.state.completedStoryIds.has(id)) return { firstCompletion: false };
+    assertStoryUnlocked(this.state, id);
     const completedStoryIds = new Set(this.state.completedStoryIds).add(id);
     // 이야기 서브만 처음 완료에 젬을 준다. 상한을 넘는 몫은 던지지 않고 깎는다.
     const reward = SUB_STORY_GEM_REWARDS[id] ?? 0;
@@ -1326,17 +1329,32 @@ export class FakeServer implements GameApi {
   async applyStoryEffect(request: ApplyStoryEffectRequest): Promise<ApplyStoryEffectResponse> {
     await this.delay();
     if (this.state.completedStoryIds.has(request.storyId)) return { xpGained: 0 };
-    const effect = request.effect;
-    if (effect?.type !== "bondXp") throw new GameApiError("INVALID_STATE", "허용되지 않은 대사 효과입니다.");
-    const progress = this.state.relicProgress[effect.relicId];
-    if (!PLAYABLE_RELICS.some(({ id }) => id === effect.relicId) || !this.state.owned.has(effect.relicId) || !progress) throw new GameApiError("INVALID_STATE", "대사 효과 대상 렐릭이 올바르지 않습니다.");
-    // 콘텐츠 오타가 대량 보상으로 이어지지 않도록 한 선택의 유대 보상을 작은 정수로 제한한다.
-    if (!Number.isInteger(effect.amount) || effect.amount < 0 || effect.amount > 20) throw new GameApiError("INVALID_STATE", "대사 유대 보상은 0~20 정수여야 합니다.");
-    const result = grantBondXp(progress, effect.amount);
-    const relicProgress = { ...this.state.relicProgress, [effect.relicId]: result.progress };
-    this.persist({ ...this.state, relicProgress });
-    this.state.relicProgress = relicProgress;
-    return { xpGained: result.xpGained };
+    const story = assertStoryUnlocked(this.state, request.storyId);
+    const { node, choice } = resolveStoryChoice(story, request);
+    const selected = this.state.serverJournal?.storyChoices?.[story.id] ?? {};
+    // 읽다 다시 들어와 다른 답을 고를 수 있지만 보상은 최초 한 번만 받는다.
+    if (selected[node.id] !== undefined) return { xpGained: 0 };
+    assertStoryChoiceReachable(story, selected, node.id);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    journal.storyChoices = { ...journal.storyChoices, [story.id]: { ...selected, [node.id]: choice.id } };
+    const relicProgress = { ...this.state.relicProgress };
+    let xpGained = 0, xpDeferred = 0;
+    const effect = choice.effect;
+    if (effect) {
+      if (this.state.owned.has(effect.relicId) && relicProgress[effect.relicId]) {
+        const result = grantBondXp(relicProgress[effect.relicId], effect.amount);
+        relicProgress[effect.relicId] = result.progress; xpGained = result.xpGained;
+      } else {
+        const previous = journal.pendingStoryBondXp?.[effect.relicId] ?? 0;
+        const pending = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
+        if (pending > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending };
+        xpDeferred = pending - previous;
+      }
+    }
+    const candidate = { ...this.state, relicProgress, serverJournal: journal };
+    this.persist(candidate);
+    this.state.relicProgress = relicProgress; this.state.serverJournal = journal;
+    return { xpGained, ...(xpDeferred > 0 ? { xpDeferred } : {}) };
   }
 
   /**
@@ -1424,8 +1442,10 @@ export class FakeServer implements GameApi {
       bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition,
     });
     if (changed > 0) {
-      this.persist({ ...this.state, ...patch });
-      Object.assign(this.state, patch);
+      const candidate = { ...this.state, ...patch };
+      redeemDeferredStoryBond(candidate, [...candidate.owned].filter(id => !this.state.owned.has(id)));
+      this.persist(candidate);
+      Object.assign(this.state, candidate);
     }
     return { ok: true, changed };
   }
@@ -1969,7 +1989,9 @@ export class FakeServer implements GameApi {
     const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
+    this.state.serverJournal = nextState.serverJournal;
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;
@@ -2976,7 +2998,10 @@ export class FakeServer implements GameApi {
     const current = this.state.productPurchases[product.id];
     const count = (current?.periodKey === periodKey ? current.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count } };
-    this.persist({ ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory });
+    const candidate = { ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory };
+    redeemDeferredStoryBond(candidate, newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
     this.state.wallet = nextWallet; this.state.runeInventory = nextRunes; this.state.itemInventory = nextItems; this.state.productPurchases = nextPurchases; this.state.relicFragments = nextFragments;
     this.state.owned = nextOwned; this.state.relicProgress = nextProgress; this.state.relicStory = nextRelicStory;
     return { ...this.snapshot(), productId, quantity, granted, grantedRunes: grantedRunes.map((rune) => this.cloneRune(rune)), remaining: Math.max(0, product.purchaseLimit - count), newRelicIds };

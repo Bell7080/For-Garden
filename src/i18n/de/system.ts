@@ -90,4 +90,5 @@ export const SYSTEM_DE = {
   "ad.temp.done": "Geschafft!",
   "ad.temp.claim": "Werbebelohnung abholen!",
   "ad.temp.waiting": "Belohnung wird abgeholt…",
+  "story.saveFailed": "Der Story-Fortschritt konnte nicht gespeichert werden. Bitte versuche es erneut.",
 } as const;

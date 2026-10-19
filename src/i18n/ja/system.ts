@@ -97,4 +97,5 @@ export const SYSTEM_JA = {
   "ad.temp.done": "見終わったよ！",
   "ad.temp.claim": "広告報酬を受け取る！",
   "ad.temp.waiting": "報酬を受け取り中…",
+  "story.saveFailed": "ストーリーの進行を保存できませんでした。もう一度お試しください。",
 } as const;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
-import { getBattleStage } from "../../src/data/stages";
+import { STAGES, getBattleStage } from "../../src/data/stages";
 import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
 import { rotationOffer } from "../../src/core/shopRotation";
@@ -1551,7 +1551,8 @@ describe("콘텐츠 첫 방문 안내 기록", () => {
 
 describe("FakeServer 이야기 서브 보상", () => {
   it("는 이야기 서브를 처음 완료할 때만 젬을 주고 보상 없는 이야기와 재완료는 주지 않는다", async () => {
-    const server = new FakeServer(makeSession(), { latencyMs: 0 });
+    const state = makeSession(); state.cleared = new Set(STAGES.filter(stage => stage.kind === "battle").map(stage => stage.id));
+    const server = new FakeServer(state, { latencyMs: 0 });
     const first = await server.completeStory({ storyId: "stage-2-3-lost-badge" });
     expect(first).toMatchObject({ firstCompletion: true, gemsGranted: 50 });
     expect(first.wallet?.gems).toBe(50);
@@ -1562,6 +1563,7 @@ describe("FakeServer 이야기 서브 보상", () => {
   it("는 젬 상한을 넘는 몫을 던지지 않고 깎아서 준다", async () => {
     const session = makeSession();
     session.wallet.gems = WALLET_CAPS.gems - 10;
+    session.cleared = new Set(STAGES.filter(stage => stage.kind === "battle").map(stage => stage.id));
     const server = new FakeServer(session, { latencyMs: 0 });
     const result = await server.completeStory({ storyId: "stage-3-8-apology" });
     expect(result).toMatchObject({ firstCompletion: true, gemsGranted: 10 });

@@ -76,7 +76,7 @@ test("보조 버튼이 열린 상태에서도 길게 누르기와 연타가 이�
   await page.mouse.down();
   // 속도 수치는 순수 경과 시간 테스트가 검증한다. 소프트웨어 GPU에서는 고정 대기 시간 대신
   // 실제 반복 입력이 처리됐는지 기다려 입력 통과와 싱글턴 쪽지의 유지 여부를 확인한다.
-  await expect.poll(async () => (await page.evaluate(() => window.__PF_DEBUG?.feedTaps))?.served ?? 0, { timeout: 15_000 }).toBeGreaterThan(12);
+  await expect.poll(async () => (await page.evaluate(() => window.__PF_DEBUG?.feedTaps))?.served ?? 0, { timeout: 60_000 }).toBeGreaterThan(12);
   expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   await page.mouse.up();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);

@@ -56,10 +56,10 @@ describe("비동기 UI 실패 복구", () => {
     await vi.waitFor(() => expect(startScene).toHaveBeenCalledWith(scene, "stageMap"));
   });
 
-  it("소개를 닫은 뒤 일반 객체를 대상으로 한 대사 트윈도 Text를 건드리지 않는다", () => {
+  it.each([false, true])("소개 닫기·씬 종료 뒤 잔류 트윈과 독립 섬광을 정리한다: %s", (sceneAlreadyDestroyed) => {
     let destroyed = false;
     const handles: Array<{ remove: () => void; tick: () => void }> = [];
-    const text = { width: 50, height: 20, setAlpha() { return this; }, setCrop() { if (destroyed) throw Error("destroyed Text"); return this; } };
+    const text = { active: true, width: 50, height: 20, setAlpha() { return this; }, setCrop() { if (destroyed) throw Error("destroyed Text"); return this; } };
     const scene = { tweens: { add(config: { onUpdate?: () => void }) {
       let active = true;
       const tween = { remove() { active = false; }, tick() { if (active) config.onUpdate?.(); } };
@@ -71,12 +71,15 @@ describe("비동기 UI 실패 복구", () => {
     });
     const showcase = Object.assign(Object.create(Showcase.prototype), {
       scene, phase: "stage", options: {}, voiceText: text, voiceLine: { setScale: vi.fn() },
-      ownedTweens: [], voiceTweens: [], puppets: [], stopOmen: vi.fn(),
+      ownedTweens: [], voiceTweens: [], detachedEffects: [{ destroy: vi.fn() }], puppets: [], stopOmen: vi.fn(),
       info: { destroy: vi.fn() }, root: { destroy() { destroyed = true; } }, resolve: vi.fn(),
     });
     showcase.startVoice();
     expect(handles).toHaveLength(3);
+    const detached = showcase.detachedEffects[0];
+    if (sceneAlreadyDestroyed) { destroyed = true; text.active = false; }
     showcase.close();
+    expect(detached.destroy).toHaveBeenCalledOnce();
     expect(() => handles.forEach(tween => tween.tick())).not.toThrow();
     expect(showcase.resolve).toHaveBeenCalledOnce();
     showcase.close();

@@ -65,7 +65,8 @@ test("가방은 로비를 유지하고 카테고리 탭과 많은 항목 스크�
 });
 
 test("상단과 가방 재화는 같은 안내를 열고 가방 위 안내만 닫아도 스택을 보존한다", async ({ page }) => {
-  await startAfterOpening(page);
+  // 빈 재화는 목록에서 생략된다. 확인할 화석 카드를 명시적으로 준비한다.
+  await startAfterOpening(page, (state) => { state.wallet.fossil = 1; });
   await tap(page, WIDTH / 2, HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 기본 상단의 첫 칩(젬)을 눌러 공용 안내 제목이 스택에 기록되는지 확인한다.

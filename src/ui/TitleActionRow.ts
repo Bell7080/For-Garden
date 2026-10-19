@@ -5,7 +5,7 @@ import { COLOR, textStyle } from "./theme";
 import { activeFontFamily } from "./fonts";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
-import { TITLE_ACTION_ROW, titleActionSlots } from "./titleActionLayout";
+import { TITLE_ACTION_ROW, titleActionSlots, titleActionContent } from "./titleActionLayout";
 
 export interface TitleAction {
   readonly icon: GlyphName;
@@ -32,9 +32,10 @@ export class TitleActionRow {
       node.add(drawLayer(scene, 0, 0, chipPoints(slot.width, height, {
         bevel: { topLeft: height * 0.3, topRight: 0, bottomRight: height * 0.3, bottomLeft: 0 },
       }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.55 }));
-      node.add(drawGlyph(scene, action.icon, -slot.width / 2 + 38, 0, 30, COLOR.accent));
-      const text = scene.add.text(14, 0, action.label(), textStyle({ role: "emphasis", size: 26 })).setOrigin(0.5);
-      const room = slot.width - 38 * 2 - 10;
+      const content = titleActionContent(slot.width);
+      node.add(drawGlyph(scene, action.icon, content.iconX, 0, 30, COLOR.accent));
+      const text = scene.add.text(content.labelX, 0, action.label(), textStyle({ role: "emphasis", size: 26 })).setOrigin(0.5);
+      const room = content.labelWidth;
       squeezeTextToWidth(text, room, 0.7);
       node.add(text);
       this.labels.push({ text, read: action.label, width: room });

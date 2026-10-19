@@ -18,6 +18,8 @@ update public.players set nickname = 'tester' where id = '00000000-0000-0000-000
 insert into public.player_saves(player_id, data, data_hash, save_version) select id, '{"gems":999}', repeat('a', 64), 1 from public.players;
 insert into public.player_assets(player_id, asset, amount) select id, 'gems', 5000 from public.players;
 insert into public.asset_ledger(player_id, asset, delta, balance_after, reason) select id, 'gems', 5000, 5000, 'admin_adjust' from public.players;
+insert into public.player_adjustments(player_id, asset, delta, note, created_by)
+  values ('00000000-0000-0000-0000-000000000001', 'gems', 1, 'launch-reset fixture', '00000000-0000-0000-0000-0000000000a1');
 insert into public.mails(id, title, body, rewards) values ('11111111-1111-1111-1111-111111111111', 'test mail', 'body', '[{"asset":"gems","amount":100}]');
 insert into public.mail_claims(mail_id, player_id) values ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001');
 insert into public.coupons(id, name, kind, rewards, ends_at, redeemed_count) values ('22222222-2222-2222-2222-222222222222', 'test coupon', 'single', '[]', now() + interval '1 day', 1);

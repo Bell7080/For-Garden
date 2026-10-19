@@ -12,7 +12,9 @@ export const TITLE_ACTION_ROW = {
   centerY: BASE_HEIGHT - 48,
   height: 64,
   /** 버튼 한 칸의 폭과 칸 사이 틈. */
-  buttonWidth: 200,
+  buttonWidth: 260,
+  /** 세 칸일 때만 버전 표기를 피해 압축한다. 현재 두 버튼은 넓은 칸을 사용한다. */
+  compactButtonWidth: 200,
   gap: 18,
   /** 한 줄에 서는 버튼의 상한. 이보다 늘면 줄을 나누는 설계가 먼저 필요하다. */
   maxButtons: 3,
@@ -25,11 +27,20 @@ export interface TitleActionSlot {
 
 /** 버튼 `count`개가 설 가로 자리를 왼쪽부터 돌려준다. 가운데 정렬이다. */
 export function titleActionSlots(count: number): readonly TitleActionSlot[] {
-  const { buttonWidth, gap, maxButtons } = TITLE_ACTION_ROW;
+  const { gap, maxButtons } = TITLE_ACTION_ROW;
   const n = Math.max(0, Math.min(Math.floor(count), maxButtons));
+  const buttonWidth = n === maxButtons ? TITLE_ACTION_ROW.compactButtonWidth : TITLE_ACTION_ROW.buttonWidth;
   const total = n * buttonWidth + Math.max(0, n - 1) * gap;
   const left = (BASE_WIDTH - total) / 2;
   return Array.from({ length: n }, (_, i) => ({ x: left + buttonWidth / 2 + i * (buttonWidth + gap), width: buttonWidth }));
+}
+
+/** 아이콘과 라벨이 서로의 영역을 침범하지 않는 공용 내부 배치다. */
+export function titleActionContent(width: number): { iconX: number; labelX: number; labelWidth: number } {
+  const iconX = -width / 2 + 28;
+  const left = iconX + 15 + 12;
+  const right = width / 2 - 14;
+  return { iconX, labelX: (left + right) / 2, labelWidth: right - left };
 }
 
 /**

@@ -1,3 +1,4 @@
+import { BANNERS } from "../../src/data/banners";
 import { test, expect, type Page } from "@playwright/test";
 import { captureGameFailure, installGameHandleProbe } from "./gameDiagnostics";
 import { startAfterOpening } from "./openingSave";
@@ -9,6 +10,7 @@ const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 const NAV_TOP = BASE_HEIGHT - 180;
 const diagnosticErrors = new WeakMap<Page, string[]>();
+const encounteredShowcases = new WeakMap<Page, Set<string>>();
 
 test.afterEach(async ({ page }, info) => {
   if (process.env.PF_E2E_INPUT_DIAGNOSTIC !== "1" || info.status === info.expectedStatus) return;
@@ -40,6 +42,7 @@ async function tapThrough(page: Page, x: number, y: number, done: () => Promise<
     const shown = await showcase(page);
     if (shown) {
       const key = `${shown.relicId}-${shown.phase}`;
+      encounteredShowcases.get(page)?.add(key);
       if (!captured.has(key)) {
         captured.add(key);
         if (process.env.PF_E2E_RESEARCH_DIAGNOSTIC === "1") console.log("[research showcase]", key);
@@ -61,11 +64,17 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
   // 여러 신규 렐릭의 소개·캡처를 모두 거치므로 단일 연구보다 넉넉한 전체 제한을 둔다.
   test.setTimeout(420_000);
   const errors: string[] = [];
+  const showcases = new Set<string>(); encounteredShowcases.set(page, showcases);
   diagnosticErrors.set(page, errors);
   page.on("pageerror", error => errors.push(error.stack ?? error.message));
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
   if (process.env.PF_E2E_INPUT_DIAGNOSTIC === "1") await installGameHandleProbe(page);
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 10; });
+  await startAfterOpening(page, (session) => {
+    session.wallet.fossil = 10;
+    // 실제 천장 규칙으로 신규 SSR 소개를 보장한다. 전역 난수나 연출 자체는 대체하지 않는다.
+    const welcome = BANNERS.find(banner => banner.id === "welcome")!;
+    session.gachaPityByGroup[welcome.pityGroupId] = { pullsSinceSsr: welcome.highestRarityGuarantee - 10, pickupGuaranteed: false, totalPulls: (welcome.pullLimit ?? welcome.highestRarityGuarantee) - 10 };
+  });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tapUntil(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lab");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lab");
@@ -87,6 +96,8 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
 
   // 균열이 끝나면 칸 열 장이 뒤집힌 채 깔린다. 이때는 아직 아무것도 열려 있지 않다.
   try {
+    // 저속 소프트웨어 GPU에서도 실제 사용자의 단계 진행 탭으로 넘어간다.
+    await tapUntil(page, BASE_WIDTH / 2, 300, async () => (await board(page))?.slots === 10, { attempts: 20, gapMs: 2_000 });
     await expect.poll(() => board(page), { timeout: CRACK_TIMEOUT }).toEqual({ slots: 10, opened: 0 });
   } catch (error) {
     const state = await page.evaluate(() => ({ debug: window.__PF_DEBUG,
@@ -106,6 +117,7 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
   await tapThrough(page, BASE_WIDTH - 150, 100, async () => (await board(page))?.opened === 10);
   await captureGame(page, `test-results/${test.info().project.name}-research-board-opened.png`);
 
+  expect(showcases.size, "신규 소개를 실제로 거쳤어야 한다").toBeGreaterThan(0);
   expect(errors).toEqual([]);
   // 다 열린 뒤에는 확인 버튼이 아니라 화면 아무 곳이나 눌러 돌아간다.
   await tap(page, BASE_WIDTH / 2, 200);

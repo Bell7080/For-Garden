@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
-import { TITLE_ACTION_ROW, TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleActionSlots, titleLoginSlots } from "../../src/ui/titleActionLayout";
+import { TITLE_ACTION_ROW, TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleActionSlots, titleLoginSlots, titleActionContent } from "../../src/ui/titleActionLayout";
 
 describe("타이틀 하단 버튼 줄", () => {
   it("1~3개 모두 가운데 정렬이고 화면 안에서 서로 겹치지 않는다", () => {
@@ -14,6 +14,15 @@ describe("타이틀 하단 버튼 줄", () => {
         expect(s.x + s.width / 2).toBeLessThanOrEqual(BASE_WIDTH);
         if (i > 0) expect(s.x - s.width / 2).toBeGreaterThan(slots[i - 1].x + slots[i - 1].width / 2);
       });
+    }
+  });
+
+  it("두 버튼은 1.3배 언어 라벨을 위한 폭을 확보하고 아이콘과 분리한다", () => {
+    for (const slot of titleActionSlots(2)) {
+      const content = titleActionContent(slot.width);
+      expect(content.labelWidth).toBeGreaterThanOrEqual(185);
+      expect(content.labelX - content.labelWidth / 2 - (content.iconX + 15)).toBeGreaterThanOrEqual(12);
+      expect(content.labelX + content.labelWidth / 2).toBeLessThanOrEqual(slot.width / 2 - 14);
     }
   });
 

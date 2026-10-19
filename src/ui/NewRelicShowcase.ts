@@ -103,6 +103,7 @@ class NewRelicShowcase {
   private voiceTimer?: Phaser.Time.TimerEvent;
   private readonly ownedTweens: Phaser.Tweens.Tween[] = [];
   private readonly voiceTweens: Phaser.Tweens.Tween[] = [];
+  private readonly detachedEffects: Phaser.GameObjects.GameObject[] = [];
 
   private animate(config: Phaser.Types.Tweens.TweenBuilderConfig): Phaser.Tweens.Tween {
     const tween = this.scene.tweens.add(config);
@@ -113,8 +114,7 @@ class NewRelicShowcase {
   private stopVoice(): void {
     this.voiceTimer?.remove(); this.voiceTimer = undefined;
     for (const tween of this.voiceTweens.splice(0)) tween.remove();
-    this.voiceText?.setCrop();
-    this.voiceText?.setAlpha(1);
+    if (this.voiceText?.active) this.voiceText.setCrop().setAlpha(1);
   }
   private voiceText?: Phaser.GameObjects.Text;
   private voiceLine?: Phaser.GameObjects.Graphics;
@@ -214,6 +214,7 @@ class NewRelicShowcase {
       .setDepth(this.options.depth + 6)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.55 * flashes.alphaRatio);
+    this.detachedEffects.push(flash);
     this.animate({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 900, ease: "Sine.easeOut", onComplete: () => flash.destroy() });
     this.enterVoice();
   }
@@ -233,7 +234,7 @@ class NewRelicShowcase {
     const gold = this.tone.halo;
     const bright = Phaser.Display.Color.IntegerToColor(gold).lighten(35).color;
     const omen = scene.add.container(0, 0).setDepth(this.options.depth + 2);
-    this.omen = omen;
+    this.omen = omen; this.detachedEffects.push(omen);
     const later = (ms: number, run: () => void) => this.omenTimers.push(scene.time.delayedCall(ms, run));
     const tween = (config: Phaser.Types.Tweens.TweenBuilderConfig) => this.omenTweens.push(this.animate(config));
 
@@ -573,6 +574,7 @@ class NewRelicShowcase {
 
     // 섬광은 무대 위 한 겹. 등급색이 섞인 흰빛이 화면을 덮었다가 걷힌다.
     const flash = scene.add.rectangle(W / 2, H / 2, OW, OH, 0xffffff, 0.001).setDepth(this.options.depth + 6);
+    this.detachedEffects.push(flash);
     flash.setBlendMode(Phaser.BlendModes.ADD);
     flash.setFillStyle(Phaser.Display.Color.IntegerToColor(this.tone.halo).lighten(40).color, 1);
     flash.setAlpha(0.95 * flashes.alphaRatio);
@@ -635,6 +637,8 @@ class NewRelicShowcase {
     this.stopVoice();
     this.stopOmen(true);
     for (const tween of this.ownedTweens.splice(0)) tween.remove();
+    // 트윈의 onComplete에만 파괴를 맡기면 빠른 닫기 때 섬광/옅어지는 전조가 화면에 남는다.
+    for (const effect of this.detachedEffects.splice(0)) effect.destroy();
     this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.close, this);
     for (const puppet of this.puppets.splice(0)) puppet.destroy();
     this.info.destroy(true);

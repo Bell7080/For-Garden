@@ -18,7 +18,7 @@ const bootstrap = read("supabase/tests/launch-reset-bootstrap.sql");
 const seed = read("supabase/tests/launch-reset-seed.sql");
 
 // ── 임시 서버 ────────────────────────────────────────────────────────────────────────
-const pgBin = readdirSync("/usr/lib/postgresql").sort().reverse().map((v) => `/usr/lib/postgresql/${v}/bin`).find((d) => existsSync(join(d, "initdb")));
+const pgBin = (existsSync("/usr/lib/postgresql") ? readdirSync("/usr/lib/postgresql") : []).sort().reverse().map((v) => `/usr/lib/postgresql/${v}/bin`).find((d) => existsSync(join(d, "initdb")));
 const dockerName = `fg-launch-reset-${Date.now()}`;
 const useDocker = !pgBin && spawnSync("docker", ["--host=unix:///var/run/docker.sock", "version"], { stdio: "ignore" }).status === 0;
 if (!pgBin && !useDocker) throw new Error("PostgreSQL 바이너리(/usr/lib/postgresql/*/bin) 또는 docker가 필요합니다.");

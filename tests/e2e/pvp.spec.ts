@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { LOBBY_ACTION_BOUNDS } from "../../src/ui/lobbyLayout";
 import { PVP_MENU, PVP_RETURN_SCENE, pvpMenuLayout } from "../../src/ui/pvpLayout";
-import { PVP_MODES } from "../../src/data/pvpModes";
+import { PVP_MODES, PVP_MODE_SELECT_ENABLED } from "../../src/data/pvpModes";
 import { startAfterOpening } from "./openingSave";
 import { tap, tapUntil } from "./canvasInput";
 
@@ -20,6 +20,14 @@ test("로비 결투 판에서 결투장과 세 PvP 상세 화면을 열고 공�
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
+
+  // 미정 모드의 진입점은 현재 숨김 상태이며 결투장으로 바로 이동한다.
+  if (!PVP_MODE_SELECT_ENABLED) {
+    await tapUntil(page, LOBBY_ACTION_BOUNDS.expedition.x, LOBBY_ACTION_BOUNDS.expedition.y, async () => (await scene(page)) === "duel");
+    await tap(page, BACK_SLOT.x, BACK_SLOT.y);
+    await expect.poll(() => scene(page)).toBe(PVP_RETURN_SCENE.preview);
+    return;
+  }
 
   for (const [index, mode] of PVP_MODES.entries()) {
     // 선택판은 씬이 아니라 로비 위의 판이라, 매번 로비의 결투 입력에서 다시 연다.

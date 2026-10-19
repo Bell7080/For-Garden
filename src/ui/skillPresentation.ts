@@ -606,7 +606,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "echoLocation" && passive.echoLocation !== undefined) {
     const swarm = passive.batSwarm;
     if (swarm === undefined) return t("skill.passive.echoLocation");
-    return t("skill.passive.echoBatSwarm", { seconds: swarm.intervalSeconds, power: swarm.powerPercent, count: swarm.healTargets, heal: swarm.healPercent });
+    return t("skill.passive.echoBatSwarm", { seconds: swarm.intervalSeconds, power: swarm.powerPercent, count: swarm.maxTargets, heal: swarm.healPercent });
   }
   if (passive.kind === "segmentBarrier" && passive.segmentBarrier !== undefined) return t("skill.passive.segmentBarrier");
   if (passive.kind === "vitalAim" && passive.vitalAim !== undefined) return t("skill.passive.vitalAim");
@@ -892,7 +892,7 @@ export function skillDescription(
    */
   const channel = "channel" in skill ? skill.channel : undefined;
   if (channel !== undefined) {
-    const clauses = statusClauses(skill).map(({ text }) => text);
+    const clauses = skillEffectClauses(skill, stats).map(({ text }) => text);
     // 대상이 먼저다 — 다른 모든 스킬과 같은 뼈대를 지키고, 그 뒤에 "얼마 동안 매초"를 둔다.
     const tick = t("skill.sentence.channel", {
       target: skillTargetPhrase(skill), seconds: channel.seconds,
@@ -1267,7 +1267,10 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
  */
 function skillTargetPhrase(skill: DescribedSkill): string {
   const targeting = "targeting" in skill ? skill.targeting : undefined;
-  if (targeting === "nearbyEnemies") return t("skill.phrase.nearbyEnemies");
+  if (targeting === "nearbyEnemies") {
+    if ("maxTargets" in skill && skill.maxTargets !== undefined) return t("skill.phrase.nearbyEnemiesCapped", { count: skill.maxTargets });
+    return t("skill.phrase.nearbyEnemies");
+  }
   // 걸음 이름이 이미 「갈래화살」이고 몇 명까지 갈라지는지는 태그가 말한다 — 본문은 어디를
   // 중심으로 갈라지는지만 적어, 한 줄에서 같은 말이 두 번 나오지 않게 한다.
   if (targeting === "splitShot") {
@@ -1514,7 +1517,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effects.passive.kind === "deeperMarch") return t("skill.breakthrough.effect.passive.deeperMarch", { percent: trim(effects.passive.regenMaxHpPercentPerAllyPerSecond) });
     if (effects.passive.kind === "deepAim") return t("skill.breakthrough.effect.passive.deepAim", { stacks: trim(effects.passive.extraStacks) });
     if (effects.passive.kind === "twinHum") return t("skill.breakthrough.effect.passive.twinHum", { name: def.passive.name });
-    if (effects.passive.kind === "swarmDeepen") return t("skill.breakthrough.effect.passive.swarmDeepen", { name: def.passive.name, count: trim(effects.passive.extraHealTargets) });
+    if (effects.passive.kind === "swarmDeepen") return t("skill.breakthrough.effect.passive.swarmDeepen", { name: def.passive.name, count: trim(effects.passive.extraTargets) });
     if (effects.passive.kind === "rageGain") return t("skill.breakthrough.effect.passive.rageGain", { name: def.passive.name, value: trim(effects.passive.extraPerHit) });
     if (effects.passive.kind === "thickShell") return t("skill.breakthrough.effect.passive.thickShell", { name: def.passive.name, self: trim(effects.passive.selfShieldMaxHpPercent), ally: trim(effects.passive.allyShieldMaxHpPercent) });
     if (effects.passive.kind === "potentReaction") return t("skill.breakthrough.effect.passive.potentReaction", { name: def.passive.name, seconds: trim(effects.passive.poisonSeconds) });

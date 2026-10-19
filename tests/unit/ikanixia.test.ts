@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { createSkirmish, fireUltimate, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 
-/** 이카닉시아는 중거리 마법사다 — 박쥐 떼가 주위를 매초 훑고, 회복은 가까운 셋이 입은 피해에서만 센다. */
+/** 이카닉시아는 중거리 마법사다 — 박쥐 떼가 주위의 가까운 둘을 매초 훑고, 평타와 궁극기도 둘까지만 맞힌다. */
 const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_200 };
 
 function setup(enemyIds: readonly string[]) {
@@ -20,20 +20,35 @@ describe("이카닉시아 박쥐 떼", () => {
     expect(def.reachTier).toBe("mid");
     expect(def.stats.ap).toBeGreaterThan(def.stats.atk * 4);
     expect(def.basic.targeting).toBe("splitShot");
+    expect(def.basic.maxTargets).toBe(2);
+    expect(def.passive.batSwarm!.maxTargets).toBe(2);
+    expect(def.ultimate.targeting === "nearbyEnemies" && def.ultimate.maxTargets).toBe(2);
     expect(def.ultimate.channel?.seconds).toBe(5);
   });
 
-  it("범위 안의 모든 적이 매초 피해를 입고 회복은 가까운 셋까지만 센다", () => {
+  it("가까운 둘만 매초 피해를 입고 회복은 맞힌 피해에서 센다", () => {
     const { state, boss, foes } = setup(["amo", "toby", "ripa", "amo"]);
     boss.hp = boss.maxHp * 0.5;
     const before = boss.hp;
     for (let t = 0; t < 1.1; t += 0.05) stepSkirmish(state, 0.05);
-    expect(foes.every((f) => f.hp < f.maxHp)).toBe(true);
-    expect(boss.hp).toBeGreaterThan(before);
     const plan = getRelic("ikanixia").passive.batSwarm!;
-    const nearest = [...foes].sort((a, b) => Math.hypot(a.x - boss.x, a.y - boss.y) - Math.hypot(b.x - boss.x, b.y - boss.y)).slice(0, plan.healTargets);
-    const dealt = nearest.reduce((sum, f) => sum + (f.maxHp - f.hp), 0);
+    const hit = foes.filter((f) => f.hp < f.maxHp);
+    expect(hit.length).toBe(plan.maxTargets);
+    expect(boss.hp).toBeGreaterThan(before);
+    const dealt = hit.reduce((sum, f) => sum + (f.maxHp - f.hp), 0);
     expect(boss.hp - before).toBeLessThanOrEqual(dealt * plan.healPercent / 100 + 1e-6);
+  });
+
+  it("궁극기 채널링은 틱마다 반경 안의 가까운 둘만 맞힌다", () => {
+    const { state, boss, foes } = setup(["amo", "toby", "ripa", "amo"]);
+    foes[3].x = boss.x + 900; // 반경(300) 밖이다
+    boss.energy = 1_000;
+    fireUltimate(state, boss.id, () => 0.99);
+    for (let t = 0; t < 3.1; t += 0.05) stepSkirmish(state, 0.05, () => 0.99);
+    expect(foes[0].hp).toBeLessThan(foes[0].maxHp);
+    expect(foes[1].hp).toBeLessThan(foes[1].maxHp);
+    expect(foes[2].hp).toBe(foes[2].maxHp);
+    expect(foes[3].hp).toBe(foes[3].maxHp);
   });
 
   it("범위 밖의 적은 맞지 않고 폭주는 범위를 넓힌다", () => {

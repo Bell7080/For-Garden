@@ -3095,9 +3095,9 @@ export const RELICS: RelicDef[] = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      // 몸 주위를 맴도는 박쥐가 초마다 넓게 훑는다 — 다수 대 일에 강한 지속 탱의 뼈대다.
-      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, healTargets: 3, healPercent: 30 },
-      desc: "박쥐 떼가 주위의 적을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
+      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, maxTargets: 2, healPercent: 30 },
+      desc: "박쥐 떼가 주위의 가까운 적 둘을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
     },
     basic: {
       id: "ikanixia-basic",
@@ -3108,11 +3108,11 @@ export const RELICS: RelicDef[] = [
       effectType: "magical",
       damageType: "magical",
       /*
-       * **박쥐가 표적과 그 곁의 둘까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 셋에게 나눠 얹고, 세 번째
+       * **박쥐가 표적과 그 곁의 하나까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 둘에게 나눠 얹고, 세 번째
        * 타격마다 출혈을 남긴다 — 기절은 걷어 냈다(붙잡는 손은 궁극기가 아니라 물량으로 몰아붙이는 쪽이 이 개체다).
        */
       targeting: "splitShot",
-      maxTargets: 3,
+      maxTargets: 2,
       statusEffectEvery: 3,
       statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
     },
@@ -3128,6 +3128,8 @@ export const RELICS: RelicDef[] = [
       cost: 80,
       targeting: "nearbyEnemies",
       radius: 300,
+      // 첫 타와 매초 틱 모두 반경 안에서 가까운 둘만 맞힌다.
+      maxTargets: 2,
       channel: { seconds: 5 },
       damageHealingPercent: 25,
     },
@@ -3136,7 +3138,7 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "bleedingSmash" },
       ultimate: { kind: "widenArea", radius: 380 },
       ferocity: { kind: "bloodFever", lifeStealPoints: 15 },
-      passive: { kind: "swarmDeepen", extraHealTargets: 2 },
+      passive: { kind: "swarmDeepen", extraTargets: 1 },
     },
   },
   {

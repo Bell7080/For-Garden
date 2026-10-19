@@ -3259,19 +3259,20 @@ function tickBatSwarm(fighter: Fighter, dt: number, state: SkirmishState, events
   const radius = plan.radius * (1 + (trait?.radiusPercent ?? 0) / 100);
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { power: plan.powerPercent, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
+  const deepen = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   const inRange = state.fighters
     .filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= radius)
-    .sort((a, b) => distance(fighter, a) - distance(fighter, b));
-  const deepen = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+    .sort((a, b) => distance(fighter, a) - distance(fighter, b))
+    .slice(0, plan.maxTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraTargets : 0));
   let healBase = 0;
-  inRange.forEach((other, index) => {
+  inRange.forEach((other) => {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
     const shieldBefore = other.shield.amount; const shieldProviderId = other.shield.providerId;
     applyDamage(other, resolution.applied, events, state);
     const credited = recordDamageContribution(state, fighter.id, other, "magical", "ap", computeDamageContribution(attacker, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-    if (index < plan.healTargets + (deepen?.kind === "swarmDeepen" ? deepen.extraHealTargets : 0)) healBase += resolution.applied;
+    healBase += resolution.applied;
     events.push({ kind: "attack", attackerId: fighter.id, targetId: other.id, skill: "basic", amount: resolution.applied,
       contributionAmount: credited, critical: false, animate: false, damageType: "magical", mitigated: resolution.reduced < resolution.raw });
     if (!isFighterAlive(other)) {
@@ -4030,11 +4031,19 @@ function tickArtChannel(fighter: Fighter, dt: number, state: SkirmishState, even
   const input = { ...ultimate, isCritical: false, kind: "ultimate" as const };
   // 채널링은 매초 전장 전체에 한 번씩 떨어진다. 틱마다 같은 표시를 다시 켜야 "아직 도는 중"이
   // 리듬으로 읽힌다 — 한 번만 켜고 5초를 버티면 깔린 판이 그동안 화면을 덮는다.
-  if (state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other))) {
-    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType, area: { shape: "battlefield" } });
+  // 반경(`nearbyEnemies`)과 인원 제한이 있는 채널링은 틱마다 가까운 순으로 다시 고른다. 없으면 전장 전체다.
+  const reach = ultimate.targeting === "nearbyEnemies" ? ultimate : undefined;
+  const widened = reach ? openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate) : undefined;
+  const reachRadius = reach ? Math.max(reach.radius, widened?.kind === "widenArea" ? widened.radius : 0) : Infinity;
+  const channelTargets = state.fighters
+    .filter((other) => other.side !== fighter.side && isFighterAlive(other) && distance(fighter, other) <= reachRadius)
+    .sort((a, b) => distance(fighter, a) - distance(fighter, b))
+    .slice(0, reach?.maxTargets ?? Infinity);
+  if (channelTargets.length > 0) {
+    events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType,
+      area: reach ? { shape: "radial", x: fighter.x, y: fighter.y, radius: reachRadius } : { shape: "battlefield" } });
   }
-  for (const other of state.fighters) {
-    if (other.side === fighter.side || !isFighterAlive(other)) continue;
+  for (const other of channelTargets) {
     const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
     const resolution = resolveReceivedDamage(other, raw);
     const hpBefore = other.hp;
@@ -8076,10 +8085,16 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       skill: { ...skill, power: skill.power * arrowBreakthrough.powerPercent / 100 } as Skill });
   }
   // 이 함수에 들어온 공격은 모두 광역이다. 은신은 단일 추적 회피이지 광역 무적이 아니므로 포함한다.
+  const nearbyCapIds = skill.targeting === "nearbyEnemies" && skill.maxTargets !== undefined ? new Set(
+    state.fighters
+      .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter) && distance(attacker, fighter) <= (skill.radius ?? 0))
+      .sort((a, b) => distance(attacker, a) - distance(attacker, b))
+      .slice(0, skill.maxTargets)
+      .map((fighter) => fighter.id)) : undefined;
   const targets = state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)
     && (!detonation || (fighter.overpaint?.stacks ?? 0) > 0)
     && (!cursed || fighter.curse !== null)
-    && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0))
+    && (skill.targeting === "battlefieldEnemies" || (skill.targeting === "nearbyEnemies" && distance(attacker, fighter) <= (skill.radius ?? 0) && (nearbyCapIds === undefined || nearbyCapIds.has(fighter.id)))
       || (skill.targeting === "splitShot" && splitTargetIds!.has(fighter.id))
       || (skill.targeting === "targetedCircle" && inCircle(fighter)) || (skill.targeting === "chargeLine" && inCharge(fighter))));
   // 갈래가 적 수보다 많고 남는 갈래를 같은 적에게 보내는 평타(`repeatOnLone`)는 적중 목록을 갈래 수까지 채운다.

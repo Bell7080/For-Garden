@@ -1206,6 +1206,8 @@ export type Ultimate = Skill & {
       targeting: "nearbyEnemies";
       /** 거리 단위는 난전 좌표와 같은 px이며, 시전자 중심에서 잰다. */
       radius: number;
+      /** 있으면 반경 안에서 시전자와 가까운 순으로 이만큼만 맞힌다(채널링 틱도 같다). */
+      maxTargets?: number;
     }
   | {
       /**
@@ -2194,13 +2196,13 @@ export interface Passive {
    */
   /**
    * 「박쥐 떼」 계약(이카닉시아). 매 `intervalSeconds`마다 자기 주위 `radius` 안의 모든 적에게 주문력 `powerPercent`% 마법 피해를
-   * 주고, 그중 가까운 `healTargets`명이 입은 피해의 `healPercent`%만큼 회복한다(범위가 넓어도 회복은 셋까지만 센다).
+   * 주고, 그중 가까운 `maxTargets`명만 맞히고, 맞힌 피해의 `healPercent`%만큼 회복한다.
    */
   batSwarm?: {
     radius: number;
     intervalSeconds: number;
     powerPercent: number;
-    healTargets: number;
+    maxTargets: number;
     healPercent: number;
   };
   echoLocation?: {
@@ -3520,9 +3522,9 @@ export type PassiveBreakthrough = {
   /** 날갯짓 울림이 가장 센 아군 **둘**에게 공명을 건다(네우리). 적 전용. */
   kind: "twinHum";
 } | {
-  /** 박쥐 떼가 피를 빠는 적이 이만큼 늘어난다(이카닉시아). 적 전용. */
+  /** 박쥐 떼가 맞히는 적이 이만큼 늘어난다(이카닉시아). 적 전용. */
   kind: "swarmDeepen";
-  extraHealTargets: number;
+  extraTargets: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

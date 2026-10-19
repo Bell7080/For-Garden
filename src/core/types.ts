@@ -3550,6 +3550,8 @@ export interface StageEnemyDef {
   breakthrough: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
   formationSlot: 0 | 1 | 2 | 3 | 4;
+  /** 편성은 그대로 두고 이 개체만 정예 유형으로 서는 관문(4-6·4-9의 코마)에 붙는다. 관문 전체가 정예면 `BattleStageDef.elite`다. */
+  elite?: true;
 }
 
 

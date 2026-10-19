@@ -178,7 +178,7 @@ describe("stage enemy design", () => {
   it("스테이지 사이에서 허용하는 차이는 레벨·돌파뿐이다", () => {
     // 태생 능력치나 스킬 보정을 스테이지에 두지 않는다는 계약이다. 유형이 주는 몫은 관문이
     // 아니라 `ENCOUNTER_ROLE` 한 표가 갖는다.
-    const allowed = ["relicId", "level", "breakthrough", "formationSlot"];
+    const allowed = ["relicId", "level", "breakthrough", "formationSlot", "elite"];
     for (const stage of battles) for (const enemy of stage.enemies) {
       expect(allowed).toEqual(expect.arrayContaining(Object.keys(enemy)));
       expect(Object.keys(enemy)).toEqual(expect.arrayContaining(["relicId", "level", "breakthrough", "formationSlot"]));
@@ -284,7 +284,7 @@ describe("stage enemy design", () => {
       const slots = stage.enemies.map(({ formationSlot }) => formationSlot);
       // 셋이 서면 0·1·2를 나눠 갖고, 정예가 홀로 서면 가운데(1) 한 자리만 쓴다. 정예 둘(2-7·2-9)은 둘만 쓴다.
       if (stage.enemies.length === 2) expect(slots.every((slot) => slot >= 0 && slot <= 2), stage.id).toBe(true);
-      else expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : stage.enemies.length === 5 ? [0, 1, 2, 3, 4] : [0, 1, 2]);
+      else expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : stage.enemies.length === 5 ? [0, 1, 2, 3, 4] : stage.enemies.length === 4 ? [0, 1, 2, 3] : [0, 1, 2]);
       expect(new Set(slots).size, stage.id).toBe(slots.length);
       const expectedIds = [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ relicId }) => relicId);
       expect(getStageEnemies(stage).map(({ id }) => id)).toEqual(expectedIds);

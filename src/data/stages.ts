@@ -22,11 +22,26 @@ const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
  * 사다리의 눈금(`STORY_RECOMMENDED_LEVELS`)은 테러조 기준이다. 태생 층이 한 띠 위인 개체(회수조)는
  * 같은 자리에서 **같은 세기가 되는 더 낮은 레벨**로 서고, 돌파도 그 레벨에서 나온다.
  */
-function tieredEnemy(relicId: string, referenceLevel: number, slot: 0 | 1 | 2 | 3 | 4): StageEnemyDef {
+function tieredEnemy(relicId: string, referenceLevel: number, slot: 0 | 1 | 2 | 3 | 4, levelBonus: number = 0): StageEnemyDef {
   const tier = ENEMY_BIRTH_TIERS[relicId];
-  const level = tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel;
+  const level = (tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel) + (tier ? levelBonus : 0);
   return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
 }
+
+/**
+ * 4장의 회수조는 태생 보정으로 낮춘 눈금에서 이만큼 더 높은 레벨로 선다(응태 결정, v0.320.1) — 같은 자리의 테러조보다
+ * 조금 더 센 정예 부대라는 뜻이다. 테러조는 이 값을 받지 않는다.
+ */
+const CHAPTER_FOUR_RAIDER_LEVEL_BONUS = 3;
+
+/**
+ * 같은 관문에서 **개체 하나만** 정예 자리에 서는 경우(4-6·4-9의 코마). 관문의 `elite`(혼자·둘이 서는 정예 관문)와 달리
+ * 편성은 그대로 두고 그 개체의 유형(`encounterRole`)만 정예가 된다 — 나머지는 보통 유형 그대로다.
+ */
+const SOLO_ELITE_ENEMIES: Readonly<Record<string, readonly string[]>> = {
+  "4-6": ["koma"],
+  "4-9": ["koma"],
+};
 
 function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2 | 3 | 4): StageEnemyDef {
   return { relicId, level, breakthrough, formationSlot };
@@ -99,9 +114,9 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-10": [["ikanixia", 1]],
-  // 4장 — 회수조와 테러조가 섞인다. 무리 5기(4-2·4-8) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6) · 이카닉시아 캐리(4-9) · 투 캐리 마감(4-10).
+  // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6, 코마만 정예) · 코마 캐리(4-9, 코마만 정예) · 투 캐리 마감(4-10).
   "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
-  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3], ["neuri", 4]],
+  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
   "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
   "4-4": [["atra", 0], ["amo", 2]],
   "4-5": [["atra", 0], ["toby", 2]],
@@ -259,7 +274,10 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
     const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
     const laterChapterEnemies = lateFormation
-      ? lateFormation.map(([relicId, slot]) => tieredEnemy(relicId, laterChapterLevel, slot))
+      ? lateFormation.map(([relicId, slot]) => {
+        const enemy = tieredEnemy(relicId, laterChapterLevel, slot, chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0);
+        return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true as const } : enemy;
+      })
       : laterChapterIds.map((relicId, slot) =>
         enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
@@ -395,10 +413,15 @@ export function stageEnemyRole(stage: Extract<StageDef, { kind: "battle" }>): En
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
   const role = stageEnemyRole(stage);
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
-  return stageEnemyGrowth(stage).map((enemy) => {
+  const growth = stageEnemyGrowth(stage);
+  const soloElites = growth.filter((enemy) => enemy.elite === true).length;
+  return growth.map((enemy) => {
     const base = getRelic(enemy.relicId);
+    // 편성 중 일부만 정예인 관문: 정예 몫은 그 개체들이 나눠 갖고, 나머지는 관문의 유형 그대로다.
+    const enemyRole = enemy.elite === true ? "elite" : role;
+    const count = enemy.elite === true ? soloElites : stage.enemies.length;
     // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
-    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role, stage.enemies.length, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
+    return { ...base, encounterRole: enemyRole, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
   });
 }
 

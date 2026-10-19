@@ -39,7 +39,7 @@ describe("SupabaseAccountApi", () => {
   it("토큰이 없으면 게스트로 가입해 보안 저장소에 맡기고 마스킹된 ID를 돌려준다", async () => {
     const { api, store, calls } = setup(() => json(session(1, 2_000_000)));
     const state = await api.getState();
-    expect(state).toEqual({ ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-1111••••" } });
+    expect(state).toEqual({ ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-1111••••", identities: [] } });
     expect(store.value?.accessToken).toBe("a1");
     expect(calls[0].path).toBe("/auth/v1/signup");
     expect(JSON.stringify(state)).not.toContain("a1");
@@ -109,7 +109,7 @@ describe("SupabaseAccountApi", () => {
     it("처음 가입은 합성 주소로 signup하고 연동 상태를 돌려준다(비밀번호는 저장소에 남지 않는다)", async () => {
       const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
       const result = await api.registerWithId("Garden_01", "correct horse");
-      expect(result).toEqual({ ok: true, value: { kind: "linked", provider: "password", maskedId: "ga••••" } });
+      expect(result).toEqual({ ok: true, value: { kind: "linked", provider: "password", maskedId: "ga••••", identities: [{ id: "11111111-2222-3333-4444-555555555555", provider: "password" }] } });
       expect(calls[0].path).toBe("/auth/v1/signup");
       expect(JSON.parse(String(calls[0].init.body))).toEqual({ email: "garden_01@id.forgarden.app", password: "correct horse" });
       expect(JSON.stringify(store.value)).not.toContain("correct horse");
@@ -125,7 +125,7 @@ describe("SupabaseAccountApi", () => {
       expect((await api.getState()).ok).toBe(true);
       const result = await api.registerWithId("garden_01", "correct horse");
       expect(result).toMatchObject({ ok: true, value: { kind: "linked", provider: "password" } });
-      const put = calls.find((c) => c.path === "/auth/v1/user");
+      const put = calls.find((c) => c.path === "/auth/v1/user" && c.init.method === "PUT");
       expect(put?.init.method).toBe("PUT");
       expect(JSON.parse(String(put?.init.body))).toEqual({ email: "garden_01@id.forgarden.app", password: "correct horse" });
       expect(store.value?.refreshToken).toBe("r2");
@@ -154,6 +154,26 @@ describe("SupabaseAccountApi", () => {
       expect(result).toMatchObject({ ok: true, value: { kind: "linked" } });
       expect(calls[0].path).toBe("/auth/v1/token?grant_type=password");
       expect(store.value?.userId).toBe("11111111-2222-3333-4444-555555555555");
+    });
+
+    it("로그인 방법이 둘이면 하나를 떼고, 하나만 남으면 서버를 부르지 않고 거절한다", async () => {
+      const users = [
+        [{ identity_id: "i-email", provider: "email" }, { identity_id: "i-apple", provider: "apple" }],
+        [{ identity_id: "i-apple", provider: "apple" }],
+      ];
+      const { api, store, calls } = setup((path, init) => {
+        if (path === "/auth/v1/user") return json({ identities: users[calls.filter((c) => c.path === "/auth/v1/user").length > 1 ? 1 : 0] });
+        if (init.method === "DELETE") return json({});
+        return json(session(2, 2_000_000));
+      });
+      store.value = { accessToken: "a1", refreshToken: "r1", expiresAtMs: 2_000_000_000, userId: "11111111-2222-3333-4444-555555555555" };
+      const removed = await api.unlinkIdentity("i-email");
+      expect(removed.ok && removed.value.identities.map((i) => i.provider)).toEqual(["apple"]);
+      expect(calls.some((c) => c.path.endsWith("/identities/i-email") && c.init.method === "DELETE")).toBe(true);
+      const deletes = calls.filter((c) => c.init.method === "DELETE").length;
+      const last = await api.unlinkIdentity("i-apple");
+      expect(last).toMatchObject({ ok: false, code: "last-identity" });
+      expect(calls.filter((c) => c.init.method === "DELETE").length).toBe(deletes);
     });
 
     it("로그아웃은 새 게스트를 만들지 않아 타이틀이 로그인 선택을 다시 보여 준다", async () => {

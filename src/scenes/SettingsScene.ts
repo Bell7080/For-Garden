@@ -17,13 +17,10 @@ import { SettingsSlider } from "../ui/SettingsSlider";
 import { SettingsToggle } from "../ui/SettingsToggle";
 import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
-import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
-import { AccountSaveSync } from "../api/AccountSaveSync";
+import { accountApi, type AccountFailureCode, type AccountIdentity, type AccountState } from "../api/AccountApi";
 import { disconnectProgress } from "../api/backendSession";
 import { openAccountIdPopup } from "../ui/AccountIdPopup";
-import { session } from "../state/session";
 import { openSupportPopup } from "../ui/SupportPopup";
-import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openDebugToolsMenu } from "../ui/DebugToolsMenu";
 import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
@@ -62,7 +59,7 @@ export class SettingsScene extends Phaser.Scene {
   private dragStartY = 0;
   private activeTab: SettingsTab = "sound";
   private readonly popups = new PopupLayer(this, 3000);
-  private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
+  private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••", identities: [] };
   private accountBusy = false;
   private battleMember = false;
   /** 검증을 마친 반환 경로만 보관해 탭 재시작 뒤에도 원래 화면을 잃지 않는다. */
@@ -306,13 +303,19 @@ export class SettingsScene extends Phaser.Scene {
     y = section(t("settings.section.account"));
     const account = this.accountState;
     this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
-    if (account.kind === "guest") {
-      // 한 줄에 세 개가 서므로 입력면을 글자 폭만큼만 둔다(겹치면 뒤에 선 줄이 앞 글자를 가로챈다).
-      this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
-      this.addTextAction(400, y, t("settings.account.linkGoogle"), () => void this.login("google"), false, 240);
-      this.addTextAction(680, y, t("settings.account.linkApple"), () => void this.login("apple"), false, 240);
+    const has = (provider: AccountIdentity["provider"]) => account.identities.some((item) => item.provider === provider);
+    // 연결된 로그인 방법은 한 줄씩 서고, 둘 이상일 때만 [해제]가 선다(마지막 하나는 뗄 수 없다).
+    for (const identity of account.identities) {
+      const label = t(`settings.account.provider.${identity.provider}` as TextKey);
+      this.content.add(this.add.text(90, y, `${label}  ${t("settings.account.linked")}`, textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.ink })).setOrigin(0, 0.5));
+      if (account.identities.length > 1) this.addTextAction(700, y, t("settings.account.unlink"), () => this.confirmUnlink(identity), true, 200);
+      y += SETTINGS_SUPPORT.actionStep;
     }
-    else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true); }
+    // 아직 걸지 않은 로그인 방법을 더한다. 한 줄에 서므로 입력면을 글자 폭만큼만 둔다(겹치면 뒤에 선 줄이 앞 글자를 가로챈다).
+    if (!has("password")) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
+    if (!has("google")) this.addTextAction(400, y, t("settings.account.linkGoogle"), () => void this.linkSocial("google"), false, 240);
+    if (!has("apple")) this.addTextAction(680, y, t("settings.account.linkApple"), () => void this.linkSocial("apple"), false, 240);
+    if (account.kind === "linked") { y += SETTINGS_SUPPORT.actionStep; this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true); }
     y += SETTINGS_SUPPORT.accountFootRoom;
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
@@ -365,21 +368,6 @@ export class SettingsScene extends Phaser.Scene {
     });
   }
 
-  /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
-  private async login(provider: "google" | "apple"): Promise<void> {
-    this.accountBusy = true; this.input.enabled = false;
-    // login 자체에는 합산을 맡기지 않는다. 아래 명시적 mergeGuestSave 계약만 게스트 진행을 병합한다.
-    const loggedIn = await accountApi.login({ provider, mergeGuestProgress: false });
-    this.accountBusy = false; this.input.enabled = true;
-    if (!loggedIn.ok) { this.showAccountFailure(loggedIn.code); return; }
-
-    const sync = new AccountSaveSync(accountApi, saveManager);
-    const requestId = crypto.randomUUID();
-    const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
-    if (result.ok) { this.leaveToBoot(); return; }
-    this.showAccountFailure(result.code);
-  }
-
   /**
    * 이 기기의 게스트 계정에 아이디·비밀번호를 붙인다. 유저가 그대로 승격되므로 서버 진행은 그 자리에 있고,
    * 같은 아이디로 다른 기기에서 로그인하면 이어서 키울 수 있다. 저장 이어받기는 부트가 다시 거친다.
@@ -390,6 +378,28 @@ export class SettingsScene extends Phaser.Scene {
         void accountApi.getState().then((result) => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; this.buildRows(); } });
       });
     } });
+  }
+
+  /** Google/Apple을 이 계정에 더한다. 성공하면 제공자 화면으로 떠나므로 돌아오는 길은 새로 연 화면이 맡는다. */
+  private async linkSocial(provider: "google" | "apple"): Promise<void> {
+    this.accountBusy = true; this.input.enabled = false;
+    const result = await accountApi.linkIdentity(provider);
+    this.accountBusy = false; this.input.enabled = true;
+    if (!result.ok) this.showAccountFailure(result.code);
+  }
+
+  /** 로그인 방법 하나를 뗀다. 확인을 거치고, 성공하면 목록만 새로 그린다(진행은 그대로다). */
+  private confirmUnlink(identity: AccountIdentity): void {
+    const label = t(`settings.account.provider.${identity.provider}` as TextKey);
+    this.popups.confirm({ title: t("settings.account.unlink"), message: t("settings.account.unlinkNotice", { provider: label }), confirmLabel: t("settings.account.unlink"), destructive: true }, () => {
+      void (async () => {
+        this.accountBusy = true; this.input.enabled = false;
+        const result = await accountApi.unlinkIdentity(identity.id);
+        this.accountBusy = false; this.input.enabled = true;
+        if (!result.ok) { this.showAccountFailure(result.code); return; }
+        if (this.scene.isActive()) { this.accountState = result.value; this.buildRows(); }
+      })();
+    });
   }
 
   /** 아이디 계정에서 나간다. 이 기기의 저장은 이 계정 것이므로 함께 비워 다음 사람의 진행과 섞이지 않게 한다. */
@@ -413,7 +423,7 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
   private showAccountFailure(code: AccountFailureCode): void {
-    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
+    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "last-identity": "settings.account.unlinkLast", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
     this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 

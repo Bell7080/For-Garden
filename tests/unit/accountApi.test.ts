@@ -5,7 +5,7 @@ import { UnsupportedAccountApi } from "../../src/api/AccountApi";
 describe("UnsupportedAccountApi", () => {
   it("returns a display-safe guest state without exposing credentials", async () => {
     const result = await new UnsupportedAccountApi().getState();
-    expect(result).toEqual({ ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } });
+    expect(result).toEqual({ ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••", identities: [] } });
     expect(JSON.stringify(result)).not.toMatch(/token|secret|credential/i);
   });
   it("reports explicit unsupported results for SDK operations", async () => {

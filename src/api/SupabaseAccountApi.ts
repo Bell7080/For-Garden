@@ -11,7 +11,7 @@
 import { t } from "../i18n";
 import { accountCredentialProblem, accountIdProblem, accountIdToAuthEmail, authEmailToAccountId, maskAccountId } from "../core/accountCredentials";
 import type {
-  AccountApi, AccountFailureCode, AccountResult, AccountState, GuestSaveMergeRequest, LoginRequest,
+  AccountApi, AccountFailureCode, AccountIdentity, AccountResult, AccountState, GuestSaveMergeRequest, LoginRequest,
   RemoteSaveDocument, RemoteSaveMetadata, RemoteSavePrecondition,
 } from "./AccountApi";
 
@@ -59,7 +59,61 @@ export class SupabaseAccountApi implements AccountApi {
   async getState(): Promise<AccountResult<AccountState>> {
     const auth = await this.ensureTokens();
     if (!auth.ok) return auth;
-    return { ok: true, value: stateOf(auth.value) };
+    // 로그인 방법 목록은 서버가 정답이다. 조회가 실패해도 화면은 토큰 claim으로 그린다.
+    const identities = await this.fetchIdentities(auth.value);
+    return { ok: true, value: stateOf(auth.value, identities) };
+  }
+
+  /** 이 계정의 로그인 방법. 모르면 null(호출부가 claim 추정으로 되돌아간다). */
+  private async fetchIdentities(tokens: StoredTokens): Promise<AccountIdentity[] | null> {
+    try {
+      const res = await this.fetchImpl(`${this.options.url}/auth/v1/user`, { headers: { apikey: this.options.key, Authorization: `Bearer ${tokens.accessToken}` } });
+      if (!res.ok) return null;
+      const body = await res.json() as { identities?: Array<{ identity_id?: unknown; id?: unknown; provider?: unknown }> | null };
+      const list: AccountIdentity[] = [];
+      for (const item of body.identities ?? []) {
+        const provider = item.provider === "email" ? "password" : item.provider === "google" || item.provider === "apple" ? item.provider : null;
+        const id = typeof item.identity_id === "string" ? item.identity_id : typeof item.id === "string" ? item.id : null;
+        if (provider && id) list.push({ id, provider });
+      }
+      return list;
+    } catch { return null; }
+  }
+
+  async linkIdentity(provider: "google" | "apple"): Promise<AccountResult<void>> {
+    const auth = await this.ensureTokens();
+    if (!auth.ok) return auth;
+    try {
+      const redirect = encodeURIComponent(globalThis.location?.origin ?? "");
+      const res = await this.fetchImpl(`${this.options.url}/auth/v1/user/identities/authorize?provider=${provider}&redirect_to=${redirect}&skip_http_redirect=true`, { headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}` } });
+      if (!res.ok) {
+        // 수동 연동이 꺼져 있거나 제공자가 설정되지 않은 서버 — 성공을 가장하지 않는다.
+        this.failure = `link:${provider}:${res.status}`;
+        return res.status === 429 ? fail("rate-limited", t("error.account.rateLimited")) : fail("unsupported", t("error.account.loginUnsupported"));
+      }
+      const body = await res.json() as { url?: unknown };
+      if (typeof body.url !== "string" || !body.url.startsWith("https://")) return fail("unsupported", t("error.account.loginUnsupported"));
+      globalThis.location.assign(body.url);
+      return { ok: true, value: undefined };
+    } catch { return fail("network-error", t("error.account.network")); }
+  }
+
+  async unlinkIdentity(identityId: string): Promise<AccountResult<AccountState>> {
+    const auth = await this.ensureTokens();
+    if (!auth.ok) return auth;
+    const current = await this.fetchIdentities(auth.value);
+    if (current === null) return fail("network-error", t("error.account.network"));
+    if (current.length <= 1) return fail("last-identity", t("error.account.lastIdentity"));
+    if (!current.some((item) => item.id === identityId)) return fail("invalid-credentials", t("error.account.badLogin"));
+    try {
+      const res = await this.fetchImpl(`${this.options.url}/auth/v1/user/identities/${encodeURIComponent(identityId)}`, { method: "DELETE", headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}` } });
+      if (!res.ok) { this.failure = `unlink:${res.status}`; return fail("network-error", t("error.account.authFailed", { status: res.status })); }
+    } catch { return fail("network-error", t("error.account.network")); }
+    // 토큰 claim(email)이 떨어져 나간 로그인 방법을 가리킬 수 있으므로 새로 받는다.
+    const refreshed = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: auth.value.refreshToken }));
+    if (!refreshed.ok) return refreshed;
+    this.tokens = refreshed.value; await this.options.store.save(refreshed.value);
+    return { ok: true, value: stateOf(refreshed.value, await this.fetchIdentities(refreshed.value)) };
   }
 
   /** 이 기기에 이미 만들어진 계정(게스트 포함)이 있는가. 네트워크를 쓰지 않는다. 첫 실행 화면이 로그인 버튼을 세울지 정한다. */
@@ -91,7 +145,7 @@ export class SupabaseAccountApi implements AccountApi {
     this.tokens = null;
     try { await this.options.store.clear(); } catch { return fail("network-error", t("error.account.logoutFailed")); }
     // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
-    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
+    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••", identities: [] } };
   }
 
   async registerWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
@@ -295,10 +349,13 @@ function isAnonymous(tokens: StoredTokens): boolean {
   return claims.is_anonymous !== false && typeof claims.email !== "string";
 }
 
-function stateOf(tokens: StoredTokens): AccountState {
-  if (isAnonymous(tokens)) return { kind: "guest", provider: "guest", maskedId: `GUEST-${tokens.userId.slice(0, 4)}••••` };
+function stateOf(tokens: StoredTokens, identities: AccountIdentity[] | null = null): AccountState {
+  // 서버가 준 목록이 있으면 그것이 정답이다 — 소셜만 연결한 계정은 email claim이 없어 토큰만으로는 게스트로 오인된다.
+  if (identities ? identities.length === 0 : isAnonymous(tokens)) return { kind: "guest", provider: "guest", maskedId: `GUEST-${tokens.userId.slice(0, 4)}••••`, identities: [] };
+  const list = identities ?? [{ id: tokens.userId, provider: "password" as const }];
   const id = authEmailToAccountId(claimsOf(tokens).email);
-  return { kind: "linked", provider: "password", maskedId: id ? maskAccountId(id) : `ID-${tokens.userId.slice(0, 4)}••••` };
+  const primary = list.find((item) => item.provider === "password") ?? list[0]!;
+  return { kind: "linked", provider: primary.provider, maskedId: id ? maskAccountId(id) : `ID-${tokens.userId.slice(0, 4)}••••`, identities: list };
 }
 
 function canonical(value: unknown): string {

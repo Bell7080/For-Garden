@@ -42,3 +42,11 @@ DB 마이그레이션은 없다. Auth 설정만 필요하다(테스트 프로젝
   (지금은 이미 연동된 계정이면 `alreadyLinked`로 거절).
 - 아이디 계정에 구글을 더하려면 설정의 「Google 연동」이 `signInWithOAuth` 대신 `linkIdentity('google')`를 부르게 한다.
 - 두 경우 모두 유저 ID가 같아 진행 병합이 없다. 이미 다른 유저가 쓰는 구글 계정이면 `identity_already_exists`로 거절된다.
+
+## 로그인 방법 여러 개 (v0.321.0)
+
+- 한 계정(유저 ID)에 아이디·Google·Apple을 함께 걸 수 있고, **언제나 하나 이상 남아야** 한다. 구글을 애플로 바꾸려면 애플을 더한 뒤 구글을 해제한다.
+- 목록은 `GET /auth/v1/user`의 `identities`(`email`은 아이디 로그인), 연동은 `GET /auth/v1/user/identities/authorize`, 해제는 `DELETE /auth/v1/user/identities/{identity_id}`.
+- Supabase 설정(운영 적용 전 사람이 확인): Authentication → Sign In / Providers → **Allow manual linking 켬**, Google·Apple 제공자 키 입력, Redirect URL에 서비스 주소 추가. 꺼져 있으면 [연동]은 「미지원」을 안내한다.
+- 이메일 연동은 인증 메일이 필요해 이 단계에 넣지 않았다.
+- 소셜 로그인으로 **다른 기기에서 들어오는** 길(타이틀의 Google/Apple)은 아직 자리표시자다.

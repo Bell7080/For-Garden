@@ -8,7 +8,12 @@ export interface AccountState {
   provider: AccountProvider;
   /** 로그·화면 노출에 적합하도록 플랫폼 구현이 이미 마스킹한 식별자다. */
   maskedId: string;
+  /** 이 계정에 걸린 로그인 방법. 게스트는 비어 있다. 하나가 남으면 해제할 수 없다. */
+  identities: AccountIdentity[];
 }
+
+/** 로그인 방법 하나. `id`는 해제 요청에만 쓰는 불투명 값이며 비밀이 아니다. */
+export interface AccountIdentity { id: string; provider: Exclude<AccountProvider, "guest"> }
 
 /** 충돌 화면에서 양쪽 진행을 사람이 비교하는 데 필요한 최소 요약이다. */
 export interface ProgressSummary {
@@ -43,7 +48,9 @@ export type AccountFailureCode =
   | "weak-password"
   | "id-taken"
   | "invalid-credentials"
-  | "rate-limited";
+  | "rate-limited"
+  /** 마지막 남은 로그인 방법은 해제할 수 없다 — 계정에 들어올 길이 없어진다. */
+  | "last-identity";
 
 /** 예외 문자열 대신 UI가 취소·통신 실패·합치기 불가를 구별하게 하는 공통 결과다. */
 export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string };
@@ -90,6 +97,10 @@ export interface AccountApi {
   registerWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
   /** 다른 기기에서 만든 아이디 계정으로 들어간다. 이 기기의 기존 세션은 이 계정으로 바뀐다. */
   signInWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
+  /** 이 계정에 Google/Apple을 더한다. 제공자 화면으로 이동하므로 성공하면 이 페이지는 떠난다. */
+  linkIdentity(provider: "google" | "apple"): Promise<AccountResult<void>>;
+  /** 로그인 방법 하나를 뗀다. 하나만 남았으면 `last-identity`로 거절한다. */
+  unlinkIdentity(identityId: string): Promise<AccountResult<AccountState>>;
 }
 
 /**
@@ -103,7 +114,7 @@ const unsupportedMessage = (): string => t("error.account.noSdk");
 export class UnsupportedAccountApi implements AccountApi {
   async getState(): Promise<AccountResult<AccountState>> {
     // 게스트 표시 자체는 로컬에서 안전하게 알 수 있으므로 조회만 성공시킨다.
-    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
+    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••", identities: [] } };
   }
   async login(_request: LoginRequest): Promise<AccountResult<AccountState>> { return this.unsupported(); }
   async logout(): Promise<AccountResult<AccountState>> { return this.unsupported(); }
@@ -115,6 +126,8 @@ export class UnsupportedAccountApi implements AccountApi {
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
   async registerWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
   async signInWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
+  async linkIdentity(_provider: "google" | "apple"): Promise<AccountResult<void>> { return this.unsupported(); }
+  async unlinkIdentity(_identityId: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
 
   private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: unsupportedMessage() }; }
 }

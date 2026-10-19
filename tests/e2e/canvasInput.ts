@@ -156,3 +156,10 @@ export async function longPress(page: Page, x: number, y: number, ms = 700): Pro
 export async function captureGame(page: Page, path: string): Promise<void> {
   await page.screenshot({ path, scale: "css" });
 }
+
+/** 상태값은 입력 객체의 등록보다 먼저 바뀔 수 있다. 재생성된 입력층을 실제 프레임으로 기다린다. */
+export async function waitForCanvasInputFrame(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
+}

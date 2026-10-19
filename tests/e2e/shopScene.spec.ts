@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { DebugPoint, DebugState } from "../../src/debug";
 import { startAfterOpening } from "./openingSave";
-import { canvasBox, captureGame, gamePoint, tap as tapGame } from "./canvasInput";
+import { canvasBox, captureGame, gamePoint, tap as tapGame, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 
 /** 디버그 계약이 준 자리를 그대로 누른다. */
 async function tap(page: Page, point: DebugPoint): Promise<void> {
@@ -25,7 +26,12 @@ async function controls(page: Page): Promise<NonNullable<DebugState["storefrontC
 
 /** 저장을 통과하고 충분한 테스트 재화가 있는 로비까지 실제 타이틀 입력으로 이동한다. */
 async function enterLobby(page: Page): Promise<void> {
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; session.wallet.amber = 100; });
+  await startAfterOpening(page, (session) => {
+    session.wallet.fossil = 10_000;
+    session.wallet.amber = 100;
+    // 상시 상점 첫 상품 두 개의 대금은 골드다. 기본 지급 재화에 의존하지 않는다.
+    session.wallet.gold = 100_000;
+  });
   // 타이틀은 화면 전체가 입력면이라 한가운데를 누른다.
   await tapGame(page, 540, 960);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -41,23 +47,30 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   let input = await controls(page);
   await tap(page, input.lobby!.mission);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("임무 기록");
-  await tap(page, input.lobby!.missionBack);
+  // 임무판은 PopupLayer의 공용 뒤로가기 슬롯을 사용한다.
+  await tap(page, BACK_SLOT);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
   input = await controls(page); await tap(page, input.lobby!.shop);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("shop");
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("general");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("daily");
   await captureGame(page, `test-results/${testInfo.project.name}-shop-1080x1920-layout.png`);
 
-  // 세 탭은 같은 입력 계약으로 전환되며 일반 탭 복귀 뒤 긴 상품 열만 세로로 움직인다.
-  input = await controls(page); await tap(page, input.shop!.tabs.enhancement);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("enhancement");
-  await tap(page, input.shop!.tabs.rune);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("rune");
-  await tap(page, input.shop!.tabs.general);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe("general");
+  // 현재 일반 상점의 세 탭은 일일·특가·골드다. 예전 디버그 타입의 키에 의존하지 않는다.
+  input = await controls(page);
+  const tabs = input.shop!.tabs as Record<string, DebugPoint>;
+  for (const category of ["special", "gold", "daily"]) {
+    await tap(page, tabs[category]);
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.category)).toBe(category);
+  }
   input = await controls(page); await scroll(page, input.shop!.drag.from, 1_200);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.scrollY)).toBeLessThan(0);
+  const minScroll = await page.evaluate(() => window.__PF_DEBUG!.shopView!.minScrollY);
+  if (minScroll < 0) {
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.scrollY)).toBeLessThan(0);
+  } else {
+    // 적은 상품이 한 화면에 들어오면 빈 공간으로 목록이 밀려나지 않아야 한다.
+    await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.shopView?.scrollY)).toBe(0);
+  }
 
   // 첫 행으로 되돌아가 상세판을 열고 수량을 바꾼 뒤 서버 확정 보상판까지 확인한다.
   await scroll(page, input.shop!.drag.to, -1_200);
@@ -66,17 +79,19 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["구매 확인"]);
   input = await controls(page); await tap(page, input.purchase!.plus!); await tap(page, input.purchase!.confirm);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["구매 보상"]);
-  await tap(page, await page.evaluate(() => window.__PF_DEBUG!.rewardPopupConfirm!));
+  const rewardClose = await page.evaluate(() => window.__PF_DEBUG!.rewardPopupConfirm!);
+  await waitForCanvasInputFrame(page);
+  await tapGame(page, rewardClose.x, rewardClose.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
   // 보상 확인 콜백의 카탈로그 재조회가 같은 포인터 release와 겹치지 않은 뒤 화면을 떠난다.
   await page.waitForTimeout(300);
-  input = await controls(page); await tap(page, input.shop!.back);
+  input = await controls(page); await tapUntil(page, input.shop!.back.x, input.shop!.back.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lobby");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
   // 무역은 독립 씬이 아니라 로비 위 레이어지만 같은 구매·확정 보상 계약을 사용한다.
   // 상점(상시 보급품을 사는 곳)·무역(운영 패키지를 전시하는 곳)·교환소(교류 표본을 바꾸는 곳)는
   // 서로 다른 셋이다. 무역의 카드는 옆에 버튼을 두지 않고 칸 자체가 입력면이다.
-  input = await controls(page); await tap(page, input.lobby!.trade);
+  input = await controls(page); await tapUntil(page, input.lobby!.trade.x, input.lobby!.trade.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.popupTitles))?.includes("무역") === true);
   // 조회 직후에는 PopupLayer가 만든 chrome이 먼저 살아 있어야 하며 비동기 목록을 기다리다 제목이 사라지면 안 된다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["무역"]);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.storefrontControls?.trade?.products.length)).toBeGreaterThan(0);
@@ -91,7 +106,7 @@ test("로비 임무→상점→무역과 교류→교환소의 분리된 진입 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 
   // 교류 버튼은 교류 씬의 유일한 로비 진입점이다. 씬 안에는 더 이상 교환소가 없고 파견 목록만 선다.
-  input = await controls(page); await tap(page, input.lobby!.interaction);
+  input = await controls(page); await tapUntil(page, input.lobby!.interaction.x, input.lobby!.interaction.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "interaction");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("interaction");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
   await captureGame(page, `test-results/${testInfo.project.name}-interaction-entry-1080x1920.png`);

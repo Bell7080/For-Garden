@@ -769,7 +769,9 @@ export class InteractionCityPopup {
       this.busy = false;
       this.adoptLatestView();
       this.onChanged?.();
-    } finally { this.busy = false; }
+    } catch {
+      if (this.body) this.popups.confirm({ title: view.city.displayName, message: t("lab.networkError"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    } finally { this.busy = false; this.render(); }
   }
 
   /** 서 있는 SD가 한 번씩 폴짝 뛴다. 칸마다 박자가 달라 셋이 한 몸으로 흔들리지 않는다. */

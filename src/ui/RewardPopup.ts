@@ -98,6 +98,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     dimAlpha: options.dimAlpha ?? 0.46,
     // 영수증이므로 팝업 안이든 밖이든 화면 아무 곳이나 누르면 닫힌다.
     closeOnBackdrop: true,
+    closeOnBody: true,
     // 화면 어디를 눌러도 닫히므로 오른쪽 위 X는 중복 조작이다.
     hideCloseButton: true,
     onClose: () => {
@@ -107,7 +108,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       guardInputAfterClose(scene);
       options.onConfirm?.();
     },
-  }, (body, close) => {
+  }, (body) => {
     // 로비가 별도로 만든 우하단 뒤로가기(depth 2100)도 보상 확인 중에는 보이거나 눌리지 않는다.
     body.parentContainer?.setDepth(4000);
     if (options.playerExp) {
@@ -145,10 +146,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       .setDepth(4000);
     hint.setShadow(0, 3, "#000000", 4, false, true);
 
-    // 닫는 판은 **맨 아래**에 깐다 — 위에 덮으면 액자가 손을 받지 못해 눌러 볼 수 없다.
-    const hit = scene.add.rectangle(0, 20 + layout.growHalf, REWARD_POPUP.width, height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => close());
-    body.addAt(hit, 0);
+
   });
 }
 

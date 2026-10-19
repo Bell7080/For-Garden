@@ -101,6 +101,21 @@ class NewRelicShowcase {
   /** 이 시각(실제 시간) 전에 들어온 누름은 버린다. 막이 바뀔 때마다 다시 잡는다. */
   private tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.voice;
   private voiceTimer?: Phaser.Time.TimerEvent;
+  private readonly ownedTweens: Phaser.Tweens.Tween[] = [];
+  private readonly voiceTweens: Phaser.Tweens.Tween[] = [];
+
+  private animate(config: Phaser.Types.Tweens.TweenBuilderConfig): Phaser.Tweens.Tween {
+    const tween = this.scene.tweens.add(config);
+    this.ownedTweens.push(tween);
+    return tween;
+  }
+
+  private stopVoice(): void {
+    this.voiceTimer?.remove(); this.voiceTimer = undefined;
+    for (const tween of this.voiceTweens.splice(0)) tween.remove();
+    this.voiceText?.setCrop();
+    this.voiceText?.setAlpha(1);
+  }
   private voiceText?: Phaser.GameObjects.Text;
   private voiceLine?: Phaser.GameObjects.Graphics;
   /** SSR 전조 한 장. 목소리 막이 열리면 걷힌다. */
@@ -146,7 +161,7 @@ class NewRelicShowcase {
     this.buildStage();
     void this.loadFigures();
 
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.close());
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.close, this);
     if (this.composition.omen) {
       this.phase = "omen";
       this.tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.omen;
@@ -199,7 +214,7 @@ class NewRelicShowcase {
       .setDepth(this.options.depth + 6)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.55 * flashes.alphaRatio);
-    this.scene.tweens.add({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 900, ease: "Sine.easeOut", onComplete: () => flash.destroy() });
+    this.animate({ targets: flash, alpha: 0, duration: this.options.reduceMotion ? 160 : 900, ease: "Sine.easeOut", onComplete: () => flash.destroy() });
     this.enterVoice();
   }
 
@@ -220,7 +235,7 @@ class NewRelicShowcase {
     const omen = scene.add.container(0, 0).setDepth(this.options.depth + 2);
     this.omen = omen;
     const later = (ms: number, run: () => void) => this.omenTimers.push(scene.time.delayedCall(ms, run));
-    const tween = (config: Phaser.Types.Tweens.TweenBuilderConfig) => this.omenTweens.push(scene.tweens.add(config));
+    const tween = (config: Phaser.Types.Tweens.TweenBuilderConfig) => this.omenTweens.push(this.animate(config));
 
     // 샤락 — 두 장의 막이 대사가 설 줄에서 만난다.
     const top = scene.add.rectangle(W / 2, O.y, OW, O.y + SHOWCASE_OVERSCAN, COLOR.void, 1).setOrigin(0.5, 1);
@@ -329,7 +344,7 @@ class NewRelicShowcase {
     this.omen = undefined;
     if (!omen) return;
     if (immediate || this.options.reduceMotion) { omen.destroy(true); return; }
-    this.scene.tweens.add({ targets: omen, alpha: 0, duration: 220, onComplete: () => omen.destroy(true) });
+    this.animate({ targets: omen, alpha: 0, duration: 220, onComplete: () => omen.destroy(true) });
   }
 
   /* ── 목소리 ─────────────────────────────────────────────────────────────── */
@@ -371,7 +386,7 @@ class NewRelicShowcase {
     const reveal = { p: 0 };
     text.setCrop(0, 0, 0, text.height).setAlpha(0.2);
     underline.setScale(0, 1);
-    scene.tweens.add({
+    this.voiceTweens.push(this.animate({
       targets: reveal,
       p: 1,
       duration: SHOWCASE_VOICE.wipeMs,
@@ -380,9 +395,9 @@ class NewRelicShowcase {
         text.setCrop(0, 0, width * reveal.p, text.height);
         text.setAlpha(0.2 + 0.8 * reveal.p);
       },
-    });
-    scene.tweens.add({ targets: text, y: SHOWCASE_VOICE.y - 10, duration: SHOWCASE_VOICE.wipeMs + 400, ease: "Sine.easeOut" });
-    scene.tweens.add({ targets: underline, scaleX: 1, duration: SHOWCASE_VOICE.line.ms, delay: SHOWCASE_VOICE.wipeMs * 0.6, ease: "Cubic.easeOut" });
+    }));
+    this.voiceTweens.push(this.animate({ targets: text, y: SHOWCASE_VOICE.y - 10, duration: SHOWCASE_VOICE.wipeMs + 400, ease: "Sine.easeOut" }));
+    this.voiceTweens.push(this.animate({ targets: underline, scaleX: 1, duration: SHOWCASE_VOICE.line.ms, delay: SHOWCASE_VOICE.wipeMs * 0.6, ease: "Cubic.easeOut" }));
     this.voiceTimer = scene.time.delayedCall(SHOWCASE_VOICE.wipeMs + SHOWCASE_VOICE.holdMs, () => this.enterStage());
   }
 
@@ -535,7 +550,7 @@ class NewRelicShowcase {
     if (this.phase === "omen" || this.phase === "voice") { creature.setVisible(false); return; }
     // 등장이 이미 시작됐다면 늦게 온 그림은 제자리에서 떠오르기만 한다.
     creature.setAlpha(0);
-    this.scene.tweens.add({ targets: creature, alpha: 1, duration: 320 });
+    this.animate({ targets: creature, alpha: 1, duration: 320 });
   }
 
   private tap(): void {
@@ -551,7 +566,7 @@ class NewRelicShowcase {
     this.phase = "stage";
     this.tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.stage;
     setDebugRelicShowcase({ relicId: this.relicId, phase: "stage" });
-    this.voiceTimer?.remove();
+    this.stopVoice();
     const { scene, composition } = this;
     const motion = !this.options.reduceMotion;
     const flashes = flashPolicy(this.options.reduceFlashes);
@@ -562,7 +577,7 @@ class NewRelicShowcase {
     flash.setFillStyle(Phaser.Display.Color.IntegerToColor(this.tone.halo).lighten(40).color, 1);
     flash.setAlpha(0.95 * flashes.alphaRatio);
     const repeat = Math.min(composition.flashes - 1, flashes.maxRepeats);
-    scene.tweens.add({
+    this.animate({
       targets: flash,
       alpha: 0,
       duration: motion ? 520 : 200,
@@ -585,40 +600,42 @@ class NewRelicShowcase {
       if (puppet === this.portrait) {
         const home = { x: puppet.x, y: puppet.y };
         puppet.setPosition(home.x + composition.enterFrom.x, home.y + composition.enterFrom.y).setAlpha(0);
-        scene.tweens.add({ targets: puppet, x: home.x, y: home.y, alpha: 1, duration: 620, ease: "Cubic.easeOut" });
+        this.animate({ targets: puppet, x: home.x, y: home.y, alpha: 1, duration: 620, ease: "Cubic.easeOut" });
       } else {
         puppet.setAlpha(0);
-        scene.tweens.add({ targets: puppet, alpha: 1, duration: 360, delay: 380 });
+        this.animate({ targets: puppet, alpha: 1, duration: 360, delay: 380 });
       }
     }
 
     if (motion) {
       // 띠·빛줄기는 살짝 부풀었다 가라앉아 섬광의 여운을 남긴다.
       this.stage.setScale(1.04).setPosition(-W * 0.02, -H * 0.02);
-      scene.tweens.add({ targets: this.stage, scale: 1, x: 0, y: 0, duration: 700, ease: "Cubic.easeOut" });
+      this.animate({ targets: this.stage, scale: 1, x: 0, y: 0, duration: 700, ease: "Cubic.easeOut" });
       // 정보는 왼쪽에서 하나씩 밀려 들어온다.
       this.pieces.forEach((piece, order) => {
         const homeX = piece.x;
         piece.x = homeX - 60;
         piece.setAlpha(0);
-        scene.tweens.add({ targets: piece, x: homeX, alpha: 1, duration: 360, delay: 260 + order * SHOWCASE_INFO.staggerMs, ease: "Cubic.easeOut" });
+        this.animate({ targets: piece, x: homeX, alpha: 1, duration: 360, delay: 260 + order * SHOWCASE_INFO.staggerMs, ease: "Cubic.easeOut" });
       });
       this.sparkles();
       if (this.squadBackdrop) {
         this.squadBackdrop.setAlpha(0).setScale(1.06);
-        scene.tweens.add({ targets: this.squadBackdrop, alpha: 1, scale: 1, duration: SHOWCASE_SQUAD.fadeMs, delay: SHOWCASE_SQUAD.delayMs, ease: "Sine.easeOut" });
+        this.animate({ targets: this.squadBackdrop, alpha: 1, scale: 1, duration: SHOWCASE_SQUAD.fadeMs, delay: SHOWCASE_SQUAD.delayMs, ease: "Sine.easeOut" });
       }
     }
     // 닫는 말은 무대가 다 선 뒤에 옅게 떠오른다.
-    scene.tweens.add({ targets: this.hint, alpha: 0.62, duration: 300, delay: motion ? 900 : 0 });
+    this.animate({ targets: this.hint, alpha: 0.62, duration: 300, delay: motion ? 900 : 0 });
   }
 
   private close(): void {
     if (this.phase === "closed") return;
     this.phase = "closed";
     setDebugRelicShowcase(undefined);
-    this.voiceTimer?.remove();
+    this.stopVoice();
     this.stopOmen(true);
+    for (const tween of this.ownedTweens.splice(0)) tween.remove();
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.close, this);
     for (const puppet of this.puppets.splice(0)) puppet.destroy();
     this.info.destroy(true);
     this.root.destroy(true);
@@ -685,7 +702,7 @@ class NewRelicShowcase {
       ], true);
       g.setAlpha(0);
       this.stage.add(g);
-      this.scene.tweens.add({
+      this.animate({
         targets: g,
         y: spark.y - 260,
         alpha: { from: 0.9, to: 0 },

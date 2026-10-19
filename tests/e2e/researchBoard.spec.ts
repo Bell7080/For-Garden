@@ -1,11 +1,20 @@
 import { test, expect, type Page } from "@playwright/test";
+import { captureGameFailure, installGameHandleProbe } from "./gameDiagnostics";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapUntil } from "./canvasInput";
+import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
 import { researchBoardLayout } from "../../src/ui/researchBoardLayout";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
 const NAV_TOP = BASE_HEIGHT - 180;
+const diagnosticErrors = new WeakMap<Page, string[]>();
+
+test.afterEach(async ({ page }, info) => {
+  if (process.env.PF_E2E_INPUT_DIAGNOSTIC !== "1" || info.status === info.expectedStatus) return;
+  await info.attach("research-errors", { body: JSON.stringify(diagnosticErrors.get(page) ?? [], null, 2), contentType: "application/json" });
+  await captureGameFailure(page, info);
+});
 
 /**
  * 균열 연출이 끝나기를 기다리는 시간.
@@ -33,6 +42,7 @@ async function tapThrough(page: Page, x: number, y: number, done: () => Promise<
       const key = `${shown.relicId}-${shown.phase}`;
       if (!captured.has(key)) {
         captured.add(key);
+        if (process.env.PF_E2E_RESEARCH_DIAGNOSTIC === "1") console.log("[research showcase]", key);
         await page.waitForTimeout(shown.phase === "stage" ? 2_500 : 1_500);
         await captureGame(page, `test-results/${test.info().project.name}-relic-showcase-${key}.png`);
       }
@@ -48,14 +58,42 @@ function board(page: Page): Promise<{ slots: number; opened: number } | undefine
 }
 
 test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async ({ page }) => {
-  await startAfterOpening(page);
+  // 여러 신규 렐릭의 소개·캡처를 모두 거치므로 단일 연구보다 넉넉한 전체 제한을 둔다.
+  test.setTimeout(420_000);
+  const errors: string[] = [];
+  diagnosticErrors.set(page, errors);
+  page.on("pageerror", error => errors.push(error.stack ?? error.message));
+  page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
+  if (process.env.PF_E2E_INPUT_DIAGNOSTIC === "1") await installGameHandleProbe(page);
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 10; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await tap(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90);
+  await tapUntil(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lab");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lab");
-  await tap(page, 780, NAV_TOP - 250); // 10회 연구
+  // 별도 진단 실행에서만 잡힌 예외도 기록한다. 게임의 catch 처리와 결과 판정은 그대로 둔다.
+  if (process.env.PF_E2E_RESEARCH_DIAGNOSTIC === "1") {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Debugger.enable");
+    cdp.on("Debugger.paused", event => {
+      console.log("[research exception]", event.data?.description ?? event.reason);
+      errors.push(JSON.stringify({ reason: event.reason, error: event.data?.description,
+        frames: event.callFrames.slice(0, 8).map((frame: { functionName: string; location: unknown }) => ({ name: frame.functionName, location: frame.location })) }));
+      void cdp.send("Debugger.resume").catch(() => undefined);
+    });
+    await cdp.send("Debugger.setPauseOnExceptions", { state: "all" });
+  }
+  // 첫 복원 연구는 10연 전용이라 버튼이 가운데로 이동한다(화석 8개).
+  await tap(page, BASE_WIDTH / 2, LAB_CHROME.pull.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.wallet?.fossil)).toBe(2);
 
   // 균열이 끝나면 칸 열 장이 뒤집힌 채 깔린다. 이때는 아직 아무것도 열려 있지 않다.
-  await expect.poll(() => board(page), { timeout: CRACK_TIMEOUT }).toEqual({ slots: 10, opened: 0 });
+  try {
+    await expect.poll(() => board(page), { timeout: CRACK_TIMEOUT }).toEqual({ slots: 10, opened: 0 });
+  } catch (error) {
+    const state = await page.evaluate(() => ({ debug: window.__PF_DEBUG,
+      cinematic: document.querySelector(".rc-root")?.getAttribute("data-phase") }));
+    await test.info().attach("research-failure-state", { body: JSON.stringify({ errors, state }, null, 2), contentType: "application/json" });
+    throw error;
+  }
   await captureGame(page, `test-results/${test.info().project.name}-research-board-facedown.png`);
 
   // 칸 하나를 누르면 그 칸만 열린다. 자리는 화면이 쓰는 배치표에서 그대로 읽는다.
@@ -68,17 +106,19 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
   await tapThrough(page, BASE_WIDTH - 150, 100, async () => (await board(page))?.opened === 10);
   await captureGame(page, `test-results/${test.info().project.name}-research-board-opened.png`);
 
+  expect(errors).toEqual([]);
   // 다 열린 뒤에는 확인 버튼이 아니라 화면 아무 곳이나 눌러 돌아간다.
   await tap(page, BASE_WIDTH / 2, 200);
   await expect.poll(() => board(page), { timeout: 30_000 }).toBeUndefined();
 });
 
 test("한 장은 가운데에 크게 한 칸만 깔린다", async ({ page }) => {
-  await startAfterOpening(page);
+  await startAfterOpening(page, (session) => { session.wallet.fossil = 1; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
-  await tap(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90);
+  await tapUntil(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lab");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lab");
-  await tap(page, 300, NAV_TOP - 250); // 1회 연구
+  await tap(page, BASE_WIDTH - LAB_TITLE.arrow.x, LAB_TITLE.arrow.y); // 화석 연구(단일)를 고른다.
+  await tap(page, 300, LAB_CHROME.pull.y); // 1회 연구
 
   await expect.poll(() => board(page), { timeout: CRACK_TIMEOUT }).toEqual({ slots: 1, opened: 0 });
   const layout = researchBoardLayout(1, BASE_WIDTH);

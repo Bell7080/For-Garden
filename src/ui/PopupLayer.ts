@@ -42,6 +42,8 @@ export interface PopupOptions {
   tilt?: number;
   /** 판 바깥을 눌러 닫을 수 있는지. 무엇을 고르는 팝업은 끄고 읽는 팝업은 켠다. */
   closeOnBackdrop?: boolean;
+  /** 영수증은 본문 빈 곳도 닫기 입력으로 쓰되, 위의 아이템 안내는 유지한다. */
+  closeOnBody?: boolean;
   /** 이 화면 좌표 영역의 입력은 뒤의 원래 조작으로 보낸다(급여 연속 입력). */
   inputPassthrough?: { x: number; y: number; width: number; height: number };
   /**
@@ -332,7 +334,9 @@ export class PopupLayer {
     // **판의 빈 곳이나 머리글을 누른 손이 뒤의 배경까지 내려가 팝업을 닫는다.** 판 안을 눌렀는데
     // 판이 사라지는 셈이라, 읽는 중에 손이 스치기만 해도 창이 없어졌다. 이 막이 판보다 뒤에
     // 깔리므로 그 위에 얹는 버튼·목록은 그대로 제 입력을 받는다.
-    body.add(this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive());
+    const bodyHit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive();
+    if (options.closeOnBody) bodyHit.on("pointerup", () => this.close(layer));
+    body.add(bodyHit);
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 

@@ -253,6 +253,7 @@ export class IdleExcavationPopup {
 
   /** 아래 칸이 소유하던 타이머와 씬 입력 리스너를 뗀다. 자식이 아니라서 파괴로 사라지지 않는다. */
   private releaseLower(): void {
+    this.rosterLabel = undefined;
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
     if (this.gridPointerDownHandler) this.scene.input.off("pointerdown", this.gridPointerDownHandler);
@@ -954,7 +955,7 @@ export class IdleExcavationPopup {
     if (this.gridPointerMoveHandler) this.scene.input.off("pointermove", this.gridPointerMoveHandler);
     if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
     this.gridWheelHandler = undefined; this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
-    this.draft = undefined; this.body = undefined; this.content = undefined; this.upper = undefined; this.lower = undefined; this.closeAction = undefined; this.messageShown = false;
+    this.rosterLabel = undefined; this.draft = undefined; this.body = undefined; this.content = undefined; this.upper = undefined; this.lower = undefined; this.closeAction = undefined; this.messageShown = false;
     setDebugIdleExcavationPopup(undefined); setDebugIdleExcavationSlots(undefined); setDebugIdleExcavationControls(undefined); this.onClosed?.();
   }
 }

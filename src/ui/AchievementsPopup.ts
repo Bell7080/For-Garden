@@ -354,17 +354,22 @@ export class AchievementsPopup {
   private async claim(ids: string[]): Promise<void> {
     if (this.claiming || ids.length === 0) return;
     this.claiming = true;
-    let result: ClaimAchievementRewardsResponse;
-    try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch { this.claiming = false; await this.refresh(); return; }
-    session.wallet = { ...result.wallet }; this.onWalletChanged?.();
-    this.data = await this.api.getAchievements();
-    this.claiming = false;
-    this.render();
-    await notificationManager.refresh();
-    const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
-    const names = result.newModifierIds.map((id) => PROFILE_MODIFIERS.find((modifier) => modifier.id === id)?.displayName).filter((name): name is string => Boolean(name));
-    // 열린 수식어는 판 밖 아래 한 줄로 알린다 — 재화가 아니라 이름이라 액자로 세우지 않는다.
-    const footnote = names.length > 0 ? names.map((name) => t("achievement.modifierEarned", { name })).join("\n") : undefined;
-    if (items.length) openRewardPopup(this.scene, this.popups, { title: t("achievement.rewardTitle"), items, footnote });
+    try {
+      let result: ClaimAchievementRewardsResponse;
+      try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch { await this.refresh().catch(() => undefined); return; }
+      session.wallet = { ...result.wallet }; this.onWalletChanged?.();
+      // 지급은 이미 확정됐다. 목록/알림 재조회 실패가 영수증과 다음 수령을 막지 않는다.
+      this.data = await this.api.getAchievements().catch(() => this.data);
+      this.render();
+      await notificationManager.refresh().catch(() => undefined);
+      const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
+      const names = result.newModifierIds.map((id) => PROFILE_MODIFIERS.find((modifier) => modifier.id === id)?.displayName).filter((name): name is string => Boolean(name));
+      // 열린 수식어는 판 밖 아래 한 줄로 알린다 — 재화가 아니라 이름이라 액자로 세우지 않는다.
+      const footnote = names.length > 0 ? names.map((name) => t("achievement.modifierEarned", { name })).join("\n") : undefined;
+      if (items.length) openRewardPopup(this.scene, this.popups, { title: t("achievement.rewardTitle"), items, footnote });
+    } finally {
+      this.claiming = false;
+      this.render();
+    }
   }
 }

@@ -291,8 +291,10 @@ function claimsOf(tokens: StoredTokens): { email?: unknown; is_anonymous?: unkno
 
 function isAnonymous(tokens: StoredTokens): boolean {
   const claims = claimsOf(tokens);
-  // claim을 못 읽으면 게스트로 본다 — 연동 화면을 잘못 숨기는 것보다 보이는 쪽이 안전하다.
-  return claims.is_anonymous !== false && typeof claims.email !== "string";
+  // 익명 여부가 있으면 이메일보다 우선한다. Supabase 게스트 JWT에도 email: ""이 들어간다.
+  if (typeof claims.is_anonymous === "boolean") return claims.is_anonymous;
+  // 구형 토큰/읽을 수 없는 claim은 실제 주소가 있을 때만 연동으로 본다.
+  return typeof claims.email !== "string" || claims.email.trim().length === 0;
 }
 
 function stateOf(tokens: StoredTokens): AccountState {

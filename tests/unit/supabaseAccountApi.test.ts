@@ -106,6 +106,45 @@ describe("SupabaseAccountApi", () => {
     const jwt = (claims: Record<string, unknown>) => `h.${btoa(JSON.stringify(claims)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}.s`;
     const sessionWith = (claims: Record<string, unknown>, n = 1) => ({ access_token: jwt(claims), refresh_token: `r${n}`, expires_at: 2_000_000, user: { id: "11111111-2222-3333-4444-555555555555" } });
 
+    it.each([
+      { is_anonymous: true, email: "" },
+      { is_anonymous: true, email: "pending@example.test" },
+      { email: "" },
+      { email: "   " },
+    ])("저장된 게스트를 재접속해도 연동 대상으로 유지한다: %j", async (claims) => {
+      const { api, store, calls } = setup((path) => {
+        if (path === "/auth/v1/user") return json({ id: "guest-existing" });
+        if (path.includes("grant_type=refresh_token")) return json({ ...sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" }, 2), user: { id: "guest-existing" } });
+        throw new Error(`unexpected ${path}`);
+      });
+      // 이전 실행의 보안 저장소를 복원한다. 새 익명 가입이나 다른 UID로 교체해서는 안 된다.
+      store.value = { accessToken: jwt(claims), refreshToken: "existing-refresh", expiresAtMs: 2_000_000_000, userId: "guest-existing" };
+      expect(await api.getState()).toMatchObject({ ok: true, value: { kind: "guest", provider: "guest" } });
+      expect(calls).toHaveLength(0);
+      expect(await api.registerWithId("garden_01", "correct horse")).toMatchObject({ ok: true, value: { kind: "linked" } });
+      expect(calls.map(c => c.path)).toEqual(["/auth/v1/user", "/auth/v1/token?grant_type=refresh_token"]);
+      expect(calls[0].init.method).toBe("PUT");
+      expect(store.value?.userId).toBe("guest-existing");
+      const restored = new SupabaseAccountApi({ url: "https://x", key: "k", store, fetchImpl: (async () => { throw new Error("restoration must not create a new user"); }) as typeof fetch, now: () => 1_000_000, saveVersion: () => 50 });
+      expect(await restored.getState()).toMatchObject({ ok: true, value: { kind: "linked", provider: "password" } });
+      expect(await restored.userId()).toBe("guest-existing");
+    });
+
+    it("만료된 게스트 토큰을 갱신해도 빈 이메일 때문에 연동 상태가 되지 않는다", async () => {
+      const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: true, email: "" })));
+      store.value = { accessToken: jwt({ is_anonymous: true, email: "" }), refreshToken: "old", expiresAtMs: 1, userId: "11111111-2222-3333-4444-555555555555" };
+      expect(await api.getState()).toMatchObject({ ok: true, value: { kind: "guest" } });
+      expect(calls.map(c => c.path)).toEqual(["/auth/v1/token?grant_type=refresh_token"]);
+    });
+
+    it("서버가 명시한 비익명 계정은 이메일이 비어도 게스트로 승격하지 않는다", async () => {
+      const { api, store, calls } = setup(() => { throw new Error("must not call"); });
+      store.value = { accessToken: jwt({ is_anonymous: false, email: "" }), refreshToken: "r", expiresAtMs: 2_000_000_000, userId: "linked" };
+      expect(await api.getState()).toMatchObject({ ok: true, value: { kind: "linked" } });
+      expect(await api.registerWithId("garden_01", "correct horse")).toMatchObject({ ok: false, code: "invalid-credentials" });
+      expect(calls).toHaveLength(0);
+    });
+
     it("처음 가입은 합성 주소로 signup하고 연동 상태를 돌려준다(비밀번호는 저장소에 남지 않는다)", async () => {
       const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
       const result = await api.registerWithId("Garden_01", "correct horse");

@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_TH = {
+  "account.id.retryAfter": "ลองใหม่อีกครั้งใน {seconds} วินาที",
+  "account.id.serverUnavailable": "ยังไม่สามารถสมัครบัญชีได้ โปรดลองใหม่ภายหลัง",
+  "account.id.switchWarning": "เปลี่ยนจากความคืบหน้าบัญชีผู้เยี่ยมชมไปยังบัญชีที่มีอยู่ คุณอาจไม่สามารถเข้าบัญชีผู้เยี่ยมชมนี้ได้อีก ข้อมูลในเครื่องจะถูกแทนที่เมื่อเข้าสู่ระบบสำเร็จเท่านั้น",
+
   "ranking.title": "สถิติออกสำรวจรายสัปดาห์",
   "ranking.syncing": "กำลังซิงก์สถิติ",
   "ranking.weekRolledReload": "สัปดาห์เปลี่ยนแล้ว กำลังโหลดสถิติใหม่",

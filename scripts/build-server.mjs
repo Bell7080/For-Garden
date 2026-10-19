@@ -13,3 +13,5 @@ await build({
   banner: { js: "/* 생성물: npm run build:server */\nimport { createRequire as __cr } from \"node:module\";\nconst require = __cr(import.meta.url);" },
 });
 console.log("[build-server] api/game.js");
+await build({ entryPoints: ["src/server/accountEntry.ts"], outfile: "api/account.js", bundle: true, platform: "node", format: "esm", target: "node20", legalComments: "none", banner: { js: "/* 생성물: npm run build:server */" } });
+console.log("[build-server] api/account.js");

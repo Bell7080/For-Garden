@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_RU = {
+  "account.id.retryAfter": "Повторите через {seconds} сек.",
+  "account.id.serverUnavailable": "Регистрация сейчас недоступна. Повторите позже.",
+  "account.id.switchWarning": "Перейти с гостевого прогресса на существующий аккаунт. Доступ к гостевому аккаунту может быть потерян. Локальный прогресс заменится только после успешного входа.",
+
   "ranking.title": "Недельный рекорд экспедиции",
   "ranking.syncing": "Синхронизация рекорда",
   "ranking.weekRolledReload": "Неделя сменилась, рекорд перезагружается.",

@@ -106,3 +106,17 @@ describe("서버 진행 연결", () => {
     expect(calls).toEqual(["remote"]);
   });
 });
+
+describe('계정 연결 세대',()=>{
+ it('계정 전환 전의 늦은 서버 응답은 새 진행/설치 상태에 반영하지 않는다',async()=>{
+  let current=true, deliver!:(r:Response)=>void, entered!:()=>void;
+  const requested=new Promise<void>(resolve=>{entered=resolve;});
+  const target=createDefaultSession();const before=target.wallet.gems;
+  const remote=createDefaultSession();remote.wallet.gems=before+999;
+  const saves=new SaveManager(memoryStorage());const installed:unknown[]=[];
+  const {account}=fakeAccount(null);
+  const pending=connectServerProgress({account,saves,target,marker:marker(null),choose:async()=> 'cancel',isCurrent:()=>current,install:api=>{installed.push(api);},fetchImpl:(async()=>{entered();return new Promise<Response>(resolve=>{deliver=resolve;});}) as typeof fetch});
+  await requested;current=false;deliver(new Response(JSON.stringify({ok:true,result:{},revision:'1',state:saves.exportData(remote)})));
+  expect(await pending).toMatchObject({ok:false});expect(target.wallet.gems).toBe(before);expect(installed).toEqual([]);
+ });
+});

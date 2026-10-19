@@ -42,11 +42,12 @@ export type AccountFailureCode =
   | "invalid-id"
   | "weak-password"
   | "id-taken"
+  | "email-unconfirmed"
   | "invalid-credentials"
   | "rate-limited";
 
 /** 예외 문자열 대신 UI가 취소·통신 실패·합치기 불가를 구별하게 하는 공통 결과다. */
-export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string };
+export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string; retryAfterSeconds?: number };
 
 export interface LoginRequest {
   provider: Exclude<AccountProvider, "guest" | "password">;

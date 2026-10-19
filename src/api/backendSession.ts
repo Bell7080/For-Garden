@@ -13,6 +13,7 @@ import { createWebTokenStore } from "./webTokenStore";
 import { SupabaseAccountApi, type TokenStore } from "./SupabaseAccountApi";
 
 let account: SupabaseAccountApi | null = null;
+let progressGeneration = 0;
 
 /** 서버에 연결된 계정. 연결되지 않은 빌드는 null이다. */
 export function backendAccount(): SupabaseAccountApi | null { return account; }
@@ -34,11 +35,13 @@ export function installBackend(options: {
  * 결과는 화면이 문구로 바꾼다 — 실패하면 진행을 이 기기에서 이어 가지 않고 다시 시도하게 한다.
  */
 export function connectProgress(choose: ServerProgressDeps["choose"]): Promise<ServerProgressResult> {
-  return connectServerProgress({ account, saves: saveManager, marker: createLinkMarker(), choose });
+  const generation = ++progressGeneration;
+  return connectServerProgress({ account, saves: saveManager, marker: createLinkMarker(), choose, isCurrent: () => generation === progressGeneration });
 }
 
 /** 계정을 바꾸기 전에 서버 연결을 내린다. 이전 계정의 호출이 새 게스트로 나가지 않게 한다. */
 export function disconnectProgress(): void {
+  progressGeneration++;
   installGameApi(null);
   installSocialApi(null);
   installGuildApi(null);

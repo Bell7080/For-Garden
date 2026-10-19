@@ -10,7 +10,7 @@ import { COLOR, textStyle } from "./theme";
 import { ACCOUNT_ID_POPUP, accountIdPopupRows, type AccountIdPopupMode, type AccountIdPopupTab } from "./accountIdPopupLayout";
 
 export interface AccountIdPopupOptions {
-  /** `both`: 로그인·회원가입 탭(타이틀). `link`: 이 기기의 게스트를 아이디 계정으로 승격(설정). */
+  /** `both`: 타이틀. `link`: 설정의 게스트 연동. 둘 다 로그인·회원가입 탭을 제공한다. */
   mode: AccountIdPopupMode;
   /** 인증이 끝난 뒤 부른다. 창은 이미 닫혀 있다. 이후의 저장 이어받기는 부른 쪽이 맡는다. */
   onDone: (state: AccountState, how: AccountIdPopupTab) => void;
@@ -20,6 +20,7 @@ const FAILURE_KEY: Partial<Record<AccountFailureCode, TextKey>> = {
   "invalid-id": "account.id.error.id",
   "weak-password": "account.id.error.password",
   "id-taken": "account.id.error.taken",
+  "email-unconfirmed": "account.id.error.login",
   "invalid-credentials": "account.id.error.login",
   "rate-limited": "account.id.error.rate",
   "network-error": "settings.account.network",
@@ -35,9 +36,10 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
   const L = ACCOUNT_ID_POPUP;
   let tab: AccountIdPopupTab = options.mode === "link" ? "register" : "signIn";
   let id = "", password = "", confirm = "";
-  let alive = true;
+  let alive = true, busy = false;
+  const retryAt: Record<AccountIdPopupTab, number> = { signIn: 0, register: 0 };
 
-  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, closeOnBackdrop: false, onClose: () => { alive = false; } }, (body, close) => {
+  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true, canClose: () => !busy, onClose: () => { alive = false; } }, (body, close) => {
     const tabs = scene.add.container(0, 0);
     const view = scene.add.container(0, 0);
     body.add([tabs, view]);
@@ -49,7 +51,7 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
       (["signIn", "register"] as const).forEach((which, index) => {
         addCategoryTab(scene, tabs, {
           x: (index - 0.5) * (width + gap), y: rows.tabsY!, width, height, label: t(which === "signIn" ? "account.id.tab.signIn" : "account.id.tab.register"), selected: tab === which, face: "down",
-          onSelect: () => { if (tab === which) return; tab = which; password = ""; confirm = ""; paintTabs(); paint(); },
+          onSelect: () => { if (busy || tab === which) return; tab = which; password = ""; confirm = ""; paintTabs(); paint(); },
         });
       });
     };
@@ -85,20 +87,38 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
             if (problem) { setNote(t(problem.startsWith("id") ? "account.id.error.id" : "account.id.error.password"), true); return; }
             if (password !== confirm) { setNote(t("account.id.error.mismatch"), true); return; }
           }
-          submit.setEnabled(false);
-          setNote(t("account.id.busy"));
-          const call = register ? accountApi.registerWithId(id, password) : accountApi.signInWithId(id, password);
-          void call.then((result) => {
-            if (!alive) return;
-            if (!result.ok) { submit.setEnabled(true); setNote(t(FAILURE_KEY[result.code] ?? "settings.account.unavailable"), true); return; }
-            const done = options.onDone;
-            const how = tab;
-            close();
-            done(result.value, how);
-          });
+          if (busy) return;
+          if (Date.now() < retryAt[tab]) { setNote(t("account.id.retryAfter", { seconds: Math.ceil((retryAt[tab] - Date.now()) / 1000) }), true); return; }
+          const how = tab;
+          const execute = (): void => {
+            if (!alive || busy) return;
+            busy = true;
+            submit.setEnabled(false); cancel.setEnabled(false);
+            setNote(t("account.id.busy"));
+            const call = how === "register" ? accountApi.registerWithId(id, password) : accountApi.signInWithId(id, password);
+            void call.then((result) => {
+              if (!result.ok) {
+                busy = false;
+                if (result.retryAfterSeconds) retryAt[how] = Date.now() + result.retryAfterSeconds * 1000;
+                if (alive) { submit.setEnabled(true); cancel.setEnabled(true); setNote(result.code === "network-error" || result.code === "rate-limited" ? result.message : t(FAILURE_KEY[result.code] ?? "settings.account.unavailable"), true); }
+                return;
+              }
+              if (!scene.scene.isActive()) return;
+              busy = false;
+              if (alive) close();
+              options.onDone(result.value, how);
+            }).catch(() => {
+              busy = false;
+              if (alive) { submit.setEnabled(true); cancel.setEnabled(true); setNote(t("settings.account.network"), true); }
+            });
+          };
+          if (how === "signIn" && options.mode === "link") {
+            layer.confirm({ title: t("account.id.signIn"), message: t("account.id.switchWarning"), confirmLabel: t("account.id.signIn"), destructive: true }, execute);
+          } else execute();
         },
       });
-      view.add(submit);
+      const cancel = new Button(scene, 0, rows.submitY + 105, { width: 300, height: 72, label: t("popup.cancel"), onClick: () => { if (!busy) close(); } });
+      view.add([submit, cancel]);
     };
 
     paintTabs();

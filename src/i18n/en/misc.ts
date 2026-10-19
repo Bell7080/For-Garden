@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_EN = {
+  "account.id.retryAfter": "Try again in {seconds} seconds.",
+  "account.id.serverUnavailable": "Account registration is unavailable. Please try again later.",
+  "account.id.switchWarning": "Switch from this guest progress to the existing account. You may lose access to this guest account. Local progress changes only after a successful login.",
+
   "ranking.title": "Weekly Expedition Record",
   "ranking.syncing": "Syncing the record",
   "ranking.weekRolledReload": "The week changed, so the record is being reloaded.",

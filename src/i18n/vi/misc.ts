@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_VI = {
+  "account.id.retryAfter": "Thử lại sau {seconds} giây.",
+  "account.id.serverUnavailable": "Hiện không thể tạo tài khoản. Vui lòng thử lại sau.",
+  "account.id.switchWarning": "Chuyển từ tiến trình khách sang tài khoản có sẵn. Bạn có thể mất quyền truy cập tài khoản khách này. Chỉ thay tiến trình trên máy khi đăng nhập thành công.",
+
   "ranking.title": "Kỷ lục Viễn chinh tuần",
   "ranking.syncing": "Đang đồng bộ kỷ lục",
   "ranking.weekRolledReload": "Tuần đã đổi nên đang tải lại kỷ lục.",

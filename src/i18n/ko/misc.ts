@@ -1,5 +1,9 @@
 /** 작은 화면·팝업들이 함께 쓰는 문구. 화면 하나에 표를 따로 세울 만큼 크지 않은 것들이다. */
 export const MISC_KO = {
+  "account.id.retryAfter": "{seconds}초 후 다시 시도할 수 있습니다.",
+  "account.id.serverUnavailable": "계정 생성 서버를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+  "account.id.switchWarning": "현재 게스트 진행을 사용하지 않고 기존 계정의 진행으로 전환합니다. 게스트에 다시 접속할 수 없게 될 수 있습니다. 로그인에 성공한 경우에만 이 기기의 진행을 교체합니다.",
+
   // 원정 순위표
   "ranking.title": "원정 주간 기록",
   "ranking.syncing": "기록 동기화 중",

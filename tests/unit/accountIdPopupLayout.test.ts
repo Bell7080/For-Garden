@@ -12,8 +12,8 @@ describe("아이디 계정 창 배치", () => {
       expect(r.height).toBeLessThan(1400);
     });
   }
-  it("탭은 가입·로그인을 가르는 창에만 있다", () => {
+  it("설정의 연동에도 로그인·회원가입 탭이 있다", () => {
     expect(accountIdPopupRows("both").tabsY).not.toBeNull();
-    expect(accountIdPopupRows("link").tabsY).toBeNull();
+    expect(accountIdPopupRows("link").tabsY).not.toBeNull();
   });
 });

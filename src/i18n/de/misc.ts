@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_DE = {
+  "account.id.retryAfter": "In {seconds} Sekunden erneut versuchen.",
+  "account.id.serverUnavailable": "Die Registrierung ist derzeit nicht verfügbar. Bitte später erneut versuchen.",
+  "account.id.switchWarning": "Vom Gastfortschritt zum bestehenden Konto wechseln. Der Zugriff auf dieses Gastkonto kann verloren gehen. Der lokale Fortschritt wird erst nach erfolgreicher Anmeldung ersetzt.",
+
   "ranking.title": "Wöchentlicher Expedition-Rekord",
   "ranking.syncing": "Rekord wird synchronisiert",
   "ranking.weekRolledReload": "Die Woche hat gewechselt, der Rekord wird neu geladen.",

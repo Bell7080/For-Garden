@@ -390,7 +390,8 @@ export class SettingsScene extends Phaser.Scene {
    * 같은 아이디로 다른 기기에서 로그인하면 이어서 키울 수 있다. 저장 이어받기는 부트가 다시 거친다.
    */
   private linkWithId(): void {
-    openAccountIdPopup(this, this.popups, { mode: "link", onDone: () => {
+    openAccountIdPopup(this, this.popups, { mode: "link", onDone: (_state, how) => {
+      if (how === "signIn") { disconnectProgress(); saveManager.reset(); this.leaveToBoot(); return; }
       this.popups.confirm({ title: t("settings.account.notice"), message: t("settings.account.linkIdDone"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, () => {
         void accountApi.getState().then((result) => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; this.buildRows(); } });
       });
@@ -418,7 +419,7 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
   private showAccountFailure(code: AccountFailureCode): void {
-    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
+    const keys: Record<AccountFailureCode, TextKey> = { "email-unconfirmed": "account.id.error.login", unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
     this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 

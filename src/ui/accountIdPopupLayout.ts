@@ -1,6 +1,6 @@
 /**
  * 아이디·비밀번호 계정 창의 자리 — Phaser를 모르는 순수 배치표.
- * 창 높이는 손으로 적지 않고 쌓인 줄에서 거꾸로 구한다. 탭이 없는 창(설정의 게스트 연동)은 탭 자리만큼 낮다.
+ * 창 높이는 손으로 적지 않고 쌓인 줄에서 거꾸로 구한다. 설정의 게스트 연동도 로그인·회원가입 탭을 항상 함께 둔다.
  */
 export const ACCOUNT_ID_POPUP = {
   width: 900,
@@ -33,12 +33,12 @@ export interface AccountIdPopupRows {
 }
 
 /** 위에서부터 쌓은 줄의 가운데 y(창 가운데가 0). */
-export function accountIdPopupRows(mode: AccountIdPopupMode): AccountIdPopupRows {
+export function accountIdPopupRows(_mode: AccountIdPopupMode): AccountIdPopupRows {
   const L = ACCOUNT_ID_POPUP;
-  const height = L.topRoom + (mode === "both" ? L.tabRoom : 0) + 3 * (L.labelRoom + L.fieldRoom) + L.noteRoom + L.submit.height + L.bottomRoom - L.submit.height / 2;
+  const height = L.topRoom + L.tabRoom + 3 * (L.labelRoom + L.fieldRoom) + L.noteRoom + L.submit.height + L.bottomRoom - L.submit.height / 2;
   let y = -height / 2 + L.topRoom;
-  const tabsY = mode === "both" ? y + L.tabRoom / 2 - 10 : null;
-  if (mode === "both") y += L.tabRoom;
+  const tabsY = y + L.tabRoom / 2 - 10;
+  y += L.tabRoom;
   const block = (): { labelY: number; fieldY: number } => {
     const labelY = y + L.labelRoom / 2;
     const fieldY = y + L.labelRoom + L.field.height / 2;

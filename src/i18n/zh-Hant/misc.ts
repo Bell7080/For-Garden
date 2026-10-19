@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ZH_HANT = {
+  "account.id.retryAfter": "請在{seconds}秒後重試。",
+  "account.id.serverUnavailable": "暫時無法建立帳號，請稍後重試。",
+  "account.id.switchWarning": "將從目前訪客進度切換至既有帳號的進度，之後可能無法再存取此訪客帳號。僅在登入成功後替換本機進度。",
+
   "ranking.title": "每週遠征記錄",
   "ranking.syncing": "正在同步記錄",
   "ranking.weekRolledReload": "週期已更替，正在重新讀取記錄。",

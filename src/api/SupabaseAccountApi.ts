@@ -5,7 +5,7 @@
  * 보안 저장소(`TokenStore`: 네이티브 보안 저장소 또는 HttpOnly 서버 세션 어댑터)에만 맡긴다.
  * 보안 저장소가 없는 빌드는 이 클래스를 만들지 않고 `UnsupportedAccountApi`에 머문다(성공을 흉내 내지 않는다).
  * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 소셜 로그인·탈퇴는 `unsupported`다.
- * 아이디 계정은 게스트를 **같은 유저 그대로 승격**한다(`PUT /auth/v1/user`) — 유저 ID가 같아 서버 진행이 그대로 따라온다.
+ * 아이디 계정은 게스트를 **같은 유저 그대로 승격**한다(`/api/account`) — 유저 ID가 같아 서버 진행이 그대로 따라온다.
  * 추후 소셜 로그인도 같은 유저에 정체성을 더하는 방식으로 붙여 양방향 연동이 되게 한다.
  */
 import { t } from "../i18n";
@@ -37,6 +37,7 @@ export interface SupabaseAccountOptions {
   fetchImpl?: typeof fetch;
   now?: () => number;
   saveVersion: () => number;
+  registrationEndpoint?: string;
 }
 
 const fail = <T>(code: AccountFailureCode, message: string): AccountResult<T> => ({ ok: false, code, message });
@@ -49,6 +50,7 @@ export class SupabaseAccountApi implements AccountApi {
   private tokens: StoredTokens | null = null;
   private pending: Promise<AccountResult<StoredTokens>> | null = null;
   private failure = "";
+  private pendingRegistration?: { id: string; userId: string };
 
   constructor(private readonly options: SupabaseAccountOptions) {
     // 브라우저의 fetch는 window가 아닌 객체의 메서드로 부르면 "Illegal invocation"으로 던진다 — 한 번 감싸 둔다.
@@ -88,7 +90,7 @@ export class SupabaseAccountApi implements AccountApi {
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
   async logout(): Promise<AccountResult<AccountState>> {
-    this.tokens = null;
+    this.tokens = null; this.pendingRegistration = undefined;
     try { await this.options.store.clear(); } catch { return fail("network-error", t("error.account.logoutFailed")); }
     // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
@@ -102,35 +104,58 @@ export class SupabaseAccountApi implements AccountApi {
       this.tokens ??= await this.options.store.load();
       const current = this.tokens;
       if (current && !isAnonymous(current)) return fail("invalid-credentials", t("error.account.alreadyLinked"));
-      if (!current) {
-        const created = await this.authCall("/auth/v1/signup", JSON.stringify({ email, password }));
-        if (!created.ok) return created;
-        // 메일 인증이 켜져 있으면 세션이 오지 않는다 — authCall이 응답 모양 오류로 걸러 준다.
-        return this.adopt(created.value);
-      }
-      // 게스트 승격: 유저 ID는 그대로이고 이메일·비밀번호만 붙는다. 토큰의 claim을 새로 받기 위해 곧바로 갱신한다.
-      const fresh = await this.ensureTokens();
-      if (!fresh.ok) return fresh;
-      const updated = await this.fetchImpl(`${this.options.url}/auth/v1/user`, {
-        method: "PUT",
-        headers: { apikey: this.options.key, Authorization: `Bearer ${fresh.value.accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      // 관리자 비밀번호 설정은 기존 세션을 종료한다. 응답 이후 로그인만 실패했다면 인증된 같은 UID로만 재시도한다.
+      if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(email, password, this.pendingRegistration.userId);
+      const fresh = current ? await this.ensureTokens() : null;
+      if (fresh && !fresh.ok) return fresh;
+      const registered = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
+        method: "POST", headers: { "Content-Type": "application/json", ...(fresh?.ok ? { Authorization: `Bearer ${fresh.value.accessToken}` } : {}) },
+        body: JSON.stringify({ id, password }), signal: AbortSignal.timeout(35000),
       });
-      if (!updated.ok) return this.authFailure("/auth/v1/user", updated);
-      const refreshed = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: fresh.value.refreshToken }));
-      if (!refreshed.ok) return refreshed;
-      return this.adopt(refreshed.value);
+      if (!registered.ok) {
+        const detail = await registered.json().catch(() => ({})) as { code?: string };
+        this.failure = `register:${registered.status}:${detail.code ?? "unknown"}`;
+        if (detail.code === "id_taken") return fail("id-taken", t("error.account.idTaken"));
+        if (detail.code === "weak_password") return fail("weak-password", t("error.account.credentials"));
+        if (registered.status === 429) return this.rateFailure(registered);
+        if (registered.status === 401) return fail("invalid-credentials", t("error.account.badLogin"));
+        return fail("network-error", t("account.id.serverUnavailable"));
+      }
+      const result = await registered.json() as { userId?: string };
+      if (!result.userId || (current && result.userId !== current.userId)) return fail("network-error", t("error.account.authResponse"));
+      this.pendingRegistration = { id: email, userId: result.userId };
+      return await this.finishRegistration(email, password, result.userId);
     } catch (error) {
       this.failure = `register-exception:${error instanceof Error ? error.name : "unknown"}`;
       return fail("network-error", t("error.account.network"));
     }
   }
 
+  private async finishRegistration(email: string, password: string, expectedUserId: string): Promise<AccountResult<AccountState>> {
+    const signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email, password }));
+    if (!signed.ok) return signed;
+    if (signed.value.userId !== expectedUserId) return fail("network-error", t("error.account.authResponse"));
+    const result = await this.adopt(signed.value);
+    this.pendingRegistration = undefined;
+    return result;
+  }
+
   async signInWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
     // 로그인에서는 규칙 위반을 '틀린 아이디 또는 비밀번호'와 구별하지 않는다 — 계정 존재 여부를 흘리지 않는다.
     if (accountIdProblem(id) || password.length === 0) return fail("invalid-credentials", t("error.account.badLogin"));
     try {
-      const signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
+      let signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
+      if (!signed.ok && signed.code === "email-unconfirmed") {
+        const confirmed = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm-existing", id, password }), signal: AbortSignal.timeout(35000) });
+        if (!confirmed.ok) {
+          if (confirmed.status === 429) return this.rateFailure(confirmed);
+          return fail(confirmed.status === 401 ? "invalid-credentials" : "network-error", t(confirmed.status === 401 ? "error.account.badLogin" : "account.id.serverUnavailable"));
+        }
+        const result = await confirmed.json() as { userId?: string };
+        if (!result.userId) return fail("network-error", t("error.account.authResponse"));
+        signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
+        if (signed.ok && signed.value.userId !== result.userId) return fail("network-error", t("error.account.authResponse"));
+      }
       return signed.ok ? this.adopt(signed.value) : signed;
     } catch (error) {
       this.failure = `signin-exception:${error instanceof Error ? error.name : "unknown"}`;
@@ -139,8 +164,8 @@ export class SupabaseAccountApi implements AccountApi {
   }
 
   private async adopt(tokens: StoredTokens): Promise<AccountResult<AccountState>> {
-    this.tokens = tokens;
     await this.options.store.save(tokens);
+    this.tokens = tokens; this.pendingRegistration = undefined;
     return { ok: true, value: stateOf(tokens) };
   }
 
@@ -245,13 +270,13 @@ export class SupabaseAccountApi implements AccountApi {
     const r = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: refreshToken }));
     // 리프레시 토큰이 폐기됐다면(다른 기기 로그아웃 등) 낡은 토큰을 지우고 처음부터 게스트를 새로 만든다.
     if (!r.ok && r.code === "unsupported") return r;
-    if (!r.ok) { this.tokens = null; await this.options.store.clear(); }
+    if (!r.ok && r.code === "invalid-credentials") { this.tokens = null; await this.options.store.clear(); }
     return r;
   }
 
   private async authCall(path: string, body: string): Promise<AccountResult<StoredTokens>> {
     const res = await this.fetchImpl(`${this.options.url}${path}`, {
-      method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body,
+      method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body, signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return this.authFailure(path, res);
     const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -272,9 +297,18 @@ export class SupabaseAccountApi implements AccountApi {
     if (code === "anonymous_provider_disabled" || code === "signup_disabled") return fail("unsupported", t("error.account.guestDisabled"));
     if (code === "email_exists" || code === "user_already_exists") return fail("id-taken", t("error.account.idTaken"));
     if (code === "weak_password" || code === "same_password") return fail("weak-password", t("error.account.credentials"));
-    if (code === "invalid_credentials" || code === "email_not_confirmed") return fail("invalid-credentials", t("error.account.badLogin"));
-    if (res.status === 429 || code === "over_request_rate_limit") return fail("rate-limited", t("error.account.rateLimited"));
+    if (code === "email_not_confirmed") return fail("email-unconfirmed", t("error.account.badLogin"));
+    if (code === "invalid_credentials") return fail("invalid-credentials", t("error.account.badLogin"));
+    if (res.status === 429 || code === "over_request_rate_limit" || code === "over_email_send_rate_limit") return this.rateFailure(res);
+    if (path.includes("grant_type=refresh_token") && (res.status === 401 || ["refresh_token_not_found", "refresh_token_already_used", "invalid_refresh_token"].includes(code))) return fail("invalid-credentials", t("error.account.badLogin"));
     return fail("network-error", t("error.account.authFailed", { status: res.status }));
+  }
+
+  private rateFailure<T>(res: Response): AccountResult<T> {
+    const raw = res.headers.get("retry-after");
+    const seconds = raw === null ? NaN : /^\d+$/.test(raw) ? Number(raw) : Math.ceil((Date.parse(raw) - this.now()) / 1000);
+    const retry = Number.isFinite(seconds) ? Math.max(1, Math.min(86400, seconds)) : undefined;
+    return { ok: false, code: "rate-limited", message: retry ? t("account.id.retryAfter", { seconds: retry }) : t("error.account.rateLimited"), ...(retry ? { retryAfterSeconds: retry } : {}) };
   }
 
   private unsupported<T>(): AccountResult<T> { return fail("unsupported", t("error.account.loginUnsupported")); }

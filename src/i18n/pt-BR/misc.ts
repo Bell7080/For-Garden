@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_PT_BR = {
+  "account.id.retryAfter": "Tente novamente em {seconds} segundos.",
+  "account.id.serverUnavailable": "O cadastro está indisponível. Tente novamente mais tarde.",
+  "account.id.switchWarning": "Trocar o progresso de visitante pelo da conta existente. Você pode perder o acesso a este visitante. O progresso local só muda após um login bem-sucedido.",
+
   "ranking.title": "Recorde semanal da Expedição",
   "ranking.syncing": "Sincronizando o recorde",
   "ranking.weekRolledReload": "A semana mudou, então o recorde está sendo recarregado.",

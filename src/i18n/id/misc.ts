@@ -1,5 +1,9 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ID = {
+  "account.id.retryAfter": "Coba lagi dalam {seconds} detik.",
+  "account.id.serverUnavailable": "Pendaftaran akun tidak tersedia. Coba lagi nanti.",
+  "account.id.switchWarning": "Beralih dari progres tamu ke akun yang sudah ada. Akses ke akun tamu ini mungkin hilang. Progres lokal hanya diganti setelah login berhasil.",
+
   "ranking.title": "Rekor Ekspedisi Mingguan",
   "ranking.syncing": "Menyinkronkan rekor",
   "ranking.weekRolledReload": "Minggu berganti, rekor sedang dimuat ulang.",

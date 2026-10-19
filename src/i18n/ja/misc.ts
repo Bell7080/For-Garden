@@ -1,5 +1,9 @@
 /** 작은 화면·팝업들의 일본어 표. */
 export const MISC_JA = {
+  "account.id.retryAfter": "{seconds}秒後に再試行できます。",
+  "account.id.serverUnavailable": "アカウント作成サーバーを利用できません。後ほどお試しください。",
+  "account.id.switchWarning": "現在のゲスト進行から既存アカウントの進行に切り替えます。このゲストに再接続できなくなる場合があります。ログインに成功した場合のみ端末の進行を置き換えます。",
+
   "ranking.title": "遠征の週間記録",
   "ranking.syncing": "記録を同期中",
   "ranking.weekRolledReload": "週が変わったため記録を再読み込みします。",

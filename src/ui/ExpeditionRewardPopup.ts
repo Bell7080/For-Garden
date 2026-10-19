@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -263,7 +264,7 @@ export class ExpeditionRewardPopup {
     this.claiming = true;
     try {
       const result = await withBusy(this.scene, this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId }));
-      session.wallet = { ...result.wallet };
+      if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
       this.onClaimed?.();
       await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : t("expeditionReward.claimedAmount", { amount: result.reward.amount.toLocaleString() }));
     } catch (error) {

@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import type { Wallet } from "../core/gacha";
 import type { DialogueEffect } from "../core/dialogue";
 import { session, type Session } from "../state/session";
@@ -44,7 +45,7 @@ export class StoryManager {
     if (!storyId || this.isCompleted(storyId)) return Promise.resolve({ firstCompletion: false, gemsGranted: 0 });
     return this.enqueue(async () => {
       const response = await this.api.completeStory({ storyId });
-      return { firstCompletion: response.firstCompletion, gemsGranted: response.gemsGranted ?? 0, ...(response.wallet ? { wallet: response.wallet } : {}) };
+      return { firstCompletion: response.firstCompletion, gemsGranted: response.gemsGranted ?? 0, ...(response.wallet && !hasRemoteState(response) ? { wallet: response.wallet } : {}) };
     });
   }
 }

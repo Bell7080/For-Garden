@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
@@ -126,13 +127,13 @@ export class RelicProgressionManager {
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
   async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi): Promise<void> {
     const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
-    this.applyRuneInventory(response.inventory);
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 
   /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
   async unequipRune(relicId: string, slotIndex: number, api: GameApi = gameApi): Promise<void> {
     const response = await api.unequipRune({ relicId, slotIndex });
-    this.applyRuneInventory(response.inventory);
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 
   /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */

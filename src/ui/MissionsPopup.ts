@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -379,7 +380,7 @@ export class MissionsPopup {
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {
     // 굴릴 시작점은 **수령 직전**의 값이다. 응답을 반영한 뒤에 읽으면 이미 오른 값이라 굴러갈 거리가 없다.
     this.rollFrom = this.research?.[this.period]?.points;
-    session.wallet = { ...result.wallet }; this.onWalletChanged?.();
+    if (!hasRemoteState(result)) session.wallet = { ...result.wallet }; this.onWalletChanged?.();
     // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
     const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
     this.render();

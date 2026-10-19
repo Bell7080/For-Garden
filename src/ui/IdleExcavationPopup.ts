@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { UI_ICON } from "./icons";
@@ -928,7 +929,7 @@ export class IdleExcavationPopup {
     try {
       const result = await withBusy(this.scene, this.api.harvestExcavation({ requestId: this.harvestRequestId }));
       if (!this.body) return;
-      session.wallet = { ...result.wallet };
+      if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       this.confirmed = result; this.saving = false; this.harvestRequestId = undefined; this.harvestResult = result; this.renderStatus();
       // 성공 수확만 알림 해제 계기가 되며 manager가 새 서버 잔량을 즉시 다시 확정한다.

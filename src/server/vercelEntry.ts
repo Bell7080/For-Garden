@@ -58,7 +58,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:process.env.FORGARDEN_QA_TOOLS==="1"}));
     }
   } catch (error) {
-    if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message }); return; }
+    if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message,...(error.domainCode ? {domainCode:error.domainCode} : {}) }); return; }
     res.status(503).json({ ok:false,code:"service_unavailable" });
   }
 }

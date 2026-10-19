@@ -1,3 +1,5 @@
+import { hasRemoteState } from "../api/resultState";
+import { GameApiError } from "../api/contracts";
 import type { ItemLot } from "../core/itemLots";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { isValidLotStack } from "../core/itemLots";
@@ -48,19 +50,23 @@ export type InventoryDisplayItem =
   | { readonly kind: "stack"; readonly category: "consumable" | "material"; readonly id: string; readonly definition: ItemDefinition; readonly quantity: number; /** 기한 있는 병은 남은 기간이 다른 묶음마다 한 칸이다. */ readonly lot?: ItemLot };
 
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
+const pendingRecharges = new WeakMap<GameApi, Map<string, string>>();
+
 export class InventoryManager {
   constructor(private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
   /** 조회와 세 저장 소유자의 반영을 한 비동기 경계로 묶어 서로 다른 시점의 행이 섞이지 않게 한다. */
   async refresh(api: GameApi): Promise<void> {
     const response = await api.getInventory();
-    this.applySnapshot(response.items);
+    if (!hasRemoteState(response)) this.applySnapshot(response.items);
+    else this.publishCurrentInventory();
   }
 
   /** 소비 명령의 최종 서버 스냅샷까지 같은 경계에서 반영해 화면이 DTO를 보관하지 않게 한다. */
   async useConsumable(api: GameApi, itemId: string, lotExpiresAt?: string): Promise<UseConsumableResponse> {
     const response = await api.useConsumable({ itemId, quantity: 1, ...(lotExpiresAt !== undefined ? { lotExpiresAt } : {}) });
-    this.applySnapshot(response.items, response.wallet);
+    if (!hasRemoteState(response)) this.applySnapshot(response.items, response.wallet);
+    else this.publishCurrentInventory();
     return response;
   }
 
@@ -72,9 +78,22 @@ export class InventoryManager {
    * 소비품 경로와 같은 검증(카탈로그 대조·행 무결성)을 함께 지나야 하기 때문이다.
    */
   async rechargeStamina(api: GameApi, sourceId: string): Promise<RechargeStaminaResponse> {
-    const response = await api.rechargeStamina({ sourceId, requestId: rechargeRequestId() });
-    this.applySnapshot((await api.getInventory()).items, response.wallet);
-    return response;
+    let pending = pendingRecharges.get(api);
+    if (!pending) { pending = new Map(); pendingRecharges.set(api, pending); }
+    const requestId = pending.get(sourceId) ?? rechargeRequestId();
+    pending.set(sourceId, requestId);
+    try {
+      const response = await api.rechargeStamina({ sourceId, requestId });
+      if (!hasRemoteState(response)) this.applySnapshot(response.items, response.wallet);
+      else this.publishCurrentInventory();
+      pending.delete(sourceId);
+      return response;
+    } catch (error) {
+      // 규칙 거절은 확정된 실패다. 통신·저장 결과가 불명확하면 최초 명령을 계속 회수한다.
+      if (error instanceof GameApiError && error.code !== "PERSISTENCE_FAILED"
+        || error && typeof error === "object" && "status" in error && Number(error.status) >= 400 && Number(error.status) < 500) pending.delete(sourceId);
+      throw error;
+    }
   }
 
   /** 광고 보상도 같은 경계를 지난다. 검증은 서버가 하고 화면은 확정 결과만 다시 읽는다. */
@@ -82,13 +101,20 @@ export class InventoryManager {
     try {
       const response = await api.claimAdReward(request);
       // 일일 수령 횟수는 지갑이 아니라 별도 기록이라 서버 확정값을 그대로 옮긴다.
-      this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
-      this.applySnapshot((await api.getInventory()).items, response.wallet);
+      if (!hasRemoteState(response)) {
+        this.state.dailyAdRewards = { ...this.state.dailyAdRewards, date: response.dailyAdRewards.date, claimsBySlot: { ...response.dailyAdRewards.claimsBySlot } };
+        this.applySnapshot(response.items, response.wallet);
+      } else this.publishCurrentInventory();
       return response;
     } finally {
       // 광고 팝업이 「받는 중」으로 서 있다가 지급이 끝난 순간(성공·실패 모두) 닫혀 영수증과 빈 틈 없이 이어진다.
       releaseAdWait();
     }
+  }
+
+  private publishCurrentInventory(): void {
+    this.events.publish("wallet", { wallet: this.state.wallet });
+    this.events.publishInventory();
   }
 
   /** 전체 DTO를 먼저 검증·정규화하고 모두 성공한 뒤에만 Session 세 영역을 함께 교체한다. */
@@ -133,7 +159,7 @@ export class InventoryManager {
    */
   async markRune(api: GameApi, instanceId: string, mark: { locked?: boolean; bookmarked?: boolean }): Promise<RuneInstance> {
     const response = await api.markRune({ runeInstanceId: instanceId, ...mark });
-    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    if (!hasRemoteState(response)) this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
     this.events.publishInventory();
     return response.rune;
   }
@@ -147,7 +173,7 @@ export class InventoryManager {
    * 확정값을 그대로 다시 알리기만 한다.
    */
   private applyRuneMutation<T extends { rune: RuneInstance; inventory: { runes: RuneInstance[] } }>(response: T): T {
-    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    if (!hasRemoteState(response)) this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
     this.events.publish("wallet", { wallet: this.state.wallet });
     this.events.publishInventory();
     return response;
@@ -171,8 +197,8 @@ export class InventoryManager {
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */
   async sellRunes(api: GameApi, instanceIds: string[], requestId = crypto.randomUUID()): Promise<SellRunesResponse> {
     const response = await api.sellRunes({ requestId, instanceIds });
-    this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
-    this.state.wallet = { ...response.wallet };
+    if (!hasRemoteState(response)) this.state.runeInventory = response.inventory.runes.map((rune) => structuredClone(rune));
+    if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
     this.events.publish("wallet", { wallet: this.state.wallet });
     this.events.publishInventory();
     return response;

@@ -134,7 +134,7 @@ export interface EquipRelicSkinRequest { relicId: string; skinId?: RelicSkinId; 
 /** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
 export interface RechargeStaminaRequest { sourceId: string; requestId: string; }
 /** 실제 채운 양과 넘친 양을 함께 돌려줘 화면이 상한을 다시 계산하지 않게 한다. */
-export interface RechargeStaminaResponse extends PlayerStateDto { sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; status: StaminaRechargeStatusDto; }
+export interface RechargeStaminaResponse extends PlayerStateDto { items: InventoryItemDto[]; sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; status: StaminaRechargeStatusDto; }
 /**
  * 젬 충전의 오늘 상태. 값은 서버가 오늘 채운 횟수로 정하고, 화면은 이 응답으로 **다음 값**과 초기화 시각만 그린다.
  * `resetsAt`은 횟수가 처음으로 돌아가는 시각(서버 UTC 자정)이다.
@@ -383,7 +383,7 @@ export interface ProfileModifierSelectionDto {
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { items: InventoryItemDto[]; slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 클라이언트는 런/정산 식별자와 종료 사유만 보내며 보상 수치는 보낼 수 없다. */
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }

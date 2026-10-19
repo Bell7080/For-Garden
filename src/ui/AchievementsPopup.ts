@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse, GameApi } from "../api/contracts";
@@ -357,7 +358,7 @@ export class AchievementsPopup {
     try {
       let result: ClaimAchievementRewardsResponse;
       try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch { await this.refresh().catch(() => undefined); return; }
-      session.wallet = { ...result.wallet }; this.onWalletChanged?.();
+      if (!hasRemoteState(result)) session.wallet = { ...result.wallet }; this.onWalletChanged?.();
       // 지급은 이미 확정됐다. 목록/알림 재조회 실패가 영수증과 다음 수령을 막지 않는다.
       this.data = await this.api.getAchievements().catch(() => this.data);
       this.render();

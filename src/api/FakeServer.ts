@@ -1608,6 +1608,9 @@ export class FakeServer implements GameApi {
    */
   async rechargeStamina(request: RechargeStaminaRequest): Promise<RechargeStaminaResponse> {
     await this.delay();
+    if (!request.requestId) throw new GameApiError("INVALID_STATE", "충전 요청 ID가 필요합니다.");
+    const cached = this.readReceipt<RechargeStaminaResponse>("staminaRecharge", request.requestId, request.sourceId);
+    if (cached) return { ...cached, ...this.snapshot(), items: this.inventoryDto(this.state).items, status: this.staminaRechargeStatus(request.sourceId, this.now()) };
     // 값을 치르기 전에 오프라인 자연 충전을 서버 시각까지 먼저 확정한다.
     this.settleStaminaNow();
     const source = staminaCurrencyRecharge(request.sourceId);
@@ -1627,10 +1630,16 @@ export class FakeServer implements GameApi {
     const nextPurchases = source.escalating
       ? { ...this.state.productPurchases, [source.id]: { periodKey: staminaGemDayKey(now), count: purchased + 1 } }
       : this.state.productPurchases;
-    this.persist({ ...this.state, wallet: nextWallet, productPurchases: nextPurchases });
+    const candidate = { ...this.state, wallet: nextWallet, productPurchases: nextPurchases };
+    this.recordReceipt(candidate, "staminaRecharge", request.requestId, request.sourceId, {
+      sourceId: source.id, spent: { currency: source.currency, amount: cost }, appliedAmount, overflowAmount: source.amount - appliedAmount,
+    });
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
     this.state.wallet = nextWallet; this.state.productPurchases = nextPurchases;
     return {
       ...this.snapshot(),
+      items: this.inventoryDto(this.state).items,
       sourceId: source.id,
       spent: { currency: source.currency, amount: cost },
       appliedAmount,
@@ -1741,7 +1750,7 @@ export class FakeServer implements GameApi {
       const amount = applied.wallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount;
     }
     const weeklyRemaining = slot.weeklyLimitUtc === undefined ? undefined : Math.max(0, slot.weeklyLimitUtc - this.quickWeek.claims);
-    return { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 활성 구독이 매일 얹는 몫을 UTC 하루에 한 번 지급한다. 광고와 무관하게 권리만 확인한다. */
@@ -1908,7 +1917,7 @@ export class FakeServer implements GameApi {
     const entitlement = { ...stored, active: true, serverTime: now.toISOString() };
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
     for (const key of Object.keys(nextWallet) as (keyof Session["wallet"])[]) { const amount = nextWallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount; }
-    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    const result: ClaimInstantAdRewardResponse = { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, entitlement, dailyBonus: bonus ? { ...bonus } : undefined, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
     this.instantClaimResults.set(request.requestId, result);
     return result;
   }

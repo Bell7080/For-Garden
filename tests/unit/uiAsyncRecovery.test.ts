@@ -14,6 +14,7 @@ describe("비동기 UI 실패 복구", () => {
   it("업적 지급 뒤 목록·알림 조회 실패에도 다음 수령이 잠기지 않는다", async () => {
     const claim = vi.fn(async () => ({ wallet: { gems: 1 }, granted: [], newModifierIds: [] }));
     const Popup = sourceClass("src/ui/AchievementsPopup.ts", "AchievementsPopup", {
+      hasRemoteState: () => false,
       withBusy: async (_scene: unknown, promise: Promise<unknown>) => promise,
       session: { wallet: {} }, notificationManager: { refresh: async () => { throw Error("offline"); } },
     });

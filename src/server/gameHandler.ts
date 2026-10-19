@@ -7,6 +7,7 @@ import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
  * 실행하고, 바뀐 상태를 낙관적 잠금(revision)으로 다시 저장한다. 이 모듈은 Phaser·HTTP·DB를 모르고
  * 저장소(`StateStore`)와 시각·난수를 주입받으므로 단위 테스트가 그대로 서버 경로를 지난다.
  */
+import { GameApiError, type ApiErrorCode } from "../api/contracts";
 import { FakeServer } from "../api/FakeServer";
 import { saveManager } from "../state/SaveManager";
 import { applyOpsAdjustments, drainOpsNotices, isOpsMailId, opsMailUuid, type OpsAppliedAdjustment, type OpsInbox } from "../core/opsInbox";
@@ -66,7 +67,7 @@ export interface GameCallResponse {
 }
 
 export class GameCallError extends Error {
-  constructor(readonly status: number, readonly code: string, message?: string) { super(message ?? code); }
+  constructor(readonly status: number, readonly code: string, message?: string, readonly domainCode?: ApiErrorCode) { super(message ?? code); }
 }
 
 export interface GameHandlerDeps {
@@ -126,6 +127,8 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
       if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
       const { _requestFingerprint, ...response } = receipt;
+      // 영수증의 지급 사실은 보존하고, 현재 상태는 최신 저장을 함께 보낸다.
+      if (stored && Number(stored.revision) >= Number(response.revision)) return { ...response, state: stored.data, revision: stored.revision };
       return response;
     }
     let state: Session;
@@ -172,7 +175,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       }
     } catch (error) {
       // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
-      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error));
+      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined);
     }
     const data = saveManager.exportData(state);
     const changed = JSON.stringify(data) !== before;

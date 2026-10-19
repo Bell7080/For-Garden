@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import type { AttendanceStatusResponse, ClaimAttendanceResponse, GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { ATTENDANCE_AD_SLOT_ID } from "../data/attendance";
@@ -42,7 +43,8 @@ export class AttendanceManager {
   }
 
   private apply(result: ClaimAttendanceResponse): ClaimAttendanceResponse {
-    new InventoryManager(this.state, this.events).applySnapshot(result.items, result.wallet);
+    if (!hasRemoteState(result)) new InventoryManager(this.state, this.events).applySnapshot(result.items, result.wallet);
+    else { this.events.publish("wallet", { wallet: this.state.wallet }); this.events.publishInventory(); }
     void notificationManager.refresh().catch(() => undefined);
     return result;
   }

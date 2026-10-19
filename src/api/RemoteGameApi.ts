@@ -7,7 +7,8 @@ import { isReadMethod } from "../server/requestPolicy";
 import { SERVER_GAME_METHODS } from "../server/gameMethods";
 import { saveManager } from "../state/SaveManager";
 import type { Session } from "../state/session";
-import type { GameApi } from "./contracts";
+import { GameApiError, type ApiErrorCode, type GameApi } from "./contracts";
+import { markRemoteStateResult } from "./resultState";
 import { reportAccountDeleted } from "./accountDeleted";
 
 export interface RemoteGameApiOptions {
@@ -22,8 +23,6 @@ export interface RemoteGameApiOptions {
 /** 같은 조회의 답을 다시 쓰는 시간이다. 쓰기가 나가면 곧바로 비운다. */
 const READ_REUSE_MS = 1500;
 
-/** 응답을 못 받은 쓰기의 재전송 키를 쥐고 있는 시간이다. 이 안의 같은 호출은 같은 일로 본다. */
-const RETRY_KEY_MS = 120_000;
 
 export class RemoteGameApiError extends Error {
   constructor(readonly status: number, readonly code: string, message?: string) { super(message ?? code); }
@@ -44,18 +43,18 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   const endpoint = options.endpoint ?? "/api/game";
   const newId = options.newRequestId ?? defaultRequestId;
   // 같은 조회가 화면 전환 때 겹쳐 나가면 한 번만 보내고, 쓰기가 상태를 바꾸기 전까지는 잠깐 그 답을 다시 쓴다.
-  const retryIds = new Map<string, { id: string; at: number }>();
+  const retryIds = new Map<string, string>();
   const inflightReads = new Map<string, { at: number; promise: Promise<unknown> }>();
 
-  async function call(method: string, args: unknown[]): Promise<unknown> {
+  async function call(method: string, args: unknown[], staleRetries = 0): Promise<unknown> {
     const token = await options.getAccessToken();
     if (!token) throw new RemoteGameApiError(401, "not_authenticated");
     // 응답이 오지 않은 쓰기를 다시 부를 때는 같은 키를 쓴다 — 서버가 첫 호출을 이미 확정했다면 새 키는 "처음 하는 일"로
     // 읽혀 거절당하고(승리 확정이 그렇다), 받은 초회 보상도 화면에 닿지 못한 채 다시 시도만 되풀이된다.
     const callKey = isReadMethod(method) ? "" : JSON.stringify([method, args]);
     const kept = retryIds.get(callKey);
-    const requestId = isReadMethod(method) ? undefined : (kept && Date.now() - kept.at < RETRY_KEY_MS ? kept.id : newId());
-    if (requestId && callKey) retryIds.set(callKey, { id: requestId, at: kept?.id === requestId ? kept.at : Date.now() });
+    const requestId = isReadMethod(method) ? undefined : (kept ?? newId());
+    if (requestId && callKey) retryIds.set(callKey, requestId);
     const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
     let lastError: unknown;
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
@@ -67,19 +66,26 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
         lastError = error;
         continue;
       }
-      const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; message?: string } | null;
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; domainCode?: ApiErrorCode; message?: string } | null;
       // 서버가 규칙으로 거절한 호출(4xx)은 끝난 일이다. 시간 초과·서버 오류(5xx)는 확정되었는지 모르므로 키를 남긴다.
       if (!res.ok || !json?.ok) {
-        if (res.status < 500 && callKey) retryIds.delete(callKey);
+        if (res.status >= 400 && res.status < 500 && callKey) retryIds.delete(callKey);
         if (res.status === 403 && json?.code === "account_deleted") reportAccountDeleted();
+        if (res.status === 422 && json?.domainCode) throw new GameApiError(json.domainCode, json.message ?? json.domainCode);
         throw new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
       }
-      if (callKey) retryIds.delete(callKey);
       const revision = Number((json as { revision?: unknown }).revision);
+      if (Number.isFinite(revision) && revision < appliedRevision && isReadMethod(method)) {
+        // 오래된 DTO도 반환하지 않는다. 최신 조회를 다시 받아 화면과 Manager 모두 같은 시점을 읽는다.
+        if (staleRetries >= 2) throw new RemoteGameApiError(409, "stale_response");
+        return call(method, args, staleRetries + 1);
+      }
       if (!Number.isFinite(revision) || revision >= appliedRevision) {
         if (Number.isFinite(revision)) appliedRevision = revision;
         options.applyState(saveManager.parse(json.state));
       }
+      markRemoteStateResult(json.result);
+      if (callKey) retryIds.delete(callKey);
       return json.result;
     }
     throw lastError instanceof Error ? lastError : new RemoteGameApiError(0, "network");

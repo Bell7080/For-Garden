@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import { gameApi } from "../api/FakeServer";
 import type { ClaimInteractionDispatchResponse, GameApi, InteractionCitiesResponse, InteractionDispatchResponse } from "../api/contracts";
 import { findInteractionCity } from "../data/interactionCities";
@@ -15,14 +16,14 @@ export class InteractionManager {
   async cities(): Promise<InteractionCitiesResponse> { const response = await this.api.getInteractionCities(); if (!Number.isFinite(Date.parse(response.serverTime)) || response.cities.some(city => !findInteractionCity(city.id))) throw new Error("교류 도시 응답이 올바르지 않습니다."); return response; }
   async refresh(): Promise<InteractionDispatchResponse> { return this.apply(await this.api.getInteractionDispatch()); }
   async start(cityId: string, party: string[]): Promise<InteractionDispatchResponse> { return this.apply(await this.api.startInteractionDispatch({ cityId, party: [...party] })); }
-  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); this.state.wallet = { ...response.wallet }; return response; }
+  async claim(dispatchId: string, requestId: string): Promise<ClaimInteractionDispatchResponse> { const response = await this.api.claimInteractionDispatch({ dispatchId, requestId }); this.apply(response); if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet }; return response; }
   /** 열람 시작 시 읽음으로 확정해 도중 앱이 닫혀도 알림 점이 되살아나지 않게 한다. 발견·중복 대체는 수령 때 서버가 이미 끝냈다. */
   async markJournalRead(journalId: string): Promise<boolean> { return (await this.api.markInteractionJournalRead({ journalId })).changed; }
   /** 서버가 보낸 목록을 통째로 세션 슬롯으로 삼는다 — 씬은 어느 도시가 나가 있는지만 읽는다. */
   private apply<T extends InteractionDispatchResponse>(response: T): T {
     for (const dispatch of response.dispatches) assertDispatch(dispatch);
     if (!Number.isFinite(Date.parse(response.serverTime))) throw new Error("교류 서버 시각이 올바르지 않습니다.");
-    this.state.interaction.slots = response.dispatches.map((dispatch) => structuredClone(dispatch));
+    if (!hasRemoteState(response)) this.state.interaction.slots = response.dispatches.map((dispatch) => structuredClone(dispatch));
     return response;
   }
 }

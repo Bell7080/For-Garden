@@ -67,7 +67,7 @@ import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend } from "./guildContracts";
 import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
-import { advanceTutorialOnStageClear, stageClearAdvancesTutorial, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { nextTutorialStep, advanceTutorialOnStageClear, stageClearAdvancesTutorial, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
@@ -1998,12 +1998,17 @@ export class FakeServer implements GameApi {
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     // 처음 만난 날은 관찰 질문이 하루에 하나씩 열리는 기준이다.
     const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
-    const nextState: Session = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    // 첫 연구 성공과 튜토리얼 완료는 같은 저장이다. 응답 유실 뒤 다시 연구 비용을 요구하지 않는다.
+    const tutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial: TutorialState = nextTutorialStep(tutorial) === "pull"
+      ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
+    const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;
+    this.state.tutorial = nextTutorial;
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;

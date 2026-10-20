@@ -1,3 +1,5 @@
+import { followTutorialTarget } from "../ui/tutorialTarget";
+import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
@@ -167,6 +169,7 @@ export class PartyScene extends Phaser.Scene {
   /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
   private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
+  private partyTutorialPhase?: "move" | "hold" | "start";
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
@@ -223,6 +226,7 @@ export class PartyScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("party");
+    this.partyTutorialPhase = this.content.content === "stage" && session.selectedStageId === "1-2" && tutorialManager.next() === "auto" ? "move" : undefined;
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
     // 결투는 제 편성을 따로 갖는다 — 공격은 지난 공격덱, 방어는 게시한 방어덱에서 시작한다.
     // 스토리 편성(`session.party`)을 건드리지 않는다.
@@ -381,6 +385,20 @@ export class PartyScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     showContentIntro(this, "party");
+    followTutorialTarget(this, {
+      enabled: () => this.partyTutorialPhase !== undefined,
+      blocked: () => this.info.isOpen,
+      rect: () => {
+        if (this.partyTutorialPhase === "start") return this.startButton.getBounds();
+        const boxes = this.allySlots.map(slot => slot.hit.getBounds());
+        if (!boxes.length) return undefined;
+        if (this.partyTutorialPhase === "hold") return boxes.find((_, i) => this.picked[i] !== null);
+        const x = Math.min(...boxes.map(b => b.x)), y = Math.min(...boxes.map(b => b.y));
+        return { x, y, width: Math.max(...boxes.map(b => b.right)) - x, height: Math.max(...boxes.map(b => b.bottom)) - y };
+      },
+      text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move") : this.partyTutorialPhase === "hold" ? t("tutorial.party.hold") : t("tutorial.party.start"),
+      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "hold" : this.partyTutorialPhase === "hold" ? "start" : undefined; },
+    });
   }
 
   /**
@@ -482,10 +500,11 @@ export class PartyScene extends Phaser.Scene {
       // 뒤 자리는 당겨지지 않는다 — 2번을 비워도 3번은 3번에 그대로 선다.
       tap: (slot) => this.tapSlot(slot),
       // 자리에 세워 둔 SD도 그리드 카드와 같은 손짓으로 상세가 열린다.
-      longPress: (slot) => { const id = this.picked[slot]; if (id) this.info.showRelic(getRelic(id)); },
+      longPress: (slot) => { const id = this.picked[slot]; if (id) { if (this.partyTutorialPhase === "hold") this.partyTutorialPhase = "start"; this.info.showRelic(getRelic(id)); } },
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
+        if (from !== to && this.partyTutorialPhase === "move") this.partyTutorialPhase = "hold";
         this.selectedSlot = to;
         // 미리보기로 옮겨 둔 SD는 확정 뒤 기존 비동기 재배치 경로가 제자리에 다시 세운다.
         this.refresh();

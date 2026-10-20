@@ -1,5 +1,19 @@
 /** 전투 화면과 결과판의 문구. */
 export const BATTLE_KO = {
+  "tutorial.lobby.sortie": "다음 관문으로 출격해 볼까요?",
+  "tutorial.lobby.story": "스토리를 선택해 다음 관문으로 이동하세요.",
+  "tutorial.stage.enter": "1-2 관문에 진입해 볼까요?",
+  "tutorial.party.move": "렐릭을 다른 칸으로 끌어 편성을 바꿔 보세요.",
+  "tutorial.party.hold": "편성된 렐릭을 꾹 눌러 정보를 확인해 보세요.",
+  "tutorial.party.start": "편성이 준비됐어요. 출전해 볼까요?",
+  "tutorial.relics.bulk": "강화 버튼을 꾹 눌러 즉시 강화 메뉴를 열어 보세요.",
+  "tutorial.relics.one": "1레벨 강화를 눌러 토리카를 한 레벨 올려 보세요.",
+  "tutorial.relics.return": "강화를 마쳤어요. 광장으로 돌아가세요.",
+  "tutorial.research.open.title": "복원 연구 개방",
+  "tutorial.research.open.body": "새로운 렐릭을 만날 준비가 끝났어요. 지원품을 받고 첫 복원 연구를 진행해 보세요.",
+  "tutorial.result.feed": "토리카를 강화하러 광장으로 돌아가세요.",
+  "tutorial.result.research": "광장으로 돌아가 복원 연구 지원품을 받아 보세요.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · 해일 예고",
   "battle.boss.limit": " · LIMIT",

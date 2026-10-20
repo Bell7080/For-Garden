@@ -13,6 +13,7 @@ describe("전투 결과 UI 복구", () => {
             }, StageCompletePopup: class {
                 open = open;
             },
+            tutorialManager: { lobbyStep: () => undefined },
             nextBattleStage: () => undefined, STAGES: [], isStageUnlocked: () => true, t: (key: string) => key,
         });
         const scene = Object.assign(Object.create(Battle.prototype), {

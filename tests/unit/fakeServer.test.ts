@@ -444,9 +444,12 @@ describe("FakeServer", () => {
     // 같은 관문을 되풀이해 깨도 더 열리지 않는다.
     await server.completeStage("1-2", true); await server.completeStage("1-2", true);
     expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto"]);
-    // 다음 새 관문이 다음 칸을 연다.
+    // 1-2 뒤에는 일반 강화와 1레벨 강화가 먼저다. 연구 지원은 아직 받을 수 없다.
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.completeTutorialStep({ stepId: "feed" });
+    await server.completeTutorialStep({ stepId: "feedLevel" });
     await server.completeStage("1-3", true);
-    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "presentation"]);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "feed", "feedLevel", "presentation"]);
   });
 
   it("첫 승리는 미리보기와 같은 초회 보상 전부를 주고, 룬은 보여 준 자리로 발급한다", async () => {
@@ -1511,7 +1514,7 @@ describe("첫 플레이 튜토리얼 칸", () => {
     state.tutorial = { completedStepIds: done as never };
     return new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
   };
-  const ORDER = ["ultimate", "auto", "presentation", "speed", "contribution", "feed"];
+  const ORDER = ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"];
 
   it("은 앞 칸을 건너뛰고 뒤 칸을 마칠 수 없다", async () => {
     await expect(make([]).completeTutorialStep({ stepId: "speed" })).rejects.toMatchObject({ code: "INVALID_STATE" });
@@ -1544,7 +1547,7 @@ describe("콘텐츠 첫 방문 안내 기록", () => {
     await server.markContentIntroSeen({ introId: "raid" });
     const again = await server.markContentIntroSeen({ introId: "raid" });
     expect(again.tutorial).toEqual({ completedStepIds: ["ultimate", "auto"], seenIntroIds: ["raid"] });
-    const next = await server.completeTutorialStep({ stepId: "presentation" });
+    const next = await server.completeTutorialStep({ stepId: "feed" });
     expect(next.tutorial.seenIntroIds).toEqual(["raid"]);
   });
 });

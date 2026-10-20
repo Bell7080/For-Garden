@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_RU = {
+  "tutorial.lobby.sortie": "Готовы к следующему этапу?",
+  "tutorial.lobby.story": "Выберите сюжет, чтобы продолжить.",
+  "tutorial.stage.enter": "Войдите на этап 1-2.",
+  "tutorial.party.move": "Перетащите реликт в другую ячейку, чтобы изменить построение.",
+  "tutorial.party.hold": "Удерживайте реликт в построении, чтобы открыть сведения.",
+  "tutorial.party.start": "Построение готово. Начните бой!",
+  "tutorial.relics.bulk": "Удерживайте кнопку улучшения, чтобы открыть быстрое улучшение.",
+  "tutorial.relics.one": "Выберите +1 уровень, чтобы повысить уровень Торики.",
+  "tutorial.relics.return": "Обучение завершено. Вернитесь на площадь.",
+  "tutorial.research.open.title": "Исследование восстановления открыто",
+  "tutorial.research.open.body": "Пора встретить новых реликтов. Получите припасы и проведите первое исследование восстановления.",
+  "tutorial.result.feed": "Вернитесь на площадь, чтобы усилить Торику.",
+  "tutorial.result.research": "Вернитесь на площадь и получите припасы для исследования восстановления.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Угроза прилива",
   "battle.boss.limit": " · ПРЕДЕЛ",

@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_ZH_HANS = {
+  "tutorial.lobby.sortie": "准备前往下一个关卡吧。",
+  "tutorial.lobby.story": "选择剧情，前往下一个关卡。",
+  "tutorial.stage.enter": "进入1-2关卡吧。",
+  "tutorial.party.move": "将遗物拖到其他位置，试着调整编队。",
+  "tutorial.party.hold": "长按已编队的遗物，查看详细信息。",
+  "tutorial.party.start": "编队准备完毕，开始战斗吧！",
+  "tutorial.relics.bulk": "长按强化按钮，打开快速强化菜单。",
+  "tutorial.relics.one": "选择提升1级，让托里卡升一级。",
+  "tutorial.relics.return": "强化完成，返回广场吧。",
+  "tutorial.research.open.title": "复原研究已解锁",
+  "tutorial.research.open.body": "迎接新遗物的准备已经完成。领取支援物资，开始首次复原研究吧。",
+  "tutorial.result.feed": "返回广场，强化托里卡吧。",
+  "tutorial.result.research": "返回广场，领取复原研究支援物资吧。",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · 潮汐警报",
   "battle.boss.limit": " · LIMIT",

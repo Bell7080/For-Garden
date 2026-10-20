@@ -426,8 +426,7 @@ export class LabScene extends Phaser.Scene {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
-      // 튜토리얼 「뽑기」 칸 — 첫 연구가 확정된 순간 마친다(연출을 건너뛰어도 칸은 마쳐진다).
-      if (tutorialManager.next() === "pull") void tutorialManager.complete("pull");
+      // 첫 연구 튜토리얼은 연구 결과와 같은 서버 저장에서 완료된다. 별도 완료 요청을 보내지 않는다.
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
       await this.playPresentation(response.results, response.mileageGained);
     } catch (error) {

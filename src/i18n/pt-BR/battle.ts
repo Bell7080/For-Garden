@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_PT_BR = {
+  "tutorial.lobby.sortie": "Pronto para a próxima fase?",
+  "tutorial.lobby.story": "Escolha História para continuar.",
+  "tutorial.stage.enter": "Entre na fase 1-2.",
+  "tutorial.party.move": "Arraste uma Relíquia para outro espaço para mudar a formação.",
+  "tutorial.party.hold": "Mantenha uma Relíquia na formação pressionada para ver os detalhes.",
+  "tutorial.party.start": "Sua formação está pronta. Comece a batalha!",
+  "tutorial.relics.bulk": "Segure o botão de melhoria para abrir as melhorias instantâneas.",
+  "tutorial.relics.one": "Escolha +1 nível para elevar Torika em um nível.",
+  "tutorial.relics.return": "Treinamento concluído. Volte à praça.",
+  "tutorial.research.open.title": "Pesquisa de restauração desbloqueada",
+  "tutorial.research.open.body": "Você já pode conhecer novas Relíquias. Recolha os suprimentos e inicie sua primeira pesquisa de restauração.",
+  "tutorial.result.feed": "Volte à praça para treinar Torika.",
+  "tutorial.result.research": "Volte à praça e recolha os suprimentos da pesquisa de restauração.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Alerta de maré",
   "battle.boss.limit": " · LIMITE",

@@ -1,3 +1,5 @@
+import { followTutorialTarget } from "../ui/tutorialTarget";
+import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -272,7 +274,7 @@ export class LobbyScene extends Phaser.Scene {
     this.gateEntrance("duel", duelButton);
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
-    new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
+    const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
       width: LOBBY_ACTION_BOUNDS.sortie.width,
       height: LOBBY_ACTION_BOUNDS.sortie.height,
       label: t("lobby.sortie"),
@@ -360,7 +362,7 @@ export class LobbyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
-    if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer);
+    if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer, sortieButton);
 
     // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
@@ -667,6 +669,10 @@ export class LobbyScene extends Phaser.Scene {
           sdSide, split: entry.split, onClick: entry.onClick,
         });
         body.add(button);
+        if (entry.label === t("lobby.sortie.story")) followTutorialTarget(this, {
+          enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.featureToTeach() !== undefined,
+          rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"),
+        });
         // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.
         const celebrate = entry.content !== undefined && contentOpen(entry.content) && consumeUnlockCelebration(entry.content);
         const sdDelay = celebrate ? 350 + UNLOCK_POP_TOTAL_MS + 250 : 0;

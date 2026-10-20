@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_ID = {
+  "tutorial.lobby.sortie": "Siap menuju tahap berikutnya?",
+  "tutorial.lobby.story": "Pilih Cerita untuk melanjutkan.",
+  "tutorial.stage.enter": "Masuki tahap 1-2.",
+  "tutorial.party.move": "Seret Relik ke slot lain untuk mengubah formasi.",
+  "tutorial.party.hold": "Tekan lama Relik dalam formasi untuk melihat detailnya.",
+  "tutorial.party.start": "Formasimu siap. Mulai pertempuran!",
+  "tutorial.relics.bulk": "Tekan lama tombol peningkatan untuk membuka peningkatan instan.",
+  "tutorial.relics.one": "Pilih +1 Level untuk menaikkan Torika satu level.",
+  "tutorial.relics.return": "Latihan selesai. Kembali ke alun-alun.",
+  "tutorial.research.open.title": "Riset Restorasi Terbuka",
+  "tutorial.research.open.body": "Kamu siap bertemu Relik baru. Ambil persediaanmu dan mulai riset restorasi pertama.",
+  "tutorial.result.feed": "Kembali ke alun-alun untuk melatih Torika.",
+  "tutorial.result.research": "Kembali ke alun-alun dan ambil persediaan riset restorasi.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Peringatan Pasang",
   "battle.boss.limit": " · LIMIT",

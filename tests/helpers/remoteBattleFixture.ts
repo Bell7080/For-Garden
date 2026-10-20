@@ -1,13 +1,13 @@
 import { worldRaidDefinitions, type SharedRaidRecord } from "../../src/server/sharedRaids";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { createCompletedTutorialState } from '../../src/core/tutorial';
-import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
+import { createDefaultSession, createInitialRelicProgress, type Session } from '../../src/state/session';
 import { saveManager } from '../../src/state/SaveManager';
 import { handleGameCall, GameCallError, type StateStore, StateConflictError } from '../../src/server/gameHandler';
 import { STAGES } from '../../src/data/stages';
 import { STAGE_STORY_LINKS } from '../../src/data/stageStories';
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from '../../src/core/playerLevel';
-export function createFixture(mode: "stage" | "duel" | "raid" = "stage") {
+export function createFixture(mode: "stage" | "duel" | "raid" = "stage", prepare?: (state: Session) => void) {
     const state = createDefaultSession();
     state.completedStoryIds.add(OPENING_TRAIN.id);
     state.party = ['rex', 'mette', 'torika'];
@@ -30,6 +30,7 @@ export function createFixture(mode: "stage" | "duel" | "raid" = "stage") {
         for (const id of [link.pre, link.post])
             if (id)
                 state.completedStoryIds.add(id);
+    prepare?.(state);
     let stored = { revision: '1', data: JSON.parse(JSON.stringify(saveManager.exportData(state))) };
     const receipts = new Map<string, unknown>();
     const calls: {

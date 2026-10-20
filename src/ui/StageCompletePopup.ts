@@ -101,6 +101,7 @@ export interface StageCompletePopupOptions {
    * 판은 화면 아무 곳이나 눌러도 닫히므로, 나가기는 그 닫힘이 부르는 기본 길과 같다.
    */
   clearActions?: readonly StageCompleteAction[];
+  returnHint?: string;
   /**
    * 진 판에서 돌려준 스테미나. 있으면 판 밑동에 **작고 흐린 한 줄**로만 선다 — 진 판의 주인공은
    * 다음에 할 일이라, 이 줄이 버튼보다 먼저 읽히면 안 된다. 경험치 블록은 서지 않는다(오르지 않았다).
@@ -241,6 +242,7 @@ export class StageCompletePopup {
       if (options.reward.kind === "storyClear") {
         if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
         else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+        if (options.returnHint) body.add(this.scene.add.text(0, 455, options.returnHint, textStyle({ role: "body", size: 24, wrap: WIDTH - 140, align: "center", color: COLOR.accentText })).setOrigin(.5));
         if (options.clearActions) this.buildClearActions(body, close, options.clearActions);
         else if (options.replay) this.buildReplay(body, close, options.replay);
       }

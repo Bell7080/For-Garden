@@ -2809,8 +2809,11 @@ export class BattleScene extends Phaser.Scene {
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;
       const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
+      const tutorialStep = tutorialManager.lobbyStep();
+      const tutorialReturn = stage.id === "1-2" && (tutorialStep === "feed" || tutorialStep === "feedLevel") || stage.id === "1-5" && tutorialStep === "gift";
+      const resultExit = tutorialReturn ? "lobby" : this.stageExit();
       const upcoming = nextBattleStage(STAGES, stage.id, isStageUnlocked);
-      const clearActions: StageCompleteAction[] | undefined = opening ? undefined : [
+      const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
           label: t("stageComplete.next"), primary: true, disabled: !canEnter,
           // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
@@ -2824,6 +2827,7 @@ export class BattleScene extends Phaser.Scene {
       ];
       new StageCompletePopup(this, popups).open({
         clearActions,
+        returnHint: tutorialReturn ? t(tutorialStep === "gift" ? "tutorial.result.research" : "tutorial.result.feed") : undefined,
         reward: {
           kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
           firstClearRewards: result.firstClearRewards.map((grant) => grant.kind === "rune"
@@ -2838,8 +2842,8 @@ export class BattleScene extends Phaser.Scene {
           if (chosen) return;
           // 이긴 판에 이어지는 이야기가 있으면 그것을 거쳐 나간다(오프닝 1-1 → 공멸 삼인조의 퇴각).
           const epilogue = this.battleInput.mode === "stage" ? this.battleInput.epilogueStoryId : undefined;
-          if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: this.stageExit() });
-          else goRoute(this, victoryRoute(stage.id, { scene: this.stageExit() }));
+          if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: resultExit });
+          else goRoute(this, victoryRoute(stage.id, { scene: resultExit }));
         },
       });
     } catch (error) {

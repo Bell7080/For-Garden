@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  battleFeatureOpen, battleFeatureToTeach, CONTENT_INTRO_IDS, shouldShowContentIntro, canCompleteTutorialStep, createCompletedTutorialState, createEmptyTutorialState,
+  migrateTutorialV50, battleFeatureOpen, battleFeatureToTeach, CONTENT_INTRO_IDS, shouldShowContentIntro, canCompleteTutorialStep, createCompletedTutorialState, createEmptyTutorialState,
   advanceTutorialOnStageClear, stageClearAdvancesTutorial, isTutorialComplete, legacyTutorialState, lobbyTutorialStep, nextTutorialStep, normalizeTutorialState, TUTORIAL_STEPS,
 } from "../../src/core/tutorial";
 
@@ -33,12 +33,14 @@ describe("첫 플레이 튜토리얼 순서표", () => {
   it("은 차례가 된 전투 조작 하나만 알려 준다", () => {
     expect(battleFeatureToTeach(createEmptyTutorialState())).toBeUndefined();
     expect(battleFeatureToTeach({ completedStepIds: ["ultimate"] })).toBe("auto");
-    expect(battleFeatureToTeach({ completedStepIds: ["ultimate", "auto", "presentation", "speed", "contribution"] })).toBeUndefined();
+    expect(battleFeatureToTeach({ completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] })).toBeUndefined();
   });
 
-  it("은 전투 칸이 끝난 뒤에만 로비가 안내한다", () => {
+  it("은 1-2 이후 강화를 안내하고 전투 조작을 마치면 연구 지원을 안내한다", () => {
+    expect(lobbyTutorialStep({ completedStepIds: ["ultimate", "auto"] })).toBe("feed");
+    expect(lobbyTutorialStep({ completedStepIds: ["ultimate", "auto", "feed"] })).toBe("feedLevel");
     expect(lobbyTutorialStep({ completedStepIds: ["ultimate"] })).toBeUndefined();
-    expect(lobbyTutorialStep({ completedStepIds: ["ultimate", "auto", "presentation", "speed", "contribution"] })).toBe("feed");
+    expect(lobbyTutorialStep({ completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] })).toBe("gift");
     expect(lobbyTutorialStep(createCompletedTutorialState())).toBeUndefined();
     expect(isTutorialComplete(createCompletedTutorialState())).toBe(true);
     expect(TUTORIAL_STEPS.at(-1)).toBe("pull");
@@ -62,7 +64,7 @@ describe("스테이지 클리어가 여는 전투 조작", () => {
   it("은 한 번에 한 칸만 앞으로 가고 전투 칸이 끝나면 멈춘다", () => {
     const one = advanceTutorialOnStageClear({ completedStepIds: ["ultimate"] });
     expect(one.completedStepIds).toEqual(["ultimate", "auto"]);
-    const last = { completedStepIds: ["ultimate", "auto", "presentation", "speed", "contribution"] as const };
+    const last = { completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] as const };
     expect(advanceTutorialOnStageClear({ completedStepIds: [...last.completedStepIds] }).completedStepIds).toEqual(last.completedStepIds);
     expect(advanceTutorialOnStageClear(createEmptyTutorialState())).toEqual(createEmptyTutorialState());
   });
@@ -83,5 +85,22 @@ describe("콘텐츠 첫 방문 안내", () => {
 
   it("은 모두 마친 상태에서 안내도 모두 본 것으로 시작한다", () => {
     expect(createCompletedTutorialState().seenIntroIds).toEqual([...CONTENT_INTRO_IDS]);
+  });
+});
+
+
+describe("v50 튜토리얼 이전", () => {
+  it("1-2까지만 깬 계정은 토리카 강화부터 이어 간다", () => {
+    expect(migrateTutorialV50({ completedStepIds: ["ultimate", "auto"] })).toEqual({ completedStepIds: ["ultimate", "auto"] });
+  });
+  it("이미 지난 전투와 지원품 수령은 되돌리지 않고 새 강화 체험을 완료 처리한다", () => {
+    const old = ["ultimate", "auto", "presentation", "speed", "contribution", "feed", "gift", "pull"];
+    const migrated = migrateTutorialV50({ completedStepIds: old, seenIntroIds: ["party"] });
+    expect(migrated.completedStepIds).toEqual(TUTORIAL_STEPS);
+    expect(migrated.seenIntroIds).toEqual(["party"]);
+    expect(migrateTutorialV50({ completedStepIds: old.slice(0, 3) }).completedStepIds).toEqual(["ultimate", "auto", "feed", "feedLevel", "presentation"]);
+  });
+  it("손상된 옛 기록에서 건너뛴 보상 단계를 복구하지 않는다", () => {
+    expect(migrateTutorialV50({ completedStepIds: ["ultimate", "auto", "gift"] }).completedStepIds).toEqual(["ultimate", "auto"]);
   });
 });

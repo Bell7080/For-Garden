@@ -547,13 +547,18 @@ export class InfoManager {
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
   /** 서버가 확정한 급여가 실제로 경험치·레벨을 올린 직후 불린다(튜토리얼이 첫 급여를 알아챈다). */
-  onFed?: () => void;
+  onFed?: (mode: "normal" | "level") => void;
 
   /** 급여 버튼이 지금 서 있는 자리(씬 좌표). 창이 닫혀 있으면 `undefined`. */
   feedButtonBounds(): Phaser.Geom.Rectangle | undefined {
     if (!this.feedButton.active || !this.isOpen || !this.feedButton.visible) return undefined;
     return this.feedButton.getBounds();
   }
+
+  feedBulkTutorialBounds(): Phaser.Geom.Rectangle | undefined {
+    return this.feedPopupOpen ? this.feedOneTutorialHit?.getBounds() : undefined;
+  }
+  private feedOneTutorialHit?: Phaser.GameObjects.Rectangle;
 
   /**
    * `baseDepth`는 창 전체가 서는 층이다. 팝업 위에서 여는 창(발굴 배치처럼 팝업 안의 그리드를
@@ -1143,7 +1148,7 @@ export class InfoManager {
       hideCloseButton: true,
       closeOnBackdrop: true,
       inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
-      onClose: () => { this.feedPopupOpen = false; this.repaintFeedBulk = undefined; },
+      onClose: () => { this.feedPopupOpen = false; this.feedOneTutorialHit = undefined; this.repaintFeedBulk = undefined; },
     }, (body, close) => {
       // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
@@ -1161,6 +1166,7 @@ export class InfoManager {
   /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
   private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, burst: FeedTapEffect): void {
     body.removeAll(true);
+    this.feedOneTutorialHit = undefined;
     const def = this.currentDef;
     if (!def) { close(); return; }
     const progress = relicProgression.getProgress(def.id);
@@ -1184,6 +1190,7 @@ export class InfoManager {
       body.add(option);
       if (!enough) return;
       const hit = this.scene.add.rectangle(0, 0, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      if (levels === 1) this.feedOneTutorialHit = hit;
       hit.on("pointerdown", () => pressIn(option, "feed"));
       hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));
       // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
@@ -1256,7 +1263,7 @@ export class InfoManager {
 
   /** 필요한 급여 횟수를 한 번에 요청한다. */
   private async feedLevels(levels: number): Promise<void> {
-    await this.feed(this.feedsForLevels(levels));
+    await this.feed(this.feedsForLevels(levels), "level");
   }
 
   /**
@@ -1266,13 +1273,13 @@ export class InfoManager {
   private feedChain: Promise<unknown> = Promise.resolve();
 
   /** Returns whether the server-confirmed response actually increased EXP or level. */
-  private feed(feeds: number): Promise<boolean> {
-    const run = this.feedChain.then(() => this.feedNow(feeds));
+  private feed(feeds: number, mode: "normal" | "level" = "normal"): Promise<boolean> {
+    const run = this.feedChain.then(() => this.feedNow(feeds, mode));
     this.feedChain = run.catch(() => false);
     return run;
   }
 
-  private async feedNow(feeds: number): Promise<boolean> {
+  private async feedNow(feeds: number, mode: "normal" | "level" = "normal"): Promise<boolean> {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return false;
     if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
@@ -1284,7 +1291,7 @@ export class InfoManager {
       addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;
-      if (changed) this.onFed?.();
+      if (changed) this.onFed?.(mode);
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
       this.onWalletChange?.();
     } catch {

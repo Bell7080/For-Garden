@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_DE = {
+  "tutorial.lobby.sortie": "Bereit für den nächsten Abschnitt?",
+  "tutorial.lobby.story": "Wähle die Geschichte, um fortzufahren.",
+  "tutorial.stage.enter": "Betritt Abschnitt 1-2.",
+  "tutorial.party.move": "Ziehe ein Relikt auf einen anderen Platz, um die Formation zu ändern.",
+  "tutorial.party.hold": "Halte ein Relikt in deiner Formation gedrückt, um Details anzusehen.",
+  "tutorial.party.start": "Deine Formation ist bereit. Starte den Kampf!",
+  "tutorial.relics.bulk": "Halte die Verstärkungstaste gedrückt, um Sofortverstärkungen zu öffnen.",
+  "tutorial.relics.one": "Wähle +1 Stufe, um Torika eine Stufe zu erhöhen.",
+  "tutorial.relics.return": "Training abgeschlossen. Kehre zum Platz zurück.",
+  "tutorial.research.open.title": "Restaurierungsforschung freigeschaltet",
+  "tutorial.research.open.body": "Du kannst neue Relikte kennenlernen. Hole deine Vorräte und starte deine erste Restaurierungsforschung.",
+  "tutorial.result.feed": "Kehre zum Platz zurück, um Torika zu trainieren.",
+  "tutorial.result.research": "Kehre zum Platz zurück und hole deine Vorräte für die Restaurierungsforschung.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Gezeitenwarnung",
   "battle.boss.limit": " · LIMIT",

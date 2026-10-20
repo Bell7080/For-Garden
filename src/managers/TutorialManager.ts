@@ -29,7 +29,7 @@ export class TutorialManager {
   featureToTeach(): BattleTutorialFeature | undefined { return battleFeatureToTeach(this.tutorial); }
 
   /** 로비가 이어서 안내할 칸(도감 급여 · 선물 · 연구소). */
-  lobbyStep(): "feed" | "gift" | "pull" | undefined { return lobbyTutorialStep(this.tutorial); }
+  lobbyStep(): "feed" | "feedLevel" | "gift" | "pull" | undefined { return lobbyTutorialStep(this.tutorial); }
 
   /** 이 콘텐츠의 첫 방문 안내를 지금 띄울 차례인가(첫 플레이 튜토리얼을 마쳤고 아직 안 본 것). */
   shouldShowIntro(id: ContentIntroId): boolean { return shouldShowContentIntro(this.tutorial, id); }

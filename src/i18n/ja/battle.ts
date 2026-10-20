@@ -1,5 +1,19 @@
 /** 전투 화면과 결과판의 일본어 표. */
 export const BATTLE_JA = {
+  "tutorial.lobby.sortie": "次のステージへ出撃しましょう。",
+  "tutorial.lobby.story": "ストーリーを選んで次のステージへ進みましょう。",
+  "tutorial.stage.enter": "ステージ1-2に進みましょう。",
+  "tutorial.party.move": "レリックを別の枠へドラッグして編成を変えてみましょう。",
+  "tutorial.party.hold": "編成中のレリックを長押しして詳細を確認しましょう。",
+  "tutorial.party.start": "編成完了です。出撃しましょう！",
+  "tutorial.relics.bulk": "強化ボタンを長押しして即時強化メニューを開きましょう。",
+  "tutorial.relics.one": "1レベル強化を選んでトリカのレベルを1つ上げましょう。",
+  "tutorial.relics.return": "強化完了です。広場へ戻りましょう。",
+  "tutorial.research.open.title": "復元研究が解放されました",
+  "tutorial.research.open.body": "新しいレリックを迎える準備ができました。支援品を受け取り、初めての復元研究を行いましょう。",
+  "tutorial.result.feed": "トリカを強化するため広場へ戻りましょう。",
+  "tutorial.result.research": "広場へ戻って復元研究の支援品を受け取りましょう。",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · 高潮の予兆",
   "battle.boss.limit": " · LIMIT",

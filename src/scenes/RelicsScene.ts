@@ -8,7 +8,7 @@ import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
-import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
@@ -214,7 +214,7 @@ export class RelicsScene extends Phaser.Scene {
     this.installScrollInput();
 
     // 그리드는 BottomNav 경계에서 잘리고 배경 원화는 하단 탭 뒤까지 이어진다.
-    new BottomNav(this, "relics");
+    const nav = new BottomNav(this, "relics");
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -222,44 +222,39 @@ export class RelicsScene extends Phaser.Scene {
     const openId = this.pendingOpenRelicId;
     this.pendingOpenRelicId = undefined;
     if (openId && relicCollection.owns(openId)) this.info.showRelic(getRelic(openId), true);
-    else this.startFeedTutorial();
+    else this.startFeedTutorial(nav);
   }
 
   /**
-   * 튜토리얼 「급여」 칸: 애착 렐릭의 정보창을 저절로 열고 급여 버튼을 가리킨다. 첫 급여가 확정되거나
+   * 튜토리얼 강화 두 칸: 토리카 정보창에서 일반 강화와 1레벨 즉시 강화를 차례로 가리킨다. 각 조작이 확정되거나
    * 건너뛰기를 누르면 칸을 마친다. 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
    */
-  private startFeedTutorial(): void {
-    if (tutorialManager.next() !== "feed") return;
-    const target = session.favorite && relicCollection.owns(session.favorite) ? session.favorite : relicCollection.validParty.find((id) => relicCollection.owns(id));
-    if (!target) return;
-    this.info.showRelic(getRelic(target), true);
-    let spotlight: TutorialSpotlight | undefined;
-    let finished = false;
-    const finish = (): void => {
-      if (finished) return;
-      finished = true;
-      spotlight?.destroy();
-      spotlight = undefined;
-      void tutorialManager.complete("feed");
+  private startFeedTutorial(nav: BottomNav): void {
+    const next = tutorialManager.lobbyStep();
+    if (next !== "feed" && next !== "feedLevel") return;
+    if (!relicCollection.owns("torika")) return;
+    this.info.showRelic(getRelic("torika"), true);
+    let stopped = false, completing = false, returnToLobby = false;
+    const complete = async (): Promise<void> => {
+      if (stopped || completing) return;
+      const step = tutorialManager.next();
+      if (step !== "feed" && step !== "feedLevel") return;
+      completing = true;
+      const result = await tutorialManager.complete(step);
+      completing = false;
+      if (!result || stopped) return;
+      if (step === "feedLevel") { returnToLobby = true; this.info.hide(); if (this.info.isOpen) this.info.hide(); }
     };
-    this.info.onFed = finish;
-    const poll = (): void => {
-      if (finished || !this.scene.isActive()) return;
-      const bounds = this.info.feedButtonBounds();
-      if (bounds && !spotlight) {
-        spotlight = new TutorialSpotlight(this, {
-          rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
-          text: t("tutorial.relics.feed"), side: "above", onSkip: finish, skipLabel: t("tutorial.skip"),
-        });
-      } else if (!bounds && spotlight) {
-        spotlight.destroy();
-        spotlight = undefined;
-      }
-      this.time.delayedCall(300, poll);
+    this.info.onFed = mode => {
+      if (tutorialManager.next() === (mode === "normal" ? "feed" : "feedLevel")) void complete();
     };
-    this.time.delayedCall(700, poll);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { finished = true; spotlight?.destroy(); });
+    followTutorialTarget(this, {
+      enabled: () => !stopped,
+      rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
+      text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
+      onSkip: () => { if (returnToLobby) { stopped = true; return; } void complete(); },
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; this.info.onFed = undefined; });
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */

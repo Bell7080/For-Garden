@@ -1,3 +1,5 @@
+import { followTutorialTarget } from "../ui/tutorialTarget";
+import { tutorialManager } from "../managers/TutorialManager";
 import { goRoute, partyRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
@@ -159,6 +161,11 @@ export class StageMapScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     showContentIntro(this, "stageMap");
+    followTutorialTarget(this, {
+      enabled: () => tutorialManager.next() === "auto" && !session.cleared.has("1-2"),
+      blocked: () => this.enemyPopups.isOpen,
+      rect: () => this.sortieButton.getBounds(), text: () => t("tutorial.stage.enter"),
+    });
   }
 
   /** 클리어 상황에서 지금 도전할 수 있는 가장 뒤쪽 스테이지. */

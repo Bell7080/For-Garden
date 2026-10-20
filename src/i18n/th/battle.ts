@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_TH = {
+  "tutorial.lobby.sortie": "พร้อมไปยังด่านต่อไปหรือยัง?",
+  "tutorial.lobby.story": "เลือกเนื้อเรื่องเพื่อไปต่อ",
+  "tutorial.stage.enter": "เข้าสู่ด่าน 1-2 กันเถอะ",
+  "tutorial.party.move": "ลาก เรลิก ไปช่องอื่นเพื่อเปลี่ยนการจัดทีม",
+  "tutorial.party.hold": "กดเรลิกในการจัดทีมค้างไว้เพื่อดูรายละเอียด",
+  "tutorial.party.start": "จัดทีมพร้อมแล้ว เริ่มต่อสู้กันเถอะ!",
+  "tutorial.relics.bulk": "กดปุ่มเสริมพลังค้างไว้เพื่อเปิดเมนูเสริมพลังทันที",
+  "tutorial.relics.one": "เลือกเพิ่ม 1 เลเวลเพื่อเพิ่มเลเวลให้โทริกะหนึ่งเลเวล",
+  "tutorial.relics.return": "ฝึกเสร็จแล้ว กลับไปที่ลานกันเถอะ",
+  "tutorial.research.open.title": "ปลดล็อกการวิจัยฟื้นคืนแล้ว",
+  "tutorial.research.open.body": "พร้อมพบ เรลิก ใหม่แล้ว รับเสบียงและเริ่มการวิจัยฟื้นคืนครั้งแรกกันเถอะ",
+  "tutorial.result.feed": "กลับไปที่ลานเพื่อฝึกโทริกะ",
+  "tutorial.result.research": "กลับไปที่ลานเพื่อรับเสบียงวิจัยฟื้นคืน",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · เตือนกระแสน้ำ",
   "battle.boss.limit": " · LIMIT",

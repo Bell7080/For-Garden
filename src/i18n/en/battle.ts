@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_EN = {
+  "tutorial.lobby.sortie": "Ready to deploy to the next stage?",
+  "tutorial.lobby.story": "Choose Story to continue to the next stage.",
+  "tutorial.stage.enter": "Enter stage 1-2 to continue.",
+  "tutorial.party.move": "Drag a Relic to another slot to change your formation.",
+  "tutorial.party.hold": "Press and hold a Relic in your formation to view their details.",
+  "tutorial.party.start": "Your formation is ready. Start the battle!",
+  "tutorial.relics.bulk": "Hold the upgrade button to open instant upgrades.",
+  "tutorial.relics.one": "Choose +1 Level to raise Torika by one level.",
+  "tutorial.relics.return": "Training complete. Return to the plaza.",
+  "tutorial.research.open.title": "Restoration Research Unlocked",
+  "tutorial.research.open.body": "You are ready to meet new Relics. Collect your supplies and try your first restoration research.",
+  "tutorial.result.feed": "Return to the plaza to train Torika.",
+  "tutorial.result.research": "Return to the plaza to collect your restoration research supplies.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Tide Warning",
   "battle.boss.limit": " · LIMIT",

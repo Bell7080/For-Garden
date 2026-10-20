@@ -679,6 +679,19 @@ var EXPEDITION_KO = {
 // src/i18n/ko/battle.ts
 init_define_import_meta_env();
 var BATTLE_KO = {
+  "tutorial.lobby.sortie": "\uB2E4\uC74C \uAD00\uBB38\uC73C\uB85C \uCD9C\uACA9\uD574 \uBCFC\uAE4C\uC694?",
+  "tutorial.lobby.story": "\uC2A4\uD1A0\uB9AC\uB97C \uC120\uD0DD\uD574 \uB2E4\uC74C \uAD00\uBB38\uC73C\uB85C \uC774\uB3D9\uD558\uC138\uC694.",
+  "tutorial.stage.enter": "1-2 \uAD00\uBB38\uC5D0 \uC9C4\uC785\uD574 \uBCFC\uAE4C\uC694?",
+  "tutorial.party.move": "\uB810\uB9AD\uC744 \uB2E4\uB978 \uCE78\uC73C\uB85C \uB04C\uC5B4 \uD3B8\uC131\uC744 \uBC14\uAFD4 \uBCF4\uC138\uC694.",
+  "tutorial.party.hold": "\uD3B8\uC131\uB41C \uB810\uB9AD\uC744 \uAFB9 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
+  "tutorial.party.start": "\uD3B8\uC131\uC774 \uC900\uBE44\uB410\uC5B4\uC694. \uCD9C\uC804\uD574 \uBCFC\uAE4C\uC694?",
+  "tutorial.relics.bulk": "\uAC15\uD654 \uBC84\uD2BC\uC744 \uAFB9 \uB20C\uB7EC \uC989\uC2DC \uAC15\uD654 \uBA54\uB274\uB97C \uC5F4\uC5B4 \uBCF4\uC138\uC694.",
+  "tutorial.relics.one": "1\uB808\uBCA8 \uAC15\uD654\uB97C \uB20C\uB7EC \uD1A0\uB9AC\uCE74\uB97C \uD55C \uB808\uBCA8 \uC62C\uB824 \uBCF4\uC138\uC694.",
+  "tutorial.relics.return": "\uAC15\uD654\uB97C \uB9C8\uCCE4\uC5B4\uC694. \uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
+  "tutorial.research.open.title": "\uBCF5\uC6D0 \uC5F0\uAD6C \uAC1C\uBC29",
+  "tutorial.research.open.body": "\uC0C8\uB85C\uC6B4 \uB810\uB9AD\uC744 \uB9CC\uB0A0 \uC900\uBE44\uAC00 \uB05D\uB0AC\uC5B4\uC694. \uC9C0\uC6D0\uD488\uC744 \uBC1B\uACE0 \uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C\uB97C \uC9C4\uD589\uD574 \uBCF4\uC138\uC694.",
+  "tutorial.result.feed": "\uD1A0\uB9AC\uCE74\uB97C \uAC15\uD654\uD558\uB7EC \uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
+  "tutorial.result.research": "\uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00 \uBCF5\uC6D0 \uC5F0\uAD6C \uC9C0\uC6D0\uD488\uC744 \uBC1B\uC544 \uBCF4\uC138\uC694.",
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " \xB7 \uD574\uC77C \uC608\uACE0",
   "battle.boss.limit": " \xB7 LIMIT",
@@ -18104,14 +18117,15 @@ var TUTORIAL_STEPS = [
   "ultimate",
   /** 다음 스토리 전투: 자동 궁극기 칩이 열린다. */
   "auto",
+  /** 1-2 후 토리카 일반 강화와 한 레벨 즉시 강화를 각각 체험한다. */
+  "feed",
+  "feedLevel",
   /** 그다음 전투: 궁극기 연출 스킵 칩이 열린다. */
   "presentation",
   /** 그다음 전투: 배속 칩이 열린다. */
   "speed",
   /** 그다음 전투: 기여도 판이 열린다. */
   "contribution",
-  /** 로비 → 도감 → 급여: 치즈케이크로 렐릭을 키운다. */
-  "feed",
   /** 로비에서 뽑기 재료를 선물로 받는다(`TUTORIAL_REWARDS.gift`). */
   "gift",
   /** 연구소에서 첫 복원 연구를 직접 돌린다. */
@@ -18195,6 +18209,18 @@ function advanceTutorialOnStageClear(state) {
   const next = nextTutorialStep(state);
   const isBattleStep = next !== void 0 && Object.values(BATTLE_FEATURE_STEP).includes(next);
   return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
+}
+function migrateTutorialV50(value) {
+  const raw = value;
+  const oldOrder = ["ultimate", "auto", "presentation", "speed", "contribution", "feed", "gift", "pull"];
+  const saved = new Set(Array.isArray(raw?.completedStepIds) ? raw.completedStepIds : []);
+  const prefix = [];
+  for (const id of oldOrder) {
+    if (!saved.has(id)) break;
+    prefix.push(id);
+  }
+  if (prefix.includes("presentation")) prefix.push("feed", "feedLevel");
+  return normalizeTutorialState({ ...raw, completedStepIds: prefix });
 }
 
 // src/core/achievementState.ts
@@ -25648,7 +25674,7 @@ function migrateV12Rune(definitionId) {
   return cloneRune(rune);
 }
 var SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
-var CURRENT_SAVE_VERSION = 50;
+var CURRENT_SAVE_VERSION = 51;
 function clampResearchPoints(saved) {
   const clamp2 = (period) => {
     const value = saved?.[period];
@@ -25973,7 +25999,7 @@ var SaveManager = class {
     const attendance = normalizeAttendanceState(legacy.attendance);
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
     const achievements = normalizeAchievementState(legacy.achievements);
-    const tutorial = legacy.tutorial === void 0 ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? legacy.clearedStageIds.filter((id) => typeof id === "string") : []) : normalizeTutorialState(legacy.tutorial);
+    const tutorial = legacy.tutorial === void 0 ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? legacy.clearedStageIds.filter((id) => typeof id === "string") : []) : Number(legacy.saveVersion ?? 0) <= 50 ? migrateTutorialV50(legacy.tutorial) : normalizeTutorialState(legacy.tutorial);
     const savedBounty = legacy.bounty;
     const bounty = { clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     const savedMissions = legacy.missions;
@@ -26037,7 +26063,7 @@ var SaveManager = class {
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
   }
@@ -32522,10 +32548,13 @@ var FakeServer = class {
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
-    const nextState = { ...this.state, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    const tutorial = normalizeTutorialState(this.state.tutorial);
+    const nextTutorial = nextTutorialStep(tutorial) === "pull" ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
+    const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;
+    this.state.tutorial = nextTutorial;
     this.state.wallet = nextWallet;
     this.state.owned = outcome.ownedRelicIds;
     this.state.relicProgress = nextProgress;

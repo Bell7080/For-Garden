@@ -10,14 +10,15 @@ export const TUTORIAL_STEPS = [
   "ultimate",
   /** 다음 스토리 전투: 자동 궁극기 칩이 열린다. */
   "auto",
+  /** 1-2 후 토리카 일반 강화와 한 레벨 즉시 강화를 각각 체험한다. */
+  "feed",
+  "feedLevel",
   /** 그다음 전투: 궁극기 연출 스킵 칩이 열린다. */
   "presentation",
   /** 그다음 전투: 배속 칩이 열린다. */
   "speed",
   /** 그다음 전투: 기여도 판이 열린다. */
   "contribution",
-  /** 로비 → 도감 → 급여: 치즈케이크로 렐릭을 키운다. */
-  "feed",
   /** 로비에서 뽑기 재료를 선물로 받는다(`TUTORIAL_REWARDS.gift`). */
   "gift",
   /** 연구소에서 첫 복원 연구를 직접 돌린다. */
@@ -150,8 +151,19 @@ export function advanceTutorialOnStageClear(state: TutorialState): TutorialState
   return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
 }
 
-/** 전투 튜토리얼을 모두 마치고 도감·연구소 안내만 남은 상태인가(로비가 안내를 시작할 때). */
-export function lobbyTutorialStep(state: TutorialState): "feed" | "gift" | "pull" | undefined {
+/** 광장에서 이어 갈 강화·연구 안내 칸(로비가 안내를 시작할 때). */
+export function lobbyTutorialStep(state: TutorialState): "feed" | "feedLevel" | "gift" | "pull" | undefined {
   const next = nextTutorialStep(state);
-  return next === "feed" || next === "gift" || next === "pull" ? next : undefined;
+  return next === "feed" || next === "feedLevel" || next === "gift" || next === "pull" ? next : undefined;
+}
+
+/** v50까지의 전투→강화 순서를 이전한다. 이미 지난 조작·강화·지원품을 다시 요구하거나 지급하지 않는다. */
+export function migrateTutorialV50(value: unknown): TutorialState {
+  const raw = value as Partial<TutorialState> | null;
+  const oldOrder = ["ultimate", "auto", "presentation", "speed", "contribution", "feed", "gift", "pull"] as const;
+  const saved = new Set(Array.isArray(raw?.completedStepIds) ? raw.completedStepIds : []);
+  const prefix: TutorialStepId[] = [];
+  for (const id of oldOrder) { if (!saved.has(id)) break; prefix.push(id); }
+  if (prefix.includes("presentation")) prefix.push("feed", "feedLevel");
+  return normalizeTutorialState({ ...raw, completedStepIds: prefix });
 }

@@ -1,5 +1,19 @@
 /** The battle screen, its chips and the result panel. */
 export const BATTLE_VI = {
+  "tutorial.lobby.sortie": "Sẵn sàng tới màn tiếp theo chưa?",
+  "tutorial.lobby.story": "Chọn Cốt truyện để tiếp tục.",
+  "tutorial.stage.enter": "Vào màn 1-2 để tiếp tục.",
+  "tutorial.party.move": "Kéo Di vật sang ô khác để đổi đội hình.",
+  "tutorial.party.hold": "Nhấn giữ Di vật trong đội hình để xem chi tiết.",
+  "tutorial.party.start": "Đội hình đã sẵn sàng. Bắt đầu chiến đấu!",
+  "tutorial.relics.bulk": "Nhấn giữ nút cường hóa để mở menu cường hóa nhanh.",
+  "tutorial.relics.one": "Chọn +1 cấp để tăng cho Torika một cấp.",
+  "tutorial.relics.return": "Đã luyện xong. Trở về quảng trường.",
+  "tutorial.research.open.title": "Đã mở nghiên cứu phục hồi",
+  "tutorial.research.open.body": "Bạn đã sẵn sàng gặp Di vật mới. Nhận vật tư và bắt đầu nghiên cứu phục hồi đầu tiên.",
+  "tutorial.result.feed": "Trở về quảng trường để luyện Torika.",
+  "tutorial.result.research": "Trở về quảng trường và nhận vật tư nghiên cứu phục hồi.",
+
   "battle.boss.phaseLine": "{phase}{warning}",
   "battle.boss.tideWarning": " · Cảnh báo thủy triều",
   "battle.boss.limit": " · LIMIT",

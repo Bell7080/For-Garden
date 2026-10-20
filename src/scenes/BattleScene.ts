@@ -1726,7 +1726,13 @@ export class BattleScene extends Phaser.Scene {
     this.tweens.killTweensOf(view.creature);
     // 쓰러질 때 상태 칩 줄은 폐기된다. 다시 서는 몸은 새 줄을 쥔다.
     if (!view.statusChips.scene) view.statusChips = new UnitStatusChips(this);
-    view.creature.setAlpha(isPupFighter(view.fighter) ? PUP_VIEW_ALPHA : 1).setVisible(true).setScale(1).setAngle(0);
+    view.creature.setAnimationFrozen(false).setAlpha(isPupFighter(view.fighter) ? PUP_VIEW_ALPHA : 1).setVisible(true).setAngle(0);
+    // 안내창은 코어 동기화를 멈춘다. 다음 syncViews를 기다리지 말고 소환 즉시 표시 크기를 복구한다.
+    const pose = renderPose(view.fighter);
+    placePuppet(view.creature, view.asset, {
+      x: pose.x, groundY: pose.y, height: UNIT_HEIGHT * view.fighter.bodyScale,
+      flipX: view.fighter.facing < 0,
+    });
     view.shadow.setVisible(true);
     view.statusHit.setVisible(true);
     view.hpBar.setVisible(true).snap(view.fighter.hp / view.fighter.maxHp);
@@ -2168,7 +2174,7 @@ export class BattleScene extends Phaser.Scene {
     if (!view || view.dead) return;
     view.dead = true;
     // 쓰러진 몸은 폭주 테두리·붉은 기운 없이 날아간다 — 다음 프레임부터는 syncViews가 이 몸을 건너뛴다.
-    view.creature.setAfterimages([]).setBodyFill(0, 0);
+    view.creature.setAnimationFrozen(true).setAfterimages([]).setBodyFill(0, 0);
     this.combatEffects.remove(fighterId);
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);

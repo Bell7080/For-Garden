@@ -138,6 +138,9 @@ export class TitleScene extends Phaser.Scene {
   private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
   private actionRow?: TitleActionRow;
   private loginButtons: Button[] = [];
+  private authAttempt?: symbol;
+  private entryPending = false;
+  private entryGeneration = 0;
   /** 언어가 바뀌면 로그인 버튼의 글자를 새로 짓는다. 첫 실행 화면에서만 채워진다. */
   private loginRebuild?: () => void;
   private popups?: PopupLayer;
@@ -158,6 +161,10 @@ export class TitleScene extends Phaser.Scene {
     this.actionRow = undefined;
     this.loginButtons = [];
     this.loginRebuild = undefined;
+    this.authAttempt = undefined;
+    this.entryPending = false;
+    this.entryGeneration += 1;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.entryGeneration += 1; });
     this.popups = new PopupLayer(this, 3000);
 
     const cx = BASE_WIDTH / 2;
@@ -464,12 +471,17 @@ export class TitleScene extends Phaser.Scene {
       .zone(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT)
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
+    const generation = this.entryGeneration;
+    const current = () => this.scene.isActive() && generation === this.entryGeneration;
     const enter = () => {
+      if (!current() || this.entryPending || this.authAttempt) return;
+      this.entryPending = true;
       // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
       // 저장 충돌 창이 뜨면 막이 그 창의 손을 삼키지 않도록 그 순간 막을 걷는다(`releaseBusy`는 여러 번 불려도 한 번만 푼다).
       let releaseBusy: () => void = () => undefined;
       void withBusy(this, new Promise<void>((resolve) => { releaseBusy = resolve; }));
       void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
+        if (!current()) { releaseBusy(); return; }
         if (result.gate === "open") {
           // 서버가 출시 초기화를 한 뒤에 처음 여는 기기는 초기화 이전의 토큰·저장을 지우고 처음부터 다시 시작한다.
           if (result.config && reconcileLaunchEpoch(result.config.launchEpoch)) {
@@ -478,24 +490,32 @@ export class TitleScene extends Phaser.Scene {
             return;
           }
           // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
-          void connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { releaseBusy(); if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
+          return connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { releaseBusy(); if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
             releaseBusy();
-            if (!this.scene.isActive()) return;
+            if (!current()) return;
             if (connected.ok) {
               if (connected.mode === "server") startLiveOps();
               startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
+            this.entryPending = false;
             this.showConnectFailure(connected.code, connected.detail);
             tapAnywhere.once("pointerup", enter);
           });
-          return;
         }
         // 막힌 동안에도 다시 누르면 새로 묻는다 — 점검이 끝났는데 앱을 다시 켜게 하지 않는다.
         releaseBusy();
         this.gate = undefined;
+        this.entryPending = false;
         this.showGateNotice(result);
+        tapAnywhere.once("pointerup", enter);
+      }).catch(() => {
+        releaseBusy();
+        if (!current()) return;
+        this.gate = undefined;
+        this.entryPending = false;
+        this.showConnectFailure("network-error");
         tapAnywhere.once("pointerup", enter);
       });
     };
@@ -505,8 +525,7 @@ export class TitleScene extends Phaser.Scene {
         this.loginButtons.forEach((button) => button.destroy());
         this.loginButtons = [];
         prompt.setVisible(true);
-        this.tweens.add({ targets: prompt, alpha: { from: 1, to: 0.25 }, duration: 900, yoyo: true, repeat: -1 });
-        tapAnywhere.once("pointerup", enter);
+        enter();
       });
       // 로그인 버튼을 고르는 동안 곧 열릴 오프닝의 스탠딩을 한 장씩 읽어 둔다(캐시에만 — 파싱까지, GPU는 세울 때).
       void (async () => {
@@ -524,28 +543,38 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /**
-   * 처음 여는 기기의 로그인 선택. 소셜·이메일·아이디가 성공하면 진입 문구로 돌아간다.
+   * 처음 여는 기기의 로그인 선택. 인증 성공은 해당 계정으로 바로 진입한다.
    */
   private showLoginButtons(cx: number, enter: () => void, fade = true, authenticated: () => void = enter): void {
     this.loginButtons.forEach((button) => button.destroy());
     this.loginButtons = [];
     this.loginRebuild = () => this.showLoginButtons(cx, enter, false, authenticated);
-    let signingIn = false;
+    const generation = this.entryGeneration;
+    const current = () => this.scene.isActive() && generation === this.entryGeneration;
+    const acquire = (): (() => void) | undefined => {
+      if (!current() || this.authAttempt || this.entryPending) return;
+      const attempt = Symbol("title-auth");
+      this.authAttempt = attempt;
+      return () => { if (this.authAttempt === attempt) this.authAttempt = undefined; };
+    };
+    const done = () => { if (current()) authenticated(); };
     const social = (provider: "google" | "apple"): void => {
-      if (signingIn) return; signingIn = true;
+      const release = acquire();
+      if (!release) return;
       void accountApi.login({ provider, mergeGuestProgress: false, intent: "sign-in" }).then(result => {
-        if (!this.scene.isActive()) return;
-        if (result.ok) authenticated();
+        release();
+        if (!current()) return;
+        if (result.ok) done();
         else if (result.code !== "cancelled") this.showConnectFailure(result.code);
-      }).finally(() => { signingIn = false; });
+      }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
     };
     const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
       { labelKey: "title.login.guest", onClick: enter, primary: true },
       { labelKey: "title.login.google", onClick: () => social("google") },
       { labelKey: "title.login.apple", onClick: () => social("apple") },
-      { labelKey: "title.login.email", onClick: () => { if (this.popups) openAccountEmailPopup(this, this.popups, "sign-in", authenticated); } },
+      { labelKey: "title.login.email", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountEmailPopup(this, this.popups, "sign-in", done, release); } },
       // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
-      { labelKey: "title.login.account", onClick: () => { if (this.popups) openAccountIdPopup(this, this.popups, { mode: "both", onDone: authenticated }); } },
+      { labelKey: "title.login.account", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountIdPopup(this, this.popups, { mode: "both", onDone: done, onClose: release }); } },
     ];
     const ys = titleLoginSlots(entries.length);
     entries.forEach((entry, i) => {

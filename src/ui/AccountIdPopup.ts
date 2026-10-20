@@ -12,6 +12,7 @@ import { ACCOUNT_ID_POPUP, accountIdPopupRows, type AccountIdPopupMode, type Acc
 export interface AccountIdPopupOptions {
   /** `both`: 타이틀. `link`: 설정의 게스트 연동. 둘 다 로그인·회원가입 탭을 제공한다. */
   mode: AccountIdPopupMode;
+  onClose?: () => void;
   /** 인증이 끝난 뒤 부른다. 창은 이미 닫혀 있다. 이후의 저장 이어받기는 부른 쪽이 맡는다. */
   onDone: (state: AccountState, how: AccountIdPopupTab) => void;
 }
@@ -39,7 +40,7 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
   let alive = true, busy = false;
   const retryAt: Record<AccountIdPopupTab, number> = { signIn: 0, register: 0 };
 
-  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true, canClose: () => !busy, onClose: () => { alive = false; } }, (body, close) => {
+  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, closeOnBackdrop: false, hideCloseButton: true, canClose: () => !busy, onClose: () => { alive = false; options.onClose?.(); } }, (body, close) => {
     const tabs = scene.add.container(0, 0);
     const view = scene.add.container(0, 0);
     body.add([tabs, view]);
@@ -103,7 +104,7 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
                 if (alive) { submit.setEnabled(true); cancel.setEnabled(true); setNote(result.code === "network-error" || result.code === "rate-limited" ? result.message : t(FAILURE_KEY[result.code] ?? "settings.account.unavailable"), true); }
                 return;
               }
-              if (!scene.scene.isActive()) return;
+              if (!alive || !scene.scene.isActive()) return;
               busy = false;
               if (alive) close();
               options.onDone(result.value, how);

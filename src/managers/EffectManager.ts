@@ -266,6 +266,9 @@ export class EffectManager {
       rotate: { start: 0, end: spec.spin },
       blendMode: ink ? Phaser.BlendModes.NORMAL : Phaser.BlendModes.ADD,
       emitting: false,
+      // 풀은 재사용하되 광역 타격·동시 사망으로 끝없이 늘리지 않는다.
+      maxParticles: 24,
+      maxAliveParticles: 24,
     }).setDepth(this.depth);
     this.emitters.set(kind, emitter);
     return emitter;

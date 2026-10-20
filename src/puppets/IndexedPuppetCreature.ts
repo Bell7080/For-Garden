@@ -196,6 +196,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private buffers?: CreatureGpuBuffers;
   /** 지금 들고 있는 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
   private buffersGeneration = -1;
+  private poseVersion = 0;
+  private uploadedPoseVersion = -1;
   /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
   private lastLoopTime = -1;
   /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
@@ -301,7 +303,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
     // 멈춘 동안은 시간만 흘려보낸다. 위에서 벽시계를 먼저 갱신했으므로 풀린 뒤 따라잡지 않는다.
-    if (this.animationFrozen) return;
+    if (this.animationFrozen || !this.visible || this.alpha <= 0) return;
     this.decorativeUpdateCredit += this.decorativeUpdateFactor;
     if (this.decorativeUpdateCredit < 1) return;
     this.decorativeUpdateCredit -= 1;
@@ -309,7 +311,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const started = debugPerfEnabled ? performance.now() : 0;
     const next = advancePuppet(this.puppet, elapsed / 1000);
-    if (next) this.positions = next;
+    if (next) { this.positions = next; this.poseVersion += 1; }
     if (debugPerfEnabled) countDebugPuppetUpdate(performance.now() - started);
   }
 
@@ -324,6 +326,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     const index = gl.createBuffer();
     if (!position || !uv || !index) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, position);
+    gl.bufferData(gl.ARRAY_BUFFER, this.positions.byteLength, gl.DYNAMIC_DRAW);
+    this.uploadedPoseVersion = -1;
     gl.bindBuffer(gl.ARRAY_BUFFER, uv);
     gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
@@ -357,7 +362,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
       gl.useProgram(shared.program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
+      // 같은 자세를 여러 카메라가 그리거나 정지했을 때는 GPU 전송을 반복하지 않는다.
+      if (this.uploadedPoseVersion !== this.poseVersion) {
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
+        this.uploadedPoseVersion = this.poseVersion;
+      }
       gl.enableVertexAttribArray(shared.position);
       gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);

@@ -89,26 +89,26 @@ export interface BurstSpec {
 export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   basic: {
     // 피격 파티클은 난전(치즈케이크 대작전 같은 밀집 전투)에서 한꺼번에 쏟아져 렉을 만들었다 —
-    // 파편 수(5→3)와 같은 종류의 재개방 간격(45→90ms)을 함께 줄여 생성량을 대략 절반 이하로 눌렀다.
-    shards: 3, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
+    // 일반 타격은 한 조각만 남기고, 별·파문으로 맞은 자리를 알린다.
+    shards: 1, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
     rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260, ink: { star: 0.78 },
   },
   ultimate: {
-    shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
+    shards: 3, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
     rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.4 },
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
-    shards: 4, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
+    shards: 1, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
     rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140, ink: { star: 0 },
   },
   fever: {
     // 폭주는 몸에서 바깥으로 밀려나는 한 겹이다. 파편은 크고 느리게 벌어진다.
-    shards: 7, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
+    shards: 2, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
     rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180, ink: { star: 0.9 },
   },
   heal: {
-    shards: 5, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
+    shards: 2, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
     rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 44, flashAlpha: 0.45, flashMs: 280, spin: 120,
   },
   shield: {
@@ -117,7 +117,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
     rings: 1, ringRadius: 116, ringMs: 340, ringWidth: 8, flash: 60, flashAlpha: 0.5, flashMs: 240, spin: 0,
   },
   death: {
-    shards: 8, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
+    shards: 2, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
     rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300, ink: { star: 0.9 },
   },
   tap: {

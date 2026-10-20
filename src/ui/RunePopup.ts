@@ -388,13 +388,17 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
   const layout = runeCraftLayout({ mainCount: rune.mainStats.length, subCount: rune.subStats.length });
   let selected: RuneStatKey | undefined;
   let pending = false;
+  let closed = false;
   /** 응답을 기다리는 동안 눌러 둔 세공 수. 각인은 절대 쌓이지 않는다. */
   let queued = 0;
   /** 확률 줄이 지금 보여 주고 있는 값. 판을 다시 그려도 이 값에서 이어 흘러간다. */
   let chanceShown = rune.currentSuccessChance;
   /** 방금 박힌 결과. 다시 그릴 때 그 표식 하나만 크게 나타났다가 앉는다. */
   let landed: { statKey: RuneStatKey; slot: number; kind: RuneCraftImpactKind } | undefined;
-  popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: options.onClose }, (body) => {
+  const stopCrafting = (): void => { closed = true; queued = 0; };
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stopCrafting);
+  popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: () => { closed = true; queued = 0; scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stopCrafting); options.onClose?.(); } }, (body) => {
+    let action: Button | undefined;
     const content = scene.add.container(0, 0);
     body.add(content);
     /** 이번 그림에서 비어 있는 칸들. 누른 순간 그 자리에 예고를 번지게 한다. */
@@ -448,7 +452,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
     /** 요청 한 번. 끝나면 눌러 둔 만큼 이어서 보낸다. */
     const craft = async (): Promise<void> => {
       const statKey = selected;
-      if (!statKey || !craftable()) { queued = 0; return; }
+      if (closed || !statKey || !craftable()) { queued = 0; return; }
       const engraving = rune!.enhancementComplete;
       pending = true;
       try {
@@ -457,6 +461,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           ? await inventory.engraveRune(api, rune!.instanceId, statKey)
           : await inventory.enhanceRune(api, rune!.instanceId, statKey);
         rune = response.rune;
+        if (closed) { pending = false; return; }
         options.onChanged?.(rune);
         const succeeded = "succeeded" in response && response.succeeded;
         landed = engraving
@@ -471,7 +476,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       } catch (error) {
         pending = false;
         queued = 0;
-        render(error instanceof Error ? error.message : t("rune.requestFailed"));
+        if (!closed) render(error instanceof Error ? error.message : t("rune.requestFailed"));
         return;
       }
       if (queued <= 0) return;
@@ -482,7 +487,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
 
     /** 버튼을 누른 한 번. 곧바로 보내거나, 기다리는 중이면 쌓아 둔다. */
     const press = (): void => {
-      if (!selected) return;
+      if (closed || !selected) return;
       const plan = planRuneCraftTap({ pending, queued, repeatable: !rune!.enhancementComplete });
       if (plan === "drop") return;
       const inFlight = (pending ? 1 : 0) + queued;
@@ -643,13 +648,18 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       // 비용은 안내문이 아니라 **누르는 것 위**에 박는다. 재화 이름은 글자 대신 아이콘이다.
       // **기다리는 동안에도 꺼지지 않는다** — 눌린 버튼이 흐려지면 연타가 막히고, 실제로
       // 보낼 수 있는지는 `craftable()`이 요청 직전에 다시 묻는다.
-      const action = new Button(scene, 0, top + layout.buttonY, {
-        width: panel.button.width, height: panel.button.height,
-        label: completed ? t("rune.engraveConfirm") : t("rune.craft"), variant: "primary", accentColor: accent,
-        cost: completed ? undefined : { icon: "currency-gold", amount: cost, affordable },
-        onClick: press,
-      }).setEnabled(!!selected && !engraved && affordable);
-      content.add(action);
+      if (!action) {
+        action = new Button(scene, 0, top + layout.buttonY, {
+          width: panel.button.width, height: panel.button.height,
+          label: t("rune.craft"), variant: "primary", accentColor: accent,
+          cost: { icon: "currency-gold", amount: cost, affordable }, onClick: press,
+        });
+        body.add(action);
+      }
+      // 응답 도중 눌린 버튼을 파괴하면 pointerup이 유실된다. 같은 입력면·누름 연출을 유지한다.
+      action.setLabel(completed ? t("rune.engraveConfirm") : t("rune.craft"))
+        .setCost(completed ? undefined : { amount: cost, affordable })
+        .setEnabled(!!selected && !engraved && affordable);
       // 박힘은 이 그림에서만 한 번 일어난다. 지우지 않으면 줄을 고를 때마다 같은 표식이 다시 꽂힌다.
       landed = undefined;
     };

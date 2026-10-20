@@ -1,3 +1,4 @@
+import { worldRaidDefinitions, type SharedRaidRecord } from "../../src/server/sharedRaids";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { createCompletedTutorialState } from '../../src/core/tutorial';
 import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
@@ -6,7 +7,7 @@ import { handleGameCall, GameCallError, type StateStore, StateConflictError } fr
 import { STAGES } from '../../src/data/stages';
 import { STAGE_STORY_LINKS } from '../../src/data/stageStories';
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from '../../src/core/playerLevel';
-export function createFixture(mode: "stage" | "duel" = "stage") {
+export function createFixture(mode: "stage" | "duel" | "raid" = "stage") {
     const state = createDefaultSession();
     state.completedStoryIds.add(OPENING_TRAIN.id);
     state.party = ['rex', 'mette', 'torika'];
@@ -39,13 +40,21 @@ export function createFixture(mode: "stage" | "duel" = "stage") {
     const defender = createDefaultSession();
     defender.playerResearch = normalizePlayerLevel({ level: 6 });
     let defenderRevision = "1";
+    const raidRecords: SharedRaidRecord[] = worldRaidDefinitions(new Date()).map(instance => ({instance,revision:"1",damage:0,entries:[]}));
     const store: StateStore = {
+        ...(mode === "raid" ? {raidContext: async () => ({playerId:"isolated-browser-player", records: structuredClone(raidRecords)})} : {}),
         ...(mode === "duel" ? { duelContext: async () => ({ playerId: "isolated-browser-player", rank: 1, ranking: [], changes: [], records: [{ id: "actual-guest-defender", revision: defenderRevision, data: saveManager.exportData(defender) as unknown as Record<string, unknown> }] }) } : {}), load: async () => structuredClone(stored), findReceipt: async (_id, key) => receipts.get(key), commit: async (input) => {
             if (input.expectedRevision !== stored.revision)
                 throw new StateConflictError();
             for (const change of input.duels ?? []) {
                 if (change.expectedRevision !== defenderRevision) throw new StateConflictError();
                 defender.duel = change.duel; defender.wallet.gems += change.gems; defenderRevision = String(Number(defenderRevision) + 1);
+            }
+            for (const change of input.raids ?? []) {
+                const record = raidRecords.find(row => row.instance.id === change.instance.id);
+                if (!record || record.revision !== change.expectedRevision) throw new StateConflictError();
+                record.instance = structuredClone(change.instance);record.damage += change.appliedDelta;record.revision=String(Number(record.revision)+1);
+                record.entries = change.instance.myDamage > 0 ? [{rank:1,playerId:"isolated-browser-player",displayName:"연구원",damage:change.instance.myDamage,isMe:true}] : [];
             }
             stored = { revision: String(Number(stored.revision) + 1), data: JSON.parse(JSON.stringify(input.data)) };
             if (input.requestId)

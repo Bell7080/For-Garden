@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 /** 계정 제공자. 인증 비밀이 아니라 화면에 공개해도 되는 분류만 표현한다. */
-export type AccountProvider = "guest" | "password" | "google" | "apple";
+export type AccountProvider = "guest" | "password" | "google" | "apple" | "email";
 
 /** SDK/서버가 보관하는 계정 상태의 표시용 투영이다. 토큰은 계약에 의도적으로 없다. */
 export interface AccountState {
@@ -9,6 +9,8 @@ export interface AccountState {
   /** 로그·화면 노출에 적합하도록 플랫폼 구현이 이미 마스킹한 식별자다. */
   maskedId: string;
 }
+
+export interface AccountIdentity { id: string; provider: Exclude<AccountProvider, "guest">; maskedId: string; }
 
 /** 충돌 화면에서 양쪽 진행을 사람이 비교하는 데 필요한 최소 요약이다. */
 export interface ProgressSummary {
@@ -50,7 +52,8 @@ export type AccountFailureCode =
 export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string; retryAfterSeconds?: number };
 
 export interface LoginRequest {
-  provider: Exclude<AccountProvider, "guest" | "password">;
+  provider: "google" | "apple";
+  intent?: "sign-in" | "link";
   /** true면 플랫폼이 지원하는 경우에만 게스트 진행 합치기를 시도한다. */
   mergeGuestProgress: boolean;
 }
@@ -76,6 +79,10 @@ export interface GuestSaveMergeRequest {
  */
 export interface AccountApi {
   getState(): Promise<AccountResult<AccountState>>;
+  getIdentities?(): Promise<AccountResult<AccountIdentity[]>>;
+  unlinkIdentity?(identityId: string): Promise<AccountResult<AccountIdentity[]>>;
+  requestEmailCode?(email: string, intent: "sign-in" | "link"): Promise<AccountResult<void>>;
+  verifyEmailCode?(email: string, code: string, intent: "sign-in" | "link"): Promise<AccountResult<AccountState>>;
   login(request: LoginRequest): Promise<AccountResult<AccountState>>;
   logout(): Promise<AccountResult<AccountState>>;
   requestWithdrawal(): Promise<AccountResult<void>>;

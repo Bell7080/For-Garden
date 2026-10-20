@@ -1,8 +1,22 @@
 /** 작은 화면·팝업들이 함께 쓰는 문구. 화면 하나에 표를 따로 세울 만큼 크지 않은 것들이다. */
 export const MISC_KO = {
+  "account.identity.unavailable": "인증 서비스의 연동 설정을 확인해 주세요.",
+  "account.identity.keepLast": "마지막 로그인 수단은 해제할 수 없습니다.",
+  "account.identity.unlink": "{provider} 해제",
+  "account.identity.unlinkBody": "이 로그인 수단을 해제할까요? 진행도는 유지됩니다. 다른 로그인 수단을 먼저 확인해 주세요.",
+  "account.identity.connected": "{provider} 연결됨",
+  "account.email.link": "이메일 연동",
+  "account.email.title": "이메일 인증",
+  "account.email.address": "이메일 주소",
+  "account.email.code": "인증 코드",
+  "account.email.send": "코드 받기",
+  "account.email.verify": "인증하기",
+  "account.email.sent": "메일로 받은 인증 코드를 입력해 주세요.",
+  "account.email.invalid": "이메일 주소 또는 인증 코드를 확인해 주세요.",
+  "account.email.note": "이메일로 인증 코드를 보냅니다. 계정 연동 시 현재 진행도가 유지됩니다.",
   "account.id.retryAfter": "{seconds}초 후 다시 시도할 수 있습니다.",
   "account.id.serverUnavailable": "계정 생성 서버를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
-  "account.id.switchWarning": "현재 게스트 진행을 사용하지 않고 기존 계정의 진행으로 전환합니다. 게스트에 다시 접속할 수 없게 될 수 있습니다. 로그인에 성공한 경우에만 이 기기의 진행을 교체합니다.",
+  "account.id.switchWarning": "이 기기의 진행 대신 로그인한 계정의 진행으로 전환합니다. 로그인에 성공한 경우에만 이 기기의 진행을 교체합니다. 연동하지 않은 게스트 진행은 먼저 보관해 주세요.",
 
   // 원정 순위표
   "ranking.title": "원정 주간 기록",
@@ -291,7 +305,6 @@ export const MISC_KO = {
   "title.login.google": "Google로 계속",
   "title.login.apple": "Apple로 계속",
   "title.login.email": "이메일로 계속",
-  "title.login.soon": "곧 지원됩니다.",
   "title.switchAccount": "계정 변경",
   "title.switchAccount.body": "다른 계정으로 시작합니다. 이 기기의 로컬 저장 데이터가 삭제됩니다. 서버에 연동된 진행은 유지됩니다.",
   "title.gate.maintenance.title": "점검 중",

@@ -1,17 +1,18 @@
+import type { OAuthBridge } from "./webOAuth";
 /**
  * Supabase 계정·클라우드 저장 어댑터(`AccountApi` 구현).
  *
  * 토큰은 이 파일 밖으로 나가지 않는다 — `Session`·`SaveData`·`localStorage`에 두지 않고, 주입받은
  * 보안 저장소(`TokenStore`: 네이티브 보안 저장소 또는 HttpOnly 서버 세션 어댑터)에만 맡긴다.
  * 보안 저장소가 없는 빌드는 이 클래스를 만들지 않고 `UnsupportedAccountApi`에 머문다(성공을 흉내 내지 않는다).
- * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 소셜 로그인·탈퇴는 `unsupported`다.
+ * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 PKCE 소셜 로그인·동일 UID 다중 연동을 지원한다. 탈퇴는 `unsupported`다.
  * 아이디 계정은 게스트를 **같은 유저 그대로 승격**한다(`/api/account`) — 유저 ID가 같아 서버 진행이 그대로 따라온다.
- * 추후 소셜 로그인도 같은 유저에 정체성을 더하는 방식으로 붙여 양방향 연동이 되게 한다.
+ * 이메일이 바뀌어도 아이디 별칭은 같은 UID를 가리킨다.
  */
 import { t } from "../i18n";
 import { accountCredentialProblem, accountIdProblem, accountIdToAuthEmail, authEmailToAccountId, maskAccountId } from "../core/accountCredentials";
 import type {
-  AccountApi, AccountFailureCode, AccountResult, AccountState, GuestSaveMergeRequest, LoginRequest,
+  AccountApi, AccountIdentity, AccountFailureCode, AccountResult, AccountState, GuestSaveMergeRequest, LoginRequest,
   RemoteSaveDocument, RemoteSaveMetadata, RemoteSavePrecondition,
 } from "./AccountApi";
 
@@ -38,6 +39,7 @@ export interface SupabaseAccountOptions {
   now?: () => number;
   saveVersion: () => number;
   registrationEndpoint?: string;
+  oauth?: OAuthBridge;
 }
 
 const fail = <T>(code: AccountFailureCode, message: string): AccountResult<T> => ({ ok: false, code, message });
@@ -50,7 +52,8 @@ export class SupabaseAccountApi implements AccountApi {
   private tokens: StoredTokens | null = null;
   private pending: Promise<AccountResult<StoredTokens>> | null = null;
   private failure = "";
-  private pendingRegistration?: { id: string; userId: string };
+  private pendingRegistration?: { id: string; userId: string; authEmail: string };
+  private identityRequest = false;
 
   constructor(private readonly options: SupabaseAccountOptions) {
     // 브라우저의 fetch는 window가 아닌 객체의 메서드로 부르면 "Illegal invocation"으로 던진다 — 한 번 감싸 둔다.
@@ -85,7 +88,98 @@ export class SupabaseAccountApi implements AccountApi {
     return auth.ok ? auth.value.userId : null;
   }
 
-  async login(_request: LoginRequest): Promise<AccountResult<AccountState>> { return this.unsupported(); }
+  async login(request: LoginRequest): Promise<AccountResult<AccountState>> {
+    if (!this.options.oauth || this.identityRequest) return this.unsupported();
+    this.identityRequest = true;
+    try {
+      const link = request.intent === "link";
+      // 같은 UID에 추가하는 연동이 실패해도 다른 계정 로그인으로 대체하지 않는다.
+      const auth = link ? await this.ensureTokens() : null;
+      if (auth && !auth.ok) return auth;
+      const expected = auth?.ok ? auth.value.userId : undefined;
+      const result = await this.options.oauth.authorize(async (challenge, redirect) => {
+        const query = new URLSearchParams({ provider: request.provider, redirect_to: redirect, code_challenge: challenge, code_challenge_method: "s256" });
+        if (!link) return `${this.options.url}/auth/v1/authorize?${query}`;
+        query.set("skip_http_redirect", "true");
+        const response = await this.fetchImpl(`${this.options.url}/auth/v1/user/identities/authorize?${query}`, {
+          headers: { apikey: this.options.key, Authorization: `Bearer ${auth!.ok ? auth!.value.accessToken : ""}` }, signal: AbortSignal.timeout(15000),
+        });
+        if (!response.ok) throw new Error("identity_link_unavailable");
+        const body = await response.json() as { url?: string };
+        if (typeof body.url !== "string") throw new Error("invalid_auth_response");
+        return body.url;
+      });
+      if (!result) return fail("cancelled", t("error.account.loginUnsupported"));
+      const exchanged = await this.authCall("/auth/v1/token?grant_type=pkce", JSON.stringify({ auth_code: result.code, code_verifier: result.verifier }));
+      if (!exchanged.ok) return exchanged;
+      if (expected && exchanged.value.userId !== expected) return fail("invalid-credentials", t("error.account.authResponse"));
+      return await this.adopt(exchanged.value);
+    } catch { return fail("unsupported", t("account.identity.unavailable")); }
+    finally { this.identityRequest = false; }
+  }
+
+  async getIdentities(): Promise<AccountResult<AccountIdentity[]>> {
+    const response = await this.userRequest();
+    if (!response.ok) return response;
+    const user = response.value as { identities?: { identity_id?: string; id?: string; provider?: string; identity_data?: { email?: string } }[] };
+    const identities: AccountIdentity[] = (user.identities ?? []).flatMap(identity => {
+      const email = identity.identity_data?.email;
+      const id = authEmailToAccountId(email);
+      const provider = identity.provider === "email" ? (id ? "password" : "email") : identity.provider;
+      return provider === "google" || provider === "apple" || provider === "password" || provider === "email"
+        ? [{ id: identity.identity_id ?? identity.id ?? "", provider, maskedId: id ? maskAccountId(id) : email ? `${email.slice(0, 2)}••••` : "••••" }] : [];
+    });
+    const alias = await this.rpc("account_login_id", {});
+    if (alias.ok && typeof alias.value === "string" && !identities.some(identity => identity.provider === "password")) identities.push({ id: "login-id", provider: "password", maskedId: maskAccountId(alias.value) });
+    return { ok: true, value: identities };
+  }
+
+  async unlinkIdentity(identityId: string): Promise<AccountResult<AccountIdentity[]>> {
+    if (this.identityRequest) return this.unsupported();
+    this.identityRequest = true;
+    try {
+      const identities = await this.getIdentities();
+      if (!identities.ok) return identities;
+      const target = identities.value.find(identity => identity.id === identityId);
+      // 이메일/비밀번호는 이 화면에서 지우지 않는다. 소셜도 마지막 로그인 수단이면 유지한다.
+      if (!target || !["google", "apple"].includes(target.provider) || identities.value.length < 2) return fail("unsupported", t("account.identity.keepLast"));
+      const result = await this.userRequest(`/identities/${encodeURIComponent(identityId)}`, "DELETE");
+      return result.ok ? this.getIdentities() : result;
+    } finally { this.identityRequest = false; }
+  }
+
+  private async userRequest(path = "", method = "GET", body?: unknown): Promise<AccountResult<unknown>> {
+    const auth = await this.ensureTokens(); if (!auth.ok) return auth;
+    try {
+      const response = await this.fetchImpl(`${this.options.url}/auth/v1/user${path}`, { method, headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}`, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000) });
+      if (!response.ok) return this.authFailure("/auth/v1/user", response);
+      return { ok: true, value: await response.json().catch(() => ({})) };
+    } catch { return fail("network-error", t("error.account.network")); }
+  }
+
+  async requestEmailCode(email: string, intent: "sign-in" | "link"): Promise<AccountResult<void>> {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return fail("invalid-credentials", t("account.email.invalid"));
+    if (intent === "link") {
+      const result = await this.userRequest("", "PUT", { email });
+      return result.ok ? { ok: true, value: undefined } : result;
+    }
+    try {
+      const response = await this.fetchImpl(`${this.options.url}/auth/v1/otp`, { method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body: JSON.stringify({ email, create_user: false }), signal: AbortSignal.timeout(15000) });
+      return response.ok ? { ok: true, value: undefined } : this.authFailure("/auth/v1/otp", response);
+    } catch { return fail("network-error", t("error.account.network")); }
+  }
+
+  async verifyEmailCode(email: string, code: string, intent: "sign-in" | "link"): Promise<AccountResult<AccountState>> {
+    if (!/^\d{6,10}$/.test(code)) return fail("invalid-credentials", t("account.email.invalid"));
+    try {
+      const auth = intent === "link" ? await this.ensureTokens() : null;
+      if (auth && !auth.ok) return auth;
+      const result = await this.authCall("/auth/v1/verify", JSON.stringify({ email, token: code, type: intent === "link" ? "email_change" : "email" }));
+      if (!result.ok) return result;
+      if (auth?.ok && result.value.userId !== auth.value.userId) return fail("invalid-credentials", t("error.account.authResponse"));
+      return this.adopt(result.value);
+    } catch { return fail("network-error", t("error.account.network")); }
+  }
   async requestWithdrawal(): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
@@ -103,9 +197,9 @@ export class SupabaseAccountApi implements AccountApi {
     try {
       this.tokens ??= await this.options.store.load();
       const current = this.tokens;
-      if (current && !isAnonymous(current)) return fail("invalid-credentials", t("error.account.alreadyLinked"));
+      if (current && !isAnonymous(current) && !claimsOf(current).email) return fail("invalid-credentials", t("error.account.alreadyLinked"));
       // 관리자 비밀번호 설정은 기존 세션을 종료한다. 응답 이후 로그인만 실패했다면 인증된 같은 UID로만 재시도한다.
-      if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(email, password, this.pendingRegistration.userId);
+      if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(this.pendingRegistration.authEmail, password, this.pendingRegistration.userId);
       const fresh = current ? await this.ensureTokens() : null;
       if (fresh && !fresh.ok) return fresh;
       const registered = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
@@ -121,10 +215,10 @@ export class SupabaseAccountApi implements AccountApi {
         if (registered.status === 401) return fail("invalid-credentials", t("error.account.badLogin"));
         return fail("network-error", t("account.id.serverUnavailable"));
       }
-      const result = await registered.json() as { userId?: string };
+      const result = await registered.json() as { userId?: string; authEmail?: string };
       if (!result.userId || (current && result.userId !== current.userId)) return fail("network-error", t("error.account.authResponse"));
-      this.pendingRegistration = { id: email, userId: result.userId };
-      return await this.finishRegistration(email, password, result.userId);
+      this.pendingRegistration = { id: email, userId: result.userId, authEmail: result.authEmail ?? email };
+      return await this.finishRegistration(result.authEmail ?? email, password, result.userId);
     } catch (error) {
       this.failure = `register-exception:${error instanceof Error ? error.name : "unknown"}`;
       return fail("network-error", t("error.account.network"));
@@ -141,26 +235,20 @@ export class SupabaseAccountApi implements AccountApi {
   }
 
   async signInWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
-    // 로그인에서는 규칙 위반을 '틀린 아이디 또는 비밀번호'와 구별하지 않는다 — 계정 존재 여부를 흘리지 않는다.
     if (accountIdProblem(id) || password.length === 0) return fail("invalid-credentials", t("error.account.badLogin"));
     try {
-      let signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
-      if (!signed.ok && signed.code === "email-unconfirmed") {
-        const confirmed = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm-existing", id, password }), signal: AbortSignal.timeout(35000) });
-        if (!confirmed.ok) {
-          if (confirmed.status === 429) return this.rateFailure(confirmed);
-          return fail(confirmed.status === 401 ? "invalid-credentials" : "network-error", t(confirmed.status === 401 ? "error.account.badLogin" : "account.id.serverUnavailable"));
-        }
-        const result = await confirmed.json() as { userId?: string };
-        if (!result.userId) return fail("network-error", t("error.account.authResponse"));
-        signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email: accountIdToAuthEmail(id), password }));
-        if (signed.ok && signed.value.userId !== result.userId) return fail("network-error", t("error.account.authResponse"));
+      // 별칭은 인증 이메일이 바뀌어도 같은 UID를 가리킨다. 합성 이메일로 먼저 로그인하면
+      // 예전에 비워진 이메일을 가진 다른 UID를 선택할 수 있어 서버 조회를 유일한 경계로 쓴다.
+      const response = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "sign-in", id, password }), signal: AbortSignal.timeout(35000),
+      });
+      if (!response.ok) {
+        if (response.status === 429) return this.rateFailure(response);
+        return fail([400,401,422].includes(response.status) ? "invalid-credentials" : "network-error", t([400,401,422].includes(response.status) ? "error.account.badLogin" : "account.id.serverUnavailable"));
       }
+      const signed = this.parseTokens(await response.json());
       return signed.ok ? this.adopt(signed.value) : signed;
-    } catch (error) {
-      this.failure = `signin-exception:${error instanceof Error ? error.name : "unknown"}`;
-      return fail("network-error", t("error.account.network"));
-    }
+    } catch { return fail("network-error", t("error.account.network")); }
   }
 
   private async adopt(tokens: StoredTokens): Promise<AccountResult<AccountState>> {
@@ -279,7 +367,11 @@ export class SupabaseAccountApi implements AccountApi {
       method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body, signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return this.authFailure(path, res);
-    const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+    return this.parseTokens(await res.json().catch(() => null));
+  }
+
+  private parseTokens(value: unknown): AccountResult<StoredTokens> {
+    const j = value as Record<string, unknown> | null;
     const user = j?.user as { id?: string } | undefined;
     if (typeof j?.access_token !== "string" || typeof j?.refresh_token !== "string" || typeof user?.id !== "string") {
       return fail("network-error", t("error.account.authResponse"));
@@ -315,11 +407,11 @@ export class SupabaseAccountApi implements AccountApi {
 }
 
 /** 액세스 토큰(JWT)의 공개 claim만 읽는다. 서명 검증은 서버 몫이고, 여기서는 표시에만 쓴다. */
-function claimsOf(tokens: StoredTokens): { email?: unknown; is_anonymous?: unknown } {
+function claimsOf(tokens: StoredTokens): { email?: unknown; is_anonymous?: unknown; app_metadata?: { provider?: string } } {
   try {
     const payload = tokens.accessToken.split(".")[1] ?? "";
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
-    return JSON.parse(atob(base64)) as { email?: unknown; is_anonymous?: unknown };
+    return JSON.parse(atob(base64)) as { email?: unknown; is_anonymous?: unknown; app_metadata?: { provider?: string } };
   } catch { return {}; }
 }
 
@@ -334,7 +426,8 @@ function isAnonymous(tokens: StoredTokens): boolean {
 function stateOf(tokens: StoredTokens): AccountState {
   if (isAnonymous(tokens)) return { kind: "guest", provider: "guest", maskedId: `GUEST-${tokens.userId.slice(0, 4)}••••` };
   const id = authEmailToAccountId(claimsOf(tokens).email);
-  return { kind: "linked", provider: "password", maskedId: id ? maskAccountId(id) : `ID-${tokens.userId.slice(0, 4)}••••` };
+  const provider = claimsOf(tokens).app_metadata?.provider;
+  return { kind: "linked", provider: id ? "password" : provider === "google" || provider === "apple" ? provider : "email", maskedId: id ? maskAccountId(id) : `ID-${tokens.userId.slice(0, 4)}••••` };
 }
 
 function canonical(value: unknown): string {

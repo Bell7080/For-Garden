@@ -16,5 +16,18 @@ export async function run(sql:(s:string)=>string){
  assert.equal(JSON.parse(sql("select public.server_id_account('garden_01@id.forgarden.app');")).id,'00000000-0000-0000-0000-000000009999');
  assert.equal(sql("select public.server_id_account('garden_02@id.forgarden.app') is null;"),'t');
  assert.equal(sql("select has_function_privilege('authenticated','public.server_id_account(text)','execute');"),'f');
- console.log(JSON.stringify({minuteLimit:true,hourLimit:true,blockedRetriesDoNotExtend:true,expiresAndRecovers:true,serviceRoleOnly:true}));
+ const owner='00000000-0000-0000-0000-000000009999', other='00000000-0000-0000-0000-000000009998';
+ sql(`insert into auth.users(id,email,encrypted_password) values('${other}','other@example.com','hash');update auth.users set encrypted_password='hash' where id='${owner}';`);
+ assert.equal(sql(`select public.server_set_account_id('${owner}','garden_01');`),'t');
+ assert.equal(sql(`select public.server_set_account_id('${owner}','garden_01');`),'t');
+ assert.equal(sql(`select public.server_set_account_id('${other}','garden_01');`),'f');
+ assert.equal(sql(`select public.server_set_account_id('${owner}','another_id');`),'f');
+ sql(`update auth.users set email='player@example.com' where id='${owner}';insert into auth.users(id,email) values('00000000-0000-0000-0000-000000009997','garden_01@id.forgarden.app');`);
+ const alias=JSON.parse(sql("select public.server_id_account('garden_01@id.forgarden.app');"));assert.equal(alias.id,owner);assert.equal(alias.email,'player@example.com');
+ assert.equal(sql(`select set_config('request.jwt.claim.sub','${owner}',false);select public.account_login_id();`).split('\n').at(-1),'garden_01');
+ assert.equal(sql(`select set_config('request.jwt.claim.sub','${other}',false);select public.account_login_id() is null;`).split('\n').at(-1),'t');
+ assert.equal(sql("select has_function_privilege('authenticated','public.server_set_account_id(uuid,text)','execute');"),'f');
+ assert.equal(sql("select has_table_privilege('authenticated','public.account_login_ids','select');"),'f');
+ assert.equal(sql("select has_function_privilege('anon','public.account_login_id()','execute');"),'f');
+ console.log(JSON.stringify({minuteLimit:true,hourLimit:true,blockedRetriesDoNotExtend:true,expiresAndRecovers:true,serviceRoleOnly:true,aliasFollowsEmail:true,aliasCannotBeReassigned:true,ownAliasOnly:true}));
 }

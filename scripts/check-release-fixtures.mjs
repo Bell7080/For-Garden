@@ -23,7 +23,8 @@ try {
           export {normalizeDuelState} from './src/core/duelState';
           export {duelSeasonId} from './src/core/duelArena';
           export {PRODUCTS} from './src/data/shopCatalog';
-          export {EXPEDITION_BEST_SCORE_REWARD_STAGES} from './src/data/expedition';`,
+          export {EXPEDITION_BEST_SCORE_REWARD_STAGES} from './src/data/expedition';
+          export {displayRankingEntries} from './src/ui/expeditionRankingLayout';`,
         resolveDir: process.cwd(),
       },
       bundle: true,
@@ -40,6 +41,9 @@ try {
       },
     });
     const module = await import(pathToFileURL(outfile).href);
+    assert.equal(module.displayRankingEntries([], 5000, true).length > 0, qa, `${mode}: expedition sample rows must be QA-only`);
+    const actual = {rank:208,playerId:"actual",displayName:"player",score:10,achievedAt:"",isMe:true};
+    assert.deepEqual(module.displayRankingEntries([actual], 10, false), [actual], `${mode}: preserve absolute server rank`);
     assert.deepEqual(await module.connectServerProgress({ account: null }), qa ? { ok: true, mode: "local" } : { ok: false, code: "unsupported" }, `${mode}: offline progression boundary`);
     const {
       FakeServer,

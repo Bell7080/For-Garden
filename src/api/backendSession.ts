@@ -1,3 +1,4 @@
+import { createWebOAuthBridge } from "./webOAuth";
 /**
  * 서버 계정 연결의 시작점. 보안 저장소(`TokenStore`)가 있고 서버 설정이 있을 때만 `SupabaseAccountApi`를
  * 세우고, 없으면 `UnsupportedAccountApi`에 머문다(성공을 흉내 내지 않는다). 지금은 웹 보관소(출시 차단 항목)만
@@ -25,7 +26,7 @@ export function installBackend(options: {
   const key = options.key ?? import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
   const store = options.store === undefined ? createWebTokenStore() : options.store;
   if (!url || !key || !store) return null;
-  account = new SupabaseAccountApi({ url, key, store, fetchImpl: options.fetchImpl, saveVersion: () => CURRENT_SAVE_VERSION });
+  account = new SupabaseAccountApi({ url, key, store, fetchImpl: options.fetchImpl, oauth: createWebOAuthBridge(), saveVersion: () => CURRENT_SAVE_VERSION });
   installAccountApi(account);
   return account;
 }

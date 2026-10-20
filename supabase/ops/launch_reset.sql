@@ -71,6 +71,7 @@ declare
     'public.coupon_codes'
   ];
   keep_tables text[] := array[
+    'public.account_login_ids', -- 인증 계정에 종속: 운영자 것은 보존, 삭제 계정은 Auth FK를 따라 제거.
     'public.admin_roles',
     'public.app_config',
     'public.reward_assets',

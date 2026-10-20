@@ -22,3 +22,6 @@ create table public.website_notices (id uuid primary key default gen_random_uuid
 create table public.website_notice_translations (notice_id uuid not null references public.website_notices(id) on delete cascade,locale text not null check(locale in ('ko','en','ja')),title text not null check(length(title) between 1 and 200),summary text not null default '',body text not null check(length(body) between 1 and 50000),primary key(notice_id,locale));
 create table public.website_preregistrations (id uuid primary key default gen_random_uuid(),email text not null unique,platform text not null check(platform in ('android','ios','both')),locale text not null check(locale in ('ko','en','ja')),consent_version text not null default 'launch-notification-v1',consented_at timestamptz not null default now(),created_at timestamptz not null default now());
 create table public.website_registration_limits (fingerprint text not null,bucket timestamptz not null,attempts integer not null default 1,primary key(fingerprint,bucket));
+
+-- Auth identity alias tests use the real GoTrue password-presence contract.
+alter table auth.users add column if not exists encrypted_password text;

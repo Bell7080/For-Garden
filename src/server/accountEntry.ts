@@ -1,5 +1,5 @@
-/** 메일을 보내지 않는 아이디 가입. 서비스 키/비밀번호/토큰을 응답·로그에 남기지 않는다. */
-import { accountCredentialProblem, accountIdToAuthEmail } from '../core/accountCredentials';
+/** 아이디 가입·로그인 경계. 서비스 키/비밀번호는 응답·로그에 남기지 않는다. 세션 토큰은 비밀번호로 증명한 본인 로그인에만 반환한다. */
+import { accountCredentialProblem, accountIdToAuthEmail, authEmailToAccountId } from '../core/accountCredentials';
 interface Req { method?: string; headers: Record<string,string|string[]|undefined>; body?: unknown }
 interface Res { status(n:number):Res; json(v:unknown):void; setHeader(k:string,v:string):void }
 export default async function handler(req:Req,res:Res):Promise<void>{
@@ -16,7 +16,7 @@ export default async function handler(req:Req,res:Res):Promise<void>{
   const deadline=AbortSignal.timeout(25000);
   const call=(path:string,init:RequestInit={})=>fetch(`${url}${path}`,{...init,headers:{apikey:key,authorization:`Bearer ${key}`,'content-type':'application/json',...init.headers},signal:AbortSignal.any([deadline,AbortSignal.timeout(10000)])});
   const auth=typeof req.headers.authorization==='string'?req.headers.authorization:'';
-  let current:{id:string;is_anonymous?:boolean;email?:string}|null=null;
+  let current:{id:string;is_anonymous?:boolean;email?:string;email_confirmed_at?:string}|null=null;
   const email=accountIdToAuthEmail(body.id);
   // Vercel이 덮어쓰는 접속 IP를 서비스 비밀값과 해시한다. 원본 IP는 DB에 남기지 않는다.
   const ip=String(req.headers['x-forwarded-for']??'unknown').split(',')[0].trim().slice(0,128);
@@ -30,6 +30,29 @@ export default async function handler(req:Req,res:Res):Promise<void>{
    return true;
   };
   if(!await takeBudget(ipKey))return;
+  if(body.action==='sign-in'){
+   if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`))return;
+   const found=await call('/rest/v1/rpc/server_id_account',{method:'POST',body:JSON.stringify({p_email:email})});
+   if(!found.ok){reply(503,'service_unavailable');return;}
+   const account=await found.json() as {id?:string;email?:string}|null;
+   if(!account?.id){reply(401,'invalid_credentials');return;}
+   // 기존 ID 전용 RPC는 UID만 반환한다. DB 적용 전에도 해당 UID의 합성 이메일 로그인을 유지한다.
+   const loginEmail=account.email??email;
+   const proof=await call('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:loginEmail,password:body.password})});
+   if(proof.status===429){const retry=proof.headers.get('retry-after');if(retry)res.setHeader('retry-after',retry);reply(429,'rate_limited');return;}
+   const value=await proof.json().catch(()=>({})) as {user?:{id?:string};error_code?:string;code?:string};
+   if(!proof.ok&&[400,422].includes(proof.status)&&(value.error_code??value.code)==='email_not_confirmed'&&loginEmail===email){
+    const confirmed=await call(`/auth/v1/admin/users/${encodeURIComponent(account.id)}`,{method:'PUT',body:JSON.stringify({email,email_confirm:true})});
+    if(!confirmed.ok){reply(503,'confirmation_failed');return;}
+    const retry=await call('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password:body.password})});
+    if(retry.status===429){const wait=retry.headers.get('retry-after');if(wait)res.setHeader('retry-after',wait);reply(429,'rate_limited');return;}
+    const recovered=await retry.json().catch(()=>({})) as {user?:{id?:string}};
+    if(!retry.ok||recovered.user?.id!==account.id){reply(401,'invalid_credentials');return;}
+    res.status(200).json(recovered);return;
+   }
+   if(!proof.ok||value.user?.id!==account.id){reply(proof.status>=500?503:401,'invalid_credentials');return;}
+   res.status(200).json(value);return;
+  }
   if(body.action==='confirm-existing'){
    if(!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`))return;
    // GoTrue는 비밀번호를 검증한 다음 email_not_confirmed를 반환한다. 이 응답만 소유권 증명으로 쓴다.
@@ -40,7 +63,7 @@ export default async function handler(req:Req,res:Res):Promise<void>{
    const found=await call('/rest/v1/rpc/server_id_account',{method:'POST',body:JSON.stringify({p_email:email})});
    if(!found.ok){reply(503,'service_unavailable');return;}
    const owned=await found.json() as {id?:string}|null;
-   if(!owned?.id){reply(401,'invalid_credentials');return;}
+   if(!owned?.id||(owned as {email?:string}).email&&((owned as {email?:string}).email!==email)){reply(401,'invalid_credentials');return;}
    const confirmed=await call(`/auth/v1/admin/users/${encodeURIComponent(owned.id)}`,{method:'PUT',body:JSON.stringify({email,email_confirm:true})});
    if(!confirmed.ok){reply(503,'confirmation_failed');return;}
    res.status(200).json({ok:true,userId:owned.id});return;
@@ -52,12 +75,27 @@ export default async function handler(req:Req,res:Res):Promise<void>{
    if(!who.ok){reply(who.status===429?429:who.status>=500?503:401,who.status>=500?'service_unavailable':'not_authenticated');return;}
    current=await who.json();
    if(!current?.id){reply(401,'not_authenticated');return;}
-   if(current.is_anonymous!==true && current.email!==email){reply(409,'already_linked');return;} // 같은 UID/아이디의 응답 유실 재시도만 허용한다.
+   const oldId=authEmailToAccountId(current.email);
+   if(oldId && current.email!==email){reply(409,'already_linked');return;}
+   if(current.is_anonymous!==true&&!oldId&&!current.email_confirmed_at){reply(409,'already_linked');return;}
   }
   if(current&&!await takeBudget(`user:${current.id}`))return;
+  if(!current){
+   const existing=await call('/rest/v1/rpc/server_id_account',{method:'POST',body:JSON.stringify({p_email:email})});
+   if(!existing.ok){reply(503,'identity_store_unavailable');return;}
+   if(await existing.json()){reply(409,'id_taken');return;}
+  }
+  const reserve=async(userId:string):Promise<boolean>=>{
+   const result=await call('/rest/v1/rpc/server_set_account_id',{method:'POST',body:JSON.stringify({p_player:userId,p_id:body.id.trim().toLowerCase()})});
+   if(!result.ok){reply(503,'identity_store_unavailable');return false;}
+   if(await result.json()!==true){reply(409,'id_taken');return false;}
+   return true;
+  };
+  if(current&&!await reserve(current.id))return;
   // 게스트는 같은 UID를 승격한다. 다른 사용자의 ID나 기존 계정을 덮어쓰지 않는다.
   const updated=await call(current?`/auth/v1/admin/users/${encodeURIComponent(current.id)}`:'/auth/v1/admin/users',{
-   method:current?'PUT':'POST',body:JSON.stringify({email,password:body.password,email_confirm:true}),
+   method:current?'PUT':'POST',body:JSON.stringify(current&&current.is_anonymous!==true&&!authEmailToAccountId(current.email)
+    ? {email:current.email,password:body.password} : {email,password:body.password,email_confirm:true}),
   });
   if(!updated.ok){
    const error=await updated.json().catch(()=>({})) as {code?:string;error_code?:string};
@@ -69,6 +107,7 @@ export default async function handler(req:Req,res:Res):Promise<void>{
   }
   const user=await updated.json() as {id?:string};
   if(!user.id||(current&&user.id!==current.id)){reply(503,'invalid_auth_response');return;}
-  res.status(200).json({ok:true,userId:user.id});
+  if(!current&&!await reserve(user.id))return;
+  res.status(200).json({ok:true,userId:user.id,authEmail:current&&current.is_anonymous!==true?current.email:email});
  }catch{reply(503,'service_unavailable');}
 }

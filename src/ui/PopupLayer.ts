@@ -435,6 +435,12 @@ export class PopupLayer {
     setDebugPopupTitles(LIVE_LAYERS.flatMap((layer) => layer.openTitles()));
   }
 
+  /** 덮인 판은 내용을 다시 굽지 않고 드러날 때 한 번 갱신할 수 있다. */
+  isTop(body: Phaser.GameObjects.Container): boolean {
+    const top = this.stack.at(-1);
+    return !!top && this.bodyByLayer.get(top) === body;
+  }
+
   /** 이 층에 지금 열려 있는 제목들. 다른 층이 함께 올릴 수 있도록 열어 둔다. */
   private openTitles(): string[] {
     return this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined);

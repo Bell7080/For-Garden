@@ -1,3 +1,4 @@
+import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
 import { gameApi } from "../api/FakeServer";
 import Phaser from "phaser";
@@ -17,13 +18,10 @@ import { SettingsSlider } from "../ui/SettingsSlider";
 import { SettingsToggle } from "../ui/SettingsToggle";
 import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
-import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
-import { AccountSaveSync } from "../api/AccountSaveSync";
+import { accountApi, type AccountIdentity, type AccountFailureCode, type AccountState } from "../api/AccountApi";
 import { disconnectProgress } from "../api/backendSession";
 import { openAccountIdPopup } from "../ui/AccountIdPopup";
-import { session } from "../state/session";
 import { openSupportPopup } from "../ui/SupportPopup";
-import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openDebugToolsMenu } from "../ui/DebugToolsMenu";
 import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
@@ -63,6 +61,7 @@ export class SettingsScene extends Phaser.Scene {
   private activeTab: SettingsTab = "sound";
   private readonly popups = new PopupLayer(this, 3000);
   private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
+  private accountIdentities: AccountIdentity[] = [];
   private accountBusy = false;
   private battleMember = false;
   private battleSpeedRow?: SettingsSelectRow<ReturnType<typeof availableBattleSpeeds>[number]>;
@@ -98,7 +97,7 @@ export class SettingsScene extends Phaser.Scene {
       this.battleMember = state.adFreeMembership;
       this.battleSpeedRow?.setChoices(usableBattleSpeed(settingsManager.get().game.battleSpeed, this.battleMember), availableBattleSpeeds(this.battleMember));
     }).catch(() => undefined);
-    void accountApi.getState().then(result => { if (result.ok && this.scene.isActive() && generation === this.viewGeneration) { this.accountState = result.value; if (this.activeTab === "support") this.buildRows(); } });
+    void this.refreshAccountView(generation);
     // 88px 이상 행뿐 아니라 빈 여백도 드래그를 받아 긴 탭의 스크롤이 끊기지 않는다.
     const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
     zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
@@ -311,13 +310,19 @@ export class SettingsScene extends Phaser.Scene {
     y = section(t("settings.section.account"));
     const account = this.accountState;
     this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
-    if (account.kind === "guest") {
-      // 한 줄에 세 개가 서므로 입력면을 글자 폭만큼만 둔다(겹치면 뒤에 선 줄이 앞 글자를 가로챈다).
-      this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
-      this.addTextAction(400, y, t("settings.account.linkGoogle"), () => void this.login("google"), false, 240);
-      this.addTextAction(680, y, t("settings.account.linkApple"), () => void this.login("apple"), false, 240);
+    const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
+    if (!linkedId) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
+    else this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: "ID" }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    for (const [index, provider] of (["google", "apple"] as const).entries()) {
+      const identity = this.accountIdentities.find(item => item.provider === provider);
+      const name = provider === "google" ? "Google" : "Apple";
+      this.addTextAction(400 + index * 280, y, identity ? t("account.identity.unlink", { provider: name }) : t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple"), () => identity ? this.confirmUnlink(identity) : void this.login(provider), false, 250);
     }
-    else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true); }
+    y += SETTINGS_SUPPORT.actionStep;
+    const email = this.accountIdentities.find(identity => identity.provider === "email");
+    if (email) this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: `EMAIL ${email.maskedId}` }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    else this.addTextAction(90, y, t("account.email.link"), () => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView()), false, 540);
+    if (account.kind !== "guest") this.addTextAction(680, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true, 250);
     y += SETTINGS_SUPPORT.accountFootRoom;
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
@@ -371,22 +376,42 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
-  private async login(provider: "google" | "apple"): Promise<void> {
-    this.accountBusy = true; this.input.enabled = false;
-    // login 자체에는 합산을 맡기지 않는다. 아래 명시적 mergeGuestSave 계약만 게스트 진행을 병합한다.
-    const loggedIn = await accountApi.login({ provider, mergeGuestProgress: false });
-    this.accountBusy = false; this.input.enabled = true;
-    if (!loggedIn.ok) { this.showAccountFailure(loggedIn.code); return; }
+  private async refreshAccountView(generation = this.viewGeneration): Promise<void> {
+    const result = await accountApi.getState();
+    if (!result.ok || !this.scene.isActive() || generation !== this.viewGeneration) return;
+    this.accountState = result.value;
+    const identities = await accountApi.getIdentities?.();
+    if (!this.scene.isActive() || generation !== this.viewGeneration) return;
+    this.accountIdentities = identities?.ok ? identities.value : [];
+    if (this.activeTab === "support") this.buildRows();
+  }
 
-    const sync = new AccountSaveSync(accountApi, saveManager);
-    const requestId = crypto.randomUUID();
-    const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
-    if (result.ok) { this.leaveToBoot(); return; }
-    this.showAccountFailure(result.code);
+  private async login(provider: "google" | "apple"): Promise<void> {
+    if (this.accountBusy) return;
+    this.accountBusy = true;
+    try {
+      const result = await accountApi.login({ provider, mergeGuestProgress: false, intent: "link" });
+      if (!this.scene.isActive()) return;
+      if (!result.ok) { if (result.code !== "cancelled") this.showAccountFailure(result.code, result.message); return; }
+      await this.refreshAccountView();
+    } finally { this.accountBusy = false; }
+  }
+
+  private confirmUnlink(identity: AccountIdentity): void {
+    this.popups.confirm({ title: t("account.identity.unlink", { provider: identity.provider }), message: t("account.identity.unlinkBody"), confirmLabel: t("settings.action.confirm"), destructive: true }, () => {
+      if (this.accountBusy) return;
+      if (!accountApi.unlinkIdentity) { this.showAccountFailure("unsupported"); return; }
+      this.accountBusy = true;
+      void accountApi.unlinkIdentity(identity.id).then(result => {
+        if (!this.scene.isActive()) return;
+        if (!result.ok) this.showAccountFailure(result.code, result.message);
+        else void this.refreshAccountView();
+      }).finally(() => { this.accountBusy = false; });
+    });
   }
 
   /**
-   * 이 기기의 게스트 계정에 아이디·비밀번호를 붙인다. 유저가 그대로 승격되므로 서버 진행은 그 자리에 있고,
+   * 현재 계정에 아이디·비밀번호를 붙인다. UID를 유지하므로 서버 진행은 그 자리에 있고,
    * 같은 아이디로 다른 기기에서 로그인하면 이어서 키울 수 있다. 저장 이어받기는 부트가 다시 거친다.
    */
   private linkWithId(): void {
@@ -418,9 +443,9 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
-  private showAccountFailure(code: AccountFailureCode): void {
+  private showAccountFailure(code: AccountFailureCode, message?: string): void {
     const keys: Record<AccountFailureCode, TextKey> = { "email-unconfirmed": "account.id.error.login", unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
-    this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    this.popups.confirm({ title: t("settings.account.notice"), message: message ?? t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 현재 탭 높이만 기준으로 콘텐츠를 움직여 다른 탭 영역으로 새지 않게 한다. */

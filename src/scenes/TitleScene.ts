@@ -1,3 +1,4 @@
+import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import Phaser from "phaser";
 import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
@@ -523,19 +524,26 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /**
-   * 처음 여는 기기의 로그인 버튼. 지금 되는 것은 게스트뿐이고 나머지는 자리만 잡은 임시 버튼이다 — 누르면
-   * 곧 지원된다고만 알린다(성공을 흉내 내지 않는다). 연결이 서면 그 버튼의 `onClick`만 바꾼다.
+   * 처음 여는 기기의 로그인 선택. 소셜·이메일·아이디가 성공하면 진입 문구로 돌아간다.
    */
   private showLoginButtons(cx: number, enter: () => void, fade = true, authenticated: () => void = enter): void {
     this.loginButtons.forEach((button) => button.destroy());
     this.loginButtons = [];
     this.loginRebuild = () => this.showLoginButtons(cx, enter, false, authenticated);
-    const soon = () => this.popups?.confirm({ title: t("settings.account.notice"), message: t("title.login.soon"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    let signingIn = false;
+    const social = (provider: "google" | "apple"): void => {
+      if (signingIn) return; signingIn = true;
+      void accountApi.login({ provider, mergeGuestProgress: false, intent: "sign-in" }).then(result => {
+        if (!this.scene.isActive()) return;
+        if (result.ok) authenticated();
+        else if (result.code !== "cancelled") this.showConnectFailure(result.code);
+      }).finally(() => { signingIn = false; });
+    };
     const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
       { labelKey: "title.login.guest", onClick: enter, primary: true },
-      { labelKey: "title.login.google", onClick: soon },
-      { labelKey: "title.login.apple", onClick: soon },
-      { labelKey: "title.login.email", onClick: soon },
+      { labelKey: "title.login.google", onClick: () => social("google") },
+      { labelKey: "title.login.apple", onClick: () => social("apple") },
+      { labelKey: "title.login.email", onClick: () => { if (this.popups) openAccountEmailPopup(this, this.popups, "sign-in", authenticated); } },
       // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
       { labelKey: "title.login.account", onClick: () => { if (this.popups) openAccountIdPopup(this, this.popups, { mode: "both", onDone: authenticated }); } },
     ];

@@ -1,6 +1,6 @@
 /** 서버 원문/저장/토큰을 노출하지 않는 전투 종료 진단이다. */
 const REPLAY_REASONS = new Set(["COMBAT_REJECTED", "COMBAT_NOT_VERIFIED", "COMBAT_TOO_FAST", "REPLAY_VERSION_REQUIRED", "INVALID_ACTIONS", "RAID_SCORE_REJECTED", "EXPEDITION_SCORE_REJECTED"]);
-export type BattleResultPhase = "prepare" | "verify" | "stage" | "cake" | "bounty" | "duel" | "expedition" | "display";
+export type BattleResultPhase = "prepare" | "verify" | "stage" | "cake" | "bounty" | "duel" | "expedition" | "raid" | "display";
 export function battleResultFailure(error: unknown, phase: BattleResultPhase) {
   const value = error && typeof error === "object" ? error as { status?: unknown; code?: unknown; message?: unknown } : {};
   const status = typeof value.status === "number" && Number.isInteger(value.status) && value.status >= 400 && value.status <= 599 ? value.status : undefined;

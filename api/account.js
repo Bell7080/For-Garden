@@ -25,6 +25,11 @@ function accountCredentialProblem(rawId, password) {
 function accountIdToAuthEmail(rawId) {
   return `${normalizeAccountId(rawId)}@${ACCOUNT_ID_DOMAIN}`;
 }
+function authEmailToAccountId(email) {
+  if (typeof email !== "string") return null;
+  const suffix = `@${ACCOUNT_ID_DOMAIN}`;
+  return email.endsWith(suffix) && email.length > suffix.length ? email.slice(0, -suffix.length) : null;
+}
 
 // src/server/accountEntry.ts
 async function handler(req, res) {
@@ -80,6 +85,55 @@ async function handler(req, res) {
       return true;
     };
     if (!await takeBudget(ipKey)) return;
+    if (body.action === "sign-in") {
+      if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`)) return;
+      const found = await call("/rest/v1/rpc/server_id_account", { method: "POST", body: JSON.stringify({ p_email: email }) });
+      if (!found.ok) {
+        reply(503, "service_unavailable");
+        return;
+      }
+      const account = await found.json();
+      if (!account?.id) {
+        reply(401, "invalid_credentials");
+        return;
+      }
+      const loginEmail = account.email ?? email;
+      const proof = await call("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email: loginEmail, password: body.password }) });
+      if (proof.status === 429) {
+        const retry = proof.headers.get("retry-after");
+        if (retry) res.setHeader("retry-after", retry);
+        reply(429, "rate_limited");
+        return;
+      }
+      const value = await proof.json().catch(() => ({}));
+      if (!proof.ok && [400, 422].includes(proof.status) && (value.error_code ?? value.code) === "email_not_confirmed" && loginEmail === email) {
+        const confirmed = await call(`/auth/v1/admin/users/${encodeURIComponent(account.id)}`, { method: "PUT", body: JSON.stringify({ email, email_confirm: true }) });
+        if (!confirmed.ok) {
+          reply(503, "confirmation_failed");
+          return;
+        }
+        const retry = await call("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password: body.password }) });
+        if (retry.status === 429) {
+          const wait = retry.headers.get("retry-after");
+          if (wait) res.setHeader("retry-after", wait);
+          reply(429, "rate_limited");
+          return;
+        }
+        const recovered = await retry.json().catch(() => ({}));
+        if (!retry.ok || recovered.user?.id !== account.id) {
+          reply(401, "invalid_credentials");
+          return;
+        }
+        res.status(200).json(recovered);
+        return;
+      }
+      if (!proof.ok || value.user?.id !== account.id) {
+        reply(proof.status >= 500 ? 503 : 401, "invalid_credentials");
+        return;
+      }
+      res.status(200).json(value);
+      return;
+    }
     if (body.action === "confirm-existing") {
       if (!await takeBudget(`login-id:${body.id.toLowerCase().trim()}`)) return;
       const proof = await call("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password: body.password }) });
@@ -100,7 +154,7 @@ async function handler(req, res) {
         return;
       }
       const owned = await found.json();
-      if (!owned?.id) {
+      if (!owned?.id || owned.email && owned.email !== email) {
         reply(401, "invalid_credentials");
         return;
       }
@@ -131,15 +185,44 @@ async function handler(req, res) {
         reply(401, "not_authenticated");
         return;
       }
-      if (current.is_anonymous !== true && current.email !== email) {
+      const oldId = authEmailToAccountId(current.email);
+      if (oldId && current.email !== email) {
+        reply(409, "already_linked");
+        return;
+      }
+      if (current.is_anonymous !== true && !oldId && !current.email_confirmed_at) {
         reply(409, "already_linked");
         return;
       }
     }
     if (current && !await takeBudget(`user:${current.id}`)) return;
+    if (!current) {
+      const existing = await call("/rest/v1/rpc/server_id_account", { method: "POST", body: JSON.stringify({ p_email: email }) });
+      if (!existing.ok) {
+        reply(503, "identity_store_unavailable");
+        return;
+      }
+      if (await existing.json()) {
+        reply(409, "id_taken");
+        return;
+      }
+    }
+    const reserve = async (userId) => {
+      const result = await call("/rest/v1/rpc/server_set_account_id", { method: "POST", body: JSON.stringify({ p_player: userId, p_id: body.id.trim().toLowerCase() }) });
+      if (!result.ok) {
+        reply(503, "identity_store_unavailable");
+        return false;
+      }
+      if (await result.json() !== true) {
+        reply(409, "id_taken");
+        return false;
+      }
+      return true;
+    };
+    if (current && !await reserve(current.id)) return;
     const updated = await call(current ? `/auth/v1/admin/users/${encodeURIComponent(current.id)}` : "/auth/v1/admin/users", {
       method: current ? "PUT" : "POST",
-      body: JSON.stringify({ email, password: body.password, email_confirm: true })
+      body: JSON.stringify(current && current.is_anonymous !== true && !authEmailToAccountId(current.email) ? { email: current.email, password: body.password } : { email, password: body.password, email_confirm: true })
     });
     if (!updated.ok) {
       const error = await updated.json().catch(() => ({}));
@@ -166,7 +249,8 @@ async function handler(req, res) {
       reply(503, "invalid_auth_response");
       return;
     }
-    res.status(200).json({ ok: true, userId: user.id });
+    if (!current && !await reserve(user.id)) return;
+    res.status(200).json({ ok: true, userId: user.id, authEmail: current && current.is_anonymous !== true ? current.email : email });
   } catch {
     reply(503, "service_unavailable");
   }

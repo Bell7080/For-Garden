@@ -71,6 +71,11 @@ export class InventoryPopup {
   private closePopup?: () => void;
   private readonly inventory = new InventoryManager(session);
   private unsubscribeInventory?: () => void;
+  private inventoryDirty = false;
+  private readonly refreshVisible = (): void => {
+    if (!this.inventoryDirty || !this.body || !this.view || !this.popups.isTop(this.body)) return;
+    this.inventoryDirty = false; this.render(this.view);
+  };
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onCurrencyAction?: (action: CurrencyGuideAction) => void) {}
 
@@ -78,7 +83,7 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = POPUP_WIDTH; const height = POPUP_HEIGHT;
-    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.refreshVisible); this.inventoryDirty = false; this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
       /*
@@ -96,9 +101,12 @@ export class InventoryPopup {
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
       // Manager가 조회·검증·Session 반영을 끝낸 뒤에만 단일 list 경로를 렌더링한다.
       void this.inventory.refresh(this.api).then(() => {
+        if (this.view !== view || !view.active) return;
         this.render(view, true);
         // 초기 응답 이후에는 DTO 대신 manager의 인벤토리 확정 신호만 받아 현재 표시 모델을 다시 읽는다.
-        this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { if (this.view) this.render(this.view); });
+        if (!this.body || !this.view) return;
+        this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { this.inventoryDirty = true; });
+        this.scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.refreshVisible);
       });
     });
   }

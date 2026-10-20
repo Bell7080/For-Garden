@@ -128,6 +128,7 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly plate: Phaser.GameObjects.Container;
   private readonly labelSize: number;
   private enabledState = true;
+  private updateCost?: (cost?: { amount: number; affordable?: boolean }) => void;
   /** 누른 동일 포인터만 클릭을 끝낼 수 있게 기억하는 포인터 ID다. */
   private pressedPointerId?: number;
   private pressX = 0;
@@ -214,15 +215,21 @@ export class Button extends Phaser.GameObjects.Container {
       // 늘었을 때 덩어리가 판을 넘는다. 아이콘과는 손가락 하나가 아니라 한 뼘만 띄운다.
       const costStyle = textStyle({ role: "display", size: fontSize * 0.96, color: opts.cost.affordable === false ? COLOR.dangerText : COLOR.ink });
       const amount = scene.add.text(0, hasSub ? -14 : 0, opts.cost.amount.toLocaleString(), costStyle).setOrigin(0, 0.5).setScale(1, 1.14);
-      const total = label.width + gap + coin + gap * 0.24 + amount.width;
-      const left = -total / 2;
-      label.setX(left + label.width / 2);
-      const coinX = left + label.width + gap + coin / 2;
-      // 그림자를 한 겹 깔아 상단 재화 줄과 같은 방식으로 앉는다.
-      plate.add(scene.add.image(coinX + 3, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55));
-      plate.add(scene.add.image(coinX, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin));
-      amount.setX(coinX + coin / 2 + gap * 0.24);
-      plate.add(amount);
+      const shadow = scene.add.image(0, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55);
+      const icon = scene.add.image(0, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin);
+      plate.add([shadow, icon, amount]);
+      this.updateCost = (cost) => {
+        shadow.setVisible(!!cost); icon.setVisible(!!cost); amount.setVisible(!!cost);
+        if (!cost) { label.setX(0); return; }
+        amount.setText(cost.amount.toLocaleString()).setColor(cost.affordable === false ? COLOR.dangerText : COLOR.ink);
+        const total = label.width + gap + coin + gap * 0.24 + amount.width;
+        const left = -total / 2;
+        label.setX(left + label.width / 2);
+        const coinX = left + label.width + gap + coin / 2;
+        shadow.setX(coinX + 3); icon.setX(coinX);
+        amount.setX(coinX + coin / 2 + gap * 0.24);
+      };
+      this.updateCost(opts.cost);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {
@@ -312,6 +319,12 @@ export class Button extends Phaser.GameObjects.Container {
     mark.setPosition(this.labelText.x - this.labelText.width / 2 - size * 0.75, this.labelText.y);
     this.plate.add(mark);
     return mark;
+  }
+
+  /** 비용 표시를 바꿀 때 버튼 입력면·누름 동작은 유지한다. */
+  setCost(cost?: { amount: number; affordable?: boolean }): this {
+    this.updateCost?.(cost);
+    return this;
   }
 
   setSub(text: string): this {

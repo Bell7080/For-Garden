@@ -797,7 +797,8 @@ export class BattleScene extends Phaser.Scene {
       this.showRaidResult(result);
     } catch (error) {
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
-      console.error("[raid] 피해 제출 실패", error);
+      const diagnostic = battleResultFailure(error, "raid");
+      console.error("[raid] 피해 제출 실패", { ...diagnostic, clientVersion: packageInfo.version });
       failBossSettlementAttempt(this.bossSettlementFailureState);
       const code = error instanceof GameApiError ? error.code : undefined;
       const reason = code === "RAID_SCORE_REJECTED" ? t("battle.settle.scoreRejected")
@@ -806,6 +807,7 @@ export class BattleScene extends Phaser.Scene {
       const failureUi = this.add.container(0, 0).setDepth(5000);
       failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));
       failureUi.add(this.add.text(BASE_WIDTH / 2, 850, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5));
+      failureUi.add(this.add.text(BASE_WIDTH / 2, 935, `${diagnostic.reference} · v${packageInfo.version}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.settle.retry"), variant: "primary", onClick: () => void this.submitRaidRun(actions) }));
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
       this.bossSettlementFailureUi = failureUi;

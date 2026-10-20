@@ -1,3 +1,4 @@
+import { finishOAuthPopup } from "../api/webOAuth";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { playerCardManager } from "../managers/PlayerCardManager";
 import Phaser from "phaser";
@@ -20,6 +21,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(data?: { destination?: "lobby" | "raid" | "raidBattle"; raidId?: string; raidBattle?: RaidBattleInputDto }): void {
+    if (finishOAuthPopup()) return;
     setDebugScene("boot");
     // 서버 연결은 보안 저장소와 설정이 있는 빌드에서만 선다. 호출은 쓸 때 처음 일어나므로 부팅을 기다리게 하지 않는다.
     installBackend();

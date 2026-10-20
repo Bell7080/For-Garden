@@ -127,14 +127,14 @@ describe("SupabaseAccountApi", () => {
     const jwt = (claims: Record<string, unknown>) => `h.${btoa(JSON.stringify(claims)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}.s`;
     const sessionWith = (claims: Record<string, unknown>, n = 1) => ({ access_token: jwt(claims), refresh_token: `r${n}`, expires_at: 2_000_000, user: { id: "11111111-2222-3333-4444-555555555555" } });
 
-    it("구형 미확인 아이디는 로그인에서 비밀번호 소유권 확인 후 같은 UID로 복구한다", async () => {
-      let attempt = 0;
-      const { api, store } = setup(path => {
-        if (path === "/api/account") return json({ ok: true, userId: "11111111-2222-3333-4444-555555555555" });
-        return ++attempt === 1 ? json({ error_code: "email_not_confirmed" }, 400) : json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" }));
+    it("아이디 로그인은 서버 별칭 경계를 통해 확인된 동일 UID의 세션을 받는다", async () => {
+      const { api, store, calls } = setup(path => {
+        if (path !== "/api/account") throw new Error("직접 합성 이메일 로그인 금지");
+        return json(sessionWith({ is_anonymous: false, email: "player@example.com" }));
       });
-      expect(await api.signInWithId("garden_01", "correct horse")).toMatchObject({ ok: true, value: { kind: "linked" } });
+      expect((await api.signInWithId("garden_01", "correct horse")).ok).toBe(true);
       expect(store.value?.userId).toBe("11111111-2222-3333-4444-555555555555");
+      expect(JSON.parse(String(calls[0].init.body))).toEqual({action:"sign-in",id:"garden_01",password:"correct horse"});
     });
 
     it("가입 확정 뒤 로그인 응답만 실패하면 회원가입을 반복하지 않고 같은 UID로 복구한다", async () => {
@@ -231,11 +231,11 @@ describe("SupabaseAccountApi", () => {
       expect(calls).toHaveLength(0);
     });
 
-    it("다른 기기 로그인은 password grant로 들어가 같은 계정의 토큰을 보관한다", async () => {
+    it("다른 기기 로그인은 서버 별칭으로 들어가 같은 계정의 토큰을 보관한다", async () => {
       const { api, store, calls } = setup(() => json(sessionWith({ is_anonymous: false, email: "garden_01@id.forgarden.app" })));
       const result = await api.signInWithId("GARDEN_01", "correct horse");
       expect(result).toMatchObject({ ok: true, value: { kind: "linked" } });
-      expect(calls[0].path).toBe("/auth/v1/token?grant_type=password");
+      expect(calls[0].path).toBe("/api/account");
       expect(store.value?.userId).toBe("11111111-2222-3333-4444-555555555555");
     });
 

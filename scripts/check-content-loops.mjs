@@ -15,6 +15,6 @@ try{
  sql(readFileSync('supabase/tests/launch-reset-bootstrap.sql','utf8'));
  for(const f of readdirSync('supabase/migrations').filter(x=>x.endsWith('.sql')).sort())sql(readFileSync(join('supabase/migrations',f),'utf8'));
  const outfile=join(dir,'content-loops.mjs');
- await build({entryPoints:['tests/helpers/contentLoopScenarios.ts'],outfile,bundle:true,platform:'node',format:'esm',target:'node22',define:{'import.meta.env':'{}','import.meta.env.MODE':'"production"','import.meta.env.DEV':'false','import.meta.env.PROD':'true'}});
+ await build({entryPoints:[process.argv[2] ?? 'tests/helpers/contentLoopScenarios.ts'],outfile,bundle:true,platform:'node',format:'esm',target:'node22',define:{'import.meta.env':'{}','import.meta.env.MODE':'"production"','import.meta.env.DEV':'false','import.meta.env.PROD':'true'}});
  const {run}=await import(pathToFileURL(outfile).href);await run(sql);
 }finally{try{docker(['rm','-f',name]);}finally{rmSync(dir,{recursive:true,force:true});}}

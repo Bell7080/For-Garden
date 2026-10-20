@@ -369,11 +369,11 @@ export class ExpeditionBossSettlementFlow {
 
   constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionClient, "applyBossScore">) {}
 
-  async finish(input: { replayVersion?: 2; requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
+  async finish(input: { replayVersion?: 2; requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[], stopAtMs?: number): Promise<ExpeditionBossFinalResult> {
     let score = this.scores.get(input.requestId);
     if (!score) {
       try {
-        score = await this.api.submitExpeditionBossScore({ replayVersion: input.replayVersion, requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions] });
+        score = await this.api.submitExpeditionBossScore({ replayVersion: input.replayVersion, requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions], ...(stopAtMs === undefined ? {} : { stopAtMs }) });
       } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
       this.scores.set(input.requestId, score);
     }

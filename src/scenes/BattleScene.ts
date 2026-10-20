@@ -745,7 +745,7 @@ export class BattleScene extends Phaser.Scene {
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
     try {
-      const result = await this.bossSettlement.finish(input, actions);
+      const result = await this.bossSettlement.finish(input, actions, this.bossStopAtMs());
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showBossResult(result.score, result.settlement);
@@ -774,6 +774,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
 
+  /** 자연 종료와 자발적 종료를 구별한다. 재시도 중에도 finished 상태라 같은 틱을 보낸다. */
+  private bossStopAtMs(): number | undefined {
+    return (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss")
+      && this.battleInput.replayVersion === 2 && this.state.phase === "fight"
+      ? Math.round(this.state.elapsed * 1_000 / BOSS_STEP_MS) * BOSS_STEP_MS : undefined;
+  }
+
   /**
    * 레이드 한 판을 서버에 확정하고 결과판을 연다.
    *
@@ -790,8 +797,9 @@ export class BattleScene extends Phaser.Scene {
     this.bossSettlementFailureUi = undefined;
     // 요청 ID는 그 판의 **입장 영수증**이다 — 재시도도 같은 ID라 성공한 제출이 두 번 쌓이지 않는다.
     const requestId = this.battleInput.requestId;
+    const stopAtMs = this.bossStopAtMs();
     try {
-      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, replayVersion: this.battleInput.replayVersion });
+      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, ...(stopAtMs === undefined ? {} : { stopAtMs }), replayVersion: this.battleInput.replayVersion });
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);

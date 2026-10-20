@@ -820,7 +820,7 @@ export interface EventListResponse { events: EventDto[]; serverTime: string; }
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
 /** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
-export interface SubmitExpeditionBossScoreRequest { replayVersion?: 2; requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
+export interface SubmitExpeditionBossScoreRequest { stopAtMs?: number; replayVersion?: 2; requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
 export interface SubmitExpeditionBossScoreResponse {
   /** Actual HP damage for the contribution chart, separate from converted expedition points. */
@@ -924,7 +924,7 @@ export interface EnterRaidResponse extends PlayerStateDto { replaySeed?: string;
  * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
  * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
  */
-export interface SubmitRaidDamageRequest { replayVersion?: 2; requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
+export interface SubmitRaidDamageRequest { stopAtMs?: number; replayVersion?: 2; requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
 export interface SubmitRaidDamageResponse extends PlayerStateDto { /** Shared HP actually removed; personal runDamage survives concurrent kills. */ sharedDamage?: number; raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
 /** 끝난 판의 정산. 참여한 판만, 한 번만 받는다. */

@@ -160,19 +160,26 @@ export function verifyBossWallTime(
 ): void {
   if (method !== "submitRaidDamage" && method !== "submitExpeditionBossScore")
     return;
-  const request = args[0] as { requestId: string };
+  const request = args[0] as { requestId: string; raidId?: string; runId?: string; nodeId?: string };
+  // 재접속은 새 HTTP 요청 ID를 쓰더라도 이미 검증·저장된 내부 영수증을 되돌려준다.
+  // 입장 영수증은 최초 확정 때 소진되므로 그 응답을 새 전투처럼 다시 시간 검증하지 않는다.
+  const operation = method === "submitRaidDamage" ? "raidSubmit" : "expeditionBoss";
+  const receipt = state.serverJournal?.receipts[JSON.stringify([operation, request.requestId])];
+  const identity = method === "submitRaidDamage" ? request.raidId : JSON.stringify([request.runId ?? "", request.nodeId ?? ""]);
+  if (receipt && receipt.identity === identity) return;
   const admission = state.serverJournal?.raidAdmissions[request.requestId];
   // 새 규칙으로 발급한 입장만 admittedAt이 있다. 구형 입장은 다시 입장해야 한다.
   const issued =
     method === "submitRaidDamage"
       ? admission?.admittedAt
       : combatJournal(state).bossIssuedAt?.[request.requestId];
+  const issuedMs = issued ? Date.parse(issued) : NaN;
   const duration = (result as { endedAtMs?: number }).endedAtMs;
   if (
-    !issued ||
+    !Number.isFinite(issuedMs) ||
     typeof duration !== "number" ||
     !Number.isFinite(duration) ||
-    duration > Math.max(0, now.getTime() - Date.parse(issued)) * 3 + 2000
+    duration > Math.max(0, now.getTime() - issuedMs) * 3 + 2000
   )
     throw new Error("COMBAT_TOO_FAST");
 }

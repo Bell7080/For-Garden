@@ -1,3 +1,5 @@
+import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
+import { SaveManager } from "../../src/state/SaveManager";
 import { worldRaidDefinitions, type SharedRaidRecord } from "../../src/server/sharedRaids";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { createCompletedTutorialState } from '../../src/core/tutorial';
@@ -7,7 +9,7 @@ import { handleGameCall, GameCallError, type StateStore, StateConflictError } fr
 import { STAGES } from '../../src/data/stages';
 import { STAGE_STORY_LINKS } from '../../src/data/stageStories';
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from '../../src/core/playerLevel';
-export function createFixture(mode: "stage" | "duel" | "raid" = "stage", prepare?: (state: Session) => void) {
+export function createFixture(mode: "stage" | "duel" | "raid" | "expedition" = "stage", prepare?: (state: Session) => void) {
     const state = createDefaultSession();
     state.completedStoryIds.add(OPENING_TRAIN.id);
     state.party = ['rex', 'mette', 'torika'];
@@ -30,6 +32,12 @@ export function createFixture(mode: "stage" | "duel" | "raid" = "stage", prepare
         for (const id of [link.pre, link.post])
             if (id)
                 state.completedStoryIds.add(id);
+    if (mode === "expedition") {
+        const saves = new SaveManager({ getItem: () => null, setItem: () => {}, removeItem: () => {} });
+        new ExpeditionManager(state, saves, () => new Date(), true).prepareDevelopmentBossShortcut(state.party);
+        state.expedition.run!.normalNodeScoreTotal = 25000;
+        state.expedition.run!.pendingRewards.gold = 300;
+    }
     prepare?.(state);
     let stored = { revision: '1', data: JSON.parse(JSON.stringify(saveManager.exportData(state))) };
     const receipts = new Map<string, unknown>();
@@ -62,8 +70,10 @@ export function createFixture(mode: "stage" | "duel" | "raid" = "stage", prepare
                 receipts.set(input.requestId, { ...input.response as object, revision: stored.revision });
             return { revision: stored.revision };
         } };
-    return { async call(request: Parameters<typeof handleGameCall>[1]) {
+    let failOnceMethod = "";
+    return { failNext(method: string) { failOnceMethod = method; }, async call(request: Parameters<typeof handleGameCall>[1]) {
             try {
+                if (request.method === failOnceMethod) { failOnceMethod = ''; throw new GameCallError(503, 'injected_unavailable'); }
                 const body = await handleGameCall('isolated-browser-player', request, { store, strict: true });
                 calls.push({ method: request.method, status: 200 });
                 console.log("[browser server]", request.method, 200);

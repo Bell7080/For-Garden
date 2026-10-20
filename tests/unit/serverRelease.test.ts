@@ -8,6 +8,7 @@ import {
 } from "../../src/server/combatAuthority";
 import {
   authoritativeArgs,
+  verifyBossWallTime,
   recordBoundaryResult,
 } from "../../src/server/releaseBoundary";
 import {
@@ -178,6 +179,20 @@ describe("출시 서버 전투 검증", () => {
       ),
     ).toThrow();
     expect(Object.values(combatJournal(state).records)).toHaveLength(0);
+  });
+  it("재접속의 새 HTTP 요청도 이미 확정된 내부 점수 영수증을 복구하며 미검증 제출은 여전히 거절한다", () => {
+    for (const method of ["submitRaidDamage", "submitExpeditionBossScore"]) {
+      const state = createDefaultSession();
+      state.serverJournal = emptyServerJournal();
+      const request = { requestId: "saved-score", raidId: "raid", runId: "run", nodeId: "boss" };
+      const operation = method === "submitRaidDamage" ? "raidSubmit" : "expeditionBoss";
+      const identity = method === "submitRaidDamage" ? "raid" : JSON.stringify(["run", "boss"]);
+      expect(() => verifyBossWallTime(state, method, [request], { endedAtMs: 10000 }, now)).toThrow("COMBAT_TOO_FAST");
+      state.serverJournal.receipts[JSON.stringify([operation, request.requestId])] = { identity, result: { endedAtMs: 10000 } };
+      expect(() => verifyBossWallTime(state, method, [request], { endedAtMs: 10000 }, now)).not.toThrow();
+      state.serverJournal.receipts[JSON.stringify([operation, request.requestId])].identity = "different-run";
+      expect(() => verifyBossWallTime(state, method, [request], { endedAtMs: 10000 }, now)).toThrow("COMBAT_TOO_FAST");
+    }
   });
   it("구형 보스 리플레이 우회와 임의 대량 행동을 거절한다", () => {
     const state = createDefaultSession();

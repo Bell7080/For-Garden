@@ -19700,6 +19700,8 @@ var REPLAY_ROUNDING_MS = 1;
 function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
   const balance = input.balance ?? EXPEDITION_BOSS_BALANCE;
   if (!input.allies.length || actions.length > balance.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const stopAtMs = input.stopAtMs;
+  if (stopAtMs !== void 0 && (input.replayIdentity === void 0 || !Number.isInteger(stopAtMs) || stopAtMs < 0 || stopAtMs % BOSS_STEP_MS !== 0 || stopAtMs > balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1e3, damagePerSecond: attackPerSecond, label }));
@@ -19722,7 +19724,7 @@ function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
     const random = bossBattleRandom(input.replayIdentity);
     let tick = 0;
     for (const action of actions) {
-      if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0 || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0 || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > (stopAtMs ?? balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
       while (tick * BOSS_STEP_MS < action.elapsedMs && state.phase === "fight") {
         stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
         tick += 1;
@@ -19733,12 +19735,12 @@ function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
       const events = fireUltimate(state, fighter.id, random);
       if (!events.length && fighter.energy >= energy) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     }
-    while (state.phase === "fight" && tick * BOSS_STEP_MS < balance.maximumDurationMs + BOSS_STEP_MS) {
+    while (state.phase === "fight" && tick * BOSS_STEP_MS < (stopAtMs ?? balance.maximumDurationMs + BOSS_STEP_MS)) {
       stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
       tick += 1;
     }
     const bossDefeated2 = killable && state.phase === "victory";
-    if (state.phase !== "defeat" && !bossDefeated2) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+    if (state.phase !== "defeat" && !bossDefeated2 && stopAtMs === void 0) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
     const actualDamage = state.fighters.filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null).reduce((sum, fighter) => {
       const value = state.contributions[fighter.id]?.attack;
       return sum + (value?.attackPower ?? 0) + (value?.abilityPower ?? 0);
@@ -19747,7 +19749,7 @@ function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
       actualDamage: Math.round(actualDamage),
       totalDamage: Math.round(state.boss?.score ?? 0),
       endedAtMs: Math.round(state.elapsed * 1e3),
-      allAlliesDead: !bossDefeated2,
+      allAlliesDead: state.fighters.filter(({ side }) => side === "player").every(({ hp }) => hp <= 0),
       bossDefeated: bossDefeated2,
       remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp]))
     };
@@ -31222,6 +31224,7 @@ var FakeServer = class {
       if (!pontos) throw new Error("INVALID_BOSS_DEFINITION");
       const boss = request.replayVersion === 2 ? getExpeditionNodeEnemies("boss", 20)[0] : { ...pontos, encounterRole: expeditionNodeRole("boss", EXPEDITION_MAP_BALANCE.bossFloor) };
       result = resolveExpeditionBossBattle({
+        stopAtMs: request.stopAtMs,
         allies: request.replayVersion === 2 ? allies.filter(({ id }) => roster.some((entry) => entry.relicId === id && entry.alive && entry.currentHp > 0)) : allies,
         boss,
         ...request.replayVersion === 2 ? { replayIdentity: JSON.stringify([request.runId, request.nodeId]) } : {},
@@ -31611,6 +31614,7 @@ var FakeServer = class {
       const base = RELICS.find(({ id }) => id === instance.bossRelicId);
       if (!base) throw new Error("INVALID_BOSS_DEFINITION");
       result = resolveExpeditionBossBattle({
+        stopAtMs: request.stopAtMs,
         allies,
         boss: raidBossDef(base, instance.difficulty),
         balance: RAID_BOSS_BALANCE,
@@ -35038,10 +35042,15 @@ function verifyBossWallTime(state, method, args, result, now) {
   if (method !== "submitRaidDamage" && method !== "submitExpeditionBossScore")
     return;
   const request = args[0];
+  const operation = method === "submitRaidDamage" ? "raidSubmit" : "expeditionBoss";
+  const receipt = state.serverJournal?.receipts[JSON.stringify([operation, request.requestId])];
+  const identity = method === "submitRaidDamage" ? request.raidId : JSON.stringify([request.runId ?? "", request.nodeId ?? ""]);
+  if (receipt && receipt.identity === identity) return;
   const admission = state.serverJournal?.raidAdmissions[request.requestId];
   const issued = method === "submitRaidDamage" ? admission?.admittedAt : combatJournal(state).bossIssuedAt?.[request.requestId];
+  const issuedMs = issued ? Date.parse(issued) : NaN;
   const duration = result.endedAtMs;
-  if (!issued || typeof duration !== "number" || !Number.isFinite(duration) || duration > Math.max(0, now.getTime() - Date.parse(issued)) * 3 + 2e3)
+  if (!Number.isFinite(issuedMs) || typeof duration !== "number" || !Number.isFinite(duration) || duration > Math.max(0, now.getTime() - issuedMs) * 3 + 2e3)
     throw new Error("COMBAT_TOO_FAST");
 }
 

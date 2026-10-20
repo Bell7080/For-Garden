@@ -656,6 +656,7 @@ export class FakeServer implements GameApi {
       // 새겨야 기절 시간과 받는 피해가 재현에서 갈리지 않는다.
       const boss = request.replayVersion === 2 ? getExpeditionNodeEnemies("boss", 20)[0] : { ...pontos, encounterRole: expeditionNodeRole("boss", EXPEDITION_MAP_BALANCE.bossFloor) };
       result = resolveExpeditionBossBattle({
+        stopAtMs: request.stopAtMs,
         allies: request.replayVersion === 2 ? allies.filter(({ id }) => roster.some((entry) => entry.relicId === id && entry.alive && entry.currentHp > 0)) : allies, boss,
         ...(request.replayVersion === 2 ? { replayIdentity: JSON.stringify([request.runId, request.nodeId]) } : {}),
         initialHpPercentByRelic: Object.fromEntries(roster.map(({ relicId, currentHp }) => [relicId, currentHp])),
@@ -1043,6 +1044,7 @@ export class FakeServer implements GameApi {
       if (!base) throw new Error("INVALID_BOSS_DEFINITION");
       // 성장은 화면과 **같은 함수**를 지난다. 서버만 따로 계산하면 보여 준 레벨과 갈린다.
       result = resolveExpeditionBossBattle({
+        stopAtMs: request.stopAtMs,
         allies, boss: raidBossDef(base, instance.difficulty), balance: RAID_BOSS_BALANCE,
         percentHpBasis: raidBossPercentHpBasis(base, instance.difficulty),
         augmentEffects: growth.traitEffects, bondLevels: growth.bondLevels, breakthroughs: growth.breakthroughs,

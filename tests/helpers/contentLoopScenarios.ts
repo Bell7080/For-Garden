@@ -1,3 +1,4 @@
+import { runRaidScenarios } from "./raidConcurrencyScenarios";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import assert from 'node:assert/strict';
 import { handleGameCall, GameCallError } from '../../src/server/gameHandler';
@@ -263,5 +264,6 @@ export async function run(sql: (query: string) => string) {
         nodes++;
     }
     assert.equal(nodes, 20);
+    await runRaidScenarios(sql);
     console.log(JSON.stringify({ passed: true, scope: 'production strict handler + RemoteGameApi + full migration PostgreSQL RPC', reportedStage: { stage: '3-10', party: state.party, level: 30, speed: 2, ticks, actions: actions.length, clearPersisted: true }, stageChecks, raid: { damage: raidScore.runDamage, scorePersisted: true, settled: true }, replyLostAndRecovered: [...lostMethods] }));
 }

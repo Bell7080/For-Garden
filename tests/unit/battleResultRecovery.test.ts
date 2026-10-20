@@ -47,9 +47,9 @@ describe("전투 결과 UI 복구", () => {
         const pending = new Promise(r => { resolve = r; });
         const complete = vi.fn();
         const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", { Phaser: { Scene: class {
-                } }, gameApi: { submitRaidDamage: () => pending }, beginBossSettlementAttempt: () => true, completeBossSettlementAttempt: complete });
+                } }, gameApi: { submitRaidDamage: () => pending }, BOSS_STEP_MS: 20, beginBossSettlementAttempt: () => true, completeBossSettlementAttempt: complete });
         const show = vi.fn();
-        const scene = Object.assign(Object.create(Battle.prototype), { combatGeneration: 1, battleInput: { mode, raidId: "raid", requestId: "entry", replayVersion: 2 }, scene: { isActive: () => true }, showRaidResult: show, showBossResult: show, bossSettlement: { finish: () => pending } });
+        const scene = Object.assign(Object.create(Battle.prototype), { combatGeneration: 1, state: { phase: "fight", elapsed: 1.02 }, battleInput: { mode, raidId: "raid", requestId: "entry", replayVersion: 2 }, scene: { isActive: () => true }, showRaidResult: show, showBossResult: show, bossSettlement: { finish: () => pending } });
         const operation = mode === "raid" ? scene.submitRaidRun([]) : scene.submitAndSettleBoss(scene.battleInput, []);
         scene.combatGeneration = 2;
         resolve({ score: {}, settlement: {} });

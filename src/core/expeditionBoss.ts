@@ -26,6 +26,8 @@ export interface BossBattleBalance {
 export interface ExpeditionBossReplayInput {
   /** Identity supplied by the admission/run, never a client damage total or random seed. */
   replayIdentity?: string;
+  /** 자발적 종료 시점. 서버가 이 틱까지만 재현하며 클라이언트 피해 합계는 받지 않는다. */
+  stopAtMs?: number;
   allies: readonly RelicDef[];
   boss: RelicDef;
   initialHpPercentByRelic?: Readonly<Record<string, number>>;
@@ -169,6 +171,9 @@ const REPLAY_ROUNDING_MS = 1;
 export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, actions: readonly ExpeditionBossAction[], rng: () => number = () => 0.999999): ExpeditionBossResult {
   const balance = input.balance ?? EXPEDITION_BOSS_BALANCE;
   if (!input.allies.length || actions.length > balance.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const stopAtMs = input.stopAtMs;
+  if (stopAtMs !== undefined && (input.replayIdentity === undefined || !Number.isInteger(stopAtMs)
+    || stopAtMs < 0 || stopAtMs % BOSS_STEP_MS !== 0 || stopAtMs > balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
@@ -186,7 +191,7 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
     let tick = 0;
     for (const action of actions) {
       if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0
-        || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+        || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > (stopAtMs ?? balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
       while (tick * BOSS_STEP_MS < action.elapsedMs && state.phase === "fight") {
         stepSkirmish(state, BOSS_STEP_MS / 1_000, random); tick += 1;
       }
@@ -196,14 +201,14 @@ export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, ac
       const events = fireUltimate(state, fighter.id, random);
       if (!events.length && fighter.energy >= energy) throw new Error("INVALID_BOSS_BATTLE_INPUT");
     }
-    while (state.phase === "fight" && tick * BOSS_STEP_MS < balance.maximumDurationMs + BOSS_STEP_MS) {
+    while (state.phase === "fight" && tick * BOSS_STEP_MS < (stopAtMs ?? balance.maximumDurationMs + BOSS_STEP_MS)) {
       stepSkirmish(state, BOSS_STEP_MS / 1_000, random); tick += 1;
     }
     const bossDefeated = killable && state.phase === "victory";
-    if (state.phase !== "defeat" && !bossDefeated) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+    if (state.phase !== "defeat" && !bossDefeated && stopAtMs === undefined) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
     const actualDamage = state.fighters.filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null)
       .reduce((sum, fighter) => { const value = state.contributions[fighter.id]?.attack; return sum + (value?.attackPower ?? 0) + (value?.abilityPower ?? 0); }, 0);
-    return { actualDamage: Math.round(actualDamage), totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: !bossDefeated, bossDefeated,
+    return { actualDamage: Math.round(actualDamage), totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: state.fighters.filter(({ side }) => side === "player").every(({ hp }) => hp <= 0), bossDefeated,
       remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp])) };
   }
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.

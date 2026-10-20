@@ -37,8 +37,9 @@ describe("expedition augment rewards", () => {
     for (let floor = 1; floor <= 19; floor += 1) {
       nodeTotal += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 70, cleared: true });
     }
-    // 원 피해 450점(레벨 1 3인 편성의 실측)만으로도 노드 총점의 아홉 배를 넘는다.
-    expect(expeditionBossDamageScore(450)).toBeGreaterThan(nodeTotal * 9);
+    // 경감 전 기여 4천 점 기준, 보스가 노드보다 크되 이전 200배 환산처럼 과도하지 않다.
+    expect(expeditionBossDamageScore(4_000)).toBeGreaterThan(nodeTotal * 3);
+    expect(expeditionBossDamageScore(4_000)).toBeLessThan(nodeTotal * 5);
   });
 
   it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {

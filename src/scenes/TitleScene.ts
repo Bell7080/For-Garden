@@ -499,7 +499,14 @@ export class TitleScene extends Phaser.Scene {
       });
     };
     if (firstRun) {
-      this.showLoginButtons(cx, enter);
+      this.showLoginButtons(cx, enter, true, () => {
+        this.loginRebuild = undefined;
+        this.loginButtons.forEach((button) => button.destroy());
+        this.loginButtons = [];
+        prompt.setVisible(true);
+        this.tweens.add({ targets: prompt, alpha: { from: 1, to: 0.25 }, duration: 900, yoyo: true, repeat: -1 });
+        tapAnywhere.once("pointerup", enter);
+      });
       // 로그인 버튼을 고르는 동안 곧 열릴 오프닝의 스탠딩을 한 장씩 읽어 둔다(캐시에만 — 파싱까지, GPU는 세울 때).
       void (async () => {
         for (const id of dialogueStandingOrder(OPENING_TRAIN, speakerStanding)) {
@@ -519,10 +526,10 @@ export class TitleScene extends Phaser.Scene {
    * 처음 여는 기기의 로그인 버튼. 지금 되는 것은 게스트뿐이고 나머지는 자리만 잡은 임시 버튼이다 — 누르면
    * 곧 지원된다고만 알린다(성공을 흉내 내지 않는다). 연결이 서면 그 버튼의 `onClick`만 바꾼다.
    */
-  private showLoginButtons(cx: number, enter: () => void, fade = true): void {
+  private showLoginButtons(cx: number, enter: () => void, fade = true, authenticated: () => void = enter): void {
     this.loginButtons.forEach((button) => button.destroy());
     this.loginButtons = [];
-    this.loginRebuild = () => this.showLoginButtons(cx, enter, false);
+    this.loginRebuild = () => this.showLoginButtons(cx, enter, false, authenticated);
     const soon = () => this.popups?.confirm({ title: t("settings.account.notice"), message: t("title.login.soon"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
     const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
       { labelKey: "title.login.guest", onClick: enter, primary: true },
@@ -530,7 +537,7 @@ export class TitleScene extends Phaser.Scene {
       { labelKey: "title.login.apple", onClick: soon },
       { labelKey: "title.login.email", onClick: soon },
       // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
-      { labelKey: "title.login.account", onClick: () => { if (this.popups) openAccountIdPopup(this, this.popups, { mode: "both", onDone: () => enter() }); } },
+      { labelKey: "title.login.account", onClick: () => { if (this.popups) openAccountIdPopup(this, this.popups, { mode: "both", onDone: authenticated }); } },
     ];
     const ys = titleLoginSlots(entries.length);
     entries.forEach((entry, i) => {

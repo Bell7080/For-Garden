@@ -656,7 +656,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const bossInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     // 표기 레벨은 기획대로 LV.20이고, 돌파 효과는 실제 난전이 쓰는 단계를 그대로 보인다.
     addEnemyPortraitTap(this, RANKING.boss.tap, () => this.bossPortrait, () => bossInfo.show({
-      def: getExpeditionEncounterEnemies("boss", 20)[0], level: 20, breakthrough: expeditionBossGrowth().breakthrough,
+      def: getExpeditionEncounterEnemies("boss", 20)[0], ...expeditionBossGrowth(),
     }));
     this.renderMyScore(t("expedition.syncing"));
     void this.refreshMyScore();

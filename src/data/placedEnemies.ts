@@ -1,3 +1,4 @@
+import { raidBossGrowth } from "../core/raid";
 import type { BattleSceneInputDto } from "../core/expeditionBattle";
 import type { BattleStageDef, RelicDef } from "../core/types";
 import { expeditionEnemyLevel } from "./expeditionEnemies";
@@ -29,6 +30,10 @@ export function placedEnemyIndex(
   stage: BattleStageDef,
   enemyDefs: readonly RelicDef[],
 ): Map<string, PlacedEnemy> {
+  if (input.mode === "raid") {
+    const growth = raidBossGrowth(input.difficulty);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, { def, ...growth }]));
+  }
   // 대작전은 한 판의 적 전부가 한꺼번에 서므로 목록 전체가 `enemy-<n>` 순서 그대로 이 표에 든다.
   // 한 단계가 한 레벨·한 야성 단계를 쓰므로 자리마다 다른 성장이 없다.
   if (input.mode === "cake") {

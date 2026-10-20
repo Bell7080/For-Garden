@@ -17027,12 +17027,9 @@ var EXPEDITION_COMBAT_BALANCE = {
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
 };
 var EXPEDITION_SCORE_BALANCE = {
-  /** 노드 한 층당 기본 점수. */
   perFloor: 40,
-  /** 원정대 평균 잔여 HP 1%당 점수. */
   perRemainingHpPercent: 1.5,
-  /** 폰토스에게 넣은 피해 1점이 점수판에서 갖는 값. */
-  bossDamagePerPoint: 200
+  bossDamagePerPoint: 10
 };
 var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
   /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
@@ -17151,7 +17148,8 @@ function expeditionRecommendedLevel(floor) {
 }
 var EXPEDITION_LEVEL_PER_FLOOR = 2;
 var ENCOUNTER_HORDE_COUNT = 5;
-function expeditionEnemyLevel(_type, floor) {
+function expeditionEnemyLevel(type, floor) {
+  if (type === "boss" && floor === 20) return 20;
   return expeditionRecommendedLevel(floor);
 }
 function getExpeditionNodeEnemies(type, floor) {
@@ -17538,6 +17536,10 @@ function partyRuneTraitEffects(equipped) {
 // src/data/placedEnemies.ts
 init_define_import_meta_env();
 function placedEnemyIndex(input, stage, enemyDefs) {
+  if (input.mode === "raid") {
+    const growth = raidBossGrowth(input.difficulty);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, { def, ...growth }]));
+  }
   if (input.mode === "cake") {
     const tier = getCakeOperationTier(input.tierId);
     const level = cakeOperationEnemyDisplayLevel(tier).level;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expeditionEnemyLevel, getExpeditionEncounterEnemies, getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
+import { expeditionBossGrowth, expeditionEnemyLevel, getExpeditionEncounterEnemies, getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
 import { getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 
@@ -34,14 +34,14 @@ describe("원정 노드 적 편성", () => {
 
   it("최종층 성장 폰토스는 유한한 자릿수로 일반 적과 SSR의 생존·마법 공격 상한을 넘는다", () => {
     const [pontos] = getExpeditionEncounterEnemies("boss", 20);
-    const normalEnemies = getExpeditionEncounterEnemies("normal", 20);
-    // 같은 25레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
+    const normalEnemies = getExpeditionEncounterEnemies("normal", 10);
+    // 같은 20레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
-      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 25, relic.rarity) }));
-    // 20층이 곧 LV.40이고, 적 곡선 2%/레벨의 78% 성장이 그대로 실린 실제 전투 수치다.
+      .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) }));
+    // 폰토스는 LV.20의 38% 성장을 실제 전투와 표시에서 함께 쓴다.
     // **공격 속도와 충전량은 태생 그대로 남는다** — 성장은 오각형의 다섯 주능력치만 올린다
     // (`GROWTH_STAT_KEYS`). 보스도 아군과 같은 규칙을 쓰므로 여기서 예외를 만들지 않는다.
-    expect(pontos.stats).toMatchObject({ hp: 4984, def: 320, res: 231, ap: 463, attackSpeed: 55, energyGain: 30 });
+    expect(pontos.stats).toMatchObject({ hp: 3864, def: 248, res: 179, ap: 359, attackSpeed: 55, energyGain: 30 });
     // 생존 축은 최종 보스가 일반 적 전체를 넘는다.
     for (const key of ["hp", "def", "res"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));
@@ -55,14 +55,9 @@ describe("원정 노드 적 편성", () => {
     expect(pontos.stats.ap).toBeLessThan(10_000);
   });
 
-  it("폰토스 정보창 표기는 1등급 LV.20이어도 높은 표시 스탯 스냅샷을 유지한다", () => {
-    const [pontos] = getExpeditionNodeEnemies("boss", 20);
-    // 최종 지시의 LV.20 표기는 성장 재계산 요청이 아니므로 기존 고정 스탯을 그대로 검증한다.
-    expect({ level: 20, grade: 1, stats: pontos.stats }).toMatchObject({
-      level: 20,
-      grade: 1,
-      stats: { hp: 4984, def: 320, res: 231, ap: 463 },
-    });
-    expect(Object.values(pontos.stats)).not.toContain(Number.MAX_SAFE_INTEGER);
+  it("폰토스의 실제 성장·표시·스킬 등급은 LV.20 / I다", () => {
+    expect(expeditionBossGrowth()).toEqual({ level: 20, breakthrough: 0 });
+    expect(expeditionEnemyLevel("boss", 20)).toBe(20);
+    expect(expeditionEnemyLevel("normal", 19)).toBe(38);
   });
 });

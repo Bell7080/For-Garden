@@ -26,12 +26,7 @@ export function calculateExpeditionNodeScore(input: ExpeditionNodeScoreInput): n
   return Math.round((input.floor * perFloor + input.remainingHpPercent * perRemainingHpPercent) * multiplier);
 }
 
-/**
- * 폰토스에게 넣은 피해를 점수판의 수로 바꾼다.
- *
- * 보스는 방어가 매우 높아 원 피해가 세 자릿수에 머문다. 그 값을 그대로 순위표에 세우면 노드
- * 참가 점수에 묻히므로 여기서 한 번만 환산한다 — **전투 계산에는 절대 들어가지 않는다.**
- */
+/** 경감 전 공격 기여도를 점수로 한 번 환산한다. 클라이언트·서버·결과판 공용이다. */
 export function expeditionBossDamageScore(totalDamage: number): number {
   if (!Number.isFinite(totalDamage) || totalDamage <= 0) return 0;
   return Math.round(totalDamage * EXPEDITION_SCORE_BALANCE.bossDamagePerPoint);

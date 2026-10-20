@@ -3007,7 +3007,13 @@ export class BattleScene extends Phaser.Scene {
           case "runeCraft": startScene(this, "relics", { openRelicId: path.relicId }); return;
           case "lab": startScene(this, "lab"); return;
           case "archaeology": startScene(this, "archaeology"); return;
-          case "party": startScene(this, partyScene); return;
+          case "party": {
+            const input = this.battleInput;
+            const content: PartyContent = input.mode === "cake" || input.mode === "bounty"
+              ? { content: input.mode, tierId: input.tierId }
+              : { content: "stage" };
+            startScene(this, partyScene, content); return;
+          }
         }
       },
     };

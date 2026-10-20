@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -12,7 +13,7 @@ import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { chipPoints, drawFrameVignette, drawLayer, HOLO } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import {
-  RANKING_LIST, RANKING_VISIBLE_RANKS, placeholderRankingEntries, rankedLeaderboard, rankingMedal,
+  RANKING_LIST, RANKING_VISIBLE_RANKS, displayRankingEntries, rankingMedal,
   rankingRowY, rankingScrollMetrics,
 } from "./expeditionRankingLayout";
 import { COLOR, textStyle } from "./theme";
@@ -77,8 +78,8 @@ export class ExpeditionRankingPopup {
     this.resetContent();
     const content = this.content;
     if (!content) return;
-    // 실제 이용자 풀이 생기면 표본 보정만 지운다 — 순위·스크롤 규칙은 그대로 남는다.
-    const merged = rankedLeaderboard([...entries, ...placeholderRankingEntries(bestScore, RANKING_VISIBLE_RANKS)]);
+    // 운영 순위에는 실제 기록만 남긴다. 빈 목록·긴 스크롤 표본은 QA에서만 쓴다.
+    const merged = displayRankingEntries(entries, bestScore, QA_TOOLS_ENABLED);
     // 순위는 누적 보상 점수가 아니라 한 판 최고 점수로 정렬된다는 기준을 제목에서 바로 밝힌다.
     content.add(this.scene.add.text(-410, -720, t("ranking.bestScoreOrder"), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
     content.add(this.scene.add.text(410, -720, t("ranking.tieBreak"), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));

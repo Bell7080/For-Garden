@@ -1800,6 +1800,10 @@ var MISC_KO = {
 // src/i18n/ko/skill.ts
 init_define_import_meta_env();
 var SKILL_KO = {
+  "skill.fact.whenActive": "\uD6A8\uACFC \uBC1C\uB3D9 \uC2DC",
+  "skill.keyword.statGain": "{stat} \uC99D\uAC00\uB7C9: +{amount}\n\uAE30\uC900 {base} \xD7 {percent}% \u2248 +{amount}\n\uC774 \uD6A8\uACFC\uB9CC \uC801\uC6A9 \uC2DC {total}. \uB2E4\uB978 \uD6A8\uACFC\uAC00 \uB354\uD574\uC9C0\uBA74 \uCD5C\uC885 \uC218\uCE58\uB294 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uB2E4.",
+  "skill.ferocity.furCoat.actual": "\uD3ED\uC8FC \uC9C4\uC785 \uC2DC \uD574\uB85C\uC6B4 \uD6A8\uACFC\uB97C \uBAA8\uB450 \uD574\uC81C\uD558\uACE0 [[shield|\uBCF4\uD638\uB9C9]] {shield}\uC744 \uC5BB\uB294\uB2E4. \uD3ED\uC8FC \uC911 [[def|\uBC29\uC5B4\uB825]] {defense} \xB7 [[res|\uC800\uD56D\uB825]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "[[vandalism|\uBC34\uB35C\uB9AC\uC998]]\uC774 \uAC78\uB9B0 \uC801 1\uBA85\uB2F9 [[def|\uBC29\uC5B4\uB825]] {defense} \xB7 [[res|\uC800\uD56D\uB825]] {resistance}.",
   // ── 능력치 이름 ──────────────────────────────────────────────────────────
   "skill.stat.atk": "\uACF5\uACA9\uB825",
   "skill.stat.ap": "\uC8FC\uBB38\uB825",
@@ -1900,7 +1904,6 @@ var SKILL_KO = {
   "skill.ferocity.overclockBody": "[[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB978\uB2E4.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
   "skill.ferocity.packBody.guardPercent": "[[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC624\uB974\uACE0",
-  "skill.ferocity.packBody.guardAmount": "[[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {amount}\uC529 \uC624\uB974\uACE0",
   "skill.ferocity.duoBreakthrough": "[[duo|\uB4C0\uC624]]\uB97C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC73C\uB85C [[charge|\uB3CC\uC9C4]]\uC2DC\uD0A8\uB2E4. \uAE38 \uC704\uC758 \uC801\uC740 \uB4C0\uC624\uC758 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD53C\uD574\uB97C \uBC1B\uACE0 [[knockback|\uB0A0\uC544\uAC04\uB2E4]]. \uD3ED\uC8FC \uB3D9\uC548 \uB4C0\uC624\uAC00 \uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uBAA8\uB4E0 \uC544\uAD70\uC774 \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.ferocity.splash": "{speed}[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uB300\uC0C1 \uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uC801\uC911\uD574 {ending}",
   "skill.ferocity.splash.speed": "[[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC99D\uAC00\uD55C\uB2E4. ",
@@ -2099,7 +2102,6 @@ var SKILL_KO = {
   "skill.keyword.plume.description": "\uC801\uC5D0\uAC8C \uBC15\uD788\uB294 \uAE43\uD138\uC774\uB2E4. \uC801\uB9C8\uB2E4 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 {hold}\uCD08 \uB3D9\uC548 \uB0A8\uC73C\uBA70, \uC0C8 \uACB9\uC774 \uBC15\uD790 \uB54C\uB9C8\uB2E4 \uC2DC\uAC04\uC774 \uB2E4\uC2DC \uC138\uC5B4\uC9C4\uB2E4. {max}\uACB9\uC774 \uB418\uBA74 \uAE43\uD138\uC774 \uC0AC\uB77C\uC9C0\uACE0 {slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uB97C {slowPercent}% \uB0AE\uCD94\uB294 \uCD9C\uD608\uB85C \uBC14\uB00C\uC5B4, {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uAC74 \uCABD \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C \uD53C\uD574\uB97C \uC900\uB2E4. \uCD9C\uD608\uC740 \uACB9\uCE58\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uAC78\uB9AC\uBA74 \uAC31\uC2E0\uB41C\uB2E4.",
   "skill.keyword.summon.description": "{owner}\uC758 {stat}{stat!\uC774} {stat}\xB7\uCCB4\uB825\xB7\uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825\uC744 \uC815\uD558\uB294 \uADFC\uAC70\uB9AC \uC18C\uD658\uC218\uB2E4. \uC2A4\uC2A4\uB85C \uD45C\uC801\uC744 \uACE0\uB974\uACE0 \uC81C \uAC8C\uC774\uC9C0\uB85C \uAD81\uADF9\uAE30\uB97C \uC4F4\uB2E4.{resummon}",
   "skill.keyword.summon.resummon": " \uC4F0\uB7EC\uC9C0\uBA74 {seconds}\uCD08 \uB4A4 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB2E4\uC2DC \uC120\uB2E4.",
-  "skill.keyword.summon.owner": "\uC9C0\uD718\uC790",
   "skill.ferocity.valueLabel": "\uC57C\uC131 \uBC1C\uD604",
   "skill.ferocity.head": "[[ferocity|\uC57C\uC131 \uAC8C\uC774\uC9C0]]\uAC00 \uAC00\uB4DD \uCC28\uBA74 \uD3ED\uC8FC\uD55C\uB2E4. ",
   "skill.label.compositeDamage": "\uD53C\uD574\uB7C9 [[damage-value|{amount}]]",

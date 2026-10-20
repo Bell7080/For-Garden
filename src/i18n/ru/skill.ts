@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_RU = {
+  "skill.fact.whenActive": "При активном эффекте",
+  "skill.keyword.statGain": "Прибавка к {stat}: +{amount}\nОснова {base} × {percent}% ≈ +{amount}\nТолько этот эффект: {total}. Другие эффекты могут изменить итоговое значение.",
+  "skill.ferocity.furCoat.actual": "При входе в Неистовство снимает все вредные эффекты и получает {shield} [[shield|Щита]]. Во время Неистовства: [[def|Защита]] {defense} · [[res|Сопротивление]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "За каждого врага с [[vandalism|Вандализмом]]: [[def|Защита]] {defense} · [[res|Сопротивление]] {resistance}.",
+
   "skill.stat.atk": "атаки",
   "skill.stat.ap": "силы магии",
   "skill.stat.def": "защиты",
@@ -85,7 +90,6 @@ export const SKILL_RU = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Куро]] и [[summon-shiro|Широ]] впадают в неистовство вместе.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|скорость атаки]] растёт на {percent}%.",
   "skill.ferocity.packBody.guardPercent": "[[def|Защита]] и [[res|сопротивление]] растут на {percent}%, а",
-  "skill.ferocity.packBody.guardAmount": "[[def|Защита]] и [[res|сопротивление]] растут на {amount} каждая, а",
   "skill.ferocity.overclock": "[[attack-speed|Скорость атаки]] растёт на {percent}%, а применивший и [[summon-dimo|Димо]] получают по [[shield|щиту]] в {shield}. Щит постепенно тает и полностью исчезает примерно к середине неистовства. Враги в широкой области вокруг Димо каждую секунду получают {damage}.",
   "skill.ferocity.overclock.shieldPercent": "{percent}% атаки",
   "skill.ferocity.overclockBody": "[[attack-speed|Скорость атаки]] растёт на {percent}%, а [[move-speed|скорость движения]] — на {move}%.",
@@ -276,7 +280,6 @@ export const SKILL_RU = {
   "skill.keyword.plume.description": "Перо, вонзившееся во врага. Каждый враг держит до {max} зарядов {hold} с, каждый новый заряд обновляет время. При {max} зарядах перья исчезают и превращаются в кровотечение, которое на {slowSeconds} с снижает скорость атаки и движения на {slowPercent}% и за {seconds} с наносит урон в {percent}% АТК нападавшего. Кровотечение не суммируется; повторное наложение обновляет его.",
   "skill.keyword.summon.description": "Призыв ближнего боя: {stat}, ОЗ, защита и сопротивление зависят от {stat} ({owner}). Сам выбирает цели и применяет ульту по своей шкале.{resummon}",
   "skill.keyword.summon.resummon": " Павший поднимается через {seconds} с с {percent}% макс. ОЗ.",
-  "skill.keyword.summon.owner": "командира",
   "skill.ferocity.valueLabel": "Черта ярости",
   "skill.ferocity.head": "Когда [[ferocity|шкала ярости]] заполняется, впадает в неистовство. ",
   "skill.label.compositeDamage": "Урон [[damage-value|{amount}]]",

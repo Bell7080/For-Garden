@@ -1,3 +1,5 @@
+import { buildSummonKeywords } from "./summonKeywords";
+import type { SummonInfoPopup } from "./SummonInfoPopup";
 import Phaser from "phaser";
 import { galleryPortraitPlacement, infoPortraitPlacement } from "./portraitPlacement";
 import { battleAssetFor, enableHitOnClick, placePuppet, playMotion, portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
@@ -384,6 +386,20 @@ export function paintInfoSkills(ctx: InfoPopupContext, chrome: Phaser.GameObject
   /** 세울 액자. 소환수는 패시브가 성장 칸과 같은 말을 해 빼고 일반 공격부터 세운다. */
   slots: readonly ("passive" | "basic" | "ultimate")[]): void {
   const { def } = snapshot;
+  let summonInfo: SummonInfoPopup | undefined;
+  let loadingSummon = false;
+  const summonTags = buildSummonKeywords(def, def.stats);
+  const summonActions = Object.fromEntries((def.summons ?? []).map(summon => [`summon-${summon.def.id}`, () => {
+    if (loadingSummon) return;
+    loadingSummon = true;
+    // 소환수 창도 적 정보 프리팹을 사용하므로 이 모듈 초기화 중 서로 불러오지 않는다.
+    void import("./SummonInfoPopup").then(({ SummonInfoPopup }) => {
+      if (!chrome.active || !ctx.scene.scene.isActive()) return;
+      summonInfo ??= new SummonInfoPopup(ctx.scene, ctx.popups);
+      summonInfo.show({ owner: def, ownerStats: def.stats, summon });
+    }).finally(() => { loadingSummon = false; });
+  }]));
+  const summonOptions = { summonTags, summonActions };
   const all: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number }[] = [
     { label: skillSlotLabel("passive"), slot: "passive", skill: { ...def.passive, power: def.passive.value, damageType: "physical" } as unknown as Skill },
     { label: skillSlotLabel("basic"), slot: "basic", skill: def.basic },
@@ -406,7 +422,7 @@ export function paintInfoSkills(ctx: InfoPopupContext, chrome: Phaser.GameObject
     hit.on("pointerout", () => { if (!ctx.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       pressIn(container);
-      openInfoSkill(ctx, snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => pressOut(container) });
+      openInfoSkill(ctx, snapshot, entry, { x: SCREEN_CENTER.x + container.x, y: SCREEN_CENTER.y + container.y - size / 2, onClose: () => pressOut(container) }, summonOptions);
     });
     container.add(hit);
     chrome.add(container);
@@ -414,7 +430,7 @@ export function paintInfoSkills(ctx: InfoPopupContext, chrome: Phaser.GameObject
     if (index === 0) {
       addInfoFerocityBadge(ctx.scene, ctx.popups, chrome, container.x, container.y + L.ferocityBadgeOffsetY, def, (from) => {
         const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
-        openFerocityTraitPopup(ctx.scene, ctx.popups, ctx.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect });
+        openFerocityTraitPopup(ctx.scene, ctx.popups, ctx.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect, ...summonOptions });
       });
       /*
        * **그 위에 역할(잡졸·무리·정예·보스·불사)이 같은 크기로 선다.** 자리가 곱하는 배율과
@@ -437,12 +453,13 @@ function openInfoSkill(
   snapshot: EnemyInfoSnapshot,
   entry: { label: string; slot: SkillArtSlot; skill: Skill | Passive; gaugeCost?: number },
   from: { x: number; y: number; onClose: () => void },
+  summons: Pick<Parameters<typeof buildSkillViewModel>[0], "summonTags" | "summonActions"> = {},
 ): void {
   const { def, breakthrough } = snapshot;
   // 적도 돌파로 스킬에 효과가 붙는다. 열린 등급의 몫만 노란 줄로 선다.
   const breakthroughEffect = breakthroughEnhances(def, breakthrough, entry.slot) ? breakthroughEffectText(def, entry.slot, def.stats) : undefined;
   openSkillPopup(ctx.scene, ctx.popups, ctx.keywords, buildSkillViewModel({
     def, breakthrough, kindLabel: entry.label, skill: entry.skill, gaugeCost: entry.gaugeCost, slot: entry.slot,
-    breakthroughEffect,
+    breakthroughEffect, ...summons,
   }), from);
 }

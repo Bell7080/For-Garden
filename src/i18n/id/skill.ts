@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ID = {
+  "skill.fact.whenActive": "Saat efek aktif",
+  "skill.keyword.statGain": "Peningkatan {stat}: +{amount}\nDasar {base} × {percent}% ≈ +{amount}\nHanya efek ini: {total}. Efek lain dapat mengubah nilai akhir.",
+  "skill.ferocity.furCoat.actual": "Saat memasuki Amukan, hapus semua efek negatif dan dapatkan {shield} [[shield|Perisai]]. Selama Amukan: [[def|Pertahanan]] {defense} · [[res|Resistansi]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "Untuk setiap musuh dengan [[vandalism|Vandalisme]]: [[def|Pertahanan]] {defense} · [[res|Resistansi]] {resistance}.",
+
   "skill.stat.atk": "Serangan",
   "skill.stat.ap": "Kekuatan Magis",
   "skill.stat.def": "Pertahanan",
@@ -85,7 +90,6 @@ export const SKILL_ID = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] dan [[summon-shiro|Shiro]] masuk Amukan bersama.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|Kecepatan Serang]] naik {percent}%.",
   "skill.ferocity.packBody.guardPercent": "[[def|Pertahanan]] dan [[res|Resistensi]] naik {percent}% dan",
-  "skill.ferocity.packBody.guardAmount": "[[def|Pertahanan]] dan [[res|Resistensi]] masing-masing naik {amount} dan",
   "skill.ferocity.overclock": "[[attack-speed|Kecepatan Serang]] naik {percent}%, dan pengguna serta [[summon-dimo|Dimo]] masing-masing mendapat [[shield|perisai]] {shield}. Perisai menyusut hingga habis saat Amukan berjalan sekitar setengahnya. Musuh di area luas sekitar Dimo menerima {damage} setiap detik.",
   "skill.ferocity.overclock.shieldPercent": "{percent}% Serangan",
   "skill.ferocity.overclockBody": "[[attack-speed|Kecepatan Serang]] naik {percent}% dan [[move-speed|Kecepatan Gerak]] naik {move}%.",
@@ -276,7 +280,6 @@ export const SKILL_ID = {
   "skill.keyword.plume.description": "Bulu yang menancap pada musuh. Tiap musuh menampung maksimal {max} tumpuk selama {hold} dtk, dan setiap tumpuk baru mengatur ulang waktu. Pada {max} tumpuk, bulu lenyap dan berubah menjadi pendarahan yang menurunkan Kecepatan Serang dan Kecepatan Gerak sebesar {slowPercent}% selama {slowSeconds} dtk serta memberi damage {percent}% ATK penyerang dalam {seconds} dtk. Pendarahan tidak menumpuk; menerapkannya lagi akan menyegarkannya.",
   "skill.keyword.summon.description": "Panggilan jarak dekat yang {stat}, HP, Pertahanan, dan Resistensinya ditentukan oleh {stat} milik {owner}. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
   "skill.keyword.summon.resummon": " Saat tumbang, ia bangkit lagi setelah {seconds} dtk dengan {percent}% HP maksnya.",
-  "skill.keyword.summon.owner": "komandan",
   "skill.ferocity.valueLabel": "Sifat Keganasan",
   "skill.ferocity.head": "Saat [[ferocity|gauge Keganasan]] penuh, ia masuk Amukan. ",
   "skill.label.compositeDamage": "Kerusakan [[damage-value|{amount}]]",

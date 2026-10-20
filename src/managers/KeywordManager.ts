@@ -1,3 +1,5 @@
+import { formatEffectDescription } from "../ui/skillExplanation";
+import { wrapByCharacter } from "../core/cjkWrap";
 import Phaser from "phaser";
 import { parseKeywordText, type KeywordDef } from "../data/keywords";
 import { t } from "../i18n";
@@ -81,18 +83,21 @@ export class KeywordManager {
         for (const word of splitWords(line)) {
           if (word === "") continue;
           // 강조된 말은 굵기와 색이 함께 달라진다. 역할을 먼저 고르고 한 번에 만든다.
-          const style = segment.keyword
+          const quantified = /[0-9]/u.test(word);
+          const style = segment.keyword || quantified
             ? textStyle({ role: "emphasis", size: options.size, color: COLOR.accentText })
             : textStyle({ role: "body", size: options.size, color: options.color ?? COLOR.ink });
-          const label = this.scene.add.text(x, y, word, style).setOrigin(0, 0);
-          if (x > 0 && x + label.width > options.width) {
-            x = 0;
-            y += lineHeight;
-            label.setPosition(x, y);
-          }
-          container.add(label);
-          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword, options.keywordActions, options.contextualKeywords);
-          x += label.width;
+          const label = this.scene.add.text(0, 0, word, style).setOrigin(0, 0);
+          const chunks = label.width > options.width
+            ? wrapByCharacter(word, options.width, value => label.context.measureText(value).width).split("\n") : [word];
+          chunks.forEach((chunk, index) => {
+            const line = index === 0 ? label.setText(chunk) : this.scene.add.text(0, 0, chunk, style).setOrigin(0, 0);
+            if (index > 0 || x > 0 && x + line.width > options.width) { x = 0; y += lineHeight; }
+            line.setPosition(x, y);
+            container.add(line);
+            if (segment.keyword) this.decorateKeyword(container, line, segment.keyword, options.keywordActions, options.contextualKeywords);
+            x += line.width;
+          });
         }
       });
     }
@@ -144,7 +149,7 @@ export class KeywordManager {
         .text(0, 0, t(`skill.keywordKind.${keyword.kind}`), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
         .setOrigin(0, 0),
     );
-    const description = this.layout(keyword.description, text);
+    const description = this.layout(formatEffectDescription(keyword.description), text);
     description.setPosition(0, note.descriptionGap);
     content.add(description);
     let bottom = description.y + description.height;
@@ -162,7 +167,7 @@ export class KeywordManager {
           .text(label.width + 14, headY, section.name, textStyle({ role: "display", size: 28 }))
           .setOrigin(0, 0.5),
       );
-      const body = this.layout(section.text, text);
+      const body = this.layout(formatEffectDescription(section.text), { ...text, contextualKeywords: [...(section.contextualKeywords ?? []), ...(contextualKeywords ?? [])] });
       body.setPosition(0, headY + note.sectionBodyGap - note.size / 2);
       content.add(body);
       bottom = body.y + body.height;

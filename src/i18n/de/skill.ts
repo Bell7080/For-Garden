@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_DE = {
+  "skill.fact.whenActive": "Bei aktivem Effekt",
+  "skill.keyword.statGain": "{stat}-Zuwachs: +{amount}\nBasis {base} × {percent}% ≈ +{amount}\nNur dieser Effekt: {total}. Andere Effekte können den Endwert ändern.",
+  "skill.ferocity.furCoat.actual": "Zu Beginn der Raserei alle schädlichen Effekte entfernen und {shield} [[shield|Schild]] erhalten. Während der Raserei: [[def|Verteidigung]] {defense} · [[res|Resistenz]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "Pro Gegner mit [[vandalism|Vandalismus]]: [[def|Verteidigung]] {defense} · [[res|Resistenz]] {resistance}.",
+
   "skill.stat.atk": "des Angriffs",
   "skill.stat.ap": "der Zauberkraft",
   "skill.stat.def": "der Verteidigung",
@@ -85,7 +90,6 @@ export const SKILL_DE = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] und [[summon-shiro|Shiro]] verfallen gemeinsam in Raserei.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|Angriffstempo]] steigt um {percent} %.",
   "skill.ferocity.packBody.guardPercent": "[[def|Verteidigung]] und [[res|Widerstand]] steigen um {percent}%, und",
-  "skill.ferocity.packBody.guardAmount": "[[def|Verteidigung]] und [[res|Widerstand]] steigen um je {amount}, und",
   "skill.ferocity.overclock": "Das [[attack-speed|Angriffstempo]] steigt um {percent} %, und der Anwender und [[summon-dimo|Dimo]] erhalten je einen [[shield|Schild]] von {shield}. Der Schild schwindet bis etwa zur Hälfte der Raserei vollständig. Gegner in einem weiten Bereich um Dimo erleiden jede Sekunde {damage}.",
   "skill.ferocity.overclock.shieldPercent": "{percent} % des Angriffs",
   "skill.ferocity.overclockBody": "[[attack-speed|Angriffstempo]] steigt um {percent} % und [[move-speed|Lauftempo]] um {move} %.",
@@ -276,7 +280,6 @@ export const SKILL_DE = {
   "skill.keyword.plume.description": "Eine in den Gegner gebohrte Feder. Jeder Gegner trägt bis zu {max} Stapel für {hold} s, jeder neue Stapel setzt die Zeit zurück. Bei {max} Stapeln verschwinden die Federn und werden zu einer Blutung, die Angriffs- und Lauftempo {slowSeconds} s lang um {slowPercent} % senkt und in {seconds} s {percent} % des ANG des Angreifers als Schaden verursacht. Die Blutung stapelt sich nicht; erneutes Anwenden erneuert sie.",
   "skill.keyword.summon.description": "Eine Nahkampf-Beschwörung, deren {stat}, LP, Verteidigung und Widerstand von {stat} von {owner} abhängen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
   "skill.keyword.summon.resummon": " Fällt sie, steht sie nach {seconds} s mit {percent}% ihres max. Lebens wieder auf.",
-  "skill.keyword.summon.owner": "des Anführers",
   "skill.ferocity.valueLabel": "Wildheitsmerkmal",
   "skill.ferocity.head": "Sobald die [[ferocity|Wildheitsleiste]] voll ist, verfällt es in Raserei. ",
   "skill.label.compositeDamage": "Schaden [[damage-value|{amount}]]",

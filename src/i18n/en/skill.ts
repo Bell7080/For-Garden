@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_EN = {
+  "skill.fact.whenActive": "While active",
+  "skill.keyword.statGain": "{stat} increase: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nWith this effect alone: {total}. Other effects may change the final value.",
+  "skill.ferocity.furCoat.actual": "On entering Frenzy, remove all harmful effects and gain {shield} [[shield|Shield]]. During Frenzy: [[def|Defense]] {defense} · [[res|Resistance]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "For each enemy with [[vandalism|Vandalism]]: [[def|Defense]] {defense} · [[res|Resistance]] {resistance}.",
+
   "skill.stat.atk": "Attack",
   "skill.stat.ap": "Ability Power",
   "skill.stat.def": "Defense",
@@ -85,7 +90,6 @@ export const SKILL_EN = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] and [[summon-shiro|Shiro]] enter Frenzy together.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|Attack Speed]] rises by {percent}%.",
   "skill.ferocity.packBody.guardPercent": "[[def|Defense]] and [[res|Resistance]] rise by {percent}% and",
-  "skill.ferocity.packBody.guardAmount": "[[def|Defense]] and [[res|Resistance]] rise by {amount} each and",
   "skill.ferocity.overclock": "[[attack-speed|Attack Speed]] rises by {percent}%, and the user and [[summon-dimo|Dimo]] each gain a [[shield|shield]] of {shield}. The shield fades away by about halfway through the Frenzy. Enemies in a wide area around Dimo take {damage} every second.",
   "skill.ferocity.overclock.shieldPercent": "{percent}% of [[atk|Attack]]",
   "skill.ferocity.overclockBody": "[[attack-speed|Attack Speed]] rises by {percent}% and [[move-speed|Move Speed]] by {move}%.",
@@ -188,7 +192,7 @@ export const SKILL_EN = {
   "skill.clause.elationDamage": "each stack of [[nodonia-elation|Elation]] increases this damage by {percent}%",
   "skill.clause.combo": "has a {percent}% chance to [[combo|Combo]] for {hits} total hits",
   "skill.clause.damageHealing": "restores HP equal to {percent}% of the damage dealt",
-  "skill.clause.selfShield": "The user gains a [[shield|shield]] equal to {shield}",
+  "skill.clause.selfShield": "the user gains a [[shield|shield]] equal to {shield}",
   "skill.clause.damageHealingIfFrozen": "restores HP equal to {percent}% of that damage when it was dealt to a [[frozen|Frozen]] enemy",
   "skill.clause.shieldFromDamage": "gains a [[shield|shield]] equal to {percent}% of the damage dealt",
   "skill.clause.selfStealth": "enters [[stealth|Stealth]] for {seconds}s",
@@ -276,7 +280,6 @@ export const SKILL_EN = {
   "skill.keyword.plume.description": "A feather lodged in an enemy. Each enemy holds up to {max} stacks for {hold}s, and every new stack restarts the timer. At {max} stacks the feathers vanish and turn into a bleed that lowers Attack Speed and Move Speed by {slowPercent}% for {slowSeconds}s and deals {percent}% of the attacker's ATK over {seconds}s. The bleed does not stack; reapplying it refreshes it.",
   "skill.keyword.summon.description": "A melee summon whose {stat}, HP, Defense and Resistance are set by {owner}'s {stat}. It picks its own targets and uses its Ultimate on its own gauge.{resummon}",
   "skill.keyword.summon.resummon": " When it falls, it stands back up after {seconds}s with {percent}% of its max HP.",
-  "skill.keyword.summon.owner": "the commander",
   "skill.ferocity.valueLabel": "Ferocity Trait",
   "skill.ferocity.head": "It goes into Frenzy once the [[ferocity|Ferocity gauge]] fills. ",
   "skill.label.compositeDamage": "Damage [[damage-value|{amount}]]",

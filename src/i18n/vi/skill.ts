@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_VI = {
+  "skill.fact.whenActive": "Khi hiệu ứng có tác dụng",
+  "skill.keyword.statGain": "{stat} tăng: +{amount}\nCơ bản {base} × {percent}% ≈ +{amount}\nChỉ hiệu ứng này: {total}. Hiệu ứng khác có thể thay đổi giá trị cuối.",
+  "skill.ferocity.furCoat.actual": "Khi vào Cuồng bạo, xóa mọi hiệu ứng bất lợi và nhận {shield} [[shield|Lá chắn]]. Trong Cuồng bạo: [[def|Phòng thủ]] {defense} · [[res|Kháng]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "Với mỗi kẻ địch có [[vandalism|Phá hoại]]: [[def|Phòng thủ]] {defense} · [[res|Kháng]] {resistance}.",
+
   "skill.stat.atk": "Công",
   "skill.stat.ap": "Phép",
   "skill.stat.def": "Thủ",
@@ -85,7 +90,6 @@ export const SKILL_VI = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] và [[summon-shiro|Shiro]] cùng vào Cuồng bạo.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|Tốc đánh]] tăng {percent}%.",
   "skill.ferocity.packBody.guardPercent": "[[def|Thủ]] và [[res|Kháng]] tăng {percent}% và",
-  "skill.ferocity.packBody.guardAmount": "[[def|Thủ]] và [[res|Kháng]] mỗi thứ tăng {amount} và",
   "skill.ferocity.overclock": "[[attack-speed|Tốc đánh]] tăng {percent}%, bản thân và [[summon-dimo|Dimo]] mỗi bên nhận [[shield|khiên]] {shield}. Khiên tan dần và biến mất khi Cuồng bạo trôi qua khoảng một nửa. Kẻ địch trong phạm vi rộng quanh Dimo nhận {damage} mỗi giây.",
   "skill.ferocity.overclock.shieldPercent": "{percent}% Công",
   "skill.ferocity.overclockBody": "[[attack-speed|Tốc đánh]] tăng {percent}% và [[move-speed|Tốc chạy]] tăng {move}%.",
@@ -276,7 +280,6 @@ export const SKILL_VI = {
   "skill.keyword.plume.description": "Chiếc lông cắm vào kẻ địch. Mỗi kẻ địch chịu tối đa {max} tầng trong {hold} giây, mỗi tầng mới đặt lại thời gian. Đủ {max} tầng, lông biến mất và chuyển thành chảy máu giảm Tốc đánh và Tốc chạy {slowPercent}% trong {slowSeconds} giây, gây sát thương bằng {percent}% Công của người gây trong {seconds} giây. Chảy máu không cộng dồn, gắn lại sẽ làm mới.",
   "skill.keyword.summon.description": "Triệu hồi cận chiến có {stat}, HP, Thủ và Kháng dựa trên {stat} của {owner}. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
   "skill.keyword.summon.resummon": " Khi gục, nó đứng dậy sau {seconds} giây với {percent}% HP tối đa.",
-  "skill.keyword.summon.owner": "chỉ huy",
   "skill.ferocity.valueLabel": "Đặc tính Dã tính",
   "skill.ferocity.head": "Khi [[ferocity|thanh Dã tính]] đầy, nó vào Cuồng bạo. ",
   "skill.label.compositeDamage": "Sát thương [[damage-value|{amount}]]",

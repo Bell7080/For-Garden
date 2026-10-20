@@ -721,9 +721,12 @@ describe("스킬 설명문 양식 계약", () => {
       // 한 축이 그 축과 몸(체력·방어·저항)을 정한다. 속도는 따라 오르지 않아 적지 않는다.
       expect(body, id).toContain(`디안의 ${axis}이 ${id === "kuro" ? "쿠로" : "시로"}의 ${axis}·체력·방어력·저항력을 정한다`);
       expect(body, id).not.toContain("속도");
-      // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
-      const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
-      expect(fever, id).toMatch(/^\[\[def\|방어력\]\]과 \[\[res\|저항력\]\]이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);
+      // 서로 다른 방어·저항에서 실제 증가량을 각각 계산한다. 공속은 비율 단위를 유지한다.
+      const defense = 101, resistance = 67;
+      const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense, resistance });
+      expect(fever, id).toBe("[[def|방어력]]이 [[stat-bonus-def|+51]], [[res|저항력]]이 [[stat-bonus-res|+34]] 오르고 [[attack-speed|공격 속도]]가 50% 오른다.");
+      // 능력치를 모르는 설명 문맥에서는 값을 추정하지 않고 원래 비율로 안내한다.
+      expect(ferocityTraitDescription(wolf.ferocityTrait), id).toContain("50% 오르고");
     }
   });
 

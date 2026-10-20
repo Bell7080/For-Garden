@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ES = {
+  "skill.fact.whenActive": "Mientras esté activo",
+  "skill.keyword.statGain": "Aumento de {stat}: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nSolo este efecto: {total}. Otros efectos pueden cambiar el valor final.",
+  "skill.ferocity.furCoat.actual": "Al entrar en Frenesí, elimina todos los efectos perjudiciales y obtiene {shield} de [[shield|Escudo]]. Durante el Frenesí: [[def|Defensa]] {defense} · [[res|Resistencia]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "Por cada enemigo con [[vandalism|Vandalismo]]: [[def|Defensa]] {defense} · [[res|Resistencia]] {resistance}.",
+
   "skill.stat.atk": "Ataque",
   "skill.stat.ap": "Poder mágico",
   "skill.stat.def": "Defensa",
@@ -85,7 +90,6 @@ export const SKILL_ES = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] y [[summon-shiro|Shiro]] entran juntos en Frenesí.",
   "skill.ferocity.packBody": "{guard} la [[attack-speed|Velocidad de ataque]] sube un {percent}%.",
   "skill.ferocity.packBody.guardPercent": "La [[def|Defensa]] y la [[res|Resistencia]] suben un {percent}% y",
-  "skill.ferocity.packBody.guardAmount": "La [[def|Defensa]] y la [[res|Resistencia]] suben {amount} cada una y",
   "skill.ferocity.overclock": "La [[attack-speed|Velocidad de ataque]] sube un {percent}%, y el usuario y [[summon-dimo|Dimo]] obtienen cada uno un [[shield|escudo]] de {shield}. El escudo se desvanece por completo hacia la mitad del Frenesí. Los enemigos en un área amplia alrededor de Dimo reciben {damage} cada segundo.",
   "skill.ferocity.overclock.shieldPercent": "el {percent}% del Ataque",
   "skill.ferocity.overclockBody": "La [[attack-speed|Velocidad de ataque]] sube un {percent}% y la [[move-speed|velocidad de movimiento]] un {move}%.",
@@ -276,7 +280,6 @@ export const SKILL_ES = {
   "skill.keyword.plume.description": "Una pluma clavada en el enemigo. Cada enemigo acumula hasta {max} cargas durante {hold} s, y cada carga nueva reinicia el tiempo. Con {max} cargas las plumas desaparecen y se convierten en un sangrado que reduce la velocidad de ataque y de movimiento un {slowPercent}% durante {slowSeconds} s e inflige el {percent}% del ATQ del atacante en {seconds} s. El sangrado no se acumula; volver a aplicarlo lo renueva.",
   "skill.keyword.summon.description": "Invocación cuerpo a cuerpo cuyos {stat}, PV, Defensa y Resistencia dependen de {stat} de {owner}. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Si cae, se levanta tras {seconds} s con el {percent}% de sus PV máx.",
-  "skill.keyword.summon.owner": "el comandante",
   "skill.ferocity.valueLabel": "Rasgo de Ferocidad",
   "skill.ferocity.head": "Entra en Frenesí cuando el [[ferocity|medidor de Ferocidad]] se llena. ",
   "skill.label.compositeDamage": "Daño [[damage-value|{amount}]]",

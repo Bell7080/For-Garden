@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_TH = {
+  "skill.fact.whenActive": "ขณะเอฟเฟกต์ทำงาน",
+  "skill.keyword.statGain": "{stat} เพิ่ม: +{amount}\nค่าพื้นฐาน {base} × {percent}% ≈ +{amount}\nเมื่อใช้เอฟเฟกต์นี้อย่างเดียว: {total} เอฟเฟกต์อื่นอาจเปลี่ยนค่าสุดท้าย",
+  "skill.ferocity.furCoat.actual": "เมื่อเข้าสู่คลุ้มคลั่ง ล้างเอฟเฟกต์ด้านลบทั้งหมดและรับ[[shield|โล่]] {shield} ระหว่างคลุ้มคลั่ง: [[def|พลังป้องกัน]] {defense} · [[res|ความต้านทาน]] {resistance}",
+  "skill.breakthrough.effect.passive.muralHide.actual": "ต่อศัตรู 1 ตัวที่ติด[[vandalism|แวนดัลลิซึม]]: [[def|พลังป้องกัน]] {defense} · [[res|ความต้านทาน]] {resistance}",
+
   "skill.stat.atk": "พลังโจมตี",
   "skill.stat.ap": "พลังเวท",
   "skill.stat.def": "พลังป้องกัน",
@@ -85,7 +90,6 @@ export const SKILL_TH = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|คุโระ]]และ[[summon-shiro|ชิโระ]]เข้าสู่คลั่งไปพร้อมกัน",
   "skill.ferocity.packBody": "{guard}[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}%",
   "skill.ferocity.packBody.guardPercent": "[[def|พลังป้องกัน]]และ[[res|ต้านทาน]]เพิ่มขึ้น {percent}% และ",
-  "skill.ferocity.packBody.guardAmount": "[[def|พลังป้องกัน]]และ[[res|ต้านทาน]]เพิ่มขึ้นอย่างละ {amount} และ",
   "skill.ferocity.overclock": "[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% และตัวเองกับ[[summon-dimo|ดีโม]]ได้รับ[[shield|โล่]] {shield} คนละก้อน โล่จะค่อย ๆ สลายหมดเมื่อผ่านช่วงคลั่งไปประมาณครึ่งหนึ่ง ศัตรูในพื้นที่กว้างรอบดีโมได้รับ{damage}ทุกวินาที",
   "skill.ferocity.overclock.shieldPercent": "{percent}% ของ[[atk|พลังโจมตี]]",
   "skill.ferocity.overclockBody": "[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}% และ[[move-speed|ความเร็วเคลื่อนที่]]เพิ่มขึ้น {move}%",
@@ -276,7 +280,6 @@ export const SKILL_TH = {
   "skill.keyword.plume.description": "ขนนกที่ปักบนศัตรู ศัตรูแต่ละตัวสะสมได้สูงสุด {max} ชั้น อยู่ได้ {hold} วินาที และทุกครั้งที่ปักชั้นใหม่จะนับเวลาใหม่ เมื่อครบ {max} ชั้น ขนนกจะหายไปและกลายเป็นเลือดไหลที่ลดความเร็วโจมตีและความเร็วเคลื่อนที่ {slowPercent}% เป็นเวลา {slowSeconds} วินาที พร้อมสร้างความเสียหาย {percent}% ของพลังโจมตีผู้ใช้ภายใน {seconds} วินาที เลือดไหลไม่ซ้อนกัน ใส่ซ้ำจะรีเฟรช",
   "skill.keyword.summon.description": "สัตว์อัญเชิญระยะประชิดที่{stat} HP พลังป้องกัน และต้านทานกำหนดจาก{stat}ของ{owner} เลือกเป้าหมายเองและใช้ท่าไม้ตายด้วยเกจของตัวเอง{resummon}",
   "skill.keyword.summon.resummon": " เมื่อล้มจะลุกขึ้นใหม่หลัง {seconds} วินาทีด้วย HP {percent}% ของสูงสุด",
-  "skill.keyword.summon.owner": "ผู้บัญชาการ",
   "skill.ferocity.valueLabel": "คุณลักษณะความดุร้าย",
   "skill.ferocity.head": "เมื่อ[[ferocity|เกจความดุร้าย]]เต็มจะเข้าสู่คลั่ง ",
   "skill.label.compositeDamage": "ความเสียหาย [[damage-value|{amount}]]",

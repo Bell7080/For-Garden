@@ -26,6 +26,8 @@ export interface KeywordSection {
   name: string;
   /** 효과 본문. 규칙어 태그를 그대로 쓸 수 있다. */
   text: string;
+  /** 소환수처럼 같은 수치 ID라도 계산 주체가 다른 하위 기술의 사전. */
+  contextualKeywords?: readonly KeywordDef[];
 }
 
 export interface KeywordDef {

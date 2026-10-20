@@ -1,3 +1,5 @@
+import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
+import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
 import { Button } from "./Button";
 import Phaser from "phaser";
@@ -74,7 +76,6 @@ import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
 import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
-import { deriveSummonStats } from "../core/summonStats";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
@@ -1963,49 +1964,8 @@ export class InfoManager {
    * 수치를 고친 뒤 옛 문장이 남지 않고, 지휘자가 늘어도 같은 코드가 그대로 읽는다.
    */
   private summonKeywordTags(): readonly KeywordDef[] {
-    const summons = this.currentDef?.summons ?? [];
-    // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
-    if (!this.capabilities.showSummons || !this.ownedNow) return [];
     const owner = this.currentDef;
-    // 늑대의 수치는 지휘자가 **지금** 가진 능력치에서 파생한다 — 정적 정의의 태생값을 적으면
-    // 디안을 키운 뒤에도 쪽지 속 늑대만 1레벨로 남는다.
-    const ownerStats = owner === undefined ? undefined : this.shownStats(owner);
-    const tags: KeywordDef[] = summons.map((summon) => {
-      const { def, growthStat, resummon } = summon;
-      const stats = ownerStats === undefined ? def.stats : deriveSummonStats(ownerStats, summon);
-      const described = (skill: Skill): string => skillDescription(skill, {
-        ap: stats.ap, atk: { atk: stats.atk, attackSpeed: stats.attackSpeed },
-        damage: skill.power === undefined ? undefined
-          : Math.round((skill.scalingStat === "ap" ? stats.ap : stats.atk) * skill.power / 100),
-      });
-      return {
-        id: `summon-${def.id}`,
-        term: def.name,
-        kind: "summon" as const,
-        description: t("skill.keyword.summon.description", {
-          owner: owner?.name ?? t("skill.keyword.summon.owner"),
-          stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
-          resummon: resummon?.enabled
-            ? t("skill.keyword.summon.resummon", { seconds: resummon.cooldownSeconds, percent: resummon.hpPercent })
-            : "",
-        }),
-        /*
-         * 늑대는 제 기술을 가진 몸이라 한 문단으로 뭉치지 않는다. 스킬 쪽지와 같은 순서(분류 →
-         * 이름 → 효과)로 칸을 나눠, 기술 이름만 늘어놓고 무엇을 하는지는 말하지 않던 쪽지를 고친다.
-         */
-        sections: [
-          { label: t("info.skill.basic"), name: def.basic.name, text: described(def.basic) },
-          { label: t("info.skill.ultimate"), name: def.ultimate.name, text: described(def.ultimate) },
-          ...(def.ferocityTrait === undefined ? [] : [{
-            label: t("info.skill.ferocity"), name: def.ferocityTrait.name,
-            text: ferocityTraitDescription(def.ferocityTrait, {
-              attack: stats.atk, defense: stats.def, maxHp: stats.hp, abilityPower: stats.ap,
-            }),
-          }]),
-        ],
-      };
-    });
-    return tags;
+    return owner && this.capabilities.showSummons ? buildSummonKeywords(owner, this.shownStats(owner)) : [];
   }
 
   /**
@@ -2018,7 +1978,7 @@ export class InfoManager {
   private summonActions(): Readonly<Record<string, () => void>> | undefined {
     const owner = this.currentDef;
     const summons = owner?.summons ?? [];
-    if (!owner || summons.length === 0 || !this.capabilities.showSummons || !this.ownedNow) return undefined;
+    if (!owner || summons.length === 0 || !this.capabilities.showSummons) return undefined;
     const ownerStats = this.shownStats(owner);
     return Object.fromEntries(summons.map((summon) => [`summon-${summon.def.id}`, () => {
       this.summonInfo ??= new SummonInfoPopup(this.scene, this.popups);
@@ -2713,23 +2673,31 @@ export function openFerocityTraitPopup(
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
   const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
-  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
+  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent
+    : def.ferocityTrait.effectId === "overclock" ? def.ferocityTrait.auraDamagePercent : undefined;
+  const abilityPercent = def.ferocityTrait.effectId === "graffitiRun" ? def.ferocityTrait.auraDamagePercent : undefined;
   // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
   const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
     : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
-    : undefined;
-  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : "skill.stat.atk");
+    : abilityPercent !== undefined ? Math.round(abilityPower * abilityPercent / 100) : undefined;
+  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : abilityPercent !== undefined ? "skill.stat.ap" : "skill.stat.atk");
   // 무리를 함께 폭주시키는 지휘자는 **무엇이 오르는지를 늑대 쪽지가 말한다.** 이름을 눌러 열 수 있어야 한다.
-  const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? [])];
+  const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? buildSummonKeywords(def, def.stats))];
   // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
-  if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
+  if (def.ferocityTrait.effectId === "adamantBody" || def.ferocityTrait.effectId === "furCoat") contextualKeywords.push({
     id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",
     description: t("skill.keyword.shield.fromMaxHp", { percent: def.ferocityTrait.shieldMaxHpPercent }),
   });
+  if (def.ferocityTrait.effectId === "overclock") contextualKeywords.push({
+    id: "shield-value", term: String(Math.round(attack * def.ferocityTrait.shieldAttackPercent / 100)), kind: "rule",
+    description: t("skill.keyword.shield.fromAttack", { percent: def.ferocityTrait.shieldAttackPercent }),
+  });
   if (convertedDamage !== undefined) contextualKeywords.push({
     id: "damage-value", term: String(convertedDamage), kind: "rule",
-    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent }),
+    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
   });
+  const plume = plumeKeyword(def);
+  if (plume) contextualKeywords.push(plume);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
     const elation = elationKeyword(def.passive);
@@ -2749,6 +2717,8 @@ export function openFerocityTraitPopup(
     id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
     description: t("skill.keyword.staccato.description"),
   });
+  const guardPercent = "defenseResistancePercent" in def.ferocityTrait ? def.ferocityTrait.defenseResistancePercent : undefined;
+  if (guardPercent !== undefined) contextualKeywords.push(...defenseGainKeywords(def.stats, guardPercent));
   // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
   // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
   openSkillPopup(scene, popups, keywords, {
@@ -2758,7 +2728,7 @@ export function openFerocityTraitPopup(
     art: skillArtFor(def.id, "ferocity"),
     tint: skillArtTint(def.element, def.role),
     effectType: "buff",
-    valueLabel: t("skill.ferocity.valueLabel"),
+    valueLabel: guardPercent === undefined ? t("skill.ferocity.valueLabel") : defenseGainSummary(def.stats, guardPercent),
     // 궁극기의 `게이지 N`과 같은 자리 — 폭주가 열리려면 채워야 하는 야성 게이지의 크기다.
     gaugeCost: ferocityMaxOf(def),
     contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
@@ -2767,7 +2737,7 @@ export function openFerocityTraitPopup(
     breakthroughEffect: options.breakthroughEffect,
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
     description: t("skill.ferocity.head")
-      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
+      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower, resistance: def.stats.res }),
   }, from);
 }
 
@@ -2779,7 +2749,7 @@ export function buildSkillViewModel(options: {
   skill: Skill | Passive;
   gaugeCost?: number;
   slot?: SkillArtSlot;
-  /** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
+  /** 지휘자의 귀속 소환수 설명. 생략하면 현재 표시 능력치로 미보유·적도 함께 조립한다. */
   summonTags?: readonly KeywordDef[];
   /** 소환수 태그를 눌렀을 때 뜻풀이 대신 여는 그 몸의 정보창. 태그 ID가 키다. */
   summonActions?: Readonly<Record<string, () => void>>;
@@ -2832,13 +2802,14 @@ export function buildSkillViewModel(options: {
   const damageDetail = compositeDamage ?? detonationDamage ?? damageKeyword(preview);
   // 귀속 소환수는 이름표 버튼이 아니라 **패시브 본문의 태그**로 연다. 화면 어딘가에 버튼을
   // 따로 세우면 "누구를 부르는가"가 그 패시브를 읽는 자리와 갈라져, 같은 사실이 두 곳에 선다.
-  const summonTags = options.summonTags ?? [];
+  const summonTags = options.summonTags ?? buildSummonKeywords(finalDef, finalDef.stats);
   // 돌파 줄이 실제 값으로 말하는 수는 그 자리에서 산출 근거를 물을 수 있어야 한다. 스킬 본문의
   // `heal-value`와 ID가 달라 한 쪽지에 두 회복 수치가 함께 서도 서로 덮어쓰지 않는다.
   const breakthroughTags = breakthroughEffect && slot ? breakthroughEffectKeywords(finalDef, slot, finalDef.stats) : [];
   const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
   const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
   const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
+  const guardPercent = "kind" in skill && skill.kind === "droneLink" ? (skill as Passive).droneLink?.defenseResistancePercent : undefined;
   const valueLabel = compositeDamage
     ? t("skill.label.compositeDamage", { amount: compositeDamage.term })
     : detonationDamage
@@ -2856,11 +2827,12 @@ export function buildSkillViewModel(options: {
     art: slot ? skillArtFor(finalDef.id, slot) : undefined,
     tint: skillArtTint(finalDef.element, finalDef.role),
     effectType: skill.effectType,
-    valueLabel,
+    valueLabel: guardPercent === undefined ? valueLabel : defenseGainSummary(finalDef.stats, guardPercent),
     // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
     // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
     contextualKeywords: [
       ...summonTags,
+      ...(guardPercent === undefined ? [] : defenseGainKeywords(finalDef.stats, guardPercent)),
       ...breakthroughTags,
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
@@ -2882,6 +2854,10 @@ export function buildSkillViewModel(options: {
         : ("prickleGain" in skill && skill.prickleGain !== undefined)
           || ("selfGuard" in skill && skill.selfGuard?.prickleGain !== undefined)
           ? prickleKeyword(finalDef.passive) : undefined,
+      "selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined ? {
+        id: "shield-value", term: String(Math.round(finalDef.stats.hp * skill.selfShieldMaxHpPercent / 100)), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfShieldMaxHpPercent }),
+      } : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
       guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
         id: "shield-value", term: String(guardShield), kind: "rule" as const,

@@ -1,3 +1,4 @@
+import { formatEffectDescription, skillDescriptionTop } from "./skillExplanation";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import type { KeywordManager } from "../managers/KeywordManager";
@@ -119,18 +120,30 @@ export function openSkillPopup(
   // **판을 열기 전에 글을 먼저 그려 높이를 잰다.** `PopupLayer.open`은 높이를 미리 받으므로,
   // 본문을 나중에 채우면 그 길이를 판이 알 수 없다. 여기서 만든 컨테이너를 그대로 판에 넣어
   // 두 번 그리지 않는다.
-  const description = keywords.layout(skill.description, skillKeywordLayoutOptions(skill, {
+  const description = keywords.layout(formatEffectDescription(skill.description), skillKeywordLayoutOptions(skill, {
     width: POPUP.width - 120, size: 28, lineSpacing: 10,
   }));
-  const breakthrough = skill.breakthroughEffect === undefined ? undefined : keywords.layout(skill.breakthroughEffect, skillKeywordLayoutOptions(skill, {
+  const breakthrough = skill.breakthroughEffect === undefined ? undefined : keywords.layout(formatEffectDescription(skill.breakthroughEffect), skillKeywordLayoutOptions(skill, {
     width: POPUP.width - 120, size: 26, lineSpacing: 10, color: COLOR.accentText,
   }));
   const breakthroughLabelHeight = breakthrough === undefined ? 0 : Math.round(BREAKTHROUGH_LINE.size * 1.4);
   const breakthroughBlock = breakthrough === undefined ? 0
     : BREAKTHROUGH_LINE.gap + BREAKTHROUGH_LINE.labelTop + breakthroughLabelHeight + BREAKTHROUGH_LINE.labelGap + breakthrough.height;
+  const summary = skill.summary ?? [
+    effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
+    ...((skill.statusEffects ?? []).map(statusEffectLabel)),
+    skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),
+    recoveryLabel(skill.recoveryPercent),
+    damageHealingLabel(skill.damageHealingPercent),
+  ].filter(Boolean).join("   ·   ");
+  // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
+  const summaryText = keywords.layout(summary, skillKeywordLayoutOptions(skill, {
+    width: 560, size: 24, lineSpacing: 4,
+  }));
+  const descriptionY = skillDescriptionTop(summaryText.height);
   const height = Math.max(
     POPUP.minHeight,
-    POPUP.descriptionY + description.height + breakthroughBlock + POPUP.bottomPad,
+    descriptionY + description.height + breakthroughBlock + POPUP.bottomPad,
   );
   popups.open({
     width: POPUP.width,
@@ -191,24 +204,13 @@ export function openSkillPopup(
     body.add(name);
 
     // 효과 분류와 수치는 한 줄에 둔다. 둘 다 "얼마나 세게, 어떤 식으로"를 말한다.
-    const summary = skill.summary ?? [
-      effectLabel(skill.effectType), skill.valueLabel, targetingLabel(skill.targeting),
-      ...((skill.statusEffects ?? []).map(statusEffectLabel)),
-      skill.durationSeconds === undefined ? undefined : t("skill.duration", { seconds: skill.durationSeconds }),
-      recoveryLabel(skill.recoveryPercent),
-      damageHealingLabel(skill.damageHealingPercent),
-    ].filter(Boolean).join("   ·   ");
-    // 실제 수치도 설명문과 같은 키워드 레이아웃을 써서, 누르면 산출 근거를 확인할 수 있게 한다.
-    const summaryText = keywords.layout(summary, skillKeywordLayoutOptions(skill, {
-      width: 560, size: 24, lineSpacing: 4,
-    }));
     summaryText.setPosition(textLeft, top + 156);
     body.add(summaryText);
 
-    body.add(drawHairline(scene, 0, top + 232, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
+    body.add(drawHairline(scene, 0, top + descriptionY - 28, POPUP.width - 96, { color: COLOR.accent, alpha: 0.35 }));
 
     // 폭주·보호막처럼 동적 수치가 본문에 있는 경우에도 요약과 같은 사전을 넘겨 밑줄과 입력을 붙인다.
-    description.setPosition(left + 60, top + POPUP.descriptionY);
+    description.setPosition(left + 60, top + descriptionY);
     body.add(description);
 
     // **돌파로 붙은 줄은 한 줄 띄우고 노랗게 선다.** 본문 바로 아래에 같은 색으로 이으면

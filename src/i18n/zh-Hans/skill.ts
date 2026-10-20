@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_ZH_HANS = {
+  "skill.fact.whenActive": "效果生效时",
+  "skill.keyword.statGain": "{stat}增加：+{amount}\n基础 {base} × {percent}% ≈ +{amount}\n仅此效果生效时为{total}，其他效果可能改变最终数值。",
+  "skill.ferocity.furCoat.actual": "进入暴走时移除所有有害效果，并获得{shield}[[shield|护盾]]。暴走期间：[[def|防御力]] {defense} · [[res|抗性]] {resistance}。",
+  "skill.breakthrough.effect.passive.muralHide.actual": "每有1名敌人附带[[vandalism|涂鸦]]：[[def|防御力]] {defense} · [[res|抗性]] {resistance}。",
+
   "skill.stat.atk": "攻击力",
   "skill.stat.ap": "法术强度",
   "skill.stat.def": "防御力",
@@ -85,7 +90,6 @@ export const SKILL_ZH_HANS = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|克罗]]与[[summon-shiro|希罗]]一同进入暴走。",
   "skill.ferocity.packBody": "{guard}[[attack-speed|攻击速度]]提升{percent}%。",
   "skill.ferocity.packBody.guardPercent": "[[def|防御力]]与[[res|抗性]]提升{percent}%，",
-  "skill.ferocity.packBody.guardAmount": "[[def|防御力]]与[[res|抗性]]各提升{amount}，",
   "skill.ferocity.overclock": "[[attack-speed|攻击速度]]提升{percent}%，自身与[[summon-dimo|迪莫]]各获得相当于{shield}的[[shield|护盾]]。护盾会在暴走进行到一半时消散殆尽。迪莫周围大范围内的敌人每秒受到{damage}。",
   "skill.ferocity.overclock.shieldPercent": "[[atk|攻击力]]的{percent}%",
   "skill.ferocity.overclockBody": "[[attack-speed|攻击速度]]提升{percent}%，[[move-speed|移动速度]]提升{move}%。",
@@ -276,7 +280,6 @@ export const SKILL_ZH_HANS = {
   "skill.keyword.plume.description": "插在敌人身上的羽毛。每名敌人最多叠加{max}层，持续{hold}秒，每次叠加新层都会重新计时。叠满{max}层时羽毛消失，转为出血：{slowSeconds}秒内攻击速度与移动速度降低{slowPercent}%，并在{seconds}秒内造成施加者攻击力{percent}%的伤害。出血不会叠加，重复施加会刷新。",
   "skill.keyword.summon.description": "{stat}、生命、防御力与抗性均由{owner}的{stat}决定的近战召唤物。自行选择目标，并以自身能量使用必杀技。{resummon}",
   "skill.keyword.summon.resummon": "倒下后{seconds}秒以最大生命{percent}%重新站起。",
-  "skill.keyword.summon.owner": "指挥者",
   "skill.ferocity.valueLabel": "野性特性",
   "skill.ferocity.head": "[[ferocity|野性槽]]充满时进入暴走。",
   "skill.label.compositeDamage": "伤害 [[damage-value|{amount}]]",

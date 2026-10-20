@@ -1,5 +1,10 @@
 /** Skill description sentences. English word order differs, so each value holds a whole sentence. */
 export const SKILL_PT_BR = {
+  "skill.fact.whenActive": "Enquanto estiver ativo",
+  "skill.keyword.statGain": "Aumento de {stat}: +{amount}\nBase {base} × {percent}% ≈ +{amount}\nSomente este efeito: {total}. Outros efeitos podem alterar o valor final.",
+  "skill.ferocity.furCoat.actual": "Ao entrar em Frenesi, remove todos os efeitos negativos e recebe {shield} de [[shield|Escudo]]. Durante o Frenesi: [[def|Defesa]] {defense} · [[res|Resistência]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "Por inimigo com [[vandalism|Vandalismo]]: [[def|Defesa]] {defense} · [[res|Resistência]] {resistance}.",
+
   "skill.stat.atk": "Ataque",
   "skill.stat.ap": "Poder mágico",
   "skill.stat.def": "Defesa",
@@ -85,7 +90,6 @@ export const SKILL_PT_BR = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|Kuro]] e [[summon-shiro|Shiro]] entram juntos em Frenesi.",
   "skill.ferocity.packBody": "{guard} a [[attack-speed|Velocidade de ataque]] sobe {percent}%.",
   "skill.ferocity.packBody.guardPercent": "[[def|Defesa]] e [[res|Resistência]] sobem {percent}% e",
-  "skill.ferocity.packBody.guardAmount": "[[def|Defesa]] e [[res|Resistência]] sobem {amount} cada e",
   "skill.ferocity.overclock": "A [[attack-speed|Velocidade de ataque]] sobe {percent}%, e o usuário e [[summon-dimo|Dimo]] ganham cada um um [[shield|escudo]] de {shield}. O escudo se dissolve por completo por volta da metade do Frenesi. Os inimigos numa área ampla ao redor de Dimo recebem {damage} a cada segundo.",
   "skill.ferocity.overclock.shieldPercent": "{percent}% do Ataque",
   "skill.ferocity.overclockBody": "A [[attack-speed|Velocidade de ataque]] sobe {percent}% e a [[move-speed|velocidade de movimento]] sobe {move}%.",
@@ -276,7 +280,6 @@ export const SKILL_PT_BR = {
   "skill.keyword.plume.description": "Uma pena cravada no inimigo. Cada inimigo acumula até {max} cargas por {hold} s, e cada carga nova reinicia o tempo. Com {max} cargas as penas somem e viram um sangramento que reduz a velocidade de ataque e de movimento em {slowPercent}% por {slowSeconds} s e causa {percent}% do ATQ do atacante em {seconds} s. O sangramento não acumula; aplicá-lo de novo o renova.",
   "skill.keyword.summon.description": "Invocação corpo a corpo cujos {stat}, PV, Defesa e Resistência dependem de {stat} de {owner}. Escolhe os próprios alvos e usa a Suprema com o próprio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Ao cair, levanta-se após {seconds} s com {percent}% do PV máx.",
-  "skill.keyword.summon.owner": "o comandante",
   "skill.ferocity.valueLabel": "Traço de Ferocidade",
   "skill.ferocity.head": "Entra em Frenesi quando o [[ferocity|medidor de Ferocidade]] enche. ",
   "skill.label.compositeDamage": "Dano [[damage-value|{amount}]]",

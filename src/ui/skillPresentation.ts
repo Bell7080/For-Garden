@@ -1,3 +1,4 @@
+import { defenseGainKeywords, statGainAlias } from "./statGainKeywords";
 import type { DamagePreview } from "../core/damage";
 import { findKeyword, type KeywordDef } from "../data/keywords";
 import type { KeywordTextOptions } from "../managers/KeywordManager";
@@ -132,7 +133,7 @@ export function skillKeywordLayoutOptions(
 
 
 /** 폭주 설명의 모든 수치를 실제 전투 계약에서 만들어 밸런스 조정 후 문구가 남지 않게 한다. */
-export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number }): string {
+export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack: number; defense: number; maxHp?: number; abilityPower?: number; resistance?: number }): string {
   // 캐릭터 ID가 아니라 도핑 계약의 구조화 수치만 읽어 어떤 정의에도 같은 문장 조립을 제공한다.
   if (trait.effectId === "reagentDoping") return t("skill.ferocity.reagentDoping", { stacks: trait.stacksOnEntry, percent: trait.attackSpeedPercent });
   if (trait.effectId === "damageReduction") return t("skill.ferocity.damageReduction", { percent: trait.reductionPercent });
@@ -220,6 +221,11 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.graffitiRun", { percent: trait.moveSpeedPercent, damage, seconds: trait.taunt.seconds });
   }
   if (trait.effectId === "furCoat") {
+    if (stats?.maxHp !== undefined && stats.resistance !== undefined) return t("skill.ferocity.furCoat.actual", {
+      shield: `[[shield-value|${Math.round(stats.maxHp * trait.shieldMaxHpPercent / 100)}]]`,
+      defense: statGainAlias("def", stats.defense, trait.defenseResistancePercent),
+      resistance: statGainAlias("res", stats.resistance, trait.defenseResistancePercent),
+    });
     return t("skill.ferocity.furCoat", { percent: trait.shieldMaxHpPercent, guardPercent: trait.defenseResistancePercent });
   }
   if (trait.effectId === "shellResolve") {
@@ -241,12 +247,12 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.summonPackFrenzy");
   }
   if (trait.effectId === "packBody") {
-    // 방어·저항은 같은 값이 함께 오르므로 한 번만 말하고, 실제로 오르는 양으로 보여 준다.
-    // 방어·저항은 퍼센트가 아니라 실제 오르는 값으로 보여 준다. 같은 비율도 개체마다 오르는 양이 다르다.
-    const defense = stats === undefined ? undefined : Math.round(stats.defense * trait.defenseResistancePercent / 100);
-    const guard = defense === undefined
+    const guard = stats?.resistance === undefined
       ? t("skill.ferocity.packBody.guardPercent", { percent: trait.defenseResistancePercent })
-      : t("skill.ferocity.packBody.guardAmount", { amount: defense });
+      : t("skill.passive.droneLink.guardAmount", {
+        defense: statGainAlias("def", stats.defense, trait.defenseResistancePercent),
+        resistance: statGainAlias("res", stats.resistance, trait.defenseResistancePercent),
+      });
     return t("skill.ferocity.packBody", { guard, percent: trait.attackSpeedPercent });
   }
 
@@ -501,7 +507,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const amount = guard === undefined
       ? t("skill.passive.droneLink.guardPercent", { percent })
       : t("skill.passive.droneLink.guardAmount", {
-        defense: Math.round(guard.defense * percent / 100), resistance: Math.round(guard.resistance * percent / 100),
+        defense: statGainAlias("def", guard.defense, percent), resistance: statGainAlias("res", guard.resistance, percent),
       });
     return t("skill.passive.droneLink", { guard: amount, regen: passive.droneLink.regenMaxHpPercentPerSecond });
   }
@@ -1558,11 +1564,15 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
       // 방어·저항은 퍼센트가 아니라 실제로 오르는 값으로 보여 준다. 능력치를 모르는 자리(도감)에서만 비율로 되돌아간다.
       const guard = stats === undefined
         ? t("skill.breakthrough.effect.passive.undyingBulwark.guardPercent", { percent: trim(bulwark.defenseResistancePercent) })
-        : t("skill.breakthrough.effect.passive.undyingBulwark.guardAmount", { def: Math.round(stats.def * bulwark.defenseResistancePercent / 100), res: Math.round(stats.res * bulwark.defenseResistancePercent / 100) });
+        : t("skill.breakthrough.effect.passive.undyingBulwark.guardAmount", { def: statGainAlias("def", stats.def, bulwark.defenseResistancePercent), res: statGainAlias("res", stats.res, bulwark.defenseResistancePercent) });
       return t("skill.breakthrough.effect.passive.undyingBulwark", { name: def.passive.name, from: trim(def.passive.value ?? 0), to: trim(bulwark.healPercent), seconds: trim(bulwark.seconds), guard });
     }
     if (effects.passive.kind === "manyEyes") return t("skill.breakthrough.effect.passive.manyEyes", { percent: trim(effects.passive.attackSpeedPercentPerObserved) });
-    if (effects.passive.kind === "muralHide") return t("skill.breakthrough.effect.passive.muralHide", { percent: trim(effects.passive.defenseResistancePercentPerTagged) });
+    if (effects.passive.kind === "muralHide") {
+      const percent = effects.passive.defenseResistancePercentPerTagged;
+      return stats === undefined ? t("skill.breakthrough.effect.passive.muralHide", { percent: trim(percent) })
+        : t("skill.breakthrough.effect.passive.muralHide.actual", { defense: statGainAlias("def", stats.def, percent), resistance: statGainAlias("res", stats.res, percent) });
+    }
     if (effects.passive.kind === "vitalSketch") return t("skill.breakthrough.effect.passive.vitalSketch", { points: trim(effects.passive.critPoints) });
     if (effects.passive.kind === "stitchedMight") return t("skill.breakthrough.effect.passive.stitchedMight", { percent: trim(effects.passive.damagePercent) });
     if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
@@ -1600,6 +1610,10 @@ export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot
     if (prickle) own.push(prickle);
     const elation = elationKeyword(def.passive);
     if (elation) own.push(elation);
+  }
+  if (stats && slot === "passive" && effectOfSlot) {
+    if (effectOfSlot.kind === "undyingBulwark") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercent));
+    if (effectOfSlot.kind === "muralHide") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercentPerTagged));
   }
   const effect = slot === "basic" ? def.breakthroughEffects?.basic : undefined;
   if (!effect || effect.kind !== "periodicGuard") return own;

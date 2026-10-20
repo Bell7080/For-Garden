@@ -10,6 +10,11 @@
  * 더하고 여기에 그 절의 문구를 더한다.
  */
 export const SKILL_KO = {
+  "skill.fact.whenActive": "효과 발동 시",
+  "skill.keyword.statGain": "{stat} 증가량: +{amount}\n기준 {base} × {percent}% ≈ +{amount}\n이 효과만 적용 시 {total}. 다른 효과가 더해지면 최종 수치는 달라질 수 있다.",
+  "skill.ferocity.furCoat.actual": "폭주 진입 시 해로운 효과를 모두 해제하고 [[shield|보호막]] {shield}을 얻는다. 폭주 중 [[def|방어력]] {defense} · [[res|저항력]] {resistance}.",
+  "skill.breakthrough.effect.passive.muralHide.actual": "[[vandalism|밴덜리즘]]이 걸린 적 1명당 [[def|방어력]] {defense} · [[res|저항력]] {resistance}.",
+
   // ── 능력치 이름 ──────────────────────────────────────────────────────────
   "skill.stat.atk": "공격력",
   "skill.stat.ap": "주문력",
@@ -119,7 +124,6 @@ export const SKILL_KO = {
   "skill.ferocity.overclockBody": "[[attack-speed|공격 속도]]가 {percent}%, [[move-speed|이동 속도]]가 {move}% 오른다.",
   "skill.ferocity.packBody": "{guard} [[attack-speed|공격 속도]]가 {percent}% 오른다.",
   "skill.ferocity.packBody.guardPercent": "[[def|방어력]]과 [[res|저항력]]이 {percent}% 오르고",
-  "skill.ferocity.packBody.guardAmount": "[[def|방어력]]과 [[res|저항력]]이 {amount}씩 오르고",
   "skill.ferocity.duoBreakthrough": "[[duo|듀오]]를 체력이 가장 낮은 적으로 [[charge|돌진]]시킨다. 길 위의 적은 듀오의 [[basic-attack|기본 공격]] 피해를 받고 [[knockback|날아간다]]. 폭주 동안 듀오가 입힌 피해의 {percent}%만큼 모든 아군이 회복한다.",
   "skill.ferocity.splash": "{speed}[[basic-attack|기본 공격]]이 대상 주위의 모든 적에게 적중해 {ending}",
   "skill.ferocity.splash.speed": "[[attack-speed|공격 속도]]가 {percent}% 증가한다. ",
@@ -327,7 +331,6 @@ export const SKILL_KO = {
   "skill.keyword.plume.description": "적에게 박히는 깃털이다. 적마다 최대 {max}겹까지 쌓이고 {hold}초 동안 남으며, 새 겹이 박힐 때마다 시간이 다시 세어진다. {max}겹이 되면 깃털이 사라지고 {slowSeconds}초 동안 공격 속도와 이동 속도를 {slowPercent}% 낮추는 출혈로 바뀌어, {seconds}초에 걸쳐 건 쪽 공격력의 {percent}%만큼 피해를 준다. 출혈은 겹치지 않고 다시 걸리면 갱신된다.",
   "skill.keyword.summon.description": "{owner}의 {stat}{stat!이} {stat}·체력·방어력·저항력을 정하는 근거리 소환수다. 스스로 표적을 고르고 제 게이지로 궁극기를 쓴다.{resummon}",
   "skill.keyword.summon.resummon": " 쓰러지면 {seconds}초 뒤 최대 체력의 {percent}%로 다시 선다.",
-  "skill.keyword.summon.owner": "지휘자",
   "skill.ferocity.valueLabel": "야성 발현",
   "skill.ferocity.head": "[[ferocity|야성 게이지]]가 가득 차면 폭주한다. ",
   "skill.label.compositeDamage": "피해량 [[damage-value|{amount}]]",

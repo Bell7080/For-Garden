@@ -4,6 +4,11 @@
  * 韓国語表と同じキーを使い、値は文を丸ごと持つ。`{名前}` の位置だけがコードから届く。
  */
 export const SKILL_JA = {
+  "skill.fact.whenActive": "効果発動中",
+  "skill.keyword.statGain": "{stat}の増加量：+{amount}\n基準 {base} × {percent}% ≈ +{amount}\nこの効果のみ適用：{total}。他の効果により最終値は変わります。",
+  "skill.ferocity.furCoat.actual": "暴走開始時に有害効果をすべて解除し、[[shield|シールド]] {shield}を得る。暴走中：[[def|防御力]] {defense} · [[res|抵抗力]] {resistance}。",
+  "skill.breakthrough.effect.passive.muralHide.actual": "[[vandalism|ヴァンダリズム]]が付いた敵1体につき：[[def|防御力]] {defense} · [[res|抵抗力]] {resistance}。",
+
   "skill.stat.atk": "攻撃力",
   "skill.stat.ap": "魔力",
   "skill.stat.def": "防御力",
@@ -96,7 +101,6 @@ export const SKILL_JA = {
   "skill.ferocity.summonPackFrenzy": "[[summon-kuro|クロ]]と[[summon-shiro|シロ]]が共に暴走する。",
   "skill.ferocity.packBody": "{guard}[[attack-speed|攻撃速度]]が{percent}%上がる。",
   "skill.ferocity.packBody.guardPercent": "[[def|防御力]]と[[res|抵抗力]]が{percent}%上がり、",
-  "skill.ferocity.packBody.guardAmount": "[[def|防御力]]と[[res|抵抗力]]が{amount}ずつ上がり、",
   "skill.ferocity.overclock": "[[attack-speed|攻撃速度]]が{percent}%上がり、自身と[[summon-dimo|ディモ]]が{shield}の[[shield|シールド]]を得る。シールドは暴走の半ばごろまでに消えていく。ディモの周囲の広い範囲の敵に毎秒{damage}が入る。",
   "skill.ferocity.overclock.shieldPercent": "[[atk|攻撃力]]の{percent}%",
   "skill.ferocity.overclockBody": "[[attack-speed|攻撃速度]]が{percent}%、[[move-speed|移動速度]]が{move}%上がる。",
@@ -296,7 +300,6 @@ export const SKILL_JA = {
   "skill.keyword.plume.description": "敵に刺さる羽根。敵ごとに最大{max}重まで重なり、{hold}秒間残る。新しい重が刺さるたびに時間が数え直される。{max}重になると羽根は消え、{slowSeconds}秒間攻撃速度と移動速度を{slowPercent}%下げる出血に変わり、{seconds}秒かけて付与した側の攻撃力の{percent}%のダメージを与える。出血は重ならず、かけ直すと更新される。",
   "skill.keyword.summon.description": "{owner}の{stat}が{stat}・体力・防御力・抵抗力を決める近距離召喚獣だ。自ら標的を選び、自分のゲージで必殺技を使う。{resummon}",
   "skill.keyword.summon.resummon": "倒れると{seconds}秒後に最大体力の{percent}%で再び立つ。",
-  "skill.keyword.summon.owner": "指揮者",
   "skill.ferocity.valueLabel": "野性発現",
   "skill.ferocity.head": "[[ferocity|野性ゲージ]]が満タンになると暴走する。 ",
 

@@ -53,7 +53,7 @@ export const SHOP_ID = {
   "shop.premium.unsupported": "Pembayaran tidak tersedia di build ini.",
   "shop.premium.cancelled": "Pembayaran dibatalkan.",
   "shop.premium.perk.raidTicket": "Gratis {count} tiket penumpasan pilihan setiap hari",
-  "shop.premium.perk.adRemoval": "Tanpa iklan · Buka kecepatan tempur 3×",
+  "shop.premium.perk.adRemoval": "Tanpa iklan · Buka kecepatan tempur 3× · Sapu tanpa tiket",
   "shop.renewal.notice": "{price} ditagih otomatis setiap {days} hari · diperpanjang hingga dibatalkan",
   "shop.renewal.title": "Detail Langganan",
   "shop.renewal.billing.title": "Penagihan",
@@ -125,4 +125,5 @@ export const SHOP_ID = {
   "shop.premium.fixedTerm": "Akses {days} hari",
   "shop.premium.expiresOn": "Berakhir {date}",
   "shop.premium.noRenewal": "Akses {days} hari · Tanpa perpanjangan otomatis",
+  "shop.premium.perk.ticketless": "Sapu tanpa tiket",
 } as const;

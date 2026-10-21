@@ -4,6 +4,7 @@
  * `tests/unit/gameHandler.test.ts`가 GameApi 인터페이스와 이 목록이 같은지 지킨다.
  */
 export const SERVER_GAME_METHODS = [
+  "getRouletteStatus", "spinRoulette", "unlockRouletteSpins",
   "prepareCombat", "finishCombat",
   "abandonStrataRun", "activatePass", "answerRelicQuestion", "applyDebugCommand", "applyStoryEffect", "archaeologyState", "beginExpeditionAugment", "breakThroughRelic", "buyDuelAttempt", "buyGuildProduct", "changeGuildBadge", "createGuild", "stampGuildAttendance",
   "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",

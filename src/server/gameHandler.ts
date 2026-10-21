@@ -120,7 +120,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
   const fingerprint = JSON.stringify([req.method, req.args ?? []]);
   for (let attempt = 1; ; attempt += 1) {
     // 서로 기다릴 이유가 없는 조회는 한꺼번에 나간다 — 순서대로 부르면 왕복 시간이 그대로 쌓인다.
-    const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
+    const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;

@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import {installGameHandleProbe} from './gameDiagnostics';
 import {startAfterOpening} from './openingSave';
 import {tap,captureGame} from './canvasInput';
-for (const how of ['register', 'signIn'] as const) test(`타이틀 ${how} 성공은 추가 입력 없이 바로 로비로 진입한다`,async({page},info)=>{
+for (const how of ['register', 'signIn'] as const) test(`타이틀 ${how} 성공은 입장 문구를 표시하고 탭하면 바로 로비로 진입한다`,async({page},info)=>{
  test.skip(process.env.PF_E2E_REMOTE_LOOP!=='1','소스 서버 전용');test.setTimeout(180000);
  await installGameHandleProbe(page);await startAfterOpening(page);
  await page.evaluate(async()=>{const root='/src/';const api=await import(/* @vite-ignore */root+'api/AccountApi.ts');(window as any).__TITLE_REGISTER=0;const done=async()=>{(window as any).__TITLE_REGISTER++;return {ok:true,value:{kind:'linked',provider:'password',maskedId:'ga••••'}};};api.installAccountApi({registerWithId:done,signInWithId:done});});
@@ -19,6 +19,8 @@ for (const how of ['register', 'signIn'] as const) test(`타이틀 ${how} 성공
  await tap(page,540,960+rows.submitY);
  await expect.poll(()=>page.evaluate(()=>(window as any).__TITLE_REGISTER)).toBe(1);
  await expect.poll(()=>page.evaluate(()=>(window as any).__TITLE_SCENE.loginButtons.length)).toBe(0);
+ await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe('title');
+ await tap(page,540,1100);
  await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene),{timeout:60000}).toBe('lobby');
  expect(await page.getByLabel('아이디',{exact:true}).count()).toBe(0);
  expect(await page.evaluate(()=>(window as any).__TITLE_SCENE.loginRebuild===undefined)).toBe(true);

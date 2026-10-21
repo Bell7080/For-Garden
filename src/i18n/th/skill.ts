@@ -248,7 +248,7 @@ export const SKILL_TH = {
   "skill.breakthrough.effect.ferocity": "เมื่อ[[ferocity|คลั่ง]]จบ จะได้รับ[[shield|โล่]]เท่ากับ {percent}% ของความเสียหายที่ได้รับระหว่างคลั่ง และ[[taunt|ยั่วยุ]]ศัตรูในวงกว้างอีกครั้ง {seconds} วินาที",
   "skill.breakthrough.effect.passive": "เมื่อ \"{name}\" ทำงาน จะแบ่ง {percent}% ของการฟื้นฟูนั้นให้พันธมิตรทุกตัว",
   "skill.breakthrough.effect.basic.deepBleed": "[[bleed|เลือดไหล]]จากการโจมตีปกติกลายเป็นเลือดไหลลึก สร้างความเสียหาย {percent}% ของ HP สูงสุดทุกวินาที ระหว่างนั้นลดการฟื้นฟูที่เป้าหมายได้รับ {reduction}% และมีผลก่อนเลือดไหลอื่น",
-  "skill.breakthrough.effect.ultimate.execution": "ความเสียหายของท่าไม้ตายกลายเป็นความเสียหายจริง และเมื่อกำจัดศัตรูได้จะคืนพลังงานท่าไม้ตาย {energy}",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "ฟื้นฟู HP เท่ากับ {percent}% ของความเสียหายที่ทำ",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "ระหว่าง[[ferocity|คลั่ง]] การโจมตีปกติจะโดนศัตรูทั้งหมดในพื้นที่ค่อนข้างกว้าง",
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP สูงสุด [[def|พลังป้องกัน]] และ[[res|ต้านทาน]]เพิ่มขึ้น {percent}% และเมื่อกำจัดศัตรูได้ จะพร้อม[[charge|พุ่งชน]]เป้าหมายถัดไปอีกครั้ง",
   "skill.breakthrough.effect.basic.splitHealing": "ส่งต่อ {percent}% ของการฟื้นฟูที่ให้พันธมิตรที่บาดเจ็บมากที่สุด ไปยังพันธมิตรที่บาดเจ็บมากเป็นอันดับสองด้วย",

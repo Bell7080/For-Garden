@@ -89,3 +89,9 @@ export function researchDays(createdAt: string, now: Date): number {
   if (!Number.isFinite(start)) return 1;
   return Math.max(1, Math.floor((now.getTime() - start) / 86_400_000) + 1);
 }
+
+
+/** 1-1 뒤 첫 로비에서 이름을 정한다. 기존 진행이 있는 무명 계정도 같은 창을 받는다. */
+export function nicknameCreationRequired(card: Pick<PlayerCardState, "nickname">, cleared: ReadonlySet<string>): boolean {
+  return card.nickname.trim() === "" && cleared.size > 0;
+}

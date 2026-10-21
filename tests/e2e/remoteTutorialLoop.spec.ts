@@ -21,6 +21,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
 async function open(page: Page, step: "navigation" | "feed" | "research") {
   const server = createFixture("stage", s => {
+    s.playerCard.nickname = "테스트연구원";
     s.tutorial = { completedStepIds: [...TUTORIAL_STEPS.slice(0, step === "navigation" ? 1 : step === "feed" ? 2 : 7)] };
     s.cleared = new Set(step === "navigation" ? ["1-1"] : step === "feed" ? ["1-1", "1-2"] : ["1-1", "1-2", "1-3", "1-4", "1-5"]);
     s.wallet.fossil = 0; s.wallet.cheesecake = 200;

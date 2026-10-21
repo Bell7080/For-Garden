@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "Control de masas",
   "keyword.crowd-control.description": "El nombre colectivo de los efectos que impiden actuar al objetivo, como Aturdimiento y Tambaleo.",
   "keyword.tenacity.term": "Tenacidad",
-  "keyword.tenacity.description": "Se acumula cada vez que se libra del control de masas y acorta controles como Aturdimiento y Tambaleo en ese porcentaje. Al tope, el control se rompe en cuanto impacta. Solo lo tienen enemigos en posiciones que no deben quedar bloqueadas, como los jefes.",
+  "keyword.tenacity.description": "Se acumula al recibir control. Reduce la duración de Aturdimiento, Tambaleo, Congelación, Sueño, Miedo, Frenesí, Provocación, Empuje y ralentizaciones temporales. El control que queda bajo la duración mínima se ignora. Reduce la fuerza de ralentizaciones sin tiempo y atracciones, y la velocidad del Empuje. Al resistencia total, el nuevo control no tiene efecto.",
   "keyword.damage-reduction.term": "Reducción de daño",
   "keyword.damage-reduction.description": "Todo el daño recibido se reduce a medida que baja la Salud. El daño minúsculo tras la reducción no entra en absoluto. Solo lo tienen los enemigos en la posición Inmortal, que nunca cae.",
   "keyword.scar.term": "Cicatriz",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "Sala de mando de persecución",
   "chapter.4.title": "Zona 4",
   "chapter.4.subtitle": "Línea de unión — Dos grupos en una misma vía",
+  "adReward.roulette-chances.text": "Ver anuncio: +3 giros",
 };

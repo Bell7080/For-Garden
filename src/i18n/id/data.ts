@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "Kontrol Massa",
   "keyword.crowd-control.description": "Nama kolektif untuk efek yang menghentikan target bertindak, seperti Pingsan dan Goyah.",
   "keyword.tenacity.term": "Kegigihan",
-  "keyword.tenacity.description": "Menumpuk setiap kali lepas dari kontrol massa, memperpendek kontrol seperti Pingsan dan Goyah sebesar persentase itu. Di batas maksimal, kontrol pecah begitu mengenai. Hanya musuh di posisi yang tak boleh terkunci, seperti bos, yang memilikinya.",
+  "keyword.tenacity.description": "Menumpuk saat menerima kontrol. Mengurangi durasi Pingsan, Goyah, Beku, Tidur, Takut, Kegilaan, Provokasi, Terpental dan perlambatan berwaktu. Kontrol di bawah durasi minimum setelah resistensi diabaikan. Mengurangi kekuatan perlambatan tanpa durasi dan tarikan, serta kecepatan Terpental. Pada resistensi penuh, kontrol baru tidak berpengaruh.",
   "keyword.damage-reduction.term": "Reduksi Kerusakan",
   "keyword.damage-reduction.description": "Semua kerusakan yang diterima menyusut seiring Nyawa turun. Kerusakan yang sangat kecil setelah reduksi tidak masuk sama sekali. Hanya musuh di posisi Abadi yang tak pernah tumbang yang memilikinya.",
   "keyword.scar.term": "Bekas Luka",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "Ruang Komando Pengejaran",
   "chapter.4.title": "Zona 4",
   "chapter.4.subtitle": "Jalur Pertemuan — Dua Kelompok di Satu Rel",
+  "adReward.roulette-chances.text": "Tonton iklan: +3 putaran",
 };

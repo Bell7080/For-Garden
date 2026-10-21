@@ -87,3 +87,12 @@ export function lobbyEventListLayout(count: number, capacity = count): LobbyEven
     centers: Array.from({ length: count }, (_, index) => start + BASE.cardHeight / 2 + index * (BASE.cardHeight + BASE.cardGap)),
   };
 }
+
+
+export function lobbyEventEntryId(entry: LobbyEventEntry): string {
+  return entry.kind === "attendance" ? `attendance:${entry.track.id}` : entry.event.id;
+}
+/** 받을 것이 남은 카드를 위로 모으고 각 묶음 안에서는 원래 순서를 지킨다. */
+export function prioritizeLobbyEvents(entries: readonly LobbyEventEntry[], actionable: ReadonlySet<string>): LobbyEventEntry[] {
+  return [...entries].sort((a, b) => Number(actionable.has(lobbyEventEntryId(b))) - Number(actionable.has(lobbyEventEntryId(a))));
+}

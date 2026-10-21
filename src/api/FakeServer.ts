@@ -1,3 +1,5 @@
+import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
+import type { SpinRouletteResponse } from "./contracts";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
@@ -1746,6 +1748,49 @@ export class FakeServer implements GameApi {
     return { excavation: this.cloneExcavation(excavation), serverTime: now.toISOString(), ...notice };
   }
 
+  private readonly rouletteResults = new Map<string, SpinRouletteResponse>();
+
+  async getRouletteStatus() {
+    return rouletteStatus(this.state.dailyAdRewards, this.now(), this.hasAdFreeMembership(this.now()));
+  }
+
+  async unlockRouletteSpins(request: { requestId: string; verificationToken?: string }) {
+    const now = this.now();
+    if (this.hasAdFreeMembership(now)) {
+      const entitlement = [...this.entitlements.values()].find(row => {
+        const product = PRODUCTS.find(product => product.id === row.productId);
+        return product?.passBenefit?.adFree && (row.expiresAt === null || now.getTime() < Date.parse(row.expiresAt));
+      })!;
+      await this.claimInstantAdReward({ entitlementId: entitlement.entitlementId, slotId: ROULETTE.adSlot, requestId: request.requestId });
+    } else await this.claimAdReward({ slotId: ROULETTE.adSlot, requestId: request.requestId, verificationToken: request.verificationToken ?? "" });
+    return this.getRouletteStatus();
+  }
+
+  async spinRoulette(request: { requestId: string }): Promise<SpinRouletteResponse> {
+    await this.delay();
+    const cached = this.rouletteResults.get(request.requestId);
+    if (cached) return { ...cached, ...this.snapshot() };
+    const now = this.now();
+    const status = await this.getRouletteStatus();
+    if (!status.active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
+    if (!request.requestId || this.state.dailyAdRewards.requestIds.includes(request.requestId)) throw new GameApiError("AD_REQUEST_DUPLICATE", "이미 처리한 회전입니다.");
+    if (status.remaining <= 0) throw new GameApiError("AD_DAILY_LIMIT", "남은 회전 횟수가 없습니다.");
+    const index = rouletteIndex(this.random);
+    const reward = ROULETTE_REWARDS[index];
+    const wallet = { ...this.state.wallet };
+    const before = wallet[reward.currency];
+    wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], before + reward.amount);
+    const current = this.state.dailyAdRewards.date === status.date ? this.state.dailyAdRewards : { date: status.date, claimsBySlot: {}, requestIds: [] };
+    // 기존 일일 지급 장부에 회전 소비도 함께 저장해 새로고침·광고 재시도로 횟수를 복제하지 않는다.
+    const dailyAdRewards = { date: status.date, claimsBySlot: { ...current.claimsBySlot, [ROULETTE.counter]: status.used + 1 }, requestIds: [...current.requestIds, request.requestId] };
+    this.persist({ ...this.state, wallet, dailyAdRewards });
+    this.state.wallet = wallet; this.state.dailyAdRewards = dailyAdRewards;
+    const result = { ...this.snapshot(), status: rouletteStatus(dailyAdRewards, now, status.adFree), index, reward,
+      granted: { [reward.currency]: wallet[reward.currency] - before } };
+    this.rouletteResults.set(request.requestId, result);
+    return result;
+  }
+
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {
     await this.delay();
@@ -1814,6 +1859,7 @@ export class FakeServer implements GameApi {
 
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   private assertAdPrerequisite(slot: AdRewardSlot, now: Date): void {
+    if (slot.id === ROULETTE.adSlot && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
     if (!slot.requiresClaimedProductId) return;
     const product = PRODUCTS.find(({ id }) => id === slot.requiresClaimedProductId);
     if (!product || this.remaining(product, now) > 0) throw new GameApiError("AD_PREREQUISITE", "먼저 무료 보급을 받아야 합니다.");
@@ -2749,7 +2795,11 @@ export class FakeServer implements GameApi {
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
-    return { claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    const roulette = rouletteStatus(this.state.dailyAdRewards, now);
+    const expedition = this.rollExpedition(now);
+    const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
+    const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
@@ -3790,7 +3840,7 @@ export class FakeServer implements GameApi {
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
     }
     // 결투 도전권은 지갑·가방이 아니라 결투장 상태에 더한다 — `claimAdReward`가 그 몫을 따로 확정한다.
-    if (reward.kind === "duel_attempt") return { wallet, excavation, itemInventory };
+    if (reward.kind === "duel_attempt" || reward.kind === "roulette_chances") return { wallet, excavation, itemInventory };
     // 효과 적용 직전까지를 먼저 정산해야 새 배율이 과거 생산에 소급되지 않는다.
     excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
     const effect = reward.effect;

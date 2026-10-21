@@ -419,6 +419,8 @@ export class PremiumScene extends Phaser.Scene {
     const label = this.add.text(x, 54, t("shop.premium.perk.speed"), textStyle({ role: "display", size: 26, color: COLOR.accentText, align: "center" })).setOrigin(0.5).setStroke("#04060a", 5).setShadow(3, 4, "#04060a", 2, true, true);
     label.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? 216,
       (value) => object.context.measureText(value).width, settingsManager.get().game.language));
+    const ticketless = this.add.text(-x, 59, t("shop.premium.perk.ticketless"), textStyle({ role: "display", size: 26, color: COLOR.accentText, align: "center" })).setOrigin(.5).setStroke("#04060a", 5).setShadow(3, 4, "#04060a", 2, true, true);
+    card.add(fitTextToBox(ticketless, { width: 232, height: 65 }, { size: 26, minSize: 18 }));
     card.add([adShadow, ad, prohibitionShadow, prohibition, speed, fitTextToBox(label, { width: 216, height: 54 }, { size: 26, minSize: 18 })]);
   }
 

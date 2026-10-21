@@ -226,7 +226,7 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     const tone = zones[zone].tone;
     const row = weightedPick(layer.rewards, (reward) => reward.weight[tone], input.random);
     const span = Math.max(0, row.max - row.min);
-    const amount = row.kind === "empty" ? 0 : row.min + Math.round(roll(input.random) * span);
+    const amount = row.kind === "empty" ? 0 : row.kind === "gems" ? (roll(input.random) < 0.75 ? row.min : row.max) : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
   fitRuneTileCount(layer, tiles, input.random);

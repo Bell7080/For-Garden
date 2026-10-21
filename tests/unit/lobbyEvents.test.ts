@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { findLobbyEvent, LOBBY_EVENTS, type LobbyEventDef } from "../../src/data/lobbyEvents";
-import { activeLobbyEvents, lobbyEventListLayout, lobbyEventRemaining } from "../../src/ui/lobbyEventModel";
+import { activeLobbyEvents, lobbyEventListLayout, lobbyEventRemaining, prioritizeLobbyEvents, lobbyEventEntryId } from "../../src/ui/lobbyEventModel";
 
 const at = (iso: string) => Date.parse(iso);
 const sample = (id: string, startsAt: string, endsAt: string): LobbyEventDef => ({ id, titleKey: "event.title", subtitleKey: "event.title", backdropKey: "background-lobby", startsAt, endsAt });
 
 describe("로비 이벤트", () => {
+  it("미완료 카드를 위로 모으고 완료 후 재조회해도 같은 순서를 유지한다", () => {
+    const entries = LOBBY_EVENTS.map(event => ({ kind: "event" as const, event }));
+    const ready = new Set(["research-roulette"]);
+    expect(prioritizeLobbyEvents(entries, ready).map(lobbyEventEntryId)[0]).toBe("research-roulette");
+    const completed = prioritizeLobbyEvents(entries, new Set());
+    expect(prioritizeLobbyEvents(completed, new Set())).toEqual(completed);
+  });
+
   it("모든 이벤트 카드가 같은 양식으로 선다 — 원화 뒷배경을 반드시 갖는다", () => {
     for (const event of LOBBY_EVENTS) expect(event.backdropKey, event.id).toMatch(/^background-/);
   });

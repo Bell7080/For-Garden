@@ -1718,14 +1718,36 @@ function gainTenacity(fighter: Fighter): void {
   fighter.tenacity = Math.min(cap, fighter.tenacity + plan.perControlPercent);
 }
 
+/** 모든 시간제 행동 제약의 공용 경계. 같은 적용에서 저항과 누적을 한 번만 계산한다. */
+export function controlDuration(fighter: Fighter, seconds: number, accumulate = true): number {
+  if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return 0;
+  const resisted = seconds * (1 - controlResistPercent(fighter) / 100);
+  if (accumulate) gainTenacity(fighter);
+  const floor = encounterTenacity(fighter)?.controlIgnoreAtOrBelowSeconds ?? 0;
+  return resisted <= floor + 1e-9 ? 0 : resisted;
+}
+
+/** 시간이 없는 중첩·영역 감속은 지속시간 대신 감속률에 같은 강인함을 적용한다. */
+export function controlMagnitude(fighter: Fighter, amount: number, accumulate = false): number {
+  if (!isFighterAlive(fighter) || !Number.isFinite(amount) || amount <= 0) return 0;
+  const resisted = amount * (1 - controlResistPercent(fighter) / 100);
+  if (accumulate) gainTenacity(fighter);
+  return Math.max(0, resisted);
+}
+
+/** 순간 끌어당김도 이동 거리로 저항한다. 지속 영역과 달리 실제 적용 때만 강인함이 쌓인다. */
+function displaceByControl(target: Fighter, x: number, y: number, state: SkirmishState): boolean {
+  const ratio = controlMagnitude(target, 1, true);
+  if (ratio <= 0) return false;
+  target.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + (x - target.x) * ratio));
+  target.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + (y - target.y) * ratio));
+  target.engaged = false;
+  return true;
+}
+
 export function applyStun(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  // 콘텐츠 정의의 저항은 지속 시간만 줄이며 100% 이상은 같은 경계에서 완전 면역으로 처리한다.
-  const resistance = controlResistPercent(fighter);
-  const resistedSeconds = seconds * (1 - resistance / 100);
-  // **막아 낸 제어도 받아 낸 것으로 센다.** 걸리자마자 풀리는 구간에 들어선 뒤에도 계속
-  // 맞고 있는 것이라, 여기서 세지 않으면 상한 근처에서 값이 멈춘 것처럼 보인다.
-  gainTenacity(fighter);
+  const resistedSeconds = controlDuration(fighter, seconds);
   if (resistedSeconds <= 0) return [];
   const wasStunned = fighter.stunnedFor > 0;
   fighter.stunnedFor = Math.max(fighter.stunnedFor, resistedSeconds);
@@ -1743,8 +1765,7 @@ export function clearStun(fighter: Fighter): void {
 /** 경직도 기절과 **같은 강인함**을 지난다. 행동을 막는 일은 하나이므로 규칙도 하나다. */
 export function applyStagger(fighter: Fighter, seconds: number, state?: SkirmishState): SkirmishEvent[] {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  const resisted = seconds * (1 - controlResistPercent(fighter) / 100);
-  gainTenacity(fighter);
+  const resisted = controlDuration(fighter, seconds);
   if (resisted <= 0) return [];
   const wasStaggered = fighter.staggeredFor > 0;
   fighter.staggeredFor = Math.max(fighter.staggeredFor, resisted);
@@ -1774,6 +1795,7 @@ function refreshChill(target: Fighter, effect: Extract<CombatStatusEffect, { kin
   if (!isFighterAlive(target) || target.frozen !== null) return;
   const stacks = Math.min(effect.maxStacks, (target.chill?.stacks ?? 0) + 1);
   target.chill = { stacks, speedPercentPerStack: effect.speedPercentPerStack, maxStacks: effect.maxStacks };
+  gainTenacity(target);
 }
 
 /** 지금 걸린 둔화가 이미 최대 중첩인지. 매디의 패시브가 빙결로 바꿀지 판단할 때 쓴다. */
@@ -1789,6 +1811,8 @@ function chillIsMaxed(target: Fighter): boolean {
  */
 function applyFrozen(target: Fighter, seconds: number, maxHpPercentOnExpire: number, events: SkirmishEvent[], state: SkirmishState): void {
   if (!isFighterAlive(target) || seconds <= 0) return;
+  seconds = controlDuration(target, seconds);
+  if (seconds <= 0) return;
   const wasFrozen = target.frozen !== null;
   target.frozen = { remaining: seconds, total: seconds, maxHpPercentOnExpire };
   // 빙결로 바뀌는 순간 소모되는 자원이라 둔화 겹은 비운다.
@@ -1852,10 +1876,10 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   if (effect.kind === "fear" && sourceId) applyFear(fighter, effect.seconds, effect.immunitySeconds, events, state, sourceId, false);
   if (effect.kind === "pressure" && sourceId) applyPressure(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
-  // 도발은 방향만 돌리는 상태라 기절 저항도 정화도 거치지 않는다. 건 사람이 없으면 바라볼
-  // 상대도 없으므로 아무 일도 일어나지 않는다.
+  // 도발도 표적 선택을 제약하므로 공용 강인함을 지난다. 정화 대상 여부는 별도 계약이다.
   if (effect.kind === "taunt" && sourceId) {
-    const seconds = effect.seconds * potency;
+    const seconds = controlDuration(fighter, effect.seconds * potency);
+    if (seconds <= 0) return;
     /*
      * **남은 시간이 더 긴 쪽이 남는다** — 보호막·순풍과 같은 규칙이다.
      *
@@ -1959,6 +1983,17 @@ function knockbackSlamOf(attacker: Fighter): Extract<FerocityTrait, { effectId: 
  * 위치에서 나와야 하기 때문이다 — 좌표를 미리 정해 두면 원정처럼 전장이 다른 화면에서
  * 캐릭터가 벽을 뚫고 나간다.
  */
+function beginKnockback(target: Fighter, flight: NonNullable<Fighter["knockback"]>, events: SkirmishEvent[]): boolean {
+  // 같은 적용 전 강인함으로 시간과 속도를 함께 줄인다. 누적은 지속시간 경계에서 한 번만 한다.
+  const ratio = controlMagnitude(target, 1);
+  const seconds = controlDuration(target, flight.remaining);
+  if (seconds <= 0) return false;
+  target.knockback = { ...flight, remaining: seconds, vx: flight.vx * ratio, vy: flight.vy * ratio };
+  target.engaged = false;
+  events.push({ kind: "knockback", fighterId: target.id, seconds, bounces: flight.bouncesLeft });
+  return true;
+}
+
 function launchKnockback(
   target: Fighter,
   attacker: Fighter,
@@ -1969,18 +2004,18 @@ function launchKnockback(
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const gap = Math.hypot(dx, dy) || 1;
-  target.knockback = {
+  const launched = beginKnockback(target, {
     remaining: trait.seconds,
     vx: (dx / gap) * trait.speed,
     vy: (dy / gap) * trait.speed,
     bouncesLeft: trait.bounces,
-  };
+  }, events);
+  if (!launched) return;
   // 폭주 돌파(`chainCollision`) — 이 비행이 부딪힌 적에게 뇌진탕을 옮긴다. 한 비행에 한 적씩이다.
   const chain = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-  if (chain?.kind === "chainCollision") target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain.radius };
+  if (chain?.kind === "chainCollision" && target.knockback) target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain.radius };
   // 붙어 있던 추적을 끊어야 날아가는 동안 제자리로 되돌아오지 않는다.
   target.engaged = false;
-  events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds, bounces: trait.bounces });
   // 날려 버린 상대는 이제 사거리 밖이므로 파치도 다음 상대를 찾는다.
   moveToNearestOtherEnemy(attacker, target, state);
 }
@@ -2113,7 +2148,7 @@ function applyFrostPlume(
   target.frostbite = {
     remaining: effect.burstSeconds, total: effect.burstSeconds, tickIn: target.frostbite?.tickIn ?? 1,
     amount: Math.max(1, Math.round(total / ticks)), sourceId: attacker.id,
-    slowRemaining: effect.slowSeconds, slowPercent: effect.slowPercent,
+    slowRemaining: controlDuration(target, effect.slowSeconds), slowPercent: effect.slowPercent,
   };
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
 }
@@ -2196,6 +2231,7 @@ function applyPressure(
   if (!isFighterAlive(target) || target.pressureLockFor > 0) return;
   const stacks = Math.min(effect.maxStacks, (target.pressure?.stacks ?? 0) + 1);
   target.pressure = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId, effect };
+  if (effect.speedPercentPerStack > 0) gainTenacity(target);
   if (stacks < effect.maxStacks) return;
   target.pressure = null;
   burstPressure(target, effect, events, state, sourceId);
@@ -2235,7 +2271,8 @@ function burstPressure(
     }
   }
   // 막아 내는 비율은 기절을 거는 순간의 값이다 — 걸고 나면 강인함이 한 칸 오른다.
-  const landed = controlResistPercent(target) < 100;
+  const potency = attacker?.statusPotencyMultiplier ?? 1;
+  const landed = controlDuration(target, effect.stunSeconds * potency, false) > 0;
   applyCombatStatusEffect(target, { kind: "stun", seconds: effect.stunSeconds }, events, state, sourceId);
   target.pressureLockFor = target.stunnedFor + effect.lockoutSeconds;
   if (landed && attacker) catchSalvage(attacker, state, events);
@@ -2323,7 +2360,7 @@ function putToSleep(
 ): void {
   if (!isFighterAlive(target)) return;
   target.drowsy = null;
-  const seconds = effect.sleepSeconds * (1 - controlResistPercent(target) / 100);
+  const seconds = controlDuration(target, effect.sleepSeconds, false);
   events.push(...applyStun(target, effect.sleepSeconds, state));
   if (seconds <= EMERGENCY_RECOVERY.epsilon || target.stunnedFor <= 0) return;
   target.sleep = { remaining: seconds, total: seconds, sourceId, effect };
@@ -2343,7 +2380,8 @@ function wakeUp(target: Fighter, byDamage: boolean): void {
   target.bt.yawnFrom = { sourceId: sleep.sourceId, effect: sleep.effect };
   if (target.stunnedFor <= sleep.remaining + EMERGENCY_RECOVERY.epsilon) target.stunnedFor = 0;
   if (sleep.effect.groggySeconds > 0) {
-    target.groggy = { remaining: sleep.effect.groggySeconds, total: sleep.effect.groggySeconds, attackSpeedPercent: sleep.effect.groggyAttackSpeedPercent };
+    const seconds = controlDuration(target, sleep.effect.groggySeconds);
+    if (seconds > 0) target.groggy = { remaining: seconds, total: seconds, attackSpeedPercent: sleep.effect.groggyAttackSpeedPercent };
   }
   if (byDamage) target.pendingWake = { sourceId: sleep.sourceId, effect: sleep.effect };
 }
@@ -2458,8 +2496,7 @@ function applyFear(
   if (!isFighterAlive(target) || !Number.isFinite(seconds) || seconds <= 0) return false;
   if (!force && (target.fear !== null || target.fearImmuneFor > EMERGENCY_RECOVERY.epsilon)) return false;
   const potency = findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1;
-  const resisted = seconds * potency * (1 - controlResistPercent(target) / 100);
-  gainTenacity(target);
+  const resisted = controlDuration(target, seconds * potency);
   if (resisted <= EMERGENCY_RECOVERY.epsilon) return false;
   const was = target.fear !== null;
   const remaining = Math.max(resisted, target.fear?.remaining ?? 0);
@@ -2629,7 +2666,7 @@ function tickWhiteNoise(fighter: Fighter, dt: number, state: SkirmishState, even
 
 /** 수압이 지금 깎고 있는 공격 속도·이동 속도 비율(%). */
 function pressureSlowPercent(fighter: Fighter): number {
-  return fighter.pressure ? fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack : 0;
+  return fighter.pressure ? controlMagnitude(fighter, fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack) : 0;
 }
 
 /** 밴덜리즘이 지금 깎고 있는 공격력·주문력 비율(0~1). 화면과 전투가 같은 값을 읽는다. */
@@ -4109,10 +4146,8 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, vict
     attacker.shallowLeapCount = Math.max(attacker.shallowLeapCount, shallows.leapEveryHits - 1);
   }
   if (useUltimate) {
-    const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-    const breakthroughRefund = effect?.kind === "execution" ? effect.energyRefundOnKill : 0;
     attacker.energy = Math.min(ULTIMATE_ENERGY_MAX,
-      attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0) + breakthroughRefund);
+      attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0));
   }
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   if (passive?.kind !== "battleMaidAscension" || passive.rechargeOnKill !== true) return;
@@ -4298,8 +4333,7 @@ function pullStruck(attacker: Fighter, target: Fighter, state: SkirmishState, ev
   // 끌어당김은 「인(引)」과 같은 규칙이다 — 보간 없이 같은 프레임에 자리를 옮기므로 이동
   // 속도의 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다.
   const dx = target.x - attacker.x; const dy = target.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
-  target.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.distance));
-  target.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.distance));
+  if (!displaceByControl(target, attacker.x + dx / gap * plan.distance, attacker.y + dy / gap * plan.distance, state)) return;
   target.engaged = false;
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
 }
@@ -4427,7 +4461,8 @@ function feverCritPoints(attacker: Fighter): number {
 function markUltimateVictim(attacker: Fighter, target: Fighter): void {
   const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind === "sunkenWeight") {
-    target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: plan.seconds, total: plan.seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
+    const seconds = controlDuration(target, plan.seconds);
+    if (seconds > 0) target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: seconds, total: seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
   }
   if (plan?.kind === "unhealedMark") target.bt.healCut = { remaining: plan.seconds, total: plan.seconds, percent: plan.reductionPercent };
 }
@@ -4564,10 +4599,6 @@ function tickBossBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
   if (!far) return;
   const input = { power: plan.powerPercent, damageType: "magical" as const, scalingStat: "ap" as const, isCritical: false, kind: "basic" as const };
   strikeSecondary(fighter, far, input, 100, false, state, events);
-}
-
-function executionUltimateIsOpen(attacker: Fighter, useUltimate: boolean): boolean {
-  return useUltimate && openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "execution";
 }
 
 /** 모든 출혈 진입점이 공유하는 단일 슬롯 갱신 규칙이다. 약한 재적용은 강도와 틱 시계를 덮지 않는다. */
@@ -4868,8 +4899,7 @@ function isCurseMaxed(target: Fighter): boolean {
  */
 export function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "frenzy" }>, sourceId?: string): void {
   // 광란도 제 편을 때리게 만드는 **행동 방해**라 같은 강인함을 지난다.
-  const seconds = effect.seconds * (1 - controlResistPercent(target) / 100);
-  gainTenacity(target);
+  const seconds = controlDuration(target, effect.seconds);
   if (seconds <= 0) return;
   target.frenzy = {
     remaining: seconds,
@@ -5205,7 +5235,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const tidalVigorPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "tidalVigor"
     ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   // 둔화는 남이 걸어 준 감속이라 다른 배율과 같은 자리에서 나눈다.
-  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   // 수압도 남이 건 감속이다. 둔화와 다른 슬롯이라 둘이 함께 걸리면 곱해진다.
   const pressurePercent = pressureSlowPercent(fighter);
   // 심해 와류는 폭주한 본인의 손만 빨라진다. 물살을 타는 손과 같은 자리다.
@@ -5510,9 +5540,9 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   // 이동 속도를 데려오는 것은 순풍뿐이다 — 오더는 한 명의 화력만 올리고 걸음은 건드리지 않는다.
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
   // 둔화는 공격 속도와 같은 비율로 이동 속도도 함께 깎는다.
-  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   // 여울은 상태가 아니라 지금 서 있는 자리라, 물 밖으로 나가면 같은 프레임에 풀린다.
-  const submergedPercent = fighter.submergedIn?.moveSlowPercent ?? 0;
+  const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
@@ -5899,7 +5929,7 @@ function tickTankBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
     if (other.side === fighter.side || !isFighterAlive(other) || (other.pressure?.stacks ?? 0) < vortex.minStacks || other.knockback !== null) continue;
     const dx = fighter.x - other.x; const dy = fighter.y - other.y; const gap = Math.hypot(dx, dy);
     if (gap <= closeIn) continue;
-    const move = Math.min(vortex.pullPerSecond * dt, gap - closeIn);
+    const move = controlMagnitude(other, Math.min(vortex.pullPerSecond * dt, gap - closeIn));
     other.x += dx / gap * move;
     other.y += dy / gap * move;
   }
@@ -6004,8 +6034,7 @@ function pullEnemiesToward(caster: Fighter, pull: { radius: number; distance: nu
   for (const other of state.fighters) {
     if (other.side === caster.side || !isFighterAlive(other) || distance(caster, other) > pull.radius) continue;
     const dx = other.x - caster.x; const dy = other.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
-    other.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull.distance));
-    other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull.distance));
+    if (!displaceByControl(other, caster.x + dx / gap * pull.distance, caster.y + dy / gap * pull.distance, state)) continue;
     pulled.push(other);
   }
   return pulled;
@@ -6024,8 +6053,7 @@ function hookFarthestEnemy(caster: Fighter, pull: { radius: number; distance: nu
   if (pool.length === 0) return [];
   const farthest = pool.reduce((best, other) => distance(caster, other) > distance(caster, best) ? other : best);
   const dx = farthest.x - caster.x; const dy = farthest.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
-  farthest.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull.distance));
-  farthest.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull.distance));
+  if (!displaceByControl(farthest, caster.x + dx / gap * pull.distance, caster.y + dy / gap * pull.distance, state)) return [];
   // 끌려온 순간 이전 추적을 끊는다 — 쫓던 자리로 되돌아 걸어가지 않게.
   farthest.engaged = false;
   farthest.knockback = null;
@@ -6262,10 +6290,11 @@ function strikeShimmer(attacker: Fighter, target: Fighter, power: number, state:
 function advanceKnockback(fighter: Fighter, dt: number, arena: Arena): void {
   const flight = fighter.knockback;
   if (!flight) return;
-  const remaining = flight.remaining - dt;
+  const elapsed = Math.min(dt, flight.remaining);
+  const remaining = flight.remaining - elapsed;
   let { vx, vy, bouncesLeft } = flight;
-  fighter.x += vx * dt;
-  fighter.y += vy * dt;
+  fighter.x += vx * elapsed;
+  fighter.y += vy * elapsed;
   // 한 프레임에 모서리로 들어가면 두 변을 함께 치므로, 튕김은 한 번으로 센다.
   let bounced = false;
   if (fighter.x <= arena.left || fighter.x >= arena.right) {
@@ -6417,7 +6446,10 @@ function damageHealingRate(attacker: Fighter, skill: Skill, attackingInFever: bo
   // 패시브가 끌어다 쓰는 몫도 퍼센트포인트 덧셈이다 — 태생 흡혈이 전 개체 공통 0이라 곱으로는
   // 이 축을 쓰는 개체가 값을 가질 방법이 없다.
   const blood = attackingInFever ? feverBreakthrough(attacker) : undefined;
-  return attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0)
+  const ultimate = skill.id === attacker.def.ultimate.id
+    ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : undefined;
+  const ultimateHealing = ultimate?.kind === "ultimateLifeSteal" ? ultimate.damageHealingPercent : 0;
+  return ultimateHealing + attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0)
     + (blood?.kind === "bloodFever" ? blood.lifeStealPoints : 0)
     + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
@@ -6917,9 +6949,7 @@ function startUndying(fighter: Fighter, state: SkirmishState, events: SkirmishEv
     for (const other of state.fighters) {
       if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > blast.radius) continue;
       const dx = other.x - fighter.x; const dy = other.y - fighter.y; const gap = Math.hypot(dx, dy) || 1;
-      other.knockback = { remaining: blast.seconds, vx: (dx / gap) * blast.speed, vy: (dy / gap) * blast.speed, bouncesLeft: blast.bounces };
-      other.engaged = false;
-      events.push({ kind: "knockback", fighterId: other.id, seconds: blast.seconds, bounces: blast.bounces });
+      beginKnockback(other, { remaining: blast.seconds, vx: (dx / gap) * blast.speed, vy: (dy / gap) * blast.speed, bouncesLeft: blast.bounces }, events);
     }
   }
   // 쫓던 쪽은 표적을 잃는다 — 어차피 때려도 들어가지 않는 동안 붙어 있을 이유가 없다.
@@ -7457,7 +7487,6 @@ function strike(
   targetPoint?: { x: number; y: number },
 ): void {
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
-  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const combo = !useUltimate ? attacker.def.basic.combo : undefined;
@@ -7569,7 +7598,7 @@ function strike(
     isCritical: critical,
     kind: useUltimate ? "ultimate" as const : "basic" as const,
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
-    ignoresDefense: empowered || executionUltimate,
+    ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
     defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)),
   };
@@ -7788,7 +7817,7 @@ function strike(
     contributionAmount: credited,
     critical,
     // 방어를 지나친 한 방은 종류가 아니라 "고정 피해"로 뜬다 — 전이와 같은 축이다.
-    damageType: empowered || executionUltimate ? "true" : damageInput.damageType,
+    damageType: empowered ? "true" : damageInput.damageType,
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...(comboHit && !comboHit.grantActionResources ? { followUp: true } : {}),
@@ -8035,7 +8064,6 @@ function refillNow(fighter: Fighter, state?: SkirmishState): void {
  */
 function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }, followUp = false, free = false): void {
   const skill = breakthroughSkill(attacker, useUltimate);
-  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   // 비공격 궁극기는 적 대상 범위 처리기에 전달하지 않는다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
   const ultimate = useUltimate ? attacker.def.ultimate : undefined;
@@ -8134,7 +8162,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
         : undefined;
   if (impactArea) {
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: useUltimate,
-      damageType: supportiveOnly ? undefined : executionUltimate ? "true" : skill.damageType, ...(supportiveOnly ? { supportive: true as const } : {}), area: impactArea });
+      damageType: supportiveOnly ? undefined : skill.damageType, ...(supportiveOnly ? { supportive: true as const } : {}), area: impactArea });
   }
 
   // 돌진은 대상을 고른 뒤 실제로 자리를 옮긴다. 먼저 옮기면 판정 기준선이 이미 지나온 길이 된다.
@@ -8191,7 +8219,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate);
     const scaled = plumePower === 1 || detonated.power === undefined ? detonated : { ...detonated, power: detonated.power * plumePower };
     const damageInput = { ...scaled, isCritical: critical, kind: useUltimate ? "ultimate" as const : "basic" as const,
-      ignoresDefense: executionUltimate,
+      ignoresDefense: false,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate)) };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput)
       * traitDamageMultiplier(state, attacker, target)));
@@ -8248,7 +8276,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     target.dashX = (dx / gap) * SKIRMISH.knockback * 1.4;
     target.dashY = (dy / gap) * SKIRMISH.knockback * 1.4;
     events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: useUltimate ? "ultimate" : "basic", amount, contributionAmount: credited, critical, animate: index === 0,
-      damageType: executionUltimate ? "true" : damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}),
+      damageType: damageInput.damageType, mitigated: resolution.reduced < resolution.raw, ...(followUp || index > 0 ? { followUp: true } : {}),
       ...(useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }) });
     if (resolution.ignored) events.push({ kind: "damageIgnored", attackerId: attacker.id, targetId: target.id });
 
@@ -8596,9 +8624,7 @@ function launchDuoBreakthrough(
     const dx = enemy.x - path.from.x;
     const dy = enemy.y - path.from.y;
     const gap = Math.hypot(dx, dy) || 1;
-    enemy.knockback = { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces };
-    enemy.engaged = false;
-    events.push({ kind: "knockback", fighterId: enemy.id, seconds: trait.knockback.seconds, bounces: trait.knockback.bounces });
+    beginKnockback(enemy, { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces }, events);
   }
   duo.x = path.to.x;
   duo.y = path.to.y;

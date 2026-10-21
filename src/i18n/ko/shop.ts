@@ -54,7 +54,7 @@ export const SHOP_KO = {
   "shop.premium.unsupported": "이 빌드에서는 결제를 사용할 수 없습니다.",
   "shop.premium.cancelled": "결제가 취소되었습니다.",
   "shop.premium.perk.raidTicket": "매일 선택 토벌권 {count}장 지급",
-  "shop.premium.perk.adRemoval": "광고 제거 · 전투 3배속 개방",
+  "shop.premium.perk.adRemoval": "광고 제거 · 전투 3배속 개방 · 소탕권 없이 소탕",
   "shop.renewal.notice": "{days}일마다 {price} 자동 결제 · 해지 전까지 갱신",
   "shop.renewal.title": "정기결제 안내",
   "shop.renewal.billing.title": "결제",
@@ -129,4 +129,5 @@ export const SHOP_KO = {
   "shop.premium.fixedTerm": "{days}일 이용",
   "shop.premium.expiresOn": "{date} 만료",
   "shop.premium.noRenewal": "{days}일간 이용 · 자동 갱신 없음",
+  "shop.premium.perk.ticketless": "소탕권 없이 소탕",
 } as const;

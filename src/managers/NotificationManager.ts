@@ -54,6 +54,8 @@ export class NotificationManager {
     if (generation !== this.refreshGeneration) return;
     const previous = this.state;
     const next = deriveNotificationState({
+      claimableRaidCount: signals.status === "fulfilled" ? signals.value.claimableRaidCount ?? 0 : Number(previous.raidReward),
+      claimableExpeditionCount: signals.status === "fulfilled" ? signals.value.claimableExpeditionCount ?? 0 : Number(previous.expeditionReward),
       claimableMissionCount: missions.status === "fulfilled" ? missions.value.claimableCount : Number(previous.missionReward),
       // 서버가 정수 수확 가능성까지 확정하므로 클라이언트는 비율을 재계산하지 않는다.
       excavationHarvestReady: excavation.status === "fulfilled" ? excavation.value.harvestNotice : previous.excavationHarvestReady,

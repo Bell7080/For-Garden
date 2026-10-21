@@ -22,6 +22,7 @@ export const INFO_EN = {
   "info.enemy.role.stat.hp": "Health ×{value}",
   "info.enemy.role.stat.attack": "Attack·Ability Power ×{value}",
   "info.enemy.role.stat.body": "Size ×{value}",
+  "info.enemy.role.controlImmunity": "[[crowd-control|Control]] lasting {seconds}s or less after Tenacity is ignored.",
   "info.enemy.role.tenacity": "Starts at {base}% [[tenacity|Tenacity]] and gains {per}% each time it shrugs off [[crowd-control|crowd control]], up to {max}%.",
   "info.enemy.role.damageReduction": "Starts at {base}% [[damage-reduction|Damage Reduction]] and rises to {max}% as [[hp|Health]] falls; damage of {ignore} or less is nullified.",
   "info.enemy.role.percentHpResistance": "Takes {percent}% less damage based on max Health.",

@@ -248,7 +248,7 @@ export const SKILL_ES = {
   "skill.breakthrough.effect.ferocity": "Al terminar el [[ferocity|Frenesí]], obtiene un [[shield|escudo]] del {percent}% del daño recibido durante el Frenesí y vuelve a [[taunt|Provocar]] a los enemigos en un área amplia durante {seconds} s.",
   "skill.breakthrough.effect.passive": "Cuando se activa «{name}», reparte el {percent}% de esa curación entre todos los aliados.",
   "skill.breakthrough.effect.basic.deepBleed": "El [[bleed|Sangrado]] del ataque básico se vuelve Sangrado profundo e inflige el {percent}% de los PV máx. cada segundo. Mientras dura, reduce la curación que recibe el objetivo un {reduction}% y tiene prioridad sobre otros Sangrados.",
-  "skill.breakthrough.effect.ultimate.execution": "El daño de la Definitiva se vuelve Daño verdadero y derrotar a un enemigo recupera {energy} de Energía de Definitiva.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "recupera PV iguales al {percent}% del daño infligido",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "Durante el [[ferocity|Frenesí]], los ataques básicos alcanzan a todos los enemigos en un área bastante amplia.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "Los PV máx., la [[def|Defensa]] y la [[res|Resistencia]] suben un {percent}%, y derrotar a un enemigo vuelve a preparar la [[charge|embestida]] hacia el siguiente objetivo.",
   "skill.breakthrough.effect.basic.splitHealing": "También pasa el {percent}% de la curación dada al aliado más herido al segundo aliado más herido.",

@@ -22,6 +22,7 @@ export const INFO_DE = {
   "info.enemy.role.stat.hp": "Leben ×{value}",
   "info.enemy.role.stat.attack": "Angriff·Zauberkraft ×{value}",
   "info.enemy.role.stat.body": "Größe ×{value}",
+  "info.enemy.role.controlImmunity": "[[crowd-control|Kontrolle]] mit höchstens {seconds} s Dauer nach Zähigkeit wird ignoriert.",
   "info.enemy.role.tenacity": "Beginnt mit {base}% [[tenacity|Zähigkeit]] und gewinnt {per}% hinzu, sobald es [[crowd-control|Massenkontrolle]] abschüttelt, bis zu {max}%.",
   "info.enemy.role.damageReduction": "Beginnt mit {base}% [[damage-reduction|Schadensminderung]], die bis {max}% steigt, je weiter das [[hp|Leben]] sinkt; Schaden von {ignore} oder weniger wird aufgehoben.",
   "info.enemy.role.percentHpResistance": "Erleidet {percent}% weniger Schaden, der auf maximalem Leben basiert.",

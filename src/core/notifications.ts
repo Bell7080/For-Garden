@@ -1,9 +1,11 @@
 /** 화면 이름과 무관하게 서버 상태에서 판별할 수 있는 공용 알림 키다. */
-export const NOTIFICATION_KEYS = ["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice", "achievementReward"] as const;
+export const NOTIFICATION_KEYS = ["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice", "achievementReward"] as const;
 export type NotificationKey = (typeof NOTIFICATION_KEYS)[number];
 
 /** API 응답을 합성하기 전의 최소 조건이며, 항목이 없으면 추측하지 않고 false로 둔다. */
 export interface NotificationConditions {
+  claimableRaidCount?: number;
+  claimableExpeditionCount?: number;
   claimableMissionCount: number;
   excavationHarvestReady: boolean;
   pendingFriendRequestCount: number;
@@ -23,6 +25,9 @@ export type NotificationState = Readonly<Record<NotificationKey, boolean>>;
 /** 수량은 양수일 때만 켜고 서버가 직접 판정한 발굴 상한 상태는 그대로 사용한다. */
 export function deriveNotificationState(conditions: NotificationConditions): NotificationState {
   return {
+    raidReward: (conditions.claimableRaidCount ?? 0) > 0,
+    expeditionReward: (conditions.claimableExpeditionCount ?? 0) > 0,
+    sortieReward: (conditions.claimableRaidCount ?? 0) > 0 || (conditions.claimableExpeditionCount ?? 0) > 0,
     missionReward: conditions.claimableMissionCount > 0,
     excavationHarvestReady: conditions.excavationHarvestReady,
     friendRequest: conditions.pendingFriendRequestCount > 0,

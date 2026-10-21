@@ -53,7 +53,7 @@ export const SHOP_DE = {
   "shop.premium.unsupported": "Zahlungen sind in diesem Build nicht verfügbar.",
   "shop.premium.cancelled": "Die Zahlung wurde abgebrochen.",
   "shop.premium.perk.raidTicket": "Täglich {count} Wahl-Jagdticket",
-  "shop.premium.perk.adRemoval": "Ohne Werbung · 3× Kampftempo freischalten",
+  "shop.premium.perk.adRemoval": "Ohne Werbung · 3× Kampftempo freischalten · Säubern ohne Tickets",
   "shop.renewal.notice": "{price} wird alle {days} Tage automatisch abgebucht · verlängert sich bis zur Kündigung",
   "shop.renewal.title": "Abo-Details",
   "shop.renewal.billing.title": "Abrechnung",
@@ -125,4 +125,5 @@ export const SHOP_DE = {
   "shop.premium.fixedTerm": "{days} Tage gültig",
   "shop.premium.expiresOn": "Endet am {date}",
   "shop.premium.noRenewal": "{days} Tage gültig · Keine automatische Verlängerung",
+  "shop.premium.perk.ticketless": "Säubern ohne Tickets",
 } as const;

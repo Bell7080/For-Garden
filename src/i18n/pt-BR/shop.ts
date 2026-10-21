@@ -53,7 +53,7 @@ export const SHOP_PT_BR = {
   "shop.premium.unsupported": "Os pagamentos não estão disponíveis nesta versão.",
   "shop.premium.cancelled": "O pagamento foi cancelado.",
   "shop.premium.perk.raidTicket": "{count} ticket de caça à escolha por dia",
-  "shop.premium.perk.adRemoval": "Sem anúncios · Libera velocidade 3×",
+  "shop.premium.perk.adRemoval": "Sem anúncios · Libera velocidade 3× · Varredura sem bilhetes",
   "shop.renewal.notice": "{price} cobrado automaticamente a cada {days} dias · renova até cancelar",
   "shop.renewal.title": "Detalhes da assinatura",
   "shop.renewal.billing.title": "Cobrança",
@@ -125,4 +125,5 @@ export const SHOP_PT_BR = {
   "shop.premium.fixedTerm": "Acesso por {days} dias",
   "shop.premium.expiresOn": "Expira em {date}",
   "shop.premium.noRenewal": "Acesso por {days} dias · Sem renovação automática",
+  "shop.premium.perk.ticketless": "Varredura sem bilhetes",
 } as const;

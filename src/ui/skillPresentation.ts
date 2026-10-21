@@ -1430,7 +1430,7 @@ export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, st
     if (effect.kind === "sunkenWeight") return t("skill.breakthrough.effect.ultimate.sunkenWeight", { percent: trim(effect.stacks * effect.speedPercentPerStack), seconds: trim(effect.seconds) });
     if (effect.kind === "unhealedMark") return t("skill.breakthrough.effect.ultimate.unhealedMark", { percent: trim(effect.reductionPercent), seconds: trim(effect.seconds) });
     if (effect.kind === "doublePlume") return t("skill.breakthrough.effect.ultimate.doublePlume", { name: def.ultimate.name, count: trim(1 + effect.extraStacks) });
-    if (effect.kind === "execution") return t("skill.breakthrough.effect.ultimate.execution", { energy: trim(effect.energyRefundOnKill) });
+    if (effect.kind === "ultimateLifeSteal") return t("skill.breakthrough.effect.ultimate.ultimateLifeSteal", { percent: trim(effect.damageHealingPercent) });
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");

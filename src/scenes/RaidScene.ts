@@ -1,3 +1,5 @@
+import { bindNotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
@@ -236,7 +238,7 @@ export class RaidScene extends Phaser.Scene {
     row.removeAll(true);
     const tabs = RAID_LIST_CHROME.tabs;
     (["active", "completed"] as const).forEach((tab, index) => {
-      addCategoryTab(this, row, {
+      const button = addCategoryTab(this, row, {
         x: tabs.left + tabs.width / 2 + index * (tabs.width + tabs.gap), y: tabs.y,
         width: tabs.width, height: tabs.height,
         label: t(`raid.tab.${tab}`), selected: this.tab === tab,
@@ -250,6 +252,7 @@ export class RaidScene extends Phaser.Scene {
           if (this.layers) slideTabPage(this, [this.layers], from, index);
         },
       });
+      if (tab === "completed") bindNotificationDot(this, button, { x: tabs.width / 2 - 16, y: -tabs.height / 2 + 12 }, listener => notificationManager.subscribe("raidReward", listener));
     });
   }
 
@@ -421,6 +424,7 @@ export class RaidScene extends Phaser.Scene {
       if (!this.scene.isActive()) return;
       this.busy = false;
       if (this.raidId) this.render(result.raid); else void this.refreshList();
+      void notificationManager.refresh().catch(() => undefined);
       openRaidSettlementPopup(this, this.popups, { raid: result.raid, granted: result.granted });
     } catch {
       if (!this.scene.isActive()) return;

@@ -43,7 +43,7 @@ export interface LobbyEventDef {
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -61,10 +61,12 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     endsAt: "2026-12-31T23:59:59+09:00",
   },
   {
-    id: "autumn-harvest",
-    titleKey: "event.autumnHarvest.title",
-    subtitleKey: "event.autumnHarvest.subtitle",
+    id: "research-roulette",
+    titleKey: "event.roulette.title",
+    subtitleKey: "event.roulette.subtitle",
     backdropKey: BACKGROUND.interactionDoppelParlor,
+    destination: { kind: "roulette" },
+    sd: { relicId: "dodo", side: "right" },
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },

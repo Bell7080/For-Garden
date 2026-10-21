@@ -53,7 +53,7 @@ export const SHOP_VI = {
   "shop.premium.unsupported": "Bản dựng này không hỗ trợ thanh toán.",
   "shop.premium.cancelled": "Đã hủy thanh toán.",
   "shop.premium.perk.raidTicket": "Tặng {count} vé thảo phạt tùy chọn mỗi ngày",
-  "shop.premium.perk.adRemoval": "Không quảng cáo · Mở tốc độ chiến đấu 3×",
+  "shop.premium.perk.adRemoval": "Không quảng cáo · Mở tốc độ chiến đấu 3× · Càn quét không cần vé",
   "shop.renewal.notice": "Tự động thu {price} mỗi {days} ngày · gia hạn đến khi hủy",
   "shop.renewal.title": "Chi tiết đăng ký",
   "shop.renewal.billing.title": "Thanh toán",
@@ -125,4 +125,5 @@ export const SHOP_VI = {
   "shop.premium.fixedTerm": "Dùng trong {days} ngày",
   "shop.premium.expiresOn": "Hết hạn {date}",
   "shop.premium.noRenewal": "Dùng trong {days} ngày · Không tự động gia hạn",
+  "shop.premium.perk.ticketless": "Càn quét không cần vé",
 } as const;

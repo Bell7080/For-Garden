@@ -1,3 +1,4 @@
+import { notificationManager } from "../managers/NotificationManager";
 import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -265,6 +266,7 @@ export class ExpeditionRewardPopup {
     try {
       const result = await withBusy(this.scene, this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId }));
       if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
+      void notificationManager.refresh().catch(() => undefined);
       this.onClaimed?.();
       await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : t("expeditionReward.claimedAmount", { amount: result.reward.amount.toLocaleString() }));
     } catch (error) {

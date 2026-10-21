@@ -2280,15 +2280,16 @@ describe("렉시아 전투 계약", () => {
     expect(hit).toMatchObject({ critical: true });
   });
 
-  it("은 300% 단일 궁극기에 제 게이지를 쓰고 실제 피해만큼만 상한까지 회복한다", () => {
+  it("은 기본 궁극기에 추가 흡혈 없이 패시브 흡혈만 적용하고 실제 피해와 최대 체력으로 제한한다", () => {
     const { state, rex, foe } = readyRex();
-    expect(rex.def.ultimate).toMatchObject({ power: 300, targeting: "single", damageHealingPercent: 50 });
+    expect(rex.def.ultimate).toMatchObject({ power: 300, targeting: "single" });
+    expect(rex.def.ultimate.damageHealingPercent).toBeUndefined();
     rex.energy = rex.def.ultimate.cost; rex.hp = rex.maxHp - 10; foe.hp = 5;
     const events = fireUltimate(state, rex.id, () => 0.99);
     const hit = events.find((event) => event.kind === "attack")!;
     expect(hit.amount).toBeGreaterThan(foe.hp); // 사건의 계산 피해는 남은 HP보다 커도 회복은 실제 5만 본다.
-    // 패시브 25퍼센트포인트 + 궁극기 50퍼센트포인트 = 75%이며, 실제로 깎인 5만 본다.
-    expect(rex.hp).toBe(rex.maxHp - 6.25);
+    // 기본 궁극기는 패시브의 25%만 회복하며, 실제로 깎인 5만 본다.
+    expect(rex.hp).toBe(rex.maxHp - 8.75);
     expect(rex.energy).toBe(0);
 
     const capped = readyRex();
@@ -2296,13 +2297,13 @@ describe("렉시아 전투 계약", () => {
     capped.rex.ferocity = ferocityMaxOf(capped.rex.def); capped.rex.ferocityFever = true; capped.rex.energy = capped.rex.def.ultimate.cost;
     capped.rex.hp = capped.rex.maxHp - 1;
     fireUltimate(capped.state, capped.rex.id, () => 0.99);
-    // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
+    // 기본 10 + 패시브 25 + 폭주 25퍼센트포인트를 합산해도 최대 체력을 넘지 않는다.
     expect(capped.rex.hp).toBe(capped.rex.maxHp);
   });
 
-  it("은 궁극기 피해에 패시브 공격력과 네 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
+  it("은 궁극기 피해에 패시브 공격력과 세 흡혈 원천을 합산하고 피해 반올림 뒤 회복한다", () => {
     const { state, rex, foe } = readyRex();
-    // 158 × 1.25 × 3 × 1.35 = 799.875를 피해 800으로 반올림한 뒤 85%를 회복한다.
+    // 158 × 1.25 × 3 × 1.35 = 799.875를 피해 800으로 반올림한 뒤 60%를 회복한다.
     rex.def = { ...rex.def, stats: { ...rex.def.stats, lifeSteal: 10 } };
     // 대상의 전방 경감 패시브도 제거해 문서의 방어력 0·동일 속성 산술만 분리한다.
     foe.def = { ...foe.def, element: "fire", passive: rex.def.passive, stats: { ...foe.def.stats, def: 0 } };
@@ -2310,8 +2311,8 @@ describe("렉시아 전투 계약", () => {
     rex.hp = 100; rex.ferocity = ferocityMaxOf(rex.def); rex.ferocityFever = true; rex.energy = rex.def.ultimate.cost;
     const hit = fireUltimate(state, rex.id, () => 0.99).find((event) => event.kind === "attack")!;
     expect(hit).toMatchObject({ critical: false, amount: 800 });
-    // 기본 10 + 패시브 25 + 폭주 25 + 궁극기 50퍼센트포인트 = 110%이며 회복량 자체는 재반올림하지 않는다.
-    expect(rex.hp).toBeCloseTo(100 + 800 * 1.1);
+    // 기본 10 + 패시브 25 + 폭주 25퍼센트포인트 = 60%이며 회복량 자체는 재반올림하지 않는다.
+    expect(rex.hp).toBeCloseTo(100 + 800 * 0.6);
   });
 });
 

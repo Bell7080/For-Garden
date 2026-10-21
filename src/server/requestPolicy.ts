@@ -9,6 +9,7 @@ export const READ_METHODS = new Set([
   "getDuelRanking",
   "getDuelStatus",
   "getEvents",
+  "getRouletteStatus",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",

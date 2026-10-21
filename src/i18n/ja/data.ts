@@ -815,7 +815,7 @@ export default {
   "keyword.crowd-control.term": "行動妨害",
   "keyword.crowd-control.description": "気絶や硬直のように、対象の行動を止める効果をまとめて指す言葉だ。",
   "keyword.tenacity.term": "強靭さ",
-  "keyword.tenacity.description": "行動妨害を受けるたびに蓄積し、その割合だけ気絶・硬直のような制御時間を短くする。上限に達すると、かかった瞬間に解ける。ボスのように封じられてはならない立場の敵だけが持つ。",
+  "keyword.tenacity.description": "行動妨害を受けるたびに蓄積し、気絶・硬直・凍結・睡眠・恐怖・狂乱・挑発・吹き飛ばし・時間制減速の持続時間を短縮する。抵抗後に最低時間以下となる妨害は無効。時間のない減速と引き寄せは強度を、吹き飛ばしは速度も低下させる。完全耐性では新しい行動妨害を受けない。",
   "keyword.damage-reduction.term": "軽減",
   "keyword.damage-reduction.description": "体力が削れるほど受けるすべてのダメージが減る。軽減を経たダメージがごく小さければ、まったく入らない。倒れない不死の立場の敵だけが持つ。",
   "keyword.scar.term": "傷痕",
@@ -6224,4 +6224,5 @@ export default {
   "story.yuti.q.yuti-title.prompt": "ユティはどうして「ボス」と呼ぶとき語尾を濁すの？",
   "product.premium-raid-pass.grant.2": "討伐券",
 
+  "adReward.roulette-chances.text": "広告を見て3回追加",
 };

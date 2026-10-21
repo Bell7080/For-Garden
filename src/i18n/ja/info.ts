@@ -22,6 +22,7 @@ export const INFO_JA = {
   "info.enemy.role.stat.hp": "体力 ×{value}",
   "info.enemy.role.stat.attack": "攻撃力·魔力 ×{value}",
   "info.enemy.role.stat.body": "体格 ×{value}",
+  "info.enemy.role.controlImmunity": "強靭さ適用後に残る[[crowd-control|行動妨害]]が{seconds}秒以下なら無効になる。",
   "info.enemy.role.tenacity": "[[tenacity|強靭さ]]{base}%から始まり、[[crowd-control|行動妨害]]を受けるたびに{per}%ずつ、最大{max}%まで上がる。",
   "info.enemy.role.damageReduction": "[[damage-reduction|軽減]]{base}%から始まり、[[hp|体力]]が削れるほど最大{max}%まで上がり、{ignore}以下のダメージは無効になる。",
   "info.enemy.role.percentHpResistance": "最大体力に比例するダメージを{percent}%軽減して受ける。",

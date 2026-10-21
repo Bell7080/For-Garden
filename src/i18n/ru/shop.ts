@@ -53,7 +53,7 @@ export const SHOP_RU = {
   "shop.premium.unsupported": "В этой сборке оплата недоступна.",
   "shop.premium.cancelled": "Оплата отменена.",
   "shop.premium.perk.raidTicket": "Ежедневно {count} билет охоты на выбор",
-  "shop.premium.perk.adRemoval": "Без рекламы · Открывает скорость 3×",
+  "shop.premium.perk.adRemoval": "Без рекламы · Открывает скорость 3× · Зачистка без билетов",
   "shop.renewal.notice": "{price} списывается автоматически каждые {days} дн. · продлевается до отмены",
   "shop.renewal.title": "Сведения о подписке",
   "shop.renewal.billing.title": "Оплата",
@@ -125,4 +125,5 @@ export const SHOP_RU = {
   "shop.premium.fixedTerm": "Доступ на {days} дн.",
   "shop.premium.expiresOn": "Истекает {date}",
   "shop.premium.noRenewal": "Доступ на {days} дн. · Без автопродления",
+  "shop.premium.perk.ticketless": "Зачистка без билетов",
 } as const;

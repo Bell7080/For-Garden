@@ -1,7 +1,8 @@
+import { openNicknamePopup } from "./NicknamePopup";
 import Phaser from "phaser";
 import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
-import { BIO_MAX_LENGTH, NICKNAME_MAX_LENGTH, NICKNAME_MIN_LENGTH, nicknameProblem } from "../core/playerCard";
+import { BIO_MAX_LENGTH } from "../core/playerCard";
 import { playerCardManager } from "../managers/PlayerCardManager";
 import { profileModifierManager, MAX_EQUIPPED_PROFILE_MODIFIERS } from "../managers/ProfileModifierManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -275,27 +276,8 @@ function openTextEditor(scene: Phaser.Scene, layer: PopupLayer, options: TextEdi
   });
 }
 
-const NICKNAME_PROBLEM: Record<string, TextKey> = {
-  tooShort: "profile.edit.error.tooShort",
-  tooLong: "profile.edit.error.tooLong",
-  invalidCharacter: "profile.edit.error.invalidCharacter",
-};
-
-export function openNicknameEditor(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void): void {
-  const lockedUntil = playerCardManager.nicknameLockedUntil();
-  openTextEditor(scene, layer, {
-    titleKey: "profile.edit.nickname",
-    value: playerCardManager.card.nickname,
-    maxGlyphs: NICKNAME_MAX_LENGTH,
-    notice: t("profile.edit.nicknameCooldown"),
-    locked: lockedUntil ? t("profile.edit.nicknameLocked", { time: lockedUntil.toLocaleString() }) : undefined,
-    // 비워 둘 수 없다 — 비웠다 다시 적는 것이 「처음 정하는 이름」이 되어 주기를 비껴간다.
-    validate: (value) => {
-      const problem = nicknameProblem(value);
-      return problem ? t(NICKNAME_PROBLEM[problem], { min: NICKNAME_MIN_LENGTH, max: NICKNAME_MAX_LENGTH }) : undefined;
-    },
-    save: (value) => playerCardManager.setNickname(value),
-  }, onDone);
+export function openNicknameEditor(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, required = false): void {
+  openNicknamePopup(scene, layer, onDone, required);
 }
 
 export function openBioEditor(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void): void {

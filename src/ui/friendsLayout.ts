@@ -15,8 +15,8 @@ export const FRIENDS_SCREEN = {
   list: { top: 340, bottom: 1730 },
   row: { height: 168, gap: 14 },
   tabs: { y: BASE_HEIGHT - 96, width: 240, height: 84, gap: 16 },
-  /** 신청 탭의 알림 점 — 라벨 글자 오른쪽 끝에서 `gap`만큼 띄우고 글자 중심보다 `rise`만큼 올려 어깨에 앉힌다. */
-  tabDot: { radius: 9, gap: 6, rise: 12 },
+  /** 신청 탭의 우상단에 공용 알림 점을 고정한다. */
+  tabDot: { x: 100, y: -26 },
 } as const;
 
 /** 라벨 탭 `index`의 가운데 x. */

@@ -207,7 +207,7 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
       basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
-      ultimate: { kind: "execution", energyRefundOnKill: 150 },
+      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
     },
@@ -252,10 +252,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 210,
-      damageHealingPercent: 50,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      // damageHealingPercent가 있는 스킬은 skillDescription()이 대상·피해·회복을 한 문장으로
     },
   },
   {

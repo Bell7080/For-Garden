@@ -22,6 +22,7 @@ export const INFO_ES = {
   "info.enemy.role.stat.hp": "Salud ×{value}",
   "info.enemy.role.stat.attack": "Ataque·Poder mágico ×{value}",
   "info.enemy.role.stat.body": "Tamaño ×{value}",
+  "info.enemy.role.controlImmunity": "Se ignora el [[crowd-control|Control]] de {seconds} s o menos tras aplicar Tenacidad.",
   "info.enemy.role.tenacity": "Empieza con un {base}% de [[tenacity|Tenacidad]] y gana un {per}% cada vez que se libra del [[crowd-control|control de masas]], hasta un {max}%.",
   "info.enemy.role.damageReduction": "Empieza con un {base}% de [[damage-reduction|Reducción de daño]] que sube hasta un {max}% al bajar la [[hp|Salud]]; el daño de {ignore} o menos se anula.",
   "info.enemy.role.percentHpResistance": "Recibe un {percent}% menos de daño basado en la Salud máxima.",

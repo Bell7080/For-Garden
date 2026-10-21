@@ -248,7 +248,7 @@ export const SKILL_DE = {
   "skill.breakthrough.effect.ferocity": "Endet die [[ferocity|Raserei]], erhält es einen [[shield|Schild]] von {percent}% des währenddessen erlittenen Schadens und [[taunt|verspottet]] erneut Gegner in weitem Umkreis {seconds} s lang.",
   "skill.breakthrough.effect.passive": "Wenn „{name}“ auslöst, teilt es {percent}% dieser Heilung unter allen Verbündeten auf.",
   "skill.breakthrough.effect.basic.deepBleed": "Die [[bleed|Blutung]] des Normalangriffs wird zur Tiefen Blutung und verursacht jede Sekunde {percent}% des max. Lebens. Solange sie wirkt, sinkt die Heilung des Ziels um {reduction}%, und sie hat Vorrang vor anderen Blutungen.",
-  "skill.breakthrough.effect.ultimate.execution": "Der Ultimativ-Schaden wird zu wahrem Schaden, und das Besiegen eines Gegners stellt {energy} Ultimativ-Energie wieder her.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "stellt Leben in Höhe von {percent}% des verursachten Schadens wieder her",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "Während der [[ferocity|Raserei]] treffen Normalangriffe alle Gegner in einem recht weiten Bereich.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "Max. Leben, [[def|Verteidigung]] und [[res|Widerstand]] steigen um {percent}%, und das Besiegen eines Gegners macht den [[charge|Sturmangriff]] auf das nächste Ziel wieder bereit.",
   "skill.breakthrough.effect.basic.splitHealing": "Gibt zusätzlich {percent}% der Heilung, die der am stärksten verwundete Verbündete erhält, an den am zweitstärksten verwundeten Verbündeten weiter.",

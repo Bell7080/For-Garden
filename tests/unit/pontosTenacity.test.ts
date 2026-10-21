@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyCombatStatusEffect,
+  controlDuration,
+  controlMagnitude,
+  currentAttackSpeed,
   applyFrenzy,
   applyStagger,
   applyStun,
@@ -9,6 +13,7 @@ import {
   stepSkirmish,
   type Fighter,
 } from "../../src/core/skirmish";
+import type { CombatStatusEffect } from "../../src/core/types";
 import { getRelic } from "../../src/data/relics";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { getExpeditionNodeEnemies } from "../../src/data/expeditionEnemies";
@@ -213,5 +218,115 @@ describe("폰토스전의 원정 점수", () => {
     const atFullHp = receivedDamage(boss, 1_000);
     boss.hp = boss.maxHp * 0.25;
     expect(receivedDamage(boss, 1_000)).toBeLessThan(atFullHp);
+  });
+});
+
+
+describe("행동 제약의 공통 강인함", () => {
+  function battle(role: "elite" | "boss" | "endless" | "normal" = "boss") {
+    return createSkirmish([getRelic("maddy")], [{ ...getRelic("amo"), encounterRole: role }], ARENA);
+  }
+
+  const controls: CombatStatusEffect[] = [
+    { kind: "stun", seconds: 0.1 },
+    { kind: "stagger", seconds: 0.1 },
+    { kind: "fear", seconds: 0.1, immunitySeconds: 1 },
+    { kind: "taunt", seconds: 0.1 },
+    { kind: "frenzy", seconds: 0.1, attackSpeedPercent: 0 },
+    { kind: "knockback", seconds: 0.1, speed: 100, bounces: 1 },
+  ];
+  it.each(controls)("는 $kind의 미세 제약을 막고 별도 상태나 사건을 만들지 않는다", (effect) => {
+    const state = battle(); const [source, target] = state.fighters;
+    const events: Parameters<typeof applyCombatStatusEffect>[2] = [];
+    applyCombatStatusEffect(target, effect, events, state, source.id);
+    expect(target.stunnedFor).toBe(0); expect(target.staggeredFor).toBe(0);
+    expect(target.fear).toBeNull(); expect(target.taunted).toBeNull();
+    expect(target.frenzy).toBeNull(); expect(target.knockback).toBeNull();
+    expect(events).toEqual([]);
+    expect(controlResistPercent(target)).toBe(56);
+  });
+
+  it.each(["elite", "boss", "endless"] as const)("는 %s에서도 저항 후 시간으로 경계를 판단하고 일반 적은 미세 제약도 받는다", (role) => {
+    const target = battle(role).fighters[1];
+    expect(controlDuration(target, 0.05 / (1 - controlResistPercent(target) / 100), false)).toBe(0);
+    expect(controlDuration(target, 0.051 / (1 - controlResistPercent(target) / 100), false)).toBeCloseTo(0.051);
+    expect(controlDuration(battle("normal").fighters[1], 0.01)).toBeCloseTo(0.01);
+  });
+
+  it("는 긴 도발의 시간을 줄이고 면역 시 기존 표적과 상태를 보존한다", () => {
+    const state = battle(); const [source, target] = state.fighters;
+    applyCombatStatusEffect(target, { kind: "taunt", seconds: 2 }, [], state, source.id);
+    expect(target.taunted?.remaining).toBe(1);
+    target.tenacity = 50;
+    const previous = target.taunted;
+    target.targetId = "previous";
+    applyCombatStatusEffect(target, { kind: "taunt", seconds: 10 }, [], state, source.id);
+    expect(target.taunted).toBe(previous); expect(target.targetId).toBe("previous");
+  });
+
+  it("는 시간 없는 둔화의 강도를 줄이고 100%에서 속도를 원상복구한다", () => {
+    const state = battle(); const [source, target] = state.fighters;
+    const before = currentAttackSpeed(target, state);
+    applyCombatStatusEffect(target, { kind: "chill", speedPercentPerStack: 20, maxStacks: 3 }, [], state, source.id);
+    expect(currentAttackSpeed(target, state)).toBeCloseTo(before * (1 - 0.2 * 0.44));
+    target.tenacity = 50;
+    expect(currentAttackSpeed(target, state)).toBe(before);
+    expect(controlMagnitude(target, 100)).toBe(0);
+    expect(controlResistPercent(target)).toBe(100);
+  });
+
+  it("는 매디의 빙결에도 저항하며 완전 면역에서는 빙결 사건을 만들지 않는다", () => {
+    for (const immune of [false, true]) {
+      const state = battle(); const [source, target] = state.fighters;
+      source.x = target.x = 300; source.y = target.y = 500;
+      source.attackCooldown = 0; target.attackCooldown = 999;
+      target.hp = target.maxHp = 100000;
+      target.chill = { stacks: 3, maxStacks: 3, speedPercentPerStack: 10 };
+      if (immune) target.tenacity = 50;
+      const events = stepSkirmish(state, 1 / 60, () => 0.99);
+      if (immune) {
+        expect(target.frozen).toBeNull();
+        expect(events.some((e) => e.kind === "status" && e.status === "frozen")).toBe(false);
+      } else {
+        // 적중이 둔화 한 겹을 갱신한 뒤 빙결을 시도하므로 50 + 6% 저항이다.
+        expect(target.frozen?.total).toBeCloseTo(3 * 0.44);
+      }
+    }
+  });
+
+  it("는 날려버림의 시간과 속도를 함께 줄이고 실제 이동 거리도 강인함에 따라 줄인다", () => {
+    const distances: number[] = [];
+    for (const resistance of [0, 50, 90, 100]) {
+      const state = battle(resistance === 0 ? "normal" : "boss");
+      const [source, target] = state.fighters;
+      source.x = 200; source.y = 500; target.x = 300; target.y = 500;
+      source.attackCooldown = target.attackCooldown = 999;
+      target.tenacity = resistance === 0 ? 0 : resistance - 50;
+      applyCombatStatusEffect(target, { kind: "knockback", seconds: 1, speed: 100, bounces: 2 }, [], state, source.id);
+      if (resistance < 100) {
+        expect(target.knockback?.remaining).toBeCloseTo(1 - resistance / 100);
+        expect(target.knockback?.vx).toBeCloseTo(100 * (1 - resistance / 100));
+      } else expect(target.knockback).toBeNull();
+      const before = target.x;
+      // 마지막 비행 프레임도 남은 시간만큼만 진행한다.
+      for (let tick = 0; tick < 21 && target.knockback !== null; tick++) stepSkirmish(state, 0.05, () => 0.99);
+      distances.push(target.x - before);
+    }
+    expect(distances[0]).toBeCloseTo(100);
+    expect(distances[1]).toBeCloseTo(25);
+    expect(distances[2]).toBeCloseTo(1);
+    expect(distances[3]).toBe(0);
+  });
+
+  it("는 경직 중 공격 대기 시간을 초기화하지 않고 남은 시간부터 이어간다", () => {
+    const state = battle("normal"); const [source, target] = state.fighters;
+    source.x = target.x = 300; source.y = target.y = 500;
+    source.attackCooldown = 999; target.attackCooldown = 0.3;
+    applyStagger(target, 0.2);
+    stepSkirmish(state, 0.05, () => 0.99);
+    expect(target.attackCooldown).toBeCloseTo(0.3);
+    for (let n = 0; n < 6; n++) stepSkirmish(state, 0.05, () => 0.99);
+    expect(target.attackCooldown).toBeLessThan(0.3);
+    expect(target.attackCooldown).toBeGreaterThan(0);
   });
 });

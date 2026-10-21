@@ -1,3 +1,5 @@
+import { bindNotificationDot } from "../ui/NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import Phaser from "phaser";
 import { UI_ICON } from "../ui/icons";
@@ -667,8 +669,9 @@ export class ExpeditionScene extends Phaser.Scene {
     const utilityRightX = BASE_WIDTH / 2 + utilityTotal / 2 - utility.width / 2;
     // 보스 전신(depth 5)보다 위에 그려야 발끝·옷자락 뒤로 조작이 숨지 않는다.
     new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.ranking"), fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
-    new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
+    const rewardButton = new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
 
+    bindNotificationDot(this, rewardButton, { x: utility.width / 2 - 16, y: -utility.height / 2 + 12 }, listener => notificationManager.subscribe("expeditionReward", listener));
     const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
     const sortieX = BASE_WIDTH / 2 - actionsTotal / 2 + actions.sortieWidth / 2;
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;

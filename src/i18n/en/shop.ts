@@ -53,7 +53,7 @@ export const SHOP_EN = {
   "shop.premium.unsupported": "Payments are not available in this build.",
   "shop.premium.cancelled": "The payment was cancelled.",
   "shop.premium.perk.raidTicket": "{count} Select Raid Ticket daily",
-  "shop.premium.perk.adRemoval": "No ads · Unlock 3× Battle Speed",
+  "shop.premium.perk.adRemoval": "No ads · Unlock 3× Battle Speed · Sweep without tickets",
   "shop.renewal.notice": "{price} auto-charged every {days} days · renews until cancelled",
   "shop.renewal.title": "Subscription Details",
   "shop.renewal.billing.title": "Billing",
@@ -125,4 +125,5 @@ export const SHOP_EN = {
   "shop.premium.fixedTerm": "{days}-day access",
   "shop.premium.expiresOn": "Expires {date}",
   "shop.premium.noRenewal": "{days}-day access · No automatic renewal",
+  "shop.premium.perk.ticketless": "Sweep without tickets",
 } as const;

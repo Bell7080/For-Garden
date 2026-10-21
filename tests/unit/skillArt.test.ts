@@ -370,7 +370,7 @@ describe("렉시아 스킬 표시 계약", () => {
     );
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
-    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
+    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBeUndefined();
   });
 });
 
@@ -446,8 +446,7 @@ describe("렉시아 스킬 표시 계약", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
     expect(skillDescription(rex.ultimate)).not.toContain("포효");
     expect(skillDescription(rex.ultimate, { damage: 400 })).toBe(
-      "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 "
-      + `${rex.ultimate.damageHealingPercent}%만큼 체력을 회복한다.`,
+      "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 준다.",
     );
   });
 });
@@ -464,6 +463,7 @@ describe("폰토스 스킬 표시 계약", () => {
     expect(encounterRoleDescription("endless")).toBe(
       "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
       + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
+      + "\n강인함 적용 후 0.05초 이하로 남은 [[crowd-control|행동 제약]]은 무효가 된다."
       + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다."
       + "\n최대 체력 비례 피해를 30% 덜 받는다.",
     );

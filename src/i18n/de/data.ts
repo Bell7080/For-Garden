@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "Massenkontrolle",
   "keyword.crowd-control.description": "Sammelbegriff für Effekte, die ein Ziel am Handeln hindern, etwa Betäubung und Taumeln.",
   "keyword.tenacity.term": "Zähigkeit",
-  "keyword.tenacity.description": "Baut sich bei jedem abgeschüttelten Kontrolleffekt auf und verkürzt Kontrollen wie Betäubung und Taumeln um diesen Prozentsatz. Am Maximum bricht Kontrolle schon beim Auftreffen. Nur Gegner an Stellen, die nicht festgesetzt werden dürfen, etwa Bosse, besitzen sie.",
+  "keyword.tenacity.description": "Steigt bei eingehender Kontrolle. Verkürzt Betäubung, Taumeln, Einfrieren, Schlaf, Furcht, Raserei, Spott, Rückstoß und zeitbegrenzte Verlangsamung. Kontrolle unter der Mindestdauer nach Widerstand wird ignoriert. Schwächt dauerhafte Verlangsamung und Heranziehen sowie die Rückstoßgeschwindigkeit. Bei vollständigem Widerstand wirkt neue Kontrolle nicht.",
   "keyword.damage-reduction.term": "Schadensminderung",
   "keyword.damage-reduction.description": "Aller erlittene Schaden schrumpft, je weiter das Leben sinkt. Nach der Minderung winziger Schaden kommt gar nicht an. Nur Gegner auf der unsterblichen Stelle, die nie fällt, besitzen sie.",
   "keyword.scar.term": "Narbe",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "Verfolgungs-Kommandoraum",
   "chapter.4.title": "Zone 4",
   "chapter.4.subtitle": "Zusammenführung — Zwei Gruppen auf einem Gleis",
+  "adReward.roulette-chances.text": "Werbung ansehen: +3",
 };

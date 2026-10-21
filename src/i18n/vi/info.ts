@@ -22,6 +22,7 @@ export const INFO_VI = {
   "info.enemy.role.stat.hp": "Máu ×{value}",
   "info.enemy.role.stat.attack": "Công·Phép ×{value}",
   "info.enemy.role.stat.body": "Kích thước ×{value}",
+  "info.enemy.role.controlImmunity": "Bỏ qua [[crowd-control|Khống chế]] còn {seconds} giây trở xuống sau Kiên cường.",
   "info.enemy.role.tenacity": "Bắt đầu với {base}% [[tenacity|Kiên cường]] và tăng {per}% mỗi lần thoát [[crowd-control|khống chế]], tối đa {max}%.",
   "info.enemy.role.damageReduction": "Bắt đầu với {base}% [[damage-reduction|Giảm sát thương]] và tăng tới {max}% khi [[hp|Máu]] giảm; sát thương từ {ignore} trở xuống bị vô hiệu.",
   "info.enemy.role.percentHpResistance": "Nhận ít hơn {percent}% sát thương theo Máu tối đa.",

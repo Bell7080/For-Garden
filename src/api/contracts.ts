@@ -1,3 +1,4 @@
+import type { RouletteReward, RouletteStatus } from "../core/roulette";
 import { t, type TextKey } from "../i18n";
 import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
@@ -381,6 +382,9 @@ export interface ProfileModifierSelectionDto {
 }
 
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
+export interface SpinRouletteResponse extends PlayerStateDto {
+  status: RouletteStatus; index: number; reward: RouletteReward; granted: Partial<Record<keyof Wallet, number>>;
+}
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
 export interface ClaimAdRewardResponse extends PlayerStateDto { items: InventoryItemDto[]; slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
@@ -548,7 +552,7 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
+export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
 
@@ -1086,6 +1090,9 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 광고 제안은 조회 성공한 서버 운영 설정만 표시 기준으로 사용한다. */
   getAdOperationsConfig(): Promise<AdOperationsConfigResponse>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
+  getRouletteStatus(): Promise<RouletteStatus>;
+  spinRoulette(request: { requestId: string }): Promise<SpinRouletteResponse>;
+  unlockRouletteSpins(request: { requestId: string; verificationToken?: string }): Promise<RouletteStatus>;
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;

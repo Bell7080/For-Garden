@@ -47,6 +47,8 @@ export type EncounterRole =
  * 보스가 늘 때마다 같은 문장과 조금씩 다른 수가 복사되므로 **자리(유형)가 갖는다.**
  */
 export interface EncounterTenacity {
+  /** 강인함 적용 후 이 시간 이하로 남은 행동 제약은 행동을 막지 않는다(초). */
+  controlIgnoreAtOrBelowSeconds?: number;
   /** 판을 시작할 때부터 갖는 몫(%). */
   basePercent: number;
   /** 제어를 한 번 받아 낼 때마다 더해지는 몫(%). 시간이 아니라 **횟수**로 센다. */
@@ -185,7 +187,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
-    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80 },
+    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
   },
   boss: {
@@ -204,7 +206,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 태생 50%에 제어 한 번마다 6%. 하루 두 판을 제어 하나로 잠가 끝내지 못하게 하되, 첫 몇
      * 번의 잠금은 확실히 가져가게 하는 선이다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     percentHpResistance: 30,
   },
   endless: {
@@ -217,7 +219,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 태생 50%에 제어 한 번마다 8% — 일곱 번이면 상한이다. 제어 하나로 최종 관문을 통째로
      * 지우지 못하게 하면서도 제어 개체를 쓸모없게 만들지 않는다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     /*
      * **바닥부터 높다.** 50이던 때는 온전한 몸으로 선 폰토스가 받는 피해의 절반을 그대로
      * 맞았다 — 체력이 무한인 자리라 사실상 "절반만 아픈 벽"이었다. 곡선(0.75)은 1보다 작아

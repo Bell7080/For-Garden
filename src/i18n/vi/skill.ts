@@ -248,7 +248,7 @@ export const SKILL_VI = {
   "skill.breakthrough.effect.ferocity": "Khi [[ferocity|Cuồng bạo]] kết thúc, nhận [[shield|khiên]] bằng {percent}% sát thương đã nhận trong Cuồng bạo và [[taunt|Khiêu khích]] kẻ địch trong vùng rộng thêm {seconds} giây.",
   "skill.breakthrough.effect.passive": "Khi \"{name}\" kích hoạt, chia {percent}% lượng hồi đó cho mọi đồng minh.",
   "skill.breakthrough.effect.basic.deepBleed": "[[bleed|Chảy máu]] từ đòn thường thành Chảy máu sâu, gây {percent}% HP tối đa mỗi giây. Khi đang hiệu lực, giảm hồi máu mục tiêu nhận {reduction}% và được ưu tiên hơn các Chảy máu khác.",
-  "skill.breakthrough.effect.ultimate.execution": "Sát thương Tuyệt kỹ thành Sát thương chuẩn, và hạ gục kẻ địch hồi {energy} năng lượng Tuyệt kỹ.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "hồi máu bằng {percent}% sát thương gây ra",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "Trong [[ferocity|Cuồng bạo]], đòn đánh thường trúng mọi kẻ địch trong vùng khá rộng.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP tối đa, [[def|Thủ]] và [[res|Kháng]] tăng {percent}%, và hạ gục kẻ địch sẽ sẵn sàng [[charge|xung phong]] vào mục tiêu kế tiếp lần nữa.",
   "skill.breakthrough.effect.basic.splitHealing": "Chuyển thêm {percent}% lượng hồi đã dành cho đồng minh bị thương nặng nhất sang đồng minh bị thương nặng thứ hai.",

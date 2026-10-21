@@ -184,8 +184,7 @@ describe("돌파 효과 문구", () => {
     const lexia = getRelic("rex");
     expect(breakthroughEffectText(lexia, "basic")).toContain("최대 체력의 4%");
     expect(breakthroughEffectText(lexia, "basic")).toContain("받는 회복량을 40% 낮추며");
-    expect(breakthroughEffectText(lexia, "ultimate")).toContain("고정 피해");
-    expect(breakthroughEffectText(lexia, "ultimate")).toContain("150 회복");
+    expect(breakthroughEffectText(lexia, "ultimate")).toContain("피해의 50%만큼 체력을 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
     expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·[[def|방어력]]·[[res|저항력]]이 25% 증가");
     expect(breakthroughEffectText(lexia, "passive")).toContain("다시 [[charge|돌진]]");
@@ -245,14 +244,17 @@ describe("렉시아 한계 돌파", () => {
     expect(torika.hp - before).toBeCloseTo(torika.maxHp * 0.035 * 0.6, 4);
   });
 
-  it("는 궁극기를 고정 피해로 바꾸고 직접 처치하면 게이지 150을 돌려받는다", () => {
+  it("는 궁극기에 50% 흡혈을 더하고 처치해도 고정 피해 전환이나 게이지 환급을 주지 않는다", () => {
     const state = lexiaBattle(); engage(state);
     const lexia = findFighter(state, "player-0")!;
     const torika = findFighter(state, "enemy-0")!;
-    torika.hp = 1; lexia.energy = lexia.def.ultimate.cost;
+    torika.hp = 5; lexia.energy = lexia.def.ultimate.cost;
+    lexia.hp = lexia.maxHp / 2;
+    const before = lexia.hp;
     const hit = fireUltimate(state, lexia.id, () => 0.99).find((event) => event.kind === "attack");
-    expect(hit).toMatchObject({ damageType: "true" });
-    expect(lexia.energy).toBe(150);
+    expect(hit).toMatchObject({ damageType: "physical" });
+    expect(lexia.hp - before).toBeCloseTo(5 * 0.75);
+    expect(lexia.energy).toBe(0);
   });
 
   it("는 폭주 중 일반 공격으로 조금 넓은 범위를 함께 때리고 처치 뒤 돌진을 다시 준비한다", () => {

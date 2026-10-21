@@ -110,6 +110,8 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     this.paintPips(track);
   }
 
+  setActionRequired(visible: boolean): void { this.setDot(visible); }
+
   private setDot(visible: boolean): void {
     if (visible && !this.dot) this.dot = new NotificationDot(this.scene, this, { x: this.options.width / 2 - 18, y: -this.options.height / 2 + 18 });
     if (!visible && this.dot) { this.dot.destroy(true); this.dot = undefined; }

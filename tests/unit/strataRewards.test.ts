@@ -20,6 +20,20 @@ function seeded(seed: number): () => number {
 const KNOWN_ITEMS = new Set<string>([RUNE_TRAIT_ITEMS.grant.itemId, RUNE_TRAIT_ITEMS.grantHigh.itemId, RUNE_TRAIT_ITEMS.upgrade.itemId]);
 
 describe("탐사 보상표", () => {
+  it("젬 발견은 유적 배율과 무관하게 100개 또는 300개다", () => {
+    const found = new Set<number>();
+    for (const layer of STRATA_LAYERS) {
+      for (let seed = 1; seed <= 150; seed++) {
+        const board = createStrataBoard({ layerId: layer.id, random: seeded(seed * 7919), crystalStage: 10 });
+        for (const tile of board.tiles.filter(tile => tile.kind === "gems")) {
+          expect([100, 300]).toContain(tile.amount);
+          found.add(tile.amount);
+        }
+      }
+    }
+    expect(found).toEqual(new Set([100, 300]));
+  });
+
   it("에는 꽝이 없고 소량의 골드·원석과 치즈케이크가 있다", () => {
     for (const layer of STRATA_LAYERS) {
       expect(layer.rewards.some((row) => row.kind === "empty"), layer.id).toBe(false);

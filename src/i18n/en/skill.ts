@@ -248,7 +248,7 @@ export const SKILL_EN = {
   "skill.breakthrough.effect.ferocity": "When Frenzy ends, gains a [[shield|shield]] equal to {percent}% of the damage taken during Frenzy and Taunts enemies in a wide area once more for {seconds}s.",
   "skill.breakthrough.effect.passive": "When \"{name}\" triggers, shares {percent}% of that healing among every ally.",
   "skill.breakthrough.effect.basic.deepBleed": "Basic attack Bleed becomes Deep Bleed, dealing {percent}% of max HP each second. While active, it reduces healing received by {reduction}% and takes priority over other Bleeds.",
-  "skill.breakthrough.effect.ultimate.execution": "Ultimate damage becomes True Damage, and defeating an enemy restores {energy} Ultimate Energy.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "restores HP equal to {percent}% of the damage dealt",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "During Frenzy, basic attacks hit every enemy in a moderately wide area.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "Max HP, [[def|Defense]], and [[res|Resistance]] increase by {percent}%, and defeating an enemy readies the [[charge|charge]] toward the next target again.",
   "skill.breakthrough.effect.basic.splitHealing": "Also passes {percent}% of the healing given to the most wounded ally to the second most wounded ally.",

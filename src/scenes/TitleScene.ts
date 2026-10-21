@@ -1,3 +1,4 @@
+import { TitleEntryGesture } from "../core/titleEntryGesture";
 import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import Phaser from "phaser";
 import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
@@ -257,11 +258,14 @@ export class TitleScene extends Phaser.Scene {
       },
       LOADING_STEPS,
       (ratio) => percent.setRatio(ratio),
-    ).then(() => {
+    ).then(async () => {
       if (!this.scene.isActive()) return;
       // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
       percent.complete();
       percent.handOver();
+      // 로그인으로 새 토큰이 생기기 전에 서버 초기화 세대를 맞춘다. 인증 뒤에 검사하면
+      // 방금 로그인한 토큰까지 과거 세대의 것으로 지우고 다시 로그인을 요구하게 된다.
+      if (!await this.prepareEntry()) return;
       // 이 기기에 계정이 아직 없으면 입장 문구 대신 로그인 버튼이 선다. 한 번 만들어지면 다음부터는 문구만 선다.
       const account = backendAccount();
       void (account ? account.hasSession() : Promise.resolve(true)).then((hasAccount) => {
@@ -270,6 +274,26 @@ export class TitleScene extends Phaser.Scene {
         diamonds.finish(() => { if (this.scene.isActive()) this.showEntry(cx, !hasAccount); }, reduced);
       });
     });
+  }
+
+  /** 인증을 시작하기 전에 초기화 세대를 맞춰 새로 받은 세션을 지우지 않는다. */
+  private async prepareEntry(): Promise<boolean> {
+    const generation = this.entryGeneration;
+    const startup = await (this.gate ??= checkStartupGate(packageInfo.version));
+    if (!this.scene.isActive() || generation !== this.entryGeneration) return false;
+    // 원격 계정이 있는 빌드는 초기화 세대 확인 없이 인증을 시작하지 않는다.
+    // 첫 조회 시간 초과 뒤 인증하고 나중에 세대를 읽으면 새 토큰을 과거 토큰으로 오인한다.
+    if (backendAccount() && !startup.config) {
+      this.gate = undefined;
+      await new Promise<void>(resolve => this.showConnectFailure("network-error", undefined, resolve));
+      if (!this.scene.isActive() || generation !== this.entryGeneration) return false;
+      return this.prepareEntry();
+    }
+    if (startup.config && reconcileLaunchEpoch(startup.config.launchEpoch)) {
+      this.scene.start("boot");
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -473,7 +497,13 @@ export class TitleScene extends Phaser.Scene {
       .setDepth(-1);
     const generation = this.entryGeneration;
     const current = () => this.scene.isActive() && generation === this.entryGeneration;
-    const enter = () => {
+    const gesture = new TitleEntryGesture(!firstRun);
+    tapAnywhere.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      gesture.down(pointer.id, Boolean(this.authAttempt || this.entryPending));
+    });
+    const enter = (pointer: Phaser.Input.Pointer) => {
+      const freshTap = gesture.up(pointer.id);
+      if (!freshTap) { tapAnywhere.once("pointerup", enter); return; }
       if (!current() || this.entryPending || this.authAttempt) return;
       this.entryPending = true;
       // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
@@ -486,7 +516,7 @@ export class TitleScene extends Phaser.Scene {
           // 서버가 출시 초기화를 한 뒤에 처음 여는 기기는 초기화 이전의 토큰·저장을 지우고 처음부터 다시 시작한다.
           if (result.config && reconcileLaunchEpoch(result.config.launchEpoch)) {
             releaseBusy();
-            window.location.reload();
+            this.scene.start("boot");
             return;
           }
           // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
@@ -524,8 +554,10 @@ export class TitleScene extends Phaser.Scene {
         this.loginRebuild = undefined;
         this.loginButtons.forEach((button) => button.destroy());
         this.loginButtons = [];
+        gesture.arm();
         prompt.setVisible(true);
-        enter();
+        this.tweens.add({ targets: prompt, alpha: { from: 1, to: 0.25 }, duration: 900, yoyo: true, repeat: -1 });
+        tapAnywhere.once("pointerup", enter);
       });
       // 로그인 버튼을 고르는 동안 곧 열릴 오프닝의 스탠딩을 한 장씩 읽어 둔다(캐시에만 — 파싱까지, GPU는 세울 때).
       void (async () => {
@@ -543,9 +575,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /**
-   * 처음 여는 기기의 로그인 선택. 인증 성공은 해당 계정으로 바로 진입한다.
+   * 처음 여는 기기의 로그인 선택. 인증 성공은 입장 문구로 이어지고 탭 한 번으로 접속한다.
    */
-  private showLoginButtons(cx: number, enter: () => void, fade = true, authenticated: () => void = enter): void {
+  private showLoginButtons(cx: number, enter: (pointer: Phaser.Input.Pointer) => void, fade: boolean, authenticated: () => void): void {
     this.loginButtons.forEach((button) => button.destroy());
     this.loginButtons = [];
     this.loginRebuild = () => this.showLoginButtons(cx, enter, false, authenticated);
@@ -569,7 +601,16 @@ export class TitleScene extends Phaser.Scene {
       }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
     };
     const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
-      { labelKey: "title.login.guest", onClick: enter, primary: true },
+      { labelKey: "title.login.guest", onClick: () => {
+        const release = acquire();
+        if (!release) return;
+        void accountApi.getState().then((result) => {
+          release();
+          if (!current()) return;
+          if (result.ok) done();
+          else this.showConnectFailure(result.code);
+        }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
+      }, primary: true },
       { labelKey: "title.login.google", onClick: () => social("google") },
       { labelKey: "title.login.apple", onClick: () => social("apple") },
       { labelKey: "title.login.email", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountEmailPopup(this, this.popups, "sign-in", done, release); } },
@@ -595,13 +636,13 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
-  private showConnectFailure(code: AccountFailureCode, detail?: string): void {
+  private showConnectFailure(code: AccountFailureCode, detail?: string, onRetry?: () => void): void {
     this.popups?.confirm({
       title: t("settings.account.notice"),
       message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable") + (QA_TOOLS_ENABLED && detail ? `\n${t("settings.account.errorCode", { code: detail })}` : ""),
       confirmLabel: t("settings.action.confirm"),
       cancelLabel: false,
-    });
+    }, onRetry);
   }
 
   private showGateNotice(result: StartupGateResult): void {

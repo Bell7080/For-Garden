@@ -53,7 +53,7 @@ export const SHOP_TH = {
   "shop.premium.unsupported": "บิลด์นี้ไม่รองรับการชำระเงิน",
   "shop.premium.cancelled": "ยกเลิกการชำระเงินแล้ว",
   "shop.premium.perk.raidTicket": "แจกตั๋วปราบปรามแบบเลือกได้ {count} ใบทุกวัน",
-  "shop.premium.perk.adRemoval": "ไม่มีโฆษณา · ปลดล็อกความเร็วต่อสู้ 3×",
+  "shop.premium.perk.adRemoval": "ไม่มีโฆษณา · ปลดล็อกความเร็วต่อสู้ 3× · กวาดล้างโดยไม่ใช้ตั๋ว",
   "shop.renewal.notice": "เรียกเก็บ {price} อัตโนมัติทุก {days} วัน · ต่ออายุจนกว่าจะยกเลิก",
   "shop.renewal.title": "รายละเอียดการสมัครสมาชิก",
   "shop.renewal.billing.title": "การเรียกเก็บเงิน",
@@ -125,4 +125,5 @@ export const SHOP_TH = {
   "shop.premium.fixedTerm": "ใช้งาน {days} วัน",
   "shop.premium.expiresOn": "หมดอายุ {date}",
   "shop.premium.noRenewal": "ใช้งาน {days} วัน · ไม่ต่ออายุอัตโนมัติ",
+  "shop.premium.perk.ticketless": "กวาดล้างโดยไม่ใช้ตั๋ว",
 } as const;

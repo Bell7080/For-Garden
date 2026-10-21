@@ -9,12 +9,18 @@ import { NOTIFICATION_DOT_STYLE, perspectiveButtonNotificationAnchor, rotatedNot
 
 /** 알림별 조건과 공용 시각 규격이 화면별 구현으로 다시 갈라지지 않게 고정한다. */
 describe("notifications", () => {
+  it("원정·레이드 중 하나라도 수령 보상이 있으면 출격 입구에 점을 켠다", () => {
+    const conditions = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    expect(deriveNotificationState({ ...conditions, claimableRaidCount: 1 })).toMatchObject({ raidReward: true, expeditionReward: false, sortieReward: true });
+    expect(deriveNotificationState({ ...conditions, claimableExpeditionCount: 2 })).toMatchObject({ raidReward: false, expeditionReward: true, sortieReward: true });
+  });
+
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice", "achievementReward"]);
+    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice", "achievementReward"]);
     expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, freeSupplyCategories: ["weekly"] }))
       .toMatchObject({ premiumFree: true, premiumFreeDaily: false, premiumFreeWeekly: true, premiumFreeMonthly: false, passReward: false, premiumNotice: true });
   });

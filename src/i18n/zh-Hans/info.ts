@@ -22,6 +22,7 @@ export const INFO_ZH_HANS = {
   "info.enemy.role.stat.hp": "生命 ×{value}",
   "info.enemy.role.stat.attack": "攻击力·法术强度 ×{value}",
   "info.enemy.role.stat.body": "体型 ×{value}",
+  "info.enemy.role.controlImmunity": "应用韧性后，剩余时间不超过{seconds}秒的[[crowd-control|控制]]无效。",
   "info.enemy.role.tenacity": "初始拥有{base}%[[tenacity|韧性]]，每次摆脱[[crowd-control|控制]]时提升{per}%，最多{max}%。",
   "info.enemy.role.damageReduction": "初始拥有{base}%[[damage-reduction|伤害减免]]，随[[hp|生命]]降低提升至{max}%；{ignore}以下的伤害无效。",
   "info.enemy.role.percentHpResistance": "受到的最大生命比例伤害减少{percent}%。",

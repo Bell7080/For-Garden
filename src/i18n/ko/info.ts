@@ -25,6 +25,7 @@ export const INFO_KO = {
   "info.enemy.role.stat.hp": "체력 ×{value}",
   "info.enemy.role.stat.attack": "공격력·주문력 ×{value}",
   "info.enemy.role.stat.body": "몸집 ×{value}",
+  "info.enemy.role.controlImmunity": "강인함 적용 후 {seconds}초 이하로 남은 [[crowd-control|행동 제약]]은 무효가 된다.",
   "info.enemy.role.tenacity": "[[tenacity|강인함]] {base}%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 {per}%씩, 최대 {max}%까지 오른다.",
   "info.enemy.role.damageReduction": "[[damage-reduction|경감]] {base}%로 시작해 [[hp|체력]]이 깎일수록 최대 {max}%까지 오르고, {ignore} 이하의 피해는 무효가 된다.",
   "info.enemy.role.percentHpResistance": "최대 체력 비례 피해를 {percent}% 덜 받는다.",

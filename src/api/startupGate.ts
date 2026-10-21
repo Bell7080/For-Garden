@@ -24,12 +24,10 @@ export async function checkStartupGate(
   const { timeoutMs = STARTUP_GATE_TIMEOUT_MS, fetchImpl = fetch, url, key, now = Date.now } = options;
   const run = async (): Promise<StartupGateResult> => {
     const before = now();
-    // 두 호출을 나란히 보내 왕복을 한 번만 기다린다.
-    const [pinged, loaded] = await Promise.all([
-      url === undefined ? pingBackend(fetchImpl) : pingBackend(fetchImpl, url, key),
-      url === undefined ? fetchPublicConfig(fetchImpl) : fetchPublicConfig(fetchImpl, url, key),
-    ]);
-    if (pinged.ok) syncServerClock(pinged.serverNow, before, now());
+    // 시각 동기화 실패·지연이 이미 도착한 초기화 세대 응답을 가리지 않게 한다.
+    const ping = url === undefined ? pingBackend(fetchImpl) : pingBackend(fetchImpl, url, key);
+    void ping.then(pinged => { if (pinged.ok) syncServerClock(pinged.serverNow, before, now()); }).catch(() => undefined);
+    const loaded = await (url === undefined ? fetchPublicConfig(fetchImpl) : fetchPublicConfig(fetchImpl, url, key));
     if (!loaded.ok) return OPEN;
     return { gate: configGate(loaded.config, appVersion), config: loaded.config };
   };

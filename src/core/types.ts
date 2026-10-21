@@ -947,7 +947,7 @@ export type CombatStatusEffect =
       /**
        * 도발. 맞은 쪽이 **때린 쪽만** 표적으로 삼는다.
        *
-       * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 그래서 정화의 대상이 아니고,
+       * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 강인함은 같은 경계에서 적용하되 정화의 대상은 아니고,
        * 짧게 걸면 "잠깐 이쪽을 보게 만들고 빠진다"가 된다. 엘라의 「인」은 궁극기 계약
        * (`SelfGuard.tauntSeconds`)으로 끌어당겨 걸지만, 이쪽은 **기본 공격 하나가** 건다.
        */
@@ -2889,8 +2889,9 @@ export type UltimateBreakthrough = {
   /** 본 위력의 몇 %로 떨어지는지. */
   powerPercent: number;
 } | {
-  kind: "execution";
-  energyRefundOnKill: number;
+  kind: "ultimateLifeSteal";
+  /** 궁극기의 실제 피해에서 회복하는 추가 비율(%). */
+  damageHealingPercent: number;
 } | {
   /**
    * 궁극기가 회복을 준 아군마다 **그 회복량의 일부를 보호막으로** 한 겹 더 덮는다(도디).

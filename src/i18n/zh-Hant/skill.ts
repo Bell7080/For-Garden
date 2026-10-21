@@ -248,7 +248,7 @@ export const SKILL_ZH_HANT = {
   "skill.breakthrough.effect.ferocity": "[[ferocity|暴走]]結束時，獲得相當於暴走期間所受傷害{percent}%的[[shield|護盾]]，並再次在大範圍內[[taunt|嘲諷]]敵人{seconds}秒。",
   "skill.breakthrough.effect.passive": "「{name}」觸發時，將該治療量的{percent}%分給所有隊友。",
   "skill.breakthrough.effect.basic.deepBleed": "普通攻擊的[[bleed|出血]]強化為深度出血，每秒造成最大生命{percent}%的傷害。持續期間，目標受到的治療減少{reduction}%，且優先於其他出血。",
-  "skill.breakthrough.effect.ultimate.execution": "必殺技傷害變為真實傷害，擊倒敵人時恢復{energy}必殺技能量。",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "恢復相當於所造成傷害{percent}%的生命",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|暴走]]期間，普通攻擊命中較大範圍內的所有敵人。",
   "skill.breakthrough.effect.passive.battleMaidAscension": "最大生命、[[def|防禦力]]與[[res|抗性]]提升{percent}%，擊倒敵人時再次準備好向下一個目標[[charge|衝鋒]]。",
   "skill.breakthrough.effect.basic.splitHealing": "將給予最受傷隊友的治療量的{percent}%，同時分給受傷第二重的隊友。",

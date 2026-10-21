@@ -11,6 +11,8 @@ import { STAGE_STORY_LINKS } from '../../src/data/stageStories';
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from '../../src/core/playerLevel';
 export function createFixture(mode: "stage" | "duel" | "raid" | "expedition" = "stage", prepare?: (state: Session) => void) {
     const state = createDefaultSession();
+    // 일반 전투 검사는 이름을 등록한 계정이다. 첫 이름 등록 검사는 prepare에서 명시적으로 비운다.
+    state.playerCard.nickname = "테스트연구원";
     state.completedStoryIds.add(OPENING_TRAIN.id);
     state.party = ['rex', 'mette', 'torika'];
     state.selectedStageId = '3-10';

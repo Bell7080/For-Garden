@@ -248,7 +248,7 @@ export const SKILL_ID = {
   "skill.breakthrough.effect.ferocity": "Saat [[ferocity|Amukan]] berakhir, mendapat [[shield|perisai]] sebesar {percent}% kerusakan yang diterima selama Amukan dan [[taunt|Memprovokasi]] musuh di area luas sekali lagi selama {seconds} dtk.",
   "skill.breakthrough.effect.passive": "Saat \"{name}\" aktif, membagikan {percent}% penyembuhan itu ke semua sekutu.",
   "skill.breakthrough.effect.basic.deepBleed": "[[bleed|Pendarahan]] dari serangan dasar menjadi Pendarahan Dalam, memberi {percent}% HP maks tiap detik. Selama aktif, mengurangi penyembuhan yang diterima target {reduction}% dan diutamakan di atas Pendarahan lain.",
-  "skill.breakthrough.effect.ultimate.execution": "Kerusakan Ultimate menjadi Kerusakan Murni, dan mengalahkan musuh memulihkan {energy} Energi Ultimate.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "memulihkan HP sebesar {percent}% dari kerusakan yang diberikan",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "Selama [[ferocity|Amukan]], serangan dasar mengenai semua musuh di area yang cukup luas.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "HP maks, [[def|Pertahanan]], dan [[res|Resistensi]] naik {percent}%, dan mengalahkan musuh menyiapkan [[charge|serbuan]] ke target berikutnya lagi.",
   "skill.breakthrough.effect.basic.splitHealing": "Meneruskan {percent}% penyembuhan yang diberikan ke sekutu paling terluka kepada sekutu terluka kedua.",

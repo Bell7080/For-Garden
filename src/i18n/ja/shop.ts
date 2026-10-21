@@ -34,7 +34,7 @@ export const SHOP_JA = {
   "shop.premium.unsupported": "このビルドでは決済を利用できません。",
   "shop.premium.cancelled": "決済がキャンセルされました。",
   "shop.premium.perk.raidTicket": "毎日 選択討伐券を{count}枚付与",
-  "shop.premium.perk.adRemoval": "広告なし · バトル3倍速を解放",
+  "shop.premium.perk.adRemoval": "広告なし · バトル3倍速を解放 · 掃討券なしで掃討",
   "shop.renewal.notice": "{days}日ごとに{price}を自動決済 · 解約まで更新",
   "shop.renewal.title": "定期課金のご案内",
   "shop.renewal.billing.title": "お支払い",
@@ -126,4 +126,5 @@ export const SHOP_JA = {
   "shop.premium.fixedTerm": "{days}日間利用",
   "shop.premium.expiresOn": "{date}まで",
   "shop.premium.noRenewal": "{days}日間利用 · 自動更新なし",
+  "shop.premium.perk.ticketless": "掃討券なしで掃討",
 } as const;

@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "Controle de grupo",
   "keyword.crowd-control.description": "O nome coletivo dos efeitos que impedem o alvo de agir, como Atordoamento e Cambaleio.",
   "keyword.tenacity.term": "Tenacidade",
-  "keyword.tenacity.description": "Acumula a cada vez que se livra de controle de grupo e encurta controles como Atordoamento e Cambaleio nessa porcentagem. No máximo, o controle quebra assim que acerta. Só inimigos em posições que não podem ficar travadas, como chefes, o têm.",
+  "keyword.tenacity.description": "Acumula ao receber controle. Reduz a duração de Atordoamento, Cambaleio, Congelamento, Sono, Medo, Frenesi, Provocação, Repulsão e lentidão temporária. Controle abaixo da duração mínima após resistência é ignorado. Reduz a força de lentidões sem duração e puxões, e a velocidade de Repulsão. A resistência total, novos controles não têm efeito.",
   "keyword.damage-reduction.term": "Redução de dano",
   "keyword.damage-reduction.description": "Todo dano recebido diminui conforme a Vida cai. Dano minúsculo após a redução não entra. Só o têm inimigos na posição Imortal, que nunca cai.",
   "keyword.scar.term": "Cicatriz",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "Sala de comando da perseguição",
   "chapter.4.title": "Zona 4",
   "chapter.4.subtitle": "Linha de junção — Dois grupos na mesma via",
+  "adReward.roulette-chances.text": "Ver anúncio: +3 giros",
 };

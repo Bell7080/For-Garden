@@ -267,7 +267,7 @@ export const SKILL_JA = {
   "skill.breakthrough.effect.ferocity": "[[ferocity|暴走]]が終わるとき、暴走の間に受けたダメージ量の{percent}%に当たる[[shield|シールド]]を得て、広い範囲の敵をもう一度{seconds}秒間[[taunt|挑発]]する。",
   "skill.breakthrough.effect.passive": "「{name}」が発動するとき、すべての味方にその回復量の{percent}%を分ける。",
   "skill.breakthrough.effect.basic.deepBleed": "通常攻撃の出血が、毎秒最大体力の{percent}%を失う深い出血に強化される。持続中は受ける回復量を{reduction}%下げ、ほかの出血より優先される。",
-  "skill.breakthrough.effect.ultimate.execution": "必殺技のダメージが固定ダメージになり、敵を倒すと必殺技ゲージを{energy}回復する。",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "与えたダメージの{percent}%分の体力を回復する",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "暴走中、通常攻撃がやや広い範囲のすべての敵を攻撃する。",
   "skill.breakthrough.effect.passive.battleMaidAscension": "最大体力・[[def|防御力]]・[[res|抵抗力]]が{percent}%上がり、敵を倒すと次の標的へもう一度[[charge|突進]]する。",
   "skill.breakthrough.effect.basic.splitHealing": "最も傷ついた味方に与える回復量の{percent}%を、2番目に傷ついた味方にも分け与える。",

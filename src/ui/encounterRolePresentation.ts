@@ -77,6 +77,9 @@ export function encounterRoleDescription(role: EncounterRole): string {
       base: spec.tenacity.basePercent, per: spec.tenacity.perControlPercent, max: spec.tenacity.maxPercent,
     }));
   }
+  if (spec.tenacity?.controlIgnoreAtOrBelowSeconds !== undefined) {
+    lines.push(t("info.enemy.role.controlImmunity", { seconds: spec.tenacity.controlIgnoreAtOrBelowSeconds }));
+  }
   if (spec.damageReduction) {
     lines.push(t("info.enemy.role.damageReduction", {
       base: spec.damageReduction.basePercent, max: spec.damageReduction.maxPercent,

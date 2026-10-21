@@ -53,7 +53,7 @@ export const SHOP_ZH_HANS = {
   "shop.premium.unsupported": "当前版本无法使用支付。",
   "shop.premium.cancelled": "支付已取消。",
   "shop.premium.perk.raidTicket": "每日赠送自选讨伐券 {count} 张",
-  "shop.premium.perk.adRemoval": "免广告 · 解锁战斗3倍速",
+  "shop.premium.perk.adRemoval": "免广告 · 解锁战斗3倍速 · 无需扫荡券即可扫荡",
   "shop.renewal.notice": "每 {days} 天自动扣费 {price} · 取消前持续续订",
   "shop.renewal.title": "订阅说明",
   "shop.renewal.billing.title": "扣费",
@@ -125,4 +125,5 @@ export const SHOP_ZH_HANS = {
   "shop.premium.fixedTerm": "有效{days}天",
   "shop.premium.expiresOn": "{date}到期",
   "shop.premium.noRenewal": "有效{days}天 · 不自动续订",
+  "shop.premium.perk.ticketless": "无需扫荡券即可扫荡",
 } as const;

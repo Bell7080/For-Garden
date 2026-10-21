@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "Khống chế",
   "keyword.crowd-control.description": "Tên gọi chung cho các hiệu ứng ngăn mục tiêu hành động, như Choáng và Khựng.",
   "keyword.tenacity.term": "Kiên cường",
-  "keyword.tenacity.description": "Tích lũy mỗi lần thoát khống chế, rút ngắn khống chế như Choáng và Khựng theo phần trăm đó. Ở giới hạn, khống chế vỡ ngay khi trúng. Chỉ kẻ địch ở vị trí không được khóa chặt như trùm mới có.",
+  "keyword.tenacity.description": "Tích lũy khi nhận khống chế. Giảm thời gian Choáng, Khựng, Đóng băng, Ngủ, Sợ hãi, Cuồng loạn, Khiêu khích, Hất văng và làm chậm có thời hạn. Khống chế còn dưới thời gian tối thiểu bị bỏ qua. Giảm cường độ làm chậm không thời hạn và kéo, cùng tốc độ Hất văng. Ở kháng hoàn toàn, khống chế mới không có hiệu lực.",
   "keyword.damage-reduction.term": "Giảm sát thương",
   "keyword.damage-reduction.description": "Máu càng giảm, mọi sát thương nhận vào càng thu nhỏ. Sát thương quá nhỏ sau khi giảm sẽ không có tác dụng. Chỉ kẻ địch ở vị trí Bất tử không bao giờ gục mới có.",
   "keyword.scar.term": "Sẹo",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "Phòng chỉ huy truy kích",
   "chapter.4.title": "Khu 4",
   "chapter.4.subtitle": "Tuyến hợp lưu — Hai nhóm trên cùng một đường ray",
+  "adReward.roulette-chances.text": "Xem quảng cáo: +3 lượt",
 };

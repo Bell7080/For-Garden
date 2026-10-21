@@ -1,3 +1,5 @@
+import { openRoulettePopup } from "../ui/RoulettePopup";
+import { nicknameCreationRequired } from "../core/playerCard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -289,6 +291,8 @@ export class LobbyScene extends Phaser.Scene {
       onClick: () => this.openSortieMenu(),
     });
 
+    bindNotificationDot(this, sortieButton, { x: 130, y: -45 }, listener => notificationManager.subscribe("sortieReward", listener));
+
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {
       width: 292,
@@ -347,22 +351,33 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
     // 판은 제 등장 연출 없이 **완성된 채로** 서서 화면 진입과 한 번에 들어온다 — 따로 떠오르면
     // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
-    if (this.returnMenu === "sortie") this.openSortieMenu(true);
-    else if (this.returnMenu === "duel") this.openPvpMenu(true);
-    else if (this.returnMenu === "event") this.openEvents(true);
-    // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
-    if (!this.returnMenu) {
-      const wait = this.unlockCelebrationUntil - this.time.now;
-      if (wait > 0) this.time.delayedCall(wait, () => this.announcePlayerLevel());
-      else this.announcePlayerLevel();
-      // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다 — 개방 연출·레벨업 알림이 끝난 뒤에.
-      if (ATTENDANCE_AUTO_POPUP) this.time.delayedCall(Math.max(0, wait) + TRANSITION.sceneIn.duration, () => this.autoOpenAttendance());
-    }
+    const continueEntry = (): void => {
+      if (!this.scene.isActive()) return;
+      if (this.returnMenu === "sortie") this.openSortieMenu(true);
+      else if (this.returnMenu === "duel") this.openPvpMenu(true);
+      else if (this.returnMenu === "event") this.openEvents(true);
+      // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
+      if (!this.returnMenu) {
+        const wait = this.unlockCelebrationUntil - this.time.now;
+        if (wait > 0) this.time.delayedCall(wait, () => this.announcePlayerLevel());
+        else this.announcePlayerLevel();
+        // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다 — 개방 연출·레벨업 알림이 끝난 뒤에.
+        if (ATTENDANCE_AUTO_POPUP) this.time.delayedCall(Math.max(0, wait) + TRANSITION.sceneIn.duration, () => this.autoOpenAttendance());
+      }
 
-    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
-    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+      // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+      // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+      if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer, sortieButton);
+    };
     playSceneEntrance(this);
-    if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer, sortieButton);
+    if (nicknameCreationRequired(session.playerCard, session.cleared) && this.popupLayer) {
+      // 서버 저장이 끝난 뒤에만 출격 안내·출석·레벨업 알림을 이어서 연다.
+      openNicknameEditor(this, this.popupLayer, () => {
+        if (!this.scene.isActive() || session.playerCard.nickname === "") return;
+        managerEvents.publish("publicProfile", { profile: playerProfileDisplay(session, profileModifierManager.equipped()) });
+        continueEntry();
+      }, true);
+    } else continueEntry();
 
     // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
@@ -534,7 +549,8 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.eventPopup ??= new LobbyEventPopup(this, this.popupLayer, {
       instant,
-      onSelect: (event) => {
+      onSelect: (event, onChanged) => {
+        if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
       },
@@ -669,6 +685,10 @@ export class LobbyScene extends Phaser.Scene {
           sdSide, split: entry.split, onClick: entry.onClick,
         });
         body.add(button);
+        if (entry.content === "raid" || entry.content === "expedition") {
+          const key = entry.content === "raid" ? "raidReward" : "expeditionReward";
+          bindNotificationDot(this, button, { x: entry.width / 2 - 22, y: -entry.height / 2 + 22 }, listener => notificationManager.subscribe(key, listener));
+        }
         if (entry.label === t("lobby.sortie.story")) followTutorialTarget(this, {
           enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.featureToTeach() !== undefined,
           rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"),

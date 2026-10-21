@@ -1,3 +1,4 @@
+import { NotificationDot } from "../ui/NotificationDot";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { socialApi, SocialApiError, type FriendListResponse, type FriendRequestEntry, type FriendRequestsResponse, type UserSearchEntry } from "../api/FakeSocialServer";
@@ -194,11 +195,7 @@ export class FriendsScene extends Phaser.Scene {
       // 받은 신청이 있는 동안 신청 탭 글자 오른쪽 어깨에 빨간 점이 선다. 모서리가 아니라 글자를 기준으로
       // 잡아야 깎인 모서리·솟는 켜진 라벨·줄어든 글자에서도 점이 라벨에 붙어 읽힌다.
       if (key === "requests" && (this.requestData?.incoming.length ?? 0) > 0) {
-        const label = tab.list.find((item): item is Phaser.GameObjects.Text => item instanceof Phaser.GameObjects.Text);
-        if (label) {
-          const dot = this.add.circle(label.x + label.displayWidth / 2 + S.tabDot.gap + S.tabDot.radius, label.y - S.tabDot.rise, S.tabDot.radius, 0xe5484d);
-          tab.add(dot);
-        }
+        new NotificationDot(this, tab, S.tabDot);
       }
     });
   }

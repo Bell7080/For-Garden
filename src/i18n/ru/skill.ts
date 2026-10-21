@@ -248,7 +248,7 @@ export const SKILL_RU = {
   "skill.breakthrough.effect.ferocity": "По окончании [[ferocity|неистовства]] получает [[shield|щит]] в {percent}% полученного за это время урона и снова [[taunt|провоцирует]] врагов на широкой области на {seconds} с.",
   "skill.breakthrough.effect.passive": "При срабатывании «{name}» делит {percent}% этого лечения между всеми союзниками.",
   "skill.breakthrough.effect.basic.deepBleed": "[[bleed|Кровотечение]] от обычной атаки становится глубоким и наносит {percent}% макс. ОЗ в секунду. Пока действует, снижает получаемое целью лечение на {reduction}% и имеет приоритет над другими кровотечениями.",
-  "skill.breakthrough.effect.ultimate.execution": "Урон ульты становится чистым, а убийство врага возвращает {energy} энергии ульты.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "восстанавливает ОЗ в размере {percent}% нанесённого урона",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "Во время [[ferocity|неистовства]] обычные атаки задевают всех врагов в довольно широкой области.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "Макс. ОЗ, [[def|защита]] и [[res|сопротивление]] растут на {percent}%, а убийство врага снова готовит [[charge|рывок]] к следующей цели.",
   "skill.breakthrough.effect.basic.splitHealing": "Также передаёт {percent}% лечения, полученного самым раненым союзником, второму по степени ранения союзнику.",

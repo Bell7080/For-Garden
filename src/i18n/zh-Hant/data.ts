@@ -632,7 +632,7 @@ export default {
   "keyword.crowd-control.term": "控制",
   "keyword.crowd-control.description": "眩暈、硬直等阻止目標行動的效果的統稱。",
   "keyword.tenacity.term": "韌性",
-  "keyword.tenacity.description": "每次擺脫控制時累積，按該百分比縮短眩暈與硬直等控制。達到上限時，控制在命中瞬間即被打破。只有首領等不能被鎖死位置的敵人擁有。",
+  "keyword.tenacity.description": "受到控制時累積，縮短暈眩、硬直、凍結、睡眠、恐懼、狂亂、嘲諷、擊飛和限時減速的持續時間。抵抗後不超過最短時間的控制無效。無時限減速和拉拽降低強度，擊飛也降低速度。完全抵抗時新控制無效。",
   "keyword.damage-reduction.term": "傷害減免",
   "keyword.damage-reduction.description": "隨著生命降低，受到的所有傷害都會縮小。減免後極小的傷害完全無效。只有佔據永不倒下的不死位置的敵人擁有。",
   "keyword.scar.term": "傷痕",
@@ -6186,4 +6186,5 @@ export default {
   "stage.4-10.name": "追擊指揮室",
   "chapter.4.title": "第4區域",
   "chapter.4.subtitle": "匯合線——兩股勢力踏上同一條軌道",
+  "adReward.roulette-chances.text": "看廣告追加3次",
 };

@@ -27,6 +27,7 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
   const session = createDefaultSession();
   session.completedStoryIds.add(OPENING_TRAIN.id);
   session.cleared.add("1-1");
+  session.playerCard.nickname = "테스트연구원";
   // 첫 플레이 튜토리얼은 끝난 상태로 시작한다 — 전투 조작·로비 안내가 화면별 검사를 가리지 않게.
   session.tutorial = createCompletedTutorialState();
   // 콘텐츠가 연구원 레벨로 잠겨 있으므로 화면별 E2E는 기본으로 모두 열린 만렙에서 시작한다. 잠금을 확인하는 편만 prepare에서 되돌린다.

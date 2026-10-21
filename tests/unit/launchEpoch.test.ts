@@ -47,6 +47,16 @@ describe("출시 초기화 세대", () => {
     expect(s.data.get(LAUNCH_EPOCH_STORAGE_KEY)).toBe("E1");
   });
 
+  it("로그인 전에 세대를 기록하면 방금 만든 로그인 세션을 다음 입장에서 지우지 않는다", () => {
+    const s = memory({ [SAVE]: "first-run" });
+    expect(reconcileLaunchEpoch("E1", s)).toBe(false);
+    // 게스트 생성·소셜 인증이 성공해 새 토큰을 보관한 시점이다.
+    s.setItem(TOKENS, "fresh-session");
+    expect(reconcileLaunchEpoch("E1", s)).toBe(false);
+    expect(s.data.get(TOKENS)).toBe("fresh-session");
+    expect(s.data.get(SAVE)).toBe("first-run");
+  });
+
   it("지울 것이 없던 새 기기는 세대만 적고 다시 시작하지 않는다", () => {
     const s = memory();
     expect(reconcileLaunchEpoch("E1", s)).toBe(false);

@@ -13,6 +13,7 @@ export type ExcavationAdEffect =
 
 /** kind로 즉시 재화와 상태 변경을 안전하게 분기하는 광고 보상 합집합이다. */
 export type AdReward =
+  | { readonly kind: "roulette_chances"; readonly quantity: 3 }
   | { readonly kind: "currency"; readonly currency: AdRewardCurrency; readonly amount: number }
   /** 한 번에 둘 이상의 재화(와 가방 아이템)를 함께 주는 광고(전리품 상점의 증표, 일간 보급의 추가 몫). */
   | { readonly kind: "currencies"; readonly grants: readonly { readonly currency: AdRewardCurrency; readonly amount: number }[]; readonly items?: readonly { readonly itemId: AdRewardItemId; readonly quantity: number }[] }
@@ -25,7 +26,7 @@ export type AdReward =
   | { readonly kind: "quick_expedition"; readonly scoreRatio: number };
 
 /** 광고 노출 위치는 일반 보급과 발굴 화면만 허용한다. */
-export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition" | "dungeon_sweep" | "duel_arena" | "premium_gems" | "premium_daily" | "shop_gold" | "archaeology_shop" | "loot_shop";
+export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition" | "dungeon_sweep" | "duel_arena" | "premium_gems" | "premium_daily" | "shop_gold" | "archaeology_shop" | "loot_shop" | "roulette";
 
 /** 서버 운영 설정의 원본이 되는 허용 슬롯 정의다. */
 export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly weeklyLimitUtc?: number; readonly placement: AdPlacement;
@@ -33,6 +34,7 @@ export interface AdRewardSlot { readonly id: string; readonly displayText: strin
   readonly requiresClaimedProductId?: string; }
 
 export const AD_REWARD_SLOTS = [
+  { id: "roulette-chances", displayText: "돌림판 추가 3회", reward: { kind: "roulette_chances", quantity: 3 }, dailyLimitUtc: 1, placement: "roulette" },
   { id: "daily-stamina", displayText: "스테미나 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
   { id: "daily-cheesecake", displayText: "치즈케이크 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
   // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.

@@ -9,13 +9,18 @@ import { startAfterOpening } from './openingSave';
 import { expeditionWeekKey } from '../../src/core/expeditionBoss';
 import { sourceScene } from './sourceScene';
 
-test('치즈케이크 원격 전투·결과 저장·복귀와 설정 계정 오류 후 입력 복구',async({page})=>{
+test('디안 없는 치즈케이크 원격 전투·결과 저장·복귀와 설정 계정 오류 후 입력 복구',async({page})=>{
  test.skip(process.env.PF_E2E_REMOTE_LOOP!=='1','소스 서버 전용');test.setTimeout(450000);
  const dir=await mkdtemp(join(tmpdir(),'fg-cake-loop-'));const errors:string[]=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')console.log(m.text());});
  try{
   const file=join(dir,'fixture.mjs');await build({entryPoints:['tests/helpers/remoteBattleFixture.ts'],outfile:file,bundle:true,platform:'node',format:'esm',define:{'import.meta.env':'{}','import.meta.env.MODE':'"production"','import.meta.env.DEV':'false','import.meta.env.PROD':'true'}});
-  const fixture=(await import(pathToFileURL(file).href)).createFixture('stage',(state:any)=>{state.expedition.weekKey=expeditionWeekKey(new Date());state.expedition.bestScore=28000;state.party=['dian','mette','torika'];state.owned.add('dian');state.relicProgress.dian={...state.relicProgress.rex,heartGemSlots:[...state.relicProgress.rex.heartGemSlots]};});
+  const fixture=(await import(pathToFileURL(file).href)).createFixture('stage',(state:any)=>{
+   state.expedition.weekKey=expeditionWeekKey(new Date());state.expedition.bestScore=28000;
+   state.party=['dodo','maddy','stella'];
+   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...state.relicProgress.rex,heartGemSlots:[...state.relicProgress.rex.heartGemSlots]};}
+  });
+  fixture.loseNextReply('completeCakeOperation');
   await page.exposeFunction('__CAKE_CALL',fixture.call);await installGameHandleProbe(page);await startAfterOpening(page);
   await page.evaluate(async()=>{
    const root='/src/';const [api,remote,state,saves,progress]=await Promise.all([import(/* @vite-ignore */root+'api/FakeServer.ts'),import(/* @vite-ignore */root+'api/RemoteGameApi.ts'),import(/* @vite-ignore */root+'state/session.ts'),import(/* @vite-ignore */root+'state/SaveManager.ts'),import(/* @vite-ignore */root+'api/serverProgress.ts')]);
@@ -29,6 +34,7 @@ test('치즈케이크 원격 전투·결과 저장·복귀와 설정 계정 오�
   await expect.poll(()=>fixture.calls.some((x:any)=>x.method==='completeCakeOperation'&&x.status===200),{timeout:150000}).toBe(true);
   await page.evaluate(()=>{const game=(window as any).__CAKE_GAME;game.loop.callback=game.__RENDER_CALLBACK;});
   await expect.poll(()=>page.evaluate(()=>Boolean((window as any).__CAKE_GAME.scene.getScene('battle').resultFailureUi?.active))).toBe(false);
+  expect(fixture.calls.filter((x:any)=>x.method==='completeCakeOperation').map((x:any)=>x.status)).toEqual([504,200]);
   await sourceScene(page,"this.game.scene.stop('battle');this.game.scene.start('settings');window.__ACCOUNT_SETTINGS=this.game.scene.getScene('settings');");
   await page.evaluate(async()=>{const s=(window as any).__ACCOUNT_SETTINGS;await s.runAccountAction(async()=>{throw Error('network failure');});});
   expect(await page.evaluate(()=>(window as any).__ACCOUNT_SETTINGS.input.enabled)).toBe(true);

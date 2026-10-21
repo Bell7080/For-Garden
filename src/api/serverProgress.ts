@@ -89,12 +89,16 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   if (!userId) return { ok: false, code: "network-error", detail: account.lastFailure?.() || "no-user" };
 
   // 서버는 로컬 세이브 업로드로 시작하지 않는다(클라이언트의 저장 쓰기 권한은 회수됐다). 첫 계정도 서버가 기본 상태를 생성한다. QA 빌드도 같은 길을 쓴다.
-  const remote=createRemoteGameApi({getAccessToken:()=>deps.isCurrent?.() === false ? Promise.resolve(null) : account.accessToken(),applyState:next=>{if(deps.isCurrent?.() === false)return;applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
+  const accessToken = async () => {
+    if (deps.isCurrent?.() === false) return null;
+    const token = await account.accessToken();
+    return deps.isCurrent?.() === false ? null : token;
+  };
+  const remote=createRemoteGameApi({getAccessToken:accessToken,applyState:next=>{if(deps.isCurrent?.() === false)return;applyServerState(target,next,deps.saves);signalRemoteMissionNotice(target);},fetchImpl:deps.fetchImpl});
   try { await remote.getPlayerState(); }
   catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
   if(deps.isCurrent?.() === false)return {ok:false,code:"network-error"};
   install(remote);
-  const accessToken = () => deps.isCurrent?.() === false ? Promise.resolve(null) : account.accessToken();
   const social=createRemoteSocialApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl});
   installSocialApi(social);
   installGuildApi(createRemoteGuildApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl}));

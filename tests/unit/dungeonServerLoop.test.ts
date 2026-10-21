@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
 import { saveManager } from '../../src/state/SaveManager';
-import { handleGameCall, type StateStore } from '../../src/server/gameHandler';
+import { handleGameCall, StateConflictError, type StateStore } from '../../src/server/gameHandler';
+import { createRemoteGameApi } from '../../src/api/RemoteGameApi';
 import type { ServerGameMethod } from '../../src/server/gameMethods';
 import { combatState, type CombatLease } from '../../src/core/combatProtocol';
 import { bossBattleRandom } from '../../src/core/bossSimulation';
@@ -14,7 +15,10 @@ describe('치즈케이크 원격 저장 왕복', () => {
   for(const id of state.party){state.owned.add(id);state.relicProgress[id]={...createInitialRelicProgress(),level:60,breakthrough:4};}
   let stored={data:JSON.parse(JSON.stringify(saveManager.exportData(state))),revision:'1'};
   const receipts=new Map<string,unknown>();let now=new Date('2026-10-21T23:59:00Z');
+  let conflict = true, completionCommits = 0;
   const store:StateStore={load:async()=>structuredClone(stored),findReceipt:async(_,id)=>receipts.get(id),commit:async input=>{
+   if(input.method==='finishCombat' && conflict){conflict=false;throw new StateConflictError();}
+   if(input.method==='completeCakeOperation')completionCommits++;
    saveManager.parse(input.data);const revision=String(Number(stored.revision)+1);
    stored={data:JSON.parse(JSON.stringify(input.data)),revision};if(input.requestId)receipts.set(input.requestId,{...(input.response as object),revision});return {revision};
   }};
@@ -30,7 +34,25 @@ describe('치즈케이크 원격 저장 왕복', () => {
   }
   now=new Date(now.getTime()+600000);
   await call('finishCombat',[{id:lease.id,ticks,actions}]);
-  const result=await call('completeCakeOperation',[{tierId,requestId:admission,victory:true}]);
-  expect(result.ok).toBe(true);await call('getPlayerState');
+  const before=saveManager.parse(stored.data).wallet;
+  let completionRequests=0;
+  const api=createRemoteGameApi({getAccessToken:async()=> 'isolated',applyState:()=>undefined,
+   fetchImpl:async(_url,init)=>{
+    const request=JSON.parse(String(init?.body));
+    const response=await handleGameCall('player',request,{store,strict:true,now:()=>now});
+    // 저장은 성공했지만 첫 응답만 게이트웨이에서 유실된다.
+    if(request.method==='completeCakeOperation' && completionRequests++===0)return new Response('gateway timeout',{status:504});
+    return new Response(JSON.stringify(response));
+   }});
+  const requestBody={tierId,requestId:admission,victory:true};
+  const first=api.completeCakeOperation(requestBody),second=api.completeCakeOperation(requestBody);
+  expect(first).toBe(second);
+  const [result,duplicate]=await Promise.all([first,second]);
+  expect(duplicate).toBe(result);
+  expect(completionRequests).toBe(2);expect(completionCommits).toBe(1);
+  const saved=saveManager.parse(stored.data);
+  expect(saved.wallet.cheesecake).toBe(before.cheesecake+(result.granted.cheesecake??0));
+  expect(saved.wallet.stamina).toBe(before.stamina-result.staminaSpent);
+  await call('getPlayerState');
  });
 });

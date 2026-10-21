@@ -40,6 +40,28 @@ function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {
     return { scene, proof: { id: lease.id, ticks: scene.combatTicks, actions: scene.combatActions } };
 }
 describe("실제 전투 씬 기록 → 서버 재현", () => {
+    for (const party of [["dodo", "maddy", "stella"], ["ella", "maki", "stella"], ["rex", "mette", "torika"]])
+        for (const tier of [1, 2, 3, 4, 5, 6, 7, 8])
+            for (const speed of [1, 2, 3]) {
+                it(`cake-${tier} ${party.join("/")} ${speed}x`, () => {
+                    for (const seed of [1, 7, 42]) {
+                        const state = createDefaultSession();
+                        state.party = party;
+                        for (const id of party) {
+                            state.owned.add(id);
+                            state.relicProgress[id] = { ...createInitialRelicProgress(), level: Math.min(60, tier * 8), breakthrough: Math.min(4, Math.floor(tier / 2)) };
+                        }
+                        const now = new Date("2026-10-21T00:00:00Z");
+                        const input = { tierId: `cake-${tier}`, requestId: "cake-admission" };
+                        recordBoundaryResult(state, "enterCakeOperation", [input]);
+                        const lease = prepareCombat(state, { input: { mode: "cake", ...input }, stageId: "1-1" }, now, `cake-${seed}`);
+                        const { scene, proof } = sceneFight(JSON.parse(JSON.stringify(lease)), speed);
+                        const restored = saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state))));
+                        const verdict = finishCombat(restored, proof, new Date(now.getTime() + 600000));
+                        expect(verdict.victory).toBe(scene.state.phase === "victory");
+                    }
+                });
+            }
     for (const party of [["rex", "mette", "torika"], ["rex", "torika", "mette"]])
         for (const speed of [1, 2, 3])
             for (const seed of [1, 7, 42])

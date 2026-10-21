@@ -13,10 +13,11 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { expeditionRewardTrackFillY, expeditionRewardTrackHeight, expeditionRewardTrackNodes, REWARD_TRACK } from "./expeditionRewardTrack";
 import { chipPoints, drawLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { withBusy } from "./BusyOverlay";
 
 /** 판 안에서 길이 보이는 창의 규격이다. 길이 더 길면 이 창 안에서만 위아래로 흐른다. */
-const VIEW = { width: 900, maxHeight: 1160, chromeTop: 168, chromeBottom: 64 } as const;
+const VIEW = { width: 900, maxHeight: 1160, chromeTop: 168, chromeBottom: 156 } as const;
 /** 손가락이 이만큼 움직이면 수령이 아니라 스크롤로 판정한다. */
 const DRAG_SLOP = 12;
 
@@ -73,7 +74,7 @@ export class ExpeditionRewardPopup {
     this.popups.open({
       width: BASE_WIDTH - 140, height, title: t("expeditionReward.title"), titleSize: POPUP_TITLE_SIZE.workboard,
       // 고를 것이 없는 읽기 판이라 바깥을 눌러도 닫힌다.
-      dim: true, dimAlpha: 0.72, closeOnBackdrop: true,
+      dim: true, dimAlpha: 0.72, closeOnBackdrop: true, canClose: () => !this.claiming,
       onClose: () => this.dispose(),
     }, (body) => {
       this.body = body;
@@ -115,7 +116,7 @@ export class ExpeditionRewardPopup {
     }
     // 보상 기준인 합계와 랭킹 기준인 한 판 최고를 완전한 이름으로 적어 서로 바꿔 읽지 않게 한다.
     content.add(this.scene.add.text(0, top + 96, t("expeditionReward.summary", { best: snapshot.bestScore.toLocaleString() }), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0.5));
-    if (this.message) content.add(this.scene.add.text(0, top + 140, this.message, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setOrigin(0.5));
+    if (this.error || this.message) content.add(this.scene.add.text(0, top + 140, this.error ?? this.message, textStyle({ role: "emphasis", size: 22, color: COLOR.sortieText })).setOrigin(0.5));
 
     // 창은 판 안의 고정된 사각이고, 길만 그 안에서 흐른다.
     const viewTop = top + VIEW.chromeTop;
@@ -124,6 +125,10 @@ export class ExpeditionRewardPopup {
     content.add(track);
     this.buildTrack(track, snapshot.rewardStages, snapshot.bestScore, viewTop, view);
     this.attachScroll(content, viewTop, view);
+    const claimable = snapshot.rewardStages.some(stage => snapshot.bestScore >= stage.threshold && !stage.claimed);
+    const claimAll = new Button(this.scene, 0, viewTop + view + 78, { width: 400, height: 92, label: t("missions.claimAll"), variant: "primary", onClick: () => void this.claim() });
+    claimAll.setEnabled(claimable && !this.claiming);
+    content.add(claimAll);
   }
 
   /** 길·마디·가지·보상 액자를 한 번에 세운다. 좌표는 순수 규칙이 준 높이를 뒤집어 쓴다. */
@@ -169,7 +174,7 @@ export class ExpeditionRewardPopup {
       track.add(this.scene.add.text(node.side === "right" ? -34 : 34, y, stage.threshold.toLocaleString(), textStyle({ role: "display", size: 27, color: reached ? COLOR.ink : COLOR.inkDim })).setOrigin(node.side === "right" ? 1 : 0, 0.5).setShadow(3, 4, "#04060a", 0, true, true));
       // 보상은 한 재화로 채우지 않는다(인양 기록·골드·보석…). 지갑 칸 → 그림은 공용 표 하나가 정한다.
       const icon = CURRENCY_ICON_BY_WALLET[stage.reward.currency];
-      const frame = new RewardFrame(this.scene, branchX, y, { icon, amount: stage.reward.amount, size: 132, state: stage.claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => { if (this.dragMoved <= DRAG_SLOP) void this.claim(stage.id); } : undefined });
+      const frame = new RewardFrame(this.scene, branchX, y, { icon, amount: stage.reward.amount, size: 132, state: stage.claimed ? "claimed" : claimable ? "claimable" : "normal", onClick: claimable ? () => { if (this.dragMoved <= DRAG_SLOP) void this.claim(); } : undefined });
       track.add(frame);
     });
 
@@ -260,20 +265,27 @@ export class ExpeditionRewardPopup {
   }
 
   /** 지급은 서버가 한 처리 단위로 확정하고 화면은 새 스냅샷만 다시 그린다. */
-  private async claim(stageId: string): Promise<void> {
+  private async claim(): Promise<void> {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      const result = await withBusy(this.scene, this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:${stageId}:${Date.now()}`, stageId }));
+      const result = await withBusy(this.scene, this.api.claimExpeditionReward({ requestId: `expedition-reward:${new Date().toISOString().slice(0, 10)}:all:${Date.now()}`, stageId: "all" }));
       if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
       void notificationManager.refresh().catch(() => undefined);
+      if (!this.body || !this.scene.scene.isActive()) return;
       this.onClaimed?.();
-      await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : t("expeditionReward.claimedAmount", { amount: result.reward.amount.toLocaleString() }));
+      await this.refresh(result.alreadyClaimed ? t("expeditionReward.claimed") : "");
+      const rewards = result.rewards ?? [result.reward];
+      const amounts: Record<string, number> = {};
+      for (const reward of rewards) amounts[reward.currency] = (amounts[reward.currency] ?? 0) + reward.amount;
+      const items = currencyRecordToRewardItems(amounts);
+      if (items.length && this.body && this.scene.scene.isActive()) openRewardPopup(this.scene, this.popups, { items });
     } catch (error) {
       this.error = this.errorMessage(error);
       this.render();
     } finally {
       this.claiming = false;
+      if (this.body && this.scene.scene.isActive()) this.render();
     }
   }
 

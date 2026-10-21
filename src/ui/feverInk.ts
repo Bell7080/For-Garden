@@ -8,13 +8,15 @@ import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
  * 마름모가 같은 박자로 퍼지고, 머리 옆에는 빠직 표식(💢)이 박자에 맞춰 부풀었다 줄며 좌우를
  * 오간다. 몸 자체에는 붉은 기운을 아주 옅게만 덮는다 — 원화를 물들이면 누구인지가 흐려진다.
  *
- * 예전의 속성색 tint 맥동을 대신한다. 테두리 24겹은 폭주 중인 개체에만 든다.
+ * 예전의 속성색 tint 맥동을 대신한다. 폭주 중에만 기본 24겹, 생존 10명 초과 물량전은 12겹으로 그린다.
  */
 export const FEVER_INK = {
   /** 경보 한 박자(ms). 두께·발밑 마름모·표식이 모두 이 박자를 탄다. */
   sirenMs: 640,
   /** 몸 둘레로 비껴 그리는 방향 수. */
   directions: 12,
+  crowdThreshold: 10,
+  crowdDirections: 6,
   /** 붉은 띠의 두께(px) — 가장 얇을 때와 박자의 정점에서 더하는 몫. */
   thickness: [5, 9],
   /** 먹선은 붉은 띠보다 이만큼 더 바깥에 선다. */
@@ -52,14 +54,18 @@ export function feverFade(ageMs: number, endedMs?: number): number {
  * 몸 둘레로 비껴 그릴 겹들. **먹선이 먼저**(더 바깥, 더 뒤), 붉은 띠가 그 안쪽이다 — 순서가
  * 바뀌면 붉은 띠를 먹이 덮어 테두리가 검게만 보인다.
  */
-export function feverOutlineSteps(pulse: number, fade: number, scale = 1): PuppetAfterimage[] {
+export function feverOutlineDirections(livingCount: number): number {
+  return livingCount > FEVER_INK.crowdThreshold ? FEVER_INK.crowdDirections : FEVER_INK.directions;
+}
+
+export function feverOutlineSteps(pulse: number, fade: number, scale = 1, directions: number = FEVER_INK.directions): PuppetAfterimage[] {
   if (fade <= 0) return [];
   const [base, swing] = FEVER_INK.thickness;
   const red = (base + swing * pulse) * fade * scale;
   const ink = red + FEVER_INK.inkGap * scale;
   const redColor = FEVER_INK.red[pulse > 0.5 ? 1 : 0];
-  const ring = (distance: number, color: number): PuppetAfterimage[] => Array.from({ length: FEVER_INK.directions }, (_, index) => {
-    const angle = (index / FEVER_INK.directions) * Math.PI * 2;
+  const ring = (distance: number, color: number): PuppetAfterimage[] => Array.from({ length: directions }, (_, index) => {
+    const angle = (index / directions) * Math.PI * 2;
     return { dx: Math.cos(angle) * distance, dy: Math.sin(angle) * distance, alpha: fade, color };
   });
   return [...ring(ink, FEVER_INK.ink), ...ring(red, redColor)];

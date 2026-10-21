@@ -54,6 +54,16 @@ export class SupabaseAccountApi implements AccountApi {
   private failure = "";
   private pendingRegistration?: { id: string; userId: string; authEmail: string };
   private identityRequest = false;
+  private authGeneration = 0;
+  private tokenWrites: Promise<void> = Promise.resolve();
+  private logoutPending: Promise<void> | null = null;
+
+  /** 지연되는 플랫폼 저장소에서도 이전 save가 로그아웃 clear를 뒤늦게 덮지 않는다. */
+  private writeTokens(tokens: StoredTokens | null): Promise<void> {
+    const write = this.tokenWrites.then(() => tokens ? this.options.store.save(tokens) : this.options.store.clear());
+    this.tokenWrites = write.catch(() => undefined);
+    return write;
+  }
 
   constructor(private readonly options: SupabaseAccountOptions) {
     // 브라우저의 fetch는 window가 아닌 객체의 메서드로 부르면 "Illegal invocation"으로 던진다 — 한 번 감싸 둔다.
@@ -69,7 +79,13 @@ export class SupabaseAccountApi implements AccountApi {
 
   /** 이 기기에 이미 만들어진 계정(게스트 포함)이 있는가. 네트워크를 쓰지 않는다. 첫 실행 화면이 로그인 버튼을 세울지 정한다. */
   async hasSession(): Promise<boolean> {
-    try { this.tokens ??= await this.options.store.load(); } catch { return false; }
+    if (this.logoutPending) return false;
+    const generation = this.authGeneration;
+    try {
+      const loaded = this.tokens ?? await this.options.store.load();
+      if (generation !== this.authGeneration) return false;
+      this.tokens = loaded;
+    } catch { return false; }
     return this.tokens !== null;
   }
 
@@ -89,6 +105,7 @@ export class SupabaseAccountApi implements AccountApi {
   }
 
   async login(request: LoginRequest): Promise<AccountResult<AccountState>> {
+    const generation = this.authGeneration;
     if (!this.options.oauth || this.identityRequest) return this.unsupported();
     this.identityRequest = true;
     try {
@@ -113,7 +130,7 @@ export class SupabaseAccountApi implements AccountApi {
       const exchanged = await this.authCall("/auth/v1/token?grant_type=pkce", JSON.stringify({ auth_code: result.code, code_verifier: result.verifier }));
       if (!exchanged.ok) return exchanged;
       if (expected && exchanged.value.userId !== expected) return fail("invalid-credentials", t("error.account.authResponse"));
-      return await this.adopt(exchanged.value);
+      return await this.adopt(exchanged.value, generation);
     } catch { return fail("unsupported", t("account.identity.unavailable")); }
     finally { this.identityRequest = false; }
   }
@@ -170,6 +187,7 @@ export class SupabaseAccountApi implements AccountApi {
   }
 
   async verifyEmailCode(email: string, code: string, intent: "sign-in" | "link"): Promise<AccountResult<AccountState>> {
+    const generation = this.authGeneration;
     if (!/^\d{6,10}$/.test(code)) return fail("invalid-credentials", t("account.email.invalid"));
     try {
       const auth = intent === "link" ? await this.ensureTokens() : null;
@@ -177,29 +195,36 @@ export class SupabaseAccountApi implements AccountApi {
       const result = await this.authCall("/auth/v1/verify", JSON.stringify({ email, token: code, type: intent === "link" ? "email_change" : "email" }));
       if (!result.ok) return result;
       if (auth?.ok && result.value.userId !== auth.value.userId) return fail("invalid-credentials", t("error.account.authResponse"));
-      return this.adopt(result.value);
+      return await this.adopt(result.value, generation);
     } catch { return fail("network-error", t("error.account.network")); }
   }
   async requestWithdrawal(): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
   async logout(): Promise<AccountResult<AccountState>> {
-    this.tokens = null; this.pendingRegistration = undefined;
-    try { await this.options.store.clear(); } catch { return fail("network-error", t("error.account.logoutFailed")); }
+    this.authGeneration++;
+    this.tokens = null; this.pending = null; this.pendingRegistration = undefined;
+    const pending = this.writeTokens(null);
+    this.logoutPending = pending;
+    try { await pending; } catch { return fail("network-error", t("error.account.logoutFailed")); }
+    finally { if (this.logoutPending === pending) this.logoutPending = null; }
     // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
   }
 
   async registerWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
+    const generation = this.authGeneration;
     const problem = accountCredentialProblem(id, password);
     if (problem) return fail(problem.startsWith("id") ? "invalid-id" : "weak-password", t("error.account.credentials"));
     const email = accountIdToAuthEmail(id);
     try {
-      this.tokens ??= await this.options.store.load();
+      const loaded = this.tokens ?? await this.options.store.load();
+      if (generation !== this.authGeneration) return fail("cancelled", t("settings.account.cancelled"));
+      this.tokens = loaded;
       const current = this.tokens;
       if (current && !isAnonymous(current) && !claimsOf(current).email) return fail("invalid-credentials", t("error.account.alreadyLinked"));
       // 관리자 비밀번호 설정은 기존 세션을 종료한다. 응답 이후 로그인만 실패했다면 인증된 같은 UID로만 재시도한다.
-      if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(this.pendingRegistration.authEmail, password, this.pendingRegistration.userId);
+      if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(this.pendingRegistration.authEmail, password, this.pendingRegistration.userId, generation);
       const fresh = current ? await this.ensureTokens() : null;
       if (fresh && !fresh.ok) return fresh;
       const registered = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
@@ -216,25 +241,26 @@ export class SupabaseAccountApi implements AccountApi {
         return fail("network-error", t("account.id.serverUnavailable"));
       }
       const result = await registered.json() as { userId?: string; authEmail?: string };
+      if (generation !== this.authGeneration) return fail("cancelled", t("settings.account.cancelled"));
       if (!result.userId || (current && result.userId !== current.userId)) return fail("network-error", t("error.account.authResponse"));
       this.pendingRegistration = { id: email, userId: result.userId, authEmail: result.authEmail ?? email };
-      return await this.finishRegistration(result.authEmail ?? email, password, result.userId);
+      return await this.finishRegistration(result.authEmail ?? email, password, result.userId, generation);
     } catch (error) {
       this.failure = `register-exception:${error instanceof Error ? error.name : "unknown"}`;
       return fail("network-error", t("error.account.network"));
     }
   }
 
-  private async finishRegistration(email: string, password: string, expectedUserId: string): Promise<AccountResult<AccountState>> {
+  private async finishRegistration(email: string, password: string, expectedUserId: string, generation: number): Promise<AccountResult<AccountState>> {
     const signed = await this.authCall("/auth/v1/token?grant_type=password", JSON.stringify({ email, password }));
     if (!signed.ok) return signed;
     if (signed.value.userId !== expectedUserId) return fail("network-error", t("error.account.authResponse"));
-    const result = await this.adopt(signed.value);
-    this.pendingRegistration = undefined;
+    const result = await this.adopt(signed.value, generation);
     return result;
   }
 
   async signInWithId(id: string, password: string): Promise<AccountResult<AccountState>> {
+    const generation = this.authGeneration;
     if (accountIdProblem(id) || password.length === 0) return fail("invalid-credentials", t("error.account.badLogin"));
     try {
       // 별칭은 인증 이메일이 바뀌어도 같은 UID를 가리킨다. 합성 이메일로 먼저 로그인하면
@@ -247,13 +273,20 @@ export class SupabaseAccountApi implements AccountApi {
         return fail([400,401,422].includes(response.status) ? "invalid-credentials" : "network-error", t([400,401,422].includes(response.status) ? "error.account.badLogin" : "account.id.serverUnavailable"));
       }
       const signed = this.parseTokens(await response.json());
-      return signed.ok ? this.adopt(signed.value) : signed;
+      return signed.ok ? await this.adopt(signed.value, generation) : signed;
     } catch { return fail("network-error", t("error.account.network")); }
   }
 
-  private async adopt(tokens: StoredTokens): Promise<AccountResult<AccountState>> {
-    await this.options.store.save(tokens);
-    this.tokens = tokens; this.pendingRegistration = undefined;
+  private async adopt(tokens: StoredTokens, expectedGeneration: number): Promise<AccountResult<AccountState>> {
+    if (expectedGeneration !== this.authGeneration) return fail("cancelled", t("settings.account.cancelled"));
+    const generation = ++this.authGeneration;
+    const previous = this.tokens;
+    this.pending = null;
+    this.tokens = tokens;
+    try { await this.writeTokens(tokens); }
+    catch (error) { if (generation === this.authGeneration) this.tokens = previous; throw error; }
+    if (generation !== this.authGeneration) return fail("cancelled", t("settings.account.cancelled"));
+    this.pendingRegistration = undefined;
     return { ok: true, value: stateOf(tokens) };
   }
 
@@ -315,11 +348,12 @@ export class SupabaseAccountApi implements AccountApi {
         method: "POST",
         headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}`, "Content-Type": "application/json" },
         body: JSON.stringify(args),
+        signal: AbortSignal.timeout(15000),
       });
       if (res.ok) return { ok: true, value: await res.json() };
       const err = (await res.json().catch(() => null)) as { message?: string } | null;
       if (err?.message === "save_conflict") return fail("save-conflict", t("error.save.changed"));
-      if (res.status === 401) this.tokens = null;
+      if (res.status === 401 && this.tokens === auth.value) this.tokens = null;
       this.failure = `rpc:${name}:${res.status}:${String(err?.message ?? "-").slice(0, 60)}`;
       return fail("network-error", err?.message ?? t("error.account.requestFailed", { status: res.status }));
     } catch (error) {
@@ -330,19 +364,32 @@ export class SupabaseAccountApi implements AccountApi {
 
   /** 토큰이 없으면 게스트(익명)로 가입하고, 만료가 가까우면 갱신한다. 동시에 여러 요청이 와도 한 번만 묻는다. */
   private ensureTokens(): Promise<AccountResult<StoredTokens>> {
-    this.pending ??= this.resolveTokens().finally(() => { this.pending = null; });
+    if (this.logoutPending) return Promise.resolve(fail("cancelled", t("settings.account.cancelled")));
+    if (!this.pending) {
+      const generation = this.authGeneration;
+      const pending = this.resolveTokens(generation).finally(() => { if (this.pending === pending) this.pending = null; });
+      this.pending = pending;
+    }
     return this.pending;
   }
 
-  private async resolveTokens(): Promise<AccountResult<StoredTokens>> {
+  private async resolveTokens(generation: number): Promise<AccountResult<StoredTokens>> {
+    const cancelled = () => fail<StoredTokens>("cancelled", t("settings.account.cancelled"));
     try {
-      this.tokens ??= await this.options.store.load();
+      const loaded = this.tokens ?? await this.options.store.load();
+      if (generation !== this.authGeneration) return cancelled();
+      this.tokens = loaded;
       const current = this.tokens;
       if (current && current.expiresAtMs - this.now() > REFRESH_MARGIN_MS) return { ok: true, value: current };
       const next = current ? await this.refresh(current.refreshToken) : await this.signInAnonymously();
-      if (!next.ok) return next;
+      if (generation !== this.authGeneration) return cancelled();
+      if (!next.ok) {
+        if (next.code === "invalid-credentials") { this.tokens = null; await this.writeTokens(null); }
+        return next;
+      }
       this.tokens = next.value;
-      await this.options.store.save(next.value);
+      await this.writeTokens(next.value);
+      if (generation !== this.authGeneration) return cancelled();
       return next;
     } catch (error) {
       this.failure = `auth-exception:${error instanceof Error ? error.name : "unknown"}`;
@@ -358,7 +405,6 @@ export class SupabaseAccountApi implements AccountApi {
     const r = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: refreshToken }));
     // 리프레시 토큰이 폐기됐다면(다른 기기 로그아웃 등) 낡은 토큰을 지우고 처음부터 게스트를 새로 만든다.
     if (!r.ok && r.code === "unsupported") return r;
-    if (!r.ok && r.code === "invalid-credentials") { this.tokens = null; await this.options.store.clear(); }
     return r;
   }
 

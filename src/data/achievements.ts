@@ -7,10 +7,9 @@ import type { MissionReward } from "../core/missions";
  * 없고, 한 업적이 여러 단계(`tiers`)로 이어져 점점 어려워진다 — 1만 골드를 모으면 10만, 100만으로
  * 문턱이 올라가고 마지막 단계를 밟으면 그 줄이 끝나며 수식어가 열린다.
  *
- * **젬은 기분 좋은 덤이지 수급처가 아니다.** 다른 수집형 업적표(원신·스타레일)도 한 칸이 5·10·20이고
- * 한 묶음을 다 끝내도 수백 남짓이다. 여기서도 모든 업적을 끝까지 밟았을 때의 젬이 연구 열 번
- * (`ACHIEVEMENT_GEM_BUDGET`) 안에 들게 짰다 — 일일 임무가 매일 주는 몫과 견주면 몇 주치다. 앞 단계는
- * 일찍 열려 처음 들어온 사람에게 작게 자주 주고, 뒤 단계는 드물게 조금 더 준다.
+ * 젬은 성장·탐험의 진척을 체감할 수 있게 단계별 25~400개를 지급한다.
+ * 기존 목표·수령 ID는 유지하고 지급량만 5배로 높였다. 이미 받은 단계는 다시 지급하지 않는다.
+ * 전체 업적 예산은 `ACHIEVEMENT_GEM_BUDGET`에서 관리한다.
  *
  * **한 단계에는 보상 하나만 둔다** — 임무의 연구도 단계와 같은 이유다(액자 한 장에 둘을 세우면 둘째가
  * 읽히지 않는다).
@@ -88,7 +87,8 @@ export interface AchievementSeries {
   hidden?: true;
 }
 
-const gems = (amount: number): MissionReward => ({ currency: "gems", amount });
+/** 업적 젬은 기존 단계 목표·수령 ID를 유지하고 지급량만 5배로 높인다. */
+const gems = (amount: number): MissionReward => ({ currency: "gems", amount: amount * 5 });
 const gold = (amount: number): MissionReward => ({ currency: "gold", amount });
 const cheesecake = (amount: number): MissionReward => ({ currency: "cheesecake", amount });
 const tiers = (targets: readonly number[], rewards: readonly MissionReward[]): AchievementTier[] =>
@@ -146,12 +146,8 @@ export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true },
 ];
 
-/**
- * 모든 업적을 끝까지 밟았을 때 받는 젬의 상한. 화석 하나(연구 한 번)가 젬 300이라 3,000이면 연구 열 번이다 —
- * 계정 하나가 몇 달에 걸쳐 밟는 몫이라 일일 임무 몇 주치에 그친다. 늘어난 업적의 몫은 젬보다 골드·치즈케이크가
- * 더 많이 맡는다. 업적을 더하거나 보상을 고치면 `achievements.test`가 이 띠를 다시 잰다.
- */
-export const ACHIEVEMENT_GEM_BUDGET = 3_000;
+/** 전체 업적을 끝까지 달성했을 때의 젬 예산. 업적 지급량 5배 상향과 함께 조정한다. */
+export const ACHIEVEMENT_GEM_BUDGET = 15_000;
 
 export function findAchievementSeries(id: string): AchievementSeries | undefined {
   return ACHIEVEMENT_SERIES.find((series) => series.id === id);

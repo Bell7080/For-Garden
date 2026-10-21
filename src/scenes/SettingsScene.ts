@@ -77,6 +77,8 @@ export class SettingsScene extends Phaser.Scene {
 
   create(): void {
     const generation = ++this.viewGeneration;
+    this.accountBusy = false;
+    this.input.enabled = true;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.viewGeneration++; this.battleSpeedRow = undefined; });
     this.battleMember = false;
     // 고정 제목과 탭은 스크롤 마스크 밖에 두어 현재 위치와 전환점을 항상 볼 수 있게 한다.
@@ -437,9 +439,19 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 전환 중 입력을 잠그고 성공하면 부트의 저장 검증·마이그레이션 경계를 다시 탄다. */
   private async runAccountAction(operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): Promise<void> {
-    this.accountBusy = true; this.input.enabled = false; const result = await operation(); this.accountBusy = false; this.input.enabled = true;
+    if (this.accountBusy) return;
+    const generation = this.viewGeneration;
+    this.accountBusy = true;
+    this.input.enabled = false;
+    let result: { ok: boolean; code?: AccountFailureCode; message?: string };
+    try { result = await operation(); }
+    catch { result = { ok: false, code: "network-error" }; }
+    finally {
+      if (generation === this.viewGeneration) { this.accountBusy = false; this.input.enabled = true; }
+    }
+    if (!this.scene.isActive() || generation !== this.viewGeneration) return;
     if (result.ok) { this.leaveToBoot(); return; }
-    this.showAccountFailure(result.code ?? "network-error");
+    this.showAccountFailure(result.code ?? "network-error", result.message);
   }
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */

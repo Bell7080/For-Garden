@@ -53,14 +53,52 @@ describe("RemoteGameApi", () => {
     const ids: string[] = [];
     const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
       ids.push(JSON.parse(String(init.body)).requestId);
-      return n++ === 0 ? new Response("<html>timeout</html>", { status: 504 }) : ok(1);
+      return n++ < 2 ? new Response("<html>timeout</html>", { status: 504 }) : ok(1);
     });
     let seq = 0;
     const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: () => undefined, fetchImpl: fetchImpl as never, newRequestId: () => `rid-0000000${++seq}` });
     await expect(api.markAttendanceAutoShown()).rejects.toMatchObject({ status: 504 });
     await api.markAttendanceAutoShown();
     await api.markAttendanceAutoShown();
-    expect(ids).toEqual(["rid-00000001", "rid-00000001", "rid-00000002"]);
+    expect(ids).toEqual(["rid-00000001", "rid-00000001", "rid-00000001", "rid-00000002"]);
+  });
+
+  it.each([408, 500, 502, 503, 504])("일시적인 HTTP %s도 같은 영수증 키로 자동 복구한다", async status => {
+    const bodies: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      return bodies.length === 1 ? new Response("gateway failure", { status }) : ok({ granted: { cheesecake: 30 } });
+    });
+    const applied = vi.fn();
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: applied, fetchImpl: fetchImpl as never, newRequestId: () => "receipt-0001" });
+    await expect(api.completeCakeOperation({ tierId: "cake-1", requestId: "admission-1", victory: true })).resolves.toMatchObject({ granted: { cheesecake: 30 } });
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).toBe(bodies[1]);
+    expect(applied).toHaveBeenCalledTimes(1);
+  });
+
+  it("성공 응답의 JSON이 중간에 끊겨도 같은 키로 확정 영수증을 회수한다", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(new Response('{"ok":true,')).mockResolvedValueOnce(ok(1));
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: () => undefined, fetchImpl, newRequestId: () => "receipt-0001" });
+    await expect(api.markAttendanceAutoShown()).resolves.toBe(1);
+    expect(fetchImpl.mock.calls.map(([,init]) => JSON.parse(init.body).requestId)).toEqual(["receipt-0001", "receipt-0001"]);
+  });
+
+  it("동일 쓰기가 겹치면 전송·응답·상태 반영을 한 번만 실행하고 완료 뒤에는 새 요청으로 보낸다", async () => {
+    let release!: (response: Response) => void;
+    const fetchImpl = vi.fn().mockImplementationOnce(() => new Promise<Response>(resolve => { release = resolve; })).mockResolvedValue(ok(2));
+    const applied = vi.fn(); let sequence = 0;
+    const api = createRemoteGameApi({ getAccessToken: async () => "t", applyState: applied, fetchImpl, newRequestId: () => `receipt-${++sequence}` });
+    const request = { tierId: "cake-1", requestId: "admission-1", victory: true };
+    const first = api.completeCakeOperation(request);
+    const second = api.completeCakeOperation(request);
+    expect(first).toBe(second);
+    await Promise.resolve(); release(ok(1));
+    expect(await Promise.all([first, second])).toEqual([1, 1]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(applied).toHaveBeenCalledTimes(1);
+    await api.completeCakeOperation(request);
+    expect(fetchImpl.mock.calls.map(([,init]) => JSON.parse(init.body).requestId)).toEqual(["receipt-1", "receipt-2"]);
   });
 
   it("규칙으로 거절된 쓰기는 다음 호출에 새 요청 키를 쓴다", async () => {

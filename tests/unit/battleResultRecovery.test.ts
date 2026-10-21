@@ -58,3 +58,31 @@ describe("전투 결과 UI 복구", () => {
         expect(complete).not.toHaveBeenCalled();
     });
 });
+
+describe('치즈케이크 결과 표시', () => {
+  it('결과 참가자는 소환수를 제외한 편성 렐릭만 포함한다', () => {
+    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{Phaser:{Scene:class{}}});
+    const scene=Object.assign(Object.create(Battle.prototype),{state:{fighters:[
+      {id:'dian',def:{id:'dian'},side:'player',summonOwnerId:null},
+      {id:'wolf',def:{id:'dian-wolf'},side:'player',summonOwnerId:'dian'},
+      {id:'enemy',def:{id:'enemy'},side:'enemy',summonOwnerId:null},
+    ]}});
+    expect(scene.stageCompleteFighters()).toEqual([{relicId:'dian',isMvp:false}]);
+  });
+  it('저장 성공 후 표시 실패를 재시도해도 보상 확정은 한 번만 호출한다', async () => {
+    const completeCakeOperation=vi.fn().mockResolvedValueOnce({granted:{cheesecake:50},bonusItems:[]}).mockRejectedValue(Error('COMBAT_NOT_VERIFIED'));
+    const open=vi.fn().mockImplementationOnce(()=>{throw Error('render interrupted');});
+    const failure=vi.fn();
+    const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{
+      Phaser:{Scene:class{}},gameApi:{completeCakeOperation},session:{cakeOperation:{clearedIndex:0},wallet:{stamina:0}},
+      rememberPlayerExp:vi.fn(),PopupLayer:class{},dungeonRewardItems:()=>[],isCakeTierUnlocked:()=>false,t:(k:string)=>k,
+      StageCompletePopup:class{open=open;},
+    });
+    const scene=Object.assign(Object.create(Battle.prototype),{combatGeneration:1,scene:{isActive:()=>true},stageCompleteFighters:()=>[],showResultFailure:failure});
+    const input={mode:'cake',tierId:'cake-1',requestId:'admission-cake'};
+    await scene.finishCakeOperation(input,true);
+    expect(failure).toHaveBeenCalledOnce();failure.mock.calls[0][0]();
+    await vi.waitFor(()=>expect(open).toHaveBeenCalledTimes(2));
+    expect(completeCakeOperation).toHaveBeenCalledTimes(1);
+  });
+});

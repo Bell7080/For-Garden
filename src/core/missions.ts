@@ -69,19 +69,19 @@ export interface MissionDefinition {
  */
 export const MISSIONS: readonly MissionDefinition[] = [
   { id: "daily-battle", period: "daily", title: "전투 승리 1회", target: 1, reward: { currency: "gold", amount: 5_000 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "연구소 캐릭터 연구 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-excavate", period: "daily", title: "연구소 캐릭터 연구 1회", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
   { id: "daily-salary", period: "daily", title: "급여 1회", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
   { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "lobby_interaction" },
   { id: "daily-stamina", period: "daily", title: "스테미나 60 사용", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
   { id: "daily-dispatch", period: "daily", title: "교류 파견 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "전투 승리 20회", target: 20, reward: { currency: "gold", amount: 30_000 }, researchPoints: 100, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "스테미나 600 사용", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "교류 파견 5회", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "급여 10회", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "발굴 수확 5회", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" },
+  { id: "weekly-harvest", period: "weekly", title: "발굴 수확 5회", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" },
 ];
 
 /**
@@ -117,14 +117,14 @@ export const RESEARCH_REWARD_STAGES: Readonly<Record<MissionPeriod, readonly Res
   daily: [
     { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 10_000 }] },
     { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
     { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] },
   ],
   weekly: [
     { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 50_000 }] },
     { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
     { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
     { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] },
   ],

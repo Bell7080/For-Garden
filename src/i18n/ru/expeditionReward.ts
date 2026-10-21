@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_RU = {
   "expeditionReward.refresh": "Обновить",
   "expeditionReward.summary": "Лучшее за неделю {best}",
   "expeditionReward.claimed": "Уже получено",
-  "expeditionReward.claimedAmount": "Получено: {amount}",
   "expeditionReward.loadFailed": "Не удалось загрузить награды за рекорд.",
   "expeditionReward.notEnough": "Недостаточно очков. Проверьте последний прогресс.",
   "expeditionReward.stageClosed": "Неделя сменилась, или этот уровень наград закрыт.",

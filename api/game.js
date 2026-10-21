@@ -281,8 +281,6 @@ var LOBBY_KO = {
   "event.remaining.minutes": "{value}\uBD84 \uB0A8\uC74C",
   "event.wolfCafe.title": "\uC6B0\uB2F9\uD0D5\uD0D5 \uB291\uB300 \uCE74\uD398",
   "event.wolfCafe.subtitle": "\uB514\uC548 \uD55C\uC815 \uD53D\uC5C5 \uC774\uBCA4\uD2B8!",
-  "event.autumnHarvest.title": "\uAC00\uC744 \uC218\uD655\uC81C",
-  "event.autumnHarvest.subtitle": "\uB9E4\uC77C \uB4E4\uB7EC \uC218\uD655 \uC120\uBB3C\uC744 \uBC1B\uB294 \uC774\uBCA4\uD2B8",
   "event.attendance.newcomer.title": "\uC2E0\uADDC \uC5F0\uAD6C\uC6D0 7\uC77C \uCD9C\uC11D",
   "event.attendance.noDeadline": "\uAE30\uD55C \uC5C6\uC74C!",
   "event.attendance.regular.title": "\uC815\uADDC \uCD9C\uC11D",
@@ -310,7 +308,20 @@ var LOBBY_KO = {
   "lobby.pass.mission.lead.raidRuns": "\uB808\uC774\uB4DC\uC5D0 \uB3C4\uC804\uD558\uBA74 \uB808\uBCA8\uC774 \uC624\uB985\uB2C8\uB2E4",
   "lobby.pass.mission.done": "\uB2EC\uC131",
   "lobby.bondXp": "\uC720\uB300 +{xp}",
-  "lobby.bondLevelUp": "\uC720\uB300 \uB808\uBCA8 +{levels}"
+  "lobby.bondLevelUp": "\uC720\uB300 \uB808\uBCA8 +{levels}",
+  "event.roulette.title": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310",
+  "event.roulette.subtitle": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!",
+  "roulette.spin": "\uB3CC\uB9BC\uD310 \uB3CC\uB9AC\uAE30",
+  "roulette.remaining": "\uB0A8\uC740 \uD68C\uC804 {count}\uD68C",
+  "roulette.daily": "\uD558\uB8E8 \uCD5C\uB300 4\uD68C \xB7 \uB9E4\uC77C \uC624\uC804 9\uC2DC \uCD08\uAE30\uD654",
+  "roulette.rules": "\uBAA8\uB4E0 \uCE78\uC758 \uB2F9\uCCA8 \uD655\uB960\uC740 \uB3D9\uC77C\uD569\uB2C8\uB2E4. \uBCF4\uC0C1\uC740 \uD68C\uC804 \uC694\uCCAD \uC2DC \uD655\uC815\uB429\uB2C8\uB2E4.",
+  "roulette.adBonus": "\uAD11\uACE0 \uBCF4\uACE0 3\uD68C \uCD94\uAC00",
+  "roulette.memberBonus": "\uAD11\uACE0 \uC5C6\uC774 3\uD68C \uCD94\uAC00",
+  "roulette.bonusUsed": "\uC624\uB298 \uCD94\uAC00 \uD69F\uC218 \uC218\uB839 \uC644\uB8CC",
+  "roulette.ended": "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "roulette.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
+  "roulette.intro": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!"
 };
 
 // src/i18n/ko/common.ts
@@ -388,6 +399,7 @@ var INFO_KO = {
   "info.enemy.role.stat.hp": "\uCCB4\uB825 \xD7{value}",
   "info.enemy.role.stat.attack": "\uACF5\uACA9\uB825\xB7\uC8FC\uBB38\uB825 \xD7{value}",
   "info.enemy.role.stat.body": "\uBAB8\uC9D1 \xD7{value}",
+  "info.enemy.role.controlImmunity": "\uAC15\uC778\uD568 \uC801\uC6A9 \uD6C4 {seconds}\uCD08 \uC774\uD558\uB85C \uB0A8\uC740 [[crowd-control|\uD589\uB3D9 \uC81C\uC57D]]\uC740 \uBB34\uD6A8\uAC00 \uB41C\uB2E4.",
   "info.enemy.role.tenacity": "[[tenacity|\uAC15\uC778\uD568]] {base}%\uB85C \uC2DC\uC791\uD574 [[crowd-control|\uAD70\uC911\uC81C\uC5B4]]\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 {per}%\uC529, \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uC624\uB978\uB2E4.",
   "info.enemy.role.damageReduction": "[[damage-reduction|\uACBD\uAC10]] {base}%\uB85C \uC2DC\uC791\uD574 [[hp|\uCCB4\uB825]]\uC774 \uAE4E\uC77C\uC218\uB85D \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uC624\uB974\uACE0, {ignore} \uC774\uD558\uC758 \uD53C\uD574\uB294 \uBB34\uD6A8\uAC00 \uB41C\uB2E4.",
   "info.enemy.role.percentHpResistance": "\uCD5C\uB300 \uCCB4\uB825 \uBE44\uB840 \uD53C\uD574\uB97C {percent}% \uB35C \uBC1B\uB294\uB2E4.",
@@ -1149,7 +1161,6 @@ var EXPEDITION_REWARD_KO = {
   "expeditionReward.refresh": "\uC0C8\uB85C\uACE0\uCE68",
   "expeditionReward.summary": "\uC8FC\uAC04 \uCD5C\uACE0 \uC810\uC218 {best}",
   "expeditionReward.claimed": "\uC774\uBBF8 \uC218\uB839\uD55C \uBCF4\uC0C1",
-  "expeditionReward.claimedAmount": "{amount} \uC218\uB839 \uC644\uB8CC",
   "expeditionReward.loadFailed": "\uAE30\uB85D \uBCF4\uC0C1\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "expeditionReward.notEnough": "\uC810\uC218\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4. \uCD5C\uC2E0 \uC9C4\uD589\uB7C9\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
   "expeditionReward.stageClosed": "\uC8FC\uCC28\uAC00 \uBCC0\uACBD\uB418\uC5C8\uAC70\uB098 \uBCF4\uC0C1 \uB2E8\uACC4\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
@@ -1251,7 +1262,7 @@ var SHOP_KO = {
   "shop.premium.unsupported": "\uC774 \uBE4C\uB4DC\uC5D0\uC11C\uB294 \uACB0\uC81C\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "shop.premium.cancelled": "\uACB0\uC81C\uAC00 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "shop.premium.perk.raidTicket": "\uB9E4\uC77C \uC120\uD0DD \uD1A0\uBC8C\uAD8C {count}\uC7A5 \uC9C0\uAE09",
-  "shop.premium.perk.adRemoval": "\uAD11\uACE0 \uC81C\uAC70 \xB7 \uC804\uD22C 3\uBC30\uC18D \uAC1C\uBC29",
+  "shop.premium.perk.adRemoval": "\uAD11\uACE0 \uC81C\uAC70 \xB7 \uC804\uD22C 3\uBC30\uC18D \uAC1C\uBC29 \xB7 \uC18C\uD0D5\uAD8C \uC5C6\uC774 \uC18C\uD0D5",
   "shop.renewal.notice": "{days}\uC77C\uB9C8\uB2E4 {price} \uC790\uB3D9 \uACB0\uC81C \xB7 \uD574\uC9C0 \uC804\uAE4C\uC9C0 \uAC31\uC2E0",
   "shop.renewal.title": "\uC815\uAE30\uACB0\uC81C \uC548\uB0B4",
   "shop.renewal.billing.title": "\uACB0\uC81C",
@@ -1324,7 +1335,8 @@ var SHOP_KO = {
   "shop.premium.perk.archaeologyTicket": "\uB9E4\uC77C \uBC1C\uAD74\uAD8C {count}\uC7A5 \uC9C0\uAE09",
   "shop.premium.fixedTerm": "{days}\uC77C \uC774\uC6A9",
   "shop.premium.expiresOn": "{date} \uB9CC\uB8CC",
-  "shop.premium.noRenewal": "{days}\uC77C\uAC04 \uC774\uC6A9 \xB7 \uC790\uB3D9 \uAC31\uC2E0 \uC5C6\uC74C"
+  "shop.premium.noRenewal": "{days}\uC77C\uAC04 \uC774\uC6A9 \xB7 \uC790\uB3D9 \uAC31\uC2E0 \uC5C6\uC74C",
+  "shop.premium.perk.ticketless": "\uC18C\uD0D5\uAD8C \uC5C6\uC774 \uC18C\uD0D5"
 };
 
 // src/i18n/ko/missions.ts
@@ -1594,6 +1606,13 @@ var MISC_KO = {
   "profile.unlock.achievement": "\uC5C5\uC801 \u300C{name}\u300D \uB05D\uAE4C\uC9C0 \uB2EC\uC131 \uC2DC \uD68D\uB4DD",
   "profile.picker.equipped": "\uCC29\uC6A9 \uC911",
   "profile.picker.unlocked": "\uD574\uAE08 \uC644\uB8CC",
+  "profile.nickname.create.title": "\uBC18\uAC00\uC6CC\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!",
+  "profile.nickname.create.question": "\uC5F0\uAD6C\uC6D0 \uB2D8\uC758 \uC774\uB984\uC740 \uBB34\uC5C7\uC778\uAC00\uC694?",
+  "profile.nickname.create.save": "\uC774 \uC774\uB984\uC73C\uB85C \uC2DC\uC791\uD558\uAE30",
+  "profile.nickname.requirements": "{min}~{max}\uC790 \xB7 \uD55C\uAE00, \uC601\uBB38, \uC22B\uC790, \uAE30\uD638\uB97C \uC4F8 \uC218 \uC788\uC5B4\uC694.\n\uC55E\uB4A4 \uACF5\uBC31\uC740 \uC790\uB3D9\uC73C\uB85C \uC815\uB9AC\uD574\uC694.",
+  "profile.nickname.help.title": "\uC774\uB984 \uC0AC\uC6A9 \uC548\uB0B4",
+  "profile.nickname.help.body": "\uBAA8\uB450\uAC00 \uD3B8\uC548\uD558\uAC8C \uBD80\uB97C \uC218 \uC788\uB294 \uC774\uB984\uC744 \uC9C0\uC5B4 \uC8FC\uC138\uC694.\n\n\uC695\uC124\xB7\uD610\uC624\xB7\uC131\uC801 \uD45C\uD604, \uD0C0\uC778\uC774\uB098 \uC6B4\uC601\uC790 \uC0AC\uCE6D, \uAC1C\uC778\uC815\uBCF4 \uB178\uCD9C \uB4F1 \uBD80\uC801\uC808\uD55C \uB2C9\uB124\uC784\uC740 \uC6B4\uC601\uC815\uCC45\uC5D0 \uB530\uB77C \uC774\uB984 \uBCC0\uACBD\uC774\uB098 \uC774\uC6A9 \uC81C\uD55C \uB4F1\uC758 \uC870\uCE58\uAC00 \uC774\uB8E8\uC5B4\uC9C8 \uC218 \uC788\uC5B4\uC694.\n\n\uB2C9\uB124\uC784\uC740 \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB3C4 \uD45C\uC2DC\uB3FC\uC694. \uC774\uB984\uC740 1\uC8FC\uC77C\uC5D0 \uD55C \uBC88 \uBC14\uAFC0 \uC218 \uC788\uC73C\uB2C8 \uC2E0\uC911\uD558\uAC8C \uACE8\uB77C \uC8FC\uC138\uC694.",
+  "profile.edit.error.save": "\uC774\uB984\uC744 \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "profile.edit.nickname": "\uB2C9\uB124\uC784",
   "profile.edit.bio": "\uD55C \uC904 \uC18C\uAC1C",
   "profile.lastActive": "\uB9C8\uC9C0\uB9C9 \uC811\uC18D \xB7 {time}",
@@ -2069,7 +2088,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity": "[[ferocity|\uD3ED\uC8FC]]\uAC00 \uB05D\uB0A0 \uB54C, \uD3ED\uC8FC \uB3D9\uC548 \uBC1B\uC740 \uD53C\uD574\uB7C9\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 \uD55C \uBC88 \uB354 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive": "\u300C{name}\u300D{name!\uC774} \uBC1C\uB3D9\uB420 \uB54C \uBAA8\uB4E0 \uC544\uAD70\uC5D0\uAC8C \uADF8 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uB098\uB208\uB2E4.",
   "skill.breakthrough.effect.basic.deepBleed": "\uC77C\uBC18 \uACF5\uACA9\uC758 [[bleed|\uCD9C\uD608]]\uC774 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uB294 \uAE4A\uC740 \uCD9C\uD608\uB85C \uAC15\uD654\uB41C\uB2E4. \uAE4A\uC740 \uCD9C\uD608 \uB3D9\uC548 \uB300\uC0C1\uC774 \uBC1B\uB294 \uD68C\uBCF5\uB7C9\uC744 {reduction}% \uB0AE\uCD94\uBA70, \uB2E4\uB978 \uCD9C\uD608\uBCF4\uB2E4 \uC6B0\uC120\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ultimate.execution": "\uAD81\uADF9\uAE30\uC758 \uD53C\uD574\uAC00 \uACE0\uC815 \uD53C\uD574\uB85C \uBC14\uB00C\uBA70, \uC801 \uCC98\uCE58 \uC2DC \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uD68C\uBCF5\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ultimate.ultimateLifeSteal": "\uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4",
   "skill.breakthrough.effect.ferocity.cleavingBasics": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC77C\uBC18 \uACF5\uACA9\uC774 \uC870\uAE08 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 \uBAA8\uB450 \uACF5\uACA9\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.battleMaidAscension": "\uCD5C\uB300 \uCCB4\uB825\xB7[[def|\uBC29\uC5B4\uB825]]\xB7[[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC99D\uAC00\uD558\uACE0, \uC801 \uCC98\uCE58 \uC2DC \uB2E4\uC74C \uD45C\uC801\uC5D0\uAC8C \uB2E4\uC2DC [[charge|\uB3CC\uC9C4]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.splitHealing": "\uAC00\uC7A5 \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C \uC8FC\uB294 \uD68C\uBCF5\uB7C9\uC758 {percent}%\uB97C \uB450 \uBC88\uC9F8\uB85C \uB2E4\uCE5C \uC544\uAD70\uC5D0\uAC8C\uB3C4 \uC804\uB2EC\uD55C\uB2E4.",
@@ -3890,7 +3909,7 @@ var ENCOUNTER_ROLE = {
      * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
-    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80 },
+    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 }
   },
   boss: {
@@ -3912,7 +3931,7 @@ var ENCOUNTER_ROLE = {
      * 태생 50%에 제어 한 번마다 6%. 하루 두 판을 제어 하나로 잠가 끝내지 못하게 하되, 첫 몇
      * 번의 잠금은 확실히 가져가게 하는 선이다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     percentHpResistance: 30
   },
   endless: {
@@ -3928,7 +3947,7 @@ var ENCOUNTER_ROLE = {
      * 태생 50%에 제어 한 번마다 8% — 일곱 번이면 상한이다. 제어 하나로 최종 관문을 통째로
      * 지우지 못하게 하면서도 제어 개체를 쓸모없게 만들지 않는다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     /*
      * **바닥부터 높다.** 50이던 때는 온전한 몸으로 선 폰토스가 받는 피해의 절반을 그대로
      * 맞았다 — 체력이 무한인 자리라 사실상 "절반만 아픈 벽"이었다. 곡선(0.75)은 1보다 작아
@@ -4708,6 +4727,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   const party = [...players, ...enemies];
   const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state = {
+    automaticUltimates: options.automaticUltimates,
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
     contributions: createBattleContributions(party.map(({ id }) => id)),
@@ -4811,11 +4831,30 @@ function gainTenacity(fighter) {
   const cap = Math.max(0, plan.maxPercent - plan.basePercent);
   fighter.tenacity = Math.min(cap, fighter.tenacity + plan.perControlPercent);
 }
+function controlDuration(fighter, seconds, accumulate = true) {
+  if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return 0;
+  const resisted = seconds * (1 - controlResistPercent(fighter) / 100);
+  if (accumulate) gainTenacity(fighter);
+  const floor = encounterTenacity(fighter)?.controlIgnoreAtOrBelowSeconds ?? 0;
+  return resisted <= floor + 1e-9 ? 0 : resisted;
+}
+function controlMagnitude(fighter, amount, accumulate = false) {
+  if (!isFighterAlive(fighter) || !Number.isFinite(amount) || amount <= 0) return 0;
+  const resisted = amount * (1 - controlResistPercent(fighter) / 100);
+  if (accumulate) gainTenacity(fighter);
+  return Math.max(0, resisted);
+}
+function displaceByControl(target, x, y, state) {
+  const ratio = controlMagnitude(target, 1, true);
+  if (ratio <= 0) return false;
+  target.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + (x - target.x) * ratio));
+  target.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + (y - target.y) * ratio));
+  target.engaged = false;
+  return true;
+}
 function applyStun(fighter, seconds, state) {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  const resistance = controlResistPercent(fighter);
-  const resistedSeconds = seconds * (1 - resistance / 100);
-  gainTenacity(fighter);
+  const resistedSeconds = controlDuration(fighter, seconds);
   if (resistedSeconds <= 0) return [];
   const wasStunned = fighter.stunnedFor > 0;
   fighter.stunnedFor = Math.max(fighter.stunnedFor, resistedSeconds);
@@ -4826,8 +4865,7 @@ function applyStun(fighter, seconds, state) {
 }
 function applyStagger(fighter, seconds, state) {
   if (!isFighterAlive(fighter) || !Number.isFinite(seconds) || seconds <= 0) return [];
-  const resisted = seconds * (1 - controlResistPercent(fighter) / 100);
-  gainTenacity(fighter);
+  const resisted = controlDuration(fighter, seconds);
   if (resisted <= 0) return [];
   const wasStaggered = fighter.staggeredFor > 0;
   fighter.staggeredFor = Math.max(fighter.staggeredFor, resisted);
@@ -4848,12 +4886,15 @@ function refreshChill(target, effect) {
   if (!isFighterAlive(target) || target.frozen !== null) return;
   const stacks = Math.min(effect.maxStacks, (target.chill?.stacks ?? 0) + 1);
   target.chill = { stacks, speedPercentPerStack: effect.speedPercentPerStack, maxStacks: effect.maxStacks };
+  gainTenacity(target);
 }
 function chillIsMaxed(target) {
   return target.chill !== null && target.chill.stacks >= target.chill.maxStacks;
 }
 function applyFrozen(target, seconds, maxHpPercentOnExpire, events, state) {
   if (!isFighterAlive(target) || seconds <= 0) return;
+  seconds = controlDuration(target, seconds);
+  if (seconds <= 0) return;
   const wasFrozen = target.frozen !== null;
   target.frozen = { remaining: seconds, total: seconds, maxHpPercentOnExpire };
   target.chill = null;
@@ -4904,7 +4945,8 @@ function applyCombatStatusEffect(fighter, effect, events, state, sourceId, criti
   if (effect.kind === "pressure" && sourceId) applyPressure(fighter, { ...effect, seconds: effect.seconds * potency }, events, state, sourceId);
   if (effect.kind === "frenzy") applyFrenzy(fighter, { ...effect, seconds: effect.seconds * potency }, sourceId);
   if (effect.kind === "taunt" && sourceId) {
-    const seconds = effect.seconds * potency;
+    const seconds = controlDuration(fighter, effect.seconds * potency);
+    if (seconds <= 0) return;
     if (fighter.taunted === null || seconds > fighter.taunted.remaining) {
       fighter.taunted = { remaining: seconds, total: seconds, sourceId };
     }
@@ -4954,20 +4996,29 @@ function knockbackSlamOf(attacker) {
   const trait = attacker.def.ferocityTrait;
   return attacker.ferocityFever && trait.effectId === "knockbackSlam" ? trait : void 0;
 }
+function beginKnockback(target, flight, events) {
+  const ratio = controlMagnitude(target, 1);
+  const seconds = controlDuration(target, flight.remaining);
+  if (seconds <= 0) return false;
+  target.knockback = { ...flight, remaining: seconds, vx: flight.vx * ratio, vy: flight.vy * ratio };
+  target.engaged = false;
+  events.push({ kind: "knockback", fighterId: target.id, seconds, bounces: flight.bouncesLeft });
+  return true;
+}
 function launchKnockback(target, attacker, trait, state, events) {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const gap = Math.hypot(dx, dy) || 1;
-  target.knockback = {
+  const launched = beginKnockback(target, {
     remaining: trait.seconds,
     vx: dx / gap * trait.speed,
     vy: dy / gap * trait.speed,
     bouncesLeft: trait.bounces
-  };
+  }, events);
+  if (!launched) return;
   const chain2 = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-  if (chain2?.kind === "chainCollision") target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain2.radius };
+  if (chain2?.kind === "chainCollision" && target.knockback) target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain2.radius };
   target.engaged = false;
-  events.push({ kind: "knockback", fighterId: target.id, seconds: trait.seconds, bounces: trait.bounces });
   moveToNearestOtherEnemy(attacker, target, state);
 }
 function splashPaint(attacker, target, stacks, state) {
@@ -5054,7 +5105,7 @@ function applyFrostPlume(target, effect, events, state, sourceId) {
     tickIn: target.frostbite?.tickIn ?? 1,
     amount: Math.max(1, Math.round(total / ticks)),
     sourceId: attacker.id,
-    slowRemaining: effect.slowSeconds,
+    slowRemaining: controlDuration(target, effect.slowSeconds),
     slowPercent: effect.slowPercent
   };
   events.push({ kind: "bleed", fighterId: target.id, amount: 0, started: true });
@@ -5104,6 +5155,7 @@ function applyPressure(target, effect, events, state, sourceId) {
   if (!isFighterAlive(target) || target.pressureLockFor > 0) return;
   const stacks = Math.min(effect.maxStacks, (target.pressure?.stacks ?? 0) + 1);
   target.pressure = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId, effect };
+  if (effect.speedPercentPerStack > 0) gainTenacity(target);
   if (stacks < effect.maxStacks) return;
   target.pressure = null;
   burstPressure(target, effect, events, state, sourceId);
@@ -5134,7 +5186,8 @@ function burstPressure(target, effect, events, state, sourceId) {
       return;
     }
   }
-  const landed = controlResistPercent(target) < 100;
+  const potency = attacker?.statusPotencyMultiplier ?? 1;
+  const landed = controlDuration(target, effect.stunSeconds * potency, false) > 0;
   applyCombatStatusEffect(target, { kind: "stun", seconds: effect.stunSeconds }, events, state, sourceId);
   target.pressureLockFor = target.stunnedFor + effect.lockoutSeconds;
   if (landed && attacker) catchSalvage(attacker, state, events);
@@ -5181,7 +5234,7 @@ function applyDrowsy(target, effect, events, state, sourceId) {
 function putToSleep(target, effect, events, state, sourceId) {
   if (!isFighterAlive(target)) return;
   target.drowsy = null;
-  const seconds = effect.sleepSeconds * (1 - controlResistPercent(target) / 100);
+  const seconds = controlDuration(target, effect.sleepSeconds, false);
   events.push(...applyStun(target, effect.sleepSeconds, state));
   if (seconds <= EMERGENCY_RECOVERY.epsilon || target.stunnedFor <= 0) return;
   target.sleep = { remaining: seconds, total: seconds, sourceId, effect };
@@ -5195,7 +5248,8 @@ function wakeUp(target, byDamage) {
   target.bt.yawnFrom = { sourceId: sleep.sourceId, effect: sleep.effect };
   if (target.stunnedFor <= sleep.remaining + EMERGENCY_RECOVERY.epsilon) target.stunnedFor = 0;
   if (sleep.effect.groggySeconds > 0) {
-    target.groggy = { remaining: sleep.effect.groggySeconds, total: sleep.effect.groggySeconds, attackSpeedPercent: sleep.effect.groggyAttackSpeedPercent };
+    const seconds = controlDuration(target, sleep.effect.groggySeconds);
+    if (seconds > 0) target.groggy = { remaining: seconds, total: seconds, attackSpeedPercent: sleep.effect.groggyAttackSpeedPercent };
   }
   if (byDamage) target.pendingWake = { sourceId: sleep.sourceId, effect: sleep.effect };
 }
@@ -5268,8 +5322,7 @@ function applyFear(target, seconds, immunitySeconds, events, state, sourceId, fo
   if (!isFighterAlive(target) || !Number.isFinite(seconds) || seconds <= 0) return false;
   if (!force && (target.fear !== null || target.fearImmuneFor > EMERGENCY_RECOVERY.epsilon)) return false;
   const potency = findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1;
-  const resisted = seconds * potency * (1 - controlResistPercent(target) / 100);
-  gainTenacity(target);
+  const resisted = controlDuration(target, seconds * potency);
   if (resisted <= EMERGENCY_RECOVERY.epsilon) return false;
   const was = target.fear !== null;
   const remaining = Math.max(resisted, target.fear?.remaining ?? 0);
@@ -5370,7 +5423,7 @@ function fleeFromFear(fighter, dt, rng, state, events) {
   }
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
   fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
-  const autoUltimate = fighter.side === "enemy" || fighter.summonOwnerId !== null;
+  const autoUltimate = !state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null;
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
     if (target) {
@@ -5426,7 +5479,7 @@ function tickWhiteNoise(fighter, dt, state, events) {
   });
 }
 function pressureSlowPercent(fighter) {
-  return fighter.pressure ? fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack : 0;
+  return fighter.pressure ? controlMagnitude(fighter, fighter.pressure.stacks * fighter.pressure.effect.speedPercentPerStack) : 0;
 }
 function vandalismOffenseShred(fighter) {
   const paint = fighter.vandalism;
@@ -6618,11 +6671,9 @@ function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
     attacker.shallowLeapCount = Math.max(attacker.shallowLeapCount, shallows.leapEveryHits - 1);
   }
   if (useUltimate) {
-    const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-    const breakthroughRefund = effect?.kind === "execution" ? effect.energyRefundOnKill : 0;
     attacker.energy = Math.min(
       ULTIMATE_ENERGY_MAX,
-      attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0) + breakthroughRefund
+      attacker.energy + (attacker.def.ultimate.energyRefundOnKill ?? 0)
     );
   }
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
@@ -6775,8 +6826,7 @@ function pullStruck(attacker, target, state, events) {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const gap = Math.hypot(dx, dy) || 1;
-  target.x = Math.min(state.arena.right, Math.max(state.arena.left, attacker.x + dx / gap * plan.distance));
-  target.y = Math.min(state.arena.bottom, Math.max(state.arena.top, attacker.y + dy / gap * plan.distance));
+  if (!displaceByControl(target, attacker.x + dx / gap * plan.distance, attacker.y + dy / gap * plan.distance, state)) return;
   target.engaged = false;
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
 }
@@ -6886,7 +6936,8 @@ function feverCritPoints(attacker) {
 function markUltimateVictim(attacker, target) {
   const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind === "sunkenWeight") {
-    target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: plan.seconds, total: plan.seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
+    const seconds = controlDuration(target, plan.seconds);
+    if (seconds > 0) target.bt.sunken = { waiting: target.stunnedFor > 0, remaining: seconds, total: seconds, stacks: plan.stacks, percentPerStack: plan.speedPercentPerStack };
   }
   if (plan?.kind === "unhealedMark") target.bt.healCut = { remaining: plan.seconds, total: plan.seconds, percent: plan.reductionPercent };
 }
@@ -7010,9 +7061,6 @@ function tickBossBreakthroughs(fighter, dt, state, events) {
   if (!far) return;
   const input = { power: plan.powerPercent, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" };
   strikeSecondary(fighter, far, input, 100, false, state, events);
-}
-function executionUltimateIsOpen(attacker, useUltimate) {
-  return useUltimate && openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "execution";
 }
 function refreshBleed(target, seconds, percent, events, sourceId, healingReceivedReductionPercent = 0) {
   const remaining = Math.max(target.bleed?.remaining ?? 0, seconds);
@@ -7238,8 +7286,7 @@ function isCurseMaxed(target) {
   return target.curse !== null && target.curse.stacks >= target.curse.maxStacks;
 }
 function applyFrenzy(target, effect, sourceId) {
-  const seconds = effect.seconds * (1 - controlResistPercent(target) / 100);
-  gainTenacity(target);
+  const seconds = controlDuration(target, effect.seconds);
   if (seconds <= 0) return;
   target.frenzy = {
     remaining: seconds,
@@ -7373,7 +7420,7 @@ function attackSpeedParts(fighter, state) {
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const tidalVigorPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "tidalVigor" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
-  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
+  const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
   const pressurePercent = pressureSlowPercent(fighter);
   const vortexPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "abyssalVortex" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const tantrumPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "sleepTantrum" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
@@ -7557,8 +7604,8 @@ function moveSpeed(fighter, state) {
   const trait = fighter.def.ferocityTrait;
   const selfBonus = fighter.ferocityFever && (trait.effectId === "graffitiRun" || trait.effectId === "overclockBody") ? trait.moveSpeedPercent : 0;
   const tailwindPercent = fighter.tailwindFor > 0 && fighter.tailwind?.kind === "tailwind" ? fighter.tailwind.moveSpeedPercent : 0;
-  const chillPercent = fighter.chill ? fighter.chill.stacks * fighter.chill.speedPercentPerStack : 0;
-  const submergedPercent = fighter.submergedIn?.moveSlowPercent ?? 0;
+  const chillPercent = fighter.chill ? controlMagnitude(fighter, fighter.chill.stacks * fighter.chill.speedPercentPerStack) : 0;
+  const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
@@ -7806,7 +7853,7 @@ function tickTankBreakthroughs(fighter, dt, state, events) {
     const dy = fighter.y - other.y;
     const gap = Math.hypot(dx, dy);
     if (gap <= closeIn) continue;
-    const move = Math.min(vortex.pullPerSecond * dt, gap - closeIn);
+    const move = controlMagnitude(other, Math.min(vortex.pullPerSecond * dt, gap - closeIn));
     other.x += dx / gap * move;
     other.y += dy / gap * move;
   }
@@ -7897,8 +7944,7 @@ function pullEnemiesToward(caster, pull2, state) {
     const dx = other.x - caster.x;
     const dy = other.y - caster.y;
     const gap = Math.hypot(dx, dy) || 1;
-    other.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull2.distance));
-    other.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull2.distance));
+    if (!displaceByControl(other, caster.x + dx / gap * pull2.distance, caster.y + dy / gap * pull2.distance, state)) continue;
     pulled.push(other);
   }
   return pulled;
@@ -7912,8 +7958,7 @@ function hookFarthestEnemy(caster, pull2, state) {
   const dx = farthest.x - caster.x;
   const dy = farthest.y - caster.y;
   const gap = Math.hypot(dx, dy) || 1;
-  farthest.x = Math.min(state.arena.right, Math.max(state.arena.left, caster.x + dx / gap * pull2.distance));
-  farthest.y = Math.min(state.arena.bottom, Math.max(state.arena.top, caster.y + dy / gap * pull2.distance));
+  if (!displaceByControl(farthest, caster.x + dx / gap * pull2.distance, caster.y + dy / gap * pull2.distance, state)) return [];
   farthest.engaged = false;
   farthest.knockback = null;
   return [farthest];
@@ -8135,10 +8180,11 @@ function strikeShimmer(attacker, target, power, state, events) {
 function advanceKnockback(fighter, dt, arena) {
   const flight = fighter.knockback;
   if (!flight) return;
-  const remaining = flight.remaining - dt;
+  const elapsed = Math.min(dt, flight.remaining);
+  const remaining = flight.remaining - elapsed;
   let { vx, vy, bouncesLeft } = flight;
-  fighter.x += vx * dt;
-  fighter.y += vy * dt;
+  fighter.x += vx * elapsed;
+  fighter.y += vy * elapsed;
   let bounced = false;
   if (fighter.x <= arena.left || fighter.x >= arena.right) {
     fighter.x = Math.min(arena.right, Math.max(arena.left, fighter.x));
@@ -8217,7 +8263,9 @@ function damageHealingRate(attacker, skill, attackingInFever, target) {
   const fever = attackingInFever && trait.effectId === "rexBattleQueen" ? trait.allDamageLifeStealPoints : 0;
   const frozenBonus = target.frozen !== null ? skill.damageHealingPercentIfFrozen ?? 0 : 0;
   const blood = attackingInFever ? feverBreakthrough(attacker) : void 0;
-  return attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0) + (blood?.kind === "bloodFever" ? blood.lifeStealPoints : 0) + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
+  const ultimate = skill.id === attacker.def.ultimate.id ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
+  const ultimateHealing = ultimate?.kind === "ultimateLifeSteal" ? ultimate.damageHealingPercent : 0;
+  return ultimateHealing + attacker.def.stats.lifeSteal + (attacker.def.passive.lifeStealPoints ?? 0) + (blood?.kind === "bloodFever" ? blood.lifeStealPoints : 0) + fever + frozenBonus + (activeOrder(attacker)?.lifeStealPoints ?? 0) + (skill.damageHealingPercent ?? 0);
 }
 function stormAimIgnorePercent(attacker, attackingInFever, useUltimate) {
   const trait = attacker.def.ferocityTrait;
@@ -8579,9 +8627,7 @@ function startUndying(fighter, state, events) {
       const dx = other.x - fighter.x;
       const dy = other.y - fighter.y;
       const gap = Math.hypot(dx, dy) || 1;
-      other.knockback = { remaining: blast.seconds, vx: dx / gap * blast.speed, vy: dy / gap * blast.speed, bouncesLeft: blast.bounces };
-      other.engaged = false;
-      events.push({ kind: "knockback", fighterId: other.id, seconds: blast.seconds, bounces: blast.bounces });
+      beginKnockback(other, { remaining: blast.seconds, vx: dx / gap * blast.speed, vy: dy / gap * blast.speed, bouncesLeft: blast.bounces }, events);
     }
   }
   for (const other of state.fighters) if (other.targetId === fighter.id) {
@@ -8992,7 +9038,6 @@ function frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) {
 }
 function strike(attacker, target, rng, state, events, useUltimate, comboHit, targetPoint) {
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
-  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) return;
   const combo = !useUltimate ? attacker.def.basic.combo : void 0;
   const volley = !useUltimate && attacker.volley ? attacker.volley : void 0;
@@ -9059,7 +9104,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     isCritical: critical,
     kind: useUltimate ? "ultimate" : "basic",
     // 강화된 한 방만 방어·저항을 지나간다. 속성 상성과 대상 경감은 그대로 거친다.
-    ignoresDefense: empowered || executionUltimate,
+    ignoresDefense: empowered,
     // 방어를 일부 지나치는 한 방. 스킬이 적은 값에 폭주 특성(「폭풍 속의 조준」)이 기본 공격에 더하는 몫을 합친다.
     defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate))
   };
@@ -9234,7 +9279,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     contributionAmount: credited,
     critical,
     // 방어를 지나친 한 방은 종류가 아니라 "고정 피해"로 뜬다 — 전이와 같은 축이다.
-    damageType: empowered || executionUltimate ? "true" : damageInput.damageType,
+    damageType: empowered ? "true" : damageInput.damageType,
     mitigated: resolution.reduced < resolution.raw,
     // 연격 둘째 타부터는 같은 행동의 뒤이은 타격이다(자원을 주지 않는 타격이 곧 그 표식이다).
     ...comboHit && !comboHit.grantActionResources ? { followUp: true } : {},
@@ -9414,7 +9459,6 @@ function refillNow(fighter, state) {
 }
 function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, followUp = false, free = false) {
   const skill = breakthroughSkill(attacker, useUltimate);
-  const executionUltimate = executionUltimateIsOpen(attacker, useUltimate);
   if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) return;
   const ultimate = useUltimate ? attacker.def.ultimate : void 0;
   const requestedCenter = targetPoint ?? (() => {
@@ -9474,7 +9518,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       kind: "areaImpact",
       attackerId: attacker.id,
       ultimate: useUltimate,
-      damageType: supportiveOnly ? void 0 : executionUltimate ? "true" : skill.damageType,
+      damageType: supportiveOnly ? void 0 : skill.damageType,
       ...supportiveOnly ? { supportive: true } : {},
       area: impactArea
     });
@@ -9516,7 +9560,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       ...scaled,
       isCritical: critical,
       kind: useUltimate ? "ultimate" : "basic",
-      ignoresDefense: executionUltimate,
+      ignoresDefense: false,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate))
     };
     const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput) * traitDamageMultiplier(state, attacker, target)));
@@ -9572,7 +9616,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       contributionAmount: credited,
       critical,
       animate: index === 0,
-      damageType: executionUltimate ? "true" : damageInput.damageType,
+      damageType: damageInput.damageType,
       mitigated: resolution.reduced < resolution.raw,
       ...followUp || index > 0 ? { followUp: true } : {},
       ...useUltimate || !attacker.def.basic.cycle ? {} : { basicStep: attacker.basicCycleStep % attacker.def.basic.cycle.length }
@@ -9793,9 +9837,7 @@ function launchDuoBreakthrough(fighter, trait, state, events) {
     const dx = enemy.x - path.from.x;
     const dy = enemy.y - path.from.y;
     const gap = Math.hypot(dx, dy) || 1;
-    enemy.knockback = { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces };
-    enemy.engaged = false;
-    events.push({ kind: "knockback", fighterId: enemy.id, seconds: trait.knockback.seconds, bounces: trait.knockback.bounces });
+    beginKnockback(enemy, { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces }, events);
   }
   duo.x = path.to.x;
   duo.y = path.to.y;
@@ -10337,7 +10379,7 @@ function advance(state, dt, rng, events) {
       fighter.hop *= recovery;
     }
     if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
-      const firedUltimate = (fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
+      const firedUltimate = (!state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
       strike(fighter, target, rng, state, events, firedUltimate);
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
@@ -10612,6 +10654,11 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step2, rng, events);
+    if (state.automaticUltimates) {
+      for (const fighter of state.fighters) {
+        if (fighter.summonOwnerId === null && canFireUltimate(state, fighter)) events.push(...fireUltimate(state, fighter.id, rng));
+      }
+    }
     for (let index = before; index < events.length; index += 1) {
       const event = events[index];
       if (event.kind === "attack") event.at = state.elapsed;
@@ -11041,7 +11088,7 @@ var RELICS = [
     ferocityTrait: { name: "\uC804\uD22C\uC758 \uC5EC\uC655\uC740 \uB098\uC57C.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
       basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
-      ultimate: { kind: "execution", energyRefundOnKill: 150 },
+      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true }
     },
@@ -11086,10 +11133,8 @@ var RELICS = [
       effectType: "physical",
       damageType: "physical",
       cost: 210,
-      damageHealingPercent: 50,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single"
-      // damageHealingPercent가 있는 스킬은 skillDescription()이 대상·피해·회복을 한 문장으로
     }
   },
   {
@@ -17055,9 +17100,9 @@ var EXPEDITION_COMBAT_BALANCE = {
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
 };
 var EXPEDITION_SCORE_BALANCE = {
-  perFloor: 40,
-  perRemainingHpPercent: 1.5,
-  bossDamagePerPoint: 10
+  perFloor: 20,
+  perRemainingHpPercent: 0.75,
+  bossDamagePerPoint: 5
 };
 var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
   /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
@@ -17078,17 +17123,17 @@ var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
 var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
 var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
-  gold: { perNode: { min: 120, max: 420 }, runCap: 7500 },
+  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
+  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
    */
-  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 }
+  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
 };
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 500, cap: 200 };
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
 function expeditionBossSalvage(bossDamageScore) {
   return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
 }
@@ -17098,9 +17143,9 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
   horde: 1.4
 };
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 520, max: 900 },
+  gold: { min: 2080, max: 3600 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 3, max: 5 },
+  gems: { min: 1e3, max: 1500 },
   salvageRecord: { min: 6, max: 10 }
 };
 var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
@@ -17117,30 +17162,30 @@ var EXPEDITION_BOSS_BALANCE = {
   ]
 };
 var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e3 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 30 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 5 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 20 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e3 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 1 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 40 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 60 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 1 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 60 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
+  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
+  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
+  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
+  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
+  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
+  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
+  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
+  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
+  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
+  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
+  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
+  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
+  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
 var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
@@ -18230,7 +18275,7 @@ init_define_import_meta_env();
 
 // src/data/achievements.ts
 init_define_import_meta_env();
-var gems = (amount) => ({ currency: "gems", amount });
+var gems = (amount) => ({ currency: "gems", amount: amount * 5 });
 var gold = (amount) => ({ currency: "gold", amount });
 var cheesecake = (amount) => ({ currency: "cheesecake", amount });
 var tiers = (targets2, rewards) => targets2.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
@@ -18290,19 +18335,19 @@ var ACHIEVEMENT_SERIES = [
 init_define_import_meta_env();
 var MISSIONS = [
   { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
   { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
   { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
   { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
   { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" }
+  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" }
 ];
 for (const mission of MISSIONS) {
   registerDataText(mission, "title", `mission.${mission.id}.title`);
@@ -18311,14 +18356,14 @@ var RESEARCH_REWARD_STAGES = {
   daily: [
     { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
     { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
     { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
   ],
   weekly: [
     { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
     { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
     { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
     { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
   ]
@@ -19041,9 +19086,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 16, gold: 12, deep: 10 }, min: 150, max: 400 },
-      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 2, max: 6 },
+      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 4, max: 12 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 16, deep: 12 }, min: 400, max: 1200 },
-      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 7, max: 22 },
+      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 14, max: 44 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 40, max: 120 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19051,7 +19096,7 @@ var STRATA_LAYERS = [
       { kind: "rune", weight: { soil: 10, teal: 12, gold: 17, deep: 21 }, min: 1, max: 1 },
       { kind: "researchItem", weight: { soil: 1, teal: 2, gold: 8, deep: 12 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0, gold: 2.5, deep: 4 }, min: 1, max: 1 },
-      { kind: "gems", weight: { soil: 0.2, teal: 0.4, gold: 1, deep: 3 }, min: 5, max: 20 }
+      { kind: "gems", weight: { soil: 0.2, teal: 0.4, gold: 1, deep: 3 }, min: 100, max: 300 }
     ]
   },
   // 유적 지도 확장용 판도 같은 보상 계약을 쓴다. 가중치만 달라 미리보기 별점과 실제 추첨이 함께 움직인다.
@@ -19065,9 +19110,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 18, teal: 14, gold: 10, deep: 8 }, min: 200, max: 500 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 4, max: 7 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 14 },
       { kind: "gold", weight: { soil: 25, teal: 22, gold: 18, deep: 14 }, min: 600, max: 1500 },
-      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 10, max: 26 },
+      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 20, max: 52 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 50, max: 140 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19075,7 +19120,7 @@ var STRATA_LAYERS = [
       { kind: "rune", weight: { soil: 13, teal: 15, gold: 21, deep: 26 }, min: 1, max: 1 },
       { kind: "researchItem", weight: { soil: 2, teal: 3, gold: 8, deep: 12 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 1, gold: 3, deep: 4.5 }, min: 1, max: 1 },
-      { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 5, max: 20 }
+      { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 100, max: 300 }
     ]
   },
   /**
@@ -19095,9 +19140,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 15, gold: 11, deep: 9 }, min: 180, max: 450 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 4, max: 7 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 8, max: 14 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 18, deep: 14 }, min: 500, max: 1300 },
-      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 8, max: 24 },
+      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 16, max: 48 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 45, max: 130 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19105,7 +19150,7 @@ var STRATA_LAYERS = [
       { kind: "rune", weight: { soil: 11, teal: 13, gold: 19, deep: 24 }, min: 1, max: 1 },
       { kind: "researchItem", weight: { soil: 1.5, teal: 2.5, gold: 8, deep: 12 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0.5, gold: 2.5, deep: 4 }, min: 1, max: 1 },
-      { kind: "gems", weight: { soil: 0.25, teal: 0.5, gold: 1.2, deep: 3.2 }, min: 5, max: 20 }
+      { kind: "gems", weight: { soil: 0.25, teal: 0.5, gold: 1.2, deep: 3.2 }, min: 100, max: 300 }
     ]
   },
   /**
@@ -19124,9 +19169,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 16, teal: 13, gold: 9, deep: 7 }, min: 250, max: 600 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 4, max: 8 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 16 },
       { kind: "gold", weight: { soil: 24, teal: 21, gold: 18, deep: 13 }, min: 800, max: 1800 },
-      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 11, max: 29 },
+      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 22, max: 58 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 60, max: 170 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19134,7 +19179,7 @@ var STRATA_LAYERS = [
       { kind: "rune", weight: { soil: 15, teal: 18, gold: 24, deep: 30 }, min: 1, max: 1 },
       { kind: "researchItem", weight: { soil: 2.5, teal: 4, gold: 8.5, deep: 12.5 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0.5, teal: 1, gold: 3.5, deep: 5 }, min: 1, max: 1 },
-      { kind: "gems", weight: { soil: 0.4, teal: 0.8, gold: 1.7, deep: 3.8 }, min: 6, max: 22 }
+      { kind: "gems", weight: { soil: 0.4, teal: 0.8, gold: 1.7, deep: 3.8 }, min: 100, max: 300 }
     ]
   },
   {
@@ -19147,9 +19192,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 14, teal: 11, gold: 8, deep: 6 }, min: 300, max: 700 },
-      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 5, max: 10 },
+      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 10, max: 20 },
       { kind: "gold", weight: { soil: 22, teal: 20, gold: 16, deep: 12 }, min: 900, max: 2e3 },
-      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 12, max: 31 },
+      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 24, max: 62 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 80, max: 220 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19157,7 +19202,7 @@ var STRATA_LAYERS = [
       { kind: "rune", weight: { soil: 17, teal: 20, gold: 26, deep: 32 }, min: 1, max: 1 },
       { kind: "researchItem", weight: { soil: 3, teal: 5, gold: 9, deep: 13 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 1, teal: 1.5, gold: 4, deep: 5 }, min: 1, max: 1 },
-      { kind: "gems", weight: { soil: 0.5, teal: 1, gold: 2, deep: 4 }, min: 8, max: 24 }
+      { kind: "gems", weight: { soil: 0.5, teal: 1, gold: 2, deep: 4 }, min: 100, max: 300 }
     ]
   }
 ];
@@ -19318,7 +19363,7 @@ function createStrataBoard(input) {
     const tone = zones[zone].tone;
     const row = weightedPick(layer.rewards, (reward) => reward.weight[tone], input.random);
     const span = Math.max(0, row.max - row.min);
-    const amount = row.kind === "empty" ? 0 : row.min + Math.round(roll(input.random) * span);
+    const amount = row.kind === "empty" ? 0 : row.kind === "gems" ? roll(input.random) < 0.75 ? row.min : row.max : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
   fitRuneTileCount(layer, tiles, input.random);
@@ -19561,6 +19606,46 @@ function replaceSession(next) {
 
 // src/state/SaveManager.ts
 init_define_import_meta_env();
+
+// src/core/roulette.ts
+init_define_import_meta_env();
+var ROULETTE = {
+  id: "research-roulette",
+  adSlot: "roulette-chances",
+  counter: "roulette-spins",
+  free: 1,
+  adBonus: 3,
+  limit: 4,
+  startsAt: "2026-09-01T00:00:00+09:00",
+  endsAt: "2026-12-31T23:59:59+09:00"
+};
+var ROULETTE_REWARDS = [
+  { currency: "gold", amount: 5e3 },
+  { currency: "cheesecake", amount: 30 },
+  { currency: "stamina", amount: 20 },
+  { currency: "gems", amount: 20 },
+  { currency: "rawStone", amount: 50 },
+  { currency: "gold", amount: 1e4 }
+];
+function rouletteStatus(ledger, now, adFree = false) {
+  const date = now.toISOString().slice(0, 10);
+  const counts = ledger.date === date ? ledger.claimsBySlot : {};
+  const used = counts[ROULETTE.counter] ?? 0;
+  const bonus = (counts[ROULETTE.adSlot] ?? 0) > 0;
+  return {
+    date,
+    active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
+    used,
+    remaining: Math.max(0, ROULETTE.free + (bonus ? ROULETTE.adBonus : 0) - used),
+    bonusAvailable: !bonus,
+    adFree,
+    resetsAt: new Date(Date.parse(date) + 864e5).toISOString()
+  };
+}
+function rouletteIndex(random) {
+  const roll3 = random();
+  return Math.min(ROULETTE_REWARDS.length - 1, Math.max(0, Math.floor((Number.isFinite(roll3) ? roll3 : 0) * ROULETTE_REWARDS.length)));
+}
 
 // src/core/saveStorage.ts
 init_define_import_meta_env();
@@ -19882,6 +19967,7 @@ var MAX_EQUIPPED_PROFILE_MODIFIERS = 1;
 // src/data/adRewards.ts
 init_define_import_meta_env();
 var AD_REWARD_SLOTS = [
+  { id: "roulette-chances", displayText: "\uB3CC\uB9BC\uD310 \uCD94\uAC00 3\uD68C", reward: { kind: "roulette_chances", quantity: 3 }, dailyLimitUtc: 1, placement: "roulette" },
   { id: "daily-stamina", displayText: "\uC2A4\uD14C\uBBF8\uB098 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
   { id: "daily-cheesecake", displayText: "\uCE58\uC988\uCF00\uC774\uD06C 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
   // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.
@@ -25455,7 +25541,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 7e3, max: 15e3 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 3500, max: 7500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 450 }],
     clueJournalId: "interaction-rust-lease-01",
     illustration: "background-interaction-rust-lease"
   },
@@ -25470,7 +25556,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-doppel-upper-01",
     illustration: "background-interaction-doppel-upper"
   },
@@ -25485,7 +25571,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 9e3, max: 2e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4500, max: 1e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-rust-works-01",
     illustration: "background-interaction-rust-works"
   },
@@ -25500,7 +25586,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 8e3, max: 18e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 1800 }],
+    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-odidi-embassy-01",
     illustration: "background-interaction-odidi-embassy"
   }
@@ -26136,7 +26222,7 @@ var SaveManager = class {
       return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period);
     }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail3("\uC0C1\uD488 \uAD6C\uB9E4 \uC81C\uD55C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
+    const adLimits = { ...Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc])), [ROULETTE.counter]: ROULETTE.limit };
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count2]) => !(id in adLimits) || !Number.isInteger(count2) || count2 < 0 || count2 > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail3("\uC77C\uC77C \uAD11\uACE0 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null) fail3("\uC6D0\uC815 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.raid || !Array.isArray(data.raid.instances) || !data.raid.instances.every(isRaidInstance) || new Set(data.raid.instances.map(({ id }) => id)).size !== data.raid.instances.length) fail3("\uB808\uC774\uB4DC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -26338,7 +26424,7 @@ function duelCombatSetup(state, opponentState, attack) {
     arena: battleArena("duel"),
     bonds: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.bondLevel ?? 0])),
     breakthroughs: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.breakthrough ?? 0])),
-    options: { augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map((id) => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map((id) => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 }
+    options: { automaticUltimates: true, augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map((id) => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map((id) => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 }
   };
 }
 function recordPlayerDefense(context, opponentId, attacker, attack, attackerWon, now) {
@@ -30168,6 +30254,9 @@ init_define_import_meta_env();
 init_define_import_meta_env();
 function deriveNotificationState(conditions) {
   return {
+    raidReward: (conditions.claimableRaidCount ?? 0) > 0,
+    expeditionReward: (conditions.claimableExpeditionCount ?? 0) > 0,
+    sortieReward: (conditions.claimableRaidCount ?? 0) > 0 || (conditions.claimableExpeditionCount ?? 0) > 0,
     missionReward: conditions.claimableMissionCount > 0,
     excavationHarvestReady: conditions.excavationHarvestReady,
     friendRequest: conditions.pendingFriendRequestCount > 0,
@@ -31286,6 +31375,24 @@ var FakeServer = class {
     if (cached) return { ...cached, wallet: { ...this.state.wallet }, claimedStageIds: [...this.state.expedition.claimedRewardStageIds] };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uBCF4\uC0C1 \uC218\uB839 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const expedition = this.rollExpedition(this.now());
+    if (request.stageId === "all") {
+      const stages = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage2) => stage2.threshold <= expedition.bestScore && !expedition.claimedRewardStageIds.includes(stage2.id));
+      const wallet = { ...this.state.wallet };
+      const granted = {};
+      for (const stage2 of stages) {
+        const { currency: currency3, amount: amount2 } = stage2.reward;
+        const applied = Math.max(0, Math.min(amount2, WALLET_CAPS[currency3] - wallet[currency3]));
+        wallet[currency3] += applied;
+        granted[currency3] = (granted[currency3] ?? 0) + applied;
+      }
+      const rewards = Object.entries(granted).map(([currency3, amount2]) => ({ currency: currency3, amount: amount2 ?? 0 }));
+      const nextExpedition = { ...expedition, claimedRewardStageIds: [...expedition.claimedRewardStageIds, ...stages.map((stage2) => stage2.id)] };
+      const response2 = { weekKey: expedition.weekKey, stageId: "all", claimedStageIds: [...nextExpedition.claimedRewardStageIds], claimedNowStageIds: stages.map((stage2) => stage2.id), rewards, reward: rewards[0] ?? { currency: "gold", amount: 0 }, alreadyClaimed: stages.length === 0, wallet };
+      const candidate = { ...this.state, wallet, expedition: nextExpedition };
+      this.recordReceipt(candidate, "expeditionReward", request.requestId, "all", response2);
+      this.commitRaidState(candidate);
+      return response2;
+    }
     const stage = EXPEDITION_BEST_SCORE_REWARD_STAGES.find(({ id }) => id === request.stageId);
     if (!stage) throw new GameApiError("EXPEDITION_REWARD_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uCD5C\uACE0 \uC810\uC218 \uBCF4\uC0C1 \uB2E8\uACC4\uC785\uB2C8\uB2E4.");
     if (expedition.bestScore < stage.threshold) throw new GameApiError("EXPEDITION_REWARD_NOT_EARNED", "\uC544\uC9C1 \uB2EC\uC131\uD558\uC9C0 \uC54A\uC740 \uCD5C\uACE0 \uC810\uC218 \uBCF4\uC0C1\uC785\uB2C8\uB2E4.");
@@ -32297,6 +32404,50 @@ var FakeServer = class {
     const notice = excavationHarvestStatus(excavation.unclaimed, rate, excavationStorageLimitSeconds(excavation, now), excavation.pendingHarvestMultiplier ?? 1);
     return { excavation: this.cloneExcavation(excavation), serverTime: now.toISOString(), ...notice };
   }
+  rouletteResults = /* @__PURE__ */ new Map();
+  async getRouletteStatus() {
+    return rouletteStatus(this.state.dailyAdRewards, this.now(), this.hasAdFreeMembership(this.now()));
+  }
+  async unlockRouletteSpins(request) {
+    const now = this.now();
+    if (this.hasAdFreeMembership(now)) {
+      const entitlement = [...this.entitlements.values()].find((row) => {
+        const product = PRODUCTS.find((product2) => product2.id === row.productId);
+        return product?.passBenefit?.adFree && (row.expiresAt === null || now.getTime() < Date.parse(row.expiresAt));
+      });
+      await this.claimInstantAdReward({ entitlementId: entitlement.entitlementId, slotId: ROULETTE.adSlot, requestId: request.requestId });
+    } else await this.claimAdReward({ slotId: ROULETTE.adSlot, requestId: request.requestId, verificationToken: request.verificationToken ?? "" });
+    return this.getRouletteStatus();
+  }
+  async spinRoulette(request) {
+    await this.delay();
+    const cached = this.rouletteResults.get(request.requestId);
+    if (cached) return { ...cached, ...this.snapshot() };
+    const now = this.now();
+    const status = await this.getRouletteStatus();
+    if (!status.active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
+    if (!request.requestId || this.state.dailyAdRewards.requestIds.includes(request.requestId)) throw new GameApiError("AD_REQUEST_DUPLICATE", "\uC774\uBBF8 \uCC98\uB9AC\uD55C \uD68C\uC804\uC785\uB2C8\uB2E4.");
+    if (status.remaining <= 0) throw new GameApiError("AD_DAILY_LIMIT", "\uB0A8\uC740 \uD68C\uC804 \uD69F\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const index = rouletteIndex(this.random);
+    const reward = ROULETTE_REWARDS[index];
+    const wallet = { ...this.state.wallet };
+    const before = wallet[reward.currency];
+    wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], before + reward.amount);
+    const current = this.state.dailyAdRewards.date === status.date ? this.state.dailyAdRewards : { date: status.date, claimsBySlot: {}, requestIds: [] };
+    const dailyAdRewards = { date: status.date, claimsBySlot: { ...current.claimsBySlot, [ROULETTE.counter]: status.used + 1 }, requestIds: [...current.requestIds, request.requestId] };
+    this.persist({ ...this.state, wallet, dailyAdRewards });
+    this.state.wallet = wallet;
+    this.state.dailyAdRewards = dailyAdRewards;
+    const result = {
+      ...this.snapshot(),
+      status: rouletteStatus(dailyAdRewards, now, status.adFree),
+      index,
+      reward,
+      granted: { [reward.currency]: wallet[reward.currency] - before }
+    };
+    this.rouletteResults.set(request.requestId, result);
+    return result;
+  }
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request) {
     await this.delay();
@@ -32365,6 +32516,7 @@ var FakeServer = class {
   }
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   assertAdPrerequisite(slot, now) {
+    if (slot.id === ROULETTE.adSlot && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.");
     if (!slot.requiresClaimedProductId) return;
     const product = PRODUCTS.find(({ id }) => id === slot.requiresClaimedProductId);
     if (!product || this.remaining(product, now) > 0) throw new GameApiError("AD_PREREQUISITE", "\uBA3C\uC800 \uBB34\uB8CC \uBCF4\uAE09\uC744 \uBC1B\uC544\uC57C \uD569\uB2C8\uB2E4.");
@@ -33354,7 +33506,11 @@ var FakeServer = class {
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
-    return { claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    const roulette = rouletteStatus(this.state.dailyAdRewards, now);
+    const expedition = this.rollExpedition(now);
+    const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage) => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
+    const claimableRaidCount = this.raidInstances(now).map((row) => this.raidDto(row, now)).filter((row) => row.status === "completed" && !row.settled && row.settlement.some((reward) => reward.amount > 0)).length;
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {
@@ -33982,6 +34138,9 @@ var FakeServer = class {
     const serverNow2 = this.now();
     this.settleStaminaNow(serverNow2);
     this.settleItemExpiry(serverNow2);
+    if (this.state.dailyAdRewards.date !== utcDateKey(serverNow2)) {
+      this.state.dailyAdRewards = { date: utcDateKey(serverNow2), claimsBySlot: {}, requestIds: [] };
+    }
     const relicProgress = Object.fromEntries(
       Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] }])
     );
@@ -34297,7 +34456,7 @@ var FakeServer = class {
     if (reward.kind === "item") {
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
     }
-    if (reward.kind === "duel_attempt") return { wallet, excavation, itemInventory };
+    if (reward.kind === "duel_attempt" || reward.kind === "roulette_chances") return { wallet, excavation, itemInventory };
     excavation = settleIdleExcavation(excavation, now, RELICS, this.state.relicProgress);
     const effect = reward.effect;
     if (effect.kind === "harvest_multiplier") excavation.pendingHarvestMultiplier = effect.multiplier;
@@ -34750,7 +34909,9 @@ function prepareCombat(state, request, now, id) {
     if (!ticket2?.duel || ticket2.kind !== "duel") return fail2();
     const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
     if (active4) return structuredClone(active4.lease);
-    const lease2 = { id, seed: id, setup: structuredClone(ticket2.duel.setup), expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    const setup2 = structuredClone(ticket2.duel.setup);
+    if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
+    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
     records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
     if (Object.keys(records2.records).length >= 8) return fail2();
     records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
@@ -34877,6 +35038,7 @@ function finishCombat(state, proof, now) {
   if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
     return fail2();
   if (record2.verdict) return structuredClone(record2.verdict);
+  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail2();
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
     return fail2();
   const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
@@ -35131,6 +35293,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "getDuelRanking",
   "getDuelStatus",
   "getEvents",
+  "getRouletteStatus",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",
@@ -35172,6 +35335,9 @@ function requestBudget(method) {
 // src/server/gameMethods.ts
 init_define_import_meta_env();
 var SERVER_GAME_METHODS = [
+  "getRouletteStatus",
+  "spinRoulette",
+  "unlockRouletteSpins",
   "prepareCombat",
   "finishCombat",
   "abandonStrataRun",
@@ -35344,7 +35510,7 @@ async function run(playerId, req, deps) {
   const attempts = deps.maxAttempts ?? 3;
   const fingerprint = JSON.stringify([req.method, req.args ?? []]);
   for (let attempt = 1; ; attempt += 1) {
-    const wantsRaid = /^(getRaids|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
+    const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;

@@ -50,8 +50,11 @@ test('실제 게스트 방어덱 PvP → 서버 검증 → 양쪽 기록 → 결
         const listener = await cdp.send('Runtime.evaluate', { expression: "window.__PF_AUDIT_LISTENERS__.find(e=>e.canvas===document.querySelector('canvas')).listener" });
         const props = await cdp.send('Runtime.getProperties', { objectId: listener.result.objectId! });
         const bound = props.internalProperties!.find(p => p.name === '[[BoundThis]]')!.value!.objectId!;
-        await cdp.send('Runtime.callFunctionOn', { objectId: bound, functionDeclaration: "function(){ this.game.scene.stop('title'); this.game.scene.start('battle',window.__PF_DUEL_INPUT); }" });
+        await cdp.send('Runtime.callFunctionOn', { objectId: bound, functionDeclaration: "function(){ this.game.scene.stop('title'); this.game.scene.start('battle',window.__PF_DUEL_INPUT); window.__PVP_GAME=this.game; }" });
         await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene), { timeout: 90000 }).toBe('battle');
+        await expect.poll(()=>page.evaluate(()=>(window as any).__PVP_GAME.scene.getScene('battle').spawned),{timeout:90000}).toBe(true);
+        // 소프트웨어 GPU의 그리기 지연을 제외하되 실제 Phaser 시계와 씬 update는 유지한다.
+        await page.evaluate(()=>{const game=(window as any).__PVP_GAME;game.__RENDER_CALLBACK=game.loop.callback;game.loop.callback=game.headlessStep.bind(game);});
         await expect.poll(async () => {
             const state = await page.evaluate(() => ({ scene: window.__PF_DEBUG?.scene, battle: window.__PF_DEBUG?.battle, popups: window.__PF_DEBUG?.popupTitles }));
             console.log('[browser loop]', JSON.stringify(state));
@@ -60,6 +63,11 @@ test('실제 게스트 방어덱 PvP → 서버 검증 → 양쪽 기록 → 결
                 await tap(page, 540, 300);
             return server.calls.filter(c => c.method === 'resolveDuel').length;
         }, { timeout: 250000, intervals: [10000] }).toBeGreaterThan(0);
+        const automatic=await page.evaluate(()=>{
+          const game=(window as any).__PVP_GAME;game.loop.callback=game.__RENDER_CALLBACK;
+          const scene=game.scene.getScene('battle');return {enabled:scene.state.automaticUltimates,manualActions:scene.combatActions.length};
+        });
+        expect(automatic).toEqual({enabled:true,manualActions:0});
         await info.attach('server-calls', { body: JSON.stringify(server.calls, null, 2), contentType: 'application/json' });
         expect(server.calls.filter((c: {
             status: number;

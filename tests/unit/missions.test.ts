@@ -62,7 +62,7 @@ describe("mission rules", () => {
     const first = claimResearchStages(state, "daily");
     expect(first.claimedStageIds).toEqual(["research-20", "research-40", "research-60", "research-80"]);
     // 단계 보상은 한 재화로 채우지 않는다 — 골드·치즈케이크·다이아가 들어오고 같은 다이아는 한 줄로 모인다.
-    expect(first.rewards).toEqual([{ currency: "gold", amount: 10_000 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 50 }]);
+    expect(first.rewards).toEqual([{ currency: "gold", amount: 10_000 }, { currency: "cheesecake", amount: 30 }, { currency: "gems", amount: 250 }]);
     expect(claimResearchStages(first.state, "daily").rewards).toEqual([]);
   });
 

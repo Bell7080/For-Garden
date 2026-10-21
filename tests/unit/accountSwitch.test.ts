@@ -11,3 +11,18 @@ describe('설정의 계정 전환',()=>{
  const s=setup();s.options.onDone({},'register');expect(s.reset).not.toHaveBeenCalled();expect(s.disconnect).not.toHaveBeenCalled();expect(s.boot).not.toHaveBeenCalled();expect(s.confirm).toHaveBeenCalledTimes(1);
  });
 });
+
+describe('계정 조작 입력 잠금 복구',()=>{
+ function setup(){const failure=vi.fn(),boot=vi.fn();const Scene=sourceClass('src/scenes/SettingsScene.ts','SettingsScene',{Phaser:{Scene:class{}},PopupLayer:class{}});
+ const scene=Object.assign(new Scene(),{viewGeneration:1,input:{enabled:true},scene:{isActive:()=>true},showAccountFailure:failure,leaveToBoot:boot});return {scene,failure,boot};}
+ it('로그아웃이 예외를 던져도 잠금을 풀고 안내하며 다시 시도할 수 있다',async()=>{
+ const {scene,failure,boot}=setup();await scene.runAccountAction(async()=>{throw Error('storage unavailable');});
+ expect(scene.input.enabled).toBe(true);expect(scene.accountBusy).toBe(false);expect(failure).toHaveBeenCalledWith('network-error',undefined);
+ await scene.runAccountAction(async()=>({ok:true}));expect(boot).toHaveBeenCalledOnce();
+ });
+ it('겹친 전환을 막고 재진입한 화면에는 이전 응답을 반영하지 않는다',async()=>{
+ const {scene,boot}=setup();let done!:(v:unknown)=>void;const op=vi.fn(()=>new Promise(r=>{done=r;}));
+ const first=scene.runAccountAction(op);await scene.runAccountAction(op);expect(op).toHaveBeenCalledOnce();
+ scene.viewGeneration++;scene.accountBusy=false;scene.input.enabled=true;done({ok:true});await first;expect(boot).not.toHaveBeenCalled();expect(scene.input.enabled).toBe(true);
+ });
+});

@@ -18,6 +18,15 @@ test("치즈케이크 15명과 디안 소환수: 실제 로딩·사망 정지·�
     s.settings.game.battleSpeed = 2;
     s.settings.game.skipUltimatePresentation = true;
   });
+  await page.evaluate(async()=>{
+    const root='/src/';const {IndexedPuppetCreature}=await import(/* @vite-ignore */root+'puppets/IndexedPuppetCreature.ts');
+    const metric={started:performance.now(),animatedBeforeReady:0};(window as any).__SWARM_STARTUP=metric;
+    const prototype=IndexedPuppetCreature.prototype as any,step=prototype.step;
+    prototype.step=function(time:number,delta:number){
+      if(this.scene?.scene?.key==='battle'&&!this.scene.spawned&&this.visible&&!this.animationFrozen)metric.animatedBeforeReady++;
+      return step.call(this,time,delta);
+    };
+  });
   await sourceScene(page, `this.game.scene.stop('title');this.game.scene.start('battle',{mode:'cake',tierId:'cake-8'});window.__SWARM=this.game.scene.getScene('battle');`);
   await expect.poll(() => page.evaluate(() => (window as any).__SWARM.spawned), { timeout: 120000 }).toBe(true);
   const metrics = await page.evaluate(() => {
@@ -35,14 +44,39 @@ test("치즈케이크 15명과 디안 소환수: 실제 로딩·사망 정지·�
     wolf.creature.step(0, 16);
     const updatesAfterDeath = wolf.creature.poseVersion - poseVersion;
     scene.reviveView(wolf.fighter.id);
-    return { enemies: enemies.length, creatures: scene.views.size, before, after, frozen, updatesAfterDeath, revivedFrozen: wolf.creature.animationFrozen };
+    const startup=(window as any).__SWARM_STARTUP;
+    return { enemies: enemies.length, creatures: scene.views.size, before, after, frozen, updatesAfterDeath, revivedFrozen: wolf.creature.animationFrozen,
+      startup:{...scene.fighterCreationStats,animatedBeforeReady:startup.animatedBeforeReady,elapsedMs:Math.round(performance.now()-startup.started)} };
   });
   expect(metrics.enemies).toBe(15);
   expect(metrics.after).toBeCloseTo(metrics.before, 5);
   expect(metrics.frozen).toBe(true);
   expect(metrics.updatesAfterDeath).toBe(0);
   expect(metrics.revivedFrozen).toBe(false);
+  expect(metrics.startup.completed).toBe(metrics.creatures);
+  expect(metrics.startup.animatedBeforeReady).toBe(0);
+  console.log('swarm-startup',JSON.stringify(metrics.startup));
+  const budget = await page.evaluate(() => {
+    const scene=(window as any).__SWARM;
+    // 실제 표시 객체의 정지 HP/폭주 예산을 잰다. 전투 계산을 프레임 절약으로 건너뛰지 않는다.
+    const enemies=[...scene.views.values()].filter((v:any)=>v.fighter.side==='enemy'&&!v.dead) as any[];
+    let repaints=0;
+    for(const view of enemies){
+      view.hpBar.snap(1);
+      const graph=view.hpBar.graph,clear=graph.clear;
+      graph.clear=function(){repaints++;return clear.call(this);};
+      for(let frame=0;frame<120;frame++)view.hpBar.step(16);
+      graph.clear=clear;
+    }
+    scene.simulationPaused=()=>true;
+    for(const view of scene.views.values())if(!view.dead){view.fighter.ferocityFever=true;view.feverTinted=true;view.feverAt=scene.time.now-500;}
+    scene.syncViews();
+    return {enemies:enemies.length,staticHpRepaints:repaints,outlineCopies:enemies.map(view=>view.creature.afterimages.length)};
+  });
+  expect(budget.enemies).toBe(15);expect(budget.staticHpRepaints).toBe(0);
+  expect(budget.outlineCopies.every(count=>count===12)).toBe(true);
   await captureGame(page, info.outputPath("cake-8-with-dian.png"));
-  await info.attach("swarm-metrics", { body: JSON.stringify({ ...metrics, errors }, null, 2), contentType: "application/json" });
+  await info.attach("swarm-metrics", { body: JSON.stringify({ ...metrics, budget, errors }, null, 2), contentType: "application/json" });
+  console.log('swarm-budget',JSON.stringify(budget));
   expect(errors).toEqual([]);
 });

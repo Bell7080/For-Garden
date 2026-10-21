@@ -250,3 +250,58 @@ describe("SupabaseAccountApi", () => {
     });
   });
 });
+
+describe('로그아웃과 토큰 갱신 경합',()=>{
+ it('로그아웃 삭제 대기 중 조회가 저장소의 옛 토큰을 다시 불러오지 않는다',async()=>{
+  let finishClear!:()=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const store=new MemoryStore();store.value={accessToken:'old',refreshToken:'r',userId:'old-user',expiresAtMs:2000000000};
+  store.clear=async()=>{began();await new Promise<void>(r=>{finishClear=r;});store.value=null;};
+  const api=new SupabaseAccountApi({url:'https://x',key:'k',store,fetchImpl:(async()=>{throw Error('must not create guest');}) as typeof fetch,now:()=>1000000,saveVersion:()=>50});
+  const logout=api.logout();await started;
+  expect(await api.hasSession()).toBe(false);expect(await api.getState()).toMatchObject({ok:false,code:'cancelled'});
+  finishClear();await logout;expect(await api.hasSession()).toBe(false);
+ });
+ it('다른 아이디 로그인 뒤 도착한 이전 계정 갱신을 폐기한다',async()=>{
+  let deliver!:(r:Response)=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const {api,store}=setup(path=>path==='/api/account'?json(session(3,2000000)):(began(),new Promise<Response>(r=>{deliver=r;})));
+  store.value={accessToken:'old',refreshToken:'old-refresh',userId:'old-user',expiresAtMs:0};
+  const refresh=api.getState();await started;
+  expect((await api.signInWithId('garden_01','correct horse')).ok).toBe(true);
+  deliver(json(session(2,2000000)));
+  expect(await refresh).toMatchObject({ok:false,code:'cancelled'});
+  expect(store.value?.accessToken).toBe('a3');expect(await api.accessToken()).toBe('a3');
+ });
+ it('로그아웃 뒤 도착한 아이디 로그인 응답을 저장하지 않는다',async()=>{
+  let deliver!:(r:Response)=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const {api,store}=setup(()=>{began();return new Promise<Response>(r=>{deliver=r;});});
+  const login=api.signInWithId('garden_01','correct horse');await started;await api.logout();
+  deliver(json(session(2,2000000)));
+  expect(await login).toMatchObject({ok:false,code:'cancelled'});
+  expect(store.value).toBeNull();expect(await api.hasSession()).toBe(false);
+ });
+ it('플랫폼 토큰 저장이 늦어도 로그아웃 clear가 마지막에 실행된다',async()=>{
+  let finishSave!:()=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const store=new MemoryStore();
+  store.save=async tokens=>{began();await new Promise<void>(r=>{finishSave=r;});store.value=tokens;};
+  const api=new SupabaseAccountApi({url:'https://x',key:'k',store,fetchImpl:(async()=>json(session(1,2000000))) as typeof fetch,now:()=>1000000,saveVersion:()=>50});
+  const pending=api.getState();await started;const logout=api.logout();finishSave();
+  expect(await pending).toMatchObject({ok:false,code:'cancelled'});expect((await logout).ok).toBe(true);
+  expect(store.value).toBeNull();expect(await api.hasSession()).toBe(false);
+ });
+ it('이전 계정 RPC의 늦은 401이 새 로그인 토큰을 지우지 않는다',async()=>{
+  let deliver!:(r:Response)=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const {api,store}=setup(path=>path==='/api/account'?json(session(3,2000000)):(began(),new Promise<Response>(r=>{deliver=r;})));
+  store.value={accessToken:'old',refreshToken:'old-refresh',userId:'old-user',expiresAtMs:2000000000};
+  const rpc=api.callRpc('get_my_save_meta',{});await started;
+  await api.signInWithId('garden_01','correct horse');deliver(json({},401));await rpc;
+  expect(await api.accessToken()).toBe('a3');
+ });
+ it('로그아웃 전에 시작한 갱신 응답이 저장된 로그인 상태를 되살리지 않는다',async()=>{
+  let deliver!:(r:Response)=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const {api,store}=setup(()=>{began();return new Promise<Response>(r=>{deliver=r;});});
+  store.value={accessToken:'old',refreshToken:'old-refresh',userId:'old-user',expiresAtMs:0};
+  const pending=api.getState();await started;expect((await api.logout()).ok).toBe(true);
+  deliver(json(session(2,2000000)));expect(await pending).toMatchObject({ok:false,code:'cancelled'});
+  expect(store.value).toBeNull();expect(await api.hasSession()).toBe(false);
+ });
+});

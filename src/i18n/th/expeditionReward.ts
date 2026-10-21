@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_TH = {
   "expeditionReward.refresh": "รีเฟรช",
   "expeditionReward.summary": "คะแนนสูงสุดประจำสัปดาห์ {best}",
   "expeditionReward.claimed": "รับแล้ว",
-  "expeditionReward.claimedAmount": "รับแล้ว {amount}",
   "expeditionReward.loadFailed": "โหลดรางวัลสถิติไม่ได้",
   "expeditionReward.notEnough": "คะแนนไม่พอ ตรวจสอบความคืบหน้าล่าสุด",
   "expeditionReward.stageClosed": "สัปดาห์เปลี่ยนแล้ว หรือขั้นรางวัลนี้ปิดแล้ว",

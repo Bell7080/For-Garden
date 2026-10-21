@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_ES = {
   "expeditionReward.refresh": "Actualizar",
   "expeditionReward.summary": "Mejor semanal {best}",
   "expeditionReward.claimed": "Ya reclamado",
-  "expeditionReward.claimedAmount": "{amount} reclamado",
   "expeditionReward.loadFailed": "No se pudieron cargar las recompensas de récord.",
   "expeditionReward.notEnough": "Puntuación insuficiente. Revisa tu progreso más reciente.",
   "expeditionReward.stageClosed": "La semana cambió o este nivel de recompensa ya cerró.",

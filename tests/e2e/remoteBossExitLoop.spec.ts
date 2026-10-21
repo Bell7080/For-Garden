@@ -49,7 +49,7 @@ for (const mode of ['raid','expedition'] as const) test(`${mode}: 실제 일시�
         (window as any).__BOSS_INPUT={mode:'expeditionBoss',runId:run.runId,nodeId:node.id,floor:20,relics:run.relics,augments:run.selectedAugments,...ids};
       }
     },mode);
-    fixture.failNext(mode==='raid'?'submitRaidDamage':'settleExpeditionRun');
+    fixture.failNext(mode==='raid'?'submitRaidDamage':'settleExpeditionRun',2);
     await sourceScene(page,`this.game.scene.stop('title');this.game.scene.start('battle',window.__BOSS_INPUT);window.__BOSS_SCENE=this.game.scene.getScene('battle');`);
     await expect.poll(()=>page.evaluate(()=>{const b=window.__PF_DEBUG?.battle;return !!b&&b.elapsed>=5&&!b.ultimateSequenceActive;}),{timeout:90000}).toBe(true);
     await tap(page,1020,62);await clickButton(page,'나가기');
@@ -67,7 +67,7 @@ for (const mode of ['raid','expedition'] as const) test(`${mode}: 실제 일시�
       expect(state.expedition.bestScore).toBe(25000+expeditionBossDamageScore(shown.damage));expect(state.expedition.run).toBeNull();
       expect(fixture.calls.filter(c=>c.method==='submitExpeditionBossScore'&&c.status===200)).toHaveLength(1);
     }
-    expect(fixture.calls.filter(c=>c.status===503)).toHaveLength(1);
+    expect(fixture.calls.filter(c=>c.status===503)).toHaveLength(2);
     expect(fixture.calls.filter(c=>c.status!==200&&c.status!==503)).toEqual([]);expect(errors).toEqual([]);
     // 원정 전용 최종판의 보조 조작까지 생성된 뒤 캡처하고 실제 로비 복귀를 누른다.
     if(mode==='expedition') await expect.poll(()=>page.evaluate(()=>{

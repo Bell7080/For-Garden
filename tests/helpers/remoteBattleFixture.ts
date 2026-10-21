@@ -73,10 +73,13 @@ export function createFixture(mode: "stage" | "duel" | "raid" | "expedition" = "
             return { revision: stored.revision };
         } };
     let failOnceMethod = "";
-    return { failNext(method: string) { failOnceMethod = method; }, async call(request: Parameters<typeof handleGameCall>[1]) {
+    let failuresLeft = 0;
+    let lostReplyMethod = "";
+    return { failNext(method: string, count = 1) { failOnceMethod = method; failuresLeft = count; }, loseNextReply(method: string) { lostReplyMethod = method; }, async call(request: Parameters<typeof handleGameCall>[1]) {
             try {
-                if (request.method === failOnceMethod) { failOnceMethod = ''; throw new GameCallError(503, 'injected_unavailable'); }
+                if (request.method === failOnceMethod && failuresLeft-- > 0) { throw new GameCallError(503, 'injected_unavailable'); }
                 const body = await handleGameCall('isolated-browser-player', request, { store, strict: true });
+                if (request.method === lostReplyMethod) { lostReplyMethod = ''; throw new GameCallError(504, 'injected_lost_committed_reply'); }
                 calls.push({ method: request.method, status: 200 });
                 console.log("[browser server]", request.method, 200);
                 return { status: 200, body };

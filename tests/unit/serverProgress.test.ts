@@ -108,6 +108,16 @@ describe("서버 진행 연결", () => {
 });
 
 describe('계정 연결 세대',()=>{
+ it('토큰을 기다리는 중 계정이 전환되면 이전 게임 연결은 HTTP 요청을 보내지 않는다',async()=>{
+  let current=true, deliver!:(token:string)=>void, entered!:()=>void;
+  const requested=new Promise<void>(resolve=>{entered=resolve;});
+  const {account}=fakeAccount(null);
+  account.accessToken=async()=>{entered();return new Promise<string>(resolve=>{deliver=resolve;});};
+  let requests=0;
+  const pending=connectServerProgress({account,saves:new SaveManager(memoryStorage()),target:createDefaultSession(),marker:marker(null),choose:async()=> 'cancel',isCurrent:()=>current,install:()=>undefined,fetchImpl:(async()=>{requests++;throw Error('stale request');}) as typeof fetch});
+  await requested;current=false;deliver('new-account-token');
+  expect(await pending).toMatchObject({ok:false});expect(requests).toBe(0);
+ });
  it('계정 전환 전의 늦은 서버 응답은 새 진행/설치 상태에 반영하지 않는다',async()=>{
   let current=true, deliver!:(r:Response)=>void, entered!:()=>void;
   const requested=new Promise<void>(resolve=>{entered=resolve;});

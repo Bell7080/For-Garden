@@ -145,6 +145,35 @@ export async function run(sql: (query: string) => string) {
         assert(state.cleared.has(stageId));
         stageChecks.push({ stageId, persisted: true });
     }
+    // 치즈케이크도 실제 JSONB 저장·검증·결과·재접속을 같은 서버 계약으로 검사한다.
+    state.cakeOperation.clearedIndex = 7;
+    const cakeSeed = await store.load(player);
+    await store.commit({ playerId: player, expectedRevision: cakeSeed!.revision, data: saveManager.exportData(state), method: 'seed-cake', requestId: null, response: {} });
+    api = remote();
+    await api.getPlayerState();
+    for (const tierId of ['cake-1', 'cake-8']) {
+      const requestId = `entry-${tierId}-db-loop`;
+      await api.enterCakeOperation({ tierId, requestId });
+      const lease = (await api.prepareCombat({ input: { mode: 'cake', tierId, requestId }, stageId: '3-10' }))!;
+      const battle = combatState(lease), rng = bossBattleRandom(lease.seed), actions = [];
+      let ticks = 0;
+      while (battle.phase === 'fight' && ticks < 18000) {
+        for (const actor of battle.fighters.filter(f => f.side === 'player' && f.summonOwnerId === null)) {
+          if (canFireUltimate(battle, actor)) { fireUltimate(battle, actor.id, rng); actions.push({ tick: ticks, actorId: actor.id }); }
+        }
+        if (battle.phase !== 'fight') break;
+        stepSkirmish(battle, .02, rng); ticks++;
+      }
+      now = new Date(now.getTime() + 600000);
+      await api.finishCombat({ id: lease.id, ticks, actions });
+      lostMethod = 'completeCakeOperation';
+      const before = state.wallet.cheesecake;
+      const result = await api.completeCakeOperation({ tierId, requestId, victory: true });
+      assert(result.victory, tierId);
+      assert.equal(state.wallet.cheesecake - before, result.granted.cheesecake);
+      api = remote(); await api.getPlayerState();
+      assert.equal(state.cakeOperation.clearedIndex, 7);
+    }
     // 보스 화면과 같은 20ms 누적 틱/자동 궁극기 입력을 만들어 실제 제출한다.
     function bossFight(battle: ReturnType<typeof createSkirmish>, identity: string) {
         const rng = bossBattleRandom(identity), log = [];

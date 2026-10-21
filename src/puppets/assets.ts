@@ -1101,6 +1101,10 @@ export async function preloadPuppetAssets(
 }
 
 export interface SpawnOptions {
+  /** 전투 진입은 모델 생성만 프레임 예산으로 나누며 읽기/파싱은 병렬로 유지한다. */
+  creationQueue?: import("./creationQueue").PuppetCreationQueue;
+  /** 전원이 준비될 때까지 부분 생성된 모델을 그리거나 애니메이션 계산하지 않는다. */
+  startPaused?: boolean;
   /** 발끝을 놓을 바닥 지점. `focus`를 주면 쓰이지 않는다. */
   x?: number;
   groundY?: number;
@@ -1282,9 +1286,14 @@ export async function spawnPuppet(
     // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
     // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
     const { Puppet } = await import("puppetforge/phaser");
-    const puppet = Puppet.fromProject(template.project, template.texture);
     const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
-    creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+    const create = async () => {
+      const puppet = Puppet.fromProject(template.project, template.texture);
+      const next = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+      if (options.startPaused) next.setVisible(false).setAnimationFrozen(true);
+      return next;
+    };
+    creature = await (options.creationQueue ? options.creationQueue.run(create) : create());
   } catch (error) {
     releasePuppetAsset(scene, asset.url);
     throw error;

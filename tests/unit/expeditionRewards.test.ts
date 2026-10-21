@@ -23,10 +23,10 @@ describe("expedition augment rewards", () => {
   });
 
   it("층·종류·잔여 HP 경계만으로 점수를 계산하고 재화 RNG를 입력받지 않는다", () => {
-    // 1층 100%의 기준 점수는 190점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
-    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(190);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(233);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(194);
+    // 1층 100%의 기준 점수는 95점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(95);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(116);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(97);
     expect(calculateExpeditionNodeScore({ floor: 20, nodeType: "boss", remainingHpPercent: 100, cleared: true })).toBe(0);
   });
 
@@ -151,3 +151,19 @@ function party() {
 function chooseFirst(manager: ExpeditionManager, offer: { augmentId: string; eligibleTargetRelicIds: string[] }): boolean {
   return manager.chooseAugment({ augmentId: offer.augmentId, ...(offer.eligibleTargetRelicIds[0] ? { targetRelicId: offer.eligibleTargetRelicIds[0] } : {}) });
 }
+
+describe('원정 점수 절반 조정',()=>{
+ it('일반·정예·무리 점수와 폰토스 환산을 같은 비율로 낮춘다',()=>{
+  for(const type of ['normal','elite','horde'] as const){
+   const multiplier={normal:1,elite:1.5,horde:1.25}[type];
+   expect(calculateExpeditionNodeScore({floor:10,nodeType:type,remainingHpPercent:80,cleared:true})).toBe(Math.round((10*40+80*1.5)*multiplier/2));
+  }
+  expect(expeditionBossDamageScore(1234)).toBe(6170);
+ });
+});
+
+describe('주간 원정 젬 보상',()=>{
+ it.each(['normal','elite','horde','treasure'] as const)('%s 노드에서 젬을 최소 300개 지급한다',nodeType=>{
+  const reward=calculateExpeditionNodeRewards({nodeType,accumulated:{},random:()=>0});expect(reward.gems).toBeGreaterThanOrEqual(300);
+ });
+});

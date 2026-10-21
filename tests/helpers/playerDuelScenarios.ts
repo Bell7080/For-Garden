@@ -49,10 +49,11 @@ export async function run(sql: (s: string) => string) {
  assert.deepEqual(admitted,retried);
  await assert.rejects(call(ids[0],'resolveDuel',[{requestId:entryId,won:true}]),/COMBAT_NOT_VERIFIED/);
  const input={mode:'duel',requestId:entryId,attack:['rex'],opponentName:'forged',opponentScore:9999,units:[]};
- const lease:any=(await call(ids[0],'prepareCombat',[{input}])).result;
+ const lease:any=(await call(ids[0],'prepareCombat',[{input,automaticUltimates:true}])).result;
+ assert.equal(lease.setup.options.automaticUltimates,true);
  assert.deepEqual(lease.setup.players.map((r:any)=>r.id),['parua','torika','dodo']);assert.equal(lease.setup.enemies.length,3);
  const battle=combatState(lease),random=bossBattleRandom(lease.seed),actions:any[]=[];let ticks=0;
- while(battle.phase==='fight'&&ticks<18000){stepSkirmish(battle,.02,random);ticks++;for(const f of battle.fighters.filter(f=>f.side==='player'&&f.summonOwnerId===null))if(canFireUltimate(battle,f)){fireUltimate(battle,f.id,random);actions.push({tick:ticks,actorId:f.id});}}
+ while(battle.phase==='fight'&&ticks<18000){stepSkirmish(battle,.02,random);ticks++;if(!battle.automaticUltimates)for(const f of battle.fighters.filter(f=>f.side==='player'&&f.summonOwnerId===null))if(canFireUltimate(battle,f)){fireUltimate(battle,f.id,random);actions.push({tick:ticks,actorId:f.id});}}
  now=new Date(now.getTime()+ticks*20);
  const verdict:any=(await call(ids[0],'finishCombat',[{id:lease.id,ticks,actions}])).result;assert.equal(verdict.victory,battle.phase==='victory');
  const resolved:any=(await call(ids[0],'resolveDuel',[{requestId:entryId,won:!verdict.victory}],'duel-resolve-once')).result;

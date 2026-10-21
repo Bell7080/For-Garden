@@ -45,6 +45,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   // 같은 조회가 화면 전환 때 겹쳐 나가면 한 번만 보내고, 쓰기가 상태를 바꾸기 전까지는 잠깐 그 답을 다시 쓴다.
   const retryIds = new Map<string, string>();
   const inflightReads = new Map<string, { at: number; promise: Promise<unknown> }>();
+  const inflightWrites = new Map<string, Promise<unknown>>();
 
   async function call(method: string, args: unknown[], staleRetries = 0): Promise<unknown> {
     const token = await options.getAccessToken();
@@ -57,22 +58,35 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     if (requestId && callKey) retryIds.set(callKey, requestId);
     const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
     let lastError: unknown;
+    const signal = AbortSignal.timeout(35000);
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let res: Response;
       try {
-        res = await doFetch(endpoint, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
+        res = await doFetch(endpoint, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body, signal });
       } catch (error) {
         lastError = error;
+        if (signal.aborted) break;
         continue;
       }
       const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; domainCode?: ApiErrorCode; message?: string } | null;
       // 서버가 규칙으로 거절한 호출(4xx)은 끝난 일이다. 시간 초과·서버 오류(5xx)는 확정되었는지 모르므로 키를 남긴다.
       if (!res.ok || !json?.ok) {
-        if (res.status >= 400 && res.status < 500 && callKey) retryIds.delete(callKey);
+        const retryable = res.status === 408 || res.status >= 500
+          || (res.status === 409 && json?.code === "save_conflict")
+          || (res.ok && json === null);
+        if (res.status >= 400 && res.status < 500 && !retryable && callKey) retryIds.delete(callKey);
         if (res.status === 403 && json?.code === "account_deleted") reportAccountDeleted();
         if (res.status === 422 && json?.domainCode) throw new GameApiError(json.domainCode, json.message ?? json.domainCode);
-        throw new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
+        const error = new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
+        if (retryable && attempt === 0 && !signal.aborted) {
+          lastError = error;
+          // 저장 직후 게이트웨이 응답만 유실된 경우도 같은 키로 영수증을 되찾는다.
+          await new Promise(resolve => setTimeout(resolve, 250));
+          if (signal.aborted) break;
+          continue;
+        }
+        throw error;
       }
       const revision = Number((json as { revision?: unknown }).revision);
       if (Number.isFinite(revision) && revision < appliedRevision && isReadMethod(method)) {
@@ -102,11 +116,26 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     return promise;
   }
 
+  function callWrite(method: string, args: unknown[]): Promise<unknown> {
+    const key = JSON.stringify([method, args]);
+    const pending = inflightWrites.get(key);
+    if (pending) return pending;
+    inflightReads.clear();
+    // 같은 결과 확정이 겹치면 요청·상태 반영·실패 복구까지 하나의 Promise를 공유한다.
+    // 성공한 호출이 재시도 키를 지운 뒤 다른 호출이 실패하는 경합도 막는다.
+    const promise = call(method, args).finally(() => {
+      inflightWrites.delete(key);
+      inflightReads.clear();
+    });
+    inflightWrites.set(key, promise);
+    return promise;
+  }
+
   const api: Record<string, unknown> = {};
   for (const name of SERVER_GAME_METHODS) {
     api[name] = isReadMethod(name)
       ? (...args: unknown[]) => callCached(name, args)
-      : (...args: unknown[]) => { inflightReads.clear(); return call(name, args).finally(() => inflightReads.clear()); };
+      : (...args: unknown[]) => callWrite(name, args);
   }
   return api as unknown as GameApi;
 }

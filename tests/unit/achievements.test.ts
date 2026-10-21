@@ -29,8 +29,8 @@ describe("업적 표", () => {
     const gems = achievementRewardTotals().find(({ currency }) => currency === "gems")?.amount ?? 0;
     expect(gems).toBeGreaterThan(ACHIEVEMENT_GEM_BUDGET * 0.6);
     expect(gems).toBeLessThanOrEqual(ACHIEVEMENT_GEM_BUDGET);
-    // 한 단계가 연구 한 번(젬 300)의 3분의 1을 넘지 않는다.
-    for (const series of ACHIEVEMENT_SERIES) for (const tier of series.tiers) if (tier.reward.currency === "gems") expect(tier.reward.amount).toBeLessThanOrEqual(100);
+    // 상향 후에도 한 단계의 젬은 500개 이내다.
+    for (const series of ACHIEVEMENT_SERIES) for (const tier of series.tiers) if (tier.reward.currency === "gems") expect(tier.reward.amount).toBeLessThanOrEqual(500);
   });
 
   it("의 수식어는 그 업적의 마지막 단계가 연다", () => {
@@ -62,7 +62,7 @@ describe("업적 수령", () => {
     const claim = claimAchievements(createEmptyAchievementState(), { ...facts, goldPeak: 150_000_000 }, ["wealth"]);
     expect(claim.claimedTiers.wealth).toEqual([0, 1, 2, 3, 4]);
     expect(claim.completedSeriesIds).toEqual(["wealth"]);
-    expect(claim.rewards).toEqual([{ currency: "gems", amount: 155 }]);
+    expect(claim.rewards).toEqual([{ currency: "gems", amount: 775 }]);
     // 다시 받으면 아무것도 없다.
     const again = claimAchievements(claim.state, { ...facts, goldPeak: 150_000_000 }, ["wealth"]);
     expect(again.rewards).toEqual([]);
@@ -131,7 +131,7 @@ describe("업적 서버 경계", () => {
     const result = await api.claimAchievementRewards(["wealth"]);
     expect(result.claimedTiers.wealth).toHaveLength(5);
     expect(result.newModifierIds).toEqual(["millionaire"]);
-    expect(state.wallet.gems).toBe(gemsBefore + 155);
+    expect(state.wallet.gems).toBe(gemsBefore + 775);
     expect(state.earnedProfileModifierIds).toContain("millionaire");
     await expect(api.claimAchievementRewards(["wealth"])).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
     const list = await api.getAchievements();

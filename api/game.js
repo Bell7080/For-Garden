@@ -1149,7 +1149,6 @@ var EXPEDITION_REWARD_KO = {
   "expeditionReward.refresh": "\uC0C8\uB85C\uACE0\uCE68",
   "expeditionReward.summary": "\uC8FC\uAC04 \uCD5C\uACE0 \uC810\uC218 {best}",
   "expeditionReward.claimed": "\uC774\uBBF8 \uC218\uB839\uD55C \uBCF4\uC0C1",
-  "expeditionReward.claimedAmount": "{amount} \uC218\uB839 \uC644\uB8CC",
   "expeditionReward.loadFailed": "\uAE30\uB85D \uBCF4\uC0C1\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "expeditionReward.notEnough": "\uC810\uC218\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4. \uCD5C\uC2E0 \uC9C4\uD589\uB7C9\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
   "expeditionReward.stageClosed": "\uC8FC\uCC28\uAC00 \uBCC0\uACBD\uB418\uC5C8\uAC70\uB098 \uBCF4\uC0C1 \uB2E8\uACC4\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
@@ -17055,9 +17054,9 @@ var EXPEDITION_COMBAT_BALANCE = {
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
 };
 var EXPEDITION_SCORE_BALANCE = {
-  perFloor: 40,
-  perRemainingHpPercent: 1.5,
-  bossDamagePerPoint: 10
+  perFloor: 20,
+  perRemainingHpPercent: 0.75,
+  bossDamagePerPoint: 5
 };
 var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
   /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
@@ -17078,17 +17077,17 @@ var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
 var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
 var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 4, max: 12 }, runCap: 180 },
-  gold: { perNode: { min: 120, max: 420 }, runCap: 7500 },
+  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
+  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 0, max: 2 }, runCap: 24 },
+  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
    */
-  salvageRecord: { perNode: { min: 2, max: 5 }, runCap: 90 }
+  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
 };
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 500, cap: 200 };
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
 function expeditionBossSalvage(bossDamageScore) {
   return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
 }
@@ -17098,9 +17097,9 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
   horde: 1.4
 };
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 520, max: 900 },
+  gold: { min: 2080, max: 3600 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 3, max: 5 },
+  gems: { min: 1e3, max: 1500 },
   salvageRecord: { min: 6, max: 10 }
 };
 var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
@@ -17117,30 +17116,30 @@ var EXPEDITION_BOSS_BALANCE = {
   ]
 };
 var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e3 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 30 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 5 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 20 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e3 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 1 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 40 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 60 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 1 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 60 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
+  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
+  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
+  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
+  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
+  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
+  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
+  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
+  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
+  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
+  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
+  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
+  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
+  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
 var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
@@ -18230,7 +18229,7 @@ init_define_import_meta_env();
 
 // src/data/achievements.ts
 init_define_import_meta_env();
-var gems = (amount) => ({ currency: "gems", amount });
+var gems = (amount) => ({ currency: "gems", amount: amount * 5 });
 var gold = (amount) => ({ currency: "gold", amount });
 var cheesecake = (amount) => ({ currency: "cheesecake", amount });
 var tiers = (targets2, rewards) => targets2.map((target, index) => ({ target, reward: rewards[index] ?? rewards.at(-1) }));
@@ -18290,19 +18289,19 @@ var ACHIEVEMENT_SERIES = [
 init_define_import_meta_env();
 var MISSIONS = [
   { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
   { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
   { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
   { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
   { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" }
+  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" }
 ];
 for (const mission of MISSIONS) {
   registerDataText(mission, "title", `mission.${mission.id}.title`);
@@ -18311,14 +18310,14 @@ var RESEARCH_REWARD_STAGES = {
   daily: [
     { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
     { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
     { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
   ],
   weekly: [
     { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
     { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
     { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
     { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
   ]
@@ -31286,6 +31285,24 @@ var FakeServer = class {
     if (cached) return { ...cached, wallet: { ...this.state.wallet }, claimedStageIds: [...this.state.expedition.claimedRewardStageIds] };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uBCF4\uC0C1 \uC218\uB839 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     const expedition = this.rollExpedition(this.now());
+    if (request.stageId === "all") {
+      const stages = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage2) => stage2.threshold <= expedition.bestScore && !expedition.claimedRewardStageIds.includes(stage2.id));
+      const wallet = { ...this.state.wallet };
+      const granted = {};
+      for (const stage2 of stages) {
+        const { currency: currency3, amount: amount2 } = stage2.reward;
+        const applied = Math.max(0, Math.min(amount2, WALLET_CAPS[currency3] - wallet[currency3]));
+        wallet[currency3] += applied;
+        granted[currency3] = (granted[currency3] ?? 0) + applied;
+      }
+      const rewards = Object.entries(granted).map(([currency3, amount2]) => ({ currency: currency3, amount: amount2 ?? 0 }));
+      const nextExpedition = { ...expedition, claimedRewardStageIds: [...expedition.claimedRewardStageIds, ...stages.map((stage2) => stage2.id)] };
+      const response2 = { weekKey: expedition.weekKey, stageId: "all", claimedStageIds: [...nextExpedition.claimedRewardStageIds], claimedNowStageIds: stages.map((stage2) => stage2.id), rewards, reward: rewards[0] ?? { currency: "gold", amount: 0 }, alreadyClaimed: stages.length === 0, wallet };
+      const candidate = { ...this.state, wallet, expedition: nextExpedition };
+      this.recordReceipt(candidate, "expeditionReward", request.requestId, "all", response2);
+      this.commitRaidState(candidate);
+      return response2;
+    }
     const stage = EXPEDITION_BEST_SCORE_REWARD_STAGES.find(({ id }) => id === request.stageId);
     if (!stage) throw new GameApiError("EXPEDITION_REWARD_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uCD5C\uACE0 \uC810\uC218 \uBCF4\uC0C1 \uB2E8\uACC4\uC785\uB2C8\uB2E4.");
     if (expedition.bestScore < stage.threshold) throw new GameApiError("EXPEDITION_REWARD_NOT_EARNED", "\uC544\uC9C1 \uB2EC\uC131\uD558\uC9C0 \uC54A\uC740 \uCD5C\uACE0 \uC810\uC218 \uBCF4\uC0C1\uC785\uB2C8\uB2E4.");
@@ -33982,6 +33999,9 @@ var FakeServer = class {
     const serverNow2 = this.now();
     this.settleStaminaNow(serverNow2);
     this.settleItemExpiry(serverNow2);
+    if (this.state.dailyAdRewards.date !== utcDateKey(serverNow2)) {
+      this.state.dailyAdRewards = { date: utcDateKey(serverNow2), claimsBySlot: {}, requestIds: [] };
+    }
     const relicProgress = Object.fromEntries(
       Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] }])
     );

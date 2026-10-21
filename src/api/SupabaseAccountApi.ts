@@ -54,6 +54,7 @@ export class SupabaseAccountApi implements AccountApi {
   private failure = "";
   private pendingRegistration?: { id: string; userId: string; authEmail: string };
   private identityRequest = false;
+  private authGeneration = 0;
 
   constructor(private readonly options: SupabaseAccountOptions) {
     // 브라우저의 fetch는 window가 아닌 객체의 메서드로 부르면 "Illegal invocation"으로 던진다 — 한 번 감싸 둔다.
@@ -184,7 +185,8 @@ export class SupabaseAccountApi implements AccountApi {
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
   async logout(): Promise<AccountResult<AccountState>> {
-    this.tokens = null; this.pendingRegistration = undefined;
+    this.authGeneration++;
+    this.tokens = null; this.pending = null; this.pendingRegistration = undefined;
     try { await this.options.store.clear(); } catch { return fail("network-error", t("error.account.logoutFailed")); }
     // 새 게스트를 여기서 만들지 않는다 — 로그아웃 뒤에는 타이틀이 로그인 선택(게스트·아이디 계정)을 보여 준다.
     return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-••••" } };
@@ -330,17 +332,28 @@ export class SupabaseAccountApi implements AccountApi {
 
   /** 토큰이 없으면 게스트(익명)로 가입하고, 만료가 가까우면 갱신한다. 동시에 여러 요청이 와도 한 번만 묻는다. */
   private ensureTokens(): Promise<AccountResult<StoredTokens>> {
-    this.pending ??= this.resolveTokens().finally(() => { this.pending = null; });
+    if (!this.pending) {
+      const generation = this.authGeneration;
+      const pending = this.resolveTokens(generation).finally(() => { if (this.pending === pending) this.pending = null; });
+      this.pending = pending;
+    }
     return this.pending;
   }
 
-  private async resolveTokens(): Promise<AccountResult<StoredTokens>> {
+  private async resolveTokens(generation: number): Promise<AccountResult<StoredTokens>> {
+    const cancelled = () => fail<StoredTokens>("cancelled", t("settings.account.cancelled"));
     try {
-      this.tokens ??= await this.options.store.load();
+      const loaded = this.tokens ?? await this.options.store.load();
+      if (generation !== this.authGeneration) return cancelled();
+      this.tokens = loaded;
       const current = this.tokens;
       if (current && current.expiresAtMs - this.now() > REFRESH_MARGIN_MS) return { ok: true, value: current };
       const next = current ? await this.refresh(current.refreshToken) : await this.signInAnonymously();
-      if (!next.ok) return next;
+      if (generation !== this.authGeneration) return cancelled();
+      if (!next.ok) {
+        if (next.code === "invalid-credentials") { this.tokens = null; await this.options.store.clear(); }
+        return next;
+      }
       this.tokens = next.value;
       await this.options.store.save(next.value);
       return next;
@@ -358,7 +371,6 @@ export class SupabaseAccountApi implements AccountApi {
     const r = await this.authCall("/auth/v1/token?grant_type=refresh_token", JSON.stringify({ refresh_token: refreshToken }));
     // 리프레시 토큰이 폐기됐다면(다른 기기 로그아웃 등) 낡은 토큰을 지우고 처음부터 게스트를 새로 만든다.
     if (!r.ok && r.code === "unsupported") return r;
-    if (!r.ok && r.code === "invalid-credentials") { this.tokens = null; await this.options.store.clear(); }
     return r;
   }
 

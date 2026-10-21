@@ -307,6 +307,7 @@ interface ProfileView {
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
 export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
+  private cakeCompletion?: { requestId: string; result: Awaited<ReturnType<typeof gameApi.completeCakeOperation>> };
   private combatLease?: CombatLease;
   private stageCompletion?: { stageId: string; result: CompleteStageResponse };
   private combatTicks = 0;
@@ -510,6 +511,7 @@ export class BattleScene extends Phaser.Scene {
     this.spawned=false; this.pendingResult=undefined;
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
     this.stageCompletion = undefined;
+    this.cakeCompletion = undefined;
     if (usesRemoteGameApi() && ["stage","cake","bounty","expedition","duel"].includes(this.battleInput.mode)) {
       const prepare=(): void => {
         void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1" }).then(lease=>{
@@ -2870,11 +2872,17 @@ export class BattleScene extends Phaser.Scene {
    */
   private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
     // 입구로 돌아갈 때는 고르던 단계를 넘긴다 — 빠지면 매번 단계를 다시 골라야 한다.
+    const generation = this.combatGeneration;
     const back = () => this.scene.start("cakeOperation", { tierId: input.tierId });
     try {
-      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
-      if (!this.scene.isActive()) return;
-      rememberPlayerExp(result.playerExp);
+      let result = this.cakeCompletion?.requestId === input.requestId ? this.cakeCompletion.result : undefined;
+      if (!result) {
+        result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
+        if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+        this.cakeCompletion = { requestId: input.requestId, result };
+        rememberPlayerExp(result.playerExp);
+      }
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const popups = new PopupLayer(this, 2200);
       const items = dungeonRewardItems(result.granted, result.bonusItems);
       // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
@@ -2899,7 +2907,8 @@ export class BattleScene extends Phaser.Scene {
       });
     } catch (error) {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
-      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }), error, "cake");
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }), error, this.cakeCompletion?.requestId === input.requestId ? "display" : "cake");
     }
   }
 
@@ -3066,7 +3075,7 @@ export class BattleScene extends Phaser.Scene {
   private stageCompleteFighters(): StageCompleteFighter[] {
     const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
     return this.state.fighters
-      .filter(({ side }) => side === "player")
+      .filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null)
       .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
   }
 

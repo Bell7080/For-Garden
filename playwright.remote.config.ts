@@ -9,7 +9,7 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   use: { ...base.use, trace: 'off' },
   webServer: {
-    command: 'npx vite --mode test --host 127.0.0.1 --port 4173',
+    command: 'npx vite --mode test --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: false,
     timeout: 90_000,

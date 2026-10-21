@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_EN = {
   "expeditionReward.refresh": "Refresh",
   "expeditionReward.summary": "Weekly best {best}",
   "expeditionReward.claimed": "Already claimed",
-  "expeditionReward.claimedAmount": "{amount} claimed",
   "expeditionReward.loadFailed": "Could not load the record rewards.",
   "expeditionReward.notEnough": "Not enough score. Check your latest progress.",
   "expeditionReward.stageClosed": "The week changed or this reward tier has closed.",

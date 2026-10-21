@@ -112,7 +112,7 @@ import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isC
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
@@ -717,7 +717,26 @@ export class FakeServer implements GameApi {
     await this.delay(); const cached = this.readReceipt<ClaimExpeditionRewardResponse>("expeditionReward", request.requestId, request.stageId);
     if (cached) return { ...cached, wallet: { ...this.state.wallet }, claimedStageIds: [...this.state.expedition.claimedRewardStageIds] };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "보상 수령 요청 ID가 필요합니다.");
-    const expedition = this.rollExpedition(this.now()); const stage = EXPEDITION_BEST_SCORE_REWARD_STAGES.find(({ id }) => id === request.stageId);
+    const expedition = this.rollExpedition(this.now());
+    if (request.stageId === "all") {
+      const stages = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => stage.threshold <= expedition.bestScore && !expedition.claimedRewardStageIds.includes(stage.id));
+      const wallet = { ...this.state.wallet };
+      const granted: Partial<Record<ExpeditionRewardCurrency, number>> = {};
+      for (const stage of stages) {
+        const { currency, amount } = stage.reward;
+        const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - wallet[currency]));
+        wallet[currency] += applied;
+        granted[currency] = (granted[currency] ?? 0) + applied;
+      }
+      const rewards = Object.entries(granted).map(([currency, amount]) => ({ currency: currency as ExpeditionRewardCurrency, amount: amount ?? 0 }));
+      const nextExpedition = { ...expedition, claimedRewardStageIds: [...expedition.claimedRewardStageIds, ...stages.map(stage => stage.id)] };
+      const response: ClaimExpeditionRewardResponse = { weekKey: expedition.weekKey, stageId: "all", claimedStageIds: [...nextExpedition.claimedRewardStageIds], claimedNowStageIds: stages.map(stage => stage.id), rewards, reward: rewards[0] ?? { currency: "gold", amount: 0 }, alreadyClaimed: stages.length === 0, wallet };
+      const candidate = { ...this.state, wallet, expedition: nextExpedition };
+      this.recordReceipt(candidate, "expeditionReward", request.requestId, "all", response);
+      this.commitRaidState(candidate);
+      return response;
+    }
+    const stage = EXPEDITION_BEST_SCORE_REWARD_STAGES.find(({ id }) => id === request.stageId);
     if (!stage) throw new GameApiError("EXPEDITION_REWARD_NOT_FOUND", "존재하지 않는 최고 점수 보상 단계입니다.");
     if (expedition.bestScore < stage.threshold) throw new GameApiError("EXPEDITION_REWARD_NOT_EARNED", "아직 달성하지 않은 최고 점수 보상입니다.");
     const alreadyClaimed = expedition.claimedRewardStageIds.includes(stage.id);
@@ -3431,6 +3450,10 @@ export class FakeServer implements GameApi {
     const serverNow = this.now();
     this.settleStaminaNow(serverNow);
     this.settleItemExpiry(serverNow);
+    // 조회도 서버 UTC 날짜를 정산해야 전날 소진한 광고 버튼이 다음 날 다시 열린다.
+    if (this.state.dailyAdRewards.date !== utcDateKey(serverNow)) {
+      this.state.dailyAdRewards = { date: utcDateKey(serverNow), claimsBySlot: {}, requestIds: [] };
+    }
     // 중첩 슬롯까지 복사해 응답 변경이 서버 역할의 세션을 오염시키지 않게 한다.
     const relicProgress = Object.fromEntries(
       Object.entries(this.state.relicProgress).map(([id, progress]) => [id, { ...progress, heartGemSlots: [...progress.heartGemSlots] as typeof progress.heartGemSlots }]),

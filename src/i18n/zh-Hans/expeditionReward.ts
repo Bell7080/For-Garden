@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_ZH_HANS = {
   "expeditionReward.refresh": "刷新",
   "expeditionReward.summary": "本周最高分 {best}",
   "expeditionReward.claimed": "已领取",
-  "expeditionReward.claimedAmount": "已领取 {amount}",
   "expeditionReward.loadFailed": "无法读取记录奖励。",
   "expeditionReward.notEnough": "分数不足。请确认最新进度。",
   "expeditionReward.stageClosed": "周期已更替，或该奖励阶段已关闭。",

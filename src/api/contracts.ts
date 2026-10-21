@@ -844,8 +844,9 @@ export interface ExpeditionRewardStageDto { id: string; threshold: number; rewar
  */
 export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; resetsAt: string; rewardStages: ExpeditionRewardStageDto[]; rank: number | null; rankRewards: Partial<Record<ExpeditionRewardCurrency, number>>; }
 /** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */
+/** stageId="all"이면 현재 달성한 미수령 단계를 한 트랜잭션에서 모두 받는다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
-export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
+export interface ClaimExpeditionRewardResponse { rewards?: { currency: ExpeditionRewardCurrency; amount: number }[]; claimedNowStageIds?: string[]; weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
 /**
  * 순위 한 줄.

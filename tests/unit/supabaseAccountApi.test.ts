@@ -250,3 +250,14 @@ describe("SupabaseAccountApi", () => {
     });
   });
 });
+
+describe('로그아웃과 토큰 갱신 경합',()=>{
+ it('로그아웃 전에 시작한 갱신 응답이 저장된 로그인 상태를 되살리지 않는다',async()=>{
+  let deliver!:(r:Response)=>void;let began!:()=>void;const started=new Promise<void>(r=>{began=r;});
+  const {api,store}=setup(()=>{began();return new Promise<Response>(r=>{deliver=r;});});
+  store.value={accessToken:'old',refreshToken:'old-refresh',userId:'old-user',expiresAtMs:0};
+  const pending=api.getState();await started;expect((await api.logout()).ok).toBe(true);
+  deliver(json(session(2,2000000)));expect(await pending).toMatchObject({ok:false,code:'cancelled'});
+  expect(store.value).toBeNull();expect(await api.hasSession()).toBe(false);
+ });
+});

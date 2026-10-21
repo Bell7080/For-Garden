@@ -94,9 +94,10 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   catch (error) { return {ok:false,code:"network-error",detail:describeGameFailure(error)}; }
   if(deps.isCurrent?.() === false)return {ok:false,code:"network-error"};
   install(remote);
-  const social=createRemoteSocialApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl});
+  const accessToken = () => deps.isCurrent?.() === false ? Promise.resolve(null) : account.accessToken();
+  const social=createRemoteSocialApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl});
   installSocialApi(social);
-  installGuildApi(createRemoteGuildApi({getAccessToken:()=>account.accessToken(),fetchImpl:deps.fetchImpl}));
+  installGuildApi(createRemoteGuildApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl}));
   void social.getRequests().catch(()=>undefined);
   deps.marker.set(userId);
   return {ok:true,mode:"server"};

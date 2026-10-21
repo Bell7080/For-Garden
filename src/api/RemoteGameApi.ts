@@ -57,13 +57,15 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     if (requestId && callKey) retryIds.set(callKey, requestId);
     const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
     let lastError: unknown;
+    const signal = AbortSignal.timeout(35000);
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let res: Response;
       try {
-        res = await doFetch(endpoint, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
+        res = await doFetch(endpoint, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body, signal });
       } catch (error) {
         lastError = error;
+        if (signal.aborted) break;
         continue;
       }
       const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; domainCode?: ApiErrorCode; message?: string } | null;

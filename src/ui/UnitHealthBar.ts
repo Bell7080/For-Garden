@@ -55,6 +55,9 @@ function darken(color: number, amount: number): number {
 }
 
 export class UnitHealthBar extends Phaser.GameObjects.Container {
+  private paintedShown?: number;
+  private paintedTrail?: number;
+  private paintedShield?: number;
   private readonly graph: Phaser.GameObjects.Graphics;
   /** shown(현재 채움)·damageTrail(붉은 잔상)·target(최종 HP)을 분리한 순수 상태다. */
   private health: UnitHealthBarState = createUnitHealthBarState();
@@ -106,6 +109,12 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
   }
 
   private paint(): void {
+    // 15명 이상의 HP가 그대로인 프레임에도 도형 전체를 다시 만들던 비용을 없앤다.
+    // 피격 흔들림/확대는 step의 그래픽 transform이 맡아 채움 재생성과 분리된다.
+    if (this.paintedShown === this.health.shown && this.paintedTrail === this.health.damageTrail && this.paintedShield === this.health.shield) return;
+    this.paintedShown = this.health.shown;
+    this.paintedTrail = this.health.damageTrail;
+    this.paintedShield = this.health.shield;
     const { width, height, slant, cap, ticks } = BAR;
     const body = toPoints(slantedRect(width, height, slant));
     this.graph.clear();

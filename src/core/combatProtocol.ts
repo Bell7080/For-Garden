@@ -4,6 +4,8 @@ import type { RelicDef } from "./types";
 import type { Arena } from "./skirmish";
 
 export interface CombatPrepare {
+  /** 양쪽 코어 자동 궁극기를 지원하는 클라이언트만 새 PvP 규칙을 요청한다. */
+  automaticUltimates?: true;
   input: BattleSceneInputDto;
   stageId?: string;
 }

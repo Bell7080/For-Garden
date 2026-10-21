@@ -46,7 +46,7 @@ export function duelCombatSetup(state: Session, opponentState: Session, attack: 
     arena: battleArena('duel'),
     bonds: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.bondLevel ?? 0])),
     breakthroughs: Object.fromEntries(attack.map(id => [id, state.relicProgress[id]?.breakthrough ?? 0])),
-    options: { augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map(id => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map(id => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 },
+    options: { automaticUltimates: true, augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map(id => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map(id => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 },
   };
 }
 

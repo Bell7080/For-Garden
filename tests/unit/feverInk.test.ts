@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { FEVER_INK, feverAngerPlacement, feverBodyFill, feverFade, feverOutlineSteps, feverPulse, feverSirenRings } from "../../src/ui/feverInk";
+import { FEVER_INK, feverAngerPlacement, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse, feverSirenRings } from "../../src/ui/feverInk";
 
 describe("폭주의 잉크 테두리", () => {
+  it("물량전에서도 먹선·붉은 띠를 유지하면서 본체 복제 draw를 24회에서 12회로 줄인다",()=>{
+    expect(feverOutlineSteps(1,1,1,feverOutlineDirections(6))).toHaveLength(24);
+    const crowded=feverOutlineSteps(1,1,.7,feverOutlineDirections(18));
+    expect(crowded).toHaveLength(12);
+    expect(new Set(crowded.map(s=>s.color)).size).toBe(2);
+  });
   it("먹선이 붉은 띠보다 바깥에, 먼저 그려진다", () => {
     const steps = feverOutlineSteps(1, 1);
     expect(steps).toHaveLength(FEVER_INK.directions * 2);

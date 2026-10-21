@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
 import { countDebugPuppetUpdate, debugPerfEnabled } from "../debug";
-import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
+import { puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha } from "./renderTransform";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
 interface SharedGpuProgram {
@@ -211,6 +211,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * program과 버퍼를 그대로 두고 행렬·색·알파만 갈아 끼우므로 겹 하나가 draw 한 번이다.
    */
   private afterimages: readonly PuppetAfterimage[] = [];
+  private transformUniform?: Float32Array<ArrayBuffer>;
+  private afterimageUniform?: Float32Array<ArrayBuffer>;
   /** 몸 위에 얇게 얹는 한 색. 폭주의 붉은 기운처럼 원화를 그대로 두고 색만 한 겹 덮는다. */
   private bodyFill: { color: number; amount: number } = { color: 0, amount: 0 };
   /**
@@ -386,32 +388,27 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
        * **잔상을 먼저, 먼 것부터 그린다.** 몸을 먼저 그리면 반투명 겹이 그 위에 얹혀 진짜 몸이
        * 흐려지고, 지나온 길이 아니라 몸에 묻은 얼룩으로 읽힌다.
        *
-       * 좌표를 잠깐 옮겨 같은 `GetCalcMatrix` 경로를 지나는 이유는, 변위를 행렬에 직접 더하면
-       * 부모 컨테이너의 배율·회전이 그 변위에 먹지 않아 확대된 화면에서 잔상만 어긋나기
-       * 때문이다. 색은 기본이 검정이다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다. 폭주 테두리처럼
+       * 변위는 부모·카메라의 축으로 옮겨 확대·회전된 화면에서도 본체에 붙인다.
+       * 색은 기본이 검정이다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다. 폭주 테두리처럼
        * 몸 둘레로 비껴 세우는 겹만 `color`로 제 색을 갖는다.
        */
-      const baseX = this.x;
-      const baseY = this.y;
+      // 본체 행렬은 한 번만 합성한다. camera는 부모 Container까지 합성한 공간이므로
+      // 잔상 변위만 그 축으로 옮기면 각 겹에서 x/y를 바꿔 재합성한 결과와 같다.
+      const matrices = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix);
+      const transform = puppetAffineUniform(matrices.calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY, this.transformUniform ??= new Float32Array(9));
       for (const ghost of this.afterimages) {
-        this.x = baseX + ghost.dx;
-        this.y = baseY + ghost.dy;
-        const ghostCalc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
-        gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(ghostCalc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
+        gl.uniformMatrix3fv(shared.transform, false, puppetOffsetUniform(transform, matrices.camera, ghost.dx, ghost.dy, this.afterimageUniform ??= new Float32Array(9)));
         gl.uniform3f(shared.tint, 1, 1, 1);
         const ghostColor = ghost.color ?? 0;
         gl.uniform4f(shared.fill, ((ghostColor >> 16) & 0xff) / 255, ((ghostColor >> 8) & 0xff) / 255, (ghostColor & 0xff) / 255, 1);
         gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha * ghost.alpha, camera.alpha));
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
       }
-      this.x = baseX;
-      this.y = baseY;
 
       // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
       // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
       // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
-      const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
-      gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
+      gl.uniformMatrix3fv(shared.transform, false, transform);
       gl.uniform3f(
         shared.tint,
         ((this.tintTopLeft >> 16) & 0xff) / 255,

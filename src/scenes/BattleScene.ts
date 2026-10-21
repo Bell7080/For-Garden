@@ -112,7 +112,7 @@ import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/Comb
 import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
-import { FEVER_INK, feverBodyFill, feverFade, feverOutlineSteps, feverPulse } from "../ui/feverInk";
+import { FEVER_INK, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse } from "../ui/feverInk";
 import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
@@ -129,6 +129,7 @@ import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
+import { PuppetCreationQueue } from "../puppets/creationQueue";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 
@@ -243,6 +244,7 @@ interface FighterView {
   statusChips: UnitStatusChips;
   /** 체력 바와 칩 줄을 함께 받는 입력면. 둘 중 어디를 눌러도 같은 쪽지가 열린다. */
   statusHit: Phaser.GameObjects.Rectangle;
+  statusHitEnabled?: boolean;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
   stunShown: boolean;
   /** 그 개체의 속성·직군을 섞은 색. 폭주 필터와 이펙트 색이 여기서 나온다. */
@@ -357,6 +359,8 @@ export class BattleScene extends Phaser.Scene {
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
   private deathWash?: Phaser.GameObjects.Graphics;
   private spawned = false;
+  private fighterCreationQueue?: PuppetCreationQueue;
+  get fighterCreationStats() { return this.fighterCreationQueue?.stats; }
   /** 전원이 선 뒤 숨을 고르고 코어 시간이 흐르기 시작하는 실제 시각(ms, `battleFightStartsAt`). */
   private fightStartsAt = Infinity;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
@@ -514,7 +518,7 @@ export class BattleScene extends Phaser.Scene {
     this.cakeCompletion = undefined;
     if (usesRemoteGameApi() && ["stage","cake","bounty","expedition","duel"].includes(this.battleInput.mode)) {
       const prepare=(): void => {
-        void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1" }).then(lease=>{
+        void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1", automaticUltimates:true }).then(lease=>{
           if(!this.scene.isActive()||generation!==this.combatGeneration) return;
           if(!lease) throw new Error("combat_not_prepared");
           this.combatLease=lease;
@@ -598,6 +602,7 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
+      automaticUltimates: this.battleInput.mode === "duel",
       // 대작전·현상수배는 스테이지의 슬롯별 돌파 표를 읽지 않고, 정보창과 같은 배치 표
       // (`placedEnemyIndex`)의 돌파를 쓴다 — 두 곳이 따로 정하면 창이 말한 돌파 효과가 전투에 없다.
       enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty" || this.battleInput.mode === "duel"
@@ -1119,6 +1124,10 @@ export class BattleScene extends Phaser.Scene {
    * 물량형 던전의 무리도 여기서 한꺼번에 선다 — 적이 열다섯이어도 같은 경로다.
    */
   private async spawnFighters(): Promise<void> {
+    const generation = this.combatGeneration;
+    const isCurrent = () => this.scene.isActive() && generation === this.combatGeneration;
+    const creationQueue = new PuppetCreationQueue({ isCurrent });
+    this.fighterCreationQueue = creationQueue;
     ensureEffectTextures(this);
     // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
     const tint = 0xffffff;
@@ -1143,18 +1152,20 @@ export class BattleScene extends Phaser.Scene {
           height: unitHeight,
           flipX: fighter.facing < 0,
           tint,
+          creationQueue,
+          startPaused: true,
         })
           .then((creature) => ({ fighter, asset, unitHeight, creature }))
           .catch((error: unknown) => {
             // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
             // **한 마리의 실패가 나머지를 함께 지우지 않도록** 약속마다 여기서 삼킨다.
-            console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+            if (isCurrent()) console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
             return undefined;
           });
       });
     const ready = await Promise.all(spawns);
     // 기다리는 동안 씬을 떠났다면 **도착한 전부**를 놓는다 — 하나만 지우면 나머지가 죽은 씬에 남는다.
-    if (!this.scene.isActive()) {
+    if (!isCurrent()) {
       ready.forEach((entry) => entry?.creature.destroy());
       return;
     }
@@ -1218,6 +1229,9 @@ export class BattleScene extends Phaser.Scene {
      * 사라졌다. 여기에 기다리는 일을 새로 끼우지 않는다.
      */
     this.syncViews();
+    for (const view of this.views.values()) {
+      if (!view.dead) view.creature.setVisible(true).setAnimationFrozen(false);
+    }
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     // 서자마자 부딪히지 않는다 — 전장을 한 번 훑어볼 틈을 둔다(모든 전투 공통).
@@ -1534,7 +1548,7 @@ export class BattleScene extends Phaser.Scene {
     // 한 시뮬레이션 프레임의 유효 타격을 하나로 병합해 광역/연격이 기기를 연속 진동시키지 않게 한다.
     if (hasMergedBattleHit(events)) settingsManager.haptic("battleHit");
     events.forEach((event) => this.playEvent(event));
-    if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
+    if (this.autoUltimate && !this.finished && !this.state.automaticUltimates) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();
   }
@@ -2191,6 +2205,7 @@ export class BattleScene extends Phaser.Scene {
     // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
     view.statusChips.destroy(true);
     view.statusHit.disableInteractive().setVisible(false);
+    view.statusHitEnabled = false;
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
     // 별 하나가 커지던 자리에 같은 마름모 파편이 터진다. 화면의 다른 타격과 결이 같아야
@@ -2309,6 +2324,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
+    const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length);
     const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
       if (view.dead) return;
@@ -2361,7 +2377,7 @@ export class BattleScene extends Phaser.Scene {
         const age = now - view.feverAt;
         const fade = feverFade(age, view.feverTinted ? undefined : now - (view.feverEndedAt ?? now));
         const pulse = feverPulse(age);
-        outline = feverOutlineSteps(pulse, fade, fighter.bodyScale);
+        outline = feverOutlineSteps(pulse, fade, fighter.bodyScale, outlineDirections);
         view.creature.setBodyFill(FEVER_INK.bodyFill.color, feverBodyFill(pulse, fade));
         feverMarks.push({
           id: fighter.id,
@@ -2424,8 +2440,12 @@ export class BattleScene extends Phaser.Scene {
       view.statusHit.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift / 2)
         .setSize(rowWidth, BATTLE_STATUS_LAYOUT.chipRowLift + BATTLE_STATUS_LAYOUT.chipSize)
         .setDepth(DEPTH.hpBar + 3);
-      if (statuses.length > 0) view.statusHit.setInteractive({ useHandCursor: true });
-      else view.statusHit.disableInteractive();
+      const statusHitEnabled = statuses.length > 0;
+      if (statusHitEnabled !== view.statusHitEnabled) {
+        view.statusHitEnabled = statusHitEnabled;
+        if (statusHitEnabled) view.statusHit.setInteractive({ useHandCursor: true });
+        else view.statusHit.disableInteractive();
+      }
     });
     this.effects.syncFeverMarks(feverMarks);
   }

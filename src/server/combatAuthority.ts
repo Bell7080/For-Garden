@@ -72,7 +72,10 @@ export function prepareCombat(
     if (!ticket?.duel || ticket.kind !== "duel") return fail();
     const active = Object.values(records.records).find(row => combatKey(row.input) === key && Date.parse(row.lease.expiresAt) > now.getTime());
     if (active) return structuredClone(active.lease);
-    const lease: CombatLease = { id, seed: id, setup: structuredClone(ticket.duel.setup), expiresAt: new Date(now.getTime() + 3600000).toISOString() };
+    const setup = structuredClone(ticket.duel.setup);
+    // 열린 구형 클라이언트는 새 코어 옵션을 모른다. 지원 여부를 요청한 새 전투만 전환한다.
+    if (request.automaticUltimates !== true && setup.options) delete setup.options.automaticUltimates;
+    const lease: CombatLease = { id, seed: id, setup, expiresAt: new Date(now.getTime() + 3600000).toISOString() };
     records.records = Object.fromEntries(Object.entries(records.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
     if (Object.keys(records.records).length >= 8) return fail();
     records.records[id] = { lease, input: structuredClone(request), issuedAt: now.toISOString() };
@@ -278,6 +281,7 @@ export function finishCombat(
   if (!record || Date.parse(record.lease.expiresAt) < now.getTime())
     return fail();
   if (record.verdict) return structuredClone(record.verdict);
+  if (record.lease.setup.options?.automaticUltimates && proof.actions.length) return fail();
   // 공식 최대 배속보다 빨리 끝나는 제출은 재현 전에 거절한다. 일시 정지는 상한을 늘리지 않는다.
   if (
     proof.ticks * COMBAT_STEP_MS >

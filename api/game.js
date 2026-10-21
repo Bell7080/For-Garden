@@ -4707,6 +4707,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   const party = [...players, ...enemies];
   const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state = {
+    automaticUltimates: options.automaticUltimates,
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
     contributions: createBattleContributions(party.map(({ id }) => id)),
@@ -5369,7 +5370,7 @@ function fleeFromFear(fighter, dt, rng, state, events) {
   }
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
   fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
-  const autoUltimate = fighter.side === "enemy" || fighter.summonOwnerId !== null;
+  const autoUltimate = !state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null;
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
     if (target) {
@@ -10336,7 +10337,7 @@ function advance(state, dt, rng, events) {
       fighter.hop *= recovery;
     }
     if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
-      const firedUltimate = (fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
+      const firedUltimate = (!state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
       strike(fighter, target, rng, state, events, firedUltimate);
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
@@ -10611,6 +10612,11 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step2, rng, events);
+    if (state.automaticUltimates) {
+      for (const fighter of state.fighters) {
+        if (fighter.summonOwnerId === null && canFireUltimate(state, fighter)) events.push(...fireUltimate(state, fighter.id, rng));
+      }
+    }
     for (let index = before; index < events.length; index += 1) {
       const event = events[index];
       if (event.kind === "attack") event.at = state.elapsed;
@@ -26337,7 +26343,7 @@ function duelCombatSetup(state, opponentState, attack) {
     arena: battleArena("duel"),
     bonds: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.bondLevel ?? 0])),
     breakthroughs: Object.fromEntries(attack.map((id) => [id, state.relicProgress[id]?.breakthrough ?? 0])),
-    options: { augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map((id) => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map((id) => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 }
+    options: { automaticUltimates: true, augmentEffects: traits(state, attack), enemyAugmentEffects: traits(opponentState, defense), enemyBondLevels: defense.map((id) => opponentState.relicProgress[id]?.bondLevel ?? 0), enemyBreakthroughs: defense.map((id) => opponentState.relicProgress[id]?.breakthrough ?? 0), enemyBodyScale: 1 }
   };
 }
 function recordPlayerDefense(context, opponentId, attacker, attack, attackerWon, now) {
@@ -34770,7 +34776,9 @@ function prepareCombat(state, request, now, id) {
     if (!ticket2?.duel || ticket2.kind !== "duel") return fail2();
     const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
     if (active4) return structuredClone(active4.lease);
-    const lease2 = { id, seed: id, setup: structuredClone(ticket2.duel.setup), expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    const setup2 = structuredClone(ticket2.duel.setup);
+    if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
+    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
     records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
     if (Object.keys(records2.records).length >= 8) return fail2();
     records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
@@ -34897,6 +34905,7 @@ function finishCombat(state, proof, now) {
   if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
     return fail2();
   if (record2.verdict) return structuredClone(record2.verdict);
+  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail2();
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
     return fail2();
   const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);

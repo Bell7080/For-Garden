@@ -1,11 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { createSkirmish } from '../../src/core/skirmish';
+import { createSkirmish, stepSkirmish } from '../../src/core/skirmish';
 import { battleArena } from '../../src/core/battleArena';
 import { getRelic } from '../../src/data/relics';
 import { competitiveRankGems } from '../../src/data/competitiveRewards';
 import { DUEL_SEASON_DAYS, DUEL_TIERS, duelSeasonId, duelSeasonResetScore } from '../../src/core/duelArena';
 
 describe('실제 이용자 PvP의 양쪽 성장', () => {
+ it('공격·방어 모두 평타 쿨다운과 사거리 대기 없이 같은 스텝에 지원 궁극기를 쓴다',()=>{
+  const def=getRelic('stella');
+  const battle=createSkirmish([def],[def],battleArena('duel'),{}, {},{automaticUltimates:true});
+  for(const fighter of battle.fighters){fighter.energy=def.ultimate.cost;fighter.attackCooldown=999;}
+  const events=stepSkirmish(battle,.02,()=>.5);
+  expect(events.filter(event=>event.kind==='teamBuff').map(event=>event.fighterId)).toEqual(battle.fighters.map(f=>f.id));
+  expect(battle.fighters.map(f=>f.energy)).toEqual([0,0]);
+ });
+ it('기존 PvE 모드는 아군 궁극기를 임의로 자동 발동하지 않는다',()=>{
+  const def=getRelic('stella');const battle=createSkirmish([def],[def],battleArena('duel'));
+  for(const fighter of battle.fighters){fighter.energy=def.ultimate.cost;fighter.attackCooldown=999;}
+  expect(stepSkirmish(battle,.02,()=>.5).filter(e=>e.kind==='teamBuff')).toEqual([]);
+  expect(battle.fighters.map(f=>f.energy)).toEqual([def.ultimate.cost,def.ultimate.cost]);
+ });
+ it('방어팀도 회복 궁극기를 공격용 strike로 잃지 않고 실제 아군 회복으로 실행한다',()=>{
+  const def=getRelic('mette');const battle=createSkirmish([def],[def],battleArena('duel'),{}, {},{automaticUltimates:true});
+  for(const fighter of battle.fighters){fighter.energy=def.ultimate.cost;fighter.attackCooldown=999;fighter.hp=fighter.maxHp/2;}
+  const events=stepSkirmish(battle,.02,()=>.5);
+  expect(events.filter(e=>e.kind==='heal'&&e.source==='ultimate')).toHaveLength(2);
+  expect(battle.fighters.map(f=>f.energy)).toEqual([0,0]);
+  expect(battle.fighters[0].hp/battle.fighters[0].maxHp).toBeCloseTo(battle.fighters[1].hp/battle.fighters[1].maxHp,8);
+  expect(battle.fighters[1].hp).toBeGreaterThan(battle.fighters[1].maxHp/2);
+ });
  it('같은 렐릭이 양쪽에 있어도 방어자 룬 특성은 공격자에게 새지 않는다', () => {
   const def=getRelic('torika');
   const base=createSkirmish([def],[def],battleArena('duel'));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { puppetAffineUniform, puppetShaderAlpha, type AffineTransform } from "../../src/puppets/renderTransform";
+import { puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha, type AffineTransform } from "../../src/puppets/renderTransform";
 
 /** column-major shader 행렬로 Puppet 로컬 정점을 화면 좌표까지 보내는 작은 검증기다. */
 function transform(matrix: Float32Array, x: number, y: number): [number, number] {
@@ -7,6 +7,21 @@ function transform(matrix: Float32Array, x: number, y: number): [number, number]
 }
 
 describe("Puppet WebGL 부모 변환", () => {
+  it('부모 회전·비균등 배율·shear·좌우 반전에서도 잔상 행렬을 다시 합성한 것과 같은 좌표를 재사용 배열에 쓴다',()=>{
+    const space={a:1.2,b:.8,c:-.3,d:.7};
+    const calc={a:2.4,b:1.6,c:.45,d:-1.05,e:340,f:710};
+    const baseBuffer=new Float32Array(9),ghostBuffer=new Float32Array(9);
+    const base=puppetAffineUniform(calc,40,80,true,false,baseBuffer);
+    const original=[...base];
+    expect(base).toBe(baseBuffer);
+    for(const [dx,dy] of [[8,0],[-7,6],[0,-10]]){
+      const old=puppetAffineUniform({...calc,e:calc.e+space.a*dx+space.c*dy,f:calc.f+space.b*dx+space.d*dy},40,80,true);
+      const next=puppetOffsetUniform(base,space,dx,dy,ghostBuffer);
+      expect(next).toBe(ghostBuffer);
+      for(let i=0;i<9;i++)expect(next[i]).toBeCloseTo(old[i],3);
+    }
+    expect([...base]).toEqual(original);
+  });
   it("부모 이동·축별 배율·회전을 포함한 affine 행렬을 로컬 정점에 적용한다", () => {
     // 자식 (10, 20)을 부모 (이동 100,200 · scale 2,3 · rotation 90°)에 합성한 결과다.
     const calc: AffineTransform = { a: 0, b: 2, c: -3, d: 0, e: 40, f: 220 };

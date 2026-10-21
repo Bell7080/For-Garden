@@ -8,6 +8,9 @@ import { recordBoundaryResult } from "../../src/server/releaseBoundary";
 import { combatState } from "../../src/core/combatProtocol";
 import { bossBattleRandom } from "../../src/core/bossSimulation";
 import { saveManager } from "../../src/state/SaveManager";
+import { combatJournal } from "../../src/server/combatAuthority";
+import { duelCombatSetup } from "../../src/server/playerDuels";
+import { normalizeDuelState } from "../../src/core/duelState";
 let clock = 0;
 const noop = () => undefined;
 const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
@@ -40,6 +43,24 @@ function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {
     return { scene, proof: { id: lease.id, ticks: scene.combatTicks, actions: scene.combatActions } };
 }
 describe("실제 전투 씬 기록 → 서버 재현", () => {
+    for (const automatic of [true,false]) for (const speed of [1,2,3]) for (const seed of [1,7,42]) {
+        it(`PvP 양쪽 코어 자동 궁극기 지원=${automatic} ${speed}x seed${seed}`,()=>{
+            const state=createDefaultSession(),defender=createDefaultSession();
+            state.party=['rex','mette','stella'];
+            for(const session of [state,defender]) for(const id of state.party){session.owned.add(id);session.relicProgress[id]={...createInitialRelicProgress(),level:30,breakthrough:2};}
+            defender.duel=normalizeDuelState(undefined,[...defender.owned]);defender.duel.defense=[...state.party];
+            const requestId='duel-regression',setup=duelCombatSetup(state,defender,state.party);
+            combatJournal(state).tickets[`duel:${requestId}`]={kind:'duel',target:'defender',requestId,duel:{opponent:{} as never,setup}};
+            const now=new Date('2026-10-22T00:00:00Z');
+            const lease=prepareCombat(state,{...(automatic?{automaticUltimates:true as const}:{}),input:{mode:'duel',requestId,attack:state.party,opponentName:'defender',opponentScore:0,units:[]}},now,`duel-${seed}`);
+            const {scene,proof}=sceneFight(JSON.parse(JSON.stringify(lease)),speed);
+            expect(scene.state.automaticUltimates).toBe(automatic?true:undefined);
+            if(automatic)expect(proof.actions).toEqual([]);
+            const restored=saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state))));
+            if(automatic)expect(()=>finishCombat(structuredClone(restored),{...proof,actions:[{tick:0,actorId:scene.state.fighters[0].id}]},new Date(now.getTime()+600000))).toThrow('COMBAT_REJECTED');
+            expect(finishCombat(restored,proof,new Date(now.getTime()+600000)).victory).toBe(scene.state.phase==='victory');
+        });
+    }
     for (const party of [["dodo", "maddy", "stella"], ["ella", "maki", "stella"], ["rex", "mette", "torika"]])
         for (const tier of [1, 2, 3, 4, 5, 6, 7, 8])
             for (const speed of [1, 2, 3]) {

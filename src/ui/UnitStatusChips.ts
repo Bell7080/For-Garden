@@ -12,6 +12,7 @@ interface ChipView {
   clock: Phaser.GameObjects.Graphics;
   stacks: Phaser.GameObjects.Text;
   plate: Phaser.GameObjects.Arc;
+  clockRatio?: number;
 }
 
 /**
@@ -48,6 +49,7 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
 
   /** 지금 걸린 상태 목록으로 한 줄을 다시 세운다. 없어진 상태의 칩만 버린다. */
   update(views: readonly UnitStatusView[]): void {
+    if (views.length === 0 && this.chips.size === 0) return;
     const alive = new Set(views.map((view) => view.key ?? view.id));
     for (const [id, chip] of this.chips) {
       if (!alive.has(id)) { chip.container.destroy(true); this.chips.delete(id); }
@@ -107,9 +109,11 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
    * 기하 마스크는 컨테이너 이동을 물려받지 않아 매 프레임 자리를 옮기는 칩에서 어긋난다.
    */
   private drawClock(chip: ChipView, view: UnitStatusView): void {
+    const elapsed = view.remaining === undefined || !view.total ? -1 : 1 - Math.max(0, Math.min(1, view.remaining / view.total));
+    if (elapsed === chip.clockRatio) return;
+    chip.clockRatio = elapsed;
     chip.clock.clear();
-    if (view.remaining === undefined || !view.total) return;
-    const elapsed = 1 - Math.max(0, Math.min(1, view.remaining / view.total));
+    if (elapsed < 0) return;
     // 덮는 도형은 칩과 **같은 폴리곤** 안에서 잘라 만든다. 사각형으로 그리면 깎인 모서리를
     // 넘어 흘러내린 검은 조각이 바로 아래 체력 바를 가린다.
     // chipPoints는 좌표를 한 줄로 늘어놓으므로 점 목록으로 다시 묶어 넘긴다.

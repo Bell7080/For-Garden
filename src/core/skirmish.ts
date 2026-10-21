@@ -656,6 +656,8 @@ export interface Fighter extends Combatant {
 export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
+  /** 양쪽 편성의 궁극기를 같은 고정 스텝에서 처리한다(PvP). */
+  automaticUltimates?: boolean;
   fighters: Fighter[];
   /** 중복 relicId와 무관하게 런타임 ID별로 누적하는 전투 결과의 단일 진실이다. */
   contributions: BattleContributions;
@@ -743,6 +745,7 @@ export interface FighterInitialState { relicId: string; currentHp: number; alive
 export interface SkirmishRelicResult { relicId: string; currentHp: number; alive: boolean }
 
 export interface CreateSkirmishOptions {
+  automaticUltimates?: boolean;
   playerInitialStates?: readonly FighterInitialState[];
   augmentEffects?: readonly ExpeditionAugmentEffect[];
   enemyAugmentEffects?: readonly ExpeditionAugmentEffect[];
@@ -1543,6 +1546,7 @@ export function createSkirmish(
   // 늑대는 편성 뒤에 붙는다. 배열 순서가 곧 동률 판정 순서라 편성 칸이 늘 앞에 온다.
   const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state: SkirmishState = {
+    automaticUltimates: options.automaticUltimates,
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
     contributions: createBattleContributions(party.map(({ id }) => id)),
@@ -2562,7 +2566,7 @@ function fleeFromFear(fighter: Fighter, dt: number, rng: () => number, state: Sk
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
   fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
   // 달아나는 중에도 궁극기만은 나간다. 일반 공격은 나가지 않으므로 시계가 차도 평타 자리를 쓰지 않는다.
-  const autoUltimate = fighter.side === "enemy" || fighter.summonOwnerId !== null;
+  const autoUltimate = (!state.automaticUltimates && fighter.side === "enemy") || fighter.summonOwnerId !== null;
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
     if (target) {
@@ -9308,7 +9312,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
        * 가득 채우고도 영영 쓰지 못한다. 자동 궁극기 설정은 플레이어가 누를 수 있는 몸의
        * 이야기라 늑대의 행동을 끄지 않는다. 적 자동 궁극기와 같은 생존·기절·게이지 규칙을 지난다.
        */
-      const firedUltimate = (fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
+      const firedUltimate = ((!state.automaticUltimates && fighter.side === "enemy") || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
       strike(fighter, target, rng, state, events, firedUltimate);
       // 순환 걸음은 **행동 하나마다** 넘긴다. strike 안에서 넘기면 연격의 개별 적중과 광역
       // 처리기가 각자 한 걸음씩 삼켜, 한 번 휘두른 것이 두세 걸음을 지나간다.
@@ -9667,6 +9671,13 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step, rng, events);
+    if (state.automaticUltimates) {
+      // 화면의 배속·프레임·컷인 대기열과 무관하게 양쪽이 같은 함수/준비 조건을 쓴다.
+      // 소환수는 자기 평타 주기에 발동하는 기존 규칙을 유지한다.
+      for (const fighter of state.fighters) {
+        if (fighter.summonOwnerId === null && canFireUltimate(state, fighter)) events.push(...fireUltimate(state, fighter.id, rng));
+      }
+    }
     // 이 조각이 만든 타격에는 조각의 끝 시각을 못 박는다. 씬은 프레임이 끝난 뒤에 사건을 읽어
     // 자기 시계로는 언제 맞았는지 알 수 없다.
     for (let index = before; index < events.length; index += 1) {

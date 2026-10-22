@@ -1,3 +1,4 @@
+import { storyDifficultyOf } from "../core/storyDifficulty";
 import type Phaser from "phaser";
 import { pendingPostStory, pendingPreStory } from "../data/stageStories";
 import { session } from "../state/session";
@@ -16,14 +17,14 @@ function storyRoute(storyId: string, then: SceneRoute): SceneRoute {
 
 /** 이 관문의 편성 화면으로 가는 길. 초회 전 대사가 남았으면 그것을 먼저 거친다. */
 export function partyRoute(stageId: string): SceneRoute {
-  const pre = pendingPreStory(stageId, session.completedStoryIds);
+  const pre = storyDifficultyOf(stageId) === "easy" ? pendingPreStory(stageId, session.completedStoryIds) : undefined;
   const party: SceneRoute = { scene: "party" };
   return pre ? storyRoute(pre, party) : party;
 }
 
 /** 이긴 뒤 `then`으로 가기 전에 초회 후 대사를 거치는 길. */
 export function victoryRoute(stageId: string, then: SceneRoute): SceneRoute {
-  const post = pendingPostStory(stageId, session.completedStoryIds);
+  const post = storyDifficultyOf(stageId) === "easy" ? pendingPostStory(stageId, session.completedStoryIds) : undefined;
   return post ? storyRoute(post, then) : then;
 }
 

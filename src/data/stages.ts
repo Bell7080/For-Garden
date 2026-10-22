@@ -1,3 +1,5 @@
+import { difficultyStageRewards, storyBaseStageId, storyDifficultyGrowth, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
 import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
@@ -366,7 +368,18 @@ export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE
 
 /** 전투와 서브가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
 export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
-const STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
+/** 확장 난이도는 별도 ID로 기록해 기존 쉬움 진행과 초회 보상을 보존한다. */
+export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter(stage => stage.id.startsWith(`${difficulty}:`)); }
+const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as const).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
+  const growth = storyDifficultyGrowth(difficulty, base.chapter!, base.chapterOrder!);
+  const first = base.id === "1-1";
+  const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
+  return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
+    enemies: base.enemies.map(enemy => ({ ...tieredEnemy(enemy.relicId, growth.level, enemy.formationSlot), ...(enemy.elite ? { elite: true as const } : {}) })),
+    difficultyStatMultiplier: growth.multiplier, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+}));
+export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
+const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
 export const DAILY_RESTORATION = {
@@ -420,8 +433,10 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     // 편성 중 일부만 정예인 관문: 정예 몫은 그 개체들이 나눠 갖고, 나머지는 관문의 유형 그대로다.
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
-    // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
-    return { ...base, encounterRole: enemyRole, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
+    // 레벨·유형 뒤 확장 난이도의 공개 강화만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
+    const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
+    for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
+    return { ...base, encounterRole: enemyRole, stats };
   });
 }
 
@@ -438,3 +453,5 @@ for (const chapter of CHAPTERS) {
 /** 곁가지 스테이지와 일일 복원의 이름도 함께 등록한다. */
 for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
+
+for (const stage of EXTRA_STORY_STAGES) registerDataText(stage, "name", `stage.${storyBaseStageId(stage.id)}.name`);

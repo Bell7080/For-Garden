@@ -321,7 +321,19 @@ var LOBBY_KO = {
   "roulette.ended": "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "roulette.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
-  "roulette.intro": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!"
+  "roulette.intro": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!",
+  "storyDifficulty.title": "\uB09C\uC774\uB3C4 \uC120\uD0DD",
+  "storyDifficulty.easy": "\uC26C\uC6C0",
+  "storyDifficulty.normal": "\uBCF4\uD1B5",
+  "storyDifficulty.hard": "\uC5B4\uB824\uC6C0",
+  "storyDifficulty.intro": "\uD55C \uBC88 \uB354, \uB354 \uAE4A\uC740 \uC815\uC6D0\uC73C\uB85C.",
+  "storyDifficulty.easy.detail": "\uC2A4\uD1A0\uB9AC\uC640 \uD568\uAED8 \uC990\uAE30\uB294 \uCCAB \uD0D0\uC0AC",
+  "storyDifficulty.normal.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 25% \uC99D\uAC00",
+  "storyDifficulty.hard.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 50% \uC99D\uAC00",
+  "storyDifficulty.locked": "{difficulty} 4-10 \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29",
+  "storyDifficulty.unlocked.title": "\uC0C8\uB85C\uC6B4 \uB09C\uC774\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694!",
+  "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694.",
+  "storyDifficulty.boost": "\uC801 \uAC15\uD654 \xD7{multiplier}"
 };
 
 // src/i18n/ko/common.ts
@@ -3660,6 +3672,49 @@ function duelAttemptsLeft(state) {
 
 // src/server/combatAuthority.ts
 init_define_import_meta_env();
+
+// src/core/storyDifficulty.ts
+init_define_import_meta_env();
+var STORY_DIFFICULTY = {
+  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1 },
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5 }
+};
+function storyDifficultyOf(id) {
+  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
+}
+function storyBaseStageId(id) {
+  return id.replace(/^(normal|hard):/, "");
+}
+function storyStageId(difficulty, base) {
+  return difficulty === "easy" ? base : `${difficulty}:${base}`;
+}
+function storyDifficultyRequirement(difficulty) {
+  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
+}
+function isStoryDifficultyUnlocked(difficulty, cleared) {
+  const required = storyDifficultyRequirement(difficulty);
+  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
+}
+function newlyUnlockedStoryDifficulty(stageId, firstClear) {
+  if (!firstClear) return;
+  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
+}
+function storyDifficultyGrowth(difficulty, chapter, order) {
+  const index = (chapter - 1) * 10 + order - 1;
+  return difficulty === "normal" ? { level: Math.min(60, 47 + index), multiplier: 1 + Math.max(0, index - 9) / 150 } : { level: Math.min(60, 56 + Math.round(index * 0.5)), multiplier: 1.2 + (index - 9) / 75 };
+}
+function isStoryStageAvailable(stage, cleared) {
+  return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
+}
+function difficultyStageRewards(rewards, difficulty) {
+  const multiplier = STORY_DIFFICULTY[difficulty].reward;
+  return {
+    firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
+    repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
+    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: Math.round(reward.amount * multiplier) } : { ...reward })
+  };
+}
 
 // src/data/relics.ts
 init_define_import_meta_env();
@@ -16875,7 +16930,22 @@ var SIDE_BATTLE_STAGE = {
 };
 var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
 var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
-var STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
+var EXTRA_STORY_STAGES = ["normal", "hard"].flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
+  const growth = storyDifficultyGrowth(difficulty, base.chapter, base.chapterOrder);
+  const first = base.id === "1-1";
+  const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map((id) => storyStageId(difficulty, id));
+  return {
+    ...base,
+    id: storyStageId(difficulty, base.id),
+    prerequisiteStageIds,
+    enemies: base.enemies.map((enemy) => ({ ...tieredEnemy(enemy.relicId, growth.level, enemy.formationSlot), ...enemy.elite ? { elite: true } : {} })),
+    difficultyStatMultiplier: growth.multiplier,
+    rewards: difficultyStageRewards(base.rewards, difficulty),
+    situation: void 0
+  };
+}));
+var ALL_STORY_STAGES = [...STAGES, ...EXTRA_STORY_STAGES];
+var STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));
 var DAILY_RESTORATION = {
   id: "daily-restoration",
   name: "\uC77C\uC77C \uBCF5\uC6D0",
@@ -16906,7 +16976,9 @@ function getStageEnemies(stage) {
     const base = getRelic(enemy.relicId);
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count2 = enemy.elite === true ? soloElites : stage.enemies.length;
-    return { ...base, encounterRole: enemyRole, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough) };
+    const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count2, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
+    for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
+    return { ...base, encounterRole: enemyRole, stats };
   });
 }
 for (const chapter of CHAPTERS) {
@@ -16919,6 +16991,7 @@ for (const chapter of CHAPTERS) {
 }
 for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
+for (const stage of EXTRA_STORY_STAGES) registerDataText(stage, "name", `stage.${storyBaseStageId(stage.id)}.name`);
 
 // src/data/cakeOperation.ts
 init_define_import_meta_env();
@@ -18250,7 +18323,7 @@ function canCompleteTutorialStep(state, step2) {
   return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
 }
 function stageClearAdvancesTutorial(stage) {
-  return stage !== void 0 && stage.id !== "1-1" && !stage.sub;
+  return stage !== void 0 && stage.id !== "1-1" && !stage.id.includes(":") && !stage.sub;
 }
 function advanceTutorialOnStageClear(state) {
   const next = nextTutorialStep(state);
@@ -26162,7 +26235,7 @@ var SaveManager = class {
     const relicIds = /* @__PURE__ */ new Set([...PLAYABLE_RELICS.map(({ id }) => id), ...Object.values(LEGACY_SAVED_RELIC_ID_MAP)]);
     const modifierIds = new Set(PROFILE_MODIFIERS.map(({ id }) => id));
     const skinsById = new Map(RELIC_SKINS.map((skin) => [skin.id, skin]));
-    const stageIds = new Set(STAGES.map(({ id }) => id));
+    const stageIds = new Set(ALL_STORY_STAGES.map(({ id }) => id));
     const journalIds = new Set(INTERACTION_JOURNALS.map(({ id }) => id));
     const fail3 = (message) => {
       throw new SaveDataError(message);
@@ -32788,6 +32861,7 @@ var FakeServer = class {
       throw new GameApiError("STAGE_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
@@ -32815,6 +32889,7 @@ var FakeServer = class {
       throw new GameApiError("STAGE_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
@@ -32870,6 +32945,7 @@ var FakeServer = class {
       firstClear,
       cheesecakeEarned: cheesecakeGranted,
       firstClearRewards,
+      unlockedStoryDifficulty: newlyUnlockedStoryDifficulty(stageId, firstClear),
       staminaSpent,
       staminaRefunded: cost - staminaSpent,
       ...spent ? { playerExp: spent.playerExp } : {}
@@ -34987,6 +35063,7 @@ function prepareCombat(state, request, now, id) {
     }))
   );
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
+  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail2();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
   const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
   const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;

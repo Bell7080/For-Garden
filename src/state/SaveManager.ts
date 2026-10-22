@@ -7,7 +7,7 @@ import { createEmptyAchievementState, isValidAchievementState, normalizeAchievem
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { isRaidDifficulty } from "../data/raid";
-import { STAGES } from "../data/stages";
+import { ALL_STORY_STAGES as STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";

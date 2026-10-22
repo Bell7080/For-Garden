@@ -1,3 +1,4 @@
+import { isStoryStageAvailable, storyDifficultyOf } from "../core/storyDifficulty";
 import type { Session } from "../state/session";
 import { getRelic } from "../data/relics";
 import {
@@ -196,6 +197,7 @@ export function prepareCombat(
     })),
   );
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
+  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : undefined;
   const enemies = cake
     ? cakeOperationEnemies(cake)

@@ -138,7 +138,7 @@ export function battleFeatureToTeach(state: TutorialState): BattleTutorialFeatur
  * 입장·퇴장·재도전으로는 열리지 않고 클리어 확정만 연다 — 1-2에 들어갔다 나오기를 되풀이해 칸을 다 여는 길을 막는다.
  */
 export function stageClearAdvancesTutorial(stage: { id: string; sub?: boolean } | undefined): boolean {
-  return stage !== undefined && stage.id !== "1-1" && !stage.sub;
+  return stage !== undefined && stage.id !== "1-1" && !stage.id.includes(":") && !stage.sub;
 }
 
 /**

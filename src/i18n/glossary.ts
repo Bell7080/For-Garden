@@ -113,6 +113,7 @@ export function glossaryForm(id: GlossaryId, language: LanguageId): string | und
  */
 export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>> = {
   // 연구원은 플레이어를 가리키며, 확률형 뽑기 기능인 연구가 아니다.
+  "storyDifficulty.unlocked.body": ["research"],
   "duel.opponents.empty": ["research"],
   // ‘모두 이룬 렐릭’의 ‘이룬’은 동사 이루다의 활용형이며 장비 ‘룬’을 가리키지 않는다.
   "achievement.objective.perfectRelics": ["rune"],

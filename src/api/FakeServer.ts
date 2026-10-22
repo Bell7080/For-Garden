@@ -1,3 +1,4 @@
+import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
 import type { SpinRouletteResponse } from "./contracts";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
@@ -2147,6 +2148,7 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     let stage; try { stage = getStage(request.stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
+    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
     this.settleStaminaNow();
     const cost = CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
@@ -2175,6 +2177,7 @@ export class FakeServer implements GameApi {
     try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     // 완료 API는 전투 보상만 정산하며 스토리 완료는 StoryManager가 독점한다.
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
+    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
@@ -2231,6 +2234,7 @@ export class FakeServer implements GameApi {
     const staminaSpent = spent ? cost : 0;
     return {
       ...this.snapshot(), stageId, firstClear, cheesecakeEarned: cheesecakeGranted, firstClearRewards,
+      unlockedStoryDifficulty: newlyUnlockedStoryDifficulty(stageId, firstClear),
       staminaSpent, staminaRefunded: cost - staminaSpent, ...(spent ? { playerExp: spent.playerExp } : {}),
     };
   }

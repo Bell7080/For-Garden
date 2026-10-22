@@ -1,3 +1,4 @@
+import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -568,7 +569,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
-    return `${stage.id}  ${stage.name}`;
+    return `${t(`storyDifficulty.${storyDifficultyOf(stage.id)}`)} · ${storyBaseStageId(stage.id)}  ${stage.name}`;
   }
 
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */

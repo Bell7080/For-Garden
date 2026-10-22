@@ -1,3 +1,4 @@
+import { isStoryDifficultyUnlocked, storyDifficultyOf } from "../core/storyDifficulty";
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -15,7 +16,7 @@ import { playerExpToNext, STARTING_STAMINA } from "../core/playerLevel";
 import { lotExpiresAt, type ItemLot } from "../core/itemLots";
 import { DEFAULT_PROFILE_FRAME_ID } from "../data/profileFrames";
 import { BANNERS } from "../data/banners";
-import { STAGES } from "../data/stages";
+import { ALL_STORY_STAGES as STAGES } from "../data/stages";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
@@ -610,5 +611,5 @@ export function isStageUnlocked(stageId: string): boolean {
   // 스토리 완료 ID를 대응 노드 ID로 바꿔 전투/서사 간선도 같은 집합 판정기를 통과시킨다.
   const completedNodeIds = new Set(session.cleared);
   for (const stage of STAGES) if (stage.kind === "story" && session.completedStoryIds.has(stage.storyId)) completedNodeIds.add(stage.id);
-  return isStageUnlockedByProgress(STAGES, stageId, completedNodeIds);
+  return isStoryDifficultyUnlocked(storyDifficultyOf(stageId), session.cleared) && isStageUnlockedByProgress(STAGES, stageId, completedNodeIds);
 }

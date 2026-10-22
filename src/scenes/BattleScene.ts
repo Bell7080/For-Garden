@@ -1,3 +1,6 @@
+import { storyDifficultyOf } from "../core/storyDifficulty";
+import { storyStages } from "../data/stages";
+import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
 import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
 import packageInfo from "../../package.json";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -34,7 +37,7 @@ import {
 } from "../core/skirmish";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth, STAGES } from "../data/stages";
+import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
@@ -2834,6 +2837,8 @@ export class BattleScene extends Phaser.Scene {
       // 스테미나는 이긴 이 확정에서 빠졌다 — 그 경험치 영수증을 결과판이 꺼내도록 맡긴다.
       rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
+      if (result.unlockedStoryDifficulty) await openStoryDifficultyUnlocked(this, popups, result.unlockedStoryDifficulty);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const fighters = this.stageCompleteFighters();
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
@@ -2842,7 +2847,7 @@ export class BattleScene extends Phaser.Scene {
       const tutorialStep = tutorialManager.lobbyStep();
       const tutorialReturn = stage.id === "1-2" && (tutorialStep === "feed" || tutorialStep === "feedLevel") || stage.id === "1-5" && tutorialStep === "gift";
       const resultExit = tutorialReturn ? "lobby" : this.stageExit();
-      const upcoming = nextBattleStage(STAGES, stage.id, isStageUnlocked);
+      const upcoming = nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
           label: t("stageComplete.next"), primary: true, disabled: !canEnter,

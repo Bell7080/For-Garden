@@ -41,6 +41,12 @@ describe("일일 돌림판", () => {
     now = new Date("2026-10-22T00:00:00Z");
     expect(await api.getRouletteStatus()).toMatchObject({ used: 0, remaining: 1, bonusAvailable: true, bonusRemaining: 3 });
   });
+  it("기본 QA 광고 증명으로 해금한 직후 같은 서버에서 추가 회전을 지급한다", async () => {
+    const api = new FakeServer(createDefaultSession(), { latencyMs: 0, now: () => new Date("2026-10-21T12:00:00Z"), random: () => 0 });
+    await api.spinRoulette({ requestId: "free" });
+    await expect(api.unlockRouletteSpins({ requestId: "ad", verificationToken: `verified:${ROULETTE.adSlot}` })).resolves.toMatchObject({ remaining: 1, bonusRemaining: 2 });
+    await expect(api.spinRoulette({ requestId: "ad-spin" })).resolves.toMatchObject({ granted: { gold: 10000 }, status: { remaining: 0, bonusRemaining: 2 } });
+  });
   it("저장한 사용량을 재실행 뒤에도 유지하고 종료된 이벤트는 지급하지 않는다", async () => {
     const ledger = { date: "2026-10-21", claimsBySlot: { [ROULETTE.counter]: 4, [ROULETTE.adSlot]: 3 } };
     expect(rouletteStatus(ledger, new Date("2026-10-21T10:00Z"))).toMatchObject({ remaining: 0, bonusAvailable: false, bonusRemaining: 0 });

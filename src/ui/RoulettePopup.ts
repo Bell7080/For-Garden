@@ -149,7 +149,10 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
       adCount.setVisible(!hasSpin).setText(`${status.bonusRemaining}/${ROULETTE.adLimit}`);
     };
     const publish = (): void => { managerEvents.publish("wallet", { wallet: session.wallet }); void notificationManager.refresh().catch(() => undefined); };
-    const fail = (): void => { if (alive) { busy = false; note.setText(t("roulette.error")); refresh(); } };
+    const fail = (error: unknown): void => {
+      console.warn("돌림판 요청 실패", error);
+      if (alive) { busy = false; refresh(); note.setText(t("roulette.error")); }
+    };
     const nudgeMascot = (): void => {
       if (!mascot || motionPolicy(session.settings).nonEssentialDistanceFactor === 0) return;
       mascotMotion?.stop();
@@ -183,7 +186,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     async function doSpin(): Promise<void> {
       if (busy || !status.active || status.remaining <= 0) return;
       busy = true; refresh();
-      try { await requestSpin(); } catch { fail(); }
+      try { await requestSpin(); } catch (error) { fail(error); }
     }
     async function unlockAndSpin(): Promise<void> {
       if (busy || !status.active || status.remaining > 0 || !status.bonusAvailable) return;
@@ -196,7 +199,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
         unlockRequest = undefined; publish();
         if (!alive) return;
         await requestSpin();
-      } catch { fail(); } finally { releaseAdWait(); }
+      } catch (error) { fail(error); } finally { releaseAdWait(); }
     }
     refresh();
   });

@@ -26191,7 +26191,13 @@ var SaveManager = class {
     const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [], ...savedMissions?.lifetime && typeof savedMissions.lifetime === "object" ? { lifetime: Object.fromEntries(Object.entries(savedMissions.lifetime).filter(([, value]) => Number.isInteger(value) && value >= 0)) } : {} };
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     const savedAds = legacy.dailyAdRewards;
-    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot: savedAds?.claimsBySlot ?? {}, requestIds: savedAds?.requestIds ?? [] };
+    const claimsBySlot = savedAds?.claimsBySlot && typeof savedAds.claimsBySlot === "object" ? { ...savedAds.claimsBySlot } : {};
+    const currentRouletteClaims = claimsBySlot[ROULETTE.adSlot];
+    if (claimsBySlot[ROULETTE.legacyAdSlot] === 1 && (currentRouletteClaims === void 0 || Number.isInteger(currentRouletteClaims) && currentRouletteClaims >= 0 && currentRouletteClaims <= ROULETTE.adLimit)) {
+      claimsBySlot[ROULETTE.adSlot] = Math.max(currentRouletteClaims ?? 0, ROULETTE.adLimit);
+      delete claimsBySlot[ROULETTE.legacyAdSlot];
+    }
+    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot, requestIds: savedAds?.requestIds ?? [] };
     const savedExpedition = legacy.expedition;
     const ownedIds = Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds.filter((id) => typeof id === "string") : [];
     const rawLastParty = Array.isArray(savedExpedition?.lastParty) ? savedExpedition.lastParty : [];

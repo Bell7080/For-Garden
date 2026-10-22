@@ -510,7 +510,17 @@ export class SaveManager {
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // v16 이전 저장은 광고를 한 번도 받지 않은 상태에서 안전하게 시작한다.
     const savedAds = legacy.dailyAdRewards as Partial<SaveData["dailyAdRewards"]> | undefined;
-    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot: savedAds?.claimsBySlot ?? {}, requestIds: savedAds?.requestIds ?? [] };
+    const claimsBySlot = savedAds?.claimsBySlot && typeof savedAds.claimsBySlot === "object" ? { ...savedAds.claimsBySlot } : {};
+    // v0.324의 광고 한 번은 돌림판 세 번을 한꺼번에 열었다. 이후 슬롯을 1회씩 세는 키로
+    // 바꿨으므로, 이미 정상 수령한 구형 한 건만 새 키의 세 건으로 옮긴다. 옛 키를 그대로 두면
+    // 현행 허용 슬롯 검증이 저장 전체를 손상으로 판정해 로그인 직후 서버 진행 연결이 막힌다.
+    const currentRouletteClaims = claimsBySlot[ROULETTE.adSlot];
+    if (claimsBySlot[ROULETTE.legacyAdSlot] === 1
+      && (currentRouletteClaims === undefined || Number.isInteger(currentRouletteClaims) && currentRouletteClaims >= 0 && currentRouletteClaims <= ROULETTE.adLimit)) {
+      claimsBySlot[ROULETTE.adSlot] = Math.max(currentRouletteClaims ?? 0, ROULETTE.adLimit);
+      delete claimsBySlot[ROULETTE.legacyAdSlot];
+    }
+    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot, requestIds: savedAds?.requestIds ?? [] };
     // 원정 도입 전 저장은 기록과 진행 중 편성을 추측하지 않고 새 주간 0회로 시작한다.
     const savedExpedition = legacy.expedition as Partial<SaveData["expedition"]> | undefined;
     const ownedIds = Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds.filter((id): id is string => typeof id === "string") : [];

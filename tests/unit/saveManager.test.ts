@@ -610,6 +610,31 @@ describe("SaveManager 광고 상태 마이그레이션", () => {
     expect(new SaveManager(new MemoryStorage()).migrate(legacy).dailyAdRewards).toEqual({ date: "", claimsBySlot: {}, requestIds: [] });
   });
 
+  it("구형 돌림판 광고 1회를 현행 추가 회전 3회로 옮겨 기존 계정 저장을 불러온다", () => {
+    const storage = new MemoryStorage();
+    const legacy = validData();
+    legacy.dailyAdRewards = {
+      date: "2026-10-22",
+      claimsBySlot: { "roulette-spins": 4, "roulette-chances": 1 },
+      requestIds: ["legacy-roulette-ad"],
+    };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+    expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual({
+      date: "2026-10-22",
+      claimsBySlot: { "roulette-spins": 4, "roulette-spin": 3 },
+      requestIds: ["legacy-roulette-ad"],
+    });
+  });
+
+  it("구형 돌림판 슬롯의 실제 제한을 넘긴 조작 저장은 이관하지 않고 거부한다", () => {
+    const storage = new MemoryStorage();
+    const tampered = validData();
+    tampered.dailyAdRewards = { date: "2026-10-22", claimsBySlot: { "roulette-chances": 2 }, requestIds: [] };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tampered));
+    expect(() => new SaveManager(storage).load()).toThrow("일일 광고 수령 정보");
+  });
+
   /**
    * 치즈케이크 대작전 해금 단계(v36).
    *

@@ -541,7 +541,7 @@ export class BattleScene extends Phaser.Scene {
   private createBattle(): void {
     setDebugScene("battle");
     this.introBattleFlag = this.battleInput.mode === "stage"
-      && (this.battleInput.epilogueStoryId !== undefined || tutorialManager.next() === "ultimate");
+      && (this.battleInput.epilogueStoryId !== undefined || session.selectedStageId === "1-1" && (tutorialManager.next() === "ultimate" || !session.cleared.has("1-1")));
     this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag && this.stageTeachesTutorial() ? tutorialManager.featureToTeach() : undefined;
     this.featureSpotlight = undefined;
     this.featureTaught = false;
@@ -1683,7 +1683,7 @@ export class BattleScene extends Phaser.Scene {
     tutorial.done = true;
     this.profiles.find((profile) => profile.fighter.id === tutorial.fighterId)?.prefab.setDepth(0);
     this.lastStepAt = performance.now();
-    void tutorialManager.complete("ultimate");
+    // 조작 체험은 이 판에서만 기억한다. 영구 진행은 승리 저장과 함께 확정한다.
   }
 
   /**
@@ -1714,10 +1714,10 @@ export class BattleScene extends Phaser.Scene {
     this.lastStepAt = performance.now();
   }
 
-  /** 이 관문이 전투 조작을 알려 줄 자리인가: 아직 못 깬 본편 관문만이다(깬 관문·SUB·이벤트는 칸을 열지 못한다). */
+  /** 지정 관문에서만 안내한다. 이미 깼어도 멈춘 안내는 다시 체험할 수 있다. */
   private stageTeachesTutorial(): boolean {
     const stageId = session.selectedStageId;
-    if (!stageId || session.cleared.has(stageId)) return false;
+    if (!stageId || tutorialManager.battleStage() !== stageId) return false;
     try { return stageClearAdvancesTutorial(getStage(stageId)); } catch { return false; }
   }
 
@@ -2790,7 +2790,8 @@ export class BattleScene extends Phaser.Scene {
    * 아니고, 그 호출이 늦어도 판은 이미 떠 있어야 한다.
    */
   private finishStageDefeat(stage: ReturnType<typeof getBattleStage>): void {
-    void gameApi.completeStage(stage.id, false).catch(() => undefined);
+    const generation = this.combatGeneration;
+    const settled = gameApi.completeStage(stage.id, false).catch(() => undefined);
     // **진 판은 스테미나를 쓰지 않는다** — 입장이 확인만 해 둔 값이 그대로 남는다. 결과 확정을
     // 기다리지 않고 판을 먼저 세우므로 그 몫은 입장이 확인한 값 그대로다.
     const staminaRefunded = CONTENT_STAMINA_COSTS.normalStage;
@@ -2810,7 +2811,11 @@ export class BattleScene extends Phaser.Scene {
       replay: {
         label: t("stageComplete.replay"),
         disabled: session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage,
-        onPress: () => { chosen = true; this.replayContent({ content: "stage" }, () => startScene(this, exitTo)); },
+        onPress: () => {
+          chosen = true;
+          // 이전 패배 저장이 새 입장보다 늦게 도착해 입장 기록을 덮지 않게 한다.
+          void settled.then(() => { if (this.scene.isActive() && generation === this.combatGeneration) this.retryBattle(); });
+        },
       },
       staminaRefunded,
       growth: this.defeatGrowth("party", () => { chosen = true; }),

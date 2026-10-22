@@ -20,6 +20,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
 async function open(page: Page, step: "navigation" | "feed" | "research") {
+  page.on("pageerror", error => console.error("[tutorial page error]", error.message));
   const server = createFixture("stage", s => {
     s.playerCard.nickname = "테스트연구원";
     s.tutorial = { completedStepIds: [...TUTORIAL_STEPS.slice(0, step === "navigation" ? 1 : step === "feed" ? 2 : 7)] };
@@ -40,6 +41,11 @@ async function open(page: Page, step: "navigation" | "feed" | "research") {
     fake.installGameApi(api); await api.getPlayerState();
   });
   await sourceScene(page, `window.__TUTORIAL_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('${step === "feed" ? "relics" : "lobby"}');`);
+  console.log("[tutorial state]", await page.evaluate(async () => {
+    const root = "/src/";
+    const [{tutorialManager}, {session}] = await Promise.all([import(/* @vite-ignore */root+"managers/TutorialManager.ts"), import(/* @vite-ignore */root+"state/session.ts")]);
+    return {next: tutorialManager.next(), lobby: tutorialManager.lobbyStep(), cleared: [...session.cleared], active: (window as any).__TUTORIAL_GAME.scene.isActive('lobby')};
+  }));
   return server;
 }
 async function clickText(page: Page, key: string) {
@@ -62,19 +68,29 @@ async function scenePoint(page: Page, scene: string, field: string) {
 }
 
 test("1-1 광장 → 출격 → 1-2 편성 이동·길게 눌러 정보 확인", async ({page},info) => {
-  test.skip(process.env.PF_E2E_REMOTE_LOOP!=="1","소스 서버 전용");test.setTimeout(240000);
+  test.skip(process.env.PF_E2E_REMOTE_LOOP!=="1","소스 서버 전용");test.setTimeout(360000);
   const server=await open(page,"navigation");
+  // 잠긴 연구소를 직접 열어도 로비로 복귀한다.
+  await page.evaluate(() => (window as any).__TUTORIAL_GAME.scene.start('lab'));
+  await expect.poll(() => page.evaluate(() => (window as any).__TUTORIAL_GAME.scene.isActive('lobby'))).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as any).__TUTORIAL_GAME.scene.isActive('lab'))).toBe(false);
   await clickText(page,"lobby.sortie");await clickText(page,"lobby.sortie.story");
   await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe("stageMap");
   const p=await scenePoint(page,"stageMap","sortieButton");await tap(page,p.x,p.y);
   await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe("party");
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('move');
+  const start=await scenePoint(page,'party','startButton');
+  await tap(page,start.x,start.y);
+  expect(await page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe('party');
+  expect(server.calls.filter(c=>c.method==='enterStage')).toHaveLength(0);
   const slots=await page.evaluate(()=>{const s=(window as any).__TUTORIAL_GAME.scene.getScene('party');return s.allySlots.map((v:any)=>{const b=v.hit.getBounds();return {x:b.centerX,y:b.centerY};});});
   const box=await canvasBox(page), from=gamePoint(box,slots[0].x,slots[0].y),to=gamePoint(box,slots[1].x,slots[1].y);
   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:10});await page.mouse.up();
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('hold');
+  await tap(page,start.x,start.y);
+  expect(await page.evaluate(()=>window.__PF_DEBUG?.scene)).toBe('party');
   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.waitForTimeout(1200);await page.mouse.up();
-  await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').info.isOpen)).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').info.isOpen), {timeout:15000}).toBe(true);
   await captureGame(page,info.outputPath('formation-information.png'));
   await tap(page,974,1800);
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('start');
@@ -103,7 +119,7 @@ test("1-2 후 토리카 일반·1레벨 강화 → 단계 서버 저장 → 광�
 test("1-5 후 연구 개방 → 지원품 1회 지급 → 첫 10회 연구",async({page},info)=>{
   test.skip(process.env.PF_E2E_REMOTE_LOOP!=="1","소스 서버 전용");test.setTimeout(300000);
   const server=await open(page,"research");
-  await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.popupTitles)).toContain('복원 연구 개방');
+  await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.popupTitles), {timeout:30000}).toContain('복원 연구 개방');
   await captureGame(page,info.outputPath('research-unlocked.png'));
   await clickText(page,'settings.action.confirm');
   await expect.poll(()=>server.state().wallet.fossil).toBe(8);

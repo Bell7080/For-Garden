@@ -45,6 +45,7 @@ import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { contentOpen } from "../ui/contentLock";
 import { tutorialManager } from "../managers/TutorialManager";
 
 /**
@@ -142,6 +143,7 @@ export class LabScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (!contentOpen("lab")) { startScene(this, "lobby"); return; }
     setDebugScene("lab");
     exposeShowcasePreview((relicId) => void this.introduceRelic(relicId));
     // 열 배너가 목록에 없으면(다 쓴 한정 배너 등) 첫 배너로 선다.
@@ -226,15 +228,12 @@ export class LabScene extends Phaser.Scene {
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
     if (teachPull && this.banner.id === "welcome") {
-      this.time.delayedCall(700, () => {
-        if (!this.scene.isActive()) return;
-        const b = this.tenButton.getBounds();
-        this.pullSpotlight = new TutorialSpotlight(this, {
-          rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
-          onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"),
-        });
-        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
+      const b = this.tenButton.getBounds();
+      this.pullSpotlight = new TutorialSpotlight(this, {
+        rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
+        onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"),
       });
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
     }
   }
 

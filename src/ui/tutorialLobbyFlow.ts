@@ -21,7 +21,7 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
       const step = tutorialManager.lobbyStep();
       if (step === "feed" || step === "feedLevel") return nav.tabRect("relics");
       if (step === "pull") return nav.tabRect("lab");
-      if (tutorialManager.featureToTeach() && session.cleared.has("1-1")) return sortie.getBounds();
+      if (tutorialManager.next() !== "gift" || !session.cleared.has("1-5")) return sortie.getBounds();
       return undefined;
     },
     text: () => {
@@ -30,7 +30,7 @@ export function startLobbyTutorial(scene: Phaser.Scene, nav: BottomNav, popups: 
     },
   });
   const step = async (): Promise<void> => {
-    if (stopped || !scene.scene.isActive() || tutorialManager.next() !== "gift") return;
+    if (stopped || !scene.scene.isActive() || tutorialManager.lobbyStep() !== "gift") return;
     if (anyPopupOpen()) { scene.time.delayedCall(500, () => void step()); return; }
     if (!giftAnnounced) {
       giftAnnounced = true;

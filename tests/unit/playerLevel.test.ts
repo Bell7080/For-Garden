@@ -76,6 +76,9 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(contentUnlockLevel("friends")).toBe(4);
     expect(contentUnlockLevel("interaction")).toBe(5);
     expect(contentUnlockLevel("duel")).toBe(6);
+    expect(CONTENT_STAGE_UNLOCKS.lab).toBe("1-5");
+    expect(isContentUnlocked("lab", 60)).toBe(false);
+    expect(isContentUnlocked("lab", 1, true, new Set(["1-5"]))).toBe(true);
     expect(CONTENT_STAGE_UNLOCKS.archaeology).toBe("1-10");
     expect(isContentUnlocked("archaeology", 60)).toBe(false);
     expect(isContentUnlocked("archaeology", 1, true, new Set(["1-10"]))).toBe(true);

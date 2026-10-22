@@ -57,16 +57,18 @@ describe("스테이지 클리어가 여는 전투 조작", () => {
   it("은 오프닝 1-1·SUB·알 수 없는 관문의 클리어로는 열지 않는다", () => {
     expect(stageClearAdvancesTutorial({ id: "1-2" })).toBe(true);
     expect(stageClearAdvancesTutorial({ id: "1-1" })).toBe(false);
+    expect(stageClearAdvancesTutorial({ id: "2-1" })).toBe(false);
+    expect(advanceTutorialOnStageClear({ completedStepIds: ["ultimate"] }, "1-3").completedStepIds).toEqual(["ultimate"]);
     expect(stageClearAdvancesTutorial({ id: "1-8-sub", sub: true })).toBe(false);
     expect(stageClearAdvancesTutorial(undefined)).toBe(false);
   });
 
   it("은 한 번에 한 칸만 앞으로 가고 전투 칸이 끝나면 멈춘다", () => {
-    const one = advanceTutorialOnStageClear({ completedStepIds: ["ultimate"] });
+    const one = advanceTutorialOnStageClear({ completedStepIds: ["ultimate"] }, "1-2");
     expect(one.completedStepIds).toEqual(["ultimate", "auto"]);
     const last = { completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] as const };
-    expect(advanceTutorialOnStageClear({ completedStepIds: [...last.completedStepIds] }).completedStepIds).toEqual(last.completedStepIds);
-    expect(advanceTutorialOnStageClear(createEmptyTutorialState())).toEqual(createEmptyTutorialState());
+    expect(advanceTutorialOnStageClear({ completedStepIds: [...last.completedStepIds] }, "1-5").completedStepIds).toEqual(last.completedStepIds);
+    expect(advanceTutorialOnStageClear(createEmptyTutorialState(), "1-2")).toEqual(createEmptyTutorialState());
   });
 });
 

@@ -22,3 +22,26 @@ it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대�
   options.onConfirm();
   expect(goRoute).toHaveBeenCalledWith(scene, { scene: "stageStory", data: { stage: id, then: { scene: "lobby" } } });
 });
+
+
+it.each([true, false])("패배 저장이 끝나야 재도전하며 떠난 화면에서는 시작하지 않는다: active=%s", async active => {
+  let options: any, settle!: () => void;
+  const saved = new Promise<void>(resolve => { settle = resolve; });
+  const retryBattle = vi.fn();
+  const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
+    Phaser: { Scene: class {} }, gameApi: { completeStage: () => saved },
+    session: { wallet: { stamina: 100 } }, CONTENT_STAMINA_COSTS: { normalStage: 5 },
+    PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },
+    t: (key: string) => key,
+  });
+  const scene = Object.assign(Object.create(Battle.prototype), {
+    scene: { isActive: () => active }, combatGeneration: 1, stageExit: () => "lobby", retryBattle,
+    defeatGrowth: () => undefined, stageCompleteFighters: () => [], featureOpen: () => false,
+  });
+  scene.finishStageDefeat({ id: "1-1" });
+  options.replay.onPress();
+  expect(retryBattle).not.toHaveBeenCalled();
+  settle();
+  await saved; await Promise.resolve();
+  expect(retryBattle).toHaveBeenCalledTimes(active ? 1 : 0);
+});

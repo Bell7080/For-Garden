@@ -29,7 +29,7 @@ export function navLabel(key: NavKey): string {
 }
 
 /** 탭이 레벨로 잠기는 콘텐츠. 숨기지 않고 자물쇠를 건 채로 남긴다 — 줄에 있어야 할 자리가 비면 화면이 덜 만든 것으로 읽힌다. */
-const NAV_CONTENT: Partial<Record<NavKey, ContentId>> = { archaeology: "archaeology" };
+const NAV_CONTENT: Partial<Record<NavKey, ContentId>> = { lab: "lab", archaeology: "archaeology" };
 
 export const NAV_TOP = BASE_HEIGHT - 180;
 

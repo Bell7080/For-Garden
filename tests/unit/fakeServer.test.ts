@@ -452,6 +452,45 @@ describe("FakeServer", () => {
     expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "feed", "feedLevel", "presentation"]);
   });
 
+  it("오프닝 패배는 진행을 남기지 않고 승리와 함께 궁극기 안내를 저장한다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: [] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("1-1", false);
+    expect(state.tutorial.completedStepIds).toEqual([]);
+    await server.completeStage("1-1", true);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate"]);
+  });
+
+  it("멈춘 튜토리얼은 지정 관문 재도전으로 복구하고 2-1이나 패배로는 진행하지 않는다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: ["ultimate"] };
+    state.cleared.add("1-2");
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("2-1", true);
+    await server.completeStage("1-2", false);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate"]);
+    await server.completeStage("1-2", true);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate", "auto"]);
+  });
+
+  it("1-5 전에는 연구와 지원품 지급을 막고 클리어 후 8개를 한 번만 준다", async () => {
+    const state = makeSession(0);
+    state.tutorial = { completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(server.pullRelics({ bannerId: "welcome", count: 10 })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    expect(state.wallet.fossil).toBe(0);
+    await server.completeStage("1-5", false);
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.completeStage("1-5", true);
+    const stageFossil = state.wallet.fossil;
+    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toEqual({ fossil: 8 });
+    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toBeUndefined();
+    expect(state.wallet.fossil).toBe(stageFossil + 8);
+    await server.pullRelics({ bannerId: "welcome", count: 10 });
+    expect(state.wallet.fossil).toBe(stageFossil);
+    expect(state.tutorial.completedStepIds.at(-1)).toBe("pull");
+  });
+
   it("첫 승리는 미리보기와 같은 초회 보상 전부를 주고, 룬은 보여 준 자리로 발급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
     const expected = stageFirstClearRewards(getBattleStage("1-5"));
@@ -612,7 +651,7 @@ describe("FakeServer", () => {
     expect(state.dailyContent).toMatchObject({ date: "2026-08-21", restorationEntries: 1 });
   });
   it("첫 복원 연구는 10연만 받고 화석 8개를 쓰며, 누적 50회를 넘기지 않는다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
     // 1회는 받지 않는다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
     await expect(server.pullRelics({ bannerId: "welcome", count: 1 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
@@ -629,7 +668,7 @@ describe("FakeServer", () => {
   });
 
   it("첫 복원 연구는 50회 안에 SSR을 한 장 확정하고, 그 SSR은 네 종 중 하나다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     // 0.9는 늘 회색이라 자연 SSR이 없다 — 50번째에 천장이 SSR을 강제한다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
     const ssr: string[] = [];
@@ -641,7 +680,7 @@ describe("FakeServer", () => {
   });
 
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
 
     const response = await server.pullRelics({ bannerId: "fossil", count: 1 });
@@ -654,7 +693,7 @@ describe("FakeServer", () => {
   });
 
   it("최초 획득의 성장 레코드를 같은 처리에서 만들고 같은 10연 중복을 누적한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     // fossil 배너에서 RNG 0은 rex만 뽑으므로 미보유로 만들어 순차 획득을 검증한다.
     state.owned.delete("rex");
     delete state.relicProgress.rex;
@@ -670,7 +709,7 @@ describe("FakeServer", () => {
   });
 
   it("렐릭과 회색 재화가 섞인 10연을 순서대로 지급하고 지갑 상한을 적용한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     state.wallet.gold = 999_999_999 - 5;
     const rolls = [0.9, 0, 0, ...Array(40).fill(0)];
     let index = 0;
@@ -682,7 +721,7 @@ describe("FakeServer", () => {
   });
 
   it("저장 단위가 실패하면 비용·보상·천장을 메모리에 부분 반영하지 않는다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const before = { wallet: { ...state.wallet }, pity: { ...state.gachaPityByGroup } };
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     // 실제 저장 장애와 같은 위치에서 실패시켜 persist 성공 이후에만 커밋한다는 계약을 검증한다.
@@ -693,7 +732,7 @@ describe("FakeServer", () => {
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {
-    const state = makeSession(0);
+    const state = makeSession(0); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0 });
 
     await expect(server.pullRelics({ bannerId: "fossil", count: 1 })).rejects.toMatchObject({
@@ -758,7 +797,7 @@ describe("FakeServer", () => {
   });
 
   it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {
-    const state = makeSession(); state.wallet.cheesecake = 20;
+    const state = makeSession(); state.cleared.add("1-5"); state.wallet.cheesecake = 20;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await server.pullRelics({ bannerId: "fossil", count: 1 });
     await server.feedRelic("torika", 1);
@@ -1512,6 +1551,7 @@ describe("첫 플레이 튜토리얼 칸", () => {
   const make = (done: string[], fossil = 0): FakeServer => {
     const state = makeSession(fossil);
     state.tutorial = { completedStepIds: done as never };
+    state.cleared.add("1-5");
     return new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
   };
   const ORDER = ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"];

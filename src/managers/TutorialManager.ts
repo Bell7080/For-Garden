@@ -1,7 +1,7 @@
 import type { CompleteTutorialStepResponse, GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import {
-  battleFeatureOpen, battleFeatureToTeach, isTutorialStepDone, lobbyTutorialStep, nextTutorialStep, shouldShowContentIntro, TUTORIAL_STEPS,
+  tutorialBattleStage, battleFeatureOpen, battleFeatureToTeach, isTutorialStepDone, lobbyTutorialStep, nextTutorialStep, shouldShowContentIntro, TUTORIAL_STEPS,
   type BattleTutorialFeature, type ContentIntroId, type TutorialStepId,
 } from "../core/tutorial";
 import { createEmptyTutorialState } from "../core/tutorial";
@@ -28,8 +28,17 @@ export class TutorialManager {
   /** 이번 전투에서 새로 열어 알려 줄 조작. */
   featureToTeach(): BattleTutorialFeature | undefined { return battleFeatureToTeach(this.tutorial); }
 
+  battleStage(): string | undefined {
+    if (this.next() !== undefined && !this.state.cleared.has("1-1")) return "1-1";
+    return tutorialBattleStage(this.tutorial);
+  }
+
   /** 로비가 이어서 안내할 칸(도감 급여 · 선물 · 연구소). */
-  lobbyStep(): "feed" | "feedLevel" | "gift" | "pull" | undefined { return lobbyTutorialStep(this.tutorial); }
+  lobbyStep(): "feed" | "feedLevel" | "gift" | "pull" | undefined {
+    const step = lobbyTutorialStep(this.tutorial);
+    const required = step === "feed" || step === "feedLevel" ? "1-2" : "1-5";
+    return this.state.cleared.has(required) ? step : undefined;
+  }
 
   /** 이 콘텐츠의 첫 방문 안내를 지금 띄울 차례인가(첫 플레이 튜토리얼을 마쳤고 아직 안 본 것). */
   shouldShowIntro(id: ContentIntroId): boolean { return shouldShowContentIntro(this.tutorial, id); }

@@ -70,7 +70,7 @@ import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend } from "./guildContracts";
 import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
-import { nextTutorialStep, advanceTutorialOnStageClear, stageClearAdvancesTutorial, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
+import { nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
@@ -2033,6 +2033,7 @@ export class FakeServer implements GameApi {
       throw new GameApiError("INVALID_PULL_COUNT", "연구 횟수는 1회 또는 10회여야 합니다.");
     }
 
+    if (!isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared)) throw new GameApiError("INVALID_STATE", "1-5 클리어 후 연구소가 열립니다.");
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "존재하지 않는 배너입니다.");
     const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
@@ -2226,9 +2227,9 @@ export class FakeServer implements GameApi {
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
       victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
     const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
-    // 튜토리얼 전투 조작은 **관문의 첫 클리어마다 한 칸씩** 열린다 — 입장·퇴장으로는 열리지 않는다.
+    // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
-    const nextTutorial = firstClear && !owningEvent && stageClearAdvancesTutorial(stage) ? advanceTutorialOnStageClear(currentTutorial) : currentTutorial;
+    const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
     this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress; this.state.missions = nextMissions;
     this.state.playerResearch = base.playerResearch; this.state.itemInventory = base.itemInventory; this.state.runeInventory = nextRunes;
@@ -3325,6 +3326,7 @@ export class FakeServer implements GameApi {
     const current = normalizeTutorialState(this.state.tutorial);
     if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
     if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "앞 단계를 먼저 마쳐야 합니다.");
+    if (request.stepId === "gift" && !this.state.cleared.has("1-5")) throw new GameApiError("INVALID_STATE", "1-5 클리어 후 연구 지원품을 받을 수 있습니다.");
     const tutorial: TutorialState = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
     const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;

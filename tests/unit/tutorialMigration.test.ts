@@ -29,7 +29,7 @@ describe("저장 v50 튜토리얼 이전과 지원품 지급", () => {
     expect(saves.parse(saves.exportData(state)).tutorial?.completedStepIds).toEqual(["ultimate", "auto", "feed"]);
   });
   it("첫 연구 완료는 비용·획득 결과와 함께 저장되어 추가 완료 요청이 필요 없다", async () => {
-    const state = createDefaultSession(); state.wallet.fossil = 8;
+    const state = createDefaultSession(); state.wallet.fossil = 8; state.cleared.add("1-5");
     state.tutorial = { completedStepIds: [...TUTORIAL_STEPS.slice(0, -1)] };
     const server = new FakeServer(state, { latencyMs: 0, random: () => .5 });
     await server.pullRelics({ bannerId: "welcome", count: 10 });
@@ -39,7 +39,7 @@ describe("저장 v50 튜토리얼 이전과 지원품 지급", () => {
     expect(new SaveManager().parse(saved).tutorial?.completedStepIds).toEqual(TUTORIAL_STEPS);
   });
   it("연구 저장이 실패하면 튜토리얼·지갑·획득을 모두 이전 상태로 둔다", async () => {
-    const state = createDefaultSession(); state.wallet.fossil = 8;
+    const state = createDefaultSession(); state.wallet.fossil = 8; state.cleared.add("1-5");
     state.tutorial = { completedStepIds: [...TUTORIAL_STEPS.slice(0, -1)] };
     const server = new FakeServer(state, { latencyMs: 0, random: () => .5 });
     (server as any).persist = () => { throw Error("save failed"); };

@@ -13,7 +13,7 @@ import { COLOR, textStyle } from "./theme";
 export function contentNameKey(id: ContentId): TextKey {
   const keys: Record<ContentId, TextKey> = {
     excavation: "excavation.title", interaction: "interaction.title", cakeOperation: "cake.title", bounty: "bounty.title",
-    expedition: "expedition.entry", raid: "raid.title", duel: "lobby.duel", archaeology: "nav.archaeology",
+    expedition: "expedition.entry", raid: "raid.title", duel: "lobby.duel", archaeology: "nav.archaeology", lab: "nav.lab",
     shop: "lobby.rail.shop", trade: "lobby.rail.trade", friends: "rail.friends", guild: "rail.guild",
   };
   return keys[id];

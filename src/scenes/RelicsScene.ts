@@ -249,7 +249,7 @@ export class RelicsScene extends Phaser.Scene {
       if (tutorialManager.next() === (mode === "normal" ? "feed" : "feedLevel")) void complete();
     };
     followTutorialTarget(this, {
-      enabled: () => !stopped,
+      enabled: () => !stopped && (returnToLobby || this.info.isOpen),
       rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
       text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
       onSkip: () => { if (returnToLobby) { stopped = true; return; } void complete(); },

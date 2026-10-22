@@ -354,6 +354,7 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
     const continueEntry = (): void => {
       if (!this.scene.isActive()) return;
+      if (tutorialManager.lobbyStep() !== undefined) this.returnMenu = undefined;
       if (this.returnMenu === "sortie") this.openSortieMenu(true);
       else if (this.returnMenu === "duel") this.openPvpMenu(true);
       else if (this.returnMenu === "event") this.openEvents(true);
@@ -378,7 +379,7 @@ export class LobbyScene extends Phaser.Scene {
         managerEvents.publish("publicProfile", { profile: playerProfileDisplay(session, profileModifierManager.equipped()) });
         continueEntry();
       }, true);
-    } else continueEntry();
+    } else this.time.delayedCall(0, continueEntry);
 
     // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
@@ -694,7 +695,7 @@ export class LobbyScene extends Phaser.Scene {
           bindNotificationDot(this, button, { x: entry.width / 2 - 22, y: -entry.height / 2 + 22 }, listener => notificationManager.subscribe(key, listener));
         }
         if (entry.label === t("lobby.sortie.story")) followTutorialTarget(this, {
-          enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.featureToTeach() !== undefined,
+          enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.next() !== undefined,
           rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"),
         });
         // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.

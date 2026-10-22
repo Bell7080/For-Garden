@@ -17178,12 +17178,6 @@ function isContentIntroId(value) {
 function isContentIntroSeen(state, id) {
   return state.seenIntroIds?.includes(id) ?? false;
 }
-var BATTLE_FEATURE_STEP = {
-  speed: "speed",
-  auto: "auto",
-  presentation: "presentation",
-  contribution: "contribution"
-};
 var TUTORIAL_REWARDS = {
   // 첫 복원 연구(배너 `welcome`)는 10연 전용이고 화석 8개가 든다 — 정확히 한 번 돌릴 몫이다.
   gift: { fossil: 8 }
@@ -17228,13 +17222,16 @@ function nextTutorialStep(state) {
 function canCompleteTutorialStep(state, step2) {
   return isTutorialStepDone(state, step2) || nextTutorialStep(state) === step2;
 }
-function stageClearAdvancesTutorial(stage) {
-  return stage !== void 0 && stage.id !== "1-1" && !stage.id.includes(":") && !stage.sub;
-}
-function advanceTutorialOnStageClear(state) {
+var TUTORIAL_BATTLE_STAGES = {
+  ultimate: "1-1",
+  auto: "1-2",
+  presentation: "1-3",
+  speed: "1-4",
+  contribution: "1-5"
+};
+function advanceTutorialOnStageClear(state, stageId) {
   const next = nextTutorialStep(state);
-  const isBattleStep = next !== void 0 && Object.values(BATTLE_FEATURE_STEP).includes(next);
-  return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
+  return next !== void 0 && TUTORIAL_BATTLE_STAGES[next] === stageId ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
 }
 function migrateTutorialV50(value) {
   const raw = value;
@@ -28579,7 +28576,7 @@ var CONTENT_UNLOCKS = [
   { id: "raid", level: 8 },
   { id: "expedition", level: 9 }
 ];
-var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
+var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10" };
 var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
 var CONTENT_LEVEL_GATES_ENABLED = true;
 function contentUnlockLevel(id) {
@@ -33194,6 +33191,7 @@ var FakeServer = class {
     if (request.count !== 1 && request.count !== 10) {
       throw new GameApiError("INVALID_PULL_COUNT", "\uC5F0\uAD6C \uD69F\uC218\uB294 1\uD68C \uB610\uB294 10\uD68C\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
     }
+    if (!isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared)) throw new GameApiError("INVALID_STATE", "1-5 \uD074\uB9AC\uC5B4 \uD6C4 \uC5F0\uAD6C\uC18C\uAC00 \uC5F4\uB9BD\uB2C8\uB2E4.");
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uBC30\uB108\uC785\uB2C8\uB2E4.");
     const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
@@ -33367,7 +33365,7 @@ var FakeServer = class {
     ]));
     const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
-    const nextTutorial = firstClear && !owningEvent && stageClearAdvancesTutorial(stage) ? advanceTutorialOnStageClear(currentTutorial) : currentTutorial;
+    const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
     this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });
     this.state.cleared = nextCleared;
     this.state.wallet = nextWallet;
@@ -34494,6 +34492,7 @@ var FakeServer = class {
     const current = normalizeTutorialState(this.state.tutorial);
     if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
     if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "\uC55E \uB2E8\uACC4\uB97C \uBA3C\uC800 \uB9C8\uCCD0\uC57C \uD569\uB2C8\uB2E4.");
+    if (request.stepId === "gift" && !this.state.cleared.has("1-5")) throw new GameApiError("INVALID_STATE", "1-5 \uD074\uB9AC\uC5B4 \uD6C4 \uC5F0\uAD6C \uC9C0\uC6D0\uD488\uC744 \uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     const tutorial = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
     const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;

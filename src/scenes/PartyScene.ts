@@ -327,7 +327,7 @@ export class PartyScene extends Phaser.Scene {
       fontSize: 44,
       onClick: async () => {
         // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-        if (this.isEnteringBattle || formationMembers(this.picked).length !== 3) return;
+        if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || formationMembers(this.picked).length !== 3) return;
         this.isEnteringBattle = true;
         this.startButton.setEnabled(false);
 

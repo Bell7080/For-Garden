@@ -133,22 +133,25 @@ export function battleFeatureToTeach(state: TutorialState): BattleTutorialFeatur
   return (Object.keys(BATTLE_FEATURE_STEP) as BattleTutorialFeature[]).find((feature) => BATTLE_FEATURE_STEP[feature] === next);
 }
 
-/**
- * 이 관문의 **첫 클리어**가 전투 조작 칸을 열 수 있나. 오프닝 1-1(궁극기 칸이 따로 연다)·SUB·이벤트 관문은 아니다.
- * 입장·퇴장·재도전으로는 열리지 않고 클리어 확정만 연다 — 1-2에 들어갔다 나오기를 되풀이해 칸을 다 여는 길을 막는다.
- */
-export function stageClearAdvancesTutorial(stage: { id: string; sub?: boolean } | undefined): boolean {
-  return stage !== undefined && stage.id !== "1-1" && !stage.id.includes(":") && !stage.sub;
+/** 전투 안내는 지정된 쉬움 관문에서만 진행한다. 재도전으로 멈춘 안내를 복구할 수 있다. */
+export const TUTORIAL_BATTLE_STAGES: Readonly<Partial<Record<TutorialStepId, string>>> = {
+  ultimate: "1-1", auto: "1-2", presentation: "1-3", speed: "1-4", contribution: "1-5",
+};
+
+export function tutorialBattleStage(state: TutorialState): string | undefined {
+  const next = nextTutorialStep(state);
+  return next === undefined ? undefined : TUTORIAL_BATTLE_STAGES[next];
 }
 
-/**
- * 관문을 처음 깼을 때 한 칸만 앞으로 간다. 지금 차례가 전투 조작 칸일 때만 열고 아니면 그대로 돌려준다.
- * 한 번에 하나라서 여러 칸이 같은 클리어로 함께 열리지 않는다.
- */
-export function advanceTutorialOnStageClear(state: TutorialState): TutorialState {
+export function stageClearAdvancesTutorial(stage: { id: string; sub?: boolean } | undefined): boolean {
+  return stage !== undefined && !stage.sub && Object.entries(TUTORIAL_BATTLE_STAGES).some(([step, id]) => step !== "ultimate" && id === stage.id);
+}
+
+/** 승리한 지정 관문에서만 한 칸 진행한다. 패배·다른 관문·반복 보상은 진행 조건을 대신하지 않는다. */
+export function advanceTutorialOnStageClear(state: TutorialState, stageId: string): TutorialState {
   const next = nextTutorialStep(state);
-  const isBattleStep = next !== undefined && (Object.values(BATTLE_FEATURE_STEP) as TutorialStepId[]).includes(next);
-  return isBattleStep ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
+  return next !== undefined && TUTORIAL_BATTLE_STAGES[next] === stageId
+    ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
 }
 
 /** 광장에서 이어 갈 강화·연구 안내 칸(로비가 안내를 시작할 때). */

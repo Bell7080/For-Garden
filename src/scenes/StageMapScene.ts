@@ -11,7 +11,7 @@ import { t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import type { StageDef } from "../core/types";
 import { setDebugScene } from "../debug";
-import { CHAPTERS, getStageEnemies, stageEnemyGrowth } from "../data/stages";
+import { CHAPTERS, getBattleStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { latestUnlockedStage } from "../core/stageProgress";
 import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { storyManager } from "../managers/StoryManager";
@@ -161,7 +161,9 @@ export class StageMapScene extends Phaser.Scene {
     this.enemyPopups = new PopupLayer(this, 2200);
     this.info = new EnemyInfoPopup(this, this.enemyPopups);
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
-    const latest = this.latestUnlocked();
+    const tutorialStage = tutorialManager.battleStage();
+    if (tutorialStage) this.difficulty = "easy";
+    const latest = tutorialStage ? getBattleStage(tutorialStage) : this.latestUnlocked();
     this.currentChapter = latest.chapter ?? 1;
     this.buildMap();
     this.enableDragScroll();
@@ -172,7 +174,7 @@ export class StageMapScene extends Phaser.Scene {
     playSceneEntrance(this);
     showContentIntro(this, "stageMap");
     followTutorialTarget(this, {
-      enabled: () => tutorialManager.next() === "auto" && !session.cleared.has("1-2"),
+      enabled: () => tutorialManager.battleStage() !== undefined,
       blocked: () => this.enemyPopups.isOpen,
       rect: () => this.sortieButton.getBounds(), text: () => t("tutorial.stage.enter"),
     });
@@ -202,7 +204,9 @@ export class StageMapScene extends Phaser.Scene {
   private changeDifficulty(difficulty: StoryDifficulty): void {
     if (!isStoryDifficultyUnlocked(difficulty, session.cleared) || difficulty === this.difficulty) return;
     this.difficulty = difficulty;
-    const latest = this.latestUnlocked();
+    const tutorialStage = tutorialManager.battleStage();
+    if (tutorialStage) this.difficulty = "easy";
+    const latest = tutorialStage ? getBattleStage(tutorialStage) : this.latestUnlocked();
     this.currentChapter = latest.chapter ?? 1;
     this.enemyPreview.dismiss(); this.storyPreview.dismiss();
     this.tweens.killTweensOf(this.map);

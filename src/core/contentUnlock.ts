@@ -10,7 +10,7 @@
  * 보이지 않고(열릴 때 자물쇠가 터지며 나타난다), 고고학 탭과 출격 안의 입구는 자물쇠가 걸린 채
  * 남는다. QA는 설정의 「레벨 만렙 · 모두 개방」으로 한 번에 연다.
  */
-export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends" | "guild";
+export type ContentId = "lab" | "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends" | "guild";
 
 export interface ContentUnlock { id: ContentId; level: number; }
 
@@ -18,7 +18,7 @@ export interface ContentUnlock { id: ContentId; level: number; }
  * 여는 순서이자 레벨. 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽히지만, **한 쌍으로 읽히는 콘텐츠는 같은 레벨에 함께 연다**
  * (상점+무역 — 둘 다 재화를 쓰는 곳, 대작전+현상수배 — 둘 다 일일 던전. 두 쌍이 3레벨에 함께 선다).
  *
- * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 연구소(뽑기), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
+ * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
  * 수집형 RPG의 첫 몇 분은 「스토리 → 뽑기 → 육성 → 임무」 한 바퀴가 전부라 그 고리에 드는 것은 닫지 않는다.
  *
  * 차례의 기준은 「그 콘텐츠가 필요한 재화·이해가 쌓이는 때」다.
@@ -48,7 +48,7 @@ export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
 ] as const;
 
 /** 레벨이 아니라 **스테이지 클리어**로 열리는 콘텐츠. 그 스테이지를 깨는 순간 열린다. */
-export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { archaeology: "1-10" };
+export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { lab: "1-5", archaeology: "1-10" };
 
 /** 개방 조건이 있는 모든 콘텐츠. */
 export const ALL_GATED_CONTENT: readonly ContentId[] = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...(Object.keys(CONTENT_STAGE_UNLOCKS) as ContentId[])];

@@ -745,6 +745,8 @@ export interface FighterInitialState { relicId: string; currentHp: number; alive
 export interface SkirmishRelicResult { relicId: string; currentHp: number; alive: boolean }
 
 export interface CreateSkirmishOptions {
+  playerPositions?: readonly { x: number; y: number }[];
+  enemyPositions?: readonly { x: number; y: number }[];
   automaticUltimates?: boolean;
   playerInitialStates?: readonly FighterInitialState[];
   augmentEffects?: readonly ExpeditionAugmentEffect[];
@@ -1514,8 +1516,11 @@ export function createSkirmish(
   if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("아군은 1~5기를 지원합니다.");
   if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
-  const playerSpots = spawnSpots(arena, "player", playerDefs.length);
-  const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
+  const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
+  const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
+  for (const [spots, count] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]] as const) {
+    if (spots && (spots.length !== count || spots.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
+  }
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
   const players = playerDefs.map((def, i) => {
     const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, 1, options.augmentEffects);

@@ -89,6 +89,7 @@ export function createSupabaseStore(env: Env) {
     async guildCall(playerId: string, method: string, actor: unknown, args: unknown[], requestId: string | null) {
       return rpc("server_guild_call", { p_player: playerId, p_method: method, p_actor: actor, p_args: args, p_request: requestId });
     },
+    async arenaRpc(name: string, args: Record<string, unknown>) { return rpc(name, args); },
     async socialCall(playerId: string, method: string, args: unknown[], requestId?: string) {
       return rpc("server_social_call", { p_player: playerId, p_method: method, p_args: args, p_request: requestId ?? null });
     },

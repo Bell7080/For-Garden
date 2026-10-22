@@ -47,6 +47,7 @@ declare
     'public.support_limits',
     'public.server_public_profiles',
     'public.server_friend_edges',
+    'public.arena_signals', 'public.arena_ratings', 'public.arena_rooms', 'public.arena_seats', 'public.arena_queue', 'public.arena_receipts',
     'public.server_friend_favorites',
     'public.server_social_wallets',
     'public.server_rate_windows',

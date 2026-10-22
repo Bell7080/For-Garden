@@ -189,7 +189,11 @@ export class FakeServer implements GameApi {
   private readonly persistSession?: (next: Session) => void;
   private readonly guildBackend: GuildBackend;
   private readonly guildUserId: string;
-  private readonly notificationScheduler?: Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification">;
+  private readonly injectedNotificationScheduler?: Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification">;
+  /** Resolve after module initialization: SettingsManager also imports the server API. */
+  private get notificationScheduler(): Pick<typeof settingsManager, "scheduleNotification" | "cancelNotification"> | undefined {
+    return this.injectedNotificationScheduler ?? (this.state === session ? settingsManager : undefined);
+  }
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   private readonly receiptResults = new Map<string, VerifyPurchaseReceiptResponse>();
   private readonly verifiedTransactions = new Map<string, VerifyPurchaseReceiptResponse>();
@@ -266,7 +270,7 @@ export class FakeServer implements GameApi {
       }
     }
     this.raidContext = options.raidContext;
-    this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : undefined);
+    this.injectedNotificationScheduler = options.notificationScheduler;
     // 고정 환영 선물·업데이트 공지와 우편 표본은 모두 QA 전용이다. 실제 지급 우편은 서버에서 받는다.
     this.mails = QA_TOOLS_ENABLED ? [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [

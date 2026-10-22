@@ -15,3 +15,10 @@ describe("PvP selection contract", () => {
     expect(PVP_RETURN_SCENE).toEqual({ preview: "lobby" });
   });
 });
+
+it('opens only the existing duel and the live arena with shared entrance artwork',async()=>{
+ const {PVP_ACTIVE_MODES,PVP_MODE_SELECT_ENABLED}=await import('../../src/data/pvpModes');
+ expect(PVP_MODE_SELECT_ENABLED).toBe(true);
+ expect(PVP_ACTIVE_MODES.map(m=>m.id)).toEqual(['arena','live-arena']);
+ expect(PVP_ACTIVE_MODES.every(m=>m.artKey==='content-duel-entry')).toBe(true);
+});

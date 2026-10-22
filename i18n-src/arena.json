@@ -1,0 +1,862 @@
+{
+  "arena.title": [
+    "竞技场",
+    "อารีนา",
+    "Đấu trường",
+    "Arena",
+    "Arena",
+    "Arena",
+    "Arena",
+    "Арена"
+  ],
+  "arena.reconnect": [
+    "重新连接",
+    "เชื่อมต่อใหม่",
+    "Kết nối lại",
+    "Hubungkan ulang",
+    "Reconectar",
+    "Reconectar",
+    "Neu verbinden",
+    "Переподключиться"
+  ],
+  "arena.record": [
+    "LV.{p0} · {p1}胜 {p2}负",
+    "LV.{p0} · ชนะ {p1} / แพ้ {p2}",
+    "LV.{p0} · {p1} thắng / {p2} thua",
+    "LV.{p0} · {p1} menang / {p2} kalah",
+    "NV.{p0} · {p1} victorias / {p2} derrotas",
+    "NV.{p0} · {p1} vitórias / {p2} derrotas",
+    "LV.{p0} · {p1} Siege / {p2} Niederlagen",
+    "УР.{p0} · {p1} побед / {p2} поражений"
+  ],
+  "arena.tier.label": [
+    "竞技场 {p0}",
+    "อารีนา {p0}",
+    "Đấu trường {p0}",
+    "Arena {p0}",
+    "Arena {p0}",
+    "Arena {p0}",
+    "Arena {p0}",
+    "Арена {p0}"
+  ],
+  "arena.tier.separate": [
+    "竞技场段位与决斗场独立记录",
+    "ระดับอารีนาบันทึกแยกจากลานประลอง",
+    "Bậc Đấu trường được ghi riêng với Đấu tay đôi",
+    "Tier Arena dicatat terpisah dari Duel",
+    "Los rangos de Arena son independientes de Duelo",
+    "Os ranques da Arena são separados dos do Duelo",
+    "Arenaränge werden getrennt vom Duell erfasst",
+    "Ранги Арены учитываются отдельно от Дуэли"
+  ],
+  "arena.tier.guideButton": [
+    "竞技场段位说明",
+    "คู่มือระดับอารีนา",
+    "Hướng dẫn bậc Đấu trường",
+    "Panduan tier Arena",
+    "Guía de rangos de Arena",
+    "Guia de ranques da Arena",
+    "Arenarang-Übersicht",
+    "Справка о рангах Арены"
+  ],
+  "arena.tier.guideTitle": [
+    "竞技场段位",
+    "ระดับอารีนา",
+    "Bậc Đấu trường",
+    "Tier Arena",
+    "Rangos de Arena",
+    "Ranques da Arena",
+    "Arenaränge",
+    "Ранги Арены"
+  ],
+  "arena.confirm": [
+    "确认",
+    "ตกลง",
+    "Xác nhận",
+    "OK",
+    "Aceptar",
+    "OK",
+    "OK",
+    "ОК"
+  ],
+  "arena.lobby.rules": [
+    "双方各禁用1名 · 3对3交替公开布阵\n先后手随机 · 双方自动释放必杀技",
+    "แบนฝ่ายละ 1 · วางสลับ 3 ต่อ 3\nสุ่มลำดับก่อนหลัง · ท่าไม้ตายอัตโนมัติ",
+    "Mỗi bên cấm 1 · bố trí luân phiên 3 đấu 3\nThứ tự ngẫu nhiên · tự động dùng tuyệt kỹ",
+    "Masing-masing 1 ban · penempatan bergiliran 3 lawan 3\nGiliran awal acak · ultimate otomatis",
+    "1 veto por jugador · despliegue alterno 3 contra 3\nTurno inicial aleatorio · definitivas automáticas",
+    "1 banimento por jogador · posicionamento alternado 3x3\nPrimeiro turno aleatório · supremas automáticas",
+    "Je 1 Bann · abwechselnde 3-gegen-3-Aufstellung\nZufälliger erster Zug · automatische Ultimativfähigkeiten",
+    "По 1 запрету · поочерёдная расстановка 3 на 3\nСлучайный первый ход · автоультимейты"
+  ],
+  "arena.resume": [
+    "返回进行中的竞技场",
+    "กลับสู่อารีนาที่ค้างไว้",
+    "Tiếp tục đấu trường",
+    "Lanjutkan arena",
+    "Reanudar arena",
+    "Retomar arena",
+    "Arena fortsetzen",
+    "Продолжить арену"
+  ],
+  "arena.match.start": [
+    "开始匹配",
+    "เริ่มค้นหาคู่ต่อสู้",
+    "Tìm trận",
+    "Cari lawan",
+    "Buscar partida",
+    "Buscar partida",
+    "Gegner suchen",
+    "Найти матч"
+  ],
+  "arena.match.searching": [
+    "正在寻找对手",
+    "กำลังค้นหาคู่ต่อสู้",
+    "Đang tìm đối thủ",
+    "Mencari lawan",
+    "Buscando oponente",
+    "Buscando adversário",
+    "Gegner wird gesucht",
+    "Поиск соперника"
+  ],
+  "arena.match.description": [
+    "正在寻找实力相近的研究员。\n等待越久，匹配范围越广。",
+    "กำลังค้นหานักวิจัยที่มีฝีมือใกล้เคียง\nช่วงคะแนนจะกว้างขึ้นตามเวลารอ",
+    "Đang tìm nghiên cứu viên có trình độ tương đương.\nPhạm vi xếp hạng mở rộng theo thời gian chờ.",
+    "Mencari peneliti dengan kemampuan serupa.\nRentang rating melebar seiring waktu tunggu.",
+    "Buscando un investigador de nivel similar.\nEl intervalo de rango aumenta con la espera.",
+    "Procurando um pesquisador de habilidade semelhante.\nA faixa de pontuação aumenta com a espera.",
+    "Suche nach Forschern ähnlicher Stärke.\nDer Wertungsbereich erweitert sich mit der Wartezeit.",
+    "Ищем исследователя близкого уровня.\nДиапазон рейтинга расширяется со временем ожидания."
+  ],
+  "arena.match.cancel": [
+    "取消匹配",
+    "ยกเลิกการค้นหา",
+    "Hủy tìm trận",
+    "Batalkan pencarian",
+    "Cancelar búsqueda",
+    "Cancelar busca",
+    "Suche abbrechen",
+    "Отменить поиск"
+  ],
+  "arena.room.leave": [
+    "离开竞技场",
+    "ออกจากอารีนา",
+    "Rời đấu trường",
+    "Keluar dari arena",
+    "Salir de la arena",
+    "Sair da arena",
+    "Arena verlassen",
+    "Покинуть арену"
+  ],
+  "arena.room.leaveConfirm": [
+    "准备期间离开将视为弃权。",
+    "การออกระหว่างเตรียมตัวจะถือว่ายอมแพ้",
+    "Rời trong lúc chuẩn bị sẽ bị tính là bỏ cuộc.",
+    "Keluar saat persiapan dihitung sebagai menyerah.",
+    "Salir durante la preparación cuenta como rendición.",
+    "Sair durante a preparação conta como desistência.",
+    "Das Verlassen während der Vorbereitung gilt als Aufgabe.",
+    "Выход во время подготовки считается сдачей."
+  ],
+  "arena.room.forfeit": [
+    "弃权",
+    "ยอมแพ้",
+    "Bỏ cuộc",
+    "Menyerah",
+    "Rendirse",
+    "Desistir",
+    "Aufgeben",
+    "Сдаться"
+  ],
+  "arena.room.remaining": [
+    "剩余{p0}秒",
+    "เหลือ {p0} วินาที",
+    "Còn {p0} giây",
+    "Tersisa {p0} dtk",
+    "Quedan {p0} s",
+    "Restam {p0} s",
+    "Noch {p0} s",
+    "Осталось {p0} с"
+  ],
+  "arena.room.ranked": [
+    "排位竞技场",
+    "อารีนาจัดอันดับ",
+    "Đấu trường xếp hạng",
+    "Arena peringkat",
+    "Arena clasificatoria",
+    "Arena ranqueada",
+    "Ranglisten-Arena",
+    "Рейтинговая арена"
+  ],
+  "arena.room.friendly": [
+    "友谊竞技场",
+    "อารีนากระชับมิตร",
+    "Đấu trường giao hữu",
+    "Arena persahabatan",
+    "Arena amistosa",
+    "Arena amistosa",
+    "Freundschaftsarena",
+    "Дружеская арена"
+  ],
+  "arena.invite.waiting": [
+    "正在等待对方接受。",
+    "กำลังรอคู่ต่อสู้ตอบรับ",
+    "Đang chờ đối thủ chấp nhận.",
+    "Menunggu lawan menerima.",
+    "Esperando que el oponente acepte.",
+    "Aguardando o adversário aceitar.",
+    "Warte auf die Zusage des Gegners.",
+    "Ожидание согласия соперника."
+  ],
+  "arena.rules.oneBan": [
+    "双方各禁用1名",
+    "แบนฝ่ายละ 1",
+    "Mỗi bên cấm 1",
+    "Masing-masing 1 ban",
+    "1 veto por jugador",
+    "1 banimento por jogador",
+    "Je 1 Bann",
+    "По 1 запрету"
+  ],
+  "arena.rules.noBan": [
+    "不禁用",
+    "ไม่แบน",
+    "Không cấm",
+    "Tanpa ban",
+    "Sin vetos",
+    "Sem banimentos",
+    "Keine Banns",
+    "Без запретов"
+  ],
+  "arena.rules.alternate": [
+    "交替布阵",
+    "วางสลับกัน",
+    "Bố trí luân phiên",
+    "Penempatan bergiliran",
+    "Despliegue alterno",
+    "Posicionamento alternado",
+    "Abwechselnde Aufstellung",
+    "Поочерёдная расстановка"
+  ],
+  "arena.rules.hidden": [
+    "隐藏布阵",
+    "วางแบบปกปิด",
+    "Bố trí ẩn",
+    "Penempatan tersembunyi",
+    "Despliegue oculto",
+    "Posicionamento oculto",
+    "Verdeckte Aufstellung",
+    "Скрытая расстановка"
+  ],
+  "arena.invite.closed": [
+    "请求已被拒绝或已过期。",
+    "คำเชิญถูกปฏิเสธหรือหมดอายุแล้ว",
+    "Lời mời bị từ chối hoặc đã hết hạn.",
+    "Undangan ditolak atau kedaluwarsa.",
+    "La invitación se rechazó o caducó.",
+    "O convite foi recusado ou expirou.",
+    "Die Einladung wurde abgelehnt oder ist abgelaufen.",
+    "Приглашение отклонено или истекло."
+  ],
+  "arena.result.drawLabel": [
+    "平局",
+    "เสมอ",
+    "Hòa",
+    "Seri",
+    "Empate",
+    "Empate",
+    "Unentschieden",
+    "Ничья"
+  ],
+  "arena.result.winLabel": [
+    "胜利",
+    "ชนะ",
+    "Chiến thắng",
+    "Menang",
+    "Victoria",
+    "Vitória",
+    "Sieg",
+    "Победа"
+  ],
+  "arena.result.lossLabel": [
+    "失败",
+    "แพ้",
+    "Thất bại",
+    "Kalah",
+    "Derrota",
+    "Derrota",
+    "Niederlage",
+    "Поражение"
+  ],
+  "arena.result.applied": [
+    "结果已计入竞技场积分。",
+    "บันทึกผลลงคะแนนอารีนาแล้ว",
+    "Kết quả đã được tính vào điểm Đấu trường.",
+    "Hasil telah diterapkan pada rating Arena.",
+    "El resultado ya se aplicó a tu puntuación de Arena.",
+    "O resultado foi aplicado à sua pontuação da Arena.",
+    "Das Ergebnis zählt jetzt für deine Arenawertung.",
+    "Результат учтён в рейтинге Арены."
+  ],
+  "arena.result.friendlyNotice": [
+    "友谊赛不会改变段位和货币。",
+    "การกระชับมิตรไม่เปลี่ยนระดับหรือเงินตรา",
+    "Giao hữu không thay đổi bậc hay tiền tệ.",
+    "Persahabatan tidak mengubah tier atau mata uang.",
+    "Los amistosos no cambian el rango ni las monedas.",
+    "Amistosos não alteram ranques nem moedas.",
+    "Freundschaftskämpfe ändern weder Rang noch Währung.",
+    "Дружеские бои не меняют ранг или валюту."
+  ],
+  "arena.result.return": [
+    "返回竞技场",
+    "กลับสู่อารีนา",
+    "Về đấu trường",
+    "Kembali ke arena",
+    "Volver a la arena",
+    "Voltar à arena",
+    "Zur Arena",
+    "Вернуться на арену"
+  ],
+  "arena.ban.choose": [
+    "请禁用对方1名遗物",
+    "แบนเรลิกฝ่ายตรงข้าม 1 ตัว",
+    "Cấm một di vật của đối thủ",
+    "Ban satu relik lawan",
+    "Veta una reliquia rival",
+    "Bana uma relíquia adversária",
+    "Banne ein gegnerisches Relikt",
+    "Запретите одну реликт соперника"
+  ],
+  "arena.ban.wait": [
+    "等待对方禁用",
+    "กำลังรอคู่ต่อสู้แบน",
+    "Đang chờ lượt cấm của đối thủ",
+    "Menunggu ban lawan",
+    "Esperando el veto del oponente",
+    "Aguardando o banimento adversário",
+    "Warte auf den Bann des Gegners",
+    "Ожидание запрета соперника"
+  ],
+  "arena.placement.choose": [
+    "选择遗物后点击起始位置",
+    "เลือกเรลิกแล้วแตะตำแหน่งเริ่มต้น",
+    "Chọn di vật rồi chạm vị trí bắt đầu",
+    "Pilih relik, lalu ketuk posisi awalnya",
+    "Elige una reliquia y toca su posición inicial",
+    "Escolha uma relíquia e toque na posição inicial",
+    "Wähle ein Relikt und tippe auf seine Startposition",
+    "Выберите реликт и нажмите на стартовую позицию"
+  ],
+  "arena.placement.wait": [
+    "等待对方布阵",
+    "กำลังรอคู่ต่อสู้จัดวาง",
+    "Đang chờ đối thủ bố trí",
+    "Menunggu penempatan lawan",
+    "Esperando el despliegue rival",
+    "Aguardando o posicionamento adversário",
+    "Warte auf die gegnerische Aufstellung",
+    "Ожидание расстановки соперника"
+  ],
+  "arena.placement.opponentHidden": [
+    "对方隐藏阵容",
+    "ทีมปกปิดของคู่ต่อสู้",
+    "Đội hình ẩn của đối thủ",
+    "Formasi lawan tersembunyi",
+    "Formación rival oculta",
+    "Formação adversária oculta",
+    "Verdecktes Gegnerteam",
+    "Скрытый состав соперника"
+  ],
+  "arena.placement.opponent": [
+    "对方阵容",
+    "ทีมของคู่ต่อสู้",
+    "Đội hình đối thủ",
+    "Formasi lawan",
+    "Formación rival",
+    "Formação adversária",
+    "Gegnerische Aufstellung",
+    "Состав соперника"
+  ],
+  "arena.none": [
+    "无",
+    "ไม่มี",
+    "Không có",
+    "Tidak ada",
+    "Ninguno",
+    "Nenhum",
+    "Keine",
+    "Нет"
+  ],
+  "arena.noneOther": [
+    "无",
+    "ไม่มี",
+    "Không có",
+    "Tidak ada",
+    "Ninguno",
+    "Nenhum",
+    "Keine",
+    "Нет"
+  ],
+  "arena.placement.summary": [
+    "已布阵{p0}/3 · 我方禁用：{p1} · 对方禁用：{p2}",
+    "วางแล้ว {p0}/3 · ฉันแบน: {p1} · อีกฝ่ายแบน: {p2}",
+    "Đã bố trí {p0}/3 · Tôi cấm: {p1} · Đối thủ cấm: {p2}",
+    "{p0}/3 ditempatkan · Ban saya: {p1} · Ban lawan: {p2}",
+    "{p0}/3 desplegadas · Mi veto: {p1} · Veto rival: {p2}",
+    "{p0}/3 posicionadas · Meu banimento: {p1} · Banimento rival: {p2}",
+    "{p0}/3 platziert · Mein Bann: {p1} · Gegnerbann: {p2}",
+    "Расставлено {p0}/3 · Мой запрет: {p1} · Запрет соперника: {p2}"
+  ],
+  "arena.roster.next": [
+    "下一页 {p0}/{p1}",
+    "หน้าถัดไป {p0}/{p1}",
+    "Trang tiếp {p0}/{p1}",
+    "Halaman berikutnya {p0}/{p1}",
+    "Página siguiente {p0}/{p1}",
+    "Próxima página {p0}/{p1}",
+    "Nächste Seite {p0}/{p1}",
+    "Следующая страница {p0}/{p1}"
+  ],
+  "arena.placement.undo": [
+    "撤销最后一次布阵",
+    "ยกเลิกตำแหน่งล่าสุด",
+    "Hoàn tác bố trí cuối",
+    "Batalkan penempatan terakhir",
+    "Deshacer último despliegue",
+    "Desfazer último posicionamento",
+    "Letzte Platzierung zurücknehmen",
+    "Отменить последнюю позицию"
+  ],
+  "arena.placement.lock": [
+    "确认布阵",
+    "ยืนยันทีม",
+    "Chốt đội hình",
+    "Kunci formasi",
+    "Confirmar formación",
+    "Confirmar formação",
+    "Aufstellung bestätigen",
+    "Подтвердить состав"
+  ],
+  "arena.rules.bannerBan": [
+    "双方各禁用1名",
+    "แบนฝ่ายละ 1",
+    "Mỗi bên cấm 1",
+    "Masing-masing 1 ban",
+    "1 veto por jugador",
+    "1 banimento por jogador",
+    "Je 1 Bann",
+    "По 1 запрету"
+  ],
+  "arena.rules.bannerNoBan": [
+    "不禁用",
+    "ไม่แบน",
+    "Không cấm",
+    "Tanpa ban",
+    "Sin vetos",
+    "Sem banimentos",
+    "Keine Banns",
+    "Без запретов"
+  ],
+  "arena.rules.openAlternate": [
+    "交替公开布阵",
+    "วางสลับแบบเปิดเผย",
+    "Bố trí công khai luân phiên",
+    "Penempatan terbuka bergiliran",
+    "Despliegue abierto alterno",
+    "Posicionamento aberto alternado",
+    "Abwechselnde offene Aufstellung",
+    "Поочерёдная открытая расстановка"
+  ],
+  "arena.rules.bannerHidden": [
+    "隐藏布阵",
+    "วางแบบปกปิด",
+    "Bố trí ẩn",
+    "Penempatan tersembunyi",
+    "Despliegue oculto",
+    "Posicionamento oculto",
+    "Verdeckte Aufstellung",
+    "Скрытая расстановка"
+  ],
+  "arena.invite.summary": [
+    "{p0} · {p1} · 友谊赛",
+    "{p0} · {p1} · กระชับมิตร",
+    "{p0} · {p1} · Giao hữu",
+    "{p0} · {p1} · Persahabatan",
+    "{p0} · {p1} · Amistoso",
+    "{p0} · {p1} · Amistoso",
+    "{p0} · {p1} · Freundschaft",
+    "{p0} · {p1} · Дружеский бой"
+  ],
+  "arena.invite.decline": [
+    "拒绝",
+    "ปฏิเสธ",
+    "Từ chối",
+    "Tolak",
+    "Rechazar",
+    "Recusar",
+    "Ablehnen",
+    "Отклонить"
+  ],
+  "arena.invite.accept": [
+    "接受",
+    "ยอมรับ",
+    "Chấp nhận",
+    "Terima",
+    "Aceptar",
+    "Aceitar",
+    "Annehmen",
+    "Принять"
+  ],
+  "arena.friend.title": [
+    "{p0} · 友谊赛",
+    "{p0} · กระชับมิตร",
+    "{p0} · Giao hữu",
+    "{p0} · Persahabatan",
+    "{p0} · Amistoso",
+    "{p0} · Amistoso",
+    "{p0} · Freundschaft",
+    "{p0} · Дружеский бой"
+  ],
+  "arena.friend.practice": [
+    "决斗场 · 防守阵容模拟战",
+    "ลานประลอง · จำลองสู้ทีมป้องกัน",
+    "Đấu tay đôi · tập đấu đội phòng thủ",
+    "Duel · latihan melawan pertahanan",
+    "Duelo · práctica contra defensa",
+    "Duelo · treino contra defesa",
+    "Duell · Verteidigungstraining",
+    "Дуэль · тренировка против защиты"
+  ],
+  "arena.friend.free": [
+    "不消耗积分或挑战券",
+    "ไม่ใช้คะแนนหรือตั๋ว",
+    "Không tốn điểm hay vé",
+    "Tanpa biaya rating atau tiket",
+    "Sin gasto de puntos ni entradas",
+    "Sem gasto de pontos ou entradas",
+    "Keine Wertungs- oder Ticketkosten",
+    "Без расхода рейтинга и билетов"
+  ],
+  "arena.friend.live": [
+    "竞技场 · 实时对战邀请",
+    "อารีนา · คำเชิญต่อสู้สด",
+    "Đấu trường · lời mời trực tiếp",
+    "Arena · undangan langsung",
+    "Arena · invitación en directo",
+    "Arena · convite ao vivo",
+    "Arena · Live-Einladung",
+    "Арена · приглашение в реальном времени"
+  ],
+  "arena.rules.oneEach": [
+    "双方各1名",
+    "ฝ่ายละหนึ่ง",
+    "Mỗi bên một",
+    "Masing-masing satu",
+    "Una por jugador",
+    "Uma para cada",
+    "Je eines",
+    "По одной"
+  ],
+  "arena.rules.off": [
+    "关闭",
+    "ปิด",
+    "Tắt",
+    "Nonaktif",
+    "Desactivado",
+    "Desativado",
+    "Aus",
+    "Выкл."
+  ],
+  "arena.rules.bans": [
+    "禁用：{p0}",
+    "การแบน: {p0}",
+    "Cấm: {p0}",
+    "Ban: {p0}",
+    "Vetos: {p0}",
+    "Banimentos: {p0}",
+    "Banns: {p0}",
+    "Запреты: {p0}"
+  ],
+  "arena.rules.first": [
+    "先手",
+    "ก่อน",
+    "Trước",
+    "Pertama",
+    "Primero",
+    "Primeiro",
+    "Zuerst",
+    "Первым"
+  ],
+  "arena.rules.second": [
+    "后手",
+    "หลัง",
+    "Sau",
+    "Kedua",
+    "Segundo",
+    "Segundo",
+    "Danach",
+    "Вторым"
+  ],
+  "arena.rules.random": [
+    "随机",
+    "สุ่ม",
+    "Ngẫu nhiên",
+    "Acak",
+    "Aleatorio",
+    "Aleatório",
+    "Zufällig",
+    "Случайно"
+  ],
+  "arena.rules.requesterOrder": [
+    "发起者的选择顺序：{p0}",
+    "ลำดับของผู้เชิญ: {p0}",
+    "Thứ tự người mời: {p0}",
+    "Giliran pengundang: {p0}",
+    "Turno del solicitante: {p0}",
+    "Ordem de quem convidou: {p0}",
+    "Zugfolge des Einladenden: {p0}",
+    "Ход отправителя: {p0}"
+  ],
+  "arena.rules.alternateOption": [
+    "交替公开布阵",
+    "วางสลับแบบเปิดเผย",
+    "Bố trí công khai luân phiên",
+    "Penempatan terbuka bergiliran",
+    "Despliegue abierto alterno",
+    "Posicionamento aberto alternado",
+    "Abwechselnde offene Aufstellung",
+    "Поочерёдная открытая расстановка"
+  ],
+  "arena.rules.hiddenOption": [
+    "同时隐藏布阵",
+    "วางพร้อมกันแบบปกปิด",
+    "Bố trí ẩn đồng thời",
+    "Penempatan tersembunyi bersamaan",
+    "Despliegue oculto simultáneo",
+    "Posicionamento oculto simultâneo",
+    "Gleichzeitig verdeckt aufstellen",
+    "Одновременная скрытая расстановка"
+  ],
+  "arena.rules.placement": [
+    "布阵方式：{p0}",
+    "รูปแบบการวาง: {p0}",
+    "Cách bố trí: {p0}",
+    "Penempatan: {p0}",
+    "Despliegue: {p0}",
+    "Posicionamento: {p0}",
+    "Aufstellung: {p0}",
+    "Расстановка: {p0}"
+  ],
+  "arena.invite.send": [
+    "发送竞技场邀请",
+    "ส่งคำเชิญอารีนา",
+    "Gửi lời mời Đấu trường",
+    "Kirim undangan Arena",
+    "Enviar invitación de Arena",
+    "Enviar convite de Arena",
+    "Arena-Einladung senden",
+    "Пригласить на арену"
+  ],
+  "arena.error.roster": [
+    "启用禁用规则的3对3需要双方各拥有至少4名遗物。",
+    "ทั้งสองฝ่ายต้องมีเรลิกอย่างน้อย 4 ตัวสำหรับ 3 ต่อ 3 แบบมีแบน",
+    "Cả hai cần ít nhất 4 di vật để chơi 3 đấu 3 có cấm.",
+    "Kedua pemain perlu setidaknya 4 relik untuk 3 lawan 3 dengan ban.",
+    "Ambos jugadores necesitan al menos 4 reliquias para 3 contra 3 con vetos.",
+    "Os dois jogadores precisam de pelo menos 4 relíquias para 3x3 com banimentos.",
+    "Für 3 gegen 3 mit Banns benötigen beide mindestens 4 Relikte.",
+    "Для 3 на 3 с запретами обоим нужно минимум 4 реликта."
+  ],
+  "arena.error.busy": [
+    "对方正在准备另一场竞技场。",
+    "คู่ต่อสู้กำลังเตรียมอารีนาอื่น",
+    "Đối thủ đang chuẩn bị một trận đấu trường khác.",
+    "Lawan sedang menyiapkan arena lain.",
+    "El oponente está preparando otra arena.",
+    "O adversário está preparando outra arena.",
+    "Dein Gegner bereitet eine andere Arena vor.",
+    "Соперник готовит другой бой на арене."
+  ],
+  "arena.error.expired": [
+    "邀请已过期。",
+    "คำเชิญหมดอายุแล้ว",
+    "Lời mời đã hết hạn.",
+    "Undangan telah kedaluwarsa.",
+    "La invitación ha caducado.",
+    "O convite expirou.",
+    "Die Einladung ist abgelaufen.",
+    "Срок приглашения истёк."
+  ],
+  "arena.error.turn": [
+    "请等待对方选择。",
+    "กรุณารอคู่ต่อสู้เลือก",
+    "Hãy chờ đối thủ lựa chọn.",
+    "Tunggu pilihan lawan.",
+    "Espera a que el oponente elija.",
+    "Aguarde a escolha do adversário.",
+    "Warte auf die Wahl des Gegners.",
+    "Дождитесь выбора соперника."
+  ],
+  "arena.error.placement": [
+    "请检查布阵区域、间距和禁用遗物。",
+    "ตรวจสอบพื้นที่ ระยะห่าง และเรลิกที่ถูกแบน",
+    "Kiểm tra vùng bố trí, khoảng cách và di vật bị cấm.",
+    "Periksa area, jarak, dan relik yang terkena ban.",
+    "Revisa el área, la separación y las reliquias vetadas.",
+    "Confira a área, o espaçamento e as relíquias banidas.",
+    "Prüfe Aufstellungsbereich, Abstand und gebannte Relikte.",
+    "Проверьте область, интервалы и запрещённые реликта."
+  ],
+  "arena.error.offline": [
+    "连接服务器账号后即可使用。",
+    "เชื่อมต่อบัญชีเซิร์ฟเวอร์เพื่อใช้ฟีเจอร์นี้",
+    "Kết nối tài khoản máy chủ để dùng tính năng này.",
+    "Hubungkan akun server untuk menggunakan fitur ini.",
+    "Conecta tu cuenta del servidor para usar esta función.",
+    "Conecte sua conta do servidor para usar este recurso.",
+    "Verbinde dein Serverkonto, um diese Funktion zu nutzen.",
+    "Для этой функции подключите серверный аккаунт."
+  ],
+  "arena.error.cooldown": [
+    "请稍后重试。",
+    "กรุณาลองอีกครั้งในอีกสักครู่",
+    "Vui lòng thử lại sau ít phút.",
+    "Coba lagi sebentar lagi.",
+    "Vuelve a intentarlo en un momento.",
+    "Tente novamente em instantes.",
+    "Versuche es gleich noch einmal.",
+    "Попробуйте чуть позже."
+  ],
+  "arena.error.connection": [
+    "请检查竞技场连接并重试。",
+    "ตรวจสอบการเชื่อมต่ออารีนาแล้วลองอีกครั้ง",
+    "Kiểm tra kết nối Đấu trường và thử lại.",
+    "Periksa koneksi Arena dan coba lagi.",
+    "Comprueba la conexión de Arena e inténtalo de nuevo.",
+    "Confira a conexão da Arena e tente novamente.",
+    "Prüfe die Arenaverbindung und versuche es erneut.",
+    "Проверьте подключение к Арене и повторите попытку."
+  ],
+  "arena.friend.button": [
+    "友谊赛",
+    "ต่อสู้กระชับมิตร",
+    "Đấu giao hữu",
+    "Pertarungan persahabatan",
+    "Combate amistoso",
+    "Batalha amistosa",
+    "Freundschaftskampf",
+    "Дружеский бой"
+  ],
+  "arena.battle.perspective": [
+    "共同观战视角 · 你的队伍在{team}",
+    "มุมมองผู้ชมร่วมกัน · ทีมของคุณอยู่{team}",
+    "Góc nhìn chung · Đội của bạn ở {team}",
+    "Tampilan penonton bersama · Timmu berada {team}",
+    "Vista de espectador compartida · Tu equipo está {team}",
+    "Visão compartilhada de espectador · Sua equipe está {team}",
+    "Gemeinsame Zuschaueransicht · Dein Team ist {team}",
+    "Общий вид наблюдателя · Ваша команда {team}"
+  ],
+  "arena.battle.bottom": [
+    "下方",
+    "ด้านล่าง",
+    "phía dưới",
+    "di bawah",
+    "abajo",
+    "embaixo",
+    "unten",
+    "внизу"
+  ],
+  "arena.battle.top": [
+    "上方",
+    "ด้านบน",
+    "phía trên",
+    "di atas",
+    "arriba",
+    "em cima",
+    "oben",
+    "вверху"
+  ],
+  "arena.invite.from": [
+    "{name}邀请你进行竞技场对战",
+    "{name} เชิญคุณต่อสู้ในอารีนา",
+    "{name} mời bạn đấu Đấu trường",
+    "{name} mengundangmu bertarung di Arena",
+    "{name} te invita a un combate de Arena",
+    "{name} convidou você para uma batalha de Arena",
+    "{name} lädt dich zu einem Arenakampf ein",
+    "{name} приглашает вас на бой на арене"
+  ],
+  "arena.result.ranked": [
+    "竞技场结果已确认 · {score} RP",
+    "ยืนยันผลอารีนาแล้ว · {score} RP",
+    "Đã xác nhận kết quả Đấu trường · {score} RP",
+    "Hasil Arena dikonfirmasi · {score} RP",
+    "Resultado de Arena confirmado · {score} RP",
+    "Resultado da Arena confirmado · {score} RP",
+    "Arenaergebnis bestätigt · {score} RP",
+    "Результат Арены подтверждён · {score} RP"
+  ],
+  "arena.result.friendly": [
+    "友谊赛结束 · 段位、挑战券及货币不变",
+    "จบกระชับมิตร · ระดับ ตั๋ว และเงินตราไม่เปลี่ยน",
+    "Giao hữu kết thúc · không thay đổi bậc, vé hay tiền tệ",
+    "Persahabatan selesai · tier, tiket, dan mata uang tidak berubah",
+    "Amistoso terminado · sin cambios de rango, entradas ni monedas",
+    "Amistoso concluído · sem alteração de ranque, entradas ou moedas",
+    "Freundschaftskampf beendet · Rang, Tickets und Währung bleiben gleich",
+    "Дружеский бой завершён · ранг, билеты и валюта не изменены"
+  ],
+  "arena.result.back": [
+    "返回",
+    "กลับ",
+    "Quay lại",
+    "Kembali",
+    "Volver",
+    "Voltar",
+    "Zurück",
+    "Назад"
+  ],
+  "arena.mode.scope": [
+    "实时禁用 · 自由布阵 · 3对3自动战斗",
+    "แบนแบบสด · วางตำแหน่งอิสระ · ต่อสู้อัตโนมัติ 3 ต่อ 3",
+    "Cấm trực tiếp · bố trí tự do · tự động chiến đấu 3 đấu 3",
+    "Ban langsung · penempatan bebas · pertarungan otomatis 3 lawan 3",
+    "Vetos en directo · despliegue libre · combate automático 3 contra 3",
+    "Banimentos ao vivo · posicionamento livre · batalha automática 3x3",
+    "Live-Banns · freie Aufstellung · automatischer 3-gegen-3-Kampf",
+    "Запреты в реальном времени · свободная расстановка · автобой 3 на 3"
+  ],
+  "arena.result.draw": [
+    "平局",
+    "เสมอ",
+    "Hòa",
+    "Seri",
+    "Empate",
+    "Empate",
+    "Unentschieden",
+    "Ничья"
+  ],
+  "arena.result.win": [
+    "胜利",
+    "ชนะ",
+    "Chiến thắng",
+    "Menang",
+    "Victoria",
+    "Vitória",
+    "Sieg",
+    "Победа"
+  ],
+  "arena.result.loss": [
+    "失败",
+    "แพ้",
+    "Thất bại",
+    "Kalah",
+    "Derrota",
+    "Derrota",
+    "Niederlage",
+    "Поражение"
+  ]
+}

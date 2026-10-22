@@ -1,3 +1,4 @@
+import { installArenaApi } from "./arenaApi";
 /**
  * 서버가 진행을 소유하도록 켠다. 타이틀에서 한 번 부르고, 성공하면 `gameApi`가 서버 호출로 바뀌어
  * 이후 모든 조작이 `/api/game`을 지난다. 연결할 서버가 없는 빌드(설정·보안 저장소 없음, E2E)는
@@ -101,6 +102,7 @@ export async function connectServerProgress(deps: ServerProgressDeps): Promise<S
   install(remote);
   const social=createRemoteSocialApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl});
   installSocialApi(social);
+  installArenaApi(accessToken);
   installGuildApi(createRemoteGuildApi({getAccessToken:accessToken,fetchImpl:deps.fetchImpl}));
   void social.getRequests().catch(()=>undefined);
   deps.marker.set(userId);

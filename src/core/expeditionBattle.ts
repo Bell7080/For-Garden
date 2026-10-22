@@ -181,6 +181,8 @@ export interface DuelBattleUnit {
  * 전투 씬이 `session.party`나 상대 정의를 다시 읽으면 입장과 전투가 다른 편성을 본다.
  */
 export interface DuelBattleInputDto {
+  /** Live arena uses a separately authenticated, immutable server lease. */
+  arena?: {roomId:string;side:number;lease:import("./combatProtocol").CombatLease;practice:boolean};
   mode: "duel";
   requestId: string;
   attack: readonly string[];

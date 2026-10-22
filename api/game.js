@@ -20,59 +20,7 @@ var init_define_import_meta_env = __esm({
 // src/server/vercelEntry.ts
 init_define_import_meta_env();
 
-// src/server/gameHandler.ts
-init_define_import_meta_env();
-
-// src/core/contentUnlock.ts
-init_define_import_meta_env();
-var CONTENT_UNLOCKS = [
-  { id: "excavation", level: 2 },
-  { id: "shop", level: 3 },
-  { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 3 },
-  { id: "bounty", level: 3 },
-  { id: "friends", level: 4 },
-  { id: "interaction", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "guild", level: 7 },
-  { id: "raid", level: 8 },
-  { id: "expedition", level: 9 }
-];
-var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
-var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
-var CONTENT_LEVEL_GATES_ENABLED = true;
-function contentUnlockLevel(id) {
-  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
-}
-function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
-  if (!gates) return true;
-  const stage = CONTENT_STAGE_UNLOCKS[id];
-  if (stage !== void 0) return clearedStages.has(stage);
-  return playerLevel >= contentUnlockLevel(id);
-}
-function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
-}
-function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
-  return void 0;
-}
-
-// src/core/duelState.ts
-init_define_import_meta_env();
-
-// src/core/duelArena.ts
-init_define_import_meta_env();
-
-// src/core/relicProgression.ts
-init_define_import_meta_env();
-
-// src/data/runes.ts
-init_define_import_meta_env();
-
-// src/core/runes.ts
+// src/server/liveArena.ts
 init_define_import_meta_env();
 
 // src/i18n/index.ts
@@ -147,6 +95,97 @@ function pickParticle(value, particle) {
 
 // src/i18n/ko/index.ts
 init_define_import_meta_env();
+
+// src/i18n/ko/arena.ts
+init_define_import_meta_env();
+var ARENA_KO = {
+  "arena.mode.scope": "\uC2E4\uC2DC\uAC04 \uBC34\uD53D \xB7 \uC790\uC720 \uBC30\uCE58 \xB7 3\uB3003 \uC790\uB3D9 \uC804\uD22C",
+  "arena.friend.button": "\uCE5C\uC120\uC804",
+  "arena.battle.perspective": "\uACF5\uB3D9 \uAD00\uC804 \uC2DC\uC810 \xB7 \uB0B4 \uD300\uC740 {team}",
+  "arena.battle.bottom": "\uC544\uB798\uCABD",
+  "arena.battle.top": "\uC704\uCABD",
+  "arena.invite.from": "{name}\uB2D8\uC774 \uC544\uB808\uB098 \uC804\uD22C\uB97C \uC694\uCCAD\uD588\uC2B5\uB2C8\uB2E4",
+  "arena.result.draw": "\uBB34\uC2B9\uBD80",
+  "arena.result.win": "\uC2B9\uB9AC",
+  "arena.result.loss": "\uD328\uBC30",
+  "arena.result.ranked": "\uC544\uB808\uB098 \uACB0\uACFC \uD655\uC815 \xB7 {score} RP",
+  "arena.result.friendly": "\uCE5C\uC120\uC804 \uC885\uB8CC \xB7 \uD2F0\uC5B4\xB7\uB3C4\uC804\uAD8C\xB7\uC7AC\uD654 \uBCC0\uB3D9 \uC5C6\uC74C",
+  "arena.result.back": "\uB3CC\uC544\uAC00\uAE30",
+  "arena.title": "\uC544\uB808\uB098",
+  "arena.reconnect": "\uB2E4\uC2DC \uC5F0\uACB0",
+  "arena.record": "LV.{p0}  \xB7  {p1}\uC2B9 {p2}\uD328",
+  "arena.tier.label": "\uC544\uB808\uB098 {p0}",
+  "arena.tier.separate": "\uACB0\uD22C\uC7A5\uACFC \uBCC4\uB3C4\uB85C \uAE30\uB85D\uB418\uB294 \uC544\uB808\uB098 \uD2F0\uC5B4",
+  "arena.tier.guideButton": "\uC544\uB808\uB098 \uD2F0\uC5B4 \uC548\uB0B4",
+  "arena.tier.guideTitle": "\uC544\uB808\uB098 \uD2F0\uC5B4",
+  "arena.confirm": "\uD655\uC778",
+  "arena.lobby.rules": "\uAC01 1\uBC34 \xB7 3\uB3003 \uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58\n\uC120\xB7\uD6C4\uACF5 \uB79C\uB364 \xB7 \uC591 \uD300 \uC790\uB3D9 \uAD81\uADF9\uAE30",
+  "arena.resume": "\uC9C4\uD589 \uC911\uC778 \uC544\uB808\uB098\uB85C \uBCF5\uADC0",
+  "arena.match.start": "\uB9E4\uCE6D \uC2DC\uC791",
+  "arena.match.searching": "\uC0C1\uB300\uB97C \uCC3E\uACE0 \uC788\uC2B5\uB2C8\uB2E4",
+  "arena.match.description": "\uC2E4\uB825\uC774 \uBE44\uC2B7\uD55C \uC5F0\uAD6C\uC6D0\uC744 \uCC3E\uB294 \uC911\uC785\uB2C8\uB2E4.\n\uB300\uAE30 \uC2DC\uAC04\uC774 \uAE38\uC5B4\uC9C0\uBA74 \uB9E4\uCE6D \uBC94\uC704\uAC00 \uB113\uC5B4\uC9D1\uB2C8\uB2E4.",
+  "arena.match.cancel": "\uB9E4\uCE6D \uCDE8\uC18C",
+  "arena.room.leave": "\uC544\uB808\uB098 \uB098\uAC00\uAE30",
+  "arena.room.leaveConfirm": "\uC900\uBE44 \uC911 \uB098\uAC00\uBA74 \uAE30\uAD8C \uCC98\uB9AC\uB429\uB2C8\uB2E4.",
+  "arena.room.forfeit": "\uAE30\uAD8C",
+  "arena.room.remaining": "\uB0A8\uC740 \uC2DC\uAC04 {p0}\uCD08",
+  "arena.room.ranked": "\uB7AD\uD06C \uC544\uB808\uB098",
+  "arena.room.friendly": "\uCE5C\uC120 \uC544\uB808\uB098",
+  "arena.invite.waiting": "\uC0C1\uB300\uC758 \uC218\uB77D\uC744 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
+  "arena.rules.oneBan": "\uAC01 1\uBC34",
+  "arena.rules.noBan": "\uBC34 \uC5C6\uC74C",
+  "arena.rules.alternate": "\uAD50\uCC28 \uBC30\uCE58",
+  "arena.rules.hidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58",
+  "arena.invite.closed": "\uC694\uCCAD\uC774 \uAC70\uC808\uB418\uC5C8\uAC70\uB098 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "arena.result.drawLabel": "\uBB34\uC2B9\uBD80",
+  "arena.result.winLabel": "\uC2B9\uB9AC",
+  "arena.result.lossLabel": "\uD328\uBC30",
+  "arena.result.applied": "\uC544\uB808\uB098 \uC810\uC218\uC5D0 \uACB0\uACFC\uAC00 \uBC18\uC601\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "arena.result.friendlyNotice": "\uCE5C\uC120\uC804\uC740 \uD2F0\uC5B4\uC640 \uC7AC\uD654\uAC00 \uBCC0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+  "arena.result.return": "\uC544\uB808\uB098\uB85C \uB3CC\uC544\uAC00\uAE30",
+  "arena.ban.choose": "\uC0C1\uB300 \uB810\uB9AD 1\uB9C8\uB9AC\uB97C \uBC34\uD558\uC138\uC694",
+  "arena.ban.wait": "\uC0C1\uB300\uC758 \uBC34\uC744 \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
+  "arena.placement.choose": "\uB810\uB9AD \uC120\uD0DD \uD6C4 \uC6D0\uD558\uB294 \uC704\uCE58\uB97C \uB204\uB974\uC138\uC694",
+  "arena.placement.wait": "\uC0C1\uB300\uC758 \uBC30\uCE58\uB97C \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
+  "arena.placement.opponentHidden": "\uC0C1\uB300 \uBE44\uACF5\uAC1C \uBC30\uCE58",
+  "arena.placement.opponent": "\uC0C1\uB300 \uBC30\uCE58",
+  "arena.none": "\uC5C6\uC74C",
+  "arena.noneOther": "\uC5C6\uC74C",
+  "arena.placement.summary": "{p0}/3 \uBC30\uCE58 \xB7 \uB0B4 \uBC34: {p1} \xB7 \uC0C1\uB300 \uBC34: {p2}",
+  "arena.roster.next": "\uB2E4\uC74C \uBAA9\uB85D {p0}/{p1}",
+  "arena.placement.undo": "\uB9C8\uC9C0\uB9C9 \uBC30\uCE58 \uCDE8\uC18C",
+  "arena.placement.lock": "\uBC30\uCE58 \uD655\uC815",
+  "arena.rules.bannerBan": "\uAC01 1\uBC34",
+  "arena.rules.bannerNoBan": "\uBC34 \uC5C6\uC74C",
+  "arena.rules.openAlternate": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
+  "arena.rules.bannerHidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58",
+  "arena.invite.summary": "{p0} \xB7 {p1} \xB7 \uCE5C\uC120\uC804",
+  "arena.invite.decline": "\uAC70\uC808",
+  "arena.invite.accept": "\uC218\uB77D",
+  "arena.friend.title": "{p0} \xB7 \uCE5C\uC120\uC804",
+  "arena.friend.practice": "\uACB0\uD22C\uC7A5 \xB7 \uBC29\uC5B4\uB371 \uBAA8\uC758\uC804\uD22C",
+  "arena.friend.free": "\uC810\uC218\xB7\uB3C4\uC804\uAD8C \uC18C\uBAA8 \uC5C6\uC74C",
+  "arena.friend.live": "\uC544\uB808\uB098 \xB7 \uC2E4\uC2DC\uAC04 \uC804\uD22C \uC694\uCCAD",
+  "arena.rules.oneEach": "\uAC01 1\uB9C8\uB9AC",
+  "arena.rules.off": "\uC0AC\uC6A9 \uC548 \uD568",
+  "arena.rules.bans": "\uBC34\uD53D: {p0}",
+  "arena.rules.first": "\uC120\uACF5",
+  "arena.rules.second": "\uD6C4\uACF5",
+  "arena.rules.random": "\uB79C\uB364",
+  "arena.rules.requesterOrder": "\uC2E0\uCCAD\uC790 \uC120\uD0DD \uC21C\uC11C: {p0}",
+  "arena.rules.alternateOption": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
+  "arena.rules.hiddenOption": "\uB3D9\uC2DC \uBE44\uACF5\uAC1C \uBC30\uCE58",
+  "arena.rules.placement": "\uBC30\uCE58 \uBC29\uC2DD: {p0}",
+  "arena.invite.send": "\uC544\uB808\uB098 \uC694\uCCAD \uBCF4\uB0B4\uAE30",
+  "arena.error.roster": "\uBC34\uC744 \uC0AC\uC6A9\uD558\uB294 3\uB3003\uC740 \uC591\uCE21 \uBAA8\uB450 \uB810\uB9AD 4\uB9C8\uB9AC \uC774\uC0C1\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.",
+  "arena.error.busy": "\uC0C1\uB300\uAC00 \uB2E4\uB978 \uC544\uB808\uB098\uB97C \uC900\uBE44\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
+  "arena.error.expired": "\uC694\uCCAD\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "arena.error.turn": "\uC0C1\uB300\uC758 \uC120\uD0DD\uC744 \uAE30\uB2E4\uB824 \uC8FC\uC138\uC694.",
+  "arena.error.placement": "\uBC30\uCE58 \uC601\uC5ED\uACFC \uAC04\uACA9, \uBC34\uB41C \uB810\uB9AD\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "arena.error.offline": "\uC11C\uBC84 \uACC4\uC815 \uC5F0\uACB0 \uD6C4 \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "arena.error.cooldown": "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC694\uCCAD\uD574 \uC8FC\uC138\uC694.",
+  "arena.error.connection": "\uC544\uB808\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+};
 
 // src/i18n/ko/settings.ts
 init_define_import_meta_env();
@@ -2878,7 +2917,7 @@ var DEBUG_KO = {
 };
 
 // src/i18n/ko/index.ts
-var KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO };
+var KO = { ...ARENA_KO, ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO };
 
 // src/i18n/catalog.ts
 var loaded = /* @__PURE__ */ new Map([[DEFAULT_LANGUAGE, KO]]);
@@ -2926,6 +2965,204 @@ function setDataLanguage(language) {
 function dataText(key, korean) {
   return loaded2.get(active2)?.[key] ?? korean;
 }
+
+// src/core/liveArena.ts
+init_define_import_meta_env();
+
+// src/core/combatProtocol.ts
+init_define_import_meta_env();
+
+// src/core/skirmish.ts
+init_define_import_meta_env();
+
+// src/core/bond.ts
+init_define_import_meta_env();
+var BOND_LEVEL_CAP = 10;
+var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
+var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
+var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
+function bondLevelForXp(xp) {
+  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  let level = 0;
+  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
+  return level;
+}
+function grantBondXp(progress, amount) {
+  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
+  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
+  const bondLevel = bondLevelForXp(bondXp);
+  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
+}
+function grantDailyLobbyBondXp(progress, utcDate) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
+  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
+  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
+}
+function amplifyFerocityGain(amount, bondLevel) {
+  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
+}
+
+// src/core/battleClock.ts
+init_define_import_meta_env();
+var BATTLE_DEATH_CLOCK = {
+  /** 이 시각(초)을 넘기는 순간부터 돈다. */
+  startsAtSeconds: 90,
+  /** 몇 초마다 한 번 도는가. */
+  tickSeconds: 1,
+  /**
+   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
+   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
+   */
+  firstTickPercent: 1,
+  /**
+   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
+   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
+   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
+   */
+  rampPercentPerTick: 0.5
+};
+function deathClockTickPercent(tick) {
+  if (tick < 1) return 0;
+  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
+}
+function deathClockCumulativePercent(ticks) {
+  if (ticks < 1) return 0;
+  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
+}
+function deathClockTicksAt(elapsedSeconds) {
+  if (!Number.isFinite(elapsedSeconds)) return 0;
+  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
+  if (past < 0) return 0;
+  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
+}
+function deathClockSurvivalMultiplier(elapsedSeconds) {
+  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
+  return Math.min(1, Math.max(0, 1 - lost / 100));
+}
+function deathClockClosesBySeconds() {
+  let ticks = 1;
+  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
+  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
+}
+var BOSS_REPLAY_SLACK_SECONDS = 30;
+
+// src/core/damage.ts
+init_define_import_meta_env();
+
+// src/core/element.ts
+init_define_import_meta_env();
+var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
+var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
+var ELEMENT_COUNTERS = {
+  fire: ["grass", "wind"],
+  water: ["fire", "earth"],
+  grass: ["water", "earth"],
+  earth: ["wind", "fire"],
+  wind: ["grass", "water"]
+};
+var ICE_ADVANTAGES = ["grass", "water", "earth"];
+var ICE_DISADVANTAGES = ["fire"];
+function elementMultiplier(attacker, defender) {
+  if (attacker === defender) return 1;
+  if (attacker === "ice") {
+    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    return 1;
+  }
+  if (defender === "ice") {
+    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
+    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
+    return 1;
+  }
+  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
+}
+function effectiveElement(relic) {
+  return relic.passive.elementOverride ?? relic.element;
+}
+
+// src/core/ferocity.ts
+init_define_import_meta_env();
+var FEROCITY_RULES = {
+  min: 0,
+  /** 개체가 `ferocityMax`를 적지 않았을 때의 아군 기본 최대치다. */
+  max: 100,
+  /** 적 전용 개체의 기본 최대치 — 아군보다 조금 더 높게 둬 폭주가 늦게 온다. */
+  enemyMax: 130,
+  basicGain: 12,
+  ultimateGain: 18,
+  hitGain: 8,
+  /** 최대치가 얼마든 가득 찬 피버가 이 시간(초) 만에 모두 소진된다. 높은 개체는 더 빨리 닳는다. */
+  feverSeconds: 8,
+  /** 구간은 최대치에 대한 비율이다 — 최대치가 달라도 같은 진행도에서 같은 보너스가 붙는다. */
+  thresholds: [
+    { ratio: 0.5, damageBonus: 0.1 },
+    { ratio: 0.8, damageBonus: 0.2 },
+    { ratio: 1, damageBonus: 0.35 }
+  ]
+};
+function ferocityMaxOf(def) {
+  return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
+}
+function feverDrainPerSecond(def) {
+  return ferocityMaxOf(def) / FEROCITY_RULES.feverSeconds;
+}
+function ferocityMirrored(from, to) {
+  return from.ferocity / ferocityMaxOf(from.def) * ferocityMaxOf(to.def);
+}
+function ferocityDamageBonus(ferocity, max = FEROCITY_RULES.max) {
+  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ ratio }) => ferocity >= ratio * max);
+  return active3?.damageBonus ?? 0;
+}
+function drainFerocityFever(unit, seconds) {
+  if (!unit.ferocityFever || seconds <= 0) return;
+  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - feverDrainPerSecond(unit.def) * seconds);
+  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
+}
+
+// src/core/damage.ts
+function isCriticalHit(critChance, roll3) {
+  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+  return roll3 < critChance / 100;
+}
+function currentAbilityPower(combatant) {
+  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
+}
+function scalingStatValue(attacker, stat, damageType) {
+  if (stat === "def") return attacker.def.stats.def;
+  if (stat === "res") return attacker.def.stats.res;
+  if (stat === "hp") return attacker.def.stats.hp;
+  if (stat === "atk") return attacker.def.stats.atk;
+  if (stat === "ap") return currentAbilityPower(attacker);
+  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
+}
+function offenseValue(attacker, input) {
+  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
+  if (!input.secondaryScaling) return primary;
+  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
+}
+function computeDamageContribution(attacker, input) {
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
+}
+function computeDamage(attacker, target, input) {
+  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
+  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
+  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
+  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
+  const afterDefense = raw * 100 / (100 + defense);
+  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
+}
+
+// src/core/relicProgression.ts
+init_define_import_meta_env();
+
+// src/data/runes.ts
+init_define_import_meta_env();
+
+// src/core/runes.ts
+init_define_import_meta_env();
 
 // src/core/runeTraits.ts
 init_define_import_meta_env();
@@ -3419,487 +3656,6 @@ function applyHeartGems(stats, gems2) {
 function calculateFinalStats(base, progress, gems2, rarity) {
   if (progress.heartGemSlots.length !== 3) throw new RangeError("Heart Gem \uC2AC\uB86F\uC740 \uC815\uD655\uD788 3\uAC1C\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   return applyHeartGems(applyBreakthrough(applyLevelGrowth(base, progress.level, rarity), progress.breakthrough), gems2);
-}
-
-// src/core/duelArena.ts
-var DUEL_DIVISION_SPAN = 100;
-var DUEL_TIERS = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1e3 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2e3 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3e3 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4e3 }, firstReachGems: 300 },
-  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5e3 }, firstReachGems: 400 },
-  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 400 }, firstReachGems: 500 },
-  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 500 }, firstReachGems: 700 }
-];
-var DUEL_MAX_BLIND = 2;
-var DUEL_START_SCORE = 0;
-var DUEL_DAILY_ATTEMPTS = 5;
-var DUEL_EXTRA_ATTEMPT_PRICES = [50, 50, 100, 100, 150];
-var DUEL_FREE_REFRESHES = 3;
-var DUEL_REFRESH_PRICES = [20, 40, 60, 80, 100];
-var DUEL_OPPONENT_COUNT = 5;
-var DUEL_STREAK_BONUS = { from: 2, perStep: 2, max: 10 };
-function duelStreakBonus(streak) {
-  if (!Number.isFinite(streak) || streak < DUEL_STREAK_BONUS.from) return 0;
-  return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
-}
-var DUEL_BATTLE_REWARD = { win: 20, loss: 0 };
-var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodo"];
-var DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 };
-function duelDefenseWinChance(mine, theirs) {
-  const total = Math.max(0, mine) + Math.max(0, theirs);
-  const share = total > 0 ? Math.max(0, mine) / total : 0.5;
-  return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
-}
-var DUEL_SEASON_DAYS = 21;
-var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
-var DAY_MS = 864e5;
-function duelTierIndex(score) {
-  let index = 0;
-  DUEL_TIERS.forEach((tier, i) => {
-    if (score >= tier.floor) index = i;
-  });
-  return index;
-}
-function duelTier(score) {
-  return DUEL_TIERS[duelTierIndex(score)];
-}
-function getDuelTier(id) {
-  return DUEL_TIERS.find((tier) => tier.id === id);
-}
-function duelStanding(score) {
-  const index = duelTierIndex(score);
-  const tier = DUEL_TIERS[index];
-  const next = DUEL_TIERS[index + 1];
-  const within = Math.max(0, score - tier.floor);
-  if (tier.divisions > 1) {
-    const step2 = Math.min(tier.divisions - 1, Math.floor(within / DUEL_DIVISION_SPAN));
-    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
-  }
-  return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
-}
-function duelScoreDelta(myScore, opponentScore, won) {
-  const gap = opponentScore - myScore;
-  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
-  return -clamp(Math.round(14 - gap / 25), 6, 24);
-}
-function applyDuelScore(score, delta) {
-  const next = Math.max(0, score + delta);
-  if (delta >= 0) return next;
-  const tier = duelTier(score);
-  return tier.divisions > 1 ? Math.max(tier.floor, next) : next;
-}
-function duelBlindCount(score) {
-  return Math.min(DUEL_MAX_BLIND, duelTier(score).blind);
-}
-function duelBlindOrder(members, chosen = []) {
-  const ids = new Set(members.map(({ relicId }) => relicId));
-  const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
-  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
-  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
-}
-function duelHiddenRelicIds(blindOrder, count2) {
-  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count2)));
-}
-function duelExtraAttemptPrice(purchasedToday) {
-  return DUEL_EXTRA_ATTEMPT_PRICES[purchasedToday];
-}
-function duelRefreshPrice(refreshesUsed) {
-  if (refreshesUsed < DUEL_FREE_REFRESHES) return 0;
-  return DUEL_REFRESH_PRICES[Math.min(refreshesUsed - DUEL_FREE_REFRESHES, DUEL_REFRESH_PRICES.length - 1)];
-}
-function duelFreeRefreshesLeft(refreshesUsed) {
-  return Math.max(0, DUEL_FREE_REFRESHES - refreshesUsed);
-}
-function duelAllOpponentsFought(candidateIds, foughtIds) {
-  return candidateIds.length > 0 && candidateIds.every((id) => foughtIds.includes(id));
-}
-function duelTierRose(scoreBefore, scoreAfter) {
-  return duelTierIndex(scoreAfter) > duelTierIndex(scoreBefore);
-}
-function duelDayKey(now) {
-  return now.toISOString().slice(0, 10);
-}
-function duelSeasonNumber(now) {
-  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
-}
-function duelSeasonId(now) {
-  return `S${duelSeasonNumber(now)}`;
-}
-function duelSeasonEndsAt(now) {
-  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
-}
-function duelSeasonResetScore(score) {
-  return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
-}
-function duelNewlyReachedTiers(before, after, reached) {
-  const from = duelTierIndex(before);
-  const to = duelTierIndex(after);
-  return DUEL_TIERS.slice(from + 1, to + 1).filter((tier) => !reached.includes(tier.id) && tier.firstReachGems > 0);
-}
-function pickDuelOpponents(pool, myScore, random, exclude = []) {
-  const candidates = pool.filter(({ id }) => !exclude.includes(id));
-  const bands = [[-420, -160], [-200, -40], [-60, 60], [40, 200], [160, 440]];
-  const picked = [];
-  for (const [low, high] of bands) {
-    const inBand = candidates.filter((entry) => !picked.includes(entry) && entry.score - myScore >= low && entry.score - myScore <= high);
-    if (inBand.length > 0) picked.push(inBand[Math.floor(random() * inBand.length) % inBand.length]);
-  }
-  const rest = candidates.filter((entry) => !picked.includes(entry)).sort((a, b) => Math.abs(a.score - myScore) - Math.abs(b.score - myScore));
-  while (picked.length < DUEL_OPPONENT_COUNT && rest.length > 0) picked.push(rest.shift());
-  return picked.sort((a, b) => a.score - b.score);
-}
-function duelGrownStats(def, level, breakthrough) {
-  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
-}
-function duelNpcLevel(score) {
-  return clamp(Math.round(10 + score / 3e3 * 50), 8, 60);
-}
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-// src/core/duelState.ts
-var DUEL_HISTORY_LIMIT = 10;
-function cloneDuelState(state) {
-  return {
-    ...state,
-    reachedTierIds: [...state.reachedTierIds],
-    candidateIds: [...state.candidateIds],
-    foughtIds: [...state.foughtIds],
-    attack: [...state.attack],
-    defense: [...state.defense],
-    blindChoice: [...state.blindChoice],
-    pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
-    history: state.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} }))
-  };
-}
-var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
-var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
-function normalizeHistoryEntry(entry) {
-  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
-  const units = Array.isArray(opponentUnits) ? opponentUnits.filter((unit) => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level })) : [];
-  return {
-    ...base,
-    ...typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {},
-    ...typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {},
-    ...units.length > 0 ? { opponentUnits: units } : {},
-    ...side === "defense" ? { side } : {}
-  };
-}
-function normalizeDuelState(value, ownedRelicIds) {
-  const source = value && typeof value === "object" ? value : {};
-  const owned = new Set(ownedRelicIds);
-  const team = (list) => stringList(list, 3).filter((id) => owned.has(id));
-  const reward = source.pendingSeasonReward;
-  const history = Array.isArray(source.history) ? source.history.filter((entry) => !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore) && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
-  const savedDefense = team(source.defense);
-  const defense = savedDefense.length > 0 ? savedDefense : DUEL_DEFAULT_DEFENSE.filter((id) => owned.has(id));
-  const defenseCustomized = savedDefense.length > 0 && (typeof source.defenseCustomized === "boolean" ? source.defenseCustomized : true);
-  const defenseSimAt = typeof source.defenseSimAt === "string" && Number.isFinite(Date.parse(source.defenseSimAt)) ? source.defenseSimAt : "";
-  const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
-  const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
-  const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId : null;
-  return {
-    seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
-    score,
-    wins: isCount(source.wins) ? source.wins : 0,
-    losses: isCount(source.losses) ? source.losses : 0,
-    reachedTierIds: stringList(source.reachedTierIds, DUEL_TIERS.length).filter((id) => getDuelTier(id) !== void 0),
-    dayKey: typeof source.dayKey === "string" ? source.dayKey : "",
-    attemptsUsed: isCount(source.attemptsUsed) ? source.attemptsUsed : 0,
-    attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
-    attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
-    refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
-    candidateIds,
-    foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
-    attack: team(source.attack),
-    defense,
-    defenseCustomized,
-    defenseSimAt,
-    blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
-    pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId) ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
-    history,
-    winStreak: isCount(source.winStreak) ? source.winStreak : 0,
-    bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
-    // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
-    seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
-    lastSeasonTierId,
-    lastSeasonScore: lastSeasonTierId && isCount(source.lastSeasonScore) ? source.lastSeasonScore : 0
-  };
-}
-function isValidDuelState(value, ownedRelicIds) {
-  if (!value || typeof value !== "object") return false;
-  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
-}
-function rollDuelPeriods(state, now) {
-  const next = cloneDuelState(state);
-  const seasonId = duelSeasonId(now);
-  if (next.seasonId !== seasonId) {
-    const played = next.seasonId !== "" && next.wins + next.losses > 0;
-    if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
-    if (next.seasonId !== "") {
-      next.lastSeasonTierId = played ? duelTier(next.score).id : null;
-      next.lastSeasonScore = played ? next.score : 0;
-    }
-    next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
-    next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
-    next.wins = 0;
-    next.losses = 0;
-    next.winStreak = 0;
-    next.bestStreak = 0;
-    next.seasonBestScore = next.score;
-    next.candidateIds = [];
-    next.foughtIds = [];
-    next.defenseSimAt = "";
-    next.seasonId = seasonId;
-  }
-  const dayKey = duelDayKey(now);
-  if (next.dayKey !== dayKey) {
-    next.dayKey = dayKey;
-    next.attemptsUsed = 0;
-    next.attemptsPurchased = 0;
-    next.attemptsFromAds = 0;
-    next.refreshesUsed = 0;
-  }
-  return next;
-}
-function duelAttemptsLeft(state) {
-  return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
-}
-
-// src/server/combatAuthority.ts
-init_define_import_meta_env();
-
-// src/core/storyDifficulty.ts
-init_define_import_meta_env();
-var STORY_DIFFICULTY = {
-  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1 },
-  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5 }
-};
-function storyDifficultyOf(id) {
-  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
-}
-function storyBaseStageId(id) {
-  return id.replace(/^(normal|hard):/, "");
-}
-function storyStageId(difficulty, base) {
-  return difficulty === "easy" ? base : `${difficulty}:${base}`;
-}
-function storyDifficultyRequirement(difficulty) {
-  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
-}
-function isStoryDifficultyUnlocked(difficulty, cleared) {
-  const required = storyDifficultyRequirement(difficulty);
-  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
-}
-function newlyUnlockedStoryDifficulty(stageId, firstClear) {
-  if (!firstClear) return;
-  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
-}
-function storyDifficultyGrowth(difficulty, chapter, order) {
-  const index = (chapter - 1) * 10 + order - 1;
-  return difficulty === "normal" ? { level: Math.min(60, 47 + index), multiplier: 1 + Math.max(0, index - 9) / 150 } : { level: Math.min(60, 56 + Math.round(index * 0.5)), multiplier: 1.2 + (index - 9) / 75 };
-}
-function isStoryStageAvailable(stage, cleared) {
-  return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
-}
-function difficultyStageRewards(rewards, difficulty) {
-  const multiplier = STORY_DIFFICULTY[difficulty].reward;
-  return {
-    firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
-    repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
-    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: Math.round(reward.amount * multiplier) } : { ...reward })
-  };
-}
-
-// src/data/relics.ts
-init_define_import_meta_env();
-
-// src/core/skirmish.ts
-init_define_import_meta_env();
-
-// src/core/bond.ts
-init_define_import_meta_env();
-var BOND_LEVEL_CAP = 10;
-var BOND_TOTAL_XP_BY_LEVEL = [0, 20, 50, 90, 140, 200, 270, 350, 440, 540, 650];
-var BOND_XP_REWARD = { firstAcquisition: 20, partyVictory: 12, firstLobbyInteraction: 5, firstObservationInterview: 5 };
-var BOND_FEROCITY_MULTIPLIER = [1, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
-function bondLevelForXp(xp) {
-  if (!Number.isInteger(xp) || xp < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  let level = 0;
-  while (level < BOND_LEVEL_CAP && xp >= BOND_TOTAL_XP_BY_LEVEL[level + 1]) level += 1;
-  return level;
-}
-function grantBondXp(progress, amount) {
-  if (!Number.isInteger(amount) || amount < 0) throw new RangeError("\uC720\uB300 \uACBD\uD5D8\uCE58 \uBCF4\uC0C1\uC740 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
-  const bondXp = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], progress.bondXp + amount);
-  const bondLevel = bondLevelForXp(bondXp);
-  return { progress: { ...progress, bondXp, bondLevel, heartGemSlots: [...progress.heartGemSlots] }, xpGained: bondXp - progress.bondXp, levelsGained: bondLevel - progress.bondLevel };
-}
-function grantDailyLobbyBondXp(progress, utcDate) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(utcDate)) throw new RangeError("\uB85C\uBE44 \uC0C1\uD638\uC791\uC6A9 \uB0A0\uC9DC\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  if (progress.lastLobbyInteractionDate === utcDate) return { progress: { ...progress, heartGemSlots: [...progress.heartGemSlots] }, xpGained: 0, levelsGained: 0 };
-  const result = grantBondXp(progress, BOND_XP_REWARD.firstLobbyInteraction);
-  return { ...result, progress: { ...result.progress, lastLobbyInteractionDate: utcDate } };
-}
-function amplifyFerocityGain(amount, bondLevel) {
-  if (!Number.isFinite(amount) || amount < 0 || !Number.isInteger(bondLevel) || bondLevel < 0) throw new RangeError("\uC57C\uC131 \uC99D\uAC00\uB7C9\uACFC \uC720\uB300 \uB808\uBCA8\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-  return Math.max(0, Math.round(amount * BOND_FEROCITY_MULTIPLIER[Math.min(BOND_LEVEL_CAP, bondLevel)]));
-}
-
-// src/core/battleClock.ts
-init_define_import_meta_env();
-var BATTLE_DEATH_CLOCK = {
-  /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 90,
-  /** 몇 초마다 한 번 도는가. */
-  tickSeconds: 1,
-  /**
-   * 첫 번째가 깎는 비율(%). 아군의 최대 체력과 회복·보호막 성능을 **같은 비율로** 깎는다 —
-   * 체력 피해는 방어·경감을 지나지 않는 고정 피해다.
-   */
-  firstTickPercent: 1,
-  /**
-   * 한 번 돌 때마다 다음 번이 더 깎는 몫(%). **시계는 점점 세진다** — 처음 몇 번은 거의 이긴 판이
-   * 끝낼 틈을 주고, 그래도 끌리는 판은 가속이 붙어 빠르게 닫힌다. 고정 2%이던 때는 50번을 기다려야
-   * 했는데(2분 20초), 지금은 19번(1분 49초)이면 어떤 편성이든 닫힌다.
-   */
-  rampPercentPerTick: 0.5
-};
-function deathClockTickPercent(tick) {
-  if (tick < 1) return 0;
-  return BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * (tick - 1);
-}
-function deathClockCumulativePercent(ticks) {
-  if (ticks < 1) return 0;
-  return ticks * BATTLE_DEATH_CLOCK.firstTickPercent + BATTLE_DEATH_CLOCK.rampPercentPerTick * ticks * (ticks - 1) / 2;
-}
-function deathClockTicksAt(elapsedSeconds) {
-  if (!Number.isFinite(elapsedSeconds)) return 0;
-  const past = elapsedSeconds - BATTLE_DEATH_CLOCK.startsAtSeconds;
-  if (past < 0) return 0;
-  return Math.floor(past / BATTLE_DEATH_CLOCK.tickSeconds) + 1;
-}
-function deathClockSurvivalMultiplier(elapsedSeconds) {
-  const lost = deathClockCumulativePercent(deathClockTicksAt(elapsedSeconds));
-  return Math.min(1, Math.max(0, 1 - lost / 100));
-}
-function deathClockClosesBySeconds() {
-  let ticks = 1;
-  while (deathClockCumulativePercent(ticks) < 100) ticks += 1;
-  return BATTLE_DEATH_CLOCK.startsAtSeconds + ticks * BATTLE_DEATH_CLOCK.tickSeconds;
-}
-var BOSS_REPLAY_SLACK_SECONDS = 30;
-
-// src/core/damage.ts
-init_define_import_meta_env();
-
-// src/core/element.ts
-init_define_import_meta_env();
-var ELEMENT_ADVANTAGE_MULTIPLIER = 1.25;
-var ELEMENT_DISADVANTAGE_MULTIPLIER = 1 / ELEMENT_ADVANTAGE_MULTIPLIER;
-var ELEMENT_COUNTERS = {
-  fire: ["grass", "wind"],
-  water: ["fire", "earth"],
-  grass: ["water", "earth"],
-  earth: ["wind", "fire"],
-  wind: ["grass", "water"]
-};
-var ICE_ADVANTAGES = ["grass", "water", "earth"];
-var ICE_DISADVANTAGES = ["fire"];
-function elementMultiplier(attacker, defender) {
-  if (attacker === defender) return 1;
-  if (attacker === "ice") {
-    if (ICE_ADVANTAGES.includes(defender)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(defender)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  if (defender === "ice") {
-    if (ICE_ADVANTAGES.includes(attacker)) return ELEMENT_DISADVANTAGE_MULTIPLIER;
-    if (ICE_DISADVANTAGES.includes(attacker)) return ELEMENT_ADVANTAGE_MULTIPLIER;
-    return 1;
-  }
-  return ELEMENT_COUNTERS[attacker].includes(defender) ? ELEMENT_ADVANTAGE_MULTIPLIER : ELEMENT_DISADVANTAGE_MULTIPLIER;
-}
-function effectiveElement(relic) {
-  return relic.passive.elementOverride ?? relic.element;
-}
-
-// src/core/ferocity.ts
-init_define_import_meta_env();
-var FEROCITY_RULES = {
-  min: 0,
-  /** 개체가 `ferocityMax`를 적지 않았을 때의 아군 기본 최대치다. */
-  max: 100,
-  /** 적 전용 개체의 기본 최대치 — 아군보다 조금 더 높게 둬 폭주가 늦게 온다. */
-  enemyMax: 130,
-  basicGain: 12,
-  ultimateGain: 18,
-  hitGain: 8,
-  /** 최대치가 얼마든 가득 찬 피버가 이 시간(초) 만에 모두 소진된다. 높은 개체는 더 빨리 닳는다. */
-  feverSeconds: 8,
-  /** 구간은 최대치에 대한 비율이다 — 최대치가 달라도 같은 진행도에서 같은 보너스가 붙는다. */
-  thresholds: [
-    { ratio: 0.5, damageBonus: 0.1 },
-    { ratio: 0.8, damageBonus: 0.2 },
-    { ratio: 1, damageBonus: 0.35 }
-  ]
-};
-function ferocityMaxOf(def) {
-  return def.ferocityMax ?? (def.enemyOnly ? FEROCITY_RULES.enemyMax : FEROCITY_RULES.max);
-}
-function feverDrainPerSecond(def) {
-  return ferocityMaxOf(def) / FEROCITY_RULES.feverSeconds;
-}
-function ferocityMirrored(from, to) {
-  return from.ferocity / ferocityMaxOf(from.def) * ferocityMaxOf(to.def);
-}
-function ferocityDamageBonus(ferocity, max = FEROCITY_RULES.max) {
-  const active3 = [...FEROCITY_RULES.thresholds].reverse().find(({ ratio }) => ferocity >= ratio * max);
-  return active3?.damageBonus ?? 0;
-}
-function drainFerocityFever(unit, seconds) {
-  if (!unit.ferocityFever || seconds <= 0) return;
-  unit.ferocity = Math.max(FEROCITY_RULES.min, unit.ferocity - feverDrainPerSecond(unit.def) * seconds);
-  if (unit.ferocity <= FEROCITY_RULES.min) unit.ferocityFever = false;
-}
-
-// src/core/damage.ts
-function isCriticalHit(critChance, roll3) {
-  if (roll3 < 0 || roll3 >= 1) throw new RangeError("critical roll\uC740 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
-  return roll3 < critChance / 100;
-}
-function currentAbilityPower(combatant) {
-  return combatant.def.stats.ap + (combatant.bonusAp ?? 0);
-}
-function scalingStatValue(attacker, stat, damageType) {
-  if (stat === "def") return attacker.def.stats.def;
-  if (stat === "res") return attacker.def.stats.res;
-  if (stat === "hp") return attacker.def.stats.hp;
-  if (stat === "atk") return attacker.def.stats.atk;
-  if (stat === "ap") return currentAbilityPower(attacker);
-  return damageType === "physical" ? attacker.def.stats.atk : currentAbilityPower(attacker);
-}
-function offenseValue(attacker, input) {
-  const primary = scalingStatValue(attacker, input.scalingStat, input.damageType) * input.power / 100;
-  if (!input.secondaryScaling) return primary;
-  return primary + scalingStatValue(attacker, input.secondaryScaling.stat, input.damageType) * input.secondaryScaling.power / 100;
-}
-function computeDamageContribution(attacker, input) {
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  return Math.max(0, offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def))));
-}
-function computeDamage(attacker, target, input) {
-  const rawDefense = input.damageType === "physical" ? target.def.stats.def : target.def.stats.res;
-  const defense = input.ignoresDefense ? 0 : rawDefense * (1 - Math.min(100, Math.max(0, input.defenseIgnorePercent ?? 0)) / 100);
-  const critical = input.isCritical ? attacker.def.stats.critDamage / 100 : 1;
-  const raw = offenseValue(attacker, input) * critical * (1 + ferocityDamageBonus(attacker.ferocity, ferocityMaxOf(attacker.def)));
-  const afterDefense = raw * 100 / (100 + defense);
-  return Math.max(1, Math.round(afterDefense * elementMultiplier(effectiveElement(attacker.def), effectiveElement(target.def))));
 }
 
 // src/core/levelDesign.ts
@@ -4755,8 +4511,11 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("\uC544\uAD70\uC740 1~5\uAE30\uB97C \uC9C0\uC6D0\uD569\uB2C8\uB2E4.");
   if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`\uC801\uC740 1~${MAX_ENEMY_COUNT}\uAE30\uB97C \uC9C0\uC6D0\uD569\uB2C8\uB2E4.`);
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("\uBCF4\uC2A4 \uB2E8\uACC4\uC640 \uB9AC\uBBF8\uD2B8\uB294 \uC720\uD6A8\uD574\uC57C \uD569\uB2C8\uB2E4.");
-  const playerSpots = spawnSpots(arena, "player", playerDefs.length);
-  const enemySpots = spawnSpots(arena, "enemy", enemyDefs.length);
+  const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
+  const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
+  for (const [spots, count2] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]]) {
+    if (spots && (spots.length !== count2 || spots.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
+  }
   const initialById = new Map(options.playerInitialStates?.map((snapshot) => [snapshot.relicId, snapshot]));
   const players = playerDefs.map((def, i) => {
     const fighter = makeFighter(def, "player", i, playerSpots[i].x, playerSpots[i].y, playerBondLevels[def.id] ?? 0, playerBreakthroughs[def.id] ?? 0, 1, options.augmentEffects);
@@ -10747,6 +10506,284 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
   return events;
 }
 
+// src/core/combatProtocol.ts
+function combatState(lease) {
+  const s = lease.setup;
+  return createSkirmish(
+    s.players,
+    s.enemies,
+    s.arena,
+    s.bonds,
+    s.breakthroughs,
+    s.options
+  );
+}
+var emptyCombatJournal = () => ({
+  tickets: {},
+  records: {}
+});
+var COMBAT_STEP_MS = 20;
+var MAX_COMBAT_TICKS = 18e3;
+var MAX_COMBAT_ACTIONS = 512;
+
+// src/core/bossSimulation.ts
+init_define_import_meta_env();
+var BOSS_STEP_MS = 20;
+function bossBattleRandom(identity) {
+  let seed = 2166136261;
+  for (const character of identity) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619) >>> 0;
+  return () => {
+    seed = Math.imul(seed, 1664525) + 1013904223 >>> 0;
+    return seed / 4294967296;
+  };
+}
+
+// src/core/battleArena.ts
+init_define_import_meta_env();
+var BASE_ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
+var BATTLE_ARENA = {
+  stage: BASE_ARENA,
+  expedition: BASE_ARENA,
+  expeditionBoss: BASE_ARENA,
+  cake: { ...BASE_ARENA, top: 720 },
+  bounty: { ...BASE_ARENA, top: 770 },
+  raid: { ...BASE_ARENA, top: 860 },
+  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
+  // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
+  // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
+  duel: { ...BASE_ARENA, top: 740 }
+};
+function battleArena(mode) {
+  return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
+}
+
+// src/core/liveArena.ts
+var RANKED_ARENA_RULES = { ban: true, order: "random", placement: "alternate" };
+function arenaRules(value) {
+  const r = value;
+  if (!r || typeof r.ban !== "boolean" || !["first", "second", "random"].includes(r.order) || !["alternate", "hidden"].includes(r.placement)) throw Error("ARENA_RULES");
+  return { ban: r.ban, order: r.order, placement: r.placement };
+}
+function arenaTurn(room) {
+  if (room.phase === "ban") return room.bans[room.first] === null ? room.first : 1 - room.first;
+  const total = room.picks[0].length + room.picks[1].length;
+  return (room.first + total) % 2;
+}
+function startArena(room, players, now) {
+  if (players.length !== 2 || players.some((p) => p.roster.length < (room.rules.ban ? 4 : 3))) throw Error("ARENA_ROSTER");
+  return { ...room, players, phase: room.rules.ban ? "ban" : "place", bans: [null, null], picks: [[], []], locked: [false, false], deadline: now + 45e3 };
+}
+function arenaPosition(p, side) {
+  const a = battleArena("duel");
+  return { x: a.left + 35 + p.x * (a.right - a.left - 70), y: side === 0 ? a.bottom - 30 - p.y * 215 : a.top + 30 + p.y * 215 };
+}
+function arenaSetup(room) {
+  const selected = room.picks.map((picks, side) => picks.map((p) => room.players[side].roster.find((u) => u.def.id === p.relicId)));
+  const [a, b] = selected;
+  return {
+    players: a.map((u) => u.def),
+    enemies: b.map((u) => u.def),
+    arena: battleArena("duel"),
+    bonds: Object.fromEntries(a.map((u) => [u.def.id, u.bond])),
+    breakthroughs: Object.fromEntries(a.map((u) => [u.def.id, u.breakthrough])),
+    options: {
+      automaticUltimates: true,
+      playerPositions: room.picks[0].map((p) => arenaPosition(p, 0)),
+      enemyPositions: room.picks[1].map((p) => arenaPosition(p, 1)),
+      augmentEffects: a.flatMap((u) => u.traits),
+      enemyAugmentEffects: b.flatMap((u) => u.traits),
+      enemyBondLevels: b.map((u) => u.bond),
+      enemyBreakthroughs: b.map((u) => u.breakthrough),
+      enemyBodyScale: 1
+    }
+  };
+}
+function applyArenaAction(source, actor, action, now) {
+  const r = structuredClone(source), side = r.players.findIndex((p) => p.id === actor);
+  if (side < 0) throw Error("ARENA_FORBIDDEN");
+  if (["done", "declined"].includes(r.phase)) return r;
+  if (r.phase === "invited") {
+    if (action.kind === "forfeit" && side === 0) {
+      r.phase = "declined";
+      return r;
+    }
+    return r;
+  }
+  if (action.kind === "forfeit") {
+    r.phase = "done";
+    r.winner = 1 - side;
+    r.reason = "forfeit";
+    return r;
+  }
+  if (now >= r.deadline && r.phase !== "battle") {
+    const late = r.phase === "place" && r.rules.placement === "hidden" ? r.locked.findIndex((v) => !v) : arenaTurn(r);
+    r.phase = "done";
+    r.winner = r.rules.placement === "hidden" && !r.locked[0] && !r.locked[1] && source.phase === "place" ? null : 1 - late;
+    r.reason = "timeout";
+    return r;
+  }
+  if (action.kind === "tick") return r;
+  if (r.phase === "ban") {
+    if (action.kind !== "ban" || arenaTurn(r) !== side || r.bans[side] !== null || !r.players[1 - side].roster.some((u) => u.def.id === action.relicId)) throw Error("ARENA_TURN");
+    r.bans[side] = action.relicId;
+    if (r.bans.every(Boolean)) r.phase = "place";
+    r.deadline = now + 45e3;
+    return r;
+  }
+  if (r.phase !== "place" || r.locked[side]) throw Error("ARENA_PHASE");
+  const alternate = r.rules.placement === "alternate";
+  if (alternate && arenaTurn(r) !== side) throw Error("ARENA_TURN");
+  if (action.kind === "undo" && !alternate) r.picks[side].pop();
+  else if (action.kind === "lock" && !alternate && r.picks[side].length === 3) r.locked[side] = true;
+  else if (action.kind === "place") {
+    const p = { relicId: action.relicId, x: action.x, y: action.y };
+    if (r.picks[side].length >= 3 || !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1 || !r.players[side].roster.some((u) => u.def.id === p.relicId) || r.bans[1 - side] === p.relicId || r.picks[side].some((q) => q.relicId === p.relicId || Math.hypot((q.x - p.x) * 750, (q.y - p.y) * 215) < 80)) throw Error("ARENA_PLACEMENT");
+    r.picks[side].push(p);
+    if (alternate) {
+      r.locked[side] = r.picks[side].length === 3;
+      r.deadline = now + 45e3;
+    }
+  } else throw Error("ARENA_ACTION");
+  if (r.locked.every(Boolean)) {
+    r.phase = "battle";
+    r.deadline = now + 6e5;
+    r.lease = { id: r.id, seed: r.seed, setup: arenaSetup(r), expiresAt: new Date(r.deadline).toISOString() };
+  }
+  return r;
+}
+function settleArena(room) {
+  if (room.phase !== "battle" || !room.lease) return room;
+  const state = combatState(room.lease), random = bossBattleRandom(room.seed);
+  let ticks = 0;
+  while (state.phase === "fight" && ticks < MAX_COMBAT_TICKS) {
+    stepSkirmish(state, COMBAT_STEP_MS / 1e3, random);
+    ticks++;
+  }
+  return { ...room, phase: "done", winner: state.phase === "victory" ? 0 : state.phase === "defeat" ? 1 : null, reason: "combat", resultTicks: ticks };
+}
+function publicArenaRoom(room, actor) {
+  const r = structuredClone(room), side = r.players.findIndex((p) => p.id === actor);
+  if (side < 0) throw Error("ARENA_FORBIDDEN");
+  if (r.rules.placement === "hidden" && (r.phase === "place" || r.phase === "ban")) {
+    r.picks[1 - side] = [];
+    delete r.lease;
+  }
+  return r;
+}
+
+// src/state/SaveManager.ts
+init_define_import_meta_env();
+
+// src/core/roulette.ts
+init_define_import_meta_env();
+var ROULETTE = {
+  id: "research-roulette",
+  adSlot: "roulette-chances",
+  counter: "roulette-spins",
+  free: 1,
+  adBonus: 3,
+  limit: 4,
+  startsAt: "2026-09-01T00:00:00+09:00",
+  endsAt: "2026-12-31T23:59:59+09:00"
+};
+var ROULETTE_REWARDS = [
+  { currency: "gold", amount: 5e3 },
+  { currency: "cheesecake", amount: 30 },
+  { currency: "stamina", amount: 20 },
+  { currency: "gems", amount: 20 },
+  { currency: "rawStone", amount: 50 },
+  { currency: "gold", amount: 1e4 }
+];
+function rouletteStatus(ledger, now, adFree = false) {
+  const date = now.toISOString().slice(0, 10);
+  const counts = ledger.date === date ? ledger.claimsBySlot : {};
+  const used = counts[ROULETTE.counter] ?? 0;
+  const bonus = (counts[ROULETTE.adSlot] ?? 0) > 0;
+  return {
+    date,
+    active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
+    used,
+    remaining: Math.max(0, ROULETTE.free + (bonus ? ROULETTE.adBonus : 0) - used),
+    bonusAvailable: !bonus,
+    adFree,
+    resetsAt: new Date(Date.parse(date) + 864e5).toISOString()
+  };
+}
+function rouletteIndex(random) {
+  const roll3 = random();
+  return Math.min(ROULETTE_REWARDS.length - 1, Math.max(0, Math.floor((Number.isFinite(roll3) ? roll3 : 0) * ROULETTE_REWARDS.length)));
+}
+
+// src/core/saveStorage.ts
+init_define_import_meta_env();
+
+// src/core/buildFlavor.ts
+init_define_import_meta_env();
+var QA_TOOLS_ENABLED = false;
+
+// src/core/saveStorage.ts
+var LOCAL_SAVE_FLAVOR = false ? "test" : QA_TOOLS_ENABLED ? "qa" : "production";
+var LOCAL_SAVE_STORAGE_KEYS = {
+  production: "eternal-city.production.local-save",
+  qa: "eternal-city.qa.local-save",
+  test: "eternal-city.test.local-save"
+};
+
+// src/core/attendance.ts
+init_define_import_meta_env();
+
+// src/core/dailyContent.ts
+init_define_import_meta_env();
+
+// src/data/stages.ts
+init_define_import_meta_env();
+
+// src/core/storyDifficulty.ts
+init_define_import_meta_env();
+var STORY_DIFFICULTY = {
+  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1 },
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5 }
+};
+function storyDifficultyOf(id) {
+  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
+}
+function storyBaseStageId(id) {
+  return id.replace(/^(normal|hard):/, "");
+}
+function storyStageId(difficulty, base) {
+  return difficulty === "easy" ? base : `${difficulty}:${base}`;
+}
+function storyDifficultyRequirement(difficulty) {
+  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
+}
+function isStoryDifficultyUnlocked(difficulty, cleared) {
+  const required = storyDifficultyRequirement(difficulty);
+  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
+}
+function newlyUnlockedStoryDifficulty(stageId, firstClear) {
+  if (!firstClear) return;
+  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
+}
+function storyDifficultyGrowth(difficulty, chapter, order) {
+  const index = (chapter - 1) * 10 + order - 1;
+  return difficulty === "normal" ? { level: Math.min(60, 47 + index), multiplier: 1 + Math.max(0, index - 9) / 150 } : { level: Math.min(60, 56 + Math.round(index * 0.5)), multiplier: 1.2 + (index - 9) / 75 };
+}
+function isStoryStageAvailable(stage, cleared) {
+  return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
+}
+function difficultyStageRewards(rewards, difficulty) {
+  const multiplier = STORY_DIFFICULTY[difficulty].reward;
+  return {
+    firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
+    repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
+    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: Math.round(reward.amount * multiplier) } : { ...reward })
+  };
+}
+
+// src/data/relics.ts
+init_define_import_meta_env();
+
 // src/data/relicStories/torika.ts
 init_define_import_meta_env();
 var CHAPTER_4 = {
@@ -16697,7 +16734,6 @@ for (const relic of RELICS) {
 }
 
 // src/data/stages.ts
-init_define_import_meta_env();
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
 function tieredEnemy(relicId, referenceLevel, slot, levelBonus = 0) {
   const tier = ENEMY_BIRTH_TIERS[relicId];
@@ -16993,755 +17029,7 @@ for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.nam
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
 for (const stage of EXTRA_STORY_STAGES) registerDataText(stage, "name", `stage.${storyBaseStageId(stage.id)}.name`);
 
-// src/data/cakeOperation.ts
-init_define_import_meta_env();
-
-// src/core/dungeonShortcut.ts
-init_define_import_meta_env();
-var SWEEP_TICKET_ITEM = "sweep-ticket";
-var SWEEP_TICKET_TEST_KIT = { itemId: SWEEP_TICKET_ITEM, quantity: 10 };
-var SWEEP_COUNT_LIMIT = 50;
-var DUNGEON_RUN_STAMINA = 10;
-function normalizeSweepCount(value) {
-  return Number.isInteger(value) && value >= 1 && value <= SWEEP_COUNT_LIMIT ? value : void 0;
-}
-function settleSweep(cost, count2, adFreeMembership) {
-  return {
-    count: count2,
-    staminaCost: cost.staminaCost * count2,
-    ticketCost: adFreeMembership ? 0 : count2,
-    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count2]))
-  };
-}
-function sweepRefusal(input) {
-  if (!input.cleared) return "not_cleared";
-  if (normalizeSweepCount(input.count) === void 0) return "invalid_count";
-  const settlement = settleSweep(input.cost, input.count, input.adFreeMembership);
-  if (input.tickets < settlement.ticketCost) return "not_enough_tickets";
-  if (input.stamina < settlement.staminaCost) return "not_enough_stamina";
-  return null;
-}
-
-// src/data/cakeOperation.ts
-var CAKE_OPERATION_TIERS = [
-  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
-  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 12, enemyCount: 10, rewardCheesecake: 44 },
-  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 20, enemyCount: 11, rewardCheesecake: 58 },
-  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 28, enemyCount: 12, rewardCheesecake: 72 },
-  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 36, enemyCount: 13, rewardCheesecake: 88 },
-  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 44, enemyCount: 14, rewardCheesecake: 108 },
-  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 52, enemyCount: 15, rewardCheesecake: 128 },
-  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 60, enemyCount: 15, rewardCheesecake: 150 }
-];
-var CAKE_OPERATION_ENEMY_IDS = [
-  "raitia-grass",
-  "raitia-water",
-  "raitia-fire",
-  "raitia-earth",
-  "raitia-wind"
-];
-var BY_ID2 = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
-function getCakeOperationTier(id) {
-  const found = BY_ID2.get(id);
-  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uB2E8\uACC4: ${id}`);
-  return found;
-}
-function cakeOperationTierIndex(id) {
-  return CAKE_OPERATION_TIERS.findIndex((tier) => tier.id === id);
-}
-function isCakeTierUnlocked(id, clearedIndex) {
-  const index = cakeOperationTierIndex(id);
-  return index >= 0 && index <= clearedIndex + 1;
-}
-function cakeOperationRunCost(tier) {
-  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } };
-}
-for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
-function cakeOperationRole(tier) {
-  return encounterRoleFor(tier.enemyCount);
-}
-function cakeOperationEnemies(tier) {
-  const role = cakeOperationRole(tier);
-  const level = tier.enemyLevel;
-  const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
-    const base = getRelic(id);
-    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role) };
-  });
-  return Array.from({ length: tier.enemyCount }, (_, index) => {
-    const sister = grown[index % grown.length];
-    return { ...sister, stats: { ...sister.stats } };
-  });
-}
-function cakeOperationEnemyDisplayLevel(tier) {
-  return { level: tier.enemyLevel };
-}
-
-// src/data/bounty.ts
-init_define_import_meta_env();
-var BOUNTY = {
-  roundCount: 3
-};
-var BOUNTY_TIERS = [
-  // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
-  { id: "bounty-1", order: 1, name: "\uD604\uC0C1\uC218\uBC30 1\uAE09", rewardGold: 1200, rounds: [
-    { relicId: "toby", level: 5 },
-    { relicId: "amo", level: 5 },
-    { relicId: "koma", level: 5 }
-  ] },
-  // 2급부터 돌파 없는 상한(20)을 넘는다.
-  { id: "bounty-2", order: 2, name: "\uD604\uC0C1\uC218\uBC30 2\uAE09", rewardGold: 3300, rounds: [
-    { relicId: "toby", level: 18 },
-    { relicId: "amo", level: 18 },
-    { relicId: "koma", level: 18 }
-  ] },
-  { id: "bounty-3", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 6400, rounds: [
-    { relicId: "toby", level: 32 },
-    { relicId: "amo", level: 32 },
-    { relicId: "koma", level: 32 }
-  ] },
-  { id: "bounty-4", order: 4, name: "\uD604\uC0C1\uC218\uBC30 4\uAE09", rewardGold: 14400, rounds: [
-    { relicId: "toby", level: 46 },
-    { relicId: "amo", level: 46 },
-    { relicId: "koma", level: 46 }
-  ] },
-  // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
-  { id: "bounty-5", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 26400, rounds: [
-    { relicId: "toby", level: 60 },
-    { relicId: "amo", level: 60 },
-    { relicId: "koma", level: 60 }
-  ] }
-];
-var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
-function getBountyTier(id) {
-  const tier = BOUNTY_TIER_BY_ID.get(id);
-  if (!tier) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uD604\uC0C1\uC218\uBC30 \uB4F1\uAE09 id: ${id}`);
-  return tier;
-}
-function bountyRoundEnemy(round) {
-  const base = getRelic(round.relicId);
-  return { ...base, encounterRole: BOUNTY_ROLE, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
-}
-var BOUNTY_ROLE = encounterRoleFor(1);
-function bountyRoundLevel(round) {
-  return round.level;
-}
-for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);
-
-// src/data/expeditionEnemies.ts
-init_define_import_meta_env();
-
-// src/data/expedition.ts
-init_define_import_meta_env();
-
-// src/data/competitiveRewards.ts
-init_define_import_meta_env();
-var WEEKLY_RANK_GEMS = [
-  { upTo: 1, gems: 5e3 },
-  { upTo: 3, gems: 4e3 },
-  { upTo: 10, gems: 3e3 },
-  { upTo: 50, gems: 2e3 },
-  { upTo: 100, gems: 1500 },
-  { upTo: null, gems: 800 }
-];
-
-// src/data/expedition.ts
-var EXPEDITION_MAP_BALANCE = {
-  /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
-  routeFloors: 19,
-  bossFloor: 20,
-  columns: 5,
-  nodesPerFloor: { min: 2, max: 4 },
-  /** 가중치는 상대값이며 생성기가 합계를 직접 가정하지 않는다. */
-  typeWeights: {
-    normal: 48,
-    elite: 12,
-    horde: 14,
-    rest: 14,
-    treasure: 12
-  },
-  /** 같은 종류와 비전투 노드가 한 세로 흐름에 지나치게 몰리지 않게 하는 상한이다. */
-  maxConsecutiveSameType: 2,
-  maxConsecutiveNonCombat: 1,
-  /** 이 층은 모든 갈래를 전투로 만들어 어느 경로든 최소 전투 수를 만족시킨다. */
-  requiredCombatFloors: [1, 4, 7, 10, 13, 16, 19],
-  minimumCombatsPerRoute: 7
-};
-var EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"];
-var EXPEDITION_COMBAT_BALANCE = {
-  normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
-  elite: { enemyCount: 1, statScale: 1.65, bodyScale: 1.1 },
-  horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
-};
-var EXPEDITION_SCORE_BALANCE = {
-  perFloor: 20,
-  perRemainingHpPercent: 0.75,
-  bossDamagePerPoint: 5
-};
-var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
-  /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
-  normal: 1,
-  /** 단일 강적의 높은 실패 위험을 표준 교전보다 50% 높게 보상한다. */
-  elite: 1.5,
-  /** 다수전의 추가 부담은 정예보다 낮은 25% 가산으로 보상한다. */
-  horde: 1.25,
-  /** 휴식은 전투 성과가 아니므로 점수를 만들지 않는다. */
-  rest: 0,
-  /** 보물의 가치는 전리품에만 있으며 RNG 결과를 점수로 환산하지 않는다. */
-  treasure: 0,
-  /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
-  boss: 0
-};
-var EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true };
-var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
-var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
-var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
-var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
-  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
-  fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
-  /**
-   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
-   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
-   */
-  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
-};
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
-function expeditionBossSalvage(bossDamageScore) {
-  return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
-}
-var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
-  normal: 1,
-  elite: 1.75,
-  horde: 1.4
-};
-var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 2080, max: 3600 },
-  fossil: { min: 1, max: 1 },
-  gems: { min: 1e3, max: 1500 },
-  salvageRecord: { min: 6, max: 10 }
-};
-var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
-var EXPEDITION_BOSS_BALANCE = {
-  /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
-  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
-  maximumActions: 2e3,
-  maximumAcceptedScore: 1e8,
-  /** 단계는 이름표다. 공격은 폰토스 정적 스킬이, 끝은 데스 카운트가 맡는다. */
-  phases: [
-    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD00\uCE21" },
-    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACFC\uBD80\uD558" },
-    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uBD95\uAD34" }
-  ]
-};
-var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
-];
-var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
-var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
-function expeditionRankRewards(rank) {
-  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
-  return { ...row.rewards };
-}
-var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
-EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
-
-// src/data/expeditionEnemies.ts
-var EXPEDITION_ENEMY_FORMATIONS = {
-  normal: ["toby", "amo", "ripa"],
-  /*
-   * **정예 조우에는 때릴 줄 아는 개체가 첫 자리에 선다.** 혼자 서는 자리인데 아모(탱커)가
-   * 앞에 있던 때는 실측에서 스물일곱 초를 싸우고도 파티 체력이 **한 점도 깎이지 않았다** —
-   * 정예가 묻는 것은 단일 딜과 유지력인데 그 조우가 아무것도 묻지 않았다.
-   */
-  elite: ["koma", "amo", "ripa"],
-  horde: ["ripa", "toby", "amo"],
-  boss: ["amo", "ripa", "toby"],
-  // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
-  rest: ["toby", "amo", "ripa"],
-  treasure: ["toby", "amo", "ripa"]
-};
-var FINAL_FLOOR_BOSS_ID = "pontos";
-function expeditionNodeRole(type, floor) {
-  if (type === "boss") return floor >= 20 ? "endless" : "boss";
-  return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
-}
-function expeditionRecommendedLevel(floor) {
-  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
-}
-var EXPEDITION_LEVEL_PER_FLOOR = 2;
-var ENCOUNTER_HORDE_COUNT = 5;
-function expeditionEnemyLevel(type, floor) {
-  if (type === "boss" && floor === 20) return 20;
-  return expeditionRecommendedLevel(floor);
-}
-function getExpeditionNodeEnemies(type, floor) {
-  const level = expeditionEnemyLevel(type, floor);
-  const ids = type === "boss" && floor === 20 ? [FINAL_FLOOR_BOSS_ID] : EXPEDITION_ENEMY_FORMATIONS[type];
-  const role = expeditionNodeRole(type, floor);
-  return ids.map((id) => {
-    const enemy = getRelic(id);
-    return { ...enemy, encounterRole: role, stats: applyEncounterScaling(enemy.stats, level, role) };
-  });
-}
-function expeditionBossGrowth() {
-  const level = expeditionEnemyLevel("boss", 20);
-  return { level, breakthrough: requiredBreakthroughForLevel(level) };
-}
-
-// src/core/expeditionBattle.ts
-init_define_import_meta_env();
-
-// src/data/raid.ts
-init_define_import_meta_env();
-var RAID_SEASON_BOSS_LEVEL = 60;
-var RAID_SEASON_BOSS = {
-  relicId: "sukusuino",
-  level: RAID_SEASON_BOSS_LEVEL,
-  /**
-   * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2로 적어 두었을 때는 정보창이
-   * `48 / 40`을 세워 상한을 넘긴 레벨을 말했다 — 적도 플레이어와 같은 성장 축을 지나야 한다.
-   */
-  breakthrough: requiredBreakthroughForLevel(RAID_SEASON_BOSS_LEVEL)
-};
-var RAID_BOSS_BALANCE = {
-  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
-  maximumActions: 2e3,
-  maximumAcceptedScore: 1e8,
-  phases: [
-    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD50\uC804" },
-    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACA9\uD654" },
-    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uCD5C\uD6C4" }
-  ]
-};
-var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
-var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30 } })
-};
-function isRaidDifficulty(value) {
-  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
-}
-var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
-var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
-var RAID_TICKET_ITEM = "raid-ticket";
-var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
-var RAID_TICKET_TEST_KIT = [
-  { itemId: RAID_TICKET_ITEM, quantity: 3 },
-  { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 }
-];
-var RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
-var RAID_ATTEMPTS_PER_RAID = 2;
-var RAID_RUN_STAMINA = 10;
-function raidRunStamina(_difficulty) {
-  return RAID_RUN_STAMINA;
-}
-var RAID_RUN_GOLD_PER_DAMAGE = 0.2;
-var RAID_COMPLETED_KEEP_HOURS = 48;
-var RAID_MOCK_PARTICIPANTS = [
-  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
-  { id: "raider-moss", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", favoriteRelicId: "torika", pace: 0.71 },
-  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spino", pace: 1.18 },
-  { id: "raider-kettle", displayName: "\uC8FC\uC804\uC790", favoriteRelicId: "luka", pace: 0.94 },
-  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodo", pace: 1.07 },
-  { id: "raider-dust", displayName: "\uBA3C\uC9C0\uB5A8\uC774", favoriteRelicId: "tia", pace: 0.62 },
-  { id: "raider-ember", displayName: "\uC794\uBD88", favoriteRelicId: "stella", pace: 1.24 },
-  { id: "raider-quartz", displayName: "\uC11D\uC601", favoriteRelicId: "meron", pace: 0.88 },
-  { id: "raider-tidal", displayName: "\uBC00\uBB3C", favoriteRelicId: "pachi", pace: 1.02 },
-  { id: "raider-orchid", displayName: "\uB09C\uCD08", favoriteRelicId: "maki", pace: 0.79 },
-  { id: "raider-cinder", displayName: "\uC7AC", favoriteRelicId: "keris", pace: 1.15 },
-  { id: "raider-fern", displayName: "\uACE0\uC0AC\uB9AC", favoriteRelicId: "delopi", pace: 0.68 },
-  { id: "raider-halo", displayName: "\uB2EC\uBB34\uB9AC", favoriteRelicId: "nodonia", pace: 1.29 },
-  { id: "raider-pebble", displayName: "\uC870\uC57D\uB3CC", favoriteRelicId: "ella", pace: 0.84 },
-  { id: "raider-signal", displayName: "\uC2E0\uD638\uD0D1", favoriteRelicId: "mette", pace: 1.11 },
-  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "deina", pace: 0.75 },
-  { id: "raider-marrow", displayName: "\uACE8\uC218\uC5F0\uAD6C", favoriteRelicId: "maddy", pace: 0.97 },
-  { id: "raider-willow", displayName: "\uBC84\uB4DC\uB098\uBB34", favoriteRelicId: "terisa", pace: 1.21 },
-  { id: "raider-gale", displayName: "\uB3CC\uD48D", favoriteRelicId: "parua", pace: 0.66 },
-  { id: "raider-amberly", displayName: "\uD638\uBC15\uBE5B", favoriteRelicId: "shute", pace: 1.06 },
-  { id: "raider-slate", displayName: "\uC810\uD310\uC554", favoriteRelicId: "dian", pace: 0.81 },
-  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rex", pace: 1.13 },
-  { id: "raider-drift", displayName: "\uD45C\uB958", favoriteRelicId: "torika", pace: 0.73 },
-  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spino", pace: 1.27 }
-];
-RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
-
-// src/core/raid.ts
-init_define_import_meta_env();
-
-// src/core/buildFlavor.ts
-init_define_import_meta_env();
-var QA_TOOLS_ENABLED = false;
-
-// src/data/friends.ts
-init_define_import_meta_env();
-var NOW = Date.now();
-var SAMPLE_FRIENDS = [
-  // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaTier: { tierId: "gold-2", displayName: "\uACE8\uB4DC II" }, expeditionScore: 18420 } },
-  // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
-  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
-];
-var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
-for (const friend of PREVIEW_FRIENDS) {
-  registerDataText(friend, "status", `friend.${friend.id}.status`);
-}
-for (const friend of PREVIEW_FRIENDS) {
-  const stats = friend.competitiveStats;
-  if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
-  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
-}
-
-// src/core/raid.ts
-var RAID_BOSS_ROLE = "boss";
-function raidSeasonKey(now) {
-  return now.toISOString().slice(0, 10);
-}
-function raidWorldBossId(dayKey) {
-  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 864e5);
-  return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
-}
-function rollRaidSummon(bossRoll, difficultyRoll) {
-  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
-  return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
-}
-function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
-  const total = Math.max(0, Math.floor(totalHp));
-  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
-  const remainingHp = Math.max(0, total - dealt);
-  return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
-}
-function raidContributionBoard(entries, limit = 100) {
-  return [...entries].filter(({ damage }) => Number.isFinite(damage) && damage > 0).sort((a, b) => b.damage - a.damage || a.playerId.localeCompare(b.playerId)).slice(0, Math.max(0, limit)).map((entry, index) => ({
-    rank: index + 1,
-    playerId: entry.playerId,
-    displayName: entry.displayName,
-    damage: Math.floor(entry.damage),
-    isMe: entry.isMe === true,
-    favoriteRelicId: entry.favoriteRelicId
-  }));
-}
-function seedHash(seed) {
-  let hash = 2166136261;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967296;
-}
-function mockRaidContributions(dayKey, dayProgress, twoRunBase = 3e4) {
-  if (!QA_TOOLS_ENABLED) return [];
-  const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
-  return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
-    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
-    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
-  });
-}
-function mockRaidWorldDamage(dayKey, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
-  if (!QA_TOOLS_ENABLED) return 0;
-  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
-  const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
-  return Math.floor(totalHp * reach * curve);
-}
-function raidBossGrowth(difficulty) {
-  const level = RAID_DIFFICULTY[difficulty].level;
-  return { level, breakthrough: requiredBreakthroughForLevel(level) };
-}
-function raidBossScaledStats(base, difficulty) {
-  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
-}
-function raidBossPercentHpBasis(base, difficulty = "rampage") {
-  return Math.max(1, Math.round(raidBossScaledStats(base, difficulty).hp));
-}
-function raidBossDef(base, difficulty = "rampage") {
-  const scaled = raidBossScaledStats(base, difficulty);
-  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
-}
-function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
-  if (!QA_TOOLS_ENABLED) return 0;
-  const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
-  const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
-  return Math.floor(totalHp * reach * curve);
-}
-function mockFriendRaids(dayKey) {
-  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
-  return PREVIEW_FRIENDS.map((friend, index) => {
-    const pick2 = seedHash(`${dayKey}:${friend.id}:raid`);
-    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
-    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
-    return {
-      id: `friend-${friend.id}-${dayKey}`,
-      friendId: friend.id,
-      friendName: friend.displayName,
-      bossRelicId,
-      difficulty,
-      openedAt: new Date(start + (2 + index * 5) * 36e5).toISOString()
-    };
-  });
-}
-function mockSummonContributions(raidId, othersDamage) {
-  const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
-  const sum = weights.reduce((total, weight) => total + weight, 0);
-  return PREVIEW_FRIENDS.map((friend, index) => ({
-    playerId: friend.id,
-    displayName: friend.displayName,
-    favoriteRelicId: friend.favoriteRelic?.relicId,
-    damage: Math.floor(othersDamage * weights[index] / sum)
-  }));
-}
-function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
-  if (!(myDamage > 0)) return void 0;
-  const spec = RAID_DIFFICULTY[difficulty].settlement;
-  const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
-  const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
-  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
-}
-function raidRunGold(runDamage, goldPerDamage) {
-  return Math.max(0, Math.floor(runDamage * goldPerDamage));
-}
-var RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
-function previewCompletedRaids(now) {
-  const hours = (value) => new Date(now.getTime() - value * 36e5).toISOString();
-  const friend = (index) => PREVIEW_FRIENDS[index % PREVIEW_FRIENDS.length]?.displayName;
-  return [
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}slain-1`,
-      kind: "summon",
-      bossRelicId: "sukusuino",
-      difficulty: "hard",
-      openedAt: hours(27),
-      endsAt: hours(3),
-      summonedByMe: true,
-      myDamage: 26400,
-      attemptsUsed: 2,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}expired-2`,
-      kind: "summon",
-      bossRelicId: "taboa",
-      difficulty: "normal",
-      openedAt: hours(34),
-      endsAt: hours(10),
-      summonerName: friend(0),
-      summonedByMe: false,
-      myDamage: 8700,
-      attemptsUsed: 1,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}world`,
-      kind: "world",
-      bossRelicId: RAID_BOSS_POOL[0],
-      difficulty: "rampage",
-      openedAt: hours(30),
-      endsAt: hours(6),
-      summonedByMe: false,
-      myDamage: 41500,
-      attemptsUsed: 2,
-      settled: false
-    },
-    {
-      id: `${RAID_HISTORY_PREVIEW_PREFIX}settled`,
-      kind: "summon",
-      bossRelicId: "taboa",
-      difficulty: "easy",
-      openedAt: hours(40),
-      endsAt: hours(16),
-      summonerName: friend(1),
-      summonedByMe: false,
-      myDamage: 12e3,
-      attemptsUsed: 2,
-      settled: true
-    }
-  ];
-}
-
-// src/core/expeditionBattle.ts
-function createExpeditionSkirmishConfig(input, playerDefs, enemyPool) {
-  if (enemyPool.length === 0) throw new RangeError("\uC6D0\uC815 \uC801 \uC6D0\uBCF8\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
-  const balance = EXPEDITION_COMBAT_BALANCE[input.nodeType];
-  const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
-  const scaleStats = (def) => ({ ...def, stats: Object.fromEntries(Object.entries(def.stats).map(([key, value]) => [key, value * balance.statScale])) });
-  return {
-    playerDefs: playerDefs.filter(({ id }) => activeIds.has(id)),
-    enemyDefs: Array.from({ length: balance.enemyCount }, (_, index) => scaleStats(enemyPool[index % enemyPool.length])),
-    playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)).map((state) => ({ ...state })),
-    augmentEffects: expeditionBattleEffects(input.augments),
-    enemyBodyScale: balance.bodyScale
-  };
-}
-function expeditionBattleEffects(selections) {
-  return selections.flatMap(({ augmentId, targetRelicId }) => {
-    const augment = getExpeditionAugment(augmentId);
-    const effect = augment?.effect;
-    if (!augment || !effect || effect.kind === "healAfterBattlePercent") return [];
-    const scope = targetRelicId ? { kind: "relic", relicId: targetRelicId } : { kind: "all" };
-    return [{ ...effect, scope, stacking: augment.stacking, stackKey: `${augment.id}:${targetRelicId ?? "party"}` }];
-  });
-}
-
-// src/core/runeTraitEffects.ts
-init_define_import_meta_env();
-function onceLimits(target, cooldownSeconds = 0) {
-  return { maxTriggers: 1, cooldownSeconds, maxStacks: 1, target };
-}
-function runeTraitCombatEffects(trait, relicId) {
-  const def = findRuneTrait(trait.id);
-  if (def === void 0) return [];
-  const value = runeTraitValue(trait.id, trait.grade);
-  const scope = { kind: "relic", relicId };
-  switch (def.effect.kind) {
-    case "hasteOnBattleStart":
-      return [{
-        kind: "triggered",
-        trigger: "battleStart",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: def.effect.seconds }
-      }];
-    case "hasteOnKill":
-      return [{
-        kind: "triggered",
-        trigger: "onKill",
-        scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: def.effect.seconds }
-      }];
-    case "damageVsHighHp":
-      return [{ kind: "damageVsHighHpPercent", percent: value, aboveHpPercent: def.effect.aboveHpPercent, scope }];
-    case "sameTargetStreak":
-      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: def.effect.maxStacks, scope }];
-    case "shieldLowestAllyOnBattleStart":
-      return [{
-        kind: "triggered",
-        trigger: "battleStart",
-        scope,
-        limits: onceLimits("lowestHpAlly"),
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "shieldOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "healOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "heal", maxHpPercent: value }
-      }];
-    case "shieldOnCritical":
-      return [{
-        kind: "triggered",
-        trigger: "onCritical",
-        scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "flatStat":
-      return [{ kind: "flatStat", stat: def.effect.stat, points: value, scope }];
-    case "bleedEveryNAttacks":
-      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
-  }
-}
-function partyRuneTraitEffects(equipped) {
-  return equipped.flatMap(({ relicId, runes }) => runes.flatMap((rune) => rune.trait === void 0 ? [] : runeTraitCombatEffects(rune.trait, relicId)));
-}
-
-// src/data/placedEnemies.ts
-init_define_import_meta_env();
-function placedEnemyIndex(input, stage, enemyDefs) {
-  if (input.mode === "raid") {
-    const growth = raidBossGrowth(input.difficulty);
-    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, { def, ...growth }]));
-  }
-  if (input.mode === "cake") {
-    const tier = getCakeOperationTier(input.tierId);
-    const level = cakeOperationEnemyDisplayLevel(tier).level;
-    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
-      def,
-      level,
-      breakthrough: requiredBreakthroughForLevel(level)
-    }]));
-  }
-  if (input.mode === "bounty") {
-    const round = getBountyTier(input.tierId).rounds[input.round];
-    const level = bountyRoundLevel(round);
-    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
-      def,
-      level,
-      breakthrough: requiredBreakthroughForLevel(level)
-    }]));
-  }
-  if (input.mode === "duel") {
-    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
-      def,
-      level: input.units[index]?.level ?? 1,
-      breakthrough: input.units[index]?.breakthrough ?? 0
-    }]));
-  }
-  const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor) : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : void 0;
-  const placed = expeditionLevel === void 0 ? stageEnemyGrowth(stage) : void 0;
-  return new Map(enemyDefs.map((def, index) => {
-    const growth = placed?.[index];
-    const level = growth?.level ?? expeditionLevel ?? 1;
-    return [`enemy-${index}`, {
-      def,
-      level,
-      breakthrough: growth?.breakthrough ?? requiredBreakthroughForLevel(level)
-    }];
-  }));
-}
-
-// src/managers/RelicProgressionManager.ts
-init_define_import_meta_env();
-
-// src/api/resultState.ts
-init_define_import_meta_env();
-var remoteResults = /* @__PURE__ */ new WeakSet();
-function hasRemoteState(result) {
-  return !!result && typeof result === "object" && remoteResults.has(result);
-}
-
-// src/state/session.ts
-init_define_import_meta_env();
-
-// src/core/attendance.ts
-init_define_import_meta_env();
-
 // src/core/dailyContent.ts
-init_define_import_meta_env();
 function utcDateKey(now) {
   if (Number.isNaN(now.getTime())) throw new RangeError("\uC720\uD6A8\uD55C \uC11C\uBC84 \uB0A0\uC9DC\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
   return now.toISOString().slice(0, 10);
@@ -17841,393 +17129,6 @@ function claimAttendanceAdBonus(state, now) {
   const day = rolled.regular.claimed;
   rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
   return { state: rolled, day };
-}
-
-// src/core/serverJournal.ts
-init_define_import_meta_env();
-
-// src/core/expeditionSnapshot.ts
-init_define_import_meta_env();
-function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
-  const runes = progress.heartGemSlots.flatMap((id) => {
-    const rune = id === null ? void 0 : runeInventory.find((candidate) => candidate.instanceId === id);
-    return rune ? [structuredClone(rune)] : [];
-  });
-  return {
-    level: progress.level,
-    breakthrough: progress.breakthrough,
-    bondLevel: progress.bondLevel,
-    stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
-    runes,
-    skinId: skinId ?? null
-  };
-}
-function isExpeditionRelicSnapshot(value) {
-  if (!value || typeof value !== "object") return false;
-  const snapshot = value;
-  const whole2 = (n) => Number.isInteger(n) && n >= 0;
-  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
-}
-
-// src/core/opsInbox.ts
-init_define_import_meta_env();
-
-// src/data/economy.ts
-init_define_import_meta_env();
-
-// src/core/stamina.ts
-init_define_import_meta_env();
-
-// src/core/timeAccrual.ts
-init_define_import_meta_env();
-function timeAccrualWindow(lastSettledAt, serverNow2, maxElapsedMs = Number.POSITIVE_INFINITY) {
-  const serverNowMs = serverNow2.getTime();
-  if (!Number.isFinite(serverNowMs)) return { accepted: false, reason: "invalid-server-time" };
-  const parsedStartMs = lastSettledAt === null ? Number.NaN : Date.parse(lastSettledAt);
-  if (!Number.isFinite(parsedStartMs)) {
-    return { accepted: true, initialized: true, window: { startMs: serverNowMs, effectiveEndMs: serverNowMs, elapsedMs: 0, serverNowMs } };
-  }
-  if (serverNowMs < parsedStartMs) return { accepted: false, reason: "clock-regression" };
-  const safeMaximum = Number.isFinite(maxElapsedMs) ? Math.max(0, maxElapsedMs) : Number.POSITIVE_INFINITY;
-  const elapsedMs = Math.min(serverNowMs - parsedStartMs, safeMaximum);
-  return { accepted: true, initialized: false, window: { startMs: parsedStartMs, effectiveEndMs: parsedStartMs + elapsedMs, elapsedMs, serverNowMs } };
-}
-function splitAccrualAt(window2, boundaryAt) {
-  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window2.startMs;
-  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window2.effectiveEndMs, boundaryMs) - window2.startMs) : 0;
-  return { beforeMs, afterMs: window2.elapsedMs - beforeMs };
-}
-
-// src/core/stamina.ts
-var BASE_STAMINA_MAX = 120;
-var STAMINA_PER_RESEARCH_LEVEL = 2;
-var ABSOLUTE_STAMINA_MAX = 240;
-var STAMINA_REGEN_INTERVAL_MS = 5 * 60 * 1e3;
-var STAMINA_HOLD_LIMIT = 9999;
-function staminaMaxForResearchLevel(level) {
-  const safeLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
-  return Math.min(ABSOLUTE_STAMINA_MAX, BASE_STAMINA_MAX + safeLevel * STAMINA_PER_RESEARCH_LEVEL);
-}
-function staminaMaxForPlayer(player) {
-  return staminaMaxForResearchLevel(player.playerResearch.level);
-}
-function paidStaminaApplied(current, requested) {
-  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current));
-}
-function settleStamina(amount, maximum, updatedAt, serverNow2) {
-  const safeMaximum = Math.max(0, Math.floor(maximum));
-  const safeAmount = Math.min(STAMINA_HOLD_LIMIT, Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0)));
-  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, Math.max(0, safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
-  if (!accrual.accepted) return { amount: safeAmount, updatedAt, recovered: 0 };
-  const nowIso = new Date(accrual.window.serverNowMs).toISOString();
-  if (safeAmount >= safeMaximum || accrual.initialized) return { amount: safeAmount, updatedAt: nowIso, recovered: 0 };
-  const intervals = Math.floor(accrual.window.elapsedMs / STAMINA_REGEN_INTERVAL_MS);
-  const recovered = Math.min(safeMaximum - safeAmount, intervals);
-  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STAMINA_REGEN_INTERVAL_MS;
-  return { amount: safeAmount + recovered, updatedAt: new Date(nextUpdatedMs).toISOString(), recovered };
-}
-function staminaTiming(amount, maximum, updatedAt) {
-  if (amount >= maximum) return { nextRecoveryAt: null, fullAt: null };
-  const next = Date.parse(updatedAt) + STAMINA_REGEN_INTERVAL_MS;
-  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, maximum - amount - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
-}
-
-// src/data/economy.ts
-var WALLET_CAPS = {
-  // 발굴의 일반 화석(`fossil`)과 다이아(`gems`)도 다른 API 지급과 같은 계정 상한을 공유한다.
-  fossil: 99999,
-  amber: 9999,
-  gems: 9999999,
-  gold: 999999999,
-  // 시간 회복은 레벨 상한에서 멈추지만 대가를 치른 충전은 그 위로 이 끝까지 쌓인다.
-  stamina: STAMINA_HOLD_LIMIT,
-  dnaFragments: 99999,
-  cheesecake: 9999999,
-  rawStone: 9999999,
-  // 증표는 가끔 들어가 터는 자리의 몫이라 상한이 사실상 걸리지 않게 둔다 — 몇 주치가
-  // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
-  raidSigil: 9999999,
-  salvageRecord: 9999999,
-  duelEmblem: 9999999
-};
-
-// src/data/items.ts
-init_define_import_meta_env();
-var ITEMS = [
-  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
-  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
-  { id: "gems", name: "\uC82C", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
-  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
-  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
-  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
-  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
-  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
-  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
-  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
-  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
-  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
-  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
-  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
-  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
-  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
-  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
-  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
-  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
-  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
-  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
-];
-function findItem(id) {
-  return ITEMS.find((item3) => item3.id === id);
-}
-for (const item3 of ITEMS) {
-  registerDataText(item3, "name", `item.${item3.id}.name`);
-  registerDataText(item3, "description", `item.${item3.id}.description`);
-}
-
-// src/core/itemLots.ts
-init_define_import_meta_env();
-function repairLegacyLotStacks(inventory) {
-  const groups = /* @__PURE__ */ new Map();
-  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
-  return [...groups.values()].flatMap((group) => {
-    const first = group[0];
-    const lots = first.lots;
-    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
-      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
-    }
-    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
-  });
-}
-var DAY_MS2 = 864e5;
-var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
-function clampExpiryDays(days) {
-  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
-}
-function lotExpiresAt(now, days) {
-  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS2).toISOString();
-}
-function normalizeLots(lots) {
-  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
-}
-function addItemLot(inventory, itemId, quantity, options) {
-  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
-  const stack = next.find((entry) => entry.itemId === itemId);
-  const held = stack?.quantity ?? 0;
-  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
-  if (added <= 0) return { inventory: next, added: 0 };
-  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
-  if (stack) {
-    stack.quantity += added;
-    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
-  } else {
-    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
-  }
-  return { inventory: next, added };
-}
-function removeItemLot(inventory, itemId, quantity) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    if (!entry.lots) return [{ ...entry, quantity: left }];
-    let owed = count2;
-    const lots = normalizeLots(entry.lots).map((lot) => {
-      const take = Math.min(owed, lot.quantity);
-      owed -= take;
-      return { ...lot, quantity: lot.quantity - take };
-    });
-    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
-  });
-}
-function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
-  const count2 = Math.floor(quantity);
-  const stack = inventory.find((entry) => entry.itemId === itemId);
-  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
-  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
-  return inventory.flatMap((entry) => {
-    if (entry.itemId !== itemId) return [{ ...entry }];
-    const left = entry.quantity - count2;
-    if (left <= 0) return [];
-    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
-    return [{ ...entry, quantity: left, lots }];
-  });
-}
-function purgeExpiredLots(inventory, now) {
-  let expired = 0;
-  const nowMs = now.getTime();
-  const next = inventory.flatMap((entry) => {
-    if (!entry.lots) return [{ ...entry }];
-    const alive = normalizeLots(entry.lots.filter((lot) => {
-      const dead = Date.parse(lot.expiresAt) <= nowMs;
-      if (dead) expired += lot.quantity;
-      return !dead;
-    }));
-    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
-    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
-  });
-  return { inventory: next, expired };
-}
-function isValidLotStack(stack) {
-  if (stack.lots === void 0) return true;
-  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
-  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
-}
-
-// src/core/opsInbox.ts
-var KEEP = 200;
-var NOTICE_KEEP = 20;
-var OPS_MAIL_PREFIX = "ops:";
-var isOpsMailId = (id) => id.startsWith(OPS_MAIL_PREFIX);
-var opsMailUuid = (id) => id.slice(OPS_MAIL_PREFIX.length);
-var emptyOps = () => ({ appliedAdjustments: [], readMails: [], announcedMails: [], notices: [] });
-var tail = (list) => list.slice(-KEEP);
-function isValidOpsJournal(value) {
-  if (!value || typeof value !== "object") return false;
-  const ops = value;
-  const ids = (v) => Array.isArray(v) && v.every((id) => typeof id === "string");
-  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
-}
-function opsJournalOf(state) {
-  state.serverJournal ??= { receipts: {}, raidAdmissions: {} };
-  state.serverJournal.ops ??= emptyOps();
-  return state.serverJournal.ops;
-}
-var walletKeys = new Set(Object.keys(WALLET_CAPS));
-var OPS_ITEM_PREFIX = "item:";
-var isWalletKey = (key) => walletKeys.has(key);
-function applyOpsAdjustments(state, adjustments, now) {
-  const journal = opsJournalOf(state);
-  const results = [];
-  for (const adjustment of adjustments) {
-    if (adjustment.asset.startsWith(OPS_ITEM_PREFIX)) {
-      results.push(applyItemAdjustment(state, journal, adjustment, now));
-      continue;
-    }
-    if (!isWalletKey(adjustment.asset) || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) {
-      results.push({ id: adjustment.id, applied: 0, balance: 0 });
-      continue;
-    }
-    const key = adjustment.asset;
-    if (journal.appliedAdjustments.includes(adjustment.id)) {
-      results.push({ id: adjustment.id, applied: adjustment.delta, balance: state.wallet[key] });
-      continue;
-    }
-    const before = state.wallet[key];
-    const after = Math.max(0, Math.min(WALLET_CAPS[key], before + adjustment.delta));
-    state.wallet[key] = after;
-    journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
-    const applied = after - before;
-    results.push({ id: adjustment.id, applied, balance: after });
-    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset", asset: key, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
-  }
-  return results;
-}
-function applyItemAdjustment(state, journal, adjustment, now) {
-  const itemId = adjustment.asset.slice(OPS_ITEM_PREFIX.length);
-  const definition = findItem(itemId);
-  const held = () => state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
-  if (!definition || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) return { id: adjustment.id, applied: 0, balance: 0 };
-  if (journal.appliedAdjustments.includes(adjustment.id)) return { id: adjustment.id, applied: adjustment.delta, balance: held() };
-  let applied = 0;
-  if (adjustment.delta > 0) {
-    const result = addItemLot(state.itemInventory, itemId, adjustment.delta, { cap: definition.maxStack, now, ...definition.expiresInDays !== void 0 ? { expiryDays: definition.expiresInDays } : {} });
-    state.itemInventory = result.inventory;
-    applied = result.added;
-  } else {
-    const take = Math.min(held(), -adjustment.delta);
-    const next = take > 0 ? removeItemLot(state.itemInventory, itemId, take) : void 0;
-    if (next) {
-      state.itemInventory = next;
-      applied = -take;
-    }
-  }
-  journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
-  if (applied !== 0) journal.notices = [...journal.notices, { kind: "item", itemId, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
-  return { id: adjustment.id, applied, balance: held() };
-}
-function opsMailToDto(source, sender, readIds) {
-  const rewards = source.rewards.filter((reward) => Number.isInteger(reward.amount) && reward.amount > 0 && (isWalletKey(reward.asset) || reward.asset.startsWith(OPS_ITEM_PREFIX) && findItem(reward.asset.slice(OPS_ITEM_PREFIX.length)) !== void 0)).map((reward) => isWalletKey(reward.asset) ? { kind: "currency", currency: reward.asset, amount: reward.amount } : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
-  const id = `${OPS_MAIL_PREFIX}${source.id}`;
-  return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
-}
-function markOpsMailsRead(state, ids) {
-  const journal = opsJournalOf(state);
-  const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
-  if (next.length) journal.readMails = tail([...journal.readMails, ...next]);
-}
-function drainOpsNotices(state) {
-  const journal = state.serverJournal?.ops;
-  if (!journal || journal.notices.length === 0) return [];
-  const notices = journal.notices;
-  journal.notices = [];
-  return notices;
-}
-
-// src/core/serverJournal.ts
-var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
-function isValidServerJournal(value) {
-  if (!value || typeof value !== "object") return false;
-  const journal = value;
-  const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
-  const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
-  return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
-}
-
-// src/core/raidTicketDrops.ts
-init_define_import_meta_env();
-var RAID_TICKET_DROP = {
-  /** 한 판(스테미나 10)마다 일반 토벌권이 떨어질 확률 — 스테미나 100당 약 0.8장. */
-  normalChancePerRun: 0.08,
-  dailyNormalCap: 3,
-  /** 지층 탐사판 한 장에 일반 토벌권 칸이 섞일 확률. */
-  strataNormalChance: 0.3
-};
-function createEmptyRaidTicketDropState() {
-  return { day: "", normal: 0, select: 0 };
-}
-var count = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
-function normalizeRaidTicketDropState(value) {
-  const source = value && typeof value === "object" ? value : {};
-  return { day: typeof source.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : "", normal: count(source.normal), select: count(source.select) };
-}
-function isValidRaidTicketDropState(value) {
-  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
-}
-function rollRaidTicketDrops(state, runs, now, random, raidOpen) {
-  if (!raidOpen) return { state, drops: [] };
-  const today = utcDateKey(now);
-  const next = state.day === today ? { ...state } : { day: today, normal: 0, select: 0 };
-  let normal = 0;
-  for (let run2 = 0; run2 < Math.max(0, Math.floor(runs)); run2 += 1) {
-    if (next.normal < RAID_TICKET_DROP.dailyNormalCap && random() > 1 - RAID_TICKET_DROP.normalChancePerRun) {
-      next.normal += 1;
-      normal += 1;
-    }
-  }
-  const drops = [];
-  if (normal > 0) drops.push({ itemId: RAID_TICKET_ITEM, amount: normal });
-  return { state: next, drops };
-}
-function strataRaidTicketTile(random, raidOpen) {
-  const value = random();
-  if (!raidOpen) return null;
-  return value > 1 - RAID_TICKET_DROP.strataNormalChance ? RAID_TICKET_ITEM : null;
 }
 
 // src/core/tutorial.ts
@@ -18341,6 +17242,125 @@ function migrateTutorialV50(value) {
   }
   if (prefix.includes("presentation")) prefix.push("feed", "feedLevel");
   return normalizeTutorialState({ ...raw, completedStepIds: prefix });
+}
+
+// src/core/raidTicketDrops.ts
+init_define_import_meta_env();
+
+// src/data/raid.ts
+init_define_import_meta_env();
+var RAID_SEASON_BOSS_LEVEL = 60;
+var RAID_SEASON_BOSS = {
+  relicId: "sukusuino",
+  level: RAID_SEASON_BOSS_LEVEL,
+  /**
+   * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2로 적어 두었을 때는 정보창이
+   * `48 / 40`을 세워 상한을 넘긴 레벨을 말했다 — 적도 플레이어와 같은 성장 축을 지나야 한다.
+   */
+  breakthrough: requiredBreakthroughForLevel(RAID_SEASON_BOSS_LEVEL)
+};
+var RAID_BOSS_BALANCE = {
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
+  maximumActions: 2e3,
+  maximumAcceptedScore: 1e8,
+  phases: [
+    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD50\uC804" },
+    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACA9\uD654" },
+    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uCD5C\uD6C4" }
+  ]
+};
+var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
+var RAID_DIFFICULTY = {
+  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30 } })
+};
+function isRaidDifficulty(value) {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
+}
+var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
+var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
+var RAID_TICKET_ITEM = "raid-ticket";
+var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
+var RAID_TICKET_TEST_KIT = [
+  { itemId: RAID_TICKET_ITEM, quantity: 3 },
+  { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 }
+];
+var RAID_SEASON_TOTAL_HP = RAID_DIFFICULTY.rampage.totalHp;
+var RAID_ATTEMPTS_PER_RAID = 2;
+var RAID_RUN_STAMINA = 10;
+function raidRunStamina(_difficulty) {
+  return RAID_RUN_STAMINA;
+}
+var RAID_RUN_GOLD_PER_DAMAGE = 0.2;
+var RAID_COMPLETED_KEEP_HOURS = 48;
+var RAID_MOCK_PARTICIPANTS = [
+  { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
+  { id: "raider-moss", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", favoriteRelicId: "torika", pace: 0.71 },
+  { id: "raider-viola", displayName: "\uBE44\uC62C\uB77C", favoriteRelicId: "spino", pace: 1.18 },
+  { id: "raider-kettle", displayName: "\uC8FC\uC804\uC790", favoriteRelicId: "luka", pace: 0.94 },
+  { id: "raider-noon", displayName: "\uC815\uC624\uC758\uD45C\uBCF8", favoriteRelicId: "dodo", pace: 1.07 },
+  { id: "raider-dust", displayName: "\uBA3C\uC9C0\uB5A8\uC774", favoriteRelicId: "tia", pace: 0.62 },
+  { id: "raider-ember", displayName: "\uC794\uBD88", favoriteRelicId: "stella", pace: 1.24 },
+  { id: "raider-quartz", displayName: "\uC11D\uC601", favoriteRelicId: "meron", pace: 0.88 },
+  { id: "raider-tidal", displayName: "\uBC00\uBB3C", favoriteRelicId: "pachi", pace: 1.02 },
+  { id: "raider-orchid", displayName: "\uB09C\uCD08", favoriteRelicId: "maki", pace: 0.79 },
+  { id: "raider-cinder", displayName: "\uC7AC", favoriteRelicId: "keris", pace: 1.15 },
+  { id: "raider-fern", displayName: "\uACE0\uC0AC\uB9AC", favoriteRelicId: "delopi", pace: 0.68 },
+  { id: "raider-halo", displayName: "\uB2EC\uBB34\uB9AC", favoriteRelicId: "nodonia", pace: 1.29 },
+  { id: "raider-pebble", displayName: "\uC870\uC57D\uB3CC", favoriteRelicId: "ella", pace: 0.84 },
+  { id: "raider-signal", displayName: "\uC2E0\uD638\uD0D1", favoriteRelicId: "mette", pace: 1.11 },
+  { id: "raider-lantern", displayName: "\uB4F1\uBD88", favoriteRelicId: "deina", pace: 0.75 },
+  { id: "raider-marrow", displayName: "\uACE8\uC218\uC5F0\uAD6C", favoriteRelicId: "maddy", pace: 0.97 },
+  { id: "raider-willow", displayName: "\uBC84\uB4DC\uB098\uBB34", favoriteRelicId: "terisa", pace: 1.21 },
+  { id: "raider-gale", displayName: "\uB3CC\uD48D", favoriteRelicId: "parua", pace: 0.66 },
+  { id: "raider-amberly", displayName: "\uD638\uBC15\uBE5B", favoriteRelicId: "shute", pace: 1.06 },
+  { id: "raider-slate", displayName: "\uC810\uD310\uC554", favoriteRelicId: "dian", pace: 0.81 },
+  { id: "raider-vellum", displayName: "\uC591\uD53C\uC9C0", favoriteRelicId: "rex", pace: 1.13 },
+  { id: "raider-drift", displayName: "\uD45C\uB958", favoriteRelicId: "torika", pace: 0.73 },
+  { id: "raider-kiln", displayName: "\uAC00\uB9C8", favoriteRelicId: "spino", pace: 1.27 }
+];
+RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
+
+// src/core/raidTicketDrops.ts
+var RAID_TICKET_DROP = {
+  /** 한 판(스테미나 10)마다 일반 토벌권이 떨어질 확률 — 스테미나 100당 약 0.8장. */
+  normalChancePerRun: 0.08,
+  dailyNormalCap: 3,
+  /** 지층 탐사판 한 장에 일반 토벌권 칸이 섞일 확률. */
+  strataNormalChance: 0.3
+};
+function createEmptyRaidTicketDropState() {
+  return { day: "", normal: 0, select: 0 };
+}
+var count = (value) => Number.isInteger(value) && value >= 0 ? value : 0;
+function normalizeRaidTicketDropState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return { day: typeof source.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : "", normal: count(source.normal), select: count(source.select) };
+}
+function isValidRaidTicketDropState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeRaidTicketDropState(value)) === JSON.stringify(value);
+}
+function rollRaidTicketDrops(state, runs, now, random, raidOpen) {
+  if (!raidOpen) return { state, drops: [] };
+  const today = utcDateKey(now);
+  const next = state.day === today ? { ...state } : { day: today, normal: 0, select: 0 };
+  let normal = 0;
+  for (let run2 = 0; run2 < Math.max(0, Math.floor(runs)); run2 += 1) {
+    if (next.normal < RAID_TICKET_DROP.dailyNormalCap && random() > 1 - RAID_TICKET_DROP.normalChancePerRun) {
+      next.normal += 1;
+      normal += 1;
+    }
+  }
+  const drops = [];
+  if (normal > 0) drops.push({ itemId: RAID_TICKET_ITEM, amount: normal });
+  return { state: next, drops };
+}
+function strataRaidTicketTile(random, raidOpen) {
+  const value = random();
+  if (!raidOpen) return null;
+  return value > 1 - RAID_TICKET_DROP.strataNormalChance ? RAID_TICKET_ITEM : null;
 }
 
 // src/core/achievementState.ts
@@ -18556,67 +17576,258 @@ function isValidAchievementState(value) {
   });
 }
 
-// src/core/playerLevel.ts
+// src/core/duelState.ts
 init_define_import_meta_env();
-var PLAYER_LEVEL_CAP = 60;
-var PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 };
-var PLAYER_EXP_PER_STAMINA = 1;
-var EARLY_EXP_TO_NEXT = [8, 16, 26, 36, 48, 60, 72, 86, 100];
-var BLEND_START_RATIO = 0.465;
-var BLEND_END_LEVEL = 20;
-function playerExpToNext(level) {
-  const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
-  if (early !== void 0) return early;
-  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
-  const formula = 50 + 15 * k + 0.9 * k * k;
-  const blend = Math.min(1, BLEND_START_RATIO + (1 - BLEND_START_RATIO) * (Math.floor(level) - 10) / (BLEND_END_LEVEL - 10));
-  return Math.round(formula * blend);
-}
-function normalizePlayerLevel(progress) {
-  const level = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(Number(progress?.level) || 1)));
-  const experienceToNext = playerExpToNext(level);
-  const raw = Math.max(0, Math.floor(Number(progress?.experience) || 0));
-  return { level, experience: level >= PLAYER_LEVEL_CAP ? 0 : Math.min(raw, experienceToNext - 1), experienceToNext };
-}
-function grantPlayerExperience(progress, amount) {
-  const start = normalizePlayerLevel(progress);
-  const gain = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
-  let { level, experience } = start;
-  if (level >= PLAYER_LEVEL_CAP || gain === 0) return { progress: start, levelsGained: 0, granted: 0 };
-  experience += gain;
-  while (level < PLAYER_LEVEL_CAP && experience >= playerExpToNext(level)) {
-    experience -= playerExpToNext(level);
-    level += 1;
-  }
-  if (level >= PLAYER_LEVEL_CAP) experience = 0;
-  return { progress: { level, experience, experienceToNext: playerExpToNext(level) }, levelsGained: level - start.level, granted: gain };
-}
-function playerExpForStamina(stamina) {
-  return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
-}
-var STARTING_STAMINA = 122;
 
-// src/data/profileFrames.ts
+// src/core/duelArena.ts
 init_define_import_meta_env();
-var DEFAULT_PROFILE_FRAME_ID = "field";
-var PROFILE_FRAMES = [
-  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
-  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
-  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
-  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
-  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
-  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
+var DUEL_DIVISION_SPAN = 100;
+var DUEL_TIERS = [
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1e3 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2e3 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3e3 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4e3 }, firstReachGems: 300 },
+  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5e3 }, firstReachGems: 400 },
+  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 400 }, firstReachGems: 500 },
+  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 500 }, firstReachGems: 700 }
 ];
-function findProfileFrame(id) {
-  return PROFILE_FRAMES.find((frame) => frame.id === id);
+var DUEL_MAX_BLIND = 2;
+var DUEL_START_SCORE = 0;
+var DUEL_DAILY_ATTEMPTS = 5;
+var DUEL_EXTRA_ATTEMPT_PRICES = [50, 50, 100, 100, 150];
+var DUEL_FREE_REFRESHES = 3;
+var DUEL_REFRESH_PRICES = [20, 40, 60, 80, 100];
+var DUEL_OPPONENT_COUNT = 5;
+var DUEL_STREAK_BONUS = { from: 2, perStep: 2, max: 10 };
+function duelStreakBonus(streak) {
+  if (!Number.isFinite(streak) || streak < DUEL_STREAK_BONUS.from) return 0;
+  return Math.min(DUEL_STREAK_BONUS.max, (Math.floor(streak) - DUEL_STREAK_BONUS.from + 1) * DUEL_STREAK_BONUS.perStep);
 }
-function profileFrameOrDefault(id) {
-  return findProfileFrame(id) ?? PROFILE_FRAMES[0];
+var DUEL_BATTLE_REWARD = { win: 20, loss: 0 };
+var DUEL_DEFAULT_DEFENSE = ["parua", "torika", "dodo"];
+var DUEL_DEFENSE_SIM = { intervalHours: 4, catchUpLimit: 3, win: 5, loss: 3, minWinChance: 0.25, maxWinChance: 0.85 };
+function duelDefenseWinChance(mine, theirs) {
+  const total = Math.max(0, mine) + Math.max(0, theirs);
+  const share = total > 0 ? Math.max(0, mine) / total : 0.5;
+  return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
 }
-function isProfileFrameUnlocked(frame, playerLevel) {
-  return playerLevel >= frame.unlockLevel;
+var DUEL_SEASON_DAYS = 21;
+var DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
+var DAY_MS = 864e5;
+function duelTierIndex(score) {
+  let index = 0;
+  DUEL_TIERS.forEach((tier, i) => {
+    if (score >= tier.floor) index = i;
+  });
+  return index;
 }
-for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
+function duelTier(score) {
+  return DUEL_TIERS[duelTierIndex(score)];
+}
+function getDuelTier(id) {
+  return DUEL_TIERS.find((tier) => tier.id === id);
+}
+function duelStanding(score) {
+  const index = duelTierIndex(score);
+  const tier = DUEL_TIERS[index];
+  const next = DUEL_TIERS[index + 1];
+  const within = Math.max(0, score - tier.floor);
+  if (tier.divisions > 1) {
+    const step2 = Math.min(tier.divisions - 1, Math.floor(within / DUEL_DIVISION_SPAN));
+    return { tier, division: tier.divisions - step2, progress: Math.min(1, (within - step2 * DUEL_DIVISION_SPAN) / DUEL_DIVISION_SPAN) };
+  }
+  return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
+}
+function duelScoreDelta(myScore, opponentScore, won) {
+  const gap = opponentScore - myScore;
+  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
+  return -clamp(Math.round(14 - gap / 25), 6, 24);
+}
+function applyDuelScore(score, delta) {
+  const next = Math.max(0, score + delta);
+  if (delta >= 0) return next;
+  const tier = duelTier(score);
+  return tier.divisions > 1 ? Math.max(tier.floor, next) : next;
+}
+function duelBlindCount(score) {
+  return Math.min(DUEL_MAX_BLIND, duelTier(score).blind);
+}
+function duelBlindOrder(members, chosen = []) {
+  const ids = new Set(members.map(({ relicId }) => relicId));
+  const picked = [...new Set(chosen.filter((id) => ids.has(id)))].slice(0, DUEL_MAX_BLIND);
+  const rest = [...members].filter(({ relicId }) => !picked.includes(relicId)).sort((a, b) => b.power - a.power || members.indexOf(a) - members.indexOf(b)).map(({ relicId }) => relicId);
+  return [...picked, ...rest].slice(0, DUEL_MAX_BLIND);
+}
+function duelHiddenRelicIds(blindOrder, count2) {
+  return blindOrder.slice(0, Math.max(0, Math.min(DUEL_MAX_BLIND, count2)));
+}
+function duelExtraAttemptPrice(purchasedToday) {
+  return DUEL_EXTRA_ATTEMPT_PRICES[purchasedToday];
+}
+function duelRefreshPrice(refreshesUsed) {
+  if (refreshesUsed < DUEL_FREE_REFRESHES) return 0;
+  return DUEL_REFRESH_PRICES[Math.min(refreshesUsed - DUEL_FREE_REFRESHES, DUEL_REFRESH_PRICES.length - 1)];
+}
+function duelFreeRefreshesLeft(refreshesUsed) {
+  return Math.max(0, DUEL_FREE_REFRESHES - refreshesUsed);
+}
+function duelAllOpponentsFought(candidateIds, foughtIds) {
+  return candidateIds.length > 0 && candidateIds.every((id) => foughtIds.includes(id));
+}
+function duelTierRose(scoreBefore, scoreAfter) {
+  return duelTierIndex(scoreAfter) > duelTierIndex(scoreBefore);
+}
+function duelDayKey(now) {
+  return now.toISOString().slice(0, 10);
+}
+function duelSeasonNumber(now) {
+  return Math.max(1, Math.floor((now.getTime() - DUEL_SEASON_EPOCH) / (DUEL_SEASON_DAYS * DAY_MS)) + 1);
+}
+function duelSeasonId(now) {
+  return `S${duelSeasonNumber(now)}`;
+}
+function duelSeasonEndsAt(now) {
+  return new Date(DUEL_SEASON_EPOCH + duelSeasonNumber(now) * DUEL_SEASON_DAYS * DAY_MS);
+}
+function duelSeasonResetScore(score) {
+  return Math.floor(score * 0.6 / DUEL_DIVISION_SPAN) * DUEL_DIVISION_SPAN;
+}
+function duelNewlyReachedTiers(before, after, reached) {
+  const from = duelTierIndex(before);
+  const to = duelTierIndex(after);
+  return DUEL_TIERS.slice(from + 1, to + 1).filter((tier) => !reached.includes(tier.id) && tier.firstReachGems > 0);
+}
+function pickDuelOpponents(pool, myScore, random, exclude = []) {
+  const candidates = pool.filter(({ id }) => !exclude.includes(id));
+  const bands = [[-420, -160], [-200, -40], [-60, 60], [40, 200], [160, 440]];
+  const picked = [];
+  for (const [low, high] of bands) {
+    const inBand = candidates.filter((entry) => !picked.includes(entry) && entry.score - myScore >= low && entry.score - myScore <= high);
+    if (inBand.length > 0) picked.push(inBand[Math.floor(random() * inBand.length) % inBand.length]);
+  }
+  const rest = candidates.filter((entry) => !picked.includes(entry)).sort((a, b) => Math.abs(a.score - myScore) - Math.abs(b.score - myScore));
+  while (picked.length < DUEL_OPPONENT_COUNT && rest.length > 0) picked.push(rest.shift());
+  return picked.sort((a, b) => a.score - b.score);
+}
+function duelGrownStats(def, level, breakthrough) {
+  return applyBreakthrough(applyLevelGrowth(def.stats, level, def.rarity), breakthrough);
+}
+function duelNpcLevel(score) {
+  return clamp(Math.round(10 + score / 3e3 * 50), 8, 60);
+}
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+// src/core/duelState.ts
+var DUEL_HISTORY_LIMIT = 10;
+function cloneDuelState(state) {
+  return {
+    ...state,
+    reachedTierIds: [...state.reachedTierIds],
+    candidateIds: [...state.candidateIds],
+    foughtIds: [...state.foughtIds],
+    attack: [...state.attack],
+    defense: [...state.defense],
+    blindChoice: [...state.blindChoice],
+    pendingSeasonReward: state.pendingSeasonReward ? { ...state.pendingSeasonReward } : null,
+    history: state.history.map((entry) => ({ ...entry, ...entry.opponentUnits ? { opponentUnits: entry.opponentUnits.map((unit) => ({ ...unit })) } : {} }))
+  };
+}
+var isCount = (value) => Number.isSafeInteger(value) && value >= 0;
+var stringList = (value, limit) => Array.isArray(value) ? [...new Set(value.filter((item3) => typeof item3 === "string" && item3.length > 0))].slice(0, limit) : [];
+function normalizeHistoryEntry(entry) {
+  const { opponentTierId, opponentFavoriteRelicId, opponentUnits, side, ...base } = entry;
+  const units = Array.isArray(opponentUnits) ? opponentUnits.filter((unit) => !!unit && typeof unit.relicId === "string" && isCount(unit.level)).slice(0, 3).map(({ relicId, level }) => ({ relicId, level })) : [];
+  return {
+    ...base,
+    ...typeof opponentTierId === "string" && getDuelTier(opponentTierId) ? { opponentTierId } : {},
+    ...typeof opponentFavoriteRelicId === "string" ? { opponentFavoriteRelicId } : {},
+    ...units.length > 0 ? { opponentUnits: units } : {},
+    ...side === "defense" ? { side } : {}
+  };
+}
+function normalizeDuelState(value, ownedRelicIds) {
+  const source = value && typeof value === "object" ? value : {};
+  const owned = new Set(ownedRelicIds);
+  const team = (list) => stringList(list, 3).filter((id) => owned.has(id));
+  const reward = source.pendingSeasonReward;
+  const history = Array.isArray(source.history) ? source.history.filter((entry) => !!entry && typeof entry.at === "string" && typeof entry.opponentName === "string" && Number.isSafeInteger(entry.opponentScore) && typeof entry.won === "boolean" && Number.isSafeInteger(entry.delta)).slice(0, DUEL_HISTORY_LIMIT).map(normalizeHistoryEntry) : [];
+  const savedDefense = team(source.defense);
+  const defense = savedDefense.length > 0 ? savedDefense : DUEL_DEFAULT_DEFENSE.filter((id) => owned.has(id));
+  const defenseCustomized = savedDefense.length > 0 && (typeof source.defenseCustomized === "boolean" ? source.defenseCustomized : true);
+  const defenseSimAt = typeof source.defenseSimAt === "string" && Number.isFinite(Date.parse(source.defenseSimAt)) ? source.defenseSimAt : "";
+  const candidateIds = stringList(source.candidateIds, DUEL_OPPONENT_COUNT);
+  const score = isCount(source.score) ? source.score : DUEL_START_SCORE;
+  const lastSeasonTierId = typeof source.lastSeasonTierId === "string" && getDuelTier(source.lastSeasonTierId) ? source.lastSeasonTierId : null;
+  return {
+    seasonId: typeof source.seasonId === "string" ? source.seasonId : "",
+    score,
+    wins: isCount(source.wins) ? source.wins : 0,
+    losses: isCount(source.losses) ? source.losses : 0,
+    reachedTierIds: stringList(source.reachedTierIds, DUEL_TIERS.length).filter((id) => getDuelTier(id) !== void 0),
+    dayKey: typeof source.dayKey === "string" ? source.dayKey : "",
+    attemptsUsed: isCount(source.attemptsUsed) ? source.attemptsUsed : 0,
+    attemptsPurchased: isCount(source.attemptsPurchased) ? source.attemptsPurchased : 0,
+    attemptsFromAds: isCount(source.attemptsFromAds) ? source.attemptsFromAds : 0,
+    refreshesUsed: isCount(source.refreshesUsed) ? source.refreshesUsed : 0,
+    candidateIds,
+    foughtIds: stringList(source.foughtIds, DUEL_OPPONENT_COUNT).filter((id) => candidateIds.includes(id)),
+    attack: team(source.attack),
+    defense,
+    defenseCustomized,
+    defenseSimAt,
+    blindChoice: stringList(source.blindChoice, 2).filter((id) => defense.includes(id)),
+    pendingSeasonReward: reward && typeof reward.seasonId === "string" && reward.tierId && getDuelTier(reward.tierId) ? { seasonId: reward.seasonId, tierId: reward.tierId } : null,
+    history,
+    winStreak: isCount(source.winStreak) ? source.winStreak : 0,
+    bestStreak: isCount(source.bestStreak) ? source.bestStreak : 0,
+    // 이 칸이 생기기 전의 저장은 지금 점수가 곧 이번 시즌 최고다.
+    seasonBestScore: isCount(source.seasonBestScore) ? Math.max(source.seasonBestScore, score) : score,
+    lastSeasonTierId,
+    lastSeasonScore: lastSeasonTierId && isCount(source.lastSeasonScore) ? source.lastSeasonScore : 0
+  };
+}
+function isValidDuelState(value, ownedRelicIds) {
+  if (!value || typeof value !== "object") return false;
+  return JSON.stringify(normalizeDuelState(value, ownedRelicIds)) === JSON.stringify(value);
+}
+function rollDuelPeriods(state, now) {
+  const next = cloneDuelState(state);
+  const seasonId = duelSeasonId(now);
+  if (next.seasonId !== seasonId) {
+    const played = next.seasonId !== "" && next.wins + next.losses > 0;
+    if (played) next.pendingSeasonReward = { seasonId: next.seasonId, tierId: duelTier(next.score).id };
+    if (next.seasonId !== "") {
+      next.lastSeasonTierId = played ? duelTier(next.score).id : null;
+      next.lastSeasonScore = played ? next.score : 0;
+    }
+    next.score = next.seasonId === "" ? next.score : duelSeasonResetScore(next.score);
+    next.reachedTierIds = DUEL_TIERS.filter(({ floor }) => floor <= next.score).map(({ id }) => id);
+    next.wins = 0;
+    next.losses = 0;
+    next.winStreak = 0;
+    next.bestStreak = 0;
+    next.seasonBestScore = next.score;
+    next.candidateIds = [];
+    next.foughtIds = [];
+    next.defenseSimAt = "";
+    next.seasonId = seasonId;
+  }
+  const dayKey = duelDayKey(now);
+  if (next.dayKey !== dayKey) {
+    next.dayKey = dayKey;
+    next.attemptsUsed = 0;
+    next.attemptsPurchased = 0;
+    next.attemptsFromAds = 0;
+    next.refreshesUsed = 0;
+  }
+  return next;
+}
+function duelAttemptsLeft(state) {
+  return Math.max(0, DUEL_DAILY_ATTEMPTS + state.attemptsPurchased + state.attemptsFromAds - state.attemptsUsed);
+}
 
 // src/data/banners.ts
 init_define_import_meta_env();
@@ -18932,6 +18143,1002 @@ var BANNERS = [
 for (const banner of BANNERS) {
   registerDataText(banner, "name", `banner.${banner.id}.name`);
 }
+
+// src/core/playerCard.ts
+init_define_import_meta_env();
+
+// src/data/profileFrames.ts
+init_define_import_meta_env();
+var DEFAULT_PROFILE_FRAME_ID = "field";
+var PROFILE_FRAMES = [
+  { id: "field", style: "plain", displayName: "\uD604\uC7A5 \uC5F0\uAD6C\uC6D0", unlockLevel: 1, color: 10466248, wash: 2766404 },
+  { id: "holo", style: "bracket", displayName: "\uD22C\uC601 \uAD00\uCE21", unlockLevel: 10, color: 6280447, wash: 1521736 },
+  { id: "amber", style: "gem", displayName: "\uD638\uBC15 \uD45C\uBCF8", unlockLevel: 20, color: 15905857, wash: 4008978 },
+  { id: "abyss", style: "wing", displayName: "\uC2EC\uD574 \uAE30\uB85D", unlockLevel: 30, color: 11566335, wash: 2759748 },
+  { id: "garden", style: "vine", displayName: "\uC815\uC6D0 \uC218\uD638", unlockLevel: 45, color: 5759136, wash: 1325612 },
+  { id: "eternal", style: "crown", displayName: "\uC774\uD130\uB110", unlockLevel: 60, color: 16740207, wash: 4331036 }
+];
+function findProfileFrame(id) {
+  return PROFILE_FRAMES.find((frame) => frame.id === id);
+}
+function profileFrameOrDefault(id) {
+  return findProfileFrame(id) ?? PROFILE_FRAMES[0];
+}
+function isProfileFrameUnlocked(frame, playerLevel) {
+  return playerLevel >= frame.unlockLevel;
+}
+for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);
+
+// src/core/playerCard.ts
+var NICKNAME_MIN_LENGTH = 2;
+var NICKNAME_MAX_LENGTH = 12;
+var BIO_MAX_LENGTH = 40;
+var PLAYER_UID_LENGTH = 9;
+var glyphs = (value) => Array.from(value);
+var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
+function cleanNickname(value) {
+  return value.replace(/\s+/gu, " ").trim();
+}
+function nicknameProblem(value) {
+  const cleaned = cleanNickname(value);
+  if (CONTROL.test(cleaned)) return "invalidCharacter";
+  const length = glyphs(cleaned).length;
+  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
+  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
+  return void 0;
+}
+function cleanBio(value) {
+  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
+  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
+}
+function isPlayerUid(value) {
+  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
+}
+function createPlayerUid(random) {
+  let uid = String(1 + Math.floor(random() * 9));
+  while (uid.length < PLAYER_UID_LENGTH) uid += String(Math.floor(random() * 10) % 10);
+  return uid;
+}
+var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
+function nicknameLockedUntil(card, now) {
+  if (card.nickname === "") return void 0;
+  const changed = Date.parse(card.nicknameChangedAt);
+  if (!Number.isFinite(changed)) return void 0;
+  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
+  return until > now.getTime() ? new Date(until) : void 0;
+}
+function normalizePlayerCard(value) {
+  const raw = value && typeof value === "object" ? value : {};
+  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
+  return {
+    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
+    nickname,
+    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
+    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
+    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
+    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
+    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
+  };
+}
+function researchDays(createdAt, now) {
+  const start = Date.parse(createdAt);
+  if (!Number.isFinite(start)) return 1;
+  return Math.max(1, Math.floor((now.getTime() - start) / 864e5) + 1);
+}
+
+// src/core/playerLevel.ts
+init_define_import_meta_env();
+var PLAYER_LEVEL_CAP = 60;
+var PLAYER_LEVEL_UP_REWARD = { itemId: "stamina-tonic", quantity: 1, expiresInDays: 7 };
+var PLAYER_EXP_PER_STAMINA = 1;
+var EARLY_EXP_TO_NEXT = [8, 16, 26, 36, 48, 60, 72, 86, 100];
+var BLEND_START_RATIO = 0.465;
+var BLEND_END_LEVEL = 20;
+function playerExpToNext(level) {
+  const early = EARLY_EXP_TO_NEXT[Math.floor(level) - 1];
+  if (early !== void 0) return early;
+  const k = Math.max(0, Math.min(PLAYER_LEVEL_CAP, Math.floor(level)) - 1);
+  const formula = 50 + 15 * k + 0.9 * k * k;
+  const blend = Math.min(1, BLEND_START_RATIO + (1 - BLEND_START_RATIO) * (Math.floor(level) - 10) / (BLEND_END_LEVEL - 10));
+  return Math.round(formula * blend);
+}
+function normalizePlayerLevel(progress) {
+  const level = Math.max(1, Math.min(PLAYER_LEVEL_CAP, Math.floor(Number(progress?.level) || 1)));
+  const experienceToNext = playerExpToNext(level);
+  const raw = Math.max(0, Math.floor(Number(progress?.experience) || 0));
+  return { level, experience: level >= PLAYER_LEVEL_CAP ? 0 : Math.min(raw, experienceToNext - 1), experienceToNext };
+}
+function grantPlayerExperience(progress, amount) {
+  const start = normalizePlayerLevel(progress);
+  const gain = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
+  let { level, experience } = start;
+  if (level >= PLAYER_LEVEL_CAP || gain === 0) return { progress: start, levelsGained: 0, granted: 0 };
+  experience += gain;
+  while (level < PLAYER_LEVEL_CAP && experience >= playerExpToNext(level)) {
+    experience -= playerExpToNext(level);
+    level += 1;
+  }
+  if (level >= PLAYER_LEVEL_CAP) experience = 0;
+  return { progress: { level, experience, experienceToNext: playerExpToNext(level) }, levelsGained: level - start.level, granted: gain };
+}
+function playerExpForStamina(stamina) {
+  return Math.max(0, Math.floor(stamina)) * PLAYER_EXP_PER_STAMINA;
+}
+var STARTING_STAMINA = 122;
+
+// src/core/itemLots.ts
+init_define_import_meta_env();
+function repairLegacyLotStacks(inventory) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const stack of inventory) groups.set(stack.itemId, [...groups.get(stack.itemId) ?? [], stack]);
+  return [...groups.values()].flatMap((group) => {
+    const first = group[0];
+    const lots = first.lots;
+    if (group.length > 1 && lots?.length && group.every((stack) => JSON.stringify(stack.lots) === JSON.stringify(lots)) && group.reduce((sum, stack) => sum + stack.quantity, 0) === lots.reduce((sum, lot) => sum + lot.quantity, 0)) {
+      return [{ ...first, quantity: lots.reduce((sum, lot) => sum + lot.quantity, 0), lots: lots.map((lot) => ({ ...lot })) }];
+    }
+    return group.map((stack) => ({ ...stack, ...stack.lots ? { lots: stack.lots.map((lot) => ({ ...lot })) } : {} }));
+  });
+}
+var DAY_MS2 = 864e5;
+var ITEM_EXPIRY_DAYS = { min: 1, max: 7 };
+function clampExpiryDays(days) {
+  return Math.max(ITEM_EXPIRY_DAYS.min, Math.min(ITEM_EXPIRY_DAYS.max, Math.floor(days)));
+}
+function lotExpiresAt(now, days) {
+  return new Date(now.getTime() + clampExpiryDays(days) * DAY_MS2).toISOString();
+}
+function normalizeLots(lots) {
+  return lots.filter((lot) => lot.quantity > 0).map((lot) => ({ ...lot })).sort((a, b) => Date.parse(a.expiresAt) - Date.parse(b.expiresAt));
+}
+function addItemLot(inventory, itemId, quantity, options) {
+  const next = inventory.map((stack2) => ({ ...stack2, ...stack2.lots ? { lots: stack2.lots.map((lot2) => ({ ...lot2 })) } : {} }));
+  const stack = next.find((entry) => entry.itemId === itemId);
+  const held = stack?.quantity ?? 0;
+  const added = Math.max(0, Math.min(options.cap, held + Math.floor(quantity)) - held);
+  if (added <= 0) return { inventory: next, added: 0 };
+  const lot = options.expiryDays !== void 0 ? { quantity: added, expiresAt: lotExpiresAt(options.now, options.expiryDays) } : void 0;
+  if (stack) {
+    stack.quantity += added;
+    if (lot) stack.lots = normalizeLots([...stack.lots ?? [], lot]);
+  } else {
+    next.push({ itemId, quantity: added, ...lot ? { lots: [lot] } : {} });
+  }
+  return { inventory: next, added };
+}
+function removeItemLot(inventory, itemId, quantity) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  if (!stack || count2 <= 0 || stack.quantity < count2) return count2 <= 0 ? inventory.map((entry) => ({ ...entry })) : void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    if (!entry.lots) return [{ ...entry, quantity: left }];
+    let owed = count2;
+    const lots = normalizeLots(entry.lots).map((lot) => {
+      const take = Math.min(owed, lot.quantity);
+      owed -= take;
+      return { ...lot, quantity: lot.quantity - take };
+    });
+    return [{ ...entry, quantity: left, lots: normalizeLots(lots) }];
+  });
+}
+function removeItemLotAt(inventory, itemId, quantity, expiresAt) {
+  const count2 = Math.floor(quantity);
+  const stack = inventory.find((entry) => entry.itemId === itemId);
+  const target = stack?.lots?.find((lot) => lot.expiresAt === expiresAt);
+  if (!stack || !target || count2 <= 0 || target.quantity < count2) return void 0;
+  return inventory.flatMap((entry) => {
+    if (entry.itemId !== itemId) return [{ ...entry }];
+    const left = entry.quantity - count2;
+    if (left <= 0) return [];
+    const lots = normalizeLots(entry.lots.map((lot) => lot.expiresAt === expiresAt ? { ...lot, quantity: lot.quantity - count2 } : lot));
+    return [{ ...entry, quantity: left, lots }];
+  });
+}
+function purgeExpiredLots(inventory, now) {
+  let expired = 0;
+  const nowMs = now.getTime();
+  const next = inventory.flatMap((entry) => {
+    if (!entry.lots) return [{ ...entry }];
+    const alive = normalizeLots(entry.lots.filter((lot) => {
+      const dead = Date.parse(lot.expiresAt) <= nowMs;
+      if (dead) expired += lot.quantity;
+      return !dead;
+    }));
+    const quantity = alive.reduce((sum, lot) => sum + lot.quantity, 0);
+    return quantity > 0 ? [{ ...entry, quantity, lots: alive }] : [];
+  });
+  return { inventory: next, expired };
+}
+function isValidLotStack(stack) {
+  if (stack.lots === void 0) return true;
+  if (!Array.isArray(stack.lots) || stack.lots.length === 0) return false;
+  return stack.lots.every((lot) => Number.isInteger(lot.quantity) && lot.quantity > 0 && Number.isFinite(Date.parse(lot.expiresAt))) && stack.lots.reduce((sum, lot) => sum + lot.quantity, 0) === stack.quantity;
+}
+
+// src/core/serverJournal.ts
+init_define_import_meta_env();
+
+// src/core/expeditionSnapshot.ts
+init_define_import_meta_env();
+function captureExpeditionRelicSnapshot(def, progress, runeInventory, skinId) {
+  const runes = progress.heartGemSlots.flatMap((id) => {
+    const rune = id === null ? void 0 : runeInventory.find((candidate) => candidate.instanceId === id);
+    return rune ? [structuredClone(rune)] : [];
+  });
+  return {
+    level: progress.level,
+    breakthrough: progress.breakthrough,
+    bondLevel: progress.bondLevel,
+    stats: { ...calculateFinalStats(def.stats, progress, runes, def.rarity) },
+    runes,
+    skinId: skinId ?? null
+  };
+}
+function isExpeditionRelicSnapshot(value) {
+  if (!value || typeof value !== "object") return false;
+  const snapshot = value;
+  const whole2 = (n) => Number.isInteger(n) && n >= 0;
+  return whole2(snapshot.level) && snapshot.level >= 1 && whole2(snapshot.breakthrough) && whole2(snapshot.bondLevel) && !!snapshot.stats && typeof snapshot.stats === "object" && Object.values(snapshot.stats).every((stat) => Number.isFinite(stat)) && Array.isArray(snapshot.runes) && (snapshot.skinId === null || typeof snapshot.skinId === "string");
+}
+
+// src/core/opsInbox.ts
+init_define_import_meta_env();
+
+// src/data/economy.ts
+init_define_import_meta_env();
+
+// src/core/stamina.ts
+init_define_import_meta_env();
+
+// src/core/timeAccrual.ts
+init_define_import_meta_env();
+function timeAccrualWindow(lastSettledAt, serverNow2, maxElapsedMs = Number.POSITIVE_INFINITY) {
+  const serverNowMs = serverNow2.getTime();
+  if (!Number.isFinite(serverNowMs)) return { accepted: false, reason: "invalid-server-time" };
+  const parsedStartMs = lastSettledAt === null ? Number.NaN : Date.parse(lastSettledAt);
+  if (!Number.isFinite(parsedStartMs)) {
+    return { accepted: true, initialized: true, window: { startMs: serverNowMs, effectiveEndMs: serverNowMs, elapsedMs: 0, serverNowMs } };
+  }
+  if (serverNowMs < parsedStartMs) return { accepted: false, reason: "clock-regression" };
+  const safeMaximum = Number.isFinite(maxElapsedMs) ? Math.max(0, maxElapsedMs) : Number.POSITIVE_INFINITY;
+  const elapsedMs = Math.min(serverNowMs - parsedStartMs, safeMaximum);
+  return { accepted: true, initialized: false, window: { startMs: parsedStartMs, effectiveEndMs: parsedStartMs + elapsedMs, elapsedMs, serverNowMs } };
+}
+function splitAccrualAt(window2, boundaryAt) {
+  const boundaryMs = boundaryAt ? Date.parse(boundaryAt) : window2.startMs;
+  const beforeMs = Number.isFinite(boundaryMs) ? Math.max(0, Math.min(window2.effectiveEndMs, boundaryMs) - window2.startMs) : 0;
+  return { beforeMs, afterMs: window2.elapsedMs - beforeMs };
+}
+
+// src/core/stamina.ts
+var BASE_STAMINA_MAX = 120;
+var STAMINA_PER_RESEARCH_LEVEL = 2;
+var ABSOLUTE_STAMINA_MAX = 240;
+var STAMINA_REGEN_INTERVAL_MS = 5 * 60 * 1e3;
+var STAMINA_HOLD_LIMIT = 9999;
+function staminaMaxForResearchLevel(level) {
+  const safeLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
+  return Math.min(ABSOLUTE_STAMINA_MAX, BASE_STAMINA_MAX + safeLevel * STAMINA_PER_RESEARCH_LEVEL);
+}
+function staminaMaxForPlayer(player) {
+  return staminaMaxForResearchLevel(player.playerResearch.level);
+}
+function paidStaminaApplied(current, requested) {
+  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current));
+}
+function settleStamina(amount, maximum, updatedAt, serverNow2) {
+  const safeMaximum = Math.max(0, Math.floor(maximum));
+  const safeAmount = Math.min(STAMINA_HOLD_LIMIT, Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0)));
+  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, Math.max(0, safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
+  if (!accrual.accepted) return { amount: safeAmount, updatedAt, recovered: 0 };
+  const nowIso = new Date(accrual.window.serverNowMs).toISOString();
+  if (safeAmount >= safeMaximum || accrual.initialized) return { amount: safeAmount, updatedAt: nowIso, recovered: 0 };
+  const intervals = Math.floor(accrual.window.elapsedMs / STAMINA_REGEN_INTERVAL_MS);
+  const recovered = Math.min(safeMaximum - safeAmount, intervals);
+  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STAMINA_REGEN_INTERVAL_MS;
+  return { amount: safeAmount + recovered, updatedAt: new Date(nextUpdatedMs).toISOString(), recovered };
+}
+function staminaTiming(amount, maximum, updatedAt) {
+  if (amount >= maximum) return { nextRecoveryAt: null, fullAt: null };
+  const next = Date.parse(updatedAt) + STAMINA_REGEN_INTERVAL_MS;
+  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, maximum - amount - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
+}
+
+// src/data/economy.ts
+var WALLET_CAPS = {
+  // 발굴의 일반 화석(`fossil`)과 다이아(`gems`)도 다른 API 지급과 같은 계정 상한을 공유한다.
+  fossil: 99999,
+  amber: 9999,
+  gems: 9999999,
+  gold: 999999999,
+  // 시간 회복은 레벨 상한에서 멈추지만 대가를 치른 충전은 그 위로 이 끝까지 쌓인다.
+  stamina: STAMINA_HOLD_LIMIT,
+  dnaFragments: 99999,
+  cheesecake: 9999999,
+  rawStone: 9999999,
+  // 증표는 가끔 들어가 터는 자리의 몫이라 상한이 사실상 걸리지 않게 둔다 — 몇 주치가
+  // 쌓여도 버려지면 그 상점의 경험 자체가 무너진다.
+  raidSigil: 9999999,
+  salvageRecord: 9999999,
+  duelEmblem: 9999999
+};
+
+// src/data/items.ts
+init_define_import_meta_env();
+var ITEMS = [
+  { id: "rune", name: "\uB8EC", description: "\uB810\uB9AD\uC758 \uD558\uD2B8 \uC82C \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uD558\uB294 \uAC1C\uBCC4 \uB8EC\uC785\uB2C8\uB2E4.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
+  { id: "fossil", name: "\uD654\uC11D", description: "\uC5F0\uAD6C\uC18C\uC758 \uCE90\uB9AD\uD130 \uD68D\uB4DD \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "amber", name: "\uD638\uBC15\uC11D", description: "\uD76C\uADC0 \uC5F0\uAD6C\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999999, useEffect: { kind: "none" } },
+  { id: "gems", name: "\uC82C", description: "\uB3C4\uC2DC \uC804\uC5ED\uC5D0\uC11C \uD1B5\uC6A9\uB418\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "gold", name: "\uACE8\uB4DC", description: "\uB8EC \uC138\uACF5\uACFC \uC131\uC7A5\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999999999, useEffect: { kind: "none" } },
+  { id: "stamina", name: "\uC2A4\uD14C\uBBF8\uB098", description: "\uD0D0\uC0AC\uC5D0 \uD544\uC694\uD55C \uD589\uB3D9\uB825\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9999, useEffect: { kind: "none" } },
+  { id: "dnaFragments", name: "DNA \uB9C8\uC77C\uB9AC\uC9C0", description: "\uB9C8\uC77C\uB9AC\uC9C0 \uC0C1\uC810\uC5D0\uC11C \uC4F0\uB294 \uAD50\uD658 \uC7AC\uD654\uC785\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99999, useEffect: { kind: "none" } },
+  { id: "cheesecake", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "\uB810\uB9AD\uC5D0\uAC8C \uAE09\uC5EC\uD574 \uC131\uC7A5\uC2DC\uD0B5\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "cheesecake" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "rawStone", name: "\uC6D0\uC11D", description: "\uC9C0\uCE35 \uD0D0\uC0AC\uB85C \uCE90\uB0B8 \uBBF8\uAC00\uACF5 \uAD11\uBB3C\uC785\uB2C8\uB2E4. \uB8EC \uD2B9\uC131 \uC7AC\uD574\uC11D\uC5D0 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "rawStone" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 에너지 드링크는 **기본과 쎈 것 둘**이다. 회복량만 다른 같은 물건이라 한 칸에서 좌우로
+  // 갈아 끼우고(`StaminaPopup`), 그래서 둘의 이름도 같은 낱말에 표시만 다르게 붙인다.
+  { id: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 60 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 60 } },
+  { id: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "\uC2A4\uD14C\uBBF8\uB098\uB97C 120 \uD68C\uBCF5\uD569\uB2C8\uB2E4.", category: "consumable", icon: { kind: "asset", key: "item-stamina-tonic-large" }, maxStack: 999, expiresInDays: 7, useEffect: { kind: "restore_stamina", amount: 120 } },
+  { id: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uB8EC\uC5D0 \uD2B9\uC131 \uD55C \uC904\uC744 \uC0C8\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uD2B9\uC131\uC774 \uC788\uC73C\uBA74 \uC9C0\uC6B0\uACE0 \uB2E4\uC2DC \uBD80\uC5EC\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-ancient-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC601\uC6C5 \uC774\uC0C1 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC744 \uD655\uC815\uC73C\uB85C \uBD80\uC5EC\uD569\uB2C8\uB2E4. \uC774\uBBF8 \uC601\uC6C5 \uC774\uC0C1\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-refined-core" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uD2B9\uC131\uC758 \uC885\uB958\uB294 \uADF8\uB300\uB85C \uB450\uACE0 \uB4F1\uAE09\uC744 \uC804\uC124\uB85C \uD655\uC815 \uC0C1\uC2B9\uC2DC\uD0B5\uB2C8\uB2E4. \uC774\uBBF8 \uC804\uC124\uC778 \uD2B9\uC131\uC5D0\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-restoration-crystal" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 레이드를 여는 두 토벌권. 소모하는 입장권이라 지갑이 아니라 가방의 재료다 — 상단 줄에 늘
+  // 서는 재화가 아니고, 레이드 목록 머리에서만 몇 장 남았는지 말한다.
+  { id: "raid-ticket", name: "\uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB294 \uBB34\uC791\uC704\uB85C \uC815\uD574\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "raid-select-ticket", name: "\uC120\uD0DD \uD1A0\uBC8C\uAD8C", description: "\uCE5C\uAD6C\uC640 \uD568\uAED8 \uCE58\uB294 \uB808\uC774\uB4DC\uB97C \uC5FD\uB2C8\uB2E4. \uBCF4\uC2A4\uC640 \uB09C\uC774\uB3C4\uB97C \uACE8\uB77C\uC11C \uC5FD\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-raid-select-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
+  // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
+  // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
+  { id: "strata-ticket", name: "\uBC1C\uAD74\uAD8C", description: "\uACE0\uACE0\uD559 \uC720\uC801\uC744 \uC5EC\uB294 \uD69F\uC218\uC785\uB2C8\uB2E4. 3\uC2DC\uAC04\uB9C8\uB2E4 \uD558\uB098\uC529 3\uAC1C\uAE4C\uC9C0 \uCC28\uACE0, \uC0C1\uC810\xB7\uBCF4\uC0C1\uC73C\uB85C \uBC1B\uC740 \uAC83\uC740 3\uAC1C\uB97C \uB118\uACA8 \uC313\uC785\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
+  // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
+  { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
+  // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
+  { id: "raidSigil", name: "\uD1A0\uBC8C \uC99D\uD45C", description: "\uB808\uC774\uB4DC \uBCF4\uC2A4\uB97C \uBC00\uC5B4\uB0B8 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uC99D\uD45C\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "raidSigil" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  { id: "salvageRecord", name: "\uC778\uC591 \uAE30\uB85D", description: "\uC218\uC7A5\uB41C \uC9C0\uBD80\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uAC83\uC744 \uC801\uC5B4 \uB454 \uAE30\uB85D\uC785\uB2C8\uB2E4. \uC804\uB9AC\uD488 \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "salvageRecord" }, maxStack: 9999999, useEffect: { kind: "none" } },
+  // 결투장의 전용 재화. 시즌마다 갈아엎지 않는 영구 재화라 증표들과 같이 지갑에 둔다.
+  { id: "duelEmblem", name: "\uD22C\uC0AC\uC758 \uD718\uC7A5", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC2F8\uC6B4 \uBAAB\uC73C\uB85C \uBC1B\uB294 \uD718\uC7A5\uC785\uB2C8\uB2E4. \uACB0\uD22C \uC0C1\uC810\uC5D0\uC11C \uAD50\uD658\uD569\uB2C8\uB2E4.", category: "currency", icon: { kind: "currency", key: "duelEmblem" }, maxStack: 9999999, useEffect: { kind: "none" } }
+];
+function findItem(id) {
+  return ITEMS.find((item3) => item3.id === id);
+}
+for (const item3 of ITEMS) {
+  registerDataText(item3, "name", `item.${item3.id}.name`);
+  registerDataText(item3, "description", `item.${item3.id}.description`);
+}
+
+// src/core/opsInbox.ts
+var KEEP = 200;
+var NOTICE_KEEP = 20;
+var OPS_MAIL_PREFIX = "ops:";
+var isOpsMailId = (id) => id.startsWith(OPS_MAIL_PREFIX);
+var opsMailUuid = (id) => id.slice(OPS_MAIL_PREFIX.length);
+var emptyOps = () => ({ appliedAdjustments: [], readMails: [], announcedMails: [], notices: [] });
+var tail = (list) => list.slice(-KEEP);
+function isValidOpsJournal(value) {
+  if (!value || typeof value !== "object") return false;
+  const ops = value;
+  const ids = (v) => Array.isArray(v) && v.every((id) => typeof id === "string");
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
+}
+function opsJournalOf(state) {
+  state.serverJournal ??= { receipts: {}, raidAdmissions: {} };
+  state.serverJournal.ops ??= emptyOps();
+  return state.serverJournal.ops;
+}
+var walletKeys = new Set(Object.keys(WALLET_CAPS));
+var OPS_ITEM_PREFIX = "item:";
+var isWalletKey = (key) => walletKeys.has(key);
+function applyOpsAdjustments(state, adjustments, now) {
+  const journal = opsJournalOf(state);
+  const results = [];
+  for (const adjustment of adjustments) {
+    if (adjustment.asset.startsWith(OPS_ITEM_PREFIX)) {
+      results.push(applyItemAdjustment(state, journal, adjustment, now));
+      continue;
+    }
+    if (!isWalletKey(adjustment.asset) || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) {
+      results.push({ id: adjustment.id, applied: 0, balance: 0 });
+      continue;
+    }
+    const key = adjustment.asset;
+    if (journal.appliedAdjustments.includes(adjustment.id)) {
+      results.push({ id: adjustment.id, applied: adjustment.delta, balance: state.wallet[key] });
+      continue;
+    }
+    const before = state.wallet[key];
+    const after = Math.max(0, Math.min(WALLET_CAPS[key], before + adjustment.delta));
+    state.wallet[key] = after;
+    journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
+    const applied = after - before;
+    results.push({ id: adjustment.id, applied, balance: after });
+    if (applied !== 0) journal.notices = [...journal.notices, { kind: "asset", asset: key, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
+  }
+  return results;
+}
+function applyItemAdjustment(state, journal, adjustment, now) {
+  const itemId = adjustment.asset.slice(OPS_ITEM_PREFIX.length);
+  const definition = findItem(itemId);
+  const held = () => state.itemInventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
+  if (!definition || !Number.isFinite(adjustment.delta) || adjustment.delta === 0) return { id: adjustment.id, applied: 0, balance: 0 };
+  if (journal.appliedAdjustments.includes(adjustment.id)) return { id: adjustment.id, applied: adjustment.delta, balance: held() };
+  let applied = 0;
+  if (adjustment.delta > 0) {
+    const result = addItemLot(state.itemInventory, itemId, adjustment.delta, { cap: definition.maxStack, now, ...definition.expiresInDays !== void 0 ? { expiryDays: definition.expiresInDays } : {} });
+    state.itemInventory = result.inventory;
+    applied = result.added;
+  } else {
+    const take = Math.min(held(), -adjustment.delta);
+    const next = take > 0 ? removeItemLot(state.itemInventory, itemId, take) : void 0;
+    if (next) {
+      state.itemInventory = next;
+      applied = -take;
+    }
+  }
+  journal.appliedAdjustments = tail([...journal.appliedAdjustments, adjustment.id]);
+  if (applied !== 0) journal.notices = [...journal.notices, { kind: "item", itemId, delta: applied, ...adjustment.note ? { note: adjustment.note } : {}, at: now.toISOString() }].slice(-NOTICE_KEEP);
+  return { id: adjustment.id, applied, balance: held() };
+}
+function opsMailToDto(source, sender, readIds) {
+  const rewards = source.rewards.filter((reward) => Number.isInteger(reward.amount) && reward.amount > 0 && (isWalletKey(reward.asset) || reward.asset.startsWith(OPS_ITEM_PREFIX) && findItem(reward.asset.slice(OPS_ITEM_PREFIX.length)) !== void 0)).map((reward) => isWalletKey(reward.asset) ? { kind: "currency", currency: reward.asset, amount: reward.amount } : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
+  const id = `${OPS_MAIL_PREFIX}${source.id}`;
+  return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
+}
+function markOpsMailsRead(state, ids) {
+  const journal = opsJournalOf(state);
+  const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
+  if (next.length) journal.readMails = tail([...journal.readMails, ...next]);
+}
+function drainOpsNotices(state) {
+  const journal = state.serverJournal?.ops;
+  if (!journal || journal.notices.length === 0) return [];
+  const notices = journal.notices;
+  journal.notices = [];
+  return notices;
+}
+
+// src/core/serverJournal.ts
+var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
+function isValidServerJournal(value) {
+  if (!value || typeof value !== "object") return false;
+  const journal = value;
+  const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+  const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
+  return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+}
+
+// src/core/expeditionPeriods.ts
+init_define_import_meta_env();
+
+// src/core/expeditionBoss.ts
+init_define_import_meta_env();
+
+// src/core/raid.ts
+init_define_import_meta_env();
+
+// src/data/friends.ts
+init_define_import_meta_env();
+var NOW = Date.now();
+var SAMPLE_FRIENDS = [
+  // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaTier: { tierId: "gold-2", displayName: "\uACE8\uB4DC II" }, expeditionScore: 18420 } },
+  // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
+  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
+];
+var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
+for (const friend of PREVIEW_FRIENDS) {
+  registerDataText(friend, "status", `friend.${friend.id}.status`);
+}
+for (const friend of PREVIEW_FRIENDS) {
+  const stats = friend.competitiveStats;
+  if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
+  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
+}
+
+// src/core/raid.ts
+var RAID_BOSS_ROLE = "boss";
+function raidSeasonKey(now) {
+  return now.toISOString().slice(0, 10);
+}
+function raidWorldBossId(dayKey) {
+  const day = Math.floor(Date.parse(`${dayKey}T00:00:00.000Z`) / 864e5);
+  return RAID_BOSS_POOL[(day % RAID_BOSS_POOL.length + RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+}
+function rollRaidSummon(bossRoll, difficultyRoll) {
+  const pick2 = (list, roll3) => list[Math.min(list.length - 1, Math.max(0, Math.floor(roll3 * list.length)))];
+  return { bossRelicId: pick2(RAID_BOSS_POOL, bossRoll), difficulty: pick2(RAID_SUMMON_DIFFICULTIES, difficultyRoll) };
+}
+function raidSeasonProgress(dealtDamage, totalHp = RAID_SEASON_TOTAL_HP) {
+  const total = Math.max(0, Math.floor(totalHp));
+  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
+  const remainingHp = Math.max(0, total - dealt);
+  return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
+}
+function raidContributionBoard(entries, limit = 100) {
+  return [...entries].filter(({ damage }) => Number.isFinite(damage) && damage > 0).sort((a, b) => b.damage - a.damage || a.playerId.localeCompare(b.playerId)).slice(0, Math.max(0, limit)).map((entry, index) => ({
+    rank: index + 1,
+    playerId: entry.playerId,
+    displayName: entry.displayName,
+    damage: Math.floor(entry.damage),
+    isMe: entry.isMe === true,
+    favoriteRelicId: entry.favoriteRelicId
+  }));
+}
+function seedHash(seed) {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
+}
+function mockRaidContributions(dayKey, dayProgress, twoRunBase = 3e4) {
+  if (!QA_TOOLS_ENABLED) return [];
+  const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
+  return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
+    const jitter = 0.78 + seedHash(`${dayKey}:${id}`) * 0.44;
+    return { playerId: id, displayName, favoriteRelicId, damage: Math.floor(twoRunBase * pace * jitter * played) };
+  });
+}
+function mockRaidWorldDamage(dayKey, dayProgress, totalHp = RAID_SEASON_TOTAL_HP) {
+  if (!QA_TOOLS_ENABLED) return 0;
+  const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
+  const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+function raidBossGrowth(difficulty) {
+  const level = RAID_DIFFICULTY[difficulty].level;
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
+}
+function raidBossScaledStats(base, difficulty) {
+  return applyEncounterScaling(base.stats, raidBossGrowth(difficulty).level, RAID_BOSS_ROLE);
+}
+function raidBossPercentHpBasis(base, difficulty = "rampage") {
+  return Math.max(1, Math.round(raidBossScaledStats(base, difficulty).hp));
+}
+function raidBossDef(base, difficulty = "rampage") {
+  const scaled = raidBossScaledStats(base, difficulty);
+  return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
+}
+function mockSummonRaidDamage(raidId, elapsedRatio, totalHp) {
+  if (!QA_TOOLS_ENABLED) return 0;
+  const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
+  const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
+  return Math.floor(totalHp * reach * curve);
+}
+function mockFriendRaids(dayKey) {
+  const start = Date.parse(`${dayKey}T00:00:00.000Z`);
+  return PREVIEW_FRIENDS.map((friend, index) => {
+    const pick2 = seedHash(`${dayKey}:${friend.id}:raid`);
+    const difficulty = RAID_SUMMON_DIFFICULTIES[Math.floor(pick2 * RAID_SUMMON_DIFFICULTIES.length) % RAID_SUMMON_DIFFICULTIES.length];
+    const bossRelicId = RAID_BOSS_POOL[Math.floor(seedHash(`${dayKey}:${friend.id}:boss`) * RAID_BOSS_POOL.length) % RAID_BOSS_POOL.length];
+    return {
+      id: `friend-${friend.id}-${dayKey}`,
+      friendId: friend.id,
+      friendName: friend.displayName,
+      bossRelicId,
+      difficulty,
+      openedAt: new Date(start + (2 + index * 5) * 36e5).toISOString()
+    };
+  });
+}
+function mockSummonContributions(raidId, othersDamage) {
+  const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
+  const sum = weights.reduce((total, weight) => total + weight, 0);
+  return PREVIEW_FRIENDS.map((friend, index) => ({
+    playerId: friend.id,
+    displayName: friend.displayName,
+    favoriteRelicId: friend.favoriteRelic?.relicId,
+    damage: Math.floor(othersDamage * weights[index] / sum)
+  }));
+}
+function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
+  if (!(myDamage > 0)) return void 0;
+  const spec = RAID_DIFFICULTY[difficulty].settlement;
+  const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
+  const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
+  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+}
+function raidRunGold(runDamage, goldPerDamage) {
+  return Math.max(0, Math.floor(runDamage * goldPerDamage));
+}
+var RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
+function previewCompletedRaids(now) {
+  const hours = (value) => new Date(now.getTime() - value * 36e5).toISOString();
+  const friend = (index) => PREVIEW_FRIENDS[index % PREVIEW_FRIENDS.length]?.displayName;
+  return [
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}slain-1`,
+      kind: "summon",
+      bossRelicId: "sukusuino",
+      difficulty: "hard",
+      openedAt: hours(27),
+      endsAt: hours(3),
+      summonedByMe: true,
+      myDamage: 26400,
+      attemptsUsed: 2,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}expired-2`,
+      kind: "summon",
+      bossRelicId: "taboa",
+      difficulty: "normal",
+      openedAt: hours(34),
+      endsAt: hours(10),
+      summonerName: friend(0),
+      summonedByMe: false,
+      myDamage: 8700,
+      attemptsUsed: 1,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}world`,
+      kind: "world",
+      bossRelicId: RAID_BOSS_POOL[0],
+      difficulty: "rampage",
+      openedAt: hours(30),
+      endsAt: hours(6),
+      summonedByMe: false,
+      myDamage: 41500,
+      attemptsUsed: 2,
+      settled: false
+    },
+    {
+      id: `${RAID_HISTORY_PREVIEW_PREFIX}settled`,
+      kind: "summon",
+      bossRelicId: "taboa",
+      difficulty: "easy",
+      openedAt: hours(40),
+      endsAt: hours(16),
+      summonerName: friend(1),
+      summonedByMe: false,
+      myDamage: 12e3,
+      attemptsUsed: 2,
+      settled: true
+    }
+  ];
+}
+
+// src/data/expedition.ts
+init_define_import_meta_env();
+
+// src/data/competitiveRewards.ts
+init_define_import_meta_env();
+var WEEKLY_RANK_GEMS = [
+  { upTo: 1, gems: 5e3 },
+  { upTo: 3, gems: 4e3 },
+  { upTo: 10, gems: 3e3 },
+  { upTo: 50, gems: 2e3 },
+  { upTo: 100, gems: 1500 },
+  { upTo: null, gems: 800 }
+];
+
+// src/data/expedition.ts
+var EXPEDITION_MAP_BALANCE = {
+  /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
+  routeFloors: 19,
+  bossFloor: 20,
+  columns: 5,
+  nodesPerFloor: { min: 2, max: 4 },
+  /** 가중치는 상대값이며 생성기가 합계를 직접 가정하지 않는다. */
+  typeWeights: {
+    normal: 48,
+    elite: 12,
+    horde: 14,
+    rest: 14,
+    treasure: 12
+  },
+  /** 같은 종류와 비전투 노드가 한 세로 흐름에 지나치게 몰리지 않게 하는 상한이다. */
+  maxConsecutiveSameType: 2,
+  maxConsecutiveNonCombat: 1,
+  /** 이 층은 모든 갈래를 전투로 만들어 어느 경로든 최소 전투 수를 만족시킨다. */
+  requiredCombatFloors: [1, 4, 7, 10, 13, 16, 19],
+  minimumCombatsPerRoute: 7
+};
+var EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"];
+var EXPEDITION_COMBAT_BALANCE = {
+  normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
+  elite: { enemyCount: 1, statScale: 1.65, bodyScale: 1.1 },
+  horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 }
+};
+var EXPEDITION_SCORE_BALANCE = {
+  perFloor: 20,
+  perRemainingHpPercent: 0.75,
+  bossDamagePerPoint: 5
+};
+var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
+  /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
+  normal: 1,
+  /** 단일 강적의 높은 실패 위험을 표준 교전보다 50% 높게 보상한다. */
+  elite: 1.5,
+  /** 다수전의 추가 부담은 정예보다 낮은 25% 가산으로 보상한다. */
+  horde: 1.25,
+  /** 휴식은 전투 성과가 아니므로 점수를 만들지 않는다. */
+  rest: 0,
+  /** 보물의 가치는 전리품에만 있으며 RNG 결과를 점수로 환산하지 않는다. */
+  treasure: 0,
+  /** 보스 점수는 별도의 서버 검증 피해 점수가 소유한다. */
+  boss: 0
+};
+var EXPEDITION_REST_RULES = { healPercent: 30, revivePercent: 25, maxRevives: 1, cannotReviveAfterWipe: true };
+var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
+var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
+var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
+var EXPEDITION_NODE_REWARD_BALANCE = {
+  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
+  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
+  fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
+  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
+  /**
+   * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
+   * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
+   */
+  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
+};
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
+function expeditionBossSalvage(bossDamageScore) {
+  return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
+}
+var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
+  normal: 1,
+  elite: 1.75,
+  horde: 1.4
+};
+var EXPEDITION_TREASURE_REWARD_BALANCE = {
+  gold: { min: 2080, max: 3600 },
+  fossil: { min: 1, max: 1 },
+  gems: { min: 1e3, max: 1500 },
+  salvageRecord: { min: 6, max: 10 }
+};
+var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
+var EXPEDITION_BOSS_BALANCE = {
+  /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
+  maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
+  maximumActions: 2e3,
+  maximumAcceptedScore: 1e8,
+  /** 단계는 이름표다. 공격은 폰토스 정적 스킬이, 끝은 데스 카운트가 맡는다. */
+  phases: [
+    { startsAtMs: 0, attackPerSecond: 0, label: "\uAD00\uCE21" },
+    { startsAtMs: 3e4, attackPerSecond: 0, label: "\uACFC\uBD80\uD558" },
+    { startsAtMs: 6e4, attackPerSecond: 0, label: "\uBD95\uAD34" }
+  ]
+};
+var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
+  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
+  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
+  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
+  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
+  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
+  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
+  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
+  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
+  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
+  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
+  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
+  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
+  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
+  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
+];
+var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
+var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
+function expeditionRankRewards(rank) {
+  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
+  return { ...row.rewards };
+}
+var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
+EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
+
+// src/core/expeditionBoss.ts
+function expeditionWeekKey(now) {
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
+  return monday.toISOString().slice(0, 10);
+}
+function fastestAttackInterval(fighter, state, basicCount) {
+  const stack = fighter.def.passive.kind === "basicHitAttackSpeedStack" ? fighter.def.passive.value : 0;
+  const hitCount = fighter.def.basic.combo?.hitCount ?? 1;
+  const bonusBefore = fighter.bonusAttackSpeed;
+  const feverBefore = fighter.ferocityFever;
+  const chillBefore = fighter.chill;
+  const hastenedBefore = fighter.hastenedAttacksLeft;
+  fighter.bonusAttackSpeed = Math.max(bonusBefore, basicCount * hitCount * stack);
+  fighter.ferocityFever = true;
+  fighter.hastenedAttacksLeft = Math.max(1, hastenedBefore);
+  fighter.chill = null;
+  const interval = attackInterval(fighter, state);
+  fighter.bonusAttackSpeed = bonusBefore;
+  fighter.ferocityFever = feverBefore;
+  fighter.chill = chillBefore;
+  fighter.hastenedAttacksLeft = hastenedBefore;
+  return interval / (1 + strongestAllyAttackSpeedPercent(fighter, state) / 100) / (1 + missingTeamBuffAttackSpeedPercent(fighter, state) / 100);
+}
+function missingTeamBuffAttackSpeedPercent(fighter, state) {
+  if (!state || fighter.tailwindFor > 0) return 0;
+  return Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && ally !== fighter).map((ally) => {
+    const ultimate = ally.def.ultimate;
+    if (ultimate.teamBuff === void 0) return 0;
+    if (ultimate.targeting === "duo" && ally.duoId !== fighter.id) return 0;
+    return ultimate.teamBuff.attackSpeedPercent ?? 0;
+  }));
+}
+function strongestAllyAttackSpeedPercent(fighter, state) {
+  if (!state) return 0;
+  return Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side).map((ally) => Math.max(
+    ally.def.passive.kind === "adagioWeight" ? ally.def.passive.teamAttackSpeedPercent ?? 0 : 0,
+    ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0
+  )));
+}
+function passOnReplayEnergy(giver, kind, state) {
+  const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
+  const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
+  const allyGain = skill.allyEnergyGain ?? 0;
+  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + allyGain);
+  const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : void 0;
+  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + skill.duoCharge.energy);
+}
+var ULTIMATE_REPLAY_ENERGY_TOLERANCE = 0.4;
+var REPLAY_ROUNDING_MS = 1;
+function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
+  const balance = input.balance ?? EXPEDITION_BOSS_BALANCE;
+  if (!input.allies.length || actions.length > balance.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const stopAtMs = input.stopAtMs;
+  if (stopAtMs !== void 0 && (input.replayIdentity === void 0 || !Number.isInteger(stopAtMs) || stopAtMs < 0 || stopAtMs % BOSS_STEP_MS !== 0 || stopAtMs > balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
+  if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1e3, damagePerSecond: attackPerSecond, label }));
+  const killable = input.bossKillable === true;
+  const bossHp = input.replayIdentity !== void 0 || killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
+  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
+    playerInitialStates: initialStates,
+    augmentEffects: input.augmentEffects,
+    enemyBreakthroughs: [input.bossBreakthrough ?? 0],
+    ...input.replayIdentity !== void 0 ? { enemyBodyScale: ENCOUNTER_ROLE[killable ? RAID_BOSS_ROLE : "endless"].bodyScale } : {},
+    boss: {
+      phases,
+      limitSeconds: balance.maximumDurationMs / 1e3,
+      percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp,
+      endsOnKill: killable,
+      ...input.seasonHp !== void 0 ? { seasonHp: input.seasonHp } : {}
+    }
+  });
+  if (input.replayIdentity !== void 0) {
+    const random = bossBattleRandom(input.replayIdentity);
+    let tick = 0;
+    for (const action of actions) {
+      if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0 || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > (stopAtMs ?? balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      while (tick * BOSS_STEP_MS < action.elapsedMs && state.phase === "fight") {
+        stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
+        tick += 1;
+      }
+      const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
+      if (!fighter || !canFireUltimate(state, fighter)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      const energy = fighter.energy;
+      const events = fireUltimate(state, fighter.id, random);
+      if (!events.length && fighter.energy >= energy) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    }
+    while (state.phase === "fight" && tick * BOSS_STEP_MS < (stopAtMs ?? balance.maximumDurationMs + BOSS_STEP_MS)) {
+      stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
+      tick += 1;
+    }
+    const bossDefeated2 = killable && state.phase === "victory";
+    if (state.phase !== "defeat" && !bossDefeated2 && stopAtMs === void 0) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+    const actualDamage = state.fighters.filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null).reduce((sum, fighter) => {
+      const value = state.contributions[fighter.id]?.attack;
+      return sum + (value?.attackPower ?? 0) + (value?.abilityPower ?? 0);
+    }, 0);
+    return {
+      actualDamage: Math.round(actualDamage),
+      totalDamage: Math.round(state.boss?.score ?? 0),
+      endedAtMs: Math.round(state.elapsed * 1e3),
+      allAlliesDead: state.fighters.filter(({ side }) => side === "player").every(({ hp }) => hp <= 0),
+      bossDefeated: bossDefeated2,
+      remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp]))
+    };
+  }
+  for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
+  const readyAt = /* @__PURE__ */ new Map();
+  const basicCount = /* @__PURE__ */ new Map();
+  let cursorMs = 0;
+  const ordered = [...actions].sort((a, b) => a.elapsedMs - b.elapsedMs);
+  for (const action of ordered) {
+    if (state.phase !== "fight") break;
+    if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    while (cursorMs < action.elapsedMs && state.phase === "fight") {
+      const slice = Math.min(50, action.elapsedMs - cursorMs);
+      stepSkirmish(state, slice / 1e3, rng);
+      cursorMs += slice;
+    }
+    const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
+    if (!fighter) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    if (!isFighterAlive(fighter)) {
+      passOnReplayEnergy(fighter, action.kind, state);
+      continue;
+    }
+    const basicKey = `${action.actorId}:basic`;
+    if (action.kind === "basic") {
+      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(basicKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    } else if (fighter.summonOwnerId !== null) {
+      const ultimateKey = `${action.actorId}:ultimate`;
+      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(ultimateKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      const intervalMs2 = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1e3;
+      readyAt.set(ultimateKey, action.elapsedMs + fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs2 * 0.5);
+    } else if (fighter.energy < fighter.def.ultimate.cost * ULTIMATE_REPLAY_ENERGY_TOLERANCE) {
+      throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    }
+    replayLoggedBossAction(state, action.actorId, action.kind, rng);
+    if (action.kind === "basic") basicCount.set(action.actorId, (basicCount.get(action.actorId) ?? 0) + 1);
+    const intervalMs = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1e3;
+    const nextBasic = action.elapsedMs + intervalMs;
+    readyAt.set(basicKey, action.kind === "basic" ? nextBasic : Math.min(readyAt.get(basicKey) ?? nextBasic, nextBasic));
+  }
+  while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) {
+    stepSkirmish(state, 0.05, rng);
+    cursorMs += 50;
+  }
+  const bossDefeated = killable && state.phase === "victory";
+  if (state.phase !== "defeat" && !bossDefeated) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+  return {
+    totalDamage: Math.round(state.boss?.score ?? 0),
+    endedAtMs: Math.round(state.elapsed * 1e3),
+    allAlliesDead: !bossDefeated,
+    bossDefeated,
+    remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp]))
+  };
+}
+
+// src/core/expeditionPeriods.ts
+function expeditionDayKey(now) {
+  return now.toISOString().slice(0, 10);
+}
+function normalizeExpeditionState(expedition) {
+  return {
+    weekKey: expedition.weekKey ?? "",
+    dayKey: expedition.dayKey ?? "",
+    playsToday: Math.max(0, Math.floor(expedition.playsToday ?? 0)),
+    bestScore: Math.max(0, Math.floor(expedition.bestScore ?? 0)),
+    bestAchievedAt: expedition.bestAchievedAt ?? "",
+    allTimeBestScore: Math.max(0, Math.floor(expedition.allTimeBestScore ?? expedition.bestScore ?? 0)),
+    claimedRewardStageIds: [...expedition.claimedRewardStageIds ?? []],
+    pendingRankReward: expedition.pendingRankReward ? { ...expedition.pendingRankReward } : null,
+    pendingRankRewards: (expedition.pendingRankRewards ?? []).map((reward) => ({ ...reward })),
+    lastParty: [...expedition.lastParty ?? []],
+    run: expedition.run ?? null
+  };
+}
+function rollExpeditionPeriods(expedition, now) {
+  const weekKey = expeditionWeekKey(now);
+  const dayKey = expeditionDayKey(now);
+  let next = expedition;
+  if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0 };
+  if (next.weekKey !== weekKey) {
+    const queue = expeditionRankRewardQueue(next);
+    if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });
+    next = { ...next, weekKey, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
+  }
+  return next;
+}
+function expeditionRankRewardQueue(state) {
+  return [...state.pendingRankReward ? [state.pendingRankReward] : [], ...state.pendingRankRewards ?? []].map((reward) => ({ ...reward }));
+}
+
+// src/state/session.ts
+init_define_import_meta_env();
 
 // src/core/stageProgress.ts
 init_define_import_meta_env();
@@ -19677,327 +19884,6 @@ function replaceSession(next) {
   Object.assign(session, next);
 }
 
-// src/state/SaveManager.ts
-init_define_import_meta_env();
-
-// src/core/roulette.ts
-init_define_import_meta_env();
-var ROULETTE = {
-  id: "research-roulette",
-  adSlot: "roulette-chances",
-  counter: "roulette-spins",
-  free: 1,
-  adBonus: 3,
-  limit: 4,
-  startsAt: "2026-09-01T00:00:00+09:00",
-  endsAt: "2026-12-31T23:59:59+09:00"
-};
-var ROULETTE_REWARDS = [
-  { currency: "gold", amount: 5e3 },
-  { currency: "cheesecake", amount: 30 },
-  { currency: "stamina", amount: 20 },
-  { currency: "gems", amount: 20 },
-  { currency: "rawStone", amount: 50 },
-  { currency: "gold", amount: 1e4 }
-];
-function rouletteStatus(ledger, now, adFree = false) {
-  const date = now.toISOString().slice(0, 10);
-  const counts = ledger.date === date ? ledger.claimsBySlot : {};
-  const used = counts[ROULETTE.counter] ?? 0;
-  const bonus = (counts[ROULETTE.adSlot] ?? 0) > 0;
-  return {
-    date,
-    active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
-    used,
-    remaining: Math.max(0, ROULETTE.free + (bonus ? ROULETTE.adBonus : 0) - used),
-    bonusAvailable: !bonus,
-    adFree,
-    resetsAt: new Date(Date.parse(date) + 864e5).toISOString()
-  };
-}
-function rouletteIndex(random) {
-  const roll3 = random();
-  return Math.min(ROULETTE_REWARDS.length - 1, Math.max(0, Math.floor((Number.isFinite(roll3) ? roll3 : 0) * ROULETTE_REWARDS.length)));
-}
-
-// src/core/saveStorage.ts
-init_define_import_meta_env();
-var LOCAL_SAVE_FLAVOR = false ? "test" : QA_TOOLS_ENABLED ? "qa" : "production";
-var LOCAL_SAVE_STORAGE_KEYS = {
-  production: "eternal-city.production.local-save",
-  qa: "eternal-city.qa.local-save",
-  test: "eternal-city.test.local-save"
-};
-
-// src/core/playerCard.ts
-init_define_import_meta_env();
-var NICKNAME_MIN_LENGTH = 2;
-var NICKNAME_MAX_LENGTH = 12;
-var BIO_MAX_LENGTH = 40;
-var PLAYER_UID_LENGTH = 9;
-var glyphs = (value) => Array.from(value);
-var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
-function cleanNickname(value) {
-  return value.replace(/\s+/gu, " ").trim();
-}
-function nicknameProblem(value) {
-  const cleaned = cleanNickname(value);
-  if (CONTROL.test(cleaned)) return "invalidCharacter";
-  const length = glyphs(cleaned).length;
-  if (length < NICKNAME_MIN_LENGTH) return "tooShort";
-  if (length > NICKNAME_MAX_LENGTH) return "tooLong";
-  return void 0;
-}
-function cleanBio(value) {
-  const flat = value.replace(/[\r\n\u2028\u2029]+/gu, " ").replace(CONTROL, "").replace(/\s+/gu, " ").trim();
-  return glyphs(flat).slice(0, BIO_MAX_LENGTH).join("");
-}
-function isPlayerUid(value) {
-  return new RegExp(`^[1-9][0-9]{${PLAYER_UID_LENGTH - 1}}$`).test(value);
-}
-function createPlayerUid(random) {
-  let uid = String(1 + Math.floor(random() * 9));
-  while (uid.length < PLAYER_UID_LENGTH) uid += String(Math.floor(random() * 10) % 10);
-  return uid;
-}
-var NICKNAME_CHANGE_COOLDOWN_MS = 7 * 864e5;
-function nicknameLockedUntil(card, now) {
-  if (card.nickname === "") return void 0;
-  const changed = Date.parse(card.nicknameChangedAt);
-  if (!Number.isFinite(changed)) return void 0;
-  const until = changed + NICKNAME_CHANGE_COOLDOWN_MS;
-  return until > now.getTime() ? new Date(until) : void 0;
-}
-function normalizePlayerCard(value) {
-  const raw = value && typeof value === "object" ? value : {};
-  const nickname = typeof raw.nickname === "string" && raw.nickname !== "" && nicknameProblem(raw.nickname) === void 0 ? cleanNickname(raw.nickname) : "";
-  return {
-    uid: typeof raw.uid === "string" && isPlayerUid(raw.uid) ? raw.uid : "",
-    nickname,
-    bio: typeof raw.bio === "string" ? cleanBio(raw.bio) : "",
-    frameId: typeof raw.frameId === "string" && findProfileFrame(raw.frameId) ? raw.frameId : DEFAULT_PROFILE_FRAME_ID,
-    avatarRelicId: typeof raw.avatarRelicId === "string" && RELICS.some(({ id }) => id === raw.avatarRelicId) ? raw.avatarRelicId : "",
-    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : "",
-    nicknameChangedAt: typeof raw.nicknameChangedAt === "string" && Number.isFinite(Date.parse(raw.nicknameChangedAt)) ? raw.nicknameChangedAt : ""
-  };
-}
-function researchDays(createdAt, now) {
-  const start = Date.parse(createdAt);
-  if (!Number.isFinite(start)) return 1;
-  return Math.max(1, Math.floor((now.getTime() - start) / 864e5) + 1);
-}
-
-// src/core/expeditionPeriods.ts
-init_define_import_meta_env();
-
-// src/core/expeditionBoss.ts
-init_define_import_meta_env();
-
-// src/core/bossSimulation.ts
-init_define_import_meta_env();
-var BOSS_STEP_MS = 20;
-function bossBattleRandom(identity) {
-  let seed = 2166136261;
-  for (const character of identity) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619) >>> 0;
-  return () => {
-    seed = Math.imul(seed, 1664525) + 1013904223 >>> 0;
-    return seed / 4294967296;
-  };
-}
-
-// src/core/expeditionBoss.ts
-function expeditionWeekKey(now) {
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
-  return monday.toISOString().slice(0, 10);
-}
-function fastestAttackInterval(fighter, state, basicCount) {
-  const stack = fighter.def.passive.kind === "basicHitAttackSpeedStack" ? fighter.def.passive.value : 0;
-  const hitCount = fighter.def.basic.combo?.hitCount ?? 1;
-  const bonusBefore = fighter.bonusAttackSpeed;
-  const feverBefore = fighter.ferocityFever;
-  const chillBefore = fighter.chill;
-  const hastenedBefore = fighter.hastenedAttacksLeft;
-  fighter.bonusAttackSpeed = Math.max(bonusBefore, basicCount * hitCount * stack);
-  fighter.ferocityFever = true;
-  fighter.hastenedAttacksLeft = Math.max(1, hastenedBefore);
-  fighter.chill = null;
-  const interval = attackInterval(fighter, state);
-  fighter.bonusAttackSpeed = bonusBefore;
-  fighter.ferocityFever = feverBefore;
-  fighter.chill = chillBefore;
-  fighter.hastenedAttacksLeft = hastenedBefore;
-  return interval / (1 + strongestAllyAttackSpeedPercent(fighter, state) / 100) / (1 + missingTeamBuffAttackSpeedPercent(fighter, state) / 100);
-}
-function missingTeamBuffAttackSpeedPercent(fighter, state) {
-  if (!state || fighter.tailwindFor > 0) return 0;
-  return Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side && ally !== fighter).map((ally) => {
-    const ultimate = ally.def.ultimate;
-    if (ultimate.teamBuff === void 0) return 0;
-    if (ultimate.targeting === "duo" && ally.duoId !== fighter.id) return 0;
-    return ultimate.teamBuff.attackSpeedPercent ?? 0;
-  }));
-}
-function strongestAllyAttackSpeedPercent(fighter, state) {
-  if (!state) return 0;
-  return Math.max(0, ...state.fighters.filter((ally) => ally.side === fighter.side).map((ally) => Math.max(
-    ally.def.passive.kind === "adagioWeight" ? ally.def.passive.teamAttackSpeedPercent ?? 0 : 0,
-    ally.def.ferocityTrait.effectId === "packHunt" ? ally.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0
-  )));
-}
-function passOnReplayEnergy(giver, kind, state) {
-  const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
-  const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
-  const allyGain = skill.allyEnergyGain ?? 0;
-  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + allyGain);
-  const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : void 0;
-  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + skill.duoCharge.energy);
-}
-var ULTIMATE_REPLAY_ENERGY_TOLERANCE = 0.4;
-var REPLAY_ROUNDING_MS = 1;
-function resolveExpeditionBossBattle(input, actions, rng = () => 0.999999) {
-  const balance = input.balance ?? EXPEDITION_BOSS_BALANCE;
-  if (!input.allies.length || actions.length > balance.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-  const stopAtMs = input.stopAtMs;
-  if (stopAtMs !== void 0 && (input.replayIdentity === void 0 || !Number.isInteger(stopAtMs) || stopAtMs < 0 || stopAtMs % BOSS_STEP_MS !== 0 || stopAtMs > balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-  const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
-  if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-  const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1e3, damagePerSecond: attackPerSecond, label }));
-  const killable = input.bossKillable === true;
-  const bossHp = input.replayIdentity !== void 0 || killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
-  const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
-    playerInitialStates: initialStates,
-    augmentEffects: input.augmentEffects,
-    enemyBreakthroughs: [input.bossBreakthrough ?? 0],
-    ...input.replayIdentity !== void 0 ? { enemyBodyScale: ENCOUNTER_ROLE[killable ? RAID_BOSS_ROLE : "endless"].bodyScale } : {},
-    boss: {
-      phases,
-      limitSeconds: balance.maximumDurationMs / 1e3,
-      percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp,
-      endsOnKill: killable,
-      ...input.seasonHp !== void 0 ? { seasonHp: input.seasonHp } : {}
-    }
-  });
-  if (input.replayIdentity !== void 0) {
-    const random = bossBattleRandom(input.replayIdentity);
-    let tick = 0;
-    for (const action of actions) {
-      if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0 || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > (stopAtMs ?? balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-      while (tick * BOSS_STEP_MS < action.elapsedMs && state.phase === "fight") {
-        stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
-        tick += 1;
-      }
-      const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
-      if (!fighter || !canFireUltimate(state, fighter)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-      const energy = fighter.energy;
-      const events = fireUltimate(state, fighter.id, random);
-      if (!events.length && fighter.energy >= energy) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    }
-    while (state.phase === "fight" && tick * BOSS_STEP_MS < (stopAtMs ?? balance.maximumDurationMs + BOSS_STEP_MS)) {
-      stepSkirmish(state, BOSS_STEP_MS / 1e3, random);
-      tick += 1;
-    }
-    const bossDefeated2 = killable && state.phase === "victory";
-    if (state.phase !== "defeat" && !bossDefeated2 && stopAtMs === void 0) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
-    const actualDamage = state.fighters.filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null).reduce((sum, fighter) => {
-      const value = state.contributions[fighter.id]?.attack;
-      return sum + (value?.attackPower ?? 0) + (value?.abilityPower ?? 0);
-    }, 0);
-    return {
-      actualDamage: Math.round(actualDamage),
-      totalDamage: Math.round(state.boss?.score ?? 0),
-      endedAtMs: Math.round(state.elapsed * 1e3),
-      allAlliesDead: state.fighters.filter(({ side }) => side === "player").every(({ hp }) => hp <= 0),
-      bossDefeated: bossDefeated2,
-      remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp]))
-    };
-  }
-  for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
-  const readyAt = /* @__PURE__ */ new Map();
-  const basicCount = /* @__PURE__ */ new Map();
-  let cursorMs = 0;
-  const ordered = [...actions].sort((a, b) => a.elapsedMs - b.elapsedMs);
-  for (const action of ordered) {
-    if (state.phase !== "fight") break;
-    if (!Number.isInteger(action.elapsedMs) || action.elapsedMs < cursorMs || action.elapsedMs > balance.maximumDurationMs) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    while (cursorMs < action.elapsedMs && state.phase === "fight") {
-      const slice = Math.min(50, action.elapsedMs - cursorMs);
-      stepSkirmish(state, slice / 1e3, rng);
-      cursorMs += slice;
-    }
-    const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
-    if (!fighter) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    if (!isFighterAlive(fighter)) {
-      passOnReplayEnergy(fighter, action.kind, state);
-      continue;
-    }
-    const basicKey = `${action.actorId}:basic`;
-    if (action.kind === "basic") {
-      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(basicKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    } else if (fighter.summonOwnerId !== null) {
-      const ultimateKey = `${action.actorId}:ultimate`;
-      if (action.elapsedMs + REPLAY_ROUNDING_MS < (readyAt.get(ultimateKey) ?? -Infinity)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
-      const intervalMs2 = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1e3;
-      readyAt.set(ultimateKey, action.elapsedMs + fighter.def.ultimate.cost / Math.max(1, fighter.def.stats.energyGain) * intervalMs2 * 0.5);
-    } else if (fighter.energy < fighter.def.ultimate.cost * ULTIMATE_REPLAY_ENERGY_TOLERANCE) {
-      throw new Error("INVALID_BOSS_BATTLE_INPUT");
-    }
-    replayLoggedBossAction(state, action.actorId, action.kind, rng);
-    if (action.kind === "basic") basicCount.set(action.actorId, (basicCount.get(action.actorId) ?? 0) + 1);
-    const intervalMs = fastestAttackInterval(fighter, state, basicCount.get(action.actorId) ?? 0) * 1e3;
-    const nextBasic = action.elapsedMs + intervalMs;
-    readyAt.set(basicKey, action.kind === "basic" ? nextBasic : Math.min(readyAt.get(basicKey) ?? nextBasic, nextBasic));
-  }
-  while (state.phase === "fight" && cursorMs < balance.maximumDurationMs) {
-    stepSkirmish(state, 0.05, rng);
-    cursorMs += 50;
-  }
-  const bossDefeated = killable && state.phase === "victory";
-  if (state.phase !== "defeat" && !bossDefeated) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
-  return {
-    totalDamage: Math.round(state.boss?.score ?? 0),
-    endedAtMs: Math.round(state.elapsed * 1e3),
-    allAlliesDead: !bossDefeated,
-    bossDefeated,
-    remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp]))
-  };
-}
-
-// src/core/expeditionPeriods.ts
-function expeditionDayKey(now) {
-  return now.toISOString().slice(0, 10);
-}
-function normalizeExpeditionState(expedition) {
-  return {
-    weekKey: expedition.weekKey ?? "",
-    dayKey: expedition.dayKey ?? "",
-    playsToday: Math.max(0, Math.floor(expedition.playsToday ?? 0)),
-    bestScore: Math.max(0, Math.floor(expedition.bestScore ?? 0)),
-    bestAchievedAt: expedition.bestAchievedAt ?? "",
-    allTimeBestScore: Math.max(0, Math.floor(expedition.allTimeBestScore ?? expedition.bestScore ?? 0)),
-    claimedRewardStageIds: [...expedition.claimedRewardStageIds ?? []],
-    pendingRankReward: expedition.pendingRankReward ? { ...expedition.pendingRankReward } : null,
-    pendingRankRewards: (expedition.pendingRankRewards ?? []).map((reward) => ({ ...reward })),
-    lastParty: [...expedition.lastParty ?? []],
-    run: expedition.run ?? null
-  };
-}
-function rollExpeditionPeriods(expedition, now) {
-  const weekKey = expeditionWeekKey(now);
-  const dayKey = expeditionDayKey(now);
-  let next = expedition;
-  if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0 };
-  if (next.weekKey !== weekKey) {
-    const queue = expeditionRankRewardQueue(next);
-    if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });
-    next = { ...next, weekKey, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
-  }
-  return next;
-}
-function expeditionRankRewardQueue(state) {
-  return [...state.pendingRankReward ? [state.pendingRankReward] : [], ...state.pendingRankRewards ?? []].map((reward) => ({ ...reward }));
-}
-
 // src/data/profileModifiers.ts
 init_define_import_meta_env();
 var PROFILE_MODIFIERS = [
@@ -20070,6 +19956,89 @@ function findAdRewardSlot(slotId) {
   return AD_REWARD_SLOTS.find((slot) => slot.id === slotId);
 }
 for (const slot of AD_REWARD_SLOTS) registerDataText(slot, "displayText", `adReward.${slot.id}.text`);
+
+// src/data/cakeOperation.ts
+init_define_import_meta_env();
+
+// src/core/dungeonShortcut.ts
+init_define_import_meta_env();
+var SWEEP_TICKET_ITEM = "sweep-ticket";
+var SWEEP_TICKET_TEST_KIT = { itemId: SWEEP_TICKET_ITEM, quantity: 10 };
+var SWEEP_COUNT_LIMIT = 50;
+var DUNGEON_RUN_STAMINA = 10;
+function normalizeSweepCount(value) {
+  return Number.isInteger(value) && value >= 1 && value <= SWEEP_COUNT_LIMIT ? value : void 0;
+}
+function settleSweep(cost, count2, adFreeMembership) {
+  return {
+    count: count2,
+    staminaCost: cost.staminaCost * count2,
+    ticketCost: adFreeMembership ? 0 : count2,
+    rewards: Object.fromEntries(Object.entries(cost.rewards).map(([currency3, amount]) => [currency3, amount * count2]))
+  };
+}
+function sweepRefusal(input) {
+  if (!input.cleared) return "not_cleared";
+  if (normalizeSweepCount(input.count) === void 0) return "invalid_count";
+  const settlement = settleSweep(input.cost, input.count, input.adFreeMembership);
+  if (input.tickets < settlement.ticketCost) return "not_enough_tickets";
+  if (input.stamina < settlement.staminaCost) return "not_enough_stamina";
+  return null;
+}
+
+// src/data/cakeOperation.ts
+var CAKE_OPERATION_TIERS = [
+  { id: "cake-1", name: "1\uB2E8\uACC4", enemyLevel: 5, enemyCount: 10, rewardCheesecake: 30 },
+  { id: "cake-2", name: "2\uB2E8\uACC4", enemyLevel: 12, enemyCount: 10, rewardCheesecake: 44 },
+  { id: "cake-3", name: "3\uB2E8\uACC4", enemyLevel: 20, enemyCount: 11, rewardCheesecake: 58 },
+  { id: "cake-4", name: "4\uB2E8\uACC4", enemyLevel: 28, enemyCount: 12, rewardCheesecake: 72 },
+  { id: "cake-5", name: "5\uB2E8\uACC4", enemyLevel: 36, enemyCount: 13, rewardCheesecake: 88 },
+  { id: "cake-6", name: "6\uB2E8\uACC4", enemyLevel: 44, enemyCount: 14, rewardCheesecake: 108 },
+  { id: "cake-7", name: "7\uB2E8\uACC4", enemyLevel: 52, enemyCount: 15, rewardCheesecake: 128 },
+  { id: "cake-8", name: "8\uB2E8\uACC4", enemyLevel: 60, enemyCount: 15, rewardCheesecake: 150 }
+];
+var CAKE_OPERATION_ENEMY_IDS = [
+  "raitia-grass",
+  "raitia-water",
+  "raitia-fire",
+  "raitia-earth",
+  "raitia-wind"
+];
+var BY_ID2 = new Map(CAKE_OPERATION_TIERS.map((tier) => [tier.id, tier]));
+function getCakeOperationTier(id) {
+  const found = BY_ID2.get(id);
+  if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uCE58\uC988\uCF00\uC774\uD06C \uB300\uC791\uC804 \uB2E8\uACC4: ${id}`);
+  return found;
+}
+function cakeOperationTierIndex(id) {
+  return CAKE_OPERATION_TIERS.findIndex((tier) => tier.id === id);
+}
+function isCakeTierUnlocked(id, clearedIndex) {
+  const index = cakeOperationTierIndex(id);
+  return index >= 0 && index <= clearedIndex + 1;
+}
+function cakeOperationRunCost(tier) {
+  return { staminaCost: DUNGEON_RUN_STAMINA, rewards: { cheesecake: tier.rewardCheesecake } };
+}
+for (const tier of CAKE_OPERATION_TIERS) registerDataText(tier, "name", `cakeOperation.${tier.id}.name`);
+function cakeOperationRole(tier) {
+  return encounterRoleFor(tier.enemyCount);
+}
+function cakeOperationEnemies(tier) {
+  const role = cakeOperationRole(tier);
+  const level = tier.enemyLevel;
+  const grown = CAKE_OPERATION_ENEMY_IDS.map((id) => {
+    const base = getRelic(id);
+    return { ...base, encounterRole: role, stats: applyEncounterScaling(base.stats, level, role) };
+  });
+  return Array.from({ length: tier.enemyCount }, (_, index) => {
+    const sister = grown[index % grown.length];
+    return { ...sister, stats: { ...sister.stats } };
+  });
+}
+function cakeOperationEnemyDisplayLevel(tier) {
+  return { level: tier.enemyLevel };
+}
 
 // src/core/relicStory.ts
 init_define_import_meta_env();
@@ -25446,6 +25415,57 @@ function relicStoryFor(relicId) {
   return RELIC_STORIES[relicId];
 }
 
+// src/data/bounty.ts
+init_define_import_meta_env();
+var BOUNTY = {
+  roundCount: 3
+};
+var BOUNTY_TIERS = [
+  // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
+  { id: "bounty-1", order: 1, name: "\uD604\uC0C1\uC218\uBC30 1\uAE09", rewardGold: 1200, rounds: [
+    { relicId: "toby", level: 5 },
+    { relicId: "amo", level: 5 },
+    { relicId: "koma", level: 5 }
+  ] },
+  // 2급부터 돌파 없는 상한(20)을 넘는다.
+  { id: "bounty-2", order: 2, name: "\uD604\uC0C1\uC218\uBC30 2\uAE09", rewardGold: 3300, rounds: [
+    { relicId: "toby", level: 18 },
+    { relicId: "amo", level: 18 },
+    { relicId: "koma", level: 18 }
+  ] },
+  { id: "bounty-3", order: 3, name: "\uD604\uC0C1\uC218\uBC30 3\uAE09", rewardGold: 6400, rounds: [
+    { relicId: "toby", level: 32 },
+    { relicId: "amo", level: 32 },
+    { relicId: "koma", level: 32 }
+  ] },
+  { id: "bounty-4", order: 4, name: "\uD604\uC0C1\uC218\uBC30 4\uAE09", rewardGold: 14400, rounds: [
+    { relicId: "toby", level: 46 },
+    { relicId: "amo", level: 46 },
+    { relicId: "koma", level: 46 }
+  ] },
+  // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
+  { id: "bounty-5", order: 5, name: "\uD604\uC0C1\uC218\uBC30 5\uAE09", rewardGold: 26400, rounds: [
+    { relicId: "toby", level: 60 },
+    { relicId: "amo", level: 60 },
+    { relicId: "koma", level: 60 }
+  ] }
+];
+var BOUNTY_TIER_BY_ID = new Map(BOUNTY_TIERS.map((tier) => [tier.id, tier]));
+function getBountyTier(id) {
+  const tier = BOUNTY_TIER_BY_ID.get(id);
+  if (!tier) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uD604\uC0C1\uC218\uBC30 \uB4F1\uAE09 id: ${id}`);
+  return tier;
+}
+function bountyRoundEnemy(round) {
+  const base = getRelic(round.relicId);
+  return { ...base, encounterRole: BOUNTY_ROLE, stats: applyEncounterScaling(base.stats, bountyRoundLevel(round), BOUNTY_ROLE) };
+}
+var BOUNTY_ROLE = encounterRoleFor(1);
+function bountyRoundLevel(round) {
+  return round.level;
+}
+for (const tier of BOUNTY_TIERS) registerDataText(tier, "name", `bounty.tier.${tier.id}.name`);
+
 // src/core/expeditionMap.ts
 init_define_import_meta_env();
 var ROUTE_TYPES = [...EXPEDITION_COMBAT_TYPES, ...EXPEDITION_NON_COMBAT_TYPES];
@@ -26429,6 +26449,16 @@ function isRaidInstance(value) {
   return typeof raid.id === "string" && raid.id.length > 0 && (raid.kind === "world" || raid.kind === "summon") && typeof raid.bossRelicId === "string" && isRaidDifficulty(raid.difficulty) && typeof raid.openedAt === "string" && Number.isFinite(Date.parse(raid.openedAt)) && typeof raid.endsAt === "string" && Number.isFinite(Date.parse(raid.endsAt)) && (raid.summonerName === void 0 || typeof raid.summonerName === "string") && typeof raid.summonedByMe === "boolean" && Number.isInteger(raid.myDamage) && raid.myDamage >= 0 && (raid.appliedDamage === void 0 || Number.isInteger(raid.appliedDamage) && raid.appliedDamage >= 0 && raid.appliedDamage <= raid.myDamage) && Number.isInteger(raid.attemptsUsed) && raid.attemptsUsed >= 0 && typeof raid.settled === "boolean";
 }
 
+// src/managers/RelicProgressionManager.ts
+init_define_import_meta_env();
+
+// src/api/resultState.ts
+init_define_import_meta_env();
+var remoteResults = /* @__PURE__ */ new WeakSet();
+function hasRemoteState(result) {
+  return !!result && typeof result === "object" && remoteResults.has(result);
+}
+
 // src/api/FakeServer.ts
 init_define_import_meta_env();
 
@@ -26455,23 +26485,77 @@ function combatPower(stats) {
   return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
 }
 
-// src/core/battleArena.ts
+// src/core/runeTraitEffects.ts
 init_define_import_meta_env();
-var BASE_ARENA = { left: 130, right: 950, top: 600, bottom: 1360 };
-var BATTLE_ARENA = {
-  stage: BASE_ARENA,
-  expedition: BASE_ARENA,
-  expeditionBoss: BASE_ARENA,
-  cake: { ...BASE_ARENA, top: 720 },
-  bounty: { ...BASE_ARENA, top: 770 },
-  raid: { ...BASE_ARENA, top: 860 },
-  // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
-  // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
-  // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
-  duel: { ...BASE_ARENA, top: 740 }
-};
-function battleArena(mode) {
-  return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
+function onceLimits(target, cooldownSeconds = 0) {
+  return { maxTriggers: 1, cooldownSeconds, maxStacks: 1, target };
+}
+function runeTraitCombatEffects(trait, relicId) {
+  const def = findRuneTrait(trait.id);
+  if (def === void 0) return [];
+  const value = runeTraitValue(trait.id, trait.grade);
+  const scope = { kind: "relic", relicId };
+  switch (def.effect.kind) {
+    case "hasteOnBattleStart":
+      return [{
+        kind: "triggered",
+        trigger: "battleStart",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: def.effect.seconds }
+      }];
+    case "hasteOnKill":
+      return [{
+        kind: "triggered",
+        trigger: "onKill",
+        scope,
+        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: def.effect.seconds }
+      }];
+    case "damageVsHighHp":
+      return [{ kind: "damageVsHighHpPercent", percent: value, aboveHpPercent: def.effect.aboveHpPercent, scope }];
+    case "sameTargetStreak":
+      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: def.effect.maxStacks, scope }];
+    case "shieldLowestAllyOnBattleStart":
+      return [{
+        kind: "triggered",
+        trigger: "battleStart",
+        scope,
+        limits: onceLimits("lowestHpAlly"),
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "shieldOnLowHp":
+      return [{
+        kind: "triggered",
+        trigger: "onLowHp",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "healOnLowHp":
+      return [{
+        kind: "triggered",
+        trigger: "onLowHp",
+        scope,
+        limits: onceLimits("self"),
+        payload: { kind: "heal", maxHpPercent: value }
+      }];
+    case "shieldOnCritical":
+      return [{
+        kind: "triggered",
+        trigger: "onCritical",
+        scope,
+        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
+        payload: { kind: "shield", maxHpPercent: value }
+      }];
+    case "flatStat":
+      return [{ kind: "flatStat", stat: def.effect.stat, points: value, scope }];
+    case "bleedEveryNAttacks":
+      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
+  }
+}
+function partyRuneTraitEffects(equipped) {
+  return equipped.flatMap(({ relicId, runes }) => runes.flatMap((rune) => rune.trait === void 0 ? [] : runeTraitCombatEffects(rune.trait, relicId)));
 }
 
 // src/server/playerDuels.ts
@@ -26513,6 +26597,317 @@ function recordPlayerDefense(context, opponentId, attacker, attack, attackerWon,
   duel2.losses += won ? 0 : 1;
   duel2.history = [{ at: now.toISOString(), opponentName: attacker.playerCard.nickname || t("profile.defaultName"), opponentScore: attacker.duel.score, won, delta: duel2.score - before, opponentTierId: duelStanding(attacker.duel.score).tier.id, opponentFavoriteRelicId: attacker.favorite, opponentUnits: attack.map((relicId) => ({ relicId, level: attacker.relicProgress[relicId]?.level ?? 1 })), side: "defense" }, ...duel2.history].slice(0, DUEL_HISTORY_LIMIT);
   context.changes.push({ playerId: row.id, expectedRevision: row.revision, duel: duel2, gems: reached.reduce((n, t2) => n + t2.firstReachGems, 0) });
+}
+
+// src/server/combatAuthority.ts
+init_define_import_meta_env();
+
+// src/data/expeditionEnemies.ts
+init_define_import_meta_env();
+var EXPEDITION_ENEMY_FORMATIONS = {
+  normal: ["toby", "amo", "ripa"],
+  /*
+   * **정예 조우에는 때릴 줄 아는 개체가 첫 자리에 선다.** 혼자 서는 자리인데 아모(탱커)가
+   * 앞에 있던 때는 실측에서 스물일곱 초를 싸우고도 파티 체력이 **한 점도 깎이지 않았다** —
+   * 정예가 묻는 것은 단일 딜과 유지력인데 그 조우가 아무것도 묻지 않았다.
+   */
+  elite: ["koma", "amo", "ripa"],
+  horde: ["ripa", "toby", "amo"],
+  boss: ["amo", "ripa", "toby"],
+  // 비전투 노드는 표시/전투 함수에서 호출하지 않지만 완전한 타입 표를 유지한다.
+  rest: ["toby", "amo", "ripa"],
+  treasure: ["toby", "amo", "ripa"]
+};
+var FINAL_FLOOR_BOSS_ID = "pontos";
+function expeditionNodeRole(type, floor) {
+  if (type === "boss") return floor >= 20 ? "endless" : "boss";
+  return encounterRoleFor(type === "horde" ? ENCOUNTER_HORDE_COUNT : 3, { elite: type === "elite" });
+}
+function expeditionRecommendedLevel(floor) {
+  return Math.max(1, Math.round(floor * EXPEDITION_LEVEL_PER_FLOOR));
+}
+var EXPEDITION_LEVEL_PER_FLOOR = 2;
+var ENCOUNTER_HORDE_COUNT = 5;
+function expeditionEnemyLevel(type, floor) {
+  if (type === "boss" && floor === 20) return 20;
+  return expeditionRecommendedLevel(floor);
+}
+function getExpeditionNodeEnemies(type, floor) {
+  const level = expeditionEnemyLevel(type, floor);
+  const ids = type === "boss" && floor === 20 ? [FINAL_FLOOR_BOSS_ID] : EXPEDITION_ENEMY_FORMATIONS[type];
+  const role = expeditionNodeRole(type, floor);
+  return ids.map((id) => {
+    const enemy = getRelic(id);
+    return { ...enemy, encounterRole: role, stats: applyEncounterScaling(enemy.stats, level, role) };
+  });
+}
+function expeditionBossGrowth() {
+  const level = expeditionEnemyLevel("boss", 20);
+  return { level, breakthrough: requiredBreakthroughForLevel(level) };
+}
+
+// src/core/expeditionBattle.ts
+init_define_import_meta_env();
+function createExpeditionSkirmishConfig(input, playerDefs, enemyPool) {
+  if (enemyPool.length === 0) throw new RangeError("\uC6D0\uC815 \uC801 \uC6D0\uBCF8\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
+  const balance = EXPEDITION_COMBAT_BALANCE[input.nodeType];
+  const activeIds = new Set(input.relics.filter(({ alive, currentHp }) => alive && currentHp > 0).map(({ relicId }) => relicId));
+  const scaleStats = (def) => ({ ...def, stats: Object.fromEntries(Object.entries(def.stats).map(([key, value]) => [key, value * balance.statScale])) });
+  return {
+    playerDefs: playerDefs.filter(({ id }) => activeIds.has(id)),
+    enemyDefs: Array.from({ length: balance.enemyCount }, (_, index) => scaleStats(enemyPool[index % enemyPool.length])),
+    playerInitialStates: input.relics.filter(({ relicId }) => activeIds.has(relicId)).map((state) => ({ ...state })),
+    augmentEffects: expeditionBattleEffects(input.augments),
+    enemyBodyScale: balance.bodyScale
+  };
+}
+function expeditionBattleEffects(selections) {
+  return selections.flatMap(({ augmentId, targetRelicId }) => {
+    const augment = getExpeditionAugment(augmentId);
+    const effect = augment?.effect;
+    if (!augment || !effect || effect.kind === "healAfterBattlePercent") return [];
+    const scope = targetRelicId ? { kind: "relic", relicId: targetRelicId } : { kind: "all" };
+    return [{ ...effect, scope, stacking: augment.stacking, stackKey: `${augment.id}:${targetRelicId ?? "party"}` }];
+  });
+}
+
+// src/data/placedEnemies.ts
+init_define_import_meta_env();
+function placedEnemyIndex(input, stage, enemyDefs) {
+  if (input.mode === "raid") {
+    const growth = raidBossGrowth(input.difficulty);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, { def, ...growth }]));
+  }
+  if (input.mode === "cake") {
+    const tier = getCakeOperationTier(input.tierId);
+    const level = cakeOperationEnemyDisplayLevel(tier).level;
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: requiredBreakthroughForLevel(level)
+    }]));
+  }
+  if (input.mode === "bounty") {
+    const round = getBountyTier(input.tierId).rounds[input.round];
+    const level = bountyRoundLevel(round);
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: requiredBreakthroughForLevel(level)
+    }]));
+  }
+  if (input.mode === "duel") {
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level: input.units[index]?.level ?? 1,
+      breakthrough: input.units[index]?.breakthrough ?? 0
+    }]));
+  }
+  const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor) : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : void 0;
+  const placed = expeditionLevel === void 0 ? stageEnemyGrowth(stage) : void 0;
+  return new Map(enemyDefs.map((def, index) => {
+    const growth = placed?.[index];
+    const level = growth?.level ?? expeditionLevel ?? 1;
+    return [`enemy-${index}`, {
+      def,
+      level,
+      breakthrough: growth?.breakthrough ?? requiredBreakthroughForLevel(level)
+    }];
+  }));
+}
+
+// src/server/combatAuthority.ts
+var fail = () => {
+  throw new Error("COMBAT_REJECTED");
+};
+function combatJournal(state) {
+  const journal = state.serverJournal;
+  return journal.combat ??= emptyCombatJournal();
+}
+function combatKey(input) {
+  const b = input.input;
+  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail();
+}
+function prepareCombat(state, request, now, id) {
+  if (request?.input?.mode === "duel") {
+    const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
+    if (!ticket2?.duel || ticket2.kind !== "duel") return fail();
+    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
+    if (active4) return structuredClone(active4.lease);
+    const setup2 = structuredClone(ticket2.duel.setup);
+    if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
+    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
+    records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
+    if (Object.keys(records2.records).length >= 8) return fail();
+    records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
+    return structuredClone(lease2);
+  }
+  if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
+    return fail();
+  const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
+  const active3 = Object.values(records.records).find(
+    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
+  );
+  if (active3) return structuredClone(active3.lease);
+  let b = input.input;
+  const ticket = records.tickets[key];
+  if (mode !== "expedition" && !ticket) return fail();
+  if (b.mode === "stage" && ticket.target !== input.stageId || (b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
+    return fail();
+  if (b.mode === "bounty") {
+    const bounty = b;
+    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail();
+    if (b.round > 0 && !Object.values(records.records).some(
+      (row) => row.input.input.mode === "bounty" && row.input.input.requestId === bounty.requestId && row.input.input.round === bounty.round - 1 && row.verdict?.victory
+    ))
+      return fail();
+  }
+  if (b.mode === "expedition") {
+    const expeditionInput = b;
+    const run2 = state.expedition.run, node = run2?.nodes.find((n) => n.id === expeditionInput.nodeId), prev = run2?.nodes.find((n) => n.id === run2.currentNodeId);
+    if (!run2 || run2.runId !== b.runId || run2.settled || !node || !["normal", "elite", "horde"].includes(node.type) || run2.visitedNodeIds.includes(node.id) || (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id)))
+      return fail();
+    b = {
+      mode: "expedition",
+      runId: run2.runId,
+      nodeId: node.id,
+      nodeType: node.type,
+      floor: node.floor,
+      relics: structuredClone(run2.relics),
+      augments: structuredClone(run2.selectedAugments)
+    };
+    input.input = b;
+  }
+  const party = b.mode === "expedition" ? b.relics.map((r) => r.relicId) : b.mode === "bounty" ? [state.party[b.round]] : state.party;
+  if (party.some((r) => !r || !state.owned.has(r)) || new Set(party).size !== party.length)
+    return fail();
+  const progression = new RelicProgressionManager(state);
+  const frozen = b.mode === "expedition" ? new Map(
+    state.expedition.run.relics.map((r) => [r.relicId, r.snapshot])
+  ) : void 0;
+  const players = party.map((relicId) => ({
+    ...getRelic(relicId),
+    stats: structuredClone(
+      frozen?.get(relicId)?.stats ?? progression.getFinalStats(relicId)
+    )
+  }));
+  const bonds = Object.fromEntries(
+    party.map((r) => [
+      r,
+      frozen?.get(r)?.bondLevel ?? state.relicProgress[r]?.bondLevel ?? 0
+    ])
+  );
+  const breakthroughs = Object.fromEntries(
+    party.map((r) => [
+      r,
+      frozen?.get(r)?.breakthrough ?? state.relicProgress[r]?.breakthrough ?? 0
+    ])
+  );
+  const traits = partyRuneTraitEffects(
+    party.map((relicId) => ({
+      relicId,
+      runes: frozen?.get(relicId)?.runes ?? (state.relicProgress[relicId]?.heartGemSlots ?? []).flatMap(
+        (id2) => state.runeInventory.filter((r) => r.instanceId === id2)
+      )
+    }))
+  );
+  const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
+  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail();
+  const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
+  const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
+  const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
+  const setup = {
+    players: expedition?.playerDefs ?? players,
+    enemies: expedition?.enemyDefs ?? enemies,
+    arena: battleArena(b.mode),
+    bonds,
+    breakthroughs,
+    options: expedition ? {
+      playerInitialStates: expedition.playerInitialStates,
+      augmentEffects: [...expedition.augmentEffects, ...traits],
+      enemyBodyScale: expedition.enemyBodyScale
+    } : {
+      augmentEffects: traits,
+      enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
+        (e) => e.breakthrough
+      ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
+      enemyBodyScale: ENCOUNTER_ROLE[cake ? cakeOperationRole(cake) : encounterRoleFor(enemies.length, {
+        elite: stage.elite === true || b.mode === "bounty"
+      })].bodyScale
+    }
+  };
+  const lease = JSON.parse(
+    JSON.stringify({
+      id,
+      seed: id,
+      setup,
+      expiresAt: new Date(now.getTime() + 36e5).toISOString()
+    })
+  );
+  records.records = Object.fromEntries(
+    Object.entries(records.records).filter(
+      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
+    )
+  );
+  if (Object.keys(records.records).length >= 8) return fail();
+  records.records[id] = {
+    lease: structuredClone(lease),
+    input,
+    issuedAt: now.toISOString()
+  };
+  return lease;
+}
+function finishCombat(state, proof, now) {
+  if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
+    return fail();
+  const record2 = combatJournal(state).records[proof.id];
+  if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
+    return fail();
+  if (record2.verdict) return structuredClone(record2.verdict);
+  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail();
+  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
+    return fail();
+  const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
+  let index = 0, previous = -1;
+  for (const action of proof.actions) {
+    if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
+      return fail();
+    previous = action.tick;
+  }
+  for (let tick = 0; tick <= proof.ticks; tick++) {
+    while (index < proof.actions.length && proof.actions[index].tick === tick) {
+      const action = proof.actions[index++], actor = battle.fighters.find(
+        (f) => f.id === action.actorId && f.side === "player"
+      );
+      if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
+        return fail();
+      fireUltimate(battle, actor.id, rng);
+    }
+    if (tick < proof.ticks) {
+      if (battle.phase !== "fight") return fail();
+      stepSkirmish(battle, COMBAT_STEP_MS / 1e3, rng);
+    }
+  }
+  if (index !== proof.actions.length || !proof.abandoned && battle.phase === "fight")
+    return fail();
+  const victory = !proof.abandoned && battle.phase === "victory";
+  const results = skirmishRelicResults(battle);
+  const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
+  const verdict = {
+    victory,
+    relicHp: party.map(
+      (id) => victory ? results.find((r) => r.relicId === id)?.currentHp ?? 0 : 0
+    ),
+    elapsedMs: proof.ticks * COMBAT_STEP_MS
+  };
+  record2.verdict = verdict;
+  return structuredClone(verdict);
+}
+function consumeCombat(state, key) {
+  const journal = combatJournal(state);
+  delete journal.tickets[key];
+  for (const [id, record2] of Object.entries(journal.records))
+    if (combatKey(record2.input) === key) delete journal.records[id];
 }
 
 // src/api/storyAuthority.ts
@@ -28164,6 +28559,43 @@ var ATTENDANCE_AD_REWARDS = [
 ];
 var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
 
+// src/core/contentUnlock.ts
+init_define_import_meta_env();
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var CONTENT_STAGE_UNLOCKS = { archaeology: "1-10" };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
+}
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
+}
+function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
+}
+function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
+  return void 0;
+}
+
 // src/core/bountyRun.ts
 init_define_import_meta_env();
 function isBountyTierUnlocked(tier, clearedTierIds) {
@@ -29559,7 +29991,7 @@ var GUILD_API_METHODS = [
 var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
 
 // src/api/FakeGuildServer.ts
-var fail = (code, message) => {
+var fail2 = (code, message) => {
   throw new GuildApiError(code, message);
 };
 var FakeGuildServer = class {
@@ -29620,7 +30052,7 @@ var FakeGuildServer = class {
   requireGuild(actor) {
     const guild = this.myGuild(actor);
     const me = guild?.members.get(actor.userId);
-    if (!guild || !me) return fail("NOT_IN_GUILD");
+    if (!guild || !me) return fail2("NOT_IN_GUILD");
     this.touch(me, actor);
     return { guild, me };
   }
@@ -29671,7 +30103,7 @@ var FakeGuildServer = class {
     return { ...this.summary(guild), createdAt: guild.createdAt, warRank: null, badgeFree: guild.badgeChanges === 0 };
   }
   assertUnlocked(actor) {
-    if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
+    if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail2("LEVEL_LOCKED");
   }
   gain(guild, me, gain) {
     guild.prosperity += gain.prosperity ?? 0;
@@ -29718,13 +30150,13 @@ var FakeGuildServer = class {
   async createGuild(actor, input, requestId) {
     this.once(actor, requestId, () => {
       this.assertUnlocked(actor);
-      if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
-      if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+      if (this.myGuild(actor)) fail2("ALREADY_IN_GUILD");
+      if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail2("LEAVE_COOLDOWN");
       const checked = validateGuildName(input.name);
-      if (!checked.ok) return fail("NAME_INVALID");
-      if ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(checked.name))) fail("NAME_TAKEN");
-      if (!isGuildBadge(input.badge)) fail("BADGE_INVALID");
-      if (input.joinMode !== "open" && input.joinMode !== "approval") fail("INVALID_REQUEST");
+      if (!checked.ok) return fail2("NAME_INVALID");
+      if ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(checked.name))) fail2("NAME_TAKEN");
+      if (!isGuildBadge(input.badge)) fail2("BADGE_INVALID");
+      if (input.joinMode !== "open" && input.joinMode !== "approval") fail2("INVALID_REQUEST");
       const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
       const guild = { id, name: checked.name, badge: { ...input.badge }, joinMode: input.joinMode, notice: "", prosperity: 0, createdAt: this.now(), badgeChanges: 0, members: /* @__PURE__ */ new Map(), requests: /* @__PURE__ */ new Map() };
       guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
@@ -29737,16 +30169,16 @@ var FakeGuildServer = class {
   }
   async joinGuild(actor, guildId) {
     this.assertUnlocked(actor);
-    if (this.myGuild(actor)) fail("ALREADY_IN_GUILD");
-    if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail("LEAVE_COOLDOWN");
+    if (this.myGuild(actor)) fail2("ALREADY_IN_GUILD");
+    if (this.now() < (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS) fail2("LEAVE_COOLDOWN");
     const guild = this.guilds.get(guildId);
-    if (!guild) return fail("GUILD_NOT_FOUND");
-    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    if (!guild) return fail2("GUILD_NOT_FOUND");
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail2("GUILD_FULL");
     if (guild.joinMode === "open") {
       this.admit(guild, actor);
       return { status: "joined" };
     }
-    if (guild.requests.has(actor.userId)) fail("REQUEST_EXISTS");
+    if (guild.requests.has(actor.userId)) fail2("REQUEST_EXISTS");
     guild.requests.set(actor.userId, { actor, requestedAt: this.now() });
     (this.requestedBy.get(actor.userId) ?? this.requestedBy.set(actor.userId, /* @__PURE__ */ new Set()).get(actor.userId)).add(guildId);
     return { status: "requested" };
@@ -29762,13 +30194,13 @@ var FakeGuildServer = class {
   }
   async cancelJoinRequest(actor, guildId) {
     const guild = this.guilds.get(guildId);
-    if (!guild?.requests.delete(actor.userId)) fail("REQUEST_NOT_FOUND");
+    if (!guild?.requests.delete(actor.userId)) fail2("REQUEST_NOT_FOUND");
     this.requestedBy.get(actor.userId)?.delete(guildId);
   }
   async leaveGuild(actor) {
     const { guild, me } = this.requireGuild(actor);
     if (me.role === "leader") {
-      if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+      if (guild.members.size > 1) fail2("LEADER_CANNOT_LEAVE");
       this.guilds.delete(guild.id);
     } else guild.members.delete(actor.userId);
     this.userGuild.delete(actor.userId);
@@ -29776,61 +30208,61 @@ var FakeGuildServer = class {
   }
   async decideJoinRequest(actor, userId, approve) {
     const { guild, me } = this.requireGuild(actor);
-    if (!guildCan(me.role, "approve")) fail("NO_PERMISSION");
+    if (!guildCan(me.role, "approve")) fail2("NO_PERMISSION");
     const request = guild.requests.get(userId);
-    if (!request) return fail("REQUEST_NOT_FOUND");
+    if (!request) return fail2("REQUEST_NOT_FOUND");
     guild.requests.delete(userId);
     this.requestedBy.get(userId)?.delete(guild.id);
     if (!approve) return;
     if (this.userGuild.has(userId)) return;
-    if (guild.members.size >= guildCapacity(this.level(guild))) fail("GUILD_FULL");
+    if (guild.members.size >= guildCapacity(this.level(guild))) fail2("GUILD_FULL");
     this.admit(guild, request.actor);
   }
   async kickMember(actor, userId) {
     const { guild, me } = this.requireGuild(actor);
     const target = guild.members.get(userId);
-    if (!target) return fail("MEMBER_NOT_FOUND");
-    if (!guildCanKick(me.role, target.role)) fail("NO_PERMISSION");
+    if (!target) return fail2("MEMBER_NOT_FOUND");
+    if (!guildCanKick(me.role, target.role)) fail2("NO_PERMISSION");
     guild.members.delete(userId);
     this.userGuild.delete(userId);
     this.leftAt.set(userId, this.now());
   }
   async setMemberRole(actor, userId, role) {
     const { guild, me } = this.requireGuild(actor);
-    if (!guildCan(me.role, "promote")) fail("NO_PERMISSION");
+    if (!guildCan(me.role, "promote")) fail2("NO_PERMISSION");
     const target = guild.members.get(userId);
-    if (!target) return fail("MEMBER_NOT_FOUND");
-    if (target.role === "leader" || !(role in GUILD_ROLE_LIMIT) || role === "leader") fail("INVALID_TARGET");
-    if (target.role !== role && [...guild.members.values()].filter((m) => m.role === role).length >= GUILD_ROLE_LIMIT[role]) fail("ROLE_FULL");
+    if (!target) return fail2("MEMBER_NOT_FOUND");
+    if (target.role === "leader" || !(role in GUILD_ROLE_LIMIT) || role === "leader") fail2("INVALID_TARGET");
+    if (target.role !== role && [...guild.members.values()].filter((m) => m.role === role).length >= GUILD_ROLE_LIMIT[role]) fail2("ROLE_FULL");
     target.role = role;
   }
   async transferLeader(actor, userId) {
     const { guild, me } = this.requireGuild(actor);
-    if (me.role !== "leader") fail("NO_PERMISSION");
+    if (me.role !== "leader") fail2("NO_PERMISSION");
     const target = guild.members.get(userId);
-    if (!target || target === me) return fail("INVALID_TARGET");
+    if (!target || target === me) return fail2("INVALID_TARGET");
     target.role = "leader";
     me.role = "vice";
   }
   async updateGuild(actor, update) {
     const { guild, me } = this.requireGuild(actor);
     if (update.notice !== void 0) {
-      if (!guildCan(me.role, "notice")) fail("NO_PERMISSION");
+      if (!guildCan(me.role, "notice")) fail2("NO_PERMISSION");
       const notice = update.notice.replace(/\s+/g, " ").trim();
-      if (guildGlyphCount(notice) > GUILD_NOTICE_MAX) fail("INVALID_REQUEST");
+      if (guildGlyphCount(notice) > GUILD_NOTICE_MAX) fail2("INVALID_REQUEST");
       guild.notice = notice;
     }
     if (update.joinMode !== void 0) {
-      if (!guildCan(me.role, "joinMode")) fail("NO_PERMISSION");
-      if (update.joinMode !== "open" && update.joinMode !== "approval") fail("INVALID_REQUEST");
+      if (!guildCan(me.role, "joinMode")) fail2("NO_PERMISSION");
+      if (update.joinMode !== "open" && update.joinMode !== "approval") fail2("INVALID_REQUEST");
       guild.joinMode = update.joinMode;
       if (guild.joinMode === "open") guild.requests.clear();
     }
   }
   async disbandGuild(actor) {
     const { guild, me } = this.requireGuild(actor);
-    if (!guildCan(me.role, "disband")) fail("NO_PERMISSION");
-    if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
+    if (!guildCan(me.role, "disband")) fail2("NO_PERMISSION");
+    if (guild.members.size > 1) fail2("LEADER_CANNOT_LEAVE");
     this.guilds.delete(guild.id);
     this.userGuild.delete(actor.userId);
     this.leftAt.set(actor.userId, this.now());
@@ -29838,8 +30270,8 @@ var FakeGuildServer = class {
   async changeBadge(actor, badge, requestId) {
     return this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
-      if (!guildCan(me.role, "badge")) fail("NO_PERMISSION");
-      if (!isGuildBadge(badge)) fail("BADGE_INVALID");
+      if (!guildCan(me.role, "badge")) fail2("NO_PERMISSION");
+      if (!isGuildBadge(badge)) fail2("BADGE_INVALID");
       if (sameGuildBadge(guild.badge, badge)) return { changed: false, charged: false };
       const charged = guild.badgeChanges > 0;
       guild.badge = { ...badge };
@@ -29858,7 +30290,7 @@ var FakeGuildServer = class {
     return this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
       const view = this.attendanceOf(me);
-      if (view.stampedToday) fail("ALREADY_STAMPED");
+      if (view.stampedToday) fail2("ALREADY_STAMPED");
       me.attendanceCount = view.day;
       me.attendanceLast = guildDateKey(this.now());
       const day = guildAttendanceDay(view.day);
@@ -29875,11 +30307,11 @@ var FakeGuildServer = class {
   async purchase(actor, productId, requestId) {
     return this.once(actor, requestId, () => {
       const product = findGuildProduct(productId);
-      if (!product) return fail("PRODUCT_NOT_FOUND");
+      if (!product) return fail2("PRODUCT_NOT_FOUND");
       const { me } = this.requireGuild(actor);
       const bought = me.purchases.get(product.id) ?? 0;
-      if (bought >= product.weeklyLimit) fail("PRODUCT_LIMIT");
-      if (me.coin < product.price) fail("INSUFFICIENT_COINS");
+      if (bought >= product.weeklyLimit) fail2("PRODUCT_LIMIT");
+      if (me.coin < product.price) fail2("INSUFFICIENT_COINS");
       me.coin -= product.price;
       me.purchases.set(product.id, bought + 1);
       return { shop: this.shopOf(me) };
@@ -30896,7 +31328,7 @@ var FakeServer = class {
       }
     }
     this.raidContext = options.raidContext;
-    this.notificationScheduler = options.notificationScheduler ?? (state === session ? settingsManager : void 0);
+    this.injectedNotificationScheduler = options.notificationScheduler;
     this.mails = QA_TOOLS_ENABLED ? [
       { id: "launch-gift", title: t("mail.launch.title"), sender: t("mail.launch.sender"), body: t("mail.launch.body"), sentAt: "2026-08-30T00:00:00.000Z", expiresAt: "2099-12-31T23:59:59.000Z", read: false, claimed: false, rewards: [
         // 첫 접속 감사 패키지 — 화석 10·호박석 10(연구 20번 값, 젬 6,000)을 뼈대로 젬·골드·치즈케이크도 그 무게에 맞춰 화려하게 얹는다.
@@ -30942,7 +31374,11 @@ var FakeServer = class {
   persistSession;
   guildBackend;
   guildUserId;
-  notificationScheduler;
+  injectedNotificationScheduler;
+  /** Resolve after module initialization: SettingsManager also imports the server API. */
+  get notificationScheduler() {
+    return this.injectedNotificationScheduler ?? (this.state === session ? settingsManager : void 0);
+  }
   /** 아래 저장소들은 실제 서버의 고유 제약조건/트랜잭션을 흉내 내는 FakeServer 전용 멱등 기록이다. */
   receiptResults = /* @__PURE__ */ new Map();
   verifiedTransactions = /* @__PURE__ */ new Map();
@@ -34946,220 +35382,64 @@ var RelicProgressionManager = class {
 };
 var relicProgression = new RelicProgressionManager();
 
-// src/core/combatProtocol.ts
-init_define_import_meta_env();
-function combatState(lease) {
-  const s = lease.setup;
-  return createSkirmish(
-    s.players,
-    s.enemies,
-    s.arena,
-    s.bonds,
-    s.breakthroughs,
-    s.options
-  );
+// src/server/liveArena.ts
+function arenaPlayer(id, data) {
+  const s = saveManager.parse(data), progression = new RelicProgressionManager(s);
+  return { id, name: s.playerCard.nickname || t("profile.defaultName"), roster: [...s.owned].map((relicId) => ({
+    def: { ...getRelic(relicId), stats: progression.getFinalStats(relicId) },
+    level: s.relicProgress[relicId]?.level ?? 1,
+    breakthrough: s.relicProgress[relicId]?.breakthrough ?? 0,
+    bond: s.relicProgress[relicId]?.bondLevel ?? 0,
+    traits: partyRuneTraitEffects([{ relicId, runes: (s.relicProgress[relicId]?.heartGemSlots ?? []).flatMap((key) => s.runeInventory.filter((r) => r.instanceId === key)) }])
+  })) };
 }
-var emptyCombatJournal = () => ({
-  tickets: {},
-  records: {}
-});
-var COMBAT_STEP_MS = 20;
-var MAX_COMBAT_TICKS = 18e3;
-var MAX_COMBAT_ACTIONS = 512;
+async function handleArenaCall(rpc, player, method, args, requestId) {
+  const input = args[0] ?? {};
+  const kind = method === "get" ? "status" : input.kind;
+  if (!["status", "queue", "cancel", "invite", "accept", "decline", "practice", "action", "finish"].includes(kind ?? "")) throw Error("ARENA_ACTION");
+  let rules = input.rules === void 0 ? RANKED_ARENA_RULES : arenaRules(input.rules);
+  if (kind === "queue") rules = RANKED_ARENA_RULES;
+  let context = await rpc("server_arena_context", { p_player: player, p_kind: kind, p_room: input.roomId ?? null, p_target: input.target ?? null, p_rules: rules, p_request: requestId ?? null });
+  let room = context.room;
+  const fingerprint = { call: JSON.stringify([method, args]) };
+  const applied = context.receiptFingerprint !== null && context.receiptFingerprint !== void 0;
+  if (applied && context.receiptFingerprint.call !== fingerprint.call) throw Error("ARENA_REQUEST_CONFLICT");
+  if (!applied && room && !["done", "declined"].includes(room.phase)) {
+    for (let retry = 0; retry < 3; retry++) {
+      let next = room;
+      if (room.phase !== "invited" && !room.players[0]?.roster) next = startArena(room, room.players.map((p) => arenaPlayer(p.id, context.records.find((s) => s.id === p.id).data)), Date.now());
+      if (next.practice && !next.lease) {
+        next.players.forEach((p, side) => {
+          const state = saveManager.parse(context.records.find((s) => s.id === p.id).data);
+          const ids = side === 0 ? state.party : state.duel?.defense ?? state.party;
+          next.picks[side] = ids.slice(0, 3).map((relicId, i) => ({ relicId, x: [0.08, 0.5, 0.92][i], y: i === 1 ? 0.32 : 0 }));
+        });
+        next.locked = [true, true];
+        next.phase = "battle";
+        next.deadline = Date.now() + 6e5;
+        next.lease = { id: next.id, seed: next.seed, setup: arenaSetup(next), expiresAt: new Date(next.deadline).toISOString() };
+      }
+      if (kind === "action" && (!input.action || typeof input.action.kind !== "string")) throw Error("ARENA_ACTION");
+      next = applyArenaAction(next, player, kind === "action" ? input.action : { kind: "tick" }, Date.now());
+      if (kind === "finish" || next.phase === "battle" && Date.now() >= next.deadline) next = settleArena(next);
+      if (JSON.stringify(next) === JSON.stringify(room)) break;
+      const out = await rpc("server_arena_commit", { p_player: player, p_room: room.id, p_version: room.version, p_data: next, p_request: kind === "action" || kind === "finish" ? requestId ?? null : null, p_fingerprint: fingerprint });
+      room = out.room;
+      if (!out.conflict) break;
+      if (retry === 2) throw Error("ARENA_CONFLICT");
+    }
+  }
+  if (room?.phase === "done") {
+    const latest = await rpc("server_arena_context", { p_player: player, p_kind: "status", p_room: room.id, p_target: null, p_rules: RANKED_ARENA_RULES, p_request: null });
+    context = { ...context, score: latest.score, wins: latest.wins, losses: latest.losses };
+  }
+  delete context.receiptFingerprint;
+  context = { ...context, room: room ? publicArenaRoom(room, player) : null, records: [] };
+  return context;
+}
 
-// src/server/combatAuthority.ts
-var fail2 = () => {
-  throw new Error("COMBAT_REJECTED");
-};
-function combatJournal(state) {
-  const journal = state.serverJournal;
-  return journal.combat ??= emptyCombatJournal();
-}
-function combatKey(input) {
-  const b = input.input;
-  return b.mode === "stage" ? `stage:${input.stageId}` : b.mode === "expedition" ? `expedition:${b.runId}:${b.nodeId}` : b.mode === "duel" ? `duel:${b.requestId}` : b.mode === "cake" || b.mode === "bounty" ? `${b.mode}:${b.requestId}` : fail2();
-}
-function prepareCombat(state, request, now, id) {
-  if (request?.input?.mode === "duel") {
-    const key2 = combatKey(request), records2 = combatJournal(state), ticket2 = records2.tickets[key2];
-    if (!ticket2?.duel || ticket2.kind !== "duel") return fail2();
-    const active4 = Object.values(records2.records).find((row) => combatKey(row.input) === key2 && Date.parse(row.lease.expiresAt) > now.getTime());
-    if (active4) return structuredClone(active4.lease);
-    const setup2 = structuredClone(ticket2.duel.setup);
-    if (request.automaticUltimates !== true && setup2.options) delete setup2.options.automaticUltimates;
-    const lease2 = { id, seed: id, setup: setup2, expiresAt: new Date(now.getTime() + 36e5).toISOString() };
-    records2.records = Object.fromEntries(Object.entries(records2.records).filter(([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()));
-    if (Object.keys(records2.records).length >= 8) return fail2();
-    records2.records[id] = { lease: lease2, input: structuredClone(request), issuedAt: now.toISOString() };
-    return structuredClone(lease2);
-  }
-  if (!request || !request.input || !["stage", "cake", "bounty", "expedition"].includes(request.input.mode))
-    return fail2();
-  const records = combatJournal(state), input = structuredClone(request), key = combatKey(input), mode = input.input.mode;
-  const active3 = Object.values(records.records).find(
-    (row) => combatKey(row.input) === key && (row.input.input.mode !== "bounty" || input.input.mode !== "bounty" || row.input.input.round === input.input.round) && Date.parse(row.lease.expiresAt) > now.getTime()
-  );
-  if (active3) return structuredClone(active3.lease);
-  let b = input.input;
-  const ticket = records.tickets[key];
-  if (mode !== "expedition" && !ticket) return fail2();
-  if (b.mode === "stage" && ticket.target !== input.stageId || (b.mode === "cake" || b.mode === "bounty") && ticket.target !== b.tierId)
-    return fail2();
-  if (b.mode === "bounty") {
-    const bounty = b;
-    if (!Number.isInteger(b.round) || b.round < 0 || b.round > 2) return fail2();
-    if (b.round > 0 && !Object.values(records.records).some(
-      (row) => row.input.input.mode === "bounty" && row.input.input.requestId === bounty.requestId && row.input.input.round === bounty.round - 1 && row.verdict?.victory
-    ))
-      return fail2();
-  }
-  if (b.mode === "expedition") {
-    const expeditionInput = b;
-    const run2 = state.expedition.run, node = run2?.nodes.find((n) => n.id === expeditionInput.nodeId), prev = run2?.nodes.find((n) => n.id === run2.currentNodeId);
-    if (!run2 || run2.runId !== b.runId || run2.settled || !node || !["normal", "elite", "horde"].includes(node.type) || run2.visitedNodeIds.includes(node.id) || (!prev ? node.floor !== 1 : !prev.successorIds.includes(node.id)))
-      return fail2();
-    b = {
-      mode: "expedition",
-      runId: run2.runId,
-      nodeId: node.id,
-      nodeType: node.type,
-      floor: node.floor,
-      relics: structuredClone(run2.relics),
-      augments: structuredClone(run2.selectedAugments)
-    };
-    input.input = b;
-  }
-  const party = b.mode === "expedition" ? b.relics.map((r) => r.relicId) : b.mode === "bounty" ? [state.party[b.round]] : state.party;
-  if (party.some((r) => !r || !state.owned.has(r)) || new Set(party).size !== party.length)
-    return fail2();
-  const progression = new RelicProgressionManager(state);
-  const frozen = b.mode === "expedition" ? new Map(
-    state.expedition.run.relics.map((r) => [r.relicId, r.snapshot])
-  ) : void 0;
-  const players = party.map((relicId) => ({
-    ...getRelic(relicId),
-    stats: structuredClone(
-      frozen?.get(relicId)?.stats ?? progression.getFinalStats(relicId)
-    )
-  }));
-  const bonds = Object.fromEntries(
-    party.map((r) => [
-      r,
-      frozen?.get(r)?.bondLevel ?? state.relicProgress[r]?.bondLevel ?? 0
-    ])
-  );
-  const breakthroughs = Object.fromEntries(
-    party.map((r) => [
-      r,
-      frozen?.get(r)?.breakthrough ?? state.relicProgress[r]?.breakthrough ?? 0
-    ])
-  );
-  const traits = partyRuneTraitEffects(
-    party.map((relicId) => ({
-      relicId,
-      runes: frozen?.get(relicId)?.runes ?? (state.relicProgress[relicId]?.heartGemSlots ?? []).flatMap(
-        (id2) => state.runeInventory.filter((r) => r.instanceId === id2)
-      )
-    }))
-  );
-  const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
-  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail2();
-  const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
-  const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
-  const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
-  const setup = {
-    players: expedition?.playerDefs ?? players,
-    enemies: expedition?.enemyDefs ?? enemies,
-    arena: battleArena(b.mode),
-    bonds,
-    breakthroughs,
-    options: expedition ? {
-      playerInitialStates: expedition.playerInitialStates,
-      augmentEffects: [...expedition.augmentEffects, ...traits],
-      enemyBodyScale: expedition.enemyBodyScale
-    } : {
-      augmentEffects: traits,
-      enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
-        (e) => e.breakthrough
-      ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
-      enemyBodyScale: ENCOUNTER_ROLE[cake ? cakeOperationRole(cake) : encounterRoleFor(enemies.length, {
-        elite: stage.elite === true || b.mode === "bounty"
-      })].bodyScale
-    }
-  };
-  const lease = JSON.parse(
-    JSON.stringify({
-      id,
-      seed: id,
-      setup,
-      expiresAt: new Date(now.getTime() + 36e5).toISOString()
-    })
-  );
-  records.records = Object.fromEntries(
-    Object.entries(records.records).filter(
-      ([, r]) => Date.parse(r.lease.expiresAt) > now.getTime()
-    )
-  );
-  if (Object.keys(records.records).length >= 8) return fail2();
-  records.records[id] = {
-    lease: structuredClone(lease),
-    input,
-    issuedAt: now.toISOString()
-  };
-  return lease;
-}
-function finishCombat(state, proof, now) {
-  if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
-    return fail2();
-  const record2 = combatJournal(state).records[proof.id];
-  if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
-    return fail2();
-  if (record2.verdict) return structuredClone(record2.verdict);
-  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail2();
-  if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
-    return fail2();
-  const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
-  let index = 0, previous = -1;
-  for (const action of proof.actions) {
-    if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
-      return fail2();
-    previous = action.tick;
-  }
-  for (let tick = 0; tick <= proof.ticks; tick++) {
-    while (index < proof.actions.length && proof.actions[index].tick === tick) {
-      const action = proof.actions[index++], actor = battle.fighters.find(
-        (f) => f.id === action.actorId && f.side === "player"
-      );
-      if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
-        return fail2();
-      fireUltimate(battle, actor.id, rng);
-    }
-    if (tick < proof.ticks) {
-      if (battle.phase !== "fight") return fail2();
-      stepSkirmish(battle, COMBAT_STEP_MS / 1e3, rng);
-    }
-  }
-  if (index !== proof.actions.length || !proof.abandoned && battle.phase === "fight")
-    return fail2();
-  const victory = !proof.abandoned && battle.phase === "victory";
-  const results = skirmishRelicResults(battle);
-  const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
-  const verdict = {
-    victory,
-    relicHp: party.map(
-      (id) => victory ? results.find((r) => r.relicId === id)?.currentHp ?? 0 : 0
-    ),
-    elapsedMs: proof.ticks * COMBAT_STEP_MS
-  };
-  record2.verdict = verdict;
-  return structuredClone(verdict);
-}
-function consumeCombat(state, key) {
-  const journal = combatJournal(state);
-  delete journal.tickets[key];
-  for (const [id, record2] of Object.entries(journal.records))
-    if (combatKey(record2.input) === key) delete journal.records[id];
-}
+// src/server/gameHandler.ts
+init_define_import_meta_env();
 
 // src/server/releaseBoundary.ts
 init_define_import_meta_env();
@@ -35361,6 +35641,7 @@ function raidChanges(context, state) {
 // src/server/requestPolicy.ts
 init_define_import_meta_env();
 var READ_METHODS = /* @__PURE__ */ new Set([
+  "arena.get",
   "archaeologyState",
   "getAchievements",
   "getAdOperationsConfig",
@@ -35776,6 +36057,9 @@ function createSupabaseStore(env) {
     async guildCall(playerId, method, actor, args, requestId) {
       return rpc("server_guild_call", { p_player: playerId, p_method: method, p_actor: actor, p_args: args, p_request: requestId });
     },
+    async arenaRpc(name, args) {
+      return rpc(name, args);
+    },
     async socialCall(playerId, method, args, requestId) {
       return rpc("server_social_call", { p_player: playerId, p_method: method, p_args: args, p_request: requestId ?? null });
     }
@@ -35895,7 +36179,7 @@ async function handler(req, res) {
       throw new GameCallError(400, "invalid_json");
     }
     if (!validCall(body)) throw new GameCallError(400, "invalid_request");
-    if (!isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400, "unknown_method");
+    if (!["arena.get", "arena.act"].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400, "unknown_method");
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400, "request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
@@ -35913,7 +36197,14 @@ async function handler(req, res) {
     }
     const uid = user.id;
     const guild = createSupabaseGuildBackend(async (actor, method, args, requestId) => store.guildCall(uid, method, actor, args, requestId));
-    if (body.method.startsWith("guild.")) {
+    if (body.method.startsWith("arena.")) {
+      try {
+        res.status(200).json({ ok: true, result: await handleArenaCall(store.arenaRpc, user.id, body.method.slice(6), body.args ?? [], body.requestId) });
+      } catch (error) {
+        if (error instanceof Error && /^ARENA_/.test(error.message)) throw new GameCallError(422, error.message);
+        throw error;
+      }
+    } else if (body.method.startsWith("guild.")) {
       const method = body.method.slice(6);
       if (!isGuildApiMethod(method)) throw new GameCallError(400, "unknown_method");
       const stored = await store.load(user.id);

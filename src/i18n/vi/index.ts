@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** vi table. Same keys as the Korean table; any key missing here falls back to Korean. */
 import { SETTINGS_VI } from "./settings";
 import { LOBBY_VI } from "./lobby";
@@ -37,4 +38,4 @@ import { RECOLLECTION_VI } from "./recollection";
 
 import { DIALOGUE_VI } from "./dialogue";
 
-export default { ...DIALOGUE_VI, ...RECOLLECTION_VI, ...ACHIEVEMENT_VI, ...SUPPORT_VI, ...GUILD_VI, ...SETTINGS_VI, ...LOBBY_VI, ...COMMON_VI, ...INFO_VI, ...STATUS_VI, ...LAB_VI, ...EXPEDITION_VI, ...BATTLE_VI, ...CAKE_OPERATION_VI, ...EXCAVATION_VI, ...AUGMENT_VI, ...FRIENDS_VI, ...RUNE_VI, ...PARTY_VI, ...EXPEDITION_REWARD_VI, ...SAVE_CONFLICT_VI, ...INTERACTION_VI, ...SHOP_VI, ...MISSIONS_VI, ...INVENTORY_VI, ...MISC_VI, ...SKILL_VI, ...SYSTEM_VI, ...RAID_VI, ...BOUNTY_VI, ...DUNGEON_VI, ...DUEL_VI };
+export default { ...ARENA_TEXT, ...DIALOGUE_VI, ...RECOLLECTION_VI, ...ACHIEVEMENT_VI, ...SUPPORT_VI, ...GUILD_VI, ...SETTINGS_VI, ...LOBBY_VI, ...COMMON_VI, ...INFO_VI, ...STATUS_VI, ...LAB_VI, ...EXPEDITION_VI, ...BATTLE_VI, ...CAKE_OPERATION_VI, ...EXCAVATION_VI, ...AUGMENT_VI, ...FRIENDS_VI, ...RUNE_VI, ...PARTY_VI, ...EXPEDITION_REWARD_VI, ...SAVE_CONFLICT_VI, ...INTERACTION_VI, ...SHOP_VI, ...MISSIONS_VI, ...INVENTORY_VI, ...MISC_VI, ...SKILL_VI, ...SYSTEM_VI, ...RAID_VI, ...BOUNTY_VI, ...DUNGEON_VI, ...DUEL_VI };

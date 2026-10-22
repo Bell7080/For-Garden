@@ -1,6 +1,7 @@
 import { storyDifficultyOf } from "../core/storyDifficulty";
 import { storyStages } from "../data/stages";
 import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
+import { arenaCall } from "../api/arenaApi";
 import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
 import packageInfo from "../../package.json";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -519,6 +520,7 @@ export class BattleScene extends Phaser.Scene {
     this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
     this.stageCompletion = undefined;
     this.cakeCompletion = undefined;
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) { this.combatLease=this.battleInput.arena.lease;this.createBattle();return; }
     if (usesRemoteGameApi() && ["stage","cake","bounty","expedition","duel"].includes(this.battleInput.mode)) {
       const prepare=(): void => {
         void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1", automaticUltimates:true }).then(lease=>{
@@ -673,6 +675,9 @@ export class BattleScene extends Phaser.Scene {
     // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
     addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) {
+      this.add.text(540,245,t("arena.battle.perspective",{team:this.battleInput.arena.side===0?t("arena.battle.bottom"):t("arena.battle.top")}),textStyle({ role: "body",size:24,color:COLOR.accentText})).setOrigin(.5).setDepth(90);
+    }
     /*
      * **머리글과 「AUTO BATTLE」은 세우지 않는다.**
      *
@@ -2743,6 +2748,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 숨 고르기가 끝난 뒤 모드별 결과판으로 넘어간다. */
   private openBattleResult(phase: "victory" | "defeat"): void {
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) {void this.finishArena();return;}
     if(this.combatLease) {
       const lease=this.combatLease;
       const generation = this.combatGeneration;
@@ -3011,6 +3017,18 @@ export class BattleScene extends Phaser.Scene {
    * 결투 결과. 도전권은 입장에서 썼으므로 다시 하기가 없고, 이기든 지든 휘장이 들어온다 — 진 판도
    * 같은 결산창(`defeat`)에 받은 휘장과 점수 변화가 선다. 닫으면 결투장으로 돌아간다.
    */
+  private async finishArena():Promise<void> {
+    if(this.battleInput.mode!=="duel" || !this.battleInput.arena)return;
+    const input=this.battleInput.arena,generation=this.combatGeneration;
+    try {
+      const status=await arenaCall("finish",{roomId:input.roomId});
+      if(!this.scene.isActive()||generation!==this.combatGeneration)return;
+      const r=status.room!;
+      const title=r.winner===null?t("arena.result.draw"):r.winner===input.side?t("arena.result.win"):t("arena.result.loss");
+      new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>startScene(this,input.practice?"friends":"arena"));
+    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>startScene(this,"arena"),error,"duel");}
+  }
+
   private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {
     const generation = this.combatGeneration;
     const fighters = this.stageCompleteFighters();

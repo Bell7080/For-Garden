@@ -1,4 +1,5 @@
 import { NotificationDot } from "../ui/NotificationDot";
+import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { socialApi, SocialApiError, type FriendListResponse, type FriendRequestEntry, type FriendRequestsResponse, type UserSearchEntry } from "../api/FakeSocialServer";
@@ -487,6 +488,7 @@ export class FriendsScene extends Phaser.Scene {
   private openProfile(profile: FriendProfile, isFriend: boolean, favorite: boolean, instant = false): void {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
+      {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,profile.id,profile.displayName);}},
       {
         label: t(favorite ? "friends.action.unfavorite" : "friends.action.favorite"),
         onClick: () => {

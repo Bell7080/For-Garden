@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "Командный пункт погони",
   "chapter.4.title": "Зона 4",
   "chapter.4.subtitle": "Линия слияния — Две группы на одном пути",
-  "adReward.roulette-chances.text": "Реклама: +3 вращения",
+  "adReward.roulette-spin.text": "Реклама: +1 вращение",
 };

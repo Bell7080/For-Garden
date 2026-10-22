@@ -66,7 +66,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     subtitleKey: "event.roulette.subtitle",
     backdropKey: BACKGROUND.interactionDoppelParlor,
     destination: { kind: "roulette" },
-    sd: { relicId: "dodo", side: "right" },
+    sd: { relicId: "meron", side: "right" },
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },

@@ -19,8 +19,20 @@ test("돌림판 팝업 모바일 배치와 무료 회전 지급", async ({ page 
     await ui.openRoulettePopup(scene, new layers.PopupLayer(scene, 3000), () => {});
   });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("행운의 돌림판");
+  await expect.poll(() => page.evaluate(() => {
+    const scene = (window as any).__ROULETTE_GAME?.scene.getScene("lobby");
+    return scene?.children.getByName("roulette-meron")?.visible === true;
+  })).toBe(true);
   await captureGame(page, info.outputPath("roulette-before.png"));
   await tap(page, 540, 1345);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles), { timeout: 60000 }).toContain("돌림판 보상");
   await captureGame(page, info.outputPath("roulette-reward.png"));
+  await tap(page, 540, 1770);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("돌림판 보상");
+  await captureGame(page, info.outputPath("roulette-ad-button.png"));
+  await tap(page, 540, 1310);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? []), { timeout: 60000 }).toContain("돌림판 보상");
+  await tap(page, 540, 1770);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("돌림판 보상");
+  await captureGame(page, info.outputPath("roulette-after-ad-spin.png"));
 });

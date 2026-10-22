@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "追擊指揮室",
   "chapter.4.title": "第4區域",
   "chapter.4.subtitle": "匯合線——兩股勢力踏上同一條軌道",
-  "adReward.roulette-chances.text": "看廣告追加3次",
+  "adReward.roulette-spin.text": "看廣告追加1次",
 };

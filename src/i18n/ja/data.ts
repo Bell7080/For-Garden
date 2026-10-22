@@ -6224,5 +6224,5 @@ export default {
   "story.yuti.q.yuti-title.prompt": "ユティはどうして「ボス」と呼ぶとき語尾を濁すの？",
   "product.premium-raid-pass.grant.2": "討伐券",
 
-  "adReward.roulette-chances.text": "広告を見て3回追加",
+  "adReward.roulette-spin.text": "広告を見て1回追加",
 };

@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "Phòng chỉ huy truy kích",
   "chapter.4.title": "Khu 4",
   "chapter.4.subtitle": "Tuyến hợp lưu — Hai nhóm trên cùng một đường ray",
-  "adReward.roulette-chances.text": "Xem quảng cáo: +3 lượt",
+  "adReward.roulette-spin.text": "Xem quảng cáo: +1 lượt",
 };

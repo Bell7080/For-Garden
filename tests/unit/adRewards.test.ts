@@ -45,6 +45,12 @@ describe("광고 보상 정적 정의", () => {
     expect(completedAdToken({ status: "unavailable" })).toBeUndefined();
     expect(completedAdToken({ status: "completed", verificationToken: "verified" })).toBe("verified");
   });
+
+  it("돌림판 광고는 한 번에 한 회전만 열고 하루 세 번으로 제한한다", () => {
+    expect(findAdRewardSlot("roulette-spin")).toMatchObject({
+      placement: "roulette", dailyLimitUtc: 3, reward: { kind: "roulette_chances", quantity: 1 },
+    });
+  });
 });
 
 /** 빠른 원정 슬롯은 동적 지급량 대신 서버 계산 비율과 두 기간 한도만 공개한다. */

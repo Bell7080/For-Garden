@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "Ruang Komando Pengejaran",
   "chapter.4.title": "Zona 4",
   "chapter.4.subtitle": "Jalur Pertemuan — Dua Kelompok di Satu Rel",
-  "adReward.roulette-chances.text": "Tonton iklan: +3 putaran",
+  "adReward.roulette-spin.text": "Tonton iklan: +1 putaran",
 };

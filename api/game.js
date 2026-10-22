@@ -310,18 +310,18 @@ var LOBBY_KO = {
   "lobby.bondXp": "\uC720\uB300 +{xp}",
   "lobby.bondLevelUp": "\uC720\uB300 \uB808\uBCA8 +{levels}",
   "event.roulette.title": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310",
-  "event.roulette.subtitle": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!",
-  "roulette.spin": "\uB3CC\uB9BC\uD310 \uB3CC\uB9AC\uAE30",
+  "event.roulette.subtitle": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0\uB85C \uD558\uB8E8 3\uD68C \uB354!",
+  "roulette.spin": "\uBB34\uB8CC 1\uD68C \uB3CC\uB9AC\uAE30",
   "roulette.remaining": "\uB0A8\uC740 \uD68C\uC804 {count}\uD68C",
   "roulette.daily": "\uD558\uB8E8 \uCD5C\uB300 4\uD68C \xB7 \uB9E4\uC77C \uC624\uC804 9\uC2DC \uCD08\uAE30\uD654",
   "roulette.rules": "\uBAA8\uB4E0 \uCE78\uC758 \uB2F9\uCCA8 \uD655\uB960\uC740 \uB3D9\uC77C\uD569\uB2C8\uB2E4. \uBCF4\uC0C1\uC740 \uD68C\uC804 \uC694\uCCAD \uC2DC \uD655\uC815\uB429\uB2C8\uB2E4.",
-  "roulette.adBonus": "\uAD11\uACE0 \uBCF4\uACE0 3\uD68C \uCD94\uAC00",
-  "roulette.memberBonus": "\uAD11\uACE0 \uC5C6\uC774 3\uD68C \uCD94\uAC00",
-  "roulette.bonusUsed": "\uC624\uB298 \uCD94\uAC00 \uD69F\uC218 \uC218\uB839 \uC644\uB8CC",
+  "roulette.adBonus": "\uAD11\uACE0 \uBCF4\uACE0 1\uD68C \uB354 \uB3CC\uB9AC\uAE30",
+  "roulette.memberBonus": "\uAD11\uACE0 \uC5C6\uC774 1\uD68C \uB354 \uB3CC\uB9AC\uAE30",
+  "roulette.bonusUsed": "\uC624\uB298 \uD68C\uC804 \uC644\uB8CC",
   "roulette.ended": "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "roulette.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
-  "roulette.intro": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0 \uD55C \uBC88\uC73C\uB85C 3\uD68C \uCD94\uAC00!",
+  "roulette.intro": "\uCCAB \uD68C\uC804\uC740 \uBB34\uB8CC! \uC774\uD6C4 \uAD11\uACE0\uB97C \uBCFC \uB54C\uB9C8\uB2E4 \uD55C \uBC88\uC529, \uD558\uB8E8 3\uD68C \uB354 \uB3CC\uB9B4 \uC218 \uC788\uC5B4\uC694.",
   "storyDifficulty.title": "\uB09C\uC774\uB3C4 \uC120\uD0DD",
   "storyDifficulty.easy": "\uC26C\uC6C0",
   "storyDifficulty.normal": "\uBCF4\uD1B5",
@@ -19684,33 +19684,38 @@ init_define_import_meta_env();
 init_define_import_meta_env();
 var ROULETTE = {
   id: "research-roulette",
-  adSlot: "roulette-chances",
+  adSlot: "roulette-spin",
+  legacyAdSlot: "roulette-chances",
   counter: "roulette-spins",
   free: 1,
-  adBonus: 3,
+  adBonus: 1,
+  adLimit: 3,
   limit: 4,
   startsAt: "2026-09-01T00:00:00+09:00",
   endsAt: "2026-12-31T23:59:59+09:00"
 };
 var ROULETTE_REWARDS = [
-  { currency: "gold", amount: 5e3 },
-  { currency: "cheesecake", amount: 30 },
-  { currency: "stamina", amount: 20 },
-  { currency: "gems", amount: 20 },
-  { currency: "rawStone", amount: 50 },
-  { currency: "gold", amount: 1e4 }
+  { currency: "gold", amount: 1e4 },
+  { currency: "cheesecake", amount: 50 },
+  { currency: "stamina", amount: 30 },
+  { currency: "gems", amount: 50 },
+  { currency: "rawStone", amount: 100 },
+  { currency: "gold", amount: 2e4 }
 ];
 function rouletteStatus(ledger, now, adFree = false) {
   const date = now.toISOString().slice(0, 10);
   const counts = ledger.date === date ? ledger.claimsBySlot : {};
   const used = counts[ROULETTE.counter] ?? 0;
-  const bonus = (counts[ROULETTE.adSlot] ?? 0) > 0;
+  const legacyBonusClaims = (counts[ROULETTE.legacyAdSlot] ?? 0) > 0 ? ROULETTE.adLimit : 0;
+  const bonusClaims = Math.min(ROULETTE.adLimit, Math.max(legacyBonusClaims, counts[ROULETTE.adSlot] ?? 0));
+  const bonusRemaining = ROULETTE.adLimit - bonusClaims;
   return {
     date,
     active: now.getTime() >= Date.parse(ROULETTE.startsAt) && now.getTime() < Date.parse(ROULETTE.endsAt),
     used,
-    remaining: Math.max(0, ROULETTE.free + (bonus ? ROULETTE.adBonus : 0) - used),
-    bonusAvailable: !bonus,
+    remaining: Math.max(0, ROULETTE.free + bonusClaims * ROULETTE.adBonus - used),
+    bonusAvailable: bonusRemaining > 0,
+    bonusRemaining,
     adFree,
     resetsAt: new Date(Date.parse(date) + 864e5).toISOString()
   };
@@ -20040,7 +20045,7 @@ var MAX_EQUIPPED_PROFILE_MODIFIERS = 1;
 // src/data/adRewards.ts
 init_define_import_meta_env();
 var AD_REWARD_SLOTS = [
-  { id: "roulette-chances", displayText: "\uB3CC\uB9BC\uD310 \uCD94\uAC00 3\uD68C", reward: { kind: "roulette_chances", quantity: 3 }, dailyLimitUtc: 1, placement: "roulette" },
+  { id: "roulette-spin", displayText: "\uB3CC\uB9BC\uD310 \uCD94\uAC00 1\uD68C", reward: { kind: "roulette_chances", quantity: 1 }, dailyLimitUtc: 3, placement: "roulette" },
   { id: "daily-stamina", displayText: "\uC2A4\uD14C\uBBF8\uB098 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
   { id: "daily-cheesecake", displayText: "\uCE58\uC988\uCF00\uC774\uD06C 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
   // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.

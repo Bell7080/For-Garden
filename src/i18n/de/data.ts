@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "Verfolgungs-Kommandoraum",
   "chapter.4.title": "Zone 4",
   "chapter.4.subtitle": "Zusammenführung — Zwei Gruppen auf einem Gleis",
-  "adReward.roulette-chances.text": "Werbung ansehen: +3",
+  "adReward.roulette-spin.text": "Werbung ansehen: +1",
 };

@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "ห้องบัญชาการไล่ล่า",
   "chapter.4.title": "เขต 4",
   "chapter.4.subtitle": "สายรวม — สองกลุ่มบนรางเดียวกัน",
-  "adReward.roulette-chances.text": "ดูโฆษณา: เพิ่ม 3 ครั้ง",
+  "adReward.roulette-spin.text": "ดูโฆษณา: เพิ่ม 1 ครั้ง",
 };

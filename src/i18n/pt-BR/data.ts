@@ -6186,5 +6186,5 @@ export default {
   "stage.4-10.name": "Sala de comando da perseguição",
   "chapter.4.title": "Zona 4",
   "chapter.4.subtitle": "Linha de junção — Dois grupos na mesma via",
-  "adReward.roulette-chances.text": "Ver anúncio: +3 giros",
+  "adReward.roulette-spin.text": "Ver anúncio: +1 giro",
 };

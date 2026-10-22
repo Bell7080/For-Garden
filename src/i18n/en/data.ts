@@ -6211,5 +6211,5 @@ export default {
   "story.yuti.q.yuti-title.prompt": "Why does Yuti trail off when she says \"Boss\"?",
   "product.premium-raid-pass.grant.2": "Raid Ticket",
 
-  "adReward.roulette-chances.text": "Watch an ad: +3 spins",
+  "adReward.roulette-spin.text": "Watch an ad: +1 spin",
 };

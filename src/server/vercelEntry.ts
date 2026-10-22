@@ -1,3 +1,4 @@
+import { handleArenaCall } from "./liveArena";
 /** 인증된 본인의 게임·친구 상태만 조작하는 HTTP 경계. */
 import { GameCallError, handleGameCall } from "./gameHandler";
 import { createSupabaseStore } from "./supabaseStore";
@@ -22,7 +23,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     let body: unknown;
     try { body = JSON.parse(raw); } catch { throw new GameCallError(400,"invalid_json"); }
     if (!validCall(body)) throw new GameCallError(400,"invalid_request");
-    if (!isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400,"unknown_method");
+    if (!["arena.get","arena.act"].includes(body.method) && !isServerGameMethod(body.method) && !(body.method.startsWith("social.") && isSocialMethod(body.method.slice(7))) && !(body.method.startsWith("guild.") && isGuildApiMethod(body.method.slice(6)))) throw new GameCallError(400,"unknown_method");
     if (!isReadMethod(body.method) && !body.requestId) throw new GameCallError(400,"request_id_required");
     const url = process.env.SUPABASE_URL, serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serviceKey;
@@ -37,7 +38,10 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     if (!rate.allowed) { res.setHeader("retry-after",String(rate.retryAfter)); throw new GameCallError(429,"rate_limited"); }
     const uid = user.id;
     const guild: GuildBackend = createSupabaseGuildBackend(async (actor, method, args, requestId) => store.guildCall(uid, method, actor, args, requestId));
-    if (body.method.startsWith("guild.")) {
+    if (body.method.startsWith("arena.")) {
+      try { res.status(200).json({ ok:true, result:await handleArenaCall(store.arenaRpc,user.id,body.method.slice(6),body.args??[],body.requestId) }); }
+      catch(error) { if(error instanceof Error && /^ARENA_/.test(error.message)) throw new GameCallError(422,error.message); throw error; }
+    } else if (body.method.startsWith("guild.")) {
       const method = body.method.slice(6);
       if (!isGuildApiMethod(method)) throw new GameCallError(400,"unknown_method");
       // 호출자(이름·레벨·얼굴)는 저장된 진행에서 서버가 만든다 — 클라이언트의 말을 쓰지 않는다.

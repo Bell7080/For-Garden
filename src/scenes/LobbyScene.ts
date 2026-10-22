@@ -1,5 +1,6 @@
 import { openRoulettePopup } from "../ui/RoulettePopup";
 import { nicknameCreationRequired } from "../core/playerCard";
+import { addArenaMascots } from "../ui/ArenaMascots";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -47,7 +48,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
-import { PVP_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
+import { PVP_ACTIVE_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
 import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -604,21 +605,24 @@ export class LobbyScene extends Phaser.Scene {
    */
   private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
-    const layout = pvpMenuLayout(PVP_MODES.map((mode) => mode.id));
+    const layout = pvpMenuLayout(PVP_ACTIVE_MODES.map((mode) => mode.id));
     // 출격판과 같은 자리·같은 암전 — 두 입구가 한 벌의 판으로 읽혀야 한다.
     const panelY = BASE_HEIGHT / 2 + PVP_MENU.panel.offsetY;
     this.popupLayer.open({ width: PVP_MENU.panel.width, height: layout.height, y: panelY, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: true, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
-      PVP_MODES.forEach((mode, index) => {
-        body.add(new ExpeditionEntryButton(this, 0, layout.centers[index], {
+      PVP_ACTIVE_MODES.forEach((mode, index) => {
+        const entry=new ExpeditionEntryButton(this, 0, layout.centers[index], {
           width: PVP_MENU.entry.width, height: pvpEntryHeight(mode.id),
           // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
           label: mode.label.replace("\n", " "), labelSize: 38,
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
           artKey: mode.artKey,
-          // 결투장만 실제 화면이 열린다. 나머지 셋은 아직 자리표시다.
-          onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "pvpPreview", { mode: mode.id }); },
-        }));
+          sdSide: mode.id === "live-arena" ? "right" : undefined,
+          // 기존 결투장과 실시간 아레나는 같은 선택판의 독립 입구다.
+          onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "arena"); },
+        });
+        body.add(entry);
+        if(mode.id==="live-arena") addArenaMascots(this,body,230,layout.centers[index]+105,210,true,SORTIE_SD_DEPTH);
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);

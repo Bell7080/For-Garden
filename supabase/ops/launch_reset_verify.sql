@@ -7,7 +7,7 @@ with
     ('public.player_saves'), ('public.player_assets'), ('public.player_adjustments'), ('public.asset_ledger'), ('public.mail_claims'),
     ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.request_receipts'),
     ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'),
-    ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.server_friend_favorites'),
+    ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.arena_signals'), ('public.arena_ratings'), ('public.arena_rooms'), ('public.arena_seats'), ('public.arena_queue'), ('public.arena_receipts'), ('public.server_friend_favorites'),
     ('public.server_social_wallets'), ('public.server_rate_windows'), ('public.server_social_receipts'),
     ('public.server_competitive_scores'), ('public.server_competitive_results'), ('public.server_competitive_awards'),
     ('public.server_raids'), ('public.server_raid_members'),

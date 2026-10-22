@@ -115,6 +115,8 @@ export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>
   // 연구원은 플레이어를 가리키며, 확률형 뽑기 기능인 연구가 아니다.
   "storyDifficulty.unlocked.body": ["research"],
   "duel.opponents.empty": ["research"],
+  // 매칭 안내의 연구원도 플레이어이며 확률형 연구 기능을 가리키지 않는다.
+  "arena.match.description": ["research"],
   // ‘모두 이룬 렐릭’의 ‘이룬’은 동사 이루다의 활용형이며 장비 ‘룬’을 가리키지 않는다.
   "achievement.objective.perfectRelics": ["rune"],
   // 화석을 캐낸 실제 장소이지 방치형 자원 수집 기능이 아니다.

@@ -1,3 +1,4 @@
+import { installArenaApi } from "./arenaApi";
 import { createWebOAuthBridge } from "./webOAuth";
 /**
  * 서버 계정 연결의 시작점. 보안 저장소(`TokenStore`)가 있고 서버 설정이 있을 때만 `SupabaseAccountApi`를
@@ -45,6 +46,7 @@ export function disconnectProgress(): void {
   progressGeneration++;
   installGameApi(null);
   installSocialApi(null);
+  installArenaApi(null);
   installGuildApi(null);
   createLinkMarker().set(null);
 }

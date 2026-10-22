@@ -1,5 +1,6 @@
 /** HTTP와 원격 어댑터가 공유하는 요청 경계. 메서드 이름의 접두사로 쓰기를 추측하지 않는다. */
 export const READ_METHODS = new Set([
+  "arena.get",
   "archaeologyState",
   "getAchievements",
   "getAdOperationsConfig",

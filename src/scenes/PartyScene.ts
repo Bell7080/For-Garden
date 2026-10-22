@@ -425,12 +425,14 @@ export class PartyScene extends Phaser.Scene {
     // 한 줄로 촘촘히 선다.
     const shown = preview.shown;
     const enemyColumns = partyPreviewEnemyColumns(shown.length);
-    const bodyScale = partyPreviewEnemyScale(ENCOUNTER_ROLE[preview.role].bodyScale);
-    const elite = preview.role !== "normal" && preview.role !== "swarm";
+
     // 다섯이 한 줄에 서면 칸이 좁아 직군·돌파 표식과 이름줄이 옆 칸을 침범한다. 그 줄은 속성과
     // 이름줄만 남긴다 — 다섯 자매는 속성만 다른 같은 몸이라 속성이 곧 고를 이유다.
     const crowded = shown.length > PARTY_PREVIEW_COLUMNS.length;
-    shown.forEach((enemy, slot) => this.addPreviewEnemy(enemy, enemyColumns[slot] ?? PREVIEW_COLUMNS[slot], bodyScale, elite, crowded));
+    shown.forEach((enemy, slot) => {
+      const role = enemy.def?.encounterRole ?? preview.role;
+      this.addPreviewEnemy(enemy, enemyColumns[slot] ?? PREVIEW_COLUMNS[slot], partyPreviewEnemyScale(ENCOUNTER_ROLE[role].bodyScale), role !== "normal" && role !== "swarm", crowded);
+    });
     if (preview.hordeCount !== undefined) {
       // 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 말한다. 대치선 판 위, 적 이름줄 아래다.
       this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
@@ -650,7 +652,7 @@ export class PartyScene extends Phaser.Scene {
     const creature = await spawnPuppet(this, relicAppearanceManager.battleAssetFor(relicId, enemy ? "enemy" : "ally"), {
       x,
       groundY,
-      // 정예는 혼자 서는 만큼 몸이 크다. 전투 화면의 `enemyBodyScale`과 같은 값을 쓴다.
+      // 정예는 개체 유형에 맞게 크게 선다. 전투의 개체별 크기와 같은 값을 쓴다.
       height: PREVIEW_HEIGHT * bodyScale,
       flipX: enemy,
       // 전투 화면과 같은 규칙 — 임시 공용 적만 색으로 구분한다.

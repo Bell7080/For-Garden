@@ -80,5 +80,4 @@ export const LOBBY_ES = {
   "storyDifficulty.locked": "Completa {difficulty} 4-10 para desbloquear",
   "storyDifficulty.unlocked.title": "¡Nueva dificultad desbloqueada!",
   "storyDifficulty.unlocked.body": "¡Felicidades, investigador!\nEnfrenta enemigos más fuertes y recibe nuevas recompensas iniciales en {difficulty}.",
-  "storyDifficulty.boost": "Refuerzo enemigo ×{multiplier}",
 } as const;

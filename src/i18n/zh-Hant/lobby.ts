@@ -80,5 +80,4 @@ export const LOBBY_ZH_HANT = {
   "storyDifficulty.locked": "通關{difficulty}4-10後解鎖",
   "storyDifficulty.unlocked.title": "新的難度已解鎖！",
   "storyDifficulty.unlocked.body": "恭喜你，研究員！\n前往{difficulty}難度，挑戰更強的敵人並領取新的首通獎勵。",
-  "storyDifficulty.boost": "敵方強化 ×{multiplier}",
 } as const;

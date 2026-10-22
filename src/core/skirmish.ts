@@ -754,6 +754,8 @@ export interface CreateSkirmishOptions {
   enemyBondLevels?: readonly number[];
   /** 적 종류별 크기 표현을 씬이 재해석하지 않도록 입력 모델에서 전달한다. */
   enemyBodyScale?: number;
+  /** 개체별 몸집. 혼합 편성의 일부 정예도 서버 재현과 같은 크기·간격을 쓴다. */
+  enemyBodyScales?: readonly number[];
   /** 적 슬롯별 돌파 효과를 스테이지 성장 스냅샷 그대로 전투원에게 전달한다. */
   enemyBreakthroughs?: readonly number[];
   /**
@@ -1530,7 +1532,7 @@ export function createSkirmish(
   });
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
-    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScales?.[i] ?? options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
     // 쓰러지면 판이 끝나는 보스(레이드)는 불사가 아니다 — 체력이 0에 닿는 순간이 곧 처치다.
     fighter.immortal = options.boss !== undefined && options.boss.endsOnKill !== true && fighter.id === bossFighterId;

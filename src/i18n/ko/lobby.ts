@@ -86,5 +86,4 @@ export const LOBBY_KO = {
   "storyDifficulty.locked": "{difficulty} 4-10 클리어 시 개방",
   "storyDifficulty.unlocked.title": "새로운 난이도가 열렸어요!",
   "storyDifficulty.unlocked.body": "축하해요, 연구원 님!\n{difficulty} 난이도에서 더 강해진 적과 새로운 초회 보상을 만나 보세요.",
-  "storyDifficulty.boost": "적 강화 ×{multiplier}",
 } as const;

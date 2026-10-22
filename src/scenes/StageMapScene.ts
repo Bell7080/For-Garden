@@ -423,7 +423,7 @@ export class StageMapScene extends Phaser.Scene {
     this.enemyPreview.showAt(scroll - visualIndex * NODE_GAP, {
       // 성장 스냅샷은 능력치 사본과 **같은 자리 순서**로 넘긴다 — 배열 순서로 넘기면 아모의
       // 레벨이 리파 밑에 적힌다.
-      title: stage.sub ? `${t("stageMap.sub")}  ${stage.name}` : `${storyBaseStageId(stage.id)}  ${stage.name}${stage.difficultyStatMultiplier && stage.difficultyStatMultiplier > 1 ? ` · ${t("storyDifficulty.boost", { multiplier: stage.difficultyStatMultiplier.toFixed(2) })}` : ""}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
+      title: stage.sub ? `${t("stageMap.sub")}  ${stage.name}` : `${storyBaseStageId(stage.id)}  ${stage.name}`, growth: stageEnemyGrowth(stage), enemies, elite: stage.elite === true,
       // 서사가 없는 관문은 `undefined`가 그대로 넘어가 직전 노드의 줄이 남지 않는다.
       situation: stage.situation,
       // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.

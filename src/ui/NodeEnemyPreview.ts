@@ -140,10 +140,10 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
-        * ENCOUNTER_ROLE[encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
+        * ENCOUNTER_ROLE[enemy.encounterRole ?? encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
       void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
-      // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
-      if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
+      // 혼합 편성에서도 정예인 개체의 머리 위에만 이름표를 붙인다.
+      if (enemy.encounterRole === "elite" || (enemy.encounterRole === undefined && this.options.elite)) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
     });
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지
     // 말지를 정할 수 있어야 한다. 전투력은 표시·정렬 전용이라 전투 계산에는 들어가지 않는다.
@@ -327,9 +327,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
       const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
-        * ENCOUNTER_ROLE[encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
+        * ENCOUNTER_ROLE[enemy.encounterRole ?? encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
       if (!keepPuppets) void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
-      if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
+      if (enemy.encounterRole === "elite" || (enemy.encounterRole === undefined && this.options.elite)) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
     });
   }
 

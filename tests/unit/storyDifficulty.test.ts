@@ -1,7 +1,11 @@
+import { combatState } from "../../src/core/combatProtocol";
+import { combatPower } from "../../src/core/combatPower";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
+import { partyPreview } from "../../src/data/partyContent";
 import { prepareCombat, combatJournal } from "../../src/server/combatAuthority";
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
-import { STORY_DIFFICULTIES, difficultyStageRewards, isStoryDifficultyUnlocked, newlyUnlockedStoryDifficulty, storyDifficultyGrowth, storyStageId } from "../../src/core/storyDifficulty";
+import { STORY_DIFFICULTIES, difficultyStageRewards, isStoryDifficultyUnlocked, newlyUnlockedStoryDifficulty, STORY_DIFFICULTY, storyStageId } from "../../src/core/storyDifficulty";
 import { nextBattleStage } from "../../src/core/stageProgress";
 import { stageClearAdvancesTutorial } from "../../src/core/tutorial";
 import { getBattleStage, getStageEnemies, STAGES, storyStages } from "../../src/data/stages";
@@ -74,17 +78,62 @@ describe("스토리 확장 난이도", () => {
     expect(manager.load()?.cleared).toEqual(state.cleared);
     expect(manager.load()?.selectedStageId).toBe("normal:1-2");
   });
-  it("전환부의 성장 기준을 맞추고 강화는 공속·치명타를 변경하지 않는다", () => {
-    expect(storyDifficultyGrowth("normal", 1, 10)).toEqual({ level: 56, multiplier: 1 });
-    expect(storyDifficultyGrowth("normal", 4, 10)).toEqual({ level: 60, multiplier: 1.2 });
-    expect(storyDifficultyGrowth("hard", 1, 10)).toEqual({ level: 60, multiplier: 1.2 });
-    for (const id of ["1-10", "4-10"]) {
-      const easy = getStageEnemies(getBattleStage(id)), normal = getStageEnemies(getBattleStage(`normal:${id}`)), hard = getStageEnemies(getBattleStage(`hard:${id}`));
-      normal.forEach((enemy, index) => {
-        expect(enemy.stats.hp).toBeGreaterThan(easy[index].stats.hp);
-        expect(hard[index].stats.hp).toBeGreaterThan(enemy.stats.hp);
-        expect(hard[index].stats.attackSpeed).toBe(easy[index].stats.attackSpeed);
-      });
+  it("난이도 전환은 이전 4-10과 다음 1-1의 표시 전투력을 약 10% 차이로 이어 간다", () => {
+    const power = (id: string) => getStageEnemies(getBattleStage(id)).reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
+    for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) expect(Math.abs(power(start) / power(end) - 1)).toBeLessThan(.12);
+    expect(power("hard:4-10")).toBeGreaterThan(power("normal:4-10"));
+  });
+
+  it("젬은 10개 단위이고 스토리 골드는 종전의 약 1/10 규모다", async () => {
+    for (const difficulty of STORY_DIFFICULTIES) for (const stage of storyStages(difficulty)) {
+      if (stage.kind !== "battle") continue;
+      for (const reward of stage.rewards.firstClearBonus ?? []) {
+        if (reward.kind !== "currency") continue;
+        if (reward.currency === "gems") expect(reward.amount % 10).toBe(0);
+        if (reward.currency === "gold") expect(reward.amount).toBeLessThanOrEqual(12_600);
+      }
+    }
+    const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-5"]);
+    state.wallet.gold = 0; state.wallet.gems = 0;
+    const receipt = await new FakeServer(state, { latencyMs: 0 }).completeStage("normal:4-6", true);
+    expect(receipt.firstClearRewards).toContainEqual({kind:"currency", currency:"gold", amount:4_800});
+    expect(receipt.firstClearRewards).toContainEqual({kind:"currency", currency:"gems", amount:60});
+    expect(state.wallet.gold).toBe(4_800);
+    expect(state.wallet.gems).toBe(60);
+  });
+
+  it.each(["3-5", "3-10", "4-4", "4-5", "4-6", "4-9", "4-10"])("%s 정예와 혼합 편성의 크기가 서버 발급·전투 복원·편성에 일치한다", id => {
+    for (const difficulty of STORY_DIFFICULTIES) {
+      const stage = getBattleStage(storyStageId(difficulty, id));
+      const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-10", ...stage.prerequisiteStageIds]);
+      combatJournal(state).tickets[`stage:${stage.id}`] = {kind:"stage", target:stage.id, requestId:"elite"};
+      const lease = prepareCombat(state, {input:{mode:"stage"}, stageId:stage.id}, new Date("2026-10-23"), "elite-test");
+      const saves = new SaveManager();
+      const restored = saves.parse(saves.exportData(state));
+      const fighters = combatState(combatJournal(restored).records[lease.id].lease).fighters.filter(f => f.side === "enemy");
+      const preview = partyPreview({content:"stage"}, stage);
+      expect(fighters.map(f=>f.bodyScale)).toEqual(preview.shown.map(e=>ENCOUNTER_ROLE[e.def!.encounterRole!].bodyScale));
+      expect(fighters.some(f=>f.def.encounterRole === "elite" && f.bodyScale > 1)).toBe(true);
+      if (id === "4-6" || id === "4-9") {
+        expect(fighters.filter(f=>f.bodyScale > 1).map(f=>f.def.id)).toEqual(["koma"]);
+        expect(fighters.filter(f=>f.def.id !== "koma").every(f=>f.bodyScale === 1)).toBe(true);
+      }
+    }
+  });
+
+  it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {
+    for (const difficulty of ["normal", "hard"] as const) {
+      for (const base of STAGES.filter(stage => stage.kind === "battle")) {
+        const stage = getBattleStage(storyStageId(difficulty, base.id));
+        expect(stage.enemies).toEqual(base.enemies);
+        expect(stage.enemies).not.toBe(base.enemies);
+        const easy = getStageEnemies(base), grown = getStageEnemies(stage);
+        grown.forEach((enemy, i) => {
+          for (const key of ["hp", "atk", "ap", "def", "res"] as const) expect(enemy.stats[key]).toBe(Math.round(easy[i].stats[key] * STORY_DIFFICULTY[difficulty].statFactor));
+          for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"] as const) expect(enemy.stats[key]).toBe(easy[i].stats[key]);
+          expect(enemy.encounterRole).toBe(easy[i].encounterRole);
+        });
+      }
     }
   });
 });

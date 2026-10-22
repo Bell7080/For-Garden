@@ -1,19 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, stepSkirmish, canFireUltimate, fireUltimate } from "../../src/core/skirmish";
-import { RUNE_GENERATION_RULES } from "../../src/core/runes";
-import { applyLevelGrowth } from "../../src/core/relicProgression";
+import { generateRune, enhanceRune, runeEnhancementIncrease } from "../../src/core/runes";
+import { applyLevelGrowth, applyHeartGems, BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
 import { battleArena } from "../../src/core/battleArena";
+import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 import { getRelic } from "../../src/data/relics";
 import { getBattleStage, getStageEnemies, stageEnemyGrowth } from "../../src/data/stages";
 
+/** 실제 생성·세공·장착 함수로 만든 전설 룬 3개, 각 옵션 2성공/1실패. 근사 스탯을 덧붙이지 않는다. */
 function battle(ids: readonly string[], level: number, stageId: string, seed: number) {
-  const players = ids.map(id => { const def = getRelic(id); const stats = applyLevelGrowth(def.stats, level, def.rarity);
-    const rune = RUNE_GENERATION_RULES.legendary;
-    const gear = 1 + 3 * (rune.mainBase + 3 * rune.mainEnhancement) / 100;
-    for (const key of ["hp", "atk", "def"] as const) stats[key] = Math.round(stats[key] * gear);
-    return { ...def, stats }; });
+  const players = ids.map(id => {
+    const def = getRelic(id);
+    const gems = ([0, 1, 2] as const).map(part => {
+      const rolls = [.2, .2, .3]; let index = 0;
+      let rune = generateRune({instanceId:`${id}-${part}`,baseName:"balance",rarity:"legendary",part,mainKeys:["hp",def.stats.ap > def.stats.atk ? "ap" : "atk"],random:()=>rolls[index++ % rolls.length]});
+      for (const option of [...rune.mainStats, ...rune.subStats]) for (let n=0;n<3;n++) rune=enhanceRune(rune,option.key,runeEnhancementIncrease(rune.rarity,option.key),n === 2 ? .99 : 0);
+      return rune;
+    });
+    return {...def,stats:applyHeartGems(applyLevelGrowth(def.stats,level,def.rarity),gems)};
+  });
   const stage = getBattleStage(stageId);
-  const state = createSkirmish(players, getStageEnemies(stage), battleArena("stage"), {}, Object.fromEntries(ids.map(id => [id, 5])), { enemyBreakthroughs: stageEnemyGrowth(stage).map(enemy => enemy.breakthrough) });
+  const state = createSkirmish(players, getStageEnemies(stage), battleArena("stage"), {}, Object.fromEntries(ids.map(id => [id, BREAKTHROUGH_CAP])), { enemyBodyScales: getStageEnemies(stage).map(enemy=>ENCOUNTER_ROLE[enemy.encounterRole!].bodyScale), enemyBreakthroughs: stageEnemyGrowth(stage).map(enemy => enemy.breakthrough) });
   let rng = seed;
   const random = () => { rng = (rng * 1664525 + 1013904223) >>> 0; return rng / 4294967296; };
   while (state.phase === "fight" && state.elapsed < 120) {
@@ -35,7 +42,7 @@ describe("스토리 난이도 실전 곡선", () => {
     console.table(results);
     const normalFinal = results.filter(row => row.stage === "normal:4-10");
     const hardFinal = results.filter(row => row.stage === "hard:4-10");
-    expect(hardFinal.some(row => row.wins > 0), "최종 어려움도 합법적인 성장·장비로 완주할 수 있어야 한다").toBe(true);
+    expect(hardFinal.filter(row => row.wins > 0).length, "최종 어려움도 합법적인 성장·실제 룬 장비로 완주할 수 있어야 한다").toBeGreaterThanOrEqual(2);
     expect(hardFinal.reduce((sum, row) => sum + row.wins, 0)).toBeLessThan(normalFinal.reduce((sum, row) => sum + row.wins, 0));
     expect(hardFinal.reduce((sum, row) => sum + row.hp, 0)).toBeLessThan(normalFinal.reduce((sum, row) => sum + row.hp, 0));
     for (const ids of [["torika", "rex", "luka"], ["ella", "maki", "stella"], ["nodonia", "spino", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {

@@ -619,6 +619,7 @@ export class BattleScene extends Phaser.Scene {
        * 체력 바와 피해 수치가 그 뒤로 숨는다.
        */
       // 결투의 상대는 아군과 같은 몸이다 — 유형 몫이 없는 대칭 판이다.
+      enemyBodyScales: this.battleInput.mode === "stage" ? stageEnemies.map(enemy => ENCOUNTER_ROLE[enemy.encounterRole ?? "normal"].bodyScale) : undefined,
       enemyBodyScale: ENCOUNTER_ROLE[cakeTier ? cakeOperationRole(cakeTier) : this.battleInput.mode === "duel" ? "normal" : encounterRoleFor(
         stageEnemies.length,
         { elite: stage.elite === true || this.battleInput.mode === "bounty" },

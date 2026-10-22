@@ -80,5 +80,4 @@ export const LOBBY_VI = {
   "storyDifficulty.locked": "Vượt {difficulty} 4-10 để mở khóa",
   "storyDifficulty.unlocked.title": "Đã mở độ khó mới!",
   "storyDifficulty.unlocked.body": "Chúc mừng nhà nghiên cứu!\nĐối đầu kẻ địch mạnh hơn và nhận thưởng vượt ải lần đầu mới ở {difficulty}.",
-  "storyDifficulty.boost": "Cường hóa địch ×{multiplier}",
 } as const;

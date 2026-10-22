@@ -49,3 +49,43 @@ test("스토리 난이도 선택 · 원본 코마 정예 · 전투 SUB · 해금
   await sourceScene(page, "window.__STORY_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('stageMap');");
   await expect.poll(() => page.evaluate(() => (window as any).__STORY_GAME.scene.getScene("stageMap").difficulty)).toBe("hard");
 });
+
+test("혼합 편성 코마만 정예 표시 · 3장 정예 크기 · 원본 레벨 상속", async ({page}, info) => {
+  test.skip(process.env.PF_E2E_REMOTE_LOOP !== "1", "소스 서버 전용");
+  test.setTimeout(360000);
+  await installGameHandleProbe(page);
+  await startAfterOpening(page, state => {
+    state.settings.game.language = "ko";
+    for (let c=1;c<=4;c++) for (let n=1;n<=10;n++) state.cleared.add(`${c}-${n}`);
+    state.cleared.add("normal:4-10");
+    state.selectedStageId = "normal:4-6";
+  });
+  await sourceScene(page, "window.__STORY_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('party');");
+  const inspect = () => page.evaluate(async () => {
+    const root="/src/";
+    const [{t},{getBattleStage},{ENCOUNTER_ROLE}] = await Promise.all([import(/* @vite-ignore */root+"i18n/index.ts"),import(/* @vite-ignore */root+"data/stages.ts"),import(/* @vite-ignore */root+"core/levelDesign.ts")]);
+    const scene=(window as any).__STORY_GAME.scene.getScene("party");
+    const labels=scene.children.list.filter((v:any)=>v.type==='Text' && v.text===t('stage.eliteMark'));
+    return {puppets:scene.children.list.filter((v:any)=>v.constructor.name==='IndexedPuppetCreature').length, marks:labels.map((v:any)=>({x:v.x,y:v.y})), roles:scene.enemies.map((v:any)=>v.encounterRole), levels:getBattleStage('normal:4-6').enemies.map((v:any)=>v.level), easyLevels:getBattleStage('4-6').enemies.map((v:any)=>v.level), eliteScale:ENCOUNTER_ROLE.elite.bodyScale};
+  });
+  await expect.poll(async ()=>(await inspect()).marks.length,{timeout:30000}).toBe(1);
+  const mixed=await inspect();
+  expect(mixed.roles).toEqual(['normal','elite','normal']);
+  expect(mixed.marks[0].x).toBe(540);
+  expect(mixed.levels).toEqual(mixed.easyLevels);
+  expect(mixed.eliteScale).toBeGreaterThan(1);
+  await expect.poll(async ()=>(await inspect()).puppets,{timeout:60000}).toBeGreaterThanOrEqual(6);
+  await captureGame(page, info.outputPath('mixed-koma-elite.png'));
+  await page.evaluate(async()=>{const root='/src/';const {session}=await import(/* @vite-ignore */root+'state/session.ts');session.selectedStageId='hard:3-10';(window as any).__STORY_GAME.scene.getScene('party').scene.restart({content:'stage'});});
+  await expect.poll(async ()=>(await inspect()).roles,{timeout:30000}).toEqual(['elite']);
+  await expect.poll(async ()=>(await inspect()).marks.length,{timeout:30000}).toBe(1);
+  await expect.poll(async ()=>(await inspect()).puppets,{timeout:60000}).toBeGreaterThanOrEqual(4);
+  await captureGame(page, info.outputPath('chapter-three-elite.png'));
+  await page.evaluate(async()=>{const root='/src/';const {session}=await import(/* @vite-ignore */root+'state/session.ts');session.selectedStageId='normal:4-6';for(let c=1;c<=4;c++)for(let n=1;n<=10;n++)session.cleared.add(`normal:${c}-${n}`);(window as any).__STORY_GAME.scene.getScene('party').scene.start('stageMap');});
+  await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene),{timeout:30000}).toBe('stageMap');
+  await page.evaluate(async()=>{const root='/src/';const {getBattleStage}=await import(/* @vite-ignore */root+'data/stages.ts');(window as any).__STORY_GAME.scene.getScene('stageMap').select(getBattleStage('normal:4-6'),true);});
+  await expect.poll(()=>page.evaluate(async()=>{const root='/src/';const {t}=await import(/* @vite-ignore */root+'i18n/index.ts');const preview=(window as any).__STORY_GAME.scene.getScene('stageMap').enemyPreview;return preview.list.filter((v:any)=>v.type==='Text'&&v.text===t('stage.eliteMark')).length;}),{timeout:30000}).toBe(1);
+  expect(await page.evaluate(()=>(window as any).__STORY_GAME.scene.getScene('stageMap').enemyPreview.options.title)).not.toContain('×');
+  await expect.poll(()=>page.evaluate(()=>(window as any).__STORY_GAME.scene.getScene('stageMap').enemyPreview.puppets.size),{timeout:60000}).toBe(3);
+  await captureGame(page, info.outputPath('mixed-koma-map.png'));
+});

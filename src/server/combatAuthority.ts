@@ -230,6 +230,7 @@ export function prepareCombat(
                   (e) => e.breakthrough,
                 )
               : stageEnemyGrowth(stage).map((e) => e.breakthrough),
+          enemyBodyScales: b.mode === "stage" ? enemies.map(enemy => ENCOUNTER_ROLE[enemy.encounterRole ?? "normal"].bodyScale) : undefined,
           enemyBodyScale:
             ENCOUNTER_ROLE[
               cake

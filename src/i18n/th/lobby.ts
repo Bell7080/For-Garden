@@ -80,5 +80,4 @@ export const LOBBY_TH = {
   "storyDifficulty.locked": "ผ่าน {difficulty} 4-10 เพื่อปลดล็อก",
   "storyDifficulty.unlocked.title": "ปลดล็อกระดับใหม่แล้ว!",
   "storyDifficulty.unlocked.body": "ยินดีด้วย นักวิจัย!\nพบศัตรูที่แข็งแกร่งขึ้นและรางวัลผ่านครั้งแรกใหม่ในระดับ{difficulty}",
-  "storyDifficulty.boost": "เสริมพลังศัตรู ×{multiplier}",
 } as const;

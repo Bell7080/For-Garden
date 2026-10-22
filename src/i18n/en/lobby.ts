@@ -80,5 +80,4 @@ export const LOBBY_EN = {
   "storyDifficulty.locked": "Clear {difficulty} 4-10 to unlock",
   "storyDifficulty.unlocked.title": "A new difficulty awaits!",
   "storyDifficulty.unlocked.body": "Congratulations, Researcher!\nFace stronger foes and earn new first-clear rewards on {difficulty}.",
-  "storyDifficulty.boost": "Enemy boost ×{multiplier}",
 } as const;

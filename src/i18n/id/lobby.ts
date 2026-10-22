@@ -80,5 +80,4 @@ export const LOBBY_ID = {
   "storyDifficulty.locked": "Selesaikan {difficulty} 4-10 untuk membuka",
   "storyDifficulty.unlocked.title": "Kesulitan baru terbuka!",
   "storyDifficulty.unlocked.body": "Selamat, Peneliti!\nHadapi musuh lebih kuat dan dapatkan hadiah kemenangan pertama di {difficulty}.",
-  "storyDifficulty.boost": "Penguatan musuh ×{multiplier}",
 } as const;

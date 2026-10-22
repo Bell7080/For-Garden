@@ -371,8 +371,7 @@ var LOBBY_KO = {
   "storyDifficulty.hard.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 50% \uC99D\uAC00",
   "storyDifficulty.locked": "{difficulty} 4-10 \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29",
   "storyDifficulty.unlocked.title": "\uC0C8\uB85C\uC6B4 \uB09C\uC774\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694!",
-  "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694.",
-  "storyDifficulty.boost": "\uC801 \uAC15\uD654 \xD7{multiplier}"
+  "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694."
 };
 
 // src/i18n/ko/common.ts
@@ -4525,7 +4524,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   });
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
-    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
+    const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScales?.[i] ?? options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
     fighter.immortal = options.boss !== void 0 && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
     if (options.boss !== void 0 && fighter.id === bossFighterId && options.boss.percentHpBasis !== void 0) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
     const seasonHp = options.boss?.seasonHp;
@@ -10746,9 +10745,9 @@ init_define_import_meta_env();
 // src/core/storyDifficulty.ts
 init_define_import_meta_env();
 var STORY_DIFFICULTY = {
-  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1 },
-  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5 }
+  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 1.4 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2 }
 };
 function storyDifficultyOf(id) {
   return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
@@ -10770,10 +10769,6 @@ function newlyUnlockedStoryDifficulty(stageId, firstClear) {
   if (!firstClear) return;
   return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
 }
-function storyDifficultyGrowth(difficulty, chapter, order) {
-  const index = (chapter - 1) * 10 + order - 1;
-  return difficulty === "normal" ? { level: Math.min(60, 47 + index), multiplier: 1 + Math.max(0, index - 9) / 150 } : { level: Math.min(60, 56 + Math.round(index * 0.5)), multiplier: 1.2 + (index - 9) / 75 };
-}
 function isStoryStageAvailable(stage, cleared) {
   return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
 }
@@ -10782,7 +10777,7 @@ function difficultyStageRewards(rewards, difficulty) {
   return {
     firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
     repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
-    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: Math.round(reward.amount * multiplier) } : { ...reward })
+    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: reward.currency === "gems" ? Math.round(reward.amount * multiplier / 10) * 10 : reward.currency === "gold" ? Math.round(reward.amount * multiplier / 100) * 100 : Math.round(reward.amount * multiplier) } : { ...reward })
   };
 }
 
@@ -16858,7 +16853,7 @@ var STORY_RAW_STONE = {
 function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
   const heavy = elite || chapterOrder === 10;
   const bonus = [
-    { kind: "currency", currency: "gold", amount: (3e3 + globalOrder * 1e3) * (heavy ? 2 : 1) },
+    { kind: "currency", currency: "gold", amount: (300 + globalOrder * 100) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 }
   ];
   const rawStone = STORY_RAW_STONE[id];
@@ -16972,15 +16967,14 @@ var SIDE_BATTLE_STAGE = {
 var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
 var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
 var EXTRA_STORY_STAGES = ["normal", "hard"].flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
-  const growth = storyDifficultyGrowth(difficulty, base.chapter, base.chapterOrder);
   const first = base.id === "1-1";
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map((id) => storyStageId(difficulty, id));
   return {
     ...base,
     id: storyStageId(difficulty, base.id),
     prerequisiteStageIds,
-    enemies: base.enemies.map((enemy) => ({ ...tieredEnemy(enemy.relicId, growth.level, enemy.formationSlot), ...enemy.elite ? { elite: true } : {} })),
-    difficultyStatMultiplier: growth.multiplier,
+    enemies: base.enemies.map((enemy) => ({ ...enemy })),
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor,
     rewards: difficultyStageRewards(base.rewards, difficulty),
     situation: void 0
   };
@@ -26833,6 +26827,7 @@ function prepareCombat(state, request, now, id) {
       enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
         (e) => e.breakthrough
       ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
+      enemyBodyScales: b.mode === "stage" ? enemies.map((enemy) => ENCOUNTER_ROLE[enemy.encounterRole ?? "normal"].bodyScale) : void 0,
       enemyBodyScale: ENCOUNTER_ROLE[cake ? cakeOperationRole(cake) : encounterRoleFor(enemies.length, {
         elite: stage.elite === true || b.mode === "bounty"
       })].bodyScale

@@ -85,5 +85,4 @@ export const LOBBY_JA = {
   "storyDifficulty.locked": "{difficulty}の4-10クリアで解放",
   "storyDifficulty.unlocked.title": "新たな難易度が解放されました！",
   "storyDifficulty.unlocked.body": "おめでとう、研究員さん！\n{difficulty}で強敵と新たな初回クリア報酬に挑みましょう。",
-  "storyDifficulty.boost": "敵強化 ×{multiplier}",
 } as const;

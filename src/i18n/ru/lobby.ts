@@ -80,5 +80,4 @@ export const LOBBY_RU = {
   "storyDifficulty.locked": "Пройдите {difficulty} 4-10 для открытия",
   "storyDifficulty.unlocked.title": "Открыта новая сложность!",
   "storyDifficulty.unlocked.body": "Поздравляем, исследователь!\nВ режиме {difficulty} вас ждут сильные враги и новые награды за первое прохождение.",
-  "storyDifficulty.boost": "Усиление врагов ×{multiplier}",
 } as const;

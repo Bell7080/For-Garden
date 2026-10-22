@@ -1,4 +1,4 @@
-import { difficultyStageRewards, storyBaseStageId, storyDifficultyGrowth, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
@@ -207,7 +207,7 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
 function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, chapterOrder: number, elite: boolean): StageBonusReward[] {
   const heavy = elite || chapterOrder === 10;
   const bonus: StageBonusReward[] = [
-    { kind: "currency", currency: "gold", amount: (3_000 + globalOrder * 1_000) * (heavy ? 2 : 1) },
+    { kind: "currency", currency: "gold", amount: (300 + globalOrder * 100) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
   ];
   const rawStone = STORY_RAW_STONE[id];
@@ -371,12 +371,11 @@ export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => 
 /** 확장 난이도는 별도 ID로 기록해 기존 쉬움 진행과 초회 보상을 보존한다. */
 export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter(stage => stage.id.startsWith(`${difficulty}:`)); }
 const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as const).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
-  const growth = storyDifficultyGrowth(difficulty, base.chapter!, base.chapterOrder!);
   const first = base.id === "1-1";
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
-    enemies: base.enemies.map(enemy => ({ ...tieredEnemy(enemy.relicId, growth.level, enemy.formationSlot), ...(enemy.elite ? { elite: true as const } : {}) })),
-    difficultyStatMultiplier: growth.multiplier, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+    enemies: base.enemies.map(enemy => ({ ...enemy })),
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
 const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));
@@ -433,7 +432,7 @@ export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): R
     // 편성 중 일부만 정예인 관문: 정예 몫은 그 개체들이 나눠 갖고, 나머지는 관문의 유형 그대로다.
     const enemyRole = enemy.elite === true ? "elite" : role;
     const count = enemy.elite === true ? soloElites : stage.enemies.length;
-    // 레벨·유형 뒤 확장 난이도의 공개 강화만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
+    // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
     const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
     for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
     return { ...base, encounterRole: enemyRole, stats };

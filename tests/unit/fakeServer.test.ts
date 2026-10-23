@@ -20,6 +20,7 @@ import { findArchaeologySite } from "../../src/data/archaeologySites";
 const STRATA_SITE_COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
 import { mileageRotatingFragmentId, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
+import { runeEnhancementGoldCost } from "../../src/data/runes";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -352,22 +353,23 @@ describe("FakeServer", () => {
     expect(result.excavation.lastSettledAt).toBe("2026-08-20T00:00:00.000Z");
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
-    const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];
+    const state = makeSession(); const firstCost = runeEnhancementGoldCost(makeRune().rarity, 0);
+    state.wallet.gold = firstCost; state.runeInventory = [makeRune()];
     const statId = state.runeInventory[0].mainStats[0].key;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     const response = await server.enhanceRune({ runeInstanceId: "rune-1", statId });
-    expect(response).toMatchObject({ succeeded: true, goldSpent: 100, nextSuccessChance: 0.65 });
+    expect(response).toMatchObject({ succeeded: true, goldSpent: firstCost, nextSuccessChance: 0.65 });
     expect(state.wallet.gold).toBe(0);
     expect(state.runeInventory[0].enhancementHistory[statId]).toHaveLength(1);
   });
 
   it("강화는 옵션 잔여 횟수와 골드를 판정 전에 검사해 실패 시 상태를 보존한다", async () => {
-    const state = makeSession(); state.wallet.gold = 99; state.runeInventory = [makeRune()];
+    const state = makeSession(); state.wallet.gold = runeEnhancementGoldCost(makeRune().rarity, 0) - 1; state.runeInventory = [makeRune()];
     const before = JSON.stringify(state.runeInventory);
     const statId = state.runeInventory[0].mainStats[0].key;
     const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
     await expect(server.enhanceRune({ runeInstanceId: "rune-1", statId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
-    expect(state.wallet.gold).toBe(99); expect(JSON.stringify(state.runeInventory)).toBe(before);
+    expect(state.wallet.gold).toBe(runeEnhancementGoldCost(makeRune().rarity, 0) - 1); expect(JSON.stringify(state.runeInventory)).toBe(before);
   });
 
   it("이름 정책과 전역 장착 중복을 서버 경계에서 구분해 거부한다", async () => {

@@ -84,6 +84,7 @@ import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
+import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
@@ -102,7 +103,7 @@ import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse } from "./contracts";
+import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
@@ -224,6 +225,7 @@ export class FakeServer implements GameApi {
   private readonly mails: MailDto[];
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   private readonly runeSaleResults = new Map<string, SellRunesResponse>();
+  private readonly runeSynthesisResults = new Map<string, SynthesizeRunesResponse>();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   private readonly stageAdmissionResults = new Map<string, EnterStageResponse>();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
@@ -3104,6 +3106,13 @@ export class FakeServer implements GameApi {
     // 룬 지급은 요청의 선택(자리·주 옵션)을 **서버가 다시 검증한** 뒤 서버 난수로 확정한다.
     for (const grant of product.grants) {
       if (grant.kind !== "rune") continue;
+      // 완전 랜덤 룬은 등급·자리까지 서버가 굴린다 — 고를 것도, 진열이 정한 자리도 없다.
+      if (grant.randomRarity) {
+        for (let count = 0; count < quantity * grant.amount; count += 1) {
+          grantedRunes.push(this.createGrantedRune(rollRandomRuneRarity(this.random()), [...nextRunes, ...grantedRunes]));
+        }
+        continue;
+      }
       const choice = this.resolveRuneChoice(grant, this.runePartOf(product, now), request.runeChoice);
       for (let count = 0; count < quantity * grant.amount; count += 1) {
         const rune = this.createGrantedRune(grant.rarity, [...nextRunes, ...grantedRunes], choice.part, choice.mainKeys);
@@ -3385,7 +3394,7 @@ export class FakeServer implements GameApi {
     return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
 
-  /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 골드 지급을 한 번만 저장한다. */
+  /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 원석 지급을 한 번만 저장한다. */
   async sellRunes(request: SellRunesRequest): Promise<SellRunesResponse> {
     await this.delay();
     const cached = this.runeSaleResults.get(request.requestId);
@@ -3396,15 +3405,51 @@ export class FakeServer implements GameApi {
     if (selected.some(({ instanceId }) => equipped.has(instanceId))) throw new GameApiError("RUNE_EQUIPPED", "장착 중인 룬은 판매할 수 없습니다.");
     // 자물쇠는 화면이 버튼을 감추는 것으로 끝내지 않는다. 실수로 판 것은 되돌릴 수 없다.
     if (selected.some(({ locked }) => locked)) throw new GameApiError("RUNE_LOCKED", "잠근 룬은 판매할 수 없습니다.");
-    const goldAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
-    if (this.state.wallet.gold + goldAwarded > WALLET_CAPS.gold) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "골드 상한을 초과해 판매할 수 없습니다.");
+    const rawStoneAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
+    if (this.state.wallet.rawStone + rawStoneAwarded > WALLET_CAPS.rawStone) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "원석 상한을 초과해 판매할 수 없습니다.");
     const sold = new Set(request.instanceIds);
     const nextRunes = this.state.runeInventory.filter(({ instanceId }) => !sold.has(instanceId));
-    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold + goldAwarded };
+    const nextWallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone + rawStoneAwarded };
     this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet });
     this.state.runeInventory = nextRunes; this.state.wallet = nextWallet;
-    const response = { inventory: this.runeInventoryDto(), wallet: { ...nextWallet }, goldAwarded };
+    const response = { inventory: this.runeInventoryDto(), wallet: { ...nextWallet }, rawStoneAwarded };
     this.runeSaleResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+
+  /**
+   * 룬 합성. 조건(각인 완료 · 같은 등급 · 미장착 · 잠금 해제)을 검증하고 골드를 치른 뒤 세 룬을 지우고
+   * 새 룬 하나를 한 번에 저장한다. 같은 requestId는 같은 결과를 돌려준다.
+   */
+  async synthesizeRunes(request: SynthesizeRunesRequest): Promise<SynthesizeRunesResponse> {
+    await this.delay();
+    const cached = this.runeSynthesisResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "합성 요청 ID가 필요합니다.");
+    const selected = request.runeInstanceIds.map((id) => this.ownedRune(id));
+    const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
+    const refusal = runeSynthesisRefusal(selected, equipped);
+    if (refusal === "equipped") throw new GameApiError("RUNE_EQUIPPED", "장착 중인 룬은 합성할 수 없습니다.");
+    if (refusal === "locked") throw new GameApiError("RUNE_LOCKED", "잠근 룬은 합성할 수 없습니다.");
+    if (refusal !== null) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "각인까지 마친 같은 등급 룬 셋이 필요합니다.");
+    const rarity = selected[0].rarity;
+    const goldSpent = RUNE_SYNTHESIS_RULES.goldCost[rarity];
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "합성에 필요한 골드가 부족합니다.");
+    const resultRarity = rollRuneSynthesisRarity(rarity, this.random());
+    const part = rollRuneSynthesisPart(selected.map((rune) => rune.part), this.random());
+    const consumed = new Set(selected.map(({ instanceId }) => instanceId));
+    const remaining = this.state.runeInventory.filter(({ instanceId }) => !consumed.has(instanceId));
+    const base = this.createGrantedRune(resultRarity, this.state.runeInventory, part);
+    const traitGrade = rollRuneSynthesisTraitGrade(selected.map((rune) => rune.trait), this.random());
+    const rune: RuneInstance = traitGrade === undefined
+      ? base
+      : { ...base, trait: { id: RUNE_TRAIT_IDS[Math.min(RUNE_TRAIT_IDS.length - 1, Math.floor(this.random() * RUNE_TRAIT_IDS.length))], grade: traitGrade, upgradeMisses: 0 } };
+    const nextRunes = [...remaining, rune];
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet });
+    this.state.runeInventory = nextRunes; this.state.wallet = nextWallet;
+    const response: SynthesizeRunesResponse = { rune: this.cloneRune(rune), upgraded: resultRarity !== rarity, goldSpent, wallet: { ...nextWallet }, inventory: this.runeInventoryDto() };
+    this.runeSynthesisResults.set(request.requestId, structuredClone(response));
     return response;
   }
 

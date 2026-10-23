@@ -127,17 +127,18 @@ export function createStarterRunes(random: () => number): RuneInstance[] {
 }
 
 
-/** 서버와 가격 표시가 함께 쓰는 등급·완료 세공 횟수별 룬 판매가의 유일한 원천이다. */
-export const RUNE_SELL_VALUES: Readonly<Record<RuneRarity, { base: number; perEnhancement: number }>> = {
-  uncommon: { base: 100, perEnhancement: 20 },
-  rare: { base: 250, perEnhancement: 40 },
-  epic: { base: 600, perEnhancement: 80 },
-  legendary: { base: 1500, perEnhancement: 160 },
+/**
+ * 룬을 팔면 받는 원석 — **등급만** 정한다(응태 결정). 세공·각인 여부는 값에 넣지 않는다.
+ * 골드가 남아도는 계정에 골드를 더 얹지 않으려고 판매 값을 원석으로 바꿨다.
+ */
+export const RUNE_SELL_RAW_STONE: Readonly<Record<RuneRarity, number>> = {
+  uncommon: 20,
+  rare: 50,
+  epic: 150,
+  legendary: 400,
 };
 
 /** 서버가 확정 지급액을 산출하며 UI는 이 함수를 복제하지 않고 응답의 값을 표시한다. */
-export function runeSellValue(rune: RuneInstance): number {
-  const rule = RUNE_SELL_VALUES[rune.rarity];
-  const attempts = Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0);
-  return rule.base + attempts * rule.perEnhancement;
+export function runeSellValue(rune: Pick<RuneInstance, "rarity">): number {
+  return RUNE_SELL_RAW_STONE[rune.rarity];
 }

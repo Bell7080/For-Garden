@@ -78,9 +78,12 @@ export type ProductGrant =
    * - `choose` 없음 — **랜덤 룬**: 등급과 자리는 진열이 정하고 옵션은 서버가 굴린다.
    * - `choose: "main"` — **지정 룬**: 주 옵션 둘을 사는 쪽이 고르고 보조 옵션만 서버가 굴린다.
    *
+   * - `randomRarity` — **완전 랜덤 룬**: 등급(`RANDOM_RUNE_RARITY_PERCENT`)·자리·옵션을 모두 서버가 굴린다.
+   *   이때 `rarity`는 진열 그림의 색일 뿐 지급 등급이 아니다.
+   *
    * 고른 값은 구매 요청(`runeChoice`)으로 오고 서버가 다시 검증한다 — 화면의 선택을 믿지 않는다.
    */
-  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "main" }
+  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "main"; randomRarity?: true }
   | { kind: "profile_decoration"; decorationId: string; name: string }
   /** 한 개체의 파편. 정의에는 `relicId`가 없고 서버가 `weeklySsrFragment`를 그 주의 개체로 풀어 내려 준다. */
   | { kind: "relic_fragment"; relicId: string; amount: number }
@@ -225,6 +228,7 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // **룬 칸 — 가끔만 나온다.** 주 무대는 고고학이고 다른 상점은 드물게, 조금 더 비싸게 판다.
   // 어느 기간에 어느 칸이 열리는지는 로테이션 순수 함수(`rotationOffer`)가 정하며, 값은 전부 고고학
   // 900(희귀)·3,000(영웅)원석을 기준으로 환산했다. 젬(다이아)으로는 팔지 않고 전설은 팔지 않는다.
+  { id: "arch-rune-random", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "랜덤 룬", description: "등급·자리·옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "rune", name: "랜덤 룬", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-rune-daily-uncommon", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "고급 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 300 }, grants: [{ kind: "rune", name: "고급 룬", amount: 1, rarity: "uncommon" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-daily-rare", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "희귀 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 900 }, grants: [{ kind: "rune", name: "희귀 룬", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-weekly-epic", storefront: "archaeology", category: "weekly", iconKey: "shop-product-rune", name: "영웅 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 3000 }, grants: [{ kind: "rune", name: "영웅 룬", amount: 1, rarity: "epic" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-weekly-a" },

@@ -236,11 +236,11 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     const sell = new Button(scene, 0, 0, {
       width: RUNE_NOTE_BUTTONS.sellWidth, height: RUNE_NOTE_BUTTONS.sellHeight, label: t("rune.sell"), fontSize: 22,
       accentColor: RUNE_NOTE_BUTTONS.sellAccent, accentTextColor: RUNE_NOTE_BUTTONS.sellText,
-      // 판매는 되돌릴 수 없어 공용 확인 창이 한 번 묻는다 — 받을 골드가 보유 줄로 선다.
+      // 판매는 되돌릴 수 없어 공용 확인 창이 한 번 묻는다 — 받을 원석이 보유 줄로 선다.
       onClick: () => popups.confirm({
         title: t("rune.sell.title"),
         message: t("rune.sell.message"),
-        balance: { iconKey: CURRENCY_ICON_BY_WALLET.gold, before: session.wallet.gold, after: session.wallet.gold + runeSellValue(rune) },
+        balance: { iconKey: CURRENCY_ICON_BY_WALLET.rawStone, before: session.wallet.rawStone, after: session.wallet.rawStone + runeSellValue(rune) },
         confirmLabel: t("rune.sell"),
         destructive: true,
       }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); }),

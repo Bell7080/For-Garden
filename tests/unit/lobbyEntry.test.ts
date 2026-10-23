@@ -154,8 +154,8 @@ describe("전리품 증표", () => {
     expect(shopStagePresentation("archaeology").currencies).toBe("archaeologyShop");
     // 고고학 가게에서 조작을 정하는 수는 원석 하나뿐이다.
     expect(TOP_BAR_SLOT_KEYS.archaeologyShop).toEqual(["rawStone"]);
-    // 지도 화면도 원석 한 칸만 세운다(응태 결정 — 화석·골드는 칸만 먹었다).
-    expect(TOP_BAR_SLOT_KEYS.archaeology).toEqual(["rawStone"]);
+    // 지도 화면은 원석과 골드를 세운다(응태 결정 — 룬 합성이 골드를 쓴다).
+    expect(TOP_BAR_SLOT_KEYS.archaeology).toEqual(["rawStone", "gold"]);
   });
 });
 

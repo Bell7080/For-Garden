@@ -387,6 +387,18 @@ describe("FakeServer", () => {
     expect(state.relicProgress.torika.heartGemSlots).toEqual(["rune-1", null, null]);
   });
 
+  it("옮겨 끼우기를 허용하면 원래 렐릭에서 빼고 한 저장으로 새 렐릭에 끼운다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0, moveFromOther: true });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
+    // 자리 불변식은 옮겨 끼울 때도 그대로다.
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 2, moveFromOther: true })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
+  });
+
   it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {
     const state = makeSession(); let rune = makeRune();
     for (const { key } of rune.mainStats) for (let count = 0; count < 3; count += 1) rune = applyRuneEnhancement(rune, key, 1, 0);

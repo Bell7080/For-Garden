@@ -3416,11 +3416,17 @@ export class FakeServer implements GameApi {
     this.assertRuneSlot(request.slotIndex);
     // 룬은 제 자리에만 들어간다. 화면이 이미 걸러 주지만, 자리 불변식은 서버가 지킨다.
     if (this.ownedRune(request.runeInstanceId).part !== request.slotIndex) throw new GameApiError("RUNE_SLOT_MISMATCH", "이 룬은 다른 칸의 조각입니다.");
-    if (Object.values(this.state.relicProgress).some(({ heartGemSlots }) => heartGemSlots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
-    const target = this.state.relicProgress[request.relicId];
+    const holders = Object.entries(this.state.relicProgress).filter(([, { heartGemSlots }]) => heartGemSlots.includes(request.runeInstanceId));
+    if (holders.length > 0 && !request.moveFromOther) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
+    // 옮겨 끼우기: 지금 끼고 있는 칸을 먼저 비우고 같은 저장 한 번에 새 칸에 끼운다.
+    const nextProgress = { ...this.state.relicProgress };
+    for (const [holderId, holder] of holders) {
+      nextProgress[holderId] = { ...holder, heartGemSlots: holder.heartGemSlots.map((id) => (id === request.runeInstanceId ? null : id)) as [string | null, string | null, string | null] };
+    }
+    const target = nextProgress[request.relicId];
     const slots = [...target.heartGemSlots] as [string | null, string | null, string | null];
     slots[request.slotIndex] = request.runeInstanceId;
-    const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
+    nextProgress[request.relicId] = { ...target, heartGemSlots: slots };
     const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
     this.state.relicProgress = nextProgress;

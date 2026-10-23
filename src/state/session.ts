@@ -62,7 +62,9 @@ export interface GameSettings {
      */
     dungeonTiers: { bounty: string; cake: string };
     /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
-    guildSeen: { war: number; guard: number } };
+    guildSeen: { war: number; guard: number };
+    /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */
+    runeBag: { showHolder: boolean; showEquipped: boolean } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

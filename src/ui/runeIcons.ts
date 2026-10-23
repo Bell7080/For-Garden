@@ -10,6 +10,7 @@ import { RUNE_FRAME_FILL, runePieceFit } from "./runePieceContent";
 import { STAT_TONE } from "./statTones";
 import { addGlowStar } from "./stars";
 import { textStyle } from "./theme";
+import { addRuneHolderFace } from "./runeHolderCycle";
 
 /**
  * 룬 하트 조각.
@@ -151,14 +152,20 @@ export function addRuneCard(
   width: number,
   height: number,
   rune: RuneCardModel,
-  options: { dimmed?: boolean } = {},
+  options: {
+    dimmed?: boolean;
+    /** 장착 렐릭 표시가 켜진 가방에서 이 룬을 낀 렐릭. 주면 액자가 그 얼굴과 갈마든다(`runeHolderCycle`). */
+    holder?: { relicId: string; order: number };
+  } = {},
 ): Phaser.GameObjects.Container {
   const engraved = rune.engravings.length > 0;
   const card = scene.add.container(x, y);
   const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
   card.add(drawLayer(scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: engraved ? RUNE_ENGRAVE_GOLD : RUNE_ACCENT[rune.rarity], edgeAlpha: engraved ? 0.9 : 0.35 }));
   const frameSize = Math.min(width, height) * 0.89;
-  card.add(addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved }));
+  const frame = addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved });
+  card.add(frame);
+  if (options.holder) addRuneHolderFace(scene, card, frame, frameSize, options.holder.relicId, options.holder.order);
   // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 액자 **안쪽** 왼쪽 위에
   // 작게 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽히고,
   // 카드 모서리에 붙이면 깎인 모서리 밖으로 반쯤 빠져나가 붙인 스티커처럼 보인다.

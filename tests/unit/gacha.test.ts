@@ -191,6 +191,18 @@ describe("운영 배너 데이터", () => {
     expect(bannerGuaranteePending(welcome, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 20 })).toBe(false);
   });
 
+  it("첫 복원 연구는 SSR을 얻으면 남은 횟수가 있어도 닫힌다", () => {
+    const welcome = BANNERS.find((candidate) => candidate.id === "welcome")!;
+    const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
+    expect(welcome.closeOnHighestRarity).toBe(true);
+    expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 10 })).toBe(0);
+    expect(bannerAcceptsCount(welcome, 10, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 10 })).toBe(false);
+    // SSR 없이 40회까지는 열려 있고, 50회째 확정으로 얻어도 한도에 닿아 닫힌다.
+    expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 40, pickupGuaranteed: false, totalPulls: 40 })).toBe(10);
+    expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 0, pickupGuaranteed: false, totalPulls: 50 })).toBe(0);
+    expect(bannerPullsRemaining(fossil, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 10 })).toBe(Number.POSITIVE_INFINITY);
+  });
+
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {
     for (const candidate of BANNERS) {
       expect(Object.values(candidate.slotRates).reduce((sum, rate) => sum + rate, 0)).toBe(1);

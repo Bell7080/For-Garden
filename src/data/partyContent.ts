@@ -82,6 +82,23 @@ export function normalizePartyContent(input: unknown): PartyContent {
   return { content: "stage" };
 }
 
+/**
+ * 진 판의 「편성 바꾸기」가 가는 곳. **그 판에 들어온 콘텐츠의 편성**으로 돌아간다 — 스토리는 스토리
+ * 편성, 대작전·현상수배는 그 단계의 편성이다. 결투는 같은 상대와 다시 싸울 수 없어 편성이 상대에 묶여
+ * 있으므로, 결투장으로 가서 상대 고르기 창을 곧바로 연다(고른 상대의 공격 편성이 그다음이다).
+ */
+export type DefeatPartyRoute =
+  | { scene: "party"; data: PartyContent }
+  | { scene: "duel"; data: { openOpponents: true } };
+
+export function defeatPartyRoute(input: { mode: string; tierId?: string }): DefeatPartyRoute {
+  if (input.mode === "duel") return { scene: "duel", data: { openOpponents: true } };
+  if ((input.mode === "cake" || input.mode === "bounty") && typeof input.tierId === "string") {
+    return { scene: "party", data: normalizePartyContent({ content: input.mode, tierId: input.tierId }) };
+  }
+  return { scene: "party", data: { content: "stage" } };
+}
+
 /** 미리보기에 선 적 하나. 정보창이 여는 스냅샷과 같은 모양이다. */
 export interface PartyPreviewEnemy {
   /** 결투에서 가려진 칸만 비어 있다 — 누구인지 모르므로 `?` 실루엣과 레벨·전투력만 선다. */

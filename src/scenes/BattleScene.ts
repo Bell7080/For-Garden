@@ -42,7 +42,7 @@ import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth } from "../
 import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
-import type { PartyContent } from "../data/partyContent";
+import { defeatPartyRoute, type PartyContent } from "../data/partyContent";
 import { enterContentBattle } from "./contentBattleEntry";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { expeditionBossGrowth, getExpeditionNodeEnemies } from "../data/expeditionEnemies";
@@ -2819,7 +2819,7 @@ export class BattleScene extends Phaser.Scene {
         },
       },
       staminaRefunded,
-      growth: this.defeatGrowth("party", () => { chosen = true; }),
+      growth: this.defeatGrowth(() => { chosen = true; }),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       contributionLocked: !this.featureOpen("contribution"),
@@ -2870,6 +2870,15 @@ export class BattleScene extends Phaser.Scene {
             goRoute(this, victoryRoute(stage.id, partyRoute(upcoming.id)));
           },
         }] : []),
+        {
+          label: t("stageComplete.replay"), disabled: !canEnter,
+          // 같은 관문을 한 판 더 — 초회 후 대사가 남았으면 그것을 먼저 보고 그 관문의 편성으로 간다.
+          onPress: () => {
+            chosen = true;
+            const after = victoryRoute(stage.id, { scene: "party" });
+            if (after.scene === "party") this.retryBattle(); else goRoute(this, after);
+          },
+        },
         { label: t("stageComplete.exit"), danger: true, onPress: () => undefined },
       ];
       new StageCompletePopup(this, popups).open({
@@ -2935,7 +2944,7 @@ export class BattleScene extends Phaser.Scene {
             { label: t("cake.title"), onPress: go(back) },
           ],
         },
-        growth: won ? undefined : this.defeatGrowth("party", () => { chosen = true; }),
+        growth: won ? undefined : this.defeatGrowth(() => { chosen = true; }),
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         staminaRefunded: result.staminaRefunded,
         fighters: this.stageCompleteFighters(),
@@ -3013,7 +3022,7 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
-      growth: this.defeatGrowth("party", () => { chosen = true; }),
+      growth: this.defeatGrowth(() => { chosen = true; }),
       replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
@@ -3065,16 +3074,16 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         { label: t("duel.result.toDuel"), onPress: go(toDuel) },
       ] },
-      standing, growth: this.defeatGrowth("duel", () => { chosen = true; }),
+      standing, growth: this.defeatGrowth(() => { chosen = true; }),
       fighters, onOpenContribution: openContribution, onConfirm,
     });
   }
 
   /**
    * 진 판의 **강해지는 길 타일**. 어느 길이 서는지는 편성 상태가 정하고(`growthPaths`), 모드마다 다른 것은
-   * 편성 바꾸기가 돌아가는 곳(`partyScene`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
+   * 편성 바꾸기가 돌아가는 곳(`defeatPartyRoute`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
    */
-  private defeatGrowth(partyScene: string, markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
+  private defeatGrowth(markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
     const paths = growthPaths({ party: session.party, relicProgress: session.relicProgress, runeInventory: session.runeInventory, archaeologyOpen: contentOpen("archaeology") });
     return {
       paths,
@@ -3085,13 +3094,7 @@ export class BattleScene extends Phaser.Scene {
           case "runeCraft": startScene(this, "relics", { openRelicId: path.relicId }); return;
           case "lab": startScene(this, "lab"); return;
           case "archaeology": startScene(this, "archaeology"); return;
-          case "party": {
-            const input = this.battleInput;
-            const content: PartyContent = input.mode === "cake" || input.mode === "bounty"
-              ? { content: input.mode, tierId: input.tierId }
-              : { content: "stage" };
-            startScene(this, partyScene, content); return;
-          }
+          case "party": { const route = defeatPartyRoute(this.battleInput as { mode: string; tierId?: string }); startScene(this, route.scene, route.data); return; }
         }
       },
     };

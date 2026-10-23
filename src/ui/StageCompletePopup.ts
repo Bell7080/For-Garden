@@ -26,6 +26,9 @@ import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { addStageRewardFrame } from "./stageRewardFrame";
 import { openRuneInfoPopup } from "./RunePopup";
+import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
+import { motionPolicy } from "../core/settings";
+import { session } from "../state/session";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -103,8 +106,8 @@ export interface StageCompletePopupOptions {
   clearActions?: readonly StageCompleteAction[];
   returnHint?: string;
   /**
-   * 진 판에서 돌려준 스테미나. 있으면 판 밑동에 **작고 흐린 한 줄**로만 선다 — 진 판의 주인공은
-   * 다음에 할 일이라, 이 줄이 버튼보다 먼저 읽히면 안 된다. 경험치 블록은 서지 않는다(오르지 않았다).
+   * 진 판에서 돌려준 스테미나. 있으면 판 안이 아니라 화면 밑동에 **토스트**로 잠깐 선다
+   * (`STAMINA_REFUND_TOAST`) — 진 판의 주인공은 다음에 할 일이라 판 안의 버튼 줄과 섞지 않는다. 경험치 블록은 서지 않는다(오르지 않았다).
    */
   staminaRefunded?: number;
   /**
@@ -153,8 +156,17 @@ const REWARD_ROW = { y: 320, frame: 132, gap: 168 } as const;
  */
 const DEFEAT_ACTIONS = { top: 272, width: 420, height: 86, gap: 18, belowLoot: 416, footnoteShift: 84 } as const;
 
-/** 진 판에서 돌려준 스테미나 한 줄. 판 밑변 가까이, 버튼 줄보다 한참 아래에 선다. */
-const STAMINA_REFUND_Y = HEIGHT / 2 - 64;
+/**
+ * 진 판에서 돌려준 스테미나 — 판 안이 아니라 **화면 밑동의 토스트**다. 판 밑변에 한 줄로 두던 때는 강해지는
+ * 길 타일이 버튼 줄을 밀어 내려 그 줄이 「나가기」에 겹쳤다. 판 밑변(화면 960 + 680)과 「화면을 눌러 확인」
+ * 사이에 서서, 판이 떠오른 뒤 잠깐 머물다 사라진다.
+ */
+export const STAMINA_REFUND_TOAST = { y: BASE_HEIGHT - 222, height: 72, padX: 36, icon: 44, gap: 14, font: 26, delayMs: 520, riseMs: 220, holdMs: 2600, fadeMs: 420, rise: 18 } as const;
+
+/** 진 판의 강해지는 길 타일 아래 버튼 줄 — 타일 줄 폭을 나눠 가로로 선다. */
+const DEFEAT_ROW = { gap: 20, height: 86, tilesGap: 26, maxWidth: 420 } as const;
+/** 진 판의 타일 묶음이 앉는 띠 — 경험치 블록 자리 아래부터 판 밑변 위까지. 그 가운데에 묶음을 세운다. */
+const DEFEAT_BAND = { top: 200, bottom: HEIGHT / 2 - 60 } as const;
 
 /** 이긴 스토리 관문의 가로 버튼 줄(다음 단계 · 다시 하기 · 나가기). */
 const CLEAR_ACTIONS = { y: 530, height: 92, gap: 16, side: 70, maxWidth: 300, font: 28 } as const;
@@ -192,6 +204,7 @@ export class StageCompletePopup {
       ? (clearRewards.length > 0 ? clearRewards.length : Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
       : loot.length;
     let hint: Phaser.GameObjects.Text | undefined;
+    let refundToast: Phaser.GameObjects.Container | undefined;
     /** Puppet은 컨테이너 변환을 물려받지 않으므로 원점(0,0)에 선 전용 레이어에 화면 좌표로 세운다. */
     let puppetLayer: Phaser.GameObjects.Container | undefined;
     const puppets = new Set<PuppetCreature>();
@@ -207,6 +220,7 @@ export class StageCompletePopup {
       onClose: () => {
         disposed = true;
         hint?.destroy();
+        if (refundToast) { this.scene.tweens.killTweensOf(refundToast); refundToast.destroy(); }
         for (const puppet of puppets) { puppetLayer?.remove(puppet, false); puppet.destroy(); }
         puppets.clear();
         puppetLayer?.destroy(true);
@@ -250,20 +264,23 @@ export class StageCompletePopup {
         const carried = (options.reward.items ?? []).filter(({ amount }) => amount > 0);
         const footnote = carried.length > 0 ? options.reward.footnote : undefined;
         if (carried.length > 0) this.buildLoot(body, carried, footnote);
-        const actions = options.replay ? [options.replay, ...options.reward.actions] : options.reward.actions;
+        // 다시 하기는 이 판의 주 조작이라 강조 판으로 선다(꺼져 있으면 강조하지 않는다).
+        const actions = options.replay ? [{ ...options.replay, primary: options.replay.disabled !== true }, ...options.reward.actions] : options.reward.actions;
         const growth = options.growth;
-        // 타일 줄은 받은 것(액자 줄) 바로 아래, 없으면 보상 자리에서 시작하고 버튼 줄은 그 아래로 밀린다.
-        const tilesTop = (carried.length > 0 ? DEFEAT_ACTIONS.belowLoot - 43 : DEFEAT_ACTIONS.top - 43) + (footnote !== undefined ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY;
         if (growth && growth.paths.length > 0) {
+          // 타일 줄 + 버튼 한 줄을 한 덩어리로 재서, 받은 것이 없으면 남는 띠의 가운데에 세운다.
+          const groupHeight = GROWTH_TILES.height + (actions.length > 0 ? DEFEAT_ROW.tilesGap + DEFEAT_ROW.height : 0);
+          const bandTop = DEFEAT_BAND.top + this.shiftY;
+          const tilesTop = carried.length > 0
+            ? DEFEAT_ACTIONS.belowLoot - 43 + (footnote !== undefined ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY
+            : bandTop + Math.max(0, (DEFEAT_BAND.bottom - bandTop - groupHeight) / 2);
           addGrowthPathTiles(this.scene, body, tilesTop, growth.paths, (path) => { growth.onPick(path); close(); });
+          const rowWidth = growth.paths.length * GROWTH_TILES.width + (growth.paths.length - 1) * GROWTH_TILES.gap;
+          this.buildDefeatRow(body, close, actions, tilesTop + GROWTH_TILES.height + DEFEAT_ROW.tilesGap + DEFEAT_ROW.height / 2, rowWidth);
+        } else {
+          this.buildDefeatActions(body, close, actions, carried.length > 0, footnote !== undefined);
         }
-        const actionsTop = growth && growth.paths.length > 0 ? tilesTop + GROWTH_TILES.height + 20 + DEFEAT_ACTIONS.height / 2 : undefined;
-        this.buildDefeatActions(body, close, actions, carried.length > 0, footnote !== undefined, actionsTop);
-        if ((options.staminaRefunded ?? 0) > 0) {
-          body.add(this.scene.add
-            .text(0, STAMINA_REFUND_Y, t("stageComplete.staminaRefunded", { amount: options.staminaRefunded ?? 0 }), textStyle({ role: "body", size: 22, color: COLOR.inkDim }))
-            .setOrigin(0.5).setAlpha(0.72));
-        }
+        if ((options.staminaRefunded ?? 0) > 0) refundToast = this.showStaminaRefundToast(options.staminaRefunded ?? 0, (body.parentContainer?.depth ?? 0) + 1);
       }
       else {
         this.buildLoot(body, loot, options.reward.footnote);
@@ -319,12 +336,13 @@ export class StageCompletePopup {
    * "보상 없음" 같은 문장을 적으면 플레이어가 지금 할 일은 바뀌지 않는다. 대신 강해지는 길로
    * 가는 입구를 세운다. 어느 길인지는 부르는 쪽(전투 화면)이 정하고 이 판은 줄만 쌓는다.
    */
-  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean, belowFootnote = false, topOverride?: number): void {
-    const top = topOverride ?? (belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top) + (belowFootnote ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY;
+  private buildDefeatActions(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], belowLoot: boolean, belowFootnote = false): void {
+    const top = (belowLoot ? DEFEAT_ACTIONS.belowLoot : DEFEAT_ACTIONS.top) + (belowFootnote ? DEFEAT_ACTIONS.footnoteShift : 0) + this.shiftY;
     actions.forEach((action, index) => {
       const y = top + index * (DEFEAT_ACTIONS.height + DEFEAT_ACTIONS.gap);
       body.add(new Button(this.scene, 0, y, {
         width: DEFEAT_ACTIONS.width, height: DEFEAT_ACTIONS.height, label: action.label, fontSize: 30,
+        variant: action.primary ? "primary" : undefined,
         ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
         // **고른 길을 먼저 알리고 그다음 닫는다.** 판은 화면 아무 곳이나 눌러도 닫히고 그
         // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
@@ -332,6 +350,40 @@ export class StageCompletePopup {
         onClick: () => { action.onPress(); close(); },
       }).setEnabled(action.disabled !== true));
     });
+  }
+
+  /** 진 판의 타일 아래 버튼 한 줄. 타일 줄과 같은 폭을 나눠 가로로 서고, 앞설 길(다시 하기)만 강조 판이다. */
+  private buildDefeatRow(body: Phaser.GameObjects.Container, close: () => void, actions: readonly StageCompleteAction[], y: number, rowWidth: number): void {
+    if (actions.length === 0) return;
+    const width = Math.min(DEFEAT_ROW.maxWidth, (rowWidth - DEFEAT_ROW.gap * (actions.length - 1)) / actions.length);
+    const total = width * actions.length + DEFEAT_ROW.gap * (actions.length - 1);
+    actions.forEach((action, index) => {
+      body.add(new Button(this.scene, -total / 2 + width / 2 + index * (width + DEFEAT_ROW.gap), y, {
+        width, height: DEFEAT_ROW.height, label: action.label, fontSize: 30,
+        variant: action.primary ? "primary" : undefined,
+        ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
+        // 고른 길을 먼저 알리고 그다음 닫는다 — 순서는 `buildDefeatActions`와 같은 이유다.
+        onClick: () => { action.onPress(); close(); },
+      }).setEnabled(action.disabled !== true));
+    });
+  }
+
+  /** 돌려준 스테미나를 화면 밑동에 잠깐 알린다. 판이 닫히면 함께 걷힌다. */
+  private showStaminaRefundToast(amount: number, depth: number): Phaser.GameObjects.Container {
+    const T = STAMINA_REFUND_TOAST;
+    const label = this.scene.add.text(0, 0, t("stageComplete.staminaRefunded", { amount }), textStyle({ role: "emphasis", size: T.font, color: COLOR.ink })).setOrigin(0, 0.5);
+    const content = T.icon + T.gap + label.width;
+    const width = Math.min(BASE_WIDTH - 80, Math.ceil(content + T.padX * 2));
+    const toast = this.scene.add.container(this.scene.scale.width / 2, T.y).setDepth(depth);
+    toast.add(drawLayer(this.scene, 0, 0, chipPoints(width, T.height, { bevel: { topLeft: 18, bottomRight: 18 } }), { fill: 0x070b10, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    toast.add(this.scene.add.image(-content / 2 + T.icon / 2, 0, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(T.icon, T.icon));
+    label.setX(-content / 2 + T.icon + T.gap);
+    toast.add(label);
+    const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    toast.setAlpha(0).setY(T.y + T.rise * factor);
+    this.scene.tweens.add({ targets: toast, alpha: 1, y: T.y, delay: T.delayMs, duration: T.riseMs, ease: "Cubic.Out" });
+    this.scene.tweens.add({ targets: toast, alpha: 0, delay: T.delayMs + T.riseMs + T.holdMs, duration: T.fadeMs, onComplete: () => toast.destroy() });
+    return toast;
   }
 
   /** 이긴 판의 가로 한 줄. 셋이 한 폭을 똑같이 나눠 어느 길도 먼저 눈에 띄지 않되, 앞서 갈 길만 강조 판이다. */

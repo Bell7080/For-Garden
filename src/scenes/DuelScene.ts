@@ -14,6 +14,7 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { paintDuelHistory } from "../ui/DuelHistoryList";
 import { openDuelOpponentPopup } from "../ui/DuelOpponentPopup";
+import { consumeSceneEntry } from "./sceneEntry";
 import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
@@ -63,8 +64,16 @@ export class DuelScene extends Phaser.Scene {
   private status?: DuelStatusResponse;
   private busy = false;
 
+  /** 진 결투의 「편성 바꾸기」로 들어왔으면 상태를 받자마자 상대 고르기 창을 연다. */
+  private openOpponentsOnEntry = false;
+
   constructor() {
     super("duel");
+  }
+
+  init(data?: { openOpponents?: boolean }): void {
+    this.openOpponentsOnEntry = data?.openOpponents === true;
+    consumeSceneEntry(this);
   }
 
   create(): void {
@@ -95,7 +104,12 @@ export class DuelScene extends Phaser.Scene {
   private async fetchStatus(): Promise<void> {
     try {
       const status = await withBusy(this, gameApi.getDuelStatus());
-      if (this.scene.isActive()) this.paint(status);
+      if (!this.scene.isActive()) return;
+      this.paint(status);
+      if (this.openOpponentsOnEntry) {
+        this.openOpponentsOnEntry = false;
+        if (status.attemptsLeft > 0 && status.opponents.length > 0) this.openOpponents();
+      }
     } catch {
       if (!this.scene.isActive()) return;
       this.view.removeAll(true);

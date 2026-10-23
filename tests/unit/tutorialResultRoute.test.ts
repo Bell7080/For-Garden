@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { sourceClass } from "../helpers/sourceClass";
+import { lobbyTutorialGateStage } from "../../src/core/tutorial";
 
 it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대사를 보존해 광장으로 돌아간다", async (id, step) => {
   let options: any;
@@ -8,7 +9,7 @@ it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대�
     Phaser: { Scene: class {} }, gameApi: { completeStage: async () => ({ firstClear: true, firstClearRewards: [], cheesecakeEarned: 50 }) },
     session: { wallet: { stamina: 100 } }, CONTENT_STAMINA_COSTS: { normalStage: 5 }, rememberPlayerExp: vi.fn(),
     PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },
-    tutorialManager: { lobbyStep: () => step }, nextBattleStage: () => ({ id: "1-3" }), STAGES: [], storyStages: () => [], storyDifficultyOf: () => "easy",
+    tutorialManager: { lobbyStep: () => step }, lobbyTutorialGateStage, nextBattleStage: () => ({ id: "1-3" }), STAGES: [], storyStages: () => [], storyDifficultyOf: () => "easy",
     isStageUnlocked: () => true, t: (key: string) => key, goRoute,
     victoryRoute: (stage: string, then: unknown) => ({ scene: "stageStory", data: { stage, then } }),
   });

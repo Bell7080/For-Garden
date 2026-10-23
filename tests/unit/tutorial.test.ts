@@ -106,3 +106,13 @@ describe("v50 튜토리얼 이전", () => {
     expect(migrateTutorialV50({ completedStepIds: ["ultimate", "auto", "gift"] }).completedStepIds).toEqual(["ultimate", "auto"]);
   });
 });
+
+import { TUTORIAL_BATTLE_STAGES as BATTLE_STAGES_FOR_GATES, lobbyTutorialGateStage } from "../../src/core/tutorial";
+describe("로비 안내 선행 관문", () => {
+  it("강화는 auto 관문, 선물·연구는 contribution 관문 뒤에 열린다", () => {
+    expect(lobbyTutorialGateStage("feed")).toBe(BATTLE_STAGES_FOR_GATES.auto);
+    expect(lobbyTutorialGateStage("feedLevel")).toBe(BATTLE_STAGES_FOR_GATES.auto);
+    expect(lobbyTutorialGateStage("gift")).toBe(BATTLE_STAGES_FOR_GATES.contribution);
+    expect(lobbyTutorialGateStage("pull")).toBe(BATTLE_STAGES_FOR_GATES.contribution);
+  });
+});

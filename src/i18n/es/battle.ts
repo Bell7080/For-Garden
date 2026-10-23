@@ -2,7 +2,7 @@
 export const BATTLE_ES = {
   "tutorial.lobby.sortie": "¿Listo para la siguiente fase?",
   "tutorial.lobby.story": "Elige Historia para continuar.",
-  "tutorial.stage.enter": "Entra en la fase 1-2.",
+  "tutorial.stage.enter": "Entra en la fase {stage}.",
   "tutorial.party.move": "Arrastra una Reliquia a otra casilla para cambiar la formación.",
   "tutorial.party.hold": "Mantén pulsada una Reliquia de tu formación para ver sus detalles.",
   "tutorial.party.start": "Tu formación está lista. ¡Empieza la batalla!",

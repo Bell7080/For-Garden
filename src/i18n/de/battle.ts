@@ -2,7 +2,7 @@
 export const BATTLE_DE = {
   "tutorial.lobby.sortie": "Bereit für den nächsten Abschnitt?",
   "tutorial.lobby.story": "Wähle die Geschichte, um fortzufahren.",
-  "tutorial.stage.enter": "Betritt Abschnitt 1-2.",
+  "tutorial.stage.enter": "Betritt Abschnitt {stage}.",
   "tutorial.party.move": "Ziehe ein Relikt auf einen anderen Platz, um die Formation zu ändern.",
   "tutorial.party.hold": "Halte ein Relikt in deiner Formation gedrückt, um Details anzusehen.",
   "tutorial.party.start": "Deine Formation ist bereit. Starte den Kampf!",

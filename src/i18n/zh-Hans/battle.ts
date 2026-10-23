@@ -2,7 +2,7 @@
 export const BATTLE_ZH_HANS = {
   "tutorial.lobby.sortie": "准备前往下一个关卡吧。",
   "tutorial.lobby.story": "选择剧情，前往下一个关卡。",
-  "tutorial.stage.enter": "进入1-2关卡吧。",
+  "tutorial.stage.enter": "进入{stage}关卡吧。",
   "tutorial.party.move": "将遗物拖到其他位置，试着调整编队。",
   "tutorial.party.hold": "长按已编队的遗物，查看详细信息。",
   "tutorial.party.start": "编队准备完毕，开始战斗吧！",

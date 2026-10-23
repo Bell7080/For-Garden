@@ -2,7 +2,7 @@
 export const BATTLE_JA = {
   "tutorial.lobby.sortie": "次のステージへ出撃しましょう。",
   "tutorial.lobby.story": "ストーリーを選んで次のステージへ進みましょう。",
-  "tutorial.stage.enter": "ステージ1-2に進みましょう。",
+  "tutorial.stage.enter": "ステージ{stage}に進みましょう。",
   "tutorial.party.move": "レリックを別の枠へドラッグして編成を変えてみましょう。",
   "tutorial.party.hold": "編成中のレリックを長押しして詳細を確認しましょう。",
   "tutorial.party.start": "編成完了です。出撃しましょう！",

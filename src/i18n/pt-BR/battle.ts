@@ -2,7 +2,7 @@
 export const BATTLE_PT_BR = {
   "tutorial.lobby.sortie": "Pronto para a próxima fase?",
   "tutorial.lobby.story": "Escolha História para continuar.",
-  "tutorial.stage.enter": "Entre na fase 1-2.",
+  "tutorial.stage.enter": "Entre na fase {stage}.",
   "tutorial.party.move": "Arraste uma Relíquia para outro espaço para mudar a formação.",
   "tutorial.party.hold": "Mantenha uma Relíquia na formação pressionada para ver os detalhes.",
   "tutorial.party.start": "Sua formação está pronta. Comece a batalha!",

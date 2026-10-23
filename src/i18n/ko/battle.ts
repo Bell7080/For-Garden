@@ -2,7 +2,7 @@
 export const BATTLE_KO = {
   "tutorial.lobby.sortie": "다음 관문으로 출격해 볼까요?",
   "tutorial.lobby.story": "스토리를 선택해 다음 관문으로 이동하세요.",
-  "tutorial.stage.enter": "1-2 관문에 진입해 볼까요?",
+  "tutorial.stage.enter": "{stage} 관문에 진입해 볼까요?",
   "tutorial.party.move": "렐릭을 다른 칸으로 끌어 편성을 바꿔 보세요.",
   "tutorial.party.hold": "편성된 렐릭을 꾹 눌러 정보를 확인해 보세요.",
   "tutorial.party.start": "편성이 준비됐어요. 출전해 볼까요?",

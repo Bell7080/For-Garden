@@ -2,7 +2,7 @@
 export const BATTLE_RU = {
   "tutorial.lobby.sortie": "Готовы к следующему этапу?",
   "tutorial.lobby.story": "Выберите сюжет, чтобы продолжить.",
-  "tutorial.stage.enter": "Войдите на этап 1-2.",
+  "tutorial.stage.enter": "Войдите на этап {stage}.",
   "tutorial.party.move": "Перетащите реликт в другую ячейку, чтобы изменить построение.",
   "tutorial.party.hold": "Удерживайте реликт в построении, чтобы открыть сведения.",
   "tutorial.party.start": "Построение готово. Начните бой!",

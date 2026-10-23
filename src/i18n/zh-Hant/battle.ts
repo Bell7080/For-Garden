@@ -2,7 +2,7 @@
 export const BATTLE_ZH_HANT = {
   "tutorial.lobby.sortie": "準備前往下一個關卡吧。",
   "tutorial.lobby.story": "選擇劇情，前往下一個關卡。",
-  "tutorial.stage.enter": "進入1-2關卡吧。",
+  "tutorial.stage.enter": "進入{stage}關卡吧。",
   "tutorial.party.move": "將遺物拖到其他位置，試著調整編隊。",
   "tutorial.party.hold": "長按已編隊的遺物，查看詳細資訊。",
   "tutorial.party.start": "編隊準備完畢，開始戰鬥吧！",

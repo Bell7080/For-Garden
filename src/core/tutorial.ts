@@ -154,6 +154,11 @@ export function advanceTutorialOnStageClear(state: TutorialState, stageId: strin
     ? { ...state, completedStepIds: [...state.completedStepIds, next] } : state;
 }
 
+/** 로비 안내 칸이 열리기 위해 이겨야 하는 직전 전투 관문 — 강화는 `auto` 관문, 선물·연구는 `contribution` 관문 뒤다. */
+export function lobbyTutorialGateStage(step: "feed" | "feedLevel" | "gift" | "pull"): string {
+  return TUTORIAL_BATTLE_STAGES[step === "feed" || step === "feedLevel" ? "auto" : "contribution"]!;
+}
+
 /** 광장에서 이어 갈 강화·연구 안내 칸(로비가 안내를 시작할 때). */
 export function lobbyTutorialStep(state: TutorialState): "feed" | "feedLevel" | "gift" | "pull" | undefined {
   const next = nextTutorialStep(state);

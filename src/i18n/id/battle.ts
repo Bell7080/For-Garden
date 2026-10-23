@@ -2,7 +2,7 @@
 export const BATTLE_ID = {
   "tutorial.lobby.sortie": "Siap menuju tahap berikutnya?",
   "tutorial.lobby.story": "Pilih Cerita untuk melanjutkan.",
-  "tutorial.stage.enter": "Masuki tahap 1-2.",
+  "tutorial.stage.enter": "Masuki tahap {stage}.",
   "tutorial.party.move": "Seret Relik ke slot lain untuk mengubah formasi.",
   "tutorial.party.hold": "Tekan lama Relik dalam formasi untuk melihat detailnya.",
   "tutorial.party.start": "Formasimu siap. Mulai pertempuran!",

@@ -2,7 +2,7 @@
 export const BATTLE_EN = {
   "tutorial.lobby.sortie": "Ready to deploy to the next stage?",
   "tutorial.lobby.story": "Choose Story to continue to the next stage.",
-  "tutorial.stage.enter": "Enter stage 1-2 to continue.",
+  "tutorial.stage.enter": "Enter stage {stage} to continue.",
   "tutorial.party.move": "Drag a Relic to another slot to change your formation.",
   "tutorial.party.hold": "Press and hold a Relic in your formation to view their details.",
   "tutorial.party.start": "Your formation is ready. Start the battle!",

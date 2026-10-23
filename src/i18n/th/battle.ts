@@ -2,7 +2,7 @@
 export const BATTLE_TH = {
   "tutorial.lobby.sortie": "พร้อมไปยังด่านต่อไปหรือยัง?",
   "tutorial.lobby.story": "เลือกเนื้อเรื่องเพื่อไปต่อ",
-  "tutorial.stage.enter": "เข้าสู่ด่าน 1-2 กันเถอะ",
+  "tutorial.stage.enter": "เข้าสู่ด่าน {stage} กันเถอะ",
   "tutorial.party.move": "ลาก เรลิก ไปช่องอื่นเพื่อเปลี่ยนการจัดทีม",
   "tutorial.party.hold": "กดเรลิกในการจัดทีมค้างไว้เพื่อดูรายละเอียด",
   "tutorial.party.start": "จัดทีมพร้อมแล้ว เริ่มต่อสู้กันเถอะ!",

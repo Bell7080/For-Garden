@@ -93,7 +93,7 @@ import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
 import { tutorialManager } from "../managers/TutorialManager";
-import { BATTLE_FEATURE_STEP, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
+import { BATTLE_FEATURE_STEP, lobbyTutorialGateStage, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
 import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { CompleteStageResponse, RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
@@ -2897,7 +2897,7 @@ export class BattleScene extends Phaser.Scene {
       let chosen = false;
       const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
       const tutorialStep = tutorialManager.lobbyStep();
-      const tutorialReturn = stage.id === "1-2" && (tutorialStep === "feed" || tutorialStep === "feedLevel") || stage.id === "1-5" && tutorialStep === "gift";
+      const tutorialReturn = tutorialStep !== undefined && tutorialStep !== "pull" && stage.id === lobbyTutorialGateStage(tutorialStep);
       const resultExit = tutorialReturn ? "lobby" : this.stageExit();
       const upcoming = nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [

@@ -753,7 +753,7 @@ init_define_import_meta_env();
 var BATTLE_KO = {
   "tutorial.lobby.sortie": "\uB2E4\uC74C \uAD00\uBB38\uC73C\uB85C \uCD9C\uACA9\uD574 \uBCFC\uAE4C\uC694?",
   "tutorial.lobby.story": "\uC2A4\uD1A0\uB9AC\uB97C \uC120\uD0DD\uD574 \uB2E4\uC74C \uAD00\uBB38\uC73C\uB85C \uC774\uB3D9\uD558\uC138\uC694.",
-  "tutorial.stage.enter": "1-2 \uAD00\uBB38\uC5D0 \uC9C4\uC785\uD574 \uBCFC\uAE4C\uC694?",
+  "tutorial.stage.enter": "{stage} \uAD00\uBB38\uC5D0 \uC9C4\uC785\uD574 \uBCFC\uAE4C\uC694?",
   "tutorial.party.move": "\uB810\uB9AD\uC744 \uB2E4\uB978 \uCE78\uC73C\uB85C \uB04C\uC5B4 \uD3B8\uC131\uC744 \uBC14\uAFD4 \uBCF4\uC138\uC694.",
   "tutorial.party.hold": "\uD3B8\uC131\uB41C \uB810\uB9AD\uC744 \uAFB9 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
   "tutorial.party.start": "\uD3B8\uC131\uC774 \uC900\uBE44\uB410\uC5B4\uC694. \uCD9C\uC804\uD574 \uBCFC\uAE4C\uC694?",
@@ -1116,6 +1116,10 @@ var RUNE_KO = {
   "rune.named": "{rarity} \uB8EC",
   "rune.notEquipped": "\uC7A5\uCC29 \uC548 \uD568",
   "rune.equippedBy": "\uC7A5\uCC29 \uC911 \xB7 {name}",
+  "rune.move.title": "\uB8EC \uC62E\uACA8 \uC7A5\uCC29",
+  "rune.move.message": "{name}\uC5D0\uAC8C\uC11C \uD574\uC81C\uD558\uACE0 \uC7A5\uCC29\uD560\uAE4C\uC694?",
+  "rune.bag.showHolder": "\uC7A5\uCC29\uC790",
+  "rune.bag.showEquipped": "\uC7A5\uCC29 \uC911",
   "rune.namePlaceholder": "\uB8EC \uC774\uB984 (1~16\uC790)",
   "rune.nameTitle": "\uB8EC \uC774\uB984",
   "rune.nameSaved": "\uC774\uB984\uC744 \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4.",
@@ -1564,6 +1568,26 @@ var MISC_KO = {
   "archaeology.bench.empty": "\uB8EC\uC744 \uB07C\uC6CC \uC8FC\uC138\uC694",
   "archaeology.tab.strata": "\uC9C0\uCE35 \uD0D0\uC0AC",
   "archaeology.tab.research": "\uD2B9\uC131 \uC5F0\uAD6C",
+  "archaeology.tab.synth": "\uB8EC \uD569\uC131",
+  "archaeology.synth.pick": "\uD569\uC131\uD560 \uB8EC",
+  "archaeology.synth.pickEmpty": "\uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE5C \uAC19\uC740 \uB4F1\uAE09\uC758 \uB8EC\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.odds": "\uACB0\uACFC \uD655\uB960",
+  "archaeology.synth.hint": "\uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE5C \uAC19\uC740 \uB4F1\uAE09\uC758 \uB8EC \uC14B\uC744 \uB123\uC5B4 \uC8FC\uC138\uC694.",
+  "archaeology.synth.traitNone": "\uD2B9\uC131 \uC5C6\uC74C",
+  "archaeology.synth.rarity": "\uB4F1\uAE09",
+  "archaeology.synth.trait": "\uD2B9\uC131",
+  "archaeology.synth.button": "\uD569\uC131",
+  "archaeology.synth.confirmTitle": "\uB8EC \uD569\uC131",
+  "archaeology.synth.confirmMessage": "\uB123\uC740 \uB8EC \uC14B\uC740 \uC0AC\uB77C\uC9C0\uACE0 \uC0C8 \uB8EC \uD558\uB098\uAC00 \uB9CC\uB4E4\uC5B4\uC9D1\uB2C8\uB2E4. \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "archaeology.synth.oddsTitle": "\uD569\uC131 \uD655\uB960",
+  "archaeology.synth.oddsRarity": "\uACB0\uACFC \uB4F1\uAE09",
+  "archaeology.synth.oddsInput": "\uB123\uC740 \uB4F1\uAE09",
+  "archaeology.synth.oddsSame": "\uAC19\uC740 \uB4F1\uAE09",
+  "archaeology.synth.oddsUp": "\uD55C \uB4F1\uAE09 \uC704",
+  "archaeology.synth.oddsGold": "\uACE8\uB4DC",
+  "archaeology.synth.oddsTrait": "\uACB0\uACFC \uD2B9\uC131",
+  "archaeology.synth.oddsBest": "\uCD5C\uACE0 \uD2B9\uC131",
+  "archaeology.synth.oddsNote": "\uB123\uC740 \uB8EC \uC911 \uAC00\uC7A5 \uB192\uC740 \uD2B9\uC131 \uB4F1\uAE09\uC774 \uC904\uC744 \uC815\uD569\uB2C8\uB2E4. \uD2B9\uC131 \uB2EC\uB9B0 \uB8EC\uC774 \uD558\uB098 \uB354 \uC788\uC744 \uB54C\uB9C8\uB2E4 \u300C\uD2B9\uC131 \uC5C6\uC74C\u300D\uC5D0\uC11C {shift}%\uAC00 \uADF8 \uB4F1\uAE09\uC73C\uB85C \uC62E\uACA8 \uAC11\uB2C8\uB2E4.",
   "archaeology.chargeCountdown": "{charges}/{max}",
   "archaeology.chargeFull": "{charges}/{max}",
   "archaeology.digsCount": "{current}/{max}",
@@ -3497,16 +3521,14 @@ function createStarterRunes(random) {
     return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
   });
 }
-var RUNE_SELL_VALUES = {
-  uncommon: { base: 100, perEnhancement: 20 },
-  rare: { base: 250, perEnhancement: 40 },
-  epic: { base: 600, perEnhancement: 80 },
-  legendary: { base: 1500, perEnhancement: 160 }
+var RUNE_SELL_RAW_STONE = {
+  uncommon: 20,
+  rare: 50,
+  epic: 150,
+  legendary: 400
 };
 function runeSellValue(rune) {
-  const rule = RUNE_SELL_VALUES[rune.rarity];
-  const attempts = Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0);
-  return rule.base + attempts * rule.perEnhancement;
+  return RUNE_SELL_RAW_STONE[rune.rarity];
 }
 
 // src/core/rarityScaling.ts
@@ -17147,7 +17169,7 @@ function attendanceTrackView(state, id, now) {
   if (id === "newcomer") {
     const done = track.claimed >= ATTENDANCE_DAYS;
     const open = !done || claimedToday;
-    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false };
+    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false, adClaimableDays: [] };
   }
   return {
     id,
@@ -17156,7 +17178,8 @@ function attendanceTrackView(state, id, now) {
     claimableToday: track.claimed < ATTENDANCE_DAYS && !claimedToday,
     endsAt: track.startDay ? windowEnd(track.startDay, REGULAR_ATTENDANCE_WINDOW_DAYS) : null,
     adClaimed: [...track.adClaimed],
-    adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed)
+    adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed),
+    adClaimableDays: Array.from({ length: track.claimed }, (_, index) => index + 1).filter((day) => !track.adClaimed.includes(day))
   };
 }
 function claimAttendanceDay(state, id, now) {
@@ -17168,12 +17191,13 @@ function claimAttendanceDay(state, id, now) {
   rolled[id] = { startDay: track.startDay || today, claimed: day, lastClaimDay: today, adClaimed: [...track.adClaimed] };
   return { state: rolled, day };
 }
-function claimAttendanceAdBonus(state, now) {
+function claimAttendanceAdBonus(state, now, day) {
   const rolled = rollAttendance(state, now);
-  if (!attendanceTrackView(rolled, "regular", now).adClaimableToday) return null;
-  const day = rolled.regular.claimed;
-  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
-  return { state: rolled, day };
+  const claimable = attendanceTrackView(rolled, "regular", now).adClaimableDays;
+  const target = day ?? (claimable.includes(rolled.regular.claimed) && rolled.regular.lastClaimDay === utcDateKey(now) ? rolled.regular.claimed : claimable[0]);
+  if (target === void 0 || !claimable.includes(target)) return null;
+  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, target].sort((a, b) => a - b) };
+  return { state: rolled, day: target };
 }
 
 // src/core/tutorial.ts
@@ -19229,7 +19253,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, runeBag: { showHolder: false, showEquipped: true } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -19281,7 +19305,9 @@ function normalizeSettings(value) {
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) }
+      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) },
+      // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
+      runeBag: { showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder), showEquipped: bool(record(g.runeBag).showEquipped, d.game.runeBag.showEquipped) }
     },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"], d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId }
@@ -29524,6 +29550,7 @@ var SHOP_PRODUCTS = [
   // **룬 칸 — 가끔만 나온다.** 주 무대는 고고학이고 다른 상점은 드물게, 조금 더 비싸게 판다.
   // 어느 기간에 어느 칸이 열리는지는 로테이션 순수 함수(`rotationOffer`)가 정하며, 값은 전부 고고학
   // 900(희귀)·3,000(영웅)원석을 기준으로 환산했다. 젬(다이아)으로는 팔지 않고 전설은 팔지 않는다.
+  { id: "arch-rune-random", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "\uB79C\uB364 \uB8EC", description: "\uB4F1\uAE09\xB7\uC790\uB9AC\xB7\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "rune", name: "\uB79C\uB364 \uB8EC", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-rune-daily-uncommon", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "\uACE0\uAE09 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "rawStone", amount: 300 }, grants: [{ kind: "rune", name: "\uACE0\uAE09 \uB8EC", amount: 1, rarity: "uncommon" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-daily-rare", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "\uD76C\uADC0 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "rawStone", amount: 900 }, grants: [{ kind: "rune", name: "\uD76C\uADC0 \uB8EC", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-weekly-epic", storefront: "archaeology", category: "weekly", iconKey: "shop-product-rune", name: "\uC601\uC6C5 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "rawStone", amount: 3e3 }, grants: [{ kind: "rune", name: "\uC601\uC6C5 \uB8EC", amount: 1, rarity: "epic" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-weekly-a" },
@@ -30770,6 +30797,86 @@ function rotationRunePart(slot, periodKey) {
   return Math.min(2, Math.floor(rotationRoll(`${slot.id}:part:${periodKey}`) * 3));
 }
 
+// src/core/runeSynthesis.ts
+init_define_import_meta_env();
+var RARITY_ORDER = ["uncommon", "rare", "epic", "legendary"];
+var RUNE_SYNTHESIS_INPUTS = 3;
+var RUNE_SYNTHESIS_RULES = {
+  /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). */
+  goldCost: { uncommon: 2e5, rare: 4e5, epic: 6e5, legendary: 1e6 },
+  /** 한 등급 위가 나올 확률(%). 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
+  upgradePercent: { uncommon: 35, rare: 25, epic: 12, legendary: 0 },
+  /**
+   * 결과 특성 확률(%) — 넣은 룬 중 **가장 높은 특성 등급**이 줄을 고른다. 칸 순서는 없음 → 고급 → 희귀 → 영웅 → 전설.
+   */
+  traitPercent: {
+    none: [85, 12, 3, 0, 0],
+    uncommon: [45, 40, 13, 2, 0],
+    rare: [30, 30, 30, 9, 1],
+    epic: [20, 20, 25, 30, 5],
+    legendary: [15, 15, 20, 30, 20]
+  },
+  /** 특성 달린 룬이 하나 더 있을 때마다 「없음」에서 떼어 최고 등급 칸에 얹는 몫(%). */
+  extraTraitShiftPercent: 10
+};
+function runeSynthesisRefusal(runes) {
+  if (runes.length !== RUNE_SYNTHESIS_INPUTS) return "count";
+  if (new Set(runes.map(({ instanceId }) => instanceId)).size !== runes.length) return "duplicate";
+  if (runes.some((rune) => rune.engravings.length === 0)) return "notEngraved";
+  if (runes.some(({ rarity }) => rarity !== runes[0].rarity)) return "rarityMismatch";
+  if (runes.some(({ locked }) => locked === true)) return "locked";
+  return null;
+}
+function runeSynthesisRarityOdds(rarity) {
+  const up = RUNE_SYNTHESIS_RULES.upgradePercent[rarity];
+  return { same: 100 - up, up, next: RARITY_ORDER[RARITY_ORDER.indexOf(rarity) + 1] };
+}
+function rollRuneSynthesisRarity(rarity, random) {
+  assertRandom(random);
+  const odds = runeSynthesisRarityOdds(rarity);
+  return odds.next !== void 0 && random * 100 < odds.up ? odds.next : rarity;
+}
+function runeSynthesisTraitOdds(traits) {
+  const present = traits.filter((trait) => trait !== void 0);
+  if (present.length === 0) return [...RUNE_SYNTHESIS_RULES.traitPercent.none];
+  const best = present.reduce((top, trait) => RUNE_TRAIT_GRADES.indexOf(trait.grade) > RUNE_TRAIT_GRADES.indexOf(top) ? trait.grade : top, present[0].grade);
+  const odds = [...RUNE_SYNTHESIS_RULES.traitPercent[best]];
+  const shift = Math.min(odds[0], (present.length - 1) * RUNE_SYNTHESIS_RULES.extraTraitShiftPercent);
+  odds[0] -= shift;
+  odds[RUNE_TRAIT_GRADES.indexOf(best) + 1] += shift;
+  return odds;
+}
+function rollRuneSynthesisTraitGrade(traits, random) {
+  assertRandom(random);
+  const odds = runeSynthesisTraitOdds(traits);
+  let cursor = random * 100;
+  for (let index = 0; index < odds.length; index += 1) {
+    cursor -= odds[index];
+    if (cursor < 0) return index === 0 ? void 0 : RUNE_TRAIT_GRADES[index - 1];
+  }
+  let last = odds.length - 1;
+  while (last > 0 && odds[last] <= 0) last -= 1;
+  return last === 0 ? void 0 : RUNE_TRAIT_GRADES[last - 1];
+}
+function rollRuneSynthesisPart(parts, random) {
+  assertRandom(random);
+  if (parts.length === 0) throw new RangeError("\uC790\uB9AC\uB97C \uACE0\uB97C \uC7AC\uB8CC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  return parts[Math.min(parts.length - 1, Math.floor(random * parts.length))];
+}
+function assertRandom(random) {
+  if (!Number.isFinite(random) || random < 0 || random >= 1) throw new RangeError("\uD569\uC131 \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
+}
+var RANDOM_RUNE_RARITY_PERCENT = { uncommon: 50, rare: 35, epic: 13, legendary: 2 };
+function rollRandomRuneRarity(random) {
+  assertRandom(random);
+  let cursor = random * 100;
+  for (const rarity of RARITY_ORDER) {
+    cursor -= RANDOM_RUNE_RARITY_PERCENT[rarity];
+    if (cursor < 0) return rarity;
+  }
+  return "legendary";
+}
+
 // src/data/runeRotation.ts
 init_define_import_meta_env();
 var ROTATION_SLOTS = [
@@ -30905,7 +31012,7 @@ var managerEvents = new ManagerEvents();
 
 // src/managers/InventoryManager.ts
 var DEFAULT_INVENTORY_SORT = { key: "acquired", direction: "asc" };
-var RARITY_ORDER = { uncommon: 0, rare: 1, epic: 2, legendary: 3 };
+var RARITY_ORDER2 = { uncommon: 0, rare: 1, epic: 2, legendary: 3 };
 var pendingRecharges = /* @__PURE__ */ new WeakMap();
 var InventoryManager = class {
   constructor(state, events = managerEvents) {
@@ -31039,6 +31146,18 @@ var InventoryManager = class {
   async renameRune(api, instanceId, name) {
     return this.applyRuneMutation(await api.renameRune({ runeInstanceId: instanceId, name }));
   }
+  /** 각인 완료 룬 셋을 합성한다. 응답의 확정 스냅샷(룬 목록·지갑)만 반영한다. */
+  async synthesizeRunes(api, instanceIds, requestId = crypto.randomUUID()) {
+    const response = await api.synthesizeRunes({ requestId, runeInstanceIds: instanceIds });
+    if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
+    if (!hasRemoteState(response)) {
+      for (const { relicId, slots } of response.inventory.equipment) {
+        const progress = this.state.relicProgress[relicId];
+        if (progress) progress.heartGemSlots = [...slots];
+      }
+    }
+    return this.applyRuneMutation(response);
+  }
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */
   async sellRunes(api, instanceIds, requestId = crypto.randomUUID()) {
     const response = await api.sellRunes({ requestId, instanceIds });
@@ -31062,7 +31181,7 @@ var InventoryManager = class {
       const definition = findItem("rune");
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null)));
       const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
-      const value = ({ rune, index }) => sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const value = ({ rune, index }) => sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER2[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
       const direction = sort.direction === "asc" ? 1 : -1;
       return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune", category, id: rune.instanceId, definition, quantity: 1, rune }));
     }
@@ -31496,6 +31615,7 @@ var FakeServer = class {
   mails;
   /** 운영 DB의 requestId 고유 제약을 흉내 내 판매 재전송에 최초 확정 영수증을 돌려준다. */
   runeSaleResults = /* @__PURE__ */ new Map();
+  runeSynthesisResults = /* @__PURE__ */ new Map();
   /** 일반 스테이지 입장 재전송이 중복 승리 대기 건을 만들지 않게 하는 서버 영수증 표다. */
   stageAdmissionResults = /* @__PURE__ */ new Map();
   /** 입장 때 커밋한 요청을 보관하고 완료 정산이 해당 전투의 대기 건 하나만 소비하게 한다. */
@@ -31698,7 +31818,8 @@ var FakeServer = class {
       days: ATTENDANCE_REWARDS[view.id].map((reward) => ({ ...reward })),
       ...view.id === "regular" ? { adDays: ATTENDANCE_AD_REWARDS.map((reward) => ({ ...reward })) } : {},
       adClaimed: view.adClaimed,
-      adClaimableToday: view.adClaimableToday
+      adClaimableToday: view.adClaimableToday,
+      adClaimableDays: view.adClaimableDays
     }));
     const autoShow = tracks.some(({ claimableToday }) => claimableToday) && state.autoShownDay !== utcDateKey(now);
     return { tracks, autoShow, serverTime: now.toISOString() };
@@ -31720,7 +31841,7 @@ var FakeServer = class {
     if (!claimed) throw new GameApiError("INVALID_STATE", "\uC624\uB298\uC740 \uBC1B\uC744 \uCD9C\uC11D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     return this.settleAttendance(request.requestId, claimed.state, request.trackId, claimed.day, ATTENDANCE_REWARDS[request.trackId][claimed.day - 1], now);
   }
-  /** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰을 먼저 확인하고, 하루 한 번만 준다. */
+  /** 정규 출석의 광고 덤을 받는다(지나간 날 포함). 광고 완료 토큰을 먼저 확인하고, 일차마다 한 번만 준다. */
   async claimAttendanceAd(request) {
     await this.delay();
     const cached = this.readReceipt("attendanceAd", request.requestId, "regular");
@@ -31728,8 +31849,8 @@ var FakeServer = class {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uCD9C\uC11D \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
     if (!request.verificationToken || !await this.verifyAdToken(request.verificationToken, ATTENDANCE_AD_SLOT_ID)) throw new GameApiError("AD_TOKEN_INVALID", "\uAD11\uACE0 \uC644\uB8CC\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const now = this.now();
-    const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now);
-    if (!claimed) throw new GameApiError("INVALID_STATE", "\uC624\uB298 \uBC1B\uC744 \uAD11\uACE0 \uB364\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now, request.day);
+    if (!claimed) throw new GameApiError("INVALID_STATE", "\uBC1B\uC744 \uAD11\uACE0 \uB364\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     return this.settleAttendance(request.requestId, claimed.state, "regular", claimed.day, ATTENDANCE_AD_REWARDS[claimed.day - 1], now, "attendanceAd");
   }
   /** 출석 한 칸(본 몫·광고 덤)을 지급하고 저장한다. 지급은 우편과 같은 상한 규칙(재화는 깎고, 아이템은 가방 한도까지)이다. */
@@ -34374,6 +34495,12 @@ var FakeServer = class {
     const grantedRunes = [];
     for (const grant of product.grants) {
       if (grant.kind !== "rune") continue;
+      if (grant.randomRarity) {
+        for (let count3 = 0; count3 < quantity * grant.amount; count3 += 1) {
+          grantedRunes.push(this.createGrantedRune(rollRandomRuneRarity(this.random()), [...nextRunes, ...grantedRunes]));
+        }
+        continue;
+      }
       const choice = this.resolveRuneChoice(grant, this.runePartOf(product, now), request.runeChoice);
       for (let count3 = 0; count3 < quantity * grant.amount; count3 += 1) {
         const rune = this.createGrantedRune(grant.rarity, [...nextRunes, ...grantedRunes], choice.part, choice.mainKeys);
@@ -34628,7 +34755,7 @@ var FakeServer = class {
     this.state.relicStory = nextStory;
     return { gemsGranted, wallet: { ...nextWallet }, serverTime: this.now().toISOString() };
   }
-  /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 골드 지급을 한 번만 저장한다. */
+  /** 존재·중복·장착·상한을 모두 복제 상태에서 검증한 뒤 제거와 원석 지급을 한 번만 저장한다. */
   async sellRunes(request) {
     await this.delay();
     const cached = this.runeSaleResults.get(request.requestId);
@@ -34638,16 +34765,50 @@ var FakeServer = class {
     const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null)));
     if (selected.some(({ instanceId }) => equipped.has(instanceId))) throw new GameApiError("RUNE_EQUIPPED", "\uC7A5\uCC29 \uC911\uC778 \uB8EC\uC740 \uD310\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (selected.some(({ locked }) => locked)) throw new GameApiError("RUNE_LOCKED", "\uC7A0\uADFC \uB8EC\uC740 \uD310\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const goldAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
-    if (this.state.wallet.gold + goldAwarded > WALLET_CAPS.gold) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "\uACE8\uB4DC \uC0C1\uD55C\uC744 \uCD08\uACFC\uD574 \uD310\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const rawStoneAwarded = selected.reduce((sum, rune) => sum + runeSellValue(rune), 0);
+    if (this.state.wallet.rawStone + rawStoneAwarded > WALLET_CAPS.rawStone) throw new GameApiError("CURRENCY_LIMIT_EXCEEDED", "\uC6D0\uC11D \uC0C1\uD55C\uC744 \uCD08\uACFC\uD574 \uD310\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const sold = new Set(request.instanceIds);
     const nextRunes = this.state.runeInventory.filter(({ instanceId }) => !sold.has(instanceId));
-    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold + goldAwarded };
+    const nextWallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone + rawStoneAwarded };
     this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet });
     this.state.runeInventory = nextRunes;
     this.state.wallet = nextWallet;
-    const response = { inventory: this.runeInventoryDto(), wallet: { ...nextWallet }, goldAwarded };
+    const response = { inventory: this.runeInventoryDto(), wallet: { ...nextWallet }, rawStoneAwarded };
     this.runeSaleResults.set(request.requestId, structuredClone(response));
+    return response;
+  }
+  /**
+   * 룬 합성. 조건(각인 완료 · 같은 등급 · 미장착 · 잠금 해제)을 검증하고 골드를 치른 뒤 세 룬을 지우고
+   * 새 룬 하나를 한 번에 저장한다. 같은 requestId는 같은 결과를 돌려준다.
+   */
+  async synthesizeRunes(request) {
+    await this.delay();
+    const cached = this.runeSynthesisResults.get(request.requestId);
+    if (cached) return structuredClone(cached);
+    if (!request.requestId) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "\uD569\uC131 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const selected = request.runeInstanceIds.map((id) => this.ownedRune(id));
+    const refusal = runeSynthesisRefusal(selected);
+    if (refusal === "locked") throw new GameApiError("RUNE_LOCKED", "\uC7A0\uADFC \uB8EC\uC740 \uD569\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (refusal !== null) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "\uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE5C \uAC19\uC740 \uB4F1\uAE09 \uB8EC \uC14B\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const rarity = selected[0].rarity;
+    const goldSpent = RUNE_SYNTHESIS_RULES.goldCost[rarity];
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uD569\uC131\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const resultRarity = rollRuneSynthesisRarity(rarity, this.random());
+    const part = rollRuneSynthesisPart(selected.map((rune2) => rune2.part), this.random());
+    const consumed = new Set(selected.map(({ instanceId }) => instanceId));
+    const remaining = this.state.runeInventory.filter(({ instanceId }) => !consumed.has(instanceId));
+    const base = this.createGrantedRune(resultRarity, this.state.runeInventory, part);
+    const traitGrade = rollRuneSynthesisTraitGrade(selected.map((rune2) => rune2.trait), this.random());
+    const rune = traitGrade === void 0 ? base : { ...base, trait: { id: RUNE_TRAIT_IDS[Math.min(RUNE_TRAIT_IDS.length - 1, Math.floor(this.random() * RUNE_TRAIT_IDS.length))], grade: traitGrade, upgradeMisses: 0 } };
+    const nextRunes = [...remaining, rune];
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id, progress.heartGemSlots.some((slot) => slot !== null && consumed.has(slot)) ? { ...progress, heartGemSlots: progress.heartGemSlots.map((slot) => slot !== null && consumed.has(slot) ? null : slot) } : progress]));
+    this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet, relicProgress: nextProgress });
+    this.state.runeInventory = nextRunes;
+    this.state.wallet = nextWallet;
+    this.state.relicProgress = nextProgress;
+    const response = { rune: this.cloneRune(rune), upgraded: resultRarity !== rarity, goldSpent, wallet: { ...nextWallet }, inventory: this.runeInventoryDto() };
+    this.runeSynthesisResults.set(request.requestId, structuredClone(response));
     return response;
   }
   /** 전체 렐릭 슬롯을 조회해 다른 슬롯에 이미 장착된 룬을 거부한다. */
@@ -34657,11 +34818,16 @@ var FakeServer = class {
     if (!this.state.owned.has(request.relicId)) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     this.assertRuneSlot(request.slotIndex);
     if (this.ownedRune(request.runeInstanceId).part !== request.slotIndex) throw new GameApiError("RUNE_SLOT_MISMATCH", "\uC774 \uB8EC\uC740 \uB2E4\uB978 \uCE78\uC758 \uC870\uAC01\uC785\uB2C8\uB2E4.");
-    if (Object.values(this.state.relicProgress).some(({ heartGemSlots }) => heartGemSlots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "\uC774\uBBF8 \uB2E4\uB978 \uB810\uB9AD \uB610\uB294 \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uB41C \uB8EC\uC785\uB2C8\uB2E4.");
-    const target = this.state.relicProgress[request.relicId];
+    const holders = Object.entries(this.state.relicProgress).filter(([, { heartGemSlots }]) => heartGemSlots.includes(request.runeInstanceId));
+    if (holders.length > 0 && !request.moveFromOther) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "\uC774\uBBF8 \uB2E4\uB978 \uB810\uB9AD \uB610\uB294 \uC2AC\uB86F\uC5D0 \uC7A5\uCC29\uB41C \uB8EC\uC785\uB2C8\uB2E4.");
+    const nextProgress = { ...this.state.relicProgress };
+    for (const [holderId, holder] of holders) {
+      nextProgress[holderId] = { ...holder, heartGemSlots: holder.heartGemSlots.map((id) => id === request.runeInstanceId ? null : id) };
+    }
+    const target = nextProgress[request.relicId];
     const slots = [...target.heartGemSlots];
     slots[request.slotIndex] = request.runeInstanceId;
-    const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
+    nextProgress[request.relicId] = { ...target, heartGemSlots: slots };
     const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
     this.state.relicProgress = nextProgress;
@@ -35441,8 +35607,8 @@ var RelicProgressionManager = class {
     this.persistSharedSession();
   }
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
-  async equipRune(relicId, slotIndex, runeInstanceId, api = gameApi) {
-    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
+  async equipRune(relicId, slotIndex, runeInstanceId, api = gameApi, options = {}) {
+    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId, ...options.moveFromOther ? { moveFromOther: true } : {} });
     if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
   /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
@@ -35906,6 +36072,7 @@ var SERVER_GAME_METHODS = [
   "submitRaidDamage",
   "summonRaid",
   "sweepBounty",
+  "synthesizeRunes",
   "sweepCakeOperation",
   "sweepExpedition",
   "unequipRune",

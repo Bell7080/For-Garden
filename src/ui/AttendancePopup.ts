@@ -169,11 +169,12 @@ export function openAttendancePopup(scene: Phaser.Scene, popups: PopupLayer, tra
         }
         const adReward = current.adDays?.[index];
         if (rect.adY === undefined || !adReward) continue;
+        // 지나간 날의 덤도 바퀴가 끝나기 전까지는 광고를 보고 받을 수 있다.
         const adState: TileState = current.adClaimed.includes(rect.day) ? "claimed"
-          : current.adClaimableToday && rect.day === current.claimed ? "today"
+          : current.adClaimableDays.includes(rect.day) ? "today"
             : index < current.claimed ? "missed" : "ahead";
         const ad = addTile(scene, grid, { x: rect.x, y: rect.adY, size: rect.size, day: rect.day, reward: adReward, state: adState, kind: "ad", track: current });
-        if (adState === "today") ad.onTap = () => claim(ad, () => attendanceManager.claimAd());
+        if (adState === "today") ad.onTap = () => claim(ad, () => attendanceManager.claimAd(undefined, undefined, rect.day));
       }
     };
     paint();

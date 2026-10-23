@@ -973,13 +973,18 @@ export interface AttendanceTrackDto {
   adClaimed: number[];
   /** 오늘 받은 칸의 광고 덤을 지금 받을 수 있는가. */
   adClaimableToday: boolean;
+  /** 지금 광고를 보고 받을 수 있는 덤의 일차(지나간 날 포함, 바퀴가 끝나기 전까지). */
+  adClaimableDays: number[];
 }
 /** 지금 서 있는 줄만 싣는다(끝난 신규 출석은 빠진다). `autoShow`는 오늘 로비가 저절로 판을 열어야 하는가다. */
 export interface AttendanceStatusResponse { tracks: AttendanceTrackDto[]; autoShow: boolean; serverTime: string; }
 export interface ClaimAttendanceRequest { trackId: import("../core/attendance").AttendanceTrackId; requestId: string; }
 export interface ClaimAttendanceResponse extends AttendanceStatusResponse { trackId: import("../core/attendance").AttendanceTrackId; day: number; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
-/** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰은 출석 광고 자리(`ATTENDANCE_AD_SLOT_ID`)의 것이어야 한다. */
-export interface ClaimAttendanceAdRequest { verificationToken: string; requestId: string; }
+/**
+ * 정규 출석의 광고 덤을 받는다. 광고 완료 토큰은 출석 광고 자리(`ATTENDANCE_AD_SLOT_ID`)의 것이어야 한다.
+ * `day`는 받을 일차(1~7)이며, 없으면 오늘 칸의 덤, 그것도 없으면 가장 오래된 못 받은 덤이다.
+ */
+export interface ClaimAttendanceAdRequest { verificationToken: string; requestId: string; day?: number; }
 
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
 export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "dailyLimitReached" | "developmentOnly";

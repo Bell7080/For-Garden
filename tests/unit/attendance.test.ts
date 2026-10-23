@@ -37,17 +37,23 @@ describe("출석", () => {
     }
   });
 
-  it("광고 덤은 그날 받은 칸에만 하루 한 번 붙는다", () => {
+  it("광고 덤은 받은 칸마다 한 번, 그날 못 받아도 바퀴 안에서는 나중에 받는다", () => {
     const first = claimAttendanceDay(createEmptyAttendanceState(), "regular", day(0))!;
     expect(claimAttendanceAdBonus(createEmptyAttendanceState(), day(0))).toBeNull();
     const ad = claimAttendanceAdBonus(first.state, day(0))!;
     expect(ad.day).toBe(1);
     expect(claimAttendanceAdBonus(ad.state, day(0))).toBeNull();
-    // 다음 날은 그날 칸을 받기 전에는 덤이 없고, 지나간 1일차 덤은 다시 열리지 않는다.
-    expect(claimAttendanceAdBonus(first.state, day(1))).toBeNull();
+    // 다음 날: 1일차 덤을 안 받았다면 칸을 받기 전에도, 받은 뒤에도 광고로 받을 수 있다.
+    expect(claimAttendanceAdBonus(first.state, day(1))?.day).toBe(1);
     const second = claimAttendanceDay(first.state, "regular", day(1))!;
+    expect(attendanceTrackView(rollAttendance(second.state, day(1)), "regular", day(1)).adClaimableDays).toEqual([1, 2]);
+    // 일차를 정하지 않으면 오늘 칸의 덤이 먼저, 일차를 정하면 그 덤만 받는다.
     expect(claimAttendanceAdBonus(second.state, day(1))?.day).toBe(2);
-    expect(isValidAttendanceState(ad.state)).toBe(true);
+    const old = claimAttendanceAdBonus(second.state, day(1), 1)!;
+    expect(old.day).toBe(1);
+    expect(claimAttendanceAdBonus(old.state, day(1), 1)).toBeNull();
+    expect(claimAttendanceAdBonus(second.state, day(1), 3)).toBeNull();
+    expect(isValidAttendanceState(old.state)).toBe(true);
   });
 
   it("신규를 받은 같은 날 정규도 받는다 — 두 줄은 서로를 막지 않는다", async () => {
@@ -175,7 +181,7 @@ describe("출석 판·이벤트 목록", () => {
   });
 
   it("출석이 기간 이벤트보다 먼저 선다", () => {
-    const track = { id: "regular" as const, claimed: 0, claimableToday: true, endsAt: null, days: [], adClaimed: [], adClaimableToday: false };
+    const track = { id: "regular" as const, claimed: 0, claimableToday: true, endsAt: null, days: [], adClaimed: [], adClaimableToday: false, adClaimableDays: [] };
     const entries = lobbyEventEntries([track], Date.parse("2026-10-01T00:00:00Z"));
     expect(entries[0].kind).toBe("attendance");
     expect(entries.slice(1).every(({ kind }) => kind === "event")).toBe(true);

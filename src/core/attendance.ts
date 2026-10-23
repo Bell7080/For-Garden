@@ -27,8 +27,8 @@ export interface AttendanceTrackState {
   /** 마지막으로 받은 UTC 날짜. 같은 날 두 칸을 받지 못하게 한다. */
   lastClaimDay: string;
   /**
-   * 이 바퀴에서 광고 덤을 받은 일차(1~7, 오름차순). 정규만 쓴다 — 덤은 **그날 받은 칸**에만 붙으므로
-   * 하루에 한 번이고, 지나간 날의 덤은 다시 열리지 않는다.
+   * 이 바퀴에서 광고 덤을 받은 일차(1~7, 오름차순). 정규만 쓴다 — 덤은 **받은 칸**에만 붙고 일차마다 한 번이다.
+   * 그날 받지 않은 덤도 바퀴가 끝나기 전까지는 광고를 보고 나중에 받을 수 있다.
    */
   adClaimed: number[];
 }
@@ -113,6 +113,8 @@ export interface AttendanceTrackView {
   adClaimed: number[];
   /** 오늘 받은 칸의 광고 덤을 지금 받을 수 있는가(정규만). 참이면 `claimed`번째 일차(1부터)의 덤이다. */
   adClaimableToday: boolean;
+  /** 지금 광고를 보고 받을 수 있는 덤의 일차(1부터, 오름차순). 받은 칸 중 덤을 아직 안 받은 날 전부이며, 지나간 날도 든다(정규만). */
+  adClaimableDays: number[];
 }
 
 function windowEnd(startDay: string, days: number): string {
@@ -130,7 +132,7 @@ export function attendanceTrackView(state: AttendanceState, id: AttendanceTrackI
     const done = track.claimed >= ATTENDANCE_DAYS;
     // 일곱째 칸을 받은 날은 그 도장을 보도록 판을 남긴다 — 다음 날부터 서지 않는다.
     const open = !done || claimedToday;
-    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false };
+    return { id, open, claimed: track.claimed, claimableToday: open && !done && !claimedToday, endsAt: null, adClaimed: [], adClaimableToday: false, adClaimableDays: [] };
   }
   return {
     id, open: true, claimed: track.claimed,
@@ -138,6 +140,7 @@ export function attendanceTrackView(state: AttendanceState, id: AttendanceTrackI
     endsAt: track.startDay ? windowEnd(track.startDay, REGULAR_ATTENDANCE_WINDOW_DAYS) : null,
     adClaimed: [...track.adClaimed],
     adClaimableToday: claimedToday && track.claimed >= 1 && !track.adClaimed.includes(track.claimed),
+    adClaimableDays: Array.from({ length: track.claimed }, (_, index) => index + 1).filter((day) => !track.adClaimed.includes(day)),
   };
 }
 
@@ -152,13 +155,17 @@ export function claimAttendanceDay(state: AttendanceState, id: AttendanceTrackId
   return { state: rolled, day };
 }
 
-/** 정규 출석에서 오늘 받은 칸의 광고 덤을 받은 상태. 받을 수 없으면 `null`이다(오늘 칸을 아직 안 받았거나 이미 받았다). */
-export function claimAttendanceAdBonus(state: AttendanceState, now: Date): { state: AttendanceState; day: number } | null {
+/**
+ * 정규 출석의 광고 덤을 받은 상태. `day`를 주지 않으면 오늘 받은 칸의 덤을, 없으면 가장 오래된 못 받은 덤을 받는다.
+ * 받을 칸이 아니거나 이미 받은 일차면 `null`이다.
+ */
+export function claimAttendanceAdBonus(state: AttendanceState, now: Date, day?: number): { state: AttendanceState; day: number } | null {
   const rolled = rollAttendance(state, now);
-  if (!attendanceTrackView(rolled, "regular", now).adClaimableToday) return null;
-  const day = rolled.regular.claimed;
-  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, day].sort((a, b) => a - b) };
-  return { state: rolled, day };
+  const claimable = attendanceTrackView(rolled, "regular", now).adClaimableDays;
+  const target = day ?? (claimable.includes(rolled.regular.claimed) && rolled.regular.lastClaimDay === utcDateKey(now) ? rolled.regular.claimed : claimable[0]);
+  if (target === undefined || !claimable.includes(target)) return null;
+  rolled.regular = { ...rolled.regular, adClaimed: [...rolled.regular.adClaimed, target].sort((a, b) => a - b) };
+  return { state: rolled, day: target };
 }
 
 /** 어느 줄이든 오늘 받을 칸이 남았는가 — 로비의 빨간 점과 저절로 여는 판이 함께 읽는다. */

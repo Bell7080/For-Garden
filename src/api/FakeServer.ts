@@ -454,7 +454,7 @@ export class FakeServer implements GameApi {
       id: view.id, claimed: view.claimed, claimableToday: view.claimableToday, endsAt: view.endsAt,
       days: ATTENDANCE_REWARDS[view.id].map((reward) => ({ ...reward })),
       ...(view.id === "regular" ? { adDays: ATTENDANCE_AD_REWARDS.map((reward) => ({ ...reward })) } : {}),
-      adClaimed: view.adClaimed, adClaimableToday: view.adClaimableToday,
+      adClaimed: view.adClaimed, adClaimableToday: view.adClaimableToday, adClaimableDays: view.adClaimableDays,
     }));
     const autoShow = tracks.some(({ claimableToday }) => claimableToday) && state.autoShownDay !== utcDateKey(now);
     return { tracks, autoShow, serverTime: now.toISOString() };
@@ -477,15 +477,15 @@ export class FakeServer implements GameApi {
     return this.settleAttendance(request.requestId, claimed.state, request.trackId, claimed.day, ATTENDANCE_REWARDS[request.trackId][claimed.day - 1], now);
   }
 
-  /** 정규 출석의 오늘 칸에 붙은 광고 덤을 받는다. 광고 완료 토큰을 먼저 확인하고, 하루 한 번만 준다. */
+  /** 정규 출석의 광고 덤을 받는다(지나간 날 포함). 광고 완료 토큰을 먼저 확인하고, 일차마다 한 번만 준다. */
   async claimAttendanceAd(request: ClaimAttendanceAdRequest): Promise<ClaimAttendanceResponse> {
     await this.delay(); const cached = this.readReceipt<ClaimAttendanceResponse>("attendanceAd", request.requestId, "regular");
     if (cached) return { ...cached, ...this.attendanceDto(this.attendanceNow(this.now()), this.now()), wallet: { ...this.state.wallet }, items: this.inventoryDto(this.state).items };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "출석 요청 ID가 필요합니다.");
     if (!request.verificationToken || !(await this.verifyAdToken(request.verificationToken, ATTENDANCE_AD_SLOT_ID))) throw new GameApiError("AD_TOKEN_INVALID", "광고 완료를 확인할 수 없습니다.");
     const now = this.now();
-    const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now);
-    if (!claimed) throw new GameApiError("INVALID_STATE", "오늘 받을 광고 덤이 없습니다.");
+    const claimed = claimAttendanceAdBonus(this.attendanceNow(now), now, request.day);
+    if (!claimed) throw new GameApiError("INVALID_STATE", "받을 광고 덤이 없습니다.");
     return this.settleAttendance(request.requestId, claimed.state, "regular", claimed.day, ATTENDANCE_AD_REWARDS[claimed.day - 1], now, "attendanceAd");
   }
 

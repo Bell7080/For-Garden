@@ -29,14 +29,14 @@ export class AttendanceManager {
   }
 
   /**
-   * 정규 출석의 오늘 칸에 붙은 광고 덤 — 광고를 보이고, 끝까지 봤을 때만 서버에 받으러 간다.
+   * 정규 출석의 광고 덤(`day` 없으면 서버가 오늘 칸, 없으면 가장 오래된 못 받은 덤을 고른다) — 광고를 보이고, 끝까지 봤을 때만 서버에 받으러 간다.
    * 취소·SDK 미준비는 성공을 흉내 내지 않고 `undefined`를 돌려준다.
    */
-  async claimAd(present: (slotId: string) => ReturnType<typeof presentRewardedAd> = presentRewardedAd, requestId: string = crypto.randomUUID()): Promise<ClaimAttendanceResponse | undefined> {
+  async claimAd(present: (slotId: string) => ReturnType<typeof presentRewardedAd> = presentRewardedAd, requestId: string = crypto.randomUUID(), day?: number): Promise<ClaimAttendanceResponse | undefined> {
     const verificationToken = completedAdToken(await present(ATTENDANCE_AD_SLOT_ID));
     if (!verificationToken) return undefined;
     try {
-      return this.apply(await this.api.claimAttendanceAd({ verificationToken, requestId }));
+      return this.apply(await this.api.claimAttendanceAd({ verificationToken, requestId, ...(day !== undefined ? { day } : {}) }));
     } finally {
       releaseAdWait();
     }

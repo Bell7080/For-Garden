@@ -814,12 +814,12 @@ describe("루카 전투 계약", () => {
     luka.hp = 1; luka.ferocityFever = false; expect(activeCombatBuffs(state, same.id)).toHaveLength(0);
   });
 
-  it("는 네 번째 실제 기본 공격을 난수 소비 없이 확정 치명타로 만들고 주기를 초기화한다", () => {
+  it("는 세 번째 실제 기본 공격을 난수 소비 없이 확정 치명타로 만들고 주기를 초기화한다", () => {
     const durable = { ...getRelic("amo"), stats: { ...getRelic("amo").stats, hp: 100_000 } };
     const state = createSkirmish([getRelic("luka")], [durable], { left: 0, right: 600, top: 0, bottom: 1_000 });
     let rolls = 0; const criticals: boolean[] = [];
     for (let index = 0; index < 5; index += 1) criticals.push(hitOnce(state, () => { rolls += 1; return 0.99; }).find((event) => event.kind === "attack")!.critical);
-    expect(criticals).toEqual([false, false, false, true, false]); expect(rolls).toBe(4); expect(state.fighters[0].basicAttackCount).toBe(1);
+    expect(criticals).toEqual([false, false, true, false, false]); expect(rolls).toBe(4); expect(state.fighters[0].basicAttackCount).toBe(2);
   });
 
   it("는 주 대상 최종 HP 손실의 75%를 주 대상 기준 가장 가까운 다른 적에게만 전이한다", () => {

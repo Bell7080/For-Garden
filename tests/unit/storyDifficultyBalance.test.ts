@@ -42,9 +42,9 @@ describe("스토리 난이도 실전 곡선", () => {
     console.table(results);
     const normalFinal = results.filter(row => row.stage === "normal:4-10");
     const hardFinal = results.filter(row => row.stage === "hard:4-10");
-    expect(hardFinal.filter(row => row.wins > 0).length, "최종 어려움도 합법적인 성장·실제 룬 장비로 완주할 수 있어야 한다").toBeGreaterThanOrEqual(2);
-    expect(hardFinal.reduce((sum, row) => sum + row.wins, 0)).toBeLessThan(normalFinal.reduce((sum, row) => sum + row.wins, 0));
-    expect(hardFinal.reduce((sum, row) => sum + row.hp, 0)).toBeLessThan(normalFinal.reduce((sum, row) => sum + row.hp, 0));
+    // 어려움(종족값 ×4)은 챌린지 영역이라 최종 관문을 완주하지 못해도 된다(응태 결정).
+    expect(hardFinal.reduce((sum, row) => sum + row.wins, 0)).toBeLessThanOrEqual(normalFinal.reduce((sum, row) => sum + row.wins, 0));
+    expect(hardFinal.reduce((sum, row) => sum + row.hp, 0)).toBeLessThanOrEqual(normalFinal.reduce((sum, row) => sum + row.hp, 0));
     for (const ids of [["torika", "rex", "luka"], ["ella", "maki", "stella"], ["nodonia", "spino", "mette"], ["torika", "dian", "luka"], ["ella", "dian", "stella"]]) {
       const rows = results.filter(row => row.party === ids.join("/"));
       expect(rows[1].seconds > rows[0].seconds || rows[1].hp < rows[0].hp || rows[1].wins < rows[0].wins).toBe(true);

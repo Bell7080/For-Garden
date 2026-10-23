@@ -1014,7 +1014,7 @@ describe("루카 한계 돌파", () => {
       }
       return bleedAtAttack;
     };
-    expect(run(1)).toBe(4);
+    expect(run(1)).toBe(3);
     expect(run(0)).toBe(-1);
   });
 
@@ -1509,7 +1509,7 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
         const state = setup(["keris"], ["toby", "amo"], breakthrough);
         const keris = findFighter(state, "player-0")!;
         const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
-        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
+        applyFrenzy(a, { kind: "frenzy", seconds: 4 }, keris.id);
         a.attackCooldown = 0; a.targetId = b.id;
         run(state, 1);
         return b.curse?.stacks ?? 0;
@@ -1525,7 +1525,7 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
         keris.ferocityFever = true; keris.ferocity = ferocityMaxOf(keris.def);
         const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
         a.maxHp = 100; a.hp = 1;
-        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
+        applyFrenzy(a, { kind: "frenzy", seconds: 4 }, keris.id);
         refreshBleed(a, 5, 50, [], keris.id);
         run(state, 1.5);
         return b.curse?.stacks ?? 0;

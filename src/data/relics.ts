@@ -150,7 +150,7 @@ const FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 200,
+  burstPower: 120,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30,
@@ -601,13 +601,15 @@ export const RELICS: RelicDef[] = [
       value: 0,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 15,
-      desc: "전투 시작 시 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
+      // 전투 시작 은신은 암살자 정체성의 일부다 — 델로피(5초)와 같은 필드를 읽는다.
+      openingStealthSeconds: 5,
+      desc: "전투 시작 시 5초 동안 은신하고, 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
     },
     basic: {
       id: "luka-basic",
       name: "치명적인 발톱",
       power: 100,
-      periodicCritical: { every: 4 },
+      periodicCritical: { every: 3 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -838,7 +840,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 },
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
     },
     ultimate: {
       id: "tia-ult",
@@ -1381,7 +1383,8 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "irna-basic",
       name: "장전된 한 발",
-      power: 130,
+      // 기본 공격 위력 130 → 170.
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1583,7 +1586,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "yuti-basic",
       name: "갈래깃",
-      power: 95,
+      power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1842,7 +1845,7 @@ export const RELICS: RelicDef[] = [
       res: 55,
       atk: 142,
       ap: 45,
-      attackSpeed: 92,
+      attackSpeed: 100,
       moveSpeed: 118,
       critChance: 10,
       critDamage: 150,
@@ -1898,7 +1901,7 @@ export const RELICS: RelicDef[] = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
     ultimate: {
@@ -1915,7 +1918,7 @@ export const RELICS: RelicDef[] = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
   },
@@ -2088,7 +2091,7 @@ export const RELICS: RelicDef[] = [
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
-    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2 },
     // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
@@ -2145,7 +2148,7 @@ export const RELICS: RelicDef[] = [
       // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
       // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
       cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
-      statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }],
+      statusEffects: [{ kind: "frenzy", seconds: 4 }],
     },
   },
 
@@ -2990,7 +2993,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
@@ -3832,7 +3835,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "maddy-basic",
       name: "소다맛 아이스크림",
-      power: 100,
+      power: 108,
       scalingStat: "atk",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -4351,7 +4354,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 9, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {

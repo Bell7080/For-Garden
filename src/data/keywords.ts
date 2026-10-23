@@ -205,11 +205,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "frenzy", term: "광란", kind: "debuff",
-    description: "공격 속도가 50% 높아지는 대신 가장 가까운 자기 편을 공격한다. 때릴 자기 편이 남지 않으면 제자리에서 자신을 공격한다. 광란 중에는 궁극기를 쓰지 못한다.",
+    description: "가장 가까운 자기 편을 공격하며, 그때 주는 피해가 절반이 된다. 때릴 자기 편이 남지 않으면 제자리에서 자신을 공격한다. 광란 중에는 궁극기를 쓰지 못한다.",
   },
   {
     id: "concussion", term: "뇌진탕", kind: "debuff",
-    description: "최대 체력의 5%(치명타면 15%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
+    description: "최대 체력의 10%(치명타면 20%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
     id: "knockback", term: "날려버림", kind: "debuff",

@@ -292,7 +292,9 @@ export class LobbyScene extends Phaser.Scene {
       onClick: () => this.openSortieMenu(),
     });
 
-    bindNotificationDot(this, sortieButton, { x: 130, y: -45 }, listener => notificationManager.subscribe("sortieReward", listener));
+    // 발굴과 같은 규칙으로 원근 판의 실제 우상단 모서리(오른쪽이 긴 변)에 앉힌다 — 고정 좌표였을 때는 판 안쪽 글자 옆에 떠 있었다.
+    const sortieDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.sortie.width, height: LOBBY_ACTION_BOUNDS.sortie.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
+    bindNotificationDot(this, sortieButton, sortieDot, listener => notificationManager.subscribe("sortieReward", listener));
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {

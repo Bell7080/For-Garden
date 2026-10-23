@@ -681,6 +681,29 @@ describe("FakeServer", () => {
     expect(ssr).toHaveLength(1);
   });
 
+  it("첫 복원 연구가 SSR로 일찍 닫히면 남은 10연이 화석 연구에서 화석 8개로 열린다", async () => {
+    const state = makeSession(); state.cleared.add("1-5");
+    // 난수 0은 첫 칸부터 SSR(렉시아)을 뽑는다 — 10회째에 닫히고 40회가 남는다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    await server.pullRelics({ bannerId: "welcome", count: 10 });
+    await expect(server.pullRelics({ bannerId: "welcome", count: 10 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(4);
+
+    const before = state.wallet.fossil;
+    await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.wallet.fossil).toBe(before - 8);
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(3);
+    // 1회 연구는 이월과 상관없이 한 개다.
+    await server.pullRelics({ bannerId: "fossil", count: 1 });
+    expect(state.wallet.fossil).toBe(before - 9);
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(3);
+    for (let i = 0; i < 3; i += 1) await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBeUndefined();
+    const last = state.wallet.fossil;
+    await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.wallet.fossil).toBe(last - 10);
+  });
+
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
     const state = makeSession(); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });

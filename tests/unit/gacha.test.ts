@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { bannerAcceptsCount, carryoverTenAvailable, carryoverTensOnClose, bannerGuaranteePending, bannerPullsRemaining, calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
 import { BANNERS, LIMITED_RELIC_IDS, PITY_GROUP, WELCOME_SSR_POOL } from "../../src/data/banners";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 
@@ -201,6 +201,30 @@ describe("운영 배너 데이터", () => {
     expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 40, pickupGuaranteed: false, totalPulls: 40 })).toBe(10);
     expect(bannerPullsRemaining(welcome, { pullsSinceSsr: 0, pickupGuaranteed: false, totalPulls: 50 })).toBe(0);
     expect(bannerPullsRemaining(fossil, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 10 })).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("첫 복원 연구가 SSR로 일찍 닫히면 남은 10연이 화석 연구의 8개짜리 10연으로 이월된다", () => {
+    const welcome = BANNERS.find((candidate) => candidate.id === "welcome")!;
+    const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
+    expect(fossil.carryoverTenCost).toBe(welcome.costTen);
+    expect(welcome.carryoverTo).toBe(fossil.pityGroupId);
+    // 10회째 SSR → 40회가 남아 10연 넷.
+    expect(carryoverTensOnClose(welcome, { pullsSinceSsr: 3, pickupGuaranteed: false, totalPulls: 10 })).toBe(4);
+    // SSR이 없거나 한도까지 다 쓴 뒤에는 이월할 것이 없다.
+    expect(carryoverTensOnClose(welcome, { pullsSinceSsr: 40, pickupGuaranteed: false, totalPulls: 40 })).toBe(0);
+    expect(carryoverTensOnClose(welcome, { pullsSinceSsr: 0, pickupGuaranteed: false, totalPulls: 50 })).toBe(0);
+    expect(carryoverTensOnClose(fossil, { pullsSinceSsr: 0, pickupGuaranteed: false, totalPulls: 10 })).toBe(0);
+    const pity = { pullsSinceSsr: 5, pickupGuaranteed: false, discountTens: 2 };
+    expect(carryoverTenAvailable(fossil, pity)).toBe(true);
+    expect(pullCost(fossil, 10, pity)).toBe(8);
+    expect(pullCost(fossil, 1, pity)).toBe(1);
+    expect(pullCost(fossil, 10, { ...pity, discountTens: 0 })).toBe(10);
+    expect(pullCost(fossil, 10)).toBe(10);
+    // 화석 8개만 있어도 이월 10연은 열린다.
+    const wallet = { fossil: 8, amber: 0, gems: 0 } as Wallet;
+    expect(canPull(wallet, fossil, 10, pity)).toBe(true);
+    expect(canPull(wallet, fossil, 10)).toBe(false);
+    expect(spend(wallet, fossil, 10, pity).fossil).toBe(0);
   });
 
   it("픽업과 대표 렐릭이 해당 등급 풀에 있고 확률 합계가 1이다", () => {

@@ -9,7 +9,7 @@ import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../core/tempAd";
-import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
+import { bannerAcceptsCount, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
@@ -2064,7 +2064,7 @@ export class FakeServer implements GameApi {
       // 건드리지 않는다 — 별은 플레이어가 파편을 써서 스스로 올린다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
+    const nextWallet = { ...spend(this.state.wallet, banner, request.count, currentPity), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     // 비용 차감 뒤 회색 보상을 순서대로 더하며 계정 상한에서 버려지는 양은 저장하지 않는다.
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
@@ -2072,6 +2072,18 @@ export class FakeServer implements GameApi {
     // 횟수 제한 배너만 누적 횟수를 센다(`GachaPityState.totalPulls`). 다른 그룹의 모양은 그대로 둔다.
     const groupPity = banner.pullLimit === undefined ? pulled.pity : { ...pulled.pity, totalPulls: (currentPity.totalPulls ?? 0) + request.count };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
+    // 이월 할인 10연: 쓴 만큼 줄이고, 첫 복원 연구가 SSR로 닫히는 뽑기면 남은 10연을 받는 그룹에 쌓는다.
+    const spentDiscount = request.count === 10 && carryoverTenAvailable(banner, currentPity) ? 1 : 0;
+    if (spentDiscount > 0) {
+      const left = (currentPity.discountTens ?? 0) - spentDiscount;
+      nextPity[banner.pityGroupId] = left > 0 ? { ...groupPity, discountTens: left } : groupPity;
+    }
+    else if (currentPity.discountTens) nextPity[banner.pityGroupId] = { ...groupPity, discountTens: currentPity.discountTens };
+    const carriedTens = carryoverTensOnClose(banner, groupPity);
+    if (carriedTens > 0 && banner.carryoverTo) {
+      const target = nextPity[banner.carryoverTo] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+      nextPity[banner.carryoverTo] = { ...target, discountTens: (target.discountTens ?? 0) + carriedTens };
+    }
     // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     // 처음 만난 날은 관찰 질문이 하루에 하나씩 열리는 기준이다.

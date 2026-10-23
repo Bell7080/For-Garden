@@ -64,7 +64,7 @@ export function autoPickParty(roster: readonly RelicDef[], enemies: readonly Rel
 }
 
 /**
- * 가운데 자리에 먼저 설 직군. 가운데(2번)는 한 걸음 앞으로 나선 자리라(`spawnSpots`의 stagger)
+ * 가운데 자리에 먼저 설 직군. 가운데(2번)는 근접 개체가 앞으로 나서는 자리라(`spawnSpots`의 forward)
  * 적과 가장 먼저 부딪힌다 — 탱커가 서야 뒤를 받치고, 없으면 전사가 앞을 맡는다.
  */
 const CENTER_PRIORITY: Readonly<Record<RelicDef["role"], number>> = { tank: 0, warrior: 1, assassin: 2, support: 3 };

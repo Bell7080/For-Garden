@@ -5,8 +5,8 @@ export type StoryDifficulty = typeof STORY_DIFFICULTIES[number];
 /** 쉬움 템플릿의 오각형에만 곱한다. 전환부 전투력은 전 난이도 4-10에 약 10% 차이로 이어지며 최종 관문의 실제 완주 가능성도 검수한다. */
 export const STORY_DIFFICULTY = {
   easy: { color: 0xe6bc57, text: "#f5d47b", fill: 0x3a3016, reward: 1, statFactor: 1 },
-  normal: { color: 0xec9144, text: "#ffb76e", fill: 0x412719, reward: 1.25, statFactor: 1.4 },
-  hard: { color: 0xe66168, text: "#ff9297", fill: 0x401f2a, reward: 1.5, statFactor: 2 },
+  normal: { color: 0xec9144, text: "#ffb76e", fill: 0x412719, reward: 1.25, statFactor: 2 },
+  hard: { color: 0xe66168, text: "#ff9297", fill: 0x401f2a, reward: 1.5, statFactor: 4 },
 } as const;
 export function storyDifficultyOf(id: string | null | undefined): StoryDifficulty {
   return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";

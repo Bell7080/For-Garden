@@ -1381,8 +1381,8 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "irna-basic",
       name: "장전된 한 발",
-      // 기본 공격 위력 +30%(130 → 169).
-      power: 169,
+      // 기본 공격 위력 130 → 170.
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

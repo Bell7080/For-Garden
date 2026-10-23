@@ -721,7 +721,7 @@ export default {
   "keyword.minor-bleed.term": "小さな出血",
   "keyword.minor-bleed.description": "2秒間、毎秒 最大体力の1%の固定ダメージを受ける。弱い再付与はより強い出血を上書きしない。",
   "keyword.poison.term": "毒",
-  "keyword.poison.description": "付与者の攻撃力22%と魔力22%を合わせた[[magical-damage|魔法ダメージ]]を毎秒受ける。値は付与した瞬間に決まり、より痛い毒が上書きするとその値が残る。",
+  "keyword.poison.description": "付与者の攻撃力30%と魔力30%を合わせた[[magical-damage|魔法ダメージ]]を毎秒受ける。値は付与した瞬間に決まり、より痛い毒が上書きするとその値が残る。",
   "keyword.liquidate.term": "清算",
   "keyword.liquidate.description": "残った継続ダメージを一度にまとめて受け、その状態が消える。これから受けるはずだった分を先に受けるだけなので、総量はそのままで時点だけが早まる。",
   "keyword.stagger.term": "硬直",

@@ -556,7 +556,7 @@ export default {
   "keyword.minor-bleed.term": "Lesser Bleed",
   "keyword.minor-bleed.description": "Takes fixed damage equal to 1% of max HP each second for 2 seconds. A weaker reapplication does not overwrite a stronger Bleed.",
   "keyword.poison.term": "Poison",
-  "keyword.poison.description": "Takes [[magical-damage|magical damage]] each second from 22% of the applier's Attack plus 22% of its Ability Power. The amount is fixed when applied, and a stronger Poison overwriting it keeps its own value.",
+  "keyword.poison.description": "Takes [[magical-damage|magical damage]] each second from 30% of the applier's Attack plus 30% of its Ability Power. The amount is fixed when applied, and a stronger Poison overwriting it keeps its own value.",
   "keyword.liquidate.term": "Liquidate",
   "keyword.liquidate.description": "Takes all remaining damage over time at once and the status disappears. It only pulls forward what would have been taken anyway, so the total is unchanged and only the timing moves.",
   "keyword.stagger.term": "Stagger",

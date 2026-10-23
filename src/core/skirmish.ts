@@ -1100,9 +1100,15 @@ export const BLEED = {
  */
 export const POISON = {
   /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
-  attackPercentPerSecond: 22,
+  attackPercentPerSecond: 30,
   /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). */
-  abilityPercentPerSecond: 22,
+  abilityPercentPerSecond: 30,
+} as const;
+
+/** 아트라·리파의 독은 델로피보다 약하다 — 델로피의 독 딜만 올리려고 공용 값에서 갈라냈다. */
+export const POISON_LIGHT = {
+  attackPercentPerSecond: 15,
+  abilityPercentPerSecond: 15,
 } as const;
 
 /**
@@ -4708,8 +4714,8 @@ function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | 
   // 2) 캐릭터 전용 독을 만들지 않고 공용 POISON 계수와 기존 강한 독 갱신 규칙을 재사용한다.
   const poisonEffect: Extract<CombatStatusEffect, { kind: "poison" }> = {
     kind: "poison", seconds: potentReactionSeconds(attacker, contract.reactionPoisonSeconds),
-    attackPercentPerSecond: POISON.attackPercentPerSecond,
-    abilityPercentPerSecond: POISON.abilityPercentPerSecond,
+    attackPercentPerSecond: POISON_LIGHT.attackPercentPerSecond,
+    abilityPercentPerSecond: POISON_LIGHT.abilityPercentPerSecond,
   };
   refreshPoison(target, poisonEffect.seconds, poisonAmountPerSecond(attacker, target, poisonEffect, state), events, attacker.id);
 

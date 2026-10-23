@@ -538,7 +538,7 @@ export default {
   "keyword.minor-bleed.term": "Leichte Blutung",
   "keyword.minor-bleed.description": "Erleidet 2 Sekunden lang jede Sekunde fixen Schaden in Höhe von 1% des max. Lebens. Eine schwächere Wiederholung überschreibt keine stärkere Blutung.",
   "keyword.poison.term": "Gift",
-  "keyword.poison.description": "Erleidet jede Sekunde [[magical-damage|magischen Schaden]] in Höhe von 22 % des Angriffs plus 22 % der Zauberkraft des Verursachers. Der Wert wird beim Auftragen festgelegt; ein stärkeres Gift, das ihn überschreibt, behält seinen eigenen Wert.",
+  "keyword.poison.description": "Erleidet jede Sekunde [[magical-damage|magischen Schaden]] in Höhe von 30 % des Angriffs plus 30 % der Zauberkraft des Verursachers. Der Wert wird beim Auftragen festgelegt; ein stärkeres Gift, das ihn überschreibt, behält seinen eigenen Wert.",
   "keyword.liquidate.term": "Liquidieren",
   "keyword.liquidate.description": "Erleidet allen verbleibenden Schaden über Zeit auf einmal, und der Zustand verschwindet. Es zieht nur vor, was ohnehin gekommen wäre; die Summe bleibt, nur der Zeitpunkt ändert sich.",
   "keyword.stagger.term": "Taumeln",

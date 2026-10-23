@@ -1,4 +1,4 @@
-import { POISON } from "../core/skirmish";
+import { POISON, POISON_LIGHT } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef } from "../core/types";
@@ -150,7 +150,7 @@ const FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 185,
+  burstPower: 160,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30,
@@ -601,7 +601,9 @@ export const RELICS: RelicDef[] = [
       value: 0,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 15,
-      desc: "전투 시작 시 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
+      // 전투 시작 은신은 암살자 정체성의 일부다 — 델로피(5초)와 같은 필드를 읽는다.
+      openingStealthSeconds: 5,
+      desc: "전투 시작 시 5초 동안 은신하고, 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
     },
     basic: {
       id: "luka-basic",
@@ -838,7 +840,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 8, capMaxHpPercent: 24 },
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
     },
     ultimate: {
       id: "tia-ult",
@@ -1584,7 +1586,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "yuti-basic",
       name: "갈래깃",
-      power: 90,
+      power: 80,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -3207,7 +3209,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON_LIGHT.attackPercentPerSecond, abilityPercentPerSecond: POISON_LIGHT.abilityPercentPerSecond }],
     },
     ultimate: {
       id: "atra-ult",
@@ -3222,7 +3224,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [
         { kind: "taunt", seconds: 3 },
         { kind: "stagger", seconds: 0.1 },
-        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond },
+        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON_LIGHT.attackPercentPerSecond, abilityPercentPerSecond: POISON_LIGHT.abilityPercentPerSecond },
       ],
     },
     // 채찍이 두 번 들어가고(II) 품이 넓어지며(III) 폭주하면 아군 몫을 대신 맞고(IV) 독이 오래 남는다(V).

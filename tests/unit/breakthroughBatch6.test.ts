@@ -43,7 +43,7 @@ describe("티아·테리사 보호막 개편", () => {
     expect(grants.some((grant) => grant.fighterId === torika.id)).toBe(true);
   });
 
-  it("티아의 반짝 폭발 막은 맞힌 피해가 아니라 자신의 최대 체력 8%다", () => {
+  it("티아의 반짝 폭발 막은 맞힌 피해가 아니라 자신의 최대 체력 12%다", () => {
     const state = createSkirmish([getRelic("tia"), getRelic("torika")], [getRelic("amo")], ARENA);
     const tia = state.fighters.find((fighter) => fighter.def.id === "tia")!;
     const amounts: number[] = [];
@@ -53,8 +53,8 @@ describe("티아·테리사 보호막 개편", () => {
       }
     }
     expect(amounts.length).toBeGreaterThan(0);
-    // 막이 상한(24%)에 닿는 세 번째 몫은 남은 자리만큼만 들어간다.
-    expect(amounts[0]).toBe(Math.round((tia.shieldHpBasis ?? tia.maxHp) * 8 / 100));
-    for (const amount of amounts) expect(amount).toBeLessThanOrEqual(Math.round((tia.shieldHpBasis ?? tia.maxHp) * 8 / 100));
+    // 막이 상한(36%)에 닿는 세 번째 몫은 남은 자리만큼만 들어간다.
+    expect(amounts[0]).toBe(Math.round((tia.shieldHpBasis ?? tia.maxHp) * 12 / 100));
+    for (const amount of amounts) expect(amount).toBeLessThanOrEqual(Math.round((tia.shieldHpBasis ?? tia.maxHp) * 12 / 100));
   });
 });

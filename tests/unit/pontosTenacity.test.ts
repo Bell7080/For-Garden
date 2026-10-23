@@ -97,7 +97,7 @@ describe("불사 자리의 강인함", () => {
     const byFrenzy = pontos();
     applyStun(byStun, 1);
     applyStagger(byStagger, 1);
-    applyFrenzy(byFrenzy, { kind: "frenzy", seconds: 1, attackSpeedPercent: 0 });
+    applyFrenzy(byFrenzy, { kind: "frenzy", seconds: 1 });
     const grown = controlResistPercent(byStun);
     expect(controlResistPercent(byStagger)).toBe(grown);
     expect(controlResistPercent(byFrenzy)).toBe(grown);
@@ -232,7 +232,7 @@ describe("행동 제약의 공통 강인함", () => {
     { kind: "stagger", seconds: 0.1 },
     { kind: "fear", seconds: 0.1, immunitySeconds: 1 },
     { kind: "taunt", seconds: 0.1 },
-    { kind: "frenzy", seconds: 0.1, attackSpeedPercent: 0 },
+    { kind: "frenzy", seconds: 0.1 },
     { kind: "knockback", seconds: 0.1, speed: 100, bounces: 1 },
   ];
   it.each(controls)("는 $kind의 미세 제약을 막고 별도 상태나 사건을 만들지 않는다", (effect) => {

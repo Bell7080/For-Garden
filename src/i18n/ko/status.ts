@@ -20,7 +20,7 @@ export const STATUS_KO = {
   "status.frozen": "빙결",
   "status.frozen.detail": "{time} 남음 · 풀리는 순간 최대 체력의 {percent}% 고정 피해",
   "status.frenzy": "광란",
-  "status.frenzy.detail": "자기 편을 공격 · 공격 속도 +{percent}% · {time} 남음",
+  "status.frenzy.detail": "자기 편을 공격 · {time} 남음",
   "status.taunt": "도발",
   "status.taunt.detail": "도발한 상대만 표적으로 삼는다 · {time} 남음",
   "status.bleed": "출혈",

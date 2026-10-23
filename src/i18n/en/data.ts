@@ -576,7 +576,7 @@ export default {
   "keyword.curse.term": "Curse",
   "keyword.curse.description": "Each stack lowers that enemy's Resistance by 15%. It builds up to 3 stacks and lasts 8 seconds, and recasting restarts the duration. Since it only lowers Resistance, it affects magical damage alone.",
   "keyword.frenzy.term": "Frenzy",
-  "keyword.frenzy.description": "Attack Speed rises by 50%, but it attacks the nearest unit on its own side. With no allies left to hit, it attacks itself on the spot. It cannot use its Ultimate while frenzied.",
+  "keyword.frenzy.description": "It attacks the nearest unit on its own side, dealing half damage. With no allies left to hit, it attacks itself on the spot. It cannot use its Ultimate while frenzied.",
   "keyword.concussion.term": "Concussion",
   "keyword.concussion.description": "Damage equal to 5% of max HP, or 15% on a critical strike. It passes through Defense and affinity and lands at once on impact.",
   "keyword.knockback.term": "Knockback",

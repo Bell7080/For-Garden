@@ -257,7 +257,7 @@ export interface Fighter extends Combatant {
    * `sourceId`를 함께 드는 이유는 **기여도** 때문이다 — 적이 자기 편을 때린 몫은 그 적이 아니라
    * 광란을 건 쪽이 만든 피해다. 없으면 광란 전략을 쓴 판에서 시전자가 기여 0으로 찍힌다.
    */
-  frenzy: { remaining: number; total: number; attackSpeedPercent: number; sourceId?: string } | null;
+  frenzy: { remaining: number; total: number; sourceId?: string } | null;
   /** 걸려 있는 출혈. 없으면 null이다. */
   bleed: { remaining: number; total: number; tickIn: number; percent: number; sourceId?: string; healingReceivedReductionPercent?: number } | null;
   /**
@@ -4902,12 +4902,19 @@ function isCurseMaxed(target: Fighter): boolean {
   return target.curse !== null && target.curse.stacks >= target.curse.maxStacks;
 }
 
+/** 광란한 개체가 자기 편(제자리 자해 포함)을 때릴 때 주는 피해의 배율. */
+export const FRENZY_FRIENDLY_DAMAGE_MULTIPLIER = 0.5;
+
 /**
  * 광란을 건다. **이미 광란 중이면 연장하지 않고 갱신만** 한다.
  *
  * 폭주 중 기본 공격마다 다시 걸리므로, 연장하면 짧은 상태가 사실상 상시 광란이 된다.
  * 표적은 다음 판정에서 다시 고르도록 비운다 — 남겨 두면 뒤집히기 전의 상대를 계속 때린다.
  */
+function frenzyFriendlyMultiplier(attacker: Fighter, target: Fighter): number {
+  return attacker.frenzy && attacker.side === target.side ? FRENZY_FRIENDLY_DAMAGE_MULTIPLIER : 1;
+}
+
 export function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect, { kind: "frenzy" }>, sourceId?: string): void {
   // 광란도 제 편을 때리게 만드는 **행동 방해**라 같은 강인함을 지난다.
   const seconds = controlDuration(target, effect.seconds);
@@ -4915,7 +4922,6 @@ export function applyFrenzy(target: Fighter, effect: Extract<CombatStatusEffect,
   target.frenzy = {
     remaining: seconds,
     total: Math.max(seconds, target.frenzy?.total ?? 0),
-    attackSpeedPercent: effect.attackSpeedPercent,
     sourceId: sourceId ?? target.frenzy?.sourceId,
   };
   target.targetId = null;
@@ -5235,8 +5241,6 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   })) : 0;
   // 순풍은 시간이 정해진 팀 강화라 아다지오·무리 사냥과 같은 자리에서 곱한다.
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
-  // 광란은 남의 손에 걸린 강화다. 시간이 정해진 배율이라 순풍과 같은 자리에서 곱한다.
-  const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
   // 쏟아붓기는 자기 궁극기가 건 시간제한 강화라 같은 자리에서 곱한다.
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
   // 시약 도핑은 폭주한 제공자 자신의 손만 빠르게 하며 팀 오라로 퍼지지 않는다.
@@ -5266,7 +5270,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100)
-    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100)
+    * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
@@ -7652,11 +7656,11 @@ function strike(
     : undefined;
   const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
   const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus)
-    * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate)));
+    * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target)));
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput)
     + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0)
     + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0)
-    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
+    + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target));
   // 방어·패시브·상성 뒤의 모든 개별 경감은 공용 HP 피해 경계에서 한 번만 적용한다.
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -7919,7 +7923,7 @@ function strike(
     // 폭주도 같은 이유로 **직접 적중**에만 걸린다.
     const gaze = attacker.def.ferocityTrait;
     if (attackingInFever && gaze.effectId === "frenzyGaze" && isFighterAlive(target)) {
-      applyFrenzy(target, { kind: "frenzy", seconds: gaze.seconds, attackSpeedPercent: gaze.attackSpeedPercent }, attacker.id);
+      applyFrenzy(target, { kind: "frenzy", seconds: gaze.seconds }, attacker.id);
     }
     spreadCurseTransfer(attacker, target, targetCurseWasMaxed, targetHpBefore - target.hp, state, events);
   }

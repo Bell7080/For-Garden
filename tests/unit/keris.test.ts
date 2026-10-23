@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canFireUltimate, clearStun, createSkirmish, defensiveDefinition, isFighterAlive, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { canFireUltimate, clearStun, createSkirmish, defensiveDefinition, FRENZY_FRIENDLY_DAMAGE_MULTIPLIER, isFighterAlive, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { computeDamage } from "../../src/core/damage";
 import { getRelic } from "../../src/data/relics";
 
@@ -84,7 +84,7 @@ describe("광란", () => {
   it("은 걸린 개체가 가장 가까운 자기 편을 때리게 만든다", () => {
     const state = createSkirmish([getRelic("keris")], [getRelic("torika"), getRelic("rex")], ARENA);
     const [, first, second] = state.fighters;
-    first.frenzy = { remaining: 6, total: 6, attackSpeedPercent: 50, sourceId: state.fighters[0].id };
+    first.frenzy = { remaining: 6, total: 6, sourceId: state.fighters[0].id };
     const before = second.hp;
     for (let frame = 0; frame < 60 * 6 && state.phase === "fight"; frame += 1) stepSkirmish(state, 1 / 60, () => 0.99);
     expect(second.hp).toBeLessThan(before);
@@ -93,7 +93,7 @@ describe("광란", () => {
   it("은 때릴 자기 편이 없으면 제자리에서 자신을 공격한다", () => {
     const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [, lone] = state.fighters;
-    lone.frenzy = { remaining: 30, total: 30, attackSpeedPercent: 50, sourceId: state.fighters[0].id };
+    lone.frenzy = { remaining: 30, total: 30, sourceId: state.fighters[0].id };
     const before = lone.hp;
     for (let frame = 0; frame < 60 * 6 && state.phase === "fight" && isFighterAlive(lone); frame += 1) {
       stepSkirmish(state, 1 / 60, () => 0.99);
@@ -103,12 +103,16 @@ describe("광란", () => {
     expect(lone.hp).toBeLessThan(before);
   });
 
+  it("에 걸린 개체가 자기 편에게 주는 피해는 절반이다", () => {
+    expect(FRENZY_FRIENDLY_DAMAGE_MULTIPLIER).toBe(0.5);
+  });
+
   it("중에는 궁극기를 쓰지 못한다", () => {
     const state = createSkirmish([getRelic("keris")], [getRelic("torika")], ARENA);
     const [keris] = state.fighters;
     keris.energy = 999;
     expect(canFireUltimate(state, keris)).toBe(true);
-    keris.frenzy = { remaining: 4, total: 4, attackSpeedPercent: 50 };
+    keris.frenzy = { remaining: 4, total: 4 };
     // 광란한 개체의 궁극기까지 자기 편에게 꽂히면 한 판이 그 한 번으로 갈린다.
     expect(canFireUltimate(state, keris)).toBe(false);
   });

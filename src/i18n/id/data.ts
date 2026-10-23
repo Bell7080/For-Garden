@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "Kutukan",
   "keyword.curse.description": "Setiap tumpuk menurunkan Resistensi musuh itu 15%. Menumpuk hingga 3, bertahan 8 detik, dan merapal ulang mengulang durasi. Karena hanya menurunkan Resistensi, hanya berpengaruh pada kerusakan magis.",
   "keyword.frenzy.term": "Amukan",
-  "keyword.frenzy.description": "Kecepatan Serang naik 50%, tetapi menyerang unit terdekat di pihaknya sendiri. Tanpa sekutu untuk diserang, ia menyerang dirinya sendiri. Tidak bisa memakai Ultimate selama mengamuk.",
+  "keyword.frenzy.description": "Menyerang unit terdekat di pihaknya sendiri dengan damage separuhnya. Tanpa sekutu untuk diserang, ia menyerang dirinya sendiri. Tidak bisa memakai Ultimate selama mengamuk.",
   "keyword.concussion.term": "Gegar",
   "keyword.concussion.description": "Kerusakan sebesar 5% HP maks, atau 15% saat kritis. Menembus Pertahanan dan afinitas serta langsung terjadi saat kena.",
   "keyword.knockback.term": "Hempasan",

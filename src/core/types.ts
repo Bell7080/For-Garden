@@ -1095,8 +1095,6 @@ export type CombatStatusEffect =
       kind: "frenzy";
       /** 유지 시간(초). 이미 광란 중이면 연장하지 않고 갱신만 한다. */
       seconds: number;
-      /** 광란 중 오르는 공격 속도 비율(%). */
-      attackSpeedPercent: number;
     };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
@@ -1812,7 +1810,6 @@ export type FerocityTrait = {
       /** 케리스 전용: 폭주 중 직접 적중한 적을 짧게 광란시킨다. 전이된 타격에는 걸리지 않는다. */
       effectId: "frenzyGaze";
       seconds: number;
-      attackSpeedPercent: number;
     }
   | {
       /**

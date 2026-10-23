@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "詛咒",
   "keyword.curse.description": "每層使該敵人的抗性降低15%。最多疊加3層，持續8秒，再次施放會重置持續時間。由於只降低抗性，隻影響魔法傷害。",
   "keyword.frenzy.term": "暴走",
-  "keyword.frenzy.description": "攻擊速度提升50%，但會攻擊最近的己方單位。沒有可攻擊的同伴時，會當場攻擊自己。暴走期間無法使用必殺技。",
+  "keyword.frenzy.description": "會攻擊最近的己方單位，造成的傷害減半。沒有可攻擊的同伴時，會當場攻擊自己。暴走期間無法使用必殺技。",
   "keyword.concussion.term": "腦震盪",
   "keyword.concussion.description": "相當於最大生命5%的傷害，暴擊時為15%。穿透防禦與屬性相剋，命中瞬間一次性造成。",
   "keyword.knockback.term": "擊飛",

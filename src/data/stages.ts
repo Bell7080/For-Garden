@@ -13,11 +13,11 @@ export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 /**
  * 세 적이 서는 **자리 순서**(앞 → 뒤). 모든 챕터가 같은 배치를 쓴다.
  *
- * 아모가 맨 앞이다 — 셋 중 유일한 탱커라 앞을 맡고, 종이 방어의 리파가 맨 뒤에 선다.
+ * 아모가 가운데(2번)다 — 셋 중 유일한 탱커라 가운데에서 앞을 맡고, 종이 방어의 리파가 맨 뒤에 선다.
  * 예전에는 챕터마다 이 셋을 한 칸씩 회전시켰는데, 그러면 2·3장에서 탱커가 뒷줄로 밀려
  * 레벨을 올려도 난이도가 되지 않았다(적 Lv40에서 1-7은 잔여 2%인데 3-7은 100%였다).
  */
-const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
+const STAGE_ENEMY_FORMATION = ["toby", "amo", "ripa"] as const;
 
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
 /**
@@ -105,11 +105,11 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
  * 회수조는 3-2부터 옛 셋과 섞여 하나씩 드러난다(3-2 미르 · 3-3 펄시, 네우리는 3-8 — 3-4에 세우면 바닥 파티가 3-4를 열었다). 3-1은 옛 셋 그대로다.
  */
 const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [string, 0 | 1 | 2 | 3 | 4])[]>> = {
-  "2-7": [["amo", 0], ["ripa", 2]],
-  "2-9": [["amo", 0], ["toby", 1]],
-  "3-2": [["amo", 0], ["mir", 1], ["ripa", 2]],
-  "3-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
-  "3-4": [["amo", 0], ["pulsi", 1], ["ripa", 2]],
+  "2-7": [["amo", 1], ["ripa", 2]],
+  "2-9": [["toby", 0], ["amo", 1]],
+  "3-2": [["mir", 0], ["amo", 1], ["ripa", 2]],
+  "3-3": [["mir", 0], ["amo", 1], ["pulsi", 2]],
+  "3-4": [["pulsi", 0], ["amo", 1], ["ripa", 2]],
   "3-5": [["atra", 1]],
   "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
   "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
@@ -117,14 +117,14 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
   "3-10": [["ikanixia", 1]],
   // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6, 코마만 정예) · 코마 캐리(4-9, 코마만 정예) · 투 캐리 마감(4-10).
-  "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
+  "4-1": [["toby", 0], ["amo", 1], ["pulsi", 2]],
   "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
-  "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
+  "4-3": [["mir", 0], ["amo", 1], ["pulsi", 2]],
   "4-4": [["atra", 0], ["amo", 2]],
   "4-5": [["atra", 0], ["toby", 2]],
   "4-6": [["ripa", 0], ["koma", 1], ["neuri", 2]],
   "4-7": [["ripa", 0], ["pulsi", 1], ["mir", 2]],
-  "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
+  "4-8": [["toby", 0], ["amo", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
   "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
   "4-10": [["koma", 0], ["ikanixia", 2]],
 };
@@ -355,7 +355,7 @@ export const SIDE_BATTLE_STAGE: BattleStageDef = {
   kind: "battle", sub: true, elite: true,
   id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
   prerequisiteStageIds: ["1-8"],
-  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
+  enemies: [enemyGrowth("amo", 18, 0, 1), enemyGrowth("ripa", 18, 0, 2)],
   rewards: {
     firstClearCheesecake: 0,
     repeatClearCheesecake: 0,

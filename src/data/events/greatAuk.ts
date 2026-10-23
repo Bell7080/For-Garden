@@ -5,7 +5,7 @@ import { FIXED_STAGE_ENEMIES } from "../stages";
 import type { EventDefinition } from "./types";
 
 /** 본편 관문과 같은 앞뒤 순서(탱커 → 전사 → 지원가)로 세 적을 세운다. */
-const EVENT_STAGE_FORMATION = ["amo", "toby", "ripa"] as const satisfies readonly (typeof FIXED_STAGE_ENEMIES)[number][];
+const EVENT_STAGE_FORMATION = ["toby", "amo", "ripa"] as const satisfies readonly (typeof FIXED_STAGE_ENEMIES)[number][];
 
 /** 공용 StageDef 전투 규칙을 사용하는 소규모 해안 발굴 전투다. */
 const GREAT_AUK_SHORE: BattleStageDef = {

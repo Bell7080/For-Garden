@@ -80,14 +80,14 @@
     "ОК"
   ],
   "arena.lobby.rules": [
-    "双方各禁用1名 · 3对3交替公开布阵\n先后手随机 · 双方自动释放必杀技",
-    "แบนฝ่ายละ 1 · วางสลับ 3 ต่อ 3\nสุ่มลำดับก่อนหลัง · ท่าไม้ตายอัตโนมัติ",
-    "Mỗi bên cấm 1 · bố trí luân phiên 3 đấu 3\nThứ tự ngẫu nhiên · tự động dùng tuyệt kỹ",
-    "Masing-masing 1 ban · penempatan bergiliran 3 lawan 3\nGiliran awal acak · ultimate otomatis",
-    "1 veto por jugador · despliegue alterno 3 contra 3\nTurno inicial aleatorio · definitivas automáticas",
-    "1 banimento por jogador · posicionamento alternado 3x3\nPrimeiro turno aleatório · supremas automáticas",
-    "Je 1 Bann · abwechselnde 3-gegen-3-Aufstellung\nZufälliger erster Zug · automatische Ultimativfähigkeiten",
-    "По 1 запрету · поочерёдная расстановка 3 на 3\nСлучайный первый ход · автоультимейты"
+    "双方各禁用1名(同时、不公开) · 轮流选择放入1·2·3号位\n禁止重复选择同一遗物 · 双方自动释放必杀技",
+    "แบนฝ่ายละ 1 (พร้อมกัน แบบปิด) · ผลัดกันเลือกวางช่อง 1·2·3\nห้ามเลือกเรลิกซ้ำ · ท่าไม้ตายอัตโนมัติ",
+    "Mỗi bên cấm 1 (đồng thời, ẩn) · luân phiên chọn vào ô 1·2·3\nKhông chọn trùng di vật · tự động dùng tuyệt kỹ",
+    "Masing-masing 1 ban (serentak, tertutup) · bergiliran memilih ke slot 1·2·3\nTidak boleh relik ganda · ultimate otomatis",
+    "1 veto oculto por jugador · elecciones alternas en casillas 1·2·3\nSin reliquias repetidas · definitivas automáticas",
+    "1 banimento oculto por jogador · escolhas alternadas nos espaços 1·2·3\nSem relíquias repetidas · supremas automáticas",
+    "Je 1 verdeckter Bann · abwechselnd auf Plätze 1·2·3 wählen\nKeine doppelten Relikte · automatische Ultimativfähigkeiten",
+    "По 1 скрытому запрету · поочерёдный выбор в ячейки 1·2·3\nБез повторов реликтов · автоультимейты"
   ],
   "arena.resume": [
     "返回进行中的竞技场",
@@ -168,16 +168,6 @@
     "Desistir",
     "Aufgeben",
     "Сдаться"
-  ],
-  "arena.room.remaining": [
-    "剩余{p0}秒",
-    "เหลือ {p0} วินาที",
-    "Còn {p0} giây",
-    "Tersisa {p0} dtk",
-    "Quedan {p0} s",
-    "Restam {p0} s",
-    "Noch {p0} s",
-    "Осталось {p0} с"
   ],
   "arena.room.ranked": [
     "排位竞技场",
@@ -320,14 +310,14 @@
     "Вернуться на арену"
   ],
   "arena.ban.choose": [
-    "请禁用对方1名遗物",
-    "แบนเรลิกฝ่ายตรงข้าม 1 ตัว",
-    "Cấm một di vật của đối thủ",
-    "Ban satu relik lawan",
-    "Veta una reliquia rival",
-    "Bana uma relíquia adversária",
-    "Banne ein gegnerisches Relikt",
-    "Запретите одну реликт соперника"
+    "点击对方1名遗物进行禁用，然后确认",
+    "แตะเรลิกฝ่ายตรงข้าม 1 ตัวเพื่อแบน แล้วยืนยัน",
+    "Chạm một di vật của đối thủ để cấm rồi xác nhận",
+    "Ketuk satu relik lawan untuk di-ban, lalu konfirmasi",
+    "Toca una reliquia rival para vetarla y confirma",
+    "Toque em uma relíquia adversária para banir e confirme",
+    "Tippe ein gegnerisches Relikt zum Bannen an und bestätige",
+    "Нажмите на реликт соперника, чтобы запретить его, и подтвердите"
   ],
   "arena.ban.wait": [
     "等待对方禁用",
@@ -339,16 +329,6 @@
     "Warte auf den Bann des Gegners",
     "Ожидание запрета соперника"
   ],
-  "arena.placement.choose": [
-    "选择遗物后点击起始位置",
-    "เลือกเรลิกแล้วแตะตำแหน่งเริ่มต้น",
-    "Chọn di vật rồi chạm vị trí bắt đầu",
-    "Pilih relik, lalu ketuk posisi awalnya",
-    "Elige una reliquia y toca su posición inicial",
-    "Escolha uma relíquia e toque na posição inicial",
-    "Wähle ein Relikt und tippe auf seine Startposition",
-    "Выберите реликт и нажмите на стартовую позицию"
-  ],
   "arena.placement.wait": [
     "等待对方布阵",
     "กำลังรอคู่ต่อสู้จัดวาง",
@@ -358,66 +338,6 @@
     "Aguardando o posicionamento adversário",
     "Warte auf die gegnerische Aufstellung",
     "Ожидание расстановки соперника"
-  ],
-  "arena.placement.opponentHidden": [
-    "对方隐藏阵容",
-    "ทีมปกปิดของคู่ต่อสู้",
-    "Đội hình ẩn của đối thủ",
-    "Formasi lawan tersembunyi",
-    "Formación rival oculta",
-    "Formação adversária oculta",
-    "Verdecktes Gegnerteam",
-    "Скрытый состав соперника"
-  ],
-  "arena.placement.opponent": [
-    "对方阵容",
-    "ทีมของคู่ต่อสู้",
-    "Đội hình đối thủ",
-    "Formasi lawan",
-    "Formación rival",
-    "Formação adversária",
-    "Gegnerische Aufstellung",
-    "Состав соперника"
-  ],
-  "arena.none": [
-    "无",
-    "ไม่มี",
-    "Không có",
-    "Tidak ada",
-    "Ninguno",
-    "Nenhum",
-    "Keine",
-    "Нет"
-  ],
-  "arena.noneOther": [
-    "无",
-    "ไม่มี",
-    "Không có",
-    "Tidak ada",
-    "Ninguno",
-    "Nenhum",
-    "Keine",
-    "Нет"
-  ],
-  "arena.placement.summary": [
-    "已布阵{p0}/3 · 我方禁用：{p1} · 对方禁用：{p2}",
-    "วางแล้ว {p0}/3 · ฉันแบน: {p1} · อีกฝ่ายแบน: {p2}",
-    "Đã bố trí {p0}/3 · Tôi cấm: {p1} · Đối thủ cấm: {p2}",
-    "{p0}/3 ditempatkan · Ban saya: {p1} · Ban lawan: {p2}",
-    "{p0}/3 desplegadas · Mi veto: {p1} · Veto rival: {p2}",
-    "{p0}/3 posicionadas · Meu banimento: {p1} · Banimento rival: {p2}",
-    "{p0}/3 platziert · Mein Bann: {p1} · Gegnerbann: {p2}",
-    "Расставлено {p0}/3 · Мой запрет: {p1} · Запрет соперника: {p2}"
-  ],
-  "arena.roster.next": [
-    "下一页 {p0}/{p1}",
-    "หน้าถัดไป {p0}/{p1}",
-    "Trang tiếp {p0}/{p1}",
-    "Halaman berikutnya {p0}/{p1}",
-    "Página siguiente {p0}/{p1}",
-    "Próxima página {p0}/{p1}",
-    "Nächste Seite {p0}/{p1}",
-    "Следующая страница {p0}/{p1}"
   ],
   "arena.placement.undo": [
     "撤销最后一次布阵",
@@ -700,14 +620,14 @@
     "Дождитесь выбора соперника."
   ],
   "arena.error.placement": [
-    "请检查布阵区域、间距和禁用遗物。",
-    "ตรวจสอบพื้นที่ ระยะห่าง และเรลิกที่ถูกแบน",
-    "Kiểm tra vùng bố trí, khoảng cách và di vật bị cấm.",
-    "Periksa area, jarak, dan relik yang terkena ban.",
-    "Revisa el área, la separación y las reliquias vetadas.",
-    "Confira a área, o espaçamento e as relíquias banidas.",
-    "Prüfe Aufstellungsbereich, Abstand und gebannte Relikte.",
-    "Проверьте область, интервалы и запрещённые реликта."
+    "无法选择该遗物，或该位置已被占用。",
+    "เลือกเรลิกนี้ไม่ได้ หรือช่องนี้ถูกใช้แล้ว",
+    "Không thể chọn di vật này hoặc ô đã có người.",
+    "Relik ini tidak bisa dipilih, atau slot sudah terisi.",
+    "No puedes elegir esa reliquia o la casilla ya está ocupada.",
+    "Essa relíquia não pode ser escolhida ou o espaço já está ocupado.",
+    "Dieses Relikt ist nicht wählbar oder der Platz ist belegt.",
+    "Этот реликт нельзя выбрать, или ячейка уже занята."
   ],
   "arena.error.offline": [
     "连接服务器账号后即可使用。",
@@ -750,14 +670,14 @@
     "Дружеский бой"
   ],
   "arena.battle.perspective": [
-    "共同观战视角 · 你的队伍在{team}",
-    "มุมมองผู้ชมร่วมกัน · ทีมของคุณอยู่{team}",
-    "Góc nhìn chung · Đội của bạn ở {team}",
-    "Tampilan penonton bersama · Timmu berada {team}",
-    "Vista de espectador compartida · Tu equipo está {team}",
-    "Visão compartilhada de espectador · Sua equipe está {team}",
-    "Gemeinsame Zuschaueransicht · Dein Team ist {team}",
-    "Общий вид наблюдателя · Ваша команда {team}"
+    "你的队伍在{team}",
+    "ทีมของคุณอยู่{team}",
+    "Đội của bạn ở {team}",
+    "Timmu berada {team}",
+    "Tu equipo está {team}",
+    "Sua equipe está {team}",
+    "Dein Team ist {team}",
+    "Ваша команда {team}"
   ],
   "arena.battle.bottom": [
     "下方",
@@ -768,16 +688,6 @@
     "embaixo",
     "unten",
     "внизу"
-  ],
-  "arena.battle.top": [
-    "上方",
-    "ด้านบน",
-    "phía trên",
-    "di atas",
-    "arriba",
-    "em cima",
-    "oben",
-    "вверху"
   ],
   "arena.invite.from": [
     "{name}邀请你进行竞技场对战",
@@ -820,14 +730,14 @@
     "Назад"
   ],
   "arena.mode.scope": [
-    "实时禁用 · 自由布阵 · 3对3自动战斗",
-    "แบนแบบสด · วางตำแหน่งอิสระ · ต่อสู้อัตโนมัติ 3 ต่อ 3",
-    "Cấm trực tiếp · bố trí tự do · tự động chiến đấu 3 đấu 3",
-    "Ban langsung · penempatan bebas · pertarungan otomatis 3 lawan 3",
-    "Vetos en directo · despliegue libre · combate automático 3 contra 3",
-    "Banimentos ao vivo · posicionamento livre · batalha automática 3x3",
-    "Live-Banns · freie Aufstellung · automatischer 3-gegen-3-Kampf",
-    "Запреты в реальном времени · свободная расстановка · автобой 3 на 3"
+    "实时禁选 · 1·2·3号位布阵 · 3对3自动战斗",
+    "แบนและเลือกแบบสด · วางช่อง 1·2·3 · ต่อสู้อัตโนมัติ 3 ต่อ 3",
+    "Cấm & chọn trực tiếp · ô 1·2·3 · tự động chiến đấu 3 đấu 3",
+    "Ban & pilih langsung · slot 1·2·3 · pertarungan otomatis 3 lawan 3",
+    "Vetos y elecciones en directo · casillas 1·2·3 · combate automático 3 contra 3",
+    "Banimentos e escolhas ao vivo · espaços 1·2·3 · batalha automática 3x3",
+    "Live-Bann & Wahl · Plätze 1·2·3 · automatischer 3-gegen-3-Kampf",
+    "Запреты и выбор в реальном времени · ячейки 1·2·3 · автобой 3 на 3"
   ],
   "arena.result.draw": [
     "平局",
@@ -858,5 +768,155 @@
     "Derrota",
     "Niederlage",
     "Поражение"
+  ],
+  "arena.room.banTitle": [
+    "禁用阶段",
+    "ช่วงแบน",
+    "Giai đoạn cấm",
+    "Fase Ban",
+    "Fase de vetos",
+    "Fase de banimento",
+    "Bann-Phase",
+    "Фаза запретов"
+  ],
+  "arena.room.pickTitle": [
+    "选择与布阵",
+    "เลือกและวาง",
+    "Chọn & bố trí",
+    "Pilih & Tempatkan",
+    "Elegir y desplegar",
+    "Escolher e posicionar",
+    "Wählen & Aufstellen",
+    "Выбор и расстановка"
+  ],
+  "arena.ban.confirm": [
+    "确认禁用",
+    "ยืนยันแบน",
+    "Xác nhận cấm",
+    "Konfirmasi Ban",
+    "Confirmar veto",
+    "Confirmar banimento",
+    "Bann bestätigen",
+    "Подтвердить запрет"
+  ],
+  "arena.ban.reveal": [
+    "禁用公开",
+    "เปิดเผยการแบน",
+    "Công bố lệnh cấm",
+    "Ban Diungkap",
+    "Vetos revelados",
+    "Banimentos revelados",
+    "Banns enthüllt",
+    "Запреты раскрыты"
+  ],
+  "arena.ban.mine": [
+    "我的禁用",
+    "แบนของฉัน",
+    "Lệnh cấm của tôi",
+    "Ban Saya",
+    "Mi veto",
+    "Meu banimento",
+    "Mein Bann",
+    "Мой запрет"
+  ],
+  "arena.ban.theirs": [
+    "对方禁用",
+    "แบนของคู่แข่ง",
+    "Lệnh cấm của đối thủ",
+    "Ban Lawan",
+    "Veto rival",
+    "Banimento rival",
+    "Gegner-Bann",
+    "Запрет соперника"
+  ],
+  "arena.pick.choose": [
+    "选择遗物和位置(1·2·3)后确认",
+    "เลือกเรลิกและช่อง (1·2·3) แล้วยืนยัน",
+    "Chọn di vật và ô (1·2·3) rồi xác nhận",
+    "Pilih relik dan slot (1·2·3), lalu konfirmasi",
+    "Elige una reliquia y una casilla (1·2·3) y confirma",
+    "Escolha uma relíquia e um espaço (1·2·3) e confirme",
+    "Wähle ein Relikt und einen Platz (1·2·3) und bestätige",
+    "Выберите реликт и ячейку (1·2·3) и подтвердите"
+  ],
+  "arena.pick.locked": [
+    "布阵已确认，正在等待对方",
+    "ยืนยันการวางแล้ว กำลังรอคู่แข่ง",
+    "Đã chốt đội hình. Đang chờ đối thủ",
+    "Formasi dikunci. Menunggu lawan",
+    "Despliegue confirmado. Esperando al rival",
+    "Posicionamento confirmado. Aguardando o adversário",
+    "Aufstellung bestätigt. Warte auf den Gegner",
+    "Расстановка подтверждена. Ожидание соперника"
+  ],
+  "arena.pick.confirm": [
+    "确认选择 ({p0}/3)",
+    "ยืนยันการเลือก ({p0}/3)",
+    "Xác nhận chọn ({p0}/3)",
+    "Konfirmasi Pilihan ({p0}/3)",
+    "Confirmar ({p0}/3)",
+    "Confirmar ({p0}/3)",
+    "Bestätigen ({p0}/3)",
+    "Подтвердить ({p0}/3)"
+  ],
+  "arena.pick.slot": [
+    "{p0}号位",
+    "ช่อง {p0}",
+    "Ô {p0}",
+    "Slot {p0}",
+    "Casilla {p0}",
+    "Espaço {p0}",
+    "Platz {p0}",
+    "Ячейка {p0}"
+  ],
+  "arena.pick.banned": [
+    "禁用",
+    "แบน",
+    "Cấm",
+    "Ban",
+    "Vetada",
+    "Banida",
+    "Gebannt",
+    "Запрет"
+  ],
+  "arena.pick.taken": [
+    "对方已选",
+    "คู่แข่งเลือกแล้ว",
+    "Đối thủ đã chọn",
+    "Dipilih lawan",
+    "Elegida",
+    "Escolhida",
+    "Vergeben",
+    "Занято"
+  ],
+  "arena.rules.duplicates": [
+    "重复选择: {p0}",
+    "เลือกซ้ำ: {p0}",
+    "Chọn trùng: {p0}",
+    "Pilihan ganda: {p0}",
+    "Elección repetida: {p0}",
+    "Escolha repetida: {p0}",
+    "Doppelte Wahl: {p0}",
+    "Повторный выбор: {p0}"
+  ],
+  "arena.rules.duplicatesAllowed": [
+    "允许",
+    "อนุญาต",
+    "Cho phép",
+    "Diizinkan",
+    "Permitida",
+    "Permitida",
+    "Erlaubt",
+    "Разрешён"
+  ],
+  "arena.rules.duplicatesBlocked": [
+    "禁止",
+    "ห้าม",
+    "Không cho phép",
+    "Dilarang",
+    "Prohibida",
+    "Proibida",
+    "Verboten",
+    "Запрещён"
   ]
 }

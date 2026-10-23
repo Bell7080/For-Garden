@@ -2715,7 +2715,8 @@
 
 - 결투 입구는 기존 `openPvpMenu` 팝업의 `PVP_ACTIVE_MODES` 두 칸(결투장·아레나)만 연다. 보류 콘텐츠 정의를 활성 입구에 섞지 않는다.
 - 밴·교차/비공개 배치·차례·범위·시간 초과는 `core/liveArena.ts`가 검증한다. `server/liveArena.ts`는 서버 저장에서 성장·룬을 고정하고 서버 재현 결과만 정산한다. 기존 `Session.duel`이나 지갑은 아레나/친선전에서 수정하지 않는다.
-- 두 클라이언트는 같은 canonical 시점/시드로 자동 전투를 본다. 상대 시점이라고 코어 배열·랜덤 소비 순서를 뒤집지 않는다. 화면에 내 팀이 위/아래 중 어디인지 표시한다.
+- 두 클라이언트는 같은 canonical 시점/시드로 자동 전투를 본다. 상대 시점이라고 코어 배열·랜덤 소비 순서를 뒤집지 않는다. **side 1은 화면만 세로로 뒤집어** 늘 내 팀이 아래·아군 색으로 선다(`core/arenaView.ts`) — `stepSkirmish`·`fireUltimate` 직전에 되돌리고 직후 다시 뒤집으며, 사건은 사본을 뒤집는다. 아군 판정은 `arenaViewAlly`를 읽는다.
+- 배치는 1·2·3번 칸(`ARENA_SLOTS`)이고 밴은 동시·비공개(`ARENA_HIDDEN_BAN`)다. 교차 배치는 기본으로 상대가 고른 렐릭을 막는다(`rules.unique`, 친선전만 끌 수 있다). 아레나 화면의 색은 `ui/arenaTheme.ts`의 `ARENA_TONE` 한 표가 갖는다.
 - 방 데이터·점수는 서비스 롤 전용 RPC와 CAS/영수증을 통한다. 비공개 배치는 양측 확정 전에 HTTP 응답에 상대 선택을 포함하지 않는다. Realtime에는 소유자 RLS가 있는 `arena_signals`만 공개하며 메시지는 재조회 신호로만 쓴다.
 - 매칭 heartbeat는 5초, 준비 조회는 2초 복구 경로이며 WebSocket 신호가 즉시 깨운다. 로그아웃은 아레나 토큰 공급자·Realtime도 함께 내린다. 새 마이그레이션은 `test:arena-db`로 실제 DB에서 검증한다.
 

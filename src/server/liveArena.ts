@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 import { arenaRules, RANKED_ARENA_RULES, startArena, applyArenaAction, settleArena, publicArenaRoom, type ArenaRoom, type ArenaAction, type ArenaPlayer } from '../core/liveArena';
-import { arenaSetup } from '../core/liveArena';
+import { arenaSetup, ARENA_SLOTS } from '../core/liveArena';
 import { saveManager } from '../state/SaveManager';
 import { RelicProgressionManager } from '../managers/RelicProgressionManager';
 import { getRelic } from '../data/relics';
@@ -34,7 +34,7 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
         next.players.forEach((p,side)=>{
           const state=saveManager.parse(context.records.find(s=>s.id===p.id)!.data);
           const ids=side===0?state.party:state.duel?.defense??state.party;
-          next.picks[side]=ids.slice(0,3).map((relicId,i)=>({relicId,x:[0.08,0.5,0.92][i],y:i===1?0.32:0}));
+          next.picks[side]=ids.slice(0,3).map((relicId,slot)=>({relicId,slot,...ARENA_SLOTS[slot]}));
         });
         next.locked=[true,true];next.phase='battle';next.deadline=Date.now()+600000;
         next.lease={id:next.id,seed:next.seed,setup:arenaSetup(next),expiresAt:new Date(next.deadline).toISOString()};

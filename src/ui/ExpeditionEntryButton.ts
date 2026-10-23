@@ -27,6 +27,8 @@ export interface IllustratedSortieButtonOptions {
   label?: string;
   artKey?: string;
   accentColor?: number;
+  /** 원화를 물들이는 색. 같은 원화를 쓰는 다른 콘텐츠(실시간 아레나)를 색으로 가를 때만 쓴다. */
+  artTint?: number;
   accentTextColor?: string;
   /** 한 줄 폭이 좁은 병렬 던전만 제목 크기를 낮춰 같은 버튼 비율을 유지한다. */
   labelSize?: number;
@@ -98,6 +100,8 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
    * 컨테이너 변환을 물려받지 않으므로 마스크도 **월드 좌표**로 매 프레임 다시 그린다.
    */
   readonly sdMask?: Phaser.Display.Masks.GeometryMask;
+  /** 칩 실루엣 마스크. 칸 안에 그림을 더 세우는 입구(아레나의 맞부딪힘)가 같은 실루엣에 가둔다. */
+  readonly clipMask: Phaser.Display.Masks.GeometryMask;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: IllustratedSortieButtonOptions) {
     super(scene, x, y);
@@ -119,6 +123,8 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     // 매 프레임 따라간다(로비 팝업 안에서도 화면 밖 엉뚱한 자리에 남지 않는다).
     const chipMask = shapeClipMask(scene, this, shape);
     art.setMask(chipMask);
+    this.clipMask = chipMask;
+    if (options.artTint !== undefined) art.setTint(options.artTint);
     // 사각 원화의 가장자리는 비네트와 주황 액자가 눌러 기존 홀로그램 판 안의 이미지로 읽히게 한다.
     // 줄여 가며 두르는 옛 비네트는 가로로 긴 칸에서 검은 테두리 잔상을 남기므로 쓰지 않는다.
     this.add(art);

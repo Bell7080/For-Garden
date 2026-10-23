@@ -26,6 +26,9 @@ export const BATTLE_ARENA = {
   // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
   // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
   duel: { ...BASE_ARENA, top: 740 },
+  // 실시간 아레나는 같은 결투장 원화(`duel` 틀)를 쓰되 확대 뒤 실측 바닥(약 670~1,440)을 거의 다 쓴다.
+  // 결투장 몫(740~1,360)에 그대로 세웠을 때는 두 편이 코앞에서 시작해 촘촘해 보였다 — 좌우도 한 뼘씩 더 연다.
+  liveArena: { left: 110, right: 970, top: 700, bottom: 1410 },
 } as const satisfies Record<string, Arena>;
 
 export type BattleArenaMode = keyof typeof BATTLE_ARENA;

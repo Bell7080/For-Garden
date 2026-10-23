@@ -50,7 +50,8 @@ describe("문구 표", () => {
       .filter((key) => !code.includes(`"${key}"`))
       .filter((key) => !prefixes.some((prefix) => key.startsWith(prefix)));
     expect(unused).toEqual([]);
-  });
+    // 표·소스가 커질수록 문자열 대조가 길어져 기본 5초를 넘긴다(부하가 걸린 기기에서 실제로 넘겼다).
+  }, 30_000);
 });
 
 describe("자리 표시", () => {

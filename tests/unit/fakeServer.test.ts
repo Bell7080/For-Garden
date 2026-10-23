@@ -1239,7 +1239,7 @@ describe("룬 판매", () => {
     const state = makeSession(); state.runeInventory = [makeRune("sale-1")]; const server = new FakeServer(state, { latencyMs: 0 });
     const first = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
     const replay = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
-    expect(replay).toEqual(first); expect(state.wallet.gold).toBe(first.goldAwarded); expect(state.runeInventory).toEqual([]);
+    expect(replay).toEqual(first); expect(state.wallet.rawStone).toBe(first.rawStoneAwarded); expect(state.runeInventory).toEqual([]);
   });
 
   it("장착 룬과 지갑 상한 초과를 원자적으로 거부해 장착표를 보존한다", async () => {
@@ -1247,9 +1247,9 @@ describe("룬 판매", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.sellRunes({ requestId: "equipped", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "RUNE_EQUIPPED" });
     expect(state.relicProgress.torika.heartGemSlots[0]).toBe("equipped-sale"); expect(state.runeInventory).toHaveLength(1);
-    state.relicProgress.torika.heartGemSlots[0] = null; state.wallet.gold = 999_999_999;
+    state.relicProgress.torika.heartGemSlots[0] = null; state.wallet.rawStone = WALLET_CAPS.rawStone;
     await expect(server.sellRunes({ requestId: "cap", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
-    expect(state.runeInventory).toHaveLength(1); expect(state.wallet.gold).toBe(999_999_999);
+    expect(state.runeInventory).toHaveLength(1); expect(state.wallet.rawStone).toBe(WALLET_CAPS.rawStone);
   });
 
   it("잠근 룬은 판매를 거부하고 잠금을 푼 뒤에만 팔린다", async () => {
@@ -1260,6 +1260,49 @@ describe("룬 판매", () => {
     await server.markRune({ runeInstanceId: "locked-sale", locked: false });
     await server.sellRunes({ requestId: "unlocked", instanceIds: ["locked-sale"] });
     expect(state.runeInventory).toEqual([]);
+  });
+});
+
+/** 합성은 재료 셋·골드를 한 번에 확정하고, 원석 상점의 랜덤 룬은 등급을 서버가 굴린다. */
+describe("룬 합성", () => {
+  const engraved = (instanceId: string): RuneInstance => {
+    const rune = makeRune(instanceId);
+    return { ...rune, enhancementComplete: true, engravings: [{ statKey: rune.mainStats[0].key, valueAdded: 1 }] };
+  };
+
+  it("각인 마친 같은 등급 셋을 골드로 녹여 새 룬 하나를 만들고 같은 requestId는 다시 쓰지 않는다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("s-1"), engraved("s-2"), engraved("s-3"), makeRune("keep")];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const first = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
+    const replay = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
+    expect(replay).toEqual(first);
+    expect(first).toMatchObject({ upgraded: true, goldSpent: 200_000 });
+    expect(first.rune.rarity).toBe("rare");
+    expect(state.wallet.gold).toBe(300_000);
+    expect(state.runeInventory.map(({ instanceId }) => instanceId).sort()).toEqual([first.rune.instanceId, "keep"].sort());
+  });
+
+  it("각인 전·장착·잠금·골드 부족은 재료와 골드를 그대로 두고 거부한다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("a"), engraved("b"), makeRune("raw"), engraved("c")];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.synthesizeRunes({ requestId: "raw", runeInstanceIds: ["a", "b", "raw"] })).rejects.toMatchObject({ code: "RUNE_SYNTHESIS_INVALID" });
+    state.relicProgress.torika.heartGemSlots[0] = "c";
+    await expect(server.synthesizeRunes({ requestId: "eq", runeInstanceIds: ["a", "b", "c"] })).rejects.toMatchObject({ code: "RUNE_EQUIPPED" });
+    state.relicProgress.torika.heartGemSlots[0] = null;
+    state.wallet.gold = 1000;
+    await expect(server.synthesizeRunes({ requestId: "poor", runeInstanceIds: ["a", "b", "c"] })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(state.runeInventory).toHaveLength(4); expect(state.wallet.gold).toBe(1000);
+  });
+
+  it("고고학 상점의 랜덤 룬은 원석으로 사고 특성 없는 룬 하나가 들어온다", async () => {
+    const state = makeSession(); state.wallet.rawStone = 2000;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999 });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-random", quantity: 1 });
+    expect(state.wallet.rawStone).toBe(500);
+    expect(state.runeInventory).toHaveLength(1);
+    expect(state.runeInventory[0].trait).toBeUndefined();
   });
 });
 

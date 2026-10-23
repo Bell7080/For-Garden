@@ -53,10 +53,11 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
     { key: "amber", icon: "currency-amber", color: "#ffc98a" },
   ],
-  // 고고학은 제 경제를 갖는다 — **원석 한 칸만 세운다**(응태 결정). 탐사가 함께 캐내는 화석·골드는
-  // 이 화면의 조작을 정하지 않아 칸만 먹고 정작 볼 수를 밀어냈다.
+  // 고고학은 **원석과 골드** 두 칸이다(응태 결정). 원석은 탐사·특성 연구가, 골드는 룬 합성이 쓴다 —
+  // 둘 다 이 화면의 조작을 정한다. 탐사가 함께 캐내는 화석은 세우지 않는다.
   archaeology: [
     { key: "rawStone", icon: "currency-orestone", compact: true, color: "#a9d8e8" },
+    { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
   ],
   /**
    * 고고학 상점.

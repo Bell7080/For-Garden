@@ -4,7 +4,7 @@ import type { ItemLot } from "../core/itemLots";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
-import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, UseConsumableResponse } from "../api/contracts";
+import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -192,6 +192,13 @@ export class InventoryManager {
   /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */
   async renameRune(api: GameApi, instanceId: string, name: string): Promise<RenameRuneResponse> {
     return this.applyRuneMutation(await api.renameRune({ runeInstanceId: instanceId, name }));
+  }
+
+  /** 각인 완료 룬 셋을 합성한다. 응답의 확정 스냅샷(룬 목록·지갑)만 반영한다. */
+  async synthesizeRunes(api: GameApi, instanceIds: readonly string[], requestId = crypto.randomUUID()): Promise<SynthesizeRunesResponse> {
+    const response = await api.synthesizeRunes({ requestId, runeInstanceIds: instanceIds });
+    if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
+    return this.applyRuneMutation(response);
   }
 
   /** 판매 응답의 확정 스냅샷만 Session에 반영하고 모든 상태 소비자에게 같은 시점으로 알린다. */

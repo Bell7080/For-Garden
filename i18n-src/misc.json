@@ -2773,5 +2773,205 @@
   "stageMap.sub": ["支线", "เสริม", "PHỤ", "SAMPING", "SEC.", "PAR.", "NEBEN", "ДОП."],
   "stageMap.subRead": ["已读", "อ่านแล้ว", "Đã đọc", "Dibaca", "Leída", "Lida", "Gelesen", "Прочитано"],
   "title.switchAccount": ["切换账号", "เปลี่ยนบัญชี", "Đổi tài khoản", "Ganti akun", "Cambiar de cuenta", "Trocar de conta", "Konto wechseln", "Сменить аккаунт"],
-  "title.switchAccount.body": ["使用其他账号开始。此设备的本地存档将被删除，已关联服务器的进度会保留。", "เริ่มด้วยบัญชีอื่น ข้อมูลบันทึกในอุปกรณ์นี้จะถูกลบ ความคืบหน้าที่เชื่อมกับเซิร์ฟเวอร์จะคงอยู่", "Bắt đầu với tài khoản khác. Bản lưu cục bộ trên thiết bị sẽ bị xóa. Tiến trình đã liên kết máy chủ được giữ lại.", "Mulai dengan akun lain. Simpanan lokal di perangkat ini akan dihapus. Progres yang terhubung ke server tetap disimpan.", "Empezar con otra cuenta. Se borrará el guardado local de este dispositivo. El progreso vinculado al servidor se conservará.", "Começar com outra conta. O salvamento local deste dispositivo será apagado. O progresso vinculado ao servidor será mantido.", "Mit anderem Konto starten. Lokale Speicherdaten auf diesem Gerät werden gelöscht. Mit dem Server verknüpfter Fortschritt bleibt erhalten.", "Начать с другим аккаунтом. Локальное сохранение на этом устройстве будет удалено. Прогресс, связанный с сервером, сохранится."]
+  "title.switchAccount.body": ["使用其他账号开始。此设备的本地存档将被删除，已关联服务器的进度会保留。", "เริ่มด้วยบัญชีอื่น ข้อมูลบันทึกในอุปกรณ์นี้จะถูกลบ ความคืบหน้าที่เชื่อมกับเซิร์ฟเวอร์จะคงอยู่", "Bắt đầu với tài khoản khác. Bản lưu cục bộ trên thiết bị sẽ bị xóa. Tiến trình đã liên kết máy chủ được giữ lại.", "Mulai dengan akun lain. Simpanan lokal di perangkat ini akan dihapus. Progres yang terhubung ke server tetap disimpan.", "Empezar con otra cuenta. Se borrará el guardado local de este dispositivo. El progreso vinculado al servidor se conservará.", "Começar com outra conta. O salvamento local deste dispositivo será apagado. O progresso vinculado ao servidor será mantido.", "Mit anderem Konto starten. Lokale Speicherdaten auf diesem Gerät werden gelöscht. Mit dem Server verknüpfter Fortschritt bleibt erhalten.", "Начать с другим аккаунтом. Локальное сохранение на этом устройстве будет удалено. Прогресс, связанный с сервером, сохранится."],
+"archaeology.tab.synth": [
+"符文合成",
+"หลอมรวมรูน",
+"Hợp nhất Rune",
+"Fusi Rune",
+"Fusión de runas",
+"Fusão de runas",
+"Runenfusion",
+"Слияние рун"
+],
+"archaeology.synth.pick": [
+"要合成的符文",
+"รูนที่จะหลอม",
+"Rune để hợp nhất",
+"Rune untuk difusi",
+"Runa a fusionar",
+"Runa para fundir",
+"Zu fusionierende Rune",
+"Руна для слияния"
+],
+"archaeology.synth.pickEmpty": [
+"没有已刻印的同等级符文。",
+"ไม่มีรูนระดับเดียวกันที่สลักแล้ว",
+"Không có Rune cùng cấp đã khắc.",
+"Tidak ada Rune selevel yang sudah diukir.",
+"No hay runas grabadas de esta rareza.",
+"Não há runas gravadas desta raridade.",
+"Keine gravierten Runen dieser Seltenheit.",
+"Нет гравированных рун этой редкости."
+],
+"archaeology.synth.odds": [
+"结果概率",
+"โอกาสผลลัพธ์",
+"Tỉ lệ kết quả",
+"Peluang hasil",
+"Probabilidades",
+"Chances do resultado",
+"Ergebnischancen",
+"Шансы результата"
+],
+"archaeology.synth.hint": [
+"请放入3个已刻印的同等级符文。",
+"ใส่รูนระดับเดียวกันที่สลักแล้ว 3 ชิ้น",
+"Hãy đặt 3 Rune cùng cấp đã khắc.",
+"Masukkan 3 Rune selevel yang sudah diukir.",
+"Coloca tres runas grabadas de la misma rareza.",
+"Coloque três runas gravadas da mesma raridade.",
+"Lege drei gravierte Runen gleicher Seltenheit ein.",
+"Вставьте три гравированные руны одной редкости."
+],
+"archaeology.synth.traitNone": [
+"无特性",
+"ไม่มีคุณลักษณะ",
+"Không đặc tính",
+"Tanpa sifat",
+"Sin rasgo",
+"Sem traço",
+"Kein Merkmal",
+"Без черты"
+],
+"archaeology.synth.rarity": [
+"等级",
+"ระดับ",
+"Cấp",
+"Tingkat",
+"Rareza",
+"Raridade",
+"Seltenheit",
+"Редкость"
+],
+"archaeology.synth.trait": [
+"特性",
+"คุณลักษณะ",
+"Đặc tính",
+"Sifat",
+"Rasgo",
+"Traço",
+"Merkmal",
+"Черта"
+],
+"archaeology.synth.button": [
+"合成",
+"หลอมรวม",
+"Hợp nhất",
+"Fusi",
+"Fusionar",
+"Fundir",
+"Fusionieren",
+"Слить"
+],
+"archaeology.synth.confirmTitle": [
+"符文合成",
+"หลอมรวมรูน",
+"Hợp nhất Rune",
+"Fusi Rune",
+"Fusión de runas",
+"Fusão de runas",
+"Runenfusion",
+"Слияние рун"
+],
+"archaeology.synth.confirmMessage": [
+"放入的3个符文将消失，并生成1个新符文。无法撤销。",
+"รูนทั้ง 3 จะหายไปและได้รูนใหม่ 1 ชิ้น ไม่สามารถย้อนกลับได้",
+"3 Rune sẽ mất đi để tạo 1 Rune mới. Không thể hoàn tác.",
+"Ketiga Rune akan hilang dan menjadi 1 Rune baru. Tidak bisa dibatalkan.",
+"Las tres runas se consumen para crear una nueva. No se puede deshacer.",
+"As três runas são consumidas para criar uma nova. Não é possível desfazer.",
+"Die drei Runen werden verbraucht und ergeben eine neue Rune. Nicht umkehrbar.",
+"Три руны исчезнут, и появится одна новая. Отменить нельзя."
+],
+"archaeology.synth.oddsTitle": [
+"合成概率",
+"โอกาสหลอมรวม",
+"Tỉ lệ hợp nhất",
+"Peluang fusi",
+"Probabilidades de fusión",
+"Chances de fusão",
+"Fusionschancen",
+"Шансы слияния"
+],
+"archaeology.synth.oddsRarity": [
+"结果等级",
+"ระดับผลลัพธ์",
+"Cấp kết quả",
+"Tingkat hasil",
+"Rareza resultante",
+"Raridade resultante",
+"Ergebnis-Seltenheit",
+"Редкость результата"
+],
+"archaeology.synth.oddsInput": [
+"放入等级",
+"ระดับที่ใส่",
+"Cấp đưa vào",
+"Masukan",
+"Entrada",
+"Entrada",
+"Einsatz",
+"Вход"
+],
+"archaeology.synth.oddsSame": [
+"同等级",
+"ระดับเดิม",
+"Giữ cấp",
+"Sama",
+"Igual",
+"Igual",
+"Gleich",
+"Та же"
+],
+"archaeology.synth.oddsUp": [
+"升一级",
+"สูงขึ้น 1 ระดับ",
+"Lên 1 cấp",
+"Naik 1",
+"Superior",
+"Superior",
+"Eine höher",
+"На ступень выше"
+],
+"archaeology.synth.oddsGold": [
+"金币",
+"ทอง",
+"Vàng",
+"Emas",
+"Oro",
+"Ouro",
+"Gold",
+"Золото"
+],
+"archaeology.synth.oddsTrait": [
+"结果特性",
+"คุณลักษณะผลลัพธ์",
+"Đặc tính kết quả",
+"Sifat hasil",
+"Rasgo resultante",
+"Traço resultante",
+"Ergebnis-Merkmal",
+"Черта результата"
+],
+"archaeology.synth.oddsBest": [
+"最高特性",
+"คุณลักษณะสูงสุด",
+"Đặc tính cao nhất",
+"Sifat terbaik",
+"Mejor rasgo",
+"Melhor traço",
+"Bestes Merkmal",
+"Лучшая черта"
+],
+"archaeology.synth.oddsNote": [
+"由放入符文中最高的特性等级决定所用行。每多1个带特性的符文，「无特性」中的{shift}%会移至该等级。",
+"ระดับคุณลักษณะสูงสุดของรูนที่ใส่จะกำหนดแถว ทุกรูนที่มีคุณลักษณะเพิ่มอีก 1 ชิ้น จะย้าย {shift}% จาก \"ไม่มีคุณลักษณะ\" ไปยังระดับนั้น",
+"Cấp đặc tính cao nhất trong các Rune đưa vào quyết định hàng. Mỗi Rune có đặc tính thêm sẽ chuyển {shift}% từ \"Không đặc tính\" sang cấp đó.",
+"Tingkat sifat tertinggi di antara masukan menentukan baris. Tiap Rune bersifat tambahan memindahkan {shift}% dari \"Tanpa sifat\" ke tingkat itu.",
+"El rango de rasgo más alto entre las entradas elige la fila. Cada runa adicional con rasgo mueve un {shift}% de \"Sin rasgo\" a ese rango.",
+"O maior nível de traço entre as entradas define a linha. Cada runa extra com traço move {shift}% de \"Sem traço\" para esse nível.",
+"Die höchste Merkmalsstufe der Einsätze wählt die Zeile. Jede weitere Rune mit Merkmal verschiebt {shift}% von „Kein Merkmal“ auf diese Stufe.",
+"Строку определяет высшая черта среди вложенных рун. Каждая дополнительная руна с чертой переносит {shift}% из «Без черты» в этот уровень."
+]
 }

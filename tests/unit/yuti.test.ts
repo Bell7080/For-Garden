@@ -33,7 +33,7 @@ describe("유티 — 정체성과 문장", () => {
   });
 
   it("의 수치는 데이터가 정한 값이고 태그와 본문이 그것을 읽는다", () => {
-    expect(PLUME).toMatchObject({ maxStacks: 5, holdSeconds: 8, burstPower: 160, burstSeconds: 4, slowSeconds: 3 });
+    expect(PLUME).toMatchObject({ maxStacks: 5, holdSeconds: 8, burstPower: 120, burstSeconds: 4, slowSeconds: 3 });
     expect(YUTI.passive).toMatchObject({ openingStealthSeconds: 4, criticalChancePercent: 20, attackSpeedPercent: 20, killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 } });
     expect(YUTI.basic.maxTargets).toBe(2);
     expect(YUTI.ultimate.repeatStrike?.count).toBe(3);

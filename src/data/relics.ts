@@ -150,7 +150,7 @@ const FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 160,
+  burstPower: 120,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30,
@@ -1586,7 +1586,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "yuti-basic",
       name: "갈래깃",
-      power: 80,
+      power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

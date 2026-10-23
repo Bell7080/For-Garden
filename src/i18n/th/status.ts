@@ -13,7 +13,7 @@ export const STATUS_TH = {
   "status.frozen": "แช่แข็ง",
   "status.frozen.detail": "เหลือ {time} · เมื่อแตกได้รับความเสียหายคงที่ {percent}% ของ HP สูงสุด",
   "status.frenzy": "คลั่ง",
-  "status.frenzy.detail": "โจมตีฝ่ายเดียวกัน · ความเร็วโจมตี +{percent}% · เหลือ {time}",
+  "status.frenzy.detail": "โจมตีฝ่ายเดียวกัน · เหลือ {time}",
   "status.taunt": "ยั่วยุ",
   "status.taunt.detail": "โจมตีเฉพาะผู้ยั่วยุ · เหลือ {time}",
   "status.bleed": "เลือดไหล",

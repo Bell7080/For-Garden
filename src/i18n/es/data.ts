@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "Maldición",
   "keyword.curse.description": "Cada carga reduce un 15% la Resistencia de ese enemigo. Acumula hasta 3 cargas, dura 8 segundos y volver a lanzarla reinicia la duración. Como solo reduce la Resistencia, afecta únicamente al daño mágico.",
   "keyword.frenzy.term": "Frenesí",
-  "keyword.frenzy.description": "La Velocidad de ataque sube un 50%, pero ataca a la unidad más cercana de su propio bando. Sin aliados a los que golpear, se ataca a sí mismo. No puede usar su Definitiva en Frenesí.",
+  "keyword.frenzy.description": "Ataca a la unidad más cercana de su propio bando y causa la mitad de daño. Sin aliados a los que golpear, se ataca a sí mismo. No puede usar su Definitiva en Frenesí.",
   "keyword.concussion.term": "Conmoción",
   "keyword.concussion.description": "Daño igual al 5% de los PV máx., o 15% en golpe crítico. Atraviesa la Defensa y la afinidad y se aplica de golpe al impactar.",
   "keyword.knockback.term": "Derribo",

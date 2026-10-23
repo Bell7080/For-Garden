@@ -13,7 +13,7 @@ export const STATUS_RU = {
   "status.frozen": "Заморозка",
   "status.frozen.detail": "осталось {time} · При разрушении {percent}% макс. ОЗ фикс. урона",
   "status.frenzy": "Неистовство",
-  "status.frenzy.detail": "Атакует своих · Скорость атаки +{percent}% · осталось {time}",
+  "status.frenzy.detail": "Атакует своих · осталось {time}",
   "status.taunt": "Провокация",
   "status.taunt.detail": "Бьёт только провокатора · осталось {time}",
   "status.bleed": "Кровотечение",

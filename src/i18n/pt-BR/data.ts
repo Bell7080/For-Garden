@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "Maldição",
   "keyword.curse.description": "Cada acúmulo reduz em 15% a Resistência desse inimigo. Acumula até 3, dura 8 segundos e lançar de novo reinicia a duração. Como só reduz a Resistência, afeta apenas o dano mágico.",
   "keyword.frenzy.term": "Frenesi",
-  "keyword.frenzy.description": "A Velocidade de ataque sobe 50%, mas ataca a unidade mais próxima do próprio lado. Sem aliados para atingir, ataca a si mesmo. Não pode usar a Suprema em Frenesi.",
+  "keyword.frenzy.description": "Ataca a unidade mais próxima do próprio lado, causando metade do dano. Sem aliados para atingir, ataca a si mesmo. Não pode usar a Suprema em Frenesi.",
   "keyword.concussion.term": "Concussão",
   "keyword.concussion.description": "Dano igual a 5% do PV máx., ou 15% em acerto crítico. Atravessa Defesa e afinidade e acontece de uma vez no impacto.",
   "keyword.knockback.term": "Arremesso",

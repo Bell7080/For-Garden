@@ -741,7 +741,7 @@ export default {
   "keyword.curse.term": "呪い",
   "keyword.curse.description": "1重ごとにその敵の抵抗力が15%下がる。最大3重まで積まれて8秒間残り、かけ直すと持続時間が最初から流れ直す。抵抗力だけを下げるので魔法ダメージにのみ効く。",
   "keyword.frenzy.term": "狂乱",
-  "keyword.frenzy.description": "攻撃速度が50%高くなる代わりに、最も近い味方を攻撃する。殴る味方が残っていなければその場で自分を攻撃する。狂乱中は必殺技を使えない。",
+  "keyword.frenzy.description": "最も近い味方を攻撃し、そのとき与えるダメージは半分になる。殴る味方が残っていなければその場で自分を攻撃する。狂乱中は必殺技を使えない。",
   "keyword.concussion.term": "脳震盪",
   "keyword.concussion.description": "最大体力の5%に当たるダメージ。クリティカル発動時は15%に当たるダメージ。防御力と属性を素通りして、当たった瞬間に一度で入る。",
   "keyword.knockback.term": "吹き飛ばし",

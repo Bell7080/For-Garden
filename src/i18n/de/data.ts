@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "Fluch",
   "keyword.curse.description": "Jeder Stapel senkt den Widerstand des Gegners um 15%. Bis zu 3 Stapel, 8 Sekunden Dauer; erneutes Wirken startet die Dauer neu. Da nur der Widerstand sinkt, betrifft er nur magischen Schaden.",
   "keyword.frenzy.term": "Raserei",
-  "keyword.frenzy.description": "Das Angriffstempo steigt um 50%, doch es greift die nächste Einheit der eigenen Seite an. Ohne Verbündete greift es sich selbst an. In Raserei kann es keine Ultimativ einsetzen.",
+  "keyword.frenzy.description": "Es greift die nächste Einheit der eigenen Seite an und verursacht dabei nur halben Schaden. Ohne Verbündete greift es sich selbst an. In Raserei kann es keine Ultimativ einsetzen.",
   "keyword.concussion.term": "Gehirnerschütterung",
   "keyword.concussion.description": "Schaden in Höhe von 5% des max. Lebens, bei kritischem Treffer 15%. Durchdringt Verteidigung und Affinität und wirkt sofort beim Aufprall.",
   "keyword.knockback.term": "Rückstoß",

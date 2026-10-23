@@ -178,7 +178,7 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
     views.push({
       id: "frenzy", name: t("status.frenzy"), color: UNIT_STATUS_COLOR.frenzy,
       remaining: frenzy.remaining, total: Math.max(frenzy.total, frenzy.remaining),
-      detail: t("status.frenzy.detail", { percent: frenzy.attackSpeedPercent, time: seconds(frenzy.remaining) }),
+      detail: t("status.frenzy.detail", { time: seconds(frenzy.remaining) }),
     });
   }
   if (fighter.taunted) {

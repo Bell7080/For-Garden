@@ -15,7 +15,7 @@ export const STATUS_JA = {
   "status.frozen": "氷結",
   "status.frozen.detail": "残り {time} · 解けた瞬間に最大体力の{percent}%の固定ダメージ",
   "status.frenzy": "狂乱",
-  "status.frenzy.detail": "味方を攻撃 · 攻撃速度 +{percent}% · 残り {time}",
+  "status.frenzy.detail": "味方を攻撃 · 残り {time}",
   "status.taunt": "挑発",
   "status.taunt.detail": "挑発した相手のみを狙う · 残り {time}",
   "status.bleed": "出血",

@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "诅咒",
   "keyword.curse.description": "每层使该敌人的抗性降低15%。最多叠加3层，持续8秒，再次施放会重置持续时间。由于只降低抗性，只影响魔法伤害。",
   "keyword.frenzy.term": "暴走",
-  "keyword.frenzy.description": "攻击速度提升50%，但会攻击最近的己方单位。没有可攻击的同伴时，会当场攻击自己。暴走期间无法使用必杀技。",
+  "keyword.frenzy.description": "会攻击最近的己方单位，造成的伤害减半。没有可攻击的同伴时，会当场攻击自己。暴走期间无法使用必杀技。",
   "keyword.concussion.term": "脑震荡",
   "keyword.concussion.description": "相当于最大生命5%的伤害，暴击时为15%。穿透防御与属性相克，命中瞬间一次性造成。",
   "keyword.knockback.term": "击飞",

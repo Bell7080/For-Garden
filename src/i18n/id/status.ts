@@ -13,7 +13,7 @@ export const STATUS_ID = {
   "status.frozen": "Beku",
   "status.frozen.detail": "sisa {time} · Saat pecah, kerusakan tetap {percent}% HP maks",
   "status.frenzy": "Amukan",
-  "status.frenzy.detail": "Menyerang pihak sendiri · Kecepatan Serang +{percent}% · sisa {time}",
+  "status.frenzy.detail": "Menyerang pihak sendiri · sisa {time}",
   "status.taunt": "Provokasi",
   "status.taunt.detail": "Hanya menargetkan provokator · sisa {time}",
   "status.bleed": "Pendarahan",

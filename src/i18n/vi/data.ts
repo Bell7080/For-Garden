@@ -558,7 +558,7 @@ export default {
   "keyword.curse.term": "Nguyền rủa",
   "keyword.curse.description": "Mỗi tầng giảm Kháng của kẻ địch đó 15%. Tích tối đa 3 tầng, kéo dài 8 giây, thi triển lại sẽ làm mới thời gian. Vì chỉ giảm Kháng nên chỉ ảnh hưởng sát thương phép.",
   "keyword.frenzy.term": "Cuồng bạo",
-  "keyword.frenzy.description": "Tốc đánh tăng 50% nhưng tấn công đơn vị phe mình gần nhất. Không còn đồng đội để đánh thì tự đánh mình tại chỗ. Không thể dùng Tuyệt kỹ khi Cuồng bạo.",
+  "keyword.frenzy.description": "Tấn công đơn vị phe mình gần nhất và gây sát thương giảm một nửa. Không còn đồng đội để đánh thì tự đánh mình tại chỗ. Không thể dùng Tuyệt kỹ khi Cuồng bạo.",
   "keyword.concussion.term": "Chấn động",
   "keyword.concussion.description": "Sát thương bằng 5% HP tối đa, hoặc 15% khi chí mạng. Xuyên qua Thủ và tương khắc, gây ngay khi trúng.",
   "keyword.knockback.term": "Đánh bật",

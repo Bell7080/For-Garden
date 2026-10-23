@@ -13,7 +13,7 @@ export const STATUS_ZH_HANS = {
   "status.frozen": "冰冻",
   "status.frozen.detail": "剩余{time} · 破碎时造成最大生命{percent}%的固定伤害",
   "status.frenzy": "暴走",
-  "status.frenzy.detail": "攻击己方 · 攻击速度 +{percent}% · 剩余{time}",
+  "status.frenzy.detail": "攻击己方 · 剩余{time}",
   "status.taunt": "嘲讽",
   "status.taunt.detail": "只攻击嘲讽者 · 剩余{time}",
   "status.bleed": "出血",

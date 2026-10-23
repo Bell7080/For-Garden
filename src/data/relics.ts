@@ -1381,7 +1381,8 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "irna-basic",
       name: "장전된 한 발",
-      power: 130,
+      // 기본 공격 위력 130 → 170.
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -2088,7 +2089,7 @@ export const RELICS: RelicDef[] = [
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
-    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2 },
     // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
@@ -2145,7 +2146,7 @@ export const RELICS: RelicDef[] = [
       // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
       // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
       cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
-      statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }],
+      statusEffects: [{ kind: "frenzy", seconds: 4 }],
     },
   },
 

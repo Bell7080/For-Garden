@@ -18867,17 +18867,17 @@ var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
 var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
 var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
-  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
+  cheesecake: { perNode: { min: 5, max: 15 }, runCap: 225 },
+  gold: { perNode: { min: 150, max: 500 }, runCap: 9e3 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
+  gems: { perNode: { min: 5, max: 15 }, runCap: 225 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
    */
-  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
+  salvageRecord: { perNode: { min: 3, max: 7 }, runCap: 120 }
 };
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 200 };
 function expeditionBossSalvage(bossDamageScore) {
   return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
 }
@@ -18887,10 +18887,10 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
   horde: 1.4
 };
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 2080, max: 3600 },
+  gold: { min: 750, max: 1500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 1e3, max: 1500 },
-  salvageRecord: { min: 6, max: 10 }
+  gems: { min: 20, max: 50 },
+  salvageRecord: { min: 8, max: 15 }
 };
 var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
 var EXPEDITION_BOSS_BALANCE = {
@@ -18906,30 +18906,30 @@ var EXPEDITION_BOSS_BALANCE = {
   ]
 };
 var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
+  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 5e3 } },
+  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 50 } },
+  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 5 } },
+  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 50 } },
+  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 1e4 } },
+  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 100 } },
+  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 100 } },
+  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 200 } },
+  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 2 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
 var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
@@ -18937,7 +18937,13 @@ function expeditionRankRewards(rank) {
   const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
   return { ...row.rewards };
 }
-var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
+var EXPEDITION_SWEEP_REWARDS = {
+  gold: 4e3,
+  cheesecake: 120,
+  gems: 120,
+  salvageRecord: 60,
+  fossil: 0
+};
 EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
 
 // src/core/expeditionBoss.ts
@@ -28808,6 +28814,17 @@ init_define_import_meta_env();
 
 // src/core/expeditionRewards.ts
 init_define_import_meta_env();
+function normalizeExpeditionPendingRewards(pending, bossDamageScore = 0) {
+  const normalized = {};
+  for (const [currency3, rule] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    const key = currency3;
+    const raw = pending[key] ?? 0;
+    const cap = rule.runCap + (key === "salvageRecord" ? expeditionBossSalvage(bossDamageScore) : 0);
+    const amount = Math.max(0, Math.min(cap, Math.floor(Number.isFinite(raw) ? raw : 0)));
+    if (amount > 0) normalized[key] = amount;
+  }
+  return normalized;
+}
 function rollInteger(min, max, random) {
   const normalized = Math.min(1 - Number.EPSILON, Math.max(0, random()));
   return min + Math.floor(normalized * (max - min + 1));
@@ -31867,7 +31884,10 @@ var FakeServer = class {
       nextState.expedition.bestScore = runScore.runScore;
       nextState.expedition.bestAchievedAt = now.toISOString();
     }
-    if (nextState.expedition.run && bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    if (nextState.expedition.run) {
+      nextState.expedition.run.pendingRewards = normalizeExpeditionPendingRewards(nextState.expedition.run.pendingRewards);
+      if (bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    }
     const bestScore = nextState.expedition.bestScore;
     const response = { ...result.actualDamage !== void 0 ? { verifiedDamage: result.actualDamage } : {}, weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) };
     this.recordReceipt(nextState, "expeditionBoss", request.requestId, identity, response);
@@ -32330,7 +32350,8 @@ var FakeServer = class {
     }
     const wallet = { ...this.state.wallet };
     const granted = {};
-    for (const [currency3, raw] of Object.entries(run2.pendingRewards)) {
+    const pendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
+    for (const [currency3, raw] of Object.entries(pendingRewards)) {
       if (!(currency3 in WALLET_CAPS)) continue;
       const key = currency3;
       const amount = Math.max(0, Math.floor(raw));
@@ -32365,12 +32386,14 @@ var FakeServer = class {
     const node = run2?.nodes.find(({ id }) => id === request.nodeId);
     const predecessor = run2?.currentNodeId ? run2.nodes.find(({ id }) => id === run2.currentNodeId) : null;
     if (!request.requestId || !run2 || run2.runId !== request.runId || !node || run2.settled || run2.visitedNodeIds.includes(node.id) || !predecessor && node.floor !== 1 || predecessor && !predecessor.successorIds.includes(node.id) || request.relicHp.length !== 3 || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "\uC644\uB8CC\uD560 \uC218 \uC5C6\uB294 \uC6D0\uC815 \uB178\uB4DC\uC785\uB2C8\uB2E4.");
-    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run2.pendingRewards, random: this.random });
+    const normalizedPendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
+    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
     const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);
     const remainingHpPercent = request.relicHp.reduce((sum, hp) => sum + hp, 0) / request.relicHp.length;
     const nodeScore = calculateExpeditionNodeScore({ floor: node.floor, nodeType: node.type, remainingHpPercent, cleared });
     const next = structuredClone(run2);
+    next.pendingRewards = normalizedPendingRewards;
     next.currentNodeId = node.id;
     next.visitedNodeIds.push(node.id);
     next.normalNodeScoreTotal += nodeScore;
@@ -32392,7 +32415,7 @@ var FakeServer = class {
     return structuredClone(response);
   }
   /**
-   * 소탕: 직접 싸우지 않고 **노드 클리어 보상의 75%**만 한꺼번에 받는다(`EXPEDITION_SWEEP_POLICY`).
+   * 소탕: 직접 싸우지 않고 평균 경로 전투 전리품의 약 75%를 고정표로 받는다.
    *
    * 보물 전리품과 폰토스 피해의 인양 기록은 빠지고, 점수도 남기지 않는다 — 최고 기록은 싸운 판만의
    * 것이다. 오늘의 한 판을 쓰며, 진행 중인 런이 있거나 한 번도 끝까지 가 보지 않은 계정은 거부한다.
@@ -32408,10 +32431,9 @@ var FakeServer = class {
     if (weekly.allTimeBestScore <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "\uC18C\uD0D5\uD560 \uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const granted = {};
-    for (const [currency3, balance] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    for (const [currency3, amount] of Object.entries(EXPEDITION_SWEEP_REWARDS)) {
       const key = currency3;
       if (!(key in WALLET_CAPS)) continue;
-      const amount = Math.floor(balance.runCap * EXPEDITION_SWEEP_POLICY.nodeRewardRatio);
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]);
       wallet[key] += applied;
       granted[currency3] = applied;

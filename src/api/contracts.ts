@@ -938,7 +938,7 @@ export interface SettleRaidRequest { requestId: string; raidId: string; }
 export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
-/** 소탕은 점수를 남기지 않고 노드 클리어 보상의 몫만 준다(`EXPEDITION_SWEEP_POLICY`). */
+/** 소탕은 점수를 남기지 않고 평균 경로 전투 전리품의 약 75% 고정표만 준다. */
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; granted: Record<string, number>; playsToday: number; }
 
 /* ── 출석 ── 규칙은 `core/attendance.ts`, 보상표는 `data/attendance.ts`가 갖는다. */

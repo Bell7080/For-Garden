@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { STAGES, getBattleStage } from "../../src/data/stages";
-import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
+import { expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
@@ -1088,7 +1088,7 @@ describe("FakeServer 원정 정산", () => {
     const runId = state.expedition.run!.runId;
     const request = { runId, settlementId: "settlement-1", outcome: "abandoned" as const };
     const first = await server.settleExpeditionRun(request);
-    expect(first.granted).toEqual({ gold: 1, fossil: 7 }); expect(state.expedition.run).toBeNull();
+    expect(first.granted).toEqual({ gold: 1, fossil: 1 }); expect(state.expedition.run).toBeNull();
     const walletAfterFirst = { ...state.wallet };
     expect(await server.settleExpeditionRun(request)).toEqual(first);
     expect(state.wallet).toEqual(walletAfterFirst);
@@ -1096,7 +1096,7 @@ describe("FakeServer 원정 정산", () => {
     expect(manager.status().active).toBeNull();
     expect(manager.start(["torika", "rex", "dodo"])).toEqual({ ok: false, reason: "dailyLimitReached" });
     await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
-    expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
+    expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1001 });
   });
 
   it("포기 정산은 런 점수를 주간 최고점에 반영하지 않고, 노드 진행 점수는 랭킹에도 반영하지 않는다", async () => {
@@ -1159,15 +1159,18 @@ describe("FakeServer 원정 정산", () => {
   });
 
   describe("소탕", () => {
-    it("노드 클리어 보상의 75%만 즉시 지급하고 점수는 남기지 않는다", async () => {
+    it("평균 경로의 75% 고정표만 즉시 지급하고 점수는 남기지 않는다", async () => {
       const state = makeSession();
       state.expedition.allTimeBestScore = 10_000;
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
       const goldBefore = state.wallet.gold;
 
       const result = await server.sweepExpedition({ requestId: "sweep-1" });
-      expect(result.granted.gold).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.gold.runCap * 0.75));
-      expect(result.granted.salvageRecord).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.salvageRecord.runCap * 0.75));
+      expect(result.granted.gold).toBe(4_000);
+      expect(result.granted.cheesecake).toBe(120);
+      expect(result.granted.gems).toBe(120);
+      expect(result.granted.salvageRecord).toBe(60);
+      expect(result.granted.fossil).toBe(0);
       expect(state.wallet.gold).toBe(goldBefore + result.granted.gold!);
       expect(state.expedition.playsToday).toBe(1);
       expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(0);

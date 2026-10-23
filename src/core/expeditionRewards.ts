@@ -1,9 +1,28 @@
 import { EXPEDITION_AUGMENTS, getExpeditionAugment, type ExpeditionAugmentRarity } from "../data/expeditionAugments";
 import type { ExpeditionNodeType } from "./expeditionMap";
-import { EXPEDITION_COMBAT_REWARD_MULTIPLIERS, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_TREASURE_REWARD_BALANCE } from "../data/expedition";
+import { EXPEDITION_COMBAT_REWARD_MULTIPLIERS, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_TREASURE_REWARD_BALANCE, expeditionBossSalvage } from "../data/expedition";
 
 /** 서버가 런 상태에 더할 수 있는 정수 재화 결과다. */
 export type ExpeditionNodeRewards = Partial<Record<keyof typeof EXPEDITION_NODE_REWARD_BALANCE, number>>;
+
+/**
+ * 상향 기간에 만들어진 미정산 런도 현행 한 판 상한을 넘겨 지급하지 않는다.
+ * 인양 기록만 노드 상한과 이미 확정된 폰토스 피해 몫을 함께 가질 수 있다.
+ */
+export function normalizeExpeditionPendingRewards(
+  pending: Readonly<Record<string, number>>,
+  bossDamageScore = 0,
+): ExpeditionNodeRewards {
+  const normalized: ExpeditionNodeRewards = {};
+  for (const [currency, rule] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    const key = currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE;
+    const raw = pending[key] ?? 0;
+    const cap = rule.runCap + (key === "salvageRecord" ? expeditionBossSalvage(bossDamageScore) : 0);
+    const amount = Math.max(0, Math.min(cap, Math.floor(Number.isFinite(raw) ? raw : 0)));
+    if (amount > 0) normalized[key] = amount;
+  }
+  return normalized;
+}
 
 /** 주입 난수를 범위의 양끝을 포함한 정수로 변환한다. */
 function rollInteger(min: number, max: number, random: () => number): number {

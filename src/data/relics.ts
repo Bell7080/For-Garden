@@ -1,4 +1,4 @@
-import { POISON, POISON_LIGHT } from "../core/skirmish";
+import { POISON } from "../core/skirmish";
 import { registerDataText } from "../i18n";
 import { TORIKA_STORY } from "./relicStories/torika";
 import type { BasicAttack, RelicDef } from "../core/types";
@@ -3209,7 +3209,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON_LIGHT.attackPercentPerSecond, abilityPercentPerSecond: POISON_LIGHT.abilityPercentPerSecond }],
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
     },
     ultimate: {
       id: "atra-ult",
@@ -3224,7 +3224,7 @@ export const RELICS: RelicDef[] = [
       statusEffects: [
         { kind: "taunt", seconds: 3 },
         { kind: "stagger", seconds: 0.1 },
-        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON_LIGHT.attackPercentPerSecond, abilityPercentPerSecond: POISON_LIGHT.abilityPercentPerSecond },
+        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond },
       ],
     },
     // 채찍이 두 번 들어가고(II) 품이 넓어지며(III) 폭주하면 아군 몫을 대신 맞고(IV) 독이 오래 남는다(V).

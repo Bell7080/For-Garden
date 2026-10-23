@@ -538,7 +538,7 @@ export default {
   "keyword.minor-bleed.term": "Chảy máu nhẹ",
   "keyword.minor-bleed.description": "Mỗi giây trong 2 giây chịu sát thương cố định bằng 1% HP tối đa. Lần gây yếu hơn không ghi đè Chảy máu mạnh hơn.",
   "keyword.poison.term": "Độc",
-  "keyword.poison.description": "Nhận [[magical-damage|sát thương phép]] mỗi giây bằng 30% Công cộng 30% Phép của người gán. Giá trị chốt lúc gán, và độc mạnh hơn đè lên sẽ giữ giá trị của nó.",
+  "keyword.poison.description": "Nhận [[magical-damage|sát thương phép]] mỗi giây bằng 22% Công cộng 22% Phép của người gán. Giá trị chốt lúc gán, và độc mạnh hơn đè lên sẽ giữ giá trị của nó.",
   "keyword.liquidate.term": "Thanh toán",
   "keyword.liquidate.description": "Chịu toàn bộ sát thương theo thời gian còn lại cùng lúc và trạng thái biến mất. Chỉ kéo sớm phần vốn sẽ chịu, tổng không đổi, chỉ đổi thời điểm.",
   "keyword.stagger.term": "Khựng",

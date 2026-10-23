@@ -538,7 +538,7 @@ export default {
   "keyword.minor-bleed.term": "Sangramento leve",
   "keyword.minor-bleed.description": "Recebe a cada segundo, por 2 segundos, dano fixo igual a 1% do PV máx. Uma reaplicação mais fraca não substitui um Sangramento mais forte.",
   "keyword.poison.term": "Veneno",
-  "keyword.poison.description": "Recebe [[magical-damage|dano mágico]] a cada segundo igual a 30% do Ataque mais 30% do Poder mágico de quem aplica. O valor é fixado na aplicação, e um veneno mais forte que o sobrescreva mantém o próprio valor.",
+  "keyword.poison.description": "Recebe [[magical-damage|dano mágico]] a cada segundo igual a 22% do Ataque mais 22% do Poder mágico de quem aplica. O valor é fixado na aplicação, e um veneno mais forte que o sobrescreva mantém o próprio valor.",
   "keyword.liquidate.term": "Liquidar",
   "keyword.liquidate.description": "Recebe de uma vez todo o dano contínuo restante e o status some. Só antecipa o que seria recebido de qualquer forma, então o total não muda; só o momento.",
   "keyword.stagger.term": "Cambaleio",

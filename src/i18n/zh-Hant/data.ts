@@ -538,7 +538,7 @@ export default {
   "keyword.minor-bleed.term": "輕微出血",
   "keyword.minor-bleed.description": "2秒內每秒受到相當於最大生命1%的固定傷害。較弱的重複施加不會覆蓋較強的出血。",
   "keyword.poison.term": "中毒",
-  "keyword.poison.description": "每秒受到相當於施加者攻擊力30%與法術強度30%之和的[[magical-damage|魔法傷害]]。數值在施加瞬間確定，更強的毒覆蓋時保留其數值。",
+  "keyword.poison.description": "每秒受到相當於施加者攻擊力22%與法術強度22%之和的[[magical-damage|魔法傷害]]。數值在施加瞬間確定，更強的毒覆蓋時保留其數值。",
   "keyword.liquidate.term": "清算",
   "keyword.liquidate.description": "一次性承受所有剩餘的持續傷害，狀態隨即消失。只是把原本就會受到的傷害提前，總量不變，只改變時機。",
   "keyword.stagger.term": "硬直",

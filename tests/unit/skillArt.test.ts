@@ -590,7 +590,7 @@ describe("델로피 스킬 표시 계약", () => {
     // 출혈과 같은 이유다 — 시간은 스킬마다 다르고, 매초 계수는 쓰는 개체가 하나뿐이라 태그가 가진다.
     expect(statusEffectLabel(delopi.basic.statusEffects?.[0])).toBe("[[poison|중독]] 3초");
     const poison = KEYWORDS.find((keyword) => keyword.id === "poison")!;
-    expect(poison.description).toContain("공격력 30%와 주문력 30%");
+    expect(poison.description).toContain("공격력 22%와 주문력 22%");
     expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("30%");
   });
 

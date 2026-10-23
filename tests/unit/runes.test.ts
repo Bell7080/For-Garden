@@ -122,6 +122,14 @@ describe("룬 도메인", () => {
     expect(() => runeEnhancementGoldCost(rarity, RUNE_ENHANCEMENT_RULES.totalAttempts[rarity])).toThrow(/다음 비용/);
   });
 
+  it("세공 골드 총합은 등급이 오를수록 가파르게 오르고 골드 소모처 몫을 한다", () => {
+    const total = (rarity: RuneRarity) => Array.from({ length: RUNE_ENHANCEMENT_RULES.totalAttempts[rarity] }, (_, attempt) => runeEnhancementGoldCost(rarity, attempt)).reduce((sum, cost) => sum + cost, 0);
+    expect(total("uncommon")).toBe(13_500);
+    expect(total("rare")).toBe(40_500);
+    expect(total("epic")).toBe(171_000);
+    expect(total("legendary")).toBe(540_000);
+  });
+
   it("완료 전 각인을 막고 완료 후 확정 각인을 한 번만 허용한다", () => {
     let rune = makeRune("uncommon");
     const result = { statKey: rune.mainStats[0].key, grade: "perfect" as const, valueAdded: 5 };

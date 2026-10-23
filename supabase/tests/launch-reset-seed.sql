@@ -58,3 +58,17 @@ insert into storage.objects(bucket_id, name) values ('notice-images', 'cover.web
 insert into public.server_competitive_scores values ('duel',current_date,'00000000-0000-0000-0000-000000000001',0,now(),true);
 insert into public.server_competitive_results values ('duel',current_date,'00000000-0000-0000-0000-000000000001',1);
 insert into public.server_competitive_awards values ('duel',current_date,'00000000-0000-0000-0000-000000000001','11111111-1111-1111-1111-111111111111',1,5000);
+
+-- 실시간 아레나 표도 전부 표본을 가져야 출시 초기화 검증이 실제 삭제를 확인한다.
+insert into public.arena_ratings(player_id) values ('00000000-0000-0000-0000-000000000001');
+insert into public.arena_rooms(id,a,b,data) values (
+  '77777777-7777-7777-7777-777777777777',
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000002',
+  '{"phase":"ban"}'
+);
+insert into public.arena_seats(player_id,room_id) values ('00000000-0000-0000-0000-000000000001','77777777-7777-7777-7777-777777777777');
+insert into public.arena_queue(player_id) values ('00000000-0000-0000-0000-000000000003');
+insert into public.arena_receipts(player_id,request_id,room_id,fingerprint) values (
+  '00000000-0000-0000-0000-000000000001','arena-reset-fixture','77777777-7777-7777-7777-777777777777','[]'
+);

@@ -98,6 +98,11 @@ export interface Banner {
    */
   pullLimit?: number;
   /**
+   * 최고 등급(SSR)을 한 번이라도 얻으면 남은 횟수와 상관없이 닫는다. 첫 복원 연구가 쓴다.
+   * 판정은 `bannerGuaranteePending`과 같다 — 미획득 횟수가 총 횟수보다 작으면 SSR이 나온 것이다.
+   */
+  closeOnHighestRarity?: boolean;
+  /**
    * 10회 연구만 연다. 할인이 걸린 1회성 배너가 쓴다.
    *
    * 상시 배너는 "한 개가 한 번"이라 묶음 할인을 두지 않는다 — 두면 한 번씩 뽑는 손이 손해라
@@ -192,7 +197,9 @@ export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, b
 /** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */
 export function bannerPullsRemaining(banner: Banner, pity: GachaPityState | undefined): number {
   if (banner.pullLimit === undefined) return Number.POSITIVE_INFINITY;
-  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
+  const total = pity?.totalPulls ?? 0;
+  if (banner.closeOnHighestRarity && (pity?.pullsSinceSsr ?? 0) < total) return 0;
+  return Math.max(0, banner.pullLimit - total);
 }
 
 /** 이 배너가 지금 이 횟수를 받는가 — 10연 전용·남은 횟수만 본다. 재화는 `canPull`이 본다. */

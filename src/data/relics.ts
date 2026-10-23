@@ -150,7 +150,7 @@ const FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 200,
+  burstPower: 185,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30,
@@ -607,7 +607,7 @@ export const RELICS: RelicDef[] = [
       id: "luka-basic",
       name: "치명적인 발톱",
       power: 100,
-      periodicCritical: { every: 4 },
+      periodicCritical: { every: 3 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -838,7 +838,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 },
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 8, capMaxHpPercent: 24 },
     },
     ultimate: {
       id: "tia-ult",
@@ -1584,7 +1584,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "yuti-basic",
       name: "갈래깃",
-      power: 95,
+      power: 90,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1843,7 +1843,7 @@ export const RELICS: RelicDef[] = [
       res: 55,
       atk: 142,
       ap: 45,
-      attackSpeed: 92,
+      attackSpeed: 100,
       moveSpeed: 118,
       critChance: 10,
       critDamage: 150,
@@ -1899,7 +1899,7 @@ export const RELICS: RelicDef[] = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
     ultimate: {
@@ -1916,7 +1916,7 @@ export const RELICS: RelicDef[] = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
   },
@@ -2991,7 +2991,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
@@ -3833,7 +3833,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "maddy-basic",
       name: "소다맛 아이스크림",
-      power: 100,
+      power: 108,
       scalingStat: "atk",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -4352,7 +4352,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 9, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {

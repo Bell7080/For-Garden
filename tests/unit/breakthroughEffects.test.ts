@@ -1014,7 +1014,7 @@ describe("루카 한계 돌파", () => {
       }
       return bleedAtAttack;
     };
-    expect(run(1)).toBe(4);
+    expect(run(1)).toBe(3);
     expect(run(0)).toBe(-1);
   });
 

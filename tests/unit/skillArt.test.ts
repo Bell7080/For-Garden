@@ -488,7 +488,7 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 6%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 18%까지 쌓인다).",
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 8%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 24%까지 쌓인다).",
     );
   });
 
@@ -513,7 +513,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 8, capMaxHpPercent: 24 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
@@ -590,8 +590,8 @@ describe("델로피 스킬 표시 계약", () => {
     // 출혈과 같은 이유다 — 시간은 스킬마다 다르고, 매초 계수는 쓰는 개체가 하나뿐이라 태그가 가진다.
     expect(statusEffectLabel(delopi.basic.statusEffects?.[0])).toBe("[[poison|중독]] 3초");
     const poison = KEYWORDS.find((keyword) => keyword.id === "poison")!;
-    expect(poison.description).toContain("공격력 15%와 주문력 15%");
-    expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("15%");
+    expect(poison.description).toContain("공격력 22%와 주문력 22%");
+    expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("22%");
   });
 
   it("은 때리지 않는 궁극기를 위력 없이 자리 잡는 문장으로 만든다", () => {
@@ -848,7 +848,7 @@ describe("루카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 40%");
     expect(passiveDescription(luka.passive)).toContain("[[atk|공격력]]이 가장 높은 렐릭");
     expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
-    expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
+    expect(skillDescription(luka.basic)).toContain("매 3번째 실제 [[basic-attack|기본 공격]]");
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
     expect(skillDescription(luka.ultimate)).toContain("실제로 잃은 체력의 75%");
     expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");

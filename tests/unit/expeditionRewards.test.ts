@@ -38,8 +38,9 @@ describe("expedition augment rewards", () => {
       nodeTotal += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 70, cleared: true });
     }
     // 경감 전 기여 4천 점 기준, 보스가 노드보다 크되 이전 200배 환산처럼 과도하지 않다.
-    expect(expeditionBossDamageScore(4_000)).toBeGreaterThan(nodeTotal * 3);
-    expect(expeditionBossDamageScore(4_000)).toBeLessThan(nodeTotal * 5);
+    // 운영 기록의 경감 전 기여 4.8만~6만 기준 — 보스가 노드보다 크되, ×5 환산(노드가 2%도 안 되던 때)처럼 과도하지 않다.
+    expect(expeditionBossDamageScore(48_000)).toBeGreaterThan(nodeTotal * 3);
+    expect(expeditionBossDamageScore(60_000)).toBeLessThan(nodeTotal * 8);
   });
 
   it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {
@@ -158,7 +159,7 @@ describe('원정 점수 절반 조정',()=>{
    const multiplier={normal:1,elite:1.5,horde:1.25}[type];
    expect(calculateExpeditionNodeScore({floor:10,nodeType:type,remainingHpPercent:80,cleared:true})).toBe(Math.round((10*40+80*1.5)*multiplier/2));
   }
-  expect(expeditionBossDamageScore(1234)).toBe(6170);
+  expect(expeditionBossDamageScore(1234)).toBe(617);
  });
 });
 

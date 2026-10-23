@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
+import { expeditionBossSalvage } from "../../src/data/expedition";
 import { AttendanceManager } from "../../src/managers/AttendanceManager";
 import { InventoryManager } from "../../src/managers/InventoryManager";
 import { MailManager } from "../../src/managers/MailManager";
@@ -121,7 +122,7 @@ describe("보상과 전투 영수증의 저장·재접속", () => {
   it("원정 보스 제출·최종 정산의 재접속 재시도는 인양 보상·횟수를 한 번만 반영한다", async () => {
     const h = harness(); const input = bossRun(h); const first = await h.api().submitExpeditionBossScore(input);
     const salvage = h.reload().expedition.run!.pendingRewards.salvageRecord;
-    expect(first.bossSalvage).toBeGreaterThan(0); expect(await h.api(h.reload()).submitExpeditionBossScore(input)).toEqual(first);
+    expect(first.bossSalvage).toBe(expeditionBossSalvage(first.bossDamageScore)); expect(await h.api(h.reload()).submitExpeditionBossScore(input)).toEqual(first);
     expect(h.reload().expedition.run!.pendingRewards.salvageRecord).toBe(salvage);
     const request = { runId: input.runId, settlementId: "settle", outcome: "completed" as const };
     const settled = await h.api().settleExpeditionRun(request); const wallet = h.reload().wallet;

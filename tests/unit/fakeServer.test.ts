@@ -211,6 +211,8 @@ describe("FakeServer", () => {
   it("최고 점수 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(10) });
+    // 짧은 판의 점수가 첫 마디에 못 미칠 수 있어 최고 기록을 첫 마디 위로 올려 둔다.
+    state.expedition.bestScore = Math.max(state.expedition.bestScore, 3_000);
     let weekly = await server.getExpeditionWeeklyBest();
     const stage = weekly.rewardStages.find(({ threshold }) => threshold <= weekly.bestScore)!;
     expect(stage).toBeDefined();

@@ -1100,9 +1100,9 @@ export const BLEED = {
  */
 export const POISON = {
   /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
-  attackPercentPerSecond: 15,
+  attackPercentPerSecond: 22,
   /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). */
-  abilityPercentPerSecond: 15,
+  abilityPercentPerSecond: 22,
 } as const;
 
 /**

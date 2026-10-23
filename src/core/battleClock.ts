@@ -75,7 +75,7 @@ export function formatBattleClock(elapsedSeconds: number): string {
  */
 export const BATTLE_DEATH_CLOCK = {
   /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 90,
+  startsAtSeconds: 60,
   /** 몇 초마다 한 번 도는가. */
   tickSeconds: 1,
   /**

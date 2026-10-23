@@ -88,9 +88,9 @@ export class ArenaMatchScene extends Phaser.Scene {
         this.label = this.add.text(540, 470, '00:00', textStyle({ role: "display", size: 66, color: ARENA_TONE.accentText })).setOrigin(.5);
         this.addRadar(540, 1000);
         const mascots = this.add.container(0, 0);
-        addArenaMascots(this, mascots, 540, 1170, 380, true, 10, { spread: 0.9 });
-        this.add.text(540, 1310, t("arena.match.description"), textStyle({ role: "body", size: 30, color: COLOR.ink, align: 'center' })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true);
-        this.error = this.add.text(540, 1430, '', textStyle({ role: "body", size: 25, color: ARENA_TONE.sparkText, wrap: 900, align: 'center' })).setOrigin(.5);
+        addArenaMascots(this, mascots, 540, 1090, 380, true, 10, { spread: 0.9 });
+        this.add.text(540, 1390, t("arena.match.description"), textStyle({ role: "body", size: 30, color: COLOR.ink, align: 'center' })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true);
+        this.error = this.add.text(540, 1490, '', textStyle({ role: "body", size: 25, color: ARENA_TONE.sparkText, wrap: 900, align: 'center' })).setOrigin(.5);
         // 취소는 화면에서 가장 큰 조작이다 — 분홍 강조 판에 점 무늬를 깔아 어디서나 먼저 읽힌다.
         this.add.existing(new Button(this, 540, 1640, { width: 820, height: 140, label: t("arena.match.cancel"), fontSize: 46, variant: 'primary', fill: 0xc2387d, accentColor: ARENA_TONE.spark, accentTextColor: COLOR.ink, decorDots: true, onClick: () => void this.cancel() }));
         const unsubscribe = subscribeArenaChanges(() => void this.poll());

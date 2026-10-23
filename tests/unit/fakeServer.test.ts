@@ -211,6 +211,8 @@ describe("FakeServer", () => {
   it("최고 점수 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(10) });
+    // 짧은 판의 점수가 첫 마디에 못 미칠 수 있어 최고 기록을 첫 마디 위로 올려 둔다.
+    state.expedition.bestScore = Math.max(state.expedition.bestScore, 3_000);
     let weekly = await server.getExpeditionWeeklyBest();
     const stage = weekly.rewardStages.find(({ threshold }) => threshold <= weekly.bestScore)!;
     expect(stage).toBeDefined();
@@ -383,6 +385,18 @@ describe("FakeServer", () => {
     await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
     await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
     expect(state.relicProgress.torika.heartGemSlots).toEqual(["rune-1", null, null]);
+  });
+
+  it("옮겨 끼우기를 허용하면 원래 렐릭에서 빼고 한 저장으로 새 렐릭에 끼운다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0, moveFromOther: true });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
+    // 자리 불변식은 옮겨 끼울 때도 그대로다.
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 2, moveFromOther: true })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
   });
 
   it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {

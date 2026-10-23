@@ -125,8 +125,8 @@ export class RelicProgressionManager {
   }
 
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
-  async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi): Promise<void> {
-    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
+  async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi, options: { moveFromOther?: boolean } = {}): Promise<void> {
+    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId, ...(options.moveFromOther ? { moveFromOther: true } : {}) });
     if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 

@@ -39,6 +39,46 @@
 "Angelegt · {name}",
 "Надета · {name}"
 ],
+"rune.move.title": [
+"移装符文",
+"ย้ายรูน",
+"Chuyển Rune",
+"Pindahkan Rune",
+"Mover runa",
+"Mover runa",
+"Rune umsetzen",
+"Перенос руны"
+],
+"rune.move.message": [
+"要从{name}身上卸下并装备吗？",
+"ถอดจาก {name} แล้วสวมใส่ที่นี่หรือไม่?",
+"Gỡ khỏi {name} và trang bị ở đây?",
+"Lepas dari {name} lalu pasang di sini?",
+"¿Quitarla de {name} y equiparla aquí?",
+"Remover de {name} e equipar aqui?",
+"Von {name} ablegen und hier anlegen?",
+"Снять с {name} и надеть сюда?"
+],
+"rune.bag.showHolder": [
+"装备者",
+"ผู้สวมใส่",
+"Người đeo",
+"Pemakai",
+"Portador",
+"Portador",
+"Träger",
+"Носитель"
+],
+"rune.bag.showEquipped": [
+"装备中",
+"ที่สวมอยู่",
+"Đang đeo",
+"Terpasang",
+"Equipadas",
+"Equipadas",
+"Angelegt",
+"Надетые"
+],
 "rune.namePlaceholder": [
 "符文名称（1-16字）",
 "ชื่อรูน (1-16 ตัวอักษร)",

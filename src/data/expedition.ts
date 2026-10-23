@@ -33,12 +33,13 @@ export const EXPEDITION_COMBAT_BALANCE = {
 } as const;
 
 /** 노드는 완주·생존 점수, 폰토스는 성장·전투 기여의 주 점수다.
- * 경감 전 기여도를 집계하므로 과거 경감 후 피해 기준의 200배를 적용하지 않는다.
- * 노드·피해 환산을 함께 절반으로 낮춘다. 기준 편성의 4천~1만 피해는 2만~5만 점이다. */
+ * 폰토스 점수는 **경감 전** 기여도에서 나온다 — 실제로 들어간 피해의 10~20배다. 운영 기록(v0.326.8)에서
+ * 실제 피해 2~3천인 판의 기여도가 4.8만~6만이었고, ×5 환산이 24만~30만 점을 만들어 노드 점수(약 4,600)가
+ * 총점의 2%도 되지 않았다. ×0.5로 낮춰 같은 판이 폰토스 2.4만~3만 + 노드 약 4,600이 되게 한다. */
 export const EXPEDITION_SCORE_BALANCE = {
   perFloor: 20,
   perRemainingHpPercent: 0.75,
-  bossDamagePerPoint: 5,
+  bossDamagePerPoint: 0.5,
 } as const;
 
 /**
@@ -155,34 +156,35 @@ export type ExpeditionRewardCurrency = "gold" | "fossil" | "gems" | "salvageReco
  * 기록을 조금씩 넘길 때마다 한두 마디가 더 열린다. 보상은 한 재화로 채우지 않는다 — 인양 기록이
  * 뼈대이고 골드·치즈케이크·DNA 조각·화석·호박석·보석이 사이사이에 선다.
  *
- * 점수 배율을 낮춘 한 판이 2만~3만 점 안팎(노드 점수 몇천 + 폰토스 피해 점수)이라 그 언저리에 마디가 촘촘하고,
- * 20만 점은 끝까지 키운 편성의 목표다.
+ * 기준 판이 3만 점 안팎(노드 약 4,600 + 폰토스 2.4만~3만)이라 그 언저리까지 여덟 마디가 열리고,
+ * 나머지는 더 키운 편성의 목표다(끝 마디 30만). 기준을 ×1.5로 올리며 **ID는 그대로 두었다** — ID가 수령
+ * 기록의 키라, 바꾸면 이미 받은 마디를 같은 주에 다시 받는다. ID의 숫자는 옛 기준이다.
  */
 export const EXPEDITION_BEST_SCORE_REWARD_STAGES: readonly { id: string; threshold: number; reward: { currency: ExpeditionRewardCurrency; amount: number } }[] = [
-  { id: "best-2k", threshold: 2_000, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-4k", threshold: 4_000, reward: { currency: "gold", amount: 5_000 } },
-  { id: "best-6k", threshold: 6_000, reward: { currency: "salvageRecord", amount: 10 } },
-  { id: "best-8k", threshold: 8_000, reward: { currency: "cheesecake", amount: 50 } },
-  { id: "best-10k", threshold: 10_000, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-13k", threshold: 13_000, reward: { currency: "dnaFragments", amount: 5 } },
-  { id: "best-16k", threshold: 16_000, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 20_000, reward: { currency: "gems", amount: 50 } },
-  { id: "best-24k", threshold: 24_000, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-28k", threshold: 28_000, reward: { currency: "gold", amount: 10_000 } },
-  { id: "best-33k", threshold: 33_000, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-38k", threshold: 38_000, reward: { currency: "fossil", amount: 1 } },
-  { id: "best-44k", threshold: 44_000, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 50_000, reward: { currency: "gems", amount: 100 } },
-  { id: "best-57k", threshold: 57_000, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-65k", threshold: 65_000, reward: { currency: "cheesecake", amount: 100 } },
-  { id: "best-74k", threshold: 74_000, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-84k", threshold: 84_000, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-95k", threshold: 95_000, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-110k", threshold: 110_000, reward: { currency: "amber", amount: 1 } },
-  { id: "best-125k", threshold: 125_000, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 145_000, reward: { currency: "gems", amount: 200 } },
-  { id: "best-170k", threshold: 170_000, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-200k", threshold: 200_000, reward: { currency: "fossil", amount: 2 } },
+  { id: "best-2k", threshold: 3_000, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-4k", threshold: 6_000, reward: { currency: "gold", amount: 5_000 } },
+  { id: "best-6k", threshold: 9_000, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-8k", threshold: 12_000, reward: { currency: "cheesecake", amount: 50 } },
+  { id: "best-10k", threshold: 15_000, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-13k", threshold: 20_000, reward: { currency: "dnaFragments", amount: 5 } },
+  { id: "best-16k", threshold: 24_000, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-20k", threshold: 30_000, reward: { currency: "gems", amount: 50 } },
+  { id: "best-24k", threshold: 36_000, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-28k", threshold: 42_000, reward: { currency: "gold", amount: 10_000 } },
+  { id: "best-33k", threshold: 50_000, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 57_000, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 66_000, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 75_000, reward: { currency: "gems", amount: 100 } },
+  { id: "best-57k", threshold: 85_000, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 100_000, reward: { currency: "cheesecake", amount: 100 } },
+  { id: "best-74k", threshold: 111_000, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 126_000, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 145_000, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 165_000, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 190_000, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 220_000, reward: { currency: "gems", amount: 200 } },
+  { id: "best-170k", threshold: 255_000, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 300_000, reward: { currency: "fossil", amount: 2 } },
 ];
 
 /** 주차는 월요일 00:00 UTC에 초기화하며 동점은 최고 점수를 먼저 달성한 기록이 앞선다. */

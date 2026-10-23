@@ -216,7 +216,11 @@ export interface MarkContentIntroSeenResponse { tutorial: import("../core/tutori
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
 /** 장착 대상은 보유 룬, 보유 렐릭, 0부터 시작하는 세 슬롯으로 특정한다. */
-export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; }
+/**
+ * `moveFromOther`를 켜면 다른 렐릭(또는 같은 렐릭의 다른 칸)에 끼워진 룬을 그 자리에서 빼고 옮겨 낀다.
+ * 해제와 장착을 한 요청에서 확정해야 중간에 끊겨도 반만 옮겨지지 않는다. 끄면 예전처럼 거절한다.
+ */
+export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; moveFromOther?: boolean; }
 /** 장착표 변경 뒤의 단일 기준 인벤토리다. */
 export interface EquipRuneResponse { inventory: RuneInventoryDto; }
 /** 해제는 렐릭 슬롯을 직접 비워 요청 시점의 룬 역참조에 의존하지 않는다. */

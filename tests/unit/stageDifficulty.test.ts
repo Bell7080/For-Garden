@@ -344,7 +344,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
         expect(stage.enemies[0].formationSlot, stage.id).toBe(1);
         continue;
       }
-      expect(stage.enemies.map(({ relicId }) => relicId), stage.id).toEqual(["toby", "amo", "ripa"]);
+      expect(stage.enemies.map(({ relicId }) => relicId), stage.id).toEqual(["amo", "toby", "ripa"]);
     }
   });
 

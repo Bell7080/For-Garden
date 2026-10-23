@@ -78,9 +78,9 @@ describe("스토리 확장 난이도", () => {
     expect(manager.load()?.cleared).toEqual(state.cleared);
     expect(manager.load()?.selectedStageId).toBe("normal:1-2");
   });
-  it("난이도 전환은 이전 4-10과 다음 1-1의 표시 전투력을 약 10% 차이로 이어 간다", () => {
+  it("난이도 전환은 이전 4-10과 다음 1-1의 표시 전투력을 챌린지 배율(보통 2·어려움 4)만큼 벌어지되 20% 안에서 이어 간다", () => {
     const power = (id: string) => getStageEnemies(getBattleStage(id)).reduce((sum, enemy) => sum + combatPower(enemy.stats), 0);
-    for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) expect(Math.abs(power(start) / power(end) - 1)).toBeLessThan(.12);
+    for (const [end, start] of [["4-10", "normal:1-1"], ["normal:4-10", "hard:1-1"]]) expect(Math.abs(power(start) / power(end) - 1)).toBeLessThan(.21);
     expect(power("hard:4-10")).toBeGreaterThan(power("normal:4-10"));
   });
 

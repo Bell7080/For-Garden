@@ -37,10 +37,8 @@ describe("난전 물량", () => {
     expect(new Set(spots.map(({ x, y }) => `${Math.round(x)}:${y}`)).size).toBe(15);
   });
 
-  it("근접 개체만 자리 번호와 무관하게 한 걸음 앞에 선다", () => {
-    expect(spawnSpots(ARENA, "enemy", 3).map(({ y }) => y)).toEqual([0, 0, 0]);
-    expect(spawnSpots(ARENA, "enemy", 3, [true, false, true]).map(({ y }) => y)).toEqual([70, 0, 70]);
-    expect(spawnSpots(ARENA, "player", 3, [false, false, true]).map(({ y }) => y)).toEqual([ARENA.bottom, ARENA.bottom, ARENA.bottom - 70]);
+  it("다섯 이하는 예전 진형을 그대로 쓴다", () => {
+    expect(spawnSpots(ARENA, "enemy", 3).map(({ y }) => y)).toEqual([0, 70, 0]);
   });
 
   it("둘이 서면 1·3번 끝자리가 아니라 세 자리의 사이로 모인다", () => {

@@ -1363,22 +1363,18 @@ export const MAX_ENEMY_COUNT = 25;
 const HORDE_ROW = 5;
 /** 무리의 줄 간격. 뒤 줄은 맵 끝 쪽(위)이 아니라 전장 안쪽으로 한 뼘씩 들어선다. */
 const HORDE_ROW_GAP = 64;
-/** 근접 개체가 시작 진형에서 나서는 거리. */
-const FORWARD_STEP = 70;
 
 /**
  * 시작 진형.
  *
  * 아군은 아래쪽 끝에서 출발한다. 맵을 넓게 쓰면서 위쪽 적진까지 달려 올라가는 그림을 만들기
- * 위해서다. 같은 팀도 한 줄로 세우지 않고 **근접 개체(`forward`)만 한 걸음 앞에** 세운다 —
- * 자리 번호가 아니라 사거리 단계(`reachTier: "melee"`)가 정한다. 둘이 서면 1·3번 끝자리가 아니라
- * 세 자리의 사이(1·2번 중간, 2·3번 중간)로 모여 선다.
+ * 위해서다. 같은 팀 셋도 한 줄로 세우지 않고 앞뒤로 어긋나게 둔다.
  *
  * **다섯을 넘는 적은 맵 끝에 여러 줄로 몰려 선다.** 첫 줄이 맵 끝(`arena.top`)에 서고 다음
  * 줄은 한 뼘씩 안쪽으로 들어서며, 줄마다 반 칸씩 어긋나 빈틈 없이 한 덩어리로 읽힌다. 맵
  * 끝보다 위로 쌓지 않는 이유는 그 너머가 땅이 아니라 배경의 벽이라 몸이 떠 보이기 때문이다.
  */
-export function spawnSpots(arena: Arena, side: Side, count = 3, forward: readonly boolean[] = []): { x: number; y: number }[] {
+export function spawnSpots(arena: Arena, side: Side, count = 3): { x: number; y: number }[] {
   const limit = side === "enemy" ? MAX_ENEMY_COUNT : 5;
   if (!Number.isInteger(count) || count < 1 || count > limit) throw new RangeError(`팀 인원은 1~${limit}기여야 합니다.`);
   const width = arena.right - arena.left;
@@ -1395,10 +1391,12 @@ export function spawnSpots(arena: Arena, side: Side, count = 3, forward: readonl
   }
   // 3기는 기존 좌표를 정확히 보존하고, 둘은 세 자리(0.08·0.5·0.92)의 사이로 모으며, 나머지는 같은 안전 여백 안에 균등 배치한다.
   const ratios = count === 3 ? [0.08, 0.5, 0.92] : count === 2 ? [0.29, 0.71] : Array.from({ length: count }, (_, index) => count === 1 ? 0.5 : 0.08 + (0.84 * index) / (count - 1));
-  return ratios.map((ratio, index) => {
-    const step = count > 1 && forward[index] ? FORWARD_STEP : 0; // 혼자 서는 자리는 기준이 될 줄이 없어 나서지 않는다
-    return { x: arena.left + width * ratio, y: side === "player" ? arena.bottom - step : arena.top + step };
-  });
+  const columns = ratios.map((ratio) => arena.left + width * ratio);
+  const stagger = count === 3 ? [0, -70, 0] : columns.map((_, index) => index % 2 === 0 ? 0 : -70);
+  return columns.map((x, index) => ({
+    x,
+    y: side === "player" ? arena.bottom + stagger[index] : arena.top - stagger[index],
+  }));
 }
 
 /**
@@ -1520,8 +1518,8 @@ export function createSkirmish(
   if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("아군은 1~5기를 지원합니다.");
   if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
-  const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length, playerDefs.map(({ reachTier }) => reachTier === "melee"));
-  const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length, enemyDefs.map(({ reachTier }) => reachTier === "melee"));
+  const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
+  const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
   for (const [spots, count] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]] as const) {
     if (spots && (spots.length !== count || spots.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
   }

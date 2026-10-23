@@ -83,7 +83,7 @@ for (const mySide of [0, 1] as const) test(`아레나 동시 밴 → 공개 연�
  const banTarget=room!.players[foeSide].roster[0].def.id;
  await tapCard(banTarget);await expect.poll(()=>scene('s.selectedRelic')).toBe(banTarget);
  await page.waitForTimeout(400);await captureGame(page,info.outputPath(`arena-ban-selected-${mySide}.png`));
- await tap(page,ARENA_ROOM_LAYOUT.confirm.x,ARENA_ROOM_LAYOUT.confirm.y);
+ await tap(page,ARENA_ROOM_LAYOUT.banConfirm.x,ARENA_ROOM_LAYOUT.banConfirm.y);
  await expect.poll(()=>scene('s.status?.room?.phase'),{timeout:30000}).toBe('place');
  await page.waitForTimeout(1000);await captureGame(page,info.outputPath(`arena-ban-reveal-${mySide}.png`));
  await expect.poll(()=>scene('s.revealing')).toBe(false);

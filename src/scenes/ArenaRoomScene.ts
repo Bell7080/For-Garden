@@ -11,7 +11,7 @@ import { addBackButton } from '../ui/IconButton';
 import { startScene } from '../ui/screenTransition';
 import { chipPoints, drawLayer, drawVignette, slantedRect } from '../ui/holo';
 import { PortraitCard } from '../ui/PortraitCard';
-import { formationRosterGrid, portraitGridContentHeight, portraitGridFirstRowY, PORTRAIT_GRID_MASK_GAP } from '../ui/portraitGrid';
+import { formationRosterGrid, PORTRAIT_GRID_MASK_GAP } from '../ui/portraitGrid';
 import { addArenaBackdrop, ARENA_TONE } from '../ui/arenaTheme';
 import { session } from '../state/session';
 import { addClippedHit } from '../ui/clippedHit';
@@ -31,10 +31,29 @@ const GRID = formationRosterGrid(ARENA_ROOM_LAYOUT.grid.right - ARENA_ROOM_LAYOU
 
 interface GridCard { card: PortraitCard; banMark: Phaser.GameObjects.Container; dim: Phaser.GameObjects.Container; dimLabel: Phaser.GameObjects.Text }
 
-/** 붉은 X 한 장. 카드 위에 겹쳐 「밴」을 말한다 — 글자보다 먼저 읽힌다. */
+/**
+ * 카드 실루엣 그대로의 덮개 한 장. 네모를 깔면 깎인 두 모서리 밖으로 뿔이 서므로 카드가 그린 칩 모양을
+ * 그대로 받는다(`createPortraitAlphaOverlay` — 몸통은 칩 면, 머리는 원화 알파). 카드의 자식이라 함께 움직인다.
+ */
+function addCardVeil(card: PortraitCard, color: number, alpha: number, width: number, height: number): Phaser.GameObjects.Container {
+  const veil = card.createPortraitAlphaOverlay(color, alpha, Math.hypot(width, height));
+  card.add(veil.display);
+  card.syncMask();
+  return veil.display;
+}
+
+/** 붉은 덮개 + X. 카드 위에 겹쳐 「밴」을 말한다 — 글자보다 먼저 읽힌다. */
+function addBanMark(scene: Phaser.Scene, card: PortraitCard, width: number, height: number): Phaser.GameObjects.Container {
+  const root = scene.add.container(0, 0);
+  card.add(root);
+  root.add(addCardVeil(card, ARENA_TONE.ban, 0.3, width, height));
+  root.add(drawBanX(scene, width, height));
+  return root;
+}
+
+/** 붉은 X 획 두 줄. 덮개는 `addBanMark`가 카드 모양으로 깐다. */
 function drawBanX(scene: Phaser.Scene, width: number, height: number): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0);
-  root.add(scene.add.rectangle(0, 0, width, height, ARENA_TONE.ban, 0.28));
   const g = scene.add.graphics();
   const w = width * 0.38, h = height * 0.32, thick = Math.max(10, width * 0.09);
   [[-1, 1], [1, 1]].forEach(([sx]) => {
@@ -83,6 +102,8 @@ export class ArenaRoomScene extends Phaser.Scene {
   private selectedSlot = -1;
   private lastPhase = '';
   private revealing = false;
+  /** 밴이 끝난 뒤 한 번 — 밴 칸이 세 칸으로 갈라지는 연출을 다음 칠에서 돌린다. */
+  private unfold = false;
   constructor() { super('arenaRoom'); }
   init(input: { roomId: string }): void { this.roomId = input.roomId; }
 
@@ -99,6 +120,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.selectedSlot = -1;
     this.lastPhase = '';
     this.revealing = false;
+    this.unfold = false;
     setDebugScene('arenaRoom');
     addSceneBackground(this, BACKGROUND.sortieDuel);
     addArenaBackdrop(this, -29, .88);
@@ -179,6 +201,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     }
     // 밴이 끝나는 순간 한 번 — 서로 무엇을 밴했는지 크게 보여 준 뒤 왼쪽 띠로 보낸다.
     const reveal = this.lastPhase === 'ban' && r.phase === 'place' && r.bans.every((b) => b && b !== ARENA_HIDDEN_BAN);
+    if (this.lastPhase === 'ban' && r.phase === 'place' && !reveal) this.unfold = true;
     this.lastPhase = r.phase;
     const signature = JSON.stringify([r.version, r.phase, this.selectedRelic, this.selectedSlot]);
     if (signature === this.signature && !reveal) return;
@@ -226,9 +249,10 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.hint.setText(ban
       ? (act ? t("arena.ban.choose") : t("arena.ban.wait"))
       : (act ? t("arena.pick.choose") : r.locked[side] ? t("arena.pick.locked") : t("arena.placement.wait")));
-    this.paintSlots(r, side, act && !ban);
+    this.paintSlots(r, side, act && !ban, ban);
     this.paintBanColumn(r, side);
-    this.ensureGrid(ban ? 'ban' : 'place', ban ? opponent.roster : mine.roster);
+    // 밴 단계에는 레벨을 감춘다 — 상대 로스터의 성장을 보고 밴할 것을 고르지 않는다. 픽은 내 로스터라 내 레벨이 선다.
+    this.ensureGrid(ban ? 'ban' : 'place', ban ? opponent.roster : mine.roster, !ban);
     this.refreshGrid(r, side, act);
     this.paintControls(r, side, act);
   }
@@ -246,14 +270,15 @@ export class ArenaRoomScene extends Phaser.Scene {
     return -1;
   }
 
-  private unitOf(r: ArenaRoom, id: string): ArenaUnit | undefined {
-    return r.players[0].roster.find((u) => u.def.id === id) ?? r.players[1].roster.find((u) => u.def.id === id);
+  /** 그 편 로스터의 렐릭 — 두 편이 같은 렐릭을 가져도 레벨은 그 주인의 것이다. */
+  private unitOf(r: ArenaRoom, id: string, owner: number): ArenaUnit | undefined {
+    return r.players[owner]?.roster.find((u) => u.def.id === id);
   }
 
-  private addCard(parent: Phaser.GameObjects.Container, x: number, y: number, unit: ArenaUnit | undefined, relicId: string, width: number, height: number): PortraitCard {
+  private addCard(parent: Phaser.GameObjects.Container, x: number, y: number, unit: ArenaUnit | undefined, relicId: string, width: number, height: number, showLevel = true): PortraitCard {
     const def = unit?.def;
     const card = new PortraitCard(this, x, y, {
-      width, height, relicId, label: def?.name ?? relicId, level: unit?.level, rarity: def?.rarity,
+      width, height, relicId, label: def?.name ?? relicId, level: showLevel ? unit?.level : undefined, rarity: def?.rarity,
       breakthroughGrade: unit ? unit.breakthrough + 1 : undefined,
       affinity: def ? { element: def.element, role: def.role } : undefined,
       head: 'inside', selectedStyle: 'pressed',
@@ -263,57 +288,86 @@ export class ArenaRoomScene extends Phaser.Scene {
     return card;
   }
 
-  /** 위아래 세 칸. 내 칸은 눌러 고를 수 있고, 고른 칸은 초록빛으로 숨 쉰다. */
-  private paintSlots(r: ArenaRoom, side: number, pickable: boolean): void {
+  /**
+   * 위아래 세 칸. 내 칸은 눌러 고를 수 있고, 고른 칸은 초록빛으로 숨 쉰다.
+   *
+   * 밴 단계(와 밴 공개가 도는 동안)에는 내 줄이 세 칸이 아니라 **밴 칸 하나**다 — 확정 버튼이 그 안에 선다.
+   * 밴이 끝나면 그 판이 세 칸으로 갈라지며(`unfold`) 픽이 시작된다. 칸마다 컨테이너 하나라 함께 움직인다.
+   */
+  private paintSlots(r: ArenaRoom, side: number, pickable: boolean, ban: boolean): void {
     this.slots.removeAll(true);
     const L = ARENA_ROOM_LAYOUT;
+    const reduce = session.settings.accessibility.reduceMotion;
+    const banRow = ban || this.revealing;
     ([[1 - side, L.enemyRow, ARENA_TONE.foe], [side, L.allyRow, ARENA_TONE.ally]] as const).forEach(([owner, y, tone]) => {
       const mineRow = owner === side;
+      if (mineRow && banRow) {
+        if (r.rules.ban) {
+          this.slots.add(drawLayer(this, L.banSlot.x, L.banSlot.y, slantedRect(L.banSlot.width, L.banSlot.height), { fill: ARENA_TONE.panel, alpha: .82, edge: ARENA_TONE.ban, edgeAlpha: .7 }));
+          return;
+        }
+      }
+      const unfolding = mineRow && this.unfold && !banRow;
+      const cells: Phaser.GameObjects.Container[] = [];
       L.slotX.forEach((x, slot) => {
+        const cell = this.add.container(x, y);
+        this.slots.add(cell);
+        cells.push(cell);
         const pick = r.picks[owner].find((p, i) => (p.slot ?? i) === slot);
         const chosen = mineRow && pickable && !pick && this.selectedSlot === slot;
         if (chosen) {
-          const glow = drawLayer(this, x, y, slantedRect(L.slot.width + 24, L.slot.height + 24), { fill: tone, alpha: .3, edge: tone, edgeAlpha: 1 });
-          this.slots.add(glow);
-          if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .45, duration: 480, yoyo: true, repeat: -1 });
+          const glow = drawLayer(this, 0, 0, slantedRect(L.slot.width + 24, L.slot.height + 24), { fill: tone, alpha: .3, edge: tone, edgeAlpha: 1 });
+          cell.add(glow);
+          if (!reduce) this.tweens.add({ targets: glow, alpha: .45, duration: 480, yoyo: true, repeat: -1 });
         }
-        this.slots.add(drawLayer(this, x, y, slantedRect(L.slot.width, L.slot.height), { fill: ARENA_TONE.panel, alpha: .82, edge: tone, edgeAlpha: chosen ? 1 : .55 }));
+        cell.add(drawLayer(this, 0, 0, slantedRect(L.slot.width, L.slot.height), { fill: ARENA_TONE.panel, alpha: .82, edge: tone, edgeAlpha: chosen ? 1 : .55 }));
         if (pick) {
-          this.addCard(this.slots, x, y + 6, this.unitOf(r, pick.relicId), pick.relicId, L.slot.card.width, L.slot.card.height);
-        } else {
+          this.addCard(cell, 0, 6, this.unitOf(r, pick.relicId, owner), pick.relicId, L.slot.card.width, L.slot.card.height);
+        } else if (chosen && this.selectedRelic) {
           // 고르는 중인 렐릭은 칸에 흐리게 미리 선다 — 확정하면 그대로 그 자리다.
-          if (chosen && this.selectedRelic) {
-            const preview = this.addCard(this.slots, x, y + 6, this.unitOf(r, this.selectedRelic), this.selectedRelic, L.slot.card.width, L.slot.card.height);
-            preview.setAlpha(.55);
-          } else {
-            this.slots.add(this.add.text(x, y, String(slot + 1), textStyle({ role: "display", size: 84, color: mineRow ? ARENA_TONE.allyText : ARENA_TONE.foeText })).setOrigin(.5).setAlpha(.38));
-          }
+          this.addCard(cell, 0, 6, this.unitOf(r, this.selectedRelic, side), this.selectedRelic, L.slot.card.width, L.slot.card.height).setAlpha(.55);
+        } else {
+          cell.add(this.add.text(0, 0, String(slot + 1), textStyle({ role: "display", size: 84, color: mineRow ? ARENA_TONE.allyText : ARENA_TONE.foeText })).setOrigin(.5).setAlpha(.38));
         }
         if (mineRow && pickable && !pick) {
-          const hit = addClippedHit(this, this.slots, x, y, L.slot.width, L.slot.height, () => FULL_SCREEN);
+          const hit = addClippedHit(this, cell, 0, 0, L.slot.width, L.slot.height, () => FULL_SCREEN);
           hit.setName(`arena-slot-${slot}`);
           hit.on('pointerup', () => { this.selectedSlot = slot; this.repaint(); });
         }
       });
+      if (!unfolding) return;
+      this.unfold = false;
+      if (reduce) return;
+      // 밴 칸이 가운데에서 세 칸으로 갈라진다 — 방금까지 밴 버튼이 섰던 자리가 곧 1·2·3이다.
+      const merged = drawLayer(this, L.banSlot.x, L.banSlot.y, slantedRect(L.banSlot.width, L.banSlot.height), { fill: ARENA_TONE.panel, alpha: .82, edge: ARENA_TONE.ban, edgeAlpha: .7 });
+      this.slots.addAt(merged, 0);
+      this.tweens.add({ targets: merged, alpha: 0, scaleY: .9, duration: 260, ease: 'Sine.easeIn', onComplete: () => merged.destroy() });
+      const sync = (): void => cells.forEach((cell) => cell.each((child: Phaser.GameObjects.GameObject) => { if (child instanceof PortraitCard) child.syncMask(); }));
+      cells.forEach((cell, slot) => {
+        const x = cell.x;
+        cell.setX(L.banSlot.x).setScale(.6, .9).setAlpha(0);
+        this.tweens.add({ targets: cell, x, scaleX: 1, scaleY: 1, alpha: 1, duration: 420, delay: 80 + Math.abs(slot - 1) * 60, ease: 'Back.easeOut', onUpdate: sync, onComplete: sync });
+      });
     });
   }
 
-  /** 왼쪽 띠 — 내 밴(위)과 상대 밴(아래). 밴 단계에는 내가 고르는 중인 것이, 상대 칸에는 「?」가 선다. */
+  /** 왼쪽 띠 — 상대 밴(위)과 내 밴(아래). 밴 단계에는 내가 고르는 중인 것이, 상대 칸에는 「?」가 선다. 레벨은 적지 않는다. */
   private paintBanColumn(r: ArenaRoom, side: number): void {
     this.banColumn.removeAll(true);
     if (!r.rules.ban || this.revealing) return;
     const L = ARENA_ROOM_LAYOUT.banColumn;
-    const entries: [string, string | null][] = [
-      [t("arena.ban.mine"), r.bans[side] ?? (r.phase === 'ban' && this.selectedRelic ? this.selectedRelic : null)],
-      [t("arena.ban.theirs"), r.bans[1 - side]],
+    const entries: [string, string, string | null, number][] = [
+      [t("arena.ban.theirs"), ARENA_TONE.foeText, r.bans[1 - side], side],
+      [t("arena.ban.mine"), ARENA_TONE.allyText, r.bans[side] ?? (r.phase === 'ban' && this.selectedRelic ? this.selectedRelic : null), 1 - side],
     ];
-    entries.forEach(([label, id], index) => {
+    entries.forEach(([label, color, id, rosterOwner], index) => {
       const y = L.y[index];
-      this.banColumn.add(this.add.text(L.x, y - L.card.height / 2 - 30, label, textStyle({ role: "emphasis", size: 22, color: ARENA_TONE.banText })).setOrigin(.5));
+      this.banColumn.add(this.add.text(L.x, y - L.card.height / 2 - 30, label, textStyle({ role: "emphasis", size: 22, color })).setOrigin(.5));
       if (id && id !== ARENA_HIDDEN_BAN) {
-        const card = this.addCard(this.banColumn, L.x, y, this.unitOf(r, id), id, L.card.width, L.card.height);
-        card.add(drawBanX(this, L.card.width, L.card.height));
-        if (r.bans[side] === null && index === 0) card.setAlpha(.7);
+        // 내 밴은 상대 로스터에서, 상대 밴은 내 로스터에서 고른 것이다.
+        const card = this.addCard(this.banColumn, L.x, y, this.unitOf(r, id, rosterOwner), id, L.card.width, L.card.height, false);
+        addBanMark(this, card, L.card.width, L.card.height);
+        if (r.bans[side] === null && index === 1) card.setAlpha(.7);
       } else {
         this.banColumn.add(drawLayer(this, L.x, y, slantedRect(L.card.width, L.card.height), { fill: ARENA_TONE.panel, alpha: .8, edge: ARENA_TONE.ban, edgeAlpha: .5 }));
         this.banColumn.add(this.add.text(L.x, y, id === ARENA_HIDDEN_BAN ? '?' : '—', textStyle({ role: "display", size: 56, color: ARENA_TONE.banText })).setOrigin(.5).setAlpha(.7));
@@ -327,15 +381,18 @@ export class ArenaRoomScene extends Phaser.Scene {
     const placed = r.picks[side].length;
     const lockReady = !ban && hidden && placed >= 3 && !r.locked[side];
     const ready = act && (ban ? this.selectedRelic !== '' : lockReady || (this.selectedRelic !== '' && this.selectedSlot >= 0));
+    if (this.revealing) return;
     const label = ban ? t("arena.ban.confirm") : lockReady ? t("arena.placement.lock") : t("arena.pick.confirm", { p0: placed });
+    // 밴 확정은 내 1·2·3 칸 자리(밴 칸) 안에, 픽 확정은 격자와 내 칸 사이에 선다.
+    const at = ban ? L.banConfirm : L.confirm;
     // 눌러야 할 때만 숨 쉬는 빛이 버튼 뒤에서 번진다(버튼 자체의 눌림 배율과 다투지 않도록 따로 세운다).
     if (ready) {
-      const glow = drawLayer(this, L.confirm.x, L.confirm.y, chipPoints(L.confirm.width + 40, L.confirm.height + 34), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
+      const glow = drawLayer(this, at.x, at.y, chipPoints(at.width + 40, at.height + 34), { fill: ban ? ARENA_TONE.ban : ARENA_TONE.glow, alpha: .45 });
       this.controls.add(glow);
-      if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .05, scaleX: 1.06, scaleY: 1.14, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: glow, alpha: .05, scaleX: 1.04, scaleY: 1.12, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
-    const button = new Button(this, L.confirm.x, L.confirm.y, {
-      width: L.confirm.width, height: L.confirm.height, label, fontSize: 40, variant: 'primary', decorDots: true,
+    const button = new Button(this, at.x, at.y, {
+      width: at.width, height: at.height, label, fontSize: ban ? 46 : 40, variant: 'primary', decorDots: true,
       fill: ban ? 0xb02844 : ARENA_TONE.confirm, accentColor: ban ? ARENA_TONE.ban : ARENA_TONE.accent, accentTextColor: COLOR.ink,
       onClick: () => this.confirm(r, side),
     });
@@ -372,8 +429,8 @@ export class ArenaRoomScene extends Phaser.Scene {
   }
 
   /** 격자 카드는 단계마다 한 번만 세운다. 고르고 밴하는 표시는 `refreshGrid`가 제자리에서 바꾼다. */
-  private ensureGrid(key: string, roster: readonly ArenaUnit[]): void {
-    const fullKey = `${key}:${roster.map((u) => u.def.id).join(',')}`;
+  private ensureGrid(key: string, roster: readonly ArenaUnit[], showLevel: boolean): void {
+    const fullKey = `${key}:${showLevel}:${roster.map((u) => u.def.id).join(',')}`;
     if (fullKey === this.gridKey) return;
     // 새 격자를 먼저 세우고 옛 격자를 걷는다 — 원화는 세운 객체가 사는 동안만 붙잡힌다.
     const previous = this.gridContent, previousMask = this.gridMask;
@@ -384,32 +441,35 @@ export class ArenaRoomScene extends Phaser.Scene {
     const mask = this.make.graphics({});
     mask.fillStyle(0xffffff, 1).fillRect(0, G.top, 1080, G.bottom - G.top);
     content.setMask(mask.createGeometryMask());
-    const startY = portraitGridFirstRowY(G.top, GRID.cardHeight, PORTRAIT_GRID_MASK_GAP);
+    // 머리가 칸 안에 있으니 머리 몫의 여유를 따로 비우지 않는다.
+    const startY = G.top + PORTRAIT_GRID_MASK_GAP + GRID.cardHeight / 2;
     const positions: Record<string, { x: number; y: number }> = {};
     roster.forEach((unit, i) => {
       const x = G.left + GRID.columnStep * (i % G.columns + .5);
       const y = startY + Math.floor(i / G.columns) * GRID.rowStep;
       positions[unit.def.id] = { x, y };
+      // 머리를 칸 안에 가둔다 — 격자 창의 윗변 마스크에 정수리가 잘리지 않고, 덮개·X가 카드 전체를 같은 모양으로 덮는다.
       const card = new PortraitCard(this, x, y, {
-        width: GRID.cardWidth, height: GRID.cardHeight, relicId: unit.def.id, label: unit.def.name, level: unit.level,
+        width: GRID.cardWidth, height: GRID.cardHeight, relicId: unit.def.id, label: unit.def.name, level: showLevel ? unit.level : undefined,
         rarity: unit.def.rarity, breakthroughGrade: unit.breakthrough + 1, affinity: { element: unit.def.element, role: unit.def.role },
-        selectedStyle: 'pressed',
+        head: 'inside', selectedStyle: 'pressed',
       });
       card.setName(`arena-card-${unit.def.id}`);
-      const banMark = drawBanX(this, GRID.cardWidth, GRID.cardHeight).setVisible(false);
+      content.add(card);
+      // 층은 원화 → 이름줄 → 덮개 → 글자/X 순이다. 덮개는 카드가 그린 칩 실루엣을 그대로 받는다.
       const dim = this.add.container(0, 0).setVisible(false);
-      dim.add(this.add.rectangle(0, 0, GRID.cardWidth, GRID.cardHeight, 0x000000, .6));
+      card.add(dim);
+      dim.add(addCardVeil(card, 0x000000, .62, GRID.cardWidth, GRID.cardHeight));
       const dimLabel = this.add.text(0, 0, '', textStyle({ role: "display", size: 30, color: COLOR.ink })).setOrigin(.5).setStroke('#000000', 6);
       dim.add(dimLabel);
-      card.add([dim, banMark]);
+      const banMark = addBanMark(this, card, GRID.cardWidth, GRID.cardHeight).setVisible(false);
       card.hit.on('pointerup', () => { if (this.dragged < 12) this.tapCard(unit.def.id); });
-      content.add(card);
       this.gridCards.set(unit.def.id, { card, banMark, dim, dimLabel });
     });
     this.gridContent = content;
     this.gridMask = mask;
     const rows = Math.ceil(roster.length / G.columns);
-    const height = rows > 0 ? PORTRAIT_GRID_MASK_GAP + portraitGridContentHeight(rows, GRID.rowStep, GRID.cardHeight) : 0;
+    const height = rows > 0 ? PORTRAIT_GRID_MASK_GAP + (rows - 1) * GRID.rowStep + GRID.cardHeight : 0;
     this.gridMinScroll = Math.min(0, G.bottom - G.top - height - 28);
     setDebugGridCards("arenaRoom", positions, 0, { top: G.top, bottom: G.bottom });
     this.scrollGridTo(0);
@@ -491,8 +551,9 @@ export class ArenaRoomScene extends Phaser.Scene {
   }
 
   /**
-   * 밴 공개. 양쪽이 밴을 확정한 순간 한 번 — 두 카드가 좌우에서 밀려 들어와 붉은 X가 찍히고,
-   * 한 박자 뒤 왼쪽 밴 띠의 제자리로 줄어들며 날아간다. 그동안은 손을 막는다.
+   * 밴 공개. 양쪽이 밴을 확정한 순간 한 번 — 상대 밴은 위(오른쪽에서), 내 밴은 아래(왼쪽에서) 밀려 들어와 붉은 X가
+   * 찍히고, 한 박자 뒤 왼쪽 밴 띠의 제자리(위가 상대, 아래가 나)로 줄어들며 날아간다. 그동안은 손을 막고, 끝나면
+   * 밴 칸이 세 칸으로 갈라지며 픽이 시작된다.
    */
   private playBanReveal(r: ArenaRoom, side: number): void {
     const reduce = session.settings.accessibility.reduceMotion;
@@ -504,24 +565,31 @@ export class ArenaRoomScene extends Phaser.Scene {
     layer.add(dim);
     // 공개가 도는 동안 뒤의 격자·버튼이 손을 받지 않게 화면 전체를 막는다.
     addClippedHit(this, layer, 540, 960, 1080, 1920, () => FULL_SCREEN, { useHandCursor: false });
-    layer.add(this.add.text(540, 560, t("arena.ban.reveal"), textStyle({ role: "display", size: 64, color: ARENA_TONE.banText })).setOrigin(.5).setStroke('#000000', 8));
-    const ids = [r.bans[side]!, r.bans[1 - side]!];
-    const cards = ids.map((id, index) => {
-      const holder = this.add.container(index === 0 ? -300 : 1380, 960);
+    const title = this.add.text(540, 960, t("arena.ban.reveal"), textStyle({ role: "display", size: 64, color: ARENA_TONE.banText })).setOrigin(.5).setStroke('#000000', 8);
+    layer.add(title);
+    // [아이디, 고른 렐릭의 주인, 표, 들어오는 쪽, 머무는 y] — 위가 상대, 아래가 나.
+    const entries = [
+      { id: r.bans[1 - side]!, owner: side, label: t("arena.ban.theirs"), color: ARENA_TONE.foeText, from: 1380, y: 640, slot: 0 },
+      { id: r.bans[side]!, owner: 1 - side, label: t("arena.ban.mine"), color: ARENA_TONE.allyText, from: -300, y: 1300, slot: 1 },
+    ];
+    const cards = entries.map((entry) => {
+      const holder = this.add.container(entry.from, entry.y);
       layer.add(holder);
-      holder.add(this.add.text(0, -250, index === 0 ? t("arena.ban.mine") : t("arena.ban.theirs"), textStyle({ role: "display", size: 34, color: index === 0 ? ARENA_TONE.allyText : ARENA_TONE.foeText })).setOrigin(.5));
-      const unit = this.unitOf(r, id);
-      const card = new PortraitCard(this, 0, 0, { width: 300, height: 375, relicId: id, label: unit?.def.name ?? id, level: unit?.level, rarity: unit?.def.rarity, head: 'inside' });
+      holder.add(this.add.text(0, -230, entry.label, textStyle({ role: "display", size: 34, color: entry.color })).setOrigin(.5).setStroke('#000000', 6));
+      const unit = this.unitOf(r, entry.id, entry.owner);
+      const card = new PortraitCard(this, 0, 0, { width: 300, height: 375, relicId: entry.id, label: unit?.def.name ?? entry.id, rarity: unit?.def.rarity, head: 'inside' });
       holder.add(card);
-      const x = drawBanX(this, 300, 375).setScale(2.2).setAlpha(0);
-      holder.add(x);
-      return { holder, card, x };
+      card.syncMask();
+      const mark = addBanMark(this, card, 300, 375);
+      mark.setScale(2.2).setAlpha(0);
+      return { holder, card, mark, entry };
     });
     const sync = (): void => cards.forEach(({ card }) => card.syncMask());
     const finish = (): void => {
       if (!layer.active || !this.scene.isActive()) return;
       layer.destroy();
       this.revealing = false;
+      this.unfold = true;
       this.repaint();
     };
     // 박자는 씬 시계로 돌지만 손을 막는 시간은 실제 시간이 지킨다 — 프레임이 굶는 기기에서 씬 타이머가 밀려도
@@ -529,18 +597,19 @@ export class ArenaRoomScene extends Phaser.Scene {
     const guard = window.setTimeout(finish, reduce ? 1600 : 2800);
     layer.once(Phaser.GameObjects.Events.DESTROY, () => window.clearTimeout(guard));
     if (reduce) {
-      cards.forEach(({ holder, x }, index) => { holder.setX(index === 0 ? 330 : 750); x.setScale(1).setAlpha(1); });
+      cards.forEach(({ holder, mark }) => { holder.setX(540); mark.setScale(1).setAlpha(1); });
       sync();
       this.time.delayedCall(1100, finish);
       return;
     }
-    this.tweens.add({ targets: cards.map((c) => c.holder), x: (_t: unknown, _k: string, _v: number, index: number) => (index === 0 ? 330 : 750), duration: 360, ease: 'Cubic.easeOut', onUpdate: sync });
-    this.tweens.add({ targets: cards.map((c) => c.x), scale: 1, alpha: 1, duration: 200, delay: 460, ease: 'Back.easeOut', onComplete: () => this.cameras.main.shake(160, .006) });
+    this.tweens.add({ targets: cards.map((c) => c.holder), x: 540, duration: 360, ease: 'Cubic.easeOut', onUpdate: sync });
+    // X 덮개는 카드 안의 자식이라 배율 트윈 동안 덮개 마스크를 다시 맞춘다.
+    this.tweens.add({ targets: cards.map((c) => c.mark), scale: 1, alpha: 1, duration: 200, delay: 460, ease: 'Back.easeOut', onUpdate: sync, onComplete: () => this.cameras.main.shake(160, .006) });
     this.time.delayedCall(1500, () => {
       if (!layer.active) return;
-      this.tweens.add({ targets: dim, alpha: 0, duration: 420 });
-      cards.forEach(({ holder }, index) => {
-        this.tweens.add({ targets: holder, x: L.x, y: L.y[index], scale: L.card.width / 300, duration: 420, ease: 'Cubic.easeInOut', onUpdate: sync });
+      this.tweens.add({ targets: [dim, title], alpha: 0, duration: 420 });
+      cards.forEach(({ holder, entry }) => {
+        this.tweens.add({ targets: holder, x: L.x, y: L.y[entry.slot], scale: L.card.width / 300, duration: 420, ease: 'Cubic.easeInOut', onUpdate: sync });
       });
       this.time.delayedCall(460, finish);
     });

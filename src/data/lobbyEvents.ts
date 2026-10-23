@@ -36,6 +36,11 @@ export interface LobbyEventDef {
   /** 카드에 세우는 SD. 출격판처럼 몸은 칸 안에 갇히고 머리만 윗변 밖으로 빠져나온다. */
   readonly sd?: { readonly relicId: string; readonly side: "left" | "right" };
   /**
+   * 카드 위에 세우는 움직이는 장면. `roulette`는 카드 밑변에서 반쯤 솟은 돌림판이 돌고 재화가 내리며, SD가 그 옆에서
+   * 바퀴를 민다(행운의 돌림판). 비우면 원화 + SD만 선다.
+   */
+  readonly showcase?: "roulette";
+  /**
    * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
    */
@@ -67,6 +72,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     backdropKey: BACKGROUND.interactionDoppelParlor,
     destination: { kind: "roulette" },
     sd: { relicId: "meron", side: "right" },
+    showcase: "roulette",
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },

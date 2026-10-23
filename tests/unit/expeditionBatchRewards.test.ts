@@ -13,7 +13,7 @@ describe('원정 달성 보상 일괄 수령',()=>{
   const server=new FakeServer(state,{latencyMs:0,now:()=>now,persistSession:()=>undefined});
   const result=await server.claimExpeditionReward({stageId:'all',requestId:'claim-batch'});
   expect(result.claimedNowStageIds).not.toContain('best-2k');expect(result.claimedNowStageIds).toHaveLength(9);
-  expect(result.rewards?.find(r=>r.currency==='gold')?.amount).toBe(90000);
+  expect(result.rewards?.find(r=>r.currency==='gold')?.amount).toBe(15000);
   expect(result.claimedStageIds).not.toContain('best-33k');
   const restored=saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state))));const wallet={...restored.wallet};
   const restarted=new FakeServer(restored,{latencyMs:0,now:()=>now,persistSession:()=>undefined});

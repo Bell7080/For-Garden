@@ -17,6 +17,7 @@ import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { ferocityMaxOf } from "../core/ferocity";
+import { arenaMirrorCenter, arenaViewAlly, arenaViewFlipped, mirrorFightersY, mirrorPointsY, type ArenaMirrorRestore } from "../core/arenaView";
 import {
   aliveFighters,
   activeCombatBuffs,
@@ -328,6 +329,9 @@ export class BattleScene extends Phaser.Scene {
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
   private finished = false;
+  /** 아레나 위쪽 자리의 화면이 전장을 거울에 비춰 보는가. */
+  private viewFlip = false;
+  private viewRestore: ArenaMirrorRestore | null = null;
   /** 끝난 판이 결과판을 여는 실제 시각과, 그때 부를 일. 숨 고르기가 끝나기 전 씬을 떠나면 버린다. */
   private closingAt = 0;
   /** 설정을 겹쳐 연 동안 이 씬이 잠든 시각. 깨어나면 멈춰 있던 만큼 숨 고르기 시계를 뒤로 민다. */
@@ -631,6 +635,10 @@ export class BattleScene extends Phaser.Scene {
     this.rng = this.combatLease ? bossBattleRandom(this.combatLease.seed) : (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2
       ? bossBattleRandom(this.battleInput.mode === "raid" ? this.battleInput.replaySeed ?? this.battleInput.requestId : JSON.stringify([this.battleInput.runId, this.battleInput.nodeId])) : battleRandom();
     applyBattleTestPreset(this.state);
+    // 실시간 아레나의 위쪽 자리는 전장을 거울에 비춰 본다 — 제 편이 아래, 초록 체력으로 선다.
+    this.viewRestore = null;
+    this.viewFlip = this.battleInput.mode === "duel" && arenaViewFlipped(this.battleInput.arena?.side);
+    this.flipView();
     this.views.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
@@ -677,7 +685,7 @@ export class BattleScene extends Phaser.Scene {
     addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     if(this.battleInput.mode==="duel" && this.battleInput.arena) {
-      this.add.text(540,245,t("arena.battle.perspective",{team:this.battleInput.arena.side===0?t("arena.battle.bottom"):t("arena.battle.top")}),textStyle({ role: "body",size:24,color:COLOR.accentText})).setOrigin(.5).setDepth(90);
+      this.add.text(540,245,t("arena.battle.perspective",{team:t("arena.battle.bottom")}),textStyle({ role: "body",size:24,color:COLOR.accentText})).setOrigin(.5).setDepth(90);
     }
     /*
      * **머리글과 「AUTO BATTLE」은 세우지 않는다.**
@@ -1154,7 +1162,7 @@ export class BattleScene extends Phaser.Scene {
         const frozenSkin = fighter.side === "enemy" ? undefined : this.frozenRelics?.get(fighter.def.id);
         const asset = frozenSkin
           ? sdAssetForSkin(fighter.def.id, frozenSkin.skinId ?? undefined) ?? battleAssetFor(fighter.def.id)
-          : relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
+          : relicAppearanceManager.battleAssetFor(fighter.def.id, this.isAlly(fighter) ? "ally" : "enemy");
         return spawnPuppet(this, asset, {
           x: fighter.x,
           groundY: fighter.y,
@@ -1188,7 +1196,7 @@ export class BattleScene extends Phaser.Scene {
       }
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
-      const infoHit = fighter.side === "enemy"
+      const infoHit = !this.isAlly(fighter)
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
@@ -1202,7 +1210,7 @@ export class BattleScene extends Phaser.Scene {
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
       const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale);
-      const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
+      const barColor = this.isAlly(fighter) ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
       // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
@@ -1393,7 +1401,9 @@ export class BattleScene extends Phaser.Scene {
         ? Promise.resolve()
         : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
       const castAt = this.state.elapsed; const energyBefore = fighter.energy;
-      const events = fireUltimate(this.state, fighter.id, this.rng);
+      this.unflipView();
+      const events = this.mirrorEvents(fireUltimate(this.state, fighter.id, this.rng));
+      this.flipView();
       // 궁극기는 **쓴 순간**을 행동으로 남긴다. 피해 사건에서 거두던 때는 피해 없는 궁극기(순풍·
       // 연사·은신·대신 받기)가 기록에서 빠져, 서버 재현이 그 강화를 모른 채 뒤이은 평타를 "너무
       // 빠르다"로 거절했다. 되찍기·채널링·늑대 돌진은 서버가 같은 함수로 다시 만든다.
@@ -1465,7 +1475,33 @@ export class BattleScene extends Phaser.Scene {
 
   /** 편성 순서 그대로의 아군 셋. 쓰러진 뒤에도 프로필 자리는 지킨다. */
   private playerFighters(): Fighter[] {
-    return this.state.fighters.filter((fighter) => fighter.side === "player");
+    return this.state.fighters.filter((fighter) => this.isAlly(fighter));
+  }
+
+  /** 이 화면에서 제 편인가. 아레나 위쪽 자리의 화면은 코어의 적 편이 곧 나다. */
+  private isAlly(fighter: Pick<Fighter, "side">): boolean {
+    return arenaViewAlly(fighter.side, this.viewFlip);
+  }
+
+  /** 피해 수치의 색은 화면의 편을 따른다 — 거울에 비춘 화면에서는 코어의 적 편이 받는 피해가 곧 내 피해다. */
+  private popupTarget(fighter: Fighter): { side: Fighter["side"]; maxHp: number } {
+    return { side: this.isAlly(fighter) ? "player" : "enemy", maxHp: fighter.maxHp };
+  }
+
+  private flipView(): void {
+    if (!this.viewFlip || this.viewRestore) return;
+    this.viewRestore = mirrorFightersY(this.state.fighters, arenaMirrorCenter(this.state.arena));
+  }
+
+  private unflipView(): void {
+    this.viewRestore?.();
+    this.viewRestore = null;
+  }
+
+  private mirrorEvents(events: SkirmishEvent[]): SkirmishEvent[] {
+    if (!this.viewFlip) return events;
+    const center = arenaMirrorCenter(this.state.arena);
+    return events.map((event) => mirrorPointsY(event, center));
   }
 
   /**
@@ -1522,6 +1558,8 @@ export class BattleScene extends Phaser.Scene {
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
     const events: SkirmishEvent[] = [];
+    // 코어는 언제나 원래 좌표에서 진행한다 — 거울은 그리는 동안에만 씌운다.
+    this.unflipView();
     if (this.combatLease || (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2) {
       this.bossStepRemainder += Math.min(0.25, dt) * this.battleSpeed * 1_000;
       while (this.bossStepRemainder >= BOSS_STEP_MS && this.state.phase === "fight") {
@@ -1530,6 +1568,8 @@ export class BattleScene extends Phaser.Scene {
         if(this.combatLease) this.combatTicks++;
       }
     } else events.push(...stepSkirmish(this.state, dt * this.battleSpeed, this.rng));
+    this.flipView();
+    if (this.viewFlip) events.splice(0, events.length, ...this.mirrorEvents(events));
     // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
     this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
     this.paintDeathClock();
@@ -1864,7 +1904,7 @@ export class BattleScene extends Phaser.Scene {
       // 바닥과 피해 수치가 서로 다른 축을 읽게 된다. 여기서 더하는 것은 "우리 편이 맞는가"뿐이다.
       const caster = this.views.get(event.attackerId);
       this.effects.groundArea(event.area, {
-        hostile: caster?.fighter.side === "enemy",
+        hostile: caster ? !this.isAlly(caster.fighter) : false,
         damageType: event.damageType,
         supportive: event.supportive,
         status: event.status,
@@ -1982,7 +2022,7 @@ export class BattleScene extends Phaser.Scene {
         this.effects.damage(
           guardian.fighter.x,
           guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
-          attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, guardian.fighter),
+          attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, this.popupTarget(guardian.fighter)),
         );
         // 아군이 맞았는데 앞에 선 개체가 깎이면, 잇는 선이 없으면 두 사건으로 읽힌다.
         const saved = this.views.get(event.fromFighterId);
@@ -2042,7 +2082,7 @@ export class BattleScene extends Phaser.Scene {
       // 물리·마법은 색을 가르지 않는다. 갈리는 것은 고정 피해뿐이고, 나머지 구분(치명타·궁극기·
       // 경감·아군 피격)은 순수 변환 경계가 사건의 성격만 보고 정한다. 기여도와 보스 점수가
       // 실수로 화면 숫자에 섞이지 않도록 공격 사건은 완성된 요청 모델로 바로 전달한다.
-      const popupRequest = attackDamagePopupRequest(event, target.fighter);
+      const popupRequest = attackDamagePopupRequest(event, this.popupTarget(target.fighter));
       this.effects.damage(
         target.fighter.x,
         target.fighter.y - UNIT_HEIGHT * target.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
@@ -2127,7 +2167,7 @@ export class BattleScene extends Phaser.Scene {
       fighter.x,
       fighter.y - height * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
       // 소수 HP가 생겨도 전투 숫자는 정수로 표시하되 사건 자체의 실제 값은 코어에 그대로 남는다.
-      { amount, flavor, incoming: fighter.side === "player", maxHp: fighter.maxHp, ...extra },
+      { amount, flavor, incoming: this.isAlly(fighter), maxHp: fighter.maxHp, ...extra },
       { onDone: healing ? () => { this.healPopups = Math.max(0, this.healPopups - 1); } : undefined },
     );
   }
@@ -2717,7 +2757,7 @@ export class BattleScene extends Phaser.Scene {
     const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
     }));
-    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, "player");
+    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, this.viewFlip ? "enemy" : "player");
     // finish 사건만 결과 정산을 소유한다. 사망 사건은 앞서 한 번 재생됐으며 정리 과정에서 재호출하지 않는다.
     this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.

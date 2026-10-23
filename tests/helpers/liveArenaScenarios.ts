@@ -3,7 +3,7 @@ import { createSupabaseStore } from '../../src/server/supabaseStore';
 import { handleArenaCall } from '../../src/server/liveArena';
 import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
 import { saveManager } from '../../src/state/SaveManager';
-import { arenaTurn } from '../../src/core/liveArena';
+import { arenaTurn, arenaPickable } from '../../src/core/liveArena';
 export async function run(sql:(s:string)=>string):Promise<void> {
  const q=(v:unknown)=>v===null?'null':`'${String(typeof v==='string'?v:JSON.stringify(v)).replaceAll("'","''")}'`;
  const ids=Array.from({length:4},(_,i)=>`00000000-0000-0000-0000-${String(i+301).padStart(12,'0')}`);
@@ -25,7 +25,7 @@ export async function run(sql:(s:string)=>string):Promise<void> {
  let retryInput:any;
  for(let i=0;i<6;i++){
   const side=arenaTurn(room),id=room.players[side].id,index=room.picks[side].length;
-  const input={roomId,action:{kind:'place',relicId:['rex','mette','stella'][index],x:[.08,.5,.92][index],y:index===1?.32:0}};
+  const input={roomId,action:{kind:'place',relicId:arenaPickable(room,side)[0].def.id,slot:index}};
   const request=`placement-${i}`;const next=await call(id,'action',input,request);const duplicate=await call(id,'action',input,request);assert.equal(next.room.version,duplicate.room.version);room=next.room;
   if(i===0){retryInput={id,input,request};await assert.rejects(call(id,'action',{roomId,action:{kind:'forfeit'}},request),/ARENA_REQUEST_CONFLICT/);}
  }
@@ -38,7 +38,7 @@ export async function run(sql:(s:string)=>string):Promise<void> {
  assert.equal(invite.room.phase,'invited');let incoming=await call(ids[1]);assert.equal(incoming.incoming.length,1);
  const invitedId=invite.room.id;
  let accepted=await call(ids[1],'accept',{roomId:invitedId});assert.equal(accepted.room.first,1);assert.equal(accepted.room.phase,'place');
- const picked=await call(ids[0],'action',{roomId:invitedId,action:{kind:'place',relicId:'rex',x:.5,y:0}});assert.equal(picked.room.picks[0].length,1);
+ const picked=await call(ids[0],'action',{roomId:invitedId,action:{kind:'place',relicId:'rex',slot:1}});assert.equal(picked.room.picks[0].length,1);
  const hidden=await call(ids[1],'status',{roomId:invitedId});assert.equal(hidden.room.picks[0].length,0);assert.equal(hidden.records.length,0);
  await call(ids[0],'action',{roomId:invitedId,action:{kind:'forfeit'}});assert.equal(sql(`select sum(wins+losses) from public.arena_ratings;`),'2');
  const practice=await call(ids[0],'practice',{target:ids[1]});assert.equal(practice.room.phase,'battle');assert.equal(practice.room.ranked,false);assert.equal(practice.room.lease.setup.enemies.length,3);

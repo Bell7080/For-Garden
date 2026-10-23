@@ -403,13 +403,13 @@ export class LabScene extends Phaser.Scene {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
     this.clearPullSpotlight();
-    const payment = pullPayment(session.wallet, banner, count);
+    const payment = pullPayment(session.wallet, banner, count, this.pityOf(banner));
     if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
     // 치를 것은 문장이 아니라 액자가 말한다 — 문장에 수를 또 적으면 같은 값을 한 창에 두 번 읽는다.
     this.popupLayer.confirm({
       title: t("lab.pull.gemTitle"),
       message: t("lab.pull.gemMessage", { currency: t(`currency.${banner.currency}`), count }),
-      costs: pullCostParts(banner, count),
+      costs: pullCostParts(banner, count, this.pityOf(banner)),
       balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - payment.gems },
       confirmLabel: t("lab.pull.gemConfirm"),
     }, () => { void this.doPull(count); });
@@ -860,13 +860,13 @@ export class LabScene extends Phaser.Scene {
     this.oneButton.setVisible(!banner.tenOnly);
     this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
     this.oneButton
-      .setCost(pullCostParts(banner, 1))
+      .setCost(pullCostParts(banner, 1, pity))
       .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
     this.tenButton
-      .setCost(pullCostParts(banner, 10))
+      .setCost(pullCostParts(banner, 10, pity))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));
 
-    const discount = bannerTenDiscountPercent(banner);
+    const discount = bannerTenDiscountPercent(banner, pity);
     this.discountBadge.setVisible(discount > 0);
     this.discountText.setText(t("lab.pull.discount", { percent: discount }));
     this.discountBadge.setPosition(this.tenButton.x + LAB_TITLE.discount.dx, LAB_CHROME.pull.y + LAB_TITLE.discount.dy);
@@ -874,11 +874,11 @@ export class LabScene extends Phaser.Scene {
 }
 
 /** 연구 버튼에 세울 값 조각 — 가진 연구 재화 몫과 모자라 젬으로 채우는 몫. */
-function pullCostParts(banner: Banner, count: number): ResearchPullCostPart[] {
-  const payment = pullPayment(session.wallet, banner, count);
+function pullCostParts(banner: Banner, count: number, pity?: GachaPityState): ResearchPullCostPart[] {
+  const payment = pullPayment(session.wallet, banner, count, pity);
   const parts: ResearchPullCostPart[] = [];
   // 연구 재화가 하나도 없으면 그 조각은 세우지 않는다(「화석 ×0」은 읽을 필요 없는 수다).
-  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count) : payment.tickets });
+  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count, pity) : payment.tickets });
   if (payment.gems > 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: payment.gems, short: !payment.affordable });
   return parts;
 }

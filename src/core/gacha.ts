@@ -98,6 +98,15 @@ export interface Banner {
    */
   pullLimit?: number;
   /**
+   * 최고 등급(SSR)을 한 번이라도 얻으면 남은 횟수와 상관없이 닫는다. 첫 복원 연구가 쓴다.
+   * 판정은 `bannerGuaranteePending`과 같다 — 미획득 횟수가 총 횟수보다 작으면 SSR이 나온 것이다.
+   */
+  closeOnHighestRarity?: boolean;
+  /** 일찍 닫힐 때 남은 10연을 할인 10연으로 넘겨줄 그룹(`PITY_GROUP`). 첫 복원 연구가 쓴다. */
+  carryoverTo?: string;
+  /** 이월된 할인 10연을 이 값의 연구 재화로 연다. 받는 배너(화석 연구)가 쓴다. */
+  carryoverTenCost?: number;
+  /**
    * 10회 연구만 연다. 할인이 걸린 1회성 배너가 쓴다.
    *
    * 상시 배너는 "한 개가 한 번"이라 묶음 할인을 두지 않는다 — 두면 한 번씩 뽑는 손이 손해라
@@ -158,9 +167,28 @@ export interface GachaPityState {
   pickupGuaranteed: boolean;
   /** 이 그룹에서 지금까지 뽑은 총 횟수. 횟수 제한이 있는 배너만 센다(`Banner.pullLimit`). */
   totalPulls?: number;
+  /** 첫 복원 연구가 SSR로 일찍 닫혀 이월된 할인 10연의 남은 수. 받는 배너(`carryoverTenCost`)의 그룹이 든다. */
+  discountTens?: number;
 }
 
-export function pullCost(banner: Banner, count: number): number {
+/** 이월된 할인 10연이 남아 있고 이 배너가 받는가. */
+export function carryoverTenAvailable(banner: Banner, pity: GachaPityState | undefined): boolean {
+  return banner.carryoverTenCost !== undefined && (pity?.discountTens ?? 0) > 0;
+}
+
+/**
+ * 첫 복원 연구가 이번 뽑기로 SSR을 얻어 닫혔을 때 이월할 할인 10연 수.
+ * 닫히지 않았거나 이월 대상이 없으면 0이다. 남은 횟수가 10연 단위로 떨어지는 몫만 센다.
+ */
+export function carryoverTensOnClose(banner: Banner, next: GachaPityState): number {
+  if (!banner.carryoverTo || !banner.closeOnHighestRarity || banner.pullLimit === undefined) return 0;
+  const total = next.totalPulls ?? 0;
+  if (next.pullsSinceSsr >= total) return 0;
+  return Math.floor(Math.max(0, banner.pullLimit - total) / 10);
+}
+
+export function pullCost(banner: Banner, count: number, pity?: GachaPityState): number {
+  if (count === 10 && carryoverTenAvailable(banner, pity)) return banner.carryoverTenCost!;
   return count === 10 ? banner.costTen : banner.costOne * count;
 }
 
@@ -182,8 +210,8 @@ export interface PullPayment {
   affordable: boolean;
 }
 
-export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, banner: Banner, count: number): PullPayment {
-  const cost = pullCost(banner, count);
+export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, banner: Banner, count: number, pity?: GachaPityState): PullPayment {
+  const cost = pullCost(banner, count, pity);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
   const gems = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems, affordable: wallet.gems >= gems };
@@ -192,7 +220,9 @@ export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, b
 /** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */
 export function bannerPullsRemaining(banner: Banner, pity: GachaPityState | undefined): number {
   if (banner.pullLimit === undefined) return Number.POSITIVE_INFINITY;
-  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
+  const total = pity?.totalPulls ?? 0;
+  if (banner.closeOnHighestRarity && (pity?.pullsSinceSsr ?? 0) < total) return 0;
+  return Math.max(0, banner.pullLimit - total);
 }
 
 /** 이 배너가 지금 이 횟수를 받는가 — 10연 전용·남은 횟수만 본다. 재화는 `canPull`이 본다. */
@@ -215,7 +245,7 @@ export function bannerGuaranteePending(banner: Banner, pity: GachaPityState | un
 
 /** 연구 재화에 젬을 더해 치를 수 있고 배너가 그 횟수를 받는가. */
 export function canPull(wallet: Wallet, banner: Banner, count: number, pity?: GachaPityState): boolean {
-  return pullPayment(wallet, banner, count).affordable && bannerAcceptsCount(banner, count, pity);
+  return pullPayment(wallet, banner, count, pity).affordable && bannerAcceptsCount(banner, count, pity);
 }
 
 /** 0 이상 1 미만이라는 RNG 계약을 방어적으로 배열 인덱스에 맞춘다. */
@@ -298,9 +328,9 @@ export function pull(
 }
 
 /** 비용을 치른 새 지갑 — 연구 재화를 먼저 쓰고 모자란 몫은 젬이다. 모자라면 원래 참조를 돌려준다. */
-export function spend(wallet: Wallet, banner: Banner, count: number): Wallet {
-  if (!canPull(wallet, banner, count)) return wallet;
-  const payment = pullPayment(wallet, banner, count);
+export function spend(wallet: Wallet, banner: Banner, count: number, pity?: GachaPityState): Wallet {
+  if (!canPull(wallet, banner, count, pity)) return wallet;
+  const payment = pullPayment(wallet, banner, count, pity);
   return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
 

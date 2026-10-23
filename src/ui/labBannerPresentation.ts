@@ -12,7 +12,7 @@
  * Phaser 없이 읽히도록 값만 둔다 — 화면과 회귀 테스트가 같은 표를 읽는다.
  */
 
-import { bannerGuaranteePending, bannerPullsRemaining, type Banner, type GachaPityState } from "../core/gacha";
+import { bannerGuaranteePending, bannerPullsRemaining, pullCost, type Banner, type GachaPityState } from "../core/gacha";
 import type { TextKey } from "../i18n";
 
 export type BannerTone = "welcome" | "standard" | "limited";
@@ -119,8 +119,9 @@ export function bannerTags(
 }
 
 /** 할인율(%) — 10연 값이 1회 값의 열 배보다 싸면 그만큼. 할인이 없으면 0이다. */
-export function bannerTenDiscountPercent(banner: Banner): number {
+export function bannerTenDiscountPercent(banner: Banner, pity?: GachaPityState): number {
   const full = banner.costOne * 10;
-  if (banner.costTen >= full) return 0;
-  return Math.round((1 - banner.costTen / full) * 100);
+  const ten = pullCost(banner, 10, pity);
+  if (ten >= full) return 0;
+  return Math.round((1 - ten / full) * 100);
 }

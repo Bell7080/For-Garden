@@ -80,13 +80,14 @@ export const BANNERS: Banner[] = [
      * 화석 연구에 덮는 할인이 아니라 따로 선 배너다. 풀(네 종)·천장 그룹·값이 모두 달라 한
      * 화면에 섞으면 무엇의 확률이고 무엇의 천장인지 읽히지 않는다. 천장을 한도와 같은 50으로
      * 두면 "50회 안에 확정"이 되고, 그 전에 SSR이 나오면 천장이 0으로 돌아가 남은 횟수로는 다시
-     * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰면 목록에서 사라진다. 기획은
+     * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰거나, SSR을 얻으면(그 10연은 끝까지 지급)
+     * 남은 횟수와 상관없이 목록에서 사라진다(`closeOnHighestRarity`). 기획은
      * `docs/live-ops-bm.md` §2. 모집 원화는 비워 둔 방이고, 그 바닥에 SSR 풀 넷의 SD가 선다.
      */
     id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
     artKey: BACKGROUND.recruitWelcome,
     castRelicIds: WELCOME_SSR_POOL,
-    currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50,
+    currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50, closeOnHighestRarity: true, carryoverTo: PITY_GROUP.STANDARD,
     // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
     slotRates: STANDARD_SLOT_RATES,
     grayRewards: STANDARD_GRAY_REWARDS,
@@ -106,6 +107,8 @@ export const BANNERS: Banner[] = [
      * 손해를 보게 되어 사실상 10연 하나만 남는다.
      */
     currency: "fossil", costOne: 1, costTen: 10,
+    // 첫 복원 연구가 SSR로 일찍 닫히면 남은 10연만큼 화석 8개짜리 10연이 열린다(첫 복원 연구의 값).
+    carryoverTenCost: 8,
     // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
     // 그대로 남아 있어 한 묶음은 보통 SR 1장 안팎, R 1~2장, 나머지는 재화로 구성된다.
     slotRates: STANDARD_SLOT_RATES,

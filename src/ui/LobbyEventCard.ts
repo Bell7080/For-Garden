@@ -8,7 +8,8 @@ import { chipPoints, drawLayer, slantedRect } from "./holo";
 import type { LobbyEventEntry } from "./lobbyEventModel";
 import { formatDayCountdown } from "../core/formatCountdown";
 import { addPopupBackgroundImage } from "./backgrounds";
-import { spawnEventCardSd } from "./eventCardSd";
+import { spawnEventCardSd, type EventCardPuppet } from "./eventCardSd";
+import { addRouletteCardShowcase } from "./rouletteCardShowcase";
 import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
 import { NotificationDot } from "./NotificationDot";
@@ -41,6 +42,11 @@ const CARD = {
   veil: { alpha: 0.8, span: 0.62, bands: 10 },
   /** SD는 출격판 칸과 같은 자리 규칙을 쓰되 한 뼘 작게 세운다(출격 스토리 칸과 같은 배율). */
   sdScale: 0.9,
+  /**
+   * 돌림판 장면 — 바퀴는 카드 밑변에 가운데를 둬 위 절반만 솟고, 메론은 그 오른쪽에 붙어 서서 가끔 바퀴를 민다.
+   * 글은 바퀴에 닿지 않도록 카드 폭의 `textRatio`까지만 쓴다.
+   */
+  roulette: { radius: 150, /** 바퀴 가운데의 x(카드 가운데 기준). */ x: 110, sdInset: 95, textRatio: 0.42, pushMs: 1700, rain: { count: 9, size: 34, alpha: 0.36, fallMs: 6400 } } as const,
   /** 출석 카드의 진행 마름모 줄(부제 자리). */
   pips: { gap: 30, half: 9, labelSize: 22 },
 } as const;
@@ -69,6 +75,8 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
   private dot?: NotificationDot;
   private pipRow?: Phaser.GameObjects.Container;
   private readonly hops: Phaser.Tweens.Tween[] = [];
+  /** SD가 도착하면 부른다 — 돌림판 장면이 메론을 바퀴 미는 몸짓에 묶는다. */
+  private sdReady?: (puppet: EventCardPuppet) => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, private readonly options: LobbyEventCardOptions) {
     super(scene, x, y);
@@ -135,8 +143,12 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     titleColor: string;
     titleStroke: string;
     backdrop?: { key: string; frame?: { zoom: number; offsetX: number; offsetY: number } };
-    sd?: { relicId: string; side: "left" | "right"; hop: boolean };
+    sd?: { relicId: string; side: "left" | "right"; hop: boolean; inset?: number };
     endsAt?: string | null;
+    /** 원화·어둠 위, 글 아래에 까는 장면(돌림판). */
+    underlay?: () => void;
+    /** SD가 서는 카드에서 글이 쓰는 폭(카드 폭 비율). */
+    textRatio?: number;
   }): { left: number; lineY: number; textWidth: number } {
     const { scene } = this;
     const { width, height, now } = this.options;
@@ -160,8 +172,9 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     }
     const left = -width / 2 + CARD.padX;
     this.add(drawLayer(scene, left - CARD.rail.inset, 0, slantedRect(CARD.rail.width, height * 0.6), { fill: spec.accent, alpha: CARD.rail.alpha, shadow: false }));
+    spec.underlay?.();
     // 글은 SD가 서지 않는 쪽 절반 남짓을 쓴다.
-    const textWidth = spec.sd ? width * 0.56 : width - CARD.padX * 2;
+    const textWidth = spec.sd ? width * (spec.textRatio ?? 0.56) : width - CARD.padX * 2;
     const title = scene.add.text(left, -height / 2 + CARD.titleY, spec.title, textStyle({ role: "display", size: CARD.titleSize, color: spec.titleColor }))
       .setOrigin(0, 0.5)
       .setStroke(spec.titleStroke, 8)
@@ -169,7 +182,7 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     shrinkTextToWidth(title, textWidth);
     this.add(title);
     if (spec.endsAt) this.addClock(left, spec.endsAt, now);
-    if (spec.sd) this.addSd(spec.sd.relicId, spec.sd.side, shape, bevel, spec.sd.hop);
+    if (spec.sd) this.addSd(spec.sd.relicId, spec.sd.side, shape, bevel, spec.sd.hop, spec.sd.inset);
     return { left, lineY: -height / 2 + CARD.lineY, textWidth };
   }
 
@@ -178,11 +191,14 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
   private paintEvent(shape: number[], bevel: number): void {
     if (this.options.entry.kind !== "event") return;
     const event = this.options.entry.event;
+    const roulette = event.showcase === "roulette";
     const { left, lineY, textWidth } = this.paintStandard({
       shape, bevel, accent: COLOR.event, title: t(event.titleKey), titleColor: COLOR.eventText, titleStroke: "#1a1206",
       backdrop: event.backdropKey ? { key: event.backdropKey, frame: event.backdropFrame } : undefined,
-      sd: event.sd ? { ...event.sd, hop: false } : undefined,
+      sd: event.sd ? { ...event.sd, hop: false, inset: roulette ? CARD.roulette.sdInset : undefined } : undefined,
       endsAt: event.endsAt,
+      underlay: roulette ? () => this.paintRouletteShowcase(shape) : undefined,
+      textRatio: roulette ? CARD.roulette.textRatio : undefined,
     });
     const subtitle = this.scene.add.text(left, lineY, t(event.subtitleKey), textStyle({ role: "body", size: CARD.subtitleSize, color: COLOR.ink }))
       .setOrigin(0, 0.5)
@@ -240,6 +256,13 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     row.add(label);
   }
 
+  /** 행운의 돌림판 장면 — 그리는 일은 `rouletteCardShowcase`가 맡고, 카드는 SD가 도착하면 넘겨주기만 한다. */
+  private paintRouletteShowcase(shape: number[]): void {
+    const { width, height } = this.options;
+    const showcase = addRouletteCardShowcase(this.scene, this, shape, { width, height, ...CARD.roulette });
+    this.sdReady = showcase.attachPusher;
+  }
+
   /** 남은 기간 시계 — 글 줄 맨 아래 왼쪽(`x`가 글의 왼쪽 끝). 초마다 갈아 끼우고 카드와 함께 멈춘다. */
   private addClock(x: number, endsAt: string, now: number): void {
     const { scene } = this;
@@ -285,16 +308,17 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
   }
 
   /** SD 한 기를 칸에 세운다(자리·마스크는 `spawnEventCardSd`). 카드의 자식이라 판과 함께 떠오르고 함께 사라진다. */
-  private addSd(relicId: string, side: "left" | "right", shape: number[], bevel: number, hop: boolean): void {
+  private addSd(relicId: string, side: "left" | "right", shape: number[], bevel: number, hop: boolean, inset?: number): void {
     const { scene } = this;
     const { width, height } = this.options;
-    void spawnEventCardSd(scene, this, relicId, side, { width, height, shape, bevel, scale: CARD.sdScale })
+    void spawnEventCardSd(scene, this, relicId, side, { width, height, shape, bevel, scale: CARD.sdScale, inset })
       .then((puppet) => {
         if (!this.active) { puppet.destroy(); return; }
         // 입력면과 빨간 점보다 아래, 원화·글보다 위에 선다.
         const hitIndex = this.list.findIndex((child) => child instanceof Phaser.GameObjects.Rectangle && child.input);
         this.addAt(puppet, hitIndex >= 0 ? hitIndex : this.list.length);
         if (hop) this.hops.push(startPuppetHop(scene, puppet, 1));
+        this.sdReady?.(puppet);
       })
       .catch(() => undefined);
   }

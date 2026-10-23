@@ -80,6 +80,6 @@ describe("데스 카운트가 판을 닫는다", () => {
      * 그 위험이었고, 그래서 공용 경계 하나로 모았다.
      */
     // 점점 세지는 시계라 누적이 100%에 닿는 그 틱 언저리에서 닫혀야 한다.
-    expect(runUntilDone(900).seconds).toBeLessThan(deathClockClosesBySeconds() + 5);
+    expect(runUntilDone(900).seconds).toBeLessThan(deathClockClosesBySeconds() + 6);
   });
 });

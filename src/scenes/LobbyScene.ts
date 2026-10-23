@@ -1,5 +1,6 @@
 import { openRoulettePopup } from "../ui/RoulettePopup";
 import { nicknameCreationRequired } from "../core/playerCard";
+import { ARENA_TONE } from "../ui/arenaTheme";
 import { addArenaMascots } from "../ui/ArenaMascots";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
@@ -292,7 +293,9 @@ export class LobbyScene extends Phaser.Scene {
       onClick: () => this.openSortieMenu(),
     });
 
-    bindNotificationDot(this, sortieButton, { x: 130, y: -45 }, listener => notificationManager.subscribe("sortieReward", listener));
+    // 발굴과 같은 규칙으로 원근 판의 실제 우상단 모서리(오른쪽이 긴 변)에 앉힌다 — 고정 좌표였을 때는 판 안쪽 글자 옆에 떠 있었다.
+    const sortieDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.sortie.width, height: LOBBY_ACTION_BOUNDS.sortie.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
+    bindNotificationDot(this, sortieButton, sortieDot, listener => notificationManager.subscribe("sortieReward", listener));
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {
@@ -618,12 +621,14 @@ export class LobbyScene extends Phaser.Scene {
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
           artKey: mode.artKey,
-          sdSide: mode.id === "live-arena" ? "right" : undefined,
+          // 실시간 아레나는 같은 결투장 원화를 보랏빛으로 물들여 다른 콘텐츠로 가른다.
+          ...(mode.id === "live-arena" ? { accentColor: ARENA_TONE.accent, accentTextColor: ARENA_TONE.accentText, artTint: 0xb58cff } : {}),
           // 기존 결투장과 실시간 아레나는 같은 선택판의 독립 입구다.
           onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "arena"); },
         });
         body.add(entry);
-        if(mode.id==="live-arena") addArenaMascots(this,body,230,layout.centers[index]+105,210,true,SORTIE_SD_DEPTH);
+        // 렉시아 VS 스피나는 칸 **안에서** 맞부딪힌다 — 칩 실루엣 마스크에 가둬 판 밖으로 나가지 않는다.
+        if(mode.id==="live-arena") addArenaMascots(this,body,-150,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);

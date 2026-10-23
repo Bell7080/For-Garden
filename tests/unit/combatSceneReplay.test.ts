@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { sourceClass } from "../helpers/sourceClass";
 import * as skirmish from "../../src/core/skirmish";
 import * as ultimate from "../../src/core/ultimateSequence";
+import * as arenaView from "../../src/core/arenaView";
 import { createDefaultSession, createInitialRelicProgress } from "../../src/state/session";
 import { prepareCombat, finishCombat } from "../../src/server/combatAuthority";
 import { recordBoundaryResult } from "../../src/server/releaseBoundary";
@@ -15,7 +16,7 @@ let clock = 0;
 const noop = () => undefined;
 const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
     Phaser: { Scene: class {
-        } }, ...skirmish, ...ultimate,
+        } }, ...skirmish, ...ultimate, ...arenaView,
     performance: { now: () => clock }, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
     ultimatePresentationFor: () => ({}), ultimatePresentationTiming: () => ({ rate: 1 }), shouldWaitForUltimatePresentation: () => false,
 });

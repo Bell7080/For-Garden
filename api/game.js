@@ -99,11 +99,10 @@ init_define_import_meta_env();
 // src/i18n/ko/arena.ts
 init_define_import_meta_env();
 var ARENA_KO = {
-  "arena.mode.scope": "\uC2E4\uC2DC\uAC04 \uBC34\uD53D \xB7 \uC790\uC720 \uBC30\uCE58 \xB7 3\uB3003 \uC790\uB3D9 \uC804\uD22C",
+  "arena.mode.scope": "\uC2E4\uC2DC\uAC04 \uBC34\uD53D \xB7 1\xB72\xB73\uBC88 \uCE78 \uBC30\uCE58 \xB7 3\uB3003 \uC790\uB3D9 \uC804\uD22C",
   "arena.friend.button": "\uCE5C\uC120\uC804",
-  "arena.battle.perspective": "\uACF5\uB3D9 \uAD00\uC804 \uC2DC\uC810 \xB7 \uB0B4 \uD300\uC740 {team}",
+  "arena.battle.perspective": "\uB0B4 \uD300\uC740 {team}",
   "arena.battle.bottom": "\uC544\uB798\uCABD",
-  "arena.battle.top": "\uC704\uCABD",
   "arena.invite.from": "{name}\uB2D8\uC774 \uC544\uB808\uB098 \uC804\uD22C\uB97C \uC694\uCCAD\uD588\uC2B5\uB2C8\uB2E4",
   "arena.result.draw": "\uBB34\uC2B9\uBD80",
   "arena.result.win": "\uC2B9\uB9AC",
@@ -119,7 +118,7 @@ var ARENA_KO = {
   "arena.tier.guideButton": "\uC544\uB808\uB098 \uD2F0\uC5B4 \uC548\uB0B4",
   "arena.tier.guideTitle": "\uC544\uB808\uB098 \uD2F0\uC5B4",
   "arena.confirm": "\uD655\uC778",
-  "arena.lobby.rules": "\uAC01 1\uBC34 \xB7 3\uB3003 \uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58\n\uC120\xB7\uD6C4\uACF5 \uB79C\uB364 \xB7 \uC591 \uD300 \uC790\uB3D9 \uAD81\uADF9\uAE30",
+  "arena.lobby.rules": "\uAC01 1\uBC34(\uB3D9\uC2DC \uBE44\uACF5\uAC1C) \xB7 \uBC88\uAC08\uC544 \uD53D\uD574 1\xB72\xB73\uBC88 \uCE78 \uBC30\uCE58\n\uAC19\uC740 \uB810\uB9AD \uC911\uBCF5 \uD53D \uAE08\uC9C0 \xB7 \uC591 \uD300 \uC790\uB3D9 \uAD81\uADF9\uAE30",
   "arena.resume": "\uC9C4\uD589 \uC911\uC778 \uC544\uB808\uB098\uB85C \uBCF5\uADC0",
   "arena.match.start": "\uB9E4\uCE6D \uC2DC\uC791",
   "arena.match.searching": "\uC0C1\uB300\uB97C \uCC3E\uACE0 \uC788\uC2B5\uB2C8\uB2E4",
@@ -128,7 +127,6 @@ var ARENA_KO = {
   "arena.room.leave": "\uC544\uB808\uB098 \uB098\uAC00\uAE30",
   "arena.room.leaveConfirm": "\uC900\uBE44 \uC911 \uB098\uAC00\uBA74 \uAE30\uAD8C \uCC98\uB9AC\uB429\uB2C8\uB2E4.",
   "arena.room.forfeit": "\uAE30\uAD8C",
-  "arena.room.remaining": "\uB0A8\uC740 \uC2DC\uAC04 {p0}\uCD08",
   "arena.room.ranked": "\uB7AD\uD06C \uC544\uB808\uB098",
   "arena.room.friendly": "\uCE5C\uC120 \uC544\uB808\uB098",
   "arena.invite.waiting": "\uC0C1\uB300\uC758 \uC218\uB77D\uC744 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
@@ -143,16 +141,9 @@ var ARENA_KO = {
   "arena.result.applied": "\uC544\uB808\uB098 \uC810\uC218\uC5D0 \uACB0\uACFC\uAC00 \uBC18\uC601\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "arena.result.friendlyNotice": "\uCE5C\uC120\uC804\uC740 \uD2F0\uC5B4\uC640 \uC7AC\uD654\uAC00 \uBCC0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
   "arena.result.return": "\uC544\uB808\uB098\uB85C \uB3CC\uC544\uAC00\uAE30",
-  "arena.ban.choose": "\uC0C1\uB300 \uB810\uB9AD 1\uB9C8\uB9AC\uB97C \uBC34\uD558\uC138\uC694",
+  "arena.ban.choose": "\uC0C1\uB300 \uB810\uB9AD \uD558\uB098\uB97C \uB20C\uB7EC \uBC34\uD558\uACE0 \uD655\uC815\uD558\uC138\uC694",
   "arena.ban.wait": "\uC0C1\uB300\uC758 \uBC34\uC744 \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
-  "arena.placement.choose": "\uB810\uB9AD \uC120\uD0DD \uD6C4 \uC6D0\uD558\uB294 \uC704\uCE58\uB97C \uB204\uB974\uC138\uC694",
   "arena.placement.wait": "\uC0C1\uB300\uC758 \uBC30\uCE58\uB97C \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
-  "arena.placement.opponentHidden": "\uC0C1\uB300 \uBE44\uACF5\uAC1C \uBC30\uCE58",
-  "arena.placement.opponent": "\uC0C1\uB300 \uBC30\uCE58",
-  "arena.none": "\uC5C6\uC74C",
-  "arena.noneOther": "\uC5C6\uC74C",
-  "arena.placement.summary": "{p0}/3 \uBC30\uCE58 \xB7 \uB0B4 \uBC34: {p1} \xB7 \uC0C1\uB300 \uBC34: {p2}",
-  "arena.roster.next": "\uB2E4\uC74C \uBAA9\uB85D {p0}/{p1}",
   "arena.placement.undo": "\uB9C8\uC9C0\uB9C9 \uBC30\uCE58 \uCDE8\uC18C",
   "arena.placement.lock": "\uBC30\uCE58 \uD655\uC815",
   "arena.rules.bannerBan": "\uAC01 1\uBC34",
@@ -181,10 +172,25 @@ var ARENA_KO = {
   "arena.error.busy": "\uC0C1\uB300\uAC00 \uB2E4\uB978 \uC544\uB808\uB098\uB97C \uC900\uBE44\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
   "arena.error.expired": "\uC694\uCCAD\uC774 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "arena.error.turn": "\uC0C1\uB300\uC758 \uC120\uD0DD\uC744 \uAE30\uB2E4\uB824 \uC8FC\uC138\uC694.",
-  "arena.error.placement": "\uBC30\uCE58 \uC601\uC5ED\uACFC \uAC04\uACA9, \uBC34\uB41C \uB810\uB9AD\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
+  "arena.error.placement": "\uACE0\uB97C \uC218 \uC5C6\uB294 \uB810\uB9AD\uC774\uAC70\uB098 \uC774\uBBF8 \uCC2C \uCE78\uC785\uB2C8\uB2E4.",
   "arena.error.offline": "\uC11C\uBC84 \uACC4\uC815 \uC5F0\uACB0 \uD6C4 \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "arena.error.cooldown": "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC694\uCCAD\uD574 \uC8FC\uC138\uC694.",
-  "arena.error.connection": "\uC544\uB808\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+  "arena.error.connection": "\uC544\uB808\uB098 \uC5F0\uACB0\uC744 \uD655\uC778\uD574 \uC8FC\uC138\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  "arena.room.banTitle": "\uBC34 \uC120\uD0DD",
+  "arena.room.pickTitle": "\uD53D & \uBC30\uCE58",
+  "arena.ban.confirm": "\uBC34 \uD655\uC815",
+  "arena.ban.reveal": "\uBC34 \uACF5\uAC1C",
+  "arena.ban.mine": "\uB0B4 \uBC34",
+  "arena.ban.theirs": "\uC0C1\uB300 \uBC34",
+  "arena.pick.choose": "\uB810\uB9AD\uACFC \uCE78(1\xB72\xB73)\uC744 \uACE0\uB978 \uB4A4 \uD655\uC815\uD558\uC138\uC694",
+  "arena.pick.locked": "\uBC30\uCE58\uB97C \uD655\uC815\uD588\uC2B5\uB2C8\uB2E4. \uC0C1\uB300\uB97C \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
+  "arena.pick.confirm": "\uC120\uD0DD \uD655\uC815 ({p0}/3)",
+  "arena.pick.slot": "{p0}\uBC88",
+  "arena.pick.banned": "\uBC34",
+  "arena.pick.taken": "\uC0C1\uB300 \uD53D",
+  "arena.rules.duplicates": "\uC911\uBCF5 \uD53D: {p0}",
+  "arena.rules.duplicatesAllowed": "\uD5C8\uC6A9",
+  "arena.rules.duplicatesBlocked": "\uAE08\uC9C0"
 };
 
 // src/i18n/ko/settings.ts
@@ -349,11 +355,11 @@ var LOBBY_KO = {
   "lobby.bondXp": "\uC720\uB300 +{xp}",
   "lobby.bondLevelUp": "\uC720\uB300 \uB808\uBCA8 +{levels}",
   "event.roulette.title": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310",
-  "event.roulette.subtitle": "\uB9E4\uC77C \uBB34\uB8CC 1\uD68C, \uAD11\uACE0\uB85C \uD558\uB8E8 3\uD68C \uB354!",
+  "event.roulette.subtitle": "\uC82C 1,000\uAC1C\uC758 \uD589\uC6B4! \uB9E4\uC77C \uBB34\uB8CC 1\uD68C",
   "roulette.spin": "\uBB34\uB8CC 1\uD68C \uB3CC\uB9AC\uAE30",
   "roulette.remaining": "\uB0A8\uC740 \uD68C\uC804 {count}\uD68C",
   "roulette.daily": "\uD558\uB8E8 \uCD5C\uB300 4\uD68C \xB7 \uB9E4\uC77C \uC624\uC804 9\uC2DC \uCD08\uAE30\uD654",
-  "roulette.rules": "\uBAA8\uB4E0 \uCE78\uC758 \uB2F9\uCCA8 \uD655\uB960\uC740 \uB3D9\uC77C\uD569\uB2C8\uB2E4. \uBCF4\uC0C1\uC740 \uD68C\uC804 \uC694\uCCAD \uC2DC \uD655\uC815\uB429\uB2C8\uB2E4.",
+  "roulette.rules": "\uCE78\uB9C8\uB2E4 \uB2F9\uCCA8 \uD655\uB960\uC774 \uB2E4\uB985\uB2C8\uB2E4. \uBCF4\uC0C1\uC740 \uD68C\uC804 \uC694\uCCAD \uC2DC \uD655\uC815\uB429\uB2C8\uB2E4.",
   "roulette.adBonus": "\uAD11\uACE0 \uBCF4\uACE0 1\uD68C \uB354 \uB3CC\uB9AC\uAE30",
   "roulette.memberBonus": "\uAD11\uACE0 \uC5C6\uC774 1\uD68C \uB354 \uB3CC\uB9AC\uAE30",
   "roulette.bonusUsed": "\uC624\uB298 \uD68C\uC804 \uC644\uB8CC",
@@ -361,6 +367,10 @@ var LOBBY_KO = {
   "roulette.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
   "roulette.intro": "\uCCAB \uD68C\uC804\uC740 \uBB34\uB8CC! \uC774\uD6C4 \uAD11\uACE0\uB97C \uBCFC \uB54C\uB9C8\uB2E4 \uD55C \uBC88\uC529, \uD558\uB8E8 3\uD68C \uB354 \uB3CC\uB9B4 \uC218 \uC788\uC5B4\uC694.",
+  "roulette.rates.basis": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310 \xB7 1\uD68C \uD68C\uC804 \uAE30\uC900",
+  "roulette.rates.rules": "\uC548\uB0B4",
+  "roulette.rates.noteSlices": "\uCE78\uC758 \uD06C\uAE30\uB294 \uBAA8\uB450 \uAC19\uC9C0\uB9CC \uB2F9\uCCA8 \uD655\uB960\uC740 \uCE78\uB9C8\uB2E4 \uB2E4\uB985\uB2C8\uB2E4.",
+  "roulette.rates.noteServer": "\uBCF4\uC0C1\uC740 \uD68C\uC804\uC744 \uC694\uCCAD\uD558\uB294 \uC21C\uAC04 \uD655\uC815\uB418\uBA70, \uCC3D\uC744 \uB2EB\uC544\uB3C4 \uC9C0\uAE09\uB429\uB2C8\uB2E4.",
   "storyDifficulty.title": "\uB09C\uC774\uB3C4 \uC120\uD0DD",
   "storyDifficulty.easy": "\uC26C\uC6C0",
   "storyDifficulty.normal": "\uBCF4\uD1B5",
@@ -553,7 +563,7 @@ var STATUS_KO = {
   "status.frozen": "\uBE59\uACB0",
   "status.frozen.detail": "{time} \uB0A8\uC74C \xB7 \uD480\uB9AC\uB294 \uC21C\uAC04 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}% \uACE0\uC815 \uD53C\uD574",
   "status.frenzy": "\uAD11\uB780",
-  "status.frenzy.detail": "\uC790\uAE30 \uD3B8\uC744 \uACF5\uACA9 \xB7 \uACF5\uACA9 \uC18D\uB3C4 +{percent}% \xB7 {time} \uB0A8\uC74C",
+  "status.frenzy.detail": "\uC790\uAE30 \uD3B8\uC744 \uACF5\uACA9 \xB7 {time} \uB0A8\uC74C",
   "status.taunt": "\uB3C4\uBC1C",
   "status.taunt.detail": "\uB3C4\uBC1C\uD55C \uC0C1\uB300\uB9CC \uD45C\uC801\uC73C\uB85C \uC0BC\uB294\uB2E4 \xB7 {time} \uB0A8\uC74C",
   "status.bleed": "\uCD9C\uD608",
@@ -3007,7 +3017,7 @@ function amplifyFerocityGain(amount, bondLevel) {
 init_define_import_meta_env();
 var BATTLE_DEATH_CLOCK = {
   /** 이 시각(초)을 넘기는 순간부터 돈다. */
-  startsAtSeconds: 90,
+  startsAtSeconds: 60,
   /** 몇 초마다 한 번 도는가. */
   tickSeconds: 1,
   /**
@@ -3434,10 +3444,10 @@ var RUNE_STAT_RULES = {
   energyGain: { base: 5, enhancement: 1, unit: "percent" }
 };
 var RUNE_ENHANCEMENT_GOLD_COSTS = {
-  uncommon: [100, 150, 200, 250, 300, 350],
-  rare: [200, 250, 300, 350, 400, 450, 500, 550, 600],
-  epic: [400, 500, 600, 700, 800, 900, 1e3, 1100, 1200, 1300, 1400, 1500],
-  legendary: [800, 1e3, 1200, 1400, 1600, 1800, 2e3, 2200, 2400, 2600, 2800, 3e3, 3200, 3400, 3600]
+  uncommon: [1e3, 1500, 2e3, 2500, 3e3, 3500],
+  rare: [2500, 3e3, 3500, 4e3, 4500, 5e3, 5500, 6e3, 6500],
+  epic: [6e3, 7500, 9e3, 10500, 12e3, 13500, 15e3, 16500, 18e3, 19500, 21e3, 22500],
+  legendary: [15e3, 18e3, 21e3, 24e3, 27e3, 3e4, 33e3, 36e3, 39e3, 42e3, 45e3, 48e3, 51e3, 54e3, 57e3]
 };
 function runeEnhancementGoldCost(rarity, completedAttempts) {
   if (!Number.isInteger(completedAttempts) || completedAttempts < 0) throw new RangeError("\uB204\uC801 \uAC15\uD654 \uD69F\uC218\uB294 0 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
@@ -4190,9 +4200,9 @@ var BLEED = {
 };
 var POISON = {
   /** 매 틱 시전자 공격력에서 뽑는 비율(%). */
-  attackPercentPerSecond: 15,
+  attackPercentPerSecond: 22,
   /** 매 틱 시전자 주문력에서 함께 뽑는 비율(%). */
-  abilityPercentPerSecond: 15
+  abilityPercentPerSecond: 22
 };
 var FROZEN = {
   /** 완전 행동불가로 묶이는 시간(초). */
@@ -4440,7 +4450,7 @@ function spawnSpots(arena, side, count2 = 3) {
       return { x: arena.left + width * ratio, y: arena.top + row * HORDE_ROW_GAP };
     });
   }
-  const ratios = count2 === 3 ? [0.08, 0.5, 0.92] : Array.from({ length: count2 }, (_, index) => count2 === 1 ? 0.5 : 0.08 + 0.84 * index / (count2 - 1));
+  const ratios = count2 === 3 ? [0.08, 0.5, 0.92] : count2 === 2 ? [0.29, 0.71] : Array.from({ length: count2 }, (_, index) => count2 === 1 ? 0.5 : 0.08 + 0.84 * index / (count2 - 1));
   const columns = ratios.map((ratio) => arena.left + width * ratio);
   const stagger = count2 === 3 ? [0, -70, 0] : columns.map((_, index) => index % 2 === 0 ? 0 : -70);
   return columns.map((x, index) => ({
@@ -7098,13 +7108,16 @@ function refreshCurse(target, effect) {
 function isCurseMaxed(target) {
   return target.curse !== null && target.curse.stacks >= target.curse.maxStacks;
 }
+var FRENZY_FRIENDLY_DAMAGE_MULTIPLIER = 0.5;
+function frenzyFriendlyMultiplier(attacker, target) {
+  return attacker.frenzy && attacker.side === target.side ? FRENZY_FRIENDLY_DAMAGE_MULTIPLIER : 1;
+}
 function applyFrenzy(target, effect, sourceId) {
   const seconds = controlDuration(target, effect.seconds);
   if (seconds <= 0) return;
   target.frenzy = {
     remaining: seconds,
     total: Math.max(seconds, target.frenzy?.total ?? 0),
-    attackSpeedPercent: effect.attackSpeedPercent,
     sourceId: sourceId ?? target.frenzy?.sourceId
   };
   target.targetId = null;
@@ -7229,7 +7242,6 @@ function attackSpeedParts(fighter, state) {
     return source?.def.ferocityTrait.effectId === "packHunt" ? source.def.ferocityTrait.sharedTargetAttackSpeedPercent : 0;
   })) : 0;
   const tailwindPercent = fighter.tailwindFor > 0 ? fighter.tailwind?.attackSpeedPercent ?? 0 : 0;
-  const frenzyPercent = fighter.frenzy?.attackSpeedPercent ?? 0;
   const volleyPercent = fighter.volley?.attackSpeedPercent ?? 0;
   const reagentDopingPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "reagentDoping" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const tidalVigorPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "tidalVigor" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
@@ -7243,7 +7255,7 @@ function attackSpeedParts(fighter, state) {
   const featherPercent = fighter.def.passive.kind === "featherVeil" ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + frenzyPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -8945,8 +8957,8 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const bashPlan = !useUltimate && attacker.shield.amount > 0 ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : void 0;
   const bashInput = bashPlan?.kind === "helmetBash" ? { ...damageInput, power: bashPlan.attackPercent, scalingStat: "atk", secondaryScaling: void 0, damageType: "physical" } : void 0;
   const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
-  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus) * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate)));
-  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput) + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0) + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0) + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate));
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus) * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target)));
+  const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput) + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0) + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0) + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target));
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
   const targetHpBefore = target.hp;
@@ -9157,7 +9169,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     }
     const gaze = attacker.def.ferocityTrait;
     if (attackingInFever && gaze.effectId === "frenzyGaze" && isFighterAlive(target)) {
-      applyFrenzy(target, { kind: "frenzy", seconds: gaze.seconds, attackSpeedPercent: gaze.attackSpeedPercent }, attacker.id);
+      applyFrenzy(target, { kind: "frenzy", seconds: gaze.seconds }, attacker.id);
     }
     spreadCurseTransfer(attacker, target, targetCurseWasMaxed, targetHpBefore - target.hp, state, events);
   }
@@ -10550,31 +10562,47 @@ var BATTLE_ARENA = {
   // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
   // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
   // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
-  duel: { ...BASE_ARENA, top: 740 }
+  duel: { ...BASE_ARENA, top: 740 },
+  // 실시간 아레나는 같은 결투장 원화(`duel` 틀)를 쓰되 확대 뒤 실측 바닥(약 670~1,440)을 거의 다 쓴다.
+  // 결투장 몫(740~1,360)에 그대로 세웠을 때는 두 편이 코앞에서 시작해 촘촘해 보였다 — 좌우도 한 뼘씩 더 연다.
+  liveArena: { left: 110, right: 970, top: 700, bottom: 1410 }
 };
 function battleArena(mode) {
   return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
 }
 
 // src/core/liveArena.ts
-var RANKED_ARENA_RULES = { ban: true, order: "random", placement: "alternate" };
+var RANKED_ARENA_RULES = { ban: true, order: "random", placement: "alternate", unique: true };
+var ARENA_SLOTS = [{ x: 0.08, y: 0 }, { x: 0.5, y: 0.32 }, { x: 0.92, y: 0 }];
+var ARENA_HIDDEN_BAN = "?";
 function arenaRules(value) {
   const r = value;
-  if (!r || typeof r.ban !== "boolean" || !["first", "second", "random"].includes(r.order) || !["alternate", "hidden"].includes(r.placement)) throw Error("ARENA_RULES");
-  return { ban: r.ban, order: r.order, placement: r.placement };
+  if (!r || typeof r.ban !== "boolean" || !["first", "second", "random"].includes(r.order) || !["alternate", "hidden"].includes(r.placement) || r.unique !== void 0 && typeof r.unique !== "boolean") throw Error("ARENA_RULES");
+  return { ban: r.ban, order: r.order, placement: r.placement, unique: r.unique !== false };
+}
+function arenaUniquePicks(rules) {
+  return rules.unique !== false && rules.placement === "alternate";
 }
 function arenaTurn(room) {
   if (room.phase === "ban") return room.bans[room.first] === null ? room.first : 1 - room.first;
   const total = room.picks[0].length + room.picks[1].length;
   return (room.first + total) % 2;
 }
+function arenaPickable(room, side) {
+  const own = room.players[side].roster.filter((u) => !room.picks[side].some((p) => p.relicId === u.def.id));
+  const open = own.filter((u) => !room.bans.includes(u.def.id));
+  const pool = open.length ? open : own;
+  if (!arenaUniquePicks(room.rules)) return pool;
+  const unique = pool.filter((u) => !room.picks[1 - side].some((p) => p.relicId === u.def.id));
+  return unique.length ? unique : pool;
+}
 function startArena(room, players, now) {
   if (players.length !== 2 || players.some((p) => p.roster.length < (room.rules.ban ? 4 : 3))) throw Error("ARENA_ROSTER");
   return { ...room, players, phase: room.rules.ban ? "ban" : "place", bans: [null, null], picks: [[], []], locked: [false, false], deadline: now + 45e3 };
 }
 function arenaPosition(p, side) {
-  const a = battleArena("duel");
-  return { x: a.left + 35 + p.x * (a.right - a.left - 70), y: side === 0 ? a.bottom - 30 - p.y * 215 : a.top + 30 + p.y * 215 };
+  const a = battleArena("liveArena");
+  return { x: a.left + 35 + p.x * (a.right - a.left - 70), y: side === 0 ? a.bottom - p.y * 215 : a.top + p.y * 215 };
 }
 function arenaSetup(room) {
   const selected = room.picks.map((picks, side) => picks.map((p) => room.players[side].roster.find((u) => u.def.id === p.relicId)));
@@ -10582,7 +10610,7 @@ function arenaSetup(room) {
   return {
     players: a.map((u) => u.def),
     enemies: b.map((u) => u.def),
-    arena: battleArena("duel"),
+    arena: battleArena("liveArena"),
     bonds: Object.fromEntries(a.map((u) => [u.def.id, u.bond])),
     breakthroughs: Object.fromEntries(a.map((u) => [u.def.id, u.breakthrough])),
     options: {
@@ -10615,18 +10643,23 @@ function applyArenaAction(source, actor, action, now) {
     return r;
   }
   if (now >= r.deadline && r.phase !== "battle") {
-    const late = r.phase === "place" && r.rules.placement === "hidden" ? r.locked.findIndex((v) => !v) : arenaTurn(r);
+    const simultaneous = r.phase === "ban" || r.rules.placement === "hidden";
+    const waiting = r.phase === "ban" ? r.bans.map((b) => b === null) : r.locked.map((v) => !v);
+    const late = simultaneous ? waiting.indexOf(true) : arenaTurn(r);
     r.phase = "done";
-    r.winner = r.rules.placement === "hidden" && !r.locked[0] && !r.locked[1] && source.phase === "place" ? null : 1 - late;
+    r.winner = simultaneous && waiting[0] && waiting[1] ? null : 1 - late;
     r.reason = "timeout";
     return r;
   }
   if (action.kind === "tick") return r;
   if (r.phase === "ban") {
-    if (action.kind !== "ban" || arenaTurn(r) !== side || r.bans[side] !== null || !r.players[1 - side].roster.some((u) => u.def.id === action.relicId)) throw Error("ARENA_TURN");
+    if (action.kind !== "ban" || r.bans[side] !== null) throw Error("ARENA_TURN");
+    if (typeof action.relicId !== "string" || !r.players[1 - side].roster.some((u) => u.def.id === action.relicId)) throw Error("ARENA_PLACEMENT");
     r.bans[side] = action.relicId;
-    if (r.bans.every(Boolean)) r.phase = "place";
-    r.deadline = now + 45e3;
+    if (r.bans.every((b) => b !== null)) {
+      r.phase = "place";
+      r.deadline = now + 45e3;
+    }
     return r;
   }
   if (r.phase !== "place" || r.locked[side]) throw Error("ARENA_PHASE");
@@ -10635,9 +10668,9 @@ function applyArenaAction(source, actor, action, now) {
   if (action.kind === "undo" && !alternate) r.picks[side].pop();
   else if (action.kind === "lock" && !alternate && r.picks[side].length === 3) r.locked[side] = true;
   else if (action.kind === "place") {
-    const p = { relicId: action.relicId, x: action.x, y: action.y };
-    if (r.picks[side].length >= 3 || !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1 || !r.players[side].roster.some((u) => u.def.id === p.relicId) || r.bans[1 - side] === p.relicId || r.picks[side].some((q) => q.relicId === p.relicId || Math.hypot((q.x - p.x) * 750, (q.y - p.y) * 215) < 80)) throw Error("ARENA_PLACEMENT");
-    r.picks[side].push(p);
+    const slot = action.slot;
+    if (r.picks[side].length >= 3 || !Number.isInteger(slot) || slot < 0 || slot >= ARENA_SLOTS.length || r.picks[side].some((q) => q.slot === slot) || !arenaPickable(r, side).some((u) => u.def.id === action.relicId)) throw Error("ARENA_PLACEMENT");
+    r.picks[side].push({ relicId: action.relicId, slot, ...ARENA_SLOTS[slot] });
     if (alternate) {
       r.locked[side] = r.picks[side].length === 3;
       r.deadline = now + 45e3;
@@ -10663,6 +10696,7 @@ function settleArena(room) {
 function publicArenaRoom(room, actor) {
   const r = structuredClone(room), side = r.players.findIndex((p) => p.id === actor);
   if (side < 0) throw Error("ARENA_FORBIDDEN");
+  if (r.phase === "ban" && r.bans[1 - side] !== null) r.bans[1 - side] = ARENA_HIDDEN_BAN;
   if (r.rules.placement === "hidden" && (r.phase === "place" || r.phase === "ban")) {
     r.picks[1 - side] = [];
     delete r.lease;
@@ -10688,13 +10722,16 @@ var ROULETTE = {
   endsAt: "2026-12-31T23:59:59+09:00"
 };
 var ROULETTE_REWARDS = [
-  { currency: "gold", amount: 1e4 },
-  { currency: "cheesecake", amount: 50 },
-  { currency: "stamina", amount: 30 },
-  { currency: "gems", amount: 50 },
-  { currency: "rawStone", amount: 100 },
-  { currency: "gold", amount: 2e4 }
+  { currency: "gold", amount: 1e4, weight: 300, tier: "common" },
+  { currency: "gems", amount: 100, weight: 90, tier: "rare" },
+  { currency: "cheesecake", amount: 50, weight: 180, tier: "common" },
+  { currency: "gems", amount: 1e3, weight: 5, tier: "jackpot" },
+  { currency: "stamina", amount: 30, weight: 150, tier: "common" },
+  { currency: "gold", amount: 2e4, weight: 100, tier: "common" },
+  { currency: "rawStone", amount: 100, weight: 150, tier: "common" },
+  { currency: "gems", amount: 300, weight: 25, tier: "rare" }
 ];
+var ROULETTE_WEIGHT_TOTAL = ROULETTE_REWARDS.reduce((sum, reward) => sum + reward.weight, 0);
 function rouletteStatus(ledger, now, adFree = false) {
   const date = now.toISOString().slice(0, 10);
   const counts = ledger.date === date ? ledger.claimsBySlot : {};
@@ -10714,8 +10751,14 @@ function rouletteStatus(ledger, now, adFree = false) {
   };
 }
 function rouletteIndex(random) {
-  const roll3 = random();
-  return Math.min(ROULETTE_REWARDS.length - 1, Math.max(0, Math.floor((Number.isFinite(roll3) ? roll3 : 0) * ROULETTE_REWARDS.length)));
+  const raw = random();
+  const roll3 = Math.min(1 - Number.EPSILON, Math.max(0, Number.isFinite(raw) ? raw : 0)) * ROULETTE_WEIGHT_TOTAL;
+  let cumulative = 0;
+  for (let index = 0; index < ROULETTE_REWARDS.length; index += 1) {
+    cumulative += ROULETTE_REWARDS[index].weight;
+    if (roll3 < cumulative) return index;
+  }
+  return ROULETTE_REWARDS.length - 1;
 }
 
 // src/core/saveStorage.ts
@@ -10746,8 +10789,8 @@ init_define_import_meta_env();
 init_define_import_meta_env();
 var STORY_DIFFICULTY = {
   easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
-  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 1.4 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 2 }
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
 };
 function storyDifficultyOf(id) {
   return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
@@ -11124,7 +11167,7 @@ var FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 200,
+  burstPower: 120,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30
@@ -11574,13 +11617,15 @@ var RELICS = [
       value: 0,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 15,
-      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC774 \uD45C\uC801\uC73C\uB85C \uC0BC\uC740 \uC801\uC744 \uD568\uAED8 \uD45C\uC801\uC73C\uB85C \uC0BC\uB294\uB2E4."
+      // 전투 시작 은신은 암살자 정체성의 일부다 — 델로피(5초)와 같은 필드를 읽는다.
+      openingStealthSeconds: 5,
+      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC 5\uCD08 \uB3D9\uC548 \uC740\uC2E0\uD558\uACE0, \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC774 \uD45C\uC801\uC73C\uB85C \uC0BC\uC740 \uC801\uC744 \uD568\uAED8 \uD45C\uC801\uC73C\uB85C \uC0BC\uB294\uB2E4."
     },
     basic: {
       id: "luka-basic",
       name: "\uCE58\uBA85\uC801\uC778 \uBC1C\uD1B1",
       power: 100,
-      periodicCritical: { every: 4 },
+      periodicCritical: { every: 3 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical"
@@ -11811,7 +11856,7 @@ var RELICS = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 }
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 }
     },
     ultimate: {
       id: "tia-ult",
@@ -12365,7 +12410,8 @@ var RELICS = [
     basic: {
       id: "irna-basic",
       name: "\uC7A5\uC804\uB41C \uD55C \uBC1C",
-      power: 130,
+      // 기본 공격 위력 130 → 170.
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -12565,7 +12611,7 @@ var RELICS = [
     basic: {
       id: "yuti-basic",
       name: "\uAC08\uB798\uAE43",
-      power: 95,
+      power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -12823,7 +12869,7 @@ var RELICS = [
       res: 55,
       atk: 142,
       ap: 45,
-      attackSpeed: 92,
+      attackSpeed: 100,
       moveSpeed: 118,
       critChance: 10,
       critDamage: 150,
@@ -12879,7 +12925,7 @@ var RELICS = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 }
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 }
       ]
     },
     ultimate: {
@@ -12896,7 +12942,7 @@ var RELICS = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 }
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 }
       ]
     }
   },
@@ -13067,7 +13113,7 @@ var RELICS = [
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
-    ferocityTrait: { name: "\uB098\uB9CC \uBD10", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
+    ferocityTrait: { name: "\uB098\uB9CC \uBD10", effectId: "frenzyGaze", seconds: 2 },
     // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
@@ -13124,7 +13170,7 @@ var RELICS = [
       // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
       // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
       cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
-      statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }]
+      statusEffects: [{ kind: "frenzy", seconds: 4 }]
     }
   },
   {
@@ -13971,7 +14017,7 @@ var RELICS = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
@@ -14840,7 +14886,7 @@ var RELICS = [
     basic: {
       id: "maddy-basic",
       name: "\uC18C\uB2E4\uB9DB \uC544\uC774\uC2A4\uD06C\uB9BC",
-      power: 100,
+      power: 108,
       scalingStat: "atk",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -15359,7 +15405,7 @@ var RELICS = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 }
+      observationVolley: { percentPerStack: 9, windowSeconds: 0.6 }
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
@@ -18062,7 +18108,8 @@ var BANNERS = [
      * 화석 연구에 덮는 할인이 아니라 따로 선 배너다. 풀(네 종)·천장 그룹·값이 모두 달라 한
      * 화면에 섞으면 무엇의 확률이고 무엇의 천장인지 읽히지 않는다. 천장을 한도와 같은 50으로
      * 두면 "50회 안에 확정"이 되고, 그 전에 SSR이 나오면 천장이 0으로 돌아가 남은 횟수로는 다시
-     * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰면 목록에서 사라진다. 기획은
+     * 닿지 못하므로 확정은 저절로 한 번뿐이다. 다 쓰거나, SSR을 얻으면(그 10연은 끝까지 지급)
+     * 남은 횟수와 상관없이 목록에서 사라진다(`closeOnHighestRarity`). 기획은
      * `docs/live-ops-bm.md` §2. 모집 원화는 비워 둔 방이고, 그 바닥에 SSR 풀 넷의 SD가 선다.
      */
     id: "welcome",
@@ -18076,6 +18123,8 @@ var BANNERS = [
     costTen: 8,
     tenOnly: true,
     pullLimit: 50,
+    closeOnHighestRarity: true,
+    carryoverTo: PITY_GROUP.STANDARD,
     // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
     slotRates: STANDARD_SLOT_RATES,
     grayRewards: STANDARD_GRAY_REWARDS,
@@ -18101,6 +18150,8 @@ var BANNERS = [
     currency: "fossil",
     costOne: 1,
     costTen: 10,
+    // 첫 복원 연구가 SSR로 일찍 닫히면 남은 10연만큼 화석 8개짜리 10연이 열린다(첫 복원 연구의 값).
+    carryoverTenCost: 8,
     // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
     // 그대로 남아 있어 한 묶음은 보통 SR 1장 안팎, R 1~2장, 나머지는 재화로 구성된다.
     slotRates: STANDARD_SLOT_RATES,
@@ -18846,7 +18897,7 @@ var EXPEDITION_COMBAT_BALANCE = {
 var EXPEDITION_SCORE_BALANCE = {
   perFloor: 20,
   perRemainingHpPercent: 0.75,
-  bossDamagePerPoint: 5
+  bossDamagePerPoint: 0.5
 };
 var EXPEDITION_NODE_SCORE_MULTIPLIERS = {
   /** 표준 교전은 층과 잔여 HP의 기준 가치를 그대로 사용한다. */
@@ -18867,17 +18918,17 @@ var EXPEDITION_NON_COMBAT_TYPES = ["rest", "treasure"];
 var EXPEDITION_AUGMENT_IDS = EXPEDITION_AUGMENTS.map(({ id }) => id);
 var EXPEDITION_REWARD_IDS = ["gold", "fossil", "amber", "gems", "cheesecake", "salvageRecord"];
 var EXPEDITION_NODE_REWARD_BALANCE = {
-  cheesecake: { perNode: { min: 8, max: 24 }, runCap: 360 },
-  gold: { perNode: { min: 480, max: 1680 }, runCap: 3e4 },
+  cheesecake: { perNode: { min: 5, max: 15 }, runCap: 225 },
+  gold: { perNode: { min: 150, max: 500 }, runCap: 9e3 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 300, max: 500 }, runCap: 3e4 },
+  gems: { perNode: { min: 5, max: 15 }, runCap: 225 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
    */
-  salvageRecord: { perNode: { min: 4, max: 10 }, runCap: 180 }
+  salvageRecord: { perNode: { min: 3, max: 7 }, runCap: 120 }
 };
-var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 400 };
+var EXPEDITION_BOSS_SALVAGE = { perScore: 1 / 250, cap: 200 };
 function expeditionBossSalvage(bossDamageScore) {
   return Math.max(0, Math.min(EXPEDITION_BOSS_SALVAGE.cap, Math.floor(Math.max(0, bossDamageScore) * EXPEDITION_BOSS_SALVAGE.perScore)));
 }
@@ -18887,10 +18938,10 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
   horde: 1.4
 };
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
-  gold: { min: 2080, max: 3600 },
+  gold: { min: 750, max: 1500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 1e3, max: 1500 },
-  salvageRecord: { min: 6, max: 10 }
+  gems: { min: 20, max: 50 },
+  salvageRecord: { min: 8, max: 15 }
 };
 var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
 var EXPEDITION_BOSS_BALANCE = {
@@ -18906,30 +18957,30 @@ var EXPEDITION_BOSS_BALANCE = {
   ]
 };
 var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
-  { id: "best-2k", threshold: 2e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-4k", threshold: 4e3, reward: { currency: "gold", amount: 3e4 } },
-  { id: "best-6k", threshold: 6e3, reward: { currency: "salvageRecord", amount: 20 } },
-  { id: "best-8k", threshold: 8e3, reward: { currency: "cheesecake", amount: 150 } },
-  { id: "best-10k", threshold: 1e4, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-13k", threshold: 13e3, reward: { currency: "dnaFragments", amount: 10 } },
-  { id: "best-16k", threshold: 16e3, reward: { currency: "salvageRecord", amount: 30 } },
-  { id: "best-20k", threshold: 2e4, reward: { currency: "gems", amount: 300 } },
-  { id: "best-24k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-28k", threshold: 28e3, reward: { currency: "gold", amount: 6e4 } },
-  { id: "best-33k", threshold: 33e3, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-38k", threshold: 38e3, reward: { currency: "fossil", amount: 2 } },
-  { id: "best-44k", threshold: 44e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-50k", threshold: 5e4, reward: { currency: "gems", amount: 600 } },
-  { id: "best-57k", threshold: 57e3, reward: { currency: "salvageRecord", amount: 50 } },
-  { id: "best-65k", threshold: 65e3, reward: { currency: "cheesecake", amount: 300 } },
-  { id: "best-74k", threshold: 74e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-84k", threshold: 84e3, reward: { currency: "dnaFragments", amount: 20 } },
-  { id: "best-95k", threshold: 95e3, reward: { currency: "salvageRecord", amount: 60 } },
-  { id: "best-110k", threshold: 11e4, reward: { currency: "amber", amount: 2 } },
-  { id: "best-125k", threshold: 125e3, reward: { currency: "salvageRecord", amount: 80 } },
-  { id: "best-145k", threshold: 145e3, reward: { currency: "gems", amount: 900 } },
-  { id: "best-170k", threshold: 17e4, reward: { currency: "salvageRecord", amount: 100 } },
-  { id: "best-200k", threshold: 2e5, reward: { currency: "fossil", amount: 4 } }
+  { id: "best-2k", threshold: 3e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-4k", threshold: 6e3, reward: { currency: "gold", amount: 5e3 } },
+  { id: "best-6k", threshold: 9e3, reward: { currency: "salvageRecord", amount: 10 } },
+  { id: "best-8k", threshold: 12e3, reward: { currency: "cheesecake", amount: 50 } },
+  { id: "best-10k", threshold: 15e3, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-13k", threshold: 2e4, reward: { currency: "dnaFragments", amount: 5 } },
+  { id: "best-16k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 15 } },
+  { id: "best-20k", threshold: 3e4, reward: { currency: "gems", amount: 50 } },
+  { id: "best-24k", threshold: 36e3, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-28k", threshold: 42e3, reward: { currency: "gold", amount: 1e4 } },
+  { id: "best-33k", threshold: 5e4, reward: { currency: "salvageRecord", amount: 20 } },
+  { id: "best-38k", threshold: 57e3, reward: { currency: "fossil", amount: 1 } },
+  { id: "best-44k", threshold: 66e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-50k", threshold: 75e3, reward: { currency: "gems", amount: 100 } },
+  { id: "best-57k", threshold: 85e3, reward: { currency: "salvageRecord", amount: 25 } },
+  { id: "best-65k", threshold: 1e5, reward: { currency: "cheesecake", amount: 100 } },
+  { id: "best-74k", threshold: 111e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-84k", threshold: 126e3, reward: { currency: "dnaFragments", amount: 10 } },
+  { id: "best-95k", threshold: 145e3, reward: { currency: "salvageRecord", amount: 30 } },
+  { id: "best-110k", threshold: 165e3, reward: { currency: "amber", amount: 1 } },
+  { id: "best-125k", threshold: 19e4, reward: { currency: "salvageRecord", amount: 40 } },
+  { id: "best-145k", threshold: 22e4, reward: { currency: "gems", amount: 200 } },
+  { id: "best-170k", threshold: 255e3, reward: { currency: "salvageRecord", amount: 50 } },
+  { id: "best-200k", threshold: 3e5, reward: { currency: "fossil", amount: 2 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
 var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
@@ -18937,7 +18988,13 @@ function expeditionRankRewards(rank) {
   const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
   return { ...row.rewards };
 }
-var EXPEDITION_SWEEP_POLICY = { nodeRewardRatio: 0.75 };
+var EXPEDITION_SWEEP_REWARDS = {
+  gold: 4e3,
+  cheesecake: 120,
+  gems: 120,
+  salvageRecord: 60,
+  fossil: 0
+};
 EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
 
 // src/core/expeditionBoss.ts
@@ -26154,7 +26211,8 @@ var SaveManager = class {
       const saved = savedGroups[groupId];
       const legacyCount = Math.max(0, ...BANNERS.filter((banner) => banner.pityGroupId === groupId).map((banner) => Number(legacyBannerPity[banner.id]) || 0));
       const totalPulls = Number.isInteger(saved?.totalPulls) ? { totalPulls: saved.totalPulls } : {};
-      return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false, ...totalPulls }];
+      const discountTens = Number.isInteger(saved?.discountTens) && saved.discountTens > 0 ? { discountTens: saved.discountTens } : {};
+      return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false, ...totalPulls, ...discountTens }];
     }));
     const savedWallet = legacy.wallet;
     const { weeds: _legacyWeeds, ...walletWithoutLegacyCurrency } = savedWallet ?? {};
@@ -26288,7 +26346,7 @@ var SaveManager = class {
     if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail3("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail3("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail3("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0))) fail3("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0) || data.gachaPityByGroup[id].discountTens !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].discountTens) || data.gachaPityByGroup[id].discountTens <= 0))) fail3("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail3("\uC131\uC7A5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail3("\uBCF4\uC720 \uB810\uB9AD\uACFC \uC131\uC7A5 \uC815\uBCF4\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     for (const [id, progress] of Object.entries(data.relicProgress)) {
@@ -27924,26 +27982,38 @@ function tempAdToken(slotId) {
 
 // src/core/gacha.ts
 init_define_import_meta_env();
-function pullCost(banner, count2) {
+function carryoverTenAvailable(banner, pity) {
+  return banner.carryoverTenCost !== void 0 && (pity?.discountTens ?? 0) > 0;
+}
+function carryoverTensOnClose(banner, next) {
+  if (!banner.carryoverTo || !banner.closeOnHighestRarity || banner.pullLimit === void 0) return 0;
+  const total = next.totalPulls ?? 0;
+  if (next.pullsSinceSsr >= total) return 0;
+  return Math.floor(Math.max(0, banner.pullLimit - total) / 10);
+}
+function pullCost(banner, count2, pity) {
+  if (count2 === 10 && carryoverTenAvailable(banner, pity)) return banner.carryoverTenCost;
   return count2 === 10 ? banner.costTen : banner.costOne * count2;
 }
 var RESEARCH_TICKET_GEM_PRICE = 300;
-function pullPayment(wallet, banner, count2) {
-  const cost = pullCost(banner, count2);
+function pullPayment(wallet, banner, count2, pity) {
+  const cost = pullCost(banner, count2, pity);
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
   const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
 }
 function bannerPullsRemaining(banner, pity) {
   if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
-  return Math.max(0, banner.pullLimit - (pity?.totalPulls ?? 0));
+  const total = pity?.totalPulls ?? 0;
+  if (banner.closeOnHighestRarity && (pity?.pullsSinceSsr ?? 0) < total) return 0;
+  return Math.max(0, banner.pullLimit - total);
 }
 function bannerAcceptsCount(banner, count2, pity) {
   if (banner.tenOnly && count2 !== 10) return false;
   return count2 <= bannerPullsRemaining(banner, pity);
 }
 function canPull(wallet, banner, count2, pity) {
-  return pullPayment(wallet, banner, count2).affordable && bannerAcceptsCount(banner, count2, pity);
+  return pullPayment(wallet, banner, count2, pity).affordable && bannerAcceptsCount(banner, count2, pity);
 }
 function choose(values, rng) {
   if (values.length === 0) throw new Error("\uCD94\uCCA8\uD560 \uB810\uB9AD \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
@@ -27999,9 +28069,9 @@ function pull(banner, count2, currentPity, rng) {
   }
   return { slots, relicIds, rarities, pity };
 }
-function spend(wallet, banner, count2) {
-  if (!canPull(wallet, banner, count2)) return wallet;
-  const payment = pullPayment(wallet, banner, count2);
+function spend(wallet, banner, count2, pity) {
+  if (!canPull(wallet, banner, count2, pity)) return wallet;
+  const payment = pullPayment(wallet, banner, count2, pity);
   return { ...wallet, [banner.currency]: wallet[banner.currency] - payment.tickets, gems: wallet.gems - payment.gems };
 }
 function resolveAcquisitions(ownedRelicIds, fragmentsById, results, breakthroughGradeById = {}, maxStars = 5, overflowAmountOf = () => 1) {
@@ -28808,6 +28878,17 @@ init_define_import_meta_env();
 
 // src/core/expeditionRewards.ts
 init_define_import_meta_env();
+function normalizeExpeditionPendingRewards(pending, bossDamageScore = 0) {
+  const normalized = {};
+  for (const [currency3, rule] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    const key = currency3;
+    const raw = pending[key] ?? 0;
+    const cap = rule.runCap + (key === "salvageRecord" ? expeditionBossSalvage(bossDamageScore) : 0);
+    const amount = Math.max(0, Math.min(cap, Math.floor(Number.isFinite(raw) ? raw : 0)));
+    if (amount > 0) normalized[key] = amount;
+  }
+  return normalized;
+}
 function rollInteger(min, max, random) {
   const normalized = Math.min(1 - Number.EPSILON, Math.max(0, random()));
   return min + Math.floor(normalized * (max - min + 1));
@@ -31867,7 +31948,10 @@ var FakeServer = class {
       nextState.expedition.bestScore = runScore.runScore;
       nextState.expedition.bestAchievedAt = now.toISOString();
     }
-    if (nextState.expedition.run && bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    if (nextState.expedition.run) {
+      nextState.expedition.run.pendingRewards = normalizeExpeditionPendingRewards(nextState.expedition.run.pendingRewards);
+      if (bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    }
     const bestScore = nextState.expedition.bestScore;
     const response = { ...result.actualDamage !== void 0 ? { verifiedDamage: result.actualDamage } : {}, weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) };
     this.recordReceipt(nextState, "expeditionBoss", request.requestId, identity, response);
@@ -32330,7 +32414,8 @@ var FakeServer = class {
     }
     const wallet = { ...this.state.wallet };
     const granted = {};
-    for (const [currency3, raw] of Object.entries(run2.pendingRewards)) {
+    const pendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
+    for (const [currency3, raw] of Object.entries(pendingRewards)) {
       if (!(currency3 in WALLET_CAPS)) continue;
       const key = currency3;
       const amount = Math.max(0, Math.floor(raw));
@@ -32365,12 +32450,14 @@ var FakeServer = class {
     const node = run2?.nodes.find(({ id }) => id === request.nodeId);
     const predecessor = run2?.currentNodeId ? run2.nodes.find(({ id }) => id === run2.currentNodeId) : null;
     if (!request.requestId || !run2 || run2.runId !== request.runId || !node || run2.settled || run2.visitedNodeIds.includes(node.id) || !predecessor && node.floor !== 1 || predecessor && !predecessor.successorIds.includes(node.id) || request.relicHp.length !== 3 || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "\uC644\uB8CC\uD560 \uC218 \uC5C6\uB294 \uC6D0\uC815 \uB178\uB4DC\uC785\uB2C8\uB2E4.");
-    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run2.pendingRewards, random: this.random });
+    const normalizedPendingRewards = normalizeExpeditionPendingRewards(run2.pendingRewards, run2.bossDamageScore);
+    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
     const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);
     const remainingHpPercent = request.relicHp.reduce((sum, hp) => sum + hp, 0) / request.relicHp.length;
     const nodeScore = calculateExpeditionNodeScore({ floor: node.floor, nodeType: node.type, remainingHpPercent, cleared });
     const next = structuredClone(run2);
+    next.pendingRewards = normalizedPendingRewards;
     next.currentNodeId = node.id;
     next.visitedNodeIds.push(node.id);
     next.normalNodeScoreTotal += nodeScore;
@@ -32392,7 +32479,7 @@ var FakeServer = class {
     return structuredClone(response);
   }
   /**
-   * 소탕: 직접 싸우지 않고 **노드 클리어 보상의 75%**만 한꺼번에 받는다(`EXPEDITION_SWEEP_POLICY`).
+   * 소탕: 직접 싸우지 않고 평균 경로 전투 전리품의 약 75%를 고정표로 받는다.
    *
    * 보물 전리품과 폰토스 피해의 인양 기록은 빠지고, 점수도 남기지 않는다 — 최고 기록은 싸운 판만의
    * 것이다. 오늘의 한 판을 쓰며, 진행 중인 런이 있거나 한 번도 끝까지 가 보지 않은 계정은 거부한다.
@@ -32408,10 +32495,9 @@ var FakeServer = class {
     if (weekly.allTimeBestScore <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "\uC18C\uD0D5\uD560 \uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const granted = {};
-    for (const [currency3, balance] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    for (const [currency3, amount] of Object.entries(EXPEDITION_SWEEP_REWARDS)) {
       const key = currency3;
       if (!(key in WALLET_CAPS)) continue;
-      const amount = Math.floor(balance.runCap * EXPEDITION_SWEEP_POLICY.nodeRewardRatio);
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]);
       wallet[key] += applied;
       granted[currency3] = applied;
@@ -33211,12 +33297,22 @@ var FakeServer = class {
     for (const result of outcome.slots) {
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
+    const nextWallet = { ...spend(this.state.wallet, banner, request.count, currentPity), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
     }
     const groupPity = banner.pullLimit === void 0 ? pulled.pity : { ...pulled.pity, totalPulls: (currentPity.totalPulls ?? 0) + request.count };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
+    const spentDiscount = request.count === 10 && carryoverTenAvailable(banner, currentPity) ? 1 : 0;
+    if (spentDiscount > 0) {
+      const left = (currentPity.discountTens ?? 0) - spentDiscount;
+      nextPity[banner.pityGroupId] = left > 0 ? { ...groupPity, discountTens: left } : groupPity;
+    } else if (currentPity.discountTens) nextPity[banner.pityGroupId] = { ...groupPity, discountTens: currentPity.discountTens };
+    const carriedTens = carryoverTensOnClose(banner, groupPity);
+    if (carriedTens > 0 && banner.carryoverTo) {
+      const target = nextPity[banner.carryoverTo] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+      nextPity[banner.carryoverTo] = { ...target, discountTens: (target.discountTens ?? 0) + carriedTens };
+    }
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     const nextRelicStory = outcome.newRelicIds.length === 0 ? this.state.relicStory : { ...this.state.relicStory, metAt: { ...this.state.relicStory.metAt, ...Object.fromEntries(outcome.newRelicIds.filter((id) => !(id in this.state.relicStory.metAt)).map((id) => [id, this.now().toISOString()])) } };
     const tutorial = normalizeTutorialState(this.state.tutorial);
@@ -35417,7 +35513,7 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
         next.players.forEach((p, side) => {
           const state = saveManager.parse(context.records.find((s) => s.id === p.id).data);
           const ids = side === 0 ? state.party : state.duel?.defense ?? state.party;
-          next.picks[side] = ids.slice(0, 3).map((relicId, i) => ({ relicId, x: [0.08, 0.5, 0.92][i], y: i === 1 ? 0.32 : 0 }));
+          next.picks[side] = ids.slice(0, 3).map((relicId, slot) => ({ relicId, slot, ...ARENA_SLOTS[slot] }));
         });
         next.locked = [true, true];
         next.phase = "battle";

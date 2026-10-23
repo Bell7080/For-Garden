@@ -9,7 +9,7 @@ import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../core/tempAd";
-import { bannerAcceptsCount, canPull, pull, resolveAcquisitions, spend } from "../core/gacha";
+import { bannerAcceptsCount, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
@@ -116,9 +116,9 @@ import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isC
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_POLICY, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
-import { calculateExpeditionNodeRewards, calculateExpeditionRunScore } from "../core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, normalizeExpeditionPendingRewards } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { normalizeExpeditionState, rollExpeditionPeriods, expeditionRankRewardQueue } from "../core/expeditionPeriods";
@@ -704,7 +704,10 @@ export class FakeServer implements GameApi {
     }
     nextState.expedition = { ...weekly, run: nextState.expedition.run, allTimeBestScore: Math.max(weekly.allTimeBestScore, runScore.runScore) };
     if (improved) { nextState.expedition.bestScore = runScore.runScore; nextState.expedition.bestAchievedAt = now.toISOString(); }
-    if (nextState.expedition.run && bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    if (nextState.expedition.run) {
+      nextState.expedition.run.pendingRewards = normalizeExpeditionPendingRewards(nextState.expedition.run.pendingRewards);
+      if (bossSalvage > 0) nextState.expedition.run.pendingRewards.salvageRecord = (nextState.expedition.run.pendingRewards.salvageRecord ?? 0) + bossSalvage;
+    }
     const bestScore = nextState.expedition.bestScore;
     const response = { ...(result.actualDamage !== undefined ? { verifiedDamage: result.actualDamage } : {}), weekKey: nextState.expedition.weekKey, score: runScore.runScore, normalNodeScoreTotal: runScore.normalNodeScoreTotal, bossDamageScore: runScore.bossDamageScore, runScore: runScore.runScore, bestScore, bossSalvage, improved, endedAtMs: result.endedAtMs, rankBefore: weekly.bestScore > 0 ? this.expeditionRank(weekly.bestScore) : null, rankAfter: this.expeditionRank(bestScore) };
     this.recordReceipt(nextState, "expeditionBoss", request.requestId, identity, response);
@@ -1171,8 +1174,9 @@ export class FakeServer implements GameApi {
       throw new GameApiError("EXPEDITION_SCORE_REJECTED", "보스 결과가 확정되지 않은 원정입니다.");
     }
     const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
+    const pendingRewards = normalizeExpeditionPendingRewards(run.pendingRewards, run.bossDamageScore);
     // 임시 보상은 계정 지갑 상한까지의 정수만 이전하고 초과분은 지급하지 않는다.
-    for (const [currency, raw] of Object.entries(run.pendingRewards)) {
+    for (const [currency, raw] of Object.entries(pendingRewards)) {
       if (!(currency in WALLET_CAPS)) continue;
       const key = currency as keyof Session["wallet"]; const amount = Math.max(0, Math.floor(raw));
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
@@ -1212,7 +1216,8 @@ export class FakeServer implements GameApi {
       // HP는 전투 계약의 퍼센트 범위여야 하며 100 초과 값으로 생존 점수를 부풀릴 수 없다.
       || request.relicHp.some((hp) => !Number.isFinite(hp) || hp < 0 || hp > 100)) throw new GameApiError("EXPEDITION_RUN_NOT_FOUND", "완료할 수 없는 원정 노드입니다.");
     // 전멸은 노드 종료만 기록하고 승리 재화는 생성하지 않는다.
-    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: run.pendingRewards, random: this.random });
+    const normalizedPendingRewards = normalizeExpeditionPendingRewards(run.pendingRewards, run.bossDamageScore);
+    const rewards = request.relicHp.every((hp) => hp === 0) ? {} : calculateExpeditionNodeRewards({ nodeType: node.type, accumulated: normalizedPendingRewards, random: this.random });
     // 전리품 수량은 점수가 아니다. 서버가 검증한 층과 종료 HP로 일반 노드 점수를 별도 확정한다.
     const scoreBearingNode = node.type === "normal" || node.type === "elite" || node.type === "horde";
     const cleared = scoreBearingNode && request.relicHp.some((hp) => hp > 0);
@@ -1220,6 +1225,7 @@ export class FakeServer implements GameApi {
     const remainingHpPercent = request.relicHp.reduce((sum, hp) => sum + hp, 0) / request.relicHp.length;
     const nodeScore = calculateExpeditionNodeScore({ floor: node.floor, nodeType: node.type, remainingHpPercent, cleared });
     const next = structuredClone(run);
+    next.pendingRewards = normalizedPendingRewards;
     next.currentNodeId = node.id; next.visitedNodeIds.push(node.id);
     next.normalNodeScoreTotal += nodeScore;
     const score = calculateExpeditionRunScore(next);
@@ -1238,7 +1244,7 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 소탕: 직접 싸우지 않고 **노드 클리어 보상의 75%**만 한꺼번에 받는다(`EXPEDITION_SWEEP_POLICY`).
+   * 소탕: 직접 싸우지 않고 평균 경로 전투 전리품의 약 75%를 고정표로 받는다.
    *
    * 보물 전리품과 폰토스 피해의 인양 기록은 빠지고, 점수도 남기지 않는다 — 최고 기록은 싸운 판만의
    * 것이다. 오늘의 한 판을 쓰며, 진행 중인 런이 있거나 한 번도 끝까지 가 보지 않은 계정은 거부한다.
@@ -1253,10 +1259,9 @@ export class FakeServer implements GameApi {
     if (weekly.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) throw new GameApiError("EXPEDITION_DAILY_LIMIT", "오늘의 원정 기회를 모두 사용했습니다.");
     if (weekly.allTimeBestScore <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "소탕할 기준 점수가 없습니다.");
     const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
-    for (const [currency, balance] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
+    for (const [currency, amount] of Object.entries(EXPEDITION_SWEEP_REWARDS)) {
       const key = currency as keyof Session["wallet"];
       if (!(key in WALLET_CAPS)) continue;
-      const amount = Math.floor(balance.runCap * EXPEDITION_SWEEP_POLICY.nodeRewardRatio);
       const applied = Math.min(amount, WALLET_CAPS[key] - wallet[key]); wallet[key] += applied; granted[currency] = applied;
     }
     const expedition = { ...weekly, playsToday: weekly.playsToday + 1 };
@@ -2061,7 +2066,7 @@ export class FakeServer implements GameApi {
       // 건드리지 않는다 — 별은 플레이어가 파편을 써서 스스로 올린다.
       if (!nextProgress[result.relicId]) nextProgress[result.relicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
     }
-    const nextWallet = { ...spend(this.state.wallet, banner, request.count), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
+    const nextWallet = { ...spend(this.state.wallet, banner, request.count, currentPity), dnaFragments: this.state.wallet.dnaFragments + mileageGained };
     // 비용 차감 뒤 회색 보상을 순서대로 더하며 계정 상한에서 버려지는 양은 저장하지 않는다.
     for (const slot of pulled.slots) if (slot.kind === "currency") {
       nextWallet[slot.currency] = Math.min(WALLET_CAPS[slot.currency], nextWallet[slot.currency] + slot.amount);
@@ -2069,6 +2074,18 @@ export class FakeServer implements GameApi {
     // 횟수 제한 배너만 누적 횟수를 센다(`GachaPityState.totalPulls`). 다른 그룹의 모양은 그대로 둔다.
     const groupPity = banner.pullLimit === undefined ? pulled.pity : { ...pulled.pity, totalPulls: (currentPity.totalPulls ?? 0) + request.count };
     const nextPity = { ...this.state.gachaPityByGroup, [banner.pityGroupId]: groupPity };
+    // 이월 할인 10연: 쓴 만큼 줄이고, 첫 복원 연구가 SSR로 닫히는 뽑기면 남은 10연을 받는 그룹에 쌓는다.
+    const spentDiscount = request.count === 10 && carryoverTenAvailable(banner, currentPity) ? 1 : 0;
+    if (spentDiscount > 0) {
+      const left = (currentPity.discountTens ?? 0) - spentDiscount;
+      nextPity[banner.pityGroupId] = left > 0 ? { ...groupPity, discountTens: left } : groupPity;
+    }
+    else if (currentPity.discountTens) nextPity[banner.pityGroupId] = { ...groupPity, discountTens: currentPity.discountTens };
+    const carriedTens = carryoverTensOnClose(banner, groupPity);
+    if (carriedTens > 0 && banner.carryoverTo) {
+      const target = nextPity[banner.carryoverTo] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
+      nextPity[banner.carryoverTo] = { ...target, discountTens: (target.discountTens ?? 0) + carriedTens };
+    }
     // 연구소의 캐릭터 연구 성공만 임무로 환산하며 방치 발굴 수확과 섞지 않는다.
     const nextMissions = applyMissionEvent(this.state.missions, { type: "relic_research_completed", count: request.count }, this.now());
     // 처음 만난 날은 관찰 질문이 하루에 하나씩 열리는 기준이다.
@@ -3444,11 +3461,17 @@ export class FakeServer implements GameApi {
     this.assertRuneSlot(request.slotIndex);
     // 룬은 제 자리에만 들어간다. 화면이 이미 걸러 주지만, 자리 불변식은 서버가 지킨다.
     if (this.ownedRune(request.runeInstanceId).part !== request.slotIndex) throw new GameApiError("RUNE_SLOT_MISMATCH", "이 룬은 다른 칸의 조각입니다.");
-    if (Object.values(this.state.relicProgress).some(({ heartGemSlots }) => heartGemSlots.includes(request.runeInstanceId))) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
-    const target = this.state.relicProgress[request.relicId];
+    const holders = Object.entries(this.state.relicProgress).filter(([, { heartGemSlots }]) => heartGemSlots.includes(request.runeInstanceId));
+    if (holders.length > 0 && !request.moveFromOther) throw new GameApiError("RUNE_ALREADY_EQUIPPED", "이미 다른 렐릭 또는 슬롯에 장착된 룬입니다.");
+    // 옮겨 끼우기: 지금 끼고 있는 칸을 먼저 비우고 같은 저장 한 번에 새 칸에 끼운다.
+    const nextProgress = { ...this.state.relicProgress };
+    for (const [holderId, holder] of holders) {
+      nextProgress[holderId] = { ...holder, heartGemSlots: holder.heartGemSlots.map((id) => (id === request.runeInstanceId ? null : id)) as [string | null, string | null, string | null] };
+    }
+    const target = nextProgress[request.relicId];
     const slots = [...target.heartGemSlots] as [string | null, string | null, string | null];
     slots[request.slotIndex] = request.runeInstanceId;
-    const nextProgress = { ...this.state.relicProgress, [request.relicId]: { ...target, heartGemSlots: slots } };
+    nextProgress[request.relicId] = { ...target, heartGemSlots: slots };
     const nextState = { ...this.state, relicProgress: nextProgress };
     this.persist(nextState);
     this.state.relicProgress = nextProgress;

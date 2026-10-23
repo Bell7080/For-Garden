@@ -72,7 +72,7 @@ export interface DebugState {
    * `y + offsetY`다. 스펙이 카드 자리를 손으로 적으면 보유 목록이나 격자 칸 수가 바뀔 때마다
    * 엉뚱한 카드를 눌러 조용히 어긋난다(도감의 메테 자리가 그랬다).
    */
-  gridCards?: Partial<Record<"relics" | "party", { offsetY: number; viewportTop: number; viewportBottom: number; cards: Record<string, { x: number; y: number }> }>>;
+  gridCards?: Partial<Record<"relics" | "party" | "arenaRoom", { offsetY: number; viewportTop: number; viewportBottom: number; cards: Record<string, { x: number; y: number }> }>>;
   /** 정보창의 원화와 비교 SD가 각각 실제 컨테이너로 교체됐는지 나타내는 읽기 전용 표시 상태다. */
   infoAssetReady?: { portrait: boolean; sd: boolean };
   /** WebGL 복구 사건과 그 뒤 실제 post-render 수를 기록하는 수명 주기 관찰값이다. */
@@ -408,7 +408,7 @@ export function setDebugInfoOpen(open: boolean): void {
 
 /** 격자 카드 자리를 알린다. 스크롤이 바뀌면 `offsetY`만 갈아 끼운다. */
 export function setDebugGridCards(
-  scene: "relics" | "party",
+  scene: "relics" | "party" | "arenaRoom",
   cards: Record<string, { x: number; y: number }> | undefined,
   offsetY = 0,
   viewport: { top: number; bottom: number } = { top: 0, bottom: 1920 },
@@ -419,7 +419,7 @@ export function setDebugGridCards(
   grids[scene] = { offsetY, viewportTop: viewport.top, viewportBottom: viewport.bottom, cards };
 }
 
-export function setDebugGridOffset(scene: "relics" | "party", offsetY: number): void {
+export function setDebugGridOffset(scene: "relics" | "party" | "arenaRoom", offsetY: number): void {
   if (!QA_TOOLS_ENABLED) return;
   const grid = ensure().gridCards?.[scene];
   if (grid) grid.offsetY = offsetY;

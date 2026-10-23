@@ -12,7 +12,8 @@ import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryT
 import { addCategoryTab } from "./CategoryTab";
 import { SortControl } from "./SortControl";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
-import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
+import { equippedRuneSlot, openRuneInfoPopup } from "./RunePopup";
+import { addRuneBagToggles } from "./runeHolderCycle";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
@@ -128,7 +129,10 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.inventory.displayList(this.category, this.sort);
+    const runeBag = session.settings.game.runeBag;
+    // 「장착 룬」을 끄면 누군가 끼고 있는 룬은 목록에서 빠진다 — 갈아 끼울 룬만 훑을 때 쓴다.
+    const visible = this.inventory.displayList(this.category, this.sort)
+      .filter((item) => item.kind !== "rune" || runeBag.showEquipped || equippedRuneSlot(item.rune.instanceId) === undefined);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
@@ -193,7 +197,10 @@ export class InventoryPopup {
       { id: "enhancement", labelKey: "inventory.sort.craft" }, { id: "equipped", labelKey: "inventory.sort.equipped" },
     ];
     const countLabel = this.scene.add.text(-right, y, t("inventory.rune.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    body.add([countLabel, this.scene.add.text(-right + countLabel.width + 12, y, count.toLocaleString(), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5)]);
+    const countValue = this.scene.add.text(-right + countLabel.width + 12, y, count.toLocaleString(), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
+    body.add([countLabel, countValue]);
+    // 보기 토글은 보유 수 바로 오른쪽에 선다 — 정렬 칩과 한 줄이지만 목록을 거르는 조작이라 왼쪽 덩어리에 묶는다.
+    addRuneBagToggles(this.scene, body, Math.max(countValue.x + countValue.width + 20, -right + 150), y, () => this.render(body));
     new SortControl(this.scene, {
       x: dirX - dirWidth / 2 - gap - sortWidth / 2, y, height, sortWidth, dirWidth, gap, fontSize: 24, parent: body,
       sortOptions: options.map(({ id, labelKey }) => ({ id, label: t(labelKey) })),
@@ -229,7 +236,11 @@ export class InventoryPopup {
     // 룬은 카드 한 장이 통째로 공용 프리팹이다. 장착용 가방과 같은 한 장을 써야 한쪽만
     // 옛 모습으로 남지 않는다.
     if (item.kind === "rune") {
-      const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, { dimmed: equippedRelicName(item.rune.instanceId) !== undefined });
+      const slot = equippedRuneSlot(item.rune.instanceId);
+      const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, {
+        dimmed: slot !== undefined,
+        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId, order: index } : undefined,
+      });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
       this.addCardInput(content, card, item, cardWidth, cardHeight);
       return;

@@ -6,6 +6,7 @@ import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { squeezeTextToWidth } from "./textFit";
 
 export interface ControlChipOptions {
   /** 조작 의미를 나타내는 공용 선 아이콘이다. */
@@ -30,6 +31,7 @@ export class ControlChip extends Phaser.GameObjects.Container {
   private readonly iconIdle: Phaser.GameObjects.Graphics;
   private readonly iconActive: Phaser.GameObjects.Graphics;
   private readonly label: Phaser.GameObjects.Text;
+  private readonly labelRoom: number;
   private spin?: Phaser.Tweens.Tween;
   private activeState = false;
   private tier: ControlChipTierLevel = 1;
@@ -51,6 +53,9 @@ export class ControlChip extends Phaser.GameObjects.Container {
     // 아이콘과 글자 사이의 얇은 세로 구분선 — 둘이 한 덩어리로 뭉치지 않고 "무엇 · 지금 값"으로 읽힌다.
     const divider = scene.add.rectangle(iconX + 26, 0, 1.5, height * 0.46, COLOR.inkDimHex, 0.35);
     this.label = scene.add.text(22, 0, options.label, textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(0.5);
+    // 글자 칸은 아이콘·구분선 오른쪽뿐이다. 언어마다 낱말 길이가 달라 넘치는 만큼만 가로로 누른다.
+    this.labelRoom = width - 64;
+    squeezeTextToWidth(this.label, this.labelRoom);
     this.add([this.face, this.tint, this.ring, divider, this.iconIdle, this.iconActive, this.label]);
 
     // 투명 입력면은 터치에서 깎인 모서리를 빗나가도 안정적으로 눌리게 한다.
@@ -66,6 +71,7 @@ export class ControlChip extends Phaser.GameObjects.Container {
   /** 배속 순환처럼 같은 칩의 현재 값을 교체한다. */
   setLabel(label: string): this {
     this.label.setText(label);
+    squeezeTextToWidth(this.label, this.labelRoom);
     return this;
   }
 

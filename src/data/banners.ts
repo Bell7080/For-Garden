@@ -87,7 +87,7 @@ export const BANNERS: Banner[] = [
     id: "welcome", pityGroupId: PITY_GROUP.WELCOME, name: "첫 복원 연구", featuredRelicId: "rex",
     artKey: BACKGROUND.recruitWelcome,
     castRelicIds: WELCOME_SSR_POOL,
-    currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50, closeOnHighestRarity: true,
+    currency: "fossil", costOne: 1, costTen: 8, tenOnly: true, pullLimit: 50, closeOnHighestRarity: true, carryoverTo: PITY_GROUP.STANDARD,
     // 확률과 회색 보상은 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
     slotRates: STANDARD_SLOT_RATES,
     grayRewards: STANDARD_GRAY_REWARDS,
@@ -107,6 +107,8 @@ export const BANNERS: Banner[] = [
      * 손해를 보게 되어 사실상 10연 하나만 남는다.
      */
     currency: "fossil", costOne: 1, costTen: 10,
+    // 첫 복원 연구가 SSR로 일찍 닫히면 남은 10연만큼 화석 8개짜리 10연이 열린다(첫 복원 연구의 값).
+    carryoverTenCost: 8,
     // 초기의 작은 R 풀을 너무 빨리 소진하지 않도록 대부분을 부산물로 돌린다. 10연 SR 보장은
     // 그대로 남아 있어 한 묶음은 보통 SR 1장 안팎, R 1~2장, 나머지는 재화로 구성된다.
     slotRates: STANDARD_SLOT_RATES,

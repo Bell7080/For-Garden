@@ -216,7 +216,11 @@ export interface MarkContentIntroSeenResponse { tutorial: import("../core/tutori
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
 /** 장착 대상은 보유 룬, 보유 렐릭, 0부터 시작하는 세 슬롯으로 특정한다. */
-export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; }
+/**
+ * `moveFromOther`를 켜면 다른 렐릭(또는 같은 렐릭의 다른 칸)에 끼워진 룬을 그 자리에서 빼고 옮겨 낀다.
+ * 해제와 장착을 한 요청에서 확정해야 중간에 끊겨도 반만 옮겨지지 않는다. 끄면 예전처럼 거절한다.
+ */
+export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; moveFromOther?: boolean; }
 /** 장착표 변경 뒤의 단일 기준 인벤토리다. */
 export interface EquipRuneResponse { inventory: RuneInventoryDto; }
 /** 해제는 렐릭 슬롯을 직접 비워 요청 시점의 룬 역참조에 의존하지 않는다. */
@@ -949,7 +953,7 @@ export interface SettleRaidRequest { requestId: string; raidId: string; }
 export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
-/** 소탕은 점수를 남기지 않고 노드 클리어 보상의 몫만 준다(`EXPEDITION_SWEEP_POLICY`). */
+/** 소탕은 점수를 남기지 않고 평균 경로 전투 전리품의 약 75% 고정표만 준다. */
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; granted: Record<string, number>; playsToday: number; }
 
 /* ── 출석 ── 규칙은 `core/attendance.ts`, 보상표는 `data/attendance.ts`가 갖는다. */

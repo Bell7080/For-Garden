@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, normalizeExpeditionPendingRewards, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../../src/core/expeditionScore";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
@@ -38,8 +38,9 @@ describe("expedition augment rewards", () => {
       nodeTotal += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 70, cleared: true });
     }
     // 경감 전 기여 4천 점 기준, 보스가 노드보다 크되 이전 200배 환산처럼 과도하지 않다.
-    expect(expeditionBossDamageScore(4_000)).toBeGreaterThan(nodeTotal * 3);
-    expect(expeditionBossDamageScore(4_000)).toBeLessThan(nodeTotal * 5);
+    // 운영 기록의 경감 전 기여 4.8만~6만 기준 — 보스가 노드보다 크되, ×5 환산(노드가 2%도 안 되던 때)처럼 과도하지 않다.
+    expect(expeditionBossDamageScore(48_000)).toBeGreaterThan(nodeTotal * 3);
+    expect(expeditionBossDamageScore(60_000)).toBeLessThan(nodeTotal * 8);
   });
 
   it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {
@@ -158,12 +159,20 @@ describe('원정 점수 절반 조정',()=>{
    const multiplier={normal:1,elite:1.5,horde:1.25}[type];
    expect(calculateExpeditionNodeScore({floor:10,nodeType:type,remainingHpPercent:80,cleared:true})).toBe(Math.round((10*40+80*1.5)*multiplier/2));
   }
-  expect(expeditionBossDamageScore(1234)).toBe(6170);
+  expect(expeditionBossDamageScore(1234)).toBe(617);
  });
 });
 
-describe('주간 원정 젬 보상',()=>{
- it.each(['normal','elite','horde','treasure'] as const)('%s 노드에서 젬을 최소 300개 지급한다',nodeType=>{
-  const reward=calculateExpeditionNodeRewards({nodeType,accumulated:{},random:()=>0});expect(reward.gems).toBeGreaterThanOrEqual(300);
+describe('원정 전리품 정상 범위',()=>{
+ it('일반 젬은 5~15, 보물 젬은 20~50 범위에서 지급한다',()=>{
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>0}).gems).toBe(5);
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>1}).gems).toBe(15);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>0}).gems).toBe(20);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>1}).gems).toBe(50);
+ });
+ it('상향 기간의 미정산 전리품을 현행 런 상한과 폰토스 몫까지만 인정한다',()=>{
+  expect(normalizeExpeditionPendingRewards({gems:10_000,gold:30_000,cheesecake:360,salvageRecord:580},50_000)).toMatchObject({
+   gems:225,gold:9_000,cheesecake:225,salvageRecord:320,
+  });
  });
 });

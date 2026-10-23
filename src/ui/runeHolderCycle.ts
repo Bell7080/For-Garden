@@ -9,17 +9,21 @@ import { settingsManager } from "../managers/SettingsManager";
 import { ControlChip } from "./ControlChip";
 
 /**
- * 장착 렐릭 표시가 켜진 가방에서 룬 액자가 그 룬을 낀 렐릭의 얼굴로 바뀌었다 돌아오는 박자.
+ * 장착 렐릭 표시가 켜진 가방에서 룬 액자의 뒷배경이 그 룬을 낀 렐릭의 얼굴로 바뀌었다 돌아오는 박자.
  *
- * 룬이 이 가방의 주인이라 룬 쪽이 더 오래 서고, 얼굴은 「누가 끼고 있나」만 한 번 말하고 물러난다.
+ * 얼굴은 룬 **뒤**에 깔리고 가운데 룬은 반투명(`runeGhostAlpha`)으로 남는다 — 룬을 지우고 얼굴로 갈아
+ * 끼우면 「누가 끼고 있나」가 읽히는 동안 룬이 사라진다. 바뀔 때는 서서히 녹지 않고 짧게 넘어가며
+ * (`fadeMs`), 얼굴이 서 있는 시간이 룬만 서 있는 시간보다 길다.
  * 카드마다 시작을 조금씩 밀어(`stagger`) 한 화면의 얼굴이 한꺼번에 깜빡이지 않게 하되, 상한을 두어
  * 뒤쪽 카드가 한참 동안 움직이지 않는 일도 없게 한다. 얼굴 액자는 룬 액자와 같은 깎임을 쓴다
  * (`ITEM_FRAME`) — 두 그림이 같은 실루엣 안에서 갈마든다.
  */
 export const RUNE_HOLDER_CYCLE = {
-  runeHoldMs: 2400,
-  fadeMs: 600,
-  faceHoldMs: 1600,
+  runeHoldMs: 1800,
+  fadeMs: 140,
+  faceHoldMs: 3600,
+  /** 얼굴이 뒷배경으로 서 있는 동안 가운데 룬의 투명도. */
+  runeGhostAlpha: 0.4,
   staggerMs: 260,
   staggerSteps: 8,
   /** 움직임 줄이기에서는 돌지 않고 액자 오른쪽 아래에 작은 얼굴만 고정으로 선다. */
@@ -48,19 +52,20 @@ export function addRuneHolderFace(
     return;
   }
   const face = new FaceFrame(scene, 0, 0, { portraitAssetId: def.portraitAssetId, size: frameSize, color: COLOR.accent }).setAlpha(0);
-  card.add(face);
-  const { runeHoldMs, fadeMs, faceHoldMs, staggerMs, staggerSteps } = RUNE_HOLDER_CYCLE;
+  // 얼굴은 룬 액자 바로 아래(카드 판 위)에 깔려 룬 너머로 비친다.
+  card.addAt(face, Math.max(0, card.getIndex(runeFrame)));
+  const { runeHoldMs, fadeMs, faceHoldMs, staggerMs, staggerSteps, runeGhostAlpha } = RUNE_HOLDER_CYCLE;
   const tween = scene.tweens.add({
     targets: face,
     alpha: 1,
     duration: fadeMs,
-    ease: "Sine.easeInOut",
+    ease: "Quad.easeOut",
     hold: faceHoldMs,
     yoyo: true,
     repeat: -1,
     repeatDelay: runeHoldMs,
     delay: runeHoldMs + (order % staggerSteps) * staggerMs,
-    onUpdate: () => { runeFrame.setAlpha(1 - face.alpha); },
+    onUpdate: () => { runeFrame.setAlpha(1 - face.alpha * (1 - runeGhostAlpha)); },
   });
   card.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
 }

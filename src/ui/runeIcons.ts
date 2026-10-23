@@ -180,7 +180,11 @@ export function addRuneCard(
     card.add(drawGlyph(scene, index === 0 && rune.locked ? "lock" : "bookmark", spot.x, spot.y, RUNE_CARD_MARK.size, color));
   });
   // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
-  if (options.dimmed) card.setAlpha(0.72);
+  // 끼고 있는 룬은 검은 막을 한 겹 더 깐다 — 알파만으로는 어두운 가방 바탕 위에서 충분히 가라앉지 않는다.
+  if (options.dimmed) {
+    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: 0.42 }));
+    card.setAlpha(0.72);
+  }
   return card;
 }
 

@@ -44,25 +44,19 @@ export interface RuneSynthesisBenchHandles {
   core: Phaser.GameObjects.Container;
 }
 
-/** 장착 중인 룬 ID. 합성 재료에서 빠진다. */
-function equippedRuneIds(): Set<string> {
-  return new Set(Object.values(session.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
-}
-
 const PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, headerHeight: 176, emptyHeight: 420 } as const;
 
 /**
  * 넣을 룬을 고르는 가방.
  *
- * **넣을 수 있는 룬만 보여 준다** — 각인까지 마쳤고, 잠기지 않았고, 아무도 끼고 있지 않고,
+ * **넣을 수 있는 룬만 보여 준다** — 각인까지 마쳤고, 잠기지 않았고(끼고 있는 룬도 넣을 수 있다),
  * 이미 넣은 룬이 있으면 그 등급인 것. 못 쓰는 룬을 흐리게 늘어놓으면 왜 못 쓰는지 하나하나
  * 눌러 봐야 한다.
  */
 function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer; rarity: RuneRarity | undefined; taken: ReadonlySet<string>; onPick: (rune: RuneInstance) => void }): void {
   const { scene, popups } = options;
-  const equipped = equippedRuneIds();
   const runes = session.runeInventory
-    .filter((rune) => isRuneSynthesisMaterial(rune, equipped) && !options.taken.has(rune.instanceId) && (options.rarity === undefined || rune.rarity === options.rarity))
+    .filter((rune) => isRuneSynthesisMaterial(rune) && !options.taken.has(rune.instanceId) && (options.rarity === undefined || rune.rarity === options.rarity))
     .sort((a, b) => RUNE_TRAIT_GRADES.indexOf(b.rarity) - RUNE_TRAIT_GRADES.indexOf(a.rarity) || (a.sequence ?? 0) - (b.sequence ?? 0));
   const columns = PICKER.columns;
   const rows = Math.max(1, Math.ceil(runes.length / columns));
@@ -223,7 +217,7 @@ export function addRuneSynthesisBench(options: RuneSynthesisBenchOptions): RuneS
   parent.add(new Button(scene, button.x, button.y, {
     width: RUNE_SYNTHESIS.buttonWidth, height: RUNE_SYNTHESIS.buttonHeight, label: t("archaeology.synth.button"), fontSize: 38,
     variant: "primary", decorDots: true,
-    ...(cost !== undefined ? { cost: { icon: "currency-gold" as const, amount: cost, affordable } } : {}),
+    ...(cost !== undefined ? { cost: { icon: "currency-gold" as const, amount: cost, affordable, abbreviate: true } } : {}),
     onClick: () => { if (!options.busy) options.onSynthesize(); },
   }).setEnabled(ready && affordable && !options.busy));
 

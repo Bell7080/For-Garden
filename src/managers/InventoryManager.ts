@@ -198,6 +198,13 @@ export class InventoryManager {
   async synthesizeRunes(api: GameApi, instanceIds: readonly string[], requestId = crypto.randomUUID()): Promise<SynthesizeRunesResponse> {
     const response = await api.synthesizeRunes({ requestId, runeInstanceIds: instanceIds });
     if (!hasRemoteState(response)) this.state.wallet = { ...response.wallet };
+    // 끼고 있던 재료는 합성과 함께 장착이 풀린다 — 응답의 장착표를 그대로 반영한다.
+    if (!hasRemoteState(response)) {
+      for (const { relicId, slots } of response.inventory.equipment) {
+        const progress = this.state.relicProgress[relicId];
+        if (progress) progress.heartGemSlots = [...slots];
+      }
+    }
     return this.applyRuneMutation(response);
   }
 

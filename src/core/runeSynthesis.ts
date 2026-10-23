@@ -40,20 +40,19 @@ export const RUNE_SYNTHESIS_RULES = {
   extraTraitShiftPercent: number;
 };
 
-export type RuneSynthesisRefusal = "count" | "duplicate" | "notEngraved" | "rarityMismatch" | "equipped" | "locked";
+export type RuneSynthesisRefusal = "count" | "duplicate" | "notEngraved" | "rarityMismatch" | "locked";
 
-/** 이 룬을 합성 재료로 쓸 수 있는가 — 각인까지 마쳤고 잠기지 않았으며 아무도 끼고 있지 않다. */
-export function isRuneSynthesisMaterial(rune: RuneInstance, equipped: ReadonlySet<string>): boolean {
-  return rune.engravings.length > 0 && rune.locked !== true && !equipped.has(rune.instanceId);
+/** 이 룬을 합성 재료로 쓸 수 있는가 — 각인까지 마쳤고 잠기지 않았다. 끼고 있는 룬도 쓸 수 있고, 합성하면 장착이 풀린다. */
+export function isRuneSynthesisMaterial(rune: RuneInstance): boolean {
+  return rune.engravings.length > 0 && rune.locked !== true;
 }
 
 /** 재료 셋이 합성 조건을 지키는지. 지키면 `null`, 아니면 첫 거절 사유다. 서버와 화면이 같은 판정을 쓴다. */
-export function runeSynthesisRefusal(runes: readonly RuneInstance[], equipped: ReadonlySet<string>): RuneSynthesisRefusal | null {
+export function runeSynthesisRefusal(runes: readonly RuneInstance[]): RuneSynthesisRefusal | null {
   if (runes.length !== RUNE_SYNTHESIS_INPUTS) return "count";
   if (new Set(runes.map(({ instanceId }) => instanceId)).size !== runes.length) return "duplicate";
   if (runes.some((rune) => rune.engravings.length === 0)) return "notEngraved";
   if (runes.some(({ rarity }) => rarity !== runes[0].rarity)) return "rarityMismatch";
-  if (runes.some(({ instanceId }) => equipped.has(instanceId))) return "equipped";
   if (runes.some(({ locked }) => locked === true)) return "locked";
   return null;
 }

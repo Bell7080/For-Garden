@@ -1325,14 +1325,21 @@ describe("룬 합성", () => {
     expect(state.runeInventory.map(({ instanceId }) => instanceId).sort()).toEqual([first.rune.instanceId, "keep"].sort());
   });
 
-  it("각인 전·장착·잠금·골드 부족은 재료와 골드를 그대로 두고 거부한다", async () => {
+  it("장착 중인 룬도 재료로 쓸 수 있고 합성하면 장착이 풀린다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("a"), engraved("b"), engraved("c")];
+    state.relicProgress.torika.heartGemSlots[0] = "c";
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const result = await server.synthesizeRunes({ requestId: "eq", runeInstanceIds: ["a", "b", "c"] });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+    expect(result.inventory.equipment.find(({ relicId }) => relicId === "torika")?.slots).toEqual([null, null, null]);
+  });
+
+  it("각인 전·잠금·골드 부족은 재료와 골드를 그대로 두고 거부한다", async () => {
     const state = makeSession(); state.wallet.gold = 500_000;
     state.runeInventory = [engraved("a"), engraved("b"), makeRune("raw"), engraved("c")];
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.synthesizeRunes({ requestId: "raw", runeInstanceIds: ["a", "b", "raw"] })).rejects.toMatchObject({ code: "RUNE_SYNTHESIS_INVALID" });
-    state.relicProgress.torika.heartGemSlots[0] = "c";
-    await expect(server.synthesizeRunes({ requestId: "eq", runeInstanceIds: ["a", "b", "c"] })).rejects.toMatchObject({ code: "RUNE_EQUIPPED" });
-    state.relicProgress.torika.heartGemSlots[0] = null;
     state.wallet.gold = 1000;
     await expect(server.synthesizeRunes({ requestId: "poor", runeInstanceIds: ["a", "b", "c"] })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
     expect(state.runeInventory).toHaveLength(4); expect(state.wallet.gold).toBe(1000);

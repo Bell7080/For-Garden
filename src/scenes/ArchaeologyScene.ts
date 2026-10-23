@@ -1205,13 +1205,12 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /**
    * 룬 합성대. 넣은 룬은 저장에서 다시 찾아 지금 값을 쓰고, 사라졌거나 더는 재료가 될 수 없으면
-   * (장착·잠금) 칸을 비운다.
+   * (잠금) 칸을 비운다.
    */
   private paintSynthesis(): void {
-    const equipped = new Set(Object.values(session.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
     const slots = this.synthIds.map((id) => {
       const rune = id === null ? undefined : session.runeInventory.find(({ instanceId }) => instanceId === id);
-      return rune !== undefined && isRuneSynthesisMaterial(rune, equipped) ? rune : undefined;
+      return rune !== undefined && isRuneSynthesisMaterial(rune) ? rune : undefined;
     });
     this.synthIds = slots.map((rune) => rune?.instanceId ?? null);
     const handles = addRuneSynthesisBench({

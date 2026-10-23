@@ -38,7 +38,7 @@ export const RUNE_CRAFT_PANEL = {
   nameWrap: 300,
   equippedY: 186,
   /** 지갑 칸. 세공은 골드를 쓰는 화면이라 늘 보인다. */
-  wallet: { x: 330, y: 106, width: 180, height: 62 },
+  wallet: { x: 316, y: 106, width: 232, height: 78 },
   /** 확률 수치 줄(글자 아래끝)과 막대. */
   chanceLabelY: 252,
   chanceBarY: 284,

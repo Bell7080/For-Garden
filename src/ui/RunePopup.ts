@@ -12,6 +12,7 @@ import { InventoryManager } from "../managers/InventoryManager";
 import { burstOverlayEffect } from "../managers/overlayEffects";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
@@ -484,6 +485,34 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       scene.tweens.add({ targets: flash, scale: RUNE_CRAFT_STRIKE.scale, alpha: 0, duration: RUNE_CRAFT_STRIKE.ms, ease: "Quad.Out", onComplete: () => flash.destroy() });
     };
 
+    /**
+     * 세공에 쓴 골드가 지갑 칸에서 짤랑이며 떨어져 나간다. 칸은 매번 다시 그려지므로 코인은 칸이 아니라
+     * 판(`body`)에 얹고, 정지한 카운터 하나를 트윈해 프레임마다 위치를 옮긴다 — 코인이 먼저 파괴돼도 안전하다.
+     */
+    const spillCoins = (): void => {
+      if (closed || motionPolicy(session.settings).nonEssentialRepeatFactor === 0) return;
+      const originX = panel.wallet.x - panel.wallet.width / 2 + 34;
+      const originY = -layout.height / 2 + panel.wallet.y;
+      const size = panel.wallet.height * 0.5;
+      const coins = Array.from({ length: 6 }, (_, i) => {
+        const coin = scene.add.image(originX + (i - 2.5) * 10, originY, "currency-gold").setDisplaySize(size, size);
+        body.add(coin);
+        return { coin, vx: (i - 2.5) * 22 + (i % 2 === 0 ? 10 : -10), vy: -150 - (i % 3) * 40, spin: (i % 2 === 0 ? 1 : -1) * (3 + i) };
+      });
+      const clock = { t: 0 };
+      scene.tweens.add({
+        targets: clock, t: 1, duration: 620, ease: "Linear",
+        onUpdate: () => {
+          const sec = clock.t * 0.62;
+          for (const { coin, vx, vy, spin } of coins) {
+            if (!coin.active) continue;
+            coin.setPosition(originX + vx * sec, originY + vy * sec + 900 * sec * sec).setRotation(spin * sec).setAlpha(1 - Math.max(0, clock.t - 0.55) / 0.45);
+          }
+        },
+        onComplete: () => { for (const { coin } of coins) if (coin.active) coin.destroy(); },
+      });
+    };
+
     /** 요청 한 번. 끝나면 눌러 둔 만큼 이어서 보낸다. */
     const craft = async (): Promise<void> => {
       const statKey = selected;
@@ -508,6 +537,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, statKey);
         pending = false;
         render(engraving ? t("rune.completed") : succeeded ? t("rune.craftSuccess") : t("rune.craftFail"));
+        if (!engraving) spillCoins();
       } catch (error) {
         pending = false;
         queued = 0;

@@ -3427,9 +3427,7 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "합성 요청 ID가 필요합니다.");
     const selected = request.runeInstanceIds.map((id) => this.ownedRune(id));
-    const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
-    const refusal = runeSynthesisRefusal(selected, equipped);
-    if (refusal === "equipped") throw new GameApiError("RUNE_EQUIPPED", "장착 중인 룬은 합성할 수 없습니다.");
+    const refusal = runeSynthesisRefusal(selected);
     if (refusal === "locked") throw new GameApiError("RUNE_LOCKED", "잠근 룬은 합성할 수 없습니다.");
     if (refusal !== null) throw new GameApiError("RUNE_SYNTHESIS_INVALID", "각인까지 마친 같은 등급 룬 셋이 필요합니다.");
     const rarity = selected[0].rarity;
@@ -3446,8 +3444,12 @@ export class FakeServer implements GameApi {
       : { ...base, trait: { id: RUNE_TRAIT_IDS[Math.min(RUNE_TRAIT_IDS.length - 1, Math.floor(this.random() * RUNE_TRAIT_IDS.length))], grade: traitGrade, upgradeMisses: 0 } };
     const nextRunes = [...remaining, rune];
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
-    this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet });
-    this.state.runeInventory = nextRunes; this.state.wallet = nextWallet;
+    // 끼고 있던 재료는 사라지므로 장착 칸도 같은 저장 한 번에 비운다 — 없는 룬 ID를 가리키는 칸이 남지 않게.
+    const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id, progress.heartGemSlots.some((slot) => slot !== null && consumed.has(slot))
+      ? { ...progress, heartGemSlots: progress.heartGemSlots.map((slot) => (slot !== null && consumed.has(slot) ? null : slot)) as [string | null, string | null, string | null] }
+      : progress])) as typeof this.state.relicProgress;
+    this.persist({ ...this.state, runeInventory: nextRunes, wallet: nextWallet, relicProgress: nextProgress });
+    this.state.runeInventory = nextRunes; this.state.wallet = nextWallet; this.state.relicProgress = nextProgress;
     const response: SynthesizeRunesResponse = { rune: this.cloneRune(rune), upgraded: resultRarity !== rarity, goldSpent, wallet: { ...nextWallet }, inventory: this.runeInventoryDto() };
     this.runeSynthesisResults.set(request.requestId, structuredClone(response));
     return response;

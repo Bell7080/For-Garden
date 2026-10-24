@@ -619,3 +619,13 @@ describe("레이드 서버 경계", () => {
     expect(state.raid.instances).toEqual([]);
   });
 });
+
+describe("레이드 1차 판 보상", () => {
+  it("피해에 비례하고 목표에서 최대치이며 피해 0이면 없다", async () => {
+    const { raidRunRewards } = await import("../../src/core/raid");
+    expect(raidRunRewards("hard", 0)).toEqual({ raidSigil: 0, gem: 0 });
+    expect(raidRunRewards("hard", 22_000)).toEqual({ raidSigil: 8, gem: 15 });
+    expect(raidRunRewards("hard", 99_000)).toEqual({ raidSigil: 8, gem: 15 });
+    expect(raidRunRewards("hard", 11_000).gem).toBeLessThan(15);
+  });
+});

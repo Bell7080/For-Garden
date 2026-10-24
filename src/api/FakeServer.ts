@@ -98,7 +98,7 @@ import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRe
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
@@ -1115,15 +1115,20 @@ export class FakeServer implements GameApi {
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
-    const appliedGold = Math.min(gold, WALLET_CAPS.gold - nextState.wallet.gold);
-    nextState.wallet = { ...nextState.wallet, gold: nextState.wallet.gold + appliedGold };
-    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [] };
+    const runRewards = raidRunRewards(instance.difficulty, runDamage);
+    const grantedRun = (["gems", "raidSigil", "gold"] as const).map((currency) => {
+      const want = currency === "gold" ? gold : currency === "gems" ? runRewards.gem : runRewards.raidSigil;
+      const amount = Math.max(0, Math.min(want, WALLET_CAPS[currency] - nextState.wallet[currency]));
+      nextState.wallet = { ...nextState.wallet, [currency]: nextState.wallet[currency] + amount };
+      return { currency, name: findItem(currency)?.name ?? currency, amount };
+    }).filter(({ amount }) => amount > 0);
+    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: grantedRun };
     this.recordReceipt(nextState, "raidSubmit", request.requestId, request.raidId, resultReceipt);
     delete nextState.serverJournal!.raidAdmissions[request.requestId];
     this.commitRaidState(nextState);
     const response: SubmitRaidDamageResponse = {
       ...this.snapshot(), raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs,
-      granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [],
+      granted: grantedRun,
     };
 
 

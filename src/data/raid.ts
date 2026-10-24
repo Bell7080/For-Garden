@@ -101,16 +101,18 @@ export interface RaidDifficultySpec {
   /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
   lifetimeHours: number;
   settlement: { mine: number; mineTarget: number; total: number; kill: number; gems: number };
+  /** 한 판을 치고 곧바로 받는 증표·젬의 최대치. 그 판 피해가 `settlement.mineTarget`에 닿을 때 이 값이고 그 아래는 비례한다. */
+  run: { sigil: number; gems: number };
 }
 
 const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 
 /** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 50 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 75 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 100 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 150 } }),
+  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 50 }, run: { sigil: 3, gems: 6 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 75 }, run: { sigil: 5, gems: 10 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 100 }, run: { sigil: 8, gems: 15 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 150 }, run: { sigil: 13, gems: 20 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */

@@ -32,7 +32,7 @@ describe("레이드·원정 정산의 실제 지급량과 재접속", () => {
     const h = setup(); h.state.wallet.gold = WALLET_CAPS.gold - 1;
     await h.api().enterRaid({ raidId: "audit-raid", requestId: "entry" });
     const result = await h.api().submitRaidDamage({ raidId: "audit-raid", requestId: "entry", actions: basics });
-    expect(result.runDamage).toBeGreaterThan(0); expect(result.granted.map(({ amount }) => amount)).toEqual([1]);
+    expect(result.runDamage).toBeGreaterThan(0); expect(result.granted.find(({ currency }) => currency === "gold")?.amount).toBe(1);
     const loaded = h.saves.load()!;
     const retry = await h.api(loaded).submitRaidDamage({ raidId: "audit-raid", requestId: "entry", actions: basics });
     expect(retry.granted).toEqual(result.granted); expect(retry.runDamage).toBe(result.runDamage);

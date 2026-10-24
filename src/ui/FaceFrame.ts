@@ -202,7 +202,7 @@ function toPoints(flat: readonly number[]): Phaser.Geom.Point[] {
  * 잡혀 **잘라낸 결과가 통째로 비었고**, 빈 점 목록을 받은 `fillPoints`가 예외를 던져 그 액자를
  * 세우던 창이 그리다 말았다(한계 돌파 확정 창이 그랬다). 그래서 감긴 방향을 **재서** 정한다.
  */
-function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
+export function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
   let polygon = [...subject];
   const count = clip.length / 2;
   // 신발끈 공식의 부호가 곧 감긴 방향이다. 안쪽은 그 부호와 같은 쪽이다.

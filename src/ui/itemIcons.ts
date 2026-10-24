@@ -29,9 +29,9 @@ export const ITEM_RASTER_ICON_ASSETS = [
   ["item-ancient-core", "sprites/items/ancient-core.webp"],
   ["item-refined-core", "sprites/items/refined-core.webp"],
   ["item-restoration-crystal", "sprites/items/restoration-crystal.webp"],
-  // 만능 파편 셋은 **한 장의 흰 문양**을 나눠 쓴다(`scripts/draw_universal_fragment.py`) — 등급은 액자의
-  // 유리 결이 색으로 말한다(`addFramedIcon`의 `universalFragmentTone`).
-  ["item-universal-fragment-r", "sprites/items/universal-fragment.webp"],
-  ["item-universal-fragment-sr", "sprites/items/universal-fragment.webp"],
-  ["item-universal-fragment-ssr", "sprites/items/universal-fragment.webp"],
+  // 만능 파편 셋은 등급색으로 구운 **홀로그램 결정 조각**이다(`scripts/draw_universal_fragment.py`) — 액자의
+  // 유리 결과 주사선·훑는 빛은 `addFramedIcon`이 `universalFragmentArt.ts`로 얹는다.
+  ["item-universal-fragment-r", "sprites/items/universal-fragment-r.webp"],
+  ["item-universal-fragment-sr", "sprites/items/universal-fragment-sr.webp"],
+  ["item-universal-fragment-ssr", "sprites/items/universal-fragment-ssr.webp"],
 ] as const;

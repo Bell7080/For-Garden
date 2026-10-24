@@ -22,7 +22,7 @@ import { guildShopProducts } from "../ui/guildShopCatalog";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
-import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
+import { addFramedIcon, addShelfAmount } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
@@ -579,9 +579,10 @@ export class ShopScene extends Phaser.Scene {
       // 룬은 상점에 서는 순간 등급과 자리가 정해져 있다 — 가방의 룬 카드와 같은 액자에 그 조각이 크게 선다.
       card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, isRandomRuneProduct(product) ? undefined : runeProduct.rarity, runeProduct.part, { mystery: isRandomRuneProduct(product) }));
     } else {
-      const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
       // 그림은 첫 지급품에서 나온다(`productIconTexture`) — 가방에 들어오는 것과 같은 그림이 칸에 선다.
-      frame.add(this.add.image(0, 0, productIconTexture(product)).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
+      // 공용 액자(`addFramedIcon`)를 지나야 만능 파편이 가방과 같은 등급색 유리·홀로그램 결로 선다. 칸 자체가
+      // 구매 확인을 여는 손이라 그림만 안내창을 열지 않는다(`plain`).
+      const frame = addFramedIcon(this, undefined, 0, SHOP_CARD.frameY, SHOP_CARD.frame, productIconTexture(product), { plain: true });
       // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
       const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
       if (amountGrant) {

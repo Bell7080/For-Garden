@@ -519,16 +519,6 @@
 "Vorhut",
 "Авангард"
 ],
-"rune.trait.vanguard.desc": [
-"战斗开始时，攻击速度提升{value}%，持续{seconds}秒。",
-"เมื่อเริ่มการต่อสู้ ความเร็วโจมตีเพิ่มขึ้น {value}% เป็นเวลา {seconds} วินาที",
-"Khi bắt đầu trận, tốc đánh tăng {value}% trong {seconds} giây.",
-"Di awal pertarungan, kecepatan serang naik {value}% selama {seconds} dtk.",
-"Al empezar el combate, la velocidad de ataque sube un {value}% durante {seconds} s.",
-"No início da batalha, a velocidade de ataque sobe {value}% por {seconds} s.",
-"Zu Kampfbeginn steigt das Angriffstempo {seconds} s lang um {value}%.",
-"В начале боя скорость атаки растёт на {value}% на {seconds} с."
-],
 "rune.trait.pursuit.name": [
 "追击",
 "ไล่ล่า",
@@ -538,16 +528,6 @@
 "Perseguição",
 "Verfolgung",
 "Погоня"
-],
-"rune.trait.pursuit.desc": [
-"击倒敌人时，攻击速度与移动速度提升{value}%，持续{seconds}秒。",
-"เมื่อกำจัดศัตรู ความเร็วโจมตีและเคลื่อนที่เพิ่มขึ้น {value}% เป็นเวลา {seconds} วินาที",
-"Khi hạ gục, tốc đánh và tốc chạy tăng {value}% trong {seconds} giây.",
-"Saat mengalahkan musuh, kecepatan serang dan gerak naik {value}% selama {seconds} dtk.",
-"Al derrotar a un enemigo, la velocidad de ataque y de movimiento suben un {value}% durante {seconds} s.",
-"Ao derrotar um inimigo, a velocidade de ataque e de movimento sobem {value}% por {seconds} s.",
-"Bei einem Besiegen steigen Angriffs- und Lauftempo {seconds} s lang um {value}%.",
-"При убийстве скорость атаки и движения растёт на {value}% на {seconds} с."
 ],
 "rune.trait.predation.name": [
 "捕食",
@@ -559,16 +539,6 @@
 "Beutejagd",
 "Хищничество"
 ],
-"rune.trait.predation.desc": [
-"对生命高于{threshold}%的敌人造成的伤害提升{value}%。",
-"ความเสียหายต่อศัตรูที่มีพลังชีวิตมากกว่า {threshold}% เพิ่มขึ้น {value}%",
-"Sát thương lên kẻ địch còn trên {threshold}% máu tăng {value}%.",
-"Kerusakan terhadap musuh dengan nyawa di atas {threshold}% naik {value}%.",
-"El daño a enemigos con más del {threshold}% de salud sube un {value}%.",
-"O dano a inimigos com mais de {threshold}% de vida sobe {value}%.",
-"Schaden gegen Gegner über {threshold}% Leben steigt um {value}%.",
-"Урон по врагам с запасом здоровья выше {threshold}% растёт на {value}%."
-],
 "rune.trait.tenacity.name": [
 "执着",
 "ดื้อรั้น",
@@ -578,16 +548,6 @@
 "Tenacidade",
 "Verbissenheit",
 "Упорство"
-],
-"rune.trait.tenacity.desc": [
-"每次连续命中同一敌人，造成的伤害提升{value}%，最多{stacks}层。更换目标时清空。",
-"ทุกครั้งที่โจมตีศัตรูตัวเดิมต่อเนื่อง ความเสียหายเพิ่มขึ้น {value}% สูงสุด {stacks} ชั้น เปลี่ยนเป้าหมายจะรีเซ็ต",
-"Mỗi đòn liên tiếp lên cùng kẻ địch tăng sát thương {value}%, tối đa {stacks} tầng. Đổi mục tiêu sẽ mất hết.",
-"Setiap serangan beruntun ke musuh yang sama menaikkan kerusakan {value}%, hingga {stacks} tumpuk. Ganti target akan menghapusnya.",
-"Cada golpe seguido al mismo enemigo sube el daño un {value}%, hasta {stacks} cargas. Cambiar de objetivo lo reinicia.",
-"Cada golpe seguido no mesmo inimigo aumenta o dano em {value}%, até {stacks} acúmulos. Trocar de alvo zera.",
-"Jeder Folgetreffer auf denselben Gegner erhöht den Schaden um {value}%, bis zu {stacks} Stapel. Ein Zielwechsel setzt zurück.",
-"Каждый удар подряд по одному врагу повышает урон на {value}%, до {stacks} зарядов. Смена цели сбрасывает."
 ],
 "rune.trait.guardian.name": [
 "守护本能",
@@ -599,16 +559,6 @@
 "Beschützerinstinkt",
 "Инстинкт защитника"
 ],
-"rune.trait.guardian.desc": [
-"战斗开始时，为生命比例最低的队友提供相当于其最大生命{value}%的护盾。",
-"เมื่อเริ่มการต่อสู้ มอบโล่เท่ากับ {value}% ของพลังชีวิตสูงสุดให้พันธมิตรที่มีสัดส่วนพลังชีวิตต่ำสุด",
-"Khi bắt đầu trận, trao cho đồng minh có tỉ lệ máu thấp nhất khiên bằng {value}% máu tối đa của họ.",
-"Di awal pertarungan, memberi sekutu dengan rasio nyawa terendah perisai sebesar {value}% nyawa maksnya.",
-"Al empezar el combate, da al aliado con menor proporción de salud un escudo del {value}% de su salud máxima.",
-"No início da batalha, dá ao aliado com menor proporção de vida um escudo de {value}% da vida máxima dele.",
-"Zu Kampfbeginn erhält der Verbündete mit dem geringsten Lebensanteil einen Schild in Höhe von {value}% seines max. Lebens.",
-"В начале боя союзник с наименьшей долей здоровья получает щит в {value}% его макс. здоровья."
-],
 "rune.trait.lastStand.name": [
 "背水一战",
 "หลังพิงกำแพง",
@@ -618,16 +568,6 @@
 "Última resistência",
 "Letztes Aufgebot",
 "Последний рубеж"
-],
-"rune.trait.lastStand.desc": [
-"生命低于{threshold}%时，获得相当于最大生命{value}%的护盾。每场战斗1次。",
-"เมื่อพลังชีวิตต่ำกว่า {threshold}% ได้รับโล่เท่ากับ {value}% ของพลังชีวิตสูงสุด ครั้งเดียวต่อการต่อสู้",
-"Khi máu dưới {threshold}%, nhận khiên bằng {value}% máu tối đa. Một lần mỗi trận.",
-"Saat nyawa di bawah {threshold}%, dapat perisai {value}% nyawa maks. Sekali per pertarungan.",
-"Al bajar la salud del {threshold}%, obtiene un escudo del {value}% de la salud máxima. Una vez por combate.",
-"Quando a vida cai abaixo de {threshold}%, ganha um escudo de {value}% da vida máxima. Uma vez por batalha.",
-"Fällt das Leben unter {threshold}%, gibt es einen Schild von {value}% des max. Lebens. Einmal pro Kampf.",
-"Когда здоровье падает ниже {threshold}%, даёт щит в {value}% макс. здоровья. Раз за бой."
 ],
 "rune.trait.firstAid.name": [
 "急救",
@@ -639,76 +579,6 @@
 "Erste Hilfe",
 "Первая помощь"
 ],
-"rune.trait.firstAid.desc": [
-"生命低于{threshold}%时，恢复最大生命的{value}%。每场战斗1次。",
-"เมื่อพลังชีวิตต่ำกว่า {threshold}% ฟื้นฟู {value}% ของพลังชีวิตสูงสุด ครั้งเดียวต่อการต่อสู้",
-"Khi máu dưới {threshold}%, hồi {value}% máu tối đa. Một lần mỗi trận.",
-"Saat nyawa di bawah {threshold}%, memulihkan {value}% nyawa maks. Sekali per pertarungan.",
-"Al bajar la salud del {threshold}%, recupera el {value}% de la salud máxima. Una vez por combate.",
-"Quando a vida cai abaixo de {threshold}%, recupera {value}% da vida máxima. Uma vez por batalha.",
-"Fällt das Leben unter {threshold}%, werden {value}% des max. Lebens wiederhergestellt. Einmal pro Kampf.",
-"Когда здоровье падает ниже {threshold}%, восстанавливает {value}% макс. здоровья. Раз за бой."
-],
-"rune.trait.focusStudy.name": [
-"瞄准研究",
-"วิจัยการเล็ง",
-"Nghiên cứu Ngắm bắn",
-"Riset Bidikan",
-"Investigación de puntería",
-"Pesquisa de mira",
-"Zielforschung",
-"Исследование прицела"
-],
-"rune.trait.focusStudy.desc": [
-"暴击率提升{value}%。",
-"อัตราคริติคอลเพิ่มขึ้น {value}%",
-"Tỉ lệ chí mạng tăng {value}%.",
-"Peluang kritis naik {value}%.",
-"La probabilidad crítica sube un {value}%.",
-"A chance crítica sobe {value}%.",
-"Die kritische Rate steigt um {value}%.",
-"Шанс крита растёт на {value}%."
-],
-"rune.trait.awakening.name": [
-"觉醒促进",
-"เร่งปลุกพลัง",
-"Thúc đẩy Thức tỉnh",
-"Pemicu Kebangkitan",
-"Impulso de Despertar",
-"Impulso de Despertar",
-"Erwachensschub",
-"Ускорение пробуждения"
-],
-"rune.trait.awakening.desc": [
-"每次普通攻击获得的必杀技充能提升{value}。",
-"ค่าชาร์จท่าไม้ตายที่ได้จากการโจมตีปกติแต่ละครั้งเพิ่มขึ้น {value}",
-"Lượng nạp Tuyệt kỹ mỗi đòn đánh thường tăng {value}.",
-"Isi Ultimate per serangan dasar naik {value}.",
-"La carga de Definitiva por ataque básico sube {value}.",
-"A carga da Suprema por ataque básico sobe {value}.",
-"Die Ultimativ-Ladung pro Normalangriff steigt um {value}.",
-"Заряд ульты за обычную атаку растёт на {value}."
-],
-"rune.trait.resonance.name": [
-"野性共鸣",
-"เสียงสะท้อนความดุร้าย",
-"Cộng hưởng Dã tính",
-"Resonansi Liar",
-"Resonancia salvaje",
-"Ressonância selvagem",
-"Wilde Resonanz",
-"Дикий резонанс"
-],
-"rune.trait.resonance.desc": [
-"野性充能提升{value}%。",
-"การสะสมความดุร้ายเพิ่มขึ้น {value}%",
-"Tích Dã tính tăng {value}%.",
-"Pengisian keganasan naik {value}%.",
-"La carga de Ferocidad sube un {value}%.",
-"A carga de Ferocidade sobe {value}%.",
-"Die Wildheitsladung steigt um {value}%.",
-"Заряд ярости растёт на {value}%."
-],
 "rune.trait.hemorrhage.name": [
 "出血研究",
 "วิจัยเลือดไหล",
@@ -719,16 +589,6 @@
 "Blutungsforschung",
 "Исследование кровотечения"
 ],
-"rune.trait.hemorrhage.desc": [
-"每{value}次普通攻击施加[[bleed|出血]]。",
-"โจมตีปกติทุก {value} ครั้งจะติด[[bleed|เลือดไหล]]",
-"Mỗi {value} đòn đánh thường gây [[bleed|chảy máu]].",
-"Setiap {value} serangan dasar memberi [[bleed|pendarahan]].",
-"Cada {value} ataques básicos aplican [[bleed|sangrado]].",
-"A cada {value} ataques básicos, aplica [[bleed|sangramento]].",
-"Alle {value} Normalangriffe verursachen [[bleed|Blutung]].",
-"Каждые {value} обычных атак накладывают [[bleed|кровотечение]]."
-],
 "rune.trait.riposte.name": [
 "反击架势",
 "ท่าตอบโต้",
@@ -738,16 +598,6 @@
 "Contra-ataque pronto",
 "Konterhaltung",
 "Готовность к контратаке"
-],
-"rune.trait.riposte.desc": [
-"暴击时，获得相当于最大生命{value}%的护盾。每{cooldown}秒1次。",
-"เมื่อคริติคอล ได้รับโล่เท่ากับ {value}% ของพลังชีวิตสูงสุด ทุก {cooldown} วินาทีครั้งเดียว",
-"Khi chí mạng, nhận khiên bằng {value}% máu tối đa. Mỗi {cooldown} giây một lần.",
-"Saat kritis, dapat perisai {value}% nyawa maks. Sekali setiap {cooldown} dtk.",
-"Al hacer crítico, obtiene un escudo del {value}% de la salud máxima. Una vez cada {cooldown} s.",
-"Ao acertar crítico, ganha um escudo de {value}% da vida máxima. Uma vez a cada {cooldown} s.",
-"Bei kritischem Treffer gibt es einen Schild von {value}% des max. Lebens. Einmal alle {cooldown} s.",
-"При крите даёт щит в {value}% макс. здоровья. Раз в {cooldown} с."
 ],
 "rune.traitAction.grant": [
 "赋予特性",
@@ -868,5 +718,465 @@
 "Garantia de aumento {done} / {total}",
 "Aufstiegsgarantie {done} / {total}",
 "Гарантия повышения {done} / {total}"
+],
+"rune.trait.stack.sum": [
+"数值叠加。",
+"ค่าจะรวมกัน",
+"Giá trị được cộng dồn.",
+"Nilai dijumlahkan.",
+"Los valores se suman.",
+"Os valores se somam.",
+"Werte werden addiert.",
+"Значения суммируются."
+],
+"rune.trait.stack.independent": [
+"每个符文各自独立触发。",
+"รูนแต่ละอันทำงานแยกกัน",
+"Mỗi Rune kích hoạt riêng.",
+"Setiap runa aktif sendiri-sendiri.",
+"Cada runa se activa por separado.",
+"Cada runa ativa separadamente.",
+"Jede Rune löst separat aus.",
+"Каждая руна срабатывает отдельно."
+],
+"rune.trait.stack.none": [
+"不可叠加。",
+"ไม่สามารถซ้อนกันได้",
+"Không cộng dồn.",
+"Tidak dapat ditumpuk.",
+"No se acumula.",
+"Não acumula.",
+"Nicht stapelbar.",
+"Не суммируется."
+],
+"rune.trait.pool.epic": [
+"史诗及以上",
+"Epic ขึ้นไป",
+"Sử thi trở lên",
+"Epik ke atas",
+"Épica o superior",
+"Épica ou superior",
+"Episch oder höher",
+"Эпическая и выше"
+],
+"rune.trait.pool.legendary": [
+"仅限传说",
+"เฉพาะ Legendary",
+"Chỉ Huyền thoại",
+"Khusus Legendaris",
+"Solo legendaria",
+"Somente lendária",
+"Nur Legendär",
+"Только легендарная"
+],
+"rune.trait.vanguard.desc": [
+"战斗开始时，攻击速度提升{value}%，持续{seconds}秒。其间击倒敌人可延长{extend}秒(每场战斗最多延长{extendMax}秒)。",
+"เมื่อเริ่มการต่อสู้ ความเร็วโจมตีเพิ่ม {value}% นาน {seconds} วินาที หากโค่นศัตรูได้ในช่วงนี้ ระยะเวลาจะยืดออก {extend} วินาที (สูงสุด {extendMax} วินาทีต่อการต่อสู้)",
+"Khi trận chiến bắt đầu, tốc đánh tăng {value}% trong {seconds} giây. Hạ gục kẻ địch trong thời gian này sẽ kéo dài thêm {extend} giây (tối đa {extendMax} giây mỗi trận).",
+"Saat pertempuran dimulai, kecepatan serang naik {value}% selama {seconds} dtk. Mengalahkan musuh dalam waktu itu memperpanjangnya {extend} dtk (maks {extendMax} dtk per pertempuran).",
+"Al empezar el combate, la velocidad de ataque sube un {value}% durante {seconds} s. Derrotar a un enemigo en ese tiempo lo prolonga {extend} s (máx. {extendMax} s por combate).",
+"No início da batalha, a velocidade de ataque sobe {value}% por {seconds} s. Derrotar um inimigo nesse tempo o prolonga em {extend} s (máx. {extendMax} s por batalha).",
+"Zu Kampfbeginn steigt das Angriffstempo {seconds} s lang um {value}%. Besiegst du in dieser Zeit einen Gegner, verlängert sich die Dauer um {extend} s (max. {extendMax} s pro Kampf).",
+"В начале боя скорость атаки растёт на {value}% на {seconds} с. Если за это время побеждён враг, длительность увеличивается на {extend} с (не более {extendMax} с за бой)."
+],
+"rune.trait.pursuit.desc": [
+"击倒敌人后，攻击速度和移动速度提升{value}%，持续{seconds}秒。连续击倒可叠加(最多{stacks}层)。",
+"เมื่อโค่นศัตรู ความเร็วโจมตีและความเร็วเคลื่อนที่เพิ่ม {value}% นาน {seconds} วินาที โค่นต่อเนื่องจะซ้อนกัน (สูงสุด {stacks} ชั้น)",
+"Khi hạ gục kẻ địch, tốc đánh và tốc chạy tăng {value}% trong {seconds} giây. Hạ gục liên tiếp sẽ cộng dồn (tối đa {stacks} cấp).",
+"Saat mengalahkan musuh, kecepatan serang dan gerak naik {value}% selama {seconds} dtk. Kemenangan beruntun menumpuk (maks {stacks} tumpukan).",
+"Al derrotar a un enemigo, la velocidad de ataque y de movimiento suben un {value}% durante {seconds} s. Las derrotas seguidas se acumulan (hasta {stacks} acumulaciones).",
+"Ao derrotar um inimigo, a velocidade de ataque e de movimento sobem {value}% por {seconds} s. Vitórias seguidas acumulam (até {stacks} acúmulos).",
+"Beim Besiegen eines Gegners steigen Angriffs- und Bewegungstempo {seconds} s lang um {value}%. Aufeinanderfolgende Siege stapeln sich (bis zu {stacks}).",
+"При победе над врагом скорость атаки и перемещения растёт на {value}% на {seconds} с. Победы подряд суммируются (до {stacks} зарядов)."
+],
+"rune.trait.predation.desc": [
+"每{n}次普通攻击，额外造成目标当前生命{value}%的伤害(上限为攻击力的{cap}%)。",
+"ทุก {n} ครั้งของการโจมตีปกติ จะสร้างความเสียหายเพิ่ม {value}% ของ HP ปัจจุบันของเป้าหมาย (ไม่เกิน {cap}% ของพลังโจมตี)",
+"Cứ {n} đòn đánh thường gây thêm sát thương bằng {value}% HP hiện tại của mục tiêu (tối đa {cap}% công).",
+"Setiap {n} serangan dasar memberi damage tambahan sebesar {value}% HP target saat ini (maks {cap}% serangan).",
+"Cada {n} ataques básicos infligen daño extra igual al {value}% de la vida actual del objetivo (límite: {cap}% del ataque).",
+"A cada {n} ataques básicos causa dano extra igual a {value}% da vida atual do alvo (limite: {cap}% do ataque).",
+"Alle {n} Basisangriffe verursachen zusätzlichen Schaden in Höhe von {value}% der aktuellen Lebenspunkte des Ziels (höchstens {cap}% des Angriffs).",
+"Каждые {n} базовых атаки наносят дополнительный урон в размере {value}% текущего здоровья цели (не более {cap}% атаки)."
+],
+"rune.trait.tenacity.desc": [
+"连续攻击同一敌人时，每次造成的伤害提升{value}%(最多{stacks}层)。击倒该敌人后一半层数延续到下一目标，更换目标则清除。",
+"ทุกครั้งที่โจมตีศัตรูตัวเดิมต่อเนื่อง ความเสียหายเพิ่ม {value}% (สูงสุด {stacks} ชั้น) เมื่อโค่นศัตรู ครึ่งหนึ่งของชั้นจะส่งต่อไปยังเป้าหมายถัดไป และจะหายไปเมื่อเปลี่ยนเป้าหมาย",
+"Mỗi đòn liên tiếp vào cùng một kẻ địch tăng {value}% sát thương gây ra (tối đa {stacks} cấp). Khi hạ gục, một nửa số cấp chuyển sang mục tiêu tiếp theo; đổi mục tiêu sẽ mất hết.",
+"Setiap serangan beruntun ke musuh yang sama menaikkan damage {value}% (maks {stacks} tumpukan). Saat musuh kalah, separuh tumpukan berpindah ke target berikutnya; berganti target menghapusnya.",
+"Cada golpe seguido al mismo enemigo aumenta el daño infligido un {value}% (hasta {stacks} acumulaciones). Al derrotarlo, la mitad pasa al siguiente objetivo; cambiar de objetivo las elimina.",
+"Cada golpe seguido no mesmo inimigo aumenta o dano causado em {value}% (até {stacks} acúmulos). Ao derrotá-lo, metade dos acúmulos passa ao próximo alvo; trocar de alvo os remove.",
+"Jeder aufeinanderfolgende Treffer auf denselben Gegner erhöht den verursachten Schaden um {value}% (bis zu {stacks} Stapel). Beim Besiegen geht die Hälfte der Stapel auf das nächste Ziel über; ein Zielwechsel löscht sie.",
+"Каждый удар подряд по одному и тому же врагу повышает наносимый урон на {value}% (до {stacks} зарядов). При победе половина зарядов переходит на следующую цель; смена цели сбрасывает их."
+],
+"rune.trait.guardian.desc": [
+"战斗开始时，为生命比例最低的友方提供相当于其最大生命{value}%的护盾。",
+"เมื่อเริ่มการต่อสู้ มอบโล่เท่ากับ {value}% ของ HP สูงสุดแก่พันธมิตรที่มีสัดส่วน HP ต่ำที่สุด",
+"Khi trận chiến bắt đầu, tạo khiên bằng {value}% HP tối đa của đồng minh có tỷ lệ HP thấp nhất cho chính đồng minh đó.",
+"Saat pertempuran dimulai, memberi sekutu dengan rasio HP terendah perisai sebesar {value}% HP maks sekutu itu.",
+"Al empezar el combate, otorga al aliado con menor proporción de vida un escudo igual al {value}% de su vida máxima.",
+"No início da batalha, concede ao aliado com menor proporção de vida um escudo igual a {value}% da vida máxima dele.",
+"Zu Kampfbeginn erhält der Verbündete mit dem geringsten Lebensanteil einen Schild in Höhe von {value}% seiner maximalen Lebenspunkte.",
+"В начале боя союзник с наименьшей долей здоровья получает щит в размере {value}% его максимального здоровья."
+],
+"rune.trait.lastStand.desc": [
+"生命低于{threshold}%时，获得相当于最大生命{value}%的护盾，并使攻击速度提升{value2}%，持续{seconds}秒。每个符文每场战斗一次。",
+"เมื่อ HP ต่ำกว่า {threshold}% จะได้รับโล่เท่ากับ {value}% ของ HP สูงสุด และความเร็วโจมตีเพิ่ม {value2}% นาน {seconds} วินาที รูนละ 1 ครั้งต่อการต่อสู้",
+"Khi HP dưới {threshold}%, nhận khiên bằng {value}% HP tối đa và tăng {value2}% tốc đánh trong {seconds} giây. Mỗi Rune một lần mỗi trận.",
+"Saat HP di bawah {threshold}%, mendapat perisai sebesar {value}% HP maks dan kecepatan serang naik {value2}% selama {seconds} dtk. Sekali per pertempuran untuk tiap runa.",
+"Cuando la vida cae por debajo del {threshold}%, obtiene un escudo igual al {value}% de la vida máxima y la velocidad de ataque sube un {value2}% durante {seconds} s. Una vez por combate por runa.",
+"Quando a vida cai abaixo de {threshold}%, ganha um escudo igual a {value}% da vida máxima e a velocidade de ataque sobe {value2}% por {seconds} s. Uma vez por batalha por runa.",
+"Fällt die Gesundheit unter {threshold}%, erhält man einen Schild in Höhe von {value}% der maximalen Lebenspunkte, und das Angriffstempo steigt {seconds} s lang um {value2}%. Einmal pro Kampf und Rune.",
+"Когда здоровье падает ниже {threshold}%, вы получаете щит в размере {value}% максимального здоровья, а скорость атаки растёт на {value2}% на {seconds} с. Раз за бой для каждой руны."
+],
+"rune.trait.firstAid.desc": [
+"生命低于{threshold}%时，立即恢复最大生命{value}%，并在之后{seconds}秒内再恢复同等数值。每个符文每场战斗一次。",
+"เมื่อ HP ต่ำกว่า {threshold}% ฟื้นฟู {value}% ของ HP สูงสุดทันที และฟื้นฟูในปริมาณเท่ากันอีกตลอด {seconds} วินาทีถัดไป รูนละ 1 ครั้งต่อการต่อสู้",
+"Khi HP dưới {threshold}%, hồi ngay {value}% HP tối đa và hồi thêm lượng tương đương trong {seconds} giây tiếp theo. Mỗi Rune một lần mỗi trận.",
+"Saat HP di bawah {threshold}%, langsung memulihkan {value}% HP maks lalu memulihkan jumlah yang sama selama {seconds} dtk berikutnya. Sekali per pertempuran untuk tiap runa.",
+"Cuando la vida cae por debajo del {threshold}%, restaura al instante el {value}% de la vida máxima y la misma cantidad de nuevo durante {seconds} s. Una vez por combate por runa.",
+"Quando a vida cai abaixo de {threshold}%, restaura na hora {value}% da vida máxima e a mesma quantia de novo ao longo de {seconds} s. Uma vez por batalha por runa.",
+"Fällt die Gesundheit unter {threshold}%, werden sofort {value}% der maximalen Lebenspunkte wiederhergestellt und danach über {seconds} s noch einmal dieselbe Menge. Einmal pro Kampf und Rune.",
+"Когда здоровье падает ниже {threshold}%, мгновенно восстанавливается {value}% максимального здоровья и столько же ещё в течение {seconds} с. Раз за бой для каждой руны."
+],
+"rune.trait.focusStudy.name": [
+"先发一击",
+"การโจมตีแรก",
+"Đòn mở màn",
+"Pukulan Pertama",
+"Primer golpe",
+"Primeiro golpe",
+"Erstschlag",
+"Первый удар"
+],
+"rune.trait.focusStudy.desc": [
+"战斗开始后的前{value}次普通攻击必定暴击。",
+"การโจมตีปกติ {value} ครั้งแรกของการต่อสู้จะติดคริติคอลเสมอ",
+"{value} đòn đánh thường đầu tiên của trận luôn chí mạng.",
+"{value} serangan dasar pertama dalam pertempuran selalu menjadi kritikal.",
+"Los primeros {value} ataques básicos del combate siempre son críticos.",
+"Os primeiros {value} ataques básicos da batalha são sempre críticos.",
+"Die ersten {value} Basisangriffe eines Kampfes sind immer kritische Treffer.",
+"Первые {value} базовых атак в бою всегда наносят критический удар."
+],
+"rune.trait.awakening.name": [
+"预热",
+"วอร์มอัป",
+"Khởi động",
+"Pemanasan",
+"Calentamiento",
+"Aquecimento",
+"Aufwärmen",
+"Разогрев"
+],
+"rune.trait.awakening.desc": [
+"战斗开始时必杀技槽已蓄满{value}%。合计最多{cap}%。",
+"เริ่มการต่อสู้โดยมีหลอดท่าไม้ตายเต็ม {value}% รวมสูงสุด {cap}%",
+"Trận đấu bắt đầu với thanh Tuyệt kỹ đã đầy {value}%. Tổng tối đa {cap}%.",
+"Pertempuran dimulai dengan gauge ultimate terisi {value}%. Total maks {cap}%.",
+"El combate empieza con el medidor de definitiva al {value}%. Total máximo: {cap}%.",
+"A batalha começa com o medidor de suprema {value}% cheio. Total máximo de {cap}%.",
+"Der Kampf beginnt mit {value}% gefüllter Ultimativ-Leiste. Insgesamt höchstens {cap}%.",
+"Бой начинается с {value}% заполненной шкалой ульты. Суммарно не более {cap}%."
+],
+"rune.trait.resonance.name": [
+"野性点燃",
+"จุดไฟสัญชาตญาณ",
+"Châm lửa hoang dã",
+"Penyulut Liar",
+"Ignición salvaje",
+"Ignição selvagem",
+"Wildzündung",
+"Разжигание дикости"
+],
+"rune.trait.resonance.desc": [
+"击倒敌人时，[[ferocity|野性]]槽增加最大值的{value}%。每个符文每{cooldown}秒一次。",
+"เมื่อโค่นศัตรู หลอด[[ferocity|สัญชาตญาณ]]จะเพิ่ม {value}% ของค่าสูงสุด รูนละ 1 ครั้งทุก {cooldown} วินาที",
+"Khi hạ gục kẻ địch, thanh [[ferocity|Hoang tính]] tăng {value}% giá trị tối đa. Mỗi Rune một lần mỗi {cooldown} giây.",
+"Saat mengalahkan musuh, gauge [[ferocity|Keliaran]] terisi {value}% dari maksimum. Sekali tiap {cooldown} dtk untuk tiap runa.",
+"Al derrotar a un enemigo, el medidor de [[ferocity|Ferocidad]] se llena un {value}% de su máximo. Una vez cada {cooldown} s por runa.",
+"Ao derrotar um inimigo, o medidor de [[ferocity|Ferocidade]] enche {value}% do máximo. Uma vez a cada {cooldown} s por runa.",
+"Beim Besiegen eines Gegners füllt sich die [[ferocity|Wildheit]]sleiste um {value}% ihres Maximums. Einmal alle {cooldown} s pro Rune.",
+"При победе над врагом шкала [[ferocity|Дикости]] заполняется на {value}% от максимума. Раз в {cooldown} с для каждой руны."
+],
+"rune.trait.hemorrhage.desc": [
+"每{value}次普通攻击施加[[bleed|出血]]。",
+"ทุก {value} ครั้งของการโจมตีปกติ จะทำให้ติด[[bleed|เลือดไหล]]",
+"Cứ {value} đòn đánh thường gây [[bleed|Chảy máu]].",
+"Setiap {value} serangan dasar menimbulkan [[bleed|Pendarahan]].",
+"Cada {value} ataques básicos infligen [[bleed|Sangrado]].",
+"A cada {value} ataques básicos causa [[bleed|Sangramento]].",
+"Alle {value} Basisangriffe verursachen [[bleed|Blutung]].",
+"Каждые {value} базовых атаки накладывают [[bleed|Кровотечение]]."
+],
+"rune.trait.riposte.desc": [
+"暴击时获得相当于最大生命{value}%的护盾。每个符文每{cooldown}秒一次。",
+"เมื่อติดคริติคอล จะได้รับโล่เท่ากับ {value}% ของ HP สูงสุด รูนละ 1 ครั้งทุก {cooldown} วินาที",
+"Khi chí mạng, nhận khiên bằng {value}% HP tối đa. Mỗi Rune một lần mỗi {cooldown} giây.",
+"Saat kritikal terjadi, mendapat perisai sebesar {value}% HP maks. Sekali tiap {cooldown} dtk untuk tiap runa.",
+"Al asestar un crítico, obtiene un escudo igual al {value}% de la vida máxima. Una vez cada {cooldown} s por runa.",
+"Ao dar um crítico, ganha um escudo igual a {value}% da vida máxima. Uma vez a cada {cooldown} s por runa.",
+"Bei einem kritischen Treffer erhält man einen Schild in Höhe von {value}% der maximalen Lebenspunkte. Einmal alle {cooldown} s pro Rune.",
+"При критическом ударе вы получаете щит в размере {value}% максимального здоровья. Раз в {cooldown} с для каждой руны."
+],
+"rune.trait.afterglow.name": [
+"余韵",
+"แสงเรืองหลังจบ",
+"Dư âm",
+"Gema Sisa",
+"Resplandor",
+"Rescaldo",
+"Nachglühen",
+"Отголосок"
+],
+"rune.trait.afterglow.desc": [
+"释放必杀技后，攻击速度提升{value}%，持续{seconds}秒。",
+"เมื่อใช้ท่าไม้ตาย ความเร็วโจมตีเพิ่ม {value}% นาน {seconds} วินาที",
+"Dùng Tuyệt kỹ sẽ tăng {value}% tốc đánh trong {seconds} giây.",
+"Menggunakan ultimate menaikkan kecepatan serang {value}% selama {seconds} dtk.",
+"Usar la definitiva sube la velocidad de ataque un {value}% durante {seconds} s.",
+"Usar a suprema sobe a velocidade de ataque em {value}% por {seconds} s.",
+"Das Einsetzen der Ultimativ-Fähigkeit erhöht das Angriffstempo {seconds} s lang um {value}%.",
+"Использование ульты повышает скорость атаки на {value}% на {seconds} с."
+],
+"rune.trait.bulwarkCry.name": [
+"展开壁垒",
+"ป้อมปราการ",
+"Dựng thành lũy",
+"Benteng",
+"Baluarte",
+"Baluarte",
+"Bollwerk",
+"Оплот"
+],
+"rune.trait.bulwarkCry.desc": [
+"释放必杀技时获得相当于最大生命{value}%的护盾。每个符文每场战斗{times}次。",
+"เมื่อใช้ท่าไม้ตายจะได้รับโล่เท่ากับ {value}% ของ HP สูงสุด รูนละ {times} ครั้งต่อการต่อสู้",
+"Dùng Tuyệt kỹ sẽ nhận khiên bằng {value}% HP tối đa. {times} lần mỗi trận cho mỗi Rune.",
+"Menggunakan ultimate memberi perisai sebesar {value}% HP maks. {times} kali per pertempuran untuk tiap runa.",
+"Usar la definitiva otorga un escudo igual al {value}% de la vida máxima. {times} vez/veces por combate por runa.",
+"Usar a suprema concede um escudo igual a {value}% da vida máxima. {times} vez(es) por batalha por runa.",
+"Das Einsetzen der Ultimativ-Fähigkeit gewährt einen Schild in Höhe von {value}% der maximalen Lebenspunkte. {times}-mal pro Kampf und Rune.",
+"Использование ульты даёт щит в размере {value}% максимального здоровья. {times} раз(а) за бой для каждой руны."
+],
+"rune.trait.spoils.name": [
+"回收战利品",
+"เก็บของที่ริบได้",
+"Thu hồi chiến lợi phẩm",
+"Rampasan",
+"Botín",
+"Espólios",
+"Beutezug",
+"Трофеи"
+],
+"rune.trait.spoils.desc": [
+"击倒敌人时恢复最大生命{value}%。每个符文每{cooldown}秒一次，每场战斗最多{times}次。",
+"เมื่อโค่นศัตรู ฟื้นฟู {value}% ของ HP สูงสุด รูนละ 1 ครั้งทุก {cooldown} วินาที สูงสุด {times} ครั้งต่อการต่อสู้",
+"Khi hạ gục kẻ địch, hồi {value}% HP tối đa. Mỗi Rune một lần mỗi {cooldown} giây, tối đa {times} lần mỗi trận.",
+"Saat mengalahkan musuh, memulihkan {value}% HP maks. Sekali tiap {cooldown} dtk untuk tiap runa, maks {times} kali per pertempuran.",
+"Al derrotar a un enemigo, restaura el {value}% de la vida máxima. Una vez cada {cooldown} s por runa, hasta {times} veces por combate.",
+"Ao derrotar um inimigo, restaura {value}% da vida máxima. Uma vez a cada {cooldown} s por runa, até {times} vezes por batalha.",
+"Beim Besiegen eines Gegners werden {value}% der maximalen Lebenspunkte wiederhergestellt. Einmal alle {cooldown} s pro Rune, bis zu {times}-mal pro Kampf.",
+"При победе над врагом восстанавливается {value}% максимального здоровья. Раз в {cooldown} с для каждой руны, до {times} раз за бой."
+],
+"rune.trait.warCry.name": [
+"鼓舞",
+"ปลุกใจ",
+"Cổ vũ",
+"Penyemangat",
+"Arenga",
+"Incentivo",
+"Anfeuern",
+"Воодушевление"
+],
+"rune.trait.warCry.desc": [
+"战斗开始时，全体友方攻击速度提升{value}%，持续{seconds}秒。",
+"เมื่อเริ่มการต่อสู้ ความเร็วโจมตีของพันธมิตรทุกคนเพิ่ม {value}% นาน {seconds} วินาที",
+"Khi trận chiến bắt đầu, tốc đánh của toàn bộ đồng minh tăng {value}% trong {seconds} giây.",
+"Saat pertempuran dimulai, kecepatan serang semua sekutu naik {value}% selama {seconds} dtk.",
+"Al empezar el combate, la velocidad de ataque de todos los aliados sube un {value}% durante {seconds} s.",
+"No início da batalha, a velocidade de ataque de todos os aliados sobe {value}% por {seconds} s.",
+"Zu Kampfbeginn steigt das Angriffstempo aller Verbündeten {seconds} s lang um {value}%.",
+"В начале боя скорость атаки всех союзников растёт на {value}% на {seconds} с."
+],
+"rune.trait.steadyBreath.name": [
+"调整呼吸",
+"หายใจให้เป็นจังหวะ",
+"Lấy lại nhịp thở",
+"Mengatur Napas",
+"Recobrar el aliento",
+"Recuperar o fôlego",
+"Durchatmen",
+"Перевести дух"
+],
+"rune.trait.steadyBreath.desc": [
+"普通攻击命中时恢复最大生命{value}%。每个符文每{cooldown}秒一次，每场战斗最多{times}次。",
+"เมื่อการโจมตีปกติโดนเป้าหมาย ฟื้นฟู {value}% ของ HP สูงสุด รูนละ 1 ครั้งทุก {cooldown} วินาที สูงสุด {times} ครั้งต่อการต่อสู้",
+"Khi đòn đánh thường trúng đích, hồi {value}% HP tối đa. Mỗi Rune một lần mỗi {cooldown} giây, tối đa {times} lần mỗi trận.",
+"Saat serangan dasar mengenai target, memulihkan {value}% HP maks. Sekali tiap {cooldown} dtk untuk tiap runa, maks {times} kali per pertempuran.",
+"Cuando un ataque básico acierta, restaura el {value}% de la vida máxima. Una vez cada {cooldown} s por runa, hasta {times} veces por combate.",
+"Quando um ataque básico acerta, restaura {value}% da vida máxima. Uma vez a cada {cooldown} s por runa, até {times} vezes por batalha.",
+"Trifft ein Basisangriff, werden {value}% der maximalen Lebenspunkte wiederhergestellt. Einmal alle {cooldown} s pro Rune, bis zu {times}-mal pro Kampf.",
+"Когда базовая атака попадает, восстанавливается {value}% максимального здоровья. Раз в {cooldown} с для каждой руны, до {times} раз за бой."
+],
+"rune.trait.heavyBlow.name": [
+"沉重一击",
+"หมัดหนัก",
+"Đòn nặng",
+"Pukulan Berat",
+"Golpe contundente",
+"Golpe pesado",
+"Wuchtiger Hieb",
+"Тяжёлый удар"
+],
+"rune.trait.heavyBlow.desc": [
+"暴击时使被命中的敌人陷入[[stagger|硬直]]。每{value}秒一次。",
+"เมื่อติดคริติคอล จะทำให้เป้าหมายติด[[stagger|ชะงัก]] ทำงานได้ 1 ครั้งทุก {value} วินาที",
+"Khi chí mạng, gây [[stagger|Khựng]] lên mục tiêu bị trúng. Một lần mỗi {value} giây.",
+"Saat kritikal terjadi, musuh yang terkena menjadi [[stagger|Goyah]]. Sekali tiap {value} dtk.",
+"Un golpe crítico inflige [[stagger|Tambaleo]] al objetivo. Una vez cada {value} s.",
+"Um golpe crítico causa [[stagger|Cambaleio]] ao alvo. Uma vez a cada {value} s.",
+"Ein kritischer Treffer verursacht beim Ziel [[stagger|Taumeln]]. Einmal alle {value} s.",
+"Критический удар накладывает на цель [[stagger|Ошеломление]]. Раз в {value} с."
+],
+"rune.trait.curseSeed.name": [
+"诅咒之种",
+"เมล็ดคำสาป",
+"Hạt giống nguyền",
+"Benih Kutukan",
+"Semilla de maldición",
+"Semente da maldição",
+"Fluchsaat",
+"Семя проклятия"
+],
+"rune.trait.curseSeed.desc": [
+"每{value}次普通攻击对敌人施加[[curse|诅咒]]。",
+"ทุก {value} ครั้งของการโจมตีปกติ จะทำให้ศัตรูติด[[curse|คำสาป]]",
+"Cứ {value} đòn đánh thường gây [[curse|Nguyền rủa]] lên kẻ địch.",
+"Setiap {value} serangan dasar menimbulkan [[curse|Kutukan]] pada musuh.",
+"Cada {value} ataques básicos infligen [[curse|Maldición]] al enemigo.",
+"A cada {value} ataques básicos causa [[curse|Maldição]] ao inimigo.",
+"Alle {value} Basisangriffe verursachen beim Gegner [[curse|Fluch]].",
+"Каждые {value} базовых атаки накладывают на врага [[curse|Проклятие]]."
+],
+"rune.trait.rhythm.name": [
+"三拍子",
+"จังหวะสาม",
+"Nhịp ba",
+"Tiga Ketukan",
+"Compás de tres",
+"Compasso triplo",
+"Dreivierteltakt",
+"Три такта"
+],
+"rune.trait.rhythm.desc": [
+"每第{n}次普通攻击额外造成{value}%的伤害。",
+"การโจมตีปกติทุกครั้งที่ {n} สร้างความเสียหายเพิ่ม {value}%",
+"Mỗi đòn đánh thường thứ {n} gây thêm {value}% sát thương.",
+"Setiap serangan dasar ke-{n} memberi damage tambahan {value}%.",
+"Cada {n}.º ataque básico inflige un {value}% de daño extra.",
+"A cada {n}º ataque básico causa {value}% de dano extra.",
+"Jeder {n}. Basisangriff verursacht {value}% zusätzlichen Schaden.",
+"Каждая {n}-я базовая атака наносит {value}% дополнительного урона."
+],
+"rune.trait.executioner.name": [
+"处刑者之眼",
+"ดวงตาเพชฌฆาต",
+"Mắt đao phủ",
+"Mata Algojo",
+"Ojo del verdugo",
+"Olhar do carrasco",
+"Auge des Henkers",
+"Взор палача"
+],
+"rune.trait.executioner.desc": [
+"对生命不高于{threshold}%的敌人造成的伤害提升{value}%。",
+"ความเสียหายต่อศัตรูที่มี HP ไม่เกิน {threshold}% เพิ่ม {value}%",
+"Sát thương gây ra cho kẻ địch có HP từ {threshold}% trở xuống tăng {value}%.",
+"Damage terhadap musuh dengan HP {threshold}% ke bawah naik {value}%.",
+"El daño infligido a enemigos con un {threshold}% de vida o menos aumenta un {value}%.",
+"O dano causado a inimigos com {threshold}% de vida ou menos aumenta {value}%.",
+"Der Schaden gegen Gegner mit höchstens {threshold}% Lebenspunkten steigt um {value}%.",
+"Урон по врагам со здоровьем {threshold}% и ниже повышается на {value}%."
+],
+"rune.trait.deepWound.name": [
+"暴击增幅",
+"ขยายคริติคอล",
+"Khuếch đại chí mạng",
+"Penguat Kritikal",
+"Amplificador crítico",
+"Amplificador crítico",
+"Krit-Verstärker",
+"Усилитель критов"
+],
+"rune.trait.deepWound.desc": [
+"暴击伤害提升{value}%。合计最多{cap}%。",
+"ความเสียหายคริติคอลเพิ่ม {value}% รวมสูงสุด {cap}%",
+"Sát thương chí mạng tăng {value}%. Tổng tối đa {cap}%.",
+"Damage kritikal naik {value}%. Total maks {cap}%.",
+"El daño crítico aumenta un {value}%. Total máximo: {cap}%.",
+"O dano crítico aumenta {value}%. Total máximo de {cap}%.",
+"Kritischer Schaden steigt um {value}%. Insgesamt höchstens {cap}%.",
+"Критический урон повышается на {value}%. Суммарно не более {cap}%."
+],
+"rune.trait.overflow.name": [
+"满溢之力",
+"พลังล้น",
+"Sức mạnh tràn",
+"Kekuatan Meluap",
+"Poder desbordante",
+"Poder transbordante",
+"Überfließende Kraft",
+"Переполняющая сила"
+],
+"rune.trait.overflow.desc": [
+"护盾存在期间，造成的伤害提升{value}%。",
+"ขณะที่ยังมีโล่เหลืออยู่ ความเสียหายที่สร้างเพิ่ม {value}%",
+"Khi còn khiên, sát thương gây ra tăng {value}%.",
+"Selama perisai masih ada, damage yang diberikan naik {value}%.",
+"Mientras quede un escudo, el daño infligido aumenta un {value}%.",
+"Enquanto houver escudo, o dano causado aumenta {value}%.",
+"Solange ein Schild besteht, steigt der verursachte Schaden um {value}%.",
+"Пока остаётся щит, наносимый урон повышается на {value}%."
+],
+"rune.trait.warmUp.name": [
+"渐入佳境",
+"ร้อนแรงขึ้น",
+"Nóng dần",
+"Makin Panas",
+"Entrar en calor",
+"Esquentando",
+"Heißlaufen",
+"Накал"
+],
+"rune.trait.warmUp.desc": [
+"战斗中每过{seconds}秒，攻击速度提升{value}%(最多{stacks}层)。",
+"ทุก {seconds} วินาทีในการต่อสู้ ความเร็วโจมตีเพิ่ม {value}% (สูงสุด {stacks} ชั้น)",
+"Cứ mỗi {seconds} giây trong trận, tốc đánh tăng {value}% (tối đa {stacks} cấp).",
+"Setiap {seconds} dtk dalam pertempuran, kecepatan serang naik {value}% (maks {stacks} tumpukan).",
+"Cada {seconds} s de combate, la velocidad de ataque sube un {value}% (hasta {stacks} acumulaciones).",
+"A cada {seconds} s de batalha, a velocidade de ataque sobe {value}% (até {stacks} acúmulos).",
+"Alle {seconds} s im Kampf steigt das Angriffstempo um {value}% (bis zu {stacks} Stapel).",
+"Каждые {seconds} с боя скорость атаки растёт на {value}% (до {stacks} зарядов)."
+],
+"rune.trait.perfectAim.name": [
+"精准瞄准",
+"เล็งสมบูรณ์แบบ",
+"Nhắm hoàn hảo",
+"Bidikan Sempurna",
+"Puntería perfecta",
+"Mira perfeita",
+"Perfektes Zielen",
+"Идеальный прицел"
+],
+"rune.trait.perfectAim.desc": [
+"每{value}次普通攻击必定暴击。每多一个此符文，次数减少1(最少{min}次)。",
+"ทุก {value} ครั้งของการโจมตีปกติจะติดคริติคอลเสมอ ทุกครั้งที่มีรูนนี้เพิ่มอีกหนึ่งอัน จำนวนครั้งจะลดลง 1 (ต่ำสุด {min} ครั้ง)",
+"Cứ {value} đòn đánh thường luôn chí mạng. Mỗi Rune này thêm vào giảm 1 số đòn (tối thiểu {min}).",
+"Setiap {value} serangan dasar pasti kritikal. Setiap tambahan runa ini mengurangi hitungan 1 (minimal {min}).",
+"Cada {value} ataques básicos son siempre críticos. Cada copia adicional de esta runa reduce la cuenta en 1 (mínimo {min}).",
+"A cada {value} ataques básicos o golpe é sempre crítico. Cada cópia adicional desta runa reduz a contagem em 1 (mínimo {min}).",
+"Alle {value} Basisangriffe sind immer kritische Treffer. Jede weitere Kopie dieser Rune senkt die Anzahl um 1 (mindestens {min}).",
+"Каждые {value} базовых атаки всегда наносят критический удар. Каждая дополнительная такая руна уменьшает число на 1 (минимум {min})."
 ]
 }

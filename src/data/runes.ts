@@ -1,6 +1,6 @@
 import { generateRune, runeBatchEnhancementTargets, runeEnhancementAttempts, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
 import { grantRuneTrait } from "../core/runeTraits";
-import { RUNE_TRAIT_IDS } from "./runeTraits";
+import { LEGENDARY_EXCLUSIVE_SHARE, RUNE_TRAIT_POOL } from "./runeTraits";
 import { t } from "../i18n";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
@@ -100,7 +100,7 @@ export function backfillStarterRuneTraits(runes: readonly RuneInstance[], random
   return runes.map((rune) => {
     const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
     if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== undefined) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 
@@ -131,7 +131,7 @@ export function createStarterRunes(random: () => number): RuneInstance[] {
       random,
     });
     if (!STARTER_RUNE_TRAITED[index]) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 

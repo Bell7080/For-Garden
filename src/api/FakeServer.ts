@@ -86,8 +86,8 @@ import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost, runeSellValue } 
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
-import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
-import { RUNE_TRAIT_IDS, RUNE_TRAIT_ITEMS } from "../data/runeTraits";
+import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, pickRuneTraitId, grantRuneTrait as rollRuneTrait, rerollRuneTrait as rollRuneTraitReroll, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, type RuneTrait } from "../core/runeTraits";
+import { LEGENDARY_EXCLUSIVE_SHARE, RUNE_TRAIT_ITEMS, RUNE_TRAIT_POOL } from "../data/runeTraits";
 import { nextStrataCrystalAt, siteCooldownMs, strataCrystalStage } from "../core/strataCrystal";
 import { beginStrataSiteCooldown, canDigStrataTile, createStrataBoard, digStrataTile as digTile, absorbStrataTickets, nextStrataChargeAt, rollStrataResearchItem, rollStrataRuneRarity, settleStrataCharges, strataBoardView, strataSiteCooldownUntil } from "../core/strataDig";
 import { findStrataLayer, STRATA_CHARGE } from "../data/strataLayers";
@@ -2237,7 +2237,7 @@ export class FakeServer implements GameApi {
         if (reward.kind === "rune") {
           const base = this.createGrantedRune(reward.rarity, nextRunes, reward.part);
           // 특성 확정 룬은 발급하는 자리에서 특성 하나를 붙인다(하한 고급) — 종류·등급은 서버가 굴린다.
-          const rune: RuneInstance = reward.trait ? { ...base, trait: rollRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random: this.random }) } : base;
+          const rune: RuneInstance = reward.trait ? { ...base, trait: rollRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) } : base;
           assertValidRuneInstance(rune);
           nextRunes = [...nextRunes, rune];
           firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName, trait: rune.trait !== undefined });
@@ -3474,7 +3474,7 @@ export class FakeServer implements GameApi {
     const traitGrade = rollRuneSynthesisTraitGrade(selected.map((rune) => rune.trait), this.random());
     const rune: RuneInstance = traitGrade === undefined
       ? base
-      : { ...base, trait: { id: RUNE_TRAIT_IDS[Math.min(RUNE_TRAIT_IDS.length - 1, Math.floor(this.random() * RUNE_TRAIT_IDS.length))], grade: traitGrade, upgradeMisses: 0 } };
+      : { ...base, trait: { id: pickRuneTraitId(RUNE_TRAIT_POOL, traitGrade, this.random, LEGENDARY_EXCLUSIVE_SHARE), grade: traitGrade, upgradeMisses: 0 } };
     const nextRunes = [...remaining, rune];
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
     // 끼고 있던 재료는 사라지므로 장착 칸도 같은 저장 한 번에 비운다 — 없는 룬 ID를 가리키는 칸이 남지 않게.
@@ -3843,7 +3843,7 @@ export class FakeServer implements GameApi {
       throw new GameApiError("RUNE_TRAIT_GRADE_REACHED", "이미 그 등급 이상의 특성입니다.");
     }
     this.consumeTraitItem(entry.itemId);
-    const trait = rollRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: entry.minimumGrade, random: this.random });
+    const trait = rollRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: entry.minimumGrade, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
     const rune: RuneInstance = { ...current, trait };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
@@ -3881,7 +3881,7 @@ export class FakeServer implements GameApi {
     if (current.trait === undefined) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "재해석할 특성이 없습니다.");
     const cost = RUNE_TRAIT_RULES.rerollCost[current.trait.grade];
     if (this.state.wallet.rawStone < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "재해석에 필요한 원석이 부족합니다.");
-    const outcome = rollRuneTraitReroll({ trait: current.trait, traitIds: RUNE_TRAIT_IDS, random: this.random });
+    const outcome = rollRuneTraitReroll({ trait: current.trait, pool: RUNE_TRAIT_POOL, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
     this.state.wallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone - cost };
     this.state.archaeology.pendingReroll = { runeInstanceId: current.instanceId, candidate: outcome.candidate };
     this.persist(this.state);

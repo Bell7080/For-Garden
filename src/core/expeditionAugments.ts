@@ -21,7 +21,12 @@ export type ExpeditionTriggeredPayload =
   | { kind: "ultimateCostReduction"; percent: number }
   | { kind: "conditionalBonusDamage"; percent: number; damageType: DamageType; requiresStatus: "curse" | "stun" }
   | { kind: "lowHpDefense"; belowHpPercent: number; defensePercent: number; resistancePercent: number }
-  | { kind: "heal"; maxHpPercent: number }
+  /** `thenOverSeconds`가 있으면 즉시 회복 뒤 **같은 양**을 그 시간에 걸쳐 더 회복한다. */
+  | { kind: "heal"; maxHpPercent: number; thenOverSeconds?: number }
+  /** 야성 게이지를 최대치의 비율만큼 채운다. 폭주 중에는 공용 야성 경계가 무시한다. */
+  | { kind: "ferocity"; maxPercent: number }
+  /** 지금 걸린 룬 특성 가속이 있으면 남은 시간을 늘린다. `maxExtraSeconds`가 한 판의 늘림 합계 상한이다. */
+  | { kind: "hasteExtend"; seconds: number; maxExtraSeconds: number }
   /**
    * 일정 시간 공격 속도·이동 속도.
    *
@@ -37,6 +42,8 @@ export interface ExpeditionTriggeredEffect {
   payload: ExpeditionTriggeredPayload;
   limits: ExpeditionAugmentLimits;
   scope: ExpeditionAugmentScope;
+  /** `onLowHp`에서 소유자의 체력 비율이 이 값 이하일 때만 발동한다. 없으면 훅이 불린 순간 곧바로 발동한다. */
+  whenHpAtOrBelowPercent?: number;
 }
 
 /** 원정 증강이 영향을 주는 아군 범위다. 지정 효과는 저장된 렐릭 ID 하나만 고른다. */
@@ -55,15 +62,36 @@ export type ExpeditionAugmentEffect =
   /** 표적의 현재 체력 비율이 기준 이상일 때만 얹히는 피해 증가율(%)이다. */
   | { kind: "damageVsHighHpPercent"; percent: number; aboveHpPercent: number; scope: ExpeditionAugmentScope }
   /** 같은 적을 연속으로 때린 겹마다 얹히는 피해 증가율(%)이다. 표적을 바꾸면 겹이 풀린다. */
-  | { kind: "sameTargetStreakPercent"; percentPerStack: number; maxStacks: number; scope: ExpeditionAugmentScope }
+  | { kind: "sameTargetStreakPercent"; percentPerStack: number; maxStacks: number; carryOnKill?: boolean; scope: ExpeditionAugmentScope }
   /**
    * 이미 퍼센트로 세는 능력치에 **덧셈**으로 붙는 가산이다.
    *
    * 곱셈 배율과 섞지 않는 이유는 같은 「+10」이 능력치마다 다른 크기가 되기 때문이다 —
    * 치명타 확률 가산이 패시브(`criticalChancePercent`)와 같은 문법으로 읽히게 한다.
    */
-  | { kind: "flatStat"; stat: "critChance" | "ferocityGain" | "energyGain"; points: number; scope: ExpeditionAugmentScope }
+  | { kind: "flatStat"; stat: FlatStatKind; points: number; scope: ExpeditionAugmentScope }
+  /** 표적의 현재 체력 비율이 기준 이하일 때만 얹히는 피해 증가율(%)이다. */
+  | { kind: "damageVsLowHpPercent"; percent: number; belowHpPercent: number; scope: ExpeditionAugmentScope }
+  /** 자신에게 보호막이 남아 있는 동안 주는 피해 증가율(%)이다. */
+  | { kind: "shieldedDamagePercent"; percent: number; scope: ExpeditionAugmentScope }
+  /** `everyN`번째 기본 공격마다 얹히는 피해 증가율(%)이다. */
+  | { kind: "nthBasicBonusPercent"; percent: number; everyN: number; scope: ExpeditionAugmentScope }
+  /** 전투를 시작하고 처음 `count`번의 기본 공격은 반드시 치명타다. */
+  | { kind: "openingCrits"; count: number; scope: ExpeditionAugmentScope }
+  /** 기본 공격 `everyN`번마다 반드시 치명타다. */
+  | { kind: "periodicCrit"; everyN: number; scope: ExpeditionAugmentScope }
+  /** 전투 시작 시 궁극기 게이지가 비용의 `percent`%만큼 찬 채로 시작한다. */
+  | { kind: "openingEnergyPercent"; percent: number; scope: ExpeditionAugmentScope }
+  /** 기본 공격 `everyN`번마다 표적의 **현재** 체력 비율만큼 추가 피해. 공격력 비례 상한이 있다. */
+  | { kind: "currentHpStrike"; percent: number; everyN: number; attackCapPercent: number; scope: ExpeditionAugmentScope }
+  /** 기본 공격 `everyNAttacks`번마다 저주를 건다. */
+  | { kind: "curseOnAttack"; everyNAttacks: number; scope: ExpeditionAugmentScope }
+  /** `everySeconds`초마다 공격 속도가 `percentPerStack`%씩 오른다. */
+  | { kind: "warmUpHaste"; percentPerStack: number; everySeconds: number; maxStacks: number; scope: ExpeditionAugmentScope }
   | ExpeditionTriggeredEffect;
+
+/** 덧셈으로 붙는 퍼센트 수치의 이름이다. */
+export type FlatStatKind = "critChance" | "ferocityGain" | "energyGain" | "critDamage";
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
 export type ExpeditionAugmentStatMultipliers = Record<ExpeditionAugmentStatKind, number>;
@@ -185,8 +213,52 @@ export function sameTargetStreakMultiplier(effects: readonly ExpeditionAugmentEf
 }
 
 /** 퍼센트 능력치에 덧셈으로 붙는 가산의 합이다. 능력치마다 한 번씩만 더한다. */
-export function flatStatPoints(effects: readonly ExpeditionAugmentEffect[], relicId: string, stat: "critChance" | "ferocityGain" | "energyGain"): number {
+export function flatStatPoints(effects: readonly ExpeditionAugmentEffect[], relicId: string, stat: FlatStatKind): number {
   return effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "flatStat" }> =>
     effect.kind === "flatStat" && effect.stat === stat && augmentAppliesTo(effect, relicId))
     .reduce((sum, effect) => sum + effect.points, 0);
+}
+
+/** 표적의 체력이 기준 이하일 때 얹히는 피해 배율이다. */
+export function lowHpDamageMultiplier(effects: readonly ExpeditionAugmentEffect[], relicId: string, targetHpPercent: number): number {
+  const percent = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "damageVsLowHpPercent" }> =>
+    effect.kind === "damageVsLowHpPercent" && augmentAppliesTo(effect, relicId) && targetHpPercent <= effect.belowHpPercent)
+    .reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+
+/** 보호막이 남아 있는 동안의 피해 배율이다. */
+export function shieldedDamageMultiplier(effects: readonly ExpeditionAugmentEffect[], relicId: string, shielded: boolean): number {
+  if (!shielded) return 1;
+  const percent = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "shieldedDamagePercent" }> =>
+    effect.kind === "shieldedDamagePercent" && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+
+/** 기본 공격 `attackNumber`번째(1부터)에 얹히는 주기 피해 배율이다. */
+export function nthBasicBonusMultiplier(effects: readonly ExpeditionAugmentEffect[], relicId: string, attackNumber: number): number {
+  const percent = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "nthBasicBonusPercent" }> =>
+    effect.kind === "nthBasicBonusPercent" && augmentAppliesTo(effect, relicId) && attackNumber % effect.everyN === 0)
+    .reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+
+/** 시간이 쌓는 가속(달아오름)의 공격 속도 증가율(%)이다. 겹은 흐른 시간에서 바로 나오므로 저장하지 않는다. */
+export function warmUpAttackSpeedPercent(effects: readonly ExpeditionAugmentEffect[], relicId: string, elapsedSeconds: number): number {
+  return effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "warmUpHaste" }> =>
+    effect.kind === "warmUpHaste" && augmentAppliesTo(effect, relicId))
+    .reduce((sum, effect) => sum + effect.percentPerStack * Math.min(effect.maxStacks, Math.floor(Math.max(0, elapsedSeconds) / effect.everySeconds)), 0);
+}
+
+/** 개막 확정 치명타 횟수의 합이다. */
+export function openingCritCount(effects: readonly ExpeditionAugmentEffect[], relicId: string): number {
+  return effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "openingCrits" }> =>
+    effect.kind === "openingCrits" && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.count, 0);
+}
+
+/** 주기 확정 치명타 중 가장 짧은 주기다. 없으면 undefined다. */
+export function periodicCritEvery(effects: readonly ExpeditionAugmentEffect[], relicId: string): number | undefined {
+  const every = effects.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "periodicCrit" }> =>
+    effect.kind === "periodicCrit" && augmentAppliesTo(effect, relicId)).map(({ everyN }) => everyN);
+  return every.length === 0 ? undefined : Math.min(...every);
 }

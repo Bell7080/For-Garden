@@ -56,13 +56,18 @@ function gradeHex(grade: RuneTraitGrade): string {
 }
 
 /** 펼친 한 등급이 차지하는 높이. 정보 줄 둘 + 제목표 + 두 칸으로 선 특성 줄. */
-function expandedHeight(): number {
-  return ODDS.entryPad * 2 + ODDS.infoStep * 2 + ODDS.titleRoom + Math.ceil(RUNE_TRAIT_DEFS.length / 2) * ODDS.traitStep;
+function expandedHeight(grade: RuneTraitGrade): number {
+  return ODDS.entryPad * 2 + ODDS.infoStep * 2 + ODDS.titleRoom + Math.ceil(eligibleDefs(grade).length / 2) * ODDS.traitStep;
+}
+
+/** 그 등급에서 풀에 드는 특성만 — 영웅 이상·전설 전용은 낮은 등급 표에 서지 않는다. */
+function eligibleDefs(grade: RuneTraitGrade): readonly (typeof RUNE_TRAIT_DEFS)[number][] {
+  return RUNE_TRAIT_DEFS.filter((def) => RUNE_TRAIT_GRADES.indexOf(def.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
 }
 
 export function openRuneTraitOdds(options: { scene: Phaser.Scene; popups: PopupLayer }, expanded: RuneTraitGrade | null = RUNE_TRAIT_GRADES[0]): void {
   const { scene, popups } = options;
-  const height = ODDS.topRoom + RUNE_TRAIT_GRADES.length * ODDS.tierStep + (expanded === null ? 0 : expandedHeight()) + ODDS.bottomPad - (ODDS.tierStep - ODDS.tierHeight);
+  const height = ODDS.topRoom + RUNE_TRAIT_GRADES.length * ODDS.tierStep + (expanded === null ? 0 : expandedHeight(expanded)) + ODDS.bottomPad - (ODDS.tierStep - ODDS.tierHeight);
 
   popups.open({
     width: ODDS.width, height, title: t("rune.trait.odds"), y: ODDS.screenTop + height / 2,
@@ -152,7 +157,8 @@ function paintExpanded(
   y += ODDS.titleRoom;
 
   const half = (width - ODDS.columnGap) / 2;
-  RUNE_TRAIT_DEFS.forEach((def, order) => {
+  const defs = eligibleDefs(grade);
+  defs.forEach((def, order) => {
     const x = left + (order % 2) * (half + ODDS.columnGap);
     const row = y + Math.floor(order / 2) * ODDS.traitStep + ODDS.traitStep / 2;
     const value = scene.add.text(x + half - 12, row, traitValueLabel(runeTraitValue(def.id, grade)),
@@ -161,5 +167,5 @@ function paintExpanded(
     shrinkTextToWidth(name, half - value.width - 40);
     parent.add([name, value]);
   });
-  return y + Math.ceil(RUNE_TRAIT_DEFS.length / 2) * ODDS.traitStep;
+  return y + Math.ceil(defs.length / 2) * ODDS.traitStep;
 }

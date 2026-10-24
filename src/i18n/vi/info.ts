@@ -27,7 +27,7 @@ export const INFO_VI = {
   "info.enemy.role.damageReduction": "Bắt đầu với {base}% [[damage-reduction|Giảm sát thương]] và tăng tới {max}% khi [[hp|Máu]] giảm; sát thương từ {ignore} trở xuống bị vô hiệu.",
   "info.enemy.role.percentHpResistance": "Nhận ít hơn {percent}% sát thương theo Máu tối đa.",
   "info.enemy.role.ramp": "[[atk|Công]] và [[ap|Phép]] bắt đầu ở mức {start}% rồi tăng lên 100% trong {seconds} giây.",
-  "info.enemy.role.apGrowth": "[[ap|Phép]] còn tăng dồn thêm {percent}% mỗi giây ngay từ đầu.",
+  "info.enemy.role.apGrowth": "Sau khi đạt 100%, [[atk|Công]] và [[ap|Phép]] vẫn tiếp tục tăng {percent}% mỗi giây.",
   "info.enemy.role.line.normal": "“Bọn tôi á? Chỉ là lính lác đi ngang thôi… nhưng sẽ cố hết sức!”",
   "info.section.rune": "Rune",
   "info.level": "Cấp",

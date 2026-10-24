@@ -27,7 +27,7 @@ export const INFO_PT_BR = {
   "info.enemy.role.damageReduction": "Começa com {base}% de [[damage-reduction|Redução de dano]] e sobe até {max}% conforme a [[hp|Vida]] cai; dano de {ignore} ou menos é anulado.",
   "info.enemy.role.percentHpResistance": "Recebe {percent}% menos dano baseado na Vida máxima.",
   "info.enemy.role.ramp": "O [[atk|Ataque]] e o [[ap|Poder mágico]] começam em {start}% e sobem até 100% em {seconds}s.",
-  "info.enemy.role.apGrowth": "Além disso, o [[ap|Poder mágico]] cresce {percent}% composto a cada segundo desde o início.",
+  "info.enemy.role.apGrowth": "Depois de chegar a 100%, o [[atk|Ataque]] e o [[ap|Poder mágico]] continuam subindo {percent}% a cada segundo.",
   "info.enemy.role.line.normal": "“Nós? Somos só capangas de passagem… mas vamos dar o nosso melhor!”",
   "info.section.rune": "Runa",
   "info.level": "Nível",

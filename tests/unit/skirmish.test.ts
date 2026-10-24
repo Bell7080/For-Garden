@@ -1165,7 +1165,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(firstUltimateAt).toBeGreaterThanOrEqual(30);
     expect(state.phase).toBe("defeat");
     expect(state.elapsed).toBeGreaterThanOrEqual(35);
-    expect(state.elapsed).toBeLessThanOrEqual(60);
+    expect(state.elapsed).toBeLessThanOrEqual(70);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
@@ -2467,34 +2467,35 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
   });
 
-  it("는 불사 자리의 램프(25%→100%, 30초)와 주문력 복리 2%를 0초·1초·여러 초에 쌓고 프레임 분할과 무관하다", () => {
+  it("는 보스·불사 자리의 램프(25%→100%, 30초)와 그 뒤 매초 2% 성장을 프레임 분할과 무관하게 쌓는다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos } = pontosBattle();
       // 실전은 makeFighter가 자리를 보고 시작 몫을 새기지만, 이 도우미는 자리를 나중에 새기므로 첫 몫을 직접 맞춘다.
       pontos.rampFactor = ENCOUNTER_ROLE.endless.ramp!.startPercent / 100;
       frames.forEach((dt) => stepSkirmish(state, dt));
-      // 때릴 때 쓰는 주문력 = 램프를 지난 기본 주문력 + 램프를 지난 복리 증가분(offensiveDefinition + bonusAp).
       return { ap: pontos.def.stats.ap * pontos.rampFactor + pontos.bonusAp, ramp: pontos.rampFactor };
     };
     const baseAp = getRelic("pontos").stats.ap;
     const ramp = ENCOUNTER_ROLE.endless.ramp!;
-    const growth = 1 + (ramp.apGrowthPercentPerSecond ?? 0) / 100;
-    const rampAt = (seconds: number) => 0.25 + 0.75 * Math.min(1, seconds / ramp.seconds);
-    expect(ramp).toMatchObject({ startPercent: 25, seconds: 30, apGrowthPercentPerSecond: 2 });
+    expect(ramp).toEqual({ startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 });
+    expect(ENCOUNTER_ROLE.boss.ramp).toEqual(ramp);
     expect(simulate([]).ap).toBeCloseTo(baseAp * 0.25);
-    expect(simulate([0.25, 0.25, 0.25, 0.25]).ap).toBeCloseTo(baseAp * rampAt(1) * growth);
-    expect(simulate(Array.from({ length: 20 }, () => 0.25)).ap).toBeCloseTo(baseAp * rampAt(5) * growth ** 5);
-    expect(simulate(Array.from({ length: 300 }, () => 1 / 60)).ap).toBeCloseTo(baseAp * rampAt(5) * growth ** 5);
-    // 30초 뒤에는 예전 「심해의 압력」과 완전히 같다 — 램프는 100%이고 복리는 0초부터 센 값이다.
-    expect(simulate(Array.from({ length: 124 }, () => 0.25)).ap).toBeCloseTo(baseAp * growth ** 31);
+    expect(simulate(Array.from({ length: 20 }, () => 0.25)).ramp).toBeCloseTo(0.25 + 0.75 * (5 / 30));
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60)).ramp).toBeCloseTo(0.25 + 0.75 * (5 / 30));
+    // 31초: 램프는 100%를 막 넘겨 1초분(2%) 더 올랐다. 주문력 복리는 없다.
+    expect(simulate(Array.from({ length: 124 }, () => 0.25)).ramp).toBeCloseTo(1.02);
+    expect(simulate(Array.from({ length: 124 }, () => 0.25)).ap).toBeCloseTo(baseAp * 1.02);
   });
 
-  it("는 보스 자리가 램프만 갖고 주문력 복리는 갖지 않는다", () => {
-    expect(ENCOUNTER_ROLE.boss.ramp).toEqual({ startPercent: 25, seconds: 30 });
-    expect(encounterRampFactor(ENCOUNTER_ROLE.boss.ramp!, 0)).toBeCloseTo(0.25);
-    expect(encounterRampFactor(ENCOUNTER_ROLE.boss.ramp!, 15)).toBeCloseTo(0.625);
-    expect(encounterRampFactor(ENCOUNTER_ROLE.boss.ramp!, 30)).toBe(1);
-    expect(encounterRampFactor(ENCOUNTER_ROLE.boss.ramp!, 300)).toBe(1);
+  it("는 100% 뒤에도 보스·불사가 매초 기본값의 2%씩 선형으로 계속 강해진다", () => {
+    for (const role of [ENCOUNTER_ROLE.boss, ENCOUNTER_ROLE.endless]) {
+      const ramp = role.ramp!;
+      expect(encounterRampFactor(ramp, 0)).toBeCloseTo(0.25);
+      expect(encounterRampFactor(ramp, 15)).toBeCloseTo(0.625);
+      expect(encounterRampFactor(ramp, 30)).toBe(1);
+      expect(encounterRampFactor(ramp, 60)).toBeCloseTo(1.6);
+      expect(encounterRampFactor(ramp, 90)).toBeCloseTo(2.2);
+    }
     // 몸집은 보스와 불사가 같은 크기다.
     expect(ENCOUNTER_ROLE.endless.bodyScale).toBe(ENCOUNTER_ROLE.boss.bodyScale);
   });

@@ -9281,18 +9281,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
   tickDeathClock(state, events);
 
-  // 자리의 시간 상승 배율. 램프가 있는 자리(보스·불사)는 완전히 경과한 초마다 공격력·주문력의 몫이 한 칸씩 오른다.
-  // 불사만 갖는 주문력 복리는 0초부터 센 비율을 램프 위에 얹는다 — bonusAp에는 증가분만 저장해
-  // currentAbilityPower가 (램프를 지난) 기본 주문력을 정확히 한 번 더하도록 한다.
+  // 자리의 시간 상승 배율. 램프가 있는 자리(보스·불사)는 완전히 경과한 초마다 공격력·주문력의 몫이 한 칸씩 오르고,
+  // 100%에 닿은 뒤에도 매초 기본값의 일정 비율씩 계속 오른다.
   for (const fighter of state.fighters) {
     const role = fighter.def.encounterRole;
     const ramp = role === undefined ? undefined : ENCOUNTER_ROLE[role].ramp;
     if (!ramp) continue;
     const seconds = Math.floor(state.elapsed + EMERGENCY_RECOVERY.epsilon);
     fighter.rampFactor = encounterRampFactor(ramp, seconds);
-    if (ramp.apGrowthPercentPerSecond !== undefined) {
-      fighter.bonusAp = fighter.def.stats.ap * fighter.rampFactor * (Math.pow(1 + ramp.apGrowthPercentPerSecond / 100, seconds) - 1);
-    }
   }
 
   if (state.boss) {

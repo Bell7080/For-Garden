@@ -27,7 +27,7 @@ export const INFO_RU = {
   "info.enemy.role.damageReduction": "Начинает с {base}% [[damage-reduction|снижения урона]], растущего до {max}% по мере падения [[hp|здоровья]]; урон до {ignore} обнуляется.",
   "info.enemy.role.percentHpResistance": "Получает на {percent}% меньше урона от максимального здоровья.",
   "info.enemy.role.ramp": "[[atk|Атака]] и [[ap|Сила магии]] начинаются с {start}% и за {seconds} с вырастают до 100%.",
-  "info.enemy.role.apGrowth": "Кроме того, [[ap|Сила магии]] с самого начала растёт на {percent}% в секунду по сложному проценту.",
+  "info.enemy.role.apGrowth": "После достижения 100% [[atk|Атака]] и [[ap|Сила магии]] продолжают расти на {percent}% в секунду.",
   "info.enemy.role.line.normal": "«Мы? Просто рядовые, проходили мимо… но постараемся!»",
   "info.section.rune": "Руны",
   "info.level": "Уровень",

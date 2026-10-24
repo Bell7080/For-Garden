@@ -27,7 +27,7 @@ export const INFO_DE = {
   "info.enemy.role.damageReduction": "Beginnt mit {base}% [[damage-reduction|Schadensminderung]], die bis {max}% steigt, je weiter das [[hp|Leben]] sinkt; Schaden von {ignore} oder weniger wird aufgehoben.",
   "info.enemy.role.percentHpResistance": "Erleidet {percent}% weniger Schaden, der auf maximalem Leben basiert.",
   "info.enemy.role.ramp": "[[atk|Angriff]] und [[ap|Zauberkraft]] starten bei {start}% und steigen innerhalb von {seconds} s auf 100%.",
-  "info.enemy.role.apGrowth": "Außerdem wächst die [[ap|Zauberkraft]] von Anfang an jede Sekunde um {percent}% (Zinseszins).",
+  "info.enemy.role.apGrowth": "Nach Erreichen von 100% steigen [[atk|Angriff]] und [[ap|Zauberkraft]] weiter um {percent}% pro Sekunde.",
   "info.enemy.role.line.normal": "„Wir? Nur Handlanger auf der Durchreise… aber wir geben unser Bestes!“",
   "info.section.rune": "Rune",
   "info.level": "Level",

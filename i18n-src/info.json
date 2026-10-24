@@ -150,7 +150,15 @@
 "[[atk|Атака]] и [[ap|Сила магии]] начинаются с {start}% и за {seconds} с вырастают до 100%."
 ],
 "info.enemy.role.apGrowth": [
-"[[ap|法术强度]]另从一开始每秒复合增长{percent}%。",
+"达到100%后，[[atk|攻击力]]与[[ap|法术强度]]仍每秒继续提升{percent}%。",
+"หลังถึง 100% [[atk|พลังโจมตี]]และ[[ap|พลังเวท]]ยังเพิ่มขึ้นต่อเนื่องอีก {percent}% ทุกวินาที",
+"Sau khi đạt 100%, [[atk|Công]] và [[ap|Phép]] vẫn tiếp tục tăng {percent}% mỗi giây.",
+"Setelah mencapai 100%, [[atk|Serangan]] dan [[ap|Kekuatan Magis]] terus naik {percent}% setiap detik.",
+"Tras llegar al 100%, el [[atk|Ataque]] y el [[ap|Poder mágico]] siguen subiendo un {percent}% cada segundo.",
+"Depois de chegar a 100%, o [[atk|Ataque]] e o [[ap|Poder mágico]] continuam subindo {percent}% a cada segundo.",
+"Nach Erreichen von 100% steigen [[atk|Angriff]] und [[ap|Zauberkraft]] weiter um {percent}% pro Sekunde.",
+"После достижения 100% [[atk|Атака]] и [[ap|Сила магии]] продолжают расти на {percent}% в секунду."
+]]另从一开始每秒复合增长{percent}%。",
 "[[ap|พลังเวท]]ทบต้นเพิ่มขึ้นอีก {percent}% ทุกวินาทีตั้งแต่เริ่ม",
 "[[ap|Phép]] còn tăng dồn thêm {percent}% mỗi giây ngay từ đầu.",
 "[[ap|Kekuatan Magis]] juga bertambah majemuk {percent}% setiap detik sejak awal.",

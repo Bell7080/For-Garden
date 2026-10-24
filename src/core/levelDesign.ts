@@ -106,15 +106,17 @@ export interface EncounterRamp {
   startPercent: number;
   /** 100%에 닿기까지 걸리는 시간(초). */
   seconds: number;
-  /** 램프와 별개로 **주문력**에만 0초부터 복리로 얹는 매초 비율(%). 불사(폰토스)만 갖는다. */
-  apGrowthPercentPerSecond?: number;
+  /** 100%에 닿은 뒤 매초 기본값의 몇 %씩 더 오르는가(선형). 오래 끄는 판일수록 위협이 된다. */
+  lateGrowthPercentPerSecond: number;
 }
 
 /** 경과 시간(초)에서 램프 몫(0~1)을 구한다. 완전히 지난 초마다 한 칸씩 오른다. */
 export function encounterRampFactor(ramp: EncounterRamp, elapsedSeconds: number): number {
   const start = ramp.startPercent / 100;
   const whole = Math.max(0, Math.floor(elapsedSeconds));
-  return start + (1 - start) * Math.min(1, whole / ramp.seconds);
+  const rise = start + (1 - start) * Math.min(1, whole / ramp.seconds);
+  const late = Math.max(0, whole - ramp.seconds);
+  return rise + (late * ramp.lateGrowthPercentPerSecond) / 100;
 }
 
 export interface EncounterRoleSpec {
@@ -238,7 +240,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * **처음 25%에서 30초에 걸쳐 100%로.** 월드 폭주(LV60)의 첫 몇 초에 편성이 서기도 전에 쓰러지는 일을
      * 막되, 30초 뒤의 세기는 예전 그대로라 오래 버티는 판의 난이도는 바뀌지 않는다(응태 결정).
      */
-    ramp: { startPercent: 25, seconds: 30 },
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 },
   },
   endless: {
     // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
@@ -262,7 +264,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 보스와 같은 램프에 **주문력 복리 +2%/초**가 얹힌다. 폰토스의 패시브(「심해의 압력」)에 있던 시간 누적을
      * 자리로 옮긴 것이다 — 복리는 0초부터 세므로 30초 뒤의 주문력은 예전과 완전히 같고 앞 30초만 약하다.
      */
-    ramp: { startPercent: 25, seconds: 30, apGrowthPercentPerSecond: 2 },
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 },
   },
 };
 

@@ -27,7 +27,7 @@ export const INFO_JA = {
   "info.enemy.role.damageReduction": "[[damage-reduction|軽減]]{base}%から始まり、[[hp|体力]]が削れるほど最大{max}%まで上がり、{ignore}以下のダメージは無効になる。",
   "info.enemy.role.percentHpResistance": "最大体力に比例するダメージを{percent}%軽減して受ける。",
   "info.enemy.role.ramp": "[[atk|攻撃力]]と[[ap|魔力]]は{start}%から始まり、{seconds}秒かけて100%まで上がる。",
-  "info.enemy.role.apGrowth": "[[ap|魔力]]はさらに、最初から毎秒{percent}%ずつ複利で上がる。",
+  "info.enemy.role.apGrowth": "100%に達した後も、[[atk|攻撃力]]と[[ap|魔力]]は毎秒{percent}%ずつ上がり続ける。",
   "info.enemy.role.line.normal": "「わたしたち？ 通りすがりの雑兵ですけど…それでもがんばります！」",
   "info.section.rune": "ルーン",
   "info.level": "レベル",

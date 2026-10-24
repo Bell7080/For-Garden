@@ -27,7 +27,7 @@ export const INFO_TH = {
   "info.enemy.role.damageReduction": "เริ่มต้นด้วย[[damage-reduction|ลดความเสียหาย]] {base}% และเพิ่มถึง {max}% เมื่อ[[hp|พลังชีวิต]]ลดลง ความเสียหายไม่เกิน {ignore} จะถูกลบล้าง",
   "info.enemy.role.percentHpResistance": "ได้รับความเสียหายตาม HP สูงสุดน้อยลง {percent}%",
   "info.enemy.role.ramp": "[[atk|พลังโจมตี]]และ[[ap|พลังเวท]]เริ่มที่ {start}% แล้วเพิ่มขึ้นเป็น 100% ภายใน {seconds} วินาที",
-  "info.enemy.role.apGrowth": "[[ap|พลังเวท]]ทบต้นเพิ่มขึ้นอีก {percent}% ทุกวินาทีตั้งแต่เริ่ม",
+  "info.enemy.role.apGrowth": "หลังถึง 100% [[atk|พลังโจมตี]]และ[[ap|พลังเวท]]ยังเพิ่มขึ้นต่อเนื่องอีก {percent}% ทุกวินาที",
   "info.enemy.role.line.normal": "“พวกเรา? ก็แค่ลูกกระจ๊อกที่ผ่านมา… แต่จะพยายามเต็มที่นะ!”",
   "info.section.rune": "รูน",
   "info.level": "เลเวล",

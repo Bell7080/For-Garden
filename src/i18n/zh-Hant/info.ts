@@ -27,7 +27,7 @@ export const INFO_ZH_HANT = {
   "info.enemy.role.damageReduction": "初始擁有{base}%[[damage-reduction|傷害減免]]，隨[[hp|生命]]降低提升至{max}%；{ignore}以下的傷害無效。",
   "info.enemy.role.percentHpResistance": "受到的最大生命比例傷害減少{percent}%。",
   "info.enemy.role.ramp": "[[atk|攻擊力]]與[[ap|法術強度]]從{start}%開始，在{seconds}秒內升至100%。",
-  "info.enemy.role.apGrowth": "[[ap|法術強度]]另從一開始每秒複合增長{percent}%。",
+  "info.enemy.role.apGrowth": "達到100%後，[[atk|攻擊力]]與[[ap|法術強度]]仍每秒繼續提升{percent}%。",
   "info.enemy.role.line.normal": "“我們？只是路過的雜兵啦……不過會盡力的！”",
   "info.section.rune": "符文",
   "info.level": "等級",

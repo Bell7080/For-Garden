@@ -93,7 +93,7 @@ export function encounterRoleDescription(role: EncounterRole): string {
   }
   if (spec.ramp) {
     lines.push(t("info.enemy.role.ramp", { start: spec.ramp.startPercent, seconds: spec.ramp.seconds }));
-    if (spec.ramp.apGrowthPercentPerSecond !== undefined) lines.push(t("info.enemy.role.apGrowth", { percent: spec.ramp.apGrowthPercentPerSecond }));
+    lines.push(t("info.enemy.role.apGrowth", { percent: spec.ramp.lateGrowthPercentPerSecond }));
   }
   if (spec.percentHpResistance) lines.push(t("info.enemy.role.percentHpResistance", { percent: spec.percentHpResistance }));
   return lines.length > 0 ? lines.join("\n") : t("info.enemy.role.line.normal");

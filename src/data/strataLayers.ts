@@ -106,9 +106,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 16, gold: 12, deep: 10 }, min: 150, max: 400 },
-      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 4, max: 12 },
+      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 6, max: 18 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 16, deep: 12 }, min: 400, max: 1200 },
-      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 14, max: 44 },
+      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 21, max: 66 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 40, max: 120 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -127,9 +127,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 18, teal: 14, gold: 10, deep: 8 }, min: 200, max: 500 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 14 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 12, max: 21 },
       { kind: "gold", weight: { soil: 25, teal: 22, gold: 18, deep: 14 }, min: 600, max: 1500 },
-      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 20, max: 52 },
+      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 30, max: 78 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 50, max: 140 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -154,9 +154,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 15, gold: 11, deep: 9 }, min: 180, max: 450 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 8, max: 14 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 12, max: 21 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 18, deep: 14 }, min: 500, max: 1300 },
-      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 16, max: 48 },
+      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 24, max: 72 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 45, max: 130 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -180,9 +180,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 16, teal: 13, gold: 9, deep: 7 }, min: 250, max: 600 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 16 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 12, max: 24 },
       { kind: "gold", weight: { soil: 24, teal: 21, gold: 18, deep: 13 }, min: 800, max: 1800 },
-      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 22, max: 58 },
+      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 33, max: 87 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 60, max: 170 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -200,9 +200,9 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 14, teal: 11, gold: 8, deep: 6 }, min: 300, max: 700 },
-      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 10, max: 20 },
+      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 15, max: 30 },
       { kind: "gold", weight: { soil: 22, teal: 20, gold: 16, deep: 12 }, min: 900, max: 2000 },
-      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 24, max: 62 },
+      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 36, max: 93 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 80, max: 220 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.

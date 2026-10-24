@@ -136,11 +136,11 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 55.8, 0.71],
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 52.8, 0.79],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 15.3, 0.96],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
-  ["원정 무리 15층", 30, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 15.0, 0.72],
+  ["원정 무리 15층", 29, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 15.0, 0.72],
 ];
 
 describe("콘텐츠별 전투 시간 실측", () => {

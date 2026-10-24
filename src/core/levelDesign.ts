@@ -233,12 +233,13 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
 /**
  * **적 전용 레벨당 성장률(%).**
  *
- * 플레이어는 등급이 성장률을 가르지만(R 1.8 · SR 2.0 · SSR 2.2) **적에게 희귀도는 가챠
+ * 플레이어는 등급이 성장률을 가르지만(R 2.2 · SR 2.4 · SSR 2.6) **적에게 희귀도는 가챠
  * 개념이라 성장률을 가를 이유가 없다.** 한 값으로 두면 같은 `LV.n`이 어느 콘텐츠에서나 같은
- * 세기이고, 플레이어 곡선과 같은 자리(2.0)에 두었으므로 **적 레벨과 내 레벨을 나란히 읽을 수
+ * 세기이고, 플레이어 곡선의 R(2.2)과 같은 자리에 두었다. 아군이 SR 2.4·SSR 2.6이라 같은 레벨이면 아군이 조금 앞서고
+ * (LV20 +2.7%), 그 덕에 레벨이 모자란 신규 파티가 1장에서 막히지 않는다. **적 레벨과 내 레벨을 나란히 읽을 수
  * 있다** — "내가 18인데 저건 21이네"가 그대로 뜻이 된다.
  */
-export const ENEMY_LEVEL_GROWTH_PERCENT = 2;
+export const ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
 
 /** 레벨 1을 기본치로 두고 레벨당 정해진 비율로 자란 배수다. 플레이어와 같은 선형 누적이다. */
 export function enemyLevelMultiplier(level: number): number {

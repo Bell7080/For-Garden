@@ -38,10 +38,10 @@ describe("원정 노드 적 편성", () => {
     // 같은 20레벨 비교표를 만들어 레벨 차이가 보스 우위를 대신 설명하지 못하게 한다.
     const normalSsr = [getRelic("rex"), getRelic("spino"), getRelic("mette")]
       .map((relic) => ({ ...relic, stats: applyLevelGrowth(relic.stats, 20, relic.rarity) }));
-    // 폰토스는 LV.20의 38% 성장을 실제 전투와 표시에서 함께 쓴다.
+    // 폰토스는 LV.20의 41.8% 성장을 실제 전투와 표시에서 함께 쓴다.
     // **공격 속도와 충전량은 태생 그대로 남는다** — 성장은 오각형의 다섯 주능력치만 올린다
     // (`GROWTH_STAT_KEYS`). 보스도 아군과 같은 규칙을 쓰므로 여기서 예외를 만들지 않는다.
-    expect(pontos.stats).toMatchObject({ hp: 3864, def: 248, res: 179, ap: 359, attackSpeed: 55, energyGain: 30 });
+    expect(pontos.stats).toMatchObject({ hp: 3970, def: 255, res: 184, ap: 369, attackSpeed: 55, energyGain: 30 });
     // 생존 축은 최종 보스가 일반 적 전체를 넘는다.
     for (const key of ["hp", "def", "res"] as const) {
       expect(pontos.stats[key]).toBeGreaterThan(Math.max(...normalEnemies.map((enemy) => enemy.stats[key])));

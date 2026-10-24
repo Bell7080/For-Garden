@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { t } from "../i18n";
+import { t, type TextKey } from "../i18n";
 import { contentUnlockedBetween, type ContentId } from "../core/contentUnlock";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
@@ -19,7 +19,7 @@ import { contentNameKey } from "./contentLock";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
-import { LEVEL_UP_POPUP as L, levelUpPopupHeight, levelUpRewardHeight, levelUpUnlockCells } from "./levelUpPopupLayout";
+import { LEVEL_UP_ENTRANCE, LEVEL_UP_POPUP as L, levelUpPopupHeight, levelUpRewardHeight, levelUpUnlockPlan, type LevelUpUnlockKey } from "./levelUpPopupLayout";
 import type { PopupLayer } from "./PopupLayer";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { startPuppetHop } from "./puppetHop";
@@ -40,30 +40,25 @@ export interface LevelUpPopupOptions {
 }
 
 /**
- * 열린 콘텐츠의 그림. 로비·출격판에서 그 콘텐츠를 여는 버튼이 쓰는 그림과 같은 것을 고른다 — 다른 그림이면
- * 「열렸다」는 말을 듣고도 어느 버튼을 눌러야 하는지 이어지지 않는다. 입구가 아이콘이 아니라 **버튼 판**인 콘텐츠
- * (로비의 교류·발굴, 출격판의 대작전·현상수배)는 그 판을 작게 본떠 세운다(`entrance`).
+ * 아이콘이 입구인 콘텐츠의 그림. 로비·하단 탭에서 그 콘텐츠를 여는 버튼이 쓰는 그림과 같은 것을 고른다 — 다른 그림이면
+ * 「열렸다」는 말을 듣고도 어느 버튼을 눌러야 하는지 이어지지 않는다. 입구가 **버튼 판**인 콘텐츠(`LEVEL_UP_ENTRANCE`)는
+ * 그림이 아니라 그 판을 원본 비율 그대로 세운다(`entrancePanel`).
  */
-type ContentPicture =
-  | { glyph: GlyphName }
-  | { nav: "lab" | "archaeology" }
-  | { entrance: "lobby" }
-  | { entrance: "sortie"; artKey: string; split: "left" | "right" };
-
-const CONTENT_PICTURE: Readonly<Record<ContentId, ContentPicture>> = {
-  excavation: { entrance: "lobby" },
+const CONTENT_PICTURE: Readonly<Partial<Record<ContentId, { glyph: GlyphName } | { nav: "lab" | "archaeology" }>>> = {
   shop: { glyph: "shop" },
   trade: { glyph: "exchange" },
-  cakeOperation: { entrance: "sortie", artKey: "content-cake-entry", split: "left" },
-  bounty: { entrance: "sortie", artKey: "content-bounty-entry", split: "right" },
   friends: { glyph: "friends" },
-  interaction: { entrance: "lobby" },
-  duel: { glyph: "arena-tier" },
   guild: { glyph: "guild" },
-  raid: { glyph: "expedition-boss" },
-  expedition: { glyph: "expedition" },
   lab: { nav: "lab" },
   archaeology: { nav: "archaeology" },
+};
+
+/** 출격판 칸의 원화·부제 — 출격판(`LobbyScene.openSortieMenu`)과 같은 값이다. */
+const SORTIE_ART: Readonly<Partial<Record<ContentId, { artKey?: string; statusKey?: TextKey }>>> = {
+  cakeOperation: { artKey: "content-cake-entry", statusKey: "lobby.sortie.cake.status" },
+  bounty: { artKey: "content-bounty-entry", statusKey: "lobby.sortie.bounty.status" },
+  raid: { artKey: "content-raid-entry", statusKey: "lobby.sortie.raid.status" },
+  expedition: {},
 };
 
 type Unlock = { kind: "content"; id: ContentId } | { kind: "frame"; frameId: string; name: string };
@@ -83,7 +78,7 @@ export function openLevelUpPopup(scene: Phaser.Scene, popups: PopupLayer, option
     ...PROFILE_FRAMES.filter((frame) => frame.unlockLevel > from && frame.unlockLevel <= to)
       .map((frame) => ({ kind: "frame" as const, frameId: frame.id, name: frame.displayName })),
   ];
-  const height = levelUpPopupHeight(unlocks.length);
+  const height = levelUpPopupHeight(unlocks.map(unlockKey));
   const reduced = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
   let hint: Phaser.GameObjects.Text | undefined;
   popups.open({
@@ -157,16 +152,18 @@ function buildRewards(scene: Phaser.Scene, body: Phaser.GameObjects.Container, t
   addSectionTitle(scene, -L.width / 2 + 56, top + L.section.titleSize / 2, t("profile.levelUp.rewards"), { parent: body, size: L.section.titleSize });
   const frameY = top + L.section.titleRoom + R.frame / 2;
   const item = findItem(PLAYER_LEVEL_UP_REWARD.itemId);
-  const cells: Array<{ texture: string; amount?: string; caption: string }> = [];
+  const cells: Array<{ texture: string; amount?: string; caption: string; limit?: boolean }> = [];
   if (item?.icon.kind === "asset") cells.push({ texture: item.icon.key, amount: String((to - from) * PLAYER_LEVEL_UP_REWARD.quantity), caption: item.name });
   // 상한은 액자 수로 적지 않는다 — 아래 줄이 「스테미나 상한 +N」으로 이미 말한다(한 창에 같은 수를 두 번 적지 않는다).
-  cells.push({ texture: "currency-stamina", caption: t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(to) - staminaMaxForResearchLevel(from) }) });
+  cells.push({ texture: "currency-stamina", limit: true, caption: t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(to) - staminaMaxForResearchLevel(from) }) });
   const total = cells.length * R.frame + (cells.length - 1) * R.spacing;
   cells.forEach((cell, index) => {
     const x = -total / 2 + R.frame / 2 + index * (R.frame + R.spacing);
     const holder = scene.add.container(x, frameY);
     body.add(holder);
-    addFramedIcon(scene, holder, 0, 0, R.frame, cell.texture, cell.amount ? { amount: cell.amount } : {});
+    const frame = addFramedIcon(scene, holder, 0, 0, R.frame, cell.texture, cell.amount ? { amount: cell.amount } : {});
+    // 상한 칸은 그림 뒤에 큰 「MAX」를 비스듬히 깐다 — 「무엇이 늘었나」(최대치)를 숫자 없이 그림이 말한다.
+    if (cell.limit) frame.addAt(limitMark(scene, R.frame), 1);
     const caption = squeezeTextToWidth(scene.add.text(0, R.frame / 2 + R.captionGap, cell.caption, textStyle({ role: "emphasis", size: R.captionSize, color: COLOR.ink })).setOrigin(0.5), R.captionWidth);
     holder.add(caption);
     if (reduced) return;
@@ -176,68 +173,98 @@ function buildRewards(scene: Phaser.Scene, body: Phaser.GameObjects.Container, t
 }
 
 /**
- * 입구 버튼 판의 축소판. 로비·출격판과 **같은 프리팹**을 칸 크기로 세우고 입력만 끈다 — 비슷하게 따로 그리면
- * 버튼 양식이 바뀔 때 이 판만 옛 모습으로 남는다.
+ * 입구 버튼 판. 로비·출격판과 **같은 프리팹**을 같은 크기로 세우고 입력만 끈다 — 비슷하게 따로 그리면 버튼 양식이
+ * 바뀔 때 이 판만 옛 모습으로 남는다. 배율은 부르는 쪽이 판을 담은 컨테이너에 준다.
  */
-function entranceMiniature(scene: Phaser.Scene, id: ContentId, picture: Extract<ContentPicture, { entrance: string }>): Phaser.GameObjects.Container {
-  const U = L.unlock;
+function entrancePanel(scene: Phaser.Scene, id: ContentId): Phaser.GameObjects.Container | undefined {
+  const spec = LEVEL_UP_ENTRANCE[id];
+  if (!spec) return undefined;
   const label = t(contentNameKey(id));
-  const mini: Phaser.GameObjects.Container = picture.entrance === "lobby"
-    ? new Button(scene, 0, U.entranceY, {
-      width: U.width - 22, height: 74, label, sub: id === "excavation" ? t("lobby.excavation.sub") : latinEcho(label, "EXCHANGE"), fontSize: 26, subFontSize: 13,
-      perspective: "left", tilt: 6, accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText, onClick: () => undefined,
-    })
-    : new ExpeditionEntryButton(scene, 0, U.entranceY, {
-      width: U.width - 22, height: 118, label, labelSize: 26, status: "", split: picture.split,
-      artKey: picture.artKey, accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText, onClick: () => undefined,
+  let panel: Phaser.GameObjects.Container;
+  if (spec.kind === "lobby") {
+    // 교류·발굴은 왼쪽의 푸른 서브 입구, 결투는 오른쪽 원근의 기본 판이다(로비와 같다).
+    const blue = id !== "duel";
+    panel = new Button(scene, 0, 0, {
+      width: spec.width, height: spec.height, label, fontSize: 34,
+      sub: id === "excavation" ? t("lobby.excavation.sub") : id === "interaction" ? latinEcho(label, "EXCHANGE") : undefined,
+      perspective: blue ? "left" : "right", tilt: blue ? 6 : -6,
+      ...(blue ? { accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText } : {}),
+      onClick: () => undefined,
     });
+  } else {
+    const art = SORTIE_ART[id] ?? {};
+    panel = new ExpeditionEntryButton(scene, 0, 0, {
+      width: spec.width, height: spec.height, label, labelSize: spec.split ? 38 : 48, status: art.statusKey ? t(art.statusKey) : "", split: spec.split,
+      ...(art.artKey ? { artKey: art.artKey } : {}),
+      ...(id === "expedition" ? {} : { accentColor: COLOR.exchange, accentTextColor: COLOR.exchangeText }),
+      onClick: () => undefined,
+    });
+  }
   const inert = (object: Phaser.GameObjects.GameObject): void => {
     if (object.input) object.disableInteractive();
     if (object instanceof Phaser.GameObjects.Container) object.each(inert);
   };
-  inert(mini);
-  // 칸이 입구보다 훨씬 좁다 — 긴 이름(치즈케이크 대작전)은 판 안에 들도록 가로로만 누른다.
-  mini.each((child: Phaser.GameObjects.GameObject) => {
-    if (child instanceof Phaser.GameObjects.Text && child.text === label) squeezeTextToWidth(child, U.width - 60);
-  });
-  return mini;
+  inert(panel);
+  return panel;
 }
 
-/** 새로 열린 것 — 콘텐츠는 그 입구의 그림, 테두리는 지금 얼굴에 씌운 모습으로 선다. */
+/**
+ * 새로 열린 것 — **아이콘 칸 → 로비 버튼 → 출격판 칸** 세 무리로 갈라 쌓는다. 아이콘 칸은 그 입구의 그림(테두리는 지금 얼굴에 씌운 모습),
+ * 버튼 판이 입구인 콘텐츠는 그 판을 원본 비율 그대로 길게 세운다.
+ */
 function buildUnlocks(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top: number, unlocks: readonly Unlock[], options: LevelUpPopupOptions, reduced: boolean): void {
   const U = L.unlock;
   addSectionTitle(scene, -L.width / 2 + 56, top + L.section.titleSize / 2, t("profile.levelUp.unlocks"), { parent: body, size: L.section.titleSize });
   const gridTop = top + L.section.titleRoom;
-  levelUpUnlockCells(unlocks.length).forEach((cell, index) => {
-    const unlock = unlocks[index]!;
-    const y = gridTop + cell.row * (U.height + U.gapY) + U.height / 2;
-    const tile = scene.add.container(cell.x, y);
-    body.add(tile);
+  const { placements } = levelUpUnlockPlan(unlocks.map(unlockKey));
+  placements.forEach((place, order) => {
+    const unlock = unlocks[place.index]!;
+    const holder = scene.add.container(place.x, gridTop + place.y).setScale(place.scale);
+    body.add(holder);
     const tone = unlock.kind === "content" ? COLOR.sortie : COLOR.accent;
-    const picture = unlock.kind === "content" ? CONTENT_PICTURE[unlock.id] : undefined;
-    const entrance = picture !== undefined && "entrance" in picture;
-    tile.add(drawLayer(scene, 0, 0, chipPoints(U.width, U.height, { bevel: { topLeft: 26, bottomRight: 26 } }), { fill: 0x0b0f15, alpha: 0.94, edge: tone, edgeAlpha: 0.85 }));
-    // 그림 뒤의 옅은 마름모 빛 — 칸이 「무엇이 새로 생겼다」로 먼저 읽히게 한다. 버튼 판을 본뜬 칸은 판이 그 몫을 한다.
-    if (!entrance) tile.add(drawLayer(scene, 0, U.glyphY, [
-      0, -58, 70, 0, 0, 58, -70, 0,
-    ], { fill: tone, alpha: 0.14 }));
-    if (unlock.kind === "content" && picture) {
-      if ("glyph" in picture) tile.add(drawGlyph(scene, picture.glyph, 0, U.glyphY, U.glyph, tone, 1, 5));
-      else if ("nav" in picture) tile.add(drawIcon(scene, picture.nav, 0, U.glyphY, tone).setScale(1.7));
-      else tile.add(entranceMiniature(scene, unlock.id, picture));
-    } else if (unlock.kind === "frame") {
-      tile.add(new ProfileAvatar(scene, 0, U.glyphY, { size: U.avatar, frameId: unlock.frameId, portraitAssetId: options.portraitAssetId, fallback: options.fallback }));
+    const panel = unlock.kind === "content" && place.kind !== "tile" ? entrancePanel(scene, unlock.id) : undefined;
+    if (panel) {
+      const spec = LEVEL_UP_ENTRANCE[(unlock as { id: ContentId }).id]!;
+      holder.add(panel);
+      // 판의 오른쪽 위 모서리에 걸쳐 「NEW」를 단다(출격판 칸은 그 모서리가 깎이지 않는다).
+      holder.add(newBadge(scene, spec.width / 2 - 44, -spec.height / 2 + (place.kind === "lobby" ? -6 : 22), tone));
+    } else {
+      holder.add(drawLayer(scene, 0, 0, chipPoints(U.width, U.height, { bevel: { topLeft: 26, bottomRight: 26 } }), { fill: 0x0b0f15, alpha: 0.94, edge: tone, edgeAlpha: 0.85 }));
+      // 그림 뒤의 옅은 마름모 빛 — 칸이 「무엇이 새로 생겼다」로 먼저 읽히게 한다.
+      holder.add(drawLayer(scene, 0, U.glyphY, [
+        0, -58, 70, 0, 0, 58, -70, 0,
+      ], { fill: tone, alpha: 0.14 }));
+      const picture = unlock.kind === "content" ? CONTENT_PICTURE[unlock.id] : undefined;
+      if (picture && "glyph" in picture) holder.add(drawGlyph(scene, picture.glyph, 0, U.glyphY, U.glyph, tone, 1, 5));
+      else if (picture) holder.add(drawIcon(scene, picture.nav, 0, U.glyphY, tone).setScale(1.7));
+      else if (unlock.kind === "frame") holder.add(new ProfileAvatar(scene, 0, U.glyphY, { size: U.avatar, frameId: unlock.frameId, portraitAssetId: options.portraitAssetId, fallback: options.fallback }));
+      const name = unlock.kind === "content" ? t(contentNameKey(unlock.id)) : unlock.name;
+      holder.add(squeezeTextToWidth(scene.add.text(0, U.nameY, name, textStyle({ role: "emphasis", size: U.nameSize, color: unlock.kind === "content" ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5), U.width - 24));
+      // 왼쪽 위 깎인 모서리를 피해 오른쪽 위에 「NEW」 표식을 단다.
+      holder.add(newBadge(scene, U.width / 2 - 40, -U.height / 2 + 20, tone));
     }
-    const name = unlock.kind === "content" ? t(contentNameKey(unlock.id)) : unlock.name;
-    // 버튼 판을 본뜬 칸은 판이 이미 이름을 적고 있다 — 아래에 한 번 더 적지 않는다.
-    if (!entrance) tile.add(squeezeTextToWidth(scene.add.text(0, U.nameY, name, textStyle({ role: "emphasis", size: U.nameSize, color: unlock.kind === "content" ? COLOR.sortieText : COLOR.accentText })).setOrigin(0.5), U.width - 24));
-    // 왼쪽 위 깎인 모서리를 피해 오른쪽 위에 「NEW」 표식을 단다.
-    const badge = scene.add.container(U.width / 2 - 40, -U.height / 2 + 20);
-    badge.add(drawLayer(scene, 0, 0, chipPoints(62, 28, { bevel: { topLeft: 8, bottomRight: 8 } }), { fill: tone, alpha: 0.95 }));
-    badge.add(scene.add.text(0, 0, "NEW", textStyle({ role: "display", size: 18, color: "#05070a" })).setOrigin(0.5));
-    tile.add(badge);
     if (reduced) return;
-    tile.setScale(0.6).setAlpha(0);
-    scene.tweens.add({ targets: tile, scale: 1, alpha: 1, duration: 320, delay: 560 + index * 110, ease: "Back.easeOut" });
+    holder.setScale(place.scale * 0.6).setAlpha(0);
+    scene.tweens.add({ targets: holder, scale: place.scale, alpha: 1, duration: 320, delay: 560 + order * 110, ease: "Back.easeOut" });
   });
+}
+
+/** 액자 그림 뒤에 까는 「MAX」 무늬. 액자 판 위·그림 아래에 서고, 그림보다 먼저 읽히지 않게 옅게 둔다. */
+function limitMark(scene: Phaser.Scene, frame: number): Phaser.GameObjects.Container {
+  const mark = scene.add.container(0, 0).setAngle(-12);
+  const style = textStyle({ role: "display", size: Math.round(frame * 0.48), color: L.reward.limitColor });
+  mark.add(scene.add.text(4, 5, "MAX", { ...style, color: "#000000" }).setOrigin(0.5).setAlpha(0.35));
+  mark.add(scene.add.text(0, 0, "MAX", style).setOrigin(0.5).setAlpha(L.reward.limitAlpha));
+  return mark;
+}
+
+function unlockKey(unlock: Unlock): LevelUpUnlockKey {
+  return unlock.kind === "content" ? unlock.id : "frame";
+}
+
+function newBadge(scene: Phaser.Scene, x: number, y: number, tone: number): Phaser.GameObjects.Container {
+  const badge = scene.add.container(x, y);
+  badge.add(drawLayer(scene, 0, 0, chipPoints(62, 28, { bevel: { topLeft: 8, bottomRight: 8 } }), { fill: tone, alpha: 0.95 }));
+  badge.add(scene.add.text(0, 0, "NEW", textStyle({ role: "display", size: 18, color: "#05070a" })).setOrigin(0.5));
+  return badge;
 }

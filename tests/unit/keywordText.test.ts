@@ -21,3 +21,29 @@ describe("설명문 수치 강조 조각", () => {
     expect(splitEmphasisRuns("공격력의 ")).toEqual([{ text: "공격력의 ", accent: false }]);
   });
 });
+
+import { RELICS } from "../../src/data/relics";
+import { parseKeywordText } from "../../src/data/keywords";
+import { plumeBurstKeyword, plumeKeyword, prickleKeyword, prickleReflectKeyword } from "../../src/ui/skillPresentation";
+
+describe("개체 전용 쪽지의 현재 수치 태그", () => {
+  it("유티 서리깃 쪽지는 공격력으로 환산한 폭발 피해를 태그로 단다", () => {
+    const yuti = RELICS.find((relic) => relic.id === "yuti")!;
+    const burst = plumeBurstKeyword(yuti, 500)!;
+    expect(burst.term).toBe("600");
+    const plume = plumeKeyword(yuti, 500)!;
+    const tagged = parseKeywordText(plume.description, [burst]).find((segment) => segment.keyword?.id === "plume-burst");
+    expect(tagged?.text).toBe("600");
+    expect(plumeKeyword(yuti)!.description).not.toContain("plume-burst");
+    expect(plumeBurstKeyword(yuti)).toBeUndefined();
+  });
+
+  it("켄토 까칠 쪽지는 주문력으로 환산한 겹당 반격 피해를 태그로 단다", () => {
+    const kento = RELICS.find((relic) => relic.passive.kind === "prickly")!;
+    const percent = kento.passive.prickle!.reflectApPercentPerStack;
+    const reflect = prickleReflectKeyword(kento.passive, 400)!;
+    expect(reflect.term).toBe(String(Math.round(400 * percent / 100)));
+    expect(prickleKeyword(kento.passive, 400)!.description).toContain("[[prickle-reflect|");
+    expect(prickleKeyword(kento.passive)!.description).not.toContain("prickle-reflect");
+  });
+});

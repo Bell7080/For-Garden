@@ -75,7 +75,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
@@ -2750,8 +2750,7 @@ export function openFerocityTraitPopup(
     id: "damage-value", term: String(convertedDamage), kind: "rule",
     description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
   });
-  const plume = plumeKeyword(def);
-  if (plume) contextualKeywords.push(plume);
+  for (const tag of [plumeKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
     const elation = elationKeyword(def.passive);
@@ -2763,8 +2762,7 @@ export function openFerocityTraitPopup(
   }
   // 카페인 풍선껌은 까칠이 쌓이는 속도를 바꾸므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "caffeineBubble") {
-    const prickle = prickleKeyword(def.passive);
-    if (prickle) contextualKeywords.push(prickle);
+    for (const tag of [prickleKeyword(def.passive, abilityPower), prickleReflectKeyword(def.passive, abilityPower)]) if (tag) contextualKeywords.push(tag);
   }
   // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
   if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
@@ -2891,7 +2889,8 @@ export function buildSkillViewModel(options: {
       damageDetail, shieldDetail, healDetail,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
-      plumeKeyword(finalDef),
+      plumeKeyword(finalDef, finalDef.stats.atk),
+      plumeBurstKeyword(finalDef, finalDef.stats.atk),
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),
       lastDropKeyword(finalDef),
@@ -2904,10 +2903,11 @@ export function buildSkillViewModel(options: {
           ? elationKeyword(finalDef.passive) : undefined,
       // 까칠은 패시브 본문이 가리키는 태그라 그 쪽지에도 실리고, 평타·궁극기가 겹을 쌓을 때도 같은 태그를 가리킨다.
       "kind" in skill
-        ? prickleKeyword(skill as Passive)
+        ? prickleKeyword(skill as Passive, finalDef.stats.ap)
         : ("prickleGain" in skill && skill.prickleGain !== undefined)
           || ("selfGuard" in skill && skill.selfGuard?.prickleGain !== undefined)
-          ? prickleKeyword(finalDef.passive) : undefined,
+          ? prickleKeyword(finalDef.passive, finalDef.stats.ap) : undefined,
+      prickleReflectKeyword("kind" in skill ? skill as Passive : finalDef.passive, finalDef.stats.ap),
       "selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined ? {
         id: "shield-value", term: String(Math.round(finalDef.stats.hp * skill.selfShieldMaxHpPercent / 100)), kind: "rule" as const,
         description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfShieldMaxHpPercent }),

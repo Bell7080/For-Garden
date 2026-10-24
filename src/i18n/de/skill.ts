@@ -416,6 +416,7 @@ export const SKILL_DE = {
   "skill.keyword.lastDrop.term": "Letzter Tropfen",
   "skill.keyword.refill.description": "Basisangriffe kommen aus einem Magazin mit {magazine} Schuss und laden {seconds} s nach, wenn es leer ist. Das Angriffstempo ist auf {speed} festgelegt; zusätzliches Angriffstempo aus Runen oder Verbündeten-Boni wird im gleichen Prozentsatz in Angriffskraft umgewandelt. Verlangsamungen wirken weiter. Die Ultimativ-Fähigkeit füllt das Magazin sofort auf.",
   "skill.keyword.lastDrop.description": "Der letzte Schuss im Magazin. Immer ein kritischer Treffer und heilt {heal}% des verursachten Schadens.",
+  "skill.keyword.nowValue": "(aktuell {value})",
   "skill.passive.refillMagazine": "[[basic-attack|Basisangriffe]] kommen aus einem Magazin mit {magazine} Schuss und laden {seconds} s nach. [[teku-refill|Nachladen]] fixiert das Angriffstempo, zusätzliches Tempo wird im gleichen Prozentsatz zu [[atk|Angriffskraft]].",
   "skill.ferocity.overtimeRefusal": "Beim Eintritt in die Raserei wird sofort [[teku-refill|nachgeladen]], und jeder [[basic-attack|Basisangriff]] dieses Magazins gilt als [[teku-last-drop|Letzter Tropfen]].",
   "skill.sentence.barrage": "Feuert der Reihe nach {shots} Schüsse auf die nächsten Gegner, jeder mit {damage}. Ab Schuss {from} sind sie immer kritisch und geben einen [[shield|Schild]] in Höhe von {shield}% des verursachten Schadens (bis {cap}% der max. LP). Danach wird [[teku-refill|nachgeladen]].",

@@ -346,17 +346,29 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
  * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 둔화 출혈로 바뀌는 규칙을 말한다.
  * 수치는 일반 공격이 거는 상태 계약에서 읽어 조정하면 팝업도 함께 바뀐다.
  */
-export function plumeKeyword(def: RelicDef): KeywordDef | undefined {
+export function plumeKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
   const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
   if (plume === undefined || plume.kind !== "frostPlume") return undefined;
+  const base = t("skill.keyword.plume.description", {
+    max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
+    seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
+  });
   return {
     id: "yuti-plume",
     term: t("skill.keyword.plume.term"),
     kind: "rule",
-    description: t("skill.keyword.plume.description", {
-      max: plume.maxStacks, hold: plume.holdSeconds, percent: plume.burstPower,
-      seconds: plume.burstSeconds, slowSeconds: plume.slowSeconds, slowPercent: plume.slowPercent,
-    }),
+    // 공격력을 아는 자리에서는 지금 능력치로 환산한 총 피해를 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
+    description: atk === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[plume-burst|${Math.round(atk * plume.burstPower / 100)}]]` })}`,
+  };
+}
+
+/** 서리깃 쪽지가 가리키는 폭발 피해 태그. 서리깃 쪽지와 함께 문맥 사전에 실어야 눌린다. */
+export function plumeBurstKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {
+  const plume = def.basic.statusEffects?.find((effect) => effect.kind === "frostPlume");
+  if (plume === undefined || plume.kind !== "frostPlume" || atk === undefined) return undefined;
+  return {
+    id: "plume-burst", term: String(Math.round(atk * plume.burstPower / 100)), kind: "rule",
+    description: t("skill.keyword.damage.bonus", { stat: t("skill.stat.atk"), percent: plume.burstPower }),
   };
 }
 
@@ -392,18 +404,30 @@ export function lastDropKeyword(def: RelicDef): KeywordDef | undefined {
  * 쓰는 개체가 하나뿐이라 태그가 수치를 가져도 되며, 본문은 그 수치를 되풀이하지 않는다. 문장은 실제
  * 전투가 읽는 필드에서 지으므로 상한·비율을 조정하면 팝업도 함께 바뀐다.
  */
-export function prickleKeyword(passive: Passive): KeywordDef | undefined {
+export function prickleKeyword(passive: Passive, ap?: number): KeywordDef | undefined {
   const plan = passive.prickle;
   if (passive.kind !== "prickly" || plan === undefined) return undefined;
+  const base = t("skill.keyword.prickle.description", {
+    percent: plan.reflectApPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
+    tauntSeconds: plan.overflow?.tauntSeconds ?? 0, shield: plan.overflow?.shieldMaxHpPercent ?? 0,
+    regen: plan.overflow?.regenMaxHpPercentPerSecond ?? 0, regenSeconds: plan.overflow?.regenSeconds ?? 0,
+  });
   return {
     id: "kento-prickle",
     term: t("skill.keyword.prickle.term"),
     kind: "buff",
-    description: t("skill.keyword.prickle.description", {
-      percent: plan.reflectApPercentPerStack, stacks: plan.maxStacks, seconds: plan.seconds,
-      tauntSeconds: plan.overflow?.tauntSeconds ?? 0, shield: plan.overflow?.shieldMaxHpPercent ?? 0,
-      regen: plan.overflow?.regenMaxHpPercentPerSecond ?? 0, regenSeconds: plan.overflow?.regenSeconds ?? 0,
-    }),
+    // 겹 하나가 되돌리는 피해를 지금 주문력으로 환산해 덧붙인다.
+    description: ap === undefined ? base : `${base} ${t("skill.keyword.nowValue", { value: `[[prickle-reflect|${Math.round(ap * plan.reflectApPercentPerStack / 100)}]]` })}`,
+  };
+}
+
+/** 까칠 쪽지가 가리키는 겹당 반격 피해 태그. */
+export function prickleReflectKeyword(passive: Passive, ap?: number): KeywordDef | undefined {
+  const plan = passive.prickle;
+  if (passive.kind !== "prickly" || plan === undefined || ap === undefined) return undefined;
+  return {
+    id: "prickle-reflect", term: String(Math.round(ap * plan.reflectApPercentPerStack / 100)), kind: "rule",
+    description: t("skill.keyword.damage.bonus", { stat: t("skill.stat.ap"), percent: plan.reflectApPercentPerStack }),
   };
 }
 

@@ -416,6 +416,7 @@ export const SKILL_ZH_HANT = {
   "skill.keyword.lastDrop.term": "最後一滴",
   "skill.keyword.refill.description": "普通攻擊使用{magazine}發彈匣，打空後裝填{seconds}秒。攻擊速度固定為{speed}，符文或友方增益帶來的額外攻擊速度會按相同比例轉化為攻擊力。減速效果依然生效。釋放必殺技後彈匣立即補滿。",
   "skill.keyword.lastDrop.description": "彈匣的最後一發。必定暴擊，並回復造成傷害{heal}%的生命。",
+  "skill.keyword.nowValue": "（目前 {value}）",
   "skill.passive.refillMagazine": "[[basic-attack|普通攻擊]]使用{magazine}發彈匣，打空後裝填{seconds}秒。[[teku-refill|重灌]]使攻擊速度固定，額外攻擊速度會按相同比例轉為[[atk|攻擊力]]。",
   "skill.ferocity.overtimeRefusal": "進入暴走的瞬間立即[[teku-refill|重灌]]，該彈匣內的所有[[basic-attack|普通攻擊]]都按[[teku-last-drop|最後一滴]]打出。",
   "skill.sentence.barrage": "依次對最近的敵人各射出{shots}發子彈，每發造成{damage}。從第{from}發起必定暴擊，並獲得相當於所造成傷害{shield}%的[[shield|護盾]](最多為最大生命的{cap}%)。發射後觸發[[teku-refill|重灌]]。",

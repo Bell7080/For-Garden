@@ -79,4 +79,6 @@ export const AUGMENT_ID = {
   "augment.tag.detail.scar": "Maksimum {maxStacks} lapis, {durationSeconds} dtk sejak perolehan terakhir. Saat penuh, habiskan semua: perisai hanya diri sendiri sebesar {selfShieldMaxHpPercent}% HP maksimum. Jeda konsumsi {cooldownSeconds} dtk. Terpisah dari Bekas Luka Pasif asli. Tidak dapat dipilih bersama Augmen Cangkang.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Pulihkan tambahan {points}% dari HP musuh yang benar-benar hilang akibat serangan yang memenuhi syarat curi nyawa. Ditambah ke curi nyawa yang ada. Serapan perisai dan kerusakan berlebih tidak dihitung; pengurangan penyembuhan berlaku.",
+  "augment.tag.controlCooldown": "Jeda CC: {cooldown} dtk",
+  "augment.tag.controlRecovery": "CC augment berlangsung maksimal {cap} dtk. Setelah berakhir, target menahan CC augment selama {gap} dtk dan harus melakukan satu serangan baru ke musuh. Serangan pertama itu juga memberi pemulihan {gap} dtk. Semua sumber dan jenis berbagi aturan ini.",
 } as const;

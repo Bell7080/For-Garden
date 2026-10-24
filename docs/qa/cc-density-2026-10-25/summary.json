@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-25",
+  "stepSeconds": 0.02,
+  "policy": {
+    "maxAugmentControlSeconds": 0.6,
+    "sharedRecoverySeconds": 2.4,
+    "requiresNewHostileAction": true,
+    "recoveryAfterFirstActionSeconds": 2.4
+  },
+  "reports": {
+    "matrix": {
+      "cases": 3894,
+      "failed": 0,
+      "insufficient": 0,
+      "maxContinuousSeconds": 0.6,
+      "maxControlledRatio": 0.166667,
+      "minimumHostileAttackFrames": 16,
+      "minimumFreeGapSeconds": 2.42
+    },
+    "engagement": {
+      "cases": 810,
+      "failed": 810,
+      "insufficient": 0,
+      "maxContinuousSeconds": 30,
+      "maxControlledRatio": 1,
+      "minimumHostileAttackFrames": 2,
+      "minimumFreeGapSeconds": 0.02,
+      "baselineFailures": 405,
+      "augmentedFailures": 405,
+      "maximumFirstAttackAdditionalDelaySeconds": 0
+    },
+    "mobility": {
+      "cases": 36,
+      "failed": 8,
+      "insufficient": 0,
+      "maxContinuousSeconds": 3.7,
+      "maxControlledRatio": 0.204,
+      "minimumHostileAttackFrames": 33,
+      "minimumFreeGapSeconds": 0.02,
+      "baselineFailures": 0,
+      "augmentedFailures": 8,
+      "maximumFirstAttackAdditionalDelaySeconds": 1.14
+    },
+    "stage": {
+      "verdict": "fail",
+      "elapsedSeconds": 15.38
+    },
+    "raid": {
+      "verdict": "insufficient",
+      "elapsedSeconds": 22.86
+    },
+    "endless": {
+      "verdict": "fail",
+      "elapsedSeconds": 30
+    }
+  }
+}

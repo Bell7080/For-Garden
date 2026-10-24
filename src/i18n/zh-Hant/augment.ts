@@ -79,4 +79,6 @@ export const AUGMENT_ZH_HANT = {
   "augment.tag.detail.scar": "最多{maxStacks}層，最後獲得後持續{durationSeconds}秒。滿層全部消耗，僅為自身提供最大生命{selfShieldMaxHpPercent}%的護盾。消耗冷卻{cooldownSeconds}秒。與原被動傷疤分開累計，與貝殼增幅互斥。",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "額外恢復可吸血攻擊實際扣除敵方生命的{points}%。與現有吸血相加，護盾吸收與溢出傷害不計入，套用現有治療降低。",
+  "augment.tag.controlCooldown": "控制冷卻：每{cooldown}秒",
+  "augment.tag.controlRecovery": "增幅控制單次最多{cap}秒。結束後{gap}秒內不再受到增幅控制。目標必須新完成一次對敵攻擊，該次攻擊後也保障{gap}秒恢復期。所有來源與類型共用。",
 } as const;

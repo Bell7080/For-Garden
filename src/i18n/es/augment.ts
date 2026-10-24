@@ -79,4 +79,6 @@ export const AUGMENT_ES = {
   "augment.tag.detail.scar": "Máximo {maxStacks} acumulaciones, {durationSeconds} s tras la última. Al llenarse, consume todas: escudo solo propio del {selfShieldMaxHpPercent}% de PV máximos. Recarga de consumo {cooldownSeconds} s. Separado de Cicatriz de la Pasiva original. Incompatible con Mejoras de Concha.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Cura adicional del {points}% de los PV enemigos realmente perdidos por ataques aptos para robo de vida. Se suma al robo existente. No cuentan escudos ni daño sobrante; se aplica reducción de curación.",
+  "augment.tag.controlCooldown": "Recarga de control: {cooldown}s",
+  "augment.tag.controlRecovery": "El control de Mejoras dura como máximo {cap}s. Tras terminar, el objetivo resiste nuevo control durante {gap}s y debe realizar un nuevo ataque enemigo. Ese primer ataque también concede {gap}s de recuperación. Todas las fuentes y tipos comparten esta regla.",
 } as const;

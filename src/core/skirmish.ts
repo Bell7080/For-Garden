@@ -1,3 +1,4 @@
+import { EXPEDITION_CC_POLICY, EXPEDITION_CONTROL_TAGS, controlRemaining, capExpeditionControl } from "./expeditionCcPolicy";
 import { amplifyFerocityGain } from "./bond";
 import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
 import type { Combatant, DamageInput } from "./combatTypes";
@@ -149,6 +150,10 @@ export interface Fighter extends Combatant {
   augmentShellState: { stacks: number; remaining: number; total: number } | null;
   augmentShellCooldown: number;
   augmentFixedDamagePercent: number;
+  /** 대상별·제공자 공용 증강 제어 회복 종료 시각. */
+  augmentControlReadyAt: number;
+  augmentControlAwaitingAttack: boolean;
+  augmentControlBlockedActionSerial: number;
   appliedStatusContracts: Partial<Record<CombatStatusEffect["kind"], CombatStatusEffect>>;
   augmentShellGuard?: import("./types").Passive["shellGuard"];
   augmentDefensePercent: number;
@@ -1229,6 +1234,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     augmentShellState: null,
     augmentShellCooldown: 0,
     augmentFixedDamagePercent: 0,
+    augmentControlReadyAt: 0,
+    augmentControlAwaitingAttack: false,
+    augmentControlBlockedActionSerial: -1,
     appliedStatusContracts: {},
     augmentShellGuard: augmentEffects.flatMap(effect => effect.kind === "triggered" && effect.payload.kind === "shell" && augmentAppliesTo(effect, def.id) ? [effect.payload.contract] : [])[0],
     augmentDefensePercent: 0,
@@ -5518,6 +5526,28 @@ function strongerSharedTagActive(target: Fighter, incoming: CombatStatusEffect):
     && Number(previous[field as keyof typeof previous]) > Number(incoming[field as keyof typeof incoming]));
 }
 
+function augmentControlAvailable(state: SkirmishState, target: Fighter): boolean {
+  return !target.augmentControlAwaitingAttack && controlRemaining(target) <= 1e-8 && state.elapsed + 1e-8 >= target.augmentControlReadyAt;
+}
+function reserveAugmentRecovery(state: SkirmishState, target: Fighter, capNewControl = false): void {
+  if (capNewControl) {
+    const cap = EXPEDITION_CC_POLICY.maxSeconds;
+    target.stunnedFor = Math.min(cap, target.stunnedFor);
+    target.staggeredFor = Math.min(cap, target.staggeredFor);
+    if (target.taunted) target.taunted = { ...target.taunted, remaining: Math.min(cap, target.taunted.remaining) };
+    if (target.sleep) target.sleep = { ...target.sleep, remaining: Math.min(cap, target.sleep.remaining) };
+    if (target.frozen) target.frozen = { ...target.frozen, remaining: Math.min(cap, target.frozen.remaining) };
+    if (target.fear) target.fear = { ...target.fear, remaining: Math.min(cap, target.fear.remaining) };
+    if (target.frenzy) target.frenzy = { ...target.frenzy, remaining: Math.min(cap, target.frenzy.remaining) };
+    if (target.knockback) target.knockback = { ...target.knockback, remaining: Math.min(cap, target.knockback.remaining) };
+  }
+  const remaining = controlRemaining(target);
+  if (remaining > 1e-8) {
+    target.augmentControlReadyAt = Math.max(target.augmentControlReadyAt, state.elapsed + remaining + EXPEDITION_CC_POLICY.recoverySeconds);
+    if (capNewControl) { target.augmentControlAwaitingAttack = true; target.augmentControlBlockedActionSerial = target.augmentActionSerial; }
+  }
+}
+
 /** 적중·치명타·처치·저체력 훅의 구조화 payload를 기존 피해·회복·상태 경계에 연결한다. */
 function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: ExpeditionAugmentTrigger, events: SkirmishEvent[], hitTarget?: Fighter): void {
   // 집념 — 표적을 쓰러뜨리면 쌓은 겹의 절반이 다음 표적의 첫 타격으로 넘어간다.
@@ -5575,11 +5605,12 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       continue;
     }
     if (payload.kind === "frozen") {
-      if (!hitTarget || !isFighterAlive(hitTarget) || hitTarget.frozen || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      if (!hitTarget || !isFighterAlive(hitTarget) || !augmentControlAvailable(state, hitTarget) || hitTarget.frozen || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const percent = Math.min(payload.maxHpPercentOnExpire, Math.max(0, 10 - hitTarget.augmentFixedDamagePercent));
       if (percent <= 0) continue;
       hitTarget.augmentFixedDamagePercent += percent;
-      applyFrozen(hitTarget, payload.seconds * owner.statusPotencyMultiplier, percent * (hitTarget.immortal ? 0.25 : 1), events, state);
+      applyFrozen(hitTarget, Math.min(EXPEDITION_CC_POLICY.maxSeconds, payload.seconds * owner.statusPotencyMultiplier), percent * (hitTarget.immortal ? 0.25 : 1), events, state);
+      reserveAugmentRecovery(state, hitTarget, true);
       continue;
     }
     if (payload.kind === "shell") {
@@ -5634,8 +5665,12 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       addContribution(state.contributions, owner.id, "attack", hpBefore - target.hp, payload.damageType === "magical" ? "abilityPower" : "attackPower");
       events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
       if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: owner.id }); }
-    } else if (payload.kind === "status" && consumeAugmentTrigger(state, owner, key, effect)) {
-      let status = payload.status;
+    } else if (payload.kind === "status") {
+      const controlled = effect.everyN !== undefined && (EXPEDITION_CONTROL_TAGS.has(payload.status.kind)
+        || payload.status.kind === "concussion" && knockbackSlamOf(owner) !== undefined);
+      if (controlled && !augmentControlAvailable(state, target)) continue;
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      let status = controlled ? capExpeditionControl(payload.status, owner.statusPotencyMultiplier) : payload.status;
       if (effect.everyN !== undefined && strongerSharedTagActive(target, status)) continue;
       if (effect.everyN !== undefined && (status.kind === "concussion" || status.kind === "bleed")) {
         const requested = status.kind === "concussion" ? status.maxHpPercent : status.seconds * status.maxHpPercentPerSecond;
@@ -5647,7 +5682,11 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
           ? { ...status, maxHpPercent: adjusted, criticalMaxHpPercent: adjusted }
           : { ...status, maxHpPercentPerSecond: adjusted / Math.max(0.001, status.seconds * owner.statusPotencyMultiplier) };
       }
-      for (let count = 0; count < (effect.applications ?? 1) && isFighterAlive(target); count += 1) applyCombatStatusEffect(target, status, events, state, owner.id);
+      for (let count = 0; count < (effect.applications ?? 1) && isFighterAlive(target); count += 1) {
+        if (controlled && !augmentControlAvailable(state, target)) break;
+        applyCombatStatusEffect(target, status, events, state, owner.id);
+        if (controlled) reserveAugmentRecovery(state, target, true);
+      }
     } else if (payload.kind === "heal" && consumeAugmentTrigger(state, owner, key, effect)) {
       const amount = applyHealing(state, target, target.maxHp * payload.maxHpPercent / 100, owner.id);
       pushHeal(events, target, amount, "passive");
@@ -9230,6 +9269,8 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
 
 function advance(state: SkirmishState, dt: number, rng: () => number, events: SkirmishEvent[]): void {
   state.elapsed += dt;
+  // 원본 스킬 제어 뒤의 빈틈도 증강이 메우지 않는다. 조기 해제돼도 예약한 회복 창은 유지한다.
+  for (const fighter of state.fighters) reserveAugmentRecovery(state, fighter);
   advancePack(state, dt, events);
 
   // 각 폰토스가 소유한 누적 시계로 완전히 경과한 1초만 처리해 프레임 분할과 무관하게 만든다.
@@ -10032,6 +10073,18 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
     for (let index = before; index < events.length; index += 1) {
       const event = events[index];
       if (event.kind === "attack") event.at = state.elapsed;
+    }
+    // 도발로 먼 표적을 왕복하는 동안 시간만 지났다고 새 증강 CC를 허용하지 않는다.
+    // 실제 새 적대 공격 한 번을 마치고, 그 뒤의 회복 창도 지난 대상만 다음 증강 제어를 받는다.
+    for (let index = before; index < events.length; index++) {
+      const event = events[index];
+      if (event.kind !== "attack" || event.skill !== "basic" && event.skill !== "ultimate") continue;
+      const actor = findFighter(state, event.attackerId), target = findFighter(state, event.targetId);
+      if (actor && target && actor.side !== target.side && actor.augmentControlAwaitingAttack
+        && actor.augmentActionSerial > actor.augmentControlBlockedActionSerial && controlRemaining(actor) <= 1e-8) {
+        actor.augmentControlAwaitingAttack = false;
+        actor.augmentControlReadyAt = Math.max(actor.augmentControlReadyAt, state.elapsed + EXPEDITION_CC_POLICY.recoverySeconds);
+      }
     }
     // 최대치에서 시작한 피버는 공격 여부와 무관하게 실제 전투 시간만큼 자연 감소한다.
     // 폭주 돌파는 **가라앉는 그 프레임**에 값을 치른다 — 타이머 값이 아니라 전후 경계를

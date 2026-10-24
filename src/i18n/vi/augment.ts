@@ -79,4 +79,6 @@ export const AUGMENT_VI = {
   "augment.tag.detail.scar": "Tối đa {maxStacks} tầng, {durationSeconds} giây sau lần nhận cuối. Đầy thì tiêu hết: khiên chỉ bản thân bằng {selfShieldMaxHpPercent}% HP tối đa. Hồi tiêu thụ {cooldownSeconds} giây. Tích riêng với Sẹo của Nội tại gốc. Không chọn cùng Tăng cường Vỏ sò.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Hồi thêm {points}% HP địch thực sự mất từ đòn có thể hút máu. Cộng vào hút máu hiện có. Không tính hấp thụ khiên hay sát thương dư; áp dụng giảm hồi máu.",
+  "augment.tag.controlCooldown": "Hồi khống chế: {cooldown} giây",
+  "augment.tag.controlRecovery": "Khống chế Tăng cường kéo dài tối đa {cap} giây. Sau đó mục tiêu kháng khống chế trong {gap} giây và phải thực hiện một đòn tấn công mới lên kẻ địch. Đòn đầu tiên đó cũng cho {gap} giây hồi phục. Mọi nguồn và loại dùng chung quy tắc.",
 } as const;

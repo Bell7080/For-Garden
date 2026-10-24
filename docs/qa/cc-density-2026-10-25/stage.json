@@ -1,0 +1,284 @@
+{
+  "id": "stage:1-10:lv20",
+  "seed": "stage:1-10:lv20",
+  "stepSeconds": 0.02,
+  "requestedSeconds": 30,
+  "elapsedSeconds": 15.38,
+  "phase": "victory",
+  "limits": {
+    "maxContinuousSeconds": 2,
+    "maxControlledRatio": 0.4,
+    "minFreeGapSeconds": 0.5,
+    "minimumObservationSeconds": 10
+  },
+  "metadata": {
+    "mode": "stage",
+    "level": 20,
+    "breakthrough": 0,
+    "party": [
+      "pachi",
+      "mosana",
+      "anka"
+    ],
+    "selections": [],
+    "hypotheticalAugments": false
+  },
+  "combatants": [
+    {
+      "fighterId": "player-0",
+      "relicId": "pachi",
+      "side": "player",
+      "attackSpeed": 100,
+      "moveSpeed": 171.1,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.5
+    },
+    {
+      "fighterId": "player-1",
+      "relicId": "mosana",
+      "side": "player",
+      "attackSpeed": 76,
+      "moveSpeed": 95.7,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.9736842105263157
+    },
+    {
+      "fighterId": "player-2",
+      "relicId": "anka",
+      "side": "player",
+      "attackSpeed": 70,
+      "moveSpeed": 89.89999999999999,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 2.142857142857143
+    },
+    {
+      "fighterId": "enemy-0",
+      "relicId": "koma",
+      "side": "enemy",
+      "attackSpeed": 118,
+      "moveSpeed": 179.79999999999998,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.271186440677966
+    }
+  ],
+  "units": [
+    {
+      "fighterId": "player-0",
+      "relicId": "pachi",
+      "side": "player",
+      "observedSeconds": 15.38,
+      "controlledSeconds": 0,
+      "controlledRatio": 0,
+      "longestContinuousSeconds": 0,
+      "minFreeGapSeconds": null,
+      "longestFreeWindowSeconds": 15.38,
+      "fullLockSeconds": 0,
+      "targetRestrictionSeconds": 0,
+      "byKindSeconds": {},
+      "directAttackFrames": 9,
+      "hostileAttackFrames": 9,
+      "friendlyFireFrames": 0,
+      "targetChanges": 0,
+      "targetReversals": 0,
+      "forcedTargetChanges": 0,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 2.32,
+      "maxHostileAttackGapSeconds": 2.56,
+      "hostileAttackTimes": [
+        2.32,
+        3.82,
+        5.32,
+        6.82,
+        8.32,
+        9.82,
+        11.32,
+        12.82,
+        15.38
+      ],
+      "intervals": [],
+      "violations": [],
+      "verdict": "pass"
+    },
+    {
+      "fighterId": "player-1",
+      "relicId": "mosana",
+      "side": "player",
+      "observedSeconds": 15.38,
+      "controlledSeconds": 2.62,
+      "controlledRatio": 0.170351,
+      "longestContinuousSeconds": 1.1,
+      "minFreeGapSeconds": 2.74,
+      "longestFreeWindowSeconds": 5.3,
+      "fullLockSeconds": 2.62,
+      "targetRestrictionSeconds": 0,
+      "byKindSeconds": {
+        "stun": 2.42,
+        "knockback": 2.62
+      },
+      "directAttackFrames": 6,
+      "hostileAttackFrames": 6,
+      "friendlyFireFrames": 0,
+      "targetChanges": 0,
+      "targetReversals": 0,
+      "forcedTargetChanges": 0,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 2.02,
+      "maxHostileAttackGapSeconds": 3.76,
+      "hostileAttackTimes": [
+        2.02,
+        4,
+        7.08,
+        9.06,
+        11.04,
+        14.8
+      ],
+      "intervals": [
+        {
+          "start": 4.72,
+          "end": 5.82,
+          "kinds": [
+            "stun",
+            "knockback"
+          ]
+        },
+        {
+          "start": 11.12,
+          "end": 12.22,
+          "kinds": [
+            "stun",
+            "knockback"
+          ]
+        },
+        {
+          "start": 14.96,
+          "end": 15.38,
+          "kinds": [
+            "stun",
+            "knockback"
+          ]
+        }
+      ],
+      "violations": [],
+      "verdict": "pass"
+    },
+    {
+      "fighterId": "player-2",
+      "relicId": "anka",
+      "side": "player",
+      "observedSeconds": 15.38,
+      "controlledSeconds": 0,
+      "controlledRatio": 0,
+      "longestContinuousSeconds": 0,
+      "minFreeGapSeconds": null,
+      "longestFreeWindowSeconds": 15.38,
+      "fullLockSeconds": 0,
+      "targetRestrictionSeconds": 0,
+      "byKindSeconds": {},
+      "directAttackFrames": 5,
+      "hostileAttackFrames": 5,
+      "friendlyFireFrames": 0,
+      "targetChanges": 0,
+      "targetReversals": 0,
+      "forcedTargetChanges": 0,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 4.52,
+      "maxHostileAttackGapSeconds": 4.52,
+      "hostileAttackTimes": [
+        4.52,
+        6.68,
+        9.84,
+        12,
+        14.16
+      ],
+      "intervals": [],
+      "violations": [],
+      "verdict": "pass"
+    },
+    {
+      "fighterId": "enemy-0",
+      "relicId": "koma",
+      "side": "enemy",
+      "observedSeconds": 15.38,
+      "controlledSeconds": 2.88,
+      "controlledRatio": 0.187256,
+      "longestContinuousSeconds": 0.8,
+      "minFreeGapSeconds": 0.44,
+      "longestFreeWindowSeconds": 5.3,
+      "fullLockSeconds": 2.3,
+      "targetRestrictionSeconds": 0.58,
+      "byKindSeconds": {
+        "stun": 2.2,
+        "knockback": 0.3,
+        "taunt": 0.58
+      },
+      "directAttackFrames": 9,
+      "hostileAttackFrames": 9,
+      "friendlyFireFrames": 0,
+      "targetChanges": 6,
+      "targetReversals": 4,
+      "forcedTargetChanges": 3,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 2.02,
+      "maxHostileAttackGapSeconds": 2.78,
+      "hostileAttackTimes": [
+        2.02,
+        3.38,
+        4.74,
+        6.76,
+        9.54,
+        11.14,
+        12.42,
+        13.7,
+        14.98
+      ],
+      "intervals": [
+        {
+          "start": 5.3,
+          "end": 5.9,
+          "kinds": [
+            "stun"
+          ]
+        },
+        {
+          "start": 7.06,
+          "end": 7.86,
+          "kinds": [
+            "stun"
+          ]
+        },
+        {
+          "start": 8.3,
+          "end": 8.9,
+          "kinds": [
+            "stun"
+          ]
+        },
+        {
+          "start": 9.8,
+          "end": 10.1,
+          "kinds": [
+            "stun",
+            "knockback"
+          ]
+        },
+        {
+          "start": 14.78,
+          "end": 15.36,
+          "kinds": [
+            "taunt"
+          ]
+        }
+      ],
+      "violations": [
+        "missing-recovery-window"
+      ],
+      "verdict": "fail"
+    }
+  ],
+  "triggerActivations": [],
+  "verdict": "fail"
+}

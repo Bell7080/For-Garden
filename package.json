@@ -26,7 +26,8 @@
     "test:account-db": "node scripts/check-account-db.mjs",
     "test:pvp-db": "node scripts/check-pvp-db.mjs",
     "test:content-loops": "node scripts/check-content-loops.mjs",
-    "test:arena-db": "node scripts/check-arena-db.mjs"
+    "test:arena-db": "node scripts/check-arena-db.mjs",
+    "audit:cc": "node scripts/audit-cc.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0",

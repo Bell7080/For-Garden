@@ -79,4 +79,6 @@ export const AUGMENT_TH = {
   "augment.tag.detail.scar": "สูงสุด {maxStacks} ชั้น คงอยู่ {durationSeconds} วินาทีหลังได้รับครั้งล่าสุด เมื่อเต็มใช้ทั้งหมดให้โล่เฉพาะตนเอง {selfShieldMaxHpPercent}% ของ HP สูงสุด คูลดาวน์ใช้ชั้น {cooldownSeconds} วินาที สะสมแยกจากแผลเป็นพาสซีฟเดิม เลือกร่วมกับเสริมพลังเปลือกหอยไม่ได้",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "ฟื้นฟูเพิ่ม {points}% ของ HP ศัตรูที่ลดจริงจากการโจมตีที่ดูดเลือดได้ เพิ่มจากค่าดูดเลือดเดิม ไม่นับโล่ดูดซับและความเสียหายเกิน ใช้ผลลดการรักษาเดิม",
+  "augment.tag.controlCooldown": "คูลดาวน์ CC: {cooldown} วินาที",
+  "augment.tag.controlRecovery": "CC เสริมพลังนานสูงสุด {cap} วินาที หลังจบ เป้าหมายต้าน CC เสริมพลัง {gap} วินาที และต้องโจมตีศัตรูใหม่หนึ่งครั้ง การโจมตีแรกนั้นให้เวลาฟื้นตัวอีก {gap} วินาที กฎนี้ใช้ร่วมกันทุกแหล่งและทุกชนิด",
 } as const;

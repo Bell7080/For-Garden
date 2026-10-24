@@ -79,4 +79,6 @@ export const AUGMENT_ZH_HANS = {
   "augment.tag.detail.scar": "最多{maxStacks}层，最后获得后持续{durationSeconds}秒。满层全部消耗，仅为自身提供最大生命{selfShieldMaxHpPercent}%的护盾。消耗冷却{cooldownSeconds}秒。与原被动伤疤分开累计，与贝壳增幅互斥。",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "额外恢复可吸血攻击实际扣除敌方生命的{points}%。与现有吸血相加，护盾吸收与溢出伤害不计入，应用现有治疗降低。",
+  "augment.tag.controlCooldown": "控制冷却：每{cooldown}秒",
+  "augment.tag.controlRecovery": "增幅控制单次最多{cap}秒。结束后{gap}秒内不再受到增幅控制。目标必须新完成一次对敌攻击，该次攻击后也保障{gap}秒恢复期。所有来源与类型共享。",
 } as const;

@@ -79,4 +79,6 @@ export const AUGMENT_EN = {
   "augment.tag.detail.scar": "Maximum {maxStacks} stacks, lasting {durationSeconds}s after the last gain. At maximum, consume all to shield self only for {selfShieldMaxHpPercent}% max HP. Consumption cooldown: {cooldownSeconds}s. Separate from native Passive Scar stacks. Mutually exclusive with Shell augments.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Heal additionally for {points}% of actual enemy HP lost to lifesteal-eligible attacks. Adds to existing lifesteal. Shield absorption and overkill do not count; existing healing reduction applies.",
+  "augment.tag.controlCooldown": "CC cooldown: {cooldown}s",
+  "augment.tag.controlRecovery": "Augment control lasts at most {cap}s. The target resists further augment control for {gap}s after it ends and must make one new hostile attack. That first attack also grants {gap}s of recovery. All sources and types share this rule.",
 } as const;

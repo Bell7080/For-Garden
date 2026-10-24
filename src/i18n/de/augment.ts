@@ -79,4 +79,6 @@ export const AUGMENT_DE = {
   "augment.tag.detail.scar": "Höchstens {maxStacks} Stapel, {durationSeconds} s seit dem letzten Erhalt. Bei voller Anzahl verbrauchen: nur Selbstschild von {selfShieldMaxHpPercent}% maximalen LP. Verbrauchsabklingzeit {cooldownSeconds} s. Getrennt von passiven Narben. Nicht mit Muschel-Verstärkungen wählbar.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Zusätzlich um {points}% der tatsächlich verlorenen Gegner-LP durch lebensraubfähige Angriffe heilen. Addiert sich zu vorhandenem Lebensraub. Schildabsorption und überschüssiger Schaden zählen nicht. Heilungsreduktion gilt.",
+  "augment.tag.controlCooldown": "CC-Abklingzeit: {cooldown}s",
+  "augment.tag.controlRecovery": "Verstärkungs-CC dauert höchstens {cap}s. Danach ist das Ziel {gap}s geschützt und muss einen neuen Angriff gegen einen Gegner ausführen. Dieser erste Angriff gewährt ebenfalls {gap}s Erholung. Alle Quellen und Typen teilen diese Regel.",
 } as const;

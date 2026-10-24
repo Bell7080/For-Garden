@@ -1,0 +1,235 @@
+{
+  "id": "stress:tag-stagger-ultimate+tag-frozen-ultimate+tag-fear-basic:as400:offset:normal:contact",
+  "seed": "stress:tag-stagger-ultimate+tag-frozen-ultimate+tag-fear-basic:as400:offset:normal:contact",
+  "stepSeconds": 0.02,
+  "requestedSeconds": 30,
+  "elapsedSeconds": 30,
+  "phase": "fight",
+  "limits": {
+    "maxContinuousSeconds": 0.6,
+    "maxControlledRatio": 0.22,
+    "minFreeGapSeconds": 2.4,
+    "minimumObservationSeconds": 20
+  },
+  "metadata": {
+    "mode": "augment-stress",
+    "selections": [
+      {
+        "augmentId": "tag-stagger-ultimate",
+        "targetRelicId": "cc-0"
+      },
+      {
+        "augmentId": "tag-frozen-ultimate",
+        "targetRelicId": "cc-1"
+      },
+      {
+        "augmentId": "tag-fear-basic",
+        "targetRelicId": "cc-2"
+      },
+      {
+        "augmentId": "overclock-field"
+      },
+      {
+        "augmentId": "overclock-field"
+      },
+      {
+        "augmentId": "overclock-field"
+      }
+    ],
+    "nativeEffectsDisabled": true,
+    "fixedContact": true,
+    "overclockStacks": 3
+  },
+  "combatants": [
+    {
+      "fighterId": "player-0",
+      "relicId": "cc-0",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 136.29999999999998,
+      "reach": 360,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "player-1",
+      "relicId": "cc-1",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 136.29999999999998,
+      "reach": 360,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "player-2",
+      "relicId": "cc-2",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 136.29999999999998,
+      "reach": 360,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "attackSpeed": 100,
+      "moveSpeed": 136.29999999999998,
+      "reach": 360,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.5
+    }
+  ],
+  "units": [
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "observedSeconds": 30,
+      "controlledSeconds": 3,
+      "controlledRatio": 0.1,
+      "longestContinuousSeconds": 0.6,
+      "minFreeGapSeconds": 3.06,
+      "longestFreeWindowSeconds": 3.16,
+      "fullLockSeconds": 3,
+      "targetRestrictionSeconds": 0,
+      "byKindSeconds": {
+        "stagger": 2.4,
+        "frozen": 0.6
+      },
+      "directAttackFrames": 19,
+      "hostileAttackFrames": 19,
+      "friendlyFireFrames": 0,
+      "targetChanges": 0,
+      "targetReversals": 0,
+      "forcedTargetChanges": 0,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 0.02,
+      "maxHostileAttackGapSeconds": 2.08,
+      "hostileAttackTimes": [
+        0.02,
+        1.8,
+        3.3,
+        5.08,
+        6.58,
+        8.36,
+        9.86,
+        11.64,
+        13.14,
+        14.92,
+        16.42,
+        18.2,
+        19.7,
+        21.48,
+        22.98,
+        24.76,
+        26.26,
+        27.76,
+        29.84
+      ],
+      "intervals": [
+        {
+          "start": 0.84,
+          "end": 1.14,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 4.2,
+          "end": 4.5,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 7.56,
+          "end": 7.86,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 10.92,
+          "end": 11.22,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 14.28,
+          "end": 14.58,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 17.64,
+          "end": 17.94,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 21,
+          "end": 21.3,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 24.36,
+          "end": 24.66,
+          "kinds": [
+            "stagger"
+          ]
+        },
+        {
+          "start": 27.82,
+          "end": 28.42,
+          "kinds": [
+            "frozen"
+          ]
+        }
+      ],
+      "violations": [],
+      "verdict": "pass"
+    }
+  ],
+  "triggerActivations": [
+    {
+      "fighterId": "player-0",
+      "effectIndex": 0,
+      "payload": "stagger",
+      "trigger": "onUltimateHit",
+      "everyN": 1,
+      "cooldownSeconds": 2,
+      "maxTriggers": 8,
+      "times": [
+        0.86,
+        4.22,
+        7.58,
+        10.94,
+        14.3,
+        17.66,
+        21.02,
+        24.38
+      ]
+    },
+    {
+      "fighterId": "player-1",
+      "effectIndex": 1,
+      "payload": "frozen",
+      "trigger": "onUltimateHit",
+      "everyN": 1,
+      "cooldownSeconds": 8,
+      "maxTriggers": 4,
+      "times": [
+        27.84
+      ]
+    }
+  ],
+  "verdict": "pass"
+}

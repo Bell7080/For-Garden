@@ -79,4 +79,6 @@ export const AUGMENT_KO = {
   "augment.tag.detail.scar": "최대 {maxStacks}겹, 마지막 획득 후 {durationSeconds}초 유지. 가득 차면 모두 소비해 자신에게만 최대 체력의 {selfShieldMaxHpPercent}% 보호막을 준다. 소비 후 {cooldownSeconds}초 대기. 원본 패시브의 흉터와 별도 누적하며 조가비 증강과는 함께 선택할 수 없다.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "흡혈 대상 공격이 실제로 깎은 적 체력의 {points}%만큼 추가 회복한다. 기존 흡혈에 더하며, 보호막 흡수·초과 피해는 회복량으로 세지 않고 기존 회복 감소를 적용한다.",
+  "augment.tag.controlCooldown": "CC 재발동: {cooldown}초마다",
+  "augment.tag.controlRecovery": "증강 CC는 한 번에 최대 {cap}초. 제어 종료 후 {gap}초 동안 다른 증강 CC를 받지 않는다. 대상이 새 적대 공격을 1회 해야 재제어할 수 있으며, 그 첫 공격 후에도 {gap}초를 보장한다. 모든 제공자와 종류가 공유한다.",
 } as const;

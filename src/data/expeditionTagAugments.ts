@@ -1,3 +1,4 @@
+import { expeditionControlCooldown } from "../core/expeditionCcPolicy";
 import { t } from "../i18n";
 import type { ExpeditionAugmentDef } from "./expeditionAugments";
 import type { CombatStatusEffect, Passive, ReagentReaction } from "../core/types";
@@ -47,7 +48,7 @@ export const EXPEDITION_TAG_PLANS = [
   { id: "drowsy", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "drowsy", maxStacks: 3, seconds: 12, sleepSeconds: 0.6, wakeResistancePower: 45, groggySeconds: 2, groggyAttackSpeedPercent: 8 } },
   { id: "intimidate", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "intimidate", maxStacks: 3, seconds: 12, fearSeconds: 0.6, immunitySeconds: 6 } },
   { id: "chill", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "chill", speedPercentPerStack: 3, maxStacks: 3 } },
-  { id: "taunt", everyN: 4, cooldown: 4, maxTriggers: 6, status: { kind: "taunt", seconds: 0.8 } },
+  { id: "taunt", everyN: 4, cooldown: 4, maxTriggers: 6, status: { kind: "taunt", seconds: 0.6 } },
   { id: "fear", everyN: 4, cooldown: 6, maxTriggers: 5, status: { kind: "fear", seconds: 0.4, immunitySeconds: 6 } },
 ] as const satisfies readonly { id: string; everyN: number; cooldown: number; maxTriggers: number; status: CombatStatusEffect }[];
 
@@ -58,6 +59,7 @@ export function expeditionPayloadTag(payload: Extract<ExpeditionAugmentDef["effe
 }
 
 function tagDef(id: string, rarity: "sr" | "ssr", trigger: "onBasicHit" | "onUltimateHit" | "onUltimateCast" | "onDamaged", everyN: number, payload: Extract<ExpeditionAugmentDef["effect"], { kind: "triggered" }>["payload"], cooldownSeconds: number, maxTriggers: number, group: string): ExpeditionAugmentDef {
+  cooldownSeconds = expeditionControlCooldown(payload) ?? cooldownSeconds;
   const beneficial = payload.kind === "ferocity" || payload.kind === "cleanse" || payload.kind === "teamBuff" || payload.kind === "regeneration" || payload.kind === "stealth" || payload.kind === "shield" || payload.kind === "shell";
   const category = payload.kind === "shield" || payload.kind === "shell" ? "shield" : payload.kind === "regeneration" ? "recovery" : "status";
   return { id, get name() {
@@ -73,7 +75,7 @@ function tagDef(id: string, rarity: "sr" | "ssr", trigger: "onBasicHit" | "onUlt
 function ultimateStatus(status: CombatStatusEffect): CombatStatusEffect {
   if (status.kind === "bleed") return { ...status, seconds: 3, maxHpPercentPerSecond: 0.25, healingReceivedReductionPercent: 15 };
   if (status.kind === "stun") return { ...status, seconds: 0.5 };
-  if (status.kind === "frenzy") return { ...status, seconds: 0.7 };
+  if (status.kind === "frenzy") return { ...status, seconds: 0.6 };
   if (status.kind === "knockback") return { ...status, seconds: 0.4, speed: 180 };
   if (status.kind === "concussion") return { ...status, maxHpPercent: 0.8, criticalMaxHpPercent: 0.8 };
   if (status.kind === "stagger") return { ...status, seconds: 0.3 };
@@ -82,10 +84,10 @@ function ultimateStatus(status: CombatStatusEffect): CombatStatusEffect {
   if (status.kind === "frostPlume") return { ...status, burstPower: 90 };
   if (status.kind === "vandalism") return { ...status, offenseShredPercent: 3, burstPower: 270 };
   if (status.kind === "pressure") return { ...status, defensePower: 80, resistancePower: 80, stunSeconds: 0.6 };
-  if (status.kind === "drowsy") return { ...status, sleepSeconds: 1.8, wakeResistancePower: 70, groggyAttackSpeedPercent: 12 };
-  if (status.kind === "intimidate") return { ...status, fearSeconds: 0.9 };
+  if (status.kind === "drowsy") return { ...status, sleepSeconds: 0.6, wakeResistancePower: 70, groggyAttackSpeedPercent: 12 };
+  if (status.kind === "intimidate") return { ...status, fearSeconds: 0.6 };
   if (status.kind === "fear") return { ...status, seconds: 0.6 };
-  if (status.kind === "taunt") return { ...status, seconds: 1.2 };
+  if (status.kind === "taunt") return { ...status, seconds: 0.6 };
   return status;
 }
 

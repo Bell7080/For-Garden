@@ -1,3 +1,4 @@
+import { EXPEDITION_CC_POLICY, expeditionControlCooldown } from "../core/expeditionCcPolicy";
 import { expeditionStatAugmentLabel } from "../data/expeditionStatAugments";
 import { expeditionTagTerm, expeditionPayloadTag } from "../data/expeditionTagAugments";
 import { type KeywordDef } from "../data/keywords";
@@ -34,9 +35,10 @@ export function expeditionAugmentKeywords(def: ExpeditionAugmentDef): KeywordDef
     detail = t(DETAIL_KEYS[kind as keyof typeof DETAIL_KEYS], { healingReceivedReductionPercent: 0, ...values });
   }
   const limits = t("augment.tag.limits", { max: effect.limits.maxTriggers, cooldown: effect.limits.cooldownSeconds });
+  const control = expeditionControlCooldown(payload) === undefined ? "" : `\n${t("augment.tag.controlRecovery", { cap: EXPEDITION_CC_POLICY.maxSeconds, gap: EXPEDITION_CC_POLICY.recoverySeconds })}`;
   const rule = t(effect.limits.target === "self" && payload.kind !== "shell" ? "augment.tag.selfRule" : effect.trigger === "onDamaged" ? "augment.tag.receivedRule" : "augment.tag.attackRule");
   return [{ id: "augment-tag", term: expeditionTagTerm(kind),
-    kind: effect.limits.target === "self" ? "buff" : "debuff", description: `${detail}\n${limits}\n${rule}` }];
+    kind: effect.limits.target === "self" ? "buff" : "debuff", description: `${detail}\n${limits}\n${rule}${control}` }];
 }
 
 export function expeditionTagAugmentLabel(def: ExpeditionAugmentDef): string | undefined {
@@ -47,5 +49,6 @@ export function expeditionTagAugmentLabel(def: ExpeditionAugmentDef): string | u
   const effect = def.effect;
   const tag = `[[augment-tag|${keyword.term}]]`;
   const stacks = effect.payload.kind === "shell" || effect.payload.kind === "reagent" ? effect.payload.stacks : effect.applications ?? 1;
-  return t(effect.trigger === "onDamaged" ? (effect.payload.kind === "shell" ? "augment.tag.received" : "augment.tag.selfReceived") : effect.trigger === "onUltimateCast" ? "augment.tag.cast" : effect.trigger === "onUltimateHit" ? "augment.tag.ultimate" : effect.limits.target === "self" && effect.payload.kind !== "shell" ? "augment.tag.selfBasic" : "augment.tag.basic", { every: effect.everyN!, tag, stacks });
+  const label = t(effect.trigger === "onDamaged" ? (effect.payload.kind === "shell" ? "augment.tag.received" : "augment.tag.selfReceived") : effect.trigger === "onUltimateCast" ? "augment.tag.cast" : effect.trigger === "onUltimateHit" ? "augment.tag.ultimate" : effect.limits.target === "self" && effect.payload.kind !== "shell" ? "augment.tag.selfBasic" : "augment.tag.basic", { every: effect.everyN!, tag, stacks });
+  return expeditionControlCooldown(effect.payload) === undefined ? label : `${label}\n${t("augment.tag.controlCooldown", { cooldown: effect.limits.cooldownSeconds })}`;
 }

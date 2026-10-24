@@ -79,4 +79,6 @@ export const AUGMENT_PT_BR = {
   "augment.tag.detail.scar": "Máximo {maxStacks} acúmulos, {durationSeconds} s após o último ganho. Ao completar, consome todos: escudo apenas próprio de {selfShieldMaxHpPercent}% dos PV máximos. Recarga de consumo {cooldownSeconds} s. Separado da Cicatriz da Passiva original. Incompatível com aprimoramentos de Concha.",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "Cura adicional de {points}% dos PV inimigos realmente perdidos por ataques aptos para roubo de vida. Soma ao roubo existente. Escudos e dano excedente não contam; redução de cura se aplica.",
+  "augment.tag.controlCooldown": "Recarga de controle: {cooldown}s",
+  "augment.tag.controlRecovery": "O controle de Aprimoramentos dura no máximo {cap}s. Após terminar, o alvo resiste a novo controle por {gap}s e deve realizar um novo ataque inimigo. Esse primeiro ataque também concede {gap}s de recuperação. Todas as fontes e tipos compartilham essa regra.",
 } as const;

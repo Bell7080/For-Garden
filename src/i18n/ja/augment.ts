@@ -79,4 +79,6 @@ export const AUGMENT_JA = {
   "augment.tag.detail.scar": "最大{maxStacks}層、最後の獲得から{durationSeconds}秒。満タンで全消費し自分だけに最大HPの{selfShieldMaxHpPercent}%のシールド。消費後{cooldownSeconds}秒待機。元のパッシブの傷跡と別に蓄積。貝殻オーグメントとは同時選択不可。",
   "augment.flatPoints": "{label} +{points}",
   "augment.stat.detail.lifeSteal": "吸血対象の攻撃で実際に減った敵HPの{points}%を追加回復。既存の吸血に加算。シールド吸収・超過ダメージは含めず、既存の回復減少を適用。",
+  "augment.tag.controlCooldown": "CC再発動：{cooldown}秒ごと",
+  "augment.tag.controlRecovery": "オーグメントCCは1回最大{cap}秒。終了後{gap}秒は再制御されない。対象が新たに敵を1回攻撃する必要があり、その最初の攻撃後も{gap}秒を保証する。発動者と種類で共有。",
 } as const;

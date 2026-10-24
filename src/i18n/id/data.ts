@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Melacak spesimen baru",
   "friend.friend-moss.status": "Hari ini pun merestorasi pelan-pelan",
   "friend.friend-haneul.highestStage": "2-5 Ngarai Merah Tua",
-  "friend.friend-haneul.arenaTier": "Emas II",
   "adReward.daily-stamina.text": "Stamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Tiket Sapu 5",

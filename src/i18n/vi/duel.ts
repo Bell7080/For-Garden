@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_VI = {
-  "ranking.weekly.rules": "Chốt thứ Hai 00:00 UTC · Thưởng qua thư\nCần có kết quả đấu hoặc điểm viễn chinh trong tuần.",
   "duel.season.rules": "Mùa kéo dài {days} ngày · Giữ 60% điểm, làm tròn xuống hàng trăm",
   "duel.opponents.empty": "Chưa có đối thủ. Nhà nghiên cứu khác sẽ xuất hiện sau khi mở PvP. Hãy kiểm tra lại sau.",
 
@@ -49,7 +48,6 @@ export const DUEL_VI = {
   "duel.tierGuide.floor": "Từ {score} điểm",
   "duel.tierGuide.blind": "Ẩn {count} đối thủ",
   "duel.tierGuide.noBlind": "Hiện toàn bộ đối thủ",
-  "duel.tierGuide.reward": "Thưởng mùa: Huy hiệu {emblem} · Ngọc {gems}",
   "duel.history.title": "Nhật ký chiến đấu",
   "duel.history.ago.now": "Vừa xong",
   "duel.history.ago.minute": "{value} phút trước",
@@ -86,4 +84,12 @@ export const DUEL_VI = {
   "duel.shop.line3": "Món đó ít hơn tuần trước một cái rồi. Cần thì lấy luôn bây giờ đi.",
   "duel.shop.line4": "Huy hiệu từ trận thua tôi cũng tính y như vậy. Ngày thua dạy được nhiều hơn mà.",
   "duel.shop.line5": "Không cần vội. Đấu trường ngày mai vẫn mở mà.",
+  "rewardTable.current": "Hiện tại",
+  "rewardTable.rank.single": "Hạng {rank}",
+  "rewardTable.rank.range": "Hạng {from}–{upTo}",
+  "rewardTable.rank.beyond": "Từ hạng {rank} trở xuống",
+  "rewardTable.rules.duel": "Chốt mỗi thứ Hai 00:00 UTC · Gửi qua thư\nCần có ít nhất một trận đấu trong tuần.",
+  "rewardTable.rules.expedition": "Chốt mỗi thứ Hai 00:00 UTC · Gửi qua thư\nCần có điểm viễn chinh trong tuần.",
+  "rewardTable.rules.arena": "Chốt mỗi thứ Hai 00:00 UTC · Gửi qua thư\nThưởng bậc lúc chốt cộng thưởng hạng. Cần có trận xếp hạng trong tuần.",
+  "ranking.mine": "Hạng của tôi",
 } as const;

@@ -1,3 +1,7 @@
+import { arenaStanding } from "../core/arenaStanding";
+import type { DuelTierId } from "../core/duelArena";
+import { addDuelTierEmblem } from "./DuelTierEmblem";
+import { DUEL_TIER_COLOR } from "./duelLayout";
 import Phaser from "phaser";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t, type TextKey } from "../i18n";
@@ -390,7 +394,9 @@ export class PlayerProfilePopup {
     const story = stats.storyProgress;
     const collection = this.profile.collection;
     // 공개하지 않은 기록은 칸째 뺀다 — 0이나 "기록 없음"으로 채우면 없는 기록을 있는 것처럼 말한다.
-    const tiles: { label: string; value: string; sub?: string; progress?: number }[] = [
+    // 아레나 티어는 결투장과 같은 휘장 표로 읽는다 — RP만 공개되고 티어 이름은 지금 언어로 짓는다.
+    const arena = stats.arena ? arenaStanding(stats.arena.score) : undefined;
+    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId }[] = [
       // 길드원 카드는 길드 안의 자리(직책·기여도)를 먼저 세운다 — 길드 화면에서 연 카드가 말해야 하는 것이 그것이다.
       ...(this.profile.leadRecords ?? []),
       {
@@ -398,13 +404,15 @@ export class PlayerProfilePopup {
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
         ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
       },
+      arena && stats.arena
+        ? { label: t("profile.arenaTier"), value: t(`duel.tier.${arena.tier.id}`), sub: t("arena.rp", { score: stats.arena.score.toLocaleString() }), tier: arena.tier.id }
+        : { label: t("profile.arenaTier"), value: t("profile.record.unranked") },
       ...(stats.expedition ? [{ label: t("profile.record.expedition"), value: stats.expedition.score.toLocaleString() }] : []),
       ...(collection ? [{
         label: t("profile.record.collection"),
         value: `${collection.owned} / ${collection.total}`,
         progress: profileProgressRatio(collection.owned, collection.total),
       }] : []),
-      { label: t("profile.arenaTier"), value: stats.arenaTier?.displayName ?? t("profile.record.unranked") },
     ].slice(0, 4);
     tiles.forEach((tile, index) => {
       const x = (index % 2 === 0 ? -1 : 1) * records.columnX;
@@ -413,7 +421,9 @@ export class PlayerProfilePopup {
       body.add(drawLayer(this.scene, x, y, shape, { fill: 0x121a24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
       const left = x - records.width / 2 + 30;
       body.add(this.scene.add.text(left, y - 40, tile.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      body.add(this.scene.add.text(left, y + 4, tile.value, textStyle({ role: "display", size: 34, color: COLOR.ink })).setOrigin(0, 0.5));
+      if (tile.tier) addDuelTierEmblem(this.scene, body, left + 26, y + 4, 52, tile.tier);
+      const valueX = tile.tier ? left + 62 : left;
+      body.add(this.scene.add.text(valueX, y + 4, tile.value, textStyle({ role: "display", size: 34, color: tile.tier ? DUEL_TIER_COLOR[tile.tier].text : COLOR.ink })).setOrigin(0, 0.5));
       if (tile.sub) body.add(this.scene.add.text(x + records.width / 2 - 26, y - 40, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5));
       if (tile.progress !== undefined) {
         const barWidth = records.width - 60;

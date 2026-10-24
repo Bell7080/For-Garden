@@ -1,3 +1,4 @@
+import { arenaPublicStanding, type ArenaPublicStanding } from "../core/arenaStanding";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { highestClearedStage } from "../core/stageProgress";
@@ -71,7 +72,8 @@ export interface FavoriteRelicShowcase {
 
 export interface PlayerCompetitiveStats {
   favoriteRelic: FavoriteRelicShowcase | null;
-  arenaTier?: { tierId: string; displayName: string };
+  /** 아레나 RP. 한 판도 하지 않았거나 공개하지 않았으면 비어 있다(그 칸이 「미배치」로 선다). 티어는 화면이 `arenaStanding`으로 읽는다. */
+  arena?: ArenaPublicStanding;
   highestStage: { stageId: string; displayValue: string } | null;
   /** 스토리 진행 — 깬 관문 수와 전체 관문 수. 친구 카드는 최고 관문만 공개해 비어 있다. */
   storyProgress?: { cleared: number; total: number };
@@ -110,7 +112,7 @@ function profileAvatarRelic(state: Session): { relicId: string; portraitAssetId:
 }
 
 /** 저장 가능한 공개 설정·애착 렐릭과 서버 확정 진행만 읽어 안전한 표시 모델을 만든다. */
-export function playerProfileDisplay(state: Session, equippedModifiers: readonly PublicProfileModifier[] = [], arenaTier?: { tierId: string; displayName: string }, now: Date = new Date()): PlayerProfileDisplay {
+export function playerProfileDisplay(state: Session, equippedModifiers: readonly PublicProfileModifier[] = [], arena?: ArenaPublicStanding, now: Date = new Date()): PlayerProfileDisplay {
   const favorite = favoriteShowcase(state);
   const stage = highestClearedStage(STAGES, state.cleared);
   const card = state.playerCard;
@@ -132,7 +134,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
     researchDays: researchDays(card.createdAt, now),
     competitiveStats: {
       favoriteRelic: favorite,
-      ...(arenaTier ? { arenaTier: { ...arenaTier } } : {}),
+      ...(arena ? { arena: { ...arena } } : {}),
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
@@ -164,7 +166,7 @@ export function friendProfileDisplay(friend: {
   displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
-  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaTier?: { tierId: string; displayName: string }; expeditionScore?: number };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number };
 }): PlayerProfileDisplay {
   const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
   const favorite: FavoriteRelicShowcase | null = relic ? {
@@ -189,7 +191,7 @@ export function friendProfileDisplay(friend: {
     lastActive: friend.lastActive,
     competitiveStats: {
       favoriteRelic: favorite,
-      ...(stats.arenaTier ? { arenaTier: { ...stats.arenaTier } } : {}),
+      ...(arenaPublicStanding(stats.arenaScore) ? { arena: arenaPublicStanding(stats.arenaScore) } : {}),
       highestStage: stats.highestStage ? { ...stats.highestStage } : null,
       ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
     },
@@ -204,7 +206,7 @@ export function friendProfileDisplay(friend: {
  */
 export function guildMemberProfileDisplay(member: {
   name: string; level: number; frameId: string; avatarRelicId: string;
-  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number } | null;
+  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number; arenaScore?: number } | null;
 }, lastActive: string, leadRecords: { label: string; value: string; sub?: string }[]): PlayerProfileDisplay {
   const card = member.card;
   const relic = card?.favorite ? RELICS.find(({ id }) => id === card.favorite!.relicId) : undefined;
@@ -230,6 +232,7 @@ export function guildMemberProfileDisplay(member: {
     competitiveStats: {
       favoriteRelic: favorite,
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
+      ...(arenaPublicStanding(card?.arenaScore) ? { arena: arenaPublicStanding(card?.arenaScore) } : {}),
       ...(card ? { expedition: { label: t("profile.expeditionBest"), score: card.expeditionBest } } : {}),
     },
     equippedModifiers: [],

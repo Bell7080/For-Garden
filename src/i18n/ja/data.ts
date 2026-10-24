@@ -440,7 +440,6 @@ export default {
   "friend.friend-haneul.status": "新しい標本の痕跡を探し中",
   "friend.friend-moss.status": "今日もゆっくり復元",
   "friend.friend-haneul.highestStage": "2-5 赤い峡谷",
-  "friend.friend-haneul.arenaTier": "ゴールド II",
   "adReward.daily-stamina.text": "スタミナ 10",
   "adReward.daily-cheesecake.text": "チーズケーキ 20",
   "adReward.sweep-tickets.text": "掃討券 5",

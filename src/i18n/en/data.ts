@@ -275,7 +275,6 @@ export default {
   "friend.friend-haneul.status": "Tracking a new specimen",
   "friend.friend-moss.status": "Restoring slowly again today",
   "friend.friend-haneul.highestStage": "2-5 Crimson Canyon",
-  "friend.friend-haneul.arenaTier": "Gold II",
   "adReward.daily-stamina.text": "Stamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Sweep Ticket 5",

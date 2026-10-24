@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ID = {
-  "ranking.weekly.rules": "Ditutup Senin 00:00 UTC · Hadiah lewat surat\nHarus ada hasil duel atau skor ekspedisi pada minggu itu.",
   "duel.season.rules": "Musim berakhir tiap {days} hari · Skor 60%, dibulatkan ke bawah per 100",
   "duel.opponents.empty": "Belum ada lawan. Peneliti lain akan muncul setelah membuka PvP. Periksa lagi nanti.",
 
@@ -49,7 +48,6 @@ export const DUEL_ID = {
   "duel.tierGuide.floor": "Mulai {score} poin",
   "duel.tierGuide.blind": "{count} lawan disembunyikan",
   "duel.tierGuide.noBlind": "Semua lawan terlihat",
-  "duel.tierGuide.reward": "Hadiah musim: Lencana {emblem} · Permata {gems}",
   "duel.history.title": "Catatan Pertempuran",
   "duel.history.ago.now": "Baru saja",
   "duel.history.ago.minute": "{value} menit lalu",
@@ -86,4 +84,12 @@ export const DUEL_ID = {
   "duel.shop.line3": "Yang itu berkurang satu dari minggu lalu. Kalau butuh, ambil sekarang.",
   "duel.shop.line4": "Lencana dari pertandingan yang kalah juga kuhitung sama. Hari kalah mengajarkan lebih banyak.",
   "duel.shop.line5": "Tak perlu buru-buru. Arena besok juga buka.",
+  "rewardTable.current": "Saat ini",
+  "rewardTable.rank.single": "Peringkat {rank}",
+  "rewardTable.rank.range": "Peringkat {from}–{upTo}",
+  "rewardTable.rank.beyond": "Peringkat {rank} ke bawah",
+  "rewardTable.rules.duel": "Ditutup setiap Senin 00:00 UTC · Dikirim lewat surat\nHarus ada setidaknya satu duel pada minggu itu.",
+  "rewardTable.rules.expedition": "Ditutup setiap Senin 00:00 UTC · Dikirim lewat surat\nHarus ada skor ekspedisi pada minggu itu.",
+  "rewardTable.rules.arena": "Ditutup setiap Senin 00:00 UTC · Dikirim lewat surat\nHadiah tingkat saat penutupan ditambah bonus peringkat. Harus ada laga peringkat minggu itu.",
+  "ranking.mine": "Peringkat saya",
 } as const;

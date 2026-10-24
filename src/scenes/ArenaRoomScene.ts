@@ -1,9 +1,9 @@
 import { t } from "../i18n";
 import { subscribeArenaChanges } from "../api/arenaRealtime";
 import Phaser from 'phaser';
-import { arenaCall, arenaError, type ArenaStatus } from '../api/arenaApi';
+import { arenaCall, arenaError, arenaForfeitOnExit, type ArenaStatus } from '../api/arenaApi';
 import { ARENA_HIDDEN_BAN, arenaCanAct, arenaPickable, type ArenaAction, type ArenaRoom, type ArenaUnit } from '../core/liveArena';
-import { Button } from '../ui/Button';
+import { Button, DESTRUCTIVE_BUTTON_STYLE } from '../ui/Button';
 import { PopupLayer } from '../ui/PopupLayer';
 import { textStyle, COLOR } from '../ui/theme';
 import { addSceneBackground, BACKGROUND } from '../ui/backgrounds';
@@ -79,6 +79,8 @@ export class ArenaRoomScene extends Phaser.Scene {
   private transitioning = false;
   private signature = '';
   private clock!: Phaser.GameObjects.Text;
+  /** 밴·배치 동안만 서는 작은 기권 버튼(왼쪽 위). */
+  private forfeitButton!: Button;
   private error!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
   private title!: Phaser.GameObjects.Text;
@@ -138,10 +140,14 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.banColumn = this.add.container(0, 0);
     this.controls = this.add.container(0, 0).setDepth(5);
     this.error = this.add.text(470, L.error.y, '', textStyle({ role: "body", size: 24, color: ARENA_TONE.sparkText, wrap: 760, align: 'center' })).setOrigin(.5).setDepth(6);
-    addBackButton(this, () => { const p = new PopupLayer(this, 2400); p.confirm({ title: t("arena.room.leave"), message: t("arena.room.leaveConfirm"), confirmLabel: t("arena.room.forfeit"), destructive: true }, () => void this.act({ kind: 'forfeit' })); });
+    addBackButton(this, () => this.confirmForfeit());
+    this.forfeitButton = new Button(this, L.forfeit.x, L.forfeit.y, { width: L.forfeit.width, height: L.forfeit.height, fontSize: 24, label: t("arena.room.forfeitShort"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => this.confirmForfeit() }).setVisible(false);
     this.bindGridScroll();
     const unsubscribe = subscribeArenaChanges(() => void this.fetchStatus());
-    this.events.once('shutdown', () => { unsubscribe(); setDebugGridCards("arenaRoom", undefined); });
+    // 창을 닫거나 다른 페이지로 떠나면 밴·배치 중인 판은 기권이다. 앱을 잠깐 내린 것은 서버의 침묵 규칙이 맡는다.
+    const onExit = (): void => { const r = this.status?.room; if (r && (r.phase === 'ban' || r.phase === 'place')) arenaForfeitOnExit(r.id); };
+    window.addEventListener('pagehide', onExit);
+    this.events.once('shutdown', () => { unsubscribe(); window.removeEventListener('pagehide', onExit); setDebugGridCards("arenaRoom", undefined); });
     this.time.addEvent({ delay: 2000, loop: true, callback: () => void this.fetchStatus() });
     void this.fetchStatus();
   }
@@ -151,6 +157,15 @@ export class ArenaRoomScene extends Phaser.Scene {
     if (!r) return;
     const live = ['ban', 'place', 'invited'].includes(r.phase);
     this.clock.setText(live ? String(Math.max(0, Math.ceil((r.deadline - Date.now()) / 1000))) : '');
+  }
+
+  /** 기권은 되돌릴 수 없어 확인 창을 한 번 지난다 — 랭크전이면 패배로 RP를 잃는다. */
+  private confirmForfeit(): void {
+    const r = this.status?.room;
+    const live = r && ['ban', 'place', 'battle'].includes(r.phase);
+    if (!live) { startScene(this, 'arena'); return; }
+    const p = new PopupLayer(this, 2400);
+    p.confirm({ title: t("arena.room.leave"), message: r.ranked ? t("arena.room.leaveConfirm") : t("arena.room.leaveConfirmFriendly"), confirmLabel: t("arena.room.forfeit"), destructive: true }, () => void this.act({ kind: 'forfeit' }));
   }
 
   private async fetchStatus(): Promise<void> {
@@ -218,6 +233,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.controls.removeAll(true);
     const L = ARENA_ROOM_LAYOUT;
     const mine = r.players[side], opponent = r.players[1 - side];
+    this.forfeitButton.setVisible(r.phase === 'ban' || r.phase === 'place');
     if (r.phase === 'invited' || r.phase === 'done' || r.phase === 'declined') {
       this.clearGrid();
       this.slots.removeAll(true);
@@ -235,6 +251,7 @@ export class ArenaRoomScene extends Phaser.Scene {
       }
       line(-120, r.phase === 'declined' ? t("arena.invite.closed") : r.winner === null ? t("arena.result.drawLabel") : r.winner === side ? t("arena.result.winLabel") : t("arena.result.lossLabel"), 54, r.winner === side ? ARENA_TONE.allyText : COLOR.ink);
       line(-20, r.ranked ? t("arena.result.applied") : t("arena.result.friendlyNotice"), 28, COLOR.inkDim);
+      if (r.phase === 'done' && r.reason === 'forfeit') line(40, r.winner === side ? t("arena.result.foeForfeit") : t("arena.result.selfForfeit"), 26, ARENA_TONE.accentText);
       panel.add(new Button(this, 0, 150, { width: 700, height: 110, label: t("arena.result.return"), variant: 'primary', fill: ARENA_TONE.confirm, accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, onClick: () => startScene(this, 'arena') }));
       return;
     }

@@ -1,6 +1,5 @@
 /** 결투장(3대3 자동전투 방어전)·결투 상점 화면 문구. */
 export const DUEL_KO = {
-  "ranking.weekly.rules": "월요일 00:00 UTC 마감 · 우편 지급\n해당 주 대전·원정 기록이 있어야 보상을 받습니다.",
   "duel.season.rules": "{days}일마다 시즌 종료 · 점수 60%를 100점 단위로 내림",
   "duel.opponents.empty": "현재 대전할 상대가 없습니다. PvP를 해금한 다른 연구원이 참가하면 목록에 표시됩니다. 다시 확인해 주세요.",
 
@@ -49,7 +48,6 @@ export const DUEL_KO = {
   "duel.tierGuide.floor": "{score}점부터",
   "duel.tierGuide.blind": "상대 {count}명 가림",
   "duel.tierGuide.noBlind": "상대 모두 공개",
-  "duel.tierGuide.reward": "시즌 보상 휘장 {emblem} · 젬 {gems}",
   "duel.history.title": "전투 기록",
   "duel.history.ago.now": "방금",
   "duel.history.ago.minute": "{value}분 전",
@@ -86,4 +84,12 @@ export const DUEL_KO = {
   "duel.shop.line3": "그건 지난주보다 하나 줄었네. 필요하면 지금 가져가.",
   "duel.shop.line4": "진 판의 휘장도 똑같이 쳐 줘. 진 날이 더 많이 가르쳐 주거든.",
   "duel.shop.line5": "서두를 거 없어. 결투장은 내일도 열려 있으니까.",
+  "rewardTable.current": "현재",
+  "rewardTable.rank.single": "{rank}위",
+  "rewardTable.rank.range": "{from}~{upTo}위",
+  "rewardTable.rank.beyond": "{rank}위 이하",
+  "rewardTable.rules.duel": "매주 월요일 00:00 UTC 마감 · 우편 지급\n그 주 결투장 대전 기록이 있어야 받습니다.",
+  "rewardTable.rules.expedition": "매주 월요일 00:00 UTC 마감 · 우편 지급\n그 주 원정 기록이 있어야 받습니다.",
+  "rewardTable.rules.arena": "매주 월요일 00:00 UTC 마감 · 우편 지급\n마감 때의 티어 보상에 순위 보너스를 더해 줍니다. 그 주 랭크전 기록이 있어야 받습니다.",
+  "ranking.mine": "내 순위",
 } as const;

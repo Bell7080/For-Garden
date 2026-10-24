@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_RU = {
-  "ranking.weekly.rules": "Итоги: понедельник 00:00 UTC · Награды по почте\nНужен результат дуэли или экспедиции за эту неделю.",
   "duel.season.rules": "Сезон: {days} дней · 60% очков с округлением вниз до сотен",
   "duel.opponents.empty": "Соперников пока нет. Другие исследователи появятся после открытия PvP. Проверьте позже.",
 
@@ -49,7 +48,6 @@ export const DUEL_RU = {
   "duel.tierGuide.floor": "От {score} очк.",
   "duel.tierGuide.blind": "Скрыто соперников: {count}",
   "duel.tierGuide.noBlind": "Все соперники видны",
-  "duel.tierGuide.reward": "Награда сезона: знак {emblem} · самоцветы {gems}",
   "duel.history.title": "Журнал боёв",
   "duel.history.ago.now": "Только что",
   "duel.history.ago.minute": "{value} мин. назад",
@@ -86,4 +84,12 @@ export const DUEL_RU = {
   "duel.shop.line3": "Этого стало на одну штуку меньше, чем на прошлой неделе. Нужно — забирай сейчас.",
   "duel.shop.line4": "Знаки за проигранные бои я засчитаю так же. Дни поражений учат больше.",
   "duel.shop.line5": "Не спеши. Арена и завтра будет открыта.",
+  "rewardTable.current": "Сейчас",
+  "rewardTable.rank.single": "{rank}-е место",
+  "rewardTable.rank.range": "Места {from}–{upTo}",
+  "rewardTable.rank.beyond": "{rank}-е место и ниже",
+  "rewardTable.rules.duel": "Итоги каждый понедельник 00:00 UTC · Награды по почте\nНужна хотя бы одна дуэль за эту неделю.",
+  "rewardTable.rules.expedition": "Итоги каждый понедельник 00:00 UTC · Награды по почте\nНужен результат экспедиции за эту неделю.",
+  "rewardTable.rules.arena": "Итоги каждый понедельник 00:00 UTC · Награды по почте\nНаграда за ранг на момент итогов плюс бонус за место. Нужен рейтинговый бой за неделю.",
+  "ranking.mine": "Моё место",
 } as const;

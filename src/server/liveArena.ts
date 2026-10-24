@@ -5,6 +5,8 @@ import { saveManager } from '../state/SaveManager';
 import { RelicProgressionManager } from '../managers/RelicProgressionManager';
 import { getRelic } from '../data/relics';
 import { partyRuneTraitEffects } from '../core/runeTraitEffects';
+/** `server_arena_standing` — 화면이 읽는 내 자리. */
+export interface ArenaStanding { score:number; wins:number; losses:number; winStreak:number; bestStreak:number; bestScore:number; nextStreakBonus:number; rank:number|null; weekEndsAt:string; serverTime:string; lastWeek:{score:number;rank:number|null}|null }
 export interface ArenaContext { playerId:string; score:number; wins:number; losses:number; queuedAt?:string; room:ArenaRoom|null; incoming:ArenaRoom[]; receiptFingerprint?:unknown; records:{id:string;data:unknown}[] }
 export type ArenaRpc=(name:string,args:Record<string,unknown>)=>Promise<unknown>;
 export function arenaPlayer(id:string,data:unknown):ArenaPlayer {
@@ -17,6 +19,9 @@ export function arenaPlayer(id:string,data:unknown):ArenaPlayer {
 }
 export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string, args:unknown[], requestId?:string):Promise<unknown> {
   const input=(args[0]??{}) as {kind?:string;roomId?:string;target?:string;rules?:unknown;action?:ArenaAction};
+  // 읽기만 하는 두 갈래(내 자리·주간 순위)는 방 잠금·정리를 거치지 않는다 — 로비 프로필도 이 값을 읽는다.
+  if(method==='get' && input.kind==='standing') return await rpc('server_arena_standing',{p_player:player});
+  if(method==='get' && input.kind==='ranking') return await rpc('server_arena_ranking',{p_player:player,p_limit:100});
   const kind=method==='get'?'status':input.kind;
   if(!['status','queue','cancel','invite','accept','decline','practice','action','finish'].includes(kind??'')) throw Error('ARENA_ACTION');
   let rules=input.rules===undefined?RANKED_ARENA_RULES:arenaRules(input.rules);
@@ -50,9 +55,10 @@ export async function handleArenaCall(rpc:ArenaRpc, player:string, method:string
     }
   }
   // Privacy is enforced before the HTTP boundary, even for cached/finished reads.
-  if(room?.phase==='done') {
-    const latest=await rpc('server_arena_context',{p_player:player,p_kind:'status',p_room:room.id,p_target:null,p_rules:RANKED_ARENA_RULES,p_request:null}) as ArenaContext;
-    context={...context,score:latest.score,wins:latest.wins,losses:latest.losses};
+  // 끝난 판은 정산 뒤의 RP·연승을, 입구 조회는 연승·주간 순위까지 함께 돌려준다.
+  if(room?.phase==='done' || kind==='status') {
+    const standing=await rpc('server_arena_standing',{p_player:player}) as ArenaStanding;
+    context={...context,...standing};
   }
   delete context.receiptFingerprint;
   context={...context,room:room?publicArenaRoom(room,player):null,records:[]};

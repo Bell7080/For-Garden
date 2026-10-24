@@ -1,6 +1,5 @@
 /** 決闘場（3対3の自動戦闘による防衛戦）と決闘ショップの文言。 */
 export const DUEL_JA = {
-  "ranking.weekly.rules": "月曜00:00 UTC締切・報酬はメールで配布\nその週の対戦・遠征の記録が報酬の対象です。",
   "duel.season.rules": "{days}日ごとにシーズン終了・スコアを60%にし100点単位で切り捨て",
   "duel.opponents.empty": "現在対戦相手がいません。PvPを解放した他の研究員が参加すると表示されます。後ほどご確認ください。",
 
@@ -49,7 +48,6 @@ export const DUEL_JA = {
   "duel.tierGuide.floor": "{score}ptから",
   "duel.tierGuide.blind": "対戦相手 {count}人を非公開",
   "duel.tierGuide.noBlind": "対戦相手はすべて公開",
-  "duel.tierGuide.reward": "シーズン報酬：記章 {emblem}、ジェム {gems}",
   "duel.history.title": "戦闘記録",
   "duel.history.ago.now": "たった今",
   "duel.history.ago.minute": "{value}分前",
@@ -86,4 +84,12 @@ export const DUEL_JA = {
   "duel.shop.line3": "それ、先週より一つ減ってるね。必要なら今のうちに持っていきな。",
   "duel.shop.line4": "負けた試合の徽章も同じように数えてあげる。負けた日のほうが多くを教えてくれるから。",
   "duel.shop.line5": "急ぐことはない。闘技場は明日も開いているから。",
+  "rewardTable.current": "現在",
+  "rewardTable.rank.single": "{rank}位",
+  "rewardTable.rank.range": "{from}～{upTo}位",
+  "rewardTable.rank.beyond": "{rank}位以下",
+  "rewardTable.rules.duel": "毎週月曜00:00 UTC締切・メールで配布\nその週に決闘場で対戦した記録が必要です。",
+  "rewardTable.rules.expedition": "毎週月曜00:00 UTC締切・メールで配布\nその週の遠征記録が必要です。",
+  "rewardTable.rules.arena": "毎週月曜00:00 UTC締切・メールで配布\n締切時のティア報酬に順位ボーナスを加えます。その週のランク戦記録が必要です。",
+  "ranking.mine": "自分の順位",
 } as const;

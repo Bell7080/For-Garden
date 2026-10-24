@@ -284,7 +284,8 @@ export interface PublicProfileModifierDto {
 /** 공개 동의를 받은 기록만 존재할 수 있으며 미기록/비공개 항목은 키 자체를 생략한다. */
 export interface PublicCompetitiveStatsDto {
   highestStage?: { stageId: string; displayValue: string };
-  arenaTier?: { tierId: string; displayName: string };
+  /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
+  arenaScore?: number;
   expeditionScore?: number;
 }
 

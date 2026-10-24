@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ZH_HANT = {
-  "ranking.weekly.rules": "週一00:00 UTC結算 · 獎勵透過郵件發放\n當週須有對戰或遠征紀錄才可領獎。",
   "duel.season.rules": "每{days}天賽季結束 · 積分保留60%，向下取整至百位",
   "duel.opponents.empty": "暫無對手。其他研究員解鎖PvP後將出現在列表中，請稍後查看。",
 
@@ -49,7 +48,6 @@ export const DUEL_ZH_HANT = {
   "duel.tierGuide.floor": "{score}分起",
   "duel.tierGuide.blind": "隱藏 {count} 名對手",
   "duel.tierGuide.noBlind": "對手全部公開",
-  "duel.tierGuide.reward": "賽季獎勵：徽章 {emblem} · 寶石 {gems}",
   "duel.history.title": "戰鬥記錄",
   "duel.history.ago.now": "剛剛",
   "duel.history.ago.minute": "{value}分鐘前",
@@ -86,4 +84,12 @@ export const DUEL_ZH_HANT = {
   "duel.shop.line3": "那個比上週少了一個。需要的話現在就拿走。",
   "duel.shop.line4": "輸掉的那場的徽章我也一樣給你算。輸的日子教給你的更多。",
   "duel.shop.line5": "不用急。競技場明天也開著。",
+  "rewardTable.current": "當前",
+  "rewardTable.rank.single": "第{rank}名",
+  "rewardTable.rank.range": "第{from}~{upTo}名",
+  "rewardTable.rank.beyond": "第{rank}名及以後",
+  "rewardTable.rules.duel": "每週一00:00 UTC結算 · 通過郵件發放\n當週需有決鬥場對戰記錄才能領取。",
+  "rewardTable.rules.expedition": "每週一00:00 UTC結算 · 通過郵件發放\n當週需有遠征記錄才能領取。",
+  "rewardTable.rules.arena": "每週一00:00 UTC結算 · 通過郵件發放\n結算時的段位獎勵加上排名獎勵。當週需有排位賽記錄才能領取。",
+  "ranking.mine": "我的排名",
 } as const;

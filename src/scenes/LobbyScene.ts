@@ -406,7 +406,7 @@ export class LobbyScene extends Phaser.Scene {
   private openPlayerProfile(_profile?: PlayerProfileDisplay, instant = false): void {
     if (!this.popupLayer || this.playerProfilePopup) return;
     // TopBar의 즉시 모델 대신 manager가 서버 확정 티어를 합친 뒤 연다. 실패하면 가짜 티어 없이 로컬 기록만 표시한다.
-    void loadPlayerProfileDisplay(session, gameApi).catch(() => playerProfileDisplay(session, profileModifierManager.equipped())).then((resolved) => {
+    void loadPlayerProfileDisplay(session).catch(() => playerProfileDisplay(session, profileModifierManager.equipped())).then((resolved) => {
       if (!this.popupLayer || this.playerProfilePopup) return;
       const layer = this.popupLayer;
       // 고칠 것을 카드에서 바로 누른다. 그 요소만 고치는 창이 카드를 닫은 자리에 서고, 닫히면 카드가 새 값으로 다시 선다.

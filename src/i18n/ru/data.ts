@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Выслеживаю новый экземпляр",
   "friend.friend-moss.status": "И сегодня восстанавливаю не спеша",
   "friend.friend-haneul.highestStage": "2-5 Багровое ущелье",
-  "friend.friend-haneul.arenaTier": "Золото II",
   "adReward.daily-stamina.text": "Выносливость 10",
   "adReward.daily-cheesecake.text": "Чизкейк 20",
   "adReward.sweep-tickets.text": "Билет зачистки 5",

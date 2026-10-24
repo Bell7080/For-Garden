@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_EN = {
-  "ranking.weekly.rules": "Closes Monday 00:00 UTC · Rewards by mail\nPlay a duel or record an expedition score that week to qualify.",
   "duel.season.rules": "Season ends every {days} days · Score resets to 60%, rounded down to 100",
   "duel.opponents.empty": "No opponents are available. Other researchers will appear after unlocking PvP. Check again later.",
 
@@ -49,7 +48,6 @@ export const DUEL_EN = {
   "duel.tierGuide.floor": "From {score} pts",
   "duel.tierGuide.blind": "{count} opponents hidden",
   "duel.tierGuide.noBlind": "All opponents revealed",
-  "duel.tierGuide.reward": "Season reward: Insignia {emblem} · Gems {gems}",
   "duel.history.title": "Battle Log",
   "duel.history.ago.now": "Just now",
   "duel.history.ago.minute": "{value}m ago",
@@ -86,4 +84,12 @@ export const DUEL_EN = {
   "duel.shop.line3": "That one's down by one since last week. If you need it, take it now.",
   "duel.shop.line4": "I'll count the insignia from lost matches the same. The days you lose teach you more.",
   "duel.shop.line5": "No need to rush. The arena's open tomorrow, too.",
+  "rewardTable.current": "Now",
+  "rewardTable.rank.single": "#{rank}",
+  "rewardTable.rank.range": "#{from}–{upTo}",
+  "rewardTable.rank.beyond": "#{rank} and below",
+  "rewardTable.rules.duel": "Closes every Monday 00:00 UTC · Sent by mail\nPlay at least one duel that week to qualify.",
+  "rewardTable.rules.expedition": "Closes every Monday 00:00 UTC · Sent by mail\nRecord an expedition score that week to qualify.",
+  "rewardTable.rules.arena": "Closes every Monday 00:00 UTC · Sent by mail\nYour tier at closing plus a rank bonus. Play a ranked match that week to qualify.",
+  "ranking.mine": "My Rank",
 } as const;

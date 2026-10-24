@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Rastreando un nuevo espécimen",
   "friend.friend-moss.status": "Hoy también restaurando con calma",
   "friend.friend-haneul.highestStage": "2-5 Cañón Carmesí",
-  "friend.friend-haneul.arenaTier": "Oro II",
   "adReward.daily-stamina.text": "Estamina 10",
   "adReward.daily-cheesecake.text": "Tarta de queso 20",
   "adReward.sweep-tickets.text": "Ticket de barrido 5",

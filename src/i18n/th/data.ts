@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "กำลังตามรอยตัวอย่างใหม่",
   "friend.friend-moss.status": "วันนี้ก็ค่อย ๆ ฟื้นคืนอีกเช่นเคย",
   "friend.friend-haneul.highestStage": "2-5 หุบเขาสีเลือด",
-  "friend.friend-haneul.arenaTier": "ทอง II",
   "adReward.daily-stamina.text": "สตามินา 10",
   "adReward.daily-cheesecake.text": "ชีสเค้ก 20",
   "adReward.sweep-tickets.text": "ตั๋วกวาดล้าง 5",

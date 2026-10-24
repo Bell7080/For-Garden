@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_DE = {
-  "ranking.weekly.rules": "Ende Montag 00:00 UTC · Belohnungen per Post\nEine Duell- oder Expeditionswertung dieser Woche ist erforderlich.",
   "duel.season.rules": "Saisonende alle {days} Tage · 60% der Punkte, auf 100 abgerundet",
   "duel.opponents.empty": "Keine Gegner verfügbar. Andere Forscher erscheinen, sobald sie PvP freischalten. Bitte später erneut prüfen.",
 
@@ -49,7 +48,6 @@ export const DUEL_DE = {
   "duel.tierGuide.floor": "Ab {score} Pkt.",
   "duel.tierGuide.blind": "{count} Gegner verborgen",
   "duel.tierGuide.noBlind": "Alle Gegner sichtbar",
-  "duel.tierGuide.reward": "Saisonbelohnung: Abzeichen {emblem} · Juwelen {gems}",
   "duel.history.title": "Kampfprotokoll",
   "duel.history.ago.now": "Gerade eben",
   "duel.history.ago.minute": "vor {value} Min.",
@@ -86,4 +84,12 @@ export const DUEL_DE = {
   "duel.shop.line3": "Davon ist seit letzter Woche einer weniger da. Wenn du es brauchst, nimm es jetzt mit.",
   "duel.shop.line4": "Abzeichen aus verlorenen Kämpfen zähle ich genauso mit. Verlorene Tage lehren mehr.",
   "duel.shop.line5": "Keine Eile. Die Arena ist morgen auch geöffnet.",
+  "rewardTable.current": "Aktuell",
+  "rewardTable.rank.single": "Platz {rank}",
+  "rewardTable.rank.range": "Platz {from}–{upTo}",
+  "rewardTable.rank.beyond": "Ab Platz {rank}",
+  "rewardTable.rules.duel": "Abschluss jeden Montag 00:00 UTC · Versand per Post\nMindestens ein Duell in dieser Woche ist nötig.",
+  "rewardTable.rules.expedition": "Abschluss jeden Montag 00:00 UTC · Versand per Post\nEine Expeditionswertung in dieser Woche ist nötig.",
+  "rewardTable.rules.arena": "Abschluss jeden Montag 00:00 UTC · Versand per Post\nRangbelohnung zum Abschluss plus Platzbonus. Ein Ranglistenspiel in dieser Woche ist nötig.",
+  "ranking.mine": "Mein Platz",
 } as const;

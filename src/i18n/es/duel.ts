@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ES = {
-  "ranking.weekly.rules": "Cierre: lunes 00:00 UTC · Recompensas por correo\nSe requiere un duelo o puntuación de expedición esa semana.",
   "duel.season.rules": "La temporada dura {days} días · Puntos al 60%, redondeados hacia abajo a centenas",
   "duel.opponents.empty": "No hay rivales. Aparecerán otros investigadores cuando desbloqueen PvP. Vuelve a consultar más tarde.",
 
@@ -49,7 +48,6 @@ export const DUEL_ES = {
   "duel.tierGuide.floor": "Desde {score} pts",
   "duel.tierGuide.blind": "{count} rivales ocultos",
   "duel.tierGuide.noBlind": "Todos los rivales visibles",
-  "duel.tierGuide.reward": "Recompensa de temporada: insignia {emblem} · Gemas {gems}",
   "duel.history.title": "Registro de combate",
   "duel.history.ago.now": "Ahora mismo",
   "duel.history.ago.minute": "hace {value} min",
@@ -86,4 +84,12 @@ export const DUEL_ES = {
   "duel.shop.line3": "Ese tiene uno menos que la semana pasada. Si lo necesitas, llévatelo ya.",
   "duel.shop.line4": "Las insignias de los combates perdidos las cuento igual. Los días de derrota enseñan más.",
   "duel.shop.line5": "No hay prisa. La arena también abre mañana.",
+  "rewardTable.current": "Actual",
+  "rewardTable.rank.single": "Puesto {rank}",
+  "rewardTable.rank.range": "Puestos {from}–{upTo}",
+  "rewardTable.rank.beyond": "Puesto {rank} o inferior",
+  "rewardTable.rules.duel": "Cierre cada lunes 00:00 UTC · Se envía por correo\nSe requiere al menos un duelo esa semana.",
+  "rewardTable.rules.expedition": "Cierre cada lunes 00:00 UTC · Se envía por correo\nSe requiere una puntuación de expedición esa semana.",
+  "rewardTable.rules.arena": "Cierre cada lunes 00:00 UTC · Se envía por correo\nRecompensa de rango al cierre más bono por puesto. Se requiere una partida clasificatoria esa semana.",
+  "ranking.mine": "Mi puesto",
 } as const;

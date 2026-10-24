@@ -38,14 +38,14 @@ export interface DuelTierDef {
 export const DUEL_DIVISION_SPAN = 100;
 
 export const DUEL_TIERS: readonly DuelTierDef[] = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1000 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2000 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3000 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4000 }, firstReachGems: 300 },
-  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5000 }, firstReachGems: 400 },
-  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 400 }, firstReachGems: 500 },
-  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 500 }, firstReachGems: 700 },
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 300 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300 },
+  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400 },
+  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 3_000 }, firstReachGems: 500 },
+  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 3_500 }, firstReachGems: 700 },
 ];
 
 /** 가려지는 칸의 상한. 셋 중 하나는 늘 보여야 고를 근거가 남는다. */

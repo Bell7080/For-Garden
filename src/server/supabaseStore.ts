@@ -1,5 +1,6 @@
 import { EXPEDITION_WEEKLY_RANK_REWARDS } from "../data/expedition";
 import { WEEKLY_RANK_GEMS } from "../data/competitiveRewards";
+import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from "../core/arenaStanding";
 import { expeditionWeekKey } from "../core/expeditionBoss";
 import { duelSeasonId } from "../core/duelArena";
 import { contentUnlockLevel } from "../core/contentUnlock";
@@ -50,6 +51,11 @@ export function createSupabaseStore(env: Env) {
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {
       await rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: EXPEDITION_WEEKLY_RANK_REWARDS[index].rewards.salvageRecord ?? 0 })) });
+      // 아레나는 판마다 주지 않고 닫힌 주의 티어·순위로 한 통을 보낸다. 표는 arenaStanding.ts 한 곳에서 넘긴다.
+      await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
+        tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+        ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems })),
+      } });
       return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox;
     },
     async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },

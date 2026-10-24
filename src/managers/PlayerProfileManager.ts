@@ -1,6 +1,7 @@
 import type { PublicProfileModifier } from "../state/playerProfile";
 import type { ProfileModifierSelectionDto } from "../api/contracts";
-import type { AsyncArenaProfileApi } from "../api/asyncArenaContracts";
+import { arenaAvailable, arenaStanding, cachedArenaScore, arenaStandingKnown } from "../api/arenaApi";
+import { arenaPublicStanding } from "../core/arenaStanding";
 import type { Session } from "../state/session";
 import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
 import { ProfileModifierManager, profileModifierManager, MAX_EQUIPPED_PROFILE_MODIFIERS } from "./ProfileModifierManager";
@@ -31,12 +32,32 @@ export function validateEquippedProfileModifiers(
   return result;
 }
 
-/** 서버 확정 티어를 로컬 진행과 합쳐 공개 프로필을 만드는 유일한 manager/API 경계다. */
-export async function loadPlayerProfileDisplay(state: Session, arenaApi: AsyncArenaProfileApi): Promise<PlayerProfileDisplay> {
-  const arena = await arenaApi.getAsyncArenaServerState();
-  const tierId = arena?.seasonTierId?.trim();
-  // 서버 데이터가 없거나 빈 ID면 항목을 통째로 생략한다. 표시명도 서버 확정 ID를 그대로 쓴다.
+/** 내 아레나 RP를 어디서 읽는가. 테스트는 가짜를 넘긴다. */
+export interface ArenaProfileSource { arenaScore(): Promise<number | null> }
+
+/** 프로필 카드가 아레나 응답을 기다리는 상한 — 넘으면 「미배치」로 먼저 연다. */
+const ARENA_PROFILE_WAIT_MS = 1500;
+
+/**
+ * 아레나에 다녀왔으면 그때 받은 RP를 곧바로 쓰고, 아직이면 내 자리만 한 번 묻는다(방 잠금 없는 읽기).
+ * 서버 계정이 없거나 한 판도 하지 않았으면 null — 카드가 「미배치」로 선다.
+ */
+export const liveArenaProfileSource: ArenaProfileSource = {
+  async arenaScore() {
+    if (arenaStandingKnown()) return cachedArenaScore();
+    if (!arenaAvailable()) return null;
+    const standing = await Promise.race([
+      arenaStanding(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), ARENA_PROFILE_WAIT_MS)),
+    ]);
+    return standing && standing.wins + standing.losses > 0 ? standing.score : null;
+  },
+};
+
+/** 서버 확정 아레나 RP를 로컬 진행과 합쳐 공개 프로필을 만드는 유일한 manager/API 경계다. */
+export async function loadPlayerProfileDisplay(state: Session, source: ArenaProfileSource = liveArenaProfileSource): Promise<PlayerProfileDisplay> {
+  const score = await source.arenaScore().catch(() => null);
   // 공개 표시에는 manager가 검증하고 정적 정의로 해석한 장착 항목만 포함하며 전체 획득 목록은 넘기지 않는다.
   const equipped = state === session ? profileModifierManager.equipped() : new ProfileModifierManager(state).equipped();
-  return playerProfileDisplay(state, equipped, tierId ? { tierId, displayName: tierId } : undefined);
+  return playerProfileDisplay(state, equipped, arenaPublicStanding(score));
 }

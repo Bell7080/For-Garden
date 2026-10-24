@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_ZH_HANS = {
-  "ranking.weekly.rules": "周一00:00 UTC结算 · 奖励通过邮件发放\n当周须有对战或远征记录才可领奖。",
   "duel.season.rules": "每{days}天赛季结束 · 积分保留60%，向下取整至百位",
   "duel.opponents.empty": "暂无对手。其他研究员解锁PvP后将出现在列表中，请稍后查看。",
 
@@ -49,7 +48,6 @@ export const DUEL_ZH_HANS = {
   "duel.tierGuide.floor": "{score}分起",
   "duel.tierGuide.blind": "隐藏 {count} 名对手",
   "duel.tierGuide.noBlind": "对手全部公开",
-  "duel.tierGuide.reward": "赛季奖励：徽章 {emblem} · 宝石 {gems}",
   "duel.history.title": "战斗记录",
   "duel.history.ago.now": "刚刚",
   "duel.history.ago.minute": "{value}分钟前",
@@ -86,4 +84,12 @@ export const DUEL_ZH_HANS = {
   "duel.shop.line3": "那个比上周少了一个。需要的话现在就拿走。",
   "duel.shop.line4": "输掉的那场的徽章我也一样给你算。输的日子教给你的更多。",
   "duel.shop.line5": "不用急。竞技场明天也开着。",
+  "rewardTable.current": "当前",
+  "rewardTable.rank.single": "第{rank}名",
+  "rewardTable.rank.range": "第{from}~{upTo}名",
+  "rewardTable.rank.beyond": "第{rank}名及以后",
+  "rewardTable.rules.duel": "每周一00:00 UTC结算 · 通过邮件发放\n当周需有决斗场对战记录才能领取。",
+  "rewardTable.rules.expedition": "每周一00:00 UTC结算 · 通过邮件发放\n当周需有远征记录才能领取。",
+  "rewardTable.rules.arena": "每周一00:00 UTC结算 · 通过邮件发放\n结算时的段位奖励加上排名奖励。当周需有排位赛记录才能领取。",
+  "ranking.mine": "我的排名",
 } as const;

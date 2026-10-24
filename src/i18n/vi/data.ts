@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Đang lần theo mẫu vật mới",
   "friend.friend-moss.status": "Hôm nay lại phục hồi từ từ",
   "friend.friend-haneul.highestStage": "2-5 Hẻm núi Đỏ thẫm",
-  "friend.friend-haneul.arenaTier": "Vàng II",
   "adReward.daily-stamina.text": "Thể lực 10",
   "adReward.daily-cheesecake.text": "Bánh phô mai 20",
   "adReward.sweep-tickets.text": "Vé càn quét 5",

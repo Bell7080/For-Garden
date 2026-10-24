@@ -34,6 +34,8 @@ export interface GuildMemberCard {
   favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null;
   highestStageId: string | null;
   expeditionBest: number;
+  /** 아레나 RP — 한 판이라도 한 길드원만 서버가 싣는다(`server_arena_weekly` 트리거). */
+  arenaScore?: number;
 }
 
 export interface GuildSummary {

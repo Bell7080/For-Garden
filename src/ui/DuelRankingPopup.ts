@@ -14,6 +14,7 @@ import { openDuelTierGuide } from "./DuelGuidePopups";
 import { squeezeTextToWidth } from "./textFit";
 import { RANKING_LIST, rankingMedal, rankingRowY, rankingScrollMetrics } from "./expeditionRankingLayout";
 import { FaceFrame } from "./FaceFrame";
+import { addRankingFace } from "./rankingFace";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -23,21 +24,43 @@ import { COLOR, textStyle } from "./theme";
  * 작은 티어 표식이 선다는 것뿐이다. 순위표 **아래에** 내 줄이 붙박여 한 번 더 서서, 목록을 어디까지 내려도,
  * 100등 밖이어도 내 자리가 보인다(`DUEL_RANKING_VIEW`).
  */
+export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" | "score" | "tierId" | "isMe"> & { favoriteRelicId?: string };
+
+/**
+ * 순위표가 읽는 곳 — 결투장과 아레나가 같은 창을 쓰고 이것만 갈아 끼운다(제목·목록·두 버튼이 여는 표).
+ * 점수 단위도 여기서 정한다(결투장 점 · 아레나 RP).
+ */
+export interface RankingSource {
+  title: string;
+  load(): Promise<{ entries: readonly RankingRowEntry[]; me: RankingRowEntry | null }>;
+  openRewards(me: RankingRowEntry | null): void;
+  openTiers(): void;
+}
+
 export class DuelRankingPopup {
   private body?: Phaser.GameObjects.Container;
+  private me: RankingRowEntry | null = null;
+  private readonly source: RankingSource;
 
-  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly currentTier: DuelTierId, private readonly api: GameApi = gameApi) {}
+  constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, currentTier: DuelTierId, api: GameApi = gameApi, source?: RankingSource) {
+    this.source = source ?? {
+      title: t("duel.link.ranking"),
+      load: () => api.getDuelRanking(),
+      openRewards: (me) => openCompetitiveRewards(scene, popups, "duel", me?.rank),
+      openTiers: () => openDuelTierGuide(scene, popups, currentTier),
+    };
+  }
 
   open(): void {
     if (this.body) return;
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
-    this.popups.open({ width, height, title: t("duel.link.ranking"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
+    this.popups.open({ width, height, title: this.source.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
       this.body = body;
-      body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openCompetitiveRewards(this.scene, this.popups) }));
+      body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => this.source.openRewards(this.me) }));
       // 티어 안내는 순위표 안에서 연다 — "몇 등인가" 다음에 읽는 것이 "어느 티어부터 무엇을 받나"다.
       body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
         width: DUEL_RANKING_TIER_BUTTON.width, height: DUEL_RANKING_TIER_BUTTON.height, label: t("duel.link.tiers"), icon: "arena-tier", fontSize: 26,
-        onClick: () => openDuelTierGuide(this.scene, this.popups, this.currentTier),
+        onClick: () => this.source.openTiers(),
       }));
       void this.load(body);
     });
@@ -47,8 +70,9 @@ export class DuelRankingPopup {
     const content = this.scene.add.container(0, 0);
     body.add(content);
     try {
-      const ranking = await this.api.getDuelRanking();
+      const ranking = await this.source.load();
       if (this.body !== body) return;
+      this.me = ranking.me;
       this.render(body, content, ranking.entries, ranking.me);
     } catch {
       if (this.body !== body) return;
@@ -56,9 +80,11 @@ export class DuelRankingPopup {
     }
   }
 
-  private render(body: Phaser.GameObjects.Container, content: Phaser.GameObjects.Container, entries: readonly DuelRankingEntryDto[], me: DuelRankingEntryDto | null): void {
+  private render(body: Phaser.GameObjects.Container, content: Phaser.GameObjects.Container, entries: readonly RankingRowEntry[], me: RankingRowEntry | null): void {
     // 내 줄은 목록 아래에 붙박여 선다 — 순위를 매기지 않은 판(아직 한 판도 안 함)이면 「순위 없음」만 선다.
     content.add(this.scene.add.rectangle(0, DUEL_RANKING_VIEW.divider, RANKING_LIST.rowWidth, 2, COLOR.accent, 0.45));
+    // 붙박인 내 줄 위에 「내 순위」 이름표 — 목록의 한 줄과 같은 판이라 이것이 없으면 목록이 거기서 끊긴 것처럼 읽힌다.
+    content.add(this.scene.add.text(-RANKING_LIST.rowWidth / 2, DUEL_RANKING_VIEW.divider - 22, t("ranking.mine"), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0, 0.5));
     if (me) this.renderRow(content, me, DUEL_RANKING_VIEW.meY);
     else content.add(this.scene.add.text(0, DUEL_RANKING_VIEW.meY, t("duel.rank.none"), textStyle({ role: "emphasis", size: 28, color: COLOR.inkDim })).setOrigin(0.5));
 
@@ -95,7 +121,7 @@ export class DuelRankingPopup {
   }
 
   /** 1·2·3등의 단 — 가운데가 1등이고 가장 높다. 단의 색은 순위표 줄의 금·은·동과 같다. */
-  private renderPodium(parent: Phaser.GameObjects.Container, top: readonly DuelRankingEntryDto[]): void {
+  private renderPodium(parent: Phaser.GameObjects.Container, top: readonly RankingRowEntry[]): void {
     top.forEach((entry, index) => {
       const spot = DUEL_PODIUM.spots[index];
       const medal = rankingMedal(entry.rank);
@@ -114,7 +140,7 @@ export class DuelRankingPopup {
     });
   }
 
-  private renderRow(parent: Phaser.GameObjects.Container, entry: DuelRankingEntryDto, y: number): void {
+  private renderRow(parent: Phaser.GameObjects.Container, entry: RankingRowEntry, y: number): void {
     const medal = rankingMedal(entry.rank);
     const tone = DUEL_TIER_COLOR[entry.tierId];
     const row = this.scene.add.container(0, y).setScale(entry.isMe ? 1.04 : 1);
@@ -126,9 +152,7 @@ export class DuelRankingPopup {
     }));
     const rankColor = medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink);
     row.add(this.scene.add.text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor })).setOrigin(0.5));
-    if (entry.favoriteRelicId) {
-      row.add(new FaceFrame(this.scene, RANKING_LIST.faceX, 0, { portraitAssetId: getRelic(entry.favoriteRelicId).portraitAssetId, size: RANKING_LIST.faceSize, color: accent }));
-    }
+    addRankingFace(this.scene, row, entry.favoriteRelicId, entry.displayName, accent);
     row.add(this.scene.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: rankColor })).setOrigin(0, 0.5));
     addDuelTierEmblem(this.scene, row, RANKING_LIST.scoreX - 170, 0, 54, entry.tierId);
     row.add(this.scene.add.text(RANKING_LIST.scoreX, 0, entry.score.toLocaleString(), textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(1, 0.5));

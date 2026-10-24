@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "正在追踪新标本",
   "friend.friend-moss.status": "今天也在慢慢复原中",
   "friend.friend-haneul.highestStage": "2-5 赤红峡谷",
-  "friend.friend-haneul.arenaTier": "黄金 II",
   "adReward.daily-stamina.text": "体力10",
   "adReward.daily-cheesecake.text": "芝士蛋糕20",
   "adReward.sweep-tickets.text": "扫荡券 5",

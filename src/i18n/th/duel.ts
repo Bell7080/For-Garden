@@ -1,6 +1,5 @@
 /** Duel arena (3v3 auto-battle defense) and duel shop text. */
 export const DUEL_TH = {
-  "ranking.weekly.rules": "ปิดวันจันทร์ 00:00 UTC · ส่งรางวัลทางจดหมาย\nต้องมีผลดวลหรือคะแนนออกสำรวจในสัปดาห์นั้น",
   "duel.season.rules": "จบฤดูกาลทุก {days} วัน · เหลือคะแนน 60% ปัดลงหลักร้อย",
   "duel.opponents.empty": "ยังไม่มีคู่ต่อสู้ นักวิจัยคนอื่นจะปรากฏเมื่อปลดล็อก PvP โปรดตรวจสอบอีกครั้งภายหลัง",
 
@@ -49,7 +48,6 @@ export const DUEL_TH = {
   "duel.tierGuide.floor": "ตั้งแต่ {score} คะแนน",
   "duel.tierGuide.blind": "ซ่อนคู่ต่อสู้ {count} คน",
   "duel.tierGuide.noBlind": "เปิดเผยคู่ต่อสู้ทั้งหมด",
-  "duel.tierGuide.reward": "รางวัลฤดูกาล: เครื่องหมาย {emblem} · เจม {gems}",
   "duel.history.title": "บันทึกการต่อสู้",
   "duel.history.ago.now": "เมื่อครู่",
   "duel.history.ago.minute": "{value} นาทีที่แล้ว",
@@ -86,4 +84,12 @@ export const DUEL_TH = {
   "duel.shop.line3": "อันนั้นเหลือน้อยกว่าสัปดาห์ก่อนหนึ่งชิ้นแล้วนะ ถ้าต้องใช้ก็รีบเอาไปตอนนี้",
   "duel.shop.line4": "ตราจากแมตช์ที่แพ้ฉันก็นับให้เท่ากัน เพราะวันที่แพ้สอนอะไรได้มากกว่า",
   "duel.shop.line5": "ไม่ต้องรีบ อารีนาพรุ่งนี้ก็เปิดอยู่",
+  "rewardTable.current": "ปัจจุบัน",
+  "rewardTable.rank.single": "อันดับ {rank}",
+  "rewardTable.rank.range": "อันดับ {from}–{upTo}",
+  "rewardTable.rank.beyond": "อันดับ {rank} ลงไป",
+  "rewardTable.rules.duel": "ปิดทุกวันจันทร์ 00:00 UTC · ส่งทางจดหมาย\nต้องมีผลดวลในสัปดาห์นั้นจึงจะได้รับ",
+  "rewardTable.rules.expedition": "ปิดทุกวันจันทร์ 00:00 UTC · ส่งทางจดหมาย\nต้องมีคะแนนออกสำรวจในสัปดาห์นั้นจึงจะได้รับ",
+  "rewardTable.rules.arena": "ปิดทุกวันจันทร์ 00:00 UTC · ส่งทางจดหมาย\nรางวัลระดับตอนปิดรวมโบนัสอันดับ ต้องมีผลแรงก์ในสัปดาห์นั้น",
+  "ranking.mine": "อันดับของฉัน",
 } as const;

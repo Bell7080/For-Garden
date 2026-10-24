@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Auf der Spur eines neuen Exemplars",
   "friend.friend-moss.status": "Auch heute wieder in Ruhe restaurieren",
   "friend.friend-haneul.highestStage": "2-5 Karmesinschlucht",
-  "friend.friend-haneul.arenaTier": "Gold II",
   "adReward.daily-stamina.text": "Ausdauer 10",
   "adReward.daily-cheesecake.text": "Käsekuchen 20",
   "adReward.sweep-tickets.text": "Säuberungsticket 5",

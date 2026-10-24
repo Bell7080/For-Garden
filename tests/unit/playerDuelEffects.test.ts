@@ -44,12 +44,12 @@ describe('실제 이용자 PvP의 양쪽 성장', () => {
 });
 describe('주간·시즌 보상 정책',()=>{
  it('순위 구간 경계와 참가 보상은 오름/내림 혼동 없이 같은 표를 읽는다',()=>{
-  expect([1,2,3,4,10,11,50,51,100,101,10000].map(competitiveRankGems)).toEqual([5000,4000,4000,3000,3000,2000,2000,1500,1500,800,800]);
+  expect([1,2,3,4,10,11,50,51,100,101,10000].map(competitiveRankGems)).toEqual([3000,2500,2500,2000,2000,1500,1500,1000,1000,500,500]);
  });
  it('3주마다 시즌이 넘어가고 플래티넘 보상·소프트 초기화가 적용된다',()=>{
   const start=new Date('2026-01-05T00:00:00Z');expect(DUEL_SEASON_DAYS).toBe(21);
   expect(duelSeasonId(new Date(start.getTime()+21*86400000-1))).toBe(duelSeasonId(start));
   expect(duelSeasonId(new Date(start.getTime()+21*86400000))).not.toBe(duelSeasonId(start));
-  expect(DUEL_TIERS.find(t=>t.id==='platinum')!.seasonReward.gems).toBe(3000);expect(duelSeasonResetScore(1200)).toBe(700);
+  expect(DUEL_TIERS.find(t=>t.id==='platinum')!.seasonReward.gems).toBe(1500);expect(duelSeasonResetScore(1200)).toBe(700);
  });
 });

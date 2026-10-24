@@ -19,66 +19,6 @@
     "Neu verbinden",
     "Переподключиться"
   ],
-  "arena.record": [
-    "LV.{p0} · {p1}胜 {p2}负",
-    "LV.{p0} · ชนะ {p1} / แพ้ {p2}",
-    "LV.{p0} · {p1} thắng / {p2} thua",
-    "LV.{p0} · {p1} menang / {p2} kalah",
-    "NV.{p0} · {p1} victorias / {p2} derrotas",
-    "NV.{p0} · {p1} vitórias / {p2} derrotas",
-    "LV.{p0} · {p1} Siege / {p2} Niederlagen",
-    "УР.{p0} · {p1} побед / {p2} поражений"
-  ],
-  "arena.tier.label": [
-    "竞技场 {p0}",
-    "อารีนา {p0}",
-    "Đấu trường {p0}",
-    "Arena {p0}",
-    "Arena {p0}",
-    "Arena {p0}",
-    "Arena {p0}",
-    "Арена {p0}"
-  ],
-  "arena.tier.separate": [
-    "竞技场段位与决斗场独立记录",
-    "ระดับอารีนาบันทึกแยกจากลานประลอง",
-    "Bậc Đấu trường được ghi riêng với Đấu tay đôi",
-    "Tier Arena dicatat terpisah dari Duel",
-    "Los rangos de Arena son independientes de Duelo",
-    "Os ranques da Arena são separados dos do Duelo",
-    "Arenaränge werden getrennt vom Duell erfasst",
-    "Ранги Арены учитываются отдельно от Дуэли"
-  ],
-  "arena.tier.guideButton": [
-    "竞技场段位说明",
-    "คู่มือระดับอารีนา",
-    "Hướng dẫn bậc Đấu trường",
-    "Panduan tier Arena",
-    "Guía de rangos de Arena",
-    "Guia de ranques da Arena",
-    "Arenarang-Übersicht",
-    "Справка о рангах Арены"
-  ],
-  "arena.tier.guideTitle": [
-    "竞技场段位",
-    "ระดับอารีนา",
-    "Bậc Đấu trường",
-    "Tier Arena",
-    "Rangos de Arena",
-    "Ranques da Arena",
-    "Arenaränge",
-    "Ранги Арены"
-  ],
-  "arena.confirm": [
-    "确认",
-    "ตกลง",
-    "Xác nhận",
-    "OK",
-    "Aceptar",
-    "OK",
-    "OK",
-    "ОК"
-  ],
   "arena.lobby.rules": [
     "双方各禁用1名(同时、不公开) · 轮流选择放入1·2·3号位\n禁止重复选择同一遗物 · 双方自动释放必杀技",
     "แบนฝ่ายละ 1 (พร้อมกัน แบบปิด) · ผลัดกันเลือกวางช่อง 1·2·3\nห้ามเลือกเรลิกซ้ำ · ท่าไม้ตายอัตโนมัติ",
@@ -150,14 +90,14 @@
     "Покинуть арену"
   ],
   "arena.room.leaveConfirm": [
-    "准备期间离开将视为弃权。",
-    "การออกระหว่างเตรียมตัวจะถือว่ายอมแพ้",
-    "Rời trong lúc chuẩn bị sẽ bị tính là bỏ cuộc.",
-    "Keluar saat persiapan dihitung sebagai menyerah.",
-    "Salir durante la preparación cuenta como rendición.",
-    "Sair durante a preparação conta como desistência.",
-    "Das Verlassen während der Vorbereitung gilt als Aufgabe.",
-    "Выход во время подготовки считается сдачей."
+    "现在离开将视为弃权失败并扣除RP。",
+    "ออกตอนนี้จะนับเป็นแพ้โดยยอมแพ้และเสีย RP",
+    "Rời đi bây giờ sẽ bị xử thua do bỏ cuộc và mất RP.",
+    "Keluar sekarang dihitung kalah menyerah dan RP berkurang.",
+    "Salir ahora cuenta como derrota por rendición y resta RP.",
+    "Sair agora conta como derrota por desistência e tira RP.",
+    "Jetzt zu gehen zählt als Aufgabe-Niederlage und kostet RP.",
+    "Выход сейчас засчитывается как поражение со сдачей и отнимает RP."
   ],
   "arena.room.forfeit": [
     "弃权",
@@ -918,5 +858,155 @@
     "Proibida",
     "Verboten",
     "Запрещён"
+  ],
+  "arena.room.leaveConfirmFriendly": [
+    "现在离开将视为弃权失败。",
+    "ออกตอนนี้จะนับเป็นแพ้โดยยอมแพ้",
+    "Rời đi bây giờ sẽ bị xử thua do bỏ cuộc.",
+    "Keluar sekarang dihitung kalah menyerah.",
+    "Salir ahora cuenta como derrota por rendición.",
+    "Sair agora conta como derrota por desistência.",
+    "Jetzt zu gehen zählt als Aufgabe-Niederlage.",
+    "Выход сейчас засчитывается как поражение со сдачей."
+  ],
+  "arena.room.forfeitShort": [
+    "认输",
+    "ยอมแพ้",
+    "Bỏ cuộc",
+    "Menyerah",
+    "Rendirse",
+    "Desistir",
+    "Aufgeben",
+    "Сдаться"
+  ],
+  "arena.result.foeForfeit": [
+    "对手弃权或离开，你获胜了。",
+    "คู่ต่อสู้ยอมแพ้หรือออกไป คุณชนะ",
+    "Đối thủ bỏ cuộc hoặc rời đi. Bạn thắng.",
+    "Lawan menyerah atau pergi. Kamu menang.",
+    "Tu rival se rindió o se fue. Ganas.",
+    "O oponente desistiu ou saiu. Você venceu.",
+    "Dein Gegner hat aufgegeben oder ist gegangen. Sieg.",
+    "Соперник сдался или вышел. Победа."
+  ],
+  "arena.result.selfForfeit": [
+    "你弃权或离开，判定失败。",
+    "คุณยอมแพ้หรือออกไป จึงแพ้",
+    "Bạn bỏ cuộc hoặc rời đi nên bị xử thua.",
+    "Kamu menyerah atau pergi, jadi kalah.",
+    "Te rendiste o te fuiste: derrota.",
+    "Você desistiu ou saiu: derrota.",
+    "Du hast aufgegeben oder bist gegangen: Niederlage.",
+    "Вы сдались или вышли — поражение."
+  ],
+  "arena.rp": [
+    "{score} RP",
+    "{score} RP",
+    "{score} RP",
+    "{score} RP",
+    "{score} RP",
+    "{score} RP",
+    "{score} RP",
+    "{score} RP"
+  ],
+  "arena.weekly.title": [
+    "竞技场每周奖励",
+    "รางวัลประจำสัปดาห์อารีนา",
+    "Thưởng tuần đấu trường",
+    "Hadiah mingguan Arena",
+    "Recompensas semanales de la arena",
+    "Prêmios semanais da arena",
+    "Arena-Wochenbelohnungen",
+    "Еженедельные награды арены"
+  ],
+  "arena.weekly.tierSection": [
+    "段位奖励",
+    "รางวัลระดับ",
+    "Thưởng bậc",
+    "Hadiah tingkat",
+    "Recompensas por rango",
+    "Prêmios por divisão",
+    "Rangbelohnungen",
+    "Награды за ранг"
+  ],
+  "arena.weekly.rankSection": [
+    "排名奖励",
+    "โบนัสอันดับ",
+    "Thưởng hạng",
+    "Bonus peringkat",
+    "Bono por puesto",
+    "Bônus de colocação",
+    "Platzbonus",
+    "Бонус за место"
+  ],
+  "arena.weekly.floor": [
+    "{score} RP起",
+    "ตั้งแต่ {score} RP",
+    "Từ {score} RP",
+    "Mulai {score} RP",
+    "Desde {score} RP",
+    "A partir de {score} RP",
+    "Ab {score} RP",
+    "От {score} RP"
+  ],
+  "arena.weekly.endsIn": [
+    "距每周结算还有 {days}天 {hours}小时",
+    "อีก {days} วัน {hours} ชั่วโมงถึงสรุปประจำสัปดาห์",
+    "Còn {days} ngày {hours} giờ đến chốt tuần",
+    "Hasil mingguan dalam {days} hari {hours} jam",
+    "Cierre semanal en {days} d {hours} h",
+    "Fechamento semanal em {days} d {hours} h",
+    "Wochenabschluss in {days} T. {hours} Std.",
+    "До итогов недели: {days} д. {hours} ч."
+  ],
+  "arena.weekly.chip": [
+    "每周奖励",
+    "รายสัปดาห์",
+    "Thưởng tuần",
+    "Mingguan",
+    "Semanal",
+    "Semanal",
+    "Woche",
+    "Неделя"
+  ],
+  "arena.ranking.title": [
+    "竞技场排名",
+    "อันดับอารีนา",
+    "Xếp hạng đấu trường",
+    "Peringkat Arena",
+    "Clasificación de la arena",
+    "Classificação da arena",
+    "Arena-Rangliste",
+    "Рейтинг арены"
+  ],
+  "arena.profile.best": [
+    "最高纪录",
+    "สถิติสูงสุด",
+    "Kỷ lục",
+    "Rekor terbaik",
+    "Mejor marca",
+    "Recorde",
+    "Bestwert",
+    "Рекорд"
+  ],
+  "arena.profile.lastWeek": [
+    "上周",
+    "สัปดาห์ก่อน",
+    "Tuần trước",
+    "Minggu lalu",
+    "Semana pasada",
+    "Semana passada",
+    "Letzte Woche",
+    "Прошлая неделя"
+  ],
+  "arena.profile.streakBonus": [
+    "连胜加成 +{bonus} RP",
+    "โบนัสชนะติด +{bonus} RP",
+    "Chuỗi thắng +{bonus} RP",
+    "Bonus beruntun +{bonus} RP",
+    "Bono de racha +{bonus} RP",
+    "Bônus de sequência +{bonus} RP",
+    "Serienbonus +{bonus} RP",
+    "Бонус серии +{bonus} RP"
   ]
 }

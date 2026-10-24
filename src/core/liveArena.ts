@@ -27,7 +27,17 @@ export interface ArenaRoom {
   first: number; bans: (string | null)[]; picks: ArenaPlacement[][]; locked: boolean[];
   deadline: number; seed: string; winner?: number | null; reason?: 'combat' | 'timeout' | 'forfeit';
   lease?: CombatLease; resultTicks?: number;
+  /** 편마다 마지막으로 응답이 온 시각(밴·배치 동안만). 오래 비면 탈주로 진다(`ARENA_ABSENCE_MS`). */
+  seen?: number[];
 }
+/**
+ * 밴·배치 도중 이만큼 아무 응답이 없으면 **탈주 패배**다. 화면은 2초마다 묻고 실시간 신호도 받으므로 20초 침묵은
+ * 창을 닫았거나 앱을 내렸다는 뜻이다 — 단계 시계(45초)를 다 기다리면 남은 쪽이 그만큼 붙잡힌다.
+ * 전투는 서버가 재현해 끝내므로 지켜보지 않아도 되고, 이 규칙이 걸리지 않는다.
+ */
+export const ARENA_ABSENCE_MS = 20_000;
+/** 응답 시각은 이만큼 지났을 때만 새로 적는다 — 묻는 때마다 방을 다시 쓰지 않는다. */
+export const ARENA_SEEN_STEP_MS = 5_000;
 export type ArenaAction = { kind: 'ban'; relicId: string } | { kind: 'place'; relicId: string; slot: number }
   | { kind: 'undo' } | { kind: 'lock' } | { kind: 'forfeit' } | { kind: 'tick' };
 export function arenaRules(value: unknown): ArenaRules {
@@ -35,11 +45,7 @@ export function arenaRules(value: unknown): ArenaRules {
   if (!r || typeof r.ban !== 'boolean' || !['first','second','random'].includes(r.order) || !['alternate','hidden'].includes(r.placement) || (r.unique !== undefined && typeof r.unique !== 'boolean')) throw Error('ARENA_RULES');
   return { ban: r.ban, order: r.order, placement: r.placement, unique: r.unique !== false };
 }
-export const ARENA_TIERS = [
-  { name: 'bronze', score: 0 }, { name: 'silver', score: 1100 }, { name: 'gold', score: 1300 },
-  { name: 'platinum', score: 1500 }, { name: 'diamond', score: 1800 }, { name: 'master', score: 2100 },
-] as const;
-export function arenaTier(score: number): (typeof ARENA_TIERS)[number]["name"] { return [...ARENA_TIERS].reverse().find(t => score >= t.score)?.name ?? 'bronze'; }
+// 티어·연승·주간 보상의 값은 `arenaStanding.ts` 한 곳이 갖는다.
 /** 상대가 이미 고른 렐릭을 막는가. 비공개 배치는 상대 선택을 모르므로 막지 않는다. */
 export function arenaUniquePicks(rules: ArenaRules): boolean { return rules.unique !== false && rules.placement === 'alternate'; }
 /**
@@ -71,7 +77,7 @@ export function arenaPickable(room: ArenaRoom, side: number): ArenaUnit[] {
 }
 export function startArena(room: ArenaRoom, players: ArenaPlayer[], now: number): ArenaRoom {
   if (players.length !== 2 || players.some(p => p.roster.length < (room.rules.ban ? 4 : 3))) throw Error('ARENA_ROSTER');
-  return { ...room, players, phase: room.rules.ban ? 'ban' : 'place', bans: [null,null], picks: [[],[]], locked: [false,false], deadline: now + 45000 };
+  return { ...room, players, phase: room.rules.ban ? 'ban' : 'place', bans: [null,null], picks: [[],[]], locked: [false,false], deadline: now + 45000, seen: [now, now] };
 }
 /** Coordinates are relative to each team's own half; both teams receive the same placement area. */
 export function arenaPosition(p: ArenaPlacement, side: number): { x: number; y: number } {
@@ -99,6 +105,13 @@ export function applyArenaAction(source: ArenaRoom, actor: string, action: Arena
     const late = simultaneous ? waiting.indexOf(true) : arenaTurn(r);
     r.phase='done'; r.winner=simultaneous && waiting[0] && waiting[1] ? null : 1-late;
     r.reason='timeout'; return r;
+  }
+  if (r.phase === 'ban' || r.phase === 'place') {
+    const seen = r.seen ?? [now, now];
+    if (action.kind !== 'tick' || now - seen[side] >= ARENA_SEEN_STEP_MS) seen[side] = now;
+    r.seen = seen;
+    // 시계가 먼저 판정한다(둘 다 늦으면 무승부). 그 전에 상대가 오래 말이 없으면 탈주다 — 기권과 같이 상대의 패배로 끝낸다(점수·연승도 기권과 같다).
+    if (now - seen[1 - side] >= ARENA_ABSENCE_MS) { r.phase='done'; r.winner=side; r.reason='forfeit'; return r; }
   }
   if (action.kind === 'tick') return r;
   if (r.phase === 'ban') {

@@ -261,7 +261,6 @@ export default {
   "friend.friend-haneul.status": "Rastreando um novo espécime",
   "friend.friend-moss.status": "Hoje também restaurando devagar",
   "friend.friend-haneul.highestStage": "2-5 Cânion Carmesim",
-  "friend.friend-haneul.arenaTier": "Ouro II",
   "adReward.daily-stamina.text": "Estamina 10",
   "adReward.daily-cheesecake.text": "Cheesecake 20",
   "adReward.sweep-tickets.text": "Tíquete de varredura 5",

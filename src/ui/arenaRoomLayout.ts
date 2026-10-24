@@ -5,6 +5,8 @@
 export const ARENA_ROOM_LAYOUT = {
   title: { y: 96 },
   clock: { x: 950, y: 96 },
+  /** 작은 기권 버튼 — 시계의 반대편(왼쪽 위). 뒤로가기도 같은 확인 창을 연다. */
+  forfeit: { x: 118, y: 96, width: 156, height: 64 },
   enemyName: { y: 196 },
   enemyRow: 360,
   allyRow: 1548,

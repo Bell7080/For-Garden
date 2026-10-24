@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { RANKED_ARENA_RULES, ARENA_HIDDEN_BAN, ARENA_SLOTS, startArena, applyArenaAction, arenaTurn, arenaCanAct, arenaPickable, arenaRules, publicArenaRoom, settleArena, arenaPosition, type ArenaRoom, type ArenaRules } from '../../src/core/liveArena';
+import { RANKED_ARENA_RULES, ARENA_HIDDEN_BAN, ARENA_SLOTS, startArena, applyArenaAction, arenaTurn, arenaCanAct, arenaPickable, arenaRules, publicArenaRoom, settleArena, arenaPosition, ARENA_ABSENCE_MS, type ArenaRoom, type ArenaRules } from '../../src/core/liveArena';
 import { createDefaultSession, createInitialRelicProgress } from '../../src/state/session';
 import { saveManager } from '../../src/state/SaveManager';
 import { arenaPlayer } from '../../src/server/liveArena';
@@ -62,5 +62,11 @@ describe('live arena authoritative preparation',()=>{
   r=fixture(true,false);expect(applyArenaAction(r,'b',{kind:'tick'},50000).winner).toBe(null);
   expect(applyArenaAction(r,'a',{kind:'forfeit'},1000)).toMatchObject({winner:1,reason:'forfeit'});
   expect(()=>publicArenaRoom(r,'outsider')).toThrow('ARENA_FORBIDDEN');
+ });
+ it('treats a silent opponent during ban/pick as a forfeit loss',()=>{
+  const r=fixture();
+  expect(applyArenaAction(r,'b',{kind:'tick'},ARENA_ABSENCE_MS+1000)).toMatchObject({phase:'done',winner:1,reason:'forfeit'});
+  const alive=applyArenaAction(r,'a',{kind:'ban',relicId:'rex'},15000);
+  expect(applyArenaAction(alive,'b',{kind:'tick'},ARENA_ABSENCE_MS+1000).phase).toBe('ban');
  });
 });

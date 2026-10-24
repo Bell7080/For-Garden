@@ -248,7 +248,7 @@ export const MISC_KO = {
   "profile.levelTree.content": "개방 · {content}",
   "profile.levelTree.stamina": "스테미나 상한 {max}",
   "profile.unset": "미지정",
-  "profile.arenaTier": "결투장 티어",
+  "profile.arenaTier": "아레나 티어",
   "profile.noRecord": "기록 없음",
 
   // 스테이지 결과

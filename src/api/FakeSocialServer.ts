@@ -51,7 +51,7 @@ function cloneProfile(friend: FriendProfile): FriendProfile {
     competitiveStats: {
       ...friend.competitiveStats,
       highestStage: friend.competitiveStats.highestStage ? { ...friend.competitiveStats.highestStage } : undefined,
-      arenaTier: friend.competitiveStats.arenaTier ? { ...friend.competitiveStats.arenaTier } : undefined,
+      arenaScore: friend.competitiveStats.arenaScore,
     },
   };
 }

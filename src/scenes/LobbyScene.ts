@@ -364,21 +364,23 @@ export class LobbyScene extends Phaser.Scene {
       if (this.returnMenu === "sortie") this.openSortieMenu(true);
       else if (this.returnMenu === "duel") this.openPvpMenu(true);
       else if (this.returnMenu === "event") this.openEvents(true);
-      // 들어서는 순서는 **레벨업 → (닫힘) → 열림 연출 → 출석**이다. 한 판이 끝나야 다음이 선다 — 겹치면 둘 다 반쯤 가린다.
-      const afterLevelUp = (): void => {
-        if (!this.scene.isActive()) return;
-        this.input.enabled = true;
-        const celebrations = releaseUnlockCelebrations(this);
-        // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다. 튜토리얼 중에는 열지 않는다(안내와 겹친다).
-        if (!this.returnMenu && ATTENDANCE_AUTO_POPUP) {
-          const wait = celebrations > 0 ? UNLOCK_POP_TOTAL_MS + 900 : 0;
-          this.time.delayedCall(wait + TRANSITION.sceneIn.duration, () => this.autoOpenAttendance());
-        }
-      };
+      // 들어서는 순서는 **출석 → 레벨업 → (닫힘) → 열림 연출**이다(응태: 출석이 가장 먼저). 한 판이 끝나야 다음이 선다 —
+      // 겹치면 둘 다 반쯤 가린다. 열림 연출은 레벨업 판이 닫힐 때까지 문 뒤에서 기다린다.
       const levelUp = this.returnMenu ? undefined : this.pendingLevelUp;
       this.pendingLevelUp = undefined;
-      if (levelUp && this.popupLayer) this.announcePlayerLevel(levelUp, afterLevelUp);
-      else afterLevelUp();
+      const release = (): void => {
+        if (!this.scene.isActive()) return;
+        this.input.enabled = true;
+        releaseUnlockCelebrations(this);
+      };
+      const announce = (): void => {
+        if (!this.scene.isActive()) return;
+        if (levelUp && this.popupLayer) this.announcePlayerLevel(levelUp, release);
+        else release();
+      };
+      // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다. 튜토리얼 중에는 열지 않는다(안내와 겹친다).
+      if (!this.returnMenu && ATTENDANCE_AUTO_POPUP) this.time.delayedCall(TRANSITION.sceneIn.duration, () => this.autoOpenAttendance(announce));
+      else announce();
 
       // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
       // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -458,34 +460,40 @@ export class LobbyScene extends Phaser.Scene {
    * 오늘 처음 로비에 들어왔을 때 받을 출석이 있으면 판을 저절로 연다 — 신규가 먼저, 닫으면 정규가 이어 선다.
    * 하루에 한 번만 연다(서버가 연 날을 기억한다). 다른 판이 떠 있으면 닫히기를 기다린다.
    */
-  private autoOpenAttendance(): void {
+  private autoOpenAttendance(done: () => void): void {
+    // `done`은 출석 판이 모두 닫혔거나 열 것이 없을 때 **꼭 한 번** 불린다 — 그 뒤에 레벨업이 선다.
+    let finished = false;
+    const finish = (): void => { if (finished) return; finished = true; done(); };
     // 튜토리얼이 끝나기 전에는 열지 않는다. 연 날로 남기지도 않으므로 끝난 뒤 처음 선 로비가 연다.
-    if (tutorialManager.next() !== undefined) return;
+    if (tutorialManager.next() !== undefined) { finish(); return; }
     void attendanceManager.status().then((status) => {
-      if (!status.autoShow || !this.sys.isActive()) return;
+      if (!status.autoShow || !this.sys.isActive()) { finish(); return; }
       const queue = ATTENDANCE_TRACK_IDS.filter((id) => status.tracks.some((track) => track.id === id && track.claimableToday));
-      if (queue.length === 0) return;
+      if (queue.length === 0) { finish(); return; }
       // 다음 판은 **열기 직전에 서버에서 다시 읽는다.** 앞 판을 받는 사이 상태가 바뀌므로(지갑·덤·바퀴),
       // 로비에 들어올 때 읽어 둔 모습으로 세우면 판이 실제와 어긋난다.
       const openNext = (): void => {
         const id = queue.shift();
-        if (!id || !this.popupLayer || !this.sys.isActive()) return;
+        if (!id || !this.popupLayer || !this.sys.isActive()) { finish(); return; }
         void attendanceManager.status().then((fresh) => {
           const track = fresh.tracks.find((entry) => entry.id === id);
           if (!this.popupLayer || !this.sys.isActive()) return;
           if (!track?.claimableToday) { openNext(); return; }
-          openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext)) });
-        }).catch(() => undefined);
+          // 레벨업이 기다리는 동안 막아 둔 입력을 풀어야 출석 판을 누를 수 있다.
+          this.input.enabled = true;
+          openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext, finish)) });
+        }).catch(finish);
       };
-      this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); });
-    }).catch(() => undefined);
+      this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); }, finish);
+    }).catch(finish);
   }
 
   /** 떠 있는 판이 없을 때 `action`을 부른다. 오래 닫히지 않으면 그만둔다. */
-  private whenPopupsClear(action: () => void, tries = 0): void {
+  private whenPopupsClear(action: () => void, giveUp?: () => void, tries = 0): void {
     if (!this.sys.isActive() || !this.popupLayer) return;
     if (!this.popupLayer.isOpen) { action(); return; }
-    if (tries < ATTENDANCE_AUTO_WAIT.tries) this.time.delayedCall(ATTENDANCE_AUTO_WAIT.stepMs, () => this.whenPopupsClear(action, tries + 1));
+    if (tries < ATTENDANCE_AUTO_WAIT.tries) this.time.delayedCall(ATTENDANCE_AUTO_WAIT.stepMs, () => this.whenPopupsClear(action, giveUp, tries + 1));
+    else giveUp?.();
   }
 
   /**

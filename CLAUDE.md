@@ -462,8 +462,8 @@
   실패한 쪽만 지난 값을 둔다(`Promise.allSettled`) — 셋을 한꺼번에 기다리던 때는 발굴 조회 하나가 임무 점까지 꺼 두었다.
 - **레벨업은 로비에서 한 번 모아 알린다**(`LobbyScene.announcePlayerLevel`) — 스테미나를 쓰는
   곳마다 창을 띄우면 전투 흐름을 끊는다. **튜토리얼 중에는 띄우지 않고 쌓았다가** 끝난 뒤 `LV.1 › LV.4`처럼
-  한 번에 알린다(`levelUpAnnouncement`). 로비 진입 순서는 **입력 잠금 → 레벨업 판(`LevelUpPopup`) → 닫힌 뒤 해금
-  연출 → 출석판**이다 — 해금 연출은 `holdUnlockCelebrations`/`whenUnlockGateOpen` 문이 판이 닫힐 때까지 붙잡고,
+  한 번에 알린다(`levelUpAnnouncement`). 로비 진입 순서는 **출석판(가장 먼저) → 레벨업 판(`LevelUpPopup`) → 닫힌 뒤 해금
+  연출**이다(레벨업이 기다리는 동안 입력을 막고, 출석 판이 열릴 때 푼다) — 해금 연출은 `holdUnlockCelebrations`/`whenUnlockGateOpen` 문이 판이 닫힐 때까지 붙잡고,
   출석 같은 자동 팝업은 튜토리얼이 남아 있으면 뜨지 않는다. QA 빌드는 튜토리얼 자체를 끈다(`TUTORIAL_ENABLED`).
 - **플레이어 카드**(`PlayerCardState` — UID·닉네임·한 줄 소개·테두리·프로필 사진·연구 개시일)는
   `PlayerCardManager`만 바꾼다. UID와 개시일은 계정이 처음 설 때 부트가 한 번 정하고 바꾸지 않는다.

@@ -132,7 +132,7 @@ export const SKILL_VI = {
   "skill.passive.lowHpStealth": "Một lần mỗi trận, khi máu còn từ {percent}% trở xuống sẽ vào [[stealth|Tàng hình]] {seconds} giây.",
   "skill.passive.lowHpStealth.focus": "Một lần mỗi trận, khi máu còn từ {percent}% trở xuống, mất hết [[focus|Tập trung]] và vào [[stealth|Tàng hình]] {seconds} giây.",
   "skill.passive.openingVanish": "Vào trận trong [[stealth|Tàng hình]] {seconds} giây.",
-  "skill.passive.featherVeil": "Vào trận trong [[stealth|Tàng hình]] {seconds} giây.",
+  "skill.passive.featherVeil": "Vào trận trong [[stealth|Tàng hình]] {seconds} giây. Khi hạ gục, [[attack-speed|Tốc đánh]] và [[move-speed|Tốc chạy]] tăng {killPercent}% trong {killSeconds} giây.",
   "skill.passive.openingStealth": "Vào trận trong [[stealth|Tàng hình]] {seconds} giây.",
   "skill.passive.undyingTalisman": "Một lần mỗi trận, đòn chí tử sẽ để nó sống sót và [[invulnerable|Bất khả xâm phạm]] {seconds} giây nhưng không thể hành động. Trong thời gian đó hồi {percent}% HP tối đa chia đều mỗi giây.{blast}",
   "skill.passive.undyingTalisman.blast": " Đồng thời [[knockback|đánh bật]] kẻ địch gần đó.",

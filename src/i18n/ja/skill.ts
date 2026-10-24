@@ -144,7 +144,7 @@ export const SKILL_JA = {
   "skill.passive.lowHpStealth": "戦闘ごとに一度、体力が{percent}%以下になると{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.lowHpStealth.focus": "戦闘ごとに一度、体力が{percent}%以下になると[[focus|集中]]をすべて失う代わりに{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.openingVanish": "戦闘を始めるとき、{seconds}秒間[[stealth|隠密]]状態で入る。",
-  "skill.passive.featherVeil": "戦闘開始時に{seconds}秒間[[stealth|隠密]]状態になる。",
+  "skill.passive.featherVeil": "戦闘開始時に{seconds}秒間[[stealth|隠密]]状態になる。敵を倒すと{killSeconds}秒間、[[attack-speed|攻撃速度]]と[[move-speed|移動速度]]が{killPercent}%上がる。",
   "skill.passive.openingStealth": "戦闘を始めるとき、{seconds}秒間[[stealth|隠密]]する。",
   "skill.passive.undyingTalisman": "戦闘ごとに1回、倒れるダメージを受けても死なず、{seconds}秒間[[invulnerable|無敵]]になる代わりに何の行動もできない。その間、最大体力の{percent}%を毎秒分けて回復する。{blast}",
   "skill.passive.undyingTalisman.blast": " このとき周囲の敵を[[knockback|吹き飛ばす]]。",

@@ -1579,7 +1579,8 @@ export const RELICS: RelicDef[] = [
       openingStealthSeconds: 4,
       // 태생 치명타는 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
-      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률이 오른다.",
+      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
+      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률이 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
     },
     basic: {
       id: "yuti-basic",

@@ -34,7 +34,7 @@ describe("유티 — 정체성과 문장", () => {
 
   it("의 수치는 데이터가 정한 값이고 태그와 본문이 그것을 읽는다", () => {
     expect(PLUME).toMatchObject({ maxStacks: 5, holdSeconds: 8, burstPower: 120, burstSeconds: 4, slowSeconds: 3 });
-    expect(YUTI.passive).toMatchObject({ openingStealthSeconds: 4, criticalChancePercent: 20 });
+    expect(YUTI.passive).toMatchObject({ openingStealthSeconds: 4, criticalChancePercent: 20, killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 } });
     expect(YUTI.basic.maxTargets).toBe(2);
     expect(YUTI.ultimate.repeatStrike?.count).toBe(3);
     expect((YUTI.ultimate.power ?? 0) * 3).toBe(240);
@@ -117,6 +117,16 @@ describe("유티 — 갈래와 궁극기", () => {
     yuti.attackCooldown = Number.POSITIVE_INFINITY;
     step(state, 1.5);
     for (const enemy of enemies) expect(enemy.frostPlume?.stacks).toBe(3);
+  });
+});
+
+describe("유티 — 처치 가속", () => {
+  it("적을 쓰러뜨리면 공격 속도와 이동 속도가 오른다", () => {
+    const { state, yuti, enemies: [enemy] } = setup(["amo"]);
+    enemy.hp = 1;
+    yuti.attackCooldown = 0;
+    step(state, 0.6);
+    expect(yuti.killHaste?.attackSpeedPercent).toBe(50);
   });
 });
 

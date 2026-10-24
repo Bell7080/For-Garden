@@ -154,6 +154,8 @@ export interface Fighter extends Combatant {
    * 갖고 있어, 다른 수치로 걸면 머리 위 표식이 말하는 것과 실제가 갈린다.
    */
   traitHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
+  /** 패시브 `killHaste`가 건 처치 가속. 룬 특성 가속(`traitHaste`)과 다른 슬롯이다. */
+  killHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
   /**
    * 룬 특성 「집념」이 세는 연속 타격 표적과 겹이다.
    *
@@ -1197,6 +1199,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     augmentDefensePercent: 0,
     augmentResistancePercent: 0,
     traitHaste: null,
+    killHaste: null,
     traitStreakTargetId: null,
     traitStreakStacks: 0,
     butcher: null,
@@ -4142,6 +4145,11 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, vict
   // 날갯짓 울림(네우리) — 직접 쓰러뜨린 몫이 궁극기 게이지로 돌아온다.
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
+  // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
+  const haste = attacker.def.passive.killHaste;
+  if (haste && isFighterAlive(attacker)) {
+    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
+  }
   // 패시브 돌파(`huntChain`) — 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(주기 카운트를 채운다).
   const shallows = attacker.def.basic.shallows;
   if (!useUltimate && victim && shallows && attacker.shallowPools.length > 0
@@ -5257,8 +5265,9 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const sunkenPercent = sunkenSlowPercent(fighter);
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
+  const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100)
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
@@ -5551,7 +5560,7 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
-    * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100)
+    * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - frostbiteSlowPercent(fighter) / 100)
     * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
 }
@@ -9093,6 +9102,12 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.traitHaste.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.traitHaste = null;
       else fighter.traitHaste = { ...fighter.traitHaste, remaining };
+    }
+    // 처치 가속도 같은 공용 시계로 마른다.
+    if (isFighterAlive(fighter) && fighter.killHaste) {
+      const remaining = fighter.killHaste.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.killHaste = null;
+      else fighter.killHaste = { ...fighter.killHaste, remaining };
     }
     // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
     tickShallows(fighter, dt);

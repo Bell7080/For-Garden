@@ -62,7 +62,7 @@ export interface InteractionCity {
    * 수량의 기준은 시세표(`TRADE_GEM_RATE`)다 — 골드 500개·치즈케이크 2개·원석 5개가 각각 젬 1개.
    * **화석·호박석은 연구 한 번(젬 300)이라 교류의 주 보상이 아니다.** 경제 문서의 화석 월 공급
    * 전체(8,300)를 하루 한 도시가 넘기던 때가 있어 교류에서는 전부 걷어 냈다. 대신 수뇌부 창구에는
-   * 젬이 가끔 한 개씩 섞인다(0~1). 시간을 고치면 이 값도 함께 다시 잡는다.
+   * 젬이 길이에 비례해 섞인다(관리부 10~30 · 대여 10~50 · 24시간 창구 10~100, 응태 승인). 시간을 고치면 이 값도 함께 다시 잡는다.
    */
   readonly rewards: readonly InteractionRewardRange[]; readonly clueJournalId: string;
   /**
@@ -117,7 +117,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "연구 성과와 렐릭의 사용처를 집계하는 도플의 관리부. 결재가 여러 단을 거쳐 오래 기다려야 한다.",
     unlock: { stageId: "1-4" }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 2_000, max: 5_000 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gems", min: 10, max: 30 }, { currency: "gold", min: 2_000, max: 5_000 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
     clueJournalId: "interaction-doppel-office-01", illustration: "background-interaction-doppel-office",
   },
   {
@@ -135,7 +135,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "고성능 장비를 빌려 주는 러스트의 대여 관리부. 연장 한 건에도 긴 협상이 붙는다.",
     unlock: { stageId: "2-5" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 3_500, max: 7_500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 450 }],
+    rewards: [{ currency: "gems", min: 10, max: 50 }, { currency: "gold", min: 3_500, max: 7_500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 450 }],
     clueJournalId: "interaction-rust-lease-01", illustration: "background-interaction-rust-lease",
   },
   {
@@ -145,7 +145,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "도플 연구소의 가장 높은 층. 연구의 목적을 정하는 사람들이 이곳에 앉는다.",
     unlock: { stageId: "2-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-doppel-upper-01", illustration: "background-interaction-doppel-upper",
   },
   {
@@ -155,7 +155,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "러스트의 중심에 선 거대한 공방. 연구 장비의 설계와 수리가 한곳에 모인다.",
     unlock: { stageId: "3-5" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4_500, max: 10_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4_500, max: 10_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-rust-works-01", illustration: "background-interaction-rust-works",
   },
   {
@@ -165,7 +165,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "꿈을 연구하는 도시 오디디가 외부 손님을 맞는 접견실. 제안은 늘 그들이 먼저 꺼낸다.",
     unlock: { stageId: "3-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
     clueJournalId: "interaction-odidi-embassy-01", illustration: "background-interaction-odidi-embassy",
   },
 ] as const;

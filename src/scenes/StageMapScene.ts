@@ -45,7 +45,13 @@ const NODE_GAP = 230;
 const DRAG_SLOP = 14;
 
 /** 챕터 제목 두 줄. 상단 재화 줄(y 40~136) 아래에 선다. */
-const STAGE_MAP_TITLE = { titleY: 200, subtitleY: 260 } as const;
+const STAGE_MAP_TITLE = { titleY: 205, subtitleY: 278, titleSize: 62, subtitleSize: 36, titleWidth: 900, difficultyY: 392, bandHeight: 470 } as const;
+
+/**
+ * 전투·편성에서 돌아올 때 방금 보던 관문을 유지하기 위한 기억. 스토리를 완전히 나가면(뒤로가기) 지워서
+ * 다음 입장은 다시 가장 최근에 열린 관문으로 올라간다. 모듈 변수라 저장에 섞이지 않는다.
+ */
+let resumeStageId: string | undefined;
 
 /** 제목·출전·뒤로가기가 앉는 깊이. 비네트(40)보다 위, 적 편성 팝업(60)보다 아래다. */
 const CHROME_DEPTH = 50;
@@ -58,6 +64,16 @@ const CHROME_DEPTH = 50;
  * 자동으로 올라간다. 스테이지를 고르면 그 스테이지의 적이 위에서 내려온다.
  */
 /** 지도 옆가지(SUB)로 서는 노드 — 이야기 서브와 전투 서브. 본편 세로축에 끼지 않는다. */
+function drawTitleShade(scene: Phaser.Scene): void {
+  const { bandHeight } = STAGE_MAP_TITLE;
+  const g = scene.add.graphics().setDepth(CHROME_DEPTH - 1);
+  const steps = 24;
+  for (let i = 0; i < steps; i++) {
+    g.fillStyle(0x05070a, 0.62 * (1 - i / steps) ** 1.6);
+    g.fillRect(0, i * (bandHeight / steps), BASE_WIDTH, bandHeight / steps + 1);
+  }
+}
+
 function isSubNode(stage: StageDef): boolean {
   return stage.kind === "story" || stage.sub === true;
 }
@@ -113,12 +129,15 @@ export class StageMapScene extends Phaser.Scene {
 
     // 스토리 입장은 스테미나를 쓰므로 위에 재화 줄을 세운다 — 다른 던전 입구와 같은 한 장이다.
     // 스테미나 칸을 누르면 그 자리에서 충전 창이 열린다. 제목은 그 줄 아래로 내려선다.
+    // 제목 뒤에 위에서 내려오는 어둠을 한 겹 깐다 — 판때기 없이 가장자리가 스며들어 원화 위에서도 글이 먼저 읽힌다.
+    drawTitleShade(this);
     new TopBar(this, 40, { profile: false, depth: CHROME_DEPTH, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.enemyPopups }, currency) });
-    this.chapterTitle = this.add.text(665, STAGE_MAP_TITLE.titleY, "", textStyle({ role: "display", size: 48 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
+    this.chapterTitle = this.add.text(cx, STAGE_MAP_TITLE.titleY, "", textStyle({ role: "display", size: STAGE_MAP_TITLE.titleSize })).setOrigin(0.5).setDepth(CHROME_DEPTH).setShadow(0, 4, "#05070a", 8, false, true);
     this.chapterSubtitle = this.add
-      .text(cx, STAGE_MAP_TITLE.subtitleY, "", textStyle({ role: "body", size: 28, color: COLOR.inkDim }))
+      .text(cx, STAGE_MAP_TITLE.subtitleY, "", textStyle({ role: "emphasis", size: STAGE_MAP_TITLE.subtitleSize, color: COLOR.ink }))
       .setOrigin(0.5)
-      .setDepth(CHROME_DEPTH);
+      .setDepth(CHROME_DEPTH)
+      .setShadow(0, 3, "#05070a", 6, false, true);
 
     this.enemyPreview = new NodeEnemyPreview(this, { title: "", growth: [], enemies: [], top: WINDOW.top - 40, bottom: WINDOW.bottom + 40, onEnemyClick: () => undefined });
     this.storyPreview = new NodeStoryPreview(this, { title: "", summary: "", read: false, top: WINDOW.top - 40, bottom: WINDOW.bottom + 40 });
@@ -155,7 +174,7 @@ export class StageMapScene extends Phaser.Scene {
       width: navigation.next.width, height: navigation.next.height, label: t("stageMap.nextZone"), fontSize: 28,
       onClick: () => this.showChapter(this.currentChapter + 1),
     }).setDepth(CHROME_DEPTH);
-    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie)).setDepth(CHROME_DEPTH);
+    addBackButton(this, () => { resumeStageId = undefined; startScene(this, "lobby", LOBBY_RETURN.sortie); }).setDepth(CHROME_DEPTH);
 
     // 적은 정보창 씬이 아니라 팝업 한 장으로 연다 — 유대·급여·룬이 없어 판을 다 쓰면 초라하다.
     this.enemyPopups = new PopupLayer(this, 2200);
@@ -163,7 +182,8 @@ export class StageMapScene extends Phaser.Scene {
     // 들어오면 가장 최근에 열린 스테이지로 올라가 그 스테이지를 고른 상태로 시작한다.
     const tutorialStage = tutorialManager.battleStage();
     if (tutorialStage) this.difficulty = "easy";
-    const latest = tutorialStage ? getBattleStage(tutorialStage) : this.latestUnlocked();
+    const resumed = resumeStageId ? storyStages(this.difficulty).find(({ id }) => id === resumeStageId) : undefined;
+    const latest = tutorialStage ? getBattleStage(tutorialStage) : resumed && isStageUnlocked(resumed.id) ? resumed : this.latestUnlocked();
     this.currentChapter = latest.chapter ?? 1;
     this.buildMap();
     this.enableDragScroll();
@@ -195,7 +215,7 @@ export class StageMapScene extends Phaser.Scene {
   private refreshDifficultyButton(): void {
     this.difficultyButton?.destroy();
     const tone = STORY_DIFFICULTY[this.difficulty];
-    this.difficultyButton = new Button(this, 180, STAGE_MAP_TITLE.titleY, { width: 270, height: 82,
+    this.difficultyButton = new Button(this, BASE_WIDTH / 2, STAGE_MAP_TITLE.difficultyY, { width: 270, height: 82,
       label: `${t(`storyDifficulty.${this.difficulty}`)} ▾`, fontSize: 30, accentColor: tone.color, accentTextColor: tone.text,
       onClick: () => openStoryDifficultyPicker(this, this.enemyPopups, this.difficulty, difficulty => this.changeDifficulty(difficulty)),
     }).setDepth(CHROME_DEPTH);
@@ -261,7 +281,7 @@ export class StageMapScene extends Phaser.Scene {
     const chapter = this.chapters().find(({ id }) => id === this.currentChapter) ?? this.chapters()[0];
     const chapterStages = this.chapterStages(this.currentChapter);
     this.chapterTitle.setText(chapter.title).setColor(tone.text);
-    fitTextToBox(this.chapterTitle, { width: 650, height: 70 }, { size: 48, minSize: 28 });
+    fitTextToBox(this.chapterTitle, { width: STAGE_MAP_TITLE.titleWidth, height: 80 }, { size: STAGE_MAP_TITLE.titleSize, minSize: 32 });
     this.chapterSubtitle.setText(chapter.subtitle);
     this.previousChapterButton?.setEnabled(this.currentChapter > this.chapters()[0].id);
     const next = this.chapters().find(({ id }) => id === this.currentChapter + 1);
@@ -386,6 +406,7 @@ export class StageMapScene extends Phaser.Scene {
   /** 고른 스테이지를 중앙으로 옮기고 공용 노드 미리보기의 내용과 꼬리를 함께 갱신한다. */
   private select(stage: StageDef, instant = false): void {
     this.selected = stage.id;
+    resumeStageId = stage.id;
     // 저장의 전투 선택에는 스토리 노드를 넣지 않아 BattleScene이 잘못 열 가능성을 없앤다.
     if (stage.kind === "battle") selectStoryStage(stage.id);
     const index = this.chapterStages(this.currentChapter).findIndex((candidate) => candidate.id === stage.id);

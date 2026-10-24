@@ -71,6 +71,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   private panelHeight: number = NODE_ENEMY_PREVIEW.height;
   /** 판이 붙은 노드의 화면 y. 칸을 여닫아 다시 그릴 때 같은 자리에 붙인다. */
   private nodeY = 0;
+  /** 마지막 추적에서 노드가 창 안에 있었는가. 늦게 도착한 SD도 같은 값을 따른다. */
+  private nodeVisible = true;
 
   constructor(scene: Phaser.Scene, options: NodeEnemyPreviewOptions) {
     super(scene, scene.scale.width / 2, 0);
@@ -91,6 +93,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     // 넘기지 않은 칸 구성이 직전 노드의 것으로 남지 않게 한다.
     this.options = { ...this.options, sections: undefined, ...options };
     this.nodeY = nodeY;
+    this.nodeVisible = true;
     if (this.options.sections) { this.renderSectioned(false); this.reveal(); return; }
     this.panelHeight = NODE_ENEMY_PREVIEW.height;
     this.removeAll(true); this.clearPuppets();
@@ -173,6 +176,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   trackNode(nodeY: number, nodeVisible: boolean): void {
     if (!this.shown) return;
     this.nodeY = nodeY;
+    this.nodeVisible = nodeVisible;
     const previousY = this.y;
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom, this.panelHeight);
     this.setY(y); this.drawTail(above);
@@ -364,7 +368,10 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   private async spawnEnemy(id: string, x: number, ground: number, height: number, generation: number): Promise<void> {
     const puppet = await spawnPuppet(this.scene, battleAssetFor(id), { x: this.x + x, groundY: this.y + ground, height, flipX: true, tint: 0xffffff, depth: this.depth + 1 });
     if (!this.active || generation !== this.generation || !this.scene.scene.isActive()) { puppet.destroy(); return; }
-    puppet.setVisible(this.revealed); this.puppets.add(puppet);
+    // SD가 내려받히는 동안 지도가 굴렀을 수 있다 — 생성 시점의 자리가 아니라 **지금 판의 자리**에 발을 맞춘다.
+    // 맞추지 않으면 스크롤 중에 연 판의 SD만 그 만큼 아래로 밀려 서 있다.
+    puppet.setY(this.y + ground);
+    puppet.setVisible(this.nodeVisible && this.revealed); this.puppets.add(puppet);
   }
 
   /** 현재 세대를 무효화한 뒤 컨테이너 밖 GPU 개체까지 명시적으로 정리한다. */

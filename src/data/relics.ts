@@ -4555,19 +4555,21 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
     ferocityTrait: { name: "해구", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
+    /*
+     * **시간이 갈수록 세지는 것은 이 개체가 아니라 불사 자리가 갖는다**(`ENCOUNTER_ROLE.endless.ramp` — 주문력 복리 +2%/초).
+     * 예전 「심해의 압력」이 하던 일을 자리로 옮겼으므로, 패시브에는 이 개체만의 밀물이 남는다.
+     */
     passive: {
       id: "pontos-passive",
-      name: "심해의 압력",
-      kind: "abyssalPressure",
+      name: "밀물",
+      kind: "tidalSurge",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 5,
-      // 500% 전장 궁극기와 곱해져도 표준 파티를 한 번에 삭제하지 않도록 실전 시뮬레이션에서 2%로 제한했다.
-      apPercentPerSecond: 2,
-      // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
-      // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다. 경감·강인함은 불사
-      // 자리가 갖는다(`ENCOUNTER_ROLE.endless`).
-      desc: "매초 주문력이 2%씩 복리로 오른다.",
+      value: 0,
+      // 10초마다 모든 적을 뒤로 민다. 피해가 없으니 강인함이 시간과 속도를 함께 깎는다.
+      tidalSurge: { intervalSeconds: 10, knockback: { seconds: 0.8, speed: 1100, bounces: 1 } },
+      // kind가 tidalSurge인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로 이 원문은 데이터 문서화용이다.
+      desc: "10초마다 모든 적을 뒤로 민다.",
     },
     basic: {
       id: "pontos-basic",

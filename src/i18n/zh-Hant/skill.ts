@@ -120,7 +120,7 @@ export const SKILL_ZH_HANT = {
   "skill.passive.adagioWeight": "存活期間，隊友[[attack-speed|攻擊速度]]提升{percent}%。隊友受到[[crowd-control|控制]]時，立即淨化並提供{shield}[[shield|護盾]]。",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|攻擊力]]{percent}%的",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|法術強度]]每秒複合增長{percent}%。",
+  "skill.passive.tidalSurge": "每{seconds}秒，漲潮會將所有敵人[[knockback|擊飛]]並向後推開。",
   "skill.passive.gourmetHunt": "戰鬥開始時，鎖定當前生命最低的敵人並[[teleport|瞬移]]過去。擊倒時立即重新選擇，否則每{cooldown}秒重新選擇。受到敵人傷害時獲得[[stealth|隱身]]{seconds}秒，每場戰鬥最多{triggers}次。",
   "skill.passive.cursedInsight": "每當[[basic-attack|普通攻擊]]直接命中[[curse|詛咒]]狀態的敵人時，本場戰鬥[[ap|法術強度]]提升{value}%，最多{stacks}次。[[transfer|轉移]]的傷害不會觸發。",
   "skill.passive.frenzyDrain": "恢復[[frenzy|暴走]]敵人造成傷害的{percent}%。",

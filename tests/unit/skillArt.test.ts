@@ -459,12 +459,14 @@ describe("폰토스 스킬 표시 계약", () => {
      * 문장이 조금씩 다른 수로 복사되던 것을 걷어 내고, 적 정보창의 역할 칸이 유형 표에서 읽어
      * 한 번만 말한다(`encounterRoleDescription`).
      */
-    expect(passiveDescription(pontos.passive)).toBe("매초 [[ap|주문력]]이 2%씩 복리로 오른다.");
+    expect(passiveDescription(pontos.passive)).toBe("10초마다 밀물이 모든 적을 [[knockback|날려버림]]으로 뒤로 민다.");
     expect(encounterRoleDescription("endless")).toBe(
-      "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
+      "공격력·주문력 ×2.6   ·   몸집 ×1.9\n"
       + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
       + "\n강인함 적용 후 0.05초 이하로 남은 [[crowd-control|행동 제약]]은 무효가 된다."
       + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다."
+      + "\n[[atk|공격력]]·[[ap|주문력]]이 25%에서 시작해 30초에 걸쳐 100%까지 오른다."
+      + "\n[[ap|주문력]]은 처음부터 매초 2%씩 복리로 더 오른다."
       + "\n최대 체력 비례 피해를 30% 덜 받는다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.

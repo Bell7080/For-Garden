@@ -1243,7 +1243,7 @@ describe("FakeServer 원정 정산", () => {
       const result = await server.sweepExpedition({ requestId: "sweep-1" });
       expect(result.granted.gold).toBe(4_000);
       expect(result.granted.cheesecake).toBe(120);
-      expect(result.granted.gems).toBe(120);
+      expect(result.granted.gems).toBe(200);
       expect(result.granted.salvageRecord).toBe(60);
       expect(result.granted.fossil).toBe(0);
       expect(state.wallet.gold).toBe(goldBefore + result.granted.gold!);

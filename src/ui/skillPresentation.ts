@@ -612,13 +612,12 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
       : t("skill.passive.adagioWeight.shieldAmount", { amount: shield.term });
     return t("skill.passive.adagioWeight", { percent: passive.teamAttackSpeedPercent, shield: shieldText });
   }
-  if (passive.kind === "abyssalPressure") {
+  if (passive.kind === "tidalSurge") {
     /*
-     * **경감과 강인함은 여기서 말하지 않는다.** 둘 다 이 개체가 아니라 불사라는 자리의 성질이라
-     * 적 정보창의 역할 칸(`encounterRoleDescription`)이 말한다 — 보스마다 패시브에 같은 문장을
-     * 조금씩 다른 수로 되풀이하지 않는다. 패시브에 남는 것은 이 개체만의 성장이다.
+     * **시간에 따른 상승은 여기서 말하지 않는다.** 그것은 이 개체가 아니라 불사라는 자리의 성질이라 적 정보창의
+     * 역할 칸(`encounterRoleDescription`)이 말한다. 패시브에 남는 것은 이 개체만의 밀물이다.
      */
-    return t("skill.passive.abyssalPressure", { percent: passive.apPercentPerSecond });
+    return t("skill.passive.tidalSurge", { seconds: passive.tidalSurge?.intervalSeconds ?? 0 });
   }
   if (passive.kind === "gourmetHunt") return t("skill.passive.gourmetHunt", {
     cooldown: passive.huntCooldownSeconds, seconds: passive.damageStealthSeconds,

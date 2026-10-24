@@ -43,9 +43,9 @@ describe("레이드·원정 정산의 실제 지급량과 재접속", () => {
     const h = setup(); h.state.raid.instances[0].myDamage = 10000; h.state.wallet.raidSigil = WALLET_CAPS.raidSigil;
     h.clock(start + 86400001);
     const result = await h.api().settleRaid({ raidId: "audit-raid", requestId: "settle" });
-    expect(result.granted).toEqual([]); expect(result.raid.settled).toBe(true);
+    expect(result.granted.map((r) => r.currency)).toEqual(["gems"]); expect(result.raid.settled).toBe(true);
     const retry = await h.api(h.saves.load()!).settleRaid({ raidId: "audit-raid", requestId: "settle" });
-    expect(retry.granted).toEqual([]); expect(retry.raid.entries).toEqual(result.raid.entries);
+    expect(retry.granted.map((r) => r.currency)).toEqual(["gems"]); expect(retry.raid.entries).toEqual(result.raid.entries);
   });
   it("같은 입장·로그는 다른 참가자 처치 직전과 직후에 같은 개인 점수를 받는다", async () => {
     const total = RAID_DIFFICULTY.easy.totalHp;

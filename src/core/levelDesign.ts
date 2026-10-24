@@ -93,6 +93,30 @@ export interface EncounterDamageReduction {
   ignoreAtOrBelow: number;
 }
 
+/**
+ * **시간 상승 배율** — 판이 시작될 때는 공격력·주문력이 `startPercent`에서 출발해 `seconds`초에 걸쳐
+ * 매초 한 칸씩 100%까지 오른다. 보스·불사는 판이 길어질수록 위협이 되는 자리인데, 처음부터 전부 내면
+ * 첫 몇 초에 편성이 서기도 전에 쓰러진다(월드 폭주에서 보스를 제대로 치지도 못하고 아군이 사망했다).
+ *
+ * 개체가 아니라 **자리**가 갖는다 — 폰토스의 패시브에 있던 시간 누적을 이리로 옮겼다. 공격력·주문력만 곱하고
+ * 체력(공유 게이지)·방어·저항·공속은 건드리지 않는다.
+ */
+export interface EncounterRamp {
+  /** 판 시작 때의 공격력·주문력 몫(%). */
+  startPercent: number;
+  /** 100%에 닿기까지 걸리는 시간(초). */
+  seconds: number;
+  /** 램프와 별개로 **주문력**에만 0초부터 복리로 얹는 매초 비율(%). 불사(폰토스)만 갖는다. */
+  apGrowthPercentPerSecond?: number;
+}
+
+/** 경과 시간(초)에서 램프 몫(0~1)을 구한다. 완전히 지난 초마다 한 칸씩 오른다. */
+export function encounterRampFactor(ramp: EncounterRamp, elapsedSeconds: number): number {
+  const start = ramp.startPercent / 100;
+  const whole = Math.max(0, Math.floor(elapsedSeconds));
+  return start + (1 - start) * Math.min(1, whole / ramp.seconds);
+}
+
 export interface EncounterRoleSpec {
   /** 전장에 서는 수. 파티는 셋이다. */
   count: number;
@@ -112,6 +136,8 @@ export interface EncounterRoleSpec {
   damageReduction?: EncounterDamageReduction;
   /** 그 자리가 갖는 치유 감소. 혼자 서는 정예가 갖는다. */
   healingReduction?: EncounterHealingReduction;
+  /** 그 자리가 갖는 시간 상승 배율. 판 안에서 오래 서는 보스·불사가 갖는다. */
+  ramp?: EncounterRamp;
   /**
    * **최대 체력 비례 피해(출혈·뇌진탕·빙결 해제)를 덜 받는 비율(%).**
    *
@@ -208,11 +234,16 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      */
     tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     percentHpResistance: 30,
+    /*
+     * **처음 25%에서 30초에 걸쳐 100%로.** 월드 폭주(LV60)의 첫 몇 초에 편성이 서기도 전에 쓰러지는 일을
+     * 막되, 30초 뒤의 세기는 예전 그대로라 오래 버티는 판의 난이도는 바뀌지 않는다(응태 결정).
+     */
+    ramp: { startPercent: 25, seconds: 30 },
   },
   endless: {
     // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
     // 자라 이 표가 곱하지 않는다.
-    count: 1, bodyScale: 1.45,
+    count: 1, bodyScale: 1.9,
     hpMultiplier: 1, attackMultiplier: 2.6,
     ttkSeconds: null, remainingHp: [0.05, 0.45],
     /*
@@ -227,6 +258,11 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      */
     damageReduction: { basePercent: 70, maxPercent: 99, maxAtHpPercent: 0, curve: 0.75, ignoreAtOrBelow: 10 },
     percentHpResistance: 30,
+    /*
+     * 보스와 같은 램프에 **주문력 복리 +2%/초**가 얹힌다. 폰토스의 패시브(「심해의 압력」)에 있던 시간 누적을
+     * 자리로 옮긴 것이다 — 복리는 0초부터 세므로 30초 뒤의 주문력은 예전과 완전히 같고 앞 30초만 약하다.
+     */
+    ramp: { startPercent: 25, seconds: 30, apGrowthPercentPerSecond: 2 },
   },
 };
 

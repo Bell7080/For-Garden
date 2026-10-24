@@ -85,6 +85,8 @@ export const RAID_BOSS_BALANCE = {
  *
  * **정산**(`settlement`)은 참여한 사람에게만 나간다. `mine`은 내 피해가 `mineTarget`에 닿을수록
  * 차오르고(두 판의 합), `total`은 판 전체가 깎인 비율만큼, `kill`은 토벌된 판에만 붙는다.
+ * `gems`는 그 세 몫이 다 찼을 때의 젬이다(쉬움 50 · 보통 75 · 어려움 100 · 폭주 150) — 증표와 같은 비율로
+ * 차오르고, 5 단위로 올림한다. 증표 30개어치 플레이가 젬 50~100이라는 기준에서 정했다.
  */
 export type RaidDifficulty = "easy" | "normal" | "hard" | "rampage";
 
@@ -98,17 +100,17 @@ export interface RaidDifficultySpec {
   totalHp: number;
   /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
   lifetimeHours: number;
-  settlement: { mine: number; mineTarget: number; total: number; kill: number };
+  settlement: { mine: number; mineTarget: number; total: number; kill: number; gems: number };
 }
 
 const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 
 /** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30 } }),
+  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 50 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 75 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 100 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 150 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */

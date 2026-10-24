@@ -91,6 +91,10 @@ export function encounterRoleDescription(role: EncounterRole): string {
       base: spec.healingReduction.basePercent, max: spec.healingReduction.maxPercent, seconds: spec.healingReduction.rampSeconds,
     }));
   }
+  if (spec.ramp) {
+    lines.push(t("info.enemy.role.ramp", { start: spec.ramp.startPercent, seconds: spec.ramp.seconds }));
+    if (spec.ramp.apGrowthPercentPerSecond !== undefined) lines.push(t("info.enemy.role.apGrowth", { percent: spec.ramp.apGrowthPercentPerSecond }));
+  }
   if (spec.percentHpResistance) lines.push(t("info.enemy.role.percentHpResistance", { percent: spec.percentHpResistance }));
   return lines.length > 0 ? lines.join("\n") : t("info.enemy.role.line.normal");
 }

@@ -251,8 +251,8 @@ function addRewardRow(
 ): void {
   const participated = raid.settlement.length > 0;
   const max = RAID_DIFFICULTY[raid.difficulty].settlement;
-  const amount = participated ? raid.settlement.reduce((sum, entry) => sum + entry.amount, 0) : max.mine + max.total + max.kill;
-  const currency = raid.settlement[0]?.currency ?? "raidSigil";
+  const amount = participated ? raid.settlement[0].amount : max.gems;
+  const currency = raid.settlement[0]?.currency ?? "gems";
   addFramedIcon(scene, layer, left + reward.size / 2, reward.y, reward.size, CURRENCY_ICON_BY_WALLET[currency], {
     amount: amount.toLocaleString(), iconAlpha: raid.settled ? 0.4 : 1,
   });

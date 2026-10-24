@@ -120,7 +120,7 @@ export const SKILL_ES = {
   "skill.passive.adagioWeight": "Mientras vive, la [[attack-speed|Velocidad de ataque]] aliada sube un {percent}%. Cuando un aliado sufre [[crowd-control|control de masas]], lo limpia al instante y le da un [[shield|escudo]] de {shield}.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% del Ataque",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "El [[ap|Poder mágico]] crece un {percent}% compuesto cada segundo.",
+  "skill.passive.tidalSurge": "Cada {seconds} s, la marea [[knockback|lanza hacia atrás]] a todos los enemigos.",
   "skill.passive.gourmetHunt": "Al empezar el combate, apunta al enemigo con menos PV actuales y se [[teleport|teletransporta]] hacia él. Elige de nuevo al instante al derrotar a alguien y, si no, cada {cooldown} s. Recibir daño de un enemigo otorga [[stealth|Sigilo]] durante {seconds} s, hasta {triggers} veces por combate.",
   "skill.passive.cursedInsight": "Cada vez que un [[basic-attack|ataque básico]] impacta directamente a un enemigo [[curse|Maldito]], el [[ap|Poder mágico]] sube un {value}% durante este combate, hasta {stacks} veces. Los golpes [[transfer|transferidos]] no lo activan.",
   "skill.passive.frenzyDrain": "Se cura el {percent}% del daño que causan los enemigos en [[frenzy|Frenesí]].",

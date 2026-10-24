@@ -628,12 +628,15 @@ export class RaidScene extends Phaser.Scene {
       let y = -height / 2 + 110;
       const participated = raid.settlement.length > 0;
       const max = RAID_DIFFICULTY[raid.difficulty].settlement;
-      const amount = participated ? raid.settlement.reduce((sum, entry) => sum + entry.amount, 0) : max.mine + max.total + max.kill;
+      const amount = participated ? raid.settlement[0].amount : max.gems;
       const label = raid.settled ? t("raid.settle.done") : !participated ? t("raid.settle.max")
         : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
       body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5));
       y += 30 + frame / 2;
-      addFramedIcon(this, body, 0, y, frame, CURRENCY_ICON_BY_WALLET[raid.settlement[0]?.currency ?? "raidSigil"], { amount: amount.toLocaleString() });
+      const shown = participated ? raid.settlement : [{ currency: "gems" as const, amount }];
+      shown.forEach((reward, index) => {
+        addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
+      });
       y += frame / 2 + 60;
       rows.forEach(([name, value]) => {
         body.add(this.add.text(-width / 2 + 90, y, name, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));

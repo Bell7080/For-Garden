@@ -120,7 +120,7 @@ export const SKILL_DE = {
   "skill.passive.adagioWeight": "Solange es lebt, steigt das [[attack-speed|Angriffstempo]] der Verbündeten um {percent}%. Gerät ein Verbündeter in [[crowd-control|Massenkontrolle]], wird er sofort gereinigt und erhält einen [[shield|Schild]] von {shield}.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% des Angriffs",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "Die [[ap|Zauberkraft]] wächst jede Sekunde um {percent}% (Zinseszins).",
+  "skill.passive.tidalSurge": "Alle {seconds} s [[knockback|schleudert]] die Flut jeden Gegner nach hinten.",
   "skill.passive.gourmetHunt": "Zu Kampfbeginn nimmt es den Gegner mit dem geringsten aktuellen Leben ins Visier und [[teleport|teleportiert]] sich zu ihm. Bei einem Besiegen wählt es sofort neu, sonst alle {cooldown} s. Schaden durch Gegner gewährt {seconds} s [[stealth|Tarnung]], bis zu {triggers}-mal pro Kampf.",
   "skill.passive.cursedInsight": "Jedes Mal, wenn ein [[basic-attack|Normalangriff]] einen [[curse|verfluchten]] Gegner direkt trifft, steigt die [[ap|Zauberkraft]] für diesen Kampf um {value}%, bis zu {stacks}-mal. [[transfer|Übertragene]] Treffer lösen das nicht aus.",
   "skill.passive.frenzyDrain": "Heilt sich um {percent}% des Schadens, den Gegner in [[frenzy|Raserei]] verursachen.",

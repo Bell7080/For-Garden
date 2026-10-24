@@ -139,6 +139,26 @@
 "Erleidet {percent}% weniger Schaden, der auf maximalem Leben basiert.",
 "Получает на {percent}% меньше урона от максимального здоровья."
 ],
+"info.enemy.role.ramp": [
+"[[atk|攻击力]]与[[ap|法术强度]]从{start}%开始，在{seconds}秒内升至100%。",
+"[[atk|พลังโจมตี]]และ[[ap|พลังเวท]]เริ่มที่ {start}% แล้วเพิ่มขึ้นเป็น 100% ภายใน {seconds} วินาที",
+"[[atk|Công]] và [[ap|Phép]] bắt đầu ở mức {start}% rồi tăng lên 100% trong {seconds} giây.",
+"[[atk|Serangan]] dan [[ap|Kekuatan Magis]] dimulai dari {start}% lalu naik hingga 100% selama {seconds} detik.",
+"El [[atk|Ataque]] y el [[ap|Poder mágico]] empiezan en el {start}% y suben al 100% a lo largo de {seconds} s.",
+"O [[atk|Ataque]] e o [[ap|Poder mágico]] começam em {start}% e sobem até 100% em {seconds}s.",
+"[[atk|Angriff]] und [[ap|Zauberkraft]] starten bei {start}% und steigen innerhalb von {seconds} s auf 100%.",
+"[[atk|Атака]] и [[ap|Сила магии]] начинаются с {start}% и за {seconds} с вырастают до 100%."
+],
+"info.enemy.role.apGrowth": [
+"[[ap|法术强度]]另从一开始每秒复合增长{percent}%。",
+"[[ap|พลังเวท]]ทบต้นเพิ่มขึ้นอีก {percent}% ทุกวินาทีตั้งแต่เริ่ม",
+"[[ap|Phép]] còn tăng dồn thêm {percent}% mỗi giây ngay từ đầu.",
+"[[ap|Kekuatan Magis]] juga bertambah majemuk {percent}% setiap detik sejak awal.",
+"Además, el [[ap|Poder mágico]] crece un {percent}% compuesto cada segundo desde el inicio.",
+"Além disso, o [[ap|Poder mágico]] cresce {percent}% composto a cada segundo desde o início.",
+"Außerdem wächst die [[ap|Zauberkraft]] von Anfang an jede Sekunde um {percent}% (Zinseszins).",
+"Кроме того, [[ap|Сила магии]] с самого начала растёт на {percent}% в секунду по сложному проценту."
+],
 "info.enemy.role.tenacity": [
 "初始拥有{base}%[[tenacity|韧性]]，每次摆脱[[crowd-control|控制]]时提升{per}%，最多{max}%。",
 "เริ่มต้นด้วย[[tenacity|ความทนทาน]] {base}% และเพิ่ม {per}% ทุกครั้งที่สลัด[[crowd-control|การควบคุม]]หลุด สูงสุด {max}%",

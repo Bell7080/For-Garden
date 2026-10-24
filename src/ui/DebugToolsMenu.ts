@@ -89,6 +89,7 @@ const MENU: readonly { id: string; labelKey: TextKey; open: (host: Host) => void
   { id: "relicBond", labelKey: "settings.debug.menu.relicBond", open: (host) => pickRelic(host, "owned", ALL_OWNED, (id) => pickFrom(host, t("settings.debug.pick.bond"), Array.from({ length: BOND_LEVEL_CAP + 1 }, (_, level) => ({ id: String(level), label: t("settings.debug.bond", { level }) })), (level) => void run(host, { kind: "relicBond", relicId: id, level: Number(level) }))) },
   { id: "relicFragments", labelKey: "settings.debug.menu.relicFragments", open: (host) => pickRelic(host, "owned", null, (id) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50, 100, 500].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "relicFragments", relicId: id, amount: Number(amount) }))) },
   { id: "breakthroughSet", labelKey: "settings.debug.menu.breakthroughSet", open: (host) => pickRelic(host, "owned", null, (id) => void run(host, { kind: "breakthroughSet", relicId: id })) },
+  { id: "universalFragments", labelKey: "settings.debug.menu.universalFragments", open: (host) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "universalFragments", amount: Number(amount) })) },
   { id: "unlockStories", labelKey: "settings.debug.menu.unlockStories", open: (host) => void run(host, { kind: "unlockStories" }) },
 ];
 

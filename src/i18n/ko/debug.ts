@@ -14,6 +14,7 @@ export const DEBUG_KO = {
   "settings.debug.menu.relicBond": "캐릭터 유대 설정",
   "settings.debug.menu.relicFragments": "캐릭터 파편 지급",
   "settings.debug.menu.breakthroughSet": "돌파 재료 세트 지급",
+  "settings.debug.menu.universalFragments": "만능 파편 지급 (R·SR·SSR)",
   "settings.debug.menu.unlockStories": "유대 10 · 질문/스토리 전체 개방",
   "settings.debug.pick.currency": "재화 선택",
   "settings.debug.pick.amount": "수량 선택",

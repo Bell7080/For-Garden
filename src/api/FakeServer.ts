@@ -1480,6 +1480,7 @@ export class FakeServer implements GameApi {
       relicStory: { ...this.state.relicStory },
       playerResearch: { ...this.state.playerResearch },
       cleared: new Set(this.state.cleared),
+      itemGrants: {} as Record<string, number>,
     };
     const changed = applyDebugCommand(patch as unknown as DebugTarget, command, {
       walletCaps: WALLET_CAPS,
@@ -1489,7 +1490,10 @@ export class FakeServer implements GameApi {
       bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition,
     });
     if (changed > 0) {
-      const candidate = { ...this.state, ...patch };
+      const { itemGrants, ...rest } = patch;
+      let itemInventory = this.state.itemInventory;
+      for (const [itemId, amount] of Object.entries(itemGrants)) itemInventory = this.grantItem(itemInventory, itemId, amount, this.now()).inventory;
+      const candidate = { ...this.state, ...rest, itemInventory };
       redeemDeferredStoryBond(candidate, [...candidate.owned].filter(id => !this.state.owned.has(id)));
       this.persist(candidate);
       Object.assign(this.state, candidate);

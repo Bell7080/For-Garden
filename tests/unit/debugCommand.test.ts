@@ -49,6 +49,14 @@ describe("QA 디버그 명령", () => {
     await expect(api.applyDebugCommand({ kind: "relicLevel", relicId: stranger, level: 5 })).rejects.toThrow();
   });
 
+  it("만능 파편을 R·SR·SSR 모두 가방에 넣는다", async () => {
+    const { state, api } = server();
+    const count = (id: string) => state.itemInventory.find((stack) => stack.itemId === id)?.quantity ?? 0;
+    const before = ["r", "sr", "ssr"].map((rarity) => count(`universal-fragment-${rarity}`));
+    expect((await api.applyDebugCommand({ kind: "universalFragments", amount: 5 })).changed).toBe(1);
+    expect(["r", "sr", "ssr"].map((rarity) => count(`universal-fragment-${rarity}`))).toEqual(before.map((value) => value + 5));
+  });
+
   it("개발 도구가 꺼진 서버는 아무것도 바꾸지 않고 거절한다", async () => {
     const { state, api } = server(false);
     const gems = state.wallet.gems;

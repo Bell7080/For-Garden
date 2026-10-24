@@ -1,7 +1,7 @@
 import { BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL } from "./bond";
 import type { Wallet } from "./gacha";
 import { normalizePlayerLevel, PLAYER_LEVEL_CAP } from "./playerLevel";
-import { BREAKTHROUGH_CAP, relicLevelCap, remainingBreakthroughCost } from "./relicProgression";
+import { BREAKTHROUGH_CAP, relicLevelCap, remainingBreakthroughCost, UNIVERSAL_FRAGMENT_ITEM } from "./relicProgression";
 import type { RelicProgress } from "./types";
 
 /**
@@ -20,6 +20,7 @@ export type DebugCommand =
   | { kind: "relicBond"; relicId: string; level: number }
   | { kind: "relicFragments"; relicId: string; amount: number }
   | { kind: "breakthroughSet"; relicId: string }
+  | { kind: "universalFragments"; amount: number }
   | { kind: "unlockStories" };
 
 export interface DebugCommandResponse {
@@ -37,6 +38,8 @@ export interface DebugTarget {
   relicStory: { metAt: Record<string, string> } & Record<string, unknown>;
   playerResearch: { level: number; experience: number };
   cleared: Set<string>;
+  /** 가방에 넣을 아이템 수. 묶음·한도 규칙은 서버의 지급 경로(`grantItem`)가 맡으므로 여기서는 수만 모은다. */
+  itemGrants: Record<string, number>;
 }
 
 export interface DebugRules {
@@ -158,6 +161,12 @@ export function applyDebugCommand(target: DebugTarget, command: DebugCommand, ru
       if (cost.fragments === 0 && cost.cheesecake === 0) return 0;
       target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + cost.fragments;
       target.wallet.cheesecake = Math.min(rules.walletCaps.cheesecake, target.wallet.cheesecake + cost.cheesecake);
+      return 1;
+    }
+    case "universalFragments": {
+      const amount = integer(command.amount, 0, 999);
+      if (amount === 0) return 0;
+      for (const itemId of Object.values(UNIVERSAL_FRAGMENT_ITEM)) target.itemGrants[itemId] = (target.itemGrants[itemId] ?? 0) + amount;
       return 1;
     }
     case "unlockStories": {

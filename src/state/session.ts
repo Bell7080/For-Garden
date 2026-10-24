@@ -548,6 +548,10 @@ export function createDefaultSession(): Session {
         { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
         { itemId: "raid-ticket", quantity: 3 },
         { itemId: "raid-select-ticket", quantity: 1 },
+        // 만능 파편은 돌파 확정 창에서 「함께 소모」를 바로 확인해 볼 수 있게 등급마다 넉넉히 둔다.
+        { itemId: "universal-fragment-r", quantity: 10 },
+        { itemId: "universal-fragment-sr", quantity: 10 },
+        { itemId: "universal-fragment-ssr", quantity: 10 },
         ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
       ]
       : [],

@@ -1,4 +1,6 @@
-import { EXPEDITION_AUGMENTS, getExpeditionAugment, type ExpeditionAugmentDef, type ExpeditionAugmentRarity } from "../data/expeditionAugments";
+import { RELICS } from "../data/relics";
+import { RETIRED_EXPEDITION_AUGMENTS } from "../data/expeditionTagAugments";
+import { EXPEDITION_AUGMENTS, getExpeditionAugment, type ExpeditionAugmentRarity, type ExpeditionAugmentDef } from "../data/expeditionAugments";
 import type { ExpeditionNodeType } from "./expeditionMap";
 import { EXPEDITION_COMBAT_REWARD_MULTIPLIERS, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_TREASURE_REWARD_BALANCE, expeditionBossSalvage } from "../data/expedition";
 
@@ -93,6 +95,13 @@ export function eligibleExpeditionTargets(relics: readonly ExpeditionRewardRelic
   return relics.filter(({ alive, currentHp }) => alive || currentHp === 0).map(({ relicId }) => relicId);
 }
 
+/** 적중이 없는 회복·지원 궁극기에는 적중형 증강을 잘못 배정하지 않는다. */
+function supportsExpeditionAugment(def: ExpeditionAugmentDef, relicId: string): boolean {
+  if (def.effect.kind !== "triggered" || def.effect.trigger !== "onUltimateHit") return true;
+  const ultimate = RELICS.find(relic => relic.id === relicId)?.ultimate;
+  return ultimate !== undefined && ultimate.damageType !== undefined && ultimate.power !== undefined && ultimate.power > 0;
+}
+
 /** 저장 선택을 세어 최대 중첩 및 이미 점유한 배타 그룹을 판정한다. */
 function augmentAvailable(augmentId: string, prior: readonly ExpeditionAugmentSelection[]): boolean {
   const def = getExpeditionAugment(augmentId);
@@ -130,8 +139,9 @@ export function generateExpeditionAugmentOffers(input: {
   candidateCount?: number;
 }): ExpeditionAugmentOffer[] {
   const targets = eligibleExpeditionTargets(input.relics);
-  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity
-    && (def.target === "party" || augmentTargets(def, targets, input.selections).length > 0)
+  const targetsFor = (def: ExpeditionAugmentDef) => augmentTargets(def, targets, input.selections).filter(id => supportsExpeditionAugment(def, id));
+  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && !RETIRED_EXPEDITION_AUGMENTS.has(def.id)
+    && (def.target === "party" || targetsFor(def).length > 0)
     && augmentAvailable(def.id, input.selections));
   // Fisher-Yates는 주입 RNG만 소비하므로 저장된 seed로 언제나 같은 제안을 복원할 수 있다.
   for (let index = pool.length - 1; index > 0; index -= 1) {
@@ -142,7 +152,7 @@ export function generateExpeditionAugmentOffers(input: {
   const requestedCount = Math.max(0, Math.floor(input.candidateCount ?? 3));
   return pool.slice(0, requestedCount).map((def) => ({
     augmentId: def.id,
-    eligibleTargetRelicIds: augmentTargets(def, targets, input.selections),
+    eligibleTargetRelicIds: def.target === "relic" ? targetsFor(def) : [],
   }));
 }
 
@@ -152,7 +162,8 @@ export function validateExpeditionAugmentChoice(offer: ExpeditionAugmentOffer, s
   if (!def || selection.augmentId !== offer.augmentId || !augmentAvailable(def.id, prior)) return false;
   if (def.target === "party") return selection.targetRelicId === undefined;
   return selection.targetRelicId !== undefined && offer.eligibleTargetRelicIds.includes(selection.targetRelicId)
-    && !(def.stacking.mode === "strongest" && prior.some((held) => held.augmentId === def.id && held.targetRelicId === selection.targetRelicId));
+    && !(def.stacking.mode === "strongest" && prior.some((held) => held.augmentId === def.id && held.targetRelicId === selection.targetRelicId))
+    && supportsExpeditionAugment(def, selection.targetRelicId);
 }
 
 /** 문자열 seed를 저장할 수 있도록 만든 결정적 난수원이다. */

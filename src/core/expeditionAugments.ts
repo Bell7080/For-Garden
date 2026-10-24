@@ -2,8 +2,8 @@ import { getExpeditionAugment, type ExpeditionAugmentStacking } from "../data/ex
 import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import type { CombatStatusEffect, DamageType } from "./types";
 
-/** 정적 증강 데이터가 선택할 수 있는, 전투 진행기가 판별 가능한 일곱 발동 시점이다. */
-export type ExpeditionAugmentTrigger = "battleStart" | "onBasicHit" | "onUltimate" | "onCritical" | "onKill" | "onLowHp" | "afterBattle";
+/** 정적 증강 데이터가 선택할 수 있는, 전투 진행기가 판별 가능한 발동 시점이다. */
+export type ExpeditionAugmentTrigger = "battleStart" | "onBasicHit" | "onUltimateHit" | "onUltimateCast" | "onDamaged" | "onUltimate" | "onCritical" | "onKill" | "onLowHp" | "afterBattle";
 
 /** 모든 조건부 효과가 공유하는 폭주 방지 계약이다. 0이나 생략값을 암묵적 무제한으로 해석하지 않는다. */
 export interface ExpeditionAugmentLimits {
@@ -17,7 +17,15 @@ export interface ExpeditionAugmentLimits {
 /** 콜백 대신 공용 상태 계약 또는 수치만 담는 안전한 payload다. */
 export type ExpeditionTriggeredPayload =
   | { kind: "shield"; maxHpPercent: number }
-  | { kind: "status"; status: Extract<CombatStatusEffect, { kind: "bleed" | "curse" | "stun" | "stagger" }> }
+  | { kind: "status"; status: CombatStatusEffect }
+  | { kind: "ferocity"; points: number }
+  | { kind: "cleanse" }
+  | { kind: "teamBuff"; buff: import("./types").TeamBuff }
+  | { kind: "regeneration"; seconds: number; maxHpPercentPerSecond: number }
+  | { kind: "stealth"; seconds: number }
+  | { kind: "frozen"; seconds: number; maxHpPercentOnExpire: number }
+  | { kind: "shell"; stacks: number; contract: NonNullable<import("./types").Passive["shellGuard"]> }
+  | { kind: "reagent"; stacks: number; contract: import("./types").ReagentReaction }
   | { kind: "ultimateCostReduction"; percent: number }
   | { kind: "conditionalBonusDamage"; percent: number; damageType: DamageType; requiresStatus: "curse" | "stun" }
   | { kind: "lowHpDefense"; belowHpPercent: number; defensePercent: number; resistancePercent: number }
@@ -44,6 +52,9 @@ export interface ExpeditionTriggeredEffect {
   scope: ExpeditionAugmentScope;
   /** `onLowHp`에서 소유자의 체력 비율이 이 값 이하일 때만 발동한다. 없으면 훅이 불린 순간 곧바로 발동한다. */
   whenHpAtOrBelowPercent?: number;
+  /** 적중은 행동당 한 번만 센다. 대상 변경으로 초기화하지 않는다. */
+  everyN?: number;
+  applications?: number;
 }
 
 /** 원정 증강이 영향을 주는 아군 범위다. 지정 효과는 저장된 렐릭 ID 하나만 고른다. */
@@ -52,7 +63,7 @@ export type ExpeditionAugmentScope = { kind: "all" } | { kind: "relic"; relicId:
 /** 전투 스냅샷에 한 번 합산할 수 있는 능력치 효과의 이름이다. */
 export type ExpeditionAugmentStatKind =
   | "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent"
-  | "spellPowerPercent" | "attackSpeedPercent" | "initialShieldPercent" | "statusPotencyPercent";
+  | "spellPowerPercent" | "attackSpeedPercent" | "moveSpeedPercent" | "initialShieldPercent" | "statusPotencyPercent";
 
 /** 전투 엔진이 해석하는 순수 효과다. 정적 RelicDef가 아니라 매 전투 Fighter만 이 값을 소비한다. */
 export type ExpeditionAugmentEffect =
@@ -91,13 +102,13 @@ export type ExpeditionAugmentEffect =
   | ExpeditionTriggeredEffect;
 
 /** 덧셈으로 붙는 퍼센트 수치의 이름이다. */
-export type FlatStatKind = "critChance" | "ferocityGain" | "energyGain" | "critDamage";
+export type FlatStatKind = "lifeSteal" | "critChance" | "ferocityGain" | "energyGain" | "critDamage";
 
 /** 합산 결과는 배율로 반환해 호출부가 같은 효과를 두 번 적용하지 않게 한다. */
 export type ExpeditionAugmentStatMultipliers = Record<ExpeditionAugmentStatKind, number>;
 const STAT_KINDS: readonly ExpeditionAugmentStatKind[] = [
   "maxHpPercent", "defensePercent", "resistancePercent", "attackPowerPercent",
-  "spellPowerPercent", "attackSpeedPercent", "initialShieldPercent", "statusPotencyPercent",
+  "spellPowerPercent", "attackSpeedPercent", "moveSpeedPercent", "initialShieldPercent", "statusPotencyPercent",
 ];
 
 /** 배열 포함 검사 뒤에도 판별 공용체를 안전하게 좁히는 능력치 효과 가드다. */

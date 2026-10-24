@@ -1,3 +1,6 @@
+import { KeywordManager } from "../managers/KeywordManager";
+import { getExpeditionAugment } from "../data/expeditionAugments";
+import { expeditionAugmentKeywords } from "./expeditionAugmentKeywords";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -5,7 +8,7 @@ import { getRelic } from "../data/relics";
 import { ExpeditionAugmentChip } from "./ExpeditionAugmentChip";
 import { FaceFrame } from "./FaceFrame";
 import { addBannerArrow, drawBannerPages } from "./LabBannerTitle";
-import type { PopupLayer } from "./PopupLayer";
+import { PopupLayer } from "./PopupLayer";
 import { RARITY_TONE } from "./rarityMark";
 import { slideTabPage } from "./screenTransition";
 import { shrinkTextToWidth } from "./textFit";
@@ -100,7 +103,12 @@ export class ExpeditionAugmentStatusPopup {
     let start = { x: 0, y: 0 };
     let lastY = 0;
     let horizontal = false;
-    pad.on("pointerdown", (pointer: Phaser.Input.Pointer) => { dragging = true; start = { x: pointer.x, y: pointer.y }; lastY = pointer.y; horizontal = false; });
+    const down = (pointer: Phaser.Input.Pointer) => {
+      const bounds = clip();
+      if (pointer.x < bounds.left || pointer.x > bounds.right || pointer.y < bounds.top || pointer.y > bounds.bottom) return;
+      dragging = true; start = { x: pointer.x, y: pointer.y }; lastY = pointer.y; horizontal = false;
+    };
+    this.scene.input.on("pointerdown", down);
     const move = (pointer: Phaser.Input.Pointer) => {
       if (!dragging || !pointer.isDown) return;
       const dx = pointer.x - start.x;
@@ -118,6 +126,7 @@ export class ExpeditionAugmentStatusPopup {
     this.scene.input.on("pointermove", move);
     this.scene.input.on("pointerup", up);
     body.once(Phaser.GameObjects.Events.DESTROY, () => {
+      this.scene.input.off("pointerdown", down);
       this.scene.input.off("pointermove", move);
       this.scene.input.off("pointerup", up);
     });
@@ -191,7 +200,15 @@ export class ExpeditionAugmentStatusPopup {
     const meta = this.scene.add.text(R.metaRight, 0, badge.meta, textStyle({ role: "emphasis", size: 23, color: tone.ink })).setOrigin(1, 0.5);
     const name = this.scene.add.text(R.textX, 0, badge.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5);
     shrinkTextToWidth(name, R.metaRight - meta.width - 20 - R.textX);
-    const effect = this.scene.add.text(R.textX, 0, badge.effect, textStyle({ role: "body", size: 27, color: COLOR.ink, wrap: R.effectWrap, lineSpacing: 6 })).setOrigin(0, 0);
+    const def = getExpeditionAugment(badge.augmentId);
+    const effect = new KeywordManager(this.scene, new PopupLayer(this.scene, 6000)).layout(badge.effect, {
+      width: R.effectWrap, size: 27, lineSpacing: 6, contextualKeywords: def ? expeditionAugmentKeywords(def) : [],
+      inputClip: () => {
+        const L = EXPEDITION_AUGMENT_STATUS;
+        const { tx, ty } = this.body!.getWorldTransformMatrix();
+        return { left: tx - L.viewport.width / 2, right: tx + L.viewport.width / 2, top: ty + L.viewport.top, bottom: ty + L.viewport.bottom };
+      },
+    }).setX(R.textX);
     const nameHeight = 36;
     const height = Math.max(R.minHeight, R.padY * 2 + nameHeight + 8 + effect.height);
     const cy = top + height / 2;

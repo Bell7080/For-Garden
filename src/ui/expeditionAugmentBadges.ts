@@ -1,3 +1,4 @@
+import { expeditionTagAugmentLabel } from "./expeditionAugmentKeywords";
 import { getExpeditionAugment, type ExpeditionAugmentDef } from "../data/expeditionAugments";
 import { t } from "../i18n";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -35,8 +36,10 @@ const AUGMENT_STATUS_LABEL = { bleed: "status.bleed", curse: "status.curse", stu
 
 /** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
 export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
+  const tagLabel = expeditionTagAugmentLabel(def);
+  if (tagLabel) return tagLabel;
   // 능력치 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 한 곳만 고쳐도 나머지가 옛 이름으로 남는다.
-  const labels = { maxHpPercent: "augment.stat.maxHp", defensePercent: "stat.def", resistancePercent: "stat.res", attackPowerPercent: "stat.atk", spellPowerPercent: "stat.ap", attackSpeedPercent: "stat.attackSpeed", initialShieldPercent: "augment.stat.initialShield", statusPotencyPercent: "augment.stat.statusPotency" } as const;
+  const labels = { maxHpPercent: "augment.stat.maxHp", defensePercent: "stat.def", resistancePercent: "stat.res", attackPowerPercent: "stat.atk", spellPowerPercent: "stat.ap", attackSpeedPercent: "stat.attackSpeed", moveSpeedPercent: "stat.moveSpeed", initialShieldPercent: "augment.stat.initialShield", statusPotencyPercent: "augment.stat.statusPotency" } as const;
   if (def.effect.kind in labels && "percent" in def.effect) return t("augment.percent", { label: t(labels[def.effect.kind as keyof typeof labels]), percent: def.effect.percent });
   if (def.effect.kind === "healAfterBattlePercent") return t("augment.healAfterBattle", { percent: def.effect.percent });
   if (def.effect.kind === "lowHpAttackPowerPercent") return t("augment.lowHpAttack", { threshold: def.effect.belowHpPercent, percent: def.effect.percent });
@@ -51,7 +54,7 @@ export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string 
     const payload = def.effect.payload;
     if (payload.kind === "shield") return t("augment.shield", { percent: payload.maxHpPercent });
     if (payload.kind === "ultimateCostReduction") return t("augment.ultimateCost", { percent: payload.percent });
-    if (payload.kind === "status") return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: t(AUGMENT_STATUS_LABEL[payload.status.kind]) });
+    if (payload.kind === "status" && payload.status.kind in AUGMENT_STATUS_LABEL) return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: t(AUGMENT_STATUS_LABEL[payload.status.kind as keyof typeof AUGMENT_STATUS_LABEL]) });
     if (payload.kind === "conditionalBonusDamage") return t("augment.conditionalDamage", { status: t(payload.requiresStatus === "curse" ? "augment.status.curse" : "augment.status.stun"), percent: payload.percent });
     if (payload.kind === "lowHpDefense") return t("augment.lowHpDefense", { threshold: payload.belowHpPercent, percent: payload.defensePercent });
     if (payload.kind === "heal") return t("augment.healOnKill", { percent: payload.maxHpPercent });

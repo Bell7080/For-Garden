@@ -1,3 +1,5 @@
+import { KeywordManager } from "../managers/KeywordManager";
+import { expeditionAugmentKeywords } from "./expeditionAugmentKeywords";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { ExpeditionAugmentOffer, ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -10,7 +12,7 @@ import { ExpeditionAugmentChip } from "./ExpeditionAugmentChip";
 import { FaceFrame } from "./FaceFrame";
 import { PopupLayer } from "./PopupLayer";
 import { RARITY_TONE } from "./rarityMark";
-import { fitTextToBox, shrinkTextToWidth } from "./textFit";
+import { shrinkTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { chipPoints, drawHairline, drawLayer, toPoints } from "./holo";
 // 판 아래로 생존 HUD 한 줄이 그대로 보이도록 규격은 지도 배치표 한 곳에서만 정한다.
@@ -193,14 +195,19 @@ export class ExpeditionAugmentPopup {
     card.add(shrinkTextToWidth(this.scene.add.text(0, -6, def.name, textStyle({ role: "display", size: 32 })).setOrigin(0.5), C.width - 34));
     card.add(drawHairline(this.scene, 0, 32, C.width - 70, { color: tone.chip, alpha: 0.45 }));
     // 효과는 고르는 근거라 본문 밝기로 크게 선다. 칸 높이 안에 들 때까지만 줄인다.
-    const effect = this.scene.add.text(0, 112, expeditionAugmentEffectLabel(def), textStyle({ role: "body", size: 26, color: COLOR.ink, align: "center", lineSpacing: 8 })).setOrigin(0.5);
-    card.add(fitTextToBox(effect, { width: C.width - 40, height: 130 }));
     // 개인 증강은 대상을 고르면 그 얼굴이 카드 밑동에 붙어, 확정 전에 "누구에게"가 카드 안에서 끝난다.
     const footer = this.scene.add.container(0, hh - 38);
     card.add(footer);
     const hit = this.scene.add.rectangle(0, 0, C.width, C.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     card.add(hit);
     hit.on("pointerup", () => this.selectOffer(entry));
+    // 태그 입력은 카드 선택 입력 위에 둔다.
+    const effect = new KeywordManager(this.scene, new PopupLayer(this.scene, 6000)).layout(expeditionAugmentEffectLabel(def), {
+      width: C.width - 40, size: 26, lineSpacing: 6, contextualKeywords: expeditionAugmentKeywords(def),
+    });
+    const scale = Math.min(1, 130 / effect.height);
+    effect.setScale(scale).setPosition(-(C.width - 40) * scale / 2, 112 - effect.height * scale / 2);
+    card.add(effect);
     body.add(card);
     const entry: OfferCard = { offer, def, card, glow, footer, restX: x };
     this.cards.push(entry);

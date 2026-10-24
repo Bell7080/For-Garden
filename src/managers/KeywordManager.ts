@@ -1,3 +1,6 @@
+import { addClippedHit } from "../ui/clippedHit";
+import type { ClipRect } from "../ui/clipRect";
+import { isTap } from "../ui/tapGuard";
 import { formatEffectDescription } from "../ui/skillExplanation";
 import { wrapByCharacter } from "../core/cjkWrap";
 import { splitEmphasisRuns, type EmphasisRun } from "../core/keywordText";
@@ -37,6 +40,8 @@ const KEYWORD_NOTE = {
 export interface KeywordTextOptions {
   width: number;
   size: number;
+  /** 스크롤 목록의 월드 좌표 입력 경계. */
+  inputClip?: () => ClipRect;
   lineSpacing?: number;
   color?: string;
   /** 현재 스킬의 피해 산식처럼 문맥마다 달라지는 추가 용어 정의다. */
@@ -112,7 +117,7 @@ export class KeywordManager {
             if (index > 0 || x > 0 && x + line.width > options.width) { x = 0; y += lineHeight; }
             line.setPosition(x, y);
             container.add(line);
-            if (segment.keyword) this.decorateKeyword(container, line, segment.keyword, options.keywordActions, options.contextualKeywords);
+            if (segment.keyword) this.decorateKeyword(container, line, segment.keyword, options.keywordActions, options.contextualKeywords, options.inputClip);
             x += line.width;
           });
         }
@@ -131,17 +136,23 @@ export class KeywordManager {
     keyword: KeywordDef,
     actions?: Readonly<Record<string, () => void>>,
     contextualKeywords?: readonly KeywordDef[],
+    inputClip?: () => ClipRect,
   ): void {
     const underline = this.scene.add.graphics();
     underline.lineStyle(2, COLOR.accent, 0.85);
     underline.lineBetween(label.x, label.y + label.height - 2, label.x + label.width, label.y + label.height - 2);
     container.add(underline);
-    const hit = this.scene.add
-      .rectangle(label.x + label.width / 2, label.y + label.height / 2, label.width + 8, Math.max(label.height, 40), 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
+    const x = label.x + label.width / 2;
+    const y = label.y + label.height / 2;
+    const width = label.width + 8;
+    const height = Math.max(label.height, 40);
+    const hit = inputClip
+      ? addClippedHit(this.scene, container, x, y, width, height, inputClip)
+      : this.scene.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누른 자리 위에 뜻이 뜬다. 화면을 새로 채우지 않고 읽던 글 위에 한 겹 얹힌다.
     const open = actions?.[keyword.id];
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (inputClip && !isTap(pointer)) return;
       if (open) open();
       // 쪽지 안의 태그도 같은 문맥 사전을 읽는다 — 그래야 소환수 쪽지 안의 태그가 전역의
       // 뭉뚱그린 문장이 아니라 이 개체의 실제 수치로 열린다.

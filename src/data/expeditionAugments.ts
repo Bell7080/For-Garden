@@ -1,3 +1,5 @@
+import { EXPEDITION_STAT_AUGMENTS } from "./expeditionStatAugments";
+import { EXPEDITION_TAG_AUGMENTS } from "./expeditionTagAugments";
 import { registerDataText } from "../i18n";
 /** 원정 증강의 제안 등급이다. 일반(SR)과 정예(SSR) 전투의 후보 풀을 분리한다. */
 export type ExpeditionAugmentRarity = "sr" | "ssr";
@@ -14,11 +16,12 @@ export type ExpeditionAugmentStacking =
 
 /** 전투 코어 또는 전투 후 정산이 소비할 수 있는 정적 파라미터다. */
 export type ExpeditionAugmentParams =
-  | { kind: "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent" | "spellPowerPercent" | "attackSpeedPercent" | "statusPotencyPercent"; percent: number }
+  | { kind: "maxHpPercent" | "defensePercent" | "resistancePercent" | "attackPowerPercent" | "spellPowerPercent" | "attackSpeedPercent" | "moveSpeedPercent" | "statusPotencyPercent"; percent: number }
   | { kind: "initialShieldPercent"; percent: number; trigger: "battleStart"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "self" | "allAllies" } }
   | { kind: "bleedOnAttack"; strength: "standard" | "minor"; everyNAttacks: number; reapplication: "refresh"; trigger: "onBasicHit"; limits: { maxTriggers: number; cooldownSeconds: number; maxStacks: 1; target: "hitTarget" } }
   | { kind: "healAfterBattlePercent"; percent: number; trigger: "afterBattle"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "allAllies" } }
   | { kind: "lowHpAttackPowerPercent"; percent: number; belowHpPercent: number; trigger: "onLowHp"; limits: { maxTriggers: 1; cooldownSeconds: 0; maxStacks: 1; target: "self" } }
+  | Omit<Extract<import("../core/expeditionAugments").ExpeditionAugmentEffect, { kind: "flatStat" }>, "scope">
   | Omit<import("../core/expeditionAugments").ExpeditionTriggeredEffect, "scope">;
 
 /** 제안 필터와 전투 수치 결합이 같은 운영 표를 읽도록 한 증강 정의다. */
@@ -41,6 +44,8 @@ export interface ExpeditionAugmentDef {
 
 /** SR은 전체 6~10%/개인 14~18%, SSR은 전체 14~18%/개인 25~30%를 기본 예산으로 삼는다. */
 export const EXPEDITION_AUGMENTS = [
+  ...EXPEDITION_TAG_AUGMENTS,
+  ...EXPEDITION_STAT_AUGMENTS,
   // 공격/SR: 범용 전체 공격력은 다른 전체 능력치와 같은 8% 기준이다.
   { id: "reinforced-core", name: "강화 코어", rarity: "sr", target: "party", category: "attack", maxStacks: 3, stacking: { mode: "additive" }, exclusiveGroup: "sr-party-offense", tags: ["attack", "party", "attackPowerPercent"], effect: { kind: "attackPowerPercent", percent: 8 } },
   // 공격/SR: 한 기에 집중하는 대신 전체 효과의 약 두 배인 18%를 준다.
@@ -110,5 +115,6 @@ export function getExpeditionAugment(id: string): ExpeditionAugmentDef | undefin
 
 /** 원정 증강의 이름을 언어별로 덮어쓸 수 있게 등록한다. 효과 문구는 수치에서 조립한다. */
 for (const augment of EXPEDITION_AUGMENTS) {
+  if ((augment.tags as readonly string[]).some(tag => tag === "tag" || tag === "stat")) continue;
   registerDataText(augment, "name", `augment.${augment.id}.name`);
 }

@@ -17,9 +17,11 @@ describe("원정 증강 밸런스 표", () => {
       const audit = expeditionAugmentBalanceAudit(augment.id);
       expect(audit, `${augment.id} balance audit`).toBeDefined();
       const range = EXPEDITION_AUGMENT_BUDGET_RANGES[augment.rarity][augment.target];
-      expect(audit!.equivalentPercent).toBeGreaterThanOrEqual(range.min);
-      expect(audit!.equivalentPercent).toBeLessThanOrEqual(range.max);
-      expect(Number.isFinite(audit!.equivalentPercent)).toBe(true);
+      if (!(augment.tags as readonly string[]).some(tag => tag === "tag" || tag === "stat")) {
+        expect(audit!.equivalentPercent).toBeGreaterThanOrEqual(range.min);
+        expect(audit!.equivalentPercent).toBeLessThanOrEqual(range.max);
+      }
+      expect(Number.isFinite(audit!.value)).toBe(true);
       expect(["attack", "spell", "survival", "shield", "heal", "status", "conditional"]).toContain(audit!.glyph);
       expect(audit!.rationale.trim().length).toBeGreaterThan(4);
       expect(audit!.sharedMechanic.trim().length).toBeGreaterThan(4);

@@ -143,8 +143,14 @@ export interface Fighter extends Combatant {
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
   augmentBleedHitCount: number;
   /** 조건부 증강별 발동 횟수와 마지막 시각. 키는 전투 입력 배열 순번이라 저장 데이터와 분리된다. */
-  augmentRuntime: Record<string, { triggers: number; lastAt: number }>;
+  augmentRuntime: Record<string, { triggers: number; lastAt: number; hits?: number; seenAction?: number }>;
   /** 낮은 체력 훅이 부여한 전투 한정 방어·저항 퍼센트다. */
+  augmentActionSerial: number;
+  augmentShellState: { stacks: number; remaining: number; total: number } | null;
+  augmentShellCooldown: number;
+  augmentFixedDamagePercent: number;
+  appliedStatusContracts: Partial<Record<CombatStatusEffect["kind"], CombatStatusEffect>>;
+  augmentShellGuard?: import("./types").Passive["shellGuard"];
   augmentDefensePercent: number;
   augmentResistancePercent: number;
   /**
@@ -1163,8 +1169,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
     // 셋은 이미 퍼센트로 세는 수치라 덧셈으로 붙는다. 곱셈 배율과 섞으면 같은 「+10」이
     // 능력치마다 다른 크기가 된다.
-    critChance: def.stats.critChance + flatPoints("critChance"),
+    moveSpeed: def.stats.moveSpeed * multipliers.moveSpeedPercent,
     critDamage: def.stats.critDamage + flatPoints("critDamage"),
+    lifeSteal: def.stats.lifeSteal + flatPoints("lifeSteal"),
+    critChance: def.stats.critChance + flatPoints("critChance"),
     energyGain: def.stats.energyGain + flatPoints("energyGain"),
     ferocityGain: def.stats.ferocityGain + flatPoints("ferocityGain"),
   } };
@@ -1217,6 +1225,12 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     statusHitCount: 0,
     augmentBleedHitCount: 0,
     augmentRuntime: {},
+    augmentActionSerial: 0,
+    augmentShellState: null,
+    augmentShellCooldown: 0,
+    augmentFixedDamagePercent: 0,
+    appliedStatusContracts: {},
+    augmentShellGuard: augmentEffects.flatMap(effect => effect.kind === "triggered" && effect.payload.kind === "shell" && augmentAppliesTo(effect, def.id) ? [effect.payload.contract] : [])[0],
     augmentDefensePercent: 0,
     augmentResistancePercent: 0,
     traitHaste: null,
@@ -1708,8 +1722,8 @@ function triggeredAugments(state: SkirmishState, fighter: Fighter, trigger: Expe
 /** 횟수와 내부 쿨타임을 한 경계에서 소비해 다단 히트와 프레임 반복이 무제한 발동하지 않게 한다. */
 function consumeAugmentTrigger(state: SkirmishState, fighter: Fighter, key: string, effect: ExpeditionTriggeredEffect): boolean {
   const runtime = fighter.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
-  if (runtime.triggers >= effect.limits.maxTriggers || state.elapsed - runtime.lastAt < effect.limits.cooldownSeconds) return false;
-  fighter.augmentRuntime[key] = { triggers: runtime.triggers + 1, lastAt: state.elapsed };
+  if (runtime.triggers >= effect.limits.maxTriggers || state.elapsed - runtime.lastAt + 1e-8 < effect.limits.cooldownSeconds) return false;
+  fighter.augmentRuntime[key] = { ...runtime, triggers: runtime.triggers + 1, lastAt: state.elapsed };
   return true;
 }
 
@@ -1947,6 +1961,7 @@ function maybeFreezeAtMaxChill(attacker: Fighter, target: Fighter, events: Skirm
  * 나타나는 어긋남을 잡지 못한다.
  */
 export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEffect, events: SkirmishEvent[], state: SkirmishState, sourceId?: string, critical = false): void {
+  fighter.appliedStatusContracts[effect.kind] = effect;
   // 상태 위력은 기존 상태 슬롯과 저항 판정을 우회하지 않고 시전자의 지속시간 입력만 늘린다.
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
@@ -3841,30 +3856,29 @@ function shareShieldFromDamage(attacker: Fighter, percent: number | undefined, d
 }
 
 /** 조가비 상한 소비는 겹을 먼저 비우고 쿨다운을 건 뒤 보호막을 준다. 보호막 후속 피해가 같은 발동을 재귀 호출하지 않게 하는 순서다. */
-function consumeShellGuard(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
-  const plan = fighter.def.passive.shellGuard;
-  if (!plan || (fighter.shellGuard?.stacks ?? 0) < plan.maxStacks || fighter.shellGuardCooldownRemaining > 0) return;
-  fighter.shellGuard = null;
-  const fever = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : undefined;
-  fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
-  const thick = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+function consumeShellGuard(fighter: Fighter, state: SkirmishState, events: SkirmishEvent[], augment = false): void {
+  const plan = augment ? fighter.augmentShellGuard : fighter.def.passive.shellGuard;
+  const shell = augment ? fighter.augmentShellState : fighter.shellGuard;
+  const cooldown = augment ? fighter.augmentShellCooldown : fighter.shellGuardCooldownRemaining;
+  if (!plan || (shell?.stacks ?? 0) < plan.maxStacks || cooldown > 0) return;
+  const fever = !augment && fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : undefined;
+  if (augment) { fighter.augmentShellState = null; fighter.augmentShellCooldown = plan.cooldownSeconds; }
+  else { fighter.shellGuard = null; fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds; }
+  const thick = !augment ? openedBreakthrough(fighter, "passive", (effects) => effects.passive) : undefined;
   grantProvidedShield(state, fighter, fighter, thick?.kind === "thickShell" ? thick.selfShieldMaxHpPercent : plan.selfShieldMaxHpPercent, events);
-  // 자신은 후보에서 빼며 filter/find 순서를 유지해 HP 비율 동률을 기존 편성 배열 순서로 결정한다.
-  const ally = state.fighters.filter((candidate) => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate))
+  const ally = state.fighters.filter(candidate => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate))
     .reduce<Fighter | undefined>((best, candidate) => !best || candidate.hp / candidate.maxHp < best.hp / best.maxHp ? candidate : best, undefined);
   if (ally) grantProvidedShield(state, fighter, ally, thick?.kind === "thickShell" ? thick.allyShieldMaxHpPercent : plan.lowestHpAllyShieldMaxHpPercent, events);
 }
 
-/** 실제 HP 감소가 끝난 뒤 살아남은 대상만 겹을 받는다. 같은 타격에서 사망·불멸 판정 전 조가비가 끼어들지 않는다. */
-function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, events: SkirmishEvent[]): void {
-  const plan = target.def.passive.shellGuard;
-  if (target.def.passive.kind !== "shellGuard" || !plan || !isFighterAlive(target) || stacks <= 0) return;
-  target.shellGuard = {
-    stacks: Math.min(plan.maxStacks, (target.shellGuard?.stacks ?? 0) + stacks),
-    remaining: plan.durationSeconds,
-    total: plan.durationSeconds,
-  };
-  consumeShellGuard(target, state, events);
+/** 원본 패시브와 증강은 별도 장부로 쌓되 같은 보호막·소비 규칙을 쓴다. */
+function gainShellGuard(target: Fighter, stacks: number, state: SkirmishState, events: SkirmishEvent[], augment = false): void {
+  const plan = augment ? target.augmentShellGuard : target.def.passive.shellGuard;
+  if ((!augment && target.def.passive.kind !== "shellGuard") || !plan || !isFighterAlive(target) || stacks <= 0) return;
+  const previous = augment ? target.augmentShellState : target.shellGuard;
+  const next = { stacks: Math.min(plan.maxStacks, (previous?.stacks ?? 0) + stacks), remaining: plan.durationSeconds, total: plan.durationSeconds };
+  if (augment) target.augmentShellState = next; else target.shellGuard = next;
+  consumeShellGuard(target, state, events, augment);
 }
 
 /** 희열이 유지되는 동안 한 겹마다 매초 최대 체력에 비례한 회복을 적용한다. 궁극기·폭주가 그 양을 키운다. */
@@ -4746,20 +4760,21 @@ function potentReactionSeconds(attacker: Fighter, base: number): number {
   return plan?.kind === "potentReaction" ? Math.max(base, plan.poisonSeconds) : base;
 }
 
-function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | undefined, state: SkirmishState, events: SkirmishEvent[]): void {
-  const contract = attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : undefined;
+function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | undefined, state: SkirmishState, events: SkirmishEvent[], augmentContract?: import("./types").ReagentReaction): void {
+  const contract = augmentContract ?? (attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : undefined);
+  const sourceKey = augmentContract ? `${attacker.id}:expedition` : attacker.id;
   if (!contract || !stacks || stacks <= 0 || !isFighterAlive(target)) return;
 
   const quick = feverBreakthrough(attacker);
   const threshold = quick?.kind === "quickReaction" ? Math.min(contract.maxStacks, quick.maxStacks) : contract.maxStacks;
-  const previous = target.reagents[attacker.id]?.stacks ?? 0;
+  const previous = target.reagents[sourceKey]?.stacks ?? 0;
   const next = Math.min(threshold, previous + stacks);
   // 같은 제공자의 재적중은 상한을 넘기지 않되, 정확히 계약 시간부터 다시 세도록 갱신한다.
-  target.reagents[attacker.id] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
+  target.reagents[sourceKey] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
   if (next < threshold) return;
 
   // 1) 임계 겹을 먼저 전부 소비해 반응 중 재진입이나 초과 중첩이 남지 않게 한다.
-  delete target.reagents[attacker.id];
+  delete target.reagents[sourceKey];
   // 소비 직후 한 사건만 싣는다. 독·저항 감소·회복은 각자의 기존 사건을 유지하므로 UI가
   // 그 후속 사건을 반응으로 오인해 수포를 중복 재생하지 않는다.
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "reagentReaction", intensity: 1 } });
@@ -4772,10 +4787,10 @@ function applyReagentOnHit(attacker: Fighter, target: Fighter, stacks: number | 
   refreshPoison(target, poisonEffect.seconds, poisonAmountPerSecond(attacker, target, poisonEffect, state), events, attacker.id);
 
   // 3) 원본 저항의 계약 비율을 수치로 잡되, 현재 유효 저항 아래로는 내려가지 않게 실제 감소량을 자른다.
-  const ownPrevious = target.reagentResistanceReductions[attacker.id]?.amount ?? 0;
+  const ownPrevious = target.reagentResistanceReductions[sourceKey]?.amount ?? 0;
   const effectiveBeforeOwn = Math.max(0, defensiveDefinition(target, state).def.stats.res + ownPrevious);
   const requested = Math.max(0, target.def.stats.res * contract.resistanceReductionPercent / 100);
-  target.reagentResistanceReductions[attacker.id] = {
+  target.reagentResistanceReductions[sourceKey] = {
     amount: Math.min(requested, effectiveBeforeOwn),
     remaining: contract.resistanceReductionSeconds,
     total: contract.resistanceReductionSeconds,
@@ -5069,6 +5084,7 @@ function clearDefeatedStatuses(fighter: Fighter): void {
   fighter.prickle = null;
   fighter.fortress = null;
   fighter.shellGuard = null;
+  fighter.augmentShellState = null;
   fighter.bulwark = null;
   fighter.overpaint = null;
   // 궁극기 돌파(`afterglow`)가 읽을 수 있도록 쓰러진 몸의 저주 겹을 남긴 뒤 비운다.
@@ -5491,6 +5507,17 @@ function applyTraitHaste(target: Fighter, payload: { attackSpeedPercent: number;
   } else target.traitHaste = { ...target.traitHaste!, remaining: Math.max(target.traitHaste!.remaining, payload.seconds) };
 }
 
+/** 약한 원정 태그가 이미 걸린 원본 스킬의 수치·지속시간을 낮추지 않는다. */
+function strongerSharedTagActive(target: Fighter, incoming: CombatStatusEffect): boolean {
+  const active = incoming.kind === "intimidate" ? target.intimidation
+    : incoming.kind in target ? target[incoming.kind as keyof Fighter] : undefined;
+  const previous = target.appliedStatusContracts[incoming.kind];
+  if (!active || !previous) return false;
+  const numericFields = ["maxHpPercentPerSecond", "damageTakenPercent", "resistancePercent", "speedPercentPerStack", "burstPower", "offenseShredPercent", "defensePower", "resistancePower", "stunSeconds", "wakeResistancePower", "sleepSeconds", "fearSeconds", "seconds", "holdSeconds", "slowPercent"] as const;
+  return numericFields.some(field => field in incoming && field in previous
+    && Number(previous[field as keyof typeof previous]) > Number(incoming[field as keyof typeof incoming]));
+}
+
 /** 적중·치명타·처치·저체력 훅의 구조화 payload를 기존 피해·회복·상태 경계에 연결한다. */
 function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: ExpeditionAugmentTrigger, events: SkirmishEvent[], hitTarget?: Fighter): void {
   // 집념 — 표적을 쓰러뜨리면 쌓은 겹의 절반이 다음 표적의 첫 타격으로 넘어간다.
@@ -5503,6 +5530,66 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
     // 저체력 훅은 피해를 받을 때마다 불리므로 기준 체력 이하인지는 여기서 먼저 가른다.
     if (trigger === "onLowHp" && effect.whenHpAtOrBelowPercent !== undefined
       && (!isFighterAlive(owner) || owner.maxHp <= 0 || owner.hp / owner.maxHp * 100 > effect.whenHpAtOrBelowPercent)) continue;
+    if (effect.everyN !== undefined) {
+      const runtime = owner.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
+      // 광역·연격·되찍기는 하나의 공격 행동이다. 피격은 실제 HP 손실이 있는 직접 타격만 센다.
+      if (trigger !== "onDamaged" && runtime.seenAction === owner.augmentActionSerial) continue;
+      runtime.seenAction = owner.augmentActionSerial;
+      runtime.hits = (runtime.hits ?? 0) + 1;
+      owner.augmentRuntime[key] = runtime;
+      if (runtime.hits % Math.max(1, effect.everyN) !== 0) continue;
+    }
+    if (payload.kind === "ferocity" && "points" in payload) {
+      if (consumeAugmentTrigger(state, owner, key, effect)) gainFerocity(owner, payload.points, state, events);
+      continue;
+    }
+    if (payload.kind === "cleanse") {
+      if (consumeAugmentTrigger(state, owner, key, effect)) cleanseAllDebuffs(owner);
+      continue;
+    }
+    if (payload.kind === "teamBuff") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      // 원본의 강한 강화·이동·회복을 약한 증강으로 덮어쓰지 않는다.
+      const current = owner.tailwindFor > 0 ? owner.tailwind : null;
+      const incoming = payload.buff;
+      const protectedBuff = current && (current.attackSpeedPercent > incoming.attackSpeedPercent
+        || (current.kind === "order" && (incoming.kind !== "order" || current.criticalChancePoints > incoming.criticalChancePoints || current.lifeStealPoints > incoming.lifeStealPoints))
+        || (current.kind === "tailwind" && (incoming.kind !== "tailwind" || current.moveSpeedPercent > incoming.moveSpeedPercent || (current.maxHpRegenPercentPerSecond ?? 0) > (incoming.maxHpRegenPercentPerSecond ?? 0))));
+      if (!protectedBuff) applyTeamBuff(owner, { ...incoming, ...(incoming.kind === "resonance" ? { sourceId: owner.id } : {}) });
+      continue;
+    }
+    if (payload.kind === "regeneration") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const current = owner.regeneration;
+      if (current && current.percentPerTick > payload.maxHpPercentPerSecond) continue;
+      owner.regeneration = { remaining: current?.percentPerTick === payload.maxHpPercentPerSecond ? Math.max(current.remaining, payload.seconds) : payload.seconds, tickIn: current?.tickIn ?? 1, percentPerTick: payload.maxHpPercentPerSecond };
+      continue;
+    }
+    if (payload.kind === "stealth") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      owner.stealthFor = Math.max(owner.stealthFor, payload.seconds);
+      for (const enemy of state.fighters) {
+        if (enemy.side === owner.side || enemy.targetId !== owner.id) continue;
+        enemy.targetId = null; enemy.engaged = false;
+      }
+      continue;
+    }
+    if (payload.kind === "frozen") {
+      if (!hitTarget || !isFighterAlive(hitTarget) || hitTarget.frozen || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const percent = Math.min(payload.maxHpPercentOnExpire, Math.max(0, 10 - hitTarget.augmentFixedDamagePercent));
+      if (percent <= 0) continue;
+      hitTarget.augmentFixedDamagePercent += percent;
+      applyFrozen(hitTarget, payload.seconds * owner.statusPotencyMultiplier, percent * (hitTarget.immortal ? 0.25 : 1), events, state);
+      continue;
+    }
+    if (payload.kind === "shell") {
+      if (consumeAugmentTrigger(state, owner, key, effect)) for (let i = 0; i < payload.stacks; i++) gainShellGuard(owner, 1, state, events, true);
+      continue;
+    }
+    if (payload.kind === "reagent") {
+      if (hitTarget && isFighterAlive(hitTarget) && consumeAugmentTrigger(state, owner, key, effect)) for (let i = 0; i < payload.stacks; i++) applyReagentOnHit(owner, hitTarget, 1, state, events, payload.contract);
+      continue;
+    }
     if (payload.kind === "haste") {
       if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
       applyTraitHaste(owner, payload, effect.limits.maxStacks);
@@ -5517,7 +5604,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       owner.traitHasteExtended += add;
       continue;
     }
-    if (payload.kind === "ferocity") {
+    if (payload.kind === "ferocity" && "maxPercent" in payload) {
       if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
       gainFerocity(owner, ferocityMaxOf(owner.def) * payload.maxPercent / 100, state, events);
       continue;
@@ -5548,7 +5635,19 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       events.push({ kind: "attack", attackerId: owner.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: payload.damageType, mitigated: resolution.reduced < resolution.raw });
       if (!isFighterAlive(target)) { clearDefeatedStatuses(target); events.push({ kind: "death", fighterId: target.id, sourceId: owner.id }); }
     } else if (payload.kind === "status" && consumeAugmentTrigger(state, owner, key, effect)) {
-      applyCombatStatusEffect(target, payload.status, events, state, owner.id);
+      let status = payload.status;
+      if (effect.everyN !== undefined && strongerSharedTagActive(target, status)) continue;
+      if (effect.everyN !== undefined && (status.kind === "concussion" || status.kind === "bleed")) {
+        const requested = status.kind === "concussion" ? status.maxHpPercent : status.seconds * status.maxHpPercentPerSecond;
+        const percent = Math.min(2, requested, Math.max(0, 10 - target.augmentFixedDamagePercent));
+        if (percent <= 0) continue;
+        target.augmentFixedDamagePercent += percent;
+        const adjusted = percent * (target.immortal ? 0.25 : 1);
+        status = status.kind === "concussion"
+          ? { ...status, maxHpPercent: adjusted, criticalMaxHpPercent: adjusted }
+          : { ...status, maxHpPercentPerSecond: adjusted / Math.max(0.001, status.seconds * owner.statusPotencyMultiplier) };
+      }
+      for (let count = 0; count < (effect.applications ?? 1) && isFighterAlive(target); count += 1) applyCombatStatusEffect(target, status, events, state, owner.id);
     } else if (payload.kind === "heal" && consumeAugmentTrigger(state, owner, key, effect)) {
       const amount = applyHealing(state, target, target.maxHp * payload.maxHpPercent / 100, owner.id);
       pushHeal(events, target, amount, "passive");
@@ -7000,7 +7099,7 @@ function applyDamage(target: Fighter, amount: number, events: SkirmishEvent[], s
   if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
   // 모든 피해 원천이 지나온 마지막 관문에서만 지급한다. 실제 HP 손실 0·전투 불능은 제외해
   // 보호막에 막힌 피해나 죽은 개체가 조가비를 만들고 다시 살아나는 무한 재발동을 방지한다.
-  if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
+  if (dealt > 0 && isFighterAlive(target) && target.def.passive.kind === "shellGuard") gainShellGuard(target, 1, state, events);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
   return dealt;
 }
@@ -7666,6 +7765,7 @@ function strike(
   /** 지정 원형 궁극기의 사용자 선택 중심점이다. */
   targetPoint?: { x: number; y: number },
 ): void {
+  if (comboHit === undefined) attacker.augmentActionSerial += 1;
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
   // 순수 회복 궁극기는 fireUltimate의 비공격 분기에서만 실행한다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
@@ -7851,6 +7951,7 @@ function strike(
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
+  if (isFighterAlive(target) && dealt > 0) triggerCombatAugments(state, target, "onDamaged", events);
   // 맞은 그 순간 희열이 오른다. 대신 받은 몫은 `shareWithBulwark`가 따로 센다.
   gainElation(target);
   // 까칠도 같은 순간에 오르고, 때린 쪽이 그 겹만큼 되받는다. 제 평타가 적중한 몫은 반격이 아니라 겹으로 돌아온다.
@@ -8080,7 +8181,8 @@ function strike(
     }
   }
   // 연격도 실제 적중마다 이 경계를 지나지만 증강 자체의 횟수·쿨타임 계약이 폭주를 막는다.
-  if (isFighterAlive(target)) {
+  if (isFighterAlive(target) && !resolution.ignored) {
+    if (useUltimate) triggerCombatAugments(state, attacker, "onUltimateHit", events, target);
     if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
     if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
   }
@@ -8253,6 +8355,7 @@ function refillNow(fighter: Fighter, state?: SkirmishState): void {
  * 복사하므로 앞선 대상이 죽어도 뒤 대상의 피해·흡혈·상태·사망 처리는 빠지지 않는다.
  */
 function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishState, events: SkirmishEvent[], useUltimate: boolean, targetPoint?: { x: number; y: number }, followUp = false, free = false): void {
+  if (!followUp && !free) attacker.augmentActionSerial += 1;
   const skill = breakthroughSkill(attacker, useUltimate);
   // 비공격 궁극기는 적 대상 범위 처리기에 전달하지 않는다.
   if (!("damageType" in skill) || skill.damageType === undefined || skill.power === undefined) return;
@@ -8424,10 +8527,11 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     const hpBefore = target.hp;
     if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount; const shieldProviderId = target.shield.providerId;
-    applyDamage(target, amount, events, state);
+    const hpLost = applyDamage(target, amount, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state); tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
+    if (isFighterAlive(target) && hpLost > 0) triggerCombatAugments(state, target, "onDamaged", events);
     // 흡혈은 대상별 실제 HP 감소량만 더해 과잉 피해를 회복량으로 만들지 않는다.
     drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
     // 보호막 전환도 같은 값을 읽는다 — 단일과 광역에서 규칙이 갈리면 같은 걸음이 대상 수에
@@ -8490,7 +8594,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
       applyShimmer(attacker, target, skill, state, events);
       // 보스 궁극기 돌파(`sunkenWeight`·`unhealedMark`) — 맞은 적 모두에게 남는 몫이다.
       if (useUltimate && !resolution.ignored) markUltimateVictim(attacker, target);
-      if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
+      if (useUltimate && !free && !followUp && !resolution.ignored) triggerCombatAugments(state, attacker, "onUltimateHit", events, target);
+      if (!useUltimate && !resolution.ignored) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
       if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
     } else {
       clearDefeatedStatuses(target);
@@ -9192,6 +9297,11 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     const adagioRemaining = fighter.adagioCooldownRemaining - dt;
     fighter.adagioCooldownRemaining = adagioRemaining <= EMERGENCY_RECOVERY.epsilon ? 0 : adagioRemaining;
     // 조가비 쿨다운은 기절·행동 불능과 무관한 실제 전투 시계로 흐르며, 궁극기만 명시적으로 0으로 만든다.
+    fighter.augmentShellCooldown = Math.max(0, fighter.augmentShellCooldown - dt);
+    if (fighter.augmentShellState) {
+      const remaining = fighter.augmentShellState.remaining - dt;
+      fighter.augmentShellState = remaining <= 0 ? null : { ...fighter.augmentShellState, remaining };
+    }
     const shellCooldown = fighter.shellGuardCooldownRemaining - dt;
     fighter.shellGuardCooldownRemaining = shellCooldown <= EMERGENCY_RECOVERY.epsilon ? 0 : shellCooldown;
     if (fighter.shellGuard) {
@@ -9619,7 +9729,13 @@ export function fireUltimate(
   /** targetedCircle만 읽는 사용자 지정 전장 좌표다. */
   targetPoint?: { x: number; y: number },
 ): SkirmishEvent[] {
+  const casterBefore = findFighter(state, fighterId);
+  const energyBefore = casterBefore?.energy;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
+  if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
+    casterBefore.augmentActionSerial += 1;
+    triggerCombatAugments(state, casterBefore, "onUltimateCast", events);
+  }
   // 쏜 직후의 적 돌파(`cheekShield`·`chasingBlink`)는 어떤 궁극기 갈래를 지났든 한 곳에서 건다.
   if (events.length > 0) {
     const caster = findFighter(state, fighterId);

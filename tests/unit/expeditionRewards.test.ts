@@ -110,13 +110,13 @@ describe("expedition augment rewards", () => {
       return { pool, targets };
     };
     const ids = party().map(({ relicId }) => relicId);
-    const one = offers([{ augmentId: "critical-incision", targetRelicId: ids[0] }]);
-    expect(one.targets.get("critical-incision")).toEqual(ids.slice(1));
-    const all = offers(ids.map((relicId) => ({ augmentId: "critical-incision", targetRelicId: relicId })));
-    expect(all.pool.has("critical-incision")).toBe(false);
-    const offer = { augmentId: "critical-incision", eligibleTargetRelicIds: ids };
-    expect(validateExpeditionAugmentChoice(offer, { augmentId: "critical-incision", targetRelicId: ids[0] }, [{ augmentId: "critical-incision", targetRelicId: ids[0] }])).toBe(false);
-    expect(validateExpeditionAugmentChoice(offer, { augmentId: "critical-incision", targetRelicId: ids[1] }, [{ augmentId: "critical-incision", targetRelicId: ids[0] }])).toBe(true);
+    const one = offers([{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }]);
+    expect(one.targets.get("tag-poison-basic")).toEqual(ids.slice(1));
+    const all = offers(ids.map((relicId) => ({ augmentId: "tag-poison-basic", targetRelicId: relicId })));
+    expect(all.pool.has("tag-poison-basic")).toBe(false);
+    const offer = { augmentId: "tag-poison-basic", eligibleTargetRelicIds: ids };
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "tag-poison-basic", targetRelicId: ids[0] }, [{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }])).toBe(false);
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "tag-poison-basic", targetRelicId: ids[1] }, [{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }])).toBe(true);
   });
 
   it("후보 풀이 요청 수보다 작으면 더미 없이 가능한 후보만 결정적으로 표시한다", () => {

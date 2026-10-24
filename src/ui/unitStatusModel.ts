@@ -8,7 +8,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
+export type UnitStatusId = "tailwind" | "order" | "resonance" | "regeneration" | "stealth" | "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -29,6 +29,7 @@ export interface UnitStatusView {
 
 /** 상태별 색. 피해 수치의 디버프 색과 같은 계열을 쓴다. */
 export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
+  tailwind: 0x62c6d8, order: 0xe8c33a, resonance: 0x4fa8e4, regeneration: 0x62c6d8, stealth: 0x8f6aa4,
   /*
    * 무리 칩 둘. 검은 늑대는 이글거리는 재, 흰 늑대는 서리 푸른빛이다.
    *
@@ -106,6 +107,25 @@ function packChipId(wolf: Fighter): "packKuro" | "packShiro" | "packDimo" {
 
 export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = []): UnitStatusView[] {
   const views: UnitStatusView[] = [];
+  if (fighter.tailwindFor > 0 && fighter.tailwind) {
+    const buff = fighter.tailwind;
+    const detail = buff.kind === "resonance"
+      ? `${t("augment.percent", { label: t("stat.attackSpeed"), percent: buff.attackSpeedPercent })} · ${t("status.seconds", { value: fighter.tailwindFor.toFixed(1) })}`
+      : t(buff.kind === "tailwind" ? "augment.tag.detail.tailwind" : "augment.tag.detail.order", { ...buff, seconds: fighter.tailwindFor.toFixed(1) });
+    views.push({ id: buff.kind, name: t(buff.kind === "tailwind" ? "augment.tag.name.tailwind" : buff.kind === "order" ? "augment.tag.name.order" : "augment.tag.name.resonance"),
+      color: UNIT_STATUS_COLOR[buff.kind], remaining: fighter.tailwindFor, total: buff.seconds, detail });
+  }
+  if (fighter.regeneration) {
+    const regen = fighter.regeneration;
+    views.push({ id: "regeneration", name: t("augment.tag.name.regeneration"), color: UNIT_STATUS_COLOR.regeneration,
+      remaining: regen.remaining,
+      detail: t("augment.tag.detail.regeneration", { seconds: regen.remaining.toFixed(1), maxHpPercentPerSecond: regen.percentPerTick }) });
+  }
+  if (fighter.stealthFor > 0 && Number.isFinite(fighter.stealthFor)) {
+    views.push({ id: "stealth", name: t("augment.tag.name.stealth"), color: UNIT_STATUS_COLOR.stealth,
+      remaining: fighter.stealthFor,
+      detail: t("status.seconds", { value: fighter.stealthFor.toFixed(1) }) });
+  }
   /*
    * 무리는 상태이상이 아니라 **지금 몇 마리가 서 있는가**다. 그래서 맨 앞에 선다 — 지휘자의
    * 은신과 치명타가 이 둘의 생존에 통째로 걸려 있어 다른 무엇보다 먼저 읽혀야 한다.
@@ -127,6 +147,14 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       total: alive ? undefined : Math.max(total, remaining),
       detail: alive ? t("status.pack.standing") : remaining > 0 ? t("status.pack.returns", { time: seconds(remaining) }) : t("status.pack.gone"),
     });
+  }
+  if (fighter.augmentShellState && fighter.augmentShellGuard) {
+    const shell = fighter.augmentShellState;
+    const stackId = fighter.augmentShellGuard.stackId ?? "shell";
+    views.push({ id: stackId, key: "expedition-shell", name: t(stackId === "scar" ? "status.scar" : "status.shell"), color: UNIT_STATUS_COLOR[stackId],
+      stacks: shell.stacks,
+      remaining: shell.remaining, total: shell.total,
+      detail: t(stackId === "scar" ? "augment.tag.detail.scar" : "augment.tag.detail.shell", { ...fighter.augmentShellGuard }) });
   }
   if (fighter.shellGuard) {
     const shell = fighter.shellGuard;

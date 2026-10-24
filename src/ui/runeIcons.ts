@@ -97,8 +97,8 @@ function addMysteryHeart(scene: Phaser.Scene, frameSize: number): Phaser.GameObj
   const x = -((box.left + box.right) / 2 - 0.5) * size;
   const y = -((box.top + box.bottom) / 2 - RUNE_CENTER_Y) * size;
   const icon = scene.add.container(0, 0);
-  // 어두운 액자 위에서도 하트가 읽히도록 같은 실루엣을 한 뼘 키운 회색 윤곽을 먼저 깐다.
-  for (const [scale, tint, alpha] of [[1.07, 0x9aa3ad, 0.5], [1, 0x000000, 0.8]] as const) {
+  // 어두운 액자 위에서도 하트가 읽히도록 같은 실루엣을 두 겹 키운 밝은 윤곽(바깥 은백, 안쪽 회청)을 먼저 깐다.
+  for (const [scale, tint, alpha] of [[1.11, 0xe3e9f0, 0.9], [1.045, 0x5f6b79, 0.95], [1, 0x07090d, 0.82]] as const) {
     for (const index of [0, 1, 2]) {
       icon.add(scene.add.image(x, y, runeTexture(undefined, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * scale, size * scale).setTint(tint).setAlpha(alpha));
     }

@@ -159,6 +159,36 @@
 "Runenveredelung",
 "Огранка руны"
 ],
+"rune.craftAll": [
+"一键打磨",
+"เจียระไนทั้งหมด",
+"Mài tất cả",
+"Asah semua",
+"Tallar todo",
+"Lapidar tudo",
+"Alles veredeln",
+"Огранить всё"
+],
+"rune.craftAllConfirm": [
+"从上方词条开始，依次完成剩余的 {count} 次打磨。\n将一次性打磨完成。",
+"เจียระไนที่เหลือ {count} ครั้งตั้งแต่ตัวเลือกบนสุดลงมา\nเจียระไนทั้งหมดในครั้งเดียว",
+"Mài {count} lượt còn lại, từ tùy chọn trên cùng trở xuống.\nTất cả được mài cùng một lúc.",
+"Mengasah {count} kesempatan tersisa dari opsi paling atas.\nSemuanya diasah sekaligus.",
+"Talla los {count} intentos restantes desde la opción superior.\nTodo se talla de una vez.",
+"Lapida as {count} tentativas restantes a partir da opção do topo.\nTudo é lapidado de uma vez.",
+"Veredelt alle {count} verbleibenden Versuche von der obersten Option abwärts.\nAlles wird auf einmal veredelt.",
+"Огранит все оставшиеся попытки ({count}) начиная с верхней опции.\nВсё будет огранено за один раз."
+],
+"rune.craftAllDone": [
+"一键打磨完成 · 成功 {success}/{total}",
+"เจียระไนทั้งหมดเสร็จสิ้น · สำเร็จ {success}/{total}",
+"Mài tất cả hoàn tất · thành công {success}/{total}",
+"Asah semua selesai · berhasil {success}/{total}",
+"Tallado completo · {success}/{total} con éxito",
+"Lapidação concluída · {success}/{total} com sucesso",
+"Alles veredelt · {success}/{total} gelungen",
+"Огранка завершена · удачно {success}/{total}"
+],
 "rune.unequip": [
 "卸下",
 "ถอด",

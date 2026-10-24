@@ -61,7 +61,8 @@ export const RUNE_CRAFT_PANEL = {
   noticeGap: 24,
   /** 구분선에서 버튼 가운데까지. */
   buttonGap: 120,
-  button: { width: 560, height: 84 },
+  /** 세공과 일괄 세공이 나란히 선다. `pairOffset`은 각 버튼 가운데가 판 가운데에서 떨어진 거리다. */
+  button: { width: 360, height: 84, pairOffset: 190 },
   /** 버튼 아래끝에서 판 밑변까지. */
   bottomMargin: 62,
 } as const;

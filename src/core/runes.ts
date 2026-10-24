@@ -361,6 +361,16 @@ export function enhanceRune(rune: RuneInstance, statKey: RuneStatKey, valueIncre
   return next;
 }
 
+/**
+ * 일괄 세공이 돌 칸의 순서다. 위 옵션 줄부터(주 옵션 → 보조 옵션) 각 줄의 남은 시도만큼 같은 키가
+ * 이어진다. 화면(총 골드 계산)과 서버(판정 순서)가 같은 함수를 읽어야 보여 준 값과 쓴 값이 갈리지 않는다.
+ */
+export function runeBatchEnhancementTargets(rune: RuneInstance): RuneStatKey[] {
+  if (rune.enhancementComplete) return [];
+  return [...rune.mainStats, ...rune.subStats].flatMap(({ key }) =>
+    Array.from({ length: Math.max(0, RUNE_ENHANCEMENT_RULES.attemptsPerOption - (rune.enhancementHistory[key]?.length ?? 0)) }, () => key));
+}
+
 /** 모든 일반 강화를 끝내고 아직 각인하지 않은 룬인지 판정한다. */
 export function canEngraveRune(rune: RuneInstance): boolean {
   return rune.enhancementComplete && rune.engravings.length === 0;

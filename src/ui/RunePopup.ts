@@ -5,14 +5,13 @@ import { t, type TextKey } from "../i18n";
 import type { GameApi } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { setDebugRuneForgeRename, setDebugRuneNoteCraft } from "../debug";
-import { canEngraveRune, canEnhanceRune, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
-import { runeEnhancementGoldCost } from "../data/runes";
+import { canEngraveRune, canEnhanceRune, runeBatchEnhancementTargets, runePartLabel, runeRarityLabel, runeEnhancementAttempts, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../core/runes";
+import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost } from "../data/runes";
 import { RELICS } from "../data/relics";
 import { InventoryManager } from "../managers/InventoryManager";
 import { burstOverlayEffect } from "../managers/overlayEffects";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { session } from "../state/session";
-import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
 import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
@@ -437,6 +436,15 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
     let action: Button | undefined;
     const content = scene.add.container(0, 0);
     body.add(content);
+    // 보유 골드 칸은 한 번만 세운다. 세공마다 새로 그리면 숫자가 롤링하지 못하고 갑자기 바뀐다 —
+    // 같은 칸에 `setText`만 부르면 공용 재화 칸의 롤링·펀치(줄면 붉은빛)가 그대로 돈다.
+    const walletText = addCurrencyChip(scene, panel.wallet.x, -layout.height / 2 + panel.wallet.y, "currency-gold", {
+      width: panel.wallet.width,
+      height: panel.wallet.height,
+      color: "#ffdf9a",
+      parent: body,
+    });
+    let batchAction: Button | undefined;
     /** 이번 그림에서 비어 있는 칸들. 누른 순간 그 자리에 예고를 번지게 한다. */
     const empties = new Map<string, EmptySlot>();
 
@@ -485,34 +493,6 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       scene.tweens.add({ targets: flash, scale: RUNE_CRAFT_STRIKE.scale, alpha: 0, duration: RUNE_CRAFT_STRIKE.ms, ease: "Quad.Out", onComplete: () => flash.destroy() });
     };
 
-    /**
-     * 세공에 쓴 골드가 지갑 칸에서 짤랑이며 떨어져 나간다. 칸은 매번 다시 그려지므로 코인은 칸이 아니라
-     * 판(`body`)에 얹고, 정지한 카운터 하나를 트윈해 프레임마다 위치를 옮긴다 — 코인이 먼저 파괴돼도 안전하다.
-     */
-    const spillCoins = (): void => {
-      if (closed || motionPolicy(session.settings).nonEssentialRepeatFactor === 0) return;
-      const originX = panel.wallet.x - panel.wallet.width / 2 + 34;
-      const originY = -layout.height / 2 + panel.wallet.y;
-      const size = panel.wallet.height * 0.5;
-      const coins = Array.from({ length: 6 }, (_, i) => {
-        const coin = scene.add.image(originX + (i - 2.5) * 10, originY, "currency-gold").setDisplaySize(size, size);
-        body.add(coin);
-        return { coin, vx: (i - 2.5) * 22 + (i % 2 === 0 ? 10 : -10), vy: -150 - (i % 3) * 40, spin: (i % 2 === 0 ? 1 : -1) * (3 + i) };
-      });
-      const clock = { t: 0 };
-      scene.tweens.add({
-        targets: clock, t: 1, duration: 620, ease: "Linear",
-        onUpdate: () => {
-          const sec = clock.t * 0.62;
-          for (const { coin, vx, vy, spin } of coins) {
-            if (!coin.active) continue;
-            coin.setPosition(originX + vx * sec, originY + vy * sec + 900 * sec * sec).setRotation(spin * sec).setAlpha(1 - Math.max(0, clock.t - 0.55) / 0.45);
-          }
-        },
-        onComplete: () => { for (const { coin } of coins) if (coin.active) coin.destroy(); },
-      });
-    };
-
     /** 요청 한 번. 끝나면 눌러 둔 만큼 이어서 보낸다. */
     const craft = async (): Promise<void> => {
       const statKey = selected;
@@ -537,7 +517,6 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, statKey);
         pending = false;
         render(engraving ? t("rune.completed") : succeeded ? t("rune.craftSuccess") : t("rune.craftFail"));
-        if (!engraving) spillCoins();
       } catch (error) {
         pending = false;
         queued = 0;
@@ -548,6 +527,42 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       queued -= 1;
       if (craftable()) void craft();
       else queued = 0;
+    };
+
+    /**
+     * 남은 세공을 위 줄부터 전부 돌린다. 칸별 연출을 기다리지 않고 요청 한 번으로 끝내며,
+     * 결과는 모두 박힌 상태로 한 번에 그려진다. 각인은 되돌릴 수 없는 선택이라 포함하지 않는다.
+     */
+    const craftAll = async (): Promise<void> => {
+      if (closed || pending || rune!.enhancementComplete) return;
+      pending = true;
+      queued = 0;
+      try {
+        const response = await inventory.enhanceRuneAll(api, rune!.instanceId);
+        rune = response.rune;
+        if (closed) { pending = false; return; }
+        options.onChanged?.(rune);
+        selected = undefined;
+        pending = false;
+        render(t("rune.craftAllDone", { success: response.results.filter(Boolean).length, total: response.results.length }));
+      } catch (error) {
+        pending = false;
+        if (!closed) render(error instanceof Error ? error.message : t("rune.requestFailed"));
+      }
+    };
+
+    /** 일괄 세공은 골드를 한꺼번에 쓰므로 총액과 남는 골드를 확인 창에서 먼저 보여 준다. */
+    const confirmCraftAll = (): void => {
+      const current = rune!;
+      const total = runeBatchEnhancementGoldCost(current);
+      if (closed || pending || total <= 0 || session.wallet.gold < total) return;
+      popups.confirm({
+        title: t("rune.craftAll"),
+        message: t("rune.craftAllConfirm", { count: runeBatchEnhancementTargets(current).length }),
+        confirmLabel: t("rune.craftAll"),
+        costs: [{ iconKey: CURRENCY_ICON_BY_WALLET.gold, amount: total }],
+        balance: { iconKey: CURRENCY_ICON_BY_WALLET.gold, before: session.wallet.gold, after: session.wallet.gold - total },
+      }, () => void craftAll());
     };
 
     /** 버튼을 누른 한 번. 곧바로 보내거나, 기다리는 중이면 쌓아 둔다. */
@@ -579,12 +594,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       addEquippedHolderLine(scene, content, panel.textX, top + panel.equippedY, current.instanceId, CRAFT_HOLDER_LINE);
       // 보유 골드는 로비 상단과 같은 칸으로 세운다. 세공은 골드를 쓰는 화면이라 지갑이 늘
       // 보여야 하고, 같은 값이 화면마다 다른 모양으로 보이지 않게 한다.
-      addCurrencyChip(scene, panel.wallet.x, top + panel.wallet.y, "currency-gold", {
-        width: panel.wallet.width,
-        height: panel.wallet.height,
-        color: "#ffdf9a",
-        parent: content,
-      }).setText(formatCurrency(session.wallet.gold));
+      walletText.setText(formatCurrency(session.wallet.gold));
       // 연필은 씬에서 직접 작도하지 않고 glyph 공용 시스템의 edit 표식을 쓴다. 이름 바로
       // 옆에 서야 무엇을 고치는 단추인지 읽힌다 — 오른쪽 끝에 두면 그 아래 확률 글자와 겹친다.
       const pencilX = Math.min(panel.textX + nameText.width + 32, half - 264);
@@ -695,6 +705,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       const engraved = current.engravings.length > 0;
       const cost = completed ? 0 : runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
       const affordable = completed || session.wallet.gold >= cost;
+      const batchCost = completed ? 0 : runeBatchEnhancementGoldCost(current);
+      const batchAffordable = session.wallet.gold >= batchCost;
       const reason = engraved
         ? t("rune.allCrafted")
         : completed
@@ -720,7 +732,17 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           cost: { icon: "currency-gold", amount: cost, affordable }, onClick: press,
         });
         body.add(action);
+        batchAction = new Button(scene, panel.button.pairOffset, top + layout.buttonY, {
+          width: panel.button.width, height: panel.button.height,
+          label: t("rune.craftAll"), variant: "primary", accentColor: accent,
+          cost: { icon: "currency-gold", amount: batchCost, affordable: batchAffordable }, onClick: confirmCraftAll,
+        });
+        batchAction.fitLabel(panel.button.width - 150);
+        body.add(batchAction);
       }
+      // 세공 단계에서는 두 버튼이 나란히 서고, 각인만 남으면 각인 버튼이 가운데로 돌아온다.
+      action.setX(completed ? 0 : -panel.button.pairOffset);
+      batchAction!.setVisible(!completed).setCost({ amount: batchCost, affordable: batchAffordable }).setEnabled(!completed && !engraved && batchAffordable && batchCost > 0);
       // 응답 도중 눌린 버튼을 파괴하면 pointerup이 유실된다. 같은 입력면·누름 연출을 유지한다.
       action.setLabel(completed ? t("rune.engraveConfirm") : t("rune.craft"))
         .setCost(completed ? undefined : { amount: cost, affordable })

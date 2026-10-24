@@ -4,7 +4,7 @@ import type { ItemLot } from "../core/itemLots";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
-import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, UseConsumableResponse } from "../api/contracts";
+import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneAllResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
@@ -182,6 +182,11 @@ export class InventoryManager {
   /** 한 옵션을 서버 난수로 한 번 세공한다. */
   async enhanceRune(api: GameApi, instanceId: string, statId: RuneStatKey): Promise<EnhanceRuneResponse> {
     return this.applyRuneMutation(await api.enhanceRune({ runeInstanceId: instanceId, statId }));
+  }
+
+  /** 남은 세공을 위 줄부터 전부 한 번에 돌린다. */
+  async enhanceRuneAll(api: GameApi, instanceId: string): Promise<EnhanceRuneAllResponse> {
+    return this.applyRuneMutation(await api.enhanceRuneAll({ runeInstanceId: instanceId }));
   }
 
   /** 모든 세공을 마친 룬에 한 번뿐인 각인을 새긴다. */

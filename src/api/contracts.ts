@@ -182,6 +182,10 @@ export interface RuneInventoryDto { runes: RuneInstance[]; equipment: RuneEquipm
 export interface EnhanceRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
 /** 서버가 판정하고 저장한 한 번의 강화 결과다. */
 export interface EnhanceRuneResponse { succeeded: boolean; goldSpent: number; nextSuccessChance: number; rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 일괄 세공 요청은 대상 룬만 고른다. 칸 순서·난수·비용은 서버가 정한다. */
+export interface EnhanceRuneAllRequest { runeInstanceId: string; }
+/** 남은 세공을 한 번에 끝낸 결과다. `results`는 위 줄부터의 성공 여부다. */
+export interface EnhanceRuneAllResponse { goldSpent: number; results: boolean[]; nextSuccessChance: number; rune: RuneInstance; inventory: RuneInventoryDto; }
 /** 각인 요청 역시 대상 룬과 실제 옵션만 고르며 등급과 증가량은 서버가 정한다. */
 export interface EngraveRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
 /** 각인 뒤 갱신된 룬과 인벤토리를 반환한다. */
@@ -1217,6 +1221,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   purchaseProduct(request: PurchaseProductRequest): Promise<PurchaseProductResponse>;
   /** 룬의 한 옵션을 서버 난수로 한 번 강화한다. */
   enhanceRune(request: EnhanceRuneRequest): Promise<EnhanceRuneResponse>;
+  /** 룬의 남은 일반 강화를 위 줄부터 전부, 골드 차감과 함께 한 번에 판정한다. */
+  enhanceRuneAll(request: EnhanceRuneAllRequest): Promise<EnhanceRuneAllResponse>;
   /** 모든 일반 강화를 마친 룬에 서버 판정 각인을 한 번 적용한다. */
   engraveRune(request: EngraveRuneRequest): Promise<EngraveRuneResponse>;
   /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */

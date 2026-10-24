@@ -8,7 +8,7 @@ import { rotationSlot } from "../../src/data/runeRotation";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
-import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeBatchEnhancementTargets, runeEnhancementIncrease, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
@@ -20,7 +20,7 @@ import { findArchaeologySite } from "../../src/data/archaeologySites";
 const STRATA_SITE_COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
 import { mileageRotatingFragmentId, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
-import { runeEnhancementGoldCost } from "../../src/data/runes";
+import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost } from "../../src/data/runes";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -372,6 +372,28 @@ describe("FakeServer", () => {
     const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
     await expect(server.enhanceRune({ runeInstanceId: "rune-1", statId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
     expect(state.wallet.gold).toBe(runeEnhancementGoldCost(makeRune().rarity, 0) - 1); expect(JSON.stringify(state.runeInventory)).toBe(before);
+  });
+
+  it("일괄 세공은 남은 칸 전부를 총 골드 한 번 차감으로 판정한다", async () => {
+    const state = makeSession(); const rune = makeRune();
+    const targets = runeBatchEnhancementTargets(rune); const total = runeBatchEnhancementGoldCost(rune);
+    expect(targets.length).toBe(runeTotalEnhancementAttempts(rune.rarity));
+    expect(total).toBe(targets.reduce((sum, _key, index) => sum + runeEnhancementGoldCost(rune.rarity, index), 0));
+    state.wallet.gold = total + 7; state.runeInventory = [rune];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.enhanceRuneAll({ runeInstanceId: "rune-1" });
+    expect(response.goldSpent).toBe(total); expect(response.results).toHaveLength(targets.length);
+    expect(state.wallet.gold).toBe(7); expect(state.runeInventory[0].enhancementComplete).toBe(true);
+    await expect(server.enhanceRuneAll({ runeInstanceId: "rune-1" })).rejects.toMatchObject({ code: "RUNE_ENHANCEMENT_COMPLETE" });
+  });
+
+  it("일괄 세공은 골드가 총액에 모자라면 난수를 부르기 전에 거절하고 상태를 보존한다", async () => {
+    const state = makeSession(); const rune = makeRune();
+    state.wallet.gold = runeBatchEnhancementGoldCost(rune) - 1; state.runeInventory = [rune];
+    const before = JSON.stringify(state.runeInventory);
+    const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
+    await expect(server.enhanceRuneAll({ runeInstanceId: "rune-1" })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(JSON.stringify(state.runeInventory)).toBe(before);
   });
 
   it("이름 정책과 전역 장착 중복을 서버 경계에서 구분해 거부한다", async () => {

@@ -1,4 +1,4 @@
-import { generateRune, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { generateRune, runeBatchEnhancementTargets, runeEnhancementAttempts, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
 import { grantRuneTrait } from "../core/runeTraits";
 import { RUNE_TRAIT_IDS } from "./runeTraits";
 import { t } from "../i18n";
@@ -46,6 +46,15 @@ export function runeEnhancementGoldCost(rarity: RuneRarity, completedAttempts: n
   const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
   if (cost === undefined) throw new RangeError("모든 강화를 마친 룬에는 다음 비용이 없습니다.");
   return cost;
+}
+
+/** 남은 세공을 전부 돌릴 때 드는 골드. 시도마다 값이 오르므로 지금 횟수부터 끝까지 합산한다. */
+export function runeBatchEnhancementGoldCost(rune: RuneInstance): number {
+  const remaining = runeBatchEnhancementTargets(rune).length;
+  const done = runeEnhancementAttempts(rune);
+  let total = 0;
+  for (let step = 0; step < remaining; step += 1) total += runeEnhancementGoldCost(rune.rarity, done + step);
+  return total;
 }
 
 /**

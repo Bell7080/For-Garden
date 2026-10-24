@@ -112,12 +112,6 @@ var ARENA_KO = {
   "arena.result.back": "\uB3CC\uC544\uAC00\uAE30",
   "arena.title": "\uC544\uB808\uB098",
   "arena.reconnect": "\uB2E4\uC2DC \uC5F0\uACB0",
-  "arena.record": "LV.{p0}  \xB7  {p1}\uC2B9 {p2}\uD328",
-  "arena.tier.label": "\uC544\uB808\uB098 {p0}",
-  "arena.tier.separate": "\uACB0\uD22C\uC7A5\uACFC \uBCC4\uB3C4\uB85C \uAE30\uB85D\uB418\uB294 \uC544\uB808\uB098 \uD2F0\uC5B4",
-  "arena.tier.guideButton": "\uC544\uB808\uB098 \uD2F0\uC5B4 \uC548\uB0B4",
-  "arena.tier.guideTitle": "\uC544\uB808\uB098 \uD2F0\uC5B4",
-  "arena.confirm": "\uD655\uC778",
   "arena.lobby.rules": "\uAC01 1\uBC34(\uB3D9\uC2DC \uBE44\uACF5\uAC1C) \xB7 \uBC88\uAC08\uC544 \uD53D\uD574 1\xB72\xB73\uBC88 \uCE78 \uBC30\uCE58\n\uAC19\uC740 \uB810\uB9AD \uC911\uBCF5 \uD53D \uAE08\uC9C0 \xB7 \uC591 \uD300 \uC790\uB3D9 \uAD81\uADF9\uAE30",
   "arena.resume": "\uC9C4\uD589 \uC911\uC778 \uC544\uB808\uB098\uB85C \uBCF5\uADC0",
   "arena.match.start": "\uB9E4\uCE6D \uC2DC\uC791",
@@ -125,7 +119,7 @@ var ARENA_KO = {
   "arena.match.description": "\uC2E4\uB825\uC774 \uBE44\uC2B7\uD55C \uC5F0\uAD6C\uC6D0\uC744 \uCC3E\uB294 \uC911\uC785\uB2C8\uB2E4.\n\uB300\uAE30 \uC2DC\uAC04\uC774 \uAE38\uC5B4\uC9C0\uBA74 \uB9E4\uCE6D \uBC94\uC704\uAC00 \uB113\uC5B4\uC9D1\uB2C8\uB2E4.",
   "arena.match.cancel": "\uB9E4\uCE6D \uCDE8\uC18C",
   "arena.room.leave": "\uC544\uB808\uB098 \uB098\uAC00\uAE30",
-  "arena.room.leaveConfirm": "\uC900\uBE44 \uC911 \uB098\uAC00\uBA74 \uAE30\uAD8C \uCC98\uB9AC\uB429\uB2C8\uB2E4.",
+  "arena.room.leaveConfirm": "\uC9C0\uAE08 \uB098\uAC00\uBA74 \uAE30\uAD8C\uC73C\uB85C \uD328\uBC30\uD558\uACE0 RP\uB97C \uC783\uC2B5\uB2C8\uB2E4.",
   "arena.room.forfeit": "\uAE30\uAD8C",
   "arena.room.ranked": "\uB7AD\uD06C \uC544\uB808\uB098",
   "arena.room.friendly": "\uCE5C\uC120 \uC544\uB808\uB098",
@@ -190,7 +184,22 @@ var ARENA_KO = {
   "arena.pick.taken": "\uC0C1\uB300 \uD53D",
   "arena.rules.duplicates": "\uC911\uBCF5 \uD53D: {p0}",
   "arena.rules.duplicatesAllowed": "\uD5C8\uC6A9",
-  "arena.rules.duplicatesBlocked": "\uAE08\uC9C0"
+  "arena.rules.duplicatesBlocked": "\uAE08\uC9C0",
+  "arena.room.leaveConfirmFriendly": "\uC9C0\uAE08 \uB098\uAC00\uBA74 \uAE30\uAD8C\uC73C\uB85C \uD328\uBC30\uD569\uB2C8\uB2E4.",
+  "arena.room.forfeitShort": "\uD3EC\uAE30",
+  "arena.result.foeForfeit": "\uC0C1\uB300\uAC00 \uAE30\uAD8C\uD558\uAC70\uB098 \uC790\uB9AC\uB97C \uBE44\uC6CC \uC2B9\uB9AC\uD588\uC2B5\uB2C8\uB2E4.",
+  "arena.result.selfForfeit": "\uAE30\uAD8C\uD558\uAC70\uB098 \uC790\uB9AC\uB97C \uBE44\uC6CC \uD328\uBC30\uD588\uC2B5\uB2C8\uB2E4.",
+  "arena.rp": "{score} RP",
+  "arena.weekly.title": "\uC544\uB808\uB098 \uC8FC\uAC04 \uBCF4\uC0C1",
+  "arena.weekly.tierSection": "\uD2F0\uC5B4 \uBCF4\uC0C1",
+  "arena.weekly.rankSection": "\uC21C\uC704 \uBCF4\uB108\uC2A4",
+  "arena.weekly.floor": "{score} RP\uBD80\uD130",
+  "arena.weekly.endsIn": "\uC8FC\uAC04 \uC815\uC0B0\uAE4C\uC9C0 {days}\uC77C {hours}\uC2DC\uAC04",
+  "arena.weekly.chip": "\uC8FC\uAC04 \uBCF4\uC0C1",
+  "arena.ranking.title": "\uC544\uB808\uB098 \uC21C\uC704",
+  "arena.profile.best": "\uCD5C\uACE0 \uAE30\uB85D",
+  "arena.profile.lastWeek": "\uC9C0\uB09C\uC8FC",
+  "arena.profile.streakBonus": "\uC5F0\uC2B9 \uD6A8\uACFC +{bonus} RP"
 };
 
 // src/i18n/ko/settings.ts
@@ -479,6 +488,8 @@ var INFO_KO = {
   "info.breakthrough.fragment": "{name} \uD30C\uD3B8",
   "info.breakthrough.cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C",
   "info.breakthrough.need": "\uD544\uC694 {count}",
+  "info.breakthrough.universalSpend": "\uC18C\uBAA8 {count}",
+  "info.breakthrough.universalNotice": "{name} {count}\uAC1C\uAC00 \uD568\uAED8 \uC18C\uBAA8\uB429\uB2C8\uB2E4",
   "info.rune.bag": "\uB8EC \uAC00\uBC29 \xB7 {part}",
   "info.rune.empty": "\uBE48 \uC790\uB9AC",
   "info.rune.emptySlot": "   \uBE48 \uC790\uB9AC",
@@ -1128,6 +1139,9 @@ var RUNE_KO = {
   "rune.sell.message": "\uC774 \uB8EC\uC744 \uD310\uB9E4\uD569\uB2C8\uB2E4. \uD310\uB9E4\uD55C \uB8EC\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "rune.craft": "\uC138\uACF5",
   "rune.craftTitle": "\uB8EC \uC138\uACF5",
+  "rune.craftAll": "\uC77C\uAD04 \uC138\uACF5",
+  "rune.craftAllConfirm": "\uB0A8\uC740 \uC138\uACF5 {count}\uD68C\uB97C \uC704 \uC635\uC158\uBD80\uD130 \uCC28\uB840\uB85C \uC9C4\uD589\uD569\uB2C8\uB2E4.\n\uD55C \uBC88\uC5D0 \uC138\uACF5\uB429\uB2C8\uB2E4.",
+  "rune.craftAllDone": "\uC77C\uAD04 \uC138\uACF5 \uC644\uB8CC \xB7 \uC131\uACF5 {success}/{total}",
   "rune.unequip": "\uD574\uC81C",
   "rune.equip": "\uC7A5\uCC29",
   "rune.engraved": "\uAC01\uC778 \uC644\uB8CC",
@@ -1710,9 +1724,9 @@ var MISC_KO = {
   "profile.edit.error.invalidCharacter": "\uC4F8 \uC218 \uC5C6\uB294 \uAE00\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4",
   "profile.levelUp.title": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 \uC0C1\uC2B9",
   "profile.levelUp.stamina": "\uC2A4\uD14C\uBBF8\uB098 \uC0C1\uD55C +{amount}",
-  "profile.levelUp.frame": "\uC0C8 \uD14C\uB450\uB9AC \u300C{name}\u300D",
-  "profile.levelUp.unlock": "\uC0C8 \uCF58\uD150\uCE20 \u300C{content}\u300D",
-  "profile.levelUp.drink": "\u300C{item}\u300D \xD7{count} \uC9C0\uAE09",
+  "profile.levelUp.rewards": "\uB808\uBCA8\uC5C5 \uBCF4\uC0C1",
+  "profile.levelUp.unlocks": "\uC0C8\uB85C \uC5F4\uB9B0 \uAC83",
+  "profile.levelUp.gain": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 +{count}",
   "profile.exp.value": "{current} / {total}",
   "profile.exp.tooltip": "{current} / {total} EXP \xB7 {percent}%",
   "profile.exp.toNext": "\uB2E4\uC74C \uB808\uBCA8\uAE4C\uC9C0 {remaining} EXP",
@@ -1722,7 +1736,7 @@ var MISC_KO = {
   "profile.levelTree.content": "\uAC1C\uBC29 \xB7 {content}",
   "profile.levelTree.stamina": "\uC2A4\uD14C\uBBF8\uB098 \uC0C1\uD55C {max}",
   "profile.unset": "\uBBF8\uC9C0\uC815",
-  "profile.arenaTier": "\uACB0\uD22C\uC7A5 \uD2F0\uC5B4",
+  "profile.arenaTier": "\uC544\uB808\uB098 \uD2F0\uC5B4",
   "profile.noRecord": "\uAE30\uB85D \uC5C6\uC74C",
   // 스테이지 결과
   "stageComplete.contribution": "\uACF5\uACA9 \xB7 \uBC29\uC5B4 \xB7 \uD68C\uBCF5",
@@ -2047,7 +2061,7 @@ var SKILL_KO = {
   "skill.passive.lowHpStealth": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.lowHpStealth.focus": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 [[focus|\uC9D1\uC911]]\uC744 \uBAA8\uB450 \uC783\uB294 \uB300\uC2E0 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.openingVanish": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]] \uC0C1\uD0DC\uB85C \uC9C4\uC785\uD55C\uB2E4.",
-  "skill.passive.featherVeil": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD558\uACE0 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {speed}% \uC624\uB978\uB2E4. \uC801\uC744 \uCC98\uCE58\uD558\uBA74 {killSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {killPercent}% \uC624\uB978\uB2E4.",
+  "skill.passive.featherVeil": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.openingStealth": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.undyingTalisman": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uC4F0\uB7EC\uC9C8 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 \uC8FD\uC9C0 \uC54A\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[invulnerable|\uBB34\uC801]]\uC774 \uB418\uB294 \uB300\uC2E0 \uC544\uBB34 \uD589\uB3D9\uB3C4 \uD558\uC9C0 \uBABB\uD55C\uB2E4. \uADF8\uB3D9\uC548 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uB9E4\uCD08 \uB098\uB204\uC5B4 \uD68C\uBCF5\uD55C\uB2E4.{blast}",
   "skill.passive.undyingTalisman.blast": " \uC774\uB54C \uC8FC\uC704 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]].",
@@ -2347,6 +2361,7 @@ var SKILL_KO = {
   "skill.keyword.lastDrop.term": "\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8",
   "skill.keyword.refill.description": "\uAE30\uBCF8 \uACF5\uACA9\uC774 {magazine}\uBC1C\uC9DC\uB9AC \uD0C4\uCC3D\uC73C\uB85C \uB098\uAC00\uACE0, \uBE44\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uC7A5\uC804\uD55C\uB2E4. \uACF5\uACA9 \uC18D\uB3C4\uB294 {speed}\uB85C \uACE0\uC815\uB418\uBA70, \uB8EC\xB7\uC544\uAD70 \uAC15\uD654\uB85C \uB354\uD574\uC9C0\uB294 \uACF5\uACA9 \uC18D\uB3C4\uB294 \uAC19\uC740 \uBE44\uC728\uC758 \uACF5\uACA9\uB825\uC73C\uB85C \uBC14\uB010\uB2E4. \uC18D\uB3C4\uB97C \uB2A6\uCD94\uB294 \uD6A8\uACFC\uB294 \uADF8\uB300\uB85C \uBC1B\uB294\uB2E4. \uAD81\uADF9\uAE30\uB97C \uC3D8\uBA74 \uD0C4\uCC3D\uC774 \uACE7\uBC14\uB85C \uAC00\uB4DD \uCC2C\uB2E4.",
   "skill.keyword.lastDrop.description": "\uD0C4\uCC3D\uC758 \uB9C8\uC9C0\uB9C9 \uBC1C\uC774\uB2E4. \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uC774\uBA70 \uC900 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
+  "skill.keyword.nowValue": "(\uD604\uC7AC {value})",
   "skill.passive.refillMagazine": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 {magazine}\uBC1C\uC9DC\uB9AC \uD0C4\uCC3D\uC73C\uB85C \uB098\uAC00\uACE0 \uBE44\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uC7A5\uC804\uD55C\uB2E4. [[teku-refill|\uB9AC\uD544]]\uB85C \uACF5\uACA9 \uC18D\uB3C4\uB294 \uACE0\uC815\uB418\uACE0, \uB354\uD574\uC9C0\uB294 \uACF5\uACA9 \uC18D\uB3C4\uB294 \uAC19\uC740 \uBE44\uC728\uC758 [[atk|\uACF5\uACA9\uB825]]\uC774 \uB41C\uB2E4.",
   "skill.ferocity.overtimeRefusal": "\uD3ED\uC8FC\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 [[teku-refill|\uB9AC\uD544]]\uB418\uACE0, \uADF8 \uD0C4\uCC3D\uC758 \uBAA8\uB4E0 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[teku-last-drop|\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8]]\uB85C \uB098\uAC04\uB2E4.",
   "skill.sentence.barrage": "\uC804\uC7A5\uC758 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uAC00\uAE4C\uC6B4 \uC21C\uC11C\uB300\uB85C {damage}\uB97C {shots}\uBC88 \uC900\uB2E4. {from}\uBC1C\uC9F8\uBD80\uD130\uB294 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uC774\uBA70 \uC900 \uD53C\uD574\uC758 {shield}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4(\uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0). \uC3DC \uB4A4 [[teku-refill|\uB9AC\uD544]]\uB41C\uB2E4.",
@@ -2584,7 +2599,6 @@ var DUNGEON_KO = {
 // src/i18n/ko/duel.ts
 init_define_import_meta_env();
 var DUEL_KO = {
-  "ranking.weekly.rules": "\uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uD574\uB2F9 \uC8FC \uB300\uC804\xB7\uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.",
   "duel.season.rules": "{days}\uC77C\uB9C8\uB2E4 \uC2DC\uC98C \uC885\uB8CC \xB7 \uC810\uC218 60%\uB97C 100\uC810 \uB2E8\uC704\uB85C \uB0B4\uB9BC",
   "duel.opponents.empty": "\uD604\uC7AC \uB300\uC804\uD560 \uC0C1\uB300\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4. PvP\uB97C \uD574\uAE08\uD55C \uB2E4\uB978 \uC5F0\uAD6C\uC6D0\uC774 \uCC38\uAC00\uD558\uBA74 \uBAA9\uB85D\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4. \uB2E4\uC2DC \uD655\uC778\uD574 \uC8FC\uC138\uC694.",
   "duel.ranking.me": "\uB098",
@@ -2632,7 +2646,6 @@ var DUEL_KO = {
   "duel.tierGuide.floor": "{score}\uC810\uBD80\uD130",
   "duel.tierGuide.blind": "\uC0C1\uB300 {count}\uBA85 \uAC00\uB9BC",
   "duel.tierGuide.noBlind": "\uC0C1\uB300 \uBAA8\uB450 \uACF5\uAC1C",
-  "duel.tierGuide.reward": "\uC2DC\uC98C \uBCF4\uC0C1 \uD718\uC7A5 {emblem} \xB7 \uC82C {gems}",
   "duel.history.title": "\uC804\uD22C \uAE30\uB85D",
   "duel.history.ago.now": "\uBC29\uAE08",
   "duel.history.ago.minute": "{value}\uBD84 \uC804",
@@ -2668,7 +2681,15 @@ var DUEL_KO = {
   "duel.shop.line2": "\uBB58 \uC0B4\uC9C0 \uC815\uD588\uC5B4? \uBABB \uC815\uD588\uC73C\uBA74 \uD55C \uBC14\uD034 \uB354 \uB3CC\uC544\uBCF4\uACE0 \uC640.",
   "duel.shop.line3": "\uADF8\uAC74 \uC9C0\uB09C\uC8FC\uBCF4\uB2E4 \uD558\uB098 \uC904\uC5C8\uB124. \uD544\uC694\uD558\uBA74 \uC9C0\uAE08 \uAC00\uC838\uAC00.",
   "duel.shop.line4": "\uC9C4 \uD310\uC758 \uD718\uC7A5\uB3C4 \uB611\uAC19\uC774 \uCCD0 \uC918. \uC9C4 \uB0A0\uC774 \uB354 \uB9CE\uC774 \uAC00\uB974\uCCD0 \uC8FC\uAC70\uB4E0.",
-  "duel.shop.line5": "\uC11C\uB450\uB97C \uAC70 \uC5C6\uC5B4. \uACB0\uD22C\uC7A5\uC740 \uB0B4\uC77C\uB3C4 \uC5F4\uB824 \uC788\uC73C\uB2C8\uAE4C."
+  "duel.shop.line5": "\uC11C\uB450\uB97C \uAC70 \uC5C6\uC5B4. \uACB0\uD22C\uC7A5\uC740 \uB0B4\uC77C\uB3C4 \uC5F4\uB824 \uC788\uC73C\uB2C8\uAE4C.",
+  "rewardTable.current": "\uD604\uC7AC",
+  "rewardTable.rank.single": "{rank}\uC704",
+  "rewardTable.rank.range": "{from}~{upTo}\uC704",
+  "rewardTable.rank.beyond": "{rank}\uC704 \uC774\uD558",
+  "rewardTable.rules.duel": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uACB0\uD22C\uC7A5 \uB300\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "rewardTable.rules.expedition": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "rewardTable.rules.arena": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uB9C8\uAC10 \uB54C\uC758 \uD2F0\uC5B4 \uBCF4\uC0C1\uC5D0 \uC21C\uC704 \uBCF4\uB108\uC2A4\uB97C \uB354\uD574 \uC90D\uB2C8\uB2E4. \uADF8 \uC8FC \uB7AD\uD06C\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "ranking.mine": "\uB0B4 \uC21C\uC704"
 };
 
 // src/i18n/ko/recollection.ts
@@ -2911,6 +2932,7 @@ var DEBUG_KO = {
   "settings.debug.menu.relicBond": "\uCE90\uB9AD\uD130 \uC720\uB300 \uC124\uC815",
   "settings.debug.menu.relicFragments": "\uCE90\uB9AD\uD130 \uD30C\uD3B8 \uC9C0\uAE09",
   "settings.debug.menu.breakthroughSet": "\uB3CC\uD30C \uC7AC\uB8CC \uC138\uD2B8 \uC9C0\uAE09",
+  "settings.debug.menu.universalFragments": "\uB9CC\uB2A5 \uD30C\uD3B8 \uC9C0\uAE09 (R\xB7SR\xB7SSR)",
   "settings.debug.menu.unlockStories": "\uC720\uB300 10 \xB7 \uC9C8\uBB38/\uC2A4\uD1A0\uB9AC \uC804\uCCB4 \uAC1C\uBC29",
   "settings.debug.pick.currency": "\uC7AC\uD654 \uC120\uD0DD",
   "settings.debug.pick.amount": "\uC218\uB7C9 \uC120\uD0DD",
@@ -3434,6 +3456,10 @@ function enhanceRune(rune, statKey, valueIncrease, random) {
   assertValidRuneInstance(next);
   return next;
 }
+function runeBatchEnhancementTargets(rune) {
+  if (rune.enhancementComplete) return [];
+  return [...rune.mainStats, ...rune.subStats].flatMap(({ key }) => Array.from({ length: Math.max(0, RUNE_ENHANCEMENT_RULES.attemptsPerOption - (rune.enhancementHistory[key]?.length ?? 0)) }, () => key));
+}
 function canEngraveRune(rune) {
   return rune.enhancementComplete && rune.engravings.length === 0;
 }
@@ -3478,6 +3504,13 @@ function runeEnhancementGoldCost(rarity, completedAttempts) {
   const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
   if (cost === void 0) throw new RangeError("\uBAA8\uB4E0 \uAC15\uD654\uB97C \uB9C8\uCE5C \uB8EC\uC5D0\uB294 \uB2E4\uC74C \uBE44\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
   return cost;
+}
+function runeBatchEnhancementGoldCost(rune) {
+  const remaining = runeBatchEnhancementTargets(rune).length;
+  const done = runeEnhancementAttempts(rune);
+  let total = 0;
+  for (let step2 = 0; step2 < remaining; step2 += 1) total += runeEnhancementGoldCost(rune.rarity, done + step2);
+  return total;
 }
 var STARTER_RUNE_RARITIES = [
   "uncommon",
@@ -3534,9 +3567,9 @@ function runeSellValue(rune) {
 // src/core/rarityScaling.ts
 init_define_import_meta_env();
 var RARITY_LEVEL_GROWTH = {
-  R: 1.8,
-  SR: 2,
-  SSR: 2.2
+  R: 2.2,
+  SR: 2.4,
+  SSR: 2.6
 };
 var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3 };
 var ENEMY_BIRTH_TIERS = {
@@ -3558,8 +3591,19 @@ var BREAKTHROUGH_STEPS = [
 var BREAKTHROUGH_FRAGMENTS = {
   SSR: { step: 1, final: 2 },
   SR: { step: 2, final: 4 },
-  R: { step: 5, final: 10 }
+  R: { step: 4, final: 8 }
 };
+var UNIVERSAL_FRAGMENT_ITEM = {
+  R: "universal-fragment-r",
+  SR: "universal-fragment-sr",
+  SSR: "universal-fragment-ssr"
+};
+function breakthroughFragmentSpend(rarity, breakthrough, own, universal) {
+  const cost = breakthroughFragmentCost(rarity, breakthrough);
+  const fromOwn = Math.min(Math.max(0, own), cost);
+  const fromUniversal = Math.min(Math.max(0, universal), cost - fromOwn);
+  return { own: fromOwn, universal: fromUniversal, enough: fromOwn + fromUniversal >= cost };
+}
 function breakthroughFragmentCost(rarity, breakthrough) {
   const cost = BREAKTHROUGH_FRAGMENTS[rarity];
   return breakthrough >= BREAKTHROUGH_CAP - 1 ? cost.final : cost.step;
@@ -3581,11 +3625,11 @@ function relicLevelCap(breakthrough) {
 function nextBreakthrough(breakthrough) {
   return BREAKTHROUGH_STEPS[breakthrough];
 }
-function canBreakThrough(rarity, progress, fragments, cheesecake2) {
+function canBreakThrough(rarity, progress, fragments, cheesecake2, universal) {
   const step2 = nextBreakthrough(progress.breakthrough);
   if (!step2) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake2 >= step2.cheesecake;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake2 >= step2.cheesecake;
 }
 function openedBreakthroughSlots(breakthrough) {
   return BREAKTHROUGH_STEPS.slice(0, Math.max(0, Math.min(BREAKTHROUGH_CAP, breakthrough))).map((step2) => step2.slot);
@@ -3799,7 +3843,7 @@ var ENCOUNTER_ROLE = {
     percentHpResistance: 30
   }
 };
-var ENEMY_LEVEL_GROWTH_PERCENT = 2;
+var ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
 function enemyLevelMultiplier(level) {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("\uC801 \uB808\uBCA8\uC740 1 \uC774\uC0C1\uC758 \uC815\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
@@ -4313,7 +4357,6 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     butcher: null,
     frostPlume: null,
     frostbite: null,
-    killHaste: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0 : def.passive.kind === "stalkerBlink" ? def.passive.value : 0,
     duoId: null,
@@ -6507,10 +6550,6 @@ function openedBreakthrough(fighter, slot, pick2) {
 function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
-  const haste = attacker.def.passive.killHaste;
-  if (haste && isFighterAlive(attacker)) {
-    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
-  }
   const shallows = attacker.def.basic.shallows;
   if (!useUltimate && victim && shallows && attacker.shallowPools.length > 0 && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "huntChain" && isSubmerged(attacker, victim)) {
     attacker.shallowLeapCount = Math.max(attacker.shallowLeapCount, shallows.leapEveryHits - 1);
@@ -7274,10 +7313,8 @@ function attackSpeedParts(fighter, state) {
   const groggyPercent = fighter.groggy?.attackSpeedPercent ?? 0;
   const sunkenPercent = sunkenSlowPercent(fighter);
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
-  const featherPercent = fighter.def.passive.kind === "featherVeil" ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
-  const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -7455,7 +7492,7 @@ function moveSpeed(fighter, state) {
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
 }
 function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
@@ -10063,11 +10100,6 @@ function advance(state, dt, rng, events) {
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.traitHaste = null;
       else fighter.traitHaste = { ...fighter.traitHaste, remaining };
     }
-    if (isFighterAlive(fighter) && fighter.killHaste) {
-      const remaining = fighter.killHaste.remaining - dt;
-      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.killHaste = null;
-      else fighter.killHaste = { ...fighter.killHaste, remaining };
-    }
     tickShallows(fighter, dt);
     refillTauntHealBudget(fighter, dt);
     if (isFighterAlive(fighter)) events.push(...tickRaiders(fighter, dt, state));
@@ -10597,6 +10629,8 @@ function battleArena(mode) {
 var RANKED_ARENA_RULES = { ban: true, order: "random", placement: "alternate", unique: true };
 var ARENA_SLOTS = [{ x: 0.08, y: 0 }, { x: 0.5, y: 0.32 }, { x: 0.92, y: 0 }];
 var ARENA_HIDDEN_BAN = "?";
+var ARENA_ABSENCE_MS = 2e4;
+var ARENA_SEEN_STEP_MS = 5e3;
 function arenaRules(value) {
   const r = value;
   if (!r || typeof r.ban !== "boolean" || !["first", "second", "random"].includes(r.order) || !["alternate", "hidden"].includes(r.placement) || r.unique !== void 0 && typeof r.unique !== "boolean") throw Error("ARENA_RULES");
@@ -10620,7 +10654,7 @@ function arenaPickable(room, side) {
 }
 function startArena(room, players, now) {
   if (players.length !== 2 || players.some((p) => p.roster.length < (room.rules.ban ? 4 : 3))) throw Error("ARENA_ROSTER");
-  return { ...room, players, phase: room.rules.ban ? "ban" : "place", bans: [null, null], picks: [[], []], locked: [false, false], deadline: now + 45e3 };
+  return { ...room, players, phase: room.rules.ban ? "ban" : "place", bans: [null, null], picks: [[], []], locked: [false, false], deadline: now + 45e3, seen: [now, now] };
 }
 function arenaPosition(p, side) {
   const a = battleArena("liveArena");
@@ -10672,6 +10706,17 @@ function applyArenaAction(source, actor, action, now) {
     r.winner = simultaneous && waiting[0] && waiting[1] ? null : 1 - late;
     r.reason = "timeout";
     return r;
+  }
+  if (r.phase === "ban" || r.phase === "place") {
+    const seen = r.seen ?? [now, now];
+    if (action.kind !== "tick" || now - seen[side] >= ARENA_SEEN_STEP_MS) seen[side] = now;
+    r.seen = seen;
+    if (now - seen[1 - side] >= ARENA_ABSENCE_MS) {
+      r.phase = "done";
+      r.winner = side;
+      r.reason = "forfeit";
+      return r;
+    }
   }
   if (action.kind === "tick") return r;
   if (r.phase === "ban") {
@@ -12624,11 +12669,9 @@ var RELICS = [
       value: 4,
       durationSeconds: 4,
       openingStealthSeconds: 4,
-      // 태생 치명타·공속은 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
+      // 태생 치명타는 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
-      attackSpeedPercent: 20,
-      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
-      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC 4\uCD08 \uB3D9\uC548 \uC740\uC2E0\uD558\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uACFC \uACF5\uACA9 \uC18D\uB3C4\uAC00 \uC624\uB978\uB2E4. \uC801\uC744 \uCC98\uCE58\uD558\uBA74 4\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 \uC624\uB978\uB2E4."
+      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC 4\uCD08 \uB3D9\uC548 \uC740\uC2E0\uD558\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC624\uB978\uB2E4."
     },
     basic: {
       id: "yuti-basic",
@@ -17649,14 +17692,14 @@ init_define_import_meta_env();
 init_define_import_meta_env();
 var DUEL_DIVISION_SPAN = 100;
 var DUEL_TIERS = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 500 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 1e3 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 2e3 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 3e3 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 4e3 }, firstReachGems: 300 },
-  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 5e3 }, firstReachGems: 400 },
-  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 400 }, firstReachGems: 500 },
-  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 500 }, firstReachGems: 700 }
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 300 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1e3 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1500 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2e3 }, firstReachGems: 300 },
+  { id: "master", floor: 2e3, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2500 }, firstReachGems: 400 },
+  { id: "grandmaster", floor: 2400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1100, gems: 3e3 }, firstReachGems: 500 },
+  { id: "challenger", floor: 2800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1400, gems: 3500 }, firstReachGems: 700 }
 ];
 var DUEL_MAX_BLIND = 2;
 var DUEL_START_SCORE = 0;
@@ -18117,7 +18160,7 @@ function pickupPools(pickups) {
   );
 }
 var AMBER_PICKUP = { SSR: ["dian"] };
-var STANDARD_SLOT_RATES = { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 };
+var STANDARD_SLOT_RATES = { R: 0.2, SR: 0.04, SSR: 0.01, GRAY: 0.75 };
 var STANDARD_GRAY_REWARDS = [
   { kind: "gold", min: 4e3, max: 1e4, weight: 2 },
   { kind: "cheesecake", min: 60, max: 150, weight: 1 }
@@ -18567,6 +18610,11 @@ var ITEMS = [
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
   { id: "duel-ticket", name: "\uACB0\uD22C \uB3C4\uC804\uAD8C", description: "\uACB0\uD22C\uC7A5\uC5D0\uC11C \uC0C1\uB300\uC5D0\uAC8C \uB3C4\uC804\uD560 \uB54C \uD55C \uC7A5 \uC501\uB2C8\uB2E4. \uB9E4\uC77C \uB2E4\uC12F \uC7A5\uC774 \uCC44\uC6CC\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 한계 돌파의 **만능 파편** — 등급마다 하나다. 그 개체의 파편이 모자랄 때만 같은 등급 렐릭의 돌파에서 모자란
+  // 몫을 채운다(`breakthroughFragmentSpend`). 그림은 파편 액자 그대로이고 얼굴 자리에 누구의 것도 아닌 실루엣이 선다.
+  { id: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "\uC5B4\uB290 R \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", description: "\uC5B4\uB290 SR \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-sr" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-ssr", name: "\uB9CC\uB2A5 SSR \uD30C\uD3B8", description: "\uC5B4\uB290 SSR \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-ssr" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
@@ -18697,7 +18745,7 @@ init_define_import_meta_env();
 var NOW = Date.now();
 var SAMPLE_FRIENDS = [
   // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaTier: { tierId: "gold-2", displayName: "\uACE8\uB4DC II" }, expeditionScore: 18420 } },
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420 } },
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
   { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
 ];
@@ -18708,7 +18756,6 @@ for (const friend of PREVIEW_FRIENDS) {
 for (const friend of PREVIEW_FRIENDS) {
   const stats = friend.competitiveStats;
   if (stats.highestStage) registerDataText(stats.highestStage, "displayValue", `friend.${friend.id}.highestStage`);
-  if (stats.arenaTier) registerDataText(stats.arenaTier, "displayName", `friend.${friend.id}.arenaTier`);
 }
 
 // src/core/raid.ts
@@ -18882,12 +18929,12 @@ init_define_import_meta_env();
 // src/data/competitiveRewards.ts
 init_define_import_meta_env();
 var WEEKLY_RANK_GEMS = [
-  { upTo: 1, gems: 5e3 },
-  { upTo: 3, gems: 4e3 },
-  { upTo: 10, gems: 3e3 },
-  { upTo: 50, gems: 2e3 },
-  { upTo: 100, gems: 1500 },
-  { upTo: null, gems: 800 }
+  { upTo: 1, gems: 3e3 },
+  { upTo: 3, gems: 2500 },
+  { upTo: 10, gems: 2e3 },
+  { upTo: 50, gems: 1500 },
+  { upTo: 100, gems: 1e3 },
+  { upTo: null, gems: 500 }
 ];
 
 // src/data/expedition.ts
@@ -19445,9 +19492,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 16, gold: 12, deep: 10 }, min: 150, max: 400 },
-      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 4, max: 12 },
+      { kind: "rawStone", weight: { soil: 14, teal: 10, gold: 8, deep: 8 }, min: 6, max: 18 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 16, deep: 12 }, min: 400, max: 1200 },
-      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 14, max: 44 },
+      { kind: "rawStone", weight: { soil: 22, teal: 30, gold: 26, deep: 22 }, min: 21, max: 66 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 40, max: 120 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19469,9 +19516,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 18, teal: 14, gold: 10, deep: 8 }, min: 200, max: 500 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 14 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 12, max: 21 },
       { kind: "gold", weight: { soil: 25, teal: 22, gold: 18, deep: 14 }, min: 600, max: 1500 },
-      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 20, max: 52 },
+      { kind: "rawStone", weight: { soil: 25, teal: 32, gold: 30, deep: 26 }, min: 30, max: 78 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 50, max: 140 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19499,9 +19546,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 20, teal: 15, gold: 11, deep: 9 }, min: 180, max: 450 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 8, max: 14 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 7 }, min: 12, max: 21 },
       { kind: "gold", weight: { soil: 26, teal: 22, gold: 18, deep: 14 }, min: 500, max: 1300 },
-      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 16, max: 48 },
+      { kind: "rawStone", weight: { soil: 24, teal: 32, gold: 28, deep: 24 }, min: 24, max: 72 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 45, max: 130 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19528,9 +19575,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 16, teal: 13, gold: 9, deep: 7 }, min: 250, max: 600 },
-      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 8, max: 16 },
+      { kind: "rawStone", weight: { soil: 12, teal: 9, gold: 7, deep: 6 }, min: 12, max: 24 },
       { kind: "gold", weight: { soil: 24, teal: 21, gold: 18, deep: 13 }, min: 800, max: 1800 },
-      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 22, max: 58 },
+      { kind: "rawStone", weight: { soil: 26, teal: 33, gold: 32, deep: 28 }, min: 33, max: 87 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 60, max: 170 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19551,9 +19598,9 @@ var STRATA_LAYERS = [
     rewards: [
       // 꽝은 없다 — 빈 흙 자리를 소량의 골드·원석이 메운다.
       { kind: "gold", weight: { soil: 14, teal: 11, gold: 8, deep: 6 }, min: 300, max: 700 },
-      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 10, max: 20 },
+      { kind: "rawStone", weight: { soil: 11, teal: 9, gold: 7, deep: 6 }, min: 15, max: 30 },
       { kind: "gold", weight: { soil: 22, teal: 20, gold: 16, deep: 12 }, min: 900, max: 2e3 },
-      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 24, max: 62 },
+      { kind: "rawStone", weight: { soil: 28, teal: 34, gold: 34, deep: 30 }, min: 36, max: 93 },
       { kind: "cheesecake", weight: { soil: 10, teal: 10, gold: 9, deep: 8 }, min: 80, max: 220 },
       // **화석·호박석 칸은 한 개씩만 나온다.** 한 개가 곧 한 번이라(배너의 `costOne`), 수량을 1로 두고
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
@@ -19909,6 +19956,10 @@ function createDefaultSession() {
       { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(/* @__PURE__ */ new Date(), 7) }] },
       { itemId: "raid-ticket", quantity: 3 },
       { itemId: "raid-select-ticket", quantity: 1 },
+      // 만능 파편은 돌파 확정 창에서 「함께 소모」를 바로 확인해 볼 수 있게 등급마다 넉넉히 둔다.
+      { itemId: "universal-fragment-r", quantity: 10 },
+      { itemId: "universal-fragment-sr", quantity: 10 },
+      { itemId: "universal-fragment-ssr", quantity: 10 },
       ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry }))
     ] : [],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
@@ -24097,7 +24148,7 @@ var CHAPTER_423 = {
   startNodeId: "n1",
   titleCard: { title: "\uC18C\uD30C \uB2E4\uC74C\uC73C\uB85C", subtitle: "\uB8E8\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 1" },
   nodes: [
-    { id: "n1", speaker: "", body: "\uC624\uD6C4\uC758 \uC5F0\uAD6C\uC18C \uD734\uAC8C\uC2E4. \uC18C\uD30C \uD558\uB098\uB97C \uD1B5\uC9F8\uB85C \uCC28\uC9C0\uD55C \uB8E8\uCE74\uAC00 \uC0C1\uC5B4 \uD6C4\uB4DC\uB97C \uB4A4\uC9D1\uC5B4\uC4F4 \uCC44 \uAE38\uAC8C \uB204\uC6CC \uC788\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uC11C\uB958\uB97C \uD55C \uC544\uB984 \uC548\uACE0 \uC9C0\uB098\uAC00\uC790 \uD6C4\uB4DC \uC18D\uC5D0\uC11C \uB208\uC774 \uBC18\uCBE4 \uB5A0\uC9C4\uB2E4.", nextId: "n2" },
+    { id: "n1", speaker: "", body: "\uC624\uD6C4\uC758 \uC5F0\uAD6C\uC18C \uD734\uAC8C\uC2E4. \uC18C\uD30C \uD558\uB098\uB97C \uD1B5\uC9F8\uB85C \uCC28\uC9C0\uD55C \uB8E8\uCE74\uAC00 \uD6C4\uB4DC\uB97C \uB4A4\uC9D1\uC5B4\uC4F4 \uCC44 \uAE38\uAC8C \uB204\uC6CC \uC788\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uC11C\uB958\uB97C \uD55C \uC544\uB984 \uC548\uACE0 \uC9C0\uB098\uAC00\uC790 \uD6C4\uB4DC \uC18D\uC5D0\uC11C \uB208\uC774 \uBC18\uCBE4 \uB5A0\uC9C4\uB2E4.", nextId: "n2" },
     { id: "n2", speaker: "\uB8E8\uCE74", body: "\uC5B4, \uC5F0\uAD6C\uC6D0\uB2D8. \uBC14\uBE60 \uBCF4\uC774\uB124. \uB2EC\uB9AC\uB294 \uAC74 \uC790\uC2E0 \uC788\uC5B4. \uC18C\uD30C \uB2E4\uC74C\uC73C\uB85C. \uADF8\uB7EC\uB2C8\uAE4C \uBB50 \uAE09\uD55C \uC2EC\uBD80\uB984 \uC788\uC73C\uBA74 \uB9D0\uD574.", nextId: "n3" },
     { id: "n3", speaker: "", body: "\uB8E8\uCE74\uAC00 \uAF2C\uB9AC\uB85C \uC18C\uD30C \uAC00\uC7A5\uC790\uB9AC\uB97C \uD1A1\uD1A1 \uB450\uB4DC\uB9B0\uB2E4. \uD55C\uCABD \uC790\uB9AC\uB97C \uBE44\uC6CC \uB450\uACA0\uB2E4\uB294 \uC2E0\uD638\uB2E4. \uADF8 \uC606\uC5D0 \uB3C4\uB514\uAC00 \uC774\uBBF8 \uC9C0\uCCD0\uC11C \uC4F0\uB7EC\uC838 \uC788\uB2E4.", nextId: "n4" },
     { id: "n4", speaker: "\uB3C4\uB514", body: "\uB8E8\uCE74\uAC00 \uC2EC\uBD80\uB984\uC774\uB77C\uACE0 \uD558\uBA74 \uC2EC\uBD80\uB984\uC774 \uC21C\uC2DD\uAC04\uC5D0 \uB05D\uB098. \uADFC\uB370 \uB05D\uB098\uACE0 \uB098\uBA74 \uC18C\uD30C \uC55E\uC5D0\uC11C \uC548 \uB098\uC640.", nextId: "n5" },
@@ -24149,7 +24200,7 @@ var CHAPTER_823 = {
     ] },
     { id: "n6a", speaker: "\uB8E8\uCE74", body: "\uACE0\uB9C8\uC6CC. \uC774\uB807\uAC8C \uD558\uBA74 \uB3FC. \uC9E7\uAC8C \uB2EC\uB9AC\uACE0 \uC228 \uACE0\uB974\uACE0, \uB610 \uC9E7\uAC8C \uB2EC\uB9AC\uACE0. \uB05D\uAE4C\uC9C0 \uAC00\uB294 \uBC29\uBC95\uC740 \uD558\uB098\uAC00 \uC544\uB2C8\uAC70\uB4E0.", nextId: "n7" },
     { id: "n6b", speaker: "\uB8E8\uCE74", body: "\uC138\uC5B4 \uC918. \uC5F4 \uAC78\uC74C\uC529 \uB04A\uC5B4\uC11C \uAC08 \uAC70\uC57C. \uB0B4\uAC00 \uBABB \uD558\uB294 \uAC74 \uC5F0\uAD6C\uC6D0\uB2D8 \uC22B\uC790\uAC00 \uB300\uC2E0\uD574 \uC8FC\uB294 \uAC70\uC9C0.", nextId: "n7" },
-    { id: "n7", speaker: "", body: "\uB8E8\uCE74\uAC00 \uB3C4\uB514\uB97C \uC5C5\uACE0 \uC5F4 \uAC78\uC74C\uC744 \uB2EC\uB9B0\uB2E4. \uBA48\uCDB0\uC11C \uC228\uC744 \uACE0\uB974\uACE0 \uB2E4\uC2DC \uC5F4 \uAC78\uC74C. \uD2B8\uB799\uC774 \uC870\uAE08\uC529 \uC904\uC5B4\uB4E0\uB2E4. \uB540\uBC29\uC6B8\uC774 \uC0C1\uC5B4 \uD6C4\uB4DC \uC704\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", nextId: "n8" },
+    { id: "n7", speaker: "", body: "\uB8E8\uCE74\uAC00 \uB3C4\uB514\uB97C \uC5C5\uACE0 \uC5F4 \uAC78\uC74C\uC744 \uB2EC\uB9B0\uB2E4. \uBA48\uCDB0\uC11C \uC228\uC744 \uACE0\uB974\uACE0 \uB2E4\uC2DC \uC5F4 \uAC78\uC74C. \uD2B8\uB799\uC774 \uC870\uAE08\uC529 \uC904\uC5B4\uB4E0\uB2E4. \uB540\uBC29\uC6B8\uC774 \uD6C4\uB4DC \uC704\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", nextId: "n8" },
     { id: "n8", speaker: "\uB3C4\uB514", body: "\uB8E8\uCE74, \uC9C0\uAE08 \uC5C4\uCCAD \uBE68\uB77C. \uC548 \uBB34\uAC81\uC9C0? \uB0B4\uAC00 \uB0B4\uB824\uAC08\uAE4C?", nextId: "n9" },
     { id: "n9", speaker: "\uB8E8\uCE74", body: "\uC548 \uBB34\uAC70\uC6CC. \uAC71\uC815 \uB9C8. \uC624\uD788\uB824 \uB204\uAC00 \uB4F1\uC5D0 \uC788\uC73C\uBA74 \uB354 \uC798 \uB2EC\uB824. \uC774\uC720\uB294 \uB098\uB3C4 \uBAA8\uB974\uACA0\uC9C0\uB9CC.", nextId: "n10" },
     { id: "n10", speaker: "\uB8E8\uCE74", body: "\uACB0\uC2B9\uC120 \uB3C4\uCC29. \uC5F0\uAD6C\uC6D0\uB2D8, \uBD24\uC9C0? \uB098 \uC624\uB298 \uD55C \uBC14\uD034 \uC644\uC8FC\uD588\uC5B4. \uC5F4 \uAC78\uC74C \uACF1\uD558\uAE30 \uB9C8\uD754 \uBC88\uC774\uC57C. \uC22B\uC790\uB294 \uD2C0\uB9AC\uC9C0 \uC54A\uC544." }
@@ -24160,7 +24211,7 @@ var CHAPTER_1023 = {
   startNodeId: "n1",
   titleCard: { title: "\uACB0\uC2B9\uC120\uC5D0 \uC11C \uC788\uB294 \uC0AC\uB78C", subtitle: "\uB8E8\uCE74 \xB7 \uC560\uCC29 \uC774\uC57C\uAE30 4" },
   nodes: [
-    { id: "n1", speaker: "", body: "\uD574 \uC9C8 \uB158\uC758 \uC625\uC678 \uD2B8\uB799. \uC624\uB298\uC740 \uC5F0\uAD6C\uC6D0\uC774 \uACB0\uC2B9\uC120 \uCABD\uC5D0 \uC11C \uC788\uACE0, \uB8E8\uCE74\uB294 \uBC18\uB300\uD3B8 \uCD9C\uBC1C\uC120\uC5D0\uC11C \uBAB8\uC744 \uD480\uACE0 \uC788\uB2E4. \uC0C1\uC5B4 \uD6C4\uB4DC\uB294 \uBC97\uC5B4\uC11C \uC5F0\uAD6C\uC6D0 \uC5B4\uAE68\uC5D0 \uAC78\uCCD0 \uB454 \uCC44\uB2E4.", nextId: "n2" },
+    { id: "n1", speaker: "", body: "\uD574 \uC9C8 \uB158\uC758 \uC625\uC678 \uD2B8\uB799. \uC624\uB298\uC740 \uC5F0\uAD6C\uC6D0\uC774 \uACB0\uC2B9\uC120 \uCABD\uC5D0 \uC11C \uC788\uACE0, \uB8E8\uCE74\uB294 \uBC18\uB300\uD3B8 \uCD9C\uBC1C\uC120\uC5D0\uC11C \uBAB8\uC744 \uD480\uACE0 \uC788\uB2E4. \uD6C4\uB4DC\uB294 \uBC97\uC5B4\uC11C \uC5F0\uAD6C\uC6D0 \uC5B4\uAE68\uC5D0 \uAC78\uCCD0 \uB454 \uCC44\uB2E4.", nextId: "n2" },
     { id: "n2", speaker: "\uB8E8\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC624\uB298\uC740 \uB2E8\uAC70\uB9AC\uC57C. \uADF8\uAC83\uB3C4 \uC81C\uC77C \uAE34 \uB2E8\uAC70\uB9AC. \uC800\uCABD \uB05D\uAE4C\uC9C0 \uC26C\uC9C0 \uC54A\uACE0 \uB2EC\uB9B4 \uAC70\uC57C!", nextId: "n3" },
     { id: "n3", speaker: "", body: "\uD2B8\uB799 \uBC18\uB300\uD3B8\uC5D0\uC11C \uB8E8\uCE74\uAC00 \uC190\uC744 \uD754\uB4E0\uB2E4. \uAC70\uB9AC\uAC00 \uBA40\uC5B4\uC11C \uC5BC\uAD74\uC774 \uC791\uAC8C \uBCF4\uC778\uB2E4. \uD558\uC9C0\uB9CC \uAF2C\uB9AC\uAC00 \uB192\uC774 \uCE58\uCF1C\uB4E4\uB9B0 \uAC83\uC740 \uB610\uB837\uC774 \uBCF4\uC778\uB2E4.", nextId: "n4" },
     { id: "n4", speaker: "\uC5F0\uAD6C\uC6D0", body: "(\uD6C4\uB4DC\uC5D0\uC11C\uB294 \uC18C\uD30C\uC758 \uB530\uB73B\uD55C \uB0C4\uC0C8\uAC00 \uB09C\uB2E4. \uB8E8\uCE74\uAC00 \uB9E4\uC77C \uC26C\uB358 \uC790\uB9AC\uC5D0\uC11C \uB098\uB294 \uB0C4\uC0C8\uB2E4.)", nextId: "n5" },
@@ -24201,7 +24252,7 @@ var LUKA_STORY = {
         },
         {
           id: "hood",
-          label: "\uC0C1\uC5B4 \uD6C4\uB4DC\uB294 \uC65C \uB298 \uC4F0\uACE0 \uC788\uB290\uB0D0\uACE0 \uBB3B\uB294\uB2E4",
+          label: "\uD6C4\uB4DC\uB294 \uC65C \uB298 \uC4F0\uACE0 \uC788\uB290\uB0D0\uACE0 \uBB3B\uB294\uB2E4",
           reply: "\uBA38\uB9AC\uB97C \uB36E\uC73C\uBA74 \uC18C\uB9AC\uAC00 \uC791\uC544\uC838. \uADF8\uB7FC \uC548\uC2EC\uC774 \uB3FC. \uC274 \uB550 \uC138\uC0C1\uC774 \uC870\uAE08 \uBA40\uC5B4\uC9C0\uB294 \uAC8C \uC88B\uC544.",
           note: "\uD6C4\uB4DC\uB97C \uBB3B\uC790 \uAC00\uC7A5\uC790\uB9AC\uB97C \uAF2D \uC950\uC5C8\uB2E4. \uC274 \uB54C\uB294 \uC138\uC0C1\uC774 \uC870\uAE08 \uBA40\uC5B4\uC9C0\uB294 \uB290\uB08C\uC774 \uC88B\uB2E4\uACE0 \uD55C\uB2E4."
         }
@@ -24255,7 +24306,7 @@ var LUKA_STORY = {
     // 0 — 낯선 사이.
     ["\uCC98\uC74C \uBCF4\uB124. \uB8E8\uCE74\uC57C. \uB2EC\uB9AC\uB294 \uAC74 \uC790\uC2E0 \uC788\uC5B4. \uC18C\uD30C \uB2E4\uC74C\uC73C\uB85C.", "\uC5F0\uAD6C\uC6D0\uB2D8\uC774\uB77C\uACE0 \uBD80\uB974\uBA74 \uB3FC? \uD3B8\uD558\uAC8C \uBD88\uB7EC. \uB098\uB294 \uB300\uCDA9 \uB300\uB2F5\uD574\uB3C4 \uC774\uD574\uD574 \uC918.", "\uC2EC\uBD80\uB984 \uD544\uC694\uD558\uBA74 \uB9D0\uD574. \uC774\uC2ED \uCD08\uBA74 \uB05D\uB098. \uB300\uC2E0 \uB05D\uB098\uACE0 \uC26C\uAC8C \uD574 \uC918."],
     // 1
-    ["\uC624\uB298\uC740 \uC18C\uD30C\uAC00 \uB530\uB73B\uD574. \uC77C\uC5B4\uB098\uAE30 \uC2EB\uC740 \uB0A0\uC774\uC57C. \uD558\uC9C0\uB9CC \uBD80\uB974\uBA74 \uAC08\uAC8C.", "\uCE58\uC988\uCF00\uC774\uD06C \uC788\uC5B4? \uAC71\uC815\uBD80\uD130 \uD558\uACE0 \uBA39\uC744\uAC8C. \uC21C\uC11C\uAC00 \uC911\uC694\uD558\uAC70\uB4E0.", "\uC0C1\uC5B4 \uD6C4\uB4DC \uC4F0\uBA74 \uC878\uB824. \uADFC\uB370 \uC878\uB824\uB3C4 \uB2EC\uB9B4 \uB550 \uAE68. \uC2E0\uAE30\uD558\uC9C0?"],
+    ["\uC624\uB298\uC740 \uC18C\uD30C\uAC00 \uB530\uB73B\uD574. \uC77C\uC5B4\uB098\uAE30 \uC2EB\uC740 \uB0A0\uC774\uC57C. \uD558\uC9C0\uB9CC \uBD80\uB974\uBA74 \uAC08\uAC8C.", "\uCE58\uC988\uCF00\uC774\uD06C \uC788\uC5B4? \uAC71\uC815\uBD80\uD130 \uD558\uACE0 \uBA39\uC744\uAC8C. \uC21C\uC11C\uAC00 \uC911\uC694\uD558\uAC70\uB4E0.", "\uD6C4\uB4DC \uC4F0\uBA74 \uC878\uB824. \uADFC\uB370 \uC878\uB824\uB3C4 \uB2EC\uB9B4 \uB550 \uAE68. \uC2E0\uAE30\uD558\uC9C0?"],
     // 2
     ["\uC26C\uB294 \uAC83\uB3C4 \uC77C\uC774\uC57C. \uC774\uAC78 \uC774\uD574\uD574 \uC8FC\uB294 \uC0AC\uB78C\uC774 \uC801\uC5B4. \uC5F0\uAD6C\uC6D0\uB2D8\uC740 \uC774\uD574\uD574 \uC918\uC11C \uC88B\uC544.", "\uC624\uB298 \uBCF5\uB3C4 \uC138 \uBC14\uD034 \uB6F0\uC5C8\uC5B4. \uC774\uC2ED \uCD08\uC529. \uC774 \uC815\uB3C4\uBA74 \uC624\uB298 \uD560 \uC77C\uC740 \uB2E4 \uD55C \uAC70\uC57C.", "\uB3C4\uB514\uAC00 \uB0B4 \uB4A4\uB97C \uCAD3\uC544\uC624\uB294\uB370 \uD55C \uBC88\uB3C4 \uBABB \uC7A1\uC558\uC5B4. \uADFC\uB370 \uACC4\uC18D \uCAD3\uC544\uC640. \uB300\uB2E8\uD574."],
     // 3
@@ -25656,7 +25707,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 10,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 30 }],
+    rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 6 }],
     clueJournalId: "interaction-doppel-01",
     illustration: "background-interaction-doppel-parlor"
   },
@@ -25671,7 +25722,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 30,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 800, max: 1800 }, { currency: "cheesecake", min: 1, max: 3 }, { currency: "rawStone", min: 0, max: 100 }],
+    rewards: [{ currency: "gold", min: 800, max: 1800 }, { currency: "cheesecake", min: 1, max: 3 }, { currency: "rawStone", min: 0, max: 20 }],
     clueJournalId: "interaction-doppel-lab-01",
     illustration: "background-interaction-doppel-lab"
   },
@@ -25685,7 +25736,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 240,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gems", min: 10, max: 30 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
     clueJournalId: "interaction-doppel-office-01",
     illustration: "background-interaction-doppel-office"
   },
@@ -25699,7 +25750,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 60,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 1500, max: 3500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 200 }],
+    rewards: [{ currency: "gold", min: 1500, max: 3500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 40 }],
     clueJournalId: "interaction-rust-garage-01",
     illustration: "background-interaction-rust-garage"
   },
@@ -25713,7 +25764,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 3500, max: 7500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 450 }],
+    rewards: [{ currency: "gems", min: 10, max: 50 }, { currency: "gold", min: 3500, max: 7500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
     clueJournalId: "interaction-rust-lease-01",
     illustration: "background-interaction-rust-lease"
   },
@@ -25728,7 +25779,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-doppel-upper-01",
     illustration: "background-interaction-doppel-upper"
   },
@@ -25743,7 +25794,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4500, max: 1e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4500, max: 1e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-rust-works-01",
     illustration: "background-interaction-rust-works"
   },
@@ -25758,7 +25809,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "gems", min: 0, max: 1 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-odidi-embassy-01",
     illustration: "background-interaction-odidi-embassy"
   }
@@ -28212,7 +28263,7 @@ function cloneProfile(friend) {
     competitiveStats: {
       ...friend.competitiveStats,
       highestStage: friend.competitiveStats.highestStage ? { ...friend.competitiveStats.highestStage } : void 0,
-      arenaTier: friend.competitiveStats.arenaTier ? { ...friend.competitiveStats.arenaTier } : void 0
+      arenaScore: friend.competitiveStats.arenaScore
     }
   };
 }
@@ -28768,6 +28819,10 @@ var REWARD_PRIORITY = [
   "duelEmblem",
   "raidSigil",
   "salvageRecord",
+  // 단품 — 만능 파편은 렐릭 파편과 같은 돌파 재료라 그 바로 앞이다.
+  "universal-fragment-ssr",
+  "universal-fragment-sr",
+  "universal-fragment-r",
   // 단품 — 파편·룬·장식은 재화가 아니라 한 점씩 받는 물건이라 가장 마지막이다
   "relicFragment",
   "rune",
@@ -29446,6 +29501,9 @@ var MILEAGE_PRODUCTS = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 150, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8 1\uAC1C", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
+  // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
+  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 SR \uD30C\uD3B8", "\uB9CC\uB2A5 SR \uD30C\uD3B8 1\uAC1C", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 1 }]),
+  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 R \uD30C\uD3B8", "\uB9CC\uB2A5 R \uD30C\uD3B8 1\uAC1C", 20, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }]),
   mileage("mileage-weekly-amber", "weekly", "shop-product-amber", "\uD638\uBC15\uC11D \uBC18\uCD9C", "\uD638\uBC15\uC11D 1\uAC1C", 5, 10, [{ kind: "currency", currency: "amber", amount: 1 }]),
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "\uD654\uC11D \uBC18\uCD9C", "\uD654\uC11D 1\uAC1C", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "\uACE0\uB18D\uCD95 \uC74C\uB8CC \uBC18\uCD9C", "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+ 2\uAC1C", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 2, expiresInDays: 7 }]),
@@ -29515,6 +29573,8 @@ var SHOP_PRODUCTS = [
    * 젬 1 = 치즈케이크 2 = 골드 500)에서 일일은 100~105%, 특가는 107~156%다.
    */
   { id: "shop-tonic-pack", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 만능 R 파편 — 주간 한 개, **아주 비싼 골드**로만 판다. R 파편 시세(마일리지 10 ≈ 젬 600 ≈ 골드 30만)의 2배다.
+  { id: "shop-universal-r", storefront: "shop", category: "special", iconKey: "shop-product-enhancement", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "", acquisition: { kind: "currency", currency: "gold", amount: 6e5 }, grants: [{ kind: "item", itemId: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-large-pack", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
   // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시
@@ -29525,8 +29585,8 @@ var SHOP_PRODUCTS = [
   // 길」은 열되 그것이 가장 좋은 환전이 되지 않게 한다. 화석·호박석은 연구 한 번(젬 300)이 기준이고 두 연구의 확률·회색 보상이 같으므로 값도 같다(2,500). 주간 한 개씩만 연다.
   { id: "arch-gold-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "\uACE8\uB4DC", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 250 }, grants: [{ kind: "currency", currency: "gold", amount: 3e4 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-cheesecake-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "\uCE58\uC988\uCF00\uC774\uD06C", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 150 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "arch-fossil-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD654\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "arch-amber-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD638\uBC15\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-fossil-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD654\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-amber-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD638\uBC15\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-ancient-core", storefront: "archaeology", category: "weekly", iconKey: "shop-product-ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 600 }, grants: [{ kind: "item", itemId: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", amount: 1 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-refined-core", storefront: "archaeology", category: "special", iconKey: "shop-product-refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "item", itemId: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-restoration-crystal", storefront: "archaeology", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 4500 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -29559,6 +29619,16 @@ var SHOP_PRODUCTS = [
   { id: "shop-rune-weekly", storefront: "shop", category: "special", iconKey: "shop-product-rune", name: "\uD76C\uADC0 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "gold", amount: 135e3 }, grants: [{ kind: "rune", name: "\uD76C\uADC0 \uB8EC", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "shop-weekly" },
   { id: "raid-rune-weekly", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-rune", name: "\uC601\uC6C5 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "raidSigil", amount: 550 }, grants: [{ kind: "rune", name: "\uC601\uC6C5 \uB8EC", amount: 1, rarity: "epic" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "raid-weekly" },
   { id: "loot-rune-weekly", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-rune", name: "\uD76C\uADC0 \uB8EC", description: "\uC635\uC158 \uBB34\uC791\uC704", acquisition: { kind: "currency", currency: "salvageRecord", amount: 220 }, grants: [{ kind: "rune", name: "\uD76C\uADC0 \uB8EC", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "loot-weekly" },
+  // **고고학 재화를 전리품 상점에서도 판다.** 열심히 돈 만큼 더 사게 화석·호박석은 주 5회, 랜덤 룬은 고고학처럼 일간 3회로 넉넉히 열고, 값은 고고학 원석값에서
+  // 증표·기록 시세(룬 값 기준 원석 1 ≈ 증표 0.18 ≈ 기록 0.24)로 환산한 뒤 조금 깎았다 — 레이드·원정이 애매한 만큼 이득을 준다.
+  // **한도는 전부 살 수 있다는 전제가 아니다.** 최대치가 과한 지급이어도 증표·기록 수입이 먼저 막는 표이고, 다 사더라도 다른 곳을 포기하고 몰아준 몫이라
+  // 버그가 아니라 플레이 전략의 선택으로 읽는다(CLAUDE.md '반복 보상 인플레이션 승인선').
+  { id: "raid-fossil-exchange", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-supplies", name: "\uD654\uC11D", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 420 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-amber-exchange", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-supplies", name: "\uD638\uBC15\uC11D", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 420 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-rune-random", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-supplies", name: "\uB79C\uB364 \uB8EC", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 250 }, grants: [{ kind: "rune", name: "\uB79C\uB364 \uB8EC", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-fossil-exchange", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-supplies", name: "\uD654\uC11D", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 560 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-amber-exchange", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-supplies", name: "\uD638\uBC15\uC11D", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 560 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-rune-random", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "\uB79C\uB364 \uB8EC", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 340 }, grants: [{ kind: "rune", name: "\uB79C\uB364 \uB8EC", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **무역은 교환소가 아니라 패키지 전시장이다.** 일반 상점이 화석·호박석으로 보급품을 사는
   // 상시 진열대라면, 무역은 그때그때 운영이 올려 두는 **묶음 하나하나를 전시**하는 자리다 —
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.
@@ -29946,6 +30016,12 @@ function applyDebugCommand(target, command, rules) {
       if (cost.fragments === 0 && cost.cheesecake === 0) return 0;
       target.relicFragments[command.relicId] = (target.relicFragments[command.relicId] ?? 0) + cost.fragments;
       target.wallet.cheesecake = Math.min(rules.walletCaps.cheesecake, target.wallet.cheesecake + cost.cheesecake);
+      return 1;
+    }
+    case "universalFragments": {
+      const amount = integer(command.amount, 0, 999);
+      if (amount === 0) return 0;
+      for (const itemId of Object.values(UNIVERSAL_FRAGMENT_ITEM)) target.itemGrants[itemId] = (target.itemGrants[itemId] ?? 0) + amount;
       return 1;
     }
     case "unlockStories": {
@@ -30442,6 +30518,27 @@ init_define_import_meta_env();
 
 // src/state/playerProfile.ts
 init_define_import_meta_env();
+
+// src/core/arenaStanding.ts
+init_define_import_meta_env();
+var ARENA_TIERS = [
+  { id: "bronze", floor: 0, weeklyReward: { duelEmblem: 100, gems: 200 } },
+  { id: "silver", floor: 1100, weeklyReward: { duelEmblem: 150, gems: 300 } },
+  { id: "gold", floor: 1300, weeklyReward: { duelEmblem: 200, gems: 500 } },
+  { id: "platinum", floor: 1500, weeklyReward: { duelEmblem: 300, gems: 600 } },
+  { id: "diamond", floor: 1800, weeklyReward: { duelEmblem: 400, gems: 800 } },
+  { id: "master", floor: 2100, weeklyReward: { duelEmblem: 500, gems: 1e3 } }
+];
+var ARENA_WEEKLY_RANK_GEMS = [
+  { upTo: 1, gems: 2500 },
+  { upTo: 3, gems: 2e3 },
+  { upTo: 10, gems: 1500 },
+  { upTo: 50, gems: 1e3 },
+  { upTo: 100, gems: 500 },
+  { upTo: null, gems: 0 }
+];
+
+// src/state/playerProfile.ts
 function favoriteShowcase(state) {
   const relic = RELICS.find(({ id }) => id === state.favorite);
   if (!relic) return null;
@@ -30469,7 +30566,7 @@ function profileAvatarRelic(state) {
   const relic = RELICS.find(({ id }) => id === chosen);
   return relic ? { relicId: relic.id, portraitAssetId: relic.portraitAssetId } : null;
 }
-function playerProfileDisplay(state, equippedModifiers = [], arenaTier, now = /* @__PURE__ */ new Date()) {
+function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__PURE__ */ new Date()) {
   const favorite = favoriteShowcase(state);
   const stage = highestClearedStage(STAGES, state.cleared);
   const card = state.playerCard;
@@ -30491,7 +30588,7 @@ function playerProfileDisplay(state, equippedModifiers = [], arenaTier, now = /*
     researchDays: researchDays(card.createdAt, now),
     competitiveStats: {
       favoriteRelic: favorite,
-      ...arenaTier ? { arenaTier: { ...arenaTier } } : {},
+      ...arena ? { arena: { ...arena } } : {},
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
@@ -31137,6 +31234,10 @@ var InventoryManager = class {
   /** 한 옵션을 서버 난수로 한 번 세공한다. */
   async enhanceRune(api, instanceId, statId) {
     return this.applyRuneMutation(await api.enhanceRune({ runeInstanceId: instanceId, statId }));
+  }
+  /** 남은 세공을 위 줄부터 전부 한 번에 돌린다. */
+  async enhanceRuneAll(api, instanceId) {
+    return this.applyRuneMutation(await api.enhanceRuneAll({ runeInstanceId: instanceId }));
   }
   /** 모든 세공을 마친 룬에 한 번뿐인 각인을 새긴다. */
   async engraveRune(api, instanceId, statId) {
@@ -32830,7 +32931,8 @@ var FakeServer = class {
       relicFragments: { ...this.state.relicFragments },
       relicStory: { ...this.state.relicStory },
       playerResearch: { ...this.state.playerResearch },
-      cleared: new Set(this.state.cleared)
+      cleared: new Set(this.state.cleared),
+      itemGrants: {}
     };
     const changed = applyDebugCommand(patch, command, {
       walletCaps: WALLET_CAPS,
@@ -32840,7 +32942,10 @@ var FakeServer = class {
       bondXpFirstAcquisition: BOND_XP_REWARD.firstAcquisition
     });
     if (changed > 0) {
-      const candidate = { ...this.state, ...patch };
+      const { itemGrants, ...rest } = patch;
+      let itemInventory = this.state.itemInventory;
+      for (const [itemId, amount] of Object.entries(itemGrants)) itemInventory = this.grantItem(itemInventory, itemId, amount, this.now()).inventory;
+      const candidate = { ...this.state, ...rest, itemInventory };
       redeemDeferredStoryBond(candidate, [...candidate.owned].filter((id) => !this.state.owned.has(id)));
       this.persist(candidate);
       Object.assign(this.state, candidate);
@@ -33493,17 +33598,22 @@ var FakeServer = class {
     if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uB808\uBCA8\uC744 \uC0C1\uD55C\uAE4C\uC9C0 \uC62C\uB824\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     const held = this.state.relicFragments[relicId] ?? 0;
     const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
-    const fragmentCost = breakthroughFragmentCost(rarity, current.breakthrough);
-    if (!canBreakThrough(rarity, current, held, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
+    if (!canBreakThrough(rarity, current, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const spend2 = breakthroughFragmentSpend(rarity, current.breakthrough, held, universal);
     const breakthrough = current.breakthrough + 1;
     const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, breakthrough } };
-    const nextFragments = { ...this.state.relicFragments, [relicId]: held - fragmentCost };
+    const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend2.own };
+    const nextItems = spend2.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend2.universal) : this.state.itemInventory;
+    if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uB9CC\uB2A5 \uD30C\uD3B8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const nextWallet = { ...this.state.wallet, cheesecake: this.state.wallet.cheesecake - step2.cheesecake };
-    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, wallet: nextWallet });
+    this.persist({ ...this.state, relicProgress: nextProgress, relicFragments: nextFragments, itemInventory: nextItems, wallet: nextWallet });
     this.state.relicProgress = nextProgress;
     this.state.relicFragments = nextFragments;
+    this.state.itemInventory = nextItems;
     this.state.wallet = nextWallet;
-    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId] };
+    return { ...this.snapshot(), relicId, breakthrough, levelCap: relicLevelCap(breakthrough), breakthroughGrade: breakthroughGrade(breakthrough), fragments: nextFragments[relicId], universalFragmentsUsed: spend2.universal };
   }
   /** 입장 허가와 비용 차감을 한 처리로 묶고 requestId 재전송에는 최초 영수증을 반환한다. */
   async enterStage(request) {
@@ -34626,6 +34736,28 @@ var FakeServer = class {
     const latest = rune.enhancementHistory[request.statId]?.at(-1);
     return { succeeded: latest?.succeeded === true, goldSpent, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
+  /** 남은 세공을 위 줄부터 전부 판정한다. 골드는 총액을 먼저 확인해 한 번에 빼고 저장도 한 번만 한다. */
+  async enhanceRuneAll(request) {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
+    const targets2 = runeBatchEnhancementTargets(current);
+    const goldSpent = runeBatchEnhancementGoldCost(current);
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uB8EC \uAC15\uD654\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    let rune = current;
+    const results = [];
+    for (const statKey of targets2) {
+      rune = enhanceRune(rune, statKey, runeEnhancementIncrease(rune.rarity, statKey), this.random());
+      results.push(rune.enhancementHistory[statKey]?.at(-1)?.succeeded === true);
+    }
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    const nextState = { ...this.state, wallet: nextWallet, runeInventory: nextRunes };
+    this.persist(nextState);
+    this.state.wallet = nextWallet;
+    this.state.runeInventory = nextRunes;
+    return { goldSpent, results, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
   /** 일반 강화 완료와 미각인 상태를 확인하고 대상 옵션에 각인 결과 하나만 추가한다. */
   async engraveRune(request) {
     await this.delay();
@@ -35533,6 +35665,11 @@ var RelicProgressionManager = class {
   getFragments(relicId) {
     return this.state.relicFragments[relicId] ?? 0;
   }
+  /** 그 등급의 만능 파편 수 — 가방의 재료 칸에 든다(`UNIVERSAL_FRAGMENT_ITEM`). */
+  getUniversalFragments(rarity) {
+    const itemId = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    return this.state.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
+  }
   /**
    * 가방이 비어 있을 때만 시작 룬을 넣어 준다(임시 지급).
    *
@@ -35662,6 +35799,8 @@ function arenaPlayer(id, data) {
 }
 async function handleArenaCall(rpc, player, method, args, requestId) {
   const input = args[0] ?? {};
+  if (method === "get" && input.kind === "standing") return await rpc("server_arena_standing", { p_player: player });
+  if (method === "get" && input.kind === "ranking") return await rpc("server_arena_ranking", { p_player: player, p_limit: 100 });
   const kind = method === "get" ? "status" : input.kind;
   if (!["status", "queue", "cancel", "invite", "accept", "decline", "practice", "action", "finish"].includes(kind ?? "")) throw Error("ARENA_ACTION");
   let rules = input.rules === void 0 ? RANKED_ARENA_RULES : arenaRules(input.rules);
@@ -35696,9 +35835,9 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
       if (retry === 2) throw Error("ARENA_CONFLICT");
     }
   }
-  if (room?.phase === "done") {
-    const latest = await rpc("server_arena_context", { p_player: player, p_kind: "status", p_room: room.id, p_target: null, p_rules: RANKED_ARENA_RULES, p_request: null });
-    context = { ...context, score: latest.score, wins: latest.wins, losses: latest.losses };
+  if (room?.phase === "done" || kind === "status") {
+    const standing = await rpc("server_arena_standing", { p_player: player });
+    context = { ...context, ...standing };
   }
   delete context.receiptFingerprint;
   context = { ...context, room: room ? publicArenaRoom(room, player) : null, records: [] };
@@ -36004,6 +36143,7 @@ var SERVER_GAME_METHODS = [
   "digStrataTile",
   "engraveRune",
   "enhanceRune",
+  "enhanceRuneAll",
   "enterBounty",
   "enterCakeOperation",
   "enterDailyRestoration",
@@ -36284,6 +36424,10 @@ function createSupabaseStore(env) {
     },
     async opsInbox(playerId) {
       await rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: EXPEDITION_WEEKLY_RANK_REWARDS[index].rewards.salvageRecord ?? 0 })) });
+      await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
+        tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
+        ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
+      } });
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {

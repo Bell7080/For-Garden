@@ -81,8 +81,8 @@ import type { EnterEventStageResponse, EventListResponse } from "./contracts";
 import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse } from "./contracts";
 import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
-import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
-import { runeEnhancementGoldCost, runeSellValue } from "../data/runes";
+import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runeBatchEnhancementTargets, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
+import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
 import { rollRandomRuneRarity, rollRuneSynthesisPart, rollRuneSynthesisRarity, rollRuneSynthesisTraitGrade, runeSynthesisRefusal, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
 import { rotationSlot } from "../data/runeRotation";
@@ -103,7 +103,7 @@ import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
 import { paidStaminaApplied, settleStamina, STAMINA_HOLD_LIMIT, staminaMaxForPlayer, staminaTiming } from "../core/stamina";
 import { InventoryManager } from "../managers/InventoryManager";
-import type { EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
+import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
 import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
@@ -3263,6 +3263,29 @@ export class FakeServer implements GameApi {
     this.state.runeInventory = nextRunes;
     const latest = rune.enhancementHistory[request.statId]?.at(-1);
     return { succeeded: latest?.succeeded === true, goldSpent, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
+  }
+
+  /** 남은 세공을 위 줄부터 전부 판정한다. 골드는 총액을 먼저 확인해 한 번에 빼고 저장도 한 번만 한다. */
+  async enhanceRuneAll(request: EnhanceRuneAllRequest): Promise<EnhanceRuneAllResponse> {
+    await this.delay();
+    const current = this.ownedRune(request.runeInstanceId);
+    if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "모든 일반 강화를 완료한 룬입니다.");
+    const targets = runeBatchEnhancementTargets(current);
+    const goldSpent = runeBatchEnhancementGoldCost(current);
+    if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "룬 강화에 필요한 골드가 부족합니다.");
+    let rune = current;
+    const results: boolean[] = [];
+    for (const statKey of targets) {
+      rune = applyRuneEnhancement(rune, statKey, runeEnhancementIncrease(rune.rarity, statKey), this.random());
+      results.push(rune.enhancementHistory[statKey]?.at(-1)?.succeeded === true);
+    }
+    const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
+    const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
+    const nextState = { ...this.state, wallet: nextWallet, runeInventory: nextRunes };
+    this.persist(nextState);
+    this.state.wallet = nextWallet;
+    this.state.runeInventory = nextRunes;
+    return { goldSpent, results, nextSuccessChance: rune.currentSuccessChance, rune: this.cloneRune(rune), inventory: this.runeInventoryDto() };
   }
 
   /** 일반 강화 완료와 미각인 상태를 확인하고 대상 옵션에 각인 결과 하나만 추가한다. */

@@ -55,7 +55,6 @@ export const SETTINGS_ZH_HANS = {
   "settings.play.battleSpeed": "战斗倍速",
   "settings.play.autoUltimate": "自动必杀技",
   "settings.play.textSpeed": "文字速度",
-  "settings.play.language": "语言",
   "settings.section.access": "无障碍",
   "settings.access.textScale": "文字大小",
   "settings.access.reduceMotion": "减少所有动效",

@@ -55,7 +55,6 @@ export const SETTINGS_TH = {
   "settings.play.battleSpeed": "ความเร็วการต่อสู้",
   "settings.play.autoUltimate": "ท่าไม้ตายอัตโนมัติ",
   "settings.play.textSpeed": "ความเร็วข้อความ",
-  "settings.play.language": "ภาษา",
   "settings.section.access": "การเข้าถึง",
   "settings.access.textScale": "ขนาดตัวอักษร",
   "settings.access.reduceMotion": "ลดการเคลื่อนไหวทั้งหมด",

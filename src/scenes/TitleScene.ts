@@ -30,7 +30,7 @@ import { speakerStanding } from "../data/dialogues/speakerStanding";
 import { preloadPuppetAssets } from "../puppets/assets";
 import { standingAsset } from "../ui/DialogueStage";
 import { settingsManager } from "../managers/SettingsManager";
-import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
+import { LANGUAGE_MENU_LABEL, LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { activeFontFamily, loadGameFonts } from "../ui/fonts";
 import { PopupLayer } from "../ui/PopupLayer";
 import { openChoicePicker } from "../ui/SettingsPicker";
@@ -472,7 +472,7 @@ export class TitleScene extends Phaser.Scene {
     this.actionRow = new TitleActionRow(this, [
       {
         icon: "globe",
-        label: () => LANGUAGE_NATIVE_NAME[settingsManager.get().game.language],
+        label: () => LANGUAGE_MENU_LABEL,
         onClick: () => this.openLanguagePicker(),
       },
       {
@@ -671,7 +671,7 @@ export class TitleScene extends Phaser.Scene {
   private openLanguagePicker(): void {
     if (!this.popups || SELECTABLE_LANGUAGE_IDS.length < 2) return;
     openChoicePicker(this, this.popups, {
-      title: t("settings.play.language"),
+      title: LANGUAGE_MENU_LABEL,
       value: settingsManager.get().game.language,
       choices: SELECTABLE_LANGUAGE_IDS,
       display: (id) => LANGUAGE_NATIVE_NAME[id],

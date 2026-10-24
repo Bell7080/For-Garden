@@ -55,7 +55,6 @@ export const SETTINGS_ES = {
   "settings.play.battleSpeed": "Velocidad de combate",
   "settings.play.autoUltimate": "Definitiva automática",
   "settings.play.textSpeed": "Velocidad del texto",
-  "settings.play.language": "Idioma",
   "settings.section.access": "Accesibilidad",
   "settings.access.textScale": "Tamaño del texto",
   "settings.access.reduceMotion": "Reducir todo el movimiento",

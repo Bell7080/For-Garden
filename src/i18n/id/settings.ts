@@ -55,7 +55,6 @@ export const SETTINGS_ID = {
   "settings.play.battleSpeed": "Kecepatan Pertarungan",
   "settings.play.autoUltimate": "Ultimate Otomatis",
   "settings.play.textSpeed": "Kecepatan Teks",
-  "settings.play.language": "Bahasa",
   "settings.section.access": "Aksesibilitas",
   "settings.access.textScale": "Ukuran Teks",
   "settings.access.reduceMotion": "Kurangi Semua Gerakan",

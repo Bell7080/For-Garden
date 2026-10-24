@@ -6,7 +6,7 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { settingsManager } from "../managers/SettingsManager";
-import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
+import { LANGUAGE_MENU_LABEL, LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { loadGameFonts } from "../ui/fonts";
 import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { saveManager } from "../state/SaveManager";
@@ -266,7 +266,7 @@ export class SettingsScene extends Phaser.Scene {
       // 고를 수 있는 언어가 하나뿐이면 줄 자체를 세우지 않는다 — 눌러도 아무 일이 없는 조작은
       // 준비 상태를 과장한다. 번역이 들어와 `SELECTABLE_LANGUAGE_IDS`가 늘면 저절로 나타난다.
       if (SELECTABLE_LANGUAGE_IDS.length > 1) {
-      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.language"),s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,LANGUAGE_MENU_LABEL,s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.

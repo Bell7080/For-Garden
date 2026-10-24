@@ -60,7 +60,6 @@ export const SETTINGS_JA = {
   "settings.play.battleSpeed": "戦闘倍速",
   "settings.play.autoUltimate": "必殺技オート",
   "settings.play.textSpeed": "テキスト速度",
-  "settings.play.language": "言語",
 
   "settings.section.access": "アクセシビリティ",
   "settings.access.textScale": "文字サイズ",

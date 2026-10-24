@@ -55,7 +55,6 @@ export const SETTINGS_ZH_HANT = {
   "settings.play.battleSpeed": "戰鬥倍速",
   "settings.play.autoUltimate": "自動必殺技",
   "settings.play.textSpeed": "文字速度",
-  "settings.play.language": "語言",
   "settings.section.access": "無障礙",
   "settings.access.textScale": "文字大小",
   "settings.access.reduceMotion": "減少所有動效",

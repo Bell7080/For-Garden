@@ -54,7 +54,6 @@
 "settings.play.battleSpeed": ["战斗倍速", "ความเร็วการต่อสู้", "Tốc độ chiến đấu", "Kecepatan Pertarungan", "Velocidad de combate", "Velocidade de batalha", "Kampftempo", "Скорость боя"],
 "settings.play.autoUltimate": ["自动必杀技", "ท่าไม้ตายอัตโนมัติ", "Tuyệt kỹ tự động", "Ultimate Otomatis", "Definitiva automática", "Suprema automática", "Auto-Ultimativ", "Автоульта"],
 "settings.play.textSpeed": ["文字速度", "ความเร็วข้อความ", "Tốc độ chữ", "Kecepatan Teks", "Velocidad del texto", "Velocidade do texto", "Textgeschwindigkeit", "Скорость текста"],
-"settings.play.language": ["语言", "ภาษา", "Ngôn ngữ", "Bahasa", "Idioma", "Idioma", "Sprache", "Язык"],
 "settings.section.access": ["无障碍", "การเข้าถึง", "Trợ năng", "Aksesibilitas", "Accesibilidad", "Acessibilidade", "Barrierefreiheit", "Доступность"],
 "settings.access.textScale": ["文字大小", "ขนาดตัวอักษร", "Cỡ chữ", "Ukuran Teks", "Tamaño del texto", "Tamanho do texto", "Textgröße", "Размер текста"],
 "settings.access.reduceMotion": ["减少所有动效", "ลดการเคลื่อนไหวทั้งหมด", "Giảm mọi chuyển động", "Kurangi Semua Gerakan", "Reducir todo el movimiento", "Reduzir todo o movimento", "Alle Bewegung reduzieren", "Меньше движения"],

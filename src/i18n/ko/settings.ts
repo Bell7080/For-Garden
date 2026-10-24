@@ -68,7 +68,6 @@ export const SETTINGS_KO = {
   "settings.play.battleSpeed": "전투 배속",
   "settings.play.autoUltimate": "자동 궁극기",
   "settings.play.textSpeed": "텍스트 속도",
-  "settings.play.language": "언어",
 
   "settings.section.access": "접근성",
   "settings.access.textScale": "텍스트 크기",

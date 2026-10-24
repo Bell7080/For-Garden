@@ -55,7 +55,6 @@ export const SETTINGS_RU = {
   "settings.play.battleSpeed": "Скорость боя",
   "settings.play.autoUltimate": "Автоульта",
   "settings.play.textSpeed": "Скорость текста",
-  "settings.play.language": "Язык",
   "settings.section.access": "Доступность",
   "settings.access.textScale": "Размер текста",
   "settings.access.reduceMotion": "Меньше движения",

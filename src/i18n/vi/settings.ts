@@ -55,7 +55,6 @@ export const SETTINGS_VI = {
   "settings.play.battleSpeed": "Tốc độ chiến đấu",
   "settings.play.autoUltimate": "Tuyệt kỹ tự động",
   "settings.play.textSpeed": "Tốc độ chữ",
-  "settings.play.language": "Ngôn ngữ",
   "settings.section.access": "Trợ năng",
   "settings.access.textScale": "Cỡ chữ",
   "settings.access.reduceMotion": "Giảm mọi chuyển động",

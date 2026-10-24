@@ -4,6 +4,7 @@ import { accountApi, type AccountFailureCode, type AccountState } from "../api/A
 import { accountCredentialProblem, ACCOUNT_ID_MAX, ACCOUNT_PASSWORD_MAX } from "../core/accountCredentials";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
 import type { PopupLayer } from "./PopupLayer";
 import { TextInputField } from "./TextInputField";
 import { COLOR, textStyle } from "./theme";
@@ -52,7 +53,12 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
       (["signIn", "register"] as const).forEach((which, index) => {
         addCategoryTab(scene, tabs, {
           x: (index - 0.5) * (width + gap), y: rows.tabsY!, width, height, label: t(which === "signIn" ? "account.id.tab.signIn" : "account.id.tab.register"), selected: tab === which, face: "down",
-          onSelect: () => { if (busy || tab === which) return; tab = which; password = ""; confirm = ""; paintTabs(); paint(); },
+          onSelect: () => {
+            if (busy || tab === which) return;
+            const order = ["signIn", "register"] as const;
+            const from = order.indexOf(tab); tab = which; password = ""; confirm = ""; paintTabs(); paint();
+            slideTabPage(scene, [view], from, order.indexOf(which));
+          },
         });
       });
     };

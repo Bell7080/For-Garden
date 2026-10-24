@@ -9,6 +9,8 @@ import { MailManager } from "../managers/MailManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
+import { attachDragScroll } from "./dragScroll";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
@@ -72,7 +74,9 @@ export class MailPopup {
 
   private select(tab: MailTab): void {
     if (tab === this.tab) return;
+    const from = TABS.indexOf(this.tab);
     this.tab = tab; this.scroll = 0; this.render();
+    if (this.content) slideTabPage(this.scene, [this.content], from, TABS.indexOf(tab));
   }
 
   private render(): void {
@@ -109,12 +113,9 @@ export class MailPopup {
       const center = matrix.transformPoint(0, (viewport.top + viewport.bottom) / 2);
       this.maskShape = this.scene.add.rectangle(center.x, center.y, viewport.width * body.scaleX, viewHeight * body.scaleY, 0xffffff).setVisible(false);
       this.mask = this.maskShape.createGeometryMask();
-      const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
-      let lastY = 0;
-      drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
-      drag.on("drag", (pointer: Phaser.Input.Pointer) => { this.moveScroll(pointer.y - lastY); lastY = pointer.y; });
-      drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.moveScroll(-dy * 0.65));
-      body.add(drag); body.sendToBack(drag);
+      const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setVisible(false);
+      attachDragScroll(this.scene, { owner: drag, root: body, bounds: () => drag.getBounds(), onDelta: (dy) => this.moveScroll(dy) });
+      body.add(drag);
     }
     if (this.mask) content.setMask(this.mask);
     content.setData("minScroll", minScroll);

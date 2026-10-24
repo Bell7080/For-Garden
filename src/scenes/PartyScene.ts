@@ -1,4 +1,5 @@
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -98,7 +99,7 @@ const ROSTER_VIEWPORT = { top: 1026, bottom: 1640 } as const;
 /** 그리드 위 두 줄의 간격 — 아래 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
 const ROSTER_BAR_STEP = 64;
 /** 손가락이 이 거리 이상 움직이면 편성이 아니라 스크롤로 본다. */
-const ROSTER_DRAG_SLOP = 12;
+const ROSTER_DRAG_SLOP = TAP_DRAG_SLOP;
 
 /** 그리드 카드 하나의 중심 x좌표. 열 번호(0부터)를 받는다. */
 function rosterColumnX(col: number): number {

@@ -8,7 +8,7 @@ import { PopupLayer } from '../ui/PopupLayer';
 import { textStyle, COLOR } from '../ui/theme';
 import { addSceneBackground, BACKGROUND } from '../ui/backgrounds';
 import { addBackButton } from '../ui/IconButton';
-import { startScene } from '../ui/screenTransition';
+import { playSceneEntrance, startScene } from '../ui/screenTransition';
 import { chipPoints, drawLayer, drawVignette, slantedRect } from '../ui/holo';
 import { PortraitCard } from '../ui/PortraitCard';
 import { formationRosterGrid, PORTRAIT_GRID_MASK_GAP } from '../ui/portraitGrid';
@@ -151,6 +151,7 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.events.once('shutdown', () => { unsubscribe(); window.removeEventListener('pagehide', onExit); setDebugGridCards("arenaRoom", undefined); });
     this.time.addEvent({ delay: 2000, loop: true, callback: () => void this.fetchStatus() });
     void this.fetchStatus();
+    playSceneEntrance(this);
   }
 
   update(): void {

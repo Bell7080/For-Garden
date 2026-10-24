@@ -1,4 +1,5 @@
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { notificationManager } from "../managers/NotificationManager";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import Phaser from "phaser";
@@ -90,7 +91,7 @@ const ROSTER_VIEWPORT = { top: 850, bottom: 1640 } as const;
 /** 아군 총 전투력 판의 세로 중심 — 이름줄 아래, 목록 조작 줄 위. */
 const FORMATION_POWER_Y = 756;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const ROSTER_DRAG_SLOP = 12;
+const ROSTER_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
 /** `groundOffset`은 칸 중심에서 SD가 발을 딛는 줄까지의 거리다 — 발밑 그림자와 SD가 함께 읽는다. */
 const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290, groundOffset: 120 } as const;

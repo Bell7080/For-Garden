@@ -12,6 +12,8 @@ import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
 import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
+import { attachDragScroll } from "./dragScroll";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -87,7 +89,9 @@ export class MissionsPopup {
 
   private select(period: MissionPeriod): void {
     if (period === this.period) return;
+    const from = PERIODS.indexOf(this.period);
     this.period = period; this.render(); setDebugMissionsPeriod(this.period);
+    if (this.list) slideTabPage(this.scene, [this.list], from, PERIODS.indexOf(period));
   }
 
   private async refresh(): Promise<void> {
@@ -152,20 +156,17 @@ export class MissionsPopup {
     this.list!.add(frame);
     const viewHeight = list.bottom - list.top;
     const half = list.cardWidth / 2 + 20;
-    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
+    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setVisible(false);
     frame.add(drag);
     const content = this.scene.add.container(0, 0);
     frame.add(content);
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
     this.scrollContent = content;
     this.minScroll = Math.min(0, viewHeight - missionListContentHeight(count));
-    let lastY = 0;
-    drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
-    drag.on("drag", (pointer: Phaser.Input.Pointer) => {
-      const scale = frame.getWorldTransformMatrix().scaleY || 1;
-      this.applyScroll(this.scroll + (pointer.y - lastY) / scale); lastY = pointer.y;
+    attachDragScroll(this.scene, {
+      owner: drag, root: frame, bounds: () => drag.getBounds(),
+      onDelta: (dy) => this.applyScroll(this.scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
     });
-    drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.applyScroll(this.scroll - dy * 0.65));
     return content;
   }
 

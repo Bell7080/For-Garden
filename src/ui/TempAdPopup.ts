@@ -9,6 +9,7 @@ import { startPuppetHop } from "./puppetHop";
 import { addSdFootShadow } from "./SdFootShadow";
 import { TEMP_AD, type TempAdHandle } from "./tempAdLayout";
 import { COLOR, textStyle } from "./theme";
+import { playFadeOut } from "./screenTransition";
 
 /**
  * 광고 SDK 대신 서는 임시 광고 팝업. 루카·토리카·렉시아 SD가 뽀용뽀용 뛰는 동안 게이지가 3초에 걸쳐 차고,
@@ -65,10 +66,16 @@ export function playTempAdPopup(scene: Phaser.Scene): Promise<TempAdHandle | und
       if (timer) clearInterval(timer);
       if (holdTimer) clearTimeout(holdTimer);
       hops.forEach((hop) => hop.stop());
-      puppets.forEach((puppet) => puppet.destroy());
-      shadows.forEach((shadow) => shadow.destroy(true));
-      claimButton?.destroy();
-      root.destroy(true);
+      claimButton?.disableInteractive();
+      const teardown = (): void => {
+        puppets.forEach((puppet) => puppet.destroy());
+        shadows.forEach((shadow) => shadow.destroy(true));
+        claimButton?.destroy();
+        root.destroy(true);
+      };
+      // 열릴 때 톡 튀어나온 만큼 사라질 때도 짧게 옅어진다(씬이 내려가는 중이면 기다리지 않는다).
+      const fading = [root, ...puppets, ...shadows, ...(claimButton ? [claimButton] : [])] as Phaser.GameObjects.Container[];
+      playFadeOut(scene, fading, teardown);
     };
 
     const showClaim = (): void => {

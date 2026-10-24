@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
@@ -19,7 +20,7 @@ import { LOBBY_RETURN } from "./lobbyEntry";
 /** 제목·구간 버튼·뒤로가기가 앉는 깊이. 비네트(40)보다 위다. */
 const CHROME_DEPTH = 50;
 /** 드래그를 스크롤로 볼지 탭으로 볼지 가르는 거리. */
-const DRAG_SLOP = 14;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 /** 길의 점선 한 토막과 틈. */
 const DASH = { on: 22, off: 16 } as const;
 /** 지금 서 있는 층. 진행 기록이 붙기 전까지는 늘 첫 층이다. */

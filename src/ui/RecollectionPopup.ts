@@ -6,6 +6,7 @@ import { getRecollectionStory } from "../data/dialogues/recollections";
 import { storyManager } from "../managers/StoryManager";
 import { session } from "../state/session";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
 import { useBackgroundTexture } from "./backgrounds";
 import { DIALOGUE_BACKDROP } from "./dialogueStageLayout";
 import { drawGlyph } from "./glyphs";
@@ -92,7 +93,12 @@ export class RecollectionPopup {
       addCategoryTab(this.scene, tabs, {
         x: startX + index * (tab.width + tab.gap), y: tab.y, width: tab.width, height: tab.height,
         label: t(`recollection.tab.${group}`), selected: group === this.tab,
-        onSelect: () => { if (group === this.tab) return; this.tab = group; this.render(); },
+        onSelect: () => {
+          if (group === this.tab) return;
+          const from = RECOLLECTION_GROUPS.indexOf(this.tab);
+          this.tab = group; this.render();
+          if (this.list) slideTabPage(this.scene, [this.list], from, RECOLLECTION_GROUPS.indexOf(group));
+        },
       });
     });
     body.add(tabs);

@@ -2959,7 +2959,7 @@ export class BattleScene extends Phaser.Scene {
   private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
     // 입구로 돌아갈 때는 고르던 단계를 넘긴다 — 빠지면 매번 단계를 다시 골라야 한다.
     const generation = this.combatGeneration;
-    const back = () => this.scene.start("cakeOperation", { tierId: input.tierId });
+    const back = () => startScene(this, "cakeOperation", { tierId: input.tierId });
     try {
       let result = this.cakeCompletion?.requestId === input.requestId ? this.cakeCompletion.result : undefined;
       if (!result) {
@@ -2994,7 +2994,7 @@ export class BattleScene extends Phaser.Scene {
     } catch (error) {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
-      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }), error, this.cakeCompletion?.requestId === input.requestId ? "display" : "cake");
+      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => startScene(this, "cakeOperation", { tierId: input.tierId }), error, this.cakeCompletion?.requestId === input.requestId ? "display" : "cake");
     }
   }
 
@@ -3036,13 +3036,13 @@ export class BattleScene extends Phaser.Scene {
     } catch (error) {
       // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
       if (!this.scene.isActive()) return;
-      this.showResultFailure(() => void this.finishBountyRound(input, won), () => this.scene.start("bounty", { tierId: input.tierId }), error, "bounty");
+      this.showResultFailure(() => void this.finishBountyRound(input, won), () => startScene(this, "bounty", { tierId: input.tierId }), error, "bounty");
       return;
     }
     if (!this.scene.isActive()) return;
     rememberPlayerExp(settled.playerExp);
     // 입구로 돌아갈 때는 고르던 등급을 넘긴다.
-    const toBounty = (): void => { this.scene.start("bounty", { tierId: input.tierId }); };
+    const toBounty = (): void => { startScene(this, "bounty", { tierId: input.tierId }); };
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };
     const bountyTier = getBountyTier(input.tierId);
@@ -3094,11 +3094,11 @@ export class BattleScene extends Phaser.Scene {
       settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
     } catch (error) {
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
-      this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"), error, "duel");
+      this.showResultFailure(() => void this.finishDuel(input, won), () => startScene(this, "duel"), error, "duel");
       return;
     }
     if (!this.scene.isActive() || generation !== this.combatGeneration) return;
-    const toDuel = (): void => { this.scene.start("duel"); };
+    const toDuel = (): void => { startScene(this, "duel"); };
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };
     const items = currencyRecordToRewardItems({ duelEmblem: settled.duelEmblem, gems: settled.gems });

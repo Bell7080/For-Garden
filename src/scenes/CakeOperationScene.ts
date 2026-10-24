@@ -23,7 +23,7 @@ import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CAKE_OPERATION_ENEMY_IDS } from "../data/cakeOperation";
-import { startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
 import { showContentIntro } from "../ui/contentIntro";
@@ -87,7 +87,7 @@ export class CakeOperationScene extends Phaser.Scene {
       onSweep: () => this.sweep(),
     });
     this.refresh();
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
 
     // 멤버십 여부와 광고 횟수는 서버 시각으로만 정해진다 — 기기 시계를 돌려 소탕권을 건너뛸 수 없다.
     void gameApi.getPlayerState().then((state) => {
@@ -97,6 +97,7 @@ export class CakeOperationScene extends Phaser.Scene {
       this.refresh();
     }).catch(() => undefined);
     showContentIntro(this, "cakeOperation");
+    playSceneEntrance(this);
   }
 
   private selectedTier(): CakeOperationTier {

@@ -1,4 +1,5 @@
 import { NotificationDot } from "../ui/NotificationDot";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -54,7 +55,7 @@ const TABS = [
 type RequestView = "incoming" | "outgoing";
 
 /** 손가락이 이만큼 움직였으면 누른 것이 아니라 끈 것이다. */
-const TAP_SLOP = 14;
+const TAP_SLOP = TAP_DRAG_SLOP;
 /** 접속 중 초록 원 — 체력의 연두와 같은 「살아 있음」의 색이다. */
 const ONLINE_COLOR = COLOR.hpFill;
 const SEARCH_MAX_GLYPHS = 20;

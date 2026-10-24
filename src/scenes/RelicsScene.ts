@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugRelicScroll, setDebugScene } from "../debug";
@@ -52,7 +53,7 @@ const GRID_CARD = { width: RELIC_GRID.card.width, height: RELIC_GRID.card.height
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
 const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
-const DRAG_SLOP = 18;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.

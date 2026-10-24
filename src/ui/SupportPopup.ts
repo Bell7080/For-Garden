@@ -5,6 +5,7 @@ import { supportApi } from "../managers/SupportManager";
 import type { SupportError, TicketDetail, TicketSummary } from "../api/SupportApi";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -42,7 +43,12 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer): void {
       ([["compose", "support.tab.compose"], ["mine", "support.tab.mine"]] as const).forEach(([id, labelKey], index) => {
         addCategoryTab(scene, tabs, {
           x: (index - 0.5) * (width + gap), y, width, height: tabHeight, label: t(labelKey), selected: tab === id, face: "down",
-          onSelect: () => { if (tab === id) return; tab = id; paintTabs(); paint(); },
+          onSelect: () => {
+            if (tab === id) return;
+            const order = ["compose", "mine"] as const;
+            const from = order.indexOf(tab); tab = id; paintTabs(); paint();
+            slideTabPage(scene, [view], from, order.indexOf(id));
+          },
         });
       });
     };

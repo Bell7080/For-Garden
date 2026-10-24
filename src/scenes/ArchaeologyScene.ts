@@ -49,7 +49,7 @@ import { openRuneSynthesisOdds } from "../ui/RuneSynthesisOddsPopup";
 import { InventoryManager } from "../managers/InventoryManager";
 import { audioManager } from "../managers/AudioManager";
 import { findItem } from "../data/items";
-import { pressIn, pressOut } from "../ui/pressFeedback";
+import { bindPressFlash, pressIn, pressOut } from "../ui/pressFeedback";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -814,6 +814,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     }
     const hit = this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
       .setInteractive({ useHandCursor: true });
+    bindPressFlash(hit, 0.18);
     hit.on("pointerup", () => this.dig(index));
     tileView.add(hit);
     this.strataHits.set(index, hit);

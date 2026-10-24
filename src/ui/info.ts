@@ -17,7 +17,7 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import { startScene } from "./screenTransition";
+import { playFadeIn, playFadeOut, startScene } from "./screenTransition";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
@@ -1797,8 +1797,11 @@ export class InfoManager {
     addInfoFigureStand(this.scene, this.chrome, FIGURE.x, FIGURE.y);
   }
 
+  /** 닫히는 연출이 도는 동안 true. 이 사이에 다시 열면 연출을 끊고 그대로 이어서 연다. */
+  private closing = false;
+
   get isOpen(): boolean {
-    return this.root.visible;
+    return this.root.visible && !this.closing;
   }
 
   /** 팝업이 떠 있으면 그것부터 닫는다. 뒤로가기 한 번에 화면이 통째로 사라지지 않게. */
@@ -1807,13 +1810,21 @@ export class InfoManager {
       this.popups.closeTop();
       return;
     }
-    this.root.setVisible(false);
-    this.chrome.setVisible(false);
+    if (this.closing || !this.root.visible) return;
+    this.closing = true;
     this.portraitWanted = false;
-    this.portrait?.setVisible(false);
-    this.figure?.setVisible(false);
     setDebugInfoOpen(false);
     this.onClose?.();
+    // 열릴 때 밝아지며 서듯 닫힐 때도 짧게 옅어진다. 전신·SD도 같은 시간으로 함께 옅어진다.
+    const fading = [this.root, this.chrome, ...(this.portrait?.visible ? [this.portrait] : []), ...(this.figure?.visible ? [this.figure] : [])] as Phaser.GameObjects.Container[];
+    playFadeOut(this.scene, fading, () => {
+      if (!this.closing) return;
+      this.closing = false;
+      this.root.setVisible(false).setAlpha(1);
+      this.chrome.setVisible(false).setAlpha(1);
+      this.portrait?.setVisible(false).setAlpha(this.portraitAlpha());
+      this.figure?.setVisible(false).setAlpha(this.portraitAlpha());
+    });
   }
 
   private toggleBookmark(): void {
@@ -2105,8 +2116,18 @@ export class InfoManager {
       if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ sd: true }); }
       else void this.loadFigure(def);
     }
+    // 닫혀 있던 판을 처음 열 때만 밝아지며 선다. 다른 개체로 바꿔 다시 그릴 때는 새로고침처럼 읽히지 않게 연출이 없다.
+    const wasOpen = this.root.visible && !this.closing;
+    if (this.closing) {
+      this.closing = false;
+      this.scene.tweens.killTweensOf([this.root, this.chrome]);
+      this.root.setAlpha(1); this.chrome.setAlpha(1);
+      if (this.portrait) { this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
+      if (this.figure) { this.scene.tweens.killTweensOf(this.figure); this.figure.setAlpha(this.portraitAlpha()); }
+    }
     this.root.setVisible(true);
     this.chrome.setVisible(true);
+    if (!wasOpen) playFadeIn(this.scene, [this.root, this.chrome]);
     setDebugInfoOpen(true);
     this.onOpen?.();
     // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저

@@ -6,6 +6,7 @@ import { chipPoints, drawLayer, HoloBar } from "./holo";
 import { FaceFrame } from "./FaceFrame";
 import { getRelic } from "../data/relics";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut, setPressRest } from "./pressFeedback";
 
 /** 씬은 코어가 완성한 행 스냅샷만 넘기며 합산·정렬을 이 프리팹에서 다시 하지 않는다. */
 export interface BattleContributionSnapshot {
@@ -68,7 +69,9 @@ export class BattleContributionPanel {
       const x = L.categories.left + L.categories.itemWidth * (index + 0.5);
       const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
       const hit = this.scene.add.rectangle(x, L.categories.top + L.categories.height / 2, L.categories.itemWidth, L.categories.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => { if (!this.locked) this.selectCategory(item); });
+      hit.on("pointerdown", () => pressIn(label));
+      hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(label); if (!this.locked) this.selectCategory(item); });
       this.panel.add([label, hit]); this.categoryLabels.push(label); this.categoryHits.push(hit);
     });
     this.refreshCategoryStyle();
@@ -105,6 +108,7 @@ export class BattleContributionPanel {
     CONTRIBUTION_CATEGORIES.forEach((item, index) => {
       const selected = item === this.category;
       this.categoryLabels[index].setColor(selected ? COLOR.accentText : COLOR.inkDim).setFontSize(selected ? 26 : 23).setScale(selected ? 1.04 : 1);
+      setPressRest(this.categoryLabels[index], selected ? 1.04 : 1);
     });
   }
 

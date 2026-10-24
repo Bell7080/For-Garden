@@ -1,4 +1,5 @@
 import { runeSellValue } from "../data/runes";
+import { bindPressFlash } from "./pressFeedback";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
@@ -703,6 +704,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           if (landed && landed.statKey === stat.key && landed.slot === -1) land(mark, "engrave");
         }
         const hit = scene.add.rectangle(0, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: usable });
+        if (usable) bindPressFlash(hit, 0.12);
         hit.on("pointerup", () => { if (!pending && usable) { selected = stat.key; render(); } });
         content.add(hit);
       };

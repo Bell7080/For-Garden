@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel, type InteractionCity } from "../data/interactionCities";
@@ -78,7 +79,7 @@ const ACTION = INTERACTION_CITY_ACTION;
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(LOWER.right - LOWER.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const GRID_DRAG_SLOP = 12;
+const GRID_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 돌아오는 것 줄에서 누름과 끌기를 가르는 거리. 그리드와 같은 몫이라 손맛이 갈리지 않는다. */
 const REWARD_TAP_SLOP = GRID_DRAG_SLOP;
 const REWARD_FRAME = INTERACTION_CITY_REWARD_FRAME;

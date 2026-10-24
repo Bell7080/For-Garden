@@ -1,4 +1,5 @@
 import { KeywordManager } from "../managers/KeywordManager";
+import { bindPress } from "./pressFeedback";
 import { expeditionAugmentKeywords } from "./expeditionAugmentKeywords";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -200,6 +201,7 @@ export class ExpeditionAugmentPopup {
     card.add(footer);
     const hit = this.scene.add.rectangle(0, 0, C.width, C.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     card.add(hit);
+    bindPress(hit, card);
     hit.on("pointerup", () => this.selectOffer(entry));
     // 태그 입력은 카드 선택 입력 위에 둔다.
     const effect = new KeywordManager(this.scene, new PopupLayer(this.scene, 6000)).layout(expeditionAugmentEffectLabel(def), {

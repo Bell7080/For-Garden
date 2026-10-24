@@ -1,4 +1,5 @@
 import { notificationManager } from "../managers/NotificationManager";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -19,7 +20,7 @@ import { withBusy } from "./BusyOverlay";
 /** 판 안에서 길이 보이는 창의 규격이다. 길이 더 길면 이 창 안에서만 위아래로 흐른다. */
 const VIEW = { width: 900, maxHeight: 1160, chromeTop: 168, chromeBottom: 156 } as const;
 /** 손가락이 이만큼 움직이면 수령이 아니라 스크롤로 판정한다. */
-const DRAG_SLOP = 12;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /**
  * 누적 점수로 여는 기록 보상.

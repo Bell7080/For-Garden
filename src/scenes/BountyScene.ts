@@ -22,7 +22,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { TopBar } from "../ui/TopBar";
-import { startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import type { PartySceneData } from "../data/partyContent";
@@ -86,7 +86,7 @@ export class BountyScene extends Phaser.Scene {
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
     });
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     this.refresh();
     // 서버가 확정한 해금이 도착하면 그때 목록을 다시 세운다.
     this.reloadStatus();
@@ -98,6 +98,7 @@ export class BountyScene extends Phaser.Scene {
       this.refresh();
     }).catch(() => undefined);
     showContentIntro(this, "bounty");
+    playSceneEntrance(this);
   }
 
   private reloadStatus(): void {

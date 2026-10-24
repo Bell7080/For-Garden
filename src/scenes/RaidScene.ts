@@ -25,6 +25,7 @@ import {
   RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight,
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
+import { attachDragScroll } from "../ui/dragScroll";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -537,15 +538,11 @@ export class RaidScene extends Phaser.Scene {
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 창보다 짧으면 minY가 0이라 아무 일도 일어나지 않는다.
     const minY = Math.min(0, viewport.height - (entries.length * (RANKING_LIST.rowHeight + RANKING_LIST.rowGap) - RANKING_LIST.rowGap));
-    let offset = 0; let dragY = 0;
+    let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = RAID_BOARD.viewport.top + offset; };
-    const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0)
-      .setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+    const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0).setVisible(false);
+    attachDragScroll(this, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
-    content.sendToBack(hit);
   }
 
   /** 한 줄. 1·2·3등의 금·은·동과 내 줄의 강조는 순위표와 같은 표를 읽는다. */

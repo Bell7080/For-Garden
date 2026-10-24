@@ -11,6 +11,7 @@ import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { addSectionTitle } from "./SectionTitle";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { attachDragScroll } from "./dragScroll";
 
 const H = DUEL_SCREEN.history;
 const ROW_WIDTH = DUEL_SCREEN.width;
@@ -45,13 +46,10 @@ export function paintDuelHistory(scene: Phaser.Scene, parent: Phaser.GameObjects
   list.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
   const clip = { left: BASE_WIDTH / 2 - ROW_WIDTH / 2, right: BASE_WIDTH / 2 + ROW_WIDTH / 2, top: H.top, bottom: H.bottom };
   const hit = addClippedHit(scene, parent, BASE_WIDTH / 2, H.top + viewport / 2, ROW_WIDTH, viewport, () => clip, { useHandCursor: false });
-  parent.sendToBack(hit);
-  scene.input.setDraggable(hit);
-  let offset = 0; let dragY = 0;
+  hit.disableInteractive();
+  let offset = 0;
   const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = H.top + offset; };
-  hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-  hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-  hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+  attachDragScroll(scene, { owner: hit, root: parent, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
 }
 
 function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry: DuelHistoryEntry, y: number, nowMs: number): void {

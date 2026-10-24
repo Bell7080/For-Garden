@@ -31,6 +31,7 @@ import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
+import { attachDragScroll } from "../ui/dragScroll";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
@@ -57,7 +58,6 @@ type SettingsTab = typeof TABS[number]["id"];
 export class SettingsScene extends Phaser.Scene {
   private content!: Phaser.GameObjects.Container;
   private scrollY = 0;
-  private dragStartY = 0;
   private activeTab: SettingsTab = "sound";
   private readonly popups = new PopupLayer(this, 3000);
   private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
@@ -101,10 +101,9 @@ export class SettingsScene extends Phaser.Scene {
     }).catch(() => undefined);
     void this.refreshAccountView(generation);
     // 88px 이상 행뿐 아니라 빈 여백도 드래그를 받아 긴 탭의 스크롤이 끊기지 않는다.
-    const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
-    zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
-    zone.on("drag", (pointer: Phaser.Input.Pointer) => this.scrollTo(pointer.y - this.dragStartY));
-    this.input.on("wheel", (_p: unknown, _o: unknown, _dx: number, dy: number) => this.scrollTo(this.scrollY - dy));
+    const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setDepth(-1);
+    // 행 위에서 시작한 손도 내려가야 한다. 끌기 면이 행 뒤에 있으면 행(슬라이더 제외)에서는 스크롤이 시작되지 않았다.
+    attachDragScroll(this, { owner: zone, bounds: () => zone.getBounds(), wheelFactor: 1, onDelta: (dy) => this.scrollTo(this.scrollY + dy) });
     addBackButton(this, () => this.close()).setDepth(30);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.

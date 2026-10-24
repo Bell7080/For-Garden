@@ -2,6 +2,12 @@
 
 새 시안 **15장**과 이전 공용 시안 **2장**입니다. 전부 PNG이며 게임에 적용하지 않은 검토용 원화입니다.
 
+## 이번 수정
+
+귀여운 공용 전장 A/B/C는 폐기했습니다. **고대 지층 지하 갱도 전장 A/B/C**로 교체했습니다. 화석 보관 심층갱(TOWER_ENTRY_B / TOWER_LOOP_B)과 같은 공간으로 읽히도록 암층·화석·목재 지지대·작업등을 사용했습니다.
+
+새 파일: `ANCIENT_MINE_FIELD_A.png`(폐광 운반 갱도), `ANCIENT_MINE_FIELD_B.png`(거대 화석 발굴장), `ANCIENT_MINE_FIELD_C.png`(봉인 석문 심층갱). 세 장 모두 **941×1672**입니다.
+
 - 브랜치: `art/background-concepts-20261025`
 - 원본: `originals/` · 이전 공용 시안: `previous/`
 - 로컬 열람: `index.html`
@@ -79,18 +85,18 @@ A/B/C는 각각 입구와 반복부를 짝으로 고르는 대안입니다. B1�
 <td valign="top">TOWER_LOOP_C<br><a href="originals/TOWER_LOOP_C.png"><img src="originals/TOWER_LOOP_C.png" width="240" alt="균사 정원 하강갱"></a></td>
 </tr></table>
 
-### 귀여운 공용 전장
+### 고대 지층 지하 갱도 전장
 
 | 파일 / 이름 | 해상도 | 원본 |
 | --- | --- | --- |
-| COMMON_CUTE_FIELD_A · 포근한 표본 정원 | 941×1672 | [PNG](originals/COMMON_CUTE_FIELD_A.png) |
-| COMMON_CUTE_FIELD_B · 화석 장난감 유적 | 941×1672 | [PNG](originals/COMMON_CUTE_FIELD_B.png) |
-| COMMON_CUTE_FIELD_C · 치즈 별빛 마당 | 941×1672 | [PNG](originals/COMMON_CUTE_FIELD_C.png) |
+| ANCIENT_MINE_FIELD_A · 폐광 운반 갱도 | 941×1672 | [PNG](originals/ANCIENT_MINE_FIELD_A.png) |
+| ANCIENT_MINE_FIELD_B · 거대 화석 발굴장 | 941×1672 | [PNG](originals/ANCIENT_MINE_FIELD_B.png) |
+| ANCIENT_MINE_FIELD_C · 봉인 석문 심층갱 | 941×1672 | [PNG](originals/ANCIENT_MINE_FIELD_C.png) |
 
 <table><tr>
-<td valign="top">COMMON_CUTE_FIELD_A<br><a href="originals/COMMON_CUTE_FIELD_A.png"><img src="originals/COMMON_CUTE_FIELD_A.png" width="240" alt="포근한 표본 정원"></a></td>
-<td valign="top">COMMON_CUTE_FIELD_B<br><a href="originals/COMMON_CUTE_FIELD_B.png"><img src="originals/COMMON_CUTE_FIELD_B.png" width="240" alt="화석 장난감 유적"></a></td>
-<td valign="top">COMMON_CUTE_FIELD_C<br><a href="originals/COMMON_CUTE_FIELD_C.png"><img src="originals/COMMON_CUTE_FIELD_C.png" width="240" alt="치즈 별빛 마당"></a></td>
+<td valign="top">ANCIENT_MINE_FIELD_A<br><a href="originals/ANCIENT_MINE_FIELD_A.png"><img src="originals/ANCIENT_MINE_FIELD_A.png" width="240" alt="폐광 운반 갱도"></a></td>
+<td valign="top">ANCIENT_MINE_FIELD_B<br><a href="originals/ANCIENT_MINE_FIELD_B.png"><img src="originals/ANCIENT_MINE_FIELD_B.png" width="240" alt="거대 화석 발굴장"></a></td>
+<td valign="top">ANCIENT_MINE_FIELD_C<br><a href="originals/ANCIENT_MINE_FIELD_C.png"><img src="originals/ANCIENT_MINE_FIELD_C.png" width="240" alt="봉인 석문 심층갱"></a></td>
 </tr></table>
 
 ### 이전 공용 시안

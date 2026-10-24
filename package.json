@@ -1,11 +1,7 @@
 {
   "name": "for-garden",
   "private": true,
-<<<<<<< HEAD
   "version": "0.336.1",
-=======
-  "version": "0.336.1",
->>>>>>> f005575 (v0.335.12: 돌파 효과·패시브 문장에 현재 수치 태그)
   "type": "module",
   "description": "For - Garden — 이터널 시티. 멸종 동물 복원 연구 도시를 무대로 한 세로형 모바일 수집형 RPG.",
   "scripts": {

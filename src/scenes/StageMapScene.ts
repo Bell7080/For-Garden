@@ -20,7 +20,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { COLOR, textStyle } from "../ui/theme";
-import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
+import { useBackgroundTexture, stageMapBackground } from "../ui/backgrounds";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
 import { NodeStoryPreview } from "../ui/NodeStoryPreview";
 import { isEnemyPreviewNodeVisible } from "../ui/nodeEnemyPreviewLayout";
@@ -276,7 +276,7 @@ export class StageMapScene extends Phaser.Scene {
     const needed = artBottom + WINDOW.top + 120 + height;
     // 지도 원화는 25MB짜리라 이 화면에 들어올 때 읽고 나갈 때 내린다. 늦게 도착해도 배율
     // 규칙을 같은 자리에서 다시 적용해야 화면마다 값이 갈리지 않는다.
-    useBackgroundTexture(this, mapArt, BACKGROUND.stageMap, (art) => {
+    useBackgroundTexture(this, mapArt, stageMapBackground(this.currentChapter), (art) => {
       art.setTint(this.difficulty === "easy" ? 0xfff4d9 : this.difficulty === "normal" ? 0xffceb0 : 0xffadb8);
       art.setScale(Math.max(BASE_WIDTH / art.width, needed / art.height));
     });

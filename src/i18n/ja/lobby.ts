@@ -15,6 +15,13 @@ export const LOBBY_JA = {
   "lobby.sortie.bounty.status": "タグ3回 · ゴールド",
   "lobby.sortie.raid": "レイド",
   "lobby.sortie.raid.status": "協力作戦 · 準備中",
+  "lobby.sortie.ancient": "古代地層",
+  "lobby.sortie.ancient.status": "無限地層探査",
+  "ancient.title": "古代地層",
+  "ancient.comingSoon": "Coming soon",
+  "ancient.prev": "前の区間",
+  "ancient.next": "次の区間",
+  "ancient.gate": "関門",
 
   "lobby.expedition.resume": "つづきから · {plays}回 · 最高 {best}",
   "lobby.expedition.weekly": "本日 {plays}回 · 最高 {best} · {quick}",

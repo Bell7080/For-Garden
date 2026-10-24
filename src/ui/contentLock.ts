@@ -184,6 +184,11 @@ export interface LockCoverOptions {
   text?: boolean;
   /** 아래 입력을 이 덮개가 막고 누르면 토스트를 띄운다. 이미 위에 입력면이 있는 자리는 끈다. */
   blockInput?: boolean;
+  /**
+   * 레벨 조건이 아닌 잠금(「Coming soon」)의 문구. 주면 개방 레벨 대신 이 문구를 적고 토스트도 같은 말을 한다.
+   * 이때 `id`는 쓰지 않는다 — 열릴 날이 정해지지 않은 잠금이라 `CONTENT_UNLOCKS`에 넣지 않는다.
+   */
+  message?: string;
 }
 
 /**
@@ -192,7 +197,7 @@ export interface LockCoverOptions {
  * 자물쇠는 받침 판 없이 그림과 그 그림의 검은 복제 그림자만으로 선다 — 덮개가 이미 어두운 면이라 받침을 한 겹 더 깔면
  * 판 위에 판이 쌓인다. 마스크가 아니라 도형 자체를 원본의 깎임으로 만들어 컨테이너 이동·확대와 함께 가므로 어긋나지 않는다.
  */
-export function addLockCover(scene: Phaser.Scene, id: ContentId, width: number, height: number, options: LockCoverOptions = {}): Phaser.GameObjects.Container {
+export function addLockCover(scene: Phaser.Scene, id: ContentId | undefined, width: number, height: number, options: LockCoverOptions = {}): Phaser.GameObjects.Container {
   const cover = scene.add.container(0, 0);
   const shape = chipPoints(width, height, { bevel: options.bevel ?? {} });
   cover.add(drawLayer(scene, 0, 0, shape, { fill: 0x05080c, alpha: LOCK_COVER.dimAlpha, shadow: false }));
@@ -201,10 +206,10 @@ export function addLockCover(scene: Phaser.Scene, id: ContentId, width: number, 
   const lock = addPadlock(scene, 0, text ? -height * 0.1 : 0, lockSize, { color: 0xeef2f6, shadow: true });
   cover.add(lock);
   cover.setData("lock", lock);
-  if (text) cover.add(scene.add.text(0, height * 0.28, contentLockText(id), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5));
+  if (text) cover.add(scene.add.text(0, height * 0.28, options.message ?? (id ? contentLockText(id) : ""), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5));
   if (options.blockInput !== false) {
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => showContentLockedToast(scene, id));
+    hit.on("pointerup", () => { if (options.message) showContentToast(scene, options.message, "locked"); else if (id) showContentLockedToast(scene, id); });
     cover.add(hit);
   }
   return cover;

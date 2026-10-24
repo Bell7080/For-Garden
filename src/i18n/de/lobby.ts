@@ -84,4 +84,11 @@ export const LOBBY_DE = {
   "storyDifficulty.locked": "Schließe {difficulty} 4-10 ab",
   "storyDifficulty.unlocked.title": "Neue Schwierigkeit freigeschaltet!",
   "storyDifficulty.unlocked.body": "Glückwunsch, Forschende!\nStelle dich auf {difficulty} stärkeren Gegnern und verdiene neue Erstabschlussbelohnungen.",
+  "lobby.sortie.ancient": "Uralte Schichten",
+  "lobby.sortie.ancient.status": "Endlose Schichterkundung",
+  "ancient.title": "Uralte Schichten",
+  "ancient.comingSoon": "Demnächst",
+  "ancient.prev": "Voriger Abschnitt",
+  "ancient.next": "Nächster Abschnitt",
+  "ancient.gate": "Tor",
 } as const;

@@ -682,7 +682,7 @@ export class BattleScene extends Phaser.Scene {
     this.effects.setArena(this.state.arena);
 
     // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
+    addSceneBackground(this, battleFieldBackground(this.battleInput.mode, session.selectedStageId ?? undefined), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
     if(this.battleInput.mode==="duel" && this.battleInput.arena) {
       this.add.text(540,245,t("arena.battle.perspective",{team:t("arena.battle.bottom")}),textStyle({ role: "body",size:24,color:COLOR.accentText})).setOrigin(.5).setDepth(90);

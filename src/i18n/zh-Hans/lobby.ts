@@ -84,4 +84,11 @@ export const LOBBY_ZH_HANS = {
   "storyDifficulty.locked": "通关{difficulty}4-10后解锁",
   "storyDifficulty.unlocked.title": "新的难度已解锁！",
   "storyDifficulty.unlocked.body": "恭喜你，研究员！\n前往{difficulty}难度，挑战更强的敌人并领取新的首通奖励。",
+  "lobby.sortie.ancient": "远古地层",
+  "lobby.sortie.ancient.status": "无尽地层探索",
+  "ancient.title": "远古地层",
+  "ancient.comingSoon": "敬请期待",
+  "ancient.prev": "上一区段",
+  "ancient.next": "下一区段",
+  "ancient.gate": "关口",
 } as const;

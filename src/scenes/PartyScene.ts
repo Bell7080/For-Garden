@@ -249,7 +249,7 @@ export class PartyScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
     // 어느 콘텐츠가 어느 전장에 서는지는 전투와 같은 표(`BATTLE_FIELD_BACKGROUND`)가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" ? "duel" : this.content.content));
+    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" ? "duel" : this.content.content, session.selectedStageId ?? undefined));
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getBattleStage(session.selectedStageId ?? "1-1");

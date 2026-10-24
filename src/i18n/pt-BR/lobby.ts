@@ -84,4 +84,11 @@ export const LOBBY_PT_BR = {
   "storyDifficulty.locked": "Conclua {difficulty} 4-10 para desbloquear",
   "storyDifficulty.unlocked.title": "Nova dificuldade desbloqueada!",
   "storyDifficulty.unlocked.body": "Parabéns, pesquisador!\nEnfrente inimigos mais fortes e ganhe novas recompensas de primeira vitória em {difficulty}.",
+  "lobby.sortie.ancient": "Estratos antigos",
+  "lobby.sortie.ancient.status": "Exploração de estratos sem fim",
+  "ancient.title": "Estratos antigos",
+  "ancient.comingSoon": "Em breve",
+  "ancient.prev": "Trecho anterior",
+  "ancient.next": "Próximo trecho",
+  "ancient.gate": "Portal",
 } as const;

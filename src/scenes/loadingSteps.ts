@@ -72,6 +72,8 @@ const CONTENT_ART_ASSETS = [
   ["content-raid-entry", "sprites/content/Content5_001.webp"],
   // Content6_001은 결투 선택판의 결투장 입구 일러스트다.
   ["content-duel-entry", "sprites/content/Content6_001.webp"],
+  // Content7_001은 고대 지층(무한 지층 탐사) 입구 — 지하 탑 입구 원화를 가로로 잘라 구운 버튼 일러스트다.
+  ["content-ancient-entry", "sprites/content/Content7_001.webp"],
   // journal_001은 관찰 일지 판 안에서 원본 크기를 유지한 채 잘라 쓰는 종이 질감 원화다.
   ["content-observation-journal", "sprites/content/journal_001.webp"],
 ] as const;

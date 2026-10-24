@@ -84,4 +84,11 @@ export const LOBBY_VI = {
   "storyDifficulty.locked": "Vượt {difficulty} 4-10 để mở khóa",
   "storyDifficulty.unlocked.title": "Đã mở độ khó mới!",
   "storyDifficulty.unlocked.body": "Chúc mừng nhà nghiên cứu!\nĐối đầu kẻ địch mạnh hơn và nhận thưởng vượt ải lần đầu mới ở {difficulty}.",
+  "lobby.sortie.ancient": "Địa tầng cổ đại",
+  "lobby.sortie.ancient.status": "Thám hiểm địa tầng vô tận",
+  "ancient.title": "Địa tầng cổ đại",
+  "ancient.comingSoon": "Sắp ra mắt",
+  "ancient.prev": "Khu trước",
+  "ancient.next": "Khu kế tiếp",
+  "ancient.gate": "Cổng",
 } as const;

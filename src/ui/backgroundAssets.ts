@@ -6,6 +6,8 @@
  * `backgrounds.ts`가, 언제까지 남길지는 `backgroundResidency.ts`가 맡는다.
  */
 
+import type { AncientBackdrop } from "../core/ancientStrata";
+
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
   lobby: "background-lobby",
@@ -133,6 +135,16 @@ export const BACKGROUND = {
    * 이야기 무대가 어느 원화를 쓰는지는 `dialogueStageLayout.ts`의 `DIALOGUE_BACKDROP`이 정한다.
    */
   storyTrain: "background-story-train",
+  /** 3·4장 스테이지 지도 — 뿌리 온실 회랑이다. 1·2장은 `stageMap`을 쓴다(`stageMapBackground`). */
+  stageMapDeep: "background-stage-map-deep",
+  /** 3·4장 스테이지 전장 — 수로와 환승로다. 1·2장은 `combat`을 쓴다(`stageFieldBackground`). */
+  combatDeep: "background-combat-deep",
+  /** 고대 지층 — 입구(1~10층)와 이후 열 층 구간마다 돌아가는 반복 세 장, 전용 전장이다. */
+  ancientEntry: "background-ancient-entry",
+  ancientLoopA: "background-ancient-loop-a",
+  ancientLoopB: "background-ancient-loop-b",
+  ancientLoopC: "background-ancient-loop-c",
+  ancientField: "background-ancient-field",
 } as const;
 
 /**
@@ -154,6 +166,13 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.lab, "sprites/background/background_005.webp"],
   [BACKGROUND.combat, "sprites/background/background_006.webp"],
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
+  [BACKGROUND.stageMapDeep, "sprites/background/map_002.webp"],
+  [BACKGROUND.combatDeep, "sprites/background/field_ch34.webp"],
+  [BACKGROUND.ancientEntry, "sprites/background/ancient_strata_entry.webp"],
+  [BACKGROUND.ancientLoopA, "sprites/background/ancient_strata_loop_a.webp"],
+  [BACKGROUND.ancientLoopB, "sprites/background/ancient_strata_loop_b.webp"],
+  [BACKGROUND.ancientLoopC, "sprites/background/ancient_strata_loop_c.webp"],
+  [BACKGROUND.ancientField, "sprites/background/ancient_strata_field.webp"],
   [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
   // 일반 상점은 전용 원화를 쓴다 — 유료 상점(008)과 같은 그림을 나눠 쓰던 때는 두 화면이
@@ -233,9 +252,36 @@ export const BATTLE_FIELD_BACKGROUND = {
   bounty: BACKGROUND.bountyField,
   raid: BACKGROUND.raidField,
   duel: BACKGROUND.duelField,
+  ancient: BACKGROUND.ancientField,
 } as const;
 
-/** 진입 데이터가 어떤 모드를 들고 와도 표에 있는 키 하나로 수렴시킨다. */
-export function battleFieldBackground(mode: keyof typeof BATTLE_FIELD_BACKGROUND | string): string {
+/**
+ * 진입 데이터가 어떤 모드를 들고 와도 표에 있는 키 하나로 수렴시킨다.
+ *
+ * 스토리 전투는 `stageId`가 오면 그 관문의 장(`3-5` → 3)으로 전장이 갈린다 — 장이 곧 구역이다.
+ */
+export function battleFieldBackground(mode: keyof typeof BATTLE_FIELD_BACKGROUND | string, stageId?: string): string {
+  if (mode === "stage" && stageId) {
+    const chapter = Number.parseInt(stageId, 10);
+    if (Number.isFinite(chapter)) return stageFieldBackground(chapter);
+  }
   return BATTLE_FIELD_BACKGROUND[mode as keyof typeof BATTLE_FIELD_BACKGROUND] ?? BACKGROUND.combat;
+}
+
+/** 3장부터는 심층 구역이라 지도·전장 원화가 갈린다. 1·2장은 처음 두 장 그대로다. */
+const DEEP_CHAPTER_FROM = 3;
+
+/** 장에 맞는 스테이지 지도 원화. */
+export function stageMapBackground(chapter: number): string {
+  return chapter >= DEEP_CHAPTER_FROM ? BACKGROUND.stageMapDeep : BACKGROUND.stageMap;
+}
+
+/** 장에 맞는 스테이지 전장 원화. 스토리 전투가 아닌 모드는 `battleFieldBackground`가 맡는다. */
+export function stageFieldBackground(chapter: number): string {
+  return chapter >= DEEP_CHAPTER_FROM ? BACKGROUND.combatDeep : BACKGROUND.combat;
+}
+
+/** 고대 지층 구간의 배경 키. 어느 구간이 어느 원화인지는 `core/ancientStrata.ts`가 말한다. */
+export function ancientBackground(backdrop: AncientBackdrop): string {
+  return { entry: BACKGROUND.ancientEntry, loopA: BACKGROUND.ancientLoopA, loopB: BACKGROUND.ancientLoopB, loopC: BACKGROUND.ancientLoopC }[backdrop];
 }

@@ -24,6 +24,7 @@ import { SettingsScene } from "./scenes/SettingsScene";
 import { ExpeditionScene } from "./scenes/ExpeditionScene";
 import { SortiePreviewScene } from "./scenes/SortiePreviewScene";
 import { RaidScene } from "./scenes/RaidScene";
+import { AncientStrataScene } from "./scenes/AncientStrataScene";
 import { CakeOperationScene } from "./scenes/CakeOperationScene";
 import { BountyScene } from "./scenes/BountyScene";
 import { EffectOverlayScene } from "./scenes/EffectOverlayScene";
@@ -77,7 +78,7 @@ const game = new Phaser.Game({
   // 장기 탐사형 고고학, 배너 연구소, 재화 상점, 유료 프리미엄은 각각 독립 화면이다.
   // 원정은 로비 출격 선택판에서 진입하며 준비/이어하기 상태를 같은 씬에서 소유한다.
   // 누른 자리에 답하는 겹은 모든 화면 위에 서야 하므로 목록의 맨 끝에 둔다.
-  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, PvpPreviewScene, DuelScene, ArenaScene, ArenaMatchScene, ArenaRoomScene, ArenaNoticeScene, EventScene, InteractionScene, ExpeditionScene, SortiePreviewScene, RaidScene, CakeOperationScene, BountyScene, SettingsScene, FriendsScene, GuildScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
+  scene: [BootScene, TitleScene, OpeningScene, LobbyScene, PvpPreviewScene, DuelScene, ArenaScene, ArenaMatchScene, ArenaRoomScene, ArenaNoticeScene, EventScene, InteractionScene, ExpeditionScene, SortiePreviewScene, RaidScene, AncientStrataScene, CakeOperationScene, BountyScene, SettingsScene, FriendsScene, GuildScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
 });
 
 // 모바일 백그라운드 복귀를 검증하도록 DOM 사건과 실제 Phaser 렌더 재개만 관찰한다.

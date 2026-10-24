@@ -84,4 +84,11 @@ export const LOBBY_RU = {
   "storyDifficulty.locked": "Пройдите {difficulty} 4-10 для открытия",
   "storyDifficulty.unlocked.title": "Открыта новая сложность!",
   "storyDifficulty.unlocked.body": "Поздравляем, исследователь!\nВ режиме {difficulty} вас ждут сильные враги и новые награды за первое прохождение.",
+  "lobby.sortie.ancient": "Древние пласты",
+  "lobby.sortie.ancient.status": "Бесконечное исследование пластов",
+  "ancient.title": "Древние пласты",
+  "ancient.comingSoon": "Скоро",
+  "ancient.prev": "Пред. участок",
+  "ancient.next": "След. участок",
+  "ancient.gate": "Врата",
 } as const;

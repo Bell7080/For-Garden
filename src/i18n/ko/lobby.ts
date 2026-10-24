@@ -16,6 +16,13 @@ export const LOBBY_KO = {
   "lobby.sortie.bounty.status": "태그 3회 · 골드",
   "lobby.sortie.raid": "레이드",
   "lobby.sortie.raid.status": "협동 작전 · 주간 시즌",
+  "lobby.sortie.ancient": "고대 지층",
+  "lobby.sortie.ancient.status": "무한 지층 탐사",
+  "ancient.title": "고대 지층",
+  "ancient.comingSoon": "Coming soon",
+  "ancient.prev": "이전 구간",
+  "ancient.next": "다음 구간",
+  "ancient.gate": "관문",
 
   "lobby.expedition.resume": "이어하기 · {plays}회 · 최고 {best}",
   "lobby.expedition.weekly": "오늘 {plays}회 · 최고 {best} · {quick}",

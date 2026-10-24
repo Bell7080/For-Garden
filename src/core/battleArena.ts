@@ -22,6 +22,8 @@ export const BATTLE_ARENA = {
   cake: { ...BASE_ARENA, top: 720 },
   bounty: { ...BASE_ARENA, top: 770 },
   raid: { ...BASE_ARENA, top: 860 },
+  // 고대 지층 전장(거대 화석 발굴장)도 바닥이 스토리 전장과 같은 높이에서 시작한다.
+  ancient: BASE_ARENA,
   // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
   // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
   // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.

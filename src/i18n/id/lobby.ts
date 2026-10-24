@@ -84,4 +84,11 @@ export const LOBBY_ID = {
   "storyDifficulty.locked": "Selesaikan {difficulty} 4-10 untuk membuka",
   "storyDifficulty.unlocked.title": "Kesulitan baru terbuka!",
   "storyDifficulty.unlocked.body": "Selamat, Peneliti!\nHadapi musuh lebih kuat dan dapatkan hadiah kemenangan pertama di {difficulty}.",
+  "lobby.sortie.ancient": "Strata Kuno",
+  "lobby.sortie.ancient.status": "Penjelajahan strata tanpa akhir",
+  "ancient.title": "Strata Kuno",
+  "ancient.comingSoon": "Segera hadir",
+  "ancient.prev": "Blok sebelumnya",
+  "ancient.next": "Blok berikutnya",
+  "ancient.gate": "Gerbang",
 } as const;

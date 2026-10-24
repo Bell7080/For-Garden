@@ -84,4 +84,11 @@ export const LOBBY_TH = {
   "storyDifficulty.locked": "ผ่าน {difficulty} 4-10 เพื่อปลดล็อก",
   "storyDifficulty.unlocked.title": "ปลดล็อกระดับใหม่แล้ว!",
   "storyDifficulty.unlocked.body": "ยินดีด้วย นักวิจัย!\nพบศัตรูที่แข็งแกร่งขึ้นและรางวัลผ่านครั้งแรกใหม่ในระดับ{difficulty}",
+  "lobby.sortie.ancient": "ชั้นดินโบราณ",
+  "lobby.sortie.ancient.status": "สำรวจชั้นดินไม่สิ้นสุด",
+  "ancient.title": "ชั้นดินโบราณ",
+  "ancient.comingSoon": "เร็วๆ นี้",
+  "ancient.prev": "ช่วงก่อนหน้า",
+  "ancient.next": "ช่วงถัดไป",
+  "ancient.gate": "ด่าน",
 } as const;

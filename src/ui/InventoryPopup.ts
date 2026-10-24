@@ -26,7 +26,7 @@ import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
 import { motionPolicy } from "../core/settings";
 import { universalFragmentRarity } from "../core/relicProgression";
-import { addUniversalFragmentGlass } from "./universalFragmentArt";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -257,9 +257,16 @@ export class InventoryPopup {
     // 있는 정의라 `addFramedIcon` 대신 같은 값으로 직접 세운다.
     const iconSize = frameSize * ITEM_FRAME.icon;
     const onTexture = (key: string): void => { textureKeys.push(key); };
-    card.add(addItemDefinitionIcon(this.scene, item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true, onTexture }));
-    card.add(addItemDefinitionIcon(this.scene, item.definition.icon, 0, 0, iconSize, { onTexture }));
     const fragmentRarity = universalFragmentRarity(item.definition.id);
+    // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+    const fragmentArt = fragmentRarity ? addUniversalFragmentArt(this.scene, frameSize, universalFragmentTexture(fragmentRarity)) : undefined;
+    if (fragmentArt && fragmentRarity) {
+      onTexture(universalFragmentTexture(fragmentRarity));
+      card.add(fragmentArt);
+    } else {
+      card.add(addItemDefinitionIcon(this.scene, item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true, onTexture }));
+      card.add(addItemDefinitionIcon(this.scene, item.definition.icon, 0, 0, iconSize, { onTexture }));
+    }
     if (fragmentRarity) card.add(addUniversalFragmentGlass(this.scene, frameSize, fragmentRarity));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는

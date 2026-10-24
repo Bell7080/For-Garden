@@ -12,7 +12,7 @@ import { itemSourceKeys } from "../data/itemSources";
 import { shrinkTextToWidth } from "./textFit";
 import { pressIn, pressOut } from "./pressFeedback";
 import { universalFragmentRarity } from "../core/relicProgression";
-import { addUniversalFragmentGlass } from "./universalFragmentArt";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 
 export interface ItemGuideOptions {
   readonly definition: ItemDefinition;
@@ -46,9 +46,15 @@ export class ItemGuidePopup {
       const iconX = -hero.width / 2 + 48 + hero.frameSize / 2;
       body.add(addItemFrame(this.scene, iconX, heroY, hero.frameSize));
       const iconSize = hero.frameSize * ITEM_FRAME.icon;
-      body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX + ITEM_FRAME.shadow.offsetX, heroY + ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true }));
-      body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
       const fragmentRarity = universalFragmentRarity(definition.id);
+      // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+      const fragmentArt = fragmentRarity ? addUniversalFragmentArt(this.scene, hero.frameSize, universalFragmentTexture(fragmentRarity)) : undefined;
+      if (fragmentArt) {
+        body.add(fragmentArt.setPosition(iconX, heroY));
+      } else {
+        body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX + ITEM_FRAME.shadow.offsetX, heroY + ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true }));
+        body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
+      }
       if (fragmentRarity) body.add(addUniversalFragmentGlass(this.scene, hero.frameSize, fragmentRarity).setPosition(iconX, heroY));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))

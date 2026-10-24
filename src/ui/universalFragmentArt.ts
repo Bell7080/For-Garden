@@ -3,7 +3,7 @@ import { UNIVERSAL_FRAGMENT_ITEM, universalFragmentRarity } from "../core/relicP
 import type { RelicRarity } from "../core/types";
 import { session } from "../state/session";
 import { clipPolygonToShape, paintGlassSheen } from "./FaceFrame";
-import { clipRectToShape, faceClipShape } from "./faceTexture";
+import { bakeFaceTexture, clipRectToShape, faceClipShape } from "./faceTexture";
 import { RARITY_TONE } from "./rarityMark";
 
 /**
@@ -32,6 +32,27 @@ export function universalFragmentTexture(rarity: RelicRarity): string {
 /** 그 등급 파편 액자의 외곽선·유리 색. 렐릭 파편과 같은 값이다. */
 export function universalFragmentTone(rarity: RelicRarity): number {
   return RARITY_TONE[rarity].chip;
+}
+
+/**
+ * 그림의 자리 — 재화 아이콘처럼 액자 안 78%에 띄우지 않고 **액자를 넘치게 키워** 위아래가 조금 잘린다.
+ * 잘린 모서리는 얼굴 액자와 같은 방법(`bakeFaceTexture`)으로 그림 자체에서 지운다. 결정이 액자보다 먼저
+ * 튀지 않게 살짝 어둡고 비치게 눌러, 위에 얹히는 유리·주사선·훑는 빛이 그 위에서 읽히게 한다.
+ */
+export const FRAGMENT_ART = {
+  /** 원본(256) 중 액자 한 변에 담을 가운데 정사각의 비율. 작을수록 크게 선다. */
+  crop: 0.64,
+  tint: 0xb8bcc4,
+  alpha: 0.84,
+} as const;
+
+/** 액자를 꽉 채우도록 구운 만능 파편 그림. 그림이 아직 없으면 아무것도 세우지 않는다. */
+export function addUniversalFragmentArt(scene: Phaser.Scene, size: number, textureKey: string, alpha = 1): Phaser.GameObjects.Image | undefined {
+  if (!scene.textures.exists(textureKey)) return undefined;
+  const source = scene.textures.get(textureKey).getSourceImage();
+  const side = source.width * FRAGMENT_ART.crop;
+  const baked = bakeFaceTexture(scene, textureKey, size, { x: (source.width - side) / 2, y: (source.height - side) / 2, side });
+  return scene.add.image(0, 0, baked).setDisplaySize(size, size).setTint(FRAGMENT_ART.tint).setAlpha(FRAGMENT_ART.alpha * alpha);
 }
 
 /** 홀로그램 결의 값. 비율은 전부 액자 한 변 대비다. */

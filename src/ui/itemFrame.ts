@@ -5,7 +5,7 @@ import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./ho
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { RUNE_FRAME_FILL, RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
-import { addUniversalFragmentGlass, universalFragmentRarityOfTexture, universalFragmentTone } from "./universalFragmentArt";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentRarityOfTexture, universalFragmentTone } from "./universalFragmentArt";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -213,7 +213,12 @@ export function addFramedIcon(
   const shape = itemFrameShape(size);
   holder.add(drawLayer(scene, 0, 0, shape, { fill: options.fill ?? ITEM_FRAME.fill, alpha: options.fillAlpha ?? ITEM_FRAME.fillAlpha }));
   const runePart = textureKey ? runePartOfTexture(textureKey) : undefined;
-  if (runePart !== undefined && scene.textures.exists(textureKey)) {
+  // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+  const fragmentRarity = textureKey ? universalFragmentRarityOfTexture(textureKey) : undefined;
+  const fragmentArt = fragmentRarity ? addUniversalFragmentArt(scene, size, textureKey, options.iconAlpha ?? 1) : undefined;
+  if (fragmentArt) {
+    holder.add(fragmentArt);
+  } else if (runePart !== undefined && scene.textures.exists(textureKey)) {
     // 룬 조각은 캔버스가 아니라 **보이는 그림**을 가운데에 크게 앉힌다 — 가방의 룬 카드와 같은 맞춤이다.
     const fit = runePieceFit(runePart, size, RUNE_FRAME_FILL);
     const offset = fit.content * 0.045;
@@ -228,7 +233,6 @@ export function addFramedIcon(
     holder.add(scene.add.image(0, 0, textureKey).setDisplaySize(icon, icon).setAlpha(options.iconAlpha ?? 1));
   }
   // 만능 파편은 렐릭 파편과 같은 유리 결과 등급색 외곽선을 두른다(`universalFragmentArt.ts`).
-  const fragmentRarity = textureKey ? universalFragmentRarityOfTexture(textureKey) : undefined;
   if (fragmentRarity) holder.add(addUniversalFragmentGlass(scene, size, fragmentRarity));
   // 비네트와 외곽선은 그림 위에 덮여야 가장자리를 눌러 준다.
   holder.add(drawInnerVignette(scene, 0, 0, shape, { strength: ITEM_FRAME.vignette }));

@@ -29,6 +29,8 @@ export interface OpsJournal {
   /** 이미 지갑에 반영한 조정 ID(확정 뒤 DB 표시가 실패해도 두 번 반영되지 않는다). */
   appliedAdjustments: string[];
   readMails: string[];
+  /** 플레이어가 지운 우편 ID(운영 우편이 아닌 것도 포함). */
+  deletedMails?: string[];
   announcedMails: string[];
   notices: OpsNotice[];
 }
@@ -47,7 +49,7 @@ export function isValidOpsJournal(value: unknown): value is OpsJournal {
   if (!value || typeof value !== "object") return false;
   const ops = value as OpsJournal;
   const ids = (v: unknown): boolean => Array.isArray(v) && v.every((id) => typeof id === "string");
-  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices)
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && (ops.deletedMails === undefined || ids(ops.deletedMails)) && ids(ops.announcedMails) && Array.isArray(ops.notices)
     && ops.notices.every((n) => !!n && typeof n === "object" && ((n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta)) || (n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta)) || (n.kind === "mail" && typeof n.title === "string")));
 }
 
@@ -128,6 +130,13 @@ export function markOpsMailsRead(state: Session, ids: readonly string[]): void {
   const journal = opsJournalOf(state);
   const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
   if (next.length) journal.readMails = tail([...journal.readMails, ...next]);
+}
+
+/** 지운 우편을 저장에 남긴다. 운영·구독 우편은 매 호출 다시 만들어지므로 ID로 걸러 낸다. */
+export function markMailsDeleted(state: Session, ids: readonly string[]): void {
+  const journal = opsJournalOf(state);
+  const next = ids.filter((id) => !(journal.deletedMails ?? []).includes(id));
+  if (next.length) journal.deletedMails = tail([...(journal.deletedMails ?? []), ...next]);
 }
 
 /** 알림 조회가 한 번 내려 준 소식은 비운다. */

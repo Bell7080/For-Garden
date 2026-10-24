@@ -62,7 +62,7 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
@@ -115,7 +115,7 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
-import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
+import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
 import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, QUICK_EXPEDITION_POLICY } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
@@ -427,6 +427,17 @@ export class FakeServer implements GameApi {
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
   async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); markOpsMailsRead(this.state, request.mailIds); return this.mailListDto(); }
 
+  /** 읽은 안내와 수령을 마쳤거나 만료된 우편만 지운다. 받을 것이 남은 우편은 거절한다. */
+  async deleteMails(request: DeleteMailsRequest): Promise<MailListResponse> {
+    await this.delay(); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims();
+    const nowMs = this.now().getTime(); const ids = [...new Set(request.mailIds)];
+    const deletable = (mail: MailDto): boolean => (mail.rewards.length > 0 ? mail.claimed || (mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs) : mail.read);
+    const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
+    if (!ids.length || targets.some((mail) => !mail || !deletable(mail))) throw new Error("MAIL_NOT_DELETABLE");
+    markMailsDeleted(this.state, ids);
+    return this.mailListDto();
+  }
+
   /**
    * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
    * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
@@ -559,7 +570,7 @@ export class FakeServer implements GameApi {
     }
   }
 
-  private mailListDto(): MailListResponse { this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
+  private mailListDto(): MailListResponse { this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const deleted = new Set(this.state.serverJournal?.ops?.deletedMails ?? []); const mails = structuredClone(this.mails).filter((mail) => !deleted.has(mail.id)); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {

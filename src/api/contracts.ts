@@ -71,6 +71,8 @@ export interface ClaimMailRewardsRequest { requestId: string; mailIds: string[];
 export interface ClaimMailRewardsResponse extends MailListResponse { claimedMailIds: string[]; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
 /** 열람 처리는 보상 수령과 분리하며 여러 행을 한 번에 읽음 처리할 수 있다. */
 export interface MarkMailsReadRequest { mailIds: string[]; }
+/** 지울 수 있는 것은 읽은 안내와 수령을 마쳤거나 만료된 우편뿐이다. 받을 것이 남은 우편은 서버가 거절한다. */
+export interface DeleteMailsRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
 /** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
 export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; }
@@ -1022,6 +1024,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse>;
   /** 열람한 우편을 읽음으로 확정한다. */
   markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse>;
+  deleteMails(request: DeleteMailsRequest): Promise<MailListResponse>;
   /** 오늘의 출석 상태(신규·정규)를 조회한다. */
   getAttendance(): Promise<AttendanceStatusResponse>;
   /** 한 줄의 오늘 칸을 받는다. 같은 날 두 번 받지 못하고 같은 요청 ID는 같은 결과를 돌려준다. */

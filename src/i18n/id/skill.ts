@@ -132,7 +132,7 @@ export const SKILL_ID = {
   "skill.passive.lowHpStealth": "Sekali per pertarungan, masuk [[stealth|Siluman]] selama {seconds} dtk saat Nyawa turun ke {percent}% atau kurang.",
   "skill.passive.lowHpStealth.focus": "Sekali per pertarungan, saat Nyawa turun ke {percent}% atau kurang, kehilangan semua [[focus|Fokus]] dan masuk [[stealth|Siluman]] selama {seconds} dtk.",
   "skill.passive.openingVanish": "Memasuki pertarungan dalam [[stealth|Siluman]] selama {seconds} dtk.",
-  "skill.passive.featherVeil": "Memasuki pertarungan dalam [[stealth|Siluman]] selama {seconds} dtk dan [[attack-speed|Kecepatan Serang]] naik {speed}%.",
+  "skill.passive.featherVeil": "Memasuki pertarungan dalam [[stealth|Siluman]] selama {seconds} dtk.",
   "skill.passive.openingStealth": "Memasuki pertarungan dalam [[stealth|Siluman]] selama {seconds} dtk.",
   "skill.passive.undyingTalisman": "Sekali per pertarungan, kerusakan mematikan membuatnya tetap hidup dan [[invulnerable|Kebal]] selama {seconds} dtk, tetapi tak bisa bertindak sama sekali. Selama itu ia memulihkan {percent}% HP maks yang dibagi tiap detik.{blast}",
   "skill.passive.undyingTalisman.blast": " Ini juga [[knockback|menghempaskan]] musuh terdekat.",

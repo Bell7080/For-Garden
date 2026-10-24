@@ -5257,10 +5257,8 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const sunkenPercent = sunkenSlowPercent(fighter);
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
-  // 유티의 상시 공속은 조건이 정해진 자기 배율이라 룬 가속과 같은 자리에서 곱한다.
-  const featherPercent = fighter.def.passive.kind === "featherVeil" ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100)
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);

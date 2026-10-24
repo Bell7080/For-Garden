@@ -132,7 +132,7 @@ export const SKILL_DE = {
   "skill.passive.lowHpStealth": "Einmal pro Kampf geht es {seconds} s in [[stealth|Tarnung]], wenn das Leben auf {percent}% oder weniger fällt.",
   "skill.passive.lowHpStealth.focus": "Einmal pro Kampf verliert es bei höchstens {percent}% Leben allen [[focus|Fokus]] und geht {seconds} s in [[stealth|Tarnung]].",
   "skill.passive.openingVanish": "Betritt den Kampf {seconds} s lang in [[stealth|Tarnung]].",
-  "skill.passive.featherVeil": "Betritt den Kampf {seconds} s lang in [[stealth|Tarnung]] und erhält {speed} % [[attack-speed|Angriffstempo]].",
+  "skill.passive.featherVeil": "Betritt den Kampf {seconds} s lang in [[stealth|Tarnung]].",
   "skill.passive.openingStealth": "Betritt den Kampf {seconds} s lang in [[stealth|Tarnung]].",
   "skill.passive.undyingTalisman": "Einmal pro Kampf überlebt es tödlichen Schaden und wird {seconds} s [[invulnerable|unverwundbar]], kann aber gar nicht handeln. In dieser Zeit stellt es {percent}% des max. Lebens verteilt über jede Sekunde wieder her.{blast}",
   "skill.passive.undyingTalisman.blast": " Außerdem werden Gegner in der Nähe [[knockback|weggeschleudert]].",

@@ -132,7 +132,7 @@ export const SKILL_ES = {
   "skill.passive.lowHpStealth": "Una vez por combate, entra en [[stealth|Sigilo]] durante {seconds} s cuando la Salud baja al {percent}% o menos.",
   "skill.passive.lowHpStealth.focus": "Una vez por combate, cuando la Salud baja al {percent}% o menos, pierde toda la [[focus|Concentración]] y entra en [[stealth|Sigilo]] durante {seconds} s.",
   "skill.passive.openingVanish": "Entra al combate en [[stealth|Sigilo]] durante {seconds} s.",
-  "skill.passive.featherVeil": "Entra al combate en [[stealth|Sigilo]] durante {seconds} s y gana un {speed}% de [[attack-speed|velocidad de ataque]].",
+  "skill.passive.featherVeil": "Entra al combate en [[stealth|Sigilo]] durante {seconds} s.",
   "skill.passive.openingStealth": "Entra al combate en [[stealth|Sigilo]] durante {seconds} s.",
   "skill.passive.undyingTalisman": "Una vez por combate, el daño que lo mataría lo deja con vida e [[invulnerable|Invulnerable]] durante {seconds} s, pero sin poder actuar. Mientras tanto recupera el {percent}% de los PV máx. repartido cada segundo.{blast}",
   "skill.passive.undyingTalisman.blast": " Además [[knockback|lanza lejos]] a los enemigos cercanos.",

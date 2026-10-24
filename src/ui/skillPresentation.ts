@@ -603,8 +603,8 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
   if (passive.kind === "overpaintSiphon") return t("skill.passive.overpaintSiphon", { percent: passive.value });
   if (passive.kind === "lowHpVanish") return t("skill.passive.lowHpVanish", { seconds: passive.durationSeconds });
   if (passive.kind === "featherVeil") {
-    // 시작 은신·상시 공속이 한 문장으로 선다. 치명타 가산은 아래 공용 절이 따로 말한다.
-    return t("skill.passive.featherVeil", { seconds: passive.openingStealthSeconds ?? 0, speed: passive.attackSpeedPercent ?? 0 });
+    // 시작 은신을 말한다. 치명타 가산은 아래 공용 절이 따로 말한다.
+    return t("skill.passive.featherVeil", { seconds: passive.openingStealthSeconds ?? 0 });
   }
   if (passive.kind === "openingVanish") return t("skill.passive.openingVanish", { seconds: passive.durationSeconds });
   if (passive.kind === "undyingTalisman") {

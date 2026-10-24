@@ -93,6 +93,7 @@ let failed = false;
 try {
   // ── A. 전체 흐름 ───────────────────────────────────────────────────────────────────
   const a = freshDb();
+  must(a, read("supabase/tests/currency-log-assertions.sql"));
   for (const t of [...listOf("reset_tables"), ...listOf("ops_tables")]) {
     assert.ok(Number(scalar(a, `select count(*) from ${t}`)) > 0, `표본이 없는 표: ${t} (supabase/tests/launch-reset-seed.sql에 한 줄을 더하세요)`);
   }

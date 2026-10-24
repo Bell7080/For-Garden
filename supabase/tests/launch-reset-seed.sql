@@ -15,7 +15,7 @@ insert into auth.audit_log_entries(payload) values ('{"ip":"203.0.113.9"}');
 insert into public.admin_roles(user_id, role) values ('00000000-0000-0000-0000-0000000000a1', 'owner');
 update public.players set nickname = 'tester' where id = '00000000-0000-0000-0000-000000000001';
 
-insert into public.player_saves(player_id, data, data_hash, save_version) select id, '{"gems":999}', repeat('a', 64), 1 from public.players;
+insert into public.player_saves(player_id, data, data_hash, save_version) select id, '{"wallet":{"gems":999}}', repeat('a', 64), 1 from public.players;
 insert into public.player_assets(player_id, asset, amount) select id, 'gems', 5000 from public.players;
 insert into public.asset_ledger(player_id, asset, delta, balance_after, reason) select id, 'gems', 5000, 5000, 'admin_adjust' from public.players;
 insert into public.player_adjustments(player_id, asset, delta, note, created_by)

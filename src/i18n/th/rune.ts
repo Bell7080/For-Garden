@@ -18,7 +18,7 @@ export const RUNE_TH = {
   "rune.craftTitle": "เจียระไนรูน",
   "rune.craftAll": "เจียระไนทั้งหมด",
   "rune.craftAllConfirm": "เจียระไนที่เหลือ {count} ครั้งตั้งแต่ตัวเลือกบนสุดลงมา\nเจียระไนทั้งหมดในครั้งเดียว",
-  "rune.craftAllDone": "เจียระไนทั้งหมดเสร็จสิ้น · สำเร็จ {success}/{total}",
+  "rune.craftAllDone": "เจียระไนทั้งหมดเสร็จสิ้น",
   "rune.unequip": "ถอด",
   "rune.equip": "สวมใส่",
   "rune.engraved": "สลักเสร็จแล้ว",

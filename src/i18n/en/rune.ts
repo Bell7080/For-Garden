@@ -18,7 +18,7 @@ export const RUNE_EN = {
   "rune.craftTitle": "Rune Polishing",
   "rune.craftAll": "Polish All",
   "rune.craftAllConfirm": "Polishes all {count} remaining attempts from the top option down.\nEverything is polished at once.",
-  "rune.craftAllDone": "Polish All complete · {success}/{total} succeeded",
+  "rune.craftAllDone": "Polish All complete",
   "rune.unequip": "Unequip",
   "rune.equip": "Equip",
   "rune.engraved": "Engraving complete",

@@ -18,7 +18,7 @@ export const RUNE_PT_BR = {
   "rune.craftTitle": "Lapidação de Runa",
   "rune.craftAll": "Lapidar tudo",
   "rune.craftAllConfirm": "Lapida as {count} tentativas restantes a partir da opção do topo.\nTudo é lapidado de uma vez.",
-  "rune.craftAllDone": "Lapidação concluída · {success}/{total} com sucesso",
+  "rune.craftAllDone": "Lapidação concluída",
   "rune.unequip": "Remover",
   "rune.equip": "Equipar",
   "rune.engraved": "Gravação concluída",

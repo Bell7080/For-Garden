@@ -18,7 +18,7 @@ export const RUNE_ES = {
   "rune.craftTitle": "Tallado de Runa",
   "rune.craftAll": "Tallar todo",
   "rune.craftAllConfirm": "Talla los {count} intentos restantes desde la opción superior.\nTodo se talla de una vez.",
-  "rune.craftAllDone": "Tallado completo · {success}/{total} con éxito",
+  "rune.craftAllDone": "Tallado completo",
   "rune.unequip": "Quitar",
   "rune.equip": "Equipar",
   "rune.engraved": "Grabado completado",

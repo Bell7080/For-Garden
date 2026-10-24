@@ -18,7 +18,7 @@ export const RUNE_ID = {
   "rune.craftTitle": "Asah Rune",
   "rune.craftAll": "Asah semua",
   "rune.craftAllConfirm": "Mengasah {count} kesempatan tersisa dari opsi paling atas.\nSemuanya diasah sekaligus.",
-  "rune.craftAllDone": "Asah semua selesai · berhasil {success}/{total}",
+  "rune.craftAllDone": "Asah semua selesai",
   "rune.unequip": "Lepas",
   "rune.equip": "Pakai",
   "rune.engraved": "Ukiran selesai",

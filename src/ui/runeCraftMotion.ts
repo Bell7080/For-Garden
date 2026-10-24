@@ -80,6 +80,9 @@ export const RUNE_CRAFT_STRIKE = { scale: 1.8, ms: 150, color: 0xffffff, alpha: 
  */
 export const RUNE_CHANCE_ROLL = { ms: 380, ease: "Cubic.Out" } as const;
 
+/** 일괄 세공 결과가 위 칸부터 차례로 박히는 간격(ms). 칸이 많은 룬도 한 박자에 끝나도록 짧다. */
+export const BATCH_LAND_STEP_MS = 85;
+
 /** 서버 응답을 기다리는 동안 눌러 둘 수 있는 세공 수. */
 export const RUNE_CRAFT_QUEUE_LIMIT = 2;
 

@@ -18,7 +18,7 @@ export const RUNE_DE = {
   "rune.craftTitle": "Runenveredelung",
   "rune.craftAll": "Alles veredeln",
   "rune.craftAllConfirm": "Veredelt alle {count} verbleibenden Versuche von der obersten Option abwärts.\nAlles wird auf einmal veredelt.",
-  "rune.craftAllDone": "Alles veredelt · {success}/{total} gelungen",
+  "rune.craftAllDone": "Alles veredelt",
   "rune.unequip": "Ablegen",
   "rune.equip": "Anlegen",
   "rune.engraved": "Gravur abgeschlossen",

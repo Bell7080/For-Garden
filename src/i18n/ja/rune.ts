@@ -18,7 +18,7 @@ export const RUNE_JA = {
   "rune.craftTitle": "ルーン研磨",
   "rune.craftAll": "一括研磨",
   "rune.craftAllConfirm": "残り{count}回の研磨を上のオプションから順に行います。\n一度に研磨されます。",
-  "rune.craftAllDone": "一括研磨完了・成功 {success}/{total}",
+  "rune.craftAllDone": "一括研磨完了",
   "rune.unequip": "外す",
   "rune.equip": "装着",
   "rune.engraved": "刻印完了",

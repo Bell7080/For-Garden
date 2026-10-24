@@ -180,14 +180,14 @@
 "Огранит все оставшиеся попытки ({count}) начиная с верхней опции.\nВсё будет огранено за один раз."
 ],
 "rune.craftAllDone": [
-"一键打磨完成 · 成功 {success}/{total}",
-"เจียระไนทั้งหมดเสร็จสิ้น · สำเร็จ {success}/{total}",
-"Mài tất cả hoàn tất · thành công {success}/{total}",
-"Asah semua selesai · berhasil {success}/{total}",
-"Tallado completo · {success}/{total} con éxito",
-"Lapidação concluída · {success}/{total} com sucesso",
-"Alles veredelt · {success}/{total} gelungen",
-"Огранка завершена · удачно {success}/{total}"
+"一键打磨完成",
+"เจียระไนทั้งหมดเสร็จสิ้น",
+"Mài tất cả hoàn tất",
+"Asah semua selesai",
+"Tallado completo",
+"Lapidação concluída",
+"Alles veredelt",
+"Огранка завершена"
 ],
 "rune.unequip": [
 "卸下",

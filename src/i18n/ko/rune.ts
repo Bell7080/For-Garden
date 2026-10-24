@@ -18,7 +18,7 @@ export const RUNE_KO = {
   "rune.craftTitle": "룬 세공",
   "rune.craftAll": "일괄 세공",
   "rune.craftAllConfirm": "남은 세공 {count}회를 위 옵션부터 차례로 진행합니다.\n한 번에 세공됩니다.",
-  "rune.craftAllDone": "일괄 세공 완료 · 성공 {success}/{total}",
+  "rune.craftAllDone": "일괄 세공 완료",
   "rune.unequip": "해제",
   "rune.equip": "장착",
   "rune.engraved": "각인 완료",

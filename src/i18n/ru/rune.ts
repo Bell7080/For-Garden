@@ -18,7 +18,7 @@ export const RUNE_RU = {
   "rune.craftTitle": "Огранка руны",
   "rune.craftAll": "Огранить всё",
   "rune.craftAllConfirm": "Огранит все оставшиеся попытки ({count}) начиная с верхней опции.\nВсё будет огранено за один раз.",
-  "rune.craftAllDone": "Огранка завершена · удачно {success}/{total}",
+  "rune.craftAllDone": "Огранка завершена",
   "rune.unequip": "Снять",
   "rune.equip": "Надеть",
   "rune.engraved": "Гравировка завершена",

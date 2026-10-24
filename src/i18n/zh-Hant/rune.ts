@@ -18,7 +18,7 @@ export const RUNE_ZH_HANT = {
   "rune.craftTitle": "符文打磨",
   "rune.craftAll": "一鍵打磨",
   "rune.craftAllConfirm": "從上方詞條開始，依次完成剩餘的 {count} 次打磨。\n將一次性打磨完成。",
-  "rune.craftAllDone": "一鍵打磨完成 · 成功 {success}/{total}",
+  "rune.craftAllDone": "一鍵打磨完成",
   "rune.unequip": "卸下",
   "rune.equip": "裝備",
   "rune.engraved": "刻印完成",

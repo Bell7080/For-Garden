@@ -18,7 +18,7 @@ export const RUNE_VI = {
   "rune.craftTitle": "Mài Rune",
   "rune.craftAll": "Mài tất cả",
   "rune.craftAllConfirm": "Mài {count} lượt còn lại, từ tùy chọn trên cùng trở xuống.\nTất cả được mài cùng một lúc.",
-  "rune.craftAllDone": "Mài tất cả hoàn tất · thành công {success}/{total}",
+  "rune.craftAllDone": "Mài tất cả hoàn tất",
   "rune.unequip": "Tháo",
   "rune.equip": "Trang bị",
   "rune.engraved": "Đã Khắc xong",

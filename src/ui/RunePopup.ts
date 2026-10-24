@@ -17,7 +17,7 @@ import { drawGlyph } from "./glyphs";
 import { drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
 import { RUNE_CRAFT_MARKS, RUNE_CRAFT_PANEL, RUNE_NOTE_PANEL, runeCraftLayout, runeNoteLayout } from "./runeCraftLayout";
-import { planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
+import { BATCH_LAND_STEP_MS, planRuneCraftTap, RUNE_CRAFT_IMPACT, RUNE_CRAFT_STRIKE, RUNE_MARK, type RuneCraftImpactKind } from "./runeCraftMotion";
 import { addEmptyRuneMark, addRuneFrame, addRuneMark, RUNE_ACCENT, RuneChanceLine } from "./runeIcons";
 import { addCurrencyChip } from "./CurrencyChip";
 import { KeywordManager } from "../managers/KeywordManager";
@@ -430,6 +430,8 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
   let chanceShown = rune.currentSuccessChance;
   /** 방금 박힌 결과. 다시 그릴 때 그 표식 하나만 크게 나타났다가 앉는다. */
   let landed: { statKey: RuneStatKey; slot: number; kind: RuneCraftImpactKind } | undefined;
+  /** 일괄 세공으로 막 박힌 칸들의 순서(위 줄부터). 이 그림에서만 차례로 박히고 곧 비운다. */
+  let batchLanded: Map<string, number> | undefined;
   const stopCrafting = (): void => { closed = true; queued = 0; };
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stopCrafting);
   popups.open({ width: panel.width, height: layout.height, title: t("rune.craftTitle"), y: panel.centerY, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true, onClose: () => { closed = true; queued = 0; scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stopCrafting); options.onClose?.(); } }, (body) => {
@@ -539,12 +541,19 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       queued = 0;
       try {
         const response = await inventory.enhanceRuneAll(api, rune!.instanceId);
+        batchLanded = new Map();
+        const nextSlot = new Map<RuneStatKey, number>();
+        for (const key of runeBatchEnhancementTargets(rune!)) {
+          const slot = nextSlot.get(key) ?? rune!.enhancementHistory[key]?.length ?? 0;
+          batchLanded.set(`${key}:${slot}`, batchLanded.size);
+          nextSlot.set(key, slot + 1);
+        }
         rune = response.rune;
         if (closed) { pending = false; return; }
         options.onChanged?.(rune);
         selected = undefined;
         pending = false;
-        render(t("rune.craftAllDone", { success: response.results.filter(Boolean).length, total: response.results.length }));
+        render(t("rune.craftAllDone"));
       } catch (error) {
         pending = false;
         if (!closed) render(error instanceof Error ? error.message : t("rune.requestFailed"));
@@ -680,7 +689,12 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
           }
           const kind: RuneCraftImpactKind = result.succeeded ? "success" : "fail";
           const mark = addRuneMark(scene, content, x, y, outer, kind);
-          if (landed && landed.statKey === stat.key && landed.slot === slot) land(mark, kind);
+          const order = batchLanded?.get(`${stat.key}:${slot}`);
+          if (order !== undefined) {
+            // 맨 위 칸부터 타다다당 박힌다. 순서가 늦을수록 간격을 좁혀 열다섯 칸도 길게 끌지 않는다.
+            mark.setAlpha(0);
+            scene.tweens.add({ targets: mark, alpha: 1, duration: 1, delay: order * BATCH_LAND_STEP_MS, onStart: () => land(mark, kind) });
+          } else if (landed && landed.statKey === stat.key && landed.slot === slot) land(mark, kind);
         }
         // 각인 자리는 세 칸 뒤의 빈 공간이다. 각인된 옵션에만 금빛 다이아가 박힌다.
         const engraving = current.engravings.find(({ statKey }) => statKey === stat.key);
@@ -729,13 +743,13 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         action = new Button(scene, 0, top + layout.buttonY, {
           width: panel.button.width, height: panel.button.height,
           label: t("rune.craft"), variant: "primary", accentColor: accent,
-          cost: { icon: "currency-gold", amount: cost, affordable }, onClick: press,
+          cost: { icon: "currency-gold", amount: cost, affordable, abbreviate: true }, onClick: press,
         });
         body.add(action);
         batchAction = new Button(scene, panel.button.pairOffset, top + layout.buttonY, {
           width: panel.button.width, height: panel.button.height,
           label: t("rune.craftAll"), variant: "primary", accentColor: accent,
-          cost: { icon: "currency-gold", amount: batchCost, affordable: batchAffordable }, onClick: confirmCraftAll,
+          cost: { icon: "currency-gold", amount: batchCost, affordable: batchAffordable, abbreviate: true }, onClick: confirmCraftAll,
         });
         batchAction.fitLabel(panel.button.width - 150);
         body.add(batchAction);
@@ -749,6 +763,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         .setEnabled(!!selected && !engraved && affordable);
       // 박힘은 이 그림에서만 한 번 일어난다. 지우지 않으면 줄을 고를 때마다 같은 표식이 다시 꽂힌다.
       landed = undefined;
+      batchLanded = undefined;
     };
     render();
   });

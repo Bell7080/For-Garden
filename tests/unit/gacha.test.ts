@@ -256,10 +256,10 @@ describe("운영 배너 데이터", () => {
   it("R 이상 렐릭과 회색 보상의 기대값이 운영 목표 범위 안이다", () => {
     // 범위는 economy-design.md의 독립 슬롯 목표를 허용 오차와 함께 기계적으로 고정한다.
     const targets = {
-      fossil: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
+      fossil: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
       // 첫 복원 연구는 확률·회색 보상이 화석 연구와 같다. 다른 것은 풀·값·한도·확정뿐이다.
-      welcome: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
-      amber: { relicRPlus: [0.169, 0.171], gold: [3_873, 3_874], cheesecake: [29.04, 29.06] },
+      welcome: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
+      amber: { relicRPlus: [0.249, 0.251], gold: [3_499, 3_501], cheesecake: [26.24, 26.26] },
     } as const;
 
     for (const candidate of BANNERS) {
@@ -278,8 +278,8 @@ describe("운영 배너 데이터", () => {
 
   it("모든 연구는 확률과 회색 보상이 같다 — 화석과 호박석 한 번의 값을 하나로 매기기 위해서다", () => {
     const fossil = BANNERS.find((candidate) => candidate.id === "fossil")!;
-    // 출시 초기의 작은 R 풀을 보호하도록 대부분이 재화다.
-    expect(fossil.slotRates.GRAY).toBeGreaterThanOrEqual(0.8);
+    // 대부분은 여전히 재화다. R은 v0.333.0에서 12% → 20%로 올렸다(그 몫은 재화 칸에서 가져왔다).
+    expect(fossil.slotRates.GRAY).toBeGreaterThanOrEqual(0.75);
     for (const candidate of BANNERS) {
       expect(candidate.slotRates).toEqual(fossil.slotRates);
       expect(candidate.grayRewards).toEqual(fossil.grayRewards);

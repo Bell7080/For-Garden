@@ -438,6 +438,20 @@ describe("FakeServer", () => {
     await expect(server.breakThroughRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
+  it("한계 돌파는 그 개체의 파편이 모자란 몫만 같은 등급의 만능 파편으로 채운다", async () => {
+    const state = makeSession();
+    const step = BREAKTHROUGH_STEPS[0];
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_LEVEL_CAP, exp: 0 };
+    // 토리카는 SR이라 파편 둘 — 하나만 있고 만능 SR 파편 셋, 다른 등급(R) 만능 파편은 쓰이지 않는다.
+    state.relicFragments.torika = 1; state.wallet.cheesecake = step.cheesecake;
+    state.itemInventory = [...state.itemInventory, { itemId: "universal-fragment-sr", quantity: 3 }, { itemId: "universal-fragment-r", quantity: 5 }];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const response = await server.breakThroughRelic("torika");
+    expect(response).toMatchObject({ breakthrough: 1, fragments: 0, universalFragmentsUsed: 1 });
+    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-sr")?.quantity).toBe(2);
+    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-r")?.quantity).toBe(5);
+  });
+
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 30 });

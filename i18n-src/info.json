@@ -996,5 +996,25 @@
 "info.diary.reward": ["回答即可获得{gems}颗宝石", "ตอบเพื่อรับเจม {gems} เม็ด", "Trả lời để nhận {gems} Ngọc", "Jawab untuk mendapat {gems} Permata", "Responde y recibe {gems} gemas", "Responda para receber {gems} gemas", "Antworte und erhalte {gems} Juwelen", "Ответьте и получите самоцветов: {gems}"],
 "info.diary.title": ["观察提问 {index} / {total}", "คำถามการสังเกต {index} / {total}", "Câu hỏi quan sát {index} / {total}", "Pertanyaan Observasi {index} / {total}", "Pregunta de observación {index} / {total}", "Pergunta de observação {index} / {total}", "Beobachtungsfrage {index} / {total}", "Вопрос наблюдения {index} / {total}"],
 "info.journal.diaryTitle": ["观察日记", "ไดอารี่การสังเกต", "Nhật ký quan sát", "Diari Observasi", "Diario de observación", "Diário de observação", "Beobachtungstagebuch", "Дневник наблюдений"],
-"info.journal.fossilRecord": ["采掘记录", "บันทึกการขุด", "Hồ sơ khai thác", "Catatan Penggalian", "Registro de excavación", "Registro de escavação", "Grabungsbericht", "Запись о раскопках"]
+"info.journal.fossilRecord": ["采掘记录", "บันทึกการขุด", "Hồ sơ khai thác", "Catatan Penggalian", "Registro de excavación", "Registro de escavação", "Grabungsbericht", "Запись о раскопках"],
+"info.breakthrough.universalSpend": [
+"消耗 {count}",
+"ใช้ {count}",
+"Dùng {count}",
+"Pakai {count}",
+"Usa {count}",
+"Usa {count}",
+"Verbraucht {count}",
+"Расход {count}"
+],
+"info.breakthrough.universalNotice": [
+"还将消耗{count}个{name}",
+"จะใช้ {name} {count} ชิ้นด้วย",
+"Sẽ dùng thêm {count} {name}",
+"{count} {name} juga akan terpakai",
+"También se consumirán {count} {name}",
+"Também serão consumidos {count} {name}",
+"Zusätzlich werden {count} {name} verbraucht",
+"Также будет израсходовано: {name} ×{count}"
+]
 }

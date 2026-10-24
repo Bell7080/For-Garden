@@ -5,6 +5,7 @@ import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./ho
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { RUNE_FRAME_FILL, RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
+import { addUniversalFragmentGlass, universalFragmentRarityOfTexture, universalFragmentTone } from "./universalFragmentArt";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -226,10 +227,13 @@ export function addFramedIcon(
     holder.add(scene.add.image(offsetX, offsetY, textureKey).setDisplaySize(icon, icon).setTint(0x000000).setAlpha(alpha * (options.iconAlpha ?? 1)));
     holder.add(scene.add.image(0, 0, textureKey).setDisplaySize(icon, icon).setAlpha(options.iconAlpha ?? 1));
   }
+  // 만능 파편은 렐릭 파편과 같은 유리 결과 등급색 외곽선을 두른다(`universalFragmentArt.ts`).
+  const fragmentRarity = textureKey ? universalFragmentRarityOfTexture(textureKey) : undefined;
+  if (fragmentRarity) holder.add(addUniversalFragmentGlass(scene, size, fragmentRarity));
   // 비네트와 외곽선은 그림 위에 덮여야 가장자리를 눌러 준다.
   holder.add(drawInnerVignette(scene, 0, 0, shape, { strength: ITEM_FRAME.vignette }));
   holder.add(drawShapeOutline(scene, 0, 0, shape, {
-    color: options.color ?? COLOR.accent,
+    color: options.color ?? (fragmentRarity ? universalFragmentTone(fragmentRarity) : COLOR.accent),
     alpha: options.outlineAlpha ?? ITEM_FRAME.outlineAlpha,
     width: options.outlineWidth ?? ITEM_FRAME.outlineWidth,
   }));

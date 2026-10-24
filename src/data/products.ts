@@ -193,6 +193,8 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
    * 젬 1 = 치즈케이크 2 = 골드 500)에서 일일은 100~105%, 특가는 107~156%다.
    */
   { id: "shop-tonic-pack", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "에너지 드링크", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 만능 R 파편 — 주간 한 개, **아주 비싼 골드**로만 판다. R 파편 시세(마일리지 10 ≈ 젬 600 ≈ 골드 30만)의 2배다.
+  { id: "shop-universal-r", storefront: "shop", category: "special", iconKey: "shop-product-enhancement", name: "만능 R 파편", description: "", acquisition: { kind: "currency", currency: "gold", amount: 600000 }, grants: [{ kind: "item", itemId: "universal-fragment-r", name: "만능 R 파편", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-large-pack", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "에너지 드링크+", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
   // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시

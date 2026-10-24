@@ -2,8 +2,8 @@ import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
-import { calculateFinalStats, breakthroughGrade } from "../core/relicProgression";
-import type { RelicProgress, Stats } from "../core/types";
+import { calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import type { RelicProgress, RelicRarity, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAIT_KIT } from "../data/runes";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
@@ -44,6 +44,12 @@ export class RelicProgressionManager {
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
   getFragments(relicId: string): number {
     return this.state.relicFragments[relicId] ?? 0;
+  }
+
+  /** 그 등급의 만능 파편 수 — 가방의 재료 칸에 든다(`UNIVERSAL_FRAGMENT_ITEM`). */
+  getUniversalFragments(rarity: RelicRarity): number {
+    const itemId = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    return this.state.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
   }
 
   /**

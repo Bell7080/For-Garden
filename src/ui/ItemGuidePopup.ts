@@ -11,6 +11,8 @@ import { ITEM_GUIDE, itemGuideHeight, itemGuideSourcesTop } from "./itemGuideLay
 import { itemSourceKeys } from "../data/itemSources";
 import { shrinkTextToWidth } from "./textFit";
 import { pressIn, pressOut } from "./pressFeedback";
+import { universalFragmentRarity } from "../core/relicProgression";
+import { addUniversalFragmentGlass } from "./universalFragmentArt";
 
 export interface ItemGuideOptions {
   readonly definition: ItemDefinition;
@@ -46,6 +48,8 @@ export class ItemGuidePopup {
       const iconSize = hero.frameSize * ITEM_FRAME.icon;
       body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX + ITEM_FRAME.shadow.offsetX, heroY + ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true }));
       body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
+      const fragmentRarity = universalFragmentRarity(definition.id);
+      if (fragmentRarity) body.add(addUniversalFragmentGlass(this.scene, hero.frameSize, fragmentRarity).setPosition(iconX, heroY));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
         .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true));

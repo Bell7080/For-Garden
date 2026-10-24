@@ -42,6 +42,8 @@ export const INFO_VI = {
   "info.breakthrough.fragment": "Mảnh {name}",
   "info.breakthrough.cheesecake": "Bánh phô mai",
   "info.breakthrough.need": "Cần {count}",
+  "info.breakthrough.universalSpend": "Dùng {count}",
+  "info.breakthrough.universalNotice": "Sẽ dùng thêm {count} {name}",
   "info.rune.bag": "Túi Rune · {part}",
   "info.rune.empty": "Ô trống",
   "info.rune.emptySlot": "   Ô trống",

@@ -42,6 +42,8 @@ export const INFO_RU = {
   "info.breakthrough.fragment": "Фрагмент: {name}",
   "info.breakthrough.cheesecake": "Чизкейк",
   "info.breakthrough.need": "Нужно {count}",
+  "info.breakthrough.universalSpend": "Расход {count}",
+  "info.breakthrough.universalNotice": "Также будет израсходовано: {name} ×{count}",
   "info.rune.bag": "Сумка рун · {part}",
   "info.rune.empty": "Пустая ячейка",
   "info.rune.emptySlot": "   Пустая ячейка",

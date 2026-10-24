@@ -42,6 +42,8 @@ export const INFO_DE = {
   "info.breakthrough.fragment": "{name}-Splitter",
   "info.breakthrough.cheesecake": "Käsekuchen",
   "info.breakthrough.need": "Benötigt {count}",
+  "info.breakthrough.universalSpend": "Verbraucht {count}",
+  "info.breakthrough.universalNotice": "Zusätzlich werden {count} {name} verbraucht",
   "info.rune.bag": "Runentasche · {part}",
   "info.rune.empty": "Leerer Platz",
   "info.rune.emptySlot": "   Leerer Platz",

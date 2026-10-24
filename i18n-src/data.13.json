@@ -829,5 +829,65 @@
 "Usa 1 ao desafiar um oponente na Arena de duelos. Recarrega 5 por dia.",
 "Wird beim Herausfordern eines Gegners in der Duellarena verbraucht. Täglich werden 5 aufgefüllt.",
 "Тратится 1 при вызове соперника на арене дуэлей. Каждый день пополняется до 5."
+],
+"item.universal-fragment-r.name": [
+"万能R碎片",
+"เศษสากล R",
+"Mảnh vạn năng R",
+"Serpihan Universal R",
+"Fragmento universal R",
+"Fragmento universal R",
+"Universal-R-Splitter",
+"Универсальный осколок R"
+],
+"item.universal-fragment-r.description": [
+"可用于任意R遗物的极限突破。仅在该遗物自身碎片不足时，消耗不足的部分。",
+"ใช้ทะลุขีดจำกัดของเรลิก R ตัวใดก็ได้ จะถูกใช้เฉพาะส่วนที่เศษของเรลิกนั้นไม่พอเท่านั้น",
+"Dùng cho đột phá giới hạn của bất kỳ di vật R nào. Chỉ tiêu hao phần còn thiếu khi mảnh riêng của di vật đó không đủ.",
+"Dapat dipakai untuk terobosan batas relik R mana pun. Hanya terpakai untuk menutup kekurangan serpihan relik itu sendiri.",
+"Sirve para la ruptura de límite de cualquier reliquia R. Solo se consume para cubrir lo que falte de los fragmentos propios de esa reliquia.",
+"Serve para a ruptura de limite de qualquer relíquia R. Só é consumido para cobrir a falta dos fragmentos próprios dessa relíquia.",
+"Für den Grenzdurchbruch jedes R-Relikts nutzbar. Wird nur verbraucht, um fehlende eigene Splitter dieses Relikts auszugleichen.",
+"Подходит для прорыва предела любой реликвии R. Расходуется только на нехватку собственных осколков этой реликвии."
+],
+"item.universal-fragment-sr.name": [
+"万能SR碎片",
+"เศษสากล SR",
+"Mảnh vạn năng SR",
+"Serpihan Universal SR",
+"Fragmento universal SR",
+"Fragmento universal SR",
+"Universal-SR-Splitter",
+"Универсальный осколок SR"
+],
+"item.universal-fragment-sr.description": [
+"可用于任意SR遗物的极限突破。仅在该遗物自身碎片不足时，消耗不足的部分。",
+"ใช้ทะลุขีดจำกัดของเรลิก SR ตัวใดก็ได้ จะถูกใช้เฉพาะส่วนที่เศษของเรลิกนั้นไม่พอเท่านั้น",
+"Dùng cho đột phá giới hạn của bất kỳ di vật SR nào. Chỉ tiêu hao phần còn thiếu khi mảnh riêng của di vật đó không đủ.",
+"Dapat dipakai untuk terobosan batas relik SR mana pun. Hanya terpakai untuk menutup kekurangan serpihan relik itu sendiri.",
+"Sirve para la ruptura de límite de cualquier reliquia SR. Solo se consume para cubrir lo que falte de los fragmentos propios de esa reliquia.",
+"Serve para a ruptura de limite de qualquer relíquia SR. Só é consumido para cobrir a falta dos fragmentos próprios dessa relíquia.",
+"Für den Grenzdurchbruch jedes SR-Relikts nutzbar. Wird nur verbraucht, um fehlende eigene Splitter dieses Relikts auszugleichen.",
+"Подходит для прорыва предела любой реликвии SR. Расходуется только на нехватку собственных осколков этой реликвии."
+],
+"item.universal-fragment-ssr.name": [
+"万能SSR碎片",
+"เศษสากล SSR",
+"Mảnh vạn năng SSR",
+"Serpihan Universal SSR",
+"Fragmento universal SSR",
+"Fragmento universal SSR",
+"Universal-SSR-Splitter",
+"Универсальный осколок SSR"
+],
+"item.universal-fragment-ssr.description": [
+"可用于任意SSR遗物的极限突破。仅在该遗物自身碎片不足时，消耗不足的部分。",
+"ใช้ทะลุขีดจำกัดของเรลิก SSR ตัวใดก็ได้ จะถูกใช้เฉพาะส่วนที่เศษของเรลิกนั้นไม่พอเท่านั้น",
+"Dùng cho đột phá giới hạn của bất kỳ di vật SSR nào. Chỉ tiêu hao phần còn thiếu khi mảnh riêng của di vật đó không đủ.",
+"Dapat dipakai untuk terobosan batas relik SSR mana pun. Hanya terpakai untuk menutup kekurangan serpihan relik itu sendiri.",
+"Sirve para la ruptura de límite de cualquier reliquia SSR. Solo se consume para cubrir lo que falte de los fragmentos propios de esa reliquia.",
+"Serve para a ruptura de limite de qualquer relíquia SSR. Só é consumido para cobrir a falta dos fragmentos próprios dessa relíquia.",
+"Für den Grenzdurchbruch jedes SSR-Relikts nutzbar. Wird nur verbraucht, um fehlende eigene Splitter dieses Relikts auszugleichen.",
+"Подходит для прорыва предела любой реликвии SSR. Расходуется только на нехватку собственных осколков этой реликвии."
 ]
 }

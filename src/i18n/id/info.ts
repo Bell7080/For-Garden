@@ -42,6 +42,8 @@ export const INFO_ID = {
   "info.breakthrough.fragment": "Serpihan {name}",
   "info.breakthrough.cheesecake": "Cheesecake",
   "info.breakthrough.need": "Butuh {count}",
+  "info.breakthrough.universalSpend": "Pakai {count}",
+  "info.breakthrough.universalNotice": "{count} {name} juga akan terpakai",
   "info.rune.bag": "Tas Rune · {part}",
   "info.rune.empty": "Slot kosong",
   "info.rune.emptySlot": "   Slot kosong",

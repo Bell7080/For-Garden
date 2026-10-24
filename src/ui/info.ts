@@ -71,7 +71,7 @@ import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
@@ -87,6 +87,8 @@ import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
+import { findItem } from "../data/items";
+import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -285,6 +287,9 @@ const BREAK_EDGE = 0xa88cf0;
 /** 한계 돌파 버튼. `labelInset`은 이름이 판 좌우 변에서 비워 두는 자리다(기울인 변을 피한다). */
 const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18, labelInset: 28 } as const;
 
+/** 만능 파편이 함께 쓰일 때 그 몫을 알리는 색 — 파편·치즈케이크의 강조색과 갈라 읽히게 금빛이다. */
+const UNIVERSAL_SPEND_TEXT = "#ffd66b";
+
 /** 뚫을 수 있을 때 판 안쪽에서 번지는 빛의 숨. 느려야 재촉이 아니라 신호로 읽힌다. */
 const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 
@@ -299,7 +304,9 @@ const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 type BreakthroughCost =
   | { kind: "level"; label: string; need: number; have: number }
   | { kind: "fragment"; label: string; need: number; have: number }
-  | { kind: "currency"; texture: string; label: string; need: number; have: number };
+  | { kind: "currency"; texture: string; label: string; need: number; have: number }
+  /** 그 개체의 파편이 모자라 **함께 소모되는** 만능 파편. 쓰일 때만 칸이 선다. */
+  | { kind: "universal"; texture: string; label: string; need: number; have: number };
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
@@ -880,15 +887,16 @@ export class InfoManager {
     const def = this.currentDef;
     const step = nextBreakthrough(progress.breakthrough);
     const held = def ? relicProgression.getFragments(def.id) : 0;
-    // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 다섯, SSR은 하나다.
+    const universal = def ? relicProgression.getUniversalFragments(def.rarity) : 0;
+    // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 넷, SSR은 하나다.
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
-    const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
+    const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.7) : 0.35);
     // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
     if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax")), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
-    this.paintBreakCost(def, step, held, need);
+    this.paintBreakCost(def, step, held, need, universal);
   }
 
   /**
@@ -919,18 +927,22 @@ export class InfoManager {
    * **액자를 쓰지 않는다** — 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와
    * 같은 규칙). 파편 그림은 확정 창의 보석 조각과 같은 얼굴을 액자 없이 세운 것이다.
    */
-  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number): void {
+  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number, universal: number): void {
     const row = this.breakButton?.cost;
     if (!row) return;
     row.removeAll(true);
     if (!def || !step) return;
     const cheesecake = session.wallet.cheesecake;
-    const pairs = [
-      { short: held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
-      { short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
+    // 그 개체의 파편이 모자라면 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 줄은 붉지 않고,
+    // 그 옆에 만능 파편 그림과 `×N`이 금빛으로 따로 서서 무엇이 함께 소모되는지 버튼이 먼저 말한다.
+    const spend = breakthroughFragmentSpend(def.rarity, relicProgression.getProgress(def.id).breakthrough, held, universal);
+    const pairs: { short: boolean; text: string; color?: string; kind: "fragment" | "universal" | "cheesecake" }[] = [
+      { kind: "fragment", short: !spend.enough && held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
+      ...(spend.enough && spend.universal > 0 ? [{ kind: "universal" as const, short: false, text: `×${formatCurrency(spend.universal)}`, color: UNIVERSAL_SPEND_TEXT }] : []),
+      { kind: "cheesecake", short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
     ];
-    const values = pairs.map(({ short, text }) => this.scene.add
-      .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : COLOR.accentText }))
+    const values = pairs.map(({ short, text, color }) => this.scene.add
+      .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : color ?? COLOR.accentText }))
       .setOrigin(0, 0.5));
     // 그림과 수를 한 덩어리로 재고 나서 줄 가운데에 세운다 — 자릿수가 늘어도 줄이 흔들리지 않는다.
     const widths = values.map((value) => BREAK_BUTTON.icon + BREAK_BUTTON.gap + value.width);
@@ -938,9 +950,14 @@ export class InfoManager {
     let cursor = -span / 2;
     values.forEach((value, index) => {
       const iconX = cursor + BREAK_BUTTON.icon / 2;
-      if (index === 0) {
+      const kind = pairs[index].kind;
+      if (kind === "fragment") {
         // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
         row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
+      } else if (kind === "universal") {
+        // 만능 파편의 문양을 그 등급색으로 물들여 액자 없이 세운다.
+        const key = universalFragmentTexture(def.rarity);
+        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon).setTint(universalFragmentTone(def.rarity)));
       } else {
         const key = CURRENCY_ICON_BY_WALLET.cheesecake;
         if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
@@ -1009,24 +1026,39 @@ export class InfoManager {
       // **드는 것은 액자 셋이다.** 레벨은 재화가 아니지만 같은 조건이라 같은 얼굴로 서고,
       // 파편은 그 개체의 얼굴이 크게 박힌 보석 조각이다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
       const held = relicProgression.getFragments(def.id);
-      const fragmentCost = breakthroughFragmentCost(def.rarity, progress.breakthrough);
+      const universal = relicProgression.getUniversalFragments(def.rarity);
+      // 그 개체의 파편을 먼저 다 쓰고 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 칸의 `필요`는
+      // 그 개체 몫만 적고, 만능 파편이 제 칸과 금빛 `소모 N`으로 따로 선다 — 무엇이 사라지는지 숨기지 않는다.
+      const spend = breakthroughFragmentSpend(def.rarity, progress.breakthrough, held, universal);
+      const usesUniversal = spend.enough && spend.universal > 0;
+      const fragmentCost = usesUniversal ? spend.own : breakthroughFragmentCost(def.rarity, progress.breakthrough);
       const costY = top + BREAK_CONFIRM.costY;
+      const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
       const costs: BreakthroughCost[] = [
         { kind: "level", label: t("info.level"), need: cap, have: progress.level },
         { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
+        ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
         { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
       ];
+      const costStep = costs.length > 3 ? BREAK_CONFIRM.costStepCompact : BREAK_CONFIRM.costStep;
       costs.forEach((cost, index) => {
-        const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
+        const x = (index - (costs.length - 1) / 2) * costStep;
         const enough = cost.have >= cost.need;
         this.addBreakthroughCost(body, x, costY, cost, enough, def);
-        body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
+        body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(costStep - 12));
+        const needKey = cost.kind === "universal" ? "info.breakthrough.universalSpend" : "info.breakthrough.need";
         body.add(this.scene.add
-          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t("info.breakthrough.need", { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t(needKey, { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: !enough ? COLOR.dangerText : cost.kind === "universal" ? UNIVERSAL_SPEND_TEXT : COLOR.ink }))
           .setOrigin(0.5));
       });
+      if (usesUniversal) {
+        // 함께 소모되는 것을 한 줄로 못 박는다 — 칸만 하나 늘면 그냥 지나칠 수 있다.
+        body.add(this.scene.add
+          .text(0, top + BREAK_CONFIRM.universalNoticeY, t("info.breakthrough.universalNotice", { name: universalName, count: formatCurrency(spend.universal) }), textStyle({ role: "emphasis", size: 22, color: UNIVERSAL_SPEND_TEXT }))
+          .setOrigin(0.5));
+      }
 
-      const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
+      const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
       const actionY = top + BREAK_CONFIRM.actionY;
       // 확정은 확인 창(`PopupLayer.confirm`)과 같은 **제 판을 가진 강조 버튼**이다 — 판 하나에 투명한
       // 입력면을 얹어 두던 때는 눌려도 손맛이 없었고 다른 확정 버튼과 다른 물건으로 읽혔다.
@@ -1065,6 +1097,11 @@ export class InfoManager {
         gem: RARITY_TONE[def.rarity].chip,
         amount: formatCurrency(cost.have),
       }));
+      return;
+    }
+    if (cost.kind === "universal") {
+      // 그 등급의 유리 결은 공용 액자가 그림 키에서 알아서 두른다(`universalFragmentArt.ts`).
+      addFramedIcon(this.scene, body, x, y, size, cost.texture, { amount: formatCurrency(cost.have), plain: true });
       return;
     }
     if (cost.kind === "currency") {

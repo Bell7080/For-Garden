@@ -42,6 +42,8 @@ export const INFO_ES = {
   "info.breakthrough.fragment": "Fragmento de {name}",
   "info.breakthrough.cheesecake": "Tarta de queso",
   "info.breakthrough.need": "Necesitas {count}",
+  "info.breakthrough.universalSpend": "Usa {count}",
+  "info.breakthrough.universalNotice": "También se consumirán {count} {name}",
   "info.rune.bag": "Bolsa de Runas · {part}",
   "info.rune.empty": "Espacio vacío",
   "info.rune.emptySlot": "   Espacio vacío",

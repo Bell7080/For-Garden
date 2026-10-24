@@ -37,6 +37,10 @@ export const BREAK_CONFIRM = {
   costY: 396,
   costFrame: 124,
   costStep: 236,
+  /** 만능 파편이 함께 쓰여 칸이 넷일 때의 간격 — 바깥 액자가 판 안에 들게 좁힌다. */
+  costStepCompact: 186,
+  /** 만능 파편이 함께 소모된다는 한 줄. 상한 줄과 액자 사이에 선다. */
+  universalNoticeY: 298,
   actionY: 612,
   action: { width: 420, height: 88 },
   /** 버튼 아래끝에서 판 밑변까지. 이보다 넓으면 빈 판이 한 뼘 더 길어 보인다. */

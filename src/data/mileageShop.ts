@@ -11,7 +11,7 @@ const UNTIL = "2030-01-01T00:00:00Z";
  * 오르는 값의 바닥이라 늘 보수적이다. 상품은 받는 것의 젬 값이 낸 값의 **1.0~1.25배** 안에 들게 한다(드링크 3개 =
  * 마일리지 2 → 1.25배, 드링크+ 2개 = 마일리지 3 → 1.11배, 골드·치즈케이크 → 1.17배). 마일리지는 **한 번에 2 이상**
  * 들게 해 한 개로 퉁치지 않는다. 화석·호박석은 시세 그대로, 주간 SSR 파편은 100~200의 가운데(150)다. SR·R 파편은 중복이 바뀌는 마일리지(SSR 30 · SR 8 · R 2)에 SSR 파편과 같은 5배를 곱해 SR 40 · R 10이다
- * (`tests/unit/mileage.test.ts`). 기한이 있는 소비품은 7일을 기본으로 한다. 주간은 월요일, 일간은 매일 UTC
+ * (`tests/unit/mileage.test.ts`). 만능 파편은 같은 등급 파편 값의 2배다(SR 80 · R 20). 기한이 있는 소비품은 7일을 기본으로 한다. 주간은 월요일, 일간은 매일 UTC
  * 자정에 돌아온다.
  *
  * **발굴권·토벌권은 젬으로 환산되지 않아 검증 대상 밖이지만 값은 프리미엄 장부와 맞춘다**(발굴권 1장 ≈ 젬 100, 토벌권 ≈ 50 —
@@ -34,6 +34,9 @@ export const MILEAGE_PRODUCTS: readonly ProductDefinition[] = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "이번 주 SSR 파편", "이번 주 점원의 파편 1개", 150, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "이번 주 SR 파편", "이번 주 SR 파편 1개", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
+  // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
+  mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "만능 SR 파편", "만능 SR 파편 1개", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "만능 SR 파편", amount: 1 }]),
+  mileage("mileage-weekly-universal-r", "weekly", "shop-product-enhancement", "만능 R 파편", "만능 R 파편 1개", 20, 1, [{ kind: "item", itemId: "universal-fragment-r", name: "만능 R 파편", amount: 1 }]),
   mileage("mileage-weekly-amber", "weekly", "shop-product-amber", "호박석 반출", "호박석 1개", 5, 10, [{ kind: "currency", currency: "amber", amount: 1 }]),
   mileage("mileage-weekly-fossil", "weekly", "shop-product-fossil", "화석 반출", "화석 1개", 5, 10, [{ kind: "currency", currency: "fossil", amount: 1 }]),
   mileage("mileage-weekly-tonic", "weekly", "shop-product-supplies", "고농축 음료 반출", "에너지 드링크+ 2개", 3, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 2, expiresInDays: 7 }]),

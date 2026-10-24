@@ -68,8 +68,39 @@ export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
 export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, { step: number; final: number }>> = {
   SSR: { step: 1, final: 2 },
   SR: { step: 2, final: 4 },
-  R: { step: 5, final: 10 },
+  R: { step: 4, final: 8 },
 };
+
+/**
+ * 등급마다 하나씩 있는 **만능 파편**의 아이템 ID(가방의 재료 칸).
+ *
+ * 어느 개체에나 쓸 수 있는 돌파 재료지만 **같은 등급에만** 든다 — R 만능 파편을 SSR 돌파에 넣으면
+ * 등급이 정한 파편 수(`BREAKTHROUGH_FRAGMENTS`)가 뜻을 잃는다. 그 개체의 파편이 모자랄 때만 그
+ * 모자란 몫을 채우므로(`breakthroughFragmentSpend`) 가진 파편이 넉넉하면 하나도 쓰이지 않는다.
+ */
+export const UNIVERSAL_FRAGMENT_ITEM: Readonly<Record<RelicRarity, string>> = {
+  R: "universal-fragment-r",
+  SR: "universal-fragment-sr",
+  SSR: "universal-fragment-ssr",
+};
+
+/** 아이템 ID가 만능 파편이면 그 등급을 돌려준다. */
+export function universalFragmentRarity(itemId: string): RelicRarity | undefined {
+  return (Object.keys(UNIVERSAL_FRAGMENT_ITEM) as RelicRarity[]).find((rarity) => UNIVERSAL_FRAGMENT_ITEM[rarity] === itemId);
+}
+
+/**
+ * 다음 돌파에서 **무엇을 몇 개 쓰는가** — 그 개체의 파편을 먼저 다 쓰고, 모자란 몫만 만능 파편이 채운다.
+ *
+ * 서버의 차감과 화면의 버튼·확정 창이 이 한 함수를 읽는다 — 둘이 따로 셈하면 보여 준 소모와 실제
+ * 소모가 갈린다. 둘을 합쳐도 모자라면 `enough`가 거짓이고 쓰는 몫은 가진 만큼까지만 적는다.
+ */
+export function breakthroughFragmentSpend(rarity: RelicRarity, breakthrough: number, own: number, universal: number): { own: number; universal: number; enough: boolean } {
+  const cost = breakthroughFragmentCost(rarity, breakthrough);
+  const fromOwn = Math.min(Math.max(0, own), cost);
+  const fromUniversal = Math.min(Math.max(0, universal), cost - fromOwn);
+  return { own: fromOwn, universal: fromUniversal, enough: fromOwn + fromUniversal >= cost };
+}
 
 /**
  * 지금 단계에서 다음 별로 가는 데 드는 그 개체의 파편 수.
@@ -143,11 +174,11 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
  * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
  * 되고, 파편을 미리 태워 두는 낭비가 생기지 않는다. `fragments`는 **그 개체의** 파편 수다.
  */
-export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number): boolean {
+export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number, universal: number): boolean {
   const step = nextBreakthrough(progress.breakthrough);
   if (!step) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake >= step.cheesecake;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake >= step.cheesecake;
 }
 
 /**

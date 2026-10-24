@@ -25,6 +25,8 @@ import { addExpiryTag, soonestItemExpiry } from "./itemExpiry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
 import { motionPolicy } from "../core/settings";
+import { universalFragmentRarity } from "../core/relicProgression";
+import { addUniversalFragmentGlass } from "./universalFragmentArt";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -257,6 +259,8 @@ export class InventoryPopup {
     const onTexture = (key: string): void => { textureKeys.push(key); };
     card.add(addItemDefinitionIcon(this.scene, item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true, onTexture }));
     card.add(addItemDefinitionIcon(this.scene, item.definition.icon, 0, 0, iconSize, { onTexture }));
+    const fragmentRarity = universalFragmentRarity(item.definition.id);
+    if (fragmentRarity) card.add(addUniversalFragmentGlass(this.scene, frameSize, fragmentRarity));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는
     // 안내가 말한다.

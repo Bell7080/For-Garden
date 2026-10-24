@@ -77,6 +77,11 @@ export const ITEMS = [
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
   { id: "duel-ticket", name: "결투 도전권", description: "결투장에서 상대에게 도전할 때 한 장 씁니다. 매일 다섯 장이 채워집니다.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 한계 돌파의 **만능 파편** — 등급마다 하나다. 그 개체의 파편이 모자랄 때만 같은 등급 렐릭의 돌파에서 모자란
+  // 몫을 채운다(`breakthroughFragmentSpend`). 그림은 파편 액자 그대로이고 얼굴 자리에 누구의 것도 아닌 실루엣이 선다.
+  { id: "universal-fragment-r", name: "만능 R 파편", description: "어느 R 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-sr", name: "만능 SR 파편", description: "어느 SR 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-sr" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-ssr", name: "만능 SSR 파편", description: "어느 SSR 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-ssr" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "소탕권", description: "이미 이긴 던전 단계를 전투 없이 한 번 소탕합니다.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.

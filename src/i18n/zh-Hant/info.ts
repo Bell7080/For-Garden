@@ -42,6 +42,8 @@ export const INFO_ZH_HANT = {
   "info.breakthrough.fragment": "{name}碎片",
   "info.breakthrough.cheesecake": "起司蛋糕",
   "info.breakthrough.need": "需要{count}",
+  "info.breakthrough.universalSpend": "消耗 {count}",
+  "info.breakthrough.universalNotice": "還將消耗{count}個{name}",
   "info.rune.bag": "符文揹包 · {part}",
   "info.rune.empty": "空位",
   "info.rune.emptySlot": "   空位",

@@ -42,6 +42,8 @@ export const INFO_TH = {
   "info.breakthrough.fragment": "เศษ{name}",
   "info.breakthrough.cheesecake": "ชีสเค้ก",
   "info.breakthrough.need": "ต้องใช้ {count}",
+  "info.breakthrough.universalSpend": "ใช้ {count}",
+  "info.breakthrough.universalNotice": "จะใช้ {name} {count} ชิ้นด้วย",
   "info.rune.bag": "กระเป๋ารูน · {part}",
   "info.rune.empty": "ช่องว่าง",
   "info.rune.emptySlot": "   ช่องว่าง",

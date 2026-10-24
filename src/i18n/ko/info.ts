@@ -46,6 +46,8 @@ export const INFO_KO = {
   "info.breakthrough.fragment": "{name} 파편",
   "info.breakthrough.cheesecake": "치즈케이크",
   "info.breakthrough.need": "필요 {count}",
+  "info.breakthrough.universalSpend": "소모 {count}",
+  "info.breakthrough.universalNotice": "{name} {count}개가 함께 소모됩니다",
 
   "info.rune.bag": "룬 가방 · {part}",
   "info.rune.empty": "빈 자리",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade, isGrowthReachable, BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
+import { BREAKTHROUGH_FRAGMENTS, breakthroughFragmentSpend, UNIVERSAL_FRAGMENT_ITEM, universalFragmentRarity, breakthroughFragmentCost, breakthroughSlotGrade, BREAKTHROUGH_STEPS, calculateFinalStats, canBreakThrough, isBreakthroughSlotOpen, openedBreakthroughSlots, canFeedRelic, canLevelUpRelic, feedRelic, FEED_UNIT, levelUpRelic, nextBreakthrough, relicLevelCap, RELIC_LEVEL_CAP, BREAKTHROUGH_GRADE_CAP, relicExpToNext, relicLevelUpCost, breakthroughGrade, isGrowthReachable, BREAKTHROUGH_CAP } from "../../src/core/relicProgression";
 import { combatPower } from "../../src/core/combatPower";
 import type { RelicProgress, Stats } from "../../src/core/types";
 import { RelicProgressionManager } from "../../src/managers/RelicProgressionManager";
@@ -188,11 +188,11 @@ describe("돌파", () => {
   it("는 레벨을 상한까지 채우고 그 개체의 파편이 있어야 할 수 있다", () => {
     const step = nextBreakthrough(0)!;
     const need = breakthroughFragmentCost("SR", 0);
-    expect(canBreakThrough("SR", base(), need, step.cheesecake)).toBe(false); // 레벨이 상한에 못 미친다
+    expect(canBreakThrough("SR", base(), need, step.cheesecake, 0)).toBe(false); // 레벨이 상한에 못 미친다
     const maxed = { ...base(), level: RELIC_LEVEL_CAP };
-    expect(canBreakThrough("SR", maxed, need, step.cheesecake)).toBe(true);
-    expect(canBreakThrough("SR", maxed, need - 1, step.cheesecake)).toBe(false);
-    expect(canBreakThrough("SR", maxed, need, step.cheesecake - 1)).toBe(false);
+    expect(canBreakThrough("SR", maxed, need, step.cheesecake, 0)).toBe(true);
+    expect(canBreakThrough("SR", maxed, need - 1, step.cheesecake, 0)).toBe(false);
+    expect(canBreakThrough("SR", maxed, need, step.cheesecake - 1, 0)).toBe(false);
   });
 
   it("는 파편 수를 등급이 정하고 마지막 별만 더 든다", () => {
@@ -211,8 +211,24 @@ describe("돌파", () => {
       expect(BREAKTHROUGH_STEPS[step].cheesecake).toBeGreaterThan(BREAKTHROUGH_STEPS[step - 1].cheesecake);
     }
     // SSR 한 장으로 뚫리는 등급이라도 마지막 별은 두 장이 필요하다.
-    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 1, 99_999)).toBe(false);
-    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 2, 99_999)).toBe(true);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 1, 99_999, 0)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 2, 99_999, 0)).toBe(true);
+  });
+
+  it("의 만능 파편은 그 개체의 파편이 모자란 몫만 채운다", () => {
+    expect(BREAKTHROUGH_FRAGMENTS.R).toEqual({ step: 4, final: 8 });
+    // 그 개체의 파편이 넉넉하면 만능 파편은 하나도 쓰이지 않는다.
+    expect(breakthroughFragmentSpend("R", 0, 10, 5)).toEqual({ own: 4, universal: 0, enough: true });
+    // 모자란 몫만 채운다.
+    expect(breakthroughFragmentSpend("R", 0, 1, 5)).toEqual({ own: 1, universal: 3, enough: true });
+    // 둘을 합쳐도 모자라면 뚫을 수 없다.
+    expect(breakthroughFragmentSpend("R", 0, 1, 2)).toEqual({ own: 1, universal: 2, enough: false });
+    const maxed = { ...base(), level: RELIC_LEVEL_CAP };
+    const cheesecake = nextBreakthrough(0)!.cheesecake;
+    expect(canBreakThrough("R", maxed, 1, cheesecake, 3)).toBe(true);
+    expect(canBreakThrough("R", maxed, 1, cheesecake, 2)).toBe(false);
+    expect(universalFragmentRarity(UNIVERSAL_FRAGMENT_ITEM.SR)).toBe("SR");
+    expect(universalFragmentRarity("stamina-tonic")).toBeUndefined();
   });
 
   it("는 별마다 다른 슬롯을 열고 순서가 손에 닿는 것부터다", () => {

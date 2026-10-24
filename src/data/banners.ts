@@ -41,7 +41,8 @@ const AMBER_PICKUP = { SSR: ["dian"] } as const satisfies Partial<Record<RelicRa
  * 뽑기 자체가 같아야 한다 — 확률을 조금만 달리해도 두 재화의 값을 따로 셈해야 하고, 그 차이를
  * 상점·무역·보상 표마다 다시 매겨야 한다. 배너가 다른 것은 풀·픽업·천장·값·한도뿐이다.
  */
-const STANDARD_SLOT_RATES = { R: 0.12, SR: 0.04, SSR: 0.01, GRAY: 0.83 } as const;
+/** R은 12% → 20%(v0.333.0, 응태 요청) — 올린 몫은 회색(재화) 칸에서 가져왔다. */
+const STANDARD_SLOT_RATES = { R: 0.2, SR: 0.04, SSR: 0.01, GRAY: 0.75 } as const;
 /*
  * **회색 한 칸도 받은 것처럼 읽혀야 한다.**
  *

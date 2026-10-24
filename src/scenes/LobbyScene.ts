@@ -617,7 +617,7 @@ export class LobbyScene extends Phaser.Scene {
         const entry=new ExpeditionEntryButton(this, 0, layout.centers[index], {
           width: PVP_MENU.entry.width, height: pvpEntryHeight(mode.id),
           // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
-          label: mode.label.replace("\n", " "), labelSize: 38,
+          label: mode.label.replace("\n", " "), labelSize: 54, statusSize: 29, statusWrap: 360,
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
           artKey: mode.artKey,
@@ -628,7 +628,7 @@ export class LobbyScene extends Phaser.Scene {
         });
         body.add(entry);
         // 렉시아 VS 스피나는 칸 **안에서** 맞부딪힌다 — 칩 실루엣 마스크에 가둬 판 밖으로 나가지 않는다.
-        if(mode.id==="live-arena") addArenaMascots(this,body,-150,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
+        if(mode.id==="live-arena") addArenaMascots(this,body,-235,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);

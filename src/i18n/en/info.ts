@@ -26,6 +26,8 @@ export const INFO_EN = {
   "info.enemy.role.tenacity": "Starts at {base}% [[tenacity|Tenacity]] and gains {per}% each time it shrugs off [[crowd-control|crowd control]], up to {max}%.",
   "info.enemy.role.damageReduction": "Starts at {base}% [[damage-reduction|Damage Reduction]] and rises to {max}% as [[hp|Health]] falls; damage of {ignore} or less is nullified.",
   "info.enemy.role.percentHpResistance": "Takes {percent}% less damage based on max Health.",
+  "info.enemy.role.ramp": "[[atk|Attack]] and [[ap|Ability Power]] start at {start}% and rise to 100% over {seconds}s.",
+  "info.enemy.role.apGrowth": "After reaching 100%, [[atk|Attack]] and [[ap|Ability Power]] keep rising by {percent}% each second.",
   "info.enemy.role.line.normal": "\"Us? We're just grunts passing by… but we'll do our best!\"",
   "info.section.rune": "Rune",
   "info.level": "Level",

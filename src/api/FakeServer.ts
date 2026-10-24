@@ -95,6 +95,7 @@ const STRATA_TICKET_ITEM = "strata-ticket";
 import { ARCHAEOLOGY_SITES, findArchaeologySite } from "../data/archaeologySites";
 import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
+import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
@@ -863,7 +864,7 @@ export class FakeServer implements GameApi {
       status: completed ? "completed" : "active", openedAt: instance.openedAt, endsAt: instance.endsAt,
       myDamage: instance.myDamage, attemptsUsed: instance.attemptsUsed, attemptsLimit: RAID_ATTEMPTS_PER_RAID,
       settled: instance.settled,
-      settlement: settlement ? [rewardOf("raidSigil", settlement.raidSigil)] : [],
+      settlement: settlement ? sortByRewardPriority([rewardOf("gems", settlement.gem), rewardOf("raidSigil", settlement.raidSigil)], (reward) => reward.currency) : [],
       entries: raidContributionBoard([...board, mine], limit),
     };
   }

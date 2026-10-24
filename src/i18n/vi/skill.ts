@@ -120,7 +120,7 @@ export const SKILL_VI = {
   "skill.passive.adagioWeight": "Khi còn sống, [[attack-speed|Tốc đánh]] của đồng minh tăng {percent}%. Khi đồng minh dính [[crowd-control|khống chế]], lập tức giải trừ và trao [[shield|khiên]] {shield}.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% Công",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|Phép]] tăng dồn {percent}% mỗi giây.",
+  "skill.passive.tidalSurge": "Cứ {seconds} giây, thủy triều [[knockback|hất tung]] mọi kẻ địch về phía sau.",
   "skill.passive.gourmetHunt": "Khi bắt đầu trận, nhắm kẻ địch có máu hiện tại thấp nhất và [[teleport|dịch chuyển]] tới. Hạ gục thì chọn lại ngay, không thì chọn lại mỗi {cooldown} giây. Chịu sát thương từ kẻ địch sẽ vào [[stealth|Tàng hình]] {seconds} giây, tối đa {triggers} lần mỗi trận.",
   "skill.passive.cursedInsight": "Mỗi khi [[basic-attack|đòn đánh thường]] trúng trực tiếp kẻ địch bị [[curse|Nguyền rủa]], [[ap|Phép]] tăng {value}% trong trận này, tối đa {stacks} lần. Đòn [[transfer|chuyển]] không kích hoạt.",
   "skill.passive.frenzyDrain": "Hồi {percent}% sát thương do kẻ địch [[frenzy|Cuồng bạo]] gây ra.",

@@ -1287,8 +1287,8 @@ export type PassiveKind =
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
-  /** 폰토스의 시간 누적 주문력. 잃은 체력 경감은 패시브가 아니라 불사 자리(`ENCOUNTER_ROLE.endless`)가 갖는다. */
-  | "abyssalPressure"
+  /** 폰토스 전용: 일정 간격마다 밀물이 전장의 모든 적을 뒤로 날린다. 시간에 따른 세기 상승은 패시브가 아니라 자리(`ENCOUNTER_ROLE.*.ramp`)가 갖는다. */
+  | "tidalSurge"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
   /** 케리스 전용: 저주에 걸린 적을 직접 때릴 때마다 주문력을 전투 한정으로 누적한다. */
@@ -2320,8 +2320,8 @@ export interface Passive {
   };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
-  /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
-  apPercentPerSecond?: number;
+  /** 밀물 전용: 몇 초마다 어떤 날려버림으로 밀어내는가. 살아 있는 모든 적에게 같은 계약(`knockback`)으로 건다. */
+  tidalSurge?: { intervalSeconds: number; knockback: { seconds: number; speed: number; bounces: number } };
   /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
   huntCooldownSeconds?: number;
   /**

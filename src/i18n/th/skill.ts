@@ -120,7 +120,7 @@ export const SKILL_TH = {
   "skill.passive.adagioWeight": "ขณะมีชีวิต [[attack-speed|ความเร็วโจมตี]]ของพันธมิตรเพิ่มขึ้น {percent}% เมื่อพันธมิตรโดน[[crowd-control|ควบคุม]] จะล้างทันทีและมอบ[[shield|โล่]] {shield}",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% ของ[[atk|พลังโจมตี]]",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|พลังเวท]]ทบต้นเพิ่มขึ้น {percent}% ทุกวินาที",
+  "skill.passive.tidalSurge": "ทุก {seconds} วินาที กระแสน้ำขึ้นจะ[[knockback|ซัดกระเด็น]]ศัตรูทุกตัวถอยหลัง",
   "skill.passive.gourmetHunt": "เมื่อเริ่มการต่อสู้ จะเล็งศัตรูที่มี HP ปัจจุบันต่ำสุดแล้ว[[teleport|วาร์ป]]ไปหา เลือกใหม่ทันทีเมื่อกำจัดได้ ไม่เช่นนั้นเลือกใหม่ทุก {cooldown} วินาที เมื่อได้รับความเสียหายจากศัตรูจะ[[stealth|ล่องหน]] {seconds} วินาที สูงสุด {triggers} ครั้งต่อการต่อสู้",
   "skill.passive.cursedInsight": "ทุกครั้งที่[[basic-attack|การโจมตีปกติ]]โดนศัตรูที่ติด[[curse|คำสาป]]โดยตรง [[ap|พลังเวท]]เพิ่มขึ้น {value}% ตลอดการต่อสู้นี้ สูงสุด {stacks} ครั้ง การโจมตีที่ถูก[[transfer|ถ่ายโอน]]ไม่ทำให้เกิด",
   "skill.passive.frenzyDrain": "ฟื้นฟู {percent}% ของความเสียหายที่ศัตรูซึ่ง[[frenzy|คลั่ง]]ทำ",

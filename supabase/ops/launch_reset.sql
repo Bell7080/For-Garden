@@ -38,6 +38,7 @@ declare
     'public.player_assets',
     'public.player_adjustments',
     'public.asset_ledger',
+    'public.currency_log',
     'public.mail_claims',
     'public.coupon_redemptions',
     'public.coupon_attempts',
@@ -76,6 +77,7 @@ declare
     'public.admin_roles',
     'public.app_config',
     'public.reward_assets',
+    'public.currency_alert_rules',
     'public.website_notices',
     'public.website_notice_translations',
     'public.website_preregistrations'

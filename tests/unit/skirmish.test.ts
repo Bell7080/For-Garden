@@ -12,7 +12,6 @@ import {
   canFireUltimate,
   clearStun,
   createSkirmish,
-  currentAbilityPower,
   defensiveDefinition,
   elationHealMultiplier,
   isPartyFighter,
@@ -46,6 +45,7 @@ import {
 } from "../../src/core/skirmish";
 import { unitStatusViews } from "../../src/ui/unitStatusModel";
 import { applyExpeditionRest, type ExpeditionAugmentEffect } from "../../src/core/expeditionAugments";
+import { ENCOUNTER_ROLE, encounterRampFactor } from "../../src/core/levelDesign";
 import { RELICS, getRelic } from "../../src/data/relics";
 import { applyLevelGrowth } from "../../src/core/relicProgression";
 import { FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf } from "../../src/core/ferocity";
@@ -1165,7 +1165,7 @@ describe("단일 난전의 원정 보스 옵션", () => {
     expect(firstUltimateAt).toBeGreaterThanOrEqual(30);
     expect(state.phase).toBe("defeat");
     expect(state.elapsed).toBeGreaterThanOrEqual(35);
-    expect(state.elapsed).toBeLessThanOrEqual(60);
+    expect(state.elapsed).toBeLessThanOrEqual(70);
     // 점수는 경감 뒤 실제로 감소한 HP와 같아 경감 전 계수나 과잉 피해로 부풀지 않는다.
     const playerAttackTotal = battleContributionSnapshot(state, "attack")
       .filter(({ fighterId }) => fighterId.startsWith("player"))
@@ -2428,7 +2428,8 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
   it("는 기본 공격의 범위 내 다중 적에게 현재 주문력 100%를 쓰고 범위 밖 적은 제외한다", () => {
     const { state, pontos, allies } = pontosBattle();
     // 방어·속성·치명타 변수를 제거해 이벤트 원피해가 계수 자체를 정확히 드러내게 한다.
-    pontos.def = { ...pontos.def, element: "earth", stats: { ...pontos.def.stats, ap: 137, critChance: 0 } };
+    // 계수만 재므로 램프(자리가 주는 시간 몫)는 끈다 — 램프는 아래 전용 검사가 잰다.
+    pontos.def = { ...pontos.def, encounterRole: undefined, element: "earth", stats: { ...pontos.def.stats, ap: 137, critChance: 0 } };
     allies.forEach((ally) => { ally.def = { ...ally.def, element: "earth", stats: { ...ally.def.stats, res: 0 } }; });
     allies[0].x = 500; allies[1].x = 919;
     // 물리 분리 보정 한 프레임 뒤에도 확실히 반경 밖이도록 전장 우하단에 둔다.
@@ -2466,19 +2467,48 @@ describe("폰토스 실전 스킬과 심해 압력", () => {
     expect(allies.map((ally) => ally.stunnedFor)).toEqual([5, 2.5, 0]);
   });
 
-  it("는 0초·1초·여러 초에 기본 주문력 2%를 복리 누적하고 프레임 분할과 무관하다", () => {
+  it("는 보스·불사 자리의 램프(25%→100%, 30초)와 그 뒤 매초 2% 성장을 프레임 분할과 무관하게 쌓는다", () => {
     const simulate = (frames: readonly number[]) => {
       const { state, pontos } = pontosBattle();
+      // 실전은 makeFighter가 자리를 보고 시작 몫을 새기지만, 이 도우미는 자리를 나중에 새기므로 첫 몫을 직접 맞춘다.
+      pontos.rampFactor = ENCOUNTER_ROLE.endless.ramp!.startPercent / 100;
       frames.forEach((dt) => stepSkirmish(state, dt));
-      return currentAbilityPower(pontos);
+      return { ap: pontos.def.stats.ap * pontos.rampFactor + pontos.bonusAp, ramp: pontos.rampFactor };
     };
-    const definition = getRelic("pontos");
-    const baseAp = definition.stats.ap;
-    const growth = 1 + (definition.passive.kind === "abyssalPressure" ? definition.passive.apPercentPerSecond ?? 0 : 0) / 100;
-    expect(simulate([])).toBe(baseAp);
-    expect(simulate([0.25, 0.25, 0.25, 0.25])).toBeCloseTo(baseAp * growth);
-    expect(simulate(Array.from({ length: 20 }, () => 0.25))).toBeCloseTo(baseAp * growth ** 5);
-    expect(simulate(Array.from({ length: 300 }, () => 1 / 60))).toBeCloseTo(baseAp * growth ** 5);
+    const baseAp = getRelic("pontos").stats.ap;
+    const ramp = ENCOUNTER_ROLE.endless.ramp!;
+    expect(ramp).toEqual({ startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 });
+    expect(ENCOUNTER_ROLE.boss.ramp).toEqual(ramp);
+    expect(simulate([]).ap).toBeCloseTo(baseAp * 0.25);
+    expect(simulate(Array.from({ length: 20 }, () => 0.25)).ramp).toBeCloseTo(0.25 + 0.75 * (5 / 30));
+    expect(simulate(Array.from({ length: 300 }, () => 1 / 60)).ramp).toBeCloseTo(0.25 + 0.75 * (5 / 30));
+    // 31초: 램프는 100%를 막 넘겨 1초분(2%) 더 올랐다. 주문력 복리는 없다.
+    expect(simulate(Array.from({ length: 124 }, () => 0.25)).ramp).toBeCloseTo(1.02);
+    expect(simulate(Array.from({ length: 124 }, () => 0.25)).ap).toBeCloseTo(baseAp * 1.02);
+  });
+
+  it("는 100% 뒤에도 보스·불사가 매초 기본값의 2%씩 선형으로 계속 강해진다", () => {
+    for (const role of [ENCOUNTER_ROLE.boss, ENCOUNTER_ROLE.endless]) {
+      const ramp = role.ramp!;
+      expect(encounterRampFactor(ramp, 0)).toBeCloseTo(0.25);
+      expect(encounterRampFactor(ramp, 15)).toBeCloseTo(0.625);
+      expect(encounterRampFactor(ramp, 30)).toBe(1);
+      expect(encounterRampFactor(ramp, 60)).toBeCloseTo(1.6);
+      expect(encounterRampFactor(ramp, 90)).toBeCloseTo(2.2);
+    }
+    // 몸집은 보스와 불사가 같은 크기다.
+    expect(ENCOUNTER_ROLE.endless.bodyScale).toBe(ENCOUNTER_ROLE.boss.bodyScale);
+  });
+
+  it("는 밀물로 10초마다 살아 있는 모든 적을 날려 보낸다", () => {
+    const { state, pontos, allies } = pontosBattle();
+    allies.forEach((ally, index) => { ally.x = 300 + index * 80; });
+    expect(pontos.def.passive.tidalSurge?.intervalSeconds).toBe(10);
+    const events: SkirmishEvent[] = [];
+    for (let frame = 0; frame < 60 * 12; frame += 1) events.push(...stepSkirmish(state, 1 / 60));
+    const launched = events.filter((event) => event.kind === "knockback");
+    // 강인함(불사 50%)이 시간을 깎아도 0.8초의 반 이상이 남아 셋 모두 날아간다.
+    expect(launched.map((event) => event.kind === "knockback" ? event.fighterId : "").sort()).toEqual(allies.map((ally) => ally.id).sort());
   });
 
   it("는 체력이 닳을수록 경감을 곡선으로 올리고 절반에서 막히지 않는다", () => {

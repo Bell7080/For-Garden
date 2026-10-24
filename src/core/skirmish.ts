@@ -7,7 +7,7 @@ import { computeDamage, computeDamageContribution, currentAbilityPower, isCritic
 export { currentAbilityPower } from "./damage";
 import { drainFerocityFever, FEROCITY_RULES, feverDrainPerSecond, ferocityMaxOf, ferocityMirrored } from "./ferocity";
 import { isBreakthroughSlotOpen, type BreakthroughSlot } from "./relicProgression";
-import { ENCOUNTER_ROLE, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
+import { ENCOUNTER_ROLE, encounterRampFactor, type EncounterDamageReduction, type EncounterTenacity } from "./levelDesign";
 import { augmentAppliesTo, bleedOnAttackEffect, conditionalAttackPowerMultiplier, expeditionAugmentStatMultipliers, flatStatPoints, highHpDamageMultiplier, lowHpDamageMultiplier, nthBasicBonusMultiplier, openingCritCount, periodicCritEvery, sameTargetStreakMultiplier, shieldedDamageMultiplier, warmUpAttackSpeedPercent, type ExpeditionAugmentEffect, type FlatStatKind, type ExpeditionAugmentTrigger, type ExpeditionTriggeredEffect } from "./expeditionAugments";
 import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, CombatStatusEffect, FerocityTrait, ReachTier, RelicDef, Side, Skill, Stats, TeamBuff } from "./types";
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
@@ -301,6 +301,8 @@ export interface Fighter extends Combatant {
   regeneration: { remaining: number; tickIn: number; percentPerTick: number } | null;
   /** 시간 기반 패시브로 누적된 추가 주문력. 정적 정의를 변경하지 않는 전투 상태다. */
   bonusAp: number;
+  /** 자리의 시간 상승 배율(`ENCOUNTER_ROLE.*.ramp`)이 지금 공격력·주문력에 곱하는 몫(0~1). 램프가 없는 자리는 늘 1이다. */
+  rampFactor: number;
   /** SkirmishBossState.fighterId와 일치하는 점수전 보스에만 설정되는 불사 경계다. */
   immortal?: boolean;
   /**
@@ -453,6 +455,8 @@ export interface Fighter extends Combatant {
     sleepPouncePercent: number;
     /** 패시브 돌파(`pressureCrack`) — 다음 균열까지 남은 시간(초). 열려 있지 않으면 음수다. */
     pressureCrackIn: number;
+    /** 패시브 「밀물」(`tidalSurge`) — 다음 밀물까지 남은 시간(초). 그 패시브가 아니면 음수다. */
+    tidalSurgeIn: number;
     /** 패시브 돌파(`pinningPlume`) — 적마다 다음에 다시 경직시킬 수 있는 시각(전투 경과 초). */
     pinnedUntil: Record<string, number>;
     /** 궁극기 돌파(`sunkenWeight`) — 기절이 풀린 뒤 이 몸을 느리게 하는 몫. 기절이 풀리는 순간(`waiting`이 꺼질 때)부터 `remaining`이 흐른다. 받는 쪽의 값이다. */
@@ -1288,6 +1292,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     passiveTriggered: false,
     regeneration: null,
     bonusAp: 0,
+    // 램프가 있는 자리는 첫 프레임부터 시작 몫으로 선다 — 첫 틱까지 100%로 서 있으면 첫 타격이 램프를 비껴간다.
+    rampFactor: ((ramp) => ramp ? encounterRampFactor(ramp, 0) : 1)(def.encounterRole === undefined ? undefined : ENCOUNTER_ROLE[def.encounterRole].ramp),
     immortal: false,
     bonusAttackSpeed: 0,
     refillFinisherAll: false,
@@ -1348,6 +1354,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
       sutureIn: def.passive.kind === "sutureStitch" ? def.passive.suture?.intervalSeconds ?? 0 : 0,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
       pressureCrackIn: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "pressureCrack" ? def.breakthroughEffects.passive.intervalSeconds : -1,
+      tidalSurgeIn: def.passive.kind === "tidalSurge" ? def.passive.tidalSurge?.intervalSeconds ?? -1 : -1,
       pinnedUntil: {},
       sunken: null,
       biteMark: null,
@@ -4679,6 +4686,17 @@ function tickBossBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
       bt.sunken = remaining > 0 ? { ...bt.sunken, remaining } : null;
     }
   }
+  if (bt.tidalSurgeIn >= 0 && isFighterAlive(fighter) && fighter.stunnedFor <= 0) {
+    const surge = fighter.def.passive.tidalSurge;
+    bt.tidalSurgeIn -= dt;
+    if (surge && bt.tidalSurgeIn <= 0) {
+      bt.tidalSurgeIn += surge.intervalSeconds;
+      // 밀물은 피해 없이 모든 적을 시전자에게서 멀리 민다. 강인함은 날려버림의 공용 경계가 알아서 지난다.
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        applyCombatStatusEffect(foe, { kind: "knockback", ...surge.knockback }, events, state, fighter.id, false);
+      }
+    }
+  }
   if (bt.pressureCrackIn < 0 || !isFighterAlive(fighter)) return;
   const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   if (plan?.kind !== "pressureCrack") return;
@@ -6754,11 +6772,13 @@ function offensiveDefinition(attacker: Fighter): RelicDef {
   // 「리필」 — 공속을 고정하는 대신 추가로 받은 공속이 같은 퍼센트의 공격력이 된다.
   const converted = passive.kind === "refillMagazine" ? attacker.refillAttackRatio : 1;
   // 치명타 확률과 마찬가지로 개체 이름이 아니라 적힌 값으로 판별한다.
-  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1) return attacker.def;
+  // 자리의 시간 상승 배율은 공격력과 주문력을 함께 곱한다 — 때리는 모든 경로가 이 함수를 지난다.
+  const ramped = attacker.rampFactor;
+  if (passive.attackPowerPercent === undefined && passive.criticalDamagePercent === undefined && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted,
-    ap: attacker.def.stats.ap * vandalised,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped,
+    ap: attacker.def.stats.ap * vandalised * ramped,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0),
   } };
 }
@@ -9302,12 +9322,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
   tickDeathClock(state, events);
 
-  // 완전히 경과한 초마다 기본 주문력에 같은 비율을 복리 적용한다. bonusAp에는 증가분만 저장해
-  // currentAbilityPower가 기본 AP를 정확히 한 번 더하도록 한다.
-  for (const fighter of state.fighters) if (fighter.def.passive.kind === "abyssalPressure") {
+  // 자리의 시간 상승 배율. 램프가 있는 자리(보스·불사)는 완전히 경과한 초마다 공격력·주문력의 몫이 한 칸씩 오르고,
+  // 100%에 닿은 뒤에도 매초 기본값의 일정 비율씩 계속 오른다.
+  for (const fighter of state.fighters) {
+    const role = fighter.def.encounterRole;
+    const ramp = role === undefined ? undefined : ENCOUNTER_ROLE[role].ramp;
+    if (!ramp) continue;
     const seconds = Math.floor(state.elapsed + EMERGENCY_RECOVERY.epsilon);
-    const rate = (fighter.def.passive.apPercentPerSecond ?? 0) / 100;
-    fighter.bonusAp = fighter.def.stats.ap * (Math.pow(1 + rate, seconds) - 1);
+    fighter.rampFactor = encounterRampFactor(ramp, seconds);
   }
 
   if (state.boss) {

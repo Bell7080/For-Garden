@@ -120,7 +120,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.adagioWeight": "存活期间，队友[[attack-speed|攻击速度]]提升{percent}%。队友受到[[crowd-control|控制]]时，立即净化并提供{shield}[[shield|护盾]]。",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|攻击力]]{percent}%的",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|法术强度]]每秒复合增长{percent}%。",
+  "skill.passive.tidalSurge": "每{seconds}秒，涨潮会将所有敌人[[knockback|击飞]]并向后推开。",
   "skill.passive.gourmetHunt": "战斗开始时，锁定当前生命最低的敌人并[[teleport|瞬移]]过去。击倒时立即重新选择，否则每{cooldown}秒重新选择。受到敌人伤害时获得[[stealth|隐身]]{seconds}秒，每场战斗最多{triggers}次。",
   "skill.passive.cursedInsight": "每当[[basic-attack|普通攻击]]直接命中[[curse|诅咒]]状态的敌人时，本场战斗[[ap|法术强度]]提升{value}%，最多{stacks}次。[[transfer|转移]]的伤害不会触发。",
   "skill.passive.frenzyDrain": "恢复[[frenzy|暴走]]敌人造成伤害的{percent}%。",

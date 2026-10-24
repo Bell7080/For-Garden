@@ -120,7 +120,7 @@ export const SKILL_ID = {
   "skill.passive.adagioWeight": "Selama hidup, [[attack-speed|Kecepatan Serang]] sekutu naik {percent}%. Saat sekutu terkena [[crowd-control|kontrol massa]], langsung dibersihkan dan diberi [[shield|perisai]] {shield}.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% Serangan",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|Kekuatan Magis]] bertambah majemuk {percent}% setiap detik.",
+  "skill.passive.tidalSurge": "Setiap {seconds} detik, air pasang [[knockback|melempar]] semua musuh ke belakang.",
   "skill.passive.gourmetHunt": "Di awal pertarungan, menargetkan musuh dengan HP saat ini terendah dan [[teleport|berteleportasi]] ke sana. Memilih lagi langsung saat mengalahkan, jika tidak setiap {cooldown} dtk. Menerima kerusakan dari musuh memberi [[stealth|Siluman]] selama {seconds} dtk, hingga {triggers} kali per pertarungan.",
   "skill.passive.cursedInsight": "Setiap kali [[basic-attack|serangan dasar]] langsung mengenai musuh yang [[curse|Terkutuk]], [[ap|Kekuatan Magis]] naik {value}% untuk pertarungan ini, hingga {stacks} kali. Serangan yang [[transfer|dialihkan]] tidak memicunya.",
   "skill.passive.frenzyDrain": "Pulih {percent}% dari kerusakan yang diberikan musuh yang [[frenzy|Mengamuk]].",

@@ -120,7 +120,7 @@ export const SKILL_RU = {
   "skill.passive.adagioWeight": "Пока жив, [[attack-speed|скорость атаки]] союзников растёт на {percent}%. Когда союзник попадает под [[crowd-control|контроль]], сразу очищает его и даёт [[shield|щит]] {shield}.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% атаки",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "[[ap|Сила магии]] растёт на {percent}% в секунду со сложением.",
+  "skill.passive.tidalSurge": "Каждые {seconds} с прилив [[knockback|отбрасывает]] всех врагов назад.",
   "skill.passive.gourmetHunt": "В начале боя выбирает врага с наименьшими текущими ОЗ и [[teleport|телепортируется]] к нему. При убийстве сразу выбирает снова, иначе — каждые {cooldown} с. Получая урон от врага, уходит в [[stealth|невидимость]] на {seconds} с, до {triggers} раз за бой.",
   "skill.passive.cursedInsight": "Каждый раз, когда [[basic-attack|обычная атака]] напрямую попадает по [[curse|проклятому]] врагу, [[ap|сила магии]] растёт на {value}% до конца боя, до {stacks} раз. [[transfer|Переданные]] удары этого не вызывают.",
   "skill.passive.frenzyDrain": "Лечится на {percent}% урона, нанесённого врагами в [[frenzy|неистовстве]].",

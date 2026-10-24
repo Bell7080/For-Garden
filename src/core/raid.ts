@@ -266,12 +266,15 @@ export function mockSummonContributions(raidId: string, othersDamage: number): R
  * 깎인 비율만큼의 몫, 토벌된 판에만 붙는 몫. 내가 많이 깎을수록, 판이 많이 깎일수록 커진다.
  * 한 번도 치지 않았으면 아무것도 없다(`undefined`).
  */
-export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dealtRatio: number, defeated: boolean): { raidSigil: number } | undefined {
+export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dealtRatio: number, defeated: boolean): { raidSigil: number; gem: number } | undefined {
   if (!(myDamage > 0)) return undefined;
   const spec = RAID_DIFFICULTY[difficulty].settlement;
   const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
   const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
-  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+  const sigil = Math.max(1, mine + total + (defeated ? spec.kill : 0));
+  // 젬은 증표와 같은 비율로 차오르고 5 단위로 올림한다(`paidAmountUnit`의 10~99 구간 단위).
+  const gem = Math.ceil((spec.gems * sigil) / (spec.mine + spec.total + spec.kill) / 5) * 5;
+  return { raidSigil: sigil, gem: Math.min(spec.gems, Math.max(5, gem)) };
 }
 
 /** 한 판을 치고 곧바로 받는 골드. 그 판의 피해에 비례한다. */

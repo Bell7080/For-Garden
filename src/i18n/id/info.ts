@@ -26,6 +26,8 @@ export const INFO_ID = {
   "info.enemy.role.tenacity": "Mulai dengan {base}% [[tenacity|Kegigihan]] dan bertambah {per}% setiap lepas dari [[crowd-control|kontrol massa]], hingga {max}%.",
   "info.enemy.role.damageReduction": "Mulai dengan {base}% [[damage-reduction|Reduksi Kerusakan]] dan naik hingga {max}% seiring [[hp|Nyawa]] turun; kerusakan {ignore} atau kurang dihapus.",
   "info.enemy.role.percentHpResistance": "Menerima {percent}% lebih sedikit kerusakan berbasis HP maksimum.",
+  "info.enemy.role.ramp": "[[atk|Serangan]] dan [[ap|Kekuatan Magis]] dimulai dari {start}% lalu naik hingga 100% selama {seconds} detik.",
+  "info.enemy.role.apGrowth": "Setelah mencapai 100%, [[atk|Serangan]] dan [[ap|Kekuatan Magis]] terus naik {percent}% setiap detik.",
   "info.enemy.role.line.normal": "“Kami? Cuma kroco yang lewat… tapi kami akan berusaha!”",
   "info.section.rune": "Rune",
   "info.level": "Level",

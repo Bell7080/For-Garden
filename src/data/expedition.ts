@@ -83,7 +83,8 @@ export const EXPEDITION_NODE_REWARD_BALANCE = {
   cheesecake: { perNode: { min: 5, max: 15 }, runCap: 225 },
   gold: { perNode: { min: 150, max: 500 }, runCap: 9_000 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 5, max: 15 }, runCap: 225 },
+  /** 젬은 한 판 상한을 따로 정하지 않는다(응태 결정, v0.338.0) — 700은 어느 경로로도 닿지 않는 기술적 천장일 뿐이다. */
+  gems: { perNode: { min: 10, max: 20 }, runCap: 700 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
@@ -118,7 +119,7 @@ export const EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
 export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 750, max: 1_500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 20, max: 50 },
+  gems: { min: 30, max: 60 },
   salvageRecord: { min: 8, max: 15 },
 } as const;
 
@@ -213,7 +214,7 @@ export function expeditionRankRewards(rank: number): Partial<Record<ExpeditionRe
 export const EXPEDITION_SWEEP_REWARDS = {
   gold: 4_000,
   cheesecake: 120,
-  gems: 120,
+  gems: 200,
   salvageRecord: 60,
   fossil: 0,
 } as const;

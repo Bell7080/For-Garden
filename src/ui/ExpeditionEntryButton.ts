@@ -32,6 +32,10 @@ export interface IllustratedSortieButtonOptions {
   accentTextColor?: string;
   /** 한 줄 폭이 좁은 병렬 던전만 제목 크기를 낮춰 같은 버튼 비율을 유지한다. */
   labelSize?: number;
+  /** 부제 글자 크기. 주면 부제가 `statusWrap` 폭에서 줄바꿈되고 제목이 그 위로 올라선다(결투 선택판). */
+  statusSize?: number;
+  /** 부제 줄바꿈 폭. `statusSize`와 함께 쓴다. */
+  statusWrap?: number;
   /**
    * SD가 서는 쪽. 글자는 늘 그 반대쪽 아래 구석에 선다.
    *
@@ -139,16 +143,17 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     const cornerInset = (fromBottom: number): number => (textRight ? Math.max(36, bevel.bottomRight - fromBottom + 22) : 40);
     const edgeX = (fromBottom: number): number => (textRight ? options.width / 2 - cornerInset(fromBottom) : -options.width / 2 + cornerInset(fromBottom));
     const originX = textRight ? 1 : 0;
-    const labelBottom = 56;
     const statusBottom = 16;
+    const status = scene.add
+      .text(edgeX(statusBottom), options.height / 2 - statusBottom, options.status, textStyle({ role: "emphasis", size: options.statusSize ?? 23, color: COLOR.ink, ...(options.statusWrap ? { wrap: options.statusWrap, align: textRight ? "right" : "left" } : {}) }))
+      .setOrigin(originX, 1)
+      .setShadow(3, 4, "#04060a", 0, true, true);
+    // 부제가 커지면 제목이 그 윗줄 위로 올라선다. 기본 크기는 예전 자리(56)를 그대로 지킨다.
+    const labelBottom = options.statusSize ? statusBottom + status.height + 10 : 56;
     const label = scene.add
       .text(edgeX(labelBottom), options.height / 2 - labelBottom, options.label ?? t("expedition.entry"), textStyle({ role: "display", size: options.labelSize ?? 58, color: accentText }))
       .setOrigin(originX, 1)
       .setShadow(4, 5, "#04060a", 0, true, true);
-    const status = scene.add
-      .text(edgeX(statusBottom), options.height / 2 - statusBottom, options.status, textStyle({ role: "emphasis", size: 23, color: COLOR.ink }))
-      .setOrigin(originX, 1)
-      .setShadow(3, 4, "#04060a", 0, true, true);
     this.add([label, status]);
 
     if (options.sdSide) {

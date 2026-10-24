@@ -448,10 +448,10 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "leapPuddle" },
       // 터진 여울이 1.5초 뒤 한 번 더 터진다(위력 50%, 기절 없음) — 물이 빠지며 되돌아오는 두 번째 파도다.
       ultimate: { kind: "tidalEcho", delaySeconds: 1.5, powerPercent: 50 },
-      // 잠행에 들어선 뒤 첫 평타가 확정 치명타다. 은신 개념의 기습이고 폭주 한 번에 한 번이다.
-      ferocity: { kind: "ambushCrit" },
-      // 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다. 사냥이 이어지는 기동 효과다.
-      passive: { kind: "huntChain" },
+      // 잠행 동안 도약 주기가 4타에서 2타로 줄어 물 위를 건너뛰며 사냥한다. 폭주가 끝나면 4타로 돌아온다.
+      ferocity: { kind: "frenzyLeap", everyHits: 2 },
+      // 도약해 내려서면 1초 숨는다(쿨다운 3초). 암살자의 생존은 은신 개념으로만 준다.
+      passive: { kind: "leapVeil", stealthSeconds: 1, cooldownSeconds: 3 },
     },
     passive: {
       id: "spino-passive",
@@ -804,7 +804,7 @@ export const RELICS: RelicDef[] = [
     // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
     breakthroughEffects: {
       basic: { kind: "wetMark", takenPercent: 12 },
-      ultimate: { kind: "splashCharge", energy: 6 },
+      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 5 },
       ferocity: { kind: "bigWave", powerMultiplier: 2 },
       passive: { kind: "touchBurst" },
     },
@@ -949,10 +949,10 @@ export const RELICS: RelicDef[] = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", attackSpeedPercent: 10, seconds: 3 },
+      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 3 },
       ultimate: { kind: "gustEnergy", energy: 25 },
-      ferocity: { kind: "windPull", extraEnergy: 5 },
-      passive: { kind: "windEcho", energy: 10 },
+      ferocity: { kind: "feverGale", seconds: 3, speedPercent: 20 },
+      passive: { kind: "windEcho", energy: 25 },
     },
   },
 
@@ -1506,9 +1506,9 @@ export const RELICS: RelicDef[] = [
       },
     },
     breakthroughEffects: {
-      basic: { kind: "dreadAegis", shieldPercent: 5, cooldownSeconds: 3 },
+      basic: { kind: "preyScale", shieldPercentPerEnemy: 3, maxEnemies: 5, cooldownSeconds: 3 },
       ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
-      ferocity: { kind: "spreadingDread", radius: 400, stacks: 1 },
+      ferocity: { kind: "roarEntry", radius: 500, stacks: 1 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 },
     },
   },
@@ -1657,9 +1657,9 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     breakthroughEffects: {
-      basic: { kind: "lastDropSplash", sharePercent: 50, radius: 260 },
+      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
-      ferocity: { kind: "quickReload", reloadSeconds: 0.6 },
+      ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 },
     },
     ferocityTrait: { name: "야근, 싫어", effectId: "overtimeRefusal" },
@@ -1864,9 +1864,9 @@ export const RELICS: RelicDef[] = [
     },
     // 한계 돌파: 헬멧 박치기(막 있는 동안 평타 추가 피해) · 돌진 왕복 · 연쇄 충돌 · 더 낮은 한 방 상한.
     breakthroughEffects: {
-      basic: { kind: "helmetBash", attackPercent: 25 },
+      basic: { kind: "helmetBash", everyHits: 4, attackPercent: 25 },
       ultimate: { kind: "dashBack", delaySeconds: 0.6, powerPercent: 60 },
-      ferocity: { kind: "chainCollision", radius: 80 },
+      ferocity: { kind: "chainEntry", entryRadius: 300, radius: 80 },
       passive: { kind: "impactCapTighten", maxHpPercent: 20 },
     },
     passive: {
@@ -1980,7 +1980,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "bleedSettle" },
       ultimate: { kind: "bleedFeast", damagePercent: 30 },
-      ferocity: { kind: "swiftHands", attackSpeedPercent: 15 },
+      ferocity: { kind: "bloodTaste", radius: 500 },
       passive: { kind: "landingAmbush" },
     },
     passive: {
@@ -2091,11 +2091,11 @@ export const RELICS: RelicDef[] = [
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
     ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2 },
-    // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
+    // 한계 돌파: 밑줄 긋기(집중 2겹) · 막이 내린 뒤(쓰러진 적의 저주가 이어진다) · 독자 몰이(폭주 진입에 전원 저주) · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
-      ultimate: { kind: "contagiousFrenzy", stacks: 1 },
-      ferocity: { kind: "finalChapter", radius: 400, stacks: 2 },
+      ultimate: { kind: "afterglow", radius: 400, maxCarry: 3 },
+      ferocity: { kind: "readersGather", radius: 500, stacks: 1 },
       passive: { kind: "extraChapter", extraStacks: 1 },
     },
     passive: {
@@ -2325,13 +2325,13 @@ export const RELICS: RelicDef[] = [
       name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240,
       taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50,
     },
-    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정이 끝나면 대신 받은 피해의 일부를 주위에 돌려주며,
-    // 폭주 중에는 희열이 열다섯 겹까지 쌓이고(폭주가 끝나면 열 겹으로 깎인다), 희열 한 겹의 재생이 0.3%에서 0.4%로 돌아온다.
+    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정 동안 대신 받은 피해가 최대 체력의 10% 쌓일 때마다 주위에 열기가 터지며(최대 4번),
+    // 폭주에 들어서는 순간 희열이 다섯 겹 쌓이고, 희열이 가득하면 재생의 절반이 아군 전원에게 번진다.
     breakthroughEffects: {
       basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
-      ultimate: { kind: "bulwarkPayback", returnPercent: 25, radius: 300, capMaxHpPercent: 10 },
-      ferocity: { kind: "heatOverflow", extraMaxStacks: 5 },
-      passive: { kind: "sweeterWound", regenPercentPerStack: 0.1 },
+      ultimate: { kind: "heatBurst", thresholdPercent: 10, pulsePercent: 2.5, maxPulses: 4, radius: 300 },
+      ferocity: { kind: "emberRush", stacks: 5 },
+      passive: { kind: "sweetShare", sharePercent: 50 },
     },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -3522,17 +3522,17 @@ export const RELICS: RelicDef[] = [
       energyGain: 26, lifeSteal: 0, ferocityGain: 0,
     },
     // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
-    // 크레센도가 점점 커지고(IV), 무게가 내려앉는다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
+    // 폭주 진입에 서곡이 울리고(IV), 막이 남아 있는 내내 음파가 퍼진다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
     breakthroughEffects: {
       // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
       // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
       basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
       // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
       ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
-      // 크레센도 추가타는 아군 누구의 평타든 따라붙어 팀 속도로 쌓이므로, 한 번마다 +5%씩 오르되 +50%에서 멈춘다.
-      ferocity: { kind: "crescendoRamp", percentPerHit: 5, maxPercent: 50 },
-      // 메테가 둘러 준 보호막이 다 깨지는 순간 주위 적에게 공격력 150%의 마법 피해와 0.1초 경직. 7초에 한 번이다.
-      passive: { kind: "adagioSlam", radius: 260, powerPercent: 150, staggerSeconds: 0.1, cooldownSeconds: 7 },
+      // 폭주에 들어서는 순간 주위 적 전원에게 스타카토 한 번이 먼저 울린다(공격력 60%, 경직 포함). 팀의 합창이 시작되기 전의 서곡이다.
+      ferocity: { kind: "overture", radius: 520, powerPercent: 60 },
+      // 메테의 막을 두른 아군이 평타를 맞히면 그 적 주위로 음파(공격력 40%)가 퍼진다. 아군마다 3초에 한 번이다.
+      passive: { kind: "resonantShield", radius: 240, powerPercent: 40, cooldownSeconds: 3 },
     },
     ferocityTrait: {
       name: "크레센도", effectId: "crescendoStaccato",
@@ -3811,11 +3811,11 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
-    // 한계 돌파: 사이다 거품 · 냉방 환기 · 털에 얼어붙음 · 얼음 깨기.
+    // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
     breakthroughEffects: {
-      basic: { kind: "sodaFizz", radius: 300, stacks: 1 },
+      basic: { kind: "sodaPop", everyHits: 3, radius: 300, stacks: 1 },
       ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
-      ferocity: { kind: "frostCling", stacks: 1 },
+      ferocity: { kind: "coldSnap", radius: 500, stacks: 2 },
       passive: { kind: "iceShatter", radius: 300, attackPercent: 120 },
     },
     passive: {
@@ -4182,10 +4182,10 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "farPing", reach: 600, followDistance: 420 },
       // 오더 6초 동안 듀오가 처음 때리는 적마다 약점 포착이 즉시 찍혀 터진다(적마다 1회) — 평타의 표식과 궁극기가 한 계약으로 이어진다.
       ultimate: { kind: "orderStrike" },
-      // 폭주 동안은 세 걸음 주기 없이 매번 표식을 찍는다 — 듀오가 때릴 때마다 터진다.
-      ferocity: { kind: "pingStorm" },
-      // 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(전투당 1회).
-      passive: { kind: "relink" },
+      // 폭주에 들어서는 순간 듀오가 노리는 적 주변 전원에게 약점 포착이 한꺼번에 찍힌다.
+      ferocity: { kind: "pingBurst", radius: 420 },
+      // 전투 시작부터 듀오가 둘이다 — 둘째 듀오도 약점 포착을 터뜨리고 핑의 충전을 함께 받는다.
+      passive: { kind: "twinDuo" },
     },
     ferocityTrait: {
       name: "그거 아니라니까?",

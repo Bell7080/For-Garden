@@ -1500,9 +1500,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
         reduction: trim(effect.healingReceivedReductionPercent),
       });
     }
-    if (effect.kind === "lastDropSplash") {
+    if (effect.kind === "bitterTaste") {
       const cycle = def.basic.cycle;
-      return t("skill.breakthrough.effect.basic.lastDropSplash", { name: cycle?.[cycle.length - 1]?.name ?? def.basic.name, percent: trim(effect.sharePercent) });
+      return t("skill.breakthrough.effect.basic.bitterTaste", { name: cycle?.[cycle.length - 1]?.name ?? def.basic.name, percent: trim(effect.defensePercent), seconds: trim(effect.seconds), max: trim(effect.maxStacks) });
     }
     if (effect.kind === "arrowEcho") {
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
@@ -1513,14 +1513,14 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "farPing") return t("skill.breakthrough.effect.basic.farPing", { name: def.basic.name });
     if (effect.kind === "scoldTaunt") return t("skill.breakthrough.effect.basic.scoldTaunt", { name: def.basic.name, seconds: trim(effect.tauntSeconds) });
     if (effect.kind === "clawBleed") return t("skill.breakthrough.effect.basic.clawBleed", { name: def.basic.name });
-    if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.attackSpeedPercent), seconds: trim(effect.seconds) });
-    if (effect.kind === "dreadAegis") return t("skill.breakthrough.effect.basic.dreadAegis", { name: def.basic.name, percent: trim(effect.shieldPercent), seconds: trim(effect.cooldownSeconds) });
+    if (effect.kind === "windStep") return t("skill.breakthrough.effect.basic.windStep", { name: def.basic.name, percent: trim(effect.moveSpeedPercent), seconds: trim(effect.seconds) });
+    if (effect.kind === "preyScale") return t("skill.breakthrough.effect.basic.preyScale", { name: def.basic.name, percent: trim(effect.shieldPercentPerEnemy), max: trim(effect.maxEnemies), seconds: trim(effect.cooldownSeconds) });
     if (effect.kind === "pressureConduct") return t("skill.breakthrough.effect.basic.pressureConduct", { stacks: trim(effect.stacks) });
     if (effect.kind === "thornJab") return t("skill.breakthrough.effect.basic.thornJab", { name: def.basic.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "sleepPounce") return t("skill.breakthrough.effect.basic.sleepPounce", { percent: trim(effect.damagePercent) });
-    if (effect.kind === "helmetBash") return t("skill.breakthrough.effect.basic.helmetBash", { name: def.basic.name, percent: trim(effect.attackPercent) });
+    if (effect.kind === "helmetBash") return t("skill.breakthrough.effect.basic.helmetBash", { every: trim(effect.everyHits), percent: trim(effect.attackPercent) });
     if (effect.kind === "underline") return t("skill.breakthrough.effect.basic.underline", { name: def.passive.name, stacks: trim(effect.stacks) });
-    if (effect.kind === "sodaFizz") return t("skill.breakthrough.effect.basic.sodaFizz", { stacks: trim(effect.stacks) });
+    if (effect.kind === "sodaPop") return t("skill.breakthrough.effect.basic.sodaPop", { every: trim(effect.everyHits), stacks: trim(effect.stacks) });
     if (effect.kind === "wetMark") return t("skill.breakthrough.effect.basic.wetMark", { percent: trim(effect.takenPercent) });
     if (effect.kind === "poisonPulse") return t("skill.breakthrough.effect.basic.poisonPulse");
     if (effect.kind === "pupLitter") return t("skill.breakthrough.effect.basic.pupLitter", { name: def.basic.name, every: trim(effect.every), seconds: trim(PUP.lifeSeconds) });
@@ -1556,7 +1556,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "forestSight") return t("skill.breakthrough.effect.ultimate.forestSight", { hits: trim(def.ultimate.selfVolley ? def.ultimate.selfVolley.hitCount + effect.extraHits : effect.extraHits), seconds: trim(effect.extraSeconds) });
     if (effect.kind === "lightChorus") return t("skill.breakthrough.effect.ultimate.lightChorus", { name: def.ultimate.name, cost: trim(effect.costReduction), percent: trim(effect.fullHpShieldPercent) });
     if (effect.kind === "orderStrike") return t("skill.breakthrough.effect.ultimate.orderStrike");
-    if (effect.kind === "bulwarkPayback") return t("skill.breakthrough.effect.ultimate.bulwarkPayback", { name: def.ultimate.name, percent: trim(effect.returnPercent), cap: trim(effect.capMaxHpPercent) });
+    if (effect.kind === "heatBurst") return t("skill.breakthrough.effect.ultimate.heatBurst", { name: def.ultimate.name, threshold: trim(effect.thresholdPercent), pulse: trim(effect.pulsePercent), max: trim(effect.maxPulses) });
     if (effect.kind === "afterimageSlash") return t("skill.breakthrough.effect.ultimate.afterimageSlash", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
     if (effect.kind === "gustEnergy") return t("skill.breakthrough.effect.ultimate.gustEnergy", { name: def.ultimate.name, energy: trim(effect.energy) });
     if (effect.kind === "quarryMark") return t("skill.breakthrough.effect.ultimate.quarryMark", { name: def.ultimate.name, seconds: trim(effect.seconds), percent: trim(effect.damageTakenPercent) });
@@ -1564,9 +1564,9 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "wallReflect") return t("skill.breakthrough.effect.ultimate.wallReflect", { name: def.ultimate.name, percent: trim(effect.reflectPercent) });
     if (effect.kind === "lullabyGaze") return t("skill.breakthrough.effect.ultimate.lullabyGaze", { name: def.ultimate.name, stacks: trim(effect.stacksPerHit) });
     if (effect.kind === "dashBack") return t("skill.breakthrough.effect.ultimate.dashBack", { name: def.ultimate.name, seconds: trim(effect.delaySeconds), percent: trim(effect.powerPercent) });
-    if (effect.kind === "contagiousFrenzy") return t("skill.breakthrough.effect.ultimate.contagiousFrenzy", { stacks: trim(effect.stacks) });
+    if (effect.kind === "afterglow") return t("skill.breakthrough.effect.ultimate.afterglow", { max: trim(effect.maxCarry) });
     if (effect.kind === "coolingVent") return t("skill.breakthrough.effect.ultimate.coolingVent", { name: def.ultimate.name, percent: trim(effect.healMaxHpPercentPerFrozen), max: trim(effect.maxFrozenCounted) });
-    if (effect.kind === "splashCharge") return t("skill.breakthrough.effect.ultimate.splashCharge", { energy: trim(effect.energy) });
+    if (effect.kind === "splashCharge") return t("skill.breakthrough.effect.ultimate.splashCharge", { energy: trim(effect.energy), ally: trim(effect.allyEnergy) });
     if (effect.kind === "extraCard") return t("skill.breakthrough.effect.ultimate.extraCard", { name: def.ultimate.name, percent: trim(effect.powerPercent) });
     if (effect.kind === "pupRush") return t("skill.breakthrough.effect.ultimate.pupRush", { name: def.ultimate.name, count: trim(effect.count) });
     if (effect.kind === "shareShield") return t("skill.breakthrough.effect.ultimate.shareShield", { name: def.ultimate.name, percent: trim(effect.sharePercent) });
@@ -1592,7 +1592,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
   if (slot === "ferocity" && effects.ferocity) {
     const effect = effects.ferocity;
     if (effect.kind === "none") return undefined;
-    if (effect.kind === "quickReload") return t("skill.breakthrough.effect.ferocity.quickReload", { seconds: trim(effect.reloadSeconds) });
+    if (effect.kind === "doubleMag") return t("skill.breakthrough.effect.ferocity.doubleMag");
     if (effect.kind === "feverWidenBasic") return t("skill.breakthrough.effect.ferocity.feverWidenBasic", { percent: trim(widerPercent("radius" in def.basic ? def.basic.radius : undefined, effect.radius)) });
     if (effect.kind === "hungryStride") return t("skill.breakthrough.effect.ferocity.hungryStride", { percent: trim(effect.moveSpeedPercent) });
     if (effect.kind === "longFeast") return t("skill.breakthrough.effect.ferocity.longFeast", { percent: trim(widerPercent(def.ferocityTrait.effectId === "selfAttackSpeedMultiplier" ? def.ferocityTrait.pullOnEntry?.radius : undefined, effect.radius)) });
@@ -1600,22 +1600,23 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "critPlume") return t("skill.breakthrough.effect.ferocity.critPlume", { count: trim(effect.extraStacks) });
     if (effect.kind === "cleavingBasics") return t("skill.breakthrough.effect.ferocity.cleavingBasics");
     if (effect.kind === "feverAmbush") return t("skill.breakthrough.effect.ferocity.feverAmbush", { seconds: trim(effect.stealthSeconds) });
-    if (effect.kind === "crescendoRamp") return t("skill.breakthrough.effect.ferocity.crescendoRamp", { percent: trim(effect.percentPerHit), max: trim(effect.maxPercent) });
-    if (effect.kind === "pingStorm") return t("skill.breakthrough.effect.ferocity.pingStorm", { name: def.basic.name });
-    if (effect.kind === "ambushCrit") return t("skill.breakthrough.effect.ferocity.ambushCrit");
-    if (effect.kind === "heatOverflow") return t("skill.breakthrough.effect.ferocity.heatOverflow", { max: trim((def.passive.elation?.maxStacks ?? 0) + effect.extraMaxStacks), base: trim(def.passive.elation?.maxStacks ?? 0) });
+    if (effect.kind === "overture") return t("skill.breakthrough.effect.ferocity.overture", { power: trim(effect.powerPercent) });
+    if (effect.kind === "pingBurst") return t("skill.breakthrough.effect.ferocity.pingBurst", { name: def.basic.name });
+    if (effect.kind === "frenzyLeap") return t("skill.breakthrough.effect.ferocity.frenzyLeap", { hits: effect.everyHits });
+    if (effect.kind === "emberRush") return t("skill.breakthrough.effect.ferocity.emberRush", { stacks: trim(effect.stacks) });
     if (effect.kind === "frenzyClaws") return t("skill.breakthrough.effect.ferocity.frenzyClaws", { name: def.basic.name, from: trim(def.basic.periodicCritical?.every ?? 0), to: trim(effect.every) });
     if (effect.kind === "bloodFever") return t("skill.breakthrough.effect.ferocity.bloodFever", { percent: trim(effect.lifeStealPoints) });
     if (effect.kind === "feverGuard") return t("skill.breakthrough.effect.ferocity.feverGuard", { percent: trim(effect.percent) });
     if (effect.kind === "quickReaction") return t("skill.breakthrough.effect.ferocity.quickReaction", { max: trim(effect.maxStacks) });
     if (effect.kind === "quickBlink") return t("skill.breakthrough.effect.ferocity.quickBlink", { name: def.passive.name, seconds: trim(effect.cooldownSeconds) });
-    if (effect.kind === "spreadingDread") return t("skill.breakthrough.effect.ferocity.spreadingDread", { stacks: trim(effect.stacks) });
+    if (effect.kind === "roarEntry") return t("skill.breakthrough.effect.ferocity.roarEntry", { stacks: trim(effect.stacks) });
     if (effect.kind === "vortexDraw") return t("skill.breakthrough.effect.ferocity.vortexDraw", { min: trim(effect.minStacks) });
     if (effect.kind === "heatChain") return t("skill.breakthrough.effect.ferocity.heatChain", { count: trim(effect.keepStacks) });
     if (effect.kind === "yawnContagion") return t("skill.breakthrough.effect.ferocity.yawnContagion", { stacks: trim(effect.stacks) });
-    if (effect.kind === "chainCollision") return t("skill.breakthrough.effect.ferocity.chainCollision");
-    if (effect.kind === "finalChapter") return t("skill.breakthrough.effect.ferocity.finalChapter", { stacks: trim(effect.stacks) });
-    if (effect.kind === "frostCling") return t("skill.breakthrough.effect.ferocity.frostCling", { stacks: trim(effect.stacks) });
+    if (effect.kind === "chainEntry") return t("skill.breakthrough.effect.ferocity.chainEntry");
+    if (effect.kind === "bloodTaste") return t("skill.breakthrough.effect.ferocity.bloodTaste");
+    if (effect.kind === "readersGather") return t("skill.breakthrough.effect.ferocity.readersGather", { stacks: trim(effect.stacks) });
+    if (effect.kind === "coldSnap") return t("skill.breakthrough.effect.ferocity.coldSnap", { stacks: trim(effect.stacks) });
     if (effect.kind === "bigWave") return t("skill.breakthrough.effect.ferocity.bigWave", { multiplier: trim(effect.powerMultiplier) });
     if (effect.kind === "rePoison") return t("skill.breakthrough.effect.ferocity.rePoison");
     if (effect.kind === "swiftHands") return t("skill.breakthrough.effect.ferocity.swiftHands", { percent: trim(effect.attackSpeedPercent) });
@@ -1628,7 +1629,7 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     if (effect.kind === "closeUp") return t("skill.breakthrough.effect.ferocity.closeUp", { stacks: trim(effect.maxStacks) });
     if (effect.kind === "paintChain") return t("skill.breakthrough.effect.ferocity.paintChain", { hops: trim(effect.hops), total: trim(effect.hops + 1) });
     if (effect.kind === "doubleNeedle") return t("skill.breakthrough.effect.ferocity.doubleNeedle", { name: def.passive.name, percent: trim(effect.sharePercent) });
-    if (effect.kind === "windPull") return t("skill.breakthrough.effect.ferocity.windPull", { energy: trim(effect.extraEnergy) });
+    if (effect.kind === "feverGale") return t("skill.breakthrough.effect.ferocity.feverGale", { seconds: trim(effect.seconds) });
     if (effect.kind === "ankleShot") return t("skill.breakthrough.effect.ferocity.ankleShot", { seconds: trim(effect.staggerSeconds) });
     if (effect.kind === "feverShare") return t("skill.breakthrough.effect.ferocity.feverShare", { percent: trim(effect.shieldPercentOfHealingDone) });
     return t("skill.breakthrough.effect.ferocity", {
@@ -1660,14 +1661,11 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
       const arrow = def.basic.cycle?.find((step) => step.targeting === "splitShot");
       return t("skill.breakthrough.effect.passive.fullFocusCrit", { name: arrow?.name ?? def.basic.name });
     }
-    if (effects.passive.kind === "adagioSlam") {
-      return t("skill.breakthrough.effect.passive.adagioSlam", { power: trim(effects.passive.powerPercent), seconds: trim(effects.passive.staggerSeconds), cooldown: trim(effects.passive.cooldownSeconds) });
+    if (effects.passive.kind === "resonantShield") {
+      return t("skill.breakthrough.effect.passive.resonantShield", { power: trim(effects.passive.powerPercent), cooldown: trim(effects.passive.cooldownSeconds) });
     }
     if (effects.passive.kind === "highTide") return t("skill.breakthrough.effect.passive.highTide", { percent: trim(effects.passive.damagePercent) });
-    if (effects.passive.kind === "sweeterWound") {
-      const base = def.passive.elation?.maxHpRegenPercentPerStack ?? 0;
-      return t("skill.breakthrough.effect.passive.sweeterWound", { from: trim(base), to: trim(Math.round((base + effects.passive.regenPercentPerStack) * 1000) / 1000) });
-    }
+    if (effects.passive.kind === "sweetShare") return t("skill.breakthrough.effect.passive.sweetShare", { percent: trim(effects.passive.sharePercent) });
     if (effects.passive.kind === "huntMark") return t("skill.breakthrough.effect.passive.huntMark", { percent: trim(effects.passive.criticalDamagePercent) });
     if (effects.passive.kind === "windEcho") return t("skill.breakthrough.effect.passive.windEcho", { name: def.passive.name, energy: trim(effects.passive.energy) });
     if (effects.passive.kind === "terrorCarapace") return t("skill.breakthrough.effect.passive.terrorCarapace", { percent: trim(effects.passive.percentPerIntimidated), max: trim(effects.passive.maxIntimidated * effects.passive.percentPerIntimidated) });
@@ -1697,8 +1695,8 @@ function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: S
     }
     if (effects.passive.kind === "vitalSketch") return t("skill.breakthrough.effect.passive.vitalSketch", { points: trim(effects.passive.critPoints) });
     if (effects.passive.kind === "stitchedMight") return t("skill.breakthrough.effect.passive.stitchedMight", { percent: trim(effects.passive.damagePercent) });
-    if (effects.passive.kind === "relink") return t("skill.breakthrough.effect.passive.relink");
-    if (effects.passive.kind === "huntChain") return t("skill.breakthrough.effect.passive.huntChain");
+    if (effects.passive.kind === "twinDuo") return t("skill.breakthrough.effect.passive.twinDuo");
+    if (effects.passive.kind === "leapVeil") return t("skill.breakthrough.effect.passive.leapVeil", { seconds: effects.passive.stealthSeconds, cooldown: effects.passive.cooldownSeconds });
     if (effects.passive.kind === "rescueShield") {
       return t("skill.breakthrough.effect.passive.rescueShield", { hp: trim(effects.passive.belowHpPercent), percent: trim(effects.passive.apPercent) });
     }

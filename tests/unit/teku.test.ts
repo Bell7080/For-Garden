@@ -122,18 +122,18 @@ describe("테쿠 — 궁극기와 폭주", () => {
 });
 
 describe("테쿠 — 한계 돌파", () => {
-  it("II: 마지막 한 방울만 주위의 다른 적에게 번지고, 돌파 전에는 번지지 않는다", () => {
-    for (const [breakthrough, splashes] of [[0, false], [1, true]] as const) {
-      const { state, teku, enemies } = setup(["toby", "amo"], breakthrough);
+  it("II: 마지막 한 방울을 맞은 적의 방어력이 겹으로 깎이고, 돌파 전에는 깎이지 않는다", () => {
+    for (const [breakthrough, shaved] of [[0, false], [1, true]] as const) {
+      const { state, teku, enemies } = setup(["toby"], breakthrough);
       teku.attackCooldown = 0;
-      enemies[0].x = 480; enemies[1].x = 540; enemies[0].y = enemies[1].y = 700;
-      const events = run(state, 14);
-      const shots = hits(events, "basic").filter((event) => event.attackerId === teku.id);
-      const sideHits = shots.filter((event) => event.targetId === enemies[1].id);
-      const main = shots.filter((event) => event.targetId === enemies[0].id);
-      expect(main.length).toBeGreaterThanOrEqual(4);
-      expect(sideHits.length > 0, `돌파 ${breakthrough}`).toBe(splashes);
-      if (splashes) expect(sideHits.every((event) => event.critical)).toBe(true);
+      enemies[0].x = 480; enemies[0].y = 700;
+      let seen = 0;
+      for (let tick = 0; tick < 280; tick += 1) {
+        stepSkirmish(state, 0.05);
+        seen = Math.max(seen, enemies[0].bt.fangShave?.stacks ?? 0);
+      }
+      expect(seen > 0, `돌파 ${breakthrough}`).toBe(shaved);
+      expect(seen).toBeLessThanOrEqual(3);
     }
   });
 
@@ -154,28 +154,24 @@ describe("테쿠 — 한계 돌파", () => {
     expect(teku.shield.amount).toBeLessThanOrEqual(40 + 1e-6);
   });
 
-  it("IV: 폭주 동안에만 장전이 짧아진다", () => {
-    const gap = (breakthrough: number, fever: boolean) => {
-      const { state, teku } = setup(["toby"], breakthrough);
-      teku.attackCooldown = 0;
-      teku.ferocityFever = fever;
-      const events = run(state, 6);
-      const times: number[] = [];
-      let elapsed = 0;
-      for (const event of events) if (event.kind === "attack" && event.skill === "basic" && event.attackerId === teku.id) times.push(elapsed++);
-      return times.length;
+  it("IV: 폭주로 채운 탄창이 비면 쉬지 않고 한 번 더 채우고, 한 번의 폭주에 한 번뿐이다", () => {
+    const refills = (breakthrough: number): number => {
+      const { state, teku, enemies } = setup(["toby"], breakthrough);
+      teku.ferocityFever = true;
+      teku.targetId = enemies[0].id;
+      teku.refillFinisherAll = true;
+      teku.bt.doubleMagUsed = false;
+      let count = 0;
+      for (let shot = 0; shot < REFILL.magazine * 3; shot += 1) {
+        teku.attackCooldown = 0; teku.ferocity = 1_000;
+        const stepBefore = teku.basicCycleStep;
+        run(state, 0.05);
+        if (stepBefore === REFILL.magazine - 1 && teku.refillFinisherAll) count += 1;
+      }
+      return count;
     };
-    expect(gap(3, true)).toBeGreaterThanOrEqual(gap(0, true));
-    const reload = (breakthrough: number, fever: boolean) => {
-      const { state, teku } = setup(["toby"], breakthrough);
-      teku.basicCycleStep = 3;
-      teku.attackCooldown = 0;
-      teku.ferocityFever = fever;
-      run(state, 0.1);
-      return teku.attackCooldown;
-    };
-    expect(reload(3, true)).toBeLessThan(reload(3, false));
-    expect(reload(0, true)).toBeCloseTo(reload(3, false), 1);
+    expect(refills(3)).toBe(1);
+    expect(refills(0)).toBe(0);
   });
 
   it("V: 장전을 시작할 때 최대 체력의 6%를 두르고 12%에서 멈춘다", () => {

@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.336.3**
+현재 버전: **v0.336.4**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,15 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.336.4 — 약한 한계 돌파 26칸을 눈에 보이는 장면으로 교체
+
+- 응태가 고른 교체안(`/mnt/project-files/breakthrough-weak-audit/replacement-proposal.md`) 26칸을 모두 반영했다. 숫자만 올리던 칸을 걷고, 폭주에 들어서는 순간·주기·처치처럼 **화면에서 읽히는 사건**이 생기는 효과로 바꿨다. 대상: 스피나 IV·V, 메테 IV·V, 슈테 IV·V, 케리스 III·IV, 매디 II·IV, 노도니아 III·IV·V, 아크 II·IV, 파치 II·IV, 테쿠 II·IV, 스테라 II·IV·V, 마키 IV, 티아 III.
+- **규칙 예외 하나를 문서에 더했다**(`docs/breakthrough-design.md`): 폭주 효과는 평타·이동·기본 능력 축에만 건다는 줄에 "폭주 **진입 즉발**은 허용"을 보탰다. 궁극기를 건드리지 않고 진입 한 번뿐이라 폭주 중 상시 효과가 아니다.
+- 옛 효과 종류(windPull·ambushCrit·huntChain·crescendoRamp·pingStorm·adagioSlam·relink·contagiousFrenzy·finalChapter·sodaFizz·frostCling·bulwarkPayback·heatOverflow·sweeterWound·dreadAegis·spreadingDread·lastDropSplash·quickReload·chainCollision)를 쓰는 개체가 없어져 타입·전투 분기·설명문을 함께 지웠다.
+- 설계 중 바꾼 것: 테쿠 IV는 원안(탄창 가득)이 기존 특성과 겹쳐 폭주 진입 시 탄창 보충 + 첫 발이 마지막 한 방울인 「더블 샷」으로 짰다. 매디 IV 한파는 빙결로 곧장 가지 않도록 둔화 3겹으로 둔다(직접 빙결 없음). 파치 II 헬멧 박치기는 평타 4번째마다다.
+- 열한 언어 문구와 단위 테스트를 함께 더했다(`breakthroughEffects`·`ark`·`teku`·`breakthroughBatch4/5`).
+- **A/B 모의(레벨 60, 돌파 0 대 V)는 돌리지 못했다** — 저장소에 돌파 모의 스크립트가 없고 이번 변경에서 새로 만들지 않았다. 수치 균형은 단위 테스트의 효과 확인까지만 검증했고, 모의는 후속으로 남긴다.
 
 ## v0.336.3 — 반짝 폭발 절에도 현재 수치 태그
 

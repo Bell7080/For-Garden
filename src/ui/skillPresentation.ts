@@ -1458,14 +1458,12 @@ function breakthroughNowValue(def: RelicDef, slot: BreakthroughSlot, stats?: Sta
   if (stats === undefined || effect === undefined) return undefined;
   const make = (kind: "damage" | "shield", stat: "atk" | "ap" | "hp", percent: number): BreakthroughNowValue =>
     ({ kind, stat, percent, amount: Math.round(stats[stat] * percent / 100) });
-  if (effect.kind === "dreadAegis") return make("shield", "hp", effect.shieldPercent);
   if (effect.kind === "helmetBash") return make("damage", "atk", effect.attackPercent);
   if (effect.kind === "freshSight") return make("damage", "atk", effect.percentPerStack);
   if (effect.kind === "cheekShield" || effect.kind === "bigShell") return make("shield", "hp", effect.shieldMaxHpPercent);
   if (effect.kind === "reloadSip") return make("shield", "hp", effect.shieldMaxHpPercent);
   if (effect.kind === "pressureCrack") return make("damage", "ap", effect.powerPercent);
   if (effect.kind === "thickShell") return make("shield", "hp", effect.selfShieldMaxHpPercent);
-  if (effect.kind === "adagioSlam") return make("damage", "atk", effect.powerPercent);
   if (effect.kind === "iceShatter") return make("damage", "atk", effect.attackPercent);
   if (effect.kind === "rescueShield") return make("shield", "ap", effect.apPercent);
   return undefined;

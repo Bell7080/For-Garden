@@ -27,7 +27,7 @@ export const LEVEL_UP_POPUP = {
   },
   section: { titleSize: 26, titleRoom: 66, gap: 26 },
   reward: { frame: 128, spacing: 72, captionGap: 34, captionSize: 22, captionWidth: 220 },
-  unlock: { width: 190, height: 196, gapX: 18, gapY: 18, perRow: 4, glyph: 74, glyphY: -26, avatar: 104, nameY: 64, nameSize: 23 },
+  unlock: { width: 190, height: 196, gapX: 18, gapY: 18, perRow: 4, glyph: 74, glyphY: -26, entranceY: 8, avatar: 104, nameY: 64, nameSize: 23 },
   bottomRoom: 48,
 } as const;
 

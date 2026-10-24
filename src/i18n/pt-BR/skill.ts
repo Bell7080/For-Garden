@@ -132,7 +132,7 @@ export const SKILL_PT_BR = {
   "skill.passive.lowHpStealth": "Uma vez por batalha, entra em [[stealth|Furtividade]] por {seconds} s quando a Vida cai para {percent}% ou menos.",
   "skill.passive.lowHpStealth.focus": "Uma vez por batalha, quando a Vida cai para {percent}% ou menos, perde todo o [[focus|Foco]] e entra em [[stealth|Furtividade]] por {seconds} s.",
   "skill.passive.openingVanish": "Entra na batalha em [[stealth|Furtividade]] por {seconds} s.",
-  "skill.passive.featherVeil": "Entra na batalha em [[stealth|Furtividade]] por {seconds} s e ganha {speed}% de [[attack-speed|velocidade de ataque]]. Ao derrotar um inimigo, a velocidade de ataque e a [[move-speed|velocidade de movimento]] sobem {killPercent}% por {killSeconds} s.",
+  "skill.passive.featherVeil": "Entra na batalha em [[stealth|Furtividade]] por {seconds} s e ganha {speed}% de [[attack-speed|velocidade de ataque]].",
   "skill.passive.openingStealth": "Entra na batalha em [[stealth|Furtividade]] por {seconds} s.",
   "skill.passive.undyingTalisman": "Uma vez por batalha, o dano que o mataria o deixa vivo e [[invulnerable|Invulnerável]] por {seconds} s, mas sem poder agir. Nesse tempo, recupera {percent}% do PV máx. dividido a cada segundo.{blast}",
   "skill.passive.undyingTalisman.blast": " Também [[knockback|arremessa]] inimigos próximos.",

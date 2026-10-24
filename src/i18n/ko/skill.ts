@@ -165,7 +165,7 @@ export const SKILL_KO = {
   "skill.passive.lowHpStealth": "전투당 한 번, 체력이 {percent}% 이하가 되면 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.lowHpStealth.focus": "전투당 한 번, 체력이 {percent}% 이하가 되면 [[focus|집중]]을 모두 잃는 대신 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.openingVanish": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]] 상태로 진입한다.",
-  "skill.passive.featherVeil": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]하고 [[attack-speed|공격 속도]]가 {speed}% 오른다. 적을 처치하면 {killSeconds}초 동안 공격 속도와 [[move-speed|이동 속도]]가 {killPercent}% 오른다.",
+  "skill.passive.featherVeil": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]하고 [[attack-speed|공격 속도]]가 {speed}% 오른다.",
   "skill.passive.openingStealth": "전투를 시작할 때 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.passive.undyingTalisman": "전투당 한 번, 쓰러질 피해를 받으면 죽지 않고 {seconds}초 동안 [[invulnerable|무적]]이 되는 대신 아무 행동도 하지 못한다. 그동안 최대 체력의 {percent}%를 매초 나누어 회복한다.{blast}",
   "skill.passive.undyingTalisman.blast": " 이때 주위 적을 [[knockback|날려버린다]].",

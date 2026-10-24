@@ -2064,16 +2064,6 @@ export interface Passive {
    */
   openingStealthSeconds?: number;
   /**
-   * 적을 쓰러뜨리면 이 시간(초)만큼 공격 속도와 이동 속도가 함께 오른다. 다시 쓰러뜨리면 시간이 갱신된다.
-   *
-   * 룬 특성의 가속(`traitHaste`)과 다른 슬롯이다 — 그쪽은 룬이 거는 값이라 같은 칸을 쓰면 서로 덮어쓴다.
-   */
-  killHaste?: {
-    seconds: number;
-    attackSpeedPercent: number;
-    moveSpeedPercent: number;
-  };
-  /**
    * 「요람에서 내려올 생각 없음」 계약. **소환수가 살아 있는 동안만** 켜지는 두 값이다.
    *
    * 값이 둘인 이유는 이 패시브가 전사의 자가 수급을 겸하기 때문이다 — 방어·저항만 오르면 수급이

@@ -178,8 +178,6 @@ export interface Fighter extends Combatant {
    * 중첩되지 않고 다시 상한에 닿으면 값과 시간이 새로 갱신된다.
    */
   frostbite: { remaining: number; total: number; tickIn: number; amount: number; sourceId?: string; slowRemaining: number; slowPercent: number } | null;
-  /** 패시브 `killHaste`가 건 처치 가속. 룬 특성 가속(`traitHaste`)과 다른 슬롯이다. */
-  killHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
   /**
    * 이 전투원을 불러낸 지휘자의 ID. 스스로 편성에 선 개체는 null이다.
    *
@@ -1204,7 +1202,6 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     butcher: null,
     frostPlume: null,
     frostbite: null,
-    killHaste: null,
     // 첫 도약은 전투가 시작되고 조금 뒤다 — 첫 프레임에 뛰면 순간이동한 것으로만 보인다.
     huntCooldown: def.passive.kind === "gourmetHunt" ? def.passive.huntOpeningSeconds ?? 0
       // 코마도 같은 시계를 쓴다. 0에서 시작하면 전장을 보기도 전에 이미 후열에 서 있다.
@@ -4145,11 +4142,6 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, vict
   // 날갯짓 울림(네우리) — 직접 쓰러뜨린 몫이 궁극기 게이지로 돌아온다.
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
-  // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
-  const haste = attacker.def.passive.killHaste;
-  if (haste && isFighterAlive(attacker)) {
-    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
-  }
   // 패시브 돌파(`huntChain`) — 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(주기 카운트를 채운다).
   const shallows = attacker.def.basic.shallows;
   if (!useUltimate && victim && shallows && attacker.shallowPools.length > 0
@@ -5265,11 +5257,10 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
   const sunkenPercent = sunkenSlowPercent(fighter);
   // 룬 특성의 가속도 시간이 정해진 배율이라 순풍·광란과 같은 자리에서 곱한다.
   const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
-  // 유티의 상시 공속과 처치 가속은 시간·조건이 정해진 자기 배율이라 룬 가속과 같은 자리에서 곱한다.
+  // 유티의 상시 공속은 조건이 정해진 자기 배율이라 룬 가속과 같은 자리에서 곱한다.
   const featherPercent = fighter.def.passive.kind === "featherVeil" ? fighter.def.passive.attackSpeedPercent ?? 0 : 0;
-  const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100) * (1 + killHastePercent / 100)
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + featherPercent / 100)
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
@@ -5562,7 +5553,7 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
   return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
-    * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100)
+    * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - frostbiteSlowPercent(fighter) / 100)
     * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
 }
@@ -9104,12 +9095,6 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const remaining = fighter.traitHaste.remaining - dt;
       if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.traitHaste = null;
       else fighter.traitHaste = { ...fighter.traitHaste, remaining };
-    }
-    // 처치 가속도 같은 공용 시계로 마른다.
-    if (isFighterAlive(fighter) && fighter.killHaste) {
-      const remaining = fighter.killHaste.remaining - dt;
-      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.killHaste = null;
-      else fighter.killHaste = { ...fighter.killHaste, remaining };
     }
     // 여울도 같은 공용 시계로 마른다. 개체를 따라다니지 않으므로 자리는 고인 그대로 둔다.
     tickShallows(fighter, dt);

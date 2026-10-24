@@ -132,7 +132,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.lowHpStealth": "每场战斗1次，生命降至{percent}%以下时进入[[stealth|隐身]]{seconds}秒。",
   "skill.passive.lowHpStealth.focus": "每场战斗1次，生命降至{percent}%以下时，失去所有[[focus|专注]]并进入[[stealth|隐身]]{seconds}秒。",
   "skill.passive.openingVanish": "以[[stealth|隐身]]状态进入战斗，持续{seconds}秒。",
-  "skill.passive.featherVeil": "战斗开始时进入{seconds}秒[[stealth|隐身]]，[[attack-speed|攻击速度]]提升{speed}%。击败敌人后{killSeconds}秒内，攻击速度与[[move-speed|移动速度]]提升{killPercent}%。",
+  "skill.passive.featherVeil": "战斗开始时进入{seconds}秒[[stealth|隐身]]，[[attack-speed|攻击速度]]提升{speed}%。",
   "skill.passive.openingStealth": "以[[stealth|隐身]]状态进入战斗，持续{seconds}秒。",
   "skill.passive.undyingTalisman": "每场战斗1次，受到致命伤害时保住性命并[[invulnerable|无敌]]{seconds}秒，但完全无法行动。期间每秒分摊恢复最大生命的{percent}%。{blast}",
   "skill.passive.undyingTalisman.blast": "同时将附近的敌人[[knockback|击飞]]。",

@@ -132,7 +132,7 @@ export const SKILL_ZH_HANT = {
   "skill.passive.lowHpStealth": "每場戰鬥1次，生命降至{percent}%以下時進入[[stealth|隱身]]{seconds}秒。",
   "skill.passive.lowHpStealth.focus": "每場戰鬥1次，生命降至{percent}%以下時，失去所有[[focus|專注]]並進入[[stealth|隱身]]{seconds}秒。",
   "skill.passive.openingVanish": "以[[stealth|隱身]]狀態進入戰鬥，持續{seconds}秒。",
-  "skill.passive.featherVeil": "戰鬥開始時進入{seconds}秒[[stealth|隱身]]，[[attack-speed|攻擊速度]]提升{speed}%。擊敗敵人後{killSeconds}秒內，攻擊速度與[[move-speed|移動速度]]提升{killPercent}%。",
+  "skill.passive.featherVeil": "戰鬥開始時進入{seconds}秒[[stealth|隱身]]，[[attack-speed|攻擊速度]]提升{speed}%。",
   "skill.passive.openingStealth": "以[[stealth|隱身]]狀態進入戰鬥，持續{seconds}秒。",
   "skill.passive.undyingTalisman": "每場戰鬥1次，受到致命傷害時保住性命並[[invulnerable|無敵]]{seconds}秒，但完全無法行動。期間每秒分攤恢復最大生命的{percent}%。{blast}",
   "skill.passive.undyingTalisman.blast": "同時將附近的敵人[[knockback|擊飛]]。",

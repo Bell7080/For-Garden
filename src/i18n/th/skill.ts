@@ -132,7 +132,7 @@ export const SKILL_TH = {
   "skill.passive.lowHpStealth": "ครั้งเดียวต่อการต่อสู้ เมื่อพลังชีวิตเหลือไม่เกิน {percent}% จะ[[stealth|ล่องหน]] {seconds} วินาที",
   "skill.passive.lowHpStealth.focus": "ครั้งเดียวต่อการต่อสู้ เมื่อพลังชีวิตเหลือไม่เกิน {percent}% จะเสีย[[focus|สมาธิ]]ทั้งหมดและ[[stealth|ล่องหน]] {seconds} วินาที",
   "skill.passive.openingVanish": "เข้าสู่การต่อสู้ใน[[stealth|สภาพล่องหน]] {seconds} วินาที",
-  "skill.passive.featherVeil": "เริ่มการต่อสู้ด้วย[[stealth|สภาพล่องหน]] {seconds} วินาที และ[[attack-speed|ความเร็วโจมตี]]เพิ่ม {speed}% เมื่อกำจัดศัตรู ความเร็วโจมตีและ[[move-speed|ความเร็วเคลื่อนที่]]เพิ่ม {killPercent}% เป็นเวลา {killSeconds} วินาที",
+  "skill.passive.featherVeil": "เริ่มการต่อสู้ด้วย[[stealth|สภาพล่องหน]] {seconds} วินาที และ[[attack-speed|ความเร็วโจมตี]]เพิ่ม {speed}%",
   "skill.passive.openingStealth": "เข้าสู่การต่อสู้ใน[[stealth|สภาพล่องหน]] {seconds} วินาที",
   "skill.passive.undyingTalisman": "ครั้งเดียวต่อการต่อสู้ เมื่อได้รับความเสียหายที่จะทำให้ตาย จะรอดชีวิตและ[[invulnerable|อยู่ยงคงกระพัน]] {seconds} วินาที แต่ขยับไม่ได้เลย ระหว่างนั้นฟื้นฟู {percent}% ของ HP สูงสุดแบ่งทุกวินาที{blast}",
   "skill.passive.undyingTalisman.blast": " และ[[knockback|กระเด็น]]ศัตรูใกล้ ๆ ออกไปด้วย",

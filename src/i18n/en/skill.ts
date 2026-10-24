@@ -132,7 +132,7 @@ export const SKILL_EN = {
   "skill.passive.lowHpStealth": "Once per battle, enters [[stealth|Stealth]] for {seconds}s when Health falls to {percent}% or below.",
   "skill.passive.lowHpStealth.focus": "Once per battle, when Health falls to {percent}% or below, loses all [[focus|Focus]] and enters [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.openingVanish": "Enters battle in [[stealth|Stealth]] for {seconds}s.",
-  "skill.passive.featherVeil": "Enters battle in [[stealth|Stealth]] for {seconds}s and gains {speed}% [[attack-speed|Attack Speed]]. On a kill, Attack Speed and [[move-speed|Move Speed]] rise by {killPercent}% for {killSeconds}s.",
+  "skill.passive.featherVeil": "Enters battle in [[stealth|Stealth]] for {seconds}s and gains {speed}% [[attack-speed|Attack Speed]].",
   "skill.passive.openingStealth": "Enters battle in [[stealth|Stealth]] for {seconds}s.",
   "skill.passive.undyingTalisman": "Once per battle, damage that would kill it leaves it alive and [[invulnerable|Invulnerable]] for {seconds}s, but unable to act at all. During that time it restores {percent}% of max HP spread over each second.{blast}",
   "skill.passive.undyingTalisman.blast": " This also [[knockback|knocks away]] nearby enemies.",

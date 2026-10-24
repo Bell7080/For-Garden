@@ -132,7 +132,7 @@ export const SKILL_RU = {
   "skill.passive.lowHpStealth": "Раз за бой уходит в [[stealth|невидимость]] на {seconds} с, когда здоровье падает до {percent}% или ниже.",
   "skill.passive.lowHpStealth.focus": "Раз за бой, когда здоровье падает до {percent}% или ниже, теряет всю [[focus|сосредоточенность]] и уходит в [[stealth|невидимость]] на {seconds} с.",
   "skill.passive.openingVanish": "Вступает в бой в [[stealth|невидимости]] на {seconds} с.",
-  "skill.passive.featherVeil": "Вступает в бой в [[stealth|невидимости]] на {seconds} с и получает {speed}% [[attack-speed|скорости атаки]]. После убийства скорость атаки и [[move-speed|скорость движения]] растут на {killPercent}% на {killSeconds} с.",
+  "skill.passive.featherVeil": "Вступает в бой в [[stealth|невидимости]] на {seconds} с и получает {speed}% [[attack-speed|скорости атаки]].",
   "skill.passive.openingStealth": "Вступает в бой в [[stealth|невидимости]] на {seconds} с.",
   "skill.passive.undyingTalisman": "Раз за бой смертельный урон оставляет его в живых и [[invulnerable|неуязвимым]] на {seconds} с, но без возможности действовать. За это время восстанавливает {percent}% макс. ОЗ, распределённых по секундам.{blast}",
   "skill.passive.undyingTalisman.blast": " Также [[knockback|отбрасывает]] ближних врагов.",

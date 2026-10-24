@@ -806,6 +806,28 @@ export function allyHealPowerKeyword(percent: number, ap?: number): KeywordDef |
  */
 export type DescribedSkill = Skill | BasicAttack | Ultimate | (BasicAttack & Pick<BasicAttackStep, "shieldFromDamagePercent" | "selfStealthSeconds" | "pull">);
 
+const SHIMMER_BURST_DAMAGE_ID = "shimmer-burst-damage";
+const SHIMMER_BURST_SHIELD_ID = "shimmer-burst-shield";
+
+type ShimmerBurstPlan = { power: number; shieldMaxHpPercent: number };
+
+function shimmerBurstNowValues(burst: ShimmerBurstPlan, stats?: { ap?: number; maxHp?: number }): { damage: number; shield: number } | undefined {
+  if (stats?.ap === undefined || stats.maxHp === undefined) return undefined;
+  return { damage: Math.round(stats.ap * burst.power / 100), shield: Math.round(stats.maxHp * burst.shieldMaxHpPercent / 100) };
+}
+
+/** 반짝 폭발 절 끝 태그의 산출 근거. 쪽지 사전에 함께 실려야 눌러 읽을 수 있다. */
+export function shimmerBurstKeywords(skill: unknown, stats?: { ap?: number; maxHp?: number }): KeywordDef[] {
+  const burst = (skill as { shimmerBurst?: ShimmerBurstPlan }).shimmerBurst;
+  if (burst === undefined) return [];
+  const now = shimmerBurstNowValues(burst, stats);
+  if (now === undefined) return [];
+  return [
+    { id: SHIMMER_BURST_DAMAGE_ID, term: String(now.damage), kind: "rule", description: t("skill.keyword.damage.bonus", { stat: statName("ap"), percent: trim(burst.power) }) },
+    { id: SHIMMER_BURST_SHIELD_ID, term: String(now.shield), kind: "rule", description: t("skill.keyword.shield.fromMaxHp", { percent: trim(burst.shieldMaxHpPercent) }) },
+  ];
+}
+
 export interface SkillDescriptionStats {
   /** 회복량을 실제 값으로 환산할 때 쓴다. */
   ap?: number;
@@ -1212,7 +1234,10 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
    */
   if ("shimmerBurst" in skill && skill.shimmerBurst !== undefined) {
     const burst = skill.shimmerBurst;
-    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldMaxHpPercent, cap: burst.capMaxHpPercent }), standalone: true });
+    const now = shimmerBurstNowValues(burst, stats);
+    // 비율은 그대로 적고, 지금 능력치로 환산한 폭발 피해·보호막을 끝에 태그로 덧붙인다.
+    const tail = now === undefined ? "" : ` ${t("skill.keyword.nowValue", { value: `[[${SHIMMER_BURST_DAMAGE_ID}|${now.damage}]] · [[${SHIMMER_BURST_SHIELD_ID}|${now.shield}]]` })}`;
+    clauses.push({ text: t("skill.clause.shimmerBurst", { percent: burst.power, shield: burst.shieldMaxHpPercent, cap: burst.capMaxHpPercent }) + tail, standalone: true });
   }
   // 순간이동해서 쓴다는 것은 대상을 고르는 규칙 자체라, 대상 문구가 말하지 못하는 몫을 적는다.
   if ("blinkToLowestDefense" in skill && skill.blinkToLowestDefense === true) {

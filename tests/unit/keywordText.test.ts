@@ -86,3 +86,18 @@ describe("패시브의 현재 수치 태그", () => {
     expect(checked).toBeGreaterThanOrEqual(3);
   });
 });
+
+import { skillDescription, shimmerBurstKeywords } from "../../src/ui/skillPresentation";
+
+describe("반짝 폭발 절의 현재 수치 태그", () => {
+  it("문장 끝 태그와 쪽지 사전이 같은 수를 가진다", () => {
+    const skill = RELICS.flatMap((relic) => [relic.basic, relic.ultimate]).find((entry) => "shimmerBurst" in entry && entry.shimmerBurst !== undefined)!;
+    const stats = { ap: 400, maxHp: 1000 };
+    const text = skillDescription(skill, stats);
+    const keywords = shimmerBurstKeywords(skill, stats);
+    expect(keywords).toHaveLength(2);
+    for (const keyword of keywords) expect(text).toContain(`[[${keyword.id}|${keyword.term}]]`);
+    expect(skillDescription(skill, {})).not.toContain("shimmer-burst");
+    expect(shimmerBurstKeywords(skill)).toEqual([]);
+  });
+});

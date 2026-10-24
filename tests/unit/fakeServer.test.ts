@@ -1572,12 +1572,12 @@ describe("FakeServer 전리품 상점의 고고학 재화", () => {
     const fossilBefore = state.wallet.fossil, runesBefore = state.runeInventory.length;
     await server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 5 });
     await server.purchaseProduct({ storefront: "loot", productId: "loot-amber-exchange", quantity: 5 });
-    await server.purchaseProduct({ storefront: "loot", productId: "raid-rune-random", quantity: 10 });
-    await server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 10 });
+    await server.purchaseProduct({ storefront: "loot", productId: "raid-rune-random", quantity: 3 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 3 });
     expect(state.wallet.fossil - fossilBefore).toBe(5);
-    expect(state.runeInventory.length - runesBefore).toBe(20);
-    expect(state.wallet.raidSigil).toBe(10_000 - 420 * 5 - 250 * 10);
-    expect(state.wallet.salvageRecord).toBe(10_000 - 560 * 5 - 340 * 10);
+    expect(state.runeInventory.length - runesBefore).toBe(6);
+    expect(state.wallet.raidSigil).toBe(10_000 - 420 * 5 - 250 * 3);
+    expect(state.wallet.salvageRecord).toBe(10_000 - 560 * 5 - 340 * 3);
     await expect(server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
     await expect(server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });

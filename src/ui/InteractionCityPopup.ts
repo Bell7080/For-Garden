@@ -57,6 +57,7 @@ import { startPuppetHop } from "./puppetHop";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
+import { onTap } from "./tapGuard";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -244,7 +245,7 @@ export class InteractionCityPopup {
       if (!editable) return;
       const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
         .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => this.tapSlot(index));
+      onTap(hit, () => this.tapSlot(index));
       parent.add(hit);
       // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
       if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));

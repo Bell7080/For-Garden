@@ -6,6 +6,7 @@ import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { RUNE_FRAME_FILL, RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentRarityOfTexture, universalFragmentTone } from "./universalFragmentArt";
+import { onTap } from "./tapGuard";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -255,7 +256,7 @@ export function addFramedIcon(
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
     hit.on("pointerdown", () => pressIn(holder));
     hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(holder); openGuide(); });
+    onTap(hit, () => { pressOut(holder); openGuide(); }, holder);
     holder.add(hit);
   }
   if (parent) parent.add(holder);

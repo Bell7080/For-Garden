@@ -19,6 +19,7 @@ import { ARENA_ROOM_LAYOUT } from '../ui/arenaRoomLayout';
 
 import type { ClipRect } from '../ui/clipRect';
 import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
+import { onTap } from "../ui/tapGuard";
 
 /**
  * 밴픽 화면의 자리. 위가 상대, 아래가 나, 가운데가 고를 렐릭 격자, 왼쪽 띠가 서로의 밴이다.
@@ -349,7 +350,7 @@ export class ArenaRoomScene extends Phaser.Scene {
         if (mineRow && pickable && !pick) {
           const hit = addClippedHit(this, cell, 0, 0, L.slot.width, L.slot.height, () => FULL_SCREEN);
           hit.setName(`arena-slot-${slot}`);
-          hit.on('pointerup', () => { this.selectedSlot = slot; this.repaint(); });
+          onTap(hit, () => { this.selectedSlot = slot; this.repaint(); });
         }
       });
       if (!unfolding) return;

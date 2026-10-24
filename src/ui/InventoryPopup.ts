@@ -27,6 +27,7 @@ import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
 import { motionPolicy } from "../core/settings";
 import { universalFragmentRarity } from "../core/relicProgression";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
+import { onTap } from "./tapGuard";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -283,7 +284,7 @@ export class InventoryPopup {
   private addCardInput(content: Phaser.GameObjects.Container, card: Phaser.GameObjects.Container, item: InventoryDisplayItem, width: number, height: number): void {
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 클릭 순간의 월드 변환을 읽어 팝업 이동·배율·스크롤 이후에도 상세창이 카드에 붙게 한다.
-    hit.on("pointerup", () => this.select(item));
+    onTap(hit, () => this.select(item));
     card.add(hit);
     content.add(card);
     if (!this.dealing) return;

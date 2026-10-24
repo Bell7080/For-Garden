@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { formatCurrency } from "../core/formatCurrency";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
@@ -16,7 +17,7 @@ function costText(amount: number, abbreviate = false): string {
   return abbreviate ? formatCurrency(amount) : amount.toLocaleString();
 }
 
-export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
+export const BUTTON_DRAG_CANCEL_DISTANCE = TAP_DRAG_SLOP;
 
 /**
  * 판 양 끝에서 안쪽으로 사라지는 점 패턴.

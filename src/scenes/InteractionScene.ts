@@ -24,6 +24,7 @@ import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { showContentIntro } from "../ui/contentIntro";
+import { onTap } from "../ui/tapGuard";
 
 /**
  * 여는 조건에 적을 관문 이름.
@@ -371,7 +372,7 @@ export class InteractionScene extends Phaser.Scene {
       const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(layer));
       hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(layer); this.openCity(view); });
+      onTap(hit, () => { pressOut(layer); this.openCity(view); }, layer);
       layer.add(hit);
     }
     return layer;

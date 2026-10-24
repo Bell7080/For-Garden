@@ -1,4 +1,4 @@
-import { EXPEDITION_AUGMENTS, getExpeditionAugment, type ExpeditionAugmentRarity } from "../data/expeditionAugments";
+import { EXPEDITION_AUGMENTS, getExpeditionAugment, type ExpeditionAugmentDef, type ExpeditionAugmentRarity } from "../data/expeditionAugments";
 import type { ExpeditionNodeType } from "./expeditionMap";
 import { EXPEDITION_COMBAT_REWARD_MULTIPLIERS, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_TREASURE_REWARD_BALANCE, expeditionBossSalvage } from "../data/expedition";
 
@@ -97,14 +97,28 @@ export function eligibleExpeditionTargets(relics: readonly ExpeditionRewardRelic
 function augmentAvailable(augmentId: string, prior: readonly ExpeditionAugmentSelection[]): boolean {
   const def = getExpeditionAugment(augmentId);
   if (!def) return false;
+  // 겹치지 않는 개인 증강은 렐릭마다 한 번이라 런 전체 횟수로 세지 않는다 — 남은 대상은 `augmentTargets`가 가른다.
+  const perRelic = def.target === "relic" && def.stacking.mode === "strongest";
   const stackCount = prior.filter((selection) => selection.augmentId === def.id).length;
-  if (stackCount >= def.maxStacks) return false;
+  if (!perRelic && stackCount >= def.maxStacks) return false;
   if (!def.exclusiveGroup) return true;
   // 같은 증강의 허용 중첩은 유지하되, 그룹의 다른 증강을 먼저 골랐다면 후보를 닫는다.
   return !prior.some((selection) => {
     const selected = getExpeditionAugment(selection.augmentId);
     return selected !== undefined && selected.exclusiveGroup === def.exclusiveGroup && selected.id !== def.id;
   });
+}
+
+/**
+ * 겹쳐도 더 세지지 않는 개인 증강(`strongest` — 치명타 시 출혈 같은 "한 번 먹이면 끝")을 이미 가진 렐릭은
+ * 그 증강의 대상에서 뺀다. 남는 대상이 없으면 그 증강은 후보 풀에서 RNG 소비 전에 사라진다 — 셋 모두에게
+ * 먹인 뒤에 고르면 아무 일도 하지 않는 퇴물 선택지가 나오지 않게.
+ */
+function augmentTargets(def: ExpeditionAugmentDef, targets: readonly string[], prior: readonly ExpeditionAugmentSelection[]): string[] {
+  if (def.target !== "relic") return [];
+  if (def.stacking.mode !== "strongest") return [...targets];
+  const holders = new Set(prior.filter((selection) => selection.augmentId === def.id).map(({ targetRelicId }) => targetRelicId));
+  return targets.filter((relicId) => !holders.has(relicId));
 }
 
 /** 한 선택의 후보를 중복 없이 뽑고, 운영 제한에 닿은 항목은 RNG 소비 전에 제거한다. */
@@ -117,7 +131,7 @@ export function generateExpeditionAugmentOffers(input: {
 }): ExpeditionAugmentOffer[] {
   const targets = eligibleExpeditionTargets(input.relics);
   const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity
-    && (def.target === "party" || targets.length > 0)
+    && (def.target === "party" || augmentTargets(def, targets, input.selections).length > 0)
     && augmentAvailable(def.id, input.selections));
   // Fisher-Yates는 주입 RNG만 소비하므로 저장된 seed로 언제나 같은 제안을 복원할 수 있다.
   for (let index = pool.length - 1; index > 0; index -= 1) {
@@ -128,7 +142,7 @@ export function generateExpeditionAugmentOffers(input: {
   const requestedCount = Math.max(0, Math.floor(input.candidateCount ?? 3));
   return pool.slice(0, requestedCount).map((def) => ({
     augmentId: def.id,
-    eligibleTargetRelicIds: def.target === "relic" ? targets : [],
+    eligibleTargetRelicIds: augmentTargets(def, targets, input.selections),
   }));
 }
 
@@ -137,7 +151,8 @@ export function validateExpeditionAugmentChoice(offer: ExpeditionAugmentOffer, s
   const def = getExpeditionAugment(offer.augmentId);
   if (!def || selection.augmentId !== offer.augmentId || !augmentAvailable(def.id, prior)) return false;
   if (def.target === "party") return selection.targetRelicId === undefined;
-  return selection.targetRelicId !== undefined && offer.eligibleTargetRelicIds.includes(selection.targetRelicId);
+  return selection.targetRelicId !== undefined && offer.eligibleTargetRelicIds.includes(selection.targetRelicId)
+    && !(def.stacking.mode === "strongest" && prior.some((held) => held.augmentId === def.id && held.targetRelicId === selection.targetRelicId));
 }
 
 /** 문자열 seed를 저장할 수 있도록 만든 결정적 난수원이다. */

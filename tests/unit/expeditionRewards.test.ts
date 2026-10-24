@@ -97,10 +97,35 @@ describe("expedition augment rewards", () => {
     expect(validateExpeditionAugmentChoice({ augmentId: "echo-circuit", eligibleTargetRelicIds: [] }, { augmentId: "echo-circuit" }, prior)).toBe(false);
   });
 
+  it("겹치지 않는 개인 증강은 가진 렐릭을 대상에서 빼고, 셋 모두 가지면 후보에서 사라진다", () => {
+    const offers = (selections: { augmentId: string; targetRelicId?: string }[]) => {
+      const pool = new Set<string>();
+      const targets = new Map<string, string[]>();
+      for (let seed = 0; seed < 200; seed += 1) {
+        for (const offer of generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections, random: expeditionRewardRandom(`s${seed}`) })) {
+          pool.add(offer.augmentId);
+          targets.set(offer.augmentId, offer.eligibleTargetRelicIds);
+        }
+      }
+      return { pool, targets };
+    };
+    const ids = party().map(({ relicId }) => relicId);
+    const one = offers([{ augmentId: "critical-incision", targetRelicId: ids[0] }]);
+    expect(one.targets.get("critical-incision")).toEqual(ids.slice(1));
+    const all = offers(ids.map((relicId) => ({ augmentId: "critical-incision", targetRelicId: relicId })));
+    expect(all.pool.has("critical-incision")).toBe(false);
+    const offer = { augmentId: "critical-incision", eligibleTargetRelicIds: ids };
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "critical-incision", targetRelicId: ids[0] }, [{ augmentId: "critical-incision", targetRelicId: ids[0] }])).toBe(false);
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "critical-incision", targetRelicId: ids[1] }, [{ augmentId: "critical-incision", targetRelicId: ids[0] }])).toBe(true);
+  });
+
   it("후보 풀이 요청 수보다 작으면 더미 없이 가능한 후보만 결정적으로 표시한다", () => {
     const remaining = new Set(["field-repair", "formation-barrier"]);
     const prior = EXPEDITION_AUGMENTS.filter(({ rarity, id }) => rarity === "sr" && !remaining.has(id))
-      .flatMap((def) => Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "torika" } : {}) })));
+      .flatMap((def) => def.target === "relic" && def.stacking.mode === "strongest"
+        // 겹치지 않는 개인 증강은 렐릭마다 한 번이라 셋 모두가 가져야 풀에서 닫힌다.
+        ? party().map(({ relicId }) => ({ augmentId: def.id, targetRelicId: relicId }))
+        : Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "torika" } : {}) })));
     const input = { rarity: "sr" as const, relics: party(), selections: prior, candidateCount: 3 };
     const first = generateExpeditionAugmentOffers({ ...input, random: expeditionRewardRandom("saved-prior") });
     const restored = generateExpeditionAugmentOffers({ ...input, selections: structuredClone(prior), random: expeditionRewardRandom("saved-prior") });

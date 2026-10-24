@@ -165,5 +165,13 @@
 "product.loot-rune-weekly.grant.0": ["符文 · 稀有", "รูน · หายาก", "Rune · Hiếm", "Rune · Langka", "Runa · Rara", "Runa · Rara", "Rune · Selten", "Руна · Редкая"],
 "product.arch-rune-random.name": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"],
 "product.arch-rune-random.description": ["等级·位置·属性随机", "ระดับ·ช่อง·ค่าสุ่ม", "Cấp·vị trí·thuộc tính ngẫu nhiên", "Tingkat·slot·opsi acak", "Rareza, ranura y opciones aleatorias", "Raridade, espaço e opções aleatórias", "Seltenheit, Platz und Werte zufällig", "Случайные редкость, слот и параметры"],
-"product.arch-rune-random.grant.0": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"]
+"product.arch-rune-random.grant.0": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"],
+"product.raid-fossil-exchange.name": ["化石", "ฟอสซิล", "Hóa thạch", "Fosil", "Fósil", "Fóssil", "Fossil", "Окаменелость"],
+"product.raid-amber-exchange.name": ["琥珀", "อำพัน", "Hổ phách", "Amber", "Ámbar", "Âmbar", "Bernstein", "Янтарь"],
+"product.raid-rune-random.name": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"],
+"product.raid-rune-random.grant.0": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"],
+"product.loot-fossil-exchange.name": ["化石", "ฟอสซิล", "Hóa thạch", "Fosil", "Fósil", "Fóssil", "Fossil", "Окаменелость"],
+"product.loot-amber-exchange.name": ["琥珀", "อำพัน", "Hổ phách", "Amber", "Ámbar", "Âmbar", "Bernstein", "Янтарь"],
+"product.loot-rune-random.name": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"],
+"product.loot-rune-random.grant.0": ["随机符文", "รูนสุ่ม", "Rune ngẫu nhiên", "Rune acak", "Runa aleatoria", "Runa aleatória", "Zufallsrune", "Случайная руна"]
 }

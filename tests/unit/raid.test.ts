@@ -368,9 +368,9 @@ describe("전리품 상점", () => {
     );
     const raid = grantsOf("raid");
     const shared = [...grantsOf("expedition")].filter((key) => raid.has(key));
-    // 룬 한 장만 양쪽에 둔다 — 룬은 어디서 사든 같은 룬이고 주 무대가 고고학이라, 두 증표 모두
-    // 가끔(주간 로테이션 칸) 같은 종류를 조금씩 다른 값으로 판다. 연구 재화·DNA 조각 상품은 없다.
-    expect(shared).toEqual(["rune"]);
+    // 룬·화석·호박석은 양쪽에 둔다(응태 결정 2026-10-24) — 레이드·원정을 열심히 돈 만큼 고고학 재화를 살 수 있게
+    // 하려는 것이라, 증표마다 값과 주간 한도를 따로 두고 서로 대체재가 되지 않게 한다. DNA 조각 상품은 없다.
+    expect(shared.sort()).toEqual(["amber", "fossil", "rune"]);
   });
 
   it("이 파는 것과 받는 값이 모두 실제로 있는 것이다", () => {

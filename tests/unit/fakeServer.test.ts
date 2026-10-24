@@ -1547,7 +1547,7 @@ describe("FakeServer 룬 로테이션 상품", () => {
   });
 
   it("은 원석으로 골드·치즈케이크·화석·호박석을 사고 하루·주간 한도를 지킨다", async () => {
-    const state = makeSession(0); state.wallet.rawStone = 20_000;
+    const state = makeSession(0); state.wallet.rawStone = 40_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-09T12:00:00Z") });
     const goldBefore = state.wallet.gold, cakeBefore = state.wallet.cheesecake, fossilBefore = state.wallet.fossil, amberBefore = state.wallet.amber;
     await server.purchaseProduct({ storefront: "archaeology", productId: "arch-gold-exchange", quantity: 1 });
@@ -1558,8 +1558,28 @@ describe("FakeServer 룬 로테이션 상품", () => {
     expect(state.wallet.cheesecake - cakeBefore).toBe(120);
     expect(state.wallet.fossil - fossilBefore).toBe(1);
     expect(state.wallet.amber - amberBefore).toBe(1);
-    expect(state.wallet.rawStone).toBe(20_000 - 250 - 300 - 2_500 - 2_500);
+    expect(state.wallet.rawStone).toBe(40_000 - 250 - 300 - 2_500 - 2_500);
+    // 화석·호박석은 주 5회까지 — 다섯 번째까지 되고 여섯 번째에서 막힌다.
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 4 });
     await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+});
+
+describe("FakeServer 전리품 상점의 고고학 재화", () => {
+  it("은 토벌 증표·인양 기록으로 화석·호박석(주 5회)과 랜덤 룬(주 10회)을 사고 한도를 지킨다", async () => {
+    const state = makeSession(0); state.wallet.raidSigil = 10_000; state.wallet.salvageRecord = 10_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-09T12:00:00Z") });
+    const fossilBefore = state.wallet.fossil, runesBefore = state.runeInventory.length;
+    await server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 5 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-amber-exchange", quantity: 5 });
+    await server.purchaseProduct({ storefront: "loot", productId: "raid-rune-random", quantity: 10 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 10 });
+    expect(state.wallet.fossil - fossilBefore).toBe(5);
+    expect(state.runeInventory.length - runesBefore).toBe(20);
+    expect(state.wallet.raidSigil).toBe(10_000 - 420 * 5 - 250 * 10);
+    expect(state.wallet.salvageRecord).toBe(10_000 - 560 * 5 - 340 * 10);
+    await expect(server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    await expect(server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 });
 

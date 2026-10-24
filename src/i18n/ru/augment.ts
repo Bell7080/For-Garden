@@ -17,6 +17,7 @@ export const AUGMENT_RU = {
   "augment.conditionalDamage": "Урон по целям под «{status}» +{percent}%",
   "augment.status.curse": "Проклятие",
   "augment.status.stun": "Оглушение",
+  "augment.status.stagger": "Ошеломление",
   "augment.lowHpDefense": "При ОЗ не выше {threshold}%\nЗащита и сопротивление +{percent}%",
   "augment.healOnKill": "ОЗ +{percent}% при убийстве",
   "augment.effect": "Эффект",

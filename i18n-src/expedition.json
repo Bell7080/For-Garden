@@ -302,6 +302,36 @@
 "Alle anwenden",
 "Применить всё"
 ],
+"expedition.augment.count": [
+"{count}个增幅",
+"เสริมพลัง {count}",
+"{count} Tăng cường",
+"{count} Augmen",
+"{count} mejoras",
+"{count} aprimoramentos",
+"{count} Verstärkungen",
+"Усилений: {count}"
+],
+"expedition.augment.slot": [
+"{slot}号遗物",
+"เรลิก {slot}",
+"Di vật {slot}",
+"Relik {slot}",
+"Reliquia {slot}",
+"Relíquia {slot}",
+"Relikt {slot}",
+"Реликт {slot}"
+],
+"expedition.augment.empty": [
+"暂无增幅",
+"ยังไม่มีเสริมพลัง",
+"Chưa có Tăng cường",
+"Belum ada Augmen",
+"Sin Mejoras",
+"Nenhum Aprimoramento",
+"Keine Verstärkungen",
+"Усилений нет"
+],
 "expedition.sweep.title": [
 "扫荡",
 "กวาดล้าง",

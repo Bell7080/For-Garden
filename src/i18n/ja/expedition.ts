@@ -38,6 +38,9 @@ export const EXPEDITION_JA = {
 
   "expedition.augment.confirmed": "確定オーグメント {count}",
   "expedition.augment.applyAll": "すべて適用",
+  "expedition.augment.count": "{count}個",
+  "expedition.augment.slot": "{slot}番レリック",
+  "expedition.augment.empty": "オーグメントなし",
 
   "expedition.sweep.title": "掃討",
   "expedition.sweep.body": "ノードクリア報酬の75%を即時受け取ります。宝物の戦利品・ポントスの引き揚げ記録・スコアは残りません。\n本日の遠征機会を1回使い、取り消せません。",

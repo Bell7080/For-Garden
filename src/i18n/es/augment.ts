@@ -17,6 +17,7 @@ export const AUGMENT_ES = {
   "augment.conditionalDamage": "Daño a objetivos con {status} +{percent}%",
   "augment.status.curse": "Maldición",
   "augment.status.stun": "Aturdimiento",
+  "augment.status.stagger": "Tambaleo",
   "augment.lowHpDefense": "Con PV al {threshold}% o menos\nDefensa y Resistencia +{percent}%",
   "augment.healOnKill": "PV +{percent}% al derrotar",
   "augment.effect": "Efecto",

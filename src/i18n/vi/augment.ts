@@ -17,6 +17,7 @@ export const AUGMENT_VI = {
   "augment.conditionalDamage": "Sát thương lên mục tiêu {status} +{percent}%",
   "augment.status.curse": "Nguyền rủa",
   "augment.status.stun": "Choáng",
+  "augment.status.stagger": "Khựng",
   "augment.lowHpDefense": "Khi HP từ {threshold}% trở xuống\nThủ & Kháng +{percent}%",
   "augment.healOnKill": "HP +{percent}% khi hạ gục",
   "augment.effect": "Hiệu ứng",

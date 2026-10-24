@@ -38,6 +38,9 @@ export const EXPEDITION_KO = {
 
   "expedition.augment.confirmed": "확정 증강 {count}",
   "expedition.augment.applyAll": "전체 적용",
+  "expedition.augment.count": "{count}개",
+  "expedition.augment.slot": "{slot}번 렐릭",
+  "expedition.augment.empty": "받은 증강 없음",
 
   "expedition.sweep.title": "소탕",
   "expedition.sweep.body": "노드 클리어 보상의 75%를 즉시 받습니다. 보물 전리품·폰토스 인양 기록·점수는 남지 않습니다.\n오늘의 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",

@@ -17,6 +17,7 @@ export const AUGMENT_KO = {
   "augment.conditionalDamage": "{status} 대상 피해 +{percent}%",
   "augment.status.curse": "저주",
   "augment.status.stun": "기절",
+  "augment.status.stagger": "경직",
   "augment.lowHpDefense": "체력 {threshold}% 이하\n방어·저항 +{percent}%",
   "augment.healOnKill": "처치 시 체력 +{percent}%",
   "augment.effect": "효과",

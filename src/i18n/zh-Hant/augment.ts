@@ -17,6 +17,7 @@ export const AUGMENT_ZH_HANT = {
   "augment.conditionalDamage": "對{status}目標傷害 +{percent}%",
   "augment.status.curse": "詛咒",
   "augment.status.stun": "眩暈",
+  "augment.status.stagger": "硬直",
   "augment.lowHpDefense": "生命{threshold}%以下時\n防禦與抗性 +{percent}%",
   "augment.healOnKill": "擊倒時生命 +{percent}%",
   "augment.effect": "效果",

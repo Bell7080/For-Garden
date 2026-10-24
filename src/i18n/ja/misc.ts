@@ -35,8 +35,12 @@ export const MISC_JA = {
   "contribution.allies": "味方の貢献度",
 
   "augment.pick.title": "オーグメント選択 {round} / {total}",
-  "augment.pick.protocol": "戦闘プロトコル",
   "augment.pick.targetNote": "個人オーグメントは下の遠征隊から対象を選びます",
+  "augment.pick.step.augment": "オーグメントを選ぶ",
+  "augment.pick.step.target": "対象を選ぶ",
+  "augment.pick.step.party": "全員に適用",
+  "augment.pick.noteParty": "遠征隊の全員に適用されます",
+  "augment.pick.noteChosen": "{name}に適用されます",
   "augment.pick.confirm": "選択を確定",
   "augment.group.attack": "攻撃",
   "augment.group.spell": "魔法",

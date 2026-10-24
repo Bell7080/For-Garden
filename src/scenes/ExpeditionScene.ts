@@ -22,6 +22,7 @@ import { combatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -42,9 +43,9 @@ import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
-import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
+import { expeditionAugmentBadges, type AugmentBadgeView } from "../ui/expeditionAugmentBadges";
+import { ExpeditionAugmentStatusPopup } from "../ui/ExpeditionAugmentStatusPopup";
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
-import { FaceFrame } from "../ui/FaceFrame";
 import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { completedAdToken } from "../data/adRewards";
@@ -514,36 +515,12 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /**
-   * 지금 무엇이 누구에게 붙어 있는지 한 장에 모은다.
-   *
-   * **전체 적용이 가장 위, 그다음이 편성 순서**다(`expeditionAugmentRows`). 고른 순서로
-   * 늘어놓으면 같은 캐릭터의 증강이 목록 여기저기에 흩어져, 결국 이 창을 열고도 다시 세야 한다.
-   * 누구에게 붙었는지는 이름이 아니라 **기여도 판과 같은 얼굴 액자**가 말한다.
+   * 지금 무엇이 누구에게 붙어 있는지 — 옆으로 넘기는 현황판(`ExpeditionAugmentStatusPopup`).
+   * 1쪽 전체 적용, 2쪽부터 편성 순서의 렐릭이다. 렐릭을 눌러 열면 그 렐릭의 쪽부터 선다.
    */
-  private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[]): void {
-    const order = expeditionManager.status().run?.relics.map(({ relicId }) => relicId) ?? [];
-    const rows = expeditionAugmentRows(augments, order);
-    const lines = rows.reduce((sum, row) => sum + row.badges.length, 0);
-    const height = Math.min(1180, 230 + rows.length * 54 + lines * 78);
-    this.popups.open({ width: 880, height, title: t("expedition.augment.confirmed", { count: augments.length }), dim: true }, (body) => {
-      let y = -height / 2 + 130;
-      for (const row of rows) {
-        if (row.relicId === undefined) {
-          body.add(this.add.text(-390, y, t("expedition.augment.applyAll"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
-        } else {
-          const relic = getRelic(row.relicId);
-          body.add(new FaceFrame(this, -366, y, { portraitAssetId: relic.portraitAssetId, size: 68 }));
-          body.add(this.add.text(-320, y, relic.name, textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0, 0.5));
-        }
-        y += 54;
-        for (const badge of row.badges) {
-          body.add(new ExpeditionAugmentChip(this, -366, y + 4, badge, 40));
-          body.add(this.add.text(-320, y - 10, `${badge.name}  ${badge.meta}`, textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
-          body.add(this.add.text(-320, y + 22, badge.effect, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
-          y += 78;
-        }
-      }
-    });
+  private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[], relicId?: string): void {
+    const order = expeditionManager.status().run?.relics.map(({ relicId: id }) => id) ?? [];
+    new ExpeditionAugmentStatusPopup(this, this.popups).open(augments, order, relicId);
   }
 
   /** 실제 전투 프로필처럼 초상 아래에 현재 체력과 0부터 시작할 야성 게이지를 함께 표시한다. */
@@ -569,12 +546,12 @@ export class ExpeditionScene extends Phaser.Scene {
       // 같은 입력면에 짧은 탭만 얹으므로 둘이 부딪히지 않는다.
       // 개인 증강은 그 캐릭터 위에 왼쪽부터 쌓인다. 표식만으로는 무엇인지 알 수 없으므로
       // 표식 줄과 카드 어디를 눌러도 같은 목록이 열린다.
-      profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments));
+      profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments, state.relicId));
       profile.card.hit.setInteractive({ useHandCursor: true });
       bindLongPress(this, profile.card.hit, {
         onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: 1001, baseDepth: 1000 }),
         // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
-        onTap: augments.length > 0 ? () => this.openAugmentDetails(augments) : undefined,
+        onTap: augments.length > 0 ? () => this.openAugmentDetails(augments, state.relicId) : undefined,
         depth: 1200,
       });
       this.relicProfiles.set(state.relicId, profile);
@@ -590,6 +567,17 @@ export class ExpeditionScene extends Phaser.Scene {
   private augmentTargetPicker(): AugmentTargetPicker {
     const profiles = this.relicProfiles;
     const pickHandlers = new Map<string, () => void>();
+    // 고를 수 있는 렐릭 위에 서는 표식. 고른 증강의 문양 + 아래를 가리키는 꺾쇠가 숨 쉰다.
+    const markers = new Map<string, Phaser.GameObjects.Container>();
+    const clearMarkers = (keep?: string): void => {
+      markers.forEach((marker, relicId) => {
+        if (relicId === keep) return;
+        this.tweens.killTweensOf(marker);
+        marker.destroy();
+        markers.delete(relicId);
+      });
+    };
+    const markerY = (profile: BattleProfile): number => profile.card.getBounds().top - 34;
     return {
       attach: (onPick) => {
         pickHandlers.clear();
@@ -601,20 +589,33 @@ export class ExpeditionScene extends Phaser.Scene {
           profile.card.hit.on("pointerup", handler);
         });
       },
-      setEligible: (relicIds) => {
+      setEligible: (relicIds, badge) => {
+        clearMarkers();
         profiles.forEach((profile, relicId) => {
-          profile.setAlpha(relicIds === null || relicIds.includes(relicId) ? 1 : 0.3);
+          const eligible = relicIds === null || relicIds.includes(relicId);
+          profile.setAlpha(eligible ? 1 : 0.3);
           profile.card.setSelected(false, COLOR.sortie);
+          if (badge && eligible) markers.set(relicId, this.addAugmentTargetMarker(profile.x, markerY(profile), badge));
         });
       },
       setChosen: (chosenId) => {
+        // 고른 대상의 표식만 남고 꺾쇠는 멈춘다 — 더 누를 자리가 아니라 정해진 자리다.
+        clearMarkers(chosenId);
+        const kept = chosenId ? markers.get(chosenId) : undefined;
+        if (kept) { this.tweens.killTweensOf(kept); kept.setY(markerY(profiles.get(chosenId!)!)); kept.getByName("chevron")?.destroy(); }
         profiles.forEach((profile, relicId) => {
           profile.setAlpha(relicId === chosenId ? 1 : 0.42);
-          // 고른 대상만 호박빛으로 남는다. 확정 버튼과 같은 색이라 다음 조작이 이어진다.
-          profile.card.setSelected(relicId === chosenId, COLOR.missionClaim);
+          // 고른 대상만 빛을 두른다. 증강 카드가 고른 상태로 두르는 빛과 같은 주황이다.
+          profile.card.setSelected(relicId === chosenId, COLOR.sortie);
         });
       },
+      landingPoint: (relicId) => {
+        const profile = relicId ? profiles.get(relicId) : undefined;
+        if (profile) { const bounds = profile.card.getBounds(); return { x: bounds.centerX, y: bounds.centerY }; }
+        return { x: BASE_WIDTH / 2, y: (EXPEDITION_LAYOUT.augments.top + EXPEDITION_LAYOUT.augments.bottom) / 2 };
+      },
       detach: () => {
+        clearMarkers();
         profiles.forEach((profile, relicId) => {
           profile.setDepth(0).setAlpha(1);
           // 고르기 핸들러만 걷는다. removeAllListeners로 쓸면 같은 입력면에 걸린 꾹 누름까지
@@ -627,6 +628,25 @@ export class ExpeditionScene extends Phaser.Scene {
         pickHandlers.clear();
       },
     };
+  }
+
+  /**
+   * "이 렐릭을 누른다" 표식 — 고른 증강의 문양 액자와 그 아래로 내려 가리키는 꺾쇠.
+   *
+   * 판 안 문장 한 줄로만 대상을 고르라고 하던 때는 손이 판 밖으로 나가야 한다는 것이 읽히지
+   * 않았다. 표식은 HUD와 같은 깊이 위에 서고 위아래로 숨 쉰다(움직임 줄이기에서는 멈춘다).
+   */
+  private addAugmentTargetMarker(x: number, y: number, badge: AugmentBadgeView): Phaser.GameObjects.Container {
+    const marker = this.add.container(x, y).setDepth(AUGMENT_PICKER_DEPTH + 1);
+    marker.add(new ExpeditionAugmentChip(this, 0, -14, badge, 44));
+    const chevron = this.add.graphics().setName("chevron");
+    chevron.lineStyle(6, 0x000000, 0.5).strokePoints([new Phaser.Math.Vector2(-14, 18), new Phaser.Math.Vector2(0, 30), new Phaser.Math.Vector2(14, 18)].map((p) => new Phaser.Math.Vector2(p.x + 2, p.y + 3)), false);
+    chevron.lineStyle(5, COLOR.sortie, 1).strokePoints([new Phaser.Math.Vector2(-14, 18), new Phaser.Math.Vector2(0, 30), new Phaser.Math.Vector2(14, 18)], false);
+    marker.add(chevron);
+    if (motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {
+      this.tweens.add({ targets: marker, y: y + 10, duration: 520, ease: "Sine.InOut", yoyo: true, repeat: -1 });
+    }
+    return marker;
   }
 
   /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */

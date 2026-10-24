@@ -17,6 +17,7 @@ export const AUGMENT_EN = {
   "augment.conditionalDamage": "Damage to {status} targets +{percent}%",
   "augment.status.curse": "Curse",
   "augment.status.stun": "Stun",
+  "augment.status.stagger": "Stagger",
   "augment.lowHpDefense": "At {threshold}% HP or below\nDefense & Resistance +{percent}%",
   "augment.healOnKill": "HP +{percent}% on kill",
   "augment.effect": "Effect",

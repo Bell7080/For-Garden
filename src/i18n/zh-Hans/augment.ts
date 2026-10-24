@@ -17,6 +17,7 @@ export const AUGMENT_ZH_HANS = {
   "augment.conditionalDamage": "对{status}目标伤害 +{percent}%",
   "augment.status.curse": "诅咒",
   "augment.status.stun": "眩晕",
+  "augment.status.stagger": "硬直",
   "augment.lowHpDefense": "生命{threshold}%以下时\n防御与抗性 +{percent}%",
   "augment.healOnKill": "击倒时生命 +{percent}%",
   "augment.effect": "效果",

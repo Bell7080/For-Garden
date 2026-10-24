@@ -140,16 +140,6 @@
 "Wähle eine Verstärkung {round} / {total}",
 "Выберите усиление {round} / {total}"
 ],
-"augment.pick.protocol": [
-"战斗协议",
-"โปรโตคอลการต่อสู้",
-"Giao thức chiến đấu",
-"Protokol Tempur",
-"Protocolo de combate",
-"Protocolo de combate",
-"Kampfprotokoll",
-"Боевой протокол"
-],
 "augment.pick.targetNote": [
 "单体增幅请从下方远征队中选择目标",
 "เสริมพลังแบบเดี่ยว ให้เลือกเป้าหมายจากทีมออกสำรวจด้านล่าง",
@@ -159,6 +149,56 @@
 "Para Aprimoramentos individuais, escolha o alvo na equipe da expedição abaixo",
 "Bei Einzel-Verstärkungen wählst du das Ziel aus dem Expeditionsteam unten",
 "Для одиночных усилений выберите цель из отряда экспедиции ниже"
+],
+"augment.pick.step.augment": [
+"选择增幅",
+"เลือกเสริมพลัง",
+"Chọn Tăng cường",
+"Pilih Augmen",
+"Elegir Mejora",
+"Escolher Aprimoramento",
+"Verstärkung wählen",
+"Выбор усиления"
+],
+"augment.pick.step.target": [
+"选择目标",
+"เลือกเป้าหมาย",
+"Chọn mục tiêu",
+"Pilih Target",
+"Elegir objetivo",
+"Escolher alvo",
+"Ziel wählen",
+"Выбор цели"
+],
+"augment.pick.step.party": [
+"全员生效",
+"ใช้กับทุกคน",
+"Toàn đội",
+"Seluruh Tim",
+"Todo el equipo",
+"Equipe inteira",
+"Ganzes Team",
+"Весь отряд"
+],
+"augment.pick.noteParty": [
+"对远征队全员生效",
+"ใช้กับทุกคนในทีมออกสำรวจ",
+"Áp dụng cho cả đội viễn chinh",
+"Berlaku untuk seluruh tim ekspedisi",
+"Se aplica a todo el equipo de expedición",
+"Aplica-se a toda a equipe da expedição",
+"Gilt für das ganze Expeditionsteam",
+"Действует на весь отряд экспедиции"
+],
+"augment.pick.noteChosen": [
+"对{name}生效",
+"ใช้กับ {name}",
+"Áp dụng cho {name}",
+"Berlaku untuk {name}",
+"Se aplica a {name}",
+"Aplica-se a {name}",
+"Gilt für {name}",
+"Действует на: {name}"
 ],
 "augment.pick.confirm": [
 "确认选择",

@@ -17,6 +17,7 @@ export const AUGMENT_ID = {
   "augment.conditionalDamage": "Kerusakan ke target {status} +{percent}%",
   "augment.status.curse": "Kutukan",
   "augment.status.stun": "Pingsan",
+  "augment.status.stagger": "Goyah",
   "augment.lowHpDefense": "Saat HP {threshold}% atau kurang\nPertahanan & Resistensi +{percent}%",
   "augment.healOnKill": "HP +{percent}% saat mengalahkan",
   "augment.effect": "Efek",

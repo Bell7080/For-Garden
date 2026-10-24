@@ -17,6 +17,7 @@ export const AUGMENT_DE = {
   "augment.conditionalDamage": "Schaden gegen Ziele mit {status} +{percent}%",
   "augment.status.curse": "Fluch",
   "augment.status.stun": "Betäubung",
+  "augment.status.stagger": "Taumeln",
   "augment.lowHpDefense": "Bei höchstens {threshold}% LP\nVerteidigung & Widerstand +{percent}%",
   "augment.healOnKill": "LP +{percent}% bei Besiegen",
   "augment.effect": "Effekt",

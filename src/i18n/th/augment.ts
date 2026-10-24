@@ -17,6 +17,7 @@ export const AUGMENT_TH = {
   "augment.conditionalDamage": "ความเสียหายต่อเป้าหมายที่ติด{status} +{percent}%",
   "augment.status.curse": "คำสาป",
   "augment.status.stun": "มึนงง",
+  "augment.status.stagger": "ชะงัก",
   "augment.lowHpDefense": "เมื่อ HP ไม่เกิน {threshold}%\nป้องกันและต้านทาน +{percent}%",
   "augment.healOnKill": "HP +{percent}% เมื่อกำจัดศัตรู",
   "augment.effect": "ผล",

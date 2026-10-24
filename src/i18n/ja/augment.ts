@@ -17,6 +17,7 @@ export const AUGMENT_JA = {
   "augment.conditionalDamage": "{status}対象へのダメージ +{percent}%",
   "augment.status.curse": "呪い",
   "augment.status.stun": "気絶",
+  "augment.status.stagger": "硬直",
   "augment.lowHpDefense": "体力{threshold}%以下\n防御·抵抗 +{percent}%",
   "augment.healOnKill": "撃破時に体力 +{percent}%",
   "augment.effect": "効果",

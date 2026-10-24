@@ -38,8 +38,12 @@ export const MISC_KO = {
 
   // 원정 증강 선택
   "augment.pick.title": "증강 선택 {round} / {total}",
-  "augment.pick.protocol": "전투 프로토콜",
   "augment.pick.targetNote": "개인 증강은 아래 원정대에서 대상을 고릅니다",
+  "augment.pick.step.augment": "증강 고르기",
+  "augment.pick.step.target": "대상 고르기",
+  "augment.pick.step.party": "전원 적용",
+  "augment.pick.noteParty": "원정대 전원에게 적용됩니다",
+  "augment.pick.noteChosen": "{name}에게 적용됩니다",
   "augment.pick.confirm": "선택 확정",
   "augment.group.attack": "공격",
   "augment.group.spell": "주문",

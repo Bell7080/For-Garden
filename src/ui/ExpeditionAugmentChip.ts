@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { AugmentBadgeGlyph, AugmentBadgeView } from "./expeditionAugmentBadges";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { COLOR } from "./theme";
+import { RARITY_TONE } from "./rarityMark";
 
 /**
  * 원정 증강 하나가 화면에 서는 작은 액자.
@@ -14,8 +14,9 @@ export class ExpeditionAugmentChip extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number, badge: AugmentBadgeView, size: number) {
     super(scene, x, y);
     scene.add.existing(this);
-    // 원정 등급도 기존 렐릭 희귀도 토큰을 공유한다. 새 색을 만들지 않아 다른 화면의 SR/SSR과 같은 뜻으로 읽힌다.
-    const tone = badge.rarity === "ssr" ? COLOR.raritySSR : COLOR.raritySR;
+    // 원정 등급도 렐릭 카드의 희귀도 색(`RARITY_TONE` — SSR 호박 · SR 보라)을 그대로 쓴다. 예전에는
+    // 옛 청록 토큰을 읽어 같은 SR이 카드에서는 보라, 증강 칩에서는 청록으로 섰다.
+    const tone = RARITY_TONE[badge.rarity === "ssr" ? "SSR" : "SR"].chip;
     const shape = chipPoints(size, size, { bevel: { topLeft: size * 0.22, topRight: 0, bottomRight: size * 0.22, bottomLeft: 0 } });
     this.add(drawLayer(scene, 0, 0, shape, { fill: tone, alpha: 0.34 }));
     this.add(drawGlyph(scene, badge.glyph, size));

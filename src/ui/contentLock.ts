@@ -53,6 +53,34 @@ export function consumeUnlockCelebration(id: ContentId): boolean {
   return pendingCelebrations.delete(id);
 }
 
+/**
+ * 화면이 다른 판(레벨업 알림)을 먼저 보여 주는 동안 **열림 연출을 묶어 둔다.** 레벨업 판 아래에서 자물쇠가 터지면 어두운 막에
+ * 가려 보이지 않고, 판을 닫은 뒤에는 이미 끝나 있다 — 레벨업 → 닫힘 → 열림 연출이 차례로 돌아야 무엇이 열렸는지 읽힌다.
+ * 묶지 않은 화면에서는 `whenUnlockGateOpen`이 곧바로 부른다.
+ */
+const unlockGates = new WeakMap<Phaser.Scene, Array<() => void>>();
+
+export function holdUnlockCelebrations(scene: Phaser.Scene): void {
+  if (unlockGates.has(scene)) return;
+  unlockGates.set(scene, []);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => unlockGates.delete(scene));
+}
+
+/** 묶어 둔 연출을 풀어 차례로 시작한다. 풀린 연출 수를 돌려준다 — 뒤따르는 판이 그만큼 기다린다. */
+export function releaseUnlockCelebrations(scene: Phaser.Scene): number {
+  const queue = unlockGates.get(scene);
+  unlockGates.delete(scene);
+  queue?.forEach((start) => start());
+  return queue?.length ?? 0;
+}
+
+/** 열림 연출을 시작할 자리. 묶여 있으면 풀릴 때까지 미룬다. */
+export function whenUnlockGateOpen(scene: Phaser.Scene, start: () => void): void {
+  const queue = unlockGates.get(scene);
+  if (queue) queue.push(start);
+  else start();
+}
+
 /** 열림 연출이 끝나는 시각(ms). 호출하는 화면이 뒤따르는 등장을 이 뒤에 건다. */
 export const UNLOCK_POP_TOTAL_MS = UNLOCK_SEQUENCE_TOTAL_MS;
 

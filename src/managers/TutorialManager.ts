@@ -4,7 +4,8 @@ import {
   tutorialBattleStage, battleFeatureOpen, battleFeatureToTeach, isTutorialStepDone, lobbyTutorialGateStage, lobbyTutorialStep, nextTutorialStep, shouldShowContentIntro, TUTORIAL_STEPS,
   type BattleTutorialFeature, type ContentIntroId, type TutorialStepId,
 } from "../core/tutorial";
-import { createEmptyTutorialState } from "../core/tutorial";
+import { createCompletedTutorialState, createEmptyTutorialState } from "../core/tutorial";
+import { TUTORIAL_ENABLED } from "../core/buildFlavor";
 import { session, type Session } from "../state/session";
 
 /**
@@ -13,9 +14,16 @@ import { session, type Session } from "../state/session";
  * 호출이 끝나면 서버가 같은 세션을 이미 갱신했으므로 다시 읽기만 하면 된다.
  */
 export class TutorialManager {
-  constructor(private readonly state: Session = session, private readonly api: GameApi = gameApi) {}
+  constructor(private readonly state: Session = session, private readonly api: GameApi = gameApi, private readonly enabled: boolean = TUTORIAL_ENABLED) {}
 
-  private get tutorial() { return this.state.tutorial ?? createEmptyTutorialState(); }
+  /**
+   * 화면이 읽는 튜토리얼 상태. 튜토리얼을 끈 빌드(QA)에서는 **모두 마친 상태로 읽는다** — 화면마다 빌드를 가르지
+   * 않고 이 한 곳만 바꾸면 안내·조작 잠금·첫 방문 안내가 함께 사라진다. 서버의 진행 기록은 건드리지 않는다.
+   */
+  private get tutorial() {
+    if (!this.enabled) return createCompletedTutorialState();
+    return this.state.tutorial ?? createEmptyTutorialState();
+  }
 
   isDone(step: TutorialStepId): boolean { return isTutorialStepDone(this.tutorial, step); }
 

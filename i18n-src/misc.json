@@ -1621,35 +1621,35 @@
 "Ausdauer max. +{amount}",
 "Макс. выносливость +{amount}"
 ],
-"profile.levelUp.frame": [
-"新头像框「{name}」",
-"กรอบใหม่ \"{name}\"",
-"Khung mới \"{name}\"",
-"Bingkai baru \"{name}\"",
-"Marco nuevo «{name}»",
-"Nova moldura \"{name}\"",
-"Neuer Rahmen „{name}“",
-"Новая рамка «{name}»"
+"profile.levelUp.rewards": [
+"升级奖励",
+"รางวัลเลเวลอัป",
+"Phần thưởng lên cấp",
+"Hadiah Naik Level",
+"Recompensas de nivel",
+"Recompensas de nível",
+"Level-up-Belohnungen",
+"Награды за уровень"
 ],
-"profile.levelUp.unlock": [
-"新内容「{content}」",
-"คอนเทนต์ใหม่ \"{content}\"",
-"Nội dung mới \"{content}\"",
-"Konten baru \"{content}\"",
-"Contenido nuevo «{content}»",
-"Novo conteúdo \"{content}\"",
-"Neuer Inhalt „{content}“",
-"Новый контент «{content}»"
+"profile.levelUp.unlocks": [
+"新开放",
+"ปลดล็อกใหม่",
+"Mới mở khóa",
+"Baru Terbuka",
+"Nuevos desbloqueos",
+"Novos desbloqueios",
+"Neu freigeschaltet",
+"Новое открыто"
 ],
-"profile.levelUp.drink": [
-"获得「{item}」×{count}",
-"ได้รับ \"{item}\" ×{count}",
-"Nhận \"{item}\" ×{count}",
-"Menerima \"{item}\" ×{count}",
-"Recibes «{item}» ×{count}",
-"Recebeu \"{item}\" ×{count}",
-"Erhalten: „{item}“ ×{count}",
-"Получено: «{item}» ×{count}"
+"profile.levelUp.gain": [
+"研究员等级 +{count}",
+"เลเวลนักวิจัย +{count}",
+"Cấp nhà nghiên cứu +{count}",
+"Level Periset +{count}",
+"Nivel de investigador +{count}",
+"Nível de pesquisador +{count}",
+"Forscher-Level +{count}",
+"Уровень исследователя +{count}"
 ],
 "profile.exp.value": [
 "{current} / {total}",

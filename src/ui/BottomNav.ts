@@ -7,7 +7,7 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
-import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast } from "./contentLock";
+import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast, whenUnlockGateOpen } from "./contentLock";
 import { addPadlock } from "./Padlock";
 import { LOCK_DIM } from "./lockStyle";
 import type { ContentId } from "../core/contentUnlock";
@@ -146,7 +146,8 @@ export class BottomNav {
         label.setAlpha(LOCK_DIM.labelAlpha);
         const lock = addPadlock(scene, 0, -16, 44, { color: LOCK_DIM.lockColor, alpha: LOCK_DIM.lockAlpha * 0.7 });
         group.add(lock);
-        if (celebrate) {
+        // 화면이 레벨업 알림을 먼저 띄우는 중이면 그 판이 닫힌 뒤에 터진다(`whenUnlockGateOpen`).
+        if (celebrate) whenUnlockGateOpen(scene, () => {
           scene.time.delayedCall(500, () => {
             if (!lock.active) return;
             playUnlockSequence(scene, lock, {
@@ -160,7 +161,7 @@ export class BottomNav {
               },
             });
           });
-        }
+        });
       }
       // 받을 무료 보급이 남아 있으면 프리미엄 탭에 점을 세운다.
       if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumNotice", listener));

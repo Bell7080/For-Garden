@@ -153,15 +153,29 @@ export function duelDivisionNumeral(division: number | null): string {
 }
 
 /**
+ * 저티어 발판 — 브론즈·실버에서는 이긴 판의 점수가 크게 오르고 진 판은 덜 깎인다.
+ *
+ * 초반에 금방 올라갈 길을 열어 두려는 값이라 티어가 오를수록 줄어 골드(가운데 티어)부터 1배다. 연승 보너스에는
+ * 곱하지 않는다. 기준은 **지금 내 점수의 티어**이고(올라간 뒤에는 바로 낮은 배수로 내려간다), 어느 티어까지를
+ * 저티어로 보는지는 이 표에 적힌 티어뿐이다.
+ */
+export const DUEL_LOW_TIER_SCORE: Readonly<Partial<Record<DuelTierId, { win: number; loss: number }>>> = {
+  bronze: { win: 2, loss: 0.5 },
+  silver: { win: 1.5, loss: 0.5 },
+};
+
+/**
  * 한 판의 점수 증감.
  *
  * 엘로를 단순하게 줄인 꼴이다 — 높은 상대를 이기면 더 오르고, 낮은 상대에게 지면 더 내려간다.
  * 상대와의 점수 차 25점마다 1점씩 기울고 양 끝은 막아 둔다(이겨도 최소 10, 져도 최대 24).
+ * 거기에 저티어 발판(`DUEL_LOW_TIER_SCORE`)이 내 티어에 따라 곱해진다.
  */
 export function duelScoreDelta(myScore: number, opponentScore: number, won: boolean): number {
   const gap = opponentScore - myScore;
-  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
-  return -clamp(Math.round(14 - gap / 25), 6, 24);
+  const boost = DUEL_LOW_TIER_SCORE[duelTier(myScore).id];
+  if (won) return Math.round(clamp(Math.round(20 + gap / 25), 10, 32) * (boost?.win ?? 1));
+  return -Math.round(clamp(Math.round(14 - gap / 25), 6, 24) * (boost?.loss ?? 1));
 }
 
 /**

@@ -53,7 +53,7 @@ import {
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
-import { productIconTexture, runeProductOf } from "../ui/productIcon";
+import { isRandomRuneProduct, productIconTexture, runeProductOf } from "../ui/productIcon";
 import { addExpiryDaysTag } from "../ui/itemExpiry";
 import { productExpiryDays } from "../ui/productExpiry";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
@@ -577,7 +577,7 @@ export class ShopScene extends Phaser.Scene {
       }));
     } else if (runeProduct) {
       // 룬은 상점에 서는 순간 등급과 자리가 정해져 있다 — 가방의 룬 카드와 같은 액자에 그 조각이 크게 선다.
-      card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, runeProduct.rarity, runeProduct.part));
+      card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, isRandomRuneProduct(product) ? undefined : runeProduct.rarity, runeProduct.part, { mystery: isRandomRuneProduct(product) }));
     } else {
       const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
       // 그림은 첫 지급품에서 나온다(`productIconTexture`) — 가방에 들어오는 것과 같은 그림이 칸에 선다.
@@ -592,7 +592,7 @@ export class ShopScene extends Phaser.Scene {
     // 기한 있는 소비품은 칸 왼쪽 위에 유통기한(`7D`)을 단다 — 가방 칸과 같은 표식이다.
     const expiryDays = productExpiryDays(product.grants);
     if (expiryDays !== undefined) card.add(addExpiryDaysTag(this, -SHOP_CARD.frame / 2 + 4, SHOP_CARD.frameY - SHOP_CARD.frame / 2 + 4, expiryDays));
-    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
+    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct && !isRandomRuneProduct(product) ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);

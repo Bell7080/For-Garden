@@ -14,6 +14,11 @@ export function productIconTexture(product: Pick<ProductDto, "grants" | "iconKey
 }
 
 /** 룬을 파는 상품인가 — 그 칸은 재화 액자가 아니라 가방과 같은 룬 액자로 선다. */
+/** 등급·자리·옵션을 모두 서버가 굴리는 랜덤 룬 상품인가. 얼굴은 조각이 아니라 물음표 하트로 선다. */
+export function isRandomRuneProduct(product: Pick<ProductDto, "grants">): boolean {
+  return product.grants.some((grant) => grant.kind === "rune" && grant.randomRarity === true);
+}
+
 export function runeProductOf(product: Pick<ProductDto, "grants" | "runePart">): { rarity: "uncommon" | "rare" | "epic" | "legendary"; part: 0 | 1 | 2 } | undefined {
   const grant = product.grants.find((candidate) => candidate.kind === "rune");
   if (grant?.kind !== "rune") return undefined;

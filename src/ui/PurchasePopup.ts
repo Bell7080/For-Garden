@@ -34,8 +34,9 @@ import { isTradePackage, tradePackageLimitLabel, tradePackageValuePercent } from
 import { runPlatformPurchase } from "../api/platformPurchase";
 import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
 import { platformPayment } from "../platform/payment";
-import { RUNE_MAIN_STAT_KEYS, runePartLabel, runeRarityLabel, type RuneMainStatKey } from "../core/runes";
-import { RANDOM_RUNE_RARITY_PERCENT } from "../core/runeSynthesis";
+import { RUNE_MAIN_STAT_KEYS, runePartLabel, type RuneMainStatKey } from "../core/runes";
+import { openRandomRuneRates } from "./RandomRuneRatesPopup";
+import { addRatesLink } from "./sideShop";
 import { runeMainChoice, toggleMainKey } from "../core/runeShopChoice";
 import { premiumDecorationNames, premiumFirstBonusGems, premiumGrantTiles } from "./premiumModel";
 import { purchaseThemeOf } from "../core/purchaseTheme";
@@ -218,10 +219,12 @@ export class PurchasePopup {
     const rarity = rune?.kind === "rune" && !random ? rune.rarity : undefined;
     const part = product.runePart ?? (rune?.kind === "rune" ? rune.part : undefined) ?? 0;
     view.add(drawLayer(this.scene, 0, RUNE.panelY, chipPoints(RUNE.panelWidth, RUNE.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
-    view.add(addRuneFrame(this.scene, -215, RUNE.panelY, RUNE.frame, rarity, part));
+    view.add(addRuneFrame(this.scene, -215, RUNE.panelY, RUNE.frame, rarity, part, { mystery: random }));
     const tone = rarity ? runeAccentCss(rarity) : COLOR.ink;
     view.add(this.scene.add.text(-75, RUNE.panelY - 62, product.name, textStyle({ role: "display", size: 34, color: tone })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-75, RUNE.panelY, random ? randomRuneOddsLine() : runePartLabel(part), textStyle({ role: "emphasis", size: random ? 22 : 30, color: COLOR.accentText, ...(random ? { wrap: 330 } : {}) })).setOrigin(0, 0.5));
+    // 랜덤 룬의 확률은 판에 펼치지 않는다 — 작은 링크를 누르면 팝업이 연다.
+    if (random) view.add(addRatesLink(this.scene, -75, RUNE.panelY, t("lab.rates"), () => openRandomRuneRates(this.scene, this.popups, product.description)));
+    else view.add(this.scene.add.text(-75, RUNE.panelY, runePartLabel(part), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5));
     view.add(this.scene.add.text(-75, RUNE.panelY + 62, product.description, textStyle({ role: "body", size: 22, color: COLOR.inkDim, wrap: 330 })).setOrigin(0, 0.5));
 
     if (kind === "main") {
@@ -485,11 +488,6 @@ export class PurchasePopup {
       this.pending = false; this.repaint?.();
     }
   }
-}
-
-/** 완전 랜덤 룬의 등급 확률 한 줄 — 값은 서버가 굴리는 표(`RANDOM_RUNE_RARITY_PERCENT`)에서 읽는다. */
-function randomRuneOddsLine(): string {
-  return (["uncommon", "rare", "epic", "legendary"] as const).map((rarity) => `${runeRarityLabel(rarity)} ${RANDOM_RUNE_RARITY_PERCENT[rarity]}%`).join(" · ");
 }
 
 /** 룬 상품인가. 지정 룬(`main`)이면 사는 쪽이 주 옵션을 고르고, 랜덤 룬(`fixed`)이면 고를 것이 없다. */

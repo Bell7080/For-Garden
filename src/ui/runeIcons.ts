@@ -84,6 +84,29 @@ function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: Heart
   return icon;
 }
 
+/** 세 조각을 합친 하트의 알파 경계(`RUNE_PIECE_CONTENT` 셋의 합집합). */
+const MYSTERY_HEART = { left: 0.1875, right: 0.8281, top: 0.2070, bottom: 0.8203 } as const;
+
+/**
+ * 랜덤 룬 액자의 그림 — 어느 등급의 어느 자리 조각이 나올지 모르므로 **세 조각을 합친 하트**를
+ * 검고 반투명한 실루엣으로 세우고, 가운데에 물음표를 박는다.
+ */
+function addMysteryHeart(scene: Phaser.Scene, frameSize: number): Phaser.GameObjects.Container {
+  const box = MYSTERY_HEART;
+  const size = (frameSize * RUNE_FRAME_FILL) / Math.max(box.right - box.left, box.bottom - box.top);
+  const x = -((box.left + box.right) / 2 - 0.5) * size;
+  const y = -((box.top + box.bottom) / 2 - RUNE_CENTER_Y) * size;
+  const icon = scene.add.container(0, 0);
+  // 어두운 액자 위에서도 하트가 읽히도록 같은 실루엣을 한 뼘 키운 회색 윤곽을 먼저 깐다.
+  for (const [scale, tint, alpha] of [[1.07, 0x9aa3ad, 0.5], [1, 0x000000, 0.8]] as const) {
+    for (const index of [0, 1, 2]) {
+      icon.add(scene.add.image(x, y, runeTexture(undefined, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * scale, size * scale).setTint(tint).setAlpha(alpha));
+    }
+  }
+  icon.add(scene.add.text(0, 0, "?", textStyle({ role: "display", size: Math.round(frameSize * 0.34), color: "#d7dde5" })).setOrigin(0.5).setStroke("#000000", Math.max(4, frameSize * 0.04)).setAlpha(0.95));
+  return icon;
+}
+
 /** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
 export const RUNE_ENGRAVE_GOLD = 0xffc861;
 
@@ -93,6 +116,8 @@ export interface RuneFrameOptions {
   mainStats?: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }];
   /** 각인까지 마친 룬. 액자 안쪽에 금빛 발광이 돈다. */
   engraved?: boolean;
+  /** 등급도 자리도 정해지지 않은 랜덤 룬. 조각 하나 대신 검은 반투명 하트에 물음표가 선다. */
+  mystery?: boolean;
 }
 
 /**
@@ -131,7 +156,7 @@ export function addRuneFrame(
   // 검게 가라앉아 두 주 옵션이 무슨 색인지 가장자리에서 읽히지 않는다.
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.3, depth: 0.2 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
-  frame.add(addFittedRuneIcon(scene, size, rarity, part));
+  frame.add(options.mystery ? addMysteryHeart(scene, size) : addFittedRuneIcon(scene, size, rarity, part));
   // 각인 발광은 조각 **위**에 두른다. 아래에 깔면 불투명한 조각이 빛을 가려 액자 가장자리에만
   // 남고, 다 자란 보석이라기보다 테두리를 한 겹 더 두른 것처럼 보인다.
   if (options.engraved) frame.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: RUNE_ENGRAVE_GOLD, strength: 0.42, depth: 0.3 }));

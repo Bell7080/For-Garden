@@ -1,5 +1,6 @@
 import { formatEffectDescription } from "../ui/skillExplanation";
 import { wrapByCharacter } from "../core/cjkWrap";
+import { splitEmphasisRuns, type EmphasisRun } from "../core/keywordText";
 import Phaser from "phaser";
 import { parseKeywordText, type KeywordDef } from "../data/keywords";
 import { t } from "../i18n";
@@ -82,12 +83,28 @@ export class KeywordManager {
         }
         for (const word of splitWords(line)) {
           if (word === "") continue;
-          // 강조된 말은 굵기와 색이 함께 달라진다. 역할을 먼저 고르고 한 번에 만든다.
-          const quantified = /[0-9]/u.test(word);
-          const style = segment.keyword || quantified
+          // 링크 낱말은 통째로, 일반 낱말은 수치 조각만 강조한다(조사·단위까지 노랗게 물들지 않게).
+          // 조각이 여럿이어도 한 낱말이라 줄은 낱말 전체 폭으로 넘긴다.
+          const runs: EmphasisRun[] = segment.keyword ? [{ text: word, accent: true }] : splitEmphasisRuns(word);
+          const styleOf = (accent: boolean) => accent
             ? textStyle({ role: "emphasis", size: options.size, color: COLOR.accentText })
             : textStyle({ role: "body", size: options.size, color: options.color ?? COLOR.ink });
-          const label = this.scene.add.text(0, 0, word, style).setOrigin(0, 0);
+          const labels = runs.map((run) => this.scene.add.text(0, 0, run.text, styleOf(run.accent)).setOrigin(0, 0));
+          const total = labels.reduce((sum, label) => sum + label.width, 0);
+          if (labels.length > 1 && total <= options.width) {
+            if (x > 0 && x + total > options.width) { x = 0; y += lineHeight; }
+            for (const label of labels) {
+              label.setPosition(x, y);
+              container.add(label);
+              x += label.width;
+            }
+            continue;
+          }
+          // 한 조각이거나 한 줄보다 긴 낱말은 예전처럼 글자 단위로 감싼다.
+          labels.slice(1).forEach((label) => label.destroy());
+          const label = labels[0];
+          const style = styleOf(runs.length === 1 && runs[0].accent);
+          label.setText(word).setStyle(style);
           const chunks = label.width > options.width
             ? wrapByCharacter(word, options.width, value => label.context.measureText(value).width).split("\n") : [word];
           chunks.forEach((chunk, index) => {

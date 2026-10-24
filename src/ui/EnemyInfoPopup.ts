@@ -431,7 +431,7 @@ export function paintInfoSkills(ctx: InfoPopupContext, chrome: Phaser.GameObject
       addInfoFerocityBadge(ctx.scene, ctx.popups, chrome, container.x, container.y + L.ferocityBadgeOffsetY, def, (from) => {
         const breakthroughEffect = breakthroughEnhances(def, snapshot.breakthrough, "ferocity") ? breakthroughEffectText(def, "ferocity", def.stats) : undefined;
         openFerocityTraitPopup(ctx.scene, ctx.popups, ctx.keywords, def, { ...from, x: SCREEN_CENTER.x + from.x, y: SCREEN_CENTER.y + from.y }, { breakthroughEffect, ...summonOptions });
-      });
+      }, breakthroughEnhances(def, snapshot.breakthrough, "ferocity"));
       /*
        * **그 위에 역할(잡졸·무리·정예·보스·불사)이 같은 크기로 선다.** 자리가 곱하는 배율과
        * 보스·불사가 갖는 강인함·경감은 개체의 패시브가 아니라 이 칸이 말한다. 자리를 새기지

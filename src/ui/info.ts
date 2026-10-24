@@ -1981,7 +1981,7 @@ export class InfoManager {
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from)));
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
   }
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
@@ -2451,9 +2451,12 @@ export function addInfoFerocityBadge(
   y: number,
   def: RelicDef,
   onOpen: (from: PopupSource) => void,
+  /** 한계 돌파가 폭주를 강화했는가 — 일반 공격·궁극기 액자와 같은 `+`가 붙는다. */
+  enhanced = false,
 ): Phaser.GameObjects.Container {
   return addInfoBadge(scene, popups, parent, x, y, {
     slot: "ferocity",
+    enhanced,
     relicId: def.id,
     // 전용 아트가 없는 개체는 공용 효과 아이콘이 아니라 야성 글리프로 되돌아간다 — 이 칸이
     // 말하는 것은 피해 종류가 아니라 야성 그 자체다.

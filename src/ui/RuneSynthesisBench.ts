@@ -10,8 +10,10 @@ import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect } from "./holo"
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { pressIn, pressOut } from "./pressFeedback";
+import { mountRunePickerGrid } from "./runePickerGrid";
+import { runePickerSize } from "./runePickerLayout";
 import { researchPlateBevel } from "./researchBenchLayout";
-import { addRuneCard, addRuneFrame, RUNE_ACCENT } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { RUNE_SYNTHESIS, runeSynthesisButtonCenter, runeSynthesisCenter, runeSynthesisOddsBounds, runeSynthesisPlateBounds, runeSynthesisVertices } from "./runeSynthesisLayout";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
@@ -44,7 +46,7 @@ export interface RuneSynthesisBenchHandles {
   core: Phaser.GameObjects.Container;
 }
 
-const PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, headerHeight: 176, emptyHeight: 420 } as const;
+const PICKER_EMPTY_HEIGHT = 420;
 
 /**
  * 넣을 룬을 고르는 가방.
@@ -58,28 +60,15 @@ function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer;
   const runes = session.runeInventory
     .filter((rune) => isRuneSynthesisMaterial(rune) && !options.taken.has(rune.instanceId) && (options.rarity === undefined || rune.rarity === options.rarity))
     .sort((a, b) => RUNE_TRAIT_GRADES.indexOf(b.rarity) - RUNE_TRAIT_GRADES.indexOf(a.rarity) || (a.sequence ?? 0) - (b.sequence ?? 0));
-  const columns = PICKER.columns;
-  const rows = Math.max(1, Math.ceil(runes.length / columns));
-  const width = columns * PICKER.cellWidth + 96;
-  const height = runes.length === 0 ? PICKER.emptyHeight : Math.min(1700, PICKER.headerHeight + (rows - 1) * PICKER.cellHeight + PICKER.cardHeight / 2 + 48);
+  const size = runePickerSize(runes.length);
+  const width = size.width;
+  const height = runes.length === 0 ? PICKER_EMPTY_HEIGHT : size.height;
   popups.open({ width, height, title: t("archaeology.synth.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
     if (runes.length === 0) {
       body.add(scene.add.text(0, 10, t("archaeology.synth.pickEmpty"), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center", wrap: width - 140 })).setOrigin(0.5));
       return;
     }
-    const top = -height / 2;
-    const firstX = -((columns - 1) * PICKER.cellWidth) / 2;
-    runes.forEach((rune, order) => {
-      const x = firstX + (order % columns) * PICKER.cellWidth;
-      const y = top + PICKER.headerHeight + Math.floor(order / columns) * PICKER.cellHeight;
-      const card = addRuneCard(scene, x, y, PICKER.cardWidth, PICKER.cardHeight, rune);
-      const hit = scene.add.rectangle(0, 0, PICKER.cardWidth, PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(card));
-      hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(card); close(); options.onPick(rune); });
-      card.add(hit);
-      body.add(card);
-    });
+    mountRunePickerGrid(scene, body, { runes, isCovered: () => popups.isOpen, onPick: (rune) => { close(); options.onPick(rune); } });
   });
 }
 

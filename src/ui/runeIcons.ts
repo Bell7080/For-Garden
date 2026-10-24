@@ -181,9 +181,10 @@ export function addRuneCard(
   });
   // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
   // 끼고 있는 룬은 검은 막을 한 겹 더 깐다 — 알파만으로는 어두운 가방 바탕 위에서 충분히 가라앉지 않는다.
+  // 장착자 얼굴이 갈마드는 카드는 얼굴이 읽혀야 하므로 가라앉힘을 덜어 준다.
   if (options.dimmed) {
-    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: 0.42 }));
-    card.setAlpha(0.72);
+    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: options.holder ? 0.16 : 0.42 }));
+    card.setAlpha(options.holder ? 0.9 : 0.72);
   }
   return card;
 }

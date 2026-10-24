@@ -12,12 +12,13 @@ import {
   RESEARCH_BENCH, RESEARCH_TRAIT, researchActionY, researchBenchTop,
   researchDetailBounds, researchPlateBevel, researchSlotCenter, researchTraitBounds,
 } from "./researchBenchLayout";
-import { addRuneCard, addRuneFrame, RUNE_ACCENT } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT } from "./runeIcons";
 import { runeStatLabel } from "./RunePopup";
 import { runeTraitView } from "./runeTraitPresentation";
 import { addSectionTitle } from "./SectionTitle";
 import { COLOR, textStyle } from "./theme";
-import { pressIn, pressOut } from "./pressFeedback";
+import { mountRunePickerGrid } from "./runePickerGrid";
+import { runePickerSize } from "./runePickerLayout";
 
 /**
  * 특성 연구대.
@@ -58,9 +59,6 @@ export interface ResearchBenchOptions {
   animate?: boolean;
 }
 
-/** 룬 가방 격자의 자리. 정보창의 장착용 가방과 같은 규격을 쓴다. */
-const PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, headerHeight: 176 } as const;
-
 /**
  * 끼울 룬을 고르는 가방.
  *
@@ -72,24 +70,9 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPi
   // 특성이 있는 룬이 먼저 선다 — 연구 중인 것이 곧 지금 찾는 것이다.
   const runes = [...session.runeInventory].sort((a, b) =>
     Number(b.trait !== undefined) - Number(a.trait !== undefined) || (a.sequence ?? 0) - (b.sequence ?? 0));
-  const columns = PICKER.columns;
-  const rows = Math.max(1, Math.ceil(runes.length / columns));
-  const width = columns * PICKER.cellWidth + 96;
-  const height = Math.min(1700, PICKER.headerHeight + (rows - 1) * PICKER.cellHeight + PICKER.cardHeight / 2 + 48);
+  const { width, height } = runePickerSize(runes.length);
   popups.open({ width, height, title: t("archaeology.bench.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-    const top = -height / 2;
-    const firstX = -((columns - 1) * PICKER.cellWidth) / 2;
-    runes.forEach((rune, order) => {
-      const x = firstX + (order % columns) * PICKER.cellWidth;
-      const y = top + PICKER.headerHeight + Math.floor(order / columns) * PICKER.cellHeight;
-      const card = addRuneCard(scene, x, y, PICKER.cardWidth, PICKER.cardHeight, rune);
-      const hit = scene.add.rectangle(0, 0, PICKER.cardWidth, PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(card));
-      hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(card); close(); options.onPick(rune); });
-      card.add(hit);
-      body.add(card);
-    });
+    mountRunePickerGrid(scene, body, { runes, isCovered: () => popups.isOpen, onPick: (rune) => { close(); options.onPick(rune); } });
   });
 }
 

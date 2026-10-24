@@ -75,7 +75,7 @@ import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, bre
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
@@ -2887,6 +2887,7 @@ export function buildSkillViewModel(options: {
       ...(guardPercent === undefined ? [] : defenseGainKeywords(finalDef.stats, guardPercent)),
       ...breakthroughTags,
       damageDetail, shieldDetail, healDetail,
+      "kind" in skill ? passiveNowKeyword(skill as Passive, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp }) : undefined,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
       plumeKeyword(finalDef, finalDef.stats.atk),
@@ -2945,7 +2946,7 @@ export function buildSkillViewModel(options: {
     gaugeCost,
     // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
     description: "kind" in skill
-      ? passiveDescription(skill as Passive, attacker?.def.stats.atk, attacker === undefined ? undefined : { defense: attacker.def.stats.def, resistance: attacker.def.stats.res })
+      ? passiveDescription(skill as Passive, attacker?.def.stats.atk, attacker === undefined ? undefined : { defense: attacker.def.stats.def, resistance: attacker.def.stats.res }, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp })
       : skillDescription(skill as Skill, {
         ap: attacker?.def.stats.ap,
         atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },

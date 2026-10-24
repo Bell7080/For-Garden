@@ -47,3 +47,42 @@ describe("개체 전용 쪽지의 현재 수치 태그", () => {
     expect(prickleKeyword(kento.passive)!.description).not.toContain("prickle-reflect");
   });
 });
+
+import { breakthroughEffectKeywords, breakthroughEffectText } from "../../src/ui/skillPresentation";
+
+describe("돌파 효과의 현재 수치 태그", () => {
+  const slots = ["basic", "ultimate", "passive"] as const;
+  it("능력치 비례 효과는 문장 끝 태그와 쪽지 사전이 같은 수를 가진다", () => {
+    let checked = 0;
+    for (const relic of RELICS) {
+      for (const slot of slots) {
+        const text = breakthroughEffectText(relic, slot, relic.stats);
+        const tagged = text?.match(/\[\[breakthrough-now\|(\d+)\]\]/);
+        if (!tagged) continue;
+        checked++;
+        const keyword = breakthroughEffectKeywords(relic, slot, relic.stats).find((entry) => entry.id === "breakthrough-now");
+        expect(keyword?.term).toBe(tagged[1]);
+        expect(breakthroughEffectText(relic, slot)).not.toContain("breakthrough-now");
+      }
+    }
+    expect(checked).toBeGreaterThan(5);
+  });
+});
+
+import { passiveDescription, passiveNowKeyword } from "../../src/ui/skillPresentation";
+
+describe("패시브의 현재 수치 태그", () => {
+  it("능력치 비례 패시브는 문장 끝 태그와 사전이 같은 수를 가진다", () => {
+    const own = { ap: 400, maxHp: 1000 };
+    let checked = 0;
+    for (const relic of RELICS) {
+      const text = passiveDescription(relic.passive, relic.stats.atk, undefined, own);
+      const tagged = text.match(/\[\[passive-now\|(\d+)\]\]/);
+      if (!tagged) continue;
+      checked++;
+      expect(passiveNowKeyword(relic.passive, own)?.term).toBe(tagged[1]);
+      expect(passiveDescription(relic.passive, relic.stats.atk)).not.toContain("passive-now");
+    }
+    expect(checked).toBeGreaterThanOrEqual(3);
+  });
+});

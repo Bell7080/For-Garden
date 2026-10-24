@@ -445,12 +445,46 @@ export function passiveShieldKeyword(passive: Passive, atk?: number): KeywordDef
  * 치명타가 전 개체 공통이라 "이 개체가 왜 치명타형인가"의 답은 늘 패시브에 있고, 그 답을
  * 개체마다 손으로 적으면 수치를 조정한 뒤 옛 문장이 남는다.
  */
-export function passiveDescription(passive: Passive, atk?: number, guard?: { defense: number; resistance: number }): string {
+export function passiveDescription(
+  passive: Passive, atk?: number, guard?: { defense: number; resistance: number }, own?: { ap: number; maxHp: number },
+): string {
+  const now = passiveNowValue(passive, own);
   return [
     passiveOpeningStealthClause(passive), passiveHead(passive, atk, guard),
     passiveFrenzyDrainClause(passive), passiveTauntHealClause(passive),
     passiveLowHpStealthClause(passive), passiveCriticalClause(passive),
+    // 스탯 비례 수치는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다.
+    now === undefined ? "" : t("skill.keyword.nowValue", { value: `[[${PASSIVE_NOW_ID}|${now.amount}]]` }),
   ].filter(Boolean).join(" ");
+}
+
+/** 패시브 문장 끝의 「현재 N」 태그 ID. */
+const PASSIVE_NOW_ID = "passive-now";
+
+interface PassiveNowValue { kind: "damage" | "shield"; stat: "ap" | "hp"; percent: number; amount: number }
+
+/** 능력치 비례 패시브 수치를 지금 능력치로 환산한다. 문장과 태그가 같은 정의 필드를 읽는다. */
+function passiveNowValue(passive: Passive, own?: { ap: number; maxHp: number }): PassiveNowValue | undefined {
+  if (own === undefined) return undefined;
+  const make = (kind: "damage" | "shield", stat: "ap" | "hp", percent: number): PassiveNowValue =>
+    ({ kind, stat, percent, amount: Math.round((stat === "ap" ? own.ap : own.maxHp) * percent / 100) });
+  if (passive.kind === "salvageCatch" && passive.salvageCatch !== undefined) return make("shield", "hp", passive.salvageCatch.shieldMaxHpPercent);
+  if (passive.kind === "shimmerMark") return make("damage", "ap", passive.value);
+  if (passive.kind === "echoLocation" && passive.batSwarm !== undefined) return make("damage", "ap", passive.batSwarm.powerPercent);
+  return undefined;
+}
+
+/** 패시브 문장 끝 태그의 산출 근거. 쪽지 사전에 함께 실려야 눌러 읽을 수 있다. */
+export function passiveNowKeyword(passive: Passive, own?: { ap: number; maxHp: number }): KeywordDef | undefined {
+  const now = passiveNowValue(passive, own);
+  if (now === undefined) return undefined;
+  const percent = trim(now.percent);
+  return {
+    id: PASSIVE_NOW_ID, term: String(now.amount), kind: "rule",
+    description: now.kind === "damage"
+      ? t("skill.keyword.damage.bonus", { stat: statName("ap"), percent })
+      : t("skill.keyword.shield.fromMaxHp", { percent }),
+  };
 }
 
 /**
@@ -1370,6 +1404,46 @@ export function breakthroughSlotLabel(slot: BreakthroughSlot): string {
  * 개체에 "효과 없음"이라고 적으면 없는 규칙을 말하는 셈이다.
  */
 export function breakthroughEffectText(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
+  const body = breakthroughEffectBody(def, slot, stats);
+  const now = body === undefined ? undefined : breakthroughNowValue(def, slot, stats);
+  // 스탯 비례 효과는 지금 능력치로 환산한 값을 끝에 태그로 덧붙인다(레벨·룬이 바뀌면 함께 바뀐다).
+  return now === undefined ? body : `${body} ${t("skill.keyword.nowValue", { value: `[[${BREAKTHROUGH_NOW_ID}|${now.amount}]]` })}`;
+}
+
+/** 돌파 문장 끝의 「현재 N」 태그 ID. 한 쪽지에는 슬롯 하나의 효과만 서므로 하나면 된다. */
+const BREAKTHROUGH_NOW_ID = "breakthrough-now";
+
+interface BreakthroughNowValue {
+  kind: "damage" | "shield";
+  stat: "atk" | "ap" | "hp";
+  percent: number;
+  amount: number;
+}
+
+/**
+ * 능력치 비례 돌파 효과를 **지금 능력치로 환산한 한 수**로 바꾼다. 문장은 비율을 그대로 적고,
+ * 이 수가 끝에 태그로 붙는다 — 문장과 태그가 같은 정의 필드를 읽으므로 갈라지지 않는다.
+ * 대상이 따로 있어 비례 기준이 달라지는 효과(아군 체력 비례 등)는 환산하지 않는다.
+ */
+function breakthroughNowValue(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): BreakthroughNowValue | undefined {
+  const effect = def.breakthroughEffects?.[slot];
+  if (stats === undefined || effect === undefined) return undefined;
+  const make = (kind: "damage" | "shield", stat: "atk" | "ap" | "hp", percent: number): BreakthroughNowValue =>
+    ({ kind, stat, percent, amount: Math.round(stats[stat] * percent / 100) });
+  if (effect.kind === "dreadAegis") return make("shield", "hp", effect.shieldPercent);
+  if (effect.kind === "helmetBash") return make("damage", "atk", effect.attackPercent);
+  if (effect.kind === "freshSight") return make("damage", "atk", effect.percentPerStack);
+  if (effect.kind === "cheekShield" || effect.kind === "bigShell") return make("shield", "hp", effect.shieldMaxHpPercent);
+  if (effect.kind === "reloadSip") return make("shield", "hp", effect.shieldMaxHpPercent);
+  if (effect.kind === "pressureCrack") return make("damage", "ap", effect.powerPercent);
+  if (effect.kind === "thickShell") return make("shield", "hp", effect.selfShieldMaxHpPercent);
+  if (effect.kind === "adagioSlam") return make("damage", "atk", effect.powerPercent);
+  if (effect.kind === "iceShatter") return make("damage", "atk", effect.attackPercent);
+  if (effect.kind === "rescueShield") return make("shield", "ap", effect.apPercent);
+  return undefined;
+}
+
+function breakthroughEffectBody(def: RelicDef, slot: BreakthroughSlot, stats?: Stats): string | undefined {
   const effects = def.breakthroughEffects;
   if (!effects) return undefined;
   // "없음"도 정해 둔 효과 하나다 — 비워 둔 슬롯(아직 설계하지 않은 자리)과 달리 표에 그대로 적는다.
@@ -1634,6 +1708,16 @@ export function breakthroughEffectKeywords(def: RelicDef, slot: BreakthroughSlot
   if (stats && slot === "passive" && effectOfSlot) {
     if (effectOfSlot.kind === "undyingBulwark") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercent));
     if (effectOfSlot.kind === "muralHide") own.push(...defenseGainKeywords(stats, effectOfSlot.defenseResistancePercentPerTagged));
+  }
+  const now = breakthroughNowValue(def, slot, stats);
+  if (now !== undefined) {
+    const percent = trim(now.percent);
+    own.push({
+      id: BREAKTHROUGH_NOW_ID, term: String(now.amount), kind: "rule",
+      description: now.kind === "damage"
+        ? t("skill.keyword.damage.bonus", { stat: statName(now.stat === "ap" ? "ap" : "atk"), percent })
+        : now.stat === "hp" ? t("skill.keyword.shield.fromMaxHp", { percent }) : t("skill.keyword.shield.fromStat", { stat: statName("ap"), percent }),
+    });
   }
   const effect = slot === "basic" ? def.breakthroughEffects?.basic : undefined;
   if (!effect || effect.kind !== "periodicGuard") return own;

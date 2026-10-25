@@ -199,6 +199,32 @@ def rune_pieces(art: Image.Image, size: int) -> list[Image.Image]:
     return pieces
 
 
+def mean_luma(piece: Image.Image) -> float:
+    """그림이 있는 픽셀(알파 200 이상)의 평균 밝기."""
+    rgba = piece.convert("RGBA")
+    total = count = 0
+    for r, g, b, a in rgba.get_flattened_data() if hasattr(rgba, "get_flattened_data") else rgba.getdata():
+        if a > 200:
+            total += 0.299 * r + 0.587 * g + 0.114 * b
+            count += 1
+    return total / count if count else 0.0
+
+
+def match_tone(piece: Image.Image, target: float) -> Image.Image:
+    """평균 밝기가 target이 되도록 곱셈으로 올린다. 색조와 명암 대비는 그대로라 뿌옇게 뜨지 않는다."""
+    current = mean_luma(piece)
+    gain = target / current if current else 1.0
+    r, g, b, a = piece.split()
+    table = [min(255, round(v * gain)) for v in range(256)]
+    return Image.merge("RGBA", (r.point(table), g.point(table), b.point(table), a))
+
+
+def balance_rune_pieces(pieces: list[Image.Image]) -> list[Image.Image]:
+    """아래 가운데 조각(2번)은 하트의 그림자 면이라 어둡게 구워진다. 위 두 조각의 평균 밝기에 맞춘다."""
+    target = (mean_luma(pieces[0]) + mean_luma(pieces[1])) / 2
+    return [pieces[0], pieces[1], match_tone(pieces[2], target)]
+
+
 def socket(piece: Image.Image) -> Image.Image:
     """빈 자리. 같은 조각을 검게 눌러 파인 것처럼 보이게 하고 반투명하게 남긴다."""
     black = Image.new("RGBA", piece.size, (2, 4, 10, 255))
@@ -275,7 +301,7 @@ def main() -> None:
     heart = load("Photoroom_20260822_113309.png")
     if heart is not None:
         for rarity, tones in RUNE_TINTS.items():
-            for index, piece in enumerate(rune_pieces(colorize(heart, tones), SIZE)):
+            for index, piece in enumerate(balance_rune_pieces(rune_pieces(colorize(heart, tones), SIZE))):
                 save_exact(piece, PUBLIC / f"sprites/runes/{rarity}-{index}.webp")
         for index, piece in enumerate(rune_pieces(heart, SIZE)):
             save_exact(socket(piece), PUBLIC / f"sprites/runes/empty-{index}.webp")

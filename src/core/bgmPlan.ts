@@ -6,7 +6,7 @@
  * 키의 파일을 바꿔 끼우면 코드는 그대로다. 같은 곡이 이어지는 화면 전환은 되감지 않는다.
  */
 
-export type BgmTrackId = "glassCity" | "researchSpire" | "battle";
+export type BgmTrackId = "title" | "glassCity" | "researchSpire" | "battle";
 
 export interface BgmTrack {
   /** Phaser 오디오 캐시 키. */
@@ -18,19 +18,23 @@ export interface BgmTrack {
 }
 
 export const BGM_TRACKS: Readonly<Record<BgmTrackId, BgmTrack>> = {
-  // 타이틀·로비·이야기·도감처럼 머무는 화면의 기본 곡.
+  // 부팅(로딩)·타이틀·오프닝·로비의 곡. 로딩부터 로비까지 한 곡으로 이어진다.
+  title: { key: "bgm-title", path: "audio/bgm/bgm-title.mp3", gain: 1 },
+  // 이야기·지도·편성·도감·친구·길드·콘텐츠 입구처럼 로비에서 갈라져 나가 머무는 화면의 곡(기존 시안).
   glassCity: { key: "bgm-glass-city", path: "audio/bgm/bgm-glass-city.mp3", gain: 1 },
   // 연구소·고고학·상점처럼 조용히 만지작거리는 화면의 곡.
   researchSpire: { key: "bgm-research-spire", path: "audio/bgm/bgm-research-spire.mp3", gain: 1 },
-  // 전투 전용. 연구탑 곡을 1.15배 빠르게 구운 변주이며 효과음이 묻히지 않게 한 뼘 낮춘다.
-  battle: { key: "bgm-battle", path: "audio/bgm/bgm-battle.mp3", gain: 0.75 },
+  // 전투 전용(150BPM대). 효과음이 묻히지 않게 한 뼘 낮춘다.
+  battle: { key: "bgm-battle", path: "audio/bgm/bgm-battle.mp3", gain: 0.8 },
 };
 
 const SCENE_TRACK: Readonly<Record<string, BgmTrackId>> = {
-  TitleScene: "glassCity",
-  OpeningScene: "glassCity",
+  // 부트는 타이틀 로딩이 시작되기 전에 서므로, 로딩 화면부터 곡이 흐르게 같은 곡을 건다.
+  BootScene: "title",
+  TitleScene: "title",
+  OpeningScene: "title",
   StageStoryScene: "glassCity",
-  LobbyScene: "glassCity",
+  LobbyScene: "title",
   StageMapScene: "glassCity",
   SortiePreviewScene: "glassCity",
   RelicsScene: "glassCity",
@@ -54,7 +58,13 @@ const SCENE_TRACK: Readonly<Record<string, BgmTrackId>> = {
   ShopScene: "researchSpire",
   PremiumScene: "researchSpire",
   BattleScene: "battle",
+  ArenaMatchScene: "battle",
 };
+
+/** 표에 올라 있는 모든 곡(받아 두기 순서: 기본 곡이 맨 앞). */
+export function allBgmTracks(): BgmTrack[] {
+  return [BGM_TRACKS.title, BGM_TRACKS.glassCity, BGM_TRACKS.battle, BGM_TRACKS.researchSpire];
+}
 
 /** 그 씬이 서는 순간 흘러야 하는 곡. 표에 없으면 `undefined` — 지금 곡을 그대로 둔다. */
 export function bgmTrackForScene(sceneKey: string): BgmTrack | undefined {

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BGM_TRACKS, bgmTrackForScene } from "../../src/core/bgmPlan";
+import { allBgmTracks, BGM_TRACKS, bgmTrackForScene } from "../../src/core/bgmPlan";
 import { BATTLE_SOUND_ASSETS, UI_SOUND_ASSETS } from "../../src/managers/AudioManager";
 
 describe("배경음 표", () => {
@@ -15,11 +15,23 @@ describe("배경음 표", () => {
   });
 
   it("타이틀·로비는 기본 곡, 연구소·고고학은 연구탑 곡, 전투는 전투 곡이다", () => {
-    expect(bgmTrackForScene("TitleScene")).toBe(BGM_TRACKS.glassCity);
-    expect(bgmTrackForScene("LobbyScene")).toBe(BGM_TRACKS.glassCity);
+    expect(bgmTrackForScene("TitleScene")).toBe(BGM_TRACKS.title);
+    expect(bgmTrackForScene("LobbyScene")).toBe(BGM_TRACKS.title);
     expect(bgmTrackForScene("LabScene")).toBe(BGM_TRACKS.researchSpire);
     expect(bgmTrackForScene("ArchaeologyScene")).toBe(BGM_TRACKS.researchSpire);
     expect(bgmTrackForScene("BattleScene")).toBe(BGM_TRACKS.battle);
+  });
+
+  it("부트·타이틀·오프닝·로비는 타이틀 곡이고 갈라진 메뉴 화면은 기존 시안 곡이다", () => {
+    for (const key of ["BootScene", "TitleScene", "OpeningScene", "LobbyScene"]) {
+      expect(bgmTrackForScene(key), key).toBe(BGM_TRACKS.title);
+    }
+    for (const key of ["StageMapScene", "PartyScene", "RelicsScene", "RaidScene"]) expect(bgmTrackForScene(key), key).toBe(BGM_TRACKS.glassCity);
+    expect(bgmTrackForScene("ArenaMatchScene")).toBe(BGM_TRACKS.battle);
+  });
+
+  it("미리 받아 두는 목록이 모든 곡을 담는다", () => {
+    expect(new Set(allBgmTracks().map((t) => t.key))).toEqual(new Set(Object.values(BGM_TRACKS).map((t) => t.key)));
   });
 
   it("겹침 층(설정·효과)은 표에 없어 곡을 건드리지 않는다", () => {

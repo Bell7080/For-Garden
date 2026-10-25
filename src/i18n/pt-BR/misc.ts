@@ -89,6 +89,8 @@ export const MISC_PT_BR = {
   "archaeology.synth.odds": "Chances do resultado",
   "archaeology.synth.hint": "Coloque três runas gravadas da mesma raridade.",
   "archaeology.synth.traitNone": "Sem traço",
+  "archaeology.synth.resultUp": "Raridade aumentada!",
+  "archaeology.synth.resultKeep": "{rarity} mantida",
   "archaeology.synth.rarity": "Raridade",
   "archaeology.synth.trait": "Traço",
   "archaeology.synth.button": "Fundir",

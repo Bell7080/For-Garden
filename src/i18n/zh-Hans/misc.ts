@@ -89,6 +89,8 @@ export const MISC_ZH_HANS = {
   "archaeology.synth.odds": "结果概率",
   "archaeology.synth.hint": "请放入3个已刻印的同等级符文。",
   "archaeology.synth.traitNone": "无特性",
+  "archaeology.synth.resultUp": "等级提升！",
+  "archaeology.synth.resultKeep": "保持{rarity}",
   "archaeology.synth.rarity": "等级",
   "archaeology.synth.trait": "特性",
   "archaeology.synth.button": "合成",

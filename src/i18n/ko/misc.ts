@@ -99,6 +99,8 @@ export const MISC_KO = {
   "archaeology.synth.odds": "결과 확률",
   "archaeology.synth.hint": "각인까지 마친 같은 등급의 룬 셋을 넣어 주세요.",
   "archaeology.synth.traitNone": "특성 없음",
+  "archaeology.synth.resultUp": "등급 상승!",
+  "archaeology.synth.resultKeep": "{rarity} 유지",
   "archaeology.synth.rarity": "등급",
   "archaeology.synth.trait": "특성",
   "archaeology.synth.button": "합성",

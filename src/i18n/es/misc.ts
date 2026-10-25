@@ -89,6 +89,8 @@ export const MISC_ES = {
   "archaeology.synth.odds": "Probabilidades",
   "archaeology.synth.hint": "Coloca tres runas grabadas de la misma rareza.",
   "archaeology.synth.traitNone": "Sin rasgo",
+  "archaeology.synth.resultUp": "¡Rareza mejorada!",
+  "archaeology.synth.resultKeep": "{rarity} sin cambios",
   "archaeology.synth.rarity": "Rareza",
   "archaeology.synth.trait": "Rasgo",
   "archaeology.synth.button": "Fusionar",

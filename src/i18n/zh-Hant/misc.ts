@@ -89,6 +89,8 @@ export const MISC_ZH_HANT = {
   "archaeology.synth.odds": "結果機率",
   "archaeology.synth.hint": "請放入3個已刻印的同等級符文。",
   "archaeology.synth.traitNone": "無特性",
+  "archaeology.synth.resultUp": "等級提升！",
+  "archaeology.synth.resultKeep": "保持{rarity}",
   "archaeology.synth.rarity": "等級",
   "archaeology.synth.trait": "特性",
   "archaeology.synth.button": "合成",

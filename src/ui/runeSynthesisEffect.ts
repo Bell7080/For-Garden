@@ -5,6 +5,10 @@ import { breakthroughShardVector, burstDiamond } from "./breakthroughBurst";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
 import { toPoints } from "./holo";
 import { RUNE_SYNTHESIS } from "./runeSynthesisLayout";
+import { t } from "../i18n";
+import { runeRarityLabel, type RuneInstance } from "../core/runes";
+import { addRuneFrame } from "./runeIcons";
+import { COLOR, textStyle } from "./theme";
 
 /**
  * 룬 합성의 연출 — 셋이 가운데 빛으로 빨려 들고 → 팡 → 새 룬이 선다.
@@ -15,6 +19,11 @@ import { RUNE_SYNTHESIS } from "./runeSynthesisLayout";
  *
  * 화면 전체의 규칙을 지킨다: 동그라미 대신 납작한 마름모, 섬광은 옅게(상한 0.6), 난수 없음,
  * 흔들림·거리는 움직임 설정을 지난다. 터지기까지 0.7초를 넘기지 않아 조작이 기다리지 않는다.
+ *
+ * **터진 자리에 결과가 선다.** 예전에는 빛이 걷히자마자 일반 룬 쪽지가 떠서 "올랐다/그대로다"를
+ * 말해 주는 순간이 없었다 — 가운데에 새 룬 액자와 판정 한 줄(「등급 상승!」 · 「고급 유지」)이 잠깐
+ * 섰다가 쪽지로 넘어간다. 파편·파문은 어두운 유리판 위에서 묻히지 않도록 보통 합성으로 그리고,
+ * 빛을 더하는 합성은 옅은 섬광·빛무리에만 남긴다.
  */
 export interface RuneSynthesisEffectOptions {
   scene: Phaser.Scene;
@@ -24,6 +33,8 @@ export interface RuneSynthesisEffectOptions {
   /** 결과 등급의 색. */
   color: number;
   upgraded: boolean;
+  /** 만들어진 룬. 터진 자리에 액자로 선다. */
+  rune: RuneInstance;
   depth: number;
   /** 터지는 프레임에 한 번 — 화면은 그때 새 룬을 세운다. */
   onImpact: () => void;
@@ -68,8 +79,13 @@ export function playRuneSynthesisEffect(options: RuneSynthesisEffectOptions): vo
         onUpdate: () => {
           const life = (spread.radius - 50) / Math.max(1, reach - 50);
           ring.clear();
-          ring.lineStyle(upgraded ? 7 - index * 2 : 3, color, (upgraded ? 0.9 : 0.5) * (1 - life));
-          ring.strokePoints(toPoints(burstDiamond(spread.radius, 0.46)), true);
+          const points = toPoints(burstDiamond(spread.radius, 0.46));
+          const fade = 1 - life;
+          // 먹선 한 겹을 먼저 깔아 밝은 원화·어두운 판 어디서든 선이 떨어져 나오게 한다.
+          ring.lineStyle((upgraded ? 12 - index * 3 : 6), 0x05070a, 0.55 * fade);
+          ring.strokePoints(points, true);
+          ring.lineStyle(upgraded ? 7 - index * 2 : 4, color, (upgraded ? 0.95 : 0.6) * fade);
+          ring.strokePoints(points, true);
         },
         onComplete: () => ring.destroy(),
       });
@@ -80,8 +96,8 @@ export function playRuneSynthesisEffect(options: RuneSynthesisEffectOptions): vo
     for (let index = 0; index < shards; index += 1) {
       const vector = breakthroughShardVector(index, shards);
       const reach = (upgraded ? 360 : 120) * distance;
-      const piece = scene.add.image(center.x, center.y, EFFECT_TEXTURE.shard).setTint(color).setDisplaySize(upgraded ? 38 : 26, upgraded ? 38 : 26)
-        .setBlendMode(Phaser.BlendModes.ADD).setAlpha(upgraded ? 1 : 0.6);
+      const piece = scene.add.image(center.x, center.y, EFFECT_TEXTURE.shard).setTint(color).setDisplaySize(upgraded ? 40 : 28, upgraded ? 40 : 28)
+        .setAlpha(upgraded ? 1 : 0.75);
       layer.add(piece);
       scene.tweens.add({
         targets: piece,
@@ -108,7 +124,26 @@ export function playRuneSynthesisEffect(options: RuneSynthesisEffectOptions): vo
       layer.add(ember);
       scene.tweens.add({ targets: ember, y: center.y + 40, displayWidth: 60, displayHeight: 40, alpha: 0, duration: 760, ease: "Sine.easeIn", onComplete: () => ember.destroy() });
     }
-    scene.time.delayedCall(upgraded ? 1100 : 900, () => { layer.destroy(); options.onDone(); });
+    // 결과 — 새 룬 액자가 톡 튀어 서고 판정 한 줄이 그 아래에 선다.
+    const result = scene.add.container(center.x, center.y).setScale(0.4).setAlpha(0);
+    layer.add(result);
+    const slot = RUNE_SYNTHESIS.resultSlot;
+    result.add(addRuneFrame(scene, 0, 0, slot, options.rune.rarity, options.rune.part, { mainStats: options.rune.mainStats, engraved: true }));
+    const verdict = scene.add.text(0, slot / 2 + 56, upgraded ? t("archaeology.synth.resultUp") : t("archaeology.synth.resultKeep", { rarity: runeRarityLabel(options.rune.rarity) }),
+      textStyle({ role: "display", size: upgraded ? 56 : 44, color: upgraded ? `#${color.toString(16).padStart(6, "0")}` : COLOR.ink }))
+      .setOrigin(0.5).setStroke("#05070a", 10).setShadow(0, 6, "#000000", 0, true, true);
+    result.add(verdict);
+    if (upgraded) {
+      result.add(scene.add.text(0, -slot / 2 - 44, runeRarityLabel(options.rune.rarity), textStyle({ role: "emphasis", size: 32, color: COLOR.ink }))
+        .setOrigin(0.5).setStroke("#05070a", 8));
+    }
+    scene.tweens.add({ targets: result, scale: 1, alpha: 1, duration: 260, ease: "Back.easeOut" });
+    if (upgraded && motion.nonEssentialRepeatFactor > 0) {
+      scene.tweens.add({ targets: verdict, scale: 1.08, duration: 240, delay: 260, yoyo: true, ease: "Sine.easeInOut" });
+    }
+    const hold = RUNE_SYNTHESIS.resultHoldMs + (upgraded ? 300 : 0);
+    scene.tweens.add({ targets: result, alpha: 0, duration: 200, delay: hold });
+    scene.time.delayedCall(hold + 200, () => { layer.destroy(); options.onDone(); });
   };
 
   // 룬 액자 셋이 돌며 가운데로 빨려 든다 — 마지막 것이 닿는 순간이 곧 터지는 순간이다.

@@ -2904,6 +2904,26 @@
 "Kein Merkmal",
 "Без черты"
 ],
+"archaeology.synth.resultUp": [
+"等级提升！",
+"ระดับเพิ่มขึ้น!",
+"Tăng cấp!",
+"Naik tingkat!",
+"¡Rareza mejorada!",
+"Raridade aumentada!",
+"Seltenheit erhöht!",
+"Редкость повышена!"
+],
+"archaeology.synth.resultKeep": [
+"保持{rarity}",
+"คง{rarity}",
+"Giữ {rarity}",
+"Tetap {rarity}",
+"{rarity} sin cambios",
+"{rarity} mantida",
+"{rarity} bleibt",
+"{rarity} без изменений"
+],
 "archaeology.synth.rarity": [
 "等级",
 "ระดับ",

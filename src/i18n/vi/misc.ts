@@ -89,6 +89,8 @@ export const MISC_VI = {
   "archaeology.synth.odds": "Tỉ lệ kết quả",
   "archaeology.synth.hint": "Hãy đặt 3 Rune cùng cấp đã khắc.",
   "archaeology.synth.traitNone": "Không đặc tính",
+  "archaeology.synth.resultUp": "Tăng cấp!",
+  "archaeology.synth.resultKeep": "Giữ {rarity}",
   "archaeology.synth.rarity": "Cấp",
   "archaeology.synth.trait": "Đặc tính",
   "archaeology.synth.button": "Hợp nhất",

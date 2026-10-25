@@ -89,6 +89,8 @@ export const MISC_ID = {
   "archaeology.synth.odds": "Peluang hasil",
   "archaeology.synth.hint": "Masukkan 3 Rune selevel yang sudah diukir.",
   "archaeology.synth.traitNone": "Tanpa sifat",
+  "archaeology.synth.resultUp": "Naik tingkat!",
+  "archaeology.synth.resultKeep": "Tetap {rarity}",
   "archaeology.synth.rarity": "Tingkat",
   "archaeology.synth.trait": "Sifat",
   "archaeology.synth.button": "Fusi",

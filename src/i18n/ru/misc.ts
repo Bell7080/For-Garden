@@ -89,6 +89,8 @@ export const MISC_RU = {
   "archaeology.synth.odds": "Шансы результата",
   "archaeology.synth.hint": "Вставьте три гравированные руны одной редкости.",
   "archaeology.synth.traitNone": "Без черты",
+  "archaeology.synth.resultUp": "Редкость повышена!",
+  "archaeology.synth.resultKeep": "{rarity} без изменений",
   "archaeology.synth.rarity": "Редкость",
   "archaeology.synth.trait": "Черта",
   "archaeology.synth.button": "Слить",

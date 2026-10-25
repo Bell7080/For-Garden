@@ -94,6 +94,8 @@ export const MISC_JA = {
   "archaeology.synth.odds": "結果の確率",
   "archaeology.synth.hint": "刻印済みの同じ等級のルーンを3つ入れてください。",
   "archaeology.synth.traitNone": "特性なし",
+  "archaeology.synth.resultUp": "等級アップ！",
+  "archaeology.synth.resultKeep": "{rarity}のまま",
   "archaeology.synth.rarity": "等級",
   "archaeology.synth.trait": "特性",
   "archaeology.synth.button": "合成",

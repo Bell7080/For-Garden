@@ -89,6 +89,8 @@ export const MISC_DE = {
   "archaeology.synth.odds": "Ergebnischancen",
   "archaeology.synth.hint": "Lege drei gravierte Runen gleicher Seltenheit ein.",
   "archaeology.synth.traitNone": "Kein Merkmal",
+  "archaeology.synth.resultUp": "Seltenheit erhöht!",
+  "archaeology.synth.resultKeep": "{rarity} bleibt",
   "archaeology.synth.rarity": "Seltenheit",
   "archaeology.synth.trait": "Merkmal",
   "archaeology.synth.button": "Fusionieren",

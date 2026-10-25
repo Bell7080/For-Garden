@@ -89,6 +89,8 @@ export const MISC_TH = {
   "archaeology.synth.odds": "โอกาสผลลัพธ์",
   "archaeology.synth.hint": "ใส่รูนระดับเดียวกันที่สลักแล้ว 3 ชิ้น",
   "archaeology.synth.traitNone": "ไม่มีคุณลักษณะ",
+  "archaeology.synth.resultUp": "ระดับเพิ่มขึ้น!",
+  "archaeology.synth.resultKeep": "คง{rarity}",
   "archaeology.synth.rarity": "ระดับ",
   "archaeology.synth.trait": "คุณลักษณะ",
   "archaeology.synth.button": "หลอมรวม",

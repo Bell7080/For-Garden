@@ -89,6 +89,8 @@ export const MISC_EN = {
   "archaeology.synth.odds": "Result odds",
   "archaeology.synth.hint": "Place three engraved runes of the same rarity.",
   "archaeology.synth.traitNone": "No trait",
+  "archaeology.synth.resultUp": "Rarity up!",
+  "archaeology.synth.resultKeep": "{rarity} kept",
   "archaeology.synth.rarity": "Rarity",
   "archaeology.synth.trait": "Trait",
   "archaeology.synth.button": "Fuse",

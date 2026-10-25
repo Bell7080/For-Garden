@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deathClockClosesBySeconds } from "../../src/core/battleClock";
 import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina, raidSettlementDisplayOrder } from "../../src/data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -176,10 +176,11 @@ describe("정산", () => {
     expect(max("rampage")).toBeGreaterThan(max("hard"));
   });
 
-  it("과 따로, 한 판의 골드는 그 판의 피해에 비례한다", () => {
-    expect(raidRunGold(0, 0.2)).toBe(0);
-    expect(raidRunGold(20_000, 0.2)).toBe(4_000);
-    expect(raidRunGold(40_000, 0.2)).toBe(2 * raidRunGold(20_000, 0.2));
+  it("한 판의 1차 보상은 그 판의 피해에 비례하고 골드는 없다", () => {
+    expect(raidRunRewards("hard", 0)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
+    expect(raidRunRewards("hard", 22_000)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 99_000)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 11_000).gem).toBeLessThan(20);
   });
 });
 
@@ -617,16 +618,6 @@ describe("레이드 서버 경계", () => {
     await expect(api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" })).rejects.toMatchObject({ code: "INVALID_STATE" });
     expect(state.wallet).toEqual(before);
     expect(state.raid.instances).toEqual([]);
-  });
-});
-
-describe("레이드 1차 판 보상", () => {
-  it("피해에 비례하고 목표에서 최대치이며 피해 0이면 없다", async () => {
-    const { raidRunRewards } = await import("../../src/core/raid");
-    expect(raidRunRewards("hard", 0)).toEqual({ raidSigil: 0, gem: 0 });
-    expect(raidRunRewards("hard", 22_000)).toEqual({ raidSigil: 8, gem: 15 });
-    expect(raidRunRewards("hard", 99_000)).toEqual({ raidSigil: 8, gem: 15 });
-    expect(raidRunRewards("hard", 11_000).gem).toBeLessThan(15);
   });
 });
 

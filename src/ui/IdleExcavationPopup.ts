@@ -891,7 +891,7 @@ export class IdleExcavationPopup {
 
   /** 해당 재화 생산에 기여한 SD가 통 튀고 머리 위 기존 이미지 아이콘이 떠올랐다 사라진다. */
   private playProductionTick(currency: ExcavationCurrency): void {
-    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => item.currency === currency);
+    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => currency === "gems" || item.currency === currency);
     for (const contributor of contributors) {
       const puppet = this.sdPuppetByRelicId.get(contributor.relicId);
       if (!puppet || !this.sdContainer) continue;

@@ -102,17 +102,17 @@ export interface RaidDifficultySpec {
   lifetimeHours: number;
   settlement: { mine: number; mineTarget: number; total: number; kill: number; gems: number };
   /** 한 판을 치고 곧바로 받는 증표·젬의 최대치. 그 판 피해가 `settlement.mineTarget`에 닿을 때 이 값이고 그 아래는 비례한다. */
-  run: { sigil: number; gems: number };
+  run: { sigil: number; gems: number; salvage: number };
 }
 
 const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 
 /** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 50 }, run: { sigil: 3, gems: 6 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 75 }, run: { sigil: 5, gems: 10 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 100 }, run: { sigil: 8, gems: 15 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 150 }, run: { sigil: 13, gems: 20 } }),
+  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 50 }, run: { sigil: 3, gems: 8, salvage: 2 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 75 }, run: { sigil: 5, gems: 15, salvage: 4 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 100 }, run: { sigil: 8, gems: 20, salvage: 6 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 150 }, run: { sigil: 13, gems: 30, salvage: 10 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */
@@ -163,14 +163,6 @@ export const RAID_RUN_STAMINA = 10;
 export function raidRunStamina(_difficulty?: RaidDifficulty): number {
   return RAID_RUN_STAMINA;
 }
-
-/**
- * 때린 판마다 곧바로 받는 골드 — **그 판의 피해에 비례한다.**
- *
- * 정산은 판이 끝나야 열리므로, 한 판을 치고 나온 손에 아무것도 없으면 두 번째 판을 칠 이유가
- * 화면에서 사라진다. 한 판 2만 피해가 4천 골드다.
- */
-export const RAID_RUN_GOLD_PER_DAMAGE = 0.2;
 
 /** 끝난 판이 완료 탭에 남는 시간. 정산하지 않은 판은 이보다 오래 남는다(받을 것이 있으므로). */
 export const RAID_COMPLETED_KEEP_HOURS = 48;

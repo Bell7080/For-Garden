@@ -269,7 +269,7 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["torika", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 0, rawStone: 31.68, gems: 4.48 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 35.2512, rawStone: 31.68, gems: 72 });
   });
 
   it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
@@ -283,7 +283,7 @@ describe("FakeServer", () => {
     const repeated = await server.getIdleExcavation();
     // 24시간 미접속이어도 기본 보관 시간(8시간)만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
     expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
-    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 8.96 });
+    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 144 });
     expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 

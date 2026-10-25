@@ -97,8 +97,8 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
@@ -1050,7 +1050,7 @@ export class FakeServer implements GameApi {
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
-   * 비례한 골드를 곧바로 준다(`RAID_RUN_GOLD_PER_DAMAGE`). 정산은 판이 끝난 뒤 따로다.
+   * 비례한 증표·젬·인양 기록을 곧바로 준다(`raidRunRewards`, 골드는 주지 않는다). 정산은 판이 끝난 뒤 따로다.
    */
   async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
     await this.delay();
@@ -1110,13 +1110,12 @@ export class FakeServer implements GameApi {
     // Personal verified damage is stable across concurrent kills/expiry. Shared HP never goes negative.
     const runDamage = Math.min(admission.seasonHp, Math.max(0, Math.floor(result.totalDamage)));
     const appliedDamage = Math.min(remainingNow, runDamage);
-    const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
     const runRewards = raidRunRewards(instance.difficulty, runDamage);
-    const grantedRun = (["gems", "raidSigil", "gold"] as const).map((currency) => {
-      const want = currency === "gold" ? gold : currency === "gems" ? runRewards.gem : runRewards.raidSigil;
+    const grantedRun = (["gems", "salvageRecord", "raidSigil"] as const).map((currency) => {
+      const want = currency === "gems" ? runRewards.gem : currency === "salvageRecord" ? runRewards.salvage : runRewards.raidSigil;
       const amount = Math.max(0, Math.min(want, WALLET_CAPS[currency] - nextState.wallet[currency]));
       nextState.wallet = { ...nextState.wallet, [currency]: nextState.wallet[currency] + amount };
       return { currency, name: findItem(currency)?.name ?? currency, amount };

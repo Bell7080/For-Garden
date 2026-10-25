@@ -627,6 +627,11 @@ export interface PullResponse extends PlayerStateDto {
   duplicateRelicIds: string[];
   /** 이번 연구가 지급한 DNA 마일리지 총량(뽑은 횟수 + 풀돌 중복 보너스). 결과 상단 칩이 이 값을 그대로 읽는다. */
   mileageGained: number;
+  /**
+   * 10연 마지막 슬롯이 SR에서 SSR로 한 번 더 올랐다면 그 칸의 번호(`results` 기준). 없으면 비어 있다.
+   * 화면은 이 칸을 SR로 먼저 보여 준 뒤 SSR로 뒤집는 연출을 돌린다 — 확정은 서버가 이미 했다.
+   */
+  rarityUpgradeSlot?: number;
 }
 
 

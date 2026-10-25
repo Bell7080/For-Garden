@@ -253,7 +253,7 @@ export class FakeServer implements GameApi {
     this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
-    this.random = options.random ?? Math.random;
+    this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
     // 테스트용 서명 형식은 QA에서만 받는다. 일반/서버 빌드는 실제 SSV 검증기가 없으면 거절한다.
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => (QA_TOOLS_ENABLED && token === `verified:${slotId}`) || (TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId)));
@@ -2118,6 +2118,7 @@ export class FakeServer implements GameApi {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
       // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
@@ -2127,6 +2128,7 @@ export class FakeServer implements GameApi {
       newRelicIds: outcome.newRelicIds,
       duplicateRelicIds: outcome.duplicateRelicIds,
       mileageGained,
+      ...(upgradedSlot >= 0 ? { rarityUpgradeSlot: upgradedSlot } : {}),
     };
   }
 
@@ -4238,6 +4240,15 @@ function missionClaimCount(missions: Session["missions"], now: Date): number {
 /** 업적 단계도 같은 신호를 탄다 — 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다). */
 export function missionNoticeScore(next: Session, now: Date): number {
   return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + missionClaimCount(next.missions, now);
+}
+
+/**
+ * QA·테스트 빌드에서만 서는 난수 주입구. 화면 검수가 연구 결과를 정해 두고 싶을 때
+ * `window.__PF_QA_RANDOM`에 함수를 걸면 서버 난수가 그 함수를 먼저 지난다. 일반 빌드에는 없다.
+ */
+function qaRandom(): number {
+  const hook = (globalThis as { __PF_QA_RANDOM?: () => number }).__PF_QA_RANDOM;
+  return hook ? hook() : Math.random();
 }
 
 const localGameApi = new FakeServer();

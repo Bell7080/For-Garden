@@ -47,9 +47,14 @@ interface CinematicInstance {
   peekReveal?(): { index: number; step: "tier" | "flip" | "next" } | undefined;
   /** 남은 연출을 건너뛰고 **결산 화면으로 곧장** 간다. 판을 지우지 않는다. */
   skipToResult(): void;
+  /** 에셋이 들고 있는 카드 목록. 결산 격자의 색과 등급별 장수가 이 값을 읽는다. */
+  rewards?: Array<{ rarity: string }>;
   destroy(): void;
   getState(): { phase: string; count: number; activeTier: string };
 }
+
+/** 올려 칠하는 카드의 등급색. 에셋의 등급표(`ft`)와 같은 값이다. */
+const PROMOTED_TIER = { SSR: "#ffc247" } as const;
 
 declare global {
   interface Window {
@@ -358,6 +363,29 @@ export class ResearchCinematic {
   /** 결산 격자까지 흘렀는가. */
   get finished(): boolean {
     return this.reachedResult;
+  }
+
+  /**
+   * 카드 한 장의 등급을 올려 칠한다.
+   *
+   * 10연 마지막 칸이 SR로 먼저 보이다가 SSR로 오르는 깜짝 연출이 쓴다. 에셋은 카드를 SR로 받아
+   * 그 색으로 세웠으므로, 오른 순간 카드의 등급 표식과 색을 직접 갈아 끼운다. 결산 격자가 색을 다시
+   * 칠하더라도 따라오도록 관찰자가 올린 등급을 지킨다.
+   */
+  promoteCard(index: number, rarity: "SSR"): void {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    if (!card) return;
+    // 결산 격자의 색과 「SR × 1」 같은 등급별 장수는 에셋의 카드 목록에서 나오므로 거기서도 올린다.
+    const reward = this.instance.rewards?.[index];
+    if (reward) reward.rarity = rarity;
+    const grade = card.querySelector<HTMLElement>(".card-grade");
+    if (grade) grade.textContent = rarity;
+    const paint = () => {
+      if (card.dataset.rarity !== rarity) card.dataset.rarity = rarity;
+      if (card.style.getPropertyValue("--tier") !== PROMOTED_TIER[rarity]) card.style.setProperty("--tier", PROMOTED_TIER[rarity]);
+    };
+    paint();
+    new MutationObserver(paint).observe(card, { attributes: true, attributeFilter: ["style", "data-rarity"] });
   }
 
   /** 연출이 끝나고 화면이 닫힐 때까지 기다린다. */

@@ -20,6 +20,7 @@ export const LAB_ZH_HANS = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR中UP概率{percent}% · 未中时下个SSR必为UP",
   "lab.policy.tenGuarantee": "10连最后一格必为SR以上（SSR保底优先）",
+  "lab.policy.tenUpgrade": "10连最后一格若为SR，有{percent}%概率升为SSR",
   "lab.policy.mileage": "每次研究DNA里程 +1",
   "lab.policy.duplicate": "重复奖励  该遗物碎片 +1 · 集齐碎片进行极限突破",
   "lab.policy.duplicateMax": "突破等级V之后，重复获得转为DNA里程（SSR +30 · SR +8 · R +2）",

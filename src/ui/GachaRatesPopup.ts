@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { Banner, GachaPityState } from "../core/gacha";
+import { TEN_PULL_SR_UPGRADE_CHANCE, type Banner, type GachaPityState } from "../core/gacha";
 import { formatRatePercent, gachaRateTable, type RateEntry, type RateTier, type RateTierRow } from "../core/gachaRateTable";
 import { getRelic } from "../data/relics";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -114,6 +114,7 @@ function rulesText({ banner, pity }: GachaRatesContext): string {
       t("lab.policy.pickup", { state: t(pity.pickupGuaranteed ? "lab.policy.pickupOn" : "lab.policy.pickupOff") }),
     ] : []),
     t("lab.policy.tenGuarantee"),
+    t("lab.policy.tenUpgrade", { percent: formatRatePercent(TEN_PULL_SR_UPGRADE_CHANCE) }),
     t("lab.policy.mileage"),
     t("lab.policy.duplicate"),
     t("lab.policy.duplicateMax"),

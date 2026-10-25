@@ -656,6 +656,7 @@ var LAB_KO = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR \uD53D\uC5C5 \uD655\uB960 {percent}% \xB7 \uC2E4\uD328 \uC2DC \uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
   "lab.policy.tenGuarantee": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F SR \uC774\uC0C1 \uBCF4\uC7A5 (SSR \uCC9C\uC7A5 \uC6B0\uC120)",
+  "lab.policy.tenUpgrade": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F\uC774 SR\uC774\uBA74 {percent}% \uD655\uB960\uB85C SSR\uB85C \uC0C1\uC2B9",
   "lab.policy.mileage": "\uC5F0\uAD6C 1\uD68C\uB9C8\uB2E4 DNA \uB9C8\uC77C\uB9AC\uC9C0 +1",
   "lab.policy.duplicate": "\uC911\uBCF5 \uBCF4\uC0C1  \uD574\uB2F9 \uB810\uB9AD \uD30C\uD3B8 +1 \xB7 \uD30C\uD3B8\uC744 \uBAA8\uC544 \uD55C\uACC4 \uB3CC\uD30C",
   "lab.policy.duplicateMax": "\uB3CC\uD30C \uB4F1\uAE09 V \uB2EC\uC131 \uC774\uD6C4 \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC804\uD658 (SSR +30 \xB7 SR +8 \xB7 R +2)",
@@ -18919,7 +18920,7 @@ var BANNERS = [
     relicPools: STANDARD_POOLS,
     pickupRelicIds: {},
     pickupRate: 0,
-    highestRarityGuarantee: 100
+    highestRarityGuarantee: 120
   },
   {
     id: "amber",
@@ -18942,7 +18943,7 @@ var BANNERS = [
     relicPools: pickupPools(AMBER_PICKUP),
     pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] },
     pickupRate: 0.5,
-    highestRarityGuarantee: 100
+    highestRarityGuarantee: 120
   }
 ];
 for (const banner of BANNERS) {
@@ -28837,6 +28838,7 @@ function tempAdToken(slotId) {
 
 // src/core/gacha.ts
 init_define_import_meta_env();
+var TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
 function carryoverTenAvailable(banner, pity) {
   return banner.carryoverTenCost !== void 0 && (pity?.discountTens ?? 0) > 0;
 }
@@ -28894,6 +28896,11 @@ function pull(banner, count2, currentPity, rng) {
     const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
     let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
     if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+    let upgraded = false;
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && grade === "SR" && rng() < TEN_PULL_SR_UPGRADE_CHANCE) {
+      grade = "SSR";
+      upgraded = true;
+    }
     if (grade === "GRAY") {
       const totalWeight = banner.grayRewards.reduce((sum, reward2) => sum + reward2.weight, 0);
       const roll3 = rng() * totalWeight;
@@ -28915,7 +28922,7 @@ function pull(banner, count2, currentPity, rng) {
     const relicId = choose(selectionPool, rng);
     relicIds.push(relicId);
     rarities.push(rarity);
-    slots.push({ kind: "relic", relicId, rarity });
+    slots.push(upgraded ? { kind: "relic", relicId, rarity, upgraded: true } : { kind: "relic", relicId, rarity });
     if (rarity === "SSR") {
       pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
     } else {
@@ -30290,7 +30297,7 @@ function mileage(id, category, iconKey, name, description, price, limit, grants)
 }
 var MILEAGE_PRODUCTS = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
-  mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 150, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
+  mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8 1\uAC1C", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
   // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
   mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 SR \uD30C\uD3B8", "\uB9CC\uB2A5 SR \uD30C\uD3B8 1\uAC1C", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 1 }]),
@@ -32406,7 +32413,7 @@ var FakeServer = class {
     this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
-    this.random = options.random ?? Math.random;
+    this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}` || TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
@@ -34352,6 +34359,7 @@ var FakeServer = class {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
       // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
@@ -34361,7 +34369,8 @@ var FakeServer = class {
       })(),
       newRelicIds: outcome.newRelicIds,
       duplicateRelicIds: outcome.duplicateRelicIds,
-      mileageGained
+      mileageGained,
+      ...upgradedSlot >= 0 ? { rarityUpgradeSlot: upgradedSlot } : {}
     };
   }
   /** 서버가 보유·상한·치즈케이크를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
@@ -36399,6 +36408,10 @@ function missionClaimCount(missions, now) {
 }
 function missionNoticeScore(next, now) {
   return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + missionClaimCount(next.missions, now);
+}
+function qaRandom() {
+  const hook = globalThis.__PF_QA_RANDOM;
+  return hook ? hook() : Math.random();
 }
 var localGameApi = new FakeServer();
 var activeGameApi = localGameApi;

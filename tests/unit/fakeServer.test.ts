@@ -1584,7 +1584,7 @@ describe("FakeServer 전리품 상점의 고고학 재화", () => {
 describe("FakeServer 마일리지 상점", () => {
   const WEEK = new Date("2026-10-07T12:00:00Z");
   it("미보유 점원의 주간 SSR 파편을 처음 사면 파편이 아니라 그 개체를 획득하고 newRelicIds로 알린다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 200;
+    const state = makeSession(); state.wallet.dnaFragments = 250;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const clerk = mileageWeeklyClerkId(WEEK)!;
     expect(state.owned.has(clerk)).toBe(false);

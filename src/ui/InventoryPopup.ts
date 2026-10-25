@@ -196,7 +196,7 @@ export class InventoryPopup {
     const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
     const dirX = right - dirWidth / 2;
     const options: readonly { id: InventorySort["key"]; labelKey: TextKey }[] = [
-      { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
+      { id: "relic", labelKey: "inventory.sort.relic" }, { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
       { id: "enhancement", labelKey: "inventory.sort.craft" }, { id: "equipped", labelKey: "inventory.sort.equipped" },
     ];
     const countLabel = this.scene.add.text(-right, y, t("inventory.rune.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);
@@ -242,7 +242,7 @@ export class InventoryPopup {
       const slot = equippedRuneSlot(item.rune.instanceId);
       const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, {
         dimmed: slot !== undefined,
-        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId, order: index } : undefined,
+        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId } : undefined,
       });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
       this.addCardInput(content, card, item, cardWidth, cardHeight);

@@ -89,6 +89,7 @@ import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
 import { findItem } from "../data/items";
+import { sortRunesByRelic } from "../managers/InventoryManager";
 import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -1431,7 +1432,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = session.runeInventory.filter((rune) => rune.part === index);
+    const runes = sortRunesByRelic(session.runeInventory.filter((rune) => rune.part === index), session.relicProgress);
     const columns = RUNE_PICKER.columns;
     const rows = Math.max(1, Math.ceil(runes.length / columns));
     const pickerWidth = columns * RUNE_PICKER.cellWidth + RUNE_PICKER.padX * 2;
@@ -1456,7 +1457,7 @@ export class InfoManager {
           const holder = equippedRuneSlot(rune.instanceId);
           const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, {
             dimmed: holder !== undefined,
-            holder: holder && view.showHolder ? { relicId: holder.relicId, order } : undefined,
+            holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
           });
           const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerdown", () => pressIn(card));

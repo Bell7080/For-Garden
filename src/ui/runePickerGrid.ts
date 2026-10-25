@@ -37,7 +37,7 @@ export function mountRunePickerGrid(
       const y = top + g.headerHeight + Math.floor(order / g.columns) * g.cellHeight;
       const holder = equippedRuneSlot(rune.instanceId);
       const card = addRuneCard(scene, x, y, g.cardWidth, g.cardHeight, rune, {
-        holder: holder && view.showHolder ? { relicId: holder.relicId, order } : undefined,
+        holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
       });
       const hit = scene.add.rectangle(0, 0, g.cardWidth, g.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(card));

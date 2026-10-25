@@ -11,6 +11,7 @@ export const INVENTORY_JA = {
   "inventory.sort.part": "部位",
   "inventory.sort.craft": "研磨",
   "inventory.sort.equipped": "装着",
+  "inventory.sort.relic": "レリック",
   "inventory.guide.held": "所持",
   "inventory.guide.expiry": "{count}個 · {time}後に消滅",
   "inventory.expiry.days": "{days}日{hours}時間",

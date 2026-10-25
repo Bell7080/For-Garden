@@ -6,6 +6,7 @@ import { isValidLotStack } from "../core/itemLots";
 import type { Wallet } from "../core/gacha";
 import type { ClaimAdRewardRequest, ClaimAdRewardResponse, EngraveRuneResponse, EnhanceRuneAllResponse, EnhanceRuneResponse, GameApi, InventoryItemDto, RechargeStaminaResponse, RenameRuneResponse, SellRunesResponse, SynthesizeRunesResponse, UseConsumableResponse } from "../api/contracts";
 import type { RuneInstance, RuneStatKey } from "../core/runes";
+import { RELICS } from "../data/relics";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
@@ -24,9 +25,33 @@ export const INVENTORY_LAYOUT = {
 
 
 /** 가방 정렬 선택은 UI 상태로 보관하고 Manager만 비교 규칙을 소유한다. */
-export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped";
+export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped" | "relic";
 export interface InventorySort { key: InventorySortKey; direction: "asc" | "desc"; }
-export const DEFAULT_INVENTORY_SORT: InventorySort = { key: "acquired", direction: "asc" };
+/** 렐릭 순 정렬에서 아무도 안 낀 룬이 서는 자리 — 도감의 어느 렐릭보다 뒤. */
+const UNEQUIPPED_RELIC_RANK = 1_000_000;
+
+/** 룬 인스턴스 → 그 룬을 낀 렐릭의 도감 순서. 낀 룬만 든다. */
+export function runeHolderOrder(relicProgress: Record<string, { heartGemSlots: readonly (string | null)[] }>): ReadonlyMap<string, number> {
+  const order = new Map<string, number>();
+  for (const [relicId, progress] of Object.entries(relicProgress)) {
+    const rank = RELICS.findIndex(({ id }) => id === relicId);
+    for (const id of progress.heartGemSlots) if (id !== null) order.set(id, rank < 0 ? RELICS.length : rank);
+  }
+  return order;
+}
+
+/** 렐릭 순 정렬 키: 낀 렐릭의 도감 순서 → 같은 렐릭 안에서는 부위 순. 안 낀 룬은 맨 뒤. */
+export function runeRelicRank(holderOrder: ReadonlyMap<string, number>, rune: { instanceId: string; part: number }): number {
+  return (holderOrder.get(rune.instanceId) ?? UNEQUIPPED_RELIC_RANK) * 10 + rune.part;
+}
+
+/** 렐릭 순으로 정렬한 사본(안정). 가방의 기본 정렬과 룬 고르기 판이 같은 규칙을 쓴다. */
+export function sortRunesByRelic<T extends { instanceId: string; part: number }>(runes: readonly T[], relicProgress: Record<string, { heartGemSlots: readonly (string | null)[] }>): T[] {
+  const order = runeHolderOrder(relicProgress);
+  return [...runes].sort((a, b) => runeRelicRank(order, a) - runeRelicRank(order, b));
+}
+
+export const DEFAULT_INVENTORY_SORT: InventorySort = { key: "relic", direction: "asc" };
 const RARITY_ORDER = { uncommon: 0, rare: 1, epic: 2, legendary: 3 } as const;
 
 export type InventoryGridLayout = Pick<typeof INVENTORY_LAYOUT, "columns" | "cellWidth" | "cellHeight" | "viewportHeight">;
@@ -237,8 +262,9 @@ export class InventoryManager {
     if (category === "rune") {
       const definition = findItem("rune")!;
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
+      const holderOrder = runeHolderOrder(this.state.relicProgress);
       const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
-      const value = ({ rune, index }: (typeof original)[number]): number => sort.key === "acquired" ? (rune.sequence ?? index) : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const value = ({ rune, index }: (typeof original)[number]): number => sort.key === "relic" ? runeRelicRank(holderOrder, rune) : sort.key === "acquired" ? (rune.sequence ?? index) : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
       const direction = sort.direction === "asc" ? 1 : -1;
       return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune" as const, category, id: rune.instanceId, definition, quantity: 1 as const, rune }));
     }

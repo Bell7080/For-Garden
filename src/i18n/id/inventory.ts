@@ -11,6 +11,7 @@ export const INVENTORY_ID = {
   "inventory.sort.part": "Bagian",
   "inventory.sort.craft": "Asah",
   "inventory.sort.equipped": "Dipakai",
+  "inventory.sort.relic": "Relik",
   "inventory.guide.held": "Dimiliki",
   "inventory.guide.expiry": "{count} · kedaluwarsa dalam {time}",
   "inventory.expiry.days": "{days} hari {hours} jam",

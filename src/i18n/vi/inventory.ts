@@ -11,6 +11,7 @@ export const INVENTORY_VI = {
   "inventory.sort.part": "Vị trí",
   "inventory.sort.craft": "Mài",
   "inventory.sort.equipped": "Đang trang bị",
+  "inventory.sort.relic": "Di vật",
   "inventory.guide.held": "Đang có",
   "inventory.guide.expiry": "{count} · hết hạn sau {time}",
   "inventory.expiry.days": "{days} ngày {hours} giờ",

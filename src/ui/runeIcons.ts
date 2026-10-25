@@ -179,8 +179,8 @@ export function addRuneCard(
   rune: RuneCardModel,
   options: {
     dimmed?: boolean;
-    /** 장착 렐릭 표시가 켜진 가방에서 이 룬을 낀 렐릭. 주면 액자가 그 얼굴과 갈마든다(`runeHolderCycle`). */
-    holder?: { relicId: string; order: number };
+    /** 장착 렐릭 표시가 켜진 가방에서 이 룬을 낀 렐릭. 주면 카드가 그 얼굴이 되고 룬은 왼쪽 아래로 줄어든다(`runeHolderCycle`). */
+    holder?: { relicId: string };
   } = {},
 ): Phaser.GameObjects.Container {
   const engraved = rune.engravings.length > 0;
@@ -190,7 +190,7 @@ export function addRuneCard(
   const frameSize = Math.min(width, height) * 0.89;
   const frame = addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved });
   card.add(frame);
-  if (options.holder) addRuneHolderFace(scene, card, frame, frameSize, options.holder.relicId, options.holder.order);
+  if (options.holder) addRuneHolderFace(scene, card, frame, frameSize, options.holder.relicId);
   // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 액자 **안쪽** 왼쪽 위에
   // 작게 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽히고,
   // 카드 모서리에 붙이면 깎인 모서리 밖으로 반쯤 빠져나가 붙인 스티커처럼 보인다.
@@ -206,10 +206,10 @@ export function addRuneCard(
   });
   // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
   // 끼고 있는 룬은 검은 막을 한 겹 더 깐다 — 알파만으로는 어두운 가방 바탕 위에서 충분히 가라앉지 않는다.
-  // 장착자 얼굴이 갈마드는 카드는 얼굴이 읽혀야 하므로 가라앉힘을 덜어 준다.
-  if (options.dimmed) {
-    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: options.holder ? 0.16 : 0.42 }));
-    card.setAlpha(options.holder ? 0.9 : 0.72);
+  // 장착자 얼굴이 서는 카드는 늘 밝다 — 누가 끼고 있는지가 곧 얼굴이라 가라앉힐 이유가 없다.
+  if (options.dimmed && !options.holder) {
+    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: 0.42 }));
+    card.setAlpha(0.72);
   }
   return card;
 }

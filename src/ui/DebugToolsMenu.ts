@@ -50,11 +50,11 @@ function pickFrom(host: Host, title: string, items: readonly Choice[], onPick: (
   });
 }
 
-async function run(host: Host, command: DebugCommand, doneKey: "count" | "relics" = "count"): Promise<void> {
+async function run(host: Host, command: DebugCommand, doneKey: "count" | "relics" | "armed" = "count"): Promise<void> {
   let message: string;
   try {
     const { changed } = await gameApi.applyDebugCommand(command);
-    message = changed <= 0 ? t("settings.debug.nothing") : doneKey === "relics" ? t("settings.debug.grantedRelics", { count: changed }) : t("settings.debug.done", { count: changed });
+    message = changed <= 0 ? t("settings.debug.nothing") : doneKey === "relics" ? t("settings.debug.grantedRelics", { count: changed }) : doneKey === "armed" ? t("settings.debug.tenUpgradeArmed") : t("settings.debug.done", { count: changed });
   } catch {
     message = t("settings.debug.failed");
   }
@@ -90,10 +90,7 @@ const MENU: readonly { id: string; labelKey: TextKey; open: (host: Host) => void
   { id: "relicFragments", labelKey: "settings.debug.menu.relicFragments", open: (host) => pickRelic(host, "owned", null, (id) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50, 100, 500].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "relicFragments", relicId: id, amount: Number(amount) }))) },
   { id: "breakthroughSet", labelKey: "settings.debug.menu.breakthroughSet", open: (host) => pickRelic(host, "owned", null, (id) => void run(host, { kind: "breakthroughSet", relicId: id })) },
   { id: "universalFragments", labelKey: "settings.debug.menu.universalFragments", open: (host) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "universalFragments", amount: Number(amount) })) },
-  { id: "tenUpgrade", labelKey: "settings.debug.menu.tenUpgrade", open: (host) => {
-    (globalThis as { __PF_QA_TEN_UPGRADE?: boolean }).__PF_QA_TEN_UPGRADE = true;
-    host.popups.confirm({ title: t("settings.debug.title"), message: t("settings.debug.tenUpgradeArmed"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
-  } },
+  { id: "tenUpgrade", labelKey: "settings.debug.menu.tenUpgrade", open: (host) => void run(host, { kind: "tenUpgrade" }, "armed") },
   { id: "unlockStories", labelKey: "settings.debug.menu.unlockStories", open: (host) => void run(host, { kind: "unlockStories" }) },
 ];
 

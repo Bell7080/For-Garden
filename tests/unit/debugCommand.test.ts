@@ -12,6 +12,24 @@ const server = (developmentTools = true) => {
 };
 
 describe("QA 디버그 명령", () => {
+  it("다음 10연 승급 찬스는 서버 장부에 걸려 10연 한 번에만 마지막 칸을 SSR로 올린다", async () => {
+    const { state, api } = server();
+    state.wallet.fossil = 100;
+    for (const id of ["1-1", "1-2", "1-3", "1-4", "1-5"]) state.cleared.add(id);
+    await api.applyDebugCommand({ kind: "tenUpgrade" });
+    expect(state.serverJournal?.qaTenUpgrade).toBe(true);
+    const first = await api.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(first.rarityUpgradeSlot).toBe(9);
+    expect(state.serverJournal?.qaTenUpgrade).toBeUndefined();
+    const second = await api.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(second.rarityUpgradeSlot).toBeUndefined();
+  });
+
+  it("개발 도구가 꺼진 서버는 승급 찬스 표식을 거절한다", async () => {
+    const { api } = server(false);
+    await expect(api.applyDebugCommand({ kind: "tenUpgrade" })).rejects.toMatchObject({ code: "DEBUG_TOOLS_DISABLED" });
+  });
+
   it("재화를 더하고 상한에서 멈추며 0으로 비운다", async () => {
     const { state, api } = server();
     const before = state.wallet.fossil;

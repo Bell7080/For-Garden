@@ -1485,6 +1485,13 @@ export class FakeServer implements GameApi {
   async applyDebugCommand(command: DebugCommand): Promise<DebugCommandResponse> {
     await this.delay();
     if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "개발 도구가 꺼진 서버입니다.");
+    if (command.kind === "tenUpgrade") {
+      // 서버 모드에서는 클라이언트 플래그가 뽑기에 닿지 않으므로 표식을 서버 장부에 남긴다.
+      const candidate = { ...this.state, serverJournal: { ...(this.state.serverJournal ?? emptyServerJournal()), qaTenUpgrade: true } };
+      this.persist(candidate);
+      this.state.serverJournal = candidate.serverJournal;
+      return { ok: true, changed: 1 };
+    }
     const patch = {
       wallet: { ...this.state.wallet },
       owned: new Set(this.state.owned),
@@ -2063,7 +2070,8 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade: request.count === 10 && takeQaTenUpgrade() });
+    const forceTenUpgrade = request.count === 10 && this.developmentTools && this.state.serverJournal?.qaTenUpgrade === true;
+    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
@@ -2107,6 +2115,11 @@ export class FakeServer implements GameApi {
     const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    if (forceTenUpgrade) {
+      // QA 승급 찬스 표식은 10연 한 번에 소진한다.
+      const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
+      nextState.serverJournal = journal;
+    }
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;
@@ -4249,15 +4262,6 @@ export function missionNoticeScore(next: Session, now: Date): number {
 function qaRandom(): number {
   const hook = (globalThis as { __PF_QA_RANDOM?: () => number }).__PF_QA_RANDOM;
   return hook ? hook() : Math.random();
-}
-
-/** QA 디버그 도구가 걸어 둔 「다음 10연 승급 찬스」를 한 번만 꺼낸다. 일반 빌드에는 걸 길이 없다. */
-function takeQaTenUpgrade(): boolean {
-  if (!QA_TOOLS_ENABLED) return false;
-  const flags = globalThis as { __PF_QA_TEN_UPGRADE?: boolean };
-  const armed = flags.__PF_QA_TEN_UPGRADE === true;
-  flags.__PF_QA_TEN_UPGRADE = false;
-  return armed;
 }
 
 const localGameApi = new FakeServer();

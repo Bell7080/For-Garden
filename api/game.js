@@ -3030,6 +3030,8 @@ var DEBUG_KO = {
   "settings.debug.menu.relicFragments": "\uCE90\uB9AD\uD130 \uD30C\uD3B8 \uC9C0\uAE09",
   "settings.debug.menu.breakthroughSet": "\uB3CC\uD30C \uC7AC\uB8CC \uC138\uD2B8 \uC9C0\uAE09",
   "settings.debug.menu.universalFragments": "\uB9CC\uB2A5 \uD30C\uD3B8 \uC9C0\uAE09 (R\xB7SR\xB7SSR)",
+  "settings.debug.menu.tenUpgrade": "\uB2E4\uC74C 10\uC5F0 \uC2B9\uAE09 \uCC2C\uC2A4 \uAC15\uC81C",
+  "settings.debug.tenUpgradeArmed": "\uB2E4\uC74C 10\uC5F0 \uD55C \uBC88\uC758 \uB9C8\uC9C0\uB9C9 \uCE78\uC774 \uC2B9\uAE09 \uCC2C\uC2A4\uB85C SSR\uC774 \uB429\uB2C8\uB2E4.",
   "settings.debug.menu.unlockStories": "\uC720\uB300 10 \xB7 \uC9C8\uBB38/\uC2A4\uD1A0\uB9AC \uC804\uCCB4 \uAC1C\uBC29",
   "settings.debug.pick.currency": "\uC7AC\uD654 \uC120\uD0DD",
   "settings.debug.pick.amount": "\uC218\uB7C9 \uC120\uD0DD",
@@ -19426,7 +19428,7 @@ function isValidServerJournal(value) {
   const journal = value;
   const record2 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
   const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record2(v2) && Object.values(v2).every(json));
-  return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -28888,7 +28890,7 @@ function determineGrade(banner, random) {
 function rewardAmount(reward, random) {
   return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
 }
-function pull(banner, count2, currentPity, rng) {
+function pull(banner, count2, currentPity, rng, options = {}) {
   const relicIds = [];
   const rarities = [];
   const slots = [];
@@ -28898,7 +28900,8 @@ function pull(banner, count2, currentPity, rng) {
     let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
     if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
     let upgraded = false;
-    if (!pityForcesSsr && count2 === 10 && slot === 9 && grade === "SR" && rng() < TEN_PULL_SR_UPGRADE_CHANCE) {
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
       grade = "SSR";
       upgraded = true;
     }
@@ -30728,6 +30731,8 @@ function integer(value, min, max) {
 }
 function applyDebugCommand(target, command, rules) {
   switch (command.kind) {
+    case "tenUpgrade":
+      return 0;
     case "currency": {
       if (!(command.key in rules.walletCaps)) throw new Error("\uC54C \uC218 \uC5C6\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.");
       const cap = rules.walletCaps[command.key];
@@ -33737,6 +33742,12 @@ var FakeServer = class {
   async applyDebugCommand(command) {
     await this.delay();
     if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "\uAC1C\uBC1C \uB3C4\uAD6C\uAC00 \uAEBC\uC9C4 \uC11C\uBC84\uC785\uB2C8\uB2E4.");
+    if (command.kind === "tenUpgrade") {
+      const candidate = { ...this.state, serverJournal: { ...this.state.serverJournal ?? emptyServerJournal(), qaTenUpgrade: true } };
+      this.persist(candidate);
+      this.state.serverJournal = candidate.serverJournal;
+      return { ok: true, changed: 1 };
+    }
     const patch = {
       wallet: { ...this.state.wallet },
       owned: new Set(this.state.owned),
@@ -34319,7 +34330,8 @@ var FakeServer = class {
     if (!canPull(this.state.wallet, banner, request.count, currentPity)) {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC7AC\uD654\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     }
-    const pulled = pull(banner, request.count, currentPity, this.random);
+    const forceTenUpgrade = request.count === 10 && this.developmentTools && this.state.serverJournal?.qaTenUpgrade === true;
+    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
@@ -34349,6 +34361,10 @@ var FakeServer = class {
     const tutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = nextTutorialStep(tutorial) === "pull" ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
     const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    if (forceTenUpgrade) {
+      const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
+      nextState.serverJournal = journal;
+    }
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;

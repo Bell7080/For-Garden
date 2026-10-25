@@ -61,14 +61,17 @@ const CHANCE_BEAT_MS = 1500;
 
 /**
  * 오르기 직전의 SR 카드 — 살짝 떨리며 금빛 마름모가 반짝인다(특별한 기회라는 낌새만 준다).
- * 이동은 `translate`로 줘서 에셋이 카드에 거는 `transform`(뒤집기)과 부딪히지 않는다.
+ * 이동은 `translate`로 줘서 에셋이 카드에 거는 `transform`(뒤집기)과 부딪히지 않고, 한 칸씩 **정수 픽셀**만
+ * 뛴다 — 소수 픽셀로 흔들면 카드 뒷면의 가는 빗금이 매 프레임 다시 샘플링되어 노이즈처럼 자글거린다.
+ * 빛은 `filter`가 아니라 **덧댄 후광의 투명도**만 움직인다(3D 카드에 걸린 필터 애니메이션은 매 프레임 다시 래스터화된다).
  */
 const TEASE_CSS = `
-@keyframes rc-tease-shake{0%,100%{translate:0 0}20%{translate:-1.5px .8px}40%{translate:1.4px -.9px}60%{translate:-1px -1px}80%{translate:1.2px .6px}}
-@keyframes rc-tease-glow{0%,100%{filter:brightness(1) drop-shadow(0 0 0 rgba(255,194,71,0))}50%{filter:brightness(1.18) drop-shadow(0 0 14px rgba(255,194,71,.75))}}
+@keyframes rc-tease-shake{0%,100%{translate:0 0}20%{translate:-2px 1px}40%{translate:2px -1px}60%{translate:-1px -1px}80%{translate:1px 1px}}
+@keyframes rc-tease-halo{0%,100%{opacity:0}50%{opacity:1}}
 @keyframes rc-tease-glint{0%,100%{opacity:0;scale:.3}50%{opacity:1;scale:1}}
-.archive-card.rc-tease{animation:rc-tease-shake .09s linear infinite,rc-tease-glow .7s ease-in-out infinite}
-.archive-card.rc-tease.rc-calm{animation:rc-tease-glow 1.4s ease-in-out infinite}
+.archive-card.rc-tease{animation:rc-tease-shake .36s steps(1,end) infinite}
+.rc-halo{position:absolute;inset:0;pointer-events:none;border-radius:1.7cqw;box-shadow:0 0 18px 4px rgba(255,194,71,.75);opacity:0;animation:rc-tease-halo .7s ease-in-out infinite}
+.archive-card.rc-calm .rc-halo{animation-duration:1.4s}
 .rc-glint{position:absolute;width:14px;height:14px;background:#ffe9a8;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);pointer-events:none;animation:rc-tease-glint .8s ease-in-out infinite}
 `;
 
@@ -426,6 +429,9 @@ export class ResearchCinematic {
       document.head.appendChild(style);
     }
     card.classList.add("rc-tease");
+    const halo = document.createElement("span");
+    halo.className = "rc-halo";
+    card.appendChild(halo);
     if (this.reduced) card.classList.add("rc-calm");
     else {
       [[18, 14, 0], [78, 30, .25], [34, 72, .5], [70, 82, .12]].forEach(([x, y, delay]) => {
@@ -442,7 +448,7 @@ export class ResearchCinematic {
   private untease(index: number): void {
     const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
     card?.classList.remove("rc-tease", "rc-calm");
-    card?.querySelectorAll(".rc-glint").forEach((glint) => glint.remove());
+    card?.querySelectorAll(".rc-glint, .rc-halo").forEach((glint) => glint.remove());
   }
 
   /** 연출이 끝나고 화면이 닫힐 때까지 기다린다. */

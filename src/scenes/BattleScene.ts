@@ -12,6 +12,7 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
 import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
+import { audioManager } from "../managers/AudioManager";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
@@ -1395,6 +1396,7 @@ export class BattleScene extends Phaser.Scene {
       // **쿵.** 쓰는 순간 그 카드가 한 번 눌렸다 올라온다 — 게이지가 비는 것만으로는 "썼다"가
       // 값의 변화로만 남고, 어느 칸에서 나갔는지가 화면에서 약하다.
       this.pressProfileCard(fighter.id);
+      audioManager?.playSfx("battle.ultimate");
       // 확대와 공격 모션을 동시에 시작해 확대를 기다리는 별도 턴처럼 보이지 않게 한다.
       // 스킵에서는 0ms 확대조차 만들지 않아 실제 발사만 아래에서 정확히 한 번 수행한다.
       const zoom = skipPresentation
@@ -2753,6 +2755,7 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    audioManager?.playSfx(phase === "victory" ? "battle.victory" : "battle.defeat");
     // 비동기 정산보다 먼저 아군 세 분류를 깊은 복사해 이후 state 사망 연출·HP 변경과 분리한다.
     const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,

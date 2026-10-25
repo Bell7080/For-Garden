@@ -29,6 +29,7 @@ import { CakeOperationScene } from "./scenes/CakeOperationScene";
 import { BountyScene } from "./scenes/BountyScene";
 import { EffectOverlayScene } from "./scenes/EffectOverlayScene";
 import { initializeAudioManager } from "./managers/AudioManager";
+import { BgmDirector } from "./managers/BgmDirector";
 import { InteractionScene } from "./scenes/InteractionScene";
 import { DuelScene } from "./scenes/DuelScene";
 import { PvpPreviewScene } from "./scenes/PvpPreviewScene";
@@ -117,3 +118,10 @@ if (debugPerfEnabled) {
 
 // Phaser Sound 생성과 브라우저 수명 주기 처리는 씬이 아니라 중앙 오디오 관리자에 연결한다.
 initializeAudioManager(game);
+
+// 배경음은 씬이 고르지 않는다 — 씬이 시작·재개될 때 `core/bgmPlan`의 표대로 감독이 곡을 바꾼다.
+// E2E(`test`)는 3~4MB 곡을 받느라 느려지지 않도록 켜지 않는다.
+{
+  const bgm = new BgmDirector(game, import.meta.env.MODE !== "test");
+  if (game.isBooted) bgm.attach(); else game.events.once(Phaser.Core.Events.READY, () => bgm.attach());
+}

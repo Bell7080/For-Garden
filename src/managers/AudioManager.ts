@@ -6,7 +6,10 @@ import { settingsManager, type SettingsManager } from "./SettingsManager";
 export type AudioBus = "music" | "sfx" | "ui" | "voice";
 
 /** 실제 에셋이 추가되기 전에도 호출부가 의미만 전달하도록 고정한 지원 사운드 목록이다. */
-export type AudioCue = "research.crack" | UiCue;
+export type AudioCue = "research.crack" | UiCue | SfxCue;
+
+/** 전투의 굵직한 순간(궁극기·승패)에 붙는 효과음이다. 씬이 `playSfx`로 의미만 넘긴다. */
+export type SfxCue = "battle.ultimate" | "battle.victory" | "battle.defeat";
 
 /** 버튼·팝업·탭처럼 화면 조작에 붙는 소리다. 씬이 고르지 않고 공용 UI 경계가 `playUi`로 부른다. */
 export type UiCue = "ui.click" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny";
@@ -19,6 +22,13 @@ export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]
   ["ui-tab", "audio/ui/ui-tab.mp3"],
   ["ui-confirm", "audio/ui/ui-confirm.mp3"],
   ["ui-deny", "audio/ui/ui-deny.mp3"],
+];
+
+/** 전투 효과음의 에셋 목록이다. **임시 시안**(ElevenLabs 생성음)이며 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다. */
+export const BATTLE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
+  ["battle-ultimate", "audio/battle/battle-ultimate.mp3"],
+  ["battle-victory", "audio/battle/battle-victory.mp3"],
+  ["battle-defeat", "audio/battle/battle-defeat.mp3"],
 ];
 
 /** Phaser 사운드를 테스트 대역으로 바꿀 수 있게 하는 최소 재생 인스턴스 계약이다. */
@@ -59,14 +69,19 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number }> = {
   "ui.tab": { key: "ui-tab", bus: "ui", gain: 0.6 },
   "ui.confirm": { key: "ui-confirm", bus: "ui", gain: 0.8 },
   "ui.deny": { key: "ui-deny", bus: "ui", gain: 0.8 },
+  "battle.ultimate": { key: "battle-ultimate", bus: "sfx", gain: 0.7 },
+  "battle.victory": { key: "battle-victory", bus: "sfx", gain: 0.9 },
+  "battle.defeat": { key: "battle-defeat", bus: "sfx", gain: 0.9 },
 };
 
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */
 export class AudioManager {
   private readonly sounds = new Map<ManagedSound, AudioBus>();
   private music?: ManagedSound;
-  /** UI 소리는 큐마다 사운드 하나를 재사용한다 — 연타하면 앞 소리를 끊고 다시 울려 인스턴스가 쌓이지 않는다. */
-  private readonly uiSounds = new Map<UiCue, ManagedSound>();
+  private musicKey?: string;
+  private musicGain = 1;
+  /** 한 번 울리는 소리(UI·전투)는 큐마다 사운드 하나를 재사용한다 — 연타하면 앞 소리를 끊고 다시 울려 인스턴스가 쌓이지 않는다. */
+  private readonly uiSounds = new Map<AudioCue, ManagedSound>();
   private hidden = false;
   private disposed = false;
   private readonly onSettings = (event: Event): void => this.applySettings((event as CustomEvent<GameSettings>).detail);
@@ -101,7 +116,12 @@ export class AudioManager {
   }
 
   /** 화면 조작 소리를 한 번 울린다. 씬 수명과 무관하며 에셋이 없거나 앱이 숨겨져 있으면 조용히 건너뛴다. */
-  playUi(cue: UiCue): boolean {
+  playUi(cue: UiCue): boolean { return this.playShared(cue); }
+
+  /** 전투의 굵직한 순간 소리를 한 번 울린다. 규칙은 `playUi`와 같다. */
+  playSfx(cue: SfxCue): boolean { return this.playShared(cue); }
+
+  private playShared(cue: AudioCue): boolean {
     const definition = CUES[cue];
     if (this.disposed || this.hidden || !this.backend.has(definition.key)) return false;
     let sound = this.uiSounds.get(cue);
@@ -115,14 +135,23 @@ export class AudioManager {
     return sound.play();
   }
 
-  /** 배경음을 짧게 교차 전환하며 음소거 중인 새 트랙도 0에서 시작시킨다. */
-  playMusic(key: string): boolean {
+  /** 지금 배경음으로 재생 중인(혹은 재생하려는) 트랙 키다. */
+  get currentMusicKey(): string | undefined { return this.musicKey; }
+
+  /**
+   * 배경음을 짧게 교차 전환하며 음소거 중인 새 트랙도 0에서 시작시킨다. 같은 트랙을 다시 부르면
+   * 처음부터 되감지 않고 그대로 둔다(화면이 바뀌어도 같은 곡이면 이어 흐른다). `gain`은 트랙별 크기 보정이다.
+   */
+  playMusic(key: string, gain = 1): boolean {
     if (this.disposed || !this.backend.has(key)) return false;
+    if (this.music && this.musicKey === key) return true;
     const previous = this.music;
     const next = this.backend.create(key, true);
     this.music = next;
+    this.musicKey = key;
+    this.musicGain = gain;
     this.sounds.set(next, "music");
-    const target = this.hidden ? 0 : this.volume("music");
+    const target = this.hidden ? 0 : this.volume("music") * gain;
     next.setVolume(0);
     next.play();
     if (this.hidden) next.pause(); else this.backend.fade(next, target, this.fadeMs);
@@ -169,6 +198,7 @@ export class AudioManager {
 
   /** UI 소리는 큐별 보정이 있어 설정이 바뀌어도 그 비율을 지킨다. */
   private gainOf(sound: ManagedSound): number {
+    if (sound === this.music) return this.musicGain;
     for (const [cue, ui] of this.uiSounds) if (ui === sound) return CUES[cue].gain ?? 1;
     return 1;
   }
@@ -179,7 +209,7 @@ export class AudioManager {
     sound.stop();
     sound.destroy();
     this.sounds.delete(sound);
-    if (this.music === sound) this.music = undefined;
+    if (this.music === sound) { this.music = undefined; this.musicKey = undefined; }
   }
 }
 

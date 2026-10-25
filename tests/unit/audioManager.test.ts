@@ -120,3 +120,24 @@ describe("AudioManager UI 소리", () => {
     expect(backend.sounds).toHaveLength(0);
   });
 });
+
+describe("AudioManager 배경음 이어 흐르기", () => {
+  it("같은 트랙을 다시 부르면 되감지 않고, 다른 트랙은 트랙별 보정으로 교차한다", () => {
+    const { audio, backend } = setup();
+    expect(audio.playMusic("bgm-a", 0.5)).toBe(true);
+    expect(audio.playMusic("bgm-a", 0.5)).toBe(true);
+    expect(backend.sounds).toHaveLength(1);
+    expect(audio.currentMusicKey).toBe("bgm-a");
+    expect(backend.sounds[0].volume).toBeCloseTo(0.8 * 0.5 * 1);
+    audio.playMusic("bgm-b");
+    expect(backend.sounds).toHaveLength(2);
+    expect(audio.currentMusicKey).toBe("bgm-b");
+  });
+
+  it("전투 효과음도 큐마다 하나를 재사용한다", () => {
+    const { audio, backend } = setup();
+    audio.playSfx("battle.ultimate");
+    audio.playSfx("battle.ultimate");
+    expect(backend.sounds).toHaveLength(1);
+  });
+});

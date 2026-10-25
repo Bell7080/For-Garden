@@ -211,18 +211,30 @@ def mean_luma(piece: Image.Image) -> float:
 
 
 def match_tone(piece: Image.Image, target: float) -> Image.Image:
-    """평균 밝기가 target이 되도록 곱셈으로 올린다. 색조와 명암 대비는 그대로라 뿌옇게 뜨지 않는다."""
-    current = mean_luma(piece)
-    gain = target / current if current else 1.0
-    r, g, b, a = piece.split()
-    table = [min(255, round(v * gain)) for v in range(256)]
-    return Image.merge("RGBA", (r.point(table), g.point(table), b.point(table), a))
+    """평균 밝기가 target이 되도록 곱셈으로 올린다. 색조와 명암 대비는 그대로라 뿌옇게 뜨지 않는다.
+
+    밝은 면이 255에서 잘려 한 번에는 못 미치므로 몇 번 되풀이해 다가간다.
+    """
+    result = piece
+    for _ in range(6):
+        current = mean_luma(result)
+        if not current or abs(current - target) < 0.5:
+            break
+        gain = target / current
+        r, g, b, a = result.split()
+        table = [min(255, round(v * gain)) for v in range(256)]
+        result = Image.merge("RGBA", (r.point(table), g.point(table), b.point(table), a))
+    return result
 
 
 def balance_rune_pieces(pieces: list[Image.Image]) -> list[Image.Image]:
-    """아래 가운데 조각(2번)은 하트의 그림자 면이라 어둡게 구워진다. 위 두 조각의 평균 밝기에 맞춘다."""
-    target = (mean_luma(pieces[0]) + mean_luma(pieces[1])) / 2
-    return [pieces[0], pieces[1], match_tone(pieces[2], target)]
+    """셋의 평균 밝기를 가장 밝게 구워지는 1번(왼쪽 위) 조각에 맞춘다.
+
+    오른쪽 위·아래 가운데는 원본 하트의 그림자 면이라 어둡게 구워진다. 한 하트에서 조각마다 톤이 다르면
+    한 장씩 놓인 칸에서 어두운 조각만 탁해 보인다.
+    """
+    target = mean_luma(pieces[0])
+    return [pieces[0], match_tone(pieces[1], target), match_tone(pieces[2], target)]
 
 
 def socket(piece: Image.Image) -> Image.Image:

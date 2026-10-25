@@ -84,6 +84,14 @@ describe("보장 우선순위와 천장", () => {
     expect(stay.pity.pullsSinceSsr).toBe(13);
   });
 
+  it("QA 강제 옵션은 10연 마지막 칸을 난수 없이 SSR 승급으로 굳힌다", () => {
+    const forced = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.8, { forceTenUpgrade: true });
+    expect(forced.slots[9]).toMatchObject({ kind: "relic", rarity: "SSR", upgraded: true });
+    // 단일 연구에는 걸리지 않는다.
+    const single = pull({ ...banner, highestRarityGuarantee: 100 }, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.8, { forceTenUpgrade: true });
+    expect(single.slots[0]).not.toHaveProperty("upgraded");
+  });
+
   it("상승 판정은 10연 마지막 슬롯이 SR일 때만 굴린다", () => {
     let calls = 0;
     // 천장이 SSR을 강제하면 굴리지 않는다: 판정 난수 없이 픽업·선택 2회뿐이다.

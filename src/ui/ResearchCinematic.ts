@@ -56,8 +56,8 @@ interface CinematicInstance {
 }
 
 /** 올려 칠하는 카드의 등급색. 에셋의 등급표(`ft`)와 같은 값이다. */
-/** SR로 열린 카드가 SSR로 오르기 전 잠잠히 머무는 실제 시간(ms). 씬 시계는 느린 기기에서 밀리므로 쓰지 않는다. */
-const SR_BEAT_MS = 1800;
+/** 찬스 카드가 떨리며 SSR로 격상되기 전까지의 실제 시간(ms). 씬 시계는 느린 기기에서 밀리므로 쓰지 않는다. */
+const CHANCE_BEAT_MS = 1500;
 
 /**
  * 오르기 직전의 SR 카드 — 살짝 떨리며 금빛 마름모가 반짝인다(특별한 기회라는 낌새만 준다).
@@ -113,11 +113,10 @@ export interface ResearchCinematicOptions {
    */
   introduceSlots?: readonly number[];
   /**
-   * 카드가 **뒤집힌 뒤에** 소개 장면을 돌릴 칸. 10연 마지막 칸이 SR로 열렸다가 SSR로 오르는
-   * 깜짝에 쓴다 — SR로 잠잠히 열린 카드 위로 SSR 전조가 덮치고, 돌아오면 카드가 금빛이 되어 있다.
-   * 건너뛰어도 결산 격자에 SR로 한 박자 머문 뒤 같은 장면이 돈다.
+   * 찬스로 SSR이 된 칸. SR 카드 뒷면으로 서 있다가 뒤집히기 직전에 **뒤집지 않고** 떨리며 반짝이다
+   * SSR로 격상되고, 곧바로 원래 SSR 소개(전조 → 목소리 → 무대)로 넘어간다. 소개는 `introduce`가 돈다.
    */
-  afterFlipSlots?: readonly number[];
+  chanceSlots?: readonly number[];
 }
 
 let assetPromise: Promise<CinematicBundle> | undefined;
@@ -288,7 +287,7 @@ export class ResearchCinematic {
   private holdHidden = false;
   private readonly introduce?: (index: number) => Promise<void>;
   private readonly introduceSlots: ReadonlySet<number>;
-  private readonly afterFlipSlots: ReadonlySet<number>;
+  private readonly chanceSlots: ReadonlySet<number>;
   private readonly reduced: boolean;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
@@ -298,7 +297,7 @@ export class ResearchCinematic {
     this.introduce = options.introduce;
     this.introduceSlots = new Set(options.introduceSlots
       ?? options.art.flatMap((slot, index) => (slot.frame === "portrait" ? [index] : [])));
-    this.afterFlipSlots = new Set(options.afterFlipSlots ?? []);
+    this.chanceSlots = new Set(options.chanceSlots ?? []);
     this.reduced = options.reducedMotion ?? false;
     bundle.text.gray = options.text.gray;
     bundle.text.dna = options.mileage;
@@ -476,24 +475,12 @@ export class ResearchCinematic {
     this.holdHidden = true;
     try {
       for (const index of this.pendingIntroductions()) {
+        // 건너뛰어도 찬스 칸은 SSR로 격상된 채 원래 SSR 소개를 돈다.
+        if (this.chanceSlots.has(index)) this.promoteCard(index, "SSR");
         await this.runIntroduction(index);
         if (this.closed) return;
       }
       this.instance.skipToResult();
-      // 올라간 칸은 결산 격자에 SR로 한 박자 잠잠히 머문 뒤 SSR로 오른다 — 건너뛰어도 깜짝은 남는다.
-      const upgrades = [...this.afterFlipSlots].filter((index) => !this.introduced.has(index));
-      if (upgrades.length > 0 && this.introduce) {
-        this.introducing = true;
-        this.root.style.opacity = "";
-        this.root.style.pointerEvents = "none";
-        for (const index of upgrades) this.teaseCard(index);
-        await new Promise<void>((resolve) => window.setTimeout(resolve, SR_BEAT_MS));
-        this.introducing = false;
-        for (const index of upgrades) {
-          if (this.closed) return;
-          await this.runIntroduction(index);
-        }
-      }
     } finally {
       this.holdHidden = false;
       if (!this.closed) {
@@ -619,7 +606,7 @@ export class ResearchCinematic {
     if (this.introducing) return;
     if (this.phase === "result") { this.closeResult(); return; }
     const next = this.instance.peekReveal?.();
-    if (next?.step === "flip" && this.introduceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
+    if (next?.step === "flip" && this.introduceSlots.has(next.index) && !this.chanceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
       // 새로 만난 렐릭 — 카드를 뒤집기 **전에** 먼저 소개하고, 돌아와서 뒤집는다.
       void this.runIntroduction(next.index).then(() => {
         if (this.closed) return;
@@ -628,12 +615,20 @@ export class ResearchCinematic {
       });
       return;
     }
-    if (next?.step === "next" && this.afterFlipSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
-      // SR로 열린 카드를 한 박자 머물게 둔 뒤, 원래 SSR 소개가 덮치고 돌아오면 카드가 SSR이다.
+    if (next?.step === "flip" && this.chanceSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
+      // 찬스 칸 — 뒤집지 않고 떨며 반짝이다 SSR로 격상되고, 원래 SSR 소개로 넘어간다.
       this.introducing = true;
       this.teaseCard(next.index);
-      void new Promise<void>((resolve) => window.setTimeout(resolve, SR_BEAT_MS))
-        .then(() => { this.introducing = false; return this.closed ? undefined : this.runIntroduction(next.index); });
+      void new Promise<void>((resolve) => window.setTimeout(resolve, CHANCE_BEAT_MS)).then(() => {
+        this.introducing = false;
+        if (this.closed) return undefined;
+        this.promoteCard(next.index, "SSR");
+        return this.runIntroduction(next.index).then(() => {
+          if (this.closed) return;
+          this.instance.advance();
+          this.scheduleShatter();
+        });
+      });
       return;
     }
     this.instance.advance();

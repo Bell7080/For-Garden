@@ -286,6 +286,8 @@ export function pull(
   count: number,
   currentPity: GachaPityState,
   rng: () => number,
+  /** QA가 다음 10연의 마지막 칸을 승급 찬스로 굳힌다. 일반 빌드는 넘기지 않는다. */
+  options: { forceTenUpgrade?: boolean } = {},
 ): PullResult {
   const relicIds: string[] = [];
   const rarities: RelicRarity[] = [];
@@ -299,7 +301,8 @@ export function pull(
     if (!pityForcesSsr && count === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
     // 마지막 슬롯이 SR로 끝났다면 한 번 더 SSR로 오를 기회가 있다. 난수는 SR일 때만 하나 더 쓴다.
     let upgraded = false;
-    if (!pityForcesSsr && count === 10 && slot === 9 && grade === "SR" && rng() < TEN_PULL_SR_UPGRADE_CHANCE) {
+    if (!pityForcesSsr && count === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
+    if (!pityForcesSsr && count === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
       grade = "SSR";
       upgraded = true;
     }

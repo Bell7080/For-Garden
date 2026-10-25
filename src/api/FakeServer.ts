@@ -2063,7 +2063,7 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, currentPity, this.random);
+    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade: request.count === 10 && takeQaTenUpgrade() });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
@@ -4249,6 +4249,15 @@ export function missionNoticeScore(next: Session, now: Date): number {
 function qaRandom(): number {
   const hook = (globalThis as { __PF_QA_RANDOM?: () => number }).__PF_QA_RANDOM;
   return hook ? hook() : Math.random();
+}
+
+/** QA 디버그 도구가 걸어 둔 「다음 10연 승급 찬스」를 한 번만 꺼낸다. 일반 빌드에는 걸 길이 없다. */
+function takeQaTenUpgrade(): boolean {
+  if (!QA_TOOLS_ENABLED) return false;
+  const flags = globalThis as { __PF_QA_TEN_UPGRADE?: boolean };
+  const armed = flags.__PF_QA_TEN_UPGRADE === true;
+  flags.__PF_QA_TEN_UPGRADE = false;
+  return armed;
 }
 
 const localGameApi = new FakeServer();

@@ -90,6 +90,10 @@ const MENU: readonly { id: string; labelKey: TextKey; open: (host: Host) => void
   { id: "relicFragments", labelKey: "settings.debug.menu.relicFragments", open: (host) => pickRelic(host, "owned", null, (id) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50, 100, 500].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "relicFragments", relicId: id, amount: Number(amount) }))) },
   { id: "breakthroughSet", labelKey: "settings.debug.menu.breakthroughSet", open: (host) => pickRelic(host, "owned", null, (id) => void run(host, { kind: "breakthroughSet", relicId: id })) },
   { id: "universalFragments", labelKey: "settings.debug.menu.universalFragments", open: (host) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "universalFragments", amount: Number(amount) })) },
+  { id: "tenUpgrade", labelKey: "settings.debug.menu.tenUpgrade", open: (host) => {
+    (globalThis as { __PF_QA_TEN_UPGRADE?: boolean }).__PF_QA_TEN_UPGRADE = true;
+    host.popups.confirm({ title: t("settings.debug.title"), message: t("settings.debug.tenUpgradeArmed"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+  } },
   { id: "unlockStories", labelKey: "settings.debug.menu.unlockStories", open: (host) => void run(host, { kind: "unlockStories" }) },
 ];
 

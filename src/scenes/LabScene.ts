@@ -572,14 +572,13 @@ export class LabScene extends Phaser.Scene {
       art,
       reducedMotion: preferences.accessibility.reduceMotion,
       mileage,
-      // 올라간 칸은 뒤집히기 **전**이 아니라 SR로 뒤집힌 **뒤에** 원래 SSR 소개(전조 → 목소리 → 무대)를 돈다.
-      introduceSlots: showcase.flatMap((relicId, index) => (relicId && index !== upgradeSlot ? [index] : [])),
-      afterFlipSlots: upgradeSlot !== undefined && showcase[upgradeSlot] ? [upgradeSlot] : [],
+      introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
+      // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.
+      chanceSlots: upgradeSlot !== undefined ? [upgradeSlot] : [],
       introduce: async (index) => {
         const relicId = showcase[index];
         if (!relicId || !this.presentation.isCurrent(request)) return;
         await this.introduceRelic(relicId);
-        if (index === upgradeSlot) cinematic?.promoteCard(index, "SSR");
       },
       text: {
         skip: t("lab.cinematic.skip"),

@@ -23,6 +23,7 @@ export const RAID_DE = {
   "raid.settle.done": "Belohnungen erhalten",
   "raid.settle.ready": "Erhaltene Belohnungen",
   "raid.settle.expected": "Erwartete Belohnungen",
+  "raid.settle.none": "Kein Beitrag",
   "raid.settle.max": "Maximale Belohnungen",
   "raid.settle.contribution": "Beitrag",
   "raid.settle.rank": "Platz {rank}",

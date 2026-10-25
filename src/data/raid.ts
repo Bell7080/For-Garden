@@ -212,3 +212,9 @@ export const RAID_MOCK_PARTICIPANTS = [
 
 // 단계 이름은 화면에 서는 정적 콘텐츠라 다른 언어만 개체 ID로 덮어쓴다.
 RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
+
+/** 정산 보상을 화면에 세우는 순서 — 토벌 증표가 먼저, 젬이 그 뒤다. 서버의 지급 순서(`sortByRewardPriority`)와 무관하다. */
+export function raidSettlementDisplayOrder<T extends { currency: string }>(settlement: readonly T[]): T[] {
+  const rank = (currency: string): number => (currency === "raidSigil" ? 0 : 1);
+  return settlement.map((reward, index) => ({ reward, index })).sort((a, b) => rank(a.reward.currency) - rank(b.reward.currency) || a.index - b.index).map(({ reward }) => reward);
+}

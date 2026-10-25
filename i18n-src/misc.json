@@ -1119,7 +1119,7 @@
 "Se eliminarán {count} correos leídos.\nLos correos eliminados no se pueden recuperar.",
 "Excluir {count} correios lidos.\nCorreios excluídos não podem ser recuperados.",
 "{count} gelesene Nachrichten löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
-"Будет удалено прочитанных писем: {count}.\nУдалённые письма восстановить нельзя."
+"Будет удалено прочитанных сообщений почты: {count}.\nУдалённые сообщения восстановить нельзя."
 ],
 "mail.delete.confirm": [
 "删除",

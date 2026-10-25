@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidRunStamina, type RaidDifficulty } from "../data/raid";
+import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, raidRunStamina, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
 import { session } from "../state/session";
 import { getRelic } from "../data/relics";
 import { setDebugRaidStage, setDebugScene } from "../debug";
@@ -613,27 +613,28 @@ export class RaidScene extends Phaser.Scene {
    */
   private openRewardPopup(raid: RaidDto): void {
     const width = 780;
+    const participated = raid.settlement.length > 0;
+    const shown = raidSettlementDisplayOrder(raid.settlement);
     const rows = [
       [t("raid.contribution.mine"), raid.myDamage.toLocaleString()],
       [t("raid.reward.progress"), t("raid.world.percent", { percent: raid.totalHp > 0 ? Math.floor(raid.dealtDamage / raid.totalHp * 100) : 0 })],
       [t("raid.reward.kill"), t(raid.defeated ? "raid.reward.killYes" : raid.status === "completed" ? "raid.reward.killFailed" : "raid.reward.killNo")],
     ] as const;
     const rowHeight = 64;
-    const frame = 132;
+    const frame = participated ? 132 : 0;
     const height = 200 + frame + 40 + rows.length * rowHeight + 110;
     this.popups.open({ width, height, title: t("raid.reward.title"), dim: true, closeOnBackdrop: true }, (body) => {
       let y = -height / 2 + 110;
-      const participated = raid.settlement.length > 0;
-      const max = RAID_DIFFICULTY[raid.difficulty].settlement;
-      const amount = participated ? raid.settlement[0].amount : max.gems;
-      const label = raid.settled ? t("raid.settle.done") : !participated ? t("raid.settle.max")
+      // 기여가 없으면 최대 보상 대신 아이콘 없이 「기여 없음」만 세운다.
+      const label = !participated ? t("raid.settle.none") : raid.settled ? t("raid.settle.done")
         : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
-      body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+      body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: participated ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       y += 30 + frame / 2;
-      const shown = participated ? raid.settlement : [{ currency: "gems" as const, amount }];
-      shown.forEach((reward, index) => {
-        addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
-      });
+      if (participated) {
+        shown.forEach((reward, index) => {
+          addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
+        });
+      }
       y += frame / 2 + 60;
       rows.forEach(([name, value]) => {
         body.add(this.add.text(-width / 2 + 90, y, name, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));

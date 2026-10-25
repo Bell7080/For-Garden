@@ -23,6 +23,7 @@ export const RAID_ID = {
   "raid.settle.done": "Hadiah diklaim",
   "raid.settle.ready": "Hadiah diperoleh",
   "raid.settle.expected": "Perkiraan hadiah",
+  "raid.settle.none": "Belum berkontribusi",
   "raid.settle.max": "Hadiah maksimal",
   "raid.settle.contribution": "Kontribusi",
   "raid.settle.rank": "Peringkat {rank}",

@@ -23,6 +23,7 @@ export const RAID_RU = {
   "raid.settle.done": "Награды получены",
   "raid.settle.ready": "Полученные награды",
   "raid.settle.expected": "Ожидаемые награды",
+  "raid.settle.none": "Нет вклада",
   "raid.settle.max": "Максимальные награды",
   "raid.settle.contribution": "Вклад",
   "raid.settle.rank": "{rank}-е место",

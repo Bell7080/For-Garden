@@ -23,6 +23,7 @@ export const RAID_TH = {
   "raid.settle.done": "รับรางวัลแล้ว",
   "raid.settle.ready": "รางวัลที่ได้รับ",
   "raid.settle.expected": "รางวัลคาดการณ์",
+  "raid.settle.none": "ไม่มีส่วนร่วม",
   "raid.settle.max": "รางวัลสูงสุด",
   "raid.settle.contribution": "การมีส่วนร่วม",
   "raid.settle.rank": "อันดับ {rank}",

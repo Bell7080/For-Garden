@@ -152,7 +152,7 @@ export const MISC_RU = {
   "mail.attachments": "Вложения {count}",
   "mail.readAll": "Прочитать всё",
   "mail.delete.title": "Удалить прочитанную почту",
-  "mail.delete.message": "Будет удалено прочитанных писем: {count}.\nУдалённые письма восстановить нельзя.",
+  "mail.delete.message": "Будет удалено прочитанных сообщений почты: {count}.\nУдалённые сообщения восстановить нельзя.",
   "mail.delete.confirm": "Удалить",
   "mail.daysLeft": "Осталось {days} д.",
   "mail.hoursLeft": "Осталось {hours}:{minutes}",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deathClockClosesBySeconds } from "../../src/core/battleClock";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina } from "../../src/data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina, raidSettlementDisplayOrder } from "../../src/data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
@@ -627,5 +627,12 @@ describe("레이드 1차 판 보상", () => {
     expect(raidRunRewards("hard", 22_000)).toEqual({ raidSigil: 8, gem: 15 });
     expect(raidRunRewards("hard", 99_000)).toEqual({ raidSigil: 8, gem: 15 });
     expect(raidRunRewards("hard", 11_000).gem).toBeLessThan(15);
+  });
+});
+
+describe("레이드 정산 표시 순서", () => {
+  it("토벌 증표를 젬보다 먼저 세운다", () => {
+    const shown = raidSettlementDisplayOrder([{ currency: "gems", amount: 50 }, { currency: "raidSigil", amount: 12 }]);
+    expect(shown.map((reward) => reward.currency)).toEqual(["raidSigil", "gems"]);
   });
 });

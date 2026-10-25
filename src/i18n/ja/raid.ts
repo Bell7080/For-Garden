@@ -23,6 +23,7 @@ export const RAID_JA = {
   "raid.settle.done": "報酬受取完了",
   "raid.settle.ready": "獲得報酬",
   "raid.settle.expected": "予想報酬",
+  "raid.settle.none": "貢献なし",
   "raid.settle.max": "最大報酬",
   "raid.settle.contribution": "貢献度",
   "raid.settle.rank": "{rank}位",

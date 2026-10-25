@@ -92,4 +92,8 @@ export const DUEL_RU = {
   "rewardTable.rules.expedition": "Итоги каждый понедельник 00:00 UTC · Награды по почте\nНужен результат экспедиции за эту неделю.",
   "rewardTable.rules.arena": "Итоги каждый понедельник 00:00 UTC · Награды по почте\nНаграда за ранг на момент итогов плюс бонус за место. Нужен рейтинговый бой за неделю.",
   "ranking.mine": "Моё место",
+  "duel.defense.title": "Защита соперника",
+  "duel.defense.totalPower": "Общая боевая мощь",
+  "duel.defense.blind": "Скрыто: {count}",
+  "duel.defense.sortie": "В бой",
 } as const;

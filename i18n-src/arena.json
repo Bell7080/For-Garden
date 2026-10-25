@@ -299,56 +299,6 @@
     "Aufstellung bestätigen",
     "Подтвердить состав"
   ],
-  "arena.rules.bannerBan": [
-    "双方各禁用1名",
-    "แบนฝ่ายละ 1",
-    "Mỗi bên cấm 1",
-    "Masing-masing 1 ban",
-    "1 veto por jugador",
-    "1 banimento por jogador",
-    "Je 1 Bann",
-    "По 1 запрету"
-  ],
-  "arena.rules.bannerNoBan": [
-    "不禁用",
-    "ไม่แบน",
-    "Không cấm",
-    "Tanpa ban",
-    "Sin vetos",
-    "Sem banimentos",
-    "Keine Banns",
-    "Без запретов"
-  ],
-  "arena.rules.openAlternate": [
-    "交替公开布阵",
-    "วางสลับแบบเปิดเผย",
-    "Bố trí công khai luân phiên",
-    "Penempatan terbuka bergiliran",
-    "Despliegue abierto alterno",
-    "Posicionamento aberto alternado",
-    "Abwechselnde offene Aufstellung",
-    "Поочерёдная открытая расстановка"
-  ],
-  "arena.rules.bannerHidden": [
-    "隐藏布阵",
-    "วางแบบปกปิด",
-    "Bố trí ẩn",
-    "Penempatan tersembunyi",
-    "Despliegue oculto",
-    "Posicionamento oculto",
-    "Verdeckte Aufstellung",
-    "Скрытая расстановка"
-  ],
-  "arena.invite.summary": [
-    "{p0} · {p1} · 友谊赛",
-    "{p0} · {p1} · กระชับมิตร",
-    "{p0} · {p1} · Giao hữu",
-    "{p0} · {p1} · Persahabatan",
-    "{p0} · {p1} · Amistoso",
-    "{p0} · {p1} · Amistoso",
-    "{p0} · {p1} · Freundschaft",
-    "{p0} · {p1} · Дружеский бой"
-  ],
   "arena.invite.decline": [
     "拒绝",
     "ปฏิเสธ",
@@ -379,16 +329,6 @@
     "{p0} · Freundschaft",
     "{p0} · Дружеский бой"
   ],
-  "arena.friend.practice": [
-    "决斗场 · 防守阵容模拟战",
-    "ลานประลอง · จำลองสู้ทีมป้องกัน",
-    "Đấu tay đôi · tập đấu đội phòng thủ",
-    "Duel · latihan melawan pertahanan",
-    "Duelo · práctica contra defensa",
-    "Duelo · treino contra defesa",
-    "Duell · Verteidigungstraining",
-    "Дуэль · тренировка против защиты"
-  ],
   "arena.friend.free": [
     "不消耗积分或挑战券",
     "ไม่ใช้คะแนนหรือตั๋ว",
@@ -398,16 +338,6 @@
     "Sem gasto de pontos ou entradas",
     "Keine Wertungs- oder Ticketkosten",
     "Без расхода рейтинга и билетов"
-  ],
-  "arena.friend.live": [
-    "竞技场 · 实时对战邀请",
-    "อารีนา · คำเชิญต่อสู้สด",
-    "Đấu trường · lời mời trực tiếp",
-    "Arena · undangan langsung",
-    "Arena · invitación en directo",
-    "Arena · convite ao vivo",
-    "Arena · Live-Einladung",
-    "Арена · приглашение в реальном времени"
   ],
   "arena.rules.oneEach": [
     "双方各1名",
@@ -428,16 +358,6 @@
     "Desativado",
     "Aus",
     "Выкл."
-  ],
-  "arena.rules.bans": [
-    "禁用：{p0}",
-    "การแบน: {p0}",
-    "Cấm: {p0}",
-    "Ban: {p0}",
-    "Vetos: {p0}",
-    "Banimentos: {p0}",
-    "Banns: {p0}",
-    "Запреты: {p0}"
   ],
   "arena.rules.first": [
     "先手",
@@ -468,46 +388,6 @@
     "Aleatório",
     "Zufällig",
     "Случайно"
-  ],
-  "arena.rules.requesterOrder": [
-    "发起者的选择顺序：{p0}",
-    "ลำดับของผู้เชิญ: {p0}",
-    "Thứ tự người mời: {p0}",
-    "Giliran pengundang: {p0}",
-    "Turno del solicitante: {p0}",
-    "Ordem de quem convidou: {p0}",
-    "Zugfolge des Einladenden: {p0}",
-    "Ход отправителя: {p0}"
-  ],
-  "arena.rules.alternateOption": [
-    "交替公开布阵",
-    "วางสลับแบบเปิดเผย",
-    "Bố trí công khai luân phiên",
-    "Penempatan terbuka bergiliran",
-    "Despliegue abierto alterno",
-    "Posicionamento aberto alternado",
-    "Abwechselnde offene Aufstellung",
-    "Поочерёдная открытая расстановка"
-  ],
-  "arena.rules.hiddenOption": [
-    "同时隐藏布阵",
-    "วางพร้อมกันแบบปกปิด",
-    "Bố trí ẩn đồng thời",
-    "Penempatan tersembunyi bersamaan",
-    "Despliegue oculto simultáneo",
-    "Posicionamento oculto simultâneo",
-    "Gleichzeitig verdeckt aufstellen",
-    "Одновременная скрытая расстановка"
-  ],
-  "arena.rules.placement": [
-    "布阵方式：{p0}",
-    "รูปแบบการวาง: {p0}",
-    "Cách bố trí: {p0}",
-    "Penempatan: {p0}",
-    "Despliegue: {p0}",
-    "Posicionamento: {p0}",
-    "Aufstellung: {p0}",
-    "Расстановка: {p0}"
   ],
   "arena.invite.send": [
     "发送竞技场邀请",
@@ -1008,5 +888,275 @@
     "Bônus de sequência +{bonus} RP",
     "Serienbonus +{bonus} RP",
     "Бонус серии +{bonus} RP"
+  ],
+  "arena.friend.practiceTitle": [
+    "决斗场模拟战",
+    "ซ้อมดวล",
+    "Đấu tập",
+    "Latihan Duel",
+    "Práctica de duelo",
+    "Treino de duelo",
+    "Duell-Training",
+    "Тренировочная дуэль"
+  ],
+  "arena.friend.practiceStatus": [
+    "与{name}的防守队练习对战",
+    "ซ้อมกับทีมป้องกันของ {name}",
+    "Đấu tập với đội phòng thủ của {name}",
+    "Berlatih melawan tim bertahan {name}",
+    "Practica contra la defensa de {name}",
+    "Treine contra a defesa de {name}",
+    "Übe gegen {name}s Verteidigung",
+    "Тренировка против защиты {name}"
+  ],
+  "arena.friend.liveTitle": [
+    "竞技场对战邀请",
+    "ท้าดวลอารีนา",
+    "Thách đấu Đấu trường",
+    "Tantangan Arena",
+    "Desafío de arena",
+    "Desafio de arena",
+    "Arena-Herausforderung",
+    "Вызов на арену"
+  ],
+  "arena.friend.liveStatus": [
+    "设定规则并发起实时对战",
+    "กำหนดกติกาแล้วส่งคำขอดวลสด",
+    "Đặt luật và gửi lời mời đấu trực tiếp",
+    "Atur aturan dan kirim ajakan tanding langsung",
+    "Elige las reglas y envía una partida en vivo",
+    "Defina as regras e envie uma partida ao vivo",
+    "Regeln festlegen und Live-Duell anfragen",
+    "Задайте правила и отправьте вызов"
+  ],
+  "arena.setup.title": [
+    "竞技场设置",
+    "ตั้งค่าอารีนา",
+    "Thiết lập Đấu trường",
+    "Pengaturan Arena",
+    "Ajustes de arena",
+    "Ajustes da arena",
+    "Arena-Einstellungen",
+    "Настройки арены"
+  ],
+  "arena.setup.ban": [
+    "禁用",
+    "แบน",
+    "Cấm",
+    "Larangan",
+    "Vetos",
+    "Banimentos",
+    "Bans",
+    "Баны"
+  ],
+  "arena.setup.ban.on": [
+    "双方各秘密禁用对方1名遗物",
+    "ต่างฝ่ายแบนเรลิกของอีกฝ่าย 1 ตัวแบบลับ",
+    "Mỗi bên bí mật cấm 1 di vật của đối thủ",
+    "Tiap pihak diam-diam melarang 1 relik lawan",
+    "Cada lado veta en secreto una reliquia rival",
+    "Cada lado bane em segredo uma relíquia rival",
+    "Jede Seite bannt verdeckt ein gegnerisches Relikt",
+    "Каждый тайно банит один Реликт соперника"
+  ],
+  "arena.setup.ban.off": [
+    "不禁用,直接布阵",
+    "ไม่มีแบน จัดวางทันที",
+    "Không cấm, vào xếp đội ngay",
+    "Tanpa larangan, langsung penempatan",
+    "Sin vetos, directo a la colocación",
+    "Sem banimentos, direto ao posicionamento",
+    "Keine Bans, direkt zur Aufstellung",
+    "Без банов, сразу расстановка"
+  ],
+  "arena.setup.order": [
+    "先手顺序",
+    "ลำดับการเลือก",
+    "Thứ tự chọn",
+    "Urutan Memilih",
+    "Orden de elección",
+    "Ordem de escolha",
+    "Wahlreihenfolge",
+    "Порядок выбора"
+  ],
+  "arena.setup.order.first": [
+    "我方先选",
+    "คุณเลือกก่อน",
+    "Bạn chọn trước",
+    "Kamu memilih duluan",
+    "Eliges primero",
+    "Você escolhe primeiro",
+    "Du wählst zuerst",
+    "Вы выбираете первым"
+  ],
+  "arena.setup.order.second": [
+    "对方先选",
+    "คู่แข่งเลือกก่อน",
+    "Đối thủ chọn trước",
+    "Lawan memilih duluan",
+    "El rival elige primero",
+    "O rival escolhe primeiro",
+    "Der Gegner wählt zuerst",
+    "Соперник выбирает первым"
+  ],
+  "arena.setup.order.random": [
+    "随机决定先手",
+    "สุ่มว่าใครเลือกก่อน",
+    "Chọn trước ngẫu nhiên",
+    "Giliran pertama diacak",
+    "El primer turno es al azar",
+    "O primeiro turno é aleatório",
+    "Erste Wahl wird ausgelost",
+    "Первый ход случайный"
+  ],
+  "arena.setup.placement": [
+    "布阵方式",
+    "การจัดวาง",
+    "Cách xếp",
+    "Penempatan",
+    "Colocación",
+    "Posicionamento",
+    "Aufstellung",
+    "Расстановка"
+  ],
+  "arena.setup.placement.alternateShort": [
+    "交替公开",
+    "สลับเปิด",
+    "Luân phiên",
+    "Bergantian",
+    "Alterna",
+    "Alternada",
+    "Abwechselnd",
+    "Поочерёдно"
+  ],
+  "arena.setup.placement.hiddenShort": [
+    "同时隐藏",
+    "พร้อมกันแบบปิด",
+    "Ẩn đồng thời",
+    "Tersembunyi",
+    "Oculta",
+    "Oculta",
+    "Verdeckt",
+    "Скрыто"
+  ],
+  "arena.setup.placement.alternate": [
+    "轮流选择,能看到彼此的选择",
+    "ผลัดกันเลือก เห็นตัวเลือกของกันและกัน",
+    "Lần lượt chọn, thấy lựa chọn của nhau",
+    "Bergantian memilih, pilihan terlihat",
+    "Por turnos; las elecciones se ven",
+    "Em turnos; as escolhas ficam visíveis",
+    "Abwechselnd, Wahl ist sichtbar",
+    "По очереди, выбор виден"
+  ],
+  "arena.setup.placement.hidden": [
+    "同时选择,确定后公开",
+    "เลือกพร้อมกัน เปิดเผยหลังยืนยัน",
+    "Chọn cùng lúc, lộ ra sau khi chốt",
+    "Pilih bersamaan, terbuka setelah dikunci",
+    "A la vez; se revela al confirmar",
+    "Ao mesmo tempo; revelado ao confirmar",
+    "Gleichzeitig, nach Bestätigung offen",
+    "Одновременно, раскрытие после подтверждения"
+  ],
+  "arena.setup.unique": [
+    "重复选择",
+    "เลือกซ้ำ",
+    "Chọn trùng",
+    "Pilihan Ganda",
+    "Duplicados",
+    "Duplicadas",
+    "Duplikate",
+    "Повторы"
+  ],
+  "arena.setup.unique.blocked": [
+    "不能选择对方已选的遗物",
+    "เลือกเรลิกที่คู่แข่งเลือกแล้วไม่ได้",
+    "Không thể chọn di vật đối thủ đã chọn",
+    "Relik pilihan lawan tidak bisa dipilih",
+    "No puedes elegir reliquias del rival",
+    "Relíquias do rival ficam bloqueadas",
+    "Vom Gegner gewählte Relikte sind gesperrt",
+    "Реликты соперника недоступны"
+  ],
+  "arena.setup.unique.allowed": [
+    "双方可使用同一遗物",
+    "ทั้งสองฝ่ายใช้เรลิกเดียวกันได้",
+    "Hai bên có thể dùng cùng di vật",
+    "Kedua pihak boleh memakai relik yang sama",
+    "Ambos pueden usar la misma reliquia",
+    "Ambos podem usar a mesma relíquia",
+    "Beide dürfen dasselbe Relikt nutzen",
+    "Обе стороны могут взять один Реликт"
+  ],
+  "arena.setup.unique.hidden": [
+    "隐藏布阵时不适用",
+    "ไม่ใช้กับการจัดวางแบบปิด",
+    "Không áp dụng khi xếp ẩn",
+    "Tidak berlaku pada penempatan tersembunyi",
+    "No aplica en colocación oculta",
+    "Não se aplica ao posicionamento oculto",
+    "Gilt nicht bei verdeckter Aufstellung",
+    "Не действует при скрытой расстановке"
+  ],
+  "arena.chip.order": [
+    "发起者{order}",
+    "ผู้ท้า{order}",
+    "Người mời {order}",
+    "Penantang {order}",
+    "Retador: {order}",
+    "Desafiante: {order}",
+    "Herausforderer: {order}",
+    "Вызвавший: {order}"
+  ],
+  "arena.chip.duplicatesBlocked": [
+    "禁止重复",
+    "ห้ามซ้ำ",
+    "Cấm trùng",
+    "Tanpa ganda",
+    "Sin duplicados",
+    "Sem duplicadas",
+    "Keine Duplikate",
+    "Без повторов"
+  ],
+  "arena.chip.duplicatesAllowed": [
+    "允许重复",
+    "ซ้ำได้",
+    "Cho phép trùng",
+    "Ganda boleh",
+    "Duplicados sí",
+    "Duplicadas ok",
+    "Duplikate erlaubt",
+    "Повторы можно"
+  ],
+  "arena.invite.tag": [
+    "竞技场友谊赛",
+    "อารีนากระชับมิตร",
+    "Đấu trường giao hữu",
+    "Arena Persahabatan",
+    "Arena amistosa",
+    "Arena amistosa",
+    "Arena-Freundschaft",
+    "Дружеская арена"
+  ],
+  "arena.invite.me": [
+    "我",
+    "คุณ",
+    "Bạn",
+    "Kamu",
+    "Tú",
+    "Você",
+    "Du",
+    "Вы"
+  ],
+  "arena.invite.opponent": [
+    "对手",
+    "คู่แข่ง",
+    "Đối thủ",
+    "Lawan",
+    "Rival",
+    "Rival",
+    "Gegner",
+    "Соперник"
   ]
 }

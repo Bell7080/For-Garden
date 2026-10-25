@@ -489,7 +489,7 @@ export class FriendsScene extends Phaser.Scene {
   private openProfile(profile: FriendProfile, isFriend: boolean, favorite: boolean, instant = false): void {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
-      {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,profile.id,profile.displayName);}},
+      {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,{id:profile.id,name:profile.displayName,frameId:profile.frameId,favoriteRelicId:profile.favoriteRelic.relicId,level:profile.level});}},
       {
         label: t(favorite ? "friends.action.unfavorite" : "friends.action.favorite"),
         onClick: () => {

@@ -16,6 +16,9 @@ import { addArenaBackdrop, ARENA_TONE } from '../ui/arenaTheme';
 import { session } from '../state/session';
 import { addClippedHit } from '../ui/clippedHit';
 import { ARENA_ROOM_LAYOUT } from '../ui/arenaRoomLayout';
+import { addArenaMascots } from '../ui/ArenaMascots';
+import { addArenaRuleChips } from '../ui/arenaRuleChips';
+import { squeezeTextToWidth } from '../ui/textFit';
 
 import type { ClipRect } from '../ui/clipRect';
 import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
@@ -247,8 +250,7 @@ export class ArenaRoomScene extends Phaser.Scene {
       panel.add(drawLayer(this, 0, 0, chipPoints(900, 520), { fill: ARENA_TONE.panel, alpha: .94, edge: ARENA_TONE.accent, edgeAlpha: .8 }));
       const line = (y: number, text: string, size: number, color: string = COLOR.ink): void => { panel.add(this.add.text(0, y, text, textStyle({ role: "display", size, color, align: 'center', wrap: 820 })).setOrigin(.5)); };
       if (r.phase === 'invited') {
-        line(-80, t("arena.invite.waiting"), 36);
-        line(40, this.rulesLine(r), 28, ARENA_TONE.accentText);
+        this.paintInviteWaiting(panel, r, side);
         return;
       }
       line(-120, r.phase === 'declined' ? t("arena.invite.closed") : r.winner === null ? t("arena.result.drawLabel") : r.winner === side ? t("arena.result.winLabel") : t("arena.result.lossLabel"), 54, r.winner === side ? ARENA_TONE.allyText : COLOR.ink);
@@ -274,6 +276,27 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.ensureGrid(ban ? 'ban' : 'place', ban ? opponent.roster : mine.roster, !ban);
     this.refreshGrid(r, side, act);
     this.paintControls(r, side, act);
+  }
+
+  /**
+   * 요청을 보내 놓고 기다리는 판 — 나 VS 상대의 이름이 마주 서고 그 사이에서 마스코트가 맞부딪히며, 아래에
+   * 고른 규칙이 그림 칩으로 선다. 남은 시간은 화면 위 시계가 말한다. 문장 두 줄만 서던 때는 누구에게 무엇을
+   * 걸고 기다리는지가 읽히지 않았다.
+   */
+  private paintInviteWaiting(panel: Phaser.GameObjects.Container, r: ArenaRoom, side: number): void {
+    panel.removeAll(true);
+    panel.add(drawLayer(this, 0, 0, chipPoints(940, 700, { bevel: { topLeft: 48, bottomRight: 48 } }), { fill: ARENA_TONE.panel, alpha: .95, edge: ARENA_TONE.accent, edgeAlpha: .85, glow: { color: ARENA_TONE.glow, strength: .3, height: .85 } }));
+    const name = (x: number, text: string, color: string, label: string): void => {
+      panel.add(this.add.text(x, -250, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(.5));
+      panel.add(squeezeTextToWidth(this.add.text(x, -205, text, textStyle({ role: "display", size: 38, color })).setOrigin(.5).setStroke('#05070a', 5), 330));
+    };
+    name(-260, r.players[side].name, ARENA_TONE.allyText, t("arena.invite.me"));
+    name(260, r.players[1 - side].name, ARENA_TONE.foeText, t("arena.invite.opponent"));
+    addArenaMascots(this, panel, 0, 70, 230, true, 10, { spread: .9 });
+    const waiting = this.add.text(0, 140, t("arena.invite.waiting"), textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true);
+    panel.add(waiting);
+    if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: waiting, alpha: .45, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    addArenaRuleChips(this, panel, 0, 240, r.rules, { size: 24, maxWidth: 880 });
   }
 
   private rulesLine(r: ArenaRoom): string {

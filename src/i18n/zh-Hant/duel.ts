@@ -92,4 +92,8 @@ export const DUEL_ZH_HANT = {
   "rewardTable.rules.expedition": "每週一00:00 UTC結算 · 通過郵件發放\n當週需有遠征記錄才能領取。",
   "rewardTable.rules.arena": "每週一00:00 UTC結算 · 通過郵件發放\n結算時的段位獎勵加上排名獎勵。當週需有排位賽記錄才能領取。",
   "ranking.mine": "我的排名",
+  "duel.defense.title": "對手防守隊",
+  "duel.defense.totalPower": "總戰鬥力",
+  "duel.defense.blind": "隱藏位 {count}",
+  "duel.defense.sortie": "出擊",
 } as const;

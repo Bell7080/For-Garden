@@ -92,4 +92,8 @@ export const DUEL_ID = {
   "rewardTable.rules.expedition": "Ditutup setiap Senin 00:00 UTC · Dikirim lewat surat\nHarus ada skor ekspedisi pada minggu itu.",
   "rewardTable.rules.arena": "Ditutup setiap Senin 00:00 UTC · Dikirim lewat surat\nHadiah tingkat saat penutupan ditambah bonus peringkat. Harus ada laga peringkat minggu itu.",
   "ranking.mine": "Peringkat saya",
+  "duel.defense.title": "Tim Bertahan Lawan",
+  "duel.defense.totalPower": "Total Kekuatan Tempur",
+  "duel.defense.blind": "{count} tersembunyi",
+  "duel.defense.sortie": "Berangkat",
 } as const;

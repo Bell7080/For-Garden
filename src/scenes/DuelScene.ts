@@ -14,6 +14,7 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { paintDuelHistory } from "../ui/DuelHistoryList";
 import { openDuelOpponentPopup } from "../ui/DuelOpponentPopup";
+import { openDuelDefensePreview } from "../ui/DuelDefensePreviewPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
@@ -318,7 +319,11 @@ export class DuelScene extends Phaser.Scene {
     const status = this.status;
     if (!status || this.busy) return;
     openDuelOpponentPopup(this, this.popups, status, {
-      onChallenge: (opponent) => startScene(this, "party", { content: "duel", opponent, attack: status.attack }),
+      // 도전은 곧장 편성으로 가지 않는다 — 먼저 상대의 방어팀을 크게 보이고, 그 창의 출격이 공격팀 편성을 연다.
+      onChallenge: (opponent) => openDuelDefensePreview(this, this.popups, opponent, {
+        onSortie: () => startScene(this, "party", { content: "duel", opponent, attack: status.attack }),
+        onBack: () => this.openOpponents(),
+      }),
       onRefresh: (close) => {
         const price = status.nextRefreshPrice;
         // 옛 창을 닫고 새 상태로 같은 창을 다시 연다 — 같은 제목이라 갈아 끼우기로 읽힌다.

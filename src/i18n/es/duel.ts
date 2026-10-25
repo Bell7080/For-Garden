@@ -92,4 +92,8 @@ export const DUEL_ES = {
   "rewardTable.rules.expedition": "Cierre cada lunes 00:00 UTC · Se envía por correo\nSe requiere una puntuación de expedición esa semana.",
   "rewardTable.rules.arena": "Cierre cada lunes 00:00 UTC · Se envía por correo\nRecompensa de rango al cierre más bono por puesto. Se requiere una partida clasificatoria esa semana.",
   "ranking.mine": "Mi puesto",
+  "duel.defense.title": "Defensa rival",
+  "duel.defense.totalPower": "Poder de combate total",
+  "duel.defense.blind": "{count} ocultos",
+  "duel.defense.sortie": "Salir",
 } as const;

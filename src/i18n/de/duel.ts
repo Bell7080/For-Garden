@@ -92,4 +92,8 @@ export const DUEL_DE = {
   "rewardTable.rules.expedition": "Abschluss jeden Montag 00:00 UTC · Versand per Post\nEine Expeditionswertung in dieser Woche ist nötig.",
   "rewardTable.rules.arena": "Abschluss jeden Montag 00:00 UTC · Versand per Post\nRangbelohnung zum Abschluss plus Platzbonus. Ein Ranglistenspiel in dieser Woche ist nötig.",
   "ranking.mine": "Mein Platz",
+  "duel.defense.title": "Gegnerische Verteidigung",
+  "duel.defense.totalPower": "Gesamte Kampfkraft",
+  "duel.defense.blind": "{count} verdeckt",
+  "duel.defense.sortie": "Ausrücken",
 } as const;

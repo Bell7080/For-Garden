@@ -125,7 +125,7 @@ export class CakeOperationScene extends Phaser.Scene {
       selectedId: tier.id,
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
-      sortieEnabled: !this.busy && session.wallet.stamina >= cost.staminaCost,
+      sortieEnabled: !this.busy,
       sweepEnabled: !this.busy && cakeOperationTierIndex(tier.id) <= clearedIndex,
     });
   }
@@ -133,6 +133,11 @@ export class CakeOperationScene extends Phaser.Scene {
   /** 출격은 편성 화면을 연다. 입장(스테미나 차감)은 거기서 전투 시작을 누를 때 확정된다. */
   private openParty(): void {
     if (this.busy) return;
+    // 모자란 채 편성에 들어가 헛수고하지 않게, 출격에서 곧바로 충전 창을 연다.
+    if (session.wallet.stamina < cakeOperationRunCost(this.selectedTier()).staminaCost) {
+      openCurrencyGuide({ scene: this, popups: this.popups }, "stamina");
+      return;
+    }
     startScene(this, "party", { content: "cake", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 

@@ -39,7 +39,8 @@ import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { openRaidSettlementPopup } from "../ui/RaidSettlementPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { findItem } from "../data/items";
-import { openItemGuide } from "../ui/currencyGuideEntry";
+import { openCurrencyGuide, openItemGuide } from "../ui/currencyGuideEntry";
+import { TopBar } from "../ui/TopBar";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
@@ -115,6 +116,8 @@ export class RaidScene extends Phaser.Scene {
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
+    // 한 판이 스테미나를 쓰므로 목록과 판 모두 위에 남은 양을 세우고, 누르면 충전 창이 열린다.
+    new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     if (!this.raidId) {
       this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
       this.buildListChrome();
@@ -592,13 +595,17 @@ export class RaidScene extends Phaser.Scene {
     }
     // 도전이 남지 않았으면 들어갈 수 없다 — 눌러도 아무 일이 없는 칸은 준비 상태를 과장한다.
     const canSortie = raid.attemptsUsed < raid.attemptsLimit;
-    // 한 판의 스테미나는 입구의 출격이 먼저 말한다 — 던전 입구와 같은 비용 표기다. 모자라도 편성은
-    // 열 수 있고, 입장이 거절되면 편성 화면이 스테미나 창을 연다.
+    // 한 판의 스테미나는 입구의 출격이 먼저 말한다 — 던전 입구와 같은 비용 표기다. 모자라면 출격이
+    // 편성 대신 스테미나 창을 연다(입장이 거절되는 편성 화면에도 같은 창이 안전망으로 남아 있다).
     const stamina = raidRunStamina(raid.difficulty);
     this.sortieButton = new Button(this, sortie.centerX, y, {
       ...common, label: t("raid.sortie"),
       cost: { icon: "currency-stamina", amount: stamina, affordable: session.wallet.stamina >= stamina },
-      onClick: () => startScene(this, "party", { content: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty } satisfies PartySceneData),
+      onClick: () => {
+        // 모자란 채 편성까지 들어가 헛수고하지 않게, 출격에서 곧바로 충전 창을 연다.
+        if (session.wallet.stamina < stamina) { openCurrencyGuide({ scene: this, popups: this.popups }, "stamina"); return; }
+        startScene(this, "party", { content: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty } satisfies PartySceneData);
+      },
     });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);

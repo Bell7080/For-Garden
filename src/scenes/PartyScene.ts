@@ -51,6 +51,9 @@ import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
+import { TopBar } from "../ui/TopBar";
+import { openCurrencyGuide } from "../ui/currencyGuideEntry";
+import { shrinkTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
@@ -263,7 +266,14 @@ export class PartyScene extends Phaser.Scene {
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
-    this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
+    // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
+    const staminaContent = this.content.content !== "duel" && this.content.content !== "duelDefense";
+    const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
+    if (staminaContent) {
+      // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
+      shrinkTextToWidth(titleText, 560);
+      new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: new PopupLayer(this, 2200) }, currency) });
+    }
     this.buildPreview(this.preview);
     this.buildRoster();
 

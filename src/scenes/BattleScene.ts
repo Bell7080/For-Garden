@@ -13,6 +13,7 @@ import { t } from "../i18n";
 import { combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
 import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
 import { audioManager } from "../managers/AudioManager";
+import { StaminaPopup } from "../ui/StaminaPopup";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
@@ -2821,6 +2822,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 스토리 결과판을 닫은 뒤의 기본 길. 오프닝에서 곧장 들어온 판은 로비로 나간다. */
+  /** 스테미나가 모자란 채 다음 판을 누르면 결과판 위에 충전 창을 연다. 판을 닫지 않아 충전 뒤 같은 버튼을 다시 누른다. */
+  private openStaminaCharge(): void {
+    new StaminaPopup(this, new PopupLayer(this, 2600), gameApi).open();
+  }
+
   private stageExit(): string {
     return this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby" ? "lobby" : "stageMap";
   }
@@ -2858,6 +2864,7 @@ export class BattleScene extends Phaser.Scene {
       replay: {
         label: t("stageComplete.replay"),
         disabled: session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage,
+        onBlocked: () => this.openStaminaCharge(),
         onPress: () => {
           chosen = true;
           // 이전 패배 저장이 새 입장보다 늦게 도착해 입장 기록을 덮지 않게 한다.
@@ -2908,7 +2915,7 @@ export class BattleScene extends Phaser.Scene {
       const upcoming = nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
-          label: t("stageComplete.next"), primary: true, disabled: !canEnter,
+          label: t("stageComplete.next"), primary: true, disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
           // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
           onPress: () => {
             chosen = true; session.selectedStageId = upcoming.id;
@@ -2917,7 +2924,7 @@ export class BattleScene extends Phaser.Scene {
           },
         }] : []),
         {
-          label: t("stageComplete.replay"), disabled: !canEnter,
+          label: t("stageComplete.replay"), disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
           // 같은 관문을 한 판 더 — 초회 후 대사가 남았으면 그것을 먼저 보고 그 관문의 편성으로 간다.
           onPress: () => {
             chosen = true;

@@ -48,12 +48,30 @@ interface CinematicInstance {
   /** 남은 연출을 건너뛰고 **결산 화면으로 곧장** 간다. 판을 지우지 않는다. */
   skipToResult(): void;
   /** 에셋이 들고 있는 카드 목록. 결산 격자의 색과 등급별 장수가 이 값을 읽는다. */
-  rewards?: Array<{ rarity: string }>;
+  rewards?: ReadonlyArray<{ rarity: string }>;
+  /** 열린 카드 한 장의 등급을 올린다(카드 목록이 얼려 있어 새 배열로 갈아 끼운다). */
+  promoteReward?(index: number, rarity: string): void;
   destroy(): void;
   getState(): { phase: string; count: number; activeTier: string };
 }
 
 /** 올려 칠하는 카드의 등급색. 에셋의 등급표(`ft`)와 같은 값이다. */
+/** SR로 열린 카드가 SSR로 오르기 전 잠잠히 머무는 실제 시간(ms). 씬 시계는 느린 기기에서 밀리므로 쓰지 않는다. */
+const SR_BEAT_MS = 1800;
+
+/**
+ * 오르기 직전의 SR 카드 — 살짝 떨리며 금빛 마름모가 반짝인다(특별한 기회라는 낌새만 준다).
+ * 이동은 `translate`로 줘서 에셋이 카드에 거는 `transform`(뒤집기)과 부딪히지 않는다.
+ */
+const TEASE_CSS = `
+@keyframes rc-tease-shake{0%,100%{translate:0 0}20%{translate:-1.5px .8px}40%{translate:1.4px -.9px}60%{translate:-1px -1px}80%{translate:1.2px .6px}}
+@keyframes rc-tease-glow{0%,100%{filter:brightness(1) drop-shadow(0 0 0 rgba(255,194,71,0))}50%{filter:brightness(1.18) drop-shadow(0 0 14px rgba(255,194,71,.75))}}
+@keyframes rc-tease-glint{0%,100%{opacity:0;scale:.3}50%{opacity:1;scale:1}}
+.archive-card.rc-tease{animation:rc-tease-shake .09s linear infinite,rc-tease-glow .7s ease-in-out infinite}
+.archive-card.rc-tease.rc-calm{animation:rc-tease-glow 1.4s ease-in-out infinite}
+.rc-glint{position:absolute;width:14px;height:14px;background:#ffe9a8;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);pointer-events:none;animation:rc-tease-glint .8s ease-in-out infinite}
+`;
+
 const PROMOTED_TIER = { SSR: "#ffc247" } as const;
 
 declare global {
@@ -94,6 +112,12 @@ export interface ResearchCinematicOptions {
    * 소개하므로 씬이 `showcaseRelicIds`에서 골라 넘긴다.
    */
   introduceSlots?: readonly number[];
+  /**
+   * 카드가 **뒤집힌 뒤에** 소개 장면을 돌릴 칸. 10연 마지막 칸이 SR로 열렸다가 SSR로 오르는
+   * 깜짝에 쓴다 — SR로 잠잠히 열린 카드 위로 SSR 전조가 덮치고, 돌아오면 카드가 금빛이 되어 있다.
+   * 건너뛰어도 결산 격자에 SR로 한 박자 머문 뒤 같은 장면이 돈다.
+   */
+  afterFlipSlots?: readonly number[];
 }
 
 let assetPromise: Promise<CinematicBundle> | undefined;
@@ -264,6 +288,8 @@ export class ResearchCinematic {
   private holdHidden = false;
   private readonly introduce?: (index: number) => Promise<void>;
   private readonly introduceSlots: ReadonlySet<number>;
+  private readonly afterFlipSlots: ReadonlySet<number>;
+  private readonly reduced: boolean;
 
   private constructor(bundle: CinematicBundle, options: ResearchCinematicOptions) {
     this.canvas = options.canvas;
@@ -272,6 +298,8 @@ export class ResearchCinematic {
     this.introduce = options.introduce;
     this.introduceSlots = new Set(options.introduceSlots
       ?? options.art.flatMap((slot, index) => (slot.frame === "portrait" ? [index] : [])));
+    this.afterFlipSlots = new Set(options.afterFlipSlots ?? []);
+    this.reduced = options.reducedMotion ?? false;
     bundle.text.gray = options.text.gray;
     bundle.text.dna = options.mileage;
     /*
@@ -376,8 +404,8 @@ export class ResearchCinematic {
     const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
     if (!card) return;
     // 결산 격자의 색과 「SR × 1」 같은 등급별 장수는 에셋의 카드 목록에서 나오므로 거기서도 올린다.
-    const reward = this.instance.rewards?.[index];
-    if (reward) reward.rarity = rarity;
+    this.untease(index);
+    this.instance.promoteReward?.(index, rarity);
     const grade = card.querySelector<HTMLElement>(".card-grade");
     if (grade) grade.textContent = rarity;
     const paint = () => {
@@ -386,6 +414,36 @@ export class ResearchCinematic {
     };
     paint();
     new MutationObserver(paint).observe(card, { attributes: true, attributeFilter: ["style", "data-rarity"] });
+  }
+
+  /** 곧 SSR로 오를 카드를 떨리고 반짝이게 한다. 움직임 줄이기에서는 떨지 않고 빛만 숨 쉰다. */
+  private teaseCard(index: number): void {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    if (!card) return;
+    if (!document.getElementById("rc-tease-style")) {
+      const style = document.createElement("style");
+      style.id = "rc-tease-style";
+      style.textContent = TEASE_CSS;
+      document.head.appendChild(style);
+    }
+    card.classList.add("rc-tease");
+    if (this.reduced) card.classList.add("rc-calm");
+    else {
+      [[18, 14, 0], [78, 30, .25], [34, 72, .5], [70, 82, .12]].forEach(([x, y, delay]) => {
+        const glint = document.createElement("span");
+        glint.className = "rc-glint";
+        glint.style.left = `${x}%`;
+        glint.style.top = `${y}%`;
+        glint.style.animationDelay = `${delay}s`;
+        card.appendChild(glint);
+      });
+    }
+  }
+
+  private untease(index: number): void {
+    const card = this.root.querySelectorAll<HTMLElement>(".archive-card")[index];
+    card?.classList.remove("rc-tease", "rc-calm");
+    card?.querySelectorAll(".rc-glint").forEach((glint) => glint.remove());
   }
 
   /** 연출이 끝나고 화면이 닫힐 때까지 기다린다. */
@@ -422,6 +480,20 @@ export class ResearchCinematic {
         if (this.closed) return;
       }
       this.instance.skipToResult();
+      // 올라간 칸은 결산 격자에 SR로 한 박자 잠잠히 머문 뒤 SSR로 오른다 — 건너뛰어도 깜짝은 남는다.
+      const upgrades = [...this.afterFlipSlots].filter((index) => !this.introduced.has(index));
+      if (upgrades.length > 0 && this.introduce) {
+        this.introducing = true;
+        this.root.style.opacity = "";
+        this.root.style.pointerEvents = "none";
+        for (const index of upgrades) this.teaseCard(index);
+        await new Promise<void>((resolve) => window.setTimeout(resolve, SR_BEAT_MS));
+        this.introducing = false;
+        for (const index of upgrades) {
+          if (this.closed) return;
+          await this.runIntroduction(index);
+        }
+      }
     } finally {
       this.holdHidden = false;
       if (!this.closed) {
@@ -554,6 +626,14 @@ export class ResearchCinematic {
         this.instance.advance();
         this.scheduleShatter();
       });
+      return;
+    }
+    if (next?.step === "next" && this.afterFlipSlots.has(next.index) && !this.introduced.has(next.index) && this.introduce) {
+      // SR로 열린 카드를 한 박자 머물게 둔 뒤, 원래 SSR 소개가 덮치고 돌아오면 카드가 SSR이다.
+      this.introducing = true;
+      this.teaseCard(next.index);
+      void new Promise<void>((resolve) => window.setTimeout(resolve, SR_BEAT_MS))
+        .then(() => { this.introducing = false; return this.closed ? undefined : this.runIntroduction(next.index); });
       return;
     }
     this.instance.advance();

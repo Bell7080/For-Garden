@@ -19,7 +19,6 @@ import { useBackgroundTexture, BACKGROUND } from "../ui/backgrounds";
 import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoints } from "../ui/fossilCrack";
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
-import { playRarityUpgrade } from "../ui/RarityUpgradeReveal";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
 import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
@@ -528,11 +527,6 @@ export class LabScene extends Phaser.Scene {
     }
     if (!this.presentation.isCurrent(request)) return;
 
-    // 건너뛰어도 이 깜짝은 건너뛰지 않는다 — SR로 잠잠하다 SSR로 오르는 순간이 이 연출의 전부다.
-    if (upgradeSlot !== undefined) {
-      await this.playRarityUpgrade();
-      if (!this.presentation.isCurrent(request)) return;
-    }
     skip.destroy();
     this.showResultBoard(content, layer, results, request);
   }
@@ -578,15 +572,14 @@ export class LabScene extends Phaser.Scene {
       art,
       reducedMotion: preferences.accessibility.reduceMotion,
       mileage,
-      introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
+      // 올라간 칸은 뒤집히기 **전**이 아니라 SR로 뒤집힌 **뒤에** 원래 SSR 소개(전조 → 목소리 → 무대)를 돈다.
+      introduceSlots: showcase.flatMap((relicId, index) => (relicId && index !== upgradeSlot ? [index] : [])),
+      afterFlipSlots: upgradeSlot !== undefined && showcase[upgradeSlot] ? [upgradeSlot] : [],
       introduce: async (index) => {
         const relicId = showcase[index];
         if (!relicId || !this.presentation.isCurrent(request)) return;
-        if (index === upgradeSlot) {
-          await this.playRarityUpgrade();
-          cinematic?.promoteCard(index, "SSR");
-        }
         await this.introduceRelic(relicId);
+        if (index === upgradeSlot) cinematic?.promoteCard(index, "SSR");
       },
       text: {
         skip: t("lab.cinematic.skip"),
@@ -691,21 +684,6 @@ export class LabScene extends Phaser.Scene {
 
   private rarityColor(rarity: ResearchGrade): number {
     return rarity === "SSR" ? COLOR.raritySSR : rarity === "SR" ? COLOR.raritySR : rarity === "R" ? COLOR.rarityR : COLOR.researchGray;
-  }
-
-  /** SR로 잠잠하다 SSR로 오르는 깜짝 장면. 건너뛰기로도 넘어가지 않는다. */
-  private async playRarityUpgrade(): Promise<void> {
-    const preferences = settingsManager.get();
-    this.showcasing = true;
-    try {
-      await playRarityUpgrade(this, {
-        depth: 1300,
-        reduceMotion: preferences.accessibility.reduceMotion,
-        reduceFlashes: preferences.accessibility.reduceFlashes,
-      });
-    } finally {
-      this.showcasing = false;
-    }
   }
 
   /**

@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "Panen saat ini ×1.5",
   "adReward.excavation-storage.text": "Simpan hingga 8 jam sampai penyelesaian berikutnya",
   "adReward.excavation-speed.text": "Produksi ×1.5 · 60 menit",
-  "adReward.quick-expedition.text": "Ekspedisi Cepat",
   "trade.trade-cheesecake-supply.name": "Pasokan Cheesecake",
   "trade.trade-cheesecake-supply.description": "600 Cheesecake",
   "trade.trade-research-grant.name": "Hibah Riset",

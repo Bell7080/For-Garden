@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "Thu hoạch hiện tại ×1.5",
   "adReward.excavation-storage.text": "Chứa tối đa 8 giờ đến lần quyết toán sau",
   "adReward.excavation-speed.text": "Sản lượng ×1.5 · 60 phút",
-  "adReward.quick-expedition.text": "Viễn chinh nhanh",
   "trade.trade-cheesecake-supply.name": "Tiếp tế Bánh phô mai",
   "trade.trade-cheesecake-supply.description": "600 Bánh phô mai",
   "trade.trade-research-grant.name": "Tài trợ nghiên cứu",

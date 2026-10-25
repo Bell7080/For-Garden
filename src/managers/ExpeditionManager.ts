@@ -26,7 +26,6 @@ export interface ExpeditionStatus {
   allTimeBestScore: number;
   active: { relicIds: [string, string, string]; score: number } | null;
   run: ExpeditionRunState | null;
-  quickAvailable: boolean;
   /** 오늘 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
   canStartRun: boolean;
 }
@@ -70,7 +69,7 @@ export class ExpeditionManager {
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
     const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
-    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */

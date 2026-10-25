@@ -123,8 +123,6 @@ export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   salvageRecord: { min: 8, max: 15 },
 } as const;
 
-/** 빠른 원정은 서버가 보유한 유효 최고 점수의 이 비율만 보상 점수로 환산한다. */
-export const QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 } as const;
 
 /**
  * 폰토스 판의 길이·입력 상한과 단계 이름표다.

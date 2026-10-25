@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.346.2**
+현재 버전: **v0.346.3**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,14 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.346.3 — 원정 준비 화면의 「빠른 원정」 버튼과 관련 코드 제거
+
+- 이유: 원정에는 이미 소탕이 있어 광고로 최고 점수의 25%를 골드로 바꿔 주는 빠른 원정과 역할이 겹쳤다(응태 요청). 출격 옆 버튼을 없애고, 버튼만 지우면 화면에서 닿지 않는 광고 슬롯이 서버에 남으므로 함께 걷었다.
+- 제거: `ExpeditionScene`의 버튼·광고 흐름, 광고 슬롯 `quick-expedition`과 `quick_expedition` 보상 종류·`QUICK_EXPEDITION_POLICY`, `FakeServer`의 주간 횟수·기준 점수 계산, 계약의 `weeklyLimitUtc`·`weeklyClaims`·`referenceScore`·`weeklyRemaining`(주간 한도를 쓰는 슬롯이 이것 하나뿐이었다), `ExpeditionManager.status().quickAvailable`과 로비 원정 칸의 「빠른 가능/잠김」 꼬리말.
+- 번역: `expedition.quick.*` 10개, `lobby.expedition.quickReady/quickLocked`, `adReward.quick-expedition.text`를 열한 언어와 `i18n-src` 원고에서 지우고 `lobby.expedition.weekly`의 `{quick}` 자리를 걷었다.
+- 보존: 소탕, 원정 기록 보상, 다른 광고 슬롯의 일일 한도(`dailyLimitUtc`)와 `FakeServer`의 `delay`·기록 계산은 그대로다. 저장 데이터·DTO 비호환은 없다(없어진 필드는 모두 선택값이었고 예전 저장은 읽지 않는다).
+- 테스트: 빠른 원정 전용 테스트 3건을 지우고 슬롯이 허용 목록에 없음을 확인하는 한 건을 남겼다. `glossary.test` 한 건은 이 변경과 무관하게 main에서 이미 실패 중이다.
 
 ## v0.346.2 — 스토리 관문 미리보기의 적 SD가 아래로 내려앉던 것 바로잡기
 

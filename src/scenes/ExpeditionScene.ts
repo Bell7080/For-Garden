@@ -3,13 +3,12 @@ import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { notificationManager } from "../managers/NotificationManager";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import Phaser from "phaser";
-import { UI_ICON } from "../ui/icons";
 import { RECOMMENDED_SLOT_ROLES } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
+import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
@@ -49,8 +48,6 @@ import { ExpeditionAugmentStatusPopup } from "../ui/ExpeditionAugmentStatusPopup
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
 import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { completedAdToken } from "../data/adRewards";
-import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
@@ -166,9 +163,6 @@ export class ExpeditionScene extends Phaser.Scene {
   private popups!: PopupLayer;
   /** 지도 입력부터 저장/씬 전환 완료까지의 단일 잠금은 이 씬이 소유한다. */
   private nodeTransitionPending = false;
-  /** 광고 표시부터 서버 확정까지 연타를 막는 빠른 원정 전용 잠금이다. */
-  private quickClaimPending = false;
-  private quickButton?: Button;
   /**
    * 편성판의 판때기·번호·입력면만 사는 층. 선택이 바뀔 때마다 통째로 다시 그린다.
    *
@@ -799,9 +793,6 @@ export class ExpeditionScene extends Phaser.Scene {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
       new Button(this, 170, 292, { width: 230, height: 68, label: t("expedition.party.devFloor"), fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
     }
-    // 서버가 빠른 원정을 열어 두었을 때만 버튼이 생긴다. 조회 중이라거나 열리지 않았다는 말은
-    // 플레이어의 선택을 바꾸지 않으므로 화면에 남기지 않는다.
-    void this.loadQuickExpeditionOffer();
     this.renderFormationPreview();
 
     this.buildRosterGrid();
@@ -940,60 +931,6 @@ export class ExpeditionScene extends Phaser.Scene {
       }
       this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
     }).catch(() => undefined);
-  }
-
-  /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */
-  private async loadQuickExpeditionOffer(): Promise<void> {
-    try {
-      const config = await gameApi.getAdOperationsConfig();
-      if (!this.scene.isActive()) return;
-      const slot = config.slots.find((candidate): candidate is AdSlotOperationsDto & { reward: { readonly kind: "quick_expedition"; readonly scoreRatio: number } } => candidate.slotId === "quick-expedition" && candidate.enabled && candidate.reward.kind === "quick_expedition");
-      if (!slot) return;
-      const sameDay = session.dailyAdRewards.date === config.serverTime.slice(0, 10);
-      const dailyUsed = sameDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0;
-      const dailyRemaining = Math.max(0, slot.dailyLimitUtc - dailyUsed);
-      const weeklyRemaining = Math.max(0, (slot.weeklyLimitUtc ?? 0) - (slot.weeklyClaims ?? 0));
-      const reference = Math.max(0, Math.floor(slot.referenceScore ?? 0));
-      const expected = Math.floor(reference * slot.reward.scoreRatio);
-      if (reference <= 0 || expected <= 0 || dailyRemaining <= 0 || weeklyRemaining <= 0) return;
-      // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다. 버튼이 보상과 남은
-      // 횟수를 직접 말하므로 별도 상태 문구를 두지 않는다.
-      this.quickButton?.destroy();
-      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: t("expedition.quick.sub", { gold: expected.toLocaleString(), remaining: dailyRemaining }), fontSize: 25, subFontSize: 18, art: UI_ICON.ad, onClick: () => void this.claimQuickExpedition(slot) });
-    } catch { /* 조회 실패는 그 자리를 비운다. 실패했다는 말은 플레이어가 할 일을 바꾸지 않는다. */ }
-  }
-
-  /** 기존 발굴 광고와 같은 토큰 추출·연타 잠금·고유 요청 ID 흐름으로 서버 지급을 요청한다. */
-  private async claimQuickExpedition(slot: AdSlotOperationsDto): Promise<void> {
-    if (this.quickClaimPending) return;
-    this.quickClaimPending = true; this.quickButton?.setEnabled(false);
-    try {
-      const token = completedAdToken(await presentRewardedAd(slot.slotId));
-      if (!token) { this.hint?.setText(t("expedition.quick.cancelled")); this.quickButton?.setEnabled(true); return; }
-      const requestId = globalThis.crypto?.randomUUID?.() ?? `quick-expedition-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const result = await gameApi.claimAdReward({ slotId: "quick-expedition", verificationToken: token, requestId });
-      const gained = Math.max(0, result.granted.gold ?? 0);
-      // 응답 스냅샷으로 로컬 준비 화면과 상단 지갑의 다음 방문 상태를 함께 갱신한다.
-      session.wallet = { ...result.wallet };
-      session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
-      releaseAdWait();
-      await this.loadQuickExpeditionOffer();
-      if (gained === 0) this.hint?.setText(t("expedition.quick.walletFull"));
-      else openRewardPopup(this, this.popups, { title: t("expedition.quick.done"), items: [{ icon: "currency-gold", amount: gained, label: t("expedition.quick.walletGain") }] });
-    } catch (error) {
-      const code = error instanceof GameApiError ? error.code : undefined;
-      const message: Partial<Record<string, string>> = {
-        AD_TOKEN_INVALID: t("expedition.quick.verifyFailed"),
-        AD_DAILY_LIMIT: t("expedition.quick.dailyUsed"),
-        AD_WEEKLY_LIMIT: t("expedition.quick.weeklyUsed"),
-        EXPEDITION_SCORE_REQUIRED: t("expedition.quick.noBaseline"),
-      };
-      this.hint?.setText(message[code ?? ""] ?? t("expedition.quick.retryLater"));
-      this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
-    } finally {
-      releaseAdWait();
-      this.quickClaimPending = false;
-    }
   }
 
   /**

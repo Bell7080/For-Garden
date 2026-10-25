@@ -25,9 +25,7 @@ export const LOBBY_KO = {
   "ancient.gate": "관문",
 
   "lobby.expedition.resume": "이어하기 · {plays}회 · 최고 {best}",
-  "lobby.expedition.weekly": "오늘 {plays}회 · 최고 {best} · {quick}",
-  "lobby.expedition.quickReady": "빠른 가능",
-  "lobby.expedition.quickLocked": "빠른 잠김",
+  "lobby.expedition.weekly": "오늘 {plays}회 · 최고 {best}",
 
   "lobby.rail.mission": "임무",
   "lobby.rail.shop": "상점",

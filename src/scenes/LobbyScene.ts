@@ -936,13 +936,12 @@ export class LobbyScene extends Phaser.Scene {
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 
-  /** 오늘의 횟수·진행·주간 최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
+  /** 오늘의 횟수·진행·주간 최고점을 한 줄의 짧은 원정 상태로 합친다. */
   private expeditionStatus(status = expeditionManager.status()): string {
     const plays = status.playsToday;
     const best = status.bestScore.toLocaleString();
     if (status.active) return t("lobby.expedition.resume", { plays, best });
-    const quick = t(status.quickAvailable ? "lobby.expedition.quickReady" : "lobby.expedition.quickLocked");
-    return t("lobby.expedition.weekly", { plays, best, quick });
+    return t("lobby.expedition.weekly", { plays, best });
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */

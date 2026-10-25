@@ -282,7 +282,6 @@ export default {
   "adReward.excavation-harvest.text": "Current harvest ×1.5",
   "adReward.excavation-storage.text": "Store up to 8 hours until the next settlement",
   "adReward.excavation-speed.text": "Production ×1.5 · 60 min",
-  "adReward.quick-expedition.text": "Quick Expedition",
   "trade.trade-cheesecake-supply.name": "Cheesecake Supply",
   "trade.trade-cheesecake-supply.description": "600 Cheesecake",
   "trade.trade-research-grant.name": "Research Grant",

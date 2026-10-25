@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "ผลเก็บเกี่ยวปัจจุบัน ×1.5",
   "adReward.excavation-storage.text": "เก็บได้สูงสุด 8 ชั่วโมงจนถึงการสรุปผลครั้งถัดไป",
   "adReward.excavation-speed.text": "ผลผลิต ×1.5 · 60 นาที",
-  "adReward.quick-expedition.text": "ออกสำรวจด่วน",
   "trade.trade-cheesecake-supply.name": "เสบียงชีสเค้ก",
   "trade.trade-cheesecake-supply.description": "ชีสเค้ก 600",
   "trade.trade-research-grant.name": "ทุนวิจัย",

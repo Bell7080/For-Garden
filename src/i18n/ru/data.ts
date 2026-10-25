@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "Текущий сбор ×1,5",
   "adReward.excavation-storage.text": "Хранить до 8 часов до следующего расчёта",
   "adReward.excavation-speed.text": "Добыча ×1,5 · 60 мин",
-  "adReward.quick-expedition.text": "Быстрая экспедиция",
   "trade.trade-cheesecake-supply.name": "Поставка чизкейков",
   "trade.trade-cheesecake-supply.description": "600 чизкейков",
   "trade.trade-research-grant.name": "Грант на исследования",

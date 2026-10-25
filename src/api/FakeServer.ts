@@ -116,8 +116,8 @@ import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeO
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
-import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import { resolveExpeditionBossBattle } from "../core/expeditionBoss";
+import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, normalizeExpeditionPendingRewards } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
@@ -219,7 +219,6 @@ export class FakeServer implements GameApi {
   private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
   /** 소탕도 정산과 같은 멱등 계약을 흉내 낸다. */
 
-  private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
   /** 개발 서버 재시작마다 같은 우편 원본에서 시작하되 읽음·수령 상태는 인스턴스 안에서만 변한다. */
@@ -1292,9 +1291,7 @@ export class FakeServer implements GameApi {
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
   async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
     await this.delay(); const now = this.now();
-    const quickScore = this.expeditionReferenceScore(now);
-    const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ...("weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {}) })) };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: true, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, })) };
   }
 
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
@@ -1857,11 +1854,6 @@ export class FakeServer implements GameApi {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
     this.assertAdPrerequisite(slot, now);
-    if (slot.reward.kind === "quick_expedition") {
-      const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-      if (this.quickWeek.claims >= QUICK_EXPEDITION_POLICY.weeklyLimitUtc) throw new GameApiError("AD_WEEKLY_LIMIT", "이번 주 빠른 원정 횟수를 모두 사용했습니다.");
-      if (!this.expeditionReferenceScore(this.now())) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "빠른 원정의 기준 점수가 없습니다.");
-    }
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
@@ -1874,14 +1866,12 @@ export class FakeServer implements GameApi {
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
     this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds; this.state.duel = duel;
-    if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
-    // 실제 지갑 증가분과 주간 잔량은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
+    // 실제 지갑 증가분은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
     for (const key of Object.keys(applied.wallet) as (keyof Session["wallet"])[]) {
       const amount = applied.wallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount;
     }
-    const weeklyRemaining = slot.weeklyLimitUtc === undefined ? undefined : Math.max(0, slot.weeklyLimitUtc - this.quickWeek.claims);
-    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 활성 구독이 매일 얹는 몫을 UTC 하루에 한 번 지급한다. 광고와 무관하게 권리만 확인한다. */
@@ -3982,12 +3972,6 @@ export class FakeServer implements GameApi {
       for (const item of reward.items ?? []) items = this.grantItem(items, item.itemId, item.quantity, now).inventory;
       return { wallet, excavation, itemInventory: items };
     }
-    if (reward.kind === "quick_expedition") {
-      // 기준 점수와 비율은 모두 서버 소유이며 클라이언트 요청에는 어느 값도 없다.
-      const referenceScore = this.expeditionReferenceScore(now);
-      wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + Math.floor(referenceScore * reward.scoreRatio));
-      return { wallet, excavation, itemInventory };
-    }
     if (reward.kind === "item") {
       // 쌓을 수 있는 한도(`maxStack`)까지만 채운다 — 넘치는 몫은 깎아서 준다(던지지 않는다).
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
@@ -4092,12 +4076,6 @@ export class FakeServer implements GameApi {
   private expeditionRank(score: number): number | null {
     if (this.remoteExpeditionRank !== undefined) return this.remoteExpeditionRank;
     return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
-  }
-
-  /** 빠른 원정·광고 보상이 기준으로 삼는 점수 — 이번 주 최고, 없으면 받지 않은 지난주 기록. */
-  private expeditionReferenceScore(now: Date): number {
-    const expedition = this.rollExpedition(now);
-    return expedition.bestScore || expedition.pendingRankReward?.score || 0;
   }
 
   /**

@@ -447,7 +447,6 @@ export default {
   "adReward.excavation-harvest.text": "現在の収穫 1.5倍",
   "adReward.excavation-storage.text": "次の精算まで最大8時間保管",
   "adReward.excavation-speed.text": "生産 1.5倍 · 60分",
-  "adReward.quick-expedition.text": "クイック遠征",
   "trade.trade-cheesecake-supply.name": "チーズケーキ補給",
   "trade.trade-cheesecake-supply.description": "チーズケーキ 600個",
   "trade.trade-research-grant.name": "研究助成金",

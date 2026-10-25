@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "當前收穫 ×1.5",
   "adReward.excavation-storage.text": "至下次結算前最多儲存8小時",
   "adReward.excavation-speed.text": "產量 ×1.5 · 60分鐘",
-  "adReward.quick-expedition.text": "快速遠征",
   "trade.trade-cheesecake-supply.name": "起司蛋糕補給",
   "trade.trade-cheesecake-supply.description": "起司蛋糕600個",
   "trade.trade-research-grant.name": "研究補助金",

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t, type TextKey } from "../i18n";
 import { contentUnlockedBetween, type ContentId } from "../core/contentUnlock";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
@@ -73,6 +74,7 @@ type Unlock = { kind: "content"; id: ContentId } | { kind: "frame"; frameId: str
  */
 export function openLevelUpPopup(scene: Phaser.Scene, popups: PopupLayer, options: LevelUpPopupOptions): void {
   const { from, to } = options;
+  audioManager?.playUi("ui.levelup");
   const unlocks: Unlock[] = [
     ...contentUnlockedBetween(from, to).map((entry) => ({ kind: "content" as const, id: entry.id })),
     ...PROFILE_FRAMES.filter((frame) => frame.unlockLevel > from && frame.unlockLevel <= to)

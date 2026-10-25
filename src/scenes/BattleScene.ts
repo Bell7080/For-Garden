@@ -1826,7 +1826,9 @@ export class BattleScene extends Phaser.Scene {
       this.finishBattle(event.phase);
       return undefined;
     }
+    if (event.kind === "attack" && event.skill !== "ultimate") audioManager?.playSfx(event.critical ? "battle.crit" : "battle.hit");
     if (event.kind === "death") {
+      audioManager?.playSfx("battle.death");
       // 프로필은 화면에 남으므로 머리 위 바와 달리 즉시 0으로 닫아 사라진 잔상을 기다리지 않는다.
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(0, this.views.get(event.fighterId)?.fighter.maxHp ?? 1, "damage", Number.MAX_SAFE_INTEGER);
       this.playDeath(event.fighterId, event.sourceId);
@@ -1875,6 +1877,7 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "heal") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;
+      audioManager?.playSfx("battle.heal");
       // 회복 사건은 붉은 잔상을 새 체력에 정리하는 명시적 원인으로 전달한다.
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "heal");
       // 회복은 HP와 같은 연두색 및 + 접두어로 피해 숫자와 즉시 구분한다.

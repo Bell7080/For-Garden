@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
@@ -76,6 +77,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     options.onConfirm?.();
     return;
   }
+  audioManager?.playUi("ui.reward");
   // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
   if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 

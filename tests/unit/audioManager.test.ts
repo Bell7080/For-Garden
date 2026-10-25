@@ -141,3 +141,18 @@ describe("AudioManager 배경음 이어 흐르기", () => {
     expect(backend.sounds).toHaveLength(1);
   });
 });
+
+describe("AudioManager 난전 효과음 간격", () => {
+  it("같은 큐가 최소 간격 안에 다시 오면 울리지 않는다", () => {
+    const { audio, backend } = setup();
+    const now = vi.spyOn(performance, "now");
+    now.mockReturnValue(1000);
+    expect(audio.playSfx("battle.hit")).toBe(true);
+    now.mockReturnValue(1030);
+    expect(audio.playSfx("battle.hit")).toBe(false);
+    now.mockReturnValue(1100);
+    expect(audio.playSfx("battle.hit")).toBe(true);
+    expect(backend.sounds).toHaveLength(1);
+    now.mockRestore();
+  });
+});

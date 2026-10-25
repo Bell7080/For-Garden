@@ -14,9 +14,8 @@ export const BATTLE_RU = {
   "tutorial.result.feed": "Вернитесь на площадь, чтобы усилить Торику.",
   "tutorial.result.research": "Вернитесь на площадь и получите припасы для исследования восстановления.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · Угроза прилива",
-  "battle.boss.limit": " · ПРЕДЕЛ",
+  "battle.rank.me": "Я",
+  "battle.rank.weekly": "Рейтинг недели",
   "battle.settle.failed": "Не удалось восстановить экран итогов.",
   "battle.settle.scoreRejected": "Не удалось проверить запись боя. Попробуйте ещё раз.",
   "battle.settle.persistenceFailed": "Не удалось сохранить результат. Повторите попытку или вернитесь в холл для загрузки данных.",

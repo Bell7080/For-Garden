@@ -14,9 +14,8 @@ export const BATTLE_VI = {
   "tutorial.result.feed": "Trở về quảng trường để luyện Torika.",
   "tutorial.result.research": "Trở về quảng trường và nhận vật tư nghiên cứu phục hồi.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · Cảnh báo thủy triều",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "Tôi",
+  "battle.rank.weekly": "Hạng tuần",
   "battle.settle.failed": "Không thể khôi phục màn hình kết quả.",
   "battle.settle.scoreRejected": "Không xác nhận được bản ghi trận đấu. Hãy thử lại.",
   "battle.settle.persistenceFailed": "Không lưu được kết quả. Thử lại hoặc về sảnh để tải lại dữ liệu.",

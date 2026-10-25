@@ -14,9 +14,8 @@ export const BATTLE_EN = {
   "tutorial.result.feed": "Return to the plaza to train Torika.",
   "tutorial.result.research": "Return to the plaza to collect your restoration research supplies.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · Tide Warning",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "Me",
+  "battle.rank.weekly": "Weekly Rank",
   "battle.settle.failed": "Could not restore the result screen.",
   "battle.settle.scoreRejected": "Could not verify the battle record. Please try again.",
   "battle.settle.persistenceFailed": "Could not save the result. Retry, or return to the lobby to reload your game data.",

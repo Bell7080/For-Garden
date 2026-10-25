@@ -125,6 +125,9 @@ import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../u
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
+import { playRankClimb } from "../ui/rankClimb";
+import { ScoreRankingHud } from "../ui/ScoreRankingHud";
+import type { ScoreRankPeer } from "../core/scoreRanking";
 import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { RewardFrame } from "../ui/RewardFrame";
 import { growthPaths, type GrowthPath } from "../core/growthPaths";
@@ -358,7 +361,9 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreShown = 0;
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
-  private bossPhaseLabel?: Phaser.GameObjects.Text;
+  private scoreRankHud?: ScoreRankingHud;
+  /** 랭킹 띠가 내 점수에 더하는 이전 판의 몫(레이드는 지난 도전의 피해, 원정은 없음). */
+  private scoreRankBase = 0;
   /**
    * 레이드의 시즌 줄. 들어올 때 서버가 확정한 남은 체력에서 이번 판의 점수만큼 매 프레임
    * 깎아 그린다 — 조회가 도착하기 전에는 세우지 않는다(조회 중을 글로 말하지 않는다).
@@ -465,12 +470,41 @@ export class BattleScene extends Phaser.Scene {
     this.bossScoreScale = 1;
     const raid = this.battleInput.mode === "raid";
     this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, raid ? RAID_BATTLE_HUD.scoreY : BATTLE_CLOCK_LAYOUT.headlineY, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    this.bossPhaseLabel = this.add.text(raid ? RAID_BATTLE_HUD.phaseX : 42, raid ? RAID_BATTLE_HUD.phaseY : 140, "", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    // 단계 이름표 자리에는 점수 랭킹 띠가 선다 — 순위는 서버 순위표를 받아야 알 수 있어 도착하는 대로 세운다.
+    void this.buildScoreRanking();
     if (raid) {
       // 시계는 시즌 줄 아래로 내려선다 — 맨 위는 남은 체력의 자리다.
       this.clockLabel?.setY(RAID_BATTLE_HUD.clockY);
       void this.buildRaidSeasonHud();
     }
+  }
+
+  /**
+   * 좌상단 점수 랭킹 띠 — 레이드는 이 판의 기여 피해, 원정은 주간 최고 점수 순위표를 상대로 센다.
+   * 순위표를 받지 못하면(오프라인·실패) 띠만 세우지 않고 전투는 그대로 흐른다.
+   */
+  private async buildScoreRanking(): Promise<void> {
+    const input = this.battleInput;
+    if (input.mode !== "raid" && input.mode !== "expeditionBoss") return;
+    const generation = this.combatGeneration;
+    let peers: ScoreRankPeer[];
+    let base = 0;
+    try {
+      if (input.mode === "raid") {
+        const season = (await gameApi.getRaids(1)).raids.find(({ id }) => id === input.raidId);
+        if (!season) return;
+        base = season.myDamage;
+        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage }));
+      } else {
+        peers = (await gameApi.getExpeditionLeaderboard(100)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score }));
+      }
+    } catch { return; }
+    if (!this.scene.isActive() || generation !== this.combatGeneration || this.scoreRankHud) return;
+    const hud = new ScoreRankingHud(this, this.motion.nonEssentialDistanceFactor > 0);
+    hud.setPeers(peers);
+    this.scoreRankBase = base;
+    this.scoreRankHud = hud;
+    hud.update(base + this.bossScoreShown);
   }
 
   /**
@@ -652,6 +686,9 @@ export class BattleScene extends Phaser.Scene {
     this.healPopups = 0;
     this.bossActions = [];
     this.raidSeasonHud = undefined;
+    this.scoreRankHud?.destroy();
+    this.scoreRankHud = undefined;
+    this.scoreRankBase = 0;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
@@ -930,6 +967,15 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("battle.settle.score"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
     const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, score.runScore.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
     scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
+    // 이번 주 순위 — 이전 기록의 순위에서 새 순위까지 이웃을 넘으며 올라간다. 오르지 않았으면 제자리 숫자만 선다.
+    if (score.rankAfter !== null && score.rankAfter !== undefined) {
+      const rankLabel = (rank: number): string => t("raid.settle.rank", { rank });
+      this.add.text(BASE_WIDTH / 2, layout.score.top + 14, t("battle.rank.weekly"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+      const rankText = this.add.text(BASE_WIDTH / 2, layout.score.top + 58, rankLabel(score.rankAfter), textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+      rankText.setStroke("#000000", 5).setShadow(0, 4, "#000000", 4, false, true);
+      const from = score.rankBefore ?? Math.min(100, score.rankAfter + 40);
+      if (score.improved) playRankClimb(this, rankText, from, score.rankAfter, rankLabel);
+    }
     const popups = new PopupLayer(this, 6000);
     // 총점 바로 아래의 작은 보조 조작만 세부 점수로 이어져 기본 화면의 정보 위계를 흐리지 않는다.
     new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: t("battle.settle.detail"), fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
@@ -1577,7 +1623,7 @@ export class BattleScene extends Phaser.Scene {
     this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
     this.paintDeathClock();
     if (this.state.boss) {
-      const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
+      const boss = this.state.boss;
       const normalScore = this.battleInput.mode === "expeditionBoss" ? expeditionManager.status().run?.normalNodeScoreTotal ?? 0 : 0;
       const previousTarget = this.bossScoreTarget;
       // 코어의 누적은 소수까지 세지만(다단히트 반올림 편향을 막는다) 화면에 서는 것은 점수라
@@ -1589,9 +1635,7 @@ export class BattleScene extends Phaser.Scene {
       this.bossScoreScale = Math.max(1, this.bossScoreScale - elapsed / 260);
       if (this.bossScoreTarget > previousTarget) this.bossScoreScale = Math.max(this.bossScoreScale, 1 + scoreMotion.punch);
       this.bossScoreLabel?.setText(this.bossScoreShown.toLocaleString()).setScale(this.bossScoreScale);
-      // **시간은 여기서 적지 않는다** — 화면 맨 위의 시계가 이미 말한다. 이 줄에 남는 것은
-      // 지금 손이 궁극기를 아낄지를 바꾸는 것, 곧 단계와 해일 경고뿐이다.
-      this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "" }));
+      this.scoreRankHud?.update(this.scoreRankBase + this.bossScoreShown);
       this.paintRaidSeasonHud();
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의

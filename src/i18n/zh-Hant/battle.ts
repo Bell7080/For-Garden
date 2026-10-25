@@ -14,9 +14,8 @@ export const BATTLE_ZH_HANT = {
   "tutorial.result.feed": "返回廣場，強化托里卡吧。",
   "tutorial.result.research": "返回廣場，領取復原研究支援物資吧。",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · 潮汐警報",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "我",
+  "battle.rank.weekly": "每週排名",
   "battle.settle.failed": "無法恢復結算畫面。",
   "battle.settle.scoreRejected": "無法確認戰鬥記錄，請重試。",
   "battle.settle.persistenceFailed": "無法儲存結果。請重試，或返回大廳重新載入遊戲資訊。",

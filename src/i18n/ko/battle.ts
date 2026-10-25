@@ -14,9 +14,8 @@ export const BATTLE_KO = {
   "tutorial.result.feed": "토리카를 강화하러 광장으로 돌아가세요.",
   "tutorial.result.research": "광장으로 돌아가 복원 연구 지원품을 받아 보세요.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · 해일 예고",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "나",
+  "battle.rank.weekly": "주간 순위",
 
   "battle.settle.failed": "결과 화면을 복구하지 못했습니다.",
   "battle.settle.scoreRejected": "전투 기록을 확인하지 못했습니다. 다시 시도해 주세요.",

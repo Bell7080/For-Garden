@@ -14,9 +14,8 @@ export const BATTLE_PT_BR = {
   "tutorial.result.feed": "Volte à praça para treinar Torika.",
   "tutorial.result.research": "Volte à praça e recolha os suprimentos da pesquisa de restauração.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · Alerta de maré",
-  "battle.boss.limit": " · LIMITE",
+  "battle.rank.me": "Eu",
+  "battle.rank.weekly": "Posição semanal",
   "battle.settle.failed": "Não foi possível restaurar a tela de resultados.",
   "battle.settle.scoreRejected": "Não foi possível verificar o registro da batalha. Tente novamente.",
   "battle.settle.persistenceFailed": "Não foi possível salvar o resultado. Tente de novo ou volte ao saguão para recarregar os dados.",

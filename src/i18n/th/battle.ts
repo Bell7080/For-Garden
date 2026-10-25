@@ -14,9 +14,8 @@ export const BATTLE_TH = {
   "tutorial.result.feed": "กลับไปที่ลานเพื่อฝึกโทริกะ",
   "tutorial.result.research": "กลับไปที่ลานเพื่อรับเสบียงวิจัยฟื้นคืน",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · เตือนกระแสน้ำ",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "ฉัน",
+  "battle.rank.weekly": "อันดับประจำสัปดาห์",
   "battle.settle.failed": "กู้คืนหน้าผลลัพธ์ไม่ได้",
   "battle.settle.scoreRejected": "ตรวจสอบบันทึกการต่อสู้ไม่ได้ กรุณาลองใหม่",
   "battle.settle.persistenceFailed": "บันทึกผลไม่ได้ ลองใหม่หรือกลับล็อบบี้เพื่อโหลดข้อมูลเกมอีกครั้ง",

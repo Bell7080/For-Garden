@@ -84,7 +84,7 @@ export const EXPEDITION_NODE_REWARD_BALANCE = {
   gold: { perNode: { min: 150, max: 500 }, runCap: 9_000 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
   /** 젬은 한 판 상한을 따로 정하지 않는다(응태 결정, v0.338.0) — 700은 어느 경로로도 닿지 않는 기술적 천장일 뿐이다. */
-  gems: { perNode: { min: 10, max: 20 }, runCap: 700 },
+  gems: { perNode: { min: 9, max: 17 }, runCap: 700 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
@@ -119,7 +119,7 @@ export const EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
 export const EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 750, max: 1_500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 30, max: 60 },
+  gems: { min: 25, max: 50 },
   salvageRecord: { min: 8, max: 15 },
 } as const;
 
@@ -167,13 +167,13 @@ export const EXPEDITION_BEST_SCORE_REWARD_STAGES: readonly { id: string; thresho
   { id: "best-10k", threshold: 15_000, reward: { currency: "salvageRecord", amount: 15 } },
   { id: "best-13k", threshold: 20_000, reward: { currency: "dnaFragments", amount: 5 } },
   { id: "best-16k", threshold: 24_000, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 30_000, reward: { currency: "gems", amount: 50 } },
+  { id: "best-20k", threshold: 30_000, reward: { currency: "gems", amount: 40 } },
   { id: "best-24k", threshold: 36_000, reward: { currency: "salvageRecord", amount: 20 } },
   { id: "best-28k", threshold: 42_000, reward: { currency: "gold", amount: 10_000 } },
   { id: "best-33k", threshold: 50_000, reward: { currency: "salvageRecord", amount: 20 } },
   { id: "best-38k", threshold: 57_000, reward: { currency: "fossil", amount: 1 } },
   { id: "best-44k", threshold: 66_000, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 75_000, reward: { currency: "gems", amount: 100 } },
+  { id: "best-50k", threshold: 75_000, reward: { currency: "gems", amount: 85 } },
   { id: "best-57k", threshold: 85_000, reward: { currency: "salvageRecord", amount: 25 } },
   { id: "best-65k", threshold: 100_000, reward: { currency: "cheesecake", amount: 100 } },
   { id: "best-74k", threshold: 111_000, reward: { currency: "salvageRecord", amount: 30 } },
@@ -181,7 +181,7 @@ export const EXPEDITION_BEST_SCORE_REWARD_STAGES: readonly { id: string; thresho
   { id: "best-95k", threshold: 145_000, reward: { currency: "salvageRecord", amount: 30 } },
   { id: "best-110k", threshold: 165_000, reward: { currency: "amber", amount: 1 } },
   { id: "best-125k", threshold: 190_000, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 220_000, reward: { currency: "gems", amount: 200 } },
+  { id: "best-145k", threshold: 220_000, reward: { currency: "gems", amount: 170 } },
   { id: "best-170k", threshold: 255_000, reward: { currency: "salvageRecord", amount: 50 } },
   { id: "best-200k", threshold: 300_000, reward: { currency: "fossil", amount: 2 } },
 ];
@@ -212,7 +212,7 @@ export function expeditionRankRewards(rank: number): Partial<Record<ExpeditionRe
 export const EXPEDITION_SWEEP_REWARDS = {
   gold: 4_000,
   cheesecake: 120,
-  gems: 200,
+  gems: 170,
   salvageRecord: 60,
   fossil: 0,
 } as const;

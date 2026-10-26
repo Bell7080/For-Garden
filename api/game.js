@@ -18402,10 +18402,10 @@ var RAID_BOSS_BALANCE = {
 };
 var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 50 }, run: { sigil: 3, gems: 8, salvage: 2 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 75 }, run: { sigil: 5, gems: 15, salvage: 4 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 100 }, run: { sigil: 8, gems: 20, salvage: 6 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 150 }, run: { sigil: 13, gems: 30, salvage: 10 } })
+  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } })
 };
 function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
@@ -20048,7 +20048,7 @@ var EXPEDITION_NODE_REWARD_BALANCE = {
   gold: { perNode: { min: 150, max: 500 }, runCap: 9e3 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
   /** 젬은 한 판 상한을 따로 정하지 않는다(응태 결정, v0.338.0) — 700은 어느 경로로도 닿지 않는 기술적 천장일 뿐이다. */
-  gems: { perNode: { min: 10, max: 20 }, runCap: 700 },
+  gems: { perNode: { min: 9, max: 17 }, runCap: 700 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
@@ -20067,7 +20067,7 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 750, max: 1500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 30, max: 60 },
+  gems: { min: 25, max: 50 },
   salvageRecord: { min: 8, max: 15 }
 };
 var EXPEDITION_BOSS_BALANCE = {
@@ -20090,13 +20090,13 @@ var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
   { id: "best-10k", threshold: 15e3, reward: { currency: "salvageRecord", amount: 15 } },
   { id: "best-13k", threshold: 2e4, reward: { currency: "dnaFragments", amount: 5 } },
   { id: "best-16k", threshold: 24e3, reward: { currency: "salvageRecord", amount: 15 } },
-  { id: "best-20k", threshold: 3e4, reward: { currency: "gems", amount: 50 } },
+  { id: "best-20k", threshold: 3e4, reward: { currency: "gems", amount: 40 } },
   { id: "best-24k", threshold: 36e3, reward: { currency: "salvageRecord", amount: 20 } },
   { id: "best-28k", threshold: 42e3, reward: { currency: "gold", amount: 1e4 } },
   { id: "best-33k", threshold: 5e4, reward: { currency: "salvageRecord", amount: 20 } },
   { id: "best-38k", threshold: 57e3, reward: { currency: "fossil", amount: 1 } },
   { id: "best-44k", threshold: 66e3, reward: { currency: "salvageRecord", amount: 25 } },
-  { id: "best-50k", threshold: 75e3, reward: { currency: "gems", amount: 100 } },
+  { id: "best-50k", threshold: 75e3, reward: { currency: "gems", amount: 85 } },
   { id: "best-57k", threshold: 85e3, reward: { currency: "salvageRecord", amount: 25 } },
   { id: "best-65k", threshold: 1e5, reward: { currency: "cheesecake", amount: 100 } },
   { id: "best-74k", threshold: 111e3, reward: { currency: "salvageRecord", amount: 30 } },
@@ -20104,7 +20104,7 @@ var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
   { id: "best-95k", threshold: 145e3, reward: { currency: "salvageRecord", amount: 30 } },
   { id: "best-110k", threshold: 165e3, reward: { currency: "amber", amount: 1 } },
   { id: "best-125k", threshold: 19e4, reward: { currency: "salvageRecord", amount: 40 } },
-  { id: "best-145k", threshold: 22e4, reward: { currency: "gems", amount: 200 } },
+  { id: "best-145k", threshold: 22e4, reward: { currency: "gems", amount: 170 } },
   { id: "best-170k", threshold: 255e3, reward: { currency: "salvageRecord", amount: 50 } },
   { id: "best-200k", threshold: 3e5, reward: { currency: "fossil", amount: 2 } }
 ];
@@ -20117,7 +20117,7 @@ function expeditionRankRewards(rank) {
 var EXPEDITION_SWEEP_REWARDS = {
   gold: 4e3,
   cheesecake: 120,
-  gems: 200,
+  gems: 170,
   salvageRecord: 60,
   fossil: 0
 };
@@ -20450,7 +20450,7 @@ function excavationHarvestStatus(unclaimed, ratePerHour, limitSeconds, harvestMu
 }
 var EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 };
 var EXCAVATION_PRODUCTION_SCALE = { gold: 4, cheesecake: 4, rawStone: 6, gems: 2 };
-var EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 6;
+var EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 5;
 var EXCAVATION_FULL_HARVEST_BONUS = 1.1;
 var EXCAVATION_GROWTH_BY_CURRENCY = {
   gold: EXCAVATION_GROWTH,
@@ -26802,7 +26802,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 240,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 10, max: 30 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
+    rewards: [{ currency: "gems", min: 8, max: 25 }, { currency: "gold", min: 2e3, max: 5e3 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
     clueJournalId: "interaction-doppel-office-01",
     illustration: "background-interaction-doppel-office"
   },
@@ -26830,7 +26830,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 720,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 10, max: 50 }, { currency: "gold", min: 3500, max: 7500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
+    rewards: [{ currency: "gems", min: 8, max: 40 }, { currency: "gold", min: 3500, max: 7500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
     clueJournalId: "interaction-rust-lease-01",
     illustration: "background-interaction-rust-lease"
   },
@@ -26845,7 +26845,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-doppel-upper-01",
     illustration: "background-interaction-doppel-upper"
   },
@@ -26860,7 +26860,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4500, max: 1e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4500, max: 1e4 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-rust-works-01",
     illustration: "background-interaction-rust-works"
   },
@@ -26875,7 +26875,7 @@ var INTERACTION_CITIES = [
     durationMinutes: 1440,
     partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "gems", min: 10, max: 100 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4e3, max: 9e3 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-odidi-embassy-01",
     illustration: "background-interaction-odidi-embassy"
   }

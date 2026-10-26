@@ -189,11 +189,11 @@ describe('원정 점수 절반 조정',()=>{
 });
 
 describe('원정 전리품 정상 범위',()=>{
- it('일반 젬은 10~20, 보물 젬은 30~60 범위에서 지급한다',()=>{
-  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>0}).gems).toBe(10);
-  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>1}).gems).toBe(20);
-  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>0}).gems).toBe(30);
-  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>1}).gems).toBe(60);
+ it('일반 젬은 9~17, 보물 젬은 25~50 범위에서 지급한다',()=>{
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>0}).gems).toBe(9);
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>1}).gems).toBe(17);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>0}).gems).toBe(25);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>1}).gems).toBe(50);
  });
  it('상향 기간의 미정산 전리품을 현행 런 상한과 폰토스 몫까지만 인정한다',()=>{
   expect(normalizeExpeditionPendingRewards({gems:10_000,gold:30_000,cheesecake:360,salvageRecord:580},50_000)).toMatchObject({

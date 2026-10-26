@@ -52,7 +52,7 @@ describe("방치 발굴 순수 규칙", () => {
 
   it("서로 다른 자원 특화를 자원별로 합산한다", () => {
     const model = excavationProductionDisplayModel(activeState().assignedRelicIds, RELICS, starterProgress);
-    expect(model.totalsPerHour).toEqual({ gold: 525, cheesecake: 10.56, rawStone: 7.92, gems: 18 });
+    expect(model.totalsPerHour).toEqual({ gold: 525, cheesecake: 10.56, rawStone: 7.92, gems: 15 });
     expect(model.relics.map(({ currency }) => currency)).toEqual(["gold", "rawStone", "cheesecake"]);
   });
 
@@ -62,7 +62,7 @@ describe("방치 발굴 순수 규칙", () => {
     expect(RELICS.some((relic) => relic.excavationTrait.primaryCurrency === "gems")).toBe(false);
     // 레벨·돌파로 늘지 않는다 — 만렙 개체도 한 칸에 시간당 6개다.
     expect(excavationProductionDisplayModel(["dodo", null, null], RELICS, { dodo: progress(50, 4) }).totalsPerHour.gems).toBe(EXCAVATION_GEMS_PER_RELIC_PER_HOUR);
-    expect(model.totalsPerHour.gems * 8).toBe(144);
+    expect(model.totalsPerHour.gems * 8).toBe(120);
   });
 
   /**
@@ -100,7 +100,7 @@ describe("방치 발굴 순수 규칙", () => {
       cheesecake: [480, 800],
       // 지층 탐사 한 판(칸마다 6~26, 8~10회)이 100개 남짓이라 그 한 판 언저리로 묶는다.
       rawStone: [420, 660],
-      // 편성된 렐릭마다 시간당 6개(응태 결정) — 세 칸이 20시간이면 360개다.
+      // 편성된 렐릭마다 시간당 5개(응태 결정) — 세 칸이 20시간이면 360개다.
       gems: [300, 420],
     };
     for (const currency of EXCAVATION_CURRENCIES) {
@@ -128,22 +128,22 @@ describe("방치 발굴 순수 규칙", () => {
   });
 
   it("빈 슬롯은 생산 상세와 합산에서 제외한다", () => {
-    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, rawStone: 7.92, gems: 6 } });
+    expect(excavationProductionDisplayModel([null, "rex", null], RELICS, { rex: progress() })).toMatchObject({ relics: [{ relicId: "rex" }], totalsPerHour: { gold: 0, cheesecake: 0, rawStone: 7.92, gems: 5 } });
   });
 
   it("앱을 종료한 4시간 동안 세 렐릭 생산량을 누적한다", () => {
     const result = settleIdleExcavation(activeState(), new Date("2026-08-20T04:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 2100, cheesecake: 42.24, rawStone: 31.68, gems: 72 });
+    expect(result.unclaimed).toEqual({ gold: 2100, cheesecake: 42.24, rawStone: 31.68, gems: 60 });
   });
 
   it("화석 특화 렐릭의 신규 생산량을 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["rex", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 7.92, gems: 6 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { rex: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 0, rawStone: 7.92, gems: 5 });
   });
 
   it("편성된 렐릭 한 명의 젬을 주 재화와 함께 독립적으로 정산한다", () => {
     const state = { ...createIdleExcavationState("2026-08-20T00:00:00.000Z"), assignedRelicIds: ["dodo", null, null] as [string, null, null] };
-    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 8.8128, rawStone: 0, gems: 6 });
+    expect(settleIdleExcavation(state, new Date("2026-08-20T01:00:00.000Z"), RELICS, { dodo: progress() }).unclaimed).toEqual({ gold: 0, cheesecake: 8.8128, rawStone: 0, gems: 5 });
   });
 
   it("수확 뒤 네 재화의 소수 부분을 각각 다음 수확으로 이월한다", () => {
@@ -171,7 +171,7 @@ describe("방치 발굴 순수 규칙", () => {
   it("활성 생산 광고는 만료 전 구간에만 1.5배를 적용한다", () => {
     const state = { ...activeState(), activeProductionMultiplier: 1.5, productionMultiplierExpiresAt: "2026-08-20T01:00:00.000Z" };
     const result = settleIdleExcavation(state, new Date("2026-08-20T02:00:00.000Z"), RELICS, starterProgress);
-    expect(result.unclaimed).toEqual({ gold: 1312.5, cheesecake: 26.4, rawStone: 19.8, gems: 45 });
+    expect(result.unclaimed).toEqual({ gold: 1312.5, cheesecake: 26.4, rawStone: 19.8, gems: 37.5 });
   });
 
   it("활성 보관 광고는 오프라인 생산 상한을 두 배로 늘린다", () => {

@@ -146,8 +146,8 @@ describe("정산", () => {
     expect(raidSettlement("normal", target * 5, 0.5, false)).toEqual(raidSettlement("normal", target, 0.5, false));
   });
 
-  it("의 젬은 증표와 같은 비율로 차올라 5 단위로 끊기고 난이도 상한(50·75·100·150)을 넘지 않는다", () => {
-    const max = { easy: 50, normal: 75, hard: 100, rampage: 150 } as const;
+  it("의 젬은 증표와 같은 비율로 차올라 5 단위로 끊기고 난이도 상한(40·65·85·130)을 넘지 않는다", () => {
+    const max = { easy: 40, normal: 65, hard: 85, rampage: 130 } as const;
     for (const difficulty of Object.keys(max) as (keyof typeof max)[]) {
       const spec = RAID_DIFFICULTY[difficulty].settlement;
       expect(spec.gems, difficulty).toBe(max[difficulty]);

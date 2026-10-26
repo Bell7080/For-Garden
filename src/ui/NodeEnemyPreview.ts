@@ -37,6 +37,9 @@ export interface NodeEnemyPreviewOptions {
   sections?: {
     rewards: readonly StageFirstClearReward[];
     rewardsClaimed: boolean;
+    /** 전투 규칙처럼 항상 읽어야 하는 정보는 접지 않고 표시한다. */
+    informationLabel?: string;
+    informationAlwaysOpen?: boolean;
     /** 룬 액자를 누르면 부른다 — 받기 전의 룬은 등급·자리만 알려 주는 미리보기 쪽지를 연다. */
     onRuneClick?: (reward: Extract<StageFirstClearReward, { kind: "rune" }>, point: { x: number; y: number }) => void;
   };
@@ -219,13 +222,14 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const width = NODE_ENEMY_PREVIEW.width;
     const spec = STORY_PREVIEW;
     const story = this.options.situation;
+    const storyOpen = sections.informationAlwaysOpen === true || sectionOpen.story;
     const textWidth = width - spec.storyText.inset * 2;
     // 줄거리 글은 높이를 먼저 재야 판 높이가 나온다. 잰 글을 그대로 판에 얹는다.
-    const storyText = story && sectionOpen.story
+    const storyText = story && storyOpen
       ? this.scene.add.text(0, 0, story, textStyle({ role: "body", size: spec.storyText.size, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0)
       : undefined;
     const layout = storyPreviewLayout({
-      enemiesOpen: sectionOpen.enemies, storyOpen: sectionOpen.story, hasStory: Boolean(story),
+      enemiesOpen: sectionOpen.enemies, storyOpen, hasStory: Boolean(story),
       storyTextHeight: storyText?.height ?? 0, rewardCount: sections.rewards.length,
     });
     this.currentSectionLayout = layout;
@@ -253,9 +257,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
     // ── 줄거리 칸: 한 등급 가볍다 — 머리줄이 낮고 글자가 작고 흐리다.
     if (layout.storyHeaderY !== undefined) {
-      this.addSectionHeader(top + layout.storyHeaderY, spec.storyHeader, sectionOpen.story, () => { sectionOpen.story = !sectionOpen.story; this.renderSectioned(true); this.publishDebug(this.isAbove()); });
-      this.add(this.scene.add.text(left, top + layout.storyHeaderY, t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      this.addSectionToggleLabel(right, top + layout.storyHeaderY, "", sectionOpen.story, 20, COLOR.inkDim);
+      if (!sections.informationAlwaysOpen) this.addSectionHeader(top + layout.storyHeaderY, spec.storyHeader, sectionOpen.story, () => { sectionOpen.story = !sectionOpen.story; this.renderSectioned(true); this.publishDebug(this.isAbove()); });
+      this.add(this.scene.add.text(left, top + layout.storyHeaderY, sections.informationLabel ?? t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      if (!sections.informationAlwaysOpen) this.addSectionToggleLabel(right, top + layout.storyHeaderY, "", sectionOpen.story, 20, COLOR.inkDim);
     }
     if (storyText && layout.storyTextY !== undefined) { storyText.setPosition(left, top + layout.storyTextY); this.add(storyText); }
     else storyText?.destroy();

@@ -4,11 +4,17 @@ import { getRelic } from "../src/data/relics";
 import { ANCIENT_GROWTH_COHORTS, ancientRegularParties, inspectAncientStableFrontier } from "../src/core/ancientStrataCohorts";
 import type { AncientEquipment } from "../src/core/ancientStrataSimulation";
 const args = process.argv.slice(2).filter(arg => arg !== "--cohorts");
-if (args.length !== 0 && (args.length !== 2 || args[0] !== "--output")) throw new Error("--cohorts accepts only --output path.json");
-const output = args[1] ?? "work/ancient-growth-cohorts.json", seeds = [1729, 2531, 4099, 8191, 12289], bondLevel = 10;
+const opts = new Map<string,string>();
+for (let i=0;i<args.length;i+=2) {
+  if (!["--output","--group"].includes(args[i]) || !args[i+1] || args[i+1].startsWith("--") || opts.has(args[i])) throw new Error("--cohorts accepts --output path.json and optional --group sr50|sr40|ssr30|mixed20");
+  opts.set(args[i],args[i+1]);
+}
+const group = opts.get("--group");
+if (group && !ANCIENT_GROWTH_COHORTS.some(c => c.id === group)) throw new Error("Invalid cohort group");
+const output = opts.get("--output") ?? "work/ancient-growth-cohorts.json", seeds = [1729,2531,4099,8191,12289], bondLevel = 10;
 const results = [], csv = ["cohort,level,breakthrough,bond,tank,dealer,support,equipment,order,stableThrough,firstUnstableFloor,unstableFloorWins"];
 let battles = 0;
-for (const cohort of ANCIENT_GROWTH_COHORTS) {
+for (const cohort of ANCIENT_GROWTH_COHORTS.filter(c => !group || c.id === group)) {
   const parties = ancientRegularParties(cohort);
   for (const [index, [tank, dealer, support]] of parties.entries()) {
     const cases = [];
@@ -31,7 +37,7 @@ for (const cohort of ANCIENT_GROWTH_COHORTS) {
   console.log(`${cohort.id} complete: ${parties.length} compositions`);
 }
 mkdirSync(dirname(output), { recursive: true });
-writeFileSync(output, JSON.stringify({ version: 1, seeds, bondLevel, equipment: ["bare", "epic"], control: "auto", tickSeconds: 1 / 30,
+writeFileSync(output, JSON.stringify({ version: 2, model: "varied-trials-v2", seeds, bondLevel, timeLimits: { standard: 90, deadline: 60 }, equipment: ["bare", "epic"], control: "auto", tickSeconds: 1 / 50,
   criterion: "4/5 wins at EVERY preceding floor. Stop immediately at first unstable floor; no claim of maximum lucky win or subsequent rebounds.",
   scope: "Every playable regular composition in the four requested cohorts; tank-first and dealer-first orders. Not all six orders, gear traits or manual policies.",
   compositions: results.length, configurations: results.length * 4, battles, results }, null, 2) + "\n");

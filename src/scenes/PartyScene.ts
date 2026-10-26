@@ -1,3 +1,4 @@
+import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
@@ -565,6 +566,7 @@ export class PartyScene extends Phaser.Scene {
 
   /** 머리글. 스토리는 관문 번호와 이름, 던전은 콘텐츠 이름과 단계다. */
   private title(stage: ReturnType<typeof getBattleStage>): string {
+    if(this.content.content === "stage" && stage.ancientFloor !== undefined) return `${t("ancient.title")} · B${stage.ancientFloor}`;
     const content = this.content;
     if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
@@ -592,7 +594,7 @@ export class PartyScene extends Phaser.Scene {
     else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
-    else startScene(this, "stageMap");
+    else startScene(this, ancientStageFloor(session.selectedStageId) !== undefined ? "ancientStrata" : "stageMap");
   }
 
   /**

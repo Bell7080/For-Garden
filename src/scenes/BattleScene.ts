@@ -1,3 +1,5 @@
+import { ancientStageFloor, ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { getAncientStrataFloor } from "../core/ancientStrataBattle";
 import { storyDifficultyOf } from "../core/storyDifficulty";
 import { storyStages } from "../data/stages";
 import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
@@ -611,6 +613,7 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
+      ...(this.battleInput.mode === "stage" && stage.ancientFloor !== undefined ? { enemyAugmentEffects:getAncientStrataFloor(stage.ancientFloor).enemyAugmentEffects,enemyPercentHpBases:getAncientStrataFloor(stage.ancientFloor).enemyPercentHpBases,timeLimitSeconds:getAncientStrataFloor(stage.ancientFloor).timeLimitSeconds } : {}),
       automaticUltimates: this.battleInput.mode === "duel",
       // 대작전·현상수배는 스테이지의 슬롯별 돌파 표를 읽지 않고, 정보창과 같은 배치 표
       // (`placedEnemyIndex`)의 돌파를 쓴다 — 두 곳이 따로 정하면 창이 말한 돌파 효과가 전투에 없다.
@@ -2816,6 +2819,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** 스토리 결과판을 닫은 뒤의 기본 길. 오프닝에서 곧장 들어온 판은 로비로 나간다. */
   private stageExit(): string {
+    if (this.battleInput.mode === "stage" && ancientStageFloor(session.selectedStageId) !== undefined) return "ancientStrata";
     return this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby" ? "lobby" : "stageMap";
   }
 
@@ -2895,11 +2899,13 @@ export class BattleScene extends Phaser.Scene {
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;
-      const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
+      const canEnter = stage.ancientFloor !== undefined || session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
       const tutorialStep = tutorialManager.lobbyStep();
       const tutorialReturn = tutorialStep !== undefined && tutorialStep !== "pull" && stage.id === lobbyTutorialGateStage(tutorialStep);
       const resultExit = tutorialReturn ? "lobby" : this.stageExit();
-      const upcoming = nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
+      const upcoming = stage.ancientFloor !== undefined
+        ? stage.ancientFloor < ANCIENT_STRATA_MAX_FLOOR ? getBattleStage(ancientStageId(stage.ancientFloor+1)) : undefined
+        : nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
           label: t("stageComplete.next"), primary: true, disabled: !canEnter,

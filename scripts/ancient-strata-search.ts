@@ -14,7 +14,7 @@ for (const tank of tanks) for (const dealer of damage) for (const support of sup
   const party = ancientReferenceParty(order, "ceiling");
   const screen = simulateAncientStrataRun(100, party, seed); battles++;
   if (!screen.won) continue;
-  const checkpoints = [100, 110, 120, 130, 200].map(floor => {
+  const checkpoints = [100, 110, 120, 124, 130, 150, 200].map(floor => {
     const runs = [1729, 2531, 4099, 8191, 12289].map(seed => { battles++; return simulateAncientStrataRun(floor, party, seed); });
     return { floor, wins: runs.filter(r => r.won).length, runs };
   });
@@ -24,7 +24,7 @@ rows.sort((a, b) => {
   const score = (row: typeof a) => row.checkpoints.reduce((sum, c) => sum + c.wins * c.floor, 0);
   return score(b) - score(a);
 });
-const report = { version: 1, scope: "All tank + warrior/assassin + support combinations, two orders; legendary reference loadout, bond 10. One-seed floor100 screen; survivors checked at five seeds. Not an exhaustive search of all legal three-unit teams, rune traits or orders.",
+const report = { version: 2, model: "varied-trials-v2", tickSeconds: 1 / 50, scope: "All tank + warrior/assassin + support combinations, two orders; legendary reference loadout, bond 10. One-seed floor100 screen; survivors checked at five seeds. Not an exhaustive search of all legal three-unit teams, rune traits or orders.",
   screenSeed: seed, tanks: tanks.map(r => r.id), dealers: damage.map(r => r.id), supports: supports.map(r => r.id),
   battles, candidatesPassingScreen: rows.length, candidates: rows };
 mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, JSON.stringify(report, null, 2) + "\n");

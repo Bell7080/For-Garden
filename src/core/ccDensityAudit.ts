@@ -19,6 +19,7 @@ export interface CcAuditScenario {
   limits: CcAuditLimits;
   /** QA 접촉 시험 등 명시적으로 주입한 조건만 변경한다. 실제 스테이지는 생략한다. */
   beforeStep?(state: SkirmishState): void;
+  step?(state: SkirmishState, dt: number, rng: () => number): ReturnType<typeof stepSkirmish>;
   metadata?: Record<string, unknown>;
   includeTimeline?: boolean;
 }
@@ -95,7 +96,7 @@ export function auditCcDensity(scenario: CcAuditScenario): CcAuditReport {
     scenario.beforeStep?.(state);
     const alive = new Set(state.fighters.filter(isFighterAlive).map(fighter => fighter.id));
     const before = state.elapsed - started;
-    const events = stepSkirmish(state, Math.min(step, scenario.durationSeconds - before), rng);
+    const events = (scenario.step ?? stepSkirmish)(state, Math.min(step, scenario.durationSeconds - before), rng);
     const after = state.elapsed - started, dt = after - before;
     if (dt <= 0) break;
     if (scenario.includeTimeline !== false) for (const fighter of state.fighters) {

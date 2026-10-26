@@ -3595,6 +3595,8 @@ export type StageBonusReward =
   | { kind: "rune"; rarity: "uncommon" | "rare"; part: 0 | 1 | 2; trait?: true };
 
 export interface BattleStageDef extends StageBase {
+  /** 고대 지층도 공용 서버 전투/초회 보상 경로를 사용한다. */
+  ancientFloor?: number;
   kind: "battle";
   /**
    * 이 관문에 서는 적. **셋이 기본이고 정예 관문만 하나다.**

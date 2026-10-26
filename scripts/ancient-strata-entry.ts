@@ -14,8 +14,9 @@ for (let index = 0; index < args.length; index++) {
   else throw new Error(`Unknown option or missing value: ${key}`);
 }
 if (values.has("--help")) {
-  console.log("audit:ancient --cohorts [--output report.json] : requested regular-party growth cohorts");
-  console.log("audit:ancient [--quick] [--party rex,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.03333333333333333] [--bond 10] [--level 60] [--output report.json]");
+  console.log("audit:ancient --cohorts [--output report.json] : requested regular-party growth cohorts; optional --group sr50|sr40|ssr30|mixed20");
+  console.log("audit:ancient --reprice | --cc | --cadence [--output report.json]");
+  console.log("audit:ancient [--quick] [--party rex,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.02] [--bond 10] [--level 60] [--output report.json]");
 } else {
   const quick = values.has("--quick");
   const seeds = values.has("--seeds") ? values.get("--seeds")!.split(",").map(Number) : quick ? [1729] : [1729, 2531, 4099, 8191, 12289];
@@ -26,7 +27,7 @@ if (values.has("--help")) {
   if (equipment && !["bare", "epic", "ceiling"].includes(equipment)) throw new Error("Invalid equipment");
   const level = Number(values.get("--level") ?? 60);
   const bondLevel = Number(values.get("--bond") ?? 10);
-  const step = Number(values.get("--step") ?? 1 / 30);
+  const step = Number(values.get("--step") ?? 1 / 50);
   if (!Number.isFinite(step) || step < 1 / 120 || step > 1 / 20) throw new Error("Invalid step");
   const onlyFloor = values.has("--floor") ? Number(values.get("--floor")) : undefined;
   if (onlyFloor !== undefined) getAncientStrataFloor(onlyFloor);
@@ -54,7 +55,7 @@ if (values.has("--help")) {
   }
   const output = values.get("--output") ?? "work/ancient-strata-audit.json";
   const csvPath = output.replace(/\.json$/i, "") + ".runs.csv";
-  const report = { version: 1, sampled: quick, onlyFloor: onlyFloor ?? null, seeds, tickSeconds: step, timeLimitSeconds: 90, control,
+  const report = { version: 2, model: "varied-trials-v2", sampled: quick, onlyFloor: onlyFloor ?? null, seeds, tickSeconds: step, timeLimits: { standard: 90, deadline: 60 }, control,
     battleCount: csv.length - 1, recovery: "Full HP/energy/ferocity reset each floor; no expedition augments", rawRunsFile: csvPath.split("/").at(-1), results,
     definitions: Array.from({ length: 200 }, (_, index) => getAncientStrataFloor(index + 1)).map(({ enemies, ...floor }) => ({ ...floor, enemies: enemies.map(e => ({ id: e.id, role: e.encounterRole, stats: e.stats })) })) };
   mkdirSync(dirname(output), { recursive: true }); writeFileSync(output, JSON.stringify(report, null, 2) + "\n");

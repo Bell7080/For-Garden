@@ -1,3 +1,4 @@
+import { getAncientStrataFloor } from "../core/ancientStrataBattle";
 import { isStoryStageAvailable, storyDifficultyOf } from "../core/storyDifficulty";
 import type { Session } from "../state/session";
 import { getRelic } from "../data/relics";
@@ -197,7 +198,7 @@ export function prepareCombat(
     })),
   );
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
-  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail();
+  if (b.mode === "stage" && (stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : undefined;
   const enemies = cake
     ? cakeOperationEnemies(cake)
@@ -224,6 +225,7 @@ export function prepareCombat(
         }
       : {
           augmentEffects: traits,
+          ...(b.mode === "stage" && stage.ancientFloor !== undefined ? { enemyAugmentEffects: getAncientStrataFloor(stage.ancientFloor).enemyAugmentEffects, enemyPercentHpBases: getAncientStrataFloor(stage.ancientFloor).enemyPercentHpBases, timeLimitSeconds: getAncientStrataFloor(stage.ancientFloor).timeLimitSeconds } : {}),
           enemyBreakthroughs:
             cake || b.mode === "bounty"
               ? [...placedEnemyIndex(b, stage, enemies).values()].map(

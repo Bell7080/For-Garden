@@ -11,7 +11,7 @@ import { createSkirmish } from "./skirmish";
 import type { RelicDef } from "./types";
 import type { CcAuditLimits, CcAuditScenario } from "./ccDensityAudit";
 import { ancientReferenceParty, type AncientEquipment } from "./ancientStrataSimulation";
-import { createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
+import { stepAncientStrataBattle, createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
 
 export const CC_AUDIT_LIMITS = {
   augment: { maxContinuousSeconds: 0.6, maxControlledRatio: 0.22, minFreeGapSeconds: 2.4, minimumObservationSeconds: 20 },
@@ -74,7 +74,7 @@ export function createCcCombatScenario(options: {
     const id = `ancient:${floor}:${options.equipment ?? "bare"}:lv${options.level ?? 60}`;
     return { id, seed: options.seed ?? id, durationSeconds: Math.min(options.durationSeconds ?? definition.timeLimitSeconds, definition.timeLimitSeconds),
       limits: CC_AUDIT_LIMITS.stage, metadata: { mode: "ancient", floor, equipment: options.equipment ?? "bare", level: options.level ?? 60, party: party.players.map(p => p.id) },
-      createState: () => createAncientStrataSkirmish(floor, party.players, party) };
+      step: stepAncientStrataBattle, stepSeconds: .02, createState: () => createAncientStrataSkirmish(floor, party.players, party) };
   }
   const stage = options.mode === "stage" ? getBattleStage(options.stageId ?? "1-10") : undefined;
   const level = options.level ?? (stage ? Math.max(...stageEnemyGrowth(stage).map(enemy => enemy.level)) : 60);

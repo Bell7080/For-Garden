@@ -368,7 +368,6 @@ var LOBBY_KO = {
   "lobby.sortie.ancient": "\uACE0\uB300 \uC9C0\uCE35",
   "lobby.sortie.ancient.status": "\uBB34\uD55C \uC9C0\uCE35 \uD0D0\uC0AC",
   "ancient.title": "\uACE0\uB300 \uC9C0\uCE35",
-  "ancient.comingSoon": "Coming soon",
   "ancient.prev": "\uC774\uC804 \uAD6C\uAC04",
   "ancient.next": "\uB2E4\uC74C \uAD6C\uAC04",
   "ancient.gate": "\uAD00\uBB38",
@@ -441,7 +440,17 @@ var LOBBY_KO = {
   "storyDifficulty.hard.detail": "\uC804\uD22C \uC911\uC2EC \xB7 \uC7AC\uD654 \uBCF4\uC0C1 50% \uC99D\uAC00",
   "storyDifficulty.locked": "{difficulty} 4-10 \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29",
   "storyDifficulty.unlocked.title": "\uC0C8\uB85C\uC6B4 \uB09C\uC774\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694!",
-  "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694."
+  "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694.",
+  "ancient.trial.endurance": "\uC2DC\uB828 \xB7 \uC801 \uCCB4\uB825 +10%",
+  "ancient.trial.armor": "\uC2DC\uB828 \xB7 \uC801 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 +20%",
+  "ancient.trial.assault": "\uC2DC\uB828 \xB7 \uC801 \uACF5\uACA9\uB825\xB7\uC8FC\uBB38\uB825 +10%",
+  "ancient.trial.deadline": "\uC2DC\uB828 \xB7 \uC81C\uD55C \uC2DC\uAC04 60\uCD08 \xB7 \uC801 \uCCB4\uB825 \u221212%",
+  "ancient.trial.shield": "\uC2DC\uB828 \xB7 \uC801 \uC2DC\uC791 \uBCF4\uD638\uB9C9: \uCD5C\uB300 \uCCB4\uB825\uC758 10%",
+  "ancient.trial.charge": "\uC2DC\uB828 \xB7 \uC801 \uC2DC\uC791 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0 +20%",
+  "ancient.depthMultiplier": "\uC9C0\uCE35 \uBC30\uC728",
+  "ancient.deepTrial": "\uC2EC\uCE35 \uC2DC\uB828 \xB7 \uBE44\uB840 \uD53C\uD574\uB294 120\uCE35 \uD658\uC0B0 \uCCB4\uB825 \uAE30\uC900",
+  "ancient.requirement": "\uBA3C\uC800 {stage} \uD074\uB9AC\uC5B4",
+  "ancient.trials": "\uCE35 \uC2DC\uB828"
 };
 
 // src/i18n/ko/common.ts
@@ -5091,6 +5100,8 @@ function packOf(state, owner) {
 function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, playerBreakthroughs = {}, options = {}) {
   if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("\uC544\uAD70\uC740 1~5\uAE30\uB97C \uC9C0\uC6D0\uD569\uB2C8\uB2E4.");
   if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`\uC801\uC740 1~${MAX_ENEMY_COUNT}\uAE30\uB97C \uC9C0\uC6D0\uD569\uB2C8\uB2E4.`);
+  if (options.timeLimitSeconds !== void 0 && (!Number.isFinite(options.timeLimitSeconds) || options.timeLimitSeconds <= 0 || options.timeLimitSeconds > 3600)) throw new RangeError("Invalid combat time limit");
+  if (options.enemyPercentHpBases && (options.enemyPercentHpBases.length !== enemyDefs.length || options.enemyPercentHpBases.some((value) => !Number.isFinite(value) || value <= 0))) throw new RangeError("Invalid enemy percent HP bases");
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("\uBCF4\uC2A4 \uB2E8\uACC4\uC640 \uB9AC\uBBF8\uD2B8\uB294 \uC720\uD6A8\uD574\uC57C \uD569\uB2C8\uB2E4.");
   const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
   const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
@@ -5107,6 +5118,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
     const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScales?.[i] ?? options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
+    if (options.enemyPercentHpBases) fighter.percentHpBasis = options.enemyPercentHpBases[i];
     fighter.immortal = options.boss !== void 0 && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
     if (options.boss !== void 0 && fighter.id === bossFighterId && options.boss.percentHpBasis !== void 0) fighter.percentHpBasis = Math.max(1, options.boss.percentHpBasis);
     const seasonHp = options.boss?.seasonHp;
@@ -5122,6 +5134,7 @@ function createSkirmish(playerDefs, enemyDefs, arena, playerBondLevels = {}, pla
   const party = [...players, ...enemies];
   const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state = {
+    ...options.timeLimitSeconds !== void 0 ? { timeLimitSeconds: options.timeLimitSeconds, timeLimitReached: false } : {},
     automaticUltimates: options.automaticUltimates,
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
@@ -11331,6 +11344,7 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
   const stealthBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.stealthFor]));
   const frenzyBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.ferocityFever]));
   let remaining = Math.min(dt, SKIRMISH.maxCatchUp);
+  if (state.timeLimitSeconds !== void 0) remaining = Math.min(remaining, Math.max(0, state.timeLimitSeconds - state.elapsed));
   while (remaining > 0 && state.phase === "fight") {
     const step2 = Math.min(remaining, SKIRMISH.maxStep);
     const before = events.length;
@@ -11371,6 +11385,11 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       tickAfterglow(fighter, state, events);
     });
     remaining -= step2;
+  }
+  if (state.phase === "fight" && state.timeLimitSeconds !== void 0 && state.elapsed >= state.timeLimitSeconds - 1e-8) {
+    state.timeLimitReached = true;
+    state.phase = "defeat";
+    events.push({ kind: "finish", phase: "defeat" });
   }
   for (const fighter of state.fighters) {
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);
@@ -11590,6 +11609,32 @@ function publicArenaRoom(room, actor) {
 // src/state/SaveManager.ts
 init_define_import_meta_env();
 
+// src/data/ancientStrataDifficulty.ts
+init_define_import_meta_env();
+var ANCIENT_STRATA_MAX_FLOOR = 200;
+var ANCIENT_STRATA_ENEMY_LEVEL = 20;
+var ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
+var ANCIENT_DIFFICULTY_BANDS = [
+  { first: 1, last: 20, focus: "entry", hpStep: 1.016, attackStep: 1.015, defenseStep: 1.006 },
+  { first: 21, last: 40, focus: "sustain", hpStep: 1.022, attackStep: 1.014, defenseStep: 1.006 },
+  { first: 41, last: 60, focus: "armor", hpStep: 1.016, attackStep: 1.015, defenseStep: 1.0105 },
+  { first: 61, last: 80, focus: "offense", hpStep: 1.016, attackStep: 1.022, defenseStep: 1.006 },
+  { first: 81, last: 100, focus: "mixed", hpStep: 1.022, attackStep: 1.02, defenseStep: 1.009 },
+  { first: 101, last: 120, focus: "ranker", hpStep: 1.065, attackStep: 1.055, defenseStep: 1.022 },
+  { first: 121, last: 150, focus: "future", hpStep: 1.085, attackStep: 1.075, defenseStep: 1.03 },
+  { first: 151, last: 200, focus: "future", hpStep: 1.1, attackStep: 1.09, defenseStep: 1.035 }
+];
+var ANCIENT_FIRST_CLEAR_GEMS = 100;
+function ancientStageId(floor) {
+  if (!Number.isInteger(floor) || floor < 1 || floor > ANCIENT_STRATA_MAX_FLOOR) throw new RangeError("Invalid ancient floor");
+  return `ancient:${floor}`;
+}
+function ancientStageFloor(id) {
+  if (typeof id !== "string" || !/^ancient:[1-9]\d{0,2}$/.test(id)) return void 0;
+  const floor = Number(id.slice(8));
+  return floor <= ANCIENT_STRATA_MAX_FLOOR ? floor : void 0;
+}
+
 // src/core/roulette.ts
 init_define_import_meta_env();
 var ROULETTE = {
@@ -11668,44 +11713,8 @@ init_define_import_meta_env();
 // src/data/stages.ts
 init_define_import_meta_env();
 
-// src/core/storyDifficulty.ts
+// src/core/ancientStrataBattle.ts
 init_define_import_meta_env();
-var STORY_DIFFICULTY = {
-  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
-  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
-  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
-};
-function storyDifficultyOf(id) {
-  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
-}
-function storyBaseStageId(id) {
-  return id.replace(/^(normal|hard):/, "");
-}
-function storyStageId(difficulty, base) {
-  return difficulty === "easy" ? base : `${difficulty}:${base}`;
-}
-function storyDifficultyRequirement(difficulty) {
-  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
-}
-function isStoryDifficultyUnlocked(difficulty, cleared) {
-  const required = storyDifficultyRequirement(difficulty);
-  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
-}
-function newlyUnlockedStoryDifficulty(stageId, firstClear) {
-  if (!firstClear) return;
-  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
-}
-function isStoryStageAvailable(stage, cleared) {
-  return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
-}
-function difficultyStageRewards(rewards, difficulty) {
-  const multiplier = STORY_DIFFICULTY[difficulty].reward;
-  return {
-    firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
-    repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
-    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: reward.currency === "gems" ? Math.round(reward.amount * multiplier / 10) * 10 : reward.currency === "gold" ? Math.round(reward.amount * multiplier / 100) * 100 : Math.round(reward.amount * multiplier) } : { ...reward })
-  };
-}
 
 // src/data/relics.ts
 init_define_import_meta_env();
@@ -17663,6 +17672,154 @@ for (const relic of RELICS) {
   registerDataText(relic, "projectName", key("projectName"));
 }
 
+// src/data/ancientStrataEncounters.ts
+init_define_import_meta_env();
+var ANCIENT_ENCOUNTERS = [
+  { id: "frontline", kind: "normal", rosters: [["amo", "toby", "ripa"], ["atra", "mir", "neuri"], ["amo", "pulsi", "neuri"], ["atra", "ikanixia", "ripa"]], hpBudget: 0.91, attackBudget: 1, defenseBudget: 1 },
+  { id: "surround", kind: "swarm", rosters: [["toby", "pulsi", "ripa", "toby", "ripa"], ["ikanixia", "mir", "pulsi", "neuri", "pulsi"], ["mir", "toby", "pulsi", "ripa", "mir"], ["ikanixia", "pulsi", "mir", "neuri", "ikanixia"]], hpBudget: 1, attackBudget: 1, defenseBudget: 0.9 },
+  { id: "hunter", kind: "elite", rosters: [["pulsi"], ["koma"], ["toby"], ["ikanixia"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "supply", kind: "normal", rosters: [["amo", "ikanixia", "neuri"], ["atra", "toby", "ripa"], ["amo", "mir", "neuri"], ["atra", "pulsi", "ripa"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "pincer", kind: "eliteDuo", rosters: [["toby", "pulsi"], ["koma", "ikanixia"], ["mir", "toby"], ["pulsi", "ikanixia"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "attrition", kind: "swarm", rosters: [["atra", "toby", "ripa", "pulsi", "ikanixia"], ["amo", "mir", "neuri", "ikanixia", "pulsi"], ["atra", "pulsi", "neuri", "mir", "ripa"], ["amo", "toby", "ripa", "pulsi", "mir"]], hpBudget: 1, attackBudget: 1, defenseBudget: 0.9 },
+  { id: "escort", kind: "mixed", rosters: [["koma", "toby", "ripa"], ["pulsi", "amo", "neuri"], ["ikanixia", "atra", "ripa"], ["mir", "amo", "neuri"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "crossfire", kind: "normal", rosters: [["ikanixia", "pulsi", "neuri"], ["mir", "toby", "ripa"], ["pulsi", "ikanixia", "ripa"], ["toby", "mir", "neuri"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "duel", kind: "eliteDuo", rosters: [["mir", "ikanixia"], ["toby", "koma"], ["pulsi", "mir"], ["ikanixia", "toby"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
+  { id: "gate", kind: "elite", rosters: [["koma"], ["mir"], ["ikanixia"], ["pulsi"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 }
+];
+var ANCIENT_TRIAL_IDS = ["endurance", "armor", "assault", "deadline", "shield", "charge"];
+var ANCIENT_TRIALS = {
+  endurance: { hp: 1.1, attack: 1, defense: 1, seconds: 90 },
+  armor: { hp: 1, attack: 1, defense: 1.2, seconds: 90 },
+  assault: { hp: 1, attack: 1.1, defense: 1, seconds: 90 },
+  deadline: { hp: 0.88, attack: 1, defense: 1, seconds: 60 },
+  shield: { hp: 1, attack: 1, defense: 1, seconds: 90 },
+  charge: { hp: 1, attack: 1, defense: 1, seconds: 90 }
+};
+function ancientEncounterRole(kind, index) {
+  return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" || kind === "mixed" && index === 0 ? "elite" : "normal";
+}
+
+// src/core/ancientStrataBattle.ts
+function assertAncientFloor(floor) {
+  if (!Number.isInteger(floor) || floor < 1 || floor > ANCIENT_STRATA_MAX_FLOOR) throw new RangeError("\uACE0\uB300 \uC9C0\uCE35\uC740 1~200\uCE35 \uC815\uC218\uB9CC \uD5C8\uC6A9\uD569\uB2C8\uB2E4.");
+}
+function ancientStrataMultipliers(floor) {
+  assertAncientFloor(floor);
+  const result = { hp: 1, attack: 1, defense: 1 };
+  for (const band of ANCIENT_DIFFICULTY_BANDS) {
+    const steps = Math.max(0, Math.min(floor, band.last) - Math.max(2, band.first) + 1);
+    result.hp *= band.hpStep ** steps;
+    result.attack *= band.attackStep ** steps;
+    result.defense *= band.defenseStep ** steps;
+  }
+  return result;
+}
+function getAncientStrataFloor(floor) {
+  const multipliers = ancientStrataMultipliers(floor);
+  const block = Math.floor((floor - 1) / 10), template = ANCIENT_ENCOUNTERS[(floor - 1) % 10];
+  const roster = template.rosters[block % template.rosters.length];
+  const trialId = ANCIENT_TRIAL_IDS[(floor - 1 + block) % ANCIENT_TRIAL_IDS.length], trial = ANCIENT_TRIALS[trialId];
+  const reference = getStageEnemies(getBattleStage("1-10"))[0];
+  const roles = roster.map((_, index) => ancientEncounterRole(template.kind, index));
+  const raw = roster.map((id, index) => applyEncounterScaling(getRelic(id).stats, ANCIENT_STRATA_ENEMY_LEVEL, roles[index], roles.filter((role) => role === roles[index]).length));
+  const rawHp = raw.reduce((sum, stats) => sum + stats.hp, 0);
+  const pressure = (stats) => Math.max(stats.atk, stats.ap) * stats.attackSpeed / 100;
+  const rawPressure = raw.reduce((sum, stats) => sum + pressure(stats), 0);
+  const hpFactor = reference.stats.hp / rawHp * multipliers.hp * template.hpBudget * trial.hp;
+  const attackFactor = pressure(reference.stats) / rawPressure * multipliers.attack * template.attackBudget * trial.attack;
+  const enemies = roster.map((id, index) => {
+    const base = getRelic(id), stats = { ...raw[index] };
+    stats.hp = Math.max(1, Math.round(stats.hp * hpFactor));
+    stats.atk = Math.max(1, Math.round(stats.atk * attackFactor));
+    stats.ap = Math.max(1, Math.round(stats.ap * attackFactor));
+    stats.def = Math.max(1, Math.round(stats.def * multipliers.defense * template.defenseBudget * trial.defense));
+    stats.res = Math.max(1, Math.round(stats.res * multipliers.defense * template.defenseBudget * trial.defense));
+    return { ...base, encounterRole: roles[index], stats };
+  });
+  const enemyAugmentEffects = trialId === "shield" ? [{ kind: "initialShieldPercent", percent: 10, scope: { kind: "all" } }] : trialId === "charge" ? [{ kind: "openingEnergyPercent", percent: 20, scope: { kind: "all" } }] : [];
+  const band = ANCIENT_DIFFICULTY_BANDS.find((band2) => floor <= band2.last);
+  return {
+    floor,
+    level: ANCIENT_STRATA_ENEMY_LEVEL,
+    breakthrough: 0,
+    focus: band.focus,
+    encounterId: template.id,
+    encounterKind: template.kind,
+    rosterVariant: block % template.rosters.length,
+    trialId,
+    trial,
+    timeLimitSeconds: trial.seconds,
+    multipliers,
+    budgetFactors: { hp: hpFactor, attack: attackFactor },
+    enemies,
+    enemyPercentHpBases: enemies.map((enemy) => Math.max(1, Math.round(enemy.stats.hp * ancientStrataMultipliers(Math.min(floor, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR)).hp / multipliers.hp))),
+    firstClearRewards: [{ kind: "currency", currency: "gems", amount: ANCIENT_FIRST_CLEAR_GEMS }],
+    repeatClearRewards: [],
+    enemyAugmentEffects,
+    enemyBreakthroughs: enemies.map(() => 0),
+    enemyBodyScales: enemies.map((enemy) => ENCOUNTER_ROLE[enemy.encounterRole].bodyScale)
+  };
+}
+function getAncientStrataStage(floor) {
+  const d = getAncientStrataFloor(floor);
+  return {
+    kind: "battle",
+    id: ancientStageId(floor),
+    name: `B${floor}`,
+    ancientFloor: floor,
+    sub: true,
+    prerequisiteStageIds: [floor === 1 ? "1-10" : ancientStageId(floor - 1)],
+    enemies: d.enemies.map((enemy, index) => ({
+      relicId: enemy.id,
+      level: d.level,
+      breakthrough: 0,
+      formationSlot: index,
+      ...enemy.encounterRole === "elite" ? { elite: true } : {}
+    })),
+    ...d.encounterKind === "elite" || d.encounterKind === "eliteDuo" ? { elite: true } : {},
+    rewards: { firstClearCheesecake: 0, repeatClearCheesecake: 0, firstClearBonus: d.firstClearRewards }
+  };
+}
+
+// src/core/storyDifficulty.ts
+init_define_import_meta_env();
+var STORY_DIFFICULTY = {
+  easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
+  normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
+  hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
+};
+function storyDifficultyOf(id) {
+  return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
+}
+function storyBaseStageId(id) {
+  return id.replace(/^(normal|hard):/, "");
+}
+function storyStageId(difficulty, base) {
+  return difficulty === "easy" ? base : `${difficulty}:${base}`;
+}
+function storyDifficultyRequirement(difficulty) {
+  return difficulty === "easy" ? void 0 : storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10");
+}
+function isStoryDifficultyUnlocked(difficulty, cleared) {
+  const required = storyDifficultyRequirement(difficulty);
+  return !required || cleared.has(required) && (difficulty !== "hard" || cleared.has("4-10"));
+}
+function newlyUnlockedStoryDifficulty(stageId, firstClear) {
+  if (!firstClear) return;
+  return stageId === "4-10" ? "normal" : stageId === "normal:4-10" ? "hard" : void 0;
+}
+function isStoryStageAvailable(stage, cleared) {
+  return isStoryDifficultyUnlocked(storyDifficultyOf(stage.id), cleared) && stage.prerequisiteStageIds.every((id) => cleared.has(id));
+}
+function difficultyStageRewards(rewards, difficulty) {
+  const multiplier = STORY_DIFFICULTY[difficulty].reward;
+  return {
+    firstClearCheesecake: Math.round(rewards.firstClearCheesecake * multiplier),
+    repeatClearCheesecake: Math.round(rewards.repeatClearCheesecake * multiplier),
+    firstClearBonus: rewards.firstClearBonus?.map((reward) => reward.kind === "currency" && reward.currency !== "fossil" ? { ...reward, amount: reward.currency === "gems" ? Math.round(reward.amount * multiplier / 10) * 10 : reward.currency === "gold" ? Math.round(reward.amount * multiplier / 100) * 100 : Math.round(reward.amount * multiplier) } : { ...reward })
+  };
+}
+
 // src/data/stages.ts
 var STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"];
 function tieredEnemy(relicId, referenceLevel, slot, levelBonus = 0) {
@@ -17918,6 +18075,8 @@ var DAILY_RESTORATION = {
   rewardCheesecake: 40
 };
 function getStage(id) {
+  const floor = ancientStageFloor(id);
+  if (floor !== void 0) return getAncientStrataStage(floor);
   const found = STAGE_BY_ID.get(id);
   if (!found) throw new Error(`\uC54C \uC218 \uC5C6\uB294 \uC2A4\uD14C\uC774\uC9C0 id: ${id}`);
   return found;
@@ -17931,9 +18090,14 @@ function stageEnemyGrowth(stage) {
   return [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot);
 }
 function stageEnemyRole(stage) {
+  if (stage.ancientFloor !== void 0) {
+    const kind = getAncientStrataFloor(stage.ancientFloor).encounterKind;
+    return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" ? "elite" : "normal";
+  }
   return encounterRoleFor(stage.enemies.length, { elite: stage.elite === true });
 }
 function getStageEnemies(stage) {
+  if (stage.ancientFloor !== void 0) return getAncientStrataFloor(stage.ancientFloor).enemies;
   const role = stageEnemyRole(stage);
   const growth = stageEnemyGrowth(stage);
   const soloElites = growth.filter((enemy) => enemy.elite === true).length;
@@ -27259,8 +27423,8 @@ var SaveManager = class {
     if (!Array.isArray(data.party) || data.party.length !== 3 || new Set(data.party).size !== 3 || data.party.some((id) => !data.ownedRelicIds.includes(id))) fail3("\uD30C\uD2F0\uB294 \uC11C\uB85C \uB2E4\uB978 \uBCF4\uC720 \uB810\uB9AD 3\uBA85\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail3("\uC560\uCC29 \uB810\uB9AD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail3("\uC990\uACA8\uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail3("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail3("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId) && ancientStageFloor(data.selectedStageId) === void 0) fail3("\uC2A4\uD14C\uC774\uC9C0 ID\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id) && ancientStageFloor(id) === void 0)) fail3("\uD074\uB9AC\uC5B4 \uC9C4\uD589\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail3("\uC7AC\uD654\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail3("\uC804\uB9AC\uD488 \uC99D\uD45C\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || data.gachaPityByGroup[id].totalPulls !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls < 0) || data.gachaPityByGroup[id].discountTens !== void 0 && (!Number.isInteger(data.gachaPityByGroup[id].discountTens) || data.gachaPityByGroup[id].discountTens <= 0))) fail3("\uBC30\uB108 \uADF8\uB8F9 \uCC9C\uC7A5 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -27864,7 +28028,7 @@ function prepareCombat(state, request, now, id) {
     }))
   );
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
-  if (b.mode === "stage" && storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, state.cleared)) return fail();
+  if (b.mode === "stage" && (stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
   const enemies = cake ? cakeOperationEnemies(cake) : b.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(b.tierId).rounds[b.round])] : b.mode === "expedition" ? getExpeditionNodeEnemies(b.nodeType, b.floor) : getStageEnemies(stage);
   const expedition = b.mode === "expedition" ? createExpeditionSkirmishConfig(b, players, enemies) : void 0;
@@ -27880,6 +28044,7 @@ function prepareCombat(state, request, now, id) {
       enemyBodyScale: expedition.enemyBodyScale
     } : {
       augmentEffects: traits,
+      ...b.mode === "stage" && stage.ancientFloor !== void 0 ? { enemyAugmentEffects: getAncientStrataFloor(stage.ancientFloor).enemyAugmentEffects, enemyPercentHpBases: getAncientStrataFloor(stage.ancientFloor).enemyPercentHpBases, timeLimitSeconds: getAncientStrataFloor(stage.ancientFloor).timeLimitSeconds } : {},
       enemyBreakthroughs: cake || b.mode === "bounty" ? [...placedEnemyIndex(b, stage, enemies).values()].map(
         (e) => e.breakthrough
       ) : stageEnemyGrowth(stage).map((e) => e.breakthrough),
@@ -34561,9 +34726,9 @@ var FakeServer = class {
       throw new GameApiError("STAGE_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
-    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
+    if ((stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     this.settleStaminaNow();
-    const cost = CONTENT_STAMINA_COSTS.normalStage;
+    const cost = stage.ancientFloor !== void 0 ? 0 : CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? /* @__PURE__ */ new Set();
     pending.add(request.requestId);
@@ -34589,12 +34754,12 @@ var FakeServer = class {
       throw new GameApiError("STAGE_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
-    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
+    if ((stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value;
-    const cost = admissionId ? CONTENT_STAMINA_COSTS.normalStage : 0;
+    const cost = admissionId && stage.ancientFloor === void 0 ? CONTENT_STAMINA_COSTS.normalStage : 0;
     const spent = victory && cost > 0 ? this.chargeVictoryStamina(cost) : void 0;
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: void 0 };
     const nextWallet = { ...base.wallet };
@@ -34622,9 +34787,9 @@ var FakeServer = class {
     }
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [
       id,
-      victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress
+      victory && (stage.ancientFloor === void 0 || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress
     ]));
-    const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
+    const nextMissions = stage.ancientFloor !== void 0 && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;
     this.persist({ ...this.state, tutorial: nextTutorial, cleared: nextCleared, wallet: nextWallet, relicProgress: nextProgress, missions: nextMissions, playerResearch: base.playerResearch, itemInventory: base.itemInventory, runeInventory: nextRunes });

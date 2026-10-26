@@ -1,13 +1,13 @@
+import { COMBAT_STEP_MS } from "./combatProtocol";
 import { BOND_LEVEL_CAP } from "./bond";
 import { getRelic } from "../data/relics";
 import { RUNE_STAT_RULES } from "../data/runes";
-import { ANCIENT_STRATA_TIME_LIMIT_SECONDS } from "../data/ancientStrataDifficulty";
 import { applyHeartGems, applyLevelGrowth } from "./relicProgression";
 import { createRuneInstance, enhanceRune, engraveRune, type RuneInstance, type RuneMainStatKey, type RuneStatKey, type RuneSubStatKey } from "./runes";
 import { partyRuneTraitEffects } from "./runeTraitEffects";
-import { createAncientStrataSkirmish } from "./ancientStrataBattle";
+import { stepAncientStrataBattle, createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
 import { createDifficultyRng, type DifficultyControl } from "./stageDifficulty";
-import { canFireUltimate, fireUltimate, isFighterAlive, stepSkirmish, type SkirmishEvent } from "./skirmish";
+import { isFighterAlive, type SkirmishEvent } from "./skirmish";
 
 export const ANCIENT_REFERENCE_PARTIES = [
   { id: "requested", relics: ["rex", "torika", "mette"] },
@@ -75,9 +75,10 @@ export interface AncientSimulationRun {
 }
 
 /** 실전과 같은 공속/이속/돌파/룬 효과/사거리/소환수/궁극기를 쓰며 매 층 새 전투로 시작한다. */
-export function simulateAncientStrataRun(floor: number, party: ReturnType<typeof ancientReferenceParty>, seed: number, control: DifficultyControl = "auto", step = 1 / 30): AncientSimulationRun {
+export function simulateAncientStrataRun(floor: number, party: ReturnType<typeof ancientReferenceParty>, seed: number, control: DifficultyControl = "auto", step = COMBAT_STEP_MS / 1000): AncientSimulationRun {
   if (!Number.isFinite(step) || step < 1 / 120 || step > 1 / 20) throw new RangeError("시뮬레이션 틱은 1/120~1/20초입니다.");
-  const state = createAncientStrataSkirmish(floor, party.players, { ...party, automaticUltimates: control === "auto" });
+  const state = createAncientStrataSkirmish(floor, party.players, { ...party, automaticUltimates: false });
+  const timeLimit = getAncientStrataFloor(floor).timeLimitSeconds;
   const rng = createDifficultyRng(seed);
   let firstPlayerDeathSeconds: number | null = null, ultimateHitEvents = 0;
   function observe(events: SkirmishEvent[]) {
@@ -86,21 +87,12 @@ export function simulateAncientStrataRun(floor: number, party: ReturnType<typeof
       if (event.kind === "attack" && event.skill === "ultimate") ultimateHitEvents++;
     }
   }
-  while (state.phase === "fight" && state.elapsed < ANCIENT_STRATA_TIME_LIMIT_SECONDS - 1e-8) {
-    observe(stepSkirmish(state, Math.min(step, ANCIENT_STRATA_TIME_LIMIT_SECONDS - state.elapsed), rng));
-    if (control === "manualUltimate") {
-      const allies = state.fighters.filter(f => f.side === "player" && f.summonOwnerId === null && isFighterAlive(f));
-      for (const fighter of allies) {
-        const ult = fighter.def.ultimate;
-        const supportive = ult.effectType === "healing" || ult.targeting === "battlefieldAllies" || "selfBulwark" in ult;
-        if (canFireUltimate(state, fighter) && (!supportive || allies.some(f => f.hp / f.maxHp <= 0.7))) observe(fireUltimate(state, fighter.id, rng));
-        if (state.phase !== "fight") break;
-      }
-    }
+  while (state.phase === "fight" && state.elapsed < timeLimit - 1e-8) {
+    observe(stepAncientStrataBattle(state,Math.min(step,timeLimit-state.elapsed),rng,control));
   }
   const players = state.fighters.filter(f => f.side === "player" && f.summonOwnerId === null);
   const enemies = state.fighters.filter(f => f.side === "enemy" && f.summonOwnerId === null);
-  return { floor, seed, won: state.phase === "victory", timedOut: state.phase === "fight", seconds: state.elapsed,
+  return { floor, seed, won: state.phase === "victory", timedOut: state.timeLimitReached === true || state.phase === "fight", seconds: state.elapsed,
     playerHpRatio: players.reduce((sum, f) => sum + Math.max(0, f.hp) / f.maxHp, 0) / players.length,
     survivors: players.filter(isFighterAlive).length, enemyHpRatio: enemies.reduce((sum, f) => sum + Math.max(0, f.hp) / f.maxHp, 0) / enemies.length,
     firstPlayerDeathSeconds, ultimateHitEvents };

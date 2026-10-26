@@ -1,3 +1,4 @@
+import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 import { ROULETTE } from "../core/roulette";
 import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS, type LocalSaveFlavor } from "../core/saveStorage";
 import { cloneAttendanceState, createEmptyAttendanceState, isValidAttendanceState, normalizeAttendanceState } from "../core/attendance";
@@ -654,8 +655,8 @@ export class SaveManager {
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     // 즐겨찾기는 여러 명이 될 수 있지만 보유하지 않은 렐릭이 섞이면 목록이 깨진다.
     if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail("즐겨찾기 정보가 올바르지 않습니다.");
-    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
-    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
+    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId) && ancientStageFloor(data.selectedStageId) === undefined) fail("스테이지 ID가 올바르지 않습니다.");
+    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id) && ancientStageFloor(id) === undefined)) fail("클리어 진행이 올바르지 않습니다.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("재화가 올바르지 않습니다.");
     if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail("전리품 증표가 올바르지 않습니다.");
     if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || (data.gachaPityByGroup[id].totalPulls !== undefined && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls! < 0)) || (data.gachaPityByGroup[id].discountTens !== undefined && (!Number.isInteger(data.gachaPityByGroup[id].discountTens) || data.gachaPityByGroup[id].discountTens! <= 0)))) fail("배너 그룹 천장 정보가 올바르지 않습니다.");

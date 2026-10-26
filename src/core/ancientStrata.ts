@@ -2,7 +2,7 @@
  * 고대 지층 — 끝없이 내려가는 지층 탐사(무한 모드)의 층 규칙.
  *
  * 지도 구간과 배경 규칙. 전투 정의는 ancientStrataBattle.ts, 전용 난이도 표는
- * data/ancientStrataDifficulty.ts가 소유한다. 진행·보상 지급은 아직 연결하지 않았다.
+ * data/ancientStrataDifficulty.ts가 소유한다. 진행·초회 보상은 공용 stage 서버 검증을 사용한다.
  */
 
 /** 한 구간(한 장의 지도)에 담기는 층 수. */

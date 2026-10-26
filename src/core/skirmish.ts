@@ -691,6 +691,9 @@ export interface Fighter extends Combatant {
 export type SkirmishPhase = "fight" | "victory" | "defeat";
 
 export interface SkirmishState {
+  /** 콘텐츠가 정한 전투 제한. 미지정 콘텐츠의 진행은 그대로 유지한다. */
+  timeLimitSeconds?: number;
+  timeLimitReached?: boolean;
   /** 양쪽 편성의 궁극기를 같은 고정 스텝에서 처리한다(PvP). */
   automaticUltimates?: boolean;
   fighters: Fighter[];
@@ -780,6 +783,9 @@ export interface FighterInitialState { relicId: string; currentHp: number; alive
 export interface SkirmishRelicResult { relicId: string; currentHp: number; alive: boolean }
 
 export interface CreateSkirmishOptions {
+  timeLimitSeconds?: number;
+  /** 공유/확장 체력 콘텐츠의 비례 피해 기준. 없으면 실제 최대 체력을 사용한다. */
+  enemyPercentHpBases?: readonly number[];
   playerPositions?: readonly { x: number; y: number }[];
   enemyPositions?: readonly { x: number; y: number }[];
   automaticUltimates?: boolean;
@@ -1578,6 +1584,8 @@ export function createSkirmish(
 ): SkirmishState {
   if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("아군은 1~5기를 지원합니다.");
   if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
+  if (options.timeLimitSeconds !== undefined && (!Number.isFinite(options.timeLimitSeconds) || options.timeLimitSeconds <= 0 || options.timeLimitSeconds > 3600)) throw new RangeError("Invalid combat time limit");
+  if (options.enemyPercentHpBases && (options.enemyPercentHpBases.length !== enemyDefs.length || options.enemyPercentHpBases.some(value => !Number.isFinite(value) || value <= 0))) throw new RangeError("Invalid enemy percent HP bases");
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
   const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
   const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
@@ -1594,6 +1602,7 @@ export function createSkirmish(
   const bossFighterId = options.boss?.fighterId ?? "enemy-0";
   const enemies = enemyDefs.map((def, i) => {
     const fighter = makeFighter(def, "enemy", i, enemySpots[i].x, enemySpots[i].y, options.enemyBondLevels?.[i] ?? 0, options.enemyBreakthroughs?.[i] ?? 0, options.enemyBodyScales?.[i] ?? options.enemyBodyScale ?? 1, options.enemyAugmentEffects);
+    if (options.enemyPercentHpBases) fighter.percentHpBasis = options.enemyPercentHpBases[i];
     // 적 편 전체가 아니라 계약에 지정된 한 개체만 불사 경계를 가진다.
     // 쓰러지면 판이 끝나는 보스(레이드)는 불사가 아니다 — 체력이 0에 닿는 순간이 곧 처치다.
     fighter.immortal = options.boss !== undefined && options.boss.endsOnKill !== true && fighter.id === bossFighterId;
@@ -1614,6 +1623,7 @@ export function createSkirmish(
   // 늑대는 편성 뒤에 붙는다. 배열 순서가 곧 동률 판정 순서라 편성 칸이 늘 앞에 온다.
   const fighters = [...party, ...createPackFighters(party, options.augmentEffects ?? [], options.enemyAugmentEffects ?? [])];
   const state: SkirmishState = {
+    ...(options.timeLimitSeconds !== undefined ? { timeLimitSeconds: options.timeLimitSeconds, timeLimitReached: false } : {}),
     automaticUltimates: options.automaticUltimates,
     fighters,
     // 늑대가 낸 피해는 성장 주체인 지휘자 앞으로 쌓이므로 장부에 제 줄을 만들지 않는다.
@@ -10075,6 +10085,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   const frenzyBefore = new Map(state.fighters.map((fighter) => [fighter.id, fighter.ferocityFever]));
 
   let remaining = Math.min(dt, SKIRMISH.maxCatchUp);
+  if (state.timeLimitSeconds !== undefined) remaining = Math.min(remaining, Math.max(0, state.timeLimitSeconds - state.elapsed));
   while (remaining > 0 && state.phase === "fight") {
     const step = Math.min(remaining, SKIRMISH.maxStep);
     const before = events.length;
@@ -10118,6 +10129,11 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
     });
     state.fighters.forEach((fighter) => { tickUltimateBreakthrough(fighter, step, state, events); tickTidalEchoes(fighter, step, state, events); tickArrowEchoes(fighter, step, state, events); tickAfterimages(fighter, step, state, events); tickTankBreakthroughs(fighter, step, state, events); tickBossBreakthroughs(fighter, step, state, events); tickAfterglow(fighter, state, events); });
     remaining -= step;
+  }
+  if (state.phase === "fight" && state.timeLimitSeconds !== undefined && state.elapsed >= state.timeLimitSeconds - 1e-8) {
+    state.timeLimitReached = true;
+    state.phase = "defeat";
+    events.push({ kind: "finish", phase: "defeat" });
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.
   for (const fighter of state.fighters) {

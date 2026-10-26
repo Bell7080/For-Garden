@@ -1,0 +1,108 @@
+{
+  "version": 2,
+  "model": "varied-trials-v2",
+  "seeds": [
+    1729,
+    2531,
+    4099,
+    8191,
+    12289
+  ],
+  "bondLevel": 10,
+  "timeLimits": {
+    "standard": 90,
+    "deadline": 60
+  },
+  "equipment": [
+    "bare",
+    "epic"
+  ],
+  "control": "auto",
+  "tickSeconds": 0.02,
+  "criterion": "4/5 wins at EVERY preceding floor. Stop immediately at first unstable floor; no claim of maximum lucky win or subsequent rebounds.",
+  "scope": "Every playable regular composition in the four requested cohorts; tank-first and dealer-first orders. Not all six orders, gear traits or manual policies.",
+  "compositions": 418,
+  "configurations": 1672,
+  "battles": 264860,
+  "summary": [
+    {
+      "cohort": "sr50",
+      "equipment": "bare",
+      "compositions": 28,
+      "min": 26,
+      "median": 29.0,
+      "max": 94,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr50",
+      "equipment": "epic",
+      "compositions": 28,
+      "min": 29,
+      "median": 66.0,
+      "max": 109,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr40",
+      "equipment": "bare",
+      "compositions": 28,
+      "min": 26,
+      "median": 29.0,
+      "max": 69,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr40",
+      "equipment": "epic",
+      "compositions": 28,
+      "min": 29,
+      "median": 54.0,
+      "max": 106,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "ssr30",
+      "equipment": "bare",
+      "compositions": 72,
+      "min": 12,
+      "median": 29.0,
+      "max": 66,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "ssr30",
+      "equipment": "epic",
+      "compositions": 72,
+      "min": 29,
+      "median": 66.0,
+      "max": 89,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "mixed20",
+      "equipment": "bare",
+      "compositions": 290,
+      "min": 3,
+      "median": 14.0,
+      "max": 48,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "mixed20",
+      "equipment": "epic",
+      "compositions": 290,
+      "min": 26,
+      "median": 29.0,
+      "max": 88,
+      "zeroStableParties": 0
+    }
+  ],
+  "sourceSha256": {
+    "src/core/ancientStrataCohorts.ts": "0254598cde5acc1caf2900d8a713cb545640d7a5b83c6b852a2898097220fcc2",
+    "src/core/ancientStrataSimulation.ts": "a66647cc866af679848eaab0d7c97859d94351140af25d122c14e7a2983d412b",
+    "src/core/ancientStrataBattle.ts": "10e43f8be926f617afd63aa6b845f0499df3ae81807d6f9021f26cef761ce2eb",
+    "src/data/ancientStrataDifficulty.ts": "c1f24ce2ad9753f57f9e7089bebd74061348c2f973a17bfae07e99dd11ff26f2",
+    "src/data/ancientStrataEncounters.ts": "ea59bb799da7c6ae5a0ff7ef7be12d6f0e15cde98dfe30dd82b398c1a03b5e94"
+  }
+}

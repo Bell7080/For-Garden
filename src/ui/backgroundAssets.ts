@@ -1,3 +1,4 @@
+import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 /**
  * 배경 원화의 키·파일·부트 적재 범위.
  *
@@ -261,6 +262,7 @@ export const BATTLE_FIELD_BACKGROUND = {
  * 스토리 전투는 `stageId`가 오면 그 관문의 장(`3-5` → 3)으로 전장이 갈린다 — 장이 곧 구역이다.
  */
 export function battleFieldBackground(mode: keyof typeof BATTLE_FIELD_BACKGROUND | string, stageId?: string): string {
+  if (mode === "stage" && ancientStageFloor(stageId) !== undefined) return BACKGROUND.ancientField;
   if (mode === "stage" && stageId) {
     const chapter = Number.parseInt(stageId, 10);
     if (Number.isFinite(chapter)) return stageFieldBackground(chapter);

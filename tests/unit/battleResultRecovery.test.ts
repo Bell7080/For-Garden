@@ -17,7 +17,7 @@ describe("전투 결과 UI 복구", () => {
             nextBattleStage: () => undefined, STAGES: [], storyStages: () => [], storyDifficultyOf: () => "easy", isStageUnlocked: () => true, t: (key: string) => key,
         });
         const scene = Object.assign(Object.create(Battle.prototype), {
-            scene: { isActive: () => true }, openingBattle: () => false, stageCompleteFighters: () => [], battleInput: { mode: "stage" }, featureOpen: () => true, showResultFailure,
+            scene: { isActive: () => true }, openingBattle: () => false, stageExit: () => "stageMap", stageCompleteFighters: () => [], battleInput: { mode: "stage" }, featureOpen: () => true, showResultFailure,
         });
         await scene.finishStageVictory({ id: "3-10" });
         expect(showResultFailure).toHaveBeenCalledOnce();

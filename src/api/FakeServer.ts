@@ -2193,9 +2193,9 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     let stage; try { stage = getStage(request.stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
-    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
+    if ((stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
     this.settleStaminaNow();
-    const cost = CONTENT_STAMINA_COSTS.normalStage;
+    const cost = stage.ancientFloor !== undefined ? 0 : CONTENT_STAMINA_COSTS.normalStage;
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     // **여기서는 빼지 않는다** — 이긴 판의 결과 확정이 뺀다(`chargeVictoryStamina`). 입장은 값을 확인하고
     // 영수증을 걸어 둘 뿐이라, 지거나 판이 끊기거나 오류로 끝난 판은 아무것도 잃지 않는다.
@@ -2222,13 +2222,13 @@ export class FakeServer implements GameApi {
     try { stage = owningEvent?.stages.find(({ id }) => id === stageId) ?? getStage(stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     // 완료 API는 전투 보상만 정산하며 스토리 완료는 StoryManager가 독점한다.
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
-    if (storyDifficultyOf(stage.id) !== "easy" && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
+    if ((stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value as string | undefined;
     // 입장 영수증이 걸린 판만 스테미나 몫이 있다(이벤트 스테이지는 입장 비용이 없다).
-    const cost = admissionId ? CONTENT_STAMINA_COSTS.normalStage : 0;
+    const cost = admissionId && stage.ancientFloor === undefined ? CONTENT_STAMINA_COSTS.normalStage : 0;
     // **이긴 판에서만 뺀다.** 진 판은 입장에서 확인만 해 둔 값을 그대로 두므로 그 몫이 곧 돌려준 몫이다.
     const spent = victory && cost > 0 ? this.chargeVictoryStamina(cost) : undefined;
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: undefined };
@@ -2265,8 +2265,8 @@ export class FakeServer implements GameApi {
     }
     // 승리한 전투에 실제 편성된 세 렐릭에게만 유대 경험치를 지급한다.
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id,
-      victory && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
-    const nextMissions = applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
+      victory && (stage.ancientFloor === undefined || firstClear) && this.state.party.includes(id) ? grantBondXp(progress, BOND_XP_REWARD.partyVictory).progress : progress]));
+    const nextMissions = stage.ancientFloor !== undefined && !firstClear ? base.missions : applyMissionEvent(base.missions, { type: "battle_completed", victory }, this.now());
     // 튜토리얼은 지정 관문 승리와 같은 저장에서만 진행한다. 멈춘 기록은 재클리어로 복구한다.
     const currentTutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = victory && !owningEvent ? advanceTutorialOnStageClear(currentTutorial, stage.id) : currentTutorial;

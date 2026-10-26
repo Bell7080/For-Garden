@@ -21,5 +21,5 @@ for (const ids of parties) {
   }
 }
 mkdirSync(dirname(output), { recursive: true });
-writeFileSync(output, JSON.stringify({ version: 1, note: "Manual is a healing/support timing heuristic, not an optimal human policy; 30/60/120Hz are sensitivity runs, not interchangeable seeds. CC uses its own named seed stream. Strict CC violations are preserved, not relabeled as passes.", bondLevel: 10, sensitivityBattles: sensitivity.length * 3, sensitivity, cc }, null, 2) + "\n");
+writeFileSync(output, JSON.stringify({ version: 2, model: "varied-trials-v2", note: "Manual is a healing/support timing heuristic, not an optimal human policy; 30/60/120Hz change the engine step and input cadence together; use --cadence for fixed-50Hz render/input batching sensitivity. These are not interchangeable seeds. CC uses its own named seed stream. Strict CC violations are preserved, not relabeled as passes.", bondLevel: 10, sensitivityBattles: sensitivity.length * 3, sensitivity, cc }, null, 2) + "\n");
 console.log(`Robustness complete: ${sensitivity.length * 3} battles; ${cc.length} CC audits`);

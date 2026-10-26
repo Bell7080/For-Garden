@@ -5,7 +5,6 @@ import { addArenaMascots } from "../ui/ArenaMascots";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
-import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { shapeClipMask } from "../ui/popupArt";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -701,12 +700,10 @@ export class LobbyScene extends Phaser.Scene {
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
-        // 고대 지층은 두 던전 아래·레이드 위의 전체 폭 칸이다. 콘텐츠가 붙기 전이라 일반 빌드는 「Coming soon」으로 잠그고,
-        // QA 빌드만 눌러서 들어가 지도를 확인한다.
+        // 고대 지층은 두 던전 아래·레이드 위의 전체 폭 칸이다. 실제 입장은 순차 해금과 서버 검증을 거친다.
         {
           y: 152, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
-          comingSoon: QA_TOOLS_ENABLED ? undefined : t("ancient.comingSoon"),
           onClick: () => { close(); startScene(this, "ancientStrata"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.

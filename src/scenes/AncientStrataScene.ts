@@ -4,9 +4,9 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { ANCIENT_FLOORS_PER_BLOCK, ancientBlockBackdrop, ancientBlockFloors, isAncientGate } from "../core/ancientStrata";
 import { getAncientStrataFloor } from "../core/ancientStrataBattle";
-import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { motionPolicy } from "../core/settings";
-import { session } from "../state/session";
+import { isStageUnlocked, session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
@@ -26,22 +26,27 @@ const CHROME_DEPTH = 50;
 const DRAG_SLOP = 14;
 /** 길의 점선 한 토막과 틈. */
 const DASH = { on: 22, off: 16 } as const;
-/** 지금 서 있는 층. 진행 기록이 붙기 전까지는 늘 첫 층이다. */
-const CURRENT_FLOOR = 1;
+/** 진행 기록에서 아직 클리어하지 않은 첫 층을 찾는다. */
+function currentFloor(): number {
+  for (let floor=1;floor<=ANCIENT_STRATA_MAX_FLOOR;floor++) if(!session.cleared.has(ancientStageId(floor)))return floor;
+  return ANCIENT_STRATA_MAX_FLOOR;
+}
 
 /**
  * 고대 지층 — 끝없이 내려가는 지층 탐사.
  *
  * 열 층이 한 구간(한 장의 지도)이고, 구간마다 원화가 바뀐다(`ancientBlockBackdrop`). 층은 위에서 아래로
  * 내려가며 노드가 가운데 축 양옆을 번갈아 오가는 긴 길이다. 노드에서 200층의 실제 적·배율을 미리 볼 수 있으며,
- * 진행·보상·서버 전투 입장은 아직 연결하지 않았다.
- * 이 화면은 QA 빌드의 출격판에서만 들어온다.
+ * 공용 서버 전투 검증과 초회 정산을 사용한다.
+ * 출격판에서 진입하며 첫 층은 쉬움 1-10 클리어 후 열린다.
  */
 export class AncientStrataScene extends Phaser.Scene {
   private block = 0;
   private map?: Phaser.GameObjects.Container;
   private range!: Phaser.GameObjects.Text;
   private previousButton!: Button;
+  private startButton!: Button;
+  private selectedFloor?: number;
   private nextButton!: Button;
   private enemyPreview?: NodeEnemyPreview;
   private enemyInfo?: EnemyInfoPopup;
@@ -57,7 +62,7 @@ export class AncientStrataScene extends Phaser.Scene {
 
   create(): void {
     setDebugScene("ancientStrata");
-    this.block = 0;
+    this.block = Math.floor((currentFloor()-1)/ANCIENT_FLOORS_PER_BLOCK);
     this.dragging = false;
     this.selectedNodeY = undefined;
     this.enemyPreview?.destroy();
@@ -69,7 +74,12 @@ export class AncientStrataScene extends Phaser.Scene {
 
     this.add.text(BASE_WIDTH / 2, 190, t("ancient.title"), textStyle({ role: "display", size: 52 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.range = this.add.text(BASE_WIDTH / 2, 262, "", textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5).setDepth(CHROME_DEPTH);
-    this.add.text(BASE_WIDTH / 2, BASE_HEIGHT - 190, t("ancient.comingSoon"), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5).setDepth(CHROME_DEPTH);
+    this.selectedFloor=undefined;
+    this.startButton=new Button(this,BASE_WIDTH/2,BASE_HEIGHT-190,{width:390,height:94,label:t("stageMap.sortie"),fontSize:32,onClick:()=>{
+      if(this.selectedFloor===undefined||!isStageUnlocked(ancientStageId(this.selectedFloor)))return;
+      session.selectedStageId=ancientStageId(this.selectedFloor);
+      startScene(this,"party",{content:"stage"});
+    }}).setDepth(CHROME_DEPTH).setEnabled(false);
 
     const navigation = stageChapterNavigationLayout(BASE_WIDTH, BASE_HEIGHT);
     this.previousButton = new Button(this, navigation.previous.x, navigation.previous.y, {
@@ -91,6 +101,7 @@ export class AncientStrataScene extends Phaser.Scene {
   private showBlock(block: number): void {
     if (block < 0 || block >= ANCIENT_STRATA_MAX_FLOOR / ANCIENT_FLOORS_PER_BLOCK || block === this.block) return;
     this.enemyPreview?.dismiss();
+    this.selectedFloor=undefined;this.startButton.setEnabled(false).setLabel(t("stageMap.sortie"));
     this.selectedNodeY = undefined;
     this.block = block;
     this.map?.destroy(true);
@@ -129,8 +140,8 @@ export class AncientStrataScene extends Phaser.Scene {
       const floor = first + index;
       const gate = isAncientGate(floor);
       const size = ancientNodeSize(floor);
-      const current = floor === CURRENT_FLOOR;
-      const reachable = floor <= CURRENT_FLOOR;
+      const current = floor === currentFloor();
+      const reachable = floor <= currentFloor();
       const bevel = size * 0.3;
       map.add(drawLayer(this, point.x, point.y, chipPoints(size, size, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } }), {
         fill: current ? COLOR.accent : gate ? 0x2a2230 : 0x141920,
@@ -150,10 +161,14 @@ export class AncientStrataScene extends Phaser.Scene {
         if (this.dragMoved > DRAG_SLOP) return;
         const definition = getAncientStrataFloor(floor), multiplier = definition.multipliers;
         this.selectedNodeY = point.y;
+        this.selectedFloor=floor;
+        const unlocked=isStageUnlocked(ancientStageId(floor));
+        this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?"1-10":`B${floor-1}`}));
         this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
-          situation: `${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
+          situation: `${t(`ancient.trial.${definition.trialId}`)}${floor>120?`\n${t("ancient.deepTrial")}`:""}\n${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
           enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),
-          elite: definition.enemies.length === 1,
+          elite: definition.encounterKind === "elite",
+          sections: { informationLabel:t("ancient.trials"),informationAlwaysOpen:true,rewards: definition.firstClearRewards, rewardsClaimed: session.cleared.has(`ancient:${floor}`) },
           onEnemyClick: (enemy, growth) => this.enemyInfo?.show({ def: enemy, ...growth }),
         });
       });
@@ -175,6 +190,9 @@ export class AncientStrataScene extends Phaser.Scene {
   /** 손가락으로 끌어 지도를 굴린다. 휠도 같은 경로다. */
   private enableDragScroll(): void {
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if(this.enemyPreview?.containsScreenPoint(pointer.worldX,pointer.worldY))return;
+      if(this.startButton.getBounds().contains(pointer.worldX,pointer.worldY))return;
+      this.enemyPreview?.dismiss();this.selectedFloor=undefined;this.selectedNodeY=undefined;this.startButton.setEnabled(false).setLabel(t("stageMap.sortie"));
       if (pointer.y < ANCIENT_MAP.window.top - 100 || pointer.y > ANCIENT_MAP.window.bottom + 40) return;
       this.dragging = true;
       this.dragMoved = 0;

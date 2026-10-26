@@ -1,3 +1,4 @@
+import { ancientStageFloor, ancientStageId } from "../data/ancientStrataDifficulty";
 import { isStoryDifficultyUnlocked, storyDifficultyOf } from "../core/storyDifficulty";
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
@@ -614,6 +615,8 @@ export function replaceSession(next: Session): void {
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */
 export function isStageUnlocked(stageId: string): boolean {
+  const floor=ancientStageFloor(stageId);
+  if(floor!==undefined) return session.cleared.has(floor===1 ? "1-10" : ancientStageId(floor-1));
   // 스토리 완료 ID를 대응 노드 ID로 바꿔 전투/서사 간선도 같은 집합 판정기를 통과시킨다.
   const completedNodeIds = new Set(session.cleared);
   for (const stage of STAGES) if (stage.kind === "story" && session.completedStoryIds.has(stage.storyId)) completedNodeIds.add(stage.id);

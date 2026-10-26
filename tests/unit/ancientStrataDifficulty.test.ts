@@ -8,44 +8,57 @@ import { assertValidRuneInstance } from "../../src/core/runes";
 import { createCcCombatScenario } from "../../src/core/ccAuditScenarios";
 
 describe("고대 지층 200층 난이도 계약", () => {
-  it("1층은 쉬움 1-10의 실제 코마이며 숨은 돌파나 불사를 붙이지 않는다", () => {
-    const definition = getAncientStrataFloor(1);
-    expect(definition.enemies).toEqual(getStageEnemies(getBattleStage("1-10")));
-    expect(definition.enemyBreakthroughs).toEqual([0]);
-    expect(definition.level).toBe(getBattleStage("1-10").enemies[0].level);
+  it("1층은 1-10 체력 예산에 맞춘 일반 3인으로 시작한다", () => {
+    const definition = getAncientStrataFloor(1), reference = getStageEnemies(getBattleStage("1-10"))[0];
+    expect(definition.enemies.map(e => e.encounterRole)).toEqual(["normal", "normal", "normal"]);
+    expect(definition.enemies.map(e => e.id)).toEqual(["amo", "toby", "ripa"]);
+    expect(definition.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / reference.stats.hp).toBeCloseTo(1.001, 2);
+    expect(definition.enemyBreakthroughs).toEqual([0,0,0]);
+    expect(definition.level).toBe(20);
     expect(definition.multipliers).toEqual({ hp: 1, attack: 1, defense: 1 });
     const party = ancientReferenceParty(["rex", "torika", "mette"], "bare");
     expect(createAncientStrataSkirmish(1, party.players, party).boss).toBeUndefined();
   });
 
-  it("모든 층에서 기존 적의 주 능력치가 오르며 전용 배율은 공속/이속/CC 기술을 바꾸지 않는다", () => {
-    let previous = getAncientStrataFloor(1);
-    for (let floor = 2; floor <= ANCIENT_STRATA_MAX_FLOOR; floor++) {
-      const next = getAncientStrataFloor(floor);
-      for (const oldEnemy of previous.enemies) {
-        const enemy = next.enemies.find(e => e.id === oldEnemy.id)!;
-        for (const key of ["hp", "atk", "ap", "def", "res"] as const) {
-          expect(enemy.stats[key], `${floor}:${enemy.id}:${key}`).toBeGreaterThanOrEqual(oldEnemy.stats[key]);
-          expect(Number.isSafeInteger(enemy.stats[key])).toBe(true);
-        }
-        expect(enemy.stats.hp).toBeGreaterThan(oldEnemy.stats.hp);
-        expect(enemy.stats.atk).toBeGreaterThan(oldEnemy.stats.atk);
-        for (const key of ["attackSpeed", "moveSpeed", "energyGain", "lifeSteal"] as const) expect(enemy.stats[key]).toBe(oldEnemy.stats[key]);
-        expect(enemy.basic).toEqual(oldEnemy.basic);
-        expect(enemy.ultimate).toEqual(oldEnemy.ultimate);
+  it("200층은 조우/시련을 매 층 교차시키되 기본 공속/스킬을 배율로 강화하지 않는다", () => {
+    const kinds=new Set(), trials=new Set(), templates=new Set();
+    let previous=getAncientStrataFloor(1);
+    for(let floor=1;floor<=ANCIENT_STRATA_MAX_FLOOR;floor++) {
+      const next=getAncientStrataFloor(floor);
+      kinds.add(next.encounterKind);trials.add(next.trialId);templates.add(next.encounterId);
+      if(floor>1) {
+        expect(next.encounterKind).not.toBe(previous.encounterKind);
+        expect(next.multipliers.hp).toBeGreaterThan(previous.multipliers.hp);
+        expect(next.multipliers.attack).toBeGreaterThan(previous.multipliers.attack);
       }
-      expect(next.level).toBeLessThanOrEqual(60);
-      previous = next;
+      for(const enemy of next.enemies) {
+        const base=getRelic(enemy.id);
+        for(const key of ["hp","atk","ap","def","res"] as const) expect(Number.isSafeInteger(enemy.stats[key])&&enemy.stats[key]>0).toBe(true);
+        for(const key of ["attackSpeed","moveSpeed","energyGain","lifeSteal"] as const) expect(enemy.stats[key]).toBe(base.stats[key]);
+        expect(enemy.basic).toEqual(base.basic);expect(enemy.ultimate).toEqual(base.ultimate);
+      }
+      expect(next.firstClearRewards).toEqual([{kind:"currency",currency:"gems",amount:100}]);
+      expect(next.repeatClearRewards).toEqual([]);
+      previous=next;
     }
-    expect(ANCIENT_DIFFICULTY_BANDS[0].first).toBe(1);
+    expect(kinds.size).toBe(5);expect(trials.size).toBe(6);expect(templates.size).toBe(10);
+    const first20=Array.from({length:20},(_,i)=>getAncientStrataFloor(i+1));
+    expect(new Set(first20.map(d=>JSON.stringify([d.encounterKind,d.enemies.map(e=>e.id),d.trialId]))).size).toBe(20);
     expect(ANCIENT_DIFFICULTY_BANDS.at(-1)?.last).toBe(200);
   });
 
-  it("지원 적을 점진적으로 추가하고 기존 적의 예산을 초기화하지 않는다", () => {
-    expect([20, 21, 40, 41, 60, 120, 121, 140, 141, 200].map(f => getAncientStrataFloor(f).enemies.length)).toEqual([1, 2, 2, 3, 3, 3, 4, 4, 5, 5]);
-    expect(getAncientStrataFloor(21).reinforcementShares[1]).toBeCloseTo(0.0675);
-    expect(getAncientStrataFloor(40).reinforcementShares[1]).toBeCloseTo(0.45);
-    expect(getAncientStrataFloor(60).reinforcementShares[2]).toBeCloseTo(0.45);
+  it("2인 정예는 같은 체력 총량을 나누며 시련 보호막/게이지가 적에게 실제 적용된다", () => {
+    const duo=getAncientStrataFloor(5);
+    expect(duo.enemies).toHaveLength(2);
+    expect(duo.enemies.every(e=>e.encounterRole==="elite")).toBe(true);
+    const reference=getStageEnemies(getBattleStage("1-10"))[0];
+    expect(duo.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / (reference.stats.hp*duo.multipliers.hp)).toBeCloseTo(1,2);
+    const party=ancientReferenceParty(["rex","torika","mette"],"bare");
+    const shield=createAncientStrataSkirmish(5,party.players,party);
+    for(const f of shield.fighters.filter(f=>f.side==="enemy")) expect(f.shield.amount / f.maxHp).toBeCloseTo(.1,2);
+    const charge=createAncientStrataSkirmish(6,party.players,party);
+    for(const f of charge.fighters.filter(f=>f.side==="enemy")) expect(f.energy / f.def.ultimate.cost).toBeCloseTo(.2,2);
+    expect(shield.enemyAugmentEffects).toEqual(duo.enemyAugmentEffects);
   });
 
   it("100층 이후 벽을 더 가파르게 하며 200층 계산도 원본과 다른 콘텐츠를 오염시키지 않는다", () => {
@@ -96,7 +109,7 @@ describe("실제 전투 기반 고대 지층 검수", () => {
     const state = scenario.createState();
     expect(state.fighters.filter(f => f.side === "enemy").map(f => f.def.stats)).toEqual(getAncientStrataFloor(100).enemies.map(e => e.stats));
     expect(state.fighters.find(f => f.side === "player")?.breakthrough).toBe(4);
-    expect(scenario.durationSeconds).toBe(90);
+    expect(scenario.durationSeconds).toBe(getAncientStrataFloor(100).timeLimitSeconds);
     expect(() => createCcCombatScenario({ mode: "ancient", selections: [{ augmentId: "tag-stun-basic", targetRelicId: "rex" }] })).toThrow();
   });
 });

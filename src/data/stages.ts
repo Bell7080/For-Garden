@@ -1,3 +1,5 @@
+import { ancientStageFloor } from "./ancientStrataDifficulty";
+import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
 import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { applyBreakthrough } from "../core/relicProgression";
@@ -389,6 +391,8 @@ export const DAILY_RESTORATION = {
 } as const;
 
 export function getStage(id: string): StageDef {
+  const floor = ancientStageFloor(id);
+  if (floor !== undefined) return getAncientStrataStage(floor);
   const found = STAGE_BY_ID.get(id);
   if (!found) throw new Error(`알 수 없는 스테이지 id: ${id}`);
   return found;
@@ -418,11 +422,16 @@ export function stageEnemyGrowth(stage: Extract<StageDef, { kind: "battle" }>): 
  * 선 크기가 갈리지 않는다.
  */
 export function stageEnemyRole(stage: Extract<StageDef, { kind: "battle" }>): EncounterRole {
+  if (stage.ancientFloor !== undefined) {
+    const kind = getAncientStrataFloor(stage.ancientFloor).encounterKind;
+    return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" ? "elite" : "normal";
+  }
   return encounterRoleFor(stage.enemies.length, { elite: stage.elite === true });
 }
 
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
+  if (stage.ancientFloor !== undefined) return getAncientStrataFloor(stage.ancientFloor).enemies;
   const role = stageEnemyRole(stage);
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
   const growth = stageEnemyGrowth(stage);

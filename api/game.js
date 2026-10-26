@@ -20450,7 +20450,7 @@ function excavationHarvestStatus(unclaimed, ratePerHour, limitSeconds, harvestMu
 }
 var EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 };
 var EXCAVATION_PRODUCTION_SCALE = { gold: 4, cheesecake: 4, rawStone: 6, gems: 2 };
-var EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 5;
+var EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 4;
 var EXCAVATION_FULL_HARVEST_BONUS = 1.1;
 var EXCAVATION_GROWTH_BY_CURRENCY = {
   gold: EXCAVATION_GROWTH,

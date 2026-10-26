@@ -20,7 +20,7 @@ import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoi
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
-import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
+import { preloadSsrOmen, releaseSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -198,6 +198,7 @@ export class LabScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.showcase?.destroy();
       this.showcase = undefined;
+      releaseSsrOmen();
       this.pickupPanels = undefined;
       this.cast?.destroy();
       this.cast = undefined;

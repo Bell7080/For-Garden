@@ -231,7 +231,10 @@ const FEVER_HEAD_RATIO = 0.95;
  * 아래쪽에 선 캐릭터에 가려지지 않는다 — 정확히 이 이유로 피해량이 보이지 않았다.
  */
 /** 광역 범위는 배경 원화 위, SD 아래에 깔린다. 앞에 두면 범위가 캐릭터를 덮는다. */
-const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320, ground: -28 } as const;
+// 발밑 그림자(`shadow`)는 모든 SD보다 **뒤**여야 한다. SD의 깊이는 `y / 10 + unitBase`라 맨 위 줄(y 600)에서
+// 0이 되는데, 그림자를 깊이 0(기본값)에 두면 그 줄의 SD와 같은 깊이에서 생성 순서로 가려져 **그림자가 몸을
+// 덮었다**. 광역 범위(`ground`) 바로 위, SD 아래의 고정 깊이로 둔다.
+const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320, ground: -28, shadow: -27 } as const;
 
 /**
  * 데스 카운트 워시가 가장 진할 때의 불투명도.
@@ -1257,7 +1260,7 @@ export class BattleScene extends Phaser.Scene {
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
-      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale);
+      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale).setDepth(DEPTH.shadow);
       const barColor = this.isAlly(fighter) ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);

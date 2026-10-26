@@ -33,7 +33,7 @@ import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
@@ -887,6 +887,7 @@ export class ExpeditionScene extends Phaser.Scene {
         affinity: { element: relic.element, role: relic.role },
         // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
+        deferPortrait: true,
       });
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
@@ -912,6 +913,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private scrollRosterTo(value: number): void {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     this.rosterContent?.setY(this.rosterScrollY);
+    syncPortraitResidency(this.cards.values(), this.rosterScrollY, ROSTER_VIEWPORT, ROSTER.cardHeight);
   }
 
   /** PortraitCard의 자체 기하 마스크는 부모(그리드) 이동을 상속하지 않으므로 스크롤마다 다시 맞춘다. */

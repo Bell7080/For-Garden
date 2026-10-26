@@ -25,7 +25,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { drawLayer, HOLO, slantedRect } from "../ui/holo";
@@ -742,6 +742,7 @@ export class PartyScene extends Phaser.Scene {
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
         selectedStyle: "pressed",
+        deferPortrait: true,
       });
       this.bindCardInput(card.hit, relic);
       this.cards.set(relic.id, { card, role });
@@ -798,6 +799,7 @@ export class PartyScene extends Phaser.Scene {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     setDebugGridOffset("party", this.rosterScrollY);
     this.rosterContent?.setY(this.rosterScrollY);
+    syncPortraitResidency([...this.cards.values()].map(({ card }) => card), this.rosterScrollY, this.rosterViewport, ROSTER_GRID.cardHeight);
     this.syncRosterCardMasks();
   }
 

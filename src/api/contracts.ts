@@ -881,7 +881,7 @@ export interface ClaimExpeditionRewardResponse { rewards?: { currency: Expeditio
  * `favoriteRelicId`는 그 사람의 **애착 렐릭**이며 순위표가 얼굴을 세우는 유일한 근거다 —
  * 화면이 playerId로 아무 개체나 골라 세우면 서버가 말한 적 없는 프로필을 그리게 된다.
  */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
+export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; frameId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 
 /**
@@ -891,7 +891,7 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
  * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
  */
-export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
+export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; /** 그 사람이 두른 프로필 테두리 — 순위 줄의 얼굴이 프로필 얼굴(`ProfileAvatar`)로 선다. */ frameId?: string; }
 /** 정산·한 판 보상의 한 줄. 화면은 이 값을 액자에 그대로 세운다. */
 export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: number; }
 /**

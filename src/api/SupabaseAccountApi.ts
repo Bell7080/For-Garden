@@ -1,4 +1,5 @@
 import { timeoutSignal } from "../core/timeoutSignal";
+import { apiUrl } from "../core/apiBase";
 import type { OAuthBridge } from "./webOAuth";
 /**
  * Supabase 계정·클라우드 저장 어댑터(`AccountApi` 구현).
@@ -228,7 +229,7 @@ export class SupabaseAccountApi implements AccountApi {
       if (this.pendingRegistration?.id === email && (!current || current.userId === this.pendingRegistration.userId)) return await this.finishRegistration(this.pendingRegistration.authEmail, password, this.pendingRegistration.userId, generation);
       const fresh = current ? await this.ensureTokens() : null;
       if (fresh && !fresh.ok) return fresh;
-      const registered = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
+      const registered = await this.fetchImpl(this.options.registrationEndpoint ?? apiUrl("/api/account"), {
         method: "POST", headers: { "Content-Type": "application/json", ...(fresh?.ok ? { Authorization: `Bearer ${fresh.value.accessToken}` } : {}) },
         body: JSON.stringify({ id, password }), signal: timeoutSignal(35000),
       });
@@ -266,7 +267,7 @@ export class SupabaseAccountApi implements AccountApi {
     try {
       // 별칭은 인증 이메일이 바뀌어도 같은 UID를 가리킨다. 합성 이메일로 먼저 로그인하면
       // 예전에 비워진 이메일을 가진 다른 UID를 선택할 수 있어 서버 조회를 유일한 경계로 쓴다.
-      const response = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
+      const response = await this.fetchImpl(this.options.registrationEndpoint ?? apiUrl("/api/account"), {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "sign-in", id, password }), signal: timeoutSignal(35000),
       });
       if (!response.ok) {

@@ -1,4 +1,5 @@
 import { isReadMethod } from "../server/requestPolicy";
+import { apiUrl } from "../core/apiBase";
 import { GUILD_API_METHODS, GuildApiError, type GuildApi, type GuildErrorCode } from "./guildContracts";
 
 /** 길드 조회·가입·직위 조작을 `/api/game`의 `guild.*` 요청으로 보낸다. 호출자는 서버가 JWT에서 정한다. */
@@ -18,7 +19,7 @@ export function createRemoteGuildApi(options: {
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          response = await (options.fetchImpl ?? fetch)("/api/game", { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
+          response = await (options.fetchImpl ?? fetch)(apiUrl("/api/game"), { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
           break;
         } catch (error) { if (attempt === 1) throw error; }
       }

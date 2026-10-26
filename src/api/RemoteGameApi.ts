@@ -3,6 +3,7 @@
  * 호출 뒤의 전체 상태를 로컬 세션에 반영한다. 규칙은 서버가 FakeServer 그대로 실행하므로 여기에는 없다.
  * 인증 토큰은 `getAccessToken`이 보안 저장소에서 그때그때 꺼내 주며 이 클래스는 보관하지 않는다.
  */
+import { apiUrl } from "../core/apiBase";
 import { timeoutSignal } from "../core/timeoutSignal";
 import { isReadMethod } from "../server/requestPolicy";
 import { SERVER_GAME_METHODS } from "../server/gameMethods";
@@ -41,7 +42,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   // 동시에 나간 호출의 응답이 뒤바뀌어 도착해도 더 오래된 상태가 새 상태를 덮지 않게 한다.
   let appliedRevision = -1;
   const doFetch = options.fetchImpl ?? fetch;
-  const endpoint = options.endpoint ?? "/api/game";
+  const endpoint = options.endpoint ?? apiUrl("/api/game");
   const newId = options.newRequestId ?? defaultRequestId;
   // 같은 조회가 화면 전환 때 겹쳐 나가면 한 번만 보내고, 쓰기가 상태를 바꾸기 전까지는 잠깐 그 답을 다시 쓴다.
   const retryIds = new Map<string, string>();

@@ -280,13 +280,15 @@ export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dea
 /**
  * 한 판을 치고 곧바로 받는 증표·젬(1차). 그 판 피해가 `mineTarget`에 닿을수록 최대치로 차오른다.
  * 정산(`raidSettlement`)이 판이 끝난 뒤 누적 점수로 따로 한 번 더 준다 — 젬은 5 단위로 올림한다.
+ *
+ * 인양 기록은 보스를 쓰러뜨린 판(`victory`)에서만 준다 — 못 쓰러뜨리고 끝난 판에는 증표·젬만 피해에 비례해 남는다.
  */
-export function raidRunRewards(difficulty: RaidDifficulty, runDamage: number): { raidSigil: number; gem: number; salvage: number } {
+export function raidRunRewards(difficulty: RaidDifficulty, runDamage: number, victory: boolean): { raidSigil: number; gem: number; salvage: number } {
   if (!(runDamage > 0)) return { raidSigil: 0, gem: 0, salvage: 0 };
   const spec = RAID_DIFFICULTY[difficulty];
   const share = Math.min(1, runDamage / spec.settlement.mineTarget);
   const gem = Math.round(spec.run.gems * share);
-  return { salvage: Math.max(1, Math.round(spec.run.salvage * share)), raidSigil: Math.max(1, Math.round(spec.run.sigil * share)), gem: gem >= 10 ? Math.ceil(gem / 5) * 5 : Math.max(1, gem) };
+  return { salvage: victory ? Math.max(1, Math.round(spec.run.salvage * share)) : 0, raidSigil: Math.max(1, Math.round(spec.run.sigil * share)), gem: gem >= 10 ? Math.ceil(gem / 5) * 5 : Math.max(1, gem) };
 }
 
 /** 임시 표본의 ID 머리. 이 머리를 가진 판이 저장에 하나라도 있으면 다시 넣지 않는다. */

@@ -1050,7 +1050,7 @@ export class FakeServer implements GameApi {
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
-   * 비례한 증표·젬·인양 기록을 곧바로 준다(`raidRunRewards`, 골드는 주지 않는다). 정산은 판이 끝난 뒤 따로다.
+   * 비례한 증표·젬을, 보스를 쓰러뜨린 판이면 인양 기록까지 곧바로 준다(`raidRunRewards`, 골드는 주지 않는다). 정산은 판이 끝난 뒤 따로다.
    */
   async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
     await this.delay();
@@ -1113,7 +1113,7 @@ export class FakeServer implements GameApi {
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
-    const runRewards = raidRunRewards(instance.difficulty, runDamage);
+    const runRewards = raidRunRewards(instance.difficulty, runDamage, result.bossDefeated);
     const grantedRun = (["gems", "salvageRecord", "raidSigil"] as const).map((currency) => {
       const want = currency === "gems" ? runRewards.gem : currency === "salvageRecord" ? runRewards.salvage : runRewards.raidSigil;
       const amount = Math.max(0, Math.min(want, WALLET_CAPS[currency] - nextState.wallet[currency]));

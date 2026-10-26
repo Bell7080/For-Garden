@@ -177,10 +177,15 @@ describe("정산", () => {
   });
 
   it("한 판의 1차 보상은 그 판의 피해에 비례하고 골드는 없다", () => {
-    expect(raidRunRewards("hard", 0)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
-    expect(raidRunRewards("hard", 22_000)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
-    expect(raidRunRewards("hard", 99_000)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
-    expect(raidRunRewards("hard", 11_000).gem).toBeLessThan(20);
+    expect(raidRunRewards("hard", 0, true)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
+    expect(raidRunRewards("hard", 22_000, true)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 99_000, true)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 11_000, true).gem).toBeLessThan(20);
+  });
+
+  it("보스를 못 쓰러뜨린 판에는 인양 기록이 없고 증표·젬만 남는다", () => {
+    expect(raidRunRewards("hard", 22_000, false)).toEqual({ raidSigil: 8, gem: 20, salvage: 0 });
+    expect(raidRunRewards("hard", 0, false)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
   });
 });
 

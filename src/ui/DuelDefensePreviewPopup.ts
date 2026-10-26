@@ -85,7 +85,7 @@ function paintStage(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: 
   const shape = chipPoints(S.width, S.height, { bevel: { topLeft: 44, bottomRight: 44 } });
   body.add(drawLayer(scene, 0, y, shape, { fill: 0x0b0f14, alpha: 1 }));
   addPopupBackgroundImage(scene, body, BACKGROUND.duelField, { x: 0, y, width: S.width, height: S.height, maskShape: shape, overlayStrength: 0.75 });
-  body.add(drawLayer(scene, 0, y, shape, { fill: 0x000000, alpha: 0, edge, edgeAlpha: 0.8 }));
+  body.add(drawLayer(scene, 0, y, shape, { fill: 0x000000, alpha: 0, edge, edgeAlpha: 0.8, shadow: false }));
   // 층은 셋 — 발밑 그림자 → SD → 이름줄. 늦게 도착한 SD가 그림자 위·글자 아래에 끼어든다.
   const stage = scene.add.container(0, 0), figures = scene.add.container(0, 0), labels = scene.add.container(0, 0);
   body.add([stage, figures, labels]);

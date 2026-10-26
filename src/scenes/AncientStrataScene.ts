@@ -3,11 +3,15 @@ import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import { ANCIENT_FLOORS_PER_BLOCK, ancientBlockBackdrop, ancientBlockFloors, isAncientGate } from "../core/ancientStrata";
+import { getAncientStrataFloor } from "../core/ancientStrataBattle";
+import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
-import { showContentToast } from "../ui/ContentToast";
+import { NodeEnemyPreview } from "../ui/NodeEnemyPreview";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { PopupLayer } from "../ui/PopupLayer";
 import { ancientBackground, useBackgroundTexture } from "../ui/backgrounds";
 import { ANCIENT_MAP, ancientNodePoint, ancientNodeSize, ancientScrollLimits } from "../ui/ancientStrataLayout";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
@@ -29,7 +33,8 @@ const CURRENT_FLOOR = 1;
  * 고대 지층 — 끝없이 내려가는 지층 탐사.
  *
  * 열 층이 한 구간(한 장의 지도)이고, 구간마다 원화가 바뀐다(`ancientBlockBackdrop`). 층은 위에서 아래로
- * 내려가며 노드가 가운데 축 양옆을 번갈아 오가는 긴 길이다. 콘텐츠가 붙기 전이라 노드를 누르면 준비 중 안내만 뜨며,
+ * 내려가며 노드가 가운데 축 양옆을 번갈아 오가는 긴 길이다. 노드에서 200층의 실제 적·배율을 미리 볼 수 있으며,
+ * 진행·보상·서버 전투 입장은 아직 연결하지 않았다.
  * 이 화면은 QA 빌드의 출격판에서만 들어온다.
  */
 export class AncientStrataScene extends Phaser.Scene {
@@ -37,6 +42,10 @@ export class AncientStrataScene extends Phaser.Scene {
   private map?: Phaser.GameObjects.Container;
   private range!: Phaser.GameObjects.Text;
   private previousButton!: Button;
+  private nextButton!: Button;
+  private enemyPreview?: NodeEnemyPreview;
+  private enemyInfo?: EnemyInfoPopup;
+  private selectedNodeY?: number;
   private dragging = false;
   private dragMoved = 0;
   private dragOrigin = 0;
@@ -50,6 +59,11 @@ export class AncientStrataScene extends Phaser.Scene {
     setDebugScene("ancientStrata");
     this.block = 0;
     this.dragging = false;
+    this.selectedNodeY = undefined;
+    this.enemyPreview?.destroy();
+    this.enemyPreview = new NodeEnemyPreview(this, { title: "", enemies: [], growth: [], top: ANCIENT_MAP.window.top,
+      bottom: ANCIENT_MAP.window.bottom, depth: 100, onEnemyClick: () => undefined });
+    this.enemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void).setDepth(-30);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { depth: 40, strength: 0.5 });
 
@@ -62,7 +76,7 @@ export class AncientStrataScene extends Phaser.Scene {
       width: navigation.previous.width, height: navigation.previous.height, label: t("ancient.prev"), fontSize: 28,
       onClick: () => this.showBlock(this.block - 1),
     }).setDepth(CHROME_DEPTH);
-    new Button(this, navigation.next.x, navigation.next.y, {
+    this.nextButton = new Button(this, navigation.next.x, navigation.next.y, {
       width: navigation.next.width, height: navigation.next.height, label: t("ancient.next"), fontSize: 28,
       onClick: () => this.showBlock(this.block + 1),
     }).setDepth(CHROME_DEPTH);
@@ -75,7 +89,9 @@ export class AncientStrataScene extends Phaser.Scene {
   }
 
   private showBlock(block: number): void {
-    if (block < 0 || block === this.block) return;
+    if (block < 0 || block >= ANCIENT_STRATA_MAX_FLOOR / ANCIENT_FLOORS_PER_BLOCK || block === this.block) return;
+    this.enemyPreview?.dismiss();
+    this.selectedNodeY = undefined;
     this.block = block;
     this.map?.destroy(true);
     this.buildMap();
@@ -86,6 +102,7 @@ export class AncientStrataScene extends Phaser.Scene {
     const { first, last } = ancientBlockFloors(this.block);
     this.range.setText(`B${first} – B${last}`);
     this.previousButton.setEnabled(this.block > 0);
+    this.nextButton.setEnabled(last < ANCIENT_STRATA_MAX_FLOOR);
     this.limits = ancientScrollLimits();
     const cx = BASE_WIDTH / 2;
     const map = this.add.container(0, this.limits.max);
@@ -131,7 +148,14 @@ export class AncientStrataScene extends Phaser.Scene {
       hit.on("pointerup", () => {
         // 지도를 끌던 손가락이 노드 위에서 떨어져도 안내가 뜨지 않게 한다.
         if (this.dragMoved > DRAG_SLOP) return;
-        showContentToast(this, t("ancient.comingSoon"), "locked");
+        const definition = getAncientStrataFloor(floor), multiplier = definition.multipliers;
+        this.selectedNodeY = point.y;
+        this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
+          situation: `${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
+          enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),
+          elite: definition.enemies.length === 1,
+          onEnemyClick: (enemy, growth) => this.enemyInfo?.show({ def: enemy, ...growth }),
+        });
       });
       map.add(hit);
     });
@@ -167,5 +191,9 @@ export class AncientStrataScene extends Phaser.Scene {
 
   private scrollTo(y: number): void {
     if (this.map) this.map.y = Phaser.Math.Clamp(y, this.limits.min, this.limits.max);
+    if (this.selectedNodeY !== undefined && this.map) {
+      const nodeY = this.selectedNodeY + this.map.y;
+      this.enemyPreview?.trackNode(nodeY, nodeY >= ANCIENT_MAP.window.top && nodeY <= ANCIENT_MAP.window.bottom);
+    }
   }
 }

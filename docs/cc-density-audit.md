@@ -82,3 +82,13 @@ npm run audit:cc -- --mode stage --stage 1-10 --party deina,torika,ella --level 
 태그 팝업의 1초·8초·10초 대기, 0.6초 상한, 공용 회복 안내를 브라우저에서 확인했고, 태그를 눌러도 후보가 선택되지 않았다. 지원 언어 12개의 표와 번역 원고를 함께 갱신했다.
 
 검증: 전체 회귀 396파일·4,735개 통과(기존 건너뜀 1개), 최종 비교/용어/번역 집중 재검사 44개 통과, 타입 검사 및 프로덕션 빌드 통과. CLI의 36개 쌍 비교 출력과 3개 실제 모드 실행도 확인했다.
+
+## 고대 지층
+
+`--mode ancient --floor 120 --equipment ceiling`은 고대 지층 공용 생성 함수와 합법적 기준 룬을 사용한다. `--party`, `--level`, `--duration`, `--targets`도 적용되며 원정 증강 주입은 거절한다. 유대는 현재 기준 파티의 상한 10을 사용한다. 90초 제한을 넘겨 검사하지 않는다.
+
+```sh
+npm run audit:cc -- --mode ancient --floor 120 --party pachi,ella,mette --equipment ceiling --targets all --duration 90 --output work/ancient-cc.json
+```
+
+2026-10-26 검수의 엄격한 CC 경고와 단계별 결과는 [고대 지층 설계](ancient-strata-level-design.md)에 기록했다. 경고를 통과로 재분류하지 않는다.

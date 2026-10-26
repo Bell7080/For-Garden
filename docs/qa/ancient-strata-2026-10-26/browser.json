@@ -1,0 +1,24 @@
+{
+  "checkedOn": "2026-10-26",
+  "locale": "ko-KR",
+  "pageErrors": [],
+  "floor1EnemyCount": 1,
+  "floor191EnemyCount": 5,
+  "maximumBlockIs19": true,
+  "enemyInfoPopupOpened": true,
+  "enemyInfoStats": {
+    "hp": 65785111,
+    "def": 2741,
+    "res": 2386,
+    "atk": 1737467,
+    "ap": 719420,
+    "attackSpeed": 118,
+    "moveSpeed": 124,
+    "critChance": 10,
+    "critDamage": 150,
+    "energyGain": 26,
+    "lifeSteal": 0,
+    "ferocityGain": 0
+  },
+  "scope": "QA browser, actual main boot and AncientStrataScene; preview only, no server combat/progression/reward"
+}

@@ -10,6 +10,8 @@ import type { ExpeditionAugmentSelection } from "./expeditionRewards";
 import { createSkirmish } from "./skirmish";
 import type { RelicDef } from "./types";
 import type { CcAuditLimits, CcAuditScenario } from "./ccDensityAudit";
+import { ancientReferenceParty, type AncientEquipment } from "./ancientStrataSimulation";
+import { createAncientStrataSkirmish, getAncientStrataFloor } from "./ancientStrataBattle";
 
 export const CC_AUDIT_LIMITS = {
   augment: { maxContinuousSeconds: 0.6, maxControlledRatio: 0.22, minFreeGapSeconds: 2.4, minimumObservationSeconds: 20 },
@@ -60,9 +62,20 @@ export function createCcStressScenario(options: {
 
 /** 실제 스테이지·레이드·원정 보스의 성장·강인함·전장·자동 시전 경로를 그대로 사용한다. */
 export function createCcCombatScenario(options: {
-  mode: "stage" | "raid" | "endless"; stageId?: string; bossId?: string; party?: readonly string[];
+  mode: "stage" | "raid" | "endless" | "ancient"; stageId?: string; bossId?: string; party?: readonly string[];
+  floor?: number; equipment?: AncientEquipment;
   level?: number; durationSeconds?: number; seed?: string; selections?: readonly ExpeditionAugmentSelection[];
 }): CcAuditScenario {
+  if (options.mode === "ancient") {
+    const floor = options.floor ?? 100, definition = getAncientStrataFloor(floor);
+    if (options.selections?.length) throw new Error("고대 지층에는 원정 증강을 적용하지 않습니다.");
+    if (options.equipment && !["bare", "epic", "ceiling"].includes(options.equipment)) throw new Error("Invalid ancient equipment");
+    const party = ancientReferenceParty(options.party ?? ["rex", "torika", "mette"], options.equipment ?? "bare", options.level ?? 60);
+    const id = `ancient:${floor}:${options.equipment ?? "bare"}:lv${options.level ?? 60}`;
+    return { id, seed: options.seed ?? id, durationSeconds: Math.min(options.durationSeconds ?? definition.timeLimitSeconds, definition.timeLimitSeconds),
+      limits: CC_AUDIT_LIMITS.stage, metadata: { mode: "ancient", floor, equipment: options.equipment ?? "bare", level: options.level ?? 60, party: party.players.map(p => p.id) },
+      createState: () => createAncientStrataSkirmish(floor, party.players, party) };
+  }
   const stage = options.mode === "stage" ? getBattleStage(options.stageId ?? "1-10") : undefined;
   const level = options.level ?? (stage ? Math.max(...stageEnemyGrowth(stage).map(enemy => enemy.level)) : 60);
   const breakthrough = requiredBreakthroughForLevel(level);

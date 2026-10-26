@@ -28,6 +28,7 @@
     "test:content-loops": "node scripts/check-content-loops.mjs",
     "test:arena-db": "node scripts/check-arena-db.mjs",
     "audit:cc": "node scripts/audit-cc.mjs",
+    "audit:ancient": "node scripts/audit-ancient-strata.mjs",
     "security:audit": "node scripts/check-security.mjs",
     "security:android": "node scripts/check-security.mjs --android",
     "security:ios": "node scripts/check-security.mjs --ios"

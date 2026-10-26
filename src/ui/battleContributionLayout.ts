@@ -5,10 +5,10 @@ export interface ContributionBounds { left: number; top: number; width: number; 
 export const BATTLE_CONTRIBUTION_LAYOUT = {
   /**
    * 판은 **화면 왼쪽 벽에 붙어 선 세로 띠**다. 위에서 분류 칩 한 줄, 그 아래로 다섯 전투원이
-   * 순위 순으로 쌓인다. 상단 HUD(0~230) 아래에서 시작해 하단 조작 줄(1250~)과 프로필(1430~)
+   * 순위 순으로 쌓인다. 상단 HUD(0~230)와 보스전 점수 랭킹 띠(~282) 아래에서 시작해 하단 조작 줄(1250~)과 프로필(1430~)
    * 위에서 끝나고, 순위가 바뀌면 줄이 위아래로 스르륵 자리를 바꾼다.
    */
-  panel: { left: 0, top: 244, width: 252, height: 732 },
+  panel: { left: 0, top: 284, width: 252, height: 732 },
   /** 판을 **화면 왼쪽으로 완전히 내보내는** 거리. 그림자까지 화면 밖으로 밀어 접은 뒤에는 흔적이 없다. */
   slideOutX: -(252 + 24),
   /**
@@ -17,9 +17,9 @@ export const BATTLE_CONTRIBUTION_LAYOUT = {
    * 칩은 전투 조작 줄(배속·자동 궁극기)과 **같은 가로선의 왼쪽 끝**에 선다.
    */
   collapsed: { left: 24, top: 1288 - 38, width: 170, height: 76 },
-  categories: { left: 0, top: 252, width: 252, height: 72, itemWidth: 84 },
+  categories: { left: 0, top: 292, width: 252, height: 72, itemWidth: 84 },
   /** 칸 하나가 한 전투원의 자리다. 위에서 아래로 순위 순이다. */
-  rows: { left: 14, top: 336, width: 224, height: 112, gap: 12, count: 5 },
+  rows: { left: 14, top: 376, width: 224, height: 112, gap: 12, count: 5 },
   /** 칸 안(왼쪽 위 기준) 얼굴 액자. */
   face: { x: 34, y: 38, size: 60 },
   /** 칸 안 이름·수치 열의 왼쪽 시작. */

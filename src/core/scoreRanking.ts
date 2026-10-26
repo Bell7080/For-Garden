@@ -4,11 +4,21 @@
  * 순위는 「나보다 점수가 **많은** 사람 수 + 1」이다 — 같은 값은 앞지른 것이 아니다(`guildRace`와 같은 약속).
  * 화면은 이 값을 그리기만 하고 순위를 다시 세지 않는다.
  */
-export interface ScoreRankPeer { id: string; name: string; score: number }
-export interface ScoreRankRow extends ScoreRankPeer { rank: number; isMe: boolean }
+export interface ScoreRankPeer { id: string; name: string; score: number; /** 공개된 애착 렐릭 — 줄의 얼굴이다. 없으면 이름 첫 글자가 선다. */ favoriteRelicId?: string }
+export interface ScoreRankRow extends ScoreRankPeer {
+  rank: number;
+  isMe: boolean;
+  /** 창 밖에서 맨 위에 붙박은 1위 줄 — 바로 아래 줄과 이어지지 않는다는 것을 화면이 틈으로 말한다. */
+  pinned?: boolean;
+}
 export interface ScoreRankingView { rows: ScoreRankRow[]; myRank: number; participants: number }
 
-/** 내 위로 둘, 아래로 하나 — 난전을 가리지 않는 작은 띠에 서는 이웃의 수. */
+/**
+ * 내 위로 둘, 아래로 하나 — 난전을 가리지 않는 작은 띠에 서는 이웃의 수.
+ *
+ * **1위는 늘 선다.** 창이 1위에 닿지 않으면 맨 위 이웃 자리를 1위가 대신 맡는다 — 줄 수는 그대로이고,
+ * 「누가 꼭대기에 있나」가 내 순위와 무관하게 읽힌다.
+ */
 export const SCORE_RANK_WINDOW = { above: 2, below: 1 } as const;
 /** 내 줄의 고정 ID — 점수가 올라도 같은 줄로 남아야 위로 올라가는 모습이 이어진다. */
 export const SCORE_RANK_ME_ID = "__me__";
@@ -26,7 +36,8 @@ export function scoreRankingView(peers: readonly ScoreRankPeer[], myName: string
   ];
   const from = Math.max(0, meIndex - window.above);
   const to = Math.min(list.length, meIndex + 1 + window.below);
-  return { rows: list.slice(from, to), myRank, participants: list.length };
+  const rows = from > 0 ? [{ ...list[0], pinned: true }, ...list.slice(from + 1, to)] : list.slice(from, to);
+  return { rows, myRank, participants: list.length };
 }
 
 /**

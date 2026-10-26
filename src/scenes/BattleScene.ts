@@ -129,6 +129,7 @@ import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
 import { playRankClimb } from "../ui/rankClimb";
 import { ScoreRankingHud } from "../ui/ScoreRankingHud";
+import { RANKING_VISIBLE_RANKS } from "../ui/expeditionRankingLayout";
 import type { ScoreRankPeer } from "../core/scoreRanking";
 import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { RewardFrame } from "../ui/RewardFrame";
@@ -496,17 +497,19 @@ export class BattleScene extends Phaser.Scene {
     let base = 0;
     try {
       if (input.mode === "raid") {
-        const season = (await gameApi.getRaids(1)).raids.find(({ id }) => id === input.raidId);
+        // 순위표 화면과 같은 길이(100등)를 받는다. 한 줄만 받던 때는 그 한 줄이 1위였고, 첫 판을 치고
+        // 내가 1위가 되면 그 줄이 나라서 이웃이 하나도 남지 않아 **두 번째 판부터 띠가 서지 않았다.**
+        const season = (await gameApi.getRaids(RANKING_VISIBLE_RANKS)).raids.find(({ id }) => id === input.raidId);
         if (!season) return;
         base = season.myDamage;
-        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage }));
+        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage, favoriteRelicId: entry.favoriteRelicId }));
       } else {
-        peers = (await gameApi.getExpeditionLeaderboard(100)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score }));
+        peers = (await gameApi.getExpeditionLeaderboard(RANKING_VISIBLE_RANKS)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score, favoriteRelicId: entry.favoriteRelicId }));
       }
     } catch { return; }
     if (!this.scene.isActive() || generation !== this.combatGeneration || this.scoreRankHud) return;
     const hud = new ScoreRankingHud(this, this.motion.nonEssentialDistanceFactor > 0);
-    hud.setPeers(peers);
+    hud.setPeers(peers, { name: session.playerCard.nickname, favoriteRelicId: session.favorite || undefined });
     this.scoreRankBase = base;
     this.scoreRankHud = hud;
     hud.update(base + this.bossScoreShown);

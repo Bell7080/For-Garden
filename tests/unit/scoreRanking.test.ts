@@ -10,11 +10,15 @@ describe("scoreRankingView", () => {
   it("내 점수가 오르면 이웃을 넘고 내 줄의 ID는 그대로다", () => {
     const before = scoreRankingView(peers, "나", 100);
     expect(before.myRank).toBe(6);
-    expect(before.rows.map((r) => r.id)).toEqual(["d", "e", SCORE_RANK_ME_ID]);
+    // 창이 1위에 닿지 않으면 맨 위 이웃 자리를 1위가 맡는다.
+    expect(before.rows.map((r) => r.id)).toEqual(["a", "e", SCORE_RANK_ME_ID]);
+    expect(before.rows.map((r) => r.rank)).toEqual([1, 5, 6]);
+    expect(before.rows[0].pinned).toBe(true);
     const after = scoreRankingView(peers, "나", 700);
     expect(after.myRank).toBe(3);
     expect(after.rows.map((r) => r.id)).toEqual(["a", "b", SCORE_RANK_ME_ID, "c"]);
     expect(after.rows.map((r) => r.rank)).toEqual([1, 2, 3, 4]);
+    expect(after.rows.some((r) => r.pinned)).toBe(false);
   });
   it("같은 점수는 앞지른 것이 아니다", () => {
     const tie = scoreRankingView(peers, "나", 600);

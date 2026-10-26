@@ -132,11 +132,17 @@ describe("보스전 점수 랭킹 띠", () => {
   it("가운데 점수 글자와 접힌 기여도 판 사이에 들고 왼쪽 벽을 넘지 않는다", async () => {
     const { SCORE_RANKING_HUD: R, RAID_BATTLE_HUD, scoreRankingRowTop } = await import("../../src/ui/battleStatusLayout");
     const { BATTLE_CONTRIBUTION_LAYOUT: C } = await import("../../src/ui/battleContributionLayout");
-    const bottom = scoreRankingRowTop(R.rows - 1) + R.rowHeight;
+    const bottom = scoreRankingRowTop(R.rows - 1, true) + R.rowHeight;
     expect(bottom).toBeLessThanOrEqual(C.panel.top);
     expect(R.left).toBeGreaterThanOrEqual(0);
     // 점수 글자(58px 숫자 열 자리)의 왼쪽 끝보다 안쪽이다.
     expect(R.left + R.width).toBeLessThan(400);
     expect(R.top).toBeGreaterThan(RAID_BATTLE_HUD.valueY + 12);
+    // 줄 안의 순위·얼굴·이름·점수가 서로 겹치지 않고 줄 폭 안에 든다.
+    expect(R.rankX * 2).toBeLessThanOrEqual(R.faceX - R.faceSize / 2 + R.rankX);
+    expect(R.faceX + R.faceSize / 2).toBeLessThan(R.nameX);
+    expect(R.nameX + R.nameWidth).toBeLessThan(R.scoreRight - 90);
+    expect(R.scoreRight).toBeLessThanOrEqual(R.width);
+    expect(R.faceSize).toBeLessThanOrEqual(R.rowHeight);
   });
 });

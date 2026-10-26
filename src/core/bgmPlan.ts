@@ -66,6 +66,14 @@ export function allBgmTracks(): BgmTrack[] {
   return [BGM_TRACKS.title, BGM_TRACKS.glassCity, BGM_TRACKS.battle, BGM_TRACKS.researchSpire];
 }
 
+/**
+ * 지금 흐르는 곡(`keepKey`)을 뺀 나머지 곡. 디코드된 PCM은 곡당 30~50MB라 이 목록은 메모리에서 놓아야 하는
+ * 곡이다(같은 파일을 쓰는 곡이 있어도 키가 다르면 따로 디코드된다).
+ */
+export function bgmTracksToEvict(keepKey: string): BgmTrack[] {
+  return allBgmTracks().filter((track) => track.key !== keepKey);
+}
+
 /** 그 씬이 서는 순간 흘러야 하는 곡. 표에 없으면 `undefined` — 지금 곡을 그대로 둔다. */
 export function bgmTrackForScene(sceneKey: string): BgmTrack | undefined {
   const id = SCENE_TRACK[sceneKey];

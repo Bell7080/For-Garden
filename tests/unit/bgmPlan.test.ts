@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { allBgmTracks, BGM_TRACKS, bgmTrackForScene } from "../../src/core/bgmPlan";
+import { allBgmTracks, BGM_TRACKS, bgmTrackForScene, bgmTracksToEvict } from "../../src/core/bgmPlan";
 import { BATTLE_SOUND_ASSETS, UI_SOUND_ASSETS } from "../../src/managers/AudioManager";
 
 describe("배경음 표", () => {
@@ -32,6 +32,12 @@ describe("배경음 표", () => {
 
   it("미리 받아 두는 목록이 모든 곡을 담는다", () => {
     expect(new Set(allBgmTracks().map((t) => t.key))).toEqual(new Set(Object.values(BGM_TRACKS).map((t) => t.key)));
+  });
+
+  it("지금 곡을 뺀 모든 곡이 디코드 해제 대상이다", () => {
+    const evict = bgmTracksToEvict(BGM_TRACKS.battle.key).map((t) => t.key);
+    expect(evict).not.toContain(BGM_TRACKS.battle.key);
+    expect(evict).toHaveLength(allBgmTracks().length - 1);
   });
 
   it("겹침 층(설정·효과)은 표에 없어 곡을 건드리지 않는다", () => {

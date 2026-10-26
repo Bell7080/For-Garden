@@ -5869,7 +5869,7 @@ function fleeFromFear(fighter, dt, rng, state, events) {
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
     if (target) {
-      strike(fighter, target, rng, state, events, true);
+      strikeOrCastSupport(fighter, target, rng, state, events, true);
       fighter.attackCooldown = attackInterval(fighter, state);
     }
   }
@@ -9685,6 +9685,14 @@ function frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) {
   if (passive?.kind === "stealthStrike" && attacker.stealthFor > 0) multiplier *= 1 + passive.damagePercent / 100;
   return multiplier;
 }
+function strikeOrCastSupport(attacker, target, rng, state, events, useUltimate) {
+  const ultimate = attacker.def.ultimate;
+  if (useUltimate && (!("damageType" in ultimate) || ultimate.damageType === void 0 || ultimate.power === void 0)) {
+    events.push(...fireUltimate(state, attacker.id, rng));
+    return;
+  }
+  strike(attacker, target, rng, state, events, useUltimate);
+}
 function strike(attacker, target, rng, state, events, useUltimate, comboHit, targetPoint) {
   if (comboHit === void 0) attacker.augmentActionSerial += 1;
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
@@ -11055,7 +11063,7 @@ function advance(state, dt, rng, events) {
     }
     if (fighter.attackCooldown <= 0 && !feverKeepsRunning) {
       const firedUltimate = (!state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
-      strike(fighter, target, rng, state, events, firedUltimate);
+      strikeOrCastSupport(fighter, target, rng, state, events, firedUltimate);
       if (!firedUltimate) {
         advanceBasicCycle(fighter);
         placeShallowPool(fighter, state);

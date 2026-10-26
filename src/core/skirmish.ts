@@ -2730,7 +2730,7 @@ function fleeFromFear(fighter: Fighter, dt: number, rng: () => number, state: Sk
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
     if (target) {
-      strike(fighter, target, rng, state, events, true);
+      strikeOrCastSupport(fighter, target, rng, state, events, true);
       fighter.attackCooldown = attackInterval(fighter, state);
     }
   }
@@ -7814,6 +7814,19 @@ function frostPlumeBreakthroughMultiplier(attacker: Fighter, target: Fighter, us
   return multiplier;
 }
 
+/** 적/소환수의 비공격 궁극기는 공격 전용 처리기에 보내지 않고 공용 시전 경계를 사용한다. */
+function strikeOrCastSupport(
+  attacker: Fighter, target: Fighter, rng: () => number, state: SkirmishState,
+  events: SkirmishEvent[], useUltimate: boolean,
+): void {
+  const ultimate = attacker.def.ultimate;
+  if (useUltimate && (!("damageType" in ultimate) || ultimate.damageType === undefined || ultimate.power === undefined)) {
+    events.push(...fireUltimate(state, attacker.id, rng));
+    return;
+  }
+  strike(attacker, target, rng, state, events, useUltimate);
+}
+
 /** 한 번 때린다. 궁극기 여부는 호출하는 쪽이 정한다. */
 function strike(
   attacker: Fighter,
@@ -9713,7 +9726,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
        * 이야기라 늑대의 행동을 끄지 않는다. 적 자동 궁극기와 같은 생존·기절·게이지 규칙을 지난다.
        */
       const firedUltimate = ((!state.automaticUltimates && fighter.side === "enemy") || fighter.summonOwnerId !== null) && canFireUltimate(state, fighter);
-      strike(fighter, target, rng, state, events, firedUltimate);
+      strikeOrCastSupport(fighter, target, rng, state, events, firedUltimate);
       // 순환 걸음은 **행동 하나마다** 넘긴다. strike 안에서 넘기면 연격의 개별 적중과 광역
       // 처리기가 각자 한 걸음씩 삼켜, 한 번 휘두른 것이 두세 걸음을 지나간다.
       // 금강불괴의 남은 횟수도 같은 자리에서 하나 쓴다 — 세는 것이 적중이 아니라 행동이라

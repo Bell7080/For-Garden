@@ -81,5 +81,7 @@
     "attackGapConfoundedByNonAttackingEnemyUltimateAiBug": true,
     "previousTerminologyCorrection": "stun, not concussion; 53.12 seconds includes taunt",
     "engineChanged": false
-  }
+  },
+  "engineStatus": "Historical verification before enemy non-attacking ultimate AI fix; not current-engine floor balance.",
+  "aiFixReport": "docs/enemy-utility-ai-fix-2026-10-26.md"
 }

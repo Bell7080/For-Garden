@@ -125,7 +125,8 @@ function battleStage(id: string): BattleStageDef {
 /** [이름, 권장 파티 레벨, 적, 그 조우의 역할, 전장, 실측 전투 시간(초), 실측 잔여 체력] */
 const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole, BattleArenaMode, number, number][] = [
   ["스토리 1-1", 5, () => getStageEnemies(battleStage("1-1")), "normal", "stage", 14.5, 0.84],
-  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 18.5, 0.87],
+  // 적 비공격 궁극기 AI 복구 후 재측정. 능력치/목표 띠는 조정하지 않았다.
+  ["스토리 1-9", 14, () => getStageEnemies(battleStage("1-9")), "normal", "stage", 23.9, 0.84],
   ["스토리 1-5 정예", 10, () => getStageEnemies(battleStage("1-5")), "elite", "stage", 11.9, 0.64],
   // 엘라 「금강불괴」의 진입 막이 실제로 지급되면서(v0.250.2) 43.7 → 45.8로 늘었다.
   // v0.308.2: 궁극기 게이지가 비용까지만 차면서(처치 환급 제외) 46.7 → 42.0으로 줄었다. 1-5는 레벨을 15 → 17로 올려 띠를 지켰다.
@@ -137,7 +138,7 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
   ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 52.8, 0.79],
-  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 15.3, 0.96],
+  ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],
   ["원정 무리 15층", 29, () => getExpeditionEncounterEnemies("horde", 15), "swarm", "expedition", 15.0, 0.72],

@@ -25,7 +25,11 @@ import { attachDragScroll } from "./dragScroll";
  * 작은 티어 표식이 선다는 것뿐이다. 순위표 **아래에** 내 줄이 붙박여 한 번 더 서서, 목록을 어디까지 내려도,
  * 100등 밖이어도 내 자리가 보인다(`DUEL_RANKING_VIEW`).
  */
-export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" | "score" | "tierId" | "isMe"> & { favoriteRelicId?: string };
+export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" | "score" | "isMe"> & {
+  favoriteRelicId?: string;
+  /** 티어가 없는 순위(고대 지층)는 비운다 — 줄에 티어 표식이 서지 않는다. */
+  tierId?: DuelTierId;
+};
 
 /**
  * 순위표가 읽는 곳 — 결투장과 아레나가 같은 창을 쓰고 이것만 갈아 끼운다(제목·목록·두 버튼이 여는 표).
@@ -34,8 +38,11 @@ export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" |
 export interface RankingSource {
   title: string;
   load(): Promise<{ entries: readonly RankingRowEntry[]; me: RankingRowEntry | null }>;
-  openRewards(me: RankingRowEntry | null): void;
-  openTiers(): void;
+  /** 보상 표·티어 안내가 없는 순위(고대 지층)는 비워 두면 그 버튼이 서지 않는다. */
+  openRewards?(me: RankingRowEntry | null): void;
+  openTiers?(): void;
+  /** 점수 칸의 글. 비우면 천 단위 쉼표를 찍은 수다(고대 지층은 `B87`). */
+  formatScore?(score: number): string;
 }
 
 export class DuelRankingPopup {
@@ -57,11 +64,12 @@ export class DuelRankingPopup {
     const width = BASE_WIDTH - 100; const height = BASE_HEIGHT - 180;
     this.popups.open({ width, height, title: this.source.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
       this.body = body;
-      body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => this.source.openRewards(this.me) }));
+      const { openRewards, openTiers } = this.source;
+      if (openRewards) body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openRewards(this.me) }));
       // 티어 안내는 순위표 안에서 연다 — "몇 등인가" 다음에 읽는 것이 "어느 티어부터 무엇을 받나"다.
-      body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
+      if (openTiers) body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
         width: DUEL_RANKING_TIER_BUTTON.width, height: DUEL_RANKING_TIER_BUTTON.height, label: t("duel.link.tiers"), icon: "arena-tier", fontSize: 26,
-        onClick: () => this.source.openTiers(),
+        onClick: () => openTiers(),
       }));
       void this.load(body);
     });
@@ -140,7 +148,7 @@ export class DuelRankingPopup {
 
   private renderRow(parent: Phaser.GameObjects.Container, entry: RankingRowEntry, y: number): void {
     const medal = rankingMedal(entry.rank);
-    const tone = DUEL_TIER_COLOR[entry.tierId];
+    const tone = entry.tierId ? DUEL_TIER_COLOR[entry.tierId] : { text: COLOR.accentText };
     const row = this.scene.add.container(0, y).setScale(entry.isMe ? 1.04 : 1);
     const accent = medal?.edge ?? (entry.isMe ? COLOR.accent : COLOR.panelEdge);
     row.add(drawLayer(this.scene, 0, 0, chipPoints(RANKING_LIST.rowWidth, RANKING_LIST.rowHeight), {
@@ -152,8 +160,9 @@ export class DuelRankingPopup {
     row.add(this.scene.add.text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor })).setOrigin(0.5));
     addRankingFace(this.scene, row, entry.favoriteRelicId, entry.displayName, accent);
     row.add(this.scene.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: rankColor })).setOrigin(0, 0.5));
-    addDuelTierEmblem(this.scene, row, RANKING_LIST.scoreX - 170, 0, 54, entry.tierId);
-    row.add(this.scene.add.text(RANKING_LIST.scoreX, 0, entry.score.toLocaleString(), textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(1, 0.5));
+    if (entry.tierId) addDuelTierEmblem(this.scene, row, RANKING_LIST.scoreX - 170, 0, 54, entry.tierId);
+    const score = this.source.formatScore ? this.source.formatScore(entry.score) : entry.score.toLocaleString();
+    row.add(this.scene.add.text(RANKING_LIST.scoreX, 0, score, textStyle({ role: "display", size: 32, color: tone.text })).setOrigin(1, 0.5));
     parent.add(row);
   }
 }

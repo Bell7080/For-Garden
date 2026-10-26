@@ -103,4 +103,12 @@ export const LOBBY_JA = {
   "ancient.deepTrial": "深層試練 · HP割合ダメージはB120換算HP基準",
   "ancient.requirement": "先に{stage}をクリア",
   "ancient.trials": "階層の試練",
+  "ancient.ranking.title": "古代地層ランキング",
+  "ancient.social.here": "{floor}を探索中",
+  "ancient.trialTag.endurance": "体力",
+  "ancient.trialTag.armor": "装甲",
+  "ancient.trialTag.assault": "猛攻",
+  "ancient.trialTag.deadline": "時間制限",
+  "ancient.trialTag.shield": "シールド",
+  "ancient.trialTag.charge": "チャージ",
 } as const;

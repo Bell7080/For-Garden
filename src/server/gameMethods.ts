@@ -12,7 +12,7 @@ export const SERVER_GAME_METHODS = [
   "claimRelicQuestionReward", "chooseExpeditionAugment", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeExpeditionRest", "completeObservation", "completeStage", "completeStory", "completeTutorialStep", "digStrataTile",
   "engraveRune", "enhanceRune", "enhanceRuneAll", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
   "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
-  "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
+  "getAncientRanking", "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",
   "deleteMails", "interactInLobby", "markAttendanceAutoShown", "markContentIntroSeen", "markInteractionJournalRead", "markMailsRead", "markRune", "prepareExpeditionBoss", "pullRelics", "purchaseProduct", "purchaseRelicSkin",

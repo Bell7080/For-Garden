@@ -98,4 +98,12 @@ export const LOBBY_TH = {
   "ancient.deepTrial": "บททดสอบชั้นลึก · ดาเมจ % HP ใช้ค่า HP เทียบเท่า B120",
   "ancient.requirement": "ผ่าน {stage} ก่อน",
   "ancient.trials": "บททดสอบประจำชั้น",
+  "ancient.ranking.title": "อันดับชั้นดินโบราณ",
+  "ancient.social.here": "กำลังสำรวจ {floor}",
+  "ancient.trialTag.endurance": "พลังชีวิต",
+  "ancient.trialTag.armor": "เกราะ",
+  "ancient.trialTag.assault": "จู่โจม",
+  "ancient.trialTag.deadline": "จำกัดเวลา",
+  "ancient.trialTag.shield": "โล่",
+  "ancient.trialTag.charge": "ชาร์จ",
 } as const;

@@ -98,4 +98,12 @@ export const LOBBY_RU = {
   "ancient.deepTrial": "Глубина · Урон от % здоровья использует эквивалент B120",
   "ancient.requirement": "Сначала пройдите {stage}",
   "ancient.trials": "Испытания этажа",
+  "ancient.ranking.title": "Рейтинг Древних пластов",
+  "ancient.social.here": "Исследует {floor}",
+  "ancient.trialTag.endurance": "Здоровье",
+  "ancient.trialTag.armor": "Броня",
+  "ancient.trialTag.assault": "Натиск",
+  "ancient.trialTag.deadline": "Лимит времени",
+  "ancient.trialTag.shield": "Щит",
+  "ancient.trialTag.charge": "Заряд",
 } as const;

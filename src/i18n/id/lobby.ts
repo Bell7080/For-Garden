@@ -98,4 +98,12 @@ export const LOBBY_ID = {
   "ancient.deepTrial": "Ujian dalam · Kerusakan % HP memakai HP setara B120",
   "ancient.requirement": "Selesaikan {stage} dahulu",
   "ancient.trials": "Ujian lantai",
+  "ancient.ranking.title": "Peringkat Strata Kuno",
+  "ancient.social.here": "Menjelajahi {floor}",
+  "ancient.trialTag.endurance": "HP",
+  "ancient.trialTag.armor": "Zirah",
+  "ancient.trialTag.assault": "Serbuan",
+  "ancient.trialTag.deadline": "Batas waktu",
+  "ancient.trialTag.shield": "Perisai",
+  "ancient.trialTag.charge": "Isi daya",
 } as const;

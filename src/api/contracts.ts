@@ -293,6 +293,8 @@ export interface PublicCompetitiveStatsDto {
   /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
   arenaScore?: number;
   expeditionScore?: number;
+  /** 고대 지층에서 가장 깊이 깬 층. 한 층도 깨지 않았으면 생략한다. */
+  ancientFloor?: number;
 }
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
@@ -833,6 +835,9 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   winStreak: number; streakBonus: number;
 }
 export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+/** 고대 지층 상시 순위 한 줄 — 점수는 가장 깊이 깬 층이고 같은 층이면 먼저 닿은 사람이 위다. */
+export interface AncientRankingEntryDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
+export interface AncientRankingResponse { entries: AncientRankingEntryDto[]; me: AncientRankingEntryDto | null; }
 export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }
 export interface ClaimDuelSeasonRewardResponse extends PlayerStateDto { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number; }
 
@@ -1197,6 +1202,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 결과 확정 — 점수·휘장·첫 도달 젬. 같은 입장은 한 번만 확정된다. */
   resolveDuel(request: ResolveDuelRequest): Promise<ResolveDuelResponse>;
   getDuelRanking(): Promise<DuelRankingResponse>;
+  /** 고대 지층 상시 순위(100등까지)와 내 줄. 초기화하지 않는다. */
+  getAncientRanking(): Promise<AncientRankingResponse>;
   /** 끝난 시즌의 티어 보상을 받는다. */
   claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */

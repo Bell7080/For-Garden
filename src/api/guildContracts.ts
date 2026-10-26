@@ -34,6 +34,8 @@ export interface GuildMemberCard {
   favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null;
   highestStageId: string | null;
   expeditionBest: number;
+  /** 고대 지층에서 가장 깊이 깬 층(0이면 아직 들어가지 않았다). 예전 카드에는 없다. */
+  ancientFloor?: number;
   /** 아레나 RP — 한 판이라도 한 길드원만 서버가 싣는다(`server_arena_weekly` 트리거). */
   arenaScore?: number;
 }

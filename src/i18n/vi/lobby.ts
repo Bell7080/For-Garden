@@ -98,4 +98,12 @@ export const LOBBY_VI = {
   "ancient.deepTrial": "Thử thách sâu · Sát thương % HP dùng HP quy đổi B120",
   "ancient.requirement": "Hoàn thành {stage} trước",
   "ancient.trials": "Thử thách tầng",
+  "ancient.ranking.title": "Xếp hạng Địa tầng cổ đại",
+  "ancient.social.here": "Đang khám phá {floor}",
+  "ancient.trialTag.endurance": "Máu",
+  "ancient.trialTag.armor": "Giáp",
+  "ancient.trialTag.assault": "Tấn công",
+  "ancient.trialTag.deadline": "Giới hạn giờ",
+  "ancient.trialTag.shield": "Khiên",
+  "ancient.trialTag.charge": "Nạp",
 } as const;

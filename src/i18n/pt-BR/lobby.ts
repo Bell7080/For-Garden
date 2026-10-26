@@ -98,4 +98,12 @@ export const LOBBY_PT_BR = {
   "ancient.deepTrial": "Provação profunda · Dano percentual usa vida equivalente a B120",
   "ancient.requirement": "Conclua {stage} primeiro",
   "ancient.trials": "Provações do andar",
+  "ancient.ranking.title": "Ranking dos Estratos antigos",
+  "ancient.social.here": "Explorando {floor}",
+  "ancient.trialTag.endurance": "Vida",
+  "ancient.trialTag.armor": "Blindagem",
+  "ancient.trialTag.assault": "Ataque",
+  "ancient.trialTag.deadline": "Tempo limite",
+  "ancient.trialTag.shield": "Escudo",
+  "ancient.trialTag.charge": "Carga",
 } as const;

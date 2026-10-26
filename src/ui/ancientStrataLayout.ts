@@ -52,3 +52,39 @@ export function ancientScrollLimits(): { min: number; max: number; artTop: numbe
   const artBottom = 1920 - min + stub;
   return { min, max, artTop, artHeight: artBottom - artTop };
 }
+
+/**
+ * 지도 위 머리 장식의 자리. 순위 칩은 결투장과 같은 왼쪽 칩이고, 친구·길드 전환은 그 맞은편 오른쪽에 선다.
+ * 둘 다 지도 창(`ANCIENT_MAP.window.top`) 위에서 끝나 노드를 덮지 않는다.
+ */
+export const ANCIENT_CHROME = {
+  rankChip: { x: 112, y: 330, size: 104 },
+  /** 순위 칩 오른쪽에 붙는 내 등수. */
+  rankText: { x: 182 },
+  socialTabs: { right: 40, y: 344, width: 150, height: 64, gap: 8 },
+} as const;
+
+/** 노드 옆에 붙는 친구·길드원 얼굴 묶음. */
+export const ANCIENT_PEERS = {
+  face: 64,
+  /** 겹쳐 서는 얼굴 사이 간격 — 얼굴보다 좁아 한 덩어리로 읽힌다. */
+  step: 42,
+  /** 한 층에 세우는 얼굴 수. 넘치는 몫은 `+N`이 말한다. */
+  visible: 3,
+  /** 노드 가장자리에서 첫 얼굴까지의 틈. */
+  gap: 26,
+} as const;
+
+/**
+ * 얼굴 묶음이 서는 방향 — 노드가 축 왼쪽에 있으면 오른쪽(가운데 쪽)으로, 오른쪽에 있으면 왼쪽으로 뻗는다.
+ * 바깥으로 뻗으면 화면 가장자리에 잘린다. 가운데 관문은 오른쪽이다.
+ */
+export function ancientPeerDirection(indexInBlock: number): 1 | -1 {
+  return ancientNodeOffset(indexInBlock) > 0 ? -1 : 1;
+}
+
+/** 묶음 안 i번째 얼굴의 중심 x(노드 중심 기준). */
+export function ancientPeerFaceX(indexInBlock: number, nodeSize: number, slot: number): number {
+  const direction = ancientPeerDirection(indexInBlock);
+  return direction * (nodeSize / 2 + ANCIENT_PEERS.gap + ANCIENT_PEERS.face / 2 + slot * ANCIENT_PEERS.step);
+}

@@ -98,4 +98,12 @@ export const LOBBY_EN = {
   "ancient.deepTrial": "Deep trial · %-HP damage uses B120-equivalent HP",
   "ancient.requirement": "Clear {stage} first",
   "ancient.trials": "Floor trials",
+  "ancient.ranking.title": "Ancient Strata Ranking",
+  "ancient.social.here": "Exploring {floor}",
+  "ancient.trialTag.endurance": "HP",
+  "ancient.trialTag.armor": "Armor",
+  "ancient.trialTag.assault": "Assault",
+  "ancient.trialTag.deadline": "Time limit",
+  "ancient.trialTag.shield": "Shield",
+  "ancient.trialTag.charge": "Charge",
 } as const;

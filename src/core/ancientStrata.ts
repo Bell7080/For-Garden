@@ -37,3 +37,41 @@ export function ancientBlockBackdrop(block: number): AncientBackdrop {
 export function isAncientGate(floor: number): boolean {
   return floor > 0 && floor % ANCIENT_FLOORS_PER_BLOCK === 0;
 }
+
+/** 진행 기록에서 클리어한 가장 깊은 층. 하나도 없으면 0이다. */
+export function ancientHighestCleared(cleared: Iterable<string>, maxFloor: number): number {
+  let best = 0;
+  for (const id of cleared) {
+    const match = /^ancient:(\d+)$/.exec(id);
+    if (match) best = Math.max(best, Math.min(maxFloor, Number(match[1])));
+  }
+  return best;
+}
+
+/** 지금 도전하는 층 — 가장 깊이 깬 층의 다음 층이고 마지막 층에서 멈춘다. */
+export function ancientChallengeFloor(highestCleared: number, maxFloor: number): number {
+  return Math.min(maxFloor, Math.max(0, Math.floor(highestCleared)) + 1);
+}
+
+/**
+ * 넘겨 볼 수 있는 마지막 구간 — 지금 도전하는 구간과 그다음 한 구간까지다.
+ * 끝없이 넘기면 아직 닿지도 않은 200층의 적·배율을 미리 다 보게 되어 "다음은 무엇이 오나"가 사라진다.
+ */
+export function ancientLastBrowsableBlock(challengeFloor: number, maxFloor: number): number {
+  const lastBlock = ancientBlockOf(maxFloor);
+  return Math.min(lastBlock, ancientBlockOf(challengeFloor) + 1);
+}
+
+/**
+ * 친구·길드원을 층 노드에 묶는다. 표시는 각자 **도전 중인 층**(가장 깊이 깬 층 + 1)이고, 한 번도 깨지
+ * 않은 사람은 지층에 들어오지 않았으므로 세우지 않는다. 같은 층 안의 순서는 들어온 순서를 지킨다.
+ */
+export function groupAncientPeers<T extends { highestCleared: number }>(peers: readonly T[], maxFloor: number): Map<number, T[]> {
+  const byFloor = new Map<number, T[]>();
+  for (const peer of peers) {
+    if (!(peer.highestCleared > 0)) continue;
+    const floor = ancientChallengeFloor(peer.highestCleared, maxFloor);
+    byFloor.set(floor, [...(byFloor.get(floor) ?? []), peer]);
+  }
+  return byFloor;
+}

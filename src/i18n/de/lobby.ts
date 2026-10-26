@@ -98,4 +98,12 @@ export const LOBBY_DE = {
   "ancient.deepTrial": "Tiefenprüfung · %-LP-Schaden nutzt auf B120 begrenzte LP",
   "ancient.requirement": "Zuerst {stage} abschließen",
   "ancient.trials": "Etagenprüfungen",
+  "ancient.ranking.title": "Rangliste der Uralten Schichten",
+  "ancient.social.here": "Erkundet {floor}",
+  "ancient.trialTag.endurance": "LP",
+  "ancient.trialTag.armor": "Panzer",
+  "ancient.trialTag.assault": "Ansturm",
+  "ancient.trialTag.deadline": "Zeitlimit",
+  "ancient.trialTag.shield": "Schild",
+  "ancient.trialTag.charge": "Ladung",
 } as const;

@@ -479,7 +479,15 @@ var LOBBY_KO = {
   "ancient.depthMultiplier": "\uC9C0\uCE35 \uBC30\uC728",
   "ancient.deepTrial": "\uC2EC\uCE35 \uC2DC\uB828 \xB7 \uBE44\uB840 \uD53C\uD574\uB294 120\uCE35 \uD658\uC0B0 \uCCB4\uB825 \uAE30\uC900",
   "ancient.requirement": "\uBA3C\uC800 {stage} \uD074\uB9AC\uC5B4",
-  "ancient.trials": "\uCE35 \uC2DC\uB828"
+  "ancient.trials": "\uCE35 \uC2DC\uB828",
+  "ancient.ranking.title": "\uACE0\uB300 \uC9C0\uCE35 \uC21C\uC704",
+  "ancient.social.here": "{floor} \uD0D0\uC0AC \uC911",
+  "ancient.trialTag.endurance": "\uCCB4\uB825",
+  "ancient.trialTag.armor": "\uC7A5\uAC11",
+  "ancient.trialTag.assault": "\uACF5\uC138",
+  "ancient.trialTag.deadline": "\uC2DC\uD55C",
+  "ancient.trialTag.shield": "\uBCF4\uD638\uB9C9",
+  "ancient.trialTag.charge": "\uCDA9\uC804"
 };
 
 // src/i18n/ko/common.ts
@@ -19794,9 +19802,9 @@ init_define_import_meta_env();
 var NOW = Date.now();
 var SAMPLE_FRIENDS = [
   // 샘플도 공개 화이트리스트만 명시해 실제 응답에 계정 키·재화·편성이 섞이는 일을 조기에 드러낸다.
-  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420 } },
+  { id: "friend-haneul", uid: "418207735", frameId: "holo", displayName: "\uD558\uB298\uC815\uC6D0", level: 27, status: "\uC0C8 \uD45C\uBCF8\uC758 \uD754\uC801\uC744 \uCC3E\uB294 \uC911", lastActiveAt: NOW - 3e4, equippedModifiers: [{ id: "field-pioneer", displayName: "\uD604\uC7A5 \uAC1C\uCC99\uC790", rarity: "rare" }], favoriteRelic: { relicId: "rex", level: 24, breakthroughGrade: 5, stats: { hp: 820, def: 42, res: 36, atk: 132, ap: 76, attackSpeed: 112, moveSpeed: 108, critChance: 20, critDamage: 160, energyGain: 28, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["rex-basic", "rex-passive", "rex-ultimate"] }, competitiveStats: { highestStage: { stageId: "stage-2-5", displayValue: "2-5 \uBD89\uC740 \uD611\uACE1" }, arenaScore: 1350, expeditionScore: 18420, ancientFloor: 23 } },
   // 두 번째 샘플은 선택 기록과 수식어가 없는 정상 응답을 검수하며 빈 상태 문구 대신 렌더링 생략을 확인한다.
-  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: {} }
+  { id: "friend-moss", uid: "602913548", frameId: "field", displayName: "\uC774\uB07C\uC5F0\uAD6C\uC18C", level: 19, status: "\uC624\uB298\uB3C4 \uCC9C\uCC9C\uD788 \uBCF5\uC6D0", lastActiveAt: NOW - 12 * 6e4, equippedModifiers: [], favoriteRelic: { relicId: "torika", level: 18, breakthroughGrade: 4, stats: { hp: 1420, def: 128, res: 92, atk: 74, ap: 52, attackSpeed: 78, moveSpeed: 72, critChance: 5, critDamage: 140, energyGain: 20, lifeSteal: 0, ferocityGain: 0 }, skillIds: ["torika-basic", "torika-passive", "torika-ultimate"] }, competitiveStats: { ancientFloor: 7 } }
 ];
 var PREVIEW_FRIENDS = QA_TOOLS_ENABLED ? SAMPLE_FRIENDS : [];
 for (const friend of PREVIEW_FRIENDS) {
@@ -31079,6 +31087,17 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   return { state: next, entries, reachedTiers };
 }
 
+// src/core/ancientStrata.ts
+init_define_import_meta_env();
+function ancientHighestCleared(cleared, maxFloor) {
+  let best = 0;
+  for (const id of cleared) {
+    const match = /^ancient:(\d+)$/.exec(id);
+    if (match) best = Math.max(best, Math.min(maxFloor, Number(match[1])));
+  }
+  return best;
+}
+
 // src/core/debugCommand.ts
 init_define_import_meta_env();
 function breakthroughForLevel(level) {
@@ -31799,7 +31818,8 @@ function guildMemberCardFrom(state) {
       skinId: state.equippedRelicSkinIds[favorite.relicId] ?? null
     } : null,
     highestStageId: profile.competitiveStats.highestStage?.stageId ?? null,
-    expeditionBest: Math.max(0, Math.floor(state.expedition.allTimeBestScore))
+    expeditionBest: Math.max(0, Math.floor(state.expedition.allTimeBestScore)),
+    ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR)
   };
 }
 
@@ -32793,11 +32813,19 @@ var settingsManager = new SettingsManager();
 // src/api/FakeServer.ts
 var STRATA_TICKET_ITEM2 = "strata-ticket";
 var MAX_RUNE_NAME_LENGTH = 20;
+var QA_ANCIENT_RANKING = [
+  { playerId: "qa-ancient-1", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
+  { playerId: "qa-ancient-2", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "qa-ancient-3", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
+  { playerId: "qa-ancient-4", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
+  { playerId: "qa-ancient-5", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" }
+];
 var FakeServer = class {
   constructor(state = session, options = {}) {
     this.state = state;
     this.duelContext = options.duelContext;
     this.remoteExpeditionRank = options.expeditionRank;
+    this.ancientRanking = options.ancientRanking;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -32929,6 +32957,7 @@ var FakeServer = class {
   developmentTools;
   duelContext;
   remoteExpeditionRank;
+  ancientRanking;
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
   applySavedMailClaims() {
     const claimed = new Set(this.state.claimedMailIds ?? []);
@@ -35505,6 +35534,23 @@ var FakeServer = class {
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
     return { entries, me, seasonEndsAt: duelSeasonEndsAt(now).toISOString() };
   }
+  /**
+   * 고대 지층 상시 순위 — 가장 깊이 깬 층이 높은 순, 같은 층이면 먼저 닿은 사람이 위다. 초기화하지 않는다.
+   * 실제 순위는 서버가 주입하고(`ancientRanking`), 서버 없이 도는 일반 빌드는 순위를 만들지 않는다.
+   */
+  async getAncientRanking() {
+    await this.delay();
+    if (this.ancientRanking) return structuredClone(this.ancientRanking);
+    if (!QA_TOOLS_ENABLED) return { entries: [], me: null };
+    const floor = ancientHighestCleared(this.state.cleared, ANCIENT_STRATA_MAX_FLOOR);
+    const name = this.state.playerCard.nickname || t("profile.defaultName");
+    const rows = [
+      ...QA_ANCIENT_RANKING.map((row) => ({ ...row, isMe: false })),
+      ...floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, isMe: true }] : []
+    ].sort((a, b) => b.floor - a.floor);
+    const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
+    return { entries, me: entries.find((row) => row.isMe) ?? null };
+  }
   async claimDuelSeasonReward() {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
@@ -37195,6 +37241,7 @@ init_define_import_meta_env();
 function publicProfile(state, playerId, now) {
   const relic = getRelic(state.favorite);
   const progress = state.relicProgress[relic.id];
+  const ancientFloor = ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR);
   return {
     id: playerId,
     uid: state.playerCard.uid,
@@ -37211,7 +37258,8 @@ function publicProfile(state, playerId, now) {
       stats: new RelicProgressionManager(state).getFinalStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id]
     },
-    competitiveStats: {}
+    // 고대 지층 지도가 친구를 그 층 노드 옆에 세운다. 깬 층이 없으면 키를 생략한다.
+    competitiveStats: ancientFloor > 0 ? { ancientFloor } : {}
   };
 }
 
@@ -37261,6 +37309,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "arena.get",
   "archaeologyState",
   "getAchievements",
+  "getAncientRanking",
   "getAdOperationsConfig",
   "getAsyncArenaServerState",
   "getAttendance",
@@ -37371,6 +37420,7 @@ var SERVER_GAME_METHODS = [
   "getAdOperationsConfig",
   "getAsyncArenaServerState",
   "getAttendance",
+  "getAncientRanking",
   "getBountyStatus",
   "getDuelRanking",
   "getDuelStatus",
@@ -37501,14 +37551,15 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
       wantsRaid ? deps.store.raidContext(playerId, now) : void 0,
       wantsOps ? deps.store.opsInbox(playerId).catch(() => null) : null,
       wantsDuel ? deps.store.duelContext(playerId, now) : void 0,
-      /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0
+      /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0,
+      req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0
     ]);
     if (cached !== void 0) {
       const receipt = cached;
@@ -37539,6 +37590,7 @@ async function run(playerId, req, deps) {
       raidContext: context,
       duelContext: duels,
       expeditionRank: expedition?.rank,
+      ancientRanking: ancient,
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true
@@ -37632,6 +37684,9 @@ function createSupabaseStore(env) {
     },
     async expeditionContext(playerId, now) {
       return await rpc("server_expedition_ranking", { p_player: playerId, p_week: expeditionWeekKey(now), p_limit: 100 });
+    },
+    async ancientRanking(playerId) {
+      return await rpc("server_ancient_ranking", { p_player: playerId, p_limit: 100 });
     },
     async duelContext(playerId, now) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") });

@@ -98,4 +98,12 @@ export const LOBBY_ES = {
   "ancient.deepTrial": "Prueba profunda · Daño porcentual basado en vida de B120",
   "ancient.requirement": "Supera {stage} primero",
   "ancient.trials": "Pruebas del piso",
+  "ancient.ranking.title": "Clasificación de Estratos antiguos",
+  "ancient.social.here": "Explorando {floor}",
+  "ancient.trialTag.endurance": "Vida",
+  "ancient.trialTag.armor": "Blindaje",
+  "ancient.trialTag.assault": "Asalto",
+  "ancient.trialTag.deadline": "Tiempo límite",
+  "ancient.trialTag.shield": "Escudo",
+  "ancient.trialTag.charge": "Carga",
 } as const;

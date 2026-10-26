@@ -104,4 +104,12 @@ export const LOBBY_KO = {
   "ancient.deepTrial": "심층 시련 · 비례 피해는 120층 환산 체력 기준",
   "ancient.requirement": "먼저 {stage} 클리어",
   "ancient.trials": "층 시련",
+  "ancient.ranking.title": "고대 지층 순위",
+  "ancient.social.here": "{floor} 탐사 중",
+  "ancient.trialTag.endurance": "체력",
+  "ancient.trialTag.armor": "장갑",
+  "ancient.trialTag.assault": "공세",
+  "ancient.trialTag.deadline": "시한",
+  "ancient.trialTag.shield": "보호막",
+  "ancient.trialTag.charge": "충전",
 } as const;

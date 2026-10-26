@@ -98,4 +98,12 @@ export const LOBBY_ZH_HANT = {
   "ancient.deepTrial": "深層試煉 · 生命比例傷害以B120換算生命為基準",
   "ancient.requirement": "先通關{stage}",
   "ancient.trials": "樓層試煉",
+  "ancient.ranking.title": "遠古地層排名",
+  "ancient.social.here": "正在探索 {floor}",
+  "ancient.trialTag.endurance": "體力",
+  "ancient.trialTag.armor": "裝甲",
+  "ancient.trialTag.assault": "猛攻",
+  "ancient.trialTag.deadline": "限時",
+  "ancient.trialTag.shield": "護盾",
+  "ancient.trialTag.charge": "充能",
 } as const;

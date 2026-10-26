@@ -60,7 +60,9 @@ import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPerio
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
-import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
+import { ancientHighestCleared } from "../core/ancientStrata";
+import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
 import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
@@ -137,6 +139,15 @@ import { t } from "../i18n";
 /** 사용자 룬 이름의 서버 정책이다. UI 글자 수와 무관하게 API 경계가 최종 권한을 가진다. */
 export const MAX_RUNE_NAME_LENGTH = 20;
 
+/** QA 빌드의 고대 지층 순위 표본. 일반 빌드는 서버가 순위를 주입하기 전까지 아무것도 세우지 않는다. */
+const QA_ANCIENT_RANKING: readonly { playerId: string; displayName: string; floor: number; favoriteRelicId: string }[] = [
+  { playerId: "qa-ancient-1", displayName: "DeepDiver", floor: 118, favoriteRelicId: "koma" },
+  { playerId: "qa-ancient-2", displayName: "Haneul", floor: 87, favoriteRelicId: "rex" },
+  { playerId: "qa-ancient-3", displayName: "StrataKeeper", floor: 64, favoriteRelicId: "mette" },
+  { playerId: "qa-ancient-4", displayName: "MossLab", floor: 31, favoriteRelicId: "torika" },
+  { playerId: "qa-ancient-5", displayName: "FossilHunter", floor: 12, favoriteRelicId: "parua" },
+];
+
 /** FakeServer의 지연과 난수원을 테스트에서 결정적으로 바꾸기 위한 선택 설정이다. */
 export interface FakeServerOptions {
   latencyMs?: number;
@@ -146,6 +157,8 @@ export interface FakeServerOptions {
   raidContext?: SharedRaidContext;
   duelContext?: PlayerDuelContext;
   expeditionRank?: number | null;
+  /** 실제 DB의 고대 지층 상시 순위. 서버 호출 단위에서만 주입한다. */
+  ancientRanking?: AncientRankingResponse;
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
@@ -246,6 +259,7 @@ export class FakeServer implements GameApi {
   private readonly developmentTools: boolean;
   private readonly duelContext?: PlayerDuelContext;
   private readonly remoteExpeditionRank?: number | null;
+  private readonly ancientRanking?: AncientRankingResponse;
 
   constructor(
     private readonly state: Session = session,
@@ -253,6 +267,7 @@ export class FakeServer implements GameApi {
   ) {
     this.duelContext = options.duelContext;
     this.remoteExpeditionRank = options.expeditionRank;
+    this.ancientRanking = options.ancientRanking;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -2822,6 +2837,24 @@ export class FakeServer implements GameApi {
     if (me) rows.splice(me.rank - 1, 0, { ...me });
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
     return { entries, me, seasonEndsAt: duelSeasonEndsAt(now).toISOString() };
+  }
+
+  /**
+   * 고대 지층 상시 순위 — 가장 깊이 깬 층이 높은 순, 같은 층이면 먼저 닿은 사람이 위다. 초기화하지 않는다.
+   * 실제 순위는 서버가 주입하고(`ancientRanking`), 서버 없이 도는 일반 빌드는 순위를 만들지 않는다.
+   */
+  async getAncientRanking(): Promise<AncientRankingResponse> {
+    await this.delay();
+    if (this.ancientRanking) return structuredClone(this.ancientRanking);
+    if (!QA_TOOLS_ENABLED) return { entries: [], me: null };
+    const floor = ancientHighestCleared(this.state.cleared, ANCIENT_STRATA_MAX_FLOOR);
+    const name = this.state.playerCard.nickname || t("profile.defaultName");
+    const rows = [
+      ...QA_ANCIENT_RANKING.map((row) => ({ ...row, isMe: false })),
+      ...(floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, isMe: true }] : []),
+    ].sort((a, b) => b.floor - a.floor);
+    const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
+    return { entries, me: entries.find((row) => row.isMe) ?? null };
   }
 
   async claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse> {

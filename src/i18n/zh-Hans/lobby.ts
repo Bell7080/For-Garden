@@ -98,4 +98,12 @@ export const LOBBY_ZH_HANS = {
   "ancient.deepTrial": "深层试炼 · 生命比例伤害以B120换算生命为基准",
   "ancient.requirement": "先通关{stage}",
   "ancient.trials": "楼层试炼",
+  "ancient.ranking.title": "远古地层排名",
+  "ancient.social.here": "正在探索 {floor}",
+  "ancient.trialTag.endurance": "体力",
+  "ancient.trialTag.armor": "装甲",
+  "ancient.trialTag.assault": "猛攻",
+  "ancient.trialTag.deadline": "限时",
+  "ancient.trialTag.shield": "护盾",
+  "ancient.trialTag.charge": "充能",
 } as const;

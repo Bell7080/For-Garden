@@ -43,6 +43,7 @@ export function createSupabaseStore(env: Env) {
       return response.incomingCount;
     },
     async expeditionContext(playerId, now) { return await rpc("server_expedition_ranking", { p_player: playerId, p_week: expeditionWeekKey(now), p_limit: 100 }) as { rank: number | null; entries: import("../api/contracts").ExpeditionLeaderboardEntry[] }; },
+    async ancientRanking(playerId) { return await rpc("server_ancient_ranking", { p_player: playerId, p_limit: 100 }) as import("../api/contracts").AncientRankingResponse; },
     async duelContext(playerId, now) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") }) as PlayerDuelContext;
       return { ...context, changes: [] };

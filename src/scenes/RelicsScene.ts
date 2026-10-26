@@ -365,6 +365,8 @@ export class RelicsScene extends Phaser.Scene {
         // 애착 렐릭은 떠오르지 않고 붉게 탄다. 크기까지 바뀌면 옆 칸과 줄이 어긋나 목록을
         // 훑는 눈이 거기서 걸린다.
         selectedStyle: "favorite",
+        // 전신 원화는 보이는 줄 근처만 올린다(`syncPortraitResidency`).
+        deferPortrait: true,
       });
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
@@ -483,8 +485,24 @@ export class RelicsScene extends Phaser.Scene {
     this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
+    this.syncPortraitResidency();
     setDebugGridOffset("relics", this.content.y);
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
+  }
+
+  /**
+   * 화면에 보이는 줄(위아래 한 줄 여유)의 카드만 전신 원화를 GPU에 올리고, 두 줄 넘게 멀어진 카드는 내린다.
+   * 카드가 서른 장 가까이 한꺼번에 서는 격자라 전부 올리면 한 장 6.5MB씩 200MB 안팎이 되어 모바일 탭이 죽는다.
+   * 올리는 문턱과 내리는 문턱을 달리 둬, 경계에서 스크롤해도 올렸다 내렸다를 되풀이하지 않는다.
+   */
+  private syncPortraitResidency(): void {
+    const top = VIEWPORT_TOP - GRID_CARD.height;
+    const bottom = VIEWPORT_BOTTOM + GRID_CARD.height;
+    for (const card of this.cards.values()) {
+      const y = card.y + this.content.y;
+      if (y >= top && y <= bottom) card.showPortrait();
+      else if (y < top - GRID_CARD.height || y > bottom + GRID_CARD.height) card.hidePortrait();
+    }
   }
 
   /** PortraitCard의 자체 마스크는 부모 이동을 상속하지 않으므로 월드 변환을 명시적으로 갱신한다. */

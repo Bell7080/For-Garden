@@ -1,3 +1,4 @@
+import { timeoutSignal } from "../core/timeoutSignal";
 import type { OAuthBridge } from "./webOAuth";
 /**
  * Supabase 계정·클라우드 저장 어댑터(`AccountApi` 구현).
@@ -119,7 +120,7 @@ export class SupabaseAccountApi implements AccountApi {
         if (!link) return `${this.options.url}/auth/v1/authorize?${query}`;
         query.set("skip_http_redirect", "true");
         const response = await this.fetchImpl(`${this.options.url}/auth/v1/user/identities/authorize?${query}`, {
-          headers: { apikey: this.options.key, Authorization: `Bearer ${auth!.ok ? auth!.value.accessToken : ""}` }, signal: AbortSignal.timeout(15000),
+          headers: { apikey: this.options.key, Authorization: `Bearer ${auth!.ok ? auth!.value.accessToken : ""}` }, signal: timeoutSignal(15000),
         });
         if (!response.ok) throw new Error("identity_link_unavailable");
         const body = await response.json() as { url?: string };
@@ -168,7 +169,7 @@ export class SupabaseAccountApi implements AccountApi {
   private async userRequest(path = "", method = "GET", body?: unknown): Promise<AccountResult<unknown>> {
     const auth = await this.ensureTokens(); if (!auth.ok) return auth;
     try {
-      const response = await this.fetchImpl(`${this.options.url}/auth/v1/user${path}`, { method, headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}`, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000) });
+      const response = await this.fetchImpl(`${this.options.url}/auth/v1/user${path}`, { method, headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}`, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}), signal: timeoutSignal(15000) });
       if (!response.ok) return this.authFailure("/auth/v1/user", response);
       return { ok: true, value: await response.json().catch(() => ({})) };
     } catch { return fail("network-error", t("error.account.network")); }
@@ -181,7 +182,7 @@ export class SupabaseAccountApi implements AccountApi {
       return result.ok ? { ok: true, value: undefined } : result;
     }
     try {
-      const response = await this.fetchImpl(`${this.options.url}/auth/v1/otp`, { method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body: JSON.stringify({ email, create_user: false }), signal: AbortSignal.timeout(15000) });
+      const response = await this.fetchImpl(`${this.options.url}/auth/v1/otp`, { method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body: JSON.stringify({ email, create_user: false }), signal: timeoutSignal(15000) });
       return response.ok ? { ok: true, value: undefined } : this.authFailure("/auth/v1/otp", response);
     } catch { return fail("network-error", t("error.account.network")); }
   }
@@ -229,7 +230,7 @@ export class SupabaseAccountApi implements AccountApi {
       if (fresh && !fresh.ok) return fresh;
       const registered = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
         method: "POST", headers: { "Content-Type": "application/json", ...(fresh?.ok ? { Authorization: `Bearer ${fresh.value.accessToken}` } : {}) },
-        body: JSON.stringify({ id, password }), signal: AbortSignal.timeout(35000),
+        body: JSON.stringify({ id, password }), signal: timeoutSignal(35000),
       });
       if (!registered.ok) {
         const detail = await registered.json().catch(() => ({})) as { code?: string };
@@ -266,7 +267,7 @@ export class SupabaseAccountApi implements AccountApi {
       // 별칭은 인증 이메일이 바뀌어도 같은 UID를 가리킨다. 합성 이메일로 먼저 로그인하면
       // 예전에 비워진 이메일을 가진 다른 UID를 선택할 수 있어 서버 조회를 유일한 경계로 쓴다.
       const response = await this.fetchImpl(this.options.registrationEndpoint ?? "/api/account", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "sign-in", id, password }), signal: AbortSignal.timeout(35000),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "sign-in", id, password }), signal: timeoutSignal(35000),
       });
       if (!response.ok) {
         if (response.status === 429) return this.rateFailure(response);
@@ -348,7 +349,7 @@ export class SupabaseAccountApi implements AccountApi {
         method: "POST",
         headers: { apikey: this.options.key, Authorization: `Bearer ${auth.value.accessToken}`, "Content-Type": "application/json" },
         body: JSON.stringify(args),
-        signal: AbortSignal.timeout(15000),
+        signal: timeoutSignal(15000),
       });
       if (res.ok) return { ok: true, value: await res.json() };
       const err = (await res.json().catch(() => null)) as { message?: string } | null;
@@ -410,7 +411,7 @@ export class SupabaseAccountApi implements AccountApi {
 
   private async authCall(path: string, body: string): Promise<AccountResult<StoredTokens>> {
     const res = await this.fetchImpl(`${this.options.url}${path}`, {
-      method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body, signal: AbortSignal.timeout(15000),
+      method: "POST", headers: { apikey: this.options.key, "Content-Type": "application/json" }, body, signal: timeoutSignal(15000),
     });
     if (!res.ok) return this.authFailure(path, res);
     return this.parseTokens(await res.json().catch(() => null));

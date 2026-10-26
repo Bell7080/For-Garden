@@ -1,3 +1,4 @@
+import { timeoutSignal } from "../core/timeoutSignal";
 import { t } from "../i18n";
 import { connectArenaRealtime } from "./arenaRealtime";
 import type { ArenaRoom, ArenaRules, ArenaAction } from '../core/liveArena';
@@ -62,7 +63,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
     let last: unknown;
     for (let i = 0; i < 2; i++) {
         try {
-            const response = await fetch('/api/game', { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(15000) });
+            const response = await fetch('/api/game', { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: timeoutSignal(15000) });
             const data = await response.json() as {
                 ok: boolean;
                 code?: string;

@@ -52,20 +52,39 @@ function finish(worker: Worker, parsed: ParsedPuppet | null): void {
   pump();
 }
 
+/** 일꾼을 세울 수 없는 환경(CSP·메모리 부족)이 확인되면 더 시도하지 않고 메인 스레드 경로만 쓴다. */
+let unavailable = false;
+
+function spawnWorker(): Worker {
+  const worker = new Worker(new URL("./puppetParseWorker.ts", import.meta.url), { type: "module" });
+  worker.onmessage = (event: MessageEvent<PuppetParseResponse>) => {
+    const { project, bitmap } = event.data;
+    finish(worker, project && bitmap ? { project, bitmap } : null);
+  };
+  // 일꾼 자체가 죽으면 그 일감은 영영 돌아오지 않는다. 기다리던 쪽을 풀어 메인 스레드 경로로 보내고,
+  // 죽은 일꾼은 무리에 되돌리지 않고 내려서 새 일꾼으로 갈아 끼운다 — 되돌리면 다음 일감도 같이 죽는다.
+  worker.onerror = () => {
+    const job = running.get(worker);
+    running.delete(worker);
+    worker.terminate();
+    pool = pool?.filter((w) => w !== worker) ?? null;
+    job?.settle(null);
+    try {
+      const replacement = spawnWorker();
+      pool?.push(replacement);
+      free.push(replacement);
+    } catch { unavailable = true; }
+    if (unavailable) for (const waitingJob of waiting.splice(0)) waitingJob.settle(null);
+    else pump();
+  };
+  free.push(worker);
+  return worker;
+}
+
 function createPool(): Worker[] {
   const cores = typeof navigator !== "undefined" ? navigator.hardwareConcurrency : undefined;
   const count = Math.max(1, Math.min(MAX_WORKERS, (cores ?? MAX_WORKERS) - 1));
-  return Array.from({ length: count }, () => {
-    const worker = new Worker(new URL("./puppetParseWorker.ts", import.meta.url), { type: "module" });
-    worker.onmessage = (event: MessageEvent<PuppetParseResponse>) => {
-      const { project, bitmap } = event.data;
-      finish(worker, project && bitmap ? { project, bitmap } : null);
-    };
-    // 일꾼 자체가 죽으면 그 일감은 영영 돌아오지 않는다. 기다리던 쪽을 풀어 메인 스레드 경로로 보낸다.
-    worker.onerror = () => finish(worker, null);
-    free.push(worker);
-    return worker;
-  });
+  return Array.from({ length: count }, () => spawnWorker());
 }
 
 function pump(): void {
@@ -104,8 +123,13 @@ export function resolveWorkerAssetUrl(url: string, documentBase: string): string
  * 실패를 던지지 않는 것은 부르는 쪽이 예전 경로로 조용히 되돌아가면 되기 때문이다.
  */
 export function parsePuppetOffThread(url: string): Promise<ParsedPuppet | null> {
-  if (!supported()) return Promise.resolve(null);
-  pool ??= createPool();
+  if (!supported() || unavailable) return Promise.resolve(null);
+  try {
+    pool ??= createPool();
+  } catch {
+    unavailable = true;
+    return Promise.resolve(null);
+  }
   const base = typeof document !== "undefined" ? document.baseURI : self.location.href;
   const resolved = resolveWorkerAssetUrl(url, base);
   return new Promise<ParsedPuppet | null>((settle) => {

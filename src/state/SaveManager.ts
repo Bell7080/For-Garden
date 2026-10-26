@@ -28,6 +28,7 @@ import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
 import { BOND_STORY_LEVELS } from "../core/relicStory";
+import { defaultLocalStorage } from "../core/safeStorage";
 import { relicStoryFor } from "../data/relicStories";
 import { BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
@@ -244,13 +245,14 @@ const INTERACTION_SLOT_LIMIT = 32;
 export class SaveManager {
   private readonly storageKey: string;
 
-  constructor(private readonly storage: StorageLike | undefined = globalThis.localStorage, flavor: LocalSaveFlavor = LOCAL_SAVE_FLAVOR) {
+  constructor(private readonly storage: StorageLike | undefined = defaultLocalStorage(), flavor: LocalSaveFlavor = LOCAL_SAVE_FLAVOR) {
     this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
   }
 
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load(): Session | null {
-    const raw = this.storage?.getItem(this.storageKey);
+    let raw: string | null | undefined;
+    try { raw = this.storage?.getItem(this.storageKey); } catch { return null; }
     if (raw === null || raw === undefined) return null;
     let parsed: unknown;
     try {
@@ -287,6 +289,7 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data = this.toSaveData(state);
+    // 쓰기 실패는 일부러 올린다 — 서버 경계(persist)가 이 예외로 지급을 되돌리고 같은 요청의 재시도를 받는다.
     this.storage?.setItem(this.storageKey, JSON.stringify(data));
   }
 
@@ -358,7 +361,7 @@ export class SaveManager {
 
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset(): void {
-    this.storage?.removeItem(this.storageKey);
+    try { this.storage?.removeItem(this.storageKey); } catch { /* 막힌 저장소에는 지울 사본도 없다 */ }
   }
 
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */

@@ -218,6 +218,18 @@ function prefetchGachaPuppetFiles(): void {
  * 한 단계가 실패해도 다음으로 넘어간다 — 아트 파일 하나가 UI와 전투 규칙까지 막지 않는다.
  * 병렬로 몰아 받지 않는 이유는 진행 칸이 실제로 하나씩 차야 기다림이 읽히기 때문이다.
  */
+/**
+ * 한 단계가 멎어도 입장은 막지 않는다. 망이 끊겨 파일 하나의 응답이 오지 않으면 `complete`가 영영 오지
+ * 않아 진행 칸이 그 자리에서 멈추고 플레이어는 타이틀에서 나갈 수 없었다. 시한이 지나면 그 단계는 실패와
+ * 같이 넘기고(위 catch와 같은 규칙), 늦게 도착한 파일은 그대로 쓰인다.
+ */
+export const LOADING_STEP_DEADLINE_MS = 30000;
+function withStepDeadline(run: Promise<unknown> | undefined): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<void>((resolve) => { timer = setTimeout(resolve, LOADING_STEP_DEADLINE_MS); });
+  return Promise.race([Promise.resolve(run), deadline]).finally(() => { if (timer) clearTimeout(timer); });
+}
+
 export async function runLoadingSteps(
   scene: Phaser.Scene,
   onStepDone: (done: number, total: number) => void,
@@ -236,7 +248,7 @@ export async function runLoadingSteps(
     const onLoaderProgress = (value: number): void => onProgress?.((i + value) / steps.length);
     scene.load.on("progress", onLoaderProgress);
     try {
-      await steps[i].run(scene);
+      await withStepDeadline(steps[i].run(scene));
     } catch {
       // 실패한 단계도 칸은 채운다. 진행이 멈춘 것처럼 보이는 편이 더 나쁘다.
     }

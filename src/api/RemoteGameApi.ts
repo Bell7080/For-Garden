@@ -3,6 +3,7 @@
  * 호출 뒤의 전체 상태를 로컬 세션에 반영한다. 규칙은 서버가 FakeServer 그대로 실행하므로 여기에는 없다.
  * 인증 토큰은 `getAccessToken`이 보안 저장소에서 그때그때 꺼내 주며 이 클래스는 보관하지 않는다.
  */
+import { timeoutSignal } from "../core/timeoutSignal";
 import { isReadMethod } from "../server/requestPolicy";
 import { SERVER_GAME_METHODS } from "../server/gameMethods";
 import { saveManager } from "../state/SaveManager";
@@ -58,7 +59,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
     if (requestId && callKey) retryIds.set(callKey, requestId);
     const body = JSON.stringify({ method, args, ...(requestId ? { requestId } : {}) });
     let lastError: unknown;
-    const signal = AbortSignal.timeout(35000);
+    const signal = timeoutSignal(35000);
     // 네트워크 단절은 같은 requestId로 재전송해도 서버가 한 번만 반영한다.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let res: Response;

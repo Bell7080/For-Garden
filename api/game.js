@@ -140,27 +140,15 @@ var ARENA_KO = {
   "arena.placement.wait": "\uC0C1\uB300\uC758 \uBC30\uCE58\uB97C \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
   "arena.placement.undo": "\uB9C8\uC9C0\uB9C9 \uBC30\uCE58 \uCDE8\uC18C",
   "arena.placement.lock": "\uBC30\uCE58 \uD655\uC815",
-  "arena.rules.bannerBan": "\uAC01 1\uBC34",
-  "arena.rules.bannerNoBan": "\uBC34 \uC5C6\uC74C",
-  "arena.rules.openAlternate": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.bannerHidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58",
-  "arena.invite.summary": "{p0} \xB7 {p1} \xB7 \uCE5C\uC120\uC804",
   "arena.invite.decline": "\uAC70\uC808",
   "arena.invite.accept": "\uC218\uB77D",
   "arena.friend.title": "{p0} \xB7 \uCE5C\uC120\uC804",
-  "arena.friend.practice": "\uACB0\uD22C\uC7A5 \xB7 \uBC29\uC5B4\uB371 \uBAA8\uC758\uC804\uD22C",
   "arena.friend.free": "\uC810\uC218\xB7\uB3C4\uC804\uAD8C \uC18C\uBAA8 \uC5C6\uC74C",
-  "arena.friend.live": "\uC544\uB808\uB098 \xB7 \uC2E4\uC2DC\uAC04 \uC804\uD22C \uC694\uCCAD",
   "arena.rules.oneEach": "\uAC01 1\uB9C8\uB9AC",
   "arena.rules.off": "\uC0AC\uC6A9 \uC548 \uD568",
-  "arena.rules.bans": "\uBC34\uD53D: {p0}",
   "arena.rules.first": "\uC120\uACF5",
   "arena.rules.second": "\uD6C4\uACF5",
   "arena.rules.random": "\uB79C\uB364",
-  "arena.rules.requesterOrder": "\uC2E0\uCCAD\uC790 \uC120\uD0DD \uC21C\uC11C: {p0}",
-  "arena.rules.alternateOption": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.hiddenOption": "\uB3D9\uC2DC \uBE44\uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.placement": "\uBC30\uCE58 \uBC29\uC2DD: {p0}",
   "arena.invite.send": "\uC544\uB808\uB098 \uC694\uCCAD \uBCF4\uB0B4\uAE30",
   "arena.error.roster": "\uBC34\uC744 \uC0AC\uC6A9\uD558\uB294 3\uB3003\uC740 \uC591\uCE21 \uBAA8\uB450 \uB810\uB9AD 4\uB9C8\uB9AC \uC774\uC0C1\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.",
   "arena.error.busy": "\uC0C1\uB300\uAC00 \uB2E4\uB978 \uC544\uB808\uB098\uB97C \uC900\uBE44\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
@@ -199,7 +187,34 @@ var ARENA_KO = {
   "arena.ranking.title": "\uC544\uB808\uB098 \uC21C\uC704",
   "arena.profile.best": "\uCD5C\uACE0 \uAE30\uB85D",
   "arena.profile.lastWeek": "\uC9C0\uB09C\uC8FC",
-  "arena.profile.streakBonus": "\uC5F0\uC2B9 \uD6A8\uACFC +{bonus} RP"
+  "arena.profile.streakBonus": "\uC5F0\uC2B9 \uD6A8\uACFC +{bonus} RP",
+  "arena.friend.practiceTitle": "\uACB0\uD22C\uC7A5 \uBAA8\uC758\uC804\uD22C",
+  "arena.friend.practiceStatus": "{name}\uB2D8\uC758 \uBC29\uC5B4\uD300\uACFC \uC5F0\uC2B5 \uC804\uD22C",
+  "arena.friend.liveTitle": "\uC544\uB808\uB098 \uB300\uC804 \uC694\uCCAD",
+  "arena.friend.liveStatus": "\uADDC\uCE59\uC744 \uC815\uD574 \uC2E4\uC2DC\uAC04 \uB300\uC804\uC744 \uC2E0\uCCAD",
+  "arena.setup.title": "\uC544\uB808\uB098 \uC124\uC815",
+  "arena.setup.ban": "\uBC34\uD53D",
+  "arena.setup.ban.on": "\uC11C\uB85C \uC0C1\uB300 \uB810\uB9AD \uD558\uB098\uB97C \uBAB0\uB798 \uAE08\uC9C0\uD569\uB2C8\uB2E4",
+  "arena.setup.ban.off": "\uAE08\uC9C0 \uC5C6\uC774 \uBC14\uB85C \uBC30\uCE58\uD569\uB2C8\uB2E4",
+  "arena.setup.order": "\uC120\uACF5 \uC21C\uC11C",
+  "arena.setup.order.first": "\uB0B4\uAC00 \uBA3C\uC800 \uACE0\uB985\uB2C8\uB2E4",
+  "arena.setup.order.second": "\uC0C1\uB300\uAC00 \uBA3C\uC800 \uACE0\uB985\uB2C8\uB2E4",
+  "arena.setup.order.random": "\uC120\uACF5\uC744 \uBB34\uC791\uC704\uB85C \uC815\uD569\uB2C8\uB2E4",
+  "arena.setup.placement": "\uBC30\uCE58 \uBC29\uC2DD",
+  "arena.setup.placement.alternateShort": "\uAD50\uCC28 \uACF5\uAC1C",
+  "arena.setup.placement.hiddenShort": "\uB3D9\uC2DC \uBE44\uACF5\uAC1C",
+  "arena.setup.placement.alternate": "\uBC88\uAC08\uC544 \uACE0\uB974\uBA70 \uC11C\uB85C\uC758 \uC120\uD0DD\uC774 \uBCF4\uC785\uB2C8\uB2E4",
+  "arena.setup.placement.hidden": "\uB3D9\uC2DC\uC5D0 \uACE0\uB974\uACE0 \uD655\uC815\uD55C \uB4A4 \uACF5\uAC1C\uD569\uB2C8\uB2E4",
+  "arena.setup.unique": "\uC911\uBCF5 \uD53D",
+  "arena.setup.unique.blocked": "\uC0C1\uB300\uAC00 \uACE0\uB978 \uB810\uB9AD\uC740 \uACE0\uB97C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "arena.setup.unique.allowed": "\uAC19\uC740 \uB810\uB9AD\uC744 \uD568\uAED8 \uC4F8 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
+  "arena.setup.unique.hidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58\uC5D0\uC11C\uB294 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "arena.chip.order": "\uC2E0\uCCAD\uC790 {order}",
+  "arena.chip.duplicatesBlocked": "\uC911\uBCF5 \uAE08\uC9C0",
+  "arena.chip.duplicatesAllowed": "\uC911\uBCF5 \uD5C8\uC6A9",
+  "arena.invite.tag": "\uC544\uB808\uB098 \uCE5C\uC120\uC804",
+  "arena.invite.me": "\uB098",
+  "arena.invite.opponent": "\uC0C1\uB300"
 };
 
 // src/i18n/ko/settings.ts
@@ -1533,6 +1548,7 @@ var INVENTORY_KO = {
   "inventory.sort.part": "\uBD80\uC704",
   "inventory.sort.craft": "\uC138\uACF5",
   "inventory.sort.equipped": "\uC7A5\uCC29",
+  "inventory.sort.relic": "\uB810\uB9AD",
   "inventory.guide.held": "\uBCF4\uC720",
   "inventory.guide.expiry": "{count}\uAC1C \xB7 {time} \uB4A4 \uC18C\uBA78",
   "inventory.expiry.days": "{days}\uC77C {hours}\uC2DC\uAC04",
@@ -2786,7 +2802,11 @@ var DUEL_KO = {
   "rewardTable.rules.duel": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uACB0\uD22C\uC7A5 \uB300\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.expedition": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.arena": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uB9C8\uAC10 \uB54C\uC758 \uD2F0\uC5B4 \uBCF4\uC0C1\uC5D0 \uC21C\uC704 \uBCF4\uB108\uC2A4\uB97C \uB354\uD574 \uC90D\uB2C8\uB2E4. \uADF8 \uC8FC \uB7AD\uD06C\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
-  "ranking.mine": "\uB0B4 \uC21C\uC704"
+  "ranking.mine": "\uB0B4 \uC21C\uC704",
+  "duel.defense.title": "\uC0C1\uB300 \uBC29\uC5B4\uD300",
+  "duel.defense.totalPower": "\uCD1D \uC804\uD22C\uB825",
+  "duel.defense.blind": "\uAC00\uB824\uC9C4 \uCE78 {count}",
+  "duel.defense.sortie": "\uCD9C\uACA9"
 };
 
 // src/i18n/ko/recollection.ts
@@ -20891,6 +20911,16 @@ function diaryQuestionUnlockAt(metAt, index) {
   return Date.UTC(met.getUTCFullYear(), met.getUTCMonth(), met.getUTCDate() + index);
 }
 
+// src/core/safeStorage.ts
+init_define_import_meta_env();
+function defaultLocalStorage() {
+  try {
+    return typeof localStorage === "undefined" ? void 0 : localStorage;
+  } catch {
+    return void 0;
+  }
+}
+
 // src/data/relicStories/index.ts
 init_define_import_meta_env();
 
@@ -26823,7 +26853,7 @@ function normalizeExpeditionRun(value, ownedIds) {
 }
 var INTERACTION_SLOT_LIMIT = 32;
 var SaveManager = class {
-  constructor(storage = globalThis.localStorage, flavor = LOCAL_SAVE_FLAVOR) {
+  constructor(storage = defaultLocalStorage(), flavor = LOCAL_SAVE_FLAVOR) {
     this.storage = storage;
     this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
   }
@@ -26831,7 +26861,12 @@ var SaveManager = class {
   storageKey;
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load() {
-    const raw = this.storage?.getItem(this.storageKey);
+    let raw;
+    try {
+      raw = this.storage?.getItem(this.storageKey);
+    } catch {
+      return null;
+    }
     if (raw === null || raw === void 0) return null;
     let parsed;
     try {
@@ -26933,7 +26968,10 @@ var SaveManager = class {
   }
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset() {
-    this.storage?.removeItem(this.storageKey);
+    try {
+      this.storage?.removeItem(this.storageKey);
+    } catch {
+    }
   }
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */
   migrate(input) {
@@ -31912,7 +31950,19 @@ var ManagerEvents = class {
 var managerEvents = new ManagerEvents();
 
 // src/managers/InventoryManager.ts
-var DEFAULT_INVENTORY_SORT = { key: "acquired", direction: "asc" };
+var UNEQUIPPED_RELIC_RANK = 1e6;
+function runeHolderOrder(relicProgress) {
+  const order = /* @__PURE__ */ new Map();
+  for (const [relicId, progress] of Object.entries(relicProgress)) {
+    const rank = RELICS.findIndex(({ id }) => id === relicId);
+    for (const id of progress.heartGemSlots) if (id !== null) order.set(id, rank < 0 ? RELICS.length : rank);
+  }
+  return order;
+}
+function runeRelicRank(holderOrder, rune) {
+  return (holderOrder.get(rune.instanceId) ?? UNEQUIPPED_RELIC_RANK) * 10 + rune.part;
+}
+var DEFAULT_INVENTORY_SORT = { key: "relic", direction: "asc" };
 var RARITY_ORDER2 = { uncommon: 0, rare: 1, epic: 2, legendary: 3 };
 var pendingRecharges = /* @__PURE__ */ new WeakMap();
 var InventoryManager = class {
@@ -32085,8 +32135,9 @@ var InventoryManager = class {
     if (category === "rune") {
       const definition = findItem("rune");
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null)));
+      const holderOrder = runeHolderOrder(this.state.relicProgress);
       const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
-      const value = ({ rune, index }) => sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER2[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const value = ({ rune, index }) => sort.key === "relic" ? runeRelicRank(holderOrder, rune) : sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER2[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
       const direction = sort.direction === "asc" ? 1 : -1;
       return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune", category, id: rune.instanceId, definition, quantity: 1, rune }));
     }
@@ -37298,6 +37349,11 @@ function createSupabaseStore(env) {
 
 // src/api/RemoteSocialApi.ts
 init_define_import_meta_env();
+
+// src/core/apiBase.ts
+init_define_import_meta_env();
+
+// src/api/RemoteSocialApi.ts
 var SOCIAL_METHODS = [
   "getFriends",
   "getRequests",
@@ -37391,9 +37447,37 @@ function createSupabaseGuildBackend(call) {
   };
 }
 
+// src/server/cors.ts
+init_define_import_meta_env();
+var APP_ORIGINS = [
+  "capacitor://localhost",
+  // iOS
+  "https://localhost",
+  // Android (androidScheme: https)
+  "ionic://localhost"
+];
+function allowedOrigins(extra = process.env.CORS_ALLOWED_ORIGINS) {
+  const more = (extra ?? "").split(",").map((o) => o.trim().replace(/\/+$/, "")).filter((o) => o !== "" && o !== "*");
+  return [...APP_ORIGINS, ...more];
+}
+function applyCors(req, res, origins = allowedOrigins()) {
+  res.setHeader("vary", "Origin");
+  const origin = req.headers.origin;
+  if (typeof origin === "string" && origins.includes(origin)) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("access-control-allow-methods", "POST, OPTIONS");
+    res.setHeader("access-control-allow-headers", "authorization, content-type");
+    res.setHeader("access-control-max-age", "600");
+  }
+  if (req.method !== "OPTIONS") return false;
+  res.status(204).json(null);
+  return true;
+}
+
 // src/server/vercelEntry.ts
 async function handler(req, res) {
   res.setHeader("cache-control", "no-store");
+  if (applyCors(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("allow", "POST");
     res.status(405).json({ ok: false, code: "method_not_allowed" });

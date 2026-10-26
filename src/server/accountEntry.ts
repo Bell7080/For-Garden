@@ -1,9 +1,11 @@
 /** 아이디 가입·로그인 경계. 서비스 키/비밀번호는 응답·로그에 남기지 않는다. 세션 토큰은 비밀번호로 증명한 본인 로그인에만 반환한다. */
+import { applyCors } from './cors';
 import { accountCredentialProblem, accountIdToAuthEmail, authEmailToAccountId } from '../core/accountCredentials';
 interface Req { method?: string; headers: Record<string,string|string[]|undefined>; body?: unknown }
 interface Res { status(n:number):Res; json(v:unknown):void; setHeader(k:string,v:string):void }
 export default async function handler(req:Req,res:Res):Promise<void>{
  res.setHeader('cache-control','no-store');
+ if(applyCors(req,res))return;
  if(req.method!=='POST'){res.setHeader('allow','POST');res.status(405).json({code:'method_not_allowed'});return;}
  const reply=(status:number,code:string)=>res.status(status).json({ok:false,code});
  try{

@@ -9,6 +9,7 @@ import { guildActorFrom } from "../api/guildActor";
 import { createSupabaseGuildBackend } from "../api/SupabaseGuildBackend";
 import { saveManager } from "../state/SaveManager";
 import { createDefaultSession } from "../state/session";
+import { applyCors } from "./cors";
 import { isReadMethod, MAX_BODY_BYTES, validCall } from "./requestPolicy";
 
 interface Req { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
@@ -16,6 +17,7 @@ interface Res { status(code: number): Res; json(body: unknown): void; setHeader(
 
 export default async function handler(req: Req, res: Res): Promise<void> {
   res.setHeader("cache-control", "no-store");
+  if (applyCors(req, res)) return;
   if (req.method !== "POST") { res.setHeader("allow","POST"); res.status(405).json({ ok: false, code: "method_not_allowed" }); return; }
   try {
     const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);

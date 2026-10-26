@@ -1,5 +1,31 @@
 /* 생성물: npm run build:server */
 
+// src/server/cors.ts
+var APP_ORIGINS = [
+  "capacitor://localhost",
+  // iOS
+  "https://localhost",
+  // Android (androidScheme: https)
+  "ionic://localhost"
+];
+function allowedOrigins(extra = process.env.CORS_ALLOWED_ORIGINS) {
+  const more = (extra ?? "").split(",").map((o) => o.trim().replace(/\/+$/, "")).filter((o) => o !== "" && o !== "*");
+  return [...APP_ORIGINS, ...more];
+}
+function applyCors(req, res, origins = allowedOrigins()) {
+  res.setHeader("vary", "Origin");
+  const origin = req.headers.origin;
+  if (typeof origin === "string" && origins.includes(origin)) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("access-control-allow-methods", "POST, OPTIONS");
+    res.setHeader("access-control-allow-headers", "authorization, content-type");
+    res.setHeader("access-control-max-age", "600");
+  }
+  if (req.method !== "OPTIONS") return false;
+  res.status(204).json(null);
+  return true;
+}
+
 // src/core/accountCredentials.ts
 var ACCOUNT_ID_MIN = 4;
 var ACCOUNT_ID_MAX = 20;
@@ -34,6 +60,7 @@ function authEmailToAccountId(email) {
 // src/server/accountEntry.ts
 async function handler(req, res) {
   res.setHeader("cache-control", "no-store");
+  if (applyCors(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("allow", "POST");
     res.status(405).json({ code: "method_not_allowed" });

@@ -1,6 +1,6 @@
 # 버전 관리
 
-현재 버전: **v0.350.7**
+현재 버전: **v0.350.8**
 
 `VERSION.md`와 `package.json`의 `version`은 항상 같은 값을 쓰고, 타이틀(로딩) 화면 좌측
 하단 표기는 그 값을 그대로 읽는다. 화면에 손으로 적어 두지 않는다.
@@ -31,6 +31,13 @@
   그 이전의 초기 프로토타입 단계는 `v0.1.0` 항목 하나로 묶었다.
 
 ## 변경 이력
+
+## v0.350.8 — 앱 출처 CORS 허용 목록 · 앱 안에서 외부 문서가 게임 창을 덮지 않게 한다
+
+- `src/server/cors.ts`(신규): 서버(`api/game.js`·`api/account.js`)가 앱 WebView 출처(`capacitor://localhost`·`https://localhost`·`ionic://localhost`)와 환경변수 `CORS_ALLOWED_ORIGINS`(쉼표 구분)로 더한 출처만 `Access-Control-Allow-Origin`에 되돌려 준다. `*`는 받지 않고, 인증은 Bearer 토큰이라 자격 증명 모드는 열지 않는다. OPTIONS 사전 요청은 204로 끝낸다. 웹 빌드는 같은 출처라 영향이 없다.
+- 홈페이지(for-garden-web)·어드민(for-garden-admin)은 이 서버가 아니라 각자의 Supabase/함수를 부르므로 허용 목록에 넣지 않았다. 나중에 이 서버를 부르게 되면 환경변수로 더한다.
+- `openPolicyDocument`: 앱 셸에서는 시스템 브라우저 플러그인으로 열고, 팝업이 막혀도 현재 창을 갈아 끼우지 않는다(게임이 통째로 사라져 돌아올 길이 없던 문제). 웹은 그대로다.
+- 앱 셸 쪽 준비물: `@capacitor/browser` 설치, `androidScheme: "https"` 유지.
 
 ## v0.350.7 — 앱 패키징에서 서버 호출이 전부 실패하던 길을 막는다 · E2E 저장 정비
 

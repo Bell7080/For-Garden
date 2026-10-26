@@ -86,7 +86,7 @@ export class DungeonLobby {
     const row = scene.add.container(BASE_WIDTH / 2, y);
     row.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.panel, alpha: 0.82, edge: COLOR.accent, edgeAlpha: 0.32 }));
     // 고른 줄은 테두리가 아니라 **더 밝은 윗선과 옅은 칠**로 알린다 — 사방을 두르지 않는 화면 규칙이다.
-    if (selected) row.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.accent, alpha: 0.12, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 5 }));
+    if (selected) row.add(drawLayer(scene, 0, 0, shape, { fill: COLOR.accent, alpha: 0.12, edge: COLOR.accent, edgeAlpha: 0.95, edgeWidth: 5, shadow: false }));
 
     const left = -width / 2 + padding;
     row.add(scene.add.text(left, -22, tier.name, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0.5));

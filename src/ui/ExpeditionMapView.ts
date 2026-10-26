@@ -107,7 +107,7 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
     if (reachable) {
       // 확대된 반투명 실루엣을 겹쳐 외곽선이 아닌 부드러운 상태 발광을 만든다.
       [1.34, 1.22, 1.12].forEach((glowScale, index) => visual.add(
-        drawLayer(this.scene, 0, 0, frame, { fill: COLOR.sortie, alpha: 0.07 + index * 0.035 }).setScale(glowScale),
+        drawLayer(this.scene, 0, 0, frame, { fill: COLOR.sortie, alpha: 0.07 + index * 0.035, shadow: false }).setScale(glowScale),
       ));
     }
     visual.add(drawLayer(this.scene, 0, 0, frame, { fill: visited ? COLOR.panel : 0x131820, alpha: 0.94 }));

@@ -17,3 +17,14 @@ describe("전장 발밑 그림자의 깊이", () => {
     expect(battle).toMatch(/addSdFootShadow\([^)]*\)\.setDepth\(DEPTH\.shadow\)/);
   });
 });
+
+describe("얹는 층의 그림자", () => {
+  const read = (path: string): string => readFileSync(new URL(`../../src/ui/${path}`, import.meta.url), "utf8");
+  // 이미 그림자를 가진 판 위에 겹쳐 얹는 반투명·테두리 층은 제 그림자를 또 그리면 그 그림자가 아래 판·원화 앞에 깔려 눌러 버린다.
+  it.each([
+    ["DuelDefensePreviewPopup.ts", /alpha: 0, edge, edgeAlpha: 0\.8, shadow: false/],
+    ["DungeonLobby.ts", /edgeWidth: 5, shadow: false/],
+    ["ExpeditionMapView.ts", /0\.035, shadow: false/],
+    ["PassPopup.ts", /alpha: 0\.16, shadow: false/],
+  ])("%s", (file, pattern) => { expect(read(file)).toMatch(pattern); });
+});

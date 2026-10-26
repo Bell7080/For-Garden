@@ -541,7 +541,7 @@ function paintRewardList(scene: Phaser.Scene, list: PassScrollList, pass: Progre
     const freeReady = milestone.freeState === "claimable";
     const paidReady = milestone.state === "claimable";
     row.add(drawLayer(scene, columns.free, 0, sideShape, { fill: 0x101722, alpha: 0.9, ...(freeReady ? { edge: COLOR.missionClaim, edgeAlpha: 0.95 } : {}) }));
-    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: tone, alpha: 0.16, ...(paidReady ? { edge: COLOR.missionClaim, edgeAlpha: 0.95 } : {}) }));
+    row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: tone, alpha: 0.16, shadow: false, ...(paidReady ? { edge: COLOR.missionClaim, edgeAlpha: 0.95 } : {}) }));
     row.add(drawLayer(scene, columns.paid, 0, sideShape, { fill: 0x101722, alpha: 0.7 }));
     paintLevelBadge(scene, row, columns.level, index, pass, tone);
     paintRewardCell(scene, list, row, columns.free, milestone.free, milestone.freeState === "claimed", false, freeReady, onClaim);

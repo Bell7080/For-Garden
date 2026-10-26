@@ -1,4 +1,5 @@
 {
+  "scopeCorrection": { "invalidConfigurationIds": ["magic", "combo", "summon"], "excludedBattles": 9000, "historicalBattleValuesUnchanged": true },
   "version": 1,
   "sampled": false,
   "onlyFloor": null,
@@ -27391,6 +27392,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "magic",
       "relics": [
         "dimo",
@@ -28882,6 +28885,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "magic",
       "relics": [
         "dimo",
@@ -31429,6 +31434,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "magic",
       "relics": [
         "dimo",
@@ -34241,6 +34248,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "combo",
       "relics": [
         "dimo",
@@ -35732,6 +35741,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "combo",
       "relics": [
         "dimo",
@@ -38280,6 +38291,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "combo",
       "relics": [
         "dimo",
@@ -41092,6 +41105,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "summon",
       "relics": [
         "dimo",
@@ -42578,6 +42593,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "summon",
       "relics": [
         "dimo",
@@ -45120,6 +45137,8 @@
       ]
     },
     {
+      "validPlayableReference": false,
+      "invalidReason": "Directly selected summon-only dimo; excluded from playable-party claims on 2026-10-26.",
       "id": "summon",
       "relics": [
         "dimo",

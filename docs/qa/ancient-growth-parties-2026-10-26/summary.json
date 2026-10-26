@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "seeds": [
+    1729,
+    2531,
+    4099,
+    8191,
+    12289
+  ],
+  "bondLevel": 10,
+  "equipment": [
+    "bare",
+    "epic"
+  ],
+  "control": "auto",
+  "tickSeconds": 0.03333333333333333,
+  "criterion": "4/5 wins at EVERY preceding floor. Stop immediately at first unstable floor; no claim of maximum lucky win or subsequent rebounds.",
+  "scope": "Every playable regular composition in the four requested cohorts; tank-first and dealer-first orders. Not all six orders, gear traits or manual policies.",
+  "compositions": 418,
+  "configurations": 1672,
+  "battles": 260505,
+  "summary": [
+    {
+      "cohort": "sr50",
+      "equipment": "bare",
+      "compositions": 28,
+      "min": 23,
+      "median": 34.5,
+      "max": 69,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr50",
+      "equipment": "epic",
+      "compositions": 28,
+      "min": 44,
+      "median": 58.5,
+      "max": 91,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr40",
+      "equipment": "bare",
+      "compositions": 28,
+      "min": 15,
+      "median": 26.0,
+      "max": 68,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "sr40",
+      "equipment": "epic",
+      "compositions": 28,
+      "min": 38,
+      "median": 49.0,
+      "max": 103,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "ssr30",
+      "equipment": "bare",
+      "compositions": 72,
+      "min": 11,
+      "median": 35.5,
+      "max": 57,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "ssr30",
+      "equipment": "epic",
+      "compositions": 72,
+      "min": 33,
+      "median": 56.5,
+      "max": 83,
+      "zeroStableParties": 0
+    },
+    {
+      "cohort": "mixed20",
+      "equipment": "bare",
+      "compositions": 290,
+      "min": 0,
+      "median": 17.0,
+      "max": 40,
+      "zeroStableParties": 21
+    },
+    {
+      "cohort": "mixed20",
+      "equipment": "epic",
+      "compositions": 290,
+      "min": 21,
+      "median": 39.0,
+      "max": 71,
+      "zeroStableParties": 0
+    }
+  ],
+  "sourceSha256": {
+    "src/core/ancientStrataCohorts.ts": "0254598cde5acc1caf2900d8a713cb545640d7a5b83c6b852a2898097220fcc2",
+    "src/core/ancientStrataSimulation.ts": "63cb8fd7d025f1deba0044a1ffeda5838b221c38fb3bcf896b8c740003512b6a",
+    "src/core/ancientStrataBattle.ts": "1e0fa088addf285e64e803cfb157f7597a0beff8655b952b26f2243842d5794a",
+    "src/data/ancientStrataDifficulty.ts": "8241a5301cb35e46a1d67dc15fd9843aeb7fd8ce779014c802bcfa2ed44bc50d"
+  },
+  "checkedOn": "2026-10-26"
+}

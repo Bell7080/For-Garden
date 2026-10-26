@@ -14,9 +14,9 @@ export const ANCIENT_REFERENCE_PARTIES = [
   { id: "requested-tank-first", relics: ["torika", "rex", "mette"] },
   { id: "starter", relics: ["torika", "luka", "meron"] },
   { id: "physical", relics: ["torika", "rex", "meron"] },
-  { id: "magic", relics: ["dimo", "ella", "mette"] },
-  { id: "combo", relics: ["dimo", "ella", "terisa"] },
-  { id: "summon", relics: ["dimo", "dian", "meron"] },
+  { id: "magic", relics: ["ella", "morphe", "mette"] },
+  { id: "combo", relics: ["ella", "irna", "terisa"] },
+  { id: "summon", relics: ["nodonia", "dian", "meron"] },
   { id: "cc", relics: ["pachi", "mosana", "anka"] },
   { id: "taunt", relics: ["deina", "rex", "mette"] },
   { id: "double-support", relics: ["torika", "meron", "mette"] },
@@ -56,7 +56,7 @@ export function ancientReferenceParty(ids: readonly string[], equipment: Ancient
   if (!Number.isInteger(level) || level < 1 || level > 60) throw new RangeError("플레이어 레벨은 1~60입니다.");
   if (!Number.isInteger(bondLevel) || bondLevel < 0 || bondLevel > BOND_LEVEL_CAP) throw new RangeError("유대 레벨은 0~10입니다.");
   const equipped = ids.map(relicId => {
-    if (getRelic(relicId).enemyOnly) throw new RangeError(`플레이 불가 렐릭: ${relicId}`);
+    if (getRelic(relicId).enemyOnly || getRelic(relicId).summonOnly) throw new RangeError(`플레이 불가 렐릭: ${relicId}`);
     return { relicId, runes: ancientReferenceRunes(relicId, equipment) };
   });
   const players = equipped.map(({ relicId, runes }) => {

@@ -4,7 +4,7 @@ import { ANCIENT_REFERENCE_PARTIES, ancientReferenceParty, simulateAncientStrata
 import { getAncientStrataFloor } from "../src/core/ancientStrataBattle";
 import type { DifficultyControl } from "../src/core/stageDifficulty";
 const args = process.argv.slice(2);
-const flags = new Set(["--quick", "--help"]), options = new Set(["--output", "--party", "--equipment", "--seeds", "--control", "--floor", "--step", "--bond"]);
+const flags = new Set(["--quick", "--help"]), options = new Set(["--output", "--party", "--equipment", "--seeds", "--control", "--floor", "--step", "--bond", "--level"]);
 const values = new Map<string, string>();
 for (let index = 0; index < args.length; index++) {
   const key = args[index];
@@ -14,7 +14,8 @@ for (let index = 0; index < args.length; index++) {
   else throw new Error(`Unknown option or missing value: ${key}`);
 }
 if (values.has("--help")) {
-  console.log("audit:ancient [--quick] [--party rex,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.03333333333333333] [--bond 10] [--output report.json]");
+  console.log("audit:ancient --cohorts [--output report.json] : requested regular-party growth cohorts");
+  console.log("audit:ancient [--quick] [--party rex,torika,mette] [--equipment bare|epic|ceiling] [--seeds 1729,2531] [--control auto|manualUltimate] [--floor 100] [--step 0.03333333333333333] [--bond 10] [--level 60] [--output report.json]");
 } else {
   const quick = values.has("--quick");
   const seeds = values.has("--seeds") ? values.get("--seeds")!.split(",").map(Number) : quick ? [1729] : [1729, 2531, 4099, 8191, 12289];
@@ -23,6 +24,7 @@ if (values.has("--help")) {
   if (control !== "auto" && control !== "manualUltimate") throw new Error("Invalid control");
   const equipment = values.get("--equipment");
   if (equipment && !["bare", "epic", "ceiling"].includes(equipment)) throw new Error("Invalid equipment");
+  const level = Number(values.get("--level") ?? 60);
   const bondLevel = Number(values.get("--bond") ?? 10);
   const step = Number(values.get("--step") ?? 1 / 30);
   if (!Number.isFinite(step) || step < 1 / 120 || step > 1 / 20) throw new Error("Invalid step");
@@ -31,7 +33,7 @@ if (values.has("--help")) {
   const references = values.has("--party") ? [{ id: "custom", relics: values.get("--party")!.split(",") }] : ANCIENT_REFERENCE_PARTIES;
   const results = [], csv = ["party,equipment,floor,seed,won,timedOut,seconds,hpRatio,survivors,enemyHpRatio,firstPlayerDeathSeconds,ultimateHitEvents"];
   for (const reference of references) for (const loadout of (equipment ? [equipment] : ["bare", "epic", "ceiling"]) as AncientEquipment[]) {
-    const party = ancientReferenceParty(reference.relics, loadout, 60, bondLevel), floors = [];
+    const party = ancientReferenceParty(reference.relics, loadout, level, bondLevel), floors = [];
     for (let floor = onlyFloor ?? 1; floor <= (onlyFloor ?? 200); floor += quick ? 5 : 1) {
       const runs = seeds.map(seed => simulateAncientStrataRun(floor, party, seed, control as DifficultyControl, step));
       for (const run of runs) csv.push([reference.id, loadout, floor, run.seed, run.won, run.timedOut, run.seconds.toFixed(4), run.playerHpRatio.toFixed(6), run.survivors, run.enemyHpRatio.toFixed(6), run.firstPlayerDeathSeconds?.toFixed(4) ?? "", run.ultimateHitEvents].join(","));
@@ -42,7 +44,7 @@ if (values.has("--help")) {
     let stableThrough = 0;
     for (const row of floors) { if (row.winRate < 0.8) break; stableThrough = row.floor; }
     const sequential = !quick && onlyFloor === undefined;
-    const row = { id: reference.id, relics: reference.relics, equipment: loadout, level: 60, breakthrough: 4, bondLevel,
+    const row = { id: reference.id, relics: reference.relics, equipment: loadout, level, breakthrough: Object.values(party.breakthroughs)[0], bondLevel,
       stableThrough: sequential ? stableThrough : null, sampledStableThrough: stableThrough,
       firstUnstableFloor: sequential && stableThrough < 200 ? stableThrough + 1 : null,
       reboundFloors: sequential ? floors.filter(row => row.floor > stableThrough + 1 && row.winRate >= 0.8).map(row => row.floor) : [],

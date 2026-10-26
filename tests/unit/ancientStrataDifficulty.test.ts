@@ -77,11 +77,12 @@ describe("실제 전투 기반 고대 지층 검수", () => {
     }
     expect(ancientReferenceRunes("rex", "ceiling")[0].engravings).toHaveLength(1);
     expect(() => ancientReferenceParty(["rex", "rex", "mette"], "bare")).toThrow();
+    expect(() => ancientReferenceParty(["dimo", "rex", "mette"], "bare")).toThrow();
     expect(() => ancientReferenceParty(["rex", "torika", "mette"], "bare", 61)).toThrow();
   });
 
   it("동일 seed는 재현되고 소환수를 원래 파티 생존자/체력 분모에 더하지 않는다", () => {
-    const party = ancientReferenceParty(["dimo", "dian", "meron"], "epic");
+    const party = ancientReferenceParty(["nodonia", "dian", "meron"], "epic");
     const run = simulateAncientStrataRun(50, party, 1729);
     expect(simulateAncientStrataRun(50, party, 1729)).toEqual(run);
     expect(run.survivors).toBeLessThanOrEqual(3);

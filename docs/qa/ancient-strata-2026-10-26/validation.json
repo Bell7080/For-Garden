@@ -22,5 +22,14 @@
     "Strict native CC warnings remain."
   ],
   "deployed": false,
-  "browserPreviewPassed": true
+  "browserPreviewPassed": true,
+  "correction": {
+    "correctedOn": "2026-10-26",
+    "invalidDirectSummon": "dimo",
+    "invalidReferenceCompositions": 3,
+    "invalidConfigurations": 9,
+    "invalidBattles": 9000,
+    "historicalRawResultsPreserved": true,
+    "scope": "Exclude these configurations from playable-party claims. Runtime validation and presets corrected; growth cohort results are a new run."
+  }
 }

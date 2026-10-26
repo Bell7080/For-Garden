@@ -1,5 +1,39 @@
 /* 생성물: npm run build:server */
 
+// src/server/httpSecurity.ts
+function applyApiOriginPolicy(req, res, configured = process.env.FORGARDEN_APP_ORIGINS ?? "") {
+  res.setHeader("cache-control", "no-store");
+  res.setHeader("x-content-type-options", "nosniff");
+  res.setHeader("referrer-policy", "no-referrer");
+  const origin = req.headers.origin;
+  if (origin === void 0 && req.method !== "OPTIONS") return false;
+  const host = req.headers.host;
+  const sameOrigin = typeof host === "string" ? `https://${host}` : "";
+  const allowed = new Set(configured.split(",").map((value) => value.trim()).filter((value) => value && value !== "*" && value !== "null"));
+  if (typeof origin !== "string" || origin === "null" || !(origin === sameOrigin || allowed.has(origin))) {
+    res.status(403);
+    res.json({ ok: false, code: "origin_not_allowed" });
+    return true;
+  }
+  res.setHeader("vary", "Origin");
+  res.setHeader("access-control-allow-origin", origin);
+  if (req.method !== "OPTIONS") return false;
+  const method = req.headers["access-control-request-method"];
+  const requestedHeaders = req.headers["access-control-request-headers"];
+  if (method !== "POST" || Array.isArray(requestedHeaders) || (requestedHeaders ?? "").split(",").some((name) => name.trim() && !["authorization", "content-type"].includes(name.trim().toLowerCase()))) {
+    res.status(403);
+    res.json({ ok: false, code: "preflight_not_allowed" });
+    return true;
+  }
+  res.setHeader("access-control-allow-methods", "POST");
+  res.setHeader("access-control-allow-headers", "authorization, content-type");
+  res.setHeader("access-control-max-age", "600");
+  res.status(204);
+  if (res.end) res.end();
+  else res.json(null);
+  return true;
+}
+
 // src/core/accountCredentials.ts
 var ACCOUNT_ID_MIN = 4;
 var ACCOUNT_ID_MAX = 20;
@@ -33,7 +67,7 @@ function authEmailToAccountId(email) {
 
 // src/server/accountEntry.ts
 async function handler(req, res) {
-  res.setHeader("cache-control", "no-store");
+  if (applyApiOriginPolicy(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("allow", "POST");
     res.status(405).json({ code: "method_not_allowed" });

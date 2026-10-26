@@ -10,3 +10,18 @@ test-results/
 shot-*.png
 # 화면을 눈으로 확인하려고 잠깐 만드는 E2E 한 편. 회귀로 남길 것만 제 이름으로 커밋한다.
 tests/e2e/__*.spec.ts
+
+# 인증·스토어 서명 자료는 앱/정적 번들에 포함하지 않는다.
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+android/local.properties
+android/key.properties
+ios/Pods/

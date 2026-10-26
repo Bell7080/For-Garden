@@ -1,3 +1,4 @@
+import { apiEndpoint } from "../core/appRuntime";
 import { t } from "../i18n";
 import { connectArenaRealtime } from "./arenaRealtime";
 import type { ArenaRoom, ArenaRules, ArenaAction } from '../core/liveArena';
@@ -62,7 +63,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
     let last: unknown;
     for (let i = 0; i < 2; i++) {
         try {
-            const response = await fetch('/api/game', { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(15000) });
+            const response = await fetch(apiEndpoint('/api/game'), { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(15000) });
             const data = await response.json() as {
                 ok: boolean;
                 code?: string;
@@ -93,7 +94,7 @@ async function arenaRequest(kind: string, options: Record<string, unknown> = {})
 export function arenaForfeitOnExit(roomId: string): void {
     if (!lastToken) return;
     const body = JSON.stringify({ method: 'arena.act', args: [{ kind: 'action', roomId, action: { kind: 'forfeit' } }], requestId: crypto.randomUUID() });
-    void fetch('/api/game', { method: 'POST', keepalive: true, headers: { authorization: `Bearer ${lastToken}`, 'content-type': 'application/json' }, body }).catch(() => undefined);
+    void fetch(apiEndpoint('/api/game'), { method: 'POST', keepalive: true, headers: { authorization: `Bearer ${lastToken}`, 'content-type': 'application/json' }, body }).catch(() => undefined);
 }
 export function arenaError(error: unknown): string {
     const code = error instanceof Error ? error.message : '';

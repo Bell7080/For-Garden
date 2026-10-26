@@ -1,0 +1,11 @@
+{
+  "report": {
+    "canvas": true,
+    "inlineExecuted": false,
+    "qaDebugPresent": false,
+    "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://udujahnlyhedlrfbaaow.supabase.co https://rscxzfdnbdmftortrcqt.supabase.co; font-src 'self' data:; connect-src 'self' https://udujahnlyhedlrfbaaow.supabase.co https://rscxzfdnbdmftortrcqt.supabase.co wss://udujahnlyhedlrfbaaow.supabase.co wss://rscxzfdnbdmftortrcqt.supabase.co; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'"
+  },
+  "errors": [],
+  "initialCspViolations": 0,
+  "blockedInlineProbe": true
+}

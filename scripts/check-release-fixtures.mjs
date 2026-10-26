@@ -14,7 +14,9 @@ try {
     const outfile = join(directory, `${mode}.mjs`);
     await build({
       stdin: {
-        contents: `export {connectServerProgress} from './src/api/serverProgress';
+        contents: `export {TEMP_AD_REWARD_ENABLED,tempAdToken} from './src/core/tempAd';
+          export {runPlatformPurchase} from './src/api/platformPurchase';
+          export {connectServerProgress} from './src/api/serverProgress';
           export {FakeServer} from './src/api/FakeServer';
           export {FakeSocialServer} from './src/api/FakeSocialServer';
           export {createDefaultSession} from './src/state/session';
@@ -178,6 +180,7 @@ try {
     );
     assert.ok(receiptProduct);
     const receipt = {
+      platform: "test",
       requestId: "release-test-receipt",
       productId: receiptProduct.id,
       receipt: `verified-receipt:${receiptProduct.id}:test-transaction`,
@@ -204,17 +207,19 @@ try {
         (error) => error.code === "AD_TOKEN_INVALID",
       );
       assert.deepEqual(state.wallet, wallet);
-      // 출시 전 임시 예외(core/tempAd.ts): 켜져 있는 동안만 temp-ad 토큰을 받는다. 출시 때 꺼야 이 줄이 거절로 바뀐다.
-      const tempAd = await import("../src/core/tempAd.ts");
+      assert.equal(module.TEMP_AD_REWARD_ENABLED, false, "production must reject unsigned temporary ads");
       const tempState = createDefaultSession();
       const tempServer = new FakeServer(tempState, options);
-      const tempRequest = { requestId: "release-temp-ad", slotId: "gold-ad", verificationToken: tempAd.tempAdToken("gold-ad") };
-      if (tempAd.TEMP_AD_REWARD_ENABLED) {
-        await tempServer.claimAdReward(tempRequest);
-        console.warn("[release-fixtures] 경고: 임시 광고 토큰(TEMP_AD_REWARD_ENABLED)이 켜져 있다 — 정식 출시 전에 끈다.");
-      } else {
-        await assert.rejects(() => tempServer.claimAdReward(tempRequest), (error) => error.code === "AD_TOKEN_INVALID");
-      }
+      await assert.rejects(() => tempServer.claimAdReward({ requestId: "release-temp-ad", slotId: "gold-ad", verificationToken: module.tempAdToken("gold-ad") }), error => error.code === "AD_TOKEN_INVALID");
+      const catalog = await server.getProducts("premium");
+      assert.ok(catalog.products.filter(p => p.acquisition.kind === "platform_payment").every(p => !p.purchasable));
+      assert.ok((await server.getAdOperationsConfig()).slots.every(slot => !slot.enabled));
+      const paidProduct = catalog.products.find(p => p.acquisition.kind === "platform_payment");
+      assert.ok(paidProduct);
+      let sdkCalled = false;
+      const blockedPurchase = await module.runPlatformPurchase(server, { requestPayment: async () => { sdkCalled = true; throw Error("SDK must not charge"); } }, paidProduct);
+      assert.equal(blockedPurchase.status, "unsupported");
+      assert.equal(sdkCalled, false);
       // Explicit validators remain usable for real providers; no test-prefix shortcut is required.
       const liveState = createDefaultSession();
       const verifiedServer = new FakeServer(liveState, {
@@ -227,6 +232,7 @@ try {
       });
       const verified = await verifiedServer.verifyPurchaseReceipt({
         ...receipt,
+        platform: "google",
         receipt: "provider-verified-purchase",
       });
       assert.equal(verified.verified, true);
@@ -242,6 +248,7 @@ try {
       );
       assert.ok(subscription);
       const subscribed = await verifiedServer.verifyPurchaseReceipt({
+        platform: "google",
         requestId: "subscription-receipt",
         productId: subscription.id,
         receipt: "provider-verified-purchase",

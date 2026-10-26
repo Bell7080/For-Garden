@@ -22,4 +22,7 @@ console.log(`[vercel-build] mode=${mode} (FORGARDEN_BUILD=${explicit || "-"}, ho
 const server = spawnSync(process.execPath, ["scripts/build-server.mjs"], { stdio: "inherit" });
 if (server.status !== 0) process.exit(server.status ?? 1);
 const result = spawnSync("npx", ["vite", "build", "--mode", mode], { stdio: "inherit", shell: process.platform === "win32" });
-process.exit(result.status ?? 1);
+if (result.status !== 0) process.exit(result.status ?? 1);
+// 배포할 공개 파일만 검사하므로 Vercel의 Git 메타데이터 유무에 의존하지 않는다.
+const security = spawnSync(process.execPath, ["scripts/check-security.mjs", "--public-only"], { stdio: "inherit" });
+process.exit(security.status ?? 1);

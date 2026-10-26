@@ -152,7 +152,7 @@ export interface FakeServerOptions {
   /** 실제 백엔드에서는 광고 사업자 SSV에 위임하는 완료 토큰 검증기다. */
   verifyAdToken?: (token: string, slotId: string) => boolean | Promise<boolean>;
   /** 실제 백엔드에서는 Apple/Google 서버 검증으로 대체되는 테스트용 영수증 검증기다. */
-  verifyPurchaseReceipt?: (receipt: string, productId: string) => string | null | Promise<string | null>;
+  verifyPurchaseReceipt?: (receipt: string, productId: string, platform: VerifyPurchaseReceiptRequest["platform"]) => string | null | Promise<string | null>;
   /** 길드 백엔드. 생략하면 이 기기의 임시 구현이고, 서버 호출 단위에서는 DB 구현을 주입한다. */
   guild?: GuildBackend;
   /** 길드 호출자 id. 서버는 JWT의 사용자 id를 넘기고, 생략하면 이 기기의 하나뿐인 플레이어다. */
@@ -186,7 +186,9 @@ export class FakeServer implements GameApi {
   private readonly random: () => number;
   private readonly now: () => Date;
   private readonly verifyAdToken: (token: string, slotId: string) => boolean | Promise<boolean>;
-  private readonly verifyReceipt: (receipt: string, productId: string) => string | null | Promise<string | null>;
+  private readonly adVerificationAvailable: boolean;
+  private readonly paymentVerificationAvailable: boolean;
+  private readonly verifyReceipt: (receipt: string, productId: string, platform: VerifyPurchaseReceiptRequest["platform"]) => string | null | Promise<string | null>;
   /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
   private readonly persistSession?: (next: Session) => void;
   private readonly guildBackend: GuildBackend;
@@ -257,6 +259,8 @@ export class FakeServer implements GameApi {
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
     // 테스트용 서명 형식은 QA에서만 받는다. 일반/서버 빌드는 실제 SSV 검증기가 없으면 거절한다.
+    this.adVerificationAvailable = options.verifyAdToken !== undefined || QA_TOOLS_ENABLED;
+    this.paymentVerificationAvailable = options.verifyPurchaseReceipt !== undefined || QA_TOOLS_ENABLED;
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => (QA_TOOLS_ENABLED && token === `verified:${slotId}`) || (TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId)));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
@@ -290,6 +294,16 @@ export class FakeServer implements GameApi {
     ] : [];
     // 받은 우편은 저장이 기억한다 — 메모리에만 두면 다시 켤 때마다 같은 선물을 또 받는다.
     this.applySavedMailClaims();
+    // 요청마다 규칙 객체가 재생성돼도 검증 다음 요청에서 지급을 이어갈 수 있다.
+    for (const [key, receipt] of Object.entries(this.state.serverJournal?.receipts ?? {})) {
+      if (!key.startsWith('["platformVerification",')) continue;
+      const result = receipt.result as unknown as VerifyPurchaseReceiptResponse;
+      if (result.verified === true && typeof result.verificationId === "string" && typeof result.transactionId === "string"
+        && result.productId === receipt.identity && Number.isFinite(Date.parse(result.serverTime))
+       ) {
+        this.verifiedTransactions.set(result.transactionId, result);
+      }
+    }
   }
 
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
@@ -959,7 +973,7 @@ export class FakeServer implements GameApi {
     // 로컬 저장 용량을 제한한다. 활성 런의 영수증은 정산될 때까지 보존한다.
     const protectedRun = next.expedition.run?.runId;
     const entries = Object.entries(journal.receipts);
-    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => key.startsWith('["platformTransaction",') || index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
+    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => (key.startsWith('["platformTransaction",') || key.startsWith('["platformVerification",')) || index >= entries.length - 256 || (protectedRun && receipt.identity.includes(protectedRun))));
     next.serverJournal = journal;
   }
 
@@ -1278,7 +1292,7 @@ export class FakeServer implements GameApi {
     await this.delay(); const now = this.now();
     const quickScore = this.expeditionReferenceScore(now);
     const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ...("weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {}) })) };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: (this.adVerificationAvailable || this.hasAdFreeMembership(now)) && (slot.placement !== "quick_expedition" || quickScore > 0), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ...("weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {}) })) };
   }
 
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
@@ -1908,10 +1922,16 @@ export class FakeServer implements GameApi {
     if (cached) return { ...cached };
     const product = PRODUCTS.find(({ id }) => id === request.productId);
     if (!request.requestId || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "플랫폼 결제 상품의 영수증이 올바르지 않습니다.");
-    const transactionId = await this.verifyReceipt(request.receipt, product.id);
-    if (!transactionId) throw new GameApiError("RECEIPT_INVALID", "플랫폼 영수증을 검증할 수 없습니다.");
+    if (!["apple", "google", "test"].includes(request.platform) || request.platform === "test" && !QA_TOOLS_ENABLED
+      || typeof request.receipt !== "string" || !request.receipt || new TextEncoder().encode(request.receipt).length > 96 * 1024) throw new GameApiError("RECEIPT_INVALID", "플랫폼 영수증을 검증할 수 없습니다.");
+    const transactionId = await this.verifyReceipt(request.receipt, product.id, request.platform);
+    if (typeof transactionId !== "string" || !transactionId.trim() || transactionId.length > 4096) throw new GameApiError("RECEIPT_INVALID", "플랫폼 영수증을 검증할 수 없습니다.");
     const previous = this.verifiedTransactions.get(transactionId);
     const result = previous ?? { verificationId: `verification-${transactionId}`, productId: product.id, transactionId, verified: true as const, serverTime: this.now().toISOString() };
+    if (previous && previous.productId !== product.id) throw new GameApiError("RECEIPT_INVALID", "다른 상품에 사용된 거래입니다.");
+    const candidate = structuredClone(this.state);
+    this.recordReceipt(candidate, "platformVerification", result.verificationId, product.id, result);
+    this.commitRaidState(candidate);
     this.verifiedTransactions.set(transactionId, result); this.receiptResults.set(request.requestId, result);
     return { ...result };
   }
@@ -1924,22 +1944,12 @@ export class FakeServer implements GameApi {
     const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
     const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
     if (!request.requestId || !verification || !product?.passBenefit) throw new GameApiError("RECEIPT_INVALID", "검증된 후원 패스 거래가 아닙니다.");
-    const entitlementId = `entitlement-${verification.transactionId}`;
-    const existing = this.entitlements.get(entitlementId);
-    const now = this.now();
-    const expiresAt = product.passBenefit.durationDays === null ? null : new Date(now.getTime() + product.passBenefit.durationDays * 86_400_000).toISOString();
-    const entitlement = existing ?? { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
-    if (!existing) {
-      if (this.hasActivePass(product, now)) throw new GameApiError("PURCHASE_LIMIT_REACHED", "이미 활성 구독이 있습니다.");
-      const candidate = structuredClone(this.state);
-      const applied = this.applyProductGrants(product, 1, candidate.wallet, candidate.itemInventory, now);
-      candidate.itemInventory = applied.items;
-      this.setSubscriptionEntitlement(candidate, entitlement);
-      this.commitRaidState(candidate);
-    }
-    const result = { entitlement, grants: product.grants };
+    // 구 패스 API와 공용 지급 API가 같은 거래 장부를 소비해야 이중 지급되지 않는다.
+    const fulfilled = await this.fulfillPlatformPurchase({ verificationId: request.verificationId, requestId: request.requestId });
+    if (!fulfilled.entitlement) throw new GameApiError("RECEIPT_INVALID", "검증된 후원 패스 거래가 아닙니다.");
+    const result = { entitlement: fulfilled.entitlement, grants: product.grants };
     this.activationResults.set(request.requestId, result);
-    return { entitlement: { ...entitlement }, grants: result.grants };
+    return { entitlement: { ...result.entitlement }, grants: result.grants };
   }
 
   /**
@@ -3063,10 +3073,10 @@ export class FakeServer implements GameApi {
     // 목록 단계부터 요청 화면과 일치하는 상품만 반환해 화면별 모델이 섞인 카탈로그를 받지 않는다.
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
-      // 플랫폼 결제 상품도 제한이 남아 있으면 살 수 있는 상품이다 — 결제 SDK가 있는 빌드인지는 클라이언트의
-      // 결제 어댑터가 말하고, 지급은 영수증 검증(`fulfillPlatformPurchase`)을 지나야만 일어난다.
+      // SDK를 붙여도 서버 검증이 준비되지 않았다면 결제를 시작할 수 없다.
+      const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
       return {
-        ...product, remaining, purchasable: remaining > 0, disabledReason: remaining <= 0 ? t("error.purchase.limit") : undefined,
+        ...product, remaining, purchasable: remaining > 0 && !paymentUnavailable, disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : undefined,
         ...(this.runePartOf(product, now) !== undefined ? { runePart: this.runePartOf(product, now) } : {}),
         ...(product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {}),
         ...this.subscriptionInfo(product, now),

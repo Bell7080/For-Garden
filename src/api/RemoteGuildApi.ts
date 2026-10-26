@@ -1,3 +1,4 @@
+import { apiEndpoint } from "../core/appRuntime";
 import { isReadMethod } from "../server/requestPolicy";
 import { GUILD_API_METHODS, GuildApiError, type GuildApi, type GuildErrorCode } from "./guildContracts";
 
@@ -18,7 +19,7 @@ export function createRemoteGuildApi(options: {
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          response = await (options.fetchImpl ?? fetch)("/api/game", { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
+          response = await (options.fetchImpl ?? fetch)(apiEndpoint("/api/game"), { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body });
           break;
         } catch (error) { if (attempt === 1) throw error; }
       }

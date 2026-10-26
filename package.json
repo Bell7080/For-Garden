@@ -27,18 +27,21 @@
     "test:pvp-db": "node scripts/check-pvp-db.mjs",
     "test:content-loops": "node scripts/check-content-loops.mjs",
     "test:arena-db": "node scripts/check-arena-db.mjs",
-    "audit:cc": "node scripts/audit-cc.mjs"
+    "audit:cc": "node scripts/audit-cc.mjs",
+    "security:audit": "node scripts/check-security.mjs",
+    "security:android": "node scripts/check-security.mjs --android",
+    "security:ios": "node scripts/check-security.mjs --ios"
   },
   "dependencies": {
+    "@supabase/realtime-js": "2.118.0",
     "phaser": "^3.90.0",
-    "puppetforge": "github:Bell7080/WebGLE#b5af06a3bcac73b8d639e7e760812d13ee19e475",
-    "@supabase/realtime-js": "2.118.0"
+    "puppetforge": "github:Bell7080/WebGLE#b5af06a3bcac73b8d639e7e760812d13ee19e475"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/node": "^26.4.0",
     "typescript": "^5.9.2",
-    "vite": "^7.1.3",
-    "vitest": "^3.2.4"
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
   }
 }

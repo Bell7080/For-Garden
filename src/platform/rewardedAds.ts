@@ -46,7 +46,7 @@ export async function presentRewardedAd(slotId: string): Promise<AdPresentationR
     if (!(await playTempAd())) return { status: "dismissed", reason: "temp_ad_closed" };
     return { status: "completed", verificationToken: `verified:${slotId}` };
   }
-  // 출시 전 임시 예외 — 일반 빌드도 SDK 브릿지가 없는 동안 같은 팝업을 거쳐 임시 토큰을 받는다(`core/tempAd.ts`).
+  // 임시 토큰 경로도 빌드의 QA 경계를 따른다. 일반 빌드에는 남지 않는다.
   if (TEMP_AD_REWARD_ENABLED && !bridge) {
     if (!(await playTempAd())) return { status: "dismissed", reason: "temp_ad_closed" };
     return { status: "completed", verificationToken: tempAdToken(slotId) };

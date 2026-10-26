@@ -1,3 +1,4 @@
+import { apiEndpoint } from "../core/appRuntime";
 /**
  * 서버가 상태를 소유하는 GameApi 구현이다. 메서드 호출은 모두 `/api/game` 한 곳으로 가고, 응답에 실린
  * 호출 뒤의 전체 상태를 로컬 세션에 반영한다. 규칙은 서버가 FakeServer 그대로 실행하므로 여기에는 없다.
@@ -40,7 +41,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
   // 동시에 나간 호출의 응답이 뒤바뀌어 도착해도 더 오래된 상태가 새 상태를 덮지 않게 한다.
   let appliedRevision = -1;
   const doFetch = options.fetchImpl ?? fetch;
-  const endpoint = options.endpoint ?? "/api/game";
+  const endpoint = options.endpoint ?? apiEndpoint("/api/game");
   const newId = options.newRequestId ?? defaultRequestId;
   // 같은 조회가 화면 전환 때 겹쳐 나가면 한 번만 보내고, 쓰기가 상태를 바꾸기 전까지는 잠깐 그 답을 다시 쓴다.
   const retryIds = new Map<string, string>();

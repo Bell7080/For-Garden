@@ -72,6 +72,8 @@ try {
   let ready = false;
   for (let n = 0; n < 50; n++) {
     try {
+      // 초기화용 임시 서버는 Unix socket만 연다. 최종 서버의 TCP 준비까지 기다린다.
+      execFileSync("docker", [...docker, "exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], { stdio: "pipe" });
       sql("select 1");
       ready = true;
       break;

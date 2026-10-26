@@ -1,3 +1,4 @@
+import { applyApiOriginPolicy, qaToolsAllowed } from "./httpSecurity";
 import { handleArenaCall } from "./liveArena";
 /** 인증된 본인의 게임·친구 상태만 조작하는 HTTP 경계. */
 import { GameCallError, handleGameCall } from "./gameHandler";
@@ -12,10 +13,10 @@ import { createDefaultSession } from "../state/session";
 import { isReadMethod, MAX_BODY_BYTES, validCall } from "./requestPolicy";
 
 interface Req { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
-interface Res { status(code: number): Res; json(body: unknown): void; setHeader(k: string, v: string): void }
+interface Res { status(code: number): Res; json(body: unknown): void; end?(): void; setHeader(k: string, v: string): void }
 
 export default async function handler(req: Req, res: Res): Promise<void> {
-  res.setHeader("cache-control", "no-store");
+  if (applyApiOriginPolicy(req, res)) return;
   if (req.method !== "POST") { res.setHeader("allow","POST"); res.status(405).json({ ok: false, code: "method_not_allowed" }); return; }
   try {
     const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? null);
@@ -59,7 +60,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
       if (!isSocialMethod(method)) throw new GameCallError(400,"unknown_method");
       res.status(200).json(await store.socialCall(user.id,method,body.args??[],body.requestId));
     } else {
-      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:process.env.FORGARDEN_QA_TOOLS==="1"}));
+      res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS)}));
     }
   } catch (error) {
     if (error instanceof GameCallError) { res.status(error.status).json({ ok:false,code:error.code,message:error.message,...(error.domainCode ? {domainCode:error.domainCode} : {}) }); return; }

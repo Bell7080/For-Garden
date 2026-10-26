@@ -12,13 +12,58 @@ var __esm = (fn, res, err) => function __init() {
 };
 
 // <define:import.meta.env>
+var define_import_meta_env_default;
 var init_define_import_meta_env = __esm({
   "<define:import.meta.env>"() {
+    define_import_meta_env_default = {};
   }
 });
 
 // src/server/vercelEntry.ts
 init_define_import_meta_env();
+
+// src/server/httpSecurity.ts
+init_define_import_meta_env();
+function applyApiOriginPolicy(req, res, configured = process.env.FORGARDEN_APP_ORIGINS ?? "") {
+  res.setHeader("cache-control", "no-store");
+  res.setHeader("x-content-type-options", "nosniff");
+  res.setHeader("referrer-policy", "no-referrer");
+  const origin = req.headers.origin;
+  if (origin === void 0 && req.method !== "OPTIONS") return false;
+  const host = req.headers.host;
+  const sameOrigin = typeof host === "string" ? `https://${host}` : "";
+  const allowed2 = new Set(configured.split(",").map((value) => value.trim()).filter((value) => value && value !== "*" && value !== "null"));
+  if (typeof origin !== "string" || origin === "null" || !(origin === sameOrigin || allowed2.has(origin))) {
+    res.status(403);
+    res.json({ ok: false, code: "origin_not_allowed" });
+    return true;
+  }
+  res.setHeader("vary", "Origin");
+  res.setHeader("access-control-allow-origin", origin);
+  if (req.method !== "OPTIONS") return false;
+  const method = req.headers["access-control-request-method"];
+  const requestedHeaders = req.headers["access-control-request-headers"];
+  if (method !== "POST" || Array.isArray(requestedHeaders) || (requestedHeaders ?? "").split(",").some((name) => name.trim() && !["authorization", "content-type"].includes(name.trim().toLowerCase()))) {
+    res.status(403);
+    res.json({ ok: false, code: "preflight_not_allowed" });
+    return true;
+  }
+  res.setHeader("access-control-allow-methods", "POST");
+  res.setHeader("access-control-allow-headers", "authorization, content-type");
+  res.setHeader("access-control-max-age", "600");
+  res.status(204);
+  if (res.end) res.end();
+  else res.json(null);
+  return true;
+}
+function qaToolsAllowed(url, enabled) {
+  if (enabled !== "1") return false;
+  try {
+    return new URL(url).origin === "https://rscxzfdnbdmftortrcqt.supabase.co";
+  } catch {
+    return false;
+  }
+}
 
 // src/server/liveArena.ts
 init_define_import_meta_env();
@@ -260,7 +305,6 @@ var SETTINGS_KO = {
   "settings.play.battleSpeed": "\uC804\uD22C \uBC30\uC18D",
   "settings.play.autoUltimate": "\uC790\uB3D9 \uAD81\uADF9\uAE30",
   "settings.play.textSpeed": "\uD14D\uC2A4\uD2B8 \uC18D\uB3C4",
-  "settings.play.language": "\uC5B8\uC5B4",
   "settings.section.access": "\uC811\uADFC\uC131",
   "settings.access.textScale": "\uD14D\uC2A4\uD2B8 \uD06C\uAE30",
   "settings.access.reduceMotion": "\uC804\uCCB4 \uC6C0\uC9C1\uC784 \uAC10\uC18C",
@@ -321,6 +365,13 @@ var LOBBY_KO = {
   "lobby.sortie.bounty.status": "\uD0DC\uADF8 3\uD68C \xB7 \uACE8\uB4DC",
   "lobby.sortie.raid": "\uB808\uC774\uB4DC",
   "lobby.sortie.raid.status": "\uD611\uB3D9 \uC791\uC804 \xB7 \uC8FC\uAC04 \uC2DC\uC98C",
+  "lobby.sortie.ancient": "\uACE0\uB300 \uC9C0\uCE35",
+  "lobby.sortie.ancient.status": "\uBB34\uD55C \uC9C0\uCE35 \uD0D0\uC0AC",
+  "ancient.title": "\uACE0\uB300 \uC9C0\uCE35",
+  "ancient.comingSoon": "Coming soon",
+  "ancient.prev": "\uC774\uC804 \uAD6C\uAC04",
+  "ancient.next": "\uB2E4\uC74C \uAD6C\uAC04",
+  "ancient.gate": "\uAD00\uBB38",
   "lobby.expedition.resume": "\uC774\uC5B4\uD558\uAE30 \xB7 {plays}\uD68C \xB7 \uCD5C\uACE0 {best}",
   "lobby.expedition.weekly": "\uC624\uB298 {plays}\uD68C \xB7 \uCD5C\uACE0 {best} \xB7 {quick}",
   "lobby.expedition.quickReady": "\uBE60\uB978 \uAC00\uB2A5",
@@ -472,6 +523,8 @@ var INFO_KO = {
   "info.enemy.role.tenacity": "[[tenacity|\uAC15\uC778\uD568]] {base}%\uB85C \uC2DC\uC791\uD574 [[crowd-control|\uAD70\uC911\uC81C\uC5B4]]\uB97C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 {per}%\uC529, \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uC624\uB978\uB2E4.",
   "info.enemy.role.damageReduction": "[[damage-reduction|\uACBD\uAC10]] {base}%\uB85C \uC2DC\uC791\uD574 [[hp|\uCCB4\uB825]]\uC774 \uAE4E\uC77C\uC218\uB85D \uCD5C\uB300 {max}%\uAE4C\uC9C0 \uC624\uB974\uACE0, {ignore} \uC774\uD558\uC758 \uD53C\uD574\uB294 \uBB34\uD6A8\uAC00 \uB41C\uB2E4.",
   "info.enemy.role.percentHpResistance": "\uCD5C\uB300 \uCCB4\uB825 \uBE44\uB840 \uD53C\uD574\uB97C {percent}% \uB35C \uBC1B\uB294\uB2E4.",
+  "info.enemy.role.ramp": "[[atk|\uACF5\uACA9\uB825]]\xB7[[ap|\uC8FC\uBB38\uB825]]\uC774 {start}%\uC5D0\uC11C \uC2DC\uC791\uD574 {seconds}\uCD08\uC5D0 \uAC78\uCCD0 100%\uAE4C\uC9C0 \uC624\uB978\uB2E4.",
+  "info.enemy.role.apGrowth": "100%\uC5D0 \uB2FF\uC740 \uB4A4\uC5D0\uB3C4 [[atk|\uACF5\uACA9\uB825]]\xB7[[ap|\uC8FC\uBB38\uB825]]\uC774 \uB9E4\uCD08 {percent}%\uC529 \uACC4\uC18D \uC624\uB978\uB2E4.",
   "info.enemy.role.line.normal": "\u201C\uC800\uD76C\uC694? \uADF8\uB0E5 \uC9C0\uB098\uAC00\uB358 \uC7A1\uC878\uC778\uB370\uC694\u2026 \uADF8\uB798\uB3C4 \uC5F4\uC2EC\uD788 \uD574 \uBCFC\uAC8C\uC694!\u201D",
   "info.section.rune": "\uB8EC",
   "info.level": "\uB808\uBCA8",
@@ -730,6 +783,9 @@ var EXPEDITION_KO = {
   "expedition.node.restConfirm": "\uD734\uC2DD\uD558\uAE30",
   "expedition.augment.confirmed": "\uD655\uC815 \uC99D\uAC15 {count}",
   "expedition.augment.applyAll": "\uC804\uCCB4 \uC801\uC6A9",
+  "expedition.augment.count": "{count}\uAC1C",
+  "expedition.augment.slot": "{slot}\uBC88 \uB810\uB9AD",
+  "expedition.augment.empty": "\uBC1B\uC740 \uC99D\uAC15 \uC5C6\uC74C",
   "expedition.sweep.title": "\uC18C\uD0D5",
   "expedition.sweep.body": "\uB178\uB4DC \uD074\uB9AC\uC5B4 \uBCF4\uC0C1\uC758 75%\uB97C \uC989\uC2DC \uBC1B\uC2B5\uB2C8\uB2E4. \uBCF4\uBB3C \uC804\uB9AC\uD488\xB7\uD3F0\uD1A0\uC2A4 \uC778\uC591 \uAE30\uB85D\xB7\uC810\uC218\uB294 \uB0A8\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.\n\uC624\uB298\uC758 \uC6D0\uC815 \uAE30\uD68C 1\uD68C\uB97C \uC0AC\uC6A9\uD558\uBA70 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "expedition.sweep.confirm": "\uC18C\uD0D5\uD558\uAE30",
@@ -882,12 +938,70 @@ var AUGMENT_KO = {
   "augment.conditionalDamage": "{status} \uB300\uC0C1 \uD53C\uD574 +{percent}%",
   "augment.status.curse": "\uC800\uC8FC",
   "augment.status.stun": "\uAE30\uC808",
+  "augment.status.stagger": "\uACBD\uC9C1",
   "augment.lowHpDefense": "\uCCB4\uB825 {threshold}% \uC774\uD558\n\uBC29\uC5B4\xB7\uC800\uD56D +{percent}%",
   "augment.healOnKill": "\uCC98\uCE58 \uC2DC \uCCB4\uB825 +{percent}%",
   "augment.effect": "\uD6A8\uACFC",
   "augment.meta": "{rarity} \xB7 {target}",
   "augment.target.party": "\uC804\uCCB4",
-  "augment.target.single": "\uAC1C\uC778"
+  "augment.target.single": "\uAC1C\uC778",
+  "augment.tag.basic": "\uD3C9\uD0C0 {every}\uD68C \uC801\uC911\uB9C8\uB2E4 {tag} {stacks}\uD68C \uC801\uC6A9.",
+  "augment.tag.ultimate": "\uAD81\uADF9\uAE30 \uC801\uC911 \uC2DC {tag} {stacks}\uD68C \uC801\uC6A9.",
+  "augment.tag.received": "\uC9C1\uC811 \uD53C\uD574\uB97C {every}\uD68C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 {tag} {stacks}\uACB9 \uD68D\uB4DD.",
+  "augment.tag.limits": "\uC804\uD22C\uB2F9 \uCD5C\uB300 {max}\uD68C \uBC1C\uB3D9. \uC7AC\uBC1C\uB3D9 \uB300\uAE30\uC2DC\uAC04 {cooldown}\uCD08.",
+  "augment.tag.attackRule": "\uAD11\uC5ED\xB7\uC5F0\uACA9\uC740 \uACF5\uACA9 \uD589\uB3D9\uB2F9 \uCCAB \uC0DD\uC874 \uC801\uC911 \uB300\uC0C1 \uD55C \uBA85\uC5D0\uAC8C\uB9CC \uC801\uC6A9\uD55C\uB2E4. \uB300\uC0C1 \uBCC0\uACBD \uC2DC\uC5D0\uB3C4 \uD69F\uC218\uB294 \uC720\uC9C0\uB41C\uB2E4. \uCD94\uAC00 \uD53C\uD574\uB294 \uD69F\uC218\uC5D0 \uD3EC\uD568\uD558\uC9C0 \uC54A\uB294\uB2E4. \uB354 \uAC15\uD55C \uAC19\uC740 \uD0DC\uADF8\uAC00 \uC720\uC9C0 \uC911\uC774\uBA74 \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uB294\uB2E4. \uC804\uD22C\uB9C8\uB2E4 \uCD08\uAE30\uD654\uB41C\uB2E4.",
+  "augment.tag.receivedRule": "\uC2E4\uC81C\uB85C \uCCB4\uB825\uC774 \uC904\uACE0 \uC0B4\uC544\uB0A8\uC740 \uC9C1\uC811 \uD0C0\uACA9\uB9CC \uC13C\uB2E4. \uBCF4\uD638\uB9C9 \uD761\uC218\xB7\uC9C0\uC18D \uD53C\uD574\xB7\uBC18\uC0AC \uD53C\uD574\uB294 \uC81C\uC678\uD55C\uB2E4. \uC804\uD22C\uB9C8\uB2E4 \uCD08\uAE30\uD654\uB41C\uB2E4.",
+  "augment.tag.name.frostPlume": "\uC11C\uB9AC\uAE43",
+  "augment.tag.detail.concussion": "\uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {maxHpPercent}%\uB9CC\uD07C \uC989\uBC1C \uACE0\uC815 \uD53C\uD574\uB97C \uC900\uB2E4. \uCE58\uBA85\uD0C0\uB85C \uC99D\uAC00\uD558\uC9C0 \uC54A\uB294\uB2E4. \uC99D\uAC15 \uB1CC\uC9C4\uD0D5\uC740 \uB300\uC0C1\uBCC4 \uD569\uACC4 \uCD5C\uB300 \uCCB4\uB825 10%\uAE4C\uC9C0\uC774\uBA70, \uBCF4\uC2A4\uC758 \uBE44\uC728 \uD53C\uD574 \uC800\uD56D\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.stagger": "{seconds}\uCD08 \uB3D9\uC548 \uD589\uB3D9\uC744 \uB9C9\uB294\uB2E4. \uAE30\uC874 \uAC15\uC778\uD568\uACFC \uC81C\uC5B4 \uC800\uD56D\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.poison": "{seconds}\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uC2DC\uC804\uC790 \uACF5\uACA9\uB825\uC758 {attackPercentPerSecond}%\uC640 \uC8FC\uBB38\uB825\uC758 {abilityPercentPerSecond}%\uB97C \uB354\uD55C \uB9C8\uBC95 \uD53C\uD574\uB97C \uC900\uB2E4. \uC911\uCCA9\uD558\uC9C0 \uC54A\uACE0 \uAC15\uD55C \uC911\uB3C5\uC744 \uC720\uC9C0\uD55C\uB2E4.",
+  "augment.tag.detail.overpaint": "\uD55C \uACB9\uB9C8\uB2E4 \uBC1B\uB294 \uD53C\uD574\uAC00 {damageTakenPercent}% \uC99D\uAC00\uD55C\uB2E4. \uCD5C\uB300 {maxStacks}\uACB9, {seconds}\uCD08 \uC720\uC9C0. \uB2E4\uC2DC \uBD80\uC5EC\uD558\uBA74 \uC2DC\uAC04\uC774 \uAC31\uC2E0\uB41C\uB2E4.",
+  "augment.tag.detail.curse": "\uD55C \uACB9\uB9C8\uB2E4 \uC800\uD56D\uB825\uC774 {resistancePercent}% \uAC10\uC18C\uD55C\uB2E4. \uCD5C\uB300 {maxStacks}\uACB9, {seconds}\uCD08 \uC720\uC9C0. \uB2E4\uC2DC \uBD80\uC5EC\uD558\uBA74 \uC2DC\uAC04\uC774 \uAC31\uC2E0\uB41C\uB2E4.",
+  "augment.tag.detail.butcher": "{maxStacks}\uACB9\uC774 \uB418\uBA74 \uBAA8\uB450 \uC18C\uBE44\uD574 \uC2DC\uC804\uC790 \uACF5\uACA9\uB825\uC758 {burstPower}%\uC5D0 \uD574\uB2F9\uD558\uB294 \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uACB9\uC740 \uC2DC\uAC04\uC73C\uB85C \uC0AC\uB77C\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.frostPlume": "{holdSeconds}\uCD08 \uC548\uC5D0 {maxStacks}\uACB9\uC744 \uC313\uC73C\uBA74 \uBAA8\uB450 \uC18C\uBE44\uD55C\uB2E4. {burstSeconds}\uCD08\uC5D0 \uAC78\uCCD0 \uACF5\uACA9\uB825\uC758 \uCD1D {burstPower}% \uD53C\uD574\uB97C \uC8FC\uACE0, {slowSeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9\xB7\uC774\uB3D9 \uC18D\uB3C4\uB97C {slowPercent}% \uB0AE\uCD98\uB2E4.",
+  "augment.tag.detail.vandalism": "\uD55C \uACB9\uB9C8\uB2E4 \uACF5\uACA9\uB825\uACFC \uC8FC\uBB38\uB825\uC774 {offenseShredPercent}% \uAC10\uC18C\uD55C\uB2E4. {maxStacks}\uACB9\uC5D0\uC11C \uC18C\uBE44\uD574 \uC2DC\uC804\uC790 \uC8FC\uBB38\uB825\uC758 {burstPower}% \uB9C8\uBC95 \uD53C\uD574\uB97C \uC900\uB2E4. \uACB9\uC740 \uC2DC\uAC04\uC73C\uB85C \uC0AC\uB77C\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.pressure": "\uD55C \uACB9\uB9C8\uB2E4 \uACF5\uACA9\xB7\uC774\uB3D9 \uC18D\uB3C4\uAC00 {speedPercentPerStack}% \uAC10\uC18C\uD55C\uB2E4. {seconds}\uCD08 \uC548\uC5D0 {maxStacks}\uACB9\uC774 \uB418\uBA74 \uC18C\uBE44\uD574 {stunSeconds}\uCD08 \uAE30\uC808\uACFC \uC2DC\uC804\uC790 \uBC29\uC5B4\uB825\uC758 {defensePower}%\uC640 \uC800\uD56D\uB825\uC758 {resistancePower}%\uB97C \uB354\uD55C \uBB3C\uB9AC \uD53C\uD574\uB97C \uC900\uB2E4. \uAE30\uC808 \uD6C4 {lockoutSeconds}\uCD08 \uB3D9\uC548 \uB2E4\uC2DC \uC313\uC774\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.drowsy": "{seconds}\uCD08 \uC548\uC5D0 {maxStacks}\uACB9\uC774 \uB418\uBA74 {sleepSeconds}\uCD08 \uC7A0\uB4E0\uB2E4. \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 \uAE68\uBA70 \uC2DC\uC804\uC790 \uC800\uD56D\uB825\uC758 {wakeResistancePower}% \uB9C8\uBC95 \uD53C\uD574\uB97C \uBC1B\uACE0, {groggySeconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {groggyAttackSpeedPercent}% \uAC10\uC18C\uD55C\uB2E4.",
+  "augment.tag.detail.intimidate": "{seconds}\uCD08 \uC548\uC5D0 {maxStacks}\uACB9\uC774 \uB418\uBA74 \uC18C\uBE44\uD574 {fearSeconds}\uCD08 \uACF5\uD3EC\uB97C \uC77C\uC73C\uD0A8\uB2E4. \uACF5\uD3EC \uD6C4 {immunitySeconds}\uCD08 \uB3D9\uC548 \uC704\uC555\xB7\uACF5\uD3EC\uC5D0 \uBA74\uC5ED\uC774\uB2E4.",
+  "augment.tag.detail.chill": "\uD55C \uACB9\uB9C8\uB2E4 \uACF5\uACA9\xB7\uC774\uB3D9 \uC18D\uB3C4\uAC00 {speedPercentPerStack}% \uAC10\uC18C\uD55C\uB2E4. \uCD5C\uB300 {maxStacks}\uACB9. \uC790\uCCB4\uC801\uC73C\uB85C \uBE59\uACB0\uC744 \uC77C\uC73C\uD0A4\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.taunt": "{seconds}\uCD08 \uB3D9\uC548 \uC2DC\uC804\uC790\uB9CC \uACF5\uACA9 \uB300\uC0C1\uC73C\uB85C \uC0BC\uAC8C \uD55C\uB2E4. \uAE30\uC874 \uAC15\uC778\uD568\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.fear": "{seconds}\uCD08 \uB3D9\uC548 \uC2DC\uC804\uC790\uC5D0\uAC8C\uC11C \uB3C4\uB9DD\uCE58\uBA70 \uD3C9\uD0C0\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB2E4. \uAD81\uADF9\uAE30\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC788\uB2E4. \uC774\uD6C4 {immunitySeconds}\uCD08 \uB3D9\uC548 \uACF5\uD3EC\uC5D0 \uBA74\uC5ED\uC774\uB2E4.",
+  "augment.tag.detail.shell": "\uC870\uAC00\uBE44\uB97C \uCD5C\uB300 {maxStacks}\uACB9\uAE4C\uC9C0 \uC313\uACE0 \uB9C8\uC9C0\uB9C9 \uD68D\uB4DD \uD6C4 {durationSeconds}\uCD08 \uC720\uC9C0\uD55C\uB2E4. \uAC00\uB4DD \uCC28\uBA74 \uC18C\uBE44\uD574 \uC790\uC2E0\uC5D0\uAC8C \uCD5C\uB300 \uCCB4\uB825\uC758 {selfShieldMaxHpPercent}%, \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uC5D0\uAC8C \uD574\uB2F9 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {lowestHpAllyShieldMaxHpPercent}% \uBCF4\uD638\uB9C9\uC744 \uC900\uB2E4. \uC18C\uBE44 \uD6C4 {cooldownSeconds}\uCD08 \uB300\uAE30. \uC6D0\uBCF8 \uD328\uC2DC\uBE0C \uC870\uAC00\uBE44\uC640 \uB530\uB85C \uC313\uC778\uB2E4.",
+  "augment.tag.detail.reagent": "\uB300\uC0C1\uC5D0\uAC8C \uC2DC\uC57D\uC744 \uCD5C\uB300 {maxStacks}\uACB9\uAE4C\uC9C0 \uC313\uACE0 {seconds}\uCD08 \uC720\uC9C0\uD55C\uB2E4. \uAC00\uB4DD \uCC28\uBA74 \uC18C\uBE44\uD574 {reactionPoisonSeconds}\uCD08 \uB3D9\uC548 \uACF5\uC6A9 \uC911\uB3C5\uC744 \uAC78\uACE0, \uC800\uD56D\uB825\uC744 {resistanceReductionPercent}%\uB9CC\uD07C {resistanceReductionSeconds}\uCD08 \uB0AE\uCD94\uBA70, \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC744 \uD574\uB2F9 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {lowestHpAllyHealMaxHpPercent}% \uD68C\uBCF5\uD55C\uB2E4. \uC6D0\uBCF8 \uD328\uC2DC\uBE0C \uC2DC\uC57D\uACFC \uB530\uB85C \uC313\uC778\uB2E4.",
+  "augment.tag.name.basic": "{tag} \uD0C0\uACA9",
+  "augment.tag.name.ultimate": "{tag} \uBC29\uCD9C",
+  "augment.tag.name.received": "{tag} \uCD95\uC801",
+  "augment.tag.name.concussion": "\uB1CC\uC9C4\uD0D5",
+  "augment.tag.name.stagger": "\uACBD\uC9C1",
+  "augment.tag.name.light": "\uBBF8\uC57D\uD55C {tag}",
+  "augment.tag.name.knockback": "\uB0A0\uB824\uBC84\uB9BC",
+  "augment.tag.name.tailwind": "\uC21C\uD48D",
+  "augment.tag.name.order": "\uC624\uB354",
+  "augment.tag.name.resonance": "\uACF5\uBA85",
+  "augment.tag.name.regeneration": "\uC9C0\uC18D \uD68C\uBCF5",
+  "augment.tag.name.stealth": "\uC740\uC2E0",
+  "augment.tag.name.shield": "\uBCF4\uD638\uB9C9",
+  "augment.tag.cast": "\uAD81\uADF9\uAE30 \uC0AC\uC6A9 \uD6C4 \uC790\uC2E0\uC5D0\uAC8C {tag} {stacks}\uD68C \uC801\uC6A9.",
+  "augment.tag.selfBasic": "\uD3C9\uD0C0 {every}\uD68C \uC801\uC911\uB9C8\uB2E4 \uC790\uC2E0\uC5D0\uAC8C {tag} {stacks}\uD68C \uC801\uC6A9.",
+  "augment.tag.selfRule": "\uC790\uC2E0\uC5D0\uAC8C\uB9CC \uC801\uC6A9\uD55C\uB2E4. \uACF5\uACA9 \uD69F\uC218\uB294 \uAD11\uC5ED\xB7\uC5F0\uACA9\uB3C4 \uD589\uB3D9\uB2F9 \uD55C \uBC88\uB9CC \uC13C\uB2E4. \uCD94\uAC00 \uD53C\uD574\uB294 \uC81C\uC678\uD55C\uB2E4. \uAC15\uD55C \uAE30\uC874 \uD6A8\uACFC\uB97C \uC57D\uD558\uAC8C \uB36E\uC5B4\uC4F0\uC9C0 \uC54A\uC73C\uBA70, \uAC19\uC740 \uAC15\uD654 \uC2AC\uB86F\uC740 \uC911\uCCA9\uB418\uC9C0 \uC54A\uB294\uB2E4. \uC804\uD22C\uB9C8\uB2E4 \uCD08\uAE30\uD654\uB41C\uB2E4.",
+  "augment.tag.detail.bleed": "{seconds}\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uB300\uC0C1 \uCD5C\uB300 \uCCB4\uB825\uC758 {maxHpPercentPerSecond}% \uACE0\uC815 \uD53C\uD574. \uBC1B\uB294 \uD68C\uBCF5\uB7C9 -{healingReceivedReductionPercent}%. \uC99D\uAC15 \uBE44\uC728 \uD53C\uD574\uB294 \uB300\uC0C1\uBCC4 \uD569\uACC4 \uCD5C\uB300 10%\uC774\uBA70 \uBD88\uC0AC \uBCF4\uC2A4\uC5D0\uB294 25% \uBC30\uC728\uACFC \uAE30\uC874 \uBE44\uC728 \uD53C\uD574 \uC800\uD56D\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.frenzy": "{seconds}\uCD08 \uB3D9\uC548 \uC790\uAE30 \uD3B8\uC744 \uACF5\uACA9\uD558\uBA70 \uD53C\uD574\uAC00 \uC808\uBC18\uC774 \uB41C\uB2E4. \uAD81\uADF9\uAE30\uB294 \uC4F8 \uC218 \uC5C6\uB2E4. \uC790\uAE30 \uD3B8\uC774 \uC5C6\uC73C\uBA74 \uC790\uC2E0\uC744 \uACF5\uACA9\uD55C\uB2E4. \uAE30\uC874 \uAC15\uC778\uD568\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.knockback": "{seconds}\uCD08 \uB3D9\uC548 \uCD08\uC18D {speed}px\uB85C \uB0A0\uB824\uBC84\uB9B0\uB2E4. \uBCBD \uBC18\uC0AC \uCD5C\uB300 {bounces}\uD68C. \uB0A0\uC544\uAC00\uB294 \uB3D9\uC548 \uD589\uB3D9\uD560 \uC218 \uC5C6\uC73C\uBA70 \uAE30\uC874 \uAC15\uC778\uD568\uC744 \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.tailwind": "{seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4 +{attackSpeedPercent}%, \uC774\uB3D9 \uC18D\uB3C4 +{moveSpeedPercent}%. \uB2E4\uB978 \uC21C\uD48D\xB7\uC624\uB354\xB7\uACF5\uBA85\uACFC \uAC19\uC740 \uC2AC\uB86F\uC744 \uC0AC\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.order": "{seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4 +{attackSpeedPercent}%, \uCE58\uBA85\uD0C0 \uD655\uB960 +{criticalChancePoints}%, \uBAA8\uB4E0 \uD53C\uD574 \uD761\uD608 +{lifeStealPoints}%. \uC21C\uD48D\xB7\uACF5\uBA85\uACFC \uAC19\uC740 \uC2AC\uB86F\uC744 \uC0AC\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.regeneration": "{seconds}\uCD08 \uB3D9\uC548 \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {maxHpPercentPerSecond}% \uD68C\uBCF5. \uC911\uCCA9\uD558\uC9C0 \uC54A\uACE0 \uAE30\uC874 \uD68C\uBCF5 \uD2F1\uC744 \uC720\uC9C0\uD558\uBA70, \uD68C\uBCF5 \uAC10\uC18C \uD6A8\uACFC\uB97C \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.detail.shield": "\uC790\uC2E0\uC758 \uCD5C\uB300 \uCCB4\uB825 {maxHpPercent}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uAE30\uC874 \uBCF4\uD638\uB9C9 \uCC98\uB9AC\uC640 \uC2E4\uC81C \uD761\uC218\uB7C9\uC744 \uC0AC\uC6A9\uD55C\uB2E4.",
+  "augment.tag.name.ferocity": "\uC57C\uC131",
+  "augment.tag.name.cleanse": "\uC815\uD654",
+  "augment.tag.detail.ferocity": "\uAE30\uBCF8 \uC57C\uC131 {points} \uD68D\uB4DD. \uAE30\uC874 \uC720\uB300\xB7\uC57C\uC131 \uD68D\uB4DD \uBCF4\uC815\uC744 \uC801\uC6A9\uD558\uBA70 \uD3ED\uC8FC \uC911\uC5D0\uB294 \uCD94\uAC00 \uD68D\uB4DD\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.detail.cleanse": "\uAE30\uC874 \uC815\uD654 \uADDC\uCE59\uC5D0 \uB530\uB77C \uD574\uB85C\uC6B4 \uD6A8\uACFC\uB97C \uC81C\uAC70\uD55C\uB2E4. \uC774\uB85C\uC6B4 \uAC15\uD654\uB294 \uC720\uC9C0\uD558\uBA70 \uC0C8 \uBA74\uC5ED\uC744 \uBD80\uC5EC\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+  "augment.tag.selfReceived": "\uC9C1\uC811 \uD53C\uD574\uB97C {every}\uD68C \uBC1B\uC744 \uB54C\uB9C8\uB2E4 \uC790\uC2E0\uC5D0\uAC8C {tag} {stacks}\uD68C \uC801\uC6A9.",
+  "augment.tag.name.receivedEffect": "{tag} \uBC18\uC751",
+  "augment.tag.detail.scar": "\uCD5C\uB300 {maxStacks}\uACB9, \uB9C8\uC9C0\uB9C9 \uD68D\uB4DD \uD6C4 {durationSeconds}\uCD08 \uC720\uC9C0. \uAC00\uB4DD \uCC28\uBA74 \uBAA8\uB450 \uC18C\uBE44\uD574 \uC790\uC2E0\uC5D0\uAC8C\uB9CC \uCD5C\uB300 \uCCB4\uB825\uC758 {selfShieldMaxHpPercent}% \uBCF4\uD638\uB9C9\uC744 \uC900\uB2E4. \uC18C\uBE44 \uD6C4 {cooldownSeconds}\uCD08 \uB300\uAE30. \uC6D0\uBCF8 \uD328\uC2DC\uBE0C\uC758 \uD749\uD130\uC640 \uBCC4\uB3C4 \uB204\uC801\uD558\uBA70 \uC870\uAC00\uBE44 \uC99D\uAC15\uACFC\uB294 \uD568\uAED8 \uC120\uD0DD\uD560 \uC218 \uC5C6\uB2E4.",
+  "augment.flatPoints": "{label} +{points}",
+  "augment.stat.detail.lifeSteal": "\uD761\uD608 \uB300\uC0C1 \uACF5\uACA9\uC774 \uC2E4\uC81C\uB85C \uAE4E\uC740 \uC801 \uCCB4\uB825\uC758 {points}%\uB9CC\uD07C \uCD94\uAC00 \uD68C\uBCF5\uD55C\uB2E4. \uAE30\uC874 \uD761\uD608\uC5D0 \uB354\uD558\uBA70, \uBCF4\uD638\uB9C9 \uD761\uC218\xB7\uCD08\uACFC \uD53C\uD574\uB294 \uD68C\uBCF5\uB7C9\uC73C\uB85C \uC138\uC9C0 \uC54A\uACE0 \uAE30\uC874 \uD68C\uBCF5 \uAC10\uC18C\uB97C \uC801\uC6A9\uD55C\uB2E4.",
+  "augment.tag.controlCooldown": "CC \uC7AC\uBC1C\uB3D9: {cooldown}\uCD08\uB9C8\uB2E4",
+  "augment.tag.controlRecovery": "\uC99D\uAC15 CC\uB294 \uD55C \uBC88\uC5D0 \uCD5C\uB300 {cap}\uCD08. \uC81C\uC5B4 \uC885\uB8CC \uD6C4 {gap}\uCD08 \uB3D9\uC548 \uB2E4\uB978 \uC99D\uAC15 CC\uB97C \uBC1B\uC9C0 \uC54A\uB294\uB2E4. \uB300\uC0C1\uC774 \uC0C8 \uC801\uB300 \uACF5\uACA9\uC744 1\uD68C \uD574\uC57C \uC7AC\uC81C\uC5B4\uD560 \uC218 \uC788\uC73C\uBA70, \uADF8 \uCCAB \uACF5\uACA9 \uD6C4\uC5D0\uB3C4 {gap}\uCD08\uB97C \uBCF4\uC7A5\uD55C\uB2E4. \uBAA8\uB4E0 \uC81C\uACF5\uC790\uC640 \uC885\uB958\uAC00 \uACF5\uC720\uD55C\uB2E4."
 };
 
 // src/i18n/ko/friends.ts
@@ -1141,7 +1255,7 @@ var RUNE_KO = {
   "rune.craftTitle": "\uB8EC \uC138\uACF5",
   "rune.craftAll": "\uC77C\uAD04 \uC138\uACF5",
   "rune.craftAllConfirm": "\uB0A8\uC740 \uC138\uACF5 {count}\uD68C\uB97C \uC704 \uC635\uC158\uBD80\uD130 \uCC28\uB840\uB85C \uC9C4\uD589\uD569\uB2C8\uB2E4.\n\uD55C \uBC88\uC5D0 \uC138\uACF5\uB429\uB2C8\uB2E4.",
-  "rune.craftAllDone": "\uC77C\uAD04 \uC138\uACF5 \uC644\uB8CC \xB7 \uC131\uACF5 {success}/{total}",
+  "rune.craftAllDone": "\uC77C\uAD04 \uC138\uACF5 \uC644\uB8CC",
   "rune.unequip": "\uD574\uC81C",
   "rune.equip": "\uC7A5\uCC29",
   "rune.engraved": "\uAC01\uC778 \uC644\uB8CC",
@@ -1174,30 +1288,61 @@ var RUNE_KO = {
   "rune.trait.odds.percent": "{percent}%",
   "rune.trait.odds.pity": "{count}\uD68C",
   "rune.trait.odds.max": "\uCD5C\uACE0 \uB4F1\uAE09",
+  "rune.trait.stack.sum": "\uC218\uCE58\uAC00 \uD569\uC0B0\uB41C\uB2E4.",
+  "rune.trait.stack.independent": "\uB8EC\uB9C8\uB2E4 \uB530\uB85C \uBC1C\uB3D9\uD55C\uB2E4.",
+  "rune.trait.stack.none": "\uC911\uCCA9\uB418\uC9C0 \uC54A\uB294\uB2E4.",
+  "rune.trait.pool.epic": "\uC601\uC6C5 \uC774\uC0C1",
+  "rune.trait.pool.legendary": "\uC804\uC124 \uC804\uC6A9",
   "rune.trait.vanguard.name": "\uC120\uBD09",
-  "rune.trait.vanguard.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.vanguard.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4. \uC774 \uC2DC\uAC04 \uC548\uC5D0 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uC9C0\uC18D \uC2DC\uAC04\uC774 {extend}\uCD08 \uB298\uC5B4\uB09C\uB2E4(\uC804\uD22C\uB2F9 \uCD5C\uB300 {extendMax}\uCD08).",
   "rune.trait.pursuit.name": "\uCD94\uACA9",
-  "rune.trait.pursuit.desc": "\uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.pursuit.desc": "\uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4. \uC5F0\uB2EC\uC544 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uACB9\uC774 \uC313\uC778\uB2E4(\uCD5C\uB300 {stacks}\uACB9).",
   "rune.trait.predation.name": "\uD3EC\uC2DD",
-  "rune.trait.predation.desc": "\uCCB4\uB825\uC774 {threshold}% \uC774\uC0C1 \uB0A8\uC740 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.predation.desc": "\uAE30\uBCF8 \uACF5\uACA9 {n}\uBC88\uB9C8\uB2E4 \uADF8 \uC801\uC758 \uD604\uC7AC \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uCD94\uAC00 \uD53C\uD574\uB97C \uC900\uB2E4(\uACF5\uACA9\uB825\uC758 {cap}% \uC774\uD558).",
   "rune.trait.tenacity.name": "\uC9D1\uB150",
-  "rune.trait.tenacity.desc": "\uAC19\uC740 \uC801\uC744 \uC774\uC5B4\uC11C \uB54C\uB9B4 \uB54C\uB9C8\uB2E4 \uC8FC\uB294 \uD53C\uD574\uAC00 {value}%\uC529 \uC624\uB978\uB2E4. {stacks}\uACB9\uAE4C\uC9C0 \uC313\uC774\uACE0 \uD45C\uC801\uC744 \uBC14\uAFB8\uBA74 \uD480\uB9B0\uB2E4.",
+  "rune.trait.tenacity.desc": "\uAC19\uC740 \uC801\uC744 \uC774\uC5B4\uC11C \uB54C\uB9B4 \uB54C\uB9C8\uB2E4 \uC8FC\uB294 \uD53C\uD574\uAC00 {value}%\uC529 \uC624\uB978\uB2E4(\uCD5C\uB300 {stacks}\uACB9). \uADF8 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uACB9\uC758 \uC808\uBC18\uC774 \uB2E4\uC74C \uD45C\uC801\uC73C\uB85C \uC774\uC5B4\uC9C0\uACE0, \uD45C\uC801\uC744 \uBC14\uAFB8\uBA74 \uD480\uB9B0\uB2E4.",
   "rune.trait.guardian.name": "\uBCF4\uD638\uBCF8\uB2A5",
   "rune.trait.guardian.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uBA74 \uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70\uC5D0\uAC8C \uADF8 \uC544\uAD70 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC900\uB2E4.",
   "rune.trait.lastStand.name": "\uCD5C\uD6C4\uC758 \uC800\uD56D",
-  "rune.trait.lastStand.desc": "\uCCB4\uB825\uC774 {threshold}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uC804\uD22C\uB2F9 \uD55C \uBC88.",
+  "rune.trait.lastStand.desc": "\uCCB4\uB825\uC774 {threshold}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uACE0 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value2}% \uC624\uB978\uB2E4. \uB8EC\uB9C8\uB2E4 \uC804\uD22C\uB2F9 \uD55C \uBC88.",
   "rune.trait.firstAid.name": "\uC751\uAE09 \uCC98\uCE58",
-  "rune.trait.firstAid.desc": "\uCCB4\uB825\uC774 {threshold}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB97C \uD68C\uBCF5\uD55C\uB2E4. \uC804\uD22C\uB2F9 \uD55C \uBC88.",
-  "rune.trait.focusStudy.name": "\uC870\uC900 \uC5F0\uAD6C",
-  "rune.trait.focusStudy.desc": "\uCE58\uBA85\uD0C0 \uD655\uB960\uC774 {value}% \uC624\uB978\uB2E4.",
-  "rune.trait.awakening.name": "\uAC01\uC131 \uCD09\uC9C4",
-  "rune.trait.awakening.desc": "\uAE30\uBCF8 \uACF5\uACA9 \uD55C \uBC88\uC73C\uB85C \uC5BB\uB294 \uAD81\uADF9\uAE30 \uCDA9\uC804\uB7C9\uC774 {value} \uC624\uB978\uB2E4.",
-  "rune.trait.resonance.name": "\uC57C\uC131 \uACF5\uBA85",
-  "rune.trait.resonance.desc": "\uC57C\uC131 \uCDA9\uC804\uB7C9\uC774 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.firstAid.desc": "\uCCB4\uB825\uC774 {threshold}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB97C \uC989\uC2DC \uD68C\uBCF5\uD558\uACE0, \uC774\uD6C4 {seconds}\uCD08\uC5D0 \uAC78\uCCD0 \uAC19\uC740 \uC591\uC744 \uB354 \uD68C\uBCF5\uD55C\uB2E4. \uB8EC\uB9C8\uB2E4 \uC804\uD22C\uB2F9 \uD55C \uBC88.",
+  "rune.trait.focusStudy.name": "\uCCAB \uC77C\uACA9",
+  "rune.trait.focusStudy.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uACE0 \uCC98\uC74C {value}\uBC88\uC758 \uAE30\uBCF8 \uACF5\uACA9\uC740 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uB2E4.",
+  "rune.trait.awakening.name": "\uC608\uC5F4",
+  "rune.trait.awakening.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uBA74 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {value}% \uCC2C \uCC44\uB85C \uC2DC\uC791\uD55C\uB2E4. \uD569\uACC4 \uCD5C\uB300 {cap}%.",
+  "rune.trait.resonance.name": "\uC57C\uC131 \uC810\uD654",
+  "rune.trait.resonance.desc": "\uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uC57C\uC131 \uAC8C\uC774\uC9C0\uAC00 \uCD5C\uB300\uCE58\uC758 {value}%\uB9CC\uD07C \uCC2C\uB2E4. \uB8EC\uB9C8\uB2E4 {cooldown}\uCD08\uC5D0 \uD55C \uBC88.",
   "rune.trait.hemorrhage.name": "\uCD9C\uD608 \uC5F0\uAD6C",
   "rune.trait.hemorrhage.desc": "\uAE30\uBCF8 \uACF5\uACA9 {value}\uBC88\uB9C8\uB2E4 [[bleed|\uCD9C\uD608]]\uC744 \uAC74\uB2E4.",
   "rune.trait.riposte.name": "\uBC18\uACA9 \uC900\uBE44",
-  "rune.trait.riposte.desc": "\uCE58\uBA85\uD0C0\uAC00 \uD130\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. {cooldown}\uCD08\uB9C8\uB2E4 \uD55C \uBC88.",
+  "rune.trait.riposte.desc": "\uCE58\uBA85\uD0C0\uAC00 \uD130\uC9C0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uB8EC\uB9C8\uB2E4 {cooldown}\uCD08\uC5D0 \uD55C \uBC88.",
+  "rune.trait.afterglow.name": "\uC5EC\uC6B4",
+  "rune.trait.afterglow.desc": "\uAD81\uADF9\uAE30\uB97C \uC4F0\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.bulwarkCry.name": "\uBC29\uBCBD \uC804\uAC1C",
+  "rune.trait.bulwarkCry.desc": "\uAD81\uADF9\uAE30\uB97C \uC4F0\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4. \uB8EC\uB9C8\uB2E4 \uC804\uD22C\uB2F9 {times}\uBC88.",
+  "rune.trait.spoils.name": "\uC804\uB9AC\uD488 \uD68C\uC218",
+  "rune.trait.spoils.desc": "\uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB97C \uD68C\uBCF5\uD55C\uB2E4. \uB8EC\uB9C8\uB2E4 {cooldown}\uCD08\uC5D0 \uD55C \uBC88, \uC804\uD22C\uB2F9 {times}\uBC88.",
+  "rune.trait.warCry.name": "\uACE0\uBB34",
+  "rune.trait.warCry.desc": "\uC804\uD22C\uB97C \uC2DC\uC791\uD558\uBA74 {seconds}\uCD08 \uB3D9\uC548 \uC544\uAD70 \uC804\uC6D0\uC758 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.steadyBreath.name": "\uC228 \uACE0\uB974\uAE30",
+  "rune.trait.steadyBreath.desc": "\uAE30\uBCF8 \uACF5\uACA9\uC774 \uC801\uC911\uD558\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {value}%\uB97C \uD68C\uBCF5\uD55C\uB2E4. \uB8EC\uB9C8\uB2E4 {cooldown}\uCD08\uC5D0 \uD55C \uBC88, \uC804\uD22C\uB2F9 {times}\uBC88.",
+  "rune.trait.heavyBlow.name": "\uBB35\uC9C1\uD55C \uD55C \uBC29",
+  "rune.trait.heavyBlow.desc": "\uCE58\uBA85\uD0C0\uAC00 \uD130\uC9C0\uBA74 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[stagger|\uACBD\uC9C1]]\uC744 \uAC74\uB2E4. {value}\uCD08\uC5D0 \uD55C \uBC88.",
+  "rune.trait.curseSeed.name": "\uC8FC\uC220 \uC528\uC557",
+  "rune.trait.curseSeed.desc": "\uAE30\uBCF8 \uACF5\uACA9 {value}\uBC88\uB9C8\uB2E4 \uC801\uC5D0\uAC8C [[curse|\uC800\uC8FC]]\uB97C \uAC74\uB2E4.",
+  "rune.trait.rhythm.name": "\uC0BC\uBC15\uC790",
+  "rune.trait.rhythm.desc": "{n}\uBC88\uC9F8 \uAE30\uBCF8 \uACF5\uACA9\uB9C8\uB2E4 {value}%\uC758 \uCD94\uAC00 \uD53C\uD574\uB97C \uC900\uB2E4.",
+  "rune.trait.executioner.name": "\uCC98\uD615\uC790\uC758 \uB208",
+  "rune.trait.executioner.desc": "\uCCB4\uB825\uC774 {threshold}% \uC774\uD558\uC778 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.deepWound.name": "\uCE58\uBA85 \uC99D\uD3ED",
+  "rune.trait.deepWound.desc": "\uCE58\uBA85\uD0C0 \uD53C\uD574\uAC00 {value}% \uC624\uB978\uB2E4. \uD569\uACC4 \uCD5C\uB300 {cap}%.",
+  "rune.trait.overflow.name": "\uB118\uCE58\uB294 \uD798",
+  "rune.trait.overflow.desc": "\uBCF4\uD638\uB9C9\uC774 \uB0A8\uC544 \uC788\uB294 \uB3D9\uC548 \uC8FC\uB294 \uD53C\uD574\uAC00 {value}% \uC624\uB978\uB2E4.",
+  "rune.trait.warmUp.name": "\uB2EC\uC544\uC624\uB984",
+  "rune.trait.warmUp.desc": "\uC804\uD22C \uC911 {seconds}\uCD08\uAC00 \uD750\uB97C \uB54C\uB9C8\uB2E4 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {value}%\uC529 \uC624\uB978\uB2E4(\uCD5C\uB300 {stacks}\uACB9).",
+  "rune.trait.perfectAim.name": "\uC815\uC870\uC900",
+  "rune.trait.perfectAim.desc": "\uAE30\uBCF8 \uACF5\uACA9 {value}\uBC88\uB9C8\uB2E4 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uAC00 \uD130\uC9C4\uB2E4. \uC774 \uB8EC\uC774 \uD558\uB098 \uB354 \uC788\uC744 \uB54C\uB9C8\uB2E4 \uD69F\uC218\uAC00 1\uC529 \uC904\uC5B4\uB4E0\uB2E4(\uCD5C\uC18C {min}\uBC88).",
   "rune.traitAction.grant": "\uD2B9\uC131 \uBD80\uC5EC",
   "rune.traitAction.grantHigh": "\uC601\uC6C5 \uC774\uC0C1 \uD655\uC815 \uBD80\uC5EC",
   "rune.traitAction.reroll": "\uC7AC\uD574\uC11D",
@@ -1534,8 +1679,12 @@ var MISC_KO = {
   "contribution.allies": "\uC544\uAD70 \uAE30\uC5EC\uB3C4",
   // 원정 증강 선택
   "augment.pick.title": "\uC99D\uAC15 \uC120\uD0DD {round} / {total}",
-  "augment.pick.protocol": "\uC804\uD22C \uD504\uB85C\uD1A0\uCF5C",
   "augment.pick.targetNote": "\uAC1C\uC778 \uC99D\uAC15\uC740 \uC544\uB798 \uC6D0\uC815\uB300\uC5D0\uC11C \uB300\uC0C1\uC744 \uACE0\uB985\uB2C8\uB2E4",
+  "augment.pick.step.augment": "\uC99D\uAC15 \uACE0\uB974\uAE30",
+  "augment.pick.step.target": "\uB300\uC0C1 \uACE0\uB974\uAE30",
+  "augment.pick.step.party": "\uC804\uC6D0 \uC801\uC6A9",
+  "augment.pick.noteParty": "\uC6D0\uC815\uB300 \uC804\uC6D0\uC5D0\uAC8C \uC801\uC6A9\uB429\uB2C8\uB2E4",
+  "augment.pick.noteChosen": "{name}\uC5D0\uAC8C \uC801\uC6A9\uB429\uB2C8\uB2E4",
   "augment.pick.confirm": "\uC120\uD0DD \uD655\uC815",
   "augment.group.attack": "\uACF5\uACA9",
   "augment.group.spell": "\uC8FC\uBB38",
@@ -2049,7 +2198,7 @@ var SKILL_KO = {
   "skill.passive.adagioWeight": "\uC0DD\uC874 \uC911 \uC544\uAD70 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uB97C {percent}% \uB192\uC778\uB2E4. \uC544\uAD70\uC774 [[crowd-control|\uAD70\uC911\uC81C\uC5B4]]\uC5D0 \uAC78\uB9AC\uBA74 \uC989\uC2DC \uC815\uD654\uD558\uACE0 {shield} [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uBD80\uC5EC\uD55C\uB2E4.",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|\uACF5\uACA9\uB825]] {percent}%",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
-  "skill.passive.abyssalPressure": "\uB9E4\uCD08 [[ap|\uC8FC\uBB38\uB825]]\uC774 {percent}%\uC529 \uBCF5\uB9AC\uB85C \uC624\uB978\uB2E4.",
+  "skill.passive.tidalSurge": "{seconds}\uCD08\uB9C8\uB2E4 \uBC00\uBB3C\uC774 \uBAA8\uB4E0 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9BC]]\uC73C\uB85C \uB4A4\uB85C \uBBFC\uB2E4.",
   "skill.passive.gourmetHunt": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C \uD604\uC7AC \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC744 \uD45C\uC801\uC73C\uB85C \uC0BC\uACE0 \uADF8 \uC790\uB9AC\uB85C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD55C\uB2E4. \uC801\uC744 \uCC98\uCE58\uD558\uBA74 \uC989\uC2DC, \uADF8 \uBC16\uC5D0\uB294 {cooldown}\uCD08\uB9C8\uB2E4 \uB2E4\uC2DC \uACE0\uB978\uB2E4. \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C \uC785\uC73C\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. \uC804\uD22C\uB2F9 \uCD5C\uB300 {triggers}\uBC88 \uBC1C\uB3D9\uD55C\uB2E4.",
   "skill.passive.cursedInsight": "[[curse|\uC800\uC8FC]]\uC5D0 \uAC78\uB9B0 \uC801\uC5D0\uAC8C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC744 \uC9C1\uC811 \uC801\uC911\uC2DC\uD0AC \uB54C\uB9C8\uB2E4 \uC774\uBC88 \uC804\uD22C \uB3D9\uC548 [[ap|\uC8FC\uBB38\uB825]]\uC774 {value}% \uC99D\uAC00\uD55C\uB2E4. \uCD5C\uB300 {stacks}\uD68C\uAE4C\uC9C0 \uC313\uC774\uBA70, [[transfer|\uC804\uC774]]\uB41C \uD0C0\uACA9\uC73C\uB85C\uB294 \uBC1C\uB3D9\uD558\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.passive.frenzyDrain": "[[frenzy|\uAD11\uB780]]\uC5D0 \uAC78\uB9B0 \uC801\uC774 \uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
@@ -2061,7 +2210,7 @@ var SKILL_KO = {
   "skill.passive.lowHpStealth": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.lowHpStealth.focus": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 [[focus|\uC9D1\uC911]]\uC744 \uBAA8\uB450 \uC783\uB294 \uB300\uC2E0 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.openingVanish": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]] \uC0C1\uD0DC\uB85C \uC9C4\uC785\uD55C\uB2E4.",
-  "skill.passive.featherVeil": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
+  "skill.passive.featherVeil": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. \uC801\uC744 \uCC98\uCE58\uD558\uBA74 {killSeconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {killPercent}% \uC624\uB978\uB2E4.",
   "skill.passive.openingStealth": "\uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uB54C {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.passive.undyingTalisman": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uC4F0\uB7EC\uC9C8 \uD53C\uD574\uB97C \uBC1B\uC73C\uBA74 \uC8FD\uC9C0 \uC54A\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[invulnerable|\uBB34\uC801]]\uC774 \uB418\uB294 \uB300\uC2E0 \uC544\uBB34 \uD589\uB3D9\uB3C4 \uD558\uC9C0 \uBABB\uD55C\uB2E4. \uADF8\uB3D9\uC548 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uB9E4\uCD08 \uB098\uB204\uC5B4 \uD68C\uBCF5\uD55C\uB2E4.{blast}",
   "skill.passive.undyingTalisman.blast": " \uC774\uB54C \uC8FC\uC704 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]].",
@@ -2195,19 +2344,13 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.rescueShield": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uC544\uAD70\uC758 \uCCB4\uB825\uC774 {hp}% \uC774\uD558\uB85C \uB0B4\uB824\uAC00\uBA74 \uADF8 \uC544\uAD70\uC774 \uC8FC\uBB38\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.staccatoChain": "\uAC19\uC740 \uC801\uC744 \uC5F0\uC18D\uC73C\uB85C \uB9DE\uD788\uBA74 \u300C{name}\u300D\uC758 [[stagger|\uACBD\uC9C1]]\uC774 \uD55C \uBC88\uB9C8\uB2E4 {seconds}\uCD08\uC529 \uAE38\uC5B4\uC9C4\uB2E4. \uCD5C\uB300 {max}\uBC88\uC9F8\uAE4C\uC9C0\uC774\uACE0 \uB2E4\uB978 \uC801\uC73C\uB85C \uC62E\uAE30\uBA74 \uCC98\uC74C\uBD80\uD130\uB2E4.",
   "skill.breakthrough.effect.ultimate.lightChorus": "\u300C{name}\u300D\uC758 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {cost} \uC904\uACE0, \uCCB4\uB825\uC774 \uAC00\uB4DD \uCC28 \uD68C\uBCF5\uD560 \uBAAB\uC774 \uC5C6\uB294 \uC544\uAD70\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uC5D0 \uD574\uB2F9\uD558\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
-  "skill.breakthrough.effect.ferocity.crescendoRamp": "[[ferocity|\uD3ED\uC8FC]] \uB3D9\uC548 \uCD94\uAC00\uD0C0\uC758 \uC704\uB825\uC774 \uCE60 \uB54C\uB9C8\uB2E4 {percent}%\uC529 \uCEE4\uC9C4\uB2E4. \uCD5C\uB300 {max}%\uAE4C\uC9C0\uC774\uACE0 \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uCC98\uC74C\uC73C\uB85C \uB3CC\uC544\uAC04\uB2E4.",
-  "skill.breakthrough.effect.passive.adagioSlam": "\uBA54\uD14C\uAC00 \uB458\uB7EC \uC900 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uBAA8\uB450 \uAE68\uC9C0\uB294 \uC21C\uAC04 \uADF8 \uC790\uB9AC \uC8FC\uC704\uC758 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {power}%\uC778 \uB9C8\uBC95 \uD53C\uD574\uB97C \uC8FC\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4. {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uC774\uB2E4.",
   "skill.breakthrough.effect.basic.farPing": "\u300C{name}\u300D{name!\uC774} \uC6D0\uAC70\uB9AC\uAE4C\uC9C0 \uB2FF\uACE0, [[duo|\uB4C0\uC624]]\uC640 \uBA40\uB9AC \uB5A8\uC5B4\uC9C4 \uCC44\uB85C\uB3C4 \uC9C0\uC6D0\uC744 \uC774\uC5B4 \uAC04\uB2E4.",
   "skill.breakthrough.effect.ultimate.orderStrike": "\uC624\uB354\uAC00 \uAC78\uB9B0 \uB3D9\uC548 [[duo|\uB4C0\uC624]]\uAC00 \uCC98\uC74C \uB54C\uB9AC\uB294 \uC801\uB9C8\uB2E4 [[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]\uC774 \uC989\uC2DC \uCC0D\uD600 \uD130\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ferocity.pingStorm": "[[ferocity|\uD3ED\uC8FC]] \uB3D9\uC548 \u300C{name}\u300D{name!\uC774} \uC138 \uBC88\uC9F8\uB9C8\uB2E4\uAC00 \uC544\uB2C8\uB77C \uB9E4\uBC88 [[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]\uC744 \uCC0D\uB294\uB2E4.",
-  "skill.breakthrough.effect.passive.relink": "[[duo|\uB4C0\uC624]]\uAC00 \uC4F0\uB7EC\uC9C0\uBA74 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC544\uAD70\uACFC \uC0C8 \uB4C0\uC624\uB97C \uB9FA\uB294\uB2E4. \uC804\uD22C\uB2F9 \uD55C \uBC88\uC774\uB2E4.",
   "skill.breakthrough.effect.basic.leapPuddle": "\uB3C4\uC57D\uC774 \uAF42\uD78C \uC801\uC758 \uBC1C\uBC11\uC5D0\uB3C4 [[shallows|\uC5EC\uC6B8]]\uC774 \uD558\uB098 \uB354 \uAE54\uB9B0\uB2E4.",
   "skill.breakthrough.effect.basic.arrowEcho": "\u300C{name}\u300D{name!\uC774} {seconds}\uCD08 \uB4A4 \uD55C \uBC88 \uB354 \uB0A0\uC544\uAC04\uB2E4. \uC704\uB825\uC740 {percent}%\uB2E4.",
   "skill.breakthrough.effect.ultimate.tidalEcho": "\uD130\uC9C4 [[shallows|\uC5EC\uC6B8]]\uC774 {seconds}\uCD08 \uB4A4 \uD55C \uBC88 \uB354 \uD130\uC9C4\uB2E4. \uC704\uB825\uC740 {percent}%\uC774\uACE0 \uAE30\uC808\uC740 \uAC78\uC9C0 \uC54A\uB294\uB2E4.",
-  "skill.breakthrough.effect.ferocity.ambushCrit": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC120 \uB4A4 \uCCAB \uC77C\uBC18 \uACF5\uACA9\uC774 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4.",
   "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|\uC9D1\uC911]]\uC774 \uAC00\uB4DD \uCC28 \uC788\uB294 \uB3D9\uC548 \u300C{name}\u300D{name!\uC774} \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4.",
-  "skill.breakthrough.effect.passive.huntChain": "[[shallows|\uC5EC\uC6B8]]\uC5D0 \uC7A0\uAE34 \uC801\uC744 \uCC98\uCE58\uD558\uBA74 \uACE7\uBC14\uB85C \uB2E4\uC74C \uC5EC\uC6B8\uB85C \uB3C4\uC57D\uD55C\uB2E4.",
   "skill.clause.stunLockout": "\uAC19\uC740 \uC801\uC740 \uD55C \uBC88 \uAE30\uC808\uD55C \uB4A4 {seconds}\uCD08 \uB3D9\uC548 \uC774 \uAE30\uC808\uC744 \uB2E4\uC2DC \uBC1B\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.forestSight": "\uD6A8\uACFC \uB3D9\uC548 \uC77C\uBC18 \uACF5\uACA9\uC774 {hits}\uBC88 \uC801\uC911\uD558\uACE0, \uD6A8\uACFC\uAC00 {seconds}\uCD08 \uB354 \uC774\uC5B4\uC9C4\uB2E4.",
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
@@ -2248,9 +2391,7 @@ var SKILL_KO = {
   "skill.keyword.shield.fromStat": "\uD604\uC7AC {stat}\uC5D0\uC11C {percent}%\uB97C \uBC1B\uC544 \uACC4\uC0B0\uD55C \uBCF4\uD638\uB9C9 \uC218\uCE58\uB2E4.",
   "skill.ferocity.caffeineBubble": "\uD3ED\uC8FC\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 \uB113\uC740 \uBC94\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4. \uD3ED\uC8FC \uC911\uC5D0\uB294 [[kento-prickle|\uAE4C\uCE60]]\uC774 \uD55C \uBC88\uC5D0 {multiplier}\uBC30\uB85C \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.basic.focusFire": "\uAC19\uC740 \uC801\uC744 \uC5F0\uC18D\uC73C\uB85C \uB9DE\uD788\uBA74 \u300C{name}\u300D\uC758 \uD53C\uD574\uAC00 \uD55C \uBC88\uB9C8\uB2E4 {percent}%\uC529 \uCEE4\uC9C4\uB2E4. \uCD5C\uB300 {max}%\uAE4C\uC9C0\uC774\uACE0 \uB2E4\uB978 \uC801\uC73C\uB85C \uC62E\uAE30\uBA74 \uCC98\uC74C\uBD80\uD130\uB2E4.",
-  "skill.breakthrough.effect.basic.lastDropSplash": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C\uB3C4 \uADF8 \uD53C\uD574\uC758 {percent}%\uAC00 \uBC88\uC9C4\uB2E4.",
   "skill.breakthrough.effect.ultimate.richBlend": "\u300C{name}\u300D\uC73C\uB85C \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uC900 \uD53C\uD574\uC758 {percent}%\uB85C \uB298\uACE0, \uD569\uACC4 \uD55C\uB3C4\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uB85C \uC624\uB978\uB2E4.",
-  "skill.breakthrough.effect.ferocity.quickReload": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC7A5\uC804 \uC2DC\uAC04\uC774 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
   "skill.breakthrough.effect.passive.reloadSip": "\uC7A5\uC804\uC744 \uC2DC\uC791\uD560 \uB54C \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. \uC774 \uBCF4\uD638\uB9C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0\uB9CC \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ultimate.shrapnel": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C\uB3C4 \uD30C\uD3B8\uC774 \uD280\uC5B4 {percent}%\uC758 \uD53C\uD574\uB97C \uC900\uB2E4.",
   "skill.breakthrough.effect.ferocity.ankleShot": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
@@ -2273,15 +2414,11 @@ var SKILL_KO = {
   "skill.ferocity.marchOfAnts": "\uD3ED\uC8FC \uC911 [[worker-march|\uD589\uB82C]]\uC758 \uBC18\uACBD\uC774 {radius} \uB298\uACE0 {allies}\uBA85 \uB354 \uC13C\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.scoldTaunt": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ultimate.bulwarkPayback": "\u300C{name}\u300D\uC774 \uB05D\uB098\uB294 \uC21C\uAC04 \uADF8\uB3D9\uC548 \uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uC758 {percent}%\uB97C \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uB3CC\uB824\uC900\uB2E4. \uC801 \uD55C \uBA85\uC774 \uBC1B\uB294 \uD53C\uD574\uB294 \uC790\uC2E0\uC758 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4.",
-  "skill.breakthrough.effect.ferocity.heatOverflow": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[nodonia-elation|\uD76C\uC5F4]]\uC774 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC778\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 {base}\uACB9\uC73C\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
-  "skill.breakthrough.effect.passive.sweeterWound": "[[nodonia-elation|\uD76C\uC5F4]] \uD55C \uACB9\uC774 \uB3CC\uB9AC\uB294 \uB9E4\uCD08 \uD68C\uBCF5\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {from}%\uC5D0\uC11C {to}%\uB85C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.basic.clawBleed": "\u300C{name}\u300D{name!\uC774} \uC8FC\uAE30 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC744 \uB0A8\uAE34\uB2E4.",
-  "skill.breakthrough.effect.basic.windStep": "\u300C{name}\u300D{name!\uC774} \uB098\uB220 \uC900 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C \uBC1B\uC740 \uC544\uAD70\uC740 {seconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4. \uC774\uBBF8 [[tailwind|\uC21C\uD48D]]\uC774 \uAC78\uB9B0 \uC544\uAD70\uC740 \uC81C\uC678\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.windStep": "\u300C{name}\u300D{name!\uC774} \uB098\uB220 \uC900 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C \uBC1B\uC740 \uC544\uAD70\uC740 {seconds}\uCD08 \uB3D9\uC548 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4. \uC774\uBBF8 [[tailwind|\uC21C\uD48D]]\uC774 \uAC78\uB9B0 \uC544\uAD70\uC740 \uC81C\uC678\uD55C\uB2E4.",
   "skill.breakthrough.effect.ultimate.afterimageSlash": "\u300C{name}\u300D{name!\uC774} \uC801\uC911\uD558\uACE0 {seconds}\uCD08 \uB4A4 \uC794\uC0C1\uC774 \uAC19\uC740 \uC801\uC744 \uD55C \uBC88 \uB354 \uBCA4\uB2E4. \uC704\uB825\uC740 {percent}%\uC774\uACE0 \uC801\uC774 \uC774\uBBF8 \uC4F0\uB7EC\uC84C\uC73C\uBA74 \uBCA0\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.gustEnergy": "\u300C{name}\u300D{name!\uC744} \uC4F0\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ferocity.frenzyClaws": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 \uCE58\uBA85\uD0C0 \uC8FC\uAE30\uAC00 {from}\uBC88\uC9F8 \uACF5\uACA9\uC5D0\uC11C {to}\uBC88\uC9F8 \uACF5\uACA9\uB9C8\uB2E4\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ferocity.windPull": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC77C\uBC18 \uACF5\uACA9\uC774 \uB098\uB220 \uC8FC\uB294 \uAC8C\uC774\uC9C0\uC5D0 \uB354\uD574, \uAC8C\uC774\uC9C0\uAC00 \uAC00\uC7A5 \uB0AE\uC740 \uC544\uAD70 \uD55C \uBA85\uC774 {energy}\uB97C \uB354 \uBC1B\uB294\uB2E4.",
   "skill.breakthrough.effect.passive.huntMark": "\uB2E4\uB978 \uC544\uAD70\uC774 \uD568\uAED8 \uB178\uB9AC\uB294 \uC801\uC5D0\uAC8C\uB294 \uCE58\uBA85\uD0C0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.windEcho": "\u300C{name}\u300D{name!\uC774} \uBC1C\uB3D9\uD574 [[stealth|\uC740\uC2E0]]\uC5D0 \uB4E4\uC5B4\uAC00\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uAC00 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.basic.pressureConduct": "[[pressure|\uC218\uC555]]\uC774 \uC0C1\uD55C\uC5D0\uC11C \uD130\uC9C8 \uB54C \uD130\uC9C4 \uC801\uC5D0\uAC8C\uC11C \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uB2E4\uB978 \uC801\uC5D0\uAC8C {stacks}\uACB9\uC774 \uC62E\uACA8 \uAC04\uB2E4. \uC62E\uACA8 \uAC04 \uACB9\uC740 \uC0C1\uD55C \uC544\uB798\uC5D0\uC11C \uBA48\uCDB0 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uB610 \uD130\uC9C0\uC9C0 \uC54A\uB294\uB2E4.",
@@ -2296,21 +2433,14 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.salvageShare": "\u300C{name}\u300D\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uC624\uB97C \uB54C \uBCF4\uD638\uB9C9\uC774 \uAC00\uC7A5 \uC587\uC740 \uC544\uAD70 \uD55C \uBA85\uC5D0\uAC8C\uB3C4 \uAC19\uC740 \uB9C9\uC758 {percent}%\uAC00 \uAC04\uB2E4.",
   "skill.breakthrough.effect.passive.thornStorm": "[[kento-prickle|\uAE4C\uCE60]]\uC774 {min}\uACB9 \uC774\uC0C1\uC77C \uB54C \uBC18\uACA9\uC774 \uB54C\uB9B0 \uC801 \uACC1\uC758 \uB2E4\uB978 \uC801 \uD55C \uBA85\uC5D0\uAC8C\uB3C4 {percent}%\uC758 \uBAAB\uC73C\uB85C \uD284\uB2E4.",
   "skill.breakthrough.effect.passive.softBreath": "\u300C{name}\u300D\uC758 \uD68C\uBCF5\uC774 \uBC94\uC704 \uC548\uC5D0\uC11C [[sleep|\uC218\uBA74]] \uC911\uC778 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {percent}% \uB298\uC5B4\uB09C\uB2E4(\uCD5C\uB300 {max}\uBA85).",
-  "skill.breakthrough.effect.basic.helmetBash": "[[shield|\uBCF4\uD638\uB9C9]]\uC774 \uB0A8\uC544 \uC788\uB294 \uB3D9\uC548 \u300C{name}\u300D{name!\uC774} \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uB97C \uD55C \uBC88 \uB354 \uC900\uB2E4. \uBCF4\uD638\uB9C9\uC740 \uC904\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.breakthrough.effect.basic.helmetBash": "\uC77C\uBC18 \uACF5\uACA9\uC744 {every}\uBC88 \uC801\uC911\uC2DC\uD0AC \uB54C\uB9C8\uB2E4 \uD5EC\uBA67\uC73C\uB85C \uB4E4\uC774\uBC1B\uC544 \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uB97C \uD55C \uBC88 \uB354 \uC8FC\uACE0 [[concussion|\uB1CC\uC9C4\uD0D5]]\uC744 \uAC74\uB2E4.",
   "skill.breakthrough.effect.basic.underline": "[[curse|\uC800\uC8FC]]\uAC00 \uCD5C\uB300\uC778 \uC801\uC744 \uC9C1\uC811 \uC801\uC911\uD558\uBA74 \u300C{name}\u300D\uC758 \uC99D\uAC00\uB7C9\uC774 \uD55C \uBC88\uC5D0 {stacks}\uACB9\uC529 \uC313\uC778\uB2E4.",
-  "skill.breakthrough.effect.basic.sodaFizz": "[[frozen|\uBE59\uACB0]] \uC911\uC778 \uC801\uC744 \uB54C\uB9AC\uBA74 \uADF8 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ultimate.dashBack": "\u300C{name}\u300D\uC758 \uB3CC\uC9C4\uC774 \uB05D\uB098\uACE0 {seconds}\uCD08 \uB4A4, \uCD9C\uBC1C\uC810\uC73C\uB85C \uD55C \uBC88 \uB354 \uB6AB\uACE0 \uB3CC\uC544\uC628\uB2E4. \uC704\uB825\uC740 {percent}%\uC774\uACE0 [[concussion|\uB1CC\uC9C4\uD0D5]]\uB9CC \uAC74\uB2E4.",
-  "skill.breakthrough.effect.ultimate.contagiousFrenzy": "[[frenzy|\uAD11\uB780]]\uC5D0 \uAC78\uB9B0 \uC801\uC774 \uAC19\uC740 \uD3B8\uC744 \uB54C\uB9B4 \uB54C\uB9C8\uB2E4 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[curse|\uC800\uC8FC]]\uAC00 {stacks}\uACB9 \uAC78\uB9B0\uB2E4.",
   "skill.breakthrough.effect.ultimate.coolingVent": "\u300C{name}\u300D\uC774 \uC774\uC5B4\uC9C0\uB294 \uB3D9\uC548 \uB9E4 \uD2F1 [[frozen|\uBE59\uACB0]] \uC911\uC778 \uC801 \uD55C \uBA85\uB9C8\uB2E4 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uD68C\uBCF5\uD55C\uB2E4(\uCD5C\uB300 {max}\uBA85).",
-  "skill.breakthrough.effect.ferocity.chainCollision": "[[ferocity|\uD3ED\uC8FC]]\uB85C \uD295\uACA8 \uB098\uAC04 \uC801\uC774 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uBD80\uB52A\uD788\uBA74 \uBD80\uB52A\uD78C \uC801\uC5D0\uAC8C [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uAC78\uB9B0\uB2E4. \uD55C \uBC88 \uD295\uAE38 \uB54C \uD55C \uC801\uC529\uC774\uB2E4.",
-  "skill.breakthrough.effect.ferocity.finalChapter": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[frenzy|\uAD11\uB780]]\uC5D0 \uAC78\uB9B0 \uC801\uC774 \uC4F0\uB7EC\uC9C0\uBA74 \uADF8 \uC790\uB9AC \uC8FC\uBCC0\uC758 \uC801\uC5D0\uAC8C [[curse|\uC800\uC8FC]]\uAC00 {stacks}\uACB9 \uBC88\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.ferocity.frostCling": "[[ferocity|\uD3ED\uC8FC]] \uC911 [[shield|\uBCF4\uD638\uB9C9]]\uC774 \uB0A8\uC544 \uC788\uB294 \uB3D9\uC548 \uC790\uC2E0\uC744 \uB54C\uB9B0 \uC801\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.passive.impactCapTighten": "\u300C{name}\u300D\uC758 \uD55C \uBC29 \uC0C1\uD55C\uC774 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB85C \uB0AE\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.passive.extraChapter": "\u300C{name}\u300D\uC758 \uC99D\uAC00\uB7C9\uC774 \uAC00\uB4DD \uCC28\uBA74 [[curse|\uC800\uC8FC]]\uC758 \uC0C1\uD55C\uC774 {stacks}\uACB9 \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.iceShatter": "[[frozen|\uBE59\uACB0]]\uC774 \uD480\uB9AC\uB294 \uC21C\uAC04 \uADF8 \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {percent}%\uB9CC\uD07C [[physical-damage|\uBB3C\uB9AC \uD53C\uD574]]\uAC00 \uD55C \uBC88 \uD130\uC9C4\uB2E4.",
-  "skill.breakthrough.effect.basic.dreadAegis": "\u300C{name}\u300D{name!\uC774} \uC774\uBBF8 [[intimidation|\uC704\uC555]]\uC774 \uAC78\uB824 \uC788\uB358 \uC801\uC744 \uB9DE\uD788\uBA74 \uC790\uAE30 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
   "skill.breakthrough.effect.ultimate.quarryMark": "\u300C{name}\u300D{name!\uC774} \uC2E4\uC81C\uB85C [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uB728\uB9B0 \uC801\uC740 {seconds}\uCD08 \uB3D9\uC548 \uBC1B\uB294 \uBAA8\uB4E0 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uACF5\uD3EC\uAC00 \uD480\uB824\uB3C4 \uD45C\uC2DD\uC740 \uB0A8\uB294\uB2E4.",
-  "skill.breakthrough.effect.ferocity.spreadingDread": "[[ferocity|\uD3ED\uC8FC]] \uC911 \uC801\uC774 [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uC9C0\uB294 \uC21C\uAC04, \uADF8 \uC8FC\uBCC0\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC774 {stacks}\uACB9 \uBC88\uC9C4\uB2E4.",
   "skill.breakthrough.effect.passive.terrorCarapace": "\uC790\uC2E0\uC774 [[intimidation|\uC704\uC555]]\uC744 \uAC74 \uC801 \uD55C \uBA85\uB2F9 [[def|\uBC29\uC5B4\uB825]]\uACFC [[res|\uC800\uD56D\uB825]]\uC774 {percent}% \uC624\uB978\uB2E4(\uCD5C\uB300 {max}%).",
   "skill.breakthrough.effect.basic.wetMark": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uBD99\uC5B4 \uC788\uB294 \uB3D9\uC548 \uADF8 \uC801\uC774 \uBC1B\uB294 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.basic.paintSpill": "[[overpaint|\uB367\uCE60]]\uC774 \uCD5C\uB300 \uACB9\uC778 \uC801\uC744 \uB54C\uB9AC\uBA74 \uADF8 \uADFC\uCC98\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[overpaint|\uB367\uCE60]]\uC774 {stacks}\uACB9 \uBC88\uC9C4\uB2E4.",
@@ -2327,7 +2457,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.basic.freshSight": "\uCD5C\uADFC {seconds}\uCD08 \uC548\uC5D0 [[observation|\uAD00\uCE21]]\uC774 \uC0C8\uB85C \uC313\uC778 \uC801\uC744 \uB9DE\uD788\uBA74 \uACB9\uB2F9 \uD53C\uD574\uAC00 \uACF5\uACA9\uB825\uC758 {percent}%\uB85C \uC624\uB978\uB2E4.",
   "skill.breakthrough.effect.basic.speedGraffiti": "\u300C{name}\u300D\uC774 \uC801\uC911\uD558\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB974\uACE0, \uC704\uB825\uC774 \uC774\uB3D9 \uC18D\uB3C4 1\uC810\uB9C8\uB2E4 {power}%\uB9CC\uD07C \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.basic.bleedSettle": "[[butcher|\uC190\uC9C8]]\uC774 \uD130\uC9C8 \uB54C \uB300\uC0C1\uC5D0\uAC8C \uB0A8\uC740 [[bleed|\uCD9C\uD608]] \uD53C\uD574\uB97C \uC989\uC2DC \uBAB0\uC544\uC11C \uC785\uD788\uACE0 \uCD9C\uD608\uC744 \uC9C0\uC6B4\uB2E4.",
-  "skill.breakthrough.effect.ultimate.splashCharge": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uD130\uC9C8 \uB54C\uB9C8\uB2E4 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.splashCharge": "[[shimmer|\uBC18\uC9DD!]]\uC774 \uD130\uC9C8 \uB54C\uB9C8\uB2E4 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uB97C {energy} \uC5BB\uACE0, \uAC8C\uC774\uC9C0\uAC00 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70 \uD55C \uBA85\uB3C4 {ally}\uB97C \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.splashPaint": "\u300C{name}\u300D{name!\uC774} \uD130\uB728\uB9B0 [[overpaint|\uB367\uCE60]] \uACB9\uC758 {percent}%\uAC00 \uC8FC\uBCC0 \uC801\uC5D0\uAC8C [[overpaint|\uB367\uCE60]]\uB85C \uB0A8\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.extraCard": "\u300C{name}\u300D\uC758 \uAC15\uD654\uB41C \uAE30\uBCF8 \uACF5\uACA9 \uC9C1\uD6C4, \uAC19\uC740 \uD655\uC815 \uCE58\uBA85\uD0C0\xB7\uBC29\uC5B4 \uBB34\uC2DC\uB97C \uC9C0\uB2CC \uCE74\uB4DC\uAC00 \uC704\uB825 {percent}%\uB85C \uD55C \uC7A5 \uB354 \uB098\uAC04\uB2E4.",
   "skill.breakthrough.effect.ultimate.pupRush": "\u300C{name}\u300D{name!\uC744} \uC4F0\uBA74 \uC0C8\uB07C \uB291\uB300 {count}\uB9C8\uB9AC\uAC00 \uB098\uC640 \uD568\uAED8 \uB36E\uCE5C\uB2E4.",
@@ -2403,7 +2533,27 @@ var SKILL_KO = {
   "skill.breakthrough.effect.passive.pressureCrack": "{seconds}\uCD08\uB9C8\uB2E4 \uAC00\uC7A5 \uBA3C \uC801 \uD55C \uBA85\uC5D0\uAC8C [[ap|\uC8FC\uBB38\uB825]]\uC758 {percent}%\uB9CC\uD07C [[magical-damage|\uB9C8\uBC95 \uD53C\uD574]]\uB97C \uC900\uB2E4.",
   "skill.breakthrough.effect.passive.scarMight": "[[scar|\uD749\uD130]] \uD55C \uACB9\uB9C8\uB2E4 \uC8FC\uB294 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
   "skill.breakthrough.effect.passive.warmBody": "\u300C{name}\u300D{name!\uC774} \uC313\uC740 \uC801\uC911 \uD55C \uBC88\uB9C8\uB2E4 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4. \uCD5C\uB300 {max}\uBC88\uAE4C\uC9C0 \uC13C\uB2E4.",
-  "skill.breakthrough.effect.passive.pinningPlume": "\uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD55C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD45C\uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC801\uC5D0\uAC8C\uB294 {lock}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4."
+  "skill.breakthrough.effect.passive.pinningPlume": "\uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD55C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD45C\uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4. \uAC19\uC740 \uC801\uC5D0\uAC8C\uB294 {lock}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.feverGale": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC0B4\uC544 \uC788\uB294 \uC544\uAD70 \uBAA8\uB450\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 [[tailwind|\uC21C\uD48D]]\uC744 \uAC74\uB2E4. \uC774\uBBF8 \uB354 \uAE34 [[tailwind|\uC21C\uD48D]]\uC774 \uAC78\uB9B0 \uC544\uAD70\uC740 \uC81C\uC678\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.frenzyLeap": "[[ferocity|\uD3ED\uC8FC]] \uB3D9\uC548 [[shallows|\uC5EC\uC6B8]] \uB3C4\uC57D \uC8FC\uAE30\uAC00 \uAE30\uBCF8 \uACF5\uACA9 {hits}\uD68C\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.breakthrough.effect.passive.leapVeil": "[[shallows|\uC5EC\uC6B8]]\uB85C \uB3C4\uC57D\uD574 \uB0B4\uB824\uC11C\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. (\uC7AC\uC0AC\uC6A9 {cooldown}\uCD08)",
+  "skill.breakthrough.effect.ferocity.overture": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {power}%\uC778 \uB9C8\uBC95 \uD53C\uD574\uB97C \uC8FC\uACE0 [[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4.",
+  "skill.breakthrough.effect.ferocity.pingBurst": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 [[duo|\uB4C0\uC624]]\uAC00 \uB178\uB9AC\uB294 \uC801 \uC8FC\uBCC0\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C \u300C{name}\u300D\uC758 [[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]\uC774 \uD55C\uAEBC\uBC88\uC5D0 \uCC0D\uD78C\uB2E4.",
+  "skill.breakthrough.effect.passive.resonantShield": "\uBA54\uD14C\uAC00 \uB458\uB7EC \uC900 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uAC00\uC9C4 \uC544\uAD70\uC774 \uC77C\uBC18 \uACF5\uACA9\uC744 \uB9DE\uD788\uBA74 \uB9DE\uD78C \uC801 \uC8FC\uC704\uC5D0 \uACF5\uACA9\uB825\uC758 {power}%\uC778 \uB9C8\uBC95 \uD53C\uD574\uAC00 \uD37C\uC9C4\uB2E4. \uC544\uAD70\uB9C8\uB2E4 {cooldown}\uCD08\uC5D0 \uD55C \uBC88\uC774\uB2E4.",
+  "skill.breakthrough.effect.passive.twinDuo": "\uC804\uD22C\uAC00 \uC2DC\uC791\uB418\uBA74 [[duo|\uB4C0\uC624]]\uB97C \uB458 \uB9FA\uB294\uB2E4. \uB458\uC9F8 \uB4C0\uC624\uB3C4 [[weakpoint|\uC57D\uC810 \uD3EC\uCC29]]\uC744 \uD130\uB728\uB9AC\uACE0 \uD551\uC758 \uCDA9\uC804\uC744 \uD568\uAED8 \uBC1B\uB294\uB2E4.",
+  "skill.breakthrough.effect.basic.sodaPop": "\uC77C\uBC18 \uACF5\uACA9\uC744 {every}\uBC88 \uD560 \uB54C\uB9C8\uB2E4 \uBCD1\uB69C\uAED1\uC774 \uD130\uC838 \uB9DE\uD78C \uC801 \uC8FC\uC704\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.ultimate.afterglow": "[[curse|\uC800\uC8FC]]\uC5D0 \uAC78\uB9B0 \uC801\uC774 \uC4F0\uB7EC\uC9C0\uBA74 \uADF8 \uC801\uC774 \uC9C0\uACE0 \uC788\uB358 \uC800\uC8FC \uACB9(\uCD5C\uB300 {max}\uACB9)\uC774 \uC8FC\uBCC0\uC758 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uC774\uC5B4\uC9C4\uB2E4.",
+  "skill.breakthrough.effect.ultimate.heatBurst": "\u300C{name}\u300D \uC911 \uB300\uC2E0 \uBC1B\uC740 \uD53C\uD574\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 {threshold}%\uB9CC\uD07C \uC313\uC77C \uB54C\uB9C8\uB2E4 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C \uCD5C\uB300 \uCCB4\uB825\uC758 {pulse}%\uB9CC\uD07C [[fixed-damage|\uACE0\uC815 \uD53C\uD574]] \uD30C\uB3D9\uC774 \uD130\uC9C4\uB2E4. \uD55C \uBC88\uC5D0 \uCD5C\uB300 {max}\uBC88\uAE4C\uC9C0 \uD130\uC9C4\uB2E4.",
+  "skill.breakthrough.effect.ferocity.readersGather": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[curse|\uC800\uC8FC]]\uAC00 {stacks}\uACB9 \uAC78\uB9B0\uB2E4.",
+  "skill.breakthrough.effect.ferocity.coldSnap": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.ferocity.emberRush": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 [[nodonia-elation|\uD76C\uC5F4]]\uC774 \uC989\uC2DC {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.passive.sweetShare": "[[nodonia-elation|\uD76C\uC5F4]]\uC774 \uCD5C\uB300\uB85C \uC313\uC5EC \uC788\uB294 \uB3D9\uC548, \uB9E4\uCD08 \uB3CC\uB9AC\uB294 \uC7AC\uC0DD\uB7C9\uC758 {percent}%\uB97C \uB2E4\uB978 \uC544\uAD70 \uC804\uC6D0\uB3C4 \uBC1B\uB294\uB2E4.",
+  "skill.breakthrough.effect.basic.preyScale": "\u300C{name}\u300D{name!\uC774} \uC774\uBBF8 [[intimidation|\uC704\uC555]]\uC774 \uAC78\uB824 \uC788\uB358 \uC801\uC744 \uB9DE\uD788\uBA74, \uC9C0\uAE08 \uC704\uC555\uC5D0 \uAC78\uB824 \uC788\uB294 \uC801 \uD55C \uBA85\uB2F9 \uC790\uAE30 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%(\uCD5C\uB300 {max}\uBA85)\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uB450\uB978\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
+  "skill.breakthrough.effect.basic.bitterTaste": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC758 \uBC29\uC5B4\uB825\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4. {seconds}\uCD08 \uB3D9\uC548 \uC720\uC9C0\uB418\uBA70 \uCD5C\uB300 {max}\uACB9\uAE4C\uC9C0 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.ferocity.roarEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC774 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.ferocity.chainEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uD55C\uAEBC\uBC88\uC5D0 \uD295\uACA8 \uB0B8\uB2E4. \uB0A0\uC544\uAC00\uB2E4 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uBD80\uB52A\uD788\uBA74 \uBD80\uB52A\uD78C \uC801\uC5D0\uAC8C [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uAC78\uB9B0\uB2E4. \uD55C \uBC88 \uD295\uAE38 \uB54C \uD55C \uC801\uC529\uC774\uB2E4.",
+  "skill.breakthrough.effect.ferocity.doubleMag": "[[ferocity|\uD3ED\uC8FC]]\uB85C \uCC44\uC6B4 \uD0C4\uCC3D\uC774 \uBE44\uBA74 \uC26C\uC9C0 \uC54A\uACE0 \uD55C \uBC88 \uB354 \uAC00\uB4DD \uCC44\uC6CC \uBAA8\uB4E0 \uBC1C\uC774 \u300C\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8\u300D\uC774 \uB41C\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.bloodTaste": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC774 \uAC78\uB9AC\uACE0 [[butcher|\uC190\uC9C8]]\uC774 \uD55C \uACB9 \uC313\uC778\uB2E4."
 };
 
 // src/i18n/ko/system.ts
@@ -3030,6 +3180,54 @@ init_define_import_meta_env();
 // src/core/skirmish.ts
 init_define_import_meta_env();
 
+// src/core/expeditionCcPolicy.ts
+init_define_import_meta_env();
+var EXPEDITION_CC_POLICY = { maxSeconds: 0.6, recoverySeconds: 2.4 };
+var EXPEDITION_CONTROL_TAGS = /* @__PURE__ */ new Set([
+  "stun",
+  "stagger",
+  "frenzy",
+  "knockback",
+  "fear",
+  "pressure",
+  "drowsy",
+  "intimidate",
+  "chill",
+  "taunt"
+]);
+function controlRemaining(target) {
+  return Math.max(
+    0,
+    target.taunted?.remaining ?? 0,
+    target.stunnedFor,
+    target.staggeredFor,
+    target.frozen?.remaining ?? 0,
+    target.fear?.remaining ?? 0,
+    target.frenzy?.remaining ?? 0,
+    target.knockback?.remaining ?? 0
+  );
+}
+function capExpeditionControl(status, potency) {
+  const cap = EXPEDITION_CC_POLICY.maxSeconds;
+  const scaledCap = cap / Math.max(1e-6, potency);
+  if (status.kind === "stun" || status.kind === "stagger" || status.kind === "frenzy" || status.kind === "taunt") return { ...status, seconds: Math.min(status.seconds, scaledCap) };
+  if (status.kind === "fear" || status.kind === "knockback") return { ...status, seconds: Math.min(status.seconds, cap) };
+  if (status.kind === "pressure") return { ...status, stunSeconds: Math.min(status.stunSeconds, cap) };
+  if (status.kind === "drowsy") return { ...status, sleepSeconds: Math.min(status.sleepSeconds, scaledCap) };
+  if (status.kind === "intimidate") return { ...status, fearSeconds: Math.min(status.fearSeconds, cap) };
+  return status;
+}
+function expeditionControlCooldown(payload) {
+  if (payload.kind === "frozen") return 8;
+  if (payload.kind !== "status" || !payload.status || !EXPEDITION_CONTROL_TAGS.has(payload.status.kind)) return void 0;
+  const kind = payload.status.kind;
+  if (kind === "stagger") return payload.status.kind === "stagger" && payload.status.seconds <= 0.15 ? 1 : 2;
+  if (kind === "chill") return 4;
+  if (kind === "stun") return payload.status.kind === "stun" && payload.status.seconds <= 0.25 ? 4 : 6;
+  if (kind === "fear") return 6;
+  return kind === "pressure" || kind === "drowsy" || kind === "intimidate" ? 10 : 8;
+}
+
 // src/core/bond.ts
 init_define_import_meta_env();
 var BOND_LEVEL_CAP = 10;
@@ -3239,6 +3437,17 @@ function canUpgradeRuneTraitGrade(trait) {
 function canGrantRuneTraitAtLeast(trait, minimumGrade) {
   return trait === void 0 || RUNE_TRAIT_GRADES.indexOf(trait.grade) < RUNE_TRAIT_GRADES.indexOf(minimumGrade);
 }
+var DEFAULT_LEGENDARY_EXCLUSIVE_SHARE = 0.35;
+function pickRuneTraitId(pool, grade, random, exclusiveShare = DEFAULT_LEGENDARY_EXCLUSIVE_SHARE) {
+  const eligible = pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
+  if (grade === "legendary") {
+    const exclusive = eligible.filter((entry) => entry.minGrade === "legendary");
+    const general = eligible.filter((entry) => entry.minGrade !== "legendary");
+    const useExclusive = exclusive.length > 0 && (general.length === 0 || random() < exclusiveShare);
+    return pick((useExclusive ? exclusive : general).map(({ id }) => id), random());
+  }
+  return pick(eligible.map(({ id }) => id), random());
+}
 function pick(pool, random) {
   if (pool.length === 0) throw new RangeError("\uD2B9\uC131 \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
   if (!Number.isFinite(random) || random < 0 || random >= 1) throw new RangeError("\uD2B9\uC131 \uB09C\uC218\uB294 0 \uC774\uC0C1 1 \uBBF8\uB9CC\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.");
@@ -3258,7 +3467,7 @@ function rollRuneTraitGrade(minimumGrade, random) {
 }
 function grantRuneTrait(input) {
   const grade = rollRuneTraitGrade(input.minimumGrade, input.random());
-  return { id: pick(input.traitIds, input.random()), grade, upgradeMisses: 0 };
+  return { id: pickRuneTraitId(input.pool, grade, input.random, input.exclusiveShare), grade, upgradeMisses: 0 };
 }
 function rerollRuneTrait(input) {
   const { trait } = input;
@@ -3269,7 +3478,7 @@ function rerollRuneTrait(input) {
   const grade = upgraded && higher !== void 0 ? higher : trait.grade;
   return {
     candidate: {
-      id: pick(input.traitIds, input.random()),
+      id: pickRuneTraitId(input.pool, grade, input.random, input.exclusiveShare),
       grade,
       // 등급이 오르면 천장은 그 등급에서 새로 돈다. 실패만 쌓는다.
       upgradeMisses: upgraded ? 0 : trait.upgradeMisses + 1
@@ -3290,20 +3499,39 @@ function assertValidRuneTrait(trait, knownIds) {
 
 // src/data/runeTraits.ts
 init_define_import_meta_env();
+var v = (uncommon, rare, epic, legendary) => ({ uncommon, rare, epic, legendary });
 var RUNE_TRAIT_DEFS = [
-  { id: "vanguard", effect: { kind: "hasteOnBattleStart", seconds: 6 }, values: { uncommon: 10, rare: 15, epic: 20, legendary: 28 } },
-  { id: "pursuit", effect: { kind: "hasteOnKill", seconds: 4, cooldownSeconds: 0 }, values: { uncommon: 8, rare: 12, epic: 16, legendary: 22 } },
-  { id: "predation", effect: { kind: "damageVsHighHp", aboveHpPercent: 70 }, values: { uncommon: 1.5, rare: 2.5, epic: 3.5, legendary: 5 } },
-  { id: "tenacity", effect: { kind: "sameTargetStreak", maxStacks: 5 }, values: { uncommon: 0.6, rare: 1, epic: 1.4, legendary: 2 } },
-  { id: "guardian", effect: { kind: "shieldLowestAllyOnBattleStart" }, values: { uncommon: 4, rare: 6, epic: 8, legendary: 11 } },
-  { id: "lastStand", effect: { kind: "shieldOnLowHp", belowHpPercent: 35 }, values: { uncommon: 8, rare: 12, epic: 16, legendary: 22 } },
-  { id: "firstAid", effect: { kind: "healOnLowHp", belowHpPercent: 35 }, values: { uncommon: 6, rare: 9, epic: 12, legendary: 16 } },
-  { id: "focusStudy", effect: { kind: "flatStat", stat: "critChance" }, values: { uncommon: 3, rare: 5, epic: 7, legendary: 10 } },
-  { id: "awakening", effect: { kind: "flatStat", stat: "energyGain" }, values: { uncommon: 1, rare: 1.5, epic: 2, legendary: 3 } },
-  { id: "resonance", effect: { kind: "flatStat", stat: "ferocityGain" }, values: { uncommon: 6, rare: 9, epic: 12, legendary: 17 } },
-  { id: "hemorrhage", effect: { kind: "bleedEveryNAttacks" }, values: { uncommon: 8, rare: 6, epic: 5, legendary: 4 } },
-  { id: "riposte", effect: { kind: "shieldOnCritical", cooldownSeconds: 6 }, values: { uncommon: 2, rare: 3, epic: 4, legendary: 5.5 } }
+  // ── 기존 열두 종(ID 유지, 효과 개편) ──
+  { id: "vanguard", minGrade: "uncommon", stacking: "sum", effect: { kind: "hasteOnBattleStart", seconds: 6, extendSeconds: 2, extendMaxSeconds: 6 }, values: v(6, 8, 11, 15) },
+  { id: "pursuit", minGrade: "uncommon", stacking: "sum", effect: { kind: "hasteOnKill", seconds: 4, maxStacks: 3 }, values: v(1.5, 2, 2.5, 3.5) },
+  { id: "predation", minGrade: "uncommon", stacking: "sum", effect: { kind: "currentHpStrike", everyNAttacks: 4, attackCapPercent: 120 }, values: v(1.5, 2.2, 3, 4.5) },
+  { id: "tenacity", minGrade: "uncommon", stacking: "sum", effect: { kind: "sameTargetStreak", maxStacks: 5 }, values: v(0.4, 0.6, 0.9, 1.3) },
+  { id: "guardian", minGrade: "uncommon", stacking: "sum", effect: { kind: "shieldLowestAllyOnBattleStart" }, values: v(3, 4.5, 6, 8.5) },
+  { id: "lastStand", minGrade: "uncommon", stacking: "independent", effect: { kind: "shieldAndHasteOnLowHp", belowHpPercent: 35, hasteSeconds: 4 }, values: v(5, 7, 9, 12), values2: v(6, 8, 10, 14) },
+  { id: "firstAid", minGrade: "uncommon", stacking: "independent", effect: { kind: "healOverTimeOnLowHp", belowHpPercent: 35, overSeconds: 5 }, values: v(2.5, 3.5, 5, 7) },
+  { id: "focusStudy", minGrade: "uncommon", stacking: "sum", effect: { kind: "openingCrits" }, values: v(1, 1, 1, 2) },
+  { id: "awakening", minGrade: "uncommon", stacking: "sum", sumCap: 60, effect: { kind: "openingEnergy" }, values: v(8, 12, 16, 22) },
+  { id: "resonance", minGrade: "uncommon", stacking: "sum", effect: { kind: "ferocityOnKill", cooldownSeconds: 1 }, values: v(1.5, 2, 3, 4.5) },
+  { id: "hemorrhage", minGrade: "uncommon", stacking: "none", effect: { kind: "bleedEveryNAttacks" }, values: v(7, 6, 5, 4) },
+  { id: "riposte", minGrade: "uncommon", stacking: "independent", effect: { kind: "shieldOnCritical", cooldownSeconds: 6 }, values: v(1.5, 2, 2.5, 3.5) },
+  // ── 신규 공통 열 종 ──
+  { id: "afterglow", minGrade: "uncommon", stacking: "sum", effect: { kind: "hasteOnUltimate", seconds: 5 }, values: v(6, 8, 11, 15) },
+  { id: "bulwarkCry", minGrade: "uncommon", stacking: "independent", effect: { kind: "shieldOnUltimate", maxTimes: 2 }, values: v(3, 4.5, 6, 8) },
+  { id: "spoils", minGrade: "uncommon", stacking: "independent", effect: { kind: "healOnKill", cooldownSeconds: 1, maxTimes: 5 }, values: v(1.2, 1.8, 2.4, 3.2) },
+  { id: "warCry", minGrade: "uncommon", stacking: "none", effect: { kind: "teamHasteOnBattleStart", seconds: 5 }, values: v(4, 6, 8, 11) },
+  { id: "steadyBreath", minGrade: "uncommon", stacking: "independent", effect: { kind: "healOnBasicHit", cooldownSeconds: 8, maxTimes: 3 }, values: v(1.2, 1.6, 2, 2.8) },
+  { id: "heavyBlow", minGrade: "uncommon", stacking: "none", effect: { kind: "staggerOnCritical", staggerSeconds: 0.1 }, values: v(6, 5, 4, 3) },
+  { id: "curseSeed", minGrade: "uncommon", stacking: "none", effect: { kind: "curseEveryNAttacks" }, values: v(8, 6, 5, 4) },
+  { id: "rhythm", minGrade: "uncommon", stacking: "sum", effect: { kind: "nthBasicBonus", everyN: 3 }, values: v(7, 10, 14, 20) },
+  { id: "executioner", minGrade: "uncommon", stacking: "sum", effect: { kind: "damageVsLowHp", belowHpPercent: 30 }, values: v(1.5, 2.5, 3.5, 5) },
+  { id: "deepWound", minGrade: "uncommon", stacking: "sum", sumCap: 30, effect: { kind: "critDamage" }, values: v(5, 7, 10, 14) },
+  // ── 영웅 이상 ──
+  { id: "overflow", minGrade: "epic", stacking: "sum", effect: { kind: "shieldedDamage" }, values: v(3.5, 3.5, 3.5, 5) },
+  { id: "warmUp", minGrade: "epic", stacking: "sum", effect: { kind: "warmUp", everySeconds: 5, maxStacks: 4 }, values: v(1.5, 1.5, 1.5, 2.2) },
+  // ── 전설 전용 ──
+  { id: "perfectAim", minGrade: "legendary", stacking: "sum", effect: { kind: "periodicCrit", minEvery: 5 }, values: v(7, 7, 7, 7) }
 ];
+var LEGENDARY_EXCLUSIVE_SHARE = 0.35;
 var RUNE_TRAIT_ITEMS = {
   /** 무작위 특성 하나. 이미 특성이 있으면 지우고 다시 부여한다. */
   grant: { itemId: "ancient-core", minimumGrade: "uncommon" },
@@ -3313,11 +3541,9 @@ var RUNE_TRAIT_ITEMS = {
   upgrade: { itemId: "restoration-crystal" }
 };
 var RUNE_TRAIT_IDS = RUNE_TRAIT_DEFS.map(({ id }) => id);
+var RUNE_TRAIT_POOL = RUNE_TRAIT_DEFS.map(({ id, minGrade }) => ({ id, minGrade }));
 function findRuneTrait(id) {
   return RUNE_TRAIT_DEFS.find((def) => def.id === id);
-}
-function runeTraitValue(id, grade) {
-  return findRuneTrait(id)?.values[grade] ?? 0;
 }
 
 // src/core/runes.ts
@@ -3530,7 +3756,7 @@ function backfillStarterRuneTraits(runes, random) {
   return runes.map((rune) => {
     const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
     if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== void 0) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 var STARTER_RUNE_TRAIT_KIT = {
@@ -3551,7 +3777,7 @@ function createStarterRunes(random) {
       random
     });
     if (!STARTER_RUNE_TRAITED[index]) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 var RUNE_SELL_RAW_STONE = {
@@ -3735,6 +3961,13 @@ function calculateFinalStats(base, progress, gems2, rarity) {
 
 // src/core/levelDesign.ts
 init_define_import_meta_env();
+function encounterRampFactor(ramp, elapsedSeconds) {
+  const start = ramp.startPercent / 100;
+  const whole2 = Math.max(0, Math.floor(elapsedSeconds));
+  const rise = start + (1 - start) * Math.min(1, whole2 / ramp.seconds);
+  const late = Math.max(0, whole2 - ramp.seconds);
+  return rise + late * ramp.lateGrowthPercentPerSecond / 100;
+}
 var ENCOUNTER_ROLE = {
   normal: {
     count: 3,
@@ -3818,13 +4051,18 @@ var ENCOUNTER_ROLE = {
      * 번의 잠금은 확실히 가져가게 하는 선이다.
      */
     tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
-    percentHpResistance: 30
+    percentHpResistance: 30,
+    /*
+     * **처음 25%에서 30초에 걸쳐 100%로.** 월드 폭주(LV60)의 첫 몇 초에 편성이 서기도 전에 쓰러지는 일을
+     * 막되, 30초 뒤의 세기는 예전 그대로라 오래 버티는 판의 난이도는 바뀌지 않는다(응태 결정).
+     */
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 }
   },
   endless: {
     // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
     // 자라 이 표가 곱하지 않는다.
     count: 1,
-    bodyScale: 1.45,
+    bodyScale: 1.9,
     hpMultiplier: 1,
     attackMultiplier: 2.6,
     ttkSeconds: null,
@@ -3840,7 +4078,12 @@ var ENCOUNTER_ROLE = {
      * 체력 75%에서 80%, 50%에서 87%, 25%에서 93%로 붙고 끝에서 상한에 **부딪히지 않고 닿는다.**
      */
     damageReduction: { basePercent: 70, maxPercent: 99, maxAtHpPercent: 0, curve: 0.75, ignoreAtOrBelow: 10 },
-    percentHpResistance: 30
+    percentHpResistance: 30,
+    /*
+     * 보스와 같은 램프에 **주문력 복리 +2%/초**가 얹힌다. 폰토스의 패시브(「심해의 압력」)에 있던 시간 누적을
+     * 자리로 옮긴 것이다 — 복리는 0초부터 세므로 30초 뒤의 주문력은 예전과 완전히 같고 앞 30초만 약하다.
+     */
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 }
   }
 };
 var ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
@@ -3886,7 +4129,219 @@ init_define_import_meta_env();
 
 // src/data/expeditionAugments.ts
 init_define_import_meta_env();
+
+// src/data/expeditionStatAugments.ts
+init_define_import_meta_env();
+var EXPEDITION_FLAT_STAT_PLANS = [
+  { id: "lifesteal", stat: "lifeSteal", category: "recovery", sr: 4, ssr: 7 },
+  { id: "crit-chance", stat: "critChance", category: "attack", sr: 8, ssr: 14 },
+  { id: "crit-damage", stat: "critDamage", category: "attack", sr: 25, ssr: 45 },
+  { id: "energy-gain", stat: "energyGain", category: "spell", sr: 2, ssr: 4 },
+  { id: "ferocity-gain", stat: "ferocityGain", category: "attack", sr: 12, ssr: 20 }
+];
+var STAT_LABELS = { lifeSteal: "stat.lifeSteal", critChance: "stat.critChance", critDamage: "stat.critDamage", energyGain: "stat.energyGain", ferocityGain: "stat.ferocityGain.rune" };
+function expeditionStatAugmentLabel(def, linkLifesteal = false) {
+  if (def.effect.kind !== "flatStat") return void 0;
+  const effect = def.effect;
+  const name = t(STAT_LABELS[effect.stat]);
+  const label = linkLifesteal && effect.stat === "lifeSteal" ? `[[augment-tag|${name}]]` : name;
+  return effect.stat === "energyGain" ? t("augment.flatPoints", { label, points: effect.points }) : t("augment.percent", { label, percent: effect.points });
+}
+var EXPEDITION_STAT_AUGMENTS = [
+  ...EXPEDITION_FLAT_STAT_PLANS.flatMap((plan) => ["sr", "ssr"].map((rarity) => {
+    const def = {
+      id: `stat-${plan.id}-${rarity}`,
+      get name() {
+        return expeditionStatAugmentLabel(def);
+      },
+      rarity,
+      target: "relic",
+      category: plan.category,
+      maxStacks: 1,
+      stacking: { mode: "strongest" },
+      exclusiveGroup: `stat-${plan.id}`,
+      tags: [plan.category, "relic", "stat", plan.stat],
+      effect: { kind: "flatStat", stat: plan.stat, points: plan[rarity] }
+    };
+    return def;
+  })),
+  ...["sr", "ssr"].map((rarity) => ({
+    id: `stat-move-speed-${rarity}`,
+    get name() {
+      return t("augment.percent", { label: t("stat.moveSpeed"), percent: rarity === "sr" ? 12 : 20 });
+    },
+    rarity,
+    target: "relic",
+    category: "survival",
+    maxStacks: 1,
+    stacking: { mode: "strongest" },
+    exclusiveGroup: "stat-move-speed",
+    tags: ["survival", "relic", "stat", "moveSpeedPercent"],
+    effect: { kind: "moveSpeedPercent", percent: rarity === "sr" ? 12 : 20 }
+  }))
+];
+
+// src/data/expeditionTagAugments.ts
+init_define_import_meta_env();
+var TAG_TERM_KEYS = {
+  scar: "status.scar",
+  ferocity: "augment.tag.name.ferocity",
+  cleanse: "augment.tag.name.cleanse",
+  bleed: "status.bleed",
+  stun: "status.stun",
+  frenzy: "status.frenzy",
+  frozen: "status.frozen",
+  knockback: "augment.tag.name.knockback",
+  tailwind: "augment.tag.name.tailwind",
+  order: "augment.tag.name.order",
+  resonance: "augment.tag.name.resonance",
+  regeneration: "augment.tag.name.regeneration",
+  stealth: "augment.tag.name.stealth",
+  shield: "augment.tag.name.shield",
+  concussion: "augment.tag.name.concussion",
+  stagger: "augment.tag.name.stagger",
+  frostPlume: "status.plume",
+  poison: "status.poison",
+  overpaint: "status.overpaint",
+  curse: "status.curse",
+  butcher: "status.butcher",
+  vandalism: "status.vandalism",
+  pressure: "status.pressure",
+  drowsy: "status.drowsy",
+  intimidate: "status.intimidation",
+  chill: "status.chill",
+  taunt: "status.taunt",
+  fear: "status.fear",
+  shell: "status.shell",
+  reagent: "status.reagent"
+};
+function expeditionTagTerm(kind) {
+  return t(TAG_TERM_KEYS[kind] ?? "augment.tag.name.frostPlume");
+}
+var EXPEDITION_SHELL = {
+  maxStacks: 3,
+  durationSeconds: 30,
+  cooldownSeconds: 6,
+  selfShieldMaxHpPercent: 8,
+  lowestHpAllyShieldMaxHpPercent: 4
+};
+var EXPEDITION_REAGENT = {
+  maxStacks: 3,
+  seconds: 16,
+  basicStacks: 0,
+  ultimateStacks: 0,
+  reactionPoisonSeconds: 3,
+  lowestHpAllyHealMaxHpPercent: 3,
+  resistanceReductionPercent: 8,
+  resistanceReductionSeconds: 4
+};
+var EXPEDITION_TAG_PLANS = [
+  { id: "bleed", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "bleed", seconds: 2, maxHpPercentPerSecond: 0.15 } },
+  { id: "stun", everyN: 5, cooldown: 5, maxTriggers: 5, status: { kind: "stun", seconds: 0.25 } },
+  { id: "frenzy", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "frenzy", seconds: 0.4 } },
+  { id: "knockback", everyN: 6, cooldown: 8, maxTriggers: 4, status: { kind: "knockback", seconds: 0.25, speed: 140, bounces: 1 } },
+  { id: "concussion", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "concussion", maxHpPercent: 0.5, criticalMaxHpPercent: 0.5 } },
+  { id: "stagger", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "stagger", seconds: 0.15 } },
+  { id: "poison", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "poison", seconds: 3, attackPercentPerSecond: 8, abilityPercentPerSecond: 8 } },
+  { id: "overpaint", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "overpaint", seconds: 8, damageTakenPercent: 3, maxStacks: 3 } },
+  { id: "curse", everyN: 3, cooldown: 3, maxTriggers: 8, status: { kind: "curse", seconds: 6, resistancePercent: 4, maxStacks: 3 } },
+  { id: "butcher", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "butcher", maxStacks: 3, burstPower: 180 } },
+  { id: "frostPlume", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "frostPlume", maxStacks: 3, holdSeconds: 12, burstPower: 60, burstSeconds: 3, slowSeconds: 2, slowPercent: 10 } },
+  { id: "vandalism", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "vandalism", offenseShredPercent: 2, maxStacks: 4, burstPower: 180 } },
+  { id: "pressure", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "pressure", speedPercentPerStack: 3, maxStacks: 3, seconds: 12, stunSeconds: 0.4, defensePower: 55, resistancePower: 55, lockoutSeconds: 6 } },
+  { id: "drowsy", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "drowsy", maxStacks: 3, seconds: 12, sleepSeconds: 0.6, wakeResistancePower: 45, groggySeconds: 2, groggyAttackSpeedPercent: 8 } },
+  { id: "intimidate", everyN: 3, cooldown: 2, maxTriggers: 12, status: { kind: "intimidate", maxStacks: 3, seconds: 12, fearSeconds: 0.6, immunitySeconds: 6 } },
+  { id: "chill", everyN: 4, cooldown: 3, maxTriggers: 8, status: { kind: "chill", speedPercentPerStack: 3, maxStacks: 3 } },
+  { id: "taunt", everyN: 4, cooldown: 4, maxTriggers: 6, status: { kind: "taunt", seconds: 0.6 } },
+  { id: "fear", everyN: 4, cooldown: 6, maxTriggers: 5, status: { kind: "fear", seconds: 0.4, immunitySeconds: 6 } }
+];
+function expeditionPayloadTag(payload) {
+  return payload.kind === "status" ? payload.status.kind : payload.kind === "teamBuff" ? payload.buff.kind : payload.kind === "shell" && payload.contract.stackId === "scar" ? "scar" : payload.kind;
+}
+function tagDef(id, rarity, trigger, everyN, payload, cooldownSeconds, maxTriggers, group) {
+  cooldownSeconds = expeditionControlCooldown(payload) ?? cooldownSeconds;
+  const beneficial = payload.kind === "ferocity" || payload.kind === "cleanse" || payload.kind === "teamBuff" || payload.kind === "regeneration" || payload.kind === "stealth" || payload.kind === "shield" || payload.kind === "shell";
+  const category = payload.kind === "shield" || payload.kind === "shell" ? "shield" : payload.kind === "regeneration" ? "recovery" : "status";
+  return {
+    id,
+    get name() {
+      const kind = expeditionPayloadTag(payload);
+      const tag = expeditionTagTerm(kind);
+      if (id.endsWith("-light")) return t("augment.tag.name.light", { tag });
+      return t(trigger === "onDamaged" ? payload.kind === "shell" ? "augment.tag.name.received" : "augment.tag.name.receivedEffect" : trigger === "onUltimateHit" || trigger === "onUltimateCast" ? "augment.tag.name.ultimate" : "augment.tag.name.basic", { tag });
+    },
+    rarity,
+    target: "relic",
+    category,
+    maxStacks: 1,
+    stacking: { mode: "strongest" },
+    exclusiveGroup: group,
+    tags: [category, "relic", "tag", group],
+    effect: { kind: "triggered", trigger, everyN, applications: rarity === "ssr" && payload.kind === "status" && "maxStacks" in payload.status ? 2 : 1, payload, limits: { maxTriggers, cooldownSeconds, maxStacks: 1, target: beneficial ? "self" : "hitTarget" } }
+  };
+}
+function ultimateStatus(status) {
+  if (status.kind === "bleed") return { ...status, seconds: 3, maxHpPercentPerSecond: 0.25, healingReceivedReductionPercent: 15 };
+  if (status.kind === "stun") return { ...status, seconds: 0.5 };
+  if (status.kind === "frenzy") return { ...status, seconds: 0.6 };
+  if (status.kind === "knockback") return { ...status, seconds: 0.4, speed: 180 };
+  if (status.kind === "concussion") return { ...status, maxHpPercent: 0.8, criticalMaxHpPercent: 0.8 };
+  if (status.kind === "stagger") return { ...status, seconds: 0.3 };
+  if (status.kind === "poison") return { ...status, seconds: 4, attackPercentPerSecond: 16, abilityPercentPerSecond: 16 };
+  if (status.kind === "curse") return { ...status, seconds: 10, resistancePercent: 6 };
+  if (status.kind === "frostPlume") return { ...status, burstPower: 90 };
+  if (status.kind === "vandalism") return { ...status, offenseShredPercent: 3, burstPower: 270 };
+  if (status.kind === "pressure") return { ...status, defensePower: 80, resistancePower: 80, stunSeconds: 0.6 };
+  if (status.kind === "drowsy") return { ...status, sleepSeconds: 0.6, wakeResistancePower: 70, groggyAttackSpeedPercent: 12 };
+  if (status.kind === "intimidate") return { ...status, fearSeconds: 0.6 };
+  if (status.kind === "fear") return { ...status, seconds: 0.6 };
+  if (status.kind === "taunt") return { ...status, seconds: 0.6 };
+  return status;
+}
+var SUPPORT_TAG_PLANS = [
+  { id: "ferocity", everyN: 5, cooldown: 6, maxTriggers: 5, basic: { kind: "ferocity", points: 4 }, ultimate: { kind: "ferocity", points: 8 } },
+  { id: "cleanse", everyN: 5, cooldown: 8, maxTriggers: 3, basic: { kind: "cleanse" }, ultimate: { kind: "cleanse" } },
+  { id: "tailwind", everyN: 4, cooldown: 6, maxTriggers: 6, basic: { kind: "teamBuff", buff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 2.5 } }, ultimate: { kind: "teamBuff", buff: { kind: "tailwind", attackSpeedPercent: 30, moveSpeedPercent: 30, seconds: 4.5 } } },
+  { id: "order", everyN: 5, cooldown: 6, maxTriggers: 6, basic: { kind: "teamBuff", buff: { kind: "order", attackSpeedPercent: 12, criticalChancePoints: 4, lifeStealPoints: 4, seconds: 2.5 } }, ultimate: { kind: "teamBuff", buff: { kind: "order", attackSpeedPercent: 20, criticalChancePoints: 6, lifeStealPoints: 6, seconds: 4.5 } } },
+  { id: "resonance", everyN: 4, cooldown: 6, maxTriggers: 6, basic: { kind: "teamBuff", buff: { kind: "resonance", attackSpeedPercent: 24, seconds: 2.5 } }, ultimate: { kind: "teamBuff", buff: { kind: "resonance", attackSpeedPercent: 36, seconds: 4.5 } } },
+  { id: "regeneration", everyN: 5, cooldown: 6, maxTriggers: 6, basic: { kind: "regeneration", seconds: 3, maxHpPercentPerSecond: 1.5 }, ultimate: { kind: "regeneration", seconds: 4, maxHpPercentPerSecond: 2 } },
+  { id: "stealth", everyN: 6, cooldown: 8, maxTriggers: 3, basic: { kind: "stealth", seconds: 0.6 }, ultimate: { kind: "stealth", seconds: 1 } },
+  { id: "shield", everyN: 4, cooldown: 6, maxTriggers: 6, basic: { kind: "shield", maxHpPercent: 2 }, ultimate: { kind: "shield", maxHpPercent: 4 } }
+];
+var EXPEDITION_TAG_AUGMENTS = [
+  tagDef("tag-scar-basic", "sr", "onDamaged", 4, { kind: "shell", stacks: 1, contract: { maxStacks: 2, durationSeconds: 30, cooldownSeconds: 8, selfShieldMaxHpPercent: 10, lowestHpAllyShieldMaxHpPercent: 0, stackId: "scar" } }, 1, 8, "tag-shell"),
+  tagDef("tag-scar-ultimate", "ssr", "onUltimateCast", 1, { kind: "shell", stacks: 2, contract: { maxStacks: 2, durationSeconds: 30, cooldownSeconds: 8, selfShieldMaxHpPercent: 10, lowestHpAllyShieldMaxHpPercent: 0, stackId: "scar" } }, 8, 4, "tag-shell"),
+  ...SUPPORT_TAG_PLANS.flatMap((plan) => [
+    tagDef(`tag-${plan.id}-basic`, "sr", plan.id === "stealth" || plan.id === "cleanse" ? "onDamaged" : "onBasicHit", plan.everyN, plan.basic, plan.cooldown, plan.maxTriggers, `tag-${plan.id}`),
+    tagDef(`tag-${plan.id}-ultimate`, "ssr", "onUltimateCast", 1, plan.ultimate, plan.cooldown, plan.maxTriggers, `tag-${plan.id}`)
+  ]),
+  tagDef("tag-frozen-basic", "sr", "onBasicHit", 6, { kind: "frozen", seconds: 0.35, maxHpPercentOnExpire: 0.1 }, 8, 4, "tag-frozen"),
+  tagDef("tag-frozen-ultimate", "ssr", "onUltimateHit", 1, { kind: "frozen", seconds: 0.6, maxHpPercentOnExpire: 0.2 }, 8, 4, "tag-frozen"),
+  ...EXPEDITION_TAG_PLANS.flatMap((plan) => [
+    tagDef(`tag-${plan.id}-basic`, "sr", "onBasicHit", plan.everyN, { kind: "status", status: plan.status }, plan.cooldown, plan.maxTriggers, `tag-${plan.id}`),
+    tagDef(`tag-${plan.id}-ultimate`, "ssr", "onUltimateHit", 1, { kind: "status", status: ultimateStatus(plan.status) }, Math.max(4, plan.cooldown), plan.maxTriggers, `tag-${plan.id}`)
+  ]),
+  tagDef("tag-concussion-light", "sr", "onBasicHit", 3, { kind: "status", status: { kind: "concussion", maxHpPercent: 0.3, criticalMaxHpPercent: 0.3 } }, 3, 10, "tag-concussion"),
+  tagDef("tag-shell-received", "sr", "onDamaged", 6, { kind: "shell", stacks: 1, contract: { ...EXPEDITION_SHELL, maxStacks: 2 } }, 1, 9, "tag-shell"),
+  tagDef("tag-shell-basic", "sr", "onBasicHit", 4, { kind: "shell", stacks: 1, contract: EXPEDITION_SHELL }, 2, 9, "tag-shell"),
+  tagDef("tag-shell-ultimate", "ssr", "onUltimateHit", 1, { kind: "shell", stacks: 2, contract: EXPEDITION_SHELL }, 6, 6, "tag-shell"),
+  tagDef("tag-reagent-basic", "sr", "onBasicHit", 3, { kind: "reagent", stacks: 1, contract: EXPEDITION_REAGENT }, 2, 12, "tag-reagent"),
+  tagDef("tag-reagent-ultimate", "ssr", "onUltimateHit", 1, { kind: "reagent", stacks: 2, contract: EXPEDITION_REAGENT }, 6, 6, "tag-reagent")
+];
+var RETIRED_EXPEDITION_AUGMENTS = /* @__PURE__ */ new Set([
+  "minor-blood-edge",
+  "blood-edge",
+  "reactive-medium",
+  "volatile-atmosphere",
+  "critical-incision",
+  "hex-overload",
+  "stun-breaker"
+]);
+
+// src/data/expeditionAugments.ts
 var EXPEDITION_AUGMENTS = [
+  ...EXPEDITION_TAG_AUGMENTS,
+  ...EXPEDITION_STAT_AUGMENTS,
   // 공격/SR: 범용 전체 공격력은 다른 전체 능력치와 같은 8% 기준이다.
   { id: "reinforced-core", name: "\uAC15\uD654 \uCF54\uC5B4", rarity: "sr", target: "party", category: "attack", maxStacks: 3, stacking: { mode: "additive" }, exclusiveGroup: "sr-party-offense", tags: ["attack", "party", "attackPowerPercent"], effect: { kind: "attackPowerPercent", percent: 8 } },
   // 공격/SR: 한 기에 집중하는 대신 전체 효과의 약 두 배인 18%를 준다.
@@ -3954,6 +4409,7 @@ function getExpeditionAugment(id) {
   return EXPEDITION_AUGMENTS.find((augment) => augment.id === id);
 }
 for (const augment of EXPEDITION_AUGMENTS) {
+  if (augment.tags.some((tag) => tag === "tag" || tag === "stat")) continue;
   registerDataText(augment, "name", `augment.${augment.id}.name`);
 }
 
@@ -3965,6 +4421,7 @@ var STAT_KINDS = [
   "attackPowerPercent",
   "spellPowerPercent",
   "attackSpeedPercent",
+  "moveSpeedPercent",
   "initialShieldPercent",
   "statusPotencyPercent"
 ];
@@ -4033,6 +4490,29 @@ function sameTargetStreakMultiplier(effects, relicId, stacks) {
 }
 function flatStatPoints(effects, relicId, stat) {
   return effects.filter((effect) => effect.kind === "flatStat" && effect.stat === stat && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.points, 0);
+}
+function lowHpDamageMultiplier(effects, relicId, targetHpPercent) {
+  const percent = effects.filter((effect) => effect.kind === "damageVsLowHpPercent" && augmentAppliesTo(effect, relicId) && targetHpPercent <= effect.belowHpPercent).reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+function shieldedDamageMultiplier(effects, relicId, shielded) {
+  if (!shielded) return 1;
+  const percent = effects.filter((effect) => effect.kind === "shieldedDamagePercent" && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+function nthBasicBonusMultiplier(effects, relicId, attackNumber) {
+  const percent = effects.filter((effect) => effect.kind === "nthBasicBonusPercent" && augmentAppliesTo(effect, relicId) && attackNumber % effect.everyN === 0).reduce((sum, effect) => sum + effect.percent, 0);
+  return 1 + percent / 100;
+}
+function warmUpAttackSpeedPercent(effects, relicId, elapsedSeconds) {
+  return effects.filter((effect) => effect.kind === "warmUpHaste" && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.percentPerStack * Math.min(effect.maxStacks, Math.floor(Math.max(0, elapsedSeconds) / effect.everySeconds)), 0);
+}
+function openingCritCount(effects, relicId) {
+  return effects.filter((effect) => effect.kind === "openingCrits" && augmentAppliesTo(effect, relicId)).reduce((sum, effect) => sum + effect.count, 0);
+}
+function periodicCritEvery(effects, relicId) {
+  const every = effects.filter((effect) => effect.kind === "periodicCrit" && augmentAppliesTo(effect, relicId)).map(({ everyN }) => everyN);
+  return every.length === 0 ? void 0 : Math.min(...every);
 }
 
 // src/core/ultimate.ts
@@ -4298,6 +4778,9 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     attackSpeed: def.stats.attackSpeed * multipliers.attackSpeedPercent,
     // 셋은 이미 퍼센트로 세는 수치라 덧셈으로 붙는다. 곱셈 배율과 섞으면 같은 「+10」이
     // 능력치마다 다른 크기가 된다.
+    moveSpeed: def.stats.moveSpeed * multipliers.moveSpeedPercent,
+    critDamage: def.stats.critDamage + flatPoints("critDamage"),
+    lifeSteal: def.stats.lifeSteal + flatPoints("lifeSteal"),
     critChance: def.stats.critChance + flatPoints("critChance"),
     energyGain: def.stats.energyGain + flatPoints("energyGain"),
     ferocityGain: def.stats.ferocityGain + flatPoints("ferocityGain")
@@ -4349,11 +4832,28 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     statusHitCount: 0,
     augmentBleedHitCount: 0,
     augmentRuntime: {},
+    augmentActionSerial: 0,
+    augmentShellState: null,
+    augmentShellCooldown: 0,
+    augmentFixedDamagePercent: 0,
+    augmentControlReadyAt: 0,
+    augmentControlAwaitingAttack: false,
+    augmentControlBlockedActionSerial: -1,
+    appliedStatusContracts: {},
+    augmentShellGuard: augmentEffects.flatMap((effect) => effect.kind === "triggered" && effect.payload.kind === "shell" && augmentAppliesTo(effect, def.id) ? [effect.payload.contract] : [])[0],
     augmentDefensePercent: 0,
     augmentResistancePercent: 0,
     traitHaste: null,
+    killHaste: null,
     traitStreakTargetId: null,
     traitStreakStacks: 0,
+    traitStreakCarry: 0,
+    traitHasteStacks: 0,
+    traitHasteExtended: 0,
+    traitBasicCount: 0,
+    traitOpeningCritsUsed: 0,
+    traitRegen: null,
+    augmentCurseHitCount: 0,
     butcher: null,
     frostPlume: null,
     frostbite: null,
@@ -4388,6 +4888,8 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     passiveTriggered: false,
     regeneration: null,
     bonusAp: 0,
+    // 램프가 있는 자리는 첫 프레임부터 시작 몫으로 선다 — 첫 틱까지 100%로 서 있으면 첫 타격이 램프를 비껴간다.
+    rampFactor: ((ramp) => ramp ? encounterRampFactor(ramp, 0) : 1)(def.encounterRole === void 0 ? void 0 : ENCOUNTER_ROLE[def.encounterRole].ramp),
     immortal: false,
     bonusAttackSpeed: 0,
     refillFinisherAll: false,
@@ -4408,6 +4910,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
       feverHealingDone: 0,
       rescueUsed: false,
       ambushCritReady: false,
+      leapVeilReadyAt: 0,
       fangShave: null,
       pincerCount: 0,
       blinkCrits: 0,
@@ -4417,23 +4920,26 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
       arrowEchoes: [],
       afterimages: [],
       stunLockouts: {},
-      relinkUsed: false,
+      sideDuoId: null,
       dreadAegisReadyAt: 0,
+      bashCount: 0,
+      doubleMagUsed: false,
       quarry: null,
       orderStruck: [],
       reachFloor: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "farPing" ? def.breakthroughEffects.basic.reach : 0,
       rescuePlan: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "rescueShield" ? { belowHpPercent: def.breakthroughEffects.passive.belowHpPercent, apPercent: def.breakthroughEffects.passive.apPercent } : null,
       staccatoStreak: null,
       focusStreak: null,
-      crescendoHits: 0,
       bulwarkTaken: 0,
-      adagioSlamCooldown: 0,
+      bulwarkPulses: 0,
+      sodaCount: 0,
+      curseDeathStacks: 0,
+      resonanceReadyAt: {},
       sinks: [],
       lullabyFor: 0,
       yawnFrom: null,
       reflectBusy: false,
       dashBack: null,
-      frenzyDeathFrom: null,
       pupCount: 0,
       pupFrenzyCount: 0,
       pupLife: 0,
@@ -4443,6 +4949,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
       sutureIn: def.passive.kind === "sutureStitch" ? def.passive.suture?.intervalSeconds ?? 0 : 0,
       sleepPouncePercent: isBreakthroughSlotOpen(breakthrough, "basic") && def.breakthroughEffects?.basic?.kind === "sleepPounce" ? def.breakthroughEffects.basic.damagePercent : 0,
       pressureCrackIn: isBreakthroughSlotOpen(breakthrough, "passive") && def.breakthroughEffects?.passive?.kind === "pressureCrack" ? def.breakthroughEffects.passive.intervalSeconds : -1,
+      tidalSurgeIn: def.passive.kind === "tidalSurge" ? def.passive.tidalSurge?.intervalSeconds ?? -1 : -1,
       pinnedUntil: {},
       sunken: null,
       biteMark: null,
@@ -4657,29 +5164,77 @@ function traitDamageMultiplier(state, attacker, target) {
 }
 function traitDamageMultiplierBase(state, attacker, target) {
   const effects = effectsFor(state, attacker);
-  attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : 0;
+  attacker.traitStreakStacks = attacker.traitStreakTargetId === target.id ? attacker.traitStreakStacks + 1 : attacker.traitStreakCarry;
+  attacker.traitStreakCarry = 0;
   attacker.traitStreakTargetId = target.id;
   const targetHpPercent = target.maxHp > 0 ? target.hp / target.maxHp * 100 : 0;
-  return highHpDamageMultiplier(effects, attacker.def.id, targetHpPercent) * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks);
+  return highHpDamageMultiplier(effects, attacker.def.id, targetHpPercent) * lowHpDamageMultiplier(effects, attacker.def.id, targetHpPercent) * shieldedDamageMultiplier(effects, attacker.def.id, attacker.shield.amount > 0) * sameTargetStreakMultiplier(effects, attacker.def.id, attacker.traitStreakStacks);
+}
+function traitForcedCritical(state, attacker) {
+  const effects = effectsFor(state, attacker);
+  if (attacker.traitOpeningCritsUsed < openingCritCount(effects, attacker.def.id)) {
+    attacker.traitOpeningCritsUsed += 1;
+    return true;
+  }
+  const every = periodicCritEvery(effects, attacker.def.id);
+  return every !== void 0 && attacker.traitBasicCount % every === 0;
+}
+function strikeTraitOnBasic(state, attacker, target, events) {
+  const effects = effectsFor(state, attacker);
+  const curse = effects.find((effect) => effect.kind === "curseOnAttack" && augmentAppliesTo(effect, attacker.def.id));
+  if (curse) {
+    attacker.augmentCurseHitCount = (attacker.augmentCurseHitCount + 1) % curse.everyNAttacks;
+    if (attacker.augmentCurseHitCount === 0) {
+      applyCombatStatusEffect(target, { kind: "curse", seconds: 8, resistancePercent: 10, maxStacks: 3 }, events, state, attacker.id);
+    }
+  }
+  const strike2 = effects.filter((effect) => effect.kind === "currentHpStrike" && augmentAppliesTo(effect, attacker.def.id) && attacker.traitBasicCount % effect.everyN === 0);
+  if (strike2.length === 0 || !isFighterAlive(target)) return;
+  const percent = strike2.reduce((sum, effect) => sum + effect.percent, 0);
+  const capPercent = Math.min(...strike2.map((effect) => effect.attackCapPercent));
+  const role = target.def.encounterRole;
+  const resistance = role === void 0 ? 0 : ENCOUNTER_ROLE[role].percentHpResistance ?? 0;
+  const byHp = target.hp * percent / 100 * (1 - resistance / 100);
+  const raw = Math.max(1, Math.round(Math.min(byHp, attacker.def.stats.atk * capPercent / 100)));
+  const hpBefore = target.hp;
+  const applied = applyDamage(target, resolveReceivedDamage(target, raw).applied, events, state);
+  addContribution(state.contributions, attacker.id, "attack", hpBefore - target.hp, "attackPower");
+  scoreBossFixedDamage(state, target, hpBefore - target.hp);
+  events.push({ kind: "attack", attackerId: attacker.id, targetId: target.id, skill: "transfer", amount: applied, contributionAmount: hpBefore - target.hp, critical: false, animate: false, damageType: "true", mitigated: false });
+  if (!isFighterAlive(target)) {
+    clearDefeatedStatuses(target);
+    events.push({ kind: "death", fighterId: target.id, sourceId: attacker.id });
+  }
 }
 function triggeredAugments(state, fighter, trigger) {
   return effectsFor(state, fighter).flatMap((effect, index) => effect.kind === "triggered" && effect.trigger === trigger && augmentAppliesTo(effect, fighter.def.id) ? [{ effect, key: String(index) }] : []);
 }
 function consumeAugmentTrigger(state, fighter, key, effect) {
   const runtime = fighter.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
-  if (runtime.triggers >= effect.limits.maxTriggers || state.elapsed - runtime.lastAt < effect.limits.cooldownSeconds) return false;
-  fighter.augmentRuntime[key] = { triggers: runtime.triggers + 1, lastAt: state.elapsed };
+  if (runtime.triggers >= effect.limits.maxTriggers || state.elapsed - runtime.lastAt + 1e-8 < effect.limits.cooldownSeconds) return false;
+  fighter.augmentRuntime[key] = { ...runtime, triggers: runtime.triggers + 1, lastAt: state.elapsed };
   return true;
 }
 function initializeSkirmishAugments(state) {
   const events = [];
   for (const fighter of state.fighters) {
+    const openingEnergy = effectsFor(state, fighter).filter((effect) => effect.kind === "openingEnergyPercent" && augmentAppliesTo(effect, fighter.def.id)).reduce((sum, effect) => sum + effect.percent, 0);
+    if (openingEnergy > 0 && fighter.augmentRuntime.openingEnergy === void 0) {
+      fighter.augmentRuntime.openingEnergy = { triggers: 1, lastAt: state.elapsed };
+      fighter.energy = Math.min(ultimateEnergyCap(fighter), fighter.energy + fighter.def.ultimate.cost * openingEnergy / 100);
+    }
     const legacyPercent = expeditionAugmentStatMultipliers(effectsFor(state, fighter), fighter.def.id).initialShieldPercent - 1;
     if (legacyPercent > 0 && fighter.augmentRuntime.legacyShield === void 0) {
       fighter.augmentRuntime.legacyShield = { triggers: 1, lastAt: state.elapsed };
       grantShield(state, fighter, fighter.id, fighter.maxHp * legacyPercent, events);
     }
     for (const { effect, key } of triggeredAugments(state, fighter, "battleStart")) {
+      if (effect.payload.kind === "haste") {
+        if (!consumeAugmentTrigger(state, fighter, key, effect)) continue;
+        const recipients = effect.limits.target === "allAllies" ? state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally)) : [fighter];
+        for (const recipient of recipients) applyTraitHaste(recipient, effect.payload, effect.limits.maxStacks);
+        continue;
+      }
       if (effect.payload.kind !== "shield" || !consumeAugmentTrigger(state, fighter, key, effect)) continue;
       const living = state.fighters.filter((ally) => ally.side === fighter.side && isFighterAlive(ally));
       const lowest = living.slice().sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
@@ -4796,6 +5351,7 @@ function maybeFreezeAtMaxChill(attacker, target, events, state) {
   applyFrozen(target, FROZEN.seconds, FROZEN.maxHpPercentOnExpire, events, state);
 }
 function applyCombatStatusEffect(fighter, effect, events, state, sourceId, critical = false) {
+  fighter.appliedStatusContracts[effect.kind] = effect;
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
@@ -4904,8 +5460,6 @@ function launchKnockback(target, attacker, trait, state, events) {
     bouncesLeft: trait.bounces
   }, events);
   if (!launched) return;
-  const chain2 = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-  if (chain2?.kind === "chainCollision" && target.knockback) target.knockback.chain = { sourceId: attacker.id, hit: [], radius: chain2.radius };
   target.engaged = false;
   moveToNearestOtherEnemy(attacker, target, state);
 }
@@ -5180,9 +5734,10 @@ function applyIntimidate(target, effect, events, state, sourceId, basicHit) {
   const source = findFighter(state, sourceId);
   if (basicHit && source !== void 0 && target.intimidation !== null && state.elapsed >= source.bt.dreadAegisReadyAt) {
     const aegis = openedBreakthrough(source, "basic", (effects) => effects.basic);
-    if (aegis?.kind === "dreadAegis" && isFighterAlive(source)) {
+    if (aegis?.kind === "preyScale" && isFighterAlive(source)) {
       source.bt.dreadAegisReadyAt = state.elapsed + aegis.cooldownSeconds;
-      grantShield(state, source, source.id, Math.max(1, Math.round(source.maxHp * aegis.shieldPercent / 100)), events, 1);
+      const scared = Math.min(aegis.maxEnemies, state.fighters.filter((other) => other.side !== source.side && isFighterAlive(other) && other.intimidation !== null).length);
+      grantShield(state, source, source.id, Math.max(1, Math.round(source.maxHp * aegis.shieldPercentPerEnemy * scared / 100)), events, 1);
     }
   }
   if (target.fear !== null || target.fearImmuneFor > EMERGENCY_RECOVERY.epsilon) return;
@@ -5192,19 +5747,6 @@ function applyIntimidate(target, effect, events, state, sourceId, basicHit) {
   target.intimidation = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId, effect };
   if (stacks < effect.maxStacks) return;
   applyFear(target, effect.fearSeconds, hunt ? hunt.fearImmunitySeconds : effect.immunitySeconds, events, state, sourceId, false);
-}
-function spreadDread(feared, sourceId, events, state) {
-  const source = findFighter(state, sourceId);
-  if (!source || !source.ferocityFever || !isFighterAlive(source)) return;
-  const plan = openedBreakthrough(source, "ferocity", (effects) => effects.ferocity);
-  const intimidate = source.def.passive.looming?.intimidate;
-  if (plan?.kind !== "spreadingDread" || !intimidate) return;
-  for (let n = 0; n < plan.stacks; n += 1) {
-    for (const other of state.fighters) {
-      if (other === feared || other.side !== feared.side || !isFighterAlive(other) || distance(feared, other) > plan.radius) continue;
-      applyIntimidate(other, intimidate, events, state, sourceId, false);
-    }
-  }
 }
 function applyFear(target, seconds, immunitySeconds, events, state, sourceId, force) {
   if (!isFighterAlive(target) || !Number.isFinite(seconds) || seconds <= 0) return false;
@@ -5220,7 +5762,6 @@ function applyFear(target, seconds, immunitySeconds, events, state, sourceId, fo
   if (!was) {
     events.push({ kind: "status", fighterId: target.id, status: "fear", active: true });
     cleanseControlWithAdagio(state, target, events);
-    spreadDread(target, sourceId, events, state);
   }
   return target.fear !== null;
 }
@@ -5691,7 +6232,6 @@ function applySkillStatuses(target, skill, events, state, sourceId, critical = f
 function statusEffectsLandThisHit(attacker, skill, useUltimate) {
   const every = useUltimate ? void 0 : attacker.def.basic.statusEffectEvery;
   if (every === void 0 || (skill.statusEffects?.length ?? 0) === 0) return true;
-  if (!useUltimate && attacker.ferocityFever && openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity)?.kind === "pingStorm") return true;
   attacker.statusHitCount += 1;
   if (attacker.statusHitCount < every) return false;
   attacker.statusHitCount = 0;
@@ -5700,7 +6240,6 @@ function statusEffectsLandThisHit(attacker, skill, useUltimate) {
 function completesStatusCycle(attacker, skill, useUltimate) {
   const every = useUltimate ? void 0 : attacker.def.basic.statusEffectEvery;
   if (every === void 0 || (skill.statusEffects?.length ?? 0) === 0) return false;
-  if (!useUltimate && attacker.ferocityFever && openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity)?.kind === "pingStorm") return true;
   return attacker.statusHitCount + 1 >= every;
 }
 function currentBasic(attacker) {
@@ -5726,15 +6265,20 @@ function basicStepIsGuaranteedCritical(attacker) {
 function reloadAfterBasic(attacker, state, events) {
   const refill = attacker.def.passive.kind === "refillMagazine" ? attacker.def.passive.refill : void 0;
   if (!refill || attacker.basicCycleStep !== 0) return void 0;
+  const feverMagazine = attacker.refillFinisherAll;
   attacker.refillFinisherAll = false;
+  const dual = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
+  if (dual?.kind === "doubleMag" && feverMagazine && attacker.ferocityFever && !attacker.bt.doubleMagUsed) {
+    attacker.bt.doubleMagUsed = true;
+    attacker.refillFinisherAll = true;
+    return void 0;
+  }
   const sip = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   if (sip?.kind === "reloadSip" && isFighterAlive(attacker)) {
     const room = Math.max(0, attacker.maxHp * sip.capMaxHpPercent / 100 - attacker.shield.amount);
     const gained = Math.min(room, attacker.maxHp * sip.shieldMaxHpPercent / 100);
     if (gained >= 1) grantShield(state, attacker, attacker.id, Math.round(gained), events);
   }
-  const quick = openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity);
-  if (quick?.kind === "quickReload" && attacker.ferocityFever) return Math.min(refill.reloadSeconds, quick.reloadSeconds);
   return refill.reloadSeconds;
 }
 function grantShield(state, target, providerId, requested, events, weight = 1) {
@@ -5959,10 +6503,8 @@ function grantShieldFromDamage(attacker, dealt, events, state) {
 function gainElation(target) {
   const plan = target.def.passive.elation;
   if (target.def.passive.kind !== "painfulElation" || plan === void 0 || !isFighterAlive(target)) return;
-  const heat = target.ferocityFever ? openedBreakthrough(target, "ferocity", (effects) => effects.ferocity) : void 0;
-  const wound = openedBreakthrough(target, "passive", (effects) => effects.passive);
-  const maxStacks = plan.maxStacks + (heat?.kind === "heatOverflow" ? heat.extraMaxStacks : 0);
-  const regen = Math.round((plan.maxHpRegenPercentPerStack + (wound?.kind === "sweeterWound" ? wound.regenPercentPerStack : 0)) * 1e3) / 1e3;
+  const maxStacks = plan.maxStacks;
+  const regen = plan.maxHpRegenPercentPerStack;
   target.elation = {
     stacks: Math.min(maxStacks, (target.elation?.stacks ?? 0) + 1),
     remaining: plan.seconds,
@@ -6039,33 +6581,20 @@ function extraStrike(owner, victim, power, stat, damageType, state, events) {
     events.push({ kind: "death", fighterId: victim.id, sourceId: owner.id });
   }
 }
-function contagiousFrenzy(attacker, target, state, events) {
-  if (!attacker.frenzy?.sourceId || attacker.side !== target.side || !isFighterAlive(target)) return;
-  const source = findFighter(state, attacker.frenzy.sourceId);
-  if (!source) return;
-  const plan = openedBreakthrough(source, "ultimate", (effects) => effects.ultimate);
-  const curse = source.def.basic.statusEffects?.find((effect) => effect.kind === "curse");
-  if (plan?.kind !== "contagiousFrenzy" || !curse) return;
-  for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(target, curse, events, state, source.id);
-}
 function reactTouchBurst(target, attacker, state, events) {
   if (attacker.side === target.side || attacker.shimmer === null || !isFighterAlive(attacker) || !isFighterAlive(target)) return;
   if (openedBreakthrough(target, "passive", (effects) => effects.passive)?.kind !== "touchBurst") return;
   applyShimmer(target, attacker, target.def.basic, state, events);
 }
-function reactFrostCling(target, attacker, state, events) {
-  if (attacker.side === target.side || !target.ferocityFever || target.shield.amount <= 0 || !isFighterAlive(attacker) || !isFighterAlive(target)) return;
-  const plan = openedBreakthrough(target, "ferocity", (effects) => effects.ferocity);
-  const chill = target.def.basic.statusEffects?.find((effect) => effect.kind === "chill");
-  if (plan?.kind !== "frostCling" || !chill) return;
-  for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(attacker, chill, events, state, target.id);
-}
-function sodaFizz(attacker, target, state, events) {
+function sodaPop(attacker, target, state, events) {
   const plan = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   const chill = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "chill");
-  if (plan?.kind !== "sodaFizz" || !chill) return;
+  if (plan?.kind !== "sodaPop" || !chill) return;
+  attacker.bt.sodaCount += 1;
+  if (attacker.bt.sodaCount < plan.everyHits) return;
+  attacker.bt.sodaCount = 0;
   for (const other of state.fighters) {
-    if (other.side === attacker.side || other.id === target.id || !isFighterAlive(other) || distance(target, other) > plan.radius) continue;
+    if (other.side === attacker.side || !isFighterAlive(other) || distance(target, other) > plan.radius) continue;
     for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(other, chill, events, state, attacker.id);
   }
 }
@@ -6219,26 +6748,32 @@ function shareShieldFromDamage(attacker, percent, dealt, state, events) {
   const share = Math.round(dealt * percent / 100 / allies.length);
   for (const ally of allies) grantShield(state, ally, attacker.id, share, events);
 }
-function consumeShellGuard(fighter, state, events) {
-  const plan = fighter.def.passive.shellGuard;
-  if (!plan || (fighter.shellGuard?.stacks ?? 0) < plan.maxStacks || fighter.shellGuardCooldownRemaining > 0) return;
-  fighter.shellGuard = null;
-  const fever = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : void 0;
-  fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
-  const thick = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+function consumeShellGuard(fighter, state, events, augment = false) {
+  const plan = augment ? fighter.augmentShellGuard : fighter.def.passive.shellGuard;
+  const shell = augment ? fighter.augmentShellState : fighter.shellGuard;
+  const cooldown = augment ? fighter.augmentShellCooldown : fighter.shellGuardCooldownRemaining;
+  if (!plan || (shell?.stacks ?? 0) < plan.maxStacks || cooldown > 0) return;
+  const fever = !augment && fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "shellResolve" ? fighter.def.ferocityTrait : void 0;
+  if (augment) {
+    fighter.augmentShellState = null;
+    fighter.augmentShellCooldown = plan.cooldownSeconds;
+  } else {
+    fighter.shellGuard = null;
+    fighter.shellGuardCooldownRemaining = fever?.shellCooldownSecondsDuringFever ?? plan.cooldownSeconds;
+  }
+  const thick = !augment ? openedBreakthrough(fighter, "passive", (effects) => effects.passive) : void 0;
   grantProvidedShield(state, fighter, fighter, thick?.kind === "thickShell" ? thick.selfShieldMaxHpPercent : plan.selfShieldMaxHpPercent, events);
   const ally = state.fighters.filter((candidate) => candidate.id !== fighter.id && candidate.side === fighter.side && isFighterAlive(candidate)).reduce((best, candidate) => !best || candidate.hp / candidate.maxHp < best.hp / best.maxHp ? candidate : best, void 0);
   if (ally) grantProvidedShield(state, fighter, ally, thick?.kind === "thickShell" ? thick.allyShieldMaxHpPercent : plan.lowestHpAllyShieldMaxHpPercent, events);
 }
-function gainShellGuard(target, stacks, state, events) {
-  const plan = target.def.passive.shellGuard;
-  if (target.def.passive.kind !== "shellGuard" || !plan || !isFighterAlive(target) || stacks <= 0) return;
-  target.shellGuard = {
-    stacks: Math.min(plan.maxStacks, (target.shellGuard?.stacks ?? 0) + stacks),
-    remaining: plan.durationSeconds,
-    total: plan.durationSeconds
-  };
-  consumeShellGuard(target, state, events);
+function gainShellGuard(target, stacks, state, events, augment = false) {
+  const plan = augment ? target.augmentShellGuard : target.def.passive.shellGuard;
+  if (!augment && target.def.passive.kind !== "shellGuard" || !plan || !isFighterAlive(target) || stacks <= 0) return;
+  const previous = augment ? target.augmentShellState : target.shellGuard;
+  const next = { stacks: Math.min(plan.maxStacks, (previous?.stacks ?? 0) + stacks), remaining: plan.durationSeconds, total: plan.durationSeconds };
+  if (augment) target.augmentShellState = next;
+  else target.shellGuard = next;
+  consumeShellGuard(target, state, events, augment);
 }
 function tickElationRegen(fighter, dt, state, events) {
   const elation = fighter.elation;
@@ -6252,6 +6787,13 @@ function tickElationRegen(fighter, dt, state, events) {
   const percent = elation.stacks * elation.regenPercentPerStack * elationHealMultiplier(fighter);
   const amount = applyHealing(state, fighter, fighter.maxHp * percent / 100, fighter.id);
   pushHeal(events, fighter, amount, "passive");
+  const share = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+  if (share?.kind === "sweetShare" && elation.stacks >= elation.maxStacks) {
+    for (const ally of aliveFighters(state, fighter.side)) {
+      if (ally.id === fighter.id) continue;
+      pushHeal(events, ally, applyHealing(state, ally, fighter.maxHp * percent / 100 * share.sharePercent / 100, fighter.id), "passive");
+    }
+  }
 }
 function tickElation(fighter, dt) {
   const elation = fighter.elation;
@@ -6261,6 +6803,7 @@ function tickElation(fighter, dt) {
 }
 function raiseBulwark(fighter, plan) {
   fighter.bt.bulwarkTaken = 0;
+  fighter.bt.bulwarkPulses = 0;
   fighter.bulwark = {
     remaining: plan.seconds,
     total: plan.seconds,
@@ -6290,34 +6833,43 @@ function tickBulwark(fighter, dt, state, events) {
     return;
   }
   fighter.bulwark = null;
-  payBulwarkBack(fighter, state, events);
 }
-function payBulwarkBack(fighter, state, events) {
-  const taken = fighter.bt.bulwarkTaken;
-  fighter.bt.bulwarkTaken = 0;
-  const effect = openedBreakthrough(fighter, "ultimate", (effects) => effects.ultimate);
-  if (effect?.kind !== "bulwarkPayback" || !isFighterAlive(fighter) || taken <= 0) return;
-  const amount = Math.max(1, Math.round(Math.min(taken * effect.returnPercent / 100, fighter.maxHp * effect.capMaxHpPercent / 100)));
-  for (const other of state.fighters) {
-    if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > effect.radius) continue;
-    const hpBefore = other.hp;
-    applyDamage(other, amount, events, state);
-    addContribution(state.contributions, fighter.id, "attack", hpBefore - other.hp, "attackPower");
-    events.push({
-      kind: "attack",
-      attackerId: fighter.id,
-      targetId: other.id,
-      skill: "ultimate",
-      amount,
-      contributionAmount: amount,
-      critical: false,
-      animate: false,
-      damageType: "true"
-    });
-    if (!isFighterAlive(other)) {
-      clearDefeatedStatuses(other);
-      events.push({ kind: "death", fighterId: other.id, sourceId: fighter.id });
+function releaseHeatBurst(guardian, state, events) {
+  const plan = openedBreakthrough(guardian, "ultimate", (effects) => effects.ultimate);
+  if (plan?.kind !== "heatBurst" || !isFighterAlive(guardian)) return;
+  const threshold = guardian.maxHp * plan.thresholdPercent / 100;
+  while (guardian.bt.bulwarkTaken >= threshold && guardian.bt.bulwarkPulses < plan.maxPulses) {
+    guardian.bt.bulwarkTaken -= threshold;
+    guardian.bt.bulwarkPulses += 1;
+    const amount = Math.max(1, Math.round(guardian.maxHp * plan.pulsePercent / 100));
+    for (const other of state.fighters) {
+      if (other.side === guardian.side || !isFighterAlive(other) || distance(guardian, other) > plan.radius) continue;
+      const hpBefore = other.hp;
+      applyDamage(other, amount, events, state);
+      addContribution(state.contributions, guardian.id, "attack", hpBefore - other.hp, "attackPower");
+      events.push({
+        kind: "attack",
+        attackerId: guardian.id,
+        targetId: other.id,
+        skill: "ultimate",
+        amount,
+        contributionAmount: amount,
+        critical: false,
+        animate: false,
+        damageType: "true"
+      });
+      if (!isFighterAlive(other)) {
+        clearDefeatedStatuses(other);
+        events.push({ kind: "death", fighterId: other.id, sourceId: guardian.id });
+      }
     }
+    events.push({
+      kind: "areaImpact",
+      attackerId: guardian.id,
+      ultimate: true,
+      damageType: "true",
+      area: { shape: "radial", x: guardian.x, y: guardian.y, radius: plan.radius }
+    });
   }
 }
 function tickFerocityRegen(fighter, dt, state, events) {
@@ -6547,12 +7099,12 @@ function openedBreakthrough(fighter, slot, pick2) {
   const effects = fighter.def.breakthroughEffects;
   return effects ? pick2(effects) : void 0;
 }
-function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
+function triggerBreakthroughOnKill(attacker, useUltimate, _victim) {
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
-  const shallows = attacker.def.basic.shallows;
-  if (!useUltimate && victim && shallows && attacker.shallowPools.length > 0 && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "huntChain" && isSubmerged(attacker, victim)) {
-    attacker.shallowLeapCount = Math.max(attacker.shallowLeapCount, shallows.leapEveryHits - 1);
+  const haste = attacker.def.passive.killHaste;
+  if (haste && isFighterAlive(attacker)) {
+    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
   }
   if (useUltimate) {
     attacker.energy = Math.min(
@@ -6648,10 +7200,6 @@ function tickUltimateBreakthrough(fighter, dt, state, events) {
   }
 }
 function applyFerocityBreakthrough(fighter, state, events) {
-  const plan = fighter.def.passive.elation;
-  if (plan !== void 0 && fighter.elation !== null && fighter.elation.maxStacks > plan.maxStacks) {
-    fighter.elation = { ...fighter.elation, maxStacks: plan.maxStacks, stacks: Math.min(fighter.elation.stacks, plan.maxStacks) };
-  }
   const taken = fighter.feverDamageTaken;
   const healingDone = fighter.bt.feverHealingDone;
   fighter.bt.ambushCritReady = false;
@@ -6935,6 +7483,16 @@ function tickBossBreakthroughs(fighter, dt, state, events) {
       bt.sunken = remaining > 0 ? { ...bt.sunken, remaining } : null;
     }
   }
+  if (bt.tidalSurgeIn >= 0 && isFighterAlive(fighter) && fighter.stunnedFor <= 0) {
+    const surge = fighter.def.passive.tidalSurge;
+    bt.tidalSurgeIn -= dt;
+    if (surge && bt.tidalSurgeIn <= 0) {
+      bt.tidalSurgeIn += surge.intervalSeconds;
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        applyCombatStatusEffect(foe, { kind: "knockback", ...surge.knockback }, events, state, fighter.id, false);
+      }
+    }
+  }
   if (bt.pressureCrackIn < 0 || !isFighterAlive(fighter)) return;
   const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
   if (plan?.kind !== "pressureCrack") return;
@@ -6992,16 +7550,17 @@ function potentReactionSeconds(attacker, base) {
   const plan = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   return plan?.kind === "potentReaction" ? Math.max(base, plan.poisonSeconds) : base;
 }
-function applyReagentOnHit(attacker, target, stacks, state, events) {
-  const contract = attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : void 0;
+function applyReagentOnHit(attacker, target, stacks, state, events, augmentContract) {
+  const contract = augmentContract ?? (attacker.def.passive.kind === "reagentReaction" ? attacker.def.passive.reagentReaction : void 0);
+  const sourceKey = augmentContract ? `${attacker.id}:expedition` : attacker.id;
   if (!contract || !stacks || stacks <= 0 || !isFighterAlive(target)) return;
   const quick = feverBreakthrough(attacker);
   const threshold = quick?.kind === "quickReaction" ? Math.min(contract.maxStacks, quick.maxStacks) : contract.maxStacks;
-  const previous = target.reagents[attacker.id]?.stacks ?? 0;
+  const previous = target.reagents[sourceKey]?.stacks ?? 0;
   const next = Math.min(threshold, previous + stacks);
-  target.reagents[attacker.id] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
+  target.reagents[sourceKey] = { stacks: next, remaining: contract.seconds, total: contract.seconds };
   if (next < threshold) return;
-  delete target.reagents[attacker.id];
+  delete target.reagents[sourceKey];
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "reagentReaction", intensity: 1 } });
   const poisonEffect = {
     kind: "poison",
@@ -7010,10 +7569,10 @@ function applyReagentOnHit(attacker, target, stacks, state, events) {
     abilityPercentPerSecond: POISON.abilityPercentPerSecond
   };
   refreshPoison(target, poisonEffect.seconds, poisonAmountPerSecond(attacker, target, poisonEffect, state), events, attacker.id);
-  const ownPrevious = target.reagentResistanceReductions[attacker.id]?.amount ?? 0;
+  const ownPrevious = target.reagentResistanceReductions[sourceKey]?.amount ?? 0;
   const effectiveBeforeOwn = Math.max(0, defensiveDefinition(target, state).def.stats.res + ownPrevious);
   const requested = Math.max(0, target.def.stats.res * contract.resistanceReductionPercent / 100);
-  target.reagentResistanceReductions[attacker.id] = {
+  target.reagentResistanceReductions[sourceKey] = {
     amount: Math.min(requested, effectiveBeforeOwn),
     remaining: contract.resistanceReductionSeconds,
     total: contract.resistanceReductionSeconds
@@ -7252,10 +7811,11 @@ function clearDefeatedStatuses(fighter) {
   fighter.prickle = null;
   fighter.fortress = null;
   fighter.shellGuard = null;
+  fighter.augmentShellState = null;
   fighter.bulwark = null;
   fighter.overpaint = null;
+  if (fighter.curse) fighter.bt.curseDeathStacks = fighter.curse.stacks;
   fighter.curse = null;
-  if (fighter.frenzy?.sourceId) fighter.bt.frenzyDeathFrom = fighter.frenzy.sourceId;
   fighter.frenzy = null;
   fighter.knockback = null;
   fighter.butcher = null;
@@ -7312,9 +7872,10 @@ function attackSpeedParts(fighter, state) {
   const tantrumPercent = fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "sleepTantrum" ? fighter.def.ferocityTrait.attackSpeedPercent : 0;
   const groggyPercent = fighter.groggy?.attackSpeedPercent ?? 0;
   const sunkenPercent = sunkenSlowPercent(fighter);
-  const traitHastePercent = fighter.traitHaste?.attackSpeedPercent ?? 0;
+  const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
+  const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -7389,15 +7950,129 @@ function defensiveDefinition(target, state) {
     res: Math.max(0, target.def.stats.res * (1 + bonus / 100) * (1 + furCoat / 100) * (1 + linked / 100) * (1 + carapace / 100) * (1 + mural / 100) * (1 + bulwark / 100) * (1 + target.augmentResistancePercent / 100) * shred - reagentReduction + (torika?.resistanceBonus ?? 0))
   } } };
 }
+function applyTraitHaste(target, payload, maxStacks) {
+  const stacks = maxStacks > 1 ? Math.min(maxStacks, (target.traitHaste === null ? 0 : target.traitHasteStacks) + 1) : 1;
+  const attackSpeedPercent = payload.attackSpeedPercent * stacks;
+  const moveSpeedPercent = payload.moveSpeedPercent * stacks;
+  const stronger = (target.traitHaste?.attackSpeedPercent ?? 0) > attackSpeedPercent;
+  if (!stronger) {
+    target.traitHaste = { remaining: payload.seconds, attackSpeedPercent, moveSpeedPercent };
+    target.traitHasteStacks = stacks;
+  } else target.traitHaste = { ...target.traitHaste, remaining: Math.max(target.traitHaste.remaining, payload.seconds) };
+}
+function strongerSharedTagActive(target, incoming) {
+  const active3 = incoming.kind === "intimidate" ? target.intimidation : incoming.kind in target ? target[incoming.kind] : void 0;
+  const previous = target.appliedStatusContracts[incoming.kind];
+  if (!active3 || !previous) return false;
+  const numericFields = ["maxHpPercentPerSecond", "damageTakenPercent", "resistancePercent", "speedPercentPerStack", "burstPower", "offenseShredPercent", "defensePower", "resistancePower", "stunSeconds", "wakeResistancePower", "sleepSeconds", "fearSeconds", "seconds", "holdSeconds", "slowPercent"];
+  return numericFields.some((field) => field in incoming && field in previous && Number(previous[field]) > Number(incoming[field]));
+}
+function augmentControlAvailable(state, target) {
+  return !target.augmentControlAwaitingAttack && controlRemaining(target) <= 1e-8 && state.elapsed + 1e-8 >= target.augmentControlReadyAt;
+}
+function reserveAugmentRecovery(state, target, capNewControl = false) {
+  if (capNewControl) {
+    const cap = EXPEDITION_CC_POLICY.maxSeconds;
+    target.stunnedFor = Math.min(cap, target.stunnedFor);
+    target.staggeredFor = Math.min(cap, target.staggeredFor);
+    if (target.taunted) target.taunted = { ...target.taunted, remaining: Math.min(cap, target.taunted.remaining) };
+    if (target.sleep) target.sleep = { ...target.sleep, remaining: Math.min(cap, target.sleep.remaining) };
+    if (target.frozen) target.frozen = { ...target.frozen, remaining: Math.min(cap, target.frozen.remaining) };
+    if (target.fear) target.fear = { ...target.fear, remaining: Math.min(cap, target.fear.remaining) };
+    if (target.frenzy) target.frenzy = { ...target.frenzy, remaining: Math.min(cap, target.frenzy.remaining) };
+    if (target.knockback) target.knockback = { ...target.knockback, remaining: Math.min(cap, target.knockback.remaining) };
+  }
+  const remaining = controlRemaining(target);
+  if (remaining > 1e-8) {
+    target.augmentControlReadyAt = Math.max(target.augmentControlReadyAt, state.elapsed + remaining + EXPEDITION_CC_POLICY.recoverySeconds);
+    if (capNewControl) {
+      target.augmentControlAwaitingAttack = true;
+      target.augmentControlBlockedActionSerial = target.augmentActionSerial;
+    }
+  }
+}
 function triggerCombatAugments(state, owner, trigger, events, hitTarget) {
+  if (trigger === "onKill" && effectsFor(state, owner).some((effect) => effect.kind === "sameTargetStreakPercent" && effect.carryOnKill === true && augmentAppliesTo(effect, owner.def.id))) {
+    owner.traitStreakCarry = Math.floor(owner.traitStreakStacks / 2);
+  }
   for (const { effect, key } of triggeredAugments(state, owner, trigger)) {
     const payload = effect.payload;
     if (payload.kind === "ultimateCostReduction") continue;
+    if (trigger === "onLowHp" && effect.whenHpAtOrBelowPercent !== void 0 && (!isFighterAlive(owner) || owner.maxHp <= 0 || owner.hp / owner.maxHp * 100 > effect.whenHpAtOrBelowPercent)) continue;
+    if (effect.everyN !== void 0) {
+      const runtime = owner.augmentRuntime[key] ?? { triggers: 0, lastAt: Number.NEGATIVE_INFINITY };
+      if (trigger !== "onDamaged" && runtime.seenAction === owner.augmentActionSerial) continue;
+      runtime.seenAction = owner.augmentActionSerial;
+      runtime.hits = (runtime.hits ?? 0) + 1;
+      owner.augmentRuntime[key] = runtime;
+      if (runtime.hits % Math.max(1, effect.everyN) !== 0) continue;
+    }
+    if (payload.kind === "ferocity" && "points" in payload) {
+      if (consumeAugmentTrigger(state, owner, key, effect)) gainFerocity(owner, payload.points, state, events);
+      continue;
+    }
+    if (payload.kind === "cleanse") {
+      if (consumeAugmentTrigger(state, owner, key, effect)) cleanseAllDebuffs(owner);
+      continue;
+    }
+    if (payload.kind === "teamBuff") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const current = owner.tailwindFor > 0 ? owner.tailwind : null;
+      const incoming = payload.buff;
+      const protectedBuff = current && (current.attackSpeedPercent > incoming.attackSpeedPercent || current.kind === "order" && (incoming.kind !== "order" || current.criticalChancePoints > incoming.criticalChancePoints || current.lifeStealPoints > incoming.lifeStealPoints) || current.kind === "tailwind" && (incoming.kind !== "tailwind" || current.moveSpeedPercent > incoming.moveSpeedPercent || (current.maxHpRegenPercentPerSecond ?? 0) > (incoming.maxHpRegenPercentPerSecond ?? 0)));
+      if (!protectedBuff) applyTeamBuff(owner, { ...incoming, ...incoming.kind === "resonance" ? { sourceId: owner.id } : {} });
+      continue;
+    }
+    if (payload.kind === "regeneration") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const current = owner.regeneration;
+      if (current && current.percentPerTick > payload.maxHpPercentPerSecond) continue;
+      owner.regeneration = { remaining: current?.percentPerTick === payload.maxHpPercentPerSecond ? Math.max(current.remaining, payload.seconds) : payload.seconds, tickIn: current?.tickIn ?? 1, percentPerTick: payload.maxHpPercentPerSecond };
+      continue;
+    }
+    if (payload.kind === "stealth") {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      owner.stealthFor = Math.max(owner.stealthFor, payload.seconds);
+      for (const enemy of state.fighters) {
+        if (enemy.side === owner.side || enemy.targetId !== owner.id) continue;
+        enemy.targetId = null;
+        enemy.engaged = false;
+      }
+      continue;
+    }
+    if (payload.kind === "frozen") {
+      if (!hitTarget || !isFighterAlive(hitTarget) || !augmentControlAvailable(state, hitTarget) || hitTarget.frozen || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const percent = Math.min(payload.maxHpPercentOnExpire, Math.max(0, 10 - hitTarget.augmentFixedDamagePercent));
+      if (percent <= 0) continue;
+      hitTarget.augmentFixedDamagePercent += percent;
+      applyFrozen(hitTarget, Math.min(EXPEDITION_CC_POLICY.maxSeconds, payload.seconds * owner.statusPotencyMultiplier), percent * (hitTarget.immortal ? 0.25 : 1), events, state);
+      reserveAugmentRecovery(state, hitTarget, true);
+      continue;
+    }
+    if (payload.kind === "shell") {
+      if (consumeAugmentTrigger(state, owner, key, effect)) for (let i = 0; i < payload.stacks; i++) gainShellGuard(owner, 1, state, events, true);
+      continue;
+    }
+    if (payload.kind === "reagent") {
+      if (hitTarget && isFighterAlive(hitTarget) && consumeAugmentTrigger(state, owner, key, effect)) for (let i = 0; i < payload.stacks; i++) applyReagentOnHit(owner, hitTarget, 1, state, events, payload.contract);
+      continue;
+    }
     if (payload.kind === "haste") {
       if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
-      const stronger = (owner.traitHaste?.attackSpeedPercent ?? 0) > payload.attackSpeedPercent;
-      if (!stronger) owner.traitHaste = { remaining: payload.seconds, attackSpeedPercent: payload.attackSpeedPercent, moveSpeedPercent: payload.moveSpeedPercent };
-      else owner.traitHaste = { ...owner.traitHaste, remaining: Math.max(owner.traitHaste.remaining, payload.seconds) };
+      applyTraitHaste(owner, payload, effect.limits.maxStacks);
+      continue;
+    }
+    if (payload.kind === "hasteExtend") {
+      if (owner.traitHaste === null || !consumeAugmentTrigger(state, owner, key, effect)) continue;
+      const add = Math.min(payload.seconds, payload.maxExtraSeconds - owner.traitHasteExtended);
+      if (add <= 0) continue;
+      owner.traitHaste = { ...owner.traitHaste, remaining: owner.traitHaste.remaining + add };
+      owner.traitHasteExtended += add;
+      continue;
+    }
+    if (payload.kind === "ferocity" && "maxPercent" in payload) {
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      gainFerocity(owner, ferocityMaxOf(owner.def) * payload.maxPercent / 100, state, events);
       continue;
     }
     if (payload.kind === "shield") {
@@ -7428,11 +8103,32 @@ function triggerCombatAugments(state, owner, trigger, events, hitTarget) {
         clearDefeatedStatuses(target);
         events.push({ kind: "death", fighterId: target.id, sourceId: owner.id });
       }
-    } else if (payload.kind === "status" && consumeAugmentTrigger(state, owner, key, effect)) {
-      applyCombatStatusEffect(target, payload.status, events, state, owner.id);
+    } else if (payload.kind === "status") {
+      const controlled = effect.everyN !== void 0 && (EXPEDITION_CONTROL_TAGS.has(payload.status.kind) || payload.status.kind === "concussion" && knockbackSlamOf(owner) !== void 0);
+      if (controlled && !augmentControlAvailable(state, target)) continue;
+      if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
+      let status = controlled ? capExpeditionControl(payload.status, owner.statusPotencyMultiplier) : payload.status;
+      if (effect.everyN !== void 0 && strongerSharedTagActive(target, status)) continue;
+      if (effect.everyN !== void 0 && (status.kind === "concussion" || status.kind === "bleed")) {
+        const requested = status.kind === "concussion" ? status.maxHpPercent : status.seconds * status.maxHpPercentPerSecond;
+        const percent = Math.min(2, requested, Math.max(0, 10 - target.augmentFixedDamagePercent));
+        if (percent <= 0) continue;
+        target.augmentFixedDamagePercent += percent;
+        const adjusted = percent * (target.immortal ? 0.25 : 1);
+        status = status.kind === "concussion" ? { ...status, maxHpPercent: adjusted, criticalMaxHpPercent: adjusted } : { ...status, maxHpPercentPerSecond: adjusted / Math.max(1e-3, status.seconds * owner.statusPotencyMultiplier) };
+      }
+      for (let count2 = 0; count2 < (effect.applications ?? 1) && isFighterAlive(target); count2 += 1) {
+        if (controlled && !augmentControlAvailable(state, target)) break;
+        applyCombatStatusEffect(target, status, events, state, owner.id);
+        if (controlled) reserveAugmentRecovery(state, target, true);
+      }
     } else if (payload.kind === "heal" && consumeAugmentTrigger(state, owner, key, effect)) {
       const amount = applyHealing(state, target, target.maxHp * payload.maxHpPercent / 100, owner.id);
       pushHeal(events, target, amount, "passive");
+      if (payload.thenOverSeconds !== void 0 && payload.thenOverSeconds > 0) {
+        const perSecond = target.maxHp * payload.maxHpPercent / 100 / payload.thenOverSeconds;
+        target.traitRegen = { remaining: payload.thenOverSeconds, perSecond: perSecond + (target.traitRegen?.perSecond ?? 0) };
+      }
     }
   }
 }
@@ -7492,7 +8188,7 @@ function moveSpeed(fighter, state) {
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
 }
 function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
@@ -7636,14 +8332,9 @@ function grantAllyEnergy(attacker, skill, state) {
   if (amount <= 0) return;
   const allies = aliveFighters(state, attacker.side);
   for (const ally of allies) giveEnergy(ally, amount);
-  const pull2 = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : void 0;
-  if (pull2?.kind === "windPull") {
-    const lowest = allies.reduce((low, ally) => !low || ally.energy < low.energy ? ally : low, void 0);
-    if (lowest) giveEnergy(lowest, pull2.extraEnergy);
-  }
   const step2 = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (step2?.kind === "windStep") {
-    const buff = { kind: "tailwind", attackSpeedPercent: step2.attackSpeedPercent, moveSpeedPercent: 0, seconds: step2.seconds, maxHpRegenPercentPerSecond: 0 };
+    const buff = { kind: "tailwind", attackSpeedPercent: 0, moveSpeedPercent: step2.moveSpeedPercent, seconds: step2.seconds, maxHpRegenPercentPerSecond: 0 };
     for (const ally of allies) if (ally.tailwindFor <= 0) applyTeamBuff(ally, buff);
   }
 }
@@ -7680,17 +8371,18 @@ function resolveChainCollision(flyer, state, events) {
   chain2.hit.push(struck.id);
   applyConcussion(struck, concussion, false, events, state, source.id, true);
 }
-function tickFinalChapter(fighter, state, events) {
-  const sourceId = fighter.bt.frenzyDeathFrom;
-  if (sourceId === null || isFighterAlive(fighter)) return;
-  fighter.bt.frenzyDeathFrom = null;
-  const source = findFighter(state, sourceId);
-  const plan = source?.ferocityFever ? openedBreakthrough(source, "ferocity", (effects) => effects.ferocity) : void 0;
+function tickAfterglow(fighter, state, events) {
+  const stacks = fighter.bt.curseDeathStacks;
+  if (stacks <= 0 || isFighterAlive(fighter)) return;
+  fighter.bt.curseDeathStacks = 0;
+  const source = state.fighters.find((other) => other.side !== fighter.side && isFighterAlive(other) && openedBreakthrough(other, "ultimate", (effects) => effects.ultimate)?.kind === "afterglow");
+  const plan = source ? openedBreakthrough(source, "ultimate", (effects) => effects.ultimate) : void 0;
   const curse = source?.def.basic.statusEffects?.find((effect) => effect.kind === "curse");
-  if (!source || plan?.kind !== "finalChapter" || !curse) return;
+  if (!source || plan?.kind !== "afterglow" || !curse) return;
+  const carry = Math.min(stacks, plan.maxCarry);
   for (const other of state.fighters) {
     if (other.side !== fighter.side || other.id === fighter.id || !isFighterAlive(other) || distance(fighter, other) > plan.radius) continue;
-    for (let i = 0; i < plan.stacks; i += 1) applyCombatStatusEffect(other, curse, events, state, source.id);
+    for (let i = 0; i < carry; i += 1) applyCombatStatusEffect(other, curse, events, state, source.id);
   }
 }
 function shatterIce(frozen, state, events) {
@@ -7799,6 +8491,14 @@ function grantDuoCharge(attacker, skill, state, events) {
     duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + charge.energy);
   }
   if (charge.ferocity > 0) gainFerocity(duo, charge.ferocity, state, events);
+  const twin = attacker.bt.sideDuoId !== null ? findFighter(state, attacker.bt.sideDuoId) : void 0;
+  if (twin !== void 0 && isFighterAlive(twin)) {
+    const twinThreshold = twin.def.ultimate.chargeStartsAtHpPercent;
+    if (charge.energy > 0 && (twinThreshold === void 0 || twin.hp / twin.maxHp * 100 <= twinThreshold)) {
+      twin.energy = Math.min(ultimateEnergyCap(twin), twin.energy + charge.energy);
+    }
+    if (charge.ferocity > 0) gainFerocity(twin, charge.ferocity, state, events);
+  }
 }
 function activeOrder(fighter) {
   return fighter.tailwindFor > 0 && fighter.tailwind?.kind === "order" ? fighter.tailwind : void 0;
@@ -7886,7 +8586,6 @@ function gainFerocity(fighter, base, state, events) {
     fighter.ferocityFever = true;
     fighter.feverDamageTaken = 0;
     fighter.bt.feverHealingDone = 0;
-    fighter.bt.crescendoHits = 0;
     const feverBreakthrough2 = openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity);
     if (feverBreakthrough2?.kind === "feverAmbush") {
       fighter.stealthFor = Math.max(fighter.stealthFor, feverBreakthrough2.stealthSeconds);
@@ -7895,7 +8594,81 @@ function gainFerocity(fighter, base, state, events) {
         other.engaged = false;
       }
     }
-    if (feverBreakthrough2?.kind === "ambushCrit") fighter.bt.ambushCritReady = true;
+    if (feverBreakthrough2?.kind === "feverGale") {
+      const gale = { kind: "tailwind", attackSpeedPercent: feverBreakthrough2.speedPercent, moveSpeedPercent: feverBreakthrough2.speedPercent, seconds: feverBreakthrough2.seconds, maxHpRegenPercentPerSecond: 0 };
+      for (const ally of aliveFighters(state, fighter.side)) applyTeamBuff(ally, gale);
+    }
+    if (feverBreakthrough2?.kind === "overture" && fighter.def.ferocityTrait.effectId === "crescendoStaccato") {
+      const stagger = fighter.def.ferocityTrait.staggerSeconds;
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+        extraStrike(fighter, foe, feverBreakthrough2.powerPercent, "atk", "magical", state, events);
+        if (isFighterAlive(foe)) events.push(...applyStagger(foe, stagger, state));
+      }
+      events.push({
+        kind: "areaImpact",
+        attackerId: fighter.id,
+        ultimate: false,
+        damageType: "magical",
+        area: { shape: "radial", x: fighter.x, y: fighter.y, radius: feverBreakthrough2.radius }
+      });
+    }
+    if (feverBreakthrough2?.kind === "readersGather" || feverBreakthrough2?.kind === "coldSnap") {
+      const status = fighter.def.basic.statusEffects?.find((effect) => effect.kind === (feverBreakthrough2.kind === "readersGather" ? "curse" : "chill"));
+      if (status) {
+        for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+          if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+          for (let i = 0; i < feverBreakthrough2.stacks; i += 1) applyCombatStatusEffect(foe, status, events, state, fighter.id);
+        }
+      }
+    }
+    if (feverBreakthrough2?.kind === "doubleMag") fighter.bt.doubleMagUsed = false;
+    if (feverBreakthrough2?.kind === "roarEntry") {
+      const intimidate = fighter.def.passive.looming?.intimidate;
+      if (intimidate) {
+        for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+          if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+          for (let i = 0; i < feverBreakthrough2.stacks; i += 1) applyIntimidate(foe, intimidate, events, state, fighter.id, false);
+        }
+      }
+    }
+    if (feverBreakthrough2?.kind === "chainEntry" && fighter.def.ferocityTrait.effectId === "knockbackSlam") {
+      const trait2 = fighter.def.ferocityTrait;
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        if (distance(fighter, foe) > feverBreakthrough2.entryRadius) continue;
+        launchKnockback(foe, fighter, trait2, state, events);
+        if (foe.knockback) foe.knockback.chain = { sourceId: fighter.id, hit: [], radius: feverBreakthrough2.radius };
+      }
+      events.push({
+        kind: "areaImpact",
+        attackerId: fighter.id,
+        ultimate: false,
+        damageType: "physical",
+        area: { shape: "radial", x: fighter.x, y: fighter.y, radius: feverBreakthrough2.entryRadius }
+      });
+    }
+    if (feverBreakthrough2?.kind === "bloodTaste") {
+      const bleed = fighter.def.basic.statusEffects?.find((effect) => effect.kind === "bleed");
+      const butcher = fighter.def.basic.statusEffects?.find((effect) => effect.kind === "butcher");
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+        if (bleed) applyCombatStatusEffect(foe, bleed, events, state, fighter.id);
+        if (butcher && isFighterAlive(foe)) applyCombatStatusEffect(foe, butcher, events, state, fighter.id);
+      }
+    }
+    if (feverBreakthrough2?.kind === "emberRush") for (let i = 0; i < feverBreakthrough2.stacks; i += 1) gainElation(fighter);
+    if (feverBreakthrough2?.kind === "pingBurst") {
+      const plan = fighter.def.basic.statusEffects?.find((effect) => effect.kind === "weakpoint");
+      const duo = duoOf(fighter, state);
+      const focusId = (duo !== void 0 && isFighterAlive(duo) ? duo.targetId : null) ?? fighter.targetId;
+      const focus = focusId !== null ? findFighter(state, focusId) : void 0;
+      if (plan?.kind === "weakpoint" && focus !== void 0 && isFighterAlive(focus)) {
+        for (const foe of aliveFighters(state, focus.side)) {
+          if (foe.weakpoint !== null || foe.stealthFor > 0 || distance(focus, foe) > feverBreakthrough2.radius) continue;
+          foe.weakpoint = { sourceId: fighter.id, burstPower: plan.burstPower, duoHealPercent: plan.duoHealPercent };
+        }
+      }
+    }
     const trait = fighter.def.ferocityTrait;
     if (trait.effectId === "stealthLeap") {
       fighter.stealthFor = trait.durationSeconds;
@@ -8010,7 +8783,11 @@ function applyShimmer(attacker, target, skill, state, events) {
   const wave = attacker.ferocityFever ? openedBreakthrough(attacker, "ferocity", (effects) => effects.ferocity) : void 0;
   const burst = wave?.kind === "bigWave" ? { ...baseBurst, power: baseBurst.power * wave.powerMultiplier } : baseBurst;
   const charge = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
-  if (charge?.kind === "splashCharge") giveEnergy(attacker, charge.energy);
+  if (charge?.kind === "splashCharge") {
+    giveEnergy(attacker, charge.energy);
+    const lowest = aliveFighters(state, attacker.side).filter((ally) => ally.id !== attacker.id).reduce((low, ally) => !low || ally.energy < low.energy ? ally : low, void 0);
+    if (lowest) giveEnergy(lowest, charge.allyEnergy);
+  }
   events.push({
     kind: "areaImpact",
     attackerId: attacker.id,
@@ -8134,11 +8911,12 @@ function offensiveDefinition(attacker) {
   const vandalised = 1 - vandalismOffenseShred(attacker);
   const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
   const converted = passive.kind === "refillMagazine" ? attacker.refillAttackRatio : 1;
-  if (passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1) return attacker.def;
+  const ramped = attacker.rampFactor;
+  if (passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted,
-    ap: attacker.def.stats.ap * vandalised,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped,
+    ap: attacker.def.stats.ap * vandalised * ramped,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0)
   } };
 }
@@ -8172,10 +8950,7 @@ function triggerCrescendoStaccato(state, target, events) {
   for (const mette of state.fighters) {
     const trait = mette.def.ferocityTrait;
     if (mette.side === target.side || !isFighterAlive(mette) || !mette.ferocityFever || trait.effectId !== "crescendoStaccato" || !isFighterAlive(target)) continue;
-    const ramp = openedBreakthrough(mette, "ferocity", (effects) => effects.ferocity);
-    const rampPercent = ramp?.kind === "crescendoRamp" ? Math.min(ramp.maxPercent, mette.bt.crescendoHits * ramp.percentPerHit) : 0;
-    if (ramp?.kind === "crescendoRamp") mette.bt.crescendoHits += 1;
-    const power = trait.damagePercent * (1 + rampPercent / 100);
+    const power = trait.damagePercent;
     const raw = computeDamage(mette, defensiveDefinition(target, state), {
       power,
       damageType: "magical",
@@ -8384,7 +9159,6 @@ function applyDamage(target, amount, events, state) {
     reflectWall(target, absorbed, state, events);
     if (target.shield.amount <= 0) {
       events.push({ kind: "shieldDepleted", fighterId: target.id, effect: { tag: "shieldBreak", intensity: 1 } });
-      tryAdagioSlam(target, target.shield.providerId, state, events);
       target.shield.providerId = null;
     }
     amount -= absorbed;
@@ -8397,7 +9171,7 @@ function applyDamage(target, amount, events, state) {
   const dealt = hpBefore - target.hp;
   if (state.boss?.seasonHp !== void 0 && target.id === state.boss.fighterId) state.boss.score += Math.max(0, dealt);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
-  if (dealt > 0 && isFighterAlive(target)) gainShellGuard(target, 1, state, events);
+  if (dealt > 0 && isFighterAlive(target) && target.def.passive.kind === "shellGuard") gainShellGuard(target, 1, state, events);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
   return dealt;
 }
@@ -8412,48 +9186,24 @@ function tryTriggerRescueShield(target, state, events) {
     return;
   }
 }
-function tryAdagioSlam(shielded, providerId, state, events) {
-  if (providerId === null) return;
+function resonateShield(state, attacker, target, events) {
+  const providerId = attacker.shield.providerId;
+  if (providerId === null || attacker.shield.amount <= 0 || attacker.side === target.side) return;
   const mette = findFighter(state, providerId);
-  if (!mette || mette.side !== shielded.side || !isFighterAlive(mette) || mette.bt.adagioSlamCooldown > 0) return;
+  if (!mette || mette.side !== attacker.side || !isFighterAlive(mette)) return;
   const plan = openedBreakthrough(mette, "passive", (effects) => effects.passive);
-  if (plan?.kind !== "adagioSlam") return;
-  mette.bt.adagioSlamCooldown = plan.cooldownSeconds;
-  const input = { power: plan.powerPercent, damageType: "magical", scalingStat: "atk", isCritical: false, kind: "basic" };
-  for (const foe of aliveFighters(state, mette.side === "player" ? "enemy" : "player")) {
-    if (Math.hypot(foe.x - shielded.x, foe.y - shielded.y) > plan.radius) continue;
-    const raw = Math.max(1, Math.round(computeDamage(mette, defensiveDefinition(foe, state), input)));
-    const resolution = resolveReceivedDamage(foe, raw);
-    const hpBefore = foe.hp;
-    const shieldBefore = foe.shield.amount;
-    const shieldProviderId = foe.shield.providerId;
-    applyDamage(foe, resolution.applied, events, state);
-    const credited = recordDamageContribution(state, mette.id, foe, "magical", "atk", computeDamageContribution(mette, input), resolution, hpBefore, shieldBefore, shieldProviderId);
-    events.push({
-      kind: "attack",
-      attackerId: mette.id,
-      targetId: foe.id,
-      skill: "basic",
-      amount: resolution.applied,
-      contributionAmount: credited,
-      critical: false,
-      animate: false,
-      damageType: "magical",
-      mitigated: resolution.reduced < resolution.raw,
-      followUp: true
-    });
-    if (isFighterAlive(foe)) events.push(...applyStagger(foe, plan.staggerSeconds, state));
-    else {
-      clearDefeatedStatuses(foe);
-      events.push({ kind: "death", fighterId: foe.id, sourceId: mette.id });
-    }
+  if (plan?.kind !== "resonantShield" || state.elapsed < (mette.bt.resonanceReadyAt[attacker.id] ?? 0)) return;
+  mette.bt.resonanceReadyAt[attacker.id] = state.elapsed + plan.cooldownSeconds;
+  for (const foe of aliveFighters(state, target.side)) {
+    if (foe.id === target.id || distance(target, foe) > plan.radius) continue;
+    extraStrike(mette, foe, plan.powerPercent, "atk", "magical", state, events);
   }
   events.push({
     kind: "areaImpact",
     attackerId: mette.id,
     ultimate: false,
     damageType: "magical",
-    area: { shape: "radial", x: shielded.x, y: shielded.y, radius: plan.radius }
+    area: { shape: "radial", x: target.x, y: target.y, radius: plan.radius }
   });
 }
 function tryTriggerDamageStealth(fighter, state) {
@@ -8486,6 +9236,7 @@ function shareWithBulwark(target, amount, events, state) {
   const dealt = applyDamage(guardian, resolution.applied, events, state);
   events.push({ kind: "damageShared", fighterId: guardian.id, fromFighterId: target.id, amount: dealt });
   guardian.bt.bulwarkTaken += share;
+  releaseHeatBurst(guardian, state, events);
   gainElation(guardian);
   return share;
 }
@@ -8875,10 +9626,11 @@ function strikeShrapnel(attacker, target, input, critical, state, events) {
   if (effect?.kind !== "shrapnel") return;
   splashAround(attacker, target, input, critical, state, events, effect.radius, effect.powerPercent, "ultimate");
 }
-function strikeLastDropSplash(attacker, target, input, critical, wasLastDrop, state, events) {
+function strikeBitterTaste(attacker, target, wasLastDrop) {
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-  if (effect?.kind !== "lastDropSplash" || !wasLastDrop) return;
-  splashAround(attacker, target, input, critical, state, events, effect.radius, effect.sharePercent, "basic");
+  if (effect?.kind !== "bitterTaste" || !wasLastDrop || !isFighterAlive(target)) return;
+  const stacks = Math.min(effect.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
+  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent };
 }
 function splashAround(attacker, target, input, critical, state, events, radius, percent, skillSlot) {
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
@@ -8921,6 +9673,7 @@ function frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) {
   return multiplier;
 }
 function strike(attacker, target, rng, state, events, useUltimate, comboHit, targetPoint) {
+  if (comboHit === void 0) attacker.augmentActionSerial += 1;
   const skill = irnaBreakthroughSkill(attacker, target, staccatoChainSkill(attacker, target, breakthroughSkill(attacker, useUltimate), useUltimate), useUltimate);
   if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) return;
   const combo = !useUltimate ? attacker.def.basic.combo : void 0;
@@ -8944,7 +9697,6 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const attackingInFever = attacker.ferocityFever;
   const targetWasCursed = target.curse !== null;
   const targetCurseWasMaxed = isCurseMaxed(target);
-  const targetWasFrozen = target.frozen !== null;
   const encoreLiquidation = !useUltimate && attackingInFever && attacker.def.ferocityTrait.effectId === "venomousEncore" && target.poison?.sourceId === attacker.id;
   const targetWasPoisoned = target.poison !== null;
   const feastPlan = useUltimate && target.bleed !== null ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
@@ -8971,7 +9723,10 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (ambush) attacker.bt.ambushCritReady = false;
   const blinkCrit = !useUltimate && !empowered && attacker.bt.blinkCrits > 0;
   if (blinkCrit) attacker.bt.blinkCrits -= 1;
-  const critical = forcedCritical || empowered || ambush || blinkCrit || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
+  const traitBasicAction = !useUltimate && (comboHit === void 0 || comboHit.grantActionResources);
+  if (traitBasicAction) attacker.traitBasicCount += 1;
+  const traitCritical = traitBasicAction && traitForcedCritical(state, attacker);
+  const critical = forcedCritical || traitCritical || empowered || ambush || blinkCrit || bleedingBite || nape > 1 || isCriticalHit(Math.min(100, criticalChance), rng());
   const attackSpeedPower = useUltimate ? attacker.def.ultimate.attackSpeedPower ?? 0 : 0;
   const joint = useUltimate ? openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate) : void 0;
   if (joint?.kind === "jointObservation" && livingDrones(state, attacker).length > 0) {
@@ -9013,10 +9768,11 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   } : void 0;
   const periodicBonus = periodicBonusInput ? computeDamage(damageAttacker, damageTarget, periodicBonusInput) : 0;
   const pounce = sleepPounceMultiplier(state, attacker, target);
-  const bashPlan = !useUltimate && attacker.shield.amount > 0 ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : void 0;
-  const bashInput = bashPlan?.kind === "helmetBash" ? { ...damageInput, power: bashPlan.attackPercent, scalingStat: "atk", secondaryScaling: void 0, damageType: "physical" } : void 0;
+  const bashPlan = !useUltimate ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : void 0;
+  const bashDue = bashPlan?.kind === "helmetBash" && (attacker.bt.bashCount += 1) % bashPlan.everyHits === 0;
+  const bashInput = bashDue && bashPlan?.kind === "helmetBash" ? { ...damageInput, power: bashPlan.attackPercent, scalingStat: "atk", secondaryScaling: void 0, damageType: "physical" } : void 0;
   const bashBonus = bashInput ? computeDamage(damageAttacker, damageTarget, bashInput) : 0;
-  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus) * traitDamageMultiplier(state, attacker, target) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target)));
+  const rawAmount = Math.max(1, Math.round((computeDamage(damageAttacker, damageTarget, damageInput) + defenseBonus + periodicBonus + bashBonus) * traitDamageMultiplier(state, attacker, target) * (traitBasicAction ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target)));
   const contributionAmount = Math.max(0, (computeDamageContribution(damageAttacker, damageInput) + (defenseBonus > 0 ? computeDamageContribution(attacker, { ...damageInput, power: splashTrait.effectId === "splashDamage" ? splashTrait.defenseDamagePercent ?? 0 : 0, scalingStat: "def", damageType: "physical" }) : 0) + (periodicBonusInput ? computeDamageContribution(damageAttacker, periodicBonusInput) : 0) + (bashInput ? computeDamageContribution(damageAttacker, bashInput) : 0)) * nape * pounce * feastMultiplier * packStrengthMultiplier(state, attacker) * vitalAimMultiplier(attacker, target, useUltimate) * workerMarchMultiplier(state, attacker) * bossDamageMultiplier(attacker, target, useUltimate) * frenzyFriendlyMultiplier(attacker, target));
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
@@ -9024,12 +9780,17 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events, state);
+  if (bashInput && isFighterAlive(target)) {
+    const concussion = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "concussion");
+    if (concussion?.kind === "concussion") applyConcussion(target, concussion, false, events, state, attacker.id, true);
+  }
   const creditedTo = attacker.frenzy?.sourceId ?? packCreditId(attacker);
   drainFrenzyDamage(state, attacker, dealt, events);
   const credited = recordDamageContribution(state, creditedTo, target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, targetHpBefore, shieldBefore, shieldProviderId);
   tryTriggerEmergencyRecovery(target, state);
   tryTriggerLowHpVanish(target, state);
   triggerCombatAugments(state, target, "onLowHp", events);
+  if (isFighterAlive(target) && dealt > 0) triggerCombatAugments(state, target, "onDamaged", events);
   gainElation(target);
   reactPrickle(target, attacker, state, events);
   if (!useUltimate) {
@@ -9039,11 +9800,9 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     overflowPrickle(attacker, state, events);
   }
   gazeDrowsy(target, attacker, state, events);
-  contagiousFrenzy(attacker, target, state, events);
-  reactFrostCling(target, attacker, state, events);
   reactTouchBurst(target, attacker, state, events);
   reactRaiders(target, attacker, state, events, useUltimate);
-  if (!useUltimate && targetWasFrozen) sodaFizz(attacker, target, state, events);
+  if (!useUltimate) sodaPop(attacker, target, state, events);
   if (!useUltimate) pullStruck(attacker, target, state, events);
   const transfer = useUltimate ? attacker.def.ultimate.damageTransfer : void 0;
   if (transfer && dealt > 0) {
@@ -9153,6 +9912,9 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
       refreshBleed(target, strength.seconds * attacker.statusPotencyMultiplier, strength.percentPerSecond, events, attacker.id);
     }
   }
+  if (traitBasicAction && isFighterAlive(target) && !resolution.ignored) {
+    strikeTraitOnBasic(state, attacker, target, events);
+  }
   events.push({
     kind: "attack",
     attackerId: attacker.id,
@@ -9175,7 +9937,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     if (card?.kind === "extraCard") throwExtraCard(attacker, target, damageInput, card, damageInput.damageType, state, events);
   }
   if (useUltimate) strikeShrapnel(attacker, target, damageInput, critical, state, events);
-  else strikeLastDropSplash(attacker, target, damageInput, critical, lastDropShot, state, events);
+  else strikeBitterTaste(attacker, target, lastDropShot);
   if (useUltimate && !comboHit && isFighterAlive(target)) {
     const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (slash?.kind === "afterimageSlash") attacker.bt.afterimages.push({ targetId: target.id, remaining: slash.delaySeconds });
@@ -9185,6 +9947,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (!useUltimate) {
     triggerCrescendoStaccato(state, target, events);
     triggerSharedOverpaint(state, target);
+    resonateShield(state, attacker, target, events);
   }
   triggerWeakpoint(state, attacker, target, events);
   if (isFighterAlive(target) && !resolution.ignored) {
@@ -9215,7 +9978,8 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
       applySkillStatuses(target, skill, events, state, attacker.id, critical);
     }
   }
-  if (isFighterAlive(target)) {
+  if (isFighterAlive(target) && !resolution.ignored) {
+    if (useUltimate) triggerCombatAugments(state, attacker, "onUltimateHit", events, target);
     if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
     if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
   }
@@ -9342,6 +10106,7 @@ function refillNow(fighter, state) {
   if (fighter.attackCooldown > ready) fighter.attackCooldown = ready;
 }
 function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, followUp = false, free = false) {
+  if (!followUp && !free) attacker.augmentActionSerial += 1;
   const skill = breakthroughSkill(attacker, useUltimate);
   if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) return;
   const ultimate = useUltimate ? attacker.def.ultimate : void 0;
@@ -9431,12 +10196,15 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   let sharedShieldSource = 0;
   const sutured = !useUltimate && !free && consumeSutureReady(attacker);
   let suturedTotal = 0;
+  const traitSplashBasic = !useUltimate && !followUp;
+  if (traitSplashBasic) attacker.traitBasicCount += 1;
+  const traitSplashCritical = traitSplashBasic && traitForcedCritical(state, attacker);
   for (const [index, target] of targets2.entries()) {
     if (index >= distinctTargets && !isFighterAlive(target)) continue;
     const criticalChance = Math.min(100, attacker.def.stats.critChance + passiveCritPoints + (activeOrder(attacker)?.criticalChancePoints ?? 0) + vitalSketchCritPoints(state, attacker, target) + feverCritPoints(attacker));
     const bleedingBite = attackingInFever && critTrait.effectId === "rexBattleQueen" && critTrait.bleedingGuaranteedCritical && target.bleed !== null;
     const focusCrit = !useUltimate && skill.targeting === "splitShot" && attacker.focus >= FOCUS.maxStacks && openedBreakthrough(attacker, "passive", (effects) => effects.passive)?.kind === "fullFocusCrit";
-    const critical = bleedingBite || focusCrit || isCriticalHit(criticalChance, rng());
+    const critical = bleedingBite || focusCrit || index === 0 && traitSplashCritical || isCriticalHit(criticalChance, rng());
     const detonated = detonation ? { ...skill, power: (skill.power ?? 0) * (target.overpaint?.stacks ?? 0) } : skill;
     const plumePower = frostPlumeBreakthroughMultiplier(attacker, target, useUltimate) * bossDamageMultiplier(attacker, target, useUltimate);
     const scaled = plumePower === 1 || detonated.power === void 0 ? detonated : { ...detonated, power: detonated.power * plumePower };
@@ -9447,7 +10215,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       ignoresDefense: false,
       defenseIgnorePercent: Math.min(100, (skill.defenseIgnorePercent ?? 0) + stormAimIgnorePercent(attacker, attackingInFever, useUltimate))
     };
-    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput) * traitDamageMultiplier(state, attacker, target)));
+    const rawAmount = Math.max(1, Math.round(computeDamage(damageAttacker, defensiveDefinition(target, state), damageInput) * traitDamageMultiplier(state, attacker, target) * (traitSplashBasic ? nthBasicBonusMultiplier(effectsFor(state, attacker), attacker.def.id, attacker.traitBasicCount) : 1)));
     const contributionAmount = Math.max(0, computeDamageContribution(damageAttacker, damageInput));
     const resolution = resolveReceivedDamage(target, rawAmount);
     const amount = resolution.applied;
@@ -9455,11 +10223,12 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     if (skill.breaksShield === true) breakShield(target, events);
     const shieldBefore = target.shield.amount;
     const shieldProviderId = target.shield.providerId;
-    applyDamage(target, amount, events, state);
+    const hpLost = applyDamage(target, amount, events, state);
     const credited = recordDamageContribution(state, packCreditId(attacker), target, damageInput.damageType, damageInput.scalingStat, contributionAmount, resolution, hpBefore, shieldBefore, shieldProviderId);
     tryTriggerEmergencyRecovery(target, state);
     tryTriggerLowHpVanish(target, state);
     triggerCombatAugments(state, target, "onLowHp", events);
+    if (isFighterAlive(target) && hpLost > 0) triggerCombatAugments(state, target, "onDamaged", events);
     drainFromDamage(state, attacker, hpBefore - target.hp, damageHealingRate(attacker, skill, attackingInFever, target), events);
     if (!useUltimate) releaseShieldHit(attacker, target, state, events);
     if (!useUltimate) grantShieldFromDamage(attacker, hpBefore - target.hp, events, state);
@@ -9474,8 +10243,6 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     gainElation(target);
     reactPrickle(target, attacker, state, events);
-    contagiousFrenzy(attacker, target, state, events);
-    reactFrostCling(target, attacker, state, events);
     reactTouchBurst(target, attacker, state, events);
     reactRaiders(target, attacker, state, events, useUltimate);
     if (!useUltimate) pullStruck(attacker, target, state, events);
@@ -9516,7 +10283,8 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
       }
       applyShimmer(attacker, target, skill, state, events);
       if (useUltimate && !resolution.ignored) markUltimateVictim(attacker, target);
-      if (!useUltimate) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
+      if (useUltimate && !free && !followUp && !resolution.ignored) triggerCombatAugments(state, attacker, "onUltimateHit", events, target);
+      if (!useUltimate && !resolution.ignored) triggerCombatAugments(state, attacker, "onBasicHit", events, target);
       if (critical) triggerCombatAugments(state, attacker, "onCritical", events, target);
     } else {
       clearDefeatedStatuses(target);
@@ -9630,9 +10398,11 @@ function duoOf(fighter, state) {
 function linkDuos(state) {
   for (const fighter of state.fighters) {
     if (fighter.def.passive.kind !== "duoLink") continue;
-    const party = state.fighters.filter((other) => other.side === fighter.side);
+    const party = state.fighters.filter((other2) => other2.side === fighter.side);
     const at = party.indexOf(fighter);
     fighter.duoId = (party[at - 1] ?? party[at + 1])?.id ?? null;
+    const other = party[at - 1] !== void 0 ? party[at + 1] : void 0;
+    fighter.bt.sideDuoId = other !== void 0 && openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "twinDuo" ? other.id : null;
   }
 }
 function updateDuoLink(fighter, state, dt) {
@@ -9642,14 +10412,6 @@ function updateDuoLink(fighter, state, dt) {
   const duo = duoOf(fighter, state);
   if (duo === void 0 || !isFighterAlive(duo)) {
     if (fighter.stealthFor === Number.POSITIVE_INFINITY) fighter.stealthFor = 0;
-    if (fighter.duoId !== null && !fighter.bt.relinkUsed && openedBreakthrough(fighter, "passive", (effects) => effects.passive)?.kind === "relink") {
-      const next = aliveFighters(state, fighter.side).filter((ally) => ally.id !== fighter.id && ally.id !== fighter.duoId && isPartyFighter(ally)).sort((a, b) => distance(fighter, a) - distance(fighter, b))[0];
-      if (next) {
-        fighter.bt.relinkUsed = true;
-        fighter.duoId = next.id;
-        fighter.duoSyncIn = 0;
-      }
-    }
     return;
   }
   const guarded = duo.hp / duo.maxHp * 100 >= passive.value;
@@ -9756,7 +10518,7 @@ function triggerWeakpoint(state, attacker, target, events) {
   const mark = target.weakpoint;
   if (mark === null || !isFighterAlive(target)) return;
   const spotter = findFighter(state, mark.sourceId);
-  if (spotter === void 0 || spotter.duoId !== attacker.id) return;
+  if (spotter === void 0 || spotter.duoId !== attacker.id && spotter.bt.sideDuoId !== attacker.id) return;
   target.weakpoint = null;
   const skill = { power: mark.burstPower, damageType: "magical", scalingStat: "ap", isCritical: false, kind: "basic" };
   const raw = Math.max(1, Math.round(computeDamage(spotter, defensiveDefinition(target, state), skill)));
@@ -9967,6 +10729,7 @@ function settle(state, events) {
 }
 function advance(state, dt, rng, events) {
   state.elapsed += dt;
+  for (const fighter of state.fighters) reserveAugmentRecovery(state, fighter);
   advancePack(state, dt, events);
   for (const pontus of state.fighters) {
     const trait = pontus.def.ferocityTrait;
@@ -9992,10 +10755,12 @@ function advance(state, dt, rng, events) {
     }
   }
   tickDeathClock(state, events);
-  for (const fighter of state.fighters) if (fighter.def.passive.kind === "abyssalPressure") {
+  for (const fighter of state.fighters) {
+    const role = fighter.def.encounterRole;
+    const ramp = role === void 0 ? void 0 : ENCOUNTER_ROLE[role].ramp;
+    if (!ramp) continue;
     const seconds = Math.floor(state.elapsed + EMERGENCY_RECOVERY.epsilon);
-    const rate = (fighter.def.passive.apPercentPerSecond ?? 0) / 100;
-    fighter.bonusAp = fighter.def.stats.ap * (Math.pow(1 + rate, seconds) - 1);
+    fighter.rampFactor = encounterRampFactor(ramp, seconds);
   }
   if (state.boss) {
     const boss = state.boss;
@@ -10023,7 +10788,11 @@ function advance(state, dt, rng, events) {
   for (const fighter of state.fighters) {
     const adagioRemaining = fighter.adagioCooldownRemaining - dt;
     fighter.adagioCooldownRemaining = adagioRemaining <= EMERGENCY_RECOVERY.epsilon ? 0 : adagioRemaining;
-    fighter.bt.adagioSlamCooldown = Math.max(0, fighter.bt.adagioSlamCooldown - dt);
+    fighter.augmentShellCooldown = Math.max(0, fighter.augmentShellCooldown - dt);
+    if (fighter.augmentShellState) {
+      const remaining = fighter.augmentShellState.remaining - dt;
+      fighter.augmentShellState = remaining <= 0 ? null : { ...fighter.augmentShellState, remaining };
+    }
     const shellCooldown = fighter.shellGuardCooldownRemaining - dt;
     fighter.shellGuardCooldownRemaining = shellCooldown <= EMERGENCY_RECOVERY.epsilon ? 0 : shellCooldown;
     if (fighter.shellGuard) {
@@ -10097,8 +10866,22 @@ function advance(state, dt, rng, events) {
     fighter.bt.manyEyesPercent = manyEyesPercent(state, fighter);
     if (isFighterAlive(fighter) && fighter.traitHaste) {
       const remaining = fighter.traitHaste.remaining - dt;
-      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.traitHaste = null;
-      else fighter.traitHaste = { ...fighter.traitHaste, remaining };
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) {
+        fighter.traitHaste = null;
+        fighter.traitHasteStacks = 0;
+      } else fighter.traitHaste = { ...fighter.traitHaste, remaining };
+    }
+    if (isFighterAlive(fighter) && fighter.traitRegen) {
+      const span = Math.min(dt, fighter.traitRegen.remaining);
+      const amount = applyHealing(state, fighter, fighter.traitRegen.perSecond * span, fighter.id);
+      if (amount > 0) pushHeal(events, fighter, amount, "passive");
+      const remaining = fighter.traitRegen.remaining - dt;
+      fighter.traitRegen = remaining <= EMERGENCY_RECOVERY.epsilon ? null : { ...fighter.traitRegen, remaining };
+    }
+    if (isFighterAlive(fighter) && fighter.killHaste) {
+      const remaining = fighter.killHaste.remaining - dt;
+      if (remaining <= EMERGENCY_RECOVERY.epsilon) fighter.killHaste = null;
+      else fighter.killHaste = { ...fighter.killHaste, remaining };
     }
     tickShallows(fighter, dt);
     refillTauntHealBudget(fighter, dt);
@@ -10264,15 +11047,28 @@ function advance(state, dt, rng, events) {
         advanceBasicCycle(fighter);
         placeShallowPool(fighter, state);
         const shallowPlan = fighter.def.basic.shallows;
+        let leaped = false;
         if (shallowPlan) {
           fighter.shallowLeapCount += 1;
-          if (fighter.shallowLeapCount >= shallowPlan.leapEveryHits) {
+          const frenzyLeap = fighter.ferocityFever ? openedBreakthrough(fighter, "ferocity", (effects) => effects.ferocity) : void 0;
+          const leapEvery = frenzyLeap?.kind === "frenzyLeap" ? Math.min(frenzyLeap.everyHits, shallowPlan.leapEveryHits) : shallowPlan.leapEveryHits;
+          if (fighter.shallowLeapCount >= leapEvery) {
             fighter.shallowLeapCount = 0;
             leapToShallowPool(fighter, state, events);
+            leaped = true;
           }
         }
         if (fighter.hastenedAttacksLeft > 0) fighter.hastenedAttacksLeft -= 1;
         breakStealthOnBasic(fighter);
+        const veil = leaped ? openedBreakthrough(fighter, "passive", (effects) => effects.passive) : void 0;
+        if (veil?.kind === "leapVeil" && state.elapsed >= fighter.bt.leapVeilReadyAt) {
+          fighter.bt.leapVeilReadyAt = state.elapsed + veil.cooldownSeconds;
+          fighter.stealthFor = Math.max(fighter.stealthFor, veil.stealthSeconds);
+          for (const other of state.fighters) if (other.targetId === fighter.id) {
+            other.targetId = null;
+            other.engaged = false;
+          }
+        }
       }
       if (state.boss && state.boss.seasonHp === void 0 && target.id === state.boss.fighterId) {
         const scored = [...events].reverse().find((event) => event.kind === "attack" && event.attackerId === fighter.id && event.targetId === target.id);
@@ -10297,10 +11093,19 @@ function canFireUltimate(state, fighter) {
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
 }
 function fireUltimate(state, fighterId, rng = NO_CRIT, targetPoint) {
+  const casterBefore = findFighter(state, fighterId);
+  const energyBefore = casterBefore?.energy;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
+  if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
+    casterBefore.augmentActionSerial += 1;
+    triggerCombatAugments(state, casterBefore, "onUltimateCast", events);
+  }
   if (events.length > 0) {
     const caster = findFighter(state, fighterId);
-    if (caster) afterUltimateBreakthrough(caster, state, events);
+    if (caster) {
+      afterUltimateBreakthrough(caster, state, events);
+      triggerCombatAugments(state, caster, "onUltimate", events);
+    }
   }
   return events;
 }
@@ -10542,6 +11347,15 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       const event = events[index];
       if (event.kind === "attack") event.at = state.elapsed;
     }
+    for (let index = before; index < events.length; index++) {
+      const event = events[index];
+      if (event.kind !== "attack" || event.skill !== "basic" && event.skill !== "ultimate") continue;
+      const actor = findFighter(state, event.attackerId), target = findFighter(state, event.targetId);
+      if (actor && target && actor.side !== target.side && actor.augmentControlAwaitingAttack && actor.augmentActionSerial > actor.augmentControlBlockedActionSerial && controlRemaining(actor) <= 1e-8) {
+        actor.augmentControlAwaitingAttack = false;
+        actor.augmentControlReadyAt = Math.max(actor.augmentControlReadyAt, state.elapsed + EXPEDITION_CC_POLICY.recoverySeconds);
+      }
+    }
     state.fighters.forEach((fighter) => {
       const feverBefore = fighter.ferocityFever;
       drainFerocityFever(fighter, step2);
@@ -10554,7 +11368,7 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       tickAfterimages(fighter, step2, state, events);
       tickTankBreakthroughs(fighter, step2, state, events);
       tickBossBreakthroughs(fighter, step2, state, events);
-      tickFinalChapter(fighter, state, events);
+      tickAfterglow(fighter, state, events);
     });
     remaining -= step2;
   }
@@ -10613,6 +11427,8 @@ var BATTLE_ARENA = {
   cake: { ...BASE_ARENA, top: 720 },
   bounty: { ...BASE_ARENA, top: 770 },
   raid: { ...BASE_ARENA, top: 860 },
+  // 고대 지층 전장(거대 화석 발굴장)도 바닥이 스토리 전장과 같은 높이에서 시작한다.
+  ancient: BASE_ARENA,
   // 결투장 필드는 관중석 벽이 아래까지 내려와 바닥이 얕았다(원본 기준 1,000~1,400) — 두 편이 코앞에서 시작했다.
   // 그래서 원화를 `BATTLE_FIELD_FRAMING.duel`만큼 키워 좌측·상단을 잘라 내고(우하단 고정) 땅을 넓혔다.
   // 확대 뒤 바닥은 실측 약 670~1,440이라 관중석 벽 밑동(740)부터 앞 난간 앞(1,360)까지를 전장으로 쓴다.
@@ -10700,7 +11516,7 @@ function applyArenaAction(source, actor, action, now) {
   }
   if (now >= r.deadline && r.phase !== "battle") {
     const simultaneous = r.phase === "ban" || r.rules.placement === "hidden";
-    const waiting = r.phase === "ban" ? r.bans.map((b) => b === null) : r.locked.map((v) => !v);
+    const waiting = r.phase === "ban" ? r.bans.map((b) => b === null) : r.locked.map((v2) => !v2);
     const late = simultaneous ? waiting.indexOf(true) : arenaTurn(r);
     r.phase = "done";
     r.winner = simultaneous && waiting[0] && waiting[1] ? null : 1 - late;
@@ -11531,10 +12347,10 @@ var RELICS = [
       basic: { kind: "leapPuddle" },
       // 터진 여울이 1.5초 뒤 한 번 더 터진다(위력 50%, 기절 없음) — 물이 빠지며 되돌아오는 두 번째 파도다.
       ultimate: { kind: "tidalEcho", delaySeconds: 1.5, powerPercent: 50 },
-      // 잠행에 들어선 뒤 첫 평타가 확정 치명타다. 은신 개념의 기습이고 폭주 한 번에 한 번이다.
-      ferocity: { kind: "ambushCrit" },
-      // 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다. 사냥이 이어지는 기동 효과다.
-      passive: { kind: "huntChain" }
+      // 잠행 동안 도약 주기가 4타에서 2타로 줄어 물 위를 건너뛰며 사냥한다. 폭주가 끝나면 4타로 돌아온다.
+      ferocity: { kind: "frenzyLeap", everyHits: 2 },
+      // 도약해 내려서면 1초 숨는다(쿨다운 3초). 암살자의 생존은 은신 개념으로만 준다.
+      passive: { kind: "leapVeil", stealthSeconds: 1, cooldownSeconds: 3 }
     },
     passive: {
       id: "spino-passive",
@@ -11887,7 +12703,7 @@ var RELICS = [
     // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
     breakthroughEffects: {
       basic: { kind: "wetMark", takenPercent: 12 },
-      ultimate: { kind: "splashCharge", energy: 6 },
+      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 5 },
       ferocity: { kind: "bigWave", powerMultiplier: 2 },
       passive: { kind: "touchBurst" }
     },
@@ -12031,10 +12847,10 @@ var RELICS = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 }
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", attackSpeedPercent: 10, seconds: 3 },
+      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 3 },
       ultimate: { kind: "gustEnergy", energy: 25 },
-      ferocity: { kind: "windPull", extraEnergy: 5 },
-      passive: { kind: "windEcho", energy: 10 }
+      ferocity: { kind: "feverGale", seconds: 3, speedPercent: 20 },
+      passive: { kind: "windEcho", energy: 25 }
     }
   },
   {
@@ -12599,9 +13415,9 @@ var RELICS = [
       }
     },
     breakthroughEffects: {
-      basic: { kind: "dreadAegis", shieldPercent: 5, cooldownSeconds: 3 },
+      basic: { kind: "preyScale", shieldPercentPerEnemy: 3, maxEnemies: 5, cooldownSeconds: 3 },
       ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
-      ferocity: { kind: "spreadingDread", radius: 400, stacks: 1 },
+      ferocity: { kind: "roarEntry", radius: 500, stacks: 1 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 }
     }
   },
@@ -12671,7 +13487,8 @@ var RELICS = [
       openingStealthSeconds: 4,
       // 태생 치명타는 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
-      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC 4\uCD08 \uB3D9\uC548 \uC740\uC2E0\uD558\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC624\uB978\uB2E4."
+      killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
+      desc: "\uC804\uD22C \uC2DC\uC791 \uC2DC 4\uCD08 \uB3D9\uC548 \uC740\uC2E0\uD558\uACE0, \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC624\uB978\uB2E4. \uC801\uC744 \uCC98\uCE58\uD558\uBA74 4\uCD08 \uB3D9\uC548 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uC774\uB3D9 \uC18D\uB3C4\uAC00 \uC624\uB978\uB2E4."
     },
     basic: {
       id: "yuti-basic",
@@ -12748,9 +13565,9 @@ var RELICS = [
       ferocityGain: 0
     },
     breakthroughEffects: {
-      basic: { kind: "lastDropSplash", sharePercent: 50, radius: 260 },
+      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
-      ferocity: { kind: "quickReload", reloadSeconds: 0.6 },
+      ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 }
     },
     ferocityTrait: { name: "\uC57C\uADFC, \uC2EB\uC5B4", effectId: "overtimeRefusal" },
@@ -12954,9 +13771,9 @@ var RELICS = [
     },
     // 한계 돌파: 헬멧 박치기(막 있는 동안 평타 추가 피해) · 돌진 왕복 · 연쇄 충돌 · 더 낮은 한 방 상한.
     breakthroughEffects: {
-      basic: { kind: "helmetBash", attackPercent: 25 },
+      basic: { kind: "helmetBash", everyHits: 4, attackPercent: 25 },
       ultimate: { kind: "dashBack", delaySeconds: 0.6, powerPercent: 60 },
-      ferocity: { kind: "chainCollision", radius: 80 },
+      ferocity: { kind: "chainEntry", entryRadius: 300, radius: 80 },
       passive: { kind: "impactCapTighten", maxHpPercent: 20 }
     },
     passive: {
@@ -13069,7 +13886,7 @@ var RELICS = [
     breakthroughEffects: {
       basic: { kind: "bleedSettle" },
       ultimate: { kind: "bleedFeast", damagePercent: 30 },
-      ferocity: { kind: "swiftHands", attackSpeedPercent: 15 },
+      ferocity: { kind: "bloodTaste", radius: 500 },
       passive: { kind: "landingAmbush" }
     },
     passive: {
@@ -13179,11 +13996,11 @@ var RELICS = [
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
     ferocityTrait: { name: "\uB098\uB9CC \uBD10", effectId: "frenzyGaze", seconds: 2 },
-    // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
+    // 한계 돌파: 밑줄 긋기(집중 2겹) · 막이 내린 뒤(쓰러진 적의 저주가 이어진다) · 독자 몰이(폭주 진입에 전원 저주) · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
-      ultimate: { kind: "contagiousFrenzy", stacks: 1 },
-      ferocity: { kind: "finalChapter", radius: 400, stacks: 2 },
+      ultimate: { kind: "afterglow", radius: 400, maxCarry: 3 },
+      ferocity: { kind: "readersGather", radius: 500, stacks: 1 },
       passive: { kind: "extraChapter", extraStacks: 1 }
     },
     passive: {
@@ -13416,13 +14233,13 @@ var RELICS = [
       tauntRadius: 420,
       elationHealBonusPercent: 50
     },
-    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정이 끝나면 대신 받은 피해의 일부를 주위에 돌려주며,
-    // 폭주 중에는 희열이 열다섯 겹까지 쌓이고(폭주가 끝나면 열 겹으로 깎인다), 희열 한 겹의 재생이 0.3%에서 0.4%로 돌아온다.
+    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정 동안 대신 받은 피해가 최대 체력의 10% 쌓일 때마다 주위에 열기가 터지며(최대 4번),
+    // 폭주에 들어서는 순간 희열이 다섯 겹 쌓이고, 희열이 가득하면 재생의 절반이 아군 전원에게 번진다.
     breakthroughEffects: {
       basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
-      ultimate: { kind: "bulwarkPayback", returnPercent: 25, radius: 300, capMaxHpPercent: 10 },
-      ferocity: { kind: "heatOverflow", extraMaxStacks: 5 },
-      passive: { kind: "sweeterWound", regenPercentPerStack: 0.1 }
+      ultimate: { kind: "heatBurst", thresholdPercent: 10, pulsePercent: 2.5, maxPulses: 4, radius: 300 },
+      ferocity: { kind: "emberRush", stacks: 5 },
+      passive: { kind: "sweetShare", sharePercent: 50 }
     },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -14621,17 +15438,17 @@ var RELICS = [
       ferocityGain: 0
     },
     // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
-    // 크레센도가 점점 커지고(IV), 무게가 내려앉는다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
+    // 폭주 진입에 서곡이 울리고(IV), 막이 남아 있는 내내 음파가 퍼진다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
     breakthroughEffects: {
       // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
       // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
       basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
       // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
       ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
-      // 크레센도 추가타는 아군 누구의 평타든 따라붙어 팀 속도로 쌓이므로, 한 번마다 +5%씩 오르되 +50%에서 멈춘다.
-      ferocity: { kind: "crescendoRamp", percentPerHit: 5, maxPercent: 50 },
-      // 메테가 둘러 준 보호막이 다 깨지는 순간 주위 적에게 공격력 150%의 마법 피해와 0.1초 경직. 7초에 한 번이다.
-      passive: { kind: "adagioSlam", radius: 260, powerPercent: 150, staggerSeconds: 0.1, cooldownSeconds: 7 }
+      // 폭주에 들어서는 순간 주위 적 전원에게 스타카토 한 번이 먼저 울린다(공격력 60%, 경직 포함). 팀의 합창이 시작되기 전의 서곡이다.
+      ferocity: { kind: "overture", radius: 520, powerPercent: 60 },
+      // 메테의 막을 두른 아군이 평타를 맞히면 그 적 주위로 음파(공격력 40%)가 퍼진다. 아군마다 3초에 한 번이다.
+      passive: { kind: "resonantShield", radius: 240, powerPercent: 40, cooldownSeconds: 3 }
     },
     ferocityTrait: {
       name: "\uD06C\uB808\uC13C\uB3C4",
@@ -14928,11 +15745,11 @@ var RELICS = [
       ferocityGain: 0
     },
     ferocityTrait: { name: "\uBAA8\uD53C", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
-    // 한계 돌파: 사이다 거품 · 냉방 환기 · 털에 얼어붙음 · 얼음 깨기.
+    // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
     breakthroughEffects: {
-      basic: { kind: "sodaFizz", radius: 300, stacks: 1 },
+      basic: { kind: "sodaPop", everyHits: 3, radius: 300, stacks: 1 },
       ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
-      ferocity: { kind: "frostCling", stacks: 1 },
+      ferocity: { kind: "coldSnap", radius: 500, stacks: 2 },
       passive: { kind: "iceShatter", radius: 300, attackPercent: 120 }
     },
     passive: {
@@ -15299,10 +16116,10 @@ var RELICS = [
       basic: { kind: "farPing", reach: 600, followDistance: 420 },
       // 오더 6초 동안 듀오가 처음 때리는 적마다 약점 포착이 즉시 찍혀 터진다(적마다 1회) — 평타의 표식과 궁극기가 한 계약으로 이어진다.
       ultimate: { kind: "orderStrike" },
-      // 폭주 동안은 세 걸음 주기 없이 매번 표식을 찍는다 — 듀오가 때릴 때마다 터진다.
-      ferocity: { kind: "pingStorm" },
-      // 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(전투당 1회).
-      passive: { kind: "relink" }
+      // 폭주에 들어서는 순간 듀오가 노리는 적 주변 전원에게 약점 포착이 한꺼번에 찍힌다.
+      ferocity: { kind: "pingBurst", radius: 420 },
+      // 전투 시작부터 듀오가 둘이다 — 둘째 듀오도 약점 포착을 터뜨리고 핑의 충전을 함께 받는다.
+      passive: { kind: "twinDuo" }
     },
     ferocityTrait: {
       name: "\uADF8\uAC70 \uC544\uB2C8\uB77C\uB2C8\uAE4C?",
@@ -15691,19 +16508,21 @@ var RELICS = [
     },
     // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
     ferocityTrait: { name: "\uD574\uAD6C", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
+    /*
+     * **시간이 갈수록 세지는 것은 이 개체가 아니라 불사 자리가 갖는다**(`ENCOUNTER_ROLE.endless.ramp` — 주문력 복리 +2%/초).
+     * 예전 「심해의 압력」이 하던 일을 자리로 옮겼으므로, 패시브에는 이 개체만의 밀물이 남는다.
+     */
     passive: {
       id: "pontos-passive",
-      name: "\uC2EC\uD574\uC758 \uC555\uB825",
-      kind: "abyssalPressure",
+      name: "\uBC00\uBB3C",
+      kind: "tidalSurge",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 5,
-      // 500% 전장 궁극기와 곱해져도 표준 파티를 한 번에 삭제하지 않도록 실전 시뮬레이션에서 2%로 제한했다.
-      apPercentPerSecond: 2,
-      // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
-      // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다. 경감·강인함은 불사
-      // 자리가 갖는다(`ENCOUNTER_ROLE.endless`).
-      desc: "\uB9E4\uCD08 \uC8FC\uBB38\uB825\uC774 2%\uC529 \uBCF5\uB9AC\uB85C \uC624\uB978\uB2E4."
+      value: 0,
+      // 10초마다 모든 적을 뒤로 민다. 피해가 없으니 강인함이 시간과 속도를 함께 깎는다.
+      tidalSurge: { intervalSeconds: 10, knockback: { seconds: 0.8, speed: 1100, bounces: 1 } },
+      // kind가 tidalSurge인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로 이 원문은 데이터 문서화용이다.
+      desc: "10\uCD08\uB9C8\uB2E4 \uBAA8\uB4E0 \uC801\uC744 \uB4A4\uB85C \uBBFC\uB2E4."
     },
     basic: {
       id: "pontos-basic",
@@ -17380,10 +18199,10 @@ var RAID_BOSS_BALANCE = {
 };
 var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30 } })
+  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 50 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 75 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 100 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 150 } })
 };
 function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
@@ -18068,7 +18887,17 @@ var BACKGROUND = {
    * 1장 오프닝의 무대 — 이터널 시티로 향하는 수송 열차 객차 안이다. 창 너머로 도시가 보인다.
    * 이야기 무대가 어느 원화를 쓰는지는 `dialogueStageLayout.ts`의 `DIALOGUE_BACKDROP`이 정한다.
    */
-  storyTrain: "background-story-train"
+  storyTrain: "background-story-train",
+  /** 3·4장 스테이지 지도 — 뿌리 온실 회랑이다. 1·2장은 `stageMap`을 쓴다(`stageMapBackground`). */
+  stageMapDeep: "background-stage-map-deep",
+  /** 3·4장 스테이지 전장 — 수로와 환승로다. 1·2장은 `combat`을 쓴다(`stageFieldBackground`). */
+  combatDeep: "background-combat-deep",
+  /** 고대 지층 — 입구(1~10층)와 이후 열 층 구간마다 돌아가는 반복 세 장, 전용 전장이다. */
+  ancientEntry: "background-ancient-entry",
+  ancientLoopA: "background-ancient-loop-a",
+  ancientLoopB: "background-ancient-loop-b",
+  ancientLoopC: "background-ancient-loop-c",
+  ancientField: "background-ancient-field"
 };
 var BACKGROUND_ASSETS = [
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
@@ -18080,6 +18909,13 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.lab, "sprites/background/background_005.webp"],
   [BACKGROUND.combat, "sprites/background/background_006.webp"],
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
+  [BACKGROUND.stageMapDeep, "sprites/background/map_002.webp"],
+  [BACKGROUND.combatDeep, "sprites/background/field_ch34.webp"],
+  [BACKGROUND.ancientEntry, "sprites/background/ancient_strata_entry.webp"],
+  [BACKGROUND.ancientLoopA, "sprites/background/ancient_strata_loop_a.webp"],
+  [BACKGROUND.ancientLoopB, "sprites/background/ancient_strata_loop_b.webp"],
+  [BACKGROUND.ancientLoopC, "sprites/background/ancient_strata_loop_c.webp"],
+  [BACKGROUND.ancientField, "sprites/background/ancient_strata_field.webp"],
   [BACKGROUND.archaeology, "sprites/background/background_007.webp"],
   [BACKGROUND.premiumShop, "sprites/background/background_008.webp"],
   // 일반 상점은 전용 원화를 쓴다 — 유료 상점(008)과 같은 그림을 나눠 쓰던 때는 두 화면이
@@ -18140,7 +18976,8 @@ var BATTLE_FIELD_BACKGROUND = {
   cake: BACKGROUND.cakeField,
   bounty: BACKGROUND.bountyField,
   raid: BACKGROUND.raidField,
-  duel: BACKGROUND.duelField
+  duel: BACKGROUND.duelField,
+  ancient: BACKGROUND.ancientField
 };
 
 // src/data/banners.ts
@@ -18642,7 +19479,7 @@ var tail = (list) => list.slice(-KEEP);
 function isValidOpsJournal(value) {
   if (!value || typeof value !== "object") return false;
   const ops = value;
-  const ids = (v) => Array.isArray(v) && v.every((id) => typeof id === "string");
+  const ids = (v2) => Array.isArray(v2) && v2.every((id) => typeof id === "string");
   return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
 }
 function opsJournalOf(state) {
@@ -18726,8 +19563,8 @@ var emptyServerJournal = () => ({ receipts: {}, raidAdmissions: {} });
 function isValidServerJournal(value) {
   if (!value || typeof value !== "object") return false;
   const journal = value;
-  const record2 = (v) => !!v && typeof v === "object" && !Array.isArray(v);
-  const json = (v) => v === null || typeof v === "string" || typeof v === "boolean" || typeof v === "number" && Number.isFinite(v) || (Array.isArray(v) ? v.every(json) : record2(v) && Object.values(v).every(json));
+  const record2 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
+  const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record2(v2) && Object.values(v2).every(json));
   return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
@@ -18860,7 +19697,9 @@ function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
   const spec = RAID_DIFFICULTY[difficulty].settlement;
   const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
   const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
-  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+  const sigil = Math.max(1, mine + total + (defeated ? spec.kill : 0));
+  const gem = Math.ceil(spec.gems * sigil / (spec.mine + spec.total + spec.kill) / 5) * 5;
+  return { raidSigil: sigil, gem: Math.min(spec.gems, Math.max(5, gem)) };
 }
 function raidRunGold(runDamage, goldPerDamage) {
   return Math.max(0, Math.floor(runDamage * goldPerDamage));
@@ -18992,7 +19831,8 @@ var EXPEDITION_NODE_REWARD_BALANCE = {
   cheesecake: { perNode: { min: 5, max: 15 }, runCap: 225 },
   gold: { perNode: { min: 150, max: 500 }, runCap: 9e3 },
   fossil: { perNode: { min: 0, max: 1 }, runCap: 1 },
-  gems: { perNode: { min: 5, max: 15 }, runCap: 225 },
+  /** 젬은 한 판 상한을 따로 정하지 않는다(응태 결정, v0.338.0) — 700은 어느 경로로도 닿지 않는 기술적 천장일 뿐이다. */
+  gems: { perNode: { min: 10, max: 20 }, runCap: 700 },
   /**
    * 인양 기록 — 노드를 넘을 때마다 **소소하게** 쌓인다. 전리품 상점의 재화라 한 판에 몇 개라도 손에
    * 쥐어져야 원정을 돌 이유가 상점까지 이어진다. 큰 몫은 폰토스 피해와 주간 보상이 맡는다.
@@ -19011,7 +19851,7 @@ var EXPEDITION_COMBAT_REWARD_MULTIPLIERS = {
 var EXPEDITION_TREASURE_REWARD_BALANCE = {
   gold: { min: 750, max: 1500 },
   fossil: { min: 1, max: 1 },
-  gems: { min: 20, max: 50 },
+  gems: { min: 30, max: 60 },
   salvageRecord: { min: 8, max: 15 }
 };
 var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
@@ -19062,7 +19902,7 @@ function expeditionRankRewards(rank) {
 var EXPEDITION_SWEEP_REWARDS = {
   gold: 4e3,
   cheesecake: 120,
-  gems: 120,
+  gems: 200,
   salvageRecord: 60,
   fossil: 0
 };
@@ -19316,7 +20156,7 @@ function normalizeSettings(value) {
   const d = createDefaultSettings();
   const root = record(value);
   const s = record(root.sound);
-  const v = record(root.vibration);
+  const v2 = record(root.vibration);
   const n = record(root.notifications);
   const p = record(root.presentation);
   const x = record(root.accessibility);
@@ -19324,7 +20164,7 @@ function normalizeSettings(value) {
   const a = record(root.account);
   return {
     sound: { masterVolume: volume(s.masterVolume, d.sound.masterVolume), musicVolume: volume(s.musicVolume, d.sound.musicVolume), effectsVolume: volume(s.effectsVolume, d.sound.effectsVolume), voiceVolume: volume(s.voiceVolume, d.sound.voiceVolume), masterMuted: bool(s.masterMuted, d.sound.masterMuted), musicMuted: bool(s.musicMuted, d.sound.musicMuted), effectsMuted: bool(s.effectsMuted, d.sound.effectsMuted), voiceMuted: bool(s.voiceMuted, d.sound.voiceMuted) },
-    vibration: { enabled: bool(v.enabled, d.vibration.enabled), combatHit: bool(v.combatHit, d.vibration.combatHit), ultimate: bool(v.ultimate, d.vibration.ultimate), excavationResult: bool(v.excavationResult, d.vibration.excavationResult), uiInput: bool(v.uiInput, d.vibration.uiInput) },
+    vibration: { enabled: bool(v2.enabled, d.vibration.enabled), combatHit: bool(v2.combatHit, d.vibration.combatHit), ultimate: bool(v2.ultimate, d.vibration.ultimate), excavationResult: bool(v2.excavationResult, d.vibration.excavationResult), uiInput: bool(v2.uiInput, d.vibration.uiInput) },
     notifications: { enabled: bool(n.enabled, d.notifications.enabled), staminaFull: bool(n.staminaFull, d.notifications.staminaFull), dailyMission: bool(n.dailyMission, d.notifications.dailyMission), quietHours: bool(n.quietHours, d.notifications.quietHours), quietHoursStart: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursStart)) ? String(n.quietHoursStart) : d.notifications.quietHoursStart, quietHoursEnd: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(n.quietHoursEnd)) ? String(n.quietHoursEnd) : d.notifications.quietHoursEnd, lastScheduledIds: Object.fromEntries(Object.entries(record(n.lastScheduledIds)).filter(([key, id]) => ["staminaFull", "dailyMission"].includes(key) && typeof id === "string" && id.length <= 120)) },
     presentation: {
       screenShake: bool(p.screenShake, d.presentation.screenShake),
@@ -26624,75 +27464,150 @@ function combatPower(stats) {
 
 // src/core/runeTraitEffects.ts
 init_define_import_meta_env();
-function onceLimits(target, cooldownSeconds = 0) {
-  return { maxTriggers: 1, cooldownSeconds, maxStacks: 1, target };
+var UNLIMITED = Number.MAX_SAFE_INTEGER;
+function limits(target, maxTriggers = 1, cooldownSeconds = 0, maxStacks = 1) {
+  return { maxTriggers, cooldownSeconds, maxStacks, target };
 }
-function runeTraitCombatEffects(trait, relicId) {
-  const def = findRuneTrait(trait.id);
-  if (def === void 0) return [];
-  const value = runeTraitValue(trait.id, trait.grade);
+function buildEffects(def, { value, value2, count: count2 }, relicId) {
   const scope = { kind: "relic", relicId };
-  switch (def.effect.kind) {
+  const effect = def.effect;
+  switch (effect.kind) {
     case "hasteOnBattleStart":
-      return [{
-        kind: "triggered",
-        trigger: "battleStart",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: def.effect.seconds }
-      }];
+      return [
+        {
+          kind: "triggered",
+          trigger: "battleStart",
+          scope,
+          limits: limits("self"),
+          payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: effect.seconds }
+        },
+        // 처치하면 지속이 늘어난다 — 합계 상한은 한 판에 늘릴 수 있는 시간이다.
+        {
+          kind: "triggered",
+          trigger: "onKill",
+          scope,
+          limits: limits("self", UNLIMITED),
+          payload: { kind: "hasteExtend", seconds: effect.extendSeconds, maxExtraSeconds: effect.extendMaxSeconds }
+        }
+      ];
     case "hasteOnKill":
       return [{
         kind: "triggered",
         trigger: "onKill",
         scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: def.effect.seconds }
+        limits: limits("self", UNLIMITED, 0, effect.maxStacks),
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: value, seconds: effect.seconds }
       }];
-    case "damageVsHighHp":
-      return [{ kind: "damageVsHighHpPercent", percent: value, aboveHpPercent: def.effect.aboveHpPercent, scope }];
+    case "currentHpStrike":
+      return [{ kind: "currentHpStrike", percent: value, everyN: effect.everyNAttacks, attackCapPercent: effect.attackCapPercent, scope }];
     case "sameTargetStreak":
-      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: def.effect.maxStacks, scope }];
+      return [{ kind: "sameTargetStreakPercent", percentPerStack: value, maxStacks: effect.maxStacks, carryOnKill: true, scope }];
     case "shieldLowestAllyOnBattleStart":
+      return [{ kind: "triggered", trigger: "battleStart", scope, limits: limits("lowestHpAlly"), payload: { kind: "shield", maxHpPercent: value } }];
+    case "shieldAndHasteOnLowHp":
+      return [
+        { kind: "triggered", trigger: "onLowHp", scope, limits: limits("self"), whenHpAtOrBelowPercent: effect.belowHpPercent, payload: { kind: "shield", maxHpPercent: value } },
+        {
+          kind: "triggered",
+          trigger: "onLowHp",
+          scope,
+          limits: limits("self"),
+          whenHpAtOrBelowPercent: effect.belowHpPercent,
+          payload: { kind: "haste", attackSpeedPercent: value2, moveSpeedPercent: 0, seconds: effect.hasteSeconds }
+        }
+      ];
+    case "healOverTimeOnLowHp":
+      return [{
+        kind: "triggered",
+        trigger: "onLowHp",
+        scope,
+        limits: limits("self"),
+        whenHpAtOrBelowPercent: effect.belowHpPercent,
+        payload: { kind: "heal", maxHpPercent: value, thenOverSeconds: effect.overSeconds }
+      }];
+    case "shieldOnCritical":
+      return [{ kind: "triggered", trigger: "onCritical", scope, limits: limits("self", UNLIMITED, effect.cooldownSeconds), payload: { kind: "shield", maxHpPercent: value } }];
+    case "openingCrits":
+      return [{ kind: "openingCrits", count: value, scope }];
+    case "openingEnergy":
+      return [{ kind: "openingEnergyPercent", percent: value, scope }];
+    case "ferocityOnKill":
+      return [{ kind: "triggered", trigger: "onKill", scope, limits: limits("self", UNLIMITED, effect.cooldownSeconds), payload: { kind: "ferocity", maxPercent: value } }];
+    case "bleedEveryNAttacks":
+      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
+    case "hasteOnUltimate":
+      return [{
+        kind: "triggered",
+        trigger: "onUltimate",
+        scope,
+        limits: limits("self", UNLIMITED),
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: effect.seconds }
+      }];
+    case "shieldOnUltimate":
+      return [{ kind: "triggered", trigger: "onUltimate", scope, limits: limits("self", effect.maxTimes), payload: { kind: "shield", maxHpPercent: value } }];
+    case "healOnKill":
+      return [{ kind: "triggered", trigger: "onKill", scope, limits: limits("self", effect.maxTimes, effect.cooldownSeconds), payload: { kind: "heal", maxHpPercent: value } }];
+    case "teamHasteOnBattleStart":
       return [{
         kind: "triggered",
         trigger: "battleStart",
         scope,
-        limits: onceLimits("lowestHpAlly"),
-        payload: { kind: "shield", maxHpPercent: value }
+        limits: limits("allAllies"),
+        payload: { kind: "haste", attackSpeedPercent: value, moveSpeedPercent: 0, seconds: effect.seconds }
       }];
-    case "shieldOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "shield", maxHpPercent: value }
-      }];
-    case "healOnLowHp":
-      return [{
-        kind: "triggered",
-        trigger: "onLowHp",
-        scope,
-        limits: onceLimits("self"),
-        payload: { kind: "heal", maxHpPercent: value }
-      }];
-    case "shieldOnCritical":
+    case "healOnBasicHit":
+      return [{ kind: "triggered", trigger: "onBasicHit", scope, limits: limits("self", effect.maxTimes, effect.cooldownSeconds), payload: { kind: "heal", maxHpPercent: value } }];
+    case "staggerOnCritical":
       return [{
         kind: "triggered",
         trigger: "onCritical",
         scope,
-        limits: { maxTriggers: Number.MAX_SAFE_INTEGER, cooldownSeconds: def.effect.cooldownSeconds, maxStacks: 1, target: "self" },
-        payload: { kind: "shield", maxHpPercent: value }
+        limits: limits("hitTarget", UNLIMITED, value),
+        payload: { kind: "status", status: { kind: "stagger", seconds: effect.staggerSeconds } }
       }];
-    case "flatStat":
-      return [{ kind: "flatStat", stat: def.effect.stat, points: value, scope }];
-    case "bleedEveryNAttacks":
-      return [{ kind: "bleedOnAttack", strength: "standard", everyNAttacks: value, reapplication: "refresh", scope }];
+    case "curseEveryNAttacks":
+      return [{ kind: "curseOnAttack", everyNAttacks: value, scope }];
+    case "nthBasicBonus":
+      return [{ kind: "nthBasicBonusPercent", percent: value, everyN: effect.everyN, scope }];
+    case "damageVsLowHp":
+      return [{ kind: "damageVsLowHpPercent", percent: value, belowHpPercent: effect.belowHpPercent, scope }];
+    case "critDamage":
+      return [{ kind: "flatStat", stat: "critDamage", points: value, scope }];
+    case "shieldedDamage":
+      return [{ kind: "shieldedDamagePercent", percent: value, scope }];
+    case "warmUp":
+      return [{ kind: "warmUpHaste", percentPerStack: value, everySeconds: effect.everySeconds, maxStacks: effect.maxStacks, scope }];
+    case "periodicCrit":
+      return [{ kind: "periodicCrit", everyN: Math.max(effect.minEvery, value - (count2 - 1)), scope }];
   }
 }
+function resolveRuneTraitStacking(traits, relicId) {
+  const effects = [];
+  const ignored = [];
+  const groups = /* @__PURE__ */ new Map();
+  traits.forEach((trait, index) => groups.set(trait.id, [...groups.get(trait.id) ?? [], index]));
+  for (const [id, indices] of groups) {
+    const def = findRuneTrait(id);
+    if (def === void 0) continue;
+    const rank = (index) => RUNE_TRAIT_GRADES.indexOf(traits[index].grade);
+    if (def.stacking === "independent") {
+      for (const index of indices) effects.push(...buildEffects(def, { value: def.values[traits[index].grade], value2: def.values2?.[traits[index].grade] ?? 0, count: 1 }, relicId));
+    } else if (def.stacking === "none") {
+      const best = indices.reduce((top, index) => rank(index) > rank(top) ? index : top, indices[0]);
+      for (const index of indices) if (index !== best) ignored.push(index);
+      effects.push(...buildEffects(def, { value: def.values[traits[best].grade], value2: def.values2?.[traits[best].grade] ?? 0, count: 1 }, relicId));
+    } else {
+      const sum = (pick2) => indices.reduce((total, index) => total + pick2(traits[index].grade), 0);
+      const value = Math.min(def.sumCap ?? Number.POSITIVE_INFINITY, sum((grade) => def.values[grade]));
+      const bestIndex = indices.reduce((top, index) => rank(index) > rank(top) ? index : top, indices[0]);
+      const base = def.effect.kind === "periodicCrit" ? def.values[traits[bestIndex].grade] : value;
+      effects.push(...buildEffects(def, { value: base, value2: sum((grade) => def.values2?.[grade] ?? 0), count: indices.length }, relicId));
+    }
+  }
+  return { effects, ignored };
+}
 function partyRuneTraitEffects(equipped) {
-  return equipped.flatMap(({ relicId, runes }) => runes.flatMap((rune) => rune.trait === void 0 ? [] : runeTraitCombatEffects(rune.trait, relicId)));
+  return equipped.flatMap(({ relicId, runes }) => resolveRuneTraitStacking(runes.flatMap((rune) => rune.trait === void 0 ? [] : [rune.trait]), relicId).effects);
 }
 
 // src/server/playerDuels.ts
@@ -28052,7 +28967,7 @@ function serverNow() {
 
 // src/core/tempAd.ts
 init_define_import_meta_env();
-var TEMP_AD_REWARD_ENABLED = true;
+var TEMP_AD_REWARD_ENABLED = QA_TOOLS_ENABLED;
 function tempAdToken(slotId) {
   return `temp-ad:${slotId}`;
 }
@@ -29005,20 +29920,33 @@ function eligibleExpeditionTargets(relics) {
   if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return [];
   return relics.filter(({ alive, currentHp }) => alive || currentHp === 0).map(({ relicId }) => relicId);
 }
+function supportsExpeditionAugment(def, relicId) {
+  if (def.effect.kind !== "triggered" || def.effect.trigger !== "onUltimateHit") return true;
+  const ultimate = RELICS.find((relic) => relic.id === relicId)?.ultimate;
+  return ultimate !== void 0 && ultimate.damageType !== void 0 && ultimate.power !== void 0 && ultimate.power > 0;
+}
 function augmentAvailable(augmentId, prior) {
   const def = getExpeditionAugment(augmentId);
   if (!def) return false;
+  const perRelic = def.target === "relic" && def.stacking.mode === "strongest";
   const stackCount = prior.filter((selection) => selection.augmentId === def.id).length;
-  if (stackCount >= def.maxStacks) return false;
+  if (!perRelic && stackCount >= def.maxStacks) return false;
   if (!def.exclusiveGroup) return true;
   return !prior.some((selection) => {
     const selected = getExpeditionAugment(selection.augmentId);
     return selected !== void 0 && selected.exclusiveGroup === def.exclusiveGroup && selected.id !== def.id;
   });
 }
+function augmentTargets(def, targets2, prior) {
+  if (def.target !== "relic") return [];
+  if (def.stacking.mode !== "strongest") return [...targets2];
+  const holders = new Set(prior.filter((selection) => selection.augmentId === def.id).map(({ targetRelicId }) => targetRelicId));
+  return targets2.filter((relicId) => !holders.has(relicId));
+}
 function generateExpeditionAugmentOffers(input) {
   const targets2 = eligibleExpeditionTargets(input.relics);
-  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && (def.target === "party" || targets2.length > 0) && augmentAvailable(def.id, input.selections));
+  const targetsFor = (def) => augmentTargets(def, targets2, input.selections).filter((id) => supportsExpeditionAugment(def, id));
+  const pool = EXPEDITION_AUGMENTS.filter((def) => def.rarity === input.rarity && !RETIRED_EXPEDITION_AUGMENTS.has(def.id) && (def.target === "party" || targetsFor(def).length > 0) && augmentAvailable(def.id, input.selections));
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const chosen = Math.floor(input.random() * (index + 1));
     [pool[index], pool[chosen]] = [pool[chosen], pool[index]];
@@ -29026,14 +29954,14 @@ function generateExpeditionAugmentOffers(input) {
   const requestedCount = Math.max(0, Math.floor(input.candidateCount ?? 3));
   return pool.slice(0, requestedCount).map((def) => ({
     augmentId: def.id,
-    eligibleTargetRelicIds: def.target === "relic" ? targets2 : []
+    eligibleTargetRelicIds: def.target === "relic" ? targetsFor(def) : []
   }));
 }
 function validateExpeditionAugmentChoice(offer, selection, prior) {
   const def = getExpeditionAugment(offer.augmentId);
   if (!def || selection.augmentId !== offer.augmentId || !augmentAvailable(def.id, prior)) return false;
   if (def.target === "party") return selection.targetRelicId === void 0;
-  return selection.targetRelicId !== void 0 && offer.eligibleTargetRelicIds.includes(selection.targetRelicId);
+  return selection.targetRelicId !== void 0 && offer.eligibleTargetRelicIds.includes(selection.targetRelicId) && !(def.stacking.mode === "strongest" && prior.some((held) => held.augmentId === def.id && held.targetRelicId === selection.targetRelicId)) && supportsExpeditionAugment(def, selection.targetRelicId);
 }
 function expeditionRewardRandom(seed) {
   let value = 2166136261;
@@ -31544,8 +32472,8 @@ var SettingsManager = class extends EventTarget {
    * 호출하지 않아야 하며, 미지원 플랫폼의 false 반환도 성공으로 바꾸지 않고 그대로 돌려준다.
    */
   haptic(pattern) {
-    const v = this.get().vibration;
-    const allowed2 = v.enabled && { uiTap: v.uiInput, battleHit: v.combatHit, ultimateReady: v.ultimate, rareExcavation: v.excavationResult }[pattern];
+    const v2 = this.get().vibration;
+    const allowed2 = v2.enabled && { uiTap: v2.uiInput, battleHit: v2.combatHit, ultimateReady: v2.ultimate, rareExcavation: v2.excavationResult }[pattern];
     return allowed2 ? this.platform.haptic(pattern) : false;
   }
   /** 단순 토글과 분리된 명시적 확인 동작만 브라우저 권한을 요청한다. */
@@ -31617,6 +32545,8 @@ var FakeServer = class {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? Math.random;
     this.now = options.now ?? serverNow;
+    this.adVerificationAvailable = options.verifyAdToken !== void 0 || QA_TOOLS_ENABLED;
+    this.paymentVerificationAvailable = options.verifyPurchaseReceipt !== void 0 || QA_TOOLS_ENABLED;
     this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}` || TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
@@ -31650,6 +32580,13 @@ var FakeServer = class {
       { id: "expired-supply", title: t("mail.expired.title"), sender: t("mail.expired.sender"), body: t("mail.expired.body"), sentAt: "2026-08-01T00:00:00.000Z", expiresAt: "2026-08-10T00:00:00.000Z", read: true, claimed: false, rewards: [{ kind: "currency", currency: "fossil", amount: 1 }] }
     ] : [];
     this.applySavedMailClaims();
+    for (const [key, receipt] of Object.entries(this.state.serverJournal?.receipts ?? {})) {
+      if (!key.startsWith('["platformVerification",')) continue;
+      const result = receipt.result;
+      if (result.verified === true && typeof result.verificationId === "string" && typeof result.transactionId === "string" && result.productId === receipt.identity && Number.isFinite(Date.parse(result.serverTime))) {
+        this.verifiedTransactions.set(result.transactionId, result);
+      }
+    }
   }
   state;
   /** 로컬 QA는 권위 영수증을 흉내 내지 않는다. 운영 HTTP 처리기만 발급/검증한다. */
@@ -31673,6 +32610,8 @@ var FakeServer = class {
   random;
   now;
   verifyAdToken;
+  adVerificationAvailable;
+  paymentVerificationAvailable;
   verifyReceipt;
   /** 테스트가 브라우저 저장소 없이 커밋 실패를 주입할 수 있는 선택 저장 경계다. */
   persistSession;
@@ -32343,7 +33282,7 @@ var FakeServer = class {
       attemptsUsed: instance.attemptsUsed,
       attemptsLimit: RAID_ATTEMPTS_PER_RAID,
       settled: instance.settled,
-      settlement: settlement ? [rewardOf("raidSigil", settlement.raidSigil)] : [],
+      settlement: settlement ? sortByRewardPriority([rewardOf("gems", settlement.gem), rewardOf("raidSigil", settlement.raidSigil)], (reward) => reward.currency) : [],
       entries: raidContributionBoard([...board, mine], limit)
     };
   }
@@ -32428,7 +33367,7 @@ var FakeServer = class {
     journal.receipts[JSON.stringify([operation, id])] = { identity, result: JSON.parse(JSON.stringify(compact)) };
     const protectedRun = next.expedition.run?.runId;
     const entries = Object.entries(journal.receipts);
-    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => key.startsWith('["platformTransaction",') || index >= entries.length - 256 || protectedRun && receipt.identity.includes(protectedRun)));
+    journal.receipts = Object.fromEntries(entries.filter(([key, receipt], index) => key.startsWith('["platformTransaction",') || key.startsWith('["platformVerification",') || index >= entries.length - 256 || protectedRun && receipt.identity.includes(protectedRun)));
     next.serverJournal = journal;
   }
   /**
@@ -32738,7 +33677,7 @@ var FakeServer = class {
     const quickScore = this.expeditionReferenceScore(now);
     const weekKey = expeditionWeekKey(now);
     if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 3e5).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: slot.placement !== "quick_expedition" || quickScore > 0, dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ..."weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {} })) };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 3e5).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: (this.adVerificationAvailable || this.hasAdFreeMembership(now)) && (slot.placement !== "quick_expedition" || quickScore > 0), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ..."weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {} })) };
   }
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
   async getInventory() {
@@ -33352,10 +34291,15 @@ var FakeServer = class {
     if (cached) return { ...cached };
     const product = PRODUCTS.find(({ id }) => id === request.productId);
     if (!request.requestId || !product || product.acquisition.kind !== "platform_payment") throw new GameApiError("RECEIPT_INVALID", "\uD50C\uB7AB\uD3FC \uACB0\uC81C \uC0C1\uD488\uC758 \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
-    const transactionId = await this.verifyReceipt(request.receipt, product.id);
-    if (!transactionId) throw new GameApiError("RECEIPT_INVALID", "\uD50C\uB7AB\uD3FC \uC601\uC218\uC99D\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (!["apple", "google", "test"].includes(request.platform) || request.platform === "test" && !QA_TOOLS_ENABLED || typeof request.receipt !== "string" || !request.receipt || new TextEncoder().encode(request.receipt).length > 96 * 1024) throw new GameApiError("RECEIPT_INVALID", "\uD50C\uB7AB\uD3FC \uC601\uC218\uC99D\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const transactionId = await this.verifyReceipt(request.receipt, product.id, request.platform);
+    if (typeof transactionId !== "string" || !transactionId.trim() || transactionId.length > 4096) throw new GameApiError("RECEIPT_INVALID", "\uD50C\uB7AB\uD3FC \uC601\uC218\uC99D\uC744 \uAC80\uC99D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const previous = this.verifiedTransactions.get(transactionId);
     const result = previous ?? { verificationId: `verification-${transactionId}`, productId: product.id, transactionId, verified: true, serverTime: this.now().toISOString() };
+    if (previous && previous.productId !== product.id) throw new GameApiError("RECEIPT_INVALID", "\uB2E4\uB978 \uC0C1\uD488\uC5D0 \uC0AC\uC6A9\uB41C \uAC70\uB798\uC785\uB2C8\uB2E4.");
+    const candidate = structuredClone(this.state);
+    this.recordReceipt(candidate, "platformVerification", result.verificationId, product.id, result);
+    this.commitRaidState(candidate);
     this.verifiedTransactions.set(transactionId, result);
     this.receiptResults.set(request.requestId, result);
     return { ...result };
@@ -33368,22 +34312,11 @@ var FakeServer = class {
     const verification = [...this.verifiedTransactions.values()].find(({ verificationId }) => verificationId === request.verificationId);
     const product = verification && PRODUCTS.find(({ id }) => id === verification.productId);
     if (!request.requestId || !verification || !product?.passBenefit) throw new GameApiError("RECEIPT_INVALID", "\uAC80\uC99D\uB41C \uD6C4\uC6D0 \uD328\uC2A4 \uAC70\uB798\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
-    const entitlementId = `entitlement-${verification.transactionId}`;
-    const existing = this.entitlements.get(entitlementId);
-    const now = this.now();
-    const expiresAt = product.passBenefit.durationDays === null ? null : new Date(now.getTime() + product.passBenefit.durationDays * 864e5).toISOString();
-    const entitlement = existing ?? { entitlementId, productId: product.id, activatedAt: now.toISOString(), expiresAt, active: true, serverTime: now.toISOString() };
-    if (!existing) {
-      if (this.hasActivePass(product, now)) throw new GameApiError("PURCHASE_LIMIT_REACHED", "\uC774\uBBF8 \uD65C\uC131 \uAD6C\uB3C5\uC774 \uC788\uC2B5\uB2C8\uB2E4.");
-      const candidate = structuredClone(this.state);
-      const applied = this.applyProductGrants(product, 1, candidate.wallet, candidate.itemInventory, now);
-      candidate.itemInventory = applied.items;
-      this.setSubscriptionEntitlement(candidate, entitlement);
-      this.commitRaidState(candidate);
-    }
-    const result = { entitlement, grants: product.grants };
+    const fulfilled = await this.fulfillPlatformPurchase({ verificationId: request.verificationId, requestId: request.requestId });
+    if (!fulfilled.entitlement) throw new GameApiError("RECEIPT_INVALID", "\uAC80\uC99D\uB41C \uD6C4\uC6D0 \uD328\uC2A4 \uAC70\uB798\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
+    const result = { entitlement: fulfilled.entitlement, grants: product.grants };
     this.activationResults.set(request.requestId, result);
-    return { entitlement: { ...entitlement }, grants: result.grants };
+    return { entitlement: { ...result.entitlement }, grants: result.grants };
   }
   /**
    * 검증된 플랫폼 거래를 지급으로 확정한다 — 패스·묶음·다이아가 모두 이 한 길이다.
@@ -33672,7 +34605,7 @@ var FakeServer = class {
       for (const reward of stageFirstClearRewards(stage)) {
         if (reward.kind === "rune") {
           const base2 = this.createGrantedRune(reward.rarity, nextRunes, reward.part);
-          const rune = reward.trait ? { ...base2, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random: this.random }) } : base2;
+          const rune = reward.trait ? { ...base2, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) } : base2;
           assertValidRuneInstance(rune);
           nextRunes = [...nextRunes, rune];
           firstClearRewards.push({ kind: "rune", rarity: rune.rarity, part: rune.part, instanceId: rune.instanceId, name: rune.customName ?? rune.baseName, trait: rune.trait !== void 0 });
@@ -34565,11 +35498,12 @@ var FakeServer = class {
     const now = this.now();
     const products = PRODUCTS.filter((product) => product.storefront === storefront && this.isVisible(product, now)).map((product) => {
       const remaining = this.remaining(product, now);
+      const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
       return {
         ...product,
         remaining,
-        purchasable: remaining > 0,
-        disabledReason: remaining <= 0 ? t("error.purchase.limit") : void 0,
+        purchasable: remaining > 0 && !paymentUnavailable,
+        disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
         ...this.runePartOf(product, now) !== void 0 ? { runePart: this.runePartOf(product, now) } : {},
         ...product.firstPurchaseBonus ? { firstBonusAvailable: this.firstBonusAvailable(product) } : {},
         ...this.subscriptionInfo(product, now)
@@ -34931,7 +35865,7 @@ var FakeServer = class {
     const remaining = this.state.runeInventory.filter(({ instanceId }) => !consumed.has(instanceId));
     const base = this.createGrantedRune(resultRarity, this.state.runeInventory, part);
     const traitGrade = rollRuneSynthesisTraitGrade(selected.map((rune2) => rune2.trait), this.random());
-    const rune = traitGrade === void 0 ? base : { ...base, trait: { id: RUNE_TRAIT_IDS[Math.min(RUNE_TRAIT_IDS.length - 1, Math.floor(this.random() * RUNE_TRAIT_IDS.length))], grade: traitGrade, upgradeMisses: 0 } };
+    const rune = traitGrade === void 0 ? base : { ...base, trait: { id: pickRuneTraitId(RUNE_TRAIT_POOL, traitGrade, this.random, LEGENDARY_EXCLUSIVE_SHARE), grade: traitGrade, upgradeMisses: 0 } };
     const nextRunes = [...remaining, rune];
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
     const nextProgress = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, progress]) => [id, progress.heartGemSlots.some((slot) => slot !== null && consumed.has(slot)) ? { ...progress, heartGemSlots: progress.heartGemSlots.map((slot) => slot !== null && consumed.has(slot) ? null : slot) } : progress]));
@@ -35255,7 +36189,7 @@ var FakeServer = class {
       throw new GameApiError("RUNE_TRAIT_GRADE_REACHED", "\uC774\uBBF8 \uADF8 \uB4F1\uAE09 \uC774\uC0C1\uC758 \uD2B9\uC131\uC785\uB2C8\uB2E4.");
     }
     this.consumeTraitItem(entry.itemId);
-    const trait = grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: entry.minimumGrade, random: this.random });
+    const trait = grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: entry.minimumGrade, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
     const rune = { ...current, trait };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
@@ -35287,7 +36221,7 @@ var FakeServer = class {
     if (current.trait === void 0) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uC7AC\uD574\uC11D\uD560 \uD2B9\uC131\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const cost = RUNE_TRAIT_RULES.rerollCost[current.trait.grade];
     if (this.state.wallet.rawStone < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC7AC\uD574\uC11D\uC5D0 \uD544\uC694\uD55C \uC6D0\uC11D\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const outcome = rerollRuneTrait({ trait: current.trait, traitIds: RUNE_TRAIT_IDS, random: this.random });
+    const outcome = rerollRuneTrait({ trait: current.trait, pool: RUNE_TRAIT_POOL, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
     this.state.wallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone - cost };
     this.state.archaeology.pendingReroll = { runeInstanceId: current.instanceId, candidate: outcome.candidate };
     this.persist(this.state);
@@ -35847,6 +36781,13 @@ async function handleArenaCall(rpc, player, method, args, requestId) {
 // src/server/gameHandler.ts
 init_define_import_meta_env();
 
+// src/server/secureRandom.ts
+init_define_import_meta_env();
+function secureRandom() {
+  const words = globalThis.crypto.getRandomValues(new Uint32Array(2));
+  return ((words[0] >>> 5) * 67108864 + (words[1] >>> 6)) / 9007199254740992;
+}
+
 // src/server/releaseBoundary.ts
 init_define_import_meta_env();
 var reject = () => {
@@ -36257,8 +37198,14 @@ var GameCallError = class extends Error {
 };
 var unavailableGuild = createUnavailableGuildBackend();
 var chain = Promise.resolve();
+var MAX_PENDING_GAME_CALLS = 32;
+var pendingCalls = 0;
 function serialize(task) {
-  const next = chain.then(task, task);
+  if (pendingCalls >= MAX_PENDING_GAME_CALLS) throw new GameCallError(503, "server_busy");
+  pendingCalls++;
+  const next = chain.then(task, task).finally(() => {
+    pendingCalls--;
+  });
   chain = next.catch(() => void 0);
   return next;
 }
@@ -36270,11 +37217,14 @@ function handleGameCall(playerId, req, deps) {
   if (req.args !== void 0 && !Array.isArray(req.args)) throw new GameCallError(400, "invalid_args");
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
   if (req.requestId !== void 0 && !REQUEST_ID.test(req.requestId)) throw new GameCallError(400, "invalid_request_id");
-  return serialize(() => run(playerId, req, deps));
+  const call = isReadMethod(req.method) ? { ...req, requestId: void 0 } : req;
+  return serialize(() => run(playerId, call, deps));
 }
 async function run(playerId, req, deps) {
   const attempts = deps.maxAttempts ?? 3;
-  const fingerprint = JSON.stringify([req.method, req.args ?? []]);
+  const legacyFingerprint = JSON.stringify([req.method, req.args ?? []]);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(legacyFingerprint));
+  const fingerprint = "sha256:" + [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
   for (let attempt = 1; ; attempt += 1) {
     const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
@@ -36291,10 +37241,10 @@ async function run(playerId, req, deps) {
     ]);
     if (cached !== void 0) {
       const receipt = cached;
-      if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
+      if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
       const { _requestFingerprint, ...response2 } = receipt;
       if (stored && Number(stored.revision) >= Number(response2.revision)) return { ...response2, state: stored.data, revision: stored.revision };
-      return response2;
+      throw new GameCallError(409, "receipt_state_unavailable");
     }
     let state;
     try {
@@ -36312,7 +37262,7 @@ async function run(playerId, req, deps) {
     if (context) state.raid.instances = context.records.map((row) => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
-      random: deps.random ?? Math.random,
+      random: deps.random ?? secureRandom,
       ...deps.now ? { now: deps.now } : {},
       persistSession: () => void 0,
       raidContext: context,
@@ -36363,7 +37313,7 @@ async function run(playerId, req, deps) {
         data,
         method: req.method,
         requestId: req.requestId ?? null,
-        response: { ...response, revision: void 0, _requestFingerprint: fingerprint },
+        response: { ok: true, result: response.result, revision: void 0, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : void 0,
         duels: duels?.changes
@@ -36480,6 +37430,12 @@ function createSupabaseStore(env) {
 
 // src/api/RemoteSocialApi.ts
 init_define_import_meta_env();
+
+// src/core/appRuntime.ts
+init_define_import_meta_env();
+var APP_TARGET = define_import_meta_env_default?.VITE_APP_TARGET ?? "web";
+
+// src/api/RemoteSocialApi.ts
 var SOCIAL_METHODS = [
   "getFriends",
   "getRequests",
@@ -36575,7 +37531,7 @@ function createSupabaseGuildBackend(call) {
 
 // src/server/vercelEntry.ts
 async function handler(req, res) {
-  res.setHeader("cache-control", "no-store");
+  if (applyApiOriginPolicy(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("allow", "POST");
     res.status(405).json({ ok: false, code: "method_not_allowed" });
@@ -36633,7 +37589,7 @@ async function handler(req, res) {
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
       res.status(200).json(await store.socialCall(user.id, method, body.args ?? [], body.requestId));
     } else {
-      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, developmentTools: process.env.FORGARDEN_QA_TOOLS === "1" }));
+      res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) }));
     }
   } catch (error) {
     if (error instanceof GameCallError) {

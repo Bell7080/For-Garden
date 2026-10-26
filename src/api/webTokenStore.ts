@@ -1,3 +1,4 @@
+import { APP_TARGET } from "../core/appRuntime";
 /**
  * 웹 빌드의 게스트 토큰 보관소. 웹에는 플랫폼 보안 저장소가 없어 브라우저 저장소(`localStorage`)에 둔다.
  *
@@ -14,8 +15,9 @@ export const WEB_TOKEN_STORAGE_KEY = "forgarden.web.tokens";
 const KEY = WEB_TOKEN_STORAGE_KEY;
 
 export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = typeof localStorage === "undefined" ? undefined : localStorage): TokenStore | null {
-  if (!storage) return null;
-  return {
+  if (APP_TARGET !== "web" || !storage) return null;
+  const store = {
+    [Symbol.toStringTag]: "ForGardenWebTokenStore",
     async load() {
       try {
         const raw = storage.getItem(KEY);
@@ -26,7 +28,8 @@ export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem"
           : null;
       } catch { return null; }
     },
-    async save(tokens) { storage.setItem(KEY, JSON.stringify(tokens)); },
+    async save(tokens: StoredTokens) { storage.setItem(KEY, JSON.stringify(tokens)); },
     async clear() { storage.removeItem(KEY); },
   };
+  return store;
 }

@@ -1,3 +1,4 @@
+import { secureRandom } from "./secureRandom";
 import type { ExpeditionLeaderboardResponse } from "../api/contracts";
 import { isContentUnlocked } from "../core/contentUnlock";
 import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
@@ -94,8 +95,12 @@ export interface GameHandlerDeps {
 // 서로 다른 계정이 한꺼번에 돌지도 않게 전역 한 줄로 직렬화한다(서버리스 인스턴스당 동시 1건).
 const unavailableGuild = createUnavailableGuildBackend();
 let chain: Promise<unknown> = Promise.resolve();
+export const MAX_PENDING_GAME_CALLS = 32;
+let pendingCalls = 0;
 function serialize<T>(task: () => Promise<T>): Promise<T> {
-  const next = chain.then(task, task);
+  if (pendingCalls >= MAX_PENDING_GAME_CALLS) throw new GameCallError(503, "server_busy");
+  pendingCalls++;
+  const next = chain.then(task, task).finally(() => { pendingCalls--; });
   chain = next.catch(() => undefined);
   return next;
 }
@@ -112,12 +117,15 @@ export function handleGameCall(playerId: string, req: GameCallRequest, deps: Gam
   if (req.args !== undefined && !Array.isArray(req.args)) throw new GameCallError(400, "invalid_args");
   if (req.args && req.args.length > 4) throw new GameCallError(400, "invalid_args");
   if (req.requestId !== undefined && !REQUEST_ID.test(req.requestId)) throw new GameCallError(400, "invalid_request_id");
-  return serialize(() => run(playerId, req, deps));
+  const call = isReadMethod(req.method) ? { ...req, requestId: undefined } : req;
+  return serialize(() => run(playerId, call, deps));
 }
 
 async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
   const attempts = deps.maxAttempts ?? 3;
-  const fingerprint = JSON.stringify([req.method, req.args ?? []]);
+  const legacyFingerprint = JSON.stringify([req.method, req.args ?? []]);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(legacyFingerprint));
+  const fingerprint = "sha256:" + [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
   for (let attempt = 1; ; attempt += 1) {
     // 서로 기다릴 이유가 없는 조회는 한꺼번에 나간다 — 순서대로 부르면 왕복 시간이 그대로 쌓인다.
     const wantsRaid = /^(getRaids|getNotificationSignals|summonRaid|enterRaid|submitRaidDamage|settleRaid)$/.test(req.method) && deps.store.raidContext;
@@ -135,11 +143,11 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     ]);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
-      if (receipt._requestFingerprint !== fingerprint) throw new GameCallError(409, "request_id_conflict");
+      if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
       const { _requestFingerprint, ...response } = receipt;
       // 영수증의 지급 사실은 보존하고, 현재 상태는 최신 저장을 함께 보낸다.
       if (stored && Number(stored.revision) >= Number(response.revision)) return { ...response, state: stored.data, revision: stored.revision };
-      return response;
+      throw new GameCallError(409, "receipt_state_unavailable");
     }
     let state: Session;
     try {
@@ -157,7 +165,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     if (context) state.raid.instances = context.records.map(row => structuredClone(row.instance));
     const server = new FakeServer(state, {
       latencyMs: 0,
-      random: deps.random ?? Math.random,
+      random: deps.random ?? secureRandom,
       ...(deps.now ? { now: deps.now } : {}),
       persistSession: () => undefined,
       raidContext: context,
@@ -204,7 +212,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
         data,
         method: req.method,
         requestId: req.requestId ?? null,
-        response: { ...response, revision: undefined, _requestFingerprint: fingerprint },
+        response: { ok: true, result: response.result, revision: undefined, _requestFingerprint: fingerprint },
         publicProfile: publicProfile(state, playerId, now),
         raids: context ? raidChanges(context, state) : undefined,
         duels: duels?.changes,

@@ -1,3 +1,4 @@
+import { apiEndpoint } from "../core/appRuntime";
 import { isReadMethod } from "../server/requestPolicy";
 import {
   SocialApiError,
@@ -61,7 +62,7 @@ export function createRemoteSocialApi(options: {
       let response: Response | undefined;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          response = await (options.fetchImpl ?? fetch)("/api/game", {
+          response = await (options.fetchImpl ?? fetch)(apiEndpoint("/api/game"), {
             method: "POST",
             headers: {
               authorization: `Bearer ${token}`,

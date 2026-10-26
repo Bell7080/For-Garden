@@ -4,6 +4,8 @@
 declare const __PF_BUILD_COMMIT__: string;
 
 interface ImportMetaEnv {
+  readonly VITE_APP_TARGET?: "web" | "android" | "ios";
+  readonly VITE_GAME_API_ORIGIN?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
 }

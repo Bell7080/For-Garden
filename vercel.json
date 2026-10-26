@@ -8,6 +8,17 @@
   "framework": "vite",
   "routes": [
     {
+      "src": "/(.*)",
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://udujahnlyhedlrfbaaow.supabase.co https://rscxzfdnbdmftortrcqt.supabase.co; font-src 'self' data:; connect-src 'self' https://udujahnlyhedlrfbaaow.supabase.co https://rscxzfdnbdmftortrcqt.supabase.co wss://udujahnlyhedlrfbaaow.supabase.co wss://rscxzfdnbdmftortrcqt.supabase.co; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()"
+      },
+      "continue": true
+    },
+    {
       "src": "/terms/?",
       "dest": "/terms/index.html"
     },

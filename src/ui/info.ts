@@ -530,6 +530,8 @@ export class InfoManager {
   private galleryReturn?: () => void;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
+  /** 호출한 화면이 정한 넘김 순서. 없으면 `PLAYABLE_RELICS`. */
+  private neighborDefs?: readonly RelicDef[];
   /** 넘기는 동안 미뤄 둔 전신·SD 읽기. 새로 열거나 닫으면 지운다. */
   /** 아직 끝나지 않은 전신·SD 읽기 수. 앞선 읽기가 남아 있을 때만 넘김 사이에 쉰다. */
   private pendingLoads = 0;
@@ -1533,11 +1535,25 @@ export class InfoManager {
     });
   }
 
+  /**
+   * 옆으로 넘길 때 따를 순서를 정한다(도감이 지금 화면에 세운 순서 — 정렬·필터·보유 구역 포함).
+   * 비우면 도감에 서는 개체 전체의 기본 순서로 돌아간다.
+   */
+  setNeighborOrder(relics?: readonly RelicDef[]): void {
+    this.neighborDefs = relics;
+  }
+
+  /** 지금 열린 개체가 정해 둔 순서 안에 있을 때만 그 순서를 쓴다(필터로 빠졌으면 기본 순서). */
+  private neighborOrder(currentId: string): readonly RelicDef[] {
+    const custom = this.neighborDefs;
+    return custom && custom.some((def) => def.id === currentId) ? custom : PLAYABLE_RELICS;
+  }
+
   /** 옆 캐릭터로 미끄러져 간다. 판이 한쪽으로 빠지고 반대쪽에서 새로 들어온다. */
   private slideToNeighbor(step: 1 | -1): void {
     const current = this.currentDef;
     if (!current || this.sliding) return;
-    const order = PLAYABLE_RELICS;
+    const order = this.neighborOrder(current.id);
     const index = order.findIndex((def) => def.id === current.id);
     if (index === -1) return;
     const next = order[(index + step + order.length) % order.length];

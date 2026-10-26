@@ -305,6 +305,8 @@ export class RelicsScene extends Phaser.Scene {
       this.gridBottom = Math.max(this.gridBottom, y + cardH / 2);
       introIndex += 1;
     });
+    // 정보창을 옆으로 넘기는 순서는 지금 도감에 선 순서(보유 → 미보유, 정렬·필터 반영) 그대로다.
+    this.info.setNeighborOrder([...owned, ...locked]);
     place(owned, startY);
     if (locked.length > 0) {
       // 미보유 항목이 있을 때만 구분선과 제목을 같은 컨테이너에 만든다. 빈 섹션에는 장식도 없다.

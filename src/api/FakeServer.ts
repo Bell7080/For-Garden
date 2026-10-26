@@ -62,7 +62,7 @@ import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
 import type { ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { isOpsMailId, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
@@ -97,8 +97,8 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, RAID_RUN_GOLD_PER_DAMAGE, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
 import { nextStaminaGemCost, nextUtcMidnight, staminaGemDayKey } from "../core/staminaGemPricing";
@@ -115,9 +115,9 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
-import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, MarkMailsReadRequest } from "./contracts";
-import { expeditionWeekKey, resolveExpeditionBossBattle } from "../core/expeditionBoss";
-import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, QUICK_EXPEDITION_POLICY } from "../data/expedition";
+import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
+import { resolveExpeditionBossBattle } from "../core/expeditionBoss";
+import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, normalizeExpeditionPendingRewards } from "../core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
@@ -221,7 +221,6 @@ export class FakeServer implements GameApi {
   private readonly raidSummonResults = new Map<string, SummonRaidResponse>();
   /** 소탕도 정산과 같은 멱등 계약을 흉내 낸다. */
 
-  private quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   private runeIssueSequence = 0;
   /** 개발 서버 재시작마다 같은 우편 원본에서 시작하되 읽음·수령 상태는 인스턴스 안에서만 변한다. */
@@ -256,7 +255,7 @@ export class FakeServer implements GameApi {
     this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
-    this.random = options.random ?? Math.random;
+    this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
     // 테스트용 서명 형식은 QA에서만 받는다. 일반/서버 빌드는 실제 SSV 검증기가 없으면 거절한다.
     this.adVerificationAvailable = options.verifyAdToken !== undefined || QA_TOOLS_ENABLED;
@@ -441,6 +440,17 @@ export class FakeServer implements GameApi {
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
   async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); markOpsMailsRead(this.state, request.mailIds); return this.mailListDto(); }
 
+  /** 읽은 안내와 수령을 마쳤거나 만료된 우편만 지운다. 받을 것이 남은 우편은 거절한다. */
+  async deleteMails(request: DeleteMailsRequest): Promise<MailListResponse> {
+    await this.delay(); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims();
+    const nowMs = this.now().getTime(); const ids = [...new Set(request.mailIds)];
+    const deletable = (mail: MailDto): boolean => (mail.rewards.length > 0 ? mail.claimed || (mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs) : mail.read);
+    const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
+    if (!ids.length || targets.some((mail) => !mail || !deletable(mail))) throw new Error("MAIL_NOT_DELETABLE");
+    markMailsDeleted(this.state, ids);
+    return this.mailListDto();
+  }
+
   /**
    * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
    * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
@@ -573,7 +583,7 @@ export class FakeServer implements GameApi {
     }
   }
 
-  private mailListDto(): MailListResponse { this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const mails = structuredClone(this.mails); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
+  private mailListDto(): MailListResponse { this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); const serverTime = this.now().toISOString(); const nowMs = Date.parse(serverTime); const deleted = new Set(this.state.serverJournal?.ops?.deletedMails ?? []); const mails = structuredClone(this.mails).filter((mail) => !deleted.has(mail.id)); return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length }; }
 
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
   async getPlayerState(): Promise<PlayerStateDto> {
@@ -1054,7 +1064,7 @@ export class FakeServer implements GameApi {
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
-   * 비례한 골드를 곧바로 준다(`RAID_RUN_GOLD_PER_DAMAGE`). 정산은 판이 끝난 뒤 따로다.
+   * 비례한 증표·젬을, 보스를 쓰러뜨린 판이면 인양 기록까지 곧바로 준다(`raidRunRewards`, 골드는 주지 않는다). 정산은 판이 끝난 뒤 따로다.
    */
   async submitRaidDamage(request: SubmitRaidDamageRequest): Promise<SubmitRaidDamageResponse> {
     await this.delay();
@@ -1114,19 +1124,23 @@ export class FakeServer implements GameApi {
     // Personal verified damage is stable across concurrent kills/expiry. Shared HP never goes negative.
     const runDamage = Math.min(admission.seasonHp, Math.max(0, Math.floor(result.totalDamage)));
     const appliedDamage = Math.min(remainingNow, runDamage);
-    const gold = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated: RaidInstanceState = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
-    const appliedGold = Math.min(gold, WALLET_CAPS.gold - nextState.wallet.gold);
-    nextState.wallet = { ...nextState.wallet, gold: nextState.wallet.gold + appliedGold };
-    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [] };
+    const runRewards = raidRunRewards(instance.difficulty, runDamage, result.bossDefeated);
+    const grantedRun = (["gems", "salvageRecord", "raidSigil"] as const).map((currency) => {
+      const want = currency === "gems" ? runRewards.gem : currency === "salvageRecord" ? runRewards.salvage : runRewards.raidSigil;
+      const amount = Math.max(0, Math.min(want, WALLET_CAPS[currency] - nextState.wallet[currency]));
+      nextState.wallet = { ...nextState.wallet, [currency]: nextState.wallet[currency] + amount };
+      return { currency, name: findItem(currency)?.name ?? currency, amount };
+    }).filter(({ amount }) => amount > 0);
+    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: grantedRun };
     this.recordReceipt(nextState, "raidSubmit", request.requestId, request.raidId, resultReceipt);
     delete nextState.serverJournal!.raidAdmissions[request.requestId];
     this.commitRaidState(nextState);
     const response: SubmitRaidDamageResponse = {
       ...this.snapshot(), raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs,
-      granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [],
+      granted: grantedRun,
     };
 
 
@@ -1290,9 +1304,7 @@ export class FakeServer implements GameApi {
   /** Fake 운영 서버도 번들의 표시 fallback 없이 인증된 설정 DTO를 명시적으로 제공한다. */
   async getAdOperationsConfig(): Promise<AdOperationsConfigResponse> {
     await this.delay(); const now = this.now();
-    const quickScore = this.expeditionReferenceScore(now);
-    const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: (this.adVerificationAvailable || this.hasAdFreeMembership(now)) && (slot.placement !== "quick_expedition" || quickScore > 0), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ...("weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {}) })) };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 300_000).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: this.adVerificationAvailable || this.hasAdFreeMembership(now), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, })) };
   }
 
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
@@ -1487,6 +1499,13 @@ export class FakeServer implements GameApi {
   async applyDebugCommand(command: DebugCommand): Promise<DebugCommandResponse> {
     await this.delay();
     if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "개발 도구가 꺼진 서버입니다.");
+    if (command.kind === "tenUpgrade") {
+      // 서버 모드에서는 클라이언트 플래그가 뽑기에 닿지 않으므로 표식을 서버 장부에 남긴다.
+      const candidate = { ...this.state, serverJournal: { ...(this.state.serverJournal ?? emptyServerJournal()), qaTenUpgrade: true } };
+      this.persist(candidate);
+      this.state.serverJournal = candidate.serverJournal;
+      return { ok: true, changed: 1 };
+    }
     const patch = {
       wallet: { ...this.state.wallet },
       owned: new Set(this.state.owned),
@@ -1855,11 +1874,6 @@ export class FakeServer implements GameApi {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "오늘 받을 수 있는 광고 보상을 모두 받았습니다.");
     this.assertAdPrerequisite(slot, now);
-    if (slot.reward.kind === "quick_expedition") {
-      const weekKey = expeditionWeekKey(now); if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-      if (this.quickWeek.claims >= QUICK_EXPEDITION_POLICY.weeklyLimitUtc) throw new GameApiError("AD_WEEKLY_LIMIT", "이번 주 빠른 원정 횟수를 모두 사용했습니다.");
-      if (!this.expeditionReferenceScore(this.now())) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "빠른 원정의 기준 점수가 없습니다.");
-    }
 
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
@@ -1872,14 +1886,12 @@ export class FakeServer implements GameApi {
     // 상한 검증과 영속화가 성공하기 전에는 메모리 세션을 변경하지 않는다.
     this.persist(nextState);
     this.state.wallet = applied.wallet; this.state.idleExcavation = applied.excavation; this.state.itemInventory = applied.itemInventory; this.state.dailyAdRewards = nextAds; this.state.duel = duel;
-    if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
-    // 실제 지갑 증가분과 주간 잔량은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
+    // 실제 지갑 증가분은 저장 성공 뒤의 서버 스냅샷에서만 만든다.
     const granted: Partial<Record<keyof Session["wallet"], number>> = {};
     for (const key of Object.keys(applied.wallet) as (keyof Session["wallet"])[]) {
       const amount = applied.wallet[key] - walletBefore[key]; if (amount > 0) granted[key] = amount;
     }
-    const weeklyRemaining = slot.weeklyLimitUtc === undefined ? undefined : Math.max(0, slot.weeklyLimitUtc - this.quickWeek.claims);
-    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
 
   /** 활성 구독이 매일 얹는 몫을 UTC 하루에 한 번 지급한다. 광고와 무관하게 권리만 확인한다. */
@@ -2068,7 +2080,8 @@ export class FakeServer implements GameApi {
     }
 
     // 원본을 전혀 건드리지 않은 복제 상태에서 비용·천장·보유 결과를 모두 먼저 계산한다.
-    const pulled = pull(banner, request.count, currentPity, this.random);
+    const forceTenUpgrade = request.count === 10 && this.developmentTools && this.state.serverJournal?.qaTenUpgrade === true;
+    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
@@ -2112,6 +2125,11 @@ export class FakeServer implements GameApi {
     const nextState: Session = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
 
     // 저장 실패도 원본 메모리에 부분 반영되지 않도록 저장을 먼저 성공시킨 뒤 필드를 일괄 교체한다.
+    if (forceTenUpgrade) {
+      // QA 승급 찬스 표식은 10연 한 번에 소진한다.
+      const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
+      nextState.serverJournal = journal;
+    }
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;
@@ -2123,6 +2141,7 @@ export class FakeServer implements GameApi {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
       // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
@@ -2132,6 +2151,7 @@ export class FakeServer implements GameApi {
       newRelicIds: outcome.newRelicIds,
       duplicateRelicIds: outcome.duplicateRelicIds,
       mileageGained,
+      ...(upgradedSlot >= 0 ? { rarityUpgradeSlot: upgradedSlot } : {}),
     };
   }
 
@@ -3976,12 +3996,6 @@ export class FakeServer implements GameApi {
       for (const item of reward.items ?? []) items = this.grantItem(items, item.itemId, item.quantity, now).inventory;
       return { wallet, excavation, itemInventory: items };
     }
-    if (reward.kind === "quick_expedition") {
-      // 기준 점수와 비율은 모두 서버 소유이며 클라이언트 요청에는 어느 값도 없다.
-      const referenceScore = this.expeditionReferenceScore(now);
-      wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + Math.floor(referenceScore * reward.scoreRatio));
-      return { wallet, excavation, itemInventory };
-    }
     if (reward.kind === "item") {
       // 쌓을 수 있는 한도(`maxStack`)까지만 채운다 — 넘치는 몫은 깎아서 준다(던지지 않는다).
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
@@ -4086,12 +4100,6 @@ export class FakeServer implements GameApi {
   private expeditionRank(score: number): number | null {
     if (this.remoteExpeditionRank !== undefined) return this.remoteExpeditionRank;
     return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
-  }
-
-  /** 빠른 원정·광고 보상이 기준으로 삼는 점수 — 이번 주 최고, 없으면 받지 않은 지난주 기록. */
-  private expeditionReferenceScore(now: Date): number {
-    const expedition = this.rollExpedition(now);
-    return expedition.bestScore || expedition.pendingRankReward?.score || 0;
   }
 
   /**
@@ -4255,6 +4263,15 @@ function missionClaimCount(missions: Session["missions"], now: Date): number {
 /** 업적 단계도 같은 신호를 탄다 — 두 수를 한 값으로 묶어 어느 쪽이 바뀌어도 신호가 나가게 한다(임무 수는 1,000을 넘지 않는다). */
 export function missionNoticeScore(next: Session, now: Date): number {
   return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1000 + missionClaimCount(next.missions, now);
+}
+
+/**
+ * QA·테스트 빌드에서만 서는 난수 주입구. 화면 검수가 연구 결과를 정해 두고 싶을 때
+ * `window.__PF_QA_RANDOM`에 함수를 걸면 서버 난수가 그 함수를 먼저 지난다. 일반 빌드에는 없다.
+ */
+function qaRandom(): number {
+  const hook = (globalThis as { __PF_QA_RANDOM?: () => number }).__PF_QA_RANDOM;
+  return hook ? hook() : Math.random();
 }
 
 const localGameApi = new FakeServer();

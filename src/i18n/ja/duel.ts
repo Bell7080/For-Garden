@@ -92,4 +92,8 @@ export const DUEL_JA = {
   "rewardTable.rules.expedition": "毎週月曜00:00 UTC締切・メールで配布\nその週の遠征記録が必要です。",
   "rewardTable.rules.arena": "毎週月曜00:00 UTC締切・メールで配布\n締切時のティア報酬に順位ボーナスを加えます。その週のランク戦記録が必要です。",
   "ranking.mine": "自分の順位",
+  "duel.defense.title": "相手の防衛編成",
+  "duel.defense.totalPower": "総戦闘力",
+  "duel.defense.blind": "非公開 {count}枠",
+  "duel.defense.sortie": "出撃",
 } as const;

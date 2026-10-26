@@ -17,7 +17,7 @@ const noop = () => undefined;
 const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
     Phaser: { Scene: class {
         } }, ...skirmish, ...ultimate, ...arenaView,
-    performance: { now: () => clock }, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
+    performance: { now: () => clock }, audioManager: undefined, BOSS_STEP_MS: 20, formatBattleClock: () => "", hasMergedBattleHit: () => false,
     ultimatePresentationFor: () => ({}), ultimatePresentationTiming: () => ({ rate: 1 }), shouldWaitForUltimatePresentation: () => false,
 });
 function sceneFight(lease: ReturnType<typeof prepareCombat>, speed: number) {

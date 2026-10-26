@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "Cosecha actual ×1.5",
   "adReward.excavation-storage.text": "Almacena hasta 8 horas hasta la siguiente liquidación",
   "adReward.excavation-speed.text": "Producción ×1.5 · 60 min",
-  "adReward.quick-expedition.text": "Expedición rápida",
   "trade.trade-cheesecake-supply.name": "Suministro de Tarta de queso",
   "trade.trade-cheesecake-supply.description": "600 de Tarta de queso",
   "trade.trade-research-grant.name": "Beca de investigación",

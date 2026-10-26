@@ -12,6 +12,8 @@ import { notificationManager } from "../managers/NotificationManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
+import { attachDragScroll } from "./dragScroll";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -82,7 +84,9 @@ export class AchievementsPopup {
 
   private select(tab: AchievementTab): void {
     if (tab === this.tab) return;
+    const from = TABS.indexOf(this.tab);
     this.tab = tab; this.render();
+    if (this.list) slideTabPage(this.scene, [this.list], from, TABS.indexOf(tab));
   }
 
   private destroyContent(): void { this.bars.forEach((bar) => bar.destroy()); this.bars = []; this.list?.destroy(); this.list = undefined; this.scrollContent = undefined; this.rows = []; }
@@ -145,19 +149,16 @@ export class AchievementsPopup {
       return { left: matrix.tx - half * scale, right: matrix.tx + half * scale, top: matrix.ty, bottom: matrix.ty + viewHeight * scale };
     };
     const drag = addClippedHit(this.scene, frame, 0, viewHeight / 2, half * 2, viewHeight, clip, { useHandCursor: false });
-    this.scene.input.setDraggable(drag);
     const content = this.scene.add.container(0, 0);
     frame.add(content);
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
     this.scrollContent = content;
     this.minScroll = Math.min(0, viewHeight - achievementListContentHeight(count));
-    let lastY = 0;
-    drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
-    drag.on("drag", (pointer: Phaser.Input.Pointer) => {
-      const scale = frame.getWorldTransformMatrix().scaleY || 1;
-      this.applyScroll(this.scroll + (pointer.y - lastY) / scale); lastY = pointer.y;
+    attachDragScroll(this.scene, {
+      owner: drag, root: frame,
+      bounds: () => { const c = clip(); return new Phaser.Geom.Rectangle(c.left, c.top, c.right - c.left, c.bottom - c.top); },
+      onDelta: (dy) => this.applyScroll(this.scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
     });
-    drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.applyScroll(this.scroll - dy * 0.65));
     return content;
   }
 

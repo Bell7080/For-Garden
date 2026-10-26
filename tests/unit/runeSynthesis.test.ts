@@ -33,16 +33,16 @@ describe("룬 합성 규칙", () => {
   });
 
   it("특성 달린 룬이 하나 더 있을 때마다 「없음」에서 최고 등급 칸으로 옮긴다", () => {
-    expect(runeSynthesisTraitOdds([undefined, undefined, undefined])).toEqual([85, 12, 3, 0, 0]);
-    expect(runeSynthesisTraitOdds([trait("rare"), undefined, undefined])).toEqual([30, 30, 30, 9, 1]);
-    expect(runeSynthesisTraitOdds([trait("rare"), trait("uncommon"), undefined])).toEqual([20, 30, 40, 9, 1]);
-    expect(runeSynthesisTraitOdds([trait("legendary"), trait("epic"), trait("rare")])).toEqual([0, 15, 20, 30, 35]);
+    expect(runeSynthesisTraitOdds([undefined, undefined, undefined])).toEqual([55, 30, 12, 3, 0]);
+    expect(runeSynthesisTraitOdds([trait("rare"), undefined, undefined])).toEqual([15, 25, 35, 20, 5]);
+    expect(runeSynthesisTraitOdds([trait("rare"), trait("uncommon"), undefined])).toEqual([0, 25, 50, 20, 5]);
+    expect(runeSynthesisTraitOdds([trait("legendary"), trait("epic"), trait("rare")])).toEqual([0, 10, 20, 35, 35]);
     for (const odds of [runeSynthesisTraitOdds([trait("epic"), trait("epic"), trait("epic")])]) expect(sum(odds)).toBe(100);
   });
 
   it("특성 굴림은 확률표의 칸을 그대로 따른다", () => {
     expect(rollRuneSynthesisTraitGrade([undefined, undefined, undefined], 0)).toBeUndefined();
-    expect(rollRuneSynthesisTraitGrade([undefined, undefined, undefined], 0.9)).toBe("uncommon");
+    expect(rollRuneSynthesisTraitGrade([undefined, undefined, undefined], 0.7)).toBe("uncommon");
     expect(rollRuneSynthesisTraitGrade([trait("legendary"), undefined, undefined], 0.999)).toBe("legendary");
   });
 

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
@@ -68,7 +69,7 @@ const TABS = [
   { key: "members", labelKey: "guild.tab.members" },
 ] as const;
 
-const TAP_SLOP = 14;
+const TAP_SLOP = TAP_DRAG_SLOP;
 const FULL_CLIP: ClipRect = { left: -1e6, right: 1e6, top: -1e6, bottom: 1e6 };
 const BADGE_CHOICES = [
   { labelKey: "guild.badge.shape", field: "shape", values: GUILD_BADGE_SHAPES },

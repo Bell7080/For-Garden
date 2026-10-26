@@ -92,4 +92,8 @@ export const DUEL_KO = {
   "rewardTable.rules.expedition": "매주 월요일 00:00 UTC 마감 · 우편 지급\n그 주 원정 기록이 있어야 받습니다.",
   "rewardTable.rules.arena": "매주 월요일 00:00 UTC 마감 · 우편 지급\n마감 때의 티어 보상에 순위 보너스를 더해 줍니다. 그 주 랭크전 기록이 있어야 받습니다.",
   "ranking.mine": "내 순위",
+  "duel.defense.title": "상대 방어팀",
+  "duel.defense.totalPower": "총 전투력",
+  "duel.defense.blind": "가려진 칸 {count}",
+  "duel.defense.sortie": "출격",
 } as const;

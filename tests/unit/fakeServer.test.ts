@@ -269,7 +269,7 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["torika", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 0, rawStone: 31.68, gems: 4.48 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 35.2512, rawStone: 31.68, gems: 72 });
   });
 
   it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
@@ -283,7 +283,7 @@ describe("FakeServer", () => {
     const repeated = await server.getIdleExcavation();
     // 24시간 미접속이어도 기본 보관 시간(8시간)만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
     expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
-    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 8.96 });
+    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 144 });
     expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 
@@ -1285,30 +1285,6 @@ describe("FakeServer 원정 정산", () => {
       await expect(server.sweepExpedition({ requestId: "sweep-limit" })).rejects.toMatchObject({ code: "EXPEDITION_DAILY_LIMIT" });
     });
   });
-
-  it("기준 점수가 없으면 비활성·무보상이고 서버 최고 점수 비율과 일일 제한을 적용한다", async () => {
-    const state = makeSession(); let now = new Date("2026-08-25T12:00:00Z");
-    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
-    expect((await server.getAdOperationsConfig()).slots.find(({ slotId }) => slotId === "quick-expedition")).toMatchObject({ enabled: false, weeklyLimitUtc: 5, weeklyClaims: 0, referenceScore: 0 });
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "failed", requestId: "quick-fail" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
-    expect(state.wallet.gold).toBe(0);
-    const quickActions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
-    await server.submitExpeditionBossScore({ requestId: "quick-score", actions: quickActions });
-    const reference = (await server.getExpeditionWeeklyBest()).bestScore;
-    const firstQuick = await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-1" });
-    expect(firstQuick).toMatchObject({ granted: { gold: Math.floor(reference * 0.25) }, weeklyRemaining: 4 });
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-2" });
-    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 2);
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
-    // 같은 UTC 주의 다음 날짜에도 누적 다섯 번을 넘을 수 없다.
-    now = new Date("2026-08-26T12:00:00Z");
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" });
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-4" });
-    now = new Date("2026-08-27T12:00:00Z");
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-5" });
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-6" })).rejects.toMatchObject({ code: "AD_WEEKLY_LIMIT" });
-    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 5);
-  });
 });
 
 /** 판매 API의 트랜잭션·멱등·장착표 불변식을 실제 FakeServer 경계에서 고정한다. */
@@ -1608,7 +1584,7 @@ describe("FakeServer 전리품 상점의 고고학 재화", () => {
 describe("FakeServer 마일리지 상점", () => {
   const WEEK = new Date("2026-10-07T12:00:00Z");
   it("미보유 점원의 주간 SSR 파편을 처음 사면 파편이 아니라 그 개체를 획득하고 newRelicIds로 알린다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 200;
+    const state = makeSession(); state.wallet.dnaFragments = 250;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const clerk = mileageWeeklyClerkId(WEEK)!;
     expect(state.owned.has(clerk)).toBe(false);

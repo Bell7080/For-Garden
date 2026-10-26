@@ -268,7 +268,6 @@ export default {
   "adReward.excavation-harvest.text": "Aktuelle Ernte ×1,5",
   "adReward.excavation-storage.text": "Bis zur nächsten Abrechnung bis zu 8 Stunden lagern",
   "adReward.excavation-speed.text": "Produktion ×1,5 · 60 Min.",
-  "adReward.quick-expedition.text": "Schnelle Expedition",
   "trade.trade-cheesecake-supply.name": "Käsekuchen-Lieferung",
   "trade.trade-cheesecake-supply.description": "600 Käsekuchen",
   "trade.trade-research-grant.name": "Forschungszuschuss",

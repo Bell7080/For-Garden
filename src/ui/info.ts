@@ -17,13 +17,14 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import { startScene } from "./screenTransition";
+import { playFadeIn, playFadeOut, startScene } from "./screenTransition";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
   enableHitOnClick,
   placePuppet,
   playMotion,
+  PuppetSpawnCancelled,
   portraitAssetForSkin,
   sdAssetForSkin,
   spawnPuppet,
@@ -88,6 +89,7 @@ import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
 import { findItem } from "../data/items";
+import { sortRunesByRelic } from "../managers/InventoryManager";
 import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -310,6 +312,12 @@ type BreakthroughCost =
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
+/**
+ * 옆으로 넘긴 뒤 전신·SD를 읽기 시작하기까지 기다리는 시간. 연달아 넘기는 동안 지나치는 개체의
+ * 원화 디코드·모델 생성이 줄줄이 메인 스레드를 잡아 판이 끊겼다 — 손이 멈춘 개체만 읽는다.
+ * 판이 미끄러져 들어오는 시간(150+260ms)보다 짧아 한 번만 넘길 때의 체감은 그대로다.
+ */
+const SWIPE_SETTLE_MS = 180;
 
 /** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
 const RUNE_GAP = 0.955;
@@ -522,6 +530,12 @@ export class InfoManager {
   private galleryReturn?: () => void;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
+  /** 호출한 화면이 정한 넘김 순서. 없으면 `PLAYABLE_RELICS`. */
+  private neighborDefs?: readonly RelicDef[];
+  /** 넘기는 동안 미뤄 둔 전신·SD 읽기. 새로 열거나 닫으면 지운다. */
+  /** 아직 끝나지 않은 전신·SD 읽기 수. 앞선 읽기가 남아 있을 때만 넘김 사이에 쉰다. */
+  private pendingLoads = 0;
+  private assetLoadTimer?: Phaser.Time.TimerEvent;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics };
@@ -1420,7 +1434,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = session.runeInventory.filter((rune) => rune.part === index);
+    const runes = sortRunesByRelic(session.runeInventory.filter((rune) => rune.part === index), session.relicProgress);
     const columns = RUNE_PICKER.columns;
     const rows = Math.max(1, Math.ceil(runes.length / columns));
     const pickerWidth = columns * RUNE_PICKER.cellWidth + RUNE_PICKER.padX * 2;
@@ -1445,7 +1459,7 @@ export class InfoManager {
           const holder = equippedRuneSlot(rune.instanceId);
           const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, {
             dimmed: holder !== undefined,
-            holder: holder && view.showHolder ? { relicId: holder.relicId, order } : undefined,
+            holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
           });
           const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
           hit.on("pointerdown", () => pressIn(card));
@@ -1521,11 +1535,25 @@ export class InfoManager {
     });
   }
 
+  /**
+   * 옆으로 넘길 때 따를 순서를 정한다(도감이 지금 화면에 세운 순서 — 정렬·필터·보유 구역 포함).
+   * 비우면 도감에 서는 개체 전체의 기본 순서로 돌아간다.
+   */
+  setNeighborOrder(relics?: readonly RelicDef[]): void {
+    this.neighborDefs = relics;
+  }
+
+  /** 지금 열린 개체가 정해 둔 순서 안에 있을 때만 그 순서를 쓴다(필터로 빠졌으면 기본 순서). */
+  private neighborOrder(currentId: string): readonly RelicDef[] {
+    const custom = this.neighborDefs;
+    return custom && custom.some((def) => def.id === currentId) ? custom : PLAYABLE_RELICS;
+  }
+
   /** 옆 캐릭터로 미끄러져 간다. 판이 한쪽으로 빠지고 반대쪽에서 새로 들어온다. */
   private slideToNeighbor(step: 1 | -1): void {
     const current = this.currentDef;
     if (!current || this.sliding) return;
-    const order = PLAYABLE_RELICS;
+    const order = this.neighborOrder(current.id);
     const index = order.findIndex((def) => def.id === current.id);
     if (index === -1) return;
     const next = order[(index + step + order.length) % order.length];
@@ -1538,7 +1566,14 @@ export class InfoManager {
       duration: 150,
       ease: "Cubic.In",
       onComplete: () => {
-        this.openCharacter(next, relicCollection.owns(next.id));
+        try {
+          this.openCharacter(next, relicCollection.owns(next.id));
+        } catch (error) {
+          // 던져도 넘김 잠금이 영영 남지 않게 판을 제자리로 돌려 놓고 알린다.
+          this.sliding = false;
+          this.chrome.setPosition(0, 0).setAlpha(1);
+          throw error;
+        }
         this.chrome.setPosition(distance, 0).setAlpha(0);
         this.scene.tweens.add({
           targets: this.chrome,
@@ -1797,8 +1832,11 @@ export class InfoManager {
     addInfoFigureStand(this.scene, this.chrome, FIGURE.x, FIGURE.y);
   }
 
+  /** 닫히는 연출이 도는 동안 true. 이 사이에 다시 열면 연출을 끊고 그대로 이어서 연다. */
+  private closing = false;
+
   get isOpen(): boolean {
-    return this.root.visible;
+    return this.root.visible && !this.closing;
   }
 
   /** 팝업이 떠 있으면 그것부터 닫는다. 뒤로가기 한 번에 화면이 통째로 사라지지 않게. */
@@ -1807,13 +1845,23 @@ export class InfoManager {
       this.popups.closeTop();
       return;
     }
-    this.root.setVisible(false);
-    this.chrome.setVisible(false);
+    if (this.closing || !this.root.visible) return;
+    this.closing = true;
     this.portraitWanted = false;
-    this.portrait?.setVisible(false);
-    this.figure?.setVisible(false);
+    this.assetLoadTimer?.remove(false);
+    this.assetLoadTimer = undefined;
     setDebugInfoOpen(false);
     this.onClose?.();
+    // 열릴 때 밝아지며 서듯 닫힐 때도 짧게 옅어진다. 전신·SD도 같은 시간으로 함께 옅어진다.
+    const fading = [this.root, this.chrome, ...(this.portrait?.visible ? [this.portrait] : []), ...(this.figure?.visible ? [this.figure] : [])] as Phaser.GameObjects.Container[];
+    playFadeOut(this.scene, fading, () => {
+      if (!this.closing) return;
+      this.closing = false;
+      this.root.setVisible(false).setAlpha(1);
+      this.chrome.setVisible(false).setAlpha(1);
+      this.portrait?.setVisible(false).setAlpha(this.portraitAlpha());
+      this.figure?.setVisible(false).setAlpha(this.portraitAlpha());
+    });
   }
 
   private toggleBookmark(): void {
@@ -1857,11 +1905,14 @@ export class InfoManager {
   private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
     const asset = this.portraitAssetOf(def);
+    this.pendingLoads += 1;
     const portrait = await spawnPuppet(this.scene, asset, {
+      isStale: () => request !== this.portraitRequest,
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
       depth: Math.max(this.portraitDepth, this.root.depth + 1),
-    });
+    }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
+    if (!portrait) return;
     // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
     portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
@@ -1889,13 +1940,16 @@ export class InfoManager {
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
     const asset = this.figureAssetOf(def);
+    this.pendingLoads += 1;
     // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
     const figure = await spawnPuppet(this.scene, asset, {
       x: FIGURE.x,
       groundY: FIGURE.y,
       height: FIGURE.height,
       depth: 1004,
-    });
+      isStale: () => request !== this.figureRequest,
+    }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
+    if (!figure) return;
     // 비교용 전신도 같은 공용 정책을 소비해 정보창 내부에서 예산이 갈리지 않게 한다.
     figure.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.figureRequest) { figure.destroy(); return; }
@@ -2100,13 +2154,36 @@ export class InfoManager {
     if (!keepPortrait) this.portrait?.setVisible(false);
     if (!keepFigure) this.figure?.setVisible(false);
     {
+      this.assetLoadTimer?.remove(false);
+      this.assetLoadTimer = undefined;
+      const load = (): void => {
+        this.assetLoadTimer = undefined;
+        if (this.currentDef !== def) return;
+        if (!keepPortrait) void this.loadPortrait(def);
+        if (!keepFigure) void this.loadFigure(def);
+      };
       if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ portrait: true }); }
-      else void this.loadPortrait(def);
       if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ sd: true }); }
-      else void this.loadFigure(def);
+      // 넘기는 중이면 손이 멈출 때까지 미룬다. 미뤄 둔 사이 이전 요청은 번호가 올라 무효가 된다.
+      if (!keepPortrait || !keepFigure) {
+        if (!keepPortrait) this.portraitRequest += 1;
+        if (!keepFigure) this.figureRequest += 1;
+        if (this.sliding && this.pendingLoads > 0) this.assetLoadTimer = this.scene.time.delayedCall(SWIPE_SETTLE_MS, load);
+        else load();
+      }
+    }
+    // 닫혀 있던 판을 처음 열 때만 밝아지며 선다. 다른 개체로 바꿔 다시 그릴 때는 새로고침처럼 읽히지 않게 연출이 없다.
+    const wasOpen = this.root.visible && !this.closing;
+    if (this.closing) {
+      this.closing = false;
+      this.scene.tweens.killTweensOf([this.root, this.chrome]);
+      this.root.setAlpha(1); this.chrome.setAlpha(1);
+      if (this.portrait) { this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
+      if (this.figure) { this.scene.tweens.killTweensOf(this.figure); this.figure.setAlpha(this.portraitAlpha()); }
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);
+    if (!wasOpen) playFadeIn(this.scene, [this.root, this.chrome]);
     setDebugInfoOpen(true);
     this.onOpen?.();
     // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저
@@ -2961,4 +3038,10 @@ export function buildSkillViewModel(options: {
         resistance,
       }),
   };
+}
+
+/** 정상 취소(`PuppetSpawnCancelled`)만 삼키고 나머지 실패는 그대로 던진다. */
+function swallowCancelled(error: unknown): undefined {
+  if (error instanceof PuppetSpawnCancelled) return undefined;
+  throw error;
 }

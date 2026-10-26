@@ -92,4 +92,8 @@ export const DUEL_EN = {
   "rewardTable.rules.expedition": "Closes every Monday 00:00 UTC · Sent by mail\nRecord an expedition score that week to qualify.",
   "rewardTable.rules.arena": "Closes every Monday 00:00 UTC · Sent by mail\nYour tier at closing plus a rank bonus. Play a ranked match that week to qualify.",
   "ranking.mine": "My Rank",
+  "duel.defense.title": "Defense Team",
+  "duel.defense.totalPower": "Total Combat Power",
+  "duel.defense.blind": "{count} hidden",
+  "duel.defense.sortie": "Sortie",
 } as const;

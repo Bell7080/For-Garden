@@ -53,11 +53,9 @@ describe("광고 보상 정적 정의", () => {
   });
 });
 
-/** 빠른 원정 슬롯은 동적 지급량 대신 서버 계산 비율과 두 기간 한도만 공개한다. */
-describe("빠른 원정 광고 정책", () => {
-  it("기준 점수나 지급량 필드 없이 고정 비율과 일일·주간 한도를 정의한다", () => {
-    const slot = findAdRewardSlot("quick-expedition");
-    expect(slot).toMatchObject({ placement: "quick_expedition", dailyLimitUtc: 2, weeklyLimitUtc: 5, reward: { kind: "quick_expedition", scoreRatio: 0.25 } });
-    expect(slot?.reward).not.toHaveProperty("score"); expect(slot?.reward).not.toHaveProperty("amount");
+/** 빠른 원정은 소탕이 대신하므로 광고 슬롯도 정의되지 않는다. */
+describe("빠른 원정 광고 슬롯 제거", () => {
+  it("빠른 원정 슬롯은 더 이상 허용 목록에 없다", () => {
+    expect(findAdRewardSlot("quick-expedition")).toBeUndefined();
   });
 });

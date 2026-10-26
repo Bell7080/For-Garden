@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidRunStamina, type RaidDifficulty } from "../data/raid";
+import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, raidRunStamina, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
 import { session } from "../state/session";
 import { getRelic } from "../data/relics";
 import { setDebugRaidStage, setDebugScene } from "../debug";
@@ -25,6 +25,7 @@ import {
   RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight,
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
+import { attachDragScroll } from "../ui/dragScroll";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -38,7 +39,8 @@ import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { openRaidSettlementPopup } from "../ui/RaidSettlementPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { findItem } from "../data/items";
-import { openItemGuide } from "../ui/currencyGuideEntry";
+import { openCurrencyGuide, openItemGuide } from "../ui/currencyGuideEntry";
+import { TopBar } from "../ui/TopBar";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
@@ -114,6 +116,8 @@ export class RaidScene extends Phaser.Scene {
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
     // 씬이 다시 시작될 때 원화와 마스크가 남지 않게 한 곳에서 걷는다.
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
+    // 한 판이 스테미나를 쓰므로 목록과 판 모두 위에 남은 양을 세우고, 누르면 충전 창이 열린다.
+    new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
     if (!this.raidId) {
       this.add.text(RAID_HEADER.titleX, RAID_HEADER.titleY, t("raid.title"), textStyle({ role: "display", size: 54, color: COLOR.sortieText })).setOrigin(0, 0);
       this.buildListChrome();
@@ -537,15 +541,11 @@ export class RaidScene extends Phaser.Scene {
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 창보다 짧으면 minY가 0이라 아무 일도 일어나지 않는다.
     const minY = Math.min(0, viewport.height - (entries.length * (RANKING_LIST.rowHeight + RANKING_LIST.rowGap) - RANKING_LIST.rowGap));
-    let offset = 0; let dragY = 0;
+    let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = RAID_BOARD.viewport.top + offset; };
-    const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0)
-      .setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+    const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0).setVisible(false);
+    attachDragScroll(this, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
-    content.sendToBack(hit);
   }
 
   /** 한 줄. 1·2·3등의 금·은·동과 내 줄의 강조는 순위표와 같은 표를 읽는다. */
@@ -595,13 +595,17 @@ export class RaidScene extends Phaser.Scene {
     }
     // 도전이 남지 않았으면 들어갈 수 없다 — 눌러도 아무 일이 없는 칸은 준비 상태를 과장한다.
     const canSortie = raid.attemptsUsed < raid.attemptsLimit;
-    // 한 판의 스테미나는 입구의 출격이 먼저 말한다 — 던전 입구와 같은 비용 표기다. 모자라도 편성은
-    // 열 수 있고, 입장이 거절되면 편성 화면이 스테미나 창을 연다.
+    // 한 판의 스테미나는 입구의 출격이 먼저 말한다 — 던전 입구와 같은 비용 표기다. 모자라면 출격이
+    // 편성 대신 스테미나 창을 연다(입장이 거절되는 편성 화면에도 같은 창이 안전망으로 남아 있다).
     const stamina = raidRunStamina(raid.difficulty);
     this.sortieButton = new Button(this, sortie.centerX, y, {
       ...common, label: t("raid.sortie"),
       cost: { icon: "currency-stamina", amount: stamina, affordable: session.wallet.stamina >= stamina },
-      onClick: () => startScene(this, "party", { content: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty } satisfies PartySceneData),
+      onClick: () => {
+        // 모자란 채 편성까지 들어가 헛수고하지 않게, 출격에서 곧바로 충전 창을 연다.
+        if (session.wallet.stamina < stamina) { openCurrencyGuide({ scene: this, popups: this.popups }, "stamina"); return; }
+        startScene(this, "party", { content: "raid", raidId: raid.id, bossRelicId: raid.bossRelicId, difficulty: raid.difficulty } satisfies PartySceneData);
+      },
     });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);
@@ -616,27 +620,28 @@ export class RaidScene extends Phaser.Scene {
    */
   private openRewardPopup(raid: RaidDto): void {
     const width = 780;
+    const participated = raid.settlement.length > 0;
+    const shown = raidSettlementDisplayOrder(raid.settlement);
     const rows = [
       [t("raid.contribution.mine"), raid.myDamage.toLocaleString()],
       [t("raid.reward.progress"), t("raid.world.percent", { percent: raid.totalHp > 0 ? Math.floor(raid.dealtDamage / raid.totalHp * 100) : 0 })],
       [t("raid.reward.kill"), t(raid.defeated ? "raid.reward.killYes" : raid.status === "completed" ? "raid.reward.killFailed" : "raid.reward.killNo")],
     ] as const;
     const rowHeight = 64;
-    const frame = 132;
+    const frame = participated ? 132 : 0;
     const height = 200 + frame + 40 + rows.length * rowHeight + 110;
     this.popups.open({ width, height, title: t("raid.reward.title"), dim: true, closeOnBackdrop: true }, (body) => {
       let y = -height / 2 + 110;
-      const participated = raid.settlement.length > 0;
-      const max = RAID_DIFFICULTY[raid.difficulty].settlement;
-      const amount = participated ? raid.settlement[0].amount : max.gems;
-      const label = raid.settled ? t("raid.settle.done") : !participated ? t("raid.settle.max")
+      // 기여가 없으면 최대 보상 대신 아이콘 없이 「기여 없음」만 세운다.
+      const label = !participated ? t("raid.settle.none") : raid.settled ? t("raid.settle.done")
         : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
-      body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0.5));
+      body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: participated ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
       y += 30 + frame / 2;
-      const shown = participated ? raid.settlement : [{ currency: "gems" as const, amount }];
-      shown.forEach((reward, index) => {
-        addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
-      });
+      if (participated) {
+        shown.forEach((reward, index) => {
+          addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
+        });
+      }
       y += frame / 2 + 60;
       rows.forEach(([name, value]) => {
         body.add(this.add.text(-width / 2 + 90, y, name, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));

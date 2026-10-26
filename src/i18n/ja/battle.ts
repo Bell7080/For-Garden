@@ -14,9 +14,8 @@ export const BATTLE_JA = {
   "tutorial.result.feed": "トリカを強化するため広場へ戻りましょう。",
   "tutorial.result.research": "広場へ戻って復元研究の支援品を受け取りましょう。",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · 高潮の予兆",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "自分",
+  "battle.rank.weekly": "週間順位",
 
   "battle.settle.failed": "結果画面を復旧できませんでした。",
   "battle.settle.scoreRejected": "戦闘記録を確認できませんでした。再試行してください。",

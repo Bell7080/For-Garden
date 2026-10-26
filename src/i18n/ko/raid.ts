@@ -28,6 +28,7 @@ export const RAID_KO = {
   "raid.settle.done": "보상 수령 완료",
   "raid.settle.ready": "획득 보상",
   "raid.settle.expected": "예상 보상",
+  "raid.settle.none": "기여 없음",
   "raid.settle.max": "최대 보상",
   "raid.settle.contribution": "기여도",
   "raid.settle.rank": "{rank}위",

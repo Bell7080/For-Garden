@@ -199,6 +199,44 @@ def rune_pieces(art: Image.Image, size: int) -> list[Image.Image]:
     return pieces
 
 
+def mean_luma(piece: Image.Image) -> float:
+    """그림이 있는 픽셀(알파 200 이상)의 평균 밝기."""
+    rgba = piece.convert("RGBA")
+    total = count = 0
+    for r, g, b, a in rgba.get_flattened_data() if hasattr(rgba, "get_flattened_data") else rgba.getdata():
+        if a > 200:
+            total += 0.299 * r + 0.587 * g + 0.114 * b
+            count += 1
+    return total / count if count else 0.0
+
+
+def match_tone(piece: Image.Image, target: float) -> Image.Image:
+    """평균 밝기가 target이 되도록 곱셈으로 올린다. 색조와 명암 대비는 그대로라 뿌옇게 뜨지 않는다.
+
+    밝은 면이 255에서 잘려 한 번에는 못 미치므로 몇 번 되풀이해 다가간다.
+    """
+    result = piece
+    for _ in range(6):
+        current = mean_luma(result)
+        if not current or abs(current - target) < 0.5:
+            break
+        gain = target / current
+        r, g, b, a = result.split()
+        table = [min(255, round(v * gain)) for v in range(256)]
+        result = Image.merge("RGBA", (r.point(table), g.point(table), b.point(table), a))
+    return result
+
+
+def balance_rune_pieces(pieces: list[Image.Image]) -> list[Image.Image]:
+    """셋의 평균 밝기를 가장 밝게 구워지는 1번(왼쪽 위) 조각에 맞춘다.
+
+    오른쪽 위·아래 가운데는 원본 하트의 그림자 면이라 어둡게 구워진다. 한 하트에서 조각마다 톤이 다르면
+    한 장씩 놓인 칸에서 어두운 조각만 탁해 보인다.
+    """
+    target = mean_luma(pieces[0])
+    return [pieces[0], match_tone(pieces[1], target), match_tone(pieces[2], target)]
+
+
 def socket(piece: Image.Image) -> Image.Image:
     """빈 자리. 같은 조각을 검게 눌러 파인 것처럼 보이게 하고 반투명하게 남긴다."""
     black = Image.new("RGBA", piece.size, (2, 4, 10, 255))
@@ -275,7 +313,7 @@ def main() -> None:
     heart = load("Photoroom_20260822_113309.png")
     if heart is not None:
         for rarity, tones in RUNE_TINTS.items():
-            for index, piece in enumerate(rune_pieces(colorize(heart, tones), SIZE)):
+            for index, piece in enumerate(balance_rune_pieces(rune_pieces(colorize(heart, tones), SIZE))):
                 save_exact(piece, PUBLIC / f"sprites/runes/{rarity}-{index}.webp")
         for index, piece in enumerate(rune_pieces(heart, SIZE)):
             save_exact(socket(piece), PUBLIC / f"sprites/runes/empty-{index}.webp")

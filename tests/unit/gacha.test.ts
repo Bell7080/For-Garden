@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bannerAcceptsCount, carryoverTenAvailable, carryoverTensOnClose, bannerGuaranteePending, bannerPullsRemaining, calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, type Banner, type Wallet } from "../../src/core/gacha";
+import { bannerAcceptsCount, carryoverTenAvailable, carryoverTensOnClose, bannerGuaranteePending, bannerPullsRemaining, calculateBannerExpectations, canPull, determineGrade, pull, pullCost, resolveAcquisitions, spend, TEN_PULL_SR_UPGRADE_CHANCE, type Banner, type Wallet } from "../../src/core/gacha";
 import { BANNERS, LIMITED_RELIC_IDS, PITY_GROUP, WELCOME_SSR_POOL } from "../../src/data/banners";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
 
@@ -62,8 +62,47 @@ describe("보장 우선순위와 천장", () => {
     let calls = 0;
     const result = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => { calls += 1; return 0.95; });
     expect(result.slots[9]).toMatchObject({ kind: "relic", rarity: "SR" });
-    // 앞선 회색 9칸은 각 3회, 승격 SR은 등급+픽업 판정+렐릭 선택 3회만 소비한다.
-    expect(calls).toBe(30);
+    // 앞선 회색 9칸은 각 3회, 승격 SR은 등급+상승 판정+픽업 판정+렐릭 선택 4회만 소비한다.
+    expect(calls).toBe(31);
+  });
+
+  it("10연 마지막 슬롯이 SR로 끝나면 낮은 확률로 SSR로 한 번 더 오르고 천장이 0으로 돌아간다", () => {
+    expect(TEN_PULL_SR_UPGRADE_CHANCE).toBeGreaterThan(0);
+    expect(TEN_PULL_SR_UPGRADE_CHANCE).toBeLessThanOrEqual(0.05);
+    // 앞 아홉 칸 R은 각 2회(등급·선택), 열 번째는 등급(18번째 호출) 다음이 상승 판정(19번째)이다.
+    const rise = (value: number) => {
+      let call = 0;
+      return () => (call++ === 19 ? value : 0.8);
+    };
+    const risen = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 3, pickupGuaranteed: false }, rise(TEN_PULL_SR_UPGRADE_CHANCE - 0.001));
+    expect(risen.rarities[9]).toBe("SSR");
+    expect(risen.slots[9]).toMatchObject({ kind: "relic", rarity: "SSR", upgraded: true });
+    expect(risen.pity.pullsSinceSsr).toBe(0);
+    const stay = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 3, pickupGuaranteed: false }, rise(TEN_PULL_SR_UPGRADE_CHANCE));
+    expect(stay.rarities[9]).toBe("SR");
+    expect(stay.slots[9]).not.toHaveProperty("upgraded");
+    expect(stay.pity.pullsSinceSsr).toBe(13);
+  });
+
+  it("QA 강제 옵션은 10연 마지막 칸을 난수 없이 SSR 승급으로 굳힌다", () => {
+    const forced = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.8, { forceTenUpgrade: true });
+    expect(forced.slots[9]).toMatchObject({ kind: "relic", rarity: "SSR", upgraded: true });
+    // 단일 연구에는 걸리지 않는다.
+    const single = pull({ ...banner, highestRarityGuarantee: 100 }, 1, { pullsSinceSsr: 3, pickupGuaranteed: false }, () => 0.8, { forceTenUpgrade: true });
+    expect(single.slots[0]).not.toHaveProperty("upgraded");
+  });
+
+  it("상승 판정은 10연 마지막 슬롯이 SR일 때만 굴린다", () => {
+    let calls = 0;
+    // 천장이 SSR을 강제하면 굴리지 않는다: 판정 난수 없이 픽업·선택 2회뿐이다.
+    pull({ ...banner, highestRarityGuarantee: 1 }, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => { calls += 1; return 0.001; });
+    expect(calls).toBe(2);
+    // 단일 연구와 R 확정 슬롯에도 상승이 없다.
+    const single = pull({ ...banner, highestRarityGuarantee: 100 }, 1, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.8);
+    expect(single.slots[0]).not.toHaveProperty("upgraded");
+    // 앞 아홉 칸에는 SR이 나와도 상승 판정이 없다(SR 판정값 0.2~0.3 → SR).
+    const early = pull({ ...banner, highestRarityGuarantee: 100 }, 10, { pullsSinceSsr: 0, pickupGuaranteed: false }, () => 0.15 + 0.0);
+    expect(early.slots.slice(0, 9).every((slot) => slot.kind !== "relic" || !("upgraded" in slot))).toBe(true);
   });
 
   it("회색 수량은 양 끝을 포함하고 비SSR 천장을 증가시킨다", () => {
@@ -144,11 +183,11 @@ describe("재화와 보유 반영", () => {
 });
 
 describe("운영 배너 데이터", () => {
-  it("상시·픽업 배너의 SSR 천장은 100회이고, 횟수 제한 배너는 천장이 곧 한도다", () => {
+  it("상시·픽업 배너의 SSR 천장은 120회이고, 횟수 제한 배너는 천장이 곧 한도다", () => {
     // 문서와 UI가 같은 정적 운영값을 읽도록 과거 80회 값의 회귀를 막는다.
     for (const candidate of BANNERS) {
       // 첫 복원 연구: 천장을 한도와 같게 두어야 "그 횟수 안에 SSR 확정"이 된다.
-      expect(candidate.highestRarityGuarantee, candidate.id).toBe(candidate.pullLimit ?? 100);
+      expect(candidate.highestRarityGuarantee, candidate.id).toBe(candidate.pullLimit ?? 120);
     }
   });
   it("한 개가 한 번이고 묶음 할인을 두지 않는다", () => {

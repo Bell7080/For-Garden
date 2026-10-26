@@ -1,5 +1,6 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -25,7 +26,7 @@ import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { drawLayer, HOLO, slantedRect } from "../ui/holo";
@@ -51,6 +52,9 @@ import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
+import { TopBar } from "../ui/TopBar";
+import { openCurrencyGuide } from "../ui/currencyGuideEntry";
+import { shrinkTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
@@ -99,7 +103,7 @@ const ROSTER_VIEWPORT = { top: 1026, bottom: 1640 } as const;
 /** 그리드 위 두 줄의 간격 — 아래 줄은 필터·정렬, 그 위 줄은 자동 배치 같은 편성 보조 버튼이다. */
 const ROSTER_BAR_STEP = 64;
 /** 손가락이 이 거리 이상 움직이면 편성이 아니라 스크롤로 본다. */
-const ROSTER_DRAG_SLOP = 12;
+const ROSTER_DRAG_SLOP = TAP_DRAG_SLOP;
 
 /** 그리드 카드 하나의 중심 x좌표. 열 번호(0부터)를 받는다. */
 function rosterColumnX(col: number): number {
@@ -263,7 +267,14 @@ export class PartyScene extends Phaser.Scene {
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
-    this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
+    // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
+    const staminaContent = this.content.content !== "duel" && this.content.content !== "duelDefense";
+    const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
+    if (staminaContent) {
+      // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
+      shrinkTextToWidth(titleText, 560);
+      new TopBar(this, 40, { profile: false, currencies: "stamina", depth: 60, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: new PopupLayer(this, 2200) }, currency) });
+    }
     this.buildPreview(this.preview);
     this.buildRoster();
 
@@ -733,6 +744,7 @@ export class PartyScene extends Phaser.Scene {
         // 이미 자리에 나가 있는 카드는 떠오르지 않고 눌려 들어간다 — 발광은 "지금 고를 수 있다"로
         // 읽혀 이미 세운 렐릭과 아직 고를 수 있는 렐릭이 같은 무게가 된다.
         selectedStyle: "pressed",
+        deferPortrait: true,
       });
       this.bindCardInput(card.hit, relic);
       this.cards.set(relic.id, { card, role });
@@ -789,6 +801,7 @@ export class PartyScene extends Phaser.Scene {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     setDebugGridOffset("party", this.rosterScrollY);
     this.rosterContent?.setY(this.rosterScrollY);
+    syncPortraitResidency([...this.cards.values()].map(({ card }) => card), this.rosterScrollY, this.rosterViewport, ROSTER_GRID.cardHeight);
     this.syncRosterCardMasks();
   }
 

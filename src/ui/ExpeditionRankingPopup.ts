@@ -16,6 +16,7 @@ import {
   rankingRowY, rankingScrollMetrics,
 } from "./expeditionRankingLayout";
 import { COLOR, textStyle } from "./theme";
+import { attachDragScroll } from "./dragScroll";
 
 /** 서버 주차 스냅샷만 사용해 준비와 결과 화면이 공유하는 원정 기록판을 그린다. */
 export class ExpeditionRankingPopup {
@@ -106,15 +107,11 @@ export class ExpeditionRankingPopup {
     merged.forEach((entry, index) => this.renderRank(list, entry, rankingRowY(index)));
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 적으면 minY가 0이라 아무 일도 일어나지 않는다.
-    let offset = 0; let dragY = 0;
+    let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); list.y = metrics.startY + offset; };
-    const hit = this.scene.add.rectangle(0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, 0xffffff, 0)
-      .setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+    const hit = this.scene.add.rectangle(0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, 0xffffff, 0).setVisible(false);
+    attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
-    content.sendToBack(hit);
   }
 
   /**

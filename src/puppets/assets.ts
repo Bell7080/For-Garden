@@ -1120,6 +1120,20 @@ export interface SpawnOptions {
   tint?: number;
   depth?: number;
   flipX?: boolean;
+  /**
+   * 읽는 사이에 더 이상 필요 없어졌는지. 모델 생성(메인 스레드, 수십~수백 ms)에 들어가기 전에
+   * 한 번 묻고, 그렇다면 만들지 않고 `PuppetSpawnCancelled`로 물러난다 — 정보창을 연달아 넘길 때
+   * 지나쳐 온 개체까지 끝까지 세웠다 부수면 그 비용이 그대로 끊김이 된다.
+   */
+  isStale?: () => boolean;
+}
+
+/** `SpawnOptions.isStale`이 참이라 만들지 않고 물러났다. 실패가 아니라 정상 취소다. */
+export class PuppetSpawnCancelled extends Error {
+  constructor() {
+    super("puppet spawn cancelled");
+    this.name = "PuppetSpawnCancelled";
+  }
 }
 
 export interface Placement {
@@ -1283,6 +1297,7 @@ export async function spawnPuppet(
   let creature: PuppetCreature;
   try {
     const template = await loadPuppet(asset);
+    if (options.isStale?.()) throw new PuppetSpawnCancelled();
     // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
     // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
     const { Puppet } = await import("puppetforge/phaser");

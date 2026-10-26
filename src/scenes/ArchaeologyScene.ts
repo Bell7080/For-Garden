@@ -49,7 +49,7 @@ import { openRuneSynthesisOdds } from "../ui/RuneSynthesisOddsPopup";
 import { InventoryManager } from "../managers/InventoryManager";
 import { audioManager } from "../managers/AudioManager";
 import { findItem } from "../data/items";
-import { pressIn, pressOut } from "../ui/pressFeedback";
+import { bindPressFlash, pressIn, pressOut } from "../ui/pressFeedback";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -814,6 +814,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     }
     const hit = this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
       .setInteractive({ useHandCursor: true });
+    bindPressFlash(hit, 0.18);
     hit.on("pointerup", () => this.dig(index));
     tileView.add(hit);
     this.strataHits.set(index, hit);
@@ -1234,6 +1235,10 @@ export class ArchaeologyScene extends Phaser.Scene {
       destructive: true,
     }, () => {
       this.synthBusy = true;
+      // 사라질 재료의 확률이 연출 내내 그대로 서 있지 않게 판을 가라앉힌다.
+      this.tweens.add({ targets: handles.odds, alpha: 0.25, duration: 200 });
+      // 가운데 빛은 결과 룬이 설 자리라 먼저 걷는다.
+      this.tweens.add({ targets: handles.core, alpha: 0, duration: 300 });
       void new InventoryManager(session).synthesizeRunes(gameApi, runes.map(({ instanceId }) => instanceId)).then((result) => {
         playRuneSynthesisEffect({
           scene: this,
@@ -1241,6 +1246,7 @@ export class ArchaeologyScene extends Phaser.Scene {
           center: runeSynthesisCenter(BASE_WIDTH),
           color: RUNE_ACCENT[result.rune.rarity],
           upgraded: result.upgraded,
+          rune: result.rune,
           depth: 2500,
           onImpact: () => { if (result.upgraded) audioManager?.playUi("ui.confirm"); },
           onDone: () => {

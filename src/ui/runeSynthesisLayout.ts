@@ -9,7 +9,7 @@ import { RESEARCH_BENCH, RESEARCH_SHIFT_X } from "./researchBenchLayout";
 export const RUNE_SYNTHESIS = {
   /** 합성대 판의 위·아래. */
   top: 320,
-  bottom: 1130,
+  bottom: 1030,
   /** 삼각형의 중심에서 꼭짓점까지. */
   radius: 280,
   /** 꼭짓점 칸 한 변. */
@@ -17,14 +17,31 @@ export const RUNE_SYNTHESIS = {
   /** 가운데 빛의 크기. 룬이 모여 터지는 자리다. */
   core: 120,
   /** 확률 판. 합성대 밑변에서 이만큼 아래에 선다. */
-  oddsGap: 28,
-  oddsHeight: 250,
-  /** 확률 판 안 막대 한 줄의 높이. */
-  oddsBar: 34,
+  oddsGap: 26,
+  oddsHeight: 380,
+  /**
+   * 확률 판 안의 한 줄 — 이름표 → 게이지 → 칸마다 `■ 이름 N%` 범례.
+   *
+   * **수치는 막대 안에 넣지 않는다.** 밝은 등급색 위의 작은 글자는 뭉개지고, 2%처럼 좁은 칸은
+   * 숫자가 들어갈 자리가 없어 통째로 사라졌다. 막대는 기운 쪽만 말하고 숫자는 그 아래 범례가 맡는다.
+   * y는 판 윗변에서 잰다.
+   */
+  oddsRows: [{ label: 70, bar: 114, legend: 168 }, { label: 236, bar: 280, legend: 334 }],
+  oddsBar: 40,
+  /** 범례의 등급색 칸 한 변과 글자 크기. */
+  oddsSwatch: 22,
+  oddsLabelSize: 26,
+  oddsNameSize: 24,
+  oddsPercentSize: 36,
+  /** 확률이 바뀌어 다시 그릴 때 칸이 왼쪽부터 차오르는 시간(ms). */
+  oddsFillMs: 420,
+  /** 터진 뒤 결과 룬과 판정 문구가 서 있는 시간(ms). 그다음 룬 쪽지가 열린다. */
+  resultHoldMs: 900,
+  resultSlot: 230,
   /** 합성 버튼. */
   buttonWidth: 720,
   buttonHeight: 112,
-  buttonGap: 44,
+  buttonGap: 36,
   /** 룬이 가운데로 빨려 드는 시간(ms). 터지기까지 0.7초를 넘기지 않는다. */
   gatherMs: 620,
 } as const;

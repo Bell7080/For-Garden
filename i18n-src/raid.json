@@ -22,6 +22,7 @@
 "raid.settle.done": ["已领取奖励", "รับรางวัลแล้ว", "Đã nhận thưởng", "Hadiah diklaim", "Recompensas recibidas", "Recompensas recebidas", "Belohnungen erhalten", "Награды получены"],
 "raid.settle.ready": ["获得奖励", "รางวัลที่ได้รับ", "Thưởng nhận được", "Hadiah diperoleh", "Recompensas obtenidas", "Recompensas obtidas", "Erhaltene Belohnungen", "Полученные награды"],
 "raid.settle.expected": ["预计奖励", "รางวัลคาดการณ์", "Thưởng dự kiến", "Perkiraan hadiah", "Recompensas previstas", "Recompensas previstas", "Erwartete Belohnungen", "Ожидаемые награды"],
+"raid.settle.none": ["无贡献", "ไม่มีส่วนร่วม", "Chưa đóng góp", "Belum berkontribusi", "Sin contribución", "Sem contribuição", "Kein Beitrag", "Нет вклада"],
 "raid.settle.max": ["最高奖励", "รางวัลสูงสุด", "Thưởng tối đa", "Hadiah maksimal", "Recompensas máximas", "Recompensas máximas", "Maximale Belohnungen", "Максимальные награды"],
 "raid.settle.contribution": ["贡献度", "การมีส่วนร่วม", "Mức đóng góp", "Kontribusi", "Contribución", "Contribuição", "Beitrag", "Вклад"],
 "raid.settle.rank": ["第{rank}名", "อันดับ {rank}", "Hạng {rank}", "Peringkat {rank}", "Puesto {rank}", "{rank}º lugar", "Platz {rank}", "{rank}-е место"],

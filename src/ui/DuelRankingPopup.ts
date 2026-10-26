@@ -18,6 +18,7 @@ import { addRankingFace } from "./rankingFace";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { attachDragScroll } from "./dragScroll";
 
 /**
  * 결투장 순위 — 원정 순위표와 **같은 줄 규격**(`RANKING_LIST`)·같은 금은동을 쓴다. 다른 것은 점수 옆에
@@ -108,16 +109,13 @@ export class DuelRankingPopup {
     if (podium > 0) this.renderPodium(list, entries.slice(0, 3));
     entries.forEach((entry, index) => this.renderRow(list, entry, podium + rankingRowY(index)));
 
-    let offset = 0; let dragY = 0;
+    let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); list.y = metrics.startY + offset; };
     // 끄는 면도 창 안에서만 손을 받는다(`addClippedHit`) — 창 밖으로 남으면 아래의 뒤로가기가 막힌다.
     const clip = { left: maskShape.x - maskShape.width / 2, right: maskShape.x + maskShape.width / 2, top: maskShape.y - maskShape.height / 2, bottom: maskShape.y + maskShape.height / 2 };
     const hit = addClippedHit(this.scene, content, 0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, () => clip);
-    this.scene.input.setDraggable(hit);
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
-    content.sendToBack(hit);
+    hit.disableInteractive();
+    attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
   }
 
   /** 1·2·3등의 단 — 가운데가 1등이고 가장 높다. 단의 색은 순위표 줄의 금·은·동과 같다. */

@@ -92,4 +92,8 @@ export const DUEL_VI = {
   "rewardTable.rules.expedition": "Chốt mỗi thứ Hai 00:00 UTC · Gửi qua thư\nCần có điểm viễn chinh trong tuần.",
   "rewardTable.rules.arena": "Chốt mỗi thứ Hai 00:00 UTC · Gửi qua thư\nThưởng bậc lúc chốt cộng thưởng hạng. Cần có trận xếp hạng trong tuần.",
   "ranking.mine": "Hạng của tôi",
+  "duel.defense.title": "Đội phòng thủ đối thủ",
+  "duel.defense.totalPower": "Tổng lực chiến",
+  "duel.defense.blind": "Ô ẩn {count}",
+  "duel.defense.sortie": "Xuất kích",
 } as const;

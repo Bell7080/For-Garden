@@ -373,7 +373,7 @@ test("@slow 실제 시간 전투는 한쪽이 전멸하면 끝난다", async ({ 
 
 
 test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 프리미엄을 오간다", async ({ page }) => {
-  await startAfterOpening(page, (session) => { session.cleared.add("1-10"); });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); session.cleared.add("1-10"); });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
@@ -397,7 +397,7 @@ test("하단 탭으로 고고학 · 렐릭 · 로비 · 연구소 · 프리미�
 
 test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", async ({ page }) => {
   test.setTimeout(300_000);
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 3; });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); session.wallet.fossil = 3; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tapUntil(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90, async () => (await scene(page)) === "lab");
   await expect.poll(() => scene(page)).toBe("lab");
@@ -416,7 +416,7 @@ test("연구소에서 화석을 사용하면 렐릭 연구 결과가 뜬다", as
 
 test("연구 재화가 모자라면 버튼 옆에 젬으로 채우는 값이 서고, 누르면 확인 창이 먼저 묻는다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 1; session.wallet.gems = 5_000; });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); session.wallet.fossil = 1; session.wallet.gems = 5_000; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tapUntil(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90, async () => (await scene(page)) === "lab");
   await expect.poll(() => scene(page)).toBe("lab");
@@ -432,7 +432,7 @@ test("연구 재화가 모자라면 버튼 옆에 젬으로 채우는 값이 서
 
 test("연구소 확률표는 등급 줄을 눌러 세부 확률을 펼치고, 세 배너 모두 같은 표를 쓴다", async ({ page }) => {
   await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
-  await startAfterOpening(page);
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tapUntil(page, (BASE_WIDTH * 7) / 10, BASE_HEIGHT - 180 + 90, async () => (await scene(page)) === "lab");
   await expect.poll(() => scene(page)).toBe("lab");

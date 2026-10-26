@@ -1101,6 +1101,36 @@
 "Alle als gelesen markieren",
 "Прочитать всё"
 ],
+"mail.delete.title": [
+"删除已读邮件",
+"ลบจดหมายที่อ่านแล้ว",
+"Xóa thư đã đọc",
+"Hapus Surat yang Dibaca",
+"Eliminar correo leído",
+"Excluir correio lido",
+"Gelesene Post löschen",
+"Удалить прочитанную почту"
+],
+"mail.delete.message": [
+"删除 {count} 封已读邮件。\n删除后无法恢复。",
+"ลบจดหมายที่อ่านแล้ว {count} ฉบับ\nจดหมายที่ลบแล้วไม่สามารถกู้คืนได้",
+"Xóa {count} thư đã đọc.\nThư đã xóa không thể khôi phục.",
+"Hapus {count} surat yang sudah dibaca.\nSurat yang dihapus tidak dapat dipulihkan.",
+"Se eliminarán {count} correos leídos.\nLos correos eliminados no se pueden recuperar.",
+"Excluir {count} correios lidos.\nCorreios excluídos não podem ser recuperados.",
+"{count} gelesene Nachrichten löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
+"Будет удалено прочитанных сообщений почты: {count}.\nУдалённые сообщения восстановить нельзя."
+],
+"mail.delete.confirm": [
+"删除",
+"ลบ",
+"Xóa",
+"Hapus",
+"Eliminar",
+"Excluir",
+"Löschen",
+"Удалить"
+],
 "mail.daysLeft": [
 "剩余{days}天",
 "เหลือ {days} วัน",
@@ -2873,6 +2903,26 @@
 "Sem traço",
 "Kein Merkmal",
 "Без черты"
+],
+"archaeology.synth.resultUp": [
+"等级提升！",
+"ระดับเพิ่มขึ้น!",
+"Tăng cấp!",
+"Naik tingkat!",
+"¡Rareza mejorada!",
+"Raridade aumentada!",
+"Seltenheit erhöht!",
+"Редкость повышена!"
+],
+"archaeology.synth.resultKeep": [
+"保持{rarity}",
+"คง{rarity}",
+"Giữ {rarity}",
+"Tetap {rarity}",
+"{rarity} sin cambios",
+"{rarity} mantida",
+"{rarity} bleibt",
+"{rarity} без изменений"
 ],
 "archaeology.synth.rarity": [
 "等级",

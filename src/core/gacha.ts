@@ -45,8 +45,16 @@ export type ResearchGrade = RelicRarity | "GRAY";
 export type QuantityRewardKind = "gold" | "cheesecake";
 export interface QuantityRewardDefinition { kind: QuantityRewardKind; min: number; max: number; weight: number; }
 export type PullSlot =
-  | { kind: "relic"; relicId: string; rarity: RelicRarity }
+  | { kind: "relic"; relicId: string; rarity: RelicRarity; upgraded?: true }
   | { kind: "currency"; currency: QuantityRewardKind; amount: number; grade: "GRAY" };
+
+/**
+ * 10연의 마지막 슬롯이 SR로 끝났을 때 SSR로 한 번 더 오를 확률.
+ *
+ * 자연 SR이든 10연 보장이 올린 SR이든 같다. 천장이 강제한 SSR에는 굴리지 않는다(이미 SSR이다).
+ * 단일 연구와 앞 아홉 칸에는 없고, 이 값은 확률표 글이 그대로 읽는다.
+ */
+export const TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
 
 export interface Banner {
   id: string;
@@ -278,6 +286,8 @@ export function pull(
   count: number,
   currentPity: GachaPityState,
   rng: () => number,
+  /** QA가 다음 10연의 마지막 칸을 승급 찬스로 굳힌다. 일반 빌드는 넘기지 않는다. */
+  options: { forceTenUpgrade?: boolean } = {},
 ): PullResult {
   const relicIds: string[] = [];
   const rarities: RelicRarity[] = [];
@@ -289,6 +299,13 @@ export function pull(
     let grade: ResearchGrade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
     // 10번째 슬롯은 자연 회색/R만 SR로 승격한다. 슬롯 판정 RNG는 이미 한 번 소비했고 보상 RNG는 소비하지 않는다.
     if (!pityForcesSsr && count === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+    // 마지막 슬롯이 SR로 끝났다면 한 번 더 SSR로 오를 기회가 있다. 난수는 SR일 때만 하나 더 쓴다.
+    let upgraded = false;
+    if (!pityForcesSsr && count === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
+    if (!pityForcesSsr && count === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
+      grade = "SSR";
+      upgraded = true;
+    }
 
     if (grade === "GRAY") {
       // 소비 순서: 슬롯 판정 → 회색 풀 선택 → 수량. 천장 카운터는 다른 비SSR과 똑같이 증가한다.
@@ -315,7 +332,7 @@ export function pull(
     const relicId = choose(selectionPool, rng);
     relicIds.push(relicId);
     rarities.push(rarity);
-    slots.push({ kind: "relic", relicId, rarity });
+    slots.push(upgraded ? { kind: "relic", relicId, rarity, upgraded: true } : { kind: "relic", relicId, rarity });
     if (rarity === "SSR") {
       // SSR 픽업 실패만 다음 SSR 확정을 켜고, 픽업 획득은 기존 확정까지 해제한다.
       pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };

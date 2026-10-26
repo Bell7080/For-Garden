@@ -1,4 +1,5 @@
 import { fitTextToBox } from "../ui/textFit";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyBaseStageId, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { storyStages, ALL_STORY_STAGES } from "../data/stages";
 import { openStoryDifficultyPicker } from "../ui/StoryDifficultyPopup";
@@ -42,7 +43,7 @@ const WINDOW = { top: 500, bottom: 1560 } as const;
 /** 스테이지 하나가 차지하는 세로 간격. */
 const NODE_GAP = 230;
 /** 드래그를 스크롤로 볼지 탭으로 볼지 가르는 거리. */
-const DRAG_SLOP = 14;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /** 챕터 제목 두 줄. 상단 재화 줄(y 40~136) 아래에 선다. */
 const STAGE_MAP_TITLE = { titleY: 205, subtitleY: 278, titleSize: 62, subtitleSize: 36, titleWidth: 900, difficultyY: 392, bandHeight: 470 } as const;

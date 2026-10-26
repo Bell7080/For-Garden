@@ -28,6 +28,7 @@ import { motionPolicy } from "../core/settings";
 import { universalFragmentRarity } from "../core/relicProgression";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 import { onTap } from "./tapGuard";
+import { attachDragScroll } from "./dragScroll";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -150,12 +151,11 @@ export class InventoryPopup {
     this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); this.maskedContent = content; body.add(content);
     visible.forEach((item, index) => this.addCard(content, item, index, textureKeys));
     setDebugInventoryTextureKeys(textureKeys);
-    const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
+    const metrics = inventoryScrollMetrics(visible.length); let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
-    const hit = this.scene.add.rectangle(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit); body.sendToBack(hit);
+    // 칸 위에서 시작한 손도 내려가도록 씬이 듣는다(`attachDragScroll`) — 끌기 면을 칸 뒤에 두면 룬 위에서는 스크롤이 안 됐다.
+    const maskShape = this.maskShape!;
+    attachDragScroll(this.scene, { owner: content, root: body, bounds: () => maskShape.getBounds(), onDelta: move });
     // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
     CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
     if (this.category === "rune") this.addSortControls(body, visible.length);
@@ -196,7 +196,7 @@ export class InventoryPopup {
     const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
     const dirX = right - dirWidth / 2;
     const options: readonly { id: InventorySort["key"]; labelKey: TextKey }[] = [
-      { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
+      { id: "relic", labelKey: "inventory.sort.relic" }, { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
       { id: "enhancement", labelKey: "inventory.sort.craft" }, { id: "equipped", labelKey: "inventory.sort.equipped" },
     ];
     const countLabel = this.scene.add.text(-right, y, t("inventory.rune.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);
@@ -242,7 +242,7 @@ export class InventoryPopup {
       const slot = equippedRuneSlot(item.rune.instanceId);
       const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, {
         dimmed: slot !== undefined,
-        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId, order: index } : undefined,
+        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId } : undefined,
       });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
       this.addCardInput(content, card, item, cardWidth, cardHeight);

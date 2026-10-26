@@ -47,6 +47,7 @@ export type GlyphName =
   | "globe"
   | "affinity"
   | "sort-arrow"
+  | "trash"
   | "check";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
@@ -313,6 +314,14 @@ export function drawGlyph(
       g.fillPoints(points(bx + bevel, by, bx + bw, by, bx + bw, by + bh - bevel, bx + bw - bevel, by + bh, bx, by + bh, bx, by + bevel), true);
       break;
     }
+    case "trash":
+      // 각진 휴지통 — 뚜껑 줄과 손잡이, 사다리꼴 통, 세로 줄 둘. 읽은 우편처럼 비우는 조작에만 쓴다.
+      g.lineBetween(-r * 0.86, -r * 0.6, r * 0.86, -r * 0.6);
+      g.strokePoints(points(-r * 0.3, -r * 0.6, -r * 0.3, -r * 0.92, r * 0.3, -r * 0.92, r * 0.3, -r * 0.6), false);
+      g.strokePoints(points(-r * 0.66, -r * 0.6, -r * 0.5, r * 0.92, r * 0.5, r * 0.92, r * 0.66, -r * 0.6), false);
+      g.lineBetween(-r * 0.2, -r * 0.2, -r * 0.2, r * 0.56);
+      g.lineBetween(r * 0.2, -r * 0.2, r * 0.2, r * 0.56);
+      break;
     case "filter":
       // 깔때기 — 목록을 좁힌다. 둥근 목 대신 각지게 꺾어 다른 아이콘과 결을 맞춘다.
       g.strokePoints(points(-r * 0.9, -r * 0.78, r * 0.9, -r * 0.78, r * 0.22, r * 0.04, r * 0.22, r * 0.86, -r * 0.22, r * 0.56, -r * 0.22, r * 0.04), true);

@@ -61,14 +61,4 @@ export const EXPEDITION_KO = {
   "expedition.runInProgress": "진행 중인 원정이 있습니다",
   "expedition.devOnly": "개발 빌드에서만 사용할 수 있습니다",
 
-  "expedition.quick.sub": "골드 {gold} · 오늘 {remaining}회",
-  "expedition.quick.cancelled": "광고가 취소되었습니다",
-  "expedition.quick.walletFull": "골드 지갑이 가득 찼습니다",
-  "expedition.quick.done": "빠른 원정 완료",
-  "expedition.quick.walletGain": "실제 지갑 증가",
-  "expedition.quick.verifyFailed": "광고 검증에 실패했습니다 · 다시 시도하세요",
-  "expedition.quick.dailyUsed": "오늘 횟수를 모두 사용했습니다 · 내일 다시 오세요",
-  "expedition.quick.weeklyUsed": "이번 주 횟수를 모두 사용했습니다 · 다음 주에 다시 오세요",
-  "expedition.quick.noBaseline": "기준 점수가 없습니다 · 원정 최고점을 먼저 기록하세요",
-  "expedition.quick.retryLater": "잠시 후 다시 시도해 주세요",
 } as const;

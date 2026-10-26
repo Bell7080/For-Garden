@@ -239,8 +239,29 @@ export const RAID_BATTLE_HUD = {
   clockY: 132,
   /** 이번 판의 점수. 시계 바로 아래다. */
   scoreY: 190,
-  /** 단계 줄. 점수와 같은 높이의 왼쪽이라 가운데 수와 부딪히지 않는다. */
-  phaseX: 42,
-  phaseY: 206,
   depth: 90,
 } as const;
+
+/**
+ * 보스전 좌상단 점수 랭킹 띠 — 내 위로 둘·나·아래로 하나, 네 줄이 위에서 아래로 쌓인다.
+ *
+ * 예전 단계 이름표(「관측」·「교전」)가 서던 자리다. 원정·레이드가 같은 자리를 쓴다 — 시즌 줄의 수치
+ * (`RAID_BATTLE_HUD.valueY`) 바로 아래에서 시작해 접힌 기여도 판(`top 244`) 위에서 끝난다.
+ * 가운데 점수 글자의 왼쪽 끝(약 400)보다 안쪽에 서므로 두 수가 부딪히지 않는다(테스트가 잰다).
+ */
+export const SCORE_RANKING_HUD = {
+  left: 24,
+  top: 128,
+  width: 330,
+  rowHeight: 26,
+  rowGap: 2,
+  rows: 4,
+  depth: 90,
+  /** 줄이 자리를 바꾸는 시간(ms). 3배속에서도 읽히도록 배속을 곱하지 않는다. */
+  moveMs: 340,
+} as const;
+
+/** i번째 줄의 위쪽 y. */
+export function scoreRankingRowTop(index: number): number {
+  return SCORE_RANKING_HUD.top + index * (SCORE_RANKING_HUD.rowHeight + SCORE_RANKING_HUD.rowGap);
+}

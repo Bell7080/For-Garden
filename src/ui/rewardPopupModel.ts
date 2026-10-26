@@ -55,7 +55,7 @@ export function dungeonRewardItems(granted: Readonly<Record<string, number>>, bo
 
 /**
  * 광고 보상 응답을 보상 액자 목록으로 바꾼다. 재화는 서버 지갑의 전후 차이(`granted`)만 읽고,
- * 가방 아이템·결투 도전권은 슬롯 정의에서 읽는다. 발굴 효과·빠른 원정은 제 화면이 결과를 보여 주므로 비운다.
+ * 가방 아이템·결투 도전권은 슬롯 정의에서 읽는다. 발굴 효과는 제 화면이 결과를 보여 주므로 비운다.
  */
 export function adRewardToRewardItems(response: Pick<ClaimAdRewardResponse, "reward" | "granted">): RewardPopupItem[] {
   const { reward } = response;

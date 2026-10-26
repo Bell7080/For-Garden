@@ -71,6 +71,13 @@ export type StageCompleteReward =
       footnote?: string;
     };
 
+/** 꺼진 길에 대신 할 일이 있으면 그것만 부르고 판은 열어 둔다. 아니면 고른 길을 알리고 닫는다. */
+function pressAction(action: StageCompleteAction, close: () => void): void {
+  if (action.disabled && action.onBlocked) { action.onBlocked(); return; }
+  action.onPress();
+  close();
+}
+
 /** 실패 결산창의 버튼 한 장. 무엇을 하면 강해지는지만 말한다. */
 export interface StageCompleteAction {
   readonly label: string;
@@ -79,6 +86,8 @@ export interface StageCompleteAction {
   readonly primary?: boolean;
   /** 지금은 갈 수 없는 길(스테미나가 모자란 다시 하기 등). 버튼은 서되 꺼져 있다. */
   readonly disabled?: boolean;
+  /** 꺼진 길을 눌렀을 때 대신 할 일(스테미나 충전 창). 있으면 버튼은 켜진 채 서고, 누르면 판을 닫지 않고 이것만 부른다. */
+  readonly onBlocked?: () => void;
   /** 나가기처럼 판을 떠나는 길. 글자만 붉게 선다. */
   readonly danger?: boolean;
 }
@@ -347,8 +356,8 @@ export class StageCompletePopup {
         // **고른 길을 먼저 알리고 그다음 닫는다.** 판은 화면 아무 곳이나 눌러도 닫히고 그
         // 닫힘이 "아무것도 고르지 않았다"는 기본 행선지를 부르므로, 닫기를 먼저 부르면 고른
         // 길과 기본 길이 같은 틱에 둘 다 선다.
-        onClick: () => { action.onPress(); close(); },
-      }).setEnabled(action.disabled !== true));
+        onClick: () => pressAction(action, close),
+      }).setEnabled(action.disabled !== true || action.onBlocked !== undefined));
     });
   }
 
@@ -363,8 +372,8 @@ export class StageCompletePopup {
         variant: action.primary ? "primary" : undefined,
         ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
         // 고른 길을 먼저 알리고 그다음 닫는다 — 순서는 `buildDefeatActions`와 같은 이유다.
-        onClick: () => { action.onPress(); close(); },
-      }).setEnabled(action.disabled !== true));
+        onClick: () => pressAction(action, close),
+      }).setEnabled(action.disabled !== true || action.onBlocked !== undefined));
     });
   }
 
@@ -397,8 +406,8 @@ export class StageCompletePopup {
         width, height: CLEAR_ACTIONS.height, label: action.label, fontSize: CLEAR_ACTIONS.font,
         variant: action.primary ? "primary" : undefined,
         ...(action.danger ? DESTRUCTIVE_BUTTON_STYLE : {}),
-        onClick: () => { action.onPress(); close(); },
-      }).setEnabled(action.disabled !== true));
+        onClick: () => pressAction(action, close),
+      }).setEnabled(action.disabled !== true || action.onBlocked !== undefined));
     });
   }
 

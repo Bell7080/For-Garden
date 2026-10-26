@@ -61,14 +61,4 @@ export const EXPEDITION_JA = {
   "expedition.runInProgress": "進行中の遠征があります",
   "expedition.devOnly": "開発ビルドでのみ使用できます",
 
-  "expedition.quick.sub": "ゴールド {gold} · 本日 {remaining}回",
-  "expedition.quick.cancelled": "広告がキャンセルされました",
-  "expedition.quick.walletFull": "ゴールドの財布がいっぱいです",
-  "expedition.quick.done": "クイック遠征完了",
-  "expedition.quick.walletGain": "実際の財布の増加",
-  "expedition.quick.verifyFailed": "広告の検証に失敗しました · もう一度お試しください",
-  "expedition.quick.dailyUsed": "本日の回数をすべて使いました · 明日またお越しください",
-  "expedition.quick.weeklyUsed": "今週の回数をすべて使いました · 来週またお越しください",
-  "expedition.quick.noBaseline": "基準スコアがありません · 先に遠征の最高得点を記録してください",
-  "expedition.quick.retryLater": "しばらくしてからもう一度お試しください",
 } as const;

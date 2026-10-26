@@ -11,6 +11,7 @@
 import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS } from "../core/saveStorage";
 import { SERVER_LINK_STORAGE_KEY } from "./serverProgress";
 import { WEB_TOKEN_STORAGE_KEY } from "./webTokenStore";
+import { defaultLocalStorage } from "../core/safeStorage";
 
 export const LAUNCH_EPOCH_STORAGE_KEY = "forgarden.launch-epoch";
 
@@ -27,7 +28,7 @@ export function launchEpochWipeKeys(): readonly string[] {
  */
 export function reconcileLaunchEpoch(
   serverEpoch: string,
-  storage: StorageLike | undefined = typeof localStorage === "undefined" ? undefined : localStorage,
+  storage: StorageLike | undefined = defaultLocalStorage(),
   keys: readonly string[] = launchEpochWipeKeys(),
 ): boolean {
   if (!storage || !serverEpoch) return false;

@@ -1,7 +1,20 @@
 /* 생성물: npm run build:server */
 
+// src/server/cors.ts
+var APP_ORIGINS = [
+  "capacitor://localhost",
+  // iOS
+  "https://localhost",
+  // Android (androidScheme: https)
+  "ionic://localhost"
+];
+function allowedOrigins(extra = process.env.CORS_ALLOWED_ORIGINS) {
+  const more = (extra ?? "").split(",").map((o) => o.trim().replace(/\/+$/, "")).filter((o) => o !== "" && o !== "*");
+  return [...APP_ORIGINS, ...more];
+}
+
 // src/server/httpSecurity.ts
-function applyApiOriginPolicy(req, res, configured = process.env.FORGARDEN_APP_ORIGINS ?? "") {
+function applyApiOriginPolicy(req, res, configured = [process.env.FORGARDEN_APP_ORIGINS ?? "", ...allowedOrigins()].join(",")) {
   res.setHeader("cache-control", "no-store");
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("referrer-policy", "no-referrer");

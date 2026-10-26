@@ -15,6 +15,8 @@ export const DEBUG_KO = {
   "settings.debug.menu.relicFragments": "캐릭터 파편 지급",
   "settings.debug.menu.breakthroughSet": "돌파 재료 세트 지급",
   "settings.debug.menu.universalFragments": "만능 파편 지급 (R·SR·SSR)",
+  "settings.debug.menu.tenUpgrade": "다음 10연 승급 찬스 강제",
+  "settings.debug.tenUpgradeArmed": "다음 10연 한 번의 마지막 칸이 승급 찬스로 SSR이 됩니다.",
   "settings.debug.menu.unlockStories": "유대 10 · 질문/스토리 전체 개방",
   "settings.debug.pick.currency": "재화 선택",
   "settings.debug.pick.amount": "수량 선택",

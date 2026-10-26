@@ -21,7 +21,9 @@ export type DebugCommand =
   | { kind: "relicFragments"; relicId: string; amount: number }
   | { kind: "breakthroughSet"; relicId: string }
   | { kind: "universalFragments"; amount: number }
-  | { kind: "unlockStories" };
+  | { kind: "unlockStories" }
+  /** 다음 10연 한 번의 마지막 칸을 승급 찬스로 굳힌다. 세션 모양이 아니라 서버 장부의 표식이라 `FakeServer`가 따로 처리한다. */
+  | { kind: "tenUpgrade" };
 
 export interface DebugCommandResponse {
   ok: boolean;
@@ -75,6 +77,7 @@ function integer(value: number, min: number, max: number): number {
 /** 명령을 `target`에 직접 적용하고 바뀐 수를 돌려준다. 호출자는 복사본을 넘기고 성공했을 때만 저장한다. */
 export function applyDebugCommand(target: DebugTarget, command: DebugCommand, rules: DebugRules): number {
   switch (command.kind) {
+    case "tenUpgrade": return 0;
     case "currency": {
       if (!(command.key in rules.walletCaps)) throw new Error("알 수 없는 재화입니다.");
       const cap = rules.walletCaps[command.key];

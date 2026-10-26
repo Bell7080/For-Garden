@@ -1,4 +1,5 @@
 import { NotificationDot } from "../ui/NotificationDot";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -54,7 +55,7 @@ const TABS = [
 type RequestView = "incoming" | "outgoing";
 
 /** 손가락이 이만큼 움직였으면 누른 것이 아니라 끈 것이다. */
-const TAP_SLOP = 14;
+const TAP_SLOP = TAP_DRAG_SLOP;
 /** 접속 중 초록 원 — 체력의 연두와 같은 「살아 있음」의 색이다. */
 const ONLINE_COLOR = COLOR.hpFill;
 const SEARCH_MAX_GLYPHS = 20;
@@ -488,7 +489,7 @@ export class FriendsScene extends Phaser.Scene {
   private openProfile(profile: FriendProfile, isFriend: boolean, favorite: boolean, instant = false): void {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
-      {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,profile.id,profile.displayName);}},
+      {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,{id:profile.id,name:profile.displayName,frameId:profile.frameId,favoriteRelicId:profile.favoriteRelic.relicId,level:profile.level});}},
       {
         label: t(favorite ? "friends.action.unfavorite" : "friends.action.favorite"),
         onClick: () => {

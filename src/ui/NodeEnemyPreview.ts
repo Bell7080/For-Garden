@@ -370,11 +370,14 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
   /** Puppet은 화면 좌표에 직접 세우며 세대가 바뀐 로드 결과는 즉시 폐기한다. */
   private async spawnEnemy(id: string, x: number, ground: number, height: number, generation: number): Promise<void> {
-    const puppet = await spawnPuppet(this.scene, battleAssetFor(id), { x: this.x + x, groundY: this.y + ground, height, flipX: true, tint: 0xffffff, depth: this.depth + 1 });
+    const spawnedGroundY = this.y + ground;
+    const puppet = await spawnPuppet(this.scene, battleAssetFor(id), { x: this.x + x, groundY: spawnedGroundY, height, flipX: true, tint: 0xffffff, depth: this.depth + 1 });
     if (!this.active || generation !== this.generation || !this.scene.scene.isActive()) { puppet.destroy(); return; }
     // SD가 내려받히는 동안 지도가 굴렀을 수 있다 — 생성 시점의 자리가 아니라 **지금 판의 자리**에 발을 맞춘다.
     // 맞추지 않으면 스크롤 중에 연 판의 SD만 그 만큼 아래로 밀려 서 있다.
-    puppet.setY(this.y + ground);
+    // Mesh의 y는 발끝이 아니라 이미지 한가운데이므로 발끝 좌표를 대입하지 않고 **움직인 만큼만** 더한다 —
+    // 대입하면 모든 SD가 이미지 절반 높이만큼 아래로 내려앉는다.
+    puppet.setY(puppet.y + this.y + ground - spawnedGroundY);
     puppet.setVisible(this.nodeVisible && this.revealed); this.puppets.add(puppet);
   }
 

@@ -1,8 +1,10 @@
+import { allowedOrigins } from "./cors";
+
 interface HttpRequest { method?: string; headers: Record<string, string | string[] | undefined> }
 interface HttpResponse { setHeader(k: string, v: string): void; status(n: number): unknown; json(value: unknown): void; end?(): void }
 
 /** CORS는 인증을 대신하지 않는다. 네이티브 WebView의 정확한 Origin만 별도로 허용한다. */
-export function applyApiOriginPolicy(req: HttpRequest, res: HttpResponse, configured = process.env.FORGARDEN_APP_ORIGINS ?? ""): boolean {
+export function applyApiOriginPolicy(req: HttpRequest, res: HttpResponse, configured = [process.env.FORGARDEN_APP_ORIGINS ?? "", ...allowedOrigins()].join(",")): boolean {
   res.setHeader("cache-control", "no-store");
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("referrer-policy", "no-referrer");

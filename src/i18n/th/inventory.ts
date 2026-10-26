@@ -11,6 +11,7 @@ export const INVENTORY_TH = {
   "inventory.sort.part": "ตำแหน่ง",
   "inventory.sort.craft": "เจียระไน",
   "inventory.sort.equipped": "สวมใส่",
+  "inventory.sort.relic": "เรลิก",
   "inventory.guide.held": "ที่มี",
   "inventory.guide.expiry": "{count} ชิ้น · หมดอายุใน {time}",
   "inventory.expiry.days": "{days} วัน {hours} ชม.",

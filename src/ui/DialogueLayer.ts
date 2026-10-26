@@ -16,6 +16,7 @@ import { COLOR, textStyle } from "./theme";
 import { wrapDialogueText } from "../core/dialogueTextWrap";
 import { fitTextToBox } from "./textFit";
 import { activeFontFamily } from "./fonts";
+import { playFadeIn, playFadeOut } from "./screenTransition";
 
 const PANEL_TOP = DIALOGUE_PANEL_TOP;
 
@@ -251,8 +252,13 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     }
     text.setText(shown);
     overlay.add(scene.add.text(BASE_WIDTH / 2, 90, t("dialogue.log"), textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5));
-    dim.once("pointerup", () => { overlay.destroy(); this.logOverlay = undefined; });
+    dim.once("pointerup", () => {
+      dim.disableInteractive();
+      this.logOverlay = undefined;
+      playFadeOut(scene, [overlay], () => overlay.destroy());
+    });
     this.logOverlay = overlay;
+    playFadeIn(scene, [overlay]);
   }
 
   /** 노드 교체 시 타이머와 그 타이머가 참조하던 원문을 함께 폐기한다. */
@@ -277,6 +283,7 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
         onClick: () => this.onAdvance(choice),
       }).setDepth(610);
       this.choiceObjects.push(button);
+      playFadeIn(this.scene, [button], { rise: 24 });
     });
   }
 

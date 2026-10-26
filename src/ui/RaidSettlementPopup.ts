@@ -9,6 +9,7 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { drawHairline, HoloBar } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
+import { playRankClimb } from "./rankClimb";
 import { RAID_DIFFICULTY_TONE } from "./raidLayout";
 import { RAID_SETTLEMENT_POPUP as L, raidSettlementHeight, raidSettlementSummary, raidSettlementY } from "./raidSettlementLayout";
 import { addSectionTitle } from "./SectionTitle";
@@ -61,8 +62,11 @@ export function openRaidSettlementPopup(scene: Phaser.Scene, popups: PopupLayer,
     // 기여도: 왼쪽은 순위와 참가 인원, 오른쪽은 판 전체 중 내 몫.
     const c = L.contribution;
     addSectionTitle(scene, -half + 36, y(c.titleY), t("raid.settle.contribution"), { parent: body });
-    body.add(scene.add.text(c.leftX, y(c.rankY), summary.rank ? t("raid.settle.rank", { rank: summary.rank }) : "-", textStyle({ role: "display", size: c.rankSize, color: COLOR.accentText }))
-      .setOrigin(0.5).setShadow(0, 4, "#000000", 6, false, true));
+    const rankText = scene.add.text(c.leftX, y(c.rankY), summary.rank ? t("raid.settle.rank", { rank: summary.rank }) : "-", textStyle({ role: "display", size: c.rankSize, color: COLOR.accentText }))
+      .setOrigin(0.5).setShadow(0, 4, "#000000", 6, false, true);
+    body.add(rankText);
+    // 꼴찌에서 시작해 내 순위까지 한 칸씩 넘으며 올라간다 — 길드 기여도 역전과 같은 결의 마무리다.
+    if (summary.rank) playRankClimb(scene, rankText, summary.participants, summary.rank, (rank) => t("raid.settle.rank", { rank }));
     body.add(scene.add.text(c.leftX, y(c.participantsY), t("raid.settle.participants", { count: summary.participants }), textStyle({ role: "emphasis", size: c.participantsSize, color: COLOR.inkDim })).setOrigin(0.5));
     body.add(scene.add.text(c.rightX, y(c.shareY), t("raid.world.percent", { percent: summary.sharePercent }), textStyle({ role: "display", size: c.shareSize, color: COLOR.ink })).setOrigin(0.5));
     const bar = new HoloBar(scene, c.rightX, y(c.barY), c.barWidth, c.barHeight, { color: COLOR.accent, trackAlpha: 0.82, outline: true, ticks: 4 });

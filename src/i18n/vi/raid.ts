@@ -23,6 +23,7 @@ export const RAID_VI = {
   "raid.settle.done": "Đã nhận thưởng",
   "raid.settle.ready": "Thưởng nhận được",
   "raid.settle.expected": "Thưởng dự kiến",
+  "raid.settle.none": "Chưa đóng góp",
   "raid.settle.max": "Thưởng tối đa",
   "raid.settle.contribution": "Mức đóng góp",
   "raid.settle.rank": "Hạng {rank}",

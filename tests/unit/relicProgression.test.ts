@@ -195,28 +195,32 @@ describe("돌파", () => {
     expect(canBreakThrough("SR", maxed, need, step.cheesecake - 1, 0)).toBe(false);
   });
 
-  it("는 파편 수를 등급이 정하고 마지막 별만 더 든다", () => {
+  it("는 파편 수를 등급이 정하고 뒤 단계일수록 더 든다", () => {
     // 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 파편 수도 등급이 정한다.
     expect(breakthroughFragmentCost("SSR", 0)).toBeLessThan(breakthroughFragmentCost("SR", 0));
     expect(breakthroughFragmentCost("SR", 0)).toBeLessThan(breakthroughFragmentCost("R", 0));
+    const costs = (rarity: "SSR" | "SR" | "R") => BREAKTHROUGH_STEPS.map((_, step) => breakthroughFragmentCost(rarity, step));
+    expect(costs("SSR")).toEqual([1, 1, 2, 3]);
+    expect(costs("SR")).toEqual([2, 2, 3, 4]);
+    expect(costs("R")).toEqual([4, 4, 6, 8]);
     for (const rarity of ["SSR", "SR", "R"] as const) {
-      const last = BREAKTHROUGH_STEPS.length - 1;
-      for (let step = 0; step < last; step += 1) {
-        expect(breakthroughFragmentCost(rarity, step)).toBe(breakthroughFragmentCost(rarity, 0));
-      }
-      expect(breakthroughFragmentCost(rarity, last)).toBeGreaterThan(breakthroughFragmentCost(rarity, 0));
+      const list = costs(rarity);
+      for (let step = 1; step < list.length; step += 1) expect(list[step]).toBeGreaterThanOrEqual(list[step - 1]);
+      expect(list[list.length - 1]).toBeGreaterThan(list[2]);
     }
     // 치즈케이크도 같은 이유로 단계마다 오른다.
     for (let step = 1; step < BREAKTHROUGH_STEPS.length; step += 1) {
       expect(BREAKTHROUGH_STEPS[step].cheesecake).toBeGreaterThan(BREAKTHROUGH_STEPS[step - 1].cheesecake);
     }
-    // SSR 한 장으로 뚫리는 등급이라도 마지막 별은 두 장이 필요하다.
-    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 1, 99_999, 0)).toBe(false);
-    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 2, 99_999, 0)).toBe(true);
+    // SSR은 III→IV에 두 장, 마지막 별에 세 장이 필요하다.
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(2), breakthrough: 2 }, 1, 99_999, 0)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(2), breakthrough: 2 }, 2, 99_999, 0)).toBe(true);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 2, 99_999, 0)).toBe(false);
+    expect(canBreakThrough("SSR", { ...base(), level: relicLevelCap(3), breakthrough: 3 }, 3, 99_999, 0)).toBe(true);
   });
 
   it("의 만능 파편은 그 개체의 파편이 모자란 몫만 채운다", () => {
-    expect(BREAKTHROUGH_FRAGMENTS.R).toEqual({ step: 4, final: 8 });
+    expect(BREAKTHROUGH_FRAGMENTS.R).toEqual([4, 4, 6, 8]);
     // 그 개체의 파편이 넉넉하면 만능 파편은 하나도 쓰이지 않는다.
     expect(breakthroughFragmentSpend("R", 0, 10, 5)).toEqual({ own: 4, universal: 0, enough: true });
     // 모자란 몫만 채운다.

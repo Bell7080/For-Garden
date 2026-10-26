@@ -19,20 +19,20 @@ export const RUNE_SYNTHESIS_INPUTS = 3;
 export const RUNE_SYNTHESIS_RULES = {
   /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). */
   goldCost: { uncommon: 200_000, rare: 400_000, epic: 600_000, legendary: 1_000_000 },
-  /** 한 등급 위가 나올 확률(%). 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
-  upgradePercent: { uncommon: 35, rare: 25, epic: 12, legendary: 0 },
+  /** 한 등급 위가 나올 확률(%). 2026-10-25 응태 확정으로 35/25/12 → 50/40/25 상향. 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
+  upgradePercent: { uncommon: 50, rare: 40, epic: 25, legendary: 0 },
   /**
    * 결과 특성 확률(%) — 넣은 룬 중 **가장 높은 특성 등급**이 줄을 고른다. 칸 순서는 없음 → 고급 → 희귀 → 영웅 → 전설.
    */
   traitPercent: {
-    none: [85, 12, 3, 0, 0],
-    uncommon: [45, 40, 13, 2, 0],
-    rare: [30, 30, 30, 9, 1],
-    epic: [20, 20, 25, 30, 5],
-    legendary: [15, 15, 20, 30, 20],
+    none: [55, 30, 12, 3, 0],
+    uncommon: [25, 45, 22, 7, 1],
+    rare: [15, 25, 35, 20, 5],
+    epic: [10, 15, 25, 38, 12],
+    legendary: [5, 10, 20, 35, 30],
   },
   /** 특성 달린 룬이 하나 더 있을 때마다 「없음」에서 떼어 최고 등급 칸에 얹는 몫(%). */
-  extraTraitShiftPercent: 10,
+  extraTraitShiftPercent: 15,
 } as const satisfies {
   goldCost: Readonly<Record<RuneRarity, number>>;
   upgradePercent: Readonly<Record<RuneRarity, number>>;

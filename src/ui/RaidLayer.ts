@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { portraitCardZoom } from "./portraitPlacement";
 import type { RaidDto } from "../api/contracts";
-import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, type RaidDifficulty } from "../data/raid";
+import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
 import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
 import { t } from "../i18n";
@@ -236,10 +236,10 @@ function addSettleCover(
 }
 
 /**
- * 보상 줄 — 증표 액자 하나와 그 오른쪽 두 줄. 정산은 층 전체를 덮는 덮개가 맡는다(`addSettleCover`).
+ * 보상 줄 — 토벌 증표 → 젬 액자와 그 오른쪽 두 줄. 정산은 층 전체를 덮는 덮개가 맡는다(`addSettleCover`).
  *
- * 증표를 두 칸으로 가르지 않는다(내 기여 몫·전체 진행 몫·토벌 몫이 모두 같은 증표다). 세 몫의
- * 내역은 판 안의 보상 창이 말하고, 층에서 읽어야 하는 것은 "얼마를 받나" 하나다.
+ * 증표 몫은 세 몫(내 기여·전체 진행·토벌)을 합친 한 칸이다. 세 몫의 내역은 판 안의 보상 창이 말하고,
+ * 층에서 읽어야 하는 것은 "얼마를 받나"다. 기여가 없으면 최대 보상을 보여 주지 않고 「기여 없음」만 선다.
  */
 function addRewardRow(
   scene: Phaser.Scene,
@@ -250,18 +250,26 @@ function addRewardRow(
   rewardText: typeof RAID_LIST.rewardText,
 ): void {
   const participated = raid.settlement.length > 0;
-  const max = RAID_DIFFICULTY[raid.difficulty].settlement;
-  const amount = participated ? raid.settlement[0].amount : max.gems;
-  const currency = raid.settlement[0]?.currency ?? "gems";
-  addFramedIcon(scene, layer, left + reward.size / 2, reward.y, reward.size, CURRENCY_ICON_BY_WALLET[currency], {
-    amount: amount.toLocaleString(), iconAlpha: raid.settled ? 0.4 : 1,
+  const shown = raidSettlementDisplayOrder(raid.settlement);
+  // 기여가 없으면 받을 것이 없다 — 최대 보상을 미리 보여 주지 않고 아이콘 없이 한마디만 선다.
+  if (!participated) {
+    layer.add(scene.add
+      .text(left, reward.y, t("raid.settle.none"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim }))
+      .setOrigin(0, 0.5)
+      .setShadow(0, 2, "#05070a", 5, false, true));
+    return;
+  }
+  const iconGap = Math.round(reward.size * 0.18);
+  shown.forEach((entry, index) => {
+    addFramedIcon(scene, layer, left + reward.size / 2 + index * (reward.size + iconGap), reward.y, reward.size, CURRENCY_ICON_BY_WALLET[entry.currency], {
+      amount: entry.amount.toLocaleString(), iconAlpha: raid.settled ? 0.4 : 1,
+    });
   });
-  const textX = left + reward.size + rewardText.gap;
+  const textX = left + shown.length * reward.size + (shown.length - 1) * iconGap + rewardText.gap;
   const label = raid.settled ? t("raid.settle.done")
-    : !participated ? t("raid.settle.max")
-      : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
+    : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
   layer.add(scene.add
-    .text(textX, reward.y - rewardText.labelUp, label, textStyle({ role: "emphasis", size: 24, color: raid.status === "completed" && participated && !raid.settled ? COLOR.accentText : COLOR.inkDim }))
+    .text(textX, reward.y - rewardText.labelUp, label, textStyle({ role: "emphasis", size: 24, color: raid.status === "completed" && !raid.settled ? COLOR.accentText : COLOR.inkDim }))
     .setOrigin(0, 0.5)
     .setShadow(0, 2, "#05070a", 5, false, true));
   layer.add(scene.add

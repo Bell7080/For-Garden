@@ -190,6 +190,8 @@ export class TitleScene extends Phaser.Scene {
     // 파일 하나가 없어도 검은 화면에 갇히지 않는다. 아트가 UI와 로딩 진행까지 막지 않는다.
     this.load.once("complete", () => this.enterTitle(curtain, cx));
     this.load.once("loaderror", () => this.enterTitle(curtain, cx));
+    // 원화·로고 응답이 오지 않아도 검은 화면에 갇히지 않는다 — 없는 채로 타이틀을 세운다.
+    this.time.delayedCall(8000, () => this.enterTitle(curtain, cx));
     this.load.start();
   }
 

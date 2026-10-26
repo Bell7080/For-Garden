@@ -52,6 +52,27 @@ export function arenaStreakBonus(streak: number): number {
   return Math.min(ARENA_STREAK_BONUS.max, (Math.floor(streak) - ARENA_STREAK_BONUS.from + 1) * ARENA_STREAK_BONUS.perStep);
 }
 
+/**
+ * 저티어 발판 — 이긴 쪽의 RP가 그 판의 기본 증감에 곱해져 크게 오른다. 진 쪽이 잃는 몫은 기본 그대로다.
+ * 이긴 쪽의 **판 시작 RP**가 `below` 미만인 첫 줄이 곱을 정한다(브론즈 1,100 미만 · 실버 1,300 미만).
+ * SQL(`server_arena_commit`)에 같은 수가 적혀 있고 `arenaStanding.test`가 마이그레이션 원문과 대조한다.
+ */
+export const ARENA_LOW_TIER_WIN: readonly { below: number; multiplier: number }[] = [
+  { below: 1100, multiplier: 2 },
+  { below: 1300, multiplier: 1.5 },
+];
+
+/** 이긴 쪽의 판 시작 RP로 정하는 승리 증감의 배수. 저티어가 아니면 1이다. */
+export function arenaWinMultiplier(winnerScore: number): number {
+  return ARENA_LOW_TIER_WIN.find((row) => winnerScore < row.below)?.multiplier ?? 1;
+}
+
+/** 한 판의 RP 증감(연승 보너스 제외). 이긴 쪽은 `winner`, 진 쪽은 `-loser`다 — SQL과 같은 식이다. */
+export function arenaScoreDelta(winnerScore: number, loserScore: number): { winner: number; loser: number } {
+  const base = Math.max(8, Math.min(40, Math.round(32 * (1 - 1 / (1 + 10 ** ((loserScore - winnerScore) / 400))))));
+  return { winner: Math.round(base * arenaWinMultiplier(winnerScore)), loser: base };
+}
+
 export function arenaTierIndex(score: number): number {
   let index = 0;
   ARENA_TIERS.forEach((tier, i) => { if (score >= tier.floor) index = i; });

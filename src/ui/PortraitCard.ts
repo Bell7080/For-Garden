@@ -20,6 +20,12 @@ export interface PortraitCardOptions {
   width: number;
   height: number;
   /**
+   * 원화를 카드를 만들 때 바로 올리지 않고 `showPortrait()`가 불릴 때 올린다. 카드가 수십 장
+   * 한꺼번에 서는 긴 격자(도감)에서 화면 밖 카드까지 전신 원화를 GPU에 올리면 한 장 6.5MB씩
+   * 200MB 안팎이 되어 모바일 탭이 죽는다. 보이는 줄만 올리고 멀어진 줄은 `hidePortrait()`로 내린다.
+   */
+  deferPortrait?: boolean;
+  /**
    * 기존 무스킨 호출부의 기본 원화 키. `relicId`나 이미 결정된 `asset`이 있으면 그 값을
    * 우선한다. 외형 선택은 manager/resolver가 소유하고 카드는 결과만 그린다.
    */
@@ -248,6 +254,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 원화가 비동기로 도착하기 전에도 오버레이 API를 만들 수 있도록 요청을 보관한다. */
   private readonly managedOverlays: ManagedPortraitOverlay[] = [];
   private portraitPlacement?: PortraitPlacement;
+  /** 원화를 올려 둔 동안 그 묶음을 붙잡는 표시 객체. 내릴 때 이 객체를 부수면 묶음이 놓인다. */
+  private portraitHolder?: Phaser.GameObjects.Container;
+  /** 올리는 중이거나 올라온 원화가 있는가. */
+  private portraitShown = false;
+  /** 늦게 끝난 옛 요청이 새 요청을 덮지 않게 하는 번호. */
+  private portraitRun = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PortraitCardOptions) {
     super(scene, x, y);
@@ -487,14 +499,48 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.notchMask.destroy();
       // 마스크 그래픽은 display 컨테이너 밖에 있으므로 카드가 생명주기를 직접 끝낸다.
       for (const overlay of this.managedOverlays) overlay.headMask.destroy();
+      this.portraitHolder?.destroy();
+      this.portraitHolder = undefined;
     });
-    void this.loadPortrait().catch(() => {
-      if (this.disposed) return;
+    if (!options.deferPortrait) this.showPortrait();
+  }
+
+  /** 원화를 올린다. 이미 올렸거나 올리는 중이면 아무것도 하지 않는다. */
+  public showPortrait(): void {
+    if (this.portraitShown || this.disposed) return;
+    this.portraitShown = true;
+    const run = ++this.portraitRun;
+    const holder = this.scene.make.container({}, false);
+    this.portraitHolder = holder;
+    const { width } = this.options;
+    void this.loadPortrait(holder, run).catch(() => {
+      if (this.disposed || run !== this.portraitRun) return;
       // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 안에 읽을 수 있는 폴백을 둔다.
       const fallback = textStyle({ role: "display", size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32 });
-      this.addAt(scene.add.text(0, bodyCenter, options.locked ? "?" : (options.label ?? "RELIC"), fallback).setOrigin(0.5), this.getIndex(this.chip) + 1);
+      this.addAt(this.scene.add.text(0, 0, this.options.locked ? "?" : (this.options.label ?? "RELIC"), fallback).setOrigin(0.5), this.getIndex(this.chip) + 1);
     });
   }
+
+  /**
+   * 원화를 GPU에서 내린다. 원화 복제(그림자·선택 머리·덮개 머리)와 묶음 붙잡기를 함께 푼다.
+   * 칩·이름·레벨은 그대로 남아 카드는 빈 얼굴로 서 있다가 `showPortrait()`로 다시 채워진다.
+   */
+  public hidePortrait(): void {
+    if (!this.portraitShown || this.disposed) return;
+    this.portraitShown = false;
+    this.portraitRun += 1;
+    for (const image of this.portraits) image.destroy();
+    this.portraits.length = 0;
+    this.selectedHeadShade = undefined;
+    this.awayHeadShade = undefined;
+    for (const overlay of this.managedOverlays) { overlay.head?.destroy(); overlay.head = undefined; }
+    this.portraitPlacement = undefined;
+    this.portraitHolder?.destroy();
+    this.portraitHolder = undefined;
+  }
+
+  /** 원화가 올라가 있거나 올라오는 중인가. */
+  public get portraitActive(): boolean { return this.portraitShown; }
 
   /**
    * 발광.
@@ -549,10 +595,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 만큼만 그림 영역을 더 잡는다. 그림자는 같은 잘라내기를 쓰는 복제본을 검게 칠한 것이라
    * 캐릭터가 늘어도 추가 아트가 필요 없다.
    */
-  private async loadPortrait(): Promise<void> {
+  private async loadPortrait(holder: Phaser.GameObjects.Container, run: number): Promise<void> {
     const asset = resolvedPortraitAsset(this.options);
-    const { key, anchors } = await loadPortraitTexture(this.scene, asset, this);
-    if (this.disposed) return;
+    const { key, anchors } = await loadPortraitTexture(this.scene, asset, holder);
+    if (this.disposed || run !== this.portraitRun) return;
 
     const { width, height } = this.options;
     const frameHeight = this.bodyHeight + this.overhang;

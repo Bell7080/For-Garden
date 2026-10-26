@@ -92,4 +92,8 @@ export const DUEL_ZH_HANS = {
   "rewardTable.rules.expedition": "每周一00:00 UTC结算 · 通过邮件发放\n当周需有远征记录才能领取。",
   "rewardTable.rules.arena": "每周一00:00 UTC结算 · 通过邮件发放\n结算时的段位奖励加上排名奖励。当周需有排位赛记录才能领取。",
   "ranking.mine": "我的排名",
+  "duel.defense.title": "对手防守队",
+  "duel.defense.totalPower": "总战斗力",
+  "duel.defense.blind": "隐藏位 {count}",
+  "duel.defense.sortie": "出击",
 } as const;

@@ -20,6 +20,7 @@ export const LAB_EN = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR pickup chance {percent}% · On a miss, the next SSR is the pickup",
   "lab.policy.tenGuarantee": "The last slot of a 10-pull is SR or better (SSR pity takes priority)",
+  "lab.policy.tenUpgrade": "If the last slot of a 10-pull ends as SR, {percent}% chance to rise to SSR",
   "lab.policy.mileage": "DNA Mileage +1 per research",
   "lab.policy.duplicate": "Duplicate reward  +1 Shard for that Relic · Collect Shards to Breakthrough",
   "lab.policy.duplicateMax": "After Breakthrough grade V, duplicates convert to DNA Mileage (SSR +30 · SR +8 · R +2)",

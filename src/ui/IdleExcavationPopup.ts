@@ -1,4 +1,5 @@
 import { hasRemoteState } from "../api/resultState";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import Phaser from "phaser";
 import { releaseAdWait } from "../platform/rewardedAds";
 import { UI_ICON } from "./icons";
@@ -69,7 +70,7 @@ const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMA
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(GRID_VIEW.right - GRID_VIEW.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const GRID_DRAG_SLOP = 12;
+const GRID_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */
 const SD_DEPTH = 2001;
 /** 원화는 별도 액자를 만들지 않고 PopupLayer 판의 비대칭 실루엣에 직접 맞춘다. */
@@ -890,7 +891,7 @@ export class IdleExcavationPopup {
 
   /** 해당 재화 생산에 기여한 SD가 통 튀고 머리 위 기존 이미지 아이콘이 떠올랐다 사라진다. */
   private playProductionTick(currency: ExcavationCurrency): void {
-    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => item.currency === currency);
+    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => currency === "gems" || item.currency === currency);
     for (const contributor of contributors) {
       const puppet = this.sdPuppetByRelicId.get(contributor.relicId);
       if (!puppet || !this.sdContainer) continue;

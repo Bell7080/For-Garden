@@ -122,6 +122,12 @@ export const EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 } as con
  */
 export const EXCAVATION_PRODUCTION_SCALE: Readonly<Record<ExcavationCurrency, number>> = { gold: 4, cheesecake: 4, rawStone: 6, gems: 2 };
 
+/**
+ * 편성된 **모든 렐릭**이 주 재화와 별개로 시간당 만드는 젬(고정값 — 레벨·돌파로 늘지 않는다).
+ * 셋을 세우면 기본 보관 8시간에 144개, 꽉 채워 걷는 보너스까지 약 158개다. 젬 특화 개체는 없다.
+ */
+export const EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 6;
+
 /** 보관 한도를 가득 채워 걷으면 그 재화에 얹히는 수확 보너스(10%)다. */
 export const EXCAVATION_FULL_HARVEST_BONUS = 1.1;
 
@@ -173,6 +179,7 @@ export function excavationProductionDisplayModel(assignedRelicIds: IdleExcavatio
   const totalsPerHour = emptyExcavationAmounts();
   // 여러 렐릭의 소수를 더할 때도 표시값을 여섯 자리로 고정한다.
   for (const detail of details) totalsPerHour[detail.currency] = fixedAmount(totalsPerHour[detail.currency] + detail.totalPerHour);
+  totalsPerHour.gems = fixedAmount(totalsPerHour.gems + details.length * EXCAVATION_GEMS_PER_RELIC_PER_HOUR);
   return { relics: details, totalsPerHour };
 }
 

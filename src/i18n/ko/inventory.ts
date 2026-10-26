@@ -11,6 +11,7 @@ export const INVENTORY_KO = {
   "inventory.sort.part": "부위",
   "inventory.sort.craft": "세공",
   "inventory.sort.equipped": "장착",
+  "inventory.sort.relic": "렐릭",
   "inventory.guide.held": "보유",
   "inventory.guide.expiry": "{count}개 · {time} 뒤 소멸",
   "inventory.expiry.days": "{days}일 {hours}시간",

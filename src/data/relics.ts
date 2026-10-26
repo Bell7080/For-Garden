@@ -672,9 +672,8 @@ export const RELICS: RelicDef[] = [
     // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
     reachTier: "mid",
     projectile: "feather",
-    // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
-    // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
+    // 젬은 편성된 모든 렐릭이 똑같이 만든다(`EXCAVATION_GEMS_PER_RELIC_PER_HOUR`) — 젬 특화는 없다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     // **손이 빠른 지원가가 아니라 단단한 지원가다.** 공속 96은 깃펜이 옮기는 회복을 그대로
     // 횟수로 바꿔, 이 개체가 서 있는 것만으로 편성이 죽지 않았다. 그 몫(12)을 체력·방어·저항
     // 셋으로 나눠 옮긴다 — 같은 등급 띠 안에서 총량은 그대로이고, 오르는 것은 제가 버티는
@@ -4148,8 +4147,8 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 듀오 곁에 붙어 다니되 듀오보다 앞에 서지 않는 자리다.
     reachTier: "mid",
-    // 관측 기록을 그대로 자산으로 바꾸는 담당이라 발굴 특화도 다이아 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.52, efficiencyMultiplier: 1.13 },
+    // 관측 기록을 캐낸 돌의 값으로 바꾸는 담당이라 원석 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     /*
      * **모든 스킬이 주문력에서 나온다.** 평타도 약점 포착의 추가 피해도 주문력 하나를 읽으므로
      * 공격력은 로스터 최하로 둔다 — 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.

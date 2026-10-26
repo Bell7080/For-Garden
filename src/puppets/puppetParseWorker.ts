@@ -10,6 +10,7 @@
  * `puppetforge`(코어)는 렌더러를 모르는 순수 런타임이라 DOM 없이 돈다. Phaser를 쓰는
  * `puppetforge/phaser`는 여기서 절대 읽지 않는다.
  */
+import { timeoutSignal } from "../core/timeoutSignal";
 import { Puppet } from "puppetforge";
 import type { PuppetProject } from "puppetforge";
 
@@ -35,7 +36,8 @@ export interface PuppetParseResponse {
 self.onmessage = async (event: MessageEvent<PuppetParseRequest>) => {
   const { id, url } = event.data;
   try {
-    const response = await fetch(url);
+    // 망이 끊겨 응답이 멎으면 일꾼 하나가 영영 붙들리고 그 일감을 기다리는 화면도 함께 멎는다 — 시한을 둔다.
+    const response = await fetch(url, { signal: timeoutSignal(45000) });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     const puppet = await Puppet.load(new Uint8Array(await response.arrayBuffer()));
     const texture = puppet.texture;

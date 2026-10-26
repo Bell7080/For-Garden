@@ -24,7 +24,23 @@ init_define_import_meta_env();
 
 // src/server/httpSecurity.ts
 init_define_import_meta_env();
-function applyApiOriginPolicy(req, res, configured = process.env.FORGARDEN_APP_ORIGINS ?? "") {
+
+// src/server/cors.ts
+init_define_import_meta_env();
+var APP_ORIGINS = [
+  "capacitor://localhost",
+  // iOS
+  "https://localhost",
+  // Android (androidScheme: https)
+  "ionic://localhost"
+];
+function allowedOrigins(extra = process.env.CORS_ALLOWED_ORIGINS) {
+  const more = (extra ?? "").split(",").map((o) => o.trim().replace(/\/+$/, "")).filter((o) => o !== "" && o !== "*");
+  return [...APP_ORIGINS, ...more];
+}
+
+// src/server/httpSecurity.ts
+function applyApiOriginPolicy(req, res, configured = [process.env.FORGARDEN_APP_ORIGINS ?? "", ...allowedOrigins()].join(",")) {
   res.setHeader("cache-control", "no-store");
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("referrer-policy", "no-referrer");
@@ -185,27 +201,15 @@ var ARENA_KO = {
   "arena.placement.wait": "\uC0C1\uB300\uC758 \uBC30\uCE58\uB97C \uAE30\uB2E4\uB9BD\uB2C8\uB2E4",
   "arena.placement.undo": "\uB9C8\uC9C0\uB9C9 \uBC30\uCE58 \uCDE8\uC18C",
   "arena.placement.lock": "\uBC30\uCE58 \uD655\uC815",
-  "arena.rules.bannerBan": "\uAC01 1\uBC34",
-  "arena.rules.bannerNoBan": "\uBC34 \uC5C6\uC74C",
-  "arena.rules.openAlternate": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.bannerHidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58",
-  "arena.invite.summary": "{p0} \xB7 {p1} \xB7 \uCE5C\uC120\uC804",
   "arena.invite.decline": "\uAC70\uC808",
   "arena.invite.accept": "\uC218\uB77D",
   "arena.friend.title": "{p0} \xB7 \uCE5C\uC120\uC804",
-  "arena.friend.practice": "\uACB0\uD22C\uC7A5 \xB7 \uBC29\uC5B4\uB371 \uBAA8\uC758\uC804\uD22C",
   "arena.friend.free": "\uC810\uC218\xB7\uB3C4\uC804\uAD8C \uC18C\uBAA8 \uC5C6\uC74C",
-  "arena.friend.live": "\uC544\uB808\uB098 \xB7 \uC2E4\uC2DC\uAC04 \uC804\uD22C \uC694\uCCAD",
   "arena.rules.oneEach": "\uAC01 1\uB9C8\uB9AC",
   "arena.rules.off": "\uC0AC\uC6A9 \uC548 \uD568",
-  "arena.rules.bans": "\uBC34\uD53D: {p0}",
   "arena.rules.first": "\uC120\uACF5",
   "arena.rules.second": "\uD6C4\uACF5",
   "arena.rules.random": "\uB79C\uB364",
-  "arena.rules.requesterOrder": "\uC2E0\uCCAD\uC790 \uC120\uD0DD \uC21C\uC11C: {p0}",
-  "arena.rules.alternateOption": "\uAD50\uCC28 \uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.hiddenOption": "\uB3D9\uC2DC \uBE44\uACF5\uAC1C \uBC30\uCE58",
-  "arena.rules.placement": "\uBC30\uCE58 \uBC29\uC2DD: {p0}",
   "arena.invite.send": "\uC544\uB808\uB098 \uC694\uCCAD \uBCF4\uB0B4\uAE30",
   "arena.error.roster": "\uBC34\uC744 \uC0AC\uC6A9\uD558\uB294 3\uB3003\uC740 \uC591\uCE21 \uBAA8\uB450 \uB810\uB9AD 4\uB9C8\uB9AC \uC774\uC0C1\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.",
   "arena.error.busy": "\uC0C1\uB300\uAC00 \uB2E4\uB978 \uC544\uB808\uB098\uB97C \uC900\uBE44\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.",
@@ -244,7 +248,34 @@ var ARENA_KO = {
   "arena.ranking.title": "\uC544\uB808\uB098 \uC21C\uC704",
   "arena.profile.best": "\uCD5C\uACE0 \uAE30\uB85D",
   "arena.profile.lastWeek": "\uC9C0\uB09C\uC8FC",
-  "arena.profile.streakBonus": "\uC5F0\uC2B9 \uD6A8\uACFC +{bonus} RP"
+  "arena.profile.streakBonus": "\uC5F0\uC2B9 \uD6A8\uACFC +{bonus} RP",
+  "arena.friend.practiceTitle": "\uACB0\uD22C\uC7A5 \uBAA8\uC758\uC804\uD22C",
+  "arena.friend.practiceStatus": "{name}\uB2D8\uC758 \uBC29\uC5B4\uD300\uACFC \uC5F0\uC2B5 \uC804\uD22C",
+  "arena.friend.liveTitle": "\uC544\uB808\uB098 \uB300\uC804 \uC694\uCCAD",
+  "arena.friend.liveStatus": "\uADDC\uCE59\uC744 \uC815\uD574 \uC2E4\uC2DC\uAC04 \uB300\uC804\uC744 \uC2E0\uCCAD",
+  "arena.setup.title": "\uC544\uB808\uB098 \uC124\uC815",
+  "arena.setup.ban": "\uBC34\uD53D",
+  "arena.setup.ban.on": "\uC11C\uB85C \uC0C1\uB300 \uB810\uB9AD \uD558\uB098\uB97C \uBAB0\uB798 \uAE08\uC9C0\uD569\uB2C8\uB2E4",
+  "arena.setup.ban.off": "\uAE08\uC9C0 \uC5C6\uC774 \uBC14\uB85C \uBC30\uCE58\uD569\uB2C8\uB2E4",
+  "arena.setup.order": "\uC120\uACF5 \uC21C\uC11C",
+  "arena.setup.order.first": "\uB0B4\uAC00 \uBA3C\uC800 \uACE0\uB985\uB2C8\uB2E4",
+  "arena.setup.order.second": "\uC0C1\uB300\uAC00 \uBA3C\uC800 \uACE0\uB985\uB2C8\uB2E4",
+  "arena.setup.order.random": "\uC120\uACF5\uC744 \uBB34\uC791\uC704\uB85C \uC815\uD569\uB2C8\uB2E4",
+  "arena.setup.placement": "\uBC30\uCE58 \uBC29\uC2DD",
+  "arena.setup.placement.alternateShort": "\uAD50\uCC28 \uACF5\uAC1C",
+  "arena.setup.placement.hiddenShort": "\uB3D9\uC2DC \uBE44\uACF5\uAC1C",
+  "arena.setup.placement.alternate": "\uBC88\uAC08\uC544 \uACE0\uB974\uBA70 \uC11C\uB85C\uC758 \uC120\uD0DD\uC774 \uBCF4\uC785\uB2C8\uB2E4",
+  "arena.setup.placement.hidden": "\uB3D9\uC2DC\uC5D0 \uACE0\uB974\uACE0 \uD655\uC815\uD55C \uB4A4 \uACF5\uAC1C\uD569\uB2C8\uB2E4",
+  "arena.setup.unique": "\uC911\uBCF5 \uD53D",
+  "arena.setup.unique.blocked": "\uC0C1\uB300\uAC00 \uACE0\uB978 \uB810\uB9AD\uC740 \uACE0\uB97C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "arena.setup.unique.allowed": "\uAC19\uC740 \uB810\uB9AD\uC744 \uD568\uAED8 \uC4F8 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
+  "arena.setup.unique.hidden": "\uBE44\uACF5\uAC1C \uBC30\uCE58\uC5D0\uC11C\uB294 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
+  "arena.chip.order": "\uC2E0\uCCAD\uC790 {order}",
+  "arena.chip.duplicatesBlocked": "\uC911\uBCF5 \uAE08\uC9C0",
+  "arena.chip.duplicatesAllowed": "\uC911\uBCF5 \uD5C8\uC6A9",
+  "arena.invite.tag": "\uC544\uB808\uB098 \uCE5C\uC120\uC804",
+  "arena.invite.me": "\uB098",
+  "arena.invite.opponent": "\uC0C1\uB300"
 };
 
 // src/i18n/ko/settings.ts
@@ -372,9 +403,7 @@ var LOBBY_KO = {
   "ancient.next": "\uB2E4\uC74C \uAD6C\uAC04",
   "ancient.gate": "\uAD00\uBB38",
   "lobby.expedition.resume": "\uC774\uC5B4\uD558\uAE30 \xB7 {plays}\uD68C \xB7 \uCD5C\uACE0 {best}",
-  "lobby.expedition.weekly": "\uC624\uB298 {plays}\uD68C \xB7 \uCD5C\uACE0 {best} \xB7 {quick}",
-  "lobby.expedition.quickReady": "\uBE60\uB978 \uAC00\uB2A5",
-  "lobby.expedition.quickLocked": "\uBE60\uB978 \uC7A0\uAE40",
+  "lobby.expedition.weekly": "\uC624\uB298 {plays}\uD68C \xB7 \uCD5C\uACE0 {best}",
   "lobby.rail.mission": "\uC784\uBB34",
   "lobby.rail.shop": "\uC0C1\uC810",
   "lobby.rail.trade": "\uBB34\uC5ED",
@@ -712,6 +741,7 @@ var LAB_KO = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "SSR \uD53D\uC5C5 \uD655\uB960 {percent}% \xB7 \uC2E4\uD328 \uC2DC \uB2E4\uC74C SSR \uD53D\uC5C5 \uD655\uC815",
   "lab.policy.tenGuarantee": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F SR \uC774\uC0C1 \uBCF4\uC7A5 (SSR \uCC9C\uC7A5 \uC6B0\uC120)",
+  "lab.policy.tenUpgrade": "10\uC5F0 \uB9C8\uC9C0\uB9C9 \uC2AC\uB86F\uC774 SR\uC774\uBA74 {percent}% \uD655\uB960\uB85C SSR\uB85C \uC0C1\uC2B9",
   "lab.policy.mileage": "\uC5F0\uAD6C 1\uD68C\uB9C8\uB2E4 DNA \uB9C8\uC77C\uB9AC\uC9C0 +1",
   "lab.policy.duplicate": "\uC911\uBCF5 \uBCF4\uC0C1  \uD574\uB2F9 \uB810\uB9AD \uD30C\uD3B8 +1 \xB7 \uD30C\uD3B8\uC744 \uBAA8\uC544 \uD55C\uACC4 \uB3CC\uD30C",
   "lab.policy.duplicateMax": "\uB3CC\uD30C \uB4F1\uAE09 V \uB2EC\uC131 \uC774\uD6C4 \uC911\uBCF5\uC740 DNA \uB9C8\uC77C\uB9AC\uC9C0\uB85C \uC804\uD658 (SSR +30 \xB7 SR +8 \xB7 R +2)",
@@ -811,17 +841,7 @@ var EXPEDITION_KO = {
   "expedition.noPlaysLeft": "\uC624\uB298\uC758 \uC6D0\uC815 \uAE30\uD68C\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4",
   "expedition.treasure.title": "\uC804\uB9AC\uD488 \uD68D\uB4DD",
   "expedition.runInProgress": "\uC9C4\uD589 \uC911\uC778 \uC6D0\uC815\uC774 \uC788\uC2B5\uB2C8\uB2E4",
-  "expedition.devOnly": "\uAC1C\uBC1C \uBE4C\uB4DC\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
-  "expedition.quick.sub": "\uACE8\uB4DC {gold} \xB7 \uC624\uB298 {remaining}\uD68C",
-  "expedition.quick.cancelled": "\uAD11\uACE0\uAC00 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-  "expedition.quick.walletFull": "\uACE8\uB4DC \uC9C0\uAC11\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4",
-  "expedition.quick.done": "\uBE60\uB978 \uC6D0\uC815 \uC644\uB8CC",
-  "expedition.quick.walletGain": "\uC2E4\uC81C \uC9C0\uAC11 \uC99D\uAC00",
-  "expedition.quick.verifyFailed": "\uAD11\uACE0 \uAC80\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4 \xB7 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694",
-  "expedition.quick.dailyUsed": "\uC624\uB298 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4 \xB7 \uB0B4\uC77C \uB2E4\uC2DC \uC624\uC138\uC694",
-  "expedition.quick.weeklyUsed": "\uC774\uBC88 \uC8FC \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4 \xB7 \uB2E4\uC74C \uC8FC\uC5D0 \uB2E4\uC2DC \uC624\uC138\uC694",
-  "expedition.quick.noBaseline": "\uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4 \xB7 \uC6D0\uC815 \uCD5C\uACE0\uC810\uC744 \uBA3C\uC800 \uAE30\uB85D\uD558\uC138\uC694",
-  "expedition.quick.retryLater": "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694"
+  "expedition.devOnly": "\uAC1C\uBC1C \uBE4C\uB4DC\uC5D0\uC11C\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4"
 };
 
 // src/i18n/ko/battle.ts
@@ -840,9 +860,8 @@ var BATTLE_KO = {
   "tutorial.research.open.body": "\uC0C8\uB85C\uC6B4 \uB810\uB9AD\uC744 \uB9CC\uB0A0 \uC900\uBE44\uAC00 \uB05D\uB0AC\uC5B4\uC694. \uC9C0\uC6D0\uD488\uC744 \uBC1B\uACE0 \uCCAB \uBCF5\uC6D0 \uC5F0\uAD6C\uB97C \uC9C4\uD589\uD574 \uBCF4\uC138\uC694.",
   "tutorial.result.feed": "\uD1A0\uB9AC\uCE74\uB97C \uAC15\uD654\uD558\uB7EC \uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
   "tutorial.result.research": "\uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00 \uBCF5\uC6D0 \uC5F0\uAD6C \uC9C0\uC6D0\uD488\uC744 \uBC1B\uC544 \uBCF4\uC138\uC694.",
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " \xB7 \uD574\uC77C \uC608\uACE0",
-  "battle.boss.limit": " \xB7 LIMIT",
+  "battle.rank.me": "\uB098",
+  "battle.rank.weekly": "\uC8FC\uAC04 \uC21C\uC704",
   "battle.settle.failed": "\uACB0\uACFC \uD654\uBA74\uC744 \uBCF5\uAD6C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "battle.settle.scoreRejected": "\uC804\uD22C \uAE30\uB85D\uC744 \uD655\uC778\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "battle.settle.persistenceFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uAC70\uB098 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC00 \uAC8C\uC784 \uC815\uBCF4\uB97C \uB2E4\uC2DC \uBD88\uB7EC\uC640 \uC8FC\uC138\uC694.",
@@ -1601,6 +1620,7 @@ var INVENTORY_KO = {
   "inventory.sort.part": "\uBD80\uC704",
   "inventory.sort.craft": "\uC138\uACF5",
   "inventory.sort.equipped": "\uC7A5\uCC29",
+  "inventory.sort.relic": "\uB810\uB9AD",
   "inventory.guide.held": "\uBCF4\uC720",
   "inventory.guide.expiry": "{count}\uAC1C \xB7 {time} \uB4A4 \uC18C\uBA78",
   "inventory.expiry.days": "{days}\uC77C {hours}\uC2DC\uAC04",
@@ -1746,6 +1766,8 @@ var MISC_KO = {
   "archaeology.synth.odds": "\uACB0\uACFC \uD655\uB960",
   "archaeology.synth.hint": "\uAC01\uC778\uAE4C\uC9C0 \uB9C8\uCE5C \uAC19\uC740 \uB4F1\uAE09\uC758 \uB8EC \uC14B\uC744 \uB123\uC5B4 \uC8FC\uC138\uC694.",
   "archaeology.synth.traitNone": "\uD2B9\uC131 \uC5C6\uC74C",
+  "archaeology.synth.resultUp": "\uB4F1\uAE09 \uC0C1\uC2B9!",
+  "archaeology.synth.resultKeep": "{rarity} \uC720\uC9C0",
   "archaeology.synth.rarity": "\uB4F1\uAE09",
   "archaeology.synth.trait": "\uD2B9\uC131",
   "archaeology.synth.button": "\uD569\uC131",
@@ -1813,6 +1835,9 @@ var MISC_KO = {
   "mail.rewardTitle": "\uC6B0\uD3B8 \uBCF4\uC0C1",
   "mail.attachments": "\uCCA8\uBD80 {count}",
   "mail.readAll": "\uBAA8\uB450 \uC77D\uC74C",
+  "mail.delete.title": "\uC77D\uC740 \uC6B0\uD3B8 \uC0AD\uC81C",
+  "mail.delete.message": "\uC77D\uC740 \uC6B0\uD3B8 {count}\uD1B5\uC744 \uC0AD\uC81C\uD569\uB2C8\uB2E4.\n\uC0AD\uC81C\uD55C \uC6B0\uD3B8\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "mail.delete.confirm": "\uC0AD\uC81C",
   "mail.daysLeft": "{days}\uC77C \uB0A8\uC74C",
   "mail.hoursLeft": "{hours}:{minutes} \uB0A8\uC74C",
   "mail.empty.reward": "\uBC1B\uC744 \uC6B0\uD3B8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -2695,6 +2720,7 @@ var RAID_KO = {
   "raid.settle.done": "\uBCF4\uC0C1 \uC218\uB839 \uC644\uB8CC",
   "raid.settle.ready": "\uD68D\uB4DD \uBCF4\uC0C1",
   "raid.settle.expected": "\uC608\uC0C1 \uBCF4\uC0C1",
+  "raid.settle.none": "\uAE30\uC5EC \uC5C6\uC74C",
   "raid.settle.max": "\uCD5C\uB300 \uBCF4\uC0C1",
   "raid.settle.contribution": "\uAE30\uC5EC\uB3C4",
   "raid.settle.rank": "{rank}\uC704",
@@ -2848,7 +2874,11 @@ var DUEL_KO = {
   "rewardTable.rules.duel": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uACB0\uD22C\uC7A5 \uB300\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.expedition": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.arena": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uB9C8\uAC10 \uB54C\uC758 \uD2F0\uC5B4 \uBCF4\uC0C1\uC5D0 \uC21C\uC704 \uBCF4\uB108\uC2A4\uB97C \uB354\uD574 \uC90D\uB2C8\uB2E4. \uADF8 \uC8FC \uB7AD\uD06C\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
-  "ranking.mine": "\uB0B4 \uC21C\uC704"
+  "ranking.mine": "\uB0B4 \uC21C\uC704",
+  "duel.defense.title": "\uC0C1\uB300 \uBC29\uC5B4\uD300",
+  "duel.defense.totalPower": "\uCD1D \uC804\uD22C\uB825",
+  "duel.defense.blind": "\uAC00\uB824\uC9C4 \uCE78 {count}",
+  "duel.defense.sortie": "\uCD9C\uACA9"
 };
 
 // src/i18n/ko/recollection.ts
@@ -3092,6 +3122,8 @@ var DEBUG_KO = {
   "settings.debug.menu.relicFragments": "\uCE90\uB9AD\uD130 \uD30C\uD3B8 \uC9C0\uAE09",
   "settings.debug.menu.breakthroughSet": "\uB3CC\uD30C \uC7AC\uB8CC \uC138\uD2B8 \uC9C0\uAE09",
   "settings.debug.menu.universalFragments": "\uB9CC\uB2A5 \uD30C\uD3B8 \uC9C0\uAE09 (R\xB7SR\xB7SSR)",
+  "settings.debug.menu.tenUpgrade": "\uB2E4\uC74C 10\uC5F0 \uC2B9\uAE09 \uCC2C\uC2A4 \uAC15\uC81C",
+  "settings.debug.tenUpgradeArmed": "\uB2E4\uC74C 10\uC5F0 \uD55C \uBC88\uC758 \uB9C8\uC9C0\uB9C9 \uCE78\uC774 \uC2B9\uAE09 \uCC2C\uC2A4\uB85C SSR\uC774 \uB429\uB2C8\uB2E4.",
   "settings.debug.menu.unlockStories": "\uC720\uB300 10 \xB7 \uC9C8\uBB38/\uC2A4\uD1A0\uB9AC \uC804\uCCB4 \uAC1C\uBC29",
   "settings.debug.pick.currency": "\uC7AC\uD654 \uC120\uD0DD",
   "settings.debug.pick.amount": "\uC218\uB7C9 \uC120\uD0DD",
@@ -3824,9 +3856,9 @@ var BREAKTHROUGH_STEPS = [
   { levelCap: 60, slot: "passive", cheesecake: 2e3 }
 ];
 var BREAKTHROUGH_FRAGMENTS = {
-  SSR: { step: 1, final: 2 },
-  SR: { step: 2, final: 4 },
-  R: { step: 4, final: 8 }
+  SSR: [1, 1, 2, 3],
+  SR: [2, 2, 3, 4],
+  R: [4, 4, 6, 8]
 };
 var UNIVERSAL_FRAGMENT_ITEM = {
   R: "universal-fragment-r",
@@ -3840,8 +3872,8 @@ function breakthroughFragmentSpend(rarity, breakthrough, own, universal) {
   return { own: fromOwn, universal: fromUniversal, enough: fromOwn + fromUniversal >= cost };
 }
 function breakthroughFragmentCost(rarity, breakthrough) {
-  const cost = BREAKTHROUGH_FRAGMENTS[rarity];
-  return breakthrough >= BREAKTHROUGH_CAP - 1 ? cost.final : cost.step;
+  const costs = BREAKTHROUGH_FRAGMENTS[rarity];
+  return costs[Math.max(0, Math.min(costs.length - 1, breakthrough))];
 }
 var BREAKTHROUGH_CAP = BREAKTHROUGH_STEPS.length;
 var BREAKTHROUGH_GRADE_CAP = BREAKTHROUGH_CAP + 1;
@@ -12588,9 +12620,8 @@ var RELICS = [
     // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
     reachTier: "mid",
     projectile: "feather",
-    // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
-    // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
+    // 젬은 편성된 모든 렐릭이 똑같이 만든다(`EXCAVATION_GEMS_PER_RELIC_PER_HOUR`) — 젬 특화는 없다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     // **손이 빠른 지원가가 아니라 단단한 지원가다.** 공속 96은 깃펜이 옮기는 회복을 그대로
     // 횟수로 바꿔, 이 개체가 서 있는 것만으로 편성이 죽지 않았다. 그 몫(12)을 체력·방어·저항
     // 셋으로 나눠 옮긴다 — 같은 등급 띠 안에서 총량은 그대로이고, 오르는 것은 제가 버티는
@@ -16099,8 +16130,8 @@ var RELICS = [
     role: "support",
     // 듀오 곁에 붙어 다니되 듀오보다 앞에 서지 않는 자리다.
     reachTier: "mid",
-    // 관측 기록을 그대로 자산으로 바꾸는 담당이라 발굴 특화도 다이아 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.52, efficiencyMultiplier: 1.13 },
+    // 관측 기록을 캐낸 돌의 값으로 바꾸는 담당이라 원석 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     /*
      * **모든 스킬이 주문력에서 나온다.** 평타도 약점 포착의 추가 피해도 주문력 하나를 읽으므로
      * 공격력은 로스터 최하로 둔다 — 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.
@@ -18371,10 +18402,10 @@ var RAID_BOSS_BALANCE = {
 };
 var raidDifficulty = (spec) => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 var RAID_DIFFICULTY = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 50 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 75 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 100 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 150 } })
+  easy: raidDifficulty({ level: 20, bodyHp: 25e3, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 1e4, total: 8, kill: 5, gems: 50 }, run: { sigil: 3, gems: 8, salvage: 2 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 5e4, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15e3, total: 14, kill: 8, gems: 75 }, run: { sigil: 5, gems: 15, salvage: 4 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 1e5, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22e3, total: 22, kill: 12, gems: 100 }, run: { sigil: 8, gems: 20, salvage: 6 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 25e4, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45e3, total: 60, kill: 30, gems: 150 }, run: { sigil: 13, gems: 30, salvage: 10 } })
 };
 function isRaidDifficulty(value) {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(RAID_DIFFICULTY, value);
@@ -18393,7 +18424,6 @@ var RAID_RUN_STAMINA = 10;
 function raidRunStamina(_difficulty) {
   return RAID_RUN_STAMINA;
 }
-var RAID_RUN_GOLD_PER_DAMAGE = 0.2;
 var RAID_COMPLETED_KEEP_HOURS = 48;
 var RAID_MOCK_PARTICIPANTS = [
   { id: "raider-haneul", displayName: "\uD558\uB298\uC815\uC6D0", favoriteRelicId: "rex", pace: 1.32 },
@@ -18739,10 +18769,15 @@ function duelStanding(score) {
   }
   return { tier, division: null, progress: next ? Math.min(1, within / (next.floor - tier.floor)) : 1 };
 }
+var DUEL_LOW_TIER_SCORE = {
+  bronze: { win: 2, loss: 0.5 },
+  silver: { win: 1.5, loss: 0.5 }
+};
 function duelScoreDelta(myScore, opponentScore, won) {
   const gap = opponentScore - myScore;
-  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
-  return -clamp(Math.round(14 - gap / 25), 6, 24);
+  const boost = DUEL_LOW_TIER_SCORE[duelTier(myScore).id];
+  if (won) return Math.round(clamp(Math.round(20 + gap / 25), 10, 32) * (boost?.win ?? 1));
+  return -Math.round(clamp(Math.round(14 - gap / 25), 6, 24) * (boost?.loss ?? 1));
 }
 function applyDuelScore(score, delta) {
   const next = Math.max(0, score + delta);
@@ -19237,7 +19272,7 @@ var BANNERS = [
     relicPools: STANDARD_POOLS,
     pickupRelicIds: {},
     pickupRate: 0,
-    highestRarityGuarantee: 100
+    highestRarityGuarantee: 120
   },
   {
     id: "amber",
@@ -19260,7 +19295,7 @@ var BANNERS = [
     relicPools: pickupPools(AMBER_PICKUP),
     pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] },
     pickupRate: 0.5,
-    highestRarityGuarantee: 100
+    highestRarityGuarantee: 120
   }
 ];
 for (const banner of BANNERS) {
@@ -19652,7 +19687,7 @@ function isValidOpsJournal(value) {
   if (!value || typeof value !== "object") return false;
   const ops = value;
   const ids = (v2) => Array.isArray(v2) && v2.every((id) => typeof id === "string");
-  return ids(ops.appliedAdjustments) && ids(ops.readMails) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && (ops.deletedMails === void 0 || ids(ops.deletedMails)) && ids(ops.announcedMails) && Array.isArray(ops.notices) && ops.notices.every((n) => !!n && typeof n === "object" && (n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta) || n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta) || n.kind === "mail" && typeof n.title === "string"));
 }
 function opsJournalOf(state) {
   state.serverJournal ??= { receipts: {}, raidAdmissions: {} };
@@ -19722,6 +19757,11 @@ function markOpsMailsRead(state, ids) {
   const next = ids.filter(isOpsMailId).filter((id) => !journal.readMails.includes(id));
   if (next.length) journal.readMails = tail([...journal.readMails, ...next]);
 }
+function markMailsDeleted(state, ids) {
+  const journal = opsJournalOf(state);
+  const next = ids.filter((id) => !(journal.deletedMails ?? []).includes(id));
+  if (next.length) journal.deletedMails = tail([...journal.deletedMails ?? [], ...next]);
+}
 function drainOpsNotices(state) {
   const journal = state.serverJournal?.ops;
   if (!journal || journal.notices.length === 0) return [];
@@ -19737,7 +19777,7 @@ function isValidServerJournal(value) {
   const journal = value;
   const record2 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
   const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record2(v2) && Object.values(v2).every(json));
-  return (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -19873,8 +19913,12 @@ function raidSettlement(difficulty, myDamage, dealtRatio, defeated) {
   const gem = Math.ceil(spec.gems * sigil / (spec.mine + spec.total + spec.kill) / 5) * 5;
   return { raidSigil: sigil, gem: Math.min(spec.gems, Math.max(5, gem)) };
 }
-function raidRunGold(runDamage, goldPerDamage) {
-  return Math.max(0, Math.floor(runDamage * goldPerDamage));
+function raidRunRewards(difficulty, runDamage, victory) {
+  if (!(runDamage > 0)) return { raidSigil: 0, gem: 0, salvage: 0 };
+  const spec = RAID_DIFFICULTY[difficulty];
+  const share = Math.min(1, runDamage / spec.settlement.mineTarget);
+  const gem = Math.round(spec.run.gems * share);
+  return { salvage: victory ? Math.max(1, Math.round(spec.run.salvage * share)) : 0, raidSigil: Math.max(1, Math.round(spec.run.sigil * share)), gem: gem >= 10 ? Math.ceil(gem / 5) * 5 : Math.max(1, gem) };
 }
 var RAID_HISTORY_PREVIEW_PREFIX = "preview-done-";
 function previewCompletedRaids(now) {
@@ -20026,7 +20070,6 @@ var EXPEDITION_TREASURE_REWARD_BALANCE = {
   gems: { min: 30, max: 60 },
   salvageRecord: { min: 8, max: 15 }
 };
-var QUICK_EXPEDITION_POLICY = { scoreRatio: 0.25, dailyLimitUtc: 2, weeklyLimitUtc: 5 };
 var EXPEDITION_BOSS_BALANCE = {
   /** 서버 검증이 허용하는 전투 길이와 입력량 상한이다. */
   maximumDurationMs: (deathClockClosesBySeconds() + BOSS_REPLAY_SLACK_SECONDS) * 1e3,
@@ -20407,6 +20450,7 @@ function excavationHarvestStatus(unclaimed, ratePerHour, limitSeconds, harvestMu
 }
 var EXCAVATION_GROWTH = { perLevel: 0.02, perBreakthrough: 0.1 };
 var EXCAVATION_PRODUCTION_SCALE = { gold: 4, cheesecake: 4, rawStone: 6, gems: 2 };
+var EXCAVATION_GEMS_PER_RELIC_PER_HOUR = 6;
 var EXCAVATION_FULL_HARVEST_BONUS = 1.1;
 var EXCAVATION_GROWTH_BY_CURRENCY = {
   gold: EXCAVATION_GROWTH,
@@ -20436,6 +20480,7 @@ function excavationProductionDisplayModel(assignedRelicIds, relics, progressByRe
   });
   const totalsPerHour = emptyExcavationAmounts();
   for (const detail of details) totalsPerHour[detail.currency] = fixedAmount(totalsPerHour[detail.currency] + detail.totalPerHour);
+  totalsPerHour.gems = fixedAmount(totalsPerHour.gems + details.length * EXCAVATION_GEMS_PER_RELIC_PER_HOUR);
   return { relics: details, totalsPerHour };
 }
 var STORAGE_EXTENSION_MULTIPLIER = 2;
@@ -21090,9 +21135,8 @@ var AD_REWARD_SLOTS = [
   { id: "gold-ad", displayText: "\uACE8\uB4DC 5,000", reward: { kind: "currency", currency: "gold", amount: 5e3 }, dailyLimitUtc: 3, placement: "shop_gold" },
   // 고고학 상점의 원석, 전리품 상점의 토벌·인양 증표. 모두 하루 세 번이다.
   { id: "archaeology-ad", displayText: "\uC6D0\uC11D 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
-  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" },
+  { id: "loot-ad", displayText: "\uD1A0\uBC8C \uC99D\uD45C 5 \xB7 \uC778\uC591 \uC99D\uD45C 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" }
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
-  { id: "quick-expedition", displayText: "\uBE60\uB978 \uC6D0\uC815", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" }
 ];
 function findAdRewardSlot(slotId) {
   return AD_REWARD_SLOTS.find((slot) => slot.id === slotId);
@@ -21194,6 +21238,16 @@ function diaryQuestionUnlockAt(metAt, index) {
   if (!metAt) return 0;
   const met = new Date(metAt);
   return Date.UTC(met.getUTCFullYear(), met.getUTCMonth(), met.getUTCDate() + index);
+}
+
+// src/core/safeStorage.ts
+init_define_import_meta_env();
+function defaultLocalStorage() {
+  try {
+    return typeof localStorage === "undefined" ? void 0 : localStorage;
+  } catch {
+    return void 0;
+  }
 }
 
 // src/data/relicStories/index.ts
@@ -27128,7 +27182,7 @@ function normalizeExpeditionRun(value, ownedIds) {
 }
 var INTERACTION_SLOT_LIMIT = 32;
 var SaveManager = class {
-  constructor(storage = globalThis.localStorage, flavor = LOCAL_SAVE_FLAVOR) {
+  constructor(storage = defaultLocalStorage(), flavor = LOCAL_SAVE_FLAVOR) {
     this.storage = storage;
     this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
   }
@@ -27136,7 +27190,12 @@ var SaveManager = class {
   storageKey;
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load() {
-    const raw = this.storage?.getItem(this.storageKey);
+    let raw;
+    try {
+      raw = this.storage?.getItem(this.storageKey);
+    } catch {
+      return null;
+    }
     if (raw === null || raw === void 0) return null;
     let parsed;
     try {
@@ -27238,7 +27297,10 @@ var SaveManager = class {
   }
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset() {
-    this.storage?.removeItem(this.storageKey);
+    try {
+      this.storage?.removeItem(this.storageKey);
+    } catch {
+    }
   }
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */
   migrate(input) {
@@ -29147,6 +29209,7 @@ function tempAdToken(slotId) {
 
 // src/core/gacha.ts
 init_define_import_meta_env();
+var TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
 function carryoverTenAvailable(banner, pity) {
   return banner.carryoverTenCost !== void 0 && (pity?.discountTens ?? 0) > 0;
 }
@@ -29195,7 +29258,7 @@ function determineGrade(banner, random) {
 function rewardAmount(reward, random) {
   return reward.min + Math.min(reward.max - reward.min, Math.floor(random * (reward.max - reward.min + 1)));
 }
-function pull(banner, count2, currentPity, rng) {
+function pull(banner, count2, currentPity, rng, options = {}) {
   const relicIds = [];
   const rarities = [];
   const slots = [];
@@ -29204,6 +29267,12 @@ function pull(banner, count2, currentPity, rng) {
     const pityForcesSsr = pity.pullsSinceSsr + 1 >= banner.highestRarityGuarantee;
     let grade = pityForcesSsr ? "SSR" : determineGrade(banner, rng());
     if (!pityForcesSsr && count2 === 10 && slot === 9 && (grade === "GRAY" || grade === "R")) grade = "SR";
+    let upgraded = false;
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && options.forceTenUpgrade && grade !== "SSR") grade = "SR";
+    if (!pityForcesSsr && count2 === 10 && slot === 9 && grade === "SR" && (options.forceTenUpgrade || rng() < TEN_PULL_SR_UPGRADE_CHANCE)) {
+      grade = "SSR";
+      upgraded = true;
+    }
     if (grade === "GRAY") {
       const totalWeight = banner.grayRewards.reduce((sum, reward2) => sum + reward2.weight, 0);
       const roll3 = rng() * totalWeight;
@@ -29225,7 +29294,7 @@ function pull(banner, count2, currentPity, rng) {
     const relicId = choose(selectionPool, rng);
     relicIds.push(relicId);
     rarities.push(rarity);
-    slots.push({ kind: "relic", relicId, rarity });
+    slots.push(upgraded ? { kind: "relic", relicId, rarity, upgraded: true } : { kind: "relic", relicId, rarity });
     if (rarity === "SSR") {
       pity = { pullsSinceSsr: 0, pickupGuaranteed: pickupPool.length > 0 && !pickedUp };
     } else {
@@ -30184,7 +30253,7 @@ var ExpeditionManager = class {
     const run2 = this.state.expedition.run;
     const copy = run2 ? structuredClone(run2) : null;
     const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
-    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId), score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run2 === null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId), score: copy.runScore } : null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
   start(relicIds) {
@@ -30600,7 +30669,7 @@ function mileage(id, category, iconKey, name, description, price, limit, grants)
 }
 var MILEAGE_PRODUCTS = [
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
-  mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 150, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
+  mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8 1\uAC1C", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
   // 만능 파편 — 이번 주 파편 값의 **2배다**(SR 40 → 80 · R 10 → 20). 개체를 고르지 않아도 되는 값이다.
   mileage("mileage-weekly-universal-sr", "weekly", "shop-product-enhancement", "\uB9CC\uB2A5 SR \uD30C\uD3B8", "\uB9CC\uB2A5 SR \uD30C\uD3B8 1\uAC1C", 80, 1, [{ kind: "item", itemId: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", amount: 1 }]),
@@ -30707,7 +30776,7 @@ var SHOP_PRODUCTS = [
   { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-fossil", name: "\uC778\uC591 \uAD11\uBB3C \uD68C\uC218\uBD84", description: "\uC6D0\uC11D 300\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 100 }, grants: [{ kind: "currency", currency: "rawStone", amount: 300 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "\uC778\uC591 \uBCF4\uAE09 \uC74C\uB8CC", description: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 85 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-gems", name: "\uC778\uC591 \uC815\uC0B0 \uACB0\uC815", description: "\uB2E4\uC774\uC544 40\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 75 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 340 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 1e3 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **룬 칸 — 가끔만 나온다.** 주 무대는 고고학이고 다른 상점은 드물게, 조금 더 비싸게 판다.
   // 어느 기간에 어느 칸이 열리는지는 로테이션 순수 함수(`rotationOffer`)가 정하며, 값은 전부 고고학
   // 900(희귀)·3,000(영웅)원석을 기준으로 환산했다. 젬(다이아)으로는 팔지 않고 전설은 팔지 않는다.
@@ -31030,6 +31099,8 @@ function integer(value, min, max) {
 }
 function applyDebugCommand(target, command, rules) {
   switch (command.kind) {
+    case "tenUpgrade":
+      return 0;
     case "currency": {
       if (!(command.key in rules.walletCaps)) throw new Error("\uC54C \uC218 \uC5C6\uB294 \uC7AC\uD654\uC785\uB2C8\uB2E4.");
       const cap = rules.walletCaps[command.key];
@@ -32002,20 +32073,20 @@ var RUNE_SYNTHESIS_INPUTS = 3;
 var RUNE_SYNTHESIS_RULES = {
   /** 합성 한 번의 골드(응태 결정 — 골드 과잉 해소). */
   goldCost: { uncommon: 2e5, rare: 4e5, epic: 6e5, legendary: 1e6 },
-  /** 한 등급 위가 나올 확률(%). 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
-  upgradePercent: { uncommon: 35, rare: 25, epic: 12, legendary: 0 },
+  /** 한 등급 위가 나올 확률(%). 2026-10-25 응태 확정으로 35/25/12 → 50/40/25 상향. 전설은 위가 없어 새 전설로 옵션·특성만 다시 굴린다. */
+  upgradePercent: { uncommon: 50, rare: 40, epic: 25, legendary: 0 },
   /**
    * 결과 특성 확률(%) — 넣은 룬 중 **가장 높은 특성 등급**이 줄을 고른다. 칸 순서는 없음 → 고급 → 희귀 → 영웅 → 전설.
    */
   traitPercent: {
-    none: [85, 12, 3, 0, 0],
-    uncommon: [45, 40, 13, 2, 0],
-    rare: [30, 30, 30, 9, 1],
-    epic: [20, 20, 25, 30, 5],
-    legendary: [15, 15, 20, 30, 20]
+    none: [55, 30, 12, 3, 0],
+    uncommon: [25, 45, 22, 7, 1],
+    rare: [15, 25, 35, 20, 5],
+    epic: [10, 15, 25, 38, 12],
+    legendary: [5, 10, 20, 35, 30]
   },
   /** 특성 달린 룬이 하나 더 있을 때마다 「없음」에서 떼어 최고 등급 칸에 얹는 몫(%). */
-  extraTraitShiftPercent: 10
+  extraTraitShiftPercent: 15
 };
 function runeSynthesisRefusal(runes) {
   if (runes.length !== RUNE_SYNTHESIS_INPUTS) return "count";
@@ -32209,7 +32280,19 @@ var ManagerEvents = class {
 var managerEvents = new ManagerEvents();
 
 // src/managers/InventoryManager.ts
-var DEFAULT_INVENTORY_SORT = { key: "acquired", direction: "asc" };
+var UNEQUIPPED_RELIC_RANK = 1e6;
+function runeHolderOrder(relicProgress) {
+  const order = /* @__PURE__ */ new Map();
+  for (const [relicId, progress] of Object.entries(relicProgress)) {
+    const rank = RELICS.findIndex(({ id }) => id === relicId);
+    for (const id of progress.heartGemSlots) if (id !== null) order.set(id, rank < 0 ? RELICS.length : rank);
+  }
+  return order;
+}
+function runeRelicRank(holderOrder, rune) {
+  return (holderOrder.get(rune.instanceId) ?? UNEQUIPPED_RELIC_RANK) * 10 + rune.part;
+}
+var DEFAULT_INVENTORY_SORT = { key: "relic", direction: "asc" };
 var RARITY_ORDER2 = { uncommon: 0, rare: 1, epic: 2, legendary: 3 };
 var pendingRecharges = /* @__PURE__ */ new WeakMap();
 var InventoryManager = class {
@@ -32382,8 +32465,9 @@ var InventoryManager = class {
     if (category === "rune") {
       const definition = findItem("rune");
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id) => id !== null)));
+      const holderOrder = runeHolderOrder(this.state.relicProgress);
       const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
-      const value = ({ rune, index }) => sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER2[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const value = ({ rune, index }) => sort.key === "relic" ? runeRelicRank(holderOrder, rune) : sort.key === "acquired" ? rune.sequence ?? index : sort.key === "rarity" ? RARITY_ORDER2[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
       const direction = sort.direction === "asc" ? 1 : -1;
       return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune", category, id: rune.instanceId, definition, quantity: 1, rune }));
     }
@@ -32716,7 +32800,7 @@ var FakeServer = class {
     this.remoteExpeditionRank = options.expeditionRank;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
-    this.random = options.random ?? Math.random;
+    this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
     this.adVerificationAvailable = options.verifyAdToken !== void 0 || QA_TOOLS_ENABLED;
     this.paymentVerificationAvailable = options.verifyPurchaseReceipt !== void 0 || QA_TOOLS_ENABLED;
@@ -32821,7 +32905,6 @@ var FakeServer = class {
   // 원정 주간 기록은 저장(`session.expedition`)이 갖는다 — 메모리에만 두던 때는 새로 고침마다 이번 주 최고 기록과 보상 수령이 사라졌다.
   raidSummonResults = /* @__PURE__ */ new Map();
   /** 소탕도 정산과 같은 멱등 계약을 흉내 낸다. */
-  quickWeek = { weekKey: "", claims: 0 };
   /** 같은 밀리초 안의 연속 발급도 구분하는 서버 인스턴스 로컬 순번이다. */
   runeIssueSequence = 0;
   /** 개발 서버 재시작마다 같은 우편 원본에서 시작하되 읽음·수령 상태는 인스턴스 안에서만 변한다. */
@@ -33002,6 +33085,19 @@ var FakeServer = class {
     markOpsMailsRead(this.state, request.mailIds);
     return this.mailListDto();
   }
+  /** 읽은 안내와 수령을 마쳤거나 만료된 우편만 지운다. 받을 것이 남은 우편은 거절한다. */
+  async deleteMails(request) {
+    await this.delay();
+    this.syncSubscriptionMails(this.now());
+    this.applySavedMailClaims();
+    const nowMs = this.now().getTime();
+    const ids = [...new Set(request.mailIds)];
+    const deletable = (mail) => mail.rewards.length > 0 ? mail.claimed || mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs : mail.read;
+    const targets2 = ids.map((id) => this.mails.find((mail) => mail.id === id));
+    if (!ids.length || targets2.some((mail) => !mail || !deletable(mail))) throw new Error("MAIL_NOT_DELETABLE");
+    markMailsDeleted(this.state, ids);
+    return this.mailListDto();
+  }
   /**
    * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
    * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
@@ -33144,7 +33240,8 @@ var FakeServer = class {
     this.applySavedMailClaims();
     const serverTime = this.now().toISOString();
     const nowMs = Date.parse(serverTime);
-    const mails = structuredClone(this.mails);
+    const deleted = new Set(this.state.serverJournal?.ops?.deletedMails ?? []);
+    const mails = structuredClone(this.mails).filter((mail) => !deleted.has(mail.id));
     return { mails, serverTime, unreadCount: mails.filter((mail) => !mail.read && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length, claimableCount: mails.filter((mail) => !mail.claimed && mail.rewards.length > 0 && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs)).length };
   }
   /** 실제 통신처럼 다음 비동기 구간을 거친 뒤 직렬화 가능한 복사본을 돌려준다. */
@@ -33620,7 +33717,7 @@ var FakeServer = class {
    * 원정 보스와 **같은 재현기**로 한 판을 다시 돌리고 그 피해만 그 레이드의 체력에서 깎는다.
    *
    * 클라이언트가 보낸 피해 숫자는 받지 않는다 — 계약에 아예 없다. 한 판을 확정하면 그 피해에
-   * 비례한 골드를 곧바로 준다(`RAID_RUN_GOLD_PER_DAMAGE`). 정산은 판이 끝난 뒤 따로다.
+   * 비례한 증표·젬을, 보스를 쓰러뜨린 판이면 인양 기록까지 곧바로 준다(`raidRunRewards`, 골드는 주지 않는다). 정산은 판이 끝난 뒤 따로다.
    */
   async submitRaidDamage(request) {
     await this.delay();
@@ -33674,13 +33771,17 @@ var FakeServer = class {
     const remainingNow = this.raidDto(instance, now).remainingHp;
     const runDamage = Math.min(admission.seasonHp, Math.max(0, Math.floor(result.totalDamage)));
     const appliedDamage = Math.min(remainingNow, runDamage);
-    const gold2 = raidRunGold(runDamage, RAID_RUN_GOLD_PER_DAMAGE);
     const updated = { ...instance, myDamage: instance.myDamage + runDamage, appliedDamage: (instance.appliedDamage ?? instance.myDamage) + appliedDamage };
     const nextState = structuredClone(this.state);
     nextState.raid = { instances: [...nextState.raid.instances.filter(({ id }) => id !== updated.id), updated] };
-    const appliedGold = Math.min(gold2, WALLET_CAPS.gold - nextState.wallet.gold);
-    nextState.wallet = { ...nextState.wallet, gold: nextState.wallet.gold + appliedGold };
-    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : [] };
+    const runRewards = raidRunRewards(instance.difficulty, runDamage, result.bossDefeated);
+    const grantedRun = ["gems", "salvageRecord", "raidSigil"].map((currency3) => {
+      const want = currency3 === "gems" ? runRewards.gem : currency3 === "salvageRecord" ? runRewards.salvage : runRewards.raidSigil;
+      const amount = Math.max(0, Math.min(want, WALLET_CAPS[currency3] - nextState.wallet[currency3]));
+      nextState.wallet = { ...nextState.wallet, [currency3]: nextState.wallet[currency3] + amount };
+      return { currency: currency3, name: findItem(currency3)?.name ?? currency3, amount };
+    }).filter(({ amount }) => amount > 0);
+    const resultReceipt = { raid: this.raidDto(updated, now), runDamage, sharedDamage: appliedDamage, endedAtMs: result.endedAtMs, granted: grantedRun };
     this.recordReceipt(nextState, "raidSubmit", request.requestId, request.raidId, resultReceipt);
     delete nextState.serverJournal.raidAdmissions[request.requestId];
     this.commitRaidState(nextState);
@@ -33690,7 +33791,7 @@ var FakeServer = class {
       runDamage,
       sharedDamage: appliedDamage,
       endedAtMs: result.endedAtMs,
-      granted: appliedGold > 0 ? [{ currency: "gold", name: findItem("gold")?.name ?? "gold", amount: appliedGold }] : []
+      granted: grantedRun
     };
     return structuredClone(response);
   }
@@ -33847,10 +33948,7 @@ var FakeServer = class {
   async getAdOperationsConfig() {
     await this.delay();
     const now = this.now();
-    const quickScore = this.expeditionReferenceScore(now);
-    const weekKey = expeditionWeekKey(now);
-    if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 3e5).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: (this.adVerificationAvailable || this.hasAdFreeMembership(now)) && (slot.placement !== "quick_expedition" || quickScore > 0), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward, ..."weeklyLimitUtc" in slot ? { weeklyLimitUtc: slot.weeklyLimitUtc, weeklyClaims: this.quickWeek.claims, referenceScore: quickScore } : {} })) };
+    return { configVersion: "fake-2026-08-25", serverTime: now.toISOString(), expiresAt: new Date(now.getTime() + 3e5).toISOString(), slots: AD_REWARD_SLOTS.map((slot) => ({ slotId: slot.id, enabled: this.adVerificationAvailable || this.hasAdFreeMembership(now), dailyLimitUtc: slot.dailyLimitUtc, displayText: slot.displayText, reward: slot.reward })) };
   }
   /** 세 저장 소유자를 읽기 전용 DTO로만 합성한다. */
   async getInventory() {
@@ -34036,6 +34134,12 @@ var FakeServer = class {
   async applyDebugCommand(command) {
     await this.delay();
     if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "\uAC1C\uBC1C \uB3C4\uAD6C\uAC00 \uAEBC\uC9C4 \uC11C\uBC84\uC785\uB2C8\uB2E4.");
+    if (command.kind === "tenUpgrade") {
+      const candidate = { ...this.state, serverJournal: { ...this.state.serverJournal ?? emptyServerJournal(), qaTenUpgrade: true } };
+      this.persist(candidate);
+      this.state.serverJournal = candidate.serverJournal;
+      return { ok: true, changed: 1 };
+    }
     const patch = {
       wallet: { ...this.state.wallet },
       owned: new Set(this.state.owned),
@@ -34397,12 +34501,6 @@ var FakeServer = class {
     const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "\uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uAD11\uACE0 \uBCF4\uC0C1\uC744 \uBAA8\uB450 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.");
     this.assertAdPrerequisite(slot, now);
-    if (slot.reward.kind === "quick_expedition") {
-      const weekKey = expeditionWeekKey(now);
-      if (this.quickWeek.weekKey !== weekKey) this.quickWeek = { weekKey, claims: 0 };
-      if (this.quickWeek.claims >= QUICK_EXPEDITION_POLICY.weeklyLimitUtc) throw new GameApiError("AD_WEEKLY_LIMIT", "\uC774\uBC88 \uC8FC \uBE60\uB978 \uC6D0\uC815 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-      if (!this.expeditionReferenceScore(this.now())) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "\uBE60\uB978 \uC6D0\uC815\uC758 \uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    }
     const nextClaims = dailyClaims + 1;
     const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
     const walletBefore = { ...this.state.wallet };
@@ -34416,14 +34514,12 @@ var FakeServer = class {
     this.state.itemInventory = applied.itemInventory;
     this.state.dailyAdRewards = nextAds;
     this.state.duel = duel2;
-    if (slot.reward.kind === "quick_expedition") this.quickWeek.claims += 1;
     const granted = {};
     for (const key of Object.keys(applied.wallet)) {
       const amount = applied.wallet[key] - walletBefore[key];
       if (amount > 0) granted[key] = amount;
     }
-    const weeklyRemaining = slot.weeklyLimitUtc === void 0 ? void 0 : Math.max(0, slot.weeklyLimitUtc - this.quickWeek.claims);
-    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, weeklyRemaining, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
+    return { ...this.snapshot(), items: this.inventoryDto(this.state).items, slotId: slot.id, reward: slot.reward, dailyClaims: nextClaims, dailyRemaining: slot.dailyLimitUtc - nextClaims, granted, excavation: this.cloneExcavation(applied.excavation), serverTime: now.toISOString() };
   }
   /** 활성 구독이 매일 얹는 몫을 UTC 하루에 한 번 지급한다. 광고와 무관하게 권리만 확인한다. */
   async claimPassDailyBonus(request) {
@@ -34620,7 +34716,8 @@ var FakeServer = class {
     if (!canPull(this.state.wallet, banner, request.count, currentPity)) {
       throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC7AC\uD654\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     }
-    const pulled = pull(banner, request.count, currentPity, this.random);
+    const forceTenUpgrade = request.count === 10 && this.developmentTools && this.state.serverJournal?.qaTenUpgrade === true;
+    const pulled = pull(banner, request.count, currentPity, this.random, { forceTenUpgrade });
     const breakthroughGradeById = Object.fromEntries(Object.entries(this.state.relicProgress).map(([id, value]) => [id, breakthroughGrade(value.breakthrough)]));
     const relicSlots = pulled.slots.filter((slot) => slot.kind === "relic");
     const outcome = resolveAcquisitions(this.state.owned, this.state.relicFragments, relicSlots.map((slot) => slot.relicId), breakthroughGradeById, BREAKTHROUGH_GRADE_CAP, (id) => MILEAGE_OVERFLOW_BY_RARITY[RELICS.find((relic) => relic.id === id)?.rarity ?? "R"]);
@@ -34650,6 +34747,10 @@ var FakeServer = class {
     const tutorial = normalizeTutorialState(this.state.tutorial);
     const nextTutorial = nextTutorialStep(tutorial) === "pull" ? { ...tutorial, completedStepIds: [...tutorial.completedStepIds, "pull"] } : tutorial;
     const nextState = { ...this.state, tutorial: nextTutorial, wallet: nextWallet, owned: outcome.ownedRelicIds, relicProgress: nextProgress, relicFragments: outcome.fragmentsById, gachaPityByGroup: nextPity, missions: nextMissions, relicStory: nextRelicStory };
+    if (forceTenUpgrade) {
+      const { qaTenUpgrade: _spent, ...journal } = nextState.serverJournal ?? emptyServerJournal();
+      nextState.serverJournal = journal;
+    }
     redeemDeferredStoryBond(nextState, outcome.newRelicIds);
     this.persist(nextState);
     this.state.serverJournal = nextState.serverJournal;
@@ -34661,6 +34762,7 @@ var FakeServer = class {
     this.state.gachaPityByGroup = nextPity;
     this.state.missions = nextMissions;
     this.state.relicStory = nextRelicStory;
+    const upgradedSlot = pulled.slots.findIndex((slot) => slot.kind === "relic" && slot.upgraded === true);
     return {
       ...this.snapshot(),
       // 렐릭 획득 결과를 원래 추첨 위치에 다시 끼워 혼합 10연의 슬롯 순서를 보존한다.
@@ -34670,7 +34772,8 @@ var FakeServer = class {
       })(),
       newRelicIds: outcome.newRelicIds,
       duplicateRelicIds: outcome.duplicateRelicIds,
-      mileageGained
+      mileageGained,
+      ...upgradedSlot >= 0 ? { rarityUpgradeSlot: upgradedSlot } : {}
     };
   }
   /** 서버가 보유·상한·치즈케이크를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
@@ -36466,11 +36569,6 @@ var FakeServer = class {
       for (const item3 of reward.items ?? []) items = this.grantItem(items, item3.itemId, item3.quantity, now).inventory;
       return { wallet, excavation, itemInventory: items };
     }
-    if (reward.kind === "quick_expedition") {
-      const referenceScore = this.expeditionReferenceScore(now);
-      wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + Math.floor(referenceScore * reward.scoreRatio));
-      return { wallet, excavation, itemInventory };
-    }
     if (reward.kind === "item") {
       return { wallet, excavation, itemInventory: this.grantItem(itemInventory, reward.itemId, reward.quantity, now).inventory };
     }
@@ -36560,11 +36658,6 @@ var FakeServer = class {
   expeditionRank(score) {
     if (this.remoteExpeditionRank !== void 0) return this.remoteExpeditionRank;
     return QA_TOOLS_ENABLED && score > 0 ? 1 : null;
-  }
-  /** 빠른 원정·광고 보상이 기준으로 삼는 점수 — 이번 주 최고, 없으면 받지 않은 지난주 기록. */
-  expeditionReferenceScore(now) {
-    const expedition = this.rollExpedition(now);
-    return expedition.bestScore || expedition.pendingRankReward?.score || 0;
   }
   /**
    * 지난주 순위 보상을 우편 한 통으로 세운다. 우편함은 메모리에 있어 다시 켜면 사라지므로, 대기는
@@ -36719,6 +36812,10 @@ function missionClaimCount(missions, now) {
 }
 function missionNoticeScore(next, now) {
   return claimableAchievementCount(normalizeAchievementState(next.achievements), achievementFacts(next)) * 1e3 + missionClaimCount(next.missions, now);
+}
+function qaRandom() {
+  const hook = globalThis.__PF_QA_RANDOM;
+  return hook ? hook() : Math.random();
 }
 var localGameApi = new FakeServer();
 var activeGameApi = localGameApi;
@@ -37294,6 +37391,7 @@ var SERVER_GAME_METHODS = [
   "getStaminaRechargeStatus",
   "grantRuneTrait",
   "harvestExcavation",
+  "deleteMails",
   "interactInLobby",
   "markAttendanceAutoShown",
   "markContentIntroSeen",
@@ -37602,6 +37700,9 @@ function createSupabaseStore(env) {
 }
 
 // src/api/RemoteSocialApi.ts
+init_define_import_meta_env();
+
+// src/core/apiBase.ts
 init_define_import_meta_env();
 
 // src/core/appRuntime.ts

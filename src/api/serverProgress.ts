@@ -23,6 +23,7 @@ import { createRemoteGuildApi } from "./RemoteGuildApi";
 import { installGuildApi } from "./guildApi";
 import { createRemoteGameApi, RemoteGameApiError } from "./RemoteGameApi";
 import type { GameApi } from "./contracts";
+import { defaultLocalStorage } from "../core/safeStorage";
 
 /** 연결에 필요한 계정 쪽 능력만 좁힌 모양이다. `SupabaseAccountApi`가 그대로 맞는다. */
 export type ServerProgressAccount = AccountApi & {
@@ -57,7 +58,7 @@ export interface ServerProgressDeps {
 export const SERVER_LINK_STORAGE_KEY = "forgarden.server-link";
 const MARKER_KEY = SERVER_LINK_STORAGE_KEY;
 
-export function createLinkMarker(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = typeof localStorage === "undefined" ? undefined : localStorage): LinkMarker {
+export function createLinkMarker(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = defaultLocalStorage()): LinkMarker {
   return {
     get() { try { return storage?.getItem(MARKER_KEY) ?? null; } catch { return null; } },
     set(userId) { try { if (userId === null) storage?.removeItem(MARKER_KEY); else storage?.setItem(MARKER_KEY, userId); } catch { /* 기억이 없으면 다음 연결에서 한 번 더 묻는다 */ } },

@@ -14,9 +14,8 @@ export const BATTLE_ZH_HANS = {
   "tutorial.result.feed": "返回广场，强化托里卡吧。",
   "tutorial.result.research": "返回广场，领取复原研究支援物资吧。",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · 潮汐警报",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "我",
+  "battle.rank.weekly": "每周排名",
   "battle.settle.failed": "无法恢复结算画面。",
   "battle.settle.scoreRejected": "无法确认战斗记录，请重试。",
   "battle.settle.persistenceFailed": "无法保存结果。请重试，或返回大厅重新加载游戏信息。",

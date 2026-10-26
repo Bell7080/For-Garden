@@ -23,6 +23,7 @@ export const RAID_ZH_HANS = {
   "raid.settle.done": "已领取奖励",
   "raid.settle.ready": "获得奖励",
   "raid.settle.expected": "预计奖励",
+  "raid.settle.none": "无贡献",
   "raid.settle.max": "最高奖励",
   "raid.settle.contribution": "贡献度",
   "raid.settle.rank": "第{rank}名",

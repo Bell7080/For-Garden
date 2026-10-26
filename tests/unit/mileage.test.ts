@@ -110,11 +110,11 @@ describe("마일리지 상점 상품", () => {
     }
   });
 
-  it("SR·R 파편은 SSR 파편과 같은 5배 비율(중복 마일리지 × 5)이다", () => {
+  it("SR·R 파편은 중복 마일리지의 5배이고 SSR 파편은 200이다", () => {
     const price = (id: string) => (MILEAGE_PRODUCTS.find((product) => product.id === id)!.acquisition as { amount: number }).amount;
     expect(price("mileage-weekly-sr")).toBe(MILEAGE_OVERFLOW_BY_RARITY.SR * 5);
     expect(price("mileage-daily-r")).toBe(MILEAGE_OVERFLOW_BY_RARITY.R * 5);
-    expect(price("mileage-weekly-ssr")).toBe(MILEAGE_OVERFLOW_BY_RARITY.SSR * 5);
+    expect(price("mileage-weekly-ssr")).toBe(200);
   });
 
   it("주간 SR·일간 R 파편은 기간 안에서 같은 개체이고 후보 안에서 돈다", () => {

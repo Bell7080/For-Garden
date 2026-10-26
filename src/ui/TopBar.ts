@@ -89,7 +89,8 @@ export class TopBar {
     // 재화는 오른쪽에서 왼쪽으로 쌓는다. 설정 아이콘이 오른쪽 끝을 차지하기 때문이다.
     const slots = SLOTS[options.currencies ?? "default"];
     const span = slots.length * SLOT.width + (slots.length - 1) * SLOT.gap;
-    const first = BASE_WIDTH * CLUSTER_CENTER - span / 2 + SLOT.width / 2;
+    const center = options.currencies === "stamina" ? TOP_BAR_LAYOUT.staminaClusterCenter : CLUSTER_CENTER;
+    const first = BASE_WIDTH * center - span / 2 + SLOT.width / 2;
     slots.forEach((slot, index) => {
       this.slots.push({ slot, text: this.buildSlot(scene, first + index * (SLOT.width + SLOT.gap), y + 46, slot, options) });
     });

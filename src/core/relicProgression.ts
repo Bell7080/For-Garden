@@ -56,19 +56,19 @@ export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
 ];
 
 /**
- * 등급별 한 단계 파편 수.
+ * 등급별 한 단계 파편 수 — 돌파 네 번(I→II · II→III · III→IV · IV→V)의 값을 순서대로 적는다.
  *
- * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 한 장이
- * 곧 한 단계지만 R은 다섯 장을 모아야 한다. 표를 하나로 두지 않고 단계마다 수를 적어 두면
- * 등급이 늘 때마다 네 줄을 함께 고쳐야 한다.
+ * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 앞 단계가
+ * 한 장이지만 R은 네 장을 모아야 한다. 단계마다 수를 적어 두므로 한 단계만 따로 조일 수 있다.
  *
- * **마지막 별만 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
+ * **뒤로 갈수록 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
  * SSR은 네 번 다시 만나는 것으로 끝난다. 치즈케이크도 같은 이유로 단계마다 오른다.
+ * III→IV(돌파 등급 IV)는 앞 단계보다 한 장 더(R은 둘 더) 들고, 마지막은 그보다 더 든다.
  */
-export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, { step: number; final: number }>> = {
-  SSR: { step: 1, final: 2 },
-  SR: { step: 2, final: 4 },
-  R: { step: 4, final: 8 },
+export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, readonly [number, number, number, number]>> = {
+  SSR: [1, 1, 2, 3],
+  SR: [2, 2, 3, 4],
+  R: [4, 4, 6, 8],
 };
 
 /**
@@ -109,8 +109,8 @@ export function breakthroughFragmentSpend(rarity: RelicRarity, breakthrough: num
  * 뚫린다(`applyLevelGrowth`와 같은 이유다).
  */
 export function breakthroughFragmentCost(rarity: RelicRarity, breakthrough: number): number {
-  const cost = BREAKTHROUGH_FRAGMENTS[rarity];
-  return breakthrough >= BREAKTHROUGH_CAP - 1 ? cost.final : cost.step;
+  const costs = BREAKTHROUGH_FRAGMENTS[rarity];
+  return costs[Math.max(0, Math.min(costs.length - 1, breakthrough))];
 }
 
 /** 한계를 몇 번까지 뚫을 수 있는지. 별 하나에서 시작하므로 최대 별은 이 값 + 1이다. */

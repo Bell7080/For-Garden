@@ -20,7 +20,7 @@ import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoi
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
-import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
+import { preloadSsrOmen, releaseSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -198,6 +198,7 @@ export class LabScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.showcase?.destroy();
       this.showcase = undefined;
+      releaseSsrOmen();
       this.pickupPanels = undefined;
       this.cast?.destroy();
       this.cast = undefined;
@@ -427,7 +428,7 @@ export class LabScene extends Phaser.Scene {
       this.topBar.refresh();
       // 첫 연구 튜토리얼은 연구 결과와 같은 서버 저장에서 완료된다. 별도 완료 요청을 보내지 않는다.
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
-      await this.playPresentation(response.results, response.mileageGained);
+      await this.playPresentation(response.results, response.mileageGained, response.rarityUpgradeSlot);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : t("lab.networkError");
       this.showNotice(message);
@@ -473,15 +474,16 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→결과판 순서로 재생한다. */
-  private async playPresentation(results: PullResultDto[], mileage: number): Promise<void> {
+  private async playPresentation(results: PullResultDto[], mileage: number, upgradeSlot?: number): Promise<void> {
     // 한 연출 도중 설정을 다시 읽어 단계별 시간이 서로 갈리지 않도록 시작 시 스냅샷을 고정한다.
     const preferences = settingsManager.get();
     const request = this.presentation.begin();
-    const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
+    // 등급이 한 번 더 오른 칸은 오르기 전의 SR로 센다 — 균열·섬광이 SSR을 미리 말하면 깜짝이 사라진다.
+    const rarity = highestRarity(results.map((result, index) => index === upgradeSlot ? "SR" : result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
     if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
     // 3D 연출이 서면 그것이 이 뽑기의 연출 전부다. 서지 못한 기기만 아래의 Phaser 연출을 탄다.
-    if (await this.playCinematic(results, request, mileage)) return;
+    if (await this.playCinematic(results, request, mileage, upgradeSlot)) return;
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
@@ -543,7 +545,7 @@ export class LabScene extends Phaser.Scene {
    *
    * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
    */
-  private async playCinematic(results: PullResultDto[], request: number, mileage: number): Promise<boolean> {
+  private async playCinematic(results: PullResultDto[], request: number, mileage: number, upgradeSlot?: number): Promise<boolean> {
     // SSR이 든 판이면 전조 무대를 미리 읽어 둔다 — 카드가 뒤집힐 때쯤이면 도착해 있다.
     if (results.some((result) => result.type === "relic" && getRelic(result.relicId).rarity === "SSR")) void preloadSsrOmen()?.catch(() => undefined);
     if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
@@ -555,6 +557,8 @@ export class LabScene extends Phaser.Scene {
       currency: (kind) => t(`currency.${kind}`),
       resourceTitle: t("lab.cinematic.resource"),
     });
+    // 등급이 한 번 더 오른 칸은 SR 카드로 먼저 세운다 — 오르는 순간은 뒤집기 직전의 깜짝 장면이 맡는다.
+    if (upgradeSlot !== undefined && rewards[upgradeSlot]) rewards[upgradeSlot] = { ...rewards[upgradeSlot], rarity: "SR" };
     // 카드에 서는 것은 결과판과 같은 규칙이다 — 새 렐릭만 실제 원화, 중복과 재화는 액자 한 장.
     const art = cinematicCardArt(views, {
       portrait: (relicId) => getRelic(relicId).portraitAssetId,
@@ -570,9 +574,12 @@ export class LabScene extends Phaser.Scene {
       reducedMotion: preferences.accessibility.reduceMotion,
       mileage,
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
+      // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.
+      chanceSlots: upgradeSlot !== undefined ? [upgradeSlot] : [],
       introduce: async (index) => {
         const relicId = showcase[index];
-        if (relicId && this.presentation.isCurrent(request)) await this.introduceRelic(relicId);
+        if (!relicId || !this.presentation.isCurrent(request)) return;
+        await this.introduceRelic(relicId);
       },
       text: {
         skip: t("lab.cinematic.skip"),

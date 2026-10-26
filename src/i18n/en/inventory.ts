@@ -11,6 +11,7 @@ export const INVENTORY_EN = {
   "inventory.sort.part": "Part",
   "inventory.sort.craft": "Polish",
   "inventory.sort.equipped": "Equipped",
+  "inventory.sort.relic": "Relic",
   "inventory.guide.held": "Held",
   "inventory.guide.expiry": "{count} expire in {time}",
   "inventory.expiry.days": "{days}d {hours}h",

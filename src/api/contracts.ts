@@ -71,6 +71,8 @@ export interface ClaimMailRewardsRequest { requestId: string; mailIds: string[];
 export interface ClaimMailRewardsResponse extends MailListResponse { claimedMailIds: string[]; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
 /** 열람 처리는 보상 수령과 분리하며 여러 행을 한 번에 읽음 처리할 수 있다. */
 export interface MarkMailsReadRequest { mailIds: string[]; }
+/** 지울 수 있는 것은 읽은 안내와 수령을 마쳤거나 만료된 우편뿐이다. 받을 것이 남은 우편은 서버가 거절한다. */
+export interface DeleteMailsRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
 /** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
 export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; }
@@ -407,7 +409,7 @@ export interface SpinRouletteResponse extends PlayerStateDto {
 }
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { items: InventoryItemDto[]; slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { items: InventoryItemDto[]; slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 클라이언트는 런/정산 식별자와 종료 사유만 보내며 보상 수치는 보낼 수 없다. */
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }
@@ -426,11 +428,6 @@ export interface AdSlotOperationsDto {
   enabled: boolean;
   /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
   dailyLimitUtc: number;
-  /** 주간 제한이 있는 슬롯은 현재 서버 주차의 한도와 사용량을 함께 내려준다. */
-  weeklyLimitUtc?: number;
-  weeklyClaims?: number;
-  /** 빠른 원정처럼 서버 기록을 환산하는 슬롯만 현재 유효 기준값을 공개한다. */
-  referenceScore?: number;
   /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
   /** 허용된 판별 합집합 그대로 내려 UI가 임의 효과를 만들 수 없게 한다. */
   reward: AdReward;
@@ -630,6 +627,11 @@ export interface PullResponse extends PlayerStateDto {
   duplicateRelicIds: string[];
   /** 이번 연구가 지급한 DNA 마일리지 총량(뽑은 횟수 + 풀돌 중복 보너스). 결과 상단 칩이 이 값을 그대로 읽는다. */
   mileageGained: number;
+  /**
+   * 10연 마지막 슬롯이 SR에서 SSR로 한 번 더 올랐다면 그 칸의 번호(`results` 기준). 없으면 비어 있다.
+   * 화면은 이 칸을 SR로 먼저 보여 준 뒤 SSR로 뒤집는 연출을 돌린다 — 확정은 서버가 이미 했다.
+   */
+  rarityUpgradeSlot?: number;
 }
 
 
@@ -1022,6 +1024,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse>;
   /** 열람한 우편을 읽음으로 확정한다. */
   markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse>;
+  deleteMails(request: DeleteMailsRequest): Promise<MailListResponse>;
   /** 오늘의 출석 상태(신규·정규)를 조회한다. */
   getAttendance(): Promise<AttendanceStatusResponse>;
   /** 한 줄의 오늘 칸을 받는다. 같은 날 두 번 받지 못하고 같은 요청 ID는 같은 결과를 돌려준다. */

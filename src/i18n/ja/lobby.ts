@@ -23,9 +23,7 @@ export const LOBBY_JA = {
   "ancient.gate": "関門",
 
   "lobby.expedition.resume": "つづきから · {plays}回 · 最高 {best}",
-  "lobby.expedition.weekly": "本日 {plays}回 · 最高 {best} · {quick}",
-  "lobby.expedition.quickReady": "クイック可",
-  "lobby.expedition.quickLocked": "クイック不可",
+  "lobby.expedition.weekly": "本日 {plays}回 · 最高 {best}",
 
   "lobby.rail.mission": "ミッション",
   "lobby.rail.shop": "ショップ",

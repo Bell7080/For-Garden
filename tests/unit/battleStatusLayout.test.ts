@@ -127,3 +127,16 @@ describe("상태 칩 줄과 체력 바", () => {
     expect(chipBottom).toBeGreaterThan(BATTLE_STATUS_LAYOUT.hpBarCapHalfHeight);
   });
 });
+
+describe("보스전 점수 랭킹 띠", () => {
+  it("가운데 점수 글자와 접힌 기여도 판 사이에 들고 왼쪽 벽을 넘지 않는다", async () => {
+    const { SCORE_RANKING_HUD: R, RAID_BATTLE_HUD, scoreRankingRowTop } = await import("../../src/ui/battleStatusLayout");
+    const { BATTLE_CONTRIBUTION_LAYOUT: C } = await import("../../src/ui/battleContributionLayout");
+    const bottom = scoreRankingRowTop(R.rows - 1) + R.rowHeight;
+    expect(bottom).toBeLessThanOrEqual(C.panel.top);
+    expect(R.left).toBeGreaterThanOrEqual(0);
+    // 점수 글자(58px 숫자 열 자리)의 왼쪽 끝보다 안쪽이다.
+    expect(R.left + R.width).toBeLessThan(400);
+    expect(R.top).toBeGreaterThan(RAID_BATTLE_HUD.valueY + 12);
+  });
+});

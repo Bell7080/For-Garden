@@ -150,34 +150,14 @@
 "Продолжить · {plays} забегов · Лучший {best}"
 ],
 "lobby.expedition.weekly": [
-"今日 {plays}次 · 最高 {best} · {quick}",
-"วันนี้ {plays} · สูงสุด {best} · {quick}",
-"Hôm nay {plays} · Cao nhất {best} · {quick}",
-"Hari ini {plays} · Terbaik {best} · {quick}",
-"Hoy {plays} · Mejor {best} · {quick}",
-"Hoje {plays} · Melhor {best} · {quick}",
-"Heute {plays} · Bestwert {best} · {quick}",
-"Сегодня {plays} · Лучшее {best} · {quick}"
-],
-"lobby.expedition.quickReady": [
-"快速可用",
-"เริ่มด่วนได้",
-"Nhanh sẵn sàng",
-"Cepat Siap",
-"Rápido listo",
-"Rápido pronto",
-"Schnell bereit",
-"Быстрый готов"
-],
-"lobby.expedition.quickLocked": [
-"快速未解锁",
-"เริ่มด่วนล็อก",
-"Nhanh bị khóa",
-"Cepat Terkunci",
-"Rápido bloqueado",
-"Rápido bloqueado",
-"Schnell gesperrt",
-"Быстрый закрыт"
+"今日 {plays}次 · 最高 {best}",
+"วันนี้ {plays} · สูงสุด {best}",
+"Hôm nay {plays} · Cao nhất {best}",
+"Hari ini {plays} · Terbaik {best}",
+"Hoy {plays} · Mejor {best}",
+"Hoje {plays} · Melhor {best}",
+"Heute {plays} · Bestwert {best}",
+"Сегодня {plays} · Лучшее {best}"
 ],
 "lobby.rail.mission": [
 "任务",

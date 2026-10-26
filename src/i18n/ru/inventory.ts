@@ -11,6 +11,7 @@ export const INVENTORY_RU = {
   "inventory.sort.part": "Часть",
   "inventory.sort.craft": "Огранка",
   "inventory.sort.equipped": "Надето",
+  "inventory.sort.relic": "Реликт",
   "inventory.guide.held": "Есть",
   "inventory.guide.expiry": "{count} шт. · исчезнут через {time}",
   "inventory.expiry.days": "{days} д. {hours} ч.",

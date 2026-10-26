@@ -1,10 +1,26 @@
 import { describe, it, expect } from 'vitest';
-import { ARENA_TIERS, arenaStanding, arenaStreakBonus, arenaTierId, arenaWeeklyReward, arenaWeeklyRankGems, arenaPublicStanding } from '../../src/core/arenaStanding';
+import { readFileSync } from 'node:fs';
+import { ARENA_LOW_TIER_WIN, arenaScoreDelta, arenaWinMultiplier, ARENA_TIERS, arenaStanding, arenaStreakBonus, arenaTierId, arenaWeeklyReward, arenaWeeklyRankGems, arenaPublicStanding } from '../../src/core/arenaStanding';
 import { ARENA_WEEKLY_RANK_GEMS } from '../../src/core/arenaStanding';
 import { WEEKLY_RANK_GEMS } from '../../src/data/competitiveRewards';
 import { DUEL_TIERS } from '../../src/core/duelArena';
 
 const clean = (gems: number) => gems % (gems >= 1000 ? 500 : 100) === 0;
+
+describe('아레나 저티어 발판', () => {
+  it('브론즈 ×2 · 실버 ×1.5 · 골드부터 1배이고 진 쪽 몫은 그대로다', () => {
+    expect(arenaWinMultiplier(1000)).toBe(2);
+    expect(arenaWinMultiplier(1100)).toBe(1.5);
+    expect(arenaWinMultiplier(1300)).toBe(1);
+    expect(arenaScoreDelta(1000, 1000)).toEqual({ winner: 32, loser: 16 });
+    expect(arenaScoreDelta(1400, 1400)).toEqual({ winner: 16, loser: 16 });
+  });
+  it('배수 경계는 티어 바닥과 같고 SQL 원문에도 같은 수가 있다', () => {
+    expect(ARENA_LOW_TIER_WIN.map((row) => row.below)).toEqual([ARENA_TIERS[1].floor, ARENA_TIERS[2].floor]);
+    const sql = readFileSync('supabase/migrations/20261031010000_low_tier_scores.sql', 'utf8');
+    expect(sql).toContain('case when sa<1100 then 2 when sa<1300 then 1.5 else 1 end');
+  });
+});
 
 describe('아레나 자리', () => {
   it('RP 문턱마다 티어가 오르고 게이지는 다음 문턱까지 찬다', () => {

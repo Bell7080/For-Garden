@@ -105,6 +105,7 @@ interface OmenStage {
   /** 지금 무대를 쓰는 판의 섬광 알림. */
   onReveal?: () => void;
   busy: boolean;
+  observer?: ResizeObserver;
 }
 
 let stage: OmenStage | undefined;
@@ -138,13 +139,15 @@ async function buildStage(game: Phaser.Game, reducedMotion: boolean): Promise<Om
     style.height = `${box.height}px`;
   };
   syncBox();
-  new ResizeObserver(syncBox).observe(canvas);
+  const observer = new ResizeObserver(syncBox);
+  observer.observe(canvas);
   document.body.appendChild(root);
-  const built: OmenStage = { root, omen: undefined as unknown as OmenInstance, reducedMotion, busy: false };
+  const built: OmenStage = { root, omen: undefined as unknown as OmenInstance, reducedMotion, busy: false, observer };
   try {
     // 소리는 판마다 볼륨이 달라질 수 있어 켜 두고, 끈 경우만 판을 열 때 무음으로 돌린다.
     built.omen = new bundle.Omen(root, { sound: true, reducedMotion, onReveal: () => built.onReveal?.() });
   } catch {
+    observer.disconnect();
     root.remove();
     return undefined;
   }
@@ -163,6 +166,28 @@ export function warmSsrOmen(game: Phaser.Game, reducedMotion: boolean): Promise<
     return built;
   });
   return stagePromise;
+}
+
+/**
+ * 미리 세운 무대를 내린다. 무대는 게임 캔버스와 같은 크기의 WebGL 컨텍스트를 하나 더 들고 있어서
+ * 연구소를 한 번 다녀온 뒤 계속 남겨 두면 모바일 브라우저가 탭 메모리 한도로 탭을 죽이는 위험이
+ * 커진다. 연구소를 떠날 때 부른다 — 다음에 들어가면 `warmSsrOmen`이 다시 세운다.
+ * 전조가 아직 돌고 있으면 걷힐 때까지 기다렸다가 내린다.
+ */
+export function releaseSsrOmen(): void {
+  const drop = (built: OmenStage): void => {
+    if (built.busy) { window.setTimeout(() => drop(built), 200); return; }
+    built.observer?.disconnect();
+    try { built.omen.dispose(); } catch { /* 이미 죽은 무대여도 판은 치운다. */ }
+    built.root.remove();
+  };
+  const pending = stagePromise;
+  const current = stage;
+  // 바로 떼어 두어, 내리는 동안 다시 들어온 연구소가 죽어 가는 무대를 물려받지 않게 한다.
+  stage = undefined;
+  stagePromise = undefined;
+  if (current) drop(current);
+  else void pending?.then((built) => { if (built) drop(built); });
 }
 
 /** 3D 전조를 연다. 세울 수 없으면 `undefined`다. */

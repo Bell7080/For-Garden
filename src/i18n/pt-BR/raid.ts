@@ -23,6 +23,7 @@ export const RAID_PT_BR = {
   "raid.settle.done": "Recompensas recebidas",
   "raid.settle.ready": "Recompensas obtidas",
   "raid.settle.expected": "Recompensas previstas",
+  "raid.settle.none": "Sem contribuição",
   "raid.settle.max": "Recompensas máximas",
   "raid.settle.contribution": "Contribuição",
   "raid.settle.rank": "{rank}º lugar",

@@ -72,7 +72,7 @@ export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIM
  */
 export const WELCOME_SSR_POOL = ["rex", "spino", "nodonia", "mette"] as const;
 
-/** 연구소의 화석 연구 운영값. 천장(100회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
+/** 연구소의 화석 연구 운영값. 천장(120회)은 개별 배너가 아니라 pityGroupId별로 누적된다. */
 export const BANNERS: Banner[] = [
   {
     /*
@@ -117,7 +117,7 @@ export const BANNERS: Banner[] = [
     // **화석 연구는 픽업이 없는 기본 연구다.** 픽업을 세우면 상시 연구가 한정 연구처럼 읽히고,
     // 호박석 연구의 픽업이 무엇이 다른지 말하지 못한다.
     relicPools: STANDARD_POOLS, pickupRelicIds: {}, pickupRate: 0,
-    highestRarityGuarantee: 100,
+    highestRarityGuarantee: 120,
   },
   {
     id: "amber", pityGroupId: PITY_GROUP.LIMITED_PICKUP, name: "호박석 연구", featuredRelicId: "dian",
@@ -133,7 +133,7 @@ export const BANNERS: Banner[] = [
     slotRates: STANDARD_SLOT_RATES,
     grayRewards: STANDARD_GRAY_REWARDS,
     relicPools: pickupPools(AMBER_PICKUP), pickupRelicIds: { SSR: [...AMBER_PICKUP.SSR] }, pickupRate: 0.5,
-    highestRarityGuarantee: 100,
+    highestRarityGuarantee: 120,
   },
 ];
 

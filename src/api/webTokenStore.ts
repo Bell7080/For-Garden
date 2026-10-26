@@ -9,12 +9,13 @@ import { APP_TARGET } from "../core/appRuntime";
  * 바꾼 뒤 이 파일과 `docs/release-fixture-cleanup.md`의 항목을 함께 지운다.
  * 토큰은 `SupabaseAccountApi` 안에서만 읽고 쓰며 `Session`·`SaveData`·화면으로 새지 않는다.
  */
+import { defaultLocalStorage } from "../core/safeStorage";
 import type { StoredTokens, TokenStore } from "./SupabaseAccountApi";
 
 export const WEB_TOKEN_STORAGE_KEY = "forgarden.web.tokens";
 const KEY = WEB_TOKEN_STORAGE_KEY;
 
-export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = typeof localStorage === "undefined" ? undefined : localStorage): TokenStore | null {
+export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | undefined = defaultLocalStorage()): TokenStore | null {
   if (APP_TARGET !== "web" || !storage) return null;
   const store = {
     [Symbol.toStringTag]: "ForGardenWebTokenStore",
@@ -28,8 +29,8 @@ export function createWebTokenStore(storage: Pick<Storage, "getItem" | "setItem"
           : null;
       } catch { return null; }
     },
-    async save(tokens: StoredTokens) { storage.setItem(KEY, JSON.stringify(tokens)); },
-    async clear() { storage.removeItem(KEY); },
+    async save(tokens: StoredTokens) { try { storage.setItem(KEY, JSON.stringify(tokens)); } catch { /* 저장 차단 시 이번 방문의 메모리 세션은 유지한다. */ } },
+    async clear() { try { storage.removeItem(KEY); } catch { /* 차단된 저장소 때문에 로그아웃을 막지 않는다. */ } },
   };
   return store;
 }

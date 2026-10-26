@@ -556,3 +556,12 @@
   .rc-root[data-phase] #stage { animation: none !important; }
   .card-rotor { will-change: auto; }
 }
+
+/*
+ * 카드 뒷면의 빗금은 칸 하나가 1px 하드 에지 줄무늬라, 3D로 기울거나 격자로 줄어드는 순간
+ * 앨리어싱(모아레)이 자글거리는 노이즈로 보였다. 하드 에지를 없애고 삼각파로 부드럽게 오르내리게
+ * 해 어떤 배율·각도에서도 같은 결로 읽힌다.
+ */
+.rc-root .archive-card .card-back {
+  background: repeating-linear-gradient(45deg, #0b1718 0, #142322 4px, #0b1718 8px);
+}

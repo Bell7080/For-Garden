@@ -175,3 +175,22 @@ export function portraitCardHeadWindow(
     topOffsetX: (topRight - topLeft) / 2,
   };
 }
+
+/** 원화를 올리고 내릴 수 있는 카드의 최소 모양. */
+interface ResidentPortrait { readonly y: number; showPortrait(): void; hidePortrait(): void }
+
+/**
+ * 스크롤하는 카드 격자에서 보이는 줄(위아래 한 줄 여유)의 카드만 전신 원화를 GPU에 올리고, 두 줄 넘게
+ * 멀어진 카드는 내린다. 카드가 수십 장 한꺼번에 서면 한 장 6.5MB씩 200MB 안팎이 되어 모바일 탭이 죽는다.
+ * 올리는 문턱과 내리는 문턱을 달리 둬 경계에서 스크롤해도 올렸다 내렸다를 되풀이하지 않는다.
+ * 카드는 `deferPortrait`로 만들어야 한다.
+ */
+export function syncPortraitResidency(cards: Iterable<ResidentPortrait>, scrollY: number, viewport: { top: number; bottom: number }, cardHeight: number): void {
+  const top = viewport.top - cardHeight;
+  const bottom = viewport.bottom + cardHeight;
+  for (const card of cards) {
+    const y = card.y + scrollY;
+    if (y >= top && y <= bottom) card.showPortrait();
+    else if (y < top - cardHeight || y > bottom + cardHeight) card.hidePortrait();
+  }
+}

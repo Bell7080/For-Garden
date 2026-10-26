@@ -14,9 +14,8 @@ export const BATTLE_ID = {
   "tutorial.result.feed": "Kembali ke alun-alun untuk melatih Torika.",
   "tutorial.result.research": "Kembali ke alun-alun dan ambil persediaan riset restorasi.",
 
-  "battle.boss.phaseLine": "{phase}{warning}",
-  "battle.boss.tideWarning": " · Peringatan Pasang",
-  "battle.boss.limit": " · LIMIT",
+  "battle.rank.me": "Saya",
+  "battle.rank.weekly": "Peringkat mingguan",
   "battle.settle.failed": "Tidak dapat memulihkan layar hasil.",
   "battle.settle.scoreRejected": "Catatan pertempuran tidak dapat diverifikasi. Coba lagi.",
   "battle.settle.persistenceFailed": "Hasil tidak dapat disimpan. Coba lagi atau kembali ke lobi untuk memuat ulang data.",

@@ -35,7 +35,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena" | "guild";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena" | "guild" | "stamina";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
@@ -103,6 +103,13 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   guild: [
     { key: "guildCoin", icon: "currency-guild-coin", compact: true, color: "#a8f0c0" },
   ],
+  /**
+   * 스테미나 한 칸. 레이드·편성처럼 스테미나를 쓰는데 상단에 다른 재화를 세울 자리가 없는 화면의 것이다 —
+   * 출전을 누르기 전에 모자란지가 읽혀야 하고, 누르면 충전 창이 열린다.
+   */
+  stamina: [
+    { key: "stamina", icon: "currency-stamina", color: "#ffe9a3" },
+  ],
   none: [],
 };
 
@@ -120,5 +127,6 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly TopBarSlo
   duel: SLOTS.duel.map(({ key }) => key),
   duelArena: SLOTS.duelArena.map(({ key }) => key),
   guild: SLOTS.guild.map(({ key }) => key),
+  stamina: SLOTS.stamina.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

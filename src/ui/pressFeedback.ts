@@ -94,3 +94,27 @@ export function setPressRest(target: Pressable, scale: number): void {
   state.rest = scale;
   if (!state.pressed) { stop(state); target.setScale(scale); }
 }
+
+/**
+ * 입력면(`hit`)이 받은 손을 `target`의 눌림으로 옮긴다. 놓았을 때만 튕기고, 벗어나거나 끌기로 끝난 손은
+ * 조용히 돌아온다(전역 탭 가드가 끌린 손의 `pointerup`을 `pointerout`으로 바꿔 준다).
+ * **탭 핸들러보다 먼저 건다** — 핸들러가 target을 다시 그려 없애도 눌림이 먼저 풀려야 한다.
+ */
+export function bindPress(hit: Phaser.GameObjects.GameObject, target: Pressable, tier: PressTier = "normal"): void {
+  hit.on("pointerdown", () => pressIn(target, tier));
+  hit.on("pointerout", () => pressOut(target, tier, { pop: false }));
+  hit.on("pointerup", () => pressOut(target, tier));
+}
+
+/**
+ * 크기를 바꿀 수 없는 면(타일·줄)의 눌림: 면이 잠깐 밝아졌다 돌아온다. 투명하게 깔린 입력면의 채움을
+ * 올렸다 내리므로 별도 개체를 만들지 않는다.
+ */
+export function bindPressFlash(hit: Phaser.GameObjects.Rectangle, flashAlpha = 0.2): void {
+  const rest = hit.fillAlpha;
+  const color = hit.fillColor;
+  const set = (alpha: number): void => { if (hit.active) hit.setFillStyle(color, alpha); };
+  hit.on("pointerdown", () => { audioManager?.playUi("ui.click"); set(flashAlpha); });
+  hit.on("pointerout", () => set(rest));
+  hit.on("pointerup", () => set(rest));
+}

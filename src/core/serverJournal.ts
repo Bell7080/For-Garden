@@ -18,6 +18,8 @@ export interface ServerJournal {
   subscriptionBonusDates?: Record<string, string>;
   /** 운영 도구가 보낸 우편·재화 조정의 처리 기록(`opsInbox`). */
   ops?: OpsJournal;
+  /** QA 디버그 도구가 걸어 둔 「다음 10연 승급 찬스」. 개발 도구가 켜진 서버만 읽고, 10연 한 번에 꺼낸다. */
+  qaTenUpgrade?: boolean;
   subscriptionMails?: Record<string, { entitlementId: string; productId: string; sentAt: string; expiresAt: string; itemId: string; amount: number }>;
 }
 
@@ -29,7 +31,8 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
   const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
   const json = (v: unknown): boolean => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v))
     || (Array.isArray(v) ? v.every(json) : record(v) && Object.values(v).every(json));
-  return (journal.storyChoices === undefined || record(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0)))
+  return (journal.qaTenUpgrade === undefined || typeof journal.qaTenUpgrade === "boolean")
+    && (journal.storyChoices === undefined || record(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0)))
     && (journal.pendingStoryBondXp === undefined || record(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP]))
     && (journal.ops === undefined || isValidOpsJournal(journal.ops))
     && (journal.combat === undefined || record(journal.combat) && record(journal.combat.tickets) && record(journal.combat.records) && json(journal.combat))

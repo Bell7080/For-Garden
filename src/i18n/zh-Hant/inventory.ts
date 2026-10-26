@@ -11,6 +11,7 @@ export const INVENTORY_ZH_HANT = {
   "inventory.sort.part": "部位",
   "inventory.sort.craft": "打磨",
   "inventory.sort.equipped": "裝備中",
+  "inventory.sort.relic": "遺物",
   "inventory.guide.held": "持有",
   "inventory.guide.expiry": "{count}個 · {time}後消失",
   "inventory.expiry.days": "{days}天{hours}小時",

@@ -92,4 +92,8 @@ export const DUEL_TH = {
   "rewardTable.rules.expedition": "ปิดทุกวันจันทร์ 00:00 UTC · ส่งทางจดหมาย\nต้องมีคะแนนออกสำรวจในสัปดาห์นั้นจึงจะได้รับ",
   "rewardTable.rules.arena": "ปิดทุกวันจันทร์ 00:00 UTC · ส่งทางจดหมาย\nรางวัลระดับตอนปิดรวมโบนัสอันดับ ต้องมีผลแรงก์ในสัปดาห์นั้น",
   "ranking.mine": "อันดับของฉัน",
+  "duel.defense.title": "ทีมป้องกันของคู่แข่ง",
+  "duel.defense.totalPower": "พลังต่อสู้รวม",
+  "duel.defense.blind": "ช่องที่ซ่อน {count}",
+  "duel.defense.sortie": "ออกรบ",
 } as const;

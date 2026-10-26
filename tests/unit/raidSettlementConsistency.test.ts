@@ -32,12 +32,12 @@ describe("레이드·원정 정산의 실제 지급량과 재접속", () => {
     const h = setup(); h.state.wallet.gold = WALLET_CAPS.gold - 1;
     await h.api().enterRaid({ raidId: "audit-raid", requestId: "entry" });
     const result = await h.api().submitRaidDamage({ raidId: "audit-raid", requestId: "entry", actions: basics });
-    expect(result.runDamage).toBeGreaterThan(0); expect(result.granted.map(({ amount }) => amount)).toEqual([1]);
+    expect(result.runDamage).toBeGreaterThan(0); expect(result.granted.some(({ currency }) => currency === "gold")).toBe(false);
     const loaded = h.saves.load()!;
     const retry = await h.api(loaded).submitRaidDamage({ raidId: "audit-raid", requestId: "entry", actions: basics });
     expect(retry.granted).toEqual(result.granted); expect(retry.runDamage).toBe(result.runDamage);
     expect(retry.raid.entries).toEqual(result.raid.entries); expect(retry.raid.entries.some(({ isMe }) => isMe)).toBe(true);
-    expect(loaded.wallet.gold).toBe(WALLET_CAPS.gold);
+    expect(loaded.wallet.gold).toBe(WALLET_CAPS.gold - 1);
   });
   it("최종 토벌 보상은 상한 적용 후 증가분이며 재접속 재시도에도 순위를 복원한다", async () => {
     const h = setup(); h.state.raid.instances[0].myDamage = 10000; h.state.wallet.raidSigil = WALLET_CAPS.raidSigil;

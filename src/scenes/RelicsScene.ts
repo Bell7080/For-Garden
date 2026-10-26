@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugRelicScroll, setDebugScene } from "../debug";
@@ -14,7 +15,7 @@ import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -52,7 +53,7 @@ const GRID_CARD = { width: RELIC_GRID.card.width, height: RELIC_GRID.card.height
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
 const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
-const DRAG_SLOP = 18;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -304,6 +305,8 @@ export class RelicsScene extends Phaser.Scene {
       this.gridBottom = Math.max(this.gridBottom, y + cardH / 2);
       introIndex += 1;
     });
+    // 정보창을 옆으로 넘기는 순서는 지금 도감에 선 순서(보유 → 미보유, 정렬·필터 반영) 그대로다.
+    this.info.setNeighborOrder([...owned, ...locked]);
     place(owned, startY);
     if (locked.length > 0) {
       // 미보유 항목이 있을 때만 구분선과 제목을 같은 컨테이너에 만든다. 빈 섹션에는 장식도 없다.
@@ -362,6 +365,8 @@ export class RelicsScene extends Phaser.Scene {
         // 애착 렐릭은 떠오르지 않고 붉게 탄다. 크기까지 바뀌면 옆 칸과 줄이 어긋나 목록을
         // 훑는 눈이 거기서 걸린다.
         selectedStyle: "favorite",
+        // 전신 원화는 보이는 줄 근처만 올린다(`syncPortraitResidency`).
+        deferPortrait: true,
       });
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
@@ -480,6 +485,7 @@ export class RelicsScene extends Phaser.Scene {
     this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
+    syncPortraitResidency(this.cards.values(), this.content.y, { top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }, GRID_CARD.height);
     setDebugGridOffset("relics", this.content.y);
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }

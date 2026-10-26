@@ -1,0 +1,2779 @@
+{
+  "checkedOn": "2026-10-26",
+  "sourceRevision": "4aa54c7ecbf087d299d4c063640046f8ee424499",
+  "cases": 99,
+  "baseline": {
+    "equipment": "ceiling",
+    "variant": "baseline",
+    "seed": "1729",
+    "phase": "defeat",
+    "elapsed": 85,
+    "casts": {
+      "deina": [
+        4.72,
+        14.24,
+        18.5,
+        27.92,
+        32.18,
+        41.6,
+        47.98,
+        54.36,
+        60.74,
+        67.12,
+        71.38
+      ],
+      "ripa": [
+        7.92,
+        21.84,
+        44.36,
+        60.76,
+        78.48
+      ],
+      "toby": [
+        8.16,
+        37.66,
+        54.56,
+        76.2,
+        81.88
+      ],
+      "torika": [
+        8.46,
+        16.16,
+        23.86,
+        31.56,
+        39.26,
+        46.96,
+        54.66,
+        61.82,
+        69.52
+      ],
+      "ella": [
+        10.1,
+        18.64,
+        28.34,
+        35.72,
+        45.42,
+        52.8,
+        60.18,
+        69.88,
+        77.26
+      ]
+    },
+    "torikaHits": [
+      {
+        "at": 8.46,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1"
+        ]
+      },
+      {
+        "at": 9.96,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1"
+        ]
+      },
+      {
+        "at": 11.46,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 16.16,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 17.66,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 19.16,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 23.86,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 25.36,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 26.86,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 31.56,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 33.06,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 34.56,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 39.26,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 40.76,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 42.26,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 46.96,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 48.46,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 49.96,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 54.66,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 56.16,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 57.66,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 61.82,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 63.32,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 64.82,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 69.52,
+        "echo": false,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 71.02,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      },
+      {
+        "at": 72.52,
+        "echo": true,
+        "targets": [
+          "enemy-0",
+          "enemy-1",
+          "enemy-2"
+        ]
+      }
+    ],
+    "units": [
+      {
+        "fighterId": "enemy-0",
+        "relicId": "amo",
+        "side": "enemy",
+        "observedSeconds": 85,
+        "controlledSeconds": 71.08,
+        "controlledRatio": 0.836235,
+        "longestContinuousSeconds": 24.98,
+        "minFreeGapSeconds": 0.24,
+        "longestFreeWindowSeconds": 2.76,
+        "fullLockSeconds": 46.4,
+        "targetRestrictionSeconds": 63.78,
+        "byKindSeconds": {
+          "taunt": 63.56,
+          "stun": 45.02,
+          "stagger": 1.4,
+          "retarget": 0.22,
+          "knockback": 0.78
+        },
+        "directAttackFrames": 4,
+        "hostileAttackFrames": 4,
+        "friendlyFireFrames": 0,
+        "targetChanges": 18,
+        "targetReversals": 10,
+        "forcedTargetChanges": 17,
+        "forcedPursuitSeconds": 0.22,
+        "firstHostileAttackSeconds": 1.88,
+        "maxHostileAttackGapSeconds": 70.42,
+        "hostileAttackTimes": [
+          1.88,
+          5.52,
+          7.56,
+          14.58
+        ],
+        "intervals": [
+          {
+            "start": 1.86,
+            "end": 2.6,
+            "kinds": [
+              "taunt"
+            ]
+          },
+          {
+            "start": 5.36,
+            "end": 6.54,
+            "kinds": [
+              "taunt"
+            ]
+          },
+          {
+            "start": 7.54,
+            "end": 14.22,
+            "kinds": [
+              "taunt",
+              "stun"
+            ]
+          },
+          {
+            "start": 14.6,
+            "end": 39.58,
+            "kinds": [
+              "taunt",
+              "stagger",
+              "stun"
+            ]
+          },
+          {
+            "start": 40.16,
+            "end": 52.54,
+            "kinds": [
+              "taunt",
+              "stun",
+              "stagger"
+            ]
+          },
+          {
+            "start": 52.78,
+            "end": 59.92,
+            "kinds": [
+              "taunt",
+              "stun",
+              "stagger"
+            ]
+          },
+          {
+            "start": 60.16,
+            "end": 66.08,
+            "kinds": [
+              "stagger",
+              "taunt",
+              "stun"
+            ]
+          },
+          {
+            "start": 66.6,
+            "end": 67.34,
+            "kinds": [
+              "taunt"
+            ]
+          },
+          {
+            "start": 68.18,
+            "end": 68.4,
+            "kinds": [
+              "retarget"
+            ]
+          },
+          {
+            "start": 69.5,
+            "end": 74.72,
+            "kinds": [
+              "stun",
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 76.46,
+            "end": 76.56,
+            "kinds": [
+              "stagger"
+            ]
+          },
+          {
+            "start": 77.24,
+            "end": 82.24,
+            "kinds": [
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 84,
+            "end": 84.78,
+            "kinds": [
+              "knockback"
+            ]
+          }
+        ],
+        "violations": [
+          "continuous-control",
+          "control-density",
+          "missing-recovery-window"
+        ],
+        "verdict": "fail",
+        "hardContinuousSeconds": 5,
+        "hardIntervals": [
+          {
+            "start": 8.44,
+            "end": 13.44
+          },
+          {
+            "start": 14.74,
+            "end": 14.84
+          },
+          {
+            "start": 16.14,
+            "end": 21.14
+          },
+          {
+            "start": 23.84,
+            "end": 28.84
+          },
+          {
+            "start": 29.32,
+            "end": 30.32
+          },
+          {
+            "start": 31.54,
+            "end": 36.54
+          },
+          {
+            "start": 39.24,
+            "end": 39.58
+          },
+          {
+            "start": 40.74,
+            "end": 44.24
+          },
+          {
+            "start": 44.42,
+            "end": 45.42
+          },
+          {
+            "start": 46.18,
+            "end": 46.28
+          },
+          {
+            "start": 46.94,
+            "end": 51.94
+          },
+          {
+            "start": 54.64,
+            "end": 59.64
+          },
+          {
+            "start": 60.16,
+            "end": 60.26
+          },
+          {
+            "start": 61.8,
+            "end": 66.08
+          },
+          {
+            "start": 69.5,
+            "end": 74.5
+          },
+          {
+            "start": 76.46,
+            "end": 76.56
+          },
+          {
+            "start": 81.12,
+            "end": 81.22
+          },
+          {
+            "start": 84,
+            "end": 84.78
+          }
+        ],
+        "tauntOwnerSeconds": {
+          "deina": 7.48,
+          "torika": 19.36,
+          "ella": 36.72
+        }
+      },
+      {
+        "fighterId": "enemy-1",
+        "relicId": "toby",
+        "side": "enemy",
+        "observedSeconds": 85,
+        "controlledSeconds": 73.28,
+        "controlledRatio": 0.862118,
+        "longestContinuousSeconds": 45.74,
+        "minFreeGapSeconds": 0.22,
+        "longestFreeWindowSeconds": 3.28,
+        "fullLockSeconds": 48.64,
+        "targetRestrictionSeconds": 66.12,
+        "byKindSeconds": {
+          "taunt": 65.82,
+          "retarget": 2.64,
+          "stun": 47.36,
+          "stagger": 1.4,
+          "knockback": 0.78
+        },
+        "directAttackFrames": 27,
+        "hostileAttackFrames": 27,
+        "friendlyFireFrames": 0,
+        "targetChanges": 17,
+        "targetReversals": 10,
+        "forcedTargetChanges": 17,
+        "forcedPursuitSeconds": 2.64,
+        "firstHostileAttackSeconds": 1.84,
+        "maxHostileAttackGapSeconds": 8.1,
+        "hostileAttackTimes": [
+          1.84,
+          3.32,
+          4.88,
+          6.78,
+          8.16,
+          14.52,
+          21.86,
+          23.18,
+          31.28,
+          37.66,
+          44.42,
+          45.68,
+          52.14,
+          53.36,
+          54.56,
+          61.34,
+          67.5,
+          68.66,
+          74.92,
+          76.2,
+          77.42,
+          78.54,
+          79.64,
+          80.72,
+          81.88,
+          82.94,
+          84
+        ],
+        "intervals": [
+          {
+            "start": 3.28,
+            "end": 4.02,
+            "kinds": [
+              "taunt",
+              "retarget"
+            ]
+          },
+          {
+            "start": 4.72,
+            "end": 4.86,
+            "kinds": [
+              "retarget"
+            ]
+          },
+          {
+            "start": 5.36,
+            "end": 6.54,
+            "kinds": [
+              "stun",
+              "taunt"
+            ]
+          },
+          {
+            "start": 6.8,
+            "end": 52.54,
+            "kinds": [
+              "taunt",
+              "stun",
+              "stagger",
+              "retarget"
+            ]
+          },
+          {
+            "start": 52.78,
+            "end": 59.92,
+            "kinds": [
+              "taunt",
+              "stun",
+              "stagger"
+            ]
+          },
+          {
+            "start": 60.16,
+            "end": 66.8,
+            "kinds": [
+              "stagger",
+              "taunt",
+              "stun"
+            ]
+          },
+          {
+            "start": 69.5,
+            "end": 74.72,
+            "kinds": [
+              "stun",
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 75.36,
+            "end": 75.8,
+            "kinds": [
+              "taunt"
+            ]
+          },
+          {
+            "start": 76.02,
+            "end": 76.18,
+            "kinds": [
+              "retarget"
+            ]
+          },
+          {
+            "start": 76.46,
+            "end": 76.56,
+            "kinds": [
+              "stagger"
+            ]
+          },
+          {
+            "start": 77.24,
+            "end": 82.24,
+            "kinds": [
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 84,
+            "end": 84.78,
+            "kinds": [
+              "knockback"
+            ]
+          }
+        ],
+        "violations": [
+          "continuous-control",
+          "control-density",
+          "missing-recovery-window"
+        ],
+        "verdict": "fail",
+        "hardContinuousSeconds": 5.12,
+        "hardIntervals": [
+          {
+            "start": 5.36,
+            "end": 5.86
+          },
+          {
+            "start": 8.44,
+            "end": 13.44
+          },
+          {
+            "start": 14.6,
+            "end": 15.1
+          },
+          {
+            "start": 16.14,
+            "end": 21.14
+          },
+          {
+            "start": 23.84,
+            "end": 28.96
+          },
+          {
+            "start": 29.88,
+            "end": 29.98
+          },
+          {
+            "start": 31.54,
+            "end": 36.54
+          },
+          {
+            "start": 37.7,
+            "end": 38.2
+          },
+          {
+            "start": 39.24,
+            "end": 44.24
+          },
+          {
+            "start": 46.18,
+            "end": 46.28
+          },
+          {
+            "start": 46.94,
+            "end": 52.06
+          },
+          {
+            "start": 54.64,
+            "end": 59.64
+          },
+          {
+            "start": 60.16,
+            "end": 60.76
+          },
+          {
+            "start": 61.8,
+            "end": 66.8
+          },
+          {
+            "start": 69.5,
+            "end": 74.62
+          },
+          {
+            "start": 76.46,
+            "end": 76.56
+          },
+          {
+            "start": 81.12,
+            "end": 81.22
+          },
+          {
+            "start": 84,
+            "end": 84.78
+          }
+        ],
+        "tauntOwnerSeconds": {
+          "deina": 9.86,
+          "torika": 17.74,
+          "ella": 38.22
+        }
+      },
+      {
+        "fighterId": "enemy-2",
+        "relicId": "ripa",
+        "side": "enemy",
+        "observedSeconds": 85,
+        "controlledSeconds": 73.92,
+        "controlledRatio": 0.869647,
+        "longestContinuousSeconds": 53.12,
+        "minFreeGapSeconds": 0.24,
+        "longestFreeWindowSeconds": 4.7,
+        "fullLockSeconds": 45.86,
+        "targetRestrictionSeconds": 66.8,
+        "byKindSeconds": {
+          "taunt": 66.8,
+          "stagger": 1.6,
+          "stun": 44.28,
+          "knockback": 0.78
+        },
+        "directAttackFrames": 28,
+        "hostileAttackFrames": 28,
+        "friendlyFireFrames": 0,
+        "targetChanges": 20,
+        "targetReversals": 7,
+        "forcedTargetChanges": 20,
+        "forcedPursuitSeconds": 0,
+        "firstHostileAttackSeconds": 1.82,
+        "maxHostileAttackGapSeconds": 7.48,
+        "hostileAttackTimes": [
+          1.82,
+          3.32,
+          4.82,
+          6.42,
+          7.92,
+          9.42,
+          11.02,
+          14.08,
+          15.26,
+          21.84,
+          23.34,
+          29.82,
+          36.8,
+          37.88,
+          44.36,
+          45.86,
+          52.44,
+          53.52,
+          54.6,
+          60.76,
+          67.24,
+          74.72,
+          75.8,
+          76.98,
+          78.48,
+          79.98,
+          81.58,
+          83.08
+        ],
+        "intervals": [
+          {
+            "start": 4.7,
+            "end": 6.34,
+            "kinds": [
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 6.8,
+            "end": 59.92,
+            "kinds": [
+              "taunt",
+              "stagger",
+              "stun"
+            ]
+          },
+          {
+            "start": 60.16,
+            "end": 66.8,
+            "kinds": [
+              "stagger",
+              "taunt",
+              "stun"
+            ]
+          },
+          {
+            "start": 68.52,
+            "end": 74.72,
+            "kinds": [
+              "stun",
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 75.36,
+            "end": 75.8,
+            "kinds": [
+              "taunt"
+            ]
+          },
+          {
+            "start": 76.46,
+            "end": 76.56,
+            "kinds": [
+              "stagger"
+            ]
+          },
+          {
+            "start": 77.24,
+            "end": 82.24,
+            "kinds": [
+              "taunt",
+              "stagger"
+            ]
+          },
+          {
+            "start": 84,
+            "end": 84.78,
+            "kinds": [
+              "knockback"
+            ]
+          }
+        ],
+        "violations": [
+          "continuous-control",
+          "control-density",
+          "missing-recovery-window"
+        ],
+        "verdict": "fail",
+        "hardContinuousSeconds": 5.98,
+        "hardIntervals": [
+          {
+            "start": 5.42,
+            "end": 5.52
+          },
+          {
+            "start": 10.08,
+            "end": 10.18
+          },
+          {
+            "start": 11.44,
+            "end": 13.44
+          },
+          {
+            "start": 14.74,
+            "end": 14.84
+          },
+          {
+            "start": 15.64,
+            "end": 21.14
+          },
+          {
+            "start": 23.84,
+            "end": 28.84
+          },
+          {
+            "start": 29.88,
+            "end": 29.98
+          },
+          {
+            "start": 30.74,
+            "end": 36.54
+          },
+          {
+            "start": 39.24,
+            "end": 44.24
+          },
+          {
+            "start": 46.18,
+            "end": 46.28
+          },
+          {
+            "start": 46.94,
+            "end": 51.94
+          },
+          {
+            "start": 54.64,
+            "end": 59.64
+          },
+          {
+            "start": 60.16,
+            "end": 60.26
+          },
+          {
+            "start": 61.8,
+            "end": 66.8
+          },
+          {
+            "start": 68.52,
+            "end": 74.5
+          },
+          {
+            "start": 76.46,
+            "end": 76.56
+          },
+          {
+            "start": 81.12,
+            "end": 81.22
+          },
+          {
+            "start": 84,
+            "end": 84.78
+          }
+        ],
+        "tauntOwnerSeconds": {
+          "deina": 8.98,
+          "torika": 19.6,
+          "ella": 38.22
+        }
+      }
+    ],
+    "amoGapBudget": {
+      "windowStartSeconds": 14.58,
+      "hard": 41.4,
+      "cooldown": 28.8,
+      "readyOutOfReach": 0.22,
+      "readyInReach": 0
+    },
+    "aimTrace": [
+      {
+        "at": 0.02,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": -0.02,
+        "gap": 753.330185
+      },
+      {
+        "at": 0.02,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.16,
+        "gap": 614.72226
+      },
+      {
+        "at": 0.02,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.34,
+        "gap": 754.838708
+      },
+      {
+        "at": 1.88,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 2.027027,
+        "gap": 139.839559
+      },
+      {
+        "at": 2.62,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.287027,
+        "gap": 230.969072
+      },
+      {
+        "at": 3.3,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": -0.017692,
+        "gap": 137.969643
+      },
+      {
+        "at": 4.02,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": -0.112973,
+        "gap": 313.264787
+      },
+      {
+        "at": 4.04,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.695094,
+        "gap": 204.079645
+      },
+      {
+        "at": 4.72,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.1,
+        "gap": 141.158206
+      },
+      {
+        "at": 5.38,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": -1.472973,
+        "gap": 152.102906
+      },
+      {
+        "at": 5.38,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-1",
+        "stun": 0.5,
+        "cooldown": 0.908889,
+        "gap": 141.511642
+      },
+      {
+        "at": 5.38,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.94,
+        "gap": 250.825773
+      },
+      {
+        "at": 5.82,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.727027,
+        "gap": 139.313782
+      },
+      {
+        "at": 5.82,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0.06,
+        "cooldown": 0.908889,
+        "gap": 141.511642
+      },
+      {
+        "at": 6.36,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.06,
+        "gap": 139.619348
+      },
+      {
+        "at": 6.56,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.987027,
+        "gap": 132.607976
+      },
+      {
+        "at": 6.56,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.208889,
+        "gap": 141.511642
+      },
+      {
+        "at": 6.82,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.323636,
+        "gap": 141.511642
+      },
+      {
+        "at": 6.82,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.1,
+        "gap": 75.422419
+      },
+      {
+        "at": 7.56,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 2.027027,
+        "gap": 132.607976
+      },
+      {
+        "at": 7.56,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.583636,
+        "gap": 168.445268
+      },
+      {
+        "at": 7.56,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.36,
+        "gap": 233.364251
+      },
+      {
+        "at": 9.82,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 0.64,
+        "cooldown": 1.063636,
+        "gap": 139.741704
+      },
+      {
+        "at": 9.82,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.1,
+        "gap": 149.521516
+      },
+      {
+        "at": 10,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 1.063636,
+        "gap": 139.741704
+      },
+      {
+        "at": 10,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.92,
+        "gap": 233.364251
+      },
+      {
+        "at": 10.1,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.86,
+        "cooldown": 1.127027,
+        "gap": 150
+      },
+      {
+        "at": 10.1,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.86,
+        "cooldown": 1.063636,
+        "gap": 150
+      },
+      {
+        "at": 10.1,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.84,
+        "gap": 150
+      },
+      {
+        "at": 14.24,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.327027,
+        "gap": 90
+      },
+      {
+        "at": 14.62,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.987027,
+        "gap": 140.152651
+      },
+      {
+        "at": 14.62,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.5,
+        "cooldown": 1.259286,
+        "gap": 90
+      },
+      {
+        "at": 14.62,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.531429,
+        "gap": 193.934656
+      },
+      {
+        "at": 15.12,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.239286,
+        "gap": 145.985391
+      },
+      {
+        "at": 17.08,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.08,
+        "cooldown": 0.199286,
+        "gap": 156.356186
+      },
+      {
+        "at": 17.54,
+        "id": "amo",
+        "target": null,
+        "taunt": null,
+        "stun": 0.62,
+        "cooldown": 0.547027,
+        "gap": null
+      },
+      {
+        "at": 17.54,
+        "id": "ripa",
+        "target": null,
+        "taunt": null,
+        "stun": 0.62,
+        "cooldown": 0.691429,
+        "gap": null
+      },
+      {
+        "at": 17.82,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 1.84,
+        "cooldown": 0.199286,
+        "gap": 156.356186
+      },
+      {
+        "at": 18.5,
+        "id": "amo",
+        "target": null,
+        "taunt": "player-0",
+        "stun": 1.16,
+        "cooldown": 0.547027,
+        "gap": null
+      },
+      {
+        "at": 18.64,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.02,
+        "cooldown": 0.547027,
+        "gap": 150
+      },
+      {
+        "at": 18.64,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.02,
+        "cooldown": 0.199286,
+        "gap": 150
+      },
+      {
+        "at": 18.64,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.02,
+        "cooldown": 0.691429,
+        "gap": 150
+      },
+      {
+        "at": 21.84,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.887027,
+        "gap": 139.241942
+      },
+      {
+        "at": 21.84,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": -0.500714,
+        "gap": 183.424586
+      },
+      {
+        "at": 21.84,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.5,
+        "gap": 150
+      },
+      {
+        "at": 21.86,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.867027,
+        "gap": 91.70011
+      },
+      {
+        "at": 21.86,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.315789,
+        "gap": 122.13434
+      },
+      {
+        "at": 21.86,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 1.48,
+        "gap": 193.142412
+      },
+      {
+        "at": 24.5,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.36,
+        "cooldown": 1.907027,
+        "gap": 138.71186
+      },
+      {
+        "at": 24.5,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.36,
+        "cooldown": 0.633103,
+        "gap": 135.048126
+      },
+      {
+        "at": 24.5,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.36,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 25.24,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0.62,
+        "cooldown": 1.907027,
+        "gap": 138.71186
+      },
+      {
+        "at": 25.24,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0.62,
+        "cooldown": 0.633103,
+        "gap": 135.048126
+      },
+      {
+        "at": 25.24,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0.62,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 25.5,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.86,
+        "cooldown": 1.907027,
+        "gap": 138.71186
+      },
+      {
+        "at": 25.5,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.86,
+        "cooldown": 0.633103,
+        "gap": 135.048126
+      },
+      {
+        "at": 25.5,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 1.86,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 26.24,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 1.12,
+        "cooldown": 1.907027,
+        "gap": 138.71186
+      },
+      {
+        "at": 26.24,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 1.12,
+        "cooldown": 0.633103,
+        "gap": 135.048126
+      },
+      {
+        "at": 26.24,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 1.12,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 26.5,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 0.86,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 27.24,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 1.62,
+        "cooldown": 0.98,
+        "gap": 193.934656
+      },
+      {
+        "at": 27.92,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-0",
+        "stun": 0.94,
+        "cooldown": 0.633103,
+        "gap": 135.048126
+      },
+      {
+        "at": 28.34,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.52,
+        "cooldown": 1.907027,
+        "gap": 150
+      },
+      {
+        "at": 28.34,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.52,
+        "cooldown": 0.633103,
+        "gap": 150
+      },
+      {
+        "at": 28.34,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.52,
+        "cooldown": 0.98,
+        "gap": 150
+      },
+      {
+        "at": 33.1,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.187027,
+        "gap": 90
+      },
+      {
+        "at": 33.1,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.991186,
+        "gap": 90
+      },
+      {
+        "at": 33.1,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.251429,
+        "gap": 90
+      },
+      {
+        "at": 34.08,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.98,
+        "cooldown": 0.187027,
+        "gap": 90
+      },
+      {
+        "at": 34.08,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.98,
+        "cooldown": 0.991186,
+        "gap": 90
+      },
+      {
+        "at": 34.08,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.98,
+        "cooldown": 0.251429,
+        "gap": 90
+      },
+      {
+        "at": 34.18,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.88,
+        "cooldown": 0.187027,
+        "gap": 90
+      },
+      {
+        "at": 34.18,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.88,
+        "cooldown": 0.991186,
+        "gap": 90
+      },
+      {
+        "at": 34.18,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.88,
+        "cooldown": 0.251429,
+        "gap": 90
+      },
+      {
+        "at": 34.92,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 1.64,
+        "cooldown": 0.187027,
+        "gap": 90
+      },
+      {
+        "at": 34.92,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 1.64,
+        "cooldown": 0.991186,
+        "gap": 90
+      },
+      {
+        "at": 34.92,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 1.64,
+        "cooldown": 0.251429,
+        "gap": 90
+      },
+      {
+        "at": 35.18,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.38,
+        "cooldown": 0.187027,
+        "gap": 90
+      },
+      {
+        "at": 35.18,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.38,
+        "cooldown": 0.991186,
+        "gap": 90
+      },
+      {
+        "at": 35.18,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.38,
+        "cooldown": 0.251429,
+        "gap": 90
+      },
+      {
+        "at": 35.72,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.84,
+        "cooldown": 0.187027,
+        "gap": 150
+      },
+      {
+        "at": 35.72,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.84,
+        "cooldown": 0.991186,
+        "gap": 150
+      },
+      {
+        "at": 35.72,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.84,
+        "cooldown": 0.251429,
+        "gap": 150
+      },
+      {
+        "at": 39.6,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.527027,
+        "gap": 90
+      },
+      {
+        "at": 40.18,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.947027,
+        "gap": 139.691603
+      },
+      {
+        "at": 40.72,
+        "id": "toby",
+        "target": null,
+        "taunt": null,
+        "stun": 0.54,
+        "cooldown": 0.171186,
+        "gap": null
+      },
+      {
+        "at": 40.72,
+        "id": "ripa",
+        "target": null,
+        "taunt": null,
+        "stun": 0.54,
+        "cooldown": 0.12,
+        "gap": null
+      },
+      {
+        "at": 40.92,
+        "id": "amo",
+        "target": null,
+        "taunt": null,
+        "stun": 1.84,
+        "cooldown": 0.367027,
+        "gap": null
+      },
+      {
+        "at": 41.6,
+        "id": "ripa",
+        "target": null,
+        "taunt": "player-0",
+        "stun": 1.16,
+        "cooldown": 0.12,
+        "gap": null
+      },
+      {
+        "at": 42.34,
+        "id": "amo",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.367027,
+        "gap": null
+      },
+      {
+        "at": 42.34,
+        "id": "toby",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.171186,
+        "gap": null
+      },
+      {
+        "at": 42.34,
+        "id": "ripa",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.12,
+        "gap": null
+      },
+      {
+        "at": 43.02,
+        "id": "toby",
+        "target": null,
+        "taunt": "player-0",
+        "stun": 1.24,
+        "cooldown": 0.171186,
+        "gap": null
+      },
+      {
+        "at": 43.32,
+        "id": "amo",
+        "target": null,
+        "taunt": null,
+        "stun": 0.94,
+        "cooldown": 0.367027,
+        "gap": null
+      },
+      {
+        "at": 43.32,
+        "id": "ripa",
+        "target": null,
+        "taunt": null,
+        "stun": 0.94,
+        "cooldown": 0.12,
+        "gap": null
+      },
+      {
+        "at": 43.76,
+        "id": "toby",
+        "target": null,
+        "taunt": null,
+        "stun": 0.5,
+        "cooldown": 0.171186,
+        "gap": null
+      },
+      {
+        "at": 44.16,
+        "id": "amo",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 0.1,
+        "cooldown": 0.367027,
+        "gap": null
+      },
+      {
+        "at": 44.16,
+        "id": "toby",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 0.1,
+        "cooldown": 0.171186,
+        "gap": null
+      },
+      {
+        "at": 44.16,
+        "id": "ripa",
+        "target": null,
+        "taunt": "player-1",
+        "stun": 0.1,
+        "cooldown": 0.12,
+        "gap": null
+      },
+      {
+        "at": 44.26,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.347027,
+        "gap": 140.074695
+      },
+      {
+        "at": 44.26,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.151186,
+        "gap": 142.854244
+      },
+      {
+        "at": 44.26,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.1,
+        "gap": 193.934656
+      },
+      {
+        "at": 45.42,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0.02,
+        "cooldown": 0.187027,
+        "gap": 150
+      },
+      {
+        "at": 45.42,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.25,
+        "gap": 150
+      },
+      {
+        "at": 45.42,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.44,
+        "gap": 150
+      },
+      {
+        "at": 48.5,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.787027,
+        "gap": 90
+      },
+      {
+        "at": 48.5,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.069508,
+        "gap": 90
+      },
+      {
+        "at": 48.5,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.96,
+        "cooldown": 0.5,
+        "gap": 90
+      },
+      {
+        "at": 51.44,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.52,
+        "cooldown": 0.787027,
+        "gap": 90
+      },
+      {
+        "at": 51.44,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.52,
+        "cooldown": 0.069508,
+        "gap": 90
+      },
+      {
+        "at": 51.44,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.52,
+        "cooldown": 0.5,
+        "gap": 90
+      },
+      {
+        "at": 51.58,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.38,
+        "cooldown": 0.787027,
+        "gap": 90
+      },
+      {
+        "at": 51.58,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.5,
+        "cooldown": 0.069508,
+        "gap": 90
+      },
+      {
+        "at": 51.58,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.38,
+        "cooldown": 0.5,
+        "gap": 90
+      },
+      {
+        "at": 51.96,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.767027,
+        "gap": 135.892423
+      },
+      {
+        "at": 51.96,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.48,
+        "gap": 193.934656
+      },
+      {
+        "at": 52.08,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.049508,
+        "gap": 136.466312
+      },
+      {
+        "at": 52.44,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.071429,
+        "gap": 133.299561
+      },
+      {
+        "at": 52.56,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.167027,
+        "gap": 101.294476
+      },
+      {
+        "at": 52.56,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.789677,
+        "gap": 136.466312
+      },
+      {
+        "at": 52.8,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 1.967027,
+        "gap": 150
+      },
+      {
+        "at": 52.8,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.549677,
+        "gap": 150
+      },
+      {
+        "at": 52.8,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.711429,
+        "gap": 150
+      },
+      {
+        "at": 56.48,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.68,
+        "cooldown": 0.107027,
+        "gap": 140.423135
+      },
+      {
+        "at": 56.48,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.68,
+        "cooldown": 1.090476,
+        "gap": 139.684617
+      },
+      {
+        "at": 56.48,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.68,
+        "cooldown": 1.011429,
+        "gap": 150
+      },
+      {
+        "at": 58.2,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.46,
+        "cooldown": 0.107027,
+        "gap": 140.423135
+      },
+      {
+        "at": 58.2,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.46,
+        "cooldown": 1.090476,
+        "gap": 139.684617
+      },
+      {
+        "at": 58.2,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.46,
+        "cooldown": 1.011429,
+        "gap": 150
+      },
+      {
+        "at": 58.94,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.72,
+        "cooldown": 0.107027,
+        "gap": 90
+      },
+      {
+        "at": 58.94,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.72,
+        "cooldown": 1.090476,
+        "gap": 90
+      },
+      {
+        "at": 58.94,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.72,
+        "cooldown": 1.011429,
+        "gap": 90
+      },
+      {
+        "at": 59.2,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.46,
+        "cooldown": 0.107027,
+        "gap": 90
+      },
+      {
+        "at": 59.2,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.46,
+        "cooldown": 1.090476,
+        "gap": 90
+      },
+      {
+        "at": 59.2,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 0.46,
+        "cooldown": 1.011429,
+        "gap": 90
+      },
+      {
+        "at": 59.66,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.087027,
+        "gap": 73.985358
+      },
+      {
+        "at": 59.66,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.070476,
+        "gap": 137.062667
+      },
+      {
+        "at": 59.66,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.991429,
+        "gap": 190.415317
+      },
+      {
+        "at": 59.94,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.847027,
+        "gap": 90
+      },
+      {
+        "at": 59.94,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.790476,
+        "gap": 75.398894
+      },
+      {
+        "at": 59.94,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.711429,
+        "gap": 263.57897
+      },
+      {
+        "at": 60.18,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 1.627027,
+        "gap": 150
+      },
+      {
+        "at": 60.18,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.570476,
+        "gap": 150
+      },
+      {
+        "at": 60.18,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.491429,
+        "gap": 150
+      },
+      {
+        "at": 64.9,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.067027,
+        "gap": 90
+      },
+      {
+        "at": 64.9,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.691875,
+        "gap": 90
+      },
+      {
+        "at": 64.9,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 1.92,
+        "cooldown": 0.44,
+        "gap": 90
+      },
+      {
+        "at": 65.2,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1.62,
+        "cooldown": 0.691875,
+        "gap": 90
+      },
+      {
+        "at": 65.88,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.94,
+        "cooldown": 0.067027,
+        "gap": 90
+      },
+      {
+        "at": 65.88,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.94,
+        "cooldown": 0.44,
+        "gap": 90
+      },
+      {
+        "at": 65.94,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.88,
+        "cooldown": 0.691875,
+        "gap": 90
+      },
+      {
+        "at": 66.26,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.927027,
+        "gap": 141.158206
+      },
+      {
+        "at": 66.62,
+        "id": "amo",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 1.567027,
+        "gap": 141.158206
+      },
+      {
+        "at": 67.36,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.827027,
+        "gap": 148.050758
+      },
+      {
+        "at": 68.54,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-0",
+        "stun": 1,
+        "cooldown": 0.22,
+        "gap": 130.875782
+      },
+      {
+        "at": 69.28,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0.26,
+        "cooldown": 0.22,
+        "gap": 159.170336
+      },
+      {
+        "at": 69.52,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 2,
+        "cooldown": 0.927027,
+        "gap": 140.519992
+      },
+      {
+        "at": 69.52,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 2,
+        "cooldown": 0.296364,
+        "gap": 121.240209
+      },
+      {
+        "at": 69.52,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 2,
+        "cooldown": 0.22,
+        "gap": 159.170336
+      },
+      {
+        "at": 69.88,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.64,
+        "cooldown": 0.927027,
+        "gap": 150
+      },
+      {
+        "at": 69.88,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.64,
+        "cooldown": 0.296364,
+        "gap": 150
+      },
+      {
+        "at": 69.88,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 1.64,
+        "cooldown": 0.22,
+        "gap": 150
+      },
+      {
+        "at": 74.14,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.38,
+        "cooldown": 0.927027,
+        "gap": 90
+      },
+      {
+        "at": 74.14,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.5,
+        "cooldown": 0.296364,
+        "gap": 90
+      },
+      {
+        "at": 74.14,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-1",
+        "stun": 0.38,
+        "cooldown": 0.22,
+        "gap": 90
+      },
+      {
+        "at": 74.52,
+        "id": "amo",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.907027,
+        "gap": 165.241086
+      },
+      {
+        "at": 74.52,
+        "id": "ripa",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.2,
+        "gap": 199.15754
+      },
+      {
+        "at": 74.64,
+        "id": "toby",
+        "target": "player-1",
+        "taunt": "player-1",
+        "stun": 0,
+        "cooldown": 0.276364,
+        "gap": 145.534429
+      },
+      {
+        "at": 74.74,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.687027,
+        "gap": 137.225826
+      },
+      {
+        "at": 74.74,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.176364,
+        "gap": 112.219702
+      },
+      {
+        "at": 74.74,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.051429,
+        "gap": 133.473547
+      },
+      {
+        "at": 75.38,
+        "id": "toby",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.659403,
+        "gap": 194.329944
+      },
+      {
+        "at": 75.38,
+        "id": "ripa",
+        "target": "player-0",
+        "taunt": "player-0",
+        "stun": 0,
+        "cooldown": 0.411429,
+        "gap": 133.473547
+      },
+      {
+        "at": 75.82,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.219403,
+        "gap": 196.236514
+      },
+      {
+        "at": 75.82,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.051429,
+        "gap": 90
+      },
+      {
+        "at": 77.26,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.307027,
+        "gap": 150
+      },
+      {
+        "at": 77.26,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 0.159403,
+        "gap": 150
+      },
+      {
+        "at": 77.26,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": "player-2",
+        "stun": 0,
+        "cooldown": 1.22,
+        "gap": 150
+      },
+      {
+        "at": 82.26,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.527027,
+        "gap": 140.379278
+      },
+      {
+        "at": 82.26,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.676338,
+        "gap": 140.912268
+      },
+      {
+        "at": 82.26,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.82,
+        "gap": 150
+      },
+      {
+        "at": 84.02,
+        "id": "amo",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.827027,
+        "gap": null
+      },
+      {
+        "at": 84.02,
+        "id": "toby",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.027397,
+        "gap": null
+      },
+      {
+        "at": 84.02,
+        "id": "ripa",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.58,
+        "gap": null
+      },
+      {
+        "at": 84.82,
+        "id": "amo",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.807027,
+        "gap": 641.601434
+      },
+      {
+        "at": 84.82,
+        "id": "toby",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.007397,
+        "gap": 721.349936
+      },
+      {
+        "at": 84.82,
+        "id": "ripa",
+        "target": "player-2",
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.56,
+        "gap": 262.233436
+      },
+      {
+        "at": 85,
+        "id": "amo",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 1.647027,
+        "gap": null
+      },
+      {
+        "at": 85,
+        "id": "toby",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.847397,
+        "gap": null
+      },
+      {
+        "at": 85,
+        "id": "ripa",
+        "target": null,
+        "taunt": null,
+        "stun": 0,
+        "cooldown": 0.4,
+        "gap": null
+      }
+    ]
+  },
+  "tauntProbe": {
+    "hpBefore": 2316,
+    "hpAfter": 2431.8,
+    "heal": 115.80000000000018,
+    "remaining": 5,
+    "owner": "player-2",
+    "attemptedOwner": "player-0",
+    "events": [
+      {
+        "kind": "heal",
+        "fighterId": "player-0",
+        "amount": 115.80000000000018,
+        "source": "passive",
+        "effect": {
+          "tag": "heal",
+          "intensity": 0.2500000000000004
+        }
+      }
+    ]
+  },
+  "nonAttackingEnemyUltimateProbe": {
+    "automatic": {
+      "manual": false,
+      "energy": 100,
+      "shield": 0,
+      "enemyCooldown": 2.027027027027027,
+      "playerTauntedBy": null,
+      "events": []
+    },
+    "directSharedCast": {
+      "manual": true,
+      "energy": 0,
+      "shield": 497,
+      "enemyCooldown": 2.027027027027027,
+      "playerTauntedBy": "enemy-0",
+      "events": [
+        {
+          "kind": "shieldGranted",
+          "fighterId": "enemy-0",
+          "providerId": "enemy-0",
+          "amount": 497,
+          "remaining": 497,
+          "effect": {
+            "tag": "shieldGain",
+            "intensity": 5.249999999999999
+          }
+        },
+        {
+          "kind": "combatEffect",
+          "fighterId": "player-0",
+          "effect": {
+            "tag": "shieldHit",
+            "intensity": 1
+          }
+        }
+      ]
+    }
+  },
+  "sourceSha256": {
+    "src/core/skirmish.ts": "485ab5c33289ab05ede156ca87ea627c369f5c1f89c55dd8252578c0b755a645",
+    "src/core/ancientStrataBattle.ts": "10e43f8be926f617afd63aa6b845f0499df3ae81807d6f9021f26cef761ce2eb",
+    "src/data/relics.ts": "5f0ef8ce088a28e81a7d6dac9e82523c04f56814d3fdc98a16d9c93e1a14ed61",
+    "scripts/tank-cc-diagnosis.ts": "a7ce485db21e8c2807e1ce63cd85d5eb016ad0d3da38ebd00cafd7d1c39f436c"
+  },
+  "balanceChanged": false
+}

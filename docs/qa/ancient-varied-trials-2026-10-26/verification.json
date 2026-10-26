@@ -74,5 +74,12 @@
     "targetUpperApproximation": 120,
     "aboveTargetFloors": 5,
     "all124StableCandidatesIncludePachi": true
+  },
+  "followupDiagnosis": {
+    "report": "docs/tank-cc-diagnosis-2026-10-26.md",
+    "baselineMaxContinuousHardCcSeconds": 5.98,
+    "attackGapConfoundedByNonAttackingEnemyUltimateAiBug": true,
+    "previousTerminologyCorrection": "stun, not concussion; 53.12 seconds includes taunt",
+    "engineChanged": false
   }
 }

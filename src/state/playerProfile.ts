@@ -111,6 +111,14 @@ function profileAvatarRelic(state: Session): { relicId: string; portraitAssetId:
   return relic ? { relicId: relic.id, portraitAssetId: relic.portraitAssetId } : null;
 }
 
+/**
+ * 순위·명단 한 줄에 싣는 내 프로필 얼굴(사진 + 테두리). 상단 줄·프로필 카드와 **같은 고르기**를 지나므로
+ * 보유하지 않은 사진은 애착 렐릭 얼굴로 돌아간다.
+ */
+export function profileFace(state: Session): { avatarRelicId: string | null; frameId: string } {
+  return { avatarRelicId: profileAvatarRelic(state)?.relicId ?? null, frameId: profileFrameOrDefault(state.playerCard.frameId).id };
+}
+
 /** 저장 가능한 공개 설정·애착 렐릭과 서버 확정 진행만 읽어 안전한 표시 모델을 만든다. */
 export function playerProfileDisplay(state: Session, equippedModifiers: readonly PublicProfileModifier[] = [], arena?: ArenaPublicStanding, now: Date = new Date()): PlayerProfileDisplay {
   const favorite = favoriteShowcase(state);
@@ -163,7 +171,7 @@ export function profileAvatarContent(profile: PlayerProfileDisplay, hasTexture: 
  * 카드가 그 칸을 세우지 않으므로 없는 기록을 "0"이라 말하지 않는다.
  */
 export function friendProfileDisplay(friend: {
-  displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string;
+  displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string | null;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
   competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number };

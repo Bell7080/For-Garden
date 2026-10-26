@@ -87,7 +87,9 @@ export interface RaidContributionEntry {
   damage: number;
   isMe: boolean;
   favoriteRelicId?: string;
-  frameId?: string;
+  /** 프로필 사진·테두리(`ProfileFaceDto`). 비면 화면이 애착 렐릭 얼굴·기본 테두리로 세운다. */
+  avatarRelicId?: string | null;
+  frameId?: string | null;
 }
 
 /** 정렬 입력. 서버가 보내는 줄과 모의 참가자가 같은 모양으로 들어온다. */
@@ -97,7 +99,8 @@ export interface RaidContributionInput {
   damage: number;
   isMe?: boolean;
   favoriteRelicId?: string;
-  frameId?: string;
+  avatarRelicId?: string | null;
+  frameId?: string | null;
 }
 
 /**
@@ -114,7 +117,9 @@ export function raidContributionBoard(entries: readonly RaidContributionInput[],
     .slice(0, Math.max(0, limit))
     .map((entry, index) => ({
       rank: index + 1, playerId: entry.playerId, displayName: entry.displayName,
-      damage: Math.floor(entry.damage), isMe: entry.isMe === true, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId,
+      damage: Math.floor(entry.damage), isMe: entry.isMe === true, favoriteRelicId: entry.favoriteRelicId,
+      ...(entry.avatarRelicId ? { avatarRelicId: entry.avatarRelicId } : {}),
+      ...(entry.frameId ? { frameId: entry.frameId } : {}),
     }));
 }
 
@@ -256,7 +261,7 @@ export function mockSummonContributions(raidId: string, othersDamage: number): R
   const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
   const sum = weights.reduce((total, weight) => total + weight, 0);
   return PREVIEW_FRIENDS.map((friend, index) => ({
-    playerId: friend.id, displayName: friend.displayName, favoriteRelicId: friend.favoriteRelic?.relicId, frameId: friend.frameId,
+    playerId: friend.id, displayName: friend.displayName, favoriteRelicId: friend.favoriteRelic?.relicId, avatarRelicId: friend.avatarRelicId, frameId: friend.frameId,
     damage: Math.floor(othersDamage * weights[index]! / sum),
   }));
 }

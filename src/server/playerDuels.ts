@@ -10,13 +10,14 @@ import { RelicProgressionManager } from '../managers/RelicProgressionManager';
 import { createDefaultSession, type Session } from '../state/session';
 import { saveManager } from '../state/SaveManager';
 import { t } from '../i18n';
+import { profileFace } from '../state/playerProfile';
 
 export interface PlayerDuelRecord { id: string; revision: string; data: Record<string, unknown> }
 export interface PlayerDuelContext {
   playerId: string;
   records: PlayerDuelRecord[];
   rank: number;
-  ranking: { id: string; displayName: string; score: number; favoriteRelicId: string }[];
+  ranking: { id: string; displayName: string; score: number; favoriteRelicId: string; avatarRelicId?: string | null; frameId?: string | null }[];
   changes: PlayerDuelChange[];
 }
 export interface PlayerDuelChange { playerId: string; expectedRevision: string; duel: DuelState; gems: number }
@@ -32,7 +33,7 @@ export function duelParticipant(row: PlayerDuelRecord, now: Date): { state: Sess
     const stats = progression.getFinalStats(relicId), progress = state.relicProgress[relicId];
     return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
   });
-  return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t('profile.defaultName'), score: state.duel.score, favoriteRelicId: state.favorite, units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
+  return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t('profile.defaultName'), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
 }
 
 /** 입장 순간 양쪽의 실제 성장·룬·유대를 고정한다. 이후 덱 수정으로 진행 중인 판을 바꾸지 않는다. */

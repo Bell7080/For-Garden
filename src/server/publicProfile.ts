@@ -6,6 +6,7 @@ import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import type { FriendProfile } from "../data/friends";
 import { ancientHighestCleared } from "../core/ancientStrata";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { profileFace } from "../state/playerProfile";
 
 /** 공개 필드는 이 화이트리스트에서만 만든다. 지갑·저장 본문·토큰·전체 편성은 공개하지 않는다. */
 export function publicProfile(
@@ -20,6 +21,7 @@ export function publicProfile(
     id: playerId,
     uid: state.playerCard.uid,
     frameId: state.playerCard.frameId,
+    avatarRelicId: profileFace(state).avatarRelicId,
     displayName: state.playerCard.nickname || t("profile.defaultName"),
     status: state.playerCard.bio || "",
     level: state.playerResearch.level,

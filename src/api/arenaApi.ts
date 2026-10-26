@@ -1,3 +1,4 @@
+import type { ProfileFaceDto } from "./contracts";
 import { timeoutSignal } from "../core/timeoutSignal";
 import { apiUrl } from "../core/apiBase";
 import { t } from "../i18n";
@@ -23,7 +24,7 @@ export interface ArenaStatus {
 }
 /** 내 자리만 — 로비 프로필이 방 잠금 없이 읽는다. */
 export type ArenaStandingStatus = Required<Pick<ArenaStatus, 'score' | 'wins' | 'losses' | 'winStreak' | 'bestStreak' | 'bestScore' | 'nextStreakBonus' | 'rank' | 'weekEndsAt' | 'serverTime' | 'lastWeek'>>;
-export interface ArenaRankingEntry { rank: number; playerId: string; displayName: string; score: number; isMe: boolean; favoriteRelicId?: string }
+export interface ArenaRankingEntry extends ProfileFaceDto { rank: number; playerId: string; displayName: string; score: number; isMe: boolean; favoriteRelicId?: string }
 export interface ArenaRankingStatus { rank: number | null; entries: ArenaRankingEntry[] }
 const READ_KINDS = new Set(['status', 'standing', 'ranking']);
 let lastStanding: { score: number; played: boolean } | null = null;

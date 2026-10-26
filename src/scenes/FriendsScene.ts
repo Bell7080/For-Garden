@@ -12,7 +12,7 @@ import {
 } from "../core/social";
 import type { FriendProfile } from "../data/friends";
 import { profileFrameOrDefault } from "../data/profileFrames";
-import { getRelic } from "../data/relics";
+import { getRelic, RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { notificationManager } from "../managers/NotificationManager";
 import { friendProfileDisplay } from "../state/playerProfile";
@@ -369,7 +369,8 @@ export class FriendsScene extends Phaser.Scene {
   private paintRowBody(row: Phaser.GameObjects.Container, profile: FriendProfile, textRight: number, extra?: string): void {
     const frame = profileFrameOrDefault(profile.frameId);
     row.add(drawLayer(this, 0, 0, chipPoints(S.width, S.row.height, { bevel: { topLeft: 42, topRight: 0, bottomRight: 42, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: frame.color, edgeAlpha: 0.6 }));
-    const relic = getRelic(profile.favoriteRelic.relicId);
+    // 얼굴은 그 친구가 고른 프로필 사진 — 카드와 같은 고르기다(없으면 애착 렐릭).
+    const relic = RELICS.find(({ id }) => id === profile.avatarRelicId) ?? getRelic(profile.favoriteRelic.relicId);
     row.add(new ProfileAvatar(this, R.avatar.x, 0, {
       size: R.avatar.size, frameId: frame.id, portraitAssetId: relic.portraitAssetId, fallback: Array.from(profile.displayName.trim())[0] ?? "?",
     }));

@@ -5,7 +5,6 @@ import { gameApi } from "../api/FakeServer";
 import type { DuelRankingEntryDto, GameApi } from "../api/contracts";
 import type { DuelTierId } from "../core/duelArena";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { getRelic } from "../data/relics";
 import { Button } from "./Button";
 import { addClippedHit } from "./clippedHit";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
@@ -13,7 +12,7 @@ import { DUEL_PODIUM, DUEL_RANKING_TIER_BUTTON, DUEL_RANKING_VIEW, DUEL_TIER_COL
 import { openDuelTierGuide } from "./DuelGuidePopups";
 import { squeezeTextToWidth } from "./textFit";
 import { RANKING_LIST, rankingMedal, rankingRowY, rankingScrollMetrics } from "./expeditionRankingLayout";
-import { FaceFrame } from "./FaceFrame";
+import { profileAvatarSizeFor } from "./profileFrameGeometry";
 import { addRankingFace } from "./rankingFace";
 import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -25,7 +24,7 @@ import { attachDragScroll } from "./dragScroll";
  * 작은 티어 표식이 선다는 것뿐이다. 순위표 **아래에** 내 줄이 붙박여 한 번 더 서서, 목록을 어디까지 내려도,
  * 100등 밖이어도 내 자리가 보인다(`DUEL_RANKING_VIEW`).
  */
-export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" | "score" | "isMe"> & {
+export type RankingRowEntry = Pick<DuelRankingEntryDto, "rank" | "displayName" | "score" | "isMe" | "avatarRelicId" | "frameId"> & {
   favoriteRelicId?: string;
   /** 티어가 없는 순위(고대 지층)는 비운다 — 줄에 티어 표식이 서지 않는다. */
   tierId?: DuelTierId;
@@ -138,9 +137,7 @@ export class DuelRankingPopup {
       }));
       parent.add(this.scene.add.text(spot.x, plinthY, `${entry.rank}`, textStyle({ role: "display", size: Math.min(56, spot.plinth - 8), color: medal.text })).setOrigin(0.5));
       const faceY = DUEL_PODIUM.baseY - spot.plinth - 44 - spot.face / 2;
-      if (entry.favoriteRelicId) {
-        parent.add(new FaceFrame(this.scene, spot.x, faceY, { portraitAssetId: getRelic(entry.favoriteRelicId).portraitAssetId, size: spot.face, color: medal.edge }));
-      }
+      addRankingFace(this.scene, parent, entry, entry.displayName, { x: spot.x, y: faceY, size: profileAvatarSizeFor(spot.face) });
       parent.add(squeezeTextToWidth(this.scene.add.text(spot.x, DUEL_PODIUM.baseY - spot.plinth - 10, entry.displayName, textStyle({ role: "emphasis", size: 24, color: medal.text }))
         .setOrigin(0.5, 1).setStroke("#05070a", 5), DUEL_PODIUM.plinthWidth));
     });
@@ -158,7 +155,7 @@ export class DuelRankingPopup {
     }));
     const rankColor = medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink);
     row.add(this.scene.add.text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor })).setOrigin(0.5));
-    addRankingFace(this.scene, row, entry.favoriteRelicId, entry.displayName, accent);
+    addRankingFace(this.scene, row, entry, entry.displayName);
     row.add(this.scene.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: rankColor })).setOrigin(0, 0.5));
     if (entry.tierId) addDuelTierEmblem(this.scene, row, RANKING_LIST.scoreX - 170, 0, 54, entry.tierId);
     const score = this.source.formatScore ? this.source.formatScore(entry.score) : entry.score.toLocaleString();

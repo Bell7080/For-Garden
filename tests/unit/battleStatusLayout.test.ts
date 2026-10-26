@@ -139,10 +139,13 @@ describe("보스전 점수 랭킹 띠", () => {
     expect(R.left + R.width).toBeLessThan(400);
     expect(R.top).toBeGreaterThan(RAID_BATTLE_HUD.valueY + 12);
     // 줄 안의 순위·얼굴·이름·점수가 서로 겹치지 않고 줄 폭 안에 든다.
-    expect(R.rankX * 2).toBeLessThanOrEqual(R.faceX - R.faceSize / 2 + R.rankX);
-    expect(R.faceX + R.faceSize / 2).toBeLessThan(R.nameX);
+    // 얼굴은 플레이어 프로필 한 장 — 테두리 장식이 뻗는 끝(`PROFILE_FRAME_REACH`)까지 이웃을 넘지 않는다.
+    const { PROFILE_FRAME_REACH } = await import("../../src/ui/profileFrameGeometry");
+    const reach = R.avatarSize * PROFILE_FRAME_REACH;
+    expect(R.rankX * 2).toBeLessThanOrEqual(R.faceX - reach + R.rankX);
+    expect(R.faceX + reach).toBeLessThan(R.nameX);
     expect(R.nameX + R.nameWidth).toBeLessThan(R.scoreRight - 90);
     expect(R.scoreRight).toBeLessThanOrEqual(R.width);
-    expect(R.faceSize).toBeLessThanOrEqual(R.rowHeight);
+    expect(reach * 2).toBeLessThanOrEqual(R.rowHeight);
   });
 });

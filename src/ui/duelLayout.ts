@@ -86,7 +86,8 @@ export const DUEL_OPPONENT_POPUP = {
   top: 100,
   bottomRoom: 150,
   faceX: -370,
-  faceSize: 120,
+  /** 상대의 프로필 얼굴 한 변 — 테두리 장식(`PROFILE_FRAME_REACH`)까지 줄 안·이름 왼쪽에 든다. */
+  avatarSize: 96,
   textX: -290,
   /** 이름·티어 줄이 쓸 수 있는 폭 — 넘치면 글자를 가로로 누른다. */
   textRoom: 300,

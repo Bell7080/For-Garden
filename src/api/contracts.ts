@@ -786,6 +786,8 @@ export interface DuelOpponentUnitDto { relicId: string | null; level: number; br
 export interface DuelOpponentDto {
   id: string; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
   favoriteRelicId: string; totalPower: number;
+  /** 그 사람의 프로필 사진·테두리. 사진이 가려진 방어 칸이면 서버가 비운다(얼굴로 가린 칸이 드러나지 않게). */
+  avatarRelicId?: string | null; frameId?: string | null;
   units: DuelOpponentUnitDto[];
   /** 이 후보와 이미 싸웠다 — 다시 도전할 수 없다. */
   fought: boolean;
@@ -834,9 +836,9 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   /** 이 판 뒤의 연승과, 이 판에 얹힌 연승 보너스(`delta`에 이미 들어 있다). */
   winStreak: number; streakBonus: number;
 }
-export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+export interface DuelRankingEntryDto extends ProfileFaceDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
 /** 고대 지층 상시 순위 한 줄 — 점수는 가장 깊이 깬 층이고 같은 층이면 먼저 닿은 사람이 위다. */
-export interface AncientRankingEntryDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
+export interface AncientRankingEntryDto extends ProfileFaceDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
 export interface AncientRankingResponse { entries: AncientRankingEntryDto[]; me: AncientRankingEntryDto | null; }
 export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }
 export interface ClaimDuelSeasonRewardResponse extends PlayerStateDto { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number; }
@@ -879,6 +881,12 @@ export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: numb
 /** stageId="all"이면 현재 달성한 미수령 단계를 한 트랜잭션에서 모두 받는다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
 export interface ClaimExpeditionRewardResponse { rewards?: { currency: ExpeditionRewardCurrency; amount: number }[]; claimedNowStageIds?: string[]; weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
+/**
+ * 순위·명단 한 줄의 **플레이어 프로필 얼굴** — 그 사람이 고른 프로필 사진(`avatarRelicId`)과 두른 테두리(`frameId`).
+ * 친구·길드·상단 줄이 그리는 `ProfileAvatar`와 같은 한 장을 세우는 값이라, 순위표만 애착 렐릭 얼굴로 서지 않는다.
+ * 둘 다 선택이다 — 비면 사진은 `favoriteRelicId`, 테두리는 기본으로 선다(옛 서버·표본 줄).
+ */
+export interface ProfileFaceDto { avatarRelicId?: string | null; frameId?: string | null; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
 /**
  * 순위 한 줄.
@@ -886,7 +894,7 @@ export interface ClaimExpeditionRewardResponse { rewards?: { currency: Expeditio
  * `favoriteRelicId`는 그 사람의 **애착 렐릭**이며 순위표가 얼굴을 세우는 유일한 근거다 —
  * 화면이 playerId로 아무 개체나 골라 세우면 서버가 말한 적 없는 프로필을 그리게 된다.
  */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; frameId?: string; }
+export interface ExpeditionLeaderboardEntry extends ProfileFaceDto { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 
 /**
@@ -896,7 +904,7 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
  * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
  */
-export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; /** 그 사람이 두른 프로필 테두리 — 순위 줄의 얼굴이 프로필 얼굴(`ProfileAvatar`)로 선다. */ frameId?: string; }
+export interface RaidContributionEntryDto extends ProfileFaceDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
 /** 정산·한 판 보상의 한 줄. 화면은 이 값을 액자에 그대로 세운다. */
 export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: number; }
 /**

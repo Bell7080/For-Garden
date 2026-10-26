@@ -21,14 +21,14 @@ interface RowView {
 }
 
 /** 내 줄에 서는 얼굴과 이름 — 순위표에서 다른 사람이 나를 보는 것과 같은 얼굴이다. */
-export interface ScoreRankSelf { name: string; favoriteRelicId?: string; frameId?: string }
+export interface ScoreRankSelf { name: string; favoriteRelicId?: string; avatarRelicId?: string | null; frameId?: string | null }
 
 /**
  * 보스전 좌상단의 **점수 랭킹 띠** — 내 위로 둘·나·아래로 하나, 1위는 늘 맨 위에 선다.
  *
  * 줄은 순위가 아니라 **사람(ID)을 따라간다.** 점수가 이웃을 넘으면 내 줄이 한 칸 위 자리로 슉 올라가고
  * 밀린 이웃은 내려선다 — 값만 갈아 끼우면 방금 읽던 줄이 다른 사람의 것이 된다(기여도 판과 같은 이유).
- * 줄 하나는 순위표 화면의 줄을 줄여 놓은 것이다 — 금·은·동 판, 애착 렐릭 얼굴(`addRankingFace`), 이름, 점수.
+ * 줄 하나는 순위표 화면의 줄을 줄여 놓은 것이다 — 금·은·동 판, 플레이어 프로필 얼굴(`addRankingFace` — 사진 + 테두리), 이름, 점수.
  * 순위·창은 `scoreRankingView`가 정하고 여기서는 그리기만 한다. 움직임 줄이기에서는 곧바로 자리에 선다.
  */
 export class ScoreRankingHud {
@@ -149,8 +149,7 @@ export class ScoreRankingHud {
     shrinkTextToWidth(score, L.scoreRight - L.nameX - L.nameWidth - 12);
     const bg = this.scene.add.graphics();
     const container = this.scene.add.container(L.left, scoreRankingRowTop(slot, pinned) + L.rowHeight / 2, [bg, rank, name, score]).setDepth(L.depth);
-    const medal = rankingMedal(data.rank);
-    addRankingFace(this.scene, container, data.favoriteRelicId, data.name, medal?.edge ?? (me ? COLOR.accent : COLOR.panelEdge), { x: L.faceX, size: L.faceSize }, me ? this.self.frameId : data.frameId);
+    addRankingFace(this.scene, container, me ? this.self : data, data.name, { x: L.faceX, size: L.avatarSize });
     const row: RowView = { container, bg, rank, name, score, slot, pinned, shownRank: data.rank, shownScore: data.score };
     this.paint(row, data);
     return row;

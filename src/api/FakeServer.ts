@@ -1,3 +1,4 @@
+import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
 import type { SpinRouletteResponse } from "./contracts";
@@ -808,7 +809,7 @@ export class FakeServer implements GameApi {
 
   /** 단일 계정 순위표는 QA 표본이다. 실제 순위 서버가 없으면 일반 빌드에 순위를 만들지 않는다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId }] : [];
+    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
@@ -891,7 +892,7 @@ export class FakeServer implements GameApi {
     const board = this.raidContext ? (this.raidContext.records.find(row => row.instance.id === instance.id)?.entries ?? []).filter(entry => entry.playerId !== this.raidContext!.playerId) : instance.kind === "world"
       ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 86_400_000)))
       : mockSummonContributions(instance.id, others);
-    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
@@ -2644,6 +2645,9 @@ export class FakeServer implements GameApi {
       return [{
         id: npc.id, displayName: npc.displayName, score: npc.score, tierId: npcStanding.tier.id, division: npcStanding.division,
         favoriteRelicId: hidden.has(npc.favoriteRelicId) ? npc.units.find(({ relicId }) => !hidden.has(relicId))!.relicId : npc.favoriteRelicId,
+        // 프로필 사진이 가려진 방어 칸이면 비운다 — 얼굴 한 장으로 가린 칸이 드러나면 안 된다.
+        avatarRelicId: npc.avatarRelicId && !hidden.has(npc.avatarRelicId) ? npc.avatarRelicId : null,
+        frameId: npc.frameId ?? null,
         totalPower: npc.units.reduce((sum, { power }) => sum + power, 0),
         units: npc.units.map(({ relicId, level, breakthrough, power }) => ({ relicId: hidden.has(relicId) ? null : relicId, level, breakthrough, power })),
         fought: duel.foughtIds.includes(npc.id),
@@ -2825,7 +2829,7 @@ export class FakeServer implements GameApi {
     if (this.duelContext) {
       const duel = this.duelNow(this.now());
       const entries = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext!.playerId }));
-      const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, isMe: true };
+      const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true };
       return { entries, me, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     }
     if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
@@ -2834,7 +2838,7 @@ export class FakeServer implements GameApi {
     const meRank = this.duelMyRank(duel);
     const meName = this.state.playerCard.nickname || t("duel.ranking.me");
     const favorite = this.state.favorite ?? duel.defense[0] ?? duel.attack[0] ?? "torika";
-    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: favorite, isMe: true };
+    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: favorite, ...profileFace(this.state), isMe: true };
     const npcs = [...this.duelPool(now)].sort((a, b) => b.score - a.score);
     const rows = npcs.map(({ displayName, score, favoriteRelicId }) => ({ displayName, score, tierId: duelTier(score).id, favoriteRelicId, isMe: false }));
     if (me) rows.splice(me.rank - 1, 0, { ...me });
@@ -2854,7 +2858,7 @@ export class FakeServer implements GameApi {
     const name = this.state.playerCard.nickname || t("profile.defaultName");
     const rows = [
       ...QA_ANCIENT_RANKING.map((row) => ({ ...row, isMe: false })),
-      ...(floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, isMe: true }] : []),
+      ...(floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true }] : []),
     ].sort((a, b) => b.floor - a.floor);
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
     return { entries, me: entries.find((row) => row.isMe) ?? null };

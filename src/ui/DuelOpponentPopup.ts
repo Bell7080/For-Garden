@@ -8,6 +8,7 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_OPPONENT_POPUP as P, DUEL_TIER_COLOR, duelOpponentPopupHeight, duelOpponentRowY } from "./duelLayout";
 import { FaceFrame } from "./FaceFrame";
+import { addRankingFace } from "./rankingFace";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { addItemFrame } from "./itemFrame";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -51,8 +52,8 @@ function paintRow(scene: Phaser.Scene, popupBody: Phaser.GameObjects.Container, 
   popupBody.add(body);
   const tone = DUEL_TIER_COLOR[opponent.tierId];
   body.add(drawLayer(scene, 0, y, chipPoints(P.rowWidth, P.rowHeight), { fill: 0x171d25, alpha: HOLO.glass, edge: tone.fill, edgeAlpha: 0.55 }));
-  // 얼굴 — 드러나 있는 렐릭 중 가장 아끼는 얼굴이다(가린 칸은 서버가 이미 비켜 준다).
-  body.add(new FaceFrame(scene, P.faceX, y, { portraitAssetId: getRelic(opponent.favoriteRelicId).portraitAssetId, size: P.faceSize, color: tone.fill }));
+  // 얼굴 — 그 사람의 프로필(사진 + 테두리). 사진이 가린 방어 칸이면 서버가 비워 드러난 렐릭 얼굴로 선다.
+  addRankingFace(scene, body, opponent, opponent.displayName, { x: P.faceX, y, size: P.avatarSize });
 
   body.add(squeezeTextToWidth(scene.add.text(P.textX, y - 62, opponent.displayName, textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(0, 0.5), P.textRoom));
   addDuelTierEmblem(scene, body, P.textX + 20, y - 8, 40, opponent.tierId);

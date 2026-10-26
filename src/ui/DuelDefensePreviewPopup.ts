@@ -8,7 +8,7 @@ import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_TIER_COLOR } from "./duelLayout";
-import { FaceFrame } from "./FaceFrame";
+import { addRankingFace } from "./rankingFace";
 import { chipPoints, drawLayer } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { addSdFootShadow } from "./SdFootShadow";
@@ -20,7 +20,7 @@ import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 export const DUEL_DEFENSE_PREVIEW = {
   width: 980,
   pad: { top: 92, bottom: 64 },
-  head: { height: 170, face: 128, faceX: -370, textX: -280, powerX: 430 },
+  head: { height: 170, avatar: 100, faceX: -370, textX: -280, powerX: 430 },
   stage: { width: 900, height: 660, gap: 26, ground: 175, sd: 300, slotX: 285, frontLift: 46, shadow: 200 },
   blind: 54,
   sortie: { width: 820, height: 132 },
@@ -70,7 +70,7 @@ function paintHead(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: n
   const H = DUEL_DEFENSE_PREVIEW.head;
   const tone = DUEL_TIER_COLOR[opponent.tierId];
   body.add(drawLayer(scene, 0, y, chipPoints(DUEL_DEFENSE_PREVIEW.stage.width, H.height, { bevel: { topLeft: 30, bottomRight: 30 } }), { fill: 0x141a22, alpha: 0.94, edge: tone.fill, edgeAlpha: 0.7 }));
-  body.add(new FaceFrame(scene, H.faceX, y, { portraitAssetId: getRelic(opponent.favoriteRelicId).portraitAssetId, size: H.face, color: tone.fill }));
+  addRankingFace(scene, body, opponent, opponent.displayName, { x: H.faceX, y, size: H.avatar });
   body.add(squeezeTextToWidth(scene.add.text(H.textX, y - 32, opponent.displayName, textStyle({ role: "display", size: 38, color: COLOR.ink })).setOrigin(0, 0.5), 400));
   addDuelTierEmblem(scene, body, H.textX + 22, y + 28, 44, opponent.tierId);
   const tierName = `${t(`duel.tier.${opponent.tierId}`)} ${duelDivisionNumeral(opponent.division)}`.trim();

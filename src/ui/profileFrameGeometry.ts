@@ -23,6 +23,11 @@ export const PROFILE_FRAME_PAD = 0.07;
  */
 export const PROFILE_FRAME_REACH = 0.72;
 
+/** 한 변 `room`짜리 자리에 장식까지 드는 가장 큰 얼굴 한 변. 액자 하나가 서던 자리를 프로필로 바꿀 때 쓴다. */
+export function profileAvatarSizeFor(room: number): number {
+  return Math.floor(room / (2 * PROFILE_FRAME_REACH));
+}
+
 export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown"];
 
 export function profileFrameOuter(size: number): number {

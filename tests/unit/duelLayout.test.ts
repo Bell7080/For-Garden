@@ -79,8 +79,11 @@ describe("상대 선택 창", () => {
 
   it("얼굴·글줄·방어덱·도전 버튼이 줄 안에서 겹치지 않는다", () => {
     const P = DUEL_OPPONENT_POPUP;
-    expect(P.faceX - P.faceSize / 2).toBeGreaterThan(-P.rowWidth / 2);
-    expect(P.faceX + P.faceSize / 2).toBeLessThan(P.textX);
+    // 상대 얼굴은 프로필 한 장 — 테두리 장식까지 줄 안·이름 왼쪽에 든다.
+    const reach = P.avatarSize * PROFILE_FRAME_REACH;
+    expect(P.faceX - reach).toBeGreaterThan(-P.rowWidth / 2);
+    expect(P.faceX + reach).toBeLessThan(P.textX);
+    expect(reach * 2).toBeLessThanOrEqual(P.rowHeight);
     expect(P.textX + P.textRoom).toBeLessThan(P.unitX - P.unitSize / 2);
     expect(P.unitX + P.unitGap * 2 + P.unitSize / 2).toBeLessThan(P.challengeX - P.challengeWidth / 2);
     expect(P.challengeX + P.challengeWidth / 2).toBeLessThan(P.rowWidth / 2);

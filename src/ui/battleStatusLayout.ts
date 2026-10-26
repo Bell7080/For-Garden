@@ -256,7 +256,7 @@ export const SCORE_RANKING_HUD = {
   left: 24,
   top: 128,
   width: 372,
-  rowHeight: 34,
+  rowHeight: 40,
   rowGap: 4,
   /** 붙박은 1위 줄과 그 아래 줄 사이에 더 띄우는 틈 — 이어진 순위가 아니라는 것을 자리로 말한다. */
   pinGap: 6,
@@ -264,9 +264,10 @@ export const SCORE_RANKING_HUD = {
   /** 줄 안(왼쪽 끝 기준) 자리 — 순위 숫자 가운데, 얼굴 가운데, 이름 시작, 점수 오른쪽 끝. */
   rankX: 22,
   faceX: 62,
-  faceSize: 30,
-  nameX: 84,
-  nameWidth: 150,
+  /** 프로필 얼굴 한 변 — 테두리 장식까지 줄 높이 안에 든다(`profileAvatarSizeFor`). */
+  avatarSize: 27,
+  nameX: 92,
+  nameWidth: 146,
   scoreRight: 362,
   depth: 90,
   /** 줄이 자리를 바꾸는 시간(ms). 3배속에서도 읽히도록 배속을 곱하지 않는다. */

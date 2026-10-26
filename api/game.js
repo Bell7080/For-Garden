@@ -19943,7 +19943,8 @@ function raidContributionBoard(entries, limit = 100) {
     damage: Math.floor(entry.damage),
     isMe: entry.isMe === true,
     favoriteRelicId: entry.favoriteRelicId,
-    frameId: entry.frameId
+    ...entry.avatarRelicId ? { avatarRelicId: entry.avatarRelicId } : {},
+    ...entry.frameId ? { frameId: entry.frameId } : {}
   }));
 }
 function seedHash(seed) {
@@ -20011,6 +20012,7 @@ function mockSummonContributions(raidId, othersDamage) {
     playerId: friend.id,
     displayName: friend.displayName,
     favoriteRelicId: friend.favoriteRelic?.relicId,
+    avatarRelicId: friend.avatarRelicId,
     frameId: friend.frameId,
     damage: Math.floor(othersDamage * weights[index] / sum)
   }));
@@ -27803,8 +27805,27 @@ function hasRemoteState(result) {
 // src/api/FakeServer.ts
 init_define_import_meta_env();
 
-// src/server/playerDuels.ts
+// src/state/playerProfile.ts
 init_define_import_meta_env();
+
+// src/core/arenaStanding.ts
+init_define_import_meta_env();
+var ARENA_TIERS = [
+  { id: "bronze", floor: 0, weeklyReward: { duelEmblem: 100, gems: 200 } },
+  { id: "silver", floor: 1100, weeklyReward: { duelEmblem: 150, gems: 300 } },
+  { id: "gold", floor: 1300, weeklyReward: { duelEmblem: 200, gems: 500 } },
+  { id: "platinum", floor: 1500, weeklyReward: { duelEmblem: 300, gems: 600 } },
+  { id: "diamond", floor: 1800, weeklyReward: { duelEmblem: 400, gems: 800 } },
+  { id: "master", floor: 2100, weeklyReward: { duelEmblem: 500, gems: 1e3 } }
+];
+var ARENA_WEEKLY_RANK_GEMS = [
+  { upTo: 1, gems: 2500 },
+  { upTo: 3, gems: 2e3 },
+  { upTo: 10, gems: 1500 },
+  { upTo: 50, gems: 1e3 },
+  { upTo: 100, gems: 500 },
+  { upTo: null, gems: 0 }
+];
 
 // src/core/combatPower.ts
 init_define_import_meta_env();
@@ -27825,6 +27846,112 @@ var WEIGHTS = {
 function combatPower(stats) {
   return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
 }
+
+// src/core/contentUnlock.ts
+init_define_import_meta_env();
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10" };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
+}
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
+}
+function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
+}
+function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
+  return void 0;
+}
+
+// src/state/playerProfile.ts
+function favoriteShowcase(state) {
+  const relic = RELICS.find(({ id }) => id === state.favorite);
+  if (!relic) return null;
+  const progress = state.relicProgress[relic.id];
+  const gems2 = (progress?.heartGemSlots ?? []).flatMap((id) => {
+    const rune = id === null ? void 0 : state.runeInventory.find((candidate) => candidate.instanceId === id);
+    return rune ? [rune] : [];
+  });
+  const stats = progress ? calculateFinalStats(relic.stats, progress, gems2, relic.rarity) : relic.stats;
+  return {
+    relicId: relic.id,
+    displayName: relic.name,
+    portraitAssetId: relic.portraitAssetId,
+    level: progress?.level ?? 1,
+    breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0),
+    bondLevel: progress?.bondLevel ?? 0,
+    rarity: relic.rarity,
+    element: relic.element,
+    role: relic.role,
+    power: combatPower(stats)
+  };
+}
+function profileAvatarRelic(state) {
+  const chosen = state.playerCard.avatarRelicId && state.owned.has(state.playerCard.avatarRelicId) ? state.playerCard.avatarRelicId : state.favorite;
+  const relic = RELICS.find(({ id }) => id === chosen);
+  return relic ? { relicId: relic.id, portraitAssetId: relic.portraitAssetId } : null;
+}
+function profileFace(state) {
+  return { avatarRelicId: profileAvatarRelic(state)?.relicId ?? null, frameId: profileFrameOrDefault(state.playerCard.frameId).id };
+}
+function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__PURE__ */ new Date()) {
+  const favorite = favoriteShowcase(state);
+  const stage = highestClearedStage(STAGES, state.cleared);
+  const card = state.playerCard;
+  const research = state.playerResearch;
+  const next = nextContentUnlock(research.level);
+  const nextStage = nextStageUnlock(state.cleared);
+  return {
+    // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
+    displayName: card.nickname || t("profile.defaultName"),
+    level: research.level,
+    experience: research.experience,
+    experienceToNext: research.experienceToNext,
+    levelCapped: research.level >= PLAYER_LEVEL_CAP,
+    displayId: card.uid || state.settings.account.displayId.trim() || t("profile.guest"),
+    bio: card.bio,
+    frameId: profileFrameOrDefault(card.frameId).id,
+    avatar: profileAvatarRelic(state),
+    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
+    researchDays: researchDays(card.createdAt, now),
+    competitiveStats: {
+      favoriteRelic: favorite,
+      ...arena ? { arena: { ...arena } } : {},
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
+      storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
+      // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
+      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) }
+    },
+    collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
+    ...next ? { nextUnlock: { contentId: next.id, level: next.level } } : {},
+    ...nextStage ? { nextStageUnlock: { contentId: nextStage.id, stageId: nextStage.stageId } } : {},
+    equippedModifiers: equippedModifiers.map((modifier) => ({ ...modifier }))
+  };
+}
+
+// src/server/playerDuels.ts
+init_define_import_meta_env();
 
 // src/core/runeTraitEffects.ts
 init_define_import_meta_env();
@@ -27985,7 +28112,7 @@ function duelParticipant(row, now) {
     const stats = progression.getFinalStats(relicId), progress = state.relicProgress[relicId];
     return { relicId, level: progress?.level ?? 1, breakthrough: progress?.breakthrough ?? 0, stats, power: combatPower(stats) };
   });
-  return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t("profile.defaultName"), score: state.duel.score, favoriteRelicId: state.favorite, units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
+  return { state, opponent: { id: row.id, displayName: state.playerCard.nickname || t("profile.defaultName"), score: state.duel.score, favoriteRelicId: state.favorite, ...profileFace(state), units, blindOrder: duelBlindOrder(units, state.duel.blindChoice) } };
 }
 function duelCombatSetup(state, opponentState, attack) {
   const progression = new RelicProgressionManager(state), defenseProgression = new RelicProgressionManager(opponentState);
@@ -30001,43 +30128,6 @@ var ATTENDANCE_AD_REWARDS = [
 ];
 var ATTENDANCE_AD_SLOT_ID = "attendance-ad";
 
-// src/core/contentUnlock.ts
-init_define_import_meta_env();
-var CONTENT_UNLOCKS = [
-  { id: "excavation", level: 2 },
-  { id: "shop", level: 3 },
-  { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 3 },
-  { id: "bounty", level: 3 },
-  { id: "friends", level: 4 },
-  { id: "interaction", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "guild", level: 7 },
-  { id: "raid", level: 8 },
-  { id: "expedition", level: 9 }
-];
-var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10" };
-var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
-var CONTENT_LEVEL_GATES_ENABLED = true;
-function contentUnlockLevel(id) {
-  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
-}
-function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
-  if (!gates) return true;
-  const stage = CONTENT_STAGE_UNLOCKS[id];
-  if (stage !== void 0) return clearedStages.has(stage);
-  return playerLevel >= contentUnlockLevel(id);
-}
-function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
-}
-function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
-  return void 0;
-}
-
 // src/core/bountyRun.ts
 init_define_import_meta_env();
 function isBountyTierUnlocked(tier, clearedTierIds) {
@@ -31825,93 +31915,6 @@ var localGuildBackend = new FakeGuildServer();
 
 // src/api/guildActor.ts
 init_define_import_meta_env();
-
-// src/state/playerProfile.ts
-init_define_import_meta_env();
-
-// src/core/arenaStanding.ts
-init_define_import_meta_env();
-var ARENA_TIERS = [
-  { id: "bronze", floor: 0, weeklyReward: { duelEmblem: 100, gems: 200 } },
-  { id: "silver", floor: 1100, weeklyReward: { duelEmblem: 150, gems: 300 } },
-  { id: "gold", floor: 1300, weeklyReward: { duelEmblem: 200, gems: 500 } },
-  { id: "platinum", floor: 1500, weeklyReward: { duelEmblem: 300, gems: 600 } },
-  { id: "diamond", floor: 1800, weeklyReward: { duelEmblem: 400, gems: 800 } },
-  { id: "master", floor: 2100, weeklyReward: { duelEmblem: 500, gems: 1e3 } }
-];
-var ARENA_WEEKLY_RANK_GEMS = [
-  { upTo: 1, gems: 2500 },
-  { upTo: 3, gems: 2e3 },
-  { upTo: 10, gems: 1500 },
-  { upTo: 50, gems: 1e3 },
-  { upTo: 100, gems: 500 },
-  { upTo: null, gems: 0 }
-];
-
-// src/state/playerProfile.ts
-function favoriteShowcase(state) {
-  const relic = RELICS.find(({ id }) => id === state.favorite);
-  if (!relic) return null;
-  const progress = state.relicProgress[relic.id];
-  const gems2 = (progress?.heartGemSlots ?? []).flatMap((id) => {
-    const rune = id === null ? void 0 : state.runeInventory.find((candidate) => candidate.instanceId === id);
-    return rune ? [rune] : [];
-  });
-  const stats = progress ? calculateFinalStats(relic.stats, progress, gems2, relic.rarity) : relic.stats;
-  return {
-    relicId: relic.id,
-    displayName: relic.name,
-    portraitAssetId: relic.portraitAssetId,
-    level: progress?.level ?? 1,
-    breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0),
-    bondLevel: progress?.bondLevel ?? 0,
-    rarity: relic.rarity,
-    element: relic.element,
-    role: relic.role,
-    power: combatPower(stats)
-  };
-}
-function profileAvatarRelic(state) {
-  const chosen = state.playerCard.avatarRelicId && state.owned.has(state.playerCard.avatarRelicId) ? state.playerCard.avatarRelicId : state.favorite;
-  const relic = RELICS.find(({ id }) => id === chosen);
-  return relic ? { relicId: relic.id, portraitAssetId: relic.portraitAssetId } : null;
-}
-function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__PURE__ */ new Date()) {
-  const favorite = favoriteShowcase(state);
-  const stage = highestClearedStage(STAGES, state.cleared);
-  const card = state.playerCard;
-  const research = state.playerResearch;
-  const next = nextContentUnlock(research.level);
-  const nextStage = nextStageUnlock(state.cleared);
-  return {
-    // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
-    displayName: card.nickname || t("profile.defaultName"),
-    level: research.level,
-    experience: research.experience,
-    experienceToNext: research.experienceToNext,
-    levelCapped: research.level >= PLAYER_LEVEL_CAP,
-    displayId: card.uid || state.settings.account.displayId.trim() || t("profile.guest"),
-    bio: card.bio,
-    frameId: profileFrameOrDefault(card.frameId).id,
-    avatar: profileAvatarRelic(state),
-    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
-    researchDays: researchDays(card.createdAt, now),
-    competitiveStats: {
-      favoriteRelic: favorite,
-      ...arena ? { arena: { ...arena } } : {},
-      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
-      storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
-      // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
-      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) }
-    },
-    collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
-    ...next ? { nextUnlock: { contentId: next.id, level: next.level } } : {},
-    ...nextStage ? { nextStageUnlock: { contentId: nextStage.id, stageId: nextStage.stageId } } : {},
-    equippedModifiers: equippedModifiers.map((modifier) => ({ ...modifier }))
-  };
-}
-
-// src/api/guildActor.ts
 function guildActorFrom(state, userId) {
   const card = state.playerCard;
   return {
@@ -33593,7 +33596,7 @@ var FakeServer = class {
   async getExpeditionLeaderboard(limit = 100) {
     await this.delay();
     const expedition = this.rollExpedition(this.now());
-    const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId }] : [];
+    const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
   /**
@@ -33680,7 +33683,7 @@ var FakeServer = class {
     const rewardOf = (currency3, amount) => ({ currency: currency3, name: findItem(currency3)?.name ?? currency3, amount });
     const settlement = instance.myDamage > 0 ? raidSettlement(instance.difficulty, instance.myDamage, progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0, progress.defeated) : void 0;
     const board = this.raidContext ? (this.raidContext.records.find((row) => row.instance.id === instance.id)?.entries ?? []).filter((entry) => entry.playerId !== this.raidContext.playerId) : instance.kind === "world" ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 864e5))) : mockSummonContributions(instance.id, others);
-    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
@@ -35437,6 +35440,9 @@ var FakeServer = class {
         tierId: npcStanding.tier.id,
         division: npcStanding.division,
         favoriteRelicId: hidden.has(npc.favoriteRelicId) ? npc.units.find(({ relicId }) => !hidden.has(relicId)).relicId : npc.favoriteRelicId,
+        // 프로필 사진이 가려진 방어 칸이면 비운다 — 얼굴 한 장으로 가린 칸이 드러나면 안 된다.
+        avatarRelicId: npc.avatarRelicId && !hidden.has(npc.avatarRelicId) ? npc.avatarRelicId : null,
+        frameId: npc.frameId ?? null,
         totalPower: npc.units.reduce((sum, { power }) => sum + power, 0),
         units: npc.units.map(({ relicId, level, breakthrough, power }) => ({ relicId: hidden.has(relicId) ? null : relicId, level, breakthrough, power })),
         fought: duel2.foughtIds.includes(npc.id)
@@ -35644,7 +35650,7 @@ var FakeServer = class {
     if (this.duelContext) {
       const duel3 = this.duelNow(this.now());
       const entries2 = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext.playerId }));
-      const me2 = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel3.score, tierId: duelTier(duel3.score).id, favoriteRelicId: this.state.favorite, isMe: true };
+      const me2 = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel3.score, tierId: duelTier(duel3.score).id, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true };
       return { entries: entries2, me: me2, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     }
     if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
@@ -35653,7 +35659,7 @@ var FakeServer = class {
     const meRank = this.duelMyRank(duel2);
     const meName = this.state.playerCard.nickname || t("duel.ranking.me");
     const favorite = this.state.favorite ?? duel2.defense[0] ?? duel2.attack[0] ?? "torika";
-    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel2.score, tierId: duelTier(duel2.score).id, favoriteRelicId: favorite, isMe: true };
+    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel2.score, tierId: duelTier(duel2.score).id, favoriteRelicId: favorite, ...profileFace(this.state), isMe: true };
     const npcs = [...this.duelPool(now)].sort((a, b) => b.score - a.score);
     const rows = npcs.map(({ displayName, score, favoriteRelicId }) => ({ displayName, score, tierId: duelTier(score).id, favoriteRelicId, isMe: false }));
     if (me) rows.splice(me.rank - 1, 0, { ...me });
@@ -35672,7 +35678,7 @@ var FakeServer = class {
     const name = this.state.playerCard.nickname || t("profile.defaultName");
     const rows = [
       ...QA_ANCIENT_RANKING.map((row) => ({ ...row, isMe: false })),
-      ...floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, isMe: true }] : []
+      ...floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true }] : []
     ].sort((a, b) => b.floor - a.floor);
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
     return { entries, me: entries.find((row) => row.isMe) ?? null };
@@ -37387,6 +37393,7 @@ function publicProfile(state, playerId, now) {
     id: playerId,
     uid: state.playerCard.uid,
     frameId: state.playerCard.frameId,
+    avatarRelicId: profileFace(state).avatarRelicId,
     displayName: state.playerCard.nickname || t("profile.defaultName"),
     status: state.playerCard.bio || "",
     level: state.playerResearch.level,

@@ -22,7 +22,8 @@ export const RANKING_LIST = {
   /** 줄 안의 자리 — 등수, 얼굴, 이름, 점수. */
   rankX: -386,
   faceX: -286,
-  faceSize: 82,
+  /** 프로필 얼굴 한 변 — 테두리 장식(`PROFILE_FRAME_REACH`)까지 줄 높이 안에 든다. */
+  avatarSize: 66,
   nameX: -216,
   scoreX: 392,
 } as const;

@@ -139,7 +139,7 @@ export class ExpeditionRankingPopup {
     row.add(this.scene.add
       .text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor }))
       .setOrigin(0.5));
-    addRankingFace(this.scene, row, entry.favoriteRelicId, entry.displayName, accent);
+    addRankingFace(this.scene, row, entry, entry.displayName);
     row.add(this.scene.add
       .text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink) }))
       .setOrigin(0, 0.5));

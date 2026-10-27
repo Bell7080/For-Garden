@@ -10,7 +10,7 @@
  * 보이지 않고(열릴 때 자물쇠가 터지며 나타난다), 고고학 탭과 출격 안의 입구는 자물쇠가 걸린 채
  * 남는다. QA는 설정의 「레벨 만렙 · 모두 개방」으로 한 번에 연다.
  */
-export type ContentId = "lab" | "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends" | "guild";
+export type ContentId = "lab" | "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "ancient" | "shop" | "trade" | "friends" | "guild";
 
 export interface ContentUnlock { id: ContentId; level: number; }
 
@@ -32,6 +32,7 @@ export interface ContentUnlock { id: ContentId; level: number; }
  * **개방 속도의 목표**: 진득하게 하는 계정이 하루~이틀(시간 회복만 쓸 때 2일 안)에 거의 다 연다. 레벨별로 몇 스테미나를 녹여야
  * 하는지는 `naturalStaminaToReach`가 재고 `docs/content-unlock-pacing.md`에 표로 남겼다. 레벨을 옮길 때는 그 표와 테스트를 함께 본다.
  * - 고고학은 레벨이 아니라 **스테이지 클리어**로 연다(`CONTENT_STAGE_UNLOCKS`) — 원석과 특성이 처음 열리는 1-10을 깬 사람이 그것을 쓸 곳이다.
+ * - 고대 지층도 스테이지 클리어로 연다 — 쉬움 4-10(= 보통 난이도가 열리는 관문)을 깬 사람의 몫이다. 1층 예산이 보통 2-10 기준이라 그 앞에서는 닫는다.
  */
 export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
   { id: "excavation", level: 2 },
@@ -48,7 +49,7 @@ export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
 ] as const;
 
 /** 레벨이 아니라 **스테이지 클리어**로 열리는 콘텐츠. 그 스테이지를 깨는 순간 열린다. */
-export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { lab: "1-5", archaeology: "1-10" };
+export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { lab: "1-5", archaeology: "1-10", ancient: "4-10" };
 
 /** 개방 조건이 있는 모든 콘텐츠. */
 export const ALL_GATED_CONTENT: readonly ContentId[] = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...(Object.keys(CONTENT_STAGE_UNLOCKS) as ContentId[])];

@@ -701,15 +701,9 @@ export class LobbyScene extends Phaser.Scene {
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
-        // 고대 지층은 두 던전 아래·레이드 위의 전체 폭 칸이다. 실제 입장은 순차 해금과 서버 검증을 거친다.
-        {
-          y: 152, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
-          accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
-          onClick: () => { close(); startScene(this, "ancientStrata"); },
-        },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          content: "raid", y: 428, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          content: "raid", y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 지금 월드 폭주에 서 있는 보스가 왼쪽에 선다(스토리 칸과 같은 쪽·같은 크기). 서버와 같은 날짜 키로 구한다.
           sd: battleAssetFor(raidWorldBossId(raidSeasonKey(new Date()))),
@@ -719,8 +713,14 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          content: "expedition", y: 719, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
+        },
+        // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 4-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
+        {
+          content: "ancient", y: 734, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
+          accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
+          onClick: () => { close(); startScene(this, "ancientStrata"); },
         },
       ];
       // 칸은 굴러가는 컨테이너 안에 서고, 판이 보여 주는 구간 밖은 마스크로 자른다.

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawLayer, HOLO } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -40,7 +41,7 @@ export function addMarkChip(scene: Phaser.Scene, parent: Phaser.GameObjects.Cont
   const hit = scene.add.rectangle(0, 0, size + 12, size + 12, 0xffffff, 0).setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => pressIn(container));
   hit.on("pointerout", () => pressOut(container, "normal", { pop: false }));
-  hit.on("pointerup", () => { pressOut(container); options.onToggle(); });
+  hit.on("pointerup", () => { pressOut(container); audioManager?.playUi("ui.toggle"); options.onToggle(); });
   container.add(hit);
   parent.add(container);
   return {

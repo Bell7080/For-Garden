@@ -388,6 +388,8 @@ export class BattleScene extends Phaser.Scene {
   private raidSeasonHud?: { bar: HoloBar; value: Phaser.GameObjects.Text; remaining: number; total: number; shown: number };
   /** 화면 맨 위에서 쉬지 않고 도는 진행 시간. 전투가 끝나면 그 자리에 멈춘다. */
   private clockLabel?: Phaser.GameObjects.Text;
+  /** 데스 카운트가 켜졌음을 이미 소리로 알렸는가 — 켜지는 경계에서 한 번만 울린다. */
+  private deathClockSounded = false;
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
   private deathWash?: Phaser.GameObjects.Graphics;
   private spawned = false;
@@ -1397,7 +1399,12 @@ export class BattleScene extends Phaser.Scene {
   /** 카드를 눌렀을 때. 조건이 맞지 않으면 코어가 아무것도 바꾸지 않는다. */
   private useUltimate(fighter: Fighter): void {
     // 수동 입력은 연출 중 큐에 넣지 않는다. 연타가 다음 궁극기로 예약되는 오해를 막는다.
-    if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
+    if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive) return;
+    if (!canFireUltimate(this.state, fighter)) {
+      // 아직 차지 않은 카드를 누른 손에 "아직"을 답한다 — 아무 반응이 없으면 입력이 먹지 않은 줄 안다.
+      if (this.battleInput.mode !== "duel" && !this.ultimateTutorial.active) audioManager?.playUi("ui.deny");
+      return;
+    }
     // 결투는 수동 발동이 없다 — 자동 궁극기만 판을 움직인다.
     if (this.battleInput.mode === "duel") return;
     // 안내 중에는 밝힌 카드만 받는다. 그 카드를 누르는 순간 안내가 걷히고 시간이 다시 흐른다.
@@ -1725,7 +1732,13 @@ export class BattleScene extends Phaser.Scene {
     if (!isDeathClockRunning(this.state.elapsed)) {
       if (label.style.color !== COLOR.ink) label.setColor(COLOR.ink).setScale(1);
       this.deathWash?.setAlpha(0);
+      this.deathClockSounded = false;
       return;
+    }
+    // 데스 카운트가 켜지는 경계에서 한 번만 울린다 — 매 프레임 맥동하는 것은 글자와 화면 가장자리다.
+    if (!this.deathClockSounded) {
+      this.deathClockSounded = true;
+      if (!this.finished) audioManager?.playSfx("battle.deathClock");
     }
     label.setColor(COLOR.dangerText);
     const beat = this.motion.nonEssentialDistanceFactor <= 0 ? 0 : (Math.sin(this.state.elapsed * Math.PI * 2) + 1) / 2;
@@ -1968,6 +1981,8 @@ export class BattleScene extends Phaser.Scene {
       // 동기화하므로, 종료 사건이 누락되어 UI가 남는 구조를 만들지 않는다. 경직은 0.1초짜리라
       // 평타마다 들어와 연출을 열면 난전이 끓는다 — 칩도 없이 피격 동작이 그 몫을 맡는다.
       if (event.status !== "stagger") this.playStatusCue(event.fighterId, event.status, UNIT_STATUS_COLOR[event.status]);
+      // 행동을 막는 제어만 소리를 낸다 — 경직은 평타마다 들어오고, 감속·도발까지 울리면 난전이 끓는다.
+      if (event.status === "stun" || event.status === "fear" || event.status === "frozen") audioManager?.playSfx("battle.stun");
       return undefined;
     }
     if (event.kind === "shieldGranted" || event.kind === "shieldAbsorbed" || event.kind === "shieldDepleted") {
@@ -1980,6 +1995,8 @@ export class BattleScene extends Phaser.Scene {
         this.popNumber(view.fighter, event.amount, "shield");
         return undefined;
       }
+      // 막이 다 깎여 깨지는 순간만 소리를 낸다 — 흡수는 같은 타격의 피격음이 이미 말한다.
+      if (event.kind === "shieldDepleted") audioManager?.playSfx("battle.shieldBreak");
       // 흡수는 숫자를 띄우지 않는다 — 같은 타격의 피해 숫자와 겹쳐 두 번 읽히기 때문이다.
       // 막이 몸을 감싸듯 한 겹 파문만 지나가고, 깨지는 순간만 위험색으로 갈린다.
       return undefined;
@@ -2007,7 +2024,10 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "damageIgnored") {
       // 무효 공격은 0 숫자와 피격 모션을 반복하지 않고, 흐린 표식 하나로 "안 통했다"만 알린다.
       const view = this.views.get(event.targetId);
-      if (view && !view.dead) this.popNumber(view.fighter, 0, "blocked");
+      if (view && !view.dead) {
+        this.popNumber(view.fighter, 0, "blocked");
+        audioManager?.playSfx("battle.block");
+      }
       return undefined;
     }
 
@@ -2018,12 +2038,15 @@ export class BattleScene extends Phaser.Scene {
       // 헬멧이 울리는 소리라 방어를 지나친 고정 피해다 — 출혈처럼 상태의 색으로 뜬다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "concussion" });
       flashHit(this, view.creature, this.bodyTint(view));
+      // 공격 사건 없이 들어오는 피해라 제 소리가 없으면 4타의 한 방이 소리 없이 지나간다.
+      audioManager?.playSfx(event.critical ? "battle.crit" : "battle.hit");
       // 4타마다 한 번 울리는 확정 치명타라 노란 숫자만으로는 왜 이번만 큰지 읽히지 않는다.
       const striker = event.sourceId ? this.views.get(event.sourceId) : undefined;
       if (striker) this.playSignature(striker, "concussion", { x: view.fighter.x, y: view.fighter.y }, { scale: view.fighter.bodyScale });
       return undefined;
     }
     if (event.kind === "knockback") {
+      audioManager?.playSfx("sweep.blastoff");
       this.playKnockback(event.fighterId);
       return undefined;
     }
@@ -2035,6 +2058,7 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "butcher" });
       flashHit(this, view.creature, this.bodyTint(view));
       this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("butcher"));
+      audioManager?.playSfx("battle.hit");
       return undefined;
     }
     if (event.kind === "vandalismBurst") {
@@ -2045,6 +2069,7 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "vandalism" });
       flashHit(this, view.creature, this.bodyTint(view));
       this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("vandalism"));
+      audioManager?.playSfx("battle.hit");
       return undefined;
     }
     if (event.kind === "sleepWake") {
@@ -2056,11 +2081,13 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "sleep" });
       flashHit(this, view.creature, this.bodyTint(view));
       this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("sleep"));
+      audioManager?.playSfx("battle.hit");
       return undefined;
     }
     if (event.kind === "fellAsleep") {
       // 머리 위 칩이 잠을 말하고, 잠드는 순간만 연기 셋이 느리게 떠오른다.
       this.playStatusCue(event.fighterId, "sleep", UNIT_STATUS_COLOR.sleep);
+      audioManager?.playSfx("battle.sleep");
       return undefined;
     }
     if (event.kind === "pressureBurst") {
@@ -2072,6 +2099,7 @@ export class BattleScene extends Phaser.Scene {
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "pressure" });
       flashHit(this, view.creature, this.bodyTint(view));
       this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("pressure"));
+      audioManager?.playSfx("battle.hit");
       return undefined;
     }
     if (event.kind === "observationTick") {
@@ -2124,6 +2152,7 @@ export class BattleScene extends Phaser.Scene {
     // 늑대가 처음 서거나 다시 서는 순간이다. 몸은 이미 fighters 배열에 있으므로 표시만 되살린다.
     if (event.kind === "packSummon") {
       this.reviveView(event.fighterId);
+      audioManager?.playSfx("battle.summon");
       return undefined;
     }
     // 두목이 표적 뒤로 사라졌다 나타나는 순간. 좌표는 코어가 정하고 화면은 그 자리에 내려놓는다.
@@ -2132,6 +2161,7 @@ export class BattleScene extends Phaser.Scene {
       if (view) {
         this.effects.burst("fever", event.x, event.y - UNIT_HEIGHT * 0.5, { color: view.feverTint, scale: 1 });
         playMotion(this, view.creature, "attack");
+        audioManager?.playSfx("battle.summon");
       }
       return undefined;
     }
@@ -2776,7 +2806,10 @@ export class BattleScene extends Phaser.Scene {
   /** 준비 상태가 바뀔 때만 연출을 갈아 끼운다. 매 프레임 트윈을 다시 만들지 않는다. */
   private setUltimateReady(profile: ProfileView, ready: boolean): void {
     // 화면 재생성이나 유지 프레임이 아니라 기존 false→true 경계의 플레이어 카드만 알린다.
-    if (isPlayerUltimateReadyTransition(profile.ready, ready, profile.fighter.side)) settingsManager.haptic("ultimateReady");
+    if (isPlayerUltimateReadyTransition(profile.ready, ready, profile.fighter.side)) {
+      settingsManager.haptic("ultimateReady");
+      audioManager?.playSfx("battle.ultimateReady");
+    }
     profile.ready = ready;
     profile.pulse?.remove();
     profile.sweepTween?.remove();
@@ -3280,6 +3313,7 @@ export class BattleScene extends Phaser.Scene {
       if(!this.scene.isActive()||generation!==this.combatGeneration)return;
       const r=status.room!;
       const title=r.winner===null?t("arena.result.draw"):r.winner===input.side?t("arena.result.win"):t("arena.result.loss");
+      if(r.winner!==null)audioManager?.playSfx(r.winner===input.side?"battle.victory":"battle.defeat");
       new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>startScene(this,input.practice?"friends":"arena"));
     }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>startScene(this,"arena"),error,"duel");}
   }

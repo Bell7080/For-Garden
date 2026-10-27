@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { playFormationTapSound } from "./formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
@@ -528,6 +529,7 @@ export class InteractionCityPopup {
           if (until !== undefined) return;
           // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다.
           const result = tapRosterRelic(this.party, this.selectedSlot, relic.id);
+          playFormationTapSound(this.party, result.formation, relic.id);
           this.party = result.formation;
           this.selectedSlot = result.selectedSlot;
           this.renderSlots(view);

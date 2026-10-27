@@ -1,4 +1,5 @@
 import { KeywordManager } from "../managers/KeywordManager";
+import { audioManager } from "../managers/AudioManager";
 import { bindPress } from "./pressFeedback";
 import { expeditionAugmentKeywords } from "./expeditionAugmentKeywords";
 import Phaser from "phaser";
@@ -334,6 +335,8 @@ export class ExpeditionAugmentPopup {
     this.confirmButton?.setEnabled(false);
     const selection: ExpeditionAugmentSelection = { augmentId: entry.offer.augmentId, ...(this.selectedTargetRelicId ? { targetRelicId: this.selectedTargetRelicId } : {}) };
     const finish = (): void => {
+      // 카드가 제 칸에 박히는 순간(날아가지 않는 설정이면 고른 순간) — 착 붙으며 반짝인다.
+      audioManager?.playUi("augment.lock");
       // 지도 HUD는 빌려 온 것이라 확정과 동시에 원래 깊이와 명도로 돌려준다.
       this.options.targets.detach();
       this.options.onChoose(selection);

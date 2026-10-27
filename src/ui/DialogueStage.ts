@@ -309,6 +309,8 @@ export class DialogueStage {
     // 함께 날아가는 사람들은 **한 점으로 모인다** — 저마다 제 자리에서 같은 방향으로 날면
     // 왼쪽 사람이 가운데를 가로질러 서로 엇갈렸다. 모인 자리에서 별 하나가 반짝인다.
     creature.setAnimationFrozen(true);
+    // 함께 날아가도 소리는 한 번 — 첫 사람이 튀어 나가는 순간이다.
+    if (order === 0) audioManager?.playSfx("sweep.blastoff");
     // 날아가는 몸은 대사판 윗선에서 자르지 않는다 — 화면 위로 나가는 길이라 잘릴 자리가 없고,
     // 원점 둘레로 도는 동안 마스크에 걸리면 몸이 반쪽씩 깜빡인다.
     creature.clearMask();
@@ -441,6 +443,8 @@ export class DialogueStage {
     // 읽히지 않는다. 끝나면 멈춘 프레임에서 그대로 이어 간다(`stopAct`가 풀어 준다).
     creature.setAnimationFrozen(true);
     const steps = DIALOGUE_ACTS[act];
+    // 통통 뛰는 몸짓만 소리를 낸다 — 끄덕·부들까지 울리면 대사마다 소리가 붙어 시끄럽다.
+    if (act === "hop" || act === "hopTwice") audioManager?.playSfx("story.hop");
     member.act = this.scene.tweens.chain({
       targets: creature,
       tweens: steps.map((step) => ({
@@ -682,6 +686,8 @@ export class DialogueStage {
    */
   private async explode(backdrop?: DialogueBackdrop): Promise<void> {
     const spec = DIALOGUE_CUES.explosion;
+    // 폭파는 `playCue`를 지나지 않으므로 소리도 여기서 낸다 — 흔들림·섬광과 같은 프레임이다.
+    audioManager?.playSfx("story.explosion");
     this.shake(spec.shakeMs, spec.shakeIntensity);
     this.burstShards();
     const reduce = settingsManager.get().accessibility.reduceFlashes;

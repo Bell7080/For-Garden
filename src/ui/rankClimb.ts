@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { motionPolicy } from "../core/settings";
 import { rankClimbFrames } from "../core/scoreRanking";
 import { session } from "../state/session";
@@ -21,7 +22,11 @@ export function playRankClimb(scene: Phaser.Scene, text: Phaser.GameObjects.Text
     const last = index === frames.length - 1;
     scene.tweens.add({
       targets: text, scale: { from: last ? 1.5 : 1.25, to: 1 }, delay: startDelay + index * step, duration: Math.max(120, step * 0.9), ease: "Back.easeOut",
-      onStart: () => text.setText(format(rank)),
+      onStart: () => {
+        text.setText(format(rank));
+        // 한 칸 넘을 때마다 톡, 내 자리에 닿는 마지막 칸은 확정음으로 맺는다.
+        audioManager?.playUi(last ? "ui.confirm" : "roulette.tick");
+      },
     });
   });
 }

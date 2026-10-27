@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { drawGlyph } from "./glyphs";
 import { COLOR, textStyle } from "./theme";
@@ -51,6 +52,8 @@ export function showBondGain(scene: Phaser.Scene, x: number, y: number, gain: Bo
   }
 
   if (gain.levels > 0) {
+    // 유대가 한 단계 오른 순간 — 하트가 떠오르는 그 프레임에 레벨업 소리를 얹는다.
+    audioManager?.playUi("ui.levelup");
     layer.add(scene.add
       .text(0, -BOND_GAIN.levelLift, t("lobby.bondLevelUp", { levels: gain.levels }), textStyle({ role: "display", size: BOND_GAIN.levelSize, color: COLOR.accentText }))
       .setOrigin(0.5));

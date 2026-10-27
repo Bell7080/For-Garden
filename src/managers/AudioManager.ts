@@ -15,15 +15,17 @@ export type SfxCue =
   | "battle.ultimate" | "battle.victory" | "battle.defeat" | "battle.hit" | "battle.hitMagic" | "battle.crit" | "battle.heal"
   | "battle.shield" | "battle.death" | "battle.cutin" | "battle.fever" | "battle.start" | "raid.summon"
   | "research.reveal.common" | "research.reveal.sr" | "research.reveal.ssr" | "research.omen" | "research.showcase"
-  | "dig.hit" | "dig.treasure" | "sweep.scuffle" | "sweep.blastoff" | "sweep.hop"
-  | "story.explosion" | "story.alarm" | "story.rumble" | "story.impact";
+  | "battle.ultimateReady" | "battle.shieldBreak" | "battle.stun" | "battle.sleep" | "battle.summon" | "battle.deathClock" | "battle.block"
+  | "research.shatter" | "dig.hit" | "dig.treasure" | "sweep.scuffle" | "sweep.blastoff" | "sweep.hop"
+  | "story.explosion" | "story.alarm" | "story.rumble" | "story.impact" | "story.titleCard" | "story.hop";
 
 /** 버튼·팝업·탭처럼 화면 조작에 붙는 소리다. 씬이 고르지 않고 공용 UI 경계가 `playUi`로 부른다. */
 export type UiCue =
   | "ui.click" | "ui.tap" | "ui.back" | "ui.toggle" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny"
   | "ui.reward" | "ui.levelup" | "ui.unlock" | "ui.purchase" | "ui.feed" | "ui.breakthrough" | "relic.poke"
   | "rune.success" | "rune.fail" | "rune.engrave" | "rune.synth" | "title.start"
-  | "roulette.tick" | "roulette.win" | "attendance.stamp" | "success.fanfare" | "success.count" | "mission.claim";
+  | "roulette.tick" | "roulette.win" | "attendance.stamp" | "success.fanfare" | "success.count" | "mission.claim"
+  | "settle.lift" | "formation.place" | "formation.lift" | "equip.on" | "equip.off" | "stamina.refill" | "ui.danger" | "sell.coins" | "augment.lock";
 
 /**
  * 효과음 에셋 목록이다. ElevenLabs(Starter, 상업 이용 가능)로 생성해 다듬은 출시용 음원이며 출처·프롬프트는
@@ -31,7 +33,8 @@ export type UiCue =
  */
 export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ...["ui-click", "ui-tap", "ui-back", "ui-toggle", "ui-panel-open", "ui-panel-close", "ui-tab", "ui-confirm", "ui-deny", "ui-reward", "ui-levelup",
-    "ui-unlock", "ui-purchase", "ui-feed", "ui-breakthrough", "rune-success", "rune-fail", "rune-engrave", "rune-synth", "title-start", "relic-poke"].map((key) => [key, `audio/ui/${key}.mp3`] as const),
+    "ui-unlock", "ui-purchase", "ui-feed", "ui-breakthrough", "rune-success", "rune-fail", "rune-engrave", "rune-synth", "title-start", "relic-poke",
+    "settle-lift", "formation-place", "formation-lift", "equip-on", "equip-off", "stamina-refill", "ui-danger", "sell-coins", "augment-lock"].map((key) => [key, `audio/ui/${key}.mp3`] as const),
   // 보상의 순간 — 룰렛·출석 도장·대성공·임무 수령.
   ...["roulette-tick", "roulette-win", "attendance-stamp", "success-fanfare", "success-count", "mission-claim"].map((key) => [key, `audio/reward/${key}.mp3`] as const),
 ];
@@ -39,18 +42,19 @@ export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]
 /** 전투 효과음의 에셋 목록이다. */
 export const BATTLE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ...["battle-ultimate", "battle-victory", "battle-defeat", "battle-hit", "battle-hit-magic", "battle-crit", "battle-heal", "battle-shield",
-    "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon", "sweep-scuffle", "sweep-blastoff", "sweep-hop"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
+    "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon", "sweep-scuffle", "sweep-blastoff", "sweep-hop",
+    "battle-ult-ready", "battle-shield-break", "battle-stun", "battle-sleep", "battle-summon", "battle-death-clock", "battle-block"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
 ];
 
 /** 연구소 효과음의 에셋 목록이다(화석 균열·카드 공개·SSR 전조·새 렐릭 소개). */
 export const RESEARCH_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ["sfx-research-crack", "audio/research/research-crack.mp3"],
-  ...["reveal-common", "reveal-sr", "reveal-ssr", "research-omen", "research-showcase"].map((key) => [key, `audio/research/${key}.mp3`] as const),
+  ...["reveal-common", "reveal-sr", "reveal-ssr", "research-omen", "research-showcase", "research-shatter"].map((key) => [key, `audio/research/${key}.mp3`] as const),
 ];
 
 /** 이야기 연출(폭발·경보·진동·부딪힘)과 고고학 굴착의 효과음 목록이다. */
 export const SCENE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
-  ...["story-explosion", "story-alarm", "story-rumble", "story-impact"].map((key) => [key, `audio/story/${key}.mp3`] as const),
+  ...["story-explosion", "story-alarm", "story-rumble", "story-impact", "story-title-card"].map((key) => [key, `audio/story/${key}.mp3`] as const),
   ...["dig-hit", "dig-treasure"].map((key) => [key, `audio/archaeology/${key}.mp3`] as const),
 ];
 
@@ -120,6 +124,16 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "success.count": { key: "success-count", bus: "ui", gain: 0.5, minGapMs: 60 },
   "mission.claim": { key: "mission-claim", bus: "ui", gain: 0.8 },
   "title.start": { key: "title-start", bus: "ui", gain: 0.8 },
+  "settle.lift": { key: "settle-lift", bus: "ui", gain: 0.7 },
+  // 편성 칸에 세우고 빼는 손맛 — 끌기·탭이 잦으므로 짧게 끊는다.
+  "formation.place": { key: "formation-place", bus: "ui", gain: 0.6, minGapMs: 60 },
+  "formation.lift": { key: "formation-lift", bus: "ui", gain: 0.5, minGapMs: 60 },
+  "equip.on": { key: "equip-on", bus: "ui", gain: 0.7 },
+  "equip.off": { key: "equip-off", bus: "ui", gain: 0.6 },
+  "stamina.refill": { key: "stamina-refill", bus: "ui", gain: 0.75 },
+  "ui.danger": { key: "ui-danger", bus: "ui", gain: 0.7 },
+  "sell.coins": { key: "sell-coins", bus: "ui", gain: 0.7 },
+  "augment.lock": { key: "augment-lock", bus: "ui", gain: 0.75 },
   "battle.ultimate": { key: "battle-ultimate", bus: "sfx", gain: 0.7, minGapMs: 120 },
   "battle.cutin": { key: "battle-cutin", bus: "sfx", gain: 0.7, minGapMs: 200 },
   "battle.victory": { key: "battle-victory", bus: "sfx", gain: 0.85 },
@@ -134,6 +148,14 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "battle.death": { key: "battle-death", bus: "sfx", gain: 0.6, minGapMs: 200 },
   "battle.fever": { key: "battle-fever", bus: "sfx", gain: 0.55, minGapMs: 800 },
   "raid.summon": { key: "raid-summon", bus: "sfx", gain: 0.85 },
+  "battle.ultimateReady": { key: "battle-ult-ready", bus: "sfx", gain: 0.5, minGapMs: 250 },
+  "battle.shieldBreak": { key: "battle-shield-break", bus: "sfx", gain: 0.5, minGapMs: 200 },
+  "battle.stun": { key: "battle-stun", bus: "sfx", gain: 0.45, minGapMs: 200 },
+  "battle.sleep": { key: "battle-sleep", bus: "sfx", gain: 0.45, minGapMs: 300 },
+  "battle.summon": { key: "battle-summon", bus: "sfx", gain: 0.55, minGapMs: 300 },
+  "battle.deathClock": { key: "battle-death-clock", bus: "sfx", gain: 0.75 },
+  "battle.block": { key: "battle-block", bus: "sfx", gain: 0.4, minGapMs: 150 },
+  "research.shatter": { key: "research-shatter", bus: "sfx", gain: 0.55, minGapMs: 80 },
   "research.reveal.common": { key: "reveal-common", bus: "sfx", gain: 0.6, minGapMs: 50 },
   "research.reveal.sr": { key: "reveal-sr", bus: "sfx", gain: 0.75, minGapMs: 50 },
   "research.reveal.ssr": { key: "reveal-ssr", bus: "sfx", gain: 0.9, minGapMs: 50 },
@@ -142,12 +164,15 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "dig.hit": { key: "dig-hit", bus: "sfx", gain: 0.7, minGapMs: 80 },
   "dig.treasure": { key: "dig-treasure", bus: "sfx", gain: 0.8, minGapMs: 120 },
   "sweep.scuffle": { key: "sweep-scuffle", bus: "sfx", gain: 0.6 },
-  "sweep.blastoff": { key: "sweep-blastoff", bus: "sfx", gain: 0.7 },
+  "sweep.blastoff": { key: "sweep-blastoff", bus: "sfx", gain: 0.7, minGapMs: 150 },
   "sweep.hop": { key: "sweep-hop", bus: "sfx", gain: 0.85, minGapMs: 120 },
   "story.explosion": { key: "story-explosion", bus: "sfx", gain: 0.8 },
   "story.alarm": { key: "story-alarm", bus: "sfx", gain: 0.6 },
   "story.rumble": { key: "story-rumble", bus: "sfx", gain: 0.75 },
   "story.impact": { key: "story-impact", bus: "sfx", gain: 0.75 },
+  "story.titleCard": { key: "story-title-card", bus: "sfx", gain: 0.75 },
+  // 대사 무대의 통통 몸짓 — 소탕의 뿅 소리를 작게 빌려 쓴다.
+  "story.hop": { key: "sweep-hop", bus: "sfx", gain: 0.5, minGapMs: 120 },
 };
 
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */

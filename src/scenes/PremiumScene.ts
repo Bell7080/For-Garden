@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
@@ -223,7 +224,7 @@ export class PremiumScene extends Phaser.Scene {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     }
     this.addCardHit(card, width, height, () => {
-      if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed")); return; }
+      if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed"), true); return; }
       if (subscribed) { void this.claimSubscriptionDaily(product); return; }
       // 결제 비활성 상품도 상세 팝업 안에서 지급량·가격·사유를 확인한다.
       new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.premium.purchased")); await this.refresh(); });
@@ -460,20 +461,20 @@ export class PremiumScene extends Phaser.Scene {
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
       void notificationManager.refresh().catch(() => undefined);
-    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
   /** 이용 중인 구독의 오늘 몫을 받는다. 하루에 한 번이다. */
   private async claimSubscriptionDaily(product: ProductDto): Promise<void> {
     if (this.claiming) return;
-    if (product.subscription?.dailyBonusClaimed) { this.notice(t("shop.premium.dailyClaimed")); return; }
+    if (product.subscription?.dailyBonusClaimed) { this.notice(t("shop.premium.dailyClaimed"), true); return; }
     this.claiming = true;
     try {
       const result = await withBusy(this, gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
-    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
   /** 젬 탭 끝의 「광고 보고 젬 받기」 칸. */
@@ -500,7 +501,7 @@ export class PremiumScene extends Phaser.Scene {
       this.topBar?.refresh();
       await this.refresh();
       openRewardPopup(this, this.popups, { items });
-    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
   /**
@@ -537,7 +538,7 @@ export class PremiumScene extends Phaser.Scene {
     card.add(bar);
     if (done) addSoldOutStamp(this, card, width, height, AD_CARD_BEVEL, slot.id); else forgetSoldOutStamp(slot.id);
     this.addCardHit(card, width, height, () => {
-      if (done) { this.notice(t("shop.premium.dailyClaimed")); return; }
+      if (done) { this.notice(t("shop.premium.dailyClaimed"), true); return; }
       void this.watchDailyAd();
     });
     this.content?.add(card);
@@ -552,7 +553,7 @@ export class PremiumScene extends Phaser.Scene {
       this.topBar?.refresh();
       await this.refresh();
       openRewardPopup(this, this.popups, { items });
-    } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
+    } catch { this.notice(t("shop.premium.adFailed"), true); } finally { this.claiming = false; }
   }
 
   /**
@@ -715,7 +716,9 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   /** 결과 안내는 격자 마스크 밖의 고정 계층에 두어 스크롤과 함께 움직이지 않게 한다. */
-  private notice(message: string): void {
+  private notice(message: string, refused = false): void {
+    // 받지 못한 안내(이미 받음·모자람·실패)는 「아직」 소리를 함께 낸다 — 같은 토스트라도 성공과 갈린다.
+    if (refused) audioManager?.playUi("ui.deny");
     const view = premiumGridViewport();
     const toast = this.add.text((view.left + view.right) / 2, view.bottom - 36, message, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5).setDepth(500);
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
@@ -82,6 +83,8 @@ export class InteractionScene extends Phaser.Scene {
   /** 층마다 세워 둔 컨테이너와 그 상태. 바뀐 층만 갈아 끼우는 데 쓴다. */
   private layerNodes: Phaser.GameObjects.Container[] = [];
   private layerSignatures: string[] = [];
+  /** 지난번에 그린 층의 상태 — 나가 있던 파견이 돌아온 순간(away → done)을 소리로 알린다. */
+  private layerStates: string[] = [];
   /** 초마다 글자만 갈아 끼우는 남은 시간 줄. 층 순서와 같은 자리에 들어간다. */
   private remainingLabels: (Phaser.GameObjects.Text | undefined)[] = [];
   private layerMask?: Phaser.GameObjects.Graphics;
@@ -99,7 +102,7 @@ export class InteractionScene extends Phaser.Scene {
     // **씬 객체는 재진입해도 그대로 재사용된다.** 지난 방문의 층 서명이 남아 있으면 시계가 "상태가 같다"고
     // 보고 목록을 그리지 않아, 서버 응답이 늦거나 실패한 재입장에서 빈 화면으로 멈췄다. 방문마다 처음부터 센다.
     this.alive = true;
-    this.layerSignature = ""; this.layerSignatures = []; this.layerNodes = []; this.remainingLabels = [];
+    this.layerSignature = ""; this.layerSignatures = []; this.layerStates = []; this.layerNodes = []; this.remainingLabels = [];
     this.scrollY = 0; this.minScroll = 0;
     this.cityPopup = undefined; this.journalPopup = undefined;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.alive = false; this.cityPopup = undefined; this.journalPopup = undefined; });
@@ -238,7 +241,11 @@ export class InteractionScene extends Phaser.Scene {
   private tickClock(): void {
     if (!this.layers) return;
     const views = this.currentViews();
-    if (InteractionScene.signature(views) !== this.layerSignature) { this.drawLayers(); return; }
+    if (InteractionScene.signature(views) !== this.layerSignature) {
+      if (views.some((view, index) => view.state === "done" && this.layerStates[index] === "away")) audioManager?.playUi("ui.reward");
+      this.drawLayers();
+      return;
+    }
     views.forEach((view, index) => {
       if (view.state !== "away") return;
       this.remainingLabels[index]?.setText(t("interaction.dispatched", { remaining: interactionRemainingLabel(view.remainingMs ?? 0) }));
@@ -274,6 +281,7 @@ export class InteractionScene extends Phaser.Scene {
       this.layerNodes = views.map((view, index) => { const layer = this.buildLayer(view, index); container.add(layer); return layer; });
     }
     this.layerSignatures = signatures;
+    this.layerStates = views.map((view) => view.state);
     this.layerSignature = InteractionScene.signature(views);
 
     const viewportHeight = INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top;

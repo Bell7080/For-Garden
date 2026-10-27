@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
 import { GameApiError, type GameApi } from "../api/contracts";
@@ -320,10 +321,12 @@ export class InventoryPopup {
       this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
     };
     void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
+      audioManager?.playUi("stamina.refill");
       notice("inventory.useDone", t("inventory.staminaGained", { amount: result.appliedAmount }));
       if (this.view) this.render(this.view);
     }).catch((error: unknown) => {
       // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다.
+      if (error instanceof GameApiError && error.code === "STAMINA_FULL") audioManager?.playUi("ui.deny");
       if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
       else console.error("소비품 사용 실패", error);
     });

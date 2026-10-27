@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLOR } from "./theme";
+import { audioManager } from "../managers/AudioManager";
 import { LONG_PRESS, longPressProgress } from "./longPressGauge";
 import { FORMATION_GESTURE, classifyFormationGesture, formationDropSlot, type FormationGestureCancelReason } from "./formationGestureRules";
 
@@ -109,7 +110,7 @@ export function bindFormationDrag(
     if (pointer.id !== pointerId || source === undefined || !pointer.isDown) return;
     const kind = classifyFormationGesture({ elapsedMs: scene.time.now - startedAt, startX, startY, x: pointer.worldX, y: pointer.worldY });
     if (!dragging && kind === "drag" && options.canDrag?.() !== false) {
-      dragging = true; stopGauge(); callbacks.dragStart(source, pointer.worldX, pointer.worldY);
+      dragging = true; stopGauge(); audioManager?.playUi("formation.lift"); callbacks.dragStart(source, pointer.worldX, pointer.worldY);
     }
     if (dragging) callbacks.dragMove(source, pointer.worldX, pointer.worldY);
   };
@@ -127,7 +128,10 @@ export function bindFormationDrag(
     reset();
     if (target === undefined) { callbacks.cancel("outside", from); return; }
     if (kind === "drag" && options.canDrag?.() === false) { callbacks.cancel("disabled", from); return; }
-    if (wasDragging || kind === "drag") { if (target !== from) callbacks.drop(from, target); else callbacks.cancel("outside", from); }
+    if (wasDragging || kind === "drag") {
+      // 손끝에 든 개체가 새 자리에 앉는 순간 — 같은 자리로 돌아오면 아무것도 바뀌지 않았으므로 조용하다.
+      if (target !== from) { audioManager?.playUi("formation.place"); callbacks.drop(from, target); } else callbacks.cancel("outside", from);
+    }
     else if (kind === "tap") callbacks.tap(from);
     else if (kind === "longTap" && callbacks.longPress) callbacks.longPress(from);
     else callbacks.cancel("outside", from);

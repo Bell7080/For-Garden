@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t } from "../i18n";
 import type { RelicDef, RelicSkinId } from "../core/types";
@@ -369,6 +370,7 @@ export class AppearanceStrip {
     try {
       const result = await withBusy(this.scene, gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` }));
       relicSkinManager.markPurchased(this.def.id, result.skinId);
+      audioManager?.playUi("ui.purchase");
       this.hooks.onWalletChange?.();
     } catch {
       // 실패는 값 줄이 이미 말한다(모자란 수가 붉다). 상태 문구로 같은 말을 되풀이하지 않는다.

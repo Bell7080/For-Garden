@@ -80,6 +80,7 @@ export const SETTINGS_DE = {
   "settings.support.clearCache": "Cache leeren",
   "settings.support.terms": "Nutzungsbedingungen",
   "settings.support.privacy": "Datenschutzerklärung",
+  "settings.support.policies": "Richtlinien & Wahrscheinlichkeiten",
   "settings.support.resetSettings": "Einstellungen zurücksetzen",
   "settings.support.resetSave": "Speicherstand zurücksetzen",
   "settings.support.withdraw": "Konto löschen",

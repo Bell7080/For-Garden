@@ -80,6 +80,7 @@ export const SETTINGS_ZH_HANT = {
   "settings.support.clearCache": "清除快取",
   "settings.support.terms": "服務條款",
   "settings.support.privacy": "隱私政策",
+  "settings.support.policies": "政策與機率資訊",
   "settings.support.resetSettings": "重置設定",
   "settings.support.resetSave": "重置存檔資料",
   "settings.support.withdraw": "登出賬號",

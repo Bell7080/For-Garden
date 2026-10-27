@@ -371,7 +371,7 @@ export class MailPopup {
     this.addDeleteChip(footer);
   }
 
-  /** 받지 않은 우편 일괄 삭제 — 작은 붉은 휴지통. 우편 탭에만 서고, 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
+  /** 이미 받은 우편 일괄 삭제 — 작은 붉은 휴지통. 우편 탭에만 서고, 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
   private addDeleteChip(footer: Phaser.GameObjects.Container): void {
     if (!this.result || this.tab !== "reward") return;
     const { deleteChip: chip } = MAIL_POPUP_LAYOUT.footer;

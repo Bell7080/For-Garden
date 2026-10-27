@@ -80,6 +80,7 @@ export const SETTINGS_TH = {
   "settings.support.clearCache": "ล้างแคช",
   "settings.support.terms": "ข้อกำหนดการใช้บริการ",
   "settings.support.privacy": "นโยบายความเป็นส่วนตัว",
+  "settings.support.policies": "นโยบายและอัตราการได้รับ",
   "settings.support.resetSettings": "รีเซ็ตการตั้งค่า",
   "settings.support.resetSave": "รีเซ็ตข้อมูลเซฟ",
   "settings.support.withdraw": "ลบบัญชี",

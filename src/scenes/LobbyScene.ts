@@ -560,7 +560,7 @@ export class LobbyScene extends Phaser.Scene {
     this.idleExcavationPopup.open();
     if (!this.excavationBackButton) {
       // 발굴도 다른 화면과 같은 우하단 뒤로가기 자리를 쓴다. 자리와 생김새를 화면마다 다시 정하지 않는다.
-      this.excavationBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.idleExcavationPopup?.close() }).setDepth(2100);
+      this.excavationBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.idleExcavationPopup?.close()) }).setDepth(2100);
     }
   }
 
@@ -575,7 +575,7 @@ export class LobbyScene extends Phaser.Scene {
     this.tradePopup ??= new TradePopup(this, this.popupLayer, gameApi, session.wallet, (result) => { session.wallet = { ...result.wallet }; this.topBar?.refresh(); }, () => { this.tradePopup = undefined; this.tradeBackButton?.destroy(); this.tradeBackButton = undefined; });
     this.tradePopup.open();
     // 판이 화면을 거의 채우므로 팝업 X 대신 다른 작업판과 같은 우하단 공용 아이콘을 쓴다.
-    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.tradePopup?.close() }).setDepth(2100);
+    if (!this.tradeBackButton) this.tradeBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.tradePopup?.close()) }).setDepth(2100);
   }
 
   /**
@@ -594,7 +594,7 @@ export class LobbyScene extends Phaser.Scene {
       onClosed: () => { this.eventPopup = undefined; this.eventBackButton?.destroy(); this.eventBackButton = undefined; },
     });
     this.eventPopup.open();
-    if (!this.eventBackButton) this.eventBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.eventPopup?.close() }).setDepth(2100);
+    if (!this.eventBackButton) this.eventBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.eventPopup?.close()) }).setDepth(2100);
   }
 
   /**
@@ -626,7 +626,7 @@ export class LobbyScene extends Phaser.Scene {
       this.inventoryPopup = undefined; this.inventoryBackButton?.destroy(); this.inventoryBackButton = undefined;
     }, (action) => this.handleCurrencyAction(action));
     this.inventoryPopup.open();
-    if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.inventoryPopup?.close() }).setDepth(2100);
+    if (!this.inventoryBackButton) this.inventoryBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(() => this.inventoryPopup?.close()) }).setDepth(2100);
   }
 
   /** 레일 입력을 준비 문구 없이 실제 우편 작업판과 즉시 연결한다. */
@@ -663,7 +663,7 @@ export class LobbyScene extends Phaser.Scene {
         if(mode.id==="live-arena") addArenaMascots(this,body,-235,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
-      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(close) }).setDepth(SORTIE_SD_DEPTH + 1);
       // 결투 상점도 출격판과 같은 곁팝업에 선다 — 같은 「사러 간다」가 두 판에서 같은 자리·같은 모양이다.
       this.addSortieShopPanel(body, { width: PVP_MENU.panel.width, height: layout.height }, [
         { label: t("shop.duel.title"), onClick: () => { close(); startScene(this, "shop", { storefront: "duel", returnScene: "lobby", returnMenu: "duel" }); } },
@@ -786,7 +786,7 @@ export class LobbyScene extends Phaser.Scene {
       });
       this.bindSortieScroll(content, panelY);
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
-      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
+      this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(close) }).setDepth(SORTIE_SD_DEPTH + 1);
       // 상점은 본판 밑의 제 판에 선다. 판과 함께 여닫히도록 본판(`body`)에 넣는다.
       this.addSortieShopPanel(body, SORTIE_MENU.panel, [
         { label: t("shop.loot.title"), onClick: () => { close(); startScene(this, "shop", { storefront: "loot", returnScene: "lobby", returnMenu: "sortie" }); } },

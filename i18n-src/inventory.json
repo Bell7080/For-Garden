@@ -49,16 +49,6 @@
 "Material",
 "Материалы"
 ],
-"inventory.rune.count": [
-"持有",
-"ที่มี",
-"Đang có",
-"Dimiliki",
-"En posesión",
-"Em posse",
-"Besitz",
-"Есть"
-],
 "inventory.sort.acquired": [
 "获得顺序",
 "ลำดับที่ได้",
@@ -118,6 +108,16 @@
 "Relíquia",
 "Relikt",
 "Реликт"
+],
+"inventory.sort.trait": [
+"特性",
+"คุณลักษณะ",
+"Đặc tính",
+"Sifat",
+"Rasgo",
+"Traço",
+"Merkmal",
+"Черта"
 ],
 "inventory.guide.held": [
 "持有",

@@ -6,7 +6,7 @@ import { compareBookmarkedOwnedRelics } from "../../src/core/relicCatalog";
 import type { Session } from "../../src/state/session";
 import { canvasBox, captureGame, tap, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
 import { RUNE_CRAFT_PANEL, runeCraftLayout } from "../../src/ui/runeCraftLayout";
-import { RUNE_PICK_GRID, runePickerSize } from "../../src/ui/runePickerLayout";
+import { RUNE_PICK_GRID, runePickerListTop, runePickerSize } from "../../src/ui/runePickerLayout";
 
 test("룬 선택창은 검색과 필터 초기화를 지원하고 상세창 뒤의 입력을 숨긴다", async ({ page }, testInfo) => {
   await startAfterOpening(page, (session) => {
@@ -20,23 +20,28 @@ test("룬 선택창은 검색과 필터 초기화를 지원하고 상세창 뒤�
   await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoGemSlots?.length)).toBe(3);
   await tap(page, 688, 1350);
-  const input = page.getByPlaceholder("이름 검색");
+  const input = page.getByLabel("이름·옵션·특성 검색");
   await expect(input).toBeVisible();
   await expect(input).toBeInViewport({ ratio: 1 });
   await input.fill("검색 A");
-  const top = H / 2 - runePickerSize(2).height / 2;
+  const { height } = runePickerSize(2);
+  const top = H / 2 - height / 2;
   const canvas = await canvasBox(page);
   const search = await input.boundingBox();
   expect(search).not.toBeNull();
-  expect(Math.abs(search!.x - (canvas.x + 145 * canvas.width / W))).toBeLessThan(2);
-  expect(Math.abs(search!.y - (canvas.y + (top + 121) * canvas.height / H))).toBeLessThan(2);
+  // 검색 칸은 조작 첫 줄(필터 · 검색 · 정렬)의 가운데 칸이다.
+  expect(Math.abs(search!.y + search!.height / 2 - (canvas.y + (top + RUNE_PICK_GRID.controlsY) * canvas.height / H))).toBeLessThan(3);
   await captureGame(page, `test-results/${testInfo.project.name}-rune-picker-search.png`);
-  await tap(page, W / 2 + 265, top + 222);
-  await expect(input).toHaveValue("");
-  await input.fill("검색 A");
+  // 필터 칩은 판 위에 필터 판을 연다 — 그동안 검색 칸은 숨는다.
+  await tap(page, W / 2 - runePickerSize(2).width / 2 + RUNE_PICK_GRID.padX + 42, top + RUNE_PICK_GRID.controlsY);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).toContain("필터");
+  await expect(input).toBeHidden();
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-picker-filter.png`);
+  await tap(page, 20, 20);
+  await expect(input).toBeVisible();
   await waitForCanvasInputFrame(page);
   await waitForCanvasInputFrame(page);
-  await tap(page, W / 2 - (RUNE_PICK_GRID.columns - 1) * RUNE_PICK_GRID.cellWidth / 2, top + RUNE_PICK_GRID.headerHeight);
+  await tap(page, W / 2 - (RUNE_PICK_GRID.columns - 1) * RUNE_PICK_GRID.cellWidth / 2, top + runePickerListTop() + RUNE_PICK_GRID.cellHeight / 2);
   await expect(input).toBeHidden();
   await tap(page, 20, 20);
   await expect(input).toBeVisible();

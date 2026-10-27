@@ -1438,7 +1438,7 @@ export class InfoManager {
     const { width, height } = runePickerSize(runes.length);
     this.popups.open({ width, height, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
       mountRunePickerGrid(this.scene, body, {
-        runes, isCovered: () => this.popups.isOpen, isActive: () => this.popups.isTop(body),
+        popups: this.popups, runes, parts: false, isCovered: () => this.popups.isOpen, isActive: () => this.popups.isTop(body),
         onPick: rune => openRuneInfoPopup(this.scene, this.popups, {
           runeInstanceId: rune.instanceId, onChanged: () => this.refreshGrowth(),
           equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },

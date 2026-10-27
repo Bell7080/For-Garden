@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawLayer, drawShapeEdge, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { drawGlyph, type GlyphName } from "./glyphs";
 
 export interface TextInputFieldOptions {
   width: number;
@@ -17,6 +18,10 @@ export interface TextInputFieldOptions {
   mask?: boolean;
   /** 한 줄 칸의 자동 완성 힌트. 비밀번호 칸은 `current-password`/`new-password`를 넘긴다. */
   autocomplete?: string;
+  /** 비었을 때 흐리게 서는 안내 글. Phaser가 그린다 — DOM `placeholder`는 브라우저 글꼴로 한 겹 더 그려져 쓰지 않는다. */
+  placeholder?: string;
+  /** 글자 앞에 서는 선 아이콘(검색 칸의 돋보기). 그만큼 글자가 오른쪽으로 물러난다. */
+  icon?: GlyphName;
 }
 
 /**
@@ -32,6 +37,7 @@ export class TextInputField extends Phaser.GameObjects.Container {
   private readonly dom: Phaser.GameObjects.DOMElement;
   private readonly text: Phaser.GameObjects.Text;
   private readonly caret: Phaser.GameObjects.Rectangle;
+  private readonly placeholderText?: Phaser.GameObjects.Text;
   /** 여러 줄 칸에서 줄 폭을 재는 보이지 않는 글자. 캐럿 x를 구하는 데만 쓴다. */
   private readonly measure?: Phaser.GameObjects.Text;
   /** 여러 줄 칸에서 지금 맨 위에 서 있는 줄. 캐럿이 창 밖으로 나갈 때만 움직인다. */
@@ -48,8 +54,14 @@ export class TextInputField extends Phaser.GameObjects.Container {
     // 판보다 한 톤 밝은 면이라야 "여기에 쓴다"가 읽힌다 — 판과 같은 어둠이면 밑줄만 떠 있다.
     this.add(drawLayer(scene, 0, 0, shape, { fill: 0x1c2633, alpha: 0.96, shadow: false }));
     this.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.7, width: 3 }));
-    const left = -width / 2 + 28;
+    if (options.icon) this.add(drawGlyph(scene, options.icon, -width / 2 + 32, 1, Math.min(32, height * 0.5), COLOR.accent, 0.8, 3));
+    const left = -width / 2 + (options.icon ? 60 : 28);
     const fontSize = options.fontSize ?? 30;
+    if (options.placeholder) {
+      this.placeholderText = scene.add.text(left, options.multiline ? -height / 2 + 16 : 0, options.placeholder, textStyle({ role: "body", size: Math.round(fontSize * 0.9), color: COLOR.inkDim }))
+        .setOrigin(0, options.multiline ? 0 : 0.5);
+      this.add(this.placeholderText);
+    }
     if (options.multiline) {
       const style = textStyle({ role: "emphasis", size: fontSize, color: COLOR.ink, lineSpacing: Math.round(fontSize * 0.25), wrap: width - 56 });
       this.text = scene.add.text(left, -height / 2 + 16, "", style).setOrigin(0, 0);
@@ -109,7 +121,17 @@ export class TextInputField extends Phaser.GameObjects.Container {
 
   get value(): string { return this.field.value; }
 
+  /** 값을 바꾼다(조건 초기화 등). 바뀐 값을 `onChange`로 다시 알리지 않는다 — 부른 쪽이 이미 안다. */
+  setValue(value: string): void {
+    this.field.value = value;
+    this.sync(false);
+  }
+
+  /** 자판을 내린다. 위에 다른 판이 덮일 때 부른다 — 보이지 않는 칸에 초점이 남으면 자판만 떠 있다. */
+  blur(): void { this.field.blur(); }
+
   private sync(notify: boolean): void {
+    this.placeholderText?.setVisible(this.field.value === "");
     // 화면에 서는 글자 수로 자른다 — 이모지 하나가 둘로 세어지지 않게.
     const glyphs = Array.from(this.field.value);
     if (glyphs.length > this.options.maxGlyphs) this.field.value = glyphs.slice(0, this.options.maxGlyphs).join("");

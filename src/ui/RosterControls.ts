@@ -2,13 +2,10 @@ import Phaser from "phaser";
 import { t } from "../i18n";
 import { RELIC_SORT_MODES, type RelicSortMode } from "../core/relicSort";
 import { rosterFilterCount, withRosterSort, type RosterView } from "../core/rosterView";
-import { drawGlyph } from "./glyphs";
-import { chipPoints, drawLayer, slantedRect, toPoints } from "./holo";
+import { addFilterButton, type FilterButton } from "./FilterButton";
 import { PopupLayer } from "./PopupLayer";
-import { pressIn, pressOut } from "./pressFeedback";
 import { openRelicFilterPopup } from "./RelicFilterPopup";
-import { CONTROL_BAR as BAR, SortControl } from "./SortControl";
-import { COLOR, textStyle } from "./theme";
+import { SortControl } from "./SortControl";
 
 /** 조작 줄의 자리. 도감의 큰 줄(84)보다 한 뼘 낮게 잡아 편성 화면의 그리드 위 한 줄에 든다. */
 export const ROSTER_CONTROLS = { height: 56, gap: 12, filterWidth: 96, sortWidth: 190, dirWidth: 64, fontSize: 24 } as const;
@@ -44,8 +41,7 @@ export interface RosterControlsOptions {
 export class RosterControls {
   private view: RosterView;
   private readonly sort: SortControl<RelicSortMode>;
-  private readonly badge: Phaser.GameObjects.Container;
-  private readonly badgeText: Phaser.GameObjects.Text;
+  private readonly filter: FilterButton;
   private readonly layer: Phaser.GameObjects.Container;
   private readonly popups: PopupLayer;
 
@@ -58,30 +54,12 @@ export class RosterControls {
     this.layer = scene.add.container(0, 0).setDepth(options.depth ?? ROSTER_CONTROLS_DEPTH);
     options.parent?.add(this.layer);
 
-    const filter = scene.add.container(options.left + filterWidth / 2, y);
-    const shape = chipPoints(filterWidth, height, { bevel: { topLeft: height * 0.26, topRight: 0, bottomRight: height * 0.26, bottomLeft: 0 } });
-    filter.add(drawLayer(scene, 0, 0, shape, { fill: BAR.fill, alpha: BAR.alpha }));
-    filter.add(drawGlyph(scene, "filter", 0, 2, 30, COLOR.accent, 0.95, 3));
-    this.badge = scene.add.container(filterWidth / 2 - 10, -height / 2 + 10);
-    const plate = scene.add.graphics();
-    plate.fillStyle(0xe23a46, 1);
-    plate.fillPoints(toPoints(slantedRect(28, 24, 6)), true);
-    this.badgeText = scene.add.text(0, 0, "", textStyle({ role: "display", size: 17, color: COLOR.ink })).setOrigin(0.5);
-    this.badge.add([plate, this.badgeText]);
-    filter.add(this.badge);
-    // 누르는 면은 보이는 칩보다 한 뼘 넓다 — 엄지가 칩 가장자리를 빗나가지 않게.
-    const hit = scene.add.rectangle(0, 0, filterWidth + 16, height + 16, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(filter));
-    hit.on("pointerout", () => pressOut(filter, "normal", { pop: false }));
-    hit.on("pointerup", () => {
-      pressOut(filter);
+    this.filter = addFilterButton(scene, this.layer, { x: options.left + filterWidth / 2, y, width: filterWidth, height }, () => {
       this.sort.closeMenu();
       const anchor = { x: options.left + filterWidth / 2, y: y + height / 2 + 26 };
       const world = options.parent ? options.parent.getWorldTransformMatrix().transformPoint(anchor.x, anchor.y) : anchor;
       openRelicFilterPopup(scene, this.popups, { x: world.x, y: world.y }, () => this.view.filter, (next) => this.change({ ...this.view, filter: next }), "battle");
     });
-    filter.add(hit);
-    this.layer.add(filter);
 
     const dirX = options.right - dirWidth / 2;
     this.sort = new SortControl(scene, {
@@ -103,8 +81,6 @@ export class RosterControls {
   }
 
   private paintBadge(): void {
-    const count = rosterFilterCount(this.view);
-    this.badge.setVisible(count > 0);
-    this.badgeText.setText(String(count));
+    this.filter.setCount(rosterFilterCount(this.view));
   }
 }

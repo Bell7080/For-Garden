@@ -186,7 +186,7 @@ function addIconChip(
 }
 
 /** 글자만 서는 칩. 사거리는 아이콘이 없어 이름이 제 색으로 선다. */
-function addTextChip(
+export function addTextChip(
   scene: Phaser.Scene,
   body: Phaser.GameObjects.Container,
   x: number,

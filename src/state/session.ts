@@ -22,6 +22,7 @@ import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
+import type { RuneTraitView } from "../core/runeListFilter";
 import { createDefaultSettings } from "../core/settings";
 import type { LanguageId } from "../core/language";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
@@ -67,7 +68,7 @@ export interface GameSettings {
     /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
     ancientResetSeen: string;
     /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */
-    runeBag: { showHolder: boolean; showEquipped: boolean } };
+    runeBag: { showHolder: boolean; showEquipped: boolean; trait: RuneTraitView; bookmarkedOnly: boolean } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 

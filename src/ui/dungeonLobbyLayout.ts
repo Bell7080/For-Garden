@@ -24,12 +24,21 @@ export const DUNGEON_LOBBY = {
     band: 132,
     /** SD가 발을 딛는 줄(무대 중심에서 아래로). */
     ground: 232,
-    /** 정예 하나의 SD 높이. 물량형 대표 얼굴은 `crowdSd`로 조금 작게 선다. */
-    sd: 270, crowdSd: 222,
+    /** 정예 하나의 SD 높이. */
+    sd: 270,
     /** 정예 셋의 가로 간격 · 가운데가 한 걸음 앞으로 나서는 거리(편성의 2번 자리). */
     slotX: 292, frontLift: 40,
-    /** 물량형 다섯의 가로 간격 · 홀짝으로 엇갈려 서는 깊이. */
-    crowdX: 156, crowdLift: 52,
+    /**
+     * 물량형(대작전)은 **몰려오는 수 그대로** 바글바글 선다 — 앞줄 다섯(이름줄·표식을 단 대표 얼굴)
+     * 뒤로 나머지가 두 줄로 엇갈려 쌓인다. 뒷줄일수록 작고 높이 선다(멀리 선 것으로 읽힌다).
+     */
+    crowd: {
+      front: { count: 5, step: 156, ground: 232, sd: 206 },
+      rows: [
+        { step: 150, ground: 128, sd: 178 },
+        { step: 146, ground: 40, sd: 156 },
+      ],
+    },
     /** 좌우 넘김 화살표 — 무대 가장자리 안쪽에 선다. */
     arrow: { inset: 36, size: 64 },
     /** 이만큼 밀어야 단계가 넘어간다. */
@@ -38,12 +47,16 @@ export const DUNGEON_LOBBY = {
   /** 난이도 번호 줄. 고른 칸은 한 뼘 커지고 테마 색으로 찬다. */
   strip: { titleY: 1100, y: 1190, chipWidth: 80, chipHeight: 96, gap: 10, selectedScale: 1.12 },
   /**
-   * 고른 단계의 **적 전투력 · 보상** 판. 두 이름표는 판 윗변에 걸터앉는 제목표다(`addSectionTitle`).
+   * 고른 단계의 **적 전투력 · 보상** 카드 둘. 판 하나에 제목표를 걸쳐 두던 때는 두 정보가 한 덩어리로
+   * 읽혔다 — 지금은 카드가 갈리고, 머리 띠가 테마 색으로 물들어 어느 입구인지를 함께 말한다.
    */
   summary: {
-    y: 1372, width: 920, height: 136, titleGap: 24,
-    /** 적 속성 뱃지 — 적 전투력 줄의 오른쪽 끝(가르는 선 앞)에서 왼쪽으로 늘어선다. */
-    element: { size: 38, step: 42, rightInset: 24 },
+    y: 1357, height: 170, header: 44, bevel: 22, gap: 20,
+    /** 왼쪽 적 전투력 카드 · 오른쪽 보상 카드의 폭. 둘과 틈의 합이 화면 가운데에 선다. */
+    powerWidth: 620, rewardWidth: 300,
+    /** 적 속성 뱃지 — 전투력 카드 오른쪽 끝에서 왼쪽으로 늘어선다. */
+    element: { size: 42, step: 46, rightInset: 30 },
+    reward: { icon: 88 },
   },
   action: { y: 1590, width: 400, height: 116, gap: 32 },
 } as const;
@@ -67,28 +80,55 @@ export function dungeonStripBounds(): { top: number; bottom: number } {
   return { top: y - (chipHeight * selectedScale) / 2, bottom: y + (chipHeight * selectedScale) / 2 };
 }
 
-/**
- * 무대 위 적 `index`의 자리(무대 중심 기준). 정예 셋은 가운데가 한 걸음 앞으로, 물량형 다섯은
- * 홀짝으로 엇갈려 선다 — 한 줄로 늘어서면 떼가 아니라 줄 선 다섯으로 읽힌다.
- */
-export function dungeonLineupSpot(index: number, count: number): { x: number; ground: number; crowd: boolean } {
-  const S = DUNGEON_LOBBY.stage;
-  const crowd = count > 3;
-  const step = crowd ? S.crowdX : S.slotX;
-  const x = (index - (count - 1) / 2) * step;
-  if (crowd) return { x, ground: S.ground - (index % 2 === 1 ? S.crowdLift : 0), crowd };
-  const center = (count - 1) / 2;
-  return { x, ground: S.ground + (index === center ? S.frontLift : 0), crowd };
+/** 무대 위 적 한 몸의 자리(무대 중심 기준) · SD 높이 · 이름줄과 표식을 다는지. */
+export interface DungeonLineupSpot {
+  x: number;
+  ground: number;
+  height: number;
+  crowd: boolean;
+  /** 이름줄·속성·전투력을 다는 대표 얼굴인가. 물량형은 앞줄만 단다. */
+  labeled: boolean;
 }
 
-/** 요약 판의 윗변. */
+/**
+ * 무대 위 적 `index`의 자리. 정예 셋은 가운데가 한 걸음 앞으로 선다. 물량형은 앞줄 다섯 뒤로
+ * 나머지를 두 줄로 나눠, 줄마다 반 칸씩 엇갈려 쌓는다 — 한 줄로 늘어서면 떼가 아니라 줄 선 다섯이다.
+ */
+export function dungeonLineupSpot(index: number, count: number): DungeonLineupSpot {
+  const S = DUNGEON_LOBBY.stage;
+  if (count <= 3) {
+    const center = (count - 1) / 2;
+    return { x: (index - center) * S.slotX, ground: S.ground + (index === center ? S.frontLift : 0), height: S.sd, crowd: false, labeled: true };
+  }
+  const { front, rows } = S.crowd;
+  const frontCount = Math.min(front.count, count);
+  if (index < frontCount) {
+    return { x: (index - (frontCount - 1) / 2) * front.step, ground: front.ground, height: front.sd, crowd: true, labeled: true };
+  }
+  // 남은 몸은 가운데 줄이 먼저(올림) 채우고 맨 뒷줄이 나머지를 갖는다.
+  const rest = count - frontCount;
+  const midCount = Math.ceil(rest / 2);
+  const back = index - frontCount >= midCount;
+  const row = rows[back ? 1 : 0];
+  const rowCount = back ? rest - midCount : midCount;
+  const at = back ? index - frontCount - midCount : index - frontCount;
+  // 앞줄 사이 틈을 메우도록 줄마다 반 칸씩 비낀다.
+  const shift = (back ? -0.25 : 0.25) * row.step;
+  return { x: (at - (rowCount - 1) / 2) * row.step + shift, ground: row.ground, height: row.sd, crowd: true, labeled: false };
+}
+
+/** 요약 카드의 윗변. */
 export function dungeonSummaryTop(): number {
   return DUNGEON_LOBBY.summary.y - DUNGEON_LOBBY.summary.height / 2;
 }
 
-/** 요약 판의 제목표가 솟는 끝. 제목표(글자 34 → 높이 52)가 윗변 4px 위에 걸터앉는다. */
-export function dungeonSummaryTitleTop(): number {
-  return dungeonSummaryTop() - 4 - Math.round(34 * 1.52) / 2;
+/** 요약 카드 `index`(0 = 적 전투력, 1 = 보상)의 중심 x와 폭. */
+export function dungeonSummaryCard(index: 0 | 1): { x: number; width: number } {
+  const { powerWidth, rewardWidth, gap } = DUNGEON_LOBBY.summary;
+  const left = BASE_WIDTH / 2 - (powerWidth + gap + rewardWidth) / 2;
+  return index === 0
+    ? { x: left + powerWidth / 2, width: powerWidth }
+    : { x: left + powerWidth + gap + rewardWidth / 2, width: rewardWidth };
 }
 
 /** 조작 버튼 `index`의 중심 x(0 = 출격, 1 = 소탕). */

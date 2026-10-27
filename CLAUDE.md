@@ -2737,6 +2737,7 @@
 
 ## 운영 서버 경계
 
+- **쿠폰 보상은 그 계정의 대상 우편으로만 준다**(`private.redeem_coupon_for` — 게임 `redeem_coupon`과 홈페이지 `server_redeem_coupon_ticket`이 같은 함수). `player_assets`에 넣지 않는다 — 게임은 그 표를 읽지 않는다. iOS 앱만 홈페이지로 보내고(`isIosApp`), 홈페이지는 게임이 발급한 15분짜리 연결 티켓으로만 계정을 안다. UID만 받는 입력은 두지 않는다.
 - 이야기 선택은 `storyId`·`nodeId`·`choiceId`만 보내고 서버가 실제 원고의 효과·선행 관문을 검증한다. 같은 노드의 보상은 `serverJournal.storyChoices`에서 최초 한 번만 확정한다. 완료 전에 미확인 선택을 재시도하며, 저장 실패를 삼키고 다음 장면으로 넘어가지 않는다.
 - 미보유 렐릭의 선택 유대는 `serverJournal.pendingStoryBondXp`에 적립하고 최초 획득의 복제 상태에서 지급·소진한다. 새 획득 경로는 `redeemDeferredStoryBond`를 같은 저장 전에 호출해야 한다. 두 장부는 선택 JSON 필드이며 구 저장은 빈 장부다. 과거 완료분의 선택을 추측해 소급 지급하지 않는다.
 

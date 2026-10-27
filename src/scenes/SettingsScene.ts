@@ -30,7 +30,11 @@ import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTIN
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
-import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { isIosApp, openCouponPage, openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { Button } from "../ui/Button";
+import { UI_ICON } from "../ui/icons";
+import { couponErrorKey, openCouponPopup } from "../ui/CouponPopup";
+import { couponApi } from "../managers/CouponManager";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 import { attachDragScroll } from "../ui/dragScroll";
@@ -318,7 +322,14 @@ export class SettingsScene extends Phaser.Scene {
   private buildSupportRows(y: number, section: (title: string) => number): number {
     y = section(t("settings.section.account"));
     const account = this.accountState;
-    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
+    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 })));
+    // 쿠폰은 계정에 붙는 일이라 계정 판의 오른쪽 위, 요약 옆에 크게 선다 — 지원 판의 글자 줄 사이에 묻히지 않게.
+    const coupon = SETTINGS_SUPPORT.coupon;
+    this.content.add(new Button(this, coupon.x, y + coupon.dy, { width: coupon.width, height: coupon.height,
+      label: t("settings.account.coupon"), fontSize: 30, art: UI_ICON.ticket, variant: "primary", fill: coupon.fill, decorDots: true,
+      onClick: () => { if (!this.accountBusy) this.openCoupon(); },
+    }).fitLabel(coupon.width - 130));
+    y += SETTINGS_SUPPORT.accountSummaryRoom;
     const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
     if (!linkedId) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
     else this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: "ID" }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
@@ -365,6 +376,19 @@ export class SettingsScene extends Phaser.Scene {
   private async clearCache(): Promise<void> {
     if ("caches" in globalThis) await Promise.all((await caches.keys()).map(key => caches.delete(key)));
     this.popups.confirm({ title: t("settings.support.cacheCleared"), message: t("settings.support.cacheClearedBody"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+  }
+
+  /**
+   * 쿠폰: 안드로이드·웹은 게임 안 입력창, iOS 앱은 홈페이지 쿠폰 페이지(같은 계정이 채워진 채)로 보낸다.
+   * iOS는 연결 티켓을 받은 뒤 시스템 브라우저를 연다 — 앱 브리지는 손짓 제한이 없다.
+   */
+  private openCoupon(): void {
+    if (!isIosApp()) { openCouponPopup(this, this.popups); return; }
+    this.accountBusy = true;
+    void couponApi().createWebTicket().then((result) => {
+      if (result.ok || result.error === "unsupported") openCouponPage(result.ok ? result.value : null);
+      else this.popups.confirm({ title: t("coupon.title"), message: t(couponErrorKey(result.error)), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    }).finally(() => { this.accountBusy = false; });
   }
 
   /** 정책은 새 탭을 우선 사용하되 팝업 차단 시 같은 탭으로 이동해 문서 접근을 보장한다. */

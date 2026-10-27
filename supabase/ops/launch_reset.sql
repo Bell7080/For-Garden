@@ -42,6 +42,7 @@ declare
     'public.mail_claims',
     'public.coupon_redemptions',
     'public.coupon_attempts',
+    'public.coupon_web_tickets',
     'public.request_receipts',
     'public.support_tickets',
     'public.support_messages',
@@ -177,6 +178,8 @@ begin
   execute 'truncate table ' || (select string_agg(x::regclass::text, ', ') from unnest(doomed) x) || ' restart identity';
 
   if not p_purge_ops_content then
+    -- 대상 우편(쿠폰 보상·개별 지급)은 지운 계정에게만 가는 것이라 남길 이유가 없다.
+    delete from public.mails where target_player is not null;
     update public.coupons set redeemed_count = 0 where redeemed_count <> 0;
     update public.coupon_codes set redeemed_by = null, redeemed_at = null where redeemed_by is not null or redeemed_at is not null;
   end if;

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bountyRoundEnemy, bountyRoundLevel, BOUNTY_TIERS, getBountyTier } from "../data/bounty";
-import { bountyRunCost, bountyTierProgress } from "../core/bountyRun";
+import { bountyRunCost, bountyTierProgress, isBountyTierCleared } from "../core/bountyRun";
 import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
@@ -15,6 +15,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { addSceneBackground, BACKGROUND, battleFieldBackground } from "../ui/backgrounds";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
+import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
 import { drawVignette } from "../ui/holo";
@@ -66,14 +67,15 @@ export class BountyScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 세 라운드의 적이 등급마다 이미 정해져 있으므로 목록을 보는 동안 전부 읽어 둔다.
-    prefetchBattlePuppets(relicCollection.validParty, BOUNTY_TIERS.flatMap((tier) => tier.rounds.map((round) => round.relicId)));
     setDebugScene("bounty");
     this.busy = false;
     this.clearedTierIds = session.bounty.clearedTierIds;
     // 돌아온 등급 → 마지막으로 고른 등급 → 열린 가장 높은 등급 순이다(`refresh`가 잠긴 값을 고친다).
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.bounty;
     this.selectedTierId = BOUNTY_TIERS.some(({ id }) => id === remembered) ? remembered : "";
+    // 들어오는 순간만 잠긴 등급을 열린 가장 높은 등급으로 고친다 — 그 뒤로는 잠긴 등급도 넘겨 볼 수 있다.
+    const openRows = bountyTierProgress(this.clearedTierIds).filter(({ unlocked }) => unlocked);
+    if (!openRows.some(({ tier }) => tier.id === this.selectedTierId)) this.selectedTierId = openRows[openRows.length - 1]?.tier.id ?? BOUNTY_TIERS[0].id;
     addSceneBackground(this, BACKGROUND.sortieBounty);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.7 });
     new TopBar(this, 40, { profile: false, onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency) });
@@ -82,10 +84,10 @@ export class BountyScene extends Phaser.Scene {
     // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.lobby = new DungeonLobby(this, {
-      onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("bounty", id); this.refresh(); } },
+      onSelectTier: (id) => this.selectTier(id),
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
-    });
+    }, { theme: DUNGEON_THEME.bounty, fieldKey: battleFieldBackground("bounty") });
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     this.refresh();
     // 서버가 확정한 해금이 도착하면 그때 목록을 다시 세운다.
@@ -109,25 +111,33 @@ export class BountyScene extends Phaser.Scene {
     }).catch(() => undefined);
   }
 
-  /** 목록·요약·소탕·조작을 한 번에 다시 세운다. 조각만 갈아 끼우면 고른 줄과 비용이 갈린다. */
+  /** 단계를 고른다. 잠긴 등급도 넘겨 볼 수 있지만 다음 진입이 되살릴 자리로는 열린 등급만 남긴다. */
+  private selectTier(id: string): void {
+    if (this.busy) return;
+    this.selectedTierId = id;
+    if (bountyTierProgress(this.clearedTierIds).find(({ tier }) => tier.id === id)?.unlocked) settingsManager.rememberDungeonTier("bounty", id);
+    this.refresh();
+  }
+
+  /** 무대·번호 줄·요약·조작을 한 번에 다시 세운다. 조각만 갈아 끼우면 고른 칸과 비용이 갈린다. */
   private refresh(): void {
     const rows = bountyTierProgress(this.clearedTierIds);
-    // 고른 등급이 아직 없거나 잠겼으면 열려 있는 가장 높은 등급으로 내려온다.
-    const openRows = rows.filter(({ unlocked }) => unlocked);
-    if (!openRows.some(({ tier }) => tier.id === this.selectedTierId)) this.selectedTierId = openRows[openRows.length - 1]?.tier.id ?? rows[0].tier.id;
     const tier = getBountyTier(this.selectedTierId);
     const selected = rows.find((row) => row.tier.id === tier.id);
+    // 고른 등급의 세 정예만 미리 읽는다 — 열 등급의 정예를 다 읽으면 보지 않을 원화가 메모리에 남는다.
+    prefetchBattlePuppets(relicCollection.validParty, tier.rounds.map((round) => round.relicId));
     const cost = bountyRunCost(tier);
     this.lobby?.render({
       tiers: rows.map((row) => ({
         id: row.tier.id, name: row.tier.name,
         // 한 등급의 셋은 같은 레벨로 선다.
         level: bountyRoundLevel(row.tier.rounds[0]),
-        faces: row.tier.rounds.map((round) => getRelic(round.relicId).portraitAssetId),
+        lineup: row.tier.rounds.map((round, index) => ({ relicId: round.relicId, name: getRelic(round.relicId).name, level: bountyRoundLevel(round), round: index + 1 })),
         elements: distinctElements(row.tier.rounds.map((round) => getRelic(round.relicId).element)),
         reward: { icon: "currency-gold", amount: row.tier.rewardGold },
         enemyPower: row.tier.rounds.reduce((sum, round) => sum + combatPower(bountyRoundEnemy(round).stats), 0),
         unlocked: row.unlocked,
+        cleared: row.cleared,
       })),
       selectedId: tier.id,
       sortieCost: cost.staminaCost,
@@ -155,7 +165,7 @@ export class BountyScene extends Phaser.Scene {
     openDungeonSweep({
       scene: this, popups: this.popups,
       tierName: tier.name, level: bountyRoundLevel(tier.rounds[0]), cost: bountyRunCost(tier),
-      cleared: this.clearedTierIds.includes(tier.id),
+      cleared: isBountyTierCleared(tier, this.clearedTierIds),
       enemyId: tier.rounds[tier.rounds.length - 1].relicId,
       fieldKey: battleFieldBackground("bounty"),
       membership: () => this.adFreeMembership,

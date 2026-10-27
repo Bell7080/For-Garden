@@ -2,6 +2,7 @@
 export const DUNGEON_ES = {
   "dungeon.enemyPower": "Poder de combate enemigo",
   "dungeon.reward": "Recompensa",
+  "dungeon.difficulty": "Dificultad",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

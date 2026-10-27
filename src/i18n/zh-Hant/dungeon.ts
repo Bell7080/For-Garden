@@ -2,6 +2,7 @@
 export const DUNGEON_ZH_HANT = {
   "dungeon.enemyPower": "敵方戰鬥力",
   "dungeon.reward": "獎勵",
+  "dungeon.difficulty": "難度",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

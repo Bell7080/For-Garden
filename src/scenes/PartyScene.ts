@@ -29,7 +29,8 @@ import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
@@ -46,7 +47,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
+import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_LANES, partyLaneBox, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -54,7 +55,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { TopBar } from "../ui/TopBar";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
-import { shrinkTextToWidth } from "../ui/textFit";
+import { shrinkTextToWidth, squeezeTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
 import { autoRepeat } from "../managers/AutoRepeatManager";
@@ -411,9 +412,13 @@ export class PartyScene extends Phaser.Scene {
     // **방어덱 편성에는 마주 선 편이 없다** — 원정 편성처럼 아군만 선다. 대치선·VS·적 전투력을 세우면
     // 빈 적진과 0을 마주 보는 판이 되어, 누구와 싸우는지 모르는 편성이 아니라 적을 빠뜨린 화면으로 읽힌다.
     const allyOnly = this.content.content === "duelDefense";
+    // 현상수배는 1대1 세 판이라 한 장면의 대치선·총합 대신 자리마다 레인 한 장이 선다(`PARTY_LANES`).
+    const lanes = this.content.content === "bounty";
     this.enemyPowerText = undefined;
+    this.allyPowerText = undefined;
+    if (lanes) this.paintBountyLanes(preview.shown.length);
     // 두 줄 사이의 대치선.
-    if (!allyOnly) this.add
+    if (!allyOnly && !lanes) this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
       .setOrigin(0)
       .setLineWidth(2)
@@ -433,7 +438,7 @@ export class PartyScene extends Phaser.Scene {
     });
     if (preview.hordeCount !== undefined) {
       // 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 말한다. 대치선 판 위, 적 이름줄 아래다.
-      this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+      this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 24, color: COLOR.dangerText }))
         .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
     }
 
@@ -446,17 +451,17 @@ export class PartyScene extends Phaser.Scene {
     // 이어져 "여기가 두 편이 마주 보는 자리"를 한 번 더 말한다.
     // 방어덱은 마주 볼 편이 없어 그 줄을 끌어올린 아군 이름줄 바로 아래에 세운다(`PARTY_DEFENSE`).
     const powerY = allyOnly ? this.allyRow + PARTY_DEFENSE.powerGap : POWER_ROW;
-    drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
+    if (!lanes) drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
       fill: COLOR.panel,
       alpha: HOLO.glass,
       edge: COLOR.panelEdge,
       edgeAlpha: 0.85,
     });
-    this.allyPowerText = this.add
+    if (!lanes) this.allyPowerText = this.add
       .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, powerY, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
       .setOrigin(allyOnly ? 0.5 : 0, 0.5)
       .setShadow(0, 3, "#05070a", 4, false, true);
-    if (!allyOnly) {
+    if (!allyOnly && !lanes) {
       this.enemyPowerText = this.add
         .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
         .setOrigin(1, 0.5)
@@ -513,6 +518,36 @@ export class PartyScene extends Phaser.Scene {
     }, { longPressGauge: (slot) => this.picked[slot] !== undefined });
   }
 
+  /**
+   * 현상수배의 레인 셋. 자리마다 세로로 긴 판이 적 하나와 아군 하나를 한 판에 묶고, 머리에 그 판의
+   * 라운드가, 대치선 자리에 「VS」가 선다. 색은 현상수배 입구와 같은 소라빛이다.
+   */
+  private paintBountyLanes(rounds: number): void {
+    const theme = DUNGEON_THEME.bounty;
+    const { header, bevel } = PARTY_LANES;
+    for (let slot = 0; slot < Math.min(rounds, PREVIEW_COLUMNS.length); slot += 1) {
+      const box = partyLaneBox(slot);
+      drawLayer(this, box.x, box.y, chipPoints(box.width, box.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), {
+        fill: COLOR.panel, alpha: HOLO.glass * 0.55, edge: theme.accent, edgeAlpha: 0.9, shadow: false,
+      }).setDepth(-16);
+      // 머리의 라운드 표 — 테마 색으로 찬 띠에 짙은 글자.
+      const headerY = PARTY_LANES.top + header / 2;
+      drawLayer(this, box.x, headerY, chipPoints(box.width, header, { bevel: { topLeft: bevel, bottomRight: 0 } }), {
+        fill: theme.accent, alpha: 0.92, shadow: false,
+      }).setDepth(-15);
+      const label = this.add.text(box.x, headerY, t("bounty.formation.round", { round: slot + 1 }), textStyle({ role: "display", size: 30, color: theme.deepText }))
+        .setOrigin(0.5).setDepth(-15);
+      squeezeTextToWidth(label, box.width - 40);
+      // 대치선 자리의 VS — 그 레인 안에서만 짧게 긋는다.
+      const line = this.add.graphics().setDepth(-15);
+      line.lineStyle(2, theme.accent, 0.55);
+      line.lineBetween(box.x - box.width / 2 + 18, FRONT_LINE, box.x - 34, FRONT_LINE);
+      line.lineBetween(box.x + 34, FRONT_LINE, box.x + box.width / 2 - 18, FRONT_LINE);
+      this.add.text(box.x, FRONT_LINE, "VS", textStyle({ role: "display", size: 30, color: theme.accentText }))
+        .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(-15);
+    }
+  }
+
   /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
   private addPreviewEnemy(enemy: PartyPreviewEnemy, x: number, bodyScale: number, elite: boolean, crowded: boolean): void {
     const { def } = enemy;
@@ -532,10 +567,8 @@ export class PartyScene extends Phaser.Scene {
     const headY = ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6;
     // 현상수배는 정예마다 **몇 라운드에 서는지**를 머리 위에 적는다 — 아래 같은 열의 아군이 그
     // 라운드에 나간다. 셋이 아니라 하나가 선 자리(정예)는 머리 위 이름표가 말한다.
-    if (enemy.round !== undefined) {
-      this.add.text(x, headY, t("bounty.formation.round", { round: enemy.round }), textStyle({ role: "display", size: 26, color: COLOR.sortieText }))
-        .setOrigin(0.5, 1).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
-    } else if (elite) {
+    // 현상수배는 그 라운드를 레인 머리가 말한다(`paintBountyLanes`).
+    if (enemy.round === undefined && elite) {
       addStageEliteMark(this, undefined, x, headY, 28).setDepth(3);
     }
 

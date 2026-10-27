@@ -1,4 +1,14 @@
 {
+"dungeon.difficulty": [
+"难度",
+"ความยาก",
+"Độ khó",
+"Tingkat Kesulitan",
+"Dificultad",
+"Dificuldade",
+"Schwierigkeit",
+"Сложность"
+],
 "dungeon.enemyPower": [
 "敌方战斗力",
 "พลังต่อสู้ของศัตรู",

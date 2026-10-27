@@ -2,6 +2,7 @@
 export const DUNGEON_VI = {
   "dungeon.enemyPower": "Lực chiến địch",
   "dungeon.reward": "Phần thưởng",
+  "dungeon.difficulty": "Độ khó",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

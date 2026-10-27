@@ -27,7 +27,7 @@ import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, clai
 import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../data/attendance";
 import { isContentUnlocked } from "../core/contentUnlock";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
-import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
+import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -2566,7 +2566,7 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const tier = this.bountyTier(request.tierId);
-    const cleared = this.state.bounty.clearedTierIds.includes(tier.id);
+    const cleared = isBountyTierCleared(tier, this.state.bounty.clearedTierIds);
     const response = this.sweepDungeon(request, tier.id, bountyRunCost(tier), cleared, this.now());
     this.bountySweepResults.set(request.requestId, structuredClone(response));
     return response;

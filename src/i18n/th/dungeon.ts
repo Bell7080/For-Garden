@@ -2,6 +2,7 @@
 export const DUNGEON_TH = {
   "dungeon.enemyPower": "พลังต่อสู้ของศัตรู",
   "dungeon.reward": "รางวัล",
+  "dungeon.difficulty": "ความยาก",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

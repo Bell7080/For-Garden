@@ -44,7 +44,7 @@ export const PARTY_PREVIEW = {
    * 물량형에서 한꺼번에 몰려오는 수가 서는 줄. 적 이름줄 아래·전투력 판 위다 — 대표 얼굴만
    * 세우므로 그 수가 없으면 다섯이 오는 판으로 읽힌다.
    */
-  hordeCountY: 503,
+  hordeCountY: 506,
   /**
    * 미리보기 적의 몸집 상한. 레이드 보스(1.9배)를 그대로 세우면 머리가 화면 제목을 뚫는다 —
    * 전장의 크기는 전투 화면이 말하고, 여기서는 "혼자 선 큰 적"까지만 읽히면 된다.
@@ -144,4 +144,26 @@ export function partyDefenseAllyRow(): number {
 export function partyDefensePowerBounds(): { top: number; bottom: number } {
   const y = partyDefenseAllyRow() + PARTY_DEFENSE.powerGap;
   return { top: y - PARTY_POWER_PLATE.height / 2, bottom: y + PARTY_POWER_PLATE.height / 2 };
+}
+
+/**
+ * **현상수배는 1대1 세 판이다** — 편성의 세 자리가 저마다 한 라운드를 맡아 위의 정예 하나와 따로
+ * 싸운다. 위아래로 한 장면처럼 세우면 번호만으로 짝을 맞춰야 해 누가 누구와 붙는지 분간되지
+ * 않았다. 그래서 자리마다 **세로로 긴 판 한 장**(레인)을 깔아 적과 아군을 한 판에 묶고, 판 머리에
+ * 몇 라운드인지를 적는다. 대치선·총 전투력 판 대신 레인마다 「VS」가 선다 — 합쳐 싸우는 판이
+ * 아니라 총합이 뜻하는 바가 없다.
+ */
+export const PARTY_LANES = {
+  /** 레인 윗변(화면 제목 아래) · 밑변(아군 이름줄 아래). */
+  top: 156, bottom: 893,
+  /** 열 간격(270) 안에 들도록 — 나머지가 레인 사이의 틈이다. */
+  width: 262,
+  /** 머리의 라운드 표 높이. */
+  header: 50,
+  bevel: 24,
+} as const;
+
+export function partyLaneBox(slot: number): PreviewBox {
+  const { top, bottom, width } = PARTY_LANES;
+  return { x: PARTY_PREVIEW_COLUMNS[slot], y: (top + bottom) / 2, width, height: bottom - top };
 }

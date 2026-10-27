@@ -4,63 +4,84 @@ import { BACK_BUTTON_SIZE, BACK_SLOT } from "./popupGeometry";
 /**
  * 던전 입구(현상수배·치즈케이크 대작전)의 **세로 좌표 소유자**.
  *
- * 두 화면은 같은 일을 한다 — 단계를 고르고, 출격하거나 소탕한다(배율은 소탕 창이 고른다). 각자 배치표를
- * 갖던 때는 현상수배만 아래에 편성 칸을 세우고 대작전만 배율 칩을 세워, 같은 손짓이 화면마다
- * 다른 자리에 섰다. 이제 한 표를 읽고, 편성은 두 곳 모두 **스토리와 같은 편성 화면**이 맡는다.
+ * 화면은 위에서부터 **전장 무대 → 난이도 줄 → 요약 판 → 조작** 넷이다. 예전에는 단계마다 한 줄씩
+ * 쌓은 목록이었는데, 단계가 열 개로 늘자 목록이 화면을 다 먹었고 무엇과 싸우는지는 얼굴 동그라미
+ * 셋으로만 읽혔다. 수집형 RPG 던전 입구가 흔히 쓰는 모양 — **고른 단계의 적이 전장에 서 있는 큰
+ * 무대 하나 + 아래의 번호 줄** — 로 바꿔, 번호를 누르거나 무대를 좌우로 밀어 단계를 넘긴다.
  *
- * **아래 두 줄(요약 판 · 조작)은 목록 길이와 무관하게 같은 자리에 선다.** 목록 밑변에서
- * 거꾸로 쌓으면 단계가 다섯인 현상수배와 여덟인 대작전의 요약 판이 서로 다른 높이에 서서,
- * "같은 양식"이 자리부터 갈린다. 목록은 그 위에서 끝나야 하며 테스트가 그것을 지킨다.
- *
- * Phaser를 모르는 순수 표다 — 화면과 회귀 테스트가 같은 값을 읽는다.
+ * **아래 세 줄은 단계 수와 무관하게 같은 자리에 선다.** 두 던전이 한 표를 읽어 같은 손짓이 같은
+ * 자리에 선다. Phaser를 모르는 순수 표다 — 화면과 회귀 테스트가 같은 값을 읽는다.
  */
 export const DUNGEON_LOBBY = {
   title: { x: 72, y: 190 },
-  /** 목록 첫 줄의 **윗변**. */
-  listTop: 250,
-  row: {
-    width: 920,
-    height: 118,
-    gap: 10,
-    /** 줄 왼쪽 안쪽 여백 — 이름과 레벨이 서는 자리다. */
-    padding: 34,
-    /** 한 판의 보상 액자. 줄 오른쪽 끝에 선다. */
-    rewardSize: 84,
-    /** 그 판에 서는 적 얼굴(현상수배의 세 라운드). 보상 액자 왼쪽으로 늘어선다. */
-    faceSize: 78,
-    faceGap: 90,
-  },
   /**
-   * 고른 단계의 **적 전투력 · 보상** 판.
-   *
-   * 현상수배 아래에 서던 "출전 순서" 자리를 이 판이 맡는다. 순서는 편성 화면이 이미 적과 나란히
-   * 보여 주므로 입구에서는 **들어갈지 말지를 정하는 두 수**만 남긴다.
-   *
-   * 두 이름표는 판 안의 회색 글자가 아니라 **판 윗변에 걸터앉는 제목표**다(`addSectionTitle`) —
-   * 다른 판의 제목과 같은 위계라 같은 양식으로 선다. 그 표가 판 위로 반 뼘 솟으므로 목록은
-   * 그 끝(`dungeonSummaryTitleTop`)보다 위에서 끝난다.
+   * 고른 단계의 적이 서는 무대. 결투 방어팀 미리보기처럼 **그 콘텐츠의 전장 원화** 위에 SD가 선다.
+   * 좌표는 무대 중심 기준이다.
+   */
+  stage: {
+    y: 650, width: 960, height: 780, bevel: 44,
+    /** 위쪽 이름 띠의 높이 — 원화 위에서 단계 이름이 읽히도록 짙게 누른다. */
+    band: 132,
+    /** SD가 발을 딛는 줄(무대 중심에서 아래로). */
+    ground: 232,
+    /** 정예 하나의 SD 높이. 물량형 대표 얼굴은 `crowdSd`로 조금 작게 선다. */
+    sd: 270, crowdSd: 222,
+    /** 정예 셋의 가로 간격 · 가운데가 한 걸음 앞으로 나서는 거리(편성의 2번 자리). */
+    slotX: 292, frontLift: 40,
+    /** 물량형 다섯의 가로 간격 · 홀짝으로 엇갈려 서는 깊이. */
+    crowdX: 156, crowdLift: 52,
+    /** 좌우 넘김 화살표 — 무대 가장자리 안쪽에 선다. */
+    arrow: { inset: 36, size: 64 },
+    /** 이만큼 밀어야 단계가 넘어간다. */
+    swipe: 70,
+  },
+  /** 난이도 번호 줄. 고른 칸은 한 뼘 커지고 테마 색으로 찬다. */
+  strip: { titleY: 1100, y: 1190, chipWidth: 80, chipHeight: 96, gap: 10, selectedScale: 1.12 },
+  /**
+   * 고른 단계의 **적 전투력 · 보상** 판. 두 이름표는 판 윗변에 걸터앉는 제목표다(`addSectionTitle`).
    */
   summary: {
-    y: 1478, width: 920, height: 136, titleGap: 24,
+    y: 1372, width: 920, height: 136, titleGap: 24,
     /** 적 속성 뱃지 — 적 전투력 줄의 오른쪽 끝(가르는 선 앞)에서 왼쪽으로 늘어선다. */
     element: { size: 38, step: 42, rightInset: 24 },
   },
-  action: { y: 1650, width: 400, height: 116, gap: 32 },
+  action: { y: 1590, width: 400, height: 116, gap: 32 },
 } as const;
 
-/** 줄 `index`(0부터)의 중심 y. */
-export function dungeonRowCenterY(index: number): number {
-  const { listTop, row } = DUNGEON_LOBBY;
-  return listTop + row.height / 2 + index * (row.height + row.gap);
+/** 무대의 위아래 끝. */
+export function dungeonStageBounds(): { top: number; bottom: number } {
+  const { y, height } = DUNGEON_LOBBY.stage;
+  return { top: y - height / 2, bottom: y + height / 2 };
 }
 
-/** 목록이 끝나는 세로 좌표(마지막 줄의 **밑변**). */
-export function dungeonListBottom(count: number): number {
-  const { listTop, row } = DUNGEON_LOBBY;
-  return listTop + count * row.height + Math.max(0, count - 1) * row.gap;
+/** 난이도 칸 `index`의 중심 x — `count`칸이 화면 가운데를 기준으로 선다. */
+export function dungeonStripChipX(index: number, count: number): number {
+  const { chipWidth, gap } = DUNGEON_LOBBY.strip;
+  const span = count * chipWidth + Math.max(0, count - 1) * gap;
+  return BASE_WIDTH / 2 - span / 2 + chipWidth / 2 + index * (chipWidth + gap);
 }
 
-/** 요약 판의 윗변. 목록은 그보다 위에서 끝나야 한다. */
+/** 난이도 줄의 위아래 끝(고른 칸이 커진 몫까지). */
+export function dungeonStripBounds(): { top: number; bottom: number } {
+  const { y, chipHeight, selectedScale } = DUNGEON_LOBBY.strip;
+  return { top: y - (chipHeight * selectedScale) / 2, bottom: y + (chipHeight * selectedScale) / 2 };
+}
+
+/**
+ * 무대 위 적 `index`의 자리(무대 중심 기준). 정예 셋은 가운데가 한 걸음 앞으로, 물량형 다섯은
+ * 홀짝으로 엇갈려 선다 — 한 줄로 늘어서면 떼가 아니라 줄 선 다섯으로 읽힌다.
+ */
+export function dungeonLineupSpot(index: number, count: number): { x: number; ground: number; crowd: boolean } {
+  const S = DUNGEON_LOBBY.stage;
+  const crowd = count > 3;
+  const step = crowd ? S.crowdX : S.slotX;
+  const x = (index - (count - 1) / 2) * step;
+  if (crowd) return { x, ground: S.ground - (index % 2 === 1 ? S.crowdLift : 0), crowd };
+  const center = (count - 1) / 2;
+  return { x, ground: S.ground + (index === center ? S.frontLift : 0), crowd };
+}
+
+/** 요약 판의 윗변. */
 export function dungeonSummaryTop(): number {
   return DUNGEON_LOBBY.summary.y - DUNGEON_LOBBY.summary.height / 2;
 }
@@ -81,11 +102,4 @@ export function dungeonActionButtonX(index: number): number {
 export function dungeonActionFitsAboveBackButton(): boolean {
   const bottom = DUNGEON_LOBBY.action.y + DUNGEON_LOBBY.action.height / 2;
   return bottom <= BACK_SLOT.y - BACK_BUTTON_SIZE / 2 && bottom <= BASE_HEIGHT;
-}
-
-/** 줄 안에서 `slot`번째 적 얼굴의 x(줄 중심 기준). 보상 액자 왼쪽에서부터 왼쪽으로 늘어선다. */
-export function dungeonRowFaceX(slot: number, count: number): number {
-  const { width, padding, rewardSize, faceGap } = DUNGEON_LOBBY.row;
-  const right = width / 2 - padding - rewardSize - 36;
-  return right - (count - 1 - slot) * faceGap - DUNGEON_LOBBY.row.faceSize / 2;
 }

@@ -43,15 +43,26 @@ export function nextBountyStep(round: BountyRoundIndex, won: boolean): BountySte
   return next >= BOUNTY.roundCount ? { kind: "clear" } : { kind: "next", round: next as BountyRoundIndex };
 }
 
+/**
+ * 그 등급을 깬 것으로 보는가 — **그 등급이나 그보다 위 등급을 하나라도 깼으면** 깬 것이다.
+ *
+ * 다섯 등급이던 사다리가 열 등급으로 촘촘해지며 예전 ID들이 띄엄띄엄 새 자리에 앉았다(`BOUNTY_TIERS`).
+ * 글자 그대로 `includes`로만 보면 예전 5급을 깬 사람이 그 사이 새 등급에서 막혀 소탕도 다음 등급도
+ * 못 연다. 위를 깬 사람이 아래를 못 깬다는 판정은 사다리에서 뜻이 없으므로 순서로 읽는다.
+ */
+export function isBountyTierCleared(tier: BountyTierDef, clearedTierIds: readonly string[]): boolean {
+  return BOUNTY_TIERS.some(({ id, order }) => order >= tier.order && clearedTierIds.includes(id));
+}
+
 /** 바로 앞 등급을 깼는지. 1급은 선행이 없어 언제나 열려 있다. */
 export function isBountyTierUnlocked(tier: BountyTierDef, clearedTierIds: readonly string[]): boolean {
   const previous = BOUNTY_TIERS.find(({ order }) => order === tier.order - 1);
-  return previous === undefined || clearedTierIds.includes(previous.id);
+  return previous === undefined || isBountyTierCleared(previous, clearedTierIds);
 }
 
 /** 화면이 등급 줄을 세울 때 쓰는 해금 스냅샷이다. 잠긴 등급도 목록에서 빼지 않는다. */
 export function bountyTierProgress(clearedTierIds: readonly string[]): { tier: BountyTierDef; unlocked: boolean; cleared: boolean }[] {
-  return BOUNTY_TIERS.map((tier) => ({ tier, unlocked: isBountyTierUnlocked(tier, clearedTierIds), cleared: clearedTierIds.includes(tier.id) }));
+  return BOUNTY_TIERS.map((tier) => ({ tier, unlocked: isBountyTierUnlocked(tier, clearedTierIds), cleared: isBountyTierCleared(tier, clearedTierIds) }));
 }
 
 /**

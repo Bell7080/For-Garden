@@ -2,6 +2,7 @@
 export const DUNGEON_ID = {
   "dungeon.enemyPower": "Kekuatan Tempur Musuh",
   "dungeon.reward": "Hadiah",
+  "dungeon.difficulty": "Tingkat Kesulitan",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

@@ -2,6 +2,7 @@
 export const DUNGEON_KO = {
   "dungeon.enemyPower": "적 전투력",
   "dungeon.reward": "보상",
+  "dungeon.difficulty": "난이도",
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",

@@ -19,9 +19,13 @@ import type { RelicDef } from "../../src/core/types";
 /** 치명타 순서를 달리하는 재현 가능한 표본 셋. 단일 운 좋은 판을 세기로 오인하지 않는다. */
 const SEEDS = [1, 2, 3] as const;
 
-/** 등급마다 상정한 플레이어 레벨. 1·2급은 돌파 없는 상한(20) 안이고 그 위는 돌파가 연 자리다. */
+/**
+ * 등급마다 상정한 플레이어 레벨 — 그 등급 정예보다 두어 레벨 위다. 1~3급은 돌파 없는 상한(20) 안이고
+ * 그 위는 돌파가 연 자리다. ID는 저장 키라 순서와 다르다(`BOUNTY_TIERS` 머리 주석).
+ */
 const ASSUMED_LEVEL: Readonly<Record<string, number>> = {
-  "bounty-1": 15, "bounty-2": 22, "bounty-3": 34, "bounty-4": 48, "bounty-5": 60,
+  "bounty-1": 15, "bounty-6": 18, "bounty-2": 22, "bounty-7": 26, "bounty-3": 31,
+  "bounty-8": 37, "bounty-4": 43, "bounty-9": 49, "bounty-10": 55, "bounty-5": 60,
 };
 
 const grow = (def: RelicDef, level: number): RelicDef => ({ ...def, stats: applyLevelGrowth(def.stats, level, def.rarity) });
@@ -45,7 +49,7 @@ describe("현상수배 등급 검수", () => {
       const distinct = new Set(winners.flat());
       expect(distinct.size, `${tier.id} 서로 다른 셋`).toBeGreaterThanOrEqual(3);
     }
-  }, 30_000);
+  }, 60_000);
 
   it("은 마지막 라운드가 그 등급의 벽이다", () => {
     // 세 라운드가 같은 무게면 "한 번이라도 지면 패배"가 뜻을 잃는다 — 마지막에 누구를 남길지가
@@ -55,7 +59,7 @@ describe("현상수배 등급 검수", () => {
       const counts = tier.rounds.map((round) => reliableWinners(bountyRoundEnemy(round), level).length);
       expect(counts[2], `${tier.id} 마지막 라운드`).toBeLessThan(Math.max(counts[0], counts[1]));
     }
-  });
+  }, 60_000);
 
   it("은 같은 성장 수준에서 등급이 오를수록 내보낼 수 있는 개체가 줄어든다", () => {
     /*
@@ -71,11 +75,11 @@ describe("현상수배 등급 검수", () => {
       const previous = counts[index - 1].reduce((sum, value) => sum + value, 0);
       expect(total, `${BOUNTY_TIERS[index].id}`).toBeLessThan(previous);
     }
-  });
+  }, 60_000);
 
   it("은 가장 높은 등급이 1레벨 맨몸을 막는다", () => {
     /*
-     * **한 라운드라도 막히면 그 판은 끝난다.** 5급의 마지막 라운드(코마)가 그 자리다.
+     * **한 라운드라도 막히면 그 판은 끝난다.** 10급의 마지막 라운드(이카닉시아)가 그 자리다.
      *
      * 낮은 등급은 1레벨로도 넘어갈 수 있다 — 이 게임의 1대1에서는 레벨보다 **어느 개체를
      * 내보냈는가**가 훨씬 크게 작용하기 때문이다. 등급을 차례로 깨야 다음이 열리고 하루 입장이

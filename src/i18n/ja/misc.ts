@@ -172,6 +172,12 @@ export const MISC_JA = {
   "mail.empty.reward": "受け取れるメールはありません",
   "mail.empty.notice": "お知らせはありません",
   "mail.empty.patch": "パッチノートはありません",
+  "mail.patch.title": "v{version} パッチノート",
+  "mail.patch.kind.new": "[新規]",
+  "mail.patch.kind.improve": "[改善]",
+  "mail.patch.kind.fix": "[修正]",
+  "mail.patch.kind.balance": "[バランス]",
+  "mail.patch.kind.etc": "[その他]",
 
   "journal.city.title": "都市日誌",
   "journal.city.empty": "まだこの都市の記録はない",

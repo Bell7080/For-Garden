@@ -1221,6 +1221,66 @@
 "Keine Patchnotes",
 "Списков изменений нет"
 ],
+"mail.patch.title": [
+"v{version} 更新说明",
+"แพตช์ v{version}",
+"Ghi chú bản cập nhật v{version}",
+"Catatan Patch v{version}",
+"Notas del parche v{version}",
+"Notas da atualização v{version}",
+"Patchnotes v{version}",
+"Список изменений v{version}"
+],
+"mail.patch.kind.new": [
+"[新增]",
+"[ใหม่]",
+"[Mới]",
+"[Baru]",
+"[Nuevo]",
+"[Novo]",
+"[Neu]",
+"[Новое]"
+],
+"mail.patch.kind.improve": [
+"[改进]",
+"[ปรับปรุง]",
+"[Cải thiện]",
+"[Perbaikan]",
+"[Mejora]",
+"[Melhoria]",
+"[Verbessert]",
+"[Улучшено]"
+],
+"mail.patch.kind.fix": [
+"[修复]",
+"[แก้ไข]",
+"[Sửa lỗi]",
+"[Perbaikan Bug]",
+"[Corregido]",
+"[Corrigido]",
+"[Behoben]",
+"[Исправлено]"
+],
+"mail.patch.kind.balance": [
+"[平衡]",
+"[บาลานซ์]",
+"[Cân bằng]",
+"[Keseimbangan]",
+"[Equilibrio]",
+"[Balanceamento]",
+"[Balance]",
+"[Баланс]"
+],
+"mail.patch.kind.etc": [
+"[其他]",
+"[อื่นๆ]",
+"[Khác]",
+"[Lainnya]",
+"[Otros]",
+"[Outros]",
+"[Sonstiges]",
+"[Прочее]"
+],
 "journal.city.title": [
 "城市日志",
 "บันทึกเมือง",

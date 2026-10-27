@@ -66,7 +66,7 @@ import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
@@ -473,11 +473,13 @@ export class FakeServer implements GameApi {
    * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
    * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
    */
-  attachOpsMails(sources: readonly OpsMailSource[]): void {
+  attachOpsMails(sources: readonly OpsMailSource[], patchNotes: readonly OpsPatchNoteSource[] = []): void {
     for (let index = this.mails.length - 1; index >= 0; index -= 1) if (isOpsMailId(this.mails[index].id)) this.mails.splice(index, 1);
     const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
     const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
-    this.mails.unshift(...mails);
+    const kinds = { new: t("mail.patch.kind.new"), improve: t("mail.patch.kind.improve"), fix: t("mail.patch.kind.fix"), balance: t("mail.patch.kind.balance"), etc: t("mail.patch.kind.etc") };
+    const notes = patchNotes.map((note) => opsPatchNoteToDto(note, { sender: t("mail.ops.sender"), title: t("mail.patch.title", { version: note.version }) + (note.title.trim() ? ` · ${note.title.trim()}` : ""), kinds }, read));
+    this.mails.unshift(...mails, ...notes);
     this.applySavedMailClaims();
   }
 

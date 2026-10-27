@@ -181,6 +181,12 @@ export const MISC_KO = {
   "mail.empty.reward": "받을 우편이 없습니다",
   "mail.empty.notice": "도착한 공지가 없습니다",
   "mail.empty.patch": "도착한 패치노트가 없습니다",
+  "mail.patch.title": "v{version} 패치노트",
+  "mail.patch.kind.new": "[신규]",
+  "mail.patch.kind.improve": "[개선]",
+  "mail.patch.kind.fix": "[수정]",
+  "mail.patch.kind.balance": "[밸런스]",
+  "mail.patch.kind.etc": "[기타]",
 
   // 교류 도시 일지
   "journal.city.title": "도시 일지",

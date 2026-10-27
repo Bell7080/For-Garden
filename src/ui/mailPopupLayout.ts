@@ -44,7 +44,7 @@ export const MAIL_POPUP_LAYOUT = {
 export type MailTab = "reward" | "notice" | "patch";
 
 /** 패치노트로 가르는 안내 — 정적 업데이트 안내와 `patch:`로 시작하는 운영 안내. 나머지 첨부 없는 안내는 공지다. */
-export const isPatchNoteMail = (mail: Pick<MailDto, "id">): boolean => mail.id === "update-notice" || mail.id.startsWith("patch:");
+export const isPatchNoteMail = (mail: Pick<MailDto, "id">): boolean => mail.id === "update-notice" || mail.id.startsWith("patch:") || mail.id.startsWith("ops:patch:");
 
 /** 첨부가 있으면 우편, 없으면 공지 또는 패치노트다. 보낸 쪽이 따로 표시하지 않아도 모양이 곧 종류다. */
 export function mailTabOf(mail: Pick<MailDto, "id" | "rewards">): MailTab {

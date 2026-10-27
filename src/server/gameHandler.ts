@@ -185,7 +185,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     let applied: OpsAppliedAdjustment[] = [];
     if (ops) {
       applied = applyOpsAdjustments(state, ops.adjustments, now);
-      server.attachOpsMails(ops.mails);
+      server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
     }
     let result: unknown;
     try {

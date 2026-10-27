@@ -1,3 +1,4 @@
+import { ANCIENT_TRIAL_THEME } from "../ui/ancientTrialTheme";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import Phaser from "phaser";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
@@ -270,9 +271,9 @@ export class AncientStrataScene extends Phaser.Scene {
         this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
           situation: `${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
           enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),
-          elite: definition.encounterKind === "elite",
+          elite: definition.encounterKind === "elite", backdrop: ANCIENT_TRIAL_THEME[definition.trialId],
           sections: { informationLabel:t("ancient.trials"),informationAlwaysOpen:true,
-            informationHighlights: [t(`ancient.trial.${definition.trialId}`), ...(floor > 120 ? [t("ancient.deepTrial")] : [])],rewards: definition.firstClearRewards, rewardsClaimed: session.cleared.has(`ancient:${floor}`) },
+            informationHighlights: [t("ancient.trialLine", { name: t(`ancient.trialTag.${definition.trialId}`), effect: t(`ancient.trial.${definition.trialId}`) }), ...(floor > 120 ? [t("ancient.deepTrial")] : [])],rewards: definition.firstClearRewards, rewardsClaimed: session.cleared.has(`ancient:${floor}`) },
           onEnemyClick: (enemy, growth) => this.enemyInfo?.show({ def: enemy, ...growth }),
         });
       });

@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import type { RelicDef, StageEnemyDef } from "../core/types";
 import { setDebugEnemyPreview } from "../debug";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
-import { chipPoints, drawHairline, drawLayer } from "./holo";
+import { chipPoints, drawHairline, drawLayer, toPoints } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 import { AffinityBadge } from "./AffinityBadge";
@@ -18,6 +18,7 @@ import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { drawGlyph } from "./glyphs";
 import { addStageRewardFrame } from "./stageRewardFrame";
+import { ANCIENT_TRIAL_BACKDROP, type TrialBackdrop } from "./ancientTrialTheme";
 
 /**
  * 스토리 판의 두 칸이 열려 있는가. **관문을 옮겨 다녀도 그대로 남는다** — 줄거리를 접어 둔 손이
@@ -57,6 +58,8 @@ export interface NodeEnemyPreviewOptions {
    * 수를 세어 판단하지 않는다 — 원정의 최종층 보스도 하나이지만 그쪽은 정예가 아니라 보스다.
    */
   elite?: boolean;
+  /** 판의 결 — 고대 지층은 그 층의 시련 색으로 판을 옅게 물들이고 오른쪽 위에 시련 문양을 깐다. */
+  backdrop?: TrialBackdrop;
   top: number;
   bottom: number;
   depth?: number;
@@ -97,9 +100,9 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "onEnemyClick" | "sections">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "onEnemyClick" | "sections">> = {}): void {
     // 넘기지 않은 칸 구성이 직전 노드의 것으로 남지 않게 한다.
-    this.options = { ...this.options, sections: undefined, ...options };
+    this.options = { ...this.options, sections: undefined, backdrop: undefined, ...options };
     this.nodeY = nodeY;
     this.nodeVisible = true;
     if (this.options.sections) { this.renderSectioned(false); this.reveal(); return; }
@@ -250,7 +253,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.setY(y);
     // 깎임은 판 높이가 아니라 고정값이다 — 높이를 따르면 줄거리를 펼칠 때 깎임이 커져 글줄의 왼쪽 시작점이 함께 안쪽으로 밀린다.
     const bevel = STORY_PREVIEW.bevel;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.55 }));
+    if (this.options.backdrop) this.paintBackdrop(this.options.backdrop, width, layout.height, bevel);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const left = -width / 2 + Math.max(56, bevel * 0.7);
     const right = width / 2 - 40;
@@ -385,6 +389,18 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 컨테이너를 뒤집지 않고 꼬리만 현재 노드 방향으로 다시 그린다. */
+  /** 시련의 결 — 같은 실루엣으로 옅게 물들이고, 깎이지 않은 오른쪽 위 모서리에 문양을 깐다. 글줄·SD보다 아래 층이다. */
+  private paintBackdrop(backdrop: TrialBackdrop, width: number, height: number, bevel: number): void {
+    const spec = ANCIENT_TRIAL_BACKDROP;
+    const wash = this.scene.add.graphics().fillStyle(backdrop.tone, spec.washAlpha);
+    wash.fillPoints(toPoints(chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } })), true);
+    this.add(wash);
+    const cx = width / 2 - spec.motifInset.right, cy = -height / 2 + spec.motifInset.top, r = spec.motifRadius;
+    const motif = this.scene.add.graphics().fillStyle(backdrop.tone, spec.motifAlpha);
+    for (const shape of backdrop.motif) motif.fillPoints(shape.map((point) => new Phaser.Math.Vector2(cx + point.x * r, cy + point.y * r)), true);
+    this.add(motif);
+  }
+
   private drawTail(above: boolean): void {
     if (!this.tail) return;
     const edge = above ? this.panelHeight / 2 : -this.panelHeight / 2;

@@ -345,6 +345,9 @@ export class PopupLayer {
     this.onCloseByLayer.set(layer, options.onClose);
     this.canCloseByLayer.set(layer, options.canClose);
     const close = (): void => { this.close(layer); };
+    // 사람이 누른 닫기(X·바깥·뒤로가기)는 어디서 눌렸든 **맨 위 판부터** 닫는다 — 위에 판이 얹혀 있는데 뒷판이
+    // 먼저 닫히면 위 판이 홀로 남는다. 소유자가 코드로 부르는 `close`는 그대로 그 판을 닫는다.
+    const userClose = (): void => { const top = this.stack[this.stack.length - 1]; this.close(top && top !== layer ? top : layer); };
     const titleChrome: Phaser.GameObjects.GameObject[] = [];
     if (options.title) {
       // 머리글은 판 안이 아니라 **윗변에 걸터앉는다.** 정보창의 칸 제목(유대·능력치·룬)과
@@ -363,7 +366,7 @@ export class PopupLayer {
         const hit = this.scene.add.rectangle(width / 2 - POPUP_CLOSE_LAYOUT.centerInset, -height / 2 + POPUP_CLOSE_LAYOUT.centerInset, POPUP_CLOSE_LAYOUT.hitSize, POPUP_CLOSE_LAYOUT.hitSize, 0xffffff, 0).setInteractive({ useHandCursor: true });
         hit.on("pointerdown", () => pressIn(closeButton));
         hit.on("pointerout", () => pressOut(closeButton, "normal", { pop: false }));
-        hit.on("pointerup", () => close());
+        hit.on("pointerup", () => userClose());
         body.add([closeButton, hit]);
         closeButton.setDepth(1000); hit.setDepth(1000);
         titleChrome.push(closeButton, hit);
@@ -374,7 +377,7 @@ export class PopupLayer {
       // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
       // 위에 다른 판(상세·확인 창)이 얹혀 있으면 뒤로가기는 **맨 위 판부터** 닫는다 — 아래 판의 버튼이 먼저 눌려
       // 아래 판만 닫히고 위 판이 홀로 남던 문제를 막는다.
-      const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => { const top = this.stack[this.stack.length - 1]; this.close(top && top !== layer ? top : layer); } })
+      const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: userClose })
         .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
       this.backByLayer.set(layer, back);
       // 층이 연출 없이 통째로 죽는 길(씬 종료)에서도 함께 지운다.
@@ -386,7 +389,7 @@ export class PopupLayer {
       // the note flash and disappear.  Arm dismissal on the next input frame so only a later outside click
       // can close it; controls inside the body remain above the backdrop and keep the note open.
       this.scene.time.delayedCall(0, () => {
-        if (layer.active && backdrop.active) backdrop.on("pointerup", () => close());
+        if (layer.active && backdrop.active) backdrop.on("pointerup", () => userClose());
       });
     }
 
@@ -476,6 +479,14 @@ export class PopupLayer {
       x: Phaser.Math.Clamp(options.anchor.x, bounds.width / 2 + margin, screen.width - bounds.width / 2 - margin),
       y: Phaser.Math.Clamp(y, bounds.height / 2 + margin, screen.height - bounds.height / 2 - margin),
     };
+  }
+
+  /**
+   * 화면에 따로 세운 뒤로가기(로비의 이벤트·무역·가방 등)용: 그 판 위에 다른 판이 얹혀 있으면 맨 위 판만 닫고,
+   * 아무것도 얹혀 있지 않을 때만 `action`(그 판 닫기)을 실행한다.
+   */
+  backOr(action: () => void): void {
+    if (this.stack.length > 1) this.closeTop(); else action();
   }
 
   /** 맨 위 한 장만 닫는다. */

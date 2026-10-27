@@ -1112,24 +1112,24 @@
 "Прочитать всё"
 ],
 "mail.delete.title": [
-"删除未领取邮件",
-"ลบจดหมายที่ยังไม่ได้รับ",
-"Xóa thư chưa nhận",
-"Hapus Surat yang Belum Diambil",
-"Eliminar correo sin reclamar",
-"Excluir correio não resgatado",
-"Nicht abgeholte Post löschen",
-"Удалить неполученную почту"
+"删除已领取邮件",
+"ลบจดหมายที่รับแล้ว",
+"Xóa thư đã nhận",
+"Hapus Surat yang Sudah Diambil",
+"Eliminar correo reclamado",
+"Excluir correio resgatado",
+"Abgeholte Post löschen",
+"Удалить полученную почту"
 ],
 "mail.delete.message": [
-"删除 {count} 封未领取邮件。\n附件奖励将无法领取,且无法恢复。",
-"ลบจดหมายที่ยังไม่ได้รับ {count} ฉบับ\nจะไม่สามารถรับรางวัลที่แนบมาได้อีก และไม่สามารถกู้คืนได้",
-"Xóa {count} thư chưa nhận.\nPhần thưởng đính kèm sẽ không thể nhận được nữa và không thể khôi phục.",
-"Hapus {count} surat yang belum diambil.\nHadiah terlampir tidak dapat diambil lagi dan tidak dapat dipulihkan.",
-"Se eliminarán {count} correos sin reclamar.\nLos adjuntos ya no se podrán reclamar y no se pueden recuperar.",
-"Excluir {count} correios não resgatados.\nOs anexos não poderão mais ser resgatados e isso não pode ser desfeito.",
-"{count} nicht abgeholte Post löschen.\nDie Anhänge können nicht mehr abgeholt werden. Das lässt sich nicht rückgängig machen.",
-"Будет удалено неполученной почты: {count}.\nВложенные награды получить будет нельзя, действие необратимо."
+"删除 {count} 封已领取邮件。\n无法恢复。",
+"ลบจดหมายที่รับแล้ว {count} ฉบับ\nไม่สามารถกู้คืนได้",
+"Xóa {count} thư đã nhận.\nKhông thể khôi phục.",
+"Hapus {count} surat yang sudah diambil.\nTidak dapat dipulihkan.",
+"Se eliminarán {count} correos reclamados.\nNo se pueden recuperar.",
+"Excluir {count} correios resgatados.\nIsso não pode ser desfeito.",
+"{count} abgeholte Post löschen.\nDas lässt sich nicht rückgängig machen.",
+"Будет удалено полученной почты: {count}.\nДействие необратимо."
 ],
 "mail.delete.one.title": [
 "删除邮件",

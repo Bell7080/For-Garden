@@ -9,12 +9,20 @@ import { describe, expect, it } from "vitest";
 describe("PopupLayer 부팅 계약", () => {
   const source = readFileSync(new URL("../../src/ui/PopupLayer.ts", import.meta.url), "utf8");
 
-  it("판 밖 뒤로가기는 위에 얹힌 판이 있으면 맨 위 판부터 닫는다", () => {
-    const start = source.indexOf("const back = new IconButton(");
-    expect(start).toBeGreaterThan(-1);
-    const line = source.slice(start, source.indexOf("\n", start));
-    expect(line).toContain("this.stack[this.stack.length - 1]");
-    expect(line).toContain("top !== layer");
+  it("사람이 누른 닫기(뒤로가기·X·바깥)는 모두 맨 위 판부터 닫는다", () => {
+    const def = source.slice(source.indexOf("const userClose"), source.indexOf("\n", source.indexOf("const userClose")));
+    expect(def).toContain("this.stack[this.stack.length - 1]");
+    expect(def).toContain("top !== layer");
+    expect(source).toContain("onClick: userClose");
+    expect(source).toContain('hit.on("pointerup", () => userClose())');
+    expect(source).toContain('backdrop.on("pointerup", () => userClose())');
+  });
+
+  it("화면에 따로 선 로비 뒤로가기는 얹힌 판이 있으면 맨 위 판만 닫는다", () => {
+    const lobby = readFileSync(new URL("../../src/scenes/LobbyScene.ts", import.meta.url), "utf8");
+    expect(source).toContain("backOr(action: () => void)");
+    expect(lobby).not.toMatch(/onClick: \(\) => this\.\w+Popup\?\.close\(\)/);
+    expect(lobby).not.toContain("onClick: close })");
   });
 
   it("생성자는 씬 이벤트를 건드리지 않는다", () => {

@@ -293,8 +293,10 @@ export interface PublicCompetitiveStatsDto {
   /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
   arenaScore?: number;
   expeditionScore?: number;
-  /** 고대 지층에서 가장 깊이 깬 층. 한 층도 깨지 않았으면 생략한다. */
+  /** 고대 지층에서 가장 깊이 깬 층(이번 달). 한 층도 깨지 않았으면 생략한다. */
   ancientFloor?: number;
+  /** 결투장 점수(이번 시즌). 티어·단계는 화면이 `duelStanding`으로 읽는다. 결투장을 연 적이 없으면 생략한다. */
+  duelScore?: number;
 }
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */

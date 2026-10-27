@@ -269,6 +269,10 @@ export const MISC_KO = {
   "profile.levelTree.stamina": "스테미나 상한 {max}",
   "profile.unset": "미지정",
   "profile.arenaTier": "아레나 티어",
+  "profile.duelTier": "결투장 티어",
+  "profile.record.ancient": "고대 지층 최고층",
+  "profile.record.ancientFloor": "{floor}층",
+  "profile.record.ancientMonth": "이번 달",
   "profile.noRecord": "기록 없음",
 
   // 스테이지 결과

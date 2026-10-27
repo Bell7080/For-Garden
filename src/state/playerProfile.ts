@@ -1,4 +1,7 @@
 import { arenaPublicStanding, type ArenaPublicStanding } from "../core/arenaStanding";
+import { ancientHighestCleared } from "../core/ancientStrata";
+import { rollDuelPeriods, type DuelState } from "../core/duelState";
+import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { highestClearedStage } from "../core/stageProgress";
@@ -79,6 +82,25 @@ export interface PlayerCompetitiveStats {
   storyProgress?: { cleared: number; total: number };
   /** 원정 최고. 공개하지 않은 친구는 비어 있다(그 칸이 서지 않는다). */
   expedition?: { label: string; score: number };
+  /** 고대 지층 — 이번 달 가장 깊이 깬 층(0이면 아직 한 층도 깨지 않았다). 공개하지 않은 친구는 비어 있다. */
+  ancientFloor?: number;
+  /** 결투장 점수(이번 시즌). 결투장을 연 적이 없으면 비어 있다(그 칸이 「미배치」로 선다). 티어는 화면이 `duelStanding`으로 읽는다. */
+  duelScore?: number;
+}
+
+/**
+ * 공개하는 결투장 점수 — **지금 시즌으로 넘긴 값**이다. 시즌이 바뀐 뒤 결투장을 열지 않은 계정의 저장에는 지난 시즌
+ * 점수가 남아 있어, 그대로 실으면 초기화되기 전 티어를 말한다. 결투장을 한 번도 연 적이 없으면 비운다.
+ */
+export function publicDuelScore(duel: DuelState | undefined, now: Date): number | undefined {
+  if (!duel || duel.seasonId === "") return undefined;
+  return Math.max(0, Math.floor(rollDuelPeriods(duel, now).score));
+}
+
+/** 공개 기록의 스토리 관문을 지금 언어로 다시 적는다 — 서버가 굳혀 보낸 이름은 그 서버의 언어다. */
+function localStage(stageId: string, fallback: string): { stageId: string; displayValue: string } {
+  const stage = STAGES.find(({ id }) => id === stageId);
+  return { stageId, displayValue: stage ? `${stage.id} ${stage.name}` : fallback };
 }
 
 export interface PublicProfileModifier {
@@ -127,6 +149,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
   const research = state.playerResearch;
   const next = nextContentUnlock(research.level);
   const nextStage = nextStageUnlock(state.cleared);
+  const duelScore = publicDuelScore(state.duel, now);
   return {
     // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
     displayName: card.nickname || t("profile.defaultName"),
@@ -147,6 +170,8 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
       expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) },
+      ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
+      ...(duelScore !== undefined ? { duelScore } : {}),
     },
     collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
     ...(next ? { nextUnlock: { contentId: next.id, level: next.level } } : {}),
@@ -174,7 +199,7 @@ export function friendProfileDisplay(friend: {
   displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string | null;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
-  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number; ancientFloor?: number; duelScore?: number };
 }): PlayerProfileDisplay {
   const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
   const favorite: FavoriteRelicShowcase | null = relic ? {
@@ -200,8 +225,11 @@ export function friendProfileDisplay(friend: {
     competitiveStats: {
       favoriteRelic: favorite,
       ...(arenaPublicStanding(stats.arenaScore) ? { arena: arenaPublicStanding(stats.arenaScore) } : {}),
-      highestStage: stats.highestStage ? { ...stats.highestStage } : null,
+      highestStage: stats.highestStage ? localStage(stats.highestStage.stageId, stats.highestStage.displayValue) : null,
       ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
+      // 지층은 깬 층이 없으면 서버가 키를 생략한다 — 그 친구는 아직 들어가지 않은 것이라 0층으로 선다.
+      ancientFloor: Math.max(0, Math.floor(stats.ancientFloor ?? 0)),
+      ...(stats.duelScore !== undefined ? { duelScore: stats.duelScore } : {}),
     },
     equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
   };
@@ -214,7 +242,7 @@ export function friendProfileDisplay(friend: {
  */
 export function guildMemberProfileDisplay(member: {
   name: string; level: number; frameId: string; avatarRelicId: string;
-  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number; arenaScore?: number } | null;
+  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number; ancientFloor?: number; duelScore?: number; arenaScore?: number } | null;
 }, lastActive: string, leadRecords: { label: string; value: string; sub?: string }[]): PlayerProfileDisplay {
   const card = member.card;
   const relic = card?.favorite ? RELICS.find(({ id }) => id === card.favorite!.relicId) : undefined;
@@ -242,6 +270,8 @@ export function guildMemberProfileDisplay(member: {
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       ...(arenaPublicStanding(card?.arenaScore) ? { arena: arenaPublicStanding(card?.arenaScore) } : {}),
       ...(card ? { expedition: { label: t("profile.expeditionBest"), score: card.expeditionBest } } : {}),
+      ...(card ? { ancientFloor: Math.max(0, Math.floor(card.ancientFloor ?? 0)) } : {}),
+      ...(card?.duelScore !== undefined ? { duelScore: card.duelScore } : {}),
     },
     equippedModifiers: [],
     leadRecords,

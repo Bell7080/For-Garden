@@ -46,7 +46,11 @@ export const PLAYER_PROFILE_LAYOUT = {
      */
     backdrop: { alpha: 0.26, crop: 0.62, headX: 0.62, anchorY: 0.32, fade: 0.55 },
   },
-  records: { titleY: 184, firstY: 286, rowGap: 168, columnX: 222, width: 426, height: 150 },
+  /**
+   * 기록 칸 — 두 열 세 줄(스토리 · 고대 지층 · 결투장 · 아레나 · 원정 · 도감). 칸 안의 줄(`labelY`·`valueY`·`barY`)은
+   * 칸 가운데에서 잰 거리다.
+   */
+  records: { titleY: 184, firstY: 262, rowGap: 122, rows: 3, columnX: 222, width: 426, height: 108, labelY: -30, valueY: 8, barY: 38, emblem: 46 },
   nextUnlock: { y: 600 },
   /** 친구 카드 밑동의 조작 줄(즐겨찾기·삭제). 다음 해금 줄이 없는 친구 카드가 그 자리를 쓴다. */
   actions: { y: 636, height: 88, gap: 16, fontSize: 32 },

@@ -255,6 +255,10 @@ export const MISC_JA = {
   "profile.levelTree.stamina": "スタミナ上限 {max}",
   "profile.unset": "未設定",
   "profile.arenaTier": "闘技場ティア",
+  "profile.duelTier": "決闘ティア",
+  "profile.record.ancient": "古代地層 最高到達",
+  "profile.record.ancientFloor": "{floor}層",
+  "profile.record.ancientMonth": "今月",
   "profile.noRecord": "記録なし",
 
   "stageComplete.contribution": "攻撃 · 防御 · 回復",

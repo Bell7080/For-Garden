@@ -1921,6 +1921,46 @@
 "Arena-Rang",
 "Ранг арены"
 ],
+"profile.duelTier": [
+"决斗段位",
+"ระดับดวล",
+"Hạng Đấu tay đôi",
+"Tingkat Duel",
+"Rango de duelo",
+"Divisão de duelo",
+"Duell-Rang",
+"Ранг дуэли"
+],
+"profile.record.ancient": [
+"远古地层最高层",
+"ชั้นดินโบราณสูงสุด",
+"Địa tầng cổ đại cao nhất",
+"Strata Kuno tertinggi",
+"Récord de Estratos antiguos",
+"Recorde dos Estratos antigos",
+"Uralte Schichten – Rekord",
+"Рекорд Древних пластов"
+],
+"profile.record.ancientFloor": [
+"第{floor}层",
+"ชั้น {floor}",
+"Tầng {floor}",
+"Lantai {floor}",
+"Piso {floor}",
+"Andar {floor}",
+"Ebene {floor}",
+"Этаж {floor}"
+],
+"profile.record.ancientMonth": [
+"本月",
+"เดือนนี้",
+"Tháng này",
+"Bulan ini",
+"Este mes",
+"Este mês",
+"Diesen Monat",
+"В этом месяце"
+],
 "profile.noRecord": [
 "无记录",
 "ไม่มีบันทึก",

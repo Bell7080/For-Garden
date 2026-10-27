@@ -41,7 +41,7 @@ import { addGuildBadge } from "../ui/GuildBadge";
 import { openGuildBadgePicker } from "../ui/GuildBadgePicker";
 import {
   GUILD_ATTENDANCE as A, GUILD_EDITOR as E, GUILD_EVENT_PAGE as P, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
-  guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildTabX,
+  guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX,
 } from "../ui/guildLayout";
 import { chipPoints, drawLayer, HoloBar, HOLO } from "../ui/holo";
 import { addBackButton } from "../ui/IconButton";
@@ -555,13 +555,17 @@ export class GuildScene extends Phaser.Scene {
           fill: last ? 0x2b2616 : 0x141b24, alpha: 0.96, edge: isToday ? COLOR.accent : last ? 0xf2c14e : undefined, edgeAlpha: 0.9,
         }));
         this.label(cell, 0, -slot.height / 2 + 30, t("guild.attendance.dayLabel", { day: number }), { role: "display", size: 26, color: isToday ? COLOR.accentText : COLOR.ink }, [0.5, 0.5]);
+        // 그날 보상 액자 + 길드 코인 액자 — 코인도 글이 아니라 같은 액자 양식으로 붙인다.
         const reward = attendanceRewardIcon(number);
-        addFramedIcon(this, cell, 0, 8, last ? 116 : 104, reward.texture, { amount: reward.amount.toLocaleString(), plain: true });
-        this.label(cell, 0, slot.height / 2 - 26, t("guild.attendance.cellGain", { contribution: day.contribution, coin: day.coin }), { role: "emphasis", size: 20, color: COIN_TEXT }, [0.5, 0.5]);
+        const pair = guildStampRewardPair(slot.width, last);
+        addFramedIcon(this, cell, pair.mainX, 8, pair.mainSize, reward.texture, { amount: reward.amount.toLocaleString(), plain: true });
+        this.label(cell, pair.plusX, 8, "+", { role: "display", size: 30, color: COIN_TEXT }, [0.5, 0.5]);
+        addFramedIcon(this, cell, pair.coinX, 8, pair.coinSize, GUILD_COIN_ICON, { amount: day.coin.toLocaleString(), plain: true });
+        this.label(cell, 0, slot.height / 2 - 26, t("guild.attendance.cellGain", { contribution: day.contribution }), { role: "emphasis", size: 20, color: COLOR.inkDim }, [0.5, 0.5]);
         if (number <= attendance.filled) body.add(addAttendanceStamp(this, slot.x, slot.y + 8, A.stampSize, COLOR.accent).setAlpha(0.92));
       });
       const regular = GUILD_ATTENDANCE_CYCLE[0], final = GUILD_ATTENDANCE_CYCLE[GUILD_ATTENDANCE_CYCLE.length - 1];
-      this.label(body, 0, A.info, t("guild.attendance.gain", { contribution: regular.contribution, coin: regular.coin, finalContribution: final.contribution, finalCoin: final.coin }), { role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: A.width - 80 }, [0.5, 0.5]);
+      this.label(body, 0, A.info, t("guild.attendance.gain", { contribution: regular.contribution, finalContribution: final.contribution }), { role: "body", size: 24, color: COLOR.inkDim, align: "center", wrap: A.width - 80 }, [0.5, 0.5]);
 
       const race = this.paintRace(body, guildAttendanceDay(today).contribution);
 

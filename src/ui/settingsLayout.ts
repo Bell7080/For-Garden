@@ -129,6 +129,8 @@ export const SETTINGS_SUPPORT = {
   accountSummaryRoom: 150,
   /** 연동 버튼 아래에 남기는 자리. */
   accountFootRoom: 120,
+  /** 계정 요약 오른쪽에 서는 쿠폰 등록 버튼(요약 첫 줄 기준으로 `dy`만큼 아래가 가운데). */
+  coupon: { x: 760, dy: 64, width: 380, height: 112, fill: 0x3a2a10 },
 } as const;
 
 /** 지원 탭의 `index`번째 글자 줄이 서는 **화면** y. */

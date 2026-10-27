@@ -41,3 +41,34 @@ insert into public.server_competitive_scores(board,period,player_id,score,achiev
  select 'ancient','1970-01-01',s.player_id,public.server_ancient_floor(s.data),s.updated_at,true
  from public.player_saves s where public.server_ancient_floor(s.data)>0
  on conflict(board,period,player_id) do nothing;
+
+-- 고대 지층은 상시 순위이며 주간 보상이 없다. 기존 주간 정산에서 별도로 제외한다.
+-- arena 등 기존 보드의 정산 동작과 서비스 롤 전용 권한은 바꾸지 않는다.
+create or replace function public.server_competitive_rewards(p_player uuid,p_rules jsonb) returns void
+language plpgsql security definer set search_path='' as $$
+declare row record; period_row record; band jsonb; amount integer; mid uuid; week date:=(date_trunc('week',now() at time zone 'UTC'))::date;
+begin
+ perform public.server_require_active(p_player);
+ perform pg_advisory_xact_lock(hashtextextended(p_player::text,7));
+ for period_row in select distinct board,period from public.server_competitive_scores where player_id=p_player and board<>'ancient' and period<week and played loop
+   perform pg_advisory_xact_lock(hashtextextended(period_row.board||period_row.period::text,27));
+   if not exists(select 1 from public.server_competitive_results where board=period_row.board and period=period_row.period) then
+     insert into public.server_competitive_results
+       select c.board,c.period,c.player_id,row_number() over(order by c.score desc,c.achieved_at,c.player_id)
+       from public.server_competitive_scores c join public.players p on p.id=c.player_id and p.status='active'
+       where c.board=period_row.board and c.period=period_row.period and c.played;
+   end if;
+ end loop;
+ for row in select x.* from public.server_competitive_results x where player_id=p_player and x.board<>'ancient'
+   and not exists(select 1 from public.server_competitive_awards a where a.board=x.board and a.period=x.period and a.player_id=p_player)
+ loop
+   select e into band from jsonb_array_elements(p_rules) e where (e->>'upTo') is null or (e->>'upTo')::bigint>=row.rank order by (e->>'upTo')::bigint nulls last limit 1;
+   amount:=(band->>'gems')::int;
+   if amount is null or amount<=0 then raise exception 'invalid_rank_rewards'; end if;
+   insert into public.mails(title,body,rewards,target_player) values(
+     case when row.board='duel' then '결투장 주간 순위 보상' else '원정 주간 순위 보상' end,
+     row.period::text||' 주간 · '||row.rank::text||'위',
+     jsonb_build_array(jsonb_build_object('asset','gems','amount',amount)) || case when row.board='expedition' then jsonb_build_array(jsonb_build_object('asset','salvageRecord','amount',(band->>'salvageRecord')::int)) else '[]'::jsonb end,p_player) returning id into mid;
+   insert into public.server_competitive_awards values(row.board,row.period,p_player,mid,row.rank,amount);
+ end loop;
+end $$;

@@ -96,6 +96,11 @@ export interface ButtonOptions {
    */
   cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean; /** 20K처럼 줄여 적는다. */ abbreviate?: boolean };
   /**
+   * 비용 자리에 서는 작은 강조 표(「무료」처럼). 값이 없는 조작도 **누르는 것 위**에서 그 사실을 말한다 —
+   * 버튼 밖의 안내문으로 적으면 값을 치르는 버튼과 다른 양식이 된다. `cost`와 함께 쓰지 않는다.
+   */
+  tag?: string;
+  /**
    * 화면에서 가장 중요한 버튼인지.
    *
    * `primary`는 강조색 면과 두 겹의 밝은 선을 쓰고 모서리를 크게 깎는다. 한 화면에 하나만 둔다.
@@ -237,6 +242,19 @@ export class Button extends Phaser.GameObjects.Container {
         amount.setX(coinX + coin / 2 + gap * 0.24);
       };
       this.updateCost(opts.cost);
+    }
+    if (opts.tag !== undefined && !opts.cost) {
+      // 비용과 같은 자리 — 라벨 오른쪽에 깎인 칩 하나. 강조색 면에 짙은 글자라 값 대신 "치르지 않는다"가 먼저 읽힌다.
+      const tagText = scene.add.text(0, hasSub ? -14 : 0, opts.tag, textStyle({ role: "display", size: fontSize * 0.78, color: "#0b1017" })).setOrigin(0.5);
+      const tagW = tagText.width + fontSize * 0.9;
+      const tagH = fontSize * 1.18;
+      const gap = fontSize * 0.42;
+      const total = label.width + gap + tagW;
+      label.setX(-total / 2 + label.width / 2);
+      const tagX = -total / 2 + label.width + gap + tagW / 2;
+      const tagShape = chipPoints(tagW, tagH, { bevel: { topLeft: tagH * 0.32, bottomRight: tagH * 0.32 } });
+      plate.add(drawLayer(scene, tagX, tagText.y, tagShape, { fill: accent, alpha: 1, edgeAlpha: 0, shadow: { x: 2, y: 3 } }));
+      plate.add(tagText.setX(tagX));
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {

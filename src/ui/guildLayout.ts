@@ -144,8 +144,8 @@ export const GUILD_EDITOR = {
   join: { width: 392, height: 76 },
   tabs: { height: 70, gap: 10, labelSize: 28 },
   swatch: { size: 120, gap: 12, badge: 84, rows: 2 },
-  cost: { height: 64 },
-  buttons: { width: 380, height: 92, gap: 24 },
+  /** 확정 버튼 하나 — 값(또는 「무료」)을 판 안에 박는다. 취소는 판 밖 우하단 공용 뒤로가기가 맡는다. */
+  submit: { width: 560, height: 100 },
 } as const;
 
 export interface GuildEditorSpots {
@@ -154,7 +154,7 @@ export interface GuildEditorSpots {
   nameLabel?: number; nameInput?: number;
   joinLabel?: number; join?: number;
   tabs: number; gridTop: number;
-  cost: number; submit: number;
+  submit: number;
 }
 
 /** 만들기(`creating`)·배지 변경 창의 줄 자리 — 위에서부터 쌓아 높이를 정한 뒤 가운데 기준으로 옮긴다. */
@@ -169,13 +169,12 @@ export function guildEditorSpots(creating: boolean): GuildEditorSpots {
   }
   at.tabs = y + E.tabs.height / 2; y += E.tabs.height + 18;
   at.gridTop = y; y += E.swatch.rows * E.swatch.size + (E.swatch.rows - 1) * E.swatch.gap + 34;
-  at.cost = y + E.cost.height / 2; y += E.cost.height + 28;
-  at.submit = y + E.buttons.height / 2; y += E.buttons.height + 56;
+  at.submit = y + E.submit.height / 2; y += E.submit.height + 56;
   const height = y;
   const shift = (v: number | undefined): number | undefined => (v === undefined ? undefined : v - height / 2);
   return {
     height, stage: shift(at.stage)!, nameLabel: shift(at.nameLabel), nameInput: shift(at.nameInput), joinLabel: shift(at.joinLabel), join: shift(at.join),
-    tabs: shift(at.tabs)!, gridTop: shift(at.gridTop)!, cost: shift(at.cost)!, submit: shift(at.submit)!,
+    tabs: shift(at.tabs)!, gridTop: shift(at.gridTop)!, submit: shift(at.submit)!,
   };
 }
 

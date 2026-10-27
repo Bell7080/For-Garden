@@ -43,7 +43,6 @@ export const GUILD_ID = {
   "guild.badge.icon": "Simbol",
   "guild.badge.iconColor": "Warna simbol",
   "guild.badge.apply": "Ubah lencana",
-  "guild.badge.free": "Perubahan pertama gratis",
   "guild.badge.confirmTitle": "Ubah lencana",
   "guild.badge.confirmMessage": "Ubah lencana guild.",
   "guild.badge.done": "Lencana diubah",

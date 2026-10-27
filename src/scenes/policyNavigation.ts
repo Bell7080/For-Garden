@@ -1,5 +1,5 @@
 /** 설정에서 노출하는 운영 문서만 열 수 있도록 경로의 범위를 고정한다. */
-export type PolicyPath = "/terms" | "/privacy";
+export type PolicyPath = "/terms" | "/privacy" | "/legal";
 
 /** 테스트와 브라우저가 같은 팝업 차단 분기를 사용하도록 필요한 Window 표면만 정의한다. */
 export interface PolicyWindow {

@@ -569,7 +569,7 @@ async function pickSetting(page: import("@playwright/test").Page, row: number, c
 }
 const SETTINGS_TAB_Y = 176;
 /** 지원 탭 글자 줄 차례. `SettingsScene.buildSupportRows`의 순서를 그대로 옮긴다. */
-const SUPPORT_ROW = { inquiry: 0, clearCache: 1, terms: 2, privacy: 3, resetSettings: 4, resetSave: 5, grantAll: 6, breakthroughSet: 7, withdraw: 8 } as const;
+const SUPPORT_ROW = { inquiry: 0, clearCache: 1, terms: 2, privacy: 3, policies: 4, resetSettings: 5, resetSave: 6, grantAll: 7, breakthroughSet: 8, withdraw: 9 } as const;
 /** 공용 확인 팝업의 「확인」 버튼. 판은 화면 가운데에 서고 버튼은 그 아래 105px이다. */
 const CONFIRM_BUTTON = { x: 690, y: 1065 } as const;
 

@@ -80,6 +80,7 @@ export const SETTINGS_ID = {
   "settings.support.clearCache": "Hapus Cache",
   "settings.support.terms": "Ketentuan Layanan",
   "settings.support.privacy": "Kebijakan Privasi",
+  "settings.support.policies": "Kebijakan & Peluang",
   "settings.support.resetSettings": "Reset Pengaturan",
   "settings.support.resetSave": "Reset Data Simpanan",
   "settings.support.withdraw": "Hapus Akun",

@@ -43,6 +43,9 @@ class AutoRepeatManager {
   /** 중지 — 지금 판은 끝까지 치르고, 결과판에서 더 넘기지 않는다. */
   cancel(): void { if (this.run) this.run.cancelled = true; }
 
+  /** 중지 예약을 거둔다 — 아직 멈추지 않은 판에서만 뜻이 있다. */
+  resume(): void { if (this.run && !this.run.stopped) this.run.cancelled = false; }
+
   /** 끝내고 비운다. */
   clear(): void { this.run = undefined; }
 

@@ -1249,36 +1249,6 @@
     "Gildenshop",
     "Магазин гильдии"
   ],
-  "guild.info.me": [
-    "我的职位 · {role}",
-    "ตำแหน่งของฉัน · {role}",
-    "Chức vụ của tôi · {role}",
-    "Jabatanku · {role}",
-    "Mi cargo · {role}",
-    "Meu cargo · {role}",
-    "Meine Rolle · {role}",
-    "Моя должность · {role}"
-  ],
-  "guild.info.contribution": [
-    "本周贡献 {week} · 累计 {total}",
-    "ผลงานสัปดาห์นี้ {week} · สะสม {total}",
-    "Cống hiến tuần {week} · Tổng {total}",
-    "Kontribusi mingguan {week} · Total {total}",
-    "Contribución semanal {week} · Total {total}",
-    "Contribuição semanal {week} · Total {total}",
-    "Wochenbeitrag {week} · Gesamt {total}",
-    "Вклад за неделю {week} · Всего {total}"
-  ],
-  "guild.info.coin": [
-    "持有公会币 {coin}",
-    "เหรียญกิลด์ที่มี {coin}",
-    "Xu Bang hội đang có {coin}",
-    "Koin guild dimiliki {coin}",
-    "Monedas del gremio: {coin}",
-    "Moedas da guilda: {coin}",
-    "Gildenmünzen: {coin}",
-    "Монеты гильдии: {coin}"
-  ],
   "guild.attendance.title": [
     "公会签到",
     "เช็กชื่อกิลด์",

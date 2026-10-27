@@ -116,21 +116,22 @@ import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
-import { unitStatusViews } from "../ui/unitStatusModel";
+import { UNIT_STATUS_COLOR, unitStatusViews } from "../ui/unitStatusModel";
+import type { StatusCueId } from "../ui/statusCueEffects";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
 import { CONTRIBUTION_TOGGLE } from "../ui/battleContributionLayout";
 import { battleContributionMvp, createBattleContributionResult, withConfirmedAttackTotal, type BattleContributionResult, type ContributionCategory } from "../core/battleContribution";
 import { BattleContributionPopup } from "../ui/BattleContributionPopup";
 import { StageCompletePopup, type StageCompleteAction, type StageCompleteFighter } from "../ui/StageCompletePopup";
-import { EffectManager } from "../managers/EffectManager";
+import { EffectManager, type SignatureOptions } from "../managers/EffectManager";
 import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/CombatEffectPresenter";
 import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
 import { FEVER_INK, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse } from "../ui/feverInk";
 import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
-import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
+import { attackDamagePopupRequest, DEBUFF_TONE, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
@@ -152,6 +153,9 @@ import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarnes
 import { PuppetCreationQueue } from "../puppets/creationQueue";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addSdFootShadow } from "../ui/SdFootShadow";
+
+/** 디버프 수치 색(문자열)을 연출이 쓰는 정수 색으로 옮긴다 — 같은 상태가 숫자와 조각에서 같은 색이어야 한다. */
+const debuffColor = (id: DebuffId): number => Phaser.Display.Color.HexStringToColor(DEBUFF_TONE[id]).color;
 
 /**
  * 여섯이 돌아다닐 수 있는 범위.
@@ -1912,8 +1916,9 @@ export class BattleScene extends Phaser.Scene {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;
       if (event.started) {
-        // 상처가 열리는 순간에만 한 번 붉게 번쩍인다. 이후 초당 피해는 숫자로만 뜬다.
+        // 상처가 열리는 순간에만 한 번 붉게 번쩍이고 핏방울이 튄다. 이후 초당 피해는 숫자로만 뜬다.
         flashHit(this, view.creature, this.bodyTint(view));
+        this.playStatusCue(event.fighterId, "dotStart", debuffColor("bleed"));
         return undefined;
       }
       // 지속 피해도 코어 사건이다. 매 프레임 HP 차이로 추측하지 않고 실제 양과 최대 체력을 넘긴다.
@@ -1928,6 +1933,7 @@ export class BattleScene extends Phaser.Scene {
       // 독이 발리는 순간만 한 번 번쩍이고, 이후 매초 피해는 숫자로만 뜬다. 출혈과 같은 결이다.
       if (event.started) {
         flashHit(this, view.creature, this.bodyTint(view));
+        this.playStatusCue(event.fighterId, "dotStart", debuffColor("poison"));
         return undefined;
       }
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "damage", event.amount);
@@ -1942,6 +1948,7 @@ export class BattleScene extends Phaser.Scene {
       // 숫자만 크게 뜨면 잔타가 우연히 커진 것처럼 읽힌다.
       flashHit(this, view.creature, this.bodyTint(view));
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "poison" });
+      this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("poison"));
       return undefined;
     }
     if (event.kind === "heal") {
@@ -1957,8 +1964,10 @@ export class BattleScene extends Phaser.Scene {
       return undefined;
     }
     if (event.kind === "status") {
-      // 시작 사건은 향후 전용 연출의 훅으로만 소비한다. 활성/종료 표시는 매 프레임 Fighter의
-      // stunnedFor를 읽어 동기화하므로, 종료 사건이 누락되어 UI가 남는 구조를 만들지 않는다.
+      // 걸린 **순간**만 한 번 알린다. 활성/종료 표시는 매 프레임 Fighter의 stunnedFor를 읽어
+      // 동기화하므로, 종료 사건이 누락되어 UI가 남는 구조를 만들지 않는다. 경직은 0.1초짜리라
+      // 평타마다 들어와 연출을 열면 난전이 끓는다 — 칩도 없이 피격 동작이 그 몫을 맡는다.
+      if (event.status !== "stagger") this.playStatusCue(event.fighterId, event.status, UNIT_STATUS_COLOR[event.status]);
       return undefined;
     }
     if (event.kind === "shieldGranted" || event.kind === "shieldAbsorbed" || event.kind === "shieldDepleted") {
@@ -1991,10 +2000,8 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "teamBuff") {
       // 순풍은 피해 사건이 아니다 — 받은 쪽에 강화 효과만 한 번 터뜨린다.
       const view = this.views.get(event.fighterId);
-      if (view && !view.dead) {
-        const height = UNIT_HEIGHT * view.fighter.bodyScale;
-        this.effects.burst("passive", view.fighter.x, view.fighter.y - height * 0.5, { color: COLOR.accent });
-      }
+      // 위로 솟는 화살 셋이 "강해졌다"를 말한다 — 색은 머리 위 칩(순풍·오더…)과 같다.
+      if (view && !view.dead) this.playStatusCue(event.fighterId, "buff", (UNIT_STATUS_COLOR as Partial<Record<string, number>>)[event.buff.kind] ?? COLOR.accent);
       return undefined;
     }
     if (event.kind === "damageIgnored") {
@@ -2027,6 +2034,7 @@ export class BattleScene extends Phaser.Scene {
       // 세 번째 칼질이 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "butcher" });
       flashHit(this, view.creature, this.bodyTint(view));
+      this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("butcher"));
       return undefined;
     }
     if (event.kind === "vandalismBurst") {
@@ -2036,6 +2044,7 @@ export class BattleScene extends Phaser.Scene {
       // 다 칠한 낙서가 통째로 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "vandalism" });
       flashHit(this, view.creature, this.bodyTint(view));
+      this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("vandalism"));
       return undefined;
     }
     if (event.kind === "sleepWake") {
@@ -2046,10 +2055,12 @@ export class BattleScene extends Phaser.Scene {
       // 맞고 화들짝 깬 순간이라 평타와 다른 무게로 읽혀야 한다 — 수면의 색을 쓴다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "sleep" });
       flashHit(this, view.creature, this.bodyTint(view));
+      this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("sleep"));
       return undefined;
     }
     if (event.kind === "fellAsleep") {
-      // 머리 위 칩이 잠을 말한다. 여기서는 따로 터뜨리지 않는다.
+      // 머리 위 칩이 잠을 말하고, 잠드는 순간만 연기 셋이 느리게 떠오른다.
+      this.playStatusCue(event.fighterId, "sleep", UNIT_STATUS_COLOR.sleep);
       return undefined;
     }
     if (event.kind === "pressureBurst") {
@@ -2060,6 +2071,7 @@ export class BattleScene extends Phaser.Scene {
       // 세 겹이 다 차 눌려 터진 자리라 평타와 다른 무게로 읽혀야 한다 — 상태의 색을 쓴다.
       this.popNumber(view.fighter, event.amount, "debuff", { debuff: "pressure" });
       flashHit(this, view.creature, this.bodyTint(view));
+      this.playStatusCue(event.fighterId, "debuffBurst", debuffColor("pressure"));
       return undefined;
     }
     if (event.kind === "observationTick") {
@@ -2183,10 +2195,13 @@ export class BattleScene extends Phaser.Scene {
         const moment: SignatureMoment | undefined = event.skill === "ultimate" ? "ultimate"
           : event.followUp === true ? "combo"
           : event.basicStep !== undefined ? "basicStep"
+          : event.skill === "basic" ? "basic"
           : undefined;
         const attackerHeight = UNIT_HEIGHT * attacker.fighter.bodyScale;
         const signed = moment !== undefined && this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
           from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
+          ground: { x: target.fighter.x, y: target.fighter.y },
+          casterGround: { x: attacker.fighter.x, y: attacker.fighter.y },
           step: event.basicStep,
           scale: target.fighter.bodyScale,
         });
@@ -2271,11 +2286,24 @@ export class BattleScene extends Phaser.Scene {
    */
   private playSignature(
     actor: FighterView, moment: SignatureMoment, at: { x: number; y: number },
-    options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
+    options: SignatureOptions = {},
   ): boolean {
     const id = signatureFor(actor.fighter.def.id, moment);
     if (id) this.effects.signature(id, at, this.palette(actor), options);
     return id !== undefined;
+  }
+
+  /**
+   * 상태가 걸린 순간·겹이 터진 순간의 공용 연출. 자리는 상태가 정한다 — 기절·공포·잠은 머리,
+   * 강화는 몸 아래쪽에서 솟고, 나머지는 몸 가운데다.
+   */
+  private playStatusCue(fighterId: string, id: StatusCueId, color: number): void {
+    const view = this.views.get(fighterId);
+    if (!view || view.dead) return;
+    const height = UNIT_HEIGHT * view.fighter.bodyScale;
+    const head = id === "stun" || id === "fear" || id === "sleep";
+    const y = view.fighter.y - height * (head ? 0.92 : 0.5);
+    this.effects.statusCue(id, view.fighter.x, y, color, view.fighter.bodyScale);
   }
 
   /**

@@ -7,7 +7,7 @@
  */
 export const RUNE_PICK_GRID = {
   columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208,
-  padX: 48, headerHeight: 220, toggleY: 82, rowsPerPage: 4, footerHeight: 100,
+  padX: 48, headerHeight: 370, toggleY: 82, rowsPerPage: 4, footerHeight: 100,
 } as const;
 
 /** 가방 판의 크기. `total`은 거르기 전의 룬 수다. */

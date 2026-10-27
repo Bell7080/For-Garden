@@ -49,10 +49,9 @@ import { motionPolicy } from "../core/settings";
 import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
-import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
-import { equippedRuneSlot, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
-import { addRuneBagToggles } from "./runeHolderCycle";
+import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -89,7 +88,8 @@ import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
 import { findItem } from "../data/items";
-import { sortRunesByRelic } from "../managers/InventoryManager";
+import { mountRunePickerGrid } from "./runePickerGrid";
+import { runePickerSize } from "./runePickerLayout";
 import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
@@ -338,7 +338,7 @@ const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number 
  * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목
  * 아래로 첫 줄 카드 **중심**이 서는 자리다.
  */
-const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 220, toggleY: 82 } as const;
+
 
 /**
  * 능력치 상세가 서는 세로 자리.
@@ -1434,54 +1434,16 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = sortRunesByRelic(session.runeInventory.filter((rune) => rune.part === index), session.relicProgress);
-    const columns = RUNE_PICKER.columns;
-    const rows = Math.max(1, Math.ceil(runes.length / columns));
-    const pickerWidth = columns * RUNE_PICKER.cellWidth + RUNE_PICKER.padX * 2;
-    // 판 높이는 가진 룬 수를 따르되 화면을 넘지 않는다. 못으로 박아 두면 룬이 늘어난 만큼 잘린다.
-    const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
-    // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
-    // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-      const top = -pickerHeight / 2;
-      const firstX = -((columns - 1) * RUNE_PICKER.cellWidth) / 2;
-      // 보기 토글이 바뀌면 판은 두고 카드 묶음만 갈아 끼운다. 판 높이는 거르기 전의 수로 정해 두어
-      // 토글을 누를 때마다 판이 줄었다 늘지 않는다.
-      const grid = this.scene.add.container(0, 0);
-      body.add(grid);
-      const paint = (): void => {
-        grid.removeAll(true);
-        const view = session.settings.game.runeBag;
-        const shown = view.showEquipped ? runes : runes.filter((rune) => equippedRuneSlot(rune.instanceId) === undefined);
-        shown.forEach((rune, order) => {
-          const x = firstX + (order % columns) * RUNE_PICKER.cellWidth;
-          const y = top + RUNE_PICKER.headerHeight + Math.floor(order / columns) * RUNE_PICKER.cellHeight;
-          const holder = equippedRuneSlot(rune.instanceId);
-          const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, {
-            dimmed: holder !== undefined,
-            holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
-          });
-          const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerdown", () => pressIn(card));
-          hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(card, "normal", { pop: false }); });
-          hit.on("pointerup", () => {
-            pressOut(card);
-            // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
-            // 다른 렐릭이 끼고 있는 룬이면 쪽지의 장착이 「해제하고 장착할까요?」를 먼저 묻는다.
-            openRuneInfoPopup(this.scene, this.popups, {
-              runeInstanceId: rune.instanceId,
-              onChanged: () => this.refreshGrowth(),
-              // 정보창에서 연 룬이므로 쪽지에 장착 버튼이 함께 선다.
-              equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
-            });
-          });
-          card.add(hit);
-          grid.add(card);
-        });
-      };
-      // 토글 줄은 제목표 아래, 첫 줄 카드 위의 빈 띠에 왼쪽부터 선다.
-      addRuneBagToggles(this.scene, body, -pickerWidth / 2 + RUNE_PICKER.padX, top + RUNE_PICKER.toggleY, paint);
-      paint();
+    const runes = session.runeInventory.filter(rune => rune.part === index);
+    const { width, height } = runePickerSize(runes.length);
+    this.popups.open({ width, height, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
+      mountRunePickerGrid(this.scene, body, {
+        runes, isCovered: () => this.popups.isOpen, isActive: () => this.popups.isTop(body),
+        onPick: rune => openRuneInfoPopup(this.scene, this.popups, {
+          runeInstanceId: rune.instanceId, onChanged: () => this.refreshGrowth(),
+          equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
+        }),
+      });
     });
   }
 

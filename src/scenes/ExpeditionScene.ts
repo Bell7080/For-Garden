@@ -1,4 +1,5 @@
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { playFormationTapSound } from "../ui/formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { notificationManager } from "../managers/NotificationManager";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -1104,6 +1105,7 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private toggle(relicId: string): void {
     const result = tapRosterRelic(this.selected, this.selectedSlot, relicId);
+    playFormationTapSound(this.selected, result.formation, relicId);
     this.selected = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refreshPreparationSelection();

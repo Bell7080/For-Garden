@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { portraitCardZoom } from "./portraitPlacement";
 import type { RaidDto } from "../api/contracts";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
@@ -228,6 +229,8 @@ function addSettleCover(
       if (!cover.active) { resolve(); return; }
       hit.disableInteractive();
       breath.stop();
+      // 덮개가 걷혀 올라가는 순간 — 정산 창이 뜨기 전의 한 박자다.
+      audioManager?.playUi("settle.lift");
       const duration = still ? 0 : spec.dismissMs;
       scene.tweens.add({ targets: [label, echo], scale: spec.dismissScale, alpha: 0, duration, ease: "Cubic.Out" });
       scene.tweens.add({ targets: cover, alpha: 0, duration, ease: "Quad.In", onComplete: () => resolve() });

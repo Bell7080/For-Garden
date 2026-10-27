@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { DialogueTitleCard } from "../core/dialogue";
 import { STORY_TITLE_CARD } from "./dialogueStageLayout";
@@ -57,6 +58,8 @@ export function playStoryTitleCard(scene: Phaser.Scene, card: DialogueTitleCard,
     };
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
 
+    // 검은 막에서 제목 띠가 열리는 순간 — 낮게 차오르다 종 하나로 맺는다.
+    audioManager?.playSfx("story.titleCard");
     const opening = { t: 0 };
     const openTween = scene.tweens.add({
       targets: opening,

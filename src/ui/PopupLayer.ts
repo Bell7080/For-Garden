@@ -261,7 +261,8 @@ export class PopupLayer {
         fill: options.destructive ? CONFIRM_DIALOG.destructiveFill : CONFIRM_DIALOG.confirmFill,
         decorDots: true,
         ...(options.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
-        onClick: () => { audioManager?.playUi("ui.confirm"); close(); onConfirm(); },
+        // 되돌릴 수 없는 확정(판매·포기·초기화)은 밝은 확정음이 아니라 낮고 둔한 한 번이다.
+        onClick: () => { audioManager?.playUi(options.destructive ? "ui.danger" : "ui.confirm"); close(); onConfirm(); },
       }));
     });
   }

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { DialogueBackdrop, DialogueChoice, DialogueNode, DialogueStandingAsset } from "../core/dialogue";
 import { DialoguePlaybackClock } from "../core/dialoguePlayback";
@@ -280,7 +281,11 @@ export class DialogueLayer extends Phaser.GameObjects.Container {
     choices.forEach((choice, index) => {
       const button = new Button(this.scene, BASE_WIDTH / 2, 1050 + index * 130, {
         width: BASE_WIDTH - 160, height: 104, label: choice.label, fontSize: 30,
-        onClick: () => this.onAdvance(choice),
+        onClick: () => {
+          // 갈래를 고른 순간 — 대사 넘김(아무 소리 없음)과 갈리게 확정음을 낸다.
+          audioManager?.playUi("ui.confirm");
+          this.onAdvance(choice);
+        },
       }).setDepth(610);
       this.choiceObjects.push(button);
       playFadeIn(this.scene, [button], { rise: 24 });

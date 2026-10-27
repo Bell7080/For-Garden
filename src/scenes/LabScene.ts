@@ -318,6 +318,8 @@ export class LabScene extends Phaser.Scene {
   private switchBanner(delta: number): void {
     const count = this.banners.length;
     this.bannerIndex = (Math.min(this.bannerIndex, count - 1) + delta + count) % count;
+    // 모집판이 옆으로 넘어간다 — 라벨 탭과 같은 「스르륵」.
+    audioManager?.playUi("ui.tab");
     // 원화는 `refresh`가 배너가 바뀐 것을 보고 갈아 끼운다.
     this.refresh();
   }

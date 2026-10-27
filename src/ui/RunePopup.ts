@@ -245,7 +245,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         balance: { iconKey: CURRENCY_ICON_BY_WALLET.rawStone, before: session.wallet.rawStone, after: session.wallet.rawStone + runeSellValue(rune) },
         confirmLabel: t("rune.sell"),
         destructive: true,
-      }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => close()); }),
+      }, () => { void new InventoryManager(session).sellRunes(options.api ?? gameApi, [rune.instanceId]).then(() => { audioManager?.playUi("sell.coins"); close(); }); }),
     });
     // 잠금과 즐겨찾기는 **머리글 아래 왼쪽 위**에 작은 칩 두 장으로 선다. 무엇을 가진
     // 룬인지 읽기 전에 "골라 둔 것인가"가 먼저 보이는 자리이고, 판매를 막는 자물쇠가
@@ -342,6 +342,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
           confirmLabel: t("rune.equip"),
         }, () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId, options.api ?? gameApi, { moveFromOther: true }).then(() => {
+            audioManager?.playUi("equip.on");
             close();
             equip.onEquipped?.();
             options.onChanged?.(rune);
@@ -354,6 +355,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         width: main.width, height: panel.buttonHeight, label: t("rune.unequip"), fontSize: 26,
         onClick: () => {
           void relicProgression.unequipRune(slot.relicId, slot.slotIndex).then(() => {
+            audioManager?.playUi("equip.off");
             close();
             // 장착과 같은 신호를 쓴다 — 부른 화면은 "끼웠다"가 아니라 "칸이 바뀌었다"를 듣는다.
             equip?.onEquipped?.();
@@ -366,6 +368,7 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
         width: main.width, height: panel.buttonHeight, label: t("rune.equip"), fontSize: 26,
         onClick: () => {
           void relicProgression.equipRune(equip.relicId, equip.slotIndex, rune.instanceId).then(() => {
+            audioManager?.playUi("equip.on");
             close();
             equip.onEquipped?.();
           });

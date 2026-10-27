@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { attachRoll } from "./RollingValue";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
 import type { AdPresentationResult, GameApi, StaminaRechargeStatusDto } from "../api/contracts";
@@ -284,8 +285,11 @@ export class StaminaPopup {
       if (source.kind === "consumable") await this.inventory.useConsumable(this.api, this.selectedTonic(source));
       else if (source.kind === "currency") this.rechargeStatus = (await this.inventory.rechargeStamina(this.api, source.id)).status;
       else await this.watchAd(source.slotId);
+      // 스테미나 수가 다시 칠해지는 그 순간 — 차오르는 거품 소리가 「채워졌다」를 말한다. 광고는 보상 영수증이 제 소리를 낸다.
+      if (source.kind !== "ad") audioManager?.playUi("stamina.refill");
     } catch {
       this.message = t("stamina.rechargeFailed");
+      audioManager?.playUi("ui.deny");
     } finally {
       this.pending = false; this.repaint?.();
     }

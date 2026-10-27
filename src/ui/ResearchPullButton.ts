@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { textStyle } from "./theme";
 
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
@@ -74,7 +75,11 @@ export class ResearchPullButton extends Phaser.GameObjects.Container {
     this.add(this.face);
 
     const hit = scene.add.rectangle(0, depth / 2, width, height + depth, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => { if (this.enabled) this.face.setY(depth * 0.6); });
+    // 이 버튼은 공용 눌림(`pressIn`)을 쓰지 않아 손끝 소리도 직접 낸다 — 꺼진 버튼은 「아직」으로 답한다.
+    hit.on("pointerdown", () => {
+      if (this.enabled) this.face.setY(depth * 0.6);
+      audioManager?.playUi(this.enabled ? "ui.click" : "ui.deny");
+    });
     hit.on("pointerout", () => this.face.setY(0));
     hit.on("pointerup", () => {
       this.face.setY(0);

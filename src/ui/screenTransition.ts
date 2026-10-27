@@ -82,6 +82,8 @@ function consumeNavDirection(): -1 | 1 | undefined {
  */
 export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 0 | 1): void {
   pendingNavDirection = direction === 0 ? undefined : direction;
+  // 나란히 놓인 자리로 옆걸음 — 라벨 탭과 같은 「스르륵」이 화면이 옆에서 미끄러져 드는 것과 맞는다.
+  audioManager?.playUi("ui.tab");
   startScene(scene, key);
 }
 

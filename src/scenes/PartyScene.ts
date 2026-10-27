@@ -1,4 +1,5 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
+import { playFormationTapSound } from "../ui/formationSound";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
@@ -900,6 +901,7 @@ export class PartyScene extends Phaser.Scene {
    */
   private toggle(relicId: string): void {
     const result = tapRosterRelic(this.picked, this.selectedSlot, relicId);
+    playFormationTapSound(this.picked, result.formation, relicId);
     this.picked = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refresh();

@@ -90,6 +90,25 @@
 | `battle/sweep-hop.mp3` | `nC5wxS4KBVF5TsFHPusz` | Tiny cute character happy hop, short soft springy boing pop, light and bouncy, single hop, cartoon mobile game, no voice, no reverb |
 | `ui/title-start.mp3` | `CuOlqyRhmMb27qQi0oR0` | Game start button, bright magical whoosh into a rich shimmering chime swell, inviting and grand |
 
+| `battle/battle-block.mp3` | `MLW5mCeILLNkx7Vv7oHD` | Attack deflected with no effect, one short small metallic tink, clean and dry, game, no voice, no reverb |
+| `battle/battle-stun.mp3` | `oHmu7RRjp15fLBKGNe6p` | Cartoon dizzy stun hit, short wobbly bonk followed by tiny twinkling stars circling, light and cute, game status effect, no voice, no reverb |
+| `story/story-title-card.mp3` | `A43gdR5fh82wl0U5Ix7e` | Chapter title card fades in on a black screen, soft low warm swell resolving into a single gentle bell, calm and cinematic, no voice |
+| `ui/formation-place.mp3` | `tVPmO2SY1PuZRBeO4h7X` | Character card placed into a team slot, one short soft solid snap thock with a tiny bright click, satisfying, mobile game UI, no voice, no reverb |
+| `ui/ui-danger.mp3` | `LPEx4vkmwjGI704q22Hv` | Confirming an irreversible action, one short low dull muted thud, heavy and soft, serious, mobile game UI, no voice, no reverb |
+| `battle/battle-sleep.mp3` | `6GP1ldYxgYT5hJH1Wzpm` | Cute character falling asleep, soft gentle descending airy chime like a tiny lullaby, dreamy and very short, mobile game, no voice, no snoring |
+| `ui/settle-lift.mp3` | `Yj5wQsDBI4XKPBR2jZNv` | Dark cover lifting away to reveal rewards, soft airy upward whoosh with a gentle shimmer at the end, game UI, no voice |
+| `ui/stamina-refill.mp3` | `Q1FjSsB1nQ1gAgaDog2B` | Energy refilled, quick rising bubbly fizz ending in a bright sparkly chime, refreshing energy drink, mobile game, no voice, no reverb |
+| `ui/augment-lock.mp3` | `RDrNV1BnXN5UI2jPUzNp` | Glowing card snaps and locks into a slot, crisp snap with a short bright magical chime, game UI, no voice, no reverb |
+| `battle/battle-death-clock.mp3` | `1Az7B2pLgrKLD58YVdbv` | Ominous warning, single deep low clock gong toll with a subtle tense ticking underneath, signals sudden death time starting, game, no voice |
+| `ui/formation-lift.mp3` | `DSIyWu78xfpRe2Bij4AS` | Picking up a character card, one very short light airy swish lift, soft, mobile game UI, no voice, no reverb |
+| `ui/equip-off.mp3` | `0bmfVmwWA7GccphgC0zW` | Removing a gem from a socket, one soft muted release click, short and gentle, game UI, no voice, no reverb |
+| `ui/sell-coins.mp3` | `9xVWMR6XdTA4pmjS8YlK` | Selling an item, short clink of a few small stones and coins dropping into a pouch, crisp, mobile game UI, no voice, no reverb |
+| `battle/battle-ult-ready.mp3` | `jCBPldSM9ytg84k1wH8H` | Short bright magical ready chime, quick ascending two-note sparkle ping, crisp and clean, signals a special skill is fully charged, mobile game UI, no voice, no reverb tail |
+| `research/research-shatter.mp3` | `IyrRoTa2RST70wVdcE7G` | Small crystal card shattering into glittering shards, quick bright glass break with sparkles, mobile game, no voice, no reverb |
+| `battle/battle-summon.mp3` | `1gjUpzMJczuDroTGIGvh` | Small magic poof as a little creature pops into the battlefield, soft puff of smoke with a tiny sparkle, short, cute game, no voice, no barking |
+| `ui/equip-on.mp3` | `tYNne0hn6EG9hWQ0cXCE` | Socketing a gem rune into equipment, one short crisp metal clasp click with a tiny crystalline shine, game UI, no voice, no reverb |
+| `battle/battle-shield-break.mp3` | `043vqjlym0dXup2Wo1pB` | Thin blue magical energy barrier shattering, brittle glassy crack and small tinkle of shards, short and light, fantasy game, no voice, no reverb |
+
 ### 손질 기록 (v0.363.0)
 
 - `battle-victory`·`battle-defeat`: 원본 테이크(위 생성 ID)를 1.35배속(음정 유지)으로 당기고 2.6초에서 0.7초 페이드로 끊었다. 결과판이 뜨는 순간에만 울린다.
@@ -98,3 +117,8 @@
 - BGM 프롬프트(v0.363.0) — 타이틀: "Gentle, wistful instrumental theme of a girl riding a quiet train through a dreamy fantasy countryside, gazing out the window. Soft steady train-wheel rhythm on the rails as subtle brushed percussion, warm felt piano melody, mellow acoustic guitar, soft string pads, faint music box sparkle, slow relaxed tempo around 80 BPM ..." / 로비: "Soft, relaxing lo-fi style home theme for a cozy fantasy mobile game lobby. Slow tempo around 75 BPM, mellow electric piano and gentle nylon guitar ...". 옛 타이틀은 음량 폭(LRA)이 16.9 LU라 조용하다 크게 치솟았고, 새 두 곡은 2~3 LU다.
 - `rune-fail`·`roulette-tick`·`ui-toggle`·`ui-unlock`·`dig-hit`·`research-crack`: 앞머리 무음 7~21ms를 걷어 냈다.
 
+
+### 손질 기록 (v0.364.0)
+
+- 위 18종(`battle-block` ~ `battle-shield-break`)은 화면 순간(막이 깨지는 프레임, 칸에 내려놓는 순간 등)에 맞춰 앞머리 무음을 걷고 길이를 0.13~1.4초로 끊었다. 테이크는 3개씩 뽑아 클리핑·피크 위치·스펙트럼 중심으로 골랐다.
+- 새 파일 없이 기존 음원을 빌려 쓰는 큐: `story.hop`(대사 몸짓) = `sweep-hop` 작게, 넉백·대사 퇴장 = `sweep-blastoff`, 정산·수확·교류 귀환 = `ui-reward`, 순위 오르기 = `roulette-tick`.

@@ -71,6 +71,7 @@ import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type D
 import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
+import { isGuildSandbox } from "./guildApi";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend, type GuildWarMapState } from "./guildContracts";
 import { normalizeGuildWarDeck, parseGuildWarSlotId } from "../core/guildWarMap";
@@ -4453,6 +4454,11 @@ function qaRandom(): number {
 }
 
 const localGameApi = new FakeServer();
+/** 길드 샌드박스(QA)일 때 이 기기의 구현으로 돌리는 조작 — 길드 백엔드를 읽거나 길드 코인·기록을 남기는 것 전부. */
+const SANDBOX_GUILD_METHODS: ReadonlySet<string> = new Set([
+  "createGuild", "changeGuildBadge", "stampGuildAttendance", "buyGuildProduct",
+  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense",
+] satisfies (keyof GameApi)[]);
 let activeGameApi: GameApi = localGameApi;
 const remoteMissionListeners = new Set<() => void>();
 let lastRemoteMissionScore: number | undefined;
@@ -4488,6 +4494,8 @@ export const gameApi: GameApi = new Proxy({} as GameApi, {
         return () => { stopLocal(); remoteMissionListeners.delete(listener); };
       };
     }
-    return (...args: unknown[]) => (activeGameApi as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args);
+    // QA 길드 샌드박스에서는 길드가 이 기기에만 있으므로, 길드에 얽힌 조작도 이 기기의 구현이 받는다(서버는 그 길드를 모른다).
+    const target = isGuildSandbox() && SANDBOX_GUILD_METHODS.has(prop) ? localGameApi : activeGameApi;
+    return (...args: unknown[]) => (target as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args);
   },
 });

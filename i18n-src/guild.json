@@ -269,6 +269,26 @@
     "Gildennamen eingeben",
     "Введите название гильдии"
   ],
+  "guild.create.nameRule": [
+    "{min}~{max}个字",
+    "{min}–{max} ตัวอักษร",
+    "{min}–{max} ký tự",
+    "{min}–{max} karakter",
+    "{min}–{max} caracteres",
+    "{min}–{max} caracteres",
+    "{min}–{max} Zeichen",
+    "{min}–{max} символов"
+  ],
+  "guild.create.joinLabel": [
+    "加入方式",
+    "รูปแบบการเข้าร่วม",
+    "Cách gia nhập",
+    "Cara bergabung",
+    "Tipo de ingreso",
+    "Tipo de entrada",
+    "Beitrittsart",
+    "Способ вступления"
+  ],
   "guild.create.confirmTitle": [
     "创建公会",
     "สร้างกิลด์",
@@ -398,16 +418,6 @@
     "Cor do símbolo",
     "Symbolfarbe",
     "Цвет символа"
-  ],
-  "guild.badge.index": [
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}",
-    "{index}/{count}"
   ],
   "guild.badge.apply": [
     "更换徽章",

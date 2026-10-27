@@ -27,4 +27,16 @@ describe("QA 표본 길드", () => {
     expect(server.qaGuilds()[0].memberCount).toBe(14);
     expect(server.qaEnsureGuild(actor, { shape: "shield", shapeColor: "violet", icon: "sword", iconColor: "amber" })).toBe(id);
   });
+
+  it("QA 자동 가입은 표본 길드의 길드장으로 앉히고 직위 상한을 지킨다", async () => {
+    const server = new FakeGuildServer(() => Date.UTC(2026, 9, 27), { seed: true, levelGate: false });
+    expect(server.qaJoinAsLeader(actor, "sample-1")).toBe(true);
+    const { members } = await server.getMembers(actor);
+    expect(members.find((m) => m.isMe)?.role).toBe("leader");
+    expect(members.filter((m) => m.role === "leader")).toHaveLength(1);
+    expect(members.filter((m) => m.role === "vice").length).toBeLessThanOrEqual(2);
+    expect(members.length).toBeGreaterThanOrEqual(GUILD_WAR_MIN_MEMBERS);
+    // 이미 길드에 있으면 다시 앉히지 않는다(탈퇴 뒤 재진입도 같은 길).
+    expect(server.qaJoinAsLeader(actor, "sample-1")).toBe(false);
+  });
 });

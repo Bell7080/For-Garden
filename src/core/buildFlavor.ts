@@ -13,3 +13,10 @@ export const QA_TOOLS_ENABLED: boolean = import.meta.env?.MODE === "qa" || impor
  * E2E(`test`)는 튜토리얼 흐름 자체를 검사하므로 켜 둔다.
  */
 export const TUTORIAL_ENABLED: boolean = import.meta.env?.MODE !== "qa";
+
+/**
+ * QA 빌드가 접속하자마자 이 기기의 임시 길드(표본 길드 「포가든 수호대」)에 길드장으로 들어가 있는가. 길드전·수호전을
+ * 곧바로 시험하려는 자리라 길드 만들기·가입을 건너뛴다. **E2E(`test`)는 끈다** — 길드 만들기 흐름 자체를 검사한다.
+ * 운영 서버의 길드는 건드리지 않고 길드만 이 기기의 샌드박스로 돈다(`guildApi.setGuildSandbox`).
+ */
+export const QA_GUILD_AUTO_JOIN: boolean = QA_TOOLS_ENABLED && import.meta.env?.MODE !== "test";

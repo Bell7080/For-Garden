@@ -14,11 +14,11 @@ import { Button } from "../ui/Button";
 import { consumeSceneEntry } from "./sceneEntry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
-  GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NOTICE_MAX,
+  GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NAME_MIN, GUILD_NOTICE_MAX,
   guildAttendanceDay, guildCan, guildCanKick, guildLevelProgress, guildPerks, validateGuildName, type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import {
-  DEFAULT_GUILD_BADGE, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
+  DEFAULT_GUILD_BADGE, GUILD_BADGE_COLORS, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
 } from "../core/guildBadge";
 import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
 import { GUILD_WAR_MIN_MEMBERS } from "../core/guildWar";
@@ -42,13 +42,12 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWidgets";
 import { addGuildBadge } from "../ui/GuildBadge";
-import { openGuildBadgePicker } from "../ui/GuildBadgePicker";
 import {
-  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
+  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
   GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarColumnX, guildWarNodeSpot,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
-import { chipPoints, drawLayer, HoloBar, HOLO } from "../ui/holo";
+import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, HOLO } from "../ui/holo";
 import { addBackButton } from "../ui/IconButton";
 import { addFramedIcon } from "../ui/itemFrame";
 import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup";
@@ -56,7 +55,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { FaceFrame } from "../ui/FaceFrame";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
-import { GUILD_COIN_ICON } from "../ui/priceTag";
+import { addPriceBar, GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
@@ -708,52 +707,94 @@ export class GuildScene extends Phaser.Scene {
   /* ── 만들기 · 뱃지 ────────────────────────────────────────────────────── */
 
   private openEditor(mode: "create" | "badge"): void {
-    const badge: GuildBadge = { ...(mode === "badge" && this.state?.guild ? this.state.guild.badge : DEFAULT_GUILD_BADGE) };
-    let joinMode: GuildJoinMode = "open";
     const creating = mode === "create";
-    const free = !creating && this.state?.guild?.badgeFree === true;
-    const height = creating ? 1180 : 840;
-    this.popups.open({ width: E.width, height, title: t(creating ? "guild.create.title" : "guild.badge.title"), closeOnBackdrop: false, dim: true }, (body, close) => {
-      const top = creating ? 0 : 210;
+    const guild = this.state?.guild;
+    const badge: GuildBadge = { ...(!creating && guild ? guild.badge : DEFAULT_GUILD_BADGE) };
+    let joinMode: GuildJoinMode = "open";
+    let field: keyof GuildBadge = "shape";
+    const free = !creating && guild?.badgeFree === true;
+    const P = guildEditorSpots(creating);
+    const cost = creating ? GUILD_CREATE_GEMS : free ? 0 : GUILD_BADGE_CHANGE_GEMS;
+    this.popups.open({ width: E.width, height: P.height, title: t(creating ? "guild.create.title" : "guild.badge.title"), closeOnBackdrop: false, dim: true }, (body, close) => {
+      const left = -E.inner / 2;
+
+      // ── 문장 무대 — 정보 탭 머리와 같은 문법(왼쪽 큰 배지, 오른쪽 이름·레벨·가입 방식). 고른 값이 곧바로 여기 선다.
+      const stageShape = chipPoints(E.inner, E.stage.height, { bevel: { topLeft: E.stage.bevel, bottomRight: E.stage.bevel } });
+      body.add(drawLayer(this, 0, P.stage, stageShape, { fill: 0x0b1017, alpha: 0.94, edge: COLOR.accent, edgeAlpha: 0.55 }));
+      body.add(drawFrameVignette(this, 0, P.stage, E.inner, E.stage.height, { strength: 0.45 }));
+      const halo = this.add.graphics();
+      body.add(halo);
+      let preview: Phaser.GameObjects.Container | undefined;
+      const nameText = this.label(body, E.stage.textX, P.stage - 34, "", { role: "display", size: 46 }, [0, 0.5]);
+      const subText = this.label(body, E.stage.textX, P.stage + 34, "", { role: "emphasis", size: 28, color: COLOR.accentText }, [0, 0.5]);
+      const paintStage = (): void => {
+        preview?.destroy();
+        halo.clear();
+        // 배지 뒤에 바탕색을 옅게 번지게 깔아 무대가 고른 색으로 물든다(겹쳐 밝아지는 합성은 쓰지 않는다).
+        const color = GUILD_BADGE_COLORS[badge.shapeColor];
+        for (let i = 4; i >= 1; i -= 1) {
+          const r = E.stage.badge * (0.38 + i * 0.07);
+          halo.fillStyle(color, 0.05).fillPoints([{ x: E.stage.badgeX, y: P.stage - r }, { x: E.stage.badgeX + r, y: P.stage }, { x: E.stage.badgeX, y: P.stage + r }, { x: E.stage.badgeX - r, y: P.stage }], true);
+        }
+        preview = addGuildBadge(this, body, E.stage.badgeX, P.stage, badge, E.stage.badge);
+        const typed = creating ? (input?.value ?? "").trim() : guild?.name ?? "";
+        nameText.setText(typed || t("guild.create.nameLabel")).setColor(typed ? COLOR.ink : COLOR.inkDim);
+        squeezeTextToWidth(nameText, E.inner / 2 - E.stage.textX - 30);
+        subText.setText(`${t("guild.levelShort", { level: guild?.level ?? 1 })} · ${t(`guild.joinMode.${creating ? joinMode : guild?.joinMode ?? "open"}`)}`);
+      };
+
+      // ── 이름 · 가입 방식 (만들기만)
       let input: TextInputField | undefined;
       if (creating) {
-        this.label(body, -400, E.nameLabel, t("guild.create.nameLabel"), { role: "emphasis", size: 28, color: COLOR.accentText });
-        input = new TextInputField(this, 0, E.nameInput, { width: 800, height: 80, value: "", maxGlyphs: GUILD_NAME_MAX, ariaLabel: t("guild.create.nameAria"), fontSize: 32 });
+        this.label(body, left, P.nameLabel!, t("guild.create.nameLabel"), { role: "emphasis", size: 28, color: COLOR.accentText }, [0, 0.5]);
+        this.label(body, -left, P.nameLabel!, t("guild.create.nameRule", { min: GUILD_NAME_MIN, max: GUILD_NAME_MAX }), { role: "body", size: 24, color: COLOR.inkDim }, [1, 0.5]);
+        input = new TextInputField(this, 0, P.nameInput!, { width: E.inner, height: E.input.height, value: "", maxGlyphs: GUILD_NAME_MAX, ariaLabel: t("guild.create.nameAria"), fontSize: 32, onChange: () => paintStage() });
         body.add(input);
-        const chips: Phaser.GameObjects.Container[] = [];
-        const paintChips = (): void => {
-          chips.splice(0).forEach((chip) => chip.destroy());
-          (["open", "approval"] as const).forEach((m, index) => chips.push(addFriendChip(this, body, -200 + index * 400, E.joinMode, 380, 72, t(`guild.joinMode.${m}`), joinMode === m, () => { joinMode = m; paintChips(); })));
+        this.label(body, left, P.joinLabel!, t("guild.create.joinLabel"), { role: "emphasis", size: 28, color: COLOR.accentText }, [0, 0.5]);
+        const joinChips: Phaser.GameObjects.Container[] = [];
+        const paintJoin = (): void => {
+          joinChips.splice(0).forEach((chip) => chip.destroy());
+          (["open", "approval"] as const).forEach((m, index) => joinChips.push(this.addEditorOption(body, (index - 0.5) * (E.join.width + 20), P.join!, E.join.width, E.join.height,
+            t(`guild.joinMode.${m}`), joinMode === m, () => { joinMode = m; paintJoin(); paintStage(); })));
         };
-        paintChips();
+        paintJoin();
       }
-      let preview: Phaser.GameObjects.Container | undefined;
-      const paintPreview = (): void => { preview?.destroy(); preview = addGuildBadge(this, body, 0, E.preview.y + top, badge, E.preview.size); };
-      paintPreview();
-      BADGE_CHOICES.forEach((cycler, row) => {
-        const y = E.cyclers.top + top + row * E.cyclers.gap;
-        this.label(body, -400, y, t(cycler.labelKey), { role: "emphasis", size: 28 });
-        const values: readonly GuildBadge[keyof GuildBadge][] = cycler.values;
-        let selector: Phaser.GameObjects.Container;
-        const paintSelector = (): void => {
-          selector?.destroy();
-          const index = values.indexOf(badge[cycler.field]);
-          selector = addFriendChip(this, body, 190, y, 420, 76, t("guild.badge.index", { index: index + 1, count: values.length }), false, () => {
-            openGuildBadgePicker(this, this.popups, {
-              title: t(cycler.labelKey), badge, field: cycler.field, choices: values,
-              onPick: (value) => {
-                // 값 목록과 field는 위의 같은 정의에서 온다. 서버 검증·저장 계약은 그대로 둔다.
-                Object.assign(badge, { [cycler.field]: value });
-                paintSelector(); paintPreview();
-              },
-            });
-          });
-        };
-        paintSelector();
-      });
-      if (!creating) this.label(body, 0, E.note + top - 120, free ? t("guild.badge.free") : "", { role: "body", size: 26, color: COLOR.accentText }, [0.5, 0.5]);
-      const submitY = creating ? E.submit : 380;
-      addRowButton(this, body, 0, submitY, 460, 92, t(creating ? "guild.create.submit" : "guild.badge.apply"), "accent", () => FULL_CLIP, () => true, () => {
+      paintStage();
+
+      // ── 배지 공방 — 네 갈래 전환 라벨, 그 아래 고를 견본이 실제 배지로 늘어선다(고른 값을 바꿔 끼운 모습).
+      const tabs = this.add.container(0, 0);
+      const grid = this.add.container(0, 0);
+      body.add([grid, tabs]);
+      const tabWidth = (E.inner - E.tabs.gap * (BADGE_CHOICES.length - 1)) / BADGE_CHOICES.length;
+      const paintWorkshop = (): void => {
+        tabs.removeAll(true);
+        BADGE_CHOICES.forEach((choice, index) => addCategoryTab(this, tabs, {
+          x: left + tabWidth / 2 + index * (tabWidth + E.tabs.gap), y: P.tabs, width: tabWidth, height: E.tabs.height,
+          label: t(choice.labelKey), selected: field === choice.field, face: "down", labelSize: E.tabs.labelSize,
+          onSelect: () => { if (field === choice.field) return; field = choice.field; paintWorkshop(); },
+        }));
+        grid.removeAll(true);
+        const choice = BADGE_CHOICES.find((c) => c.field === field)!;
+        const values: readonly GuildBadge[keyof GuildBadge][] = choice.values;
+        values.forEach((value, index) => {
+          const spot = guildSwatchSpot(index, values.length, P.gridTop);
+          const candidate = { ...badge, [field]: value } as GuildBadge;
+          const selected = badge[field] === value;
+          const allowed = isGuildBadge(candidate);
+          grid.add(this.addBadgeSwatch(spot.x, spot.y, candidate, selected, allowed, () => {
+            Object.assign(badge, { [field]: value });
+            paintWorkshop(); paintStage();
+          }));
+        });
+      };
+      paintWorkshop();
+
+      // ── 비용 · 취소 / 확정
+      if (free) this.label(body, 0, P.cost, t("guild.badge.free"), { role: "emphasis", size: 30, color: COLOR.accentText }, [0.5, 0.5]);
+      else addPriceBar(this, body, 0, P.cost, E.inner, undefined, "gems", cost, { short: session.wallet.gems < cost, height: E.cost.height });
+      const half = (E.buttons.width + E.buttons.gap) / 2;
+      addRowButton(this, body, -half, P.submit, E.buttons.width, E.buttons.height, t("popup.cancel"), "neutral", () => FULL_CLIP, () => true, close);
+      addRowButton(this, body, half, P.submit, E.buttons.width, E.buttons.height, t(creating ? "guild.create.submit" : "guild.badge.apply"), "accent", () => FULL_CLIP, () => true, () => {
         if (!isGuildBadge(badge)) { this.toast(t("guild.error.BADGE_INVALID")); return; }
         if (creating) {
           const checked = validateGuildName(input?.value ?? "");
@@ -766,7 +807,7 @@ export class GuildScene extends Phaser.Scene {
           }, () => { void this.act(() => gameApi.createGuild({ name, joinMode, badge: { ...badge } }), () => { close(); this.toast(t("guild.create.done"), "unlocked"); }); });
           return;
         }
-        const current = this.state?.guild?.badge;
+        const current = guild?.badge;
         if (current && current.shape === badge.shape && current.shapeColor === badge.shapeColor && current.icon === badge.icon && current.iconColor === badge.iconColor) { this.toast(t("guild.badge.same")); return; }
         const change = (): void => { void this.act(() => gameApi.changeGuildBadge({ badge: { ...badge } }), () => { close(); this.toast(t("guild.badge.done"), "unlocked"); }); };
         if (free) { change(); return; }
@@ -776,8 +817,39 @@ export class GuildScene extends Phaser.Scene {
           balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - GUILD_BADGE_CHANGE_GEMS },
         }, change);
       });
-      addRowButton(this, body, 0, submitY + 110, 460, 80, t("guild.members.close"), "neutral", () => FULL_CLIP, () => true, close);
     });
+  }
+
+  /** 고르는 칸 한 장 — 깎인 칩 위에 글자. 고른 것은 강조색 외곽선과 짙은 면, 나머지는 눌린 유리. 배지 견본 칸과 같은 결이다. */
+  private addEditorOption(parent: Phaser.GameObjects.Container, x: number, y: number, width: number, height: number, label: string, selected: boolean, onTap: () => void): Phaser.GameObjects.Container {
+    const node = this.add.container(x, y);
+    const shape = chipPoints(width, height, { bevel: { topLeft: 16, bottomRight: 16 } });
+    node.add(drawLayer(this, 0, 0, shape, { fill: selected ? 0x27313b : 0x0c1118, alpha: 0.96 }));
+    node.add(drawShapeOutline(this, 0, 0, shape, { color: selected ? COLOR.accent : 0x536170, alpha: selected ? 1 : 0.45, width: selected ? 4 : 2 }));
+    node.add(squeezeTextToWidth(this.add.text(0, 1, label, textStyle({ role: "emphasis", size: 30, color: selected ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5), width - 24));
+    parent.add(node);
+    const hit = addClippedHit(this, node, 0, 0, width, height, () => FULL_CLIP);
+    hit.on("pointerdown", () => pressIn(node));
+    hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(node); onTap(); });
+    return node;
+  }
+
+  /** 배지 견본 한 칸 — 지금 배지에서 그 값만 바꿔 끼운 실제 배지가 선다. 바탕색과 문양색이 같아지는 견본은 흐리고 눌리지 않는다. */
+  private addBadgeSwatch(x: number, y: number, candidate: GuildBadge, selected: boolean, allowed: boolean, onTap: () => void): Phaser.GameObjects.Container {
+    const { size, badge: badgeSize } = E.swatch;
+    const node = this.add.container(x, y);
+    const shape = chipPoints(size, size, { bevel: { topLeft: 18, bottomRight: 18 } });
+    node.add(drawLayer(this, 0, 0, shape, { fill: selected ? 0x27313b : 0x0c1118, alpha: 0.96 }));
+    node.add(drawShapeOutline(this, 0, 0, shape, { color: selected ? COLOR.accent : 0x536170, alpha: selected ? 1 : 0.4, width: selected ? 4 : 2 }));
+    addGuildBadge(this, node, 0, 0, candidate, badgeSize);
+    node.setAlpha(allowed ? 1 : 0.3);
+    if (!allowed) return node;
+    const hit = addClippedHit(this, node, 0, 0, size, size, () => FULL_CLIP);
+    hit.on("pointerdown", () => pressIn(node));
+    hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(node); if (!selected) onTap(); });
+    return node;
   }
 
   /* ── 멤버 ─────────────────────────────────────────────────────────────── */

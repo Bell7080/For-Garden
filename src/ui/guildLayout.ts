@@ -130,16 +130,64 @@ export function guildStampRewardPair(cellWidth: number, last: boolean): { mainX:
   return { mainX, mainSize, plusX, coinX, coinSize };
 }
 
-/** 길드 만들기·뱃지 창의 자리 — 창 가운데가 0이다. */
+/**
+ * 길드 만들기·배지 창 — 위에서부터 **문장 무대**(큰 배지 + 이름·레벨·가입 방식, 정보 탭 머리와 같은 문법) → 이름 입력 →
+ * 가입 방식 → **배지 공방**(네 갈래 전환 라벨 + 실제 배지 견본 격자) → 비용 → 취소·확정. 값을 고르는 칸을 「1/8」 같은 번호 버튼으로
+ * 두지 않고 고를 견본을 그 자리에 늘어놓는다 — 번호는 무엇인지 말하지 못하고, 창을 하나 더 열어야 고를 수 있었다.
+ * 창 높이는 쌓인 줄에서 거꾸로 구한다. 좌표는 모두 창 가운데가 0이다.
+ */
 export const GUILD_EDITOR = {
-  width: 900,
-  nameLabel: -520, nameInput: -450,
-  joinMode: -350,
-  preview: { y: -190, size: 230 },
-  cyclers: { top: 10, gap: 84 },
-  note: 400,
-  submit: 490,
+  width: 920,
+  inner: 804,
+  stage: { height: 236, badge: 196, badgeX: -282, textX: -150, bevel: 28 },
+  input: { height: 80 },
+  join: { width: 392, height: 76 },
+  tabs: { height: 70, gap: 10, labelSize: 28 },
+  swatch: { size: 120, gap: 12, badge: 84, rows: 2 },
+  cost: { height: 64 },
+  buttons: { width: 380, height: 92, gap: 24 },
 } as const;
+
+export interface GuildEditorSpots {
+  height: number;
+  stage: number;
+  nameLabel?: number; nameInput?: number;
+  joinLabel?: number; join?: number;
+  tabs: number; gridTop: number;
+  cost: number; submit: number;
+}
+
+/** 만들기(`creating`)·배지 변경 창의 줄 자리 — 위에서부터 쌓아 높이를 정한 뒤 가운데 기준으로 옮긴다. */
+export function guildEditorSpots(creating: boolean): GuildEditorSpots {
+  const E = GUILD_EDITOR;
+  let y = 72;
+  const at: Record<string, number> = {};
+  at.stage = y + E.stage.height / 2; y += E.stage.height + 34;
+  if (creating) {
+    at.nameLabel = y + 16; at.nameInput = y + 48 + E.input.height / 2; y += 48 + E.input.height + 30;
+    at.joinLabel = y + 16; at.join = y + 48 + E.join.height / 2; y += 48 + E.join.height + 38;
+  }
+  at.tabs = y + E.tabs.height / 2; y += E.tabs.height + 18;
+  at.gridTop = y; y += E.swatch.rows * E.swatch.size + (E.swatch.rows - 1) * E.swatch.gap + 34;
+  at.cost = y + E.cost.height / 2; y += E.cost.height + 28;
+  at.submit = y + E.buttons.height / 2; y += E.buttons.height + 56;
+  const height = y;
+  const shift = (v: number | undefined): number | undefined => (v === undefined ? undefined : v - height / 2);
+  return {
+    height, stage: shift(at.stage)!, nameLabel: shift(at.nameLabel), nameInput: shift(at.nameInput), joinLabel: shift(at.joinLabel), join: shift(at.join),
+    tabs: shift(at.tabs)!, gridTop: shift(at.gridTop)!, cost: shift(at.cost)!, submit: shift(at.submit)!,
+  };
+}
+
+/** 견본 격자 칸 `index`의 가운데 — `count`개를 두 줄로 나눠 가운데에 모은다(여덟 개면 넷씩, 열두 개면 여섯씩). */
+export function guildSwatchSpot(index: number, count: number, gridTop: number): { x: number; y: number } {
+  const { size, gap, rows } = GUILD_EDITOR.swatch;
+  const columns = Math.ceil(count / rows);
+  const row = Math.floor(index / columns);
+  const inRow = Math.min(columns, count - row * columns);
+  const col = index - row * columns;
+  return { x: (col - (inRow - 1) / 2) * (size + gap), y: gridTop + row * (size + gap) + size / 2 };
+}
 
 /**
  * 길드전 방어진 지도 — 지부 셋이 세로 기둥 셋으로 나란히 서고, 기둥마다 위에서부터 우두머리 → 정예 둘 → 일반 칸 격자(두 줄)다.

@@ -538,6 +538,21 @@ export class FakeGuildServer implements GuildBackend {
     return id;
   }
 
+  /**
+   * QA 빌드가 접속하자마자 길드전·수호전을 시험할 수 있게 호출자를 표본 길드의 **길드장**으로 앉힌다. 원래 길드장(표본)은
+   * 부길드장으로 내려 직위 상한을 지킨다. 이미 어느 길드에 있으면 그대로 둔다.
+   */
+  qaJoinAsLeader(actor: GuildActor, guildId: string): boolean {
+    const guild = this.guilds.get(guildId);
+    if (!guild || this.userGuild.has(actor.userId)) return false;
+    for (const member of guild.members.values()) if (member.role === "leader") member.role = "vice";
+    const vices = [...guild.members.values()].filter((m) => m.role === "vice").sort((a, b) => b.joinedAt - a.joinedAt);
+    for (const extra of vices.slice(GUILD_ROLE_LIMIT.vice)) extra.role = "officer";
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    this.userGuild.set(actor.userId, guildId); this.requestedBy.delete(actor.userId);
+    return true;
+  }
+
   /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
   addProsperityForTest(guildId: string, amount: number): void { const guild = this.guilds.get(guildId); if (guild) guild.prosperity += amount; }
 }

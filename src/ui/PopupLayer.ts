@@ -378,7 +378,8 @@ export class PopupLayer {
       // 위에 다른 판(상세·확인 창)이 얹혀 있으면 뒤로가기는 **맨 위 판부터** 닫는다 — 아래 판의 버튼이 먼저 눌려
       // 아래 판만 닫히고 위 판이 홀로 남던 문제를 막는다.
       const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: userClose })
-        .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
+        // 층 자체가 밑값보다 높게 서는 화면(타이틀 3000 등)에서는 판의 어둠이 버튼을 덮어 눌리지 않았다 — 늘 그 층 바로 위에 세운다.
+        .setDepth(Math.max(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2, layer.depth + 1));
       this.backByLayer.set(layer, back);
       // 층이 연출 없이 통째로 죽는 길(씬 종료)에서도 함께 지운다.
       layer.once(Phaser.GameObjects.Events.DESTROY, () => back.destroy());

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { GUILD_ATTENDANCE_CYCLE, GUILD_LEVELS, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, guildCan, type GuildAction, type GuildRole } from "../../src/core/guild";
 import { contentUnlockLevel } from "../../src/core/contentUnlock";
+import { GUILD_WAR_GRUNTS } from "../../src/core/guildWar";
 
 const sql = readFileSync(new URL("../../supabase/migrations/20261019000000_guild_basics.sql", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const cycleSql = readFileSync(new URL("../../supabase/migrations/20261021000000_guild_attendance_cycle.sql", import.meta.url), "utf8").replace(/\r\n/g, "\n");
@@ -42,5 +43,17 @@ describe("길드 SQL 표", () => {
   it("출석 순환의 길드 쪽 몫이 TS 표와 같다", () => {
     const json = /server_guild_attendance_cycle\(\)[\s\S]*?select '(\[.*?\])'::jsonb/.exec(cycleSql)?.[1];
     expect(JSON.parse(json!)).toEqual(GUILD_ATTENDANCE_CYCLE.map((d) => ({ prosperity: d.prosperity, contribution: d.contribution, coin: d.coin })));
+  });
+});
+
+describe("길드전 방어진 SQL 표", () => {
+  const warSql = readFileSync(new URL("../../supabase/migrations/20261108000000_guild_war_defense.sql", import.meta.url), "utf8");
+  it("레벨별 일반 칸 수가 TS 표와 같다", () => {
+    const rows = /array\[(\[[\d,\[\]]+\])\]\)\[least/.exec(warSql)?.[1];
+    expect(JSON.parse(`[${rows!}]`)).toEqual(GUILD_WAR_GRUNTS.map((row) => [...row]));
+  });
+  it("배치 권한이 TS와 같다", () => {
+    const listed = /'canArrange', p_role in \(([^)]*)\)/.exec(warSql)![1].split(",").map((v) => v.trim().replace(/'/g, ""));
+    expect(listed.sort()).toEqual((["leader", "vice", "officer", "member"] as GuildRole[]).filter((r) => guildCan(r, "formation")).sort());
   });
 });

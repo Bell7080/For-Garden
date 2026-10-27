@@ -72,6 +72,7 @@ import { duelBlindOrder } from "../core/duelArena";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
 import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES } from "../core/guildGuard";
+import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { GuildApiError } from "../api/guildContracts";
 
 /**
@@ -215,6 +216,8 @@ export class PartyScene extends Phaser.Scene {
 
   /** 수호전은 여섯 칸 두 줄(앞줄 0~2 · 뒷줄 3~5)이다. 나머지 편성은 세 칸 한 줄이다. */
   private get guard(): boolean { return this.content.content === "guildGuard"; }
+  /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
+  private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
   private get slotCount(): number { return this.guard ? GUILD_GUARD.slots : 3; }
   /** 전투 시작에 필요한 인원 — 수호전은 비운 칸이 있어도 한 명부터 나간다. */
   private get requiredMembers(): number { return this.guard ? 1 : 3; }
@@ -268,7 +271,7 @@ export class PartyScene extends Phaser.Scene {
     // 결투는 제 편성을 따로 갖는다 — 공격은 지난 공격덱, 방어는 게시한 방어덱에서 시작한다.
     // 스토리 편성(`session.party`)을 건드리지 않는다.
     const owned = new Set(relicCollection.owned.map(({ id }) => id));
-    const duelStart = this.content.content === "duel" ? this.content.attack : this.content.content === "duelDefense" ? this.content.defense : undefined;
+    const duelStart = this.content.content === "duel" ? this.content.attack : this.content.content === "duelDefense" ? this.content.defense : this.content.content === "guildWarDefense" ? this.content.deck : undefined;
     const duelPicks = duelStart?.filter((id) => owned.has(id));
     this.picked = toFormationSlots(duelPicks && duelPicks.length === 3 ? duelPicks : relicCollection.validParty, 3);
     if (this.guard) {
@@ -282,7 +285,7 @@ export class PartyScene extends Phaser.Scene {
     this.rosterView = DEFAULT_ROSTER_VIEW;
     this.allySlots = [];
     this.isEnteringBattle = false;
-    const defense = this.content.content === "duelDefense";
+    const defense = this.defenseOnly;
     this.allyLift = defense ? PARTY_DEFENSE.lift : 0;
     this.allyRow = defense ? partyDefenseAllyRow() : PARTY_PREVIEW.allyRow;
     this.rosterViewport = defense ? { ...ROSTER_VIEWPORT, top: PARTY_DEFENSE.rosterTop } : ROSTER_VIEWPORT;
@@ -290,7 +293,7 @@ export class PartyScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     // 편성 미리보기와 실제 전투가 같은 전장 원화를 공유해 출전 흐름을 시각적으로 잇는다.
     // 어느 콘텐츠가 어느 전장에 서는지는 전투와 같은 표(`BATTLE_FIELD_BACKGROUND`)가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.content.content === "duelDefense" ? "duel" : this.content.content, session.selectedStageId ?? undefined));
+    addSceneBackground(this, battleFieldBackground(this.defenseOnly ? "duel" : this.content.content, session.selectedStageId ?? undefined));
     this.add.rectangle(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.42).setDepth(-29);
 
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
@@ -304,7 +307,7 @@ export class PartyScene extends Phaser.Scene {
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
     // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
-    const staminaContent = this.content.content !== "duel" && this.content.content !== "duelDefense" && !this.guard;
+    const staminaContent = this.content.content !== "duel" && !this.defenseOnly && !this.guard;
     const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
@@ -371,7 +374,7 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
       height: 130,
-      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : t("party.start"),
+      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : t("party.start"),
       fontSize: 44,
       onClick: () => {
         // 손으로 누른 전투 시작은 자동 전투가 아니다 — 남은 자동 전투를 비우고 한 판만 들어간다.
@@ -442,7 +445,7 @@ export class PartyScene extends Phaser.Scene {
   private buildPreview(preview: PartyPreview): void {
     // **방어덱 편성에는 마주 선 편이 없다** — 원정 편성처럼 아군만 선다. 대치선·VS·적 전투력을 세우면
     // 빈 적진과 0을 마주 보는 판이 되어, 누구와 싸우는지 모르는 편성이 아니라 적을 빠뜨린 화면으로 읽힌다.
-    const allyOnly = this.content.content === "duelDefense" || this.guard;
+    const allyOnly = this.defenseOnly || this.guard;
     // 현상수배는 1대1 세 판이라 한 장면의 대치선·총합 대신 자리마다 레인 한 장이 선다(`PARTY_LANES`).
     const lanes = this.content.content === "bounty";
     this.enemyPowerText = undefined;
@@ -651,6 +654,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
     if (content.content === "guildGuard") return t("guild.guard.party.title");
+    if (content.content === "guildWarDefense") return t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) });
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
@@ -665,7 +669,7 @@ export class PartyScene extends Phaser.Scene {
     this.startButton.setEnabled(false);
 
     // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
-    if (this.content.content === "duel" || this.content.content === "duelDefense" || this.guard) {
+    if (this.content.content === "duel" || this.defenseOnly || this.guard) {
       try {
         if (this.guard) settingsManager.update({ game: { guardFormation: [...this.picked] } });
         await this.enterBattle();
@@ -717,6 +721,11 @@ export class PartyScene extends Phaser.Scene {
       startScene(this, "duel");
       return;
     }
+    if (this.content.content === "guildWarDefense") {
+      await withBusy(this, gameApi.placeGuildWarDefense({ slotId: this.content.slotId, relicIds: formationMembers(this.picked) }));
+      startScene(this, "guild", { page: "war", toast: "placed" });
+      return;
+    }
     await enterContentBattle(this, this.content, formationMembers(this.picked), this.picked);
   }
 
@@ -728,6 +737,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
     else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
     else if (content.content === "guildGuard") startScene(this, "guild", { page: "guard" });
+    else if (content.content === "guildWarDefense") startScene(this, "guild", { page: "war" });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
     else startScene(this, ancientStageFloor(session.selectedStageId) !== undefined ? "ancientStrata" : "stageMap");
@@ -1048,7 +1058,7 @@ export class PartyScene extends Phaser.Scene {
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
     const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
-    this.allyPowerText?.setText(this.content.content === "duelDefense" || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
+    this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.

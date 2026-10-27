@@ -130,16 +130,6 @@ export function guildStampRewardPair(cellWidth: number, last: boolean): { mainX:
   return { mainX, mainSize, plusX, coinX, coinSize };
 }
 
-/** 길드전·수호전 쪽 — 큰 판 하나에 지금 단계와 남은 시간, 그 아래 줄들. */
-export const GUILD_EVENT_PAGE = {
-  plate: { y: 760, height: 620 },
-  heading: 520,
-  phase: 610,
-  timer: 690,
-  lines: { y: 800, gap: 56 },
-  note: 1180,
-} as const;
-
 /** 길드 만들기·뱃지 창의 자리 — 창 가운데가 0이다. */
 export const GUILD_EDITOR = {
   width: 900,
@@ -150,3 +140,34 @@ export const GUILD_EDITOR = {
   note: 400,
   submit: 490,
 } as const;
+
+/**
+ * 길드전 방어진 지도 — 지부 셋이 세로 기둥 셋으로 나란히 서고, 기둥마다 위에서부터 우두머리 → 정예 둘 → 일반 칸 격자(두 줄)다.
+ * 칸이 클수록 무거운 자리라 크기가 곧 위계를 말한다. 일반 칸은 레벨이 늘리므로 격자 줄 수가 늘어도 본문 안에 든다(최대 7칸 → 4줄).
+ */
+export const GUILD_WAR_MAP = {
+  column: { width: 300, gap: 15, top: 400, bottom: 1500 },
+  header: 440,
+  boss: { y: 568, size: 136 },
+  elite: { y: 776, size: 108, dx: 66 },
+  grunt: { y: 950, size: 88, dx: 60, step: 136 },
+  /** 칸 아래 이름줄이 칸 밑변에서 떨어지는 거리. */
+  nameGap: 22,
+  /** 아래 참가 조건 줄 — 작은 탭이 없는 쪽이라 그 자리를 쓴다. */
+  note: 1690,
+} as const;
+
+/** 지부 `branch`(1~3) 기둥의 가운데 x. */
+export function guildWarColumnX(branch: number): number {
+  const { width, gap } = GUILD_WAR_MAP.column;
+  return BASE_WIDTH / 2 + (branch - 2) * (width + gap);
+}
+
+/** 칸 하나의 가운데와 크기. */
+export function guildWarNodeSpot(slot: { branch: number; kind: "boss" | "elite" | "grunt"; index: number }): { x: number; y: number; size: number } {
+  const x = guildWarColumnX(slot.branch);
+  const M = GUILD_WAR_MAP;
+  if (slot.kind === "boss") return { x, y: M.boss.y, size: M.boss.size };
+  if (slot.kind === "elite") return { x: x + (slot.index === 0 ? -1 : 1) * M.elite.dx, y: M.elite.y, size: M.elite.size };
+  return { x: x + (slot.index % 2 === 0 ? -1 : 1) * M.grunt.dx, y: M.grunt.y + Math.floor(slot.index / 2) * M.grunt.step, size: M.grunt.size };
+}

@@ -6,7 +6,7 @@
 export const SERVER_GAME_METHODS = [
   "getRouletteStatus", "spinRoulette", "unlockRouletteSpins",
   "prepareCombat", "finishCombat",
-  "abandonStrataRun", "activatePass", "answerRelicQuestion", "applyDebugCommand", "applyStoryEffect", "archaeologyState", "beginExpeditionAugment", "breakThroughRelic", "buyDuelAttempt", "buyGuildProduct", "changeGuildBadge", "createGuild", "stampGuildAttendance", "getGuildGuard", "enterGuildGuard", "submitGuildGuard",
+  "abandonStrataRun", "activatePass", "answerRelicQuestion", "applyDebugCommand", "applyStoryEffect", "archaeologyState", "beginExpeditionAugment", "breakThroughRelic", "buyDuelAttempt", "buyGuildProduct", "changeGuildBadge", "createGuild", "stampGuildAttendance", "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense",
   "claimAchievementRewards", "claimAdReward", "claimAttendance", "claimAttendanceAd", "claimDuelSeasonReward", "claimExpeditionReward", "claimInstantAdReward",
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
   "claimRelicQuestionReward", "chooseExpeditionAugment", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeExpeditionRest", "completeObservation", "completeStage", "completeStory", "completeTutorialStep", "digStrataTile",

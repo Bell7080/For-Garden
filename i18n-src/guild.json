@@ -1439,16 +1439,6 @@
     "Gildenkrieg-Punkte {score} · Rang {rank}",
     "Очки войны гильдий {score} · Место {rank}"
   ],
-  "guild.war.slots": [
-    "防守阵 {count}格",
-    "ช่องแนวป้องกัน {count}",
-    "Ô phòng thủ {count}",
-    "Slot pertahanan {count}",
-    "Puestos defensivos {count}",
-    "Posições de defesa {count}",
-    "Verteidigungsplätze {count}",
-    "Ячеек обороны: {count}"
-  ],
   "guild.war.members": [
     "参加条件 公会成员{need}人以上 · 当前{count}人",
     "ต้องมีสมาชิกกิลด์ {need} คนขึ้นไป · ตอนนี้ {count}",
@@ -1458,6 +1448,166 @@
     "Requer {need}+ membros da guilda · Agora {count}",
     "Benötigt {need}+ Gildenmitglieder · Jetzt {count}",
     "Нужно {need}+ участников гильдии · Сейчас {count}"
+  ],
+  "guild.error.WAR_LOCKED": [
+    "战斗日无法修改防御阵",
+    "แก้ไขแนวป้องกันในวันต่อสู้ไม่ได้",
+    "Không thể sửa trận phòng thủ vào ngày chiến đấu",
+    "Peta pertahanan terkunci pada Hari Pertempuran",
+    "No se puede cambiar la defensa en el día de batalla",
+    "Não é possível alterar a defesa no dia de batalha",
+    "Am Kampftag ist die Verteidigung gesperrt",
+    "В день битвы оборону менять нельзя"
+  ],
+  "guild.error.SLOT_INVALID": [
+    "无法在该格配置",
+    "ใช้ช่องนี้ไม่ได้",
+    "Không thể dùng ô này",
+    "Slot ini tidak bisa dipakai",
+    "No se puede usar esta casilla",
+    "Não é possível usar este espaço",
+    "Dieses Feld ist nicht verfügbar",
+    "Эту ячейку занять нельзя"
+  ],
+  "guild.error.SLOT_TAKEN": [
+    "该格已由其他公会成员负责",
+    "สมาชิกกิลด์คนอื่นรับช่องนี้แล้ว",
+    "Thành viên bang hội khác đã giữ ô này",
+    "Anggota guild lain sudah memegang slot ini",
+    "Otro miembro del gremio ya ocupa esta casilla",
+    "Outro membro da guilda já ocupa este espaço",
+    "Ein anderes Gildenmitglied hält dieses Feld bereits",
+    "Эту ячейку уже занял другой участник гильдии"
+  ],
+  "guild.war.branch": [
+    "第{n}分部",
+    "สาขา {n}",
+    "Chi nhánh {n}",
+    "Cabang {n}",
+    "Sede {n}",
+    "Filial {n}",
+    "Zweigstelle {n}",
+    "Филиал {n}"
+  ],
+  "guild.war.kind.boss": [
+    "首领",
+    "หัวหน้า",
+    "Thủ lĩnh",
+    "Pemimpin",
+    "Jefe",
+    "Chefe",
+    "Anführer",
+    "Вожак"
+  ],
+  "guild.war.kind.elite": [
+    "精锐",
+    "อีลีท",
+    "Tinh nhuệ",
+    "Elite",
+    "Élite",
+    "Elite",
+    "Elite",
+    "Элита"
+  ],
+  "guild.war.kind.grunt": [
+    "普通",
+    "ทั่วไป",
+    "Thường",
+    "Biasa",
+    "Común",
+    "Comum",
+    "Normal",
+    "Обычный"
+  ],
+  "guild.war.placed": [
+    "已配置 {count}/{total}",
+    "จัดวาง {count}/{total}",
+    "Đã bố trí {count}/{total}",
+    "Ditempatkan {count}/{total}",
+    "Desplegados {count}/{total}",
+    "Posicionados {count}/{total}",
+    "Aufgestellt {count}/{total}",
+    "Расставлено {count}/{total}"
+  ],
+  "guild.war.slot.title": [
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}",
+    "{branch} · {kind}"
+  ],
+  "guild.war.slot.power": [
+    "防御战斗力 {power}",
+    "พลังต่อสู้ป้องกัน {power}",
+    "Lực chiến phòng thủ {power}",
+    "Kekuatan Tempur pertahanan {power}",
+    "Poder de combate defensivo {power}",
+    "Poder de Combate defensivo {power}",
+    "Kampfkraft der Verteidigung {power}",
+    "Боевая мощь обороны {power}"
+  ],
+  "guild.war.slot.replace": [
+    "重新编队",
+    "จัดทีมใหม่",
+    "Sửa đội hình",
+    "Ubah Formasi",
+    "Cambiar formación",
+    "Alterar formação",
+    "Formation ändern",
+    "Изменить построение"
+  ],
+  "guild.war.slot.clear": [
+    "清空",
+    "ล้างช่อง",
+    "Bỏ trống",
+    "Kosongkan",
+    "Vaciar",
+    "Esvaziar",
+    "Leeren",
+    "Освободить"
+  ],
+  "guild.war.party.title": [
+    "防御阵配置 · {slot}",
+    "จัดแนวป้องกัน · {slot}",
+    "Bố trí phòng thủ · {slot}",
+    "Tempatkan pertahanan · {slot}",
+    "Desplegar defensa · {slot}",
+    "Posicionar defesa · {slot}",
+    "Verteidigung aufstellen · {slot}",
+    "Расстановка обороны · {slot}"
+  ],
+  "guild.war.party.save": [
+    "配置",
+    "จัดวาง",
+    "Bố trí",
+    "Tempatkan",
+    "Desplegar",
+    "Posicionar",
+    "Aufstellen",
+    "Расставить"
+  ],
+  "guild.war.placedToast": [
+    "已配置防御阵容",
+    "จัดวางทีมป้องกันแล้ว",
+    "Đã bố trí đội phòng thủ",
+    "Tim pertahanan ditempatkan",
+    "Defensa desplegada",
+    "Defesa posicionada",
+    "Verteidigung aufgestellt",
+    "Оборона расставлена"
+  ],
+  "guild.war.empty": [
+    "空位",
+    "ว่าง",
+    "Trống",
+    "Kosong",
+    "Vacío",
+    "Vazio",
+    "Frei",
+    "Свободно"
   ],
   "guild.guard.next": [
     "距下一场 {time}",

@@ -10,6 +10,7 @@ import { duelGrownStats } from "../core/duelArena";
 import { GUILD_GUARD_ELEMENTS } from "../core/guildPages";
 import type { Element } from "../core/types";
 import { guildGuardRoster } from "./guildGuard";
+import { parseGuildWarSlotId } from "../core/guildWarMap";
 
 /**
  * 편성 화면이 **어느 콘텐츠의 편성인가**.
@@ -43,7 +44,9 @@ export type PartyContent =
   /** 결투 방어덱 — 위에 적이 없고, 저장이 곧 게시다. 가릴 렐릭의 순서도 여기서 고른다. */
   | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[] }
   /** 길드 수호전 — 위에 적이 없고(웨이브로 몰려온다) 여섯 칸 두 줄이다. 그날의 적 속성을 함께 든다. */
-  | { content: "guildGuard"; element: Element };
+  | { content: "guildGuard"; element: Element }
+  /** 길드전 방어덱 — 지도의 칸 하나에 셋을 세운다. 위에 적이 없고 저장이 곧 배치다. 시작 편성은 그 칸에 지금 선 덱이다. */
+  | { content: "guildWarDefense"; slotId: string; deck: readonly string[] };
 
 const stringIds = (value: unknown, limit: number): string[] =>
   Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, limit) : [];
@@ -65,7 +68,7 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown }>;
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -73,6 +76,9 @@ export function normalizePartyContent(input: unknown): PartyContent {
   if (data.content === "duelDefense") {
     const defense = stringIds(data.defense, 3);
     return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2) };
+  }
+  if (data.content === "guildWarDefense" && parseGuildWarSlotId(data.slotId)) {
+    return { content: "guildWarDefense", slotId: data.slotId as string, deck: stringIds(data.deck, 3) };
   }
   if (data.content === "guildGuard" && (GUILD_GUARD_ELEMENTS as readonly string[]).includes(data.element ?? "")) {
     return { content: "guildGuard", element: data.element as Element };
@@ -137,7 +143,7 @@ export interface PartyPreview {
  * 전투력이 실제 전투보다 낮게 보인다.
  */
 export function partyPreview(content: PartyContent, stage: BattleStageDef): PartyPreview {
-  if (content.content === "duelDefense") return { shown: [], all: [], role: "normal" };
+  if (content.content === "duelDefense" || content.content === "guildWarDefense") return { shown: [], all: [], role: "normal" };
   // 수호전은 위에 세울 적이 없다 — 그날 속성의 명단이 자동 배치의 상성 방향만 정한다.
   if (content.content === "guildGuard") {
     const roster = guildGuardRoster(content.element);

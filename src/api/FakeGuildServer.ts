@@ -8,11 +8,14 @@ import {
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { combatPower } from "../core/combatPower";
 import { rankGuildWar } from "../core/guildWar";
+import { guildWarNow } from "../core/guildPages";
+import { guildWarMapSlots, parseGuildWarSlotId } from "../core/guildWarMap";
+import { guildQaClockShift } from "./guildQaClock";
 import { guildGuardDayKey, guildGuardTotal, rankGuildGuardMembers } from "../core/guildGuard";
 import { PLAYABLE_RELICS } from "../data/relics";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
-  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildWarDeckEntry, type GuildWarDefenseInput, type GuildWarMapState, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
 } from "./guildContracts";
 
 interface MemberRow {
@@ -33,7 +36,10 @@ interface GuildRow {
   /** QA 길드전·수호전 점수(`guildQa`가 정한다). 열리기 전에는 null이라 순위 줄이 「-」로 선다. */
   warScore?: number | null; warReachedAt?: number; guardScore?: number | null;
   members: Map<string, MemberRow>; requests: Map<string, { actor: GuildActor; requestedAt: number }>;
+  /** 방어진 지도 — 칸 id → 그 칸을 맡은 길드원의 방어덱. 한 길드원은 한 칸만 맡는다. */
+  war?: Map<string, WarDefenseRow>;
 }
+interface WarDefenseRow { userId: string; deck: GuildWarDeckEntry[]; lineup: GuildWarDefenseInput["lineup"] | null; placedAt: number }
 
 /** 서버가 모르는 요청을 거절하는 한 줄 도우미. */
 const fail = (code: GuildErrorCode, message?: string): never => { throw new GuildApiError(code, message); };
@@ -235,7 +241,7 @@ export class FakeGuildServer implements GuildBackend {
     if (me.role === "leader") {
       if (guild.members.size > 1) fail("LEADER_CANNOT_LEAVE");
       this.guilds.delete(guild.id);
-    } else guild.members.delete(actor.userId);
+    } else { guild.members.delete(actor.userId); this.dropWarDefense(guild, actor.userId); }
     this.userGuild.delete(actor.userId);
     this.leftAt.set(actor.userId, this.now());
   }
@@ -258,6 +264,7 @@ export class FakeGuildServer implements GuildBackend {
     if (!target) return fail("MEMBER_NOT_FOUND");
     if (!guildCanKick(me.role, target.role)) fail("NO_PERMISSION");
     guild.members.delete(userId); this.userGuild.delete(userId); this.leftAt.set(userId, this.now());
+    this.dropWarDefense(guild, userId);
   }
 
   async setMemberRole(actor: GuildActor, userId: string, role: Exclude<GuildRole, "leader">): Promise<void> {
@@ -398,6 +405,91 @@ export class FakeGuildServer implements GuildBackend {
     });
   }
 
+  // ── 길드전 방어진 지도 ──────────────────────────────────────────────────────
+  private warOf(guild: GuildRow): Map<string, WarDefenseRow> { return guild.war ?? (guild.war = new Map()); }
+  private dropWarDefense(guild: GuildRow, userId: string): void {
+    for (const [slotId, row] of this.warOf(guild)) if (row.userId === userId) this.warOf(guild).delete(slotId);
+  }
+  /**
+   * QA 표본 길드원은 아직 칸을 맡지 않았으면 레벨 높은 순으로 앞 칸(우두머리 → 정예 → 일반)을 채운다. 덱은 id에서만
+   * 나오는 값이라 다시 읽어도 같다. 플레이어가 고를 칸이 남도록 표본은 열린 칸의 3분의 2까지만 채운다.
+   */
+  private seedSampleWar(guild: GuildRow): void {
+    const war = this.warOf(guild);
+    const holders = new Set([...war.values()].map(({ userId }) => userId));
+    const slots = guildWarMapSlots(this.level(guild));
+    const order = [...slots].sort((a, b) => ({ boss: 0, elite: 1, grunt: 2 })[a.kind] - ({ boss: 0, elite: 1, grunt: 2 })[b.kind] || a.branch - b.branch || a.index - b.index);
+    const cap = Math.floor(slots.length * 2 / 3);
+    const samples = [...guild.members.values()].filter((m) => m.sample && !holders.has(m.userId)).sort((a, b) => b.level - a.level || a.userId.localeCompare(b.userId));
+    for (const member of samples) {
+      if (war.size >= cap) break;
+      const slot = order.find(({ id }) => !war.has(id));
+      if (!slot) break;
+      let h = 2166136261;
+      for (const ch of member.userId) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+      h >>>= 0;
+      const deck: GuildWarDeckEntry[] = [0, 1, 2].map((offset) => {
+        const relic = PLAYABLE_RELICS[(h + offset * 7) % PLAYABLE_RELICS.length];
+        const level = Math.max(1, member.level - offset * 2);
+        return { relicId: relic.id, level, breakthrough: Math.min(5, Math.max(0, Math.ceil((level - 20) / 10))), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)) };
+      });
+      if (new Set(deck.map(({ relicId }) => relicId)).size < deck.length) continue;
+      war.set(slot.id, { userId: member.userId, deck, lineup: null, placedAt: guild.createdAt });
+    }
+  }
+  private warMapOf(guild: GuildRow, me: MemberRow): GuildWarMapState {
+    if (guild.members.size > 0 && [...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    const now = this.now();
+    const war = this.warOf(guild);
+    const level = this.level(guild);
+    const { phase, endsAt } = guildWarNow(now);
+    const slots = guildWarMapSlots(level).map((slot) => {
+      const row = war.get(slot.id);
+      const member = row ? guild.members.get(row.userId) : undefined;
+      return {
+        ...slot,
+        holder: member ? { userId: member.userId, name: member.name, level: member.level, avatarRelicId: member.avatarRelicId, frameId: member.frameId, isMe: member.userId === me.userId } : null,
+        deck: member && row ? row.deck.map((entry) => ({ ...entry })) : [],
+        power: member && row ? row.deck.reduce((sum, entry) => sum + entry.power, 0) : 0,
+      };
+    });
+    const mine = [...war.entries()].find(([, row]) => row.userId === me.userId)?.[0] ?? null;
+    return { level, phase, endsAt, slots, mySlotId: mine, canArrange: guildCan(me.role, "formation"), serverTime: now };
+  }
+
+  async getWarMap(actor: GuildActor): Promise<GuildWarMapState> {
+    const { guild, me } = this.requireGuild(actor);
+    return this.warMapOf(guild, me);
+  }
+
+  async clearWarSlot(actor: GuildActor, slotId: string): Promise<GuildWarMapState> {
+    const { guild, me } = this.requireGuild(actor);
+    if (guildWarNow(this.now()).phase !== "prep") fail("WAR_LOCKED");
+    if (!parseGuildWarSlotId(slotId)) fail("SLOT_INVALID");
+    const row = this.warOf(guild).get(slotId);
+    if (!row) fail("SLOT_INVALID");
+    if (row!.userId !== me.userId && !guildCan(me.role, "formation")) fail("NO_PERMISSION");
+    this.warOf(guild).delete(slotId);
+    return this.warMapOf(guild, me);
+  }
+
+  async placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState> {
+    this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      if (guildWarNow(this.now()).phase !== "prep") fail("WAR_LOCKED");
+      const slot = parseGuildWarSlotId(input?.slotId);
+      if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail("SLOT_INVALID");
+      if (!Array.isArray(input.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail("INVALID_REQUEST");
+      const war = this.warOf(guild);
+      const current = war.get(slot.id);
+      if (current && current.userId !== me.userId) fail("SLOT_TAKEN");
+      this.dropWarDefense(guild, me.userId);
+      war.set(slot.id, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
+      return true;
+    });
+    return this.getWarMap(actor);
+  }
+
   // ── QA 전용 — 길드전·수호전 시험판(`guildQa`)이 쓰는 조회·조작. 운영 서버의 계약에는 없다. ─────────────
   /** 모든 길드의 id·이름·점수. */
   qaGuilds(): { id: string; name: string; badge: GuildBadge; level: number; memberCount: number; warScore: number | null; guardScore: number | null; warReachedAt: number }[] {
@@ -456,4 +548,4 @@ const SAMPLE_BIOS = ["오늘도 복원 중", "치즈케이크는 사랑입니다
 const roleRank = (role: GuildRole): number => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
 
 /** 이 기기의 임시 길드 백엔드. 서버가 연결되지 않은 빌드(QA·개발)에서 `FakeServer`와 `guildApi`가 함께 쓴다. */
-export const localGuildBackend: FakeGuildServer = new FakeGuildServer();
+export const localGuildBackend: FakeGuildServer = new FakeGuildServer(() => Date.now() + guildQaClockShift());

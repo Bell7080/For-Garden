@@ -65,6 +65,7 @@ declare
     'public.guild_attendance',
     'public.guild_left',
     'public.guild_receipts',
+    'public.guild_war_defense',
     'public.admin_audit_log',
     'public.website_registration_limits'
   ];

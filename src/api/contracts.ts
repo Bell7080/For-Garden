@@ -1111,6 +1111,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   getGuildGuard(): Promise<GuildGuardStatusResponse>;
   enterGuildGuard(request: EnterGuildGuardRequest): Promise<EnterGuildGuardResponse>;
   submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse>;
+  /** 길드전 방어덱 게시 — 정비일에만, 우리 길드 지도의 빈 칸 하나에. 보유·성장은 서버가 확인해 굳힌다. */
+  placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<import("./guildContracts").GuildWarMapState>;
   /** 길드 코인으로 상점 상품을 산다. */
   buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
   /** 장착 수식어 목록을 확정한다. */
@@ -1332,6 +1334,8 @@ export interface EnterGuildGuardResponse {
   lineup: (import("../core/guildGuardBattle").GuildGuardSlotUnit | null)[];
   attemptsLeft: number;
 }
+/** 방어진 지도의 칸 하나에 렐릭 셋을 세운다. */
+export interface PlaceGuildWarDefenseRequest { requestId?: string; slotId: string; relicIds: string[] }
 /** 입장 영수증으로 판을 확정한다. 클라이언트가 말하는 점수는 없다 — 서버가 같은 시드로 다시 굴린다. */
 export interface SubmitGuildGuardRequest { requestId: string }
 export interface SubmitGuildGuardResponse {

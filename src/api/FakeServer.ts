@@ -72,8 +72,9 @@ import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGui
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
-import { GuildApiError, type GuildBackend } from "./guildContracts";
-import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, GuildGuardStatusResponse, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
+import { GuildApiError, type GuildBackend, type GuildWarMapState } from "./guildContracts";
+import { normalizeGuildWarDeck, parseGuildWarSlotId } from "../core/guildWarMap";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
 import { GUILD_GUARD, guildGuardAttemptsLeft, guildGuardDayKey, normalizeGuildGuardFormation } from "../core/guildGuard";
 import { guildGuardCoin, replayGuildGuard } from "../core/guildGuardBattle";
 import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
@@ -1761,6 +1762,25 @@ export class FakeServer implements GameApi {
     this.persist(next);
     this.state.serverJournal = next.serverJournal;
     return result;
+  }
+
+  /**
+   * 길드전 방어덱 게시 — 보유한 렐릭 셋만, 이 순간의 성장·룬으로 굳혀 길드 지도에 세운다. 칸·국면·중복은 길드 백엔드가
+   * 판정한다. 전투일에 상대가 이 스냅샷과 싸우므로 게시한 뒤 키운 몫은 다시 게시해야 든다.
+   */
+  async placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<GuildWarMapState> {
+    await this.delay();
+    let relicIds: string[];
+    try { relicIds = normalizeGuildWarDeck(Array.isArray(request?.relicIds) ? request.relicIds : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
+    if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const lineup = relicIds.map((relicId) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
+    }));
+    const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
+    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
   }
 
   /**

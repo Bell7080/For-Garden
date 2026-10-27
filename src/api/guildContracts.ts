@@ -1,5 +1,7 @@
 import type { GuildBadge } from "../core/guildBadge";
 import type { GuildJoinMode, GuildRole } from "../core/guild";
+import type { GuildWarBranch, GuildWarPhase, GuildWarSlotKind } from "../core/guildWar";
+import type { GuildGuardSlotUnit } from "../core/guildGuardBattle";
 
 /**
  * 길드 서버 경계의 계약. 규칙은 `src/core/guild*.ts` 순수 모듈이 갖고, 이 파일은 응답 모양과 오류 코드만 갖는다.
@@ -13,6 +15,7 @@ export const GUILD_ERROR_CODES = [
   "GUILD_NOT_FOUND", "GUILD_FULL", "LEAVE_COOLDOWN", "REQUEST_EXISTS", "REQUEST_NOT_FOUND", "MEMBER_NOT_FOUND",
   "NO_PERMISSION", "ROLE_FULL", "INVALID_TARGET", "LEADER_CANNOT_LEAVE", "ALREADY_STAMPED", "PRODUCT_NOT_FOUND",
   "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST", "GUARD_LIMIT", "GUARD_NOT_ENTERED",
+  "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN",
 ] as const;
 export type GuildErrorCode = (typeof GUILD_ERROR_CODES)[number];
 export const isGuildErrorCode = (value: string): value is GuildErrorCode => (GUILD_ERROR_CODES as readonly string[]).includes(value);
@@ -100,6 +103,28 @@ export interface GuildGuardBoard {
   serverTime: number;
 }
 
+/** 방어덱 한 자리 — 지도와 칸 쪽지가 읽는 공개 값. 전투가 읽는 스냅샷은 따로 든다(`GuildWarDefenseInput.lineup`). */
+export interface GuildWarDeckEntry { relicId: string; level: number; breakthrough: number; power: number }
+/** 방어진 지도의 칸 하나. 비어 있으면 `holder`가 null이다. */
+export interface GuildWarMapSlot {
+  id: string; branch: GuildWarBranch; kind: GuildWarSlotKind; index: number;
+  holder: { userId: string; name: string; level: number; avatarRelicId: string; frameId: string; isMe: boolean } | null;
+  deck: GuildWarDeckEntry[];
+  power: number;
+}
+/** 우리 길드의 방어진 지도 — 정비일에만 고칠 수 있다. */
+export interface GuildWarMapState {
+  level: number; phase: GuildWarPhase; endsAt: number;
+  slots: GuildWarMapSlot[];
+  /** 내가 방어덱을 세운 칸(없으면 null). 한 사람은 한 칸만 맡는다. */
+  mySlotId: string | null;
+  /** 다른 길드원의 칸을 비울 수 있는 직위인가(`guildCan(role, "formation")`). */
+  canArrange: boolean;
+  serverTime: number;
+}
+/** 방어덱 게시 — 게임 서버가 보유·성장을 확인해 굳힌 값만 길드 백엔드로 넘어간다. */
+export interface GuildWarDefenseInput { slotId: string; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
+
 export interface GuildShopItem { productId: string; price: number; weeklyLimit: number; bought: number }
 export interface GuildShopState { coin: number; items: GuildShopItem[]; serverTime: number }
 
@@ -120,15 +145,19 @@ export interface GuildApi {
   getAttendance(): Promise<GuildAttendanceState>;
   getShop(): Promise<GuildShopState>;
   getGuard(): Promise<GuildGuardBoard>;
+  getWarMap(): Promise<GuildWarMapState>;
+  /** 정비일에만. 자기 칸이거나 배치 권한(`formation`)이 있으면 비운다. */
+  clearWarSlot(slotId: string): Promise<GuildWarMapState>;
 }
 
 export const GUILD_API_METHODS = [
   "getGuild", "searchGuilds", "getMembers", "joinGuild", "cancelJoinRequest", "leaveGuild", "decideJoinRequest", "kickMember",
   "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop", "getGuard",
+  "getWarMap", "clearWarSlot",
 ] as const satisfies readonly (keyof GuildApi)[];
 export type GuildApiMethod = (typeof GUILD_API_METHODS)[number];
 export const isGuildApiMethod = (value: string): value is GuildApiMethod => (GUILD_API_METHODS as readonly string[]).includes(value);
-export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard"];
+export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard", "getWarMap"];
 
 /**
  * 길드 백엔드 — `GuildApi`의 모든 조작에 호출자(`actor`)를 앞세우고, 지갑이 얽힌 네 조작을 더한 것이다.
@@ -155,6 +184,10 @@ export interface GuildBackend {
    * 길드원 행에 더한다. 돌려주는 `best`는 오늘 최고, `coin`은 더한 뒤의 보유 코인이다.
    */
   recordGuard(actor: GuildActor, record: { day: number; score: number; coin: number }, requestId: string): Promise<{ best: number; coin: number }>;
+  getWarMap(actor: GuildActor): Promise<GuildWarMapState>;
+  clearWarSlot(actor: GuildActor, slotId: string): Promise<GuildWarMapState>;
+  /** 정비일에만, 빈 칸에만. 이미 다른 칸을 맡았으면 그 칸을 비우고 옮긴다. */
+  placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState>;
   /** 길드를 만든다. 젬 차감은 부르는 쪽(`GameApi`)이 한 호출 안에서 확정한다. */
   createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse>;
   /** 길드장만. 바뀌었는지와 값을 치러야 했는지(첫 변경은 무료)를 돌려줘 부르는 쪽이 젬을 받을지 정한다. */

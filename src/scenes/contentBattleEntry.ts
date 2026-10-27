@@ -38,7 +38,7 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
     return;
   }
   // 방어덱 게시는 전투가 아니다 — 편성 화면이 따로 저장한다.
-  if (content.content === "duelDefense") return;
+  if (content.content === "duelDefense" || content.content === "guildWarDefense") return;
   if (content.content === "raid") {
     const admission = await gameApi.enterRaid({ replayVersion: 2, raidId: content.raidId, requestId });
     rememberPlayerExp(admission.playerExp);

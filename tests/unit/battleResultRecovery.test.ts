@@ -8,7 +8,7 @@ describe("전투 결과 UI 복구", () => {
         const showResultFailure = vi.fn();
         const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
             Phaser: { Scene: class {
-                } }, gameApi: { completeStage }, session: { wallet: { stamina: 100 } }, CONTENT_STAMINA_COSTS: { normalStage: 5 },
+                } }, gameApi: { completeStage }, session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5,
             rememberPlayerExp: vi.fn(), PopupLayer: class {
             }, StageCompletePopup: class {
                 open = open;

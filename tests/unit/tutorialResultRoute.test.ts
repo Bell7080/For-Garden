@@ -7,7 +7,7 @@ it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대�
   const goRoute = vi.fn();
   const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
     Phaser: { Scene: class {} }, gameApi: { completeStage: async () => ({ firstClear: true, firstClearRewards: [], cheesecakeEarned: 50 }) },
-    session: { wallet: { stamina: 100 } }, CONTENT_STAMINA_COSTS: { normalStage: 5 }, rememberPlayerExp: vi.fn(),
+    session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5, rememberPlayerExp: vi.fn(),
     PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },
     tutorialManager: { lobbyStep: () => step }, lobbyTutorialGateStage, nextBattleStage: () => ({ id: "1-3" }), STAGES: [], storyStages: () => [], storyDifficultyOf: () => "easy",
     isStageUnlocked: () => true, t: (key: string) => key, goRoute,
@@ -31,7 +31,7 @@ it.each([true, false])("패배 저장이 끝나야 재도전하며 떠난 화면
   const retryBattle = vi.fn();
   const Battle = sourceClass("src/scenes/BattleScene.ts", "BattleScene", {
     Phaser: { Scene: class {} }, gameApi: { completeStage: () => saved },
-    session: { wallet: { stamina: 100 } }, CONTENT_STAMINA_COSTS: { normalStage: 5 },
+    session: { wallet: { stamina: 100 } }, battleStageStaminaCost: () => 5,
     PopupLayer: class {}, StageCompletePopup: class { open(value: any) { options = value; } },
     t: (key: string) => key,
   });

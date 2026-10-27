@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
-import { ANCIENT_DIFFICULTY_BANDS, ANCIENT_STRATA_MAX_FLOOR } from "../../src/data/ancientStrataDifficulty";
+import { ANCIENT_DIFFICULTY_BANDS, ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from "../../src/data/ancientStrataDifficulty";
+import { isCleanPaidAmount } from "../../src/core/paidAmountUnit";
 import { ancientStrataMultipliers, createAncientStrataSkirmish, getAncientStrataFloor } from "../../src/core/ancientStrataBattle";
 import { ancientReferenceParty, ancientReferenceRunes, simulateAncientStrataRun } from "../../src/core/ancientStrataSimulation";
 import { assertValidRuneInstance } from "../../src/core/runes";
@@ -37,7 +38,7 @@ describe("고대 지층 200층 난이도 계약", () => {
         for(const key of ["attackSpeed","moveSpeed","energyGain","lifeSteal"] as const) expect(enemy.stats[key]).toBe(base.stats[key]);
         expect(enemy.basic).toEqual(base.basic);expect(enemy.ultimate).toEqual(base.ultimate);
       }
-      expect(next.firstClearRewards).toEqual([{kind:"currency",currency:"gems",amount:100}]);
+      expect(next.firstClearRewards).toHaveLength(1);
       expect(next.repeatClearRewards).toEqual([]);
       previous=next;
     }
@@ -45,6 +46,19 @@ describe("고대 지층 200층 난이도 계약", () => {
     const first20=Array.from({length:20},(_,i)=>getAncientStrataFloor(i+1));
     expect(new Set(first20.map(d=>JSON.stringify([d.encounterKind,d.enemies.map(e=>e.id),d.trialId]))).size).toBe(20);
     expect(ANCIENT_DIFFICULTY_BANDS.at(-1)?.last).toBe(200);
+  });
+
+  it("첫 클리어는 한 층에 한 종류이고 10층마다 오르며, 젬은 200층 전부 6,500이다", () => {
+    const totals:Record<string,number>={};
+    const kinds=Array.from({length:10},(_,i)=>{const r=ancientFirstClearReward(i+1);return r.kind==="rune"?"rune":r.currency;});
+    expect(kinds).toEqual(["gold","cheesecake","gems","gold","cheesecake","gems","gold","cheesecake","rune","gems"]);
+    for(let floor=1;floor<=ANCIENT_STRATA_MAX_FLOOR;floor++){
+      const r=ancientFirstClearReward(floor);
+      if(r.kind==="currency"){totals[r.currency]=(totals[r.currency]??0)+r.amount;expect(isCleanPaidAmount(r.amount)).toBe(true);}
+      if(floor>10&&r.kind==="currency"){const before=ancientFirstClearReward(floor-10);expect(before.kind==="currency"&&r.amount>=before.amount).toBe(true);}
+      if(r.kind==="rune")expect(r.rarity).toBe(floor<=40?"uncommon":floor<=100?"rare":"epic");
+    }
+    expect(totals.gems).toBe(6_500);
   });
 
   it("2인 정예는 같은 체력 총량을 나누며 시련 보호막/게이지가 적에게 실제 적용된다", () => {

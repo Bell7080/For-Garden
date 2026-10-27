@@ -17,7 +17,7 @@ import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
 import { audioManager } from "../managers/AudioManager";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
-import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
+import { battleStageStaminaCost } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { ferocityMaxOf } from "../core/ferocity";
@@ -2901,7 +2901,7 @@ export class BattleScene extends Phaser.Scene {
     const settled = gameApi.completeStage(stage.id, false).catch(() => undefined);
     // **진 판은 스테미나를 쓰지 않는다** — 입장이 확인만 해 둔 값이 그대로 남는다. 결과 확정을
     // 기다리지 않고 판을 먼저 세우므로 그 몫은 입장이 확인한 값 그대로다.
-    const staminaRefunded = CONTENT_STAMINA_COSTS.normalStage;
+    const staminaRefunded = battleStageStaminaCost(stage);
     const popups = new PopupLayer(this, 2200);
     // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
     // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
@@ -2917,7 +2917,7 @@ export class BattleScene extends Phaser.Scene {
       },
       replay: {
         label: t("stageComplete.replay"),
-        disabled: session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage,
+        disabled: session.wallet.stamina < battleStageStaminaCost(stage),
         onBlocked: () => this.openStaminaCharge(),
         onPress: () => {
           chosen = true;
@@ -2962,7 +2962,7 @@ export class BattleScene extends Phaser.Scene {
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;
-      const canEnter = stage.ancientFloor !== undefined || session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
+      const canEnter = session.wallet.stamina >= battleStageStaminaCost(stage);
       const tutorialStep = tutorialManager.lobbyStep();
       const tutorialReturn = tutorialStep !== undefined && tutorialStep !== "pull" && stage.id === lobbyTutorialGateStage(tutorialStep);
       const resultExit = tutorialReturn ? "lobby" : this.stageExit();

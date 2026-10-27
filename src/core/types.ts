@@ -3590,9 +3590,9 @@ export type StageBonusReward =
   | { kind: "currency"; currency: "gold" | "gems" | "rawStone" | "fossil"; amount: number }
   /**
    * 룬은 **고급·희귀만** 둔다 — 스토리는 룬을 처음 쥐여 주는 자리이지 주 수급처가 아니다. 영웅·전설은
-   * 뒤쪽 장(8·9장)에서 연다. `trait`이면 발급할 때 특성 하나를 확정으로 붙인다(하한 고급).
+   * 뒤쪽 장(8·9장)에서 연다. 고대 지층만 101층부터 영웅 룬을 준다(고층 보상). `trait`이면 발급할 때 특성 하나를 확정으로 붙인다(하한 고급).
    */
-  | { kind: "rune"; rarity: "uncommon" | "rare"; part: 0 | 1 | 2; trait?: true };
+  | { kind: "rune"; rarity: "uncommon" | "rare" | "epic"; part: 0 | 1 | 2; trait?: true };
 
 export interface BattleStageDef extends StageBase {
   /** 고대 지층도 공용 서버 전투/초회 보상 경로를 사용한다. */

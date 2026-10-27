@@ -11663,16 +11663,56 @@ var ANCIENT_STRATA_MAX_FLOOR = 200;
 var ANCIENT_STRATA_ENEMY_LEVEL = 20;
 var ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR = 120;
 var ANCIENT_DIFFICULTY_BANDS = [
-  { first: 1, last: 20, focus: "entry", hpStep: 1.016, attackStep: 1.015, defenseStep: 1.006 },
-  { first: 21, last: 40, focus: "sustain", hpStep: 1.022, attackStep: 1.014, defenseStep: 1.006 },
-  { first: 41, last: 60, focus: "armor", hpStep: 1.016, attackStep: 1.015, defenseStep: 1.0105 },
-  { first: 61, last: 80, focus: "offense", hpStep: 1.016, attackStep: 1.022, defenseStep: 1.006 },
-  { first: 81, last: 100, focus: "mixed", hpStep: 1.022, attackStep: 1.02, defenseStep: 1.009 },
+  // v3(응태 요청): 1~100층의 층당 상승폭을 1.2배로 키웠다 — 100층 체력×공격이 v2의 약 2배다.
+  { first: 1, last: 20, focus: "entry", hpStep: 1.0192, attackStep: 1.018, defenseStep: 1.0072 },
+  { first: 21, last: 40, focus: "sustain", hpStep: 1.0264, attackStep: 1.0168, defenseStep: 1.0072 },
+  { first: 41, last: 60, focus: "armor", hpStep: 1.0192, attackStep: 1.018, defenseStep: 1.0126 },
+  { first: 61, last: 80, focus: "offense", hpStep: 1.0192, attackStep: 1.0264, defenseStep: 1.0072 },
+  { first: 81, last: 100, focus: "mixed", hpStep: 1.0264, attackStep: 1.024, defenseStep: 1.0108 },
   { first: 101, last: 120, focus: "ranker", hpStep: 1.065, attackStep: 1.055, defenseStep: 1.022 },
   { first: 121, last: 150, focus: "future", hpStep: 1.085, attackStep: 1.075, defenseStep: 1.03 },
   { first: 151, last: 200, focus: "future", hpStep: 1.1, attackStep: 1.09, defenseStep: 1.035 }
 ];
-var ANCIENT_FIRST_CLEAR_GEMS = 100;
+var ANCIENT_REWARD_BLOCKS = [
+  { gold: 5e3, cheesecake: 60, gems: 50, gateGems: 150, rune: "uncommon", runeTrait: false },
+  { gold: 5500, cheesecake: 70, gems: 50, gateGems: 150, rune: "uncommon", runeTrait: false },
+  { gold: 6e3, cheesecake: 80, gems: 50, gateGems: 150, rune: "uncommon", runeTrait: true },
+  { gold: 6500, cheesecake: 90, gems: 50, gateGems: 150, rune: "uncommon", runeTrait: true },
+  { gold: 7e3, cheesecake: 100, gems: 50, gateGems: 150, rune: "rare", runeTrait: false },
+  { gold: 7500, cheesecake: 100, gems: 50, gateGems: 150, rune: "rare", runeTrait: false },
+  { gold: 8e3, cheesecake: 150, gems: 50, gateGems: 150, rune: "rare", runeTrait: false },
+  { gold: 8500, cheesecake: 150, gems: 50, gateGems: 150, rune: "rare", runeTrait: true },
+  { gold: 9e3, cheesecake: 150, gems: 50, gateGems: 150, rune: "rare", runeTrait: true },
+  { gold: 1e4, cheesecake: 200, gems: 50, gateGems: 150, rune: "rare", runeTrait: true },
+  { gold: 1e4, cheesecake: 200, gems: 100, gateGems: 200, rune: "epic", runeTrait: false },
+  { gold: 15e3, cheesecake: 250, gems: 100, gateGems: 200, rune: "epic", runeTrait: false },
+  { gold: 15e3, cheesecake: 250, gems: 100, gateGems: 200, rune: "epic", runeTrait: false },
+  { gold: 2e4, cheesecake: 300, gems: 100, gateGems: 200, rune: "epic", runeTrait: false },
+  { gold: 2e4, cheesecake: 300, gems: 100, gateGems: 200, rune: "epic", runeTrait: true },
+  { gold: 25e3, cheesecake: 350, gems: 100, gateGems: 200, rune: "epic", runeTrait: true },
+  { gold: 25e3, cheesecake: 350, gems: 100, gateGems: 200, rune: "epic", runeTrait: true },
+  { gold: 3e4, cheesecake: 400, gems: 100, gateGems: 200, rune: "epic", runeTrait: true },
+  { gold: 3e4, cheesecake: 400, gems: 100, gateGems: 200, rune: "epic", runeTrait: true },
+  { gold: 35e3, cheesecake: 500, gems: 100, gateGems: 200, rune: "epic", runeTrait: true }
+];
+function ancientFirstClearReward(floor) {
+  const block = ANCIENT_REWARD_BLOCKS[Math.min(ANCIENT_REWARD_BLOCKS.length - 1, Math.floor((floor - 1) / 10))];
+  switch (floor % 10) {
+    case 0:
+      return { kind: "currency", currency: "gems", amount: block.gateGems };
+    case 3:
+    case 6:
+      return { kind: "currency", currency: "gems", amount: block.gems };
+    case 2:
+    case 5:
+    case 8:
+      return { kind: "currency", currency: "cheesecake", amount: block.cheesecake };
+    case 9:
+      return { kind: "rune", rarity: block.rune, part: Math.floor(floor / 10) % 3, ...block.runeTrait ? { trait: true } : {} };
+    default:
+      return { kind: "currency", currency: "gold", amount: block.gold };
+  }
+}
 function ancientStageId(floor) {
   if (!Number.isInteger(floor) || floor < 1 || floor > ANCIENT_STRATA_MAX_FLOOR) throw new RangeError("Invalid ancient floor");
   return `ancient:${floor}`;
@@ -17800,7 +17840,7 @@ function getAncientStrataFloor(floor) {
     budgetFactors: { hp: hpFactor, attack: attackFactor },
     enemies,
     enemyPercentHpBases: enemies.map((enemy) => Math.max(1, Math.round(enemy.stats.hp * ancientStrataMultipliers(Math.min(floor, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR)).hp / multipliers.hp))),
-    firstClearRewards: [{ kind: "currency", currency: "gems", amount: ANCIENT_FIRST_CLEAR_GEMS }],
+    firstClearRewards: [ancientFirstClearReward(floor)],
     repeatClearRewards: [],
     enemyAugmentEffects,
     enemyBreakthroughs: enemies.map(() => 0),
@@ -17824,7 +17864,11 @@ function getAncientStrataStage(floor) {
       ...enemy.encounterRole === "elite" ? { elite: true } : {}
     })),
     ...d.encounterKind === "elite" || d.encounterKind === "eliteDuo" ? { elite: true } : {},
-    rewards: { firstClearCheesecake: 0, repeatClearCheesecake: 0, firstClearBonus: d.firstClearRewards }
+    rewards: {
+      firstClearCheesecake: d.firstClearRewards.reduce((sum, r) => sum + (r.kind === "currency" && r.currency === "cheesecake" ? r.amount : 0), 0),
+      repeatClearCheesecake: 0,
+      firstClearBonus: d.firstClearRewards.flatMap((r) => r.kind === "currency" && r.currency === "cheesecake" ? [] : [r])
+    }
   };
 }
 
@@ -30015,7 +30059,10 @@ function stageFirstClearRewards(stage) {
 
 // src/data/contentCosts.ts
 init_define_import_meta_env();
-var CONTENT_STAMINA_COSTS = { normalStage: 10, dailyGrowth: 10, normalExpeditionStart: 12 };
+var CONTENT_STAMINA_COSTS = { normalStage: 10, ancientFloor: 10, dailyGrowth: 10, normalExpeditionStart: 12 };
+function battleStageStaminaCost(stage) {
+  return stage.ancientFloor !== void 0 ? CONTENT_STAMINA_COSTS.ancientFloor : CONTENT_STAMINA_COSTS.normalStage;
+}
 
 // src/core/interactionDispatch.ts
 init_define_import_meta_env();
@@ -34870,7 +34917,7 @@ var FakeServer = class {
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "\uC804\uD22C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     if ((stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     this.settleStaminaNow();
-    const cost = stage.ancientFloor !== void 0 ? 0 : CONTENT_STAMINA_COSTS.normalStage;
+    const cost = battleStageStaminaCost(stage);
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const pending = this.pendingStageAdmissions.get(request.stageId) ?? /* @__PURE__ */ new Set();
     pending.add(request.requestId);
@@ -34901,7 +34948,7 @@ var FakeServer = class {
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value;
-    const cost = admissionId && stage.ancientFloor === void 0 ? CONTENT_STAMINA_COSTS.normalStage : 0;
+    const cost = admissionId ? battleStageStaminaCost(stage) : 0;
     const spent = victory && cost > 0 ? this.chargeVictoryStamina(cost) : void 0;
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: void 0 };
     const nextWallet = { ...base.wallet };

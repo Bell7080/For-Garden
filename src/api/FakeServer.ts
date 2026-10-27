@@ -35,7 +35,7 @@ import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } 
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
-import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
+import { battleStageStaminaCost } from "../data/contentCosts";
 import { createEmptyProgressPassState, createInitialRelicProgress, replaceSession, session, type RaidInstanceState, type Session } from "../state/session";
 import { saveManager } from "../state/SaveManager";
 import { INTERACTION_CITIES, findInteractionCity } from "../data/interactionCities";
@@ -2230,7 +2230,7 @@ export class FakeServer implements GameApi {
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
     if ((stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
     this.settleStaminaNow();
-    const cost = stage.ancientFloor !== undefined ? 0 : CONTENT_STAMINA_COSTS.normalStage;
+    const cost = battleStageStaminaCost(stage);
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     // **여기서는 빼지 않는다** — 이긴 판의 결과 확정이 뺀다(`chargeVictoryStamina`). 입장은 값을 확인하고
     // 영수증을 걸어 둘 뿐이라, 지거나 판이 끊기거나 오류로 끝난 판은 아무것도 잃지 않는다.
@@ -2263,7 +2263,7 @@ export class FakeServer implements GameApi {
     const pending = this.pendingStageAdmissions.get(stageId);
     const admissionId = pending?.values().next().value as string | undefined;
     // 입장 영수증이 걸린 판만 스테미나 몫이 있다(이벤트 스테이지는 입장 비용이 없다).
-    const cost = admissionId && stage.ancientFloor === undefined ? CONTENT_STAMINA_COSTS.normalStage : 0;
+    const cost = admissionId ? battleStageStaminaCost(stage) : 0;
     // **이긴 판에서만 뺀다.** 진 판은 입장에서 확인만 해 둔 값을 그대로 두므로 그 몫이 곧 돌려준 몫이다.
     const spent = victory && cost > 0 ? this.chargeVictoryStamina(cost) : undefined;
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: undefined };

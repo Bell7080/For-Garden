@@ -1,12 +1,13 @@
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
-import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ANCIENT_FIRST_CLEAR_GEMS, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ancientFirstClearReward, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { ANCIENT_ENCOUNTERS, ANCIENT_TRIAL_IDS, ANCIENT_TRIALS, ancientEncounterRole } from "../data/ancientStrataEncounters";
 import { applyEncounterScaling, ENCOUNTER_ROLE } from "./levelDesign";
 import { battleArena } from "./battleArena";
 import { canFireUltimate, fireUltimate, stepSkirmish, createSkirmish, type SkirmishState, type CreateSkirmishOptions } from "./skirmish";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import type { RelicDef, Stats, StageBonusReward, BattleStageDef } from "./types";
+import type { StageFirstClearReward } from "./stageRewards";
 
 export function assertAncientFloor(floor: number): void {
   if (!Number.isInteger(floor) || floor < 1 || floor > ANCIENT_STRATA_MAX_FLOOR) throw new RangeError("고대 지층은 1~200층 정수만 허용합니다.");
@@ -55,7 +56,7 @@ export function getAncientStrataFloor(floor: number) {
     encounterId: template.id, encounterKind: template.kind, rosterVariant: block % template.rosters.length,
     trialId, trial, timeLimitSeconds: trial.seconds, multipliers, budgetFactors: { hp: hpFactor, attack: attackFactor }, enemies,
     enemyPercentHpBases: enemies.map(enemy => Math.max(1, Math.round(enemy.stats.hp * ancientStrataMultipliers(Math.min(floor,ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR)).hp / multipliers.hp))),
-    firstClearRewards: [{ kind: "currency", currency: "gems", amount: ANCIENT_FIRST_CLEAR_GEMS }] satisfies StageBonusReward[],
+    firstClearRewards: [ancientFirstClearReward(floor)] satisfies StageFirstClearReward[],
     repeatClearRewards: [] as StageBonusReward[], enemyAugmentEffects,
     enemyBreakthroughs: enemies.map(() => 0), enemyBodyScales: enemies.map(enemy => ENCOUNTER_ROLE[enemy.encounterRole!].bodyScale) };
 }
@@ -79,7 +80,8 @@ export function getAncientStrataStage(floor: number): BattleStageDef {
     enemies: d.enemies.map((enemy,index)=>({ relicId:enemy.id,level:d.level,breakthrough:0,formationSlot:index as 0|1|2|3|4,
       ...(enemy.encounterRole === "elite" ? { elite:true as const } : {}) })),
     ...(d.encounterKind === "elite" || d.encounterKind === "eliteDuo" ? { elite:true as const } : {}),
-    rewards: { firstClearCheesecake:0,repeatClearCheesecake:0,firstClearBonus:d.firstClearRewards } };
+    rewards: { firstClearCheesecake: d.firstClearRewards.reduce((sum, r) => sum + (r.kind === "currency" && r.currency === "cheesecake" ? r.amount : 0), 0),
+      repeatClearCheesecake:0, firstClearBonus: d.firstClearRewards.flatMap((r): StageBonusReward[] => r.kind === "currency" && r.currency === "cheesecake" ? [] : [r as StageBonusReward]) } };
 }
 
 /** 실전 스토리/지층의 자동 조작: 적은 코어 AI, 아군 궁극기는 고정 틱 뒤 입력한다. */

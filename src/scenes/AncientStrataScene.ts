@@ -1,3 +1,4 @@
+import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import Phaser from "phaser";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
@@ -112,7 +113,7 @@ export class AncientStrataScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, 190, t("ancient.title"), textStyle({ role: "display", size: 52 })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.range = this.add.text(BASE_WIDTH / 2, 262, "", textStyle({ role: "body", size: 30, color: COLOR.inkDim })).setOrigin(0.5).setDepth(CHROME_DEPTH);
     this.selectedFloor=undefined;
-    this.startButton=new Button(this,BASE_WIDTH/2,BASE_HEIGHT-190,{width:390,height:94,label:t("stageMap.sortie"),fontSize:32,onClick:()=>{
+    this.startButton=new Button(this,BASE_WIDTH/2,BASE_HEIGHT-190,{width:390,height:94,label:t("stageMap.sortie"),fontSize:32,cost:{icon:"currency-stamina",amount:CONTENT_STAMINA_COSTS.ancientFloor,affordable:session.wallet.stamina>=CONTENT_STAMINA_COSTS.ancientFloor},onClick:()=>{
       if(this.selectedFloor===undefined||!isStageUnlocked(ancientStageId(this.selectedFloor)))return;
       session.selectedStageId=ancientStageId(this.selectedFloor);
       startScene(this,"party",{content:"stage"});

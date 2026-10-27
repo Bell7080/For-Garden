@@ -54,7 +54,7 @@ export const STATUS_PT_BR = {
   "status.fear.detail": "Fugindo · Sem ataque básico · {time}",
   "status.plume": "Pluma-Geada",
   "status.plume.detail": "{stacks}/{max} cargas · restam {time}",
-  "status.frostbite": "Sangramento gélido",
+  "status.frostbite": "Queimadura de gelo",
   "status.frostbite.detail": "{amount} de dano no total · lentidão {slow}% · restam {time}",
   "status.biteMark": "Marca de mordida",
   "status.biteMark.detail": "{stacks} acúmulos · dano recebido +{percent}% · restam {time}",

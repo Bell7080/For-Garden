@@ -195,11 +195,11 @@ export interface Fighter extends Combatant {
   butcher: { stacks: number; maxStacks: number; burstPower: number } | null;
   /**
    * 박혀 있는 서리깃. 맞을 때마다 한 겹 늘고 유지 시간이 새로 시작되며, 상한에 닿으면 비워지고
-   * 서리 출혈(`frostbite`)로 바뀐다. 시간 안에 상한에 닿지 못하면 통째로 사라진다.
+   * 동상(`frostbite`)으로 바뀐다. 시간 안에 상한에 닿지 못하면 통째로 사라진다.
    */
   frostPlume: { stacks: number; remaining: number; maxStacks: number } | null;
   /**
-   * 서리깃이 바뀐 서리 출혈. 공격력에서 뽑은 피해를 매초 나눠 입히고 둔화를 함께 건다.
+   * 서리깃이 바뀐 동상. 공격력에서 뽑은 피해를 매초 나눠 입히고 둔화를 함께 건다.
    * 중첩되지 않고 다시 상한에 닿으면 값과 시간이 새로 갱신된다.
    */
   frostbite: { remaining: number; total: number; tickIn: number; amount: number; sourceId?: string; slowRemaining: number; slowPercent: number } | null;
@@ -2260,9 +2260,9 @@ function applyButcher(
 }
 
 /**
- * 서리깃을 한 겹 박고, 상한에 닿으면 **서리 출혈로 바꾼다.**
+ * 서리깃을 한 겹 박고, 상한에 닿으면 **동상으로 바꾼다.**
  *
- * 서리 출혈은 박은 쪽 공격력에서 총 피해를 한 번 계산해 틱 수로 나눠 두고, 방어력을 거치지 않는
+ * 동상은 박은 쪽 공격력에서 총 피해를 한 번 계산해 틱 수로 나눠 두고, 방어력을 거치지 않는
  * 지속 피해로 입힌다(출혈과 같은 축). 이미 걸려 있으면 겹치지 않고 값과 시간을 새로 덮는다 —
  * 둔화도 같이 새로 시작한다. 박은 쪽을 찾지 못하면 피해를 만들 수 없어 겹만 비운다.
  */
@@ -7394,7 +7394,7 @@ function tickFrostPlume(fighter: Fighter, dt: number): void {
   if (plume.remaining <= 0) fighter.frostPlume = null;
 }
 
-/** 서리 출혈을 1초 간격으로 깎는다. 출혈과 같은 고정 피해이고, 쓰러뜨린 쪽의 처치 훅도 같은 길이다. */
+/** 동상을 1초 간격으로 깎는다. 출혈과 같은 고정 피해이고, 쓰러뜨린 쪽의 처치 훅도 같은 길이다. */
 function tickFrostbite(fighter: Fighter, dt: number, state: SkirmishState, events: SkirmishEvent[]): void {
   const bite = fighter.frostbite;
   if (!bite) return;
@@ -7409,7 +7409,7 @@ function tickFrostbite(fighter: Fighter, dt: number, state: SkirmishState, event
     if (bite.sourceId) addContribution(state.contributions, bite.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
     tryTriggerEmergencyRecovery(fighter, state); tryTriggerLowHpVanish(fighter, state);
-    state.log.push(`${fighter.def.name} 서리 출혈 ${amount}`);
+    state.log.push(`${fighter.def.name} 동상 ${amount}`);
     bite.tickIn += 1;
     if (!isFighterAlive(fighter)) {
       clearDefeatedStatuses(fighter);
@@ -7422,7 +7422,7 @@ function tickFrostbite(fighter: Fighter, dt: number, state: SkirmishState, event
   if (bite.remaining <= 0 || !isFighterAlive(fighter)) fighter.frostbite = null;
 }
 
-/** 서리 출혈이 거는 둔화(%). 둔화 시간이 끝나면 출혈이 남아 있어도 0이다. */
+/** 동상이 거는 둔화(%). 둔화 시간이 끝나면 출혈이 남아 있어도 0이다. */
 function frostbiteSlowPercent(fighter: Fighter): number {
   const bite = fighter.frostbite;
   return bite && bite.slowRemaining > 0 ? bite.slowPercent : 0;

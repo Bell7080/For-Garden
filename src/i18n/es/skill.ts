@@ -271,7 +271,7 @@ export const SKILL_ES = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Un golpe mágico adicional idéntico al [[basic-attack|ataque básico]] de Mette. Hace [[stagger|Tambalearse]] al objetivo que alcanza.",
   "skill.keyword.plume.term": "Plumaescarcha",
-  "skill.keyword.plume.description": "Una pluma clavada en el enemigo. Cada enemigo acumula hasta {max} cargas durante {hold} s, y cada carga nueva reinicia el tiempo. Con {max} cargas las plumas desaparecen y se convierten en un sangrado que reduce la velocidad de ataque y de movimiento un {slowPercent}% durante {slowSeconds} s e inflige el {percent}% del ATQ del atacante en {seconds} s. El sangrado no se acumula; volver a aplicarlo lo renueva.",
+  "skill.keyword.plume.description": "Una pluma clavada en el enemigo. Cada enemigo acumula hasta {max} cargas durante {hold} s, y cada carga nueva reinicia el tiempo. Con {max} cargas las plumas desaparecen y se convierten en una quemadura gélida que reduce la velocidad de ataque y de movimiento un {slowPercent}% durante {slowSeconds} s e inflige el {percent}% del ATQ del atacante en {seconds} s. La quemadura gélida no se acumula; volver a aplicarlo lo renueva.",
   "skill.keyword.summon.description": "Invocación cuerpo a cuerpo cuyos {stat}, PV, Defensa y Resistencia dependen de {stat} de {owner}. Elige sus propios objetivos y usa su Definitiva con su propio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Si cae, se levanta tras {seconds} s con el {percent}% de sus PV máx.",
   "skill.ferocity.valueLabel": "Rasgo de Ferocidad",

@@ -54,7 +54,7 @@ export const STATUS_ZH_HANS = {
   "status.fear.detail": "逃跑中 · 无法普通攻击 · {time}",
   "status.plume": "霜羽",
   "status.plume.detail": "{stacks}/{max}层 · 剩余{time}",
-  "status.frostbite": "霜冻出血",
+  "status.frostbite": "冻伤",
   "status.frostbite.detail": "共{amount}伤害 · 减速{slow}% · 剩余{time}",
   "status.biteMark": "咬痕",
   "status.biteMark.detail": "{stacks}层 · 受到伤害 +{percent}% · 剩余{time}",

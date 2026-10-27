@@ -271,7 +271,7 @@ export const SKILL_ZH_HANT = {
   "skill.keyword.staccato.term": "斷奏",
   "skill.keyword.staccato.description": "與梅特的[[basic-attack|普通攻擊]]相同的追加魔法打擊。會使命中的目標[[stagger|硬直]]。",
   "skill.keyword.plume.term": "霜羽",
-  "skill.keyword.plume.description": "插在敵人身上的羽毛。每名敵人最多疊加{max}層，持續{hold}秒，每次疊加新層都會重新計時。疊滿{max}層時羽毛消失，轉為出血：{slowSeconds}秒內攻擊速度與移動速度降低{slowPercent}%，並在{seconds}秒內造成施加者攻擊力{percent}%的傷害。出血不會疊加，重複施加會重新整理。",
+  "skill.keyword.plume.description": "插在敵人身上的羽毛。每名敵人最多疊加{max}層，持續{hold}秒，每次疊加新層都會重新計時。疊滿{max}層時羽毛消失，轉為凍傷：{slowSeconds}秒內攻擊速度與移動速度降低{slowPercent}%，並在{seconds}秒內造成施加者攻擊力{percent}%的傷害。凍傷不會疊加，重複施加會重新整理。",
   "skill.keyword.summon.description": "{stat}、生命、防禦力與抗性均由{owner}的{stat}決定的近戰召喚物。自行選擇目標，並以自身能量使用必殺技。{resummon}",
   "skill.keyword.summon.resummon": "倒下後{seconds}秒以最大生命{percent}%重新站起。",
   "skill.ferocity.valueLabel": "野性特性",

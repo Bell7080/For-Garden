@@ -322,7 +322,7 @@ export const SKILL_KO = {
   "skill.keyword.staccato.term": "스타카토",
   "skill.keyword.staccato.description": "메테의 [[basic-attack|기본 공격]]과 같은 마법 추가타다. 적중한 대상을 [[stagger|경직]]시킨다.",
   "skill.keyword.plume.term": "서리깃",
-  "skill.keyword.plume.description": "적에게 박히는 깃털이다. 적마다 최대 {max}겹까지 쌓이고 {hold}초 동안 남으며, 새 겹이 박힐 때마다 시간이 다시 세어진다. {max}겹이 되면 깃털이 사라지고 {slowSeconds}초 동안 공격 속도와 이동 속도를 {slowPercent}% 낮추는 출혈로 바뀌어, {seconds}초에 걸쳐 건 쪽 공격력의 {percent}%만큼 피해를 준다. 출혈은 겹치지 않고 다시 걸리면 갱신된다.",
+  "skill.keyword.plume.description": "적에게 박히는 깃털이다. 적마다 최대 {max}겹까지 쌓이고 {hold}초 동안 남으며, 새 겹이 박힐 때마다 시간이 다시 세어진다. {max}겹이 되면 깃털이 사라지고 {slowSeconds}초 동안 공격 속도와 이동 속도를 {slowPercent}% 낮추는 동상으로 바뀌어, {seconds}초에 걸쳐 건 쪽 공격력의 {percent}%만큼 피해를 준다. 동상은 겹치지 않고 다시 걸리면 갱신된다.",
   "skill.keyword.summon.description": "{owner}의 {stat}{stat!이} {stat}·체력·방어력·저항력을 정하는 근거리 소환수다. 스스로 표적을 고르고 제 게이지로 궁극기를 쓴다.{resummon}",
   "skill.keyword.summon.resummon": " 쓰러지면 {seconds}초 뒤 최대 체력의 {percent}%로 다시 선다.",
   "skill.ferocity.valueLabel": "야성 발현",

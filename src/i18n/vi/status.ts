@@ -54,7 +54,7 @@ export const STATUS_VI = {
   "status.fear.detail": "Đang chạy trốn · Không đánh thường · {time}",
   "status.plume": "Lông Sương",
   "status.plume.detail": "{stacks}/{max} tầng · còn {time}",
-  "status.frostbite": "Chảy máu băng",
+  "status.frostbite": "Tê cóng",
   "status.frostbite.detail": "Tổng {amount} sát thương · làm chậm {slow}% · còn {time}",
   "status.biteMark": "Vết cắn",
   "status.biteMark.detail": "{stacks} tầng · sát thương nhận +{percent}% · còn {time}",

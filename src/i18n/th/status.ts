@@ -54,7 +54,7 @@ export const STATUS_TH = {
   "status.fear.detail": "กำลังหนี · โจมตีปกติไม่ได้ · {time}",
   "status.plume": "ขนน้ำค้างแข็ง",
   "status.plume.detail": "{stacks} / {max} ชั้น · เหลือ {time}",
-  "status.frostbite": "เลือดไหลน้ำแข็ง",
+  "status.frostbite": "หิมะกัด",
   "status.frostbite.detail": "รวม {amount} ความเสียหาย · ชะลอ {slow}% · เหลือ {time}",
   "status.biteMark": "รอยกัด",
   "status.biteMark.detail": "{stacks} ชั้น · ความเสียหายที่ได้รับ +{percent}% · เหลือ {time}",

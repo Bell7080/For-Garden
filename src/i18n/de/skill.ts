@@ -271,7 +271,7 @@ export const SKILL_DE = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Ein zusätzlicher magischer Treffer, identisch mit Mettes [[basic-attack|Normalangriff]]. Er lässt das getroffene Ziel [[stagger|taumeln]].",
   "skill.keyword.plume.term": "Frostgefieder",
-  "skill.keyword.plume.description": "Eine in den Gegner gebohrte Feder. Jeder Gegner trägt bis zu {max} Stapel für {hold} s, jeder neue Stapel setzt die Zeit zurück. Bei {max} Stapeln verschwinden die Federn und werden zu einer Blutung, die Angriffs- und Lauftempo {slowSeconds} s lang um {slowPercent} % senkt und in {seconds} s {percent} % des ANG des Angreifers als Schaden verursacht. Die Blutung stapelt sich nicht; erneutes Anwenden erneuert sie.",
+  "skill.keyword.plume.description": "Eine in den Gegner gebohrte Feder. Jeder Gegner trägt bis zu {max} Stapel für {hold} s, jeder neue Stapel setzt die Zeit zurück. Bei {max} Stapeln verschwinden die Federn und werden zu einer Erfrierung, die Angriffs- und Lauftempo {slowSeconds} s lang um {slowPercent} % senkt und in {seconds} s {percent} % des ANG des Angreifers als Schaden verursacht. Die Erfrierung stapelt sich nicht; erneutes Anwenden erneuert sie.",
   "skill.keyword.summon.description": "Eine Nahkampf-Beschwörung, deren {stat}, LP, Verteidigung und Widerstand von {stat} von {owner} abhängen. Sie wählt eigene Ziele und setzt ihre Ultimativ mit eigener Ladung ein.{resummon}",
   "skill.keyword.summon.resummon": " Fällt sie, steht sie nach {seconds} s mit {percent}% ihres max. Lebens wieder auf.",
   "skill.ferocity.valueLabel": "Wildheitsmerkmal",

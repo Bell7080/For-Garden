@@ -54,7 +54,7 @@ export const STATUS_DE = {
   "status.fear.detail": "Flieht · Kein Standardangriff · {time}",
   "status.plume": "Frostgefieder",
   "status.plume.detail": "{stacks}/{max} Stapel · noch {time}",
-  "status.frostbite": "Frostblutung",
+  "status.frostbite": "Erfrierung",
   "status.frostbite.detail": "{amount} Schaden gesamt · Verlangsamung {slow} % · noch {time}",
   "status.biteMark": "Bissmal",
   "status.biteMark.detail": "{stacks} Stapel · erlittener Schaden +{percent}% · noch {time}",

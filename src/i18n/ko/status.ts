@@ -63,7 +63,7 @@ export const STATUS_KO = {
   "status.fear.detail": "달아나는 중 · 기본 공격 불가 · {time}",
   "status.plume": "서리깃",
   "status.plume.detail": "{stacks} / {max}겹 · {time} 남음",
-  "status.frostbite": "서리 출혈",
+  "status.frostbite": "동상",
   "status.frostbite.detail": "총 {amount} 피해 · 둔화 {slow}% · {time} 남음",
   "status.biteMark": "물린 자국",
   "status.biteMark.detail": "{stacks}겹 · 받는 피해 +{percent}% · {time} 남음",

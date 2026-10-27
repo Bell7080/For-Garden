@@ -54,7 +54,7 @@ export const STATUS_ES = {
   "status.fear.detail": "Huyendo · Sin ataque básico · {time}",
   "status.plume": "Plumaescarcha",
   "status.plume.detail": "{stacks}/{max} cargas · quedan {time}",
-  "status.frostbite": "Sangrado gélido",
+  "status.frostbite": "Quemadura gélida",
   "status.frostbite.detail": "{amount} de daño en total · ralentización {slow}% · quedan {time}",
   "status.biteMark": "Marca de mordisco",
   "status.biteMark.detail": "{stacks} cargas · daño recibido +{percent}% · quedan {time}",

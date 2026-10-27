@@ -66,7 +66,7 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   // **다음 한 방이 무엇을 할지 알리는 표식**이라는 것이 먼저 읽힌다(약점 포착과 같은 이유다).
   shimmer: 0x8fe3f0,
   butcher: 0xc07fa4,
-  // 서리깃은 박힌 깃털의 연한 하늘빛이고, 그것이 바뀐 서리 출혈은 한 단계 짙은 청록이다 — 둔화·출혈의 붉은 지속 피해와 갈린다.
+  // 서리깃은 박힌 깃털의 연한 하늘빛이고, 그것이 바뀐 동상은 한 단계 짙은 청록이다 — 둔화·출혈의 붉은 지속 피해와 갈린다.
   plume: 0x9fd8f0,
   frostbite: 0x4fb4c8,
   biteMark: 0xb0405a,

@@ -271,7 +271,7 @@ export const SKILL_PT_BR = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Um golpe mágico extra idêntico ao [[basic-attack|ataque básico]] de Mette. Faz o alvo atingido [[stagger|Cambalear]].",
   "skill.keyword.plume.term": "Pluma-Geada",
-  "skill.keyword.plume.description": "Uma pena cravada no inimigo. Cada inimigo acumula até {max} cargas por {hold} s, e cada carga nova reinicia o tempo. Com {max} cargas as penas somem e viram um sangramento que reduz a velocidade de ataque e de movimento em {slowPercent}% por {slowSeconds} s e causa {percent}% do ATQ do atacante em {seconds} s. O sangramento não acumula; aplicá-lo de novo o renova.",
+  "skill.keyword.plume.description": "Uma pena cravada no inimigo. Cada inimigo acumula até {max} cargas por {hold} s, e cada carga nova reinicia o tempo. Com {max} cargas as penas somem e viram uma queimadura de gelo que reduz a velocidade de ataque e de movimento em {slowPercent}% por {slowSeconds} s e causa {percent}% do ATQ do atacante em {seconds} s. A queimadura de gelo não acumula; aplicá-lo de novo o renova.",
   "skill.keyword.summon.description": "Invocação corpo a corpo cujos {stat}, PV, Defesa e Resistência dependem de {stat} de {owner}. Escolhe os próprios alvos e usa a Suprema com o próprio medidor.{resummon}",
   "skill.keyword.summon.resummon": " Ao cair, levanta-se após {seconds} s com {percent}% do PV máx.",
   "skill.ferocity.valueLabel": "Traço de Ferocidade",

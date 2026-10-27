@@ -271,7 +271,7 @@ export const SKILL_EN = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "An extra magical hit identical to Mette's [[basic-attack|basic attack]]. It [[stagger|Staggers]] the target it lands on.",
   "skill.keyword.plume.term": "Frostplume",
-  "skill.keyword.plume.description": "A feather lodged in an enemy. Each enemy holds up to {max} stacks for {hold}s, and every new stack restarts the timer. At {max} stacks the feathers vanish and turn into a bleed that lowers Attack Speed and Move Speed by {slowPercent}% for {slowSeconds}s and deals {percent}% of the attacker's ATK over {seconds}s. The bleed does not stack; reapplying it refreshes it.",
+  "skill.keyword.plume.description": "A feather lodged in an enemy. Each enemy holds up to {max} stacks for {hold}s, and every new stack restarts the timer. At {max} stacks the feathers vanish and turn into Frostbite, which lowers Attack Speed and Move Speed by {slowPercent}% for {slowSeconds}s and deals {percent}% of the attacker's ATK over {seconds}s. Frostbite does not stack; reapplying it refreshes it.",
   "skill.keyword.summon.description": "A melee summon whose {stat}, HP, Defense and Resistance are set by {owner}'s {stat}. It picks its own targets and uses its Ultimate on its own gauge.{resummon}",
   "skill.keyword.summon.resummon": " When it falls, it stands back up after {seconds}s with {percent}% of its max HP.",
   "skill.ferocity.valueLabel": "Ferocity Trait",

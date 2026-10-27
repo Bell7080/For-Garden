@@ -54,7 +54,7 @@ export const STATUS_ID = {
   "status.fear.detail": "Melarikan diri · Tanpa Serangan Dasar · {time}",
   "status.plume": "Bulu Embun Beku",
   "status.plume.detail": "{stacks}/{max} tumpuk · sisa {time}",
-  "status.frostbite": "Pendarahan Beku",
+  "status.frostbite": "Radang Beku",
   "status.frostbite.detail": "Total {amount} damage · perlambatan {slow}% · sisa {time}",
   "status.biteMark": "Bekas Gigitan",
   "status.biteMark.detail": "{stacks} tumpuk · damage diterima +{percent}% · sisa {time}",

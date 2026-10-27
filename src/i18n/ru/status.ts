@@ -54,7 +54,7 @@ export const STATUS_RU = {
   "status.fear.detail": "Бежит · Без обычной атаки · {time}",
   "status.plume": "Ледяное перо",
   "status.plume.detail": "{stacks}/{max} зар. · осталось {time}",
-  "status.frostbite": "Ледяное кровотечение",
+  "status.frostbite": "Обморожение",
   "status.frostbite.detail": "Всего {amount} урона · замедление {slow}% · осталось {time}",
   "status.biteMark": "Укус",
   "status.biteMark.detail": "{stacks} зар. · получаемый урон +{percent}% · осталось {time}",

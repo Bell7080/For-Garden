@@ -6,7 +6,7 @@ import { breakthroughEffectText, passiveDescription, plumeKeyword, skillDescript
 
 /**
  * 유티 — 바람 SSR 중거리 암살자. 일반 공격이 두 갈래로 갈라져 적마다 「서리깃」을 박고, 다섯 겹이 차면
- * 둔화 출혈로 바뀐다. 궁극기는 세 번에 나눠 찍으며 적마다 세 겹을 쌓는다.
+ * 동상로 바뀐다. 궁극기는 세 번에 나눠 찍으며 적마다 세 겹을 쌓는다.
  */
 const ARENA: Arena = { left: 0, right: 1_000, top: 0, bottom: 1_200 };
 const YUTI = getRelic("yuti");
@@ -52,7 +52,7 @@ describe("유티 — 정체성과 문장", () => {
 });
 
 describe("유티 — 서리깃", () => {
-  it("은 겹마다 쌓이다가 다섯 겹에서 둔화 출혈로 바뀐다", () => {
+  it("은 겹마다 쌓이다가 다섯 겹에서 동상로 바뀐다", () => {
     const { state, yuti, enemies: [enemy] } = setup(["amo"]);
     for (let n = 1; n < PLUME.maxStacks; n += 1) {
       applyCombatStatusEffect(enemy, PLUME, [], state, yuti.id);

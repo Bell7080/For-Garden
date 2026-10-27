@@ -56,7 +56,7 @@ export const STATUS_JA = {
   "status.fear.detail": "逃走中 · 通常攻撃不可 · {time}",
   "status.plume": "霜羽",
   "status.plume.detail": "{stacks} / {max}重 · 残り {time}",
-  "status.frostbite": "霜の出血",
+  "status.frostbite": "凍傷",
   "status.frostbite.detail": "計{amount}ダメージ · 鈍化{slow}% · 残り {time}",
   "status.biteMark": "噛み跡",
   "status.biteMark.detail": "{stacks}重 · 受ける被害 +{percent}% · 残り{time}",

@@ -271,7 +271,7 @@ export const SKILL_ID = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Serangan magis tambahan yang sama dengan [[basic-attack|serangan dasar]] Mette. Membuat target yang terkena [[stagger|Goyah]].",
   "skill.keyword.plume.term": "Bulu Embun Beku",
-  "skill.keyword.plume.description": "Bulu yang menancap pada musuh. Tiap musuh menampung maksimal {max} tumpuk selama {hold} dtk, dan setiap tumpuk baru mengatur ulang waktu. Pada {max} tumpuk, bulu lenyap dan berubah menjadi pendarahan yang menurunkan Kecepatan Serang dan Kecepatan Gerak sebesar {slowPercent}% selama {slowSeconds} dtk serta memberi damage {percent}% ATK penyerang dalam {seconds} dtk. Pendarahan tidak menumpuk; menerapkannya lagi akan menyegarkannya.",
+  "skill.keyword.plume.description": "Bulu yang menancap pada musuh. Tiap musuh menampung maksimal {max} tumpuk selama {hold} dtk, dan setiap tumpuk baru mengatur ulang waktu. Pada {max} tumpuk, bulu lenyap dan berubah menjadi Radang Beku yang menurunkan Kecepatan Serang dan Kecepatan Gerak sebesar {slowPercent}% selama {slowSeconds} dtk serta memberi damage {percent}% ATK penyerang dalam {seconds} dtk. Radang Beku tidak menumpuk; menerapkannya lagi akan menyegarkannya.",
   "skill.keyword.summon.description": "Panggilan jarak dekat yang {stat}, HP, Pertahanan, dan Resistensinya ditentukan oleh {stat} milik {owner}. Ia memilih target sendiri dan memakai Ultimate dengan gauge-nya sendiri.{resummon}",
   "skill.keyword.summon.resummon": " Saat tumbang, ia bangkit lagi setelah {seconds} dtk dengan {percent}% HP maksnya.",
   "skill.ferocity.valueLabel": "Sifat Keganasan",

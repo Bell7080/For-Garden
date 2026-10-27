@@ -35,7 +35,7 @@ describe("광고 보상 정적 정의", () => {
 
   it("발굴 버튼은 서버 문구 대신 슬롯별 라벨과 사용/한도 상태를 표시한다", () => {
     // 남은 횟수 2는 사용량 0으로, 남은 횟수 0은 사용량 2와 비활성 상태로 바뀌어야 한다.
-    expect(excavationAdOfferDisplayModel("excavation-harvest", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "2/2", used: 0, limit: 2, enabled: true });
+    expect(excavationAdOfferDisplayModel("excavation-speed", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "2/2", used: 0, limit: 2, enabled: true });
     expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "0/2", used: 2, limit: 2, enabled: false });
   });
 
@@ -57,5 +57,22 @@ describe("광고 보상 정적 정의", () => {
 describe("빠른 원정 광고 슬롯 제거", () => {
   it("빠른 원정 슬롯은 더 이상 허용 목록에 없다", () => {
     expect(findAdRewardSlot("quick-expedition")).toBeUndefined();
+  });
+});
+
+import { excavationStorageFillOfBase } from "../../src/core/idleExcavation";
+import { formatEffectRemaining } from "../../src/ui/excavationAdOfferModel";
+describe("발굴 보관 2배 두 줄 게이지", () => {
+  const rate = { gold: 3600, gems: 0, rawStone: 0, cheesecake: 0 } as never;
+  it("기본 한도를 100%로 두고 2배까지 이어 채운다", () => {
+    const base = 8 * 3600;
+    expect(excavationStorageFillOfBase({ gold: base } as never, rate, base, 2)).toBeCloseTo(1);
+    expect(excavationStorageFillOfBase({ gold: base * 1.5 } as never, rate, base, 2)).toBeCloseTo(1.5);
+    expect(excavationStorageFillOfBase({ gold: base * 3 } as never, rate, base, 2)).toBe(2);
+    expect(excavationStorageFillOfBase({ gold: base * 3 } as never, rate, base, 1)).toBe(1);
+  });
+  it("남은 시간은 숫자로만 적는다", () => {
+    expect(formatEffectRemaining(3_600_000)).toBe("1:00:00");
+    expect(formatEffectRemaining(59_200)).toBe("01:00");
   });
 });

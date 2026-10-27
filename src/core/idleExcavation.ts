@@ -86,6 +86,20 @@ export function excavationStorageFillRatio(unclaimed: Readonly<Record<Excavation
   return Math.min(1, ratio);
 }
 
+/**
+ * 기본 보관 한도(100%)를 기준으로 한 채움 비율이며 **1을 넘을 수 있다.** 보관 2배 효과가 켜져 있으면
+ * 게이지가 한 줄 더 늘어 최대 200%까지 차오르므로, 화면은 분모를 늘리지 않고 이 값으로 두 줄을 채운다.
+ */
+export function excavationStorageFillOfBase(unclaimed: Readonly<Record<ExcavationCurrency, number>>, ratePerHour: Readonly<Record<ExcavationCurrency, number>>, baseSeconds: number, maxRatio: number): number {
+  if (baseSeconds <= 0) return 0;
+  const capacity = excavationStorageCapacity(ratePerHour, baseSeconds);
+  let ratio = 0;
+  for (const currency of EXCAVATION_CURRENCIES) {
+    if (capacity[currency] > 0) ratio = Math.max(ratio, unclaimed[currency] / capacity[currency]);
+  }
+  return Math.min(maxRatio, ratio);
+}
+
 /** API와 알림 manager가 공유할 서버 확정 보관 비율·수확 가능 판정이다. */
 export function excavationHarvestStatus(unclaimed: Readonly<Record<ExcavationCurrency, number>>, ratePerHour: Readonly<Record<ExcavationCurrency, number>>, limitSeconds: number, harvestMultiplier = 1): { storageFillRatio: number; harvestNotice: boolean } {
   const storageFillRatio = excavationStorageFillRatio(unclaimed, ratePerHour, limitSeconds);

@@ -13,7 +13,7 @@ export const EXPEDITION_ZH_HANS = {
   "expedition.sortie": "出 击",
   "expedition.sweep": "扫 荡",
   "expedition.ranking": "排行榜",
-  "expedition.weeklyReward": "每周奖励",
+  "expedition.weeklyScoreReward": "每周分数奖励",
   "expedition.syncing": "正在同步记录",
   "expedition.abandon": "放弃",
   "expedition.abandon.title": "放弃远征",

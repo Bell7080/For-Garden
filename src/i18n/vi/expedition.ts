@@ -13,7 +13,7 @@ export const EXPEDITION_VI = {
   "expedition.sortie": "X U Ấ T  K Í C H",
   "expedition.sweep": "C À N  Q U É T",
   "expedition.ranking": "Bảng xếp hạng",
-  "expedition.weeklyReward": "Thưởng tuần",
+  "expedition.weeklyScoreReward": "Thưởng điểm tuần",
   "expedition.syncing": "Đang đồng bộ kỷ lục",
   "expedition.abandon": "Bỏ cuộc",
   "expedition.abandon.title": "Bỏ Viễn chinh",

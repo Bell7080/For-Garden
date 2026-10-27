@@ -7,6 +7,7 @@ import type { DuelTierId } from "../core/duelArena";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { Button } from "./Button";
 import { addClippedHit } from "./clippedHit";
+import { addRankRewardChip, RANKING_POPUP_REWARD_CHIP, type RankRewardPeriod } from "./RankingChips";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_PODIUM, DUEL_RANKING_TIER_BUTTON, DUEL_RANKING_VIEW, DUEL_TIER_COLOR } from "./duelLayout";
 import { openDuelTierGuide } from "./DuelGuidePopups";
@@ -40,6 +41,8 @@ export interface RankingSource {
   load(): Promise<{ entries: readonly RankingRowEntry[]; me: RankingRowEntry | null }>;
   /** 보상 표·티어 안내가 없는 순위(고대 지층)는 비워 두면 그 버튼이 서지 않는다. */
   openRewards?(me: RankingRowEntry | null): void;
+  /** 보상 칩의 기간 — 비우면 주간이다(고대 지층은 월간). */
+  rewardPeriod?: RankRewardPeriod;
   openTiers?(): void;
   /** 점수 칸의 글. 비우면 천 단위 쉼표를 찍은 수다(고대 지층은 `B87`). */
   formatScore?(score: number): string;
@@ -65,7 +68,8 @@ export class DuelRankingPopup {
     this.popups.open({ width, height, title: this.source.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.76, closeOnBackdrop: true, backButton: true, onClose: () => { this.body = undefined; } }, (body) => {
       this.body = body;
       const { openRewards, openTiers } = this.source;
-      if (openRewards) body.add(new Button(this.scene, -width / 2 + 200, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openRewards(this.me) }));
+      // 순위 보상은 왼쪽 위의 금빛 칩이다 — 결투장·아레나·고대 지층·원정 순위표가 같은 칩(`addRankRewardChip`)을 같은 자리에 세운다.
+      if (openRewards) addRankRewardChip(this.scene, body, -width / 2 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, { period: this.source.rewardPeriod ?? "weekly", onClick: () => openRewards(this.me) });
       // 티어 안내는 순위표 안에서 연다 — "몇 등인가" 다음에 읽는 것이 "어느 티어부터 무엇을 받나"다.
       if (openTiers) body.add(new Button(this.scene, width / 2 - DUEL_RANKING_TIER_BUTTON.right, -height / 2 + DUEL_RANKING_TIER_BUTTON.top, {
         width: DUEL_RANKING_TIER_BUTTON.width, height: DUEL_RANKING_TIER_BUTTON.height, label: t("duel.link.tiers"), icon: "arena-tier", fontSize: 26,

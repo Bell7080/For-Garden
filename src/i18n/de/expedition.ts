@@ -13,7 +13,7 @@ export const EXPEDITION_DE = {
   "expedition.sortie": "A U F B R U C H",
   "expedition.sweep": "S Ä U B E R N",
   "expedition.ranking": "Rangliste",
-  "expedition.weeklyReward": "Wochenbelohnungen",
+  "expedition.weeklyScoreReward": "Wochenpunkte-Belohnungen",
   "expedition.syncing": "Rekord wird synchronisiert",
   "expedition.abandon": "Abbrechen",
   "expedition.abandon.title": "Expedition abbrechen",

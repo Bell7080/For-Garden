@@ -20,9 +20,9 @@ import { setDebugScene } from '../debug';
 import { ARENA_LOBBY as S } from '../ui/arenaLobbyLayout';
 import { DUEL_PROFILE as P, DUEL_TIER_COLOR, duelProfileRowY } from '../ui/duelLayout';
 import { HoloBar } from '../ui/holo';
-import { RailButton } from '../ui/RailButton';
 import { addSectionTitle } from '../ui/SectionTitle';
 import { squeezeTextToWidth } from '../ui/textFit';
+import { addRankChip, addRankRewardChip } from "../ui/RankingChips";
 import { DuelRankingPopup, type RankingSource } from '../ui/DuelRankingPopup';
 import { openArenaWeeklyRewards } from '../ui/ArenaRewardPopup';
 
@@ -85,9 +85,8 @@ export class ArenaScene extends Phaser.Scene {
         const { rankChip, rewardChip } = S;
         const played = s.wins + s.losses > 0;
         const rank = s.rank ?? null;
-        this.view.add(new RailButton(this, rankChip.x, rankChip.y, { icon: "arena-tier", label: t("duel.link.ranking"), size: rankChip.size, onClick: () => new DuelRankingPopup(this, this.popups, tierId, undefined, this.rankingSource(s)).open() }));
-        this.view.add(this.add.text(rankChip.x + rankChip.size / 2 + 18, rankChip.y, rank === null ? t("duel.rank.none") : t("duel.rank.value", { rank: rank.toLocaleString() }), textStyle({ role: "display", size: 30, color: ARENA_TONE.accentText })).setOrigin(0, .5).setStroke('#05070a', 6));
-        this.view.add(new RailButton(this, rewardChip.x, rewardChip.y, { icon: "mission", label: t("arena.weekly.chip"), size: rewardChip.size, accent: true, onClick: () => openArenaWeeklyRewards(this, this.popups, played ? s.score : null, rank) }));
+        addRankChip(this, this.view, rankChip.x, rankChip.y, { size: rankChip.size, rank, rankColor: ARENA_TONE.accentText, onClick: () => new DuelRankingPopup(this, this.popups, tierId, undefined, this.rankingSource(s)).open() });
+        addRankRewardChip(this, this.view, rewardChip.x, rewardChip.y, { period: "weekly", size: rewardChip.size, onClick: () => openArenaWeeklyRewards(this, this.popups, played ? s.score : null, rank) });
     }
     private rankingSource(s: ArenaStatus): RankingSource {
         const played = s.wins + s.losses > 0;

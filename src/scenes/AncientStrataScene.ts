@@ -31,9 +31,11 @@ import { guildApi } from "../api/guildApi";
 import { RELICS } from "../data/relics";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
+import { addRankChip } from "../ui/RankingChips";
+import { openRankPoolRewards } from "../ui/CompetitiveRewardPopup";
+import { ANCIENT_MONTHLY_RANK_REWARDS, rankTableAsPool } from "../data/competitiveRewards";
 import { FaceFrame } from "../ui/FaceFrame";
 import { drawGlyph } from "../ui/glyphs";
-import { RailButton } from "../ui/RailButton";
 import { encounterRoleIcon } from "../ui/encounterRolePresentation";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
@@ -286,7 +288,7 @@ export class AncientStrataScene extends Phaser.Scene {
 
   /** 왼쪽 위 순위 칩 — 결투장과 같은 칩이고, 오른쪽에 내 등수가 선다. 누르면 결투장과 같은 순위표가 열린다. */
   private paintRankChip(): void {
-    const { rankChip, rankText } = ANCIENT_CHROME;
+    const { rankChip } = ANCIENT_CHROME;
     const source = {
       title: t("ancient.ranking.title"),
       load: async () => {
@@ -295,18 +297,16 @@ export class AncientStrataScene extends Phaser.Scene {
         return { entries: ranking.entries.map(row), me: ranking.me ? row(ranking.me) : null };
       },
       formatScore: (floor: number) => `B${floor}`,
+      // 매달 마감하는 순위라 보상 칩은 「월간 보상」이다. 1,000위 밖의 내 구간은 참가자 수를 몰라 표가 「현재」를 달지 않는다.
+      rewardPeriod: "monthly" as const,
+      openRewards: (me: { rank: number } | null) => openRankPoolRewards(this, this.popups, { pool: rankTableAsPool(ANCIENT_MONTHLY_RANK_REWARDS), period: "monthly", rules: t("rewardTable.rules.ancient"), myRank: me?.rank ?? null }),
     };
-    new RailButton(this, rankChip.x, rankChip.y, {
-      icon: "arena-tier", label: t("duel.link.ranking"), size: rankChip.size,
+    const chip = addRankChip(this, null, rankChip.x, rankChip.y, {
+      size: rankChip.size,
       onClick: () => new DuelRankingPopup(this, this.popups, "bronze", gameApi, source).open(),
     }).setDepth(CHROME_DEPTH);
-    const text = this.add.text(rankText.x, rankChip.y, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
-      .setOrigin(0, 0.5).setStroke("#05070a", 6).setDepth(CHROME_DEPTH);
     // 순위를 읽지 못하면 그 자리를 비운다 — 상태 문구로 채우지 않는다.
-    gameApi.getAncientRanking().then((ranking) => {
-      if (!text.active) return;
-      text.setText(ranking.me ? t("duel.rank.value", { rank: ranking.me.rank.toLocaleString() }) : t("duel.rank.none"));
-    }).catch(() => undefined);
+    gameApi.getAncientRanking().then((ranking) => chip.setRank(ranking.me ? ranking.me.rank : null)).catch(() => undefined);
   }
 
   /** 오른쪽 위 「친구 / 길드」 전환 — 고른 쪽 사람들만 노드 옆에 선다. */

@@ -35,3 +35,33 @@ export function rankRewardGems(table: RankRewardTable, rank: number, total: numb
   const percent = rank / Math.max(1, total) * 100;
   return table.percents.find((row) => percent <= row.upToPercent)?.gems ?? table.participation;
 }
+
+/** 순위 보상 한 묶음 — 우편에 함께 드는 재화(지갑 키)와 수량. */
+export type RankRewardBundle = Partial<Record<"gems" | "salvageRecord" | "gold" | "cheesecake", number>>;
+
+/**
+ * 여러 재화를 함께 주는 순위 보상 풀 — 모양은 `RankRewardTable`과 같다(순위 구간 → 1,000위 밖 백분율 구간 → 참여).
+ * 원정 주간 순위가 쓴다. 젬만 주는 표는 `rankTableAsPool`로 같은 모양이 되어 보상표 창이 한 길로 그린다.
+ */
+export interface RankRewardPool {
+  readonly ranks: readonly { readonly upTo: number; readonly rewards: RankRewardBundle }[];
+  readonly percents: readonly { readonly upToPercent: number; readonly rewards: RankRewardBundle }[];
+  readonly participation: RankRewardBundle;
+}
+
+export const rankTableAsPool = (table: RankRewardTable): RankRewardPool => ({
+  ranks: table.ranks.map((row) => ({ upTo: row.upTo, rewards: { gems: row.gems } })),
+  percents: table.percents.map((row) => ({ upToPercent: row.upToPercent, rewards: { gems: row.gems } })),
+  participation: { gems: table.participation },
+});
+
+/**
+ * 풀에서 그 자리의 묶음. `total`(그 기간 참가자 수)을 모르면 1,000위 밖은 참여 몫으로 본다 — 모르는 값으로 더 주지 않는다.
+ * 서버(`server_competitive_rewards_v2`)가 같은 규칙으로 고른다.
+ */
+export function rankRewardBundle(pool: RankRewardPool, rank: number, total: number = rank): RankRewardBundle {
+  const byRank = pool.ranks.find((row) => rank <= row.upTo);
+  if (byRank) return { ...byRank.rewards };
+  const percent = rank / Math.max(1, total) * 100;
+  return { ...(pool.percents.find((row) => percent <= row.upToPercent)?.rewards ?? pool.participation) };
+}

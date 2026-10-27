@@ -13,7 +13,7 @@ export const EXPEDITION_EN = {
   "expedition.sortie": "S O R T I E",
   "expedition.sweep": "S W E E P",
   "expedition.ranking": "Ranking",
-  "expedition.weeklyReward": "Weekly Rewards",
+  "expedition.weeklyScoreReward": "Weekly Score Rewards",
   "expedition.syncing": "Syncing the record",
   "expedition.abandon": "Abandon",
   "expedition.abandon.title": "Abandon Expedition",

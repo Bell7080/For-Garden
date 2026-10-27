@@ -13,7 +13,7 @@ export const EXPEDITION_ZH_HANT = {
   "expedition.sortie": "出 擊",
   "expedition.sweep": "掃 蕩",
   "expedition.ranking": "排行榜",
-  "expedition.weeklyReward": "每週獎勵",
+  "expedition.weeklyScoreReward": "每週分數獎勵",
   "expedition.syncing": "正在同步記錄",
   "expedition.abandon": "放棄",
   "expedition.abandon.title": "放棄遠征",

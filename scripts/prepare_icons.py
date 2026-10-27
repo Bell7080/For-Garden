@@ -67,6 +67,13 @@ ART: dict[str, tuple[str, tuple[float, float, float] | None] | tuple[str, tuple[
     "sprites/currency/salvage-record.webp": ("인양기록.webp", None),
     # 결투장의 투사의 휘장. 결투 상점의 값이고 결투 결과판·상단 줄에 선다.
     "sprites/currency/duel-emblem.webp": ("battlecoin.webp", None),
+    # 길드 코인. 길드 상점의 값이고 길드 화면 상단 줄·가격 줄에 선다.
+    "sprites/currency/guild-coin.webp": ("무지개 크리스탈 길드 코인-Photoroom.png", None),
+    # 만능 파편 셋(R · SR · SSR). 한계 돌파 재료라 가방·상점·돌파 버튼에 선다. 일러스트가 액자를 **꽉 채우도록**
+    # 알파 경계로 잘라 정사각에 맞추고(RECENTER 1.0), 홀로그램 결은 액자(`universalFragmentArt.ts`)가 얹는다.
+    "sprites/items/universal-fragment-r.webp": ("ForGarden_LimitBreak_R_Blue (1).png", None),
+    "sprites/items/universal-fragment-sr.webp": ("ForGarden_LimitBreak_SR_Purple (1).png", None),
+    "sprites/items/universal-fragment-ssr.webp": ("ForGarden_LimitBreak_SSR_Amber-Photoroom.png", None),
     # 소탕권(던전 소탕에 드는 표)과 발굴권(고고학 유적에 들어가는 입장권). 발굴권은 재화가 아니라
     # 조작 횟수라 UI 아이콘 자리에 굽는다.
     "sprites/items/sweep-ticket.webp": ("소탕권.png", None),
@@ -102,6 +109,11 @@ RECENTER: dict[str, float] = {
     "sprites/currency/raid-sigil.webp": 0.8,
     "sprites/currency/salvage-record.webp": 0.8,
     "sprites/currency/duel-emblem.webp": 0.8,
+    "sprites/currency/guild-coin.webp": 0.8,
+    # 파편은 액자를 꽉 채운다 — 다른 재화처럼 여백을 되돌리지 않는다.
+    "sprites/items/universal-fragment-r.webp": 1.0,
+    "sprites/items/universal-fragment-sr.webp": 1.0,
+    "sprites/items/universal-fragment-ssr.webp": 1.0,
     # 토벌권은 가로로 긴 표라 긴 변을 조금 더 채운다 — 0.8이면 세로가 얇아 액자 안에서 작아 보인다.
     "sprites/items/raid-ticket.webp": 0.86,
     "sprites/items/raid-select-ticket.webp": 0.86,

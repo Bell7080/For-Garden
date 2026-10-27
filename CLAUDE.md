@@ -1769,8 +1769,8 @@
 - **만능 파편은 그 개체의 파편이 모자란 몫만 채운다**(`UNIVERSAL_FRAGMENT_ITEM` — 등급마다 하나, 가방의 재료).
   같은 등급 렐릭에만 들고, 그 개체의 파편을 먼저 다 쓴 뒤 남은 몫만 소모된다(`breakthroughFragmentSpend` — 서버 차감과
   버튼·확정 창이 같은 함수를 읽는다). 쓰일 몫이 있으면 돌파 버튼이 `×N`을 금빛으로, 확정 창이 그 액자와 「함께 소모됩니다」
-  한 줄을 따로 세운다 — 말없이 사라지면 안 된다. 그림은 렐릭 파편과 같은 유리 결에 얼굴 대신 흰 문양이다
-  (`universalFragmentArt.ts` + `scripts/draw_universal_fragment.py`).
+  한 줄을 따로 세운다 — 말없이 사라지면 안 된다. 그림은 렐릭 파편과 같은 유리 결에 얼굴 대신 등급색 결정 일러스트가 액자를 꽉 채운다
+  (`universalFragmentArt.ts` + 굽기 `scripts/prepare_icons.py`) — 홀로그램 결(주사선·훑는 빛)은 그 위에 은은하게만 얹는다.
 - 단계별 파편·치즈케이크·레벨 상한·여는 슬롯은 `BREAKTHROUGH_STEPS` 한 표뿐이다. 화면이 문구나
   수치를 따로 적지 않고, 상한을 묻는 곳은 전부 `relicLevelCap(breakthrough)`을 쓴다.
 - **단계가 여는 것은 상한과 슬롯뿐이고, 공용 배율을 다시 붙이지 않는다.** 한때 단계마다

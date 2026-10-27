@@ -91,7 +91,7 @@ import { withBusy } from "./BusyOverlay";
 import { findItem } from "../data/items";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
-import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
+import { universalFragmentTexture } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -972,9 +972,9 @@ export class InfoManager {
         // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
         row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
       } else if (kind === "universal") {
-        // 만능 파편의 문양을 그 등급색으로 물들여 액자 없이 세운다.
+        // 만능 파편의 일러스트를 액자 없이 세운다(등급색은 그림이 이미 갖고 있다).
         const key = universalFragmentTexture(def.rarity);
-        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon).setTint(universalFragmentTone(def.rarity)));
+        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
       } else {
         const key = CURRENCY_ICON_BY_WALLET.cheesecake;
         if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));

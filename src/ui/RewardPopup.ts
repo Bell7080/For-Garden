@@ -42,6 +42,8 @@ export interface RewardPopupOptions {
   /** 뒤 화면을 누르는 암전 강도. 기본은 원래 화면의 맥락이 남는 은은한 검정이다. */
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
+  /** 영수증이 열릴 때 울릴 소리. 구매처럼 결제가 확정된 결과는 보상음 대신 결제음을 낸다. */
+  sound?: "ui.reward" | "ui.purchase";
   /**
    * 판 **밖 아래**에 서는 한 줄.
    *
@@ -84,7 +86,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     options.onConfirm?.();
     return;
   }
-  audioManager?.playUi("ui.reward");
+  audioManager?.playUi(options.sound ?? "ui.reward");
   // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
   if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 

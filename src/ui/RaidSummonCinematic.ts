@@ -8,6 +8,7 @@ import { FaceFrame } from "./FaceFrame";
 import { toPoints } from "./holo";
 import { RAID_DIFFICULTY_TONE, RAID_SUMMON_INTENSITY, RAID_SUMMON_STAGE } from "./raidLayout";
 import { COLOR, textStyle } from "./theme";
+import { audioManager } from "../managers/AudioManager";
 
 export interface RaidSummonCinematicOptions {
   bossRelicId: string;
@@ -40,6 +41,7 @@ export interface RaidSummonCinematicOptions {
  */
 export function playRaidSummonCinematic(scene: Phaser.Scene, options: RaidSummonCinematicOptions): void {
   ensureEffectTextures(scene);
+  audioManager?.playSfx("raid.summon");
   const { depth } = options;
   const camera = scene.cameras.main;
   const width = camera.width;

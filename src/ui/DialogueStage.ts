@@ -50,6 +50,7 @@ import {
 import { speakerStanding } from "../data/dialogues/speakerStanding";
 import { drawVignette } from "./holo";
 import { textStyle } from "./theme";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
@@ -602,6 +603,7 @@ export class DialogueStage {
   /** 흔들림·섬광·경보 가운데 폭파를 뺀 것. 폭파는 무대를 갈아 끼우므로 기다려야 한다. */
   private playCue(cue: DialogueCue): void {
     const spec = DIALOGUE_CUES[cue];
+    audioManager?.playSfx(`story.${cue}`);
     this.shake(spec.shakeMs, spec.shakeIntensity);
     if (spec.flashAlpha > 0) this.flash(spec.flashAlpha, 60, 240);
     if (cue === "alarm") this.startAlarm();

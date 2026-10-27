@@ -1248,7 +1248,7 @@ export class ArchaeologyScene extends Phaser.Scene {
           upgraded: result.upgraded,
           rune: result.rune,
           depth: 2500,
-          onImpact: () => { if (result.upgraded) audioManager?.playUi("ui.confirm"); },
+          onImpact: () => { if (result.upgraded) audioManager?.playUi("rune.success"); },
           onDone: () => {
             this.synthBusy = false;
             this.synthIds = [null, null, null];

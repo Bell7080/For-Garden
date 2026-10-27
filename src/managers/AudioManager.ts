@@ -8,38 +8,47 @@ export type AudioBus = "music" | "sfx" | "ui" | "voice";
 /** 실제 에셋이 추가되기 전에도 호출부가 의미만 전달하도록 고정한 지원 사운드 목록이다. */
 export type AudioCue = "research.crack" | UiCue | SfxCue;
 
-/** 전투의 굵직한 순간(궁극기·승패)에 붙는 효과음이다. 씬이 `playSfx`로 의미만 넘긴다. */
-export type SfxCue = "battle.ultimate" | "battle.victory" | "battle.defeat" | "battle.hit" | "battle.crit" | "battle.heal" | "battle.death";
+/**
+ * 화면 조작 밖에서 일어난 사건의 소리다(전투·연구 공개·발굴·이야기 연출). 씬이 `playSfx`로 의미만 넘긴다.
+ */
+export type SfxCue =
+  | "battle.ultimate" | "battle.victory" | "battle.defeat" | "battle.hit" | "battle.hitMagic" | "battle.crit" | "battle.heal"
+  | "battle.shield" | "battle.death" | "battle.cutin" | "battle.fever" | "battle.start" | "raid.summon"
+  | "research.reveal.common" | "research.reveal.sr" | "research.reveal.ssr" | "research.omen" | "research.showcase"
+  | "dig.hit" | "dig.treasure"
+  | "story.explosion" | "story.alarm" | "story.rumble" | "story.impact";
 
 /** 버튼·팝업·탭처럼 화면 조작에 붙는 소리다. 씬이 고르지 않고 공용 UI 경계가 `playUi`로 부른다. */
-export type UiCue = "ui.click" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny" | "ui.reward" | "ui.levelup";
+export type UiCue =
+  | "ui.click" | "ui.tap" | "ui.back" | "ui.toggle" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny"
+  | "ui.reward" | "ui.levelup" | "ui.unlock" | "ui.purchase" | "ui.feed" | "ui.breakthrough"
+  | "rune.success" | "rune.fail" | "rune.engrave" | "title.start";
 
-/** UI 소리의 에셋 목록이다. **임시 시안**이며 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다. */
+/**
+ * 효과음 에셋 목록이다. ElevenLabs(Starter, 상업 이용 가능)로 생성해 다듬은 출시용 음원이며 출처·프롬프트는
+ * `public/audio/CREDITS.md`가 갖는다. 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다.
+ */
 export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
-  ["ui-click", "audio/ui/ui-click.mp3"],
-  ["ui-panel-open", "audio/ui/ui-panel-open.mp3"],
-  ["ui-panel-close", "audio/ui/ui-panel-close.mp3"],
-  ["ui-tab", "audio/ui/ui-tab.mp3"],
-  ["ui-confirm", "audio/ui/ui-confirm.mp3"],
-  ["ui-deny", "audio/ui/ui-deny.mp3"],
-  ["ui-reward", "audio/ui/ui-reward.mp3"],
-  ["ui-levelup", "audio/ui/ui-levelup.mp3"],
+  ...["ui-click", "ui-tap", "ui-back", "ui-toggle", "ui-panel-open", "ui-panel-close", "ui-tab", "ui-confirm", "ui-deny", "ui-reward", "ui-levelup",
+    "ui-unlock", "ui-purchase", "ui-feed", "ui-breakthrough", "rune-success", "rune-fail", "rune-engrave", "title-start"].map((key) => [key, `audio/ui/${key}.mp3`] as const),
 ];
 
-/** 전투 효과음의 에셋 목록이다. **임시 시안**(ElevenLabs 생성음)이며 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다. */
+/** 전투 효과음의 에셋 목록이다. */
 export const BATTLE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
-  ["battle-ultimate", "audio/battle/battle-ultimate.mp3"],
-  ["battle-victory", "audio/battle/battle-victory.mp3"],
-  ["battle-defeat", "audio/battle/battle-defeat.mp3"],
-  ["battle-hit", "audio/battle/battle-hit.mp3"],
-  ["battle-crit", "audio/battle/battle-crit.mp3"],
-  ["battle-heal", "audio/battle/battle-heal.mp3"],
-  ["battle-death", "audio/battle/battle-death.mp3"],
+  ...["battle-ultimate", "battle-victory", "battle-defeat", "battle-hit", "battle-hit-magic", "battle-crit", "battle-heal", "battle-shield",
+    "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
 ];
 
-/** 연구소 효과음의 에셋 목록이다(화석 균열). **임시 시안**이며 같은 이름의 파일을 바꿔 끼우면 코드는 그대로다. */
+/** 연구소 효과음의 에셋 목록이다(화석 균열·카드 공개·SSR 전조·새 렐릭 소개). */
 export const RESEARCH_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ["sfx-research-crack", "audio/research/research-crack.mp3"],
+  ...["reveal-common", "reveal-sr", "reveal-ssr", "research-omen", "research-showcase"].map((key) => [key, `audio/research/${key}.mp3`] as const),
+];
+
+/** 이야기 연출(폭발·경보·진동·부딪힘)과 고고학 굴착의 효과음 목록이다. */
+export const SCENE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
+  ...["story-explosion", "story-alarm", "story-rumble", "story-impact"].map((key) => [key, `audio/story/${key}.mp3`] as const),
+  ...["dig-hit", "dig-treasure"].map((key) => [key, `audio/archaeology/${key}.mp3`] as const),
 ];
 
 /** Phaser 사운드를 테스트 대역으로 바꿀 수 있게 하는 최소 재생 인스턴스 계약이다. */
@@ -70,26 +79,59 @@ export interface AudioScope {
   release(): void;
 }
 
-/** `gain`은 시안마다 들쭉날쭉한 크기를 맞추는 큐별 보정이다(버스 볼륨에 곱한다). */
+/**
+ * `gain`은 큐별 믹스 보정이다(버스 볼륨에 곱한다). 원본은 굽는 단계에서 활성 구간 RMS로 맞춰 두었으므로
+ * 여기서는 **무게**만 고른다 — 손끝 소리(탭·클릭)가 가장 작고, 한 판에 몇 번 없는 순간(궁극기·승패·SSR)이 가장 크다.
+ */
 const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGapMs?: number }> = {
   // 연구소 획득 연구의 균열음이다. 배치형 자원 발굴과 분리하며, 에셋이 없을 때는 의도적으로 무음 폴백한다.
-  "research.crack": { key: "sfx-research-crack", bus: "sfx" },
-  "ui.click": { key: "ui-click", bus: "ui", gain: 0.6 },
-  "ui.panel.open": { key: "ui-panel-open", bus: "ui", gain: 0.7 },
-  "ui.panel.close": { key: "ui-panel-close", bus: "ui", gain: 0.6 },
-  "ui.tab": { key: "ui-tab", bus: "ui", gain: 0.6 },
-  "ui.confirm": { key: "ui-confirm", bus: "ui", gain: 0.8 },
-  "ui.deny": { key: "ui-deny", bus: "ui", gain: 0.8 },
-  "battle.ultimate": { key: "battle-ultimate", bus: "sfx", gain: 0.7 },
-  "battle.victory": { key: "battle-victory", bus: "sfx", gain: 0.9 },
-  "battle.defeat": { key: "battle-defeat", bus: "sfx", gain: 0.9 },
+  "research.crack": { key: "sfx-research-crack", bus: "sfx", gain: 0.8 },
+  "ui.click": { key: "ui-click", bus: "ui", gain: 0.55, minGapMs: 40 },
+  // 아무것도 없는 자리를 누른 손에 답하는 가장 작은 소리 — 버튼 소리와 겹치지 않을 때만 울린다.
+  "ui.tap": { key: "ui-tap", bus: "ui", gain: 0.3, minGapMs: 60 },
+  "ui.back": { key: "ui-back", bus: "ui", gain: 0.6, minGapMs: 60 },
+  "ui.toggle": { key: "ui-toggle", bus: "ui", gain: 0.6, minGapMs: 40 },
+  "ui.panel.open": { key: "ui-panel-open", bus: "ui", gain: 0.5, minGapMs: 60 },
+  "ui.panel.close": { key: "ui-panel-close", bus: "ui", gain: 0.45, minGapMs: 60 },
+  "ui.tab": { key: "ui-tab", bus: "ui", gain: 0.55, minGapMs: 60 },
+  "ui.confirm": { key: "ui-confirm", bus: "ui", gain: 0.7 },
+  "ui.deny": { key: "ui-deny", bus: "ui", gain: 0.6, minGapMs: 120 },
   "ui.reward": { key: "ui-reward", bus: "ui", gain: 0.8 },
-  "ui.levelup": { key: "ui-levelup", bus: "ui", gain: 0.9 },
+  "ui.levelup": { key: "ui-levelup", bus: "ui", gain: 0.85 },
+  "ui.unlock": { key: "ui-unlock", bus: "ui", gain: 0.8 },
+  "ui.purchase": { key: "ui-purchase", bus: "ui", gain: 0.75 },
+  // 급여는 다다닥 두드리는 조작이라 간격을 짧게 두되 겹쳐 쌓이지 않게 한다.
+  "ui.feed": { key: "ui-feed", bus: "ui", gain: 0.5, minGapMs: 70 },
+  "ui.breakthrough": { key: "ui-breakthrough", bus: "ui", gain: 0.85 },
+  "rune.success": { key: "rune-success", bus: "ui", gain: 0.75 },
+  "rune.fail": { key: "rune-fail", bus: "ui", gain: 0.7 },
+  "rune.engrave": { key: "rune-engrave", bus: "ui", gain: 0.85 },
+  "title.start": { key: "title-start", bus: "ui", gain: 0.8 },
+  "battle.ultimate": { key: "battle-ultimate", bus: "sfx", gain: 0.7, minGapMs: 120 },
+  "battle.cutin": { key: "battle-cutin", bus: "sfx", gain: 0.7, minGapMs: 200 },
+  "battle.victory": { key: "battle-victory", bus: "sfx", gain: 0.85 },
+  "battle.defeat": { key: "battle-defeat", bus: "sfx", gain: 0.85 },
+  "battle.start": { key: "battle-start", bus: "sfx", gain: 0.7 },
   // 난전에서는 초당 수십 번 터지므로 큐마다 최소 간격을 둔다 — 겹쳐 울리면 소리가 아니라 소음이 된다.
-  "battle.hit": { key: "battle-hit", bus: "sfx", gain: 0.45, minGapMs: 90 },
-  "battle.crit": { key: "battle-crit", bus: "sfx", gain: 0.6, minGapMs: 140 },
-  "battle.heal": { key: "battle-heal", bus: "sfx", gain: 0.4, minGapMs: 500 },
-  "battle.death": { key: "battle-death", bus: "sfx", gain: 0.7, minGapMs: 200 },
+  "battle.hit": { key: "battle-hit", bus: "sfx", gain: 0.4, minGapMs: 90 },
+  "battle.hitMagic": { key: "battle-hit-magic", bus: "sfx", gain: 0.35, minGapMs: 90 },
+  "battle.crit": { key: "battle-crit", bus: "sfx", gain: 0.55, minGapMs: 140 },
+  "battle.heal": { key: "battle-heal", bus: "sfx", gain: 0.35, minGapMs: 500 },
+  "battle.shield": { key: "battle-shield", bus: "sfx", gain: 0.4, minGapMs: 400 },
+  "battle.death": { key: "battle-death", bus: "sfx", gain: 0.6, minGapMs: 200 },
+  "battle.fever": { key: "battle-fever", bus: "sfx", gain: 0.55, minGapMs: 800 },
+  "raid.summon": { key: "raid-summon", bus: "sfx", gain: 0.85 },
+  "research.reveal.common": { key: "reveal-common", bus: "sfx", gain: 0.6, minGapMs: 50 },
+  "research.reveal.sr": { key: "reveal-sr", bus: "sfx", gain: 0.75, minGapMs: 50 },
+  "research.reveal.ssr": { key: "reveal-ssr", bus: "sfx", gain: 0.9, minGapMs: 50 },
+  "research.omen": { key: "research-omen", bus: "sfx", gain: 0.9 },
+  "research.showcase": { key: "research-showcase", bus: "sfx", gain: 0.8 },
+  "dig.hit": { key: "dig-hit", bus: "sfx", gain: 0.7, minGapMs: 80 },
+  "dig.treasure": { key: "dig-treasure", bus: "sfx", gain: 0.8, minGapMs: 120 },
+  "story.explosion": { key: "story-explosion", bus: "sfx", gain: 0.8 },
+  "story.alarm": { key: "story-alarm", bus: "sfx", gain: 0.6 },
+  "story.rumble": { key: "story-rumble", bus: "sfx", gain: 0.75 },
+  "story.impact": { key: "story-impact", bus: "sfx", gain: 0.75 },
 };
 
 /** master × category × mute 공식을 유일하게 계산하고 Phaser Sound 수명을 소유한다. */
@@ -101,6 +143,8 @@ export class AudioManager {
   /** 한 번 울리는 소리(UI·전투)는 큐마다 사운드 하나를 재사용한다 — 연타하면 앞 소리를 끊고 다시 울려 인스턴스가 쌓이지 않는다. */
   private readonly uiSounds = new Map<AudioCue, ManagedSound>();
   private readonly lastPlayedAt = new Map<AudioCue, number>();
+  /** 마지막으로 UI·효과음이 실제로 울린 시각 — 빈 자리 탭이 버튼 소리와 겹치지 않게 가른다. */
+  private lastSoundAt = -Infinity;
   private hidden = false;
   private disposed = false;
   private readonly onSettings = (event: Event): void => this.applySettings((event as CustomEvent<GameSettings>).detail);
@@ -140,6 +184,9 @@ export class AudioManager {
   /** 전투의 굵직한 순간 소리를 한 번 울린다. 규칙은 `playUi`와 같다. */
   playSfx(cue: SfxCue): boolean { return this.playShared(cue); }
 
+  /** `since`(performance.now 기준) 이후에 단발음이 하나라도 실제로 울렸는가. */
+  heardSince(since: number): boolean { return this.lastSoundAt >= since; }
+
   private playShared(cue: AudioCue): boolean {
     const definition = CUES[cue];
     if (this.disposed || this.hidden || !this.backend.has(definition.key)) return false;
@@ -156,6 +203,7 @@ export class AudioManager {
     }
     sound.stop();
     sound.setVolume(this.volume(definition.bus) * (definition.gain ?? 1));
+    this.lastSoundAt = performance.now();
     return sound.play();
   }
 

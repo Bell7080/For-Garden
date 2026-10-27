@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { UI_ICON } from "./icons";
@@ -83,7 +84,7 @@ export class StrataDigEffect {
       // 손을 축으로 92도를 한 번에 돌린다. 가속만 있고 감속이 없어 날이 닿는 순간이 가장 빠르다.
       this.tween({ targets: this.layer, x: strike.x, y: strike.y, angle: strike.angle, duration: timing.swing, ease: "Cubic.In",
         onComplete: () => {
-          this.impactResolve(); this.burst(reduced, timing.burst);
+          this.impactResolve(); audioManager?.playSfx("dig.hit"); this.burst(reduced, timing.burst);
           // 박히며 튕기는 반동: 손이 살짝 튕겨 오른다.
           this.tween({ targets: this.layer, angle: strike.angle + 7, x: strike.x + this.cellSize * 0.03, y: strike.y - this.cellSize * 0.04,
             duration: Math.min(50, timing.hold), ease: "Quad.Out" });

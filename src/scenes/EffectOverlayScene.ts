@@ -14,6 +14,7 @@ import { disconnectProgress } from "../api/backendSession";
 import { saveManager } from "../state/SaveManager";
 import { stopLiveOps } from "../managers/liveOps";
 import { t } from "../i18n";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 누른 자리에 답하는 얇은 겹 하나.
@@ -57,7 +58,25 @@ export class EffectOverlayScene extends Phaser.Scene {
       // 이 겹에는 입력을 받는 표시 객체가 없어 hit test가 돌지 않으므로 `worldX`가 갱신되지
       // 않는다. FIT 배율은 포인터를 이미 게임 좌표로 옮겨 두므로 `x`·`y`를 그대로 쓴다.
       this.effects.tap(pointer.x, pointer.y, this.scene.isActive("battle") ? "tapBattle" : "tap");
+      this.answerEmptyTap(pointer);
     });
+  }
+
+  /**
+   * 아무것도 없는 자리를 누른 손에도 아주 작은 소리로 답한다. 이 겹이 맨 위라 아래 씬의 버튼보다 **먼저**
+   * 듣는다 — 그래서 같은 사건이 아래로 다 흘러간 뒤(다음 태스크)에 본다. 그사이 버튼이 제 소리를 냈거나
+   * 손 밑에 눌리는 개체가 하나라도 있으면 그 개체의 몫이라 울리지 않는다.
+   */
+  private answerEmptyTap(pointer: Phaser.Input.Pointer): void {
+    const pressedAt = performance.now();
+    setTimeout(() => {
+      if (!audioManager || audioManager.heardSince(pressedAt)) return;
+      for (const scene of this.game.scene.getScenes(true)) {
+        if (scene === this || !scene.input?.enabled) continue;
+        if (scene.input.hitTestPointer(pointer).some((hit) => hit.input?.enabled)) return;
+      }
+      audioManager.playUi("ui.tap");
+    }, 0);
   }
 
   /** 운영팀이 보낸 우편·재화 조정의 안내와 계정 삭제 안내를 어느 화면 위에서나 띄운다. */

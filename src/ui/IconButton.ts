@@ -3,6 +3,7 @@ import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { UI_ICON } from "./icons";
 import { BACK_BUTTON_SIZE, BACK_SLOT as BACK_SLOT_SPOT } from "./popupGeometry";
+import { audioManager } from "../managers/AudioManager";
 
 export interface IconButtonOptions {
   /** 텍스처 키. `UI_ICON`의 값을 쓴다. */
@@ -55,7 +56,8 @@ export class IconButton extends Phaser.GameObjects.Container {
     }
 
     const hit = scene.add.rectangle(0, 0, size, size, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerdown", () => this.press(true));
+    // 화면을 벗어나는 소리는 일반 클릭과 갈라 둔다 — 손이 닿는 순간 울린다.
+    hit.on("pointerdown", () => { audioManager?.playUi("ui.back"); this.press(true); });
     hit.on("pointerout", () => this.press(false));
     hit.on("pointerup", () => {
       this.press(false);

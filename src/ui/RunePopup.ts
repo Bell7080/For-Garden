@@ -27,6 +27,7 @@ import { addMarkChip } from "./MarkChip";
 import { formatCurrency } from "../core/formatCurrency";
 import { FaceFrame } from "./FaceFrame";
 import { COLOR, textStyle } from "./theme";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 룬 옵션 키의 공용 표시명이다.
@@ -519,6 +520,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
         // 무엇에 새길지는 반드시 사람이 다시 고른다.
         selected = rune.enhancementComplete ? undefined : nextCraftTarget(rune, statKey);
         pending = false;
+        audioManager?.playUi(engraving ? "rune.engrave" : succeeded ? "rune.success" : "rune.fail");
         render(engraving ? t("rune.completed") : succeeded ? t("rune.craftSuccess") : t("rune.craftFail"));
       } catch (error) {
         pending = false;

@@ -13,6 +13,7 @@ import { flashPolicy } from "./signatureEffects";
 import { ultimateCutInMaskLayout, type CutInPoint } from "./ultimateCutInLayout";
 import { InterruptibleStep } from "./InterruptibleStep";
 import { shrinkTextToWidth } from "./textFit";
+import { audioManager } from "../managers/AudioManager";
 
 /** 컷인이 서는 층. 공격 판정 시각은 이 프리팹이 아니라 BattleScene이 소유한다. */
 const CUT_IN = { depth: 900, dimAlpha: 0.58 } as const;
@@ -246,6 +247,7 @@ export class UltimateCutIn extends Phaser.GameObjects.Container {
     this.skipAllowedAt = this.scene.time.now + ULTIMATE_CUT_IN_MIN_VISIBLE_MS;
     this.skipPressAllowed = false;
     this.tapBlocker.setVisible(true);
+    audioManager?.playSfx("battle.cutin");
     const flashes = flashPolicy(this.policy.reduceFlashes);
     // 섬광 감소에서는 투명→불투명 점멸 대신 화면 밖 이동만으로 진입을 알린다.
     this.setX(-BASE_WIDTH).setAlpha(flashes.fadeFromTransparent ? 0 : 1).setVisible(true);

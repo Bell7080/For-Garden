@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import type { ResearchSlotView } from "../core/researchPresentation";
 import { getRelic } from "../data/relics";
 import { mixWhite } from "../puppets/tints";
@@ -108,6 +109,9 @@ export class ResearchSlotTile extends Phaser.GameObjects.Container {
     if (this.revealed) return false;
     this.revealed = true;
     this.hit.disableInteractive();
+    // 등급이 오를수록 무거운 공개음 — 칸의 색과 같은 말을 소리로도 한다.
+    const grade = this.view.grade;
+    audioManager?.playSfx(grade === "SSR" ? "research.reveal.ssr" : grade === "SR" ? "research.reveal.sr" : "research.reveal.common");
 
     const flash = this.scene.add.graphics();
     flash.fillStyle(0xffffff, 0.85);

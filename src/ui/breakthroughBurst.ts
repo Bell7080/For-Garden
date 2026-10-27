@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { ensureEffectTextures, EFFECT_TEXTURE } from "./effectTextures";
 import { toPoints } from "./holo";
 
@@ -62,6 +63,7 @@ export function addBreakthroughBurst(
   depth: number,
 ): Phaser.GameObjects.Container {
   ensureEffectTextures(scene);
+  audioManager?.playUi("ui.breakthrough");
   const { flash, ripple, shard, shake } = BREAKTHROUGH_BURST;
   const layer = scene.add.container(0, 0).setDepth(depth);
   const camera = scene.cameras.main;

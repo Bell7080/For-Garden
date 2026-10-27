@@ -30,18 +30,18 @@ export class BgmDirector {
     for (const scene of this.game.scene.getScenes(false)) {
       const key = scene.scene.key;
       if (!bgmTrackForScene(key)) continue;
-      const onEnter = (): void => this.request(key);
+      const onEnter = (): void => this.request(key, scene.sys.settings.data);
       scene.events.on(Phaser.Scenes.Events.START, onEnter);
       scene.events.on(Phaser.Scenes.Events.WAKE, onEnter);
     }
     // 부트 씬은 감독이 붙기 전에 이미 시작했을 수 있다 — 지금 돌고 있는 씬 기준으로 곧바로 한 번 요청해
     // 타이틀 로딩 화면부터 곡이 흐르게 한다.
     const running = this.game.scene.getScenes(true).find((s) => bgmTrackForScene(s.scene.key));
-    this.request(running ? running.scene.key : "BootScene");
+    this.request(running ? running.scene.key : "boot");
   }
 
-  private request(sceneKey: string): void {
-    const track = bgmTrackForScene(sceneKey);
+  private request(sceneKey: string, data?: unknown): void {
+    const track = bgmTrackForScene(sceneKey, data);
     if (!track || !this.enabled) return;
     this.wanted = track;
     if (this.game.cache.audio.exists(track.key)) { audioManager?.playMusic(track.key, track.gain); this.scheduleEvict(); return; }

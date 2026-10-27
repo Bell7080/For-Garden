@@ -45,6 +45,7 @@ import { saveManager } from "../state/SaveManager";
 import { startLiveOps } from "../managers/liveOps";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
+import { audioManager } from "../managers/AudioManager";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -508,6 +509,7 @@ export class TitleScene extends Phaser.Scene {
       if (!freshTap) { tapAnywhere.once("pointerup", enter); return; }
       if (!current() || this.entryPending || this.authAttempt) return;
       this.entryPending = true;
+      audioManager?.playUi("title.start");
       // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
       // 저장 충돌 창이 뜨면 막이 그 창의 손을 삼키지 않도록 그 순간 막을 걷는다(`releaseBusy`는 여러 번 불려도 한 번만 푼다).
       let releaseBusy: () => void = () => undefined;

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t, type TextKey } from "../i18n";
 import { ALL_GATED_CONTENT, CONTENT_STAGE_UNLOCKS, contentUnlockLevel, isContentUnlocked, type ContentId } from "../core/contentUnlock";
 import { motionPolicy } from "../core/settings";
@@ -121,6 +122,7 @@ export function playUnlockSequence(scene: Phaser.Scene, lock: Phaser.GameObjects
   };
   const finish = () => { lock.destroy(); cover?.destroy(); };
   options.onStart?.();
+  audioManager?.playUi("ui.unlock");
   if (factor < 1) {
     open();
     scene.tweens.add({ targets: cover ?? lock, alpha: 0, duration: 160, onComplete: finish });

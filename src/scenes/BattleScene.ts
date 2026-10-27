@@ -391,6 +391,8 @@ export class BattleScene extends Phaser.Scene {
   get fighterCreationStats() { return this.fighterCreationQueue?.stats; }
   /** 전원이 선 뒤 숨을 고르고 코어 시간이 흐르기 시작하는 실제 시각(ms, `battleFightStartsAt`). */
   private fightStartsAt = Infinity;
+  /** 숨 고르기가 끝나 전투가 열리는 순간을 한 번만 알렸는가. */
+  private fightStartAnnounced = false;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
   private lastStepAt = 0;
   /** 시뮬레이션 시간에만 곱하는 현재 전투 배속이다. */
@@ -698,6 +700,7 @@ export class BattleScene extends Phaser.Scene {
     this.pendingResult = undefined;
     this.spawned = false;
     this.fightStartsAt = Infinity;
+    this.fightStartAnnounced = false;
     // 이전 씬의 tween 종료보다 재진입이 빠르더라도 표시 관찰값은 새 전투에서 0부터 시작한다.
     this.healPopups = 0;
     this.bossActions = [];
@@ -1612,6 +1615,10 @@ export class BattleScene extends Phaser.Scene {
       this.refreshDebug();
       return;
     }
+    if (!this.fightStartAnnounced) {
+      this.fightStartAnnounced = true;
+      audioManager?.playSfx("battle.start");
+    }
     if (this.simulationPaused()) {
       // 멈춘 동안에도 화면과 관찰값은 지금 상태를 말해야 한다. 여기서 그냥 돌아가면 프로필과
       // `__PF_DEBUG.battle`이 **판이 열리기 직전 값으로 얼어붙어**, 판이 눈앞에 펼쳐져 있는데도
@@ -1889,7 +1896,7 @@ export class BattleScene extends Phaser.Scene {
       this.finishBattle(event.phase);
       return undefined;
     }
-    if (event.kind === "attack" && event.skill !== "ultimate") audioManager?.playSfx(event.critical ? "battle.crit" : "battle.hit");
+    if (event.kind === "attack" && event.skill !== "ultimate") audioManager?.playSfx(event.critical ? "battle.crit" : event.damageType === "magical" ? "battle.hitMagic" : "battle.hit");
     if (event.kind === "death") {
       audioManager?.playSfx("battle.death");
       // 프로필은 화면에 남으므로 머리 위 바와 달리 즉시 0으로 닫아 사라진 잔상을 기다리지 않는다.
@@ -1959,6 +1966,7 @@ export class BattleScene extends Phaser.Scene {
       const view = this.views.get(event.fighterId);
       if (!view || view.dead) return undefined;
       if (event.kind === "shieldGranted") {
+        audioManager?.playSfx("battle.shield");
         // 새로 덮인 막은 얻은 양을 에너지와 같은 푸른빛으로 알린다.
         this.popNumber(view.fighter, event.amount, "shield");
         return undefined;
@@ -2484,6 +2492,7 @@ export class BattleScene extends Phaser.Scene {
         if (fever) {
           view.feverAt = now;
           view.feverEndedAt = undefined;
+          audioManager?.playSfx("battle.fever");
           // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 테두리가 맡는다.
           this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
         } else view.feverEndedAt = now;

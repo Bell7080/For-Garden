@@ -479,6 +479,7 @@ export class PurchasePopup {
       for (const relicId of result.newRelicIds ?? []) await this.introduceRelic(relicId);
       openRewardPopup(this.scene, this.popups, {
         title: t("shop.purchase.rewardTitle"),
+        sound: "ui.purchase",
         items: productGrantsToRewardItems(result.granted, result.grantedRunes),
         onConfirm: () => { void onPurchased(result); },
       });

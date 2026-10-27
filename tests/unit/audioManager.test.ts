@@ -98,7 +98,7 @@ describe("AudioManager UI 소리", () => {
     settings.update({ sound: { masterVolume: 0.5, effectsVolume: 0.4 } });
     expect(audio.volume("ui")).toBeCloseTo(0.2);
     audio.playUi("ui.click");
-    expect(backend.sounds[0].volume).toBeCloseTo(0.2 * 0.6);
+    expect(backend.sounds[0].volume).toBeCloseTo(0.2 * 0.55);
     settings.update({ sound: { effectsMuted: true } });
     expect(backend.sounds[0].volume).toBe(0);
   });
@@ -153,6 +153,16 @@ describe("AudioManager 난전 효과음 간격", () => {
     now.mockReturnValue(1100);
     expect(audio.playSfx("battle.hit")).toBe(true);
     expect(backend.sounds).toHaveLength(1);
+    now.mockRestore();
+  });
+
+  it("허공 클릭음이 겹치지 않도록 이번 누름 뒤에 다른 소리가 났는지 안다", () => {
+    const { audio } = setup();
+    const now = vi.spyOn(performance, "now").mockReturnValue(1_000);
+    expect(audio.heardSince(1_000)).toBe(false);
+    audio.playUi("ui.click");
+    expect(audio.heardSince(1_000)).toBe(true);
+    expect(audio.heardSince(1_001)).toBe(false);
     now.mockRestore();
   });
 });

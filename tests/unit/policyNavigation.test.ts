@@ -17,6 +17,12 @@ describe("정책 문서 이동", () => {
     openPolicyDocument("/privacy", { location: { href: "https://garden.example/", assign }, open } as PolicyWindow);
     expect(assign).toHaveBeenCalledWith("https://forgarden-web.vercel.app/privacy");
   });
+
+  it("정책 안내 센터(운영정책·환불·확률·사업자 정보)도 같은 홈페이지 고정 주소로 연다", () => {
+    const open = vi.fn(() => ({}) as Window);
+    openPolicyDocument("/legal", { location: { href: "https://garden.example/", assign: vi.fn() }, open } as PolicyWindow);
+    expect(open).toHaveBeenCalledWith("https://forgarden-web.vercel.app/legal", "_blank", "noopener,noreferrer");
+  });
 });
 
 describe("앱 셸에서의 정책 문서 이동", () => {

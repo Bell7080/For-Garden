@@ -80,6 +80,7 @@ export const SETTINGS_RU = {
   "settings.support.clearCache": "Очистить кэш",
   "settings.support.terms": "Условия использования",
   "settings.support.privacy": "Политика конфиденциальности",
+  "settings.support.policies": "Правила и вероятности",
   "settings.support.resetSettings": "Сбросить настройки",
   "settings.support.resetSave": "Сбросить сохранение",
   "settings.support.withdraw": "Удалить аккаунт",

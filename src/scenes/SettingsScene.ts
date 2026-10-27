@@ -333,6 +333,8 @@ export class SettingsScene extends Phaser.Scene {
     this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += SETTINGS_SUPPORT.actionStep;
+    // 운영정책·환불·청소년 보호·확률 정보·사업자 정보는 홈페이지 안내 센터 한 곳에 모여 있다.
+    this.addTextAction(90, y, t("settings.support.policies"), () => this.openPolicy("/legal")); y += SETTINGS_SUPPORT.actionStep;
     // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
     this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;

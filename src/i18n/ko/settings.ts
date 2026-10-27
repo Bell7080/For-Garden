@@ -97,6 +97,7 @@ export const SETTINGS_KO = {
   "settings.support.clearCache": "캐시 정리",
   "settings.support.terms": "이용약관",
   "settings.support.privacy": "개인정보 처리방침",
+  "settings.support.policies": "정책·확률 정보",
   "settings.support.resetSettings": "환경설정 초기화",
   "settings.support.resetSave": "저장 데이터 초기화",
   "settings.support.withdraw": "계정 탈퇴",

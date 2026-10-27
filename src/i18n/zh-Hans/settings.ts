@@ -80,6 +80,7 @@ export const SETTINGS_ZH_HANS = {
   "settings.support.clearCache": "清除缓存",
   "settings.support.terms": "服务条款",
   "settings.support.privacy": "隐私政策",
+  "settings.support.policies": "政策与概率信息",
   "settings.support.resetSettings": "重置设置",
   "settings.support.resetSave": "重置存档数据",
   "settings.support.withdraw": "注销账号",

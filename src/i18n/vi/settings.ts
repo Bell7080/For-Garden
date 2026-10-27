@@ -80,6 +80,7 @@ export const SETTINGS_VI = {
   "settings.support.clearCache": "Xóa bộ nhớ đệm",
   "settings.support.terms": "Điều khoản dịch vụ",
   "settings.support.privacy": "Chính sách quyền riêng tư",
+  "settings.support.policies": "Chính sách & tỉ lệ",
   "settings.support.resetSettings": "Đặt lại cài đặt",
   "settings.support.resetSave": "Đặt lại dữ liệu lưu",
   "settings.support.withdraw": "Xóa tài khoản",

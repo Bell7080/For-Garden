@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_EN = {
+  "profile.unlock.achievementTier": "Claim tier {tier} of the achievement \"{name}\"",
   "account.identity.unavailable": "Check the authentication service linking settings.",
   "account.identity.keepLast": "Keep at least one sign-in method.",
   "account.identity.unlink": "Unlink {provider}",

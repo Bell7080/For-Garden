@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Первопроходец древности",
+  "modifier.seasoned-pioneer.name": "Опытный авангард",
+  "modifier.unyielding-pioneer.name": "Несгибаемый авангард",
+  "modifier.rune-master.name": "Мастер рун",
+  "modifier.trait-scholar.name": "Знаток свойств",
+  "modifier.master-mentor.name": "Наставник совершенства",
+  "profileFrame.ancient.name": "Древние пласты",
+  "profileFrame.conqueror.name": "Несгибаемый лавр",
+  "profileFrame.runic.name": "Рунное сияние",
   "stage.1-1.name": "Карантинная зона",
   "stage.1-1.situation": "Вы выбрались из горящего вагона. До города ещё далеко.",
   "stage.1-2.name": "Обрушенная оранжерея",

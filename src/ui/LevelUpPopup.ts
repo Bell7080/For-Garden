@@ -77,7 +77,7 @@ export function openLevelUpPopup(scene: Phaser.Scene, popups: PopupLayer, option
   audioManager?.playUi("ui.levelup");
   const unlocks: Unlock[] = [
     ...contentUnlockedBetween(from, to).map((entry) => ({ kind: "content" as const, id: entry.id })),
-    ...PROFILE_FRAMES.filter((frame) => frame.unlockLevel > from && frame.unlockLevel <= to)
+    ...PROFILE_FRAMES.filter((frame) => !frame.unlockAchievement && frame.unlockLevel > from && frame.unlockLevel <= to)
       .map((frame) => ({ kind: "frame" as const, frameId: frame.id, name: frame.displayName })),
   ];
   const height = levelUpPopupHeight(unlocks.map(unlockKey));

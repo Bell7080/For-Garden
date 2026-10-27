@@ -3163,5 +3163,6 @@
 "O maior nível de traço entre as entradas define a linha. Cada runa extra com traço move {shift}% de \"Sem traço\" para esse nível.",
 "Die höchste Merkmalsstufe der Einsätze wählt die Zeile. Jede weitere Rune mit Merkmal verschiebt {shift}% von „Kein Merkmal“ auf diese Stufe.",
 "Строку определяет высшая черта среди вложенных рун. Каждая дополнительная руна с чертой переносит {shift}% из «Без черты» в этот уровень."
-]
+],
+  "profile.unlock.achievementTier": ["领取成就「{name}」第{tier}阶段奖励","รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"","Nhận thưởng bậc {tier} của thành tựu \"{name}\"","Klaim hadiah tingkat {tier} pencapaian \"{name}\"","Reclama el nivel {tier} del logro «{name}»","Resgate o nível {tier} da conquista \"{name}\"","Hole Stufe {tier} des Erfolgs „{name}“ ab","Получите награду за ступень {tier} достижения «{name}»"]
 }

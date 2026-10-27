@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "ผู้บุกเบิกยุคโบราณ",
+  "modifier.seasoned-pioneer.name": "แนวหน้าผู้ชำนาญ",
+  "modifier.unyielding-pioneer.name": "แนวหน้าผู้ไม่ย่อท้อ",
+  "modifier.rune-master.name": "ปรมาจารย์รูน",
+  "modifier.trait-scholar.name": "ผู้ศึกษาคุณลักษณะ",
+  "modifier.master-mentor.name": "ผู้ชี้นำสู่ความสมบูรณ์",
+  "profileFrame.ancient.name": "ชั้นดินดึกดำบรรพ์",
+  "profileFrame.conqueror.name": "พวงเกียรติยศอันแน่วแน่",
+  "profileFrame.runic.name": "ประกายรูน",
   "stage.1-1.name": "เขตกักกัน",
   "stage.1-1.situation": "หนีออกจากตู้รถไฟที่ลุกไหม้ได้แล้ว แต่เมืองยังอยู่อีกไกล",
   "stage.1-2.name": "เรือนกระจกถล่ม",

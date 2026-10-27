@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_PT_BR = {
+  "profile.unlock.achievementTier": "Resgate o nível {tier} da conquista \"{name}\"",
   "account.identity.unavailable": "Confira as configurações de vinculação do serviço de autenticação.",
   "account.identity.keepLast": "Mantenha pelo menos uma forma de entrar.",
   "account.identity.unlink": "Desvincular {provider}",

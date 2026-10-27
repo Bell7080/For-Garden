@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ZH_HANT = {
+  "profile.unlock.achievementTier": "領取成就「{name}」第{tier}階段獎勵",
   "account.identity.unavailable": "請檢查驗證服務的連結設定。",
   "account.identity.keepLast": "不能解除最後一種登入方式。",
   "account.identity.unlink": "解除{provider}",

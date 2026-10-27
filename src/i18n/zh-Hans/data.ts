@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "太古开拓者",
+  "modifier.seasoned-pioneer.name": "熟练先锋",
+  "modifier.unyielding-pioneer.name": "不屈先锋",
+  "modifier.rune-master.name": "符文琢磨名匠",
+  "modifier.trait-scholar.name": "特性探索者",
+  "modifier.master-mentor.name": "完美引路人",
+  "profileFrame.ancient.name": "太古地层",
+  "profileFrame.conqueror.name": "不屈月桂",
+  "profileFrame.runic.name": "符文光辉",
   "stage.1-1.name": "隔离区",
   "stage.1-1.situation": "逃出了燃烧的车厢。城市还很遥远。",
   "stage.1-2.name": "倒塌温室",

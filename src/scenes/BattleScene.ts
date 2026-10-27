@@ -3053,7 +3053,7 @@ export class BattleScene extends Phaser.Scene {
       },
       replay: {
         label: t("stageComplete.replay"),
-        disabled: session.wallet.stamina < battleStageStaminaCost(stage),
+        isBlocked: () => session.wallet.stamina < battleStageStaminaCost(stage),
         onBlocked: () => this.openStaminaCharge(),
         onPress: () => {
           chosen = true;
@@ -3098,7 +3098,6 @@ export class BattleScene extends Phaser.Scene {
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;
-      const canEnter = session.wallet.stamina >= battleStageStaminaCost(stage);
       const tutorialStep = tutorialManager.lobbyStep();
       const tutorialReturn = tutorialStep !== undefined && tutorialStep !== "pull" && stage.id === lobbyTutorialGateStage(tutorialStep);
       const resultExit = tutorialReturn ? "lobby" : this.stageExit();
@@ -3107,7 +3106,7 @@ export class BattleScene extends Phaser.Scene {
         : nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
       const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
-          label: t("stageComplete.next"), primary: true, disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
+          label: t("stageComplete.next"), primary: true, isBlocked: () => upcoming.kind === "battle" && session.wallet.stamina < battleStageStaminaCost(upcoming), onBlocked: () => this.openStaminaCharge(),
           // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
           onPress: () => {
             chosen = true; session.selectedStageId = upcoming.id;
@@ -3116,7 +3115,7 @@ export class BattleScene extends Phaser.Scene {
           },
         }] : []),
         {
-          label: t("stageComplete.replay"), disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
+          label: t("stageComplete.replay"), isBlocked: () => session.wallet.stamina < battleStageStaminaCost(stage), onBlocked: () => this.openStaminaCharge(),
           // 같은 관문을 한 판 더 — 초회 후 대사가 남았으면 그것을 먼저 보고 그 관문의 편성으로 간다.
           onPress: () => {
             chosen = true;

@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Người mở lối cổ đại",
+  "modifier.seasoned-pioneer.name": "Tiên phong lão luyện",
+  "modifier.unyielding-pioneer.name": "Tiên phong bất khuất",
+  "modifier.rune-master.name": "Bậc thầy rune",
+  "modifier.trait-scholar.name": "Học giả đặc tính",
+  "modifier.master-mentor.name": "Người dẫn lối hoàn thiện",
+  "profileFrame.ancient.name": "Địa tầng thái cổ",
+  "profileFrame.conqueror.name": "Vòng nguyệt quế bất khuất",
+  "profileFrame.runic.name": "Ánh sáng rune",
   "stage.1-1.name": "Khu cách ly",
   "stage.1-1.situation": "Đã thoát khỏi toa tàu đang cháy. Thành phố vẫn còn xa.",
   "stage.1-2.name": "Nhà kính sụp đổ",

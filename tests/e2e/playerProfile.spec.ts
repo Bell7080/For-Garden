@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { startAfterOpening } from "./openingSave";
+import { E2E_SAVE_STORAGE_KEY, startAfterOpening } from "./openingSave";
 import { AVATAR_PICKER, avatarPickerHeight, PLAYER_PROFILE_LAYOUT } from "../../src/ui/playerProfileLayout";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
@@ -7,6 +7,29 @@ import { POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 import { captureGame, tap } from "./canvasInput";
 
 const WIDTH = 1080; const HEIGHT = 1920;
+
+test("업적 테두리는 미리보기와 장착을 거쳐 저장된다", async ({ page }) => {
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+  await startAfterOpening(page, (state) => {
+    state.achievements = { goldPeak: 0, claimed: { "ancient-depth": 4, "hard-frontline": 4, "rune-refinement": 4 } };
+  });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tap(page, 176, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBe(true);
+  const { avatar } = PLAYER_PROFILE_LAYOUT.header;
+  await tap(page, WIDTH / 2 + avatar.x, HEIGHT / 2 + avatar.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("프로필 꾸미기");
+  const top = HEIGHT / 2 - avatarPickerHeight(6, PROFILE_FRAMES.length, PROFILE_MODIFIERS.length) / 2;
+  await tap(page, WIDTH / 2, top + AVATAR_PICKER.tabs.y);
+  await page.waitForTimeout(700);
+  const frameIndex = PROFILE_FRAMES.findIndex(({ id }) => id === "ancient");
+  const cell = AVATAR_PICKER.frames;
+  await tap(page, WIDTH / 2 + ((frameIndex % cell.columns) - 1) * (cell.width + cell.gap), top + cell.top + cell.height / 2 + Math.floor(frameIndex / cell.columns) * (cell.height + cell.gap));
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).playerCard.frameId, E2E_SAVE_STORAGE_KEY)).toBe("ancient");
+  await page.waitForTimeout(500);
+  await captureGame(page, "docs/qa/energy-achievements-2026-10-27/achievement-frames.png");
+});
 
 test("로비 프로필 칩은 공개 정보창을 열고 공용 닫기로 정리한다", async ({ page }) => {
   await startAfterOpening(page);

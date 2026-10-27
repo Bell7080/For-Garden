@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Ancient Pathfinder",
+  "modifier.seasoned-pioneer.name": "Seasoned Vanguard",
+  "modifier.unyielding-pioneer.name": "Unyielding Vanguard",
+  "modifier.rune-master.name": "Rune Master",
+  "modifier.trait-scholar.name": "Trait Scholar",
+  "modifier.master-mentor.name": "Master Mentor",
+  "profileFrame.ancient.name": "Ancient Strata",
+  "profileFrame.conqueror.name": "Unyielding Laurel",
+  "profileFrame.runic.name": "Runic Radiance",
 
   // ── Stages, chapters, currencies, items and operational data ─────────────────────────────────────────────────────────────
   "stage.1-1.name": "The Falling Ark",

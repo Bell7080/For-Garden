@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_TH = {
+  "profile.unlock.achievementTier": "รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"",
   "account.identity.unavailable": "โปรดตรวจสอบการตั้งค่าการเชื่อมโยงของบริการยืนยันตัวตน",
   "account.identity.keepLast": "ต้องเหลือวิธีเข้าสู่ระบบอย่างน้อยหนึ่งวิธี",
   "account.identity.unlink": "ยกเลิก {provider}",

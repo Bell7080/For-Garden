@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_VI = {
+  "profile.unlock.achievementTier": "Nhận thưởng bậc {tier} của thành tựu \"{name}\"",
   "account.identity.unavailable": "Hãy kiểm tra cài đặt liên kết của dịch vụ xác thực.",
   "account.identity.keepLast": "Phải giữ ít nhất một cách đăng nhập.",
   "account.identity.unlink": "Hủy liên kết {provider}",

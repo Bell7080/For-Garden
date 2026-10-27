@@ -81,9 +81,13 @@ export class StaminaPopup {
 
   open(): void {
     const guide = currencyGuide("stamina");
-    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34 }, (body) => {
+    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34, hideCloseButton: true, closeOnBackdrop: false }, (body, close) => {
       const view = this.scene.add.container(0, 0);
       body.add(view);
+      const back = LAYOUT.returnButton;
+      if (back) body.add(new Button(this.scene, 0, back.y, {
+        width: back.width, height: back.height, label: t("stamina.back"), fontSize: 30, onClick: close,
+      }));
       const render = (): void => { view.removeAll(true); this.paint(view); };
       this.repaint = render;
       render();

@@ -25,6 +25,12 @@ export const ACHIEVEMENT_CATEGORIES: readonly AchievementCategory[] = ["growth",
 
 /** 업적이 읽는 값. 상태에서 곧바로 읽는 것과, 도입 뒤로 누적해 센 것이 섞여 있다(`core/achievements.ts`). */
 export type AchievementMetric =
+  | "ancientFloorPeak"
+  | "normalStagesCleared"
+  | "hardStagesCleared"
+  | "enhancedRunes"
+  | "traitRunes"
+  | "legendaryTraits"
   | "goldPeak"
   | "relicsOwned"
   | "maxRelicLevel"
@@ -104,6 +110,8 @@ export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   { id: "rune-artisan", category: "growth", metric: "runesEngraved", tiers: tiers([1, 5, 20, 50], [gold(10_000), gold(30_000), gold(60_000), gold(100_000)]) },
   { id: "research-level", category: "growth", metric: "playerLevel", tiers: tiers([10, 20, 30, 40, 50, 60], [gems(10), gems(15), gems(20), gems(25), gems(30), gems(50)]), modifierId: "chief-researcher" },
   // ── 전투 ──
+  { id: "normal-frontline", category: "battle", metric: "normalStagesCleared", tiers: tiers([1, 10, 20, 30], [gems(5), gems(10), gems(15), gems(25)]), modifierId: "seasoned-pioneer" },
+  { id: "hard-frontline", category: "battle", metric: "hardStagesCleared", tiers: tiers([1, 10, 20, 30], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "unyielding-pioneer" },
   { id: "victories", category: "battle", metric: "victories", tiers: tiers([10, 50, 200, 500, 1_000, 3_000], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "veteran" },
   { id: "frontline", category: "battle", metric: "storyStagesCleared", tiers: tiers([10, 20, 30], [gems(20), gems(30), gems(50)]), modifierId: "front-breaker" },
   { id: "bounty-hunter", category: "battle", metric: "bountyTiersCleared", tiers: tiers([1, 2, 3, 4, 5], [gems(5), gems(10), gems(15), gems(20), gems(30)]) },
@@ -114,6 +122,7 @@ export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   { id: "raider", category: "battle", metric: "raidRuns", tiers: tiers([1, 10, 50, 150], [gems(5), gems(15), gems(25), gems(40)]), modifierId: "raid-captain" },
   { id: "salvager", category: "battle", metric: "expeditionBest", tiers: tiers([10_000, 30_000, 65_000, 110_000, 200_000], [gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "deep-salvager" },
   // ── 탐사 ──
+  { id: "ancient-depth", category: "explore", metric: "ancientFloorPeak", tiers: tiers([1, 10, 30, 50, 100, 200], [gems(5), gems(10), gems(15), gems(20), gems(30), gems(50)]), modifierId: "ancient-pathfinder" },
   { id: "fossil-lab", category: "explore", metric: "researchPulls", tiers: tiers([10, 50, 100, 300, 1_000], [gems(5), gems(10), gems(15), gems(25), gems(40)]), modifierId: "fossil-appraiser" },
   { id: "archaeologist", category: "explore", metric: "archaeologySitesCompleted", tiers: tiers([1, 3, 5, 8], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "stratum-explorer" },
   { id: "harvest", category: "explore", metric: "harvests", tiers: tiers([10, 50, 200, 500], [gold(10_000), gold(30_000), gold(60_000), gold(100_000)]) },
@@ -123,6 +132,11 @@ export const ACHIEVEMENT_SERIES: readonly AchievementSeries[] = [
   { id: "interviewer", category: "explore", metric: "observationAnswers", tiers: tiers([5, 20, 50, 100], [gems(5), gems(10), gems(15), gems(20)]) },
   { id: "chapter-reader", category: "explore", metric: "relicChaptersRead", tiers: tiers([1, 5, 15, 30], [gems(5), gems(10), gems(15), gems(20)]) },
   // ── 수집 ──
+  { id: "rune-refinement", category: "growth", metric: "enhancedRunes", tiers: tiers([1, 3, 10, 30], [gold(10_000), gold(30_000), gold(60_000), gold(100_000)]), modifierId: "rune-master" },
+  { id: "trait-research", category: "growth", metric: "traitRunes", tiers: tiers([1, 3, 10, 30], [gems(5), gems(10), gems(15), gems(20)]), modifierId: "trait-scholar" },
+  { id: "legendary-traits", category: "collection", metric: "legendaryTraits", tiers: tiers([1, 3, 9], [gems(10), gems(20), gems(30)]) },
+  { id: "perfect-roster", category: "growth", metric: "perfectRelics", tiers: tiers([3, 5, 10], [gems(15), gems(25), gems(40)]), modifierId: "master-mentor" },
+  { id: "equipped-roster", category: "growth", metric: "fullyRunedRelics", tiers: tiers([3, 5, 10], [gold(20_000), gold(50_000), gold(100_000)]) },
   { id: "collector", category: "collection", metric: "relicsOwned", tiers: tiers([5, 10, 15, 20], [gems(10), gems(15), gems(20), gems(30)]), modifierId: "specimen-curator" },
   { id: "ssr-collector", category: "collection", metric: "ssrOwned", tiers: tiers([1, 3, 6, 9, 12], [gems(10), gems(15), gems(20), gems(30), gems(40)]) },
   { id: "rune-hoarder", category: "collection", metric: "runesOwned", tiers: tiers([10, 50, 150], [gold(10_000), gold(30_000), gold(60_000)]) },

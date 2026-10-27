@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ID = {
+  "profile.unlock.achievementTier": "Klaim hadiah tingkat {tier} pencapaian \"{name}\"",
   "account.identity.unavailable": "Periksa pengaturan penautan layanan autentikasi.",
   "account.identity.keepLast": "Sisakan setidaknya satu metode masuk.",
   "account.identity.unlink": "Lepas {provider}",

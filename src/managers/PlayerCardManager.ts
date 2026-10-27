@@ -37,14 +37,14 @@ export class PlayerCardManager {
 
   setBio(value: string): Promise<PlayerCardResult> { return this.send({ kind: "bio", value }); }
 
-  /** 테두리는 연구원 레벨이 연 것만 고를 수 있다. */
+  /** 레벨·업적 조건을 충족한 테두리만 서버가 장착한다. */
   setFrame(id: string): Promise<PlayerCardResult> { return this.send({ kind: "frame", frameId: id }); }
 
   /** 프로필 사진은 보유한 렐릭의 얼굴만 고를 수 있다. */
   setAvatar(relicId: string): Promise<PlayerCardResult> { return this.send({ kind: "avatar", relicId }); }
 
   frames(): { frame: ProfileFrameDefinition; unlocked: boolean }[] {
-    return PROFILE_FRAMES.map((frame) => ({ frame, unlocked: isProfileFrameUnlocked(frame, this.state.playerResearch.level) }));
+    return PROFILE_FRAMES.map((frame) => ({ frame, unlocked: isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed) }));
   }
 
   private async send(request: UpdatePlayerCardRequest): Promise<PlayerCardResult> {

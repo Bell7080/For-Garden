@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_RU = {
+  "profile.unlock.achievementTier": "Получите награду за ступень {tier} достижения «{name}»",
   "account.identity.unavailable": "Проверьте настройки привязки службы входа.",
   "account.identity.keepLast": "Должен остаться хотя бы один способ входа.",
   "account.identity.unlink": "Отключить {provider}",

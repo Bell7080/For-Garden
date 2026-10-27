@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_DE = {
+  "profile.unlock.achievementTier": "Hole Stufe {tier} des Erfolgs „{name}“ ab",
   "account.identity.unavailable": "Prüfe die Verknüpfungseinstellungen des Anmeldedienstes.",
   "account.identity.keepLast": "Mindestens eine Anmeldemethode muss bleiben.",
   "account.identity.unlink": "{provider} trennen",

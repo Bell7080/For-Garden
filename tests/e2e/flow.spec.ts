@@ -10,14 +10,49 @@ import { BATTLE_CONTROLS } from "../../src/ui/battleStatusLayout";
 import { BATTLE_CONTRIBUTION_LAYOUT, CONTRIBUTION_TOGGLE } from "../../src/ui/battleContributionLayout";
 import { LAB_CHROME, LAB_TITLE } from "../../src/ui/labLayout";
 import { gachaRatesTierScreenY } from "../../src/ui/gachaRatesLayout";
-import { BACK_SLOT } from "../../src/ui/popupGeometry";
+import { BACK_SLOT, POPUP_CLOSE_LAYOUT } from "../../src/ui/popupGeometry";
 import { DIALOGUE_PANEL_TOP } from "../../src/ui/dialogueStageLayout";
 import { PLAYER_LEVEL_UP_REWARD, playerExpToNext } from "../../src/core/playerLevel";
 import { PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS } from "../../src/ui/partyPreviewLayout";
 import { BATTLE_SPEEDS } from "../../src/core/battleControls";
+import { staminaPopupLayout, STAMINA_CELL } from "../../src/ui/staminaPopupLayout";
+import { currencyGuide } from "../../src/data/currencyGuide";
+import { CONTENT_STAMINA_COSTS } from "../../src/data/contentCosts";
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
+
+test("충전 직후 결과판의 같은 다음 단계 버튼으로 입장한다", async ({ page }) => {
+  await page.setViewportSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+  await page.addInitScript(() => { window.__PF_BATTLE_TEST__ = { seed: 0x5eed, preset: "result" }; });
+  await enterBattle(page, (state) => {
+    state.wallet.stamina = CONTENT_STAMINA_COSTS.normalStage;
+    state.staminaUpdatedAt = new Date().toISOString();
+    state.itemInventory = [{ itemId: "stamina-tonic", quantity: 2 }];
+    state.completedStoryIds.add("stage-1-2-post");
+    state.completedStoryIds.add("stage-1-3-pre");
+  });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.rewardPopup), { timeout: 20_000 }).toBe(true);
+  await tap(page, 268, 1490);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("스테미나");
+  await page.waitForTimeout(500);
+  await captureGame(page, "docs/qa/energy-achievements-2026-10-27/energy-before.png");
+  const guide = currencyGuide("stamina");
+  const layout = staminaPopupLayout(Math.max(guide.uses.length, guide.sources.length));
+  // 우상단에는 닫기 입력도 남기지 않는다. 돌아가기는 하단 버튼 한 곳이 맡는다.
+  await tap(page, BASE_WIDTH / 2 + layout.width / 2 - POPUP_CLOSE_LAYOUT.centerInset, BASE_HEIGHT / 2 - layout.height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("스테미나");
+  await tap(page, BASE_WIDTH / 2 + layout.cell.centers[0], BASE_HEIGHT / 2 + layout.cell.y + STAMINA_CELL.buttonY);
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).wallet.stamina, E2E_SAVE_STORAGE_KEY)).toBe(60);
+  await page.waitForTimeout(500);
+  await captureGame(page, "docs/qa/energy-achievements-2026-10-27/energy-recharged.png");
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + layout.returnButton!.y);
+  await expect.poll(() => page.evaluate(() => Boolean(window.__PF_DEBUG?.popupTitles?.includes("스테미나")))).toBe(false);
+  await tap(page, 268, 1490);
+  await expect.poll(() => scene(page), { timeout: 30_000 }).toBe("party");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.party?.selectedCount)).toBe(3);
+  await captureGame(page, "docs/qa/energy-achievements-2026-10-27/entered-after-recharge.png");
+});
 
 /**
  * 편성 화면 그리드에서 렐릭 카드의 기준 좌표.

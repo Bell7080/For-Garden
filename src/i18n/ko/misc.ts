@@ -233,6 +233,7 @@ export const MISC_KO = {
   "profile.unlock.researchDaily": "일일 임무 연구도 {value} 달성 시 획득",
   "profile.unlock.researchWeekly": "주간 임무 연구도 {value} 달성 시 획득",
   "profile.unlock.achievement": "업적 「{name}」 끝까지 달성 시 획득",
+  "profile.unlock.achievementTier": "업적 「{name}」 {tier}단계 보상 수령 시 획득",
   "profile.picker.equipped": "착용 중",
   "profile.picker.unlocked": "해금 완료",
   "profile.nickname.create.title": "반가워요, 연구원 님!",

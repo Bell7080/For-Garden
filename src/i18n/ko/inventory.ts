@@ -1,5 +1,6 @@
 /** 가방·스테미나 창·출격 미리보기의 문구. */
 export const INVENTORY_KO = {
+  "stamina.back": "돌아가기",
   "inventory.title": "가방",
   "inventory.tab.rune": "룬",
   "inventory.tab.currency": "재화",

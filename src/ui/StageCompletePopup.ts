@@ -1,6 +1,7 @@
 import { audioManager } from "../managers/AudioManager";
 import { sortRewardItems } from "./rewardOrder";
 import Phaser from "phaser";
+import { pressResultAction as pressAction } from "../core/stageCompleteAction";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
@@ -74,13 +75,6 @@ export type StageCompleteReward =
       footnote?: string;
     };
 
-/** 꺼진 길에 대신 할 일이 있으면 그것만 부르고 판은 열어 둔다. 아니면 고른 길을 알리고 닫는다. */
-function pressAction(action: StageCompleteAction, close: () => void): void {
-  if (action.disabled && action.onBlocked) { action.onBlocked(); return; }
-  action.onPress();
-  close();
-}
-
 /** 실패 결산창의 버튼 한 장. 무엇을 하면 강해지는지만 말한다. */
 export interface StageCompleteAction {
   readonly label: string;
@@ -89,6 +83,8 @@ export interface StageCompleteAction {
   readonly primary?: boolean;
   /** 지금은 갈 수 없는 길(스테미나가 모자란 다시 하기 등). 버튼은 서되 꺼져 있다. */
   readonly disabled?: boolean;
+  /** 충전처럼 결과판이 열린 동안 바뀌는 조건은 누르는 순간 다시 읽는다. */
+  readonly isBlocked?: () => boolean;
   /** 꺼진 길을 눌렀을 때 대신 할 일(스테미나 충전 창). 있으면 버튼은 켜진 채 서고, 누르면 판을 닫지 않고 이것만 부른다. */
   readonly onBlocked?: () => void;
   /** 나가기처럼 판을 떠나는 길. 글자만 붉게 선다. */
@@ -439,7 +435,7 @@ export class StageCompletePopup {
   private buildReplay(body: Phaser.GameObjects.Container, close: () => void, replay: StageCompleteAction): void {
     body.add(new Button(this.scene, 0, REPLAY.y, {
       width: REPLAY.width, height: REPLAY.height, label: replay.label, fontSize: 30, variant: "primary",
-      onClick: () => { replay.onPress(); close(); },
+      onClick: () => pressAction(replay, close),
     }));
   }
 

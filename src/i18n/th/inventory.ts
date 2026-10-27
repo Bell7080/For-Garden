@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_TH = {
+  "stamina.back": "กลับ",
   "inventory.title": "กระเป๋า",
   "inventory.tab.rune": "รูน",
   "inventory.tab.currency": "สกุลเงิน",

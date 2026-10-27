@@ -7,6 +7,15 @@
  * 키는 데이터가 이미 가진 ID를 그대로 쓴다(`relic.torika.name`). 개체가 늘면 키도 저절로 는다.
  */
 export default {
+  "modifier.ancient-pathfinder.name": "太古の開拓者",
+  "modifier.seasoned-pioneer.name": "熟練の先鋒",
+  "modifier.unyielding-pioneer.name": "不屈の先鋒",
+  "modifier.rune-master.name": "ルーン研磨の名匠",
+  "modifier.trait-scholar.name": "特性の探究者",
+  "modifier.master-mentor.name": "完成への導き手",
+  "profileFrame.ancient.name": "太古の地層",
+  "profileFrame.conqueror.name": "不屈の月桂冠",
+  "profileFrame.runic.name": "ルーンの輝き",
   // ── 렐릭 이름 ────────────────────────────────────────────────────────────
   "relic.rex.name": "レクシア",
   "relic.torika.name": "トリカ",

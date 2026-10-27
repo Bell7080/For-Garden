@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ZH_HANS = {
+  "profile.unlock.achievementTier": "领取成就「{name}」第{tier}阶段奖励",
   "account.identity.unavailable": "请检查认证服务的关联设置。",
   "account.identity.keepLast": "不能解除最后一种登录方式。",
   "account.identity.unlink": "解除{provider}",

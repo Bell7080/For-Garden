@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ES = {
+  "stamina.back": "Volver",
   "inventory.title": "Bolsa",
   "inventory.tab.rune": "Runa",
   "inventory.tab.currency": "Moneda",

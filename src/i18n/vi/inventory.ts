@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_VI = {
+  "stamina.back": "Quay lại",
   "inventory.title": "Túi đồ",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Tiền tệ",

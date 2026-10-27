@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Desbravador ancestral",
+  "modifier.seasoned-pioneer.name": "Vanguarda experiente",
+  "modifier.unyielding-pioneer.name": "Vanguarda inabalável",
+  "modifier.rune-master.name": "Mestre das runas",
+  "modifier.trait-scholar.name": "Estudioso de traços",
+  "modifier.master-mentor.name": "Mentor da perfeição",
+  "profileFrame.ancient.name": "Estratos ancestrais",
+  "profileFrame.conqueror.name": "Louro inabalável",
+  "profileFrame.runic.name": "Radiância rúnica",
   "stage.1-1.name": "Zona de quarentena",
   "stage.1-1.situation": "Você saiu do vagão em chamas. A cidade ainda está longe.",
   "stage.1-2.name": "Estufa desabada",

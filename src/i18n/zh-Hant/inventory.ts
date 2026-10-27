@@ -1,5 +1,6 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ZH_HANT = {
+  "stamina.back": "返回",
   "inventory.title": "揹包",
   "inventory.tab.rune": "符文",
   "inventory.tab.currency": "貨幣",

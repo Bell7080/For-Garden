@@ -210,7 +210,8 @@ export function openAvatarPicker(scene: Phaser.Scene, layer: PopupLayer, onDone:
         item.add(scene.add.text(0, cellHeight / 2 - 58, frame.displayName, textStyle({ role: "emphasis", size: 24, color: chosen ? hex(frame.color) : COLOR.ink })).setOrigin(0.5));
         if (!unlocked) {
           item.add(drawGlyph(scene, "lock", -30, cellHeight / 2 - 24, 22, COLOR.inkDimHex));
-          item.add(scene.add.text(-12, cellHeight / 2 - 24, t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5));
+          const lockText = scene.add.text(-12, cellHeight / 2 - 24, frame.unlockAchievement ? t("achievement.tier", { current: frame.unlockAchievement.tiers, total: frame.unlockAchievement.tiers }) : t("profile.edit.frameLocked", { level: frame.unlockLevel }), textStyle({ role: "emphasis", size: 20, color: COLOR.inkDim })).setOrigin(0, 0.5);
+          item.add(lockText);
         }
         const hit = scene.add.rectangle(0, 0, width, cellHeight, 0xffffff, 0).setInteractive({ useHandCursor: unlocked });
         hit.on("pointerup", () => {

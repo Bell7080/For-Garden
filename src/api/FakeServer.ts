@@ -1603,7 +1603,7 @@ export class FakeServer implements GameApi {
       case "frame": {
         const frame = findProfileFrame(request.frameId);
         if (!frame) return { ok: false, reason: "unknownFrame" };
-        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level)) return { ok: false, reason: "frameLocked" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed)) return { ok: false, reason: "frameLocked" };
         next = { ...card, frameId: request.frameId };
         break;
       }
@@ -3790,6 +3790,7 @@ export class FakeServer implements GameApi {
    * (2026-10-27 응태 승인 — 매달 초회 보상 전체 재지급). 그 달의 명단·시련이 정의에 들도록 지금 달을 함께 맞춘다.
    */
   private rollAncientSeasonNow(now = this.now()): void {
+    this.raiseAchievementPeaks(this.state);
     const next = rollAncientSeason(this.state.ancientSeason ?? "", this.state.cleared, now);
     if (next) { this.state.ancientSeason = next.season; this.state.cleared = next.cleared; }
     setActiveAncientSeason(this.state.ancientSeason ?? "");
@@ -4370,8 +4371,8 @@ export class FakeServer implements GameApi {
   private persist(next: Session): void {
     // 발굴권은 고고학 입장 횟수 그 자체다 — 어느 경로로 받았든 가방에 남기지 않고 횟수에 더한다(`max` 초과 허용).
     this.absorbStrataTicketsInto(next);
-    // 최고 보유 골드는 지갑만 보고는 알 수 없다 — 모든 쓰기가 지나는 이 자리에서 최고치만 올린다(업적).
-    this.raiseGoldPeak(next);
+    // 골드와 지층 최고 기록은 소비·월간 초기화 후에도 유지한다.
+    this.raiseAchievementPeaks(next);
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
     // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
@@ -4381,15 +4382,16 @@ export class FakeServer implements GameApi {
     } catch (error) {
       throw persistenceFailed(error);
     }
-    // 호출자는 nextState의 몇 칸만 this.state에 옮겨 담으므로, 저장 경계가 올린 최고 골드는 여기서 맞춘다.
+    // 호출자는 nextState의 몇 칸만 옮기므로 저장 경계가 올린 업적 최고 기록도 함께 맞춘다.
     if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
   }
 
-  private raiseGoldPeak(next: Session): void {
+  private raiseAchievementPeaks(next: Session): void {
     const achievements = normalizeAchievementState(next.achievements);
-    if (next.wallet.gold <= achievements.goldPeak && next.achievements) return;
-    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold) };
+    const ancientFloorPeak = Math.max(achievements.ancientFloorPeak ?? 0, ancientHighestCleared(next.cleared, ANCIENT_STRATA_MAX_FLOOR));
+    if (next.wallet.gold <= achievements.goldPeak && ancientFloorPeak === (achievements.ancientFloorPeak ?? 0) && next.achievements) return;
+    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}) };
     next.achievements = raised;
   }
 

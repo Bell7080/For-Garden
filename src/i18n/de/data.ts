@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Uralter Wegbereiter",
+  "modifier.seasoned-pioneer.name": "Erfahrene Vorhut",
+  "modifier.unyielding-pioneer.name": "Unbeugsame Vorhut",
+  "modifier.rune-master.name": "Runenmeister",
+  "modifier.trait-scholar.name": "Merkmalsgelehrter",
+  "modifier.master-mentor.name": "Mentor der Vollendung",
+  "profileFrame.ancient.name": "Uralte Schichten",
+  "profileFrame.conqueror.name": "Unbeugsamer Lorbeer",
+  "profileFrame.runic.name": "Runenglanz",
   "stage.1-1.name": "Quarantänezone",
   "stage.1-1.situation": "Du bist aus dem brennenden Waggon entkommen. Die Stadt ist noch weit.",
   "stage.1-2.name": "Eingestürztes Gewächshaus",

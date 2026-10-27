@@ -5,6 +5,15 @@
  * data already has (`relic.torika.name`).
  */
 export default {
+  "modifier.ancient-pathfinder.name": "Perintis Purba",
+  "modifier.seasoned-pioneer.name": "Pelopor Berpengalaman",
+  "modifier.unyielding-pioneer.name": "Pelopor Pantang Menyerah",
+  "modifier.rune-master.name": "Ahli Rune",
+  "modifier.trait-scholar.name": "Cendekiawan Trait",
+  "modifier.master-mentor.name": "Pembimbing Kesempurnaan",
+  "profileFrame.ancient.name": "Lapisan Purba",
+  "profileFrame.conqueror.name": "Mahkota Keteguhan",
+  "profileFrame.runic.name": "Kilau Rune",
   "stage.1-1.name": "Zona Karantina",
   "stage.1-1.situation": "Kamu berhasil keluar dari gerbong yang terbakar. Kota masih jauh.",
   "stage.1-2.name": "Rumah Kaca Runtuh",

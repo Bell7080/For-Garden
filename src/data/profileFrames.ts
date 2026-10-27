@@ -1,10 +1,9 @@
 import { registerDataText } from "../i18n";
 
 /**
- * 프로필 테두리 — 연구원 레벨이 여는 치장.
+ * 프로필 테두리 — 연구원 레벨 또는 업적 보상 수령으로 여는 치장.
  *
- * 수집형 RPG의 프로필 테두리는 대개 **오래 한 흔적**이다(레벨·업적·시즌). 여기서는 레벨이 연다:
- * 레벨이 곧 얼마나 오래 싸웠는가라, 테두리 하나가 그 계정의 연차를 한눈에 말한다.
+ * 레벨 테두리에 더해 지층·어려움 전선·룬 세공의 성취를 별도 모양으로 남긴다.
  * 저장에는 ID만 남고 이름·색은 이 표에서만 읽는다.
  */
 export interface ProfileFrameDefinition {
@@ -12,6 +11,7 @@ export interface ProfileFrameDefinition {
   displayName: string;
   /** 이 레벨에 닿으면 고를 수 있다. */
   readonly unlockLevel: number;
+  readonly unlockAchievement?: { readonly id: string; readonly tiers: number };
   /** 테두리 선과 발광의 색. */
   readonly color: number;
   /** 액자 안쪽을 은은하게 물들이는 색. */
@@ -23,12 +23,15 @@ export interface ProfileFrameDefinition {
   readonly style: ProfileFrameStyle;
 }
 
-export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown";
+export type ProfileFrameStyle = "plain" | "bracket" | "gem" | "wing" | "vine" | "crown" | "strata" | "laurel" | "prism";
 
 export const DEFAULT_PROFILE_FRAME_ID = "field";
 
 export const PROFILE_FRAMES: readonly ProfileFrameDefinition[] = [
   { id: "field", style: "plain", displayName: "현장 연구원", unlockLevel: 1, color: 0x9fb3c8, wash: 0x2a3644 },
+  { id: "ancient", style: "strata", displayName: "태고의 지층", unlockLevel: 1, unlockAchievement: { id: "ancient-depth", tiers: 4 }, color: 0xd8ae72, wash: 0x392818 },
+  { id: "conqueror", style: "laurel", displayName: "불굴의 월계", unlockLevel: 1, unlockAchievement: { id: "hard-frontline", tiers: 4 }, color: 0xf28b9b, wash: 0x3e1b28 },
+  { id: "runic", style: "prism", displayName: "룬의 광채", unlockLevel: 1, unlockAchievement: { id: "rune-refinement", tiers: 4 }, color: 0x7ee5de, wash: 0x143b3a },
   { id: "holo", style: "bracket", displayName: "투영 관측", unlockLevel: 10, color: 0x5fd4ff, wash: 0x173848 },
   { id: "amber", style: "gem", displayName: "호박 표본", unlockLevel: 20, color: 0xf2b441, wash: 0x3d2c12 },
   { id: "abyss", style: "wing", displayName: "심해 기록", unlockLevel: 30, color: 0xb07cff, wash: 0x2a1c44 },
@@ -45,8 +48,8 @@ export function profileFrameOrDefault(id: string): ProfileFrameDefinition {
   return findProfileFrame(id) ?? PROFILE_FRAMES[0];
 }
 
-export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLevel: number): boolean {
-  return playerLevel >= frame.unlockLevel;
+export function isProfileFrameUnlocked(frame: ProfileFrameDefinition, playerLevel: number, claimed: Readonly<Record<string, number>> = {}): boolean {
+  return playerLevel >= frame.unlockLevel && (!frame.unlockAchievement || (claimed[frame.unlockAchievement.id] ?? 0) >= frame.unlockAchievement.tiers);
 }
 
 for (const frame of PROFILE_FRAMES) registerDataText(frame, "displayName", `profileFrame.${frame.id}.name`);

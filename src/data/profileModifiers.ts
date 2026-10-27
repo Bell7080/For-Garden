@@ -10,6 +10,12 @@ export interface ProfileModifierDefinition { readonly id: string; readonly displ
 
 /** 운영 중 문구를 바꿔도 저장 호환성이 유지되는 수식어 카탈로그다. */
 export const PROFILE_MODIFIERS: readonly ProfileModifierDefinition[] = [
+  { id: "ancient-pathfinder", displayName: "태고의 개척자", rarity: "legendary", acquisitionConditionId: "achievement:ancient-depth" },
+  { id: "seasoned-pioneer", displayName: "숙련된 선봉", rarity: "epic", acquisitionConditionId: "achievement:normal-frontline" },
+  { id: "unyielding-pioneer", displayName: "불굴의 선봉", rarity: "legendary", acquisitionConditionId: "achievement:hard-frontline" },
+  { id: "rune-master", displayName: "룬 세공 명장", rarity: "epic", acquisitionConditionId: "achievement:rune-refinement" },
+  { id: "trait-scholar", displayName: "특성의 탐구자", rarity: "epic", acquisitionConditionId: "achievement:trait-research" },
+  { id: "master-mentor", displayName: "완성의 인도자", rarity: "legendary", acquisitionConditionId: "achievement:perfect-roster" },
   { id: "field-pioneer", displayName: "현장 개척자", rarity: "rare", acquisitionConditionId: "mission:daily-battle" },
   { id: "steady-researcher", displayName: "꾸준한 연구자", rarity: "common", acquisitionConditionId: "mission:daily-excavate" },
   { id: "deep-record", displayName: "심층 기록자", rarity: "epic", acquisitionConditionId: "research:weekly:research-300" },

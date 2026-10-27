@@ -1,5 +1,6 @@
 /** 작은 화면·팝업들의 일본어 표. */
 export const MISC_JA = {
+  "profile.unlock.achievementTier": "実績「{name}」の第{tier}段階報酬を受領",
   "account.identity.unavailable": "認証サービスの連携設定をご確認ください。",
   "account.identity.keepLast": "最後のログイン方法は解除できません。",
   "account.identity.unlink": "{provider} 解除",

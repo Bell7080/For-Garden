@@ -939,26 +939,8 @@
     "Relikte aller {value} Trupps besitzen",
     "Иметь реликтов всех {value} отрядов"
   ],
-  "achievement.objective.perfectRelics": [
-    "满级、突破及羁绊均达最大的遗物",
-    "เรลิกเลเวลสูงสุด ทะลวงเต็ม และสายสัมพันธ์สูงสุด",
-    "Di vật đạt cấp tối đa, Đột phá và Gắn kết tối đa",
-    "Relik dengan level, Terobosan, dan Ikatan maksimal",
-    "Reliquia con nivel, ruptura y vínculo máximos",
-    "Relíquia com nível, ruptura e vínculo máximos",
-    "Relikt mit höchster Stufe, vollem Durchbruch und maximaler Bindung",
-    "Реликт с максимальными уровнем, прорывом и связью"
-  ],
-  "achievement.objective.fullyRunedRelics": [
-    "三个符文槽均装备的遗物",
-    "เรลิกที่ใส่รูนครบสามช่อง",
-    "Di vật lấp đủ ba ô Rune",
-    "Relik dengan tiga slot Rune terisi",
-    "Reliquia con las tres ranuras de runa equipadas",
-    "Relíquia com os três espaços de runa preenchidos",
-    "Relikt mit drei belegten Runenplätzen",
-    "Реликт с тремя заполненными ячейками рун"
-  ],
+  "achievement.objective.perfectRelics": ["持有{value}名等级、突破与羁绊皆达上限的遗物","มีเรลิกที่เลเวล ทะลวงขีดจำกัด และสายสัมพันธ์สูงสุด {value} ตัว","Sở hữu {value} di vật đạt cấp, đột phá và gắn kết tối đa","Miliki {value} relik dengan level, terobosan, dan ikatan maksimal","Posee {value} reliquias con nivel, ruptura y vínculo máximos","Possua {value} relíquias com nível, ruptura e vínculo máximos","Besitze {value} Relikte mit maximalem Level, Durchbruch und Bindung","Получите {value} реликтов с максимальными уровнем, прорывом и связью"],
+  "achievement.objective.fullyRunedRelics": ["拥有{value}名符文三槽皆已装备的遗物","ใส่รูนครบสามช่องให้เรลิก {value} ตัว","Trang bị đủ ba ô rune cho {value} di vật","Isi ketiga slot rune pada {value} relik","Llena las tres ranuras de runas de {value} reliquias","Preencha os três espaços de runas de {value} relíquias","Belege alle drei Runenplätze von {value} Relikten","Заполните все три ячейки рун у {value} реликтов"],
   "achievement.objective.nicknameSet": [
     "设置昵称",
     "ตั้งชื่อเล่น",
@@ -998,5 +980,19 @@
     "Criar uma formação de {value} relíquias SSR",
     "Eine Formation mit {value} SSR-Relikten erstellen",
     "Создать построение из {value} SSR-реликтов"
-  ]
+  ],
+  "achievement.series.ancient-depth": ["迈向太古","มุ่งสู่ยุคดึกดำบรรพ์","Tiến vào thời cổ đại","Menuju Zaman Purba","Hacia la antigüedad","Rumo à antiguidade","In die Urzeit","Навстречу древности"],
+  "achievement.series.normal-frontline": ["普通难度战线","แนวหน้าระดับปกติ","Tiền tuyến Thường","Garis Depan Normal","Frente normal","Frente Normal","Normale Front","Обычный фронт"],
+  "achievement.series.hard-frontline": ["困难难度战线","แนวหน้าระดับยาก","Tiền tuyến Khó","Garis Depan Sulit","Frente difícil","Frente Difícil","Schwere Front","Сложный фронт"],
+  "achievement.series.rune-refinement": ["打磨的极致","เจียระไนจนสมบูรณ์","Bậc thầy mài rune","Ahli Asah","Maestría del tallado","Mestre da lapidação","Meister der Veredelung","Мастер огранки"],
+  "achievement.series.trait-research": ["特性研究者","นักวิจัยคุณลักษณะ","Nhà nghiên cứu đặc tính","Riset Trait","Investigador de rasgos","Pesquisador de traços","Merkmalsforscher","Исследователь свойств"],
+  "achievement.series.legendary-traits": ["传说的潜力","ศักยภาพระดับตำนาน","Tiềm năng huyền thoại","Potensi Legendaris","Potencial legendario","Potencial lendário","Legendäres Potenzial","Легендарный потенциал"],
+  "achievement.series.perfect-roster": ["完整的研究团队","ทีมวิจัยที่สมบูรณ์","Đội nghiên cứu hoàn thiện","Tim Riset Sempurna","Equipo de investigación completo","Equipe de pesquisa completa","Vollendetes Forschungsteam","Совершенная исследовательская команда"],
+  "achievement.series.equipped-roster": ["全副武装","อุปกรณ์พร้อมรบ","Trang bị đầy đủ","Perlengkapan Lengkap","Equipamiento completo","Equipamento completo","Voll ausgerüstet","Полное оснащение"],
+  "achievement.objective.ancientFloorPeak": ["通关古代地层第{value}层","ผ่านชั้น {value} ของชั้นดินโบราณ","Vượt tầng {value} Địa tầng cổ đại","Selesaikan lantai {value} Lapisan Kuno","Supera el piso {value} de los Estratos Antiguos","Conclua o andar {value} dos Estratos Antigos","Schließe Ebene {value} der Uralten Schichten ab","Пройдите этаж {value} Древних пластов"],
+  "achievement.objective.normalStagesCleared": ["通关{value}个普通难度剧情关卡","ผ่านด่านเนื้อเรื่องระดับปกติ {value} ด่าน","Vượt {value} màn cốt truyện mức Thường","Selesaikan {value} tahap cerita Normal","Supera {value} etapas de historia en Normal","Conclua {value} fases de história no Normal","Schließe {value} Story-Stufen auf Normal ab","Пройдите {value} сюжетных этапов на обычной сложности"],
+  "achievement.objective.hardStagesCleared": ["通关{value}个困难难度剧情关卡","ผ่านด่านเนื้อเรื่องระดับยาก {value} ด่าน","Vượt {value} màn cốt truyện mức Khó","Selesaikan {value} tahap cerita Sulit","Supera {value} etapas de historia en Difícil","Conclua {value} fases de história no Difícil","Schließe {value} Story-Stufen auf Schwer ab","Пройдите {value} сюжетных этапов на высокой сложности"],
+  "achievement.objective.enhancedRunes": ["持有{value}个已完成打磨的符文","มีรูนที่เจียระไนสมบูรณ์ {value} ชิ้น","Sở hữu {value} rune đã mài hoàn tất","Miliki {value} rune yang selesai diasah","Posee {value} runas totalmente talladas","Possua {value} runas totalmente lapidadas","Besitze {value} vollständig veredelte Runen","Получите {value} полностью огранённых рун"],
+  "achievement.objective.traitRunes": ["持有{value}个附带特性的符文","มีรูนที่มีคุณลักษณะ {value} ชิ้น","Sở hữu {value} rune có đặc tính","Miliki {value} rune dengan trait","Posee {value} runas con rasgos","Possua {value} runas com traços","Besitze {value} Runen mit Merkmalen","Получите {value} рун со свойствами"],
+  "achievement.objective.legendaryTraits": ["持有{value}个传说特性符文","มีรูนที่มีคุณลักษณะระดับตำนาน {value} ชิ้น","Sở hữu {value} rune có đặc tính Huyền thoại","Miliki {value} rune dengan trait Legendaris","Posee {value} runas con rasgos legendarios","Possua {value} runas com traços lendários","Besitze {value} Runen mit legendären Merkmalen","Получите {value} рун с легендарными свойствами"]
 }

@@ -5,6 +5,7 @@ import { applyMissionEvent } from "../../src/core/missions";
 import { ACHIEVEMENT_GEM_BUDGET, ACHIEVEMENT_SERIES } from "../../src/data/achievements";
 import { PROFILE_MODIFIERS } from "../../src/data/profileModifiers";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
+import { findProfileFrame, isProfileFrameUnlocked } from "../../src/data/profileFrames";
 import { KO } from "../../src/i18n/ko";
 import { SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type Session } from "../../src/state/session";
@@ -111,6 +112,37 @@ describe("단발 기록", () => {
 
 describe("업적 서버 경계", () => {
   const make = (state: Session) => new FakeServer(state, { latencyMs: 0, now: () => NOW, random: () => 0.5 });
+
+  it("지층의 지난달 최고 기록은 초기화와 재접속 뒤에도 유지하고 테두리는 수령 후에 연다", async () => {
+    const state = createDefaultSession();
+    state.ancientSeason = "2026-09";
+    state.cleared.add("ancient:50");
+    const api = make(state);
+    const frame = findProfileFrame("ancient")!;
+    expect(await api.updatePlayerCard({ kind: "frame", frameId: frame.id })).toMatchObject({ ok: false, reason: "frameLocked" });
+    await api.getPlayerState();
+    expect(state.cleared.has("ancient:50")).toBe(false);
+    expect(achievementFacts(state).ancientFloorPeak).toBe(50);
+    const claim = await api.claimAchievementRewards(["ancient-depth"]);
+    expect(claim.claimedTiers["ancient-depth"]).toHaveLength(4);
+    expect(isProfileFrameUnlocked(frame, state.playerResearch.level, state.achievements?.claimed)).toBe(true);
+    expect(await api.updatePlayerCard({ kind: "frame", frameId: frame.id })).toMatchObject({ ok: true });
+    const saves = new SaveManager(undefined);
+    const restored = saves.parse(JSON.parse(JSON.stringify(saves.exportData(state))));
+    expect(restored.achievements?.ancientFloorPeak).toBe(50);
+    expect(achievementFacts(restored).ancientFloorPeak).toBe(50);
+    await expect(make(restored).claimAchievementRewards(["ancient-depth"])).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
+  });
+
+  it("추가한 지층 업적은 구 저장의 현재 층을 소급 반영하고 난이도별 진행을 구분한다", () => {
+    const state = createDefaultSession();
+    state.cleared = new Set(["ancient:30", "1-1", "normal:1-1", "normal:1-2", "hard:1-1", "hard:ghost"]);
+    const facts = achievementFacts(state);
+    expect(facts.ancientFloorPeak).toBe(30);
+    expect(facts.normalStagesCleared).toBe(2);
+    expect(facts.hardStagesCleared).toBe(1);
+    expect(normalizeAchievementState({ goldPeak: 0, claimed: {}, ancientFloorPeak: 999 }).ancientFloorPeak).toBe(200);
+  });
 
   it("은 최고 보유 골드를 기억해, 골드를 쓴 뒤에도 업적이 뒤로 가지 않는다", async () => {
     const state = createDefaultSession();

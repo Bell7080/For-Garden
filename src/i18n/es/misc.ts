@@ -1,5 +1,6 @@
 /** Everything else: ranking, mail, profile, titles and small labels. */
 export const MISC_ES = {
+  "profile.unlock.achievementTier": "Reclama el nivel {tier} del logro «{name}»",
   "account.identity.unavailable": "Revisa la configuración de vinculación del servicio de acceso.",
   "account.identity.keepLast": "Debes conservar al menos un método de acceso.",
   "account.identity.unlink": "Desvincular {provider}",

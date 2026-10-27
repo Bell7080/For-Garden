@@ -23,10 +23,10 @@ let activeSeason = "";
 export function setActiveAncientSeason(season: string): void { activeSeason = season; }
 export function activeAncientSeason(): string { return activeSeason; }
 
-/** 1층의 출발점 — 보통 2-10 전체의 체력·압박·방어 예산(2026-10-27, 쉬움 1-10 정예에서 올렸다). */
-const ANCIENT_REFERENCE_STAGE = "normal:2-10";
+/** 1층의 출발점 — 보통 1-5 전체의 체력·압박·방어 예산(2026-10-27, 응태 요청으로 보통 2-10에서 낮췄다). */
+const ANCIENT_REFERENCE_STAGE = "normal:1-5";
 
-/** 보통 2-10의 예산을 출발점으로 삼되, 층마다 조우와 시련을 바꾼다. */
+/** 보통 1-5의 예산을 출발점으로 삼되, 층마다 조우와 시련을 바꾼다. */
 export function ancientStrataMultipliers(floor: number): { hp: number; attack: number; defense: number } {
   assertAncientFloor(floor);
   const result = { hp: 1, attack: 1, defense: 1 };

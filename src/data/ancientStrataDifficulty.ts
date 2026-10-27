@@ -1,5 +1,5 @@
 /** 고대 지층 전용 예산. 스토리/레이드/캐릭터 원본에는 적용하지 않는다. */
-export const ANCIENT_STRATA_MODEL_VERSION = 3;
+export const ANCIENT_STRATA_MODEL_VERSION = 4;
 export const ANCIENT_STRATA_MAX_FLOOR = 200;
 export const ANCIENT_STRATA_TIME_LIMIT_SECONDS = 90;
 export const ANCIENT_STRATA_ENEMY_LEVEL = 20;

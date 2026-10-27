@@ -6,8 +6,11 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
 import {
   ANCIENT_FLOORS_PER_BLOCK, ancientBlockBackdrop, ancientBlockFloors, ancientBlockOf, ancientChallengeFloor, ancientHighestCleared,
-  ancientLastBrowsableBlock, groupAncientPeers, isAncientGate,
+  ancientDayKey, ancientLastBrowsableBlock, ancientResetWarningDue, ancientSeasonEndsAt, ancientSeasonKey, groupAncientPeers, isAncientGate,
 } from "../core/ancientStrata";
+import { remainingDetail } from "../ui/itemExpiry";
+import { openAncientResetWarning } from "../ui/AncientResetWarningPopup";
+import { settingsManager } from "../managers/SettingsManager";
 import { getAncientStrataFloor } from "../core/ancientStrataBattle";
 import { ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { motionPolicy } from "../core/settings";
@@ -57,12 +60,19 @@ interface AncientPeer { id: string; name: string; level: number; relicId: string
 type PeerTab = "friends" | "guild";
 /** 마지막으로 고른 전환 — 화면을 다시 열어도 같은 쪽을 본다(기기 저장까지는 하지 않는다). */
 let lastPeerTab: PeerTab = "friends";
-/** 시련 아이디 → 노드 밑 짧은 이름표의 키. */
+/** 노드 판의 결 — 상태마다 판 색·테두리·역할 아이콘 색. */
 const NODE_STYLE = {
-  cleared: { fill: 0x10151b, alpha: 0.86, edgeAlpha: 0.45 },
-  locked: { fill: 0x0a0d11, alpha: 0.74, edgeAlpha: 0.3 },
+  /** 지금 층 — 강조색 판 위에 짙은 그림. */
+  current: { fill: COLOR.accent, alpha: 0.96, edgeAlpha: 1, icon: 0x1a1d21 },
+  /** 깬 층 — 스토리 지도의 깬 칸처럼 따뜻한 판이 밝게 남는다. */
+  cleared: { fill: 0x5a4520, alpha: 0.95, edgeAlpha: 0.9, icon: 0xffe6a8 },
+  /** 열렸지만 아직 깨지 않은 층(지금 층 말고는 없다 — 표를 비우지 않으려 둔다). */
+  open: { fill: 0x141920, alpha: 0.94, edgeAlpha: 0.9, icon: 0xf3d9a4 },
+  locked: { fill: 0x0a0d11, alpha: 0.74, edgeAlpha: 0.3, icon: COLOR.inkDimHex },
   gate: { fill: 0x2a2230 },
 } as const;
+/** 노드 둘레 글자 — 층 번호는 밑에, 시련은 오른쪽 아래 모서리에 겹친다. */
+const NODE_TEXT = { floorGap: 8, floorSize: 34, gateFloorSize: 40, trialSize: 26, trialOverhang: 18, trialLift: -6 } as const;
 
 /**
  * 고대 지층 — 끝없이 내려가는 지층 탐사.
@@ -70,7 +80,7 @@ const NODE_STYLE = {
  * 열 층이 한 구간(한 장의 지도)이고, 구간마다 원화가 바뀐다(`ancientBlockBackdrop`). 층은 위에서 아래로
  * 내려가며 노드가 가운데 축 양옆을 번갈아 오가는 긴 길이다. 노드에서 200층의 실제 적·배율을 미리 볼 수 있으며,
  * 공용 서버 전투 검증과 초회 정산을 사용한다.
- * 출격판에서 진입하며 첫 층은 쉬움 1-10 클리어 후 열린다.
+ * 출격판에서 진입하며 첫 층은 쉬움 1-10 클리어 후 열린다. 매달 1일(UTC)에 1층으로 돌아가고 명단·시련이 바뀐다.
  */
 export class AncientStrataScene extends Phaser.Scene {
   private block = 0;
@@ -137,6 +147,15 @@ export class AncientStrataScene extends Phaser.Scene {
     this.enableDragScroll();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다 — 조각마다 트윈을 걸지 않으므로 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    this.warnReset();
+  }
+
+  /** 지층 초기화가 사흘 안이면 아모가 하루 한 번 알린다. */
+  private warnReset(): void {
+    const now = new Date(), season = session.ancientSeason || ancientSeasonKey(now);
+    if (!ancientResetWarningDue(season, now, settingsManager.get().game.ancientResetSeen)) return;
+    settingsManager.rememberAncientResetSeen(ancientDayKey(now));
+    openAncientResetWarning(this, this.popups, ancientSeasonEndsAt(season));
   }
 
   private showBlock(block: number): void {
@@ -157,7 +176,8 @@ export class AncientStrataScene extends Phaser.Scene {
   /** 이 구간의 원화·길·노드를 한 컨테이너에 세운다. 컨테이너를 굴리면 모두 함께 움직인다. */
   private buildMap(): void {
     const { first, last } = ancientBlockFloors(this.block);
-    this.range.setText(`B${first} – B${last}`);
+    // 매달 1일에 1층으로 돌아간다 — 그때까지 남은 시간이 구간 옆에 선다.
+    this.range.setText(`B${first} – B${last} · ${t("ancient.season.reset", { time: remainingDetail(ancientSeasonEndsAt(session.ancientSeason || ancientSeasonKey(new Date())).toISOString()) })}`);
     this.previousButton.setEnabled(this.block > 0);
     this.nextButton.setEnabled(this.block < this.lastBlock());
     this.limits = ancientScrollLimits();
@@ -210,42 +230,30 @@ export class AncientStrataScene extends Phaser.Scene {
         map.add(glow);
         if (motion) this.tweens.add({ targets: glow, alpha: 0.35, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
-      const style = cleared ? NODE_STYLE.cleared : locked ? NODE_STYLE.locked : undefined;
+      // 깬 층은 스토리 지도처럼 밝게 남는다 — 체크 하나로 가라앉히면 지나온 길이 꺼진 칸의 줄로 읽힌다.
+      const style = current ? NODE_STYLE.current : cleared ? NODE_STYLE.cleared : locked ? NODE_STYLE.locked : NODE_STYLE.open;
       map.add(drawLayer(this, point.x, point.y, shape, {
-        fill: current ? COLOR.accent : gate ? NODE_STYLE.gate.fill : style?.fill ?? 0x141920,
-        alpha: current ? 0.96 : style?.alpha ?? 0.94,
-        edge: gate || current ? COLOR.accent : COLOR.panelEdge,
-        edgeAlpha: current ? 1 : style?.edgeAlpha ?? 0.9,
+        fill: gate && !current && !cleared ? NODE_STYLE.gate.fill : style.fill, alpha: style.alpha,
+        edge: COLOR.accent, edgeAlpha: style.edgeAlpha,
       }));
-      // 관문은 그 층에 서는 정예의 얼굴을 액자로 품는다 — 열 층마다 누가 막아서는지가 지도에서 먼저 읽힌다.
-      const leader = definition.enemies[0];
-      if (gate && leader) {
-        const face = new FaceFrame(this, point.x, point.y, { portraitAssetId: leader.portraitAssetId, size: size * 0.74, color: COLOR.accent, ...(locked ? { tint: 0x5a5a5a } : {}) });
-        map.add(face);
+      // 노드의 그림은 그 층이 어떤 무리인가다 — 적 정보창·원정 지도와 같은 역할 아이콘(잡졸·무리·정예).
+      const role = definition.enemies[0]?.encounterRole ?? "normal";
+      if (this.textures.exists(encounterRoleIcon(role))) {
+        map.add(this.add.image(point.x, point.y - size * 0.04, encounterRoleIcon(role)).setDisplaySize(size * 0.6, size * 0.6)
+          .setTint(style.icon).setAlpha(locked ? 0.7 : 1));
       }
-      // 관문의 층 이름은 얼굴 아래 원화 위에 서므로 지금 층이어도 진한 글자가 아니라 강조색이다.
-      const labelColor = current ? (gate ? COLOR.accentText : "#1a1d21") : cleared || locked ? COLOR.inkDim : COLOR.ink;
-      const labelY = gate ? point.y + size / 2 + 22 : point.y;
-      const label = this.add.text(point.x, labelY, `B${floor}`, textStyle({ role: "emphasis", size: gate ? 36 : 32, color: labelColor }))
-        .setOrigin(0.5, gate ? 0 : 0.5);
-      if (gate) label.setStroke("#05070a", 6);
-      map.add(label);
-      // 깬 층은 체크, 아직 닿지 않은 층은 자물쇠가 오른쪽 위 모서리에 작게 선다.
-      const corner = { x: point.x + size / 2 - 6, y: point.y - size / 2 + 6 };
-      if (cleared) map.add(drawGlyph(this, "check", corner.x, corner.y, 30, COLOR.accent, 1, 4));
-      else if (locked) map.add(drawGlyph(this, "lock", corner.x, corner.y, 28, COLOR.inkDimHex, 0.9));
-      // 정예·무리 층은 적 정보창과 같은 역할 아이콘을 왼쪽 위에 단다 — 일반 층은 아무것도 달지 않는다.
-      const role = leader?.encounterRole;
-      if (role && role !== "normal" && !gate && this.textures.exists(encounterRoleIcon(role))) {
-        map.add(this.add.image(point.x - size / 2 + 4, point.y - size / 2 + 4, encounterRoleIcon(role)).setDisplaySize(38, 38).setTint(locked ? COLOR.inkDimHex : 0xf3d9a4));
-      }
-      // 노드 밑의 짧은 이름표가 그 층의 시련을 말한다(자세한 수치는 노드를 눌러 연다).
-      const trialY = gate ? labelY + 46 : point.y + size / 2 + 12;
-      map.add(this.add.text(point.x, trialY, t(`ancient.trialTag.${definition.trialId}`), textStyle({ role: "emphasis", size: 22, color: locked ? COLOR.inkDim : COLOR.accentText }))
-        .setOrigin(0.5, 0).setStroke("#05070a", 5).setAlpha(locked ? 0.75 : 1));
-      if (gate) map.add(this.add.text(point.x, point.y - size / 2 - 10, t("ancient.gate"), textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5, 1).setStroke("#05070a", 6));
+      // 아직 닿지 않은 층만 오른쪽 위에 자물쇠가 작게 선다.
+      if (locked) map.add(drawGlyph(this, "lock", point.x + size / 2 - 6, point.y - size / 2 + 6, 28, COLOR.inkDimHex, 0.9));
+      // 시련은 재화 액자의 수량처럼 오른쪽 아래 모서리에 겹친다. 검은 획이 원화·판 어디에서도 글자를 떼어 낸다.
+      map.add(this.add.text(point.x + size / 2 + NODE_TEXT.trialOverhang, point.y + size / 2 - NODE_TEXT.trialLift, t(`ancient.trialTag.${definition.trialId}`),
+        textStyle({ role: "display", size: NODE_TEXT.trialSize, color: locked ? COLOR.inkDim : COLOR.dangerText }))
+        .setOrigin(1, 1).setStroke("#05070a", 7));
+      // 층 번호는 노드 밑에 크게 선다.
+      map.add(this.add.text(point.x, point.y + size / 2 + NODE_TEXT.floorGap, `B${floor}`,
+        textStyle({ role: "display", size: gate ? NODE_TEXT.gateFloorSize : NODE_TEXT.floorSize, color: locked ? COLOR.inkDim : current ? COLOR.accentText : COLOR.ink }))
+        .setOrigin(0.5, 0).setStroke("#05070a", 7));
       if (current) {
-        const tag = this.add.text(point.x, point.y - size / 2 - (gate ? 48 : 12), t("rewardTable.current"), textStyle({ role: "display", size: 26, color: COLOR.accentText }))
+        const tag = this.add.text(point.x, point.y - size / 2 - 12, t("rewardTable.current"), textStyle({ role: "display", size: 26, color: COLOR.accentText }))
           .setOrigin(0.5, 1).setStroke("#05070a", 6);
         map.add(tag);
         if (motion) this.tweens.add({ targets: tag, y: tag.y - 8, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
@@ -260,10 +268,11 @@ export class AncientStrataScene extends Phaser.Scene {
         const unlocked=isStageUnlocked(ancientStageId(floor));
         this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?"1-10":`B${floor-1}`}));
         this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
-          situation: `${t(`ancient.trial.${definition.trialId}`)}${floor>120?`\n${t("ancient.deepTrial")}`:""}\n${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
+          situation: `${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
           enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),
           elite: definition.encounterKind === "elite",
-          sections: { informationLabel:t("ancient.trials"),informationAlwaysOpen:true,rewards: definition.firstClearRewards, rewardsClaimed: session.cleared.has(`ancient:${floor}`) },
+          sections: { informationLabel:t("ancient.trials"),informationAlwaysOpen:true,
+            informationHighlights: [t(`ancient.trial.${definition.trialId}`), ...(floor > 120 ? [t("ancient.deepTrial")] : [])],rewards: definition.firstClearRewards, rewardsClaimed: session.cleared.has(`ancient:${floor}`) },
           onEnemyClick: (enemy, growth) => this.enemyInfo?.show({ def: enemy, ...growth }),
         });
       });

@@ -323,6 +323,7 @@ export class SaveManager {
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
+      ...(state.ancientSeason ? { ancientSeason: state.ancientSeason } : {}),
       ownedRelicIds: [...state.owned],
       favorite: state.favorite,
       bookmarkedRelicIds: [...state.bookmarked],
@@ -700,6 +701,7 @@ export class SaveManager {
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
     if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail("결투장 진행 정보가 올바르지 않습니다.");
+    if (data.ancientSeason !== undefined && (typeof data.ancientSeason !== "string" || !/^\d{4}-\d{2}$/.test(data.ancientSeason))) fail("고대 지층 시즌 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("우편 수령 정보가 올바르지 않습니다.");
     if (!isValidAttendanceState(data.attendance)) fail("출석 정보가 올바르지 않습니다.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("토벌권 획득 정보가 올바르지 않습니다.");
@@ -762,7 +764,7 @@ export class SaveManager {
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
-      selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
+      selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), ...(data.ancientSeason ? { ancientSeason: data.ancientSeason } : {}), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, staminaUpdatedAt: data.staminaUpdatedAt, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       relicFragments: { ...data.relicFragments },
       runeInventory: data.runeInventory.map(cloneRune),

@@ -24,16 +24,27 @@ export const ANCIENT_ENCOUNTERS: readonly AncientEncounterTemplate[] = [
   { id: "gate", kind: "elite", rosters: [["koma"],["mir"],["ikanixia"],["pulsi"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
 ];
 
+export interface AncientTrial {
+  readonly hp: number;
+  readonly attack: number;
+  readonly defense: number;
+  readonly seconds: number;
+  /** 적 전원이 최대 체력의 몇 %만큼 막을 두르고 시작하나. */
+  readonly initialShieldPercent?: number;
+  /** 적 전원의 궁극기 게이지가 몇 % 찬 채로 시작하나. */
+  readonly openingEnergyPercent?: number;
+}
 export type AncientTrialId = "endurance" | "armor" | "assault" | "deadline" | "shield" | "charge";
 export const ANCIENT_TRIAL_IDS: readonly AncientTrialId[] = ["endurance","armor","assault","deadline","shield","charge"];
+/** 시련 하나가 판을 얼마나 바꾸는가(2026-10-27 상향 — 체력·공격 +30%, 방어 +50%, 막 30%, 궁극기 50%, 시한 45초). */
 export const ANCIENT_TRIALS = {
-  endurance: { hp: 1.1, attack: 1, defense: 1, seconds: 90 },
-  armor: { hp: 1, attack: 1, defense: 1.2, seconds: 90 },
-  assault: { hp: 1, attack: 1.1, defense: 1, seconds: 90 },
-  deadline: { hp: .88, attack: 1, defense: 1, seconds: 60 },
-  shield: { hp: 1, attack: 1, defense: 1, seconds: 90 },
-  charge: { hp: 1, attack: 1, defense: 1, seconds: 90 },
-} as const;
+  endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
+  armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
+  assault: { hp: 1, attack: 1.3, defense: 1, seconds: 90 },
+  deadline: { hp: .88, attack: 1, defense: 1, seconds: 45 },
+  shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
+  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 },
+} as const satisfies Record<AncientTrialId, AncientTrial>;
 
 export function ancientEncounterRole(kind: AncientEncounterKind, index: number): EncounterRole {
   return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" || kind === "mixed" && index === 0 ? "elite" : "normal";

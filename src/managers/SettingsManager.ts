@@ -60,6 +60,12 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { guildSeen: { ...current, [page]: key } } });
   }
 
+  /** 고대 지층 초기화 예고 창을 오늘 봤다고 적는다 — 같은 날 다시 띄우지 않는다. */
+  rememberAncientResetSeen(day: string): void {
+    if (this.get().game.ancientResetSeen === day) return;
+    this.update({ game: { ancientResetSeen: day } });
+  }
+
   update(patch: SettingsPatch): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);

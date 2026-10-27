@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { createDefaultSession, createInitialRelicProgress } from "../../src/state/session";
 import { saveManager } from "../../src/state/SaveManager";
 import { emptyServerJournal } from "../../src/core/serverJournal";
@@ -9,7 +9,10 @@ import { canFireUltimate, fireUltimate, stepSkirmish, createSkirmish, percentHpD
 import { ancientStageId, ancientStageFloor } from "../../src/data/ancientStrataDifficulty";
 import { getBattleStage, getStageEnemies } from "../../src/data/stages";
 import { getRelic } from "../../src/data/relics";
-import { getAncientStrataFloor } from "../../src/core/ancientStrataBattle";
+import { getAncientStrataFloor, setActiveAncientSeason } from "../../src/core/ancientStrataBattle";
+
+// 서버가 시계의 달로 활성 시즌을 바꾼다 — 다음 테스트의 층 구성이 그 달을 물려받지 않게 되돌린다.
+afterEach(() => setActiveAncientSeason(""));
 import { battleArena } from "../../src/core/battleArena";
 
 function service(unlocked = true, unlockedFloor = 1) {
@@ -53,7 +56,7 @@ async function verifiedWin(s:ReturnType<typeof service>) {
 }
 
 describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
-  it.each([4,5,6,121])("%i층의 시련과 심층 피해 기준을 서버 발급 전투에도 적용한다",async floor=>{
+  it.each([1,2,3,4,5,6,121])("%i층의 시련과 심층 피해 기준을 서버 발급 전투에도 적용한다",async floor=>{
     const s=service(true,floor),stageId=ancientStageId(floor);
     await s.call("enterStage",[{stageId,requestId:`trial-entry-${floor}`}]);
     const lease=(await s.call("prepareCombat",[{input:{mode:"stage"},stageId}])).result as CombatLease;
@@ -63,8 +66,9 @@ describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
     const enemies=fight.fighters.filter(f=>f.side==="enemy"&&f.summonOwnerId===null);
     expect(enemies.map(f=>f.def.stats)).toEqual(definition.enemies.map(e=>e.stats));
     expect(enemies.map(f=>f.percentHpBasis)).toEqual(definition.enemyPercentHpBases);
-    if(floor===5)expect(enemies.every(f=>f.shield.amount>0)).toBe(true);
-    if(floor===6)expect(enemies.every(f=>f.energy/f.def.ultimate.cost>=.19)).toBe(true);
+    // 시련은 달마다 다른 층에 서므로 층 번호가 아니라 그 층의 시련으로 확인한다.
+    if(definition.trialId==="shield")expect(enemies.every(f=>f.shield.amount/f.maxHp>=.29)).toBe(true);
+    if(definition.trialId==="charge")expect(enemies.every(f=>f.energy/f.def.ultimate.cost>=.49)).toBe(true);
   });
 
   it("1-10 이전 입장과 층 건너뛰기·클라이언트 승리 주장만으로는 보상을 허용하지 않는다",async()=>{
@@ -118,6 +122,7 @@ describe("공용 전투 제한과 심층 비례 피해",()=>{
       const normal=getAncientStrataFloor(floor);
       expect(normal.enemyPercentHpBases).toEqual(normal.enemies.map(e=>e.stats.hp));
     }
-    expect(getAncientStrataFloor(4).timeLimitSeconds).toBe(60);
+    expect(getAncientStrataFloor(4).trialId).toBe("deadline");
+    expect(getAncientStrataFloor(4).timeLimitSeconds).toBe(45);
   });
 });

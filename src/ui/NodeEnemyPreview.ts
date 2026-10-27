@@ -40,6 +40,11 @@ export interface NodeEnemyPreviewOptions {
     /** 전투 규칙처럼 항상 읽어야 하는 정보는 접지 않고 표시한다. */
     informationLabel?: string;
     informationAlwaysOpen?: boolean;
+    /**
+     * 정보 칸 맨 위에 붉게 크게 서는 줄들 — 판을 바꾸는 규칙(고대 지층의 시련)이다. 그 아래 `situation`은 회색 곁말로 남는다.
+     * 한 줄이 한 규칙이고, 줄마다 앞에 작은 마름모가 선다.
+     */
+    informationHighlights?: readonly string[];
     /** 룬 액자를 누르면 부른다 — 받기 전의 룬은 등급·자리만 알려 주는 미리보기 쪽지를 연다. */
     onRuneClick?: (reward: Extract<StageFirstClearReward, { kind: "rune" }>, point: { x: number; y: number }) => void;
   };
@@ -228,9 +233,15 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const storyText = story && storyOpen
       ? this.scene.add.text(0, 0, story, textStyle({ role: "body", size: spec.storyText.size, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0)
       : undefined;
+    // 붉은 규칙 줄은 회색 곁말보다 크고 굵다 — 판을 고르기 전에 먼저 읽혀야 하는 말이다.
+    const highlight = spec.highlight;
+    const highlights = storyOpen ? (sections.informationHighlights ?? []).map((line) => this.scene.add
+      .text(0, 0, line, textStyle({ role: "emphasis", size: highlight.size, color: COLOR.dangerText, wrap: textWidth - highlight.indent }))
+      .setOrigin(0, 0).setStroke("#05070a", 5)) : [];
+    const highlightHeight = highlights.reduce((sum, text) => sum + text.height + highlight.gap, 0);
     const layout = storyPreviewLayout({
-      enemiesOpen: sectionOpen.enemies, storyOpen, hasStory: Boolean(story),
-      storyTextHeight: storyText?.height ?? 0, rewardCount: sections.rewards.length,
+      enemiesOpen: sectionOpen.enemies, storyOpen, hasStory: Boolean(story) || highlights.length > 0,
+      storyTextHeight: highlightHeight + (storyText?.height ?? 0), rewardCount: sections.rewards.length,
     });
     this.currentSectionLayout = layout;
     this.panelHeight = layout.height;
@@ -261,8 +272,20 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       this.add(this.scene.add.text(left, top + layout.storyHeaderY, sections.informationLabel ?? t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
       if (!sections.informationAlwaysOpen) this.addSectionToggleLabel(right, top + layout.storyHeaderY, "", sectionOpen.story, 20, COLOR.inkDim);
     }
-    if (storyText && layout.storyTextY !== undefined) { storyText.setPosition(left, top + layout.storyTextY); this.add(storyText); }
-    else storyText?.destroy();
+    if (layout.storyTextY !== undefined) {
+      let lineY = top + layout.storyTextY;
+      for (const text of highlights) {
+        // 표식은 동그라미가 아니라 마름모다(화면 전체 규칙).
+        const half = highlight.mark / 2;
+        const mark = this.scene.add.graphics().fillStyle(COLOR.danger, 1)
+          .fillPoints([new Phaser.Math.Vector2(0, -half), new Phaser.Math.Vector2(half * 0.8, 0), new Phaser.Math.Vector2(0, half), new Phaser.Math.Vector2(-half * 0.8, 0)], true)
+          .setPosition(left + half, lineY + text.height / 2);
+        text.setPosition(left + highlight.indent, lineY);
+        this.add([mark, text]);
+        lineY += text.height + highlight.gap;
+      }
+      if (storyText) { storyText.setPosition(left, lineY); this.add(storyText); }
+    } else { storyText?.destroy(); highlights.forEach((text) => text.destroy()); }
 
     // ── 초회 보상: 접지 않는다. 받은 관문이면 액자마다 검은 막과 노란 체크가 선다.
     if (layout.rewardLabelY !== undefined && layout.rewardRowY !== undefined) {

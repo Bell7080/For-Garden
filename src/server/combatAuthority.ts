@@ -1,4 +1,4 @@
-import { getAncientStrataFloor } from "../core/ancientStrataBattle";
+import { getAncientStrataFloor, setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { isStoryStageAvailable, storyDifficultyOf } from "../core/storyDifficulty";
 import type { Session } from "../state/session";
 import { getRelic } from "../data/relics";
@@ -197,6 +197,8 @@ export function prepareCombat(
         ),
     })),
   );
+  // 고대 지층은 달마다 명단·시련이 바뀐다 — 이 계정이 지금 서 있는 달로 적을 짓는다.
+  setActiveAncientSeason(state.ancientSeason ?? "");
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
   if (b.mode === "stage" && (stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : undefined;

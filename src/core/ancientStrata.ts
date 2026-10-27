@@ -75,3 +75,46 @@ export function groupAncientPeers<T extends { highestCleared: number }>(peers: r
   }
   return byFloor;
 }
+
+/**
+ * 고대 지층의 달 — UTC 기준 `YYYY-MM`. 매달 1일 00:00(UTC)에 진행이 1층으로 돌아가고, 순위도 그 달 한 칸에 쌓인다.
+ * 서버의 순위 기간 키(`server_competitive_scores.period`)는 이 값의 첫날(`YYYY-MM-01`)이다.
+ */
+export function ancientSeasonKey(now: Date): string {
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** 달 키를 0부터 세는 달 번호로 바꾼다. 비었거나 형식이 틀리면 0이다(구성의 기본 회전). */
+export function ancientSeasonIndex(season: string): number {
+  const match = /^(\d{4})-(\d{2})$/.exec(season);
+  return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : 0;
+}
+
+/** 다음 달 1일 00:00(UTC) — 이 시각에 지층이 초기화된다. */
+export function ancientSeasonEndsAt(season: string): Date {
+  const index = ancientSeasonIndex(season) + 1;
+  return new Date(Date.UTC(Math.floor(index / 12), index % 12, 1));
+}
+
+/**
+ * 진행을 이번 달로 넘긴다. 달이 바뀌었으면 지층을 초기화한다 — `ancient:N` 기록만 지우고(초회 보상도 다시 받는다), 나머지 진행은 그대로다.
+ * 달 키가 아직 없는 예전 저장은 지우지 않고 이번 달로 받아들인다 — 갱신 직후 진행이 통째로 사라지지 않게.
+ */
+export function rollAncientSeason(season: string, cleared: ReadonlySet<string>, now: Date): { season: string; cleared: Set<string> } | null {
+  const current = ancientSeasonKey(now);
+  if (season === current) return null;
+  if (!season) return { season: current, cleared: new Set(cleared) };
+  return { season: current, cleared: new Set([...cleared].filter((id) => !/^ancient:\d+$/.test(id))) };
+}
+
+/** 지층 초기화가 이만큼 남으면 지층에 들어올 때 예고 창을 띄운다(응태 — 마감 3일 전). */
+export const ANCIENT_RESET_WARNING_MS = 3 * 86_400_000;
+
+/** 예고 창을 하루 한 번만 띄우려고 기기에 남기는 날짜 키(UTC). */
+export const ancientDayKey = (now: Date): string => now.toISOString().slice(0, 10);
+
+/** 지금 예고 창을 띄울 차례인가 — 초기화 3일 전부터, 그날 아직 보지 않았을 때만. */
+export function ancientResetWarningDue(season: string, now: Date, seenDay: string): boolean {
+  const left = ancientSeasonEndsAt(season || ancientSeasonKey(now)).getTime() - now.getTime();
+  return left > 0 && left <= ANCIENT_RESET_WARNING_MS && seenDay !== ancientDayKey(now);
+}

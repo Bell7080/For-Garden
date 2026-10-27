@@ -8,12 +8,17 @@ import { ancientReferenceParty, ancientReferenceRunes, simulateAncientStrataRun 
 import { assertValidRuneInstance } from "../../src/core/runes";
 import { createCcCombatScenario } from "../../src/core/ccAuditScenarios";
 
+/** 1층의 출발점 — 보통 2-10 적 전원의 체력 합. */
+const referenceHp = () => getStageEnemies(getBattleStage("normal:2-10")).reduce((sum, e) => sum + e.stats.hp, 0);
+
 describe("고대 지층 200층 난이도 계약", () => {
-  it("1층은 1-10 체력 예산에 맞춘 일반 3인으로 시작한다", () => {
-    const definition = getAncientStrataFloor(1), reference = getStageEnemies(getBattleStage("1-10"))[0];
+  it("1층은 보통 2-10 체력 예산에 맞춘 일반 3인으로 시작한다", () => {
+    const definition = getAncientStrataFloor(1), reference = referenceHp();
     expect(definition.enemies.map(e => e.encounterRole)).toEqual(["normal", "normal", "normal"]);
     expect(definition.enemies.map(e => e.id)).toEqual(["amo", "toby", "ripa"]);
-    expect(definition.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / reference.stats.hp).toBeCloseTo(1.001, 2);
+    // 1층의 시련은 강인(체력 +30%)이고 일반 3인 조우의 체력 몫은 0.91이다 — 보통 2-10 총량 × 1.3 × 0.91.
+    expect(definition.trialId).toBe("endurance");
+    expect(definition.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / reference).toBeCloseTo(1.183, 2);
     expect(definition.enemyBreakthroughs).toEqual([0,0,0]);
     expect(definition.level).toBe(20);
     expect(definition.multipliers).toEqual({ hp: 1, attack: 1, defense: 1 });
@@ -65,13 +70,12 @@ describe("고대 지층 200층 난이도 계약", () => {
     const duo=getAncientStrataFloor(5);
     expect(duo.enemies).toHaveLength(2);
     expect(duo.enemies.every(e=>e.encounterRole==="elite")).toBe(true);
-    const reference=getStageEnemies(getBattleStage("1-10"))[0];
-    expect(duo.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / (reference.stats.hp*duo.multipliers.hp)).toBeCloseTo(1,2);
+    expect(duo.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / (referenceHp()*duo.multipliers.hp)).toBeCloseTo(1,2);
     const party=ancientReferenceParty(["rex","torika","mette"],"bare");
     const shield=createAncientStrataSkirmish(5,party.players,party);
-    for(const f of shield.fighters.filter(f=>f.side==="enemy")) expect(f.shield.amount / f.maxHp).toBeCloseTo(.1,2);
+    for(const f of shield.fighters.filter(f=>f.side==="enemy")) expect(f.shield.amount / f.maxHp).toBeCloseTo(.3,2);
     const charge=createAncientStrataSkirmish(6,party.players,party);
-    for(const f of charge.fighters.filter(f=>f.side==="enemy")) expect(f.energy / f.def.ultimate.cost).toBeCloseTo(.2,2);
+    for(const f of charge.fighters.filter(f=>f.side==="enemy")) expect(f.energy / f.def.ultimate.cost).toBeCloseTo(.5,2);
     expect(shield.enemyAugmentEffects).toEqual(duo.enemyAugmentEffects);
   });
 

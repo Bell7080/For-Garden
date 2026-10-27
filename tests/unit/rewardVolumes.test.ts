@@ -1,7 +1,8 @@
 import { describe,it,expect } from 'vitest';
 import { MISSIONS, RESEARCH_REWARD_STAGES } from '../../src/core/missions';
 import { ACHIEVEMENT_SERIES } from '../../src/data/achievements';
-import { WEEKLY_RANK_GEMS } from '../../src/data/competitiveRewards';
+import { ANCIENT_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from '../../src/data/competitiveRewards';
+import { ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from '../../src/data/ancientStrataDifficulty';
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from '../../src/core/arenaStanding';
 import { DUEL_TIERS } from '../../src/core/duelArena';
 import { RAID_DIFFICULTY } from '../../src/data/raid';
@@ -43,5 +44,14 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(DUEL_TIERS.map(t=>t.seasonReward.gems),approvalMessage).toEqual([300,500,1000,1500,2000,2500,3000,3500]);
   // 한 주에 한 사람이 받는 경쟁 젬의 끝(결투장 1위 + 원정 1위 + 아레나 마스터·1위)
   expect(WEEKLY_RANK_GEMS[0].gems*2+ARENA_TIERS.at(-1)!.weeklyReward.gems+ARENA_WEEKLY_RANK_GEMS[0].gems,approvalMessage).toBeLessThanOrEqual(9500);
+ });
+ // 2026-10-27 응태 승인: 고대 지층은 매달 초기화되고 초회 보상을 매달 전부 다시 준다(200층 끝까지 젬 6,500/월).
+ // 월간 순위는 1위 3,000 · 1,000위 밖은 백분율 구간 + 참여 200.
+ it('고대 지층의 달마다 다시 열리는 초회 젬과 월간 순위 젬은 승인된 표를 넘지 않는다',()=>{
+  const gems=Array.from({length:ANCIENT_STRATA_MAX_FLOOR},(_,i)=>ancientFirstClearReward(i+1)).reduce((sum,r)=>sum+(r.kind==='currency'&&r.currency==='gems'?r.amount:0),0);
+  expect(gems,approvalMessage).toBeLessThanOrEqual(6500);
+  expect(ANCIENT_MONTHLY_RANK_REWARDS.ranks.map(r=>r.gems),approvalMessage).toEqual([3000,2500,2000,1500,1000,900,750,600]);
+  expect(ANCIENT_MONTHLY_RANK_REWARDS.percents.map(r=>r.gems),approvalMessage).toEqual([500,400,300]);
+  expect(ANCIENT_MONTHLY_RANK_REWARDS.participation,approvalMessage).toBe(200);
  });
 });

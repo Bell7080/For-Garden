@@ -64,6 +64,8 @@ export interface GameSettings {
     dungeonTiers: { bounty: string; cake: string };
     /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
     guildSeen: { war: number; guard: number };
+    /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
+    ancientResetSeen: string;
     /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */
     runeBag: { showHolder: boolean; showEquipped: boolean } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
@@ -162,6 +164,8 @@ export interface Session {
   party: string[];
   /** 클리어한 스테이지 id. */
   cleared: Set<string>;
+  /** 고대 지층의 달(`YYYY-MM`, UTC). 달이 바뀌면 서버가 `ancient:N` 기록을 지우고 이 값을 넘긴다(`rollAncientSeason`). */
+  ancientSeason?: string;
   /** 보유한 렐릭. 뽑기로 늘어난다. */
   owned: Set<string>;
   /** 로비에 세워 두는 애착 렐릭. 한 명뿐이다. */
@@ -468,6 +472,8 @@ export interface SaveData {
   selectedStageId: string | null;
   party: string[];
   clearedStageIds: string[];
+  /** 고대 지층의 달. 없으면 예전 저장이며, 서버가 처음 넘길 때 기록을 지우지 않고 이번 달로 받아들인다. */
+  ancientSeason?: string;
   ownedRelicIds: string[];
   favorite: string;
   bookmarkedRelicIds: string[];

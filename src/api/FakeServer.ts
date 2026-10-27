@@ -60,7 +60,8 @@ import { DUEL_HISTORY_LIMIT, normalizeDuelState, duelAttemptsLeft, rollDuelPerio
 import { duelNpcPool } from "../core/duelNpcPool";
 import { simulateDuelDefenses } from "../core/duelDefense";
 import { combatPower } from "../core/combatPower";
-import { ancientHighestCleared } from "../core/ancientStrata";
+import { ancientHighestCleared, rollAncientSeason } from "../core/ancientStrata";
+import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
@@ -2226,6 +2227,7 @@ export class FakeServer implements GameApi {
     const cached = this.stageAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
+    this.rollAncientSeasonNow();
     let stage; try { stage = getStage(request.stageId); } catch { throw new GameApiError("STAGE_NOT_FOUND", "존재하지 않는 스테이지입니다."); }
     if (stage.kind !== "battle") throw new GameApiError("STAGE_NOT_FOUND", "전투 스테이지가 아닙니다.");
     if ((stage.ancientFloor !== undefined || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "아직 열리지 않은 스테이지입니다.");
@@ -2250,6 +2252,7 @@ export class FakeServer implements GameApi {
    */
   async completeStage(stageId: string, victory: boolean): Promise<CompleteStageResponse> {
     await this.delay();
+    this.rollAncientSeasonNow();
     let stage;
     const owningEvent = findEventByStageId(stageId);
     // 입장 뒤 시간이 넘어간 우회 요청도 결과 확정 경계에서 다시 차단한다.
@@ -3654,6 +3657,16 @@ export class FakeServer implements GameApi {
     return product.firstPurchaseBonus !== undefined && (this.state.productPurchases[product.id]?.count ?? 0) === 0;
   }
 
+  /**
+   * 고대 지층의 달을 서버 시각까지 넘긴다. 달이 바뀌면 `ancient:N` 기록만 지워 1층부터 다시 오르고 초회 보상이 다시 열린다
+   * (2026-10-27 응태 승인 — 매달 초회 보상 전체 재지급). 그 달의 명단·시련이 정의에 들도록 지금 달을 함께 맞춘다.
+   */
+  private rollAncientSeasonNow(now = this.now()): void {
+    const next = rollAncientSeason(this.state.ancientSeason ?? "", this.state.cleared, now);
+    if (next) { this.state.ancientSeason = next.season; this.state.cleared = next.cleared; }
+    setActiveAncientSeason(this.state.ancientSeason ?? "");
+  }
+
   /** 모든 스테미나 요청이 공유하는 서버 정산 경계다. */
   private settleStaminaNow(now = this.now()): void {
     const maximum = staminaMaxForPlayer(this.state);
@@ -3675,6 +3688,7 @@ export class FakeServer implements GameApi {
 
   private snapshot(): PlayerStateDto {
     const serverNow = this.now();
+    this.rollAncientSeasonNow(serverNow);
     this.settleStaminaNow(serverNow);
     this.settleItemExpiry(serverNow);
     // 조회도 서버 UTC 날짜를 정산해야 전날 소진한 광고 버튼이 다음 날 다시 열린다.

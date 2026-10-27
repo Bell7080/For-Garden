@@ -90,6 +90,8 @@ export const STORY_PREVIEW = {
   /** 줄거리 칸 머리줄 — 적 칸보다 낮다. */
   storyHeader: 60,
   storyText: { size: 24, inset: 56, padTop: 2, padBottom: 22 },
+  /** 정보 칸 맨 위의 붉은 규칙 줄(`informationHighlights`) — 마름모 표식 + 들여 쓴 글, 줄 사이 간격. */
+  highlight: { size: 30, mark: 16, indent: 30, gap: 10 },
   reward: { labelGap: 20, labelSize: 22, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
 } as const;
 

@@ -49,6 +49,7 @@ export const SHOP_ID = {
   "shop.premium.pass.metric.storyClears": "Cerita selesai {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Level Periset {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Tantangan Raid {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Petak Digali {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Hadiah Pass",
   "shop.premium.unsupported": "Pembayaran tidak tersedia di build ini.",
   "shop.premium.cancelled": "Pembayaran dibatalkan.",

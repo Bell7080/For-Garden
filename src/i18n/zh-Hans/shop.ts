@@ -49,6 +49,7 @@ export const SHOP_ZH_HANS = {
   "shop.premium.pass.metric.storyClears": "剧情通关 {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "研究员等级 {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "团体战挑战 {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "地层挖掘 {progress} / {goal}格",
   "shop.premium.pass.rewardTitle": "通行证奖励",
   "shop.premium.unsupported": "当前版本无法使用支付。",
   "shop.premium.cancelled": "支付已取消。",

@@ -3101,6 +3101,7 @@ export class FakeServer implements GameApi {
   private progressPassProgress(pass: ProgressPassDefinition, state: Session): number {
     if (pass.metric === "storyClears") return CHAPTERS.reduce((sum, { stages }) => sum + stages.filter(({ id }) => state.cleared.has(id)).length, 0);
     if (pass.metric === "playerLevel") return state.playerResearch.level;
+    if (pass.metric === "strataDigs") return state.missions.lifetime?.strata_tile_dug ?? 0;
     return state.progressPasses?.raidRuns ?? 0;
   }
 
@@ -3853,6 +3854,7 @@ export class FakeServer implements GameApi {
     if (board === null) throw new GameApiError("STRATA_RUN_NOT_FOUND", "진행 중인 탐사가 없습니다.");
     if (!canDigStrataTile(board, request.tileIndex)) throw new GameApiError("STRATA_TILE_UNAVAILABLE", "이미 열었거나 팔 수 없는 칸입니다.");
     const result = digTile(board, request.tileIndex);
+    this.state.missions = applyMissionEvent(this.state.missions, { type: "strata_tile_dug" }, this.now());
     this.state.archaeology.board = result.board;
     const tile = result.tile;
     let grantedRune: RuneInstance | undefined;

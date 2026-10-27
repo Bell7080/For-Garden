@@ -49,6 +49,7 @@ export const SHOP_EN = {
   "shop.premium.pass.metric.storyClears": "Story Cleared {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Researcher Level {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Raid Attempts {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Strata Tiles Dug {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Pass Rewards",
   "shop.premium.unsupported": "Payments are not available in this build.",
   "shop.premium.cancelled": "The payment was cancelled.",

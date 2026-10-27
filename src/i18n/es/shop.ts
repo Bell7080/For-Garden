@@ -49,6 +49,7 @@ export const SHOP_ES = {
   "shop.premium.pass.metric.storyClears": "Historia superada {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Nivel de investigador {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Intentos de incursión {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Casillas excavadas {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Recompensas del pase",
   "shop.premium.unsupported": "Los pagos no están disponibles en esta versión.",
   "shop.premium.cancelled": "El pago se canceló.",

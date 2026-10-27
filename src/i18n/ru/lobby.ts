@@ -51,6 +51,8 @@ export const LOBBY_RU = {
   "lobby.pass.mission.lead.storyClears": "Проходите сюжетные этапы, чтобы повышать уровень",
   "lobby.pass.mission.lead.playerLevel": "Растёт вместе с уровнем исследователя",
   "lobby.pass.mission.lead.raidRuns": "Участвуйте в рейдах, чтобы повышать уровень",
+  "lobby.pass.mission.strataDigs": "Раскопать {threshold} клеток",
+  "lobby.pass.mission.lead.strataDigs": "Раскапывайте клетки для повышения уровня",
   "lobby.pass.mission.done": "Выполнено",
   "lobby.bondXp": "Связь +{xp}",
   "lobby.bondLevelUp": "Уровень связи +{levels}",

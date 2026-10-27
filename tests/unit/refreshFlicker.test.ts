@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  * 꺼졌다 다시 부풀거나, 얼굴·원화가 빠졌다 들어오면 **새로고침된 것처럼** 읽힌다. 눈으로만
  * 보이는 일이라 소스의 모양으로 지킨다.
  */
-const read = (path: string) => readFileSync(path, "utf8");
+const read = (path: string) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");
 
 describe("다시 그리기", () => {
   it("는 씬을 직접 재시작하지 않고 연출을 건너뛰는 한 길을 지난다", () => {

@@ -6,7 +6,7 @@ const SOURCES = import.meta.glob("../../src/ui/*.ts", { query: "?raw", import: "
 function source(path: string): string {
   const text = SOURCES[path];
   expect(text, `${path}를 읽지 못했다`).toBeTypeOf("string");
-  return text;
+  return text.replace(/\r\n/g, "\n");
 }
 
 describe("스킬 아이콘 액자", () => {

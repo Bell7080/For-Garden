@@ -51,6 +51,8 @@ export const LOBBY_VI = {
   "lobby.pass.mission.lead.storyClears": "Vượt màn cốt truyện để lên cấp",
   "lobby.pass.mission.lead.playerLevel": "Tăng cùng cấp nhà nghiên cứu",
   "lobby.pass.mission.lead.raidRuns": "Đột kích để lên cấp",
+  "lobby.pass.mission.strataDigs": "Khai quật {threshold} ô địa tầng",
+  "lobby.pass.mission.lead.strataDigs": "Khai quật ô địa tầng để lên cấp",
   "lobby.pass.mission.done": "Đã đạt",
   "lobby.bondXp": "Gắn kết +{xp}",
   "lobby.bondLevelUp": "Cấp Gắn kết +{levels}",

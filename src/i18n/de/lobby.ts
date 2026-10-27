@@ -51,6 +51,8 @@ export const LOBBY_DE = {
   "lobby.pass.mission.lead.storyClears": "Schaffe Story-Stufen, um aufzusteigen",
   "lobby.pass.mission.lead.playerLevel": "Steigt mit deiner Forscherstufe",
   "lobby.pass.mission.lead.raidRuns": "Betritt Raids, um aufzusteigen",
+  "lobby.pass.mission.strataDigs": "Grabe {threshold} Felder aus",
+  "lobby.pass.mission.lead.strataDigs": "Grabe Felder aus, um aufzusteigen",
   "lobby.pass.mission.done": "Erreicht",
   "lobby.bondXp": "Bindung +{xp}",
   "lobby.bondLevelUp": "Bindungsstufe +{levels}",

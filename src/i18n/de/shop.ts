@@ -49,6 +49,7 @@ export const SHOP_DE = {
   "shop.premium.pass.metric.storyClears": "Story geschafft {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Forscherstufe {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Raid-Versuche {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Ausgegrabene Felder {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Pass-Belohnungen",
   "shop.premium.unsupported": "Zahlungen sind in diesem Build nicht verfügbar.",
   "shop.premium.cancelled": "Die Zahlung wurde abgebrochen.",

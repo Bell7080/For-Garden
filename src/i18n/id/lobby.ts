@@ -51,6 +51,8 @@ export const LOBBY_ID = {
   "lobby.pass.mission.lead.storyClears": "Selesaikan tahap cerita untuk naik level",
   "lobby.pass.mission.lead.playerLevel": "Naik bersama Level Periset",
   "lobby.pass.mission.lead.raidRuns": "Masuk raid untuk naik level",
+  "lobby.pass.mission.strataDigs": "Gali {threshold} petak strata",
+  "lobby.pass.mission.lead.strataDigs": "Gali petak strata untuk naik level",
   "lobby.pass.mission.done": "Tercapai",
   "lobby.bondXp": "Ikatan +{xp}",
   "lobby.bondLevelUp": "Level Ikatan +{levels}",

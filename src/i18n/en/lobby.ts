@@ -56,6 +56,8 @@ export const LOBBY_EN = {
   "lobby.pass.mission.lead.storyClears": "Clear story stages to level up",
   "lobby.pass.mission.lead.playerLevel": "Levels up with your Researcher Level",
   "lobby.pass.mission.lead.raidRuns": "Enter raids to level up",
+  "lobby.pass.mission.strataDigs": "Dig {threshold} strata tiles",
+  "lobby.pass.mission.lead.strataDigs": "Dig strata tiles to level up",
   "lobby.pass.mission.done": "Done",
   "lobby.bondXp": "Bond +{xp}",
   "lobby.bondLevelUp": "Bond Level +{levels}",

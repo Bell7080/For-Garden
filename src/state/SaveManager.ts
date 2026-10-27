@@ -57,7 +57,7 @@ function migrateV12Rune(definitionId: string): RuneInstance {
 
 /** 일반·QA·자동화는 같은 origin에서도 서로 다른 로컬 기록을 사용한다. */
 export const SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
-export const CURRENT_SAVE_VERSION = 51;
+export const CURRENT_SAVE_VERSION = 52;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -492,7 +492,7 @@ export class SaveManager {
     // 렐릭 이야기(v44) 도입 전 저장은 답변·읽은 장이 없고, 처음 만난 날이 없는 개체는 질문이 모두 열린다.
     const relicStory = normalizeRelicStory(legacy.relicStory);
     // 진행 패스(v45) 도입 전 저장은 받은 마디도 레이드 입장 수도 없다.
-    const progressPasses = normalizeProgressPasses(legacy.progressPasses);
+    const progressPasses = normalizeProgressPasses(legacy.progressPasses, legacy.saveVersion === undefined || Number(legacy.saveVersion) < 52);
     // 결투장(v47) 도입 전 저장은 점수 0으로 시작한다. 잃을 기록이 없다. v49부터 빈 방어덱은 기본 셋으로 채운다.
     const duel = normalizeDuelState(legacy.duel, Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds as string[] : []);
     // 우편 수령·출석·토벌권 덤은 v49 위에 더한 칸이라 없으면 빈 모양으로 채운다(저장 버전을 올리지 않는다).
@@ -618,7 +618,7 @@ export class SaveManager {
       .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
   }
@@ -796,7 +796,7 @@ function cloneProgressPasses(passes: SaveData["progressPasses"]): SaveData["prog
 }
 
 /** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
-function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
+function normalizeProgressPasses(value: unknown, legacyLevelThresholds = false): SaveData["progressPasses"] {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["progressPasses"]>;
   const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
   // v46 전 저장은 무료 칸이 없었다 — 빈 표로 올라와 지나온 무료 칸을 모두 받을 수 있다.
@@ -806,7 +806,11 @@ function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
     .filter(([id, list]) => Array.isArray(list) && findProgressPass(id))
     .map(([id, list]) => {
       const valid = new Set(findProgressPass(id)!.milestones.map(({ threshold }) => threshold));
-      return [id, [...new Set(list as number[])].filter((threshold) => valid.has(threshold))];
+      // v52: 받은 보상을 같은 순번의 새 문턱으로 옮겨 중복 수령을 막는다.
+      const oldLevels = [3, 5, 8, 10, 13, 15, 18, 20, 25, 30, 35, 40, 45, 50, 60];
+      const thresholds = (list as number[]).map((threshold) => id === "level" && legacyLevelThresholds
+        ? (oldLevels.indexOf(threshold) + 1) * 2 : threshold);
+      return [id, [...new Set(thresholds)].filter((threshold) => valid.has(threshold))];
     }));
   return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
 }

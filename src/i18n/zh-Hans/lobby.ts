@@ -51,6 +51,8 @@ export const LOBBY_ZH_HANS = {
   "lobby.pass.mission.lead.storyClears": "通关剧情关卡即可升级",
   "lobby.pass.mission.lead.playerLevel": "随研究员等级一同提升",
   "lobby.pass.mission.lead.raidRuns": "挑战团体战即可升级",
+  "lobby.pass.mission.strataDigs": "挖掘{threshold}格地层",
+  "lobby.pass.mission.lead.strataDigs": "挖掘地层格子即可升级",
   "lobby.pass.mission.done": "已达成",
   "lobby.bondXp": "羁绊 +{xp}",
   "lobby.bondLevelUp": "羁绊等级 +{levels}",

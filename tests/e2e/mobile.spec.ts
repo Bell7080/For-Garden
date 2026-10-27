@@ -390,7 +390,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
 test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입력을 차단한 뒤 닫힌다", async ({ page }) => {
   await startAfterOpening(page, (session) => {
     // 성공 뒤 다시 그려진 사용량과 같은 저장 상태를 만들고, 한도 소진 버튼도 남는 정책을 검증한다.
-    session.dailyAdRewards = { date: new Date().toISOString().slice(0, 10), claimsBySlot: { "excavation-harvest": 1, "excavation-storage": 2 }, requestIds: ["e2e-harvest", "e2e-storage-1", "e2e-storage-2"] };
+    session.dailyAdRewards = { date: new Date().toISOString().slice(0, 10), claimsBySlot: { "excavation-speed": 1, "excavation-storage": 2 }, requestIds: ["e2e-harvest", "e2e-storage-1", "e2e-storage-2"] };
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
@@ -401,12 +401,12 @@ test("방치 발굴 팝업은 좁은 로비 위 한 장으로 열리고 뒤 입�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.idleExcavationPopup)).toBe("ready");
   // 성공 상태는 남은/한도로 다시 그려지고, 소진된 보관 버튼은 0/2인 채 비활성으로 남는다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.excavationAdOffers)).toEqual([
-    { slotId: "excavation-harvest", label: "생산량 ×1.5", usage: "2/3", enabled: true },
+    { slotId: "excavation-speed", label: "생산량 ×1.5", usage: "1/2", enabled: true },
     { slotId: "excavation-storage", label: "보관량 ×2", usage: "0/2", enabled: false },
   ]);
   // 광고 버튼도 팝업이 제공한 새 중심 좌표를 가지며 좌우 순서가 슬롯 계약과 일치한다.
   const adControls = await page.evaluate(() => window.__PF_DEBUG?.idleExcavationControls?.ads ?? []);
-  expect(adControls.map(({ slotId }) => slotId)).toEqual(["excavation-harvest", "excavation-storage"]);
+  expect(adControls.map(({ slotId }) => slotId)).toEqual(["excavation-speed", "excavation-storage"]);
   expect(adControls[0].x).toBeLessThan(adControls[1].x);
   // 디버그 계약은 화면의 "발굴 진행 중" 문구가 아니라 기존 자동화용 상태명 ready를 계속 쓴다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

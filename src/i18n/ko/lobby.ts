@@ -61,6 +61,8 @@ export const LOBBY_KO = {
   "lobby.pass.mission.lead.storyClears": "스토리 관문을 클리어하면 레벨이 오릅니다",
   "lobby.pass.mission.lead.playerLevel": "연구원 레벨이 오르면 함께 오릅니다",
   "lobby.pass.mission.lead.raidRuns": "레이드에 도전하면 레벨이 오릅니다",
+  "lobby.pass.mission.strataDigs": "지층 {threshold}칸 발굴",
+  "lobby.pass.mission.lead.strataDigs": "지층의 칸을 발굴하면 레벨이 오릅니다",
   "lobby.pass.mission.done": "달성",
 
   "lobby.bondXp": "유대 +{xp}",

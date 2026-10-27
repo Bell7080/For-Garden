@@ -539,7 +539,7 @@ export interface ProgressPassMilestoneDto {
 export interface ProgressPassDto {
   id: "story" | "level" | "raid" | "archaeology";
   productId: string;
-  metric: "storyClears" | "playerLevel" | "raidRuns";
+  metric: "storyClears" | "playerLevel" | "raidRuns" | "strataDigs";
   progress: number;
   goal: number;
   owned: boolean;

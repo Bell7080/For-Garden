@@ -401,7 +401,6 @@ var LOBBY_KO = {
   "ancient.title": "\uACE0\uB300 \uC9C0\uCE35",
   "ancient.prev": "\uC774\uC804 \uAD6C\uAC04",
   "ancient.next": "\uB2E4\uC74C \uAD6C\uAC04",
-  "ancient.gate": "\uAD00\uBB38",
   "lobby.expedition.resume": "\uC774\uC5B4\uD558\uAE30 \xB7 {plays}\uD68C \xB7 \uCD5C\uACE0 {best}",
   "lobby.expedition.weekly": "\uC624\uB298 {plays}\uD68C \xB7 \uCD5C\uACE0 {best}",
   "lobby.rail.mission": "\uC784\uBB34",
@@ -439,6 +438,8 @@ var LOBBY_KO = {
   "lobby.pass.mission.lead.storyClears": "\uC2A4\uD1A0\uB9AC \uAD00\uBB38\uC744 \uD074\uB9AC\uC5B4\uD558\uBA74 \uB808\uBCA8\uC774 \uC624\uB985\uB2C8\uB2E4",
   "lobby.pass.mission.lead.playerLevel": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8\uC774 \uC624\uB974\uBA74 \uD568\uAED8 \uC624\uB985\uB2C8\uB2E4",
   "lobby.pass.mission.lead.raidRuns": "\uB808\uC774\uB4DC\uC5D0 \uB3C4\uC804\uD558\uBA74 \uB808\uBCA8\uC774 \uC624\uB985\uB2C8\uB2E4",
+  "lobby.pass.mission.strataDigs": "\uC9C0\uCE35 {threshold}\uCE78 \uBC1C\uAD74",
+  "lobby.pass.mission.lead.strataDigs": "\uC9C0\uCE35\uC758 \uCE78\uC744 \uBC1C\uAD74\uD558\uBA74 \uB808\uBCA8\uC774 \uC624\uB985\uB2C8\uB2E4",
   "lobby.pass.mission.done": "\uB2EC\uC131",
   "lobby.bondXp": "\uC720\uB300 +{xp}",
   "lobby.bondLevelUp": "\uC720\uB300 \uB808\uBCA8 +{levels}",
@@ -470,24 +471,31 @@ var LOBBY_KO = {
   "storyDifficulty.locked": "{difficulty} 4-10 \uD074\uB9AC\uC5B4 \uC2DC \uAC1C\uBC29",
   "storyDifficulty.unlocked.title": "\uC0C8\uB85C\uC6B4 \uB09C\uC774\uB3C4\uAC00 \uC5F4\uB838\uC5B4\uC694!",
   "storyDifficulty.unlocked.body": "\uCD95\uD558\uD574\uC694, \uC5F0\uAD6C\uC6D0 \uB2D8!\n{difficulty} \uB09C\uC774\uB3C4\uC5D0\uC11C \uB354 \uAC15\uD574\uC9C4 \uC801\uACFC \uC0C8\uB85C\uC6B4 \uCD08\uD68C \uBCF4\uC0C1\uC744 \uB9CC\uB098 \uBCF4\uC138\uC694.",
-  "ancient.trial.endurance": "\uC2DC\uB828 \xB7 \uC801 \uCCB4\uB825 +10%",
-  "ancient.trial.armor": "\uC2DC\uB828 \xB7 \uC801 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 +20%",
-  "ancient.trial.assault": "\uC2DC\uB828 \xB7 \uC801 \uACF5\uACA9\uB825\xB7\uC8FC\uBB38\uB825 +10%",
-  "ancient.trial.deadline": "\uC2DC\uB828 \xB7 \uC81C\uD55C \uC2DC\uAC04 60\uCD08 \xB7 \uC801 \uCCB4\uB825 \u221212%",
-  "ancient.trial.shield": "\uC2DC\uB828 \xB7 \uC801 \uC2DC\uC791 \uBCF4\uD638\uB9C9: \uCD5C\uB300 \uCCB4\uB825\uC758 10%",
-  "ancient.trial.charge": "\uC2DC\uB828 \xB7 \uC801 \uC2DC\uC791 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0 +20%",
+  "ancient.trial.endurance": "\uC801 \uCCB4\uB825 +30%",
+  "ancient.trial.armor": "\uC801 \uBC29\uC5B4\uB825\xB7\uC800\uD56D\uB825 +50%",
+  "ancient.trial.assault": "\uC801 \uACF5\uACA9\uB825\xB7\uC8FC\uBB38\uB825 +30%",
+  "ancient.trial.deadline": "\uC81C\uD55C \uC2DC\uAC04 45\uCD08 \xB7 \uC801 \uCCB4\uB825 \u221212%",
+  "ancient.trial.shield": "\uC801 \uC2DC\uC791 \uBCF4\uD638\uB9C9: \uCD5C\uB300 \uCCB4\uB825\uC758 30%",
+  "ancient.trial.charge": "\uC801 \uC2DC\uC791 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0 +50%",
   "ancient.depthMultiplier": "\uC9C0\uCE35 \uBC30\uC728",
   "ancient.deepTrial": "\uC2EC\uCE35 \uC2DC\uB828 \xB7 \uBE44\uB840 \uD53C\uD574\uB294 120\uCE35 \uD658\uC0B0 \uCCB4\uB825 \uAE30\uC900",
   "ancient.requirement": "\uBA3C\uC800 {stage} \uD074\uB9AC\uC5B4",
   "ancient.trials": "\uCE35 \uC2DC\uB828",
+  "ancient.season.reset": "\uC9C0\uCE35 \uCD08\uAE30\uD654\uAE4C\uC9C0 {time}",
+  "ancient.resetWarning.title": "\uC9C0\uCE35 \uCD08\uAE30\uD654 \uC608\uACE0",
+  "ancient.resetWarning.line": "\uC73C\uC544\uC544, \uD070\uC77C\uC774\uC5D0\uC694! \uC9C0\uCE35 \uCD08\uAE30\uD654\uAC00 \uC5BC\uB9C8 \uB0A8\uC9C0 \uC54A\uC558\uC5B4\uC694!",
+  "ancient.resetWarning.body": "\uCD08\uAE30\uD654\uB418\uBA74 \uC9C0\uCE35\uC774 1\uCE35\uC73C\uB85C \uB3CC\uC544\uAC00\uC694. \uADF8 \uC804\uC5D0 \uD55C \uCE35\uC774\uB77C\uB3C4 \uB354 \uC62C\uB77C\uAC00 \uBD10\uC694!",
+  "ancient.resetWarning.left": "\uC9C0\uCE35 \uCD08\uAE30\uD654\uAE4C\uC9C0 \uB0A8\uC740 \uC2DC\uAC04",
+  "ancient.resetWarning.ok": "\uC54C\uACA0\uC5B4\uC694!",
   "ancient.ranking.title": "\uACE0\uB300 \uC9C0\uCE35 \uC21C\uC704",
   "ancient.social.here": "{floor} \uD0D0\uC0AC \uC911",
-  "ancient.trialTag.endurance": "\uCCB4\uB825",
-  "ancient.trialTag.armor": "\uC7A5\uAC11",
-  "ancient.trialTag.assault": "\uACF5\uC138",
-  "ancient.trialTag.deadline": "\uC2DC\uD55C",
-  "ancient.trialTag.shield": "\uBCF4\uD638\uB9C9",
-  "ancient.trialTag.charge": "\uCDA9\uC804"
+  "ancient.trialTag.endurance": "\uAC15\uC778",
+  "ancient.trialTag.armor": "\uBC29\uBCBD",
+  "ancient.trialTag.assault": "\uB9F9\uACF5",
+  "ancient.trialTag.deadline": "\uCD08\uC77D\uAE30",
+  "ancient.trialTag.shield": "\uACB0\uACC4",
+  "ancient.trialTag.charge": "\uACFC\uCDA9\uC804",
+  "ancient.trialLine": "\u300C{name}\u300D {effect}"
 };
 
 // src/i18n/ko/common.ts
@@ -1517,6 +1525,7 @@ var SHOP_KO = {
   "shop.premium.pass.metric.storyClears": "\uC2A4\uD1A0\uB9AC \uD074\uB9AC\uC5B4 {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "\uC5F0\uAD6C\uC6D0 \uB808\uBCA8 {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "\uB808\uC774\uB4DC \uB3C4\uC804 {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "\uC9C0\uCE35 \uBC1C\uAD74 {progress} / {goal}\uCE78",
   "shop.premium.pass.rewardTitle": "\uD328\uC2A4 \uBCF4\uC0C1",
   "shop.premium.unsupported": "\uC774 \uBE4C\uB4DC\uC5D0\uC11C\uB294 \uACB0\uC81C\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "shop.premium.cancelled": "\uACB0\uC81C\uAC00 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
@@ -17775,21 +17784,51 @@ var ANCIENT_ENCOUNTERS = [
 ];
 var ANCIENT_TRIAL_IDS = ["endurance", "armor", "assault", "deadline", "shield", "charge"];
 var ANCIENT_TRIALS = {
-  endurance: { hp: 1.1, attack: 1, defense: 1, seconds: 90 },
-  armor: { hp: 1, attack: 1, defense: 1.2, seconds: 90 },
-  assault: { hp: 1, attack: 1.1, defense: 1, seconds: 90 },
-  deadline: { hp: 0.88, attack: 1, defense: 1, seconds: 60 },
-  shield: { hp: 1, attack: 1, defense: 1, seconds: 90 },
-  charge: { hp: 1, attack: 1, defense: 1, seconds: 90 }
+  endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
+  armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
+  assault: { hp: 1, attack: 1.3, defense: 1, seconds: 90 },
+  deadline: { hp: 0.88, attack: 1, defense: 1, seconds: 45 },
+  shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
+  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 }
 };
 function ancientEncounterRole(kind, index) {
   return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" || kind === "mixed" && index === 0 ? "elite" : "normal";
 }
 
+// src/core/ancientStrata.ts
+init_define_import_meta_env();
+function ancientHighestCleared(cleared, maxFloor) {
+  let best = 0;
+  for (const id of cleared) {
+    const match = /^ancient:(\d+)$/.exec(id);
+    if (match) best = Math.max(best, Math.min(maxFloor, Number(match[1])));
+  }
+  return best;
+}
+function ancientSeasonKey(now) {
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+function ancientSeasonIndex(season) {
+  const match = /^(\d{4})-(\d{2})$/.exec(season);
+  return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : 0;
+}
+function rollAncientSeason(season, cleared, now) {
+  const current = ancientSeasonKey(now);
+  if (season === current) return null;
+  if (!season) return { season: current, cleared: new Set(cleared) };
+  return { season: current, cleared: new Set([...cleared].filter((id) => !/^ancient:\d+$/.test(id))) };
+}
+var ANCIENT_RESET_WARNING_MS = 3 * 864e5;
+
 // src/core/ancientStrataBattle.ts
 function assertAncientFloor(floor) {
   if (!Number.isInteger(floor) || floor < 1 || floor > ANCIENT_STRATA_MAX_FLOOR) throw new RangeError("\uACE0\uB300 \uC9C0\uCE35\uC740 1~200\uCE35 \uC815\uC218\uB9CC \uD5C8\uC6A9\uD569\uB2C8\uB2E4.");
 }
+var activeSeason = "";
+function setActiveAncientSeason(season) {
+  activeSeason = season;
+}
+var ANCIENT_REFERENCE_STAGE = "normal:2-10";
 function ancientStrataMultipliers(floor) {
   assertAncientFloor(floor);
   const result = { hp: 1, attack: 1, defense: 1 };
@@ -17801,43 +17840,61 @@ function ancientStrataMultipliers(floor) {
   }
   return result;
 }
-function getAncientStrataFloor(floor) {
+var referenceCache;
+function ancientReferenceBudget() {
+  if (referenceCache) return referenceCache;
+  const enemies = getStageEnemies(getBattleStage(ANCIENT_REFERENCE_STAGE));
+  referenceCache = {
+    hp: enemies.reduce((sum, enemy) => sum + enemy.stats.hp, 0),
+    pressure: enemies.reduce((sum, enemy) => sum + Math.max(enemy.stats.atk, enemy.stats.ap) * enemy.stats.attackSpeed / 100, 0),
+    defense: enemies.reduce((sum, enemy) => sum + enemy.stats.def + enemy.stats.res, 0) / enemies.length
+  };
+  return referenceCache;
+}
+function getAncientStrataFloor(floor, season = activeSeason) {
   const multipliers = ancientStrataMultipliers(floor);
+  const month = ancientSeasonIndex(season);
   const block = Math.floor((floor - 1) / 10), template = ANCIENT_ENCOUNTERS[(floor - 1) % 10];
-  const roster = template.rosters[block % template.rosters.length];
-  const trialId = ANCIENT_TRIAL_IDS[(floor - 1 + block) % ANCIENT_TRIAL_IDS.length], trial = ANCIENT_TRIALS[trialId];
-  const reference = getStageEnemies(getBattleStage("1-10"))[0];
+  const rosterVariant = (block + month) % template.rosters.length, roster = template.rosters[rosterVariant];
+  const trialId = ANCIENT_TRIAL_IDS[(floor - 1 + block + month) % ANCIENT_TRIAL_IDS.length], trial = ANCIENT_TRIALS[trialId];
+  const reference = ancientReferenceBudget();
   const roles = roster.map((_, index) => ancientEncounterRole(template.kind, index));
   const raw = roster.map((id, index) => applyEncounterScaling(getRelic(id).stats, ANCIENT_STRATA_ENEMY_LEVEL, roles[index], roles.filter((role) => role === roles[index]).length));
   const rawHp = raw.reduce((sum, stats) => sum + stats.hp, 0);
   const pressure = (stats) => Math.max(stats.atk, stats.ap) * stats.attackSpeed / 100;
   const rawPressure = raw.reduce((sum, stats) => sum + pressure(stats), 0);
-  const hpFactor = reference.stats.hp / rawHp * multipliers.hp * template.hpBudget * trial.hp;
-  const attackFactor = pressure(reference.stats) / rawPressure * multipliers.attack * template.attackBudget * trial.attack;
+  const rawDefense = raw.reduce((sum, stats) => sum + stats.def + stats.res, 0) / raw.length;
+  const hpFactor = reference.hp / rawHp * multipliers.hp * template.hpBudget * trial.hp;
+  const attackFactor = reference.pressure / rawPressure * multipliers.attack * template.attackBudget * trial.attack;
+  const defenseFactor = reference.defense / rawDefense * multipliers.defense * template.defenseBudget * trial.defense;
   const enemies = roster.map((id, index) => {
     const base = getRelic(id), stats = { ...raw[index] };
     stats.hp = Math.max(1, Math.round(stats.hp * hpFactor));
     stats.atk = Math.max(1, Math.round(stats.atk * attackFactor));
     stats.ap = Math.max(1, Math.round(stats.ap * attackFactor));
-    stats.def = Math.max(1, Math.round(stats.def * multipliers.defense * template.defenseBudget * trial.defense));
-    stats.res = Math.max(1, Math.round(stats.res * multipliers.defense * template.defenseBudget * trial.defense));
+    stats.def = Math.max(1, Math.round(stats.def * defenseFactor));
+    stats.res = Math.max(1, Math.round(stats.res * defenseFactor));
     return { ...base, encounterRole: roles[index], stats };
   });
-  const enemyAugmentEffects = trialId === "shield" ? [{ kind: "initialShieldPercent", percent: 10, scope: { kind: "all" } }] : trialId === "charge" ? [{ kind: "openingEnergyPercent", percent: 20, scope: { kind: "all" } }] : [];
+  const enemyAugmentEffects = [
+    ...trial.initialShieldPercent ? [{ kind: "initialShieldPercent", percent: trial.initialShieldPercent, scope: { kind: "all" } }] : [],
+    ...trial.openingEnergyPercent ? [{ kind: "openingEnergyPercent", percent: trial.openingEnergyPercent, scope: { kind: "all" } }] : []
+  ];
   const band = ANCIENT_DIFFICULTY_BANDS.find((band2) => floor <= band2.last);
   return {
     floor,
     level: ANCIENT_STRATA_ENEMY_LEVEL,
     breakthrough: 0,
     focus: band.focus,
+    season,
     encounterId: template.id,
     encounterKind: template.kind,
-    rosterVariant: block % template.rosters.length,
+    rosterVariant,
     trialId,
     trial,
     timeLimitSeconds: trial.seconds,
     multipliers,
-    budgetFactors: { hp: hpFactor, attack: attackFactor },
+    budgetFactors: { hp: hpFactor, attack: attackFactor, defense: defenseFactor },
     enemies,
     enemyPercentHpBases: enemies.map((enemy) => Math.max(1, Math.round(enemy.stats.hp * ancientStrataMultipliers(Math.min(floor, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR)).hp / multipliers.hp))),
     firstClearRewards: [ancientFirstClearReward(floor)],
@@ -20045,6 +20102,20 @@ var WEEKLY_RANK_GEMS = [
   { upTo: 100, gems: 1e3 },
   { upTo: null, gems: 500 }
 ];
+var ANCIENT_MONTHLY_RANK_REWARDS = {
+  ranks: [
+    { upTo: 1, gems: 3e3 },
+    { upTo: 2, gems: 2500 },
+    { upTo: 3, gems: 2e3 },
+    { upTo: 10, gems: 1500 },
+    { upTo: 50, gems: 1e3 },
+    { upTo: 100, gems: 900 },
+    { upTo: 300, gems: 750 },
+    { upTo: 1e3, gems: 600 }
+  ],
+  percents: [{ upToPercent: 10, gems: 500 }, { upToPercent: 30, gems: 400 }, { upToPercent: 50, gems: 300 }],
+  participation: 200
+};
 
 // src/data/expedition.ts
 var EXPEDITION_MAP_BALANCE = {
@@ -20409,7 +20480,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, runeBag: { showHolder: false, showEquipped: true } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -20462,6 +20533,7 @@ function normalizeSettings(value) {
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
       guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) },
+      ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
       // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
       runeBag: { showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder), showEquipped: bool(record(g.runeBag).showEquipped, d.game.runeBag.showEquipped) }
     },
@@ -26988,21 +27060,21 @@ var PROGRESS_PASSES = [
     productId: "premium-level-pass",
     metric: "playerLevel",
     milestones: [
-      step(3, currency("gold", 5e3), currency("cheesecake", 300), currency("gems", 100)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
-      step(8, currency("gems", 30), currency("gold", 5e4), currency("gems", 200)),
-      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 200)),
-      step(13, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
-      step(15, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
-      step(18, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
-      step(20, currency("gold", 15e3), currency("dnaFragments", 20), currency("gems", 300)),
-      step(25, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
-      step(30, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
-      step(35, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
-      step(40, currency("gold", 25e3), currency("cheesecake", 600), currency("gems", 400)),
-      step(45, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
-      step(60, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1e3))
+      step(2, currency("gold", 5e3), currency("cheesecake", 300), currency("gems", 100)),
+      step(4, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
+      step(6, currency("gems", 30), currency("gold", 5e4), currency("gems", 200)),
+      step(8, currency("gold", 1e4), currency("amber", 1), currency("gems", 200)),
+      step(10, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
+      step(12, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
+      step(14, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
+      step(16, currency("gold", 15e3), currency("dnaFragments", 20), currency("gems", 300)),
+      step(18, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
+      step(20, currency("gems", 60), currency("gold", 1e5), currency("gems", 350)),
+      step(22, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
+      step(24, currency("gold", 25e3), currency("cheesecake", 600), currency("gems", 400)),
+      step(26, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
+      step(28, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
+      step(30, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1e3))
     ]
   },
   {
@@ -27028,11 +27100,10 @@ var PROGRESS_PASSES = [
     ]
   },
   {
-    // 임시 — 패스 탭 줄이 네 칸일 때 옆으로 흐르는 스크롤을 확인하려고 더한 항목이다. 진행도는 새로 세지 않고 연구원
-    // 레벨을 빌려 쓰며(저장 구조를 건드리지 않는다), 정식 고고학 패스가 정해지면 이 항목째 지우거나 바꾼다.
+    // 실제 발굴한 칸 수를 센다. 입장이나 중도 종료만으로 진행하지 않는다.
     id: "archaeology",
     productId: "premium-archaeology-pass",
-    metric: "playerLevel",
+    metric: "strataDigs",
     milestones: [
       step(3, currency("gold", 5e3), item("strata-ticket", 2), currency("gems", 60)),
       step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
@@ -27107,7 +27178,7 @@ function migrateV12Rune(definitionId) {
   return cloneRune(rune);
 }
 var SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
-var CURRENT_SAVE_VERSION = 51;
+var CURRENT_SAVE_VERSION = 52;
 function clampResearchPoints(saved) {
   const clamp2 = (period) => {
     const value = saved?.[period];
@@ -27313,6 +27384,7 @@ var SaveManager = class {
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
+      ...state.ancientSeason ? { ancientSeason: state.ancientSeason } : {},
       ownedRelicIds: [...state.owned],
       favorite: state.favorite,
       bookmarkedRelicIds: [...state.bookmarked],
@@ -27435,7 +27507,7 @@ var SaveManager = class {
     const cakeClearedIndex = Number.isInteger(savedCake?.clearedIndex) ? Number(savedCake?.clearedIndex) : -1;
     const cakeOperation = { clearedIndex: Math.min(Math.max(-1, cakeClearedIndex), CAKE_OPERATION_TIERS.length - 1) };
     const relicStory = normalizeRelicStory(legacy.relicStory);
-    const progressPasses = normalizeProgressPasses(legacy.progressPasses);
+    const progressPasses = normalizeProgressPasses(legacy.progressPasses, legacy.saveVersion === void 0 || Number(legacy.saveVersion) < 52);
     const duel2 = normalizeDuelState(legacy.duel, Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds : []);
     const claimedMailIds = Array.isArray(legacy.claimedMailIds) ? [...new Set(legacy.claimedMailIds.filter((id) => typeof id === "string"))] : [];
     const attendance = normalizeAttendanceState(legacy.attendance);
@@ -27511,7 +27583,7 @@ var SaveManager = class {
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
     if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, CURRENT_SAVE_VERSION];
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
     return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
   }
@@ -27588,6 +27660,7 @@ var SaveManager = class {
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
     if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail3("\uACB0\uD22C\uC7A5 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.ancientSeason !== void 0 && (typeof data.ancientSeason !== "string" || !/^\d{4}-\d{2}$/.test(data.ancientSeason))) fail3("\uACE0\uB300 \uC9C0\uCE35 \uC2DC\uC98C \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail3("\uC6B0\uD3B8 \uC218\uB839 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidAttendanceState(data.attendance)) fail3("\uCD9C\uC11D \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail3("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -27648,6 +27721,7 @@ var SaveManager = class {
       selectedStageId: data.selectedStageId,
       party: [...data.party],
       cleared: new Set(data.clearedStageIds),
+      ...data.ancientSeason ? { ancientSeason: data.ancientSeason } : {},
       owned: new Set(data.ownedRelicIds),
       favorite: data.favorite,
       bookmarked: new Set(data.bookmarkedRelicIds),
@@ -27681,12 +27755,14 @@ function cloneProgressPasses(passes) {
   const copy = (table) => Object.fromEntries(Object.entries(table).map(([id, thresholds]) => [id, [...thresholds]]));
   return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed) };
 }
-function normalizeProgressPasses(value) {
+function normalizeProgressPasses(value, legacyLevelThresholds = false) {
   const source = value && typeof value === "object" ? value : {};
   const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
   const table = (value2) => Object.fromEntries(Object.entries(value2 && typeof value2 === "object" ? value2 : {}).filter(([id, list]) => Array.isArray(list) && findProgressPass(id)).map(([id, list]) => {
     const valid = new Set(findProgressPass(id).milestones.map(({ threshold }) => threshold));
-    return [id, [...new Set(list)].filter((threshold) => valid.has(threshold))];
+    const oldLevels = [3, 5, 8, 10, 13, 15, 18, 20, 25, 30, 35, 40, 45, 50, 60];
+    const thresholds = list.map((threshold) => id === "level" && legacyLevelThresholds ? (oldLevels.indexOf(threshold) + 1) * 2 : threshold);
+    return [id, [...new Set(thresholds)].filter((threshold) => valid.has(threshold))];
   }));
   return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
 }
@@ -28151,6 +28227,7 @@ function prepareCombat(state, request, now, id) {
       )
     }))
   );
+  setActiveAncientSeason(state.ancientSeason ?? "");
   const stage = getBattleStage(input.stageId ?? state.selectedStageId ?? "1-1");
   if (b.mode === "stage" && (stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, state.cleared)) return fail();
   const cake = b.mode === "cake" ? getCakeOperationTier(b.tierId) : void 0;
@@ -31136,17 +31213,6 @@ function simulateDuelDefenses(state, now, pool, defensePower, random) {
   return { state: next, entries, reachedTiers };
 }
 
-// src/core/ancientStrata.ts
-init_define_import_meta_env();
-function ancientHighestCleared(cleared, maxFloor) {
-  let best = 0;
-  for (const id of cleared) {
-    const match = /^ancient:(\d+)$/.exec(id);
-    if (match) best = Math.max(best, Math.min(maxFloor, Number(match[1])));
-  }
-  return best;
-}
-
 // src/core/debugCommand.ts
 init_define_import_meta_env();
 function breakthroughForLevel(level) {
@@ -32764,6 +32830,11 @@ var SettingsManager = class extends EventTarget {
     const current = this.get().game.guildSeen;
     if (current[page] === key) return;
     this.update({ game: { guildSeen: { ...current, [page]: key } } });
+  }
+  /** 고대 지층 초기화 예고 창을 오늘 봤다고 적는다 — 같은 날 다시 띄우지 않는다. */
+  rememberAncientResetSeen(day) {
+    if (this.get().game.ancientResetSeen === day) return;
+    this.update({ game: { ancientResetSeen: day } });
   }
   update(patch) {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...patch[key] ?? {} }]));
@@ -34908,6 +34979,7 @@ var FakeServer = class {
     const cached = this.stageAdmissionResults.get(request.requestId);
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC785\uC7A5 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    this.rollAncientSeasonNow();
     let stage;
     try {
       stage = getStage(request.stageId);
@@ -34934,6 +35006,7 @@ var FakeServer = class {
    */
   async completeStage(stageId, victory) {
     await this.delay();
+    this.rollAncientSeasonNow();
     let stage;
     const owningEvent = findEventByStageId(stageId);
     if (owningEvent) this.assertEventActive(owningEvent, this.now());
@@ -35836,6 +35909,7 @@ var FakeServer = class {
   progressPassProgress(pass, state) {
     if (pass.metric === "storyClears") return CHAPTERS.reduce((sum, { stages }) => sum + stages.filter(({ id }) => state.cleared.has(id)).length, 0);
     if (pass.metric === "playerLevel") return state.playerResearch.level;
+    if (pass.metric === "strataDigs") return state.missions.lifetime?.strata_tile_dug ?? 0;
     return state.progressPasses?.raidRuns ?? 0;
   }
   progressPassDtos(state) {
@@ -36334,6 +36408,18 @@ var FakeServer = class {
   firstBonusAvailable(product) {
     return product.firstPurchaseBonus !== void 0 && (this.state.productPurchases[product.id]?.count ?? 0) === 0;
   }
+  /**
+   * 고대 지층의 달을 서버 시각까지 넘긴다. 달이 바뀌면 `ancient:N` 기록만 지워 1층부터 다시 오르고 초회 보상이 다시 열린다
+   * (2026-10-27 응태 승인 — 매달 초회 보상 전체 재지급). 그 달의 명단·시련이 정의에 들도록 지금 달을 함께 맞춘다.
+   */
+  rollAncientSeasonNow(now = this.now()) {
+    const next = rollAncientSeason(this.state.ancientSeason ?? "", this.state.cleared, now);
+    if (next) {
+      this.state.ancientSeason = next.season;
+      this.state.cleared = next.cleared;
+    }
+    setActiveAncientSeason(this.state.ancientSeason ?? "");
+  }
   /** 모든 스테미나 요청이 공유하는 서버 정산 경계다. */
   settleStaminaNow(now = this.now()) {
     const maximum = staminaMaxForPlayer(this.state);
@@ -36352,6 +36438,7 @@ var FakeServer = class {
   }
   snapshot() {
     const serverNow2 = this.now();
+    this.rollAncientSeasonNow(serverNow2);
     this.settleStaminaNow(serverNow2);
     this.settleItemExpiry(serverNow2);
     if (this.state.dailyAdRewards.date !== utcDateKey(serverNow2)) {
@@ -36498,6 +36585,7 @@ var FakeServer = class {
     if (board === null) throw new GameApiError("STRATA_RUN_NOT_FOUND", "\uC9C4\uD589 \uC911\uC778 \uD0D0\uC0AC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     if (!canDigStrataTile(board, request.tileIndex)) throw new GameApiError("STRATA_TILE_UNAVAILABLE", "\uC774\uBBF8 \uC5F4\uC5C8\uAC70\uB098 \uD314 \uC218 \uC5C6\uB294 \uCE78\uC785\uB2C8\uB2E4.");
     const result = digStrataTile(board, request.tileIndex);
+    this.state.missions = applyMissionEvent(this.state.missions, { type: "strata_tile_dug" }, this.now());
     this.state.archaeology.board = result.board;
     const tile = result.tile;
     let grantedRune;
@@ -37753,6 +37841,7 @@ function createSupabaseStore(env) {
         tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
         ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
       } });
+      await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {

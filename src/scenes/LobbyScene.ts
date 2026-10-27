@@ -53,6 +53,7 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
 import { PVP_ACTIVE_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
 import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
+import { clipInteractiveTree, containerClip } from "../ui/clippedHit";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
 import { raidSeasonKey, raidWorldBossId } from "../core/raid";
@@ -786,6 +787,9 @@ export class LobbyScene extends Phaser.Scene {
         });
         if (sdDelay > 0) this.time.delayedCall(sdDelay, spawn); else spawn();
       });
+      // 기하 마스크는 그리기만 자른다 — 판 아래로 흘러 잘린 칸(원정·고대 지층)의 입력면이 판 밖 허공에 남아,
+      // 바깥을 눌러 닫으려던 손이 가려진 칸을 열었다. 보이는 창 안에서만 손을 받게 좁힌다.
+      clipInteractiveTree(content, containerClip(body, -panel.width / 2, view.viewTop, panel.width / 2, view.viewBottom));
       this.bindSortieScroll(content, panelY);
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => this.popupLayer?.backOr(close) }).setDepth(SORTIE_SD_DEPTH + 1);

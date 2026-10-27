@@ -29,7 +29,7 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 import { withBusy } from "./BusyOverlay";
 
-const TABS: readonly MailTab[] = ["reward", "notice"];
+const TABS: readonly MailTab[] = ["reward", "notice", "patch"];
 
 /** 첨부물 한 칸의 그림 키 — 출석과 같은 한 규칙이다. */
 const mailRewardTexture = rewardDtoTexture;
@@ -93,7 +93,7 @@ export class MailPopup {
       if (this.tab === "reward") this.renderRewardMail(content, mail, rows.centers[index], nowMs);
       else this.renderNotice(content, mail, rows.centers[index], nowMs);
     });
-    if (mails.length === 0) content.add(this.scene.add.text(0, (viewport.bottom - viewport.top) / 2, t(this.tab === "reward" ? "mail.empty.reward" : "mail.empty.notice"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+    if (mails.length === 0) content.add(this.scene.add.text(0, (viewport.bottom - viewport.top) / 2, t(`mail.empty.${this.tab}`), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
     previous?.destroy();
     this.content = content;
     this.attachScroll(content, rows.contentHeight);
@@ -194,7 +194,8 @@ export class MailPopup {
     const chip = card.deleteChip;
     const box = this.scene.add.container(card.width / 2 - chip.right, y - height / 2 + chip.top);
     box.add(drawGlyph(this.scene, "trash", 0, 0, chip.glyph, COLOR.danger, dim ? 0.55 : 0.9));
-    const hit = this.scene.add.rectangle(0, 0, chip.hit, chip.hit, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.scene.add.rectangle(0, 0, chip.hit, chip.hit, 0xffffff, 0);
+    this.makeListHit(hit, box.y, chip.hit);
     box.add(hit);
     hit.on("pointerdown", () => pressIn(box));
     hit.on("pointerout", () => pressOut(box, "normal", { pop: false }));
@@ -206,9 +207,24 @@ export class MailPopup {
     parent.add(box);
   }
 
+  /**
+   * 목록 안의 입력면은 **보이는 창 안쪽만** 손을 받는다. 마스크는 그림만 자르고 입력은 자르지 않아서, 창 밖으로
+   * 흘러간 카드의 입력면이 하단 줄(일괄 삭제 칩·탭)을 덮어 손이 카드로 샜다.
+   */
+  private makeListHit(hit: Phaser.GameObjects.Rectangle, centerY: number, height: number): void {
+    const { viewport } = MAIL_POPUP_LAYOUT;
+    const area = new Phaser.Geom.Rectangle(0, 0, hit.width, height);
+    hit.setInteractive({ hitArea: area, useHandCursor: true, hitAreaCallback: (shape: Phaser.Geom.Rectangle, x: number, y: number) => {
+      if (!Phaser.Geom.Rectangle.Contains(shape, x, y)) return false;
+      const listY = centerY - height / 2 + y;
+      return listY + this.scroll >= 0 && listY + this.scroll <= viewport.bottom - viewport.top;
+    } });
+  }
+
   /** 카드 전체가 우편을 펼치는 입력면이다. 끌어서 흘린 손은 펼치지 않는다. */
   private addOpenHit(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number): void {
-    const hit = this.scene.add.rectangle(0, y, MAIL_POPUP_LAYOUT.card.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.scene.add.rectangle(0, y, MAIL_POPUP_LAYOUT.card.width, height, 0xffffff, 0);
+    this.makeListHit(hit, y, height);
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.getDistance() < 24) void this.openMail(mail); });
     parent.add(hit);
   }
@@ -246,7 +262,7 @@ export class MailPopup {
     const textWidth = L.width - L.padX * 2;
     const hasRewards = mail.rewards.length > 0;
     let close: (() => void) | undefined;
-    this.popups.open({ width: L.width, height: L.height, title: t(hasRewards ? "mail.tab.reward" : "mail.notice.heading"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
+    this.popups.open({ width: L.width, height: L.height, title: t(`mail.tab.${mailTabOf(mail)}`), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
       close = closePopup;
       body.add(this.scene.add.text(left, L.titleY, mail.title, textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(left, L.metaY, `${mail.sender}  ·  ${mail.sentAt.slice(0, 10)}  ·  ${this.expiryLabel(mail, nowMs)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -336,7 +352,7 @@ export class MailPopup {
     const nowMs = Date.parse(this.result.serverTime);
     TABS.forEach((tab, index) => {
       const pending = this.result!.mails.filter((mail) => mailTabOf(mail) === tab && !isMailExpired(mail, nowMs) && (tab === "reward" ? !mail.claimed : !mail.read)).length;
-      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(tab === "reward" ? "mail.tab.reward" : "mail.tab.notice"), selected: tab === this.tab, onSelect: () => this.select(tab) });
+      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(`mail.tab.${tab}`), selected: tab === this.tab, onSelect: () => this.select(tab) });
       if (pending > 0) {
         const badge = this.scene.add.text(layout.tab.width / 2 - 14, -layout.tab.height / 2 + 4, `${pending}`, textStyle({ role: "display", size: 20, color: "#1a1206" })).setOrigin(0.5);
         const plate = this.scene.add.graphics({ x: badge.x, y: badge.y });
@@ -346,7 +362,7 @@ export class MailPopup {
       }
     });
     const claimable = this.manager.claimableIds(this.result);
-    const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === "notice" && !mail.read).map(({ id }) => id);
+    const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === this.tab && !mail.read).map(({ id }) => id);
     const action = this.tab === "reward"
       ? new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), variant: "primary", onClick: () => void this.claim(claimable) })
       : new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });

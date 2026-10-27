@@ -24,7 +24,7 @@ export class MailManager {
   isDeletable(mail: Pick<MailDto, "rewards">): boolean { return mail.rewards.length > 0; }
 
   /** 일괄 삭제 대상 — 우편 탭의 **아직 받지 않은** 우편(만료로 못 받게 된 것 포함). 안내 탭은 비어 있다. */
-  deletableIds(result: MailListResponse, tab: "reward" | "notice"): string[] { return tab === "reward" ? result.mails.filter((mail) => this.isDeletable(mail) && !mail.claimed).map(({ id }) => id) : []; }
+  deletableIds(result: MailListResponse, tab: "reward" | "notice" | "patch"): string[] { return tab === "reward" ? result.mails.filter((mail) => this.isDeletable(mail) && !mail.claimed).map(({ id }) => id) : []; }
 
   /** 단일 수령도 일괄 수령과 같은 멱등 계약을 사용한다. */
   async claim(mailIds: readonly string[], requestId: string = crypto.randomUUID()): Promise<ClaimMailRewardsResponse> {

@@ -6,9 +6,16 @@ const mail = (overrides: Partial<MailDto>): MailDto => ({ id: "m", title: "t", s
 const gold = { kind: "currency", currency: "gold", amount: 1 } as const;
 
 describe("우편함 배치", () => {
-  it("첨부가 있으면 우편, 없으면 안내다", () => {
+  it("첨부가 있으면 우편, 없으면 공지, 업데이트 안내는 패치노트다", () => {
     expect(mailTabOf(mail({ rewards: [gold] }))).toBe("reward");
     expect(mailTabOf(mail({}))).toBe("notice");
+    expect(mailTabOf(mail({ id: "update-notice" }))).toBe("patch");
+    expect(mailTabOf(mail({ id: "patch:1.0.0" }))).toBe("patch");
+  });
+
+  it("탭 셋(우편·공지·패치노트)이 한 줄에 서고 일괄 삭제 칩과 겹치지 않는다", () => {
+    const { tab, deleteChip } = MAIL_POPUP_LAYOUT.footer;
+    expect(mailTabX(2) + tab.width / 2).toBeLessThan(deleteChip.x - deleteChip.hit / 2);
   });
 
   it("우편은 받을 것 → 받은 것 → 만료, 같은 무리는 최근 것이 위다", () => {

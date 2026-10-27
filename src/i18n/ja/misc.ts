@@ -156,6 +156,7 @@ export const MISC_JA = {
   "mail.noExpiry": "期限なし",
   "mail.tab.reward": "メール",
   "mail.tab.notice": "お知らせ",
+  "mail.tab.patch": "パッチノート",
   "mail.claim": "受取",
   "mail.rewardTitle": "メール報酬",
   "mail.attachments": "添付 {count}",
@@ -170,7 +171,7 @@ export const MISC_JA = {
   "mail.hoursLeft": "残り{hours}:{minutes}",
   "mail.empty.reward": "受け取れるメールはありません",
   "mail.empty.notice": "お知らせはありません",
-  "mail.notice.heading": "お知らせ",
+  "mail.empty.patch": "パッチノートはありません",
 
   "journal.city.title": "都市日誌",
   "journal.city.empty": "まだこの都市の記録はない",

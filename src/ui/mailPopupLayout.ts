@@ -41,11 +41,15 @@ export const MAIL_POPUP_LAYOUT = {
   },
 } as const;
 
-export type MailTab = "reward" | "notice";
+export type MailTab = "reward" | "notice" | "patch";
 
-/** 첨부가 있으면 우편, 없으면 안내다. 보낸 쪽이 따로 표시하지 않아도 모양이 곧 종류다. */
-export function mailTabOf(mail: Pick<MailDto, "rewards">): MailTab {
-  return mail.rewards.length > 0 ? "reward" : "notice";
+/** 패치노트로 가르는 안내 — 정적 업데이트 안내와 `patch:`로 시작하는 운영 안내. 나머지 첨부 없는 안내는 공지다. */
+export const isPatchNoteMail = (mail: Pick<MailDto, "id">): boolean => mail.id === "update-notice" || mail.id.startsWith("patch:");
+
+/** 첨부가 있으면 우편, 없으면 공지 또는 패치노트다. 보낸 쪽이 따로 표시하지 않아도 모양이 곧 종류다. */
+export function mailTabOf(mail: Pick<MailDto, "id" | "rewards">): MailTab {
+  if (mail.rewards.length > 0) return "reward";
+  return isPatchNoteMail(mail as Pick<MailDto, "id">) ? "patch" : "notice";
 }
 
 export function isMailExpired(mail: Pick<MailDto, "expiresAt">, nowMs: number): boolean {
@@ -58,7 +62,7 @@ export function isMailExpired(mail: Pick<MailDto, "expiresAt">, nowMs: number): 
  */
 export function sortMails(mails: readonly MailDto[], tab: MailTab, nowMs: number): MailDto[] {
   const rank = (mail: MailDto): number => {
-    if (tab === "notice") return mail.read ? 1 : 0;
+    if (tab !== "reward") return mail.read ? 1 : 0;
     if (isMailExpired(mail, nowMs)) return 2;
     return mail.claimed ? 1 : 0;
   };

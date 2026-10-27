@@ -164,7 +164,8 @@ export const MISC_KO = {
   "mail.state.claimed": "수령 완료",
   "mail.noExpiry": "기한 없음",
   "mail.tab.reward": "우편",
-  "mail.tab.notice": "안내",
+  "mail.tab.notice": "공지",
+  "mail.tab.patch": "패치노트",
   "mail.claim": "받기",
   "mail.rewardTitle": "우편 보상",
   "mail.attachments": "첨부 {count}",
@@ -178,8 +179,8 @@ export const MISC_KO = {
   "mail.daysLeft": "{days}일 남음",
   "mail.hoursLeft": "{hours}:{minutes} 남음",
   "mail.empty.reward": "받을 우편이 없습니다",
-  "mail.empty.notice": "도착한 안내가 없습니다",
-  "mail.notice.heading": "안내",
+  "mail.empty.notice": "도착한 공지가 없습니다",
+  "mail.empty.patch": "도착한 패치노트가 없습니다",
 
   // 교류 도시 일지
   "journal.city.title": "도시 일지",

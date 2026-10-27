@@ -1061,6 +1061,16 @@
 "Mitteilungen",
 "Объявления"
 ],
+"mail.tab.patch": [
+"更新说明",
+"บันทึกแพตช์",
+"Ghi chú bản cập nhật",
+"Catatan Patch",
+"Notas del parche",
+"Notas da atualização",
+"Patchnotes",
+"Список изменений"
+],
 "mail.claim": [
 "领取",
 "รับ",
@@ -1201,15 +1211,15 @@
 "Keine Mitteilungen",
 "Нет объявлений"
 ],
-"mail.notice.heading": [
-"公告",
-"ประกาศ",
-"Thông báo",
-"Pengumuman",
-"Aviso",
-"Aviso",
-"Mitteilung",
-"Объявление"
+"mail.empty.patch": [
+"没有收到的更新说明",
+"ไม่มีบันทึกแพตช์",
+"Chưa có ghi chú bản cập nhật",
+"Belum ada catatan patch",
+"No hay notas del parche",
+"Nenhuma nota de atualização",
+"Keine Patchnotes",
+"Списков изменений нет"
 ],
 "journal.city.title": [
 "城市日志",

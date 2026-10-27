@@ -31,6 +31,7 @@ export const COMMON_VI = {
   "currency.fossil": "Hóa thạch",
   "currency.amber": "Hổ phách",
   "currency.cheesecake": "Bánh phô mai",
+  "currency.stamina": "Thể lực",
   "currency.dnaFragments": "Dặm DNA",
   "element.fire": "Hỏa",
   "element.water": "Thủy",

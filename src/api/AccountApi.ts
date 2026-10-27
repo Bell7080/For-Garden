@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 /** 계정 제공자. 인증 비밀이 아니라 화면에 공개해도 되는 분류만 표현한다. */
-export type AccountProvider = "guest" | "google" | "apple";
+export type AccountProvider = "guest" | "password" | "google" | "apple" | "email";
 
 /** SDK/서버가 보관하는 계정 상태의 표시용 투영이다. 토큰은 계약에 의도적으로 없다. */
 export interface AccountState {
@@ -9,6 +9,8 @@ export interface AccountState {
   /** 로그·화면 노출에 적합하도록 플랫폼 구현이 이미 마스킹한 식별자다. */
   maskedId: string;
 }
+
+export interface AccountIdentity { id: string; provider: Exclude<AccountProvider, "guest">; maskedId: string; }
 
 /** 충돌 화면에서 양쪽 진행을 사람이 비교하는 데 필요한 최소 요약이다. */
 export interface ProgressSummary {
@@ -37,13 +39,21 @@ export type AccountFailureCode =
   | "guest-merge-unavailable"
   | "save-conflict"
   | "invalid-remote-save"
-  | "conflict-cancelled";
+  | "conflict-cancelled"
+  /** 아이디·비밀번호 계정 입력/인증 실패. 어느 칸이 틀렸는지는 알려 주되 계정 존재 여부는 로그인에서 흘리지 않는다. */
+  | "invalid-id"
+  | "weak-password"
+  | "id-taken"
+  | "email-unconfirmed"
+  | "invalid-credentials"
+  | "rate-limited";
 
 /** 예외 문자열 대신 UI가 취소·통신 실패·합치기 불가를 구별하게 하는 공통 결과다. */
-export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string };
+export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: AccountFailureCode; message: string; retryAfterSeconds?: number };
 
 export interface LoginRequest {
-  provider: Exclude<AccountProvider, "guest">;
+  provider: "google" | "apple";
+  intent?: "sign-in" | "link";
   /** true면 플랫폼이 지원하는 경우에만 게스트 진행 합치기를 시도한다. */
   mergeGuestProgress: boolean;
 }
@@ -69,6 +79,10 @@ export interface GuestSaveMergeRequest {
  */
 export interface AccountApi {
   getState(): Promise<AccountResult<AccountState>>;
+  getIdentities?(): Promise<AccountResult<AccountIdentity[]>>;
+  unlinkIdentity?(identityId: string): Promise<AccountResult<AccountIdentity[]>>;
+  requestEmailCode?(email: string, intent: "sign-in" | "link"): Promise<AccountResult<void>>;
+  verifyEmailCode?(email: string, code: string, intent: "sign-in" | "link"): Promise<AccountResult<AccountState>>;
   login(request: LoginRequest): Promise<AccountResult<AccountState>>;
   logout(): Promise<AccountResult<AccountState>>;
   requestWithdrawal(): Promise<AccountResult<void>>;
@@ -77,6 +91,13 @@ export interface AccountApi {
   uploadRemoteSave(data: unknown, expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>>;
   deleteRemoteSave(expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>>;
   mergeGuestSave(request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>>;
+  /**
+   * 아이디·비밀번호 계정(메일 인증 없음). 이 기기에 게스트 계정이 있으면 **같은 유저 그대로 승격**해 진행이 따라오고,
+   * 없으면 새 계정을 만든다. 비밀번호는 인증 서비스만 보관한다.
+   */
+  registerWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
+  /** 다른 기기에서 만든 아이디 계정으로 들어간다. 이 기기의 기존 세션은 이 계정으로 바뀐다. */
+  signInWithId(id: string, password: string): Promise<AccountResult<AccountState>>;
 }
 
 /**
@@ -100,9 +121,19 @@ export class UnsupportedAccountApi implements AccountApi {
   async uploadRemoteSave(_data: unknown, _expectedRemote: RemoteSavePrecondition | null): Promise<AccountResult<RemoteSaveMetadata>> { return this.unsupported(); }
   async deleteRemoteSave(_expectedRemote: RemoteSavePrecondition): Promise<AccountResult<void>> { return this.unsupported(); }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return this.unsupported(); }
+  async registerWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
+  async signInWithId(_id: string, _password: string): Promise<AccountResult<AccountState>> { return this.unsupported(); }
 
   private unsupported<T>(): AccountResult<T> { return { ok: false, code: "unsupported", message: unsupportedMessage() }; }
 }
 
 /** 실제 SDK 어댑터가 주입되기 전 사용하는 유일한 기본 구현이다. */
-export const accountApi: AccountApi = new UnsupportedAccountApi();
+export let accountApi: AccountApi = new UnsupportedAccountApi();
+
+/**
+ * 플랫폼 보안 저장소 어댑터가 준비됐을 때만 부른다(네이티브 부트스트랩). 토큰을 둘 안전한 곳이 없는
+ * 웹 빌드는 부르지 않으므로 `UnsupportedAccountApi`에 머문다 — 토큰을 `localStorage`로 대신하지 않는다.
+ */
+export function installAccountApi(api: AccountApi): void {
+  accountApi = api;
+}

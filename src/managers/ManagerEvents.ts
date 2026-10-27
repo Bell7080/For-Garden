@@ -2,6 +2,7 @@ import type { MailListResponse } from "../api/contracts";
 import type { NotificationState } from "../core/notifications";
 import { EMPTY_NOTIFICATION_STATE } from "../core/notifications";
 import type { Wallet } from "../core/gacha";
+import type { OpsNotice } from "../core/opsInbox";
 import type { PlayerProfileDisplay } from "../state/playerProfile";
 
 /** UI가 API DTO를 해석하지 않도록 manager가 확정한 네 종류의 읽기 모델만 노출한다. */
@@ -11,6 +12,8 @@ export interface ManagerEventMap {
   publicProfile: { readonly profile: PlayerProfileDisplay };
   notification: { readonly state: Readonly<NotificationState> };
   mail: { readonly list: MailListResponse };
+  /** 운영팀이 보낸 우편·재화 조정이 방금 계정에 닿았다는 알림이다. 화면은 안내 팝업만 띄운다. */
+  opsNotice: { readonly notices: readonly OpsNotice[] };
 }
 
 /** 구독 해제 함수를 계약에 포함한 작은 동기 이벤트 허브다. 한 API 영수증의 이벤트는 같은 tick에 발행된다. */

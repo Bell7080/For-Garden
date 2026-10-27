@@ -178,7 +178,7 @@ describe("relic catalog", () => {
     // 이름뿐 아니라 엔진이 판별할 계수·게이지·주기·전이 기준까지 카탈로그 회귀로 함께 고정한다.
     expect(luka.ferocityTrait).toMatchObject({ name: "폭주", effectId: "packHunt", stealthDurationSeconds: 3, retriggerPackHunt: true, sharedTargetAttackSpeedPercent: 40 });
     expect(luka.passive).toMatchObject({ name: "무리 사냥", kind: "followHighestAttackAllyTarget" });
-    expect(luka.basic).toMatchObject({ name: "치명적인 발톱", power: 100, periodicCritical: { every: 4 } });
+    expect(luka.basic).toMatchObject({ name: "치명적인 발톱", power: 100, periodicCritical: { every: 3 } });
     expect(luka.ultimate).toMatchObject({ name: "약점 관통", power: 200, cost: 90, blinkToLowestDefense: true, damageTransfer: { percent: 75, distanceOrigin: "primaryTarget" } });
   });
 

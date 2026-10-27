@@ -1,6 +1,6 @@
 import type { PlatformPaymentAdapter, PlatformReceipt } from "../api/PlatformPayment";
 import type { ProductAcquisition } from "../data/products";
-import { presentRewardedAd } from "../platform/rewardedAds";
+import { presentRewardedAd, releaseAdWait } from "../platform/rewardedAds";
 
 /** 외부 획득의 완료·취소·중복·한도 결과를 화면과 무관한 고정 상태로 제한한다. */
 export type ProductConfirmation =
@@ -18,7 +18,10 @@ export async function confirmPlatformProduct(acquisition: Extract<ProductAcquisi
   const paymentResult = await payment.requestPayment(acquisition.platformProductId);
   if (paymentResult.status === "cancelled") return { status: "cancelled" };
   if (paymentResult.status === "unsupported") return { status: "unavailable" };
-  return confirmReceipt(paymentResult.receipt.payload, paymentResult.receipt);
+  const receipt = paymentResult.receipt;
+  if (!receipt || receipt.productId !== acquisition.platformProductId || typeof receipt.transactionId !== "string" || !receipt.transactionId.trim()
+    || receipt.transactionId.length > 4096 || typeof receipt.payload !== "string" || !receipt.payload || receipt.payload.length > 96 * 1024) return { status: "unavailable" };
+  return confirmReceipt(receipt.payload, receipt);
 }
 
 /** 광고 상품은 rewardedAds 모듈의 완료 토큰 외에는 서버 확정 콜백에 전달하지 않는다. */
@@ -26,5 +29,9 @@ export async function confirmRewardedAdProduct(acquisition: Extract<ProductAcqui
   const presentation = await presentRewardedAd(acquisition.slotId);
   if (presentation.status === "dismissed") return { status: "cancelled" };
   if (presentation.status !== "completed") return { status: "unavailable" };
-  return confirmToken(presentation.verificationToken);
+  try {
+    return await confirmToken(presentation.verificationToken);
+  } finally {
+    releaseAdWait();
+  }
 }

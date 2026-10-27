@@ -41,6 +41,13 @@ describe("난전 물량", () => {
     expect(spawnSpots(ARENA, "enemy", 3).map(({ y }) => y)).toEqual([0, 70, 0]);
   });
 
+  it("둘이 서면 1·3번 끝자리가 아니라 세 자리의 사이로 모인다", () => {
+    const three = spawnSpots(ARENA, "player", 3).map(({ x }) => x);
+    const two = spawnSpots(ARENA, "player", 2).map(({ x }) => x);
+    expect(two[0]).toBeCloseTo((three[0] + three[1]) / 2);
+    expect(two[1]).toBeCloseTo((three[1] + three[2]) / 2);
+  });
+
   it("몰려온 적을 모두 쓰러뜨려야 승리하고 승리는 한 번만 선다", () => {
     const tier = CAKE_OPERATION_TIERS[0];
     const players = ["rex", "spino", "torika"].map((id) => getRelic(id));

@@ -1,17 +1,21 @@
 import Phaser from "phaser";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
 import { CONTRIBUTION_CATEGORIES, contributionCategoryLabel, contributionRenderModel } from "./battleContributionRenderModel";
-import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionRowCenterY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
-import { chipPoints, drawLayer, HoloBar, HOLO } from "./holo";
+import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionCellX, contributionCellY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
+import { chipPoints, drawLayer, HoloBar } from "./holo";
 import { FaceFrame } from "./FaceFrame";
 import { getRelic } from "../data/relics";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut, setPressRest } from "./pressFeedback";
 
 /** 씬은 코어가 완성한 행 스냅샷만 넘기며 합산·정렬을 이 프리팹에서 다시 하지 않는다. */
 export interface BattleContributionSnapshot {
   category: ContributionCategory;
   rows: readonly BattleContributionRow[];
 }
+
+/** 뒷배경은 전장이 비쳐 보이도록 공용 유리(`HOLO.glass` 0.82)보다 훨씬 옅게 둔다. */
+const CONTRIBUTION_PANEL_ALPHA = 0.42;
 
 /**
  * 한 전투원의 줄.
@@ -37,7 +41,7 @@ interface RowView {
   facePortraitId?: string;
 }
 
-/** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 좌측 홀로그램 기여도 판이다. */
+/** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 왼쪽 벽에 붙은 세로 홀로그램 기여도 판이다. */
 export class BattleContributionPanel {
   private readonly panel: Phaser.GameObjects.Container;
   private readonly categoryHits: Phaser.GameObjects.Rectangle[] = [];
@@ -52,9 +56,9 @@ export class BattleContributionPanel {
 
   constructor(private readonly scene: Phaser.Scene, private readonly onCategory: (category: ContributionCategory) => void) {
     this.panel = scene.add.container(L.slideOutX, 0).setDepth(315);
-    const shape = chipPoints(L.panel.width, L.panel.height, { bevel: { topLeft: 18, topRight: 30, bottomRight: 12, bottomLeft: 22 } });
+    const shape = chipPoints(L.panel.width, L.panel.height, { bevel: { topLeft: 0, topRight: 30, bottomRight: 22, bottomLeft: 0 } });
     // drawLayer가 그림자·HOLO.glass 면·윗변 한 줄만 그려 사방 외곽선을 만들지 않는다.
-    this.panel.add(drawLayer(scene, L.panel.left + L.panel.width / 2, L.panel.top + L.panel.height / 2, shape, { fill: COLOR.panel, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }));
+    this.panel.add(drawLayer(scene, L.panel.left + L.panel.width / 2, L.panel.top + L.panel.height / 2, shape, { fill: COLOR.panel, alpha: CONTRIBUTION_PANEL_ALPHA, edge: COLOR.accent, edgeAlpha: 0.5 }));
     this.buildCategories();
     this.buildRows();
   }
@@ -65,7 +69,9 @@ export class BattleContributionPanel {
       const x = L.categories.left + L.categories.itemWidth * (index + 0.5);
       const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
       const hit = this.scene.add.rectangle(x, L.categories.top + L.categories.height / 2, L.categories.itemWidth, L.categories.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => { if (!this.locked) this.selectCategory(item); });
+      hit.on("pointerdown", () => pressIn(label));
+      hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
+      hit.on("pointerup", () => { pressOut(label); if (!this.locked) this.selectCategory(item); });
       this.panel.add([label, hit]); this.categoryLabels.push(label); this.categoryHits.push(hit);
     });
     this.refreshCategoryStyle();
@@ -79,10 +85,10 @@ export class BattleContributionPanel {
    */
   private buildRows(): void {
     for (let index = 0; index < L.rows.count; index += 1) {
-      const container = this.scene.add.container(0, contributionRowCenterY(index));
-      const name = this.scene.add.text(L.rows.left, 0, "", textStyle({ role: "body", size: 22, color: COLOR.ink })).setOrigin(0, 0.5);
-      const value = this.scene.add.text(L.rows.left + L.rows.width, 0, "0", textStyle({ role: "display", size: 21, color: COLOR.inkDim })).setOrigin(1, 0.5);
-      const bar = new HoloBar(this.scene, L.rows.left + L.bar.width / 2, L.bar.offsetY - 18, L.bar.width, L.bar.height, { color: COLOR.sortie, trackAlpha: 0.48 }).addTo(container);
+      const container = this.scene.add.container(contributionCellX(), contributionCellY(index));
+      const name = this.scene.add.text(L.text.x, L.text.nameY, "", textStyle({ role: "body", size: 21, color: COLOR.ink })).setOrigin(0, 0.5);
+      const value = this.scene.add.text(L.text.x, L.text.valueY, "0", textStyle({ role: "display", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      const bar = new HoloBar(this.scene, L.rows.width / 2, L.bar.y, L.bar.width, L.bar.height, { color: COLOR.sortie, trackAlpha: 0.48 }).addTo(container);
       container.add([name, value]);
       this.panel.add(container);
       this.rows.push({ container, name, value, bar, lastValue: Number.NaN, slot: index });
@@ -102,6 +108,7 @@ export class BattleContributionPanel {
     CONTRIBUTION_CATEGORIES.forEach((item, index) => {
       const selected = item === this.category;
       this.categoryLabels[index].setColor(selected ? COLOR.accentText : COLOR.inkDim).setFontSize(selected ? 26 : 23).setScale(selected ? 1.04 : 1);
+      setPressRest(this.categoryLabels[index], selected ? 1.04 : 1);
     });
   }
 
@@ -153,14 +160,14 @@ export class BattleContributionPanel {
     if (view.slot === slot) return;
     view.slot = slot;
     view.slide?.remove();
-    const y = contributionRowCenterY(slot);
+    const y = contributionCellY(slot);
     view.slide = this.scene.tweens.add({
       targets: view.container, y, duration: 260, ease: "Cubic.Out",
       onComplete: () => { view.slide = undefined; },
     });
     // 얼굴 액자는 판의 자식이지만 줄 컨테이너 밖에 있어(비동기로 만들어진다) 함께 옮긴다.
     if (view.face) {
-      this.scene.tweens.add({ targets: view.face, y: y + L.face.offsetY - 18, duration: 260, ease: "Cubic.Out" });
+      this.scene.tweens.add({ targets: view.face, y: y + L.face.y, duration: 260, ease: "Cubic.Out" });
     }
   }
 
@@ -174,7 +181,7 @@ export class BattleContributionPanel {
     if (view.facePortraitId === portraitId) return;
     view.face?.destroy();
     view.facePortraitId = portraitId;
-    const face = new FaceFrame(this.scene, L.face.x, contributionRowCenterY(view.slot) + L.face.offsetY - 18, {
+    const face = new FaceFrame(this.scene, contributionCellX() + L.face.x, contributionCellY(view.slot) + L.face.y, {
       portraitAssetId: getRelic(portraitId).portraitAssetId, size: L.face.size,
     });
     view.face = face;
@@ -190,7 +197,7 @@ export class BattleContributionPanel {
   setExpanded(expanded: boolean): void {
     if (this.expanded === expanded) return;
     this.expanded = expanded; this.slide?.remove();
-    // **접으면 확실히 사라진다.** 판 폭만큼 밀면 화면 왼쪽 여백만큼이 전장에 남는다.
+    // **접으면 확실히 사라진다.** 그림자까지 화면 위로 밀어낸다.
     this.slide = this.scene.tweens.add({ targets: this.panel, x: expanded ? 0 : L.slideOutX, duration: 190, ease: "Cubic.Out" });
     if (this.outsideTap) { this.scene.input.off(Phaser.Input.Events.POINTER_UP, this.outsideTap); this.outsideTap = undefined; }
     if (!expanded) return;

@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import type { ExpeditionLeaderboardEntry } from "../api/contracts";
 import type { TextKey } from "../i18n";
 
@@ -115,4 +116,10 @@ export function rankedLeaderboard(entries: readonly ExpeditionLeaderboardEntry[]
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
+}
+
+/** 운영 서버가 돌려준 절대 순위를 유지한다. 표본 점수 합성·재정렬은 QA만 허용한다. */
+export function displayRankingEntries(entries: readonly ExpeditionLeaderboardEntry[], bestScore: number, qa = false): ExpeditionLeaderboardEntry[] {
+  if (QA_TOOLS_ENABLED && qa) return rankedLeaderboard([...entries, ...placeholderRankingEntries(bestScore, RANKING_VISIBLE_RANKS)]);
+  return [...entries].sort((a, b) => a.rank - b.rank).slice(0, RANKING_VISIBLE_RANKS);
 }

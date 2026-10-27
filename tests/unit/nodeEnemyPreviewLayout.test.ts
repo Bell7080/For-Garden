@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   anchorEnemyPreview,
+  ENEMY_PREVIEW_ROW,
+  enemyPreviewRow,
   NODE_ENEMY_PREVIEW,
   NODE_ENEMY_SITUATION,
   NODE_ENEMY_SLOT,
@@ -73,5 +75,36 @@ describe("관문 상황 문구", () => {
       expect(stage.situation.length).toBeLessThanOrEqual(34);
       expect(stage.situation).not.toContain("\n");
     }
+  });
+});
+
+describe("적 한 줄 — 무리도 칸을 꽉 채운다", () => {
+  const panelHalf = NODE_ENEMY_PREVIEW.width / 2;
+
+  it.each([1, 2, 3, 4, 5])("%i기의 칸·표식이 판 안에 들고 서로 겹치지 않는다", (count) => {
+    const row = enemyPreviewRow(count);
+    expect(row.columns).toHaveLength(count);
+    for (const x of row.columns) {
+      expect(x - row.half).toBeGreaterThanOrEqual(-panelHalf + ENEMY_PREVIEW_ROW.inset - 1);
+      expect(x + row.half).toBeLessThanOrEqual(panelHalf - ENEMY_PREVIEW_ROW.inset + 1);
+    }
+    row.columns.slice(1).forEach((x, index) => expect(x - row.half).toBeGreaterThan(row.columns[index] + row.half));
+    expect(row.nameWidth).toBeLessThanOrEqual(row.columns.length > 1 ? row.columns[1] - row.columns[0] : Infinity);
+  });
+
+  it("셋 이하는 예전 그대로다", () => {
+    for (const count of [1, 2, 3]) {
+      const row = enemyPreviewRow(count);
+      expect(row.sdHeight).toBe(ENEMY_PREVIEW_ROW.sdHeight);
+      expect(row.half).toBe(115);
+      expect(row.badge).toBe(52);
+    }
+    expect(enemyPreviewRow(3).columns).toEqual([-256, 0, 256]);
+  });
+
+  it("넷·다섯도 셋과 거의 같은 키로 선다", () => {
+    expect(enemyPreviewRow(4).sdHeight).toBe(ENEMY_PREVIEW_ROW.sdHeight);
+    // 예전에는 158 × 무리 몸집 0.8 = 126이었다.
+    expect(enemyPreviewRow(5).sdHeight).toBeGreaterThanOrEqual(ENEMY_PREVIEW_ROW.sdHeight * 0.9);
   });
 });

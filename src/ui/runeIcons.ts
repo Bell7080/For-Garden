@@ -10,6 +10,7 @@ import { RUNE_FRAME_FILL, runePieceFit } from "./runePieceContent";
 import { STAT_TONE } from "./statTones";
 import { addGlowStar } from "./stars";
 import { textStyle } from "./theme";
+import { addRuneHolderFace } from "./runeHolderCycle";
 
 /**
  * 룬 하트 조각.
@@ -83,6 +84,29 @@ function addFittedRuneIcon(scene: Phaser.Scene, frameSize: number, rarity: Heart
   return icon;
 }
 
+/** 세 조각을 합친 하트의 알파 경계(`RUNE_PIECE_CONTENT` 셋의 합집합). */
+const MYSTERY_HEART = { left: 0.1875, right: 0.8281, top: 0.2070, bottom: 0.8203 } as const;
+
+/**
+ * 랜덤 룬 액자의 그림 — 어느 등급의 어느 자리 조각이 나올지 모르므로 **세 조각을 합친 하트**를
+ * 검고 반투명한 실루엣으로 세우고, 가운데에 물음표를 박는다.
+ */
+function addMysteryHeart(scene: Phaser.Scene, frameSize: number): Phaser.GameObjects.Container {
+  const box = MYSTERY_HEART;
+  const size = (frameSize * RUNE_FRAME_FILL) / Math.max(box.right - box.left, box.bottom - box.top);
+  const x = -((box.left + box.right) / 2 - 0.5) * size;
+  const y = -((box.top + box.bottom) / 2 - RUNE_CENTER_Y) * size;
+  const icon = scene.add.container(0, 0);
+  // 어두운 액자 위에서도 하트가 읽히도록 같은 실루엣을 두 겹 키운 밝은 윤곽(바깥 은백, 안쪽 회청)을 먼저 깐다.
+  for (const [scale, tint, alpha] of [[1.11, 0xe3e9f0, 0.95], [1.045, 0x6b7787, 1], [1, 0x0b0e13, 1]] as const) {
+    for (const index of [0, 1, 2]) {
+      icon.add(scene.add.image(x, y, runeTexture(undefined, index)).setOrigin(0.5, RUNE_CENTER_Y).setDisplaySize(size * scale, size * scale).setTintFill(tint).setAlpha(alpha));
+    }
+  }
+  icon.add(scene.add.text(0, 0, "?", textStyle({ role: "display", size: Math.round(frameSize * 0.34), color: "#d7dde5" })).setOrigin(0.5).setStroke("#000000", Math.max(4, frameSize * 0.04)).setAlpha(0.95));
+  return icon;
+}
+
 /** 각인까지 마친 룬이 두르는 금빛. 완성된 보석 하나뿐인 색이라 다른 표식과 섞지 않는다. */
 export const RUNE_ENGRAVE_GOLD = 0xffc861;
 
@@ -92,6 +116,8 @@ export interface RuneFrameOptions {
   mainStats?: readonly [{ key: RuneMainStatKey }, { key: RuneMainStatKey }];
   /** 각인까지 마친 룬. 액자 안쪽에 금빛 발광이 돈다. */
   engraved?: boolean;
+  /** 등급도 자리도 정해지지 않은 랜덤 룬. 조각 하나 대신 검은 반투명 하트에 물음표가 선다. */
+  mystery?: boolean;
 }
 
 /**
@@ -130,7 +156,7 @@ export function addRuneFrame(
   // 검게 가라앉아 두 주 옵션이 무슨 색인지 가장자리에서 읽히지 않는다.
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.3, depth: 0.2 }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, { color: accent, alpha: rarity ? 0.9 : 0.35, width: 3 }));
-  frame.add(addFittedRuneIcon(scene, size, rarity, part));
+  frame.add(options.mystery ? addMysteryHeart(scene, size) : addFittedRuneIcon(scene, size, rarity, part));
   // 각인 발광은 조각 **위**에 두른다. 아래에 깔면 불투명한 조각이 빛을 가려 액자 가장자리에만
   // 남고, 다 자란 보석이라기보다 테두리를 한 겹 더 두른 것처럼 보인다.
   if (options.engraved) frame.add(drawShapeInnerGlow(scene, 0, 0, shape, { color: RUNE_ENGRAVE_GOLD, strength: 0.42, depth: 0.3 }));
@@ -151,14 +177,20 @@ export function addRuneCard(
   width: number,
   height: number,
   rune: RuneCardModel,
-  options: { dimmed?: boolean } = {},
+  options: {
+    dimmed?: boolean;
+    /** 장착 렐릭 표시가 켜진 가방에서 이 룬을 낀 렐릭. 주면 카드가 그 얼굴이 되고 룬은 왼쪽 아래로 줄어든다(`runeHolderCycle`). */
+    holder?: { relicId: string };
+  } = {},
 ): Phaser.GameObjects.Container {
   const engraved = rune.engravings.length > 0;
   const card = scene.add.container(x, y);
   const shape = chipPoints(width, height, { bevel: { topLeft: width * 0.19, topRight: 0, bottomRight: width * 0.19, bottomLeft: 0 } });
   card.add(drawLayer(scene, 0, 0, shape, { fill: 0x151a21, alpha: 0.96, edge: engraved ? RUNE_ENGRAVE_GOLD : RUNE_ACCENT[rune.rarity], edgeAlpha: engraved ? 0.9 : 0.35 }));
   const frameSize = Math.min(width, height) * 0.89;
-  card.add(addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved }));
+  const frame = addRuneFrame(scene, 0, 0, frameSize, rune.rarity, rune.part, { mainStats: rune.mainStats, engraved });
+  card.add(frame);
+  if (options.holder) addRuneHolderFace(scene, card, frame, frameSize, options.holder.relicId);
   // 잠금·즐겨찾기는 쪽지에서 켜지만 읽는 자리는 목록이다. 켜진 것만 액자 **안쪽** 왼쪽 위에
   // 작게 서고 꺼진 것은 자리를 비운다 — 회색 표식이 카드마다 늘어서면 액자보다 먼저 읽히고,
   // 카드 모서리에 붙이면 깎인 모서리 밖으로 반쯤 빠져나가 붙인 스티커처럼 보인다.
@@ -173,7 +205,12 @@ export function addRuneCard(
     card.add(drawGlyph(scene, index === 0 && rune.locked ? "lock" : "bookmark", spot.x, spot.y, RUNE_CARD_MARK.size, color));
   });
   // 이미 누군가 끼고 있는 룬은 옅어진다. 고르러 들어가는 헛걸음을 카드에서 미리 막는다.
-  if (options.dimmed) card.setAlpha(0.72);
+  // 끼고 있는 룬은 검은 막을 한 겹 더 깐다 — 알파만으로는 어두운 가방 바탕 위에서 충분히 가라앉지 않는다.
+  // 장착자 얼굴이 서는 카드는 늘 밝다 — 누가 끼고 있는지가 곧 얼굴이라 가라앉힐 이유가 없다.
+  if (options.dimmed && !options.holder) {
+    card.add(drawLayer(scene, 0, 0, shape, { fill: 0x05070a, alpha: 0.42 }));
+    card.setAlpha(0.72);
+  }
   return card;
 }
 

@@ -7,8 +7,12 @@ import { addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
-import { ITEM_GUIDE, itemGuideHeight } from "./itemGuideLayout";
+import { ITEM_GUIDE, itemGuideHeight, itemGuideSourcesTop } from "./itemGuideLayout";
+import { itemSourceKeys } from "../data/itemSources";
+import { shrinkTextToWidth } from "./textFit";
 import { pressIn, pressOut } from "./pressFeedback";
+import { universalFragmentRarity } from "../core/relicProgression";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 
 export interface ItemGuideOptions {
   readonly definition: ItemDefinition;
@@ -32,7 +36,8 @@ export class ItemGuidePopup {
 
   open(options: ItemGuideOptions): void {
     const { definition, quantity, onUse, expiry } = options;
-    const height = itemGuideHeight(onUse !== undefined);
+    const sources = itemSourceKeys(definition.id);
+    const height = itemGuideHeight(onUse !== undefined, sources.length);
     const top = -height / 2;
     this.popups.open({ width: ITEM_GUIDE.width, height, title: definition.name, dim: true, dimAlpha: 0.34 }, (body, close) => {
       const { hero } = ITEM_GUIDE;
@@ -41,8 +46,16 @@ export class ItemGuidePopup {
       const iconX = -hero.width / 2 + 48 + hero.frameSize / 2;
       body.add(addItemFrame(this.scene, iconX, heroY, hero.frameSize));
       const iconSize = hero.frameSize * ITEM_FRAME.icon;
-      body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX + ITEM_FRAME.shadow.offsetX, heroY + ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true }));
-      body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
+      const fragmentRarity = universalFragmentRarity(definition.id);
+      // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+      const fragmentArt = fragmentRarity ? addUniversalFragmentArt(this.scene, hero.frameSize, universalFragmentTexture(fragmentRarity)) : undefined;
+      if (fragmentArt) {
+        body.add(fragmentArt.setPosition(iconX, heroY));
+      } else {
+        body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX + ITEM_FRAME.shadow.offsetX, heroY + ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true }));
+        body.add(addItemDefinitionIcon(this.scene, definition.icon, iconX, heroY, iconSize));
+      }
+      if (fragmentRarity) body.add(addUniversalFragmentGlass(this.scene, hero.frameSize, fragmentRarity).setPosition(iconX, heroY));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
         .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true));
@@ -62,6 +75,19 @@ export class ItemGuidePopup {
       body.add(this.scene.add.text(-section.width / 2, sectionY, t("inventory.guide.effect"), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
       new HoloBar(this.scene, 0, sectionY + 32, section.width, 5, { color: COLOR.accent, trackAlpha: 0.5 }).addTo(body).setValue(1);
       body.add(this.scene.add.text(-section.width / 2 + 15, sectionY + 60, definition.description, textStyle({ role: "body", size: 24, color: COLOR.ink, wrap: section.width - 30 })).setOrigin(0, 0));
+      if (sources.length > 0) {
+        // 효과와 같은 제목줄 양식으로 「얻는 방법」을 세우고, 수급처는 줄마다 짧은 빗금 표식과 함께 선다.
+        const sourcesY = top + itemGuideSourcesTop();
+        body.add(this.scene.add.text(-section.width / 2, sourcesY, t("inventory.guide.sources"), textStyle({ role: "display", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
+        new HoloBar(this.scene, 0, sourcesY + 32, section.width, 5, { color: COLOR.accent, trackAlpha: 0.5 }).addTo(body).setValue(1);
+        sources.forEach((key, index) => {
+          const lineY = sourcesY + ITEM_GUIDE.sources.header + index * ITEM_GUIDE.sources.line + ITEM_GUIDE.sources.line / 2 - 8;
+          body.add(drawLayer(this.scene, -section.width / 2 + 22, lineY, slantedRect(8, 22, 4), { fill: COLOR.accent, alpha: 0.8, shadow: false }));
+          const line = this.scene.add.text(-section.width / 2 + 42, lineY, t(key), textStyle({ role: "body", size: 23, color: COLOR.ink })).setOrigin(0, 0.5);
+          shrinkTextToWidth(line, section.width - 50);
+          body.add(line);
+        });
+      }
 
       if (!onUse) return;
       const { use } = ITEM_GUIDE;

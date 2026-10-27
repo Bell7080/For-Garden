@@ -23,7 +23,7 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
 
   await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245); // 출격
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + 152); // 레이드
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 80 + 428); // 레이드 (출격판 중심 -80 + 칸 428)
   await expect.poll(() => scene(page)).toBe("raid");
   // 레이드는 먼저 **목록**을 연다 — 맨 위가 오늘의 월드 폭주 층이다.
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });

@@ -7,6 +7,7 @@ import { SETTINGS_PICKER, settingsChoicePickerHeight, settingsChoiceRowY } from 
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { onTap } from "./tapGuard";
 
 export interface ChoicePickerOptions<T> {
   readonly title: string;
@@ -48,11 +49,11 @@ export function openChoicePicker<T>(scene: Phaser.Scene, popups: PopupLayer, opt
       const hit = scene.add.rectangle(0, 0, row.width, row.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(node));
       hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
-      hit.on("pointerup", () => {
+      onTap(hit, () => {
         pressOut(node);
         close();
         if (choice !== options.value) options.onPick(choice);
-      });
+      }, node);
       node.add(hit);
       body.add(node);
     });

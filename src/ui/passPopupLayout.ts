@@ -1,3 +1,4 @@
+import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
 /**
  * 로비 패스 창의 자리표(창 중심 기준).
  *
@@ -161,7 +162,7 @@ export function passPopupPassTabs(count: number): { width: number; xs: number[];
  */
 export function passPopupPassStrip(): { left: number; top: number; bottom: number; right: (y: number) => number; polygon: number[] } {
   const { width, height, inner, passRow } = PASS_POPUP;
-  const bevel = Math.min(width, height) * 0.14;
+  const bevel = Math.min(width, height) * POPUP_BODY_BEVEL_RATIO;
   const centerY = height / 2 - passRow.fromBottom;
   const top = centerY - passRow.tabHeight / 2 - 22;
   const bottom = centerY + passRow.tabHeight / 2 + 4;

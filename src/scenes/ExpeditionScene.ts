@@ -1,11 +1,14 @@
+import { bindNotificationDot } from "../ui/NotificationDot";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
+import { notificationManager } from "../managers/NotificationManager";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import Phaser from "phaser";
-import { UI_ICON } from "../ui/icons";
 import { RECOMMENDED_SLOT_ROLES } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import { GameApiError, type AdSlotOperationsDto } from "../api/contracts";
+import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
@@ -19,6 +22,7 @@ import { combatPower } from "../core/combatPower";
 import { applyRosterView, DEFAULT_ROSTER_VIEW, type RosterView } from "../core/rosterView";
 import { RosterControls, ROSTER_CONTROLS } from "../ui/RosterControls";
 import { session } from "../state/session";
+import { motionPolicy } from "../core/settings";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
@@ -29,7 +33,7 @@ import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
 import { PortraitCard } from "../ui/PortraitCard";
-import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
 import { PopupLayer } from "../ui/PopupLayer";
 import { COLOR, textStyle } from "../ui/theme";
@@ -39,13 +43,11 @@ import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
 import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
-import { expeditionAugmentBadges, expeditionAugmentRows } from "../ui/expeditionAugmentBadges";
+import { expeditionAugmentBadges, type AugmentBadgeView } from "../ui/expeditionAugmentBadges";
+import { ExpeditionAugmentStatusPopup } from "../ui/ExpeditionAugmentStatusPopup";
 import { ExpeditionAugmentChip } from "../ui/ExpeditionAugmentChip";
-import { FaceFrame } from "../ui/FaceFrame";
 import { EXPEDITION_DAILY_POLICY, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
-import { completedAdToken } from "../data/adRewards";
-import { presentRewardedAd } from "../platform/rewardedAds";
 import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { ExpeditionRewardPopup } from "../ui/ExpeditionRewardPopup";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
@@ -70,6 +72,8 @@ import { createFormationDragVisualController, type FormationDragVisualController
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -84,7 +88,7 @@ const ROSTER_VIEWPORT = { top: 850, bottom: 1640 } as const;
 /** 아군 총 전투력 판의 세로 중심 — 이름줄 아래, 목록 조작 줄 위. */
 const FORMATION_POWER_Y = 756;
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const ROSTER_DRAG_SLOP = 12;
+const ROSTER_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 발굴 편성처럼 화면 상단에서 순서를 먼저 읽는 1/2/3 슬롯 규격이다. */
 /** `groundOffset`은 칸 중심에서 SD가 발을 딛는 줄까지의 거리다 — 발밑 그림자와 SD가 함께 읽는다. */
 const FORMATION = { y: 540, firstX: 230, stepX: 310, width: 250, height: 290, groundOffset: 120 } as const;
@@ -159,9 +163,6 @@ export class ExpeditionScene extends Phaser.Scene {
   private popups!: PopupLayer;
   /** 지도 입력부터 저장/씬 전환 완료까지의 단일 잠금은 이 씬이 소유한다. */
   private nodeTransitionPending = false;
-  /** 광고 표시부터 서버 확정까지 연타를 막는 빠른 원정 전용 잠금이다. */
-  private quickClaimPending = false;
-  private quickButton?: Button;
   /**
    * 편성판의 판때기·번호·입력면만 사는 층. 선택이 바뀔 때마다 통째로 다시 그린다.
    *
@@ -272,6 +273,7 @@ export class ExpeditionScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "expedition");
   }
 
   /** 진행 중 원정은 보상·상승 지도·증강·생존 HUD를 서로 겹치지 않는 안전 구역에 배치한다. */
@@ -308,7 +310,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (run.pendingAugmentReward) this.openAugmentReward();
     // 포기는 전리품 판(획득 전리품 + 점수) 위, 화면 우상단 구석에 작게 둔다 — 판과 겹치지
     // 않으면서도 작고 붉은 파괴 조작이라 손이 쉽게 닿지 않게 한다.
-    new Button(this, BASE_WIDTH - 90, 46, { width: 140, height: 44, label: t("expedition.abandon"), fontSize: 16, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
+    new Button(this, BASE_WIDTH - 120, 50, { width: 200, height: 64, label: t("expedition.abandon"), fontSize: 28, fill: 0x431d20, accentColor: COLOR.danger, accentTextColor: COLOR.dangerText, onClick: () => this.confirmAbandon() });
   }
 
   /** 런에서만 누적되는 네 재화를 보상 팝업과 같은 액자·우하단 수량 문법으로 묶는다. */
@@ -401,9 +403,8 @@ export class ExpeditionScene extends Phaser.Scene {
     if (node.type === "rest") {
       this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
         this.nodeTransitionPending = true;
-        // 매니저의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
-        if (expeditionManager.completeRestNode(node.id)) restartScene(this);
-        else this.nodeTransitionPending = false;
+        // 서버의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
+        void withBusy(this, expeditionManager.completeRestNode(node.id)).then((ok) => { if (ok) restartScene(this); else this.nodeTransitionPending = false; }).catch(() => { this.nodeTransitionPending = false; });
       });
       this.nodeTransitionPending = false;
       return;
@@ -416,8 +417,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (this.nodeTransitionPending) return;
     this.nodeTransitionPending = true;
     if (node.type === "boss") { this.enterBossBattle(node); return; }
-    const pending = expeditionManager.beginAugmentReward(node.id, node.type);
-    if (pending) restartScene(this); else this.enterBattle(node);
+    void withBusy(this, expeditionManager.beginAugmentReward(node.id)).then((pending) => { if (pending) restartScene(this); else this.enterBattle(node); }).catch(() => { this.nodeTransitionPending = false; });
   }
 
   /** 선택이 모두 저장된 바로 그 노드로 진입해, 후보 확정 뒤 다른 지도 노드를 누를 틈을 만들지 않는다. */
@@ -430,9 +430,14 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 서버 제출과 완료 정산의 멱등 키를 먼저 런에 고정한 뒤 불사 보스 전장으로 이동한다. */
   private enterBossBattle(node: ExpeditionMapNode): void {
-    const run = expeditionManager.status().run;
-    const ids = expeditionManager.prepareBossRequests(node.id);
-    if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
+    void withBusy(this, expeditionManager.prepareBossRequests(node.id)).then((ids) => {
+      const run = expeditionManager.status().run;
+      if (!run || !ids || node.floor !== 20) { this.nodeTransitionPending = false; return; }
+      this.startBossBattle(node, run, ids);
+    }).catch(() => { this.nodeTransitionPending = false; });
+  }
+
+  private startBossBattle(node: ExpeditionMapNode, run: NonNullable<ReturnType<typeof expeditionManager.status>["run"]>, ids: { requestId: string; settlementId: string; replayVersion: 2 }): void {
     const input: ExpeditionBossBattleInputDto = { mode: "expeditionBoss", runId: run.runId, nodeId: node.id, floor: 20, relics: run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })), augments: run.selectedAugments, ...ids };
     startScene(this, "battle", input);
   }
@@ -443,7 +448,7 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!run) { this.nodeTransitionPending = false; return; }
     try {
       // 보상 필드가 없는 완료 계약이므로 재화 종류나 수량을 위조할 수 없다.
-      const result = await gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) });
+      const result = await withBusy(this, gameApi.completeExpeditionNode({ requestId: `${run.runId}:${node.id}`, runId: run.runId, nodeId: node.id, relicHp: run.relics.map(({ currentHp }) => currentHp) }));
       // 전리품을 주웠으면 영수증 한 장으로 알린다 — 지도의 합계만 슬쩍 늘면 무엇을 주웠는지 읽히지 않는다.
       // 영수증은 화면 아무 곳이나 눌러 닫히고, 닫히면 지도가 새 합계로 다시 선다.
       const items = currencyRecordToRewardItems(result.rewards);
@@ -463,11 +468,13 @@ export class ExpeditionScene extends Phaser.Scene {
     new ExpeditionAugmentPopup(this, { round: pending.round, totalRounds: pending.totalRounds, offers: pending.offers, targets: this.augmentTargetPicker(), onChoose: (selection) => {
       if (this.nodeTransitionPending) return;
       this.nodeTransitionPending = true;
-      // 확정은 UI가 Session을 쓰지 않고 매니저의 후보·대상·중첩 검증을 반드시 통과한다.
-      if (!expeditionManager.chooseAugment(selection)) { this.nodeTransitionPending = false; return; }
-      const next = expeditionManager.status().run?.pendingAugmentReward;
-      if (next) restartScene(this);
-      else this.enterBattle(node);
+      // 확정은 UI가 Session을 쓰지 않고 서버의 후보·대상·중첩 검증을 반드시 통과한다.
+      void withBusy(this, expeditionManager.chooseAugment(selection)).then((ok) => {
+        if (!ok) { this.nodeTransitionPending = false; return; }
+        const next = expeditionManager.status().run?.pendingAugmentReward;
+        if (next) restartScene(this);
+        else this.enterBattle(node);
+      }).catch(() => { this.nodeTransitionPending = false; });
     } }).open();
   }
 
@@ -503,36 +510,12 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /**
-   * 지금 무엇이 누구에게 붙어 있는지 한 장에 모은다.
-   *
-   * **전체 적용이 가장 위, 그다음이 편성 순서**다(`expeditionAugmentRows`). 고른 순서로
-   * 늘어놓으면 같은 캐릭터의 증강이 목록 여기저기에 흩어져, 결국 이 창을 열고도 다시 세야 한다.
-   * 누구에게 붙었는지는 이름이 아니라 **기여도 판과 같은 얼굴 액자**가 말한다.
+   * 지금 무엇이 누구에게 붙어 있는지 — 옆으로 넘기는 현황판(`ExpeditionAugmentStatusPopup`).
+   * 1쪽 전체 적용, 2쪽부터 편성 순서의 렐릭이다. 렐릭을 눌러 열면 그 렐릭의 쪽부터 선다.
    */
-  private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[]): void {
-    const order = expeditionManager.status().run?.relics.map(({ relicId }) => relicId) ?? [];
-    const rows = expeditionAugmentRows(augments, order);
-    const lines = rows.reduce((sum, row) => sum + row.badges.length, 0);
-    const height = Math.min(1180, 230 + rows.length * 54 + lines * 78);
-    this.popups.open({ width: 880, height, title: t("expedition.augment.confirmed", { count: augments.length }), dim: true }, (body) => {
-      let y = -height / 2 + 130;
-      for (const row of rows) {
-        if (row.relicId === undefined) {
-          body.add(this.add.text(-390, y, t("expedition.augment.applyAll"), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0, 0.5));
-        } else {
-          const relic = getRelic(row.relicId);
-          body.add(new FaceFrame(this, -366, y, { portraitAssetId: relic.portraitAssetId, size: 68 }));
-          body.add(this.add.text(-320, y, relic.name, textStyle({ role: "emphasis", size: 24, color: COLOR.sortieText })).setOrigin(0, 0.5));
-        }
-        y += 54;
-        for (const badge of row.badges) {
-          body.add(new ExpeditionAugmentChip(this, -366, y + 4, badge, 40));
-          body.add(this.add.text(-320, y - 10, `${badge.name}  ${badge.meta}`, textStyle({ role: "emphasis", size: 22, color: COLOR.ink })).setOrigin(0, 0.5));
-          body.add(this.add.text(-320, y + 22, badge.effect, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
-          y += 78;
-        }
-      }
-    });
+  private openAugmentDetails(augments: readonly ExpeditionAugmentSelection[], relicId?: string): void {
+    const order = expeditionManager.status().run?.relics.map(({ relicId: id }) => id) ?? [];
+    new ExpeditionAugmentStatusPopup(this, this.popups).open(augments, order, relicId);
   }
 
   /** 실제 전투 프로필처럼 초상 아래에 현재 체력과 0부터 시작할 야성 게이지를 함께 표시한다. */
@@ -558,12 +541,12 @@ export class ExpeditionScene extends Phaser.Scene {
       // 같은 입력면에 짧은 탭만 얹으므로 둘이 부딪히지 않는다.
       // 개인 증강은 그 캐릭터 위에 왼쪽부터 쌓인다. 표식만으로는 무엇인지 알 수 없으므로
       // 표식 줄과 카드 어디를 눌러도 같은 목록이 열린다.
-      profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments));
+      profile.setAugmentBadges(personal[state.relicId] ?? [], () => this.openAugmentDetails(augments, state.relicId));
       profile.card.hit.setInteractive({ useHandCursor: true });
       bindLongPress(this, profile.card.hit, {
         onLongPress: () => showExpeditionRelic(this, def.id, { portraitDepth: 1001, baseDepth: 1000 }),
         // 짧은 탭은 지금 무엇이 붙어 있는지를 연다. 꾹 누르면 예전처럼 상세 정보창이다.
-        onTap: augments.length > 0 ? () => this.openAugmentDetails(augments) : undefined,
+        onTap: augments.length > 0 ? () => this.openAugmentDetails(augments, state.relicId) : undefined,
         depth: 1200,
       });
       this.relicProfiles.set(state.relicId, profile);
@@ -579,6 +562,17 @@ export class ExpeditionScene extends Phaser.Scene {
   private augmentTargetPicker(): AugmentTargetPicker {
     const profiles = this.relicProfiles;
     const pickHandlers = new Map<string, () => void>();
+    // 고를 수 있는 렐릭 위에 서는 표식. 고른 증강의 문양 + 아래를 가리키는 꺾쇠가 숨 쉰다.
+    const markers = new Map<string, Phaser.GameObjects.Container>();
+    const clearMarkers = (keep?: string): void => {
+      markers.forEach((marker, relicId) => {
+        if (relicId === keep) return;
+        this.tweens.killTweensOf(marker);
+        marker.destroy();
+        markers.delete(relicId);
+      });
+    };
+    const markerY = (profile: BattleProfile): number => profile.card.getBounds().top - 34;
     return {
       attach: (onPick) => {
         pickHandlers.clear();
@@ -590,20 +584,33 @@ export class ExpeditionScene extends Phaser.Scene {
           profile.card.hit.on("pointerup", handler);
         });
       },
-      setEligible: (relicIds) => {
+      setEligible: (relicIds, badge) => {
+        clearMarkers();
         profiles.forEach((profile, relicId) => {
-          profile.setAlpha(relicIds === null || relicIds.includes(relicId) ? 1 : 0.3);
+          const eligible = relicIds === null || relicIds.includes(relicId);
+          profile.setAlpha(eligible ? 1 : 0.3);
           profile.card.setSelected(false, COLOR.sortie);
+          if (badge && eligible) markers.set(relicId, this.addAugmentTargetMarker(profile.x, markerY(profile), badge));
         });
       },
       setChosen: (chosenId) => {
+        // 고른 대상의 표식만 남고 꺾쇠는 멈춘다 — 더 누를 자리가 아니라 정해진 자리다.
+        clearMarkers(chosenId);
+        const kept = chosenId ? markers.get(chosenId) : undefined;
+        if (kept) { this.tweens.killTweensOf(kept); kept.setY(markerY(profiles.get(chosenId!)!)); kept.getByName("chevron")?.destroy(); }
         profiles.forEach((profile, relicId) => {
           profile.setAlpha(relicId === chosenId ? 1 : 0.42);
-          // 고른 대상만 호박빛으로 남는다. 확정 버튼과 같은 색이라 다음 조작이 이어진다.
-          profile.card.setSelected(relicId === chosenId, COLOR.missionClaim);
+          // 고른 대상만 빛을 두른다. 증강 카드가 고른 상태로 두르는 빛과 같은 주황이다.
+          profile.card.setSelected(relicId === chosenId, COLOR.sortie);
         });
       },
+      landingPoint: (relicId) => {
+        const profile = relicId ? profiles.get(relicId) : undefined;
+        if (profile) { const bounds = profile.card.getBounds(); return { x: bounds.centerX, y: bounds.centerY }; }
+        return { x: BASE_WIDTH / 2, y: (EXPEDITION_LAYOUT.augments.top + EXPEDITION_LAYOUT.augments.bottom) / 2 };
+      },
       detach: () => {
+        clearMarkers();
         profiles.forEach((profile, relicId) => {
           profile.setDepth(0).setAlpha(1);
           // 고르기 핸들러만 걷는다. removeAllListeners로 쓸면 같은 입력면에 걸린 꾹 누름까지
@@ -618,12 +625,36 @@ export class ExpeditionScene extends Phaser.Scene {
     };
   }
 
+  /**
+   * "이 렐릭을 누른다" 표식 — 고른 증강의 문양 액자와 그 아래로 내려 가리키는 꺾쇠.
+   *
+   * 판 안 문장 한 줄로만 대상을 고르라고 하던 때는 손이 판 밖으로 나가야 한다는 것이 읽히지
+   * 않았다. 표식은 HUD와 같은 깊이 위에 서고 위아래로 숨 쉰다(움직임 줄이기에서는 멈춘다).
+   */
+  private addAugmentTargetMarker(x: number, y: number, badge: AugmentBadgeView): Phaser.GameObjects.Container {
+    const marker = this.add.container(x, y).setDepth(AUGMENT_PICKER_DEPTH + 1);
+    marker.add(new ExpeditionAugmentChip(this, 0, -14, badge, 44));
+    const chevron = this.add.graphics().setName("chevron");
+    chevron.lineStyle(6, 0x000000, 0.5).strokePoints([new Phaser.Math.Vector2(-14, 18), new Phaser.Math.Vector2(0, 30), new Phaser.Math.Vector2(14, 18)].map((p) => new Phaser.Math.Vector2(p.x + 2, p.y + 3)), false);
+    chevron.lineStyle(5, COLOR.sortie, 1).strokePoints([new Phaser.Math.Vector2(-14, 18), new Phaser.Math.Vector2(0, 30), new Phaser.Math.Vector2(14, 18)], false);
+    marker.add(chevron);
+    if (motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {
+      this.tweens.add({ targets: marker, y: y + 10, duration: 520, ease: "Sine.InOut", yoyo: true, repeat: -1 });
+    }
+    return marker;
+  }
+
   /** 임시 보상과 포기 결과를 먼저 보여 준 뒤 서버 원자 정산만 호출한다. */
   private confirmAbandon(): void {
     const run = expeditionManager.status().run; if (!run) return;
-    const reward = Object.values(run.pendingRewards).reduce((sum, amount) => sum + Math.floor(amount), 0);
-    this.popups.confirm({ title: t("expedition.abandon.title"), message: t("expedition.abandon.body", { reward: reward.toLocaleString() }), confirmLabel: t("expedition.abandon.confirm"), destructive: true }, async () => {
-      const settlement = await gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" });
+    const rewards = currencyRecordToRewardItems(run.pendingRewards);
+    this.popups.confirm({
+      title: t("expedition.abandon.title"), message: t("expedition.abandon.body"),
+      // 확인창의 공용 재화 액자는 소비·획득 모두 수량을 그대로 표시한다. 종류가 다른 재화는 합치지 않는다.
+      costs: rewards.flatMap((item) => typeof item.icon === "string" ? [{ iconKey: item.icon, amount: item.amount }] : []),
+      confirmLabel: t("expedition.abandon.confirm"), destructive: true,
+    }, async () => {
+      const settlement = await withBusy(this, gameApi.settleExpeditionRun({ runId: run.runId, settlementId: `${run.runId}:abandon`, outcome: "abandoned" }));
       // 지갑 상한 적용 뒤 실제 들어온 양만 영수증에 표시하고 확인 후 로비로 돌아간다.
       openRewardPopup(this, this.popups, { title: t("expedition.abandon.settle"), items: currencyRecordToRewardItems(settlement.granted), onConfirm: () => startScene(this, "lobby") });
     });
@@ -642,7 +673,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const bossInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     // 표기 레벨은 기획대로 LV.20이고, 돌파 효과는 실제 난전이 쓰는 단계를 그대로 보인다.
     addEnemyPortraitTap(this, RANKING.boss.tap, () => this.bossPortrait, () => bossInfo.show({
-      def: getExpeditionEncounterEnemies("boss", 20)[0], level: 20, breakthrough: expeditionBossGrowth().breakthrough,
+      def: getExpeditionEncounterEnemies("boss", 20)[0], ...expeditionBossGrowth(),
     }));
     this.renderMyScore(t("expedition.syncing"));
     void this.refreshMyScore();
@@ -653,8 +684,9 @@ export class ExpeditionScene extends Phaser.Scene {
     const utilityRightX = BASE_WIDTH / 2 + utilityTotal / 2 - utility.width / 2;
     // 보스 전신(depth 5)보다 위에 그려야 발끝·옷자락 뒤로 조작이 숨지 않는다.
     new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.ranking"), fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
-    new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
+    const rewardButton = new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
 
+    bindNotificationDot(this, rewardButton, { x: utility.width / 2 - 16, y: -utility.height / 2 + 12 }, listener => notificationManager.subscribe("expeditionReward", listener));
     const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
     const sortieX = BASE_WIDTH / 2 - actionsTotal / 2 + actions.sortieWidth / 2;
     const sweepX = BASE_WIDTH / 2 + actionsTotal / 2 - actions.sweepWidth / 2;
@@ -708,7 +740,7 @@ export class ExpeditionScene extends Phaser.Scene {
   /** 내 최고 순위는 순위표에만 있으므로 두 조회를 함께 묶는다. */
   private async refreshMyScore(): Promise<void> {
     try {
-      const [best, leaderboard] = await Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]);
+      const [best, leaderboard] = await withBusy(this, Promise.all([gameApi.getExpeditionWeeklyBest(), gameApi.getExpeditionLeaderboard(10)]));
       if (!this.scene.isActive() || this.stage !== "ranking") return;
       if (best.weekKey !== leaderboard.weekKey) { this.renderMyScore(t("expedition.weekly.rolled")); return; }
       const mine = leaderboard.entries.find((entry) => entry.isMe);
@@ -735,7 +767,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.sweepPending = true; this.sweepButton?.setEnabled(false);
     try {
       const requestId = globalThis.crypto?.randomUUID?.() ?? `expedition-sweep-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const result = await gameApi.sweepExpedition({ requestId });
+      const result = await withBusy(this, gameApi.sweepExpedition({ requestId }));
       openRewardPopup(this, this.popups, { title: t("expedition.sweep.done"), items: currencyRecordToRewardItems(result.granted), onConfirm: () => restartScene(this) });
     } catch (error) {
       const code = error instanceof GameApiError ? error.code : undefined;
@@ -757,13 +789,10 @@ export class ExpeditionScene extends Phaser.Scene {
     this.selected = toFormationSlots(saved.length === 3 ? saved : [...session.owned].slice(0, 3), 3);
     this.selectedSlot = undefined;
     this.add.text(BASE_WIDTH / 2, 292, t("expedition.party.title"), textStyle({ role: "emphasis", size: 32 })).setOrigin(0.5);
-    if (import.meta.env.DEV) {
+    if (QA_TOOLS_ENABLED) {
       // 임시 개발 도구: Session을 건드리지 않고 매니저가 만든 실제 20층 노드를 열어 미리보기와 출격 흐름을 그대로 검수한다.
       new Button(this, 170, 292, { width: 230, height: 68, label: t("expedition.party.devFloor"), fontSize: 21, fill: 0x3b2330, accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick: () => this.openDevelopmentBossShortcut() });
     }
-    // 서버가 빠른 원정을 열어 두었을 때만 버튼이 생긴다. 조회 중이라거나 열리지 않았다는 말은
-    // 플레이어의 선택을 바꾸지 않으므로 화면에 남기지 않는다.
-    void this.loadQuickExpeditionOffer();
     this.renderFormationPreview();
 
     this.buildRosterGrid();
@@ -858,6 +887,7 @@ export class ExpeditionScene extends Phaser.Scene {
         affinity: { element: relic.element, role: relic.role },
         // 이미 편성판에 나가 있는 카드는 떠오르지 않고 눌려 들어간다.
         selectedStyle: "pressed",
+        deferPortrait: true,
       });
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
@@ -883,6 +913,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private scrollRosterTo(value: number): void {
     this.rosterScrollY = Phaser.Math.Clamp(value, this.rosterMinScroll, 0);
     this.rosterContent?.setY(this.rosterScrollY);
+    syncPortraitResidency(this.cards.values(), this.rosterScrollY, ROSTER_VIEWPORT, ROSTER.cardHeight);
   }
 
   /** PortraitCard의 자체 기하 마스크는 부모(그리드) 이동을 상속하지 않으므로 스크롤마다 다시 맞춘다. */
@@ -894,65 +925,14 @@ export class ExpeditionScene extends Phaser.Scene {
   private openDevelopmentBossShortcut(): void {
     const members = formationMembers(this.selected);
     const relicIds = members.length === 3 ? members : [...session.owned].slice(0, 3);
-    const result = expeditionManager.prepareDevelopmentBossShortcut(relicIds);
-    if (result.ok) {
-      // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
-      restartScene(this);
-      return;
-    }
-    this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
-  }
-
-  /** 서버가 활성화한 슬롯의 문구·비율·일일/주간 한도만 준비 화면에 결합한다. */
-  private async loadQuickExpeditionOffer(): Promise<void> {
-    try {
-      const config = await gameApi.getAdOperationsConfig();
-      if (!this.scene.isActive()) return;
-      const slot = config.slots.find((candidate): candidate is AdSlotOperationsDto & { reward: { readonly kind: "quick_expedition"; readonly scoreRatio: number } } => candidate.slotId === "quick-expedition" && candidate.enabled && candidate.reward.kind === "quick_expedition");
-      if (!slot) return;
-      const sameDay = session.dailyAdRewards.date === config.serverTime.slice(0, 10);
-      const dailyUsed = sameDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0;
-      const dailyRemaining = Math.max(0, slot.dailyLimitUtc - dailyUsed);
-      const weeklyRemaining = Math.max(0, (slot.weeklyLimitUtc ?? 0) - (slot.weeklyClaims ?? 0));
-      const reference = Math.max(0, Math.floor(slot.referenceScore ?? 0));
-      const expected = Math.floor(reference * slot.reward.scoreRatio);
-      if (reference <= 0 || expected <= 0 || dailyRemaining <= 0 || weeklyRemaining <= 0) return;
-      // 주 행동과 떨어진 낮고 작은 중립 버튼으로 위계를 명확히 나눈다. 버튼이 보상과 남은
-      // 횟수를 직접 말하므로 별도 상태 문구를 두지 않는다.
-      this.quickButton?.destroy();
-      this.quickButton = new Button(this, 230, 1800, { width: 340, height: 84, label: slot.displayText, sub: t("expedition.quick.sub", { gold: expected.toLocaleString(), remaining: dailyRemaining }), fontSize: 25, subFontSize: 18, art: UI_ICON.ad, onClick: () => void this.claimQuickExpedition(slot) });
-    } catch { /* 조회 실패는 그 자리를 비운다. 실패했다는 말은 플레이어가 할 일을 바꾸지 않는다. */ }
-  }
-
-  /** 기존 발굴 광고와 같은 토큰 추출·연타 잠금·고유 요청 ID 흐름으로 서버 지급을 요청한다. */
-  private async claimQuickExpedition(slot: AdSlotOperationsDto): Promise<void> {
-    if (this.quickClaimPending) return;
-    this.quickClaimPending = true; this.quickButton?.setEnabled(false);
-    try {
-      const token = completedAdToken(await presentRewardedAd(slot.slotId));
-      if (!token) { this.hint?.setText(t("expedition.quick.cancelled")); this.quickButton?.setEnabled(true); return; }
-      const requestId = globalThis.crypto?.randomUUID?.() ?? `quick-expedition-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const result = await gameApi.claimAdReward({ slotId: "quick-expedition", verificationToken: token, requestId });
-      const gained = Math.max(0, result.granted.gold ?? 0);
-      // 응답 스냅샷으로 로컬 준비 화면과 상단 지갑의 다음 방문 상태를 함께 갱신한다.
-      session.wallet = { ...result.wallet };
-      session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
-      await this.loadQuickExpeditionOffer();
-      if (gained === 0) this.hint?.setText(t("expedition.quick.walletFull"));
-      else openRewardPopup(this, this.popups, { title: t("expedition.quick.done"), items: [{ icon: "currency-gold", amount: gained, label: t("expedition.quick.walletGain") }] });
-    } catch (error) {
-      const code = error instanceof GameApiError ? error.code : undefined;
-      const message: Partial<Record<string, string>> = {
-        AD_TOKEN_INVALID: t("expedition.quick.verifyFailed"),
-        AD_DAILY_LIMIT: t("expedition.quick.dailyUsed"),
-        AD_WEEKLY_LIMIT: t("expedition.quick.weeklyUsed"),
-        EXPEDITION_SCORE_REQUIRED: t("expedition.quick.noBaseline"),
-      };
-      this.hint?.setText(message[code ?? ""] ?? t("expedition.quick.retryLater"));
-      this.quickButton?.setEnabled(!["AD_DAILY_LIMIT", "AD_WEEKLY_LIMIT", "EXPEDITION_SCORE_REQUIRED"].includes(code ?? ""));
-    } finally {
-      this.quickClaimPending = false;
-    }
+    void withBusy(this, expeditionManager.prepareDevelopmentBossShortcut(relicIds)).then((result) => {
+      if (result.ok) {
+        // 재시작 뒤 실제 보스 노드를 눌러 적 미리보기를 확인하고, 기존 enterBossBattle 출격 DTO로 진입한다.
+        restartScene(this);
+        return;
+      }
+      this.hint?.setText(result.reason === "developmentOnly" ? t("expedition.devOnly") : this.failureMessage(result.reason));
+    }).catch(() => undefined);
   }
 
   /**
@@ -1149,13 +1129,14 @@ export class ExpeditionScene extends Phaser.Scene {
 
   /** 선택 배열을 직접 저장하지 않고 매니저의 검증 완료 상태 전이만 요청한다. */
   private startExpedition(): void {
-    const result = expeditionManager.start(formationMembers(this.selected));
-    if (result.ok) {
-      // 성공 결과는 이미 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
-      restartScene(this);
-      return;
-    }
-    this.hint.setText(this.failureMessage(result.reason));
+    void withBusy(this, expeditionManager.start(formationMembers(this.selected))).then((result) => {
+      if (result.ok) {
+        // 성공 결과는 이미 서버 저장까지 완료되었으므로 같은 씬을 다시 그려 이어하기 상태로 전환한다.
+        restartScene(this);
+        return;
+      }
+      this.hint.setText(this.failureMessage(result.reason));
+    }).catch(() => undefined);
   }
 
   /** 공개 실패 코드를 화면에 필요한 짧은 행동 문구로만 바꾼다. */

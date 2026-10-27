@@ -45,7 +45,8 @@ function makeSession(stamina = 100, clearedIndex = -1): Session {
   };
 }
 
-const make = (state: Session) => new FakeServer(state, { latencyMs: 0, now: NOW });
+// 난수 0이면 토벌권 덤이 떨어지지 않는다 — 가방은 소탕권만 본다.
+const make = (state: Session) => new FakeServer(state, { latencyMs: 0, random: () => 0, now: NOW });
 
 /** 광고 제거 멤버십을 실제 구매 경로로 켠다 — 서버가 권리 목록을 보고 소탕권을 건너뛴다. */
 async function buyAdFreeMembership(server: FakeServer, suffix: string): Promise<void> {
@@ -108,6 +109,8 @@ describe("FakeServer 치즈케이크 대작전", () => {
 
   it("소탕은 이겨 본 단계만 통과하고 횟수만큼 차감·지급하며 소탕권을 한 장씩 쓴다", async () => {
     const state = makeSession(100, -1); state.itemInventory = [{ itemId: SWEEP_TICKET_ITEM, quantity: 5 }];
+    // 레벨업 드링크가 가방에 섞이지 않게 중반 레벨에서 시작한다.
+    state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
     const server = make(state);
     // 아직 한 번도 이기지 않았으므로 해금된 첫 단계라도 소탕은 막힌다.
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 1, requestId: "sweep-2" })).rejects.toMatchObject({ code: "DUNGEON_NOT_CLEARED" });

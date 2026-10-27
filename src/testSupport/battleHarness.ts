@@ -1,4 +1,5 @@
 import type { SkirmishState } from "../core/skirmish";
+import { ferocityMaxOf } from "../core/ferocity";
 
 /**
  * Playwright가 전투 씬 연결만 빠르게 확인할 때 쓰는 테스트 전용 입력이다.
@@ -6,8 +7,11 @@ import type { SkirmishState } from "../core/skirmish";
  */
 interface BattleTestConfig {
   seed: number;
-  /** `result`는 다음 타격으로 끝나는 판, `ultimate`는 아군 궁극기가 찬 채로 여는 판(컷인 캡처용)이다. */
-  preset?: "result" | "ultimate";
+  /**
+   * `result`는 다음 타격으로 끝나는 판, `ultimate`는 아군 궁극기가 찬 채로 여는 판(컷인 캡처용),
+   * `fever`는 아군 야성이 가득 찬 채로 여는 판(폭주 연출 캡처용)이다.
+   */
+  preset?: "result" | "ultimate" | "fever";
 }
 
 declare global {
@@ -40,6 +44,11 @@ export function applyBattleTestPreset(state: SkirmishState): void {
   if (preset === "ultimate") {
     // 궁극기 컷인을 실제로 여는 E2E만 아군 게이지를 채워 둔다. 전투 공식은 건드리지 않는다.
     for (const fighter of state.fighters) if (fighter.side === "player") fighter.energy = fighter.def.ultimate.cost;
+    return;
+  }
+  if (preset === "fever") {
+    // 폭주 연출을 캡처하는 E2E만 아군 야성을 채워 둔다. 차오른 뒤의 규칙은 전투가 그대로 돈다.
+    for (const fighter of state.fighters) if (fighter.side === "player") fighter.ferocity = ferocityMaxOf(fighter.def);
     return;
   }
   if (preset !== "result") return;

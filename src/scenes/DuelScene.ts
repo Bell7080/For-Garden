@@ -14,6 +14,8 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { paintDuelHistory } from "../ui/DuelHistoryList";
 import { openDuelOpponentPopup } from "../ui/DuelOpponentPopup";
+import { openDuelDefensePreview } from "../ui/DuelDefensePreviewPopup";
+import { consumeSceneEntry } from "./sceneEntry";
 import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
@@ -33,6 +35,8 @@ import { addSideShopButton } from "../ui/sideShop";
 import { COLOR, textStyle } from "../ui/theme";
 import { TopBar } from "../ui/TopBar";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다(가방·고고학과 같은 좌하단 라벨). */
 type DuelTab = "battle" | "history";
@@ -61,8 +65,16 @@ export class DuelScene extends Phaser.Scene {
   private status?: DuelStatusResponse;
   private busy = false;
 
+  /** 진 결투의 「편성 바꾸기」로 들어왔으면 상태를 받자마자 상대 고르기 창을 연다. */
+  private openOpponentsOnEntry = false;
+
   constructor() {
     super("duel");
+  }
+
+  init(data?: { openOpponents?: boolean }): void {
+    this.openOpponentsOnEntry = data?.openOpponents === true;
+    consumeSceneEntry(this);
   }
 
   create(): void {
@@ -87,12 +99,18 @@ export class DuelScene extends Phaser.Scene {
     this.paintTabs();
     void this.fetchStatus();
     playSceneEntrance(this);
+    showContentIntro(this, "duel");
   }
 
   private async fetchStatus(): Promise<void> {
     try {
-      const status = await gameApi.getDuelStatus();
-      if (this.scene.isActive()) this.paint(status);
+      const status = await withBusy(this, gameApi.getDuelStatus());
+      if (!this.scene.isActive()) return;
+      this.paint(status);
+      if (this.openOpponentsOnEntry) {
+        this.openOpponentsOnEntry = false;
+        if (status.attemptsLeft > 0 && status.opponents.length > 0) this.openOpponents();
+      }
     } catch {
       if (!this.scene.isActive()) return;
       this.view.removeAll(true);
@@ -282,10 +300,11 @@ export class DuelScene extends Phaser.Scene {
       onClick: () => {
         if (this.busy) return;
         // 도전권이 없으면 상대를 고르게 한 뒤 막지 않고, 곧바로 채우는 창을 연다.
+        if (status.opponents.length === 0) { this.popups.confirm({ title: t("duel.opponents.title"), message: t("duel.opponents.empty"), confirmLabel: t("duel.ok"), cancelLabel: false }, () => void this.run(() => gameApi.getDuelStatus())); return; }
         if (status.attemptsLeft > 0) this.openOpponents(); else this.openTicketPopup();
       },
     });
-    button.setEnabled(status.opponents.length > 0);
+
     this.view.add(button);
   }
 
@@ -300,7 +319,11 @@ export class DuelScene extends Phaser.Scene {
     const status = this.status;
     if (!status || this.busy) return;
     openDuelOpponentPopup(this, this.popups, status, {
-      onChallenge: (opponent) => startScene(this, "party", { content: "duel", opponent, attack: status.attack }),
+      // 도전은 곧장 편성으로 가지 않는다 — 먼저 상대의 방어팀을 크게 보이고, 그 창의 출격이 공격팀 편성을 연다.
+      onChallenge: (opponent) => openDuelDefensePreview(this, this.popups, opponent, {
+        onSortie: () => startScene(this, "party", { content: "duel", opponent, attack: status.attack }),
+        onBack: () => this.openOpponents(),
+      }),
       onRefresh: (close) => {
         const price = status.nextRefreshPrice;
         // 옛 창을 닫고 새 상태로 같은 창을 다시 연다 — 같은 제목이라 갈아 끼우기로 읽힌다.
@@ -337,7 +360,7 @@ export class DuelScene extends Phaser.Scene {
     if (this.busy) return;
     this.busy = true;
     try {
-      const claimed = await gameApi.claimDuelSeasonReward();
+      const claimed = await withBusy(this, gameApi.claimDuelSeasonReward());
       if (!this.scene.isActive()) return;
       openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ duelEmblem: claimed.duelEmblem, gems: claimed.gems }), onConfirm: () => void this.fetchStatus() });
     } catch (error) {
@@ -348,6 +371,7 @@ export class DuelScene extends Phaser.Scene {
   }
 
   private errorMessage(error: unknown): string {
+    if (error && typeof error === "object" && "code" in error && error.code === "DUEL_UNAVAILABLE") return t("duel.error.unavailable");
     if (error instanceof GameApiError) {
       if (error.code === "INSUFFICIENT_CURRENCY") return t("duel.error.noGems");
       if (error.code === "DUEL_ATTEMPT_LIMIT") return t("duel.error.attemptLimit");

@@ -1,77 +1,55 @@
-import { cleanBio, cleanNickname, createPlayerUid, nicknameLockedUntil, nicknameProblem, type NicknameProblem } from "../core/playerCard";
-import { findProfileFrame, isProfileFrameUnlocked, PROFILE_FRAMES, type ProfileFrameDefinition } from "../data/profileFrames";
-import { saveManager, type SaveManager } from "../state/SaveManager";
+import { nicknameLockedUntil } from "../core/playerCard";
+import { isProfileFrameUnlocked, PROFILE_FRAMES, type ProfileFrameDefinition } from "../data/profileFrames";
+import type { PlayerCardFailureReason, UpdatePlayerCardRequest } from "../api/contracts";
 import { session, type PlayerCardState, type Session } from "../state/session";
+import { resolveServerApi, type ProfileApi } from "./serverApi";
 
-export type PlayerCardResult = { ok: true } | { ok: false; reason: NicknameProblem | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned" };
+export type PlayerCardResult = { ok: true } | { ok: false; reason: PlayerCardFailureReason };
 
 /**
  * 플레이어 카드(닉네임·한 줄 소개·테두리·UID)를 바꾸는 유일한 경계.
  *
- * 씬은 입력만 넘기고 검증·저장은 여기서 끝낸다. 저장이 실패하면 메모리도 되돌린다 — 화면에는
- * 바뀐 이름이 섰는데 다시 켜면 옛 이름인 계정을 만들지 않는다.
+ * 씬은 입력만 넘기고 검증·저장은 서버(`GameApi.updatePlayerCard`)가 끝낸다 — 닉네임 주기와
+ * 시각도 서버 시계로 잰다. 이 매니저는 요청을 보내고 결과를 데이터로 돌려줄 뿐 상태를 직접 쓰지 않는다.
  */
 export class PlayerCardManager {
-  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager) {}
+  private readonly apiCache: { api?: ProfileApi } = {};
+  constructor(private readonly state: Session = session, private readonly injectedApi?: ProfileApi) {}
+
+  private get api(): ProfileApi { return resolveServerApi<ProfileApi>(this.state, this.injectedApi, this.apiCache); }
 
   get card(): Readonly<PlayerCardState> { return this.state.playerCard; }
 
-  /** UID와 연구 개시일은 계정이 처음 설 때 한 번 정해지고 그 뒤로 바뀌지 않는다. */
-  ensureIdentity(random: () => number = Math.random, now: Date = new Date()): void {
+  /** UID와 연구 개시일은 계정이 처음 설 때 서버가 한 번 정하고 그 뒤로 바뀌지 않는다. */
+  async ensureIdentity(): Promise<void> {
     const card = this.state.playerCard;
     if (card.uid && card.createdAt) return;
-    this.commit({ ...card, uid: card.uid || createPlayerUid(random), createdAt: card.createdAt || now.toISOString() });
+    await this.api.updatePlayerCard({ kind: "identity" });
   }
 
-  /** 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 `undefined`다. */
+  /** 다음에 닉네임을 바꿀 수 있는 시각. 지금 바꿀 수 있으면 `undefined`다. 표시용 조회라 화면 시계를 쓴다. */
   nicknameLockedUntil(now: Date = new Date()): Date | undefined {
     return nicknameLockedUntil(this.state.playerCard, now);
   }
 
-  /**
-   * 닉네임은 이레에 한 번 바꾼다(처음 정하는 이름은 세지 않는다). 같은 이름을 다시 적는 것은
-   * 바꾼 것이 아니라 아무 일도 없는 것이다.
-   */
-  setNickname(value: string, now: Date = new Date()): PlayerCardResult {
-    const problem = nicknameProblem(value);
-    if (problem) return { ok: false, reason: problem };
-    const card = this.state.playerCard;
-    const nickname = cleanNickname(value);
-    if (nickname === card.nickname) return { ok: true };
-    if (nicknameLockedUntil(card, now)) return { ok: false, reason: "nicknameCooldown" };
-    this.commit({ ...card, nickname, nicknameChangedAt: card.nickname === "" ? card.nicknameChangedAt : now.toISOString() });
-    return { ok: true };
-  }
+  /** 닉네임은 이레에 한 번 바꾼다(처음 정하는 이름은 세지 않는다). 규칙은 서버가 지킨다. */
+  setNickname(value: string): Promise<PlayerCardResult> { return this.send({ kind: "nickname", value }); }
 
-  setBio(value: string): PlayerCardResult {
-    this.commit({ ...this.state.playerCard, bio: cleanBio(value) });
-    return { ok: true };
-  }
+  setBio(value: string): Promise<PlayerCardResult> { return this.send({ kind: "bio", value }); }
 
   /** 테두리는 연구원 레벨이 연 것만 고를 수 있다. */
-  setFrame(id: string): PlayerCardResult {
-    const frame = findProfileFrame(id);
-    if (!frame) return { ok: false, reason: "unknownFrame" };
-    if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level)) return { ok: false, reason: "frameLocked" };
-    this.commit({ ...this.state.playerCard, frameId: id });
-    return { ok: true };
-  }
+  setFrame(id: string): Promise<PlayerCardResult> { return this.send({ kind: "frame", frameId: id }); }
 
   /** 프로필 사진은 보유한 렐릭의 얼굴만 고를 수 있다. */
-  setAvatar(relicId: string): PlayerCardResult {
-    if (!this.state.owned.has(relicId)) return { ok: false, reason: "notOwned" };
-    this.commit({ ...this.state.playerCard, avatarRelicId: relicId });
-    return { ok: true };
-  }
+  setAvatar(relicId: string): Promise<PlayerCardResult> { return this.send({ kind: "avatar", relicId }); }
 
   frames(): { frame: ProfileFrameDefinition; unlocked: boolean }[] {
     return PROFILE_FRAMES.map((frame) => ({ frame, unlocked: isProfileFrameUnlocked(frame, this.state.playerResearch.level) }));
   }
 
-  private commit(next: PlayerCardState): void {
-    const previous = this.state.playerCard;
-    this.state.playerCard = next;
-    try { this.saves.save(this.state); } catch (error) { this.state.playerCard = previous; throw error; }
+  private async send(request: UpdatePlayerCardRequest): Promise<PlayerCardResult> {
+    const result = await this.api.updatePlayerCard(request);
+    return result.ok ? { ok: true } : { ok: false, reason: result.reason };
   }
 }
 

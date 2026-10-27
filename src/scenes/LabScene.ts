@@ -20,7 +20,7 @@ import { CRACK_BRANCHES, FOSSIL_CRACK, crackBranchPoints, fossilShards, shardPoi
 import { researchBoardLayout } from "../ui/researchBoardLayout";
 import { ResearchSlotTile } from "../ui/ResearchSlotTile";
 import { playNewRelicShowcase } from "../ui/NewRelicShowcase";
-import { preloadSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
+import { preloadSsrOmen, releaseSsrOmen, warmSsrOmen } from "../ui/SsrOmenCinematic";
 import { exposeShowcasePreview } from "../testSupport/showcaseHarness";
 import { audioManager, type AudioScope } from "../managers/AudioManager";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -44,6 +44,9 @@ import { formatCurrency } from "../core/formatCurrency";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { TutorialSpotlight } from "../ui/TutorialSpotlight";
+import { contentOpen } from "../ui/contentLock";
+import { tutorialManager } from "../managers/TutorialManager";
 
 /**
  * 연구소 — 화석과 호박석으로 렐릭을 복원하는 기존 연구 시설이다.
@@ -140,10 +143,14 @@ export class LabScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (!contentOpen("lab")) { startScene(this, "lobby"); return; }
     setDebugScene("lab");
     exposeShowcasePreview((relicId) => void this.introduceRelic(relicId));
     // 열 배너가 목록에 없으면(다 쓴 한정 배너 등) 첫 배너로 선다.
     this.bannerIndex = Math.max(0, this.banners.findIndex(({ id }) => id === this.entryBannerId));
+    // 튜토리얼 「뽑기」 칸이면 첫 복원 연구 배너로 서서 10회 버튼을 가리킨다.
+    const teachPull = tutorialManager.next() === "pull";
+    if (teachPull) this.bannerIndex = Math.max(0, this.banners.findIndex(({ id }) => id === "welcome"));
     this.audioScope = audioManager?.createScope();
     this.popupLayer = new PopupLayer(this, 2400);
 
@@ -191,6 +198,7 @@ export class LabScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.showcase?.destroy();
       this.showcase = undefined;
+      releaseSsrOmen();
       this.pickupPanels = undefined;
       this.cast?.destroy();
       this.cast = undefined;
@@ -220,6 +228,21 @@ export class LabScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    if (teachPull && this.banner.id === "welcome") {
+      const b = this.tenButton.getBounds();
+      this.pullSpotlight = new TutorialSpotlight(this, {
+        rect: { x: b.x, y: b.y, width: b.width, height: b.height }, text: t("tutorial.lab.pull"), side: "above",
+        onSkip: () => { this.clearPullSpotlight(); void tutorialManager.complete("pull"); }, skipLabel: t("tutorial.skip"),
+      });
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.clearPullSpotlight());
+    }
+  }
+
+  private pullSpotlight?: TutorialSpotlight;
+
+  private clearPullSpotlight(): void {
+    this.pullSpotlight?.destroy();
+    this.pullSpotlight = undefined;
   }
 
   /** 마일리지 상점 — 다른 상점과 같은 한 씬이고, 뒤로가기는 연구소로 돌아온다. */
@@ -380,13 +403,14 @@ export class LabScene extends Phaser.Scene {
   private requestPull(count: 1 | 10): void {
     const banner = this.banner;
     if (this.pullPending || !canPull(session.wallet, banner, count, this.pityOf(banner))) return;
-    const payment = pullPayment(session.wallet, banner, count);
+    this.clearPullSpotlight();
+    const payment = pullPayment(session.wallet, banner, count, this.pityOf(banner));
     if (payment.gems <= 0 || !this.popupLayer) { void this.doPull(count); return; }
     // 치를 것은 문장이 아니라 액자가 말한다 — 문장에 수를 또 적으면 같은 값을 한 창에 두 번 읽는다.
     this.popupLayer.confirm({
       title: t("lab.pull.gemTitle"),
       message: t("lab.pull.gemMessage", { currency: t(`currency.${banner.currency}`), count }),
-      costs: pullCostParts(banner, count),
+      costs: pullCostParts(banner, count, this.pityOf(banner)),
       balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - payment.gems },
       confirmLabel: t("lab.pull.gemConfirm"),
     }, () => { void this.doPull(count); });
@@ -402,8 +426,9 @@ export class LabScene extends Phaser.Scene {
       // 결과와 비용은 클라이언트에서 계산하지 않고 API 응답만 화면에 반영한다.
       const response = await gameApi.pullRelics({ bannerId: banner.id, count });
       this.topBar.refresh();
+      // 첫 연구 튜토리얼은 연구 결과와 같은 서버 저장에서 완료된다. 별도 완료 요청을 보내지 않는다.
       // API가 상태 반영과 저장까지 끝낸 뒤 응답하므로 이후 건너뛰기는 보상에 영향을 주지 않는다.
-      await this.playPresentation(response.results, response.mileageGained);
+      await this.playPresentation(response.results, response.mileageGained, response.rarityUpgradeSlot);
     } catch (error) {
       const message = error instanceof GameApiError ? error.message : t("lab.networkError");
       this.showNotice(message);
@@ -449,15 +474,16 @@ export class LabScene extends Phaser.Scene {
   }
 
   /** 서버 확정 등급을 복권처럼 암시한 뒤 균열→결과판 순서로 재생한다. */
-  private async playPresentation(results: PullResultDto[], mileage: number): Promise<void> {
+  private async playPresentation(results: PullResultDto[], mileage: number, upgradeSlot?: number): Promise<void> {
     // 한 연출 도중 설정을 다시 읽어 단계별 시간이 서로 갈리지 않도록 시작 시 스냅샷을 고정한다.
     const preferences = settingsManager.get();
     const request = this.presentation.begin();
-    const rarity = highestRarity(results.map((result) => result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
+    // 등급이 한 번 더 오른 칸은 오르기 전의 SR로 센다 — 균열·섬광이 SSR을 미리 말하면 깜짝이 사라진다.
+    const rarity = highestRarity(results.map((result, index) => index === upgradeSlot ? "SR" : result.type === "relic" ? getRelic(result.relicId).rarity : result.grade));
     // API가 확정한 전체 결과를 순수 희귀도 정책에 넣고, 10연이어도 결과 묶음당 한 번만 울린다.
     if (hasRareExcavationResult([rarity])) settingsManager.haptic("rareExcavation");
     // 3D 연출이 서면 그것이 이 뽑기의 연출 전부다. 서지 못한 기기만 아래의 Phaser 연출을 탄다.
-    if (await this.playCinematic(results, request, mileage)) return;
+    if (await this.playCinematic(results, request, mileage, upgradeSlot)) return;
     this.presentationLayer?.destroy(true);
     const layer = this.add.container(0, 0).setDepth(900);
     this.presentationLayer = layer;
@@ -519,7 +545,7 @@ export class LabScene extends Phaser.Scene {
    *
    * 돌려주는 값은 "시네마틱이 실제로 연출을 맡았는가"다. 거짓이면 씬은 예전 연출을 재생한다.
    */
-  private async playCinematic(results: PullResultDto[], request: number, mileage: number): Promise<boolean> {
+  private async playCinematic(results: PullResultDto[], request: number, mileage: number, upgradeSlot?: number): Promise<boolean> {
     // SSR이 든 판이면 전조 무대를 미리 읽어 둔다 — 카드가 뒤집힐 때쯤이면 도착해 있다.
     if (results.some((result) => result.type === "relic" && getRelic(result.relicId).rarity === "SSR")) void preloadSsrOmen()?.catch(() => undefined);
     if (!researchCinematicEnabled() || !isCinematicCount(results.length)) return false;
@@ -531,6 +557,8 @@ export class LabScene extends Phaser.Scene {
       currency: (kind) => t(`currency.${kind}`),
       resourceTitle: t("lab.cinematic.resource"),
     });
+    // 등급이 한 번 더 오른 칸은 SR 카드로 먼저 세운다 — 오르는 순간은 뒤집기 직전의 깜짝 장면이 맡는다.
+    if (upgradeSlot !== undefined && rewards[upgradeSlot]) rewards[upgradeSlot] = { ...rewards[upgradeSlot], rarity: "SR" };
     // 카드에 서는 것은 결과판과 같은 규칙이다 — 새 렐릭만 실제 원화, 중복과 재화는 액자 한 장.
     const art = cinematicCardArt(views, {
       portrait: (relicId) => getRelic(relicId).portraitAssetId,
@@ -546,9 +574,12 @@ export class LabScene extends Phaser.Scene {
       reducedMotion: preferences.accessibility.reduceMotion,
       mileage,
       introduceSlots: showcase.flatMap((relicId, index) => (relicId ? [index] : [])),
+      // 찬스로 오른 칸은 SR 뒷면으로 서 있다가 뒤집지 않고 떨리며 SSR로 격상되어 원래 SSR 소개로 넘어간다.
+      chanceSlots: upgradeSlot !== undefined ? [upgradeSlot] : [],
       introduce: async (index) => {
         const relicId = showcase[index];
-        if (relicId && this.presentation.isCurrent(request)) await this.introduceRelic(relicId);
+        if (!relicId || !this.presentation.isCurrent(request)) return;
+        await this.introduceRelic(relicId);
       },
       text: {
         skip: t("lab.cinematic.skip"),
@@ -836,13 +867,13 @@ export class LabScene extends Phaser.Scene {
     this.oneButton.setVisible(!banner.tenOnly);
     this.tenButton.setX(banner.tenOnly ? BASE_WIDTH / 2 : 780);
     this.oneButton
-      .setCost(pullCostParts(banner, 1))
+      .setCost(pullCostParts(banner, 1, pity))
       .setEnabled(oneOpen && !this.pullPending && canPull(session.wallet, banner, 1, pity));
     this.tenButton
-      .setCost(pullCostParts(banner, 10))
+      .setCost(pullCostParts(banner, 10, pity))
       .setEnabled(!this.pullPending && canPull(session.wallet, banner, 10, pity));
 
-    const discount = bannerTenDiscountPercent(banner);
+    const discount = bannerTenDiscountPercent(banner, pity);
     this.discountBadge.setVisible(discount > 0);
     this.discountText.setText(t("lab.pull.discount", { percent: discount }));
     this.discountBadge.setPosition(this.tenButton.x + LAB_TITLE.discount.dx, LAB_CHROME.pull.y + LAB_TITLE.discount.dy);
@@ -850,11 +881,11 @@ export class LabScene extends Phaser.Scene {
 }
 
 /** 연구 버튼에 세울 값 조각 — 가진 연구 재화 몫과 모자라 젬으로 채우는 몫. */
-function pullCostParts(banner: Banner, count: number): ResearchPullCostPart[] {
-  const payment = pullPayment(session.wallet, banner, count);
+function pullCostParts(banner: Banner, count: number, pity?: GachaPityState): ResearchPullCostPart[] {
+  const payment = pullPayment(session.wallet, banner, count, pity);
   const parts: ResearchPullCostPart[] = [];
   // 연구 재화가 하나도 없으면 그 조각은 세우지 않는다(「화석 ×0」은 읽을 필요 없는 수다).
-  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count) : payment.tickets });
+  if (payment.tickets > 0 || payment.gems === 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET[banner.currency], amount: payment.gems === 0 ? pullCost(banner, count, pity) : payment.tickets });
   if (payment.gems > 0) parts.push({ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: payment.gems, short: !payment.affordable });
   return parts;
 }

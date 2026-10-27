@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** th table. Same keys as the Korean table; any key missing here falls back to Korean. */
 import { SETTINGS_TH } from "./settings";
 import { LOBBY_TH } from "./lobby";
@@ -25,5 +26,16 @@ import { SYSTEM_TH } from "./system";
 import { RAID_TH } from "./raid";
 import { BOUNTY_TH } from "./bounty";
 import { DUNGEON_TH } from "./dungeon";
+import { DUEL_TH } from "./duel";
 
-export default { ...SETTINGS_TH, ...LOBBY_TH, ...COMMON_TH, ...INFO_TH, ...STATUS_TH, ...LAB_TH, ...EXPEDITION_TH, ...BATTLE_TH, ...CAKE_OPERATION_TH, ...EXCAVATION_TH, ...AUGMENT_TH, ...FRIENDS_TH, ...RUNE_TH, ...PARTY_TH, ...EXPEDITION_REWARD_TH, ...SAVE_CONFLICT_TH, ...INTERACTION_TH, ...SHOP_TH, ...MISSIONS_TH, ...INVENTORY_TH, ...MISC_TH, ...SKILL_TH, ...SYSTEM_TH, ...RAID_TH, ...BOUNTY_TH, ...DUNGEON_TH };
+import { GUILD_TH } from "./guild";
+
+import { SUPPORT_TH } from "./support";
+
+import { ACHIEVEMENT_TH } from "./achievement";
+
+import { RECOLLECTION_TH } from "./recollection";
+
+import { DIALOGUE_TH } from "./dialogue";
+
+export default { ...ARENA_TEXT, ...DIALOGUE_TH, ...RECOLLECTION_TH, ...ACHIEVEMENT_TH, ...SUPPORT_TH, ...GUILD_TH, ...SETTINGS_TH, ...LOBBY_TH, ...COMMON_TH, ...INFO_TH, ...STATUS_TH, ...LAB_TH, ...EXPEDITION_TH, ...BATTLE_TH, ...CAKE_OPERATION_TH, ...EXCAVATION_TH, ...AUGMENT_TH, ...FRIENDS_TH, ...RUNE_TH, ...PARTY_TH, ...EXPEDITION_REWARD_TH, ...SAVE_CONFLICT_TH, ...INTERACTION_TH, ...SHOP_TH, ...MISSIONS_TH, ...INVENTORY_TH, ...MISC_TH, ...SKILL_TH, ...SYSTEM_TH, ...RAID_TH, ...BOUNTY_TH, ...DUNGEON_TH, ...DUEL_TH };

@@ -81,7 +81,7 @@ describe("Puppet 원화 거주 규칙", () => {
 });
 
 describe("거주 규칙을 지나지 않는 길을 남기지 않는다", () => {
-  const assets = readFileSync("src/puppets/assets.ts", "utf8");
+  const assets = readFileSync("src/puppets/assets.ts", "utf8").replace(/\r\n/g, "\n");
 
   it("원화를 얻는 두 길이 모두 붙잡는다", () => {
     // `loadPortraitTexture`는 붙잡을 표시 객체를 **필수 인자로** 받는다 — 선택으로 두면

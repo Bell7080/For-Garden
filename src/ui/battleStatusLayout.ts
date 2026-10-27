@@ -239,8 +239,42 @@ export const RAID_BATTLE_HUD = {
   clockY: 132,
   /** 이번 판의 점수. 시계 바로 아래다. */
   scoreY: 190,
-  /** 단계 줄. 점수와 같은 높이의 왼쪽이라 가운데 수와 부딪히지 않는다. */
-  phaseX: 42,
-  phaseY: 206,
   depth: 90,
 } as const;
+
+/**
+ * 보스전 좌상단 점수 랭킹 띠 — 내 위로 둘·나·아래로 하나, 네 줄이 위에서 아래로 쌓인다.
+ *
+ * 예전 단계 이름표(「관측」·「교전」)가 서던 자리다. 원정·레이드가 같은 자리를 쓴다 — 시즌 줄의 수치
+ * (`RAID_BATTLE_HUD.valueY`) 바로 아래에서 시작해 기여도 판(`top 284`) 위에서 끝난다.
+ * 가운데 점수 글자의 왼쪽 끝(약 400)보다 안쪽에 서므로 두 수가 부딪히지 않는다(테스트가 잰다).
+ *
+ * 줄마다 **순위 · 애착 렐릭 얼굴 · 이름 · 점수**가 선다 — 이름만 늘어선 띠는 누구와 겨루는지가
+ * 순위표 화면의 줄과 다르게 읽혔다. 1위가 창 밖이면 맨 위에 붙박이고(`pinned`) 그 아래로 `pinGap`만큼 띄운다.
+ */
+export const SCORE_RANKING_HUD = {
+  left: 24,
+  top: 128,
+  width: 372,
+  rowHeight: 34,
+  rowGap: 4,
+  /** 붙박은 1위 줄과 그 아래 줄 사이에 더 띄우는 틈 — 이어진 순위가 아니라는 것을 자리로 말한다. */
+  pinGap: 6,
+  rows: 4,
+  /** 줄 안(왼쪽 끝 기준) 자리 — 순위 숫자 가운데, 얼굴 가운데, 이름 시작, 점수 오른쪽 끝. */
+  rankX: 22,
+  faceX: 62,
+  faceSize: 30,
+  nameX: 84,
+  nameWidth: 150,
+  scoreRight: 362,
+  depth: 90,
+  /** 줄이 자리를 바꾸는 시간(ms). 3배속에서도 읽히도록 배속을 곱하지 않는다. */
+  moveMs: 340,
+} as const;
+
+/** i번째 줄의 위쪽 y. 맨 위가 붙박은 1위면 그 아래 줄부터 `pinGap`만큼 내려선다. */
+export function scoreRankingRowTop(index: number, pinned = false): number {
+  const L = SCORE_RANKING_HUD;
+  return L.top + index * (L.rowHeight + L.rowGap) + (pinned && index > 0 ? L.pinGap : 0);
+}

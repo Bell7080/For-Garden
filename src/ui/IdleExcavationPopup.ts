@@ -1,10 +1,13 @@
+import { hasRemoteState } from "../api/resultState";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import Phaser from "phaser";
+import { releaseAdWait } from "../platform/rewardedAds";
 import { UI_ICON } from "./icons";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
-import type { AdOperationsConfigResponse, AdPresentationResult, AdSlotOperationsDto, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
+import type { AdPresentationResult, GameApi, HarvestExcavationResponse, IdleExcavationResponse } from "../api/contracts";
 import { motionPolicy, powerSavingPolicy } from "../core/settings";
-import { clampExcavationStorage, emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageFillRatio, excavationStorageLimitSeconds, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
+import { clampExcavationStorage, emptyExcavationAmounts, EXCAVATION_CURRENCIES, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageFillOfBase, excavationStorageLimitSeconds, STORAGE_EXTENSION_MULTIPLIER, type ExcavationCurrency, type IdleExcavationState } from "../core/idleExcavation";
 import { tapFormationSlot, tapRosterRelic } from "../core/formationSlots";
 import { RELICS } from "../data/relics";
 import type { RelicDef } from "../core/types";
@@ -28,14 +31,14 @@ import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelectio
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
-import { completedAdToken } from "../data/adRewards";
+import { completedAdToken, findAdRewardSlot } from "../data/adRewards";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { openRewardPopup } from "./RewardPopup";
 import { addPopupBackgroundImage, BACKGROUND, type PopupBackgroundImage } from "./backgrounds";
 import { addSectionTitle } from "./SectionTitle";
 import { excavationDisplayModel } from "./excavationDisplayModel";
 import { ExcavationCurrencyFrame, formatRate } from "./ExcavationCurrencyFrame";
-import { excavationAdOfferDisplayModel, type ExcavationAdOfferId } from "./excavationAdOfferModel";
+import { excavationAdOfferDisplayModel, formatEffectRemaining, type ExcavationAdOfferId } from "./excavationAdOfferModel";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { startPuppetHop } from "./puppetHop";
@@ -44,13 +47,16 @@ import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
+import { withBusy } from "./BusyOverlay";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
 /** 현황의 누적 액자 판. 배치 그리드도 같은 윗변에서 시작해 두 화면이 한 자리를 공유한다. */
 const STATUS_SUMMARY = { y: 30, width: 800, height: 205 } as const;
 /** SD 발밑과 누적 액자 사이, 보관 한도가 찬 비율을 보여주는 좁은 자리다. */
-const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20 } as const;
+const STORAGE_GAUGE = { labelY: -158, y: -128, width: 700, height: 20, rowGap: 26 } as const;
+/** 켜져 있는 효과 칩. 보관 게이지 라벨 양옆에 배율과 남은 시간 카운트만 적는다. */
+const EFFECT_CHIP = { width: 210, height: 36, x: 300 } as const;
 /**
  * 보유 렐릭은 이 창 안에서만 세로로 흐르며 상단 슬롯과 하단 완료 버튼을 침범하지 않는다.
  *
@@ -66,7 +72,7 @@ const GRID_VIEW = { left: -415, right: 415, top: STATUS_SUMMARY.y - STATUS_SUMMA
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(GRID_VIEW.right - GRID_VIEW.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const GRID_DRAG_SLOP = 12;
+const GRID_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 팝업 판(PopupLayer 기본 2000) 바로 위. 그 위에 열리는 보상 팝업(2002)보다는 아래에 남는다. */
 const SD_DEPTH = 2001;
 /** 원화는 별도 액자를 만들지 않고 PopupLayer 판의 비대칭 실루엣에 직접 맞춘다. */
@@ -180,8 +186,11 @@ export class IdleExcavationPopup {
   private harvestRequestId?: string;
   /** 성공 결과는 다음 현황 렌더 한 번에만 안내·연출하고 즉시 소비한다. */
   private harvestResult?: HarvestExcavationResponse;
-  /** 조회 실패 시 undefined를 유지해 번들 표로 광고를 임의 노출하지 않는다. */
-  private adOperations?: AdOperationsConfigResponse;
+  /** 생산 1.5배가 켜져 있는 동안 SD의 도약을 빠르게 하고 머리 위에 배율 표식을 세운다. */
+  private speedActive = false;
+  private readonly speedBadges = new Map<string, Phaser.GameObjects.Text>();
+  /** 보관 2배를 방금 받았으면 다음 현황에서 두 번째 줄이 펼쳐지는 연출을 한 번 돈다. */
+  private storageUnfold = false;
   private adMessage?: string;
   private harvestError?: string;
   private ticker?: Phaser.Time.TimerEvent;
@@ -205,7 +214,7 @@ export class IdleExcavationPopup {
       harvest: { x: POPUP_CENTER.x, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
       cancelEdit: { x: POPUP_CENTER.x + BOTTOM_ACTION.cancelX, y: POPUP_CENTER.y + BOTTOM_ACTION.y },
       ads: [
-        { slotId: "excavation-harvest", x: POPUP_CENTER.x - 205, y: POPUP_CENTER.y + 385 },
+        { slotId: "excavation-speed", x: POPUP_CENTER.x - 205, y: POPUP_CENTER.y + 385 },
         { slotId: "excavation-storage", x: POPUP_CENTER.x + 205, y: POPUP_CENTER.y + 385 },
       ],
     });
@@ -219,9 +228,7 @@ export class IdleExcavationPopup {
   private async fetch(): Promise<void> {
     const generation = ++this.requestGeneration;
     try {
-      const response = await this.api.getIdleExcavation();
-      // 운영 설정 실패는 선택 광고만 숨기며 기본 보관 시간 생산과 일반 수확 진입은 그대로 계속한다.
-      try { this.adOperations = await this.api.getAdOperationsConfig(); } catch { this.adOperations = undefined; }
+      const response = await withBusy(this.scene, this.api.getIdleExcavation());
       if (!this.body || generation !== this.requestGeneration) return;
       this.confirmed = response;
       this.renderStatus();
@@ -251,6 +258,7 @@ export class IdleExcavationPopup {
 
   /** 아래 칸이 소유하던 타이머와 씬 입력 리스너를 뗀다. 자식이 아니라서 파괴로 사라지지 않는다. */
   private releaseLower(): void {
+    this.rosterLabel = undefined;
     this.gridMask?.destroy(); this.gridMask = undefined;
     if (this.gridWheelHandler) this.scene.input.off("wheel", this.gridWheelHandler);
     if (this.gridPointerDownHandler) this.scene.input.off("pointerdown", this.gridPointerDownHandler);
@@ -346,6 +354,32 @@ export class IdleExcavationPopup {
     const storageLabel = this.scene.add.text(0, STORAGE_GAUGE.labelY, "", textStyle({ role: "emphasis", size: 20, color: COLOR.accentText })).setOrigin(0.5);
     content.add(storageLabel);
     const storageGauge = new HoloBar(this.scene, 0, STORAGE_GAUGE.y, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.accent, trackAlpha: 0.8, outline: true }).addTo(content);
+    // 보관 2배가 켜져 있으면 줄이 하나 더 늘어 두 줄(최대 200%)이 된다. 아래 줄이 100%를 채운 몫이 위 줄로 이어진다.
+    const nowAtRender = Date.now();
+    const remainingOf = (iso: string | null | undefined): number => (iso ? Date.parse(iso) - nowAtRender : 0);
+    const storageLeft = remainingOf(response.excavation.storageExtensionExpiresAt);
+    const speedLeft = response.excavation.activeProductionMultiplier > 1 ? remainingOf(response.excavation.productionMultiplierExpiresAt) : 0;
+    const extActive = storageLeft > 0, speedOn = speedLeft > 0;
+    const storageGauge2 = extActive ? new HoloBar(this.scene, 0, STORAGE_GAUGE.y + STORAGE_GAUGE.rowGap, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.excavationStorage, trackAlpha: 0.8, outline: true }).addTo(content) : undefined;
+    const reveal = { v: extActive && this.storageUnfold ? 0 : 1 };
+    let storageTotal = 0;
+    const paintGauges = (): void => {
+      storageGauge.setValue(Math.min(1, storageTotal));
+      storageGauge2?.setValue(Math.max(0, Math.min(1, storageTotal - 1)) * reveal.v);
+      storageLabel.setText(t("excavation.storage", { percent: Math.round(storageTotal * 100) }));
+    };
+    if (extActive && this.storageUnfold) {
+      this.storageUnfold = false;
+      this.scene.tweens.add({ targets: reveal, v: 1, duration: 700, ease: "Cubic.easeOut", onUpdate: paintGauges });
+    }
+    const addChip = (x: number, accent: number): Phaser.GameObjects.Text => {
+      content.add(drawLayer(this.scene, x, STORAGE_GAUGE.labelY, slantedRect(EFFECT_CHIP.width, EFFECT_CHIP.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: accent, edgeAlpha: 0.8 }));
+      const label = this.scene.add.text(x, STORAGE_GAUGE.labelY, "", textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(0.5);
+      content.add(label);
+      return label;
+    };
+    const speedChip = speedOn ? addChip(-EFFECT_CHIP.x, COLOR.excavationProduction) : undefined;
+    const storageChip = extActive ? addChip(EFFECT_CHIP.x, COLOR.excavationStorage) : undefined;
     // 발굴 전용 액자는 큰 누적값을, 아래의 독립 칩은 같은 아이콘과 생산 속도만 책임진다.
     // 3순위 누적 보상: SD 아래에서 현재 수확량과 시간당 생산량을 한 번에 훑는다.
     content.add(drawLayer(this.scene, 0, STATUS_SUMMARY.y, slantedRect(STATUS_SUMMARY.width, STATUS_SUMMARY.height), { fill: COLOR.panel, alpha: HOLO.glassLight, edge: COLOR.accent, edgeAlpha: 0.42 }));
@@ -380,10 +414,16 @@ export class IdleExcavationPopup {
       harvestButton?.setEnabled(harvestable && !this.saving);
       // 실제로 쌓인 재화량 자체를 보관 한도와 비교한다 — 경과 시간 기준으로 계산하면 창을 열
       // 때마다 서버 정산이 일어나 기준 시각이 현재로 밀리면서 게이지가 늘 0%로 보였다.
-      const limitSeconds = excavationStorageLimitSeconds(response.excavation, new Date());
-      const storageRatio = excavationStorageFillRatio(liveAmounts, rate, limitSeconds);
-      storageGauge.setValue(storageRatio);
-      storageLabel.setText(t("excavation.storage", { percent: Math.round(storageRatio * 100) }));
+      storageTotal = excavationStorageFillOfBase(liveAmounts, rate, response.excavation.baseStorageSeconds, extActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
+      paintGauges();
+      // 효과가 끝났거나 새로 켜졌으면 현황을 다시 그려 줄 수와 칩을 맞춘다.
+      const now = Date.now();
+      const speedNow = response.excavation.activeProductionMultiplier > 1 && Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") > now;
+      const extNow = Date.parse(response.excavation.storageExtensionExpiresAt ?? "") > now;
+      if (speedNow !== speedOn || extNow !== extActive) { this.renderStatus(); return; }
+      speedChip?.setText(`×${response.excavation.activeProductionMultiplier}  ${formatEffectRemaining(Date.parse(response.excavation.productionMultiplierExpiresAt ?? "") - now)}`);
+      storageChip?.setText(`×${STORAGE_EXTENSION_MULTIPLIER}  ${formatEffectRemaining(Date.parse(response.excavation.storageExtensionExpiresAt ?? "") - now)}`);
+      this.setSpeedActive(speedNow);
     };
     refreshEstimate();
     this.ticker?.remove(false);
@@ -416,21 +456,21 @@ export class IdleExcavationPopup {
     }
   }
 
-  /** 좌우 제안은 유효한 서버 설정에서 활성인 발굴 슬롯만 남은 횟수와 효과를 직접 말한다. */
+  /**
+   * 광고 칸은 서버 운영 설정과 무관하게 슬롯 정의와 오늘 남은 횟수로만 그린다 — 상점·스테미나의 광고 칸과 같다.
+   * 광고를 실제로 못 쓰는 환경은 광고 실행 단계(`claimAdEffect`)가 안내한다.
+   */
   private addAdOffers(content: Phaser.GameObjects.Container, serverTime: string): void {
-    const config = this.adOperations;
-    if (!config || new Date(config.expiresAt).getTime() <= new Date(serverTime).getTime()) { setDebugExcavationAdOffers([]); return; }
-    const slotIds: readonly ExcavationAdOfferId[] = ["excavation-harvest", "excavation-storage"];
-    const slots = slotIds.map((id) => config.slots.find((slot) => slot.slotId === id && slot.enabled)).filter((slot): slot is AdSlotOperationsDto & { slotId: ExcavationAdOfferId } => Boolean(slot));
+    const slotIds: readonly ExcavationAdOfferId[] = ["excavation-speed", "excavation-storage"];
     const debugOffers: NonNullable<Window["__PF_DEBUG"]>["excavationAdOffers"] = [];
-    slots.forEach((slot, index) => {
+    slotIds.forEach((slotId, index) => {
+      const limit = findAdRewardSlot(slotId)?.dailyLimitUtc ?? 0;
       const sameUtcDay = session.dailyAdRewards.date === serverTime.slice(0, 10);
-      const remaining = Math.max(0, slot.dailyLimitUtc - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slot.slotId] ?? 0 : 0));
-      // 서버 displayText 대신 슬롯별 표시 모델을 사용하고, 남은 횟수에서 실제 사용 횟수를 구한다.
-      const offer = excavationAdOfferDisplayModel(slot.slotId, slot.dailyLimitUtc, remaining);
-      const production = slot.slotId === "excavation-harvest";
-      // E2E에는 Canvas에서 사용자가 읽는 값만 노출하고 서버 displayText와 광고 토큰은 제외한다.
-      debugOffers.push({ slotId: slot.slotId, label: offer.label, usage: offer.usage, enabled: offer.enabled && !this.saving });
+      const remaining = Math.max(0, limit - (sameUtcDay ? session.dailyAdRewards.claimsBySlot[slotId] ?? 0 : 0));
+      const offer = excavationAdOfferDisplayModel(slotId, limit, remaining);
+      const production = slotId === "excavation-speed";
+      // E2E에는 Canvas에서 사용자가 읽는 값만 노출하고 광고 토큰은 제외한다.
+      debugOffers.push({ slotId, label: offer.label, usage: offer.usage, enabled: offer.enabled && !this.saving });
       // 4순위 보조 혜택: 광고는 primary와 거리를 두고 더 낮고 작은 보조 버튼으로만 제안한다.
       const button = new Button(this.scene, index === 0 ? -205 : 205, 385, {
         width: 350, height: 78, label: offer.label, sub: offer.usage, fontSize: 27, subFontSize: 17,
@@ -439,7 +479,7 @@ export class IdleExcavationPopup {
         // 생산은 청록/푸른 강조, 보관은 보라 강조와 어두운 호박 면으로 기존 토큰의 채도를 따른다.
         accentColor: production ? COLOR.excavationProduction : COLOR.excavationStorage,
         fill: production ? COLOR.panel : COLOR.excavationStorageFill,
-        onClick: () => void this.claimAdEffect(slot),
+        onClick: () => void this.claimAdEffect(slotId),
       });
       // 한도를 다 쓴 2/2 같은 상태도 진행 정보로 남기되 입력과 손 모양은 비활성화한다.
       button.setEnabled(offer.enabled && !this.saving);
@@ -450,18 +490,35 @@ export class IdleExcavationPopup {
   }
 
   /** 취소·동의 거부·SDK/재고 실패는 메시지만 바꾸며 일반 수확 버튼과 발굴 상태를 건드리지 않는다. */
-  private async claimAdEffect(slot: AdSlotOperationsDto): Promise<void> {
+  private async claimAdEffect(slotId: ExcavationAdOfferId): Promise<void> {
     if (!this.presentAd || this.saving) { this.adMessage = t("excavation.ad.unavailable"); this.renderStatus(); return; }
-    const presentation = await this.presentAd(slot.slotId);
+    const presentation = await this.presentAd(slotId);
     const verificationToken = completedAdToken(presentation);
     if (!verificationToken) { this.adMessage = t("excavation.ad.cancelled"); this.renderStatus(); return; }
     try {
-      const result = await this.api.claimAdReward({ slotId: slot.slotId, verificationToken, requestId: requestId() });
+      const result = await this.api.claimAdReward({ slotId, verificationToken, requestId: requestId() });
       if (result.excavation) session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       session.dailyAdRewards = { date: result.dailyAdRewards.date, claimsBySlot: { ...result.dailyAdRewards.claimsBySlot }, requestIds: session.dailyAdRewards.requestIds };
+      if (slotId === "excavation-storage") this.storageUnfold = true;
       // 광고 적용 뒤에도 임시 응답을 조립하지 않고 비율·알림이 포함된 발굴 API 스냅샷을 다시 받는다.
       this.confirmed = await this.api.getIdleExcavation(); this.adMessage = t("excavation.ad.applied"); this.renderStatus();
-    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); }
+    } catch { this.adMessage = t("excavation.ad.verifyFailed"); this.renderStatus(); } finally { releaseAdWait(); }
+  }
+
+  /** 생산 1.5배가 켜진 동안만 도약을 빠르게 하고 SD 머리 위에 배율 표식을 세운다. */
+  private setSpeedActive(active: boolean): void {
+    this.speedActive = active;
+    for (const tween of this.sdTweens) tween.timeScale = active ? 1.5 : 1;
+    const multiplier = this.confirmed?.excavation.activeProductionMultiplier ?? 1.5;
+    for (const [relicId, puppet] of this.sdPuppetByRelicId) {
+      const badge = this.speedBadges.get(relicId);
+      if (!active) { badge?.destroy(); this.speedBadges.delete(relicId); continue; }
+      if (badge?.active || !this.sdContainer) continue;
+      const text = this.scene.add.text(puppet.x, STATUS_HERO.slotY + SLOT_GROUND_OFFSET - 235, `×${multiplier}`, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0.5).setScale(0.3).setStroke("#000000", 5);
+      this.sdContainer.add(text);
+      this.speedBadges.set(relicId, text);
+      this.scene.tweens.add({ targets: text, scale: 1, duration: 260, ease: "Back.easeOut" });
+    }
   }
 
   /** 편집을 열 때에만 확정 배열을 복사하므로 취소/닫기가 서버 편성을 건드릴 수 없다. */
@@ -808,6 +865,7 @@ export class IdleExcavationPopup {
     for (const puppet of this.sdPuppets) { this.sdContainer?.remove(puppet, false); puppet.destroy(); }
     this.sdPuppets.clear();
     this.sdPuppetByRelicId.clear();
+    this.speedBadges.clear();
     this.sdContainer?.destroy(true); this.sdContainer = undefined;
   }
 
@@ -835,6 +893,7 @@ export class IdleExcavationPopup {
       layer.remove(puppet, false); puppet.destroy();
       this.sdPuppets.delete(puppet);
       this.sdPuppetByRelicId.delete(relicId);
+      this.speedBadges.get(relicId)?.destroy(); this.speedBadges.delete(relicId);
     }
     const generation = ++this.sdLoadGeneration;
     formation.forEach((relicId, index) => {
@@ -877,6 +936,7 @@ export class IdleExcavationPopup {
         setDebugIdleExcavationSdReady(index);
         // 통통 튀는 모션은 파견과 나눠 쓰는 공용 규칙 하나가 갖는다. 여기서는 칸 번호만 준다.
         this.sdTweens.add(startPuppetHop(this.scene, puppet, index));
+        this.setSpeedActive(this.speedActive);
       },
     });
     // Puppet 실패는 슬롯 전체의 실패가 아니다. 개발 경고만 남기고 빈 판을 그대로 둔다.
@@ -886,7 +946,7 @@ export class IdleExcavationPopup {
 
   /** 해당 재화 생산에 기여한 SD가 통 튀고 머리 위 기존 이미지 아이콘이 떠올랐다 사라진다. */
   private playProductionTick(currency: ExcavationCurrency): void {
-    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => item.currency === currency);
+    const contributors = excavationProductionDisplayModel(this.confirmed?.excavation.assignedRelicIds ?? [null, null, null], RELICS, session.relicProgress).relics.filter((item) => currency === "gems" || item.currency === currency);
     for (const contributor of contributors) {
       const puppet = this.sdPuppetByRelicId.get(contributor.relicId);
       if (!puppet || !this.sdContainer) continue;
@@ -905,7 +965,7 @@ export class IdleExcavationPopup {
     this.saving = true; this.renderEditor();
     const submitted = copyFormation(this.draft);
     try {
-      const response = await this.api.saveExcavationFormation({ requestId: requestId(), assignedRelicIds: submitted });
+      const response = await withBusy(this.scene, this.api.saveExcavationFormation({ requestId: requestId(), assignedRelicIds: submitted }));
       if (!this.body) return;
       this.confirmed = response;
       session.idleExcavation = { ...response.excavation, assignedRelicIds: copyFormation(response.excavation.assignedRelicIds), unclaimed: { ...response.excavation.unclaimed } };
@@ -923,9 +983,9 @@ export class IdleExcavationPopup {
     // 네트워크 실패 뒤 사용자가 다시 누르면 최초 요청의 ID를 그대로 재전송한다.
     this.harvestRequestId ??= requestId();
     try {
-      const result = await this.api.harvestExcavation({ requestId: this.harvestRequestId });
+      const result = await withBusy(this.scene, this.api.harvestExcavation({ requestId: this.harvestRequestId }));
       if (!this.body) return;
-      session.wallet = { ...result.wallet };
+      if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       this.confirmed = result; this.saving = false; this.harvestRequestId = undefined; this.harvestResult = result; this.renderStatus();
       // 성공 수확만 알림 해제 계기가 되며 manager가 새 서버 잔량을 즉시 다시 확정한다.
@@ -952,7 +1012,7 @@ export class IdleExcavationPopup {
     if (this.gridPointerMoveHandler) this.scene.input.off("pointermove", this.gridPointerMoveHandler);
     if (this.gridPointerUpHandler) this.scene.input.off("pointerup", this.gridPointerUpHandler);
     this.gridWheelHandler = undefined; this.gridPointerDownHandler = undefined; this.gridPointerMoveHandler = undefined; this.gridPointerUpHandler = undefined;
-    this.draft = undefined; this.body = undefined; this.content = undefined; this.upper = undefined; this.lower = undefined; this.closeAction = undefined; this.messageShown = false;
+    this.rosterLabel = undefined; this.draft = undefined; this.body = undefined; this.content = undefined; this.upper = undefined; this.lower = undefined; this.closeAction = undefined; this.messageShown = false;
     setDebugIdleExcavationPopup(undefined); setDebugIdleExcavationSlots(undefined); setDebugIdleExcavationControls(undefined); this.onClosed?.();
   }
 }

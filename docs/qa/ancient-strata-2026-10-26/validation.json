@@ -1,0 +1,35 @@
+{
+  "checkedOn": "2026-10-26",
+  "regularBattles": 58670,
+  "ccScenarios": 15,
+  "additionalWorstCcReplay": 1,
+  "ccReleaseGatePassed": false,
+  "maxConsecutiveControlSeconds": 6.02,
+  "observedWinAboveFloor120": false,
+  "sourceSha256": {
+    "src/data/ancientStrataDifficulty.ts": "8241a5301cb35e46a1d67dc15fd9843aeb7fd8ce779014c802bcfa2ed44bc50d",
+    "src/core/ancientStrataBattle.ts": "1e0fa088addf285e64e803cfb157f7597a0beff8655b952b26f2243842d5794a",
+    "src/core/ancientStrataSimulation.ts": "2a243ffe1ab2d8c8d6f5e0059bf153f99eedb6f19391f1f99ea508a4ed56072d",
+    "src/core/skirmish.ts": "a34227be92733508f0b2a5a1db7a97ee4b11be71784337600a5f8c7fd2c0ba34",
+    "src/core/relicProgression.ts": "1a90be29ab35e61252cd5df02b644a4f0b391df383e72754d5561d5d92ff46ae",
+    "src/data/relics.ts": "5f0ef8ce088a28e81a7d6dac9e82523c04f56814d3fdc98a16d9c93e1a14ed61",
+    "src/core/runeTraitEffects.ts": "c4460189d6a9396754c00b67d5ce4a01bc8feee9585a0af3aab030d0958a7e13",
+    "src/core/battleArena.ts": "fd6da644e32d2cb219a399691355308db788f646ea39f6e41dfe5ddd5c328d0c"
+  },
+  "limitations": [
+    "Finite seeded sample; not all parties or all rune traits.",
+    "No server progress/reward/entry integration.",
+    "Strict native CC warnings remain."
+  ],
+  "deployed": false,
+  "browserPreviewPassed": true,
+  "correction": {
+    "correctedOn": "2026-10-26",
+    "invalidDirectSummon": "dimo",
+    "invalidReferenceCompositions": 3,
+    "invalidConfigurations": 9,
+    "invalidBattles": 9000,
+    "historicalRawResultsPreserved": true,
+    "scope": "Exclude these configurations from playable-party claims. Runtime validation and presets corrected; growth cohort results are a new run."
+  }
+}

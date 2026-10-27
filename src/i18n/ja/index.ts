@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** 일본어 표. 한국어 표와 같은 키를 쓰며, 빠진 키는 한국어가 메운다. */
 import { SETTINGS_JA } from "./settings";
 import { LOBBY_JA } from "./lobby";
@@ -25,5 +26,16 @@ import { SYSTEM_JA } from "./system";
 import { RAID_JA } from "./raid";
 import { BOUNTY_JA } from "./bounty";
 import { DUNGEON_JA } from "./dungeon";
+import { DUEL_JA } from "./duel";
 
-export default { ...SETTINGS_JA, ...LOBBY_JA, ...COMMON_JA, ...INFO_JA, ...STATUS_JA, ...LAB_JA, ...EXPEDITION_JA, ...BATTLE_JA, ...CAKE_OPERATION_JA, ...EXCAVATION_JA, ...AUGMENT_JA, ...FRIENDS_JA, ...RUNE_JA, ...PARTY_JA, ...EXPEDITION_REWARD_JA, ...SAVE_CONFLICT_JA, ...INTERACTION_JA, ...SHOP_JA, ...MISSIONS_JA, ...INVENTORY_JA, ...MISC_JA, ...SKILL_JA, ...SYSTEM_JA, ...RAID_JA, ...BOUNTY_JA, ...DUNGEON_JA };
+import { GUILD_JA } from "./guild";
+
+import { SUPPORT_JA } from "./support";
+
+import { ACHIEVEMENT_JA } from "./achievement";
+
+import { RECOLLECTION_JA } from "./recollection";
+
+import { DIALOGUE_JA } from "./dialogue";
+
+export default { ...ARENA_TEXT, ...DIALOGUE_JA, ...RECOLLECTION_JA, ...ACHIEVEMENT_JA, ...SUPPORT_JA, ...GUILD_JA, ...SETTINGS_JA, ...LOBBY_JA, ...COMMON_JA, ...INFO_JA, ...STATUS_JA, ...LAB_JA, ...EXPEDITION_JA, ...BATTLE_JA, ...CAKE_OPERATION_JA, ...EXCAVATION_JA, ...AUGMENT_JA, ...FRIENDS_JA, ...RUNE_JA, ...PARTY_JA, ...EXPEDITION_REWARD_JA, ...SAVE_CONFLICT_JA, ...INTERACTION_JA, ...SHOP_JA, ...MISSIONS_JA, ...INVENTORY_JA, ...MISC_JA, ...SKILL_JA, ...SYSTEM_JA, ...RAID_JA, ...BOUNTY_JA, ...DUNGEON_JA, ...DUEL_JA };

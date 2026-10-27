@@ -24,14 +24,19 @@ export function addUnitNameplate(
   level: number,
   name: string,
   size: number,
+  /** 줄이 넘지 않을 폭. 넘치면 두 글자를 함께 가로로만 누른다 — 무리 다섯이 나란히 서면 칸이 좁다. */
+  maxWidth?: number,
 ): void {
   const level0 = scene.add.text(0, y, `LV.${level}`, textStyle({ role: "display", size, color: COLOR.accentText })).setOrigin(0, 0);
   const name0 = scene.add.text(0, y, name, textStyle({ role: "display", size, color: COLOR.ink })).setOrigin(0, 0);
   for (const text of [level0, name0]) text.setStroke("#05070a", 4).setShadow(0, 2, "#05070a", 3, true, true);
   const gap = size * 0.42;
-  const startX = x - (level0.width + gap + name0.width) / 2;
+  const total = level0.width + gap + name0.width;
+  const squeeze = maxWidth !== undefined && total > maxWidth ? maxWidth / total : 1;
+  level0.setScale(squeeze, 1); name0.setScale(squeeze, 1);
+  const startX = x - (total * squeeze) / 2;
   level0.setX(startX);
-  name0.setX(startX + level0.width + gap);
+  name0.setX(startX + (level0.width + gap) * squeeze);
   if (parent) parent.add([level0, name0]);
 }
 

@@ -360,14 +360,14 @@
 "{amount} {currency}"
 ],
 "mail.launch.title": [
-"先驱者支援物资箱",
-"กล่องเสบียงสนับสนุนผู้บุกเบิก",
-"Hòm tiếp tế Người tiên phong",
-"Peti Pasokan Dukungan Perintis",
-"Caja de suministros de apoyo pionero",
-"Caixa de suprimentos de apoio pioneiro",
-"Pionier-Unterstützungskiste",
-"Ящик снабжения первопроходцев"
+"研究启动感谢礼包",
+"แพ็กเกจขอบคุณการเริ่มวิจัย",
+"Gói quà tri ân khởi đầu nghiên cứu",
+"Paket Terima Kasih Awal Riset",
+"Paquete de agradecimiento por iniciar la investigación",
+"Pacote de agradecimento pelo início da pesquisa",
+"Dankeschön-Paket zum Forschungsstart",
+"Благодарственный набор за начало исследований"
 ],
 "mail.expeditionRank.title": [
 "每周远征排名奖励",
@@ -410,14 +410,14 @@
 "Бюро поддержки исследований"
 ],
 "mail.launch.body": [
-"欢迎来到永恒之城。现随信附上调查所需的物资。",
-"ยินดีต้อนรับสู่นครนิรันดร์ เราส่งเสบียงที่จำเป็นสำหรับการสำรวจมาให้",
-"Chào mừng đến Thành phố Vĩnh Hằng. Chúng tôi gửi kèm vật tư cần cho cuộc khảo sát.",
-"Selamat datang di Kota Abadi. Kami kirimkan pasokan yang dibutuhkan untuk survei.",
-"Bienvenido a la Ciudad Eterna. Te enviamos los suministros que necesitarás para la investigación de campo.",
-"Bem-vindo à Cidade Eterna. Enviamos os suprimentos de que você precisará para a pesquisa de campo.",
-"Willkommen in der Ewigen Stadt. Wir schicken dir die Vorräte, die du für deine Erkundung brauchst.",
-"Добро пожаловать в Вечный город. Отправляем припасы, нужные для исследования."
+"感谢您游玩我们的游戏！谨以这份特别物资庆祝研究开始。",
+"ขอบคุณที่เล่นเกมของเรา! ขอมอบเสบียงพิเศษเพื่อฉลองการเริ่มวิจัย",
+"Cảm ơn bạn đã chơi game của chúng tôi! Xin gửi tặng vật tư đặc biệt mừng bạn bắt đầu nghiên cứu.",
+"Terima kasih telah memainkan game kami! Kami kirimkan pasokan spesial untuk merayakan awal risetmu.",
+"¡Gracias por jugar a nuestro juego! Te enviamos suministros especiales para celebrar el inicio de tu investigación.",
+"Obrigado por jogar o nosso jogo! Enviamos suprimentos especiais para celebrar o início da sua pesquisa.",
+"Danke, dass du unser Spiel spielst! Zum Forschungsstart schicken wir dir besondere Vorräte.",
+"Спасибо, что играете в нашу игру! В честь начала исследований отправляем особые припасы."
 ],
 "mail.update.title": [
 "任务与邮件箱维护公告",
@@ -689,16 +689,7 @@
 "Die Punktzahl konnte nicht übermittelt werden.",
 "Не удалось отправить счёт."
 ],
-"error.expedition.settle": [
-"分数已提交，但结算未完成。",
-"ส่งคะแนนแล้วแต่สรุปผลไม่เสร็จ",
-"Đã gửi điểm nhưng quyết toán chưa xong.",
-"Skor terkirim tetapi penyelesaian belum tuntas.",
-"Se envió la puntuación pero la liquidación no terminó.",
-"A pontuação foi enviada, mas o acerto não terminou.",
-"Die Punkte wurden übermittelt, aber die Abrechnung wurde nicht abgeschlossen.",
-"Счёт отправлен, но расчёт не завершён."
-],
+"error.expedition.settle": ["分数已提交，但未能领取远征奖励。请重试。", "ส่งคะแนนแล้วแต่รับรางวัลออกสำรวจไม่ได้ กรุณาลองใหม่", "Đã gửi điểm nhưng chưa nhận được thưởng Viễn chinh. Hãy thử lại.", "Skor terkirim, tetapi hadiah Ekspedisi belum diterima. Coba lagi.", "Puntuación enviada, pero no se recibieron las recompensas de expedición. Inténtalo de nuevo.", "Pontuação enviada, mas as recompensas da expedição não foram recebidas. Tente novamente.", "Punkte gesendet, aber Expeditionsbelohnungen konnten nicht erhalten werden. Bitte erneut versuchen.", "Очки отправлены, но награды экспедиции не получены. Попробуйте ещё раз."],
 "error.persist.state": [
 "无法保存游戏状态。",
 "บันทึกสถานะเกมไม่ได้",
@@ -738,5 +729,21 @@
 "{amount} {item}",
 "{amount} {item}",
 "{amount} {item}"
-]
+],
+  "mail.subscription.title": ["{product}每日补给", "เสบียงประจำวัน {product}", "Tiếp tế hằng ngày {product}", "Suplai harian {product}", "Suministro diario de {product}", "Suprimento diário de {product}", "Täglicher Vorrat: {product}", "Ежедневное снабжение {product}"],
+  "mail.subscription.body": ["今天的登录奖励。请在邮件过期前领取票券。", "รางวัลเข้าสู่ระบบวันนี้ รับตั๋วก่อนจดหมายหมดอายุ", "Thưởng đăng nhập hôm nay. Nhận vé trước khi Thư hết hạn.", "Hadiah login harianmu. Ambil tiket sebelum Surat kedaluwarsa.", "Tu recompensa diaria. Recoge el boleto antes de que caduque el correo.", "Sua recompensa diária. Receba o bilhete antes que o correio expire.", "Deine tägliche Anmeldebelohnung. Ticket vor Ablauf der Post abholen.", "Награда за ежедневный вход. Заберите билет до истечения срока почты."],
+  "ad.temp.title": ["正在播放临时广告！", "กำลังเล่นโฆษณาชั่วคราว!", "Đang phát quảng cáo tạm thời!", "Memutar iklan sementara!", "¡Reproduciendo un anuncio temporal!", "Reproduzindo um anúncio temporário!", "Temporäre Werbung läuft!", "Идёт временная реклама!"],
+  "ad.temp.done": ["看完啦！", "เสร็จแล้ว!", "Xem xong rồi!", "Selesai!", "¡Listo!", "Pronto!", "Geschafft!", "Готово!"],
+  "ad.temp.claim": ["领取广告奖励！", "รับรางวัลโฆษณา!", "Nhận thưởng quảng cáo!", "Ambil hadiah iklan!", "¡Reclamar recompensa del anuncio!", "Receber recompensa do anúncio!", "Werbebelohnung abholen!", "Забрать награду за рекламу!"],
+  "ad.temp.waiting": ["正在领取奖励…", "กำลังรับรางวัล…", "Đang nhận thưởng…", "Mengambil hadiah…", "Recibiendo recompensa…", "Recebendo recompensa…", "Belohnung wird abgeholt…", "Получаем награду…"],
+  "product.action.guild_coin": ["兑换", "แลก", "Đổi", "Tukar", "Canjear", "Trocar", "Tauschen", "Обменять"],
+  "product.price.guildCoin": ["公会硬币 {amount}", "เหรียญกิลด์ {amount}", "{amount} xu bang hội", "{amount} Koin Guild", "{amount} monedas de gremio", "{amount} moedas de guilda", "{amount} Gildenmünzen", "{amount} монет гильдии"],
+"mail.ops.sender": ["运营团队", "ทีมปฏิบัติการ", "Đội vận hành", "Tim Operasional", "Equipo de operaciones", "Equipe de operações", "Betriebsteam", "Команда управления"],
+"ops.notice.title": ["运营通知", "ประกาศจากทีมปฏิบัติการ", "Thông báo từ đội vận hành", "Pemberitahuan Operasional", "Aviso del equipo", "Aviso da equipe", "Mitteilung des Betriebsteams", "Сообщение от команды"],
+"ops.notice.gain": ["已发放{name}{amount}个。", "มอบ{name} {amount} ชิ้นแล้ว", "Đã cấp {amount} {name}.", "{amount} {name} telah diberikan.", "Se han otorgado {amount} de {name}.", "Foram concedidos {amount} de {name}.", "{amount} {name} wurden gutgeschrieben.", "Начислено: {name} — {amount}."],
+"ops.notice.loss": ["已回收{name}{amount}个。", "เรียกคืน{name} {amount} ชิ้นแล้ว", "Đã thu hồi {amount} {name}.", "{amount} {name} telah ditarik.", "Se han retirado {amount} de {name}.", "Foram retirados {amount} de {name}.", "{amount} {name} wurden abgezogen.", "Списано: {name} — {amount}."],
+"ops.notice.mail": ["收到{count}封新邮件。", "มีจดหมายใหม่ {count} ฉบับ", "Có {count} thư mới.", "{count} surat baru telah tiba.", "Han llegado {count} correos nuevos.", "Chegaram {count} correios novos.", "Neue Post eingetroffen ({count}).", "Почта: новых писем — {count}."],
+"ops.deleted.title": ["账号通知", "ประกาศบัญชี", "Thông báo tài khoản", "Pemberitahuan Akun", "Aviso de cuenta", "Aviso da conta", "Kontohinweis", "Уведомление об аккаунте"],
+"ops.deleted.body": ["账号已被删除。\n将返回标题画面。", "บัญชีของคุณถูกลบแล้ว\nกลับสู่หน้าชื่อเกม", "Tài khoản đã bị xóa.\nQuay về màn hình chính.", "Akun telah dihapus.\nKembali ke layar judul.", "Tu cuenta ha sido eliminada.\nVolviendo a la pantalla de título.", "Sua conta foi excluída.\nVoltando à tela de título.", "Das Konto wurde gelöscht.\nZurück zum Titelbildschirm.", "Аккаунт удалён.\nВозврат на титульный экран."],
+"story.saveFailed": ["剧情进度保存失败，请重试。", "บันทึกความคืบหน้าเนื้อเรื่องไม่สำเร็จ โปรดลองอีกครั้ง", "Không thể lưu tiến trình cốt truyện. Vui lòng thử lại.", "Progres cerita tidak dapat disimpan. Silakan coba lagi.", "No se pudo guardar el progreso de la historia. Inténtalo de nuevo.", "Não foi possível salvar o progresso da história. Tente novamente.", "Der Story-Fortschritt konnte nicht gespeichert werden. Bitte versuche es erneut.", "Не удалось сохранить прогресс истории. Попробуйте ещё раз."]
 }

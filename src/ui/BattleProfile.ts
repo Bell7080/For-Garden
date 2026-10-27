@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import { ferocityMaxOf } from "../core/ferocity";
 import type { RelicDef, RelicSkinId, SkillIconAssetId } from "../core/types";
 import { portraitAssetForSkin } from "../puppets/assets";
 import type { ActiveCombatBuff } from "../core/skirmish";
@@ -71,16 +72,21 @@ export class BattleProfile extends Phaser.GameObjects.Container {
   /** 버프 액자의 표시 객체를 한곳에 귀속해 프로필 제거 시 함께 정리한다. */
   public readonly buffContainer: Phaser.GameObjects.Container;
   public readonly readOnly: boolean;
+  /** 이 개체의 야성 게이지 크기. 막대 비율은 늘 이 값으로 잰다. */
+  private readonly ferocityMax: number;
   /** 원정 증강 표식. 전투 버프와 생명주기를 섞지 않도록 목록을 따로 든다. */
   private readonly augmentChips: Phaser.GameObjects.GameObject[] = [];
   private readonly buffChips = new Map<string, BuffChipView>();
   private readonly battleUiMotion: BattleUiMotion;
   /** 최대 개수를 넘긴 마지막 집계 칩이 전체 목록 열기 의도를 씬으로 전달한다. */
   private overflowChip?: BattleBuffChip;
+  private overflowKey?: string;
+  private onOverflowPress?: () => void;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: BattleProfileOptions) {
     super(scene, x, y);
     this.readOnly = options.readOnly;
+    this.ferocityMax = ferocityMaxOf(options.relic);
     this.battleUiMotion = options.battleUiMotion ?? "default";
     this.glow = scene.add.rectangle(0, 0, L.glowSize, L.glowSize, COLOR.accent, 0);
     this.sweep = scene.add.rectangle(-125, 0, 34, 320, COLOR.accent, 0).setAngle(18).setDepth(2);
@@ -123,7 +129,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     if (dead) this.battleHpBar.snap(0);
     this.hpLabel.setText(dead ? t("battle.profile.down") : `HP ${Math.round(currentHp)} / ${Math.round(maxHp)}`)
       .setColor(dead ? COLOR.dangerText : COLOR.hpText);
-    this.ferocityBar.setValue(ferocity / 100, COLOR.ferocityLow);
+    this.ferocityBar.setValue(ferocity / this.ferocityMax, COLOR.ferocityLow);
     this.ferocityLabel.setText(t("battle.profile.ferocity", { value: Math.round(ferocity) })).setColor(COLOR.ferocityText);
     // 사망은 카드와 충전 가림막의 조립이 끝난 뒤 전체 알파를 정확히 한 번 적용한다. 잠금 tint,
     // 선택 면, 충전 효과의 개별 알파를 여기서 다시 계산하지 않아 중복 감쇠를 피하고 부활 시 복구한다.
@@ -180,14 +186,19 @@ export class BattleProfile extends Phaser.GameObjects.Container {
       this.buffContainer.add(container);
     }
     // 집계 칩은 실제 버프와 키/슬롯 생명주기를 섞지 않고 마지막 고정 슬롯만 사용한다.
-    this.overflowChip?.destroy(true);
-    this.overflowChip = undefined;
-    if (overflow > 0) {
-      const model = models[visibleCount];
-      const { container } = this.createBuffChip(model, L.buffRow.maxVisible - 1, `+${overflow}`, onOverflowPress);
-      this.overflowChip = container;
-      this.buffContainer.add(container);
-    }
+    this.onOverflowPress = onOverflowPress;
+    const model = overflow > 0 ? models[visibleCount] : undefined;
+    const key = model ? `${this.buffKey(model.buff)}:${model.buff.skillId}:${model.buff.timing.kind}:${model.sourceRelic.id}:${model.fallbackIcon ?? ""}:${overflow}` : undefined;
+    if (key !== this.overflowKey) {
+      this.overflowChip?.destroy(true);
+      this.overflowChip = undefined;
+      this.overflowKey = key;
+      if (model) {
+        const { container } = this.createBuffChip(model, L.buffRow.maxVisible - 1, `+${overflow}`, () => this.onOverflowPress?.());
+        this.overflowChip = container;
+        this.buffContainer.add(container);
+      }
+    } else if (model) this.overflowChip?.setTiming(model.buff.timing, L.buffRow.chipSize).setStacks(model.buff.stacks);
     return this;
   }
 

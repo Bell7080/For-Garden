@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel, type InteractionCity } from "../data/interactionCities";
@@ -57,6 +58,7 @@ import { startPuppetHop } from "./puppetHop";
 import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
+import { onTap } from "./tapGuard";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -77,7 +79,7 @@ const ACTION = INTERACTION_CITY_ACTION;
 /** 한 줄에 몇 칸이고 카드가 얼마나 큰지는 화면이 정하지 않는다 — 폭만 주면 공용 규칙이 정한다. */
 const ROSTER = formationRosterGrid(LOWER.right - LOWER.left);
 /** 손가락이 이 거리 이상 움직여야 카드 선택이 아니라 스크롤로 판정한다. */
-const GRID_DRAG_SLOP = 12;
+const GRID_DRAG_SLOP = TAP_DRAG_SLOP;
 /** 돌아오는 것 줄에서 누름과 끌기를 가르는 거리. 그리드와 같은 몫이라 손맛이 갈리지 않는다. */
 const REWARD_TAP_SLOP = GRID_DRAG_SLOP;
 const REWARD_FRAME = INTERACTION_CITY_REWARD_FRAME;
@@ -244,7 +246,7 @@ export class InteractionCityPopup {
       if (!editable) return;
       const hit = this.scene.add.rectangle(x, SLOT.y, SLOT.width, SLOT.height, 0xffffff, 0)
         .setName(`interaction-party-slot-${index + 1}`).setDepth(SD_DEPTH + 1).setInteractive({ useHandCursor: true });
-      hit.on("pointerup", () => this.tapSlot(index));
+      onTap(hit, () => this.tapSlot(index));
       parent.add(hit);
       // 빼는 표식은 SD보다 앞선 층에 선다 — 같은 컨테이너에 두면 머리에 가린다.
       if (index === this.selectedSlot && relicId && this.chromeLayer) addFormationRemoveChip(this.scene, this.chromeLayer, box, () => this.tapSlot(index, "clear"));
@@ -769,7 +771,9 @@ export class InteractionCityPopup {
       this.busy = false;
       this.adoptLatestView();
       this.onChanged?.();
-    } finally { this.busy = false; }
+    } catch {
+      if (this.body) this.popups.confirm({ title: view.city.displayName, message: t("lab.networkError"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    } finally { this.busy = false; this.render(); }
   }
 
   /** 서 있는 SD가 한 번씩 폴짝 뛴다. 칸마다 박자가 달라 셋이 한 몸으로 흔들리지 않는다. */
@@ -800,6 +804,9 @@ export class InteractionCityPopup {
         title: t("interaction.rewardTitle"),
         items: currencyRecordToRewardItems(Object.fromEntries(response.granted.map(({ currency, amount }) => [currency, amount]))),
       });
-    } finally { this.busy = false; }
+    } finally {
+      // 실패해도 버튼이 「수령 중…」에 갇히지 않게 다시 그린다. 성공 뒤에는 판이 닫혀 render가 아무것도 하지 않는다.
+      this.busy = false; this.render();
+    }
   }
 }

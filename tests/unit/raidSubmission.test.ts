@@ -124,7 +124,7 @@ describe("레이드 피해 제출 왕복", () => {
     const base = RELICS.find(({ id }) => id === "sukusuino")!;
     const boss = raidBossDef(base, "easy");
     const basis = raidBossPercentHpBasis(base, "easy");
-    const seasonHp = 800;
+    const seasonHp = 10;
     const config = createRaidSkirmishConfig(party, boss, basis, seasonHp);
     expect(config.boss.endsOnKill).toBe(true);
     const state = createSkirmish(config.playerDefs, config.enemyDefs, battleArena("raid"), {}, {}, { playerInitialStates: config.playerInitialStates, boss: config.boss });

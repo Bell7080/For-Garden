@@ -17,6 +17,8 @@ import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { formatCurrency } from "../core/formatCurrency";
 import { PopupLayer } from "./PopupLayer";
+import { openRewardPopup } from "./RewardPopup";
+import { adRewardToRewardItems } from "./rewardPopupModel";
 import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
 import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
@@ -292,7 +294,8 @@ export class StaminaPopup {
   private async watchAd(slotId: string): Promise<void> {
     const verificationToken = completedAdToken(await this.presentAd(slotId));
     if (!verificationToken) { this.message = t("stamina.adCancelled"); return; }
-    await this.inventory.claimAdReward(this.api, { slotId, verificationToken, requestId: adRequestId() });
+    const response = await this.inventory.claimAdReward(this.api, { slotId, verificationToken, requestId: adRequestId() });
+    openRewardPopup(this.scene, this.popups, { items: adRewardToRewardItems(response) });
   }
 }
 

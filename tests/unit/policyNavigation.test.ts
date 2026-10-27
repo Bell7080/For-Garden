@@ -7,7 +7,7 @@ describe("정책 문서 이동", () => {
     const open = vi.fn(() => ({}) as Window);
     const assign = vi.fn();
     openPolicyDocument("/terms", { location: { href: "https://garden.example/settings", assign }, open } as PolicyWindow);
-    expect(open).toHaveBeenCalledWith("https://garden.example/terms", "_blank", "noopener,noreferrer");
+    expect(open).toHaveBeenCalledWith("https://forgarden-web.vercel.app/terms", "_blank", "noopener,noreferrer");
     expect(assign).not.toHaveBeenCalled();
   });
 
@@ -15,6 +15,25 @@ describe("정책 문서 이동", () => {
     const open = vi.fn(() => null);
     const assign = vi.fn();
     openPolicyDocument("/privacy", { location: { href: "https://garden.example/", assign }, open } as PolicyWindow);
-    expect(assign).toHaveBeenCalledWith("https://garden.example/privacy");
+    expect(assign).toHaveBeenCalledWith("https://forgarden-web.vercel.app/privacy");
+  });
+});
+
+describe("앱 셸에서의 정책 문서 이동", () => {
+  it("앱이면 시스템 브라우저 플러그인으로 열고 현재 창은 건드리지 않는다", () => {
+    const open = vi.fn(() => null);
+    const assign = vi.fn();
+    const plugin = vi.fn(() => Promise.resolve());
+    openPolicyDocument("/terms", { location: { href: "https://localhost/", assign }, open, Capacitor: { isNativePlatform: () => true, Plugins: { Browser: { open: plugin } } } } as PolicyWindow);
+    expect(plugin).toHaveBeenCalledWith({ url: "https://forgarden-web.vercel.app/terms" });
+    expect(open).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("앱인데 플러그인이 없으면 팝업만 시도하고 게임 창을 떠나지 않는다", () => {
+    const open = vi.fn(() => null);
+    const assign = vi.fn();
+    openPolicyDocument("/terms", { location: { href: "https://localhost/", assign }, open, Capacitor: { isNativePlatform: () => true } } as PolicyWindow);
+    expect(assign).not.toHaveBeenCalled();
   });
 });

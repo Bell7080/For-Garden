@@ -10,6 +10,7 @@ export const EXCAVATION_VI = {
   "excavation.harvestBusy": "Đang thu hoạch…",
   "excavation.harvest": "Thu hoạch",
   "excavation.rewardTitle": "Thưởng Khai thác",
+  "excavation.rewardTitleFull": "Thưởng thu hoạch đầy kho +10%",
   "excavation.harvestFailed": "Thu hoạch thất bại. Hãy thử lại với cùng yêu cầu.",
   "excavation.ad.unavailable": "Dù không xem được quảng cáo, vẫn thu hoạch thường được.",
   "excavation.ad.cancelled": "Quảng cáo đã hủy hoặc chưa sẵn sàng. Hãy thu hoạch thường.",

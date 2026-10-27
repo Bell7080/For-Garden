@@ -27,9 +27,15 @@ export interface IllustratedSortieButtonOptions {
   label?: string;
   artKey?: string;
   accentColor?: number;
+  /** 원화를 물들이는 색. 같은 원화를 쓰는 다른 콘텐츠(실시간 아레나)를 색으로 가를 때만 쓴다. */
+  artTint?: number;
   accentTextColor?: string;
   /** 한 줄 폭이 좁은 병렬 던전만 제목 크기를 낮춰 같은 버튼 비율을 유지한다. */
   labelSize?: number;
+  /** 부제 글자 크기. 주면 부제가 `statusWrap` 폭에서 줄바꿈되고 제목이 그 위로 올라선다(결투 선택판). */
+  statusSize?: number;
+  /** 부제 줄바꿈 폭. `statusSize`와 함께 쓴다. */
+  statusWrap?: number;
   /**
    * SD가 서는 쪽. 글자는 늘 그 반대쪽 아래 구석에 선다.
    *
@@ -52,9 +58,10 @@ export interface IllustratedSortieButtonOptions {
  * 카드 그리드의 머리처럼 SD도 버튼 윗변 밖으로 조금 빠져나온다 — 그래서 키를 버튼보다 크게
  * 잡고 발끝은 아래 변 안쪽에 둔다. 씬은 이 값을 화면 좌표로 옮겨 그대로 세운다.
  */
-export function sortieEntrySdSpot(width: number, height: number, side: "left" | "right"): SortieSdSpot {
+export function sortieEntrySdSpot(width: number, height: number, side: "left" | "right", insetOverride?: number): SortieSdSpot {
   // 칸 안쪽으로 충분히 들여 세운다. 가장자리에 붙이면 옆 칸이나 판 밖으로 몸이 넘어간다.
-  const inset = Math.min(168, width * 0.3);
+  // 가운데에 글이 서는 칸(출석 신규 카드처럼 둘이 좌우에 서는 칸)만 더 바깥으로 붙여 글 자리를 비운다.
+  const inset = insetOverride ?? Math.min(168, width * 0.3);
   return {
     x: side === "left" ? -width / 2 + inset : width / 2 - inset,
     // 발끝을 아래 변 **밖**에 두면 다리가 판에 잘리고 상반신만 남는다. 카드가 얼굴을 크게
@@ -97,6 +104,8 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
    * 컨테이너 변환을 물려받지 않으므로 마스크도 **월드 좌표**로 매 프레임 다시 그린다.
    */
   readonly sdMask?: Phaser.Display.Masks.GeometryMask;
+  /** 칩 실루엣 마스크. 칸 안에 그림을 더 세우는 입구(아레나의 맞부딪힘)가 같은 실루엣에 가둔다. */
+  readonly clipMask: Phaser.Display.Masks.GeometryMask;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: IllustratedSortieButtonOptions) {
     super(scene, x, y);
@@ -118,6 +127,8 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     // 매 프레임 따라간다(로비 팝업 안에서도 화면 밖 엉뚱한 자리에 남지 않는다).
     const chipMask = shapeClipMask(scene, this, shape);
     art.setMask(chipMask);
+    this.clipMask = chipMask;
+    if (options.artTint !== undefined) art.setTint(options.artTint);
     // 사각 원화의 가장자리는 비네트와 주황 액자가 눌러 기존 홀로그램 판 안의 이미지로 읽히게 한다.
     // 줄여 가며 두르는 옛 비네트는 가로로 긴 칸에서 검은 테두리 잔상을 남기므로 쓰지 않는다.
     this.add(art);
@@ -132,16 +143,17 @@ export class ExpeditionEntryButton extends Phaser.GameObjects.Container {
     const cornerInset = (fromBottom: number): number => (textRight ? Math.max(36, bevel.bottomRight - fromBottom + 22) : 40);
     const edgeX = (fromBottom: number): number => (textRight ? options.width / 2 - cornerInset(fromBottom) : -options.width / 2 + cornerInset(fromBottom));
     const originX = textRight ? 1 : 0;
-    const labelBottom = 56;
     const statusBottom = 16;
+    const status = scene.add
+      .text(edgeX(statusBottom), options.height / 2 - statusBottom, options.status, textStyle({ role: "emphasis", size: options.statusSize ?? 23, color: COLOR.ink, ...(options.statusWrap ? { wrap: options.statusWrap, align: textRight ? "right" : "left" } : {}) }))
+      .setOrigin(originX, 1)
+      .setShadow(3, 4, "#04060a", 0, true, true);
+    // 부제가 커지면 제목이 그 윗줄 위로 올라선다. 기본 크기는 예전 자리(56)를 그대로 지킨다.
+    const labelBottom = options.statusSize ? statusBottom + status.height + 10 : 56;
     const label = scene.add
       .text(edgeX(labelBottom), options.height / 2 - labelBottom, options.label ?? t("expedition.entry"), textStyle({ role: "display", size: options.labelSize ?? 58, color: accentText }))
       .setOrigin(originX, 1)
       .setShadow(4, 5, "#04060a", 0, true, true);
-    const status = scene.add
-      .text(edgeX(statusBottom), options.height / 2 - statusBottom, options.status, textStyle({ role: "emphasis", size: 23, color: COLOR.ink }))
-      .setOrigin(originX, 1)
-      .setShadow(3, 4, "#04060a", 0, true, true);
     this.add([label, status]);
 
     if (options.sdSide) {

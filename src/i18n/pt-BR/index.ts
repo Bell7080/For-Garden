@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** pt-BR table. Same keys as the Korean table; any key missing here falls back to Korean. */
 import { SETTINGS_PT_BR } from "./settings";
 import { LOBBY_PT_BR } from "./lobby";
@@ -25,5 +26,16 @@ import { SYSTEM_PT_BR } from "./system";
 import { RAID_PT_BR } from "./raid";
 import { BOUNTY_PT_BR } from "./bounty";
 import { DUNGEON_PT_BR } from "./dungeon";
+import { DUEL_PT_BR } from "./duel";
 
-export default { ...SETTINGS_PT_BR, ...LOBBY_PT_BR, ...COMMON_PT_BR, ...INFO_PT_BR, ...STATUS_PT_BR, ...LAB_PT_BR, ...EXPEDITION_PT_BR, ...BATTLE_PT_BR, ...CAKE_OPERATION_PT_BR, ...EXCAVATION_PT_BR, ...AUGMENT_PT_BR, ...FRIENDS_PT_BR, ...RUNE_PT_BR, ...PARTY_PT_BR, ...EXPEDITION_REWARD_PT_BR, ...SAVE_CONFLICT_PT_BR, ...INTERACTION_PT_BR, ...SHOP_PT_BR, ...MISSIONS_PT_BR, ...INVENTORY_PT_BR, ...MISC_PT_BR, ...SKILL_PT_BR, ...SYSTEM_PT_BR, ...RAID_PT_BR, ...BOUNTY_PT_BR, ...DUNGEON_PT_BR };
+import { GUILD_PT_BR } from "./guild";
+
+import { SUPPORT_PT_BR } from "./support";
+
+import { ACHIEVEMENT_PT_BR } from "./achievement";
+
+import { RECOLLECTION_PT_BR } from "./recollection";
+
+import { DIALOGUE_PT_BR } from "./dialogue";
+
+export default { ...ARENA_TEXT, ...DIALOGUE_PT_BR, ...RECOLLECTION_PT_BR, ...ACHIEVEMENT_PT_BR, ...SUPPORT_PT_BR, ...GUILD_PT_BR, ...SETTINGS_PT_BR, ...LOBBY_PT_BR, ...COMMON_PT_BR, ...INFO_PT_BR, ...STATUS_PT_BR, ...LAB_PT_BR, ...EXPEDITION_PT_BR, ...BATTLE_PT_BR, ...CAKE_OPERATION_PT_BR, ...EXCAVATION_PT_BR, ...AUGMENT_PT_BR, ...FRIENDS_PT_BR, ...RUNE_PT_BR, ...PARTY_PT_BR, ...EXPEDITION_REWARD_PT_BR, ...SAVE_CONFLICT_PT_BR, ...INTERACTION_PT_BR, ...SHOP_PT_BR, ...MISSIONS_PT_BR, ...INVENTORY_PT_BR, ...MISC_PT_BR, ...SKILL_PT_BR, ...SYSTEM_PT_BR, ...RAID_PT_BR, ...BOUNTY_PT_BR, ...DUNGEON_PT_BR, ...DUEL_PT_BR };

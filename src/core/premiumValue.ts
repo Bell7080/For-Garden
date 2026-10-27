@@ -5,11 +5,16 @@ import { tradeGemValue } from "../data/tradePackages";
 /**
  * 가방 아이템의 젬 값 — 시세표(`TRADE_GEM_RATE`)에 없는 소비품이라 여기서만 센다.
  * 드링크는 스테미나 값어치의 기준(가장 싼 충전 1단계, 젬 0.83/스테미나)에서 나온다.
- * 표에 없는 아이템(소탕권·발굴권 등)은 환산하지 않는다 — 모르는 값을 지어내 배수를 부풀리지 않는다.
+ * 발굴권·토벌권은 판마다 값이 갈리는 변동 보상이라 하한 쪽 구간(발굴권은 판 값 분포의 하위 구간 상단,
+ * 토벌권은 증표·골드의 기대 환산)으로 센다 — 근거는 docs/premium-pricing-review.md.
+ * 표에 없는 아이템(소탕권 등)은 환산하지 않는다 — 모르는 값을 지어내 배수를 부풀리지 않는다.
  */
 export const PREMIUM_ITEM_GEM_VALUE: Readonly<Record<string, number>> = {
   "stamina-tonic": 50,
   "stamina-tonic-large": 100,
+  "strata-ticket": 100,
+  "raid-ticket": 50,
+  "raid-select-ticket": 80,
 };
 
 /** 배수를 단 상품의 최소 배수. 이보다 낮으면 "이득"이라 말할 수 없어 배지를 세우지 않는다. */
@@ -19,9 +24,9 @@ type ValueInput = Pick<ProductDto, "acquisition" | "grants" | "passBenefit"> & P
 
 /** 지급품(+정기권이 매일 얹는 다이아의 기간 합)을 다이아 값으로 환산한다. */
 export function premiumGemValue(product: Pick<ProductDto, "grants" | "passBenefit"> & { id?: string }): number {
-  // 진행 패스는 지급 목록이 비어 있고 값은 유료 칸 전체에 있다 — 끝까지 걸었을 때의 합이다.
+  // 즉시 구성품과 진행 마디를 함께 센다. 진행 패스는 끝까지 걸었을 때의 합이다.
   const pass = product.id === undefined ? undefined : progressPassForProduct(product.id);
-  const grants = pass ? pass.milestones.flatMap((milestone) => milestone.rewards) : product.grants;
+  const grants = pass ? [...product.grants, ...pass.milestones.flatMap((milestone) => milestone.rewards)] : product.grants;
   const items = grants.reduce((sum, grant) => grant.kind === "item" ? sum + (PREMIUM_ITEM_GEM_VALUE[grant.itemId] ?? 0) * grant.amount : sum, 0);
   const daily = product.passBenefit?.dailyBonus;
   const days = product.passBenefit?.durationDays ?? 0;

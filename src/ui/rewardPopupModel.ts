@@ -1,5 +1,6 @@
+import type { ClaimAdRewardResponse } from "../api/contracts";
 import type { RuneInstance } from "../core/runes";
-import { findItem } from "../data/items";
+import { findItem, ITEMS, type ItemDefinition } from "../data/items";
 import type { ProductGrant } from "../data/shopCatalog";
 import type { CurrencyIconKey } from "./currencyIcons";
 import type { GlyphName } from "./glyphs";
@@ -16,6 +17,18 @@ export interface RewardPopupItem {
   runeInstanceId?: string;
   /** 그 개체의 파편. 있으면 액자가 얼굴 액자(유리 조각)로 선다. */
   relicId?: string;
+  /** 지급 영수증에 정확한 만료 시각이 있으면 우선 사용한다. */
+  expiresAt?: string;
+  /** 지급처별 기한. 없으면 아이템 정의의 기본 기한을 표시한다. */
+  expiresInDays?: number;
+}
+
+/** 기존 소지품의 만료일과 섞지 않고 이번 보상의 기한만 읽는다. */
+export function rewardItemExpiry(item: RewardPopupItem): { expiresAt: string } | { days: number } | undefined {
+  if (item.expiresAt !== undefined) return Number.isFinite(Date.parse(item.expiresAt)) ? { expiresAt: item.expiresAt } : undefined;
+  const definition: ItemDefinition | undefined = typeof item.icon === "string" ? ITEMS.find(({ icon }) => icon.kind === "asset" && icon.key === item.icon) : undefined;
+  const days = item.expiresInDays ?? definition?.expiresInDays;
+  return days !== undefined && Number.isInteger(days) && days > 0 ? { days } : undefined;
 }
 
 /** 서버 재화 레코드를 공용 보상 액자 키로 바꾼다. 알 수 없는 운영 재화는 안전하게 생략한다. */
@@ -34,6 +47,26 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
   }));
 }
 
+/** 재화 지급에 이긴 판의 덤(토벌권 등 가방 아이템)을 함께 붙인 한 줄 — 결과판·소탕 영수증이 같은 함수를 지난다. */
+export function dungeonRewardItems(granted: Readonly<Record<string, number>>, bonusItems: readonly { itemId: string; amount: number }[] = []): RewardPopupItem[] {
+  const bonus = productGrantsToRewardItems(bonusItems.map(({ itemId, amount }) => ({ kind: "item" as const, itemId, name: itemId, amount })));
+  return sortRewardItems([...currencyRecordToRewardItems(granted), ...bonus]);
+}
+
+/**
+ * 광고 보상 응답을 보상 액자 목록으로 바꾼다. 재화는 서버 지갑의 전후 차이(`granted`)만 읽고,
+ * 가방 아이템·결투 도전권은 슬롯 정의에서 읽는다. 발굴 효과는 제 화면이 결과를 보여 주므로 비운다.
+ */
+export function adRewardToRewardItems(response: Pick<ClaimAdRewardResponse, "reward" | "granted">): RewardPopupItem[] {
+  const { reward } = response;
+  const items: ProductGrant[] = [];
+  if (reward.kind === "item") items.push({ kind: "item", itemId: reward.itemId, name: reward.itemId, amount: reward.quantity });
+  else if (reward.kind === "duel_attempt") items.push({ kind: "item", itemId: "duel-ticket", name: "duel-ticket", amount: reward.quantity });
+  else if (reward.kind === "currencies") for (const item of reward.items ?? []) items.push({ kind: "item", itemId: item.itemId, name: item.itemId, amount: item.quantity });
+  const currencies = reward.kind === "currency" || reward.kind === "currencies" ? currencyRecordToRewardItems(response.granted as Record<string, number>) : [];
+  return sortRewardItems([...currencies, ...productGrantsToRewardItems(items)]);
+}
+
 /** 서버가 확정한 상품 지급 결과를 정의 재계산 없이 보상 액자 표시 모델로만 변환한다. */
 export function productGrantsToRewardItems(grants: readonly ProductGrant[], grantedRunes: readonly RuneInstance[] = []): RewardPopupItem[] {
   // 같은 재화 행이 여러 개여도 Object 변환으로 덮어쓰지 않고 영수증의 각 확정 행을 보존한다.
@@ -49,7 +82,7 @@ export function productGrantsToRewardItems(grants: readonly ProductGrant[], gran
     // 가방 아이템은 재화와 같은 양식으로 액자와 수량만 세운다 — 에너지 드링크만 이름이 붙어 보상 칸 양식이 갈렸다.
     // 이름은 아이템 안내창이 말하므로 영수증에는 적지 않는다(룬·프로필 장식만 이름으로 가려 읽는다).
     if (!definition) return [{ icon: { kind: "glyph", key: "scroll" }, amount: grant.amount }];
-    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount }];
+    if (definition.icon.kind === "asset") return [{ icon: definition.icon.key, amount: grant.amount, ...(grant.expiresInDays !== undefined ? { expiresInDays: grant.expiresInDays } : {}) }];
     if (definition.icon.kind === "currency") return currencyRecordToRewardItems({ [definition.icon.key]: grant.amount });
     return [{ icon: { kind: "glyph", key: definition.icon.key }, amount: grant.amount }];
   });

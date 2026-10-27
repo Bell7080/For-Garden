@@ -56,20 +56,51 @@ export const BREAKTHROUGH_STEPS: readonly BreakthroughStep[] = [
 ];
 
 /**
- * 등급별 한 단계 파편 수.
+ * 등급별 한 단계 파편 수 — 돌파 네 번(I→II · II→III · III→IV · IV→V)의 값을 순서대로 적는다.
  *
- * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 한 장이
- * 곧 한 단계지만 R은 다섯 장을 모아야 한다. 표를 하나로 두지 않고 단계마다 수를 적어 두면
- * 등급이 늘 때마다 네 줄을 함께 고쳐야 한다.
+ * 같은 개체를 다시 만나는 빈도가 등급마다 다르므로 **파편 수도 등급이 정한다** — SSR은 앞 단계가
+ * 한 장이지만 R은 네 장을 모아야 한다. 단계마다 수를 적어 두므로 한 단계만 따로 조일 수 있다.
  *
- * **마지막 별만 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
+ * **뒤로 갈수록 더 든다.** 별 다섯은 그 개체를 끝까지 키운 표식인데 앞 단계와 같은 값이면
  * SSR은 네 번 다시 만나는 것으로 끝난다. 치즈케이크도 같은 이유로 단계마다 오른다.
+ * III→IV(돌파 등급 IV)는 앞 단계보다 한 장 더(R은 둘 더) 들고, 마지막은 그보다 더 든다.
  */
-export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, { step: number; final: number }>> = {
-  SSR: { step: 1, final: 2 },
-  SR: { step: 2, final: 4 },
-  R: { step: 5, final: 10 },
+export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, readonly [number, number, number, number]>> = {
+  SSR: [1, 1, 2, 3],
+  SR: [2, 2, 3, 4],
+  R: [4, 4, 6, 8],
 };
+
+/**
+ * 등급마다 하나씩 있는 **만능 파편**의 아이템 ID(가방의 재료 칸).
+ *
+ * 어느 개체에나 쓸 수 있는 돌파 재료지만 **같은 등급에만** 든다 — R 만능 파편을 SSR 돌파에 넣으면
+ * 등급이 정한 파편 수(`BREAKTHROUGH_FRAGMENTS`)가 뜻을 잃는다. 그 개체의 파편이 모자랄 때만 그
+ * 모자란 몫을 채우므로(`breakthroughFragmentSpend`) 가진 파편이 넉넉하면 하나도 쓰이지 않는다.
+ */
+export const UNIVERSAL_FRAGMENT_ITEM: Readonly<Record<RelicRarity, string>> = {
+  R: "universal-fragment-r",
+  SR: "universal-fragment-sr",
+  SSR: "universal-fragment-ssr",
+};
+
+/** 아이템 ID가 만능 파편이면 그 등급을 돌려준다. */
+export function universalFragmentRarity(itemId: string): RelicRarity | undefined {
+  return (Object.keys(UNIVERSAL_FRAGMENT_ITEM) as RelicRarity[]).find((rarity) => UNIVERSAL_FRAGMENT_ITEM[rarity] === itemId);
+}
+
+/**
+ * 다음 돌파에서 **무엇을 몇 개 쓰는가** — 그 개체의 파편을 먼저 다 쓰고, 모자란 몫만 만능 파편이 채운다.
+ *
+ * 서버의 차감과 화면의 버튼·확정 창이 이 한 함수를 읽는다 — 둘이 따로 셈하면 보여 준 소모와 실제
+ * 소모가 갈린다. 둘을 합쳐도 모자라면 `enough`가 거짓이고 쓰는 몫은 가진 만큼까지만 적는다.
+ */
+export function breakthroughFragmentSpend(rarity: RelicRarity, breakthrough: number, own: number, universal: number): { own: number; universal: number; enough: boolean } {
+  const cost = breakthroughFragmentCost(rarity, breakthrough);
+  const fromOwn = Math.min(Math.max(0, own), cost);
+  const fromUniversal = Math.min(Math.max(0, universal), cost - fromOwn);
+  return { own: fromOwn, universal: fromUniversal, enough: fromOwn + fromUniversal >= cost };
+}
 
 /**
  * 지금 단계에서 다음 별로 가는 데 드는 그 개체의 파편 수.
@@ -78,8 +109,8 @@ export const BREAKTHROUGH_FRAGMENTS: Readonly<Record<RelicRarity, { step: number
  * 뚫린다(`applyLevelGrowth`와 같은 이유다).
  */
 export function breakthroughFragmentCost(rarity: RelicRarity, breakthrough: number): number {
-  const cost = BREAKTHROUGH_FRAGMENTS[rarity];
-  return breakthrough >= BREAKTHROUGH_CAP - 1 ? cost.final : cost.step;
+  const costs = BREAKTHROUGH_FRAGMENTS[rarity];
+  return costs[Math.max(0, Math.min(costs.length - 1, breakthrough))];
 }
 
 /** 한계를 몇 번까지 뚫을 수 있는지. 별 하나에서 시작하므로 최대 별은 이 값 + 1이다. */
@@ -143,11 +174,11 @@ export function nextBreakthrough(breakthrough: number): BreakthroughStep | undef
  * 레벨을 상한까지 채운 뒤에만 뚫을 수 있다. 그래야 돌파가 "더 키우고 싶을 때 하는 선택"이
  * 되고, 파편을 미리 태워 두는 낭비가 생기지 않는다. `fragments`는 **그 개체의** 파편 수다.
  */
-export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number): boolean {
+export function canBreakThrough(rarity: RelicRarity, progress: RelicProgress, fragments: number, cheesecake: number, universal: number): boolean {
   const step = nextBreakthrough(progress.breakthrough);
   if (!step) return false;
   if (progress.level < relicLevelCap(progress.breakthrough)) return false;
-  return fragments >= breakthroughFragmentCost(rarity, progress.breakthrough) && cheesecake >= step.cheesecake;
+  return breakthroughFragmentSpend(rarity, progress.breakthrough, fragments, universal).enough && cheesecake >= step.cheesecake;
 }
 
 /**

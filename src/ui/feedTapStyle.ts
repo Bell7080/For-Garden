@@ -15,17 +15,17 @@ export const FEED_TAP = {
   cake: {
     size: 46,
     /** 떨어지는 자리까지의 가로 폭. 조각마다 이 폭 안에서 부채꼴로 벌어진다. */
-    reach: 150,
+    reach: 240,
     /** 포물선 꼭대기의 높이(출발점 기준 위로). 조각마다 조금씩 어긋난다. */
-    peak: 120,
-    peakStep: 26,
+    peak: 165,
+    peakStep: 38,
     /** 떨어지는 자리는 출발점보다 이만큼 위다 — 발밑으로 쏟지 않는다. */
     land: 36,
     spin: 1.6,
     ms: 520,
   },
   /** 한 번에 흩뿌리는 조각 수 — 한 번 누름 · 1레벨 · 10레벨. 많이 먹일수록 많이 터진다. */
-  pieces: { tap: 3, level: 12, tenLevels: 28 },
+  pieces: { tap: 5, level: 12, tenLevels: 28 },
   /** 한 물결에 띄우는 조각 수와 물결 사이 간격. 한꺼번에 스물을 띄우면 한 덩어리로 뭉친다. */
   wave: { size: 7, gapMs: 110 },
   /** 떨어진 자리에서 터지는 작은 마름모. 셋을 넘기지 않는다 — 연타 중에 화면이 조각으로 덮인다. */
@@ -35,12 +35,11 @@ export const FEED_TAP = {
   /** 연속 표시(×N). 이 수부터 서고, 누르지 않은 지 이만큼 지나면 끊긴다. */
   combo: { from: 2, resetMs: 900, punch: 1.32, punchMs: 170, size: 34 },
   /**
-   * 꾹 눌렀을 때 되풀이해 먹이는 간격. 처음은 두드리는 손보다 조금 느리고, 한 번 먹일 때마다
-   * `accel`만큼 줄어 `minMs`에서 멈춘다 — 2초쯤 누르면 다다닥 최고 속도에 닿는다.
+   * 꾹 눌렀을 때 되풀이해 먹이는 간격. 한 틱이 한 번의 급여라 틱 사이가 귀와 눈에 읽혀야 한다 —
+   * 16ms까지 줄던 때는 한 덩어리로 「드르르르륵」 몰아 먹여졌다. 150ms에서 시작해 한 번 먹일 때마다
+   * `accel`만큼 줄어 `minMs`에서 멈춘다(「드 르 르 르 르」). 게이지는 틱마다 따로 차오른다(`gaugeGlideMs`).
    */
-  hold: { startMs: 200, minMs: 45, accel: 0.86 },
-  /** 손을 떼고 이만큼 쉬면 여러 레벨을 채우는 쪽지를 연다. 연타하는 동안에는 열지 않는다. */
-  bulkIdleMs: 700,
+  hold: { startMs: 150, minMs: 85, accel: 0.9, gaugeGlideMs: 110 },
 } as const;
 
 /** 꾹 누른 채 `repeat`번째로 먹일 때까지의 간격(ms). 점점 빨라져 하한에서 멈춘다. */
@@ -64,10 +63,11 @@ export function feedTapDrift(streak: number): number {
 export function feedBurstPath(index: number, count: number, streak = 0): { dx: number; dy: number; peak: number } {
   const { reach, peak, peakStep, land } = FEED_TAP.cake;
   const spread = count <= 1 ? 0 : (index / (count - 1)) * 2 - 1;
-  const lean = Math.max(-1, Math.min(1, spread + feedTapDrift(streak)));
+  const jitter = Math.sin((index + 1) * 12.9898 + streak * 7.233);
+  const lean = Math.max(-1, Math.min(1, spread + feedTapDrift(streak) + jitter * 0.12));
   return {
     dx: Math.round(lean * reach),
-    dy: -land - (index % 3) * 14,
+    dy: -land - ((index + streak) % 4) * 22,
     peak: peak + ((index * 7) % 4) * peakStep - Math.round(Math.abs(lean) * peakStep),
   };
 }
@@ -80,4 +80,28 @@ export function feedArcPoint(path: { dx: number; dy: number; peak: number }, t: 
 /** 연속 표시가 서는지. 한 번만 누른 손에 ×1을 세우면 숫자가 아무것도 말하지 않는다. */
 export function feedComboVisible(streak: number): boolean {
   return streak >= FEED_TAP.combo.from;
+}
+
+/** 조각 크기도 연타마다 달라진다. 게임 진행 난수와 무관한 그림 전용 값이다. */
+export function feedCakeScale(index: number, streak: number): number {
+  return 0.55 + (Math.sin((index + 1) * 19.19 + streak * 5.71) + 1) * 0.65;
+}
+
+/** 낮은 FPS에서도 입력 속도를 유지하되 복귀 직후에는 최대 250ms/16회만 처리한다. */
+export class FeedHoldRepeater {
+  private elapsed = 0;
+  private nextAt = feedHoldDelay(0);
+  private repeat = 0;
+
+  advance(deltaMs: number): number {
+    this.elapsed += Math.max(0, Math.min(250, deltaMs));
+    let count = 0;
+    while (this.elapsed >= this.nextAt && count < 16) {
+      count += 1;
+      this.repeat += 1;
+      this.nextAt += feedHoldDelay(this.repeat);
+    }
+    if (count === 16) this.nextAt = Math.max(this.nextAt, this.elapsed + FEED_TAP.hold.minMs);
+    return count;
+  }
 }

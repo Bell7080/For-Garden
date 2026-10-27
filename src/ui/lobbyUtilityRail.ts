@@ -6,6 +6,7 @@ import { LOBBY_RAIL_BOUNDS } from "./lobbyLayout";
 export interface LobbyUtilityRailActions {
   openEvents: () => void;
   openMail: () => void;
+  openGuild: () => void;
   openFriends: () => void;
   openInventory: () => void;
 }
@@ -14,8 +15,9 @@ export interface LobbyUtilityRailActions {
 export function createLobbyUtilityRail(actions: LobbyUtilityRailActions) {
   // 우편·친구·가방은 각각 정확히 한 번만 생성하며 같은 동작의 입력면을 중복해서 만들지 않는다.
   return [
-    { bounds: LOBBY_RAIL_BOUNDS.utility.event, icon: "event", label: t("lobby.rail.event"), event: true, onClick: actions.openEvents },
+    { bounds: LOBBY_RAIL_BOUNDS.content.event, icon: "event", label: t("lobby.rail.event"), event: true, onClick: actions.openEvents },
     { bounds: LOBBY_RAIL_BOUNDS.utility.mail, icon: "mail", label: t("rail.mail"), event: false, onClick: actions.openMail },
+    { bounds: LOBBY_RAIL_BOUNDS.utility.guild, icon: "guild", label: t("rail.guild"), event: false, onClick: actions.openGuild },
     { bounds: LOBBY_RAIL_BOUNDS.utility.friends, icon: "friends", label: t("rail.friends"), event: false, onClick: actions.openFriends },
     { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: UI_ICON.bag, label: t("rail.bag"), event: false, onClick: actions.openInventory },
   ] as const;

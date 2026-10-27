@@ -13,7 +13,7 @@ export const STATUS_DE = {
   "status.frozen": "Gefroren",
   "status.frozen.detail": "noch {time} · Beim Zerbrechen {percent}% max. LP als fixer Schaden",
   "status.frenzy": "Raserei",
-  "status.frenzy.detail": "Greift die eigene Seite an · Angriffstempo +{percent}% · noch {time}",
+  "status.frenzy.detail": "Greift die eigene Seite an · noch {time}",
   "status.taunt": "Spott",
   "status.taunt.detail": "Zielt nur auf den Spötter · noch {time}",
   "status.bleed": "Blutung",
@@ -62,4 +62,6 @@ export const STATUS_DE = {
   "status.healCut.detail": "Erhaltene Heilung −{percent}% · noch {time}",
   "status.sunken": "Sinkende Last",
   "status.sunken.detail": "Bewegungs- und Angriffstempo −{percent}% · noch {time}",
+  "status.echo": "Echo",
+  "status.echo.detail": "Noch {time}",
 } as const;

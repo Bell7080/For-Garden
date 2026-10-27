@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSkirmish, findFighter, fireUltimate, resolveReceivedDamage, stepSkirmish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
 
@@ -24,7 +24,7 @@ function swing(state: SkirmishState, attackerId: string, targetId: string, rng: 
 }
 
 const mark = (state: SkirmishState, targetId: string, sourceId: string) => { findFighter(state, targetId)!.shimmer = { sourceId }; };
-const enterFever = (state: SkirmishState, id: string) => { const fighter = findFighter(state, id)!; fighter.ferocityFever = true; fighter.ferocity = FEROCITY_RULES.max; };
+const enterFever = (state: SkirmishState, id: string) => { const fighter = findFighter(state, id)!; fighter.ferocityFever = true; fighter.ferocity = ferocityMaxOf(fighter.def); };
 const paint = (stacks: number) => ({ remaining: 10, total: 10, stacks, percentPerStack: 6, maxStacks: 4 });
 const amounts = (events: SkirmishEvent[], filter: (event: Extract<SkirmishEvent, { kind: "attack" }>) => boolean) =>
   events.flatMap((event) => event.kind === "attack" && filter(event) ? [event.amount] : []);
@@ -53,7 +53,7 @@ describe("티아 한계 돌파", () => {
     expect(resolveReceivedDamage(foe, 1_000).applied).toBe(1_000);
   });
 
-  it("는 표식이 터질 때마다 궁극기 게이지를 6 얻는다(별 III)", () => {
+  it("는 표식이 터질 때마다 궁극기 게이지를 15 얻는다(별 III)", () => {
     const gained = (breakthrough: number) => {
       const state = setup(["tia"], ["amo"], breakthrough);
       mark(state, "enemy-0", "player-0");
@@ -62,7 +62,7 @@ describe("티아 한계 돌파", () => {
       swing(state, "player-0", "enemy-0");
       return tia.energy;
     };
-    expect(gained(2) - gained(1)).toBeCloseTo(6, 5);
+    expect(gained(2) - gained(1)).toBeCloseTo(15, 5);
   });
 
   it("는 폭주 중 표식 폭발의 추가 피해가 두 배가 된다(별 IV)", () => {

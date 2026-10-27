@@ -135,7 +135,8 @@ function settlementHarness(failOnce?: PersistPhase) {
   const settle = vi.spyOn(server, "settleExpeditionRun");
   const requests = manager.prepareBossRequests(boss.id)!;
   const request = { ...requests, runId: state.expedition.run!.runId, nodeId: boss.id };
-  const actions = fightAndLog(["torika", "rex", "spino"], 1);
+  // v2 logs only player ultimate controls; basics are simulated automatically.
+  const actions: ExpeditionBossAction[] = [];
   // 준비 단계의 manager 저장은 finish 순서 검증 대상이 아니므로 실제 왕복 직전에 기록만 비운다.
   commitOrder.length = 0;
   return { state, manager, server, flow: new ExpeditionBossSettlementFlow(server, manager), request, actions, walletBefore, managerSaves, serverPersists, commitOrder, persistSession, submit, settle };
@@ -151,15 +152,13 @@ describe("원정 보스 비동기 정산 복구", () => {
     expect(result.settlement.granted.salvageRecord ?? 0).toBe(expeditionBossSalvage(result.score.bossDamageScore));
     expect(harness.submit).toHaveBeenCalledTimes(1);
     expect(harness.settle).toHaveBeenCalledTimes(1);
-    expect(harness.managerSaves.filter(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId))).toHaveLength(1);
-    // 실제 FakeServer 점수 커밋, manager의 로컬 노드 적용, 최종 런 정산이 서로 앞서거나 합쳐지지 않는다.
-    const scoreCommit = harness.serverPersists.findIndex(({ expedition }) => expedition.run?.bossDamageScore === result.score.bossDamageScore);
-    const localNodeCommit = harness.managerSaves.findIndex(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId));
+    // 보스 노드 방문은 서버가 점수와 **같은 저장**에서 확정한다 — 클라이언트는 더 쓰지 않는다.
+    expect(harness.managerSaves.filter(({ expedition }) => expedition.run?.visitedNodeIds.includes(harness.request.nodeId))).toHaveLength(0);
+    const scoreCommit = harness.serverPersists.findIndex(({ expedition }) => expedition.run?.bossDamageScore === result.score.bossDamageScore && expedition.run.visitedNodeIds.includes(harness.request.nodeId));
     const settlementCommit = harness.serverPersists.findIndex(({ expedition }) => expedition.run === null);
     expect(scoreCommit).toBeGreaterThanOrEqual(0);
-    expect(localNodeCommit).toBeGreaterThanOrEqual(0);
     expect(settlementCommit).toBeGreaterThan(scoreCommit);
-    expect(harness.commitOrder).toEqual(["score", "local-node", "settlement"]);
+    expect(harness.commitOrder).toEqual(["score", "settlement"]);
     expect(harness.state.wallet.gold).toBe(harness.walletBefore + 73);
     expect(harness.state.expedition.playsToday).toBe(1);
     expect(harness.state.expedition.run).toBeNull();

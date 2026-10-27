@@ -8,20 +8,15 @@ import {
   type DialogueCue,
   type DialogueLeave,
   type DialogueNode,
+  type DialogueSign,
   type DialogueStandingAsset,
 } from "../core/dialogue";
+import { t } from "../i18n";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
 import {
-  DODI_ASSET,
-  EXPLORER_ASSET,
-  LEXIA_ASSET,
-  PARUA_ASSET,
-  RIPA_ASSET,
-  SEIRA_ASSET,
-  AMO_ASSET,
-  TOBY_ASSET,
-  TORIKA_ASSET,
+  SHOP_CLERK_ASSET,
+  portraitAssetFor,
   preloadPuppetAssets,
   spawnPuppet,
   type PuppetAsset,
@@ -30,7 +25,13 @@ import {
 import { addSceneBackground, ensureBackgroundTexture } from "./backgrounds";
 import {
   DIALOGUE_ACTS,
+  DIALOGUE_ACT_FILL,
+  DIALOGUE_ACT_GLOW,
+  actGlowSteps,
   DIALOGUE_ALARM,
+  DIALOGUE_REMOTE,
+  DIALOGUE_SIGN,
+  DIALOGUE_SIGN_LAYOUT,
   DIALOGUE_BLAST_OFF,
   DIALOGUE_BACKDROP,
   DIALOGUE_CUES,
@@ -46,20 +47,17 @@ import {
   dialogueStageSpot,
   explosionShards,
 } from "./dialogueStageLayout";
+import { speakerStanding } from "../data/dialogues/speakerStanding";
 import { drawVignette } from "./holo";
+import { textStyle } from "./theme";
 
-/** 대사 데이터의 스탠딩 키 → 전신 원화. 데이터에 런타임 객체를 넣지 않으므로 여기서 잇는다. */
-const STANDING_ASSETS: Readonly<Record<DialogueStandingAsset, PuppetAsset>> = {
-  torika: TORIKA_ASSET,
-  lexia: LEXIA_ASSET,
-  seira: SEIRA_ASSET,
-  dodi: DODI_ASSET,
-  parua: PARUA_ASSET,
-  koma: EXPLORER_ASSET,
-  toby: TOBY_ASSET,
-  amo: AMO_ASSET,
-  ripa: RIPA_ASSET,
-};
+/**
+ * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
+ * 상점 점원 오비만 도감에 서지 않는 전용 원화라 따로 잇는다.
+ */
+export function standingAsset(id: DialogueStandingAsset): PuppetAsset {
+  return id === "obi" ? SHOP_CLERK_ASSET : portraitAssetFor(id);
+}
 
 /**
  * 무대에 선 한 명. `baseX`·`baseY`는 연출이 끝나면 돌아올 제자리다.
@@ -72,6 +70,14 @@ interface StageMember {
   creature: PuppetCreature;
   slot: DialogueCastMember["slot"];
   veiled: boolean;
+  /** 무전 너머의 목소리 — 옅은 푸른 투영. 얼굴은 가리지 않는다. */
+  remote: boolean;
+  /** 투영이 일렁이는 트윈(무전 목소리만). */
+  flicker?: Phaser.Tweens.Tween;
+  /** 들어오는 움직임이 끝나 제 자리에 선 뒤인가. 투영의 일렁임은 그 뒤에만 알파를 만진다. */
+  settled: boolean;
+  /** 몸짓이 없을 때의 배율. 눌리고 늘어나는 몸짓이 끝나면 여기로 돌아온다. */
+  restScale: number;
   baseX: number;
   baseY: number;
   /** 무대 크기 배율(`zoom`)이 1일 때의 개체 배율. */
@@ -79,6 +85,8 @@ interface StageMember {
   headOffset: { x: number; y: number };
   /** 지금 도는 연출. 다음 연출이 오면 끊고 제자리에서 다시 시작한다. */
   act?: Phaser.Tweens.TweenChain;
+  /** 색이 덮이는 몸짓의 진하기 보간용. */
+  fillAct?: Phaser.Tweens.TweenChain;
 }
 
 /**
@@ -115,6 +123,7 @@ export class DialogueStage {
   private readonly maskGraphics: Phaser.GameObjects.Graphics;
   private readonly mask: Phaser.Display.Masks.GeometryMask;
   private alarm?: { band: Phaser.GameObjects.Graphics; tween: Phaser.Tweens.Tween };
+  private sign?: { kind: DialogueSign; stamp: Phaser.GameObjects.Container };
   private terminated = false;
 
   constructor(private readonly scene: Phaser.Scene, backdrop?: DialogueBackdrop) {
@@ -123,6 +132,7 @@ export class DialogueStage {
     this.mask = this.maskGraphics.createGeometryMask();
     this.drawFade();
     if (backdrop) this.setBackdrop(backdrop);
+    scene.events.on(Phaser.Scenes.Events.UPDATE, this.updateRemote, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.terminate());
   }
 
@@ -155,7 +165,7 @@ export class DialogueStage {
     void (async () => {
       for (const id of order) {
         if (this.terminated) return;
-        await preloadPuppetAssets([STANDING_ASSETS[id]]).catch(() => undefined);
+        await preloadPuppetAssets([standingAsset(id)]).catch(() => undefined);
       }
     })();
   }
@@ -166,8 +176,11 @@ export class DialogueStage {
    * `isCurrent`는 기다리는 사이 노드가 바뀌거나 씬이 닫혔는지 묻는다 — 늦게 도착한 스탠딩이
    * 이미 지나간 노드의 무대에 붙지 않게 한다.
    */
-  async present(node: DialogueNode, isCurrent: () => boolean): Promise<void> {
+  async present(source: DialogueNode, isCurrent: () => boolean): Promise<void> {
     if (this.terminated) return;
+    // 스탠딩을 적지 않은 노드는 화자 이름으로 찾는다 — 전신이 있는 사람은 말하는 순간 얼굴이 뜬다.
+    const standing = source.standing ?? (source.speaker ? speakerStanding(source.speaker) : undefined);
+    const node = standing === source.standing ? source : { ...source, standing };
     // 기다리기 전에는 `isCurrent`를 묻지 않는다 — 씬의 `create` 안에서 부르면 그 씬은 아직
     // 활성으로 표시되기 전이라, 첫 노드의 무대가 통째로 세워지지 않는다.
     if (node.cue === "explosion") {
@@ -178,6 +191,7 @@ export class DialogueStage {
       if (node.cue) this.playCue(node.cue);
     }
 
+    this.showSign(node.sign);
     const next = resolveDialogueCast(this.cast, node);
     this.cast = next;
     const nextIds = new Set(next.map(({ id }) => id));
@@ -186,7 +200,12 @@ export class DialogueStage {
     const leavers = [...this.members.values()]
       .filter(({ id }) => !nextIds.has(id))
       .sort((a, b) => DIALOGUE_SLOT_ORDER[a.slot] - DIALOGUE_SLOT_ORDER[b.slot]);
-    leavers.forEach((member, index) => this.dismiss(member, node.leave, index, leavers.length));
+    const departures = leavers.map((member, index) => this.dismiss(member, node.leave, index, leavers.length));
+    // 날아가며 퇴장하는 동안은 다음 인물을 들이지 않는다 — 날아가기가 끝나 사라진 뒤에 들어와야 겹치지 않는다.
+    if (node.leave === "blastOff") {
+      await Promise.all(departures);
+      if (!isCurrent()) return;
+    }
 
     const arrivals = next.filter(({ id }) => !this.members.has(id));
     for (const entry of next) {
@@ -200,6 +219,7 @@ export class DialogueStage {
     if (!isCurrent()) return;
 
     this.focus(node.standing);
+    this.syncRemote(next);
     if (node.act && node.standing) {
       const speaker = this.members.get(node.standing);
       if (speaker) this.playAct(speaker, node.act);
@@ -211,7 +231,7 @@ export class DialogueStage {
    * 부르는 쪽이 함께 선 사람 모두가 도착한 뒤 한꺼번에 튼다.
    */
   private async summon(entry: DialogueCastMember, castSize: number, isCurrent: () => boolean): Promise<(() => void) | undefined> {
-    const asset = STANDING_ASSETS[entry.id];
+    const asset = standingAsset(entry.id);
     const spot = dialogueStageSpot(entry.slot, castSize);
     const zoom = (DIALOGUE_STANDING_ZOOM[entry.id] ?? 1) * spot.zoom;
     let creature: PuppetCreature;
@@ -236,6 +256,9 @@ export class DialogueStage {
       creature,
       slot: entry.slot,
       veiled: entry.veiled === true,
+      remote: entry.remote === true,
+      settled: false,
+      restScale: creature.scaleX,
       baseX: creature.x,
       baseY: creature.y,
       unitScale: creature.scaleX / spot.zoom,
@@ -249,19 +272,28 @@ export class DialogueStage {
     creature.setAlpha(0).setX(member.baseX + from * slide).setY(member.baseY + (from === 0 ? slide * 0.4 : 0));
     return () => {
       if (this.terminated || !creature.active) return;
-      this.scene.tweens.add({ targets: creature, x: member.baseX, y: member.baseY, alpha: 1, duration: DIALOGUE_ENTRANCE.enterMs, ease: "Cubic.Out" });
+      this.scene.tweens.add({
+        targets: creature,
+        x: member.baseX,
+        y: member.baseY,
+        alpha: member.remote ? DIALOGUE_REMOTE.alpha : 1,
+        duration: DIALOGUE_ENTRANCE.enterMs,
+        ease: "Cubic.Out",
+        onComplete: () => { member.settled = true; },
+      });
     };
   }
 
   /** 무대를 떠나는 사람. 곧바로 장부에서 빼 다음 노드가 같은 사람을 다시 세울 수 있게 한다. */
-  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0, total = 1): void {
+  private dismiss(member: StageMember, leave?: DialogueLeave, order = 0, total = 1): Promise<void> {
     this.members.delete(member.id);
     this.stopAct(member);
     const { creature } = member;
-    if (!this.scene.tweens || !creature.active) { creature.destroy(); return; }
+    if (!this.scene.tweens || !creature.active) { creature.destroy(); return Promise.resolve(); }
     this.scene.tweens.killTweensOf(creature);
-    if (leave === "blastOff") { this.blastOff(member, order, total); return; }
+    if (leave === "blastOff") return this.blastOff(member, order, total);
     this.scene.tweens.add({ targets: creature, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => creature.destroy() });
+    return Promise.resolve();
   }
 
   /**
@@ -269,7 +301,7 @@ export class DialogueStage {
    * 마름모 하나가 반짝인다. 몸짓이 도는 동안은 idle을 멈춰 날아가는 몸이 한 덩어리로 읽힌다.
    * 움직임 줄이기를 켜면 거리와 회전을 줄인다 — 퇴장 자체는 이야기의 한 박자라 없애지 않는다.
    */
-  private blastOff(member: StageMember, order: number, total: number): void {
+  private blastOff(member: StageMember, order: number, total: number): Promise<void> {
     const { creature } = member;
     const spec = DIALOGUE_BLAST_OFF;
     const factor = this.distanceFactor();
@@ -286,7 +318,7 @@ export class DialogueStage {
     // TweenChain은 `delay`를 주면 시작 대기 상태에서 영영 빠져나오지 못해, 차례가 0인 한 명
     // (왼쪽 아모)만 날아가고 나머지는 배경에 그대로 남았다.
     const wait = order * spec.staggerMs;
-    this.scene.tweens.chain({
+    return new Promise<void>((resolve) => this.scene.tweens.chain({
       targets: creature,
       tweens: [
         ...(wait > 0 ? [{ y: creature.y, duration: wait }] : []),
@@ -304,8 +336,9 @@ export class DialogueStage {
         creature.destroy();
         // 별은 마지막 사람이 닿을 때 한 번만 — 셋이 하나의 별이 된다.
         if (!this.terminated && order === total - 1) this.twinkle(Phaser.Math.Clamp(targetX, 60, BASE_WIDTH - 60), spec.twinkleY);
+        resolve();
       },
-    });
+    }));
   }
 
   /** 날아간 자리에서 한 번 반짝이는 마름모. 동그라미가 아니라 좌우를 어긋나게 깎은 마름모다. */
@@ -343,6 +376,7 @@ export class DialogueStage {
     const baseX = spot.x - member.headOffset.x * scale;
     const baseY = DIALOGUE_STANDING_FRAME.headY - member.headOffset.y * scale;
     member.slot = entry.slot;
+    member.restScale = scale;
     if (Math.abs(baseX - member.baseX) < 0.5 && Math.abs(baseY - member.baseY) < 0.5 && Math.abs(scale - member.creature.scaleX) < 1e-4) return;
     member.baseX = baseX;
     member.baseY = baseY;
@@ -353,7 +387,7 @@ export class DialogueStage {
       x: baseX,
       y: baseY,
       scale,
-      alpha: 1,
+      alpha: entry.remote ? DIALOGUE_REMOTE.alpha : 1,
       duration: DIALOGUE_ENTRANCE.moveMs,
       ease: "Cubic.InOut",
     });
@@ -361,11 +395,14 @@ export class DialogueStage {
 
   /** 말하는 사람만 밝게 한 층 앞으로. 화자가 없는 줄(지문·연구원)은 모두 가라앉는다. */
   private focus(speaker?: DialogueStandingAsset): void {
+    this.focusedSpeaker = speaker;
     for (const member of this.members.values()) {
       const speaking = member.id === speaker;
       member.creature.setDepth(speaking ? DIALOGUE_FOCUS.speakerDepth : DIALOGUE_FOCUS.listenerDepth);
       if (member.veiled) continue;
-      this.tweenTint(member.creature, speaking ? 0xffffff : DIALOGUE_FOCUS.dimTint);
+      const lit = member.remote ? DIALOGUE_REMOTE.tint : 0xffffff;
+      const dim = member.remote ? DIALOGUE_REMOTE.dimTint : DIALOGUE_FOCUS.dimTint;
+      this.tweenTint(member.creature, speaking ? lit : dim);
     }
   }
 
@@ -387,20 +424,29 @@ export class DialogueStage {
     });
   }
 
-  /** 제자리에서 시작해 제자리로 끝나는 몸짓. 앞 몸짓이 남아 있으면 끊고 제자리에서 다시 시작한다. */
+  /**
+   * 제자리에서 시작해 제자리로 끝나는 몸짓. 앞 몸짓이 남아 있으면 끊고 제자리에서 다시 시작한다.
+   *
+   * 위치(`dx`·`dy`)뿐 아니라 **배율**(눌림·늘어남)과 **몸에 덮는 색**(푸름·붉음)도 같은 걸음에서
+   * 함께 옮긴다. 움직임 줄이기는 위치와 배율의 변화폭을 같이 줄인다 — 색은 움직임이 아니라 남긴다.
+   */
   private playAct(member: StageMember, act: DialogueAct): void {
     this.stopAct(member);
     const { creature } = member;
     creature.setPosition(member.baseX, member.baseY);
     const factor = this.distanceFactor();
+    const rest = member.restScale;
     // 몸짓 동안은 idle을 그 자리에서 멈춘다 — 몸이 뛰는 동안 팔다리까지 따로 흔들리면 한 동작으로
     // 읽히지 않는다. 끝나면 멈춘 프레임에서 그대로 이어 간다(`stopAct`가 풀어 준다).
     creature.setAnimationFrozen(true);
+    const steps = DIALOGUE_ACTS[act];
     member.act = this.scene.tweens.chain({
       targets: creature,
-      tweens: DIALOGUE_ACTS[act].map((step) => ({
+      tweens: steps.map((step) => ({
         x: member.baseX + step.dx * factor,
         y: member.baseY + step.dy * factor,
+        scaleX: rest * (1 + ((step.sx ?? 1) - 1) * factor),
+        scaleY: rest * (1 + ((step.sy ?? 1) - 1) * factor),
         duration: step.ms,
         ease: step.ease,
       })),
@@ -408,16 +454,130 @@ export class DialogueStage {
         member.act = undefined;
         if (!creature.active) return;
         creature.setPosition(member.baseX, member.baseY);
+        creature.setScale(rest);
         creature.setAnimationFrozen(false);
+      },
+    });
+    const color = DIALOGUE_ACT_FILL[act];
+    if (color === undefined) return;
+    const proxy = { amount: 0 };
+    member.fillAct = this.scene.tweens.chain({
+      targets: proxy,
+      tweens: steps.map((step) => ({
+        amount: step.fill ?? 0,
+        duration: step.ms,
+        ease: step.ease === "Back.Out" ? "Quad.Out" : step.ease,
+        onUpdate: () => { if (creature.active) this.paintActGlow(creature, color, proxy.amount); },
+      })),
+      onComplete: () => {
+        member.fillAct = undefined;
+        if (creature.active) this.paintActGlow(creature, color, 0);
       },
     });
   }
 
-  /** 도는 몸짓을 끊는다. 멈춰 둔 idle도 함께 풀어, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
+  /** 감정 몸짓의 색 — 몸에는 옅게만 덮고 둘레에 빛을 번지게 한다. */
+  private paintActGlow(creature: PuppetCreature, color: number, amount: number): void {
+    creature.setBodyFill(color, amount * DIALOGUE_ACT_GLOW.bodyShare);
+    creature.setAfterimages(actGlowSteps(color, amount));
+  }
+
+  /** 도는 몸짓을 끊는다. 멈춰 둔 idle·눌린 배율·덮인 색도 함께 되돌려, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
   private stopAct(member: StageMember): void {
+    const interrupted = member.act !== undefined || member.fillAct !== undefined;
     member.act?.stop();
     member.act = undefined;
-    if (member.creature.active) member.creature.setAnimationFrozen(false);
+    member.fillAct?.stop();
+    member.fillAct = undefined;
+    const { creature } = member;
+    if (!creature.active) return;
+    creature.setAnimationFrozen(false);
+    if (!interrupted) return;
+    creature.setScale(member.restScale);
+    creature.setBodyFill(0xffffff, 0);
+    creature.setAfterimages([]);
+  }
+
+  // ── 무전 너머의 목소리 ─────────────────────────────────────────────
+
+  /**
+   * 무대에 선 사람의 무전 여부를 이번 노드에 맞춘다. 무전이 되면 얼굴 실루엣을 깔고 투영으로,
+   * 풀리면 실루엣을 걷고 제 모습으로 돌아온다(직접 만난 사람은 얼굴이 보인다).
+   */
+  private syncRemote(cast: readonly DialogueCastMember[]): void {
+    for (const entry of cast) {
+      const member = this.members.get(entry.id);
+      if (!member) continue;
+      const remote = entry.remote === true;
+      if (remote === member.remote) continue;
+      member.remote = remote;
+      if (!remote && member.creature.active) this.scene.tweens.add({ targets: member.creature, alpha: 1, duration: DIALOGUE_ENTRANCE.moveMs });
+    }
+    this.focus(this.cast.length ? this.focusedSpeaker : undefined);
+  }
+
+  /** 마지막으로 `focus`에 넘긴 화자. 무전 여부만 바뀔 때 같은 화자로 색을 다시 맞춘다. */
+  private focusedSpeaker?: DialogueStandingAsset;
+
+  /** 매 프레임: 무전 목소리의 투영이 가끔 일렁이게 알파를 오간다. */
+  private updateRemote(time: number): void {
+    if (this.terminated) return;
+    const flicker = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor > 0;
+    for (const member of this.members.values()) {
+      if (!member.remote) continue;
+      if (!member.settled || !member.creature.active) continue;
+      const wave = flicker ? 0.5 + 0.5 * Math.sin((time / DIALOGUE_REMOTE.flickerMs) * Math.PI * 2) : 0;
+      member.creature.setAlpha(DIALOGUE_REMOTE.alpha - DIALOGUE_REMOTE.flickerAlpha * wave);
+    }
+  }
+
+  // ── 사람이 아닌 목소리의 글자 딱지 ─────────────────────────────────
+
+  /**
+   * 안내·경고·시스템·방송·관제탑 딱지를 가운데에 찍는다. 같은 딱지가 이어지면 그대로 두고, 다른
+   * 딱지로 바뀌면 새로 찍으며, 적지 않은 노드에서는 걷는다. 딱지가 서 있는 동안은 화자가 사람이
+   * 아니므로 서 있는 사람들이 모두 한 톤 가라앉는다(`focus`).
+   */
+  private showSign(kind: DialogueSign | undefined): void {
+    if (this.sign?.kind === kind) return;
+    const previous = this.sign;
+    this.sign = undefined;
+    if (previous) {
+      this.scene.tweens.add({ targets: previous.stamp, alpha: 0, duration: DIALOGUE_ENTRANCE.exitMs, onComplete: () => previous.stamp.destroy() });
+    }
+    if (!kind) return;
+    const layout = DIALOGUE_SIGN_LAYOUT;
+    const look = DIALOGUE_SIGN[kind];
+    const stamp = this.scene.add.container(BASE_WIDTH / 2, layout.y).setDepth(layout.depth);
+    const label = this.scene.add.text(0, 0, t(`dialogue.sign.${kind}` as const), textStyle({ role: "display", size: layout.textSize, color: look.textColor })).setOrigin(0.5).setStroke("#05070a", 10);
+    const w = Math.max(layout.width, label.width + 150);
+    const h = layout.height;
+    const plate = this.scene.add.graphics();
+    plate.fillStyle(0x05070a, 0.78).fillRect(-w / 2, -h / 2, w, h);
+    plate.lineStyle(8, look.color, 0.95).strokeRect(-w / 2, -h / 2, w, h);
+    // 안쪽 얇은 선과 모서리 눈금 — 비스듬히 찍힌 방송 딱지처럼 읽히는 최소한의 장식.
+    plate.lineStyle(2, look.color, 0.55).strokeRect(-w / 2 + 14, -h / 2 + 14, w - 28, h - 28);
+    plate.fillStyle(look.color, 0.9);
+    plate.fillRect(-w / 2, -h / 2, 54, 8);
+    plate.fillRect(w / 2 - 54, h / 2 - 8, 54, 8);
+    stamp.add([plate, label]);
+    stamp.setRotation(Phaser.Math.DegToRad(layout.tiltDeg));
+    stamp.setAlpha(layout.dimAlpha);
+    this.sign = { kind, stamp };
+    if (settingsManager.get().accessibility.reduceMotion) return;
+    // 쿵 하고 찍힌다. 경고는 찍힌 뒤에도 붉게 한 박자씩 깜빡인다.
+    stamp.setScale(layout.stampFromScale).setAlpha(0);
+    this.scene.tweens.add({
+      targets: stamp,
+      scale: 1,
+      alpha: layout.dimAlpha,
+      duration: layout.stampMs,
+      ease: "Quad.In",
+      onComplete: () => {
+        if (kind !== "warning" || !stamp.active || motionPolicy(settingsManager.get()).nonEssentialRepeatFactor <= 0) return;
+        this.scene.tweens.add({ targets: stamp, alpha: 0.6, duration: 420, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      },
+    });
   }
 
   /** 배경을 갈아 끼운다. 새 원화가 도착하면 옛것을 걷는다 — 그 사이에 빈 판이 보이지 않게 한다. */
@@ -609,7 +769,9 @@ export class DialogueStage {
   private terminate(): void {
     this.terminated = true;
     this.alarm = undefined;
-    for (const member of this.members.values()) member.creature.destroy();
+    this.sign = undefined;
+    this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.updateRemote, this);
+    for (const member of this.members.values()) { member.creature.destroy(); }
     this.members.clear();
     this.mask.destroy();
     this.maskGraphics.destroy();

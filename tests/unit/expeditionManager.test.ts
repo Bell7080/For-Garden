@@ -47,13 +47,6 @@ describe("ExpeditionManager", () => {
     expect(manager.start(["torika", "rex", "spino"])).toEqual({ ok: false, reason: "alreadyActive" });
   });
 
-  it("exposes quick expedition only after a weekly score and without active progress", () => {
-    const state = createDefaultSession();
-    state.expedition = { weekKey: "2026-08-24", dayKey: "2026-08-25", playsToday: 0, bestScore: 1200, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 1200, lastParty: [], run: null };
-    const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
-    expect(manager.status().quickAvailable).toBe(true);
-  });
-
   it("기존 settled 런을 비활성으로 정리해 재진입에서 새 편성을 허용한다", () => {
     const state = createDefaultSession(); const save = vi.fn();
     const manager = new ExpeditionManager(state, { save }, () => new Date("2026-08-25T12:00:00Z"));
@@ -220,8 +213,8 @@ describe("ExpeditionManager", () => {
     expect(shortcut.ok).toBe(true);
     const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
     const before = { requestId: state.expedition.run!.bossSubmissionId, settlementId: state.expedition.run!.bossSettlementId };
-    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
-    expect(manager.prepareBossRequests(boss.id)).toEqual(before);
+    expect(manager.prepareBossRequests(boss.id)).toEqual({ ...before, replayVersion: 2 });
+    expect(manager.prepareBossRequests(boss.id)).toEqual({ ...before, replayVersion: 2 });
     expect(new Set([state.expedition.run!.bossSubmissionId]).size).toBe(1);
   });
 

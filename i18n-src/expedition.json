@@ -49,16 +49,7 @@
 "Wochenrang {rank}",
 "Место за неделю {rank}"
 ],
-"expedition.weekly.rankReward": [
-"每周奖励 · 宝石 {gems} · 打捞记录 {salvage}",
-"รางวัลประจำสัปดาห์ · อัญมณี {gems} · บันทึกกู้ซาก {salvage}",
-"Thưởng tuần · Đá quý {gems} · Hồ sơ trục vớt {salvage}",
-"Hadiah mingguan · Permata {gems} · Catatan Salvage {salvage}",
-"Recompensa semanal · Gemas {gems} · Registros de rescate {salvage}",
-"Recompensa semanal · Gemas {gems} · Registros de resgate {salvage}",
-"Wochenbelohnung · Edelsteine {gems} · Bergungsberichte {salvage}",
-"Награда недели · Самоцветы {gems} · Записи о подъёме {salvage}"
-],
+"expedition.weekly.rankReward": ["每周奖励 · 宝石 {gems} · 打捞记录 {salvage}", "รางวัลประจำสัปดาห์ · เจม {gems} · บันทึกกู้ซาก {salvage}", "Thưởng tuần · Ngọc {gems} · Hồ sơ trục vớt {salvage}", "Hadiah mingguan · Permata {gems} · Catatan Salvage {salvage}", "Recompensa semanal · Gemas {gems} · Registros de rescate {salvage}", "Recompensa semanal · Gemas {gems} · Registros de resgate {salvage}", "Wochenbelohnung · Juwelen {gems} · Bergungsberichte {salvage}", "Награда недели · Самоцветы {gems} · Записи о подъёме {salvage}"],
 "expedition.weekly.unranked": [
 "未上榜",
 "ไม่มีอันดับ",
@@ -169,16 +160,7 @@
 "Expedition abbrechen",
 "Прервать экспедицию"
 ],
-"expedition.abandon.body": [
-"{reward}临时奖励将转入钱包。\n本次的最佳分数不会计入每周记录。",
-"รางวัลชั่วคราว {reward} จะเข้ากระเป๋าเงิน\nคะแนนสูงสุดของรอบนี้จะไม่นับในสถิติรายสัปดาห์",
-"{reward} phần thưởng tạm sẽ chuyển vào ví.\nĐiểm cao nhất lượt này không tính vào kỷ lục tuần.",
-"{reward} hadiah sementara masuk ke dompet.\nSkor terbaik run ini tidak dihitung dalam rekor mingguan.",
-"{reward} recompensas temporales pasan a tu cartera.\nLa mejor puntuación de este intento no contará para el récord semanal.",
-"{reward} recompensas temporárias vão para sua carteira.\nA melhor pontuação desta tentativa não contará para o recorde semanal.",
-"{reward} vorläufige Belohnungen gehen in deine Börse.\nDer Bestwert dieses Laufs zählt nicht zum Wochenrekord.",
-"{reward} временных наград перейдут в кошелёк.\nЛучший счёт этого забега не войдёт в рекорд недели."
-],
+"expedition.abandon.body": ["结束远征并领取目前获得的奖励。\n本次远征分数不会计入每周记录。\n显示的奖励可能因持有上限而减少。", "จบการออกสำรวจและรับรางวัลที่สะสมไว้\nคะแนนออกสำรวจครั้งนี้ไม่นับในสถิติรายสัปดาห์\nรางวัลอาจลดลงตามขีดจำกัดการถือครอง", "Kết thúc Viễn chinh và nhận thưởng đã thu thập.\nĐiểm Viễn chinh này không tính vào kỷ lục tuần.\nThưởng hiển thị có thể giảm do giới hạn sở hữu.", "Akhiri Ekspedisi dan ambil hadiah yang terkumpul.\nSkor Ekspedisi ini tidak masuk rekor mingguan.\nHadiah dapat berkurang karena batas penyimpanan.", "Terminar la expedición y recoger las recompensas obtenidas.\nEsta puntuación no contará para el récord semanal.\nLos límites de posesión pueden reducir las recompensas mostradas.", "Encerrar a expedição e receber as recompensas obtidas.\nEsta pontuação não contará para o recorde semanal.\nOs limites de posse podem reduzir as recompensas exibidas.", "Expedition beenden und bisherige Belohnungen erhalten.\nDiese Expeditionspunkte zählen nicht zum Wochenrekord.\nBesitzgrenzen können die angezeigten Belohnungen verringern.", "Завершить экспедицию и получить собранные награды.\nЭти очки экспедиции не войдут в недельный рекорд.\nЛимиты хранения могут уменьшить показанные награды."],
 "expedition.abandon.confirm": [
 "确认放弃",
 "ยืนยันการละทิ้ง",
@@ -189,16 +171,7 @@
 "Abbruch bestätigen",
 "Подтвердить отказ"
 ],
-"expedition.abandon.settle": [
-"放弃战利品结算",
-"สรุปของรางวัลที่ละทิ้ง",
-"Quyết toán chiến lợi phẩm khi bỏ",
-"Penyelesaian Jarahan Saat Menyerah",
-"Liquidación del botín al abandonar",
-"Acerto do espólio ao abandonar",
-"Beuteabrechnung bei Abbruch",
-"Расчёт добычи при отказе"
-],
+"expedition.abandon.settle": ["远征结束奖励", "รางวัลจบออกสำรวจ", "Thưởng Viễn chinh", "Hadiah Ekspedisi", "Recompensas de expedición", "Recompensas da expedição", "Expeditionsbelohnungen", "Награды экспедиции"],
 "expedition.loot": [
 "获得的战利品",
 "ของที่ได้รับ",
@@ -328,6 +301,36 @@
 "Aplicar tudo",
 "Alle anwenden",
 "Применить всё"
+],
+"expedition.augment.count": [
+"{count}个增幅",
+"เสริมพลัง {count}",
+"{count} Tăng cường",
+"{count} Augmen",
+"{count} mejoras",
+"{count} aprimoramentos",
+"{count} Verstärkungen",
+"Усилений: {count}"
+],
+"expedition.augment.slot": [
+"{slot}号遗物",
+"เรลิก {slot}",
+"Di vật {slot}",
+"Relik {slot}",
+"Reliquia {slot}",
+"Relíquia {slot}",
+"Relikt {slot}",
+"Реликт {slot}"
+],
+"expedition.augment.empty": [
+"暂无增幅",
+"ยังไม่มีเสริมพลัง",
+"Chưa có Tăng cường",
+"Belum ada Augmen",
+"Sin Mejoras",
+"Nenhum Aprimoramento",
+"Keine Verstärkungen",
+"Усилений нет"
 ],
 "expedition.sweep.title": [
 "扫荡",
@@ -498,105 +501,5 @@
 "Disponível apenas em builds de desenvolvimento",
 "Nur in Entwicklungsversionen verfügbar",
 "Только в сборках для разработки"
-],
-"expedition.quick.sub": [
-"金币 {gold} · 今日 {remaining}",
-"ทอง {gold} · วันนี้ {remaining}",
-"Vàng {gold} · Hôm nay {remaining}",
-"Emas {gold} · Hari ini {remaining}",
-"Oro {gold} · Hoy {remaining}",
-"Ouro {gold} · Hoje {remaining}",
-"Gold {gold} · Heute {remaining}",
-"Золото {gold} · Сегодня {remaining}"
-],
-"expedition.quick.cancelled": [
-"广告已取消",
-"โฆษณาถูกยกเลิก",
-"Quảng cáo đã bị hủy",
-"Iklan dibatalkan",
-"El anuncio se canceló",
-"O anúncio foi cancelado",
-"Die Werbung wurde abgebrochen",
-"Реклама отменена"
-],
-"expedition.quick.walletFull": [
-"金币钱包已满",
-"กระเป๋าทองเต็มแล้ว",
-"Ví Vàng đã đầy",
-"Dompet Emas penuh",
-"Tu cartera de Oro está llena",
-"Sua carteira de Ouro está cheia",
-"Deine Gold-Börse ist voll",
-"Кошелёк золота полон"
-],
-"expedition.quick.done": [
-"快速远征完成",
-"ออกสำรวจด่วนเสร็จสิ้น",
-"Viễn chinh nhanh hoàn tất",
-"Ekspedisi Cepat selesai",
-"Expedición rápida completada",
-"Expedição rápida concluída",
-"Schnelle Expedition abgeschlossen",
-"Быстрая экспедиция завершена"
-],
-"expedition.quick.walletGain": [
-"实际入账",
-"ยอดที่เข้ากระเป๋าจริง",
-"Thực nhận vào ví",
-"Masuk dompet sebenarnya",
-"Ganancia real en la cartera",
-"Ganho real na carteira",
-"Tatsächlicher Zugewinn",
-"Фактически в кошелёк"
-],
-"expedition.quick.verifyFailed": [
-"广告验证失败 · 请重试",
-"ตรวจสอบโฆษณาล้มเหลว · ลองอีกครั้ง",
-"Xác minh quảng cáo thất bại · Hãy thử lại",
-"Verifikasi iklan gagal · Coba lagi",
-"Falló la verificación del anuncio · Inténtalo de nuevo",
-"A verificação do anúncio falhou · Tente novamente",
-"Werbeprüfung fehlgeschlagen · Bitte erneut versuchen",
-"Проверка рекламы не удалась · Повторите"
-],
-"expedition.quick.dailyUsed": [
-"今日次数已用完 · 请明天再来",
-"ใช้สิทธิ์วันนี้หมดแล้ว · กลับมาพรุ่งนี้",
-"Đã dùng hết lượt hôm nay · Hãy quay lại ngày mai",
-"Kesempatan hari ini habis · Kembali besok",
-"Has usado todos los intentos de hoy · Vuelve mañana",
-"Você usou todas as tentativas de hoje · Volte amanhã",
-"Alle Läufe für heute verbraucht · Komm morgen wieder",
-"Попытки на сегодня кончились · Приходите завтра"
-],
-"expedition.quick.weeklyUsed": [
-"本周次数已用完 · 请下周再来",
-"ใช้สิทธิ์สัปดาห์นี้หมดแล้ว · กลับมาสัปดาห์หน้า",
-"Đã dùng hết lượt tuần này · Hãy quay lại tuần sau",
-"Kesempatan minggu ini habis · Kembali minggu depan",
-"Has usado todos los intentos de la semana · Vuelve la próxima",
-"Você usou todas as tentativas da semana · Volte na próxima",
-"Alle Läufe dieser Woche verbraucht · Komm nächste Woche wieder",
-"Попытки на неделю кончились · Приходите на следующей"
-],
-"expedition.quick.noBaseline": [
-"没有基准分数 · 请先创下远征最佳纪录",
-"ไม่มีคะแนนอ้างอิง · สร้างสถิติออกสำรวจก่อน",
-"Chưa có điểm chuẩn · Hãy lập kỷ lục Viễn chinh trước",
-"Tidak ada skor acuan · Catat skor terbaik Ekspedisi dulu",
-"Sin puntuación de referencia · Registra antes tu mejor Expedición",
-"Sem pontuação de referência · Registre antes seu melhor na Expedição",
-"Kein Referenzwert · Stelle zuerst einen Expedition-Bestwert auf",
-"Нет базового счёта · Сначала установите рекорд экспедиции"
-],
-"expedition.quick.retryLater": [
-"请稍后再试",
-"ลองใหม่อีกสักครู่",
-"Hãy thử lại sau ít phút",
-"Coba lagi sebentar lagi",
-"Inténtalo de nuevo en un momento",
-"Tente novamente em instantes",
-"Bitte versuche es gleich erneut",
-"Повторите чуть позже"
 ]
 }

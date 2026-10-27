@@ -22,11 +22,12 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { TopBar } from "../ui/TopBar";
-import { startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import type { PartySceneData } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 편성 화면·결과판에서 돌아올 때 고른 등급을 그대로 되살린다. */
 export interface BountySceneData {
@@ -85,7 +86,7 @@ export class BountyScene extends Phaser.Scene {
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
     });
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     this.refresh();
     // 서버가 확정한 해금이 도착하면 그때 목록을 다시 세운다.
     this.reloadStatus();
@@ -96,6 +97,8 @@ export class BountyScene extends Phaser.Scene {
       this.dailyAdRewards = state.dailyAdRewards;
       this.refresh();
     }).catch(() => undefined);
+    showContentIntro(this, "bounty");
+    playSceneEntrance(this);
   }
 
   private reloadStatus(): void {
@@ -129,7 +132,7 @@ export class BountyScene extends Phaser.Scene {
       selectedId: tier.id,
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
-      sortieEnabled: !this.busy && selected?.unlocked === true && session.wallet.stamina >= cost.staminaCost,
+      sortieEnabled: !this.busy && selected?.unlocked === true,
       sweepEnabled: !this.busy && selected?.cleared === true,
     });
   }
@@ -137,6 +140,11 @@ export class BountyScene extends Phaser.Scene {
   /** 출격은 편성 화면을 연다. 입장(스테미나 차감)은 거기서 전투 시작을 누를 때 확정된다. */
   private openParty(): void {
     if (this.busy) return;
+    // 모자란 채 편성에 들어가 헛수고하지 않게, 출격에서 곧바로 충전 창을 연다.
+    if (session.wallet.stamina < bountyRunCost(getBountyTier(this.selectedTierId)).staminaCost) {
+      openCurrencyGuide({ scene: this, popups: this.popups }, "stamina");
+      return;
+    }
     startScene(this, "party", { content: "bounty", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 

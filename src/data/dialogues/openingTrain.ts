@@ -67,7 +67,7 @@ export const OPENING_TRAIN: DialogueStory = {
 
     // ── 경보: 큰 진동, 그리고 검은 베일 ───────────────────────────────
     { id: "quake", speaker: "", body: "쿠구구궁…!! 객차 전체가 크게 들썩인다.", cue: "rumble", nextId: "alarm" },
-    { id: "alarm", speaker: "안내 방송", body: "경보. 경보. 선로 전방에 미확인 개체 접근. 승객 여러분은 즉시 자리를 지켜 주십시오.", cue: "alarm", nextId: "sense" },
+    { id: "alarm", speaker: "안내 방송", body: "경보. 경보. 선로 전방에 미확인 개체 접근. 승객 여러분은 즉시 자리를 지켜 주십시오.", cue: "alarm", sign: "broadcast", nextId: "sense" },
     { id: "sense", speaker: "파루아", body: "…앞에서 뭔가 와요. 하나가 아니에요.", standing: "parua", act: "tremble", nextId: "guard" },
     { id: "guard", speaker: "토리카", body: "연구원님, 제 뒤로 오세요! 무슨 일이 있어도 제가 막을게요!", standing: "torika", act: "hop", nextId: "veil" },
     { id: "veil", speaker: "???", body: "찾았다. Garden이 내려보낸 연구원.", standing: "koma", cast: [{ id: "koma", slot: "center", veiled: true }], cue: "rumble", nextId: "order" },

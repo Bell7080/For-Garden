@@ -1,3 +1,9 @@
+import { addClippedHit } from "../ui/clippedHit";
+import type { ClipRect } from "../ui/clipRect";
+import { isTap } from "../ui/tapGuard";
+import { formatEffectDescription } from "../ui/skillExplanation";
+import { wrapByCharacter } from "../core/cjkWrap";
+import { splitEmphasisRuns, type EmphasisRun } from "../core/keywordText";
 import Phaser from "phaser";
 import { parseKeywordText, type KeywordDef } from "../data/keywords";
 import { t } from "../i18n";
@@ -34,6 +40,8 @@ const KEYWORD_NOTE = {
 export interface KeywordTextOptions {
   width: number;
   size: number;
+  /** 스크롤 목록의 월드 좌표 입력 경계. */
+  inputClip?: () => ClipRect;
   lineSpacing?: number;
   color?: string;
   /** 현재 스킬의 피해 산식처럼 문맥마다 달라지는 추가 용어 정의다. */
@@ -80,19 +88,38 @@ export class KeywordManager {
         }
         for (const word of splitWords(line)) {
           if (word === "") continue;
-          // 강조된 말은 굵기와 색이 함께 달라진다. 역할을 먼저 고르고 한 번에 만든다.
-          const style = segment.keyword
+          // 링크 낱말은 통째로, 일반 낱말은 수치 조각만 강조한다(조사·단위까지 노랗게 물들지 않게).
+          // 조각이 여럿이어도 한 낱말이라 줄은 낱말 전체 폭으로 넘긴다.
+          const runs: EmphasisRun[] = segment.keyword ? [{ text: word, accent: true }] : splitEmphasisRuns(word);
+          const styleOf = (accent: boolean) => accent
             ? textStyle({ role: "emphasis", size: options.size, color: COLOR.accentText })
             : textStyle({ role: "body", size: options.size, color: options.color ?? COLOR.ink });
-          const label = this.scene.add.text(x, y, word, style).setOrigin(0, 0);
-          if (x > 0 && x + label.width > options.width) {
-            x = 0;
-            y += lineHeight;
-            label.setPosition(x, y);
+          const labels = runs.map((run) => this.scene.add.text(0, 0, run.text, styleOf(run.accent)).setOrigin(0, 0));
+          const total = labels.reduce((sum, label) => sum + label.width, 0);
+          if (labels.length > 1 && total <= options.width) {
+            if (x > 0 && x + total > options.width) { x = 0; y += lineHeight; }
+            for (const label of labels) {
+              label.setPosition(x, y);
+              container.add(label);
+              x += label.width;
+            }
+            continue;
           }
-          container.add(label);
-          if (segment.keyword) this.decorateKeyword(container, label, segment.keyword, options.keywordActions, options.contextualKeywords);
-          x += label.width;
+          // 한 조각이거나 한 줄보다 긴 낱말은 예전처럼 글자 단위로 감싼다.
+          labels.slice(1).forEach((label) => label.destroy());
+          const label = labels[0];
+          const style = styleOf(runs.length === 1 && runs[0].accent);
+          label.setText(word).setStyle(style);
+          const chunks = label.width > options.width
+            ? wrapByCharacter(word, options.width, value => label.context.measureText(value).width).split("\n") : [word];
+          chunks.forEach((chunk, index) => {
+            const line = index === 0 ? label.setText(chunk) : this.scene.add.text(0, 0, chunk, style).setOrigin(0, 0);
+            if (index > 0 || x > 0 && x + line.width > options.width) { x = 0; y += lineHeight; }
+            line.setPosition(x, y);
+            container.add(line);
+            if (segment.keyword) this.decorateKeyword(container, line, segment.keyword, options.keywordActions, options.contextualKeywords, options.inputClip);
+            x += line.width;
+          });
         }
       });
     }
@@ -109,17 +136,23 @@ export class KeywordManager {
     keyword: KeywordDef,
     actions?: Readonly<Record<string, () => void>>,
     contextualKeywords?: readonly KeywordDef[],
+    inputClip?: () => ClipRect,
   ): void {
     const underline = this.scene.add.graphics();
     underline.lineStyle(2, COLOR.accent, 0.85);
     underline.lineBetween(label.x, label.y + label.height - 2, label.x + label.width, label.y + label.height - 2);
     container.add(underline);
-    const hit = this.scene.add
-      .rectangle(label.x + label.width / 2, label.y + label.height / 2, label.width + 8, Math.max(label.height, 40), 0xffffff, 0)
-      .setInteractive({ useHandCursor: true });
+    const x = label.x + label.width / 2;
+    const y = label.y + label.height / 2;
+    const width = label.width + 8;
+    const height = Math.max(label.height, 40);
+    const hit = inputClip
+      ? addClippedHit(this.scene, container, x, y, width, height, inputClip)
+      : this.scene.add.rectangle(x, y, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누른 자리 위에 뜻이 뜬다. 화면을 새로 채우지 않고 읽던 글 위에 한 겹 얹힌다.
     const open = actions?.[keyword.id];
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (inputClip && !isTap(pointer)) return;
       if (open) open();
       // 쪽지 안의 태그도 같은 문맥 사전을 읽는다 — 그래야 소환수 쪽지 안의 태그가 전역의
       // 뭉뚱그린 문장이 아니라 이 개체의 실제 수치로 열린다.
@@ -144,7 +177,7 @@ export class KeywordManager {
         .text(0, 0, t(`skill.keywordKind.${keyword.kind}`), textStyle({ role: "emphasis", size: 22, color: COLOR.accentText }))
         .setOrigin(0, 0),
     );
-    const description = this.layout(keyword.description, text);
+    const description = this.layout(formatEffectDescription(keyword.description), text);
     description.setPosition(0, note.descriptionGap);
     content.add(description);
     let bottom = description.y + description.height;
@@ -162,7 +195,7 @@ export class KeywordManager {
           .text(label.width + 14, headY, section.name, textStyle({ role: "display", size: 28 }))
           .setOrigin(0, 0.5),
       );
-      const body = this.layout(section.text, text);
+      const body = this.layout(formatEffectDescription(section.text), { ...text, contextualKeywords: [...(section.contextualKeywords ?? []), ...(contextualKeywords ?? [])] });
       body.setPosition(0, headY + note.sectionBodyGap - note.size / 2);
       content.add(body);
       bottom = body.y + body.height;

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
-import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible } from "./feedTapStyle";
+import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedCakeScale } from "./feedTapStyle";
 import { textStyle } from "./theme";
 
 /**
@@ -64,25 +64,30 @@ export class FeedTapEffect {
 
   /** 조각 `count`개를 부채꼴 포물선으로 띄운다. 떨어지는 자리에서 팡 터진다. */
   private burst(count: number, streak = this.streak): void {
-    for (let index = 0; index < count; index += 1) this.launchCake(feedBurstPath(index, count, streak), index);
+    for (let index = 0; index < count; index += 1) this.launchCake(feedBurstPath(index, count, streak), index, streak);
   }
 
-  private launchCake(path: { dx: number; dy: number; peak: number }, index: number): void {
+  private launchCake(path: { dx: number; dy: number; peak: number }, index: number, streak: number): void {
     if (this.live >= FEED_TAP.maxLiveCakes) return;
     const spec = FEED_TAP.cake;
     const { x: ox, y: oy } = this.origin;
     const cake = this.scene.add.image(ox, oy, "currency-cheesecake").setDisplaySize(spec.size, spec.size);
-    const base = cake.scaleX;
+    const base = cake.scaleX * feedCakeScale(index, streak);
     cake.setScale(base * 0.5);
     this.host.add(cake);
     this.live += 1;
     const spin = Math.sign(path.dx || 1) * spec.spin;
     const flight = { t: 0 };
+    cake.once(Phaser.GameObjects.Events.DESTROY, () => {
+      this.scene.tweens.killTweensOf(flight);
+      this.scene.tweens.killTweensOf(cake);
+      this.live -= 1;
+    });
     // 조각마다 조금씩 늦게 떠 한 점에서 한꺼번에 튀어나가지 않는다.
     this.scene.tweens.add({
       targets: flight,
       t: 1,
-      delay: index * 18,
+      delay: index * 8,
       duration: spec.ms,
       ease: "Linear",
       onUpdate: () => {
@@ -92,7 +97,7 @@ export class FeedTapEffect {
       onComplete: () => {
         // 떨어진 자리에서 한 번 부풀었다 사라진다 — 그 순간이 "먹였다"의 팡이다.
         this.sparkle(cake.x, cake.y, index);
-        this.scene.tweens.add({ targets: cake, scale: base * 1.5, alpha: 0, duration: 150, ease: "Quad.Out", onComplete: () => { cake.destroy(); this.live -= 1; } });
+        this.scene.tweens.add({ targets: cake, scale: base * 1.5, alpha: 0, duration: 150, ease: "Quad.Out", onComplete: () => { cake.destroy(); } });
       },
     });
   }
@@ -112,6 +117,7 @@ export class FeedTapEffect {
         new Phaser.Math.Vector2(-size * 0.54, size * 0.1),
       ], true);
       this.host.add(gem);
+      gem.once(Phaser.GameObjects.Events.DESTROY, () => this.scene.tweens.killTweensOf(gem));
       this.scene.tweens.add({
         targets: gem,
         x: x + Math.cos(angle) * spec.reach,

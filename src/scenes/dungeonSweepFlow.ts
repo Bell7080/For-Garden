@@ -1,11 +1,12 @@
 import type Phaser from "phaser";
+import { gameApi } from "../api/FakeServer";
 import type { DungeonSweepResponse, PlayerStateDto } from "../api/contracts";
 import type { DungeonRunCost } from "../core/dungeonShortcut";
 import { t } from "../i18n";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import type { PopupLayer } from "../ui/PopupLayer";
-import { currencyRecordToRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { dungeonRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { openSweepPopup } from "../ui/SweepPopup";
 import { playSweepSkirmish } from "../ui/SweepSkirmish";
 import { sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
@@ -42,19 +43,33 @@ export interface DungeonSweepFlow {
  * 돈다 — 연출이 결과를 기다리게 하지도, 결과가 연출을 끊지도 않는다. 둘 다 끝나면 영수증이 경험치
  * 블록과 함께 열린다. 거절되면 연출을 곧바로 걷고 아무것도 알리지 않는다(지급이 서지 않았다).
  */
-export function openDungeonSweep(flow: DungeonSweepFlow): void {
+export async function openDungeonSweep(flow: DungeonSweepFlow): Promise<void> {
   const { scene, popups } = flow;
+  // 같은 화면에서 날짜를 넘겨도 기기 시계 대신 최신 서버 날짜로 횟수를 읽는다.
+  flow.setBusy(true);
+  let membership: boolean;
+  try {
+    const state = await gameApi.getPlayerState();
+    if (!scene.scene.isActive()) return;
+    flow.setDailyAdRewards(state.dailyAdRewards);
+    membership = state.adFreeMembership;
+  } catch {
+    if (scene.scene.isActive()) flow.onFailed?.();
+    return;
+  } finally { flow.setBusy(false); }
   openSweepPopup(scene, popups, {
     tierName: flow.tierName,
     level: flow.level,
     cost: flow.cost,
     cleared: flow.cleared,
-    membership: flow.membership,
-    tickets: () => sweepTicketState(flow.membership(), flow.dailyAdRewards()),
+    membership: () => membership,
+    tickets: () => sweepTicketState(membership, flow.dailyAdRewards()),
     onWatchAd: async () => {
       try {
         const daily = await watchSweepTicketAd();
-        if (daily) flow.setDailyAdRewards(daily);
+        if (!daily) return;
+        flow.setDailyAdRewards(daily.dailyAdRewards);
+        openRewardPopup(scene, popups, { items: daily.items });
       } catch {
         // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
       }
@@ -69,11 +84,11 @@ async function run(flow: DungeonSweepFlow, count: number): Promise<void> {
   const heroId = session.favorite && session.owned.has(session.favorite) ? session.favorite : relicCollection.validParty[0] ?? session.favorite;
   const skirmish = playSweepSkirmish(scene, { heroId, enemyId: flow.enemyId, count, fieldKey: flow.fieldKey, depth: SKIRMISH_DEPTH });
   // 응답이 오는 대로 확정된 보상을 넘긴다 — 그 뒤의 타격부터 그 아이콘이 튀어나온다.
-  const request = flow.request(count).then((result) => { skirmish.setRewards(currencyRecordToRewardItems(result.granted)); return result; });
+  const request = flow.request(count).then((result) => { skirmish.setRewards(dungeonRewardItems(result.granted, result.bonusItems)); return result; });
   try {
     const [result] = await Promise.all([request, skirmish.done]);
     if (!scene.scene.isActive()) return;
-    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items: currencyRecordToRewardItems(result.granted), playerExp: result.playerExp });
+    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items: dungeonRewardItems(result.granted, result.bonusItems), playerExp: result.playerExp });
   } catch {
     skirmish.close();
     flow.onFailed?.();

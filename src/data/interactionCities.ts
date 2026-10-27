@@ -59,9 +59,10 @@ export interface InteractionCity {
    * 하던 때는, 그 표본을 주는 곳이 게임 안에 한 군데도 없어 교환소가 늘 빈 줄 하나로 서 있었다 —
    * 파밍 재화를 하나 더 만드는 대신 이미 쓰임이 뚜렷한 원석(룬 특성 재해석)을 낮은 가중치로 섞는다.
    *
-   * 수량은 눈대중이 아니라 **그 도시의 골드 줄과 같은 값**이다. 시세표(`TRADE_GEM_RATE`)로
-   * 환산하면 짧은 창구(`exchange`)가 분당 0.1젬, 긴 창구(`council`)가 분당 0.037젬이라,
-   * 원석 40개/젬을 곱해 분당 4개·1.5개로 잡고 파견 시간을 곱했다. 시간을 고치면 이 값도 함께 다시 잡는다.
+   * 수량의 기준은 시세표(`TRADE_GEM_RATE`)다 — 골드 500개·치즈케이크 2개·원석 5개가 각각 젬 1개.
+   * **화석·호박석은 연구 한 번(젬 300)이라 교류의 주 보상이 아니다.** 경제 문서의 화석 월 공급
+   * 전체(8,300)를 하루 한 도시가 넘기던 때가 있어 교류에서는 전부 걷어 냈다. 대신 수뇌부 창구에는
+   * 젬이 길이에 비례해 섞인다(관리부 8~25 · 대여 8~40 · 24시간 창구 8~85, 응태 승인 후 소폭 하향). 시간을 고치면 이 값도 함께 다시 잡는다.
    */
   readonly rewards: readonly InteractionRewardRange[]; readonly clueJournalId: string;
   /**
@@ -97,7 +98,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "도플의 중앙 연구소 한쪽에 딸린 응접실. 손님을 앉혀 두고 연구 일지를 한 장씩 내어 준다.",
     unlock: {}, durationMinutes: 10, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 30 }],
+    rewards: [{ currency: "gold", min: 300, max: 800 }, { currency: "cheesecake", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 6 }],
     clueJournalId: "interaction-doppel-01", illustration: "background-interaction-doppel-parlor",
   },
   {
@@ -107,7 +108,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "도플 연구소 안쪽의 내부 연구기관. 이터널에 파견됐던 연구원들이 남긴 일기가 이곳에 모인다.",
     unlock: {}, durationMinutes: 30, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support"], squads: ["rune"] },
-    rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "fossil", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 100 }],
+    rewards: [{ currency: "gold", min: 800, max: 1_800 }, { currency: "cheesecake", min: 1, max: 3 }, { currency: "rawStone", min: 0, max: 20 }],
     clueJournalId: "interaction-doppel-lab-01", illustration: "background-interaction-doppel-lab",
   },
   {
@@ -116,7 +117,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "연구 성과와 렐릭의 사용처를 집계하는 도플의 관리부. 결재가 여러 단을 거쳐 오래 기다려야 한다.",
     unlock: { stageId: "1-4" }, durationMinutes: 240, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water", "grass"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "gold", min: 2_000, max: 5_000 }, { currency: "gems", min: 0, max: 8 }, { currency: "rawStone", min: 0, max: 300 }],
+    rewards: [{ currency: "gems", min: 8, max: 25 }, { currency: "gold", min: 2_000, max: 5_000 }, { currency: "cheesecake", min: 5, max: 15 }, { currency: "rawStone", min: 0, max: 50 }],
     clueJournalId: "interaction-doppel-office-01", illustration: "background-interaction-doppel-office",
   },
   {
@@ -125,7 +126,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "러스트의 정비창. 부서진 연구 장비를 고쳐 달라는 의뢰가 쉴 새 없이 들어온다.",
     unlock: { stageId: "1-10" }, durationMinutes: 60, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["warrior"], squads: ["gear"] },
-    rewards: [{ currency: "fossil", min: 1, max: 2 }, { currency: "gold", min: 800, max: 2_600 }, { currency: "rawStone", min: 0, max: 200 }],
+    rewards: [{ currency: "gold", min: 1_500, max: 3_500 }, { currency: "cheesecake", min: 3, max: 8 }, { currency: "rawStone", min: 0, max: 40 }],
     clueJournalId: "interaction-rust-garage-01", illustration: "background-interaction-rust-garage",
   },
   {
@@ -134,7 +135,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "고성능 장비를 빌려 주는 러스트의 대여 관리부. 연장 한 건에도 긴 협상이 붙는다.",
     unlock: { stageId: "2-5" }, durationMinutes: 720, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 7_000, max: 15_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 900 }],
+    rewards: [{ currency: "gems", min: 8, max: 40 }, { currency: "gold", min: 3_500, max: 7_500 }, { currency: "cheesecake", min: 15, max: 40 }, { currency: "rawStone", min: 0, max: 80 }],
     clueJournalId: "interaction-rust-lease-01", illustration: "background-interaction-rust-lease",
   },
   {
@@ -144,7 +145,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "도플 연구소의 가장 높은 층. 연구의 목적을 정하는 사람들이 이곳에 앉는다.",
     unlock: { stageId: "2-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["water"], roles: ["support", "tank"], squads: ["rune", "eye"] },
-    rewards: [{ currency: "fossil", min: 4, max: 9 }, { currency: "amber", min: 0, max: 1 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-doppel-upper-01", illustration: "background-interaction-doppel-upper",
   },
   {
@@ -154,7 +155,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "러스트의 중심에 선 거대한 공방. 연구 장비의 설계와 수리가 한곳에 모인다.",
     unlock: { stageId: "3-5" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["earth", "fire"], roles: ["tank", "warrior"], squads: ["gear"] },
-    rewards: [{ currency: "gold", min: 9_000, max: 20_000 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_500, max: 10_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-rust-works-01", illustration: "background-interaction-rust-works",
   },
   {
@@ -164,7 +165,7 @@ export const INTERACTION_CITIES: readonly InteractionCity[] = [
     description: "꿈을 연구하는 도시 오디디가 외부 손님을 맞는 접견실. 제안은 늘 그들이 먼저 꺼낸다.",
     unlock: { stageId: "3-10" }, durationMinutes: 1440, partySize: { min: 1, max: 3 },
     specialty: { elements: ["wind", "water"], roles: ["assassin", "support"], squads: ["eye", "rogue"] },
-    rewards: [{ currency: "fossil", min: 5, max: 10 }, { currency: "amber", min: 0, max: 2 }, { currency: "rawStone", min: 0, max: 1_800 }],
+    rewards: [{ currency: "gems", min: 8, max: 85 }, { currency: "gold", min: 4_000, max: 9_000 }, { currency: "cheesecake", min: 20, max: 50 }, { currency: "rawStone", min: 0, max: 150 }],
     clueJournalId: "interaction-odidi-embassy-01", illustration: "background-interaction-odidi-embassy",
   },
 ] as const;

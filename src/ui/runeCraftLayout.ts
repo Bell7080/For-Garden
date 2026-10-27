@@ -38,7 +38,7 @@ export const RUNE_CRAFT_PANEL = {
   nameWrap: 300,
   equippedY: 186,
   /** 지갑 칸. 세공은 골드를 쓰는 화면이라 늘 보인다. */
-  wallet: { x: 330, y: 106, width: 180, height: 62 },
+  wallet: { x: 316, y: 106, width: 232, height: 78 },
   /** 확률 수치 줄(글자 아래끝)과 막대. */
   chanceLabelY: 252,
   chanceBarY: 284,
@@ -61,7 +61,8 @@ export const RUNE_CRAFT_PANEL = {
   noticeGap: 24,
   /** 구분선에서 버튼 가운데까지. */
   buttonGap: 120,
-  button: { width: 560, height: 84 },
+  /** 세공과 일괄 세공이 나란히 선다. `pairOffset`은 각 버튼 가운데가 판 가운데에서 떨어진 거리다. */
+  button: { width: 360, height: 84, pairOffset: 190 },
   /** 버튼 아래끝에서 판 밑변까지. */
   bottomMargin: 62,
 } as const;

@@ -68,7 +68,6 @@ export const SETTINGS_KO = {
   "settings.play.battleSpeed": "전투 배속",
   "settings.play.autoUltimate": "자동 궁극기",
   "settings.play.textSpeed": "텍스트 속도",
-  "settings.play.language": "언어",
 
   "settings.section.access": "접근성",
   "settings.access.textScale": "텍스트 크기",
@@ -91,6 +90,7 @@ export const SETTINGS_KO = {
   "settings.account.mergeBlocked": "게스트 진행을 기존 계정에 합칠 수 없습니다.",
   "settings.account.conflictCancelled": "저장 충돌 선택을 취소했습니다.",
   "settings.account.stale": "다른 기기에서 저장이 갱신되었습니다. 다시 시도해 주세요.",
+  "settings.account.errorCode": "오류 코드: {code}",
   "settings.account.unavailable": "서버 저장을 확인할 수 없습니다.",
 
   "settings.section.support": "고객지원 · 데이터",
@@ -112,18 +112,5 @@ export const SETTINGS_KO = {
   "settings.action.reset": "초기화",
   "settings.action.next": "다음",
 
-  "settings.debug.grantAll": "모든 캐릭터 획득",
-  "settings.debug.maxLevel": "플레이어 레벨 만렙 · 모든 콘텐츠 개방",
-  "settings.debug.maxLevelDone": "플레이어 레벨을 LV.{level}로 올렸습니다. 로비로 돌아가면 열린 콘텐츠가 나타납니다.",
-  "settings.debug.maxLevelAlready": "이미 LV.{level}입니다.",
-  "settings.debug.unlockStories": "유대 10 · 질문/스토리 전체 개방",
-  "settings.debug.unlockedStories": "유대를 올린 캐릭터 {count}명. 모든 관찰 질문과 애착 스토리가 열렸습니다.",
-  "settings.debug.breakthroughSet": "토리카 돌파 세트",
-  "settings.debug.breakthroughTitle": "돌파 세트",
-  "settings.debug.breakthroughSuffix": " 돌파 세트",
-  "settings.debug.needOwned": "먼저 그 캐릭터를 보유해야 합니다.",
-  "settings.debug.granted": "{name} 파편 {fragments}개와 치즈케이크 {cheesecake}개를 지급했습니다. 급여로 상한까지 올린 뒤 돌파 등급 옆의 한계 돌파를 누릅니다.",
-  "settings.debug.alreadyMax": "이미 돌파 등급 V까지 키운 캐릭터입니다.",
   "settings.debug.grantedRelics": "새 캐릭터 {count}명을 보유 처리했습니다.",
-  "settings.debug.alreadyAll": "이미 모든 캐릭터를 보유하고 있습니다.",
 } as const;

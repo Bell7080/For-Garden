@@ -199,6 +199,16 @@
 "Der letzte Platz eines 10er-Zugs ist SR oder besser (SSR-Garantie hat Vorrang)",
 "Последний слот x10 — SR или выше (гарантия SSR в приоритете)"
 ],
+"lab.policy.tenUpgrade": [
+"10连最后一格若为SR，有{percent}%概率升为SSR",
+"หากช่องสุดท้ายของ 10 ครั้งเป็น SR มีโอกาส {percent}% ที่จะเลื่อนเป็น SSR",
+"Nếu ô cuối của x10 là SR, có {percent}% cơ hội nâng lên SSR",
+"Jika slot terakhir x10 berupa SR, ada peluang {percent}% naik menjadi SSR",
+"Si la última posición de x10 es SR, hay un {percent}% de probabilidad de subir a SSR",
+"Se a última posição do x10 for SR, há {percent}% de chance de subir para SSR",
+"Ist der letzte Platz eines 10er-Zugs SR, besteht eine Chance von {percent}%, auf SSR aufzusteigen",
+"Если последний слот x10 — SR, с шансом {percent}% он повышается до SSR"
+],
 "lab.policy.duplicate": [
 "重复奖励  该遗物碎片 +1 · 集齐碎片进行极限突破",
 "รางวัลซ้ำ  เศษของเรลิกนั้น +1 · สะสมเศษเพื่อทะลวงขีดจำกัด",

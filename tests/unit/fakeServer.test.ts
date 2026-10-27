@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
-import { getBattleStage } from "../../src/data/stages";
-import { EXPEDITION_NODE_REWARD_BALANCE, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
+import { STAGES, getBattleStage } from "../../src/data/stages";
+import { expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
 import { FakeServer } from "../../src/api/FakeServer";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
 import { breakthroughFragmentCost, BREAKTHROUGH_STEPS, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
 import { GameApiError } from "../../src/api/contracts";
 import { createEmptyRaidState, createInitialPlayerResearchProgress, createEmptyPlayerCard, type Session } from "../../src/state/session";
-import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeEnhancementIncrease, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
+import { createRuneInstance, enhanceRune as applyRuneEnhancement, runeBatchEnhancementTargets, runeEnhancementIncrease, runeTotalEnhancementAttempts, type RuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { createDefaultSettings } from "../../src/core/settings";
 import { WALLET_CAPS } from "../../src/data/economy";
 import { staminaCurrencyRecharge } from "../../src/data/staminaRecharge";
@@ -20,6 +20,7 @@ import { findArchaeologySite } from "../../src/data/archaeologySites";
 const STRATA_SITE_COOLDOWN_MS = siteCooldownMs(findArchaeologySite("garden-gate")!);
 import { mileageRotatingFragmentId, mileageWeeklyClerkId } from "../../src/data/mileageClerk";
 import { BREAKTHROUGH_GRADE_CAP } from "../../src/core/relicProgression";
+import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost } from "../../src/data/runes";
 
 /** API 테스트에서 같은 옵션 구성을 재현하는 보유 룬을 만든다. */
 function makeRune(instanceId = "rune-1"): RuneInstance {
@@ -210,6 +211,8 @@ describe("FakeServer", () => {
   it("최고 점수 보상은 다른 요청 ID로 재요청해도 한 번만 지급한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
     await server.submitExpeditionBossScore({ requestId: "boss-reward-score", actions: bossActions(10) });
+    // 짧은 판의 점수가 첫 마디에 못 미칠 수 있어 최고 기록을 첫 마디 위로 올려 둔다.
+    state.expedition.bestScore = Math.max(state.expedition.bestScore, 3_000);
     let weekly = await server.getExpeditionWeeklyBest();
     const stage = weekly.rewardStages.find(({ threshold }) => threshold <= weekly.bestScore)!;
     expect(stage).toBeDefined();
@@ -233,6 +236,7 @@ describe("FakeServer", () => {
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["torika", "rex", "dodo"]);
     const originalRun = state.expedition.run;
+    originalRun!.currentNodeId = originalRun!.nodes.find(({ type }) => type === "boss")!.predecessorIds[0];
     const originalRunSnapshot = structuredClone(originalRun);
     const originalAllTimeBestScore = state.expedition.allTimeBestScore;
     let fail = true;
@@ -265,7 +269,7 @@ describe("FakeServer", () => {
     await server.getIdleExcavation();
     await server.saveExcavationFormation({ requestId: "formation-1", assignedRelicIds: ["torika", "rex", "dodo"] });
     now = new Date("2026-08-20T04:00:00Z"); await server.getIdleExcavation();
-    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 0, rawStone: 31.68, gems: 4.48 });
+    expect(state.idleExcavation.unclaimed).toEqual({ gold: 2142, cheesecake: 35.2512, rawStone: 31.68, gems: 48 });
   });
 
   it("v18 신규 재화 소급분은 서버 기준 시각과 보관 상한으로 한 번만 정산한다", async () => {
@@ -279,7 +283,7 @@ describe("FakeServer", () => {
     const repeated = await server.getIdleExcavation();
     // 24시간 미접속이어도 기본 보관 시간(8시간)만 계산하며, 같은 서버 시각의 재조회는 다시 지급하지 않는다.
     expect(first.excavation.unclaimed).toEqual(repeated.excavation.unclaimed);
-    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 8.96 });
+    expect(first.excavation.unclaimed).toMatchObject({ rawStone: 63.36, gems: 96 });
     expect(first.excavation.retroactiveExcavationGrantVersion).toBe(1);
   });
 
@@ -351,22 +355,45 @@ describe("FakeServer", () => {
     expect(result.excavation.lastSettledAt).toBe("2026-08-20T00:00:00.000Z");
   });
   it("강화 요청의 선택 정보만 받아 서버 난수·골드 차감·룬 갱신을 함께 확정한다", async () => {
-    const state = makeSession(); state.wallet.gold = 100; state.runeInventory = [makeRune()];
+    const state = makeSession(); const firstCost = runeEnhancementGoldCost(makeRune().rarity, 0);
+    state.wallet.gold = firstCost; state.runeInventory = [makeRune()];
     const statId = state.runeInventory[0].mainStats[0].key;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     const response = await server.enhanceRune({ runeInstanceId: "rune-1", statId });
-    expect(response).toMatchObject({ succeeded: true, goldSpent: 100, nextSuccessChance: 0.65 });
+    expect(response).toMatchObject({ succeeded: true, goldSpent: firstCost, nextSuccessChance: 0.65 });
     expect(state.wallet.gold).toBe(0);
     expect(state.runeInventory[0].enhancementHistory[statId]).toHaveLength(1);
   });
 
   it("강화는 옵션 잔여 횟수와 골드를 판정 전에 검사해 실패 시 상태를 보존한다", async () => {
-    const state = makeSession(); state.wallet.gold = 99; state.runeInventory = [makeRune()];
+    const state = makeSession(); state.wallet.gold = runeEnhancementGoldCost(makeRune().rarity, 0) - 1; state.runeInventory = [makeRune()];
     const before = JSON.stringify(state.runeInventory);
     const statId = state.runeInventory[0].mainStats[0].key;
     const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
     await expect(server.enhanceRune({ runeInstanceId: "rune-1", statId })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
-    expect(state.wallet.gold).toBe(99); expect(JSON.stringify(state.runeInventory)).toBe(before);
+    expect(state.wallet.gold).toBe(runeEnhancementGoldCost(makeRune().rarity, 0) - 1); expect(JSON.stringify(state.runeInventory)).toBe(before);
+  });
+
+  it("일괄 세공은 남은 칸 전부를 총 골드 한 번 차감으로 판정한다", async () => {
+    const state = makeSession(); const rune = makeRune();
+    const targets = runeBatchEnhancementTargets(rune); const total = runeBatchEnhancementGoldCost(rune);
+    expect(targets.length).toBe(runeTotalEnhancementAttempts(rune.rarity));
+    expect(total).toBe(targets.reduce((sum, _key, index) => sum + runeEnhancementGoldCost(rune.rarity, index), 0));
+    state.wallet.gold = total + 7; state.runeInventory = [rune];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const response = await server.enhanceRuneAll({ runeInstanceId: "rune-1" });
+    expect(response.goldSpent).toBe(total); expect(response.results).toHaveLength(targets.length);
+    expect(state.wallet.gold).toBe(7); expect(state.runeInventory[0].enhancementComplete).toBe(true);
+    await expect(server.enhanceRuneAll({ runeInstanceId: "rune-1" })).rejects.toMatchObject({ code: "RUNE_ENHANCEMENT_COMPLETE" });
+  });
+
+  it("일괄 세공은 골드가 총액에 모자라면 난수를 부르기 전에 거절하고 상태를 보존한다", async () => {
+    const state = makeSession(); const rune = makeRune();
+    state.wallet.gold = runeBatchEnhancementGoldCost(rune) - 1; state.runeInventory = [rune];
+    const before = JSON.stringify(state.runeInventory);
+    const server = new FakeServer(state, { latencyMs: 0, random: () => { throw new Error("검증 전에 난수를 부르면 안 됩니다."); } });
+    await expect(server.enhanceRuneAll({ runeInstanceId: "rune-1" })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(JSON.stringify(state.runeInventory)).toBe(before);
   });
 
   it("이름 정책과 전역 장착 중복을 서버 경계에서 구분해 거부한다", async () => {
@@ -380,6 +407,18 @@ describe("FakeServer", () => {
     await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0 })).rejects.toMatchObject({ code: "RUNE_ALREADY_EQUIPPED" });
     await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 2 })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
     expect(state.relicProgress.torika.heartGemSlots).toEqual(["rune-1", null, null]);
+  });
+
+  it("옮겨 끼우기를 허용하면 원래 렐릭에서 빼고 한 저장으로 새 렐릭에 끼운다", async () => {
+    const state = makeSession(); state.runeInventory = [makeRune()];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 0 });
+    await server.equipRune({ runeInstanceId: "rune-1", relicId: "rex", slotIndex: 0, moveFromOther: true });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
+    // 자리 불변식은 옮겨 끼울 때도 그대로다.
+    await expect(server.equipRune({ runeInstanceId: "rune-1", relicId: "torika", slotIndex: 2, moveFromOther: true })).rejects.toMatchObject({ code: "RUNE_SLOT_MISMATCH" });
+    expect(state.relicProgress.rex.heartGemSlots[0]).toBe("rune-1");
   });
 
   it("모든 일반 강화 뒤에만 대상 옵션 각인을 정확히 하나 저장한다", async () => {
@@ -421,11 +460,87 @@ describe("FakeServer", () => {
     await expect(server.breakThroughRelic("torika")).rejects.toMatchObject({ code: "RELIC_MAX_LEVEL" });
   });
 
+  it("한계 돌파는 그 개체의 파편이 모자란 몫만 같은 등급의 만능 파편으로 채운다", async () => {
+    const state = makeSession();
+    const step = BREAKTHROUGH_STEPS[0];
+    state.relicProgress.torika = { ...state.relicProgress.torika, level: RELIC_LEVEL_CAP, exp: 0 };
+    // 토리카는 SR이라 파편 둘 — 하나만 있고 만능 SR 파편 셋, 다른 등급(R) 만능 파편은 쓰이지 않는다.
+    state.relicFragments.torika = 1; state.wallet.cheesecake = step.cheesecake;
+    state.itemInventory = [...state.itemInventory, { itemId: "universal-fragment-sr", quantity: 3 }, { itemId: "universal-fragment-r", quantity: 5 }];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const response = await server.breakThroughRelic("torika");
+    expect(response).toMatchObject({ breakthrough: 1, fragments: 0, universalFragmentsUsed: 1 });
+    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-sr")?.quantity).toBe(2);
+    expect(state.itemInventory.find(({ itemId }) => itemId === "universal-fragment-r")?.quantity).toBe(5);
+  });
+
   it("메인 스테이지의 최초와 반복 보상을 데이터대로 구분한다", async () => {
     const state = makeSession(); const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: true, cheesecakeEarned: 30 });
     await expect(server.completeStage("1-1", true)).resolves.toMatchObject({ firstClear: false, cheesecakeEarned: 10 });
     expect(state.wallet.cheesecake).toBe(40);
+  });
+
+  it("튜토리얼 전투 조작은 관문의 첫 클리어마다 한 칸씩만 열린다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: ["ultimate"] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    // 오프닝 1-1의 클리어는 궁극기 칸이 따로 열었으므로 칸을 더 열지 않는다.
+    await server.completeStage("1-1", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate"]);
+    // 진 판은 열지 않는다.
+    await server.completeStage("1-2", false);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate"]);
+    // 첫 클리어가 한 칸을 연다.
+    await server.completeStage("1-2", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto"]);
+    // 같은 관문을 되풀이해 깨도 더 열리지 않는다.
+    await server.completeStage("1-2", true); await server.completeStage("1-2", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto"]);
+    // 1-2 뒤에는 일반 강화와 1레벨 강화가 먼저다. 연구 지원은 아직 받을 수 없다.
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.completeTutorialStep({ stepId: "feed" });
+    await server.completeTutorialStep({ stepId: "feedLevel" });
+    await server.completeStage("1-3", true);
+    expect(state.tutorial?.completedStepIds).toEqual(["ultimate", "auto", "feed", "feedLevel", "presentation"]);
+  });
+
+  it("오프닝 패배는 진행을 남기지 않고 승리와 함께 궁극기 안내를 저장한다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: [] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("1-1", false);
+    expect(state.tutorial.completedStepIds).toEqual([]);
+    await server.completeStage("1-1", true);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate"]);
+  });
+
+  it("멈춘 튜토리얼은 지정 관문 재도전으로 복구하고 2-1이나 패배로는 진행하지 않는다", async () => {
+    const state = makeSession(); state.tutorial = { completedStepIds: ["ultimate"] };
+    state.cleared.add("1-2");
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await server.completeStage("2-1", true);
+    await server.completeStage("1-2", false);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate"]);
+    await server.completeStage("1-2", true);
+    expect(state.tutorial.completedStepIds).toEqual(["ultimate", "auto"]);
+  });
+
+  it("1-5 전에는 연구와 지원품 지급을 막고 클리어 후 8개를 한 번만 준다", async () => {
+    const state = makeSession(0);
+    state.tutorial = { completedStepIds: ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"] };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(server.pullRelics({ bannerId: "welcome", count: 10 })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    expect(state.wallet.fossil).toBe(0);
+    await server.completeStage("1-5", false);
+    await expect(server.completeTutorialStep({ stepId: "gift" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.completeStage("1-5", true);
+    const stageFossil = state.wallet.fossil;
+    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toEqual({ fossil: 8 });
+    expect((await server.completeTutorialStep({ stepId: "gift" })).granted).toBeUndefined();
+    expect(state.wallet.fossil).toBe(stageFossil + 8);
+    await server.pullRelics({ bannerId: "welcome", count: 10 });
+    expect(state.wallet.fossil).toBe(stageFossil);
+    expect(state.tutorial.completedStepIds.at(-1)).toBe("pull");
   });
 
   it("첫 승리는 미리보기와 같은 초회 보상 전부를 주고, 룬은 보여 준 자리로 발급한다", async () => {
@@ -563,7 +678,10 @@ describe("FakeServer", () => {
     const state = makeSession();
     state.wallet.stamina = 100;
     state.itemInventory = [{ itemId: "sweep-ticket", quantity: 4 }];
-    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-19T04:00:00Z") });
+    // 레벨업 드링크가 가방에 섞이지 않게 중반 레벨에서 시작한다.
+    state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
+    // 난수 0이면 토벌권 덤이 떨어지지 않는다 — 소탕권 차감만 본다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-09-19T04:00:00Z") });
     await expect(server.sweepBounty({ tierId: "bounty-1", requestId: "early", count: 1 })).rejects.toMatchObject({ code: "DUNGEON_NOT_CLEARED" });
     await server.enterBounty({ tierId: "bounty-1", requestId: "clear" });
     await server.completeBounty({ tierId: "bounty-1", requestId: "clear", victory: true, clearedRounds: 3 });
@@ -585,7 +703,7 @@ describe("FakeServer", () => {
     expect(state.dailyContent).toMatchObject({ date: "2026-08-21", restorationEntries: 1 });
   });
   it("첫 복원 연구는 10연만 받고 화석 8개를 쓰며, 누적 50회를 넘기지 않는다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
     // 1회는 받지 않는다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
     await expect(server.pullRelics({ bannerId: "welcome", count: 1 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
@@ -602,7 +720,7 @@ describe("FakeServer", () => {
   });
 
   it("첫 복원 연구는 50회 안에 SSR을 한 장 확정하고, 그 SSR은 네 종 중 하나다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     // 0.9는 늘 회색이라 자연 SSR이 없다 — 50번째에 천장이 SSR을 강제한다.
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.9 });
     const ssr: string[] = [];
@@ -613,8 +731,31 @@ describe("FakeServer", () => {
     expect(ssr).toHaveLength(1);
   });
 
+  it("첫 복원 연구가 SSR로 일찍 닫히면 남은 10연이 화석 연구에서 화석 8개로 열린다", async () => {
+    const state = makeSession(); state.cleared.add("1-5");
+    // 난수 0은 첫 칸부터 SSR(렉시아)을 뽑는다 — 10회째에 닫히고 40회가 남는다.
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    await server.pullRelics({ bannerId: "welcome", count: 10 });
+    await expect(server.pullRelics({ bannerId: "welcome", count: 10 })).rejects.toMatchObject({ code: "BANNER_LIMIT_REACHED" });
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(4);
+
+    const before = state.wallet.fossil;
+    await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.wallet.fossil).toBe(before - 8);
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(3);
+    // 1회 연구는 이월과 상관없이 한 개다.
+    await server.pullRelics({ bannerId: "fossil", count: 1 });
+    expect(state.wallet.fossil).toBe(before - 9);
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBe(3);
+    for (let i = 0; i < 3; i += 1) await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.gachaPityByGroup["standard-fossil"].discountTens).toBeUndefined();
+    const last = state.wallet.fossil;
+    await server.pullRelics({ bannerId: "fossil", count: 10 });
+    expect(state.wallet.fossil).toBe(last - 10);
+  });
+
   it("서버 안에서 비용과 결과를 함께 확정한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
 
     const response = await server.pullRelics({ bannerId: "fossil", count: 1 });
@@ -627,7 +768,7 @@ describe("FakeServer", () => {
   });
 
   it("최초 획득의 성장 레코드를 같은 처리에서 만들고 같은 10연 중복을 누적한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     // fossil 배너에서 RNG 0은 rex만 뽑으므로 미보유로 만들어 순차 획득을 검증한다.
     state.owned.delete("rex");
     delete state.relicProgress.rex;
@@ -643,7 +784,7 @@ describe("FakeServer", () => {
   });
 
   it("렐릭과 회색 재화가 섞인 10연을 순서대로 지급하고 지갑 상한을 적용한다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     state.wallet.gold = 999_999_999 - 5;
     const rolls = [0.9, 0, 0, ...Array(40).fill(0)];
     let index = 0;
@@ -655,7 +796,7 @@ describe("FakeServer", () => {
   });
 
   it("저장 단위가 실패하면 비용·보상·천장을 메모리에 부분 반영하지 않는다", async () => {
-    const state = makeSession();
+    const state = makeSession(); state.cleared.add("1-5");
     const before = { wallet: { ...state.wallet }, pity: { ...state.gachaPityByGroup } };
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
     // 실제 저장 장애와 같은 위치에서 실패시켜 persist 성공 이후에만 커밋한다는 계약을 검증한다.
@@ -666,7 +807,7 @@ describe("FakeServer", () => {
   });
 
   it("재화가 부족하면 상태를 변경하지 않는다", async () => {
-    const state = makeSession(0);
+    const state = makeSession(0); state.cleared.add("1-5");
     const server = new FakeServer(state, { latencyMs: 0 });
 
     await expect(server.pullRelics({ bannerId: "fossil", count: 1 })).rejects.toMatchObject({
@@ -731,7 +872,7 @@ describe("FakeServer", () => {
   });
 
   it("발굴·급여·로비 성공을 각 API 경계에서 임무에 한 번 반영한다", async () => {
-    const state = makeSession(); state.wallet.cheesecake = 20;
+    const state = makeSession(); state.cleared.add("1-5"); state.wallet.cheesecake = 20;
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0, now: () => new Date("2026-08-20T12:00:00Z") });
     await server.pullRelics({ bannerId: "fossil", count: 1 });
     await server.feedRelic("torika", 1);
@@ -826,17 +967,17 @@ describe("FakeServer 상품 카탈로그", () => {
   it("패스 즉시 수령도 광고 슬롯의 기본 보상·UTC 한도를 공유하고 중복 지급하지 않는다", async () => {
     const state = makeSession(); let now = new Date("2026-08-22T23:59:00Z");
     const server = new FakeServer(state, { latencyMs: 0, now: () => now });
-    const verified = await server.verifyPurchaseReceipt({ productId: "premium-monthly", platform: "test", receipt: "verified-receipt:premium-monthly:tx-2", requestId: "verify-2" });
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-adfree", platform: "test", receipt: "verified-receipt:premium-adfree:tx-2", requestId: "verify-2" });
     const { entitlement } = await server.activatePass({ verificationId: verified.verificationId, requestId: "activate-2" });
     const request = { entitlementId: entitlement.entitlementId, slotId: "daily-stamina", requestId: "instant-1" };
     const first = await server.claimInstantAdReward(request);
     await expect(server.claimInstantAdReward(request)).resolves.toMatchObject({ dailyClaims: 1, wallet: first.wallet });
-    expect(first).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 150 }, dailyRemaining: 2 });
+    expect(first).toMatchObject({ reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyBonus: { currency: "gems", amount: 100 }, dailyRemaining: 2 });
     await server.claimInstantAdReward({ ...request, requestId: "instant-2" });
     await server.claimInstantAdReward({ ...request, requestId: "instant-3" });
     await expect(server.claimInstantAdReward({ ...request, requestId: "instant-4" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
     now = new Date("2026-08-23T00:00:00Z");
-    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 150 } });
+    await expect(server.claimInstantAdReward({ ...request, requestId: "instant-next-day" })).resolves.toMatchObject({ dailyClaims: 1, dailyBonus: { currency: "gems", amount: 100 } });
   });
 });
 
@@ -924,7 +1065,7 @@ describe("FakeServer 광고 보상 경계", () => {
 
   it("패스 즉시 수령도 발굴 효과와 슬롯별 UTC 제한을 그대로 적용한다", async () => {
     const state = makeSession(); const now = () => new Date("2026-08-22T12:00:00Z"); const server = new FakeServer(state, { latencyMs: 0, now });
-    const verified = await server.verifyPurchaseReceipt({ productId: "premium-monthly", platform: "test", receipt: "verified-receipt:premium-monthly:boost", requestId: "verify-boost" });
+    const verified = await server.verifyPurchaseReceipt({ productId: "premium-adfree", platform: "test", receipt: "verified-receipt:premium-adfree:boost", requestId: "verify-boost" });
     const { entitlement } = await server.activatePass({ verificationId: verified.verificationId, requestId: "activate-boost" });
     const result = await server.claimInstantAdReward({ entitlementId: entitlement.entitlementId, slotId: "excavation-storage", requestId: "instant-storage" });
     expect(result.reward).toMatchObject({ kind: "excavation_effect", effect: { kind: "storage_extension", maxStorageSeconds: 57_600 } });
@@ -981,6 +1122,8 @@ describe("FakeServer 원정 정산", () => {
     const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => now });
     const runId = state.expedition.run!.runId;
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    // 보스 제출 경계만 검증하므로 서버 저장을 19층 도달 상태로 준비한다.
+    state.expedition.run!.currentNodeId = bossNode.predecessorIds[0];
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:weekly-boss-once`;
     const actions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => (
       { elapsedMs: index * 2_000, actorId, kind: "basic" as const }
@@ -1020,7 +1163,7 @@ describe("FakeServer 원정 정산", () => {
     const runId = state.expedition.run!.runId;
     const request = { runId, settlementId: "settlement-1", outcome: "abandoned" as const };
     const first = await server.settleExpeditionRun(request);
-    expect(first.granted).toEqual({ gold: 1, fossil: 7 }); expect(state.expedition.run).toBeNull();
+    expect(first.granted).toEqual({ gold: 1, fossil: 1 }); expect(state.expedition.run).toBeNull();
     const walletAfterFirst = { ...state.wallet };
     expect(await server.settleExpeditionRun(request)).toEqual(first);
     expect(state.wallet).toEqual(walletAfterFirst);
@@ -1028,7 +1171,7 @@ describe("FakeServer 원정 정산", () => {
     expect(manager.status().active).toBeNull();
     expect(manager.start(["torika", "rex", "dodo"])).toEqual({ ok: false, reason: "dailyLimitReached" });
     await expect(server.settleExpeditionRun({ runId: first.runId, settlementId: "settlement-2", outcome: "completed" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
-    expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1007 });
+    expect(state.wallet).toMatchObject({ gold: 999_999_999, fossil: 1001 });
   });
 
   it("포기 정산은 런 점수를 주간 최고점에 반영하지 않고, 노드 진행 점수는 랭킹에도 반영하지 않는다", async () => {
@@ -1057,6 +1200,8 @@ describe("FakeServer 원정 정산", () => {
     const normalNode = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
     await server.completeExpeditionNode({ requestId: "before-boss", runId, nodeId: normalNode.id, relicHp: [100, 90, 80] });
     const bossNode = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    // 보스 제출 경계만 검증하므로 서버 저장을 19층 도달 상태로 준비한다.
+    state.expedition.run!.currentNodeId = bossNode.predecessorIds[0];
     state.expedition.run!.bossSubmissionId = `${runId}:${bossNode.id}:boss-score`;
     // 실제 피해량 없이 각 렐릭의 공용 공속 쿨다운을 만족하는 기본 공격 입력이다.
     const bossActions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
@@ -1078,7 +1223,10 @@ describe("FakeServer 원정 정산", () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
     manager.start(["torika", "rex", "dodo"]); state.expedition.run!.runScore = 88_000; state.expedition.run!.normalNodeScoreTotal = 88_000; state.expedition.run!.bestScore = 88_000; state.expedition.bestScore = 12_000;
-    const server = new FakeServer(state, { latencyMs: 0 });
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
+    const boss = state.expedition.run!.nodes.find(({ type }) => type === "boss")!;
+    state.expedition.run!.currentNodeId = boss.predecessorIds[0];
+    await server.submitExpeditionBossScore({ requestId: "verified-boss", runId: state.expedition.run!.runId, nodeId: boss.id, actions: [] });
 
     await server.settleExpeditionRun({ runId: state.expedition.run!.runId, settlementId: "boss-complete", outcome: "completed" });
     expect(state.expedition.bestScore).toBe(88_000);
@@ -1086,15 +1234,18 @@ describe("FakeServer 원정 정산", () => {
   });
 
   describe("소탕", () => {
-    it("노드 클리어 보상의 75%만 즉시 지급하고 점수는 남기지 않는다", async () => {
+    it("평균 경로의 75% 고정표만 즉시 지급하고 점수는 남기지 않는다", async () => {
       const state = makeSession();
       state.expedition.allTimeBestScore = 10_000;
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
       const goldBefore = state.wallet.gold;
 
       const result = await server.sweepExpedition({ requestId: "sweep-1" });
-      expect(result.granted.gold).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.gold.runCap * 0.75));
-      expect(result.granted.salvageRecord).toBe(Math.floor(EXPEDITION_NODE_REWARD_BALANCE.salvageRecord.runCap * 0.75));
+      expect(result.granted.gold).toBe(4_000);
+      expect(result.granted.cheesecake).toBe(120);
+      expect(result.granted.gems).toBe(170);
+      expect(result.granted.salvageRecord).toBe(60);
+      expect(result.granted.fossil).toBe(0);
       expect(state.wallet.gold).toBe(goldBefore + result.granted.gold!);
       expect(state.expedition.playsToday).toBe(1);
       expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(0);
@@ -1134,30 +1285,6 @@ describe("FakeServer 원정 정산", () => {
       await expect(server.sweepExpedition({ requestId: "sweep-limit" })).rejects.toMatchObject({ code: "EXPEDITION_DAILY_LIMIT" });
     });
   });
-
-  it("기준 점수가 없으면 비활성·무보상이고 서버 최고 점수 비율과 일일 제한을 적용한다", async () => {
-    const state = makeSession(); let now = new Date("2026-08-25T12:00:00Z");
-    const server = new FakeServer(state, { latencyMs: 0, now: () => now });
-    expect((await server.getAdOperationsConfig()).slots.find(({ slotId }) => slotId === "quick-expedition")).toMatchObject({ enabled: false, weeklyLimitUtc: 5, weeklyClaims: 0, referenceScore: 0 });
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "failed", requestId: "quick-fail" })).rejects.toMatchObject({ code: "AD_TOKEN_INVALID" });
-    expect(state.wallet.gold).toBe(0);
-    const quickActions = Array.from({ length: 5 }, (_, index) => ["torika", "rex", "dodo"].map((actorId) => ({ elapsedMs: index * 2_000, actorId, kind: "basic" as const }))).flat();
-    await server.submitExpeditionBossScore({ requestId: "quick-score", actions: quickActions });
-    const reference = (await server.getExpeditionWeeklyBest()).bestScore;
-    const firstQuick = await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-1" });
-    expect(firstQuick).toMatchObject({ granted: { gold: Math.floor(reference * 0.25) }, weeklyRemaining: 4 });
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-2" });
-    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 2);
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" })).rejects.toMatchObject({ code: "AD_DAILY_LIMIT" });
-    // 같은 UTC 주의 다음 날짜에도 누적 다섯 번을 넘을 수 없다.
-    now = new Date("2026-08-26T12:00:00Z");
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-3" });
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-4" });
-    now = new Date("2026-08-27T12:00:00Z");
-    await server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-5" });
-    await expect(server.claimAdReward({ slotId: "quick-expedition", verificationToken: "verified:quick-expedition", requestId: "quick-6" })).rejects.toMatchObject({ code: "AD_WEEKLY_LIMIT" });
-    expect(state.wallet.gold).toBe(Math.floor(reference * 0.25) * 5);
-  });
 });
 
 /** 판매 API의 트랜잭션·멱등·장착표 불변식을 실제 FakeServer 경계에서 고정한다. */
@@ -1166,7 +1293,7 @@ describe("룬 판매", () => {
     const state = makeSession(); state.runeInventory = [makeRune("sale-1")]; const server = new FakeServer(state, { latencyMs: 0 });
     const first = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
     const replay = await server.sellRunes({ requestId: "sale-request", instanceIds: ["sale-1"] });
-    expect(replay).toEqual(first); expect(state.wallet.gold).toBe(first.goldAwarded); expect(state.runeInventory).toEqual([]);
+    expect(replay).toEqual(first); expect(state.wallet.rawStone).toBe(first.rawStoneAwarded); expect(state.runeInventory).toEqual([]);
   });
 
   it("장착 룬과 지갑 상한 초과를 원자적으로 거부해 장착표를 보존한다", async () => {
@@ -1174,9 +1301,9 @@ describe("룬 판매", () => {
     const server = new FakeServer(state, { latencyMs: 0 });
     await expect(server.sellRunes({ requestId: "equipped", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "RUNE_EQUIPPED" });
     expect(state.relicProgress.torika.heartGemSlots[0]).toBe("equipped-sale"); expect(state.runeInventory).toHaveLength(1);
-    state.relicProgress.torika.heartGemSlots[0] = null; state.wallet.gold = 999_999_999;
+    state.relicProgress.torika.heartGemSlots[0] = null; state.wallet.rawStone = WALLET_CAPS.rawStone;
     await expect(server.sellRunes({ requestId: "cap", instanceIds: ["equipped-sale"] })).rejects.toMatchObject({ code: "CURRENCY_LIMIT_EXCEEDED" });
-    expect(state.runeInventory).toHaveLength(1); expect(state.wallet.gold).toBe(999_999_999);
+    expect(state.runeInventory).toHaveLength(1); expect(state.wallet.rawStone).toBe(WALLET_CAPS.rawStone);
   });
 
   it("잠근 룬은 판매를 거부하고 잠금을 푼 뒤에만 팔린다", async () => {
@@ -1187,6 +1314,56 @@ describe("룬 판매", () => {
     await server.markRune({ runeInstanceId: "locked-sale", locked: false });
     await server.sellRunes({ requestId: "unlocked", instanceIds: ["locked-sale"] });
     expect(state.runeInventory).toEqual([]);
+  });
+});
+
+/** 합성은 재료 셋·골드를 한 번에 확정하고, 원석 상점의 랜덤 룬은 등급을 서버가 굴린다. */
+describe("룬 합성", () => {
+  const engraved = (instanceId: string): RuneInstance => {
+    const rune = makeRune(instanceId);
+    return { ...rune, enhancementComplete: true, engravings: [{ statKey: rune.mainStats[0].key, valueAdded: 1 }] };
+  };
+
+  it("각인 마친 같은 등급 셋을 골드로 녹여 새 룬 하나를 만들고 같은 requestId는 다시 쓰지 않는다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("s-1"), engraved("s-2"), engraved("s-3"), makeRune("keep")];
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0 });
+    const first = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
+    const replay = await server.synthesizeRunes({ requestId: "synth-1", runeInstanceIds: ["s-1", "s-2", "s-3"] });
+    expect(replay).toEqual(first);
+    expect(first).toMatchObject({ upgraded: true, goldSpent: 200_000 });
+    expect(first.rune.rarity).toBe("rare");
+    expect(state.wallet.gold).toBe(300_000);
+    expect(state.runeInventory.map(({ instanceId }) => instanceId).sort()).toEqual([first.rune.instanceId, "keep"].sort());
+  });
+
+  it("장착 중인 룬도 재료로 쓸 수 있고 합성하면 장착이 풀린다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("a"), engraved("b"), engraved("c")];
+    state.relicProgress.torika.heartGemSlots[0] = "c";
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const result = await server.synthesizeRunes({ requestId: "eq", runeInstanceIds: ["a", "b", "c"] });
+    expect(state.relicProgress.torika.heartGemSlots).toEqual([null, null, null]);
+    expect(result.inventory.equipment.find(({ relicId }) => relicId === "torika")?.slots).toEqual([null, null, null]);
+  });
+
+  it("각인 전·잠금·골드 부족은 재료와 골드를 그대로 두고 거부한다", async () => {
+    const state = makeSession(); state.wallet.gold = 500_000;
+    state.runeInventory = [engraved("a"), engraved("b"), makeRune("raw"), engraved("c")];
+    const server = new FakeServer(state, { latencyMs: 0 });
+    await expect(server.synthesizeRunes({ requestId: "raw", runeInstanceIds: ["a", "b", "raw"] })).rejects.toMatchObject({ code: "RUNE_SYNTHESIS_INVALID" });
+    state.wallet.gold = 1000;
+    await expect(server.synthesizeRunes({ requestId: "poor", runeInstanceIds: ["a", "b", "c"] })).rejects.toMatchObject({ code: "INSUFFICIENT_GOLD" });
+    expect(state.runeInventory).toHaveLength(4); expect(state.wallet.gold).toBe(1000);
+  });
+
+  it("고고학 상점의 랜덤 룬은 원석으로 사고 특성 없는 룬 하나가 들어온다", async () => {
+    const state = makeSession(); state.wallet.rawStone = 2000;
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.999 });
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-rune-random", quantity: 1 });
+    expect(state.wallet.rawStone).toBe(500);
+    expect(state.runeInventory).toHaveLength(1);
+    expect(state.runeInventory[0].trait).toBeUndefined();
   });
 });
 
@@ -1368,7 +1545,7 @@ describe("FakeServer 룬 로테이션 상품", () => {
   });
 
   it("은 원석으로 골드·치즈케이크·화석·호박석을 사고 하루·주간 한도를 지킨다", async () => {
-    const state = makeSession(0); state.wallet.rawStone = 20_000;
+    const state = makeSession(0); state.wallet.rawStone = 40_000;
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-09T12:00:00Z") });
     const goldBefore = state.wallet.gold, cakeBefore = state.wallet.cheesecake, fossilBefore = state.wallet.fossil, amberBefore = state.wallet.amber;
     await server.purchaseProduct({ storefront: "archaeology", productId: "arch-gold-exchange", quantity: 1 });
@@ -1379,15 +1556,35 @@ describe("FakeServer 룬 로테이션 상품", () => {
     expect(state.wallet.cheesecake - cakeBefore).toBe(120);
     expect(state.wallet.fossil - fossilBefore).toBe(1);
     expect(state.wallet.amber - amberBefore).toBe(1);
-    expect(state.wallet.rawStone).toBe(20_000 - 250 - 300 - 2_500 - 2_500);
+    expect(state.wallet.rawStone).toBe(40_000 - 250 - 300 - 2_500 - 2_500);
+    // 화석·호박석은 주 5회까지 — 다섯 번째까지 되고 여섯 번째에서 막힌다.
+    await server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 4 });
     await expect(server.purchaseProduct({ storefront: "archaeology", productId: "arch-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+  });
+});
+
+describe("FakeServer 전리품 상점의 고고학 재화", () => {
+  it("은 토벌 증표·인양 기록으로 화석·호박석(주 5회)과 랜덤 룬(주 10회)을 사고 한도를 지킨다", async () => {
+    const state = makeSession(0); state.wallet.raidSigil = 10_000; state.wallet.salvageRecord = 10_000;
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-09-09T12:00:00Z") });
+    const fossilBefore = state.wallet.fossil, runesBefore = state.runeInventory.length;
+    await server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 5 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-amber-exchange", quantity: 5 });
+    await server.purchaseProduct({ storefront: "loot", productId: "raid-rune-random", quantity: 3 });
+    await server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 3 });
+    expect(state.wallet.fossil - fossilBefore).toBe(5);
+    expect(state.runeInventory.length - runesBefore).toBe(6);
+    expect(state.wallet.raidSigil).toBe(10_000 - 420 * 5 - 250 * 3);
+    expect(state.wallet.salvageRecord).toBe(10_000 - 560 * 5 - 340 * 3);
+    await expect(server.purchaseProduct({ storefront: "loot", productId: "raid-fossil-exchange", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
+    await expect(server.purchaseProduct({ storefront: "loot", productId: "loot-rune-random", quantity: 1 })).rejects.toMatchObject({ code: "PURCHASE_LIMIT_REACHED" });
   });
 });
 
 describe("FakeServer 마일리지 상점", () => {
   const WEEK = new Date("2026-10-07T12:00:00Z");
   it("미보유 점원의 주간 SSR 파편을 처음 사면 파편이 아니라 그 개체를 획득하고 newRelicIds로 알린다", async () => {
-    const state = makeSession(); state.wallet.dnaFragments = 200;
+    const state = makeSession(); state.wallet.dnaFragments = 250;
     const server = new FakeServer(state, { latencyMs: 0, now: () => WEEK });
     const clerk = mileageWeeklyClerkId(WEEK)!;
     expect(state.owned.has(clerk)).toBe(false);
@@ -1471,5 +1668,72 @@ describe("젬 충전 서버 경계", () => {
     const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
     await server.rechargeStamina({ sourceId: "stamina-gems", requestId: "a" });
     await expect(server.rechargeStamina({ sourceId: "stamina-gems", requestId: "b" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+  });
+});
+
+describe("첫 플레이 튜토리얼 칸", () => {
+  const make = (done: string[], fossil = 0): FakeServer => {
+    const state = makeSession(fossil);
+    state.tutorial = { completedStepIds: done as never };
+    state.cleared.add("1-5");
+    return new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
+  };
+  const ORDER = ["ultimate", "auto", "feed", "feedLevel", "presentation", "speed", "contribution"];
+
+  it("은 앞 칸을 건너뛰고 뒤 칸을 마칠 수 없다", async () => {
+    await expect(make([]).completeTutorialStep({ stepId: "speed" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(make([]).completeTutorialStep({ stepId: "nope" as never })).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
+  it("은 선물 칸에서 화석을 한 번만 준다", async () => {
+    const server = make(ORDER, 0);
+    const first = await server.completeTutorialStep({ stepId: "gift" });
+    expect(first.granted).toEqual({ fossil: 8 });
+    expect(first.wallet.fossil).toBe(8);
+    const again = await server.completeTutorialStep({ stepId: "gift" });
+    expect(again.granted).toBeUndefined();
+    expect(again.wallet.fossil).toBe(8);
+  });
+
+  it("은 지갑 상한을 넘기는 선물을 깎아서 준다", async () => {
+    const server = make(ORDER, WALLET_CAPS.fossil - 3);
+    const response = await server.completeTutorialStep({ stepId: "gift" });
+    expect(response.granted).toEqual({ fossil: 3 });
+  });
+});
+
+describe("콘텐츠 첫 방문 안내 기록", () => {
+  it("은 알려진 안내만 한 번 남기고 튜토리얼 칸을 지우지 않는다", async () => {
+    const state = makeSession(0);
+    state.tutorial = { completedStepIds: ["ultimate", "auto"] };
+    const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-10-05T10:00:00Z") });
+    await expect(server.markContentIntroSeen({ introId: "nope" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await server.markContentIntroSeen({ introId: "raid" });
+    const again = await server.markContentIntroSeen({ introId: "raid" });
+    expect(again.tutorial).toEqual({ completedStepIds: ["ultimate", "auto"], seenIntroIds: ["raid"] });
+    const next = await server.completeTutorialStep({ stepId: "feed" });
+    expect(next.tutorial.seenIntroIds).toEqual(["raid"]);
+  });
+});
+
+describe("FakeServer 이야기 서브 보상", () => {
+  it("는 이야기 서브를 처음 완료할 때만 젬을 주고 보상 없는 이야기와 재완료는 주지 않는다", async () => {
+    const state = makeSession(); state.cleared = new Set(STAGES.filter(stage => stage.kind === "battle").map(stage => stage.id));
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const first = await server.completeStory({ storyId: "stage-2-3-lost-badge" });
+    expect(first).toMatchObject({ firstCompletion: true, gemsGranted: 50 });
+    expect(first.wallet?.gems).toBe(50);
+    expect(await server.completeStory({ storyId: "stage-2-3-lost-badge" })).toEqual({ firstCompletion: false });
+    expect(await server.completeStory({ storyId: "stage-1-5-pre" })).toEqual({ firstCompletion: true });
+  });
+
+  it("는 젬 상한을 넘는 몫을 던지지 않고 깎아서 준다", async () => {
+    const session = makeSession();
+    session.wallet.gems = WALLET_CAPS.gems - 10;
+    session.cleared = new Set(STAGES.filter(stage => stage.kind === "battle").map(stage => stage.id));
+    const server = new FakeServer(session, { latencyMs: 0 });
+    const result = await server.completeStory({ storyId: "stage-3-8-apology" });
+    expect(result).toMatchObject({ firstCompletion: true, gemsGranted: 10 });
+    expect(result.wallet?.gems).toBe(WALLET_CAPS.gems);
   });
 });

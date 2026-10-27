@@ -26,6 +26,8 @@ export interface KeywordSection {
   name: string;
   /** 효과 본문. 규칙어 태그를 그대로 쓸 수 있다. */
   text: string;
+  /** 소환수처럼 같은 수치 ID라도 계산 주체가 다른 하위 기술의 사전. */
+  contextualKeywords?: readonly KeywordDef[];
 }
 
 export interface KeywordDef {
@@ -161,6 +163,28 @@ export const KEYWORDS: readonly KeywordDef[] = [
     id: "fear", term: "공포", kind: "debuff",
     description: "2초 동안 건 쪽에게서 달아나며 [[basic-attack|기본 공격]]을 하지 못한다. 궁극기는 쓸 수 있다. 풀린 뒤 6초 동안 새 위압과 공포에 면역이 된다.",
   },
+  // 회수조 다섯의 규칙어는 쓰는 개체가 하나씩뿐이라 태그가 수치를 갖는다. 값은 각 패시브 계약과 같아야 하며
+  // `raiders.test`가 둘을 맞춰 본다.
+  {
+    id: "echo", term: "반향", kind: "debuff",
+    description: "피해가 없는 표식이다. 5초 동안 남고, 반향이 든 적을 친 이카닉시아 편 아군은 최대 체력의 6%만큼 [[shield|보호막]]을 두른다. 막은 최대 체력의 30%까지만 쌓인다.",
+  },
+  {
+    id: "segment-barrier", term: "마디 방벽", kind: "buff",
+    description: "최대 체력의 4%짜리 [[shield|보호막]] 마디 4개를 두른다. 막이 모자라면 7초마다 마디 하나가 되살아나고, 맞을 때마다 복구가 0.1초 앞당겨진다. 막이 깎이면 그만큼 피해를 받는다.",
+  },
+  {
+    id: "vital-aim", term: "겨누기", kind: "buff",
+    description: "같은 적을 [[basic-attack|기본 공격]]으로 칠 때마다 한 겹 쌓이고, 겹마다 그 적에게 주는 피해가 8% 커진다. 최대 6겹이며 표적이 바뀌면 사라진다.",
+  },
+  {
+    id: "resonance", term: "공명", kind: "buff",
+    description: "5초 동안 공격 속도가 30% 오르는 아군 강화다. 순풍·오더와 같은 칸을 쓰므로 남은 시간이 더 긴 쪽만 남는다.",
+  },
+  {
+    id: "worker-march", term: "행렬", kind: "buff",
+    description: "곁 220 안의 아군이 한 명 있을 때마다(최대 3명) 주는 피해가 8% 커지고 매초 최대 체력의 0.4%가 차오른다.",
+  },
   // 해무 방벽은 쓰는 개체가 이르나 하나뿐이라 태그가 수치를 갖는다. 값은 패시브의 `lifeStealShield` 계약과 같아야
   // 하며 `irna.test`가 둘을 맞춰 본다.
   {
@@ -181,11 +205,11 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "frenzy", term: "광란", kind: "debuff",
-    description: "공격 속도가 50% 높아지는 대신 가장 가까운 자기 편을 공격한다. 때릴 자기 편이 남지 않으면 제자리에서 자신을 공격한다. 광란 중에는 궁극기를 쓰지 못한다.",
+    description: "가장 가까운 자기 편을 공격하며, 그때 주는 피해가 절반이 된다. 때릴 자기 편이 남지 않으면 제자리에서 자신을 공격한다. 광란 중에는 궁극기를 쓰지 못한다.",
   },
   {
     id: "concussion", term: "뇌진탕", kind: "debuff",
-    description: "최대 체력의 5%(치명타면 15%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
+    description: "최대 체력의 10%(치명타면 20%)에 해당하는 피해로, 방어력과 속성을 지나쳐 맞은 순간 한 번에 들어간다.",
   },
   {
     id: "knockback", term: "날려버림", kind: "debuff",
@@ -355,7 +379,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
      * 태그는 무엇인지만 말하고, 얼마인지는 적 정보창의 역할 칸이 그 자리의 값으로 적는다.
      */
     id: "tenacity", term: "강인함", kind: "rule",
-    description: "군중제어를 받아 낼 때마다 쌓여, 그 비율만큼 기절·경직 같은 제어 시간을 줄인다. 상한에 닿으면 걸리자마자 풀린다. 보스처럼 잠기면 안 되는 자리의 적만 갖는다.",
+    description: "군중제어를 받을 때마다 쌓여 기절·경직·빙결·수면·공포·광란·도발·날려버림과 시간제 감속의 지속시간을 줄인다. 저항 후 최소 시간 이하인 제약은 무효다. 시간 없는 감속과 끌어당김은 강도를 줄이고, 날려버림은 속도도 줄인다. 완전히 저항하면 새 행동 제약을 받지 않는다.",
   },
   {
     // 불사 자리만 갖는다(`ENCOUNTER_ROLE.endless.damageReduction`). 수치는 역할 칸이 적는다.

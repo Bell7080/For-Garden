@@ -5,7 +5,7 @@ export const EXPEDITION_JA = {
   "expedition.weekly.best": "週間最高スコア {score}",
   "expedition.weekly.myBest": "自分の週間最高スコア",
   "expedition.weekly.rank": "週間 {rank}位",
-  "expedition.weekly.rankReward": "週間報酬 · 宝石 {gems} · 引き揚げ記録 {salvage}",
+  "expedition.weekly.rankReward": "週間報酬 · ジェム {gems} · 引き揚げ記録 {salvage}",
   "expedition.weekly.unranked": "未登録",
   "expedition.weekly.rolled": "週が変わりました。入り直してください。",
   "expedition.weekly.loadFailed": "記録を読み込めませんでした",
@@ -19,9 +19,9 @@ export const EXPEDITION_JA = {
 
   "expedition.abandon": "撤退する",
   "expedition.abandon.title": "遠征を撤退",
-  "expedition.abandon.body": "仮報酬 {reward}個が財布へ移されます。\nこのランの最高スコアは週間記録に反映されません。",
+  "expedition.abandon.body": "遠征を終了し、ここまでの報酬を受け取ります。\n今回の遠征スコアは週間記録に反映されません。\n所持上限により表示報酬が減る場合があります。",
   "expedition.abandon.confirm": "撤退を確定",
-  "expedition.abandon.settle": "撤退戦利品の精算",
+  "expedition.abandon.settle": "遠征終了報酬",
 
   "expedition.loot": "獲得戦利品",
   "expedition.nodeScore": "ノードスコア",
@@ -38,6 +38,9 @@ export const EXPEDITION_JA = {
 
   "expedition.augment.confirmed": "確定オーグメント {count}",
   "expedition.augment.applyAll": "すべて適用",
+  "expedition.augment.count": "{count}個",
+  "expedition.augment.slot": "{slot}番レリック",
+  "expedition.augment.empty": "オーグメントなし",
 
   "expedition.sweep.title": "掃討",
   "expedition.sweep.body": "ノードクリア報酬の75%を即時受け取ります。宝物の戦利品・ポントスの引き揚げ記録・スコアは残りません。\n本日の遠征機会を1回使い、取り消せません。",
@@ -58,14 +61,4 @@ export const EXPEDITION_JA = {
   "expedition.runInProgress": "進行中の遠征があります",
   "expedition.devOnly": "開発ビルドでのみ使用できます",
 
-  "expedition.quick.sub": "ゴールド {gold} · 本日 {remaining}回",
-  "expedition.quick.cancelled": "広告がキャンセルされました",
-  "expedition.quick.walletFull": "ゴールドの財布がいっぱいです",
-  "expedition.quick.done": "クイック遠征完了",
-  "expedition.quick.walletGain": "実際の財布の増加",
-  "expedition.quick.verifyFailed": "広告の検証に失敗しました · もう一度お試しください",
-  "expedition.quick.dailyUsed": "本日の回数をすべて使いました · 明日またお越しください",
-  "expedition.quick.weeklyUsed": "今週の回数をすべて使いました · 来週またお越しください",
-  "expedition.quick.noBaseline": "基準スコアがありません · 先に遠征の最高得点を記録してください",
-  "expedition.quick.retryLater": "しばらくしてからもう一度お試しください",
 } as const;

@@ -38,6 +38,7 @@ const KURO_DEF: RelicDef = {
   element: "fire",
   role: "warrior",
   reachTier: "melee",
+  strike: "claw",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 공격력 160에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
   stats: { hp: 422, def: 67, res: 67, atk: 158, ap: 0, attackSpeed: 104, moveSpeed: 109, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
@@ -74,6 +75,7 @@ const SHIRO_DEF: RelicDef = {
   element: "fire",
   role: "assassin",
   reachTier: "melee",
+  strike: "slash",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 디안의 태생 주문력 158에서 파생한 값이며, 전투에서는 성장한 주문력으로 다시 계산된다.
   stats: { hp: 422, def: 70, res: 74, atk: 0, ap: 155, attackSpeed: 96, moveSpeed: 100, critChance: 10, critDamage: 150, energyGain: 26, lifeSteal: 0, ferocityGain: 0 },
@@ -116,6 +118,7 @@ const DIMO_DEF: RelicDef = {
   element: "wind",
   role: "support",
   reachTier: "ranged",
+  projectile: "signal",
   excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 0, efficiencyMultiplier: 1.00 },
   // 모르페의 태생 공격력 172에서 파생한 값이며, 전투에서는 성장한 공격력으로 다시 계산된다.
   stats: { hp: 301, def: 43, res: 43, atk: 86, ap: 0, attackSpeed: 80, moveSpeed: 105, critChance: 0, critDamage: 150, energyGain: 12, lifeSteal: 0, ferocityGain: 0 },
@@ -147,7 +150,7 @@ const FROST_PLUME = {
   kind: "frostPlume",
   maxStacks: 5,
   holdSeconds: 8,
-  burstPower: 200,
+  burstPower: 120,
   burstSeconds: 4,
   slowSeconds: 3,
   slowPercent: 30,
@@ -173,14 +176,16 @@ export const RELICS: RelicDef[] = [
       weight: "54 kg",
     },
     catalogSummary: "신장 1.63m, 체중 54kg의 균형 잡힌 인간형 체격과 발달한 턱 구조가 확인된, 성체 초기 티라노사우루스 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투 그대로, 문 앞에서도 선언부터 하고 문을 열다 경첩째 뽑아 든다. 그러고는 눈치를 보며 시말서 철을 꺼내 오는데, 철은 벌써 두 권째다. 맨 앞 장에는 자랑스러운 첫 시말서가 붙어 있다. 문은 부수면서도 귀여운 접시와 찻잔만은 손가락 두 개로 조심조심 다룬다. 예전에 내가 블렌딩A의 홍차가 맛있다고 한마디 했더니 그 브랜드의 한정판을 줄 서서 구해 와 한 번도 열지 않은 채 아끼고 있다. 지금까지 깨진 찻잔은 하나도 없다. 동료의 신호가 들리면 곧바로 보폭을 맞추고, 전투가 길어질수록 야성을 즐기면서도 뒤처진 동료를 몇 번이고 돌아본다. 칭찬 한마디에는 입꼬리를 누르느라 꼬리 끝이 먼저 살랑거린다. 나를 부르는 호칭은 변함없이 '마스터'." },
+    unlockRecord: { status: "recorded", text: "렉시아는 먼저 앞장서고 승부를 선언하는 일이 잦다. 스스로를 여왕이라 부르는 당당한 말투 그대로, 문 앞에서도 선언부터 하고 문을 열다 경첩째 뽑아 든다. 그러고는 눈치를 보며 시말서 철을 꺼내 오는데, 철은 벌써 두 권째다. 맨 앞 장에는 자랑스러운 첫 시말서가 붙어 있다. 문은 부수면서도 귀여운 접시와 찻잔만은 손가락 두 개로 조심조심 다룬다. 예전에 내가 블렌딩A의 홍차가 맛있다고 한마디 했더니 그 브랜드의 한정판을 줄 서서 구해 와 한 번도 열지 않은 채 아끼고 있다. 지금까지 깨진 찻잔은 하나도 없다. 동료의 신호가 들리면 곧바로 보폭을 맞추고, 전투가 길어질수록 야성을 즐기면서도 뒤처진 동료를 몇 번이고 돌아본다. 칭찬 한마디에는 입꼬리를 누르느라 꼬리 끝이 먼저 살랑거린다." },
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "lexia",
     origin: "티라노사우루스",
     element: "fire",
     role: "warrior",
     // 송곳니로 물어뜯는 근접 물리 딜러.
     reachTier: "melee",
+    strike: "bite",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.10 },
     stats: {
@@ -202,7 +207,7 @@ export const RELICS: RelicDef[] = [
     ferocityTrait: { name: "전투의 여왕은 나야.", effectId: "rexBattleQueen", bleedingGuaranteedCritical: true, allDamageLifeStealPoints: 25 },
     breakthroughEffects: {
       basic: { kind: "deepBleed", bleedMultiplier: 2, healingReceivedReductionPercent: 40 },
-      ultimate: { kind: "execution", energyRefundOnKill: 150 },
+      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 50 },
       ferocity: { kind: "cleavingBasics", radius: 260 },
       passive: { kind: "battleMaidAscension", durabilityPercent: 25, rechargeOnKill: true },
     },
@@ -247,10 +252,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       cost: 210,
-      damageHealingPercent: 50,
       // 궁극기 대상 방식은 설명문이나 렐릭 ID가 아니라 코어가 읽는 계약이다.
       targeting: "single",
-      // damageHealingPercent가 있는 스킬은 skillDescription()이 대상·피해·회복을 한 문장으로
     },
   },
   {
@@ -279,6 +282,7 @@ export const RELICS: RelicDef[] = [
     // 스쿼드가 주인공을 부르는 대표 호칭.
     researcherTitle: "대장님",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "torika",
     origin: "트리케라톱스",
     element: "earth",
@@ -406,14 +410,16 @@ export const RELICS: RelicDef[] = [
     // 미보유 도감에는 외형과 수중 적응 체형만 공개하고 신상 및 생활 기록은 노출하지 않는다.
     catalogSummary: "긴 주둥이와 돛 구조, 수중 활동에 적합한 균형 잡힌 체형이 확인된 표본.",
     // 해금 기록은 유일한 연구원인 주인공이 직접 포착한 직업·태도·취미·관계를 1인칭으로 남긴다.
-    unlockRecord: { status: "recorded", text: "스피나는 연구소 수중경비대로 근무한다. 과묵한 편이지만 맡은 일은 언제나 정확하게 수행하며, 순찰 경로와 수문 점검 기록에도 빈틈이 없다. 나는 스피나가 아무도 모른다고 생각하는 듯 근무가 끝난 뒤 작은 어항을 오래 꾸미는 모습을 지켜보았다. 아는 체하지 않은 채 주변의 물자국과 모래를 조용히 청소해 두었더니, 여전히 들키지 않았다고 여긴 모양이다. 다음 날 내 책상에는 가장 반듯한 조개 하나가 놓여 있었다. 간식은 붕어빵을 좋아하는데, 팥이나 슈크림은 사양하고 피자 붕어빵만 받는다. 받자마자 머리부터 한 입 무는 모습이 영락없는 강가의 사냥꾼이다. 나를 부르는 호칭은 변함없이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "스피나는 연구소 수중경비대로 근무한다. 과묵한 편이지만 맡은 일은 언제나 정확하게 수행하며, 순찰 경로와 수문 점검 기록에도 빈틈이 없다. 나는 스피나가 아무도 모른다고 생각하는 듯 근무가 끝난 뒤 작은 어항을 오래 꾸미는 모습을 지켜보았다. 아는 체하지 않은 채 주변의 물자국과 모래를 조용히 청소해 두었더니, 여전히 들키지 않았다고 여긴 모양이다. 다음 날 내 책상에는 가장 반듯한 조개 하나가 놓여 있었다. 간식은 붕어빵을 좋아하는데, 팥이나 슈크림은 사양하고 피자 붕어빵만 받는다. 받자마자 머리부터 한 입 무는 모습이 영락없는 강가의 사냥꾼이다." },
     rarity: "SSR",
+    ferocityMax: 130,
     portraitAssetId: "seira",
     origin: "스피노사우루스",
     element: "water",
     role: "assassin",
     // 악어턱으로 물어뜯는 근접 암살자.
     reachTier: "melee",
+    strike: "bite",
     // 치즈케이크 생산 계약은 수중 발굴 특화이며 전투 역할을 바꿔도 기존 생산성을 보존한다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.4, efficiencyMultiplier: 1.10 },
     // 낮은 HP·방어력은 렉시아보다 낮은 생존력을, 높은 공격·공속·이속은 암살자의 선공 능력을 보장한다.
@@ -442,10 +448,10 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "leapPuddle" },
       // 터진 여울이 1.5초 뒤 한 번 더 터진다(위력 50%, 기절 없음) — 물이 빠지며 되돌아오는 두 번째 파도다.
       ultimate: { kind: "tidalEcho", delaySeconds: 1.5, powerPercent: 50 },
-      // 잠행에 들어선 뒤 첫 평타가 확정 치명타다. 은신 개념의 기습이고 폭주 한 번에 한 번이다.
-      ferocity: { kind: "ambushCrit" },
-      // 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다. 사냥이 이어지는 기동 효과다.
-      passive: { kind: "huntChain" },
+      // 잠행 동안 도약 주기가 4타에서 2타로 줄어 물 위를 건너뛰며 사냥한다. 폭주가 끝나면 4타로 돌아온다.
+      ferocity: { kind: "frenzyLeap", everyHits: 2 },
+      // 도약해 내려서면 1초 숨는다(쿨다운 3초). 암살자의 생존은 은신 개념으로만 준다.
+      passive: { kind: "leapVeil", stealthSeconds: 1, cooldownSeconds: 3 },
     },
     passive: {
       id: "spino-passive",
@@ -558,14 +564,16 @@ export const RELICS: RelicDef[] = [
     // 도감도 관찰 프로필과 같은 수치를 사용하며, 체중은 단거리 선수의 발달한 하체 근육과 함께 설명한다.
     catalogSummary: "신장 1.62m, 체중 59kg이며 단거리 질주에 적합한 발달한 하체 근육과 가벼운 골격을 지닌, 성체 벨로키랍토르 화석 기반 표본.",
     // 해금 기록은 유일한 연구원인 주인공이 루카의 생활과 관계를 직접 관찰한 1인칭 시점으로 남긴다.
-    unlockRecord: { status: "recorded", text: "복원 후 루카는 집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수로 관찰된다. 단거리 선수답게 하체 근육량이 탄탄한 루카는 다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다. 연구소 소파에 길게 누워 쉬다가도 내가 지나가면 늘 먼저 말을 걸어 오는 것이 습관이다. 좋아하는 치즈케이크를 먹으면서도 살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정하지만, 이내 한 입 더 먹고는 다음 질주로 충분히 움직이면 된다며 웃는다. 나를 부르는 호칭은 한결같이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 루카는 집과 휴식을 무엇보다 좋아하는 단거리 달리기 선수로 관찰된다. 단거리 선수답게 하체 근육량이 탄탄한 루카는 다른 육식 계열 렐릭들과도 대체로 원만하게 지낸다. 연구소 소파에 길게 누워 쉬다가도 내가 지나가면 늘 먼저 말을 걸어 오는 것이 습관이다. 좋아하는 치즈케이크를 먹으면서도 살이 찌면 달리기가 둔해지지 않겠냐며 가볍게 걱정하지만, 이내 한 입 더 먹고는 다음 질주로 충분히 움직이면 된다며 웃는다." },
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "luka",
     origin: "벨로키랍토르",
     element: "wind",
     role: "assassin",
     // 발톱으로 파고드는 근접 암살자.
     reachTier: "melee",
+    strike: "claw",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 137.5, efficiencyMultiplier: 1.08 },
     stats: {
@@ -593,13 +601,15 @@ export const RELICS: RelicDef[] = [
       value: 0,
       // 태생 치명타는 전 개체 공통이므로 암살자의 치명타형 정체성은 패시브가 만든다.
       criticalChancePercent: 15,
-      desc: "전투 시작 시 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
+      // 전투 시작 은신은 암살자 정체성의 일부다 — 델로피(5초)와 같은 필드를 읽는다.
+      openingStealthSeconds: 5,
+      desc: "전투 시작 시 5초 동안 은신하고, 공격력이 가장 높은 아군이 표적으로 삼은 적을 함께 표적으로 삼는다.",
     },
     basic: {
       id: "luka-basic",
       name: "치명적인 발톱",
       power: 100,
-      periodicCritical: { every: 4 },
+      periodicCritical: { every: 3 },
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -654,15 +664,16 @@ export const RELICS: RelicDef[] = [
     // 다른 스쿼드를 향한 동경도 독립 라벨이 아닌, 연구원이 직접 본 행동으로 관찰 기록 문장 안에 남긴다.
     unlockRecord: { status: "recorded", text: "도디는 새로운 물건만 보면 “대장님, 이것 좀 보세요!” 하고 달려오는 아이다. 반짝이는 잡동사니도 발견 기록이라며 깃펜으로 일지에 또박또박 적어 넣는데, 정작 제 밥때는 적어 두지 않아서 자꾸 놓친다. 동료의 사소한 버릇과 낯선 상대의 반응까지 받아 적다 보니 손가락에는 늘 잉크가 묻어 있다. 너무 반가운 나머지 한 걸음 더 다가서다가 상대를 놀라게 하고 저도 놀라 물러서는 일도 잦다. 요즘은 관제탑의 시그널 아이가 여러 신호를 한꺼번에 살피고 판단하는 모습을 오래 올려다보더니, 높은 곳에 올라 동료들의 움직임을 일일이 확인하고 먼저 갈 길을 정하려 한다. 아직은 길보다 도디가 먼저 길을 잃는다. 일지 첫 장 맨 위에는 나를 부르는 말인 '대장님'이 크게 적혀 있고, 이름 쓸 칸은 비어 있다. 1호 팬이라는 말은 본인이 붙였다." },
     rarity: "R",
+    ferocityMax: 70,
     portraitAssetId: "dodi",
     origin: "도도새",
     element: "wind",
     role: "support",
     // 깃펜을 든 조수라 겁이 많아 한 걸음 뒤에서 거든다.
     reachTier: "mid",
-    // 다이아는 희소 재화라 1시간 생산량을 1 미만으로 두고 수확 시에만 내림한다.
-    // 보석은 희소성을 유지하되 기본 보관 시간에 슬롯 하나가 최소 정수 넷을 만든다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.5, efficiencyMultiplier: 1.12 },
+    projectile: "feather",
+    // 젬은 편성된 모든 렐릭이 똑같이 만든다(`EXCAVATION_GEMS_PER_RELIC_PER_HOUR`) — 젬 특화는 없다.
+    excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     // **손이 빠른 지원가가 아니라 단단한 지원가다.** 공속 96은 깃펜이 옮기는 회복을 그대로
     // 횟수로 바꿔, 이 개체가 서 있는 것만으로 편성이 죽지 않았다. 그 몫(12)을 체력·방어·저항
     // 셋으로 나눠 옮긴다 — 같은 등급 띠 안에서 총량은 그대로이고, 오르는 것은 제가 버티는
@@ -757,10 +768,11 @@ export const RELICS: RelicDef[] = [
       weight: "27 kg",
     },
     catalogSummary: "신장 1.31m, 체중 27kg의 작은 인간형 체격에 등지느러미 관과 꼬리날, 반투명한 지느러미 베일이 확인된 유체 어룡 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 티아는 물가만 보이면 먼저 뛰어들어 물살을 튀기고 도망치는 장난을 반복한다. 그러다 연구원이 다가오면 베일 자락으로 얼굴 절반을 가린 채 뒷걸음질 치면서도, 이름을 부르면 곧바로 곁으로 달려와 옷자락을 붙잡고 따라다닌다. 강가에서 보급 회수라며 반짝이는 돌과 유리 조각을 한 움큼씩 주워 오는데, 가장 처음 주운 작은 조각만은 늘 소매 속에 따로 간직한다. 쓸모가 없다는 말을 들은 날에는 꼬리날을 축 늘어뜨리고 한참 말이 없었다. 나를 부르는 호칭은 한결같이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 티아는 물가만 보이면 먼저 뛰어들어 물살을 튀기고 도망치는 장난을 반복한다. 그러다 연구원이 다가오면 베일 자락으로 얼굴 절반을 가린 채 뒷걸음질 치면서도, 이름을 부르면 곧바로 곁으로 달려와 옷자락을 붙잡고 따라다닌다. 강가에서 보급 회수라며 반짝이는 돌과 유리 조각을 한 움큼씩 주워 오는데, 가장 처음 주운 작은 조각만은 늘 소매 속에 따로 간직한다. 쓸모가 없다는 말을 들은 날에는 꼬리날을 축 늘어뜨리고 한참 말이 없었다." },
     squadNote: "쁘띠 로그의 물가 담당. 반짝이는 것만 보면 주워 와 대장님의 보급품이라 우기고, 정작 칭찬은 베일 뒤에 숨어서 듣는다.",
     researcherTitle: "연구원님",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "tia",
     origin: "이크티오사우루스",
     element: "water",
@@ -791,7 +803,7 @@ export const RELICS: RelicDef[] = [
     // 한계 돌파: 젖은 표적 · 물보라 충전 · 큰 파도 · 건드리면 터진다.
     breakthroughEffects: {
       basic: { kind: "wetMark", takenPercent: 12 },
-      ultimate: { kind: "splashCharge", energy: 6 },
+      ultimate: { kind: "splashCharge", energy: 15, allyEnergy: 5 },
       ferocity: { kind: "bigWave", powerMultiplier: 2 },
       passive: { kind: "touchBurst" },
     },
@@ -827,7 +839,7 @@ export const RELICS: RelicDef[] = [
       targeting: "single",
       // 반짝이 묻은 적을 때리면 그 자리에서 터뜨려 주위까지 함께 적신다. 터질 때마다 제 최대
       // 체력의 일부를 막으로 두른다 — 피해에 비례하던 때는 한 번이 평균 3%라 한 방도 못 막았다.
-      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 },
+      shimmerBurst: { power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 },
     },
     ultimate: {
       id: "tia-ult",
@@ -869,11 +881,12 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.42m, 체중 31kg의 인간형 체격에 아직 자라는 중인 볏과 넓게 접히는 익수가 확인된 유체 익룡 표본.",
     // 소속을 옮긴 사정은 라벨이 아니라 연구원이 직접 본 행동으로 남긴다.
-    unlockRecord: { status: "recorded", text: "스테라는 관제탑에 올라가 바람의 방향과 세기를 하루에도 몇 번씩 새로 잰다. 손등을 덮는 헐렁한 연구 가운을 소매만 접어 입고, 틀린 숫자도 지우지 않고 소매 안쪽에 그대로 남겨 두는 것이 이 아이의 방식이다. 계산이 맞아떨어진 날에는 아무렇지 않은 척 보고서만 내밀지만 볏 끝이 서 있다. 배치 첫 주부터 상급 관측 절차를 통째로 외워 와 시그널 아이 선임들을 당황시켰다. 그 이야기를 들은 어린 개체들이 통로에서 기다렸다가 따라붙으면 귀찮다고 말하면서도 걸음을 늦춰 준다. 선망 어린 시선이 조금 무겁다는 건 본인도 인정한다. 가운이 누구 것이었는지 물으면 비밀이라며 입을 다문다. 나를 부르는 호칭은 변함없이 '선배'." },
+    unlockRecord: { status: "recorded", text: "스테라는 관제탑에 올라가 바람의 방향과 세기를 하루에도 몇 번씩 새로 잰다. 손등을 덮는 헐렁한 연구 가운을 소매만 접어 입고, 틀린 숫자도 지우지 않고 소매 안쪽에 그대로 남겨 두는 것이 이 아이의 방식이다. 계산이 맞아떨어진 날에는 아무렇지 않은 척 보고서만 내밀지만 볏 끝이 서 있다. 배치 첫 주부터 상급 관측 절차를 통째로 외워 와 시그널 아이 선임들을 당황시켰다. 그 이야기를 들은 어린 개체들이 통로에서 기다렸다가 따라붙으면 귀찮다고 말하면서도 걸음을 늦춰 준다. 선망 어린 시선이 조금 무겁다는 건 본인도 인정한다. 가운이 누구 것이었는지 물으면 비밀이라며 입을 다문다." },
     squadNote: "시그널 아이의 최연소 관측 담당. 바람길을 미리 읽어 아군이 뜰 자리를 잡아 주며, 아직 새내기라 연구원도 선임처럼 부른다.",
     // 시그널 아이의 새내기라 연구원을 "선배"라 부른다 — 그 호칭 자체가 이적한 지 얼마 안 됐음을 말한다.
     researcherTitle: "선배",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "stella",
     origin: "게오스테른베르기아",
     element: "wind",
@@ -935,10 +948,10 @@ export const RELICS: RelicDef[] = [
       teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 10, maxHpRegenPercentPerSecond: 2 },
     },
     breakthroughEffects: {
-      basic: { kind: "windStep", attackSpeedPercent: 10, seconds: 3 },
+      basic: { kind: "windStep", moveSpeedPercent: 20, seconds: 3 },
       ultimate: { kind: "gustEnergy", energy: 25 },
-      ferocity: { kind: "windPull", extraEnergy: 5 },
-      passive: { kind: "windEcho", energy: 10 },
+      ferocity: { kind: "feverGale", seconds: 3, speedPercent: 20 },
+      passive: { kind: "windEcho", energy: 25 },
     },
   },
 
@@ -970,11 +983,12 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.38m, 체중 41kg의 작은 인간형 체격에 가시가 줄지어 난 꼬리와 자동 반사 장치를 둘 단 채 복원된 성체 켄트로사우르스 표본.",
     // 다른 스쿼드를 동경하는 설정이 아니라, 스테라를 챙기는 선임이라는 관계를 직접 관찰된 행동으로 남긴다.
-    unlockRecord: { status: "recorded", text: "복원 후 켄토는 관제탑 아래층 의자에 자리를 잡고 풍선껌을 불며 단말기를 뒤적인다. 일을 맡기면 \"귀찮게\"라며 한숨부터 쉬지만 마감은 한 번도 어긴 적이 없고, 보고서는 빠진 줄 없이 끝까지 똑 부러지게 올린다. 작다는 말이 나오면 껌이 터진다. 어린 개체 무리로 한데 묶이거나 오해받는 것은 질색이라, 그럴 때마다 시그널 아이의 표식을 들이밀며 정정한다. 그러면서도 어린 렐릭들이 통로에서 엉키면 한숨을 쉬면서 끝까지 줄을 세워 주는 쪽이 늘 켄토다. 스테라와 함께 있는 날에는 가시 날 둘을 먼저 바람 앞에 띄워 두고 \"원래 내 구역이야\"라는 말만 남기고 돌아온다. 나를 부를 때는 변함없이 '담당관'." },
+    unlockRecord: { status: "recorded", text: "복원 후 켄토는 관제탑 아래층 의자에 자리를 잡고 풍선껌을 불며 단말기를 뒤적인다. 일을 맡기면 \"귀찮게\"라며 한숨부터 쉬지만 마감은 한 번도 어긴 적이 없고, 보고서는 빠진 줄 없이 끝까지 똑 부러지게 올린다. 작다는 말이 나오면 껌이 터진다. 어린 개체 무리로 한데 묶이거나 오해받는 것은 질색이라, 그럴 때마다 시그널 아이의 표식을 들이밀며 정정한다. 그러면서도 어린 렐릭들이 통로에서 엉키면 한숨을 쉬면서 끝까지 줄을 세워 주는 쪽이 늘 켄토다. 스테라와 함께 있는 날에는 가시 날 둘을 먼저 바람 앞에 띄워 두고 \"원래 내 구역이야\"라는 말만 남기고 돌아온다." },
     squadNote: "시그널 아이의 지상 거점 담당. 하늘에서 신호를 읽는 선배·후배들이 내려앉을 자리를 가시 날 둘로 먼저 막아 두고, 신입 스테라를 가장 가까이서 챙긴다.",
     // 관제 호칭 중 가장 실무적인 것을 골라, 귀찮다면서도 일은 끝까지 하는 선임의 결을 말한다.
     researcherTitle: "담당관",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "kento",
     origin: "켄트로사우르스",
     element: "fire",
@@ -1091,17 +1105,19 @@ export const RELICS: RelicDef[] = [
       weight: "49 kg",
     },
     catalogSummary: "신장 1.62m, 체중 49kg의 인간형 체격에 닻 모양 지느러미가 달린 톱니 꼬리와 잠수 장비 일체, 탐사 드론 한 기를 갖춘 채 복원된 성체 모사사우루스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 모사나는 대부분의 시간을 수조 바닥이나 인양 갱도에서 보낸다. 마스크를 벗는 일이 드물어 말은 짧게 끊어지고, 대답 대신 드론의 불빛을 두 번 깜빡여 보내기도 한다. 다른 대원이 \"다녀왔어?\"라고 물으면 고개만 끄덕이지만, 끌어 올린 잔해 목록은 한 줄도 빠짐없이 적어 관제실 문 앞에 붙여 둔다. 줄이 끊어진 채 돌아온 날에는 아무에게도 말하지 않고 다시 내려가며, 드론에게만 \"조금 더\"라고 말하는 것이 녹음에 남아 있다. 나를 부르는 호칭은 한결같이 '당신'." },
+    unlockRecord: { status: "recorded", text: "복원 후 모사나는 대부분의 시간을 수조 바닥이나 인양 갱도에서 보낸다. 마스크를 벗는 일이 드물어 말은 짧게 끊어지고, 대답 대신 드론의 불빛을 두 번 깜빡여 보내기도 한다. 다른 대원이 \"다녀왔어?\"라고 물으면 고개만 끄덕이지만, 끌어 올린 잔해 목록은 한 줄도 빠짐없이 적어 관제실 문 앞에 붙여 둔다. 줄이 끊어진 채 돌아온 날에는 아무에게도 말하지 않고 다시 내려가며, 드론에게만 \"조금 더\"라고 말하는 것이 녹음에 남아 있다." },
     squadNote: "나이트 기어의 심해 인양 담당. 물에 잠긴 구획으로 먼저 내려가 길을 열고, 대원이 들고 오지 못한 잔해와 장비를 줄 하나로 끌어 올린다.",
     // 말을 아끼는 작업자라 스쿼드 호칭 중 가장 짧고 건조한 쪽을 쓴다.
     researcherTitle: "당신",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "mosana",
     origin: "모사사우루스",
     element: "water",
     role: "tank",
     // 꼬리가 닿는 거리에서 싸운다. 멀리 있는 적은 궁극기가 끌어온다.
     reachTier: "melee",
+    strike: "slash",
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.16, efficiencyMultiplier: 1.08 },
     /**
      * **방어·저항이 곧 손이다** — 수압이 터지는 피해가 두 수치에서 나오므로 둘을 고르게 높이고, 평타
@@ -1195,11 +1211,12 @@ export const RELICS: RelicDef[] = [
       weight: "38 kg",
     },
     catalogSummary: "신장 1.24m, 체중 38kg의 인간형 체격에 골판이 박힌 잠옷과 곤봉 꼬리, 백색소음 장치를 단 철퇴를 갖춘 채 복원된 유년기 안킬로사우루스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 안카는 하루의 절반 가까이를 졸린 눈으로 보낸다. 말끝이 늘어지고 대답보다 하품이 먼저 나오며, 다른 대원을 재우러 들어간 방에서 본인이 먼저 잠든 채 발견되는 일이 잦다. 잠을 깨우면 꼬리 끝 철퇴를 끌어안고 크게 화를 내지만, 다친 대원이 누운 침상 곁에서는 밤새 장치를 끄지 않고 눈을 비비며 깨어 있었다는 기록이 여러 번 남아 있다. 나를 부르는 호칭은 한결같이 '연구원 씨'." },
+    unlockRecord: { status: "recorded", text: "복원 후 안카는 하루의 절반 가까이를 졸린 눈으로 보낸다. 말끝이 늘어지고 대답보다 하품이 먼저 나오며, 다른 대원을 재우러 들어간 방에서 본인이 먼저 잠든 채 발견되는 일이 잦다. 잠을 깨우면 꼬리 끝 철퇴를 끌어안고 크게 화를 내지만, 다친 대원이 누운 침상 곁에서는 밤새 장치를 끄지 않고 눈을 비비며 깨어 있었다는 기록이 여러 번 남아 있다." },
     squadNote: "사일런트 룬의 수면 담당. 잠 못 드는 대원 곁에서 백색소음 장치를 틀어 재우고, 아픈 대원의 침상을 끝까지 지킨다.",
     // 졸린 말투에 어울리는 늘어지는 호칭이라 사일런트 룬의 「연구원 씨」를 쓴다.
     researcherTitle: "연구원 씨",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "anka",
     origin: "안킬로사우루스",
     element: "earth",
@@ -1301,17 +1318,19 @@ export const RELICS: RelicDef[] = [
       weight: "47 kg",
     },
     catalogSummary: "신장 1.56m, 체중 47kg의 인간형 체격에 흑백 날개 망토와 선원 모자, 조준경을 단 장총을 갖춘 채 복원된 성체 이크티오르니스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 직후 이르나는 관제탑 옥상 난간을 제 자리로 정했다. 바다가 없는 도시에서도 수평선이 있는 쪽을 정확히 가리키며, 쏘기 전에는 바람이 바뀔 때까지 숨을 길게 고르고 쏜 뒤에는 총신에 묻은 바람부터 닦는다. 말수는 적지만 무전에는 한 번도 답을 빠뜨린 적이 없고, 판단이 서면 그 지시를 입으로 한 번 따라 읊은 뒤에야 방아쇠에 손을 올리는 모습이 관찰됐다. 나를 부르는 호칭은 한결같이 '오더'." },
+    unlockRecord: { status: "recorded", text: "복원 직후 이르나는 관제탑 옥상 난간을 제 자리로 정했다. 바다가 없는 도시에서도 수평선이 있는 쪽을 정확히 가리키며, 쏘기 전에는 바람이 바뀔 때까지 숨을 길게 고르고 쏜 뒤에는 총신에 묻은 바람부터 닦는다. 말수는 적지만 무전에는 한 번도 답을 빠뜨린 적이 없고, 판단이 서면 그 지시를 입으로 한 번 따라 읊은 뒤에야 방아쇠에 손을 올리는 모습이 관찰됐다." },
     squadNote: "시그널 아이의 해상 저격수. 관측 보고가 올라오면 가장 먼 표적 하나를 받아 한 발로 끝내고, 쏘고 난 뒤 총구에 어린 해무로 자기 몸을 가린다.",
     // 선원 모자를 쓰고 지시를 되읊는 버릇이라 시그널 아이가 지시자에게 쓰는 「오더」를 그대로 연구원에게 돌려 쓴다.
     researcherTitle: "오더",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "irna",
     origin: "이크티오르니스",
     element: "water",
     role: "warrior",
     // 조준경을 단 장총으로 먼 거리에서 쏜다.
     reachTier: "ranged",
+    projectile: "bullet",
     // 관제탑에서 받은 표적 기록을 골드로 정산하는 자리라 발굴 특화도 골드 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.05 },
     /*
@@ -1363,7 +1382,8 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "irna-basic",
       name: "장전된 한 발",
-      power: 260,
+      // 기본 공격 위력 130 → 170.
+      power: 170,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1372,7 +1392,7 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "irna-ult",
       name: "수평선 저격",
-      power: 650,
+      power: 450,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1406,10 +1426,11 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.46m, 체중 41kg의 인간형 체격에 곰 머리 후드와 발톱이 달린 긴 소매, 털 달린 군화를 갖춘 채 복원된 아성체 아르크토두스 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 아크는 후드를 깊이 눌러쓴 채 복도 한가운데를 걸어 다니며 \"므하하\" 하고 낮게 웃는데, 마주 오던 쪽이 먼저 벽에 붙어 길을 비키면 후드 속에서 흡족해한다. 그러나 정말로 겁먹은 얼굴 앞에서는 말이 꼬이고 어쩔 줄 몰라 한다. 연구원 앞에서만 후드를 뒤로 넘기며, 관찰 중 간식 포장을 슬며시 건넨 적이 있다. 나를 부르는 호칭은 한결같이 '마스터'." },
+    unlockRecord: { status: "recorded", text: "복원 후 아크는 후드를 깊이 눌러쓴 채 복도 한가운데를 걸어 다니며 \"므하하\" 하고 낮게 웃는데, 마주 오던 쪽이 먼저 벽에 붙어 길을 비키면 후드 속에서 흡족해한다. 그러나 정말로 겁먹은 얼굴 앞에서는 말이 꼬이고 어쩔 줄 몰라 한다. 연구원 앞에서만 후드를 뒤로 넘기며, 관찰 중 간식 포장을 슬며시 건넨 적이 있다." },
     squadNote: "앱솔루트 팽의 전선 수비 담당. 밀고 들어가는 동료들 앞에 서서 상대가 먼저 물러서게 만들어 전열을 지키고, 연구원을 \"마스터\"라 부르며 지시에는 고개부터 끄덕인다.",
     researcherTitle: "마스터",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ark",
     origin: "아르크토두스",
     element: "earth",
@@ -1484,9 +1505,9 @@ export const RELICS: RelicDef[] = [
       },
     },
     breakthroughEffects: {
-      basic: { kind: "dreadAegis", shieldPercent: 5, cooldownSeconds: 3 },
+      basic: { kind: "preyScale", shieldPercentPerEnemy: 3, maxEnemies: 5, cooldownSeconds: 3 },
       ultimate: { kind: "quarryMark", seconds: 8, damageTakenPercent: 12 },
-      ferocity: { kind: "spreadingDread", radius: 400, stacks: 1 },
+      ferocity: { kind: "roarEntry", radius: 500, stacks: 1 },
       passive: { kind: "terrorCarapace", percentPerIntimidated: 10, maxIntimidated: 5 },
     },
   },
@@ -1510,16 +1531,18 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.68m, 체중 52kg의 날렵한 인간형 체격에 목과 팔을 감싼 깃털 장식이 확인된, 성체 유티라누스 화석 기반 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 유티는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 옆에서 나타나 깃털 한 장을 슬쩍 건네고는 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 화려한 선배들을 흉내 내 호칭을 쓰면서도 어색한지 매번 말끝을 흐린다. 나를 부르는 호칭은 한결같이 '보스'." },
+    unlockRecord: { status: "recorded", text: "복원 후 유티는 큰 소리를 내지 않고도 복도 끝에서 끝까지 사람들 사이를 빠져나간다. 모두가 정면을 보고 있을 때 어느새 옆자리에 와 있다가, 눈이 마주치면 자기가 한 일이 아닌 척 시선을 돌리는 버릇이 관찰됐다. 화려한 선배들을 흉내 내 호칭을 쓰면서도 어색한지 매번 말끝을 흐린다." },
     squadNote: "앱솔루트 팽의 측면 침투 담당. 정면에서 부딪히는 동료들의 틈으로 바람처럼 파고들어 약해진 상대를 끝내고, 연구원을 \"보스\"라 부른다.",
     researcherTitle: "보스",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "yuti",
     origin: "유티라누스",
     element: "wind",
     role: "assassin",
     // 깃털을 날려 보내는 암살자라 붙지 않고 한 걸음 물러서서 쏜다.
     reachTier: "mid",
+    projectile: "feather",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 140, efficiencyMultiplier: 1.1 },
     stats: {
@@ -1553,16 +1576,15 @@ export const RELICS: RelicDef[] = [
       value: 4,
       durationSeconds: 4,
       openingStealthSeconds: 4,
-      // 태생 치명타·공속은 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
+      // 태생 치명타는 전 개체 공통이므로 암살자의 정체성은 패시브가 만든다.
       criticalChancePercent: 20,
-      attackSpeedPercent: 20,
       killHaste: { seconds: 4, attackSpeedPercent: 50, moveSpeedPercent: 50 },
-      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률과 공격 속도가 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
+      desc: "전투 시작 시 4초 동안 은신하고, 치명타 확률이 오른다. 적을 처치하면 4초 동안 공격 속도와 이동 속도가 오른다.",
     },
     basic: {
       id: "yuti-basic",
       name: "갈래깃",
-      power: 95,
+      power: 70,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -1605,10 +1627,11 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.50m, 체중 47kg의 인간형 체격에 눈 밑 그늘과 큼직한 컵을 쥔 손이 확인된, 성체 기간토피테쿠스 화석 기반 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 테쿠는 케어실 창가에서 짙은 말차 음료 컵을 두 손으로 감싸 쥐고 한 모금씩 아주 천천히 마신다. 서두르는 법이 없고, 컵 바닥이 보이면 말없이 손을 내밀어 '리필' 한마디만 한다. 밤을 새우고도 목소리 하나 달라지지 않아, 곁에 있던 이들이 졸음이 안 오는 건 카페인 덕인지 말차 덕인지 내기를 한 적이 있다. 아이들이 떠들며 뛰어다니는 한가운데서도 같은 속도로 컵을 비우고, 누가 소란을 피우면 아무 말 없이 컵 하나를 더 건넨다. 나를 부르는 호칭은 한결같이 '대장님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 테쿠는 케어실 창가에서 짙은 말차 음료 컵을 두 손으로 감싸 쥐고 한 모금씩 아주 천천히 마신다. 서두르는 법이 없고, 컵 바닥이 보이면 말없이 손을 내밀어 '리필' 한마디만 한다. 밤을 새우고도 목소리 하나 달라지지 않아, 곁에 있던 이들이 졸음이 안 오는 건 카페인 덕인지 말차 덕인지 내기를 한 적이 있다. 아이들이 떠들며 뛰어다니는 한가운데서도 같은 속도로 컵을 비우고, 누가 소란을 피우면 아무 말 없이 컵 하나를 더 건넨다." },
     squadNote: "쁘띠 로그에서 유일하게 느긋한 축. 소란스러운 탐험대 한켠에서 음료를 나눠 주며 분위기를 가라앉히고, 연구원을 \"대장님\"이라 부른다.",
     researcherTitle: "대장님",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "teku",
     origin: "기간토피테쿠스",
     element: "grass",
@@ -1633,9 +1656,9 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     breakthroughEffects: {
-      basic: { kind: "lastDropSplash", sharePercent: 50, radius: 260 },
+      basic: { kind: "bitterTaste", defensePercent: 6, seconds: 3, maxStacks: 3 },
       ultimate: { kind: "richBlend", shieldFromCriticalPercent: 45, shieldMaxHpPercent: 40 },
-      ferocity: { kind: "quickReload", reloadSeconds: 0.6 },
+      ferocity: { kind: "doubleMag" },
       passive: { kind: "reloadSip", shieldMaxHpPercent: 6, capMaxHpPercent: 12 },
     },
     ferocityTrait: { name: "야근, 싫어", effectId: "overtimeRefusal" },
@@ -1698,10 +1721,11 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.58m, 체중 44kg의 인간형 체격에 등지느러미형 후드와 긴 꼬리가 확인된 유체 상어 표본.",
     // 유체 화석에서 복원한 이유를 세계관 안의 판단으로 남긴다 — 성체 표본은 복원 자체가 통제 밖이다.
-    unlockRecord: { status: "recorded", text: "성체 표본의 파장은 리바이어던급이라 복원 승인이 나지 않았고, 연구소는 힘이 덜 여문 유체 쪽을 골랐다. 복원 후 메론은 케어실 구석 가장 서늘한 자리에 앉아 하루 종일 무언가를 그린다. 말을 걸면 스케치북을 가슴에 붙이고 앞머리 뒤로 숨지만, 다음 날 아침이면 그 사람의 얼굴이 그려진 스티커가 문 앞에 한 장 붙어 있다. 그림은 끝없이 고쳐서 스케치북 표지에는 '진짜 마지막'이 몇 번째인지 숫자가 늘 붙어 있다. 전장에서도 적을 똑바로 보지 못해 시선을 내린 채 손끝으로만 윤곽을 뜨는데, 그렇게 그려진 자국이 남은 적은 동료들의 타격에 유난히 크게 무너진다. 나를 부르는 호칭은 변함없이 '연구원 씨'." },
+    unlockRecord: { status: "recorded", text: "성체 표본의 파장은 리바이어던급이라 복원 승인이 나지 않았고, 연구소는 힘이 덜 여문 유체 쪽을 골랐다. 복원 후 메론은 케어실 구석 가장 서늘한 자리에 앉아 하루 종일 무언가를 그린다. 말을 걸면 스케치북을 가슴에 붙이고 앞머리 뒤로 숨지만, 다음 날 아침이면 그 사람의 얼굴이 그려진 스티커가 문 앞에 한 장 붙어 있다. 그림은 끝없이 고쳐서 스케치북 표지에는 '진짜 마지막'이 몇 번째인지 숫자가 늘 붙어 있다. 전장에서도 적을 똑바로 보지 못해 시선을 내린 채 손끝으로만 윤곽을 뜨는데, 그렇게 그려진 자국이 남은 적은 동료들의 타격에 유난히 크게 무너진다." },
     squadNote: "사일런트 룬의 기록 담당. 케어실을 드나든 렐릭의 얼굴을 한 장씩 그려 벽에 붙여 두고, 정작 자기 그림 이야기가 나오면 후드를 뒤집어쓴다.",
     researcherTitle: "연구원 씨",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "meron",
     origin: "메갈로돈",
     element: "water",
@@ -1799,10 +1823,11 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.55m, 체중 47kg의 인간형 체격에 각질이 두꺼운 꼬리와 단단한 두개골이 확인된 성체 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 하루 종일 체리맛 사탕을 물고 다니며 껍질을 아무 데나 버리고, 지적하면 눈을 굴리며 \"알았다고\"라고 대꾸한 뒤 결국 주워 온다. 출격 지시에도 매번 툴툴거리지만 내가 말한 자리에서는 한 발도 물러서지 않고, 뒤따라오는 인원이 다 지나갈 때까지 그 앞을 막고 서 있는다. 나를 부르는 호칭은 한결같이 '보스'." },
+    unlockRecord: { status: "recorded", text: "복원 첫날 파치는 케어실 문틀을 머리로 받아 경첩을 부쉈고, 그 뒤로 안전모를 씌워 두자 벗지 않는다. 하루 종일 체리맛 사탕을 물고 다니며 껍질을 아무 데나 버리고, 지적하면 눈을 굴리며 \"알았다고\"라고 대꾸한 뒤 결국 주워 온다. 출격 지시에도 매번 툴툴거리지만 내가 말한 자리에서는 한 발도 물러서지 않고, 뒤따라오는 인원이 다 지나갈 때까지 그 앞을 막고 서 있는다." },
     squadNote: "앱솔루트 팽의 돌파 담당. 전선이 열려야 할 자리를 머리로 뚫어 놓고, 연구원을 굳이 \"보스\"라 부르며 지시에는 툴툴거리면서도 꼭 따른다.",
     researcherTitle: "보스",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "pachi",
     origin: "파키케팔로사우루스",
     element: "earth",
@@ -1818,7 +1843,7 @@ export const RELICS: RelicDef[] = [
       res: 55,
       atk: 142,
       ap: 45,
-      attackSpeed: 92,
+      attackSpeed: 100,
       moveSpeed: 118,
       critChance: 10,
       critDamage: 150,
@@ -1838,9 +1863,9 @@ export const RELICS: RelicDef[] = [
     },
     // 한계 돌파: 헬멧 박치기(막 있는 동안 평타 추가 피해) · 돌진 왕복 · 연쇄 충돌 · 더 낮은 한 방 상한.
     breakthroughEffects: {
-      basic: { kind: "helmetBash", attackPercent: 25 },
+      basic: { kind: "helmetBash", everyHits: 4, attackPercent: 25 },
       ultimate: { kind: "dashBack", delaySeconds: 0.6, powerPercent: 60 },
-      ferocity: { kind: "chainCollision", radius: 80 },
+      ferocity: { kind: "chainEntry", entryRadius: 300, radius: 80 },
       passive: { kind: "impactCapTighten", maxHpPercent: 20 },
     },
     passive: {
@@ -1874,7 +1899,7 @@ export const RELICS: RelicDef[] = [
       statusEffectEvery: 3,
       statusEffects: [
         { kind: "stun", seconds: 1 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
     ultimate: {
@@ -1891,7 +1916,7 @@ export const RELICS: RelicDef[] = [
       radius: 110,
       statusEffects: [
         { kind: "stun", seconds: 2 },
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
       ],
     },
   },
@@ -1915,16 +1940,18 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.62m, 체중 49kg의 인간형 체격에 반점 무늬 꼬리와 드러난 검치가 확인된 해츨링 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 이 개체는 이터널 시티에서 뼈를 가장 잘 맞추는 손으로 꼽힌다. 부러진 자리를 한 번 짚고 곧바로 붙여 놓고는, 같은 손으로 회복식 재료를 손질해 내온다. 연구원의 전속 담당의를 자처하며 매일 진료 신청서를 들이밀지만 매번 퇴짜를 맞고, 그때마다 \"보는 눈이 없다\"며 꼬리를 세운다. 케어실 벽에 붙여 둔 식재료 순위표 1등 칸에는 연구원의 이름이 적혀 있는데, 본인은 그게 최고의 찬사라고 우긴다. 나를 부르는 호칭은 한결같이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 이 개체는 이터널 시티에서 뼈를 가장 잘 맞추는 손으로 꼽힌다. 부러진 자리를 한 번 짚고 곧바로 붙여 놓고는, 같은 손으로 회복식 재료를 손질해 내온다. 연구원의 전속 담당의를 자처하며 매일 진료 신청서를 들이밀지만 매번 퇴짜를 맞고, 그때마다 \"보는 눈이 없다\"며 꼬리를 세운다. 케어실 벽에 붙여 둔 식재료 순위표 1등 칸에는 연구원의 이름이 적혀 있는데, 본인은 그게 최고의 찬사라고 우긴다." },
     squadNote: "나이트 기어의 야전 담당의. 인양조가 다치면 그 자리에서 붙여 놓고, 연구원만은 \"연구원님\"이라 부르며 진료 예약을 조른다.",
     researcherTitle: "연구원님",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "maki",
     origin: "마카이로두스",
     element: "earth",
     role: "assassin",
     // 손질은 붙어서 한다.
     reachTier: "melee",
+    strike: "slash",
     // 재료를 다루는 손이라 발굴 특화도 치즈케이크 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.28, efficiencyMultiplier: 1.12 },
     // 가장 약해진 적을 골라 뛰어드는 개체라 발이 가장 빠르고, 칼을 쓰는 손이라 공격력이 높다.
@@ -1952,7 +1979,7 @@ export const RELICS: RelicDef[] = [
     breakthroughEffects: {
       basic: { kind: "bleedSettle" },
       ultimate: { kind: "bleedFeast", damagePercent: 30 },
-      ferocity: { kind: "swiftHands", attackSpeedPercent: 15 },
+      ferocity: { kind: "bloodTaste", radius: 500 },
       passive: { kind: "landingAmbush" },
     },
     passive: {
@@ -2019,17 +2046,19 @@ export const RELICS: RelicDef[] = [
       weight: "48 kg",
     },
     catalogSummary: "신장 1.62m의 인간형 체격에 안쪽으로 굽은 한 쌍의 큰 뿔과, 종이를 다루기 좋게 가늘고 긴 손끝이 확인된 성체 메갈로케로스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 직후부터 케리스는 중앙 도서관을 떠나지 않았다. 말수가 거의 없고 눈을 잘 맞추지 못하지만, 누가 무엇을 빌려 갔는지는 묻지 않아도 정확히 기억한다. 특히 연구원이 열람한 자료는 반납일이 지나도 서가로 돌려보내지 않고 제 책상 옆에 따로 쌓아 두며, 그 목록을 별도의 공책에 옮겨 적는 모습이 여러 번 관찰됐다. 좋아하는 것을 물으면 로맨스 소설이라고만 답한다. 나를 부르는 호칭은 한결같이 '선배'." },
+    unlockRecord: { status: "recorded", text: "복원 직후부터 케리스는 중앙 도서관을 떠나지 않았다. 말수가 거의 없고 눈을 잘 맞추지 못하지만, 누가 무엇을 빌려 갔는지는 묻지 않아도 정확히 기억한다. 특히 연구원이 열람한 자료는 반납일이 지나도 서가로 돌려보내지 않고 제 책상 옆에 따로 쌓아 두며, 그 목록을 별도의 공책에 옮겨 적는 모습이 여러 번 관찰됐다. 좋아하는 것을 물으면 로맨스 소설이라고만 답한다." },
     squadNote: "시그널 아이의 기록 담당. 관측 보고가 오가는 자리에 끼지 않고 그 기록을 받아 색인하며, 연구원이 무엇을 열람했는지는 아무도 묻지 않았는데도 전부 적어 둔다.",
     // 관제탑의 잡담에 끼지 못하는 성격이라 스쿼드가 쓰는 호칭 중 가장 사적인 "선배"를 쓴다.
     researcherTitle: "선배",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "keris",
     origin: "메갈로케로스",
     element: "earth",
     role: "warrior",
     // 서가 사이에서 글로 싸우는 마법형이라 붙지 않는다.
     reachTier: "ranged",
+    projectile: "paper",
     // 장서를 정리하며 나오는 기록 자산이라 발굴 특화도 골드 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 132.5, efficiencyMultiplier: 1.06 },
     /*
@@ -2060,12 +2089,12 @@ export const RELICS: RelicDef[] = [
     },
     // 광란은 폭주에서도 나오지만 **직접 적중**에만 걸린다. 전이까지 발동하면 한 번의 공격이
     // 사슬 길이만큼 적을 돌려세워, 폭주 동안 상대 편이 통째로 멈춘 것처럼 된다.
-    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2, attackSpeedPercent: 50 },
-    // 한계 돌파: 밑줄 긋기(집중 2겹) · 서로 물들기 · 결말의 여운 · 한 장 더(저주 상한).
+    ferocityTrait: { name: "나만 봐", effectId: "frenzyGaze", seconds: 2 },
+    // 한계 돌파: 밑줄 긋기(집중 2겹) · 막이 내린 뒤(쓰러진 적의 저주가 이어진다) · 독자 몰이(폭주 진입에 전원 저주) · 한 장 더(저주 상한).
     breakthroughEffects: {
       basic: { kind: "underline", stacks: 2 },
-      ultimate: { kind: "contagiousFrenzy", stacks: 1 },
-      ferocity: { kind: "finalChapter", radius: 400, stacks: 2 },
+      ultimate: { kind: "afterglow", radius: 400, maxCarry: 3 },
+      ferocity: { kind: "readersGather", radius: 500, stacks: 1 },
       passive: { kind: "extraChapter", extraStacks: 1 },
     },
     passive: {
@@ -2117,7 +2146,7 @@ export const RELICS: RelicDef[] = [
       // 저주받은 적이 하나도 없으면 가장 가까운 적에게 먼저 씌운다 — 그러지 않으면 게이지가
       // 가득 찬 자동 궁극기가 대상 없이 헛돌고, 플레이어는 왜 안 나가는지 알 수 없다.
       cursedTargetsOnly: { seedCurse: { kind: "curse", seconds: 8, resistancePercent: 15, maxStacks: 3 } },
-      statusEffects: [{ kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }],
+      statusEffects: [{ kind: "frenzy", seconds: 4 }],
     },
   },
 
@@ -2139,17 +2168,19 @@ export const RELICS: RelicDef[] = [
       weight: "41 kg",
     },
     catalogSummary: "신장 1.45m, 체중 41kg의 작고 마른 인간형 체격에 목 뒤로 접히는 한 쌍의 얇은 볏과, 카드를 다루기 좋게 마디가 긴 손가락이 확인된 성체 딜로포사우루스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 델로피는 손이 먼저 움직이는 아이로 관찰된다. 연구원의 주머니에서 사라진 열쇠는 늘 인사와 함께 되돌아오고, 되돌려 줄 때의 표정이 가져갈 때보다 훨씬 즐거워 보인다. 목 뒤의 볏은 놀래킬 순간에만 활짝 펴지는데, 정작 본인은 그게 다 보인다는 걸 모르는 눈치다. 임무에서 돌아온 날에는 카드 한 벌을 들고 다른 렐릭들을 쫓아다니며 같은 마술을 열 번쯤 반복하다가, 아무도 속지 않으면 그제야 시무룩하게 구석으로 간다. 나를 부르는 호칭은 한결같이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 델로피는 손이 먼저 움직이는 아이로 관찰된다. 연구원의 주머니에서 사라진 열쇠는 늘 인사와 함께 되돌아오고, 되돌려 줄 때의 표정이 가져갈 때보다 훨씬 즐거워 보인다. 목 뒤의 볏은 놀래킬 순간에만 활짝 펴지는데, 정작 본인은 그게 다 보인다는 걸 모르는 눈치다. 임무에서 돌아온 날에는 카드 한 벌을 들고 다른 렐릭들을 쫓아다니며 같은 마술을 열 번쯤 반복하다가, 아무도 속지 않으면 그제야 시무룩하게 구석으로 간다." },
     squadNote: "나이트 기어의 막내 인양조. 조용해야 할 잠입 중에도 회수한 물건을 손안에서 사라지게 했다가 되돌리는 장난을 멈추지 않아, 선배들이 매번 볏을 눌러 접어 준다.",
     // 낯을 가리는 스쿼드에서 혼자 말이 많은 막내라, 스쿼드가 쓰는 호칭 중 가장 격식 있는 쪽을 골라 장난스럽게 부른다.
     researcherTitle: "연구원님",
     rarity: "SR",
+    ferocityMax: 110,
     portraitAssetId: "delopi",
     origin: "딜로포사우루스",
     element: "grass",
     role: "assassin",
     // 손을 벗어나 날아가는 카드라 붙지 않고 한 걸음 물러서서 던진다.
     reachTier: "mid",
+    projectile: "card",
     // 남의 주머니에서 나온 것을 되돌려 주는 손이라 발굴 특화도 골드 회수 쪽에 붙인다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 130, efficiencyMultiplier: 1.07 },
     // 유일한 혼합형이다. 카드 한 장이 손끝 힘과 발라 둔 독을 함께 쓰므로 공격력과 주문력을
@@ -2249,11 +2280,12 @@ export const RELICS: RelicDef[] = [
       weight: "79 kg",
     },
     catalogSummary: "검은 예복과 베일을 쓴 채 복원된 성체 프테라노돈 표본.",
-    unlockRecord: { status: "recorded", text: "노도니아는 아프다는 말을 하지 않는다. 케어실에서 상처를 볼 때 표정이 오히려 풀리는 것이 여러 번 기록됐고, 처치가 끝나면 아쉬운 얼굴로 베일을 내린다. 훈련에서는 늘 어린 렐릭들 앞에 서서 먼저 맞고, 다 끝난 뒤 \"잘했어요\"라며 한 명씩 머리를 쓰다듬는다. 정작 자기 몫의 붕대는 며칠씩 갈지 않아 케어 담당이 매번 찾아다닌다. 반대로 남이 다치는 자리에는 웃음기가 완전히 사라진다. 나를 부르는 호칭은 한결같이 '아가'." },
+    unlockRecord: { status: "recorded", text: "노도니아는 아프다는 말을 하지 않는다. 케어실에서 상처를 볼 때 표정이 오히려 풀리는 것이 여러 번 기록됐고, 처치가 끝나면 아쉬운 얼굴로 베일을 내린다. 훈련에서는 늘 어린 렐릭들 앞에 서서 먼저 맞고, 다 끝난 뒤 \"잘했어요\"라며 한 명씩 머리를 쓰다듬는다. 정작 자기 몫의 붕대는 며칠씩 갈지 않아 케어 담당이 매번 찾아다닌다. 반대로 남이 다치는 자리에는 웃음기가 완전히 사라진다." },
     squadNote: "사일런트 룬의 케어실 앞자리. 공명이 흔들린 개체가 실려 오면 제일 먼저 달려가 붙잡고 있으며, 그 자리에서 자기 상처는 뒤로 미룬다.",
     // 케어하는 스쿼드에서 스스로 돌봄을 받지 않는 쪽이라, 아이를 부르듯 하는 호칭을 골라 쓴다.
     researcherTitle: "아가",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "nodonia",
     origin: "프테라노돈",
     element: "wind",
@@ -2292,13 +2324,13 @@ export const RELICS: RelicDef[] = [
       name: "전장의 열기", effectId: "battleHeat", auraDamageMaxHpPercent: 1.5, radius: 240,
       taunt: { kind: "taunt", seconds: 3 }, tauntRadius: 420, elationHealBonusPercent: 50,
     },
-    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정이 끝나면 대신 받은 피해의 일부를 주위에 돌려주며,
-    // 폭주 중에는 희열이 열다섯 겹까지 쌓이고(폭주가 끝나면 열 겹으로 깎인다), 희열 한 겹의 재생이 0.3%에서 0.4%로 돌아온다.
+    // 한계 돌파 — 평타에 맞은 적이 잠깐 노도니아만 노리고(벌 세우기), 절정 동안 대신 받은 피해가 최대 체력의 10% 쌓일 때마다 주위에 열기가 터지며(최대 4번),
+    // 폭주에 들어서는 순간 희열이 다섯 겹 쌓이고, 희열이 가득하면 재생의 절반이 아군 전원에게 번진다.
     breakthroughEffects: {
       basic: { kind: "scoldTaunt", tauntSeconds: 0.5 },
-      ultimate: { kind: "bulwarkPayback", returnPercent: 25, radius: 300, capMaxHpPercent: 10 },
-      ferocity: { kind: "heatOverflow", extraMaxStacks: 5 },
-      passive: { kind: "sweeterWound", regenPercentPerStack: 0.1 },
+      ultimate: { kind: "heatBurst", thresholdPercent: 10, pulsePercent: 2.5, maxPulses: 4, radius: 300 },
+      ferocity: { kind: "emberRush", stacks: 5 },
+      passive: { kind: "sweetShare", sharePercent: 50 },
     },
     passive: {
       // kind가 painfulElation인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로
@@ -2367,11 +2399,12 @@ export const RELICS: RelicDef[] = [
       weight: "138 kg",
     },
     catalogSummary: "신장 1.56m, 체중 138kg의 표본. 인간형 체격에 비해 밀도가 세 배 가까워 들어 올릴 수 없으며, 이마와 소매에 부적을 붙인 채 복원된 성체 후기 코엘로돈타 표본이다.",
-    unlockRecord: { status: "recorded", text: "엘라는 몸이 굳어 있다. 복원 직후 계측대가 주저앉아 한 번 갈았고 케어실 바닥재도 다시 깔았는데, 정작 본인은 소리 없이 걷는다. 하루의 대부분을 마당에서 같은 동작을 아주 느리게 반복하며 보내고, 어린 렐릭들이 흉내 내며 달려들면 손목만 살짝 돌려 하나씩 넘어뜨리고는 다시 처음 자세로 돌아간다. 앳된 얼굴로 \"요즘 것들은 성질이 급해\"라고 말하는 것이 여러 번 관찰됐다. 이마와 소매의 부적은 젖으면 안 된다며 비 오는 날에는 처마 밑에서만 움직인다. 문짝이 부서진 날 밤이면 시말서 쓰는 붓소리가 들리는데, 쓰는 이는 대개 부순 쪽이 아니다. 나를 부르는 호칭은 한결같이 '연구원'." },
+    unlockRecord: { status: "recorded", text: "엘라는 몸이 굳어 있다. 복원 직후 계측대가 주저앉아 한 번 갈았고 케어실 바닥재도 다시 깔았는데, 정작 본인은 소리 없이 걷는다. 하루의 대부분을 마당에서 같은 동작을 아주 느리게 반복하며 보내고, 어린 렐릭들이 흉내 내며 달려들면 손목만 살짝 돌려 하나씩 넘어뜨리고는 다시 처음 자세로 돌아간다. 앳된 얼굴로 \"요즘 것들은 성질이 급해\"라고 말하는 것이 여러 번 관찰됐다. 이마와 소매의 부적은 젖으면 안 된다며 비 오는 날에는 처마 밑에서만 움직인다. 문짝이 부서진 날 밤이면 시말서 쓰는 붓소리가 들리는데, 쓰는 이는 대개 부순 쪽이 아니다." },
     squadNote: "앱솔루트 팽의 최전선 방벽. 화려한 선배들이 앞다투어 뛰어나갈 때 혼자 제자리에 서서 그 뒤를 받치고, 문짝을 부순 이들의 시말서를 대신 써 준다.",
     // 힘을 숨기지 않는 스쿼드에서 유일하게 물러서지 않는 쪽이라, 호칭도 가장 격의 없는 것을 쓴다.
     researcherTitle: "연구원",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "ella",
     origin: "코엘로돈타",
     element: "grass",
@@ -2506,6 +2539,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 갈퀴로 할퀴는 근접 허스크.
     reachTier: "melee",
+    strike: "slash",
     // 발굴 특화는 전투 능력치와 무관한 운영 데이터다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     // 기존의 강한 물리 공격과 빠른 발은 보존한다. 다만 암살자가 아닌 전사로 확정했으므로
@@ -2862,7 +2896,7 @@ export const RELICS: RelicDef[] = [
      * 다른 공멸 셋과 같은 층위(복원 후 관찰 · 소속 행동 · 호칭)로 채운다.
      */
     unlockRecord: { status: "recorded", text: "식별 기록 204. 공멸 소속으로 확인되었다. 얼룩무늬 후드 코트의 지퍼를 목 끝까지 올려 눈만 드러내고 서며, 두 손은 뒤로 돌린 채 꼬리 끝이 톱니처럼 갈라져 있다. 문이 열리는 소리보다 먼저 그 앞에 가 있었고, 막다른 길이면 되돌아와 다른 길을 골라 달렸다. 한 번 뒤를 밟은 상대는 시야에서 사라져도 놓지 않았다. 누구의 지시를 받아 먼저 움직이는지는 확인되지 않았다." },
-    squadNote: "공멸의 행동대장으로 확인된다. 돌입로가 정해지기 전에 먼저 들어가 안을 보고 오며, 흩어진 적을 한 방향으로 몰아 뒤따르는 동료 앞에 세운다.",
+    squadNote: "공멸 테러조의 행동대장으로 확인된다. 돌입로가 정해지기 전에 먼저 들어가 안을 보고 오며, 흩어진 적을 한 방향으로 몰아 뒤따르는 동료 앞에 세운다.",
     researcherTitle: "연구원",
     /*
      * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
@@ -2870,6 +2904,8 @@ export const RELICS: RelicDef[] = [
      * 등급을 R로 두면 레벨 성장률(1.8)까지 잡졸과 같아져 관문이 올라갈수록 격차가 벌어진다.
      */
     rarity: "SR",
+    // 폭주가 열리려면 야성 320(기본 100의 3.2배). 막다른 길에서도 놓지 않는 급습형이라 늦게 터진다. 폭주는 8초에 다 닳는다.
+    ferocityMax: 320,
     portraitAssetId: "koma",
     origin: "콤프소그나투스",
     /*
@@ -2887,6 +2923,7 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     // 전열 사이를 빠르게 파고드는 근접 중간보스다.
     reachTier: "melee",
+    strike: "slash",
     // 적 전용 개체지만 데이터 계약을 완성하기 위해 비전투 특성도 영구 정의에 둔다.
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
     /*
@@ -2899,11 +2936,12 @@ export const RELICS: RelicDef[] = [
      */
     stats: {
       // 중간보스는 SR 띠의 위쪽이다. 암살자가 쓰는 공격력과 그 정체성인 공격 속도에만 얹는다.
-      hp: 1100,
-      def: 55,
-      res: 46,
+      // 응태 결정(v0.308.6): SSR 없이 못 깰 만큼 단단해 체력을 덜어 방어·저항·주문력에 조금 나눴다(1100/55/46/52 → 900/60/52/62).
+      hp: 900,
+      def: 60,
+      res: 52,
       atk: 150,
-      ap: 52,
+      ap: 62,
       attackSpeed: 118,
       moveSpeed: 124,
       critChance: 10,
@@ -2953,7 +2991,7 @@ export const RELICS: RelicDef[] = [
        */
       statusEffectEvery: 3,
       statusEffects: [
-        { kind: "concussion", maxHpPercent: 5, criticalMaxHpPercent: 15 },
+        { kind: "concussion", maxHpPercent: 10, criticalMaxHpPercent: 20 },
         { kind: "stun", seconds: 1 },
         // 밀어내는 것이 이 개체가 무리에서 맡은 일이다 — 흩어진 적을 한 방향으로 몰아
         // 뒤따르는 아모와 토비 앞에 세운다(`squadNote`).
@@ -2999,6 +3037,452 @@ export const RELICS: RelicDef[] = [
     },
   },
   {
+    id: "ikanixia",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "이카닉시아",
+    specimenNumber: "213",
+    projectName: "ANNIHILATION RETRIEVAL 213",
+    excavationSite: "오디디 격리 연구동 회수 격납고",
+    fossilRecord: "격납고 천장 골조에 매달린 채 굳은 날개막 흔적과 가느다란 손가락뼈가 함께 회수되었다. 소리로 거리를 재는 귀뼈가 유난히 크게 복원되어 있어, 연구는 이 개체가 어둠 속에서 무엇을 먼저 찾았는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 5,200만 년 전",
+      // E.C.는 차분하게 판을 읽고 아랫사람을 다루는 성숙한 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 17년",
+      lifeStage: "성체",
+      height: "1.62 m",
+      weight: "44 kg",
+    },
+    catalogSummary: "넓은 날개막과 예민한 귀를 지닌 채 복원된, 공멸 회수조의 행동대장 이카로닉테리스 기반 표본.",
+    unlockRecord: { status: "recorded", text: "식별 기록 213. 공멸 소속으로 확인되었다. 날개막을 망토처럼 접어 어깨에 두르고 서며, 조용히 걷는데도 복도 끝의 소리를 먼저 알아채고 고개를 돌렸다. 실패한 팀의 뒤를 따라가 사람과 장비를 거두어 오는 일을 맡으며, 연구원에게는 \"연구원님\"이라 깍듯하게 부르지만 말끝에 서늘한 웃음이 묻어 있었다. 회수의 대상에 무엇이 포함되는지는 확인되지 않았다." },
+    squadNote: "공멸 회수조의 행동대장으로 확인된다. 작전에 실패한 팀을 찾아 거두어 오고, 같은 손으로 연구원을 데려가는 일도 맡는다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
+    researcherTitle: "연구원님",
+    rarity: "SR",
+    portraitAssetId: "ikanixia",
+    origin: "이카로닉테리스",
+    element: "wind",
+    role: "warrior",
+    reachTier: "mid",
+    projectile: "bat",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
+    /*
+     * **행동대장이라 SR 띠의 위쪽이다.** 날개로 가르던 전사에서 박쥐 떼를 부리는 마법사로 다시 짰다 — 공격력은 거의 쓰지 않고
+     * 주문력이 모든 딜을 낸다. 느리고 두꺼워서(체력·저항) 한가운데에 서서 박쥐로 훑는 자리다. 직군은 전사 그대로 둔다
+     * (마법사 직군이 없다 — 케리스와 같다).
+     */
+    stats: {
+      hp: 950,
+      def: 70,
+      res: 90,
+      atk: 30,
+      ap: 190,
+      attackSpeed: 90,
+      moveSpeed: 90,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "박쥐 폭풍", effectId: "batStorm", radiusPercent: 40, tickSpeedPercent: 50 },
+    passive: {
+      id: "ikanixia-passive",
+      name: "귀족의 박쥐 떼",
+      kind: "echoLocation",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
+      value: 5,
+      echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
+      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, maxTargets: 2, healPercent: 30 },
+      desc: "박쥐 떼가 주위의 가까운 적 둘을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
+    },
+    basic: {
+      id: "ikanixia-basic",
+      name: "박쥐 날리기",
+      power: 110,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      /*
+       * **박쥐가 표적과 그 곁의 하나까지 함께 문다.** 한 명을 잡는 코마의 후려치기와 갈리도록 이쪽은 둘에게 나눠 얹고, 세 번째
+       * 타격마다 출혈을 남긴다 — 기절은 걷어 냈다(붙잡는 손은 궁극기가 아니라 물량으로 몰아붙이는 쪽이 이 개체다).
+       */
+      targeting: "splitShot",
+      maxTargets: 2,
+      statusEffectEvery: 3,
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
+    },
+    ultimate: {
+      id: "ikanixia-ult",
+      name: "혈월의 만찬",
+      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다.
+      power: 90,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      cost: 80,
+      targeting: "nearbyEnemies",
+      radius: 300,
+      // 첫 타와 매초 틱 모두 반경 안에서 가까운 둘만 맞힌다.
+      maxTargets: 2,
+      channel: { seconds: 5 },
+      damageHealingPercent: 25,
+    },
+    // 박쥐가 물 때마다 피가 나고(II) 만찬의 범위가 넓어지며(III) 폭주하면 맞춘 만큼 회복하고(IV) 더 많은 적의 피를 빤다(V).
+    breakthroughEffects: {
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "widenArea", radius: 380 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 15 },
+      passive: { kind: "swarmDeepen", extraTargets: 1 },
+    },
+  },
+  {
+    id: "atra",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "아트라",
+    specimenNumber: "214",
+    projectName: "ANNIHILATION RETRIEVAL 214",
+    excavationSite: "오디디 격리 연구동 회수 격납고",
+    fossilRecord: "격납고 바닥을 가로질러 마디마디 이어진 긴 외골격 인상이 한 줄로 굳어 나왔다. 마디 하나하나가 따로 떨어져도 움직임이 이어진 흔적이 남아 있어, 복원 연구는 이 몸이 어디까지 끊기지 않고 버텼는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 3억 년 전",
+      // E.C.는 한 걸음 물러서 대장을 받치는 침착한 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 15년",
+      lifeStage: "성체",
+      height: "1.74 m",
+      weight: "63 kg",
+    },
+    catalogSummary: "마디진 외골격과 긴 꼬리를 지닌 채 복원된, 공멸 회수조의 부부대장 아르트로플레우라 기반 표본.",
+    unlockRecord: { status: "recorded", text: "식별 기록 214. 공멸 소속으로 확인되었다. 어깨와 등을 덮은 마디 장식이 걸을 때마다 차례로 울렸고, 대장 곁에서 반 걸음 뒤를 지켰다. 누가 먼저 맞아도 그 앞으로 몸을 밀어 넣었으며, 연구원에게는 \"연구원님\"이라 부르되 눈은 출구 쪽을 보고 있었다. 마디가 깎여 나가도 얼굴빛을 바꾸지 않았다." },
+    squadNote: "공멸 회수조의 부부대장으로 확인된다. 행동대장이 앞으로 나가면 그 뒤를 받쳐 회수 대상 앞에 선다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
+    researcherTitle: "연구원님",
+    rarity: "SR",
+    portraitAssetId: "atra",
+    origin: "아르트로플레우라",
+    element: "grass",
+    role: "tank",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
+    /*
+     * **버티는 값은 체력·방어·저항, 한 방은 느리다**(2323). 무적은 없다 — 마디 방벽은 막이 깎이는 만큼 피해를 받고
+     * 마디가 되살아나는 속도로만 버틴다.
+     */
+    stats: {
+      hp: 1450,
+      def: 120,
+      res: 100,
+      atk: 120,
+      ap: 20,
+      attackSpeed: 66,
+      moveSpeed: 56,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "부끄러운 가시", effectId: "thornBristle", segmentSizePercent: 50, restoreSpeedPercent: 50 },
+    passive: {
+      id: "atra-passive",
+      name: "수줍은 갑옷",
+      kind: "segmentBarrier",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 마디가 되살아나는 주기(초)를 담아 둔다.
+      value: 6,
+      segmentBarrier: { segments: 4, segmentMaxHpPercent: 4, restoreSeconds: 7, hitRestoreSeconds: 0.1 },
+      desc: "전투를 마디 방벽을 두르고 시작한다. 막이 깎이면 마디가 하나씩 되살아난다.",
+    },
+    basic: {
+      id: "atra-basic",
+      name: "저, 저기 채찍",
+      // 한 방을 낮추고(190→130) 소매 속 가시의 독으로 시간에 나눠 준다 — 풀 속성 탱커의 딜이 한 방에만 몰리지 않게 한다.
+      power: 130,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffects: [{ kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond }],
+    },
+    ultimate: {
+      id: "atra-ult",
+      name: "놓, 놓지 않아요",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 150,
+      targeting: "nearbyEnemies",
+      radius: 260,
+      statusEffects: [
+        { kind: "taunt", seconds: 3 },
+        { kind: "stagger", seconds: 0.1 },
+        { kind: "poison", seconds: 3, attackPercentPerSecond: POISON.attackPercentPerSecond, abilityPercentPerSecond: POISON.abilityPercentPerSecond },
+      ],
+    },
+    // 채찍이 두 번 들어가고(II) 품이 넓어지며(III) 폭주하면 아군 몫을 대신 맞고(IV) 독이 오래 남는다(V).
+    breakthroughEffects: {
+      basic: { kind: "pincerPair", every: 2 },
+      ultimate: { kind: "widenArea", radius: 340 },
+      ferocity: { kind: "feverGuard", percent: 30 },
+      passive: { kind: "lingeringVenom", poisonSeconds: 5 },
+    },
+  },
+  {
+    id: "pulsi",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "펄시",
+    specimenNumber: "215",
+    projectName: "ANNIHILATION RETRIEVAL 215",
+    excavationSite: "오디디 격리 연구동 회수 격납고",
+    fossilRecord: "격납고 배관 틈에 말려 들어간 꼬리 마디와 집게 조각이 굳은 채 회수되었다. 꼬리 끝 침이 지나간 자리가 한 점으로 모여 있어, 복원 연구는 이 개체가 어디를 노렸는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 3억 3,000만 년 전",
+      // E.C.는 말수가 적고 한 곳만 바라보는 소년기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 12년",
+      lifeStage: "성체",
+      height: "1.38 m",
+      weight: "33 kg",
+    },
+    catalogSummary: "구부러진 긴 꼬리와 집게 장식을 지닌 채 복원된, 공멸 회수조의 암살자 풀모노스코르피우스 기반 표본.",
+    unlockRecord: { status: "recorded", text: "식별 기록 215. 공멸 소속으로 확인되었다. 꼬리 끝을 바닥에 끌지 않고 허공에 세운 채 걸었고, 말은 거의 없었으며 눈은 한 번에 하나만 쫓았다. 한 번 노린 상대는 다른 사람이 가로막아도 시선이 옮겨 가지 않았다. 연구원에게는 \"연구원님\"이라 부르고는 곧바로 고개를 숙였다." },
+    squadNote: "공멸 회수조의 저격 담당으로 확인된다. 회수 대상이 도망치려는 순간 한 곳만 노려 그 발을 묶는다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
+    researcherTitle: "연구원님",
+    rarity: "R",
+    portraitAssetId: "pulsi",
+    origin: "풀모노스코르피우스",
+    element: "fire",
+    role: "assassin",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
+    /* R 띠의 위쪽이다(2189). 한 표적에 쌓는 암살자라 공격력과 공격 속도에 얹는다. */
+    stats: {
+      hp: 900,
+      def: 48,
+      res: 44,
+      atk: 185,
+      ap: 20,
+      attackSpeed: 120,
+      moveSpeed: 108,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "신난 꼬리", effectId: "frenzyTail", attackSpeedPercent: 30, extraStacksPerHit: 1 },
+    passive: {
+      id: "pulsi-passive",
+      name: "장난스러운 조준",
+      kind: "vitalAim",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 겨누기의 최대 겹 수를 담아 둔다.
+      value: 6,
+      vitalAim: { maxStacks: 6, damagePercentPerStack: 8 },
+      criticalChancePercent: 10,
+      desc: "같은 적을 기본 공격으로 이어 칠수록 그 적에게 주는 피해가 커진다.",
+    },
+    basic: {
+      id: "pulsi-basic",
+      name: "콕콕 찌르기",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "pulsi-ult",
+      name: "깜짝 선물",
+      power: 260,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      targeting: "single",
+    },
+    // 급소를 찔러 피를 내고(II) 선물이 회복을 막으며(III) 폭주하면 치명타가 터지고(IV) 겨누기가 더 깊어진다(V).
+    breakthroughEffects: {
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "unhealedMark", seconds: 4, reductionPercent: 50 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "deepAim", extraStacks: 2 },
+    },
+  },
+  {
+    id: "neuri",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "네우리",
+    specimenNumber: "216",
+    projectName: "ANNIHILATION RETRIEVAL 216",
+    excavationSite: "오디디 격리 연구동 회수 격납고",
+    fossilRecord: "격납고 환기구 안쪽에서 그물맥이 선명한 넓은 날개 두 쌍의 인상이 겹쳐 굳은 채 회수되었다. 날개 근육이 붙은 흔적이 유난히 두꺼워, 복원 연구는 이 개체가 얼마나 빠르게 날갯짓했는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 3억 년 전",
+      // E.C.는 예의 바른 말투 뒤에 제 우월함을 숨기는 청소년 후반기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 14년",
+      lifeStage: "성체",
+      height: "1.55 m",
+      weight: "40 kg",
+    },
+    catalogSummary: "넓은 그물맥 날개와 가는 몸을 지닌 채 복원된, 공멸 회수조의 지원가 메가네우라 기반 표본.",
+    unlockRecord: { status: "recorded", text: "식별 기록 216. 공멸 소속으로 확인되었다. 말끝마다 \"후훗\" 하고 웃으며 존댓말을 썼지만, 다른 조의 대장 앞에서도 시선을 한 단계 위에 두고 있었다. 날개가 낮게 울리면 곁에 선 동료의 걸음이 함께 빨라졌다. 연구원에게는 \"연구원님\"이라 부르며 고개를 살짝 기울였다." },
+    squadNote: "공멸 회수조의 박자 담당으로 확인된다. 날갯짓 소리로 앞선 동료의 손을 빠르게 만들고, 자기 조의 대장들이 더 뛰어나다고 믿는다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
+    researcherTitle: "연구원님",
+    rarity: "R",
+    portraitAssetId: "neuri",
+    origin: "메가네우라",
+    element: "water",
+    role: "support",
+    reachTier: "mid",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
+    /* R 띠의 위쪽이다(2172). 주문력으로 쏘는 지원가라 공격력은 낮게 둔다. */
+    stats: {
+      hp: 900,
+      def: 48,
+      res: 60,
+      atk: 25,
+      ap: 190,
+      attackSpeed: 92,
+      moveSpeed: 110,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "마음이 급해서요", effectId: "swiftFlight", intervalReductionPercent: 40 },
+    passive: {
+      id: "neuri-passive",
+      name: "정중한 윙윙",
+      kind: "wingHum",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 공명을 거는 주기(초)를 담아 둔다.
+      value: 6,
+      wingHum: { intervalSeconds: 6, resonance: { kind: "resonance", attackSpeedPercent: 30, seconds: 5 }, energyOnKill: 60 },
+      desc: "주기마다 공격력이 가장 높은 아군에게 공명을 건다.",
+    },
+    basic: {
+      id: "neuri-basic",
+      name: "상냥한 파동",
+      power: 70,
+      scalingStat: "ap",
+      iconAssetId: "skill-icon-magical",
+      effectType: "magical",
+      damageType: "magical",
+      targeting: "single",
+      allyEnergyGain: 4,
+    },
+    ultimate: {
+      id: "neuri-ult",
+      name: "삼가 올리는 비행",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 160,
+      targeting: "battlefieldAllies",
+      teamBuff: { kind: "tailwind", attackSpeedPercent: 20, moveSpeedPercent: 20, seconds: 8, maxHpRegenPercentPerSecond: 1.5 },
+    },
+    // 날갯짓 파동에 적이 움찔하고(II) 순풍이 오래 불며(III) 폭주하면 맞춘 만큼 회복하고(IV) 울림이 둘에게 걸린다(V).
+    breakthroughEffects: {
+      basic: { kind: "shellKnock", seconds: 0.3 },
+      ultimate: { kind: "longGust", seconds: 10 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 10 },
+      passive: { kind: "twinHum" },
+    },
+  },
+  {
+    id: "mir",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "미르",
+    specimenNumber: "217",
+    projectName: "ANNIHILATION RETRIEVAL 217",
+    excavationSite: "오디디 격리 연구동 회수 격납고",
+    fossilRecord: "격납고 바닥의 균열을 따라 같은 방향으로 줄지어 굳은 작은 턱 조각이 여럿 회수되었다. 그중 하나만 유난히 크게 복원되어 있어, 연구는 이 개체가 무리 속에서 어디에 서 있었는지를 재는 것으로 시작했다.",
+    observationProfile: {
+      originYear: "약 5,000만 년 전",
+      // E.C.는 앞뒤 가리지 않고 동료 곁에 붙어 다니는 아동기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 8년",
+      lifeStage: "아성체",
+      height: "1.22 m",
+      weight: "30 kg",
+    },
+    catalogSummary: "단단한 턱과 짧고 굵은 팔다리를 지닌 채 복원된, 공멸 회수조의 전사 티타노미르마 기반 표본.",
+    unlockRecord: { status: "recorded", text: "식별 기록 217. 공멸 소속으로 확인되었다. 혼자 있을 때는 가만히 서 있다가 동료가 곁에 오면 그 걸음에 맞춰 줄을 섰다. 짐을 든 동료 뒤에서 걸음을 세어 따라가는 버릇이 관찰되었다. 연구원에게는 \"연구원님\"이라 부르며 어색하게 경례했다." },
+    squadNote: "공멸 회수조의 운반 담당으로 확인된다. 동료 곁에 붙어 줄지어 움직이며, 곁에 선 동료가 많을수록 더 단단해진다. 연구원을 \"연구원님\"이라 깍듯이 부른다.",
+    researcherTitle: "연구원님",
+    rarity: "R",
+    portraitAssetId: "mir",
+    origin: "티타노미르마",
+    element: "earth",
+    role: "warrior",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
+    /* R 띠의 위쪽이다(2186). 곁의 아군이 곧 이 개체의 수급이라 체력과 방어에 얹는다. */
+    stats: {
+      hp: 1000,
+      def: 80,
+      res: 60,
+      atk: 170,
+      ap: 20,
+      attackSpeed: 90,
+      moveSpeed: 80,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0,
+    },
+    ferocityTrait: { name: "더 많이 영차", effectId: "marchOfAnts", radiusBonus: 120, extraAllies: 2 },
+    passive: {
+      id: "mir-passive",
+      name: "줄 맞춰 총총",
+      kind: "workerMarch",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 행렬을 세는 반경(px)을 담아 둔다.
+      value: 220,
+      workerMarch: { radius: 220, maxAllies: 3, attackPercentPerAlly: 8, regenMaxHpPercentPerAllyPerSecond: 0.4 },
+      desc: "곁에 선 아군이 많을수록 주는 피해가 커지고 체력이 서서히 찬다.",
+    },
+    basic: {
+      id: "mir-basic",
+      name: "냠냠 깨물기",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+    },
+    ultimate: {
+      id: "mir-ult",
+      name: "다 같이 영차",
+      power: 180,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      targeting: "nearbyEnemies",
+      radius: 200,
+    },
+    // 곡괭이로 방어를 깎고(II) 영차의 품이 넓어지며(III) 폭주하면 물어뜯어 회복하고(IV) 행렬이 더 든든히 받친다(V).
+    breakthroughEffects: {
+      basic: { kind: "fangShave", defensePercent: 6, maxStacks: 4, seconds: 6 },
+      ultimate: { kind: "widenArea", radius: 300 },
+      ferocity: { kind: "bloodFever", lifeStealPoints: 12 },
+      passive: { kind: "deeperMarch", regenMaxHpPercentPerAllyPerSecond: 0.6 },
+    },
+  },
+  {
     // 신규 저장 키 `mette`는 표시명이나 에셋 번호와 분리한 안정적인 내부 ID다.
     id: "mette",
     squad: "rune",
@@ -3018,8 +3502,9 @@ export const RELICS: RelicDef[] = [
       weight: "74 kg",
     },
     catalogSummary: "신장 1.76m의 견고한 인간형 체격과 현악 연주에 적합한 섬세한 손끝을 지닌, 성체 메가테리움 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 활을 올리기 전에 송진을 한참 바르는 버릇이 있어, 그동안은 누가 말을 걸어도 대답하지 않는다. 평소에는 케어실 바닥에 느긋하게 뒹굴며 귀찮다는 말을 달고 살지만, 아픈 렐릭이 실려 오면 말없이 일어나 곁에 앉는다. 그 큰 몸으로 가늘디가는 활을 켜는데, 연주가 시작되면 말수가 뚝 끊기고 활끝만 따라간다. 전장에서도 흔들리는 법이 없어 박자가 흐트러진 동료 옆에 서서 걸음을 맞춰 준다. 지금은 나를 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다. 나를 부르는 호칭은 한결같이 '선생'." },
+    unlockRecord: { status: "recorded", text: "메테는 복원 직후부터 바이올린의 울림에 유난히 오래 귀를 기울였다. 활을 올리기 전에 송진을 한참 바르는 버릇이 있어, 그동안은 누가 말을 걸어도 대답하지 않는다. 평소에는 케어실 바닥에 느긋하게 뒹굴며 귀찮다는 말을 달고 살지만, 아픈 렐릭이 실려 오면 말없이 일어나 곁에 앉는다. 그 큰 몸으로 가늘디가는 활을 켜는데, 연주가 시작되면 말수가 뚝 끊기고 활끝만 따라간다. 전장에서도 흔들리는 법이 없어 박자가 흐트러진 동료 옆에 서서 걸음을 맞춰 준다. 지금은 나를 위한 단 하나뿐인 무대를 준비하며, 자신의 연주가 온전히 닿을 날을 고대하고 있다." },
     rarity: "SSR",
+    ferocityMax: 110,
     // 6번 전신과 SD를 함께 사용해 도감과 전투에서 같은 메테가 보이도록 한다.
     portraitAssetId: "mette",
     origin: "메가테리움",
@@ -3027,6 +3512,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 활을 켜는 자리는 무대 뒤편이다.
     reachTier: "ranged",
+    projectile: "note",
     // 물리형 지원가의 견고함을 운영에서도 드러내도록 화석 생산 특화를 부여했다.
     excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.2, efficiencyMultiplier: 1.12 },
     stats: {
@@ -3035,17 +3521,17 @@ export const RELICS: RelicDef[] = [
       energyGain: 26, lifeSteal: 0, ferocityGain: 0,
     },
     // 별 넷이 이 개체를 **지휘하는 연주자**로 완성한다 — 박자가 쌓이고(II), 찬가가 더 자주 울리며 넘치는 선율이 방패가 되고(III),
-    // 크레센도가 점점 커지고(IV), 무게가 내려앉는다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
+    // 폭주 진입에 서곡이 울리고(IV), 막이 남아 있는 내내 음파가 퍼진다(V). 회복 총량(잃은 체력 15%)은 건드리지 않는다.
     breakthroughEffects: {
       // 같은 적을 연속으로 맞히면 경직이 0.1초씩 쌓인다(최대 0.3초). 공격 간격(약 1.7초)보다 짧아 영구 경직이 되지 않고,
       // 경직이 쌓일 때마다 저항(`gainTenacity`)도 함께 오른다.
       basic: { kind: "staccatoChain", secondsPerStack: 0.1, maxStacks: 3 },
       // 궁극기 게이지가 90에서 75로 줄고, 체력이 가득 차 회복할 몫이 없던 아군은 최대 체력 8%의 보호막을 얻는다.
       ultimate: { kind: "lightChorus", costReduction: 15, fullHpShieldPercent: 8 },
-      // 크레센도 추가타는 아군 누구의 평타든 따라붙어 팀 속도로 쌓이므로, 한 번마다 +5%씩 오르되 +50%에서 멈춘다.
-      ferocity: { kind: "crescendoRamp", percentPerHit: 5, maxPercent: 50 },
-      // 메테가 둘러 준 보호막이 다 깨지는 순간 주위 적에게 공격력 150%의 마법 피해와 0.1초 경직. 7초에 한 번이다.
-      passive: { kind: "adagioSlam", radius: 260, powerPercent: 150, staggerSeconds: 0.1, cooldownSeconds: 7 },
+      // 폭주에 들어서는 순간 주위 적 전원에게 스타카토 한 번이 먼저 울린다(공격력 60%, 경직 포함). 팀의 합창이 시작되기 전의 서곡이다.
+      ferocity: { kind: "overture", radius: 520, powerPercent: 60 },
+      // 메테의 막을 두른 아군이 평타를 맞히면 그 적 주위로 음파(공격력 40%)가 퍼진다. 아군마다 3초에 한 번이다.
+      passive: { kind: "resonantShield", radius: 240, powerPercent: 40, cooldownSeconds: 3 },
     },
     ferocityTrait: {
       name: "크레센도", effectId: "crescendoStaccato",
@@ -3091,12 +3577,13 @@ export const RELICS: RelicDef[] = [
     },
     catalogSummary: "신장 1.66m, 체중 43kg의 가벼운 인간형 체격과 발달한 꼬리 깃이 확인된, 아성체 데이노니쿠스 화석 기반 표본.",
     // 복원 후 관찰은 성격과 실제로 목격된 행동만 남기고 발굴 기록과 겹치지 않게 쓴다.
-    unlockRecord: { status: "recorded", text: "복원 후 데이는 비어 있는 면을 그냥 지나치지 못한다. 케어실 셔터와 창고 벽에 하룻밤 사이 이름 모를 표식이 늘어나는데, 정작 본인은 아침마다 시치미를 뗀다. 연구원이 책상에 엎드려 잠든 날에는 어김없이 얼굴에 무언가를 남기고, 들켜서 혼이 나면 눈이 그렁그렁해져 다시는 안 하겠다고 말한 뒤 그날 밤에 또 한다. 야단맞는 동안에도 손끝은 캔을 흔들고 있다. 나를 부르는 호칭은 한결같이 '연구원님'." },
+    unlockRecord: { status: "recorded", text: "복원 후 데이는 비어 있는 면을 그냥 지나치지 못한다. 케어실 셔터와 창고 벽에 하룻밤 사이 이름 모를 표식이 늘어나는데, 정작 본인은 아침마다 시치미를 뗀다. 연구원이 책상에 엎드려 잠든 날에는 어김없이 얼굴에 무언가를 남기고, 들켜서 혼이 나면 눈이 그렁그렁해져 다시는 안 하겠다고 말한 뒤 그날 밤에 또 한다. 야단맞는 동안에도 손끝은 캔을 흔들고 있다." },
     squadNote: "나이트 기어의 야간 정찰조. 잠입 경로와 인양 지점을 벽의 표식으로 남겨 뒤따르는 조가 소리 없이 읽게 하고, 쓰다 남은 캔은 잔해에서 주워 스스로 채운다.",
     // 스쿼드가 실제로 쓰는 호칭 중 가장 격식 있는 쪽을 고른다 — 사고는 쳐도 인양조의 규율
     // 안에 있는 개체라, 혼나는 자리에서도 부르는 말은 흐트러지지 않는다.
     researcherTitle: "연구원님",
     rarity: "SSR",
+    ferocityMax: 110,
     portraitAssetId: "deina",
     origin: "데이노니쿠스",
     element: "fire",
@@ -3292,12 +3779,13 @@ export const RELICS: RelicDef[] = [
       weight: "39 kg",
     },
     catalogSummary: "신장 1.52m, 체중 39kg의 가늘고 마른 인간형 체격에 몸을 통째로 감싸는 두꺼운 흰 모피와 작게 말린 한 쌍의 엄니가 확인된 성체 매머드 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "매디는 더위를 못 견뎌 늘 소다맛 아이스크림을 입에 물고 다니고, 연구소 냉장고를 제 것인 양 아이스크림으로 가득 채워 둔다. 냉방을 세게 틀었다가 연구원 씨에게 몇 번을 혼나도 다음 날이면 온도를 또 최저로 내려놓는다. 몸집에 안 맞게 가는 팔다리로 커다란 모피를 여미며 걷는 모습이 자꾸 눈이 간다. 나를 부르는 호칭은 한결같이 '연구원 씨'." },
+    unlockRecord: { status: "recorded", text: "매디는 더위를 못 견뎌 늘 소다맛 아이스크림을 입에 물고 다니고, 연구소 냉장고를 제 것인 양 아이스크림으로 가득 채워 둔다. 냉방을 세게 틀었다가 연구원 씨에게 몇 번을 혼나도 다음 날이면 온도를 또 최저로 내려놓는다. 몸집에 안 맞게 가는 팔다리로 커다란 모피를 여미며 걷는 모습이 자꾸 눈이 간다." },
     // 저온 보존실을 제집처럼 여기고 관리하는 모습이 사일런트 룬의 임무(메인프레임 저온 보존실 관리)와
     // role(warrior)의 어긋남을 서사로 메운다 — 방어·저항을 스스로 두르는 폭주도 "버티며 지키는" 룬의 결과 맞는다.
     squadNote: "룬의 저온 보존실 냉장고를 아이스크림으로 채우는 자칭 관리인. 온도를 최저로 내려 선배들을 떨게 해 놓고는 정작 모피 코트 속에서 제일 먼저 존다.",
     researcherTitle: "연구원 씨",
     rarity: "SR",
+    ferocityMax: 100,
     portraitAssetId: "maddy",
     origin: "매머드",
     element: "water",
@@ -3322,11 +3810,11 @@ export const RELICS: RelicDef[] = [
       ferocityGain: 0,
     },
     ferocityTrait: { name: "모피", effectId: "furCoat", cleanseAllOnEntry: true, shieldMaxHpPercent: 25, defenseResistancePercent: 100 },
-    // 한계 돌파: 사이다 거품 · 냉방 환기 · 털에 얼어붙음 · 얼음 깨기.
+    // 한계 돌파: 소다 터짐(세 번마다 냉기) · 냉방 환기 · 한파(폭주 진입에 전원 냉기) · 얼음 깨기.
     breakthroughEffects: {
-      basic: { kind: "sodaFizz", radius: 300, stacks: 1 },
+      basic: { kind: "sodaPop", everyHits: 3, radius: 300, stacks: 1 },
       ultimate: { kind: "coolingVent", healMaxHpPercentPerFrozen: 0.5, maxFrozenCounted: 3 },
-      ferocity: { kind: "frostCling", stacks: 1 },
+      ferocity: { kind: "coldSnap", radius: 500, stacks: 2 },
       passive: { kind: "iceShatter", radius: 300, attackPercent: 120 },
     },
     passive: {
@@ -3345,7 +3833,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "maddy-basic",
       name: "소다맛 아이스크림",
-      power: 100,
+      power: 108,
       scalingStat: "atk",
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
@@ -3392,10 +3880,11 @@ export const RELICS: RelicDef[] = [
       weight: "50 kg",
     },
     catalogSummary: "신장 1.72m, 체중 50kg의 인간형 체격에 손가락마다 길게 뻗은 낫 모양 갈퀴가 확인된 성체 테리지노사우루스 화석 기반 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 테리사는 말을 아끼고 대신 손을 움직인다. 파장이 튄 개체가 케어실에 실려 오면 아무것도 묻지 않고 찢어진 자리부터 꿰매 놓는데, 실이 모자라면 제 수도복 자락을 갈퀴로 그어 뜯어 쓴다. 그 갈퀴로 남을 다치게 한 기록은 아직 없다. 다 꿰맨 뒤에는 송곳니를 드러내고 웃으며 다음 사람을 부른다. 나를 부르는 호칭은 한결같이 '아가'." },
+    unlockRecord: { status: "recorded", text: "복원 후 테리사는 말을 아끼고 대신 손을 움직인다. 파장이 튄 개체가 케어실에 실려 오면 아무것도 묻지 않고 찢어진 자리부터 꿰매 놓는데, 실이 모자라면 제 수도복 자락을 갈퀴로 그어 뜯어 쓴다. 그 갈퀴로 남을 다치게 한 기록은 아직 없다. 다 꿰맨 뒤에는 송곳니를 드러내고 웃으며 다음 사람을 부른다." },
     squadNote: "사일런트 룬의 재봉 담당. 케어실에 실려 온 개체의 옷과 몸을 말없이 꿰매고, 실이 떨어지면 제 수도복을 그어 뜯어 쓴다.",
     researcherTitle: "아가",
     rarity: "SR",
+    ferocityMax: 90,
     portraitAssetId: "terisa",
     origin: "테리지노사우루스",
     // 불은 갈퀴를 달궈 지지는 쪽에서 온다 — 자르는 손과 지혈하는 손이 같은 손이다.
@@ -3403,6 +3892,7 @@ export const RELICS: RelicDef[] = [
     role: "support",
     // 제 손으로 직접 잘라야 아군이 꿰매지므로 적 한가운데로 파고드는 지원가다.
     reachTier: "melee",
+    strike: "slash",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 2.04, efficiencyMultiplier: 1.08 },
     /*
      * 근거리 지원가라 전사보다 두껍고 탱커보다는 얇은 자리에 선다(전투력 2303, SR 띠 안).
@@ -3516,12 +4006,14 @@ export const RELICS: RelicDef[] = [
     // 목소리를 크게 내지 못하는 아이라 스쿼드가 쓰는 호칭 중 가장 짧고 부르기 쉬운 쪽을 고른다.
     researcherTitle: "대장님",
     rarity: "R",
+    ferocityMax: 90,
     portraitAssetId: "parua",
     origin: "파라사우롤로푸스",
     element: "grass",
     role: "assassin",
     // 로스터에서 세 번째 원거리 개체이며, 사거리는 집중이 자라면서 함께 늘어난다.
     reachTier: "ranged",
+    projectile: "arrow",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 105, efficiencyMultiplier: 1.06 },
     /*
      * **공격력에 전부 몰아준 유리몸이다.** 체력·방어·저항이 로스터 최하급이고 공격력은 SR
@@ -3643,19 +4135,20 @@ export const RELICS: RelicDef[] = [
       weight: "39 kg",
     },
     catalogSummary: "신장 1.46m, 체중 39kg의 인간형 체격에 신호를 실어 보내는 등판 두 줄과 네 갈래 꼬리 가시가 확인된 아성체 스테고사우루스 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 슈테는 관제탑에 올라오지 않는다. 제 방에 화면을 여덟 장 띄워 놓고 거기서 전장을 본다. 말을 걸면 대답이 한 박자 늦고 대체로 짧지만, 한 명을 정해 놓고는 그 한 명에게만 끝없이 말한다 — 어디로 돌아라, 지금 들어가라, 그거 아니라니까. 등판은 그때 색이 돈다. 판이 밝아진 방향에 정확히 그 아이가 보고 있는 곳이 있어, 주변 대원들은 슈테의 등을 보고 전황을 읽는 법을 따로 익혔다. 잘했다고 하면 화면 쪽으로 고개를 돌리고 그럭저럭이라고만 한다. 나를 부르는 호칭은 한결같이 '오더'." },
+    unlockRecord: { status: "recorded", text: "복원 후 슈테는 관제탑에 올라오지 않는다. 제 방에 화면을 여덟 장 띄워 놓고 거기서 전장을 본다. 말을 걸면 대답이 한 박자 늦고 대체로 짧지만, 한 명을 정해 놓고는 그 한 명에게만 끝없이 말한다 — 어디로 돌아라, 지금 들어가라, 그거 아니라니까. 등판은 그때 색이 돈다. 판이 밝아진 방향에 정확히 그 아이가 보고 있는 곳이 있어, 주변 대원들은 슈테의 등을 보고 전황을 읽는 법을 따로 익혔다. 잘했다고 하면 화면 쪽으로 고개를 돌리고 그럭저럭이라고만 한다." },
     squadNote: "시그널 아이의 전담 오더. 광역 관측을 나눠 맡는 다른 담당들과 달리 한 판에 한 명만 붙잡고 끝까지 따라다니며, 그 한 명이 쓰러지면 남은 시간 동안 아무 신호도 내지 않는다.",
     // 관제 절차를 통째로 외워 오는 개체라 스쿼드가 지시자에게 쓰는 호칭을 그대로 연구원에게 돌린다.
     researcherTitle: "오더",
     rarity: "SSR",
+    ferocityMax: 100,
     portraitAssetId: "shute",
     origin: "스테고사우루스",
     element: "earth",
     role: "support",
     // 듀오 곁에 붙어 다니되 듀오보다 앞에 서지 않는 자리다.
     reachTier: "mid",
-    // 관측 기록을 그대로 자산으로 바꾸는 담당이라 발굴 특화도 다이아 쪽에 붙인다.
-    excavationTrait: { primaryCurrency: "gems", baseProductionPerHour: 0.52, efficiencyMultiplier: 1.13 },
+    // 관측 기록을 캐낸 돌의 값으로 바꾸는 담당이라 원석 쪽에 붙인다.
+    excavationTrait: { primaryCurrency: "rawStone", baseProductionPerHour: 1.12, efficiencyMultiplier: 1.06 },
     /*
      * **모든 스킬이 주문력에서 나온다.** 평타도 약점 포착의 추가 피해도 주문력 하나를 읽으므로
      * 공격력은 로스터 최하로 둔다 — 쓰지 않는 값을 높게 적으면 실전에 없는 힘이 전투력만 부풀린다.
@@ -3688,10 +4181,10 @@ export const RELICS: RelicDef[] = [
       basic: { kind: "farPing", reach: 600, followDistance: 420 },
       // 오더 6초 동안 듀오가 처음 때리는 적마다 약점 포착이 즉시 찍혀 터진다(적마다 1회) — 평타의 표식과 궁극기가 한 계약으로 이어진다.
       ultimate: { kind: "orderStrike" },
-      // 폭주 동안은 세 걸음 주기 없이 매번 표식을 찍는다 — 듀오가 때릴 때마다 터진다.
-      ferocity: { kind: "pingStorm" },
-      // 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(전투당 1회).
-      passive: { kind: "relink" },
+      // 폭주에 들어서는 순간 듀오가 노리는 적 주변 전원에게 약점 포착이 한꺼번에 찍힌다.
+      ferocity: { kind: "pingBurst", radius: 420 },
+      // 전투 시작부터 듀오가 둘이다 — 둘째 듀오도 약점 포착을 터뜨리고 핑의 충전을 함께 받는다.
+      passive: { kind: "twinDuo" },
     },
     ferocityTrait: {
       name: "그거 아니라니까?",
@@ -3759,11 +4252,12 @@ export const RELICS: RelicDef[] = [
       weight: "41 kg",
     },
     catalogSummary: "신장 1.57m, 체중 41kg의 인간형 체격에 앞다리에서 이어지는 얇은 비막과 짧은 뿔부리가 확인된 성체 디몰포돈 표본.",
-    unlockRecord: { status: "recorded", text: "복원 후 모르페는 제 요람에서 내려오지 않는다. 관제실이 내준 의자를 통째로 제 자리로 바꿔 놓고, 등받이를 끝까지 젖힌 채 천장에 띄운 A-Dimo를 본다. 부르면 대답은 하는데 늘 한 박자 늦고 대체로 짧다. 그런데 A-Dimo가 움직이는 속도는 그 말투와 정반대라, 한 기가 전장 전체를 훑으며 적마다 표식을 남기는 것을 보고 지켜보던 대원들이 손을 놓은 적이 여러 번이다. 직접 걷는 일은 거의 없다 — 어디를 봐야 하느냐고 물으면 천장을 가리키고, 그러면 이미 그곳에 A-Dimo가 가 있다. 나를 부르는 호칭은 한결같이 '담당관'." },
+    unlockRecord: { status: "recorded", text: "복원 후 모르페는 제 요람에서 내려오지 않는다. 관제실이 내준 의자를 통째로 제 자리로 바꿔 놓고, 등받이를 끝까지 젖힌 채 천장에 띄운 A-Dimo를 본다. 부르면 대답은 하는데 늘 한 박자 늦고 대체로 짧다. 그런데 A-Dimo가 움직이는 속도는 그 말투와 정반대라, 한 기가 전장 전체를 훑으며 적마다 표식을 남기는 것을 보고 지켜보던 대원들이 손을 놓은 적이 여러 번이다. 직접 걷는 일은 거의 없다 — 어디를 봐야 하느냐고 물으면 천장을 가리키고, 그러면 이미 그곳에 A-Dimo가 가 있다." },
     squadNote: "시그널 아이의 드론 관제. 고공 정찰을 사람이 나가지 않고 끝내는 유일한 담당이라, 다른 척후들이 오르던 환기구 순찰이 이 개체가 온 뒤로 절반으로 줄었다.",
     // 직접 오르내리지 않고 화면으로만 상대하는 개체라 스쿼드에서 가장 사무적인 호칭을 쓴다.
     researcherTitle: "담당관",
     rarity: "SSR",
+    ferocityMax: 120,
     portraitAssetId: "morphe",
     origin: "디몰포돈",
     element: "wind",
@@ -3775,6 +4269,7 @@ export const RELICS: RelicDef[] = [
     role: "warrior",
     // 본인이 나가는 것이 아니라 드론이 나간다. 사거리는 그 비막이 닿는 거리다.
     reachTier: "ranged",
+    projectile: "volley",
     /*
      * 고공에서 노출 지점을 찍어 주는 담당이라 발굴 특화는 화석 쪽이다.
      *
@@ -3857,7 +4352,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      observationVolley: { percentPerStack: 8, windowSeconds: 0.6 },
+      observationVolley: { percentPerStack: 9, windowSeconds: 0.6 },
     },
     // 현재 체력이 가장 높은 적을 저격한다. 관측은 소모하지 않는다.
     ultimate: {
@@ -3902,12 +4397,14 @@ export const RELICS: RelicDef[] = [
     // “두목”은 관계 인식이고 실제 발화 호칭은 쁘띠 로그의 허용 목록과 일치시킨다.
     researcherTitle: "대장님",
     rarity: "SSR",
+    ferocityMax: 150,
     // 디안 전용 전신은 늑대 SD와 분리해 도감·컷인에서만 사용한다.
     portraitAssetId: "dian",
     origin: "다이어울프",
     element: "fire",
     role: "assassin",
     reachTier: "ranged",
+    projectile: "signal",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 145, efficiencyMultiplier: 1.10 },
     /**
      * 생존 셋과 이동 속도를 로스터 최저로 내주고 공격 속도와 두 공격 축을 최고로 가져간다.
@@ -4057,19 +4554,21 @@ export const RELICS: RelicDef[] = [
     },
     // 폭주 파동은 매초 각 적 최대 HP의 2%를 고정 피해로 주고, 살아 있는 동안 모든 적 회복을 취소한다.
     ferocityTrait: { name: "해구", effectId: "pontusRage", maxHpDamagePercentPerSecond: 2, cancelEnemyHealing: true },
+    /*
+     * **시간이 갈수록 세지는 것은 이 개체가 아니라 불사 자리가 갖는다**(`ENCOUNTER_ROLE.endless.ramp` — 주문력 복리 +2%/초).
+     * 예전 「심해의 압력」이 하던 일을 자리로 옮겼으므로, 패시브에는 이 개체만의 밀물이 남는다.
+     */
     passive: {
       id: "pontos-passive",
-      name: "심해의 압력",
-      kind: "abyssalPressure",
+      name: "밀물",
+      kind: "tidalSurge",
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
-      value: 5,
-      // 500% 전장 궁극기와 곱해져도 표준 파티를 한 번에 삭제하지 않도록 실전 시뮬레이션에서 2%로 제한했다.
-      apPercentPerSecond: 2,
-      // kind가 abyssalPressure인 패시브는 passiveDescription()이 구조화 필드로 다시 문장을
-      // 만들므로 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다. 경감·강인함은 불사
-      // 자리가 갖는다(`ENCOUNTER_ROLE.endless`).
-      desc: "매초 주문력이 2%씩 복리로 오른다.",
+      value: 0,
+      // 10초마다 모든 적을 뒤로 민다. 피해가 없으니 강인함이 시간과 속도를 함께 깎는다.
+      tidalSurge: { intervalSeconds: 10, knockback: { seconds: 0.8, speed: 1100, bounces: 1 } },
+      // kind가 tidalSurge인 패시브는 passiveDescription()이 구조화 필드로 문장을 만들므로 이 원문은 데이터 문서화용이다.
+      desc: "10초마다 모든 적을 뒤로 민다.",
     },
     basic: {
       id: "pontos-basic",
@@ -4264,11 +4763,11 @@ export const RELICS: RelicDef[] = [
       name: "수장의 아가리",
       // 코마의 통로(190)와 폰토스의 전장 해일(500) 사이다. 원 하나를 지정해 무는 기술이라
       // 전장 전체를 치지 않고, 그만큼 서 있는 자리가 답이 된다.
-      power: 300,
+      power: 340,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
-      cost: 100,
+      cost: 80,
       /*
        * **원을 지정해 문다.** 전장 전체를 치는 기술로 두면 편성이 무엇이든 똑같이 맞아 자리를
        * 옮길 이유가 사라진다 — 바닥에 그려지는 원이 곧 "여기 서 있으면 맞는다"가 되고,
@@ -4613,6 +5112,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4732,6 +5232,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4851,6 +5352,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -4970,6 +5472,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부
@@ -5089,6 +5592,7 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     // 앞니로 갉는 개체라 붙어야 때린다.
     reachTier: "melee",
+    strike: "bite",
     excavationTrait: { primaryCurrency: "cheesecake", baseProductionPerHour: 1.4, efficiencyMultiplier: 1.00 },
     stats: {
       // 다섯이 같은 몸이라 오각형은 한 벌이고, 공속·이속만 자매마다 다르다. 전투력은 전부

@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import { FakeServer } from "../../src/api/FakeServer";
+import { createDefaultSession, createEmptyProgressPassState } from "../../src/state/session";
+import { ManagerEvents } from "../../src/managers/ManagerEvents";
 import type { GameApi } from "../../src/api/contracts";
 import { deriveNotificationState, NOTIFICATION_KEYS } from "../../src/core/notifications";
 import { NotificationManager } from "../../src/managers/NotificationManager";
@@ -6,12 +9,61 @@ import { NOTIFICATION_DOT_STYLE, perspectiveButtonNotificationAnchor, rotatedNot
 
 /** 알림별 조건과 공용 시각 규격이 화면별 구현으로 다시 갈라지지 않게 고정한다. */
 describe("notifications", () => {
+  it("원정·레이드 중 하나라도 수령 보상이 있으면 출격 입구에 점을 켠다", () => {
+    const conditions = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    expect(deriveNotificationState({ ...conditions, claimableRaidCount: 1 })).toMatchObject({ raidReward: true, expeditionReward: false, sortieReward: true });
+    expect(deriveNotificationState({ ...conditions, claimableExpeditionCount: 2 })).toMatchObject({ raidReward: false, expeditionReward: true, sortieReward: true });
+  });
+
   it("maps only positive or explicit conditions to each stable key", () => {
-    expect(NOTIFICATION_KEYS).toEqual(["missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail"]);
+    expect(NOTIFICATION_KEYS).toEqual(["raidReward", "expeditionReward", "sortieReward", "missionReward", "excavationHarvestReady", "friendRequest", "newEvent", "mail", "premiumFree", "premiumFreeDaily", "premiumFreeWeekly", "premiumFreeMonthly", "passReward", "premiumNotice", "achievementReward"]);
     expect(deriveNotificationState({ claimableMissionCount: 2, excavationHarvestReady: true, pendingFriendRequestCount: 1, unseenEventCount: 3, unreadMailCount: 4 }))
-      .toEqual({ missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: true, excavationHarvestReady: true, friendRequest: true, newEvent: true, mail: true, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
     expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }))
-      .toEqual({ missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false });
+      .toEqual({ raidReward: false, expeditionReward: false, sortieReward: false, missionReward: false, excavationHarvestReady: false, friendRequest: false, newEvent: false, mail: false, premiumFree: false, premiumFreeDaily: false, premiumFreeWeekly: false, premiumFreeMonthly: false, passReward: false, premiumNotice: false, achievementReward: false });
+    expect(deriveNotificationState({ claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0, freeSupplyCategories: ["weekly"] }))
+      .toMatchObject({ premiumFree: true, premiumFreeDaily: false, premiumFreeWeekly: true, premiumFreeMonthly: false, passReward: false, premiumNotice: true });
+  });
+
+  it("읽은 우편의 미수령 보상과 패스 보상도 알리고 전부 수령하면 꺼진다", () => {
+    const base = { claimableMissionCount: 0, excavationHarvestReady: false, pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 };
+    expect(deriveNotificationState({ ...base, claimableMailCount: 1, claimablePassCount: 1 })).toMatchObject({ mail: true, passReward: true, premiumNotice: false, premiumFree: false });
+    expect(deriveNotificationState({ ...base, claimableMailCount: 0, claimablePassCount: 0 })).toMatchObject({ mail: false, passReward: false, premiumNotice: false });
+  });
+
+  it("조회 중 우편을 수령한 최신 영수증을 이전 응답이 덮지 않는다", async () => {
+    let resolve!: (value: unknown) => void;
+    const events = new ManagerEvents();
+    const api = { getMissions: vi.fn().mockResolvedValue({ claimableCount: 0 }), getIdleExcavation: vi.fn().mockResolvedValue({ harvestNotice: false }), getNotificationSignals: vi.fn().mockImplementation(() => new Promise((done) => { resolve = done; })) } as unknown as GameApi;
+    const manager = new NotificationManager(api, events);
+    const values: boolean[] = [];
+    const unsubscribe = manager.subscribe("mail", (value) => values.push(value));
+    const refresh = manager.refresh();
+    events.publishMailNotification(false);
+    resolve({ unreadMailCount: 1, claimableMailCount: 1, pendingFriendRequestCount: 0, unseenEventCount: 0, freeSupplyCategories: [] });
+    await refresh;
+    expect(values).toEqual([false]);
+    unsubscribe();
+  });
+
+  it("레이드 무료 패스 보상 달성·수령을 실제 API 신호에 반영한다", async () => {
+    const state = createDefaultSession();
+    const api = new FakeServer(state, { latencyMs: 0 });
+    const before = (await api.getNotificationSignals()).claimablePassCount!;
+    state.progressPasses = { ...createEmptyProgressPassState(), raidRuns: 1 };
+    expect((await api.getNotificationSignals()).claimablePassCount).toBe(before + 1);
+    await api.claimProgressPass({ passId: "raid", requestId: "notice-pass-claim" });
+    expect((await api.getNotificationSignals()).claimablePassCount).toBe(before);
+  });
+
+  it("무료 일간 보급은 수령하면 꺼지고 다음 UTC 날짜에 다시 켜진다", async () => {
+    let now = new Date("2026-08-30T23:59:59Z");
+    const api = new FakeServer(createDefaultSession(), { latencyMs: 0, now: () => now });
+    expect((await api.getNotificationSignals()).freeSupplyCategories).toContain("daily");
+    await api.purchaseProduct({ storefront: "premium", productId: "premium-free-daily", quantity: 1 });
+    expect((await api.getNotificationSignals()).freeSupplyCategories).not.toContain("daily");
+    now = new Date("2026-08-31T00:00:00Z");
+    expect((await api.getNotificationSignals()).freeSupplyCategories).toContain("daily");
   });
 
   it("keeps one red, white-outlined, dark-shadow specification for every button", () => {
@@ -37,7 +89,7 @@ describe("notifications", () => {
       getIdleExcavation: vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0.5, harvestNotice: true }),
       getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }),
     } as unknown as GameApi;
-    const manager = new NotificationManager(api); const values: boolean[] = [];
+    const manager = new NotificationManager(api, new ManagerEvents()); const values: boolean[] = [];
     const unsubscribe = manager.subscribe("missionReward", (value) => values.push(value));
     await manager.refresh(); await manager.refresh(); unsubscribe();
     expect(values).toEqual([false, true]);
@@ -48,7 +100,7 @@ describe("notifications", () => {
     // 셋을 한꺼번에 기다리던 때는 발굴 조회 하나가 실패하면 받을 임무가 있어도 임무 점이 꺼진 채 남았다.
     const getIdleExcavation = vi.fn().mockResolvedValueOnce({ excavation: {}, serverTime: "", storageFillRatio: 1, harvestNotice: true }).mockRejectedValue(new Error("down"));
     const api = { getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 2 }), getIdleExcavation, getNotificationSignals: vi.fn().mockRejectedValue(new Error("down")) } as unknown as GameApi;
-    const manager = new NotificationManager(api); const missions: boolean[] = []; const harvest: boolean[] = [];
+    const manager = new NotificationManager(api, new ManagerEvents()); const missions: boolean[] = []; const harvest: boolean[] = [];
     manager.subscribe("missionReward", (value) => missions.push(value));
     manager.subscribe("excavationHarvestReady", (value) => harvest.push(value));
     await manager.refresh(); await manager.refresh();
@@ -61,7 +113,7 @@ describe("notifications", () => {
     const getMissions = vi.fn().mockResolvedValueOnce({ missions: [], claimableCount: 0 }).mockResolvedValue({ missions: [], claimableCount: 1 });
     const api = { getMissions, getIdleExcavation: vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0, harvestNotice: false }), getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }),
       subscribeMissionNotice: (listener: () => void) => { notify = listener; return () => undefined; } } as unknown as GameApi;
-    const manager = new NotificationManager(api); const values: boolean[] = [];
+    const manager = new NotificationManager(api, new ManagerEvents()); const values: boolean[] = [];
     manager.subscribe("missionReward", (value) => values.push(value));
     await manager.refresh();
     notify(); notify(); // 한 처리 안의 여러 저장은 한 번만 다시 읽는다.
@@ -72,10 +124,10 @@ describe("notifications", () => {
   it("팝업 출입이나 앱 재진입을 읽음 처리하지 않고 서버 확정 수확 상태를 복원한다", async () => {
     const getIdleExcavation = vi.fn().mockResolvedValue({ excavation: {}, serverTime: "", storageFillRatio: 0.5, harvestNotice: true });
     const api = { getMissions: vi.fn().mockResolvedValue({ missions: [], claimableCount: 0 }), getIdleExcavation, getNotificationSignals: vi.fn().mockResolvedValue({ pendingFriendRequestCount: 0, unseenEventCount: 0, unreadMailCount: 0 }) } as unknown as GameApi;
-    const firstManager = new NotificationManager(api); const first: boolean[] = [];
+    const firstManager = new NotificationManager(api, new ManagerEvents()); const first: boolean[] = [];
     firstManager.subscribe("excavationHarvestReady", (value) => first.push(value)); await firstManager.refresh(); await firstManager.refresh();
     // 새 manager는 앱 재진입을 나타내며, 로컬 읽음 플래그 없이 같은 서버 true를 다시 받는다.
-    const restoredManager = new NotificationManager(api); const restored: boolean[] = [];
+    const restoredManager = new NotificationManager(api, new ManagerEvents()); const restored: boolean[] = [];
     restoredManager.subscribe("excavationHarvestReady", (value) => restored.push(value)); await restoredManager.refresh();
     expect(first).toEqual([false, true]); expect(restored).toEqual([false, true]); expect(getIdleExcavation).toHaveBeenCalledTimes(3);
   });

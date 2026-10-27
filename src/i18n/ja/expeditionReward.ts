@@ -5,7 +5,6 @@ export const EXPEDITION_REWARD_JA = {
   "expeditionReward.refresh": "更新",
   "expeditionReward.summary": "週間最高スコア {best}",
   "expeditionReward.claimed": "受け取り済みの報酬",
-  "expeditionReward.claimedAmount": "{amount} 受け取り完了",
   "expeditionReward.loadFailed": "記録報酬を読み込めませんでした。",
   "expeditionReward.notEnough": "スコアが足りません。最新の進行量をご確認ください。",
   "expeditionReward.stageClosed": "週が変わったか、報酬段階が終了しました。",

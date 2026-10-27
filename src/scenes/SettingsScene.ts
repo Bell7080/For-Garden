@@ -1,9 +1,12 @@
-import { availableBattleSpeeds } from "../core/battleControls";
+import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
+import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
+import { gameApi } from "../api/FakeServer";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugScene } from "../debug";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { settingsManager } from "../managers/SettingsManager";
-import { LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
+import { LANGUAGE_MENU_LABEL, LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
 import { loadGameFonts } from "../ui/fonts";
 import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { saveManager } from "../state/SaveManager";
@@ -15,23 +18,20 @@ import { SettingsSlider } from "../ui/SettingsSlider";
 import { SettingsToggle } from "../ui/SettingsToggle";
 import { COLOR, textStyle } from "../ui/theme";
 import { platformFeedback } from "../api/PlatformFeedback";
-import { accountApi, type AccountFailureCode, type AccountState } from "../api/AccountApi";
-import { AccountSaveSync } from "../api/AccountSaveSync";
-import { session } from "../state/session";
-import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
+import { accountApi, type AccountIdentity, type AccountFailureCode, type AccountState } from "../api/AccountApi";
+import { disconnectProgress } from "../api/backendSession";
+import { openAccountIdPopup } from "../ui/AccountIdPopup";
+import { openSupportPopup } from "../ui/SupportPopup";
 import { PopupLayer } from "../ui/PopupLayer";
+import { openDebugToolsMenu } from "../ui/DebugToolsMenu";
 import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTINGS_TEXT, settingsSectionHeight, settingsTabSlot } from "../ui/settingsLayout";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
-import { relicCollection } from "../managers/RelicCollectionManager";
-import { playerLevelManager } from "../managers/PlayerLevelManager";
-import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
-import { relicProgression } from "../managers/RelicProgressionManager";
-import { getRelic } from "../data/relics";
 import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
+import { attachDragScroll } from "../ui/dragScroll";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
@@ -58,11 +58,14 @@ type SettingsTab = typeof TABS[number]["id"];
 export class SettingsScene extends Phaser.Scene {
   private content!: Phaser.GameObjects.Container;
   private scrollY = 0;
-  private dragStartY = 0;
   private activeTab: SettingsTab = "sound";
   private readonly popups = new PopupLayer(this, 3000);
   private accountState: AccountState = { kind: "guest", provider: "guest", maskedId: "GUEST-••••" };
+  private accountIdentities: AccountIdentity[] = [];
   private accountBusy = false;
+  private battleMember = false;
+  private battleSpeedRow?: SettingsSelectRow<ReturnType<typeof availableBattleSpeeds>[number]>;
+  private viewGeneration = 0;
   /** 검증을 마친 반환 경로만 보관해 탭 재시작 뒤에도 원래 화면을 잃지 않는다. */
   private returnScene: SettingsReturnScene = "lobby";
   private returnData?: SettingsEntryData["returnData"];
@@ -73,6 +76,11 @@ export class SettingsScene extends Phaser.Scene {
   constructor() { super("settings"); }
 
   create(): void {
+    const generation = ++this.viewGeneration;
+    this.accountBusy = false;
+    this.input.enabled = true;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.viewGeneration++; this.battleSpeedRow = undefined; });
+    this.battleMember = false;
     // 고정 제목과 탭은 스크롤 마스크 밖에 두어 현재 위치와 전환점을 항상 볼 수 있게 한다.
     // 디버그 채널의 제목은 화면에 그리지 않고 E2E가 어느 화면인지 확인하는 데만 쓴다. 언어를
     // 따라 바뀌면 그 확인이 언어마다 갈리므로 한국어 그대로 둔다.
@@ -86,12 +94,16 @@ export class SettingsScene extends Phaser.Scene {
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
     maskShape.fillStyle(0xffffff).fillRect(34, SETTINGS_HEAD.contentTop - 10, 1012, 1430);
     this.content.setMask(maskShape.createGeometryMask()); this.buildRows();
-    void accountApi.getState().then(result => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; if (this.activeTab === "support") this.buildRows(); } });
+    void gameApi.getPlayerState().then((state) => {
+      if (!this.scene.isActive() || generation !== this.viewGeneration) return;
+      this.battleMember = state.adFreeMembership;
+      this.battleSpeedRow?.setChoices(usableBattleSpeed(settingsManager.get().game.battleSpeed, this.battleMember), availableBattleSpeeds(this.battleMember));
+    }).catch(() => undefined);
+    void this.refreshAccountView(generation);
     // 88px 이상 행뿐 아니라 빈 여백도 드래그를 받아 긴 탭의 스크롤이 끊기지 않는다.
-    const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setInteractive({ draggable: true }).setDepth(-1);
-    zone.on("dragstart", (pointer: Phaser.Input.Pointer) => { this.dragStartY = pointer.y - this.scrollY; });
-    zone.on("drag", (pointer: Phaser.Input.Pointer) => this.scrollTo(pointer.y - this.dragStartY));
-    this.input.on("wheel", (_p: unknown, _o: unknown, _dx: number, dy: number) => this.scrollTo(this.scrollY - dy));
+    const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setDepth(-1);
+    // 행 위에서 시작한 손도 내려가야 한다. 끌기 면이 행 뒤에 있으면 행(슬라이더 제외)에서는 스크롤이 시작되지 않았다.
+    attachDragScroll(this, { owner: zone, bounds: () => zone.getBounds(), wheelFactor: 1, onDelta: (dy) => this.scrollTo(this.scrollY + dy) });
     addBackButton(this, () => this.close()).setDepth(30);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -157,6 +169,7 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 현재 탭에 종속된 행만 생성해 다른 탭의 입력면이 마스크 뒤에 남지 않게 한다. */
   private buildRows(): void {
+    this.battleSpeedRow = undefined;
     this.content.removeAll(true);
     const s = settingsManager.get();
     // 첫 판이 서는 자리. 배치표가 갖는 이유는 E2E가 같은 값으로 줄을 짚기 때문이다.
@@ -243,7 +256,7 @@ export class SettingsScene extends Phaser.Scene {
       const motionKeys = { default: "settings.play.motion.default", reduced: "settings.play.motion.reduced", off: "settings.play.motion.off" } as const;
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleUiMotion"),s.presentation.battleUiMotion,['default','reduced','off'] as const,v=>settingsManager.update({presentation:{battleUiMotion:v}}),v=>t(motionKeys[v]))); y+=SETTINGS_ROW.step; divider();
       // 인게임 배속 칩과 같은 1·2·3배 선택지를 보여 주며 SettingsManager가 즉시 저장한다.
-      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),s.game.battleSpeed,availableBattleSpeeds(false),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
+      this.content.add(this.battleSpeedRow = new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.battleSpeed"),usableBattleSpeed(s.game.battleSpeed,this.battleMember),availableBattleSpeeds(this.battleMember),v=>settingsManager.update({game:{battleSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       toggle(t("settings.play.autoUltimate"),'game','autoUltimate');
       this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.textSpeed"),s.game.textSpeed,[0.5,1,2] as const,v=>settingsManager.update({game:{textSpeed:v}}))); y+=SETTINGS_ROW.step; divider();
       // 목록·표기는 core/language.ts 한 표가 갖는다. 각 언어는 제 이름으로 서야 지금 화면을
@@ -252,7 +265,7 @@ export class SettingsScene extends Phaser.Scene {
       // 고를 수 있는 언어가 하나뿐이면 줄 자체를 세우지 않는다 — 눌러도 아무 일이 없는 조작은
       // 준비 상태를 과장한다. 번역이 들어와 `SELECTABLE_LANGUAGE_IDS`가 늘면 저절로 나타난다.
       if (SELECTABLE_LANGUAGE_IDS.length > 1) {
-      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,t("settings.play.language"),s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
+      this.content.add(new SettingsSelectRow(this,this.popups,SETTINGS_ROW.left,y,LANGUAGE_MENU_LABEL,s.game.language,SELECTABLE_LANGUAGE_IDS,v=>{
         settingsManager.update({game:{language:v}});
         // 글꼴 스택과 문구 표가 함께 바뀌므로, 둘 다 도착한 뒤에 다시 그린다. Phaser Text는 그린
         // 순간의 글꼴로 텍스처를 굳으니 받기 전에 그리면 대체 글꼴 상태로 남는다.
@@ -298,36 +311,42 @@ export class SettingsScene extends Phaser.Scene {
     y = section(t("settings.section.account"));
     const account = this.accountState;
     this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
-    if (account.kind === "guest") { this.addTextAction(90, y, t("settings.account.linkGoogle"), () => void this.login("google")); this.addTextAction(350, y, t("settings.account.linkApple"), () => void this.login("apple")); }
-    else { this.addTextAction(90, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => accountApi.logout()), true); }
+    const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
+    if (!linkedId) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
+    else this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: "ID" }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    for (const [index, provider] of (["google", "apple"] as const).entries()) {
+      const identity = this.accountIdentities.find(item => item.provider === provider);
+      const name = provider === "google" ? "Google" : "Apple";
+      this.addTextAction(400 + index * 280, y, identity ? t("account.identity.unlink", { provider: name }) : t(provider === "google" ? "settings.account.linkGoogle" : "settings.account.linkApple"), () => identity ? this.confirmUnlink(identity) : void this.login(provider), false, 250);
+    }
+    y += SETTINGS_SUPPORT.actionStep;
+    const email = this.accountIdentities.find(identity => identity.provider === "email");
+    if (email) this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: `EMAIL ${email.maskedId}` }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
+    else this.addTextAction(90, y, t("account.email.link"), () => openAccountEmailPopup(this, this.popups, "link", () => void this.refreshAccountView()), false, 540);
+    if (account.kind !== "guest") this.addTextAction(680, y, t("settings.account.signOut"), () => this.confirmAccountAction(t("settings.account.signOut"), t("settings.account.signOutNotice"), () => this.signOut()), true, 250);
     y += SETTINGS_SUPPORT.accountFootRoom;
     // 두 번째 판은 **정해진 자리**에서 시작한다. 계정 판이 언어에 따라 길어지면 그때만
     // 밀려나며(`section`의 `Math.max`), 그 밖에는 줄 자리가 언제나 같아 E2E가 짚을 수 있다.
     y = Math.max(y, SETTINGS_SUPPORT.sectionTop);
     y = section(t("settings.section.support"));
+    this.addTextAction(90, y, t("settings.support.inquiry"), () => openSupportPopup(this, this.popups)); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += SETTINGS_SUPPORT.actionStep;
     // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
     this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;
-    // 스타터 렐릭 추가처럼 저장 마이그레이션이 소급하지 않는 변경을 QA가 재설치 없이 확인하는 임시 진입점이다.
-    this.addTextAction(90, y, t("settings.debug.grantAll"), () => this.grantAllRelics()); y += SETTINGS_SUPPORT.actionStep;
-    // 렐릭 이야기(관찰 질문 셋·애착 스토리 넷)는 처음 만난 날과 유대 4~10이 열어 주므로, 확인용으로 한 번에 모두 연다.
-    // 콘텐츠가 연구원 레벨로 잠겨 있어, 뒤쪽 콘텐츠 확인용으로 레벨을 만렙으로 올려 한 번에 모두 연다.
-    this.addTextAction(90, y, t("settings.debug.maxLevel"), () => this.maxOutPlayerLevel()); y += SETTINGS_SUPPORT.actionStep;
-    this.addTextAction(90, y, t("settings.debug.unlockStories"), () => this.unlockAllStories()); y += SETTINGS_SUPPORT.actionStep;
-    // 한계 돌파는 레벨 상한·파편·치즈케이크 셋이 동시에 맞아야 열리는 조작이라, 재료 없이는
-    // 그 화면과 별마다 열리는 개체 효과를 확인할 방법이 없다. 재료만 주고 돌파는 사람이 누른다.
-    this.addTextAction(90, y, t("settings.debug.breakthroughSet"), () => this.grantBreakthroughSet("torika")); y += SETTINGS_SUPPORT.actionStep;
+    // 치트·개발용 조작은 QA 빌드(`--mode qa`)에서만 선다. 일반 빌드에서는 분기째 지워진다.
+    // 재화·레벨·보유·돌파·유대 조정은 서버 경계(`applyDebugCommand`)를 지나야 다음 서버 응답에 덮이지 않는다.
+    if (QA_TOOLS_ENABLED) { this.addTextAction(90, y, t("settings.debug.open"), () => openDebugToolsMenu(this, this.popups)); y += SETTINGS_SUPPORT.actionStep; }
     this.addTextAction(90, y, t("settings.support.withdraw"), () => this.confirmAccountAction(t("settings.support.withdraw"), t("settings.support.withdrawNotice"), () => accountApi.requestWithdrawal()), true); y += 110;
     return y;
   }
 
   /** 텍스트형 진입점도 최소 88px 터치 영역과 눌림 확대 규칙을 갖는다. */
-  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false): void {
+  private addTextAction(x: number, y: number, label: string, action: () => void, destructive = false, hitWidth = 840): void {
     const button = this.add.text(x, y, label, textStyle({ role: "emphasis", size: SETTINGS_TEXT.action, color: destructive ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5);
-    const hit = this.add.rectangle(x + 420, y, 840, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = this.add.rectangle(x + hitWidth / 2, y, hitWidth, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(button)); hit.on("pointerout", () => pressOut(button, "normal", { pop: false })); hit.on("pointerup", () => { pressOut(button); if (!this.accountBusy) action(); });
     this.content.add([button, hit]);
   }
@@ -357,55 +376,59 @@ export class SettingsScene extends Phaser.Scene {
     });
   }
 
-  /** 별 다섯까지 남은 재료를 한 번에 넣고 실제로 지급한 수만 알린다. */
-  private grantBreakthroughSet(relicId: string): void {
-    if (!session.owned.has(relicId)) {
-      this.popups.confirm({ title: t("settings.debug.breakthroughTitle"), message: t("settings.debug.needOwned"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
-      return;
-    }
-    const granted = relicProgression.grantBreakthroughSetForDebug(relicId);
-    const name = getRelic(relicId).name;
-    this.popups.confirm({
-      title: name + t("settings.debug.breakthroughSuffix"),
-      message: granted.fragments > 0 || granted.cheesecake > 0
-        ? t("settings.debug.granted", { name, fragments: granted.fragments, cheesecake: granted.cheesecake.toLocaleString() })
-        : t("settings.debug.alreadyMax"),
-      confirmLabel: t("settings.action.confirm"),
-      cancelLabel: false,
+  /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
+  private async refreshAccountView(generation = this.viewGeneration): Promise<void> {
+    const result = await accountApi.getState();
+    if (!result.ok || !this.scene.isActive() || generation !== this.viewGeneration) return;
+    this.accountState = result.value;
+    const identities = await accountApi.getIdentities?.();
+    if (!this.scene.isActive() || generation !== this.viewGeneration) return;
+    this.accountIdentities = identities?.ok ? identities.value : [];
+    if (this.activeTab === "support") this.buildRows();
+  }
+
+  private async login(provider: "google" | "apple"): Promise<void> {
+    if (this.accountBusy) return;
+    this.accountBusy = true;
+    try {
+      const result = await accountApi.login({ provider, mergeGuestProgress: false, intent: "link" });
+      if (!this.scene.isActive()) return;
+      if (!result.ok) { if (result.code !== "cancelled") this.showAccountFailure(result.code, result.message); return; }
+      await this.refreshAccountView();
+    } finally { this.accountBusy = false; }
+  }
+
+  private confirmUnlink(identity: AccountIdentity): void {
+    this.popups.confirm({ title: t("account.identity.unlink", { provider: identity.provider }), message: t("account.identity.unlinkBody"), confirmLabel: t("settings.action.confirm"), destructive: true }, () => {
+      if (this.accountBusy) return;
+      if (!accountApi.unlinkIdentity) { this.showAccountFailure("unsupported"); return; }
+      this.accountBusy = true;
+      void accountApi.unlinkIdentity(identity.id).then(result => {
+        if (!this.scene.isActive()) return;
+        if (!result.ok) this.showAccountFailure(result.code, result.message);
+        else void this.refreshAccountView();
+      }).finally(() => { this.accountBusy = false; });
     });
   }
 
-  /** 보유한 모든 렐릭의 유대를 10으로 올리고 관찰 질문·애착 스토리를 전부 연다(개발용). */
-  private unlockAllStories(): void {
-    const changed = relicCollection.unlockAllStoriesForDebug();
-    this.popups.confirm({ title: t("settings.debug.unlockStories"), message: t("settings.debug.unlockedStories", { count: changed }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+  /**
+   * 현재 계정에 아이디·비밀번호를 붙인다. UID를 유지하므로 서버 진행은 그 자리에 있고,
+   * 같은 아이디로 다른 기기에서 로그인하면 이어서 키울 수 있다. 저장 이어받기는 부트가 다시 거친다.
+   */
+  private linkWithId(): void {
+    openAccountIdPopup(this, this.popups, { mode: "link", onDone: (_state, how) => {
+      if (how === "signIn") { disconnectProgress(); saveManager.reset(); this.leaveToBoot(); return; }
+      this.popups.confirm({ title: t("settings.account.notice"), message: t("settings.account.linkIdDone"), confirmLabel: t("settings.action.confirm"), cancelLabel: false }, () => {
+        void accountApi.getState().then((result) => { if (result.ok && this.scene.isActive()) { this.accountState = result.value; this.buildRows(); } });
+      });
+    } });
   }
 
-  /** 연구원 레벨을 만렙으로 올린다. 로비로 돌아가면 새로 열린 콘텐츠의 자물쇠가 터지며 나타난다. */
-  private maxOutPlayerLevel(): void {
-    const changed = playerLevelManager.maxOutForDebug();
-    this.popups.confirm({ title: t("settings.debug.maxLevel"), message: t(changed ? "settings.debug.maxLevelDone" : "settings.debug.maxLevelAlready", { level: PLAYER_LEVEL_CAP }), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
-  }
-
-  /** 미보유 렐릭만 채워 넣고 몇 명이 새로 늘었는지만 짧게 알린다. */
-  private grantAllRelics(): void {
-    const grantedCount = relicCollection.grantAllForDebug();
-    this.popups.confirm({ title: t("settings.debug.grantAll"), message: grantedCount > 0 ? t("settings.debug.grantedRelics", { count: grantedCount }) : t("settings.debug.alreadyAll"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
-  }
-
-  /** 인증 성공 뒤 해시를 비교하고, 게스트의 로컬 선택은 서버 멱등 병합으로만 처리한다. */
-  private async login(provider: "google" | "apple"): Promise<void> {
-    this.accountBusy = true; this.input.enabled = false;
-    // login 자체에는 합산을 맡기지 않는다. 아래 명시적 mergeGuestSave 계약만 게스트 진행을 병합한다.
-    const loggedIn = await accountApi.login({ provider, mergeGuestProgress: false });
-    this.accountBusy = false; this.input.enabled = true;
-    if (!loggedIn.ok) { this.showAccountFailure(loggedIn.code); return; }
-
-    const sync = new AccountSaveSync(accountApi, saveManager);
-    const requestId = crypto.randomUUID();
-    const result = await sync.synchronize(session, (local, remote) => new Promise<SaveConflictChoice>(resolve => openSaveConflictPopup(this, this.popups, local, remote, resolve)), requestId);
-    if (result.ok) { this.leaveToBoot(); return; }
-    this.showAccountFailure(result.code);
+  /** 아이디 계정에서 나간다. 이 기기의 저장은 이 계정 것이므로 함께 비워 다음 사람의 진행과 섞이지 않게 한다. */
+  private async signOut(): Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }> {
+    const result = await accountApi.logout();
+    if (result.ok) { disconnectProgress(); saveManager.reset(); }
+    return result;
   }
 
   /** 로그아웃/탈퇴는 저장 초기화와 별개의 공용 확인 팝업을 통과한다. */
@@ -415,15 +438,25 @@ export class SettingsScene extends Phaser.Scene {
 
   /** 전환 중 입력을 잠그고 성공하면 부트의 저장 검증·마이그레이션 경계를 다시 탄다. */
   private async runAccountAction(operation: () => Promise<{ ok: boolean; code?: AccountFailureCode; message?: string }>): Promise<void> {
-    this.accountBusy = true; this.input.enabled = false; const result = await operation(); this.accountBusy = false; this.input.enabled = true;
+    if (this.accountBusy) return;
+    const generation = this.viewGeneration;
+    this.accountBusy = true;
+    this.input.enabled = false;
+    let result: { ok: boolean; code?: AccountFailureCode; message?: string };
+    try { result = await operation(); }
+    catch { result = { ok: false, code: "network-error" }; }
+    finally {
+      if (generation === this.viewGeneration) { this.accountBusy = false; this.input.enabled = true; }
+    }
+    if (!this.scene.isActive() || generation !== this.viewGeneration) return;
     if (result.ok) { this.leaveToBoot(); return; }
-    this.showAccountFailure(result.code ?? "network-error");
+    this.showAccountFailure(result.code ?? "network-error", result.message);
   }
 
   /** 서버 계약의 실패 코드를 플레이어용 문구로 한곳에서 바꾼다. */
-  private showAccountFailure(code: AccountFailureCode): void {
-    const keys: Record<AccountFailureCode, TextKey> = { unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
-    this.popups.confirm({ title: t("settings.account.notice"), message: t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+  private showAccountFailure(code: AccountFailureCode, message?: string): void {
+    const keys: Record<AccountFailureCode, TextKey> = { "email-unconfirmed": "account.id.error.login", unsupported: "settings.account.unsupported", cancelled: "settings.account.cancelled", "network-error": "settings.account.network", "guest-merge-unavailable": "settings.account.mergeBlocked", "conflict-cancelled": "settings.account.conflictCancelled", "invalid-id": "account.id.error.id", "weak-password": "account.id.error.password", "id-taken": "account.id.error.taken", "invalid-credentials": "account.id.error.login", "rate-limited": "account.id.error.rate", "save-conflict": "settings.account.stale", "invalid-remote-save": "settings.account.unavailable" };
+    this.popups.confirm({ title: t("settings.account.notice"), message: message ?? t(keys[code]), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
   }
 
   /** 현재 탭 높이만 기준으로 콘텐츠를 움직여 다른 탭 영역으로 새지 않게 한다. */

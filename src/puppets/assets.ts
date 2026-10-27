@@ -92,6 +92,16 @@ import {
   SUKUSUINO_SD_METADATA,
   TABOA_PORTRAIT_METADATA,
   TABOA_SD_METADATA,
+  IKANIXIA_PORTRAIT_METADATA,
+  IKANIXIA_SD_METADATA,
+  ATRA_PORTRAIT_METADATA,
+  ATRA_SD_METADATA,
+  PULSI_PORTRAIT_METADATA,
+  PULSI_SD_METADATA,
+  NEURI_PORTRAIT_METADATA,
+  NEURI_SD_METADATA,
+  MIR_PORTRAIT_METADATA,
+  MIR_SD_METADATA,
   QUETZALCOATLUS_PORTRAIT_METADATA,
   QUETZALCOATLUS_SD_METADATA,
   VENTIA_SD_METADATA,
@@ -492,6 +502,18 @@ export const SUKUSUINO_ASSET: PuppetAsset = { url: `${base}puppets/raid_001.zip`
 /** **타보아 전신.** 둘째 레이드 보스다(`raid_002`). */
 export const TABOA_ASSET: PuppetAsset = { url: `${base}puppets/raid_002.zip`, ...TABOA_PORTRAIT_METADATA };
 
+/** 회수조 다섯(`enemy_010`~`014` · `enemySD_010`~`014`). 번호는 이카닉시아·아트라·펄시·네우리·미르 순이다. */
+export const IKANIXIA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_010.zip`, ...IKANIXIA_PORTRAIT_METADATA };
+export const IKANIXIA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_010.zip`, ...IKANIXIA_SD_METADATA };
+export const ATRA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_011.zip`, ...ATRA_PORTRAIT_METADATA };
+export const ATRA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_011.zip`, ...ATRA_SD_METADATA };
+export const PULSI_ASSET: PuppetAsset = { url: `${base}puppets/enemy_012.zip`, ...PULSI_PORTRAIT_METADATA };
+export const PULSI_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_012.zip`, ...PULSI_SD_METADATA };
+export const NEURI_ASSET: PuppetAsset = { url: `${base}puppets/enemy_013.zip`, ...NEURI_PORTRAIT_METADATA };
+export const NEURI_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_013.zip`, ...NEURI_SD_METADATA };
+export const MIR_ASSET: PuppetAsset = { url: `${base}puppets/enemy_014.zip`, ...MIR_PORTRAIT_METADATA };
+export const MIR_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_014.zip`, ...MIR_SD_METADATA };
+
 /** **코아틀 전신.** 셋째 레이드 보스다(`raid_003`). */
 export const QUETZALCOATLUS_ASSET: PuppetAsset = { url: `${base}puppets/raid_003.zip`, ...QUETZALCOATLUS_PORTRAIT_METADATA };
 
@@ -535,6 +557,11 @@ const PORTRAIT_ASSETS = {
   pontos: PONTOS_ASSET,
   sukusuino: SUKUSUINO_ASSET,
   taboa: TABOA_ASSET,
+  ikanixia: IKANIXIA_ASSET,
+  atra: ATRA_ASSET,
+  pulsi: PULSI_ASSET,
+  neuri: NEURI_ASSET,
+  mir: MIR_ASSET,
   quetzalcoatlus: QUETZALCOATLUS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
@@ -875,6 +902,11 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   [ENEMY_SD_ASSET_IDS[11]]: TABOA_SD_ASSET,
   [ENEMY_SD_ASSET_IDS[12]]: QUETZALCOATLUS_SD_ASSET,
   ...RAITIA_SD_ASSETS,
+  ikanixia: IKANIXIA_SD_ASSET,
+  atra: ATRA_SD_ASSET,
+  pulsi: PULSI_SD_ASSET,
+  neuri: NEURI_SD_ASSET,
+  mir: MIR_SD_ASSET,
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */
@@ -1069,6 +1101,10 @@ export async function preloadPuppetAssets(
 }
 
 export interface SpawnOptions {
+  /** 전투 진입은 모델 생성만 프레임 예산으로 나누며 읽기/파싱은 병렬로 유지한다. */
+  creationQueue?: import("./creationQueue").PuppetCreationQueue;
+  /** 전원이 준비될 때까지 부분 생성된 모델을 그리거나 애니메이션 계산하지 않는다. */
+  startPaused?: boolean;
   /** 발끝을 놓을 바닥 지점. `focus`를 주면 쓰이지 않는다. */
   x?: number;
   groundY?: number;
@@ -1084,6 +1120,20 @@ export interface SpawnOptions {
   tint?: number;
   depth?: number;
   flipX?: boolean;
+  /**
+   * 읽는 사이에 더 이상 필요 없어졌는지. 모델 생성(메인 스레드, 수십~수백 ms)에 들어가기 전에
+   * 한 번 묻고, 그렇다면 만들지 않고 `PuppetSpawnCancelled`로 물러난다 — 정보창을 연달아 넘길 때
+   * 지나쳐 온 개체까지 끝까지 세웠다 부수면 그 비용이 그대로 끊김이 된다.
+   */
+  isStale?: () => boolean;
+}
+
+/** `SpawnOptions.isStale`이 참이라 만들지 않고 물러났다. 실패가 아니라 정상 취소다. */
+export class PuppetSpawnCancelled extends Error {
+  constructor() {
+    super("puppet spawn cancelled");
+    this.name = "PuppetSpawnCancelled";
+  }
 }
 
 export interface Placement {
@@ -1247,12 +1297,18 @@ export async function spawnPuppet(
   let creature: PuppetCreature;
   try {
     const template = await loadPuppet(asset);
+    if (options.isStale?.()) throw new PuppetSpawnCancelled();
     // Puppet은 재생 시각·속도·강도를 내부에 보관한다. 같은 인스턴스를 여러 Mesh가 공유하면 한
     // 캐릭터의 play가 다른 캐릭터를 덮으므로, 정적 프로젝트만 공유하고 재생기는 개체마다 만든다.
     const { Puppet } = await import("puppetforge/phaser");
-    const puppet = Puppet.fromProject(template.project, template.texture);
     const { IndexedPuppetCreature } = await import("./IndexedPuppetCreature");
-    creature = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+    const create = async () => {
+      const puppet = Puppet.fromProject(template.project, template.texture);
+      const next = await IndexedPuppetCreature.fromPuppet(scene, puppet);
+      if (options.startPaused) next.setVisible(false).setAnimationFrozen(true);
+      return next;
+    };
+    creature = await (options.creationQueue ? options.creationQueue.run(create) : create());
   } catch (error) {
     releasePuppetAsset(scene, asset.url);
     throw error;

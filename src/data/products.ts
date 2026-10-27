@@ -10,7 +10,7 @@ import { DUEL_PRODUCTS } from "./duelShop";
  * 아래가 전시대」라는 규칙이 이미 깊이 박혀 있어, 둘로 갈리면 선반·격자·값줄 규칙이 두 곳이
  * 되고 한쪽만 고치는 사고가 난다.
  */
-export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage" | "duel";
+export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "loot" | "mileage" | "duel" | "guild";
 
 /** 일반 인게임 상점과 무역소가 공유하는 안정적인 카테고리 계약이다. */
 /**
@@ -59,7 +59,12 @@ export type ProductAcquisition =
   | { kind: "item"; itemId: string; amount: number }
   | { kind: "platform_payment"; platformProductId: string; basePriceKrw: number; /** 할인 전 정가(원화). 있으면 카드가 정가를 긋고 할인율을 단다. */ listPriceKrw?: number }
   | { kind: "free" }
-  | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number };
+  | { kind: "rewarded_ad"; slotId: string; dailyLimitUtc: number }
+  /**
+   * 길드 코인으로 사는 상품(길드 상점). 코인은 지갑이 아니라 길드원 행이 들고 있어 `currency` 갈래에 넣지 않는다 —
+   * 차감·주간 한도는 길드 백엔드가, 지급은 `GameApi.buyGuildProduct`가 한 호출로 확정한다.
+   */
+  | { kind: "guild_coin"; amount: number };
 
 /** API 경계에서 확정할 수 있는 상품 지급 항목이다. */
 export type ProductGrant =
@@ -73,9 +78,12 @@ export type ProductGrant =
    * - `choose` 없음 — **랜덤 룬**: 등급과 자리는 진열이 정하고 옵션은 서버가 굴린다.
    * - `choose: "main"` — **지정 룬**: 주 옵션 둘을 사는 쪽이 고르고 보조 옵션만 서버가 굴린다.
    *
+   * - `randomRarity` — **완전 랜덤 룬**: 등급(`RANDOM_RUNE_RARITY_PERCENT`)·자리·옵션을 모두 서버가 굴린다.
+   *   이때 `rarity`는 진열 그림의 색일 뿐 지급 등급이 아니다.
+   *
    * 고른 값은 구매 요청(`runeChoice`)으로 오고 서버가 다시 검증한다 — 화면의 선택을 믿지 않는다.
    */
-  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "main" }
+  | { kind: "rune"; name: string; amount: number; rarity: "uncommon" | "rare" | "epic" | "legendary"; part?: 0 | 1 | 2; choose?: "main"; randomRarity?: true }
   | { kind: "profile_decoration"; decorationId: string; name: string }
   /** 한 개체의 파편. 정의에는 `relicId`가 없고 서버가 `weeklySsrFragment`를 그 주의 개체로 풀어 내려 준다. */
   | { kind: "relic_fragment"; relicId: string; amount: number }
@@ -116,6 +124,8 @@ export type PassDailyBonus =
 /** 후원 상품이 부여하는 기간제 또는 영구 계정 권리다. */
 export interface PassBenefitDefinition {
   durationDays: number | null;
+  /** 스토어 정기결제. 생략한 기간제 패스는 만료 후 자동으로 갱신하지 않는다. */
+  autoRenew?: true;
   /** 광고 보상을 즉시 받는 후원 권리. 레이드 구독처럼 광고와 무관한 구독은 적지 않는다. */
   instantAdRewards?: true;
   usesStandardAdRewardPolicy?: true;
@@ -183,6 +193,8 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
    * 젬 1 = 치즈케이크 2 = 골드 500)에서 일일은 100~105%, 특가는 107~156%다.
    */
   { id: "shop-tonic-pack", storefront: "shop", category: "daily", iconKey: "shop-product-supplies", name: "에너지 드링크", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  // 만능 R 파편 — 주간 한 개, **아주 비싼 골드**로만 판다. R 파편 시세(마일리지 10 ≈ 젬 600 ≈ 골드 30만)의 2배다.
+  { id: "shop-universal-r", storefront: "shop", category: "special", iconKey: "shop-product-enhancement", name: "만능 R 파편", description: "", acquisition: { kind: "currency", currency: "gold", amount: 600000 }, grants: [{ kind: "item", itemId: "universal-fragment-r", name: "만능 R 파편", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "shop-tonic-large-pack", storefront: "shop", category: "special", iconKey: "shop-product-supplies", name: "에너지 드링크+", description: "", acquisition: { kind: "currency", currency: "gems", amount: 45 }, grants: [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **고고학 상점.** 기본 리롤은 언제나 플레이 재화(원석)로 돌아가야 하므로, 여기서 파는 것은
   // 그 바깥의 몫이다 — 원석 자체는 골드로 바꿔 주되 하루 몫으로 끊고, 특성 아이템은 상시
@@ -193,8 +205,8 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   // 길」은 열되 그것이 가장 좋은 환전이 되지 않게 한다. 화석·호박석은 연구 한 번(젬 300)이 기준이고 두 연구의 확률·회색 보상이 같으므로 값도 같다(2,500). 주간 한 개씩만 연다.
   { id: "arch-gold-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "골드", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 250 }, grants: [{ kind: "currency", currency: "gold", amount: 30000 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-cheesecake-exchange", storefront: "archaeology", category: "daily", iconKey: "shop-product-supplies", name: "치즈케이크", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 150 }, grants: [{ kind: "currency", currency: "cheesecake", amount: 60 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "arch-fossil-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "화석", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "arch-amber-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "호박석", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-fossil-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "화석", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-amber-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "호박석", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-ancient-core", storefront: "archaeology", category: "weekly", iconKey: "shop-product-ancient-core", name: "미지의 고대 핵", description: "미지의 고대 핵 1개", acquisition: { kind: "currency", currency: "rawStone", amount: 600 }, grants: [{ kind: "item", itemId: "ancient-core", name: "미지의 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-refined-core", storefront: "archaeology", category: "special", iconKey: "shop-product-refined-core", name: "정제된 고대 핵", description: "정제된 고대 핵 1개", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-restoration-crystal", storefront: "archaeology", category: "special", iconKey: "shop-product-restoration-crystal", name: "완전 복원 결정", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "rawStone", amount: 4500 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
@@ -214,10 +226,11 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-fossil", name: "인양 광물 회수분", description: "원석 300개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 100 }, grants: [{ kind: "currency", currency: "rawStone", amount: 300 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "인양 보급 음료", description: "에너지 드링크 1개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 85 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "에너지 드링크", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-gems", name: "인양 정산 결정", description: "다이아 40개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 75 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "완전 복원 결정", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 340 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "완전 복원 결정", description: "완전 복원 결정 1개", acquisition: { kind: "currency", currency: "salvageRecord", amount: 1000 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **룬 칸 — 가끔만 나온다.** 주 무대는 고고학이고 다른 상점은 드물게, 조금 더 비싸게 판다.
   // 어느 기간에 어느 칸이 열리는지는 로테이션 순수 함수(`rotationOffer`)가 정하며, 값은 전부 고고학
   // 900(희귀)·3,000(영웅)원석을 기준으로 환산했다. 젬(다이아)으로는 팔지 않고 전설은 팔지 않는다.
+  { id: "arch-rune-random", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "랜덤 룬", description: "등급·자리·옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "rune", name: "랜덤 룬", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-rune-daily-uncommon", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "고급 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 300 }, grants: [{ kind: "rune", name: "고급 룬", amount: 1, rarity: "uncommon" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-daily-rare", storefront: "archaeology", category: "daily", iconKey: "shop-product-rune", name: "희귀 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 900 }, grants: [{ kind: "rune", name: "희귀 룬", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-daily" },
   { id: "arch-rune-weekly-epic", storefront: "archaeology", category: "weekly", iconKey: "shop-product-rune", name: "영웅 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "rawStone", amount: 3000 }, grants: [{ kind: "rune", name: "영웅 룬", amount: 1, rarity: "epic" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "arch-weekly-a" },
@@ -226,6 +239,16 @@ export const SHOP_PRODUCTS: readonly ProductDefinition[] = [
   { id: "shop-rune-weekly", storefront: "shop", category: "special", iconKey: "shop-product-rune", name: "희귀 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "gold", amount: 135000 }, grants: [{ kind: "rune", name: "희귀 룬", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "shop-weekly" },
   { id: "raid-rune-weekly", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-rune", name: "영웅 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "raidSigil", amount: 550 }, grants: [{ kind: "rune", name: "영웅 룬", amount: 1, rarity: "epic" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "raid-weekly" },
   { id: "loot-rune-weekly", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-rune", name: "희귀 룬", description: "옵션 무작위", acquisition: { kind: "currency", currency: "salvageRecord", amount: 220 }, grants: [{ kind: "rune", name: "희귀 룬", amount: 1, rarity: "rare" }], defaultQuantity: 1, purchaseLimit: 1, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z", rotationSlot: "loot-weekly" },
+  // **고고학 재화를 전리품 상점에서도 판다.** 열심히 돈 만큼 더 사게 화석·호박석은 주 5회, 랜덤 룬은 고고학처럼 일간 3회로 넉넉히 열고, 값은 고고학 원석값에서
+  // 증표·기록 시세(룬 값 기준 원석 1 ≈ 증표 0.18 ≈ 기록 0.24)로 환산한 뒤 조금 깎았다 — 레이드·원정이 애매한 만큼 이득을 준다.
+  // **한도는 전부 살 수 있다는 전제가 아니다.** 최대치가 과한 지급이어도 증표·기록 수입이 먼저 막는 표이고, 다 사더라도 다른 곳을 포기하고 몰아준 몫이라
+  // 버그가 아니라 플레이 전략의 선택으로 읽는다(CLAUDE.md '반복 보상 인플레이션 승인선').
+  { id: "raid-fossil-exchange", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-supplies", name: "화석", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 420 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-amber-exchange", storefront: "loot", lootCategory: "raid", category: "weekly", iconKey: "shop-product-supplies", name: "호박석", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 420 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "raid-rune-random", storefront: "loot", lootCategory: "raid", category: "daily", iconKey: "shop-product-supplies", name: "랜덤 룬", description: "", acquisition: { kind: "currency", currency: "raidSigil", amount: 250 }, grants: [{ kind: "rune", name: "랜덤 룬", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-fossil-exchange", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-supplies", name: "화석", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 560 }, grants: [{ kind: "currency", currency: "fossil", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-amber-exchange", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-supplies", name: "호박석", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 560 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-rune-random", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "랜덤 룬", description: "", acquisition: { kind: "currency", currency: "salvageRecord", amount: 340 }, grants: [{ kind: "rune", name: "랜덤 룬", amount: 1, rarity: "rare", randomRarity: true }], defaultQuantity: 1, purchaseLimit: 3, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **무역은 교환소가 아니라 패키지 전시장이다.** 일반 상점이 화석·호박석으로 보급품을 사는
   // 상시 진열대라면, 무역은 그때그때 운영이 올려 두는 **묶음 하나하나를 전시**하는 자리다 —
   // 값은 젬으로 받고, 같은 젬으로 따로 사는 것보다 더 많이 주는 것이 이 화면의 존재 이유다.

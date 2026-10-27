@@ -109,6 +109,16 @@
 "Angelegt",
 "Надето"
 ],
+"inventory.sort.relic": [
+"遗物",
+"เรลิก",
+"Di vật",
+"Relik",
+"Reliquia",
+"Relíquia",
+"Relikt",
+"Реликт"
+],
 "inventory.guide.held": [
 "持有",
 "ที่มี",
@@ -459,16 +469,6 @@
 "Formation und Kampf dieser Operation öffnen später",
 "Построение и бой этой операции откроются позже"
 ],
-"inventory.strataChargeGained": [
-"探查次数 +{amount}",
-"จำนวนครั้งสำรวจ +{amount}",
-"Lượt thám sát +{amount}",
-"Kesempatan survei +{amount}",
-"Intentos de estudio +{amount}",
-"Tentativas de pesquisa +{amount}",
-"Erkundungen +{amount}",
-"Попытки разведки +{amount}"
-],
 "inventory.useFailed": [
 "无法使用",
 "ใช้ไม่ได้",
@@ -479,16 +479,6 @@
 "Nicht nutzbar",
 "Нельзя использовать"
 ],
-"inventory.strataChargeFull": [
-"探查次数已满",
-"จำนวนครั้งสำรวจเต็มแล้ว",
-"Lượt thám sát đã đầy",
-"Kesempatan survei sudah penuh",
-"Los intentos de estudio están llenos",
-"As tentativas de pesquisa estão cheias",
-"Erkundungen sind voll",
-"Попытки разведки заполнены"
-],
 "inventory.staminaFull": [
 "体力已满",
 "สตามินาเต็มแล้ว",
@@ -498,5 +488,17 @@
 "A estamina está cheia",
 "Ausdauer ist voll",
 "Выносливость заполнена"
-]
+],
+"stamina.gemDetail": ["今日{count}次 · {reset}重置", "วันนี้ {count} ครั้ง · รีเซ็ต {reset}", "Hôm nay {count} lần · đặt lại {reset}", "Hari ini {count}x · atur ulang {reset}", "Hoy {count} veces · se reinicia {reset}", "Hoje {count}x · reinicia {reset}", "Heute {count}× · Reset {reset}", "Сегодня {count} раз · сброс {reset}"],
+"inventory.guide.sources": ["获取方式", "วิธีได้รับ", "Cách nhận", "Cara Mendapatkan", "Cómo obtener", "Como obter", "Erhalt", "Как получить"],
+"inventory.source.dungeonDrop": ["芝士蛋糕大作战·悬赏胜利与扫荡时偶尔获得（每日最多3张）", "บางครั้งจากชัยชนะและการกวาดล้างใน ปฏิบัติการชีสเค้ก · ค่าหัว (สูงสุดวันละ 3)", "Thỉnh thoảng khi thắng và càn quét Đại chiến Bánh phô mai · Truy nã (tối đa 3/ngày)", "Kadang dari kemenangan dan sapu bersih Operasi Cheesecake · Buronan (maks. 3/hari)", "A veces al ganar y en el barrido de Operación Tarta de queso · Se busca (máx. 3 al día)", "Às vezes em vitórias e na varredura de Operação Cheesecake · Procurados (até 3 por dia)", "Manchmal bei Siegen und Säuberungen in Käsekuchen-Operation · Kopfgeld (max. 3 pro Tag)", "Иногда за победы и зачистку в «Чизкейк» · Розыск (до 3 в день)"],
+"inventory.source.dungeonDropRare": ["芝士蛋糕大作战·悬赏胜利与扫荡时稀有获得（每日最多1张）", "นาน ๆ ครั้งจากชัยชนะและการกวาดล้างใน ปฏิบัติการชีสเค้ก · ค่าหัว (สูงสุดวันละ 1)", "Hiếm khi thắng và càn quét Đại chiến Bánh phô mai · Truy nã (tối đa 1/ngày)", "Jarang dari kemenangan dan sapu bersih Operasi Cheesecake · Buronan (maks. 1/hari)", "Rara vez al ganar y en el barrido de Operación Tarta de queso · Se busca (máx. 1 al día)", "Raramente em vitórias e na varredura de Operação Cheesecake · Procurados (até 1 por dia)", "Selten bei Siegen und Säuberungen in Käsekuchen-Operation · Kopfgeld (max. 1 pro Tag)", "Изредка за победы и зачистку в «Чизкейк» · Розыск (до 1 в день)"],
+"inventory.source.strata": ["考古地层探查", "การสำรวจชั้นหินโบราณคดี", "Thăm dò địa tầng Khảo cổ", "Eksplorasi lapisan Arkeologi", "Exploración de estratos de Arqueología", "Exploração de estratos de Arqueologia", "Archäologie-Schichtgrabung", "Археологическая разведка пластов"],
+"inventory.source.strataRare": ["考古地层探查中稀有获得", "นาน ๆ ครั้งจากการสำรวจชั้นหินโบราณคดี", "Hiếm khi từ thăm dò địa tầng Khảo cổ", "Jarang dari eksplorasi lapisan Arkeologi", "Rara vez en la exploración de estratos de Arqueología", "Raramente na exploração de estratos de Arqueologia", "Selten aus der Archäologie-Schichtgrabung", "Изредка в археологической разведке пластов"],
+"inventory.source.attendance": ["签到奖励", "รางวัลเช็กอิน", "Phần thưởng điểm danh", "Hadiah absen", "Recompensas de asistencia", "Recompensas de presença", "Anmeldebelohnungen", "Награды за вход"],
+"inventory.source.premium": ["高级商店礼包", "แพ็กเกจร้านค้าพรีเมียม", "Gói Cửa hàng cao cấp", "Paket Toko Premium", "Paquetes de la Tienda prémium", "Pacotes da Loja premium", "Premium-Shop-Pakete", "Наборы премиум-магазина"],
+"inventory.source.raidPass": ["突袭通行证（每日1张）", "บัตรผ่านเรด (วันละ 1)", "Thẻ Raid (1 mỗi ngày)", "Pass Raid (1 per hari)", "Pase de incursión (1 al día)", "Passe de incursão (1 por dia)", "Raid-Pass (1 pro Tag)", "Пропуск рейда (1 в день)"],
+"inventory.source.levelUp": ["研究员等级提升", "เลเวลนักวิจัยเพิ่มขึ้น", "Lên cấp nhà nghiên cứu", "Naik level periset", "Subida de nivel de investigador", "Subida de nível de pesquisador", "Forschenden-Stufenaufstieg", "Повышение уровня исследователя"],
+"inventory.source.shops": ["商店", "ร้านค้า", "Cửa hàng", "Toko", "Tienda", "Loja", "Shop", "Магазин"],
+"inventory.source.ad": ["广告奖励", "รางวัลโฆษณา", "Phần thưởng quảng cáo", "Hadiah iklan", "Recompensas de anuncios", "Recompensas de anúncios", "Werbebelohnungen", "Награды за рекламу"]
 }

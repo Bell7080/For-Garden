@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { setDebugGridCards, setDebugGridOffset, setDebugRelicScroll, setDebugScene } from "../debug";
@@ -8,11 +9,13 @@ import type { RelicDef } from "../core/types";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { followTutorialTarget } from "../ui/tutorialTarget";
+import { tutorialManager } from "../managers/TutorialManager";
 import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
-import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../ui/portraitGrid";
+import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
@@ -50,7 +53,7 @@ const GRID_CARD = { width: RELIC_GRID.card.width, height: RELIC_GRID.card.height
 /** 첫 줄의 돌출된 머리가 상단 마스크에 닿지 않도록 공용 안전 영역 계산만 쓴다. */
 const GRID_FIRST_ROW_Y = portraitGridFirstRowY(VIEWPORT_TOP, GRID_CARD.height, PORTRAIT_GRID_MASK_GAP);
 /** 드래그와 카드 탭을 구분하는 최소 이동 거리다. */
-const DRAG_SLOP = 18;
+const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /**
  * 렐릭 — 보유 중인 렐릭을 훑어보는 화면.
@@ -212,7 +215,7 @@ export class RelicsScene extends Phaser.Scene {
     this.installScrollInput();
 
     // 그리드는 BottomNav 경계에서 잘리고 배경 원화는 하단 탭 뒤까지 이어진다.
-    new BottomNav(this, "relics");
+    const nav = new BottomNav(this, "relics");
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
@@ -220,6 +223,39 @@ export class RelicsScene extends Phaser.Scene {
     const openId = this.pendingOpenRelicId;
     this.pendingOpenRelicId = undefined;
     if (openId && relicCollection.owns(openId)) this.info.showRelic(getRelic(openId), true);
+    else this.startFeedTutorial(nav);
+  }
+
+  /**
+   * 튜토리얼 강화 두 칸: 토리카 정보창에서 일반 강화와 1레벨 즉시 강화를 차례로 가리킨다. 각 조작이 확정되거나
+   * 건너뛰기를 누르면 칸을 마친다. 정보창을 닫아 버리면 안내도 함께 걷는다(다시 오면 이어진다).
+   */
+  private startFeedTutorial(nav: BottomNav): void {
+    const next = tutorialManager.lobbyStep();
+    if (next !== "feed" && next !== "feedLevel") return;
+    if (!relicCollection.owns("torika")) return;
+    this.info.showRelic(getRelic("torika"), true);
+    let stopped = false, completing = false, returnToLobby = false;
+    const complete = async (): Promise<void> => {
+      if (stopped || completing) return;
+      const step = tutorialManager.next();
+      if (step !== "feed" && step !== "feedLevel") return;
+      completing = true;
+      const result = await tutorialManager.complete(step);
+      completing = false;
+      if (!result || stopped) return;
+      if (step === "feedLevel") { returnToLobby = true; this.info.hide(); if (this.info.isOpen) this.info.hide(); }
+    };
+    this.info.onFed = mode => {
+      if (tutorialManager.next() === (mode === "normal" ? "feed" : "feedLevel")) void complete();
+    };
+    followTutorialTarget(this, {
+      enabled: () => !stopped && (returnToLobby || this.info.isOpen),
+      rect: () => returnToLobby ? nav.tabRect("lobby") : this.info.feedBulkTutorialBounds() ?? this.info.feedButtonBounds(),
+      text: () => returnToLobby ? t("tutorial.relics.return") : tutorialManager.next() === "feed" ? t("tutorial.relics.feed") : this.info.feedBulkTutorialBounds() ? t("tutorial.relics.one") : t("tutorial.relics.bulk"),
+      onSkip: () => { if (returnToLobby) { stopped = true; return; } void complete(); },
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { stopped = true; this.info.onFed = undefined; });
   }
 
   /** 모바일 관성은 프레임 시간으로 감쇠하며, 이동한 프레임마다 카드 내부 마스크도 동기화한다. */
@@ -269,6 +305,8 @@ export class RelicsScene extends Phaser.Scene {
       this.gridBottom = Math.max(this.gridBottom, y + cardH / 2);
       introIndex += 1;
     });
+    // 정보창을 옆으로 넘기는 순서는 지금 도감에 선 순서(보유 → 미보유, 정렬·필터 반영) 그대로다.
+    this.info.setNeighborOrder([...owned, ...locked]);
     place(owned, startY);
     if (locked.length > 0) {
       // 미보유 항목이 있을 때만 구분선과 제목을 같은 컨테이너에 만든다. 빈 섹션에는 장식도 없다.
@@ -327,6 +365,8 @@ export class RelicsScene extends Phaser.Scene {
         // 애착 렐릭은 떠오르지 않고 붉게 탄다. 크기까지 바뀌면 옆 칸과 줄이 어긋나 목록을
         // 훑는 눈이 거기서 걸린다.
         selectedStyle: "favorite",
+        // 전신 원화는 보이는 줄 근처만 올린다(`syncPortraitResidency`).
+        deferPortrait: true,
       });
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
@@ -445,6 +485,7 @@ export class RelicsScene extends Phaser.Scene {
     this.content.y = Phaser.Math.Clamp(y, this.minScrollY, 0);
     if (this.content.y === this.minScrollY || this.content.y === 0) this.velocityY = 0;
     this.syncCardMasks();
+    syncPortraitResidency(this.cards.values(), this.content.y, { top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }, GRID_CARD.height);
     setDebugGridOffset("relics", this.content.y);
     setDebugRelicScroll({ y: this.content.y, minY: this.minScrollY, maxY: 0, enabled: this.scrollEnabled(), viewportTop: VIEWPORT_TOP, viewportBottom: VIEWPORT_BOTTOM });
   }

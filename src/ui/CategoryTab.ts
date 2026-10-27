@@ -44,6 +44,8 @@ export interface CategoryTabOptions {
    * `"down"`이면 솟는 쪽과 강조선이 아래로 뒤집힌다(환경설정).
    */
   face?: "up" | "down";
+  /** 글자 크기. 비우면 공용 크기다 — 화면의 큰 갈래(길드의 정보·길드전·수호전)처럼 한 단계 위의 탭만 키운다. */
+  labelSize?: number;
   onSelect: () => void;
 }
 
@@ -73,7 +75,7 @@ export function addCategoryTab(
   }
 
   const label = scene.add
-    .text(0, 1, options.label, textStyle({ role: "emphasis", size: CATEGORY_TAB.labelSize, color: selected ? COLOR.accentText : COLOR.inkDim }))
+    .text(0, 1, options.label, textStyle({ role: "emphasis", size: options.labelSize ?? CATEGORY_TAB.labelSize, color: selected ? COLOR.accentText : COLOR.inkDim }))
     .setOrigin(0.5);
   // 낱말 길이는 언어가 정하는데(`룬` 한 글자 ↔ `Consumable` 열 글자) 라벨 폭은 줄이 나눠 갖는
   // 고정값이다. 라벨을 넓히면 줄 전체가 판 밖으로 나가므로 글자만 가로로 줄인다.

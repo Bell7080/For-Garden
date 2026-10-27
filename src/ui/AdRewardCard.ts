@@ -1,14 +1,19 @@
 import Phaser from "phaser";
 import { formatCurrency } from "../core/formatCurrency";
-import { t } from "../i18n";
 import type { ClipRect } from "./clipRect";
 import { addClippedHit } from "./clippedHit";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
 import { addFrameAmount, addFramedIcon } from "./itemFrame";
+import { UI_ICON } from "./icons";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { addSoldOutStamp, forgetSoldOutStamp } from "./soldOutStamp";
+import { paintShowcaseCard, SHOWCASE_TIER_TONE } from "./showcaseCardChrome";
+
+/** 매진 막이 광고 칸의 깎인 모서리를 넘지 않게 하는 값 — 상점 칸과 같다. */
+export const AD_CARD_BEVEL = { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } as const;
 
 export interface AdRewardCardOptions {
   x: number; y: number; width: number; height: number;
@@ -26,6 +31,8 @@ export interface AdRewardCardOptions {
   /** 스크롤 중의 손을 누름으로 치지 않는 판정(씬이 갖는다). */
   isTap: (pointer: Phaser.Input.Pointer) => boolean;
   onWatch: () => void;
+  /** 오늘 몫을 다 받았을 때 찍히는 매진 도장의 기억 키(보통 광고 슬롯 ID). */
+  stampKey: string;
 }
 
 /**
@@ -38,7 +45,8 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   const { width, height } = options;
   const done = options.remaining <= 0;
   const card = scene.add.container(options.x, options.y);
-  card.add(drawLayer(scene, 0, 0, chipPoints(width, height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.52 }));
+  // 다른 상품 칸과 같은 전시대 겉모습(빗금·면 무늬)을 쓴다. 꼬리표는 격자 첫 줄에서 창 위로 잘리지 않게 칸 안쪽 오른쪽 위에 둔다.
+  paintShowcaseCard(scene, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + 34, stageY: 0 });
   const frameSize = Math.round(height * 0.4);
   const gains = [{ currency: options.currency, amount: options.amount }, ...(options.extras ?? [])];
   const gap = Math.round(frameSize * 0.2);
@@ -49,12 +57,11 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   });
   const name = scene.add.text(0, height * 0.08, options.title, textStyle({ role: "display", size: 30 })).setOrigin(0.5).setShadow(3, 4, "#04060a", 0, true, true);
   card.add(squeezeTextToWidth(name, width - 36, 0.7));
-  card.add(scene.add.text(0, height * 0.19, t("shop.premium.adLeft", { remaining: options.remaining, limit: options.limit }), textStyle({ role: "emphasis", size: 25, color: done ? COLOR.dangerText : COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 3));
   const buttonWidth = width - 64;
   const buttonHeight = Math.round(height * 0.17);
   const bar = scene.add.container(0, height * 0.34);
   bar.add(drawLayer(scene, 0, 0, chipPoints(buttonWidth, buttonHeight, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-  bar.add(scene.add.text(0, 0, t("shop.premium.adWatch"), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0.5).setStroke("#000000", 6));
+  addAdCountLabel(scene, bar, 0, 0, options.remaining, options.limit, done, Math.round(buttonHeight * 0.74));
   card.add(bar);
   if (options.badge) {
     const label = scene.add.text(0, 0, options.badge, textStyle({ role: "display", size: 26, color: "#101418" })).setOrigin(0.5);
@@ -64,8 +71,9 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
     tag.add(label);
     card.add(tag);
   }
-  if (done) card.setAlpha(0.52);
+  if (done) addSoldOutStamp(scene, card, width, height, AD_CARD_BEVEL, options.stampKey);
   else {
+    forgetSoldOutStamp(options.stampKey);
     const hit = addClippedHit(scene, card, 0, 0, width, height, options.clip, { useHandCursor: true });
     hit.on("pointerdown", () => pressIn(card));
     hit.on("pointerout", () => pressOut(card, "normal", { pop: false }));
@@ -73,4 +81,14 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   }
   parent.add(card);
   return card;
+}
+
+/** 광고 칸의 간결한 표기 — 광고 아이콘과 `남은/한도`만 가운데에 나란히 세운다. */
+export function addAdCountLabel(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number, remaining: number, limit: number, done: boolean, iconSize: number): void {
+  const label = scene.add.text(0, 0, `${remaining}/${limit}`, textStyle({ role: "display", size: 34, color: done ? COLOR.dangerText : COLOR.accentText })).setOrigin(0, 0.5).setStroke("#000000", 6);
+  const gap = Math.round(iconSize * 0.2);
+  const left = x - (iconSize + gap + label.width) / 2;
+  label.setPosition(left + iconSize + gap, y);
+  parent.add(scene.add.image(left + iconSize / 2, y, UI_ICON.ad).setDisplaySize(iconSize, iconSize));
+  parent.add(label);
 }

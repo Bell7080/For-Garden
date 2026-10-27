@@ -150,34 +150,14 @@
 "Продолжить · {plays} забегов · Лучший {best}"
 ],
 "lobby.expedition.weekly": [
-"今日 {plays}次 · 最高 {best} · {quick}",
-"วันนี้ {plays} · สูงสุด {best} · {quick}",
-"Hôm nay {plays} · Cao nhất {best} · {quick}",
-"Hari ini {plays} · Terbaik {best} · {quick}",
-"Hoy {plays} · Mejor {best} · {quick}",
-"Hoje {plays} · Melhor {best} · {quick}",
-"Heute {plays} · Bestwert {best} · {quick}",
-"Сегодня {plays} · Лучшее {best} · {quick}"
-],
-"lobby.expedition.quickReady": [
-"快速可用",
-"เริ่มด่วนได้",
-"Nhanh sẵn sàng",
-"Cepat Siap",
-"Rápido listo",
-"Rápido pronto",
-"Schnell bereit",
-"Быстрый готов"
-],
-"lobby.expedition.quickLocked": [
-"快速未解锁",
-"เริ่มด่วนล็อก",
-"Nhanh bị khóa",
-"Cepat Terkunci",
-"Rápido bloqueado",
-"Rápido bloqueado",
-"Schnell gesperrt",
-"Быстрый закрыт"
+"今日 {plays}次 · 最高 {best}",
+"วันนี้ {plays} · สูงสุด {best}",
+"Hôm nay {plays} · Cao nhất {best}",
+"Hari ini {plays} · Terbaik {best}",
+"Hoy {plays} · Mejor {best}",
+"Hoje {plays} · Melhor {best}",
+"Heute {plays} · Bestwert {best}",
+"Сегодня {plays} · Лучшее {best}"
 ],
 "lobby.rail.mission": [
 "任务",
@@ -480,14 +460,14 @@
 "Суматошное «Волчье кафе»"
 ],
 "event.wolfCafe.subtitle": [
-"迎接狼咖啡店客人的限时活动",
-"อีเวนต์จำกัดเวลาต้อนรับแขกของคาเฟ่หมาป่า",
-"Sự kiện giới hạn đón khách ở Quán cà phê Sói",
-"Event terbatas menyambut tamu Kafe Serigala",
-"Evento por tiempo limitado para recibir a los clientes del Café del Lobo",
-"Evento por tempo limitado para receber os clientes do Café do Lobo",
-"Zeitlich begrenztes Event: Gäste im Wolfscafé empfangen",
-"Ограниченное событие: встречаем гостей «Волчьего кафе»"
+"蒂安限定UP活动！",
+"อีเวนต์ Pick Up เดียนจำกัดเวลา!",
+"Sự kiện Pick Up giới hạn Dian!",
+"Event Pick Up Terbatas Dian!",
+"¡Evento de Pick Up limitado de Dian!",
+"Evento de Pick Up limitado de Dian!",
+"Limitiertes Dian-Pick-Up-Event!",
+"Ограниченное событие Pick Up: Диан!"
 ],
 "event.autumnHarvest.title": [
 "秋季丰收祭",
@@ -508,5 +488,49 @@
 "Passe todos os dias para receber presentes da colheita",
 "Schau täglich vorbei und hol dir Erntegeschenke ab",
 "Заходите каждый день за подарками урожая"
+],
+"event.attendance.newcomer.title": ["新人研究员7日签到", "เช็กอิน 7 วันนักวิจัยใหม่", "Điểm danh 7 ngày nhà nghiên cứu mới", "Absen 7 Hari Periset Baru", "Asistencia de 7 días: nuevo investigador", "Presença de 7 dias: novo pesquisador", "7-Tage-Anmeldung für neue Forschende", "7-дневный вход нового исследователя"],
+"event.attendance.noDeadline": ["没有期限！", "ไม่มีกำหนดเวลา!", "Không giới hạn!", "Tanpa batas waktu!", "¡Sin fecha límite!", "Sem prazo!", "Keine Frist!", "Без срока!"],
+"event.attendance.regular.title": ["每日签到", "เช็กอินประจำวัน", "Điểm danh hằng ngày", "Absen Harian", "Asistencia diaria", "Presença diária", "Tägliche Anmeldung", "Ежедневный вход"],
+"attendance.day": ["第{day}天", "วันที่ {day}", "Ngày {day}", "Hari {day}", "Día {day}", "Dia {day}", "Tag {day}", "День {day}"],
+"attendance.today": ["今天", "วันนี้", "Hôm nay", "Hari ini", "Hoy", "Hoje", "Heute", "Сегодня"],
+"attendance.claimFailed": ["签到失败，请再点一次。", "เช็กอินไม่สำเร็จ โปรดแตะอีกครั้ง", "Không thể điểm danh. Hãy chạm lại.", "Gagal absen. Ketuk sekali lagi.", "No se pudo registrar. Toca de nuevo.", "Não foi possível fazer o check-in. Toque novamente.", "Check-in fehlgeschlagen. Bitte erneut tippen.", "Не удалось отметиться. Нажмите ещё раз."],
+"attendance.reward.title": ["签到奖励", "รางวัลเช็กอิน", "Phần thưởng điểm danh", "Hadiah Absen", "Recompensa de asistencia", "Recompensa de presença", "Anmeldebelohnung", "Награда за вход"],
+"event.roulette.title": ["幸运转盘", "วงล้อนำโชค", "Vòng quay may mắn", "Roda keberuntungan", "Ruleta de la suerte", "Roleta da sorte", "Glücksrad", "Колесо удачи"],
+"event.roulette.subtitle": ["最高1,000宝石！每天免费1次", "ลุ้นเจมสูงสุด 1,000! หมุนฟรีวันละ 1 ครั้ง", "Trúng tới 1.000 Ngọc! Mỗi ngày quay miễn phí 1 lần", "Menangkan hingga 1.000 Permata! 1 putaran gratis tiap hari", "¡Hasta 1000 Gemas! 1 giro gratis al día", "Até 1.000 Gemas! 1 giro grátis por dia", "Bis zu 1.000 Juwelen! Täglich 1 Gratisdreh", "До 1000 Самоцветов! 1 бесплатное вращение в день"],
+"roulette.spin": ["免费转1次", "หมุนฟรี 1 ครั้ง", "Quay miễn phí 1 lần", "Putar gratis 1 kali", "Usar giro gratis", "Usar giro grátis", "Gratis drehen", "Бесплатное вращение"],
+"roulette.remaining": ["剩余{count}次", "เหลือ {count} ครั้ง", "Còn {count} lượt quay", "Sisa {count} putaran", "Quedan {count} giros", "{count} giros restantes", "{count} Drehungen übrig", "Осталось вращений: {count}"],
+"roulette.daily": ["每天最多4次 · UTC 00:00重置", "สูงสุดวันละ 4 ครั้ง · รีเซ็ต 00:00 UTC", "Tối đa 4 lượt/ngày · Đặt lại 00:00 UTC", "Maksimal 4 sehari · Reset 00:00 UTC", "Hasta 4 diarios · Reinicio 00:00 UTC", "Até 4 por dia · Reinício às 00:00 UTC", "Bis zu 4 täglich · Reset 00:00 UTC", "До 4 в день · Сброс в 00:00 UTC"],
+"roulette.rules": ["各格中奖概率不同，奖励在请求转动时确定。", "แต่ละช่องมีอัตราออกต่างกัน รางวัลจะถูกกำหนดเมื่อส่งคำขอหมุน", "Mỗi ô có tỉ lệ trúng khác nhau. Phần thưởng được xác định khi yêu cầu quay.", "Setiap petak punya peluang berbeda. Hadiah ditentukan saat putaran diminta.", "Cada casilla tiene su propia probabilidad. La recompensa se decide al solicitar el giro.", "Cada casa tem sua própria chance. A recompensa é definida ao solicitar o giro.", "Jedes Feld hat eigene Chancen. Der Gewinn wird bei der Anfrage bestimmt.", "У каждого сектора свой шанс. Награда определяется при запросе вращения."],
+"roulette.adBonus": ["看广告再转1次", "ดูโฆษณาแล้วหมุนอีก 1 ครั้ง", "Xem quảng cáo & quay thêm 1 lần", "Tonton iklan & putar 1 kali", "Ver anuncio y girar 1 vez", "Ver anúncio e girar 1 vez", "Werbung ansehen & 1× drehen", "Реклама и ещё 1 вращение"],
+"roulette.memberBonus": ["免广告再转1次", "หมุนอีก 1 ครั้งโดยไม่ดูโฆษณา", "Quay thêm 1 lần không quảng cáo", "Putar 1 kali tanpa iklan", "Girar 1 vez sin anuncio", "Girar 1 vez sem anúncio", "Ohne Werbung 1× drehen", "Ещё 1 вращение без рекламы"],
+"roulette.bonusUsed": ["今日次数已用完", "ใช้สิทธิ์หมุนวันนี้ครบแล้ว", "Đã dùng hết lượt hôm nay", "Semua putaran hari ini habis", "Ya usaste todos los giros de hoy", "Todos os giros de hoje foram usados", "Heute alle Drehungen genutzt", "Все вращения на сегодня использованы"],
+"roulette.ended": ["活动已结束。", "กิจกรรมสิ้นสุดแล้ว", "Sự kiện đã kết thúc.", "Acara telah berakhir.", "El evento ha terminado.", "O evento terminou.", "Das Event ist beendet.", "Событие завершено."],
+"roulette.error": ["操作失败，请重试。", "ดำเนินการไม่สำเร็จ โปรดลองอีกครั้ง", "Không thể hoàn tất. Vui lòng thử lại.", "Tidak dapat menyelesaikan. Coba lagi.", "No se pudo completar. Inténtalo de nuevo.", "Não foi possível concluir. Tente novamente.", "Aktion fehlgeschlagen. Bitte erneut versuchen.", "Не удалось завершить действие. Повторите попытку."],
+"roulette.reward": ["转盘奖励", "รางวัลวงล้อ", "Thưởng vòng quay", "Hadiah roda", "Premio de la ruleta", "Prêmio da roleta", "Glücksrad-Gewinn", "Награда колеса"],
+"roulette.intro": ["首次免费！之后每看一次广告可再转一次，每天最多追加3次。", "ครั้งแรกฟรี จากนั้นดูโฆษณาเพื่อหมุนเพิ่มครั้งละ 1 ครั้ง ได้สูงสุด 3 ครั้งต่อวัน", "Lượt đầu miễn phí. Xem một quảng cáo cho mỗi lượt thêm, tối đa 3 lượt mỗi ngày.", "Putaran pertama gratis. Tonton satu iklan untuk tiap putaran tambahan, hingga 3 kali sehari.", "El primer giro es gratis. Mira un anuncio por cada giro extra, hasta 3 al día.", "O primeiro giro é grátis. Veja um anúncio para cada giro extra, até 3 por dia.", "Der erste Dreh ist gratis. Für jede Werbung gibt es einen weiteren, bis zu 3 pro Tag.", "Первое вращение бесплатно. За каждую рекламу даётся ещё одно, до 3 в день."],
+"roulette.rates.basis": ["幸运转盘 · 每次转动", "วงล้อนำโชค · ต่อการหมุน 1 ครั้ง", "Vòng quay may mắn · Mỗi lượt quay", "Roda Keberuntungan · Per putaran", "Ruleta de la suerte · Por giro", "Roleta da sorte · Por giro", "Glücksrad · Pro Dreh", "Колесо удачи · За одно вращение"],
+"roulette.rates.rules": ["说明", "หมายเหตุ", "Lưu ý", "Catatan", "Notas", "Observações", "Hinweise", "Примечания"],
+"roulette.rates.noteSlices": ["各格大小相同，但中奖概率各不相同。", "ทุกช่องมีขนาดเท่ากัน แต่อัตราออกของแต่ละช่องต่างกัน", "Các ô có kích thước bằng nhau nhưng tỉ lệ trúng của mỗi ô khác nhau.", "Semua petak berukuran sama, tetapi peluangnya berbeda-beda.", "Todas las casillas tienen el mismo tamaño, pero cada una tiene su propia probabilidad.", "Todas as casas têm o mesmo tamanho, mas cada uma tem sua própria chance.", "Alle Felder sind gleich groß, haben aber unterschiedliche Chancen.", "Все секторы одного размера, но шанс у каждого свой."],
+"roulette.rates.noteServer": ["奖励在请求转动的瞬间确定，关闭窗口也会发放。", "รางวัลจะถูกกำหนดทันทีที่ขอหมุน และจะได้รับแม้ปิดหน้าต่าง", "Phần thưởng được xác định ngay khi quay và vẫn được nhận dù đóng cửa sổ.", "Hadiah ditentukan saat kamu memutar dan tetap diberikan meski jendela ditutup.", "La recompensa se decide al girar y se entrega aunque cierres la ventana.", "A recompensa é definida no momento do giro e é entregue mesmo se você fechar a janela.", "Der Gewinn steht beim Drehen fest und wird auch beim Schließen des Fensters gutgeschrieben.", "Награда определяется в момент вращения и выдаётся, даже если закрыть окно."],
+"lobby.pass.mission.strataDigs": [
+"挖掘{threshold}格地层",
+"ขุดชั้นดิน {threshold} ช่อง",
+"Khai quật {threshold} ô địa tầng",
+"Gali {threshold} petak strata",
+"Excava {threshold} casillas",
+"Escave {threshold} casas",
+"Grabe {threshold} Felder aus",
+"Раскопать {threshold} клеток"
+],
+"lobby.pass.mission.lead.strataDigs": [
+"挖掘地层格子即可升级",
+"ขุดช่องชั้นดินเพื่อเพิ่มเลเวล",
+"Khai quật ô địa tầng để lên cấp",
+"Gali petak strata untuk naik level",
+"Excava casillas para subir de nivel",
+"Escave casas para subir de nível",
+"Grabe Felder aus, um aufzusteigen",
+"Раскапывайте клетки для повышения уровня"
 ]
 }

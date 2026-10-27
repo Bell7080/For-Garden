@@ -25,9 +25,9 @@ export const RARITY_STAT_BAND: Readonly<Record<RelicRarity, { readonly min: numb
  * 못 쓰는 개체로 만들지 않기 위해서다.
  */
 export const RARITY_LEVEL_GROWTH: Readonly<Record<RelicRarity, number>> = {
-  R: 1.8,
-  SR: 2.0,
-  SSR: 2.2,
+  R: 2.2,
+  SR: 2.4,
+  SSR: 2.6,
 };
 
 /**
@@ -57,3 +57,23 @@ export function withinRarityBand(power: number, rarity: RelicRarity): boolean {
   const band = RARITY_STAT_BAND[rarity];
   return power >= band.min && power <= band.max;
 }
+
+/**
+ * **적 전용 태생 단계 — 값은 정의가 아니라 이 표가 갖는다.**
+ *
+ * 태생 단계가 높은 개체는 등급 표기와 정의의 태생 능력치(자기 띠 안, 오각형 상한 안)를 그대로 두고,
+ * 적으로 설 때 오각형 다섯(체력·방어·저항·공격·주문력)에 `statFactor`가 **한 번 더 곱해진다**
+ * (`applyEncounterScaling`의 `birthFactor`). 같은 `LV.n`이 더 세므로 더 낮은 레벨에서 같은 세기를 내고
+ * 한계 돌파가 단계적으로 열린다. 성장률(`ENEMY_LEVEL_GROWTH_PERCENT`)은 그대로 단일 값(2.2%)이다.
+ *
+ * 0단계(테러조)=×1.0, 1단계(회수조)=×1.3. 6장 이후 개체는 더 높은 단계를 한 줄 더한다.
+ */
+export const ENEMY_BIRTH_STAGE_FACTOR: Readonly<Record<number, number>> = { 0: 1, 1: 1.3 };
+
+export const ENEMY_BIRTH_TIERS: Readonly<Record<string, { readonly stage: number; readonly statFactor: number }>> = {
+  mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  pulsi: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  neuri: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  atra: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+};

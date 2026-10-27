@@ -1,4 +1,11 @@
+import { openRoulettePopup } from "../ui/RoulettePopup";
+import { nicknameCreationRequired } from "../core/playerCard";
+import { ARENA_TONE } from "../ui/arenaTheme";
+import { addArenaMascots } from "../ui/ArenaMascots";
+import { followTutorialTarget } from "../ui/tutorialTarget";
+import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
+import { shapeClipMask } from "../ui/popupArt";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefrontControls } from "../debug";
@@ -7,21 +14,26 @@ import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { startLobbyTutorial } from "../ui/tutorialLobbyFlow";
 import { Button } from "../ui/Button";
 import { RailButton } from "../ui/RailButton";
 import { POPUP_BODY_BEVEL_RATIO } from "../ui/popupGeometry";
 import { TopBar } from "../ui/TopBar";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
-import { COLOR, textStyle } from "../ui/theme";
+import { COLOR } from "../ui/theme";
 import { t } from "../i18n";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { gameApi } from "../api/FakeServer";
+import { presentRewardedAd } from "../platform/rewardedAds";
 import { loadPlayerProfileDisplay } from "../managers/PlayerProfileManager";
 import { bondDialogue } from "../data/bonds";
 import { PopupLayer, POPUP_TITLE_SIZE } from "../ui/PopupLayer";
 import { IdleExcavationPopup } from "../ui/IdleExcavationPopup";
 import { TradePopup } from "../ui/TradePopup";
 import { LobbyEventPopup } from "../ui/LobbyEventPopup";
+import { openAttendancePopup } from "../ui/AttendancePopup";
+import { attendanceManager } from "../managers/AttendanceManager";
+import { ATTENDANCE_TRACK_IDS } from "../core/attendance";
 import { BACK_SLOT, IconButton } from "../ui/IconButton";
 import { UI_ICON } from "../ui/icons";
 import { InventoryPopup } from "../ui/InventoryPopup";
@@ -29,6 +41,7 @@ import { bindNotificationDot } from "../ui/NotificationDot";
 import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle";
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
+import { AchievementsPopup } from "../ui/AchievementsPopup";
 import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
 import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -37,7 +50,7 @@ import { createLobbyUtilityRail } from "../ui/lobbyUtilityRail";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { relicSkinManager } from "../managers/RelicSkinManager";
 import { expeditionManager } from "../managers/ExpeditionManager";
-import { PVP_MODES } from "../data/pvpModes";
+import { PVP_ACTIVE_MODES, PVP_MODE_SELECT_ENABLED } from "../data/pvpModes";
 import { PVP_MENU, pvpEntryHeight, pvpMenuLayout } from "../ui/pvpLayout";
 import { ExpeditionEntryButton, sortieEntryBevel, sortieEntrySdSpot } from "../ui/ExpeditionEntryButton";
 import { battleAssetFor, ENEMY_SD_ASSETS, PONTOS_SD_ASSET, playMotion, type PuppetAsset } from "../puppets/assets";
@@ -45,18 +58,15 @@ import { raidSeasonKey, raidWorldBossId } from "../core/raid";
 import { loadOwnedPuppet } from "../ui/statusPuppetLoad";
 import { PlayerProfilePopup } from "../ui/PlayerProfilePopup";
 import { profileModifierManager } from "../managers/ProfileModifierManager";
-import { playerProfileDisplay, type PlayerProfileDisplay } from "../state/playerProfile";
-import { openAvatarPicker, openBioEditor, openModifierPicker, openNicknameEditor } from "../ui/PlayerProfileEditors";
-import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentNameKey, contentOpen, playUnlockSequence, unlockCover, UNLOCK_POP_TOTAL_MS } from "../ui/contentLock";
+import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
+import { openAvatarPicker, openBioEditor, openNicknameEditor } from "../ui/PlayerProfileEditors";
+import { showContentLockedToast, addLockCover, collectUnlockCelebrations, consumeUnlockCelebration, contentOpen, holdUnlockCelebrations, playUnlockSequence, releaseUnlockCelebrations, unlockCover, UNLOCK_POP_TOTAL_MS, whenUnlockGateOpen } from "../ui/contentLock";
 import { addPadlock } from "../ui/Padlock";
 import { LOCK_DIM } from "../ui/lockStyle";
 import type { ContentId } from "../core/contentUnlock";
 import { managerEvents } from "../managers/ManagerEvents";
-import { PROFILE_FRAMES } from "../data/profileFrames";
-import { contentUnlockedBetween } from "../core/contentUnlock";
-import { staminaMaxForResearchLevel } from "../core/stamina";
-import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
-import { findItem } from "../data/items";
+import { levelUpAnnouncement } from "../core/levelUpAnnouncement";
+import { openLevelUpPopup } from "../ui/LevelUpPopup";
 import { MailPopup } from "../ui/MailPopup";
 import { openPassPopup } from "../ui/PassPopup";
 import { LobbyPassCard } from "../ui/LobbyPassCard";
@@ -71,6 +81,8 @@ import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
+import { LobbyMenuTray, LOBBY_MENU_GLYPH } from "../ui/LobbyMenuTray";
+import { RecollectionPopup } from "../ui/RecollectionPopup";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -79,7 +91,7 @@ import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
  * 깔려 배경과 인물을 한 번에 누른다 — 배경만 누르면 인물이 혼자 밝게 떠 오려 붙인 것으로 보인다.
  */
 const LOBBY_PORTRAIT_DEPTH = -20;
-/** 마지막으로 알린 연구원 레벨. 앱을 켠 뒤 처음 선 로비가 기준을 잡고, 그 뒤로 오른 만큼만 알린다. */
+/** 마지막으로 알린 연구원 레벨. 앱을 켠 뒤 처음 선 로비가 기준을 잡고, 그 뒤로 오른 만큼만 알린다(`levelUpAnnouncement`). */
 let announcedPlayerLevel: number | undefined;
 
 /** 교류의 강조색. 값은 테마 한 곳이 갖는다 — 레이드의 상점 입구도 같은 값을 읽는다. */
@@ -100,11 +112,23 @@ const EXCHANGE_BLUE = COLOR.exchange;
  * 속한 것인지 애매했다 — 판 밑에 한 뼘 띄워 **제 제목을 단 판**(`shop`)을 따로 세우고 거기에 상점을
  * 한 줄씩 담는다. 그 자리를 내려고 본판을 `panel.offsetY`만큼 올린다(칸끼리의 자리는 그대로).
  */
+/**
+ * 출석 판을 저절로 여는가. E2E 빌드(`test`)에서는 열지 않는다 — 로비를 확인하는 모든 스펙이 그 판에 가린다.
+ */
+const ATTENDANCE_AUTO_POPUP = import.meta.env?.MODE !== "test";
+/** 다른 판(레벨업 알림 등)이 닫히기를 기다리는 간격과 횟수. 넘기면 오늘은 저절로 열지 않는다. */
+const ATTENDANCE_AUTO_WAIT = { stepMs: 400, tries: 60 } as const;
+
 const SORTIE_MENU = {
   panel: { width: 980, height: 1240, offsetY: -80 },
   shop: { gap: 28, pad: 20, cell: SIDE_SHOP.screen.size, cellGap: 16 },
   motionDelay: 2600,
   dimAlpha: 0.42,
+  /**
+   * 칸이 판보다 길어서 판 안에서 세로로 굴린다. 보이는 구간(`view`)은 제목표 밑에서 판 밑변까지이고,
+   * `bottomPad`만큼 아래 여유를 두어 마지막 칸이 밑변에 붙지 않게 한다. 끌기와 눌림을 가르는 거리가 `slop`이다.
+   */
+  scroll: { viewTop: -590, viewBottom: 620, bottomPad: 40, slop: 14 },
 } as const;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
@@ -134,6 +158,11 @@ interface SortieEntry {
   split?: "left" | "right";
   /** 개체마다 원화 크기가 달라 혼자 커 보이는 SD만 이 배율로 줄인다. */
   sdScale?: number;
+  /**
+   * 레벨과 무관하게 열릴 날이 정해지지 않은 입구의 「Coming soon」 문구. 주면 덮개로 막고 SD는 흐리게 선다.
+   * QA 빌드는 이 값을 주지 않아 눌러서 들어간다.
+   */
+  comingSoon?: string;
 }
 
 /**
@@ -157,14 +186,20 @@ export class LobbyScene extends Phaser.Scene {
   /** 출격 선택판 위에 화면 좌표로 세우는 SD와 그 수명은 이 씬이 직접 소유한다. */
   private sortieSdLayer?: Phaser.GameObjects.Container;
   private readonly sortieSdPuppets = new Set<PuppetCreature>();
+  /** 출격판 안에서 굴러가는 칸들의 컨테이너와 현재 굴림. SD 층도 같은 만큼 움직인다. */
+  private sortieContent?: Phaser.GameObjects.Container;
+  private sortieScroll = { y: 0, min: 0, dragStart: undefined as number | undefined, dragOrigin: 0, moved: 0 };
+  private sortieScrollHandlers?: { down: (p: Phaser.Input.Pointer) => void; move: (p: Phaser.Input.Pointer) => void; up: () => void; wheel: (...args: number[]) => void };
+  /** 칸마다 그 칸 SD들이 보이는 굴림 구간. SD는 판 마스크를 못 물려 칸이 판 밖으로 나가면 통째로 숨긴다. */
+  private sortieSdSpots: Array<{ top: number; bottom: number; puppets: PuppetCreature[] }> = [];
   /** 본체와 복제 그림자를 짝으로 들고 있어야 같은 동작을 함께 재생할 수 있다. */
   private sortieSdPairs: SortieSdPair[] = [];
   private sortieSdTimer?: Phaser.Time.TimerEvent;
   private sortieBackButton?: IconButton;
   /** 출격판 밖 왼쪽 아래에 서는 전리품 상점 입구. 판과 함께 나고 함께 사라진다. */
   private idleExcavationPopup?: IdleExcavationPopup;
-  /** 열림 연출이 끝나는 시각. 레벨업 알림이 연출 위에 겹치지 않게 그 뒤로 미룬다. */
-  private unlockCelebrationUntil = 0;
+  /** 이번 로비가 들어서자마자 알릴 레벨업. 있으면 판이 뜰 때까지 다른 입력을 막는다. */
+  private pendingLevelUp?: { from: number; to: number };
   /** 무역은 로비 수명을 보존하는 패키지 레이어다. */
   private tradePopup?: TradePopup;
   private tradeBackButton?: IconButton;
@@ -197,7 +232,9 @@ export class LobbyScene extends Phaser.Scene {
    * 열 때마다 출격판이 저절로 뜬다.
    */
   init(data?: unknown): void {
-    this.returnMenu = normalizeLobbyEntry(data);
+    const entryMenu = normalizeLobbyEntry(data);
+    // 선택판을 꺼 두면 결투장에서 돌아와도 열 판이 없다 — 일반 로비로 서서 레벨업 알림도 그대로 돈다.
+    this.returnMenu = entryMenu === "duel" && !PVP_MODE_SELECT_ENABLED ? undefined : entryMenu;
     consumeSceneEntry(this);
   }
 
@@ -205,7 +242,7 @@ export class LobbyScene extends Phaser.Scene {
   private forgetPopups(): void {
     this.sortieBackButton = undefined;
     this.idleExcavationPopup = undefined;
-    this.unlockCelebrationUntil = 0;
+    this.pendingLevelUp = undefined;
     this.excavationBackButton = undefined;
     this.tradePopup = undefined;
     this.tradeBackButton = undefined;
@@ -233,11 +270,18 @@ export class LobbyScene extends Phaser.Scene {
 
     // 그 사이 새로 열린 콘텐츠를 모아 둔다 — 아래 입구들이 제 몫을 가져가 자물쇠가 터지는 연출을 돈다.
     collectUnlockCelebrations();
+    // 열림 연출은 레벨업 알림이 닫힌 뒤에 차례로 돈다 — 입구들이 연출을 걸기 전에 묶어 둔다.
+    holdUnlockCelebrations(this);
+    this.pendingLevelUp = this.takeLevelUp();
+    // 레벨업이 있으면 판이 뜰 때까지 로비의 다른 버튼을 막는다. 판이 열리는 순간 되돌린다.
+    this.input.enabled = this.pendingLevelUp === undefined;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.input.enabled = true; });
     this.buildPlaza();
     // 설정 아이콘은 준비 중 토스트가 아니라 등록된 환경 설정 씬으로 곧바로 이동한다.
     this.topBar = new TopBar(this, 40, { onSettings: () => startScene(this, "settings"), onProfile: (profile) => this.openPlayerProfile(profile), onCurrency: (currency) => this.openCurrencyGuide(currency) });
     this.buildPromo();
     this.buildUtilityRail();
+    this.buildMenuTray();
     this.buildMissionEntry();
 
     // 결투 — 기존 원정 자리를 독립 PvP 모드 선택 화면으로 연결한다.
@@ -249,12 +293,12 @@ export class LobbyScene extends Phaser.Scene {
       // 출격과 성격이 다른 입구라 강조 양식을 쓰지 않는다. 같은 원근만 공유한다.
       perspective: "right",
       tilt: -6,
-      onClick: this.guarded("duel", () => this.openPvpMenu()),
+      onClick: this.guarded("duel", () => (PVP_MODE_SELECT_ENABLED ? this.openPvpMenu() : startScene(this, "duel"))),
     });
     this.gateEntrance("duel", duelButton);
 
     // 출격 — 로비에서 가장 큰 버튼이다. 주황빛 강조로 다른 입구와 구분한다.
-    new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
+    const sortieButton = new Button(this, LOBBY_ACTION_BOUNDS.sortie.x, LOBBY_ACTION_BOUNDS.sortie.y, {
       width: LOBBY_ACTION_BOUNDS.sortie.width,
       height: LOBBY_ACTION_BOUNDS.sortie.height,
       label: t("lobby.sortie"),
@@ -268,6 +312,10 @@ export class LobbyScene extends Phaser.Scene {
       decorDots: true,
       onClick: () => this.openSortieMenu(),
     });
+
+    // 발굴과 같은 규칙으로 원근 판의 실제 우상단 모서리(오른쪽이 긴 변)에 앉힌다 — 고정 좌표였을 때는 판 안쪽 글자 옆에 떠 있었다.
+    const sortieDot = perspectiveButtonNotificationAnchor({ width: LOBBY_ACTION_BOUNDS.sortie.width, height: LOBBY_ACTION_BOUNDS.sortie.height, tall: "right", rotation: Phaser.Math.DegToRad(-6), inset: 10 });
+    bindNotificationDot(this, sortieButton, sortieDot, listener => notificationManager.subscribe("sortieReward", listener));
 
     // 교류 — 맞은편이라 기울기와 원근을 뒤집어 `\` 방향으로 눕힌다.
     const interactionButton = new Button(this, 250, NAV_TOP - 400, {
@@ -304,7 +352,7 @@ export class LobbyScene extends Phaser.Scene {
     this.gateEntrance("excavation", excavationButton);
     bindNotificationDot(this, excavationButton, excavationDot, (listener) => notificationManager.subscribe("excavationHarvestReady", listener));
 
-    new BottomNav(this, "lobby");
+    const bottomNav = new BottomNav(this, "lobby");
     // 한 번의 공용 조회가 모든 버튼을 갱신하며 실패 시 기존의 안전한 꺼짐 상태를 유지한다.
     void notificationManager.refresh().catch(() => undefined);
     // 로비의 조작 가능 시점은 동기 UI와 최초 애착 Puppet 시도가 모두 끝난 때다. Puppet 실패는
@@ -327,19 +375,43 @@ export class LobbyScene extends Phaser.Scene {
     // 로비가 다 선 뒤에 여는 이유는 판이 상단 줄·애착 렐릭 위에 얹히는 쪽지이기 때문이다.
     // 판은 제 등장 연출 없이 **완성된 채로** 서서 화면 진입과 한 번에 들어온다 — 따로 떠오르면
     // 로비가 먼저 보이고 판이 뒤늦게 열려, 로비로 튕겼다가 판이 다시 열리는 것처럼 읽혔다.
-    if (this.returnMenu === "sortie") this.openSortieMenu(true);
-    else if (this.returnMenu === "duel") this.openPvpMenu(true);
-    else if (this.returnMenu === "event") this.openEvents(true);
-    // 되돌아간 판이 없을 때만 레벨업을 알린다 — 판 위에 겹치면 둘 다 반쯤 가린다.
-    if (!this.returnMenu) {
-      const wait = this.unlockCelebrationUntil - this.time.now;
-      if (wait > 0) this.time.delayedCall(wait, () => this.announcePlayerLevel());
-      else this.announcePlayerLevel();
-    }
+    const continueEntry = (): void => {
+      if (!this.scene.isActive()) return;
+      if (tutorialManager.lobbyStep() !== undefined) this.returnMenu = undefined;
+      if (this.returnMenu === "sortie") this.openSortieMenu(true);
+      else if (this.returnMenu === "duel") this.openPvpMenu(true);
+      else if (this.returnMenu === "event") this.openEvents(true);
+      // 들어서는 순서는 **출석 → 레벨업 → (닫힘) → 열림 연출**이다(응태: 출석이 가장 먼저). 한 판이 끝나야 다음이 선다 —
+      // 겹치면 둘 다 반쯤 가린다. 열림 연출은 레벨업 판이 닫힐 때까지 문 뒤에서 기다린다.
+      const levelUp = this.returnMenu ? undefined : this.pendingLevelUp;
+      this.pendingLevelUp = undefined;
+      const release = (): void => {
+        if (!this.scene.isActive()) return;
+        this.input.enabled = true;
+        releaseUnlockCelebrations(this);
+      };
+      const announce = (): void => {
+        if (!this.scene.isActive()) return;
+        if (levelUp && this.popupLayer) this.announcePlayerLevel(levelUp, release);
+        else release();
+      };
+      // 오늘 처음 로비에 왔고 받을 출석이 있으면 출석 판이 저절로 열린다. 튜토리얼 중에는 열지 않는다(안내와 겹친다).
+      if (!this.returnMenu && ATTENDANCE_AUTO_POPUP) this.time.delayedCall(TRANSITION.sceneIn.duration, () => this.autoOpenAttendance(announce));
+      else announce();
 
-    // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
-    // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+      // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
+      // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+      if (this.popupLayer) startLobbyTutorial(this, bottomNav, this.popupLayer, sortieButton);
+    };
     playSceneEntrance(this);
+    if (nicknameCreationRequired(session.playerCard, session.cleared) && this.popupLayer) {
+      // 서버 저장이 끝난 뒤에만 출격 안내·출석·레벨업 알림을 이어서 연다.
+      openNicknameEditor(this, this.popupLayer, () => {
+        if (!this.scene.isActive() || session.playerCard.nickname === "") return;
+        managerEvents.publish("publicProfile", { profile: playerProfileDisplay(session, profileModifierManager.equipped()) });
+        continueEntry();
+      }, true);
+    } else this.time.delayedCall(0, continueEntry);
 
     // 로비는 캐릭터를 보는 화면이라 대개 한참 머문다. 그 시간에 다음 전투가 쓸 SD를 한 장씩
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
@@ -351,7 +423,7 @@ export class LobbyScene extends Phaser.Scene {
   private openPlayerProfile(_profile?: PlayerProfileDisplay, instant = false): void {
     if (!this.popupLayer || this.playerProfilePopup) return;
     // TopBar의 즉시 모델 대신 manager가 서버 확정 티어를 합친 뒤 연다. 실패하면 가짜 티어 없이 로컬 기록만 표시한다.
-    void loadPlayerProfileDisplay(session, gameApi).catch(() => playerProfileDisplay(session, profileModifierManager.equipped())).then((resolved) => {
+    void loadPlayerProfileDisplay(session).catch(() => playerProfileDisplay(session, profileModifierManager.equipped())).then((resolved) => {
       if (!this.popupLayer || this.playerProfilePopup) return;
       const layer = this.popupLayer;
       // 고칠 것을 카드에서 바로 누른다. 그 요소만 고치는 창이 카드를 닫은 자리에 서고, 닫히면 카드가 새 값으로 다시 선다.
@@ -367,43 +439,78 @@ export class LobbyScene extends Phaser.Scene {
         avatar: edit((done) => openAvatarPicker(this, layer, done)),
         nickname: edit((done) => openNicknameEditor(this, layer, done)),
         bio: edit((done) => openBioEditor(this, layer, done)),
-        ...(profileModifierManager.earned().length > 0 ? { modifiers: edit((done) => openModifierPicker(this, layer, done)) } : {}),
       });
       this.playerProfilePopup.open({ instant });
     });
   }
 
   /**
-   * 로비에 들어올 때 연구원 레벨이 올랐으면 한 번 알린다.
+   * 이번 로비가 알릴 레벨업을 정하고 기준을 옮긴다. 돌아갈 판이 있는 진입은 건드리지 않는다 — 판 위에 겹치므로
+   * 다음에 판 없이 선 로비가 알린다. 튜토리얼 중에는 띄우지 않고 끝난 뒤 한 번에 모아 알린다(`levelUpAnnouncement`).
+   */
+  private takeLevelUp(): { from: number; to: number } | undefined {
+    if (this.returnMenu) return undefined;
+    const result = levelUpAnnouncement(announcedPlayerLevel, session.playerResearch.level, tutorialManager.next() !== undefined);
+    announcedPlayerLevel = result.baseline;
+    return result.announce;
+  }
+
+  /**
+   * 연구원 레벨이 올랐으면 로비에 들어서자마자 한 장으로 알린다.
    *
    * 스테미나를 쓰는 곳은 편성·던전·전투 곳곳이라 그 자리마다 창을 띄우면 전투 흐름을 끊는다.
-   * 로비는 모든 길이 돌아오는 자리라 여기서 한 번 모아 알린다 — 몇 레벨이 올랐는지, 스테미나
-   * 상한이 얼마나 넓어졌는지, 그 사이에 열린 테두리와 콘텐츠를 한 장에.
+   * 로비는 모든 길이 돌아오는 자리라 여기서 한 번 모아 알린다 — 몇 레벨이 올랐는지, 받은 것, 그 사이 열린 콘텐츠와 테두리를 한 장에.
    */
-  private announcePlayerLevel(): void {
-    const level = session.playerResearch.level;
-    const previous = announcedPlayerLevel;
-    announcedPlayerLevel = level;
-    if (previous === undefined || level <= previous || !this.popupLayer) return;
-    const frames = PROFILE_FRAMES.filter((frame) => frame.unlockLevel > previous && frame.unlockLevel <= level);
-    const unlocks = contentUnlockedBetween(previous, level);
-    const lines = [
-      t("profile.levelUp.stamina", { amount: staminaMaxForResearchLevel(level) - staminaMaxForResearchLevel(previous) }),
-      // 스테미나를 채우는 대신 레벨마다 주는 병 — 가방에 들어갔다는 것을 레벨과 함께 말한다.
-      t("profile.levelUp.drink", { item: findItem(PLAYER_LEVEL_UP_REWARD.itemId)?.name ?? "", count: (level - previous) * PLAYER_LEVEL_UP_REWARD.quantity }),
-      ...frames.map((frame) => t("profile.levelUp.frame", { name: frame.displayName })),
-      ...unlocks.map((entry) => t("profile.levelUp.unlock", { content: t(contentNameKey(entry.id)) })),
-    ];
-    const height = 360 + lines.length * 52;
-    this.popupLayer.open({ width: 760, height, title: t("profile.levelUp.title"), dim: true, closeOnBackdrop: true }, (body) => {
-      const top = -height / 2;
-      body.add(this.add.text(-40, top + 150, `LV.${previous}`, textStyle({ role: "display", size: 44, color: COLOR.inkDim })).setOrigin(1, 0.5));
-      body.add(this.add.text(0, top + 150, "›", textStyle({ role: "display", size: 52, color: COLOR.accentText })).setOrigin(0.5));
-      const next = this.add.text(40, top + 150, `LV.${level}`, textStyle({ role: "display", size: 72, color: COLOR.accentText })).setOrigin(0, 0.5).setScale(0.6);
-      body.add(next);
-      this.tweens.add({ targets: next, scale: 1, duration: 420, ease: "Back.easeOut" });
-      lines.forEach((line, index) => body.add(this.add.text(0, top + 250 + index * 52, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0.5)));
+  private announcePlayerLevel(levelUp: { from: number; to: number }, onClosed: () => void): void {
+    if (!this.popupLayer) { onClosed(); return; }
+    this.input.enabled = true;
+    const profile = playerProfileDisplay(session, profileModifierManager.equipped());
+    openLevelUpPopup(this, this.popupLayer, {
+      ...levelUp,
+      portraitAssetId: profile.avatar?.portraitAssetId,
+      fallback: profileAvatarContent(profile, () => false).fallback,
+      onClosed: () => this.time.delayedCall(0, onClosed),
     });
+  }
+
+  /**
+   * 오늘 처음 로비에 들어왔을 때 받을 출석이 있으면 판을 저절로 연다 — 신규가 먼저, 닫으면 정규가 이어 선다.
+   * 하루에 한 번만 연다(서버가 연 날을 기억한다). 다른 판이 떠 있으면 닫히기를 기다린다.
+   */
+  private autoOpenAttendance(done: () => void): void {
+    // `done`은 출석 판이 모두 닫혔거나 열 것이 없을 때 **꼭 한 번** 불린다 — 그 뒤에 레벨업이 선다.
+    let finished = false;
+    const finish = (): void => { if (finished) return; finished = true; done(); };
+    // 튜토리얼이 끝나기 전에는 열지 않는다. 연 날로 남기지도 않으므로 끝난 뒤 처음 선 로비가 연다.
+    if (tutorialManager.next() !== undefined) { finish(); return; }
+    void attendanceManager.status().then((status) => {
+      if (!status.autoShow || !this.sys.isActive()) { finish(); return; }
+      const queue = ATTENDANCE_TRACK_IDS.filter((id) => status.tracks.some((track) => track.id === id && track.claimableToday));
+      if (queue.length === 0) { finish(); return; }
+      // 다음 판은 **열기 직전에 서버에서 다시 읽는다.** 앞 판을 받는 사이 상태가 바뀌므로(지갑·덤·바퀴),
+      // 로비에 들어올 때 읽어 둔 모습으로 세우면 판이 실제와 어긋난다.
+      const openNext = (): void => {
+        const id = queue.shift();
+        if (!id || !this.popupLayer || !this.sys.isActive()) { finish(); return; }
+        void attendanceManager.status().then((fresh) => {
+          const track = fresh.tracks.find((entry) => entry.id === id);
+          if (!this.popupLayer || !this.sys.isActive()) return;
+          if (!track?.claimableToday) { openNext(); return; }
+          // 레벨업이 기다리는 동안 막아 둔 입력을 풀어야 출석 판을 누를 수 있다.
+          this.input.enabled = true;
+          openAttendancePopup(this, this.popupLayer, track, { onClosed: () => this.time.delayedCall(0, () => this.whenPopupsClear(openNext, finish)) });
+        }).catch(finish);
+      };
+      this.whenPopupsClear(() => { void attendanceManager.markAutoShown(); openNext(); }, finish);
+    }).catch(finish);
+  }
+
+  /** 떠 있는 판이 없을 때 `action`을 부른다. 오래 닫히지 않으면 그만둔다. */
+  private whenPopupsClear(action: () => void, giveUp?: () => void, tries = 0): void {
+    if (!this.sys.isActive() || !this.popupLayer) return;
+    if (!this.popupLayer.isOpen) { action(); return; }
+    if (tries < ATTENDANCE_AUTO_WAIT.tries) this.time.delayedCall(ATTENDANCE_AUTO_WAIT.stepMs, () => this.whenPopupsClear(action, giveUp, tries + 1));
+    else giveUp?.();
   }
 
   /**
@@ -416,8 +523,7 @@ export class LobbyScene extends Phaser.Scene {
     // 꺼진 칩처럼 판·글자가 가라앉고 아이콘 자리에 자물쇠가 선다(`RailButton.setLocked`).
     button.setLocked();
     if (!celebrate) return;
-    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
-    this.time.delayedCall(450, () => { if (button.active) button.unlock(id); });
+    whenUnlockGateOpen(this, () => this.time.delayedCall(450, () => { if (button.active) button.unlock(id); }));
   }
 
   /** 잠긴 입구의 눌림은 동작 대신 개방 레벨을 알린다. */
@@ -435,11 +541,10 @@ export class LobbyScene extends Phaser.Scene {
     button.setAlpha(LOCK_DIM.entranceAlpha);
     const lock = button.addLabelMark((size) => addPadlock(this, 0, 0, size, { color: LOCK_DIM.lockColor }));
     if (!celebrate) return;
-    this.unlockCelebrationUntil = this.time.now + UNLOCK_POP_TOTAL_MS + 900;
-    this.time.delayedCall(450, () => {
+    whenUnlockGateOpen(this, () => this.time.delayedCall(450, () => {
       if (!button.active) return;
       playUnlockSequence(this, lock, { id, onStart: () => this.tweens.add({ targets: button, alpha: 1, duration: 420, ease: "Sine.easeOut" }) });
-    });
+    }));
   }
 
   /** 연타 중에는 같은 인스턴스의 open 가드가 기존 쪽지를 유지한다. */
@@ -450,7 +555,7 @@ export class LobbyScene extends Phaser.Scene {
       this.excavationBackButton?.destroy(); this.excavationBackButton = undefined;
       // 열람 자체로 점을 지우지 않고, 닫힌 직후 서버 잔량으로 다시 확정한다.
       void notificationManager.refresh().catch(() => undefined);
-    });
+    }, presentRewardedAd);
     this.idleExcavationPopup.open();
     if (!this.excavationBackButton) {
       // 발굴도 다른 화면과 같은 우하단 뒤로가기 자리를 쓴다. 자리와 생김새를 화면마다 다시 정하지 않는다.
@@ -480,7 +585,8 @@ export class LobbyScene extends Phaser.Scene {
     if (!this.popupLayer) return;
     this.eventPopup ??= new LobbyEventPopup(this, this.popupLayer, {
       instant,
-      onSelect: (event) => {
+      onSelect: (event, onChanged) => {
+        if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
       },
@@ -534,21 +640,26 @@ export class LobbyScene extends Phaser.Scene {
    */
   private openPvpMenu(instant = false): void {
     if (!this.popupLayer || this.popupLayer.isOpen) return;
-    const layout = pvpMenuLayout(PVP_MODES.map((mode) => mode.id));
+    const layout = pvpMenuLayout(PVP_ACTIVE_MODES.map((mode) => mode.id));
     // 출격판과 같은 자리·같은 암전 — 두 입구가 한 벌의 판으로 읽혀야 한다.
     const panelY = BASE_HEIGHT / 2 + PVP_MENU.panel.offsetY;
     this.popupLayer.open({ width: PVP_MENU.panel.width, height: layout.height, y: panelY, title: t("lobby.duel"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: SORTIE_MENU.dimAlpha, closeOnBackdrop: true, hideCloseButton: true, instant, onClose: () => this.clearSortieChrome() }, (body, close) => {
-      PVP_MODES.forEach((mode, index) => {
-        body.add(new ExpeditionEntryButton(this, 0, layout.centers[index], {
+      PVP_ACTIVE_MODES.forEach((mode, index) => {
+        const entry=new ExpeditionEntryButton(this, 0, layout.centers[index], {
           width: PVP_MENU.entry.width, height: pvpEntryHeight(mode.id),
           // 라벨은 판에서 한 줄로 선다 — 2×2 칸에서 쓰던 줄바꿈은 가로로 긴 칸에서 빈 줄이 된다.
-          label: mode.label.replace("\n", " "), labelSize: 38,
+          label: mode.label.replace("\n", " "), labelSize: 54, statusSize: 29, statusWrap: 360,
           // 무엇을 하는 모드인지 첫 줄만 남긴다. 나머지는 상세가 말한다.
           status: mode.scope.split("\n")[0],
           artKey: mode.artKey,
-          // 결투장만 실제 화면이 열린다. 나머지 셋은 아직 자리표시다.
-          onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "pvpPreview", { mode: mode.id }); },
-        }));
+          // 실시간 아레나는 같은 결투장 원화를 보랏빛으로 물들여 다른 콘텐츠로 가른다.
+          ...(mode.id === "live-arena" ? { accentColor: ARENA_TONE.accent, accentTextColor: ARENA_TONE.accentText, artTint: 0xb58cff } : {}),
+          // 기존 결투장과 실시간 아레나는 같은 선택판의 독립 입구다.
+          onClick: () => { close(); if (mode.id === "arena") startScene(this, "duel"); else startScene(this, "arena"); },
+        });
+        body.add(entry);
+        // 렉시아 VS 스피나는 칸 **안에서** 맞부딪힌다 — 칩 실루엣 마스크에 가둬 판 밖으로 나가지 않는다.
+        if(mode.id==="live-arena") addArenaMascots(this,body,-235,layout.centers[index]+118,205,true,SORTIE_SD_DEPTH,{ mask: entry.clipMask, spread: 0.95 });
       });
       // 돌아가기는 판 안이 아니라 출격과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
@@ -589,9 +700,15 @@ export class LobbyScene extends Phaser.Scene {
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
+        // 고대 지층은 두 던전 아래·레이드 위의 전체 폭 칸이다. 실제 입장은 순차 해금과 서버 검증을 거친다.
+        {
+          y: 152, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
+          accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
+          onClick: () => { close(); startScene(this, "ancientStrata"); },
+        },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          content: "raid", y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          content: "raid", y: 428, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 지금 월드 폭주에 서 있는 보스가 왼쪽에 선다(스토리 칸과 같은 쪽·같은 크기). 서버와 같은 날짜 키로 구한다.
           sd: battleAssetFor(raidWorldBossId(raidSeasonKey(new Date()))),
@@ -601,10 +718,19 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          content: "expedition", y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: 719, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
       ];
+      // 칸은 굴러가는 컨테이너 안에 서고, 판이 보여 주는 구간 밖은 마스크로 자른다.
+      const view = SORTIE_MENU.scroll;
+      const content = this.add.container(0, 0);
+      body.add(content);
+      const viewShape = [-panel.width / 2, view.viewTop, panel.width / 2, view.viewTop, panel.width / 2, view.viewBottom, -panel.width / 2, view.viewBottom];
+      content.setMask(shapeClipMask(this, body, viewShape));
+      const bottom = Math.max(...entries.map((entry) => entry.y + entry.height / 2));
+      this.sortieScroll = { y: 0, min: Math.min(0, view.viewBottom - view.bottomPad - bottom), dragStart: undefined, dragOrigin: 0, moved: 0 };
+      this.sortieSdSpots = [];
       entries.forEach((entry) => {
         const x = entry.x ?? 0;
         // SD가 서는 칸만 마스크를 만든다. 쪽을 적지 않은 칸은 왼쪽이 기본이다.
@@ -612,25 +738,39 @@ export class LobbyScene extends Phaser.Scene {
         const button = new ExpeditionEntryButton(this, x, entry.y, {
           width: entry.width, height: entry.height, label: entry.label, labelSize: entry.labelSize, status: entry.status,
           artKey: entry.artKey, accentColor: entry.accentColor, accentTextColor: entry.accentTextColor,
-          sdSide, split: entry.split, onClick: entry.onClick,
+          // 끌어서 굴린 손이 칸 위에서 떨어져도 그 칸이 열리지 않게 한다.
+          sdSide, split: entry.split, onClick: () => { if (this.sortieScroll.moved <= view.slop) entry.onClick(); },
         });
-        body.add(button);
+        content.add(button);
+        if (entry.content === "raid" || entry.content === "expedition") {
+          const key = entry.content === "raid" ? "raidReward" : "expeditionReward";
+          bindNotificationDot(this, button, { x: entry.width / 2 - 22, y: -entry.height / 2 + 22 }, listener => notificationManager.subscribe(key, listener));
+        }
+        if (entry.label === t("lobby.sortie.story")) followTutorialTarget(this, {
+          enabled: () => body.active && this.popupLayer?.isOpen === true && tutorialManager.next() !== undefined,
+          rect: () => button.getBounds(), text: () => t("tutorial.lobby.story"),
+        });
         // 잠긴 입구는 덮개로 막고 SD도 세우지 않는다. 방금 열린 입구는 덮개의 자물쇠가 터지며 풀리고, SD는 그 뒤에 선다.
+        // 레벨이 아닌 「Coming soon」 잠금은 개방 연출이 없고 SD가 흐리게 선다.
         const celebrate = entry.content !== undefined && contentOpen(entry.content) && consumeUnlockCelebration(entry.content);
         const sdDelay = celebrate ? 350 + UNLOCK_POP_TOTAL_MS + 250 : 0;
-        if (entry.content !== undefined && (!contentOpen(entry.content) || celebrate)) {
+        if (entry.comingSoon) {
+          content.add(addLockCover(this, undefined, entry.width, entry.height, { bevel: sortieEntryBevel(entry.height, entry.split), text: true, message: entry.comingSoon }).setPosition(x, entry.y));
+        } else if (entry.content !== undefined && (!contentOpen(entry.content) || celebrate)) {
           const cover = addLockCover(this, entry.content, entry.width, entry.height, { bevel: sortieEntryBevel(entry.height, entry.split), text: true }).setPosition(x, entry.y);
-          body.add(cover);
+          content.add(cover);
           if (celebrate) {
             // 막은 채 자물쇠가 개방 연출을 돌고, 터진 뒤 덮개가 걷힌다.
-            const content = entry.content;
-            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, content); });
+            const unlocking = entry.content;
+            this.time.delayedCall(350, () => { if (cover.active) unlockCover(this, cover, unlocking); });
           }
           if (!celebrate) return;
         }
         const sdAsset = entry.sd;
         if (!sdAsset) return;
         const spot = sortieEntrySdSpot(entry.width, entry.height, sdSide ?? "left");
+        const range: { top: number; bottom: number; puppets: PuppetCreature[] } = { top: entry.y - entry.height / 2, bottom: entry.y + entry.height / 2, puppets: [] };
+        this.sortieSdSpots.push(range);
         const spawn = () => void this.spawnSortieSd(sdAsset, {
           x: BASE_WIDTH / 2 + x + spot.x,
           groundY: panelY + entry.y + spot.groundY,
@@ -638,9 +778,12 @@ export class LobbyScene extends Phaser.Scene {
           shadowOffsetX: spot.shadowOffsetX,
           shadowOffsetY: spot.shadowOffsetY,
           mask: button.sdMask,
+          dim: entry.comingSoon !== undefined,
+          range,
         });
         if (sdDelay > 0) this.time.delayedCall(sdDelay, spawn); else spawn();
       });
+      this.bindSortieScroll(content, panelY);
       // 돌아가기는 판 안이 아니라 다른 팝업과 같은 화면 우하단 슬롯에 선다.
       this.sortieBackButton = new IconButton(this, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: close }).setDepth(SORTIE_SD_DEPTH + 1);
       // 상점은 본판 밑의 제 판에 선다. 판과 함께 여닫히도록 본판(`body`)에 넣는다.
@@ -680,8 +823,59 @@ export class LobbyScene extends Phaser.Scene {
     // 칸은 연구소·고고학의 상점 칩과 같은 한 벌·같은 크기다.
     shops.forEach((entry, index) => {
       const x = centerX - width / 2 + shop.pad + shop.cell / 2 + index * (shop.cell + shop.cellGap);
-      body.add(addSideShopButton(this, x, centerY, shop.cell, entry.label, entry.onClick));
+      // 전리품 상점은 일반 상점과 같은 조건으로 열린다 — 잠긴 동안은 칩이 꺼지고 누르면 안내만 뜬다.
+      const chip = addSideShopButton(this, x, centerY, shop.cell, entry.label, () => { if (contentOpen("shop")) entry.onClick(); else showContentLockedToast(this, "shop"); });
+      if (!contentOpen("shop")) chip.setLocked();
+      body.add(chip);
     });
+  }
+
+  /**
+   * 출격판 안 칸 굴리기 — 끌어서도 휠로도 굴리고, SD 층도 같은 만큼 움직인다.
+   *
+   * 칸은 컨테이너 마스크가 자르지만 SD는 칸마다 제 마스크를 달고 있어 판 마스크를 겹쳐 물지 못한다. 그래서 칸이 보이는
+   * 구간에 온전히 들어올 때만 그 칸의 SD를 세운다(`applySortieScroll`).
+   */
+  private bindSortieScroll(content: Phaser.GameObjects.Container, panelY: number): void {
+    this.sortieContent = content;
+    const view = SORTIE_MENU.scroll;
+    const half = SORTIE_MENU.panel.width / 2;
+    const inside = (p: Phaser.Input.Pointer): boolean =>
+      this.popupLayer?.isOpen === true && p.x >= BASE_WIDTH / 2 - half && p.x <= BASE_WIDTH / 2 + half && p.y >= panelY + view.viewTop && p.y <= panelY + view.viewBottom;
+    const scroll = this.sortieScroll;
+    const handlers = {
+      down: (p: Phaser.Input.Pointer) => { if (!inside(p)) return; scroll.dragStart = p.y; scroll.dragOrigin = scroll.y - p.y; scroll.moved = 0; },
+      move: (p: Phaser.Input.Pointer) => {
+        if (scroll.dragStart === undefined || !p.isDown) return;
+        scroll.moved = Math.max(scroll.moved, Math.abs(p.y - scroll.dragStart));
+        // 끌기로 보기 전에는 굴리지 않는다. 칸을 누르던 손의 흔들림에 판이 따라 흔들리지 않게 한다.
+        if (scroll.moved > view.slop) this.scrollSortie(scroll.dragOrigin + p.y);
+      },
+      up: () => { scroll.dragStart = undefined; },
+      wheel: (...args: number[]) => { if (this.popupLayer?.isOpen) this.scrollSortie(scroll.y - args[2]); },
+    };
+    this.input.on("pointerdown", handlers.down);
+    this.input.on("pointermove", handlers.move);
+    this.input.on("pointerup", handlers.up);
+    this.input.on("wheel", handlers.wheel);
+    this.sortieScrollHandlers = handlers as typeof this.sortieScrollHandlers;
+  }
+
+  private scrollSortie(y: number): void {
+    this.sortieScroll.y = Phaser.Math.Clamp(y, this.sortieScroll.min, 0);
+    this.applySortieScroll();
+  }
+
+  /** 굴림을 칸 컨테이너·SD 층에 옮기고, 보이는 구간 밖으로 나간 칸의 SD는 숨긴다. */
+  private applySortieScroll(): void {
+    const { y } = this.sortieScroll;
+    const view = SORTIE_MENU.scroll;
+    this.sortieContent?.setY(y);
+    this.sortieSdLayer?.setY(y);
+    for (const range of this.sortieSdSpots) {
+      const shown = range.top + y >= view.viewTop - 6 && range.bottom + y <= view.viewBottom;
+      for (const puppet of range.puppets) puppet.setVisible(shown);
+    }
   }
 
   /**
@@ -691,7 +885,7 @@ export class LobbyScene extends Phaser.Scene {
    * 판에서 떠오른다. 그림자도 같은 동작을 재생해야 두 겹이 어긋나지 않는다. 늦게 도착한
    * 결과는 이미 닫힌 판 위에 남지 않도록 현재 레이어일 때만 붙인다.
    */
-  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask }): Promise<void> {
+  private async spawnSortieSd(asset: PuppetAsset, place: { x: number; groundY: number; height: number; shadowOffsetX: number; shadowOffsetY: number; mask?: Phaser.Display.Masks.GeometryMask; dim?: boolean; range?: { top: number; bottom: number; puppets: PuppetCreature[] } }): Promise<void> {
     const layer = this.sortieSdLayer;
     if (!layer) return;
     const pair: SortieSdPair = {};
@@ -703,8 +897,12 @@ export class LobbyScene extends Phaser.Scene {
       if (place.mask) puppet.setMask(place.mask);
       if (shadow) { puppet.setTint(SORTIE_SD_SHADOW.color); puppet.setAlpha(SORTIE_SD_SHADOW.alpha); pair.shadow = puppet; }
       else pair.body = puppet;
+      // 열리지 않은 입구의 SD는 잠긴 칸답게 가라앉혀 세운다.
+      if (place.dim) puppet.setAlpha(shadow ? SORTIE_SD_SHADOW.alpha * 0.5 : 0.5);
       layer.add(puppet);
       this.sortieSdPuppets.add(puppet);
+      place.range?.puppets.push(puppet);
+      this.applySortieScroll();
     };
     const spawn = (shadow: boolean) => loadOwnedPuppet({
       spawn: () => spawnPuppet(this, asset, {
@@ -727,18 +925,20 @@ export class LobbyScene extends Phaser.Scene {
   private clearSortieChrome(): void {
     this.sortieSdTimer?.remove(false); this.sortieSdTimer = undefined;
     for (const puppet of this.sortieSdPuppets) { this.sortieSdLayer?.remove(puppet, false); puppet.destroy(); }
-    this.sortieSdPuppets.clear(); this.sortieSdPairs = [];
+    this.sortieSdPuppets.clear(); this.sortieSdPairs = []; this.sortieSdSpots = [];
+    const handlers = this.sortieScrollHandlers;
+    if (handlers) { this.input.off("pointerdown", handlers.down); this.input.off("pointermove", handlers.move); this.input.off("pointerup", handlers.up); this.input.off("wheel", handlers.wheel); }
+    this.sortieScrollHandlers = undefined; this.sortieContent = undefined;
     this.sortieSdLayer?.destroy(true); this.sortieSdLayer = undefined;
     this.sortieBackButton?.destroy(); this.sortieBackButton = undefined;
   }
 
-  /** 오늘의 횟수·진행·주간 최고점·빠른 가능 여부를 한 줄의 짧은 원정 상태로 합친다. */
+  /** 오늘의 횟수·진행·주간 최고점을 한 줄의 짧은 원정 상태로 합친다. */
   private expeditionStatus(status = expeditionManager.status()): string {
     const plays = status.playsToday;
     const best = status.bestScore.toLocaleString();
     if (status.active) return t("lobby.expedition.resume", { plays, best });
-    const quick = t(status.quickAvailable ? "lobby.expedition.quickReady" : "lobby.expedition.quickLocked");
-    return t("lobby.expedition.weekly", { plays, best, quick });
+    return t("lobby.expedition.weekly", { plays, best });
   }
 
   /** 연구소에서 옮긴 채광 설비·식물 원화를 로비 광장 배경으로 사용한다. */
@@ -765,11 +965,35 @@ export class LobbyScene extends Phaser.Scene {
    * 늘 쓰지만 화면의 주인공은 아닌 편의 기능들이다. 캐릭터를 가리지 않도록 가장자리에 세우고
    * 크기도 출격·교류보다 한참 작게 둔다.
    */
+  /**
+   * 가방 아래의 메뉴(햄버거). 누르면 옆에서 한 줄짜리 판이 나와 회고·업적을 고른다.
+   * 받을 업적 단계가 남아 있으면 업적 칩과 접힌 단추에 빨간 점이 선다.
+   */
+  private buildMenuTray(): void {
+    new LobbyMenuTray(this, [
+      { icon: LOBBY_MENU_GLYPH.recollection, label: t("lobby.menu.recollection"), onClick: () => this.openRecollection() },
+      { icon: LOBBY_MENU_GLYPH.achievement, label: t("lobby.menu.achievement"), onClick: () => this.openAchievements(), notice: "achievementReward" },
+    ], undefined, () => this.popupLayer?.isOpen ?? false);
+  }
+
+  /** 업적 창을 로비 위에서 연다 — 임무 기록과 같은 판이다. */
+  private openAchievements(): void {
+    if (!this.popupLayer) return;
+    new AchievementsPopup(this, this.popupLayer, gameApi, () => this.topBar?.refresh()).open();
+  }
+
+  /** 본 이야기를 모아 다시 읽는 회고를 로비 위에서 연다. 고른 이야기는 끝나면 로비로 돌아온다. */
+  private openRecollection(): void {
+    if (!this.popupLayer) return;
+    new RecollectionPopup(this, this.popupLayer, (storyId) => startScene(this, "stageStory", { storyId, exitTo: "lobby" })).open();
+  }
+
   private buildUtilityRail(): void {
     // 우편·친구·가방은 각각 입력 중심 하나만 가져야 한 번의 탭이 한 동작으로 이어진다.
     const rail = createLobbyUtilityRail({
       openEvents: () => this.openEvents(),
       openMail: () => this.openMail(),
+      openGuild: this.guarded("guild", () => startScene(this, "guild")),
       // 친구는 더 이상 준비 중 토스트가 아니라 목록과 공개 프로필 화면으로 연결된다.
       openFriends: this.guarded("friends", () => startScene(this, "friends")),
       // 가방은 씬 전환 없이 현재 로비 위에서 열린다.
@@ -778,8 +1002,10 @@ export class LobbyScene extends Phaser.Scene {
     rail.forEach((item) => {
       const button = new RailButton(this, item.bounds.x, item.bounds.y, { icon: item.icon, label: item.label, size: item.bounds.width, event: item.event, onClick: item.onClick });
       // 실제 서버 계약이 준비된 우편·친구 요청만 연결하고 Fake 데이터에서는 임의로 켜지 않는다.
-      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : undefined;
+      // 이벤트 입구는 오늘 받을 출석이 남아 있으면 점이 선다.
+      const key = item.icon === "mail" ? "mail" : item.icon === "friends" ? "friendRequest" : item.icon === "event" ? "newEvent" : undefined;
       if (item.icon === "friends") this.lockRailButton("friends", button);
+      if (item.icon === "guild") this.lockRailButton("guild", button);
       if (key) bindNotificationDot(this, button, { x: 42, y: -42 }, (listener) => notificationManager.subscribe(key, listener));
     });
   }

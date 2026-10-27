@@ -20,6 +20,7 @@ export const LAB_DE = {
   "lab.policy.pickupOff": "AUS",
   "lab.policy.pickupRate": "SSR-Pickup-Chance {percent}% · Bei Fehlschlag ist das nächste SSR das Pickup",
   "lab.policy.tenGuarantee": "Der letzte Platz eines 10er-Zugs ist SR oder besser (SSR-Garantie hat Vorrang)",
+  "lab.policy.tenUpgrade": "Ist der letzte Platz eines 10er-Zugs SR, besteht eine Chance von {percent}%, auf SSR aufzusteigen",
   "lab.policy.mileage": "+1 DNA-Meile pro Forschung",
   "lab.policy.duplicate": "Duplikatbelohnung  +1 Splitter dieses Relikts · Sammle Splitter für den Durchbruch",
   "lab.policy.duplicateMax": "Nach Durchbruch-Stufe V werden Duplikate zu DNA-Meilen (SSR +30 · SR +8 · R +2)",

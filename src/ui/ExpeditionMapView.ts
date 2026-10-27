@@ -1,9 +1,11 @@
 import Phaser from "phaser";
-import type { ExpeditionMapNode } from "../core/expeditionMap";
+import type { ExpeditionMapNode, ExpeditionNodeType } from "../core/expeditionMap";
+import { expeditionNodeRole } from "../data/expeditionEnemies";
 import { BUTTON_DRAG_CANCEL_DISTANCE } from "./Button";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import { chipPoints, drawInnerVignette, drawLayer } from "./holo";
 import { COLOR } from "./theme";
+import { encounterRoleIcon } from "./encounterRolePresentation";
 import { isEnemyPreviewNodeVisible } from "./nodeEnemyPreviewLayout";
 import {
   clampExpeditionMapOffset,
@@ -12,6 +14,8 @@ import {
   expeditionNodePosition,
   focusExpeditionFloor,
 } from "./expeditionLayout";
+
+const BATTLE_NODE_TYPES: ReadonlySet<ExpeditionNodeType> = new Set(["normal", "elite", "horde", "boss"]);
 
 export interface ExpeditionMapViewOptions {
   top: number;
@@ -107,12 +111,18 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
     if (reachable) {
       // 확대된 반투명 실루엣을 겹쳐 외곽선이 아닌 부드러운 상태 발광을 만든다.
       [1.34, 1.22, 1.12].forEach((glowScale, index) => visual.add(
-        drawLayer(this.scene, 0, 0, frame, { fill: COLOR.sortie, alpha: 0.07 + index * 0.035 }).setScale(glowScale),
+        drawLayer(this.scene, 0, 0, frame, { fill: COLOR.sortie, alpha: 0.07 + index * 0.035, shadow: false }).setScale(glowScale),
       ));
     }
     visual.add(drawLayer(this.scene, 0, 0, frame, { fill: visited ? COLOR.panel : 0x131820, alpha: 0.94 }));
     visual.add(drawInnerVignette(this.scene, 0, 0, frame, { strength: 0.45 }));
-    visual.add(drawGlyph(this.scene, `expedition-${node.type}` as GlyphName, 0, 0, baseSize * 0.54, reachable ? COLOR.sortie : COLOR.inkDimHex, 1, 3));
+    // 전투 칸은 적 정보창·고대 지층과 같은 역할 아이콘을 쓴다 — 같은 「정예」가 화면마다 다른 그림이면 익힌 표식이 통하지 않는다.
+    // 휴식·보물처럼 역할이 없는 칸과 아이콘이 아직 안 올라온 때만 원정 전용 도형으로 선다.
+    const tint = reachable ? COLOR.sortie : COLOR.inkDimHex;
+    const roleIcon = BATTLE_NODE_TYPES.has(node.type) ? encounterRoleIcon(expeditionNodeRole(node.type, node.floor)) : undefined;
+    visual.add(roleIcon && this.scene.textures.exists(roleIcon)
+      ? this.scene.add.image(0, 0, roleIcon).setDisplaySize(baseSize * 0.8, baseSize * 0.8).setTint(tint)
+      : drawGlyph(this.scene, `expedition-${node.type}` as GlyphName, 0, 0, baseSize * 0.68, tint, 1, 3));
     this.world.add(visual);
 
     // 손가락 입력면은 축소되는 시각 노드보다 항상 크게 유지한다.

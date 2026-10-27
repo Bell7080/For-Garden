@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { ProductRefresh } from "../data/products";
 import { chipPoints, drawFrameVignette, drawLayer, slantedRect } from "./holo";
 import { COLOR, textStyle } from "./theme";
+import { addShowcaseFace } from "./showcaseCardFace";
 
 /**
  * 전시대에 놓인 상품 카드 한 장의 **겉모습** — 무역 전시장과 프리미엄이 함께 쓴다.
@@ -53,6 +54,8 @@ export interface ShowcaseChromeOptions {
   tag?: string;
   /** 꼬리표의 왼쪽 끝(카드 중심 기준). 비우면 글줄 시작선이다. */
   tagLeft?: number;
+  /** 상품(액자 줄)이 놓이는 높이 — 면 무늬의 받침·빛이 이 줄을 기준으로 선다. */
+  stageY?: number;
 }
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업·스크롤 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
@@ -93,6 +96,8 @@ export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.
     glow: { color: accent, strength: dim ? 0.16 : SHOWCASE_CARD.glow.strength, height: SHOWCASE_CARD.glow.height },
     edge: accent, edgeAlpha: dim ? 0.35 : 0.9, edgeWidth: 3,
   }));
+  // 면 무늬(◆ 격자 + 광휘). 몸판 바로 위·광택 아래에 깔고 카드 도형대로 구워 모서리 밖으로 새지 않는다.
+  addShowcaseFace(scene, card, 0, 0, { width, height, shape, accent, stageY: options.stageY, dim });
   // 비스듬한 빛줄기. 몸판 도형 안에서만 보이도록 아래 비네트와 같은 마스크를 쓴다.
   const streaks = scene.add.graphics();
   for (const streak of SHOWCASE_CARD.streaks) {

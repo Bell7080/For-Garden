@@ -77,6 +77,9 @@ export function encounterRoleDescription(role: EncounterRole): string {
       base: spec.tenacity.basePercent, per: spec.tenacity.perControlPercent, max: spec.tenacity.maxPercent,
     }));
   }
+  if (spec.tenacity?.controlIgnoreAtOrBelowSeconds !== undefined) {
+    lines.push(t("info.enemy.role.controlImmunity", { seconds: spec.tenacity.controlIgnoreAtOrBelowSeconds }));
+  }
   if (spec.damageReduction) {
     lines.push(t("info.enemy.role.damageReduction", {
       base: spec.damageReduction.basePercent, max: spec.damageReduction.maxPercent,
@@ -87,6 +90,10 @@ export function encounterRoleDescription(role: EncounterRole): string {
     lines.push(t("info.enemy.role.healingReduction", {
       base: spec.healingReduction.basePercent, max: spec.healingReduction.maxPercent, seconds: spec.healingReduction.rampSeconds,
     }));
+  }
+  if (spec.ramp) {
+    lines.push(t("info.enemy.role.ramp", { start: spec.ramp.startPercent, seconds: spec.ramp.seconds }));
+    lines.push(t("info.enemy.role.apGrowth", { percent: spec.ramp.lateGrowthPercentPerSecond }));
   }
   if (spec.percentHpResistance) lines.push(t("info.enemy.role.percentHpResistance", { percent: spec.percentHpResistance }));
   return lines.length > 0 ? lines.join("\n") : t("info.enemy.role.line.normal");

@@ -1,3 +1,6 @@
+import type { ProjectileKind } from "../core/types";
+import type { InkShapeId } from "./inkShapes";
+
 /**
  * 이펙트 한 방의 **순수 배치표**.
  *
@@ -69,6 +72,12 @@ export interface BurstSpec {
   flashMs: number;
   /** 파편이 회전하는 초당 각도. 마름모라 돌면 반짝이는 것처럼 보인다. */
   spin: number;
+  /**
+   * 전장의 잉크 결(`inkShapes.ts`). 주면 파편이 잉크 조각으로 서고, 밝아지는 섬광 대신 맞은 자리에
+   * **잉크 별**이 팡 벌어졌다 꺼진다(`star`는 별의 배율, 0이면 별 없이 조각만). 메뉴의 홀로그램
+   * 결(탭·세공)은 이 칸을 갖지 않는다.
+   */
+  ink?: { star: number };
 }
 
 /**
@@ -79,25 +88,27 @@ export interface BurstSpec {
  */
 export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   basic: {
-    shards: 5, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
-    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260,
+    // 피격 파티클은 난전(치즈케이크 대작전 같은 밀집 전투)에서 한꺼번에 쏟아져 렉을 만들었다 —
+    // 일반 타격은 한 조각만 남기고, 별·파문으로 맞은 자리를 알린다.
+    shards: 1, speed: [260, 460], gravity: 90, life: [220, 340], shardScale: 0.85,
+    rings: 1, ringRadius: 74, ringMs: 240, ringWidth: 5, flash: 38, flashAlpha: 0.3, flashMs: 150, spin: 260, ink: { star: 0.78 },
   },
   ultimate: {
-    shards: 9, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
-    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200,
+    shards: 3, speed: [420, 780], gravity: 40, life: [360, 560], shardScale: 1.5,
+    rings: 2, ringRadius: 216, ringMs: 420, ringWidth: 11, flash: 140, flashAlpha: 0.55, flashMs: 300, spin: 200, ink: { star: 1.4 },
   },
   passive: {
     // 패시브는 스스로 발동하는 조용한 효과라 파문 없이 위로 떠오르는 파편 몇 조각뿐이다.
-    shards: 4, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
-    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140,
+    shards: 1, speed: [120, 220], gravity: -150, life: [420, 620], shardScale: 0.7,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 36, flashAlpha: 0.42, flashMs: 260, spin: 140, ink: { star: 0 },
   },
   fever: {
     // 폭주는 몸에서 바깥으로 밀려나는 한 겹이다. 파편은 크고 느리게 벌어진다.
-    shards: 7, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
-    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180,
+    shards: 2, speed: [300, 520], gravity: -60, life: [400, 620], shardScale: 1.2,
+    rings: 1, ringRadius: 168, ringMs: 380, ringWidth: 9, flash: 96, flashAlpha: 0.42, flashMs: 320, spin: 180, ink: { star: 0.9 },
   },
   heal: {
-    shards: 5, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
+    shards: 2, speed: [90, 190], gravity: -260, life: [520, 760], shardScale: 0.72,
     rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 44, flashAlpha: 0.45, flashMs: 280, spin: 120,
   },
   shield: {
@@ -106,8 +117,8 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
     rings: 1, ringRadius: 116, ringMs: 340, ringWidth: 8, flash: 60, flashAlpha: 0.5, flashMs: 240, spin: 0,
   },
   death: {
-    shards: 8, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
-    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300,
+    shards: 2, speed: [220, 480], gravity: -110, life: [420, 700], shardScale: 1.05,
+    rings: 1, ringRadius: 138, ringMs: 340, ringWidth: 7, flash: 80, flashAlpha: 0.42, flashMs: 260, spin: 300, ink: { star: 0.9 },
   },
   tap: {
     // 홀로그램 장비를 누른 자리. 파편을 뿌리지 않고 얇은 파문 한 겹만 빠르게 지나간다.
@@ -117,7 +128,7 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
   tapBattle: {
     // 전장은 단순한 SD가 뚜따시하는 화면이라 조작도 작게 톡 튄다. 파문 없이 조각 셋뿐이다.
     shards: 3, speed: [140, 260], gravity: -80, life: [200, 300], shardScale: 0.42,
-    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320,
+    rings: 0, ringRadius: 0, ringMs: 0, ringWidth: 0, flash: 30, flashAlpha: 0.45, flashMs: 150, spin: 320, ink: { star: 0 },
   },
   craftSuccess: {
     // 세공 성공은 "깡" 하고 박힌다. 조각이 위로 튀고 파문 한 겹이 빠르게 벌어진다 — 메뉴의
@@ -138,6 +149,55 @@ export const EFFECT_PRESETS: Record<EffectKind, BurstSpec> = {
     rings: 2, ringRadius: 168, ringMs: 340, ringWidth: 9, flash: 116, flashAlpha: 0.6, flashMs: 260, spin: 240,
   },
 };
+
+/**
+ * 잉크 결 타격의 값.
+ *
+ * 별은 **누가 맞았나**를 피해 수치와 같은 축으로 말한다 — 우리 편이 맞으면 붉은 별, 치명타는 노란 별이
+ * 한 등급 크게, 그 밖에는 때린 쪽의 색을 한 톤 밝힌 별이다. 섬광을 겹쳐 밝히지 않으므로 밝은 원화
+ * 위에서도 잉크선이 별을 떼어 놓는다.
+ */
+export const INK_HIT = {
+  /** 잉크 조각 텍스처가 홀로그램 파편보다 커서 같은 배율이면 무겁다. 배율에 곱한다. */
+  shardScale: 0.7,
+  /** 치명타 별은 일반 별의 이 배수다. */
+  criticalStar: 1.6,
+  /** 별이 벌어졌다 꺼지는 시간(ms). 치명타만 조금 길다. */
+  starMs: 190,
+  criticalStarMs: 260,
+  /** 별이 처음 서는 배율과 최대로 벌어지는 시점(수명 비율). */
+  starFrom: 0.35,
+  starPeakAt: 0.45,
+  /** 별이 진하기를 잃기 시작하는 시점(수명 비율). 그 전까지는 또렷하다. */
+  starFadeAt: 0.55,
+  /** 때린 쪽 색을 흰색 쪽으로 이만큼 밝혀 별을 칠한다. */
+  lighten: 0.3,
+  /** 우리 편이 맞은 별 — 피해 수치의 아군 피격 색(`INCOMING_DAMAGE_TONE`)의 가운데 톤이다. */
+  incomingColor: 0xf9705f,
+  /** 치명타 별 — 피해 수치의 치명타 색(`CRITICAL_COLOR`)과 같다. */
+  criticalColor: 0xffd24a,
+  /** 파문 밑에 까는 잉크선이 색 선보다 굵은 몫(px). */
+  ringInkExtra: 4,
+} as const;
+
+/** 색을 흰색 쪽으로 `amount`(0~1)만큼 밝힌다. */
+export function lightenColor(color: number, amount: number): number {
+  const channel = (shift: number): number => {
+    const value = (color >> shift) & 0xff;
+    return Math.round(value + (255 - value) * amount);
+  };
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+}
+
+/** 잉크 별의 색과 배율. 아군 피격이 치명타보다 먼저다(피해 수치와 같은 우선순위). */
+export function inkStarStyle(color: number, options: { critical?: boolean; incoming?: boolean }): { color: number; scale: number; ms: number } {
+  const critical = options.critical === true && options.incoming !== true;
+  return {
+    color: options.incoming ? INK_HIT.incomingColor : critical ? INK_HIT.criticalColor : lightenColor(color, INK_HIT.lighten),
+    scale: critical ? INK_HIT.criticalStar : 1,
+    ms: critical ? INK_HIT.criticalStarMs : INK_HIT.starMs,
+  };
+}
 
 /**
  * 화면을 누른 자리의 색.
@@ -163,7 +223,7 @@ export const EFFECT_BUDGET = {
    * 세공도 막지 않는다 — 손이 누른 만큼 결과가 박혀야 연타가 화면에 남는다. 한 번에 하나씩
    * 서버 응답을 기다려 열리므로 한 프레임에 몰릴 일도 없다.
    */
-  minGapMs: { basic: 45, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
+  minGapMs: { basic: 90, heal: 90, shield: 90, passive: 120, tap: 40, tapBattle: 40, ultimate: 0, fever: 0, death: 0, craftSuccess: 0, craftFail: 0, craftEngrave: 0 } as Record<EffectKind, number>,
   /** 살아 있는 파문의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
   maxRings: 14,
   /** 살아 있는 수치 글자의 상한. */
@@ -249,6 +309,64 @@ export const BATTLEFIELD_WASH_RISE = 0.45;
 export const BATTLEFIELD_WASH_HOLD = 0.5;
 
 /**
+ * 회복·보호막·궁극기의 잉크 결.
+ *
+ * - **회복**은 밝아지는 초록 기운 대신 발밑에 초록 마름모 한 겹(먹선)이 벌어지고, 잉크 십자가
+ *   톡 커지며(살짝 넘쳤다 돌아온다) 솟는다.
+ * - **보호막**은 두른 원 밖에 먹선을 한 겹 깔고 안쪽 선을 흰색이 아니라 막 색을 밝힌 톤으로 긋는다.
+ *   깨지는 순간은 막 조각 아홉이 바깥으로 흩어지고 붉은 별이 선다(맞은 쪽이 아군이든 적이든
+ *   "막이 깨졌다"는 받는 쪽의 사건이다).
+ * - **궁극기**는 처음 맞은 자리에서 집중선이 안으로 조여 든다. 광역이 셋을 함께 때려도 집중선은
+ *   한 번뿐이다(`focus.gapMs` 안의 두 번째부터는 건너뛴다).
+ */
+export const INK_RESTORE = {
+  heal: { feetOffset: 86, diamond: [0.34, 0.5], fillAlpha: 0.3, inkWidth: 7, crossPop: 1.15, crossPopAt: 0.35 },
+  shield: { inkExtra: 4, innerLighten: 0.35, breakShards: 9, breakRadius: 76, breakTravel: 140, breakMs: 420, breakStar: 1.1 },
+  focus: { rays: 16, inner: 660, travel: 300, length: 280, widths: [10, 16, 22], ms: 280, alpha: 0.85, gapMs: 400 },
+} as const;
+
+/**
+ * 범위와 장판의 **잉크 결**.
+ *
+ * 홀로그램 시절의 옅은 색면 + 검은 밑판은 밝은 원화 위에서 경계가 흐렸다. 잉크 결에서는 경계를
+ * **먹선 한 줄**이 쥐고, 그 안쪽에 같은 색을 한 톤 밝힌 선이 한 줄 더 돈다(조각의 흰 면 + 먹선과
+ * 같은 문법). 안쪽 6할에는 밝힌 색을 한 겹 더 깔아 가운데가 솟아 보이게 한다 — 무늬가 아니라
+ * 셀 그늘이다. 순간 범위는 처음 3할 동안 벌어지고 6할까지 그대로 머문 뒤 빠진다(그래야 벌어지는
+ * 동안 이미 사라지지 않는다).
+ */
+export const INK_AREA = {
+  // 보통 피해의 흰빛은 0.3이면 밝은 바닥 위에서 판이 통째로 하얗게 떴다.
+  fillAlpha: 0.24,
+  coreScale: 0.6,
+  coreAlpha: 0.16,
+  coreLighten: 0.35,
+  inkWidth: 8,
+  inkAlpha: 0.9,
+  lineWidth: 3,
+  lineLighten: 0.25,
+  growUntil: 0.3,
+  holdUntil: 0.6,
+  /**
+   * 고여 있는 장판(여울). 계속 떠 있는 면이라 순간 범위보다 한 단계 옅고, 먹선도 가늘고 옅다 —
+   * 시안 그대로의 굵은 먹선은 판 위에 선 SD보다 먼저 읽혔다. 안에서 바깥으로 번지는 물결 셋이
+   * 고여 있다는 것을 말한다(크기는 판이 아니라 물결만 움직인다 — 경계는 흔들리지 않는다).
+   */
+  surface: {
+    fillAlpha: 0.2,
+    coreAlpha: 0.12,
+    inkWidth: 5,
+    inkAlpha: 0.55,
+    lineAlpha: 0.6,
+    ripples: 3,
+    rippleSeconds: 1.1,
+    rippleFrom: 0.18,
+    rippleWidth: 4,
+    rippleAlpha: 0.45,
+    rippleLighten: 0.5,
+  },
+} as const;
+
+/**
  * 멀리서 때리는 타격이 **가는 길**.
  *
  * 사거리를 나눈 뒤로 중·원거리 개체는 떨어진 자리에서 때리는데, 화면에는 맞은 쪽에서만
@@ -286,28 +404,106 @@ export const REACH_STRIKE = {
     bend: 0.13,
     /** 뻗었다 걷히기까지(ms). 다음 평타보다 반드시 짧아야 잔상이 겹치지 않는다. */
     ms: 130,
-    /** 가장 진할 때의 알파. 겹쳐 밝아지는 합성이라 낮게 둔다. */
-    alpha: 0.66,
-  },
-  bullet: {
-    /**
-     * 탄환 한 알의 길이·두께(px). 마름모 한 조각이라 나는 방향으로 길게 눕는다.
-     *
-     * 두께는 반드시 채찍의 뿌리보다 두껍다 — 얇으면 같은 길 위에서 채찍에 통째로 묻힌다.
-     */
-    length: 50,
-    thickness: 18,
-    /** 날아가는 시간(ms). 거리와 무관하게 고정이라 먼 적일수록 빨라 보인다. */
-    ms: 150,
-    /** 지나온 자리에 남는 옅은 꼬리의 길이 배수. */
-    trail: 1.9,
-    alpha: 0.85,
-    /** 살아 있는 탄환의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
-    maxLive: 10,
-    /** 채찍보다 몇 겹 위에 그릴지. 같은 깊이에 두면 나중에 열린 채찍이 탄환을 덮는다. */
-    depthLift: 2,
+    /** 가장 진할 때의 알파. 먹선을 두르므로 또렷하게 둔다. */
+    alpha: 0.95,
+    /** 먹선 두께 — 뻗은 순간이 가장 굵고 걷히며 가늘어진다(px). */
+    inkWidth: [1.5, 5] as const,
   },
 } as const;
+
+/**
+ * 떨어져서 때리는 평타가 **날리는 것** — 잉크 조각 하나가 실제로 날아간다(`RelicDef.projectile`).
+ *
+ * 길이는 고정이고 자리만 옮긴다. 경로만큼 늘이면 먼 적일수록 화살이 엿가락이 된다. 피해는 이미
+ * 확정된 뒤라 시간도 거리와 무관하게 짧게 고정해 숫자보다 늦게 닿지 않게 한다.
+ */
+export interface ProjectileSpec {
+  shape: InkShapeId;
+  scale: number;
+  /** 몸 뒤로 꼬리를 단다(탄환). */
+  trail?: boolean;
+  /** 위로 솟는 높이(길이 대비). */
+  arc?: number;
+  /** 옆으로 일렁이는 폭(px). */
+  wave?: number;
+  /** 초당 회전(라디안). */
+  spin?: number;
+  /** 카드처럼 뒤집히며 난다. */
+  flip?: boolean;
+}
+
+export const INK_PROJECTILE: {
+  ms: number;
+  fadeFrom: number;
+  maxLive: number;
+  depthLift: number;
+  volley: { count: number; gapMs: number; spread: number };
+  kinds: Record<ProjectileKind, ProjectileSpec>;
+  trail: { offset: number; alpha: number; lighten: number };
+} = {
+  /** 날아가는 시간(ms). */
+  ms: 160,
+  /** 마지막 이 비율 동안 옅어지며 닿는다. */
+  fadeFrom: 0.9,
+  /** 살아 있는 투사체의 상한. 넘으면 가장 오래된 것을 즉시 회수한다. */
+  maxLive: 14,
+  /** 채찍보다 몇 겹 위에 그릴지. 같은 깊이에 두면 나중에 열린 채찍이 투사체를 덮는다. */
+  depthLift: 2,
+  /** 연사 한 번에 나가는 발 수와 발 사이 간격(ms), 옆으로 벌어지는 폭(px). */
+  volley: { count: 3, gapMs: 45, spread: 22 },
+  /** 종류마다 굽힌 조각·배율·움직임. `spin`은 초당 회전(라디안), `flip`은 카드처럼 뒤집히며 난다. */
+  kinds: {
+    bullet: { shape: "bullet", scale: 0.9, trail: true },
+    arrow: { shape: "arrow", scale: 0.95, arc: 0.09 },
+    volley: { shape: "bullet", scale: 0.72, trail: true },
+    note: { shape: "note", scale: 0.95, wave: 22 },
+    paper: { shape: "paper", scale: 0.95, spin: 24 },
+    signal: { shape: "signal", scale: 0.9 },
+    card: { shape: "card", scale: 0.95, flip: true },
+    feather: { shape: "feather", scale: 0.95, arc: 0.06 },
+    // 박쥐 떼 — 전용 그림이 오기 전까지 날개깃 조각이 물결치며 난다.
+    bat: { shape: "feather", scale: 0.8, wave: 26 },
+  },
+  /** 탄환 꼬리가 몸 뒤로 떨어진 거리(px)와 진하기. */
+  trail: { offset: 76, alpha: 0.8, lighten: 0.35 },
+};
+
+/**
+ * 근접 평타가 닿는 결(`RelicDef.strike`) — 몸이 붙어 있어 무엇으로 쳤는지가 곧 그 개체다.
+ * 공용 별 위에 한 겹만 얹고, 3배속 한 프레임에서도 획 하나가 남도록 짧고 굵게 둔다. 값은 게임 픽셀이다.
+ */
+export const INK_STRIKE = {
+  /** 지연 중인 조각까지 포함한 풀 상한. 초과 시 가장 오래된 연출만 회수한다. */
+  maxLive: 32,
+  // 칼날은 SD 몸통보다 작게 둔다 — 1.15배로 세웠을 때 맞은 개체를 통째로 덮었다.
+  slash: { ms: 170, from: 0.35, to: 0.7, growUntil: 0.45, drift: 30, tilt: -0.55, turn: 0.5 },
+  claw: { ms: 160, count: 3, gapMs: 38, gap: 34, tilt: 0.92, from: 0.35, to: 1.05, growUntil: 0.4, drift: 38 },
+  bite: { ms: 180, scale: 0.5, open: 40, close: 6, shutAt: 0.45 },
+  smash: { ms: 300, radius: 150, width: 5 },
+  /** 획이 진하기를 잃기 시작하는 시점(수명 비율). */
+  fadeFrom: 0.5,
+} as const;
+
+/** 투사체가 `t`(0~1)에 서는 자리. 활처럼 휘는 것은 위로 솟았다 내려온다. */
+export function projectilePosition(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  kind: ProjectileKind,
+  t: number,
+): { x: number; y: number } {
+  const spec = INK_PROJECTILE.kinds[kind];
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy) || 1;
+  let x = from.x + dx * t;
+  let y = from.y + dy * t - (spec.arc ?? 0) * length * 4 * t * (1 - t);
+  if (spec.wave) {
+    const sway = Math.sin(t * Math.PI * 3) * spec.wave;
+    x += (-dy / length) * sway;
+    y += (dx / length) * sway;
+  }
+  return { x, y };
+}
 
 /**
  * 유지 효과의 순수한 도형/움직임 배치표다. 색은 캐릭터의 `skillArtTint()`가 정하므로 이곳에

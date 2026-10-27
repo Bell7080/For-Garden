@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deathClockClosesBySeconds } from "../../src/core/battleClock";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina } from "../../src/data/raid";
-import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunGold, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_BOSS, RAID_SEASON_TOTAL_HP, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM, isRaidDifficulty, RAID_RUN_STAMINA, raidRunStamina, raidSettlementDisplayOrder } from "../../src/data/raid";
+import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidDayProgress, raidResetsAt, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../../src/core/raid";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import { ENCOUNTER_ROLE, applyEncounterScaling } from "../../src/core/levelDesign";
 
@@ -146,6 +146,22 @@ describe("정산", () => {
     expect(raidSettlement("normal", target * 5, 0.5, false)).toEqual(raidSettlement("normal", target, 0.5, false));
   });
 
+  it("의 젬은 증표와 같은 비율로 차올라 5 단위로 끊기고 난이도 상한(40·65·85·130)을 넘지 않는다", () => {
+    const max = { easy: 40, normal: 65, hard: 85, rampage: 130 } as const;
+    for (const difficulty of Object.keys(max) as (keyof typeof max)[]) {
+      const spec = RAID_DIFFICULTY[difficulty].settlement;
+      expect(spec.gems, difficulty).toBe(max[difficulty]);
+      const full = raidSettlement(difficulty, spec.mineTarget, 1, true)!;
+      expect(full.gem, difficulty).toBe(max[difficulty]);
+      for (const ratio of [0, 0.3, 0.6, 1]) {
+        const gem = raidSettlement(difficulty, spec.mineTarget * ratio + 1, ratio, ratio === 1)!.gem;
+        expect(gem % 5, difficulty).toBe(0);
+        expect(gem, difficulty).toBeGreaterThanOrEqual(5);
+        expect(gem, difficulty).toBeLessThanOrEqual(max[difficulty]);
+      }
+    }
+  });
+
   it("은 조금이라도 쳤으면 한 개는 준다", () => {
     expect(raidSettlement("easy", 1, 0, false)!.raidSigil).toBeGreaterThanOrEqual(1);
   });
@@ -160,10 +176,16 @@ describe("정산", () => {
     expect(max("rampage")).toBeGreaterThan(max("hard"));
   });
 
-  it("과 따로, 한 판의 골드는 그 판의 피해에 비례한다", () => {
-    expect(raidRunGold(0, 0.2)).toBe(0);
-    expect(raidRunGold(20_000, 0.2)).toBe(4_000);
-    expect(raidRunGold(40_000, 0.2)).toBe(2 * raidRunGold(20_000, 0.2));
+  it("한 판의 1차 보상은 그 판의 피해에 비례하고 골드는 없다", () => {
+    expect(raidRunRewards("hard", 0, true)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
+    expect(raidRunRewards("hard", 22_000, true)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 99_000, true)).toEqual({ raidSigil: 8, gem: 20, salvage: 6 });
+    expect(raidRunRewards("hard", 11_000, true).gem).toBeLessThan(20);
+  });
+
+  it("보스를 못 쓰러뜨린 판에는 인양 기록이 없고 증표·젬만 남는다", () => {
+    expect(raidRunRewards("hard", 22_000, false)).toEqual({ raidSigil: 8, gem: 20, salvage: 0 });
+    expect(raidRunRewards("hard", 0, false)).toEqual({ raidSigil: 0, gem: 0, salvage: 0 });
   });
 });
 
@@ -368,9 +390,9 @@ describe("전리품 상점", () => {
     );
     const raid = grantsOf("raid");
     const shared = [...grantsOf("expedition")].filter((key) => raid.has(key));
-    // 룬 한 장만 양쪽에 둔다 — 룬은 어디서 사든 같은 룬이고 주 무대가 고고학이라, 두 증표 모두
-    // 가끔(주간 로테이션 칸) 같은 종류를 조금씩 다른 값으로 판다. 연구 재화·DNA 조각 상품은 없다.
-    expect(shared).toEqual(["rune"]);
+    // 룬·화석·호박석은 양쪽에 둔다(응태 결정 2026-10-24) — 레이드·원정을 열심히 돈 만큼 고고학 재화를 살 수 있게
+    // 하려는 것이라, 증표마다 값과 주간 한도를 따로 두고 서로 대체재가 되지 않게 한다. DNA 조각 상품은 없다.
+    expect(shared.sort()).toEqual(["amber", "fossil", "rune"]);
   });
 
   it("이 파는 것과 받는 값이 모두 실제로 있는 것이다", () => {
@@ -492,13 +514,19 @@ describe("레이드 서버 경계", () => {
     const server = serverAt(state, "2026-09-16T12:00:00Z");
     const done = (await server.getRaids()).raids.find(({ id }) => id === "world-2026-09-15")!;
     expect(done.status).toBe("completed");
-    const amount = done.settlement[0]!.amount;
+    // 젬이 중요도 순으로 앞에 서고 증표가 뒤따른다.
+    expect(done.settlement.map(({ currency }) => currency)).toEqual(["gems", "raidSigil"]);
+    const amount = done.settlement.find(({ currency }) => currency === "raidSigil")!.amount;
+    const gems = done.settlement[0]!.amount;
     expect(amount).toBeGreaterThan(0);
+    expect(gems % 5).toBe(0);
     const before = state.wallet.raidSigil;
+    const gemsBefore = state.wallet.gems;
     const first = await server.settleRaid({ requestId: "st1", raidId: done.id });
     expect(first.alreadySettled).toBe(false);
     expect(first.raid.settled).toBe(true);
     expect(state.wallet.raidSigil).toBe(before + amount);
+    expect(state.wallet.gems).toBe(gemsBefore + gems);
     // 같은 요청은 영수증만, 다른 요청은 지급 없이 그렇다고만 말한다.
     await server.settleRaid({ requestId: "st1", raidId: done.id });
     const again = await server.settleRaid({ requestId: "st2", raidId: done.id });
@@ -591,8 +619,16 @@ describe("레이드 서버 경계", () => {
     const state = makeRaidSession();
     state.party = [];
     const api = serverAt(state, "2026-09-16T12:00:00Z");
-    await api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" });
-    await expect(api.submitRaidDamage({ requestId: "s2", raidId: "world-2026-09-16", actions: [] }))
-      .rejects.toMatchObject({ code: "RAID_SCORE_REJECTED" });
+    const before = { ...state.wallet };
+    await expect(api.enterRaid({ requestId: "s2", raidId: "world-2026-09-16" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    expect(state.wallet).toEqual(before);
+    expect(state.raid.instances).toEqual([]);
+  });
+});
+
+describe("레이드 정산 표시 순서", () => {
+  it("토벌 증표를 젬보다 먼저 세운다", () => {
+    const shown = raidSettlementDisplayOrder([{ currency: "gems", amount: 50 }, { currency: "raidSigil", amount: 12 }]);
+    expect(shown.map((reward) => reward.currency)).toEqual(["raidSigil", "gems"]);
   });
 });

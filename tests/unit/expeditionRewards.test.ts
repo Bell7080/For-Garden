@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
+import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, normalizeExpeditionPendingRewards, validateExpeditionAugmentChoice } from "../../src/core/expeditionRewards";
 import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../../src/core/expeditionScore";
 import { EXPEDITION_NODE_REWARD_BALANCE } from "../../src/data/expedition";
 import { EXPEDITION_AUGMENTS } from "../../src/data/expeditionAugments";
@@ -23,10 +23,10 @@ describe("expedition augment rewards", () => {
   });
 
   it("층·종류·잔여 HP 경계만으로 점수를 계산하고 재화 RNG를 입력받지 않는다", () => {
-    // 1층 100%의 기준 점수는 190점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
-    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(190);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(233);
-    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(194);
+    // 1층 100%의 기준 점수는 95점이며 위험한 노드만 단일 밸런스 배율을 적용한다.
+    expect(calculateExpeditionNodeScore({ floor: 1, nodeType: "normal", remainingHpPercent: 100, cleared: true })).toBe(95);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "elite", remainingHpPercent: 50, cleared: true })).toBe(116);
+    expect(calculateExpeditionNodeScore({ floor: 2, nodeType: "horde", remainingHpPercent: 50, cleared: true })).toBe(97);
     expect(calculateExpeditionNodeScore({ floor: 20, nodeType: "boss", remainingHpPercent: 100, cleared: true })).toBe(0);
   });
 
@@ -37,8 +37,10 @@ describe("expedition augment rewards", () => {
     for (let floor = 1; floor <= 19; floor += 1) {
       nodeTotal += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 70, cleared: true });
     }
-    // 원 피해 450점(레벨 1 3인 편성의 실측)만으로도 노드 총점의 아홉 배를 넘는다.
-    expect(expeditionBossDamageScore(450)).toBeGreaterThan(nodeTotal * 9);
+    // 경감 전 기여 4천 점 기준, 보스가 노드보다 크되 이전 200배 환산처럼 과도하지 않다.
+    // 운영 기록의 경감 전 기여 4.8만~6만 기준 — 보스가 노드보다 크되, ×5 환산(노드가 2%도 안 되던 때)처럼 과도하지 않다.
+    expect(expeditionBossDamageScore(48_000)).toBeGreaterThan(nodeTotal * 3);
+    expect(expeditionBossDamageScore(60_000)).toBeLessThan(nodeTotal * 8);
   });
 
   it("전멸·미클리어와 서버가 거부해야 할 HP·층 경계는 0점이다", () => {
@@ -95,10 +97,35 @@ describe("expedition augment rewards", () => {
     expect(validateExpeditionAugmentChoice({ augmentId: "echo-circuit", eligibleTargetRelicIds: [] }, { augmentId: "echo-circuit" }, prior)).toBe(false);
   });
 
+  it("겹치지 않는 개인 증강은 가진 렐릭을 대상에서 빼고, 셋 모두 가지면 후보에서 사라진다", () => {
+    const offers = (selections: { augmentId: string; targetRelicId?: string }[]) => {
+      const pool = new Set<string>();
+      const targets = new Map<string, string[]>();
+      for (let seed = 0; seed < 200; seed += 1) {
+        for (const offer of generateExpeditionAugmentOffers({ rarity: "sr", relics: party(), selections, random: expeditionRewardRandom(`s${seed}`) })) {
+          pool.add(offer.augmentId);
+          targets.set(offer.augmentId, offer.eligibleTargetRelicIds);
+        }
+      }
+      return { pool, targets };
+    };
+    const ids = party().map(({ relicId }) => relicId);
+    const one = offers([{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }]);
+    expect(one.targets.get("tag-poison-basic")).toEqual(ids.slice(1));
+    const all = offers(ids.map((relicId) => ({ augmentId: "tag-poison-basic", targetRelicId: relicId })));
+    expect(all.pool.has("tag-poison-basic")).toBe(false);
+    const offer = { augmentId: "tag-poison-basic", eligibleTargetRelicIds: ids };
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "tag-poison-basic", targetRelicId: ids[0] }, [{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }])).toBe(false);
+    expect(validateExpeditionAugmentChoice(offer, { augmentId: "tag-poison-basic", targetRelicId: ids[1] }, [{ augmentId: "tag-poison-basic", targetRelicId: ids[0] }])).toBe(true);
+  });
+
   it("후보 풀이 요청 수보다 작으면 더미 없이 가능한 후보만 결정적으로 표시한다", () => {
     const remaining = new Set(["field-repair", "formation-barrier"]);
     const prior = EXPEDITION_AUGMENTS.filter(({ rarity, id }) => rarity === "sr" && !remaining.has(id))
-      .flatMap((def) => Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "torika" } : {}) })));
+      .flatMap((def) => def.target === "relic" && def.stacking.mode === "strongest"
+        // 겹치지 않는 개인 증강은 렐릭마다 한 번이라 셋 모두가 가져야 풀에서 닫힌다.
+        ? party().map(({ relicId }) => ({ augmentId: def.id, targetRelicId: relicId }))
+        : Array.from({ length: def.maxStacks }, () => ({ augmentId: def.id, ...(def.target === "relic" ? { targetRelicId: "torika" } : {}) })));
     const input = { rarity: "sr" as const, relics: party(), selections: prior, candidateCount: 3 };
     const first = generateExpeditionAugmentOffers({ ...input, random: expeditionRewardRandom("saved-prior") });
     const restored = generateExpeditionAugmentOffers({ ...input, selections: structuredClone(prior), random: expeditionRewardRandom("saved-prior") });
@@ -150,3 +177,27 @@ function party() {
 function chooseFirst(manager: ExpeditionManager, offer: { augmentId: string; eligibleTargetRelicIds: string[] }): boolean {
   return manager.chooseAugment({ augmentId: offer.augmentId, ...(offer.eligibleTargetRelicIds[0] ? { targetRelicId: offer.eligibleTargetRelicIds[0] } : {}) });
 }
+
+describe('원정 점수 절반 조정',()=>{
+ it('일반·정예·무리 점수와 폰토스 환산을 같은 비율로 낮춘다',()=>{
+  for(const type of ['normal','elite','horde'] as const){
+   const multiplier={normal:1,elite:1.5,horde:1.25}[type];
+   expect(calculateExpeditionNodeScore({floor:10,nodeType:type,remainingHpPercent:80,cleared:true})).toBe(Math.round((10*40+80*1.5)*multiplier/2));
+  }
+  expect(expeditionBossDamageScore(1234)).toBe(617);
+ });
+});
+
+describe('원정 전리품 정상 범위',()=>{
+ it('일반 젬은 9~17, 보물 젬은 25~50 범위에서 지급한다',()=>{
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>0}).gems).toBe(9);
+  expect(calculateExpeditionNodeRewards({nodeType:'normal',accumulated:{},random:()=>1}).gems).toBe(17);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>0}).gems).toBe(25);
+  expect(calculateExpeditionNodeRewards({nodeType:'treasure',accumulated:{},random:()=>1}).gems).toBe(50);
+ });
+ it('상향 기간의 미정산 전리품을 현행 런 상한과 폰토스 몫까지만 인정한다',()=>{
+  expect(normalizeExpeditionPendingRewards({gems:10_000,gold:30_000,cheesecake:360,salvageRecord:580},50_000)).toMatchObject({
+   gems:700,gold:9_000,cheesecake:225,salvageRecord:320,
+  });
+ });
+});

@@ -12,9 +12,13 @@ export type MissionEvent =
   /** 스테미나를 쓰는 모든 입장이 지나는 `FakeServer.spendStamina` 한 곳에서만 난다. */
   | { type: "stamina_spent"; amount: number }
   | { type: "excavation_harvested" }
+  /** 고고학에서 실제로 발굴한 칸. 패스가 누적 기록을 읽는다. */
+  | { type: "strata_tile_dug" }
   | { type: "interaction_dispatched" }
   /** 일일 임무를 수령한 수. 주간 임무가 "매일 들어와 끝냈는가"를 세는 데 쓴다. */
-  | { type: "daily_mission_claimed"; count: number };
+  | { type: "daily_mission_claimed"; count: number }
+  /** 결투에서 이긴 판. 임무는 이 사건을 세지 않고 업적의 누적 기록만 센다. */
+  | { type: "duel_won" };
 
 export type MissionPeriod = "daily" | "weekly";
 
@@ -34,6 +38,13 @@ export interface MissionState {
   researchPoints: Record<MissionPeriod, number>;
   /** 연구도 단계 보상이 실제 지급된 ID다. */
   claimedResearchStageIds: string[];
+  /**
+   * 기간과 무관하게 이제껏 쌓인 사건 수(업적이 읽는다 — `core/achievements.ts`). 임무 진행은 목표에서
+   * 잘리고 기간마다 비워지므로 그 값으로는 "평생 몇 번"을 셀 수 없다. 모든 사건이 지나는
+   * `applyMissionEvent` 한 곳에서 오르게 해 새 호출부가 빠뜨리지 않게 한다. **선택 필드다** — 도입 전
+   * 세이브는 0에서 센다.
+   */
+  lifetime?: Partial<Record<MissionEvent["type"], number>>;
 }
 
 /** 화면과 서버가 함께 쓰는 정적 임무 규격이다. */
@@ -60,19 +71,19 @@ export interface MissionDefinition {
  */
 export const MISSIONS: readonly MissionDefinition[] = [
   { id: "daily-battle", period: "daily", title: "전투 승리 1회", target: 1, reward: { currency: "gold", amount: 5_000 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "연구소 캐릭터 연구 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-excavate", period: "daily", title: "연구소 캐릭터 연구 1회", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
   { id: "daily-salary", period: "daily", title: "급여 1회", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
   { id: "daily-lobby", period: "daily", title: "로비 교류 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "lobby_interaction" },
   { id: "daily-stamina", period: "daily", title: "스테미나 60 사용", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 10 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-harvest", period: "daily", title: "발굴 수확 1회", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
   { id: "daily-dispatch", period: "daily", title: "교류 파견 1회", target: 1, reward: { currency: "gold", amount: 3_000 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 50 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-daily", period: "weekly", title: "일일 임무 20회 완료", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
   { id: "weekly-battle", period: "weekly", title: "전투 승리 20회", target: 20, reward: { currency: "gold", amount: 30_000 }, researchPoints: 100, event: "battle_completed" },
   { id: "weekly-excavate", period: "weekly", title: "연구소 캐릭터 연구 10회", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
   { id: "weekly-stamina", period: "weekly", title: "스테미나 600 사용", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
   { id: "weekly-dispatch", period: "weekly", title: "교류 파견 5회", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
   { id: "weekly-salary", period: "weekly", title: "급여 10회", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "발굴 수확 5회", target: 5, reward: { currency: "gems", amount: 30 }, researchPoints: 50, event: "excavation_harvested" },
+  { id: "weekly-harvest", period: "weekly", title: "발굴 수확 5회", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" },
 ];
 
 /**
@@ -108,14 +119,14 @@ export const RESEARCH_REWARD_STAGES: Readonly<Record<MissionPeriod, readonly Res
   daily: [
     { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 10_000 }] },
     { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 20 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
     { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] },
   ],
   weekly: [
     { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 50_000 }] },
     { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
     { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
     { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] },
   ],
@@ -157,6 +168,7 @@ export function normalizeMissions(state: MissionState, now: Date): MissionState 
   const resetIds = new Set(MISSIONS.filter((mission) => (mission.period === "daily" ? dailyChanged : weeklyChanged)).map((mission) => mission.id));
   return {
     ...keys,
+    ...(state.lifetime ? { lifetime: { ...state.lifetime } } : {}),
     progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
     claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
     researchPoints: {
@@ -167,6 +179,9 @@ export function normalizeMissions(state: MissionState, now: Date): MissionState 
   };
 }
 
+/** 누적 기록의 끝. 저장 검증이 같은 값을 읽는다 — 정수 범위를 넘지 않게만 막는다. */
+export const LIFETIME_COUNT_CAP = 1_000_000_000;
+
 /** 하나의 성공 이벤트를 관련 임무에 한 번만 반영하고 목표 이상은 잘라 낸다. */
 export function applyMissionEvent(state: MissionState, event: MissionEvent, now: Date): MissionState {
   const next = normalizeMissions(state, now);
@@ -174,6 +189,7 @@ export function applyMissionEvent(state: MissionState, event: MissionEvent, now:
   if (event.type === "battle_completed" && !event.victory) return next;
   const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
   if (amount <= 0) return next;
+  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
   for (const mission of MISSIONS) {
     if (mission.event !== event.type) continue;
     next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);

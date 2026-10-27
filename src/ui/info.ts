@@ -1,3 +1,6 @@
+import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
+import { buildSummonKeywords } from "./summonKeywords";
+import { ferocityMaxOf } from "../core/ferocity";
 import { Button } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
@@ -14,13 +17,14 @@ import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
 import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import { startScene } from "./screenTransition";
+import { playFadeIn, playFadeOut, startScene } from "./screenTransition";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
   enableHitOnClick,
   placePuppet,
   playMotion,
+  PuppetSpawnCancelled,
   portraitAssetForSkin,
   sdAssetForSkin,
   spawnPuppet,
@@ -47,7 +51,8 @@ import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
 import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
-import { equippedRelicName, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { equippedRuneSlot, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
+import { addRuneBagToggles } from "./runeHolderCycle";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -67,13 +72,12 @@ import type { EncounterRole } from "../core/levelDesign";
 import { squeezeTextToWidth } from "./textFit";
 import { BREAK_CONFIRM, BREAK_STEPS, breakConfirmHeight, breakthroughStepsLayout } from "./breakthroughLayout";
 import { gameApi } from "../api/FakeServer";
-import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, type BreakthroughStep, canBreakThrough, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
+import { BREAKTHROUGH_STEPS, breakthroughEnhances, breakthroughFragmentCost, breakthroughFragmentSpend, type BreakthroughStep, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, FEED_UNIT, nextBreakthrough, relicExpToNext, relicLevelCap, breakthroughGrade } from "../core/relicProgression";
 import { BOND_FEROCITY_MULTIPLIER, BOND_LEVEL_CAP, BOND_TOTAL_XP_BY_LEVEL, BOND_XP_REWARD } from "../core/bond";
 import type { PublicRelicProfileDto } from "../api/contracts";
 import { capabilitiesFor, type InfoCapabilities, type InfoContext } from "../core/infoCapabilities";
-import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, skillDescription } from "./skillPresentation";
+import { allyHealPowerKeyword, attackSpeedCompositeDamageKeyword, canPreviewSkillDamage, damageKeyword, ferocityTraitDescription, passiveDescription, passiveNowKeyword, shimmerBurstKeywords, overpaintDetonationDamageKeyword, elationKeyword, lastDropKeyword, prickleKeyword, refillKeyword, passiveShieldKeyword, periodicStackKeyword, plumeKeyword, plumeBurstKeyword, prickleReflectKeyword, skillDescription } from "./skillPresentation";
 import type { KeywordDef } from "../data/keywords";
-import { deriveSummonStats } from "../core/summonStats";
 import { SummonInfoPopup } from "./SummonInfoPopup";
 import { galleryPortraitPlacement, INFO_PORTRAIT_FOCUS, infoPortraitPlacement } from "./portraitPlacement";
 import { skinsForRelic } from "../data/relicSkins";
@@ -81,8 +85,12 @@ import { relicSkinManager } from "../managers/RelicSkinManager";
 import { pressIn, pressOut } from "./pressFeedback";
 import { FeedTapEffect } from "./feedTapEffect";
 import { settingsManager } from "../managers/SettingsManager";
-import { FEED_TAP, feedHoldDelay } from "./feedTapStyle";
+import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
+import { withBusy } from "./BusyOverlay";
+import { findItem } from "../data/items";
+import { sortRunesByRelic } from "../managers/InventoryManager";
+import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -281,6 +289,9 @@ const BREAK_EDGE = 0xa88cf0;
 /** 한계 돌파 버튼. `labelInset`은 이름이 판 좌우 변에서 비워 두는 자리다(기울인 변을 피한다). */
 const BREAK_BUTTON = { width: 260, height: 86, labelY: -18, costY: 18, costSize: 19, icon: 26, gap: 5, pairGap: 18, labelInset: 28 } as const;
 
+/** 만능 파편이 함께 쓰일 때 그 몫을 알리는 색 — 파편·치즈케이크의 강조색과 갈라 읽히게 금빛이다. */
+const UNIVERSAL_SPEND_TEXT = "#ffd66b";
+
 /** 뚫을 수 있을 때 판 안쪽에서 번지는 빛의 숨. 느려야 재촉이 아니라 신호로 읽힌다. */
 const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 
@@ -295,13 +306,18 @@ const BREAK_ARM = { low: 0.35, high: 1, duration: 900 } as const;
 type BreakthroughCost =
   | { kind: "level"; label: string; need: number; have: number }
   | { kind: "fragment"; label: string; need: number; have: number }
-  | { kind: "currency"; texture: string; label: string; need: number; have: number };
-
-/** 이만큼 누르고 있으면 한 번에 급여 팝업이 열린다(ms). */
-const FEED_HOLD_MS = 420;
+  | { kind: "currency"; texture: string; label: string; need: number; have: number }
+  /** 그 개체의 파편이 모자라 **함께 소모되는** 만능 파편. 쓰일 때만 칸이 선다. */
+  | { kind: "universal"; texture: string; label: string; need: number; have: number };
 
 /** 옆 캐릭터로 넘어가는 데 필요한 가로 이동(px). */
 const SWIPE_DISTANCE = 110;
+/**
+ * 옆으로 넘긴 뒤 전신·SD를 읽기 시작하기까지 기다리는 시간. 연달아 넘기는 동안 지나치는 개체의
+ * 원화 디코드·모델 생성이 줄줄이 메인 스레드를 잡아 판이 끊겼다 — 손이 멈춘 개체만 읽는다.
+ * 판이 미끄러져 들어오는 시간(150+260ms)보다 짧아 한 번만 넘길 때의 체감은 그대로다.
+ */
+const SWIPE_SETTLE_MS = 180;
 
 /** 빈 자리가 제 크기에서 물러나는 비율. 셋이 물러나면 사이에 고른 틈이 생긴다. */
 const RUNE_GAP = 0.955;
@@ -319,10 +335,10 @@ const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number 
  * 장착용 룬 가방의 격자.
  *
  * 가방(`INVENTORY_LAYOUT`)과 같은 카드 크기·같은 칸 간격을 쓴다. 같은 룬이 두 화면에서
- * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목과 "비우기" 줄
+ * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목
  * 아래로 첫 줄 카드 **중심**이 서는 자리다.
  */
-const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 272 } as const;
+const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 220, toggleY: 82 } as const;
 
 /**
  * 능력치 상세가 서는 세로 자리.
@@ -514,6 +530,12 @@ export class InfoManager {
   private galleryReturn?: () => void;
   /** 좌우 넘김이 진행 중인지. 연달아 밀어도 한 번에 한 명씩만 넘어간다. */
   private sliding = false;
+  /** 호출한 화면이 정한 넘김 순서. 없으면 `PLAYABLE_RELICS`. */
+  private neighborDefs?: readonly RelicDef[];
+  /** 넘기는 동안 미뤄 둔 전신·SD 읽기. 새로 열거나 닫으면 지운다. */
+  /** 아직 끝나지 않은 전신·SD 읽기 수. 앞선 읽기가 남아 있을 때만 넘김 사이에 쉰다. */
+  private pendingLoads = 0;
+  private assetLoadTimer?: Phaser.Time.TimerEvent;
   /** 급여 버튼의 켜짐·꺼짐 판 두 장. */
   /** 돌파 버튼. 레벨 옆에 붙어 지금 뚫을 수 있는지를 진하기로 알린다. */
   private breakButton?: { container: Phaser.GameObjects.Container; label: Phaser.GameObjects.Text; cost: Phaser.GameObjects.Container; arm: Phaser.GameObjects.Graphics };
@@ -525,19 +547,16 @@ export class InfoManager {
   /** 값이 바뀔 때마다 아이콘과 수를 다시 가운데로 모은다. */
   private feedCostLayout?: () => void;
   private feedHold?: Phaser.Time.TimerEvent;
-  /**
-   * 손을 쉬면 여러 레벨 쪽지를 여는 타이머. 다시 누르면 취소된다.
-   *
-   * **씬 시계가 아니라 벽시계로 잰다.** 씬 타이머는 프레임이 돌아야 흐르므로 메인 스레드가 바쁜
-   * 자리에서는 0.7초가 몇 초로 늘어나, 손을 쉬었는데도 쪽지가 한참 뒤에 떴다.
-   */
-  private feedBulkTimer?: ReturnType<typeof setTimeout>;
+  private repaintFeedBulk?: () => void;
   /** 아직 서버로 보내지 않은 급여 횟수. 도는 요청이 끝나면 한 번에 보낸다. */
   private feedQueue = 0;
   private feedInFlight = 0;
   private feedQueueRelicId?: string;
   private feedFlushing?: Promise<void>;
   private feeding = false;
+  /** 급여 직후의 다시 칠하기에서만 경험치 줄을 미끄러뜨린다. */
+  private glideExp = false;
+  private expShownLevel = -1;
   /** A feed note is a singleton; this also bridges the async feed lock and popup creation. */
   private feedPopupOpen = false;
   /** 생성 시 고정한 문맥 덕분에 읽기 전용 창이 도중에 소유자 권한으로 승격되지 않는다. */
@@ -550,6 +569,19 @@ export class InfoManager {
   onOpen?: () => void;
   /** 급여·돌파가 지갑을 바꾼 직후 소유 씬의 상단 재화 줄을 갱신하는 경계다. */
   onWalletChange?: () => void;
+  /** 서버가 확정한 급여가 실제로 경험치·레벨을 올린 직후 불린다(튜토리얼이 첫 급여를 알아챈다). */
+  onFed?: (mode: "normal" | "level") => void;
+
+  /** 급여 버튼이 지금 서 있는 자리(씬 좌표). 창이 닫혀 있으면 `undefined`. */
+  feedButtonBounds(): Phaser.Geom.Rectangle | undefined {
+    if (!this.feedButton.active || !this.isOpen || !this.feedButton.visible) return undefined;
+    return this.feedButton.getBounds();
+  }
+
+  feedBulkTutorialBounds(): Phaser.Geom.Rectangle | undefined {
+    return this.feedPopupOpen ? this.feedOneTutorialHit?.getBounds() : undefined;
+  }
+  private feedOneTutorialHit?: Phaser.GameObjects.Rectangle;
 
   /**
    * `baseDepth`는 창 전체가 서는 층이다. 팝업 위에서 여는 창(발굴 배치처럼 팝업 안의 그리드를
@@ -779,9 +811,6 @@ export class InfoManager {
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 누를 때마다 치즈케이크 한 조각이 튀어 오르고 연속 수(×N)가 선다. 버튼의 자식이라 함께 사라진다.
     const tapEffect = new FeedTapEffect(this.scene, container, { x: 0, y: -height / 2 + 10 }, { x: width / 2 - 36, y: -height / 2 - 30 });
-    let heldFrom = 0;
-    let repeated = false;
-    let served = false;
     /**
      * **한 번 누르면 한 번 먹인다 — 서버 응답을 기다리지 않는다.** 예전에는 요청이 도는 동안 들어온
      * 누름을 버려, 빠르게 두드리면 절반 넘게 헛손질이 됐다. 이제 누름은 줄(`feedQueue`)에 쌓이고,
@@ -790,56 +819,36 @@ export class InfoManager {
      */
     const serveOnce = (): void => {
       if (!this.canQueueFeed()) return;
-      served = true;
       addDebugFeedTaps(1, 0);
       tapEffect.tap();
       settingsManager.haptic("uiTap");
       this.enqueueFeed(1);
     };
     hit.on("pointerdown", () => {
-      if (this.feedPopupOpen) return;
-      this.cancelFeedBulk();
+      if (!this.canQueueFeed()) return;
+      this.openFeedBulk(hit.getBounds());
       pressIn(container, "feed");
-      heldFrom = this.scene.time.now;
-      repeated = false;
-      served = false;
       serveOnce();
-      // **꾹 누르면 점점 빨라진다**(`feedHoldDelay`) — 한 박자씩 같은 간격으로 먹이던 때는 누르고
-      // 있어도 두드리는 것보다 느렸다. 한 번 먹일 때마다 다음 간격을 새로 잡는다.
       this.feedHold?.remove();
-      let repeat = 0;
-      const schedule = (): void => {
-        this.feedHold = this.scene.time.delayedCall(feedHoldDelay(repeat), () => {
-          repeat += 1;
-          repeated = true;
-          serveOnce();
-          if (heldFrom !== 0 && container.active) schedule();
-        });
-      };
-      schedule();
+      const repeater = new FeedHoldRepeater();
+      let lastAt = performance.now();
+      const relicId = this.currentDef?.id;
+      this.feedHold = this.scene.time.addEvent({ delay: FEED_TAP.hold.minMs, loop: true, callback: () => {
+        if (!container.active || !this.isOpen || !this.scene.input.activePointer.isDown || this.currentDef?.id !== relicId) { this.feedHold?.remove(); return; }
+        const now = performance.now();
+        const count = repeater.advance(now - lastAt);
+        lastAt = now;
+        for (let i = 0; i < count; i += 1) serveOnce();
+      } });
     });
     const release = (opened: boolean): void => {
       pressOut(container, "feed", { pop: opened });
-      // **제스처의 소유권을 먼저 가져온다.** `pointerup`과 `pointerupoutside`가 잇달아 와도 한 번만 처리한다.
-      const startedAt = heldFrom;
-      heldFrom = 0;
+      // 원래 버튼의 입력은 보조 쪽지가 열린 상태에서도 끝까지 이 버튼이 처리한다.
       this.feedHold?.remove();
       this.feedHold = undefined;
-      if (startedAt === 0 || !opened || !served) return;
-      const wasHold = repeated || this.scene.time.now - startedAt >= FEED_HOLD_MS;
-      // 한 번에 여러 레벨을 채우는 쪽지는 **손이 쉴 때** 연다. 누를 때마다 열면 그 판이 버튼 위를 덮어
-      // 연타가 거기서 끊긴다. 꾹 누른 손은 이미 멈춘 손이라 곧바로 연다.
-      this.cancelFeedBulk();
-      const relicId = this.currentDef?.id;
-      this.feedBulkTimer = setTimeout(() => {
-        this.feedBulkTimer = undefined;
-        // 기다리는 사이 창이 닫혔거나 옆 렐릭으로 넘어갔으면 열지 않는다.
-        if (!container.active || !this.scene.sys.isActive() || this.currentDef?.id !== relicId) return;
-        void this.flushFeeds().then(() => { if (heldFrom === 0 && container.active) this.openFeedBulk(x, y + height / 2); });
-      }, wasHold ? 0 : FEED_TAP.bulkIdleMs);
     };
     hit.on("pointerup", () => release(true));
-    // 손을 **뗀 자리**로 판단한다. 벗어남은 되풀이 급여만 멈추고, 쪽지를 열지 말지는 떼는 순간에 정한다.
+    // 버튼 밖으로 움직이면 연속 급여를 멈춘다.
     hit.on("pointerupoutside", () => release(false));
     hit.on("pointerout", () => { this.feedHold?.remove(); this.feedHold = undefined; });
     container.add(hit);
@@ -892,15 +901,16 @@ export class InfoManager {
     const def = this.currentDef;
     const step = nextBreakthrough(progress.breakthrough);
     const held = def ? relicProgression.getFragments(def.id) : 0;
-    // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 다섯, SSR은 하나다.
+    const universal = def ? relicProgression.getUniversalFragments(def.rarity) : 0;
+    // 드는 파편 수는 등급이 정한다 — 같은 단계라도 R은 넷, SSR은 하나다.
     const need = def && step ? breakthroughFragmentCost(def.rarity, progress.breakthrough) : 0;
-    const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
+    const ready = this.ownedNow && def !== undefined && canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
     this.breakButton?.container.setAlpha(step ? (ready ? 1 : 0.7) : 0.35);
     // 문구가 바뀌면 폭도 함께 바뀐다 — 처음 그릴 때만 누르면 `돌파 완료`가 판을 넘는다.
     if (this.breakButton) squeezeTextToWidth(this.breakButton.label.setText(step ? t("info.breakthrough") : t("info.breakthrough.gradeMax")), BREAK_BUTTON.width - BREAK_BUTTON.labelInset);
     this.breakButton?.label.setColor(ready ? COLOR.ink : COLOR.inkDim);
     this.paintBreakArm(ready);
-    this.paintBreakCost(def, step, held, need);
+    this.paintBreakCost(def, step, held, need, universal);
   }
 
   /**
@@ -931,18 +941,22 @@ export class InfoManager {
    * **액자를 쓰지 않는다** — 버튼 판 안에 액자를 넣으면 판이 두 겹으로 보인다(재화 비용 표기와
    * 같은 규칙). 파편 그림은 확정 창의 보석 조각과 같은 얼굴을 액자 없이 세운 것이다.
    */
-  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number): void {
+  private paintBreakCost(def: RelicDef | undefined, step: BreakthroughStep | undefined, held: number, need: number, universal: number): void {
     const row = this.breakButton?.cost;
     if (!row) return;
     row.removeAll(true);
     if (!def || !step) return;
     const cheesecake = session.wallet.cheesecake;
-    const pairs = [
-      { short: held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
-      { short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
+    // 그 개체의 파편이 모자라면 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 줄은 붉지 않고,
+    // 그 옆에 만능 파편 그림과 `×N`이 금빛으로 따로 서서 무엇이 함께 소모되는지 버튼이 먼저 말한다.
+    const spend = breakthroughFragmentSpend(def.rarity, relicProgression.getProgress(def.id).breakthrough, held, universal);
+    const pairs: { short: boolean; text: string; color?: string; kind: "fragment" | "universal" | "cheesecake" }[] = [
+      { kind: "fragment", short: !spend.enough && held < need, text: `${formatCurrency(held)}/${formatCurrency(need)}` },
+      ...(spend.enough && spend.universal > 0 ? [{ kind: "universal" as const, short: false, text: `×${formatCurrency(spend.universal)}`, color: UNIVERSAL_SPEND_TEXT }] : []),
+      { kind: "cheesecake", short: cheesecake < step.cheesecake, text: `${formatCurrency(cheesecake)}/${formatCurrency(step.cheesecake)}` },
     ];
-    const values = pairs.map(({ short, text }) => this.scene.add
-      .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : COLOR.accentText }))
+    const values = pairs.map(({ short, text, color }) => this.scene.add
+      .text(0, 0, text, textStyle({ role: "emphasis", size: BREAK_BUTTON.costSize, color: short ? COLOR.dangerText : color ?? COLOR.accentText }))
       .setOrigin(0, 0.5));
     // 그림과 수를 한 덩어리로 재고 나서 줄 가운데에 세운다 — 자릿수가 늘어도 줄이 흔들리지 않는다.
     const widths = values.map((value) => BREAK_BUTTON.icon + BREAK_BUTTON.gap + value.width);
@@ -950,9 +964,14 @@ export class InfoManager {
     let cursor = -span / 2;
     values.forEach((value, index) => {
       const iconX = cursor + BREAK_BUTTON.icon / 2;
-      if (index === 0) {
+      const kind = pairs[index].kind;
+      if (kind === "fragment") {
         // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
         row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
+      } else if (kind === "universal") {
+        // 만능 파편의 문양을 그 등급색으로 물들여 액자 없이 세운다.
+        const key = universalFragmentTexture(def.rarity);
+        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon).setTint(universalFragmentTone(def.rarity)));
       } else {
         const key = CURRENCY_ICON_BY_WALLET.cheesecake;
         if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
@@ -1021,24 +1040,39 @@ export class InfoManager {
       // **드는 것은 액자 셋이다.** 레벨은 재화가 아니지만 같은 조건이라 같은 얼굴로 서고,
       // 파편은 그 개체의 얼굴이 크게 박힌 보석 조각이다. 가진 수는 액자 우하단, 드는 수는 그 아래다.
       const held = relicProgression.getFragments(def.id);
-      const fragmentCost = breakthroughFragmentCost(def.rarity, progress.breakthrough);
+      const universal = relicProgression.getUniversalFragments(def.rarity);
+      // 그 개체의 파편을 먼저 다 쓰고 **모자란 몫만** 만능 파편이 채운다. 쓰일 몫이 있으면 파편 칸의 `필요`는
+      // 그 개체 몫만 적고, 만능 파편이 제 칸과 금빛 `소모 N`으로 따로 선다 — 무엇이 사라지는지 숨기지 않는다.
+      const spend = breakthroughFragmentSpend(def.rarity, progress.breakthrough, held, universal);
+      const usesUniversal = spend.enough && spend.universal > 0;
+      const fragmentCost = usesUniversal ? spend.own : breakthroughFragmentCost(def.rarity, progress.breakthrough);
       const costY = top + BREAK_CONFIRM.costY;
+      const universalName = findItem(UNIVERSAL_FRAGMENT_ITEM[def.rarity])?.name ?? "";
       const costs: BreakthroughCost[] = [
         { kind: "level", label: t("info.level"), need: cap, have: progress.level },
         { kind: "fragment", label: t("info.breakthrough.fragment", { name: def.name }), need: fragmentCost, have: held },
+        ...(usesUniversal ? [{ kind: "universal" as const, texture: universalFragmentTexture(def.rarity), label: universalName, need: spend.universal, have: universal }] : []),
         { kind: "currency", texture: CURRENCY_ICON_BY_WALLET.cheesecake, label: t("info.breakthrough.cheesecake"), need: step.cheesecake, have: session.wallet.cheesecake },
       ];
+      const costStep = costs.length > 3 ? BREAK_CONFIRM.costStepCompact : BREAK_CONFIRM.costStep;
       costs.forEach((cost, index) => {
-        const x = (index - (costs.length - 1) / 2) * BREAK_CONFIRM.costStep;
+        const x = (index - (costs.length - 1) / 2) * costStep;
         const enough = cost.have >= cost.need;
         this.addBreakthroughCost(body, x, costY, cost, enough, def);
-        body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(BREAK_CONFIRM.costStep - 12));
+        body.add(this.scene.add.text(x, costY + BREAK_CONFIRM.costFrame / 2 + 26, cost.label, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5).setWordWrapWidth(costStep - 12));
+        const needKey = cost.kind === "universal" ? "info.breakthrough.universalSpend" : "info.breakthrough.need";
         body.add(this.scene.add
-          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t("info.breakthrough.need", { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: enough ? COLOR.ink : COLOR.dangerText }))
+          .text(x, costY + BREAK_CONFIRM.costFrame / 2 + 58, t(needKey, { count: formatCurrency(cost.need) }), textStyle({ role: "emphasis", size: 24, color: !enough ? COLOR.dangerText : cost.kind === "universal" ? UNIVERSAL_SPEND_TEXT : COLOR.ink }))
           .setOrigin(0.5));
       });
+      if (usesUniversal) {
+        // 함께 소모되는 것을 한 줄로 못 박는다 — 칸만 하나 늘면 그냥 지나칠 수 있다.
+        body.add(this.scene.add
+          .text(0, top + BREAK_CONFIRM.universalNoticeY, t("info.breakthrough.universalNotice", { name: universalName, count: formatCurrency(spend.universal) }), textStyle({ role: "emphasis", size: 22, color: UNIVERSAL_SPEND_TEXT }))
+          .setOrigin(0.5));
+      }
 
-      const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake);
+      const ready = canBreakThrough(def.rarity, progress, held, session.wallet.cheesecake, universal);
       const actionY = top + BREAK_CONFIRM.actionY;
       // 확정은 확인 창(`PopupLayer.confirm`)과 같은 **제 판을 가진 강조 버튼**이다 — 판 하나에 투명한
       // 입력면을 얹어 두던 때는 눌려도 손맛이 없었고 다른 확정 버튼과 다른 물건으로 읽혔다.
@@ -1079,6 +1113,11 @@ export class InfoManager {
       }));
       return;
     }
+    if (cost.kind === "universal") {
+      // 그 등급의 유리 결은 공용 액자가 그림 키에서 알아서 두른다(`universalFragmentArt.ts`).
+      addFramedIcon(this.scene, body, x, y, size, cost.texture, { amount: formatCurrency(cost.have), plain: true });
+      return;
+    }
     if (cost.kind === "currency") {
       addFramedIcon(this.scene, body, x, y, size, cost.texture, {
         amount: formatCurrency(cost.have),
@@ -1104,7 +1143,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def) return;
     try {
-      await gameApi.breakThroughRelic(def.id);
+      await withBusy(this.scene, gameApi.breakThroughRelic(def.id));
       // 성공한 서버 처리만 알린다. 실패했을 때는 지갑 값이 바뀌지 않는다.
       this.onWalletChange?.();
       this.playBreakthroughBurst();
@@ -1141,7 +1180,7 @@ export class InfoManager {
    * 여기서도 크게 읽어야 하는 것은 레벨 수가 아니라 **나가는 치즈케이크 수**다. 한 번에
    * 수십 번을 먹이는 자리라 지갑이 얼마나 줄어드는지 모르고 누르면 안 된다.
    */
-  private openFeedBulk(x: number, y: number): void {
+  private openFeedBulk(bounds: Phaser.Geom.Rectangle): void {
     if (this.feedPopupOpen || this.popups.isOpen) return;
     const def = this.currentDef;
     if (!def) return;
@@ -1155,41 +1194,44 @@ export class InfoManager {
     this.feedPopupOpen = true;
     this.popups.open({
       width: 500,
-      height: 250,
-      x,
-      y: y + 150,
+      height: 190,
+      x: bounds.centerX,
+      y: bounds.bottom + 112,
       title: t("info.feed.bulk"),
       hideCloseButton: true,
       closeOnBackdrop: true,
-      onClose: () => { this.feedPopupOpen = false; },
+      inputPassthrough: { x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 },
+      onClose: () => { this.feedPopupOpen = false; this.feedOneTutorialHit = undefined; this.repaintFeedBulk = undefined; },
     }, (body, close) => {
       // **쪽지는 한 번 먹였다고 닫히지 않는다.** 한 레벨씩 올리는 일은 보통 연달아 일어나므로,
       // 누를 때마다 닫히면 같은 자리를 다시 길게 눌러 쪽지를 여는 손이 매번 더 든다. 값과
       // 남은 여력만 다시 적고 그대로 남아, 화면의 다른 곳을 누를 때까지 이어서 누를 수 있다.
-      const paint = (): void => { if (this.feedPopupOpen) this.paintFeedBulk(body, close, paint); };
+      // 본문만 갱신해 공용 제목·입력 차단판·날아가는 조각은 유지한다.
+      const content = this.scene.add.container(0, 0);
+      body.add(content);
+      const burst = new FeedTapEffect(this.scene, body, { x: 0, y: 0 });
+      const paint = (): void => { if (content.active && this.feedPopupOpen) this.paintFeedBulk(content, close, paint, burst); };
+      this.repaintFeedBulk = paint;
       paint();
     });
   }
 
   /** 한 번에 급여 쪽지의 내용. 먹일 때마다 값이 달라지므로 같은 판 위에 다시 그린다. */
-  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void): void {
+  private paintFeedBulk(body: Phaser.GameObjects.Container, close: () => void, repaint: () => void, burst: FeedTapEffect): void {
     body.removeAll(true);
+    this.feedOneTutorialHit = undefined;
     const def = this.currentDef;
     if (!def) { close(); return; }
     const progress = relicProgression.getProgress(def.id);
     // 상한에 닿는 순간 쪽지가 스스로 닫힌다 — 더 먹일 수 없는 판에 남아 있을 이유가 없고,
     // 다음에 할 일(한계 돌파)은 별 옆의 버튼이 제 자리에서 말한다.
     if (progress.level >= relicLevelCap(progress.breakthrough)) { close(); return; }
-    // 조각은 판 **바깥** 겹에서 터진다 — 먹일 때마다 판을 다시 적으므로(`removeAll`) 판 안에 두면
-    // 날아가던 조각이 다시 그리는 순간 함께 지워진다.
-    const host = body.parentContainer ?? body;
-    const burst = new FeedTapEffect(this.scene, host, { x: body.x, y: body.y });
     ([[t("info.feed.one"), 1], [t("info.feed.ten"), 10]] as const).forEach(([label, levels], index) => {
       const bx = index === 0 ? -118 : 118;
       const cost = this.feedsForLevels(levels) * FEED_UNIT.cheesecake;
       const enough = session.wallet.cheesecake >= cost;
       // 칸 하나를 한 덩어리로 묶어야 눌림이 판·이름·값줄을 함께 누른다.
-      const option = this.scene.add.container(bx, 12);
+      const option = this.scene.add.container(bx, 0);
       option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
       option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
@@ -1201,13 +1243,14 @@ export class InfoManager {
       body.add(option);
       if (!enough) return;
       const hit = this.scene.add.rectangle(0, 0, 212, 116, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      if (levels === 1) this.feedOneTutorialHit = hit;
       hit.on("pointerdown", () => pressIn(option, "feed"));
       hit.on("pointerout", () => pressOut(option, "feed", { pop: false }));
       // 먹인 뒤 쪽지를 닫지 않고 같은 판을 다시 적는다 — 레벨이 올라 다음 한 레벨의 값이
       // 달라지므로, 남겨 두기만 하고 값을 그대로 두면 화면이 거짓말을 한다.
       hit.on("pointerup", () => {
         pressOut(option, "feed");
-        burst.from({ x: body.x + bx, y: body.y + 12 - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
+        burst.from({ x: body.x + bx, y: body.y - 40 }).feast(levels >= 10 ? FEED_TAP.pieces.tenLevels : FEED_TAP.pieces.level);
         settingsManager.haptic("uiTap");
         // 버튼으로 두드려 쌓인 몫이 먼저 나가야 이 칸이 셈한 값이 맞는다.
         void this.flushFeeds().then(() => this.feedLevels(levels)).then(repaint);
@@ -1247,11 +1290,6 @@ export class InfoManager {
     return queued < this.feedsForLevels(cap - progress.level);
   }
 
-  private cancelFeedBulk(): void {
-    if (this.feedBulkTimer !== undefined) clearTimeout(this.feedBulkTimer);
-    this.feedBulkTimer = undefined;
-  }
-
   private enqueueFeed(count: number): void {
     // 줄은 한 렐릭의 것이다. 쌓인 채로 옆 렐릭으로 넘어가면 그 몫이 엉뚱한 렐릭에게 먹여지므로 버린다.
     const relicId = this.currentDef?.id;
@@ -1278,13 +1316,25 @@ export class InfoManager {
 
   /** 필요한 급여 횟수를 한 번에 요청한다. */
   private async feedLevels(levels: number): Promise<void> {
-    await this.feed(this.feedsForLevels(levels));
+    await this.feed(this.feedsForLevels(levels), "level");
   }
 
+  /**
+   * 급여 요청은 한 줄로 직렬화한다. 줄 비우기와 「N레벨」 버튼이 겹쳐 두 요청이 동시에 돌면
+   * 뒤의 요청이 `feeding` 가드에 걸려 **버려졌고**, 그만큼의 누름이 먹여지지 않은 채 사라졌다.
+   */
+  private feedChain: Promise<unknown> = Promise.resolve();
+
   /** Returns whether the server-confirmed response actually increased EXP or level. */
-  private async feed(feeds: number): Promise<boolean> {
+  private feed(feeds: number, mode: "normal" | "level" = "normal"): Promise<boolean> {
+    const run = this.feedChain.then(() => this.feedNow(feeds, mode));
+    this.feedChain = run.catch(() => false);
+    return run;
+  }
+
+  private async feedNow(feeds: number, mode: "normal" | "level" = "normal"): Promise<boolean> {
     const def = this.currentDef;
-    if (!def || !this.ownedNow || this.feeding) return false;
+    if (!def || !this.ownedNow) return false;
     if (!canFeedRelic(relicProgression.getProgress(def.id), session.wallet.cheesecake)) return false;
     const before = relicProgression.getProgress(def.id);
     this.feeding = true;
@@ -1294,13 +1344,16 @@ export class InfoManager {
       addDebugFeedTaps(0, response.feeds);
       const after = relicProgression.getProgress(def.id);
       changed = after.level > before.level || after.exp > before.exp;
+      if (changed) this.onFed?.(mode);
       // 정보창과 상단 줄 모두 확정된 단일 세션 지갑을 읽도록 성공 직후 알린다.
       this.onWalletChange?.();
     } catch {
       // 치즈케이크 부족·상한은 화면에서 이미 막는다. 실패하면 상태만 다시 그린다.
     } finally {
       this.feeding = false;
+      this.glideExp = true;
       this.refreshGrowth();
+      this.repaintFeedBulk?.();
     }
     return changed;
   }
@@ -1381,7 +1434,7 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = session.runeInventory.filter((rune) => rune.part === index);
+    const runes = sortRunesByRelic(session.runeInventory.filter((rune) => rune.part === index), session.relicProgress);
     const columns = RUNE_PICKER.columns;
     const rows = Math.max(1, Math.ceil(runes.length / columns));
     const pickerWidth = columns * RUNE_PICKER.cellWidth + RUNE_PICKER.padX * 2;
@@ -1391,35 +1444,44 @@ export class InfoManager {
     // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
     this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
       const top = -pickerHeight / 2;
-      // 비우기는 격자 위 한 줄이다. 룬 카드와 섞이면 실수로 누르기 쉽다.
-      body.add(drawLayer(this.scene, 0, top + 128, slantedRect(pickerWidth - 96, 66, 12), { fill: 0x141a22, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.3 }));
-      body.add(this.scene.add.text(0, top + 128, t("info.rune.clear"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
-      const clearHit = this.scene.add.rectangle(0, top + 128, pickerWidth - 96, 66, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      clearHit.on("pointerup", () => void relicProgression.unequipRune(def.id, index).then(() => { close(); this.refreshGrowth(); }));
-      body.add(clearHit);
-
       const firstX = -((columns - 1) * RUNE_PICKER.cellWidth) / 2;
-      runes.forEach((rune, order) => {
-        const x = firstX + (order % columns) * RUNE_PICKER.cellWidth;
-        const y = top + RUNE_PICKER.headerHeight + Math.floor(order / columns) * RUNE_PICKER.cellHeight;
-        const holder = equippedRelicName(rune.instanceId);
-        const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, { dimmed: holder !== undefined });
-        const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        hit.on("pointerdown", () => pressIn(card));
-        hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(card, "normal", { pop: false }); });
-        hit.on("pointerup", () => {
-          pressOut(card);
-          // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
-          openRuneInfoPopup(this.scene, this.popups, {
-            runeInstanceId: rune.instanceId,
-            onChanged: () => this.refreshGrowth(),
-            // 정보창에서 연 룬이므로 쪽지에 장착 버튼이 함께 선다.
-            equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
+      // 보기 토글이 바뀌면 판은 두고 카드 묶음만 갈아 끼운다. 판 높이는 거르기 전의 수로 정해 두어
+      // 토글을 누를 때마다 판이 줄었다 늘지 않는다.
+      const grid = this.scene.add.container(0, 0);
+      body.add(grid);
+      const paint = (): void => {
+        grid.removeAll(true);
+        const view = session.settings.game.runeBag;
+        const shown = view.showEquipped ? runes : runes.filter((rune) => equippedRuneSlot(rune.instanceId) === undefined);
+        shown.forEach((rune, order) => {
+          const x = firstX + (order % columns) * RUNE_PICKER.cellWidth;
+          const y = top + RUNE_PICKER.headerHeight + Math.floor(order / columns) * RUNE_PICKER.cellHeight;
+          const holder = equippedRuneSlot(rune.instanceId);
+          const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, {
+            dimmed: holder !== undefined,
+            holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
           });
+          const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerdown", () => pressIn(card));
+          hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(card, "normal", { pop: false }); });
+          hit.on("pointerup", () => {
+            pressOut(card);
+            // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
+            // 다른 렐릭이 끼고 있는 룬이면 쪽지의 장착이 「해제하고 장착할까요?」를 먼저 묻는다.
+            openRuneInfoPopup(this.scene, this.popups, {
+              runeInstanceId: rune.instanceId,
+              onChanged: () => this.refreshGrowth(),
+              // 정보창에서 연 룬이므로 쪽지에 장착 버튼이 함께 선다.
+              equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
+            });
+          });
+          card.add(hit);
+          grid.add(card);
         });
-        card.add(hit);
-        body.add(card);
-      });
+      };
+      // 토글 줄은 제목표 아래, 첫 줄 카드 위의 빈 띠에 왼쪽부터 선다.
+      addRuneBagToggles(this.scene, body, -pickerWidth / 2 + RUNE_PICKER.padX, top + RUNE_PICKER.toggleY, paint);
+      paint();
     });
   }
 
@@ -1473,11 +1535,25 @@ export class InfoManager {
     });
   }
 
+  /**
+   * 옆으로 넘길 때 따를 순서를 정한다(도감이 지금 화면에 세운 순서 — 정렬·필터·보유 구역 포함).
+   * 비우면 도감에 서는 개체 전체의 기본 순서로 돌아간다.
+   */
+  setNeighborOrder(relics?: readonly RelicDef[]): void {
+    this.neighborDefs = relics;
+  }
+
+  /** 지금 열린 개체가 정해 둔 순서 안에 있을 때만 그 순서를 쓴다(필터로 빠졌으면 기본 순서). */
+  private neighborOrder(currentId: string): readonly RelicDef[] {
+    const custom = this.neighborDefs;
+    return custom && custom.some((def) => def.id === currentId) ? custom : PLAYABLE_RELICS;
+  }
+
   /** 옆 캐릭터로 미끄러져 간다. 판이 한쪽으로 빠지고 반대쪽에서 새로 들어온다. */
   private slideToNeighbor(step: 1 | -1): void {
     const current = this.currentDef;
     if (!current || this.sliding) return;
-    const order = PLAYABLE_RELICS;
+    const order = this.neighborOrder(current.id);
     const index = order.findIndex((def) => def.id === current.id);
     if (index === -1) return;
     const next = order[(index + step + order.length) % order.length];
@@ -1490,7 +1566,14 @@ export class InfoManager {
       duration: 150,
       ease: "Cubic.In",
       onComplete: () => {
-        this.openCharacter(next, relicCollection.owns(next.id));
+        try {
+          this.openCharacter(next, relicCollection.owns(next.id));
+        } catch (error) {
+          // 던져도 넘김 잠금이 영영 남지 않게 판을 제자리로 돌려 놓고 알린다.
+          this.sliding = false;
+          this.chrome.setPosition(0, 0).setAlpha(1);
+          throw error;
+        }
         this.chrome.setPosition(distance, 0).setAlpha(0);
         this.scene.tweens.add({
           targets: this.chrome,
@@ -1749,8 +1832,11 @@ export class InfoManager {
     addInfoFigureStand(this.scene, this.chrome, FIGURE.x, FIGURE.y);
   }
 
+  /** 닫히는 연출이 도는 동안 true. 이 사이에 다시 열면 연출을 끊고 그대로 이어서 연다. */
+  private closing = false;
+
   get isOpen(): boolean {
-    return this.root.visible;
+    return this.root.visible && !this.closing;
   }
 
   /** 팝업이 떠 있으면 그것부터 닫는다. 뒤로가기 한 번에 화면이 통째로 사라지지 않게. */
@@ -1759,27 +1845,35 @@ export class InfoManager {
       this.popups.closeTop();
       return;
     }
-    this.root.setVisible(false);
-    this.chrome.setVisible(false);
+    if (this.closing || !this.root.visible) return;
+    this.closing = true;
     this.portraitWanted = false;
-    this.portrait?.setVisible(false);
-    this.figure?.setVisible(false);
+    this.assetLoadTimer?.remove(false);
+    this.assetLoadTimer = undefined;
     setDebugInfoOpen(false);
     this.onClose?.();
+    // 열릴 때 밝아지며 서듯 닫힐 때도 짧게 옅어진다. 전신·SD도 같은 시간으로 함께 옅어진다.
+    const fading = [this.root, this.chrome, ...(this.portrait?.visible ? [this.portrait] : []), ...(this.figure?.visible ? [this.figure] : [])] as Phaser.GameObjects.Container[];
+    playFadeOut(this.scene, fading, () => {
+      if (!this.closing) return;
+      this.closing = false;
+      this.root.setVisible(false).setAlpha(1);
+      this.chrome.setVisible(false).setAlpha(1);
+      this.portrait?.setVisible(false).setAlpha(this.portraitAlpha());
+      this.figure?.setVisible(false).setAlpha(this.portraitAlpha());
+    });
   }
 
   private toggleBookmark(): void {
     if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
-    relicCollection.toggleBookmark(this.currentDef.id);
-    this.refreshBadges();
+    void relicCollection.toggleBookmark(this.currentDef.id).then(() => this.refreshBadges(), () => undefined);
   }
 
   private toggleFavorite(): void {
     if (!this.capabilities.mutateProgress) return;
     if (!this.currentDef || !this.ownedNow) return;
-    relicCollection.setFavorite(this.currentDef.id);
-    this.refreshBadges();
+    void relicCollection.setFavorite(this.currentDef.id).then(() => this.refreshBadges(), () => undefined);
   }
 
   private refreshBadges(): void {
@@ -1811,11 +1905,14 @@ export class InfoManager {
   private async loadPortrait(def: RelicDef): Promise<void> {
     const request = ++this.portraitRequest;
     const asset = this.portraitAssetOf(def);
+    this.pendingLoads += 1;
     const portrait = await spawnPuppet(this.scene, asset, {
+      isStale: () => request !== this.portraitRequest,
       // 지도와 전투의 CharacterInfoManager가 모두 이 경로를 써서 폰토스 보정도 동일하다.
       ...infoPortraitPlacement(asset, PORTRAIT_FOCUS),
       depth: Math.max(this.portraitDepth, this.root.depth + 1),
-    });
+    }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
+    if (!portrait) return;
     // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
     portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
@@ -1843,13 +1940,16 @@ export class InfoManager {
   private async loadFigure(def: RelicDef): Promise<void> {
     const request = ++this.figureRequest;
     const asset = this.figureAssetOf(def);
+    this.pendingLoads += 1;
     // 관련 SD도 공개 DTO 또는 로컬 manager가 결정한 결과만 그린다.
     const figure = await spawnPuppet(this.scene, asset, {
       x: FIGURE.x,
       groundY: FIGURE.y,
       height: FIGURE.height,
       depth: 1004,
-    });
+      isStale: () => request !== this.figureRequest,
+    }).catch(swallowCancelled).finally(() => { this.pendingLoads -= 1; });
+    if (!figure) return;
     // 비교용 전신도 같은 공용 정책을 소비해 정보창 내부에서 예산이 갈리지 않게 한다.
     figure.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.figureRequest) { figure.destroy(); return; }
@@ -1935,7 +2035,7 @@ export class InfoManager {
    */
   private addFerocityBadge(x: number, y: number, def: RelicDef): void {
     // 스킬 아이콘과 같은 목록에 담아 미보유 개체에서 함께 숨고 다시 그릴 때 함께 지워진다.
-    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from)));
+    this.skillIcons.push(addInfoFerocityBadge(this.scene, this.popups, this.chrome, x, y, def, (from) => this.openFerocityTrait(def, from), breakthroughEnhances(def, this.shownBreakthrough(def), "ferocity")));
   }
 
   /** 개체별 폭주 발현 설명. 야성 규칙 자체는 강조된 말을 눌러 다시 열 수 있다. */
@@ -1972,49 +2072,8 @@ export class InfoManager {
    * 수치를 고친 뒤 옛 문장이 남지 않고, 지휘자가 늘어도 같은 코드가 그대로 읽는다.
    */
   private summonKeywordTags(): readonly KeywordDef[] {
-    const summons = this.currentDef?.summons ?? [];
-    // 미보유 도감은 성장·스킬과 같은 정책으로 귀속 소환수도 감춘다.
-    if (!this.capabilities.showSummons || !this.ownedNow) return [];
     const owner = this.currentDef;
-    // 늑대의 수치는 지휘자가 **지금** 가진 능력치에서 파생한다 — 정적 정의의 태생값을 적으면
-    // 디안을 키운 뒤에도 쪽지 속 늑대만 1레벨로 남는다.
-    const ownerStats = owner === undefined ? undefined : this.shownStats(owner);
-    const tags: KeywordDef[] = summons.map((summon) => {
-      const { def, growthStat, resummon } = summon;
-      const stats = ownerStats === undefined ? def.stats : deriveSummonStats(ownerStats, summon);
-      const described = (skill: Skill): string => skillDescription(skill, {
-        ap: stats.ap, atk: { atk: stats.atk, attackSpeed: stats.attackSpeed },
-        damage: skill.power === undefined ? undefined
-          : Math.round((skill.scalingStat === "ap" ? stats.ap : stats.atk) * skill.power / 100),
-      });
-      return {
-        id: `summon-${def.id}`,
-        term: def.name,
-        kind: "summon" as const,
-        description: t("skill.keyword.summon.description", {
-          owner: owner?.name ?? t("skill.keyword.summon.owner"),
-          stat: t(growthStat === "atk" ? "skill.stat.atk" : "skill.stat.ap"),
-          resummon: resummon?.enabled
-            ? t("skill.keyword.summon.resummon", { seconds: resummon.cooldownSeconds, percent: resummon.hpPercent })
-            : "",
-        }),
-        /*
-         * 늑대는 제 기술을 가진 몸이라 한 문단으로 뭉치지 않는다. 스킬 쪽지와 같은 순서(분류 →
-         * 이름 → 효과)로 칸을 나눠, 기술 이름만 늘어놓고 무엇을 하는지는 말하지 않던 쪽지를 고친다.
-         */
-        sections: [
-          { label: t("info.skill.basic"), name: def.basic.name, text: described(def.basic) },
-          { label: t("info.skill.ultimate"), name: def.ultimate.name, text: described(def.ultimate) },
-          ...(def.ferocityTrait === undefined ? [] : [{
-            label: t("info.skill.ferocity"), name: def.ferocityTrait.name,
-            text: ferocityTraitDescription(def.ferocityTrait, {
-              attack: stats.atk, defense: stats.def, maxHp: stats.hp, abilityPower: stats.ap,
-            }),
-          }]),
-        ],
-      };
-    });
-    return tags;
+    return owner && this.capabilities.showSummons ? buildSummonKeywords(owner, this.shownStats(owner)) : [];
   }
 
   /**
@@ -2027,7 +2086,7 @@ export class InfoManager {
   private summonActions(): Readonly<Record<string, () => void>> | undefined {
     const owner = this.currentDef;
     const summons = owner?.summons ?? [];
-    if (!owner || summons.length === 0 || !this.capabilities.showSummons || !this.ownedNow) return undefined;
+    if (!owner || summons.length === 0 || !this.capabilities.showSummons) return undefined;
     const ownerStats = this.shownStats(owner);
     return Object.fromEntries(summons.map((summon) => [`summon-${summon.def.id}`, () => {
       this.summonInfo ??= new SummonInfoPopup(this.scene, this.popups);
@@ -2095,13 +2154,36 @@ export class InfoManager {
     if (!keepPortrait) this.portrait?.setVisible(false);
     if (!keepFigure) this.figure?.setVisible(false);
     {
+      this.assetLoadTimer?.remove(false);
+      this.assetLoadTimer = undefined;
+      const load = (): void => {
+        this.assetLoadTimer = undefined;
+        if (this.currentDef !== def) return;
+        if (!keepPortrait) void this.loadPortrait(def);
+        if (!keepFigure) void this.loadFigure(def);
+      };
       if (keepPortrait) { this.portraitRequest += 1; this.portrait?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ portrait: true }); }
-      else void this.loadPortrait(def);
       if (keepFigure) { this.figureRequest += 1; this.figure?.setVisible(this.portraitWanted).setAlpha(this.portraitAlpha()); setDebugInfoAssetReady({ sd: true }); }
-      else void this.loadFigure(def);
+      // 넘기는 중이면 손이 멈출 때까지 미룬다. 미뤄 둔 사이 이전 요청은 번호가 올라 무효가 된다.
+      if (!keepPortrait || !keepFigure) {
+        if (!keepPortrait) this.portraitRequest += 1;
+        if (!keepFigure) this.figureRequest += 1;
+        if (this.sliding && this.pendingLoads > 0) this.assetLoadTimer = this.scene.time.delayedCall(SWIPE_SETTLE_MS, load);
+        else load();
+      }
+    }
+    // 닫혀 있던 판을 처음 열 때만 밝아지며 선다. 다른 개체로 바꿔 다시 그릴 때는 새로고침처럼 읽히지 않게 연출이 없다.
+    const wasOpen = this.root.visible && !this.closing;
+    if (this.closing) {
+      this.closing = false;
+      this.scene.tweens.killTweensOf([this.root, this.chrome]);
+      this.root.setAlpha(1); this.chrome.setAlpha(1);
+      if (this.portrait) { this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
+      if (this.figure) { this.scene.tweens.killTweensOf(this.figure); this.figure.setAlpha(this.portraitAlpha()); }
     }
     this.root.setVisible(true);
     this.chrome.setVisible(true);
+    if (!wasOpen) playFadeIn(this.scene, [this.root, this.chrome]);
     setDebugInfoOpen(true);
     this.onOpen?.();
     // 급여 버튼 자리를 **열 때마다** 알린다. 만들 때 한 번만 알리면, 씬을 오갈 때 새 창이 먼저
@@ -2169,7 +2251,12 @@ export class InfoManager {
     // 늦게 도착하면 처음 그린 높이가 다르므로 그릴 때마다 다시 맞춘다.
     this.levelCap.setY(this.levelValue.y + this.levelValue.displayHeight - 4);
     const need = maxed ? 0 : relicExpToNext(progress.level);
-    this.expBar.setValue(maxed ? 1 : progress.exp / need);
+    const expRatio = maxed ? 1 : progress.exp / need;
+    if (this.glideExp && this.expShownLevel >= 0 && !this.publicProfile) {
+      this.expBar.glideTo(this.scene, expRatio, FEED_TAP.hold.gaugeGlideMs, progress.level > this.expShownLevel && !maxed);
+    } else this.expBar.setValue(expRatio);
+    this.glideExp = false;
+    this.expShownLevel = progress.level;
     // 경험치 줄은 "얼마나 컸는가"만 말한다. 급여에 드는 치즈케이크는 바로 아래 버튼이 맡는다.
     this.expLabel.setText(maxed ? "MAX" : progress.exp + " / " + need + " EXP");
     this.paintFeedButton(this.ownedNow && canFeedRelic(progress, session.wallet.cheesecake));
@@ -2219,7 +2306,32 @@ class Gauge {
     return [this.track, this.fill];
   }
 
+  private shown = 0;
+  private glide?: Phaser.Tweens.Tween;
+
+  /**
+   * 틱마다 값이 차오르게 한다. 레벨이 올라 비율이 되감기면 끝까지 찼다가 비워진 뒤 새 값으로 오른다.
+   * 짧은 트윈을 매번 새로 걸어, 몰아서 한 번에 차오르는 느낌을 없앤다.
+   */
+  glideTo(scene: Phaser.Scene, ratio: number, ms: number, wrapped: boolean): void {
+    this.glide?.remove();
+    const target = Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
+    if (ms <= 0 || !scene.sys.isActive()) { this.setValue(target); return; }
+    const proxy = { v: this.shown };
+    const to = (value: number, done?: () => void) => {
+      this.glide = scene.tweens.add({ targets: proxy, v: value, duration: ms, ease: "Sine.Out", onUpdate: () => this.draw(proxy.v), onComplete: () => { this.draw(value); done?.(); } });
+    };
+    if (wrapped) to(1, () => { proxy.v = 0; this.draw(0); to(target); });
+    else to(target);
+  }
+
   setValue(ratio: number): void {
+    this.glide?.remove();
+    this.draw(ratio);
+  }
+
+  private draw(ratio: number): void {
+    this.shown = Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
     const filled = this.width * Phaser.Math.Clamp(Number.isFinite(ratio) ? ratio : 0, 0, 1);
     this.fill.clear();
     if (filled <= 0) return;
@@ -2416,9 +2528,12 @@ export function addInfoFerocityBadge(
   y: number,
   def: RelicDef,
   onOpen: (from: PopupSource) => void,
+  /** 한계 돌파가 폭주를 강화했는가 — 일반 공격·궁극기 액자와 같은 `+`가 붙는다. */
+  enhanced = false,
 ): Phaser.GameObjects.Container {
   return addInfoBadge(scene, popups, parent, x, y, {
     slot: "ferocity",
+    enhanced,
     relicId: def.id,
     // 전용 아트가 없는 개체는 공용 효과 아이콘이 아니라 야성 글리프로 되돌아간다 — 이 칸이
     // 말하는 것은 피해 종류가 아니라 야성 그 자체다.
@@ -2692,23 +2807,30 @@ export function openFerocityTraitPopup(
   // 피해 수치가 있는 폭주만 현재 능력치로 환산한다. 토리카의 새 탱커 계약은 자체 실제값을 그대로 보여 준다.
   const { atk: attack, def: defense, ap: abilityPower } = def.stats;
   const defensePercent = def.ferocityTrait.effectId === "splashDamage" ? def.ferocityTrait.defenseDamagePercent : undefined;
-  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent : undefined;
+  const attackPercent = def.ferocityTrait.effectId === "crescendoStaccato" ? def.ferocityTrait.damagePercent
+    : def.ferocityTrait.effectId === "overclock" ? def.ferocityTrait.auraDamagePercent : undefined;
+  const abilityPercent = def.ferocityTrait.effectId === "graffitiRun" ? def.ferocityTrait.auraDamagePercent : undefined;
   // 남아 있는 공격형 폭주 추가 피해도 일반 스킬과 같은 수치 링크를 써서 별도 팝업을 만들지 않는다.
   const convertedDamage = defensePercent !== undefined ? Math.round(defense * defensePercent / 100)
     : attackPercent !== undefined ? Math.round(attack * attackPercent / 100)
-    : undefined;
-  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : "skill.stat.atk");
+    : abilityPercent !== undefined ? Math.round(abilityPower * abilityPercent / 100) : undefined;
+  const damageSourceLabel = t(defensePercent !== undefined ? "skill.stat.def" : abilityPercent !== undefined ? "skill.stat.ap" : "skill.stat.atk");
   // 무리를 함께 폭주시키는 지휘자는 **무엇이 오르는지를 늑대 쪽지가 말한다.** 이름을 눌러 열 수 있어야 한다.
-  const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? [])];
+  const contextualKeywords: KeywordDef[] = [...(options.summonTags ?? buildSummonKeywords(def, def.stats))];
   // 금강불괴가 덮는 막도 퍼센트가 아니라 실제로 덮이는 값으로 보여 준다.
-  if (def.ferocityTrait.effectId === "adamantBody") contextualKeywords.push({
+  if (def.ferocityTrait.effectId === "adamantBody" || def.ferocityTrait.effectId === "furCoat") contextualKeywords.push({
     id: "shield-value", term: String(Math.round(def.stats.hp * def.ferocityTrait.shieldMaxHpPercent / 100)), kind: "rule",
     description: t("skill.keyword.shield.fromMaxHp", { percent: def.ferocityTrait.shieldMaxHpPercent }),
   });
+  if (def.ferocityTrait.effectId === "overclock") contextualKeywords.push({
+    id: "shield-value", term: String(Math.round(attack * def.ferocityTrait.shieldAttackPercent / 100)), kind: "rule",
+    description: t("skill.keyword.shield.fromAttack", { percent: def.ferocityTrait.shieldAttackPercent }),
+  });
   if (convertedDamage !== undefined) contextualKeywords.push({
     id: "damage-value", term: String(convertedDamage), kind: "rule",
-    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent }),
+    description: t("skill.keyword.damage.bonus", { stat: damageSourceLabel, percent: defensePercent ?? attackPercent ?? abilityPercent }),
   });
+  for (const tag of [plumeKeyword(def, attack), plumeBurstKeyword(def, attack)]) if (tag) contextualKeywords.push(tag);
   // 전장의 열기는 희열의 회복량을 키우므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "battleHeat") {
     const elation = elationKeyword(def.passive);
@@ -2720,14 +2842,15 @@ export function openFerocityTraitPopup(
   }
   // 카페인 풍선껌은 까칠이 쌓이는 속도를 바꾸므로 그 태그를 이 쪽지에서도 눌러 읽게 한다.
   if (def.ferocityTrait.effectId === "caffeineBubble") {
-    const prickle = prickleKeyword(def.passive);
-    if (prickle) contextualKeywords.push(prickle);
+    for (const tag of [prickleKeyword(def.passive, abilityPower), prickleReflectKeyword(def.passive, abilityPower)]) if (tag) contextualKeywords.push(tag);
   }
   // 메테의 스타카토 추가타는 기본 공격과 같은 효과를 다시 부르는 것이므로 그 뜻을 여기서 짧게 설명한다.
   if (def.ferocityTrait.effectId === "crescendoStaccato") contextualKeywords.push({
     id: "mette-staccato", term: t("skill.keyword.staccato.term"), kind: "rule",
     description: t("skill.keyword.staccato.description"),
   });
+  const guardPercent = "defenseResistancePercent" in def.ferocityTrait ? def.ferocityTrait.defenseResistancePercent : undefined;
+  if (guardPercent !== undefined) contextualKeywords.push(...defenseGainKeywords(def.stats, guardPercent));
   // 폭주도 패시브와 같은 정형 상세창을 사용한다. 별도 제목 레이어 없이 아이콘 옆에서
   // 스킬 종류·이름·발현 유형을 한 번에 읽게 한다.
   openSkillPopup(scene, popups, keywords, {
@@ -2737,14 +2860,16 @@ export function openFerocityTraitPopup(
     art: skillArtFor(def.id, "ferocity"),
     tint: skillArtTint(def.element, def.role),
     effectType: "buff",
-    valueLabel: t("skill.ferocity.valueLabel"),
+    valueLabel: guardPercent === undefined ? t("skill.ferocity.valueLabel") : defenseGainSummary(def.stats, guardPercent),
+    // 궁극기의 `게이지 N`과 같은 자리 — 폭주가 열리려면 채워야 하는 야성 게이지의 크기다.
+    gaugeCost: ferocityMaxOf(def),
     contextualKeywords: contextualKeywords.length > 0 ? contextualKeywords : undefined,
     keywordActions: options.summonActions,
     // 폭주도 돌파가 효과를 붙이는 슬롯이라 같은 노란 줄을 얻는다.
     breakthroughEffect: options.breakthroughEffect,
     // 설명 수치는 전투가 읽는 특성 필드에서 생성해 정적 문구와 실제 효과가 갈라지지 않는다.
     description: t("skill.ferocity.head")
-      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower }),
+      + ferocityTraitDescription(def.ferocityTrait, { attack, defense, maxHp: def.stats.hp, abilityPower, resistance: def.stats.res }),
   }, from);
 }
 
@@ -2756,7 +2881,7 @@ export function buildSkillViewModel(options: {
   skill: Skill | Passive;
   gaugeCost?: number;
   slot?: SkillArtSlot;
-  /** 지휘자의 귀속 소환수 설명. 감추는 문맥(미보유 도감)은 빈 배열을 넘긴다. */
+  /** 지휘자의 귀속 소환수 설명. 생략하면 현재 표시 능력치로 미보유·적도 함께 조립한다. */
   summonTags?: readonly KeywordDef[];
   /** 소환수 태그를 눌렀을 때 뜻풀이 대신 여는 그 몸의 정보창. 태그 ID가 키다. */
   summonActions?: Readonly<Record<string, () => void>>;
@@ -2809,13 +2934,14 @@ export function buildSkillViewModel(options: {
   const damageDetail = compositeDamage ?? detonationDamage ?? damageKeyword(preview);
   // 귀속 소환수는 이름표 버튼이 아니라 **패시브 본문의 태그**로 연다. 화면 어딘가에 버튼을
   // 따로 세우면 "누구를 부르는가"가 그 패시브를 읽는 자리와 갈라져, 같은 사실이 두 곳에 선다.
-  const summonTags = options.summonTags ?? [];
+  const summonTags = options.summonTags ?? buildSummonKeywords(finalDef, finalDef.stats);
   // 돌파 줄이 실제 값으로 말하는 수는 그 자리에서 산출 근거를 물을 수 있어야 한다. 스킬 본문의
   // `heal-value`와 ID가 달라 한 쪽지에 두 회복 수치가 함께 서도 서로 덮어쓰지 않는다.
   const breakthroughTags = breakthroughEffect && slot ? breakthroughEffectKeywords(finalDef, slot, finalDef.stats) : [];
   const shieldDetail = "kind" in skill ? passiveShieldKeyword(skill as Passive, attacker?.def.stats.atk) : undefined;
   const allyHealingPower = "allyHealingPower" in skill ? (skill as Ultimate).allyHealingPower : undefined;
   const healDetail = allyHealingPower !== undefined ? allyHealPowerKeyword(allyHealingPower, attacker?.def.stats.ap) : undefined;
+  const guardPercent = "kind" in skill && skill.kind === "droneLink" ? (skill as Passive).droneLink?.defenseResistancePercent : undefined;
   const valueLabel = compositeDamage
     ? t("skill.label.compositeDamage", { amount: compositeDamage.term })
     : detonationDamage
@@ -2833,16 +2959,20 @@ export function buildSkillViewModel(options: {
     art: slot ? skillArtFor(finalDef.id, slot) : undefined,
     tint: skillArtTint(finalDef.element, finalDef.role),
     effectType: skill.effectType,
-    valueLabel,
+    valueLabel: guardPercent === undefined ? valueLabel : defenseGainSummary(finalDef.stats, guardPercent),
     // 「세 개의 뿔」처럼 이름을 가진 주기 스택은 개체 전용 규칙어라 전역 사전이 아니라
     // 이 스킬을 여는 자리에서만 주입한다(메테의 스타카토와 같은 자리다).
     contextualKeywords: [
       ...summonTags,
+      ...(guardPercent === undefined ? [] : defenseGainKeywords(finalDef.stats, guardPercent)),
       ...breakthroughTags,
       damageDetail, shieldDetail, healDetail,
+      ...shimmerBurstKeywords(skill, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp }),
+      "kind" in skill ? passiveNowKeyword(skill as Passive, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp }) : undefined,
       "kind" in skill ? undefined : periodicStackKeyword(skill as Skill),
       // 서리깃은 유티의 평타·궁극기 본문이 가리키는 개체 전용 규칙어라 그 쪽지에서 눌러 읽게 한다.
-      plumeKeyword(finalDef),
+      plumeKeyword(finalDef, finalDef.stats.atk),
+      plumeBurstKeyword(finalDef, finalDef.stats.atk),
       // 리필·마지막 한 방울은 테쿠의 패시브·평타·궁극기 본문이 가리키는 개체 전용 규칙어다.
       refillKeyword(finalDef),
       lastDropKeyword(finalDef),
@@ -2855,10 +2985,15 @@ export function buildSkillViewModel(options: {
           ? elationKeyword(finalDef.passive) : undefined,
       // 까칠은 패시브 본문이 가리키는 태그라 그 쪽지에도 실리고, 평타·궁극기가 겹을 쌓을 때도 같은 태그를 가리킨다.
       "kind" in skill
-        ? prickleKeyword(skill as Passive)
+        ? prickleKeyword(skill as Passive, finalDef.stats.ap)
         : ("prickleGain" in skill && skill.prickleGain !== undefined)
           || ("selfGuard" in skill && skill.selfGuard?.prickleGain !== undefined)
-          ? prickleKeyword(finalDef.passive) : undefined,
+          ? prickleKeyword(finalDef.passive, finalDef.stats.ap) : undefined,
+      prickleReflectKeyword("kind" in skill ? skill as Passive : finalDef.passive, finalDef.stats.ap),
+      "selfShieldMaxHpPercent" in skill && skill.selfShieldMaxHpPercent !== undefined ? {
+        id: "shield-value", term: String(Math.round(finalDef.stats.hp * skill.selfShieldMaxHpPercent / 100)), kind: "rule" as const,
+        description: t("skill.keyword.shield.fromMaxHp", { percent: skill.selfShieldMaxHpPercent }),
+      } : undefined,
       // 「인」이 덮는 막도 실제 값으로 보여 주고, 어디서 나온 수인지 눌러 읽게 한다.
       guardShield === undefined || !("selfGuard" in skill) || skill.selfGuard === undefined ? undefined : {
         id: "shield-value", term: String(guardShield), kind: "rule" as const,
@@ -2892,7 +3027,7 @@ export function buildSkillViewModel(options: {
     gaugeCost,
     // 구조화된 연격·복합 계수는 정적 설명을 복제하지 않고 키워드가 연결된 공용 문장으로 표시한다.
     description: "kind" in skill
-      ? passiveDescription(skill as Passive, attacker?.def.stats.atk, attacker === undefined ? undefined : { defense: attacker.def.stats.def, resistance: attacker.def.stats.res })
+      ? passiveDescription(skill as Passive, attacker?.def.stats.atk, attacker === undefined ? undefined : { defense: attacker.def.stats.def, resistance: attacker.def.stats.res }, attacker === undefined ? undefined : { ap: attacker.def.stats.ap, maxHp: attacker.def.stats.hp })
       : skillDescription(skill as Skill, {
         ap: attacker?.def.stats.ap,
         atk: attacker && { atk: attacker.def.stats.atk, attackSpeed: attacker.def.stats.attackSpeed },
@@ -2903,4 +3038,10 @@ export function buildSkillViewModel(options: {
         resistance,
       }),
   };
+}
+
+/** 정상 취소(`PuppetSpawnCancelled`)만 삼키고 나머지 실패는 그대로 던진다. */
+function swallowCancelled(error: unknown): undefined {
+  if (error instanceof PuppetSpawnCancelled) return undefined;
+  throw error;
 }

@@ -1,7 +1,10 @@
+import { ENCOUNTER_ROLE } from "./levelDesign";
+import { RAID_BOSS_ROLE } from "./raid";
 import { EXPEDITION_BOSS_BALANCE } from "../data/expedition";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
-import { ULTIMATE_ENERGY_MAX } from "./ultimate";
-import { attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena, type Fighter } from "./skirmish";
+import { ultimateEnergyCap } from "./ultimate";
+import { BOSS_STEP_MS, bossBattleRandom } from "./bossSimulation";
+import { canFireUltimate, fireUltimate, attackInterval, createSkirmish, isFighterAlive, replayLoggedBossAction, stepSkirmish, type Arena, type Fighter } from "./skirmish";
 import type { RelicDef } from "./types";
 
 /** 클라이언트 제출 계약에는 관측 가능한 시각과 행동만 있으며 피해 숫자는 의도적으로 없다. */
@@ -21,6 +24,10 @@ export interface BossBattleBalance {
 
 /** 서버 저장 스냅샷과 보스 정적 정의를 공용 난전 규칙에 연결하는 입력이다. */
 export interface ExpeditionBossReplayInput {
+  /** Identity supplied by the admission/run, never a client damage total or random seed. */
+  replayIdentity?: string;
+  /** 자발적 종료 시점. 서버가 이 틱까지만 재현하며 클라이언트 피해 합계는 받지 않는다. */
+  stopAtMs?: number;
   allies: readonly RelicDef[];
   boss: RelicDef;
   initialHpPercentByRelic?: Readonly<Record<string, number>>;
@@ -58,7 +65,7 @@ export interface ExpeditionBossReplayInput {
  * 대신 코어 밖으로 나가는 **여기서 한 번만** 반올림해, 점수판과 순위표에는 언제나 정수가 선다.
  */
 /** 원정 폰토스는 늘 전멸로 끝난다. 레이드처럼 쓰러질 수 있는 보스만 `bossDefeated`가 켜진다. */
-export interface ExpeditionBossResult { totalDamage: number; endedAtMs: number; allAlliesDead: boolean; bossDefeated: boolean; remainingHpByAlly: Record<string, number>; }
+export interface ExpeditionBossResult { actualDamage?: number; totalDamage: number; endedAtMs: number; allAlliesDead: boolean; bossDefeated: boolean; remainingHpByAlly: Record<string, number>; }
 
 /** 해당 시각에 활성인 마지막 보스 단계를 찾는다. 일반 단계는 표시만 하고 피해는 폰토스 스킬이 소유한다. */
 export function expeditionBossPhaseAt(elapsedMs: number) {
@@ -147,9 +154,9 @@ function passOnReplayEnergy(giver: Fighter, kind: ExpeditionBossAction["kind"], 
   const skill = kind === "ultimate" ? giver.def.ultimate : giver.def.basic;
   const living = state.fighters.filter((ally) => ally.side === giver.side && isFighterAlive(ally));
   const allyGain = skill.allyEnergyGain ?? 0;
-  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ULTIMATE_ENERGY_MAX, ally.energy + allyGain);
+  if (allyGain > 0) for (const ally of living) ally.energy = Math.min(ultimateEnergyCap(ally), ally.energy + allyGain);
   const duo = giver.duoId ? living.find(({ id }) => id === giver.duoId) : undefined;
-  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ULTIMATE_ENERGY_MAX, duo.energy + skill.duoCharge!.energy);
+  if (duo && (skill.duoCharge?.energy ?? 0) > 0) duo.energy = Math.min(ultimateEnergyCap(duo), duo.energy + skill.duoCharge!.energy);
 }
 
 /** 재현 속 게이지가 비용의 이만큼만 차 있어도 궁극기를 받아 준다(자리·처치 환급의 어긋남). */
@@ -164,17 +171,46 @@ const REPLAY_ROUNDING_MS = 1;
 export function resolveExpeditionBossBattle(input: ExpeditionBossReplayInput, actions: readonly ExpeditionBossAction[], rng: () => number = () => 0.999999): ExpeditionBossResult {
   const balance = input.balance ?? EXPEDITION_BOSS_BALANCE;
   if (!input.allies.length || actions.length > balance.maximumActions) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+  const stopAtMs = input.stopAtMs;
+  if (stopAtMs !== undefined && (input.replayIdentity === undefined || !Number.isInteger(stopAtMs)
+    || stopAtMs < 0 || stopAtMs % BOSS_STEP_MS !== 0 || stopAtMs > balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const initialStates = input.allies.map(({ id }) => ({ relicId: id, currentHp: input.initialHpPercentByRelic?.[id] ?? 100, alive: (input.initialHpPercentByRelic?.[id] ?? 100) > 0 }));
   if (initialStates.some(({ currentHp }) => !Number.isFinite(currentHp) || currentHp < 0 || currentHp > 100)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
   const phases = balance.phases.map(({ startsAtMs, attackPerSecond, label }) => ({ startsAt: startsAtMs / 1_000, damagePerSecond: attackPerSecond, label }));
   const killable = input.bossKillable === true;
-  const bossHp = killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
+  const bossHp = input.replayIdentity !== undefined || killable ? input.boss.stats.hp : Number.MAX_SAFE_INTEGER;
   const state = createSkirmish([...input.allies], [{ ...input.boss, stats: { ...input.boss.stats, hp: bossHp } }], input.arena, input.bondLevels ?? {}, input.breakthroughs ?? {}, {
     playerInitialStates: initialStates, augmentEffects: input.augmentEffects,
     enemyBreakthroughs: [input.bossBreakthrough ?? 0],
+    ...(input.replayIdentity !== undefined ? { enemyBodyScale: ENCOUNTER_ROLE[killable ? RAID_BOSS_ROLE : "endless"].bodyScale } : {}),
     boss: { phases, limitSeconds: balance.maximumDurationMs / 1_000, percentHpBasis: input.percentHpBasis ?? input.boss.stats.hp, endsOnKill: killable,
       ...(input.seasonHp !== undefined ? { seasonHp: input.seasonHp } : {}) },
   });
+  if (input.replayIdentity !== undefined) {
+    const random = bossBattleRandom(input.replayIdentity);
+    let tick = 0;
+    for (const action of actions) {
+      if (action.kind !== "ultimate" || !Number.isInteger(action.elapsedMs) || action.elapsedMs % BOSS_STEP_MS !== 0
+        || action.elapsedMs < tick * BOSS_STEP_MS || action.elapsedMs > (stopAtMs ?? balance.maximumDurationMs)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      while (tick * BOSS_STEP_MS < action.elapsedMs && state.phase === "fight") {
+        stepSkirmish(state, BOSS_STEP_MS / 1_000, random); tick += 1;
+      }
+      const fighter = state.fighters.find(({ side, def }) => side === "player" && def.id === action.actorId);
+      if (!fighter || !canFireUltimate(state, fighter)) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+      const energy = fighter.energy;
+      const events = fireUltimate(state, fighter.id, random);
+      if (!events.length && fighter.energy >= energy) throw new Error("INVALID_BOSS_BATTLE_INPUT");
+    }
+    while (state.phase === "fight" && tick * BOSS_STEP_MS < (stopAtMs ?? balance.maximumDurationMs + BOSS_STEP_MS)) {
+      stepSkirmish(state, BOSS_STEP_MS / 1_000, random); tick += 1;
+    }
+    const bossDefeated = killable && state.phase === "victory";
+    if (state.phase !== "defeat" && !bossDefeated && stopAtMs === undefined) throw new Error("BOSS_BATTLE_DID_NOT_END_IN_WIPE");
+    const actualDamage = state.fighters.filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null)
+      .reduce((sum, fighter) => { const value = state.contributions[fighter.id]?.attack; return sum + (value?.attackPower ?? 0) + (value?.abilityPower ?? 0); }, 0);
+    return { actualDamage: Math.round(actualDamage), totalDamage: Math.round(state.boss?.score ?? 0), endedAtMs: Math.round(state.elapsed * 1_000), allAlliesDead: state.fighters.filter(({ side }) => side === "player").every(({ hp }) => hp <= 0), bossDefeated,
+      remainingHpByAlly: Object.fromEntries(state.fighters.filter(({ side }) => side === "player").map(({ def, hp }) => [def.id, hp])) };
+  }
   // 자동 평타는 제출 로그가 명시적으로 재생하므로 끄고, 폰토스의 AI·폭주·상태 시계만 stepSkirmish로 진행한다.
   for (const fighter of state.fighters) if (fighter.side === "player") fighter.attackCooldown = Number.POSITIVE_INFINITY;
   // 같은 행동이 다시 준비되는 시각을 그 행동을 재생한 **그 순간의 상태**로 못 박는다.

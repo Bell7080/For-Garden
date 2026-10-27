@@ -20,6 +20,7 @@ export type GlyphName =
   | "shop"
   | "mail"
   | "friends"
+  | "guild"
   | "exchange"
   | "event"
   | "settings"
@@ -43,8 +44,10 @@ export type GlyphName =
   | "filter"
   | "search"
   | "caret-down"
+  | "globe"
   | "affinity"
   | "sort-arrow"
+  | "trash"
   | "check";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
@@ -69,6 +72,12 @@ export function drawGlyph(
   const r = size / 2;
   g.lineStyle(lineWidth ?? Math.max(2, size * 0.09), color, alpha);
   switch (name) {
+    case "globe":
+      // 각진 팔각 윤곽 + 세로 자오선 마름모 + 적도선. 둥근 선을 쓰지 않는 아이콘 결을 따른다.
+      g.strokePoints(points(-r * 0.4, -r, r * 0.4, -r, r, -r * 0.4, r, r * 0.4, r * 0.4, r, -r * 0.4, r, -r, r * 0.4, -r, -r * 0.4), true);
+      g.strokePoints(points(0, -r, r * 0.42, 0, 0, r, -r * 0.42, 0), true);
+      g.lineBetween(-r, 0, r, 0);
+      break;
     case "arena-tier":
       // 공용 각진 방패/계급선으로 티어를 표현해 각 씬이 배지를 다시 조립하지 않게 한다.
       g.strokePoints(points(-r * 0.75, -r * 0.85, r * 0.75, -r * 0.85, r * 0.58, r * 0.38, 0, r * 0.9, -r * 0.58, r * 0.38), true);
@@ -184,6 +193,19 @@ export function drawGlyph(
       g.strokeRect(-r * 0.9, -r * 0.6, r * 1.8, r * 1.2);
       g.strokePoints(points(-r * 0.9, -r * 0.6, 0, r * 0.15, r * 0.9, -r * 0.6), false);
       break;
+    case "guild":
+      // 방패 문장 — 모서리를 각지게 맞춘다.
+      g.beginPath();
+      g.moveTo(-r * 0.75, -r * 0.8);
+      g.lineTo(r * 0.75, -r * 0.8);
+      g.lineTo(r * 0.75, r * 0.1);
+      g.lineTo(0, r * 0.95);
+      g.lineTo(-r * 0.75, r * 0.1);
+      g.closePath();
+      g.strokePath();
+      g.lineBetween(0, -r * 0.8, 0, r * 0.95);
+      g.lineBetween(-r * 0.75, -r * 0.25, r * 0.75, -r * 0.25);
+      break;
     case "friends":
       // 어깨를 나란히 한 둘.
       g.strokeCircle(-r * 0.4, -r * 0.35, r * 0.32);
@@ -292,6 +314,14 @@ export function drawGlyph(
       g.fillPoints(points(bx + bevel, by, bx + bw, by, bx + bw, by + bh - bevel, bx + bw - bevel, by + bh, bx, by + bh, bx, by + bevel), true);
       break;
     }
+    case "trash":
+      // 각진 휴지통 — 뚜껑 줄과 손잡이, 사다리꼴 통, 세로 줄 둘. 읽은 우편처럼 비우는 조작에만 쓴다.
+      g.lineBetween(-r * 0.86, -r * 0.6, r * 0.86, -r * 0.6);
+      g.strokePoints(points(-r * 0.3, -r * 0.6, -r * 0.3, -r * 0.92, r * 0.3, -r * 0.92, r * 0.3, -r * 0.6), false);
+      g.strokePoints(points(-r * 0.66, -r * 0.6, -r * 0.5, r * 0.92, r * 0.5, r * 0.92, r * 0.66, -r * 0.6), false);
+      g.lineBetween(-r * 0.2, -r * 0.2, -r * 0.2, r * 0.56);
+      g.lineBetween(r * 0.2, -r * 0.2, r * 0.2, r * 0.56);
+      break;
     case "filter":
       // 깔때기 — 목록을 좁힌다. 둥근 목 대신 각지게 꺾어 다른 아이콘과 결을 맞춘다.
       g.strokePoints(points(-r * 0.9, -r * 0.78, r * 0.9, -r * 0.78, r * 0.22, r * 0.04, r * 0.22, r * 0.86, -r * 0.22, r * 0.56, -r * 0.22, r * 0.04), true);

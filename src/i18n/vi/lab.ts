@@ -20,6 +20,7 @@ export const LAB_VI = {
   "lab.policy.pickupOff": "TẮT",
   "lab.policy.pickupRate": "Tỉ lệ nhân vật tăng tỉ lệ trong SSR {percent}% · Nếu trượt, SSR kế tiếp chắc chắn trúng",
   "lab.policy.tenGuarantee": "Ô cuối của x10 là SR trở lên (bảo đảm SSR được ưu tiên)",
+  "lab.policy.tenUpgrade": "Nếu ô cuối của x10 là SR, có {percent}% cơ hội nâng lên SSR",
   "lab.policy.mileage": "Mỗi lượt nghiên cứu +1 Dặm DNA",
   "lab.policy.duplicate": "Thưởng trùng  +1 Mảnh của Di vật đó · Gom Mảnh để Đột phá",
   "lab.policy.duplicateMax": "Sau Đột phá bậc V, trùng lặp chuyển thành Dặm DNA (SSR +30 · SR +8 · R +2)",

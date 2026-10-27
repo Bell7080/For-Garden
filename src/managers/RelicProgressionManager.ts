@@ -1,8 +1,9 @@
+import { hasRemoteState } from "../api/resultState";
 import { RAID_TICKET_TEST_KIT } from "../data/raid";
 import { previewCompletedRaids, RAID_HISTORY_PREVIEW_PREFIX } from "../core/raid";
 import { SWEEP_TICKET_TEST_KIT } from "../core/dungeonShortcut";
-import { calculateFinalStats, breakthroughGrade, remainingBreakthroughCost } from "../core/relicProgression";
-import type { RelicProgress, Stats } from "../core/types";
+import { calculateFinalStats, breakthroughGrade, UNIVERSAL_FRAGMENT_ITEM } from "../core/relicProgression";
+import type { RelicProgress, RelicRarity, Stats } from "../core/types";
 import { getRelic } from "../data/relics";
 import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAIT_KIT } from "../data/runes";
 import { createInitialRelicProgress, session, type Session } from "../state/session";
@@ -43,6 +44,12 @@ export class RelicProgressionManager {
   /** 그 개체의 파편 보유량. 없으면 0이다 — 없는 개체를 위해 표를 만들지 않는다. */
   getFragments(relicId: string): number {
     return this.state.relicFragments[relicId] ?? 0;
+  }
+
+  /** 그 등급의 만능 파편 수 — 가방의 재료 칸에 든다(`UNIVERSAL_FRAGMENT_ITEM`). */
+  getUniversalFragments(rarity: RelicRarity): number {
+    const itemId = UNIVERSAL_FRAGMENT_ITEM[rarity];
+    return this.state.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0;
   }
 
   /**
@@ -124,15 +131,15 @@ export class RelicProgressionManager {
   }
 
   /** 서버가 검증한 장착 응답만 로컬 세션에 적용해 UI가 슬롯 불변식을 재구현하지 않게 한다. */
-  async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi): Promise<void> {
-    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId });
-    this.applyRuneInventory(response.inventory);
+  async equipRune(relicId: string, slotIndex: number, runeInstanceId: string, api: GameApi = gameApi, options: { moveFromOther?: boolean } = {}): Promise<void> {
+    const response = await api.equipRune({ relicId, slotIndex, runeInstanceId, ...(options.moveFromOther ? { moveFromOther: true } : {}) });
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 
   /** 빈 슬롯 결과 역시 서버 응답의 전체 장착표를 적용한다. */
   async unequipRune(relicId: string, slotIndex: number, api: GameApi = gameApi): Promise<void> {
     const response = await api.unequipRune({ relicId, slotIndex });
-    this.applyRuneInventory(response.inventory);
+    if (!hasRemoteState(response)) this.applyRuneInventory(response.inventory);
   }
 
   /** 인벤토리 DTO를 기존 공유 객체에 복사해 씬 참조를 보존하고 응답 단위로 저장한다. */
@@ -162,26 +169,6 @@ export class RelicProgressionManager {
     });
     const def = getRelic(relicId);
     return calculateFinalStats(def.stats, progress, gems, def.rarity);
-  }
-
-  /**
-   * 그 개체를 별 다섯까지 키우는 데 필요한 재료를 한 번에 지급한다 — **테스트 전용 진입점**이다.
-   *
-   * 돌파는 레벨 상한 → 파편 → 치즈케이크 셋이 동시에 맞아야 되는 조작이라, 지급 없이 확인하려면
-   * 연구소에서 같은 개체를 여러 번 뽑고 수십 번 급여해야 한다. 여기서는 **재료만** 주고 돌파
-   * 자체는 사람이 누른다 — 자동으로 뚫어 버리면 확인하려는 그 화면을 지나쳐 버린다.
-   *
-   * 수치는 화면이 아니라 순수 규칙(`remainingBreakthroughCost`)에서 나오므로, 단계표나 등급별
-   * 파편 수를 고치면 지급량도 함께 따라간다. 정식 획득 경로가 충분해지면 이 메서드를 지운다.
-   */
-  grantBreakthroughSetForDebug(relicId: string): { fragments: number; cheesecake: number } {
-    const def = getRelic(relicId);
-    const progress = this.ownedProgress(relicId);
-    const cost = remainingBreakthroughCost(def.rarity, progress);
-    this.state.relicFragments[relicId] = (this.state.relicFragments[relicId] ?? 0) + cost.fragments;
-    this.state.wallet.cheesecake += cost.cheesecake;
-    this.persistSharedSession();
-    return cost;
   }
 
   /** 성장 트랜잭션이 끝난 뒤에만 저장해 중간 상태가 남지 않게 한다. */

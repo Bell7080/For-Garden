@@ -7,10 +7,12 @@ import { COLOR, textStyle } from "./theme";
 import { startNavScene } from "./screenTransition";
 import { NAV_TABS, navTabDirection, type NavKey } from "../core/navTabs";
 import { pressIn, pressOut } from "./pressFeedback";
-import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast } from "./contentLock";
+import { consumeUnlockCelebration, contentOpen, playUnlockSequence, showContentLockedToast, whenUnlockGateOpen } from "./contentLock";
 import { addPadlock } from "./Padlock";
 import { LOCK_DIM } from "./lockStyle";
 import type { ContentId } from "../core/contentUnlock";
+import { notificationManager } from "../managers/NotificationManager";
+import { bindNotificationDot } from "./NotificationDot";
 
 /** 차례와 넘김 규칙은 순수 표가 갖는다. 여기서는 그리기만 한다. */
 export { NAV_TABS };
@@ -27,7 +29,7 @@ export function navLabel(key: NavKey): string {
 }
 
 /** 탭이 레벨로 잠기는 콘텐츠. 숨기지 않고 자물쇠를 건 채로 남긴다 — 줄에 있어야 할 자리가 비면 화면이 덜 만든 것으로 읽힌다. */
-const NAV_CONTENT: Partial<Record<NavKey, ContentId>> = { archaeology: "archaeology" };
+const NAV_CONTENT: Partial<Record<NavKey, ContentId>> = { lab: "lab", archaeology: "archaeology" };
 
 export const NAV_TOP = BASE_HEIGHT - 180;
 
@@ -97,6 +99,11 @@ export function drawIcon(scene: Phaser.Scene, key: NavKey, x: number, y: number,
  * 보이되 아이콘과 글자는 읽힌다. 지금 화면인 탭은 강조색과 살짝 큰 크기로만 알린다.
  */
 export class BottomNav {
+  private readonly hits = new Map<NavKey, { x: number; y: number; width: number; height: number }>();
+
+  /** 탭이 눌리는 자리(씬 좌표). 튜토리얼이 가리킬 때 읽는다. */
+  tabRect(key: NavKey): { x: number; y: number; width: number; height: number } | undefined { return this.hits.get(key); }
+
   constructor(scene: Phaser.Scene, current: NavKey) {
     const height = BASE_HEIGHT - NAV_TOP;
     drawGlassFade(scene, BASE_WIDTH / 2, NAV_TOP + height / 2, BASE_WIDTH, height, {
@@ -139,7 +146,8 @@ export class BottomNav {
         label.setAlpha(LOCK_DIM.labelAlpha);
         const lock = addPadlock(scene, 0, -16, 44, { color: LOCK_DIM.lockColor, alpha: LOCK_DIM.lockAlpha * 0.7 });
         group.add(lock);
-        if (celebrate) {
+        // 화면이 레벨업 알림을 먼저 띄우는 중이면 그 판이 닫힌 뒤에 터진다(`whenUnlockGateOpen`).
+        if (celebrate) whenUnlockGateOpen(scene, () => {
           scene.time.delayedCall(500, () => {
             if (!lock.active) return;
             playUnlockSequence(scene, lock, {
@@ -153,14 +161,17 @@ export class BottomNav {
               },
             });
           });
-        }
+        });
       }
+      // 받을 무료 보급이 남아 있으면 프리미엄 탭에 점을 세운다.
+      if (tab.key === "premium") bindNotificationDot(scene, group, { x: 34, y: -40 }, (listener) => notificationManager.subscribe("premiumNotice", listener));
       // 지금 화면인 탭만 살짝 크다. 밑줄이나 상자 대신 크기로 알린다.
       group.setScale(active ? ACTIVE_SCALE : 1);
 
       const hit = scene.add
         .rectangle(x, NAV_TOP + 90, step - 8, 160, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
+      this.hits.set(tab.key, { x: x - (step - 8) / 2, y: NAV_TOP + 10, width: step - 8, height: 160 });
       if (!active) {
         // 누르는 동안 공용 눌림 연출로 눌린 자리를 알린다.
         hit.on("pointerdown", () => pressIn(group));

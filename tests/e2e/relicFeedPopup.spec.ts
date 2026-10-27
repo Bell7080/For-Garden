@@ -41,7 +41,7 @@ test.beforeEach(async ({ page }) => {
   await openOwnedRelic(page);
 });
 
-test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만 닫힌다", async ({ page }, testInfo) => {
+test("급여를 누르는 순간 보조 버튼이 뜨고 외부 입력으로만 닫힌다", async ({ page }, testInfo) => {
   // 급여는 되풀이하면 실제로 여러 번 먹이고 판도 열렸다 닫힌다 — 다시 누르지 않고, 정보창이
   // 원화·스킬을 마저 세울 틈만 두고 한 번 누른다.
   // 급여 버튼 자리는 화면이 알려 준다 — 레벨 칸의 줄 구성이 바뀌면 좌표가 함께 움직인다.
@@ -49,11 +49,14 @@ test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton !== undefined), { timeout: 15_000 }).toBe(true);
   const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
   const feed = await gamePointOf(page, spot.x, spot.y);
-  await page.mouse.click(feed.x, feed.y);
+  await page.mouse.move(feed.x, feed.y);
+  await page.mouse.down();
+  expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
+  await page.mouse.up();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
 
   // Releasing has already happened; an internal blank/header tap must not reach the backdrop.
-  const inside = await gamePointOf(page, 766, 650);
+  const inside = await gamePointOf(page, 766, 640);
   await page.mouse.click(inside.x, inside.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   // Keep a mobile visual regression artifact for the newly-visible growth action note.
@@ -64,16 +67,17 @@ test("짧은 급여 탭 뒤 성장 팝업이 유지되고 외부 입력으로만
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
 });
 
-test("긴 누르기 반복 급여는 손을 뗀 뒤 팝업을 한 장만 연다", async ({ page }) => {
+test("보조 버튼이 열린 상태에서도 길게 누르기와 연타가 이어진다", async ({ page }) => {
   await page.waitForTimeout(900);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.feedButton !== undefined), { timeout: 15_000 }).toBe(true);
   const spot = (await page.evaluate(() => window.__PF_DEBUG!.feedButton!))!;
   const feed = await gamePointOf(page, spot.x, spot.y);
   await page.mouse.move(feed.x, feed.y);
   await page.mouse.down();
-  await page.waitForTimeout(760);
-  // The repeat gesture must not create a popup under the held pointer.
-  expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeUndefined();
+  // 속도 수치는 순수 경과 시간 테스트가 검증한다. 소프트웨어 GPU에서는 고정 대기 시간 대신
+  // 실제 반복 입력이 처리됐는지 기다려 입력 통과와 싱글턴 쪽지의 유지 여부를 확인한다.
+  await expect.poll(async () => (await page.evaluate(() => window.__PF_DEBUG?.feedTaps))?.served ?? 0, { timeout: 60_000 }).toBeGreaterThan(12);
+  expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   await page.mouse.up();
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["한 번에 급여"]);
   expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length)).toBe(1);
@@ -90,8 +94,8 @@ test("급여 버튼을 연달아 두드리면 누른 것을 하나도 버리지 
     await page.mouse.click(feed.x, feed.y);
     await page.waitForTimeout(60);
   }
-  // 누른 것은 하나도 버려지지 않는다 — 두드린 수와 서버가 확정한 수가 같다. 느린 환경에서는 두드리는
-  // 사이에 손이 쉰 것으로 보여 쪽지가 열리고 다음 누름이 그 뒤판에 먹히므로, 누른 횟수 자체는 세지 않는다.
+  expect((await page.evaluate(() => window.__PF_DEBUG?.feedTaps))?.served).toBe(taps);
+  // 보조 쪽지가 열려 있어도 원래 급여 입력이 통과하고, 누른 수만큼 서버에서 확정된다.
   await expect
     .poll(async () => {
       const count = await page.evaluate(() => window.__PF_DEBUG?.feedTaps);

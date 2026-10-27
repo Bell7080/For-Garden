@@ -9,7 +9,7 @@ import { requiredBreakthroughForLevel } from "../core/levelDesign";
  *
  * - **월드 폭주** — 시스템만 여는 하루 한 마리(난이도 `rampage`, 만렙). 모든 플레이어가 체력
  *   한 줄을 함께 깎고 **잡지 못해도 된다.**
- * - **소환 레이드** — 토벌권으로 여는 판(쉬움·보통·어려움). 친구 목록 인원끼리 함께 본다.
+ * - **소환 레이드** — 토벌권으로 여는 판(쉬움·보통·어려움). 친구와 같은 길드원끼리 함께 본다.
  *
  * 어느 쪽이든 판 하나에 **두 번** 도전하고, 판이 끝나면(토벌되거나 수명이 다하면) **완료 탭에서
  * 정산을 눌러** 보상을 받는다(`raidSettlement`). 보상은 **참여한 사람만** 받고, 내가 많이 깎을수록
@@ -85,41 +85,34 @@ export const RAID_BOSS_BALANCE = {
  *
  * **정산**(`settlement`)은 참여한 사람에게만 나간다. `mine`은 내 피해가 `mineTarget`에 닿을수록
  * 차오르고(두 판의 합), `total`은 판 전체가 깎인 비율만큼, `kill`은 토벌된 판에만 붙는다.
+ * `gems`는 그 세 몫이 다 찼을 때의 젬이다(쉬움 40 · 보통 65 · 어려움 85 · 폭주 130) — 증표와 같은 비율로
+ * 차오르고, 5 단위로 올림한다. 증표 30개어치 플레이가 젬 50~100이라는 기준에서 정했다.
  */
 export type RaidDifficulty = "easy" | "normal" | "hard" | "rampage";
 
 export interface RaidDifficultySpec {
   level: number;
-  /**
-   * **판 안에 서는 보스 한 마리의 최대 체력** — 머리 위 체력 바가 곧 이 값이다.
-   *
-   * 난이도마다 두 배씩 단단해진다. 모든 판이 같은 몸(2만 5천)을 쓰던 때는 보통과 어려움의 체력
-   * 바가 똑같이 서서, 레벨 차이(+15% 남짓)만으로는 무엇이 어려워졌는지 화면이 말하지 못했다.
-   */
+  /** 공유 체력을 산정하는 밸런스 단위. 보호막 기준도 이 값을 사용한다. 실제 입장 HP는 남은 공유 HP다. */
   bodyHp: number;
-  /**
-   * **이 판을 토벌하려면 보스를 몇 번 쓰러뜨려야 하나.** 공유 체력은 `bodyHp × kills`에서 나온다 —
-   * 따로 적어 두면 머리 위 바 한 줄이 공유 게이지의 몇 칸인지 아무도 말할 수 없다.
-   */
+  /** 공유 체력 배수. 처치/부활 횟수가 아니다. */
   kills: number;
-  /** 공유 체력. `bodyHp × kills`로만 만든다(`raidDifficulty`). */
+  /** 단일 보스의 전체 공유 HP. `bodyHp × kills`. */
   totalHp: number;
   /** 판이 열려 있는 시간. 토벌되면 그 전에 끝난다. */
   lifetimeHours: number;
-  settlement: { mine: number; mineTarget: number; total: number; kill: number };
+  settlement: { mine: number; mineTarget: number; total: number; kill: number; gems: number };
+  /** 한 판을 치고 곧바로 받는 증표·젬의 최대치. 그 판 피해가 `settlement.mineTarget`에 닿을 때 이 값이고 그 아래는 비례한다. */
+  run: { sigil: number; gems: number; salvage: number };
 }
 
 const raidDifficulty = (spec: Omit<RaidDifficultySpec, "totalHp">): RaidDifficultySpec => ({ ...spec, totalHp: spec.bodyHp * spec.kills });
 
-/*
- * 한 번 처치 = 공유 게이지의 `1 / kills`다. 쉬움은 여섯 번(한 칸 16.7%), 보통 여덟 번, 어려움 열 번,
- * 월드 폭주는 마흔 번이라 한 사람이 혼자 잡는 판이 아니다. 몸은 쉬움 2만 5천 → 5만 → 10만 → 25만.
- */
+/** 단일 공유 HP 풀이다. 여러 몸을 처치하거나 부활시키는 단계는 없다. */
 export const RAID_DIFFICULTY: Record<RaidDifficulty, RaidDifficultySpec> = {
-  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5 } }),
-  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8 } }),
-  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12 } }),
-  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30 } }),
+  easy: raidDifficulty({ level: 20, bodyHp: 25_000, kills: 6, lifetimeHours: 24, settlement: { mine: 12, mineTarget: 10_000, total: 8, kill: 5, gems: 40 }, run: { sigil: 3, gems: 7, salvage: 2 } }),
+  normal: raidDifficulty({ level: 30, bodyHp: 50_000, kills: 8, lifetimeHours: 24, settlement: { mine: 20, mineTarget: 15_000, total: 14, kill: 8, gems: 65 }, run: { sigil: 5, gems: 13, salvage: 4 } }),
+  hard: raidDifficulty({ level: 40, bodyHp: 100_000, kills: 10, lifetimeHours: 24, settlement: { mine: 32, mineTarget: 22_000, total: 22, kill: 12, gems: 85 }, run: { sigil: 8, gems: 17, salvage: 6 } }),
+  rampage: raidDifficulty({ level: 60, bodyHp: 250_000, kills: 40, lifetimeHours: 24, settlement: { mine: 50, mineTarget: 45_000, total: 60, kill: 30, gems: 130 }, run: { sigil: 13, gems: 25, salvage: 10 } }),
 };
 
 /** 저장·진입 데이터에서 온 값이 난이도 표에 있는지. 모르는 값은 어느 몸으로 세울지 알 수 없다. */
@@ -171,14 +164,6 @@ export function raidRunStamina(_difficulty?: RaidDifficulty): number {
   return RAID_RUN_STAMINA;
 }
 
-/**
- * 때린 판마다 곧바로 받는 골드 — **그 판의 피해에 비례한다.**
- *
- * 정산은 판이 끝나야 열리므로, 한 판을 치고 나온 손에 아무것도 없으면 두 번째 판을 칠 이유가
- * 화면에서 사라진다. 한 판 2만 피해가 4천 골드다.
- */
-export const RAID_RUN_GOLD_PER_DAMAGE = 0.2;
-
 /** 끝난 판이 완료 탭에 남는 시간. 정산하지 않은 판은 이보다 오래 남는다(받을 것이 있으므로). */
 export const RAID_COMPLETED_KEEP_HOURS = 48;
 
@@ -219,3 +204,9 @@ export const RAID_MOCK_PARTICIPANTS = [
 
 // 단계 이름은 화면에 서는 정적 콘텐츠라 다른 언어만 개체 ID로 덮어쓴다.
 RAID_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `raid.phase.${index}`));
+
+/** 정산 보상을 화면에 세우는 순서 — 토벌 증표가 먼저, 젬이 그 뒤다. 서버의 지급 순서(`sortByRewardPriority`)와 무관하다. */
+export function raidSettlementDisplayOrder<T extends { currency: string }>(settlement: readonly T[]): T[] {
+  const rank = (currency: string): number => (currency === "raidSigil" ? 0 : 1);
+  return settlement.map((reward, index) => ({ reward, index })).sort((a, b) => rank(a.reward.currency) - rank(b.reward.currency) || a.index - b.index).map(({ reward }) => reward);
+}

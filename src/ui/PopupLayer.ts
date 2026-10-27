@@ -42,6 +42,10 @@ export interface PopupOptions {
   tilt?: number;
   /** 판 바깥을 눌러 닫을 수 있는지. 무엇을 고르는 팝업은 끄고 읽는 팝업은 켠다. */
   closeOnBackdrop?: boolean;
+  /** 영수증은 본문 빈 곳도 닫기 입력으로 쓰되, 위의 아이템 안내는 유지한다. */
+  closeOnBody?: boolean;
+  /** 이 화면 좌표 영역의 입력은 뒤의 원래 조작으로 보낸다(급여 연속 입력). */
+  inputPassthrough?: { x: number; y: number; width: number; height: number };
   /**
    * 뒤 화면을 어둡게 덮을지.
    *
@@ -72,6 +76,8 @@ export interface PopupOptions {
   anchor?: { x: number; y: number };
   /** 닫힐 때 부르는 콜백. 누른 버튼이 눌린 상태를 되돌릴 때 쓴다. */
   onClose?: () => void;
+  /** 비동기 확정·연출 중에는 모든 닫기 경로를 잠깐 보호한다. */
+  canClose?: () => boolean;
   /**
    * 제 등장 연출 없이 **완성된 채로** 선다.
    *
@@ -121,6 +127,7 @@ export class PopupLayer {
   private readonly stack: Phaser.GameObjects.Container[] = [];
   /** 외부 뒤로가기가 `closeTop`을 호출해도 팝업 소유자의 정리 콜백을 빠뜨리지 않는다. */
   private readonly onCloseByLayer = new Map<Phaser.GameObjects.Container, (() => void) | undefined>();
+  private readonly canCloseByLayer = new Map<Phaser.GameObjects.Container, (() => boolean) | undefined>();
   /** 판 소유자가 나중에 채운 내용 위로 머리글을 다시 올릴 수 있게 판별 본문마다 보관한다. */
   private readonly chromeByBody = new Map<Phaser.GameObjects.Container, Phaser.GameObjects.GameObject[]>();
   /** 제목 있는 팝업만 E2E 관찰용으로 기록한다. Canvas 밖에서는 지금 무엇이 열려 있는지 알 방법이 없다. */
@@ -161,6 +168,7 @@ export class PopupLayer {
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       openLayerCount -= this.stack.length;
       this.stack.length = 0;
+      this.canCloseByLayer.clear();
       this.shutdownHooked = false;
       this.trackLive();
       this.publishDebugTitles();
@@ -305,8 +313,14 @@ export class PopupLayer {
     // 바깥을 눌러 닫을 수 있게 투명한 판을 깐다. 명시한 강도는 중첩 암전이 과해지는 것을 막는다.
     const dimAlpha = options.dim ? Phaser.Math.Clamp(options.dimAlpha ?? 0.55, 0, 1) : 0;
     const backdrop = this.scene.add
-      .rectangle(screen.width / 2, screen.height / 2, screen.width, screen.height, 0x05070a, dimAlpha)
-      .setInteractive();
+      .rectangle(screen.width / 2, screen.height / 2, screen.width, screen.height, 0x05070a, dimAlpha);
+    if (options.inputPassthrough) {
+      const area = options.inputPassthrough;
+      backdrop.setInteractive(new Phaser.Geom.Rectangle(0, 0, screen.width, screen.height), (_hitArea: unknown, x: number, y: number) =>
+        !(x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height));
+    } else {
+      backdrop.setInteractive();
+    }
     layer.add(backdrop);
 
     const body = this.scene.add.container(cx, cy);
@@ -320,12 +334,15 @@ export class PopupLayer {
     // **판의 빈 곳이나 머리글을 누른 손이 뒤의 배경까지 내려가 팝업을 닫는다.** 판 안을 눌렀는데
     // 판이 사라지는 셈이라, 읽는 중에 손이 스치기만 해도 창이 없어졌다. 이 막이 판보다 뒤에
     // 깔리므로 그 위에 얹는 버튼·목록은 그대로 제 입력을 받는다.
-    body.add(this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive());
+    const bodyHit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive();
+    if (options.closeOnBody) bodyHit.on("pointerup", () => this.close(layer));
+    body.add(bodyHit);
     body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 
     // 닫기 경로(내부 X·배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.
     this.onCloseByLayer.set(layer, options.onClose);
+    this.canCloseByLayer.set(layer, options.canClose);
     const close = (): void => { this.close(layer); };
     const titleChrome: Phaser.GameObjects.GameObject[] = [];
     if (options.title) {
@@ -418,6 +435,12 @@ export class PopupLayer {
     setDebugPopupTitles(LIVE_LAYERS.flatMap((layer) => layer.openTitles()));
   }
 
+  /** 덮인 판은 내용을 다시 굽지 않고 드러날 때 한 번 갱신할 수 있다. */
+  isTop(body: Phaser.GameObjects.Container): boolean {
+    const top = this.stack.at(-1);
+    return !!top && this.bodyByLayer.get(top) === body;
+  }
+
   /** 이 층에 지금 열려 있는 제목들. 다른 층이 함께 올릴 수 있도록 열어 둔다. */
   private openTitles(): string[] {
     return this.stack.map((layer) => this.titleByLayer.get(layer)).filter((title): title is string => title !== undefined);
@@ -459,7 +482,11 @@ export class PopupLayer {
   }
 
   closeAll(): void {
-    while (this.stack.length > 0) this.closeTop();
+    while (this.stack.length > 0) {
+      const top = this.stack[this.stack.length - 1];
+      this.closeTop();
+      if (this.stack[this.stack.length - 1] === top) break;
+    }
   }
 
   /**
@@ -493,6 +520,8 @@ export class PopupLayer {
   private close(layer: Phaser.GameObjects.Container): void {
     const index = this.stack.indexOf(layer);
     if (index === -1) return;
+    if (this.canCloseByLayer.get(layer)?.() === false) return;
+    this.canCloseByLayer.delete(layer);
     this.stack.splice(index, 1);
     openLayerCount -= 1;
     const closedTitle = this.titleByLayer.get(layer);

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   canUpgradeRuneTraitGrade, grantRuneTrait, nextRuneTraitGrade, rerollRuneTrait,
-  RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, upgradeRuneTraitGrade, canGrantRuneTraitAtLeast, type RuneTrait,
+  RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, pickRuneTraitId, runeTraitIdsForGrade, upgradeRuneTraitGrade, canGrantRuneTraitAtLeast, type RuneTrait,
 } from "../../src/core/runeTraits";
-import { RUNE_TRAIT_DEFS, RUNE_TRAIT_IDS, runeTraitValue } from "../../src/data/runeTraits";
-import { runeTraitCombatEffects } from "../../src/core/runeTraitEffects";
+import { RUNE_TRAIT_DEFS, RUNE_TRAIT_IDS, RUNE_TRAIT_POOL, runeTraitValue } from "../../src/data/runeTraits";
+import { runeTraitCombatEffects, resolveRuneTraitStacking } from "../../src/core/runeTraitEffects";
 import { backfillStarterRuneTraits, createStarterRunes, STARTER_RUNE_TRAITED } from "../../src/data/runes";
 import { assertValidRuneInstance } from "../../src/core/runes";
 
@@ -17,7 +17,7 @@ function scripted(values: readonly number[]): () => number {
 describe("룬 특성", () => {
   it("은 부여한 최소 등급 아래로 내려가지 않는다", () => {
     for (const minimumGrade of RUNE_TRAIT_GRADES) {
-      const trait = grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade, random: scripted([0.999, 0.5]) });
+      const trait = grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade, random: scripted([0.999, 0.5]) });
       expect(RUNE_TRAIT_GRADES.indexOf(trait.grade)).toBeGreaterThanOrEqual(RUNE_TRAIT_GRADES.indexOf(minimumGrade));
       expect(RUNE_TRAIT_IDS).toContain(trait.id);
     }
@@ -26,7 +26,7 @@ describe("룬 특성", () => {
   it("의 재해석은 등급을 내리지 않는다", () => {
     const trait: RuneTrait = { id: "vanguard", grade: "epic", upgradeMisses: 0 };
     // 상승 판정과 종류 추첨 모두 가장 불리한 난수를 준다.
-    const outcome = rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0.999, 0.5]) });
+    const outcome = rerollRuneTrait({ trait, pool: RUNE_TRAIT_POOL, random: scripted([0.999, 0.5]) });
     expect(outcome.upgraded).toBe(false);
     expect(outcome.candidate.grade).toBe("epic");
   });
@@ -34,7 +34,7 @@ describe("룬 특성", () => {
   it("의 천장은 연속 실패가 임계에 닿는 재해석에서 확정으로 올린다", () => {
     const threshold = RUNE_TRAIT_RULES.pityThreshold.uncommon;
     const trait: RuneTrait = { id: "vanguard", grade: "uncommon", upgradeMisses: threshold - 1 };
-    const outcome = rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0.999, 0.5]) });
+    const outcome = rerollRuneTrait({ trait, pool: RUNE_TRAIT_POOL, random: scripted([0.999, 0.5]) });
     expect(outcome.byPity).toBe(true);
     expect(outcome.upgraded).toBe(true);
     expect(outcome.candidate.grade).toBe("rare");
@@ -44,9 +44,9 @@ describe("룬 특성", () => {
 
   it("의 실패는 쌓이고 성공은 초기화한다", () => {
     const trait: RuneTrait = { id: "vanguard", grade: "rare", upgradeMisses: 3 };
-    const missed = rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0.999, 0.5]) });
+    const missed = rerollRuneTrait({ trait, pool: RUNE_TRAIT_POOL, random: scripted([0.999, 0.5]) });
     expect(missed.candidate.upgradeMisses).toBe(4);
-    const hit = rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0, 0.5]) });
+    const hit = rerollRuneTrait({ trait, pool: RUNE_TRAIT_POOL, random: scripted([0, 0.5]) });
     expect(hit.upgraded).toBe(true);
     expect(hit.candidate.upgradeMisses).toBe(0);
   });
@@ -55,7 +55,7 @@ describe("룬 특성", () => {
     const trait: RuneTrait = { id: "vanguard", grade: "legendary", upgradeMisses: 99 };
     expect(nextRuneTraitGrade("legendary")).toBeUndefined();
     expect(canUpgradeRuneTraitGrade(trait)).toBe(false);
-    expect(rerollRuneTrait({ trait, traitIds: RUNE_TRAIT_IDS, random: scripted([0, 0.5]) }).upgraded).toBe(false);
+    expect(rerollRuneTrait({ trait, pool: RUNE_TRAIT_POOL, random: scripted([0, 0.5]) }).upgraded).toBe(false);
     expect(() => upgradeRuneTraitGrade(trait)).toThrow();
   });
 
@@ -75,18 +75,21 @@ describe("룬 특성", () => {
 
   it("의 수치는 등급이 오를수록 세진다", () => {
     for (const def of RUNE_TRAIT_DEFS) {
-      const values = RUNE_TRAIT_GRADES.map((grade) => runeTraitValue(def.id, grade));
-      // 출혈 연구만 **낮을수록 세다**(N회마다 한 번). 나머지는 모두 오른다.
-      const rising = def.effect.kind === "bleedEveryNAttacks"
+      const from = RUNE_TRAIT_GRADES.indexOf(def.minGrade);
+      const values = RUNE_TRAIT_GRADES.slice(from).map((grade) => runeTraitValue(def.id, grade));
+      // N회마다 한 번 터지는 특성은 **낮을수록 세다**. 나머지는 모두 오른다.
+      const rising = ["bleedEveryNAttacks", "curseEveryNAttacks", "staggerOnCritical"].includes(def.effect.kind)
         ? values.every((value, index) => index === 0 || value < values[index - 1])
-        : values.every((value, index) => index === 0 || value > values[index - 1]);
+        : values.every((value, index) => index === 0 || value >= values[index - 1]);
       expect(rising, def.id).toBe(true);
+      // 모든 등급이 같은 값인 특성은 전설 전용(완벽한 조준)처럼 등급이 아니라 개수가 키우는 것뿐이다.
+      if (def.minGrade !== "legendary") expect(values[values.length - 1], def.id).not.toBe(values[0]);
     }
   });
 
-  it("은 열두 종이 모두 실제로 도는 전투 효과를 만든다", () => {
+  it("은 모든 종이 실제로 도는 전투 효과를 만든다", () => {
     for (const def of RUNE_TRAIT_DEFS) {
-      const effects = runeTraitCombatEffects({ id: def.id, grade: "rare", upgradeMisses: 0 }, "torika");
+      const effects = runeTraitCombatEffects({ id: def.id, grade: "legendary", upgradeMisses: 0 }, "torika");
       expect(effects.length, def.id).toBeGreaterThan(0);
       // 특성은 그 룬을 낀 렐릭 하나에만 걸린다 — 전체 범위가 새면 편성 전체가 함께 세진다.
       for (const effect of effects) expect(effect.scope).toEqual({ kind: "relic", relicId: "torika" });
@@ -111,5 +114,31 @@ describe("룬 특성", () => {
 
   it("은 알 수 없는 ID에 효과를 만들지 않는다", () => {
     expect(runeTraitCombatEffects({ id: "no-such-trait", grade: "rare", upgradeMisses: 0 }, "torika")).toEqual([]);
+  });
+
+  it("의 풀은 등급이 자격을 정하고 전설 전용은 전설에서만 나온다", () => {
+    const uncommon = runeTraitIdsForGrade(RUNE_TRAIT_POOL, "uncommon");
+    expect(uncommon).not.toContain("perfectAim");
+    expect(uncommon).not.toContain("overflow");
+    expect(runeTraitIdsForGrade(RUNE_TRAIT_POOL, "epic")).toContain("overflow");
+    expect(runeTraitIdsForGrade(RUNE_TRAIT_POOL, "epic")).not.toContain("perfectAim");
+    expect(runeTraitIdsForGrade(RUNE_TRAIT_POOL, "legendary")).toContain("perfectAim");
+    // 전설이 굴러 전용 몫에 걸리면(첫 난수가 몫 아래) 전용 풀에서만 고른다.
+    expect(pickRuneTraitId(RUNE_TRAIT_POOL, "legendary", scripted([0, 0]), 0.35)).toBe("perfectAim");
+    expect(pickRuneTraitId(RUNE_TRAIT_POOL, "epic", scripted([0]), 0.35)).not.toBe("perfectAim");
+  });
+
+  it("의 중첩은 합산·독립·불가를 갈라 정리한다", () => {
+    const trait = (id: string, grade: RuneTrait["grade"] = "rare"): RuneTrait => ({ id, grade, upgradeMisses: 0 });
+    // 중첩 불가: 가장 높은 등급 하나만 효과를 내고 나머지는 무시된다.
+    const none = resolveRuneTraitStacking([trait("hemorrhage", "uncommon"), trait("hemorrhage", "epic")], "torika");
+    expect(none.ignored).toEqual([0]);
+    expect(none.effects).toHaveLength(runeTraitCombatEffects(trait("hemorrhage", "epic"), "torika").length);
+    // 독립형: 룬마다 효과가 따로 선다.
+    const one = runeTraitCombatEffects(trait("riposte"), "torika").length;
+    expect(resolveRuneTraitStacking([trait("riposte"), trait("riposte")], "torika").effects).toHaveLength(one * 2);
+    // 합산형: 효과 수는 그대로이고 수치만 더해진다.
+    const sum = resolveRuneTraitStacking([trait("rhythm"), trait("rhythm")], "torika").effects;
+    expect(sum).toHaveLength(runeTraitCombatEffects(trait("rhythm"), "torika").length);
   });
 });

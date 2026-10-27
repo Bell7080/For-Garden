@@ -1,11 +1,27 @@
+import { ancientStageFloor, ancientStageId, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { getAncientStrataFloor } from "../core/ancientStrataBattle";
+import { storyDifficultyOf } from "../core/storyDifficulty";
+import { storyStages } from "../data/stages";
+import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
+import { arenaCall } from "../api/arenaApi";
+import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
+import packageInfo from "../../package.json";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { expeditionBossDamageScore } from "../core/expeditionScore";
+import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";
+import { goRoute, partyRoute, victoryRoute } from "./stageStoryRoute";
 import Phaser from "phaser";
 import { t } from "../i18n";
-import { gameApi } from "../api/FakeServer";
+import { combatState, type CombatLease, type CombatProof } from "../core/combatProtocol";
+import { gameApi, usesRemoteGameApi } from "../api/FakeServer";
+import { audioManager } from "../managers/AudioManager";
+import { StaminaPopup } from "../ui/StaminaPopup";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
-import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
+import { battleStageStaminaCost } from "../data/contentCosts";
 import { raidRunStamina } from "../data/raid";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { FEROCITY_RULES } from "../core/ferocity";
+import { ferocityMaxOf } from "../core/ferocity";
+import { arenaMirrorCenter, arenaViewAlly, arenaViewFlipped, mirrorFightersY, mirrorPointsY, type ArenaMirrorRestore } from "../core/arenaView";
 import {
   aliveFighters,
   activeCombatBuffs,
@@ -27,18 +43,18 @@ import {
 } from "../core/skirmish";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
-import { getBattleStage, getStageEnemies, stageEnemyGrowth, STAGES } from "../data/stages";
+import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
 import { bountyRunCost, isBountyTierUnlocked, nextBountyStep, type BountyBattleInputDto } from "../core/bountyRun";
-import type { PartyContent } from "../data/partyContent";
+import { defeatPartyRoute, type PartyContent } from "../data/partyContent";
 import { enterContentBattle } from "./contentBattleEntry";
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { expeditionBossGrowth, getExpeditionNodeEnemies } from "../data/expeditionEnemies";
 import type { PuppetCreature, PuppetAsset } from "../puppets/assets";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
-import { battleAssetFor, cancelMotion, flashHit, isHitFlashing, placePuppet, playMotion, sdAssetForSkin, spawnPuppet, tintPuppet } from "../puppets/assets";
+import { battleAssetFor, cancelMotion, flashHit, placePuppet, playMotion, sdAssetForSkin, spawnPuppet } from "../puppets/assets";
 import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
@@ -80,10 +96,13 @@ import { raidBossDef, raidBossGrowth, raidBossPercentHpBasis } from "../core/rai
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { expeditionManager, ExpeditionBossSettlementError, ExpeditionBossSettlementFlow } from "../managers/ExpeditionManager";
 import { settingsManager } from "../managers/SettingsManager";
+import { tutorialManager } from "../managers/TutorialManager";
+import { BATTLE_FEATURE_STEP, lobbyTutorialGateStage, stageClearAdvancesTutorial, type BattleTutorialFeature } from "../core/tutorial";
+import { TutorialSpotlight } from "../ui/TutorialSpotlight";
 import { motionPolicy, type MotionPolicy } from "../core/settings";
-import type { RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
+import type { CompleteStageResponse, RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
-import { currencyRecordToRewardItems } from "../ui/RewardPopup";
+import { currencyRecordToRewardItems, dungeonRewardItems } from "../ui/RewardPopup";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
@@ -102,10 +121,16 @@ import { CombatEffectPresenter, type CombatEffectTarget } from "../managers/Comb
 import { knockbackFlightPath } from "../ui/knockbackFlight";
 import { ensureEffectTextures } from "../ui/effectTextures";
 import { chargeAfterimageSteps } from "../ui/chargeAfterimage";
+import { FEVER_INK, feverBodyFill, feverFade, feverOutlineDirections, feverOutlineSteps, feverPulse } from "../ui/feverInk";
+import type { PuppetAfterimage } from "../puppets/IndexedPuppetCreature";
 import { attackDamagePopupRequest, type DamageFlavor, type DebuffId } from "../ui/damageNumbers";
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
+import { playRankClimb } from "../ui/rankClimb";
+import { ScoreRankingHud } from "../ui/ScoreRankingHud";
+import { RANKING_VISIBLE_RANKS } from "../ui/expeditionRankingLayout";
+import type { ScoreRankPeer } from "../core/scoreRanking";
 import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
 import { RewardFrame } from "../ui/RewardFrame";
 import { growthPaths, type GrowthPath } from "../core/growthPaths";
@@ -117,6 +142,7 @@ import type { CurrencyIconKey } from "../ui/currencyIcons";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
+import { PuppetCreationQueue } from "../puppets/creationQueue";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 
@@ -165,6 +191,8 @@ const UNIT_HEIGHT = 210;
 /** 보통 몸의 발밑 그림자 폭. 몸집(`bodyScale`)만큼 줄어든다. */
 const BATTLE_FOOT_SHADOW_WIDTH = 140;
 const PROFILE_TOP = 1430;
+/** 오프닝 궁극기 안내: 전장·HUD 전부 위, 팝업(2200~) 아래. 밝히는 카드는 +1, 글자는 +2. */
+const TUTORIAL_DEPTH = 2000;
 /**
  * 조작 칩은 프로필 줄 바로 위 우하단에 모인다. 전장을 가리지 않고 엄지가 닿는 자리다.
  *
@@ -188,38 +216,16 @@ const METER_EASE = 6;
  * 폭주 연출.
  *
  * **주위에 빛을 두르지 않는다.** 발광을 겹쳐 두면 밝은 배경 원화 위에서 하얗게 떠 정작 봐야 할
- * 캐릭터가 그 속에 묻힌다. 대신 SD가 한 뼘 커지고 **일러스트 자체에 그 개체의 스킬 아이콘 색을
- * 필터처럼 입힌다.** 색은 제자리에 머물지 않고 옅은 쪽과 짙은 쪽을 오가며 울그락불그락 끓는다.
+ * 캐릭터가 그 속에 묻힌다. 대신 SD가 한 뼘 커지고 몸 둘레에 먹선과 붉은 띠가 경보처럼 숨 쉰다
+ * (`feverInk.ts`). 원화는 거의 물들이지 않는다 — 누구인지가 흐려지면 안 된다.
  */
 const FEVER = {
   scale: 1.1,
-  /** 필터가 가장 옅을 때와 짙을 때의 섞는 비율. 낮으면 원화의 색이, 높으면 폭주색이 이긴다. */
-  mixLow: 0.28,
-  mixHigh: 0.62,
-  /** 색이 한 번 오가는 데 걸리는 시간(ms). 숨보다 조금 빠르게 끓는다. */
-  pulseMs: 620,
-  /**
-   * 색 단계 수.
-   *
-   * 매 프레임 새 색을 칠하면 Puppet의 모든 조각에 tint를 다시 먹여야 해 그만큼이 그대로 프레임
-   * 비용이 된다. 단계로 끊으면 한 주기에 이만큼만 칠하고도 눈에는 이어져 보인다.
-   */
-  pulseSteps: 10,
 } as const;
 
-/** 지금 폭주 필터가 어느 단계인지. 0이 가장 옅고 마지막이 가장 짙다. */
-function feverPulseStep(now: number): number {
-  const wave = 0.5 - Math.cos((now / FEVER.pulseMs) * Math.PI * 2) / 2;
-  return Math.min(FEVER.pulseSteps - 1, Math.floor(wave * FEVER.pulseSteps));
-}
+/** 빠직 표식이 서는 높이 — 몸 높이에 대한 비율(머리 옆, 체력 바보다 조금 아래). */
+const FEVER_HEAD_RATIO = 0.95;
 
-/** 두 색을 비율대로 섞는다. 폭주 중 몸에 제 색을 옅게 얹을 때 쓴다. */
-function mixTint(base: number, other: number, amount: number): number {
-  const blend = (shift: number): number => Math.round(
-    (((base >> shift) & 0xff) * (1 - amount)) + (((other >> shift) & 0xff) * amount),
-  );
-  return (blend(16) << 16) | (blend(8) << 8) | blend(0);
-}
 
 /**
  * 전장 안에서의 앞뒤 순서.
@@ -228,7 +234,10 @@ function mixTint(base: number, other: number, amount: number): number {
  * 아래쪽에 선 캐릭터에 가려지지 않는다 — 정확히 이 이유로 피해량이 보이지 않았다.
  */
 /** 광역 범위는 배경 원화 위, SD 아래에 깔린다. 앞에 두면 범위가 캐릭터를 덮는다. */
-const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320, ground: -28 } as const;
+// 발밑 그림자(`shadow`)는 모든 SD보다 **뒤**여야 한다. SD의 깊이는 `y / 10 + unitBase`라 맨 위 줄(y 600)에서
+// 0이 되는데, 그림자를 깊이 0(기본값)에 두면 그 줄의 SD와 같은 깊이에서 생성 순서로 가려져 **그림자가 몸을
+// 덮었다**. 광역 범위(`ground`) 바로 위, SD 아래의 고정 깊이로 둔다.
+const DEPTH = { unitBase: -60, hpBar: 200, damage: 300, burst: 320, ground: -28, shadow: -27 } as const;
 
 /**
  * 데스 카운트 워시가 가장 진할 때의 불투명도.
@@ -251,15 +260,18 @@ interface FighterView {
   statusChips: UnitStatusChips;
   /** 체력 바와 칩 줄을 함께 받는 입력면. 둘 중 어디를 눌러도 같은 쪽지가 열린다. */
   statusHit: Phaser.GameObjects.Rectangle;
+  statusHitEnabled?: boolean;
   /** 코어 상태 전환 때만 Puppet 모션을 바꾸기 위한 마지막 기절 표시값이다. */
   stunShown: boolean;
   /** 그 개체의 속성·직군을 섞은 색. 폭주 필터와 이펙트 색이 여기서 나온다. */
   feverTint: number;
-  /** 마지막으로 칠한 폭주 필터 단계. 같은 단계면 다시 칠하지 않는다. */
-  feverStep: number;
+  /** 폭주가 시작된 시각(ms). 테두리 두께·사이렌·빠직 표식의 박자가 여기서 센다. */
+  feverAt: number;
+  /** 폭주가 끝난 시각(ms). 테두리가 녹아 없어지는 동안만 값이 있다. */
+  feverEndedAt: number | undefined;
   /** 피격 섬광이 끝난 뒤 되돌릴 원래 색. */
   tint: number;
-  /** 지금 몸이 폭주 색으로 물들어 있는지. 상태가 바뀔 때만 다시 칠한다. */
+  /** 지금 폭주 중인지. 들고 나는 순간을 가르는 마지막 값이다. */
   feverTinted: boolean;
   /** 지금 돌진 잔상이 서 있는지. 돌진이 끝난 프레임에 한 번만 지우기 위한 값이다. */
   afterimageShown: boolean;
@@ -313,6 +325,12 @@ interface ProfileView {
 /** SD 여섯이 실시간으로 뒤엉켜 싸우는 자동 전투 화면이다. */
 export class BattleScene extends Phaser.Scene {
   /** init 입력은 씬 한 생명주기 동안 고정되며 원정 진행 상태는 매니저만 저장한다. */
+  private cakeCompletion?: { requestId: string; result: Awaited<ReturnType<typeof gameApi.completeCakeOperation>> };
+  private combatLease?: CombatLease;
+  private stageCompletion?: { stageId: string; result: CompleteStageResponse };
+  private combatTicks = 0;
+  private combatActions: CombatProof["actions"] = [];
+  private combatGeneration = 0;
   private battleInput: BattleSceneInputDto = { mode: "stage" };
   private state!: SkirmishState;
   /** 전투 한 판이 공유하는 난수원. 테스트 빌드는 seed를 주입하고 일반 빌드는 Math.random을 쓴다. */
@@ -322,6 +340,9 @@ export class BattleScene extends Phaser.Scene {
   private views = new Map<string, FighterView>();
   private profiles: ProfileView[] = [];
   private finished = false;
+  /** 아레나 위쪽 자리의 화면이 전장을 거울에 비춰 보는가. */
+  private viewFlip = false;
+  private viewRestore: ArenaMirrorRestore | null = null;
   /** 끝난 판이 결과판을 여는 실제 시각과, 그때 부를 일. 숨 고르기가 끝나기 전 씬을 떠나면 버린다. */
   private closingAt = 0;
   /** 설정을 겹쳐 연 동안 이 씬이 잠든 시각. 깨어나면 멈춰 있던 만큼 숨 고르기 시계를 뒤로 민다. */
@@ -331,6 +352,7 @@ export class BattleScene extends Phaser.Scene {
   private pausePopups?: PopupLayer;
   private pendingResult?: () => void;
   /** 보스 제출에는 코어가 실제로 낸 공격 종류와 시각만 기록하며 피해 숫자는 넣지 않는다. */
+  private bossStepRemainder = 0;
   private bossActions: ExpeditionBossAction[] = [];
   /** 레이드 제출의 멱등 키. 재시도가 같은 ID를 써야 성공한 제출이 두 번 쌓이지 않는다. */
   /** 성공 응답은 결과 UI보다 오래 살아 UI 생성 중단 뒤에도 같은 영수증으로 복구된다. */
@@ -345,7 +367,9 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreShown = 0;
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
-  private bossPhaseLabel?: Phaser.GameObjects.Text;
+  private scoreRankHud?: ScoreRankingHud;
+  /** 랭킹 띠가 내 점수에 더하는 이전 판의 몫(레이드는 지난 도전의 피해, 원정은 없음). */
+  private scoreRankBase = 0;
   /**
    * 레이드의 시즌 줄. 들어올 때 서버가 확정한 남은 체력에서 이번 판의 점수만큼 매 프레임
    * 깎아 그린다 — 조회가 도착하기 전에는 세우지 않는다(조회 중을 글로 말하지 않는다).
@@ -356,6 +380,8 @@ export class BattleScene extends Phaser.Scene {
   /** 데스 카운트가 도는 동안 화면 네 변에서 스며드는 붉은 워시. 한 번 그리고 진하기만 바꾼다. */
   private deathWash?: Phaser.GameObjects.Graphics;
   private spawned = false;
+  private fighterCreationQueue?: PuppetCreationQueue;
+  get fighterCreationStats() { return this.fighterCreationQueue?.stats; }
   /** 전원이 선 뒤 숨을 고르고 코어 시간이 흐르기 시작하는 실제 시각(ms, `battleFightStartsAt`). */
   private fightStartsAt = Infinity;
   /** 마지막으로 시뮬레이션을 굴린 실제 시각(ms). */
@@ -370,6 +396,21 @@ export class BattleScene extends Phaser.Scene {
   private autoUltimate = false;
   /** 공개적으로 읽기 쉬운 입력 잠금. 토큰 큐와 항상 함께 갱신한다. */
   private ultimateSequenceActive = false;
+  /**
+   * 오프닝 1-1의 궁극기 안내. 처음 켜진 카드 하나만 밝히고 나머지는 어둡게 덮은 채 시간을 멈춘다.
+   * 한 번 쓰면(`done`) 다시 열리지 않는다.
+   */
+  /**
+   * 첫 궁극기 안내가 도는 판인가. 오프닝에서 곧장 들어온 1-1이거나, 지도에서 처음 들어가는 스토리 전투인데
+   * 튜토리얼이 아직 궁극기 칸에 머물러 있을 때다(타이틀로 나갔다 돌아온 경우). 판이 시작할 때 한 번 굳힌다 —
+   * 도중에 칸이 끝나도 이 판의 조작이 갑자기 열리지 않는다.
+   */
+  private introBattleFlag = false;
+  /** 이번 전투에서 새로 열어 알려 줄 조작. 없으면 안내 없이 열린 조작만 쓴다. */
+  private teachFeature?: BattleTutorialFeature;
+  private featureSpotlight?: TutorialSpotlight;
+  private featureTaught = false;
+  private ultimateTutorial: { fighterId: string; done: boolean; active: boolean; layer?: Phaser.GameObjects.GameObject[] } = { fighterId: "", done: false, active: false };
   /** 자동 동시 준비를 직렬화하고 오래된 async 완료를 구분하는 순수 상태다. */
   private ultimateSequence: UltimateSequenceState = createUltimateSequenceState();
   /** 현재 컷인. 전투·씬 종료 정리에서 즉시 거두기 위한 참조다. */
@@ -430,17 +471,48 @@ export class BattleScene extends Phaser.Scene {
    * 것이 없는 수다.
    */
   private buildBossScoreHud(): void {
-    this.bossScoreShown = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+    this.bossScoreShown = this.battleInput.mode === "expeditionBoss" ? expeditionManager.status().run?.normalNodeScoreTotal ?? 0 : 0;
     this.bossScoreTarget = this.bossScoreShown;
     this.bossScoreScale = 1;
     const raid = this.battleInput.mode === "raid";
     this.bossScoreLabel = this.add.text(BASE_WIDTH / 2, raid ? RAID_BATTLE_HUD.scoreY : BATTLE_CLOCK_LAYOUT.headlineY, this.bossScoreShown.toLocaleString(), textStyle({ role: "display", size: 58, color: COLOR.sortieText })).setOrigin(0.5, 0).setDepth(90);
-    this.bossPhaseLabel = this.add.text(raid ? RAID_BATTLE_HUD.phaseX : 42, raid ? RAID_BATTLE_HUD.phaseY : 140, "", textStyle({ role: "emphasis", size: 25, color: COLOR.accentText })).setDepth(90);
+    // 단계 이름표 자리에는 점수 랭킹 띠가 선다 — 순위는 서버 순위표를 받아야 알 수 있어 도착하는 대로 세운다.
+    void this.buildScoreRanking();
     if (raid) {
       // 시계는 시즌 줄 아래로 내려선다 — 맨 위는 남은 체력의 자리다.
       this.clockLabel?.setY(RAID_BATTLE_HUD.clockY);
       void this.buildRaidSeasonHud();
     }
+  }
+
+  /**
+   * 좌상단 점수 랭킹 띠 — 레이드는 이 판의 기여 피해, 원정은 주간 최고 점수 순위표를 상대로 센다.
+   * 순위표를 받지 못하면(오프라인·실패) 띠만 세우지 않고 전투는 그대로 흐른다.
+   */
+  private async buildScoreRanking(): Promise<void> {
+    const input = this.battleInput;
+    if (input.mode !== "raid" && input.mode !== "expeditionBoss") return;
+    const generation = this.combatGeneration;
+    let peers: ScoreRankPeer[];
+    let base = 0;
+    try {
+      if (input.mode === "raid") {
+        // 순위표 화면과 같은 길이(100등)를 받는다. 한 줄만 받던 때는 그 한 줄이 1위였고, 첫 판을 치고
+        // 내가 1위가 되면 그 줄이 나라서 이웃이 하나도 남지 않아 **두 번째 판부터 띠가 서지 않았다.**
+        const season = (await gameApi.getRaids(RANKING_VISIBLE_RANKS)).raids.find(({ id }) => id === input.raidId);
+        if (!season) return;
+        base = season.myDamage;
+        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId }));
+      } else {
+        peers = (await gameApi.getExpeditionLeaderboard(RANKING_VISIBLE_RANKS)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId }));
+      }
+    } catch { return; }
+    if (!this.scene.isActive() || generation !== this.combatGeneration || this.scoreRankHud) return;
+    const hud = new ScoreRankingHud(this, this.motion.nonEssentialDistanceFactor > 0);
+    hud.setPeers(peers, { name: session.playerCard.nickname, favoriteRelicId: session.favorite || undefined, frameId: session.playerCard.frameId });
+    this.scoreRankBase = base;
+    this.scoreRankHud = hud;
+    hud.update(base + this.bossScoreShown);
   }
 
   /**
@@ -468,7 +540,7 @@ export class BattleScene extends Phaser.Scene {
     });
     bar.objects.forEach((object) => object.setDepth(hud.depth));
     const value = stroke(this.add.text(left, hud.valueY, "", textStyle({ role: "display", size: 24, color: COLOR.ink })).setOrigin(0, 0.5));
-    this.raidSeasonHud = { bar, value, remaining: season.remainingHp, total: season.totalHp, shown: -1 };
+    this.raidSeasonHud = { bar, value, remaining: this.battleInput.seasonHp, total: season.totalHp, shown: -1 };
     this.paintRaidSeasonHud();
   }
 
@@ -491,7 +563,36 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    const generation=++this.combatGeneration;
+    this.spawned=false; this.pendingResult=undefined;
+    this.combatLease=undefined; this.combatTicks=0; this.combatActions=[];
+    this.stageCompletion = undefined;
+    this.cakeCompletion = undefined;
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) { this.combatLease=this.battleInput.arena.lease;this.createBattle();return; }
+    if (usesRemoteGameApi() && ["stage","cake","bounty","expedition","duel"].includes(this.battleInput.mode)) {
+      const prepare=(): void => {
+        void gameApi.prepareCombat({ input:this.battleInput, stageId:session.selectedStageId??"1-1", automaticUltimates:true }).then(lease=>{
+          if(!this.scene.isActive()||generation!==this.combatGeneration) return;
+          if(!lease) throw new Error("combat_not_prepared");
+          this.combatLease=lease;
+          this.createBattle();
+        }).catch((error: unknown)=>{
+          if(this.scene.isActive()&&generation===this.combatGeneration) this.showResultFailure(prepare,()=>startScene(this,"lobby"), error, "prepare");
+        });
+      };
+      prepare();
+      return;
+    }
+    this.createBattle();
+  }
+
+  private createBattle(): void {
     setDebugScene("battle");
+    this.introBattleFlag = this.battleInput.mode === "stage"
+      && (this.battleInput.epilogueStoryId !== undefined || session.selectedStageId === "1-1" && (tutorialManager.next() === "ultimate" || !session.cleared.has("1-1")));
+    this.teachFeature = this.battleInput.mode === "stage" && !this.introBattleFlag && this.stageTeachesTutorial() ? tutorialManager.featureToTeach() : undefined;
+    this.featureSpotlight = undefined;
+    this.featureTaught = false;
     // Phaser가 같은 Scene 인스턴스를 다시 쓰므로 지난 판의 요청/UI 잠금을 새 전투로 넘기지 않는다.
     completeBossSettlementAttempt(this.bossSettlementFailureState);
     this.bossSettlementFailureUi = undefined;
@@ -504,11 +605,13 @@ export class BattleScene extends Phaser.Scene {
       : this.battleInput.mode === "bounty" ? [session.party[this.battleInput.round] ?? session.party[0]]
       // 결투는 입장이 확정한 공격덱으로 싸운다 — 그 사이 편성을 바꿔도 이 판은 그 셋이다.
       : this.battleInput.mode === "duel" ? [...this.battleInput.attack]
+      : this.battleInput.mode === "raid" && this.battleInput.relics ? this.battleInput.relics.map(({ relicId }) => relicId)
       : session.party;
     // **원정은 떠난 순간의 모습으로 싸운다**(`ExpeditionRelicSnapshot`). 스무 층 도중에 급여·돌파·
     // 룬·외형을 바꿔도 이 런의 전투는 출발할 때 굳힌 값만 읽는다. 그 밖의 전투는 지금 성장이다.
     const expeditionMode = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss";
-    this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)])) : undefined;
+    this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)]))
+      : this.battleInput.mode === "raid" && this.battleInput.relics ? new Map(this.battleInput.relics.map(({ relicId, snapshot }) => [relicId, snapshot])) : undefined;
     const frozen = this.frozenRelics;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.bondLevel ?? session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
@@ -552,6 +655,8 @@ export class BattleScene extends Phaser.Scene {
       // 일반 스테이지의 적도 능력치뿐 아니라 스킬 돌파 효과까지 슬롯별 스냅샷을 사용한다.
       // 능력치 복사본과 같은 formationSlot 순서로 돌파 스킬 스냅샷을 맞춘다.
       augmentEffects: traitEffects,
+      ...(this.battleInput.mode === "stage" && stage.ancientFloor !== undefined ? { enemyAugmentEffects:getAncientStrataFloor(stage.ancientFloor).enemyAugmentEffects,enemyPercentHpBases:getAncientStrataFloor(stage.ancientFloor).enemyPercentHpBases,timeLimitSeconds:getAncientStrataFloor(stage.ancientFloor).timeLimitSeconds } : {}),
+      automaticUltimates: this.battleInput.mode === "duel",
       // 대작전·현상수배는 스테이지의 슬롯별 돌파 표를 읽지 않고, 정보창과 같은 배치 표
       // (`placedEnemyIndex`)의 돌파를 쓴다 — 두 곳이 따로 정하면 창이 말한 돌파 효과가 전투에 없다.
       enemyBreakthroughs: cakeTier || this.battleInput.mode === "bounty" || this.battleInput.mode === "duel"
@@ -563,14 +668,22 @@ export class BattleScene extends Phaser.Scene {
        * 체력 바와 피해 수치가 그 뒤로 숨는다.
        */
       // 결투의 상대는 아군과 같은 몸이다 — 유형 몫이 없는 대칭 판이다.
+      enemyBodyScales: this.battleInput.mode === "stage" ? stageEnemies.map(enemy => ENCOUNTER_ROLE[enemy.encounterRole ?? "normal"].bodyScale) : undefined,
       enemyBodyScale: ENCOUNTER_ROLE[cakeTier ? cakeOperationRole(cakeTier) : this.battleInput.mode === "duel" ? "normal" : encounterRoleFor(
         stageEnemies.length,
         { elite: stage.elite === true || this.battleInput.mode === "bounty" },
       )].bodyScale,
     });
+    if (this.combatLease) this.state=combatState(this.combatLease);
     // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
-    this.rng = battleRandom();
+    this.bossStepRemainder = 0;
+    this.rng = this.combatLease ? bossBattleRandom(this.combatLease.seed) : (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2
+      ? bossBattleRandom(this.battleInput.mode === "raid" ? this.battleInput.replaySeed ?? this.battleInput.requestId : JSON.stringify([this.battleInput.runId, this.battleInput.nodeId])) : battleRandom();
     applyBattleTestPreset(this.state);
+    // 실시간 아레나의 위쪽 자리는 전장을 거울에 비춰 본다 — 제 편이 아래, 초록 체력으로 선다.
+    this.viewRestore = null;
+    this.viewFlip = this.battleInput.mode === "duel" && arenaViewFlipped(this.battleInput.arena?.side);
+    this.flipView();
     this.views.clear();
     this.profiles = [];
     this.allyInfoRef = undefined;
@@ -582,6 +695,9 @@ export class BattleScene extends Phaser.Scene {
     this.healPopups = 0;
     this.bossActions = [];
     this.raidSeasonHud = undefined;
+    this.scoreRankHud?.destroy();
+    this.scoreRankHud = undefined;
+    this.scoreRankBase = 0;
     // 이전 전투/환경설정에서 저장한 조작 상태를 새 판의 시작값으로 그대로 복원한다.
     const currentSettings = settingsManager.get();
     const battleSettings = currentSettings.game;
@@ -590,9 +706,11 @@ export class BattleScene extends Phaser.Scene {
     // 멤버십은 서버에 물어야 알 수 있어 **닫힌 쪽에서 시작한다** — 저장에 3이 있으면 답이 올 때까지
     // 2로 싸우다가 멤버십이 확인되는 순간 3으로 돌아간다(`resolveBattleMembership`).
     this.battleMember = false;
-    this.battleSpeed = usableBattleSpeed(battleSettings.battleSpeed, false);
+    this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(battleSettings.battleSpeed, false) : 1;
     // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
-    this.autoUltimate = this.battleInput.mode === "duel" || battleSettings.autoUltimate;
+    // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
+    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && battleSettings.autoUltimate);
+    this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
     this.currentUltimateFighterId = null;
@@ -612,8 +730,11 @@ export class BattleScene extends Phaser.Scene {
     this.effects.setArena(this.state.arena);
 
     // 어느 모드가 어느 전장에 서는지는 씬이 아니라 `BATTLE_FIELD_BACKGROUND` 한 표가 갖는다.
-    addSceneBackground(this, battleFieldBackground(this.battleInput.mode), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
+    addSceneBackground(this, battleFieldBackground(this.battleInput.mode, session.selectedStageId ?? undefined), -30, BATTLE_FIELD_FRAMING[this.battleInput.mode]);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.28).setDepth(-29);
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) {
+      this.add.text(540,245,t("arena.battle.perspective",{team:t("arena.battle.bottom")}),textStyle({ role: "body",size:24,color:COLOR.accentText})).setOrigin(.5).setDepth(90);
+    }
     /*
      * **머리글과 「AUTO BATTLE」은 세우지 않는다.**
      *
@@ -643,12 +764,15 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // 씬은 코어 스냅샷을 넘길 뿐 공격·방어·회복 합산을 복제하지 않는다.
-    this.contributionPanel = new BattleContributionPanel(this, (category) => {
-      this.contributionCategory = category;
+    // 기여도를 아직 열지 않은 튜토리얼 구간에서는 판을 세우지 않는다(칩도 감춘다).
+    if (this.featureOpen("contribution")) {
+      this.contributionPanel = new BattleContributionPanel(this, (category) => {
+        this.contributionCategory = category;
+        this.refreshContribution(true);
+        this.refreshDebug();
+      });
       this.refreshContribution(true);
-      this.refreshDebug();
-    });
-    this.refreshContribution(true);
+    }
 
     this.buildProfiles();
     void this.spawnFighters();
@@ -687,15 +811,18 @@ export class BattleScene extends Phaser.Scene {
     return true;
   }
   private async submitAndSettleBoss(input: ExpeditionBossBattleInputDto, actions: ExpeditionBossAction[]): Promise<void> {
+    const generation = this.combatGeneration;
     // 전송 중 연타는 같은 멱등 요청조차 병렬 실행하지 않으며, 재시도는 낡은 실패판부터 걷는다.
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
     this.bossSettlementFailureUi?.destroy(true);
     this.bossSettlementFailureUi = undefined;
     try {
-      const result = await this.bossSettlement.finish(input, actions);
+      const result = await this.bossSettlement.finish(input, actions, this.bossStopAtMs());
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showBossResult(result.score, result.settlement);
     } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
@@ -719,6 +846,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
 
+  /** 자연 종료와 자발적 종료를 구별한다. 재시도 중에도 finished 상태라 같은 틱을 보낸다. */
+  private bossStopAtMs(): number | undefined {
+    return (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss")
+      && this.battleInput.replayVersion === 2 && this.state.phase === "fight"
+      ? Math.round(this.state.elapsed * 1_000 / BOSS_STEP_MS) * BOSS_STEP_MS : undefined;
+  }
+
   /**
    * 레이드 한 판을 서버에 확정하고 결과판을 연다.
    *
@@ -727,6 +861,7 @@ export class BattleScene extends Phaser.Scene {
    * 실패했을 때의 손짓(같은 요청 ID로 재시도 · 로비로 되돌아가기)은 원정과 같다.
    */
   private async submitRaidRun(actions: ExpeditionBossAction[]): Promise<void> {
+    const generation = this.combatGeneration;
     if (this.battleInput.mode !== "raid") return;
     const raidId = this.battleInput.raidId;
     if (!beginBossSettlementAttempt(this.bossSettlementFailureState)) return;
@@ -734,12 +869,16 @@ export class BattleScene extends Phaser.Scene {
     this.bossSettlementFailureUi = undefined;
     // 요청 ID는 그 판의 **입장 영수증**이다 — 재시도도 같은 ID라 성공한 제출이 두 번 쌓이지 않는다.
     const requestId = this.battleInput.requestId;
+    const stopAtMs = this.bossStopAtMs();
     try {
-      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions });
+      const result = await gameApi.submitRaidDamage({ requestId, raidId, actions, ...(stopAtMs === undefined ? {} : { stopAtMs }), replayVersion: this.battleInput.replayVersion });
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       completeBossSettlementAttempt(this.bossSettlementFailureState);
       this.showRaidResult(result);
     } catch (error) {
-      console.error("[raid] 피해 제출 실패", error);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      const diagnostic = battleResultFailure(error, "raid");
+      console.error("[raid] 피해 제출 실패", { ...diagnostic, clientVersion: packageInfo.version });
       failBossSettlementAttempt(this.bossSettlementFailureState);
       const code = error instanceof GameApiError ? error.code : undefined;
       const reason = code === "RAID_SCORE_REJECTED" ? t("battle.settle.scoreRejected")
@@ -748,6 +887,7 @@ export class BattleScene extends Phaser.Scene {
       const failureUi = this.add.container(0, 0).setDepth(5000);
       failureUi.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96));
       failureUi.add(this.add.text(BASE_WIDTH / 2, 850, reason, textStyle({ role: "body", size: 27, color: COLOR.dangerText, align: "center", wrap: BASE_WIDTH - 220 })).setOrigin(0.5));
+      failureUi.add(this.add.text(BASE_WIDTH / 2, 935, `${diagnostic.reference} · v${packageInfo.version}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.settle.retry"), variant: "primary", onClick: () => void this.submitRaidRun(actions) }));
       failureUi.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("battle.settle.recoverLobby"), onClick: () => this.recoverBossSettlementToLobby() }));
       this.bossSettlementFailureUi = failureUi;
@@ -783,9 +923,9 @@ export class BattleScene extends Phaser.Scene {
         this.bossLeaving = true;
         // 다른 콘텐츠의 「다시 하기」처럼 **입장부터** 지난다. 거절되면 전장이 아니라 그 판으로 돌아간다.
         const requestId = globalThis.crypto?.randomUUID?.() ?? `raid-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        void gameApi.enterRaid({ raidId: input.raidId, requestId }).then((admission) => {
+        void gameApi.enterRaid({ replayVersion: 2, raidId: input.raidId, requestId }).then((admission) => {
           rememberPlayerExp(admission.playerExp);
-          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId, seasonHp: admission.raid.remainingHp } satisfies RaidBattleInputDto });
+          this.scene.start("boot", { destination: "raidBattle", raidBattle: { mode: "raid", raidId: input.raidId, bossRelicId: input.bossRelicId, difficulty: input.difficulty, requestId: admission.requestId, seasonHp: admission.raid.remainingHp, relics: admission.relics, replaySeed: admission.replaySeed, replayVersion: admission.replayVersion } satisfies RaidBattleInputDto });
         }).catch(() => { this.scene.start("boot", { destination: "raid", raidId: result.raid.id }); });
       },
     } : undefined;
@@ -815,8 +955,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
-    // 서버 재검증 총점은 머리글에만 더하고 확정 당시의 개별 행동 분배는 다시 시뮬레이션하지 않는다.
-    if (this.contributionResult) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.bossDamageScore);
+    // 원정 환산 점수를 피해량 머리글에 넣지 않는다. 실제 HP 피해 장부만 비교한다.
+    if (this.contributionResult && score.verifiedDamage !== undefined) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.verifiedDamage);
     // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
     const layout = BOSS_RESULT_LAYOUT;
@@ -836,6 +976,15 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("battle.settle.score"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
     const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, score.runScore.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
     scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
+    // 이번 주 순위 — 이전 기록의 순위에서 새 순위까지 이웃을 넘으며 올라간다. 오르지 않았으면 제자리 숫자만 선다.
+    if (score.rankAfter !== null && score.rankAfter !== undefined) {
+      const rankLabel = (rank: number): string => t("raid.settle.rank", { rank });
+      this.add.text(BASE_WIDTH / 2, layout.score.top + 14, t("battle.rank.weekly"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
+      const rankText = this.add.text(BASE_WIDTH / 2, layout.score.top + 58, rankLabel(score.rankAfter), textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
+      rankText.setStroke("#000000", 5).setShadow(0, 4, "#000000", 4, false, true);
+      const from = score.rankBefore ?? Math.min(100, score.rankAfter + 40);
+      if (score.improved) playRankClimb(this, rankText, from, score.rankAfter, rankLabel);
+    }
     const popups = new PopupLayer(this, 6000);
     // 총점 바로 아래의 작은 보조 조작만 세부 점수로 이어져 기본 화면의 정보 위계를 흐리지 않는다.
     new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: t("battle.settle.detail"), fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
@@ -875,6 +1024,7 @@ export class BattleScene extends Phaser.Scene {
         settingsManager.update({ game: { battleSpeed: this.battleSpeed } });
         this.refreshSpeedChip();
         this.refreshDebug();
+        this.featureTapped("speed");
       },
     });
     this.autoChip = new ControlChip(this, BATTLE_CONTROLS.rightX, BATTLE_CONTROLS.rowY, {
@@ -889,6 +1039,7 @@ export class BattleScene extends Phaser.Scene {
         settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
         this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
         this.refreshDebug();
+        this.featureTapped("auto");
       },
     });
     const refreshPresentationChip = (): void => {
@@ -901,6 +1052,7 @@ export class BattleScene extends Phaser.Scene {
         // 전투 흐름을 바꾸는 값은 세션을 직접 고치지 않고 공용 manager 경계에서 즉시 영속화한다.
         settingsManager.update({ game: { skipUltimatePresentation: !settingsManager.get().game.skipUltimatePresentation } });
         refreshPresentationChip(); this.refreshDebug();
+        this.featureTapped("presentation");
       },
     });
     // **기여도 판도 같은 줄에서 연다.** 예전에는 판 왼쪽에 전용 그래프 칩이 붙어 있어, 조작은
@@ -908,10 +1060,13 @@ export class BattleScene extends Phaser.Scene {
     // 했다. 자리는 `CONTRIBUTION_TOGGLE` 한 곳이 정한다.
     this.contributionChip = new ControlChip(this, CONTRIBUTION_TOGGLE.x, CONTRIBUTION_TOGGLE.y, {
       icon: "bar-chart", label: t("battle.contribution"), width: CONTRIBUTION_TOGGLE.width, height: CONTRIBUTION_TOGGLE.height,
-      onClick: () => { this.contributionPanel?.toggle(); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); },
+      onClick: () => { this.contributionPanel?.toggle(); this.refreshContribution(true); this.contributionChip.setActive(this.contributionPanel?.state.expanded ?? false); this.refreshDebug(); this.featureTapped("contribution"); },
     });
     // 전장 아래쪽에 서므로 SD·체력 바보다 앞에 둔다.
     for (const chip of [this.speedChip, this.autoChip, this.presentationChip, this.contributionChip]) chip.setDepth(BATTLE_CONTROLS.depth);
+    // 튜토리얼이 아직 열지 않은 조작은 칩을 감추고 입력도 받지 않는다(오프닝 첫 전투는 네 개 모두).
+    const chips: [BattleTutorialFeature, ControlChip][] = [["speed", this.speedChip], ["auto", this.autoChip], ["presentation", this.presentationChip], ["contribution", this.contributionChip]];
+    for (const [feature, chip] of chips) if (!this.featureOpen(feature)) chip.setVisible(false).disableInteractive();
     // 복원된 값도 첫 클릭 전부터 켜짐 색으로 읽히게 한다.
     this.refreshSpeedChip();
     this.autoChip.setActive(this.autoUltimate);
@@ -931,13 +1086,14 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished || !this.spawned || this.ultimateSequenceActive) return;
     const popups = this.pausePopups ??= new PopupLayer(this, 2400);
     if (popups.isOpen) return;
-    const actions = battlePauseActions(this.battleInput.mode);
+    const actions = battlePauseActions(this.battleInput.mode, this.openingBattle());
     const rows: { label: string; primary?: boolean; destructive?: boolean; onPress: (close: () => void) => void }[] = [
-      { label: t("battle.pause.resume"), primary: true, onPress: (close) => close() },
-      { label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } },
+      { label: t(this.openingBattle() ? "battle.pause.continue" : "battle.pause.resume"), primary: true, onPress: (close) => close() },
     ];
+    if (actions.settings) rows.push({ label: t("battle.pause.settings"), onPress: (close) => { close(); this.openSettingsOverlay(); } });
     if (actions.retry) rows.push({ label: t("battle.pause.retry"), onPress: () => popups.confirm({ title: t("battle.pause.retry"), message: t("battle.pause.retryConfirm"), confirmLabel: t("battle.pause.retry") }, () => this.retryBattle()) });
     if (actions.exit === "leave") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.exit"), message: t("battle.pause.exitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => this.leaveBattle()) });
+    if (actions.exit === "title") rows.push({ label: t("battle.pause.toTitle"), destructive: true, onPress: () => popups.confirm({ title: t("battle.pause.toTitle"), message: t("battle.pause.toTitleConfirm"), confirmLabel: t("battle.pause.toTitle"), destructive: true }, () => startScene(this, "title")) });
     if (actions.exit === "forfeit") rows.push({ label: t("battle.pause.exit"), destructive: true, onPress: (close) => popups.confirm({ title: t("battle.pause.exit"), message: this.battleInput.mode === "duel" ? t("duel.pause.forfeitConfirm") : t("battle.pause.forfeitConfirm"), confirmLabel: t("battle.pause.exit"), destructive: true }, () => { close(); this.finishBattle("defeat"); }) });
     const button = { width: 420, height: 86, gap: 20, top: 120, bottom: 70 };
     const height = button.top + rows.length * button.height + (rows.length - 1) * button.gap + button.bottom;
@@ -976,8 +1132,8 @@ export class BattleScene extends Phaser.Scene {
     // 멈춰 있던 시간이 한 프레임에 한꺼번에 흘러들지 않게 한다.
     this.lastStepAt = now;
     const game = settingsManager.get().game;
-    this.battleSpeed = usableBattleSpeed(game.battleSpeed, this.battleMember);
-    this.autoUltimate = this.battleInput.mode === "duel" || game.autoUltimate;
+    this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(game.battleSpeed, this.battleMember) : 1;
+    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && game.autoUltimate);
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -1022,6 +1178,7 @@ export class BattleScene extends Phaser.Scene {
    * 성공을 흉내 내어 여는 길을 두지 않는다.
    */
   private resolveBattleMembership(): void {
+    if (!this.featureOpen("speed")) return;
     const saved = settingsManager.get().game.battleSpeed;
     void gameApi.getPlayerState().then((state) => {
       if (!this.scene.isActive() || !this.speedChip) return;
@@ -1041,6 +1198,10 @@ export class BattleScene extends Phaser.Scene {
    * 물량형 던전의 무리도 여기서 한꺼번에 선다 — 적이 열다섯이어도 같은 경로다.
    */
   private async spawnFighters(): Promise<void> {
+    const generation = this.combatGeneration;
+    const isCurrent = () => this.scene.isActive() && generation === this.combatGeneration;
+    const creationQueue = new PuppetCreationQueue({ isCurrent });
+    this.fighterCreationQueue = creationQueue;
     ensureEffectTextures(this);
     // 번호별 전용 적 SD도 원화 색을 보존하므로 더 이상 임시 허스크 tint를 입히지 않는다.
     const tint = 0xffffff;
@@ -1058,25 +1219,27 @@ export class BattleScene extends Phaser.Scene {
         const frozenSkin = fighter.side === "enemy" ? undefined : this.frozenRelics?.get(fighter.def.id);
         const asset = frozenSkin
           ? sdAssetForSkin(fighter.def.id, frozenSkin.skinId ?? undefined) ?? battleAssetFor(fighter.def.id)
-          : relicAppearanceManager.battleAssetFor(fighter.def.id, fighter.side === "enemy" ? "enemy" : "ally");
+          : relicAppearanceManager.battleAssetFor(fighter.def.id, this.isAlly(fighter) ? "ally" : "enemy");
         return spawnPuppet(this, asset, {
           x: fighter.x,
           groundY: fighter.y,
           height: unitHeight,
           flipX: fighter.facing < 0,
           tint,
+          creationQueue,
+          startPaused: true,
         })
           .then((creature) => ({ fighter, asset, unitHeight, creature }))
           .catch((error: unknown) => {
             // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
             // **한 마리의 실패가 나머지를 함께 지우지 않도록** 약속마다 여기서 삼킨다.
-            console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+            if (isCurrent()) console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
             return undefined;
           });
       });
     const ready = await Promise.all(spawns);
     // 기다리는 동안 씬을 떠났다면 **도착한 전부**를 놓는다 — 하나만 지우면 나머지가 죽은 씬에 남는다.
-    if (!this.scene.isActive()) {
+    if (!isCurrent()) {
       ready.forEach((entry) => entry?.creature.destroy());
       return;
     }
@@ -1090,7 +1253,7 @@ export class BattleScene extends Phaser.Scene {
       }
       // Puppet Mesh의 기본 입력 경계는 비동기 생성 시점의 로컬 크기에 묶여 이동·배율 적용 뒤
       // 실제 SD와 어긋날 수 있다. 투명 몸통 영역을 따로 두고 매 프레임 발 위치를 따라가게 한다.
-      const infoHit = fighter.side === "enemy"
+      const infoHit = !this.isAlly(fighter)
         ? this.add.rectangle(fighter.x, fighter.y - unitHeight / 2, 190 * fighter.bodyScale, unitHeight + 70, 0xffffff, 0)
           .setInteractive({ useHandCursor: true })
           .on("pointerup", () => {
@@ -1103,8 +1266,8 @@ export class BattleScene extends Phaser.Scene {
       // 폭주 필터. 스킬 아이콘과 같은 속성·직군 색을 그대로 쓰며, 발광이 아니라 몸에 입힌다.
       const feverTint = skillArtTint(fighter.def.element, fighter.def.role);
       // 발밑 그림자는 몸집만큼만 — 작게 선 늑대가 사람만 한 그림자를 끌고 다니지 않는다.
-      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale);
-      const barColor = fighter.side === "player" ? COLOR.hpFill : COLOR.hpEnemy;
+      const shadow = addSdFootShadow(this, fighter.x, fighter.y + 4, BATTLE_FOOT_SHADOW_WIDTH * fighter.bodyScale).setDepth(DEPTH.shadow);
+      const barColor = this.isAlly(fighter) ? COLOR.hpFill : COLOR.hpEnemy;
       const hpBar = new UnitHealthBar(this, barColor, this.motion.effectiveBattleUiMotion).snap(1);
       const statusChips = new UnitStatusChips(this);
       // 체력 바와 칩 줄을 함께 덮는 입력면. 둘 중 어디를 눌러도 지금 걸린 상태를 펼친다 —
@@ -1115,7 +1278,7 @@ export class BattleScene extends Phaser.Scene {
           event.stopPropagation();
           this.openStatusList(fighter.id);
         });
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverStep: -1, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverAt: 0, feverEndedAt: undefined, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
       // 새끼 늑대 자리는 쓰러진 채로 열린다 — 부르는 순간 `packSummon`이 일으켜 세울 때까지 보이지 않는다.
       if (fighter.hp <= 0 && isPupFighter(fighter)) {
         const idle = this.views.get(fighter.id);
@@ -1140,6 +1303,9 @@ export class BattleScene extends Phaser.Scene {
      * 사라졌다. 여기에 기다리는 일을 새로 끼우지 않는다.
      */
     this.syncViews();
+    for (const view of this.views.values()) {
+      if (!view.dead) view.creature.setVisible(true).setAnimationFrozen(false);
+    }
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     // 서자마자 부딪히지 않는다 — 전장을 한 번 훑어볼 틈을 둔다(모든 전투 공통).
@@ -1218,6 +1384,11 @@ export class BattleScene extends Phaser.Scene {
     if (this.finished || !this.spawned || performance.now() < this.fightStartsAt || this.ultimateSequenceActive || !canFireUltimate(this.state, fighter)) return;
     // 결투는 수동 발동이 없다 — 자동 궁극기만 판을 움직인다.
     if (this.battleInput.mode === "duel") return;
+    // 안내 중에는 밝힌 카드만 받는다. 그 카드를 누르는 순간 안내가 걷히고 시간이 다시 흐른다.
+    if (this.ultimateTutorial.active) {
+      if (fighter.id !== this.ultimateTutorial.fighterId) return;
+      this.endUltimateTutorial();
+    }
     if (enqueueUltimate(this.ultimateSequence, fighter.id)) void this.pumpUltimateQueue();
   }
 
@@ -1252,7 +1423,7 @@ export class BattleScene extends Phaser.Scene {
       // 전신 컷인 한 장으로 "누가 무엇을 쓰는가"를 알린다. 다만 포효를 기다리지 않고 컷인이
       // 빠지는 즉시 친다 — 전투 중 여러 번 반복되는 연출이라 길이가 곧 기다림이다.
       const base = view.creature.scaleX;
-      const skipPresentation = settingsManager.get().game.skipUltimatePresentation;
+      const skipPresentation = this.ultimatePresentationSkipped();
       // 컷인·확대·공격·복귀가 이 한 계산값을 공유한다. 전투 배속과 스킵을 단계마다 다시
       // 해석하면 서로 다른 시간축이 생기므로 pump 진입 시 한 번만 고정한다.
       const timing = ultimatePresentationTiming(skipPresentation);
@@ -1281,18 +1452,22 @@ export class BattleScene extends Phaser.Scene {
       // **쿵.** 쓰는 순간 그 카드가 한 번 눌렸다 올라온다 — 게이지가 비는 것만으로는 "썼다"가
       // 값의 변화로만 남고, 어느 칸에서 나갔는지가 화면에서 약하다.
       this.pressProfileCard(fighter.id);
+      audioManager?.playSfx("battle.ultimate");
       // 확대와 공격 모션을 동시에 시작해 확대를 기다리는 별도 턴처럼 보이지 않게 한다.
       // 스킵에서는 0ms 확대조차 만들지 않아 실제 발사만 아래에서 정확히 한 번 수행한다.
       const zoom = skipPresentation
         ? Promise.resolve()
         : this.tween({ targets: view.creature, scale: base * presentation.zoomScale, duration: scaleUltimateDuration(presentation.zoomMs, timing), ease: "Back.Out" });
       const castAt = this.state.elapsed; const energyBefore = fighter.energy;
-      const events = fireUltimate(this.state, fighter.id, this.rng);
+      this.unflipView();
+      const events = this.mirrorEvents(fireUltimate(this.state, fighter.id, this.rng));
+      this.flipView();
       // 궁극기는 **쓴 순간**을 행동으로 남긴다. 피해 사건에서 거두던 때는 피해 없는 궁극기(순풍·
       // 연사·은신·대신 받기)가 기록에서 빠져, 서버 재현이 그 강화를 모른 채 뒤이은 평타를 "너무
       // 빠르다"로 거절했다. 되찍기·채널링·늑대 돌진은 서버가 같은 함수로 다시 만든다.
       // 표적이 없어 헛돈 시전은 게이지도 사건도 남기지 않으므로 적지 않는다.
       const cast = events.length > 0 || fighter.energy < energyBefore;
+      if (cast && this.combatLease && fighter.side === "player") this.combatActions.push({tick:this.combatTicks,actorId:fighter.id});
       if (cast && this.state.boss && fighter.side === "player") this.bossActions.push({ elapsedMs: Math.round(castAt * 1_000), actorId: fighter.def.id, kind: "ultimate" });
       // 공격 판정(core), 시각적 사망(scene tween), 전투 결과(finish)는 서로 다른 책임이다.
       // 사건 순서는 건드리지 않고, finish가 있는 결정타인지만 종료 대기 정책에 따로 전달한다.
@@ -1358,7 +1533,33 @@ export class BattleScene extends Phaser.Scene {
 
   /** 편성 순서 그대로의 아군 셋. 쓰러진 뒤에도 프로필 자리는 지킨다. */
   private playerFighters(): Fighter[] {
-    return this.state.fighters.filter((fighter) => fighter.side === "player");
+    return this.state.fighters.filter((fighter) => this.isAlly(fighter));
+  }
+
+  /** 이 화면에서 제 편인가. 아레나 위쪽 자리의 화면은 코어의 적 편이 곧 나다. */
+  private isAlly(fighter: Pick<Fighter, "side">): boolean {
+    return arenaViewAlly(fighter.side, this.viewFlip);
+  }
+
+  /** 피해 수치의 색은 화면의 편을 따른다 — 거울에 비춘 화면에서는 코어의 적 편이 받는 피해가 곧 내 피해다. */
+  private popupTarget(fighter: Fighter): { side: Fighter["side"]; maxHp: number } {
+    return { side: this.isAlly(fighter) ? "player" : "enemy", maxHp: fighter.maxHp };
+  }
+
+  private flipView(): void {
+    if (!this.viewFlip || this.viewRestore) return;
+    this.viewRestore = mirrorFightersY(this.state.fighters, arenaMirrorCenter(this.state.arena));
+  }
+
+  private unflipView(): void {
+    this.viewRestore?.();
+    this.viewRestore = null;
+  }
+
+  private mirrorEvents(events: SkirmishEvent[]): SkirmishEvent[] {
+    if (!this.viewFlip) return events;
+    const center = arenaMirrorCenter(this.state.arena);
+    return events.map((event) => mirrorPointsY(event, center));
   }
 
   /**
@@ -1414,26 +1615,36 @@ export class BattleScene extends Phaser.Scene {
     if (this.ultimateSequenceActive) return;
     // battleSpeed는 코어 시간에 여기서 정확히 한 번만 곱한다. 궁극기 연출 배율은 tween/Puppet에만
     // 쓰고 stepSkirmish에 넣지 않으므로 피해량·공격 주기·게이지 충전이 이중 가속되지 않는다.
-    const events = stepSkirmish(this.state, dt * this.battleSpeed, this.rng);
+    const events: SkirmishEvent[] = [];
+    // 코어는 언제나 원래 좌표에서 진행한다 — 거울은 그리는 동안에만 씌운다.
+    this.unflipView();
+    if (this.combatLease || (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2) {
+      this.bossStepRemainder += Math.min(0.25, dt) * this.battleSpeed * 1_000;
+      while (this.bossStepRemainder >= BOSS_STEP_MS && this.state.phase === "fight") {
+        events.push(...stepSkirmish(this.state, BOSS_STEP_MS / 1_000, this.rng));
+        this.bossStepRemainder -= BOSS_STEP_MS;
+        if(this.combatLease) this.combatTicks++;
+      }
+    } else events.push(...stepSkirmish(this.state, dt * this.battleSpeed, this.rng));
+    this.flipView();
+    if (this.viewFlip) events.splice(0, events.length, ...this.mirrorEvents(events));
     // 코어가 센 시간을 그대로 적는다. 배속은 이미 위에서 한 번 곱해졌으므로 시계도 그만큼 빨리 돈다.
     this.clockLabel?.setText(formatBattleClock(this.state.elapsed));
     this.paintDeathClock();
     if (this.state.boss) {
-      const boss = this.state.boss; const phase = boss.phases[boss.phaseIndex];
-      const normalScore = expeditionManager.status().run?.normalNodeScoreTotal ?? 0;
+      const boss = this.state.boss;
+      const normalScore = this.battleInput.mode === "expeditionBoss" ? expeditionManager.status().run?.normalNodeScoreTotal ?? 0 : 0;
       const previousTarget = this.bossScoreTarget;
       // 코어의 누적은 소수까지 세지만(다단히트 반올림 편향을 막는다) 화면에 서는 것은 점수라
       // 정수다 — 여기서 반올림하지 않으면 `5,934.48`이 그대로 선다.
-      this.bossScoreTarget = normalScore + Math.round(boss.score);
+      this.bossScoreTarget = normalScore + (this.battleInput.mode === "expeditionBoss" ? expeditionBossDamageScore(Math.round(boss.score)) : Math.round(boss.score));
       const scoreMotion = stepBattleScoreMotion(this.bossScoreShown, this.bossScoreTarget, elapsed);
       this.bossScoreShown = scoreMotion.shown;
       // 새 타격의 크기로 즉시 부풀고, 다음 프레임부터 원래 크기로 가라앉아 강한 공격을 숫자 무게로 보여 준다.
       this.bossScoreScale = Math.max(1, this.bossScoreScale - elapsed / 260);
       if (this.bossScoreTarget > previousTarget) this.bossScoreScale = Math.max(this.bossScoreScale, 1 + scoreMotion.punch);
       this.bossScoreLabel?.setText(this.bossScoreShown.toLocaleString()).setScale(this.bossScoreScale);
-      // **시간은 여기서 적지 않는다** — 화면 맨 위의 시계가 이미 말한다. 이 줄에 남는 것은
-      // 지금 손이 궁극기를 아낄지를 바꾸는 것, 곧 단계와 해일 경고뿐이다.
-      this.bossPhaseLabel?.setText(t("battle.boss.phaseLine", { phase: phase.label, warning: boss.tideWarning ? t("battle.boss.tideWarning") : boss.limitReached ? t("battle.boss.limit") : "" }));
+      this.scoreRankHud?.update(this.scoreRankBase + this.bossScoreShown);
       this.paintRaidSeasonHud();
     }
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
@@ -1442,7 +1653,7 @@ export class BattleScene extends Phaser.Scene {
     // 한 시뮬레이션 프레임의 유효 타격을 하나로 병합해 광역/연격이 기기를 연속 진동시키지 않게 한다.
     if (hasMergedBattleHit(events)) settingsManager.haptic("battleHit");
     events.forEach((event) => this.playEvent(event));
-    if (this.autoUltimate && !this.finished) this.fireReadyUltimates();
+    if (this.autoUltimate && !this.finished && !this.state.automaticUltimates) this.fireReadyUltimates();
     this.refreshProfiles();
     this.refreshDebug();
   }
@@ -1515,12 +1726,101 @@ export class BattleScene extends Phaser.Scene {
     // **펼친 기여도 판은 전투를 멈추지 않는다.** 그 판은 창이 아니라 화면 한쪽에 붙는 순위표라,
     // 열어 둔 채로 순위가 실시간으로 바뀌는 것을 보는 것이 그 판의 쓸모다 — 멈추면 열어 볼
     // 때마다 전투가 서고, 다시 접을 때까지 아무 일도 일어나지 않는다.
-    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false);
+    return anyPopupOpen() || (this.allyInfoRef?.isOpen ?? false) || this.ultimateTutorial.active || (this.featureSpotlight?.active ?? false);
+  }
+
+  /** 오프닝에서 곧장 들어온 첫 전투(1-1). 이 판만 조작을 막고 궁극기 사용법을 안내한다. */
+  private openingBattle(): boolean {
+    return this.introBattleFlag;
+  }
+
+  /**
+   * 이 판에서 그 조작이 열려 있나. 스토리 전투만 튜토리얼에 묶이고, 첫 궁극기 판은 전부 닫혀 있다.
+   * 지금 알려 주는 조작(`teachFeature`)은 그 판부터 열린다 — 안내가 가리킬 칩이 있어야 한다.
+   */
+  private featureOpen(feature: BattleTutorialFeature): boolean {
+    if (this.openingBattle()) return false;
+    return feature === this.teachFeature || tutorialManager.featureOpen(feature, this.battleInput.mode === "stage");
+  }
+
+  /** 오프닝 첫 전투는 컷인을 끄는 설정을 따르지 않는다. */
+  private ultimatePresentationSkipped(): boolean {
+    return this.featureOpen("presentation") && settingsManager.get().game.skipUltimatePresentation;
+  }
+
+  /**
+   * 처음 궁극기가 켜진 카드를 밝히고 나머지를 어둡게 덮는다. 동시에 켜지면 토리카가 먼저다.
+   * 시간은 멈추고(`simulationPaused`), 그 카드를 눌러 궁극기를 쓰면 어둠이 걷히며 이어진다.
+   */
+  private maybeStartUltimateTutorial(): void {
+    const tutorial = this.ultimateTutorial;
+    if (!this.openingBattle() || tutorial.done || tutorial.active || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    const ready = this.profiles.filter((profile) => profile.ready && canFireUltimate(this.state, profile.fighter));
+    const pick = ready.find((profile) => profile.fighter.def.id === "torika") ?? ready[0];
+    if (!pick) return;
+    tutorial.active = true;
+    tutorial.fighterId = pick.fighter.id;
+    const dim = this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, 0x000000, 0.62)
+      .setDepth(TUTORIAL_DEPTH).setInteractive();
+    const text = this.add.text(BASE_WIDTH / 2, PROFILE_TOP - 120, t("battle.tutorial.ultimate"), textStyle({ role: "display", size: 44, color: COLOR.accentText }))
+      .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2).setShadow(3, 4, "#05070a", 0, true, true);
+    const arrow = this.add.text(pick.prefab.x, PROFILE_TOP - 40, "▼", textStyle({ role: "display", size: 56, color: COLOR.accentText }))
+      .setOrigin(0.5).setDepth(TUTORIAL_DEPTH + 2);
+    if (this.motion.battleUiFactor > 0) this.tweens.add({ targets: arrow, y: arrow.y + 18, duration: 520, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    pick.prefab.setDepth(TUTORIAL_DEPTH + 1);
+    tutorial.layer = [dim, text, arrow];
+  }
+
+  /** 안내를 걷고 시간을 다시 흘린다. 궁극기를 눌렀을 때와 씬이 닫힐 때 부른다. */
+  private endUltimateTutorial(): void {
+    const tutorial = this.ultimateTutorial;
+    tutorial.layer?.forEach((object) => { this.tweens.killTweensOf(object); object.destroy(); });
+    tutorial.layer = undefined;
+    tutorial.active = false;
+    tutorial.done = true;
+    this.profiles.find((profile) => profile.fighter.id === tutorial.fighterId)?.prefab.setDepth(0);
+    this.lastStepAt = performance.now();
+    // 조작 체험은 이 판에서만 기억한다. 영구 진행은 승리 저장과 함께 확정한다.
+  }
+
+  /**
+   * 이번 전투가 알려 줄 조작(속도·자동 궁극기·연출 스킵·기여도)의 칩을 밝혀 가리킨다. 전투 시간은 멈추고,
+   * 그 칩을 누르는 순간 안내가 걷히며 칸을 마친다. 전투가 시작되기 전(숨 고르기)에는 열지 않는다.
+   */
+  private maybeStartFeatureTutorial(): void {
+    const feature = this.teachFeature;
+    if (!feature || this.featureTaught || this.featureSpotlight || this.finished || this.ultimateSequenceActive || performance.now() < this.fightStartsAt) return;
+    if (tutorialManager.isDone(BATTLE_FEATURE_STEP[feature])) return;
+    const chip = { speed: this.speedChip, auto: this.autoChip, presentation: this.presentationChip, contribution: this.contributionChip }[feature];
+    const bounds = chip.getBounds();
+    this.featureSpotlight = new TutorialSpotlight(this, {
+      rect: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+      text: t(`tutorial.battle.${feature}`),
+      side: "above",
+    });
+  }
+
+  /** 조작 칩이 눌렸다. 그 조작을 가리키던 안내가 있으면 걷고 시간을 다시 흘리며 칸을 마친다. */
+  private featureTapped(feature: BattleTutorialFeature): void {
+    if (feature !== this.teachFeature || !this.featureSpotlight) return;
+    this.featureSpotlight.destroy();
+    this.featureSpotlight = undefined;
+    // 칸은 여기서 마치지 않는다 — 서버가 이 관문의 첫 클리어를 확정할 때 한 칸만 연다(`completeStage`).
+    // 이 판 안에서는 다시 가리키지 않고 조작도 닫히지 않으며, 클리어 전에 나가면 다음 입장에서 다시 알려 준다.
+    this.featureTaught = true;
+    this.lastStepAt = performance.now();
+  }
+
+  /** 지정 관문에서만 안내한다. 이미 깼어도 멈춘 안내는 다시 체험할 수 있다. */
+  private stageTeachesTutorial(): boolean {
+    const stageId = session.selectedStageId;
+    if (!stageId || tutorialManager.battleStage() !== stageId) return false;
+    try { return stageClearAdvancesTutorial(getStage(stageId)); } catch { return false; }
   }
 
   /** 제한 주기 또는 카테고리 입력 때만 코어의 불변 표시 스냅샷을 프리팹에 전달한다. */
   private refreshContribution(force = false, now = performance.now()): void {
-    if (!this.contributionPanel || (!force && now < this.contributionRefreshAt)) return;
+    if (!this.contributionPanel || (!force && (!this.contributionPanel.state.expanded || now < this.contributionRefreshAt))) return;
     // 순위가 바뀌는 것을 보는 판이라 갱신이 너무 느리면 값이 뚝뚝 끊겨 보인다. 줄이 자리를
     // 옮기는 tween(260ms)보다 짧게 두면 옮기는 중에 다시 옮기라고 하므로 그보다 길게 잡는다.
     this.contributionRefreshAt = now + 300;
@@ -1555,7 +1855,13 @@ export class BattleScene extends Phaser.Scene {
     this.tweens.killTweensOf(view.creature);
     // 쓰러질 때 상태 칩 줄은 폐기된다. 다시 서는 몸은 새 줄을 쥔다.
     if (!view.statusChips.scene) view.statusChips = new UnitStatusChips(this);
-    view.creature.setAlpha(isPupFighter(view.fighter) ? PUP_VIEW_ALPHA : 1).setVisible(true).setScale(1).setAngle(0);
+    view.creature.setAnimationFrozen(false).setAlpha(isPupFighter(view.fighter) ? PUP_VIEW_ALPHA : 1).setVisible(true).setAngle(0);
+    // 안내창은 코어 동기화를 멈춘다. 다음 syncViews를 기다리지 말고 소환 즉시 표시 크기를 복구한다.
+    const pose = renderPose(view.fighter);
+    placePuppet(view.creature, view.asset, {
+      x: pose.x, groundY: pose.y, height: UNIT_HEIGHT * view.fighter.bodyScale,
+      flipX: view.fighter.facing < 0,
+    });
     view.shadow.setVisible(true);
     view.statusHit.setVisible(true);
     view.hpBar.setVisible(true).snap(view.fighter.hp / view.fighter.maxHp);
@@ -1574,7 +1880,9 @@ export class BattleScene extends Phaser.Scene {
       this.finishBattle(event.phase);
       return undefined;
     }
+    if (event.kind === "attack" && event.skill !== "ultimate") audioManager?.playSfx(event.critical ? "battle.crit" : "battle.hit");
     if (event.kind === "death") {
+      audioManager?.playSfx("battle.death");
       // 프로필은 화면에 남으므로 머리 위 바와 달리 즉시 0으로 닫아 사라진 잔상을 기다리지 않는다.
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(0, this.views.get(event.fighterId)?.fighter.maxHp ?? 1, "damage", Number.MAX_SAFE_INTEGER);
       this.playDeath(event.fighterId, event.sourceId);
@@ -1623,6 +1931,7 @@ export class BattleScene extends Phaser.Scene {
     if (event.kind === "heal") {
       const view = this.views.get(event.fighterId);
       if (!view) return undefined;
+      audioManager?.playSfx("battle.heal");
       // 회복 사건은 붉은 잔상을 새 체력에 정리하는 명시적 원인으로 전달한다.
       this.profiles.find((profile) => profile.fighter.id === event.fighterId)?.prefab.setHealthTarget(view.fighter.hp, view.fighter.maxHp, "heal");
       // 회복은 HP와 같은 연두색 및 + 접두어로 피해 숫자와 즉시 구분한다.
@@ -1654,7 +1963,7 @@ export class BattleScene extends Phaser.Scene {
       // 바닥과 피해 수치가 서로 다른 축을 읽게 된다. 여기서 더하는 것은 "우리 편이 맞는가"뿐이다.
       const caster = this.views.get(event.attackerId);
       this.effects.groundArea(event.area, {
-        hostile: caster?.fighter.side === "enemy",
+        hostile: caster ? !this.isAlly(caster.fighter) : false,
         damageType: event.damageType,
         supportive: event.supportive,
         status: event.status,
@@ -1772,7 +2081,7 @@ export class BattleScene extends Phaser.Scene {
         this.effects.damage(
           guardian.fighter.x,
           guardian.fighter.y - UNIT_HEIGHT * guardian.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
-          attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, guardian.fighter),
+          attackDamagePopupRequest({ amount: event.amount, damageType: "physical", skill: "basic", critical: false }, this.popupTarget(guardian.fighter)),
         );
         // 아군이 맞았는데 앞에 선 개체가 깎이면, 잇는 선이 없으면 두 사건으로 읽힌다.
         const saved = this.views.get(event.fromFighterId);
@@ -1811,7 +2120,7 @@ export class BattleScene extends Phaser.Scene {
       // 늑대 돌진의 뒤따르는 피해는 서버가 그 한 번에서 다시 만든다.
       const replayKind = event.skill === "staccato" || event.skill === "shimmer" || event.skill === "weakpoint" ? "basic" : event.skill;
       // 프레임이 끝난 지금이 아니라 코어가 못 박은 타격 시각을 적는다(`at`).
-      if (replayKind === "basic") this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
+      if (replayKind === "basic" && (!(this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") || this.battleInput.replayVersion !== 2)) this.bossActions.push({ elapsedMs: Math.round((event.at ?? this.state.elapsed) * 1_000), actorId: attacker.fighter.def.id, kind: replayKind });
     }
     // 한 광역 기술의 후속 피해 사건은 피격 표현만 만들고 시전자 모션은 첫 사건에서 한 번만 튼다.
     const playback = attacker && event.animate !== false ? playMotion(this, attacker.creature, "attack", motionSpeedMultiplier) : undefined;
@@ -1832,7 +2141,7 @@ export class BattleScene extends Phaser.Scene {
       // 물리·마법은 색을 가르지 않는다. 갈리는 것은 고정 피해뿐이고, 나머지 구분(치명타·궁극기·
       // 경감·아군 피격)은 순수 변환 경계가 사건의 성격만 보고 정한다. 기여도와 보스 점수가
       // 실수로 화면 숫자에 섞이지 않도록 공격 사건은 완성된 요청 모델로 바로 전달한다.
-      const popupRequest = attackDamagePopupRequest(event, target.fighter);
+      const popupRequest = attackDamagePopupRequest(event, this.popupTarget(target.fighter));
       this.effects.damage(
         target.fighter.x,
         target.fighter.y - UNIT_HEIGHT * target.fighter.bodyScale * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
@@ -1848,6 +2157,8 @@ export class BattleScene extends Phaser.Scene {
         color: this.effectColor(attacker),
         direction,
         scale: target.fighter.bodyScale,
+        critical: popupRequest.critical,
+        incoming: popupRequest.incoming,
       });
       // 그 개체를 그 개체답게 만드는 순간이면 공용 파편 위에 전용 연출이 한 겹 더 선다.
       // **순간은 사건에서 읽는다** — 어느 개체가 무엇을 갖는지는 씬이 아니라 표가 안다.
@@ -1857,12 +2168,22 @@ export class BattleScene extends Phaser.Scene {
           : event.basicStep !== undefined ? "basicStep"
           : undefined;
         const attackerHeight = UNIT_HEIGHT * attacker.fighter.bodyScale;
-        if (moment) {
-          this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
-            from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
-            step: event.basicStep,
-            scale: target.fighter.bodyScale,
-          });
+        const signed = moment !== undefined && this.playSignature(attacker, moment, { x: target.fighter.x, y: target.fighter.y - height * 0.5 }, {
+          from: { x: attacker.fighter.x, y: attacker.fighter.y - attackerHeight * 0.5 },
+          step: event.basicStep,
+          scale: target.fighter.bodyScale,
+        });
+        // 근접 평타는 무엇으로 쳤는지(베기·발톱·물기·강타)를 한 획 얹는다. 전용 연출이 그 순간을
+        // 이미 맡았으면 겹치지 않는다.
+        if (!signed && event.skill !== "ultimate" && attacker.fighter.def.reachTier === "melee") {
+          this.effects.meleeStrike(
+            { x: target.fighter.x, y: target.fighter.y - height * 0.5 },
+            { x: target.fighter.x, y: target.fighter.y },
+            attacker.fighter.def.strike ?? "smash",
+            this.effectColor(attacker),
+            target.fighter.x - attacker.fighter.x,
+            target.fighter.bodyScale,
+          );
         }
       }
       // 떨어져서 때리는 개체는 사이를 잇는 것이 없으면 맞은 자리에 숫자만 뜬다. 근거리는 몸이
@@ -1876,6 +2197,7 @@ export class BattleScene extends Phaser.Scene {
           { x: target.fighter.x, y: target.fighter.y - height * 0.5 },
           reachTier,
           this.effectColor(attacker),
+          attacker.fighter.def.projectile,
         );
       }
     }
@@ -1904,7 +2226,7 @@ export class BattleScene extends Phaser.Scene {
       fighter.x,
       fighter.y - height * BATTLE_STATUS_LAYOUT.popupBodyOffsetRatio,
       // 소수 HP가 생겨도 전투 숫자는 정수로 표시하되 사건 자체의 실제 값은 코어에 그대로 남는다.
-      { amount, flavor, incoming: fighter.side === "player", maxHp: fighter.maxHp, ...extra },
+      { amount, flavor, incoming: this.isAlly(fighter), maxHp: fighter.maxHp, ...extra },
       { onDone: healing ? () => { this.healPopups = Math.max(0, this.healPopups - 1); } : undefined },
     );
   }
@@ -1933,9 +2255,10 @@ export class BattleScene extends Phaser.Scene {
   private playSignature(
     actor: FighterView, moment: SignatureMoment, at: { x: number; y: number },
     options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
-  ): void {
+  ): boolean {
     const id = signatureFor(actor.fighter.def.id, moment);
     if (id) this.effects.signature(id, at, this.palette(actor), options);
+    return id !== undefined;
   }
 
   /**
@@ -1982,12 +2305,15 @@ export class BattleScene extends Phaser.Scene {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
     view.dead = true;
+    // 쓰러진 몸은 폭주 테두리·붉은 기운 없이 날아간다 — 다음 프레임부터는 syncViews가 이 몸을 건너뛴다.
+    view.creature.setAnimationFrozen(true).setAfterimages([]).setBodyFill(0, 0);
     this.combatEffects.remove(fighterId);
     view.shadow.setVisible(false);
     view.hpBar.setVisible(false);
     // 사망 뒤에는 코어가 상태를 비우므로 표시 객체도 컨테이너와 자식까지 즉시 폐기한다.
     view.statusChips.destroy(true);
     view.statusHit.disableInteractive().setVisible(false);
+    view.statusHitEnabled = false;
     // 쓰러진 적의 빈자리가 계속 정보창을 열지 않도록 입력도 함께 닫는다.
     view.infoHit?.disableInteractive().setVisible(false);
     // 별 하나가 커지던 자리에 같은 마름모 파편이 터진다. 화면의 다른 타격과 결이 같아야
@@ -2027,7 +2353,8 @@ export class BattleScene extends Phaser.Scene {
       })),
       onComplete: () => {
         // 마지막은 번쩍이다. 조용히 오므라들면 여섯이 함께 쓰러질 때 언제 사라졌는지 모른다.
-        this.effects.burst("death", view.creature.x, view.creature.y, { color: view.feverTint, scale: view.fighter.bodyScale * 1.4 });
+        // 날아간 끝에서 노란 별 하나가 반짝인다 — "날아가 별이 됐다".
+        this.effects.burst("death", view.creature.x, view.creature.y, { color: view.feverTint, scale: view.fighter.bodyScale * 1.4, critical: true });
         this.tweens.add({
           targets: view.creature,
           scale: 0,
@@ -2105,6 +2432,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 좌표·방향·체력 바·앞뒤 순서를 시뮬레이션 상태에 맞춘다. */
   private syncViews(): void {
+    const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length);
+    const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
       if (view.dead) return;
       const { fighter } = view;
@@ -2137,26 +2466,39 @@ export class BattleScene extends Phaser.Scene {
       }
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);
-      // 폭주는 빛이 아니라 **필터**다. 일러스트에 그 개체의 스킬 아이콘 색을 입히고, 섞는
-      // 비율이 옅은 쪽과 짙은 쪽을 오가며 울그락불그락 끓는다.
+      // 폭주는 빛이 아니라 **화난 테두리**다(`feverInk.ts`). 몸을 먹과 붉은 띠로 비껴 그려
+      // 테두리를 세우고 그 두께가 경보처럼 숨 쉰다. 발밑 사이렌과 빠직 표식은 이펙트가 맡는다.
+      const now = this.time.now;
       const fever = fighter.ferocityFever;
       if (fever !== view.feverTinted) {
         view.feverTinted = fever;
-        view.feverStep = -1;
-        // 폭주가 풀리는 순간에만 원래 색으로 한 번 되돌린다.
-        if (!fever) tintPuppet(view.creature, view.tint);
-        // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 필터가 맡는다.
-        else this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
+        if (fever) {
+          view.feverAt = now;
+          view.feverEndedAt = undefined;
+          // 폭주에 **드는 순간**만 한 겹 밀려난다. 유지되는 동안은 테두리가 맡는다.
+          this.effects.burst("fever", pose.x, pose.y - unitHeight * 0.5, { color: view.feverTint, scale: fighter.bodyScale });
+        } else view.feverEndedAt = now;
       }
-      // 피격 섬광이 도는 동안에는 칠하지 않는다 — 덮어쓰면 맞은 티가 그 프레임에 사라진다.
-      if (fever && !isHitFlashing(view.creature)) {
-        // 단계가 바뀐 프레임에만 다시 칠한다. 매 프레임 칠하면 Puppet 조각 전부에 tint를
-        // 다시 먹여야 해 그만큼이 그대로 프레임 비용이 된다.
-        const step = feverPulseStep(this.time.now);
-        if (step !== view.feverStep) {
-          view.feverStep = step;
-          tintPuppet(view.creature, this.bodyTint(view));
-        }
+      let outline: PuppetAfterimage[] = [];
+      const fadingOut = view.feverEndedAt !== undefined && now - view.feverEndedAt < FEVER_INK.fadeOutMs;
+      if (view.feverTinted || fadingOut) {
+        const age = now - view.feverAt;
+        const fade = feverFade(age, view.feverTinted ? undefined : now - (view.feverEndedAt ?? now));
+        const pulse = feverPulse(age);
+        outline = feverOutlineSteps(pulse, fade, fighter.bodyScale, outlineDirections);
+        view.creature.setBodyFill(FEVER_INK.bodyFill.color, feverBodyFill(pulse, fade));
+        feverMarks.push({
+          id: fighter.id,
+          x: pose.x,
+          feetY: pose.y,
+          headY: pose.y - unitHeight * FEVER_HEAD_RATIO,
+          scale: fighter.bodyScale,
+          ageMs: age,
+          fade,
+        });
+      } else if (view.feverEndedAt !== undefined) {
+        view.feverEndedAt = undefined;
+        view.creature.setBodyFill(0, 0);
       }
       /*
        * **돌진은 3배속에서 순간이동으로 보인다.** 그림이 출발점에서 끝점까지 따라붙는 시간이
@@ -2167,7 +2509,9 @@ export class BattleScene extends Phaser.Scene {
        * **돌진일 때만 세운다.** `dashX`·`dashY`는 피격 변위도 함께 쓰는 자리라, 맞을 때마다
        * 잔상이 뜨면 난전 내내 몸이 여러 겹으로 보인다.
        */
-      const ghosts = fighter.chargeGlide > 0 ? chargeAfterimageSteps(fighter.dashX, fighter.dashY) : [];
+      const charge = fighter.chargeGlide > 0 ? chargeAfterimageSteps(fighter.dashX, fighter.dashY) : [];
+      // 폭주 테두리를 먼저(더 뒤에) 두고 돌진 잔상을 그 위에 얹는다.
+      const ghosts = outline.length > 0 ? [...outline, ...charge] : charge;
       // 빈 목록도 한 번은 넘겨야 돌진이 끝난 프레임에 잔상이 지워진다.
       if (ghosts.length > 0 || view.afterimageShown) {
         view.afterimageShown = ghosts.length > 0;
@@ -2204,9 +2548,14 @@ export class BattleScene extends Phaser.Scene {
       view.statusHit.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift / 2)
         .setSize(rowWidth, BATTLE_STATUS_LAYOUT.chipRowLift + BATTLE_STATUS_LAYOUT.chipSize)
         .setDepth(DEPTH.hpBar + 3);
-      if (statuses.length > 0) view.statusHit.setInteractive({ useHandCursor: true });
-      else view.statusHit.disableInteractive();
+      const statusHitEnabled = statuses.length > 0;
+      if (statusHitEnabled !== view.statusHitEnabled) {
+        view.statusHitEnabled = statusHitEnabled;
+        if (statusHitEnabled) view.statusHit.setInteractive({ useHandCursor: true });
+        else view.statusHit.disableInteractive();
+      }
     });
+    this.effects.syncFeverMarks(feverMarks);
   }
 
   private refreshProfiles(): void {
@@ -2244,6 +2593,8 @@ export class BattleScene extends Phaser.Scene {
       profile.prefab.setBuffs(models, () => this.openBuffList(fighter.id));
     }
     this.refreshOpenBuff();
+    this.maybeStartUltimateTutorial();
+    this.maybeStartFeatureTutorial();
   }
 
   /** 누른 순간의 객체를 보관하지 않고 안정적인 런타임 ID만 선택해 다음 프레임부터 다시 조회한다. */
@@ -2294,11 +2645,9 @@ export class BattleScene extends Phaser.Scene {
    * 폭주 중에는 원래 색에 그 개체의 폭주색을 섞되, 섞는 비율이 현재 맥동 단계를 따라 오간다.
    */
   private bodyTint(view: FighterView): number {
-    if (!view.feverTinted) return view.tint;
-    const step = view.feverStep < 0 ? feverPulseStep(this.time.now) : view.feverStep;
-    const wave = step / (FEVER.pulseSteps - 1);
-    return mixTint(view.tint, view.feverTint, FEVER.mixLow + (FEVER.mixHigh - FEVER.mixLow) * wave);
+    return view.tint;
   }
+
 
   /**
    * 게이지와 수치를 실제 값으로 **스르륵** 따라붙인다.
@@ -2333,13 +2682,15 @@ export class BattleScene extends Phaser.Scene {
       profile.chargeShown = stepUltimateCharge(profile.chargeShown, chargeTarget, deltaMs / 1000, motionFactor);
       profile.prefab.setChargeRatio(profile.chargeShown);
       const fever = fighter.ferocityFever;
-      const ferocityColor = fever ? COLOR.ferocityFever : fighter.ferocity >= 80 ? COLOR.ferocityWarning : COLOR.ferocityLow;
+      const ferocityMax = ferocityMaxOf(fighter.def);
+      const ferocityWarm = fighter.ferocity >= ferocityMax * 0.8;
+      const ferocityColor = fever ? COLOR.ferocityFever : ferocityWarm ? COLOR.ferocityWarning : COLOR.ferocityLow;
       // 값과 사망 표현의 최종 소유자는 공용 프리팹이며 폭주 문구만 전투가 덧씌운다.
       profile.prefab.setMeters(profile.hpShown, fighter.maxHp, profile.ferocityShown, !alive);
-      profile.ferocityBar.setValue(profile.ferocityShown / FEROCITY_RULES.max, ferocityColor);
+      profile.ferocityBar.setValue(profile.ferocityShown / ferocityMax, ferocityColor);
       // 피버는 플레이어가 끄고 켜는 것이 아니라 스스로 가라앉으므로, 보상 상태와 남은 양만 알린다.
-      profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: FEROCITY_RULES.max }))
-        .setColor(fever || fighter.ferocity >= 80 ? COLOR.ferocityHotText : FEROCITY_TEXT);
+      profile.ferocityLabel.setText(t(fever ? "battle.gauge.frenzy" : "battle.gauge.ferocity", { value: Math.round(profile.ferocityShown), max: ferocityMax }))
+        .setColor(fever || ferocityWarm ? COLOR.ferocityHotText : FEROCITY_TEXT);
     }
   }
 
@@ -2421,6 +2772,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshDebug(): void {
+    if (!QA_TOOLS_ENABLED) return;
     setDebugBattle({
       phase: this.state.phase,
       elapsed: Math.round(this.state.elapsed * 10) / 10,
@@ -2432,7 +2784,7 @@ export class BattleScene extends Phaser.Scene {
       enemyHp: teamHp(this.state, "enemy"),
       speed: this.battleSpeed,
       autoUltimate: this.autoUltimate,
-      skipUltimatePresentation: settingsManager.get().game.skipUltimatePresentation,
+      skipUltimatePresentation: this.ultimatePresentationSkipped(),
       ultimateSequenceActive: this.ultimateSequenceActive,
       ultimateQueue: [...this.ultimateSequence.queue],
       // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.
@@ -2460,11 +2812,12 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
+    audioManager?.playSfx(phase === "victory" ? "battle.victory" : "battle.defeat");
     // 비동기 정산보다 먼저 아군 세 분류를 깊은 복사해 이후 state 사망 연출·HP 변경과 분리한다.
     const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
     }));
-    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, "player");
+    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, this.viewFlip ? "enemy" : "player");
     // finish 사건만 결과 정산을 소유한다. 사망 사건은 앞서 한 번 재생됐으며 정리 과정에서 재호출하지 않는다.
     this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
@@ -2496,6 +2849,19 @@ export class BattleScene extends Phaser.Scene {
 
   /** 숨 고르기가 끝난 뒤 모드별 결과판으로 넘어간다. */
   private openBattleResult(phase: "victory" | "defeat"): void {
+    if(this.battleInput.mode==="duel" && this.battleInput.arena) {void this.finishArena();return;}
+    if(this.combatLease) {
+      const lease=this.combatLease;
+      const generation = this.combatGeneration;
+      const verify=(): void => { void gameApi.finishCombat({id:lease.id,ticks:this.combatTicks,actions:this.combatActions,abandoned:this.state.phase==="fight"}).then(verdict=>{
+        if(!this.scene.isActive() || generation !== this.combatGeneration || this.combatLease !== lease) return;
+        if(!verdict) throw new Error("combat_not_verified");
+        this.combatLease=undefined;
+        this.openBattleResult(verdict.victory?"victory":"defeat");
+      }).catch((error: unknown)=>{ if(this.scene.isActive() && generation === this.combatGeneration && this.combatLease === lease) this.showResultFailure(verify,()=>startScene(this,"lobby"), error, "verify"); }); };
+      verify();
+      return;
+    }
     const won = phase === "victory";
     if (this.battleInput.mode === "expeditionBoss") { void this.submitAndSettleBoss(this.battleInput, this.bossActions); return; }
     if (this.battleInput.mode === "raid") { void this.submitRaidRun(this.bossActions); return; }
@@ -2509,7 +2875,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 스토리 결과판을 닫은 뒤의 기본 길. 오프닝에서 곧장 들어온 판은 로비로 나간다. */
+  /** 스테미나가 모자란 채 다음 판을 누르면 결과판 위에 충전 창을 연다. 판을 닫지 않아 충전 뒤 같은 버튼을 다시 누른다. */
+  private openStaminaCharge(): void {
+    new StaminaPopup(this, new PopupLayer(this, 2600), gameApi).open();
+  }
+
   private stageExit(): string {
+    if (this.battleInput.mode === "stage" && ancientStageFloor(session.selectedStageId) !== undefined) return "ancientStrata";
     return this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby" ? "lobby" : "stageMap";
   }
 
@@ -2525,10 +2897,11 @@ export class BattleScene extends Phaser.Scene {
    * 아니고, 그 호출이 늦어도 판은 이미 떠 있어야 한다.
    */
   private finishStageDefeat(stage: ReturnType<typeof getBattleStage>): void {
-    void gameApi.completeStage(stage.id, false).catch(() => undefined);
+    const generation = this.combatGeneration;
+    const settled = gameApi.completeStage(stage.id, false).catch(() => undefined);
     // **진 판은 스테미나를 쓰지 않는다** — 입장이 확인만 해 둔 값이 그대로 남는다. 결과 확정을
     // 기다리지 않고 판을 먼저 세우므로 그 몫은 입장이 확인한 값 그대로다.
-    const staminaRefunded = CONTENT_STAMINA_COSTS.normalStage;
+    const staminaRefunded = battleStageStaminaCost(stage);
     const popups = new PopupLayer(this, 2200);
     // 버튼이 닫기를 먼저 부르므로 `onConfirm`이 그 직후에 돈다 — 고른 길과 기본 길이 같은
     // 틱에 두 번 시작되지 않도록, 고른 것이 있으면 기본 길은 서지 않는다.
@@ -2544,13 +2917,19 @@ export class BattleScene extends Phaser.Scene {
       },
       replay: {
         label: t("stageComplete.replay"),
-        disabled: session.wallet.stamina < CONTENT_STAMINA_COSTS.normalStage,
-        onPress: () => { chosen = true; this.replayContent({ content: "stage" }, () => startScene(this, exitTo)); },
+        disabled: session.wallet.stamina < battleStageStaminaCost(stage),
+        onBlocked: () => this.openStaminaCharge(),
+        onPress: () => {
+          chosen = true;
+          // 이전 패배 저장이 새 입장보다 늦게 도착해 입장 기록을 덮지 않게 한다.
+          void settled.then(() => { if (this.scene.isActive() && generation === this.combatGeneration) this.retryBattle(); });
+        },
       },
       staminaRefunded,
-      growth: this.defeatGrowth("party", () => { chosen = true; }),
+      growth: this.defeatGrowth(() => { chosen = true; }),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      contributionLocked: !this.featureOpen("contribution"),
       // 버튼을 고르지 않고 판을 닫으면 원래 가던 곳(지도, 오프닝에서 왔으면 로비)으로 돌아간다.
       onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, this.stageExit()); },
     });
@@ -2564,28 +2943,56 @@ export class BattleScene extends Phaser.Scene {
    * 곳이나 눌러도 닫힌다.
    */
   private async finishStageVictory(stage: ReturnType<typeof getBattleStage>): Promise<void> {
+    const generation = this.combatGeneration;
     try {
-      const result = await gameApi.completeStage(stage.id, true);
-      if (!this.scene.isActive()) return;
+      // 저장 뒤 표시만 실패한 재시도는 소비된 전투를 다시 정산하지 않는다.
+      const result = this.stageCompletion?.stageId === stage.id
+        ? this.stageCompletion.result : await gameApi.completeStage(stage.id, true);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      this.stageCompletion = { stageId: stage.id, result };
+      // 첫 궁극기 판을 이겼는데 궁극기를 쓰지 못한 채 끝났어도(칸이 비어 있으면) 다음 칸으로 넘어가게 한다.
+      if (this.openingBattle()) await tutorialManager.complete("ultimate");
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // 스테미나는 이긴 이 확정에서 빠졌다 — 그 경험치 영수증을 결과판이 꺼내도록 맡긴다.
       rememberPlayerExp(result.playerExp);
       const popups = new PopupLayer(this, 2200);
+      if (result.unlockedStoryDifficulty) await openStoryDifficultyUnlocked(this, popups, result.unlockedStoryDifficulty);
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const fighters = this.stageCompleteFighters();
       // 오프닝에서 곧장 들어온 판은 이어지는 이야기를 거쳐 나가야 하므로 길을 고르게 하지 않는다.
       const opening = this.battleInput.mode === "stage" && this.battleInput.exitTo === "lobby";
       let chosen = false;
-      const canEnter = session.wallet.stamina >= CONTENT_STAMINA_COSTS.normalStage;
-      const upcoming = nextBattleStage(STAGES, stage.id, isStageUnlocked);
-      const clearActions: StageCompleteAction[] | undefined = opening ? undefined : [
+      const canEnter = session.wallet.stamina >= battleStageStaminaCost(stage);
+      const tutorialStep = tutorialManager.lobbyStep();
+      const tutorialReturn = tutorialStep !== undefined && tutorialStep !== "pull" && stage.id === lobbyTutorialGateStage(tutorialStep);
+      const resultExit = tutorialReturn ? "lobby" : this.stageExit();
+      const upcoming = stage.ancientFloor !== undefined
+        ? stage.ancientFloor < ANCIENT_STRATA_MAX_FLOOR ? getBattleStage(ancientStageId(stage.ancientFloor+1)) : undefined
+        : nextBattleStage(storyStages(storyDifficultyOf(stage.id)), stage.id, isStageUnlocked);
+      const clearActions: StageCompleteAction[] | undefined = opening ? undefined : tutorialReturn ? [{ label: t("battle.settle.toLobby"), primary: true, onPress: () => undefined }] : [
         ...(upcoming ? [{
-          label: t("stageComplete.next"), primary: true, disabled: !canEnter,
+          label: t("stageComplete.next"), primary: true, disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
           // 다음 전투로 곧바로 들어가지 않고, 지도에서 고를 때와 같이 다음 관문의 편성 화면을 연다.
-          onPress: () => { chosen = true; session.selectedStageId = upcoming.id; startScene(this, "party"); },
+          onPress: () => {
+            chosen = true; session.selectedStageId = upcoming.id;
+            // 방금 이긴 관문의 후 대사 → 다음 관문의 전 대사 → 편성 순으로 이어진다.
+            goRoute(this, victoryRoute(stage.id, partyRoute(upcoming.id)));
+          },
         }] : []),
+        {
+          label: t("stageComplete.replay"), disabled: !canEnter, onBlocked: () => this.openStaminaCharge(),
+          // 같은 관문을 한 판 더 — 초회 후 대사가 남았으면 그것을 먼저 보고 그 관문의 편성으로 간다.
+          onPress: () => {
+            chosen = true;
+            const after = victoryRoute(stage.id, { scene: "party" });
+            if (after.scene === "party") this.retryBattle(); else goRoute(this, after);
+          },
+        },
         { label: t("stageComplete.exit"), danger: true, onPress: () => undefined },
       ];
       new StageCompletePopup(this, popups).open({
         clearActions,
+        returnHint: tutorialReturn ? t(tutorialStep === "gift" ? "tutorial.result.research" : "tutorial.result.feed") : undefined,
         reward: {
           kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
           firstClearRewards: result.firstClearRewards.map((grant) => grant.kind === "rune"
@@ -2594,18 +3001,20 @@ export class BattleScene extends Phaser.Scene {
         },
         fighters,
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+        contributionLocked: !this.featureOpen("contribution"),
         onConfirm: () => {
           // 다음 단계·다시 하기를 골랐으면 그 길이 이미 시작됐다 — 기본 길을 또 세우지 않는다.
           if (chosen) return;
           // 이긴 판에 이어지는 이야기가 있으면 그것을 거쳐 나간다(오프닝 1-1 → 공멸 삼인조의 퇴각).
           const epilogue = this.battleInput.mode === "stage" ? this.battleInput.epilogueStoryId : undefined;
-          if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: this.stageExit() });
-          else startScene(this, this.stageExit());
+          if (epilogue) startScene(this, "stageStory", { storyId: epilogue, exitTo: resultExit });
+          else goRoute(this, victoryRoute(stage.id, { scene: resultExit }));
         },
       });
-    } catch {
+    } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       // 승리는 이미 확정됐으므로 전장으로 되돌리지 않고, 같은 저장 요청만 다시 시도하게 한다.
-      this.showResultFailure(() => void this.finishStageVictory(stage), () => startScene(this, this.stageExit()));
+      this.showResultFailure(() => void this.finishStageVictory(stage), () => startScene(this, this.stageExit()), error, this.stageCompletion?.stageId === stage.id ? "display" : "stage");
     }
   }
 
@@ -2618,13 +3027,19 @@ export class BattleScene extends Phaser.Scene {
    */
   private async finishCakeOperation(input: CakeBattleInputDto, won: boolean): Promise<void> {
     // 입구로 돌아갈 때는 고르던 단계를 넘긴다 — 빠지면 매번 단계를 다시 골라야 한다.
-    const back = () => this.scene.start("cakeOperation", { tierId: input.tierId });
+    const generation = this.combatGeneration;
+    const back = () => startScene(this, "cakeOperation", { tierId: input.tierId });
     try {
-      const result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
-      if (!this.scene.isActive()) return;
-      rememberPlayerExp(result.playerExp);
+      let result = this.cakeCompletion?.requestId === input.requestId ? this.cakeCompletion.result : undefined;
+      if (!result) {
+        result = await gameApi.completeCakeOperation({ tierId: input.tierId, requestId: input.requestId, victory: won });
+        if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+        this.cakeCompletion = { requestId: input.requestId, result };
+        rememberPlayerExp(result.playerExp);
+      }
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const popups = new PopupLayer(this, 2200);
-      const items = currencyRecordToRewardItems(result.granted);
+      const items = dungeonRewardItems(result.granted, result.bonusItems);
       // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
       let chosen = false;
       const go = (run: () => void) => () => { chosen = true; run(); };
@@ -2638,16 +3053,17 @@ export class BattleScene extends Phaser.Scene {
             { label: t("cake.title"), onPress: go(back) },
           ],
         },
-        growth: won ? undefined : this.defeatGrowth("party", () => { chosen = true; }),
+        growth: won ? undefined : this.defeatGrowth(() => { chosen = true; }),
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         staminaRefunded: result.staminaRefunded,
         fighters: this.stageCompleteFighters(),
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => { if (!chosen && this.scene.isActive()) back(); },
       });
-    } catch {
+    } catch (error) {
       // 결과 확정만 실패한 자리라 전장으로 되돌리지 않고 같은 요청만 다시 시도하게 한다.
-      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => this.scene.start("cakeOperation", { tierId: input.tierId }));
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      this.showResultFailure(() => void this.finishCakeOperation(input, won), () => startScene(this, "cakeOperation", { tierId: input.tierId }), error, this.cakeCompletion?.requestId === input.requestId ? "display" : "cake");
     }
   }
 
@@ -2677,22 +3093,25 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const clearedRounds = step.kind === "clear" ? BOUNTY.roundCount : step.round;
-    const fighters = this.stageCompleteFighters();
+    // 한 라운드에 한 명만 싸우므로 전장에는 이번 라운드의 한 명뿐이다 — 결산창은 다른 던전과 같이
+    // 이번 판에 나선 편성 전체(진 판이면 진 라운드까지)를 세운다.
+    const fought = step.kind === "clear" ? BOUNTY.roundCount : step.round + 1;
+    const fighters: StageCompleteFighter[] = session.party.slice(0, fought).map((relicId) => ({ relicId, isMvp: false }));
     const popups = new PopupLayer(this, 2200);
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
     let settled;
     try {
       settled = await gameApi.completeBounty({ tierId: input.tierId, requestId: input.requestId, victory: step.kind === "clear", clearedRounds });
-    } catch {
+    } catch (error) {
       // 정산이 늦어도 전장으로 되돌리지 않는다. 같은 영수증으로 다시 시도하게만 한다.
       if (!this.scene.isActive()) return;
-      this.showResultFailure(() => void this.finishBountyRound(input, won), () => this.scene.start("bounty", { tierId: input.tierId }));
+      this.showResultFailure(() => void this.finishBountyRound(input, won), () => startScene(this, "bounty", { tierId: input.tierId }), error, "bounty");
       return;
     }
     if (!this.scene.isActive()) return;
     rememberPlayerExp(settled.playerExp);
     // 입구로 돌아갈 때는 고르던 등급을 넘긴다.
-    const toBounty = (): void => { this.scene.start("bounty", { tierId: input.tierId }); };
+    const toBounty = (): void => { startScene(this, "bounty", { tierId: input.tierId }); };
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };
     const bountyTier = getBountyTier(input.tierId);
@@ -2700,7 +3119,7 @@ export class BattleScene extends Phaser.Scene {
     const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "bounty", tierId: input.tierId }, toBounty)) } : undefined;
     if (step.kind === "clear") {
       new StageCompletePopup(this, popups).open({
-        reward: { kind: "loot", items: currencyRecordToRewardItems({ gold: settled.goldEarned }) },
+        reward: { kind: "loot", items: dungeonRewardItems({ gold: settled.goldEarned }, settled.bonusItems) },
         replay, fighters, onOpenContribution: openContribution,
         onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });
@@ -2712,7 +3131,7 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
-      growth: this.defeatGrowth("party", () => { chosen = true; }),
+      growth: this.defeatGrowth(() => { chosen = true; }),
       replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
@@ -2722,20 +3141,33 @@ export class BattleScene extends Phaser.Scene {
    * 결투 결과. 도전권은 입장에서 썼으므로 다시 하기가 없고, 이기든 지든 휘장이 들어온다 — 진 판도
    * 같은 결산창(`defeat`)에 받은 휘장과 점수 변화가 선다. 닫으면 결투장으로 돌아간다.
    */
+  private async finishArena():Promise<void> {
+    if(this.battleInput.mode!=="duel" || !this.battleInput.arena)return;
+    const input=this.battleInput.arena,generation=this.combatGeneration;
+    try {
+      const status=await arenaCall("finish",{roomId:input.roomId});
+      if(!this.scene.isActive()||generation!==this.combatGeneration)return;
+      const r=status.room!;
+      const title=r.winner===null?t("arena.result.draw"):r.winner===input.side?t("arena.result.win"):t("arena.result.loss");
+      new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>startScene(this,input.practice?"friends":"arena"));
+    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>startScene(this,"arena"),error,"duel");}
+  }
+
   private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {
+    const generation = this.combatGeneration;
     const fighters = this.stageCompleteFighters();
     const popups = new PopupLayer(this, 2200);
     const openContribution = (onClosed: () => void): void => this.openContributionPopup(popups, onClosed);
     let settled;
     try {
       settled = await gameApi.resolveDuel({ requestId: input.requestId, won });
-    } catch {
-      if (!this.scene.isActive()) return;
-      this.showResultFailure(() => void this.finishDuel(input, won), () => this.scene.start("duel"));
+    } catch (error) {
+      if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+      this.showResultFailure(() => void this.finishDuel(input, won), () => startScene(this, "duel"), error, "duel");
       return;
     }
-    if (!this.scene.isActive()) return;
-    const toDuel = (): void => { this.scene.start("duel"); };
+    if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+    const toDuel = (): void => { startScene(this, "duel"); };
     let chosen = false;
     const go = (run: () => void) => () => { chosen = true; run(); };
     const items = currencyRecordToRewardItems({ duelEmblem: settled.duelEmblem, gems: settled.gems });
@@ -2751,16 +3183,16 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         { label: t("duel.result.toDuel"), onPress: go(toDuel) },
       ] },
-      standing, growth: this.defeatGrowth("duel", () => { chosen = true; }),
+      standing, growth: this.defeatGrowth(() => { chosen = true; }),
       fighters, onOpenContribution: openContribution, onConfirm,
     });
   }
 
   /**
    * 진 판의 **강해지는 길 타일**. 어느 길이 서는지는 편성 상태가 정하고(`growthPaths`), 모드마다 다른 것은
-   * 편성 바꾸기가 돌아가는 곳(`partyScene`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
+   * 편성 바꾸기가 돌아가는 곳(`defeatPartyRoute`)뿐이다. 고른 길이 있으면 판을 닫는 기본 길은 서지 않는다(`markChosen`).
    */
-  private defeatGrowth(partyScene: string, markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
+  private defeatGrowth(markChosen: () => void): { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void } {
     const paths = growthPaths({ party: session.party, relicProgress: session.relicProgress, runeInventory: session.runeInventory, archaeologyOpen: contentOpen("archaeology") });
     return {
       paths,
@@ -2771,7 +3203,7 @@ export class BattleScene extends Phaser.Scene {
           case "runeCraft": startScene(this, "relics", { openRelicId: path.relicId }); return;
           case "lab": startScene(this, "lab"); return;
           case "archaeology": startScene(this, "archaeology"); return;
-          case "party": startScene(this, partyScene); return;
+          case "party": { const route = defeatPartyRoute(this.battleInput as { mode: string; tierId?: string }); startScene(this, route.scene, route.data); return; }
         }
       },
     };
@@ -2782,11 +3214,14 @@ export class BattleScene extends Phaser.Scene {
    * 이긴·진 결과를 그리는 모든 모드가 같은 판을 쓴다.
    */
   private resultFailureUi?: Phaser.GameObjects.Container;
-  private showResultFailure(retry: () => void, leave: () => void): void {
+  private showResultFailure(retry: () => void, leave: () => void, error?: unknown, phase: BattleResultPhase = "stage"): void {
+    const failure = battleResultFailure(error, phase);
+    console.error("[battle-result]", { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId, clientVersion: packageInfo.version });
     this.resultFailureUi?.destroy(true);
     const ui = this.add.container(0, 0).setDepth(5000);
     ui.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
-    ui.add(this.add.text(BASE_WIDTH / 2, 900, t("battle.result.saveFailed"), textStyle({ role: "body", size: 30, color: COLOR.ink })).setOrigin(0.5));
+    ui.add(this.add.text(BASE_WIDTH / 2, 860, t(failure.key), textStyle({ role: "body", size: 30, color: COLOR.ink, align: "center", wrap: BASE_WIDTH - 160 })).setOrigin(0.5));
+    ui.add(this.add.text(BASE_WIDTH / 2, 935, `${failure.reference} · v${packageInfo.version}`, textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
     ui.add(new Button(this, BASE_WIDTH / 2, 1010, { width: 460, height: 100, label: t("battle.result.retry"), variant: "primary", onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; retry(); } }));
     ui.add(new Button(this, BASE_WIDTH / 2, 1140, { width: 460, height: 90, label: t("stageComplete.exit"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => { ui.destroy(true); this.resultFailureUi = undefined; leave(); } }));
     this.resultFailureUi = ui;
@@ -2801,7 +3236,7 @@ export class BattleScene extends Phaser.Scene {
   private stageCompleteFighters(): StageCompleteFighter[] {
     const mvpFighterId = this.contributionResult ? battleContributionMvp(this.contributionResult) : undefined;
     return this.state.fighters
-      .filter(({ side }) => side === "player")
+      .filter(({ side, summonOwnerId }) => side === "player" && summonOwnerId === null)
       .map((fighter) => ({ relicId: fighter.def.id, isMvp: fighter.id === mvpFighterId }));
   }
 
@@ -2862,7 +3297,7 @@ export class BattleScene extends Phaser.Scene {
       }).catch((error: unknown) => {
         // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.
         console.error("[expedition] 노드 결과 정산 실패", error);
-        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"));
+        if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"), error, "expedition");
       });
     }
   }

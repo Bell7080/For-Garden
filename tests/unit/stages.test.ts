@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { requiredBreakthroughForLevel } from "../../src/core/levelDesign";
+import { referenceEnemyLevel, requiredBreakthroughForLevel } from "../../src/core/levelDesign";
+import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
+import type { BattleStageDef } from "../../src/core/types";
 
 import { getRelic } from "../../src/data/relics";
-import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_STORY_STAGE, STAGES, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
+import { CHAPTERS, DAILY_RESTORATION, FIXED_STAGE_ENEMIES, SIDE_BATTLE_STAGE, SIDE_STORY_STAGE, STAGES, SUB_STAGES, SUB_STORY_GEM_REWARDS, getBattleStage, getStage, getStageEnemies } from "../../src/data/stages";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
-import { isStageUnlockedByProgress } from "../../src/core/stageProgress";
+import { isStageUnlockedByProgress, nextBattleStage } from "../../src/core/stageProgress";
 import { stageChapterNavigationLayout } from "../../src/ui/stageChapterLayout";
 import { BREAKTHROUGH_CAP, relicLevelCap } from "../../src/core/relicProgression";
 
 /** 스테이지 편성과 공개 성장 설계가 콘텐츠 수정 중 흐트러지지 않도록 고정한다. */
 describe("stage enemy design", () => {
   /** 판별 유니온 테스트에서 전투 데이터만 안전하게 추려낸다. */
-  const battles = STAGES.filter((stage) => stage.kind === "battle");
+  const battles = STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle" && !stage.sub);
   it("최초/반복 보상과 단일 일일 복원 3회 제한을 정적 데이터로 제공한다", () => {
     expect(battles[0].rewards).toMatchObject({ firstClearCheesecake: 30, repeatClearCheesecake: 10 });
     expect(DAILY_RESTORATION).toMatchObject({ id: "daily-restoration", maxEntriesPerUtcDay: 3, rewardCheesecake: 40 });
@@ -26,17 +28,17 @@ describe("stage enemy design", () => {
     const has = (id: string, currency: string) => rewardsOf(id).some((reward) => reward.kind === "currency" && reward.currency === currency);
     for (const stage of stages) {
       for (const base of ["cheesecake", "gold", "gems"]) expect(has(stage.id, base), `${stage.id} ${base}`).toBe(true);
-      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true);
+      expect(has(stage.id, "fossil"), `${stage.id} fossil`).toBe(stage.elite === true && stage.enemies.length === 1);
     }
     // 원석은 고고학이 주 수급처라 스토리는 2장부터 장마다 두 번만, 한 줌씩 맛보기로 준다.
     const rawStone = stages.filter((stage) => has(stage.id, "rawStone")).map(({ id }) => id);
-    expect(rawStone).toEqual(["2-1", "2-6", "3-1", "3-6"]);
+    expect(rawStone).toEqual(["2-1", "2-6", "3-1", "3-6", "4-1", "4-6"]);
     for (const id of rawStone) {
       const amount = rewardsOf(id).reduce((sum, reward) => reward.kind === "currency" && reward.currency === "rawStone" ? sum + reward.amount : sum, 0);
       expect(amount, id).toBeLessThanOrEqual(60);
     }
     const runes = stages.flatMap((stage) => rewardsOf(stage.id).flatMap((reward) => reward.kind === "rune" ? [{ id: stage.id, ...reward }] : []));
-    expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10"]);
+    expect(runes.map(({ id }) => id)).toEqual(["1-5", "1-10", "2-5", "2-10", "3-5", "3-10", "4-5", "4-10"]);
     // 영웅·전설은 두지 않는다 — 스토리는 주 수급처가 아니다.
     expect(runes.every(({ rarity }) => rarity === "uncommon" || rarity === "rare")).toBe(true);
     // 첫 룬은 특성이 없고, 장을 닫는 관문의 룬만 특성이 확정으로 붙는다.
@@ -93,7 +95,7 @@ describe("stage enemy design", () => {
       // 파티가 1장 중반부터 조이고 후반에 막히는 선이다.
       { 아모: [11, 0], 토비: [11, 0], 리파: [11, 0] },
       { 아모: [13, 0], 토비: [13, 0], 리파: [13, 0] },
-      { 토비: [15, 0] },
+      { 토비: [17, 0] },
       { 아모: [17, 0], 토비: [17, 0], 리파: [17, 0] },
       { 아모: [18, 0], 토비: [18, 0], 리파: [18, 0] },
       { 아모: [19, 0], 토비: [19, 0], 리파: [19, 0] },
@@ -127,7 +129,7 @@ describe("stage enemy design", () => {
      * 찾지 못한 개체가 `undefined`로 빠져 검사 자체가 사라진다. 구성과 무관한 검사로 바꾼다.
      */
     const finalEnemies = getStageEnemies(battles[29]);
-    expect(finalEnemies).toHaveLength(3);
+    expect(finalEnemies).toHaveLength(1);
     for (const enemy of finalEnemies) {
       expect(enemy.stats.hp, enemy.name).toBeGreaterThan(getRelic(enemy.id).stats.hp);
     }
@@ -176,7 +178,7 @@ describe("stage enemy design", () => {
   it("스테이지 사이에서 허용하는 차이는 레벨·돌파뿐이다", () => {
     // 태생 능력치나 스킬 보정을 스테이지에 두지 않는다는 계약이다. 유형이 주는 몫은 관문이
     // 아니라 `ENCOUNTER_ROLE` 한 표가 갖는다.
-    const allowed = ["relicId", "level", "breakthrough", "formationSlot"];
+    const allowed = ["relicId", "level", "breakthrough", "formationSlot", "elite"];
     for (const stage of battles) for (const enemy of stage.enemies) {
       expect(allowed).toEqual(expect.arrayContaining(Object.keys(enemy)));
       expect(Object.keys(enemy)).toEqual(expect.arrayContaining(["relicId", "level", "breakthrough", "formationSlot"]));
@@ -229,9 +231,10 @@ describe("stage enemy design", () => {
     for (const stage of battles) {
       for (const enemy of stage.enemies) expect(Number.isInteger(enemy.level), stage.id).toBe(true);
       if (stage.kind === "battle" && stage.elite === true) continue;
-      const level = Math.max(...stage.enemies.map((enemy) => enemy.level));
-      expect(level, stage.id).toBeGreaterThanOrEqual(previous);
-      previous = level;
+      // 태생 층이 높은 개체(회수조)는 같은 세기를 더 낮은 레벨로 서므로 기준(테러조) 눈금으로 되돌려 비교한다.
+      const level = Math.max(...stage.enemies.map((enemy) => referenceEnemyLevel(enemy.level, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1)));
+      expect(level + 0.6, stage.id).toBeGreaterThanOrEqual(previous);
+      previous = Math.max(previous, level);
     }
   });
 
@@ -279,8 +282,9 @@ describe("stage enemy design", () => {
   it("모든 전투는 중복 없는 formationSlot 0·1·2를 가지며 그 순서로 전투 복사본을 만든다", () => {
     for (const stage of battles) {
       const slots = stage.enemies.map(({ formationSlot }) => formationSlot);
-      // 셋이 서면 0·1·2를 나눠 갖고, 정예가 홀로 서면 가운데(1) 한 자리만 쓴다.
-      expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : [0, 1, 2]);
+      // 셋이 서면 0·1·2를 나눠 갖고, 정예가 홀로 서면 가운데(1) 한 자리만 쓴다. 정예 둘(2-7·2-9)은 둘만 쓴다.
+      if (stage.enemies.length === 2) expect(slots.every((slot) => slot >= 0 && slot <= 2), stage.id).toBe(true);
+      else expect([...slots].sort(), stage.id).toEqual(stage.enemies.length === 1 ? [1] : stage.enemies.length === 5 ? [0, 1, 2, 3, 4] : stage.enemies.length === 4 ? [0, 1, 2, 3] : [0, 1, 2]);
       expect(new Set(slots).size, stage.id).toBe(slots.length);
       const expectedIds = [...stage.enemies].sort((a, b) => a.formationSlot - b.formationSlot).map(({ relicId }) => relicId);
       expect(getStageEnemies(stage).map(({ id }) => id)).toEqual(expectedIds);
@@ -294,12 +298,29 @@ describe("stage enemy design", () => {
     }
   });
 
-  it("세 챕터의 본편 ID 30개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
-    expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10]);
-    expect(STAGES).toHaveLength(31);
-    expect(new Set(STAGES.map(({ id }) => id)).size).toBe(31);
+  it("네 챕터의 본편 ID 40개를 유일한 평탄 인덱스로 제공하고 알 수 없는 ID를 거부한다", () => {
+    expect(CHAPTERS.map(({ stages }) => stages.length)).toEqual([10, 10, 10, 10]);
+    expect(STAGES).toHaveLength(40 + SUB_STAGES.length);
+    expect(new Set(STAGES.map(({ id }) => id)).size).toBe(STAGES.length);
     expect(getStage("3-10").chapterOrder).toBe(10);
-    expect(() => getStage("4-1")).toThrow("알 수 없는 스테이지 id");
+    expect(() => getStage("5-1")).toThrow("알 수 없는 스테이지 id");
+  });
+
+  it("전투 서브는 젬뿐인 초회 보상이고 본편 진행·다음 단계에 끼지 않는다", () => {
+    const sub = SIDE_BATTLE_STAGE;
+    expect(sub).toMatchObject({ kind: "battle", sub: true, prerequisiteStageIds: ["1-8"] });
+    expect(stageFirstClearRewards(sub)).toEqual([{ kind: "currency", currency: "gems", amount: 50 }]);
+    expect(sub.rewards.repeatClearCheesecake).toBe(0);
+    // 모든 서브(이야기·전투, 어느 장이든)의 초회 젬은 50 하나다.
+    for (const gems of Object.values(SUB_STORY_GEM_REWARDS)) expect(gems).toBe(50);
+    // 아모·리파 정예 둘이 1-8(LV.19)보다 한 칸 낮은 LV.18로 선다.
+    expect(sub.enemies.map(({ relicId, level }) => [relicId, level])).toEqual([["amo", 18], ["ripa", 18]]);
+    expect(sub.elite).toBe(true);
+    // 선행 목록에 들지 않아 본편이 막히지 않고, 「다음 단계」는 본편의 다음이다.
+    expect(STAGES.some((stage) => stage.prerequisiteStageIds.includes(sub.id))).toBe(false);
+    expect(nextBattleStage(STAGES, "1-8", () => true)?.id).toBe("1-9");
+    expect(nextBattleStage(STAGES, sub.id, () => true)?.id).toBe("1-9");
+    expect(nextBattleStage(STAGES, "4-10", () => true)).toBeUndefined();
   });
 
   it("1-5 전에는 서브 서사를 잠그고 이후에는 1-6과 함께 독립적으로 연다", () => {

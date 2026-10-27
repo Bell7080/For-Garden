@@ -1,0 +1,20 @@
+{
+  "checkedOn": "2026-10-26",
+  "fullSuite": {
+    "files": 400,
+    "passed": 4765,
+    "skipped": 1,
+    "environmentFailures": 4,
+    "environmentFailure": "spawnSync unzip EPERM"
+  },
+  "failedFileRecheck": {
+    "file": "tests/unit/dianPuppetAssets.test.ts",
+    "passed": 4
+  },
+  "requestReceiptAndHandlerTests": 25,
+  "isolatedPostgresIntegration": "passed",
+  "productionBuild": "passed",
+  "serverBuild": "passed",
+  "repositoryAndPublicArtifactFindings": 0,
+  "deployed": false
+}

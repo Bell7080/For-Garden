@@ -1,3 +1,4 @@
+import { showStorySaveFailure } from "./storySaveFailure";
 import Phaser from "phaser";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
@@ -52,7 +53,7 @@ export class InteractionJournalPopup {
 
   /** 일반 본문은 공용 쪽지에서, 분기형 본문은 기존 대사층과 StoryManager에서 연다. */
   private openJournal(journal: InteractionJournal): void {
-    this.manager.markJournalRead(journal.id);
+    void this.manager.markJournalRead(journal.id).catch(() => undefined);
     if (journal.body) {
       this.popups.open({ width: 860, height: 620, title: journal.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
       return;
@@ -71,11 +72,15 @@ export class InteractionJournalPopup {
   private advance(choice?: DialogueChoice): void {
     const active = this.active;
     if (!active) return;
+    const previousNode = active.flow.current.id;
     const result = active.flow.advance(choice?.id);
     const storyId = active.journal.dialogueStory?.id;
     if (!storyId) return;
-    if (result.effect) storyManager.applyEffect(storyId, result.effect);
-    if (result.completed) { storyManager.complete(storyId); this.active = undefined; return; }
+    if (choice && (result.completed || result.node?.id !== previousNode)) void storyManager.applyChoice(storyId, previousNode, choice.id).catch(() => undefined);
+    if (result.completed) {
+      const finish = (): void => { void storyManager.complete(storyId).then(() => { if (this.active === active) this.active = undefined; }).catch(() => showStorySaveFailure(this.scene, this.popups, finish)); };
+      finish(); return;
+    }
     // 후속 표시 완료만 흐름을 다시 열어 Puppet 교체와 빠른 입력 사이의 경쟁을 차단한다.
     void active.layer.show(result.node!).finally(() => active.flow.markCurrentNodeReady());
   }

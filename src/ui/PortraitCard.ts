@@ -20,6 +20,12 @@ export interface PortraitCardOptions {
   width: number;
   height: number;
   /**
+   * 원화를 카드를 만들 때 바로 올리지 않고 `showPortrait()`가 불릴 때 올린다. 카드가 수십 장
+   * 한꺼번에 서는 긴 격자(도감)에서 화면 밖 카드까지 전신 원화를 GPU에 올리면 한 장 6.5MB씩
+   * 200MB 안팎이 되어 모바일 탭이 죽는다. 보이는 줄만 올리고 멀어진 줄은 `hidePortrait()`로 내린다.
+   */
+  deferPortrait?: boolean;
+  /**
    * 기존 무스킨 호출부의 기본 원화 키. `relicId`나 이미 결정된 `asset`이 있으면 그 값을
    * 우선한다. 외형 선택은 manager/resolver가 소유하고 카드는 결과만 그린다.
    */
@@ -138,6 +144,7 @@ interface ManagedPortraitOverlay extends PortraitAlphaOverlay {
   alpha: number;
   radius: number;
   ratio: number;
+  paintedRatio?: number;
   head?: Phaser.GameObjects.Image;
   headMask: Phaser.GameObjects.Graphics;
 }
@@ -233,6 +240,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   private readonly notchMask: Phaser.GameObjects.Graphics;
   /** 원화를 검게 복제해 머리만 눌러 주는 선택 표시다. 원화가 늦게 오면 그때 만들어진다. */
   private selectedHeadShade?: Phaser.GameObjects.Image;
+  /** 파견 덮개의 몸통 면. 돌출 머리 몫(`awayHeadShade`)은 원화가 올라온 뒤에 이 면 바로 위에 낀다. */
+  private awayVeil?: Phaser.GameObjects.Graphics;
+  private awayHeadShade?: Phaser.GameObjects.Image;
   /** 발광·확대와 함께 선택이 '눌린 면'으로 읽히게 하는 선택형 어두운 면이다. */
   private readonly selectedOverlay: Phaser.GameObjects.Graphics;
   private readonly maskOffsetY: number;
@@ -244,6 +254,12 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 원화가 비동기로 도착하기 전에도 오버레이 API를 만들 수 있도록 요청을 보관한다. */
   private readonly managedOverlays: ManagedPortraitOverlay[] = [];
   private portraitPlacement?: PortraitPlacement;
+  /** 원화를 올려 둔 동안 그 묶음을 붙잡는 표시 객체. 내릴 때 이 객체를 부수면 묶음이 놓인다. */
+  private portraitHolder?: Phaser.GameObjects.Container;
+  /** 올리는 중이거나 올라온 원화가 있는가. */
+  private portraitShown = false;
+  /** 늦게 끝난 옛 요청이 새 요청을 덮지 않게 하는 번호. */
+  private portraitRun = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: PortraitCardOptions) {
     super(scene, x, y);
@@ -483,14 +499,48 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       this.notchMask.destroy();
       // 마스크 그래픽은 display 컨테이너 밖에 있으므로 카드가 생명주기를 직접 끝낸다.
       for (const overlay of this.managedOverlays) overlay.headMask.destroy();
+      this.portraitHolder?.destroy();
+      this.portraitHolder = undefined;
     });
-    void this.loadPortrait().catch(() => {
-      if (this.disposed) return;
+    if (!options.deferPortrait) this.showPortrait();
+  }
+
+  /** 원화를 올린다. 이미 올렸거나 올리는 중이면 아무것도 하지 않는다. */
+  public showPortrait(): void {
+    if (this.portraitShown || this.disposed) return;
+    this.portraitShown = true;
+    const run = ++this.portraitRun;
+    const holder = this.scene.make.container({}, false);
+    this.portraitHolder = holder;
+    const { width } = this.options;
+    void this.loadPortrait(holder, run).catch(() => {
+      if (this.disposed || run !== this.portraitRun) return;
       // Puppet 텍스처 실패가 전체 결과 그리드를 깨지 않도록 카드 안에 읽을 수 있는 폴백을 둔다.
       const fallback = textStyle({ role: "display", size: Math.min(34, width / 8), color: COLOR.inkDim, align: "center", wrap: width - 32 });
-      this.addAt(scene.add.text(0, bodyCenter, options.locked ? "?" : (options.label ?? "RELIC"), fallback).setOrigin(0.5), this.getIndex(this.chip) + 1);
+      this.addAt(this.scene.add.text(0, 0, this.options.locked ? "?" : (this.options.label ?? "RELIC"), fallback).setOrigin(0.5), this.getIndex(this.chip) + 1);
     });
   }
+
+  /**
+   * 원화를 GPU에서 내린다. 원화 복제(그림자·선택 머리·덮개 머리)와 묶음 붙잡기를 함께 푼다.
+   * 칩·이름·레벨은 그대로 남아 카드는 빈 얼굴로 서 있다가 `showPortrait()`로 다시 채워진다.
+   */
+  public hidePortrait(): void {
+    if (!this.portraitShown || this.disposed) return;
+    this.portraitShown = false;
+    this.portraitRun += 1;
+    for (const image of this.portraits) image.destroy();
+    this.portraits.length = 0;
+    this.selectedHeadShade = undefined;
+    this.awayHeadShade = undefined;
+    for (const overlay of this.managedOverlays) { overlay.head?.destroy(); overlay.head = undefined; }
+    this.portraitPlacement = undefined;
+    this.portraitHolder?.destroy();
+    this.portraitHolder = undefined;
+  }
+
+  /** 원화가 올라가 있거나 올라오는 중인가. */
+  public get portraitActive(): boolean { return this.portraitShown; }
 
   /**
    * 발광.
@@ -545,10 +595,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    * 만큼만 그림 영역을 더 잡는다. 그림자는 같은 잘라내기를 쓰는 복제본을 검게 칠한 것이라
    * 캐릭터가 늘어도 추가 아트가 필요 없다.
    */
-  private async loadPortrait(): Promise<void> {
+  private async loadPortrait(holder: Phaser.GameObjects.Container, run: number): Promise<void> {
     const asset = resolvedPortraitAsset(this.options);
-    const { key, anchors } = await loadPortraitTexture(this.scene, asset, this);
-    if (this.disposed) return;
+    const { key, anchors } = await loadPortraitTexture(this.scene, asset, holder);
+    if (this.disposed || run !== this.portraitRun) return;
 
     const { width, height } = this.options;
     const frameHeight = this.bodyHeight + this.overhang;
@@ -612,6 +662,7 @@ export class PortraitCard extends Phaser.GameObjects.Container {
       crop: { x: card.cropX, y: card.cropY, width: card.cropWidth, height: card.cropHeight },
     };
     for (const overlay of this.managedOverlays) this.attachOverlayHead(overlay);
+    this.attachAwayHead();
     // 칩 바로 위, 아래 어둠보다 아래에 끼운다. 자리를 숫자로 박아 두면 발광 같은 레이어가
     // 하나 늘 때마다 그림이 칩 밑으로 숨는다. 칩을 기준으로 찾는다.
     const above = this.getIndex(this.backdrop ?? this.chip) + 1;
@@ -685,6 +736,10 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   /** 몸통과 머리 마스크에 완전히 같은 12시 시작·시계 방향 부채꼴을 그린다. */
   private paintMaskOverlay(overlay: ManagedPortraitOverlay, ratio: number): void {
     overlay.ratio = Phaser.Math.Clamp(ratio, 0, 1);
+    // 게이지가 멈췄거나 0/100%에 머무는 동안 같은 부채꼴을 다시 만들지 않는다.
+    // 부모 이동·카드 눌림에 따른 월드 마스크 위치는 그대로 동기화한다.
+    if (overlay.paintedRatio === overlay.ratio) { this.syncMask(); return; }
+    overlay.paintedRatio = overlay.ratio;
     overlay.body.clear();
     overlay.headMask.clear();
     if (overlay.ratio >= 1) return;
@@ -731,14 +786,36 @@ export class PortraitCard extends Phaser.GameObjects.Container {
    */
   setAwayOverlay(label: string, remaining: string): Phaser.GameObjects.Text {
     const veil = this.scene.add.graphics();
-    veil.fillStyle(0x05070a, 0.66);
+    veil.fillStyle(AWAY_VEIL.color, AWAY_VEIL.alpha);
     veil.fillPoints(toPoints(this.chipShape), true);
+    this.awayVeil = veil;
     const title = this.scene.add.text(0, -20, label, textStyle({ role: "display", size: Math.round(this.bodyHeight * 0.13), color: "#8fd3f5" })).setOrigin(0.5);
     title.setShadow(0, 2, "#000000", 6, true, true);
     const clock = this.scene.add.text(0, 22, remaining, textStyle({ role: "emphasis", size: Math.round(this.bodyHeight * 0.11), color: "#8fd3f5" })).setOrigin(0.5);
     clock.setShadow(0, 2, "#000000", 6, true, true);
     this.add([veil, title, clock]);
+    this.attachAwayHead();
     return clock;
+  }
+
+  /**
+   * 파견 덮개가 칩 윗변 밖으로 솟은 머리도 눌러 주게 한다.
+   *
+   * 몸통 면(`chipShape`)은 윗변이 닫혀 있어 머리 홈 위로 빠져나온 정수리는 덮지 못한다. 선택 표시와
+   * 같은 방법으로 원화를 검게 복제해 홈 안에서만 보이게 하면 머리 모양 그대로 눌리고 그 옆의
+   * 투명한 빈자리는 밝게 남는다. 원화가 덮개보다 늦게 오면 그때 만들어진다.
+   */
+  private attachAwayHead(): void {
+    if (this.awayHeadShade || !this.awayVeil || !this.portraitPlacement || this.disposed) return;
+    const placement = this.portraitPlacement;
+    const head = this.scene.add.image(placement.x, placement.y, placement.key)
+      .setOrigin(0, 0).setScale(placement.scale).setTint(AWAY_VEIL.color).setAlpha(AWAY_VEIL.alpha);
+    head.setCrop(placement.crop.x, placement.crop.y, placement.crop.width, placement.crop.height);
+    head.setMask(this.notchMask.createGeometryMask());
+    this.awayHeadShade = head;
+    this.portraits.push(head);
+    this.addAt(head, this.getIndex(this.awayVeil) + 1);
+    this.syncMask();
   }
 
   /**
@@ -800,6 +877,9 @@ export class PortraitCard extends Phaser.GameObjects.Container {
   }
 
 }
+
+/** 다른 곳에 나가 있는 카드를 덮는 어둠. 몸통 면과 머리 복제가 같은 값을 읽는다. */
+const AWAY_VEIL = { color: 0x05070a, alpha: 0.66 } as const;
 
 /** 평평한 좌표 배열을 Phaser가 받는 점 목록으로 바꾼다. */
 function toGeomPoints(flat: number[]): Phaser.Geom.Point[] {

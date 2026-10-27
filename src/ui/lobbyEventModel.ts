@@ -1,3 +1,4 @@
+import type { AttendanceTrackDto } from "../api/contracts";
 import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
 
 /**
@@ -10,6 +11,23 @@ import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
 /** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트는 서지 않는다. */
 export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS): LobbyEventDef[] {
   return events.filter((event) => Date.parse(event.startsAt) <= now && now < Date.parse(event.endsAt));
+}
+
+/**
+ * 판에 서는 한 장 — 출석(신규·정규)이 먼저, 그 아래 기간 이벤트가 선다.
+ *
+ * 출석은 매일 누르러 오는 칸이라 맨 위에 둔다. 출석이 서는지는 서버가 정하고(신규는 끝나면 사라진다)
+ * 기간 이벤트는 정의의 기간으로 거른다.
+ */
+export type LobbyEventEntry =
+  | { readonly kind: "attendance"; readonly track: AttendanceTrackDto }
+  | { readonly kind: "event"; readonly event: LobbyEventDef };
+
+export function lobbyEventEntries(tracks: readonly AttendanceTrackDto[], now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS): LobbyEventEntry[] {
+  return [
+    ...tracks.map((track) => ({ kind: "attendance", track }) as const),
+    ...activeLobbyEvents(now, events).map((event) => ({ kind: "event", event }) as const),
+  ];
 }
 
 /** 남은 기간을 한 단위로 줄인다 — 하루 넘게 남으면 일, 한 시간 넘게면 시간, 그 밑은 분(최소 1). */
@@ -30,11 +48,14 @@ const BASE = {
   width: 940,
   /** 좌우 안쪽 여백 — 몸판의 깎인 왼쪽 위 모서리 안으로 카드가 들게 한다. */
   padX: 60,
-  /** 제목표가 윗변에 걸터앉으므로 첫 카드는 그보다 아래에서 시작한다. */
-  topPad: 104,
+  /**
+   * 제목표가 윗변에 걸터앉고, 첫 카드의 SD 머리가 윗변 밖으로 빠져나오므로 그만큼 더 내려 시작한다.
+   */
+  topPad: 168,
   bottomPad: 84,
-  cardHeight: 230,
-  cardGap: 28,
+  cardHeight: 220,
+  /** 출격판처럼 칸 사이를 넉넉히 띄운다 — 아랫칸 SD의 머리가 윗칸 밑변에 닿지 않는다. */
+  cardGap: 88,
   /** 카드가 하나도 없을 때도 판이 납작하게 찌그러지지 않는 최소 칸 수. */
   minRows: 2,
 } as const;
@@ -65,4 +86,13 @@ export function lobbyEventListLayout(count: number, capacity = count): LobbyEven
     cardHeight: BASE.cardHeight,
     centers: Array.from({ length: count }, (_, index) => start + BASE.cardHeight / 2 + index * (BASE.cardHeight + BASE.cardGap)),
   };
+}
+
+
+export function lobbyEventEntryId(entry: LobbyEventEntry): string {
+  return entry.kind === "attendance" ? `attendance:${entry.track.id}` : entry.event.id;
+}
+/** 받을 것이 남은 카드를 위로 모으고 각 묶음 안에서는 원래 순서를 지킨다. */
+export function prioritizeLobbyEvents(entries: readonly LobbyEventEntry[], actionable: ReadonlySet<string>): LobbyEventEntry[] {
+  return [...entries].sort((a, b) => Number(actionable.has(lobbyEventEntryId(b))) - Number(actionable.has(lobbyEventEntryId(a))));
 }

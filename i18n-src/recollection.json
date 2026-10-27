@@ -1,0 +1,632 @@
+{
+  "lobby.menu.recollection": [
+    "回顾",
+    "ความทรงจำ",
+    "Hồi tưởng",
+    "Kenangan",
+    "Recuerdos",
+    "Recordações",
+    "Rückblicke",
+    "Воспоминания"
+  ],
+  "lobby.menu.achievement": [
+    "成就",
+    "ความสำเร็จ",
+    "Thành tựu",
+    "Pencapaian",
+    "Logros",
+    "Conquistas",
+    "Erfolge",
+    "Достижения"
+  ],
+  "recollection.title": [
+    "回顾",
+    "ความทรงจำ",
+    "Hồi tưởng",
+    "Kenangan",
+    "Recuerdos",
+    "Recordações",
+    "Rückblicke",
+    "Воспоминания"
+  ],
+  "recollection.tab.chapter1": [
+    "第1章",
+    "บทที่ 1",
+    "Chương 1",
+    "Bab 1",
+    "Capítulo 1",
+    "Capítulo 1",
+    "Kapitel 1",
+    "Глава 1"
+  ],
+  "recollection.tab.chapter2": [
+    "第2章",
+    "บทที่ 2",
+    "Chương 2",
+    "Bab 2",
+    "Capítulo 2",
+    "Capítulo 2",
+    "Kapitel 2",
+    "Глава 2"
+  ],
+  "recollection.tab.chapter3": [
+    "第3章",
+    "บทที่ 3",
+    "Chương 3",
+    "Bab 3",
+    "Capítulo 3",
+    "Capítulo 3",
+    "Kapitel 3",
+    "Глава 3"
+  ],
+  "recollection.tab.chapter4": [
+    "第4章",
+    "บทที่ 4",
+    "Chương 4",
+    "Bab 4",
+    "Capítulo 4",
+    "Capítulo 4",
+    "Kapitel 4",
+    "Глава 4"
+  ],
+  "recollection.tab.side": [
+    "支线故事",
+    "เรื่องเสริม",
+    "Ngoại truyện",
+    "Kisah sampingan",
+    "Historias secundarias",
+    "Histórias paralelas",
+    "Nebengeschichten",
+    "Побочные истории"
+  ],
+  "recollection.phase.pre": [
+    "出击前",
+    "ก่อนออกปฏิบัติการ",
+    "Trước xuất kích",
+    "Sebelum berangkat",
+    "Antes de salir",
+    "Antes da saída",
+    "Vor dem Einsatz",
+    "Перед вылазкой"
+  ],
+  "recollection.phase.post": [
+    "战斗后",
+    "หลังต่อสู้",
+    "Sau trận chiến",
+    "Setelah pertempuran",
+    "Después del combate",
+    "Após a batalha",
+    "Nach dem Kampf",
+    "После боя"
+  ],
+  "recollection.locked": [
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???"
+  ],
+  "recollection.title.openingTrain": [
+    "运输列车",
+    "รถไฟขนส่ง",
+    "Chuyến tàu vận chuyển",
+    "Kereta Pengangkut",
+    "El tren de transporte",
+    "O trem de transporte",
+    "Der Transportzug",
+    "Транспортный поезд"
+  ],
+  "recollection.title.openingRetreat": [
+    "共灭的撤退",
+    "การถอยของกลุ่มทำลายล้าง",
+    "Cuộc rút lui của Hủy diệt",
+    "Mundurnya Annihilation",
+    "La retirada de Aniquilación",
+    "A retirada da Aniquilação",
+    "Der Rückzug der Vernichtung",
+    "Отступление Уничтожения"
+  ],
+  "recollection.title.greenhouse": [
+    "温室南瓜骚动",
+    "ฟักทองวุ่นวายในเรือนกระจก",
+    "Rắc rối bí ngô nhà kính",
+    "Kekacauan Labu di Rumah Kaca",
+    "Lío de calabazas en el invernadero",
+    "Confusão de abóboras na estufa",
+    "Kürbischaos im Gewächshaus",
+    "Тыквенная суматоха в теплице"
+  ],
+  "recollection.title.greatAuk": [
+    "大海雀报告",
+    "รายงานนกเกรตออค",
+    "Báo cáo chim anca lớn",
+    "Laporan Auk Besar",
+    "El informe del alca gigante",
+    "O relatório do arau-gigante",
+    "Der Riesenalkbericht",
+    "Отчёт о бескрылой гагарке"
+  ],
+  "recollection.summary.opening-train": [
+    "驶向永恒城的运输列车响起警报。",
+    "สัญญาณเตือนดังบนรถไฟมุ่งสู่อีเทอร์นัลซิตี",
+    "Chuông báo động vang trên tàu đến Thành phố Vĩnh hằng.",
+    "Alarm berbunyi di kereta menuju Eternal City.",
+    "Una alarma suena en el tren rumbo a Ciudad Eterna.",
+    "Um alarme soa no trem rumo à Cidade Eterna.",
+    "Im Transportzug nach Eternal City ertönt ein Alarm.",
+    "В поезде до Вечного города звучит тревога."
+  ],
+  "recollection.summary.opening-retreat": [
+    "共灭三人组留下不甘的喊声，飞向天空。",
+    "สามสหายทำลายล้างลอยฟ้าทิ้งเสียงตะโกนเสียดาย",
+    "Bộ ba Hủy diệt bay lên trời, để lại tiếng kêu tiếc nuối.",
+    "Trio Annihilation terbang sambil berseru kecewa.",
+    "El trío de Aniquilación sale volando entre gritos de pesar.",
+    "O trio da Aniquilação sai voando, deixando um grito de pesar.",
+    "Das Vernichtungstrio fliegt mit einem letzten Ruf davon.",
+    "Троица Уничтожения улетает в небо с досадным криком."
+  ],
+  "recollection.summary.stage-1-2-post": [
+    "从玻璃屋顶摔下的三人组说漏了柯玛的名字。",
+    "สามสหายตกจากหลังคากระจกแล้วหลุดชื่อ โคมะ",
+    "Bộ ba rơi qua mái kính rồi buột miệng nhắc Koma.",
+    "Trio itu jatuh dari atap kaca dan membocorkan nama Koma.",
+    "Tras caer del techo de cristal, el trío menciona a Koma.",
+    "Após cair do teto de vidro, o trio deixa escapar o nome Koma.",
+    "Nach dem Sturz durchs Glasdach verrät das Trio den Namen Koma.",
+    "Упав со стеклянной крыши, троица проговаривается о Кома."
+  ],
+  "recollection.summary.stage-1-4-pre": [
+    "多蒂解读标本库中留下的手印。",
+    "โดดีอ่านรอยมือในคลังตัวอย่าง",
+    "Dodi đọc dấu tay còn lại trong kho mẫu vật.",
+    "Dodi membaca jejak tangan di gudang spesimen.",
+    "Dodi interpreta las huellas del almacén de especímenes.",
+    "Dodi interpreta as marcas de mãos no depósito de espécimes.",
+    "Dodi deutet die Handabdrücke im Exemplarlager.",
+    "Доди изучает следы рук в хранилище экземпляров."
+  ],
+  "recollection.summary.stage-1-5-pre": [
+    "独自抢先赶来的托比碰了屏障装置。",
+    "โทบีวิ่งล่วงหน้ามาคนเดียวแล้วแตะเครื่องกั้น",
+    "Toby chạy trước một mình rồi chạm thiết bị chắn.",
+    "Toby berlari sendirian dan menyentuh alat penghalang.",
+    "Toby se adelanta y toca el dispositivo de barrera.",
+    "Toby se adianta sozinha e toca o dispositivo de barreira.",
+    "Toby eilt allein voraus und berührt das Barrieregerät.",
+    "Тоби бежит вперёд и задевает устройство барьера."
+  ],
+  "recollection.summary.stage-1-5-post": [
+    "托比偷偷扶正倒下的设备时被发现了。",
+    "โทบีถูกจับได้ขณะแอบตั้งอุปกรณ์ที่ล้ม",
+    "Toby bị bắt gặp lén dựng lại thiết bị đã đổ.",
+    "Toby ketahuan diam-diam menegakkan peralatan yang jatuh.",
+    "Sorprenden a Toby recolocando el equipo caído.",
+    "Toby é pega recolocando o equipamento derrubado.",
+    "Toby wird beim heimlichen Aufrichten der Geräte erwischt.",
+    "Тоби замечают за попыткой незаметно поднять оборудование."
+  ],
+  "recollection.summary.stage-1-6-post": [
+    "修复的天线首次传来城市的声音。",
+    "เสียงเมืองส่งผ่านเสาอากาศที่ซ่อมแล้วเป็นครั้งแรก",
+    "Giọng nói thành phố lần đầu truyền qua ăng-ten vừa khôi phục.",
+    "Suara kota pertama kali terdengar lewat antena yang pulih.",
+    "La voz de la ciudad llega por primera vez a la antena reparada.",
+    "A voz da cidade chega pela primeira vez à antena restaurada.",
+    "Durch die reparierte Antenne erklingt erstmals die Stimme der Stadt.",
+    "Через восстановленную антенну впервые слышен голос города."
+  ],
+  "recollection.summary.stage-1-7-pre": [
+    "面对成堆的废弃标记，阿莫沉默了。",
+    "อาโมเงียบลงหน้ากองป้ายทิ้ง",
+    "Amo ít nói hẳn trước đống thẻ thải bỏ.",
+    "Amo terdiam di depan tumpukan label pembuangan.",
+    "Amo calla ante una pila de etiquetas de descarte.",
+    "Amo fica calada diante das etiquetas de descarte.",
+    "Vor einem Haufen Entsorgungsmarken verstummt Amo.",
+    "У груды меток утилизации Амо становится молчаливее."
+  ],
+  "recollection.summary.stage-1-8-side-pre": [
+    "阿莫与莉帕守着水闸下的补给箱拦路。",
+    "อาโมและริปาขวางทางหน้ากล่องเสบียงใต้ประตูน้ำ",
+    "Amo và Ripa chặn đường trước thùng tiếp tế dưới cống.",
+    "Amo dan Ripa menghalangi peti suplai di bawah pintu air.",
+    "Amo y Ripa bloquean la caja de suministros bajo la compuerta.",
+    "Amo e Ripa bloqueiam o caminho até os suprimentos sob a comporta.",
+    "Amo und Ripa versperren den Weg zur Vorratskiste unter der Schleuse.",
+    "Амо и Рипа преграждают путь к ящику под шлюзом."
+  ],
+  "recollection.summary.stage-1-8-side-post": [
+    "箱子里没有零食，只有闪亮的碎片。",
+    "ในกล่องมีแต่เศษระยิบระยับแทนขนม",
+    "Thùng mở ra chỉ có mảnh lấp lánh, không phải đồ ăn vặt.",
+    "Peti yang dibuka berisi pecahan berkilau, bukan camilan.",
+    "La caja contiene fragmentos brillantes en lugar de aperitivos.",
+    "A caixa contém fragmentos brilhantes em vez de lanches.",
+    "In der Kiste liegen glitzernde Splitter statt Snacks.",
+    "В открытом ящике вместо угощения лежат блестящие осколки."
+  ],
+  "recollection.summary.stage-1-8-pre": [
+    "在排水道遇见回收补给的蒂娅。",
+    "พบเทียเก็บเสบียงในทางระบายน้ำ",
+    "Bạn gặp Tia đang thu gom tiếp tế trong cống.",
+    "Kamu bertemu Tia yang mengumpulkan suplai di drainase.",
+    "Encuentras a Tia recogiendo suministros en el desagüe.",
+    "Você encontra Tia recolhendo suprimentos no canal.",
+    "Du triffst Tia beim Sammeln von Vorräten im Abwasserkanal.",
+    "В водоотводе вы встречаете Тиа, собирающую припасы."
+  ],
+  "recollection.summary.stage-1-9-pre": [
+    "封锁门另一侧有人敲门。",
+    "มีใครเคาะจากหลังประตูปิดผนึก",
+    "Có ai đó gõ từ bên kia cửa niêm phong.",
+    "Seseorang mengetuk dari balik pintu tersegel.",
+    "Alguien golpea al otro lado de la puerta sellada.",
+    "Alguém bate do outro lado da porta selada.",
+    "Hinter der versiegelten Tür klopft jemand.",
+    "За запечатанной дверью кто-то стучит."
+  ],
+  "recollection.summary.stage-1-9-post": [
+    "脱困的欧比分享剩余库存。",
+    "โอบิที่ถูกขังแบ่งของที่เหลือให้",
+    "Obi vừa thoát ra chia sẻ số hàng còn lại.",
+    "Obi yang tadinya terkurung membagikan stok tersisa.",
+    "Obi sale del encierro y comparte las existencias restantes.",
+    "Após sair do confinamento, Obi divide o estoque restante.",
+    "Aus der Gefangenschaft befreit teilt Obi die restlichen Vorräte.",
+    "Освобождённая Оби делится оставшимися запасами."
+  ],
+  "recollection.summary.stage-1-10-pre": [
+    "在边界门面对揭下面纱的柯玛。",
+    "เผชิญหน้ากับโคมะที่เปิดเผยตัวตรงประตูเขต",
+    "Tại cổng ranh giới, bạn đối diện Koma đã lộ diện.",
+    "Di gerbang batas, kamu menghadapi Koma yang membuka tabir.",
+    "En la puerta limítrofe, te enfrentas a Koma sin velo.",
+    "No portão da fronteira, você enfrenta Koma sem o véu.",
+    "Am Grenztor stehst du Koma ohne Schleier gegenüber.",
+    "У пограничных ворот вы встречаете Кома без покрова."
+  ],
+  "recollection.summary.stage-1-10-post": [
+    "研究员的第一句话之后，蕾克希娅现身了。",
+    "คำแรกของนักวิจัย แล้วเร็กเซียก็ปรากฏตัว",
+    "Lời đầu của nhà nghiên cứu, rồi Rexia xuất hiện.",
+    "Kata pertama sang Periset, lalu Rexia muncul.",
+    "Las primeras palabras del investigador y la aparición de Rexia.",
+    "As primeiras palavras do pesquisador, e Rexia aparece.",
+    "Die ersten Worte des Forschers, dann erscheint Rexia.",
+    "Первые слова исследователя — и появляется Рексия."
+  ],
+  "recollection.summary.stage-2-1-pre": [
+    "进入边界门，追寻柯玛足迹消失的地方。",
+    "ตามรอยโคมะที่หยุดลงด้านในประตูเขต",
+    "Trong cổng ranh giới, bạn theo dấu chân Koma đến nơi chúng dừng lại.",
+    "Di dalam gerbang, kamu menelusuri tempat jejak Koma berhenti.",
+    "Dentro de la puerta, sigues las huellas de Koma hasta su final.",
+    "Dentro do portão, você segue até onde as pegadas de Koma param.",
+    "Hinter dem Grenztor folgst du dem Ende von Komas Spuren.",
+    "За воротами вы идёте туда, где обрываются следы Кома."
+  ],
+  "recollection.summary.stage-2-2-post": [
+    "托比启动停下的生产线，箱内的样机显露出来。",
+    "โทบีเปิดสายงานที่หยุดไว้จนเผยต้นแบบในกล่อง",
+    "Toby khởi động dây chuyền, để lộ nguyên mẫu trong thùng.",
+    "Toby menyalakan lini yang berhenti dan memperlihatkan prototipe.",
+    "Toby reactiva la línea y descubre un prototipo en la caja.",
+    "Toby religa a linha e revela um protótipo na caixa.",
+    "Toby startet die Anlage und enthüllt einen Prototyp in der Kiste.",
+    "Тоби запускает линию, открывая прототип в ящике."
+  ],
+  "recollection.summary.stage-2-4-pre": [
+    "中继室恢复照明，三人组就在眼前。",
+    "ไฟห้องถ่ายทอดกลับมาติด พร้อมสามสหายตรงหน้า",
+    "Đèn phòng tiếp sóng bật lại, bộ ba đã ở ngay trước mắt.",
+    "Lampu ruang relai menyala, dan trio itu ada di depanmu.",
+    "Vuelve la luz a la sala de relés y el trío aparece ante ti.",
+    "A luz volta à sala de retransmissão, e o trio está à sua frente.",
+    "Im Relaisraum geht das Licht an, direkt vor dir steht das Trio.",
+    "В релейной комнате загорается свет, и перед вами стоит троица."
+  ],
+  "recollection.summary.stage-2-5-pre": [
+    "阿莫独自守在站台尽头挡住铁轨。",
+    "อาโมขวางรางอยู่คนเดียวที่ปลายชานชาลา",
+    "Amo một mình chặn đường ray cuối sân ga.",
+    "Amo sendirian menghalangi rel di ujung peron.",
+    "Amo bloquea sola las vías al final del andén.",
+    "Amo bloqueia sozinha os trilhos no fim da plataforma.",
+    "Amo versperrt allein die Gleise am Ende des Bahnsteigs.",
+    "В конце платформы Амо одна преграждает пути."
+  ],
+  "recollection.summary.stage-2-5-post": [
+    "战斗结束的站台上，阿莫拉起头巾。",
+    "หลังต่อสู้บนชานชาลา อาโมดึงฮู้ดขึ้น",
+    "Sau trận chiến trên sân ga, Amo kéo mũ trùm lên.",
+    "Usai pertempuran di peron, Amo menaikkan tudung.",
+    "Tras el combate, Amo se sube la capucha en el andén.",
+    "Após a luta, Amo levanta o capuz na plataforma.",
+    "Nach dem Kampf zieht Amo am Bahnsteig die Kapuze hoch.",
+    "После боя на платформе Амо поднимает капюшон."
+  ],
+  "recollection.summary.stage-2-6-post": [
+    "屏息穿过无人生产线的阴影。",
+    "ย่องเงียบผ่านเงาสายการผลิตไร้คน",
+    "Bạn lặng lẽ đi qua bóng tối của dây chuyền không người.",
+    "Kamu menyusuri bayangan lini produksi tanpa awak dengan senyap.",
+    "Avanzas en silencio entre las sombras de la línea automática.",
+    "Você passa em silêncio pelas sombras da linha sem operadores.",
+    "Du schleichst durch die Schatten der unbemannten Fertigung.",
+    "Вы бесшумно проходите в тени автоматической линии."
+  ],
+  "recollection.summary.stage-2-7-pre": [
+    "门关上了，研究员独自被困在隔间。",
+    "ประตูปิดขังนักวิจัยไว้ในห้องลำพัง",
+    "Cửa đóng lại, nhốt nhà nghiên cứu một mình trong khoang.",
+    "Pintu menutup dan mengurung Periset sendirian di kompartemen.",
+    "La puerta se cierra y deja al investigador atrapado a solas.",
+    "A porta se fecha, prendendo o pesquisador sozinho no compartimento.",
+    "Die Tür schließt sich und sperrt den Forscher allein ein.",
+    "Дверь закрывается, запирая исследователя одного в отсеке."
+  ],
+  "recollection.summary.stage-2-7-post": [
+    "托比撕开门，将研究员救出。",
+    "โทบีฉีกประตูช่วยนักวิจัยออกมา",
+    "Toby xé cửa và cứu nhà nghiên cứu ra.",
+    "Toby merobek pintu dan membebaskan Periset.",
+    "Toby arranca la puerta y libera al investigador.",
+    "Toby arranca a porta e liberta o pesquisador.",
+    "Toby reißt die Tür auf und befreit den Forscher.",
+    "Тоби вырывает дверь и освобождает исследователя."
+  ],
+  "recollection.summary.stage-2-8-pre": [
+    "熔炉旁，柯玛默默擦拭标记。",
+    "ข้างเตาหลอม โคมะเช็ดรอยอย่างเงียบงัน",
+    "Bên lò nung, Koma lặng lẽ lau dấu.",
+    "Di sisi tungku, Koma diam-diam membersihkan tanda.",
+    "Junto al horno, Koma limpia una marca en silencio.",
+    "Ao lado da fornalha, Koma limpa uma marca em silêncio.",
+    "Neben dem Ofen wischt Koma schweigend eine Markierung ab.",
+    "У печи Кома молча стирает метку."
+  ],
+  "recollection.summary.stage-2-8-post": [
+    "两名回收员从熔炉上方降下，对柯玛留下一句客气话。",
+    "เจ้าหน้าที่กู้คืนสองคนลงจากเหนือเตา ทิ้งคำสุภาพให้โคมะ",
+    "Hai người thu hồi đáp xuống trên lò, để lại lời lịch sự với Koma.",
+    "Dua petugas pemulihan turun di atas tungku dan menyapa Koma dengan sopan.",
+    "Dos agentes descienden sobre el horno y dejan unas palabras corteses a Koma.",
+    "Dois agentes descem sobre a fornalha e deixam palavras corteses a Koma.",
+    "Zwei Bergungskräfte steigen über dem Ofen herab und richten ein höfliches Wort an Koma.",
+    "Двое сборщиков спускаются над печью, оставляя Кома вежливую реплику."
+  ],
+  "recollection.summary.stage-2-9-post": [
+    "传送带尽头，一口深坑张开。",
+    "สุดสายพานมีหลุมลึกอ้ารออยู่",
+    "Cuối băng chuyền là một hố sâu mở toang.",
+    "Di ujung konveyor, lubang dalam menganga.",
+    "Al final de la cinta transportadora se abre un pozo profundo.",
+    "No fim da esteira, um poço profundo se abre.",
+    "Am Ende des Förderbands klafft ein tiefer Schacht.",
+    "В конце конвейера зияет глубокая яма."
+  ],
+  "recollection.summary.stage-2-10-pre": [
+    "没有柯玛，三人组第一次独自并肩站立。",
+    "สามสหายยืนด้วยกันโดยไม่มีโคมะเป็นครั้งแรก",
+    "Lần đầu bộ ba đứng cùng nhau mà không có Koma.",
+    "Untuk pertama kali, trio itu berdiri bersama tanpa Koma.",
+    "Por primera vez, el trío se reúne sin Koma.",
+    "Pela primeira vez, o trio se reúne sem Koma.",
+    "Zum ersten Mal steht das Trio ohne Koma zusammen.",
+    "Впервые троица стоит вместе без Кома."
+  ],
+  "recollection.summary.stage-2-3-lost-badge": [
+    "冷却水道的影子偷走工牌，手背上的伤痕令人难忘。",
+    "เงาในทางน้ำหล่อเย็นขโมยบัตร ทิ้งรอยแผลหลังมือให้จำ",
+    "Bóng đen lấy thẻ trong kênh làm mát; vết sẹo trên tay còn in lại.",
+    "Bayangan mencuri kartu di saluran pendingin; bekas luka di tangan membekas.",
+    "Una sombra roba una identificación en el canal; queda el recuerdo de una cicatriz.",
+    "Uma sombra rouba um crachá no canal; a cicatriz na mão fica na memória.",
+    "Ein Schatten stiehlt im Kühlkanal einen Ausweis; eine Narbe bleibt im Gedächtnis.",
+    "Тень крадёт пропуск в охладительном канале; запоминается шрам на руке."
+  ],
+  "recollection.summary.stage-2-6-same-line": [
+    "生产线后，柯玛核对编号与标记。",
+    "หลังสายการผลิต โคมะเทียบหมายเลขกับรอย",
+    "Sau dây chuyền, Koma đối chiếu số với dấu.",
+    "Di belakang lini produksi, Koma mencocokkan nomor dan tanda.",
+    "Detrás de la línea, Koma coteja números y marcas.",
+    "Atrás da linha de produção, Koma confere números e marcas.",
+    "Hinter der Fertigung gleicht Koma Nummern und Markierungen ab.",
+    "За линией производства Кома сверяет номера с метками."
+  ],
+  "recollection.summary.stage-2-9-second-chase": [
+    "笔直道路的尽头，柯玛意识到自己才是诱饵。",
+    "สุดทางตรง โคมะรู้ว่าตนเป็นเหยื่อล่อ",
+    "Cuối con đường thẳng, Koma nhận ra mình là mồi nhử.",
+    "Di ujung jalan lurus, Koma sadar dirinya umpan.",
+    "Al final del camino recto, Koma descubre que era el cebo.",
+    "No fim do caminho reto, Koma percebe que era a isca.",
+    "Am Ende des geraden Weges erkennt Koma, dass sie der Köder war.",
+    "В конце прямого пути Кома понимает, что была приманкой."
+  ],
+  "recollection.summary.stage-3-5-behind-sleeve": [
+    "袖后的眼睛将研究员的名字记入名单。",
+    "ดวงตาหลังแขนเสื้อเพิ่มชื่อนักวิจัยลงรายชื่อ",
+    "Con mắt sau tay áo ghi tên nhà nghiên cứu vào danh sách.",
+    "Mata di balik lengan baju menulis nama Periset ke daftar.",
+    "Un ojo tras una manga añade el nombre del investigador a una lista.",
+    "Um olho atrás de uma manga acrescenta o nome do pesquisador à lista.",
+    "Ein Auge hinter einem Ärmel setzt den Namen des Forschers auf eine Liste.",
+    "Глаз за рукавом вносит имя исследователя в список."
+  ],
+  "recollection.summary.stage-3-8-apology": [
+    "破墙前，又多了一份检讨书。",
+    "หน้ากำแพงพัง มีรายงานชี้แจงเพิ่มอีกแผ่น",
+    "Trước bức tường vỡ, lại thêm một bản tường trình.",
+    "Di depan tembok rusak, satu laporan insiden lagi bertambah.",
+    "Ante el muro roto se suma otro informe de incidentes.",
+    "Diante da parede quebrada, mais um relatório se junta à pilha.",
+    "Vor der zerbrochenen Wand kommt ein weiterer Vorfallsbericht hinzu.",
+    "Перед сломанной стеной становится на один объяснительный отчёт больше."
+  ],
+  "recollection.summary.stage-3-1-pre": [
+    "跪下的柯玛身后，翼形披风缓缓降落。",
+    "ผ้าคลุมปีกลงมาหลังโคมะที่คุกเข่า",
+    "Sau Koma đang quỳ, một áo choàng cánh đáp xuống.",
+    "Di belakang Koma yang berlutut, jubah bersayap turun.",
+    "Tras Koma, de rodillas, desciende una capa alada.",
+    "Atrás de Koma ajoelhada, um manto alado desce.",
+    "Hinter der knienden Koma sinkt ein geflügelter Umhang herab.",
+    "За стоящей на коленях Кома опускается крылатый плащ."
+  ],
+  "recollection.summary.stage-3-4-post": [
+    "夜之齿轮熄灭照明，打开退路。",
+    "เฟืองรัตติกาลหรี่ไฟและเปิดทางหนี",
+    "Bánh Răng Đêm tắt đèn và mở đường rút.",
+    "Gir Malam meredupkan lampu dan membuka jalan mundur.",
+    "Engranaje Nocturno apaga las luces y abre una ruta de escape.",
+    "Engrenagem Noturna apaga as luzes e abre uma rota de fuga.",
+    "Nachtgetriebe löscht das Licht und öffnet den Fluchtweg.",
+    "Ночная Шестерня гасит свет и открывает путь отхода."
+  ],
+  "recollection.summary.stage-3-5-pre": [
+    "走廊中央，阿特拉用袖后的东西挡住去路。",
+    "กลางทางเดิน อาทราขวางด้วยสิ่งหลังแขนเสื้อ",
+    "Giữa hành lang, Atra dùng thứ sau tay áo chặn đường.",
+    "Di tengah lorong, Atra menghalangi dengan sesuatu di balik lengan baju.",
+    "En el pasillo, Atra bloquea el paso con lo que oculta en su manga.",
+    "No corredor, Atra bloqueia o caminho com o que esconde na manga.",
+    "Im Gang versperrt Atra mit dem, was hinter ihrem Ärmel liegt, den Weg.",
+    "Посреди коридора Атра преграждает путь тем, что скрыто за рукавом."
+  ],
+  "recollection.summary.stage-3-5-post": [
+    "柯玛前来接走倒下的阿特拉。",
+    "โคมะมารับอาทราที่ล้มลง",
+    "Koma đến đón Atra đã ngã.",
+    "Koma datang menjemput Atra yang tumbang.",
+    "Koma viene a recoger a Atra, que ha caído.",
+    "Koma vem buscar Atra caída.",
+    "Koma kommt, um die gefallene Atra zu holen.",
+    "Кома приходит забрать павшую Атру."
+  ],
+  "recollection.summary.stage-3-6-post": [
+    "死路尽头的隔墙从内部炸开。",
+    "ผนังกั้นทางตันระเบิดออกจากด้านใน",
+    "Vách ngăn cuối đường cụt nổ tung từ bên trong.",
+    "Sekat di jalan buntu meledak dari dalam.",
+    "El mamparo del callejón sin salida revienta desde dentro.",
+    "A divisória no beco sem saída explode por dentro.",
+    "Die Schottwand am Ende des Ganges bricht von innen auf.",
+    "Переборка в тупике взрывается изнутри."
+  ],
+  "recollection.summary.stage-3-8-post": [
+    "面对帕尔希的突袭，艾拉挺身筑起防壁。",
+    "เอลลายืนเป็นโล่รับการซุ่มโจมตีของพัลซี",
+    "Ella đứng làm lá chắn trước đòn phục kích của Pulsi.",
+    "Ella menjadi perisai menghadapi penyergapan Pulsi.",
+    "Ella hace de escudo ante la emboscada de Pulsi.",
+    "Ella se torna um escudo contra a emboscada de Pulsi.",
+    "Ella stellt sich Pulsis Hinterhalt als Schild entgegen.",
+    "Элла встаёт щитом перед засадой Пульси."
+  ],
+  "recollection.summary.stage-3-9-post": [
+    "尤蒂与阿克从侧面冲来，将两队分开。",
+    "ยูทิกับอาร์กพุ่งจากด้านข้างแยกสองกลุ่ม",
+    "Yuti và Ark lao từ bên hông, chia cắt hai nhóm.",
+    "Yuti dan Ark menyerbu dari samping, memisahkan dua kelompok.",
+    "Yuti y Ark irrumpen por el flanco y separan los grupos.",
+    "Yuti e Ark avançam pelo flanco e separam os grupos.",
+    "Yuti und Ark stürmen von der Seite und trennen die Gruppen.",
+    "Юти и Арк врываются сбоку, разделяя две группы."
+  ],
+  "recollection.summary.stage-3-10-pre": [
+    "最后的大厅里，绝对之牙列队而立。",
+    "เขี้ยวสัมบูรณ์ยืนเรียงแถวในโถงสุดท้าย",
+    "Trong đại sảnh cuối, Nanh Tuyệt Đối đứng thành hàng.",
+    "Di aula terakhir, Taring Mutlak berdiri berjajar.",
+    "En la última sala, Colmillo Absoluto forma una fila.",
+    "No último salão, Presa Absoluta forma uma fileira.",
+    "In der letzten Halle steht Absoluter Fang in einer Reihe.",
+    "В последнем зале Абсолютный Клык выстраивается в ряд."
+  ],
+  "recollection.summary.stage-3-10-post": [
+    "回收队撤退了，柯玛始终不肯自称同伴。",
+    "ทีมกู้คืนถอนตัว แต่โคมะก็ยังไม่ยอมเรียกตนว่าพวกเดียวกัน",
+    "Đội thu hồi rút lui; Koma vẫn không nhận là đồng minh.",
+    "Tim pemulihan mundur; Koma tetap tak menyebut diri sekutu.",
+    "El equipo se retira; Koma sigue sin llamarse aliada.",
+    "A equipe se retira; Koma ainda não se diz aliada.",
+    "Das Bergungsteam zieht ab; Koma nennt sich weiterhin keine Verbündete.",
+    "Сборщики отступают; Кома так и не называет себя союзницей."
+  ],
+  "recollection.summary.stage-2-10-post": [
+    "“我可以跟着你吗？”现在轮到研究员回答。",
+    "“ขอตามไปด้วยได้ไหม?” ถึงคราวนักวิจัยตอบแล้ว",
+    "“Cho tôi theo với nhé?” Giờ đến lượt nhà nghiên cứu trả lời.",
+    "“Boleh ikut?” Kini giliran Periset menjawab.",
+    "«¿Puedo ir contigo?» Ahora le toca responder al investigador.",
+    "“Posso ir junto?” Agora é a vez do pesquisador responder.",
+    "„Darf ich mitkommen?“ Nun muss der Forscher antworten.",
+    "«Можно с вами?» Теперь очередь исследователя отвечать."
+  ],
+  "recollection.summary.stage-1-5-greenhouse-echo": [
+    "隐蔽的温室里，巨型南瓜和喷淋器接连闯祸。",
+    "ฟักทองยักษ์และสปริงเกลอร์ก่อเรื่องไม่หยุดในเรือนกระจกลับ",
+    "Trong nhà kính bí mật, bí ngô khổng lồ và vòi phun liên tiếp gây rắc rối.",
+    "Di rumah kaca tersembunyi, labu raksasa dan penyiram terus membuat ulah.",
+    "En el invernadero oculto, las calabazas y los aspersores encadenan accidentes.",
+    "Na estufa escondida, abóboras gigantes e aspersores causam acidentes em sequência.",
+    "Im versteckten Gewächshaus sorgen Riesenkürbisse und Sprinkler für ein Missgeschick nach dem anderen.",
+    "В скрытой теплице гигантские тыквы и разбрызгиватели вызывают одну аварию за другой."
+  ],
+  "recollection.summary.event-great-auk-report": [
+    "北大西洋标本箱中发现大海雀的骨骼标签。",
+    "พบป้ายโครงกระดูกเกรตออคในกล่องตัวอย่างแอตแลนติกเหนือ",
+    "Nhãn bộ xương chim anca lớn xuất hiện trong hộp Mẫu vật Bắc Đại Tây Dương.",
+    "Label kerangka auk besar ditemukan dalam kotak spesimen Atlantik Utara.",
+    "Aparece una etiqueta ósea de alca gigante en una caja de especímenes del Atlántico Norte.",
+    "Surge uma etiqueta óssea do arau-gigante numa caixa de espécimes do Atlântico Norte.",
+    "Aus einer nordatlantischen Exemplarkiste taucht ein Skelettschild des Riesenalks auf.",
+    "В североатлантическом ящике экземпляров обнаруживается метка скелета бескрылой гагарки."
+  ],
+  "recollection.summary.stage-4-1-pre": [
+    "站台上两支小队并为一条线路，联合追击开始。",
+    "สองหน่วยยืนบนรางเดียวกันที่ชานชาลา การไล่ล่าร่วมเริ่มต้นขึ้น",
+    "Hai đội đứng chung một tuyến ở sân ga, cuộc truy đuổi phối hợp bắt đầu.",
+    "Dua regu berdiri di satu jalur di peron, pengejaran gabungan dimulai.",
+    "En el andén, dos escuadras comparten una vía y empieza la persecución conjunta.",
+    "Na plataforma, dois esquadrões dividem a mesma linha e a perseguição conjunta começa.",
+    "Auf dem Bahnsteig stehen zwei Trupps auf einem Gleis, die gemeinsame Verfolgung beginnt.",
+    "На платформе два отряда встают на одну линию, начинается совместная погоня."
+  ],
+  "recollection.summary.stage-4-4-pre": [
+    "阿特拉和阿莫堵住封印的坑道，科马说他并未选边。",
+    "อาตร้าและอาโมขวางอุโมงค์ที่ถูกปิดผนึก โคมะบอกว่าเขายังไม่ได้เลือกข้าง",
+    "Atra và Amo chắn đường hầm bị phong tỏa, Koma nói chưa chọn phe.",
+    "Atra dan Amo menghalangi terowongan tersegel, Koma bilang belum memilih pihak.",
+    "Atra y Amo bloquean el túnel sellado y Koma dice que no ha elegido bando.",
+    "Atra e Amo bloqueiam o túnel selado, e Koma diz que não escolheu um lado.",
+    "Atra und Amo versperren den versiegelten Schacht, Koma sagt, er habe keine Seite gewählt.",
+    "Атра и Амо перегораживают запечатанный тоннель, Кома говорит, что не выбирал сторону."
+  ],
+  "recollection.summary.stage-4-10-pre": [
+    "指挥室里，科马和伊卡尼克西亚并肩拦住去路。",
+    "ในห้องบัญชาการ โคมะและอิคานิกเซียยืนเคียงกันขวางทาง",
+    "Trong phòng chỉ huy, Koma và Ikanixia đứng cạnh nhau chặn đường.",
+    "Di ruang komando, Koma dan Ikanixia berdiri berdampingan menghalangi jalan.",
+    "En la sala de mando, Koma e Ikanixia se plantan juntos para cerrar el paso.",
+    "Na sala de comando, Koma e Ikanixia ficam lado a lado bloqueando o caminho.",
+    "Im Kommandoraum versperren Koma und Ikanixia gemeinsam den Weg.",
+    "В командной Кома и Иканиксия встают рядом, преграждая путь."
+  ],
+  "recollection.summary.stage-4-10-post": [
+    "回收组撤退，科马说下次名单上再见。",
+    "หน่วยกู้คืนถอนตัว โคมะบอกว่าจะพบกันอีกในรายชื่อถัดไป",
+    "Nhóm thu hồi rút lui, Koma nói sẽ gặp lại ở danh sách tiếp theo.",
+    "Regu penjemput mundur, Koma bilang mereka akan bertemu lagi di daftar berikutnya.",
+    "El grupo de recuperación se retira y Koma dice que se verán en la próxima lista.",
+    "O grupo de recuperação recua, e Koma diz que se encontrarão na próxima lista.",
+    "Der Bergungstrupp zieht sich zurück, Koma sagt, man sehe sich auf der nächsten Liste wieder.",
+    "Отряд возврата отступает, Кома говорит, что они встретятся в следующем списке."
+  ]
+}

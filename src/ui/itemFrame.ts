@@ -5,6 +5,8 @@ import { chipPoints, drawInnerVignette, drawShapeOutline, drawLayer } from "./ho
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { RUNE_FRAME_FILL, RUNE_PIECE_ORIGIN_Y, runePartOfTexture, runePieceFit } from "./runePieceContent";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentRarityOfTexture, universalFragmentTone } from "./universalFragmentArt";
+import { onTap } from "./tapGuard";
 
 /**
  * 그 화면에서 재화 액자를 누르면 무엇이 열리는가.
@@ -95,6 +97,19 @@ export const ITEM_FRAME = {
   amountRatio: 0.23,
 } as const;
 
+/**
+ * 액자 실루엣 — 왼쪽 위·오른쪽 아래만 `ITEM_FRAME.bevel`로 깎은 칩.
+ *
+ * **액자 위에 얹는 모든 것(맥동 빛·받은 칸의 어둠·잠금 덮개)은 이 함수로 모양을 얻는다.** 깎임
+ * 수치를 화면에 다시 적으면 덮개만 다른 각도로 깎여 액자 모서리 밖으로 삐져나오거나 덜 덮는다.
+ * `grow`는 빛처럼 액자보다 한 뼘 넓게 두를 때의 여유이며, 깎임도 같은 비율로 함께 넓힌다.
+ */
+export function itemFrameShape(size: number, grow = 0): number[] {
+  const side = size + grow * 2;
+  const cut = side * ITEM_FRAME.bevel;
+  return chipPoints(side, side, { bevel: { topLeft: cut, topRight: 0, bottomRight: cut, bottomLeft: 0 } });
+}
+
 export interface ItemFrameOptions {
   /** 액자 안 그림이 액자 한 변에서 차지하는 비율. 비우면 공용 값이다. */
   iconRatio?: number;
@@ -111,7 +126,7 @@ export interface ItemFrameOptions {
 /** 액자만 그린다. 안에 담을 그림은 부르는 쪽이 같은 자리에 얹는다. */
 export function addItemFrame(scene: Phaser.Scene, x: number, y: number, size: number, options: ItemFrameOptions = {}): Phaser.GameObjects.Container {
   const frame = scene.add.container(x, y);
-  const shape = chipPoints(size, size, { bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 } });
+  const shape = itemFrameShape(size);
   frame.add(drawLayer(scene, 0, 0, shape, { fill: options.fill ?? ITEM_FRAME.fill, alpha: options.fillAlpha ?? ITEM_FRAME.fillAlpha }));
   frame.add(drawInnerVignette(scene, 0, 0, shape, { strength: ITEM_FRAME.vignette }));
   frame.add(drawShapeOutline(scene, 0, 0, shape, {
@@ -196,10 +211,15 @@ export function addFramedIcon(
   options: FramedIconOptions = {},
 ): Phaser.GameObjects.Container {
   const holder = scene.add.container(x, y);
-  const shape = chipPoints(size, size, { bevel: { topLeft: size * ITEM_FRAME.bevel, topRight: 0, bottomRight: size * ITEM_FRAME.bevel, bottomLeft: 0 } });
+  const shape = itemFrameShape(size);
   holder.add(drawLayer(scene, 0, 0, shape, { fill: options.fill ?? ITEM_FRAME.fill, alpha: options.fillAlpha ?? ITEM_FRAME.fillAlpha }));
   const runePart = textureKey ? runePartOfTexture(textureKey) : undefined;
-  if (runePart !== undefined && scene.textures.exists(textureKey)) {
+  // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+  const fragmentRarity = textureKey ? universalFragmentRarityOfTexture(textureKey) : undefined;
+  const fragmentArt = fragmentRarity ? addUniversalFragmentArt(scene, size, textureKey, options.iconAlpha ?? 1) : undefined;
+  if (fragmentArt) {
+    holder.add(fragmentArt);
+  } else if (runePart !== undefined && scene.textures.exists(textureKey)) {
     // 룬 조각은 캔버스가 아니라 **보이는 그림**을 가운데에 크게 앉힌다 — 가방의 룬 카드와 같은 맞춤이다.
     const fit = runePieceFit(runePart, size, RUNE_FRAME_FILL);
     const offset = fit.content * 0.045;
@@ -213,10 +233,12 @@ export function addFramedIcon(
     holder.add(scene.add.image(offsetX, offsetY, textureKey).setDisplaySize(icon, icon).setTint(0x000000).setAlpha(alpha * (options.iconAlpha ?? 1)));
     holder.add(scene.add.image(0, 0, textureKey).setDisplaySize(icon, icon).setAlpha(options.iconAlpha ?? 1));
   }
+  // 만능 파편은 렐릭 파편과 같은 유리 결과 등급색 외곽선을 두른다(`universalFragmentArt.ts`).
+  if (fragmentRarity) holder.add(addUniversalFragmentGlass(scene, size, fragmentRarity));
   // 비네트와 외곽선은 그림 위에 덮여야 가장자리를 눌러 준다.
   holder.add(drawInnerVignette(scene, 0, 0, shape, { strength: ITEM_FRAME.vignette }));
   holder.add(drawShapeOutline(scene, 0, 0, shape, {
-    color: options.color ?? COLOR.accent,
+    color: options.color ?? (fragmentRarity ? universalFragmentTone(fragmentRarity) : COLOR.accent),
     alpha: options.outlineAlpha ?? ITEM_FRAME.outlineAlpha,
     width: options.outlineWidth ?? ITEM_FRAME.outlineWidth,
   }));
@@ -234,7 +256,7 @@ export function addFramedIcon(
     // 누르면 커진다 — 눌린 상태를 색이 아니라 크기로 알리는 화면 전체의 규칙이다.
     hit.on("pointerdown", () => pressIn(holder));
     hit.on("pointerout", () => pressOut(holder, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(holder); openGuide(); });
+    onTap(hit, () => { pressOut(holder); openGuide(); }, holder);
     holder.add(hit);
   }
   if (parent) parent.add(holder);

@@ -1,11 +1,14 @@
+import { TitleEntryGesture } from "../core/titleEntryGesture";
+import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import Phaser from "phaser";
-import { t, type TextKey } from "../i18n";
+import { loadDataOverlay, loadTextCatalog, t, type TextKey } from "../i18n";
 import { BASE_WIDTH, BASE_HEIGHT } from "../config/gameConfig";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene } from "../debug";
 import { COLOR, textStyle } from "../ui/theme";
 import { OPENING_TRAIN } from "../data/dialogues/openingTrain";
 import { storyManager } from "../managers/StoryManager";
-import { Button } from "../ui/Button";
+import { session } from "../state/session";
+import { openingPending } from "../core/openingFlow";
 import { LoadingDiamonds } from "../ui/LoadingDiamonds";
 import { LoadingPercent } from "../ui/LoadingPercent";
 import {
@@ -18,7 +21,30 @@ import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSt
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
+import { reconcileLaunchEpoch } from "../api/launchEpoch";
+import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
 import { startScene } from "../ui/screenTransition";
+import { withBusy } from "../ui/BusyOverlay";
+import { dialogueStandingOrder } from "../core/dialogue";
+import { speakerStanding } from "../data/dialogues/speakerStanding";
+import { preloadPuppetAssets } from "../puppets/assets";
+import { standingAsset } from "../ui/DialogueStage";
+import { settingsManager } from "../managers/SettingsManager";
+import { LANGUAGE_MENU_LABEL, LANGUAGE_NATIVE_NAME, SELECTABLE_LANGUAGE_IDS } from "../core/language";
+import { activeFontFamily, loadGameFonts } from "../ui/fonts";
+import { PopupLayer } from "../ui/PopupLayer";
+import { openChoicePicker } from "../ui/SettingsPicker";
+import { accountApi, type AccountFailureCode } from "../api/AccountApi";
+import { openAccountIdPopup } from "../ui/AccountIdPopup";
+import { backendAccount, connectProgress, disconnectProgress } from "../api/backendSession";
+import { Button } from "../ui/Button";
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { motionPolicy } from "../core/settings";
+import { openSaveConflictPopup, type SaveConflictChoice } from "../ui/SaveConflictPopup";
+import { saveManager } from "../state/SaveManager";
+import { startLiveOps } from "../managers/liveOps";
+import { TitleActionRow } from "../ui/TitleActionRow";
+import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -36,7 +62,7 @@ const TITLE_LOGOTYPE_RATIO = 1024 / 1536;
  */
 const TITLE_LOGOTYPE_CONTENT = { top: 0.3135, bottom: 0.6963, left: 0.0677, right: 0.9518 } as const;
 
-/** 보이는 글자의 윗변이 놓일 자리. 좌상단 회상 버튼 아래에서 시작한다. */
+/** 보이는 글자의 윗변이 놓일 자리.  */
 const TITLE_LOGO_TOP = 150;
 
 /**
@@ -91,7 +117,7 @@ const TITLE_REVEAL = {
  * 로딩 중에는 진행률 숫자가, 다 찬 뒤에는 진입 문구가 **같은 자리를** 이어받는다. 둘이 함께
  * 서는 순간은 없으므로 자리를 나누면 오히려 무엇을 기다리는지가 두 곳으로 갈린다.
  */
-const LOADING_PROMPT_Y = BASE_HEIGHT * 0.89;
+const LOADING_PROMPT_Y = TITLE_LOADING_LAYOUT.promptY;
 
 /**
  * 타이틀이자 로딩 화면.
@@ -109,6 +135,18 @@ export class TitleScene extends Phaser.Scene {
   private revealed = false;
   /** 제목 연출도 영상이 시작하지 않는 기기에서 한 번은 반드시 열려야 하므로 같은 빗장을 쓴다. */
   private headerOpened = false;
+  /** 언어가 바뀌면 문장을 다시 읽어 갈아 끼울 글자들. 그릴 때 문장을 굳히지 않고 읽는 법을 들고 있다. */
+  private localized: Array<{ text: Phaser.GameObjects.Text; read: () => string }> = [];
+  private actionRow?: TitleActionRow;
+  private loginButtons: Button[] = [];
+  private authAttempt?: symbol;
+  private entryPending = false;
+  private entryGeneration = 0;
+  /** 언어가 바뀌면 로그인 버튼의 글자를 새로 짓는다. 첫 실행 화면에서만 채워진다. */
+  private loginRebuild?: () => void;
+  private popups?: PopupLayer;
+  /** 시작 관문(점검·최소 버전). 로딩과 나란히 한 번 묻고, 입장을 누를 때 결과를 읽는다. */
+  private gate?: Promise<StartupGateResult>;
 
   constructor() {
     super("title");
@@ -120,6 +158,15 @@ export class TitleScene extends Phaser.Scene {
     setDebugScene("title");
     this.revealed = false;
     this.headerOpened = false;
+    this.localized = [];
+    this.actionRow = undefined;
+    this.loginButtons = [];
+    this.loginRebuild = undefined;
+    this.authAttempt = undefined;
+    this.entryPending = false;
+    this.entryGeneration += 1;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.entryGeneration += 1; });
+    this.popups = new PopupLayer(this, 3000);
 
     const cx = BASE_WIDTH / 2;
     // 최소 리소스가 도착할 때까지 화면은 검다. 조립 과정을 보여 주지 않기 위해서다.
@@ -143,6 +190,8 @@ export class TitleScene extends Phaser.Scene {
     // 파일 하나가 없어도 검은 화면에 갇히지 않는다. 아트가 UI와 로딩 진행까지 막지 않는다.
     this.load.once("complete", () => this.enterTitle(curtain, cx));
     this.load.once("loaderror", () => this.enterTitle(curtain, cx));
+    // 원화·로고 응답이 오지 않아도 검은 화면에 갇히지 않는다 — 없는 채로 타이틀을 세운다.
+    this.time.delayedCall(8000, () => this.enterTitle(curtain, cx));
     this.load.start();
   }
 
@@ -192,7 +241,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setAlpha(0.7);
 
-    const diamonds = new LoadingDiamonds(this, cx, BASE_HEIGHT * 0.94, LOADING_STEPS.length);
+    const diamonds = new LoadingDiamonds(this, cx, TITLE_LOADING_LAYOUT.diamondsY, LOADING_STEPS.length);
     // 칸은 "몇 개 남았나"를, 이 숫자는 "얼마나 왔나"를 말한다. 다 차면 그 자리를 진입 문구가
     // 그대로 이어받으므로 같은 y에 세운다.
     const percent = new LoadingPercent(this, cx, LOADING_PROMPT_Y);
@@ -200,6 +249,8 @@ export class TitleScene extends Phaser.Scene {
     // 검은 화면은 타이틀이 다 선 뒤에 걷는다. 걷히는 순간 화면은 이미 완성돼 있다.
     this.tweens.add({ targets: curtain, alpha: 0, duration: 220, onComplete: () => curtain.destroy() });
 
+    // 서버에 점검·최소 버전을 묻는 일은 로딩과 나란히 돌려, 입장을 누를 때는 대개 답이 와 있다.
+    this.gate = checkStartupGate(packageInfo.version);
     void runLoadingSteps(
       this,
       (done) => {
@@ -209,13 +260,42 @@ export class TitleScene extends Phaser.Scene {
       },
       LOADING_STEPS,
       (ratio) => percent.setRatio(ratio),
-    ).then(() => {
+    ).then(async () => {
       if (!this.scene.isActive()) return;
       // 따라가기를 건너뛰고 정확히 100.00%에 멈춘 뒤 그 자리를 진입 문구에 넘긴다.
       percent.complete();
       percent.handOver();
-      this.showEntry(cx);
+      // 로그인으로 새 토큰이 생기기 전에 서버 초기화 세대를 맞춘다. 인증 뒤에 검사하면
+      // 방금 로그인한 토큰까지 과거 세대의 것으로 지우고 다시 로그인을 요구하게 된다.
+      if (!await this.prepareEntry()) return;
+      // 이 기기에 계정이 아직 없으면 입장 문구 대신 로그인 버튼이 선다. 한 번 만들어지면 다음부터는 문구만 선다.
+      const account = backendAccount();
+      void (account ? account.hasSession() : Promise.resolve(true)).then((hasAccount) => {
+        if (!this.scene.isActive()) return;
+        const reduced = motionPolicy(session.settings).nonEssentialDistanceFactor <= 0;
+        diamonds.finish(() => { if (this.scene.isActive()) this.showEntry(cx, !hasAccount); }, reduced);
+      });
     });
+  }
+
+  /** 인증을 시작하기 전에 초기화 세대를 맞춰 새로 받은 세션을 지우지 않는다. */
+  private async prepareEntry(): Promise<boolean> {
+    const generation = this.entryGeneration;
+    const startup = await (this.gate ??= checkStartupGate(packageInfo.version));
+    if (!this.scene.isActive() || generation !== this.entryGeneration) return false;
+    // 원격 계정이 있는 빌드는 초기화 세대 확인 없이 인증을 시작하지 않는다.
+    // 첫 조회 시간 초과 뒤 인증하고 나중에 세대를 읽으면 새 토큰을 과거 토큰으로 오인한다.
+    if (backendAccount() && !startup.config) {
+      this.gate = undefined;
+      await new Promise<void>(resolve => this.showConnectFailure("network-error", undefined, resolve));
+      if (!this.scene.isActive() || generation !== this.entryGeneration) return false;
+      return this.prepareEntry();
+    }
+    if (startup.config && reconcileLaunchEpoch(startup.config.launchEpoch)) {
+      this.scene.start("boot");
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -266,10 +346,10 @@ export class TitleScene extends Phaser.Scene {
 
     // 판때기를 받치지 않는다. 글자 모양 그대로 진 복제 그림자가 대비를 만들고 배경은 비친다.
     const lines = [
-      ...this.addShadowedText(cx, subtitleY, "ETERNAL CITY",
+      ...this.addShadowedText(cx, subtitleY, () => "ETERNAL CITY",
         textStyle({ role: "emphasis", size: 40, color: COLOR.accentText }),
         textStyle({ role: "emphasis", size: 40, color: "#000000" })),
-      ...this.addShadowedText(cx, descY, t("title.subtitle"),
+      ...this.addShadowedText(cx, descY, () => t("title.subtitle"),
         textStyle({ role: "body", size: 30, color: COLOR.inkDim }),
         textStyle({ role: "body", size: 30, color: "#000000" })),
     ];
@@ -299,7 +379,7 @@ export class TitleScene extends Phaser.Scene {
   private addShadowedText(
     x: number,
     y: number,
-    text: string,
+    read: () => string,
     style: Phaser.Types.GameObjects.Text.TextStyle,
     // 그림자도 같은 역할·같은 크기여야 획이 어긋나지 않는다. 색만 검다.
     shadowStyle: Phaser.Types.GameObjects.Text.TextStyle,
@@ -307,13 +387,15 @@ export class TitleScene extends Phaser.Scene {
   ): readonly Phaser.GameObjects.Text[] {
     const size = Number.parseInt(String(shadowStyle.fontSize ?? "30"), 10);
     const shadow = this.add
-      .text(x + TITLE_SHADOW.textOffset.x, y + TITLE_SHADOW.textOffset.y, text, shadowStyle)
+      .text(x + TITLE_SHADOW.textOffset.x, y + TITLE_SHADOW.textOffset.y, read(), shadowStyle)
       .setOrigin(0.5)
       // 획 둘레로 번지는 검은 띠가 실제 배경이 되어 대비를 배경 원화에서 떼어 놓는다.
       .setStroke("#000000", Math.round(size * TITLE_SHADOW.haloRatio))
       .setAlpha(TITLE_SHADOW.alpha)
       .setDepth(-11);
-    return [shadow, this.add.text(x, y, text, style).setOrigin(0.5).setDepth(-10)];
+    const main = this.add.text(x, y, read(), style).setOrigin(0.5).setDepth(-10);
+    this.localized.push({ text: shadow, read }, { text: main, read });
+    return [shadow, main];
   }
 
   /**
@@ -379,14 +461,30 @@ export class TitleScene extends Phaser.Scene {
   }
 
   /** 다섯 칸이 다 찬 뒤에만 부른다. 이때부터 화면 어디를 눌러도 다음으로 넘어간다. */
-  private showEntry(cx: number): void {
+  private showEntry(cx: number, firstRun = false): void {
     const prompt = this.add
-      .text(cx, LOADING_PROMPT_Y, "TAP TO ENTER", textStyle({ role: "emphasis", size: 36 }))
+      .text(cx, LOADING_PROMPT_Y, t("title.enter"), textStyle({ role: "emphasis", size: 36 }))
       .setOrigin(0.5)
       // 이 자리는 배경 원화의 밝은 부분과 겹칠 수 있어 검은 그림자로 대비를 만든다.
       .setShadow(0, 3, "#000000", 6, true, true);
 
-    this.tweens.add({
+    this.localized.push({ text: prompt, read: () => t("title.enter") });
+    if (firstRun) prompt.setVisible(false);
+    // 하단 버튼 줄. 지금은 언어 하나이고 로그인·계정 전환이 같은 줄에 이어 붙는다.
+    this.actionRow = new TitleActionRow(this, [
+      {
+        icon: "globe",
+        label: () => LANGUAGE_MENU_LABEL,
+        onClick: () => this.openLanguagePicker(),
+      },
+      {
+        icon: "friends",
+        label: () => t("title.switchAccount"),
+        onClick: () => this.confirmSwitchAccount(),
+      },
+    ]);
+
+    if (!firstRun) this.tweens.add({
       targets: prompt,
       alpha: { from: 1, to: 0.25 },
       duration: 900,
@@ -394,22 +492,236 @@ export class TitleScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    if (storyManager.isCompleted(OPENING_TRAIN.id)) {
-      // 회상은 이 화면의 주된 조작이 아니라 이미 본 사람을 위한 곁길이다. 가운데를 비우고
-      // 좌상단에 작게 둬 제목과 배경 원화를 가리지 않는다.
-      // 완료 플래그를 지우지 않으므로 선택 보상이 다시 지급되지 않는다.
-      new Button(this, 150, 92, { width: 220, height: 64, label: t("title.replayOpening"), fontSize: 24, onClick: () => startScene(this, "opening") });
-    }
-
-    // 회상 버튼이 먼저 눌리도록 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.
+    // 화면 전체 히트영역은 가장 아래 깊이에 깔고 pointerup에서 확정한다.
     const tapAnywhere = this.add
       .zone(cx, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT)
       .setInteractive({ useHandCursor: true })
       .setDepth(-1);
-    tapAnywhere.once("pointerup", () => {
-      startScene(this, storyManager.isCompleted(OPENING_TRAIN.id) ? "lobby" : "opening");
+    const generation = this.entryGeneration;
+    const current = () => this.scene.isActive() && generation === this.entryGeneration;
+    const gesture = new TitleEntryGesture(!firstRun);
+    tapAnywhere.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      gesture.down(pointer.id, Boolean(this.authAttempt || this.entryPending));
     });
+    const enter = (pointer: Phaser.Input.Pointer) => {
+      const freshTap = gesture.up(pointer.id);
+      if (!freshTap) { tapAnywhere.once("pointerup", enter); return; }
+      if (!current() || this.entryPending || this.authAttempt) return;
+      this.entryPending = true;
+      // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
+      // 저장 충돌 창이 뜨면 막이 그 창의 손을 삼키지 않도록 그 순간 막을 걷는다(`releaseBusy`는 여러 번 불려도 한 번만 푼다).
+      let releaseBusy: () => void = () => undefined;
+      void withBusy(this, new Promise<void>((resolve) => { releaseBusy = resolve; }));
+      void (this.gate ??= checkStartupGate(packageInfo.version)).then((result) => {
+        if (!current()) { releaseBusy(); return; }
+        if (result.gate === "open") {
+          // 서버가 출시 초기화를 한 뒤에 처음 여는 기기는 초기화 이전의 토큰·저장을 지우고 처음부터 다시 시작한다.
+          if (result.config && reconcileLaunchEpoch(result.config.launchEpoch)) {
+            releaseBusy();
+            this.scene.start("boot");
+            return;
+          }
+          // 서버가 진행을 소유하는 빌드는 연결이 선 뒤에만 들어간다. 실패하면 이 기기에서 이어 가지 않는다.
+          return connectProgress((local, remote) => new Promise<SaveConflictChoice>((resolve) => { releaseBusy(); if (this.popups) openSaveConflictPopup(this, this.popups, local, remote, resolve); else resolve("cancel"); })).then((connected) => {
+            releaseBusy();
+            if (!current()) return;
+            if (connected.ok) {
+              if (connected.mode === "server") startLiveOps();
+              startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
+              return;
+            }
+            console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
+            this.entryPending = false;
+            this.showConnectFailure(connected.code, connected.detail);
+            tapAnywhere.once("pointerup", enter);
+          });
+        }
+        // 막힌 동안에도 다시 누르면 새로 묻는다 — 점검이 끝났는데 앱을 다시 켜게 하지 않는다.
+        releaseBusy();
+        this.gate = undefined;
+        this.entryPending = false;
+        this.showGateNotice(result);
+        tapAnywhere.once("pointerup", enter);
+      }).catch(() => {
+        releaseBusy();
+        if (!current()) return;
+        this.gate = undefined;
+        this.entryPending = false;
+        this.showConnectFailure("network-error");
+        tapAnywhere.once("pointerup", enter);
+      });
+    };
+    if (firstRun) {
+      this.showLoginButtons(cx, enter, true, () => {
+        this.loginRebuild = undefined;
+        this.loginButtons.forEach((button) => button.destroy());
+        this.loginButtons = [];
+        gesture.arm();
+        prompt.setVisible(true);
+        this.tweens.add({ targets: prompt, alpha: { from: 1, to: 0.25 }, duration: 900, yoyo: true, repeat: -1 });
+        tapAnywhere.once("pointerup", enter);
+      });
+      // 로그인 버튼을 고르는 동안 곧 열릴 오프닝의 스탠딩을 한 장씩 읽어 둔다(캐시에만 — 파싱까지, GPU는 세울 때).
+      void (async () => {
+        for (const id of dialogueStandingOrder(OPENING_TRAIN, speakerStanding)) {
+          if (!this.scene.isActive()) return;
+          await preloadPuppetAssets([standingAsset(id)]).catch(() => undefined);
+        }
+      })();
+    }
+    else tapAnywhere.once("pointerup", enter);
 
+    // 로딩 중 먼저 그려진 글자(부제)가 문구표보다 앞섰을 수 있으므로 한 번 더 읽는다.
+    this.relocalize();
     setDebugReady(true);
+  }
+
+  /**
+   * 처음 여는 기기의 로그인 선택. 인증 성공은 입장 문구로 이어지고 탭 한 번으로 접속한다.
+   */
+  private showLoginButtons(cx: number, enter: (pointer: Phaser.Input.Pointer) => void, fade: boolean, authenticated: () => void): void {
+    this.loginButtons.forEach((button) => button.destroy());
+    this.loginButtons = [];
+    this.loginRebuild = () => this.showLoginButtons(cx, enter, false, authenticated);
+    const generation = this.entryGeneration;
+    const current = () => this.scene.isActive() && generation === this.entryGeneration;
+    const acquire = (): (() => void) | undefined => {
+      if (!current() || this.authAttempt || this.entryPending) return;
+      const attempt = Symbol("title-auth");
+      this.authAttempt = attempt;
+      return () => { if (this.authAttempt === attempt) this.authAttempt = undefined; };
+    };
+    const done = () => { if (current()) authenticated(); };
+    const social = (provider: "google" | "apple"): void => {
+      const release = acquire();
+      if (!release) return;
+      void accountApi.login({ provider, mergeGuestProgress: false, intent: "sign-in" }).then(result => {
+        release();
+        if (!current()) return;
+        if (result.ok) done();
+        else if (result.code !== "cancelled") this.showConnectFailure(result.code);
+      }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
+    };
+    const entries: Array<{ labelKey: TextKey; onClick: () => void; primary?: boolean }> = [
+      { labelKey: "title.login.guest", onClick: () => {
+        const release = acquire();
+        if (!release) return;
+        void accountApi.getState().then((result) => {
+          release();
+          if (!current()) return;
+          if (result.ok) done();
+          else this.showConnectFailure(result.code);
+        }).catch(() => { if (current()) this.showConnectFailure("network-error"); }).finally(release);
+      }, primary: true },
+      { labelKey: "title.login.google", onClick: () => social("google") },
+      { labelKey: "title.login.apple", onClick: () => social("apple") },
+      { labelKey: "title.login.email", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountEmailPopup(this, this.popups, "sign-in", done, release); } },
+      // 메일 인증 없이 아이디·비밀번호로 만드는 계정. 다른 기기에서 같은 계정으로 이어서 키울 수 있다.
+      { labelKey: "title.login.account", onClick: () => { if (!this.popups) return; const release = acquire(); if (release) openAccountIdPopup(this, this.popups, { mode: "both", onDone: done, onClose: release }); } },
+    ];
+    const ys = titleLoginSlots(entries.length);
+    entries.forEach((entry, i) => {
+      const button = new Button(this, cx, ys[i], {
+        width: TITLE_LOGIN_LAYOUT.width,
+        height: TITLE_LOGIN_LAYOUT.height,
+        label: t(entry.labelKey),
+        fontSize: 34,
+        variant: entry.primary ? "primary" : "default",
+        onClick: entry.onClick,
+      });
+      this.loginButtons.push(button);
+      if (fade) {
+        button.setAlpha(0);
+        this.tweens.add({ targets: button, alpha: 1, duration: 260, delay: i * 70 });
+      }
+    });
+  }
+
+  /** 서버 연결이 서지 못한 이유를 알리고 다시 누르면 새로 시도한다. */
+  private showConnectFailure(code: AccountFailureCode, detail?: string, onRetry?: () => void): void {
+    this.popups?.confirm({
+      title: t("settings.account.notice"),
+      message: t(code === "conflict-cancelled" ? "settings.account.conflictCancelled" : code === "network-error" ? "settings.account.network" : "settings.account.unavailable") + (QA_TOOLS_ENABLED && detail ? `\n${t("settings.account.errorCode", { code: detail })}` : ""),
+      confirmLabel: t("settings.action.confirm"),
+      cancelLabel: false,
+    }, onRetry);
+  }
+
+  private showGateNotice(result: StartupGateResult): void {
+    if (!this.popups) return;
+    const config = result.config;
+    if (result.gate === "maintenance") {
+      const until = config?.maintenanceEndsAt ? new Date(config.maintenanceEndsAt).toLocaleString() : "";
+      const base = config?.maintenanceMessage || t("title.gate.maintenance.default");
+      this.popups.confirm({
+        title: t("title.gate.maintenance.title"),
+        message: until ? `${base}\n${t("title.gate.maintenance.until", { time: until })}` : base,
+        confirmLabel: t("title.gate.confirm"),
+        cancelLabel: false,
+      });
+      return;
+    }
+    this.popups.confirm({
+      title: t("title.gate.update.title"),
+      message: t("title.gate.update.body", { version: config?.latestAppVersion || config?.minAppVersion || "" }),
+      confirmLabel: t("title.gate.confirm"),
+      cancelLabel: false,
+    });
+  }
+
+  /** 설정의 언어 줄과 같은 선택창·같은 저장 경로다. 둘이 어긋나지 않는다. */
+  private openLanguagePicker(): void {
+    if (!this.popups || SELECTABLE_LANGUAGE_IDS.length < 2) return;
+    openChoicePicker(this, this.popups, {
+      title: LANGUAGE_MENU_LABEL,
+      value: settingsManager.get().game.language,
+      choices: SELECTABLE_LANGUAGE_IDS,
+      display: (id) => LANGUAGE_NATIVE_NAME[id],
+      onPick: (id) => {
+        settingsManager.update({ game: { language: id } });
+        // 글꼴 스택과 문구표가 함께 바뀌므로 둘 다 도착한 뒤에 글자를 갈아 끼운다.
+        void Promise.all([loadGameFonts(id), loadTextCatalog(id), loadDataOverlay(id)]).then(() => {
+          if (this.scene.isActive()) this.relocalize();
+        });
+      },
+    });
+  }
+
+  /**
+   * 로그아웃이 성공한 뒤에만 이 기기의 로컬 저장을 지운다 — 미지원·통신 실패로 끝나면 아무것도 잃지 않는다.
+   * 이후 부트가 저장 검증을 다시 거쳐 새 계정으로 시작한다.
+   */
+  private confirmSwitchAccount(): void {
+    if (!this.popups) return;
+    this.popups.confirm(
+      { title: t("title.switchAccount"), message: t("title.switchAccount.body"), confirmLabel: t("title.switchAccount"), destructive: true },
+      () => {
+        void accountApi.logout().then((result) => {
+          if (!this.scene.isActive()) return;
+          if (result.ok) {
+            disconnectProgress();
+            saveManager.reset();
+            startScene(this, "boot");
+            return;
+          }
+          this.popups?.confirm({
+            title: t("settings.account.notice"),
+            message: t(result.code === "unsupported" ? "settings.account.unsupported" : "settings.account.network"),
+            confirmLabel: t("settings.action.confirm"),
+            cancelLabel: false,
+          });
+        });
+      },
+    );
+  }
+
+  /** 타이틀 글자를 지금 언어의 문장·글꼴로 갈아 끼운다. 씬을 다시 세우지 않아 연출이 끊기지 않는다. */
+  private relocalize(): void {
+    this.localized.forEach(({ text, read }) => {
+      if (!text.active) return;
+      text.setFontFamily(activeFontFamily()).setText(read());
+    });
+    this.actionRow?.relocalize();
+    this.loginRebuild?.();
   }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canDigStrataTile, createArchaeologyState, createStrataBoard, digStrataTile,
-  isStrataBoardFinished, nextStrataChargeAt, settleStrataCharges, strataBoardHaul, strataBoardView,
+  isStrataBoardFinished, nextStrataChargeAt, absorbStrataTickets, settleStrataCharges, strataBoardHaul, strataBoardView,
 } from "../../src/core/strataDig";
 import { DEFAULT_STRATA_LAYER_ID, findStrataLayer, STRATA_ART_COUNT, STRATA_CHARGE } from "../../src/data/strataLayers";
 import { BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
@@ -92,6 +92,19 @@ describe("탐사 횟수", () => {
     const start = new Date("2026-01-01T00:00:00Z");
     const far = new Date(start.getTime() + STRATA_CHARGE.intervalMs * 999);
     expect(settleStrataCharges(0, start.toISOString(), far).charges).toBe(STRATA_CHARGE.max);
+  });
+
+  it("발굴권으로 넘겨 쌓인 횟수는 상한을 넘겨도 깎이지 않고 시간 충전만 멈춘다", () => {
+    const start = new Date("2026-01-01T00:00:00Z");
+    const far = new Date(start.getTime() + STRATA_CHARGE.intervalMs * 50);
+    const settled = settleStrataCharges(STRATA_CHARGE.max + 4, start.toISOString(), far);
+    expect(settled.charges).toBe(STRATA_CHARGE.max + 4);
+    expect(nextStrataChargeAt(settled.charges, settled.updatedAt)).toBeNull();
+  });
+
+  it("발굴권은 횟수에 더해지고 보유 끝을 넘는 몫만 남는다", () => {
+    expect(absorbStrataTickets(3, 5)).toEqual({ charges: 8, absorbed: 5 });
+    expect(absorbStrataTickets(STRATA_CHARGE.holdLimit - 1, 5)).toEqual({ charges: STRATA_CHARGE.holdLimit, absorbed: 1 });
   });
 
   it("은 가득 차면 다음 충전 시각을 말하지 않는다", () => {

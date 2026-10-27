@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ferocityMaxOf } from "../../src/core/ferocity";
 import { createSkirmish, defensiveDefinition, findFighter, stepSkirmish, type Arena, type SkirmishState } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -28,7 +29,7 @@ describe("엘라 한계 돌파는 슬롯끼리 엮이지 않는다", () => {
       const foe = findFighter(state, "enemy-0")!;
       foe.x = 130; foe.y = 1_500;
       // 폭주 문턱에 선 채로 한 번 때리면 그 타격이 게이지를 채운다.
-      ella.ferocity = 99.9; ella.targetId = "enemy-0"; ella.attackCooldown = 0;
+      ella.ferocity = ferocityMaxOf(ella.def) - 0.1; ella.targetId = "enemy-0"; ella.attackCooldown = 0;
       stepSkirmish(state, 0.05, NEVER);
       expect(ella.ferocityFever).toBe(true);
       return ella.shield.amount / ella.maxHp;

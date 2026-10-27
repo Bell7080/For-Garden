@@ -370,7 +370,7 @@ describe("렉시아 스킬 표시 계약", () => {
     );
     expect(statusEffectLabel(rex.basic.statusEffects?.[0])).toBe("[[bleed|출혈]] 3초 · 매초 최대 체력 2%");
     expect(targetingLabel(rex.ultimate.targeting)).toBe("적 한 명");
-    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBe("실제 피해의 50% 회복");
+    expect(damageHealingLabel(rex.ultimate.damageHealingPercent)).toBeUndefined();
   });
 });
 
@@ -446,8 +446,7 @@ describe("렉시아 스킬 표시 계약", () => {
     const rex = RELICS.find((def) => def.id === "rex")!;
     expect(skillDescription(rex.ultimate)).not.toContain("포효");
     expect(skillDescription(rex.ultimate, { damage: 400 })).toBe(
-      "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 주고, 입힌 피해의 "
-      + `${rex.ultimate.damageHealingPercent}%만큼 체력을 회복한다.`,
+      "적 한 명에게 [[damage-value|400]]의 [[physical-damage|물리 피해]]를 준다.",
     );
   });
 });
@@ -460,11 +459,14 @@ describe("폰토스 스킬 표시 계약", () => {
      * 문장이 조금씩 다른 수로 복사되던 것을 걷어 내고, 적 정보창의 역할 칸이 유형 표에서 읽어
      * 한 번만 말한다(`encounterRoleDescription`).
      */
-    expect(passiveDescription(pontos.passive)).toBe("매초 [[ap|주문력]]이 2%씩 복리로 오른다.");
+    expect(passiveDescription(pontos.passive)).toBe("10초마다 밀물이 모든 적을 [[knockback|날려버림]]으로 뒤로 민다.");
     expect(encounterRoleDescription("endless")).toBe(
-      "공격력·주문력 ×2.6   ·   몸집 ×1.45\n"
+      "공격력·주문력 ×2.6   ·   몸집 ×1.9\n"
       + "[[tenacity|강인함]] 50%로 시작해 [[crowd-control|군중제어]]를 받을 때마다 8%씩, 최대 100%까지 오른다."
+      + "\n강인함 적용 후 0.05초 이하로 남은 [[crowd-control|행동 제약]]은 무효가 된다."
       + "\n[[damage-reduction|경감]] 70%로 시작해 [[hp|체력]]이 깎일수록 최대 99%까지 오르고, 10 이하의 피해는 무효가 된다."
+      + "\n[[atk|공격력]]·[[ap|주문력]]이 25%에서 시작해 30초에 걸쳐 100%까지 오른다."
+      + "\n100%에 닿은 뒤에도 [[atk|공격력]]·[[ap|주문력]]이 매초 2%씩 계속 오른다."
       + "\n최대 체력 비례 피해를 30% 덜 받는다.",
     );
     // 폭주도 같은 규칙으로 태그를 건다 — 고정 피해가 무엇인지는 규칙어가 말한다.
@@ -488,7 +490,7 @@ describe("티아 스킬 표시 계약", () => {
     // 능력치를 모르는 자리에서도 어느 능력치에서 나오는 배율인지 말한다.
     expect(skillDescription(def.basic)).toBe(
       `적 한 명에게 주문력의 ${def.basic.power}% [[magical-damage|마법 피해]]를 준다.`
-      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 6%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 18%까지 쌓인다).",
+      + " [[shimmer|반짝!]]이 사라질 때 그 자리에서 터져 주위 적에게 [[ap|주문력]]의 50%만큼 [[magical-damage|마법 피해]]를 입히고, 자신의 최대 체력 12%만큼 [[shield|보호막]]을 얻는다 (최대 체력의 36%까지 쌓인다).",
     );
   });
 
@@ -513,7 +515,7 @@ describe("티아 스킬 표시 계약", () => {
     );
     // 남기는 것은 패시브, 지워질 때 터지는 것은 그 타격을 낸 스킬이다.
     expect(def.passive.kind).toBe("shimmerMark");
-    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 6, capMaxHpPercent: 18 });
+    expect(def.basic.shimmerBurst).toMatchObject({ power: 50, radius: 260, shieldMaxHpPercent: 12, capMaxHpPercent: 36 });
     expect(def.ultimate.shimmerBurst).toBeUndefined();
     expect(passiveDescription(def.passive)).toBe(
       `적을 타격하면 [[shimmer|반짝!]] 표식을 부여하고 [[ap|주문력]]의 ${def.passive.value}% [[magical-damage|마법 피해]]를 추가로 입힌다.`,
@@ -590,8 +592,8 @@ describe("델로피 스킬 표시 계약", () => {
     // 출혈과 같은 이유다 — 시간은 스킬마다 다르고, 매초 계수는 쓰는 개체가 하나뿐이라 태그가 가진다.
     expect(statusEffectLabel(delopi.basic.statusEffects?.[0])).toBe("[[poison|중독]] 3초");
     const poison = KEYWORDS.find((keyword) => keyword.id === "poison")!;
-    expect(poison.description).toContain("공격력 15%와 주문력 15%");
-    expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("15%");
+    expect(poison.description).toContain("공격력 22%와 주문력 22%");
+    expect(skillDescription(delopi.basic, { damage: 114 })).not.toContain("30%");
   });
 
   it("은 때리지 않는 궁극기를 위력 없이 자리 잡는 문장으로 만든다", () => {
@@ -661,7 +663,7 @@ describe("스킬 설명문 양식 계약", () => {
       const borrowsSummonStats = "packAssault" in skill && skill.packAssault !== undefined;
       for (const body of bodies) {
         // 대상이 먼저다. 무엇을 때리는지 모른 채 수치부터 읽게 하지 않는다.
-        expect(body).toMatch(/^(적 한 명|서로 다른 적 \d+명|자신의 주위 모든 적|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|가장 먼 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
+        expect(body).toMatch(/^(적 한 명|서로 다른 적 \d+명|자신의 주위 모든 적|자신의 주위 가까운 적 \d+명|표적과 그 주위의 적|전장의 모든 적|지정한 원 안의 모든 적|\[\[charge\|돌진\]\]해 뚫고 지나간 길의 모든 적|현재 체력이 가장 높은 적|가장 먼 적|\[\[observation\|관측\]\]이 없거나 가장 적은 적)에게 /);
         if (borrowsSummonStats) {
           expect(body).toMatch(/\d+% 위력/);
           continue;
@@ -721,9 +723,12 @@ describe("스킬 설명문 양식 계약", () => {
       // 한 축이 그 축과 몸(체력·방어·저항)을 정한다. 속도는 따라 오르지 않아 적지 않는다.
       expect(body, id).toContain(`디안의 ${axis}이 ${id === "kuro" ? "쿠로" : "시로"}의 ${axis}·체력·방어력·저항력을 정한다`);
       expect(body, id).not.toContain("속도");
-      // 폭주는 같은 값이 함께 오르므로 한 번만 말하고, 방어·저항은 실제로 오르는 값으로 보여 준다.
-      const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense: wolf.stats.def });
-      expect(fever, id).toMatch(/^\[\[def\|방어력\]\]과 \[\[res\|저항력\]\]이 \d+씩 오르고 \[\[attack-speed\|공격 속도\]\]가 50% 오른다\.$/);
+      // 서로 다른 방어·저항에서 실제 증가량을 각각 계산한다. 공속은 비율 단위를 유지한다.
+      const defense = 101, resistance = 67;
+      const fever = ferocityTraitDescription(wolf.ferocityTrait, { attack: wolf.stats.atk, defense, resistance });
+      expect(fever, id).toBe("[[def|방어력]]이 [[stat-bonus-def|+51]], [[res|저항력]]이 [[stat-bonus-res|+34]] 오르고 [[attack-speed|공격 속도]]가 50% 오른다.");
+      // 능력치를 모르는 설명 문맥에서는 값을 추정하지 않고 원래 비율로 안내한다.
+      expect(ferocityTraitDescription(wolf.ferocityTrait), id).toContain("50% 오르고");
     }
   });
 
@@ -771,7 +776,7 @@ describe("사용자 노출 퍼센트 표시 계약", () => {
       };
       visit(file);
     }
-  });
+  }, 30_000); // 저장소 전체 소스를 파싱하므로 기본 5초로는 모자란다.
 });
 
 describe("스피나 스킬 표시 계약", () => {
@@ -845,7 +850,7 @@ describe("루카 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(luka.ferocityTrait)).toContain("[[attack-speed|공격 속도]]가 40%");
     expect(passiveDescription(luka.passive)).toContain("[[atk|공격력]]이 가장 높은 렐릭");
     expect(passiveDescription(luka.passive)).toContain(`치명타 확률이 ${luka.passive.criticalChancePercent}% 오른다`);
-    expect(skillDescription(luka.basic)).toContain("매 4번째 실제 [[basic-attack|기본 공격]]");
+    expect(skillDescription(luka.basic)).toContain("매 3번째 실제 [[basic-attack|기본 공격]]");
     expect(skillDescription(luka.basic)).toContain("[[physical-damage|물리 피해]]");
     expect(skillDescription(luka.ultimate)).toContain("실제로 잃은 체력의 75%");
     expect(skillDescription(luka.ultimate)).toContain("[[transfer|전이]]");
@@ -1387,7 +1392,7 @@ describe("적 정보창 역할 칸 표시 계약", () => {
      * (`ENCOUNTER_ROLE`)에서 그대로 읽으므로 표를 고치면 이 줄도 함께 움직인다.
      */
     expect(encounterRoleMultipliers("normal")).toBe("");
-    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3.3   ·   공격력·주문력 ×1.2   ·   몸집 ×1.18");
+    expect(encounterRoleMultipliers("elite")).toBe("체력 ×3   ·   공격력·주문력 ×1.2   ·   몸집 ×1.18");
     expect(encounterRoleMultipliers("swarm")).toBe("체력 ×0.7   ·   몸집 ×0.8");
     // 보스·불사는 체력을 곱하지 않는다(시즌 게이지 · 불사 계약).
     expect(encounterRoleMultipliers("boss")).not.toContain("체력");

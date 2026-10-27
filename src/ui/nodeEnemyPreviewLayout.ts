@@ -36,18 +36,70 @@ export const NODE_ENEMY_SLOT = {
   powerY: 230,
 } as const;
 
+/**
+ * **적 한 줄의 칸 — 판 안쪽 폭을 마릿수로 똑같이 나눈다.**
+ *
+ * 다섯이 서는 무리는 예전에 칸 간격만 좁히고 SD를 158 × 무리 몸집(0.8)으로 줄여, 셋일 때 200이던 키가
+ * 126까지 작아졌고 양끝 SD와 표식은 판 밖으로 삐져나갔다. 지금은 판 양옆 `inset`을 뺀 폭을 칸 수로
+ * 나누고(셋 이하는 예전 간격 256을 넘지 않는다), SD는 **그 칸 폭이 허락하는 가장 큰 키**로 세운다 —
+ * 미리보기에서 무리의 작은 몸집은 "여럿이 온다"를 말하지 못하고 누구인지만 흐리게 한다.
+ */
+export const ENEMY_PREVIEW_ROW = {
+  /** 판 양옆에서 칸이 들어오는 거리. 깎인 모서리와 판 테두리를 비켜 선다. */
+  inset: 40,
+  /** 셋 이하의 칸 간격 상한 — 하나·둘이 판 양끝으로 흩어지지 않는다. */
+  maxGap: 256,
+  /** SD 키의 상한(셋 이하의 키)과 칸 폭에 대한 비율 — SD는 대개 키보다 좁아 칸 폭의 1.12배까지 선다. */
+  sdHeight: 200,
+  sdPerSlot: 1.12,
+  /** 표식(속성)·돌파 표식 크기의 상한과 칸 반폭에 대한 비율. */
+  badge: 52,
+  badgePerHalf: 0.5,
+} as const;
+
+export interface EnemyPreviewRow {
+  /** SD 중심의 x(판 가운데 기준). */
+  columns: number[];
+  /** 한 적이 차지하는 칸의 반폭. 표식이 옆 칸을 침범하지 않는다. */
+  half: number;
+  /** 무리 몸집을 빼고 그 칸에 세울 SD 키. */
+  sdHeight: number;
+  /** 속성 표식 한 변. 직군·돌파는 이 값에서 나온다. */
+  badge: number;
+  /** 이름줄 글자 크기와 그 줄이 넘지 않을 폭. */
+  nameSize: number;
+  nameWidth: number;
+  /** 개체 전투력 글자 크기. */
+  powerSize: number;
+}
+
+/** 마릿수에서 한 줄의 자리·크기를 구한다. 모든 값이 판 안에 들어온다. */
+export function enemyPreviewRow(count: number, width: number = NODE_ENEMY_PREVIEW.width): EnemyPreviewRow {
+  const spec = ENEMY_PREVIEW_ROW;
+  const safeCount = Math.max(1, count);
+  const gap = Math.min(spec.maxGap, (width - spec.inset * 2) / safeCount);
+  const columns = Array.from({ length: safeCount }, (_, index) => (index - (safeCount - 1) / 2) * gap);
+  const half = Math.min(115, gap / 2 - 6);
+  const crowded = safeCount > 3;
+  return {
+    columns,
+    half,
+    sdHeight: Math.min(spec.sdHeight, Math.round(gap * spec.sdPerSlot)),
+    badge: Math.min(spec.badge, Math.round(half * spec.badgePerHalf)),
+    nameSize: crowded ? 24 : 30,
+    nameWidth: gap - 8,
+    powerSize: crowded ? 22 : 24,
+  };
+}
+
 /** 1/3/5기 모두 같은 판 안에서 좌우 대칭을 이루는 SD 중심을 계산한다. */
 export function enemyPreviewColumns(count: number, width = NODE_ENEMY_PREVIEW.width): number[] {
-  const safeCount = Math.max(1, count);
-  const gap = Math.min(256, (width - 120) / Math.max(1, safeCount - 1));
-  return Array.from({ length: safeCount }, (_, index) => (index - (safeCount - 1) / 2) * gap);
+  return enemyPreviewRow(count, width).columns;
 }
 
 /** 한 적이 차지하는 상자의 반폭. 표식이 옆 칸을 침범하지 않도록 열 간격에서 구한다. */
 export function enemyPreviewSlotHalfWidth(count: number, width = NODE_ENEMY_PREVIEW.width): number {
-  const columns = enemyPreviewColumns(count, width);
-  if (columns.length < 2) return 115;
-  return Math.min(115, Math.abs(columns[1] - columns[0]) / 2 - 6);
+  return enemyPreviewRow(count, width).half;
 }
 
 /** 노드 위 공간이 부족할 때만 아래로 뒤집고, 양쪽 안전 영역 안에 판 전체를 보존한다. */
@@ -90,6 +142,8 @@ export const STORY_PREVIEW = {
   /** 줄거리 칸 머리줄 — 적 칸보다 낮다. */
   storyHeader: 60,
   storyText: { size: 24, inset: 56, padTop: 2, padBottom: 22 },
+  /** 정보 칸 맨 위의 붉은 규칙 줄(`informationHighlights`) — 마름모 표식 + 들여 쓴 글, 줄 사이 간격. */
+  highlight: { size: 30, mark: 16, indent: 30, gap: 10 },
   reward: { labelGap: 20, labelSize: 22, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
 } as const;
 

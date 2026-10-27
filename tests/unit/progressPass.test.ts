@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { FakeServer } from "../../src/api/FakeServer";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassLevel, progressPassMilestoneStates } from "../../src/core/progressPass";
+import { POPUP_BODY_BEVEL_RATIO } from "../../src/ui/popupGeometry";
 import { PROGRESS_PASSES, findProgressPass } from "../../src/data/progressPasses";
 import { PREMIUM_PRODUCTS } from "../../src/data/premiumProducts";
 import { CURRENT_SAVE_VERSION, SAVE_STORAGE_KEY, SaveManager } from "../../src/state/SaveManager";
 import { createDefaultSession, type SaveData } from "../../src/state/session";
 import { passLevelOf, passReadyCount, passToOpen, storyPassStageId } from "../../src/ui/passPopupModel";
 import { CATEGORY_TAB } from "../../src/ui/categoryTabStyle";
+import { createStrataBoard } from "../../src/core/strataDig";
+import { DEFAULT_STRATA_LAYER_ID } from "../../src/data/strataLayers";
 import { passPopupContentHeight, passPopupMinScroll, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport, modeToPassTabGap, PASS_POPUP } from "../../src/ui/passPopupLayout";
 
 class MemoryStorage {
@@ -34,7 +37,7 @@ describe("진행 패스 규칙", () => {
       expect(progressPassGoal(pass)).toBe(thresholds[thresholds.length - 1]);
       const product = PREMIUM_PRODUCTS.find(({ id }) => id === pass.productId)!;
       // 레이드 패스는 30일 구독이다 — 그 밖의 패스는 패스 칸에 선다.
-      expect(product.premiumCategory).toBe(pass.id === "raid" ? "subscription" : "pass");
+      expect(product.premiumCategory).toBe(["raid", "archaeology"].includes(pass.id) ? "subscription" : "pass");
       // 사는 순간의 즉시 보상은 재화·발굴권뿐이고, 나머지는 길의 마디가 준다.
       for (const grant of product.grants ?? []) expect(["currency", "item"]).toContain(grant.kind);
     }
@@ -98,7 +101,7 @@ describe("로비 패스 창 모델", () => {
     expect(passPopupPassTabs(3).width).toBe(passPopupPassTabs(8).width);
     expect(passPopupPassMinScroll(8)).toBeLessThan(passPopupPassMinScroll(3));
     const strip = passPopupPassStrip();
-    const bevel = Math.min(PASS_POPUP.width, PASS_POPUP.height) * 0.14;
+    const bevel = Math.min(PASS_POPUP.width, PASS_POPUP.height) * POPUP_BODY_BEVEL_RATIO;
     for (const y of [strip.top, strip.bottom]) {
       // 빗변 (w/2, h/2 - bevel) → (w/2 - bevel, h/2) 안쪽에 선다.
       const edge = PASS_POPUP.width / 2 - Math.max(0, y - (PASS_POPUP.height / 2 - bevel));
@@ -119,32 +122,72 @@ describe("로비 패스 창 모델", () => {
 });
 
 describe("FakeServer 진행 패스", () => {
+  it("레벨 30에서 모든 레벨 패스 보상이 열리고 다시 받을 수 없다", async () => {
+    const state = createDefaultSession();
+    state.playerResearch.level = 30;
+    state.productPurchases["premium-level-pass"] = { periodKey: "once", count: 1 };
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const result = await server.claimProgressPass({ passId: "level", requestId: "level-30" });
+    expect(result.claimedThresholds).toEqual(Array.from({ length: 15 }, (_, i) => (i + 1) * 2));
+    expect(result.claimedFreeThresholds).toEqual(result.claimedThresholds);
+    await expect(server.claimProgressPass({ passId: "level", requestId: "level-30-again" })).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
+  });
+
+  it("고고학 패스는 연구원 레벨 대신 성공한 발굴 칸만 누적하고 저장한다", async () => {
+    const state = createDefaultSession();
+    state.playerResearch.level = 30;
+    const server = new FakeServer(state, { latencyMs: 0 });
+    const pass = async () => (await server.getProgressPasses()).passes.find(({ id }) => id === "archaeology")!;
+    expect(await pass()).toMatchObject({ metric: "strataDigs", progress: 0 });
+    state.archaeology.board = createStrataBoard({ layerId: DEFAULT_STRATA_LAYER_ID, random: () => 0.5 });
+    for (const tileIndex of [0, 1, 2]) await server.digStrataTile({ tileIndex, requestId: `dig-${tileIndex}` });
+    expect(await pass()).toMatchObject({ progress: 3 });
+    await expect(server.digStrataTile({ tileIndex: 0, requestId: "dig-duplicate" })).rejects.toMatchObject({ code: "STRATA_TILE_UNAVAILABLE" });
+    expect(await pass()).toMatchObject({ progress: 3 });
+    await server.abandonStrataRun({ requestId: "abandon" });
+    expect(await pass()).toMatchObject({ progress: 3 });
+    const manager = new SaveManager(new MemoryStorage());
+    manager.save(state);
+    expect(manager.load()!.missions.lifetime?.strata_tile_dug).toBe(3);
+    const reward = await server.claimProgressPass({ passId: "archaeology", requestId: "dig-free" });
+    expect(reward.claimedFreeThresholds).toEqual([3]);
+  });
+
   it("열지 않아도 무료 칸은 받고, 연 뒤에는 지나온 유료 칸을 한꺼번에 한 번만 준다", async () => {
     const state = createDefaultSession();
     state.playerResearch = { ...state.playerResearch, level: 12 };
     const server = new FakeServer(state, { latencyMs: 0 });
     const free = await server.claimProgressPass({ passId: "level", requestId: "early" });
-    expect(free.claimedFreeThresholds).toEqual([3, 5, 8, 10]);
+    expect(free.claimedFreeThresholds).toEqual([2, 4, 6, 8, 10, 12]);
     expect(free.claimedThresholds).toEqual([]);
-    expect(state.progressPasses?.freeClaimed.level).toEqual([3, 5, 8, 10]);
+    expect(state.progressPasses?.freeClaimed.level).toEqual([2, 4, 6, 8, 10, 12]);
 
     state.productPurchases["premium-level-pass"] = { periodKey: "once", count: 1 };
     const gems = state.wallet.gems;
     const first = await server.claimProgressPass({ passId: "level", requestId: "claim-1" });
-    expect(first.claimedThresholds).toEqual([3, 5, 8, 10]);
-    expect(state.wallet.gems).toBe(gems + 650);
+    expect(first.claimedThresholds).toEqual([2, 4, 6, 8, 10, 12]);
+    expect(state.wallet.gems).toBe(gems + 1150);
     // 같은 요청을 다시 보내도 두 번 주지 않는다.
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-1" })).resolves.toEqual(first);
-    expect(state.wallet.gems).toBe(gems + 650);
+    expect(state.wallet.gems).toBe(gems + 1150);
     await expect(server.claimProgressPass({ passId: "level", requestId: "claim-2" })).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
 
     const listed = (await server.getProgressPasses()).passes.find(({ id }) => id === "level")!;
     expect(listed).toMatchObject({ owned: true, progress: 12 });
-    expect(listed.milestones.slice(3, 6).map(({ state: s }) => s)).toEqual(["claimed", "locked", "locked"]);
+    expect(listed.milestones.slice(5, 8).map(({ state: s }) => s)).toEqual(["claimed", "locked", "locked"]);
   });
 });
 
 describe("저장 v46 진행 패스", () => {
+  it("v51의 레벨 패스 수령 기록을 같은 보상 순번으로 한 번만 이관한다", () => {
+    const manager = new SaveManager(new MemoryStorage());
+    const saved = manager.exportData(createDefaultSession());
+    const legacy = { ...saved, saveVersion: 51, progressPasses: { raidRuns: 0, claimed: { level: [3, 30, 60] }, freeClaimed: { level: [5, 35] } } };
+    const migrated = manager.migrate(legacy);
+    expect(migrated.progressPasses).toMatchObject({ claimed: { level: [2, 20, 30] }, freeClaimed: { level: [4, 22] } });
+    expect(manager.migrate(migrated).progressPasses).toEqual(migrated.progressPasses);
+  });
+
   it("v44 저장은 빈 진행 패스로 올라오고 받은 마디(무료 포함)는 왕복한다", () => {
     const storage = new MemoryStorage();
     const manager = new SaveManager(storage);
@@ -183,7 +226,7 @@ describe("패스 탭 줄의 오른쪽 잘림", () => {
     const y = height / 2 - passRow.fromBottom;
     expect(strip.right(y) - strip.right(y + 1)).toBeCloseTo(1);
     // 빗변까지의 수직 거리 = 가로 물러남 / √2.
-    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * 0.14));
+    const bevelX = width / 2 - (y - (height / 2 - Math.min(width, height) * POPUP_BODY_BEVEL_RATIO));
     expect((bevelX - strip.right(y)) / Math.SQRT2).toBeCloseTo((width - inner) / 2);
   });
 
@@ -217,7 +260,7 @@ describe("패스 유료 칸의 짜임", () => {
       expect(premiumGemValue(product)).toBeGreaterThan(4_000);
       const multiple = premiumValueMultiple(product, PREMIUM_GEM_PER_KRW)!;
       expect(multiple, id).toBeGreaterThanOrEqual(2.5);
-      expect(multiple, id).toBeLessThanOrEqual(4);
+      // 구독·진행 패스는 일일 출석과 진행을 요구하므로 패키지의 가치 배수 상한을 적용하지 않는다.
     }
   });
 });

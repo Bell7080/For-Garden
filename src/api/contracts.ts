@@ -1,8 +1,11 @@
+import type { RouletteReward, RouletteStatus } from "../core/roulette";
 import { t, type TextKey } from "../i18n";
+import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
 import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod, MissionReward } from "../core/missions";
+import type { AchievementCategory, AchievementMetric } from "../data/achievements";
 import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
@@ -16,9 +19,15 @@ import type { ExcavationCurrency, IdleExcavationState } from "../core/idleExcava
 import type { AdReward } from "../data/adRewards";
 import type { ItemCategory, ItemUseEffect, WalletItemKey } from "../data/items";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
-import type { PlayerResearchProgress } from "../state/session";
+import type { ExpeditionRunState, ObservationRecord, PlayerCardState, PlayerResearchProgress } from "../state/session";
+import type { AccountGameSettings } from "../core/settingsOwnership";
+import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
+import type { DialogueEffect } from "../core/dialogue";
+import type { JournalDiscoveryResolution } from "../core/interactionJournals";
+import type { NicknameProblem } from "../core/playerCard";
 import type { PlayerExpReceipt } from "../core/playerLevel";
 import type { ItemLot } from "../core/itemLots";
+import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import type { ExpeditionRewardCurrency } from "../data/expedition";
 import type { AsyncArenaProfileApi } from "./asyncArenaContracts";
 import type { InteractionCity } from "../data/interactionCities";
@@ -37,7 +46,9 @@ export interface StartInteractionDispatchRequest { cityId: string; party: string
 export interface InteractionDispatchResponse { dispatches: InteractionDispatchSnapshot[]; serverTime: string; }
 /** 수령 재전송을 한 지급으로 묶는 멱등 요청이다. */
 export interface ClaimInteractionDispatchRequest { dispatchId: string; requestId: string; }
-export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet; }
+export interface ClaimInteractionDispatchResponse extends InteractionDispatchResponse { granted: { currency: keyof Wallet; amount: number }[]; alreadyClaimed: boolean; wallet: Wallet;
+  /** 수령으로 서버가 발견 처리한 교류 일지. 이미 받은 파견이면 없다. */
+  journal?: JournalDiscoveryResolution; }
 
 /** 정적 표시 메타데이터를 중복 전송하지 않고 서버 보유량과 인스턴스만 전달하는 인벤토리 조회 행이다. */
 /** 기한이 있는 아이템(에너지 드링크)은 받은 묶음마다 사라지는 시각을 `lots`로 싣는다. */
@@ -60,6 +71,8 @@ export interface ClaimMailRewardsRequest { requestId: string; mailIds: string[];
 export interface ClaimMailRewardsResponse extends MailListResponse { claimedMailIds: string[]; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
 /** 열람 처리는 보상 수령과 분리하며 여러 행을 한 번에 읽음 처리할 수 있다. */
 export interface MarkMailsReadRequest { mailIds: string[]; }
+/** 지울 수 있는 것은 읽은 안내와 수령을 마쳤거나 만료된 우편뿐이다. 받을 것이 남은 우편은 서버가 거절한다. */
+export interface DeleteMailsRequest { mailIds: string[]; }
 /** 수량은 양의 정수만 허용하며 서버가 보유량과 상한을 다시 검증한다. */
 /** `lotExpiresAt`을 주면 그 묶음에서 쓴다(가방에서 누른 칸). 없으면 가장 먼저 사라질 묶음부터다. */
 export interface UseConsumableRequest { itemId: string; quantity: number; lotExpiresAt?: string; }
@@ -77,11 +90,54 @@ export interface PurchaseRelicSkinRequest { relicId: string; skinId: RelicSkinId
 /** 치른 값을 함께 돌려줘 화면이 영수증을 다시 계산하지 않게 한다. */
 export interface PurchaseRelicSkinResponse extends PlayerStateDto { skinId: RelicSkinId; spent: { currency: keyof Wallet; amount: number }; }
 
+/** 이야기 완료 기록. 같은 이야기를 다시 완료해도 한 번만 반영한다. */
+export interface CompleteStoryRequest { storyId: string; }
+/** 이야기 서브를 처음 완료하면 젬만 준다(`SUB_STORY_GEM_REWARDS`). 보상이 없는 이야기는 두 필드를 비운다. */
+export interface CompleteStoryResponse { firstCompletion: boolean; gemsGranted?: number; wallet?: Wallet; }
+/** 대사 선택이 일으키는 데이터 명령. 서버가 대상·범위·재관람 중복을 확인하고 이미 완료한 이야기는 보상하지 않는다. */
+export interface ApplyStoryEffectRequest { storyId: string; nodeId?: string; choiceId?: string; /** 구형 클라이언트 호환용. 카탈로그와 일치해야 한다. */ effect?: DialogueEffect; }
+export interface ApplyStoryEffectResponse { xpGained: number; /** 미보유 개체는 최초 획득 시 지급한다. */ xpDeferred?: number; }
+/** 오늘의 관찰 인터뷰 완료. 날짜는 서버 UTC 날짜여야 한다(재관람은 기록된 날짜를 그대로 받는다). */
+export interface CompleteObservationRequest { relicId: string; utcDate: string; choiceId: string; }
+export interface CompleteObservationResponse { record: ObservationRecord; bondXpEarned: number; firstCompletion: boolean; }
+/** 발견한 교류 일지를 읽음으로 확정한다. */
+export interface MarkInteractionJournalReadRequest { journalId: string; }
+export interface MarkInteractionJournalReadResponse { changed: boolean; }
+/** 고고학 지도에서 마지막으로 고른 유적. 삭제된 ID는 받지 않는다. */
+export interface SelectArchaeologySiteRequest { siteId: string; }
+export interface SelectArchaeologySiteResponse { ok: boolean; }
+
+/** 편성 확정 요청. 서로 다른 보유 렐릭 세 명이어야 한다. */
+export interface SetPartyRequest { relicIds: string[]; }
+/** 검증 실패는 던지지 않고 사유를 데이터로 돌려준다 — 화면이 사유마다 다른 안내를 세운다. */
+export type SetPartyResponse = { ok: true; party: string[] } | { ok: false; reason: "wrong-size" | "duplicate" | "not-owned"; relicId?: string };
+/** 애착 렐릭 지정. 보유한 플레이 가능 렐릭만 받는다. */
+export interface SetFavoriteRequest { relicId: string; }
+/** 즐겨찾기 켜기·끄기. 보유하지 않은 렐릭은 담지 않는다. */
+export interface SetRelicBookmarkRequest { relicId: string; bookmarked: boolean; }
+/** 보유 검증을 통과해 반영되었는지만 말한다. */
+export interface RelicMarkResponse { ok: boolean; }
+export type { DebugCommand, DebugCommandResponse } from "../core/debugCommand";
+/** 플레이어 카드의 바뀌는 칸 하나. `identity`는 UID·연구 개시일을 처음 한 번만 정한다. */
+export type UpdatePlayerCardRequest =
+  | { kind: "identity" }
+  | { kind: "nickname"; value: string }
+  | { kind: "bio"; value: string }
+  | { kind: "frame"; frameId: string }
+  | { kind: "avatar"; relicId: string };
+export type PlayerCardFailureReason = NicknameProblem | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned";
+export type UpdatePlayerCardResponse = { ok: true; card: PlayerCardState } | { ok: false; reason: PlayerCardFailureReason };
+/** 장착 수식어 전체를 한 번에 바꾼다. 획득하지 않았거나 상한(3)을 넘으면 거절한다. */
+export interface EquipProfileModifiersRequest { modifierIds: string[]; }
+export interface EquipProfileModifiersResponse { equippedModifierIds: string[]; }
+/** 추가 외형 장착. `skinId`를 비우면 기본 외형으로 되돌린다. */
+export interface EquipRelicSkinRequest { relicId: string; skinId?: RelicSkinId; }
+
 /** 로컬 시계로 확정량을 만들지 않도록 서버가 완성해 주는 스테미나 시계다. 세부 명명 규칙은 docs/server-time-dto.md를 따른다. */
 /** 재화로 스테미나를 채우는 요청. 수단 ID는 서버 표와 대조하고 재전송은 requestId로 막는다. */
 export interface RechargeStaminaRequest { sourceId: string; requestId: string; }
 /** 실제 채운 양과 넘친 양을 함께 돌려줘 화면이 상한을 다시 계산하지 않게 한다. */
-export interface RechargeStaminaResponse extends PlayerStateDto { sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; status: StaminaRechargeStatusDto; }
+export interface RechargeStaminaResponse extends PlayerStateDto { items: InventoryItemDto[]; sourceId: string; spent: { currency: keyof Wallet; amount: number }; appliedAmount: number; overflowAmount: number; stamina: StaminaDto; status: StaminaRechargeStatusDto; }
 /**
  * 젬 충전의 오늘 상태. 값은 서버가 오늘 채운 횟수로 정하고, 화면은 이 응답으로 **다음 값**과 초기화 시각만 그린다.
  * `resetsAt`은 횟수가 처음으로 돌아가는 시각(서버 UTC 자정)이다.
@@ -128,6 +184,10 @@ export interface RuneInventoryDto { runes: RuneInstance[]; equipment: RuneEquipm
 export interface EnhanceRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
 /** 서버가 판정하고 저장한 한 번의 강화 결과다. */
 export interface EnhanceRuneResponse { succeeded: boolean; goldSpent: number; nextSuccessChance: number; rune: RuneInstance; inventory: RuneInventoryDto; }
+/** 일괄 세공 요청은 대상 룬만 고른다. 칸 순서·난수·비용은 서버가 정한다. */
+export interface EnhanceRuneAllRequest { runeInstanceId: string; }
+/** 남은 세공을 한 번에 끝낸 결과다. `results`는 위 줄부터의 성공 여부다. */
+export interface EnhanceRuneAllResponse { goldSpent: number; results: boolean[]; nextSuccessChance: number; rune: RuneInstance; inventory: RuneInventoryDto; }
 /** 각인 요청 역시 대상 룬과 실제 옵션만 고르며 등급과 증가량은 서버가 정한다. */
 export interface EngraveRuneRequest { runeInstanceId: string; statId: RuneStatKey; }
 /** 각인 뒤 갱신된 룬과 인벤토리를 반환한다. */
@@ -151,11 +211,22 @@ export interface AnswerRelicQuestionResponse { serverTime: string; }
 export interface ClaimRelicQuestionRewardRequest { relicId: string; questionId: string; }
 /** 실제로 지급한 젬(상한에서 깎일 수 있다)과 확정된 지갑이다. */
 export interface ClaimRelicQuestionRewardResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
+/** 튜토리얼 한 칸을 마친 것을 확정한다. 앞 칸이 비어 있으면 거절하고, 이미 마친 칸은 아무것도 다시 주지 않는다. */
+export interface CompleteTutorialStepRequest { stepId: string; }
+/** 확정된 진행과, 이번 호출이 새로 준 선물(있을 때만)과 지갑이다. */
+export interface CompleteTutorialStepResponse { tutorial: import("../core/tutorial").TutorialState; granted?: { fossil: number }; wallet: Wallet; serverTime: string; }
+/** 콘텐츠 첫 방문 안내를 봤다고 확정한다. 순서 없이 한 번만 기록되고 선물은 없다. */
+export interface MarkContentIntroSeenRequest { introId: string; }
+export interface MarkContentIntroSeenResponse { tutorial: import("../core/tutorial").TutorialState; serverTime: string; }
 /** 애착 스토리 한 장을 처음 읽은 것을 확정한다. 유대 레벨은 서버가 자기 상태로 확인한다. */
 export interface ClaimRelicChapterRequest { relicId: string; level: number; }
 export interface ClaimRelicChapterResponse { gemsGranted: number; wallet: Wallet; serverTime: string; }
 /** 장착 대상은 보유 룬, 보유 렐릭, 0부터 시작하는 세 슬롯으로 특정한다. */
-export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; }
+/**
+ * `moveFromOther`를 켜면 다른 렐릭(또는 같은 렐릭의 다른 칸)에 끼워진 룬을 그 자리에서 빼고 옮겨 낀다.
+ * 해제와 장착을 한 요청에서 확정해야 중간에 끊겨도 반만 옮겨지지 않는다. 끄면 예전처럼 거절한다.
+ */
+export interface EquipRuneRequest { runeInstanceId: string; relicId: string; slotIndex: number; moveFromOther?: boolean; }
 /** 장착표 변경 뒤의 단일 기준 인벤토리다. */
 export interface EquipRuneResponse { inventory: RuneInventoryDto; }
 /** 해제는 렐릭 슬롯을 직접 비워 요청 시점의 룬 역참조에 의존하지 않는다. */
@@ -165,7 +236,18 @@ export interface UnequipRuneResponse { inventory: RuneInventoryDto; }
 /** 판매 명령은 재전송 멱등 키와 서버가 제거할 인스턴스 ID만 전달한다. */
 export interface SellRunesRequest { requestId: string; instanceIds: string[]; }
 /** 서버가 원자 커밋한 룬·장착표·지갑과 실제 지급 골드다. */
-export interface SellRunesResponse { inventory: RuneInventoryDto; wallet: Wallet; goldAwarded: number; }
+export interface SellRunesResponse { inventory: RuneInventoryDto; wallet: Wallet; rawStoneAwarded: number; }
+/** 룬 합성 — 각인까지 마친 같은 등급 룬 셋. 결과 등급·자리·옵션·특성은 서버가 굴린다. */
+export interface SynthesizeRunesRequest { requestId: string; runeInstanceIds: readonly string[]; }
+export interface SynthesizeRunesResponse {
+  /** 새로 만든 룬. 세공 전 상태다. */
+  rune: RuneInstance;
+  /** 한 등급 위로 올랐는가. 화면이 연출의 결(성공·아쉬움)을 고른다. */
+  upgraded: boolean;
+  goldSpent: number;
+  wallet: Wallet;
+  inventory: RuneInventoryDto;
+}
 
 /** 다른 이용자에게 공개해도 되는 렐릭 정보만 담는 소셜 DTO다. */
 export interface PublicRelicProfileDto {
@@ -208,8 +290,11 @@ export interface PublicProfileModifierDto {
 /** 공개 동의를 받은 기록만 존재할 수 있으며 미기록/비공개 항목은 키 자체를 생략한다. */
 export interface PublicCompetitiveStatsDto {
   highestStage?: { stageId: string; displayValue: string };
-  arenaTier?: { tierId: string; displayName: string };
+  /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
+  arenaScore?: number;
   expeditionScore?: number;
+  /** 고대 지층에서 가장 깊이 깬 층. 한 층도 깨지 않았으면 생략한다. */
+  ancientFloor?: number;
 }
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
@@ -280,6 +365,8 @@ export interface CakeOperationCompleteResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
+  /** 이긴 판에 가끔 얹히는 덤(토벌권). 없으면 빈 목록이다. */
+  bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
   staminaSpent: number;
   staminaRefunded: number;
@@ -302,6 +389,8 @@ export interface DungeonSweepRequest {
 /** 소탕 결과. 스테미나·소탕권 차감과 보상 지급이 전투 없이 한 처리로 끝난다. */
 export interface DungeonSweepResponse extends PlayerStateDto {
   tierId: string;
+  /** 소탕한 판마다 굴린 덤(토벌권). 없으면 빈 목록이다. */
+  bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   count: number;
   staminaSpent: number;
   ticketsSpent: number;
@@ -317,9 +406,12 @@ export interface ProfileModifierSelectionDto {
 }
 
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
+export interface SpinRouletteResponse extends PlayerStateDto {
+  status: RouletteStatus; index: number; reward: RouletteReward; granted: Partial<Record<keyof Wallet, number>>;
+}
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
-export interface ClaimAdRewardResponse extends PlayerStateDto { slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; /** 주간 제한 슬롯만 서버가 확정한 잔여 횟수를 돌려준다. */ weeklyRemaining?: number; excavation?: IdleExcavationState; serverTime: string; }
+export interface ClaimAdRewardResponse extends PlayerStateDto { items: InventoryItemDto[]; slotId: string; reward: AdReward; dailyClaims: number; dailyRemaining: number; /** 서버 지갑 스냅샷의 전후 차이만 담아 UI가 실제 지급량을 재계산하지 않게 한다. */ granted: Partial<Record<keyof Wallet, number>>; excavation?: IdleExcavationState; serverTime: string; }
 
 /** 클라이언트는 런/정산 식별자와 종료 사유만 보내며 보상 수치는 보낼 수 없다. */
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }
@@ -338,11 +430,6 @@ export interface AdSlotOperationsDto {
   enabled: boolean;
   /** 서버 UTC 날짜 하나에 검증·지급할 수 있는 최대 완료 횟수다. */
   dailyLimitUtc: number;
-  /** 주간 제한이 있는 슬롯은 현재 서버 주차의 한도와 사용량을 함께 내려준다. */
-  weeklyLimitUtc?: number;
-  weeklyClaims?: number;
-  /** 빠른 원정처럼 서버 기록을 환산하는 슬롯만 현재 유효 기준값을 공개한다. */
-  referenceScore?: number;
   /** 표시와 실제 지급이 같은 서버 값을 사용하도록 화폐와 수량을 함께 전달한다. */
   /** 허용된 판별 합집합 그대로 내려 UI가 임의 효과를 만들 수 없게 한다. */
   reward: AdReward;
@@ -452,7 +539,7 @@ export interface ProgressPassMilestoneDto {
 export interface ProgressPassDto {
   id: "story" | "level" | "raid" | "archaeology";
   productId: string;
-  metric: "storyClears" | "playerLevel" | "raidRuns";
+  metric: "storyClears" | "playerLevel" | "raidRuns" | "strataDigs";
   progress: number;
   goal: number;
   owned: boolean;
@@ -484,9 +571,31 @@ export interface PeriodResearchDto { points: number; maxPoints: number; stages: 
 /** 목록 응답은 로비 배지에서 바로 쓸 미수령 개수를 포함한다. */
 export interface MissionListResponse { missions: MissionDto[]; claimableCount: number; research: Record<MissionPeriod, PeriodResearchDto>; }
 /** 받은 편지함 데이터가 없는 화면이 상태를 추측하지 않도록 마련한 명시적 서버 계약이다. */
-export interface NotificationSignalsResponse { pendingFriendRequestCount: number; unseenEventCount: number; unreadMailCount: number; }
+export interface NotificationSignalsResponse { claimableRaidCount?: number; claimableExpeditionCount?: number; pendingFriendRequestCount: number; /** 받을 수 있는 업적 단계 수. */ claimableAchievementCount?: number; unseenEventCount: number; unreadMailCount: number; claimableMailCount?: number; claimablePassCount?: number; /** 아직 받지 않은 무료 보급이 있는 프리미엄 탭(일간·주간·월간). */ freeSupplyCategories: Array<"daily" | "weekly" | "monthly">; /** 운영 도구가 보낸 우편·재화 변동 소식. 한 번 내려가면 서버가 비운다. */ opsNotices?: OpsNotice[]; }
 /** 일괄 또는 선택 수령 뒤 지급 총액과 최신 상태를 반환한다. */
 export interface ClaimMissionRewardsResponse extends PlayerStateDto { claimedIds: string[]; claimedResearchStageIds: string[]; /** 임무·연구도 단계가 각각 준 것과 그 합(같은 재화는 한 줄). 상한에 깎인 뒤의 실제 지급분이다. */ rewards: { mission: MissionReward[]; research: MissionReward[] }; granted: MissionReward[]; }
+
+/** 업적 한 단계 — 문턱과 그 단계가 주는 것. */
+export interface AchievementTierDto { target: number; reward: MissionReward; }
+/** 업적 한 줄. 지금 값·받은 단계 수·받을 수 있는 단계 수를 서버가 판정해 내려 준다. */
+export interface AchievementSeriesDto {
+  id: string;
+  category: AchievementCategory;
+  metric: AchievementMetric;
+  value: number;
+  tiers: AchievementTierDto[];
+  /** 받은 단계 수(0 ~ 단계 수). */
+  claimedTiers: number;
+  /** 닿았지만 아직 받지 않은 단계 수. */
+  claimableTiers: number;
+  /** 마지막 단계를 받으면 열리는 수식어와, 이미 얻었는가. */
+  modifier?: { id: string; earned: boolean };
+  /** 숨은 업적 — 닿기 전에는 목표를 가린다. */
+  hidden?: true;
+}
+export interface AchievementListResponse { series: AchievementSeriesDto[]; claimableCount: number; completedTiers: number; totalTiers: number; earnedModifierCount: number; totalModifierCount: number; }
+/** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */
+export interface ClaimAchievementRewardsResponse extends PlayerStateDto { claimedTiers: Record<string, number[]>; completedSeriesIds: string[]; newModifierIds: string[]; granted: MissionReward[]; }
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; /** 룬 상품이 이 기간에 내놓는 룬의 자리. 서버가 로테이션 칸에서 정해 내려 주며, 사는 쪽은 고르지 않는다. */ runePart?: RunePart; /** 활성 구독이면 만료 시각(null은 영구)과 오늘 몫 수령 여부. */ subscription?: { expiresAt: string | null; dailyBonusClaimed: boolean }; /** 노출이 끝나는 시각 — 한정 상품의 남은 시간이 읽는다. */ visibleUntil?: string; }
@@ -520,6 +629,11 @@ export interface PullResponse extends PlayerStateDto {
   duplicateRelicIds: string[];
   /** 이번 연구가 지급한 DNA 마일리지 총량(뽑은 횟수 + 풀돌 중복 보너스). 결과 상단 칩이 이 값을 그대로 읽는다. */
   mileageGained: number;
+  /**
+   * 10연 마지막 슬롯이 SR에서 SSR로 한 번 더 올랐다면 그 칸의 번호(`results` 기준). 없으면 비어 있다.
+   * 화면은 이 칸을 SR로 먼저 보여 준 뒤 SSR로 뒤집는 연출을 돌린다 — 확정은 서버가 이미 했다.
+   */
+  rarityUpgradeSlot?: number;
 }
 
 
@@ -601,11 +715,11 @@ export interface UpgradeRuneTraitRequest { runeInstanceId: string; itemId: strin
 export interface UpgradeRuneTraitResponse { rune: RuneInstance; items: InventoryItemDto[]; }
 
 /** UI가 서버 실패 원인을 문구로 바꿀 수 있게 고정한 오류 코드다. */
-export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "AD_PREREQUISITE" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "PASS_BONUS_CLAIMED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_OPPONENT_FOUGHT" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
+export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPEDITION_RUN_NOT_FOUND" | "EXPEDITION_ALREADY_SETTLED" | "EXPEDITION_ALREADY_ACTIVE" | "EXPEDITION_DAILY_LIMIT" | "EXPEDITION_SCORE_REQUIRED" | "AD_WEEKLY_LIMIT" | "EXPEDITION_SCORE_REJECTED" | "RAID_DAILY_LIMIT" | "RAID_NOT_ENTERED" | "RAID_SCORE_REJECTED" | "RAID_REWARD_NOT_EARNED" | "RAID_NOT_FOUND" | "RAID_ENDED" | "RAID_NOT_ENDED" | "RAID_SUMMON_INVALID" | "RAID_TICKET_SHORTAGE" | "EXPEDITION_REWARD_NOT_FOUND" | "EXPEDITION_REWARD_NOT_EARNED" | "ITEM_NOT_FOUND" | "ITEM_NOT_USABLE" | "INVALID_ITEM_QUANTITY" | "INVALID_PURCHASE_QUANTITY" | "INSUFFICIENT_ITEMS" | "STAMINA_FULL" | "AD_SLOT_NOT_FOUND" | "AD_TOKEN_INVALID" | "AD_REQUEST_DUPLICATE" | "AD_DAILY_LIMIT" | "AD_PREREQUISITE" | "RECEIPT_INVALID" | "PASS_NOT_FOUND" | "PASS_EXPIRED" | "PASS_BONUS_CLAIMED" | "BANNER_NOT_FOUND" | "BANNER_LIMIT_REACHED" | "INSUFFICIENT_CURRENCY" | "INSUFFICIENT_GOLD" | "INVALID_PULL_COUNT" | "RELIC_NOT_FOUND" | "RELIC_MAX_LEVEL" | "RELIC_MAX_BREAKTHROUGH" | "RUNE_CHOICE_REQUIRED" | "RUNE_NOT_FOUND" | "RUNE_ENHANCEMENT_COMPLETE" | "RUNE_STAT_EXHAUSTED" | "RUNE_ENGRAVING_NOT_ALLOWED" | "INVALID_RUNE_NAME" | "INVALID_RUNE_SLOT" | "RUNE_ALREADY_EQUIPPED" | "RUNE_SLOT_MISMATCH" | "RUNE_SLOT_EMPTY" | "INVALID_RUNE_SALE" | "RUNE_EQUIPPED" | "RUNE_LOCKED" | "STAGE_LOCKED" | "STAGE_NOT_FOUND" | "DAILY_ENTRY_LIMIT" | "BOUNTY_TIER_NOT_FOUND" | "BOUNTY_TIER_LOCKED" | "BOUNTY_ADMISSION_NOT_FOUND" | "MISSION_NOT_FOUND" | "MISSION_NOT_COMPLETE" | "MISSION_ALREADY_CLAIMED" | "PRODUCT_NOT_FOUND" | "PRODUCT_STOREFRONT_MISMATCH" | "PRODUCT_NOT_VISIBLE" | "PURCHASE_LIMIT_REACHED" | "PLATFORM_PAYMENT_REQUIRED" | "ACQUISITION_FLOW_REQUIRED" | "INVALID_EXCHANGE_TARGET" | "DUPLICATE_GRANT" | "INVALID_STATE" | "CURRENCY_LIMIT_EXCEEDED" | "EVENT_NOT_FOUND" | "EVENT_NOT_ACTIVE" | "NOTHING_TO_CLAIM" | "DUEL_UNAVAILABLE" | "DUEL_OPPONENT_NOT_FOUND" | "DUEL_OPPONENT_FOUGHT" | "DUEL_NO_ATTEMPTS" | "DUEL_ATTEMPT_LIMIT" | "DUEL_INVALID_TEAM" | "DUEL_ADMISSION_NOT_FOUND"
   | "STRATA_NO_CHARGE" | "STRATA_CHARGE_FULL" | "STRATA_RUN_ACTIVE" | "STRATA_RUN_NOT_FOUND" | "STRATA_SITE_LOCKED" | "STRATA_SITE_COOLING" | "STRATA_TILE_UNAVAILABLE"
-  | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
+  | "RUNE_SYNTHESIS_INVALID" | "RUNE_TRAIT_NOT_FOUND" | "RUNE_TRAIT_ITEM_INVALID" | "RUNE_TRAIT_MAX_GRADE" | "RUNE_TRAIT_GRADE_REACHED" | "RUNE_TRAIT_REROLL_PENDING"
   | "CAKE_TIER_NOT_FOUND" | "CAKE_TIER_LOCKED" | "DUNGEON_NOT_CLEARED" | "SWEEP_TICKET_SHORTAGE"
-  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED";
+  | "RELIC_STORY_NOT_FOUND" | "RELIC_STORY_LOCKED" | "RELIC_STORY_ALREADY_CLAIMED" | "PROFILE_MODIFIER_INVALID" | "DEBUG_TOOLS_DISABLED";
 
 /**
  * 급여 응답.
@@ -615,7 +729,7 @@ export type ApiErrorCode = "PERSISTENCE_FAILED" | "INSUFFICIENT_STAMINA" | "EXPE
  */
 export interface FeedRelicResponse extends PlayerStateDto { relicId: string; feeds: number; cheesecakeSpent: number; levelsGained: number; }
 /** 돌파 결과. 열린 상한을 함께 돌려줘 화면이 표를 다시 뒤지지 않게 한다. */
-export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; }
+export interface BreakThroughResponse extends PlayerStateDto { relicId: string; breakthrough: number; levelCap: number; /** 돌파 뒤의 별(1~5). */ breakthroughGrade: number; /** 남은 그 개체의 파편. */ fragments: number; /** 모자란 몫을 채우느라 함께 쓴 만능 파편 수(0이면 쓰지 않았다). */ universalFragmentsUsed: number; }
 /**
  * 스테미나를 쓰는 전투 입장의 환불 규칙.
  *
@@ -632,6 +746,7 @@ export type StaminaRefundPolicy = "charged-on-victory" | "no-refund-after-admiss
  * 다시 읽어 그리면 미리 본 보상과 받은 보상이 갈릴 때 받지 않은 것까지 받은 것처럼 선다.
  */
 export interface CompleteStageResponse extends PlayerStateDto {
+  unlockedStoryDifficulty?: import("../core/storyDifficulty").StoryDifficulty;
   stageId: string;
   firstClear: boolean;
   cheesecakeEarned: number;
@@ -660,7 +775,7 @@ export interface EnterBountyResponse extends PlayerStateDto { tierId: string; re
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 
@@ -677,7 +792,7 @@ export interface DuelOpponentDto {
 }
 export interface DuelStatusResponse {
   seasonId: string; seasonEndsAt: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
-  /** 표본과 합친 순위. 한 판도 치르지 않았으면 없다. */
+  /** 서버가 확정한 순위. 순위 서비스가 없거나 한 판도 치르지 않았으면 null이다. */
   rank: number | null; wins: number; losses: number;
   /** 지금 연승과 이번 시즌 최장 연승. 다음 판을 이기면 얹히는 연승 보너스(없으면 0). */
   winStreak: number; bestStreak: number; nextStreakBonus: number;
@@ -720,6 +835,9 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   winStreak: number; streakBonus: number;
 }
 export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+/** 고대 지층 상시 순위 한 줄 — 점수는 가장 깊이 깬 층이고 같은 층이면 먼저 닿은 사람이 위다. */
+export interface AncientRankingEntryDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
+export interface AncientRankingResponse { entries: AncientRankingEntryDto[]; me: AncientRankingEntryDto | null; }
 export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }
 export interface ClaimDuelSeasonRewardResponse extends PlayerStateDto { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number; }
 
@@ -734,9 +852,11 @@ export interface EventListResponse { events: EventDto[]; serverTime: string; }
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
 /** 클라이언트 점수가 아니라 재연산 가능한 동작열만 받는 주간 보스 제출 계약이다. */
-export interface SubmitExpeditionBossScoreRequest { requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
+export interface SubmitExpeditionBossScoreRequest { stopAtMs?: number; replayVersion?: 2; requestId: string; runId?: string; nodeId?: string; actions: ExpeditionBossAction[]; }
 /** 전멸 순간 서버가 확정한 점수와 최고/누적 기록이다. */
 export interface SubmitExpeditionBossScoreResponse {
+  /** Actual HP damage for the contribution chart, separate from converted expedition points. */
+  verifiedDamage?: number;
   weekKey: string;
   /** 이전 클라이언트 호환용이며 runScore와 같다. */ score: number;
   /** 이번 폰토스 전투에서 확정된 피해 점수만 담는다. */ bossDamageScore: number;
@@ -744,7 +864,8 @@ export interface SubmitExpeditionBossScoreResponse {
   /** 이번 한 판의 최종 점수로 normalNodeScoreTotal + bossDamageScore다. */ runScore: number;
   /** 이번 주 한 판 최고 점수다. 판의 점수를 합치지 않는다. */ bestScore: number;
   /** 폰토스에게 넣은 피해로 이번 판 전리품에 더해진 인양 기록(`expeditionBossSalvage`)이다. */ bossSalvage: number;
-  improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number;
+  /** 순위 서비스가 없으면 전후 순위는 null이며, 임의의 1위나 0위를 반환하지 않는다. */
+  improved: boolean; endedAtMs: number; rankBefore: number | null; rankAfter: number | null;
 }
 /** 주간 최고 점수와 월요일 00:00 UTC 초기화 경계를 함께 전달한다. */
 /** 운영 보상 수치와 수령 상태는 서버 스냅샷만 화면의 기준으로 삼는다. */
@@ -755,8 +876,9 @@ export interface ExpeditionRewardStageDto { id: string; threshold: number; rewar
  */
 export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: number; resetsAt: string; rewardStages: ExpeditionRewardStageDto[]; rank: number | null; rankRewards: Partial<Record<ExpeditionRewardCurrency, number>>; }
 /** 누적 단계는 정적 표 ID로 요청하고 실제 서버가 달성 및 기존 수령을 다시 검사한다. */
+/** stageId="all"이면 현재 달성한 미수령 단계를 한 트랜잭션에서 모두 받는다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
-export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
+export interface ClaimExpeditionRewardResponse { rewards?: { currency: ExpeditionRewardCurrency; amount: number }[]; claimedNowStageIds?: string[]; weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
 /**
  * 순위 한 줄.
@@ -764,7 +886,7 @@ export interface ClaimExpeditionRewardResponse { weekKey: string; stageId: strin
  * `favoriteRelicId`는 그 사람의 **애착 렐릭**이며 순위표가 얼굴을 세우는 유일한 근거다 —
  * 화면이 playerId로 아무 개체나 골라 세우면 서버가 말한 적 없는 프로필을 그리게 된다.
  */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
+export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; frameId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 
 /**
@@ -774,7 +896,7 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
  * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
  */
-export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
+export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; /** 그 사람이 두른 프로필 테두리 — 순위 줄의 얼굴이 프로필 얼굴(`ProfileAvatar`)로 선다. */ frameId?: string; }
 /** 정산·한 판 보상의 한 줄. 화면은 이 값을 액자에 그대로 세운다. */
 export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: number; }
 /**
@@ -785,6 +907,8 @@ export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: 
  * 받는 것은 끝난 뒤 정산 한 번뿐이다.
  */
 export interface RaidDto {
+  /** 아직 제출하지 않은 입장 영수증. 유예 안에는 추가 비용 없이 판을 다시 시작할 수 있다. */
+  pendingRequestId?: string;
   id: string;
   kind: "world" | "summon";
   bossRelicId: string;
@@ -827,25 +951,74 @@ export interface SummonRaidResponse extends PlayerStateDto { raid: RaidDto; tick
  * 도전을 제출에서 세던 때는 입장에 값이 없어, 판을 열어 보고 마음에 들지 않으면 나가는 길이
  * 공짜였다. 다른 콘텐츠처럼 입장이 비용을 확정하고, 제출은 그 입장 영수증(`requestId`)으로만 받는다.
  */
-export interface EnterRaidRequest { requestId: string; raidId: string; }
-export interface EnterRaidResponse extends PlayerStateDto { raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; }
+export interface EnterRaidRequest { replayVersion?: 2; requestId: string; raidId: string; }
+export interface EnterRaidResponse extends PlayerStateDto { replaySeed?: string; replayVersion?: 2; raid: RaidDto; requestId: string; staminaSpent: number; playerExp: PlayerExpReceipt; refundPolicy: "no-refund-after-admission"; relics?: { relicId: string; snapshot: ExpeditionRelicSnapshot }[]; }
 /**
  * 원정 보스와 **같은 재현 규칙**을 쓴다 — 클라이언트 피해 숫자는 받지 않는다.
  * `requestId`는 그 판의 **입장 영수증**이다 — 입장하지 않은 판의 피해는 받지 않는다.
  */
-export interface SubmitRaidDamageRequest { requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
+export interface SubmitRaidDamageRequest { stopAtMs?: number; replayVersion?: 2; requestId: string; raidId: string; actions: ExpeditionBossAction[]; }
 /** 한 판이 확정된 뒤의 그 레이드 상태와, 그 판의 피해에 비례해 곧바로 지급된 것이다. */
-export interface SubmitRaidDamageResponse extends PlayerStateDto { raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
+export interface SubmitRaidDamageResponse extends PlayerStateDto { /** Shared HP actually removed; personal runDamage survives concurrent kills. */ sharedDamage?: number; raid: RaidDto; runDamage: number; endedAtMs: number; granted: RaidRewardDto[]; }
 /** 끝난 판의 정산. 참여한 판만, 한 번만 받는다. */
 export interface SettleRaidRequest { requestId: string; raidId: string; }
 export interface SettleRaidResponse extends PlayerStateDto { raid: RaidDto; granted: RaidRewardDto[]; alreadySettled: boolean; }
 /** 직접 플레이하지 않고 역대 최고 점수 일부와 절반의 노드 클리어 전리품만 즉시 정산하는 소탕 요청이다. */
 export interface SweepExpeditionRequest { requestId: string; }
-/** 소탕은 점수를 남기지 않고 노드 클리어 보상의 몫만 준다(`EXPEDITION_SWEEP_POLICY`). */
+/** 소탕은 점수를 남기지 않고 평균 경로 전투 전리품의 약 75% 고정표만 준다. */
 export interface SweepExpeditionResponse extends PlayerStateDto { weekKey: string; granted: Record<string, number>; playsToday: number; }
 
+/* ── 출석 ── 규칙은 `core/attendance.ts`, 보상표는 `data/attendance.ts`가 갖는다. */
+
+/** 한 줄(신규·정규)의 지금 모습. 칸마다 받는 것까지 함께 내려 화면이 표를 따로 읽지 않는다. */
+export interface AttendanceTrackDto {
+  id: import("../core/attendance").AttendanceTrackId;
+  claimed: number;
+  claimableToday: boolean;
+  /** 이 줄이 닫히는 시각. 정규는 첫 칸을 받기 전이면 `null`이다. */
+  endsAt: string | null;
+  /** 일곱 칸 각각의 받는 것(칸마다 하나). */
+  days: MailRewardDto[];
+  /** 칸 아래의 광고 덤(정규만). 없는 줄은 덤 칸을 세우지 않는다. */
+  adDays?: MailRewardDto[];
+  /** 이 바퀴에서 광고 덤을 받은 일차. */
+  adClaimed: number[];
+  /** 오늘 받은 칸의 광고 덤을 지금 받을 수 있는가. */
+  adClaimableToday: boolean;
+  /** 지금 광고를 보고 받을 수 있는 덤의 일차(지나간 날 포함, 바퀴가 끝나기 전까지). */
+  adClaimableDays: number[];
+}
+/** 지금 서 있는 줄만 싣는다(끝난 신규 출석은 빠진다). `autoShow`는 오늘 로비가 저절로 판을 열어야 하는가다. */
+export interface AttendanceStatusResponse { tracks: AttendanceTrackDto[]; autoShow: boolean; serverTime: string; }
+export interface ClaimAttendanceRequest { trackId: import("../core/attendance").AttendanceTrackId; requestId: string; }
+export interface ClaimAttendanceResponse extends AttendanceStatusResponse { trackId: import("../core/attendance").AttendanceTrackId; day: number; granted: MailRewardDto[]; wallet: Wallet; items: InventoryItemDto[]; }
+/**
+ * 정규 출석의 광고 덤을 받는다. 광고 완료 토큰은 출석 광고 자리(`ATTENDANCE_AD_SLOT_ID`)의 것이어야 한다.
+ * `day`는 받을 일차(1~7)이며, 없으면 오늘 칸의 덤, 그것도 없으면 가장 오래된 못 받은 덤이다.
+ */
+export interface ClaimAttendanceAdRequest { verificationToken: string; requestId: string; day?: number; }
+
 /** 실제 HTTP API로 교체할 때도 씬이 의존할 단 하나의 통신 인터페이스다. */
+export type StartExpeditionFailure = "exactlyThree" | "duplicate" | "notOwned" | "alreadyActive" | "dailyLimitReached" | "developmentOnly";
+export interface StartExpeditionRunRequest {
+  relicIds: string[];
+  /** 개발용 20층 바로가기다. QA 도구가 켜진 서버만 받고 일반 서버는 `developmentOnly`로 거절한다. */
+  shortcut?: "boss";
+}
+export type StartExpeditionRunResponse = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
+export interface CompleteExpeditionRestRequest { nodeId: string }
+export interface BeginExpeditionAugmentRequest { nodeId: string }
+export interface BeginExpeditionAugmentResponse { pending: ExpeditionRunState["pendingAugmentReward"] }
+export interface ChooseExpeditionAugmentRequest { selection: ExpeditionAugmentSelection }
+export interface PrepareExpeditionBossRequest { nodeId: string }
+export interface PrepareExpeditionBossResponse { ids: { requestId: string; settlementId: string; replayVersion: 2 } | null }
+
+export interface UpdateAccountSettingsRequest { game: Partial<AccountGameSettings> }
+export interface UpdateAccountSettingsResponse { game: AccountGameSettings }
+
 export interface GameApi extends AsyncArenaProfileApi {
+  prepareCombat(request: import("../core/combatProtocol").CombatPrepare): Promise<import("../core/combatProtocol").CombatLease | null>;
+  finishCombat(request: import("../core/combatProtocol").CombatProof): Promise<import("../core/combatProtocol").CombatVerdict | null>;
   getInteractionCities(): Promise<InteractionCitiesResponse>;
   startInteractionDispatch(request: StartInteractionDispatchRequest): Promise<InteractionDispatchResponse>;
   getInteractionDispatch(): Promise<InteractionDispatchResponse>;
@@ -856,6 +1029,15 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse>;
   /** 열람한 우편을 읽음으로 확정한다. */
   markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse>;
+  deleteMails(request: DeleteMailsRequest): Promise<MailListResponse>;
+  /** 오늘의 출석 상태(신규·정규)를 조회한다. */
+  getAttendance(): Promise<AttendanceStatusResponse>;
+  /** 한 줄의 오늘 칸을 받는다. 같은 날 두 번 받지 못하고 같은 요청 ID는 같은 결과를 돌려준다. */
+  claimAttendance(request: ClaimAttendanceRequest): Promise<ClaimAttendanceResponse>;
+  /** 정규 출석의 오늘 받은 칸에 붙은 광고 덤을 받는다. 하루 한 번이고 같은 요청 ID는 같은 결과를 돌려준다. */
+  claimAttendanceAd(request: ClaimAttendanceAdRequest): Promise<ClaimAttendanceResponse>;
+  /** 로비가 오늘 출석 판을 저절로 열었음을 남긴다 — 하루에 한 번만 저절로 연다. */
+  markAttendanceAutoShown(): Promise<void>;
   /** 서버 UTC 주차의 최고/누적 기록을 조회한다. */
   getExpeditionWeeklyBest(): Promise<ExpeditionWeeklyBestResponse>;
   /** 동작열을 서버 편성으로 재현하고 전멸 결과만 점수로 제출한다. */
@@ -884,8 +1066,42 @@ export interface GameApi extends AsyncArenaProfileApi {
   getStaminaRechargeStatus(): Promise<StaminaRechargeStatusDto>;
   /** 값 조회·차감·외형 지급을 한 처리 단위로 확정한다. 화면은 결과만 다시 읽는다. */
   purchaseRelicSkin(request: PurchaseRelicSkinRequest): Promise<PurchaseRelicSkinResponse>;
+  /** 이야기 완료를 서버 기록으로 남긴다. */
+  completeStory(request: CompleteStoryRequest): Promise<CompleteStoryResponse>;
+  /** 대사 선택의 유대 경험치 명령을 서버가 검증해 적용한다. */
+  applyStoryEffect(request: ApplyStoryEffectRequest): Promise<ApplyStoryEffectResponse>;
+  /** 오늘의 관찰 인터뷰를 일일 한도와 최초 보상까지 한 처리 단위로 확정한다. */
+  completeObservation(request: CompleteObservationRequest): Promise<CompleteObservationResponse>;
+  /** 교류 일지를 읽음으로 확정한다. 발견하지 않은 일지는 거절한다. */
+  markInteractionJournalRead(request: MarkInteractionJournalReadRequest): Promise<MarkInteractionJournalReadResponse>;
+  /** 고고학 지도의 마지막 선택 유적을 기록한다. */
+  selectArchaeologySite(request: SelectArchaeologySiteRequest): Promise<SelectArchaeologySiteResponse>;
+  /** 편성은 서버가 보유·중복·인원을 확인해 확정한다. */
+  setParty(request: SetPartyRequest): Promise<SetPartyResponse>;
+  /** 로비에 서는 애착 렐릭을 정한다. 유대 경험치는 건드리지 않는다. */
+  setFavorite(request: SetFavoriteRequest): Promise<RelicMarkResponse>;
+  /** 목록을 추리는 즐겨찾기 표시. 애착과 섞이지 않는다. */
+  setRelicBookmark(request: SetRelicBookmarkRequest): Promise<RelicMarkResponse>;
+  /** QA 디버그 창의 재화·레벨·보유 조정. 개발 도구가 켜진 서버에서만 실행하고 정식 서버는 거절한다. */
+  applyDebugCommand(command: import("../core/debugCommand").DebugCommand): Promise<import("../core/debugCommand").DebugCommandResponse>;
+  /** 닉네임·소개·테두리·프로필 사진·최초 식별값을 서버 규칙으로 바꾼다. */
+  updatePlayerCard(request: UpdatePlayerCardRequest): Promise<UpdatePlayerCardResponse>;
+  /** 길드를 만든다. 젬 2,000을 같은 호출 안에서 차감한다. */
+  createGuild(request: CreateGuildRequest): Promise<GuildWalletResponse>;
+  /** 길드 뱃지를 바꾼다(길드장). 실제로 바뀌면 젬을 차감한다. */
+  changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse>;
+  /** 오늘의 출석 도장을 찍고 고른 보상을 받는다. 길드 부흥도·기여도도 함께 오른다. */
+  stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse>;
+  /** 길드 코인으로 상점 상품을 산다. */
+  buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
+  /** 장착 수식어 목록을 확정한다. */
+  equipProfileModifiers(request: EquipProfileModifiersRequest): Promise<EquipProfileModifiersResponse>;
+  /** 추가 외형을 입히거나 벗긴다. */
+  equipRelicSkin(request: EquipRelicSkinRequest): Promise<RelicMarkResponse>;
   /** 장착 검증과 지갑 상한을 통과한 룬 판매를 서버가 원자 확정한다. */
   sellRunes(request: SellRunesRequest): Promise<SellRunesResponse>;
+  /** 각인 완료 룬 셋을 골드로 합성해 새 룬 하나를 만든다. */
+  synthesizeRunes(request: SynthesizeRunesRequest): Promise<SynthesizeRunesResponse>;
 
   /** 고고학 화면이 여는 순간 읽는 상태다. 충전 정산도 여기서 끝난다. */
   archaeologyState(): Promise<ArchaeologyStateResponse>;
@@ -911,11 +1127,26 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 광고 제안은 조회 성공한 서버 운영 설정만 표시 기준으로 사용한다. */
   getAdOperationsConfig(): Promise<AdOperationsConfigResponse>;
   /** 광고 완료 증명을 검증하고 멱등성·UTC 제한·지급·저장을 한 처리로 확정한다. */
+  getRouletteStatus(): Promise<RouletteStatus>;
+  spinRoulette(request: { requestId: string }): Promise<SpinRouletteResponse>;
+  unlockRouletteSpins(request: { requestId: string; verificationToken?: string }): Promise<RouletteStatus>;
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;
   /** 모든 노드의 방문·HP·보상을 서버가 한 처리로 확정한다. */
   completeExpeditionNode(request: CompleteExpeditionNodeRequest): Promise<CompleteExpeditionNodeResponse>;
+  /** 계정에 묶인 환경설정(전투 배속·자동 궁극기 등, `settingsOwnership`)만 서버에 저장한다. 기기 값은 보내지 않는다. */
+  updateAccountSettings(request: UpdateAccountSettingsRequest): Promise<UpdateAccountSettingsResponse>;
+  /** 원정 출발. 편성(보유·중복·세 명)·하루 한 판·지도 생성·떠날 때의 성장 스냅샷을 서버가 한 처리로 굳힌다. */
+  startExpeditionRun(request: StartExpeditionRunRequest): Promise<StartExpeditionRunResponse>;
+  /** 휴식 노드의 회복과 방문을 한 번에 확정한다. */
+  completeExpeditionRest(request: CompleteExpeditionRestRequest): Promise<{ ok: boolean }>;
+  /** 전투 노드의 증강 제안을 서버 난수로 한 번만 연다. 노드 종류는 서버가 런에서 읽는다. */
+  beginExpeditionAugment(request: BeginExpeditionAugmentRequest): Promise<BeginExpeditionAugmentResponse>;
+  /** 열려 있는 제안 중 하나를 확정한다. 후보·대상·중첩 검증은 서버가 한다. */
+  chooseExpeditionAugment(request: ChooseExpeditionAugmentRequest): Promise<{ ok: boolean }>;
+  /** 보스 출격 직전에 점수 제출·정산의 멱등 키를 런에 굳힌다. */
+  prepareExpeditionBoss(request: PrepareExpeditionBossRequest): Promise<PrepareExpeditionBossResponse>;
   /** 진행 중인 런이 없을 때만 주간 횟수 하나를 소비해 역대 최고점 일부와 절반의 전리품을 즉시 정산한다. */
   sweepExpedition(request: SweepExpeditionRequest): Promise<SweepExpeditionResponse>;
   /** 실제 결제 서버가 플랫폼 원본 영수증을 검증하며 요청 ID 재시도에는 같은 결과를 반환한다. */
@@ -971,6 +1202,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   /** 결과 확정 — 점수·휘장·첫 도달 젬. 같은 입장은 한 번만 확정된다. */
   resolveDuel(request: ResolveDuelRequest): Promise<ResolveDuelResponse>;
   getDuelRanking(): Promise<DuelRankingResponse>;
+  /** 고대 지층 상시 순위(100등까지)와 내 줄. 초기화하지 않는다. */
+  getAncientRanking(): Promise<AncientRankingResponse>;
   /** 끝난 시즌의 티어 보상을 받는다. */
   claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */
@@ -988,12 +1221,18 @@ export interface GameApi extends AsyncArenaProfileApi {
   subscribeMissionNotice?(listener: () => void): () => void;
   /** ID를 생략하면 현재 완료된 모든 미수령 임무를 한 저장 처리로 받는다. */
   claimMissionRewards(missionIds?: string[], researchPeriod?: MissionPeriod, researchStageIds?: string[]): Promise<ClaimMissionRewardsResponse>;
+  /** 업적 목록과 받을 단계 수를 조회한다. */
+  getAchievements(): Promise<AchievementListResponse>;
+  /** ID를 생략하면 닿은 모든 업적 단계를 한 저장 처리로 받는다. 마지막 단계를 받은 업적은 수식어도 연다. */
+  claimAchievementRewards(seriesIds?: string[]): Promise<ClaimAchievementRewardsResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
   getProducts(storefront: ProductStorefront): Promise<ProductListResponse>;
   /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */
   purchaseProduct(request: PurchaseProductRequest): Promise<PurchaseProductResponse>;
   /** 룬의 한 옵션을 서버 난수로 한 번 강화한다. */
   enhanceRune(request: EnhanceRuneRequest): Promise<EnhanceRuneResponse>;
+  /** 룬의 남은 일반 강화를 위 줄부터 전부, 골드 차감과 함께 한 번에 판정한다. */
+  enhanceRuneAll(request: EnhanceRuneAllRequest): Promise<EnhanceRuneAllResponse>;
   /** 모든 일반 강화를 마친 룬에 서버 판정 각인을 한 번 적용한다. */
   engraveRune(request: EngraveRuneRequest): Promise<EngraveRuneResponse>;
   /** 서버 이름 정책을 통과한 사용자 이름으로 바꾼다. */
@@ -1004,6 +1243,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   answerRelicQuestion(request: AnswerRelicQuestionRequest): Promise<AnswerRelicQuestionResponse>;
   /** 답한 질문의 젬 50개를 한 번만 받는다. */
   claimRelicQuestionReward(request: ClaimRelicQuestionRewardRequest): Promise<ClaimRelicQuestionRewardResponse>;
+  /** 첫 플레이 튜토리얼의 한 칸을 마친다. 선물이 걸린 칸은 처음 마칠 때 한 번만 지급한다. */
+  completeTutorialStep(request: CompleteTutorialStepRequest): Promise<CompleteTutorialStepResponse>;
+  /** 콘텐츠 첫 방문 안내를 봤다고 남긴다. */
+  markContentIntroSeen(request: MarkContentIntroSeenRequest): Promise<MarkContentIntroSeenResponse>;
   /** 유대 레벨이 닿은 애착 스토리 한 장의 해금 젬을 한 번만 받는다. */
   claimRelicChapter(request: ClaimRelicChapterRequest): Promise<ClaimRelicChapterResponse>;
   /** 한 룬이 전체 장착표에서 정확히 한 슬롯에만 있도록 장착한다. */
@@ -1033,3 +1276,18 @@ export function persistenceFailed(error: unknown, messageKey: TextKey = "error.p
     ? error
     : new GameApiError("PERSISTENCE_FAILED", message, { cause: error });
 }
+
+// ── 길드: 지갑이 얽힌 조작 ─────────────────────────────────────────────────────
+export interface CreateGuildRequest { name: string; joinMode: import("../core/guild").GuildJoinMode; badge: import("../core/guildBadge").GuildBadge }
+export interface ChangeGuildBadgeRequest { badge: import("../core/guildBadge").GuildBadge }
+export type StampGuildAttendanceRequest = Record<string, never>;
+export interface BuyGuildProductRequest { productId: string }
+export interface GuildWalletResponse extends PlayerStateDto { guild: import("./guildContracts").GuildStateResponse }
+export interface StampGuildAttendanceResponse extends PlayerStateDto {
+  attendance: import("./guildContracts").GuildAttendanceState;
+  /** 이번 도장으로 받은 몫(상한에 걸리면 깎인 값). */
+  granted: { gold: number; cheesecake: number; gems: number };
+  /** 찍은 칸의 번호(1~7). 길드 쪽 몫(기여도·코인)은 `guildAttendanceDay(day)`가 말한다. */
+  day: number;
+}
+export interface BuyGuildProductResponse extends PlayerStateDto { shop: import("./guildContracts").GuildShopState; productId: string }

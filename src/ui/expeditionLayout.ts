@@ -32,7 +32,39 @@ export const EXPEDITION_LAYOUT: Readonly<Record<ExpeditionLayoutRegion, { top: n
  * 멈춰야 한다. 위로는 전리품 판과 그 아래 원정 점수 줄을 덮지 않도록 지도 구역에서 시작한다.
  * 높이를 늘릴 때는 이 계약을 함께 확인한다.
  */
-export const EXPEDITION_AUGMENT_POPUP = { width: 940, height: 840, centerY: 760 } as const;
+export const EXPEDITION_AUGMENT_POPUP = {
+  width: 940, height: 820, centerY: 750,
+  /** 단계 표시 한 줄(증강 고르기 › 대상 고르기). 머리글 바로 아래다. */
+  stepY: -335,
+  /**
+   * 후보 카드 세 장. 고른 카드가 떠오르며 커져도(`lift`·`chosenScale`) 위로는 단계 줄, 아래로는
+   * 안내 줄을 넘지 않아야 한다 — `tests/unit/expeditionAugmentPopupLayout.test.ts`가 지킨다.
+   */
+  card: { width: 284, height: 470, y: -40, gap: 16, lift: 14, chosenScale: 1.06, restScale: 0.94 },
+  noteY: 250,
+  confirm: { y: 330, width: 500, height: 100 },
+} as const;
+
+/**
+ * 증강 현황 팝업 — 쪽마다 머리(누구의 몫인가) → 흐르는 목록 → 넘김 줄.
+ *
+ * 줄 높이는 손으로 적지 않고 효과 글의 실제 높이에서 쌓는다. 예전에는 줄마다 78px로 못 박아
+ * 두 줄짜리 효과가 다음 줄을 덮었다. 목록이 창보다 길면 판 안에서만 흐른다.
+ */
+export const EXPEDITION_AUGMENT_STATUS = {
+  width: 900, height: 1240, centerY: 900,
+  header: { y: -515, face: 100 },
+  divider: -448,
+  viewport: { top: -428, bottom: 468, width: 860 },
+  row: { width: 820, chip: 80, minHeight: 132, gap: 18, padY: 26, textX: -290, metaRight: 386, effectWrap: 650 },
+  pager: { y: 548, arrowX: 250 },
+} as const;
+
+/** 후보 카드 `index`번째의 판 안 가운데 x. 세 장이 판 가운데를 기준으로 고르게 선다. */
+export function expeditionAugmentCardX(index: number, count: number): number {
+  const { width, gap } = EXPEDITION_AUGMENT_POPUP.card;
+  return (index - (count - 1) / 2) * (width + gap);
+}
 
 /** 인접 구역의 최소 여백을 계산해 모바일 세로 화면에서 겹침을 순수하게 검증한다. */
 export function expeditionLayoutGaps(): number[] {

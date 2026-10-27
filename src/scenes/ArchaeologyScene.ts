@@ -41,8 +41,15 @@ import { StrataRewardPop } from "../ui/StrataRewardPop";
 import { STRATA_REWARD_POP, strataRewardTier } from "../ui/strataRewardPopStyle";
 import { addRuneFrame } from "../ui/runeIcons";
 import { openRuneInfoPopup } from "../ui/RunePopup";
+import { isRuneSynthesisMaterial, RUNE_SYNTHESIS_INPUTS, RUNE_SYNTHESIS_RULES } from "../core/runeSynthesis";
+import { addRuneSynthesisBench, type RuneSynthesisBenchHandles } from "../ui/RuneSynthesisBench";
+import { playRuneSynthesisEffect } from "../ui/runeSynthesisEffect";
+import { runeSynthesisCenter } from "../ui/runeSynthesisLayout";
+import { openRuneSynthesisOdds } from "../ui/RuneSynthesisOddsPopup";
+import { InventoryManager } from "../managers/InventoryManager";
+import { audioManager } from "../managers/AudioManager";
 import { findItem } from "../data/items";
-import { pressIn, pressOut } from "../ui/pressFeedback";
+import { bindPressFlash, pressIn, pressOut } from "../ui/pressFeedback";
 import { UI_ICON } from "../ui/icons";
 import { TopBar } from "../ui/TopBar";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -53,6 +60,8 @@ import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
+import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 고고학. 하단 탭 첫 슬롯이다.
@@ -65,7 +74,7 @@ import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransit
  */
 
 /** 두 갈래. 씬 하나 안에서 판만 갈아 끼운다 — 화면을 넘기는 상점은 이 줄에 서지 않는다. */
-type ArchaeologyTab = "strata" | "research";
+type ArchaeologyTab = "strata" | "research" | "synth";
 
 /** 화면의 세로 좌표를 한 곳에서 잡는다. */
 const ARCHAEOLOGY = {
@@ -179,6 +188,15 @@ export class ArchaeologyScene extends Phaser.Scene {
   private popups!: PopupLayer;
   private keywords!: KeywordManager;
   private tab: ArchaeologyTab = "strata";
+  private traitOddsLink: Phaser.GameObjects.Container | null = null;
+  private synthOddsLink: Phaser.GameObjects.Container | null = null;
+  /**
+   * 합성대 꼭짓점 셋에 넣은 룬 ID. 특성 연구대처럼 **인스턴스가 아니라 ID를 든다** — 팔거나 바뀐
+   * 룬을 다시 그릴 때 저장에서 다시 찾아 지금 값을 쓴다.
+   */
+  private synthIds: (string | null)[] = [null, null, null];
+  /** 합성 연출이 도는 동안 칸·버튼을 다시 받지 않는다. */
+  private synthBusy = false;
   /** 지금 그려진 판. 서버 응답을 그대로 들고 있고 씬이 고쳐 쓰지 않는다. */
   private board: StrataBoardView | null = null;
   /** 서버 확정 해금/완료 상태만 지도에 전달한다. */
@@ -298,7 +316,9 @@ export class ArchaeologyScene extends Phaser.Scene {
     setDebugStorefrontControls({ archaeology: { shop: { x: shopSlot.x, y: shopSlot.y } } });
     // **누른 자리에 붙이지 않는다** — 표 두 장이 든 큰 판이라 위로 붙이면 제목·횟수 줄을 덮는다.
     // 한동안 머무는 판은 화면 가운데에 서고 우하단 뒤로가기로 닫는다.
-    addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
+    // 확률 글줄은 탭마다 제 표를 연다 — 합성 탭에서는 합성 확률, 나머지는 특성 확률이다.
+    this.traitOddsLink = addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("rune.trait.odds"), () => openRuneTraitOdds({ scene: this, popups: this.popups }));
+    this.synthOddsLink = addRatesLink(this, ARCHAEOLOGY.rates.x, ARCHAEOLOGY.rates.y, t("archaeology.synth.oddsTitle"), () => openRuneSynthesisOdds({ scene: this, popups: this.popups }));
 
     this.view = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
@@ -319,6 +339,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "archaeology");
   }
 
   /**
@@ -332,6 +353,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     const tabs: ReadonlyArray<{ key: ArchaeologyTab; labelKey: TextKey }> = [
       { key: "strata", labelKey: "archaeology.tab.strata" },
       { key: "research", labelKey: "archaeology.tab.research" },
+      { key: "synth", labelKey: "archaeology.tab.synth" },
     ];
     // 옛 라벨을 먼저 지운다. 남겨 두면 누를 때마다 한 겹씩 쌓인다.
     this.tabRow.removeAll(true);
@@ -357,7 +379,7 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   /** 서버에서 지금 상태를 받아 다시 그린다. 씬이 횟수나 판을 스스로 계산하지 않는다. */
   private async refresh(): Promise<void> {
-    const state = await gameApi.archaeologyState();
+    const state = await withBusy(this, gameApi.archaeologyState());
     this.applyArchaeologyState(state);
     this.paintView();
   }
@@ -372,7 +394,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.board = state.board;
     this.siteStates = state.sites;
     // 구 저장의 진행 판도 다음 지도 복귀 때 같은 유적을 가리키도록 의미 있는 ID로 승격한다.
-    if (state.board?.siteId) archaeologyProgressManager.selectSite(state.board.siteId);
+    if (state.board?.siteId) void archaeologyProgressManager.selectSite(state.board.siteId).catch(() => undefined);
     // 잘못된 서버 시각은 로컬 시각을 서버 시각이라고 추측하지 않고 안전한 정지 상태로 둔다.
     this.serverClockOffsetMs = Number.isFinite(serverTime) ? serverTime - receivedAt : 0;
     this.nextChargeAt = Number.isFinite(serverTime) && Number.isFinite(nextChargeAt) ? nextChargeAt : null;
@@ -408,8 +430,11 @@ export class ArchaeologyScene extends Phaser.Scene {
     this.view.removeAll(true);
     this.chargeValueText = null; this.chargeNoteText = null;
     setDebugArchaeologyMap(undefined);
+    this.traitOddsLink?.setVisible(this.tab !== "synth");
+    this.synthOddsLink?.setVisible(this.tab === "synth");
     if (this.tab === "strata") this.paintStrata();
-    else this.paintResearch();
+    else if (this.tab === "research") this.paintResearch();
+    else this.paintSynthesis();
     this.setBoardDim(this.tab === "strata" && this.board !== null);
   }
 
@@ -473,7 +498,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         session.archaeology.lastSelectedSiteId,
       );
       // 삭제되거나 다시 잠긴 선택은 화면에서만 우회하지 않고 안전한 유적으로 저장도 복구한다.
-      if (focus && focus.id !== session.archaeology.lastSelectedSiteId) archaeologyProgressManager.repairSelection(focus.id);
+      if (focus && focus.id !== session.archaeology.lastSelectedSiteId) void archaeologyProgressManager.repairSelection(focus.id).catch(() => undefined);
       const map = new ArchaeologyMapView(this, {
         top: ARCHAEOLOGY.chargePanel.y + ARCHAEOLOGY.chargePanel.height / 2 + 24,
         bottom: ARCHAEOLOGY.tabY - 64,
@@ -486,7 +511,7 @@ export class ArchaeologyScene extends Phaser.Scene {
         focusSiteId: focus?.id,
         onSelect: (site) => {
           // 서버가 확정한 해금 노드만 마지막 선택으로 남긴다. 잠긴 노드 열람은 진행 선택이 아니다.
-          if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) archaeologyProgressManager.selectSite(site.id);
+          if (this.siteStates.find(({ siteId }) => siteId === site.id)?.unlocked) void archaeologyProgressManager.selectSite(site.id).catch(() => undefined);
           this.openSitePreview(site);
         },
         // 열세 자리가 얽힌 그물망에서 테스트가 좌표를 손으로 적지 않도록 실제 자리를 알린다.
@@ -789,6 +814,7 @@ export class ArchaeologyScene extends Phaser.Scene {
     }
     const hit = this.add.rectangle(center.x, center.y, frame.cellWidth, frame.cellHeight, 0xffffff, 0.001)
       .setInteractive({ useHandCursor: true });
+    bindPressFlash(hit, 0.18);
     hit.on("pointerup", () => this.dig(index));
     tileView.add(hit);
     this.strataHits.set(index, hit);
@@ -812,7 +838,7 @@ export class ArchaeologyScene extends Phaser.Scene {
   private async finishRun(board: StrataBoardView): Promise<void> {
     this.digging = true;
     try {
-      const response = await gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` });
+      const response = await withBusy(this, gameApi.abandonStrataRun({ requestId: `strata-finish-${Date.now()}` }));
       this.applyArchaeologyState(response);
       this.paintView();
       const items = haulToRewardItems(strataBoardHaul(board), this.grantedRunes);
@@ -1175,6 +1201,62 @@ export class ArchaeologyScene extends Phaser.Scene {
       onPick: (picked) => { this.benchRuneId = picked.instanceId; this.benchJustSlotted = true; this.paintView(); },
       onClear: () => { this.benchRuneId = null; this.paintView(); },
       actions: rune === undefined ? [] : this.traitActions(rune),
+    });
+  }
+
+  /**
+   * 룬 합성대. 넣은 룬은 저장에서 다시 찾아 지금 값을 쓰고, 사라졌거나 더는 재료가 될 수 없으면
+   * (잠금) 칸을 비운다.
+   */
+  private paintSynthesis(): void {
+    const slots = this.synthIds.map((id) => {
+      const rune = id === null ? undefined : session.runeInventory.find(({ instanceId }) => instanceId === id);
+      return rune !== undefined && isRuneSynthesisMaterial(rune) ? rune : undefined;
+    });
+    this.synthIds = slots.map((rune) => rune?.instanceId ?? null);
+    const handles = addRuneSynthesisBench({
+      scene: this, parent: this.view, popups: this.popups, slots, busy: this.synthBusy,
+      onPick: (index, rune) => { this.synthIds[index] = rune.instanceId; this.paintView(); },
+      onClear: (index) => { this.synthIds[index] = null; this.paintView(); },
+      onSynthesize: () => this.requestSynthesis(slots.filter((rune): rune is RuneInstance => rune !== undefined), handles),
+    });
+  }
+
+  /** 되돌릴 수 없는 골드 소모라 공용 확인 창이 한 번 묻고, 서버 결과를 받은 뒤 연출을 돌린다. */
+  private requestSynthesis(runes: readonly RuneInstance[], handles: RuneSynthesisBenchHandles): void {
+    if (this.synthBusy || runes.length !== RUNE_SYNTHESIS_INPUTS) return;
+    const cost = RUNE_SYNTHESIS_RULES.goldCost[runes[0].rarity];
+    this.popups.confirm({
+      title: t("archaeology.synth.confirmTitle"),
+      message: t("archaeology.synth.confirmMessage"),
+      costs: [{ iconKey: "currency-gold", amount: cost }],
+      balance: { iconKey: "currency-gold", before: session.wallet.gold, after: session.wallet.gold - cost },
+      confirmLabel: t("archaeology.synth.button"),
+      destructive: true,
+    }, () => {
+      this.synthBusy = true;
+      // 사라질 재료의 확률이 연출 내내 그대로 서 있지 않게 판을 가라앉힌다.
+      this.tweens.add({ targets: handles.odds, alpha: 0.25, duration: 200 });
+      // 가운데 빛은 결과 룬이 설 자리라 먼저 걷는다.
+      this.tweens.add({ targets: handles.core, alpha: 0, duration: 300 });
+      void new InventoryManager(session).synthesizeRunes(gameApi, runes.map(({ instanceId }) => instanceId)).then((result) => {
+        playRuneSynthesisEffect({
+          scene: this,
+          frames: handles.frames.filter((frame): frame is Phaser.GameObjects.Container => frame !== undefined),
+          center: runeSynthesisCenter(BASE_WIDTH),
+          color: RUNE_ACCENT[result.rune.rarity],
+          upgraded: result.upgraded,
+          rune: result.rune,
+          depth: 2500,
+          onImpact: () => { if (result.upgraded) audioManager?.playUi("ui.confirm"); },
+          onDone: () => {
+            this.synthBusy = false;
+            this.synthIds = [null, null, null];
+            this.paintView();
+            openRuneInfoPopup(this, this.popups, { runeInstanceId: result.rune.instanceId, api: gameApi });
+          },
+        });
+      }).catch(() => { this.synthBusy = false; this.paintView(); });
     });
   }
 

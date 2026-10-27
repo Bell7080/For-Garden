@@ -4,6 +4,8 @@ import type { WalletItemKey } from "../data/items";
 import { drawRoundedLayer } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { session } from "../state/session";
+import { rollEndpoints, rollText } from "../core/valueRoll";
 
 /**
  * 재화 한 칸.
@@ -71,6 +73,7 @@ export function addCurrencyChip(
     .setScale(1, VALUE.stretch)
     .setShadow(2, 5, "#05070a", 6, false, true);
   chip.add(value);
+  rollOnChange(scene, value, options.color ?? COLOR.ink);
   options.parent?.add(chip);
   const press = options.onPress ?? (options.currency && options.onClick ? () => options.onClick?.(options.currency!) : undefined);
   if (press) {
@@ -82,4 +85,48 @@ export function addCurrencyChip(
     chip.add(hit);
   }
   return value;
+}
+
+/** 숫자가 구르는 시간과 맥동의 세기. 재화는 자주 바뀌므로 길게 끌지 않는다. */
+const ROLL = { ms: 620, punch: 1.26, punchMs: 110, settleMs: 520, gain: "#9dffb8", loss: "#ff9a9a" } as const;
+
+/**
+ * 값이 바뀌면 숫자가 **띠리리릭 굴러** 새 값에 닿고, 칸이 한 번 부풀었다 찰랑이며 가라앉는다.
+ * 늘면 연둣빛, 줄면 붉은빛이 잠깐 비친다. 부르는 쪽은 예전처럼 `setText`만 부르면 된다 —
+ * 칸 하나를 고치면 상단 줄·팝업 보유량이 모두 같은 손맛을 갖는다. 처음 적는 글자와
+ * 움직임 줄이기에서는 바로 적는다.
+ */
+function rollOnChange(scene: Phaser.Scene, value: Phaser.GameObjects.Text, baseColor: string): void {
+  const plain = value.setText.bind(value);
+  let shown = "";
+  let target = "";
+  let roll: Phaser.Tweens.Tween | undefined;
+  let punch: Phaser.Tweens.Tween | undefined;
+  const baseScaleY = value.scaleY;
+  value.setText = (text: string | string[]) => {
+    const next = Array.isArray(text) ? text.join("\n") : text;
+    if (next === target) return value;
+    const from = shown;
+    target = next;
+    roll?.remove(); punch?.remove(); roll = undefined; punch = undefined;
+    const ends = from === "" || session.settings.accessibility.reduceMotion || import.meta.env?.MODE === "test" || !value.active ? undefined : rollEndpoints(from, next);
+    if (!ends) { shown = next; value.setScale(1, baseScaleY).setColor(baseColor); return plain(next); }
+    const [start, end] = ends;
+    const color = end > start ? ROLL.gain : ROLL.loss;
+    value.setColor(color);
+    const counter = { v: start };
+    roll = scene.tweens.add({
+      targets: counter, v: end, duration: ROLL.ms, ease: "Cubic.Out",
+      onUpdate: () => { shown = rollText(next, counter.v); plain(shown); },
+      onComplete: () => { shown = next; plain(next); value.setColor(baseColor); roll = undefined; },
+    });
+    punch = scene.tweens.add({
+      targets: value, scaleX: ROLL.punch, scaleY: baseScaleY * ROLL.punch, duration: ROLL.punchMs, ease: "Quad.Out",
+      onComplete: () => {
+        punch = scene.tweens.add({ targets: value, scaleX: 1, scaleY: baseScaleY, duration: ROLL.settleMs, ease: "Elastic.Out", easeParams: [1, 0.35], onComplete: () => { punch = undefined; } });
+      },
+    });
+    return value;
+  };
+  value.once(Phaser.GameObjects.Events.DESTROY, () => { roll?.remove(); punch?.remove(); });
 }

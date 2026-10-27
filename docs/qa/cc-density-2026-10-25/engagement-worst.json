@@ -1,0 +1,125 @@
+{
+  "id": "engagement:deina+torika+ella:as4:ms0.5:bt0:near:baseline",
+  "seed": "engagement:deina+torika+ella:as4:ms0.5:bt0:near",
+  "stepSeconds": 0.02,
+  "requestedSeconds": 30,
+  "elapsedSeconds": 30,
+  "phase": "fight",
+  "limits": {
+    "maxContinuousSeconds": 2,
+    "maxControlledRatio": 0.4,
+    "minFreeGapSeconds": 0.5,
+    "minimumObservationSeconds": 10
+  },
+  "metadata": {
+    "mode": "engagement",
+    "pairedScenario": "engagement:deina+torika+ella:as4:ms0.5:bt0:near",
+    "hpEnduranceMultiplier": 100,
+    "originalSkills": true,
+    "party": [
+      "deina",
+      "torika",
+      "ella"
+    ],
+    "attackSpeedMultiplier": 4,
+    "moveSpeedMultiplier": 0.5,
+    "breakthrough": 0,
+    "layout": "near",
+    "selections": []
+  },
+  "combatants": [
+    {
+      "fighterId": "player-0",
+      "relicId": "deina",
+      "side": "player",
+      "attackSpeed": 268.8,
+      "moveSpeed": 144.42,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.5580357142857143
+    },
+    {
+      "fighterId": "player-1",
+      "relicId": "torika",
+      "side": "player",
+      "attackSpeed": 312,
+      "moveSpeed": 52.199999999999996,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.4807692307692308
+    },
+    {
+      "fighterId": "player-2",
+      "relicId": "ella",
+      "side": "player",
+      "attackSpeed": 297.59999999999997,
+      "moveSpeed": 37.12,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.5040322580645162
+    },
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "attackSpeed": 100,
+      "moveSpeed": 159.5,
+      "reach": 360,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.5
+    }
+  ],
+  "units": [
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "observedSeconds": 30,
+      "controlledSeconds": 30,
+      "controlledRatio": 1,
+      "longestContinuousSeconds": 30,
+      "minFreeGapSeconds": null,
+      "longestFreeWindowSeconds": 0,
+      "fullLockSeconds": 26.22,
+      "targetRestrictionSeconds": 30,
+      "byKindSeconds": {
+        "taunt": 30,
+        "stagger": 2,
+        "stun": 26.02
+      },
+      "directAttackFrames": 4,
+      "hostileAttackFrames": 4,
+      "friendlyFireFrames": 0,
+      "targetChanges": 1,
+      "targetReversals": 0,
+      "forcedTargetChanges": 1,
+      "forcedPursuitSeconds": 0,
+      "firstHostileAttackSeconds": 0.02,
+      "maxHostileAttackGapSeconds": 11.32,
+      "hostileAttackTimes": [
+        0.02,
+        1.62,
+        8.98,
+        18.68
+      ],
+      "intervals": [
+        {
+          "start": 0,
+          "end": 30,
+          "kinds": [
+            "taunt",
+            "stagger",
+            "stun"
+          ]
+        }
+      ],
+      "violations": [
+        "continuous-control",
+        "control-density"
+      ],
+      "verdict": "fail"
+    }
+  ],
+  "triggerActivations": [],
+  "verdict": "fail"
+}

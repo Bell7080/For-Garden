@@ -38,14 +38,14 @@ export interface DuelTierDef {
 export const DUEL_DIVISION_SPAN = 100;
 
 export const DUEL_TIERS: readonly DuelTierDef[] = [
-  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 0 }, firstReachGems: 0 },
-  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 50 }, firstReachGems: 100 },
-  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 100 }, firstReachGems: 150 },
-  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 150 }, firstReachGems: 200 },
-  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 200 }, firstReachGems: 300 },
-  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 300 }, firstReachGems: 400 },
-  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 400 }, firstReachGems: 500 },
-  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 500 }, firstReachGems: 700 },
+  { id: "bronze", floor: 0, divisions: 4, blind: 0, seasonReward: { duelEmblem: 150, gems: 300 }, firstReachGems: 0 },
+  { id: "silver", floor: 400, divisions: 4, blind: 0, seasonReward: { duelEmblem: 250, gems: 500 }, firstReachGems: 100 },
+  { id: "gold", floor: 800, divisions: 4, blind: 0, seasonReward: { duelEmblem: 400, gems: 1_000 }, firstReachGems: 150 },
+  { id: "platinum", floor: 1_200, divisions: 4, blind: 1, seasonReward: { duelEmblem: 550, gems: 1_500 }, firstReachGems: 200 },
+  { id: "diamond", floor: 1_600, divisions: 4, blind: 1, seasonReward: { duelEmblem: 700, gems: 2_000 }, firstReachGems: 300 },
+  { id: "master", floor: 2_000, divisions: 1, blind: 2, seasonReward: { duelEmblem: 900, gems: 2_500 }, firstReachGems: 400 },
+  { id: "grandmaster", floor: 2_400, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_100, gems: 3_000 }, firstReachGems: 500 },
+  { id: "challenger", floor: 2_800, divisions: 1, blind: 2, seasonReward: { duelEmblem: 1_400, gems: 3_500 }, firstReachGems: 700 },
 ];
 
 /** 가려지는 칸의 상한. 셋 중 하나는 늘 보여야 고를 근거가 남는다. */
@@ -107,8 +107,8 @@ export function duelDefenseWinChance(mine: number, theirs: number): number {
   return clamp(share, DUEL_DEFENSE_SIM.minWinChance, DUEL_DEFENSE_SIM.maxWinChance);
 }
 
-/** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 28일인가다. */
-export const DUEL_SEASON_DAYS = 28;
+/** 시즌 길이와 기준점(월요일 00:00 UTC). 시즌 번호는 이 기준에서 몇 번째 21일인가다. */
+export const DUEL_SEASON_DAYS = 21;
 const DUEL_SEASON_EPOCH = Date.UTC(2026, 0, 5);
 const DAY_MS = 86_400_000;
 
@@ -153,15 +153,29 @@ export function duelDivisionNumeral(division: number | null): string {
 }
 
 /**
+ * 저티어 발판 — 브론즈·실버에서는 이긴 판의 점수가 크게 오르고 진 판은 덜 깎인다.
+ *
+ * 초반에 금방 올라갈 길을 열어 두려는 값이라 티어가 오를수록 줄어 골드(가운데 티어)부터 1배다. 연승 보너스에는
+ * 곱하지 않는다. 기준은 **지금 내 점수의 티어**이고(올라간 뒤에는 바로 낮은 배수로 내려간다), 어느 티어까지를
+ * 저티어로 보는지는 이 표에 적힌 티어뿐이다.
+ */
+export const DUEL_LOW_TIER_SCORE: Readonly<Partial<Record<DuelTierId, { win: number; loss: number }>>> = {
+  bronze: { win: 2, loss: 0.5 },
+  silver: { win: 1.5, loss: 0.5 },
+};
+
+/**
  * 한 판의 점수 증감.
  *
  * 엘로를 단순하게 줄인 꼴이다 — 높은 상대를 이기면 더 오르고, 낮은 상대에게 지면 더 내려간다.
  * 상대와의 점수 차 25점마다 1점씩 기울고 양 끝은 막아 둔다(이겨도 최소 10, 져도 최대 24).
+ * 거기에 저티어 발판(`DUEL_LOW_TIER_SCORE`)이 내 티어에 따라 곱해진다.
  */
 export function duelScoreDelta(myScore: number, opponentScore: number, won: boolean): number {
   const gap = opponentScore - myScore;
-  if (won) return clamp(Math.round(20 + gap / 25), 10, 32);
-  return -clamp(Math.round(14 - gap / 25), 6, 24);
+  const boost = DUEL_LOW_TIER_SCORE[duelTier(myScore).id];
+  if (won) return Math.round(clamp(Math.round(20 + gap / 25), 10, 32) * (boost?.win ?? 1));
+  return -Math.round(clamp(Math.round(14 - gap / 25), 6, 24) * (boost?.loss ?? 1));
 }
 
 /**

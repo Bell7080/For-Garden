@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { PlayOptions, Puppet } from "puppetforge";
 import { advancePuppet, puppetElapsedMs } from "./runtimeStep";
 import { countDebugPuppetUpdate, debugPerfEnabled } from "../debug";
-import { puppetAffineUniform, puppetShaderAlpha } from "./renderTransform";
+import { puppetAffineUniform, puppetOffsetUniform, puppetShaderAlpha } from "./renderTransform";
 
 /** GPU 프로그램과 정적 attribute 위치는 렌더러 하나당 한 번만 만든다. */
 interface SharedGpuProgram {
@@ -13,6 +13,7 @@ interface SharedGpuProgram {
   transform: WebGLUniformLocation;
   viewport: WebGLUniformLocation;
   tint: WebGLUniformLocation;
+  fill: WebGLUniformLocation;
   alpha: WebGLUniformLocation;
   sampler: WebGLUniformLocation;
 }
@@ -51,6 +52,14 @@ function watchContextRestore(renderer: Phaser.Renderer.WebGL.WebGLRenderer): voi
   });
 }
 
+/** 몸 뒤에 겹쳐 그리는 한 겹. 변위는 월드 픽셀, 색은 실루엣을 채우는 한 색(기본 검정)이다. */
+export interface PuppetAfterimage {
+  dx: number;
+  dy: number;
+  alpha: number;
+  color?: number;
+}
+
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
 attribute vec2 aUv;
@@ -69,11 +78,14 @@ const FRAGMENT_SHADER = `
 precision mediump float;
 uniform sampler2D uTexture;
 uniform vec3 uTint;
+uniform vec4 uFill;
 uniform float uAlpha;
 varying vec2 vUv;
 void main() {
   vec4 color = texture2D(uTexture, vUv);
-  gl_FragColor = vec4(color.rgb * uTint, color.a * uAlpha);
+  // uFill.a만큼 원화 대신 한 색으로 채운다(실루엣). 원화가 미리 곱해진 알파라 채움도 알파를 곱한다.
+  vec3 rgb = mix(color.rgb * uTint, uFill.rgb * color.a, uFill.a);
+  gl_FragColor = vec4(rgb, color.a * uAlpha);
 }`;
 
 /** 셰이더 컴파일 오류는 조용히 빈 캐릭터를 만들지 않고 부트 단계에서 원인을 드러낸다. */
@@ -119,6 +131,7 @@ function createProgram(gl: WebGLRenderingContext): SharedGpuProgram {
     transform: uniform("uTransform"),
     viewport: uniform("uViewport"),
     tint: uniform("uTint"),
+    fill: uniform("uFill"),
     alpha: uniform("uAlpha"),
     sampler: uniform("uTexture"),
   };
@@ -183,6 +196,8 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
   private buffers?: CreatureGpuBuffers;
   /** 지금 들고 있는 버퍼를 만든 컨텍스트 세대. 다르면 죽은 손잡이라 지우지도 쓰지도 않는다. */
   private buffersGeneration = -1;
+  private poseVersion = 0;
+  private uploadedPoseVersion = -1;
   /** 직전 갱신 때의 TimeStep 벽시계. 프레임 제한이 켜져도 실제 경과 시간을 잴 수 있게 한다. */
   private lastLoopTime = -1;
   /** 1보다 작은 값은 비전투 장식의 프레임 일부를 버리며 누락 시간을 다음 프레임에 합치지 않는다. */
@@ -195,7 +210,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * 늘고 `spawnPuppet`은 비동기라 0.1초짜리 돌진이 끝난 뒤에야 도착한다. 여기서는 이미 바인딩한
    * program과 버퍼를 그대로 두고 행렬·색·알파만 갈아 끼우므로 겹 하나가 draw 한 번이다.
    */
-  private afterimages: readonly { dx: number; dy: number; alpha: number }[] = [];
+  private afterimages: readonly PuppetAfterimage[] = [];
+  private transformUniform?: Float32Array<ArrayBuffer>;
+  private afterimageUniform?: Float32Array<ArrayBuffer>;
+  /** 몸 위에 얇게 얹는 한 색. 폭주의 붉은 기운처럼 원화를 그대로 두고 색만 한 겹 덮는다. */
+  private bodyFill: { color: number; amount: number } = { color: 0, amount: 0 };
   /**
    * 동작을 그 자리에서 멈춘다. 멈춘 동안의 시간은 버린다 — 풀면 멈춘 프레임에서 그대로 이어지고
    * 지나간 만큼을 한꺼번에 따라잡지 않는다(따라잡으면 풀리는 순간 자세가 툭 튄다).
@@ -239,8 +258,14 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * 변위는 **월드 픽셀**이라 카메라·부모 변환을 화면이 다시 계산하지 않는다 — 그릴 때 좌표만
    * 잠깐 옮겨 같은 경로로 행렬을 만들기 때문이다.
    */
-  setAfterimages(steps: readonly { dx: number; dy: number; alpha: number }[]): this {
+  setAfterimages(steps: readonly PuppetAfterimage[]): this {
     this.afterimages = steps;
+    return this;
+  }
+
+  /** 몸 위에 한 색을 `amount`(0~1)만큼 덮는다. 0이면 원화 그대로다. */
+  setBodyFill(color: number, amount: number): this {
+    this.bodyFill = { color, amount: Phaser.Math.Clamp(amount, 0, 1) };
     return this;
   }
 
@@ -280,7 +305,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 브라우저 비가시성은 저장된 절전과 별도 정지이며 hidden delta를 임의 애니메이션으로 따라잡지 않는다.
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
     // 멈춘 동안은 시간만 흘려보낸다. 위에서 벽시계를 먼저 갱신했으므로 풀린 뒤 따라잡지 않는다.
-    if (this.animationFrozen) return;
+    if (this.animationFrozen || !this.visible || this.alpha <= 0) return;
     this.decorativeUpdateCredit += this.decorativeUpdateFactor;
     if (this.decorativeUpdateCredit < 1) return;
     this.decorativeUpdateCredit -= 1;
@@ -288,7 +313,7 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     // 편집기보다 긴 프레임을 한 번에 적분하면 pinnedSoft 발 주변의 spring이 튀므로 잘게 나눈다.
     const started = debugPerfEnabled ? performance.now() : 0;
     const next = advancePuppet(this.puppet, elapsed / 1000);
-    if (next) this.positions = next;
+    if (next) { this.positions = next; this.poseVersion += 1; }
     if (debugPerfEnabled) countDebugPuppetUpdate(performance.now() - started);
   }
 
@@ -303,6 +328,9 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     const index = gl.createBuffer();
     if (!position || !uv || !index) throw new Error("Puppet GPU buffer를 만들 수 없습니다.");
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, position);
+    gl.bufferData(gl.ARRAY_BUFFER, this.positions.byteLength, gl.DYNAMIC_DRAW);
+    this.uploadedPoseVersion = -1;
     gl.bindBuffer(gl.ARRAY_BUFFER, uv);
     gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
@@ -336,7 +364,11 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
 
       gl.useProgram(shared.program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.DYNAMIC_DRAW);
+      // 같은 자세를 여러 카메라가 그리거나 정지했을 때는 GPU 전송을 반복하지 않는다.
+      if (this.uploadedPoseVersion !== this.poseVersion) {
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positions);
+        this.uploadedPoseVersion = this.poseVersion;
+      }
       gl.enableVertexAttribArray(shared.position);
       gl.vertexAttribPointer(shared.position, 2, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uv);
@@ -356,35 +388,35 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
        * **잔상을 먼저, 먼 것부터 그린다.** 몸을 먼저 그리면 반투명 겹이 그 위에 얹혀 진짜 몸이
        * 흐려지고, 지나온 길이 아니라 몸에 묻은 얼룩으로 읽힌다.
        *
-       * 좌표를 잠깐 옮겨 같은 `GetCalcMatrix` 경로를 지나는 이유는, 변위를 행렬에 직접 더하면
-       * 부모 컨테이너의 배율·회전이 그 변위에 먹지 않아 확대된 화면에서 잔상만 어긋나기
-       * 때문이다. 색은 검게 고정한다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다.
+       * 변위는 부모·카메라의 축으로 옮겨 확대·회전된 화면에서도 본체에 붙인다.
+       * 색은 기본이 검정이다 — 개체 색으로 채우면 잔상이 아니라 발광이 된다. 폭주 테두리처럼
+       * 몸 둘레로 비껴 세우는 겹만 `color`로 제 색을 갖는다.
        */
-      const baseX = this.x;
-      const baseY = this.y;
+      // 본체 행렬은 한 번만 합성한다. camera는 부모 Container까지 합성한 공간이므로
+      // 잔상 변위만 그 축으로 옮기면 각 겹에서 x/y를 바꿔 재합성한 결과와 같다.
+      const matrices = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix);
+      const transform = puppetAffineUniform(matrices.calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY, this.transformUniform ??= new Float32Array(9));
       for (const ghost of this.afterimages) {
-        this.x = baseX + ghost.dx;
-        this.y = baseY + ghost.dy;
-        const ghostCalc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
-        gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(ghostCalc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
-        gl.uniform3f(shared.tint, 0, 0, 0);
+        gl.uniformMatrix3fv(shared.transform, false, puppetOffsetUniform(transform, matrices.camera, ghost.dx, ghost.dy, this.afterimageUniform ??= new Float32Array(9)));
+        gl.uniform3f(shared.tint, 1, 1, 1);
+        const ghostColor = ghost.color ?? 0;
+        gl.uniform4f(shared.fill, ((ghostColor >> 16) & 0xff) / 255, ((ghostColor >> 8) & 0xff) / 255, (ghostColor & 0xff) / 255, 1);
         gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha * ghost.alpha, camera.alpha));
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
       }
-      this.x = baseX;
-      this.y = baseY;
 
       // GetCalcMatrix가 개체 로컬 → 부모 Container → Camera 순으로 이동·배율·회전을 합성한다.
       // Puppet 정점은 이미지 좌상단 픽셀이므로 displayOrigin을 로컬에서 먼저 빼고, flip도 원점
       // 둘레의 로컬 반전으로 행렬에 포함한다. vec4 이동/축 배율로는 부모 회전과 shear를 보존할 수 없다.
-      const calc = Phaser.GameObjects.GetCalcMatrix(this, camera, parentMatrix).calc;
-      gl.uniformMatrix3fv(shared.transform, false, puppetAffineUniform(calc, this.displayOriginX, this.displayOriginY, this.flipX, this.flipY));
+      gl.uniformMatrix3fv(shared.transform, false, transform);
       gl.uniform3f(
         shared.tint,
         ((this.tintTopLeft >> 16) & 0xff) / 255,
         ((this.tintTopLeft >> 8) & 0xff) / 255,
         (this.tintTopLeft & 0xff) / 255,
       );
+      const fill = this.bodyFill;
+      gl.uniform4f(shared.fill, ((fill.color >> 16) & 0xff) / 255, ((fill.color >> 8) & 0xff) / 255, (fill.color & 0xff) / 255, fill.amount);
       // Container renderer가 호출 직전에 누적 부모 alpha를 this.alpha에 곱하므로 카메라 alpha만 마저 합친다.
       gl.uniform1f(shared.alpha, puppetShaderAlpha(this.alpha, camera.alpha));
       gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);

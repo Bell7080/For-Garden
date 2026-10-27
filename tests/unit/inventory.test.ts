@@ -142,8 +142,9 @@ describe("inventory", () => {
     const state = createDefaultSession(); const inventory = new InventoryManager(state);
     expect(inventory.list("currency").find(({ id }) => id === "gold")?.quantity).toBe(state.wallet.gold);
     expect(inventory.list("consumable")).toHaveLength(1);
-    // 재료 칸은 룬 특성을 만져 보게 하는 임시 지급과 처음 쥐여 주는 두 토벌권뿐이다.
-    expect(inventory.list("material")).toHaveLength(STARTER_RUNE_TRAIT_KIT.items.length + 2);
+    // 재료 칸은 룬 특성을 만져 보게 하는 임시 지급, 처음 쥐여 주는 두 토벌권, QA용 만능 파편 셋뿐이다.
+    expect(inventory.list("material")).toHaveLength(STARTER_RUNE_TRAIT_KIT.items.length + 2 + 3 + 1);
+    // 마지막 하나는 가방에 서는 발굴권(고고학 입장 횟수) 칸이다.
     expect(inventoryScrollMetrics(4).minY).toBe(0); expect(inventoryScrollMetrics(20)).toEqual({ contentHeight: 1040, minY: 0 });
   });
 
@@ -213,12 +214,23 @@ describe("inventory", () => {
 });
 
 describe("발굴권 칸", () => {
-  it("0개면 칸이 서지 않고 가지고 있으면 재료 탭에 선다", async () => {
+  it("횟수가 0이면 칸이 서지 않고 3칸을 넘긴 몫까지 그대로 센다", async () => {
     const { InventoryManager } = await import("../../src/managers/InventoryManager");
     const state = createDefaultSession();
     const manager = new InventoryManager(state);
+    state.archaeology.charges = 0;
     expect(manager.list("material").some(({ id }) => id === "strata-ticket")).toBe(false);
-    state.itemInventory = [{ itemId: "strata-ticket", quantity: 2 }];
-    expect(manager.list("material").find(({ id }) => id === "strata-ticket")?.quantity).toBe(2);
+    state.archaeology.charges = 7;
+    expect(manager.list("material").find(({ id }) => id === "strata-ticket")?.quantity).toBe(7);
+  });
+});
+
+describe("가방 표시 목록", () => {
+  it("보유량 0인 재화는 칸을 세우지 않고 서버용 list는 모든 재화 행을 유지한다", () => {
+    const state = createDefaultSession(); state.wallet.gold = 0; state.wallet.gems = 5;
+    const inventory = new InventoryManager(state);
+    expect(inventory.displayList("currency").map(({ id }) => id)).not.toContain("gold");
+    expect(inventory.displayList("currency").map(({ id }) => id)).toContain("gems");
+    expect(inventory.list("currency").map(({ id }) => id)).toContain("gold");
   });
 });

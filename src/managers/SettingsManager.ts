@@ -8,6 +8,8 @@ import { setFontLanguage } from "../ui/fonts";
 import { setDataLanguage, setTextLanguage } from "../i18n";
 import { adjustForQuietHours } from "../core/notificationSchedule";
 import { applyFrameRateLimit } from "../config/gameConfig";
+import { accountGameSettings, accountPartOfPatch, type SettingsPatch } from "../core/settingsOwnership";
+import { resolveServerApi, type SettingsApi } from "./serverApi";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
@@ -16,7 +18,26 @@ export class SettingsManager extends EventTarget {
   /** 부트가 등록한 Phaser 하나만 보관해 설정 변경을 코어 시계와 분리한다. */
   private runtimeGame?: Phaser.Game;
 
-  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly platform: PlatformFeedback = platformFeedback) { super(); }
+  /** 계정의 값을 서버에 보내는 줄. 보낸 순서대로 닿아야 마지막으로 고른 값이 서버에 남는다. */
+  private accountSync: Promise<unknown> = Promise.resolve();
+  private readonly apiCache: { api?: SettingsApi } = {};
+
+  constructor(private readonly state: Session = session, private readonly saves: Pick<SaveManager, "save"> = saveManager, private readonly platform: PlatformFeedback = platformFeedback, private readonly injectedApi?: SettingsApi) { super(); }
+
+  private get api(): SettingsApi { return resolveServerApi<SettingsApi>(this.state, this.injectedApi, this.apiCache); }
+
+  /**
+   * 계정의 값(`settingsOwnership`)만 서버로 보낸다. 화면은 곧바로 바뀌어야 하므로(전투 중 배속 칩) 기기에는 먼저
+   * 적용하고 서버는 뒤따른다 — 실패하면 다음에 서버 상태를 받을 때 서버 값으로 돌아간다.
+   */
+  private syncAccountPart(patch: SettingsPatch): void {
+    const game = accountPartOfPatch(patch);
+    if (!game) return;
+    this.accountSync = this.accountSync.then(() => this.api.updateAccountSettings({ game }), () => this.api.updateAccountSettings({ game })).catch((error) => { console.error("계정 설정 저장 실패", error); });
+  }
+
+  /** 서버가 마지막으로 확정할 때까지 기다린다. 시험과 계정 전환 직전에 쓴다. */
+  settled(): Promise<void> { return this.accountSync.then(() => undefined); }
 
   /** 외부 참조로 세션이 변경되지 않도록 정규화된 독립 스냅샷을 반환한다. */
   get(): GameSettings { return normalizeSettings(this.state.settings); }
@@ -32,7 +53,20 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId } } });
   }
 
-  update(patch: { [K in keyof GameSettings]?: Partial<GameSettings[K]> }): GameSettings {
+  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. */
+  rememberGuildSeen(page: "war" | "guard", key: number): void {
+    const current = this.get().game.guildSeen;
+    if (current[page] === key) return;
+    this.update({ game: { guildSeen: { ...current, [page]: key } } });
+  }
+
+  /** 고대 지층 초기화 예고 창을 오늘 봤다고 적는다 — 같은 날 다시 띄우지 않는다. */
+  rememberAncientResetSeen(day: string): void {
+    if (this.get().game.ancientResetSeen === day) return;
+    this.update({ game: { ancientResetSeen: day } });
+  }
+
+  update(patch: SettingsPatch): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);
     // 새로 그리는 모든 글자가 공용 스타일 배율을 사용하도록 한곳에서 동기화한다.
@@ -44,6 +78,7 @@ export class SettingsManager extends EventTarget {
     setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
+    this.syncAccountPart(patch);
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
     return this.get();
   }
@@ -62,6 +97,8 @@ export class SettingsManager extends EventTarget {
     setDataLanguage(this.state.settings.game.language);
     if (this.runtimeGame) applyFrameRateLimit(this.runtimeGame, this.state.settings.presentation.frameRateLimit);
     this.saves.save(this.state);
+    // 기본값으로 돌아간 계정의 값도 서버가 같은 값을 갖게 한다.
+    this.syncAccountPart({ game: accountGameSettings(this.state.settings.game) });
     this.dispatchEvent(new CustomEvent<GameSettings>("change", { detail: this.get() }));
     return this.get();
   }

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-25",
+  "projects": [
+    "forgarden-prod",
+    "forgarden-test"
+  ],
+  "admin_roles_writable_by_anon": false,
+  "admin_roles_writable_by_authenticated": false,
+  "save_upload_by_authenticated": false,
+  "save_remove_by_authenticated": false,
+  "checked_service_rpc_executable_by_clients": false,
+  "public_tables_without_rls": [],
+  "operator_console_tokens": "memory only, source inspected",
+  "credential_scope": "Tracked game sources, public/dist text artifacts, sensitive filenames in git history; no secret values emitted",
+  "live_schema_mutated": false,
+  "production_code_deployed": false,
+  "leaked_password_protection": "disabled; management configuration not modified"
+}

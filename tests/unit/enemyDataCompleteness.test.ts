@@ -29,7 +29,7 @@ function referencedEnemyIds(): { stage: Set<string>; expedition: Set<string>; du
  * 확인한다. 전용 던전에만 서는 개체(치즈케이크 대작전의 레이티아 다섯 자매)는 여기 오르지 않는다 —
  * 그 개체를 스토리·원정 표에 억지로 넣으면 편성이 콘텐츠의 성격과 갈린다.
  */
-const SHARED_ENEMY_IDS = ["toby", "amo", "ripa", "koma", "pontos"] as const;
+const SHARED_ENEMY_IDS = ["toby", "amo", "ripa", "koma"] as const;
 
 describe("enemy static data completeness", () => {
   it("registers every permanent enemy in some content formation", () => {

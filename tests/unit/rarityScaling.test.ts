@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { combatPower } from "../../src/core/combatPower";
 import { applyLevelGrowth, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
-import { COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
+import { ENEMY_BIRTH_TIERS, COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import type { RelicDef, Stats } from "../../src/core/types";
 
@@ -182,6 +182,16 @@ describe("치명타형 정체성", () => {
     // 값이 있는 개체는 태생 공통값 위에 그만큼을 더한 확률로 싸운다.
     for (const relic of sources) {
       expect(relic.stats.critChance + relic.passive.criticalChancePercent!, relic.name).toBeGreaterThan(COMMON_SECONDARY_STATS.critChance);
+    }
+  });
+});
+
+describe("적 전용 태생 단계", () => {
+  it("회수조는 정의가 자기 등급 띠 안에 서고 1단계 배수만 얹는다", () => {
+    for (const id of Object.keys(ENEMY_BIRTH_TIERS)) {
+      const relic = getRelic(id);
+      expect(withinRarityBand(combatPower(relic.stats), relic.rarity), id).toBe(true);
+      expect(ENEMY_BIRTH_TIERS[id].statFactor).toBe(1.3);
     }
   });
 });

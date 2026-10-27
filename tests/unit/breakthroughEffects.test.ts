@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { unitStatusViews } from "../../src/ui/unitStatusModel";
-import { applyCombatStatusEffect, applyFrenzy, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
-import { FEROCITY_RULES } from "../../src/core/ferocity";
+import { applyCombatStatusEffect, gainElation, bossDamageMultiplier, breakthroughSkill, currentAttackSpeed, gainFerocity, moveSpeed, receivedDamage, createSkirmish, fighterReach, fireUltimate, findFighter, refreshBleed, stepSkirmish, tryTriggerEmergencyRecovery, tryTriggerLowHpVanish, type Arena, type SkirmishEvent, type SkirmishState } from "../../src/core/skirmish";
+import { FEROCITY_RULES, ferocityMaxOf } from "../../src/core/ferocity";
 import { BREAKTHROUGH_STEPS, isBreakthroughSlotOpen } from "../../src/core/relicProgression";
 import { getRelic, RELICS } from "../../src/data/relics";
 import { breakthroughEffectText } from "../../src/ui/skillPresentation";
@@ -110,7 +110,7 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.attackCooldown = 999;
     // 폭주에 들어간 뒤 피해를 받고, 게이지가 다 빠질 때까지 굴린다.
-    torika.ferocity = FEROCITY_RULES.max;
+    torika.ferocity = ferocityMaxOf(torika.def);
     torika.ferocityFever = true;
     torika.feverDamageTaken = 400;
     torika.shield.amount = 0;
@@ -129,7 +129,7 @@ describe("한계 돌파 — 폭주(별 IV)", () => {
     const state = battle(3);
     const torika = findFighter(state, "player-0")!;
     torika.feverDamageTaken = 999;
-    torika.ferocity = FEROCITY_RULES.max - 1;
+    torika.ferocity = ferocityMaxOf(torika.def) - 1;
     // 게이지를 채워 폭주에 들어가게 한다(공격 사건이 아니라 직접 임계를 넘긴다).
     torika.ferocityFever = false;
     stepSkirmish(state, 0.05);
@@ -184,8 +184,7 @@ describe("돌파 효과 문구", () => {
     const lexia = getRelic("rex");
     expect(breakthroughEffectText(lexia, "basic")).toContain("최대 체력의 4%");
     expect(breakthroughEffectText(lexia, "basic")).toContain("받는 회복량을 40% 낮추며");
-    expect(breakthroughEffectText(lexia, "ultimate")).toContain("고정 피해");
-    expect(breakthroughEffectText(lexia, "ultimate")).toContain("150 회복");
+    expect(breakthroughEffectText(lexia, "ultimate")).toContain("피해의 50%만큼 체력을 회복");
     expect(breakthroughEffectText(lexia, "ferocity")).toContain("조금 넓은 범위");
     expect(breakthroughEffectText(lexia, "passive")).toContain("최대 체력·[[def|방어력]]·[[res|저항력]]이 25% 증가");
     expect(breakthroughEffectText(lexia, "passive")).toContain("다시 [[charge|돌진]]");
@@ -245,14 +244,17 @@ describe("렉시아 한계 돌파", () => {
     expect(torika.hp - before).toBeCloseTo(torika.maxHp * 0.035 * 0.6, 4);
   });
 
-  it("는 궁극기를 고정 피해로 바꾸고 직접 처치하면 게이지 150을 돌려받는다", () => {
+  it("는 궁극기에 50% 흡혈을 더하고 처치해도 고정 피해 전환이나 게이지 환급을 주지 않는다", () => {
     const state = lexiaBattle(); engage(state);
     const lexia = findFighter(state, "player-0")!;
     const torika = findFighter(state, "enemy-0")!;
-    torika.hp = 1; lexia.energy = lexia.def.ultimate.cost;
+    torika.hp = 5; lexia.energy = lexia.def.ultimate.cost;
+    lexia.hp = lexia.maxHp / 2;
+    const before = lexia.hp;
     const hit = fireUltimate(state, lexia.id, () => 0.99).find((event) => event.kind === "attack");
-    expect(hit).toMatchObject({ damageType: "true" });
-    expect(lexia.energy).toBe(150);
+    expect(hit).toMatchObject({ damageType: "physical" });
+    expect(lexia.hp - before).toBeCloseTo(5 * 0.75);
+    expect(lexia.energy).toBe(0);
   });
 
   it("는 폭주 중 일반 공격으로 조금 넓은 범위를 함께 때리고 처치 뒤 돌진을 다시 준비한다", () => {
@@ -263,7 +265,7 @@ describe("렉시아 한계 돌파", () => {
       enemy.x = lexia.x + 50 + index * 30; enemy.y = lexia.y; enemy.attackCooldown = 999;
     }
     enemies[0].hp = 1;
-    lexia.ferocity = FEROCITY_RULES.max; lexia.ferocityFever = true;
+    lexia.ferocity = ferocityMaxOf(lexia.def); lexia.ferocityFever = true;
     lexia.openingChargeReady = false; lexia.attackCooldown = 0;
     const attacks = stepSkirmish(state, 0.05, () => 0.99)
       .filter((event) => event.kind === "attack" && event.attackerId === lexia.id && event.skill === "basic");
@@ -321,7 +323,7 @@ describe("도디 한계 돌파", () => {
     const enemy = findFighter(state, "enemy-0")!;
     enemy.attackCooldown = 999;
     for (const fighter of state.fighters) fighter.shield.amount = 0;
-    dodo.ferocity = FEROCITY_RULES.max; dodo.ferocityFever = true; dodo.bt.feverHealingDone = 300;
+    dodo.ferocity = ferocityMaxOf(dodo.def); dodo.ferocityFever = true; dodo.bt.feverHealingDone = 300;
     let ended = false;
     for (let tick = 0; tick < 400 && !ended; tick += 1) { stepSkirmish(state, 0.05); ended = !dodo.ferocityFever; }
     expect(ended).toBe(true);
@@ -404,7 +406,7 @@ describe("파루아 한계 돌파", () => {
     const state = paruaBattle(3);
     setUp(state);
     const parua = findFighter(state, "player-0")!;
-    parua.ferocity = FEROCITY_RULES.max - 0.001; parua.attackCooldown = 0;
+    parua.ferocity = ferocityMaxOf(parua.def) - 0.001; parua.attackCooldown = 0;
     for (let tick = 0; tick < 40 && !parua.ferocityFever; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
     expect(parua.ferocityFever).toBe(true);
     expect(parua.stealthFor).toBeGreaterThan(2);
@@ -412,7 +414,7 @@ describe("파루아 한계 돌파", () => {
     const plain = paruaBattle(2);
     setUp(plain);
     const other = findFighter(plain, "player-0")!;
-    other.ferocity = FEROCITY_RULES.max - 0.001; other.attackCooldown = 0;
+    other.ferocity = ferocityMaxOf(other.def) - 0.001; other.attackCooldown = 0;
     for (let tick = 0; tick < 40 && !other.ferocityFever; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
     expect(other.stealthFor).toBe(0);
   });
@@ -519,50 +521,42 @@ describe("스피나 한계 돌파", () => {
     expect(other.bt.tidalEchoes).toHaveLength(0);
   });
 
-  it("는 폭주에 들어선 뒤 첫 일반 공격이 반드시 치명타다(별 IV)", () => {
-    const state = spinoBattle(3, ["torika"]);
-    engageAll(state);
-    const spino = findFighter(state, "player-0")!;
-    spino.ferocity = FEROCITY_RULES.max - 0.001; spino.attackCooldown = 0;
-    expect(spino.bt.ambushCritReady).toBe(false);
-    let firstBasic: boolean | undefined;
-    for (let tick = 0; tick < 200 && firstBasic === undefined; tick += 1) {
-      const wasFever = spino.ferocityFever;
-      for (const event of stepSkirmish(state, 0.05, () => 0.99)) {
-        if (spino.ferocityFever && event.kind === "attack" && event.attackerId === spino.id && event.skill === "basic" && !wasFever === false) firstBasic = event.critical;
-      }
-      if (spino.ferocityFever && spino.bt.ambushCritReady) { spino.attackCooldown = 0; engageAll(state); }
-    }
-    expect(firstBasic).toBe(true);
-    expect(spino.bt.ambushCritReady).toBe(false);
-  });
-
-  it("는 여울에 잠긴 적을 처치하면 곧바로 다음 여울로 도약한다(별 V)", () => {
+  it("는 폭주 중에 도약 주기가 2타로 줄어든다(별 IV)", () => {
     const run = (breakthrough: number): number => {
-      const state = spinoBattle(breakthrough, ["torika", "amo"]);
+      const state = spinoBattle(breakthrough, ["torika"]);
       engageAll(state);
       const spino = findFighter(state, "player-0")!;
-      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
-      first.hp = 1;
-      second.x = first.x + 900; second.y = first.y;
-      spino.shallowPools = [
-        { x: first.x, y: first.y, remaining: 6, total: 6 },
-        { x: second.x, y: second.y, remaining: 6, total: 6 },
-      ];
-      spino.targetId = first.id; spino.attackCooldown = 0; spino.shallowLeapCount = 0;
+      spino.ferocity = ferocityMaxOf(spino.def); spino.ferocityFever = true;
+      spino.shallowLeapCount = 1; spino.attackCooldown = 0;
       stepSkirmish(state, 0.05, () => 0.99);
-      return Math.hypot(spino.x - second.x, spino.y - second.y);
+      return spino.shallowLeapCount;
     };
-    // 돌파가 열려 있으면 처치한 즉시 둘째 여울로 건너가 둘째 적 곁에 선다.
-    expect(run(FULL)).toBeLessThan(run(FULL - 1));
+    // 열려 있으면 두 번째 타에서 곧바로 뛰어 카운트가 0으로 돌아온다. 닫혀 있으면 4타 주기라 2가 쌓일 뿐이다.
+    expect(run(FULL)).toBe(0);
+    expect(run(0)).toBe(2);
+  });
+
+  it("는 도약해 내려서면 1초 숨고, 3초 안에는 다시 숨지 않는다(별 V)", () => {
+    const run = (breakthrough: number, elapsed = 0): number => {
+      const state = spinoBattle(breakthrough, ["torika"]);
+      engageAll(state);
+      const spino = findFighter(state, "player-0")!;
+      spino.shallowLeapCount = 3; spino.attackCooldown = 0; spino.stealthFor = 0;
+      if (elapsed > 0) spino.bt.leapVeilReadyAt = state.elapsed + elapsed;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return spino.stealthFor;
+    };
+    expect(run(FULL)).toBeGreaterThan(0);
+    expect(run(FULL - 1)).toBe(0);
+    expect(run(FULL, 3)).toBe(0);
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const spino = getRelic("spino");
     expect(breakthroughEffectText(spino, "basic")).toContain("[[shallows|여울]]");
     expect(breakthroughEffectText(spino, "ultimate")).toContain("1.5초 뒤 한 번 더 터진다");
-    expect(breakthroughEffectText(spino, "ferocity")).toContain("반드시 치명타");
-    expect(breakthroughEffectText(spino, "passive")).toContain("처치하면");
+    expect(breakthroughEffectText(spino, "ferocity")).toContain("2회");
+    expect(breakthroughEffectText(spino, "passive")).toContain("은신");
   });
 });
 
@@ -616,50 +610,47 @@ describe("슈테 한계 돌파", () => {
     expect(bursts(2)).toBe(1);
   });
 
-  it("는 폭주 동안 평타가 세 번째마다가 아니라 매번 표식을 찍는다(별 IV)", () => {
-    const marks = (breakthrough: number): number => {
-      const state = shuteBattle(breakthrough);
+  it("는 폭주에 들어서는 순간 듀오가 노리는 적 주변 전원에게 약점 포착을 찍는다(별 IV)", () => {
+    const marked = (breakthrough: number): number => {
+      const state = shuteBattle(breakthrough, ["torika", "amo", "toby"]);
       freeze(state);
       const shute = findFighter(state, "player-1")!; const duo = findFighter(state, "player-0")!;
-      const enemy = findFighter(state, "enemy-0")!;
-      enemy.x = shute.x + 100; enemy.y = shute.y; duo.attackCooldown = 999;
-      shute.ferocityFever = true; shute.ferocity = FEROCITY_RULES.max; shute.attackCooldown = 0; shute.targetId = enemy.id;
-      stepSkirmish(state, 0.05, () => 0.99);
-      return enemy.weakpoint === null ? 0 : 1;
+      const foes = state.fighters.filter((fighter) => fighter.side === "enemy");
+      foes.forEach((foe, index) => { foe.x = duo.x + 60 + index * 40; foe.y = duo.y; foe.stealthFor = 0; });
+      duo.targetId = foes[0].id;
+      shute.ferocity = ferocityMaxOf(shute.def) - 0.001;
+      gainFerocity(shute, 1, state, []);
+      return foes.filter((foe) => foe.weakpoint !== null).length;
     };
-    // 첫 걸음에서 돌파 없이는 주기가 차지 않아 표식이 없다.
-    expect(marks(2)).toBe(0);
-    expect(marks(3)).toBe(1);
+    expect(marked(3)).toBe(3);
+    expect(marked(2)).toBe(0);
   });
 
-  it("는 듀오가 쓰러지면 가장 가까운 아군과 새 듀오를 맺는다(별 V · 전투당 한 번)", () => {
+  it("는 둘째 듀오를 맺어 그 듀오도 약점 포착을 터뜨린다(별 V)", () => {
     const state = shuteBattle(FULL);
-    freeze(state);
     const shute = findFighter(state, "player-1")!;
-    const rex = findFighter(state, "player-0")!; const tia = findFighter(state, "player-2")!;
-    expect(shute.duoId).toBe(rex.id);
-    rex.hp = 0;
-    stepSkirmish(state, 0.05, () => 0.99);
-    expect(shute.duoId).toBe(tia.id);
-    expect(shute.bt.relinkUsed).toBe(true);
-    // 새 듀오도 쓰러지면 다시 맺지 않는다.
-    tia.hp = 0;
-    stepSkirmish(state, 0.05, () => 0.99);
-    expect(shute.duoId).toBe(tia.id);
-    // 돌파가 없으면 맺지 않는다.
-    const plain = shuteBattle(FULL - 1);
-    freeze(plain);
-    findFighter(plain, "player-0")!.hp = 0;
-    stepSkirmish(plain, 0.05, () => 0.99);
-    expect(findFighter(plain, "player-1")!.duoId).toBe("player-0");
+    expect(shute.duoId).toBe("player-0");
+    expect(shute.bt.sideDuoId).toBe("player-2");
+    expect(findFighter(shuteBattle(FULL - 1), "player-1")!.bt.sideDuoId).toBeNull();
+    // 둘째 듀오가 표식이 찍힌 적을 때리면 표식이 터진다.
+    freeze(state);
+    const twin = findFighter(state, "player-2")!; const foe = findFighter(state, "enemy-0")!;
+    foe.x = twin.x + 40; foe.y = twin.y;
+    foe.weakpoint = { sourceId: shute.id, burstPower: 100, duoHealPercent: 0 };
+    twin.attackCooldown = 0; twin.targetId = foe.id; shute.attackCooldown = 999;
+    let burst = 0;
+    for (let tick = 0; tick < 40 && burst === 0; tick += 1) {
+      for (const event of stepSkirmish(state, 0.05, () => 0.99)) if (event.kind === "attack" && event.skill === "weakpoint") burst += 1;
+    }
+    expect(burst).toBe(1);
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const shute = getRelic("shute");
     expect(breakthroughEffectText(shute, "basic")).toContain("원거리");
     expect(breakthroughEffectText(shute, "ultimate")).toContain("처음 때리는 적마다");
-    expect(breakthroughEffectText(shute, "ferocity")).toContain("매번");
-    expect(breakthroughEffectText(shute, "passive")).toContain("새 듀오");
+    expect(breakthroughEffectText(shute, "ferocity")).toContain("약점 포착");
+    expect(breakthroughEffectText(shute, "passive")).toContain("둘째 듀오");
   });
 });
 
@@ -716,57 +707,46 @@ describe("메테 한계 돌파", () => {
     expect(tia.hp).toBeGreaterThan(tia.maxHp * 0.5);
   });
 
-  it("는 폭주 추가타 위력이 칠 때마다 커지되 +50%에서 멈춘다(별 IV)", () => {
-    const power = (hits: number, breakthrough: number): number => {
-      const state = metteBattle(breakthrough, ["torika"]);
+  it("는 폭주에 들어서는 순간 주위 적 전원에게 스타카토가 먼저 울린다(별 IV)", () => {
+    const damaged = (breakthrough: number): number => {
+      const state = metteBattle(breakthrough);
       freeze(state);
-      const mette = findFighter(state, "player-0")!; const enemy = findFighter(state, "enemy-0")!;
-      enemy.x = mette.x; enemy.y = mette.y - 200;
-      mette.ferocityFever = true; mette.ferocity = FEROCITY_RULES.max; mette.bt.crescendoHits = hits;
-      mette.attackCooldown = 0; mette.targetId = enemy.id;
-      const events = stepSkirmish(state, 0.05, () => 0.99);
-      const extra = events.find((event) => event.kind === "attack" && event.skill === "staccato");
-      return extra?.kind === "attack" ? extra.amount : 0;
+      const mette = findFighter(state, "player-0")!;
+      const foes = state.fighters.filter((fighter) => fighter.side === "enemy");
+      foes.forEach((foe, index) => { foe.x = mette.x + index * 60; foe.y = mette.y - 200; });
+      mette.ferocity = ferocityMaxOf(mette.def) - 0.001;
+      gainFerocity(mette, 1, state, []);
+      return foes.reduce((sum, foe) => sum + (foe.maxHp - foe.hp), 0);
     };
-    const base = power(0, 3);
-    expect(power(4, 3) / base).toBeGreaterThan(1.1);
-    // 열 번을 넘겨 쌓여도 +50%를 넘지 않는다.
-    expect(power(50, 3) / base).toBeLessThan(1.52);
-    expect(power(50, 3) / base).toBeGreaterThan(1.45);
-    // 별 셋에서는 오르지 않는다.
-    expect(power(50, 2) / power(0, 2)).toBeCloseTo(1, 1);
+    expect(damaged(2)).toBe(0);
+    expect(damaged(3)).toBeGreaterThan(0);
   });
 
-  it("는 메테의 보호막이 다 깨지면 주위 적에게 피해와 경직을 주고 7초 쉰다(별 V)", () => {
-    const state = metteBattle(FULL);
-    freeze(state);
-    const mette = findFighter(state, "player-0")!; const tia = findFighter(state, "player-2")!;
-    const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
-    first.x = tia.x + 50; first.y = tia.y; second.x = tia.x - 80; second.y = tia.y;
-    first.hp = first.maxHp; second.hp = second.maxHp;
-    tia.shield.amount = 1; tia.shield.providerId = mette.id;
-    first.attackCooldown = 0; first.targetId = tia.id; first.engaged = true;
-    const before = second.hp;
-    for (let tick = 0; tick < 40 && mette.bt.adagioSlamCooldown <= 0; tick += 1) stepSkirmish(state, 0.05, () => 0.99);
-    expect(mette.bt.adagioSlamCooldown).toBeGreaterThan(6);
-    expect(second.hp).toBeLessThan(before);
-    // 돌파가 없으면 내려앉지 않는다.
-    const plain = metteBattle(FULL - 1);
-    freeze(plain);
-    const other = findFighter(plain, "player-0")!; const ally = findFighter(plain, "player-2")!;
-    const foe = findFighter(plain, "enemy-0")!;
-    foe.x = ally.x + 50; foe.y = ally.y; ally.shield.amount = 1; ally.shield.providerId = other.id;
-    foe.attackCooldown = 0; foe.targetId = ally.id; foe.engaged = true;
-    for (let tick = 0; tick < 40; tick += 1) stepSkirmish(plain, 0.05, () => 0.99);
-    expect(other.bt.adagioSlamCooldown).toBe(0);
+  it("는 메테의 막을 가진 아군이 평타를 맞히면 주위로 음파가 퍼지고 아군마다 3초 쉰다(별 V)", () => {
+    const run = (breakthrough: number): { splash: number; ready: number } => {
+      const state = metteBattle(breakthrough);
+      freeze(state);
+      const mette = findFighter(state, "player-0")!; const rex = findFighter(state, "player-1")!;
+      const [first, second] = state.fighters.filter((fighter) => fighter.side === "enemy");
+      first.x = rex.x + 40; first.y = rex.y; second.x = rex.x + 120; second.y = rex.y;
+      rex.shield.amount = 10_000; rex.shield.providerId = mette.id;
+      rex.attackCooldown = 0; rex.targetId = first.id; mette.attackCooldown = 999;
+      const before = second.hp;
+      stepSkirmish(state, 0.05, () => 0.99);
+      return { splash: before - second.hp, ready: mette.bt.resonanceReadyAt[rex.id] ?? 0 };
+    };
+    const open = run(FULL); const closed = run(FULL - 1);
+    expect(open.splash).toBeGreaterThan(closed.splash);
+    expect(open.ready).toBeGreaterThan(2.9);
+    expect(closed.ready).toBe(0);
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const mette = getRelic("mette");
     expect(breakthroughEffectText(mette, "basic")).toContain("연속으로");
     expect(breakthroughEffectText(mette, "ultimate")).toContain("15 줄고");
-    expect(breakthroughEffectText(mette, "ferocity")).toContain("50%까지");
-    expect(breakthroughEffectText(mette, "passive")).toContain("7초에 한 번");
+    expect(breakthroughEffectText(mette, "ferocity")).toContain("경직");
+    expect(breakthroughEffectText(mette, "passive")).toContain("3초에 한 번");
   });
 });
 
@@ -896,90 +876,69 @@ describe("노도니아 한계 돌파", () => {
     expect(run(0)).toBeNull();
   });
 
-  /** 대신 받기가 켜진 뒤 합계를 `taken`으로 맞추고 끝날 때까지 돌려 적이 입은 피해를 잰다. 돌파가 없는 판과 같은 조건이라 차이만 본다. */
-  function paybackDamage(breakthrough: number, taken: number, foeX = 140): number {
-    const state = nodoniaBattle(breakthrough);
-    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
-    foe.x = foeX; foe.attackCooldown = 999; foe.retargetIn = 999;
-    const nodonia = findFighter(state, "player-0")!;
-    nodonia.x = 100; nodonia.retargetIn = 999; nodonia.attackCooldown = 999; nodonia.energy = 1_000;
-    fireUltimate(state, "player-0");
-    // 켜는 순간 합계는 0으로 시작한다 — 이후 대신 받은 피해만 센다.
-    expect(nodonia.bt.bulwarkTaken).toBe(0);
-    nodonia.bt.bulwarkTaken = taken;
-    // 서로 다가서지 않도록 자리를 붙박아 둔다 — 반경 판정을 시험하는 판이다.
-    for (let tick = 0; tick < 130; tick += 1) {
-      nodonia.x = 100; nodonia.y = 1_000; foe.x = foeX; foe.y = 1_000;
-      stepSkirmish(state, 0.05);
-    }
-    return foe.maxHp - foe.hp;
-  }
-
-  it("은 대신 받기가 끝날 때 대신 받은 피해의 일부를 주위 적에게만 고정 피해로 돌려준다(별 III)", () => {
-    // 400의 25% = 100. 자기 최대 체력의 10%보다 작으니 상한에 걸리지 않는다.
-    expect(paybackDamage(2, 400) - paybackDamage(0, 400)).toBe(100);
-    // 반경(300) 밖의 적은 맞지 않는다.
-    expect(paybackDamage(2, 400, 900) - paybackDamage(0, 400, 900)).toBe(0);
+  it("은 절정 중 대신 받은 피해가 쌓일 때마다 주위 적에게 고정 피해 파동이 터진다(별 III)", () => {
+    const pulses = (breakthrough: number, foeX = 140): { count: number; lost: number } => {
+      const state = createSkirmish([getRelic("nodonia"), getRelic("torika")], [getRelic("toby")], ARENA, {}, { nodonia: breakthrough });
+      const nodonia = findFighter(state, "player-0")!; const ally = findFighter(state, "player-1")!; const foe = findFighter(state, "enemy-0")!;
+      for (const fighter of state.fighters) { fighter.retargetIn = 999; fighter.stealthFor = 0; }
+      nodonia.attackCooldown = 999; ally.attackCooldown = 999; foe.attackCooldown = 999;
+      foe.maxHp = 10_000_000; foe.hp = foe.maxHp;
+      nodonia.energy = 1_000;
+      fireUltimate(state, "player-0");
+      const events: SkirmishEvent[] = [];
+      // 대신 받기를 실제로 거치는 길로 피해를 먹인다: 적이 아군을 때린다.
+      for (let tick = 0; tick < 100; tick += 1) {
+        nodonia.x = 100; nodonia.y = 1_000; ally.x = 160; ally.y = 1_000; foe.x = foeX; foe.y = 1_000;
+        foe.attackCooldown = 0; foe.targetId = ally.id;
+        events.push(...stepSkirmish(state, 0.05));
+      }
+      const lost = events.filter((event) => event.kind === "attack" && event.attackerId === nodonia.id && event.targetId === foe.id && event.damageType === "true")
+        .reduce((sum, event) => sum + (event.kind === "attack" ? event.amount : 0), 0);
+      return { count: nodonia.bt.bulwarkPulses, lost };
+    };
+    const opened = pulses(2); const control = pulses(0);
+    expect(opened.count).toBeGreaterThan(0);
+    expect(opened.count).toBeLessThanOrEqual(4);
+    expect(control.count).toBe(0);
+    expect(opened.lost).toBeGreaterThan(control.lost);
+    // 반경(300) 밖의 적은 파동을 맞지 않는다.
+    expect(pulses(2, 900).lost).toBe(pulses(0, 900).lost);
   });
 
-  it("은 대신 받은 피해가 많아도 적 한 명이 받는 몫을 노도니아 최대 체력의 10%로 막는다(별 III)", () => {
-    const maxHp = findFighter(nodoniaBattle(2), "player-0")!.maxHp;
-    expect(paybackDamage(2, 100_000) - paybackDamage(0, 100_000)).toBe(Math.round(maxHp * 0.1));
-  });
-
-  it("은 폭주 중에는 희열이 열다섯 겹까지 쌓이고 폭주가 끝나면 열 겹으로 깎인다(별 IV)", () => {
-    const state = nodoniaBattle(3, "toby");
-    const nodonia = findFighter(state, "player-0")!;
-    const foe = state.fighters.find((fighter) => fighter.side === "enemy")!;
-    nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
-    nodonia.ferocityFever = true;
-    let peak = 0;
-    for (let tick = 0; tick < 1_200 && peak < 15; tick += 1) {
-      nodonia.ferocity = FEROCITY_RULES.max; nodonia.hp = nodonia.maxHp;
-      stepSkirmish(state, 0.05);
-      peak = Math.max(peak, nodonia.elation?.stacks ?? 0);
-    }
-    expect(foe.hp).toBeLessThanOrEqual(foe.maxHp);
-    expect(peak).toBe(15);
-    // 폭주가 끝나는 프레임에 상한이 열 겹으로 돌아오고 넘친 겹이 깎인다.
-    nodonia.ferocity = 0.001; nodonia.ferocityFever = true;
-    stepSkirmish(state, 0.05);
-    expect(nodonia.ferocityFever).toBe(false);
-    expect(nodonia.elation?.maxStacks).toBe(10);
-    expect(nodonia.elation?.stacks ?? 0).toBeLessThanOrEqual(10);
-  });
-
-  it("은 폭주가 아니면 열 겹에서 멈춘다(별 IV)", () => {
-    const state = nodoniaBattle(3, "toby");
-    const nodonia = findFighter(state, "player-0")!;
-    nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
-    let peak = 0;
-    for (let tick = 0; tick < 600; tick += 1) {
-      nodonia.hp = nodonia.maxHp; nodonia.ferocity = 0;
-      stepSkirmish(state, 0.05);
-      peak = Math.max(peak, nodonia.elation?.stacks ?? 0);
-    }
-    expect(peak).toBeLessThanOrEqual(10);
-  });
-
-  it("은 희열 한 겹의 재생을 0.3%에서 0.4%로 돌려놓는다(별 V)", () => {
-    const regen = (breakthrough: number): number | undefined => {
+  it("은 폭주에 들어서는 순간 희열이 다섯 겹 쌓인다(별 IV)", () => {
+    const stacks = (breakthrough: number): number => {
       const state = nodoniaBattle(breakthrough, "toby");
       const nodonia = findFighter(state, "player-0")!;
-      nodonia.retargetIn = 999; nodonia.attackCooldown = 999;
-      for (let tick = 0; tick < 200 && !nodonia.elation; tick += 1) { nodonia.hp = nodonia.maxHp; stepSkirmish(state, 0.05); }
-      return nodonia.elation?.regenPercentPerStack;
+      nodonia.ferocity = ferocityMaxOf(nodonia.def) - 0.001;
+      gainFerocity(nodonia, 1, state, []);
+      return nodonia.elation?.stacks ?? 0;
     };
-    expect(regen(0)).toBe(0.3);
-    expect(regen(FULL)).toBe(0.4);
+    expect(stacks(3)).toBe(5);
+    expect(stacks(2)).toBe(0);
+  });
+
+  it("은 희열이 가득하면 다른 아군도 재생의 절반을 받는다(별 V)", () => {
+    const healed = (breakthrough: number, stacks: number): number => {
+      const state = createSkirmish([getRelic("nodonia"), getRelic("torika")], [getRelic("toby")], ARENA, {}, { nodonia: breakthrough });
+      for (const fighter of state.fighters) { fighter.retargetIn = 999; fighter.attackCooldown = 999; fighter.stealthFor = 0; }
+      const nodonia = findFighter(state, "player-0")!; const ally = findFighter(state, "player-1")!;
+      ally.hp = ally.maxHp * 0.5;
+      const before = ally.hp;
+      for (let i = 0; i < stacks; i += 1) gainElation(nodonia);
+      nodonia.hp = nodonia.maxHp * 0.9;
+      for (let tick = 0; tick < 60; tick += 1) stepSkirmish(state, 0.05);
+      return ally.hp - before;
+    };
+    expect(healed(FULL, 10)).toBeGreaterThan(healed(FULL - 1, 10));
+    expect(healed(FULL, 3)).toBe(healed(FULL - 1, 3));
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const nodonia = getRelic("nodonia");
     expect(breakthroughEffectText(nodonia, "basic")).toContain("도발");
     expect(breakthroughEffectText(nodonia, "ultimate")).toContain("고정 피해");
-    expect(breakthroughEffectText(nodonia, "ferocity")).toContain("15겹");
-    expect(breakthroughEffectText(nodonia, "passive")).toContain("0.4%");
+    expect(breakthroughEffectText(nodonia, "ferocity")).toContain("5겹");
+    expect(breakthroughEffectText(nodonia, "passive")).toContain("50%");
   });
 });
 
@@ -1012,7 +971,7 @@ describe("루카 한계 돌파", () => {
       }
       return bleedAtAttack;
     };
-    expect(run(1)).toBe(4);
+    expect(run(1)).toBe(3);
     expect(run(0)).toBe(-1);
   });
 
@@ -1047,7 +1006,7 @@ describe("루카 한계 돌파", () => {
       const crits: boolean[] = [];
       for (let tick = 0; tick < 600 && crits.length < 2; tick += 1) {
         luka.x = 500; luka.y = 1_000; foe.x = 540; foe.y = 1_000;
-        if (fever) luka.ferocity = FEROCITY_RULES.max;
+        if (fever) luka.ferocity = ferocityMaxOf(luka.def);
         for (const event of stepSkirmish(state, 0.05, NEVER)) {
           if (event.kind === "attack" && event.attackerId === luka.id && event.skill === "basic") crits.push(event.critical);
         }
@@ -1115,7 +1074,7 @@ describe("스테라 한계 돌파", () => {
     }
   }
 
-  it("은 게이지를 받은 아군에게 짧게 공격 속도를 준다(별 II)", () => {
+  it("은 게이지를 받은 아군에게 짧게 이동 속도를 준다(별 II)", () => {
     const run = (breakthrough: number) => {
       const state = stellaBattle(breakthrough);
       afterFirstBasic(state);
@@ -1123,7 +1082,8 @@ describe("스테라 한계 돌파", () => {
     };
     const rex = run(1);
     expect(rex.tailwindFor).toBeGreaterThan(0);
-    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.attackSpeedPercent : 0).toBe(10);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.moveSpeedPercent : 0).toBe(20);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.attackSpeedPercent : 1).toBe(0);
     expect(run(0).tailwindFor).toBe(0);
   });
 
@@ -1146,22 +1106,22 @@ describe("스테라 한계 돌파", () => {
     expect(gain(2) - gain(0)).toBe(25);
   });
 
-  it("은 폭주 중 게이지가 가장 낮은 아군에게만 평타마다 5를 더 건넨다(별 IV)", () => {
-    const run = (breakthrough: number, fever: boolean) => {
+  it("은 폭주에 들어서는 순간 아군 전원에게 순풍을 건다(별 IV)", () => {
+    const run = (breakthrough: number) => {
       const state = stellaBattle(breakthrough);
       const stella = findFighter(state, "player-0")!;
-      stella.ferocityFever = fever; stella.ferocity = fever ? FEROCITY_RULES.max : 0; stella.energy = 50;
-      afterFirstBasic(state);
-      return { rex: findFighter(state, "player-1")!.energy, stella: stella.energy };
+      stella.ferocity = ferocityMaxOf(stella.def) - 0.001;
+      gainFerocity(stella, 1, state, []);
+      return findFighter(state, "player-1")!;
     };
-    const base = run(0, true);
-    const pulled = run(3, true);
-    expect(pulled.rex - base.rex).toBe(5);
-    expect(pulled.stella).toBe(base.stella);
-    expect(run(3, false).rex).toBe(run(0, false).rex);
+    const rex = run(3);
+    expect(rex.tailwindFor).toBeGreaterThan(0);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.attackSpeedPercent : 0).toBe(20);
+    expect(rex.tailwind?.kind === "tailwind" ? rex.tailwind.moveSpeedPercent : 0).toBe(20);
+    expect(run(0).tailwindFor).toBe(0);
   });
 
-  it("은 저체력 은신에 들어가는 순간 아군 전원이 게이지를 10 얻는다(별 V)", () => {
+  it("은 저체력 은신에 들어가는 순간 아군 전원이 게이지를 25 얻는다(별 V)", () => {
     const run = (breakthrough: number) => {
       const state = stellaBattle(breakthrough);
       const stella = findFighter(state, "player-0")!;
@@ -1169,14 +1129,14 @@ describe("스테라 한계 돌파", () => {
       expect(tryTriggerLowHpVanish(stella, state)).toBe(true);
       return findFighter(state, "player-1")!.energy;
     };
-    expect(run(FULL) - run(0)).toBe(10);
+    expect(run(FULL) - run(0)).toBe(25);
   });
 
   it("는 네 슬롯 모두 문장을 만든다", () => {
     const stella = getRelic("stella");
-    expect(breakthroughEffectText(stella, "basic")).toContain("공격 속도");
+    expect(breakthroughEffectText(stella, "basic")).toContain("이동 속도");
     expect(breakthroughEffectText(stella, "ultimate")).toContain("게이지");
-    expect(breakthroughEffectText(stella, "ferocity")).toContain("가장 낮은");
+    expect(breakthroughEffectText(stella, "ferocity")).toContain("순풍");
     expect(breakthroughEffectText(stella, "passive")).toContain("은신");
   });
 });
@@ -1244,7 +1204,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
         const foe = findFighter(state, "enemy-0")!;
         const effect = pressure();
         if (effect.kind !== "pressure") throw new Error("pressure");
-        mosana.ferocityFever = true; mosana.ferocity = FEROCITY_RULES.max;
+        mosana.ferocityFever = true; mosana.ferocity = ferocityMaxOf(mosana.def);
         foe.x = 900; foe.stunnedFor = 5;
         foe.pressure = { stacks: 2, remaining: 4, total: 4, sourceId: mosana.id, effect };
         run(state, 1);
@@ -1301,7 +1261,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
       const result = (breakthrough: number) => {
         const state = setup(["kento"], ["toby"], breakthrough);
         const kento = withPrickle(state, 9);
-        kento.ferocityFever = true; kento.ferocity = FEROCITY_RULES.max;
+        kento.ferocityFever = true; kento.ferocity = ferocityMaxOf(kento.def);
         const foe = findFighter(state, "enemy-0")!;
         foe.attackCooldown = 0; foe.targetId = kento.id;
         run(state, 0.3);
@@ -1369,7 +1329,7 @@ describe("탱커 계약 한계 돌파 — 모사나·켄토·안카", () => {
       const result = (breakthrough: number) => {
         const state = setup(["anka"], ["toby", "amo"], breakthrough);
         const anka = findFighter(state, "player-0")!;
-        anka.ferocityFever = true; anka.ferocity = FEROCITY_RULES.max;
+        anka.ferocityFever = true; anka.ferocity = ferocityMaxOf(anka.def);
         const sleeper = lullToSleep(state, "enemy-0");
         sleeper.sleep!.remaining = 0.01;
         run(state, 0.2);
@@ -1434,19 +1394,24 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
   const curseOf = (id: string) => getRelic(id).basic.statusEffects!.find((effect) => effect.kind === "curse")!;
 
   describe("파치", () => {
-    it("은 보호막이 남아 있는 동안에만 철거 스윙에 추가 피해를 얹는다(별 II)", () => {
-      const damage = (breakthrough: number, shield: number) => {
+    it("은 일반 공격 네 번째마다 헬멧 박치기로 추가 피해와 뇌진탕을 준다(별 II)", () => {
+      const hits = (breakthrough: number) => {
         const state = setup(["pachi"], ["toby"], breakthrough);
         const pachi = findFighter(state, "player-0")!;
-        pachi.shield = { amount: shield, providerId: pachi.id };
-        swing(state);
         const foe = findFighter(state, "enemy-0")!;
-        const before = foe.hp;
-        run(state, 0.1);
-        return before - foe.hp;
+        const lost: number[] = [];
+        for (let i = 0; i < 4; i += 1) {
+          pachi.statusHitCount = 0;
+          swing(state);
+          const before = foe.hp;
+          run(state, 0.1);
+          lost.push(before - foe.hp);
+        }
+        return lost;
       };
-      expect(damage(1, 500)).toBeGreaterThan(damage(0, 500));
-      expect(damage(1, 0)).toBe(damage(0, 0));
+      const open = hits(1); const closed = hits(0);
+      expect(open[0]).toBe(closed[0]);
+      expect(open[3]).toBeGreaterThan(closed[3]);
     });
 
     it("은 궁극기 돌진을 한 번 더 출발점으로 되돌려 돌진이 두 번이 된다(별 III)", () => {
@@ -1461,21 +1426,21 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       expect(charges(2)).toBe(2);
     });
 
-    it("은 폭주로 튕겨 나간 적이 다른 적에게 부딪히면 뇌진탕을 옮긴다(별 IV)", () => {
-      const struck = (breakthrough: number) => {
+    it("은 폭주에 들어서는 순간 주변 적을 튕겨 내고 부딪힌 적에게 뇌진탕을 옮긴다(별 IV)", () => {
+      const flown = (breakthrough: number) => {
         const state = setup(["pachi"], ["toby", "amo"], breakthrough);
         const pachi = findFighter(state, "player-0")!;
-        pachi.ferocityFever = true; pachi.ferocity = FEROCITY_RULES.max;
-        pachi.statusHitCount = 2;
-        const second = findFighter(state, "enemy-1")!;
-        second.x = 690; second.y = 1_000;
-        swing(state);
-        const before = second.hp;
-        run(state, 0.6);
-        return before - second.hp;
+        pachi.ferocity = ferocityMaxOf(pachi.def) - 0.001;
+        gainFerocity(pachi, 1, state, []);
+        return state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.knockback !== null).length;
       };
-      expect(struck(3)).toBeGreaterThan(0);
-      expect(struck(0)).toBe(0);
+      expect(flown(3)).toBe(2);
+      expect(flown(2)).toBe(0);
+      const state = setup(["pachi"], ["toby", "amo"], 3);
+      const pachi = findFighter(state, "player-0")!;
+      pachi.ferocity = ferocityMaxOf(pachi.def) - 0.001;
+      gainFerocity(pachi, 1, state, []);
+      for (const foe of state.fighters.filter((fighter) => fighter.side === "enemy")) expect(foe.knockback?.chain?.sourceId).toBe(pachi.id);
     });
 
     it("은 한 방 상한이 최대 체력의 20%로 내려가 네 방은 버틴다(별 V)", () => {
@@ -1502,34 +1467,31 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       expect(gained(1)).toBeCloseTo(gained(0) * 2, 5);
     });
 
-    it("은 광란에 걸린 적이 같은 편을 때리면 맞은 적에게 저주를 건다(별 III)", () => {
+    it("은 저주가 걸린 적이 쓰러지면 그 겹이 주변 적에게 이어진다(별 III)", () => {
       const stacks = (breakthrough: number) => {
         const state = setup(["keris"], ["toby", "amo"], breakthrough);
         const keris = findFighter(state, "player-0")!;
-        const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
-        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
-        a.attackCooldown = 0; a.targetId = b.id;
-        run(state, 1);
-        return b.curse?.stacks ?? 0;
-      };
-      expect(stacks(2)).toBeGreaterThan(0);
-      expect(stacks(0)).toBe(0);
-    });
-
-    it("은 폭주 중 광란에 걸린 적이 쓰러지면 주변에 저주를 번뜨린다(별 IV)", () => {
-      const stacks = (breakthrough: number) => {
-        const state = setup(["keris"], ["toby", "amo"], breakthrough);
-        const keris = findFighter(state, "player-0")!;
-        keris.ferocityFever = true; keris.ferocity = FEROCITY_RULES.max;
         const [a, b] = [findFighter(state, "enemy-0")!, findFighter(state, "enemy-1")!];
         a.maxHp = 100; a.hp = 1;
-        applyFrenzy(a, { kind: "frenzy", seconds: 4, attackSpeedPercent: 50 }, keris.id);
+        for (let i = 0; i < 2; i += 1) applyCombatStatusEffect(a, curseOf("keris"), [], state, keris.id);
         refreshBleed(a, 5, 50, [], keris.id);
         run(state, 1.5);
         return b.curse?.stacks ?? 0;
       };
-      expect(stacks(3)).toBe(2);
+      expect(stacks(2)).toBe(2);
       expect(stacks(0)).toBe(0);
+    });
+
+    it("은 폭주에 들어서는 순간 주변 적 전원에게 저주를 건다(별 IV)", () => {
+      const cursed = (breakthrough: number) => {
+        const state = setup(["keris"], ["toby", "amo"], breakthrough);
+        const keris = findFighter(state, "player-0")!;
+        keris.ferocity = ferocityMaxOf(keris.def) - 0.001;
+        gainFerocity(keris, 1, state, []);
+        return state.fighters.filter((fighter) => fighter.side === "enemy" && (fighter.curse?.stacks ?? 0) > 0).length;
+      };
+      expect(cursed(3)).toBe(2);
+      expect(cursed(2)).toBe(0);
     });
 
     it("은 집중이 가득 차야 저주 상한이 한 겹 열린다(별 V)", () => {
@@ -1554,16 +1516,23 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       findFighter(state, id)!.frozen = { remaining, total: remaining, maxHpPercentOnExpire: 0 };
     };
 
-    it("은 얼어 있는 적을 때리면 주위의 다른 적에게 냉기가 튄다(별 II)", () => {
-      const chill = (breakthrough: number) => {
+    it("은 일반 공격 세 번마다 병뚜껑이 터져 주위 적에게 냉기가 쌓인다(별 II)", () => {
+      // 세 번째 일반 공격에서 터진다 — 앞의 두 번은 비운 채로 지나간다.
+      const popped = (breakthrough: number) => {
         const state = setup(["maddy"], ["toby", "amo"], breakthrough);
-        freeze(state, "enemy-0");
-        swing(state);
-        run(state, 0.1);
-        return findFighter(state, "enemy-1")!.chill?.stacks ?? 0;
+        const maddy = findFighter(state, "player-0")!;
+        const other = findFighter(state, "enemy-1")!;
+        const seen: number[] = [];
+        for (let i = 0; i < 3; i += 1) {
+          swing(state); maddy.attackCooldown = 0;
+          run(state, 0.4);
+          seen.push(other.chill?.stacks ?? 0);
+        }
+        return seen;
       };
-      expect(chill(1)).toBe(1);
-      expect(chill(0)).toBe(0);
+      const withBreak = popped(1); const without = popped(0);
+      expect(withBreak[2]).toBeGreaterThan(without[2]);
+      expect(withBreak[0]).toBe(without[0]);
     });
 
     it("은 냉방 채널이 얼어 있는 적의 수만큼 체력을 되돌려 준다(별 III)", () => {
@@ -1581,19 +1550,16 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
       expect(healed(2)).toBeGreaterThan(healed(0));
     });
 
-    it("은 폭주 중 보호막이 남아 있으면 때린 적에게 냉기가 쌓인다(별 IV)", () => {
-      const chill = (breakthrough: number) => {
-        const state = setup(["maddy"], ["toby"], breakthrough);
+    it("은 폭주에 들어서는 순간 주변 적 전원에게 냉기가 두 겹 쌓이되 바로 얼리지는 않는다(별 IV)", () => {
+      const stacks = (breakthrough: number) => {
+        const state = setup(["maddy"], ["toby", "amo"], breakthrough);
         const maddy = findFighter(state, "player-0")!;
-        maddy.ferocityFever = true; maddy.ferocity = FEROCITY_RULES.max;
-        maddy.shield = { amount: 5_000, providerId: maddy.id };
-        const foe = findFighter(state, "enemy-0")!;
-        foe.attackCooldown = 0; foe.targetId = maddy.id;
-        run(state, 0.3);
-        return foe.chill?.stacks ?? 0;
+        maddy.ferocity = ferocityMaxOf(maddy.def) - 0.001;
+        gainFerocity(maddy, 1, state, []);
+        return state.fighters.filter((fighter) => fighter.side === "enemy").map((foe) => ({ chill: foe.chill?.stacks ?? 0, frozen: foe.frozen !== null }));
       };
-      expect(chill(3)).toBeGreaterThan(0);
-      expect(chill(0)).toBe(0);
+      expect(stacks(3)).toEqual([{ chill: 2, frozen: false }, { chill: 2, frozen: false }]);
+      expect(stacks(2).every((foe) => foe.chill === 0)).toBe(true);
     });
 
     it("은 빙결이 풀리는 순간 주위의 적에게 물리 피해가 한 번 터진다(별 V)", () => {
@@ -1610,8 +1576,63 @@ describe("전사 한계 돌파 — 파치·케리스·매디", () => {
     });
   });
 
+  describe("테쿠", () => {
+    it("은 마지막 한 방울을 맞은 적의 방어력이 겹으로 깎이고 시간이 지나면 풀린다(별 II)", () => {
+      const defOf = (breakthrough: number, shots: number) => {
+        const state = setup(["teku"], ["toby"], breakthrough);
+        const teku = findFighter(state, "player-0")!;
+        const foe = findFighter(state, "enemy-0")!;
+        // 한 탄창을 모두 쏘면 마지막 발이 마지막 한 방울이다.
+        for (let i = 0; i < shots; i += 1) { teku.attackCooldown = 0; teku.targetId = foe.id; run(state, 0.1); }
+        return foe.bt.fangShave;
+      };
+      const cycle = getRelic("teku").basic.cycle!.length;
+      expect(defOf(1, cycle - 1)).toBeNull();
+      expect(defOf(1, cycle)?.stacks).toBe(1);
+      expect(defOf(0, cycle)).toBeNull();
+    });
+
+    it("은 폭주로 채운 탄창이 비면 한 번 더 가득 채우고, 한 번의 폭주에 한 번뿐이다(별 IV)", () => {
+      const refills = (breakthrough: number) => {
+        const state = setup(["teku"], ["toby"], breakthrough);
+        const teku = findFighter(state, "player-0")!;
+        const foe = findFighter(state, "enemy-0")!;
+        teku.ferocity = ferocityMaxOf(teku.def) - 0.001;
+        gainFerocity(teku, 1, state, []);
+        expect(teku.refillFinisherAll).toBe(true);
+        const cycle = getRelic("teku").basic.cycle!.length;
+        let sawRefill = 0; let pauses = 0;
+        for (let i = 0; i < cycle * 3; i += 1) {
+          teku.attackCooldown = 0; teku.targetId = foe.id;
+          const wasStep = teku.basicCycleStep;
+          run(state, 0.05);
+          if (wasStep === cycle - 1 && teku.refillFinisherAll) sawRefill += 1;
+          if (wasStep === cycle - 1 && !teku.refillFinisherAll) pauses += 1;
+        }
+        return { sawRefill, pauses, used: teku.bt.doubleMagUsed };
+      };
+      expect(refills(3).used).toBe(true);
+      expect(refills(3).sawRefill).toBe(1);
+      expect(refills(2).used).toBe(false);
+    });
+  });
+
+  describe("마키", () => {
+    it("는 폭주에 들어서는 순간 주변 모든 적에게 출혈이 걸리고 손질이 한 겹 쌓인다(별 IV)", () => {
+      const marked = (breakthrough: number) => {
+        const state = setup(["maki"], ["toby", "amo"], breakthrough);
+        const maki = findFighter(state, "player-0")!;
+        maki.ferocity = ferocityMaxOf(maki.def) - 0.001;
+        gainFerocity(maki, 1, state, []);
+        return state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.bleed !== null && (fighter.butcher?.stacks ?? 0) === 1).length;
+      };
+      expect(marked(3)).toBe(2);
+      expect(marked(2)).toBe(0);
+    });
+  });
+
   it("은 세 개체 모두 네 슬롯 문장을 만든다", () => {
-    for (const id of ["pachi", "keris", "maddy"]) {
+    for (const id of ["pachi", "keris", "maddy", "teku", "maki"]) {
       for (const slot of ["basic", "ultimate", "ferocity", "passive"] as const) {
         const text = breakthroughEffectText(getRelic(id), slot);
         expect(text, `${id} ${slot}`).toBeDefined();
@@ -1834,7 +1855,7 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
       const boss = findFighter(state, "enemy-0")!;
       const ally = findFighter(state, "player-0")!;
       place(state, "enemy-0", 500, 400); place(state, "player-0", 500, 887);
-      gainFerocity(boss, 100, state, []);
+      gainFerocity(boss, ferocityMaxOf(boss.def), state, []);
       expect(boss.ferocityFever).toBe(true);
       return 887 - ally.y;
     };

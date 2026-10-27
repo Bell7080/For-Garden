@@ -23,6 +23,8 @@ import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+import { showContentIntro } from "../ui/contentIntro";
+import { onTap } from "../ui/tapGuard";
 
 /**
  * 여는 조건에 적을 관문 이름.
@@ -88,10 +90,19 @@ export class InteractionScene extends Phaser.Scene {
   private cityPopup?: InteractionCityPopup;
   /** 도시 일지는 쪽지에서 열리지만 대사 분기는 씬 위에 서므로 씬이 소유한다. */
   private journalPopup?: InteractionJournalPopup;
+  /** 이 방문이 살아 있는 동안만 참이다. 떠난 뒤 늦게 도착한 서버 응답이 죽은 컨테이너에 그리지 않게 한다. */
+  private alive = false;
 
   constructor() { super("interaction"); }
 
   create(): void {
+    // **씬 객체는 재진입해도 그대로 재사용된다.** 지난 방문의 층 서명이 남아 있으면 시계가 "상태가 같다"고
+    // 보고 목록을 그리지 않아, 서버 응답이 늦거나 실패한 재입장에서 빈 화면으로 멈췄다. 방문마다 처음부터 센다.
+    this.alive = true;
+    this.layerSignature = ""; this.layerSignatures = []; this.layerNodes = []; this.remainingLabels = [];
+    this.scrollY = 0; this.minScroll = 0;
+    this.cityPopup = undefined; this.journalPopup = undefined;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.alive = false; this.cityPopup = undefined; this.journalPopup = undefined; });
     setDebugScene("interaction", t("interaction.title"));
     // TODO(art): 전용 원화 전까지 loadingSteps가 이미 읽는 로비 배경을 임시 사용한다.
     addSceneBackground(this, BACKGROUND.lobby);
@@ -109,13 +120,25 @@ export class InteractionScene extends Phaser.Scene {
     this.buildScrollArea();
     this.buildBackArea();
 
-    void interactionManager.refresh().then((response) => { this.syncClock(response.serverTime); this.drawLayers(); });
+    // 세션에 이미 있는 파견으로 먼저 그리고, 서버 응답은 그 위에 갱신만 한다 — 응답이 늦거나 실패해도 목록은 선다.
+    this.drawLayers();
+    this.refreshFromServer();
     // 남은 시간은 실시간으로 흐른다. 시계만 도는 동안에는 글자만 갈아 끼우고 층은 그대로 두어
     // 스크롤 위치도, 읽고 있던 원화도 흔들리지 않는다.
     this.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "interaction");
+  }
+
+  /** 서버가 확정한 파견 목록을 받아 다시 그린다. 실패는 목록을 지우지 않고 지난 값을 그대로 둔다. */
+  private refreshFromServer(): void {
+    void interactionManager.refresh().then((response) => {
+      if (!this.alive) return;
+      this.syncClock(response.serverTime);
+      this.drawLayers();
+    }).catch(() => undefined);
   }
 
   /**
@@ -231,7 +254,7 @@ export class InteractionScene extends Phaser.Scene {
    */
   private drawLayers(): void {
     const container = this.layers;
-    if (!container) return;
+    if (!container || !this.alive) return;
     const views = this.currentViews();
     const signatures = views.map((view) => InteractionScene.layerSignature(view));
     const reusable = this.layerNodes.length === views.length && this.layerNodes.every((node) => node.active);
@@ -369,7 +392,7 @@ export class InteractionScene extends Phaser.Scene {
       const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
       hit.on("pointerdown", () => pressIn(layer));
       hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(layer); this.openCity(view); });
+      onTap(hit, () => { pressOut(layer); this.openCity(view); }, layer);
       layer.add(hit);
     }
     return layer;
@@ -465,7 +488,7 @@ export class InteractionScene extends Phaser.Scene {
     this.cityPopup ??= new InteractionCityPopup(this, this.popups, interactionManager);
     this.journalPopup ??= new InteractionJournalPopup(this, this.popups, interactionManager);
     this.cityPopup.open(view, {
-      onChanged: () => { void interactionManager.refresh().then((response) => { this.syncClock(response.serverTime); this.drawLayers(); }); },
+      onChanged: () => this.refreshFromServer(),
       onOpenJournal: (cityId) => this.journalPopup!.open(cityId),
       // 쪽지의 시계도 씬이 서버와 맞춰 둔 같은 시각을 읽는다 — 두 곳이 따로 세면 층과 쪽지의
       // 남은 시간이 어긋난다.

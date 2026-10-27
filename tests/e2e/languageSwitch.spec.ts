@@ -1,3 +1,4 @@
+import { E2E_SAVE_STORAGE_KEY } from "./openingSave";
 import { test, expect } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap } from "./canvasInput";
@@ -15,12 +16,12 @@ const BASE_HEIGHT = 1920;
  * 「텍스트 속도」가 대신 눌리는데**, 그래도 조작 자체는 성공하므로 검사가 조용히 엉뚱한 행을
  * 통과시킨다. 그래서 아래에서 텍스트 속도가 그대로인지도 함께 본다.
  */
-const LANGUAGE_ROW = { x: 800, y: settingsRowY(10) } as const;
+const LANGUAGE_ROW = { x: 800, y: settingsRowY(11) } as const;
 const GAME_TAB = { x: settingsTabX(2, 5, BASE_WIDTH), y: 176 } as const;
 
 const scene = (page: import("@playwright/test").Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
-const savedGame = (page: import("@playwright/test").Page) => page.evaluate(() =>
-  JSON.parse(localStorage.getItem("eternal-city.local-save")!).settings.game as { language: string; textSpeed: number });
+const savedGame = (page: import("@playwright/test").Page) => page.evaluate((saveKey) =>
+  JSON.parse(localStorage.getItem(saveKey)!).settings.game as { language: string; textSpeed: number }, E2E_SAVE_STORAGE_KEY);
 
 /**
  * **언어를 바꾸면 화면이 실제로 그 언어로 다시 그려지는가.**

@@ -93,6 +93,16 @@ describe("SaveManager", () => {
     expect(createDefaultSession().wallet).toMatchObject({ fossil: 900, amber: 450 });
   });
 
+  it("수식어를 여럿 장착한 옛 저장은 맨 앞 하나만 남긴다", () => {
+    const legacy = validData() as unknown as Record<string, unknown>;
+    legacy.earnedProfileModifierIds = ["field-pioneer", "steady-researcher"];
+    legacy.equippedProfileModifierIds = ["field-pioneer", "steady-researcher"];
+    const manager = new SaveManager(new MemoryStorage());
+    const migrated = manager.migrate(legacy);
+    expect(migrated.equippedProfileModifierIds).toEqual(["field-pioneer"]);
+    expect(() => manager.validate(migrated)).not.toThrow();
+  });
+
   it("v32 외형 없는 저장도 토리카 기본 해금을 보유하고 손상된 레거시 선택은 폐기한다", () => {
     const legacy = validData() as unknown as Record<string, unknown>;
     legacy.saveVersion = 32;
@@ -250,7 +260,7 @@ describe("SaveManager", () => {
 
   it("플레이어 연구 진행을 왕복하고 완료되지 않은 레벨 구간만 허용한다", () => {
     const storage = new MemoryStorage(); const source = createDefaultSession();
-    source.playerResearch = { level: 4, experience: 80, experienceToNext: playerExpToNext(4) };
+    source.playerResearch = { level: 4, experience: 30, experienceToNext: playerExpToNext(4) };
     const manager = new SaveManager(storage); manager.save(source);
     expect(manager.load()?.playerResearch).toEqual(source.playerResearch);
     const invalid = validData(); invalid.playerResearch.experience = invalid.playerResearch.experienceToNext;
@@ -262,7 +272,7 @@ describe("SaveManager", () => {
     legacy.saveVersion = 22;
     legacy.expedition = { weekKey: "2026-08-24", playsThisWeek: 2, bestScore: 400, active: { relicIds: ["torika", "rex", "spino"], startedAt: "2026-08-25T00:00:00Z", score: 30 } };
     // 소탕 도입 전 저장은 그때까지의 주간 최고점을 역대 최고점 초기값으로 이어받는다.
-    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", dayKey: "", playsToday: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null });
+    expect(new SaveManager(new MemoryStorage()).migrate(legacy).expedition).toEqual({ weekKey: "2026-08-24", dayKey: "", playsToday: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, pendingRankRewards: [], bestScore: 400, allTimeBestScore: 400, lastParty: [], run: null });
   });
 
   it("마지막 원정 편성을 왕복하고 구버전·미보유 항목을 안전하게 정규화한다", () => {
@@ -598,6 +608,31 @@ describe("SaveManager 광고 상태 마이그레이션", () => {
     expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual(source.dailyAdRewards);
     const legacy = validData() as unknown as Record<string, unknown>; legacy.saveVersion = 15; delete legacy.dailyAdRewards;
     expect(new SaveManager(new MemoryStorage()).migrate(legacy).dailyAdRewards).toEqual({ date: "", claimsBySlot: {}, requestIds: [] });
+  });
+
+  it("구형 돌림판 광고 1회를 현행 추가 회전 3회로 옮겨 기존 계정 저장을 불러온다", () => {
+    const storage = new MemoryStorage();
+    const legacy = validData();
+    legacy.dailyAdRewards = {
+      date: "2026-10-22",
+      claimsBySlot: { "roulette-spins": 4, "roulette-chances": 1 },
+      requestIds: ["legacy-roulette-ad"],
+    };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+    expect(new SaveManager(storage).load()?.dailyAdRewards).toEqual({
+      date: "2026-10-22",
+      claimsBySlot: { "roulette-spins": 4, "roulette-spin": 3 },
+      requestIds: ["legacy-roulette-ad"],
+    });
+  });
+
+  it("구형 돌림판 슬롯의 실제 제한을 넘긴 조작 저장은 이관하지 않고 거부한다", () => {
+    const storage = new MemoryStorage();
+    const tampered = validData();
+    tampered.dailyAdRewards = { date: "2026-10-22", claimsBySlot: { "roulette-chances": 2 }, requestIds: [] };
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tampered));
+    expect(() => new SaveManager(storage).load()).toThrow("일일 광고 수령 정보");
   });
 
   /**

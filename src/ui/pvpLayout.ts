@@ -23,7 +23,7 @@ export const PVP_MENU = {
 
 /** 결투 선택판의 칸 높이(모드 순서대로). 원화를 가진 결투장만 크게 선다. */
 export function pvpEntryHeight(id: string): number {
-  return id === "arena" ? PVP_MENU.entry.featured : PVP_MENU.entry.height;
+  return id === "arena" || id === "live-arena" ? PVP_MENU.entry.featured : PVP_MENU.entry.height;
 }
 
 /** 칸 높이에서 판 높이와 각 칸의 중심 y를 구한다. */

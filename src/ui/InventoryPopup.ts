@@ -12,7 +12,8 @@ import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryT
 import { addCategoryTab } from "./CategoryTab";
 import { SortControl } from "./SortControl";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
-import { equippedRelicName, openRuneInfoPopup } from "./RunePopup";
+import { equippedRuneSlot, openRuneInfoPopup } from "./RunePopup";
+import { addRuneBagToggles } from "./runeHolderCycle";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
@@ -24,6 +25,10 @@ import { addExpiryTag, soonestItemExpiry } from "./itemExpiry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
 import { RELIC_GRID_INTRO, relicGridIntroDelay } from "./relicGridLayout";
 import { motionPolicy } from "../core/settings";
+import { universalFragmentRarity } from "../core/relicProgression";
+import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
+import { onTap } from "./tapGuard";
+import { attachDragScroll } from "./dragScroll";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -71,6 +76,11 @@ export class InventoryPopup {
   private closePopup?: () => void;
   private readonly inventory = new InventoryManager(session);
   private unsubscribeInventory?: () => void;
+  private inventoryDirty = false;
+  private readonly refreshVisible = (): void => {
+    if (!this.inventoryDirty || !this.body || !this.view || !this.popups.isTop(this.body)) return;
+    this.inventoryDirty = false; this.render(this.view);
+  };
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi, private readonly onClose?: () => void, private readonly onCurrencyAction?: (action: CurrencyGuideAction) => void) {}
 
@@ -78,7 +88,7 @@ export class InventoryPopup {
   open(): void {
     if (this.body) return;
     const width = POPUP_WIDTH; const height = POPUP_HEIGHT;
-    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
+    this.body = this.popups.open({ width, height, title: t("inventory.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, hideCloseButton: true, onClose: () => { this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.refreshVisible); this.inventoryDirty = false; this.unsubscribeInventory?.(); this.unsubscribeInventory = undefined; setDebugInventoryCategory(undefined); this.body = undefined; this.view = undefined; this.closePopup = undefined; this.onClose?.(); } }, (body, close) => {
       // 외부 돌아가기 버튼은 stack 최상단이 아니라 이 가방 판을 정확히 가리켜야 한다.
       this.closePopup = close;
       /*
@@ -96,9 +106,12 @@ export class InventoryPopup {
       // 닫기는 LobbyScene의 화면 우하단 공용 버튼 하나가 맡아 팝업에 붙은 중복 버튼을 만들지 않는다.
       // Manager가 조회·검증·Session 반영을 끝낸 뒤에만 단일 list 경로를 렌더링한다.
       void this.inventory.refresh(this.api).then(() => {
+        if (this.view !== view || !view.active) return;
         this.render(view, true);
         // 초기 응답 이후에는 DTO 대신 manager의 인벤토리 확정 신호만 받아 현재 표시 모델을 다시 읽는다.
-        this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { if (this.view) this.render(this.view); });
+        if (!this.body || !this.view) return;
+        this.unsubscribeInventory = managerEvents.subscribe("inventory", () => { this.inventoryDirty = true; });
+        this.scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.refreshVisible);
       });
     });
   }
@@ -120,7 +133,10 @@ export class InventoryPopup {
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const visible = this.inventory.list(this.category, this.sort);
+    const runeBag = session.settings.game.runeBag;
+    // 「장착 룬」을 끄면 누군가 끼고 있는 룬은 목록에서 빠진다 — 갈아 끼울 룬만 훑을 때 쓴다.
+    const visible = this.inventory.displayList(this.category, this.sort)
+      .filter((item) => item.kind !== "rune" || runeBag.showEquipped || equippedRuneSlot(item.rune.instanceId) === undefined);
     // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
     const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
@@ -135,12 +151,11 @@ export class InventoryPopup {
     this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); this.maskedContent = content; body.add(content);
     visible.forEach((item, index) => this.addCard(content, item, index, textureKeys));
     setDebugInventoryTextureKeys(textureKeys);
-    const metrics = inventoryScrollMetrics(visible.length); let offset = 0; let dragY = 0;
+    const metrics = inventoryScrollMetrics(visible.length); let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
-    const hit = this.scene.add.rectangle(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height, 0xffffff, 0).setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65)); body.add(hit); body.sendToBack(hit);
+    // 칸 위에서 시작한 손도 내려가도록 씬이 듣는다(`attachDragScroll`) — 끌기 면을 칸 뒤에 두면 룬 위에서는 스크롤이 안 됐다.
+    const maskShape = this.maskShape!;
+    attachDragScroll(this.scene, { owner: content, root: body, bounds: () => maskShape.getBounds(), onDelta: move });
     // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
     CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
     if (this.category === "rune") this.addSortControls(body, visible.length);
@@ -181,11 +196,14 @@ export class InventoryPopup {
     const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
     const dirX = right - dirWidth / 2;
     const options: readonly { id: InventorySort["key"]; labelKey: TextKey }[] = [
-      { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
+      { id: "relic", labelKey: "inventory.sort.relic" }, { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
       { id: "enhancement", labelKey: "inventory.sort.craft" }, { id: "equipped", labelKey: "inventory.sort.equipped" },
     ];
     const countLabel = this.scene.add.text(-right, y, t("inventory.rune.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    body.add([countLabel, this.scene.add.text(-right + countLabel.width + 12, y, count.toLocaleString(), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5)]);
+    const countValue = this.scene.add.text(-right + countLabel.width + 12, y, count.toLocaleString(), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
+    body.add([countLabel, countValue]);
+    // 보기 토글은 보유 수 바로 오른쪽에 선다 — 정렬 칩과 한 줄이지만 목록을 거르는 조작이라 왼쪽 덩어리에 묶는다.
+    addRuneBagToggles(this.scene, body, Math.max(countValue.x + countValue.width + 20, -right + 150), y, () => this.render(body));
     new SortControl(this.scene, {
       x: dirX - dirWidth / 2 - gap - sortWidth / 2, y, height, sortWidth, dirWidth, gap, fontSize: 24, parent: body,
       sortOptions: options.map(({ id, labelKey }) => ({ id, label: t(labelKey) })),
@@ -221,7 +239,11 @@ export class InventoryPopup {
     // 룬은 카드 한 장이 통째로 공용 프리팹이다. 장착용 가방과 같은 한 장을 써야 한쪽만
     // 옛 모습으로 남지 않는다.
     if (item.kind === "rune") {
-      const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, { dimmed: equippedRelicName(item.rune.instanceId) !== undefined });
+      const slot = equippedRuneSlot(item.rune.instanceId);
+      const card = addRuneCard(this.scene, x, y, cardWidth, cardHeight, item.rune, {
+        dimmed: slot !== undefined,
+        holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId } : undefined,
+      });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
       this.addCardInput(content, card, item, cardWidth, cardHeight);
       return;
@@ -236,8 +258,17 @@ export class InventoryPopup {
     // 있는 정의라 `addFramedIcon` 대신 같은 값으로 직접 세운다.
     const iconSize = frameSize * ITEM_FRAME.icon;
     const onTexture = (key: string): void => { textureKeys.push(key); };
-    card.add(addItemDefinitionIcon(this.scene, item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true, onTexture }));
-    card.add(addItemDefinitionIcon(this.scene, item.definition.icon, 0, 0, iconSize, { onTexture }));
+    const fragmentRarity = universalFragmentRarity(item.definition.id);
+    // 만능 파편은 액자를 넘치게 키워 구운 그림이 선다(`addUniversalFragmentArt`).
+    const fragmentArt = fragmentRarity ? addUniversalFragmentArt(this.scene, frameSize, universalFragmentTexture(fragmentRarity)) : undefined;
+    if (fragmentArt && fragmentRarity) {
+      onTexture(universalFragmentTexture(fragmentRarity));
+      card.add(fragmentArt);
+    } else {
+      card.add(addItemDefinitionIcon(this.scene, item.definition.icon, ITEM_FRAME.shadow.offsetX, ITEM_FRAME.shadow.offsetY, iconSize, { shadow: true, onTexture }));
+      card.add(addItemDefinitionIcon(this.scene, item.definition.icon, 0, 0, iconSize, { onTexture }));
+    }
+    if (fragmentRarity) card.add(addUniversalFragmentGlass(this.scene, frameSize, fragmentRarity));
     // 수량은 액자 오른쪽 아래에 겹친다. 보상 액자와 같은 자리라 화면이 달라도 같은 곳을 본다.
     // 골드처럼 자릿수가 큰 재화는 K·M으로 줄여 칸을 넘지 않게 한다 — 온전한 수는 눌러서 여는
     // 안내가 말한다.
@@ -253,7 +284,7 @@ export class InventoryPopup {
   private addCardInput(content: Phaser.GameObjects.Container, card: Phaser.GameObjects.Container, item: InventoryDisplayItem, width: number, height: number): void {
     const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     // 클릭 순간의 월드 변환을 읽어 팝업 이동·배율·스크롤 이후에도 상세창이 카드에 붙게 한다.
-    hit.on("pointerup", () => this.select(item));
+    onTap(hit, () => this.select(item));
     card.add(hit);
     content.add(card);
     if (!this.dealing) return;

@@ -1,0 +1,84 @@
+{
+  "model": "varied-trials-v2",
+  "settingsScreened": 1440,
+  "passingOneSeedFloor100Screen": 1411,
+  "screenAndCheckpointBattles": 50825,
+  "checkpointPartiesWithAtLeast4Wins": {
+    "100": 1410,
+    "110": 71,
+    "120": 318,
+    "124": 4,
+    "130": 50,
+    "150": 0,
+    "200": 0
+  },
+  "followupBattles": 8000,
+  "combinedTestedCeilingPoolStableThrough": 125,
+  "topFollowups": [
+    {
+      "ids": "nodonia,pachi,stella",
+      "party": "노도니아·파치·스테라",
+      "equipment": "ceiling",
+      "stableThrough": 125,
+      "firstUnstableFloor": 126,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "ark,pachi,mette",
+      "party": "아크·파치·메테",
+      "equipment": "ceiling",
+      "stableThrough": 106,
+      "firstUnstableFloor": 107,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "mosana,pachi,mette",
+      "party": "모사나·파치·메테",
+      "equipment": "ceiling",
+      "stableThrough": 118,
+      "firstUnstableFloor": 119,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "mosana,pachi,stella",
+      "party": "모사나·파치·스테라",
+      "equipment": "ceiling",
+      "stableThrough": 125,
+      "firstUnstableFloor": 126,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "nodonia,pachi,stella",
+      "party": "노도니아·파치·스테라",
+      "equipment": "bare",
+      "stableThrough": 94,
+      "firstUnstableFloor": 95,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "nodonia,pachi,stella",
+      "party": "노도니아·파치·스테라",
+      "equipment": "epic",
+      "stableThrough": 118,
+      "firstUnstableFloor": 119,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "mosana,pachi,stella",
+      "party": "모사나·파치·스테라",
+      "equipment": "bare",
+      "stableThrough": 94,
+      "firstUnstableFloor": 95,
+      "highestIsolatedWin": 143
+    },
+    {
+      "ids": "mosana,pachi,stella",
+      "party": "모사나·파치·스테라",
+      "equipment": "epic",
+      "stableThrough": 94,
+      "firstUnstableFloor": 95,
+      "highestIsolatedWin": 143
+    }
+  ],
+  "scope": "All tank + warrior/assassin + support combinations, two orders; legendary reference loadout, bond 10. One-seed floor100 screen; survivors checked at five seeds. Not an exhaustive search of all legal three-unit teams, rune traits or orders."
+}

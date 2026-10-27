@@ -21,6 +21,7 @@ import { calculateObservationJournalFlow, OBSERVATION_JOURNAL_SIZE, withoutRepea
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { onTap } from "./tapGuard";
 
 /**
  * 관찰 일지 — **개체 하나를 설명하는 유일한 판이다.**
@@ -323,7 +324,7 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
       const caret = drawGlyph(scene, "caret-down", bodyLeft + fossilHeader.width + 34, flow.excavationY + fossilHeader.height / 2, 30, COLOR.inkDimHex);
       caret.setAngle(fossilOpen ? 180 : 0); content.add(caret);
       const toggle = scene.add.rectangle(bodyLeft + (fossilHeader.width + 80) / 2, flow.excavationY + fossilHeader.height / 2, fossilHeader.width + 80, 90, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      toggle.on("pointerup", () => { close(); openObservationJournal(deps, { ...options, fossilOpen: !fossilOpen, page: 0 }); });
+      onTap(toggle, () => { close(); openObservationJournal(deps, { ...options, fossilOpen: !fossilOpen, page: 0 }); });
       content.add(toggle);
       if (fossilOpen) { excavation.setPosition(bodyLeft, flow.excavationY + fossilHeader.height + journal.spacing.compactLine); content.add(excavation); } else excavation.destroy();
     } else if (classified) {
@@ -345,7 +346,7 @@ export function openObservationJournal(deps: ObservationJournalDeps, options: Ob
         const linkHit = scene.add.rectangle(bodyLeft + link.width / 2, linkY + link.height / 2, link.width + 80, 96, 0xffffff, 0)
           .setOrigin(0.5)
           .setInteractive({ useHandCursor: true });
-        linkHit.on("pointerup", () => openObservationHistory(deps, def, from));
+        onTap(linkHit, () => openObservationHistory(deps, def, from));
         content.add(linkHit);
       }
     }

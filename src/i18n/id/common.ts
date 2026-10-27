@@ -31,6 +31,7 @@ export const COMMON_ID = {
   "currency.fossil": "Fosil",
   "currency.amber": "Amber",
   "currency.cheesecake": "Cheesecake",
+  "currency.stamina": "Stamina",
   "currency.dnaFragments": "Mil DNA",
   "element.fire": "Api",
   "element.water": "Air",

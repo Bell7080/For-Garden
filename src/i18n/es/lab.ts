@@ -20,6 +20,7 @@ export const LAB_ES = {
   "lab.policy.pickupOff": "OFF",
   "lab.policy.pickupRate": "Probabilidad de destacado en SSR {percent}% · Si falla, el próximo SSR será el destacado",
   "lab.policy.tenGuarantee": "La última posición de x10 es SR o superior (la garantía SSR tiene prioridad)",
+  "lab.policy.tenUpgrade": "Si la última posición de x10 es SR, hay un {percent}% de probabilidad de subir a SSR",
   "lab.policy.mileage": "+1 Milla de ADN por investigación",
   "lab.policy.duplicate": "Recompensa por duplicado  +1 Fragmento de esa Reliquia · Reúne Fragmentos para la Ruptura",
   "lab.policy.duplicateMax": "Tras la Ruptura de grado V, los duplicados se convierten en Millas de ADN (SSR +30 · SR +8 · R +2)",

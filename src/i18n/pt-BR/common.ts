@@ -31,6 +31,7 @@ export const COMMON_PT_BR = {
   "currency.fossil": "Fóssil",
   "currency.amber": "Âmbar",
   "currency.cheesecake": "Cheesecake",
+  "currency.stamina": "Estamina",
   "currency.dnaFragments": "Milhas de DNA",
   "element.fire": "Fogo",
   "element.water": "Água",

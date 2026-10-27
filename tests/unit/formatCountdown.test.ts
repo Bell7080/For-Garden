@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCountdown } from "../../src/core/formatCountdown";
+import { formatCountdown, formatDayCountdown } from "../../src/core/formatCountdown";
 
 describe("남은 시간 표기", () => {
   it("는 시·분·초를 두 자리로 적고 남은 1초 미만도 한 초로 보인다", () => {
@@ -14,5 +14,14 @@ describe("남은 시간 표기", () => {
   it("는 음수와 유한하지 않은 입력을 안전한 0으로 닫는다", () => {
     expect([formatCountdown(-1), formatCountdown(Number.NaN), formatCountdown(Number.POSITIVE_INFINITY)])
       .toEqual(["00:00:00", "00:00:00", "00:00:00"]);
+  });
+});
+
+describe("formatDayCountdown", () => {
+  it("상점 리필 시계와 같은 D00:HH:MM:SS로 적는다", () => {
+    expect(formatDayCountdown(((9 * 24 + 3) * 3600 + 4 * 60 + 5) * 1000)).toBe("D09:03:04:05");
+    expect(formatDayCountdown(81 * 86_400_000)).toBe("D81:00:00:00");
+    expect(formatDayCountdown(-5)).toBe("D00:00:00:00");
+    expect(formatDayCountdown(Number.NaN)).toBe("D00:00:00:00");
   });
 });

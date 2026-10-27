@@ -1,0 +1,382 @@
+{
+  "support.title": [
+    "客户支持",
+    "ฝ่ายช่วยเหลือ",
+    "Hỗ trợ khách hàng",
+    "Bantuan pelanggan",
+    "Atención al cliente",
+    "Atendimento ao cliente",
+    "Kundendienst",
+    "Поддержка"
+  ],
+  "support.tab.compose": [
+    "提交咨询",
+    "ส่งเรื่องใหม่",
+    "Gửi yêu cầu",
+    "Buat pertanyaan",
+    "Nueva consulta",
+    "Nova solicitação",
+    "Neue Anfrage",
+    "Новое обращение"
+  ],
+  "support.tab.mine": [
+    "我的咨询",
+    "เรื่องของฉัน",
+    "Yêu cầu của tôi",
+    "Pertanyaan saya",
+    "Mis consultas",
+    "Minhas solicitações",
+    "Meine Anfragen",
+    "Мои обращения"
+  ],
+  "support.category.inquiry": [
+    "咨询",
+    "สอบถาม",
+    "Thắc mắc",
+    "Pertanyaan",
+    "Consulta",
+    "Dúvida",
+    "Frage",
+    "Вопрос"
+  ],
+  "support.category.bug": [
+    "错误",
+    "ข้อผิดพลาด",
+    "Lỗi",
+    "Bug",
+    "Error",
+    "Erro",
+    "Fehler",
+    "Ошибка"
+  ],
+  "support.category.report": [
+    "举报",
+    "รายงาน",
+    "Báo cáo",
+    "Laporan",
+    "Denuncia",
+    "Denúncia",
+    "Meldung",
+    "Жалоба"
+  ],
+  "support.category.other": [
+    "其他",
+    "อื่น ๆ",
+    "Khác",
+    "Lainnya",
+    "Otro",
+    "Outro",
+    "Sonstiges",
+    "Другое"
+  ],
+  "support.field.subject": [
+    "标题",
+    "หัวข้อ",
+    "Tiêu đề",
+    "Judul",
+    "Asunto",
+    "Assunto",
+    "Betreff",
+    "Тема"
+  ],
+  "support.field.body": [
+    "内容",
+    "เนื้อหา",
+    "Nội dung",
+    "Pesan",
+    "Mensaje",
+    "Mensagem",
+    "Nachricht",
+    "Сообщение"
+  ],
+  "support.field.reply": [
+    "回复",
+    "ตอบกลับ",
+    "Trả lời",
+    "Balasan",
+    "Respuesta",
+    "Resposta",
+    "Antwort",
+    "Ответ"
+  ],
+  "support.counter": [
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}",
+    "{count} / {max}"
+  ],
+  "support.submit": [
+    "发送",
+    "ส่ง",
+    "Gửi",
+    "Kirim",
+    "Enviar",
+    "Enviar",
+    "Senden",
+    "Отправить"
+  ],
+  "support.reply.send": [
+    "发送回复",
+    "ส่งคำตอบ",
+    "Gửi trả lời",
+    "Kirim balasan",
+    "Enviar respuesta",
+    "Enviar resposta",
+    "Antwort senden",
+    "Отправить ответ"
+  ],
+  "support.back": [
+    "返回列表",
+    "กลับรายการ",
+    "Về danh sách",
+    "Ke daftar",
+    "Volver a la lista",
+    "Voltar à lista",
+    "Zur Liste",
+    "К списку"
+  ],
+  "support.prev": [
+    "上一页",
+    "ก่อนหน้า",
+    "Trước",
+    "Sebelumnya",
+    "Anterior",
+    "Anterior",
+    "Zurück",
+    "Назад"
+  ],
+  "support.next": [
+    "下一步",
+    "ถัดไป",
+    "Tiếp",
+    "Berikutnya",
+    "Siguiente",
+    "Próximo",
+    "Weiter",
+    "Далее"
+  ],
+  "support.page": [
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}",
+    "{page} / {pages}"
+  ],
+  "support.empty": [
+    "暂无咨询记录",
+    "ยังไม่มีเรื่องที่ส่ง",
+    "Chưa có yêu cầu nào",
+    "Belum ada pertanyaan",
+    "No tienes consultas",
+    "Nenhuma solicitação",
+    "Keine Anfragen vorhanden",
+    "Обращений пока нет"
+  ],
+  "support.loading": [
+    "加载中",
+    "กำลังโหลด",
+    "Đang tải",
+    "Memuat",
+    "Cargando",
+    "Carregando",
+    "Wird geladen",
+    "Загрузка"
+  ],
+  "support.status.open": [
+    "已受理",
+    "รับเรื่องแล้ว",
+    "Đã tiếp nhận",
+    "Diterima",
+    "Recibida",
+    "Recebida",
+    "Eingegangen",
+    "Принято"
+  ],
+  "support.status.in_progress": [
+    "处理中",
+    "กำลังตรวจสอบ",
+    "Đang xem xét",
+    "Sedang ditinjau",
+    "En revisión",
+    "Em análise",
+    "In Bearbeitung",
+    "На рассмотрении"
+  ],
+  "support.status.answered": [
+    "已回复",
+    "ตอบแล้ว",
+    "Đã trả lời",
+    "Sudah dijawab",
+    "Respondida",
+    "Respondida",
+    "Beantwortet",
+    "Ответ получен"
+  ],
+  "support.status.closed": [
+    "已关闭",
+    "ปิดแล้ว",
+    "Đã đóng",
+    "Ditutup",
+    "Cerrada",
+    "Encerrada",
+    "Geschlossen",
+    "Закрыто"
+  ],
+  "support.ticket.no": [
+    "编号 {no}",
+    "เลขที่ {no}",
+    "Số {no}",
+    "No. {no}",
+    "N.º {no}",
+    "N.º {no}",
+    "Nr. {no}",
+    "№ {no}"
+  ],
+  "support.author.player": [
+    "我",
+    "ฉัน",
+    "Tôi",
+    "Saya",
+    "Yo",
+    "Eu",
+    "Ich",
+    "Я"
+  ],
+  "support.author.staff": [
+    "运营团队",
+    "ทีมงาน",
+    "Đội ngũ hỗ trợ",
+    "Tim dukungan",
+    "Equipo de soporte",
+    "Equipe de suporte",
+    "Supportteam",
+    "Команда поддержки"
+  ],
+  "support.sent.title": [
+    "咨询已受理",
+    "รับเรื่องแล้ว",
+    "Đã tiếp nhận yêu cầu",
+    "Pertanyaan diterima",
+    "Consulta recibida",
+    "Solicitação recebida",
+    "Anfrage eingegangen",
+    "Обращение принято"
+  ],
+  "support.sent.body": [
+    "咨询已受理。编号：{no}",
+    "รับเรื่องของคุณแล้ว เลขที่ {no}",
+    "Đã tiếp nhận yêu cầu. Mã số: {no}",
+    "Pertanyaan diterima. Nomor: {no}",
+    "Consulta recibida. Referencia: {no}",
+    "Solicitação recebida. Número: {no}",
+    "Anfrage eingegangen. Referenz: {no}",
+    "Обращение принято. Номер: {no}"
+  ],
+  "support.error.title": [
+    "咨询提示",
+    "แจ้งเรื่องช่วยเหลือ",
+    "Thông báo hỗ trợ",
+    "Pemberitahuan bantuan",
+    "Aviso de soporte",
+    "Aviso de suporte",
+    "Supporthinweis",
+    "Уведомление поддержки"
+  ],
+  "support.error.unsupported": [
+    "此版本无法发送咨询",
+    "เวอร์ชันนี้ส่งเรื่องไม่ได้",
+    "Không thể gửi yêu cầu trong bản này",
+    "Pertanyaan tidak tersedia di versi ini",
+    "Las consultas no están disponibles en esta versión",
+    "Solicitações indisponíveis nesta versão",
+    "Anfragen in dieser Version nicht verfügbar",
+    "В этой версии нельзя отправлять обращения"
+  ],
+  "support.error.network": [
+    "请检查网络连接。",
+    "ตรวจสอบการเชื่อมต่อเครือข่าย",
+    "Hãy kiểm tra kết nối mạng.",
+    "Periksa koneksi jaringan Anda.",
+    "Revisa tu conexión de red.",
+    "Verifique sua conexão de rede.",
+    "Bitte prüfe deine Netzwerkverbindung.",
+    "Проверьте подключение к сети."
+  ],
+  "support.error.no_player": [
+    "找不到账号信息",
+    "ไม่พบข้อมูลบัญชี",
+    "Không tìm thấy thông tin tài khoản",
+    "Informasi akun tidak ditemukan",
+    "No se encontró la cuenta",
+    "Informações da conta não encontradas",
+    "Kontoinformationen nicht gefunden",
+    "Данные аккаунта не найдены"
+  ],
+  "support.error.invalid_category": [
+    "请重新选择咨询类型",
+    "กรุณาเลือกประเภทเรื่องใหม่",
+    "Hãy chọn lại loại yêu cầu",
+    "Pilih ulang kategori pertanyaan",
+    "Elige una categoría de consulta",
+    "Selecione a categoria da solicitação",
+    "Bitte eine Anfragekategorie wählen",
+    "Выберите категорию обращения"
+  ],
+  "support.error.invalid_text": [
+    "请检查标题和内容",
+    "กรุณาตรวจหัวข้อและเนื้อหา",
+    "Hãy kiểm tra tiêu đề và nội dung",
+    "Periksa judul dan pesan",
+    "Revisa el asunto y el mensaje",
+    "Confira o assunto e a mensagem",
+    "Betreff und Nachricht prüfen",
+    "Проверьте тему и текст"
+  ],
+  "support.error.rate_limited": [
+    "请稍后再发送",
+    "กรุณารอสักครู่แล้วส่งใหม่",
+    "Hãy gửi lại sau ít phút",
+    "Coba kirim lagi sebentar lagi",
+    "Vuelve a enviarlo más tarde",
+    "Tente enviar novamente em instantes",
+    "Bitte später erneut senden",
+    "Попробуйте отправить чуть позже"
+  ],
+  "support.error.not_found": [
+    "找不到咨询",
+    "ไม่พบเรื่องที่ส่ง",
+    "Không tìm thấy yêu cầu",
+    "Pertanyaan tidak ditemukan",
+    "Consulta no encontrada",
+    "Solicitação não encontrada",
+    "Anfrage nicht gefunden",
+    "Обращение не найдено"
+  ],
+  "support.error.ticket_closed": [
+    "无法回复已关闭的咨询",
+    "ตอบเรื่องที่ปิดแล้วไม่ได้",
+    "Không thể trả lời yêu cầu đã đóng",
+    "Tidak bisa membalas pertanyaan tertutup",
+    "No se puede responder a consultas cerradas",
+    "Não é possível responder a solicitações encerradas",
+    "Geschlossene Anfragen können nicht beantwortet werden",
+    "На закрытое обращение ответить нельзя"
+  ],
+  "settings.support.inquiry": [
+    "客户支持",
+    "ฝ่ายช่วยเหลือ",
+    "Hỗ trợ khách hàng",
+    "Bantuan pelanggan",
+    "Atención al cliente",
+    "Atendimento ao cliente",
+    "Kundendienst",
+    "Поддержка"
+  ]
+}

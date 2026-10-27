@@ -1,3 +1,4 @@
+import { strataRaidTicketTile } from "./raidTicketDrops";
 /**
  * 지층 탐사의 순수 규칙이다.
  *
@@ -217,7 +218,7 @@ function fitRuneTileCount(layer: StrataLayerDefinition, tiles: StrataTile[], ran
 }
 
 /** 새 판을 만든다. 모든 칸의 내용이 이 순간 정해지고 그 뒤로는 바뀌지 않는다. */
-export function createStrataBoard(input: { layerId: string; siteId?: string; crystalStage?: number; random: () => number }): StrataBoard {
+export function createStrataBoard(input: { layerId: string; siteId?: string; crystalStage?: number; random: () => number; raidOpen?: boolean }): StrataBoard {
   const layer = findStrataLayer(input.layerId);
   if (layer === undefined) throw new Error("알 수 없는 지층입니다.");
   const { zones, zoneOf } = assignZones(layer, input.random);
@@ -225,7 +226,7 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     const tone = zones[zone].tone;
     const row = weightedPick(layer.rewards, (reward) => reward.weight[tone], input.random);
     const span = Math.max(0, row.max - row.min);
-    const amount = row.kind === "empty" ? 0 : row.min + Math.round(roll(input.random) * span);
+    const amount = row.kind === "empty" ? 0 : row.kind === "gems" ? (roll(input.random) < 0.75 ? row.min : row.max) : row.min + Math.round(roll(input.random) * span);
     return { index, zone, kind: row.kind, amount, revealed: false };
   });
   fitRuneTileCount(layer, tiles, input.random);
@@ -241,6 +242,13 @@ export function createStrataBoard(input: { layerId: string; siteId?: string; cry
     const tone = zones[tile.zone].tone;
     if (tile.kind === "rune") Object.assign(tile, withRuneDetail(layer, tone, input.random));
     else if (tile.kind === "researchItem") tile.itemId = rollStrataResearchItem(input.random);
+  }
+  // 판 한 장에 가끔(레이드가 열린 계정만) 일반 토벌권 칸이 섞인다(화석처럼 드문 덤). 골드·원석 칸 하나를 바꾸어 귀한 칸의 확률을 건드리지 않는다.
+  const raidTicket = strataRaidTicketTile(input.random, input.raidOpen === true);
+  const plain = tiles.filter((tile) => tile.kind === "gold" || tile.kind === "rawStone");
+  if (raidTicket !== null && plain.length > 0) {
+    const pick = plain[Math.min(plain.length - 1, Math.floor(roll(input.random) * plain.length))];
+    pick.kind = "researchItem"; pick.amount = 1; pick.itemId = raidTicket;
   }
   const art = 1 + Math.floor(roll(input.random) * STRATA_ART_COUNT);
   return { layerId: layer.id, ...(input.siteId ? { siteId: input.siteId } : {}), art, columns: layer.columns, rows: layer.rows, tiles, zones, digsLeft: layer.digs + modifiers.digs, digsMax: layer.digs + modifiers.digs, ...(crystalStage > 0 ? { crystalStage } : {}) };
@@ -385,7 +393,8 @@ export function createArchaeologyState(): ArchaeologyState {
 
 /** 서버 시각까지 끝난 구간만 채운다. 시각이 역행하면 기준점을 뒤로 옮기지 않는다. */
 export function settleStrataCharges(charges: number, updatedAt: string | null, now: Date): { charges: number; updatedAt: string } {
-  const safe = Math.min(STRATA_CHARGE.max, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
+  // 상한(`max`)은 시간이 채우는 몫에만 걸린다. 발굴권으로 넘겨 쌓인 횟수는 깎지 않는다(보유 끝까지).
+  const safe = Math.min(STRATA_CHARGE.holdLimit, Math.max(0, Math.floor(Number.isFinite(charges) ? charges : 0)));
   const accrual = timeAccrualWindow(updatedAt, now, Math.max(0, STRATA_CHARGE.max - safe) * STRATA_CHARGE.intervalMs);
   if (!accrual.accepted) return { charges: safe, updatedAt: updatedAt ?? now.toISOString() };
   const nowIso = new Date(accrual.window.serverNowMs).toISOString();
@@ -393,6 +402,16 @@ export function settleStrataCharges(charges: number, updatedAt: string | null, n
   const recovered = Math.min(STRATA_CHARGE.max - safe, Math.floor(accrual.window.elapsedMs / STRATA_CHARGE.intervalMs));
   const nextMs = safe + recovered >= STRATA_CHARGE.max ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STRATA_CHARGE.intervalMs;
   return { charges: safe + recovered, updatedAt: new Date(nextMs).toISOString() };
+}
+
+/**
+ * 발굴권 아이템을 탐사 횟수로 옮긴다. **발굴권은 고고학 입장 횟수 그 자체**라 가방에 남지 않고, 시간 충전이
+ * 가득 차 있어도 `max`를 넘겨 쌓인다(보유 끝 `holdLimit`까지, 넘치는 몫은 가방에 남긴다).
+ */
+export function absorbStrataTickets(charges: number, tickets: number): { charges: number; absorbed: number } {
+  const room = Math.max(0, STRATA_CHARGE.holdLimit - Math.max(0, Math.floor(charges)));
+  const absorbed = Math.min(room, Math.max(0, Math.floor(tickets)));
+  return { charges: charges + absorbed, absorbed };
 }
 
 /** 다음 한 번이 차는 시각이다. 가득 찼으면 null이다. */

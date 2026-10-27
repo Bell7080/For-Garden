@@ -1,6 +1,6 @@
-import { registerDataText } from "../i18n";
+import { registerDataText, t } from "../i18n";
 /** PvP 선택판과 상세 화면이 함께 사용하는 식별자다. 저장 데이터나 전투 규칙은 담지 않는다. */
-export type PvpModeId = "arena" | "boss-duel" | "brawl" | "training";
+export type PvpModeId = "arena" | "boss-duel" | "brawl" | "training" | "live-arena";
 
 /** 플레이어에게 보여 줄 모드 이름과 현재 기획 범위를 한곳에서 관리하는 순수 정적 정의다. */
 export interface PvpModeDefinition {
@@ -22,6 +22,15 @@ export const PVP_MODES: readonly PvpModeDefinition[] = [
   { id: "brawl", label: "대난투", title: "대난투", scope: "6:6 결투" },
   { id: "training", label: "연습 훈련", title: "연습 훈련", scope: "허수아비 또는 아군 렐릭을 이용한\n1:1~3:3 훈련" },
 ] as const;
+
+/** 기존 선택판을 결투장·실시간 아레나 두 입구로 다시 연다. */
+export const PVP_MODE_SELECT_ENABLED = true;
+
+/** Enabled entrances. Deferred preview modes remain in the historical catalog. */
+function liveArenaMode(): PvpModeDefinition {
+  return { id: "live-arena", get label() { return t("arena.title"); }, get title() { return t("arena.title"); }, get scope() { return t("arena.mode.scope"); }, artKey: "content-duel-entry" };
+}
+export const PVP_ACTIVE_MODES: readonly PvpModeDefinition[] = [PVP_MODES[0], liveArenaMode()];
 
 /** 잘못된 외부 진입이 있더라도 첫 모드로 안전하게 수렴시키는 순수 조회 경계다. */
 export function getPvpMode(id: unknown): PvpModeDefinition {

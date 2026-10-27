@@ -7,6 +7,8 @@ import { BACK_BUTTON_SIZE, BACK_SLOT as BACK_SLOT_SPOT } from "./popupGeometry";
 export interface IconButtonOptions {
   /** 텍스처 키. `UI_ICON`의 값을 쓴다. */
   icon: string;
+  /** 아이콘 대신 가운데에 앉는 짧은 글자(가챠 SKIP처럼). 주면 `icon`은 그리지 않는다. */
+  centerText?: string;
   /** 정사각형 한 변(px). */
   size?: number;
   /** 아이콘 오른쪽에 붙는 짧은 설명. 없으면 아이콘만 있는 정사각형이다. */
@@ -40,7 +42,11 @@ export class IconButton extends Phaser.GameObjects.Container {
     cut.lineBetween(-size / 2, size / 2 - size * 0.42, -size / 2 + size * 0.42, size / 2);
     this.add([this.face, cut]);
 
-    this.add(scene.add.image(0, 0, options.icon).setDisplaySize(size * 0.5, size * 0.5).setTint(0xf2f0ec));
+    if (options.centerText) {
+      this.add(scene.add.text(0, 0, options.centerText, textStyle({ role: "display", size: Math.round(size * 0.24), color: COLOR.ink })).setOrigin(0.5));
+    } else {
+      this.add(scene.add.image(0, 0, options.icon).setDisplaySize(size * 0.5, size * 0.5).setTint(0xf2f0ec));
+    }
 
     if (options.label) {
       this.add(
@@ -82,4 +88,9 @@ export const BACK_BUTTON_DEPTH = 50;
 /** 화면을 벗어나는 유일한 버튼. 자리와 생김새를 씬마다 다시 정하지 않는다. */
 export function addBackButton(scene: Phaser.Scene, onClick: () => void): IconButton {
   return new IconButton(scene, BACK_SLOT_SPOT.x, BACK_SLOT_SPOT.y, { icon: UI_ICON.back, onClick }).setDepth(BACK_BUTTON_DEPTH);
+}
+
+/** 대사 화면의 스킵. 뒤로가기와 같은 자리·같은 칩이고 아이콘 대신 글자가 선다(가챠 SKIP과 같은 양식). */
+export function addSkipButton(scene: Phaser.Scene, label: string, onClick: () => void): IconButton {
+  return new IconButton(scene, BACK_SLOT_SPOT.x, BACK_SLOT_SPOT.y, { icon: UI_ICON.back, centerText: label, onClick }).setDepth(BACK_BUTTON_DEPTH);
 }

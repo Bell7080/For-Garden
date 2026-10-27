@@ -1,0 +1,14 @@
+{
+  "target": "ios",
+  "findings": [
+    {
+      "file": "ios/App/App/capacitor.config.json",
+      "code": "native-project-not-generated"
+    },
+    {
+      "file": "ios/App/App/Info.plist",
+      "code": "native-manifest-missing"
+    }
+  ],
+  "note": "Source configuration checks only; signed APK/AAB/IPA, store SDK verification and device tests remain required."
+}

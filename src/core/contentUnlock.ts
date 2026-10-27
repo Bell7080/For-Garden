@@ -10,23 +10,24 @@
  * 보이지 않고(열릴 때 자물쇠가 터지며 나타난다), 고고학 탭과 출격 안의 입구는 자물쇠가 걸린 채
  * 남는다. QA는 설정의 「레벨 만렙 · 모두 개방」으로 한 번에 연다.
  */
-export type ContentId = "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends";
+export type ContentId = "lab" | "excavation" | "interaction" | "cakeOperation" | "bounty" | "expedition" | "raid" | "duel" | "archaeology" | "shop" | "trade" | "friends" | "guild";
 
 export interface ContentUnlock { id: ContentId; level: number; }
 
 /**
  * 여는 순서이자 레벨. 한 번에 하나씩 새것이 서야 무엇이 열렸는지 읽히지만, **한 쌍으로 읽히는 콘텐츠는 같은 레벨에 함께 연다**
- * (상점+무역 — 둘 다 재화를 쓰는 곳, 대작전+현상수배 — 둘 다 일일 던전).
+ * (상점+무역 — 둘 다 재화를 쓰는 곳, 대작전+현상수배 — 둘 다 일일 던전. 두 쌍이 3레벨에 함께 선다).
  *
- * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 연구소(뽑기), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
+ * **시작부터 열려 있는 것**(표에 없다): 출격(스토리), 도감, 임무, 우편, 가방, 프리미엄, 이벤트, 설정.
  * 수집형 RPG의 첫 몇 분은 「스토리 → 뽑기 → 육성 → 임무」 한 바퀴가 전부라 그 고리에 드는 것은 닫지 않는다.
  *
  * 차례의 기준은 「그 콘텐츠가 필요한 재화·이해가 쌓이는 때」다.
  * - 2: 발굴 — 방치형이라 가장 먼저 맛보게 한다.
  * - 3: 상점+무역 — 재화를 쓰는 창구는 일찍 열고, 얼마나 사 모을지는 재화 공급 쪽이 조인다.
- * - 4: 대작전+현상수배 — 급여·돌파 재료 파밍. 한꺼번에 밀고 싶어도 **적 레벨 사다리(난이도)** 가 막으므로 재화 인플레이션은 거기서 조인다.
+ * - 3: 대작전+현상수배도 상점과 같은 레벨 — 스테미나를 녹일 곳이 일찍 있어야 한다. 급여·돌파 재료 파밍이며 한꺼번에 밀고 싶어도 **적 레벨 사다리(난이도)** 가 막으므로 재화 인플레이션은 거기서 조인다.
+ * - 4: 친구 — 사람 관계는 일찍 열어 둔다.
  * - 5~6: 교류 → 결투 — 서브 콘텐츠를 차례로, 결투는 편성이 갖춰진 뒤.
- * - 7~10: 친구 → 레이드(공동 토벌이라 친구가 먼저) → 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
+ * - 7~9: 길드 → 레이드(공동 토벌이라 친구가 먼저) → 원정 — 가장 무겁고 마지막에 닿는 콘텐츠.
  *
  * **개방 속도의 목표**: 진득하게 하는 계정이 하루~이틀(시간 회복만 쓸 때 2일 안)에 거의 다 연다. 레벨별로 몇 스테미나를 녹여야
  * 하는지는 `naturalStaminaToReach`가 재고 `docs/content-unlock-pacing.md`에 표로 남겼다. 레벨을 옮길 때는 그 표와 테스트를 함께 본다.
@@ -36,17 +37,18 @@ export const CONTENT_UNLOCKS: readonly ContentUnlock[] = [
   { id: "excavation", level: 2 },
   { id: "shop", level: 3 },
   { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 4 },
-  { id: "bounty", level: 4 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
   { id: "interaction", level: 5 },
   { id: "duel", level: 6 },
-  { id: "friends", level: 7 },
-  { id: "raid", level: 9 },
-  { id: "expedition", level: 10 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 },
 ] as const;
 
 /** 레벨이 아니라 **스테이지 클리어**로 열리는 콘텐츠. 그 스테이지를 깨는 순간 열린다. */
-export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { archaeology: "1-10" };
+export const CONTENT_STAGE_UNLOCKS: Partial<Record<ContentId, string>> = { lab: "1-5", archaeology: "1-10" };
 
 /** 개방 조건이 있는 모든 콘텐츠. */
 export const ALL_GATED_CONTENT: readonly ContentId[] = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...(Object.keys(CONTENT_STAGE_UNLOCKS) as ContentId[])];

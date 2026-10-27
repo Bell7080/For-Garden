@@ -20,6 +20,7 @@ export const LAB_RU = {
   "lab.policy.pickupOff": "ВЫКЛ",
   "lab.policy.pickupRate": "Шанс избранного среди SSR {percent}% · При промахе следующий SSR — избранный",
   "lab.policy.tenGuarantee": "Последний слот x10 — SR или выше (гарантия SSR в приоритете)",
+  "lab.policy.tenUpgrade": "Если последний слот x10 — SR, с шансом {percent}% он повышается до SSR",
   "lab.policy.mileage": "+1 миля ДНК за каждое исследование",
   "lab.policy.duplicate": "Награда за повтор  +1 фрагмент этого реликта · Копите фрагменты для прорыва",
   "lab.policy.duplicateMax": "После Прорыва V дубликаты превращаются в мили ДНК (SSR +30 · SR +8 · R +2)",

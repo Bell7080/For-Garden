@@ -8,6 +8,8 @@ import type { Stats } from "./types";
  * 있게 옮긴 것이다. Phaser를 읽지 않으므로 데이터·검수·화면이 같은 표를 지난다.
  *
  * **축은 둘뿐이다.**
+ * 공용 성장/조우의 기본 규칙이다. 고대 지층의 별도 콘텐츠 배율은
+ * data/ancientStrataDifficulty.ts에 공개하며 이 유형 표와 다른 콘텐츠에는 적용하지 않는다.
  * 1. **레벨** — 그 관문이 얼마나 무거운가. 콘텐츠 사다리 하나가 갖고 **적 레벨이 곧 그 수다**.
  *    화면에 선 `LV.n`이 그 개체가 실제로 싸우는 레벨이고, 유형은 이 수를 건드리지 않는다 —
  *    유형마다 레벨을 얹으면 정예 자리에서 솟았다가 다음 관문에서 도로 내려앉는다.
@@ -47,6 +49,8 @@ export type EncounterRole =
  * 보스가 늘 때마다 같은 문장과 조금씩 다른 수가 복사되므로 **자리(유형)가 갖는다.**
  */
 export interface EncounterTenacity {
+  /** 강인함 적용 후 이 시간 이하로 남은 행동 제약은 행동을 막지 않는다(초). */
+  controlIgnoreAtOrBelowSeconds?: number;
   /** 판을 시작할 때부터 갖는 몫(%). */
   basePercent: number;
   /** 제어를 한 번 받아 낼 때마다 더해지는 몫(%). 시간이 아니라 **횟수**로 센다. */
@@ -91,6 +95,32 @@ export interface EncounterDamageReduction {
   ignoreAtOrBelow: number;
 }
 
+/**
+ * **시간 상승 배율** — 판이 시작될 때는 공격력·주문력이 `startPercent`에서 출발해 `seconds`초에 걸쳐
+ * 매초 한 칸씩 100%까지 오른다. 보스·불사는 판이 길어질수록 위협이 되는 자리인데, 처음부터 전부 내면
+ * 첫 몇 초에 편성이 서기도 전에 쓰러진다(월드 폭주에서 보스를 제대로 치지도 못하고 아군이 사망했다).
+ *
+ * 개체가 아니라 **자리**가 갖는다 — 폰토스의 패시브에 있던 시간 누적을 이리로 옮겼다. 공격력·주문력만 곱하고
+ * 체력(공유 게이지)·방어·저항·공속은 건드리지 않는다.
+ */
+export interface EncounterRamp {
+  /** 판 시작 때의 공격력·주문력 몫(%). */
+  startPercent: number;
+  /** 100%에 닿기까지 걸리는 시간(초). */
+  seconds: number;
+  /** 100%에 닿은 뒤 매초 기본값의 몇 %씩 더 오르는가(선형). 오래 끄는 판일수록 위협이 된다. */
+  lateGrowthPercentPerSecond: number;
+}
+
+/** 경과 시간(초)에서 램프 몫(0~1)을 구한다. 완전히 지난 초마다 한 칸씩 오른다. */
+export function encounterRampFactor(ramp: EncounterRamp, elapsedSeconds: number): number {
+  const start = ramp.startPercent / 100;
+  const whole = Math.max(0, Math.floor(elapsedSeconds));
+  const rise = start + (1 - start) * Math.min(1, whole / ramp.seconds);
+  const late = Math.max(0, whole - ramp.seconds);
+  return rise + (late * ramp.lateGrowthPercentPerSecond) / 100;
+}
+
 export interface EncounterRoleSpec {
   /** 전장에 서는 수. 파티는 셋이다. */
   count: number;
@@ -110,6 +140,8 @@ export interface EncounterRoleSpec {
   damageReduction?: EncounterDamageReduction;
   /** 그 자리가 갖는 치유 감소. 혼자 서는 정예가 갖는다. */
   healingReduction?: EncounterHealingReduction;
+  /** 그 자리가 갖는 시간 상승 배율. 판 안에서 오래 서는 보스·불사가 갖는다. */
+  ramp?: EncounterRamp;
   /**
    * **최대 체력 비례 피해(출혈·뇌진탕·빙결 해제)를 덜 받는 비율(%).**
    *
@@ -166,10 +198,18 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 실제 전장은 그 거리가 짧아 ×1.5로는 대표 조합이 1-10을 한 판도 열지 못했다.
      * v0.174.2에서 ×1.2로 한 뼘 올렸다 — 1-10이 장을 닫는 **벽**이 되어 권장 레벨 파티가 한 번
      * 막히고 뽑기·강화로 돌아가게 한다. ×1.3부터는 원정 10층 정예까지 8판 중 1판만 열려 멈췄다. 체력 몫은
-     * 결과를 거의 바꾸지 않아(×2.4~×3.3 사이에서 같은 판이 났다) 그대로 둔다.
+     * 결과를 거의 바꾸지 않아(×2.4~×3.3 사이에서 같은 판이 났다) 그대로 두었다.
+     *
+     * **v0.275.14에서 ×8로 올렸다**(응태 결정). 1-5의 R 토비가 12초에 끝나 정예답지 않았고, 1-10은 직접 깨 보며 조율하기로 했다.
+     * 1-5는 21초(띠 안), 1-10은 편성에 따라 승률 0 ~ 1.00이다. **원정 정예 10층은 29.5 → 67초로 띠를 벗어나 사실상 열리지 않는다** —
+     * 같은 표를 읽기 때문이며, 원정 레벨을 다시 풀 때 함께 본다(`levelDesign.test`의 검수 기록).
+     *
+     * **v0.282.9에서 ×4로 내렸다**(응태 결정). 직접 R 토비로 1-5를 떠 봤는데 이기지 못해, ×8이 R 단독 편성에는 과했다.
+     *
+     * **v0.308.6에서 ×3으로 내렸다**(응태 결정). 1-10 코마가 SSR 없이는 깨지지 않았다.
      */
     count: 1, bodyScale: 1.18,
-    hpMultiplier: 3.3, attackMultiplier: 1.2,
+    hpMultiplier: 3, attackMultiplier: 1.2,
     ttkSeconds: [18, 32], remainingHp: [0.20, 0.60],
     /*
      * **혼자 서는 정예도 보스처럼 막아서되 훨씬 얕게.** 태생 20%에 제어 한 번마다 10% — 여섯 번이면 상한(80)이라
@@ -177,7 +217,7 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 60초에 걸쳐 40%까지 오른다 — 길게 버티며 고치는 풀이를 시간이 닫되, 평범하게 끝나는 판은 거의 건드리지 않는다
      * (10%에서 50%까지 40초에 올렸더니 원정 정예 10층의 권장 파티 승률이 75%에서 25%로 떨어졌다).
      */
-    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80 },
+    tenacity: { basePercent: 20, perControlPercent: 10, maxPercent: 80, controlIgnoreAtOrBelowSeconds: 0.05 },
     healingReduction: { basePercent: 5, maxPercent: 40, rampSeconds: 60 },
   },
   boss: {
@@ -196,20 +236,25 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      * 태생 50%에 제어 한 번마다 6%. 하루 두 판을 제어 하나로 잠가 끝내지 못하게 하되, 첫 몇
      * 번의 잠금은 확실히 가져가게 하는 선이다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 6, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     percentHpResistance: 30,
+    /*
+     * **처음 25%에서 30초에 걸쳐 100%로.** 월드 폭주(LV60)의 첫 몇 초에 편성이 서기도 전에 쓰러지는 일을
+     * 막되, 30초 뒤의 세기는 예전 그대로라 오래 버티는 판의 난이도는 바뀌지 않는다(응태 결정).
+     */
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 },
   },
   endless: {
     // 판 안에서 눕지 않는다(`SkirmishState.boss`의 불사 계약). 체력은 세기가 아니라 점수를 재는
     // 자라 이 표가 곱하지 않는다.
-    count: 1, bodyScale: 1.45,
+    count: 1, bodyScale: 1.9,
     hpMultiplier: 1, attackMultiplier: 2.6,
     ttkSeconds: null, remainingHp: [0.05, 0.45],
     /*
      * 태생 50%에 제어 한 번마다 8% — 일곱 번이면 상한이다. 제어 하나로 최종 관문을 통째로
      * 지우지 못하게 하면서도 제어 개체를 쓸모없게 만들지 않는다.
      */
-    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100 },
+    tenacity: { basePercent: 50, perControlPercent: 8, maxPercent: 100, controlIgnoreAtOrBelowSeconds: 0.05 },
     /*
      * **바닥부터 높다.** 50이던 때는 온전한 몸으로 선 폰토스가 받는 피해의 절반을 그대로
      * 맞았다 — 체력이 무한인 자리라 사실상 "절반만 아픈 벽"이었다. 곡선(0.75)은 1보다 작아
@@ -217,23 +262,44 @@ export const ENCOUNTER_ROLE: Record<EncounterRole, EncounterRoleSpec> = {
      */
     damageReduction: { basePercent: 70, maxPercent: 99, maxAtHpPercent: 0, curve: 0.75, ignoreAtOrBelow: 10 },
     percentHpResistance: 30,
+    /*
+     * 보스와 같은 램프에 **주문력 복리 +2%/초**가 얹힌다. 폰토스의 패시브(「심해의 압력」)에 있던 시간 누적을
+     * 자리로 옮긴 것이다 — 복리는 0초부터 세므로 30초 뒤의 주문력은 예전과 완전히 같고 앞 30초만 약하다.
+     */
+    ramp: { startPercent: 25, seconds: 30, lateGrowthPercentPerSecond: 2 },
   },
 };
 
 /**
  * **적 전용 레벨당 성장률(%).**
  *
- * 플레이어는 등급이 성장률을 가르지만(R 1.8 · SR 2.0 · SSR 2.2) **적에게 희귀도는 가챠
+ * 플레이어는 등급이 성장률을 가르지만(R 2.2 · SR 2.4 · SSR 2.6) **적에게 희귀도는 가챠
  * 개념이라 성장률을 가를 이유가 없다.** 한 값으로 두면 같은 `LV.n`이 어느 콘텐츠에서나 같은
- * 세기이고, 플레이어 곡선과 같은 자리(2.0)에 두었으므로 **적 레벨과 내 레벨을 나란히 읽을 수
+ * 세기이고, 플레이어 곡선의 R(2.2)과 같은 자리에 두었다. 아군이 SR 2.4·SSR 2.6이라 같은 레벨이면 아군이 조금 앞서고
+ * (LV20 +2.7%), 그 덕에 레벨이 모자란 신규 파티가 1장에서 막히지 않는다. **적 레벨과 내 레벨을 나란히 읽을 수
  * 있다** — "내가 18인데 저건 21이네"가 그대로 뜻이 된다.
  */
-export const ENEMY_LEVEL_GROWTH_PERCENT = 2;
+export const ENEMY_LEVEL_GROWTH_PERCENT = 2.2;
 
 /** 레벨 1을 기본치로 두고 레벨당 정해진 비율로 자란 배수다. 플레이어와 같은 선형 누적이다. */
 export function enemyLevelMultiplier(level: number): number {
   if (!Number.isInteger(level) || level < 1) throw new RangeError("적 레벨은 1 이상의 정수여야 합니다.");
   return 1 + (level - 1) * ENEMY_LEVEL_GROWTH_PERCENT / 100;
+}
+
+/**
+ * 태생 층이 더 높은 적이 **테러조 기준 레벨과 같은 세기가 되는 레벨.** 층이 올린 오각형 배수
+ * (`statFactor`)만큼 레벨 배수를 덜어 낸다. 사다리(`STORY_RECOMMENDED_LEVELS`)는 기준 개체
+ * 하나의 눈금이고, 층이 높은 개체는 같은 자리에서 더 낮은 레벨로 선다.
+ */
+export function equivalentEnemyLevel(referenceLevel: number, statFactor: number): number {
+  const target = enemyLevelMultiplier(referenceLevel) / statFactor;
+  return Math.max(1, Math.round((target - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1));
+}
+
+/** `equivalentEnemyLevel`의 거꾸로 — 그 개체의 레벨을 **기준(테러조) 눈금**으로 되돌린다. 사다리 단조 검수가 쓴다. */
+export function referenceEnemyLevel(level: number, statFactor: number): number {
+  return (enemyLevelMultiplier(level) * statFactor - 1) * 100 / ENEMY_LEVEL_GROWTH_PERCENT + 1;
 }
 
 /**
@@ -243,15 +309,26 @@ export function enemyLevelMultiplier(level: number): number {
  * 같은 나머지는 그 개체의 정의가 그대로 갖는다. 유형 배수도 **체력과 공격 두 축에만** 걸어
  * 어디서 무엇이 얹혔는지 읽히게 둔다.
  */
-export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole): Stats {
+export function applyEncounterScaling(base: Stats, level: number, role: EncounterRole, countOnField: number = ENCOUNTER_ROLE[role].count, birthFactor: number = 1): Stats {
   const spec = ENCOUNTER_ROLE[role];
-  const growth = enemyLevelMultiplier(level);
+  const growth = enemyLevelMultiplier(level) * birthFactor;
   const result = { ...base };
   for (const key of GROWTH_STAT_KEYS) result[key] = Math.round(base[key] * growth);
-  result.hp = Math.round(result.hp * spec.hpMultiplier);
+  result.hp = Math.round(result.hp * encounterHpShare(role, countOnField));
   result.atk = Math.round(result.atk * spec.attackMultiplier);
   result.ap = Math.round(result.ap * spec.attackMultiplier);
   return result;
+}
+
+/**
+ * **정예가 둘 이상 서는 관문의 체력 몫.** 정예의 체력 배수는 "셋이 나눠 내던 몫을 혼자 대신한다"는
+ * 뜻이라, 둘이 서면 그 몫을 **나눠 가진다**(둘이면 각각 절반). 새 유형을 만들지 않고 같은 정예 자리에
+ * 머릿수만 달리 얹는 계산이며, 하나일 때는 표 그대로다. 정예 아닌 유형은 머릿수와 무관하다.
+ */
+export function encounterHpShare(role: EncounterRole, countOnField: number): number {
+  const spec = ENCOUNTER_ROLE[role];
+  if (role !== "elite") return spec.hpMultiplier;
+  return spec.hpMultiplier / Math.max(1, countOnField);
 }
 
 /**

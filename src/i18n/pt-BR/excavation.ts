@@ -10,6 +10,7 @@ export const EXCAVATION_PT_BR = {
   "excavation.harvestBusy": "Colhendo…",
   "excavation.harvest": "Colher",
   "excavation.rewardTitle": "Recompensas da escavação",
+  "excavation.rewardTitleFull": "Bônus de colheita completa +10%",
   "excavation.harvestFailed": "A colheita falhou. Tente de novo com a mesma solicitação.",
   "excavation.ad.unavailable": "Mesmo sem anúncios, a colheita normal continua disponível.",
   "excavation.ad.cancelled": "O anúncio foi cancelado ou não está pronto. Use a colheita normal.",

@@ -58,7 +58,8 @@ const ENCOUNTER_HORDE_COUNT = 5;
  * 일반이 LV.22라, 한 층을 올라가는 동안 수가 뒤로 갔다. 층이 곧 레벨이고 그 노드가 얼마나
  * 무거운지는 유형 배수(`ENCOUNTER_ROLE`)가 말한다.
  */
-export function expeditionEnemyLevel(_type: ExpeditionNodeType, floor: number): number {
+export function expeditionEnemyLevel(type: ExpeditionNodeType, floor: number): number {
+  if (type === "boss" && floor === 20) return 20;
   return expeditionRecommendedLevel(floor);
 }
 

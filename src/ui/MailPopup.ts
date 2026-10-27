@@ -9,31 +9,30 @@ import { MailManager } from "../managers/MailManager";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
+import { attachDragScroll } from "./dragScroll";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
 import { POPUP_TITLE_SIZE } from "./PopupLayer";
-import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { COLOR, textStyle } from "./theme";
 import { addSectionTitle } from "./SectionTitle";
 import { fitTextToBox } from "./textFit";
 import { shapeClipMask } from "./popupArt";
 import { openCurrencyGuide, openItemGuide } from "./currencyGuideEntry";
 import { openRewardPopup } from "./RewardPopup";
+import { rewardDtoTexture } from "./rewardDtoIcon";
 import { setDebugMailPopup } from "../debug";
 import { pressIn, pressOut } from "./pressFeedback";
 import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
+import { withBusy } from "./BusyOverlay";
 
 const TABS: readonly MailTab[] = ["reward", "notice"];
 
-/** 첨부물 한 칸의 그림 키. 재화는 지갑 아이콘, 아이템은 제 정의의 그림이다. */
-function mailRewardTexture(reward: MailRewardDto): string {
-  if (reward.kind === "currency") return CURRENCY_ICON_BY_WALLET[reward.currency];
-  const icon = findItem(reward.itemId)?.icon;
-  return icon?.kind === "asset" ? icon.key : icon?.kind === "currency" ? CURRENCY_ICON_BY_WALLET[icon.key] : "";
-}
+/** 첨부물 한 칸의 그림 키 — 출석과 같은 한 규칙이다. */
+const mailRewardTexture = rewardDtoTexture;
 
 /**
  * 우편함 — **우편**(받을 것이 든 봉투)과 **안내**(읽을 글)를 두 탭으로 가른다.
@@ -75,7 +74,9 @@ export class MailPopup {
 
   private select(tab: MailTab): void {
     if (tab === this.tab) return;
+    const from = TABS.indexOf(this.tab);
     this.tab = tab; this.scroll = 0; this.render();
+    if (this.content) slideTabPage(this.scene, [this.content], from, TABS.indexOf(tab));
   }
 
   private render(): void {
@@ -112,12 +113,9 @@ export class MailPopup {
       const center = matrix.transformPoint(0, (viewport.top + viewport.bottom) / 2);
       this.maskShape = this.scene.add.rectangle(center.x, center.y, viewport.width * body.scaleX, viewHeight * body.scaleY, 0xffffff).setVisible(false);
       this.mask = this.maskShape.createGeometryMask();
-      const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
-      let lastY = 0;
-      drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
-      drag.on("drag", (pointer: Phaser.Input.Pointer) => { this.moveScroll(pointer.y - lastY); lastY = pointer.y; });
-      drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.moveScroll(-dy * 0.65));
-      body.add(drag); body.sendToBack(drag);
+      const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setVisible(false);
+      attachDragScroll(this.scene, { owner: drag, root: body, bounds: () => drag.getBounds(), onDelta: (dy) => this.moveScroll(dy) });
+      body.add(drag);
     }
     if (this.mask) content.setMask(this.mask);
     content.setData("minScroll", minScroll);
@@ -334,6 +332,28 @@ export class MailPopup {
       : new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });
     if ((this.tab === "reward" ? claimable : unreadNotices).length === 0) action.setEnabled(false);
     footer.add(action);
+    this.addDeleteChip(footer);
+  }
+
+  /** 읽은 우편 삭제 — 작은 붉은 휴지통. 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
+  private addDeleteChip(footer: Phaser.GameObjects.Container): void {
+    if (!this.result) return;
+    const { deleteChip: chip } = MAIL_POPUP_LAYOUT.footer;
+    const ids = this.manager.deletableIds(this.result, this.tab);
+    const chipBox = this.scene.add.container(chip.x, chip.y);
+    chipBox.add(drawGlyph(this.scene, "trash", 0, 0, chip.glyph, COLOR.danger, ids.length ? 1 : 0.35));
+    const hit = this.scene.add.rectangle(0, 0, chip.hit, chip.hit, 0xffffff, 0);
+    chipBox.add(hit);
+    if (ids.length) {
+      hit.setInteractive({ useHandCursor: true });
+      hit.on("pointerdown", () => pressIn(chipBox));
+      hit.on("pointerout", () => pressOut(chipBox, "normal", { pop: false }));
+      hit.on("pointerup", () => {
+        pressOut(chipBox, "normal", { pop: true });
+        this.popups.confirm({ title: t("mail.delete.title"), message: t("mail.delete.message", { count: ids.length }), confirmLabel: t("mail.delete.confirm"), destructive: true }, () => void this.deleteRead(ids));
+      });
+    }
+    footer.add(chipBox);
   }
 
   private expiryLabel(mail: MailDto, nowMs: number): string {
@@ -350,9 +370,10 @@ export class MailPopup {
   /** 받은 것은 임무·발굴과 같은 영수증으로 알린다 — 지갑 숫자만 슬쩍 바뀌면 무엇이 들어왔는지 모른다. */
   private async claim(ids: string[]): Promise<void> {
     if (!ids.length) return;
-    const result = await this.manager.claim(ids);
-    const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount })).filter(({ icon, amount }) => icon && amount > 0);
+    const result = await withBusy(this.scene, this.manager.claim(ids));
+    const items = result.granted.map((reward) => ({ icon: mailRewardTexture(reward), amount: reward.amount, ...(reward.kind === "item" && reward.expiresInDays !== undefined ? { expiresInDays: reward.expiresInDays } : {}) })).filter(({ icon, amount }) => icon && amount > 0);
     if (items.length) openRewardPopup(this.scene, this.popups, { title: t("mail.rewardTitle"), items });
   }
+  private async deleteRead(ids: string[]): Promise<void> { await withBusy(this.scene, this.manager.delete(ids)); }
   private async readAll(ids: string[]): Promise<void> { if (!ids.length) return; await this.manager.readAll(ids); }
 }

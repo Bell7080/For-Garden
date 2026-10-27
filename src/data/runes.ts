@@ -1,6 +1,6 @@
-import { generateRune, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
+import { generateRune, runeBatchEnhancementTargets, runeEnhancementAttempts, runePartLabel, type RuneInstance, type RunePart, type RuneRarity, type RuneStatKey } from "../core/runes";
 import { grantRuneTrait } from "../core/runeTraits";
-import { RUNE_TRAIT_IDS } from "./runeTraits";
+import { LEGENDARY_EXCLUSIVE_SHARE, RUNE_TRAIT_POOL } from "./runeTraits";
 import { t } from "../i18n";
 
 /** 옵션 수치 단위. percent는 기존 수치에 곱하고 percentagePoint는 게이지/확률에 그대로 더한다. */
@@ -25,12 +25,19 @@ export const RUNE_STAT_RULES: Readonly<Record<RuneStatKey, { base: number; enhan
   energyGain: { base: 5, enhancement: 1, unit: "percent" },
 };
 
-/** 희귀도와 누적 시도 번호별 골드 비용표다. 운영 수치는 이 표에서만 조정한다. */
+/**
+ * 희귀도와 누적 시도 번호별 골드 비용표다. 운영 수치는 이 표에서만 조정한다.
+ *
+ * 세공은 골드의 주 소모처다. 현상수배 5급이 스테미나 10에 26,400을 주므로 하루 자연 회복만
+ * 돌아도 70만 넘게 쌓여, 예전 표(전설 끝까지 33,000)로는 1M~4M가 쓸 곳 없이 남았다. 등급이
+ * 높을수록 크게 올려 전설 한 개를 끝까지 세공하면 54만(5급 수익 약 0.7일)이 들게 했다.
+ * 총합: 고급 13,500 · 희귀 40,500 · 영웅 171,000 · 전설 540,000.
+ */
 export const RUNE_ENHANCEMENT_GOLD_COSTS: Readonly<Record<RuneRarity, readonly number[]>> = {
-  uncommon: [100, 150, 200, 250, 300, 350],
-  rare: [200, 250, 300, 350, 400, 450, 500, 550, 600],
-  epic: [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500],
-  legendary: [800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600],
+  uncommon: [1_000, 1_500, 2_000, 2_500, 3_000, 3_500],
+  rare: [2_500, 3_000, 3_500, 4_000, 4_500, 5_000, 5_500, 6_000, 6_500],
+  epic: [6_000, 7_500, 9_000, 10_500, 12_000, 13_500, 15_000, 16_500, 18_000, 19_500, 21_000, 22_500],
+  legendary: [15_000, 18_000, 21_000, 24_000, 27_000, 30_000, 33_000, 36_000, 39_000, 42_000, 45_000, 48_000, 51_000, 54_000, 57_000],
 };
 
 /** 다음 시도의 누적 인덱스로 골드 비용을 조회하며 완료 후 요청은 거부한다. */
@@ -39,6 +46,15 @@ export function runeEnhancementGoldCost(rarity: RuneRarity, completedAttempts: n
   const cost = RUNE_ENHANCEMENT_GOLD_COSTS[rarity][completedAttempts];
   if (cost === undefined) throw new RangeError("모든 강화를 마친 룬에는 다음 비용이 없습니다.");
   return cost;
+}
+
+/** 남은 세공을 전부 돌릴 때 드는 골드. 시도마다 값이 오르므로 지금 횟수부터 끝까지 합산한다. */
+export function runeBatchEnhancementGoldCost(rune: RuneInstance): number {
+  const remaining = runeBatchEnhancementTargets(rune).length;
+  const done = runeEnhancementAttempts(rune);
+  let total = 0;
+  for (let step = 0; step < remaining; step += 1) total += runeEnhancementGoldCost(rune.rarity, done + step);
+  return total;
 }
 
 /**
@@ -84,7 +100,7 @@ export function backfillStarterRuneTraits(runes: readonly RuneInstance[], random
   return runes.map((rune) => {
     const index = STARTER_RUNE_TRAITED.findIndex((_, slot) => rune.instanceId === `starter-rune-${slot + 1}`);
     if (index < 0 || !STARTER_RUNE_TRAITED[index] || rune.trait !== undefined) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 
@@ -115,22 +131,23 @@ export function createStarterRunes(random: () => number): RuneInstance[] {
       random,
     });
     if (!STARTER_RUNE_TRAITED[index]) return rune;
-    return { ...rune, trait: grantRuneTrait({ traitIds: RUNE_TRAIT_IDS, minimumGrade: "uncommon", random }) };
+    return { ...rune, trait: grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: "uncommon", random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE }) };
   });
 }
 
 
-/** 서버와 가격 표시가 함께 쓰는 등급·완료 세공 횟수별 룬 판매가의 유일한 원천이다. */
-export const RUNE_SELL_VALUES: Readonly<Record<RuneRarity, { base: number; perEnhancement: number }>> = {
-  uncommon: { base: 100, perEnhancement: 20 },
-  rare: { base: 250, perEnhancement: 40 },
-  epic: { base: 600, perEnhancement: 80 },
-  legendary: { base: 1500, perEnhancement: 160 },
+/**
+ * 룬을 팔면 받는 원석 — **등급만** 정한다(응태 결정). 세공·각인 여부는 값에 넣지 않는다.
+ * 골드가 남아도는 계정에 골드를 더 얹지 않으려고 판매 값을 원석으로 바꿨다.
+ */
+export const RUNE_SELL_RAW_STONE: Readonly<Record<RuneRarity, number>> = {
+  uncommon: 20,
+  rare: 50,
+  epic: 150,
+  legendary: 400,
 };
 
 /** 서버가 확정 지급액을 산출하며 UI는 이 함수를 복제하지 않고 응답의 값을 표시한다. */
-export function runeSellValue(rune: RuneInstance): number {
-  const rule = RUNE_SELL_VALUES[rune.rarity];
-  const attempts = Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0);
-  return rule.base + attempts * rule.perEnhancement;
+export function runeSellValue(rune: Pick<RuneInstance, "rarity">): number {
+  return RUNE_SELL_RAW_STONE[rune.rarity];
 }

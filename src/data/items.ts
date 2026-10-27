@@ -53,7 +53,7 @@ export const ITEMS = [
   { id: "rune", name: "룬", description: "렐릭의 하트 젬 슬롯에 장착하는 개별 룬입니다.", category: "rune", icon: { kind: "glyph", key: "heart" }, maxStack: 1, useEffect: { kind: "none" } },
   { id: "fossil", name: "화석", description: "연구소의 캐릭터 획득 연구에 사용합니다.", category: "currency", icon: { kind: "currency", key: "fossil" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "amber", name: "호박석", description: "희귀 연구에 사용하는 재화입니다.", category: "currency", icon: { kind: "currency", key: "amber" }, maxStack: 999_999, useEffect: { kind: "none" } },
-  { id: "gems", name: "보석", description: "도시 전역에서 통용되는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
+  { id: "gems", name: "젬", description: "도시 전역에서 통용되는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gems" }, maxStack: 9_999_999, useEffect: { kind: "none" } },
   { id: "gold", name: "골드", description: "룬 세공과 성장에 사용하는 재화입니다.", category: "currency", icon: { kind: "currency", key: "gold" }, maxStack: 999_999_999, useEffect: { kind: "none" } },
   { id: "stamina", name: "스테미나", description: "탐사에 필요한 행동력입니다.", category: "currency", icon: { kind: "currency", key: "stamina" }, maxStack: 9_999, useEffect: { kind: "none" } },
   { id: "dnaFragments", name: "DNA 마일리지", description: "마일리지 상점에서 쓰는 교환 재화입니다.", category: "currency", icon: { kind: "currency", key: "dnaFragments" }, maxStack: 99_999, useEffect: { kind: "none" } },
@@ -73,10 +73,15 @@ export const ITEMS = [
   // 소탕 한 번에 한 장. 멤버십이 없을 때만 들고, 던전 입구에서 광고를 보면 다섯 장씩 채워진다.
   // 고고학 지층 탐사 한 번. 시간이 채우는 횟수와 같은 몫이라 그림도 탐사 횟수 칸의 입장권 그대로다 —
   // 그 칸의 그림을 누르면 이 안내창이 열린다(`guideForIcon`).
-  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 데 쓰는 권입니다. 가진 수 그대로가 가진 횟수입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "strata-ticket", name: "발굴권", description: "고고학 유적을 여는 횟수입니다. 3시간마다 하나씩 3개까지 차고, 상점·보상으로 받은 것은 3개를 넘겨 쌓입니다.", category: "material", icon: { kind: "asset", key: "item-strata-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 결투장 도전 한 번. 하루 다섯 장이 채워지는 몫과 같은 것이라 결투장의 도전권 줄이 이 그림을 쓴다 —
   // 그 줄의 그림을 누르면 이 안내창이 열린다. 전용 원화가 오기 전까지 입장권 그림을 빌려 쓴다.
   { id: "duel-ticket", name: "결투 도전권", description: "결투장에서 상대에게 도전할 때 한 장 씁니다. 매일 다섯 장이 채워집니다.", category: "material", icon: { kind: "asset", key: "item-duel-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 한계 돌파의 **만능 파편** — 등급마다 하나다. 그 개체의 파편이 모자랄 때만 같은 등급 렐릭의 돌파에서 모자란
+  // 몫을 채운다(`breakthroughFragmentSpend`). 그림은 파편 액자 그대로이고 얼굴 자리에 누구의 것도 아닌 실루엣이 선다.
+  { id: "universal-fragment-r", name: "만능 R 파편", description: "어느 R 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-sr", name: "만능 SR 파편", description: "어느 SR 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-sr" }, maxStack: 999, useEffect: { kind: "none" } },
+  { id: "universal-fragment-ssr", name: "만능 SSR 파편", description: "어느 SSR 렐릭의 한계 돌파에나 쓸 수 있는 파편입니다. 그 렐릭의 파편이 모자랄 때만 모자란 만큼 소모됩니다.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-ssr" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "소탕권", description: "이미 이긴 던전 단계를 전투 없이 한 번 소탕합니다.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.

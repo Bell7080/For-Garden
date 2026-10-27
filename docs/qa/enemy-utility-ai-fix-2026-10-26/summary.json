@@ -1,0 +1,113 @@
+{
+  "checkedOn": "2026-10-26",
+  "beforeFixRevision": "6fb8c2c1b9fc501d34f8a8d72b9ab2918b33f3d6",
+  "scope": "Only non-attacking AI ultimate dispatch; native CC/stat/formation/reward data and taunt-heal contract unchanged. Damaging ultimates retain the old attack route. Normal and fear AI paths use the same helper.",
+  "probe": {
+    "automatic": {
+      "manual": false,
+      "energy": 0,
+      "shield": 497,
+      "enemyCooldown": 2.027027027027027,
+      "playerTauntedBy": "enemy-0",
+      "events": [
+        {
+          "kind": "shieldGranted",
+          "fighterId": "enemy-0",
+          "providerId": "enemy-0",
+          "amount": 497,
+          "remaining": 497,
+          "effect": {
+            "tag": "shieldGain",
+            "intensity": 5.249999999999999
+          }
+        },
+        {
+          "kind": "combatEffect",
+          "fighterId": "player-0",
+          "effect": {
+            "tag": "shieldHit",
+            "intensity": 1
+          }
+        }
+      ]
+    },
+    "directSharedCast": {
+      "manual": true,
+      "energy": 0,
+      "shield": 497,
+      "enemyCooldown": 2.027027027027027,
+      "playerTauntedBy": "enemy-0",
+      "events": [
+        {
+          "kind": "shieldGranted",
+          "fighterId": "enemy-0",
+          "providerId": "enemy-0",
+          "amount": 497,
+          "remaining": 497,
+          "effect": {
+            "tag": "shieldGain",
+            "intensity": 5.249999999999999
+          }
+        },
+        {
+          "kind": "combatEffect",
+          "fighterId": "player-0",
+          "effect": {
+            "tag": "shieldHit",
+            "intensity": 1
+          }
+        }
+      ]
+    }
+  },
+  "regressionTests": {
+    "before": {
+      "failed": 7,
+      "passed": 2
+    },
+    "after": {
+      "passed": 9
+    }
+  },
+  "representativeB121": {
+    "seed": "1729",
+    "level": 60,
+    "breakthrough": 4,
+    "equipment": "ceiling",
+    "party": [
+      "deina",
+      "torika",
+      "ella"
+    ],
+    "amoUltimateCastsBefore": 0,
+    "amoUltimateCastsAfter": 3,
+    "amoAttackFramesBefore": 4,
+    "amoAttackFramesAfter": 14,
+    "amoMaxAttackGapBefore": 70.42,
+    "amoMaxAttackGapAfter": 9.26,
+    "beforeElapsed": 85,
+    "afterElapsed": 79,
+    "beforePhase": "defeat",
+    "afterPhase": "defeat"
+  },
+  "sourceSha256": {
+    "src/core/skirmish.ts": "7eb97d7355be962357984f9acbf06e60869fcf76e5fc532524449aff5a67d0c0",
+    "src/data/relics.ts": "5f0ef8ce088a28e81a7d6dac9e82523c04f56814d3fdc98a16d9c93e1a14ed61",
+    "tests/unit/enemyUtilityUltimate.test.ts": "778d64df22184ce9cf7b0f8b1f3ed19481f899c7bf527294e4d5a179007e166c",
+    "api/game.js": "0e56d9be2092fb574ebe802e05e429ec004e1e1c05230a4cab240054a028b306"
+  },
+  "validation": {
+    "typecheck": "passed",
+    "unitFilesPassed": 404,
+    "unitTestsPassed": 4806,
+    "unitTestsSkipped": 1,
+    "unitTestsFailed": 0,
+    "clientBuild": "passed",
+    "serverBuild": "passed",
+    "releaseFixtures": [
+      "qa",
+      "test",
+      "production"
+    ]
+  }
+}

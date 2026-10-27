@@ -7,13 +7,20 @@ import { setDebugPremiumSection, setDebugScene } from "../debug";
 import { PREMIUM_TABS, type PremiumCategory } from "../data/shopCatalog";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { BottomNav } from "../ui/BottomNav";
+import { notificationManager } from "../managers/NotificationManager";
+import { TabStripEdgeHint } from "../ui/TabStripEdgeHint";
+import { hiddenDotSides, nearestHiddenDot, tabStripMinScroll, type TabStripSpec } from "../core/tabStrip";
+import { attachTabStripDrag } from "../ui/tabStripDrag";
+import { bindNotificationDot } from "../ui/NotificationDot";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addFrameAmount, addFramedIcon, guideForIcon } from "../ui/itemFrame";
 import { chipPoints, drawLayer, drawShapeOutline, drawVignette, slantedRect } from "../ui/holo";
 import { paintShowcaseCard, SHOWCASE_TIER_TONE, showcaseCardShape } from "../ui/showcaseCardChrome";
-import { addAdRewardCard } from "../ui/AdRewardCard";
-import { addStatusSticker, forgetStatusStickers } from "../ui/soldOutStamp";
+import { purchaseThemeOf } from "../core/purchaseTheme";
+import { PURCHASE_THEME_STYLE } from "../ui/purchaseThemeStyle";
+import { AD_CARD_BEVEL, addAdCountLabel, addAdRewardCard } from "../ui/AdRewardCard";
+import { addSoldOutStamp, addStatusSticker, forgetSoldOutStamp, forgetStatusStickers } from "../ui/soldOutStamp";
 import { premiumStatusOf, type PremiumStatus } from "../ui/premiumStatus";
 import { remainingDetail } from "../ui/itemExpiry";
 import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
@@ -29,12 +36,12 @@ import { session } from "../state/session";
 import { findAdRewardSlot } from "../data/adRewards";
 import { productActionModel } from "../core/productAcquisition";
 import { addPriceBar } from "../ui/priceTag";
-import { squeezeTextToWidth } from "../ui/textFit";
+import { fitTextToBox, squeezeTextToWidth } from "../ui/textFit";
 import { premiumCategoryOf, premiumFirstBonusGems, premiumGrantTiles, premiumModel, productsForPremiumCategory } from "../ui/premiumModel";
 import {
   PREMIUM_CARD, PREMIUM_TAB_ROW, PREMIUM_TITLE, PREMIUM_WIDE,
   premiumCardHeight, premiumCardSpot, premiumCardWidth, premiumGridContentHeight, premiumGridViewport, premiumListKind,
-  premiumTabSpot, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
+  PREMIUM_SWIPE, premiumTabScrollFor, premiumTabSpot, premiumTabStep, premiumTabStrip, premiumTitleLeft, premiumTitleY, premiumWideFrameXs, type PremiumListKind,
 } from "../ui/premiumLayout";
 import { formatCurrency } from "../core/formatCurrency";
 import { formatStorePrice } from "../core/storePrice";
@@ -43,6 +50,12 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addClippedHit } from "../ui/clippedHit";
+import { UI_ICON } from "../ui/icons";
+import { addRewardExpiryTag } from "../ui/rewardExpiry";
+import { wrapDialogueText } from "../core/dialogueTextWrap";
+import { settingsManager } from "../managers/SettingsManager";
+import { withBusy } from "../ui/BusyOverlay";
+import { showContentIntro } from "../ui/contentIntro";
 
 /**
  * 현금 결제 카탈로그를 인게임 재화 상점과 분리해 소유하는 독립 프리미엄 씬이다.
@@ -56,6 +69,16 @@ export class PremiumScene extends Phaser.Scene {
   /** 흐르는 격자. 스크롤은 이 컨테이너의 y 하나가 갖는다. */
   private content?: Phaser.GameObjects.Container;
   private tabRow?: Phaser.GameObjects.Container;
+  private tabDotDisposers: Array<() => void> = [];
+  private tabMask?: Phaser.GameObjects.Graphics;
+  /** 창 밖에 가려진 라벨에 받을 것이 남았을 때 줄 끝이 붉게 숨 쉰다. */
+  private tabEdgeHint?: TabStripEdgeHint;
+  private tabDotted: boolean[] = [];
+  private tabDragging: () => boolean = () => false;
+  /** 입력 한 번이 가로 쓸기인지 세로 스크롤인지. 14px 안에서 정한다. */
+  private pointerAxis: "none" | "x" | "y" = "none";
+  private pointerStartX = 0;
+  private swipeX = 0;
   private viewportMask?: Phaser.GameObjects.Graphics;
   /** 서버 지갑 스냅샷을 적용한 뒤 현재 화면의 잔액 표시를 즉시 갱신한다. */
   private topBar?: TopBar;
@@ -109,10 +132,13 @@ export class PremiumScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.removeScrollInput();
       this.viewportMask?.destroy(); this.viewportMask = undefined;
+      this.tabMask?.destroy(); this.tabMask = undefined;
+      this.tabEdgeHint?.destroy(); this.tabEdgeHint = undefined;
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "premium");
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */
@@ -139,14 +165,14 @@ export class PremiumScene extends Phaser.Scene {
 
   /** 서버가 계산한 노출·제한 상태에서 유료 storefront만 골라 다시 그린다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts("premium");
+    const response = await withBusy(this, gameApi.getProducts("premium"));
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
     this.products = premiumModel(response.products);
     this.serverOffsetMs = Date.parse(response.serverTime) - Date.now();
     // 상품을 산 뒤에는 지갑이 바뀌었으므로 상단 줄도 함께 맞춘다.
-    session.wallet = { ...session.wallet, ...(await gameApi.getPlayerState()).wallet };
+    session.wallet = { ...session.wallet, ...(await withBusy(this, gameApi.getPlayerState())).wallet };
     if (!this.scene.isActive()) return;
     this.topBar?.refresh();
     this.renderProducts();
@@ -158,12 +184,18 @@ export class PremiumScene extends Phaser.Scene {
     this.limitedClocks = [];
     const visible = productsForPremiumCategory(this.products, this.selectedCategory);
     const kind = premiumListKind(this.selectedCategory);
-    // 광고 칸은 젬 탭의 맨 위(1번), 일간 탭에서는 「일일 무료 보급」 바로 아래에 끼어든다.
-    const freeDailyIndex = visible.findIndex((product) => product.id === DAILY_FREE_PRODUCT_ID);
-    const adAt = this.selectedCategory === "gem" ? 0 : this.selectedCategory === "daily" && freeDailyIndex >= 0 ? freeDailyIndex + 1 : -1;
-    visible.forEach((product, index) => this.addProduct(product, adAt >= 0 && index >= adAt ? index + 1 : index, kind));
-    const extra = adAt >= 0 ? 1 : 0;
-    if (adAt >= 0) { if (this.selectedCategory === "gem") this.addGemAdCard(adAt, kind); else this.addDailyAdCard(adAt, kind); }
+    // 광고 칸은 젬 탭의 맨 위(1번)다. 일간 탭은 별도 광고 칸이 없고, 1번 「일일 무료 보급」을 받으면 같은 자리가 광고 칸으로 바뀐다.
+    const gem = this.selectedCategory === "gem";
+    const ordered = this.selectedCategory === "daily"
+      ? [...visible].sort((a, b) => Number(b.id === DAILY_FREE_PRODUCT_ID) - Number(a.id === DAILY_FREE_PRODUCT_ID))
+      : visible;
+    const offset = gem ? 1 : 0;
+    ordered.forEach((product, index) => {
+      if (product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable) this.addDailyAdCard(index, kind);
+      else this.addProduct(product, index + offset, kind);
+    });
+    if (gem) this.addGemAdCard(0, kind);
+    const extra = offset;
     const view = premiumGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - premiumGridContentHeight(visible.length + extra, kind));
     this.scrollTo(this.content?.y ?? 0);
@@ -181,13 +213,14 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
+    const status = premiumStatusOf(product);
     const subscribed = product.subscription !== undefined;
     // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
-    const soldOut = !product.purchasable && !subscribed;
+    const soldOut = status !== undefined && !subscribed;
     if (kind === "grid") {
-      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : COLOR.accent, dim: soldOut, railX: -width / 2 + 34 });
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
     } else {
-      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product) });
+      paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + PREMIUM_WIDE.pad, tag: premiumCardTag(product), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     }
     this.addCardHit(card, width, height, () => {
       if (product.acquisition.kind === "free") { if (product.purchasable) void this.claimFree(product); else this.notice(t("shop.premium.freeClaimed")); return; }
@@ -197,10 +230,9 @@ export class PremiumScene extends Phaser.Scene {
     });
     if (kind === "wide") this.paintWideCard(card, product, width, action); else this.paintGridCard(card, product, width, action);
     if (soldOut) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA);
-    if (subscribed) this.addActivePulse(card, width, height);
+    if (subscribed) this.addActivePulse(card, width, height, premiumCardTone(product));
     this.content?.add(card);
     // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
-    const status = premiumStatusOf(product);
     const stickerKey = `${product.id}:${status ?? ""}`;
     if (status && this.content) addStatusSticker(this, this.content, x, y + (kind === "grid" ? -70 : -10), t(`shop.premium.sticker.${status}`), STICKER_TONE[status], stickerKey);
     else forgetStatusStickers(product.id);
@@ -233,6 +265,7 @@ export class PremiumScene extends Phaser.Scene {
   private addGrantFrame(card: Phaser.GameObjects.Container, x: number, y: number, size: number, icon: string, amount: number, options: { color?: number } = {}): Phaser.GameObjects.Container {
     const frame = addFramedIcon(this, card, x, y, size, icon, { plain: true, color: options.color });
     frame.add(addFrameAmount(this, size, formatCurrency(amount)));
+    addRewardExpiryTag(this, frame, size, { icon, amount });
     const openGuide = guideForIcon(this, icon);
     if (openGuide) {
       const hit = addClippedHit(this, frame, 0, 0, size, size, premiumGridViewport);
@@ -257,6 +290,7 @@ export class PremiumScene extends Phaser.Scene {
     const name = this.add.text(left, S.nameY, product.name, textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
     card.add(squeezeTextToWidth(name, right - left, 0.7));
     const xs = premiumWideFrameXs(tiles.length);
+    if (product.passBenefit?.adFree) this.addMembershipBenefits(card, width);
     tiles.forEach((tile, i) => {
       const frame = this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount);
       const tagText = tile.daily ? t("shop.premium.daily") : tile.badge ? t(`shop.premium.badge.${tile.badge}`) : undefined;
@@ -283,7 +317,14 @@ export class PremiumScene extends Phaser.Scene {
       const clock = this.add.text(left, S.price.y, this.limitedText(product.visibleUntil), textStyle({ role: "emphasis", size: W.noteSize + 2, color: COLOR.dangerText, wrap: -sideWidth - left })).setOrigin(0, 0.5).setStroke("#05070a", 3);
       card.add(clock);
       this.limitedClocks.push({ text: clock, until: product.visibleUntil });
-    } else if (foot) card.add(this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim, wrap: -sideWidth - left })).setOrigin(0, 0.5));
+    } else if (this.passPerkText(product) && !product.passBenefit?.adFree) {
+      const note = this.add.text(left, S.price.y - 50, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      card.add(fitTextToBox(note, { width: -sideWidth - left, height: 54 }, { size: W.noteSize, minSize: 16 }));
+      this.addPassPerk(card, this.passPerkText(product)!, left, S.price.y + 8, -sideWidth - left);
+    } else if (foot) {
+      const note = this.add.text(left, S.price.y, foot, textStyle({ role: "body", size: W.noteSize, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      card.add(fitTextToBox(note, { width: -sideWidth - left, height: 54 }, { size: W.noteSize, minSize: 16 }));
+    }
     const subscribed = product.subscription !== undefined;
     const remainingText = subscribed ? t(product.subscription?.dailyBonusClaimed ? "shop.premium.dailyClaimed" : "shop.premium.claimDaily")
       : product.acquisition.kind === "free" && !product.purchasable ? t("shop.premium.freeClaimed")
@@ -342,12 +383,57 @@ export class PremiumScene extends Phaser.Scene {
     const pass = product.passBenefit;
     if (pass) {
       // 갱신 주기를 먼저 말한다. 이용 중이면 다음 갱신일이, 아니면 권리 한 줄이 그 뒤에 선다.
-      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t("shop.premium.renewal", { days: pass.durationDays }));
+      parts.push(pass.durationDays === null ? t("shop.premium.forever") : t(pass.autoRenew ? "shop.premium.renewal" : "shop.premium.fixedTerm", { days: pass.durationDays }));
       const until = product.subscription?.expiresAt;
-      if (until) parts.push(t("shop.premium.renewsOn", { date: new Date(until).toLocaleDateString() }));
-      else parts.push(pass.adFree ? t("shop.premium.perk.adFree") : t("shop.premium.perk.instantAds"));
+      if (until) return t(pass.autoRenew ? "shop.premium.renewsOn" : "shop.premium.expiresOn", { date: new Date(until).toLocaleDateString() });
     }
     return parts.join("  ·  ");
+  }
+
+  /**
+   * 정기권 카드 좌하단의 혜택 한 줄 — 레이드 패스는 매일 받는 선택 토벌권, 광고 제거 멤버십은 광고 즉시 제거.
+   * 광고 제거는 그 멤버십에서만 누리므로 월간 연구 후원은 아무것도 적지 않는다.
+   */
+  private passPerkText(product: ProductDto): string | undefined {
+    const pass = product.passBenefit;
+    if (!pass) return undefined;
+    if (pass.adFree) return t("shop.premium.perk.adRemoval");
+    const bonus = pass.dailyBonus;
+    if ("itemId" in bonus && bonus.itemId === "raid-select-ticket") return t("shop.premium.perk.raidTicket", { count: bonus.amount });
+    if ("itemId" in bonus && bonus.itemId === "strata-ticket") return t("shop.premium.perk.archaeologyTicket", { count: bonus.amount });
+    return undefined;
+  }
+
+  /** 보상 양옆에 광고 금지와 3배속을 크게 세워 멤버십의 실제 혜택을 먼저 읽게 한다. */
+  private addMembershipBenefits(card: Phaser.GameObjects.Container, width: number): void {
+    const x = width / 2 - 148;
+    const adShadow = this.add.image(-x + 4, -12, UI_ICON.ad).setDisplaySize(86, 86).setTint(0x04060a).setAlpha(0.9);
+    const ad = this.add.image(-x, -18, UI_ICON.ad).setDisplaySize(86, 86);
+    const prohibitionShadow = this.add.graphics({ x: 4, y: 6 }).lineStyle(11, 0x04060a, 0.9);
+    prohibitionShadow.strokeCircle(-x, -18, 47);
+    prohibitionShadow.lineBetween(-x - 34, -52, -x + 34, 16);
+    const prohibition = this.add.graphics().lineStyle(8, 0xf0846c, 1);
+    prohibition.strokeCircle(-x, -18, 47);
+    prohibition.lineBetween(-x - 34, -52, -x + 34, 16);
+    const speed = this.add.text(x, -18, "3x▶", textStyle({ role: "display", size: 48, color: COLOR.accentText })).setOrigin(0.5).setStroke("#05070a", 7).setShadow(4, 6, "#04060a", 3, true, true);
+    const label = this.add.text(x, 54, t("shop.premium.perk.speed"), textStyle({ role: "display", size: 26, color: COLOR.accentText, align: "center" })).setOrigin(0.5).setStroke("#04060a", 5).setShadow(3, 4, "#04060a", 2, true, true);
+    label.setWordWrapCallback((text: string, object: Phaser.GameObjects.Text) => wrapDialogueText(text, object.style.wordWrapWidth ?? 216,
+      (value) => object.context.measureText(value).width, settingsManager.get().game.language));
+    const ticketless = this.add.text(-x, 59, t("shop.premium.perk.ticketless"), textStyle({ role: "display", size: 26, color: COLOR.accentText, align: "center" })).setOrigin(.5).setStroke("#04060a", 5).setShadow(3, 4, "#04060a", 2, true, true);
+    card.add(fitTextToBox(ticketless, { width: 232, height: 65 }, { size: 26, minSize: 18 }));
+    card.add([adShadow, ad, prohibitionShadow, prohibition, speed, fitTextToBox(label, { width: 216, height: 54 }, { size: 26, minSize: 18 })]);
+  }
+
+  /** 값 줄 왼쪽에 또렷한 글씨로 서는 혜택 레이어. 갱신 주기 같은 작은 글 위에 따로 얹는다. */
+  private addPassPerk(card: Phaser.GameObjects.Container, text: string, left: number, y: number, maxWidth: number): void {
+    const label = this.add.text(0, 0, text, textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0, 0.5).setStroke("#000000", 5).setShadow(2, 3, "#04060a", 0, true, true);
+    fitTextToBox(label, { width: maxWidth - 36, height: 52 }, { size: 28, minSize: 18 });
+    const width = Math.min(maxWidth, label.width + 36);
+    const plate = this.add.container(left, y);
+    plate.add(drawLayer(this, width / 2, 0, slantedRect(width, Math.max(48, label.height + 12), 12), { fill: 0x0d141c, alpha: 0.9, shadow: false }));
+    label.setX(18);
+    plate.add(label);
+    card.add(plate);
   }
 
   /** 한정 상품의 남은 시간 한 줄. 서버 시각을 기준으로 센다. */
@@ -356,8 +442,8 @@ export class PremiumScene extends Phaser.Scene {
   }
 
   /** 이용 중인 구독의 활성 표시 — 카드 모양을 따라 도는 테두리가 숨 쉰다. 움직임 줄이기에서는 가만히 선다. */
-  private addActivePulse(card: Phaser.GameObjects.Container, width: number, height: number): void {
-    const outline = drawShapeOutline(this, 0, 0, showcaseCardShape(width, height, 3), { color: COLOR.accent, alpha: 1, width: 5 });
+  private addActivePulse(card: Phaser.GameObjects.Container, width: number, height: number, color: number): void {
+    const outline = drawShapeOutline(this, 0, 0, showcaseCardShape(width, height, 3), { color, alpha: 1, width: 5 });
     card.add(outline);
     if (motionPolicy(session.settings).nonEssentialDistanceFactor === 0) { outline.setAlpha(0.85); return; }
     outline.setAlpha(0.35);
@@ -369,10 +455,11 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      const result = await gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 });
+      const result = await withBusy(this, gameApi.purchaseProduct({ storefront: "premium", productId: product.id, quantity: 1 }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
+      void notificationManager.refresh().catch(() => undefined);
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
@@ -382,7 +469,7 @@ export class PremiumScene extends Phaser.Scene {
     if (product.subscription?.dailyBonusClaimed) { this.notice(t("shop.premium.dailyClaimed")); return; }
     this.claiming = true;
     try {
-      const result = await gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` });
+      const result = await withBusy(this, gameApi.claimPassDailyBonus({ productId: product.id, requestId: globalThis.crypto?.randomUUID?.() ?? `daily-${Date.now()}` }));
       this.applyPurchaseResult(result);
       openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(result.granted) });
       await this.refresh();
@@ -400,7 +487,7 @@ export class PremiumScene extends Phaser.Scene {
       x, y, width: premiumCardWidth(kind), height: premiumCardHeight(kind), currency: "gems", amount: slot.reward.amount,
       title: t("shop.premium.adTitle"), badge: t("shop.premium.adDeal"), remaining: status.remaining, limit: status.limit,
       clip: premiumGridViewport, isTap: (pointer) => this.isTap(pointer),
-      onWatch: () => void this.watchGemAd(),
+      onWatch: () => void this.watchGemAd(), stampKey: slotId,
     });
   }
 
@@ -408,9 +495,11 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      if (!(await watchAdSlot("gem-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot("gem-ad");
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       await this.refresh();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
@@ -427,11 +516,9 @@ export class PremiumScene extends Phaser.Scene {
     const height = premiumCardHeight(kind);
     const { x, y } = premiumCardSpot(index, kind);
     const status = adSlotStatus(slot.id);
-    const freeClaimed = this.products.some((product) => product.id === DAILY_FREE_PRODUCT_ID && !product.purchasable);
     const done = status.remaining <= 0;
-    const open = freeClaimed && !done;
     const card = this.add.container(x, y);
-    paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag") });
+    paintShowcaseCard(this, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + W.pad, tag: t("shop.premium.dailyAdTag"), stageY: PREMIUM_WIDE.stack.frameY + PREMIUM_WIDE.frame / 2 });
     const left = -width / 2 + W.pad;
     const right = width / 2 - W.pad;
     const name = this.add.text(left, S.nameY, t("shop.premium.dailyAdTitle"), textStyle({ role: "display", size: W.nameSize })).setOrigin(0, 0.5).setShadow(3, 4, "#04060a", 0, true, true);
@@ -446,13 +533,10 @@ export class PremiumScene extends Phaser.Scene {
     tiles.forEach((tile, i) => this.addGrantFrame(card, xs[i], S.frameY, W.frame, tile.icon, tile.amount));
     const bar = this.add.container(0, S.price.y);
     bar.add(drawLayer(this, 0, 0, chipPoints(S.price.width + 120, S.price.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } }), { fill: 0x0d141c, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.7 }));
-    const label = this.add.text(0, 0, t(freeClaimed ? "shop.premium.dailyAdWatch" : "shop.premium.dailyAdLocked"), textStyle({ role: "display", size: 34, color: open ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5).setStroke("#000000", 6);
-    bar.add(squeezeTextToWidth(label, S.price.width + 120 - 40, 0.6));
+    addAdCountLabel(this, bar, 0, 0, status.remaining, status.limit, done, Math.round(S.price.height * 0.7));
     card.add(bar);
-    card.add(this.add.text(right, S.price.y, t("shop.premium.adLeft", { remaining: status.remaining, limit: status.limit }), textStyle({ role: "emphasis", size: W.noteSize + 4, color: done ? COLOR.dangerText : COLOR.ink, align: "right" })).setOrigin(1, 0.5).setStroke("#05070a", 3));
-    if (!open) card.setAlpha(PREMIUM_SOLD_OUT_ALPHA + 0.2);
+    if (done) addSoldOutStamp(this, card, width, height, AD_CARD_BEVEL, slot.id); else forgetSoldOutStamp(slot.id);
     this.addCardHit(card, width, height, () => {
-      if (!freeClaimed) { this.notice(t("shop.premium.dailyAdLocked")); return; }
       if (done) { this.notice(t("shop.premium.dailyClaimed")); return; }
       void this.watchDailyAd();
     });
@@ -463,34 +547,91 @@ export class PremiumScene extends Phaser.Scene {
     if (this.claiming) return;
     this.claiming = true;
     try {
-      if (!(await watchAdSlot("daily-bonus-ad"))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot("daily-bonus-ad");
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       await this.refresh();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); } finally { this.claiming = false; }
   }
 
-  /** 하단 목록 교체 줄은 상점·가방과 **같은 서류철 라벨 프리팹**을 쓴다. */
-  private createTabs(): void {
+  /**
+   * 하단 목록 교체 줄은 상점·가방과 같은 서류철 라벨 프리팹이다. 여덟을 한 줄에 깔면 칸이 좁아지므로
+   * 라벨을 넓게 세운 줄을 옆으로 흘리고, 고른 라벨은 창 가운데로 모인다.
+   */
+  private createTabs(animateFrom?: number): void {
+    this.tabDotDisposers.forEach((dispose) => dispose()); this.tabDotDisposers = [];
     this.tabRow?.destroy();
-    this.tabRow = this.add.container(0, 0).setDepth(9);
+    const row = this.add.container(0, 0).setDepth(9);
+    this.tabRow = row;
+    if (!this.tabMask) {
+      const strip = premiumTabStrip();
+      this.tabMask = this.make.graphics();
+      this.tabMask.fillStyle(0xffffff, 1).fillRect(strip.left, strip.top, strip.right - strip.left, strip.bottom - strip.top);
+    }
+    row.setMask(this.tabMask.createGeometryMask());
+    const spec = this.tabStripSpec();
+    const strip = premiumTabStrip();
+    this.tabDotted = PREMIUM_TABS.map(() => false);
+    // 탭을 눌러 넘기는 것에 더해, 화면 밖으로 나간 줄을 손으로 끌어 넘길 수도 있다.
+    const drag = attachTabStripDrag(this, {
+      row, left: strip.left, right: strip.right, top: strip.top, bottom: strip.bottom, min: tabStripMinScroll(spec),
+      get: () => row.x, set: (value) => { row.x = value; this.syncTabEdgeHint(); },
+    });
+    this.tabDragging = drag.dragging;
+    if (!this.tabEdgeHint) {
+      this.tabEdgeHint = new TabStripEdgeHint(this, undefined, {
+        left: strip.left, right: strip.right, y: premiumTabSpot(0).y, height: PREMIUM_TAB_ROW.height,
+        onTap: (side) => {
+          if (this.tabDragging()) return;
+          const index = this.tabRow ? nearestHiddenDot(spec, this.tabRow.x, this.tabDotted, side) : undefined;
+          if (index !== undefined) this.selectCategory(PREMIUM_TABS[index].id);
+        },
+      }).setDepth(10);
+    }
     PREMIUM_TABS.forEach((tab, index) => {
-      const { x, y } = premiumTabSpot(index, PREMIUM_TABS.length);
-      addCategoryTab(this, this.tabRow, {
+      const { x, y } = premiumTabSpot(index);
+      const tabObject = addCategoryTab(this, row, {
         x, y, width: PREMIUM_TAB_ROW.width, height: PREMIUM_TAB_ROW.height,
         label: tab.label, selected: tab.id === this.selectedCategory,
-        onSelect: () => this.selectCategory(tab.id),
+        onSelect: () => { if (!drag.dragging()) this.selectCategory(tab.id); },
       });
+      // 받을 무료 보급이 남은 일간·주간·월간 라벨에 점을 세운다.
+      const dotKey = tab.id === "daily" ? "premiumFreeDaily" : tab.id === "weekly" ? "premiumFreeWeekly" : tab.id === "monthly" ? "premiumFreeMonthly" : undefined;
+      if (dotKey) this.tabDotDisposers.push(bindNotificationDot(this, tabObject, { x: PREMIUM_TAB_ROW.width / 2 - 22, y: -PREMIUM_TAB_ROW.height / 2 + 12 }, (listener) => notificationManager.subscribe(dotKey, (visible) => {
+        listener(visible);
+        this.tabDotted[index] = visible;
+        this.syncTabEdgeHint();
+      })));
     });
+    const target = premiumTabScrollFor(this.selectedIndex(), PREMIUM_TABS.length);
+    if (animateFrom === undefined || animateFrom === target) { row.x = target; this.syncTabEdgeHint(); return; }
+    row.x = animateFrom;
+    this.syncTabEdgeHint();
+    this.tweens.add({ targets: row, x: target, duration: 220, ease: "Cubic.easeOut", onUpdate: () => this.syncTabEdgeHint(), onComplete: () => this.syncTabEdgeHint() });
   }
+
+  private tabStripSpec(): TabStripSpec {
+    const strip = premiumTabStrip();
+    return { left: strip.left, right: strip.right, width: PREMIUM_TAB_ROW.width, gap: PREMIUM_TAB_ROW.gap, count: PREMIUM_TABS.length };
+  }
+
+  private syncTabEdgeHint(): void {
+    if (!this.tabRow?.active || !this.tabEdgeHint) return;
+    this.tabEdgeHint.setSides(hiddenDotSides(this.tabStripSpec(), this.tabRow.x, this.tabDotted));
+  }
+
+  private selectedIndex(): number { return PREMIUM_TABS.findIndex((tab) => tab.id === this.selectedCategory); }
 
   /** 라벨을 바꾸면 이전 스크롤을 버리고 그 갈래의 첫 상품부터 다시 보여 준다. */
   private selectCategory(category: PremiumCategory): void {
     if (category === this.selectedCategory) return;
     const indexOf = (id: PremiumCategory): number => PREMIUM_TABS.findIndex((tab) => tab.id === id);
     const from = indexOf(this.selectedCategory);
+    const rowFrom = this.tabRow?.x;
     this.selectedCategory = category;
     if (this.content) this.content.y = 0;
-    this.createTabs();
+    this.createTabs(rowFrom);
     this.renderProducts();
     if (this.content) slideTabPage(this, [this.content], from, indexOf(category));
   }
@@ -526,6 +667,9 @@ export class PremiumScene extends Phaser.Scene {
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer): void => {
     if (!this.insideViewport(pointer)) return;
     this.pointerDown = true;
+    this.pointerAxis = "none";
+    this.pointerStartX = pointer.x;
+    this.swipeX = 0;
     this.pointerY = pointer.y;
     this.draggedDistance = 0;
     this.velocityY = 0;
@@ -535,12 +679,31 @@ export class PremiumScene extends Phaser.Scene {
     if (!this.pointerDown || !pointer.isDown) return;
     const delta = pointer.y - this.pointerY;
     this.pointerY = pointer.y;
+    const dx = pointer.x - this.pointerStartX;
+    if (this.pointerAxis === "none") {
+      const total = this.draggedDistance + Math.abs(delta);
+      if (Math.abs(dx) > PREMIUM_SWIPE.lock && Math.abs(dx) > total) this.pointerAxis = "x";
+      else if (total > PREMIUM_SWIPE.lock) this.pointerAxis = "y";
+    }
+    if (this.pointerAxis === "x") {
+      this.swipeX = dx;
+      this.draggedDistance += Math.abs(delta) + 1;
+      return;
+    }
     this.draggedDistance += Math.abs(delta);
     this.velocityY = delta * 60;
     this.scrollTo((this.content?.y ?? 0) + delta);
   };
 
-  private readonly onPointerUp = (): void => { this.pointerDown = false; };
+  /** 가로로 충분히 쓸었으면 이웃 라벨로 넘긴다 — 왼쪽으로 쓸면 다음 갈래다. */
+  private readonly onPointerUp = (): void => {
+    const swiped = this.pointerDown && this.pointerAxis === "x" && Math.abs(this.swipeX) >= PREMIUM_SWIPE.distance;
+    this.pointerDown = false;
+    if (!swiped) return;
+    const index = this.selectedIndex();
+    const next = premiumTabStep(index, PREMIUM_TABS.length, this.swipeX < 0 ? 1 : -1);
+    if (next !== index) this.selectCategory(PREMIUM_TABS[next].id);
+  };
 
   private readonly onWheel = (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number): void => {
     this.scrollTo((this.content?.y ?? 0) - dy * 0.8);
@@ -575,14 +738,16 @@ const PREMIUM_SOLD_OUT_ALPHA = 0.52;
 /** 첫 구매 보너스 액자의 선 — 무역의 가치 배지와 같은 뜨거운 색이라 "더 들어온다"가 먼저 걸린다. */
 const PREMIUM_BONUS_TONE = 0xe0603a;
 
-/** 카드 색 — 정기권(기간 패스)은 금빛 한정과 같은 무게로, 나머지는 갱신 주기의 색이다. */
+/** 카드 색 — 구매 팝업과 같은 테마 색이다(`purchaseThemeOf` → `PURCHASE_THEME_STYLE`). 갱신 주기는 꼬리표 글자가 말한다. */
 function premiumCardTone(product: ProductDto): number {
-  return product.passBenefit ? SHOWCASE_TIER_TONE.once : SHOWCASE_TIER_TONE[product.refresh];
+  if (product.passBenefit?.adFree) return COLOR.accent;
+  return PURCHASE_THEME_STYLE[purchaseThemeOf(product)].accent;
 }
 
 /** 꼬리표 — 정기권은 「30일 정기권」, 나머지는 무역과 같은 주기 이름이다. */
 function premiumCardTag(product: ProductDto): string {
-  if (product.passBenefit?.durationDays) return t("shop.premium.tag.membership", { days: product.passBenefit.durationDays });
+  if (product.passBenefit?.adFree) return t("shop.premium.recommended");
+  if (product.passBenefit?.durationDays) return t(product.passBenefit.autoRenew ? "shop.premium.tag.membership" : "shop.premium.fixedTerm", { days: product.passBenefit.durationDays });
   return t(`trade.tag.${product.refresh}`);
 }
 

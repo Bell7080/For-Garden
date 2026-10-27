@@ -6,7 +6,7 @@ import { createDefaultSession } from "../../src/state/session";
 /** 원격 저장 동시성/병합 계약을 실제 UI나 플랫폼 SDK 없이 검증하는 최소 가짜 구현이다. */
 function api(overrides: Partial<AccountApi>): AccountApi {
   const unsupported = async () => ({ ok: false as const, code: "unsupported" as const, message: "unsupported" });
-  return { getState: unsupported, login: unsupported, logout: unsupported, requestWithdrawal: unsupported, getRemoteSaveMetadata: unsupported, downloadRemoteSave: unsupported, uploadRemoteSave: unsupported, deleteRemoteSave: unsupported, mergeGuestSave: unsupported, ...overrides };
+  return { getState: unsupported, login: unsupported, logout: unsupported, requestWithdrawal: unsupported, getRemoteSaveMetadata: unsupported, downloadRemoteSave: unsupported, uploadRemoteSave: unsupported, deleteRemoteSave: unsupported, mergeGuestSave: unsupported, registerWithId: unsupported, signInWithId: unsupported, ...overrides };
 }
 
 const metadata: RemoteSaveMetadata = { revision: "7", etag: '"save-7"', saveVersion: 34, serverModifiedAt: "2026-09-09T00:00:00Z", dataHash: "different", summary: { playerLevel: 9, currency: { gems: 20, gold: 30 }, lastPlayedAt: "2026-09-09T00:00:00Z" } };

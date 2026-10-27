@@ -34,6 +34,8 @@ export const MAIL_POPUP_LAYOUT = {
     tabY: 648,
     tab: { width: 210, height: 76, gap: 12, left: -470 },
     action: { x: 0, y: 772, width: 380, height: 92 },
+    /** 읽은 우편 삭제 칩 — 라벨 줄 오른쪽 끝. 구석 아래는 뒤로가기 자리라 비운다. */
+    deleteChip: { x: 430, y: 648, glyph: 40, hit: 80 },
   },
 } as const;
 

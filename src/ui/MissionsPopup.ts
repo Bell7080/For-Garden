@@ -1,3 +1,4 @@
+import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -11,6 +12,8 @@ import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
 import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
+import { slideTabPage } from "./screenTransition";
+import { attachDragScroll } from "./dragScroll";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -26,6 +29,7 @@ import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsT
  */
 const MISSION_ORDER_MEMORY = new Map<string, MissionOrderMemory>();
 import { shapeClipMask } from "./popupArt";
+import { withBusy } from "./BusyOverlay";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
 
@@ -85,11 +89,13 @@ export class MissionsPopup {
 
   private select(period: MissionPeriod): void {
     if (period === this.period) return;
+    const from = PERIODS.indexOf(this.period);
     this.period = period; this.render(); setDebugMissionsPeriod(this.period);
+    if (this.list) slideTabPage(this.scene, [this.list], from, PERIODS.indexOf(period));
   }
 
   private async refresh(): Promise<void> {
-    const result = await this.api.getMissions();
+    const result = await withBusy(this.scene, this.api.getMissions());
     this.missions = result.missions; this.research = result.research;
     this.render(); setDebugMissionsPeriod(this.period);
   }
@@ -150,20 +156,17 @@ export class MissionsPopup {
     this.list!.add(frame);
     const viewHeight = list.bottom - list.top;
     const half = list.cardWidth / 2 + 20;
-    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setInteractive({ draggable: true });
+    const drag = this.scene.add.rectangle(0, viewHeight / 2, half * 2, viewHeight, 0xffffff, 0).setVisible(false);
     frame.add(drag);
     const content = this.scene.add.container(0, 0);
     frame.add(content);
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
     this.scrollContent = content;
     this.minScroll = Math.min(0, viewHeight - missionListContentHeight(count));
-    let lastY = 0;
-    drag.on("dragstart", (pointer: Phaser.Input.Pointer) => { lastY = pointer.y; });
-    drag.on("drag", (pointer: Phaser.Input.Pointer) => {
-      const scale = frame.getWorldTransformMatrix().scaleY || 1;
-      this.applyScroll(this.scroll + (pointer.y - lastY) / scale); lastY = pointer.y;
+    attachDragScroll(this.scene, {
+      owner: drag, root: frame, bounds: () => drag.getBounds(),
+      onDelta: (dy) => this.applyScroll(this.scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
     });
-    drag.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => this.applyScroll(this.scroll - dy * 0.65));
     return content;
   }
 
@@ -378,7 +381,7 @@ export class MissionsPopup {
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {
     // 굴릴 시작점은 **수령 직전**의 값이다. 응답을 반영한 뒤에 읽으면 이미 오른 값이라 굴러갈 거리가 없다.
     this.rollFrom = this.research?.[this.period]?.points;
-    session.wallet = { ...result.wallet }; this.onWalletChanged?.();
+    if (!hasRemoteState(result)) session.wallet = { ...result.wallet }; this.onWalletChanged?.();
     // 서버 응답의 단계 상태까지 다시 조회해 그래프와 알림 점이 같은 틱에 갱신되게 한다.
     const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
     this.render();

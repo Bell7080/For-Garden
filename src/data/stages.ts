@@ -1,7 +1,12 @@
+import { ancientStageFloor } from "./ancientStrataDifficulty";
+import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
-import { applyEncounterScaling, encounterRoleFor, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
-import { type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
+import { applyEncounterScaling, encounterRoleFor, equivalentEnemyLevel, requiredBreakthroughForLevel, type EncounterRole } from "../core/levelDesign";
+import { ENEMY_BIRTH_TIERS } from "../core/rarityScaling";
+import { type BattleStageDef, type ChapterDef, type RelicDef, type StageBonusReward, type StageDef, type StageEnemyDef } from "../core/types";
 import { getRelic } from "./relics";
 
 /** 챕터 1의 기본 악당 셋은 영구 캐릭터 ID만 공유하고 성장 상태는 각 스테이지가 소유한다. */
@@ -17,7 +22,32 @@ export const FIXED_STAGE_ENEMIES = ["toby", "amo", "ripa"] as const;
 const STAGE_ENEMY_FORMATION = ["amo", "toby", "ripa"] as const;
 
 /** 스테이지 난이도를 캐릭터 수치가 아닌 공개 성장 축과 검증 가능한 배치로만 표현한다. */
-function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2): StageEnemyDef {
+/**
+ * 사다리의 눈금(`STORY_RECOMMENDED_LEVELS`)은 테러조 기준이다. 태생 층이 한 띠 위인 개체(회수조)는
+ * 같은 자리에서 **같은 세기가 되는 더 낮은 레벨**로 서고, 돌파도 그 레벨에서 나온다.
+ */
+function tieredEnemy(relicId: string, referenceLevel: number, slot: 0 | 1 | 2 | 3 | 4, levelBonus: number = 0): StageEnemyDef {
+  const tier = ENEMY_BIRTH_TIERS[relicId];
+  const level = (tier ? equivalentEnemyLevel(referenceLevel, tier.statFactor) : referenceLevel) + (tier ? levelBonus : 0);
+  return enemyGrowth(relicId, level, requiredBreakthroughForLevel(level), slot);
+}
+
+/**
+ * 4장의 회수조는 태생 보정으로 낮춘 눈금에서 이만큼 더 높은 레벨로 선다(응태 결정, v0.320.1) — 같은 자리의 테러조보다
+ * 조금 더 센 정예 부대라는 뜻이다. 테러조는 이 값을 받지 않는다.
+ */
+const CHAPTER_FOUR_RAIDER_LEVEL_BONUS = 3;
+
+/**
+ * 같은 관문에서 **개체 하나만** 정예 자리에 서는 경우(4-6·4-9의 코마). 관문의 `elite`(혼자·둘이 서는 정예 관문)와 달리
+ * 편성은 그대로 두고 그 개체의 유형(`encounterRole`)만 정예가 된다 — 나머지는 보통 유형 그대로다.
+ */
+const SOLO_ELITE_ENEMIES: Readonly<Record<string, readonly string[]>> = {
+  "4-6": ["koma"],
+  "4-9": ["koma"],
+};
+
+function enemyGrowth(relicId: string, level: number, breakthrough: number, formationSlot: 0 | 1 | 2 | 3 | 4): StageEnemyDef {
   return { relicId, level, breakthrough, formationSlot };
 }
 
@@ -44,10 +74,13 @@ const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   // 아슬아슬했고 3이던 때는 싸움이 되지 않았다. 5는 1-2(8)와의 턱도 크지 않다.
   // 사다리는 여기서부터 오르기만 한다. 1-3~2-2는 검수를 실제 전장 크기로 옮기며(v0.172.6) 한 뼘씩
   // 올렸다 — 넓은 틀에서 재던 때는 같은 관문이 실제보다 훨씬 어렵게 읽혀 사다리가 낮게 잡혀 있었다.
-  5, 8, 11, 13, 15, 17, 18, 19, 20, 20,
+  5, 8, 11, 13, 17, 17, 18, 19, 20, 20,
   // 2장은 21~30 — 돌파 1단계(상한 30) 안에서 끝난다. 1장 끝(20)에서 한 칸씩 오르는 곡선이다.
   21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-  36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
+  36, 37, 38, 39, 40, 41, 42, 43, 44, 47,
+  // 4장은 테러조 기준 48~56이다. 57~60은 5·6장이 쓴다 — 레벨 사다리는 60에서 멈추므로 아껴 쓴다.
+  // 회수조는 태생 층이 한 띠 위라 같은 자리에서 더 낮은 레벨로 선다(`tieredEnemy`).
+  48, 48, 49, 51, 51, 51, 51, 51, 54, 56,
 ];
 
 /**
@@ -62,6 +95,44 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
   5: "toby",
   10: "koma",
 };
+
+/**
+ * **2·3장 후반의 변칙 편성.** 적어 두지 않은 관문은 기본 셋(`STAGE_ENEMY_FORMATION`)이다.
+ *
+ * - 2-7·2-9는 **정예 둘**이다 — 새 유형을 만들지 않고 같은 정예 자리에 둘이 서며, 체력 몫은 둘이 나눠 갖는다
+ *   (`encounterHpShare`). 레벨 사다리는 그대로다.
+ * - 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
+ *   펄시 뒤의 공격조이고, 3-8부터 네우리가 뒤에 서서 치유와 공명으로 받치며 가운데가 펄시로 바뀐다.
+ *   네우리가 일찍 서면 바닥 파티가 3-7을 열었다(여덟 판 중 한 판) — 3장은 완전히 닫혀 있어야 해서 늦췄다.
+ * 회수조는 3-2부터 옛 셋과 섞여 하나씩 드러난다(3-2 미르 · 3-3 펄시, 네우리는 3-8 — 3-4에 세우면 바닥 파티가 3-4를 열었다). 3-1은 옛 셋 그대로다.
+ */
+const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [string, 0 | 1 | 2 | 3 | 4])[]>> = {
+  "2-7": [["amo", 0], ["ripa", 2]],
+  "2-9": [["amo", 0], ["toby", 1]],
+  "3-2": [["amo", 0], ["mir", 1], ["ripa", 2]],
+  "3-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
+  "3-4": [["amo", 0], ["pulsi", 1], ["ripa", 2]],
+  "3-5": [["atra", 1]],
+  "3-6": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-7": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "3-8": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-9": [["atra", 0], ["pulsi", 1], ["neuri", 2]],
+  "3-10": [["ikanixia", 1]],
+  // 4장 — 회수조와 테러조가 섞인다. 무리(4-2 넷 · 4-8 다섯) · 탱커 정예(4-4·4-5) · 코마 캐리(4-6, 코마만 정예) · 코마 캐리(4-9, 코마만 정예) · 투 캐리 마감(4-10).
+  "4-1": [["amo", 0], ["toby", 1], ["pulsi", 2]],
+  "4-2": [["toby", 0], ["mir", 1], ["ripa", 2], ["pulsi", 3]],
+  "4-3": [["amo", 0], ["mir", 1], ["pulsi", 2]],
+  "4-4": [["atra", 0], ["amo", 2]],
+  "4-5": [["atra", 0], ["toby", 2]],
+  "4-6": [["ripa", 0], ["koma", 1], ["neuri", 2]],
+  "4-7": [["ripa", 0], ["pulsi", 1], ["mir", 2]],
+  "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
+  "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
+  "4-10": [["koma", 0], ["ikanixia", 2]],
+};
+
+/** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
+const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10"]);
 
 /**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
@@ -103,6 +174,8 @@ const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { ki
   "2-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
   "3-5": { kind: "rune", rarity: "rare", part: 1 },
   "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
+  "4-5": { kind: "rune", rarity: "rare", part: 0 },
+  "4-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
 };
 
 /**
@@ -117,6 +190,8 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
   "2-6": 40,
   "3-1": 50,
   "3-6": 60,
+  "4-1": 60,
+  "4-6": 60,
 };
 
 /**
@@ -134,7 +209,7 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
 function storyFirstClearBonus(id: string, globalOrder: number, chapter: number, chapterOrder: number, elite: boolean): StageBonusReward[] {
   const heavy = elite || chapterOrder === 10;
   const bonus: StageBonusReward[] = [
-    { kind: "currency", currency: "gold", amount: (3_000 + globalOrder * 1_000) * (heavy ? 2 : 1) },
+    { kind: "currency", currency: "gold", amount: (300 + globalOrder * 100) * (heavy ? 2 : 1) },
     { kind: "currency", currency: "gems", amount: heavy ? [150, 200, 300][chapter - 1] ?? 300 : [30, 40, 50][chapter - 1] ?? 50 },
   ];
   const rawStone = STORY_RAW_STONE[id];
@@ -172,9 +247,10 @@ const CHAPTER_SITUATIONS: readonly (readonly string[])[] = [
 ];
 
 const CHAPTER_CONTENT = [
-  { title: "제 1 구역", subtitle: "격리 구역 — 이터널 시티 외곽", names: ["격리 구역", "붕괴한 온실", "침수된 배양실", "표본 보관고", "제1구역 관제탑", "무너진 통신소", "폐기물 처리장", "지하 배수로", "봉쇄된 정거장", "구역 경계문"] },
-  { title: "제 2 구역", subtitle: "잔향 지구 — 침묵한 산업 회랑", names: ["잔향 진입로", "녹슨 조립동", "냉각 수로", "동력 중계실", "파손된 승강장", "무인 생산선", "압력 격실", "재처리 용광로", "중앙 운송로", "잔향 지구 관문"] },
+  { title: "제1지부 외곽", subtitle: "검역선 — 도시로 들어가는 마지막 구간", names: ["추락하는 방주", "붕괴한 온실", "침수된 배양실", "표본 보관고", "제1구역 관제탑", "무너진 통신소", "폐기물 처리장", "지하 배수로", "봉쇄된 정거장", "구역 경계문"] },
+  { title: "잔향 지구", subtitle: "침묵한 산업 회랑", names: ["잔향 진입로", "녹슨 조립동", "냉각 수로", "동력 중계실", "파손된 승강장", "무인 생산선", "압력 격실", "재처리 용광로", "중앙 운송로", "잔향 지구 관문"] },
   { title: "제 3 구역", subtitle: "심층 정원 — 도시 아래의 뿌리", names: ["심층 하강로", "발광 균사굴", "고대 급수원", "뿌리 관측소", "유전자 저장고", "포자 확산실", "생체 반응로", "심층 연구동", "정원 핵심부", "심층 정원 제어실"] },
+  { title: "제 4 구역", subtitle: "합류선 — 두 무리가 한 선로에 서다", names: ["합류 승강장", "끊어진 환승로", "점검 통로", "봉인된 수송 갱도", "회수 대기실", "폐쇄 격납고", "지하 정비동", "낙하 승강기", "합류선 종점", "추격 사령실"] },
 ] as const;
 
 /** 챕터가 콘텐츠 소유 단위이고, 각 스테이지는 명시적인 선행 ID로 챕터 경계를 잇는다. */
@@ -190,24 +266,27 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 적 레벨에서 1-7보다 **쉬웠다** — 적 Lv40에서 1-7은 잔여 2%인데 3-7은 100%였다.
      * 앞이 무너지는 배치는 레벨을 아무리 올려도 난이도가 되지 않으므로 1장의 배치를 이어 쓴다.
      *
-     * 3-10의 폰토스는 원정 최종층 개체라 스토리에서는 추후 뺀다. 난이도 기준점으로도 쓰지
-     * 않았다 — 바닥 파티가 어떤 레벨에서도 이기지 못해 곡선을 그릴 수 없기 때문이다.
      */
-    const laterChapterIds = chapter === 3 && chapterOrder === 10
-      ? ["amo", "pontos", "ripa"]
-      : [...STAGE_ENEMY_FORMATION];
+    const laterChapterIds = [...STAGE_ENEMY_FORMATION];
+    const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     /*
      * **돌파는 레벨에서 나온다**(`requiredBreakthroughForLevel`). 2장은 21~30이라 전 관문이 돌파 1단계
      * (상한 30)이고, 화면의 `LV`와 돌파 등급이 맞는다. 1단계가 여는 것은 평타 효과 하나뿐이라
-     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장은 새 적으로 따로 설계하므로 여기서 돌파를 적지 않는다.
+     * "기본기가 한층 강해진다"가 2장의 몫이다. 3장(36~47)도 같은 함수로 2~3단계가 나온다 — 0으로 적어 두었을 때는
+     * 정보창이 `LV.40 / 상한 20`을 세웠다. 돌파는 늘 그 레벨이 요구하는 단계 이상이어야 한다.
      */
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = chapter === 2 ? requiredBreakthroughForLevel(laterChapterLevel) : 0;
-    const laterChapterEnemies = laterChapterIds.map((relicId, slot) =>
-      enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
+    const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
+    const laterChapterEnemies = lateFormation
+      ? lateFormation.map(([relicId, slot]) => {
+        const enemy = tieredEnemy(relicId, laterChapterLevel, slot, chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0);
+        return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true as const } : enemy;
+      })
+      : laterChapterIds.map((relicId, slot) =>
+        enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
-    const elite = enemies.length === 1;
+    const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
     return {
       kind: "battle",
       id, name, chapter, chapterOrder,
@@ -226,7 +305,7 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
          */
         firstClearCheesecake: 30 + globalOrder * 5,
         repeatClearCheesecake: 10 + globalOrder * 2,
-        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite),
+        firstClearBonus: storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, enemies.length === 1),
       },
       // 아직 서사가 없는 장은 이 값이 비어 있고, 화면은 그 줄을 그리지 않는다.
       situation: CHAPTER_SITUATIONS[chapterIndex]?.[orderIndex],
@@ -235,16 +314,73 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
   return { id: chapter, title: content.title, subtitle: content.subtitle, prerequisiteStageId, stages };
 });
 
-/** 저장 검증과 전투 조회가 모든 챕터를 같은 ID 공간에서 찾도록 제공하는 평탄 인덱스다. */
+/**
+ * 서브 노드(SUB) — 본편 노드 옆에서 갈라지는 선택 서사다. 선행 관문(`anchor`)을 깨면 열리지만 **다음 본편의 선행 목록에는
+ * 들지 않아** 본편을 막지 않는다. 지도에서는 칸에 「SUB」만 적고 이름은 칸 아래에 선다.
+ *
+ * 이야기 SUB는 이 목록(`SUB_STORY_STAGES`)이고, 전투 SUB는 `sub: true`를 단 `BattleStageDef`(`SIDE_BATTLE_STAGE`)다.
+ * 전투 SUB는 진행 순위·「다음 단계」에서 빠진다(`stageProgress.ts`).
+ */
+function subStory(anchor: string, suffix: string, name: string, storyId: string): StageDef {
+  const [chapter, order] = anchor.split("-").map(Number);
+  return { kind: "story", id: `${anchor}-${suffix}`, name, chapter, chapterOrder: order, prerequisiteStageIds: [anchor], storyId };
+}
+
 /** 1-5에서 갈라지는 선택 서사는 1-6의 선행 목록에 들어가지 않아 본편을 막지 않는다. */
-export const SIDE_STORY_STAGE: StageDef = {
-  kind: "story", id: "1-5-side-story", name: "온실의 잔향", chapter: 1, chapterOrder: 5,
-  prerequisiteStageIds: ["1-5"], storyId: "stage-1-5-greenhouse-echo",
+export const SIDE_STORY_STAGE: StageDef = subStory("1-5", "side-story", "온실의 호박 소동", "stage-1-5-greenhouse-echo");
+
+/** 지도 순서(아래에서 위로)대로다. 한 본편 노드에는 서브 하나만 단다. */
+export const SUB_STORY_STAGES: readonly StageDef[] = [
+  SIDE_STORY_STAGE,
+  subStory("2-3", "side-story", "떨어진 사원증", "stage-2-3-lost-badge"),
+  subStory("2-6", "side-story", "같은 줄", "stage-2-6-same-line"),
+  subStory("2-9", "side-story", "두 번째 추격", "stage-2-9-second-chase"),
+  subStory("3-5", "side-story", "소매 뒤의 마음", "stage-3-5-behind-sleeve"),
+  subStory("3-8", "side-story", "시말서", "stage-3-8-apology"),
+];
+
+/**
+ * **모든 서브(SUB)의 처음 보상은 젬 50 하나다** — 이야기든 전투든, 어느 장이든 같은 값이다. 서브는 덤이지 수급처가 아니고
+ * 장마다 값이 갈리면 어느 서브가 이득인지를 따지게 된다. 서버(`completeStory`·전투 초회)와 화면이 이 상수 하나를 읽는다.
+ */
+export const SUB_GEM_REWARD = 50;
+export const SUB_STORY_GEM_REWARDS: Readonly<Record<string, number>> = Object.fromEntries(
+  SUB_STORY_STAGES.flatMap((stage) => stage.kind === "story" ? [[stage.storyId, SUB_GEM_REWARD]] : []),
+);
+
+/**
+ * 전투 서브 — 1-8 수문 아래에서 아모와 리파가 보급 상자를 두고 길을 막는다. 본편 1-8(LV.19)의 공멸 셋과 달리
+ * **둘만 서는 정예 변칙**이고 레벨은 한 칸 낮은 LV.18이다(2-7·2-9 정예 둘과 같은 자리 규칙 — 새 유형을 만들지 않는다).
+ * 보상은 젬 50뿐이고 치즈케이크는 주지 않는다 — 난이도 검수가 딛고 선 초회 치즈케이크 곡선(`stageDifficulty.test`)을 건드리지 않는다.
+ */
+export const SIDE_BATTLE_STAGE: BattleStageDef = {
+  kind: "battle", sub: true, elite: true,
+  id: "1-8-side-battle", name: "수문 밑 보급전", chapter: 1, chapterOrder: 8,
+  prerequisiteStageIds: ["1-8"],
+  enemies: [enemyGrowth("amo", 18, 0, 0), enemyGrowth("ripa", 18, 0, 2)],
+  rewards: {
+    firstClearCheesecake: 0,
+    repeatClearCheesecake: 0,
+    firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }],
+  },
 };
 
-/** 전투와 서브 스토리가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
-export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), SIDE_STORY_STAGE];
-const STAGE_BY_ID = new Map(STAGES.map((stage) => [stage.id, stage]));
+/** 지도에 서는 서브 전부 — 이야기와 전투를 함께 센다. */
+export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
+
+/** 전투와 서브가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
+export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
+/** 확장 난이도는 별도 ID로 기록해 기존 쉬움 진행과 초회 보상을 보존한다. */
+export function storyStages(difficulty: StoryDifficulty): readonly StageDef[] { return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter(stage => stage.id.startsWith(`${difficulty}:`)); }
+const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as const).flatMap(difficulty => STAGES.filter((stage): stage is BattleStageDef => stage.kind === "battle").map(base => {
+  const first = base.id === "1-1";
+  const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
+  return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
+    enemies: base.enemies.map(enemy => ({ ...enemy })),
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+}));
+export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
+const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));
 
 /** 대규모 던전 대신 하루 세 번만 보상을 받을 수 있는 단일 복원 훈련이다. */
 export const DAILY_RESTORATION = {
@@ -255,6 +391,8 @@ export const DAILY_RESTORATION = {
 } as const;
 
 export function getStage(id: string): StageDef {
+  const floor = ancientStageFloor(id);
+  if (floor !== undefined) return getAncientStrataStage(floor);
   const found = STAGE_BY_ID.get(id);
   if (!found) throw new Error(`알 수 없는 스테이지 id: ${id}`);
   return found;
@@ -284,17 +422,29 @@ export function stageEnemyGrowth(stage: Extract<StageDef, { kind: "battle" }>): 
  * 선 크기가 갈리지 않는다.
  */
 export function stageEnemyRole(stage: Extract<StageDef, { kind: "battle" }>): EncounterRole {
+  if (stage.ancientFloor !== undefined) {
+    const kind = getAncientStrataFloor(stage.ancientFloor).encounterKind;
+    return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" ? "elite" : "normal";
+  }
   return encounterRoleFor(stage.enemies.length, { elite: stage.elite === true });
 }
 
 /** 플레이어와 같은 레벨→돌파 순서로 성장시키며 영구 캐릭터 정의는 변경하지 않는다. */
 export function getStageEnemies(stage: Extract<StageDef, { kind: "battle" }>): RelicDef[] {
+  if (stage.ancientFloor !== undefined) return getAncientStrataFloor(stage.ancientFloor).enemies;
   const role = stageEnemyRole(stage);
   // 배열을 재정렬해도 실제 전투 배치는 formationSlot이라는 데이터 계약을 따른다.
-  return stageEnemyGrowth(stage).map((enemy) => {
+  const growth = stageEnemyGrowth(stage);
+  const soloElites = growth.filter((enemy) => enemy.elite === true).length;
+  return growth.map((enemy) => {
     const base = getRelic(enemy.relicId);
-    // 레벨로 자라고 유형으로 몫을 받는다. 스테이지 전용 배율은 만들지 않는다.
-    return { ...base, encounterRole: role, stats: applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, role), enemy.breakthrough) };
+    // 편성 중 일부만 정예인 관문: 정예 몫은 그 개체들이 나눠 갖고, 나머지는 관문의 유형 그대로다.
+    const enemyRole = enemy.elite === true ? "elite" : role;
+    const count = enemy.elite === true ? soloElites : stage.enemies.length;
+    // 레벨·유형 뒤 공용 난이도 종족값 보정만 적용한다. 태생 정의와 공속은 바꾸지 않는다.
+    const stats = applyBreakthrough(applyEncounterScaling(base.stats, enemy.level, enemyRole, count, ENEMY_BIRTH_TIERS[enemy.relicId]?.statFactor ?? 1), enemy.breakthrough);
+    for (const key of GROWTH_STAT_KEYS) stats[key] = Math.round(stats[key] * (stage.difficultyStatMultiplier ?? 1));
+    return { ...base, encounterRole: enemyRole, stats };
   });
 }
 
@@ -309,5 +459,7 @@ for (const chapter of CHAPTERS) {
 }
 
 /** 곁가지 스테이지와 일일 복원의 이름도 함께 등록한다. */
-registerDataText(SIDE_STORY_STAGE, "name", `stage.${SIDE_STORY_STAGE.id}.name`);
+for (const sub of SUB_STAGES) registerDataText(sub, "name", `stage.${sub.id}.name`);
 registerDataText(DAILY_RESTORATION, "name", "stage.dailyRestoration.name");
+
+for (const stage of EXTRA_STORY_STAGES) registerDataText(stage, "name", `stage.${storyBaseStageId(stage.id)}.name`);

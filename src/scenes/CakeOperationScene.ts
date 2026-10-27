@@ -9,7 +9,7 @@ import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
 import { openDungeonSweep } from "./dungeonSweepFlow";
-import { combatPower } from "../core/combatPower";
+import { groupCombatPower } from "../core/combatPower";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
@@ -23,9 +23,10 @@ import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { CAKE_OPERATION_ENEMY_IDS } from "../data/cakeOperation";
-import { startScene } from "../ui/screenTransition";
+import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import type { PartySceneData } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 편성 화면·결과판에서 돌아올 때 고른 단계를 그대로 되살린다. */
 export interface CakeOperationSceneData {
@@ -86,7 +87,7 @@ export class CakeOperationScene extends Phaser.Scene {
       onSweep: () => this.sweep(),
     });
     this.refresh();
-    addBackButton(this, () => this.scene.start("lobby", LOBBY_RETURN.sortie));
+    addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
 
     // 멤버십 여부와 광고 횟수는 서버 시각으로만 정해진다 — 기기 시계를 돌려 소탕권을 건너뛸 수 없다.
     void gameApi.getPlayerState().then((state) => {
@@ -95,6 +96,8 @@ export class CakeOperationScene extends Phaser.Scene {
       this.dailyAdRewards = state.dailyAdRewards;
       this.refresh();
     }).catch(() => undefined);
+    showContentIntro(this, "cakeOperation");
+    playSceneEntrance(this);
   }
 
   private selectedTier(): CakeOperationTier {
@@ -115,14 +118,14 @@ export class CakeOperationScene extends Phaser.Scene {
           id: entry.id, name: entry.name, level: cakeOperationEnemyDisplayLevel(entry).level,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
-          enemyPower: enemies.reduce((sum, def) => sum + combatPower(def.stats), 0),
+          enemyPower: groupCombatPower(enemies.map((def) => def.stats)),
           unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
         };
       }),
       selectedId: tier.id,
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
-      sortieEnabled: !this.busy && session.wallet.stamina >= cost.staminaCost,
+      sortieEnabled: !this.busy,
       sweepEnabled: !this.busy && cakeOperationTierIndex(tier.id) <= clearedIndex,
     });
   }
@@ -130,6 +133,11 @@ export class CakeOperationScene extends Phaser.Scene {
   /** 출격은 편성 화면을 연다. 입장(스테미나 차감)은 거기서 전투 시작을 누를 때 확정된다. */
   private openParty(): void {
     if (this.busy) return;
+    // 모자란 채 편성에 들어가 헛수고하지 않게, 출격에서 곧바로 충전 창을 연다.
+    if (session.wallet.stamina < cakeOperationRunCost(this.selectedTier()).staminaCost) {
+      openCurrencyGuide({ scene: this, popups: this.popups }, "stamina");
+      return;
+    }
     startScene(this, "party", { content: "cake", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 

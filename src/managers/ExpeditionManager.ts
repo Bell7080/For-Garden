@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { generateExpeditionMap } from "../core/expeditionMap";
 import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
 import { calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -12,6 +13,7 @@ import { createInitialRelicProgress, session, type ExpeditionRunState, type Sess
 import { GameApiError, type ApiErrorCode, type GameApi, type SettleExpeditionRunResponse, type SubmitExpeditionBossScoreResponse } from "../api/contracts";
 import type { ExpeditionBossAction } from "../core/expeditionBoss";
 import { t } from "../i18n";
+import { resolveServerApi, type ExpeditionApi } from "./serverApi";
 
 /** UI가 소비하는 원정 요약이며 변경 가능한 Session 참조는 노출하지 않는다. */
 export interface ExpeditionStatus {
@@ -24,7 +26,6 @@ export interface ExpeditionStatus {
   allTimeBestScore: number;
   active: { relicIds: [string, string, string]; score: number } | null;
   run: ExpeditionRunState | null;
-  quickAvailable: boolean;
   /** 오늘 원정을 더 시작할 수 있는지다. 소탕도 같은 횟수를 소비한다. */
   canStartRun: boolean;
 }
@@ -54,8 +55,8 @@ export class ExpeditionManager {
     private readonly state: Session = session,
     private readonly saves: Pick<SaveManager, "save"> = saveManager,
     private readonly serverNow: () => Date = () => new Date(),
-    /** 테스트가 production 경계를 검증할 수 있게 주입하되, 실제 빌드는 Vite의 제거 가능한 DEV 플래그만 따른다. */
-    private readonly developmentToolsEnabled: boolean = import.meta.env?.DEV === true,
+    /** 테스트가 production 경계를 검증할 수 있게 주입하되, 실제 빌드는 QA 빌드 스위치(`buildFlavor`)만 따른다. */
+    private readonly developmentToolsEnabled: boolean = QA_TOOLS_ENABLED,
   ) {}
 
   /** 주차를 서버 UTC에 맞춘 뒤 UI용 독립 사본을 반환한다. */
@@ -68,7 +69,7 @@ export class ExpeditionManager {
     const run = this.state.expedition.run;
     const copy = run ? structuredClone(run) : null;
     const { weekKey, playsToday, bestScore, allTimeBestScore } = this.state.expedition;
-    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, quickAvailable: this.state.expedition.bestScore > 0 && run === null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
+    return { weekKey, playsToday, bestScore, allTimeBestScore, run: copy, active: copy ? { relicIds: copy.relics.map(({ relicId }) => relicId) as [string, string, string], score: copy.runScore } : null, canStartRun: playsToday < EXPEDITION_DAILY_POLICY.maxPlaysPerDay };
   }
 
   /** 정확히 세 보유 렐릭을 검증하고 서버 주간 키가 포함된 결정적 맵을 생성한다. */
@@ -171,15 +172,16 @@ export class ExpeditionManager {
   }
 
   /** 보스를 누르는 순간 두 멱등 키를 먼저 저장해 어느 비동기 경계에서 종료돼도 복원한다. */
-  prepareBossRequests(nodeId: string): { requestId: string; settlementId: string } | null {
+  prepareBossRequests(nodeId: string): { requestId: string; settlementId: string; replayVersion: 2 } | null {
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === nodeId);
     if (!run || node?.type !== "boss" || run.settled) return null;
     const next = structuredClone(run);
+    next.bossReplayVersion = 2;
     next.bossSubmissionId ??= `${run.runId}:${nodeId}:boss-score`;
     next.bossSettlementId ??= `${run.runId}:boss-completed`;
     this.commit({ ...this.state.expedition, run: next });
-    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId };
+    return { requestId: next.bossSubmissionId, settlementId: next.bossSettlementId, replayVersion: 2 };
   }
 
   /** 서버가 검증한 보스 피해만 진행 저장에 합치며, 재응답은 같은 노드를 두 번 완료하지 않는다. */
@@ -297,7 +299,45 @@ export class ExpeditionManager {
   }
 }
 
-export const expeditionManager = new ExpeditionManager();
+/**
+ * 화면이 쓰는 원정 진입점이다. **읽기**(`status`·`snapshotFor`)는 동기화된 세션을 그대로 읽고 — 저장하지 않는 규칙
+ * 인스턴스라 주·일 주기를 넘겨도 기기에는 아무것도 쓰지 않는다 — **쓰기**는 모두 서버 호출이며 서버가 답한 뒤
+ * 세션이 서버 상태로 맞춰진다. 규칙 자체는 위 `ExpeditionManager`가 갖고 서버가 같은 클래스를 실행한다.
+ */
+export class ExpeditionClient {
+  private readonly view: ExpeditionManager;
+  private readonly apiCache: { api?: ExpeditionApi } = {};
+  constructor(private readonly state: Session = session, private readonly injectedApi?: ExpeditionApi, serverNow: () => Date = () => new Date()) {
+    this.view = new ExpeditionManager(state, { save: () => undefined }, serverNow, false);
+  }
+
+  private get api(): ExpeditionApi { return resolveServerApi<ExpeditionApi>(this.state, this.injectedApi, this.apiCache); }
+
+  status(): ExpeditionStatus { return this.view.status(); }
+  snapshotFor(relicId: string): ExpeditionRelicSnapshot { return this.view.snapshotFor(relicId); }
+
+  start(relicIds: readonly string[]): Promise<StartExpeditionResult> {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds] }) as Promise<StartExpeditionResult>;
+  }
+
+  /** 개발용 20층 바로가기. 일반 서버는 `developmentOnly`로 거절한다. */
+  prepareDevelopmentBossShortcut(relicIds: readonly string[]): Promise<DevelopmentBossShortcutResult> {
+    return this.api.startExpeditionRun({ relicIds: [...relicIds], shortcut: "boss" });
+  }
+
+  async completeRestNode(nodeId: string): Promise<boolean> { return (await this.api.completeExpeditionRest({ nodeId })).ok; }
+  async beginAugmentReward(nodeId: string): Promise<ExpeditionRunState["pendingAugmentReward"]> { return (await this.api.beginExpeditionAugment({ nodeId })).pending; }
+  async chooseAugment(selection: ExpeditionAugmentSelection): Promise<boolean> { return (await this.api.chooseExpeditionAugment({ selection })).ok; }
+  async prepareBossRequests(nodeId: string): Promise<{ requestId: string; settlementId: string; replayVersion: 2 } | null> { return (await this.api.prepareExpeditionBoss({ nodeId })).ids; }
+
+  /** 서버가 점수와 보스 방문을 한 저장으로 확정했으므로, 세션이 그 점수와 같은지만 확인한다. */
+  applyBossScore(nodeId: string, response: SubmitExpeditionBossScoreResponse): boolean {
+    const run = this.state.expedition.run;
+    return !!run && run.visitedNodeIds.includes(nodeId) && run.bossDamageScore === response.bossDamageScore;
+  }
+}
+
+export const expeditionManager = new ExpeditionClient();
 
 /** 어느 원격 경계에서 멈췄는지 UI와 테스트가 문자열 추측 없이 구분하는 실패다. */
 export class ExpeditionBossSettlementError extends Error {
@@ -326,13 +366,13 @@ export class ExpeditionBossSettlementFlow {
   private readonly scores = new Map<string, SubmitExpeditionBossScoreResponse>();
   private readonly settlements = new Map<string, SettleExpeditionRunResponse>();
 
-  constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionManager, "applyBossScore">) {}
+  constructor(private readonly api: Pick<GameApi, "submitExpeditionBossScore" | "settleExpeditionRun">, private readonly manager: Pick<ExpeditionClient, "applyBossScore">) {}
 
-  async finish(input: { requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[]): Promise<ExpeditionBossFinalResult> {
+  async finish(input: { replayVersion?: 2; requestId: string; settlementId: string; runId: string; nodeId: string }, actions: readonly ExpeditionBossAction[], stopAtMs?: number): Promise<ExpeditionBossFinalResult> {
     let score = this.scores.get(input.requestId);
     if (!score) {
       try {
-        score = await this.api.submitExpeditionBossScore({ requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions] });
+        score = await this.api.submitExpeditionBossScore({ replayVersion: input.replayVersion, requestId: input.requestId, runId: input.runId, nodeId: input.nodeId, actions: [...actions], ...(stopAtMs === undefined ? {} : { stopAtMs }) });
       } catch (error) { throw new ExpeditionBossSettlementError("score", error); }
       this.scores.set(input.requestId, score);
     }

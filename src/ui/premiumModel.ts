@@ -24,7 +24,13 @@ export function premiumCategoryOf(product: ProductDto): PremiumCategory {
 
 /** 라벨은 storefront 검증을 통과한 상품 중 그 갈래만 새 배열로 반환한다. */
 export function productsForPremiumCategory(products: readonly ProductDto[], category: PremiumCategory): ProductDto[] {
-  return premiumModel(products).filter((product) => premiumCategoryOf(product) === category);
+  const sharedPass = (product: ProductDto): boolean => product.id === "premium-raid-pass" || product.id === "premium-archaeology-pass";
+  return premiumModel(products).filter((product) => premiumCategoryOf(product) === category || (category === "pass" && sharedPass(product)))
+    .sort((a, b) => category === "subscription" ? subscriptionOrder(a) - subscriptionOrder(b) : 0);
+}
+
+function subscriptionOrder(product: ProductDto): number {
+  return product.id === "premium-adfree" ? 0 : product.id === "premium-monthly" ? 1 : 2;
 }
 
 /** 카드에 서는 받는 것 한 칸. 그림 키와 수량, 매일 받는 몫인지만 든다. */
@@ -46,17 +52,10 @@ export interface PremiumGrantTile {
  * `premiumDecorationNames`가 한 줄로 알린다.
  */
 export function premiumGrantTiles(product: Pick<ProductDto, "grants" | "passBenefit"> & { id?: string }): PremiumGrantTile[] {
-  // 진행 패스는 사는 순간 주는 것이 없고 길의 마디가 준다 — 카드에는 유료 칸 전체의 합을 세워 무엇을 사는지 말한다.
+  // 상품에는 즉시 구성품만 세운다. 진행 마디의 합계는 패스 화면에서 확인한다.
   const pass = product.id === undefined ? undefined : progressPassForProduct(product.id);
-  if (pass) {
-    // 즉시 보상 + 패스 보상 — 사는 순간 받는 몫이 먼저, 길 전체의 합이 그 뒤에 선다.
-    const instant: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
-      typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount, badge: "instant" as const }] : []);
-    const track = progressPassPaidTiles(pass.milestones.flatMap((milestone) => milestone.rewards)).map((tile) => ({ ...tile, badge: "pass" as const }));
-    return [...instant, ...track];
-  }
   const tiles: PremiumGrantTile[] = productGrantsToRewardItems(product.grants).flatMap((item) =>
-    typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount }] : []);
+    typeof item.icon === "string" ? [{ icon: item.icon, amount: item.amount, ...(pass && !product.passBenefit ? { badge: "instant" as const } : {}) }] : []);
   const daily = product.passBenefit?.dailyBonus;
   if (daily && "currency" in daily) tiles.push(...currencyRecordToRewardItems({ [daily.currency]: daily.amount }).map((item) => ({ icon: item.icon as string, amount: item.amount, daily: true })));
   if (daily && "itemId" in daily) tiles.push(...grantTiles([{ kind: "item", itemId: daily.itemId, name: daily.itemId, amount: daily.amount }]).map((tile) => ({ ...tile, daily: true })));

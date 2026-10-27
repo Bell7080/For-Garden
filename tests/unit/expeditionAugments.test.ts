@@ -19,7 +19,10 @@ describe("원정 증강 능력치", () => {
         if (augment.stacking.mode === "additiveCapped") expect(augment.stacking.capPercent).toBeGreaterThan(0);
         // 출혈은 공용 규칙을 참조하므로 카탈로그에 백분율을 복제하지 않는다.
         if (augment.effect.kind === "bleedOnAttack" || augment.effect.kind === "triggered") expect(augment.effect).not.toHaveProperty("percent");
-        else {
+        else if (augment.effect.kind === "flatStat") {
+          expect(augment.effect.points).toBeGreaterThan(0);
+          expect(augment.effect.points).toBeLessThanOrEqual(50);
+        } else {
           expect(augment.effect.percent).toBeGreaterThan(0);
           expect(augment.effect.percent).toBeLessThanOrEqual(40);
         }

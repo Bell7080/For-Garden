@@ -7,6 +7,9 @@ import { drawLayer, HOLO, slantedRect } from "./holo";
 import { addFramedIcon, addItemFrame, ITEM_FRAME } from "./itemFrame";
 import { COLOR, textStyle } from "./theme";
 
+/** 길드 코인 그림. 상단 줄(`topBarSlots`의 `guild`)과 같은 키다. */
+export const GUILD_COIN_ICON = "currency-guild-coin";
+
 /**
  * **값과 재화가 서는 자리는 글자가 아니라 액자다.**
  *
@@ -146,25 +149,27 @@ export function addPriceBar(
   y: number,
   width: number,
   label: string | undefined,
-  currency: WalletItemKey,
+  /** 지갑 칸이거나 길드 코인. 길드 코인은 길드원 행이 들고 있어 지갑 키가 아니다. */
+  currency: WalletItemKey | "guildCoin",
   amount: number,
-  options: { short?: boolean; height?: number; iconAlpha?: number } = {},
+  options: { short?: boolean; height?: number; iconAlpha?: number; valueSize?: number; plate?: boolean } = {},
 ): Phaser.GameObjects.Container {
   const height = options.height ?? PRICE_BAR.height;
   const bar = scene.add.container(x, y);
-  bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
+  // 판은 부르는 쪽이 따로 깔 수 있다(값이 곧 버튼인 구매 확인판) — 그때는 글자와 그림만 세운다.
+  if (options.plate !== false) bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
     fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45,
   }));
   if (label !== undefined) {
     bar.add(scene.add.text(-width / 2 + PRICE_BAR.padX, 0, label, textStyle({ role: "body", size: PRICE_BAR.labelSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   }
   const value = scene.add
-    .text(0, 0, formatCurrency(amount), textStyle({ role: "display", size: PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
+    .text(0, 0, formatCurrency(amount), textStyle({ role: "display", size: options.valueSize ?? PRICE_BAR.valueSize, color: options.short ? COLOR.dangerText : COLOR.accentText }))
     .setOrigin(1, 0.5)
     .setScale(1, 1.08)
     .setAlpha(options.iconAlpha ?? 1)
     .setShadow(2, 3, "#04060a", 0, true, true);
-  const iconKey = CURRENCY_ICON_BY_WALLET[currency];
+  const iconKey = currency === "guildCoin" ? GUILD_COIN_ICON : CURRENCY_ICON_BY_WALLET[currency];
   const hasIcon = scene.textures.exists(iconKey);
   // 그림과 수를 한 덩어리로 재고 나서 세운다 — 이름표가 있으면 오른쪽 변에, 없으면 가운데에.
   const span = value.width + (hasIcon ? PRICE_BAR.gap + PRICE_BAR.icon : 0);

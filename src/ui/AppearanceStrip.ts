@@ -20,6 +20,7 @@ import {
 import {
   canEquipAppearance, isAppearanceDimmed, isAppearanceUnrevealed, type AppearanceEntry, type AppearanceState,
 } from "./appearanceModel";
+import { withBusy } from "./BusyOverlay";
 
 /** 상태마다 한 낱말. 화면이 상태별로 문장을 새로 짓지 않는다. */
 const STATE_TEXT: Record<AppearanceState, "info.skin.equipped" | "info.skin.owned" | "info.skin.purchasable" | "info.skin.locked" | "info.skin.comingSoon"> = {
@@ -357,7 +358,7 @@ export class AppearanceStrip {
   private pressAction(): void {
     const entry = this.entries[this.focused];
     if (entry.skinId && entry.price && !relicSkinManager.owns(entry.skinId)) { void this.purchaseFocused(entry.skinId); return; }
-    this.equipFocused();
+    void this.equipFocused();
   }
 
   /** 값 조회·차감·지급을 한 처리로 맡기고, 화면은 확정된 결과만 다시 그린다. */
@@ -366,7 +367,7 @@ export class AppearanceStrip {
     this.busy = true;
     this.paint();
     try {
-      const result = await gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` });
+      const result = await withBusy(this.scene, gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` }));
       relicSkinManager.markPurchased(this.def.id, result.skinId);
       this.hooks.onWalletChange?.();
     } catch {
@@ -378,10 +379,15 @@ export class AppearanceStrip {
   }
 
   /** 지금 고른 외형을 입힌다. 성공 여부는 manager가 정하고 화면은 결과만 다시 그린다. */
-  private equipFocused(): void {
+  private async equipFocused(): Promise<void> {
     const entry = this.entries[this.focused];
     if (!canEquipAppearance(entry)) return;
-    const succeeded = entry.skinId ? relicSkinManager.equip(this.def.id, entry.skinId) : relicSkinManager.unequip(this.def.id);
+    let succeeded = false;
+    try {
+      succeeded = entry.skinId ? await relicSkinManager.equip(this.def.id, entry.skinId) : await relicSkinManager.unequip(this.def.id);
+    } catch {
+      return;
+    }
     if (!succeeded) return;
     this.hooks.onEquipped();
     this.paint();

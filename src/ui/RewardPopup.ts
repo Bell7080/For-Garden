@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { setDebugRewardPopup } from "../debug";
@@ -26,9 +27,10 @@ import type { PlayerExpReceipt } from "../core/playerLevel";
 import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
 import { guardInputAfterClose } from "./closeInputGuard";
+import { addRewardExpiryTag } from "./rewardExpiry";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
-export { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
+export { currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 
 /** 상자 개봉·임무 수령·발굴 수확이 공유할 수 있는 한 개의 확정 보상 표기다. */
 export interface RewardPopupOptions {
@@ -75,6 +77,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     options.onConfirm?.();
     return;
   }
+  audioManager?.playUi("ui.reward");
   // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
   if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 
@@ -97,6 +100,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     dimAlpha: options.dimAlpha ?? 0.46,
     // 영수증이므로 팝업 안이든 밖이든 화면 아무 곳이나 누르면 닫힌다.
     closeOnBackdrop: true,
+    closeOnBody: true,
     // 화면 어디를 눌러도 닫히므로 오른쪽 위 X는 중복 조작이다.
     hideCloseButton: true,
     onClose: () => {
@@ -106,7 +110,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       guardInputAfterClose(scene);
       options.onConfirm?.();
     },
-  }, (body, close) => {
+  }, (body) => {
     // 로비가 별도로 만든 우하단 뒤로가기(depth 2100)도 보상 확인 중에는 보이거나 눌리지 않는다.
     body.parentContainer?.setDepth(4000);
     if (options.playerExp) {
@@ -144,10 +148,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       .setDepth(4000);
     hint.setShadow(0, 3, "#000000", 4, false, true);
 
-    // 닫는 판은 **맨 아래**에 깐다 — 위에 덮으면 액자가 손을 받지 못해 눌러 볼 수 없다.
-    const hit = scene.add.rectangle(0, 20 + layout.growHalf, REWARD_POPUP.width, height - 80, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => close());
-    body.addAt(hit, 0);
+
   });
 }
 
@@ -175,6 +176,7 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
   // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
   // 이미 말하므로 `+`를 붙이지 않는다. 재화·아이템 그림은 이 프리팹이 안내창까지 잇는다.
   const framed = addFramedIcon(scene, holder, 0, 0, size, texture, { amount: formatCurrency(item.amount) });
+  addRewardExpiryTag(scene, framed, size, item);
   // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신하고, 이름 쪽지를 연다.
   if (typeof item.icon !== "string") {
     framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);

@@ -10,6 +10,7 @@ export const EXCAVATION_DE = {
   "excavation.harvestBusy": "Wird geerntet…",
   "excavation.harvest": "Ernten",
   "excavation.rewardTitle": "Grabungsbelohnungen",
+  "excavation.rewardTitleFull": "Bonus für volles Lager +10%",
   "excavation.harvestFailed": "Die Ernte ist fehlgeschlagen. Versuche es mit derselben Anfrage erneut.",
   "excavation.ad.unavailable": "Auch ohne Werbung funktioniert die normale Ernte.",
   "excavation.ad.cancelled": "Die Werbung wurde abgebrochen oder ist nicht bereit. Nutze die normale Ernte.",

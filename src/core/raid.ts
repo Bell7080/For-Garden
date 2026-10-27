@@ -1,5 +1,6 @@
 import { applyEncounterScaling, type EncounterRole } from "./levelDesign";
 import { RAID_DIFFICULTY, RAID_MOCK_PARTICIPANTS, RAID_SEASON_TOTAL_HP, RAID_SUMMON_DIFFICULTIES, RAID_BOSS_POOL, type RaidDifficulty } from "../data/raid";
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
 import { PREVIEW_FRIENDS } from "../data/friends";
 import { requiredBreakthroughForLevel } from "./levelDesign";
 import type { RelicDef } from "./types";
@@ -73,7 +74,7 @@ export interface RaidSeasonProgress {
 /** 누적 피해가 총량을 넘겨도 남은 체력은 0에서 멈추고 비율은 0~1을 벗어나지 않는다. */
 export function raidSeasonProgress(dealtDamage: number, totalHp: number = RAID_SEASON_TOTAL_HP): RaidSeasonProgress {
   const total = Math.max(0, Math.floor(totalHp));
-  const dealt = Math.max(0, Math.floor(dealtDamage));
+  const dealt = Math.min(total, Math.max(0, Math.floor(dealtDamage)));
   const remainingHp = Math.max(0, total - dealt);
   return { totalHp: total, dealtDamage: dealt, remainingHp, remainingRatio: total > 0 ? remainingHp / total : 0, defeated: total > 0 && dealt >= total };
 }
@@ -86,6 +87,7 @@ export interface RaidContributionEntry {
   damage: number;
   isMe: boolean;
   favoriteRelicId?: string;
+  frameId?: string;
 }
 
 /** 정렬 입력. 서버가 보내는 줄과 모의 참가자가 같은 모양으로 들어온다. */
@@ -95,6 +97,7 @@ export interface RaidContributionInput {
   damage: number;
   isMe?: boolean;
   favoriteRelicId?: string;
+  frameId?: string;
 }
 
 /**
@@ -111,7 +114,7 @@ export function raidContributionBoard(entries: readonly RaidContributionInput[],
     .slice(0, Math.max(0, limit))
     .map((entry, index) => ({
       rank: index + 1, playerId: entry.playerId, displayName: entry.displayName,
-      damage: Math.floor(entry.damage), isMe: entry.isMe === true, favoriteRelicId: entry.favoriteRelicId,
+      damage: Math.floor(entry.damage), isMe: entry.isMe === true, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId,
     }));
 }
 
@@ -139,6 +142,7 @@ function seedHash(seed: string): number {
  * 순서가 날마다 바뀐다.
  */
 export function mockRaidContributions(dayKey: string, dayProgress: number, twoRunBase = 30_000): RaidContributionInput[] {
+  if (!QA_TOOLS_ENABLED) return [];
   const played = Math.min(1, Math.max(0.15, dayProgress / 0.7));
   return RAID_MOCK_PARTICIPANTS.map(({ id, displayName, favoriteRelicId, pace }) => {
     // 흔들림은 0.78~1.22 사이라 같은 pace를 가진 둘도 날마다 앞뒤가 바뀐다.
@@ -156,6 +160,7 @@ export function mockRaidContributions(dayKey: string, dayProgress: number, twoRu
  * 100%를 넘는 날만 토벌되고, 나머지 날은 깎은 만큼의 보상만 나간다 — 잡지 못해도 되는 보스다.
  */
 export function mockRaidWorldDamage(dayKey: string, dayProgress: number, totalHp: number = RAID_SEASON_TOTAL_HP): number {
+  if (!QA_TOOLS_ENABLED) return 0;
   const reach = 0.55 + seedHash(`${dayKey}:world`) * 0.55;
   // 초반에 빨리 밀리고 저녁에 느려지는 곡선이다 — 접속이 몰리는 시간을 흉내 낸다.
   const curve = 1 - (1 - Math.min(1, Math.max(0, dayProgress))) ** 2;
@@ -185,7 +190,7 @@ function raidBossScaledStats(base: RelicDef, difficulty: RaidDifficulty): RelicD
 /**
  * 최대 체력 비례 피해(출혈·뇌진탕)가 레이드 보스에게서 재는 체력 — **성장으로 얻은 체력**이다.
  *
- * 판 안의 최대 체력은 공유 게이지의 한 칸(`RaidDifficultySpec.bodyHp`)이라 성장 체력의 여러 배다. 그
+ * 판 안의 최대 체력은 입장 당시 남은 공유 HP라 성장 체력의 여러 배다. 그
  * 값으로 비율을 재던 때는 출혈 한 번이 판 전체의 타격보다 컸다 — 비율 피해는 **그 개체가 얼마나
  * 단단한가**를 재야 하므로 세기의 몫(레벨·유형)에서 잰다.
  */
@@ -195,11 +200,7 @@ export function raidBossPercentHpBasis(base: RelicDef, difficulty: RaidDifficult
 
 export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampage"): RelicDef {
   const scaled = raidBossScaledStats(base, difficulty);
-  /*
-   * **최대 체력만 성장이 아니라 난이도의 몸(`bodyHp`)에서 나온다.** 나머지 넷은 유형 표와 레벨이
-   * 그대로 정한다. 그 몸 하나가 공유 게이지의 한 칸이라, 머리 위 체력 바를 한 번 비우면 공유
-   * 게이지가 정확히 `1 / kills`만큼 줄어든다 — 두 줄이 같은 단위를 쓴다.
-   */
+  // 정의의 HP는 보호막 기준이다. 입장은 남은 공유 HP로 바꾸고, 비율 피해는 위의 성장 기준을 쓴다.
   return { ...base, encounterRole: RAID_BOSS_ROLE, stats: { ...scaled, hp: RAID_DIFFICULTY[difficulty].bodyHp } };
 }
 
@@ -211,6 +212,7 @@ export function raidBossDef(base: RelicDef, difficulty: RaidDifficulty = "rampag
  * 언제 읽어도 같은 값이다.
  */
 export function mockSummonRaidDamage(raidId: string, elapsedRatio: number, totalHp: number): number {
+  if (!QA_TOOLS_ENABLED) return 0;
   const reach = 0.6 + seedHash(`${raidId}:reach`) * 0.7;
   const curve = 1 - (1 - Math.min(1, Math.max(0, elapsedRatio))) ** 2;
   return Math.floor(totalHp * reach * curve);
@@ -254,7 +256,7 @@ export function mockSummonContributions(raidId: string, othersDamage: number): R
   const weights = PREVIEW_FRIENDS.map((friend) => 0.5 + seedHash(`${raidId}:${friend.id}`));
   const sum = weights.reduce((total, weight) => total + weight, 0);
   return PREVIEW_FRIENDS.map((friend, index) => ({
-    playerId: friend.id, displayName: friend.displayName, favoriteRelicId: friend.favoriteRelic?.relicId,
+    playerId: friend.id, displayName: friend.displayName, favoriteRelicId: friend.favoriteRelic?.relicId, frameId: friend.frameId,
     damage: Math.floor(othersDamage * weights[index]! / sum),
   }));
 }
@@ -266,17 +268,29 @@ export function mockSummonContributions(raidId: string, othersDamage: number): R
  * 깎인 비율만큼의 몫, 토벌된 판에만 붙는 몫. 내가 많이 깎을수록, 판이 많이 깎일수록 커진다.
  * 한 번도 치지 않았으면 아무것도 없다(`undefined`).
  */
-export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dealtRatio: number, defeated: boolean): { raidSigil: number } | undefined {
+export function raidSettlement(difficulty: RaidDifficulty, myDamage: number, dealtRatio: number, defeated: boolean): { raidSigil: number; gem: number } | undefined {
   if (!(myDamage > 0)) return undefined;
   const spec = RAID_DIFFICULTY[difficulty].settlement;
   const mine = Math.round(spec.mine * Math.min(1, myDamage / spec.mineTarget));
   const total = Math.round(spec.total * Math.min(1, Math.max(0, dealtRatio)));
-  return { raidSigil: Math.max(1, mine + total + (defeated ? spec.kill : 0)) };
+  const sigil = Math.max(1, mine + total + (defeated ? spec.kill : 0));
+  // 젬은 증표와 같은 비율로 차오르고 5 단위로 올림한다(`paidAmountUnit`의 10~99 구간 단위).
+  const gem = Math.ceil((spec.gems * sigil) / (spec.mine + spec.total + spec.kill) / 5) * 5;
+  return { raidSigil: sigil, gem: Math.min(spec.gems, Math.max(5, gem)) };
 }
 
-/** 한 판을 치고 곧바로 받는 골드. 그 판의 피해에 비례한다. */
-export function raidRunGold(runDamage: number, goldPerDamage: number): number {
-  return Math.max(0, Math.floor(runDamage * goldPerDamage));
+/**
+ * 한 판을 치고 곧바로 받는 증표·젬(1차). 그 판 피해가 `mineTarget`에 닿을수록 최대치로 차오른다.
+ * 정산(`raidSettlement`)이 판이 끝난 뒤 누적 점수로 따로 한 번 더 준다 — 젬은 5 단위로 올림한다.
+ *
+ * 인양 기록은 보스를 쓰러뜨린 판(`victory`)에서만 준다 — 못 쓰러뜨리고 끝난 판에는 증표·젬만 피해에 비례해 남는다.
+ */
+export function raidRunRewards(difficulty: RaidDifficulty, runDamage: number, victory: boolean): { raidSigil: number; gem: number; salvage: number } {
+  if (!(runDamage > 0)) return { raidSigil: 0, gem: 0, salvage: 0 };
+  const spec = RAID_DIFFICULTY[difficulty];
+  const share = Math.min(1, runDamage / spec.settlement.mineTarget);
+  const gem = Math.round(spec.run.gems * share);
+  return { salvage: victory ? Math.max(1, Math.round(spec.run.salvage * share)) : 0, raidSigil: Math.max(1, Math.round(spec.run.sigil * share)), gem: gem >= 10 ? Math.ceil(gem / 5) * 5 : Math.max(1, gem) };
 }
 
 /** 임시 표본의 ID 머리. 이 머리를 가진 판이 저장에 하나라도 있으면 다시 넣지 않는다. */

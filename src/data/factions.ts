@@ -70,7 +70,8 @@ export const SQUADS: Readonly<Record<SquadId, SquadDef>> = {
     duty: "복원체 침투 및 이터널 시티 파괴",
     allegiance: "enemy", hasEmblem: true,
     // 기록이 열린 세 개체는 적대 관계에서도 주인공의 직책을 그대로 불러 관계의 거리를 드러낸다.
-    researcherTitles: ["연구원"],
+    // 회수조는 연구원을 「연구원님」이라 깍듯이(그러나 서늘하게) 부른다.
+    researcherTitles: ["연구원", "연구원님"],
   },
   "sealed-abyss": {
     id: "sealed-abyss", name: "봉인된 어비스", latin: "Sealed Abyss",

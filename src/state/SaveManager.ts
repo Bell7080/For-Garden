@@ -1,17 +1,25 @@
+import { ancientStageFloor } from "../data/ancientStrataDifficulty";
+import { ROULETTE } from "../core/roulette";
+import { LOCAL_SAVE_FLAVOR, LOCAL_SAVE_STORAGE_KEYS, type LocalSaveFlavor } from "../core/saveStorage";
+import { cloneAttendanceState, createEmptyAttendanceState, isValidAttendanceState, normalizeAttendanceState } from "../core/attendance";
+import { isValidTutorialState, legacyTutorialState, migrateTutorialV50, normalizeTutorialState, createEmptyTutorialState } from "../core/tutorial";
+import { createEmptyRaidTicketDropState, isValidRaidTicketDropState, normalizeRaidTicketDropState } from "../core/raidTicketDrops";
+import { createEmptyAchievementState, isValidAchievementState, normalizeAchievementState } from "../core/achievementState";
 import { cloneDuelState, isValidDuelState, normalizeDuelState } from "../core/duelState";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { isRaidDifficulty } from "../data/raid";
-import { STAGES } from "../data/stages";
+import { ALL_STORY_STAGES as STAGES } from "../data/stages";
 import { BANNERS } from "../data/banners";
 import { BREAKTHROUGH_CAP } from "../core/relicProgression";
 import type { RelicProgress } from "../core/types";
 import { normalizePlayerCard } from "../core/playerCard";
 import { normalizePlayerLevel } from "../core/playerLevel";
-import { isValidLotStack } from "../core/itemLots";
+import { isValidLotStack, repairLegacyLotStacks } from "../core/itemLots";
+import { emptyServerJournal, isValidServerJournal } from "../core/serverJournal";
 import { normalizeExpeditionState } from "../core/expeditionPeriods";
 import { maxResearchPoints } from "../core/missions";
 import { createDefaultSession, createEmptyInteractionProgress, createEmptyProgressPassState, createInitialPlayerResearchProgress, type RaidInstanceState, type RaidState, type SaveData, type Session } from "./session";
-import { PROFILE_MODIFIERS } from "../data/profileModifiers";
+import { MAX_EQUIPPED_PROFILE_MODIFIERS, PROFILE_MODIFIERS } from "../data/profileModifiers";
 import { assertValidRuneInstance, type RuneInstance } from "../core/runes";
 import { normalizeSettings } from "../core/settings";
 import { AD_REWARD_SLOTS } from "../data/adRewards";
@@ -21,6 +29,7 @@ import { findItem } from "../data/items";
 import { EXPEDITION_AUGMENT_IDS, EXPEDITION_REWARD_IDS } from "../data/expedition";
 import { CAKE_OPERATION_TIERS } from "../data/cakeOperation";
 import { BOND_STORY_LEVELS } from "../core/relicStory";
+import { defaultLocalStorage } from "../core/safeStorage";
 import { relicStoryFor } from "../data/relicStories";
 import { BOUNTY_TIERS } from "../data/bounty";
 import { validateExpeditionMap } from "../core/expeditionMap";
@@ -46,9 +55,9 @@ function migrateV12Rune(definitionId: string): RuneInstance {
   return cloneRune(rune);
 }
 
-/** 키는 계정 연동 저장소와 충돌하지 않도록 로컬 프로토타입임을 명시한다. */
-export const SAVE_STORAGE_KEY = "eternal-city.local-save";
-export const CURRENT_SAVE_VERSION = 49;
+/** 일반·QA·자동화는 같은 origin에서도 서로 다른 로컬 기록을 사용한다. */
+export const SAVE_STORAGE_KEY = LOCAL_SAVE_STORAGE_KEYS[LOCAL_SAVE_FLAVOR];
+export const CURRENT_SAVE_VERSION = 52;
 
 /**
  * 연구도는 기간마다 상한이 다르다(일일 100 · 주간 500). 상한이 120 하나이던 때의 저장은 일일
@@ -225,6 +234,7 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
     && Array.isArray(run.selectedAugments) && run.selectedAugments.every(({ augmentId, targetRelicId }) => EXPEDITION_AUGMENT_IDS.includes(augmentId as never) && (targetRelicId === undefined || relicIds.includes(targetRelicId)))
     && (run.pendingAugmentReward === null || (typeof run.pendingAugmentReward.seed === "string" && nodeIds.includes(run.pendingAugmentReward.nodeId) && Number.isInteger(run.pendingAugmentReward.round) && run.pendingAugmentReward.round > 0 && Number.isInteger(run.pendingAugmentReward.totalRounds) && run.pendingAugmentReward.totalRounds >= run.pendingAugmentReward.round && Array.isArray(run.pendingAugmentReward.offers)))
     && rewardsValid && Number.isFinite(run.bossDamage) && run.bossDamage >= 0 && Number.isFinite(run.normalNodeScoreTotal) && run.normalNodeScoreTotal >= 0 && Number.isFinite(run.bossDamageScore) && run.bossDamageScore >= 0 && Number.isFinite(run.runScore) && run.runScore >= 0 && Number.isFinite(run.bestScore) && run.bestScore >= 0 && typeof run.settled === "boolean" && (run.settlementId === null || typeof run.settlementId === "string")
+    && (run.bossReplayVersion === undefined || run.bossReplayVersion === 2)
     && (run.bossSubmissionId === null || typeof run.bossSubmissionId === "string") && (run.bossSettlementId === null || typeof run.bossSettlementId === "string");
   return valid ? cloneExpeditionRun(run) : null;
 }
@@ -234,11 +244,16 @@ function normalizeExpeditionRun(value: unknown, ownedIds: readonly string[]): Ex
 const INTERACTION_SLOT_LIMIT = 32;
 
 export class SaveManager {
-  constructor(private readonly storage: StorageLike | undefined = globalThis.localStorage) {}
+  private readonly storageKey: string;
+
+  constructor(private readonly storage: StorageLike | undefined = defaultLocalStorage(), flavor: LocalSaveFlavor = LOCAL_SAVE_FLAVOR) {
+    this.storageKey = LOCAL_SAVE_STORAGE_KEYS[flavor];
+  }
 
   /** JSON 배열을 런타임 Set으로 되돌린 검증 완료 세션을 반환한다. */
   load(): Session | null {
-    const raw = this.storage?.getItem(SAVE_STORAGE_KEY);
+    let raw: string | null | undefined;
+    try { raw = this.storage?.getItem(this.storageKey); } catch { return null; }
     if (raw === null || raw === undefined) return null;
     let parsed: unknown;
     try {
@@ -256,6 +271,13 @@ export class SaveManager {
     return this.toSaveData(state);
   }
 
+  /** 저장소에 쓰지 않고 마이그레이션·검증만 거쳐 세션으로 되돌린다. 서버가 보관한 상태를 읽을 때 쓴다. */
+  parse(input: unknown): Session {
+    const data = this.migrate(input);
+    this.validate(data);
+    return this.toSession(data);
+  }
+
   /** 다운로드 본문은 불신 입력으로 취급하고 마이그레이션·검증 후에만 로컬 저장으로 확정한다. */
   importRemote(input: unknown): Session {
     const data = this.migrate(input);
@@ -268,7 +290,8 @@ export class SaveManager {
   /** 상태 확정 경계에서 Set을 배열로 바꾸고 한 번에 교체 저장한다. */
   save(state: Session): void {
     const data = this.toSaveData(state);
-    this.storage?.setItem(SAVE_STORAGE_KEY, JSON.stringify(data));
+    // 쓰기 실패는 일부러 올린다 — 서버 경계(persist)가 이 예외로 지급을 되돌리고 같은 요청의 재시도를 받는다.
+    this.storage?.setItem(this.storageKey, JSON.stringify(data));
   }
 
   /** Set과 중첩 객체를 JSON 안전 복사본으로 바꾸는 단일 변환점이다. */
@@ -300,6 +323,7 @@ export class SaveManager {
       selectedStageId: state.selectedStageId,
       party: [...state.party],
       clearedStageIds: [...state.cleared],
+      ...(state.ancientSeason ? { ancientSeason: state.ancientSeason } : {}),
       ownedRelicIds: [...state.owned],
       favorite: state.favorite,
       bookmarkedRelicIds: [...state.bookmarked],
@@ -314,7 +338,7 @@ export class SaveManager {
       // 깬 등급 목록도 저장 뒤 호출자가 바꾸지 못하도록 복사한다.
       bounty: { ...state.bounty, clearedTierIds: [...state.bounty.clearedTierIds] },
       // 임무 진행 객체와 수령 배열도 호출자가 저장 후 바꾸지 못하도록 복사한다.
-      missions: { ...state.missions, progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
+      missions: { ...state.missions, ...(state.missions.lifetime ? { lifetime: { ...state.missions.lifetime } } : {}), progress: { ...state.missions.progress }, claimedIds: [...state.missions.claimedIds], researchPoints: { ...state.missions.researchPoints }, claimedResearchStageIds: [...state.missions.claimedResearchStageIds] },
       // 구매 제한도 지급과 같은 저장 단위에 포함해 재실행으로 제한이 풀리지 않게 한다.
       productPurchases: Object.fromEntries(Object.entries(state.productPurchases).map(([id, value]) => [id, { ...value }])),
       // 광고 검증 토큰은 제외하고 UTC 일자·횟수·멱등 ID만 독립 복사한다.
@@ -326,6 +350,12 @@ export class SaveManager {
       relicStory: cloneRelicStory(state.relicStory),
       progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
       duel: state.duel ? cloneDuelState(state.duel) : normalizeDuelState(undefined, [...state.owned]),
+      claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
+      attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
+      raidTicketDrops: { ...(state.raidTicketDrops ?? createEmptyRaidTicketDropState()) },
+      achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
+      tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
+      serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal()),
     };
     this.validate(data);
     return data;
@@ -333,7 +363,7 @@ export class SaveManager {
 
   /** 로그아웃/계정 전환에서 사용할 저장 제거다. 새게임 UI를 만들지는 않는다. */
   reset(): void {
-    this.storage?.removeItem(SAVE_STORAGE_KEY);
+    try { this.storage?.removeItem(this.storageKey); } catch { /* 막힌 저장소에는 지울 사본도 없다 */ }
   }
 
   /** 버전 없는 초기 프로토타입 저장을 명시적으로 v1 계약에 올린다. */
@@ -356,7 +386,7 @@ export class SaveManager {
     const readInteractionJournalIds = Array.isArray(legacy.readInteractionJournalIds) ? legacy.readInteractionJournalIds.filter((id: unknown) => typeof id === "string" && knownJournalIds.has(id)) : [];
     // 수식어 도입 전 저장은 미획득으로 시작하며 표시 문자열을 ID로 추측하지 않는다.
     const earnedProfileModifierIds = Array.isArray(legacy.earnedProfileModifierIds) ? legacy.earnedProfileModifierIds : [];
-    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds : [];
+    const equippedProfileModifierIds = Array.isArray(legacy.equippedProfileModifierIds) ? legacy.equippedProfileModifierIds.slice(0, MAX_EQUIPPED_PROFILE_MODIFIERS) : [];
     // v25 이전에는 프로필 임시 상수만 있었으므로 모든 기존 저장을 레벨 1, 경험치 0으로 명시 이관한다.
     // 요구 경험치는 저장값이 아니라 늘 공식에서 다시 구한다 — 곡선을 고쳐도 옛 저장이 옛 요구치를 들고 있지 않게.
     const playerResearch = Number(legacy.saveVersion) >= 25 && legacy.playerResearch && typeof legacy.playerResearch === "object"
@@ -416,7 +446,7 @@ export class SaveManager {
     const settings = normalizeSettings(legacy.settings);
     // 현재 이월 그룹만 정규화하며 삭제된 그룹 키는 버리고 새 그룹은 기본 상태로 만든다.
     const savedGroups = legacy.gachaPityByGroup && typeof legacy.gachaPityByGroup === "object"
-      ? legacy.gachaPityByGroup as Record<string, { pullsSinceSsr?: unknown; pickupGuaranteed?: unknown; totalPulls?: unknown }> : {};
+      ? legacy.gachaPityByGroup as Record<string, { pullsSinceSsr?: unknown; pickupGuaranteed?: unknown; totalPulls?: unknown; discountTens?: unknown }> : {};
     const legacyBannerPity = legacy.pullCountSinceHighestRarity && typeof legacy.pullCountSinceHighestRarity === "object"
       ? legacy.pullCountSinceHighestRarity as Record<string, unknown> : {};
     // v7까지의 배너별 카운터는 현재 배너가 속한 그룹으로 옮긴다. 같은 그룹이면 가장 큰 진행을 보존한다.
@@ -426,7 +456,8 @@ export class SaveManager {
       const legacyCount = Math.max(0, ...BANNERS.filter((banner) => banner.pityGroupId === groupId).map((banner) => Number(legacyBannerPity[banner.id]) || 0));
       // 횟수 제한 배너의 누적 횟수(v41, 첫 복원 연구)는 있으면 그대로 보존한다.
       const totalPulls = Number.isInteger(saved?.totalPulls) ? { totalPulls: saved!.totalPulls as number } : {};
-      return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false, ...totalPulls }];
+      const discountTens = Number.isInteger(saved?.discountTens) && (saved!.discountTens as number) > 0 ? { discountTens: saved!.discountTens as number } : {};
+      return [groupId, { pullsSinceSsr: saved?.pullsSinceSsr ?? legacyCount, pickupGuaranteed: saved?.pickupGuaranteed ?? false, ...totalPulls, ...discountTens }];
     }));
     // DNA 조각 도입 전 저장도 별도 초기화 없이 0개로 복구한다.
     const savedWallet = legacy.wallet as (Partial<SaveData["wallet"]> & { weeds?: unknown }) | undefined;
@@ -461,9 +492,18 @@ export class SaveManager {
     // 렐릭 이야기(v44) 도입 전 저장은 답변·읽은 장이 없고, 처음 만난 날이 없는 개체는 질문이 모두 열린다.
     const relicStory = normalizeRelicStory(legacy.relicStory);
     // 진행 패스(v45) 도입 전 저장은 받은 마디도 레이드 입장 수도 없다.
-    const progressPasses = normalizeProgressPasses(legacy.progressPasses);
+    const progressPasses = normalizeProgressPasses(legacy.progressPasses, legacy.saveVersion === undefined || Number(legacy.saveVersion) < 52);
     // 결투장(v47) 도입 전 저장은 점수 0으로 시작한다. 잃을 기록이 없다. v49부터 빈 방어덱은 기본 셋으로 채운다.
     const duel = normalizeDuelState(legacy.duel, Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds as string[] : []);
+    // 우편 수령·출석·토벌권 덤은 v49 위에 더한 칸이라 없으면 빈 모양으로 채운다(저장 버전을 올리지 않는다).
+    const claimedMailIds = Array.isArray(legacy.claimedMailIds) ? [...new Set((legacy.claimedMailIds as unknown[]).filter((id): id is string => typeof id === "string"))] : [];
+    const attendance = normalizeAttendanceState(legacy.attendance);
+    const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
+    const achievements = normalizeAchievementState(legacy.achievements);
+    // 튜토리얼 도입 전 저장은 클리어 기록으로 시작점을 정한다(저장 버전을 올리지 않는다). 이미 있는 값은 순서만 바로잡는다.
+    const tutorial = legacy.tutorial === undefined
+      ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? (legacy.clearedStageIds as unknown[]).filter((id): id is string => typeof id === "string") : [])
+      : Number(legacy.saveVersion ?? 0) <= 50 ? migrateTutorialV50(legacy.tutorial) : normalizeTutorialState(legacy.tutorial);
     // 현상수배 도입(v38) 전 저장은 깬 등급이 없으므로 1급만 열린 채로 시작한다. 하루 입장 제한을
     // 걷어 낸 뒤로는 예전 저장의 날짜·횟수(`date`·`entries`)를 버리고 깬 등급만 옮긴다.
     const savedBounty = legacy.bounty as Partial<SaveData["bounty"]> | undefined;
@@ -471,12 +511,22 @@ export class SaveManager {
     // 임무 도입 전 저장은 기간 키가 비어 있어 다음 서버 접근에서 현재 UTC 기간으로 정규화된다.
     const savedMissions = legacy.missions as Partial<SaveData["missions"]> | undefined;
     // 구버전 저장은 이미 완료된 임무를 다시 연구도로 환산하지 않고 0에서 안전하게 시작한다.
-    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [] };
+    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [], ...(savedMissions?.lifetime && typeof savedMissions.lifetime === "object" ? { lifetime: Object.fromEntries(Object.entries(savedMissions.lifetime).filter(([, value]) => Number.isInteger(value) && (value as number) >= 0)) } : {}) };
     // 상품 도입 전 저장에는 구매 이력이 없으므로 빈 기록으로 안전하게 시작한다.
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     // v16 이전 저장은 광고를 한 번도 받지 않은 상태에서 안전하게 시작한다.
     const savedAds = legacy.dailyAdRewards as Partial<SaveData["dailyAdRewards"]> | undefined;
-    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot: savedAds?.claimsBySlot ?? {}, requestIds: savedAds?.requestIds ?? [] };
+    const claimsBySlot = savedAds?.claimsBySlot && typeof savedAds.claimsBySlot === "object" ? { ...savedAds.claimsBySlot } : {};
+    // v0.324의 광고 한 번은 돌림판 세 번을 한꺼번에 열었다. 이후 슬롯을 1회씩 세는 키로
+    // 바꿨으므로, 이미 정상 수령한 구형 한 건만 새 키의 세 건으로 옮긴다. 옛 키를 그대로 두면
+    // 현행 허용 슬롯 검증이 저장 전체를 손상으로 판정해 로그인 직후 서버 진행 연결이 막힌다.
+    const currentRouletteClaims = claimsBySlot[ROULETTE.adSlot];
+    if (claimsBySlot[ROULETTE.legacyAdSlot] === 1
+      && (currentRouletteClaims === undefined || Number.isInteger(currentRouletteClaims) && currentRouletteClaims >= 0 && currentRouletteClaims <= ROULETTE.adLimit)) {
+      claimsBySlot[ROULETTE.adSlot] = Math.max(currentRouletteClaims ?? 0, ROULETTE.adLimit);
+      delete claimsBySlot[ROULETTE.legacyAdSlot];
+    }
+    const dailyAdRewards = { date: savedAds?.date ?? "", claimsBySlot, requestIds: savedAds?.requestIds ?? [] };
     // 원정 도입 전 저장은 기록과 진행 중 편성을 추측하지 않고 새 주간 0회로 시작한다.
     const savedExpedition = legacy.expedition as Partial<SaveData["expedition"]> | undefined;
     const ownedIds = Array.isArray(legacy.ownedRelicIds) ? legacy.ownedRelicIds.filter((id): id is string => typeof id === "string") : [];
@@ -564,13 +614,13 @@ export class SaveManager {
     // v20 이전에는 중첩 가방이 없었다. 지갑과 룬은 기존 단일 기준에 남겨 빈 스택만 보충한다.
     // 재료 칸에 있던 토벌 증표는 위에서 지갑으로 옮겼으므로 여기서 걷어 낸다 — 남겨 두면
     // 같은 증표가 가방과 지갑 두 곳에 서고, 검증이 "재화는 가방에 없다"로 저장을 되돌린다.
-    const itemInventory = (Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
-      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil");
+    const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : [])
+      .filter((stack: { itemId?: unknown }) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
-    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, CURRENT_SAVE_VERSION];
+    if (legacy.saveVersion === undefined) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
+    const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion as number)) throw new SaveDataError(`지원하지 않는 저장 버전입니다: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel } as unknown as SaveData;
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial } as unknown as SaveData;
   }
 
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
@@ -599,7 +649,7 @@ export class SaveManager {
     if (!Array.isArray(data.ownedRelicSkinIds) || defaultUnlockedRelicSkinIds().some((id) => !data.ownedRelicSkinIds.includes(id)) || new Set(data.ownedRelicSkinIds).size !== data.ownedRelicSkinIds.length || data.ownedRelicSkinIds.some((id) => !skinsById.has(id))) fail("렐릭 스킨 소유 정보가 올바르지 않습니다.");
     if (!data.equippedRelicSkinIds || typeof data.equippedRelicSkinIds !== "object" || Array.isArray(data.equippedRelicSkinIds) || Object.entries(data.equippedRelicSkinIds).some(([relicId, skinId]) => { const skin = skinId && skinsById.get(skinId); return !data.ownedRelicIds.includes(relicId) || !skin || !data.ownedRelicSkinIds.includes(skinId) || skin.relicId !== relicId; })) fail("렐릭 스킨 장착 정보가 올바르지 않습니다.");
     // 획득 목록은 알려진 고유 ID만, 장착 목록은 그 부분집합과 공용 상한만 허용한다.
-    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > 3) fail("프로필 수식어 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.earnedProfileModifierIds) || !Array.isArray(data.equippedProfileModifierIds) || data.earnedProfileModifierIds.some((id) => !modifierIds.has(id)) || data.equippedProfileModifierIds.some((id) => !data.earnedProfileModifierIds.includes(id)) || new Set(data.earnedProfileModifierIds).size !== data.earnedProfileModifierIds.length || new Set(data.equippedProfileModifierIds).size !== data.equippedProfileModifierIds.length || data.equippedProfileModifierIds.length > MAX_EQUIPPED_PROFILE_MODIFIERS) fail("프로필 수식어 정보가 올바르지 않습니다.");
     // 설정은 저장 전에 정규화되므로 검증 시 값이 바뀐다면 현재 계약이 아닌 손상 데이터다.
     if (JSON.stringify(data.settings) !== JSON.stringify(normalizeSettings(data.settings))) fail("설정 정보가 올바르지 않습니다.");
     if (!Array.isArray(data.completedStoryIds) || data.completedStoryIds.some((id) => typeof id !== "string") || new Set(data.completedStoryIds).size !== data.completedStoryIds.length) fail("완료 스토리 정보가 올바르지 않습니다.");
@@ -609,11 +659,11 @@ export class SaveManager {
     if (!relicIds.has(data.favorite) || !data.ownedRelicIds.includes(data.favorite)) fail("애착 렐릭이 올바르지 않습니다.");
     // 즐겨찾기는 여러 명이 될 수 있지만 보유하지 않은 렐릭이 섞이면 목록이 깨진다.
     if (!Array.isArray(data.bookmarkedRelicIds) || data.bookmarkedRelicIds.some((id) => !data.ownedRelicIds.includes(id)) || new Set(data.bookmarkedRelicIds).size !== data.bookmarkedRelicIds.length) fail("즐겨찾기 정보가 올바르지 않습니다.");
-    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId)) fail("스테이지 ID가 올바르지 않습니다.");
-    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id))) fail("클리어 진행이 올바르지 않습니다.");
+    if (data.selectedStageId !== null && !stageIds.has(data.selectedStageId) && ancientStageFloor(data.selectedStageId) === undefined) fail("스테이지 ID가 올바르지 않습니다.");
+    if (!Array.isArray(data.clearedStageIds) || data.clearedStageIds.some((id) => !stageIds.has(id) && ancientStageFloor(id) === undefined)) fail("클리어 진행이 올바르지 않습니다.");
     if (!data.wallet || !Number.isFinite(data.wallet.fossil) || data.wallet.fossil < 0 || !Number.isFinite(data.wallet.amber) || data.wallet.amber < 0 || !Number.isInteger(data.wallet.dnaFragments) || data.wallet.dnaFragments < 0 || !Number.isInteger(data.wallet.cheesecake) || data.wallet.cheesecake < 0) fail("재화가 올바르지 않습니다.");
     if (!Number.isInteger(data.wallet.raidSigil) || data.wallet.raidSigil < 0 || !Number.isInteger(data.wallet.salvageRecord) || data.wallet.salvageRecord < 0 || !Number.isInteger(data.wallet.duelEmblem) || data.wallet.duelEmblem < 0) fail("전리품 증표가 올바르지 않습니다.");
-    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || (data.gachaPityByGroup[id].totalPulls !== undefined && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls! < 0)))) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
+    if (!data.gachaPityByGroup || [...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].some((id) => !Number.isInteger(data.gachaPityByGroup[id]?.pullsSinceSsr) || data.gachaPityByGroup[id].pullsSinceSsr < 0 || typeof data.gachaPityByGroup[id].pickupGuaranteed !== "boolean" || (data.gachaPityByGroup[id].totalPulls !== undefined && (!Number.isInteger(data.gachaPityByGroup[id].totalPulls) || data.gachaPityByGroup[id].totalPulls! < 0)) || (data.gachaPityByGroup[id].discountTens !== undefined && (!Number.isInteger(data.gachaPityByGroup[id].discountTens) || data.gachaPityByGroup[id].discountTens! <= 0)))) fail("배너 그룹 천장 정보가 올바르지 않습니다.");
     if (!data.relicProgress || typeof data.relicProgress !== "object") fail("성장 정보가 없습니다.");
     // 보유 목록과 성장 레코드는 항상 정확히 같은 렐릭 집합이어야 한다.
     if (data.ownedRelicIds.some((id) => !data.relicProgress[id]) || Object.keys(data.relicProgress).some((id) => !data.ownedRelicIds.includes(id))) fail("보유 렐릭과 성장 정보가 일치하지 않습니다.");
@@ -639,7 +689,7 @@ export class SaveManager {
       || new Set(data.bounty.clearedTierIds).size !== data.bounty.clearedTierIds.length) fail("현상수배 진행 정보가 올바르지 않습니다.");
     if (!data.missions || typeof data.missions.dailyKey !== "string" || typeof data.missions.weeklyKey !== "string" || !data.missions.progress || typeof data.missions.progress !== "object" || Object.values(data.missions.progress).some((value) => !Number.isInteger(value) || value < 0) || !Array.isArray(data.missions.claimedIds) || new Set(data.missions.claimedIds).size !== data.missions.claimedIds.length || !data.missions.researchPoints || (["daily", "weekly"] as const).some((period) => { const value = data.missions.researchPoints[period]; return !Number.isInteger(value) || value < 0 || value > maxResearchPoints(period); }) || !Array.isArray(data.missions.claimedResearchStageIds) || data.missions.claimedResearchStageIds.some((id) => typeof id !== "string") || new Set(data.missions.claimedResearchStageIds).size !== data.missions.claimedResearchStageIds.length) fail("임무 진행 정보가 올바르지 않습니다.");
     if (!data.productPurchases || typeof data.productPurchases !== "object" || Object.values(data.productPurchases).some((value) => typeof value.periodKey !== "string" || !Number.isInteger(value.count) || value.count < 0)) fail("상품 구매 제한 정보가 올바르지 않습니다.");
-    const adLimits = Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc]));
+    const adLimits: Record<string, number> = { ...Object.fromEntries(AD_REWARD_SLOTS.map(({ id, dailyLimitUtc }) => [id, dailyLimitUtc])), [ROULETTE.counter]: ROULETTE.limit };
     // 삭제/변조된 슬롯과 정적 UTC 제한을 넘긴 저장은 서버 지급 이력으로 신뢰하지 않는다.
     if (!data.dailyAdRewards || typeof data.dailyAdRewards.date !== "string" || !data.dailyAdRewards.claimsBySlot || Object.entries(data.dailyAdRewards.claimsBySlot).some(([id, count]) => !(id in adLimits) || !Number.isInteger(count) || count < 0 || count > adLimits[id]) || !Array.isArray(data.dailyAdRewards.requestIds) || data.dailyAdRewards.requestIds.some((id) => typeof id !== "string" || id.length === 0) || new Set(data.dailyAdRewards.requestIds).size !== data.dailyAdRewards.requestIds.length) fail("일일 광고 수령 정보가 올바르지 않습니다.");
     if (!data.expedition || typeof data.expedition.weekKey !== "string" || typeof data.expedition.dayKey !== "string" || !Number.isInteger(data.expedition.playsToday) || data.expedition.playsToday < 0 || !Array.isArray(data.expedition.claimedRewardStageIds) || typeof data.expedition.bestAchievedAt !== "string" || !Number.isInteger(data.expedition.bestScore) || data.expedition.bestScore < 0 || !Number.isInteger(data.expedition.allTimeBestScore) || data.expedition.allTimeBestScore < 0 || !Array.isArray(data.expedition.lastParty) || data.expedition.lastParty.length > 3 || new Set(data.expedition.lastParty).size !== data.expedition.lastParty.length || data.expedition.lastParty.some((id) => !data.ownedRelicIds.includes(id)) || (data.expedition.run !== null && normalizeExpeditionRun(data.expedition.run, data.ownedRelicIds) === null)) fail("원정 진행 정보가 올바르지 않습니다.");
@@ -651,6 +701,17 @@ export class SaveManager {
     this.validateRelicStory(data);
     this.validateProgressPasses(data);
     if (!isValidDuelState(data.duel, data.ownedRelicIds)) fail("결투장 진행 정보가 올바르지 않습니다.");
+    if (data.ancientSeason !== undefined && (typeof data.ancientSeason !== "string" || !/^\d{4}-\d{2}$/.test(data.ancientSeason))) fail("고대 지층 시즌 정보가 올바르지 않습니다.");
+    if (!Array.isArray(data.claimedMailIds) || data.claimedMailIds.some((id) => typeof id !== "string") || new Set(data.claimedMailIds).size !== data.claimedMailIds.length) fail("우편 수령 정보가 올바르지 않습니다.");
+    if (!isValidAttendanceState(data.attendance)) fail("출석 정보가 올바르지 않습니다.");
+    if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail("토벌권 획득 정보가 올바르지 않습니다.");
+    if (!isValidAchievementState(data.achievements)) fail("업적 정보가 올바르지 않습니다.");
+    if (!isValidTutorialState(data.tutorial)) fail("튜토리얼 진행 정보가 올바르지 않습니다.");
+    if (data.missions.lifetime !== undefined && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || (value as number) < 0))) fail("임무 진행 정보가 올바르지 않습니다.");
+    if (data.serverJournal !== undefined && !isValidServerJournal(data.serverJournal)) fail("서버 처리 영수증이 올바르지 않습니다.");
+    if (data.expedition.pendingRankRewards !== undefined && (!Array.isArray(data.expedition.pendingRankRewards)
+      || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string")
+      || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward!.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail("원정 주간 보상 대기가 올바르지 않습니다.");
   }
 
   /** 받은 마디는 그 패스의 실제 문턱값만, 한 번씩만 허용한다. 레이드 입장 수는 0 이상의 정수다. */
@@ -703,14 +764,14 @@ export class SaveManager {
       settings: normalizeSettings(data.settings),
       completedStoryIds: new Set(data.completedStoryIds),
       observationRecords: data.observationRecords.map((record) => ({ ...record })),
-      selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
+      selectedStageId: data.selectedStageId, party: [...data.party], cleared: new Set(data.clearedStageIds), ...(data.ancientSeason ? { ancientSeason: data.ancientSeason } : {}), owned: new Set(data.ownedRelicIds), favorite: data.favorite, bookmarked: new Set(data.bookmarkedRelicIds),
       wallet: { ...data.wallet }, staminaUpdatedAt: data.staminaUpdatedAt, relicProgress: Object.fromEntries(Object.entries(data.relicProgress).map(([id, value]) => [id, cloneProgress(value)])),
       relicFragments: { ...data.relicFragments },
       runeInventory: data.runeInventory.map(cloneRune),
       gachaPityByGroup: Object.fromEntries(Object.entries(data.gachaPityByGroup).map(([id, pity]) => [id, { ...pity }])),
       dailyContent: { ...data.dailyContent, completedIds: [...data.dailyContent.completedIds], claimedRewardIds: [...data.dailyContent.claimedRewardIds] },
       bounty: { ...data.bounty, clearedTierIds: [...data.bounty.clearedTierIds] },
-      missions: { ...data.missions, progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
+      missions: { ...data.missions, ...(data.missions.lifetime ? { lifetime: { ...data.missions.lifetime } } : {}), progress: { ...data.missions.progress }, claimedIds: [...data.missions.claimedIds], researchPoints: { ...data.missions.researchPoints }, claimedResearchStageIds: [...data.missions.claimedResearchStageIds] },
       productPurchases: Object.fromEntries(Object.entries(data.productPurchases).map(([id, value]) => [id, { ...value }])),
       dailyAdRewards: { ...data.dailyAdRewards, claimsBySlot: { ...data.dailyAdRewards.claimsBySlot }, requestIds: [...data.dailyAdRewards.requestIds] },
       expedition: { ...data.expedition, claimedRewardStageIds: [...data.expedition.claimedRewardStageIds], pendingRankReward: data.expedition.pendingRankReward ? { ...data.expedition.pendingRankReward } : null, lastParty: [...data.expedition.lastParty], run: data.expedition.run ? cloneExpeditionRun(data.expedition.run) : null },
@@ -719,6 +780,12 @@ export class SaveManager {
       relicStory: cloneRelicStory(data.relicStory),
       progressPasses: cloneProgressPasses(data.progressPasses),
       duel: cloneDuelState(data.duel),
+      claimedMailIds: [...data.claimedMailIds],
+      attendance: cloneAttendanceState(data.attendance),
+      serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
+      raidTicketDrops: { ...data.raidTicketDrops },
+      achievements: { claimed: { ...data.achievements.claimed }, goldPeak: data.achievements.goldPeak },
+      tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}) },
     };
   }
 }
@@ -729,7 +796,7 @@ function cloneProgressPasses(passes: SaveData["progressPasses"]): SaveData["prog
 }
 
 /** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
-function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
+function normalizeProgressPasses(value: unknown, legacyLevelThresholds = false): SaveData["progressPasses"] {
   const source = (value && typeof value === "object" ? value : {}) as Partial<SaveData["progressPasses"]>;
   const raidRuns = Number.isSafeInteger(source.raidRuns) && Number(source.raidRuns) >= 0 ? Number(source.raidRuns) : 0;
   // v46 전 저장은 무료 칸이 없었다 — 빈 표로 올라와 지나온 무료 칸을 모두 받을 수 있다.
@@ -739,7 +806,11 @@ function normalizeProgressPasses(value: unknown): SaveData["progressPasses"] {
     .filter(([id, list]) => Array.isArray(list) && findProgressPass(id))
     .map(([id, list]) => {
       const valid = new Set(findProgressPass(id)!.milestones.map(({ threshold }) => threshold));
-      return [id, [...new Set(list as number[])].filter((threshold) => valid.has(threshold))];
+      // v52: 받은 보상을 같은 순번의 새 문턱으로 옮겨 중복 수령을 막는다.
+      const oldLevels = [3, 5, 8, 10, 13, 15, 18, 20, 25, 30, 35, 40, 45, 50, 60];
+      const thresholds = (list as number[]).map((threshold) => id === "level" && legacyLevelThresholds
+        ? (oldLevels.indexOf(threshold) + 1) * 2 : threshold);
+      return [id, [...new Set(thresholds)].filter((threshold) => valid.has(threshold))];
     }));
   return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
 }
@@ -799,6 +870,7 @@ function isRaidInstance(value: unknown): value is RaidInstanceState {
     && (raid.summonerName === undefined || typeof raid.summonerName === "string")
     && typeof raid.summonedByMe === "boolean"
     && Number.isInteger(raid.myDamage) && raid.myDamage! >= 0
+    && (raid.appliedDamage === undefined || Number.isInteger(raid.appliedDamage) && raid.appliedDamage >= 0 && raid.appliedDamage <= raid.myDamage!)
     && Number.isInteger(raid.attemptsUsed) && raid.attemptsUsed! >= 0
     && typeof raid.settled === "boolean";
 }

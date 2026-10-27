@@ -70,7 +70,7 @@ async function tapPreviewClose(page: Page): Promise<void> {
 
 test("고고학의 두 탭과 고고학 상점을 연다", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
-  await startAfterOpening(page, (session) => {
+  await startAfterOpening(page, (session) => { session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate";
     session.wallet.fossil = 10_000;
     session.wallet.gold = 500_000;
     session.wallet.rawStone = 5_000;
@@ -154,7 +154,7 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
   test.setTimeout(300_000);
   // **Phaser는 데이터 없이 시작한 씬의 지난 데이터를 그대로 남긴다.** 고고학 상점을 한 번 열면
   // 로비의 `scene.start("shop")`이 그 자리를 물려받아 일반 상점 자리에 고고학 상점이 떴다.
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate"; session.wallet.fossil = 10_000; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
 
@@ -178,7 +178,7 @@ test("고고학 상점을 다녀와도 로비 상점은 제 자리로 열린다"
 
 test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공개한다", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 10_000; });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate"; session.wallet.fossil = 10_000; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");
@@ -216,7 +216,10 @@ test("지층 한 칸은 타격까지 입력을 잠그고 선택한 결과만 공
 
 test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보기 → 탐사 시작", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
-  await startAfterOpening(page);
+  await startAfterOpening(page, (session) => {
+    session.cleared.add("1-10"); session.archaeology.lastSelectedSiteId = "garden-gate";
+    session.playerResearch = { level: 1, experience: 0, experienceToNext: 30 };
+  });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => scene(page)).toBe("lobby");
   await tapUntil(page, BASE_WIDTH / 10, BASE_HEIGHT - 180 + 90, "archaeology");

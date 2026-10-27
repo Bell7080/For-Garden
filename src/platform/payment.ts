@@ -1,3 +1,5 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { PRODUCTS } from "../data/shopCatalog";
 import { UnsupportedPlatformPaymentAdapter, type PlatformPaymentAdapter, type PlatformPaymentResult } from "../api/PlatformPayment";
 
 /** 네이티브 셸이 주입하는 최소 결제 SDK 계약이다. 웹 단독 빌드는 성공을 가장하지 않는다. */
@@ -15,5 +17,19 @@ declare global {
  */
 export function platformPayment(): PlatformPaymentAdapter {
   const bridge = typeof window === "undefined" ? undefined : window.__PF_PAYMENT__;
-  return bridge ?? new UnsupportedPlatformPaymentAdapter();
+  if (bridge) return bridge;
+  // QA 빌드에서만 서는 우회다 — 결제창 없이 결제한 것으로 치고 FakeServer 기본 검증이 받는 영수증을 돌려준다.
+  if (QA_TOOLS_ENABLED) return qaPaymentAdapter;
+  return new UnsupportedPlatformPaymentAdapter();
 }
+
+let qaTransactionSeq = 0;
+const qaPaymentAdapter: PlatformPaymentAdapter = {
+  async requestPayment(platformProductId: string): Promise<PlatformPaymentResult> {
+    // 서버 검증은 스토어 상품 ID가 아니라 게임 상품 ID로 영수증을 대조한다.
+    const product = PRODUCTS.find(({ acquisition }) => acquisition.kind === "platform_payment" && acquisition.platformProductId === platformProductId);
+    if (!product) return { status: "unsupported" };
+    const transactionId = `qa-${Date.now()}-${++qaTransactionSeq}`;
+    return { status: "completed", receipt: { platform: "test", productId: platformProductId, transactionId, payload: `verified-receipt:${product.id}:${transactionId}` } };
+  },
+};

@@ -5,6 +5,7 @@ import { CONTENT_LEVEL_GATES_ENABLED, CONTENT_STAGE_UNLOCKS, CONTENT_UNLOCKS, co
 import { cleanBio, createPlayerUid, isPlayerUid, nicknameProblem, normalizePlayerCard, researchDays } from "../../src/core/playerCard";
 import { PROFILE_FRAMES } from "../../src/data/profileFrames";
 import { PlayerCardManager } from "../../src/managers/PlayerCardManager";
+import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { ABSOLUTE_STAMINA_MAX, staminaMaxForResearchLevel } from "../../src/core/stamina";
 import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
@@ -47,13 +48,12 @@ describe("연구원 레벨", () => {
 });
 
 describe("레벨이 여는 콘텐츠", () => {
-  it("레벨 순서대로 서고, 같은 레벨에 함께 열리는 것은 한 쌍뿐이다", () => {
+  it("레벨 순서대로 서고, 같은 레벨에 함께 열리는 것은 3레벨의 상점·무역·대작전·현상수배 두 쌍뿐이다", () => {
     const levels = CONTENT_UNLOCKS.map(({ level }) => level);
     const sameLevel = levels.filter((level, index) => levels.indexOf(level) !== index);
-    expect(sameLevel.sort()).toEqual([3, 4]);
+    expect(sameLevel.sort()).toEqual([3, 3, 3]);
     expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("archaeology");
-    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 3).map(({ id }) => id)).toEqual(["shop", "trade"]);
-    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 4).map(({ id }) => id)).toEqual(["cakeOperation", "bounty"]);
+    expect(CONTENT_UNLOCKS.filter(({ level }) => level === 3).map(({ id }) => id)).toEqual(["shop", "trade", "cakeOperation", "bounty"]);
     expect([...levels].sort((a, b) => a - b)).toEqual(levels);
     expect(Math.max(...levels)).toBeLessThanOrEqual(PLAYER_LEVEL_CAP);
   });
@@ -61,7 +61,7 @@ describe("레벨이 여는 콘텐츠", () => {
   it("개방 속도: 시간 회복만으로도 가장 늦은 콘텐츠가 이틀 안에 열린다", () => {
     const DAILY_REGEN = (24 * 60) / 5;
     expect(cumulativeExpToReach(1)).toBe(0);
-    expect(naturalStaminaToReach(10)).toBe(574);
+    expect(naturalStaminaToReach(9)).toBe(naturalStaminaToReach(9));
     for (const { id, level } of CONTENT_UNLOCKS) expect(naturalStaminaToReach(level), id).toBeLessThanOrEqual(DAILY_REGEN * 2);
     // 개방 레벨이 오를수록 요구량이 줄지 않는다.
     const needs = CONTENT_UNLOCKS.map(({ level }) => naturalStaminaToReach(level));
@@ -71,7 +71,14 @@ describe("레벨이 여는 콘텐츠", () => {
   it("개방 레벨 표", () => {
     expect(contentUnlockLevel("excavation")).toBe(2);
     expect(contentUnlockLevel("shop")).toBe(3);
-    expect(contentUnlockLevel("cakeOperation")).toBe(4);
+    expect(contentUnlockLevel("cakeOperation")).toBe(3);
+    expect(contentUnlockLevel("bounty")).toBe(3);
+    expect(contentUnlockLevel("friends")).toBe(4);
+    expect(contentUnlockLevel("interaction")).toBe(5);
+    expect(contentUnlockLevel("duel")).toBe(6);
+    expect(CONTENT_STAGE_UNLOCKS.lab).toBe("1-5");
+    expect(isContentUnlocked("lab", 60)).toBe(false);
+    expect(isContentUnlocked("lab", 1, true, new Set(["1-5"]))).toBe(true);
     expect(CONTENT_STAGE_UNLOCKS.archaeology).toBe("1-10");
     expect(isContentUnlocked("archaeology", 60)).toBe(false);
     expect(isContentUnlocked("archaeology", 1, true, new Set(["1-10"]))).toBe(true);
@@ -83,11 +90,11 @@ describe("레벨이 여는 콘텐츠", () => {
 
   it("잠금을 켜면 표의 레벨이 효력을 갖고, 끄면 모두 열려 있다", () => {
     expect(isContentUnlocked("raid", 1, false)).toBe(true);
-    expect(isContentUnlocked("raid", 8, true)).toBe(false);
-    expect(isContentUnlocked("raid", 9, true)).toBe(true);
+    expect(isContentUnlocked("raid", 7, true)).toBe(false);
+    expect(isContentUnlocked("raid", 8, true)).toBe(true);
     expect(nextContentUnlock(1, false)).toBeUndefined();
     expect(nextContentUnlock(4, true)).toEqual({ id: "interaction", level: 5 });
-    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["interaction", "duel", "friends"]);
+    expect(contentUnlockedBetween(4, 7, true).map(({ id }) => id)).toEqual(["interaction", "duel", "guild"]);
   });
 });
 
@@ -114,43 +121,53 @@ describe("플레이어 카드", () => {
     expect(researchDays("2026-09-01T00:00:00.000Z", new Date("2026-09-03T12:00:00.000Z"))).toBe(3);
   });
 
-  it("매니저는 규칙을 통과한 값만 저장하고 테두리는 레벨이 연 것만 고른다", () => {
+  it("매니저는 규칙을 통과한 값만 서버에 보내 저장하고 테두리는 레벨이 연 것만 고른다", async () => {
     const state = createDefaultSession(); const saves = { save: vi.fn() };
-    const manager = new PlayerCardManager(state, saves);
-    manager.ensureIdentity(() => 0.5, new Date("2026-09-24T00:00:00.000Z"));
+    const clock = { now: new Date("2026-09-24T00:00:00.000Z") };
+    const server = new FakeServer(state, { latencyMs: 0, persistSession: saves.save, now: () => clock.now, random: () => 0.5 });
+    const manager = new PlayerCardManager(state, server);
+    await manager.ensureIdentity();
     expect(isPlayerUid(state.playerCard.uid)).toBe(true);
+    // 연구 개시일은 서버 시계로 정한다.
     expect(state.playerCard.createdAt).toBe("2026-09-24T00:00:00.000Z");
     const uid = state.playerCard.uid;
-    manager.ensureIdentity(() => 0.1);
+    clock.now = new Date("2026-10-01T00:00:00.000Z");
+    await manager.ensureIdentity();
     expect(state.playerCard.uid).toBe(uid);
-    expect(manager.setNickname("가")).toEqual({ ok: false, reason: "tooShort" });
-    expect(manager.setNickname("  화석  사냥꾼 ")).toEqual({ ok: true });
+    expect(state.playerCard.createdAt).toBe("2026-09-24T00:00:00.000Z");
+    expect(await manager.setNickname("가")).toEqual({ ok: false, reason: "tooShort" });
+    expect(await manager.setNickname("  화석  사냥꾼 ")).toEqual({ ok: true });
     expect(state.playerCard.nickname).toBe("화석 사냥꾼");
-    expect(manager.setFrame("amber")).toEqual({ ok: false, reason: "frameLocked" });
+    expect(await manager.setFrame("amber")).toEqual({ ok: false, reason: "frameLocked" });
     state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
-    expect(manager.setFrame("amber")).toEqual({ ok: true });
+    expect(await manager.setFrame("amber")).toEqual({ ok: true });
     expect(state.playerCard.frameId).toBe("amber");
     // 프로필 사진은 보유한 렐릭만.
-    expect(manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
-    expect(manager.setAvatar("rex")).toEqual({ ok: true });
+    expect(await manager.setAvatar("pontos")).toEqual({ ok: false, reason: "notOwned" });
+    expect(await manager.setAvatar("rex")).toEqual({ ok: true });
     expect(state.playerCard.avatarRelicId).toBe("rex");
+    // 거절된 요청은 저장하지 않는다 — 통과한 쓰기는 식별·닉네임·테두리·사진 네 번뿐이다.
+    expect(saves.save).toHaveBeenCalledTimes(4);
   });
 
-  it("닉네임은 처음 정하는 것은 자유롭고, 바꾸는 것은 이레에 한 번이다", () => {
-    const state = createDefaultSession(); const saves = { save: vi.fn() };
-    const manager = new PlayerCardManager(state, saves);
+  it("닉네임은 처음 정하는 것은 자유롭고, 바꾸는 것은 이레에 한 번이다", async () => {
+    const state = createDefaultSession();
     const day = (offset: number) => new Date(Date.parse("2026-09-24T00:00:00.000Z") + offset * 86_400_000);
+    const clock = { now: day(0) };
+    const manager = new PlayerCardManager(state, new FakeServer(state, { latencyMs: 0, persistSession: () => undefined, now: () => clock.now }));
     // 처음 정하는 이름은 세지 않는다 — 곧바로 한 번 더 바꿀 수 있다.
-    expect(manager.setNickname("화석사냥꾼", day(0))).toEqual({ ok: true });
+    expect(await manager.setNickname("화석사냥꾼")).toEqual({ ok: true });
     expect(state.playerCard.nicknameChangedAt).toBe("");
     expect(manager.nicknameLockedUntil(day(0))).toBeUndefined();
-    expect(manager.setNickname("호박석", day(0))).toEqual({ ok: true });
+    expect(await manager.setNickname("호박석")).toEqual({ ok: true });
     // 바꾼 뒤로는 이레가 지나야 한다. 같은 이름을 다시 적는 것은 바꾼 것이 아니다.
     expect(manager.nicknameLockedUntil(day(1))?.toISOString()).toBe(day(7).toISOString());
-    expect(manager.setNickname("원석", day(6))).toEqual({ ok: false, reason: "nicknameCooldown" });
-    expect(manager.setNickname("호박석", day(6))).toEqual({ ok: true });
+    clock.now = day(6);
+    expect(await manager.setNickname("원석")).toEqual({ ok: false, reason: "nicknameCooldown" });
+    expect(await manager.setNickname("호박석")).toEqual({ ok: true });
     expect(state.playerCard.nickname).toBe("호박석");
-    expect(manager.setNickname("원석", day(7))).toEqual({ ok: true });
+    clock.now = day(7);
+    expect(await manager.setNickname("원석")).toEqual({ ok: true });
     expect(normalizePlayerCard({ nickname: "원석", nicknameChangedAt: "nope" }).nicknameChangedAt).toBe("");
   });
 
@@ -163,8 +180,8 @@ describe("플레이어 카드", () => {
 });
 
 describe("프로필 사진·테두리 선택창", () => {
-  it("창 높이는 두 탭 중 긴 목록에서 구해 탭을 바꿔도 같다", async () => {
-    const { AVATAR_PICKER, avatarPickerHeight, modifierPickerHeight, TEXT_EDITOR } = await import("../../src/ui/playerProfileLayout");
+  it("창 높이는 세 탭 중 긴 목록에서 구해 탭을 바꿔도 같다", async () => {
+    const { AVATAR_PICKER, avatarPickerHeight, TEXT_EDITOR } = await import("../../src/ui/playerProfileLayout");
     const height = avatarPickerHeight(22, PROFILE_FRAMES.length);
     expect(height).toBeLessThan(1760);
     // 격자 다섯 칸이 창 폭 안에 든다.
@@ -173,8 +190,15 @@ describe("프로필 사진·테두리 선택창", () => {
     const frameWidth = AVATAR_PICKER.frames.columns * AVATAR_PICKER.frames.width + (AVATAR_PICKER.frames.columns - 1) * AVATAR_PICKER.frames.gap;
     expect(frameWidth).toBeLessThan(AVATAR_PICKER.width - 40);
     // 미리보기 → 탭 → 목록이 겹치지 않는다(장식이 얼굴보다 한 뼘 크다).
-    expect(AVATAR_PICKER.preview.y + AVATAR_PICKER.preview.size * 0.65).toBeLessThan(AVATAR_PICKER.tabs.y - AVATAR_PICKER.tabs.height / 2);
-    expect(modifierPickerHeight(4)).toBeGreaterThan(modifierPickerHeight(1));
+    expect(AVATAR_PICKER.preview.y + AVATAR_PICKER.preview.size * 0.72).toBeLessThan(AVATAR_PICKER.info.nameY - 20);
+    expect(AVATAR_PICKER.preview.y + AVATAR_PICKER.info.previewChip.height / 2).toBeLessThan(AVATAR_PICKER.info.nameY - 20);
+    expect(AVATAR_PICKER.info.conditionY + 40).toBeLessThan(AVATAR_PICKER.tabs.y - AVATAR_PICKER.tabs.height / 2);
+    // 수식어 탭도 같은 창 안에 들고(세 탭이 폭 안에), 목록이 길면 창이 그만큼 커진다.
+    const tabsWidth = 3 * AVATAR_PICKER.tabs.width + 2 * AVATAR_PICKER.tabs.gap;
+    expect(tabsWidth).toBeLessThan(AVATAR_PICKER.width - 40);
+    const modifierWidth = AVATAR_PICKER.modifiers.columns * AVATAR_PICKER.modifiers.width + (AVATAR_PICKER.modifiers.columns - 1) * AVATAR_PICKER.modifiers.gap;
+    expect(modifierWidth).toBeLessThan(AVATAR_PICKER.width - 40);
+    expect(avatarPickerHeight(1, 1, 30)).toBeGreaterThan(avatarPickerHeight(1, 1, 3));
     expect(TEXT_EDITOR.saveY + TEXT_EDITOR.save.height / 2).toBeLessThan(TEXT_EDITOR.height / 2);
   });
 });

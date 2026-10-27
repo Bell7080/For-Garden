@@ -14,6 +14,7 @@ export type PlatformPaymentResult =
 
 /** 앱스토어/플레이스토어 SDK를 UI와 게임 서버에서 격리하는 결제 어댑터 경계다. */
 export interface PlatformPaymentAdapter {
+  readonly supported?: boolean;
   /**
    * 스토어 상품 ID(`platformProductId`)로 결제창을 연다. 성공 영수증을 반환해도 지급은 서버 검증 뒤에만 가능하다.
    * SDK를 붙일 때는 이 메서드 하나만 구현하면 된다.
@@ -23,6 +24,7 @@ export interface PlatformPaymentAdapter {
 
 /** 결제 SDK가 없는 빌드의 기본 구현이다. 결제를 시작하지 않고 `unsupported`만 돌려준다. */
 export class UnsupportedPlatformPaymentAdapter implements PlatformPaymentAdapter {
+  readonly supported = false;
   async requestPayment(_platformProductId: string): Promise<PlatformPaymentResult> {
     return { status: "unsupported" };
   }

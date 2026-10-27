@@ -860,3 +860,58 @@ export const ARK_SD_METADATA: Omit<PuppetAsset, "url"> = {
   imageHeight: 1254,
   content: { left: 113, top: 31, right: 1128, bottom: 1224 },
 };
+
+/**
+ * **회수조 전신·SD 다섯.** ZIP 안 WebP의 실제 크기와 alpha > 16 경계, 프로젝트의 관절(중심1·머리1·
+ * 눈1·눈2·발1·발2)을 직접 재서 적었다. SD에는 눈 관절이 없어 `eyes: null`이다.
+ */
+export const IKANIXIA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 31, top: 26, right: 1054, bottom: 1373 },
+  joints: { center: [523, 343], head: [490, 255], eyes: [[468, 256], [520, 221]], feet: [[795, 2202], [857, 2012]] },
+};
+export const IKANIXIA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 117, top: 22, right: 1168, bottom: 1220 },
+  joints: { center: [690, 574], head: [603, 467], eyes: null, feet: [[537, 1200], [764, 1205]] },
+};
+export const ATRA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 126, top: 70, right: 942, bottom: 1393 },
+  joints: { center: [593, 294], head: [530, 233], eyes: [[512, 233], [565, 203]], feet: [[543, 1400], [370, 1322]] },
+};
+export const ATRA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 254, top: 89, right: 1070, bottom: 1203 },
+  joints: { center: [629, 640], head: [572, 472], eyes: null, feet: [[510, 1180], [689, 1187]] },
+};
+export const PULSI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 70, top: 46, right: 973, bottom: 1398 },
+  joints: { center: [647, 357], head: [736, 263], eyes: [[702, 216], [765, 256]], feet: [[854, 1504], [779, 1180]] },
+};
+export const PULSI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 97, top: 104, right: 1057, bottom: 1181 },
+  joints: { center: [698, 617], head: [757, 510], eyes: null, feet: [[876, 1164], [575, 1158]] },
+};
+export const NEURI_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1086, imageHeight: 1448,
+  content: { left: 28, top: 52, right: 1072, bottom: 1399 },
+  joints: { center: [499, 313], head: [470, 207], eyes: [[454, 206], [514, 174]], feet: [[424, 1648], [243, 1569]] },
+};
+export const NEURI_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 79, top: 87, right: 1177, bottom: 1197 },
+  joints: { center: [639, 565], head: [568, 441], eyes: null, feet: [[712, 1175], [430, 1166]] },
+};
+export const MIR_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1024, imageHeight: 1536,
+  content: { left: 31, top: 21, right: 990, bottom: 1491 },
+  joints: { center: [509, 409], head: [582, 339], eyes: [[530, 296], [605, 351]], feet: [[474, 1503], [716, 1479]] },
+};
+export const MIR_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 206, top: 33, right: 1054, bottom: 1217 },
+  joints: { center: [639, 565], head: [673, 489], eyes: null, feet: [[844, 1185], [577, 1198]] },
+};

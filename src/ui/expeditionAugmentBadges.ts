@@ -1,3 +1,4 @@
+import { expeditionTagAugmentLabel } from "./expeditionAugmentKeywords";
 import { getExpeditionAugment, type ExpeditionAugmentDef } from "../data/expeditionAugments";
 import { t } from "../i18n";
 import type { ExpeditionAugmentSelection } from "../core/expeditionRewards";
@@ -30,10 +31,15 @@ export interface AugmentBadgeView {
   targetRelicId?: string;
 }
 
+/** 증강이 거는 상태의 이름. 원래 상태 칩과 같은 낱말을 읽는다 — 상태 ID를 그대로 세우면 「bleed」가 화면에 선다. */
+const AUGMENT_STATUS_LABEL = { bleed: "status.bleed", curse: "status.curse", stun: "status.stun", stagger: "augment.status.stagger" } as const;
+
 /** 선택 화면과 확정 목록이 공유하는 효과 수치 표기다. 운영 데이터의 값을 문구에 다시 적지 않는다. */
 export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string {
+  const tagLabel = expeditionTagAugmentLabel(def);
+  if (tagLabel) return tagLabel;
   // 능력치 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 한 곳만 고쳐도 나머지가 옛 이름으로 남는다.
-  const labels = { maxHpPercent: "augment.stat.maxHp", defensePercent: "stat.def", resistancePercent: "stat.res", attackPowerPercent: "stat.atk", spellPowerPercent: "stat.ap", attackSpeedPercent: "stat.attackSpeed", initialShieldPercent: "augment.stat.initialShield", statusPotencyPercent: "augment.stat.statusPotency" } as const;
+  const labels = { maxHpPercent: "augment.stat.maxHp", defensePercent: "stat.def", resistancePercent: "stat.res", attackPowerPercent: "stat.atk", spellPowerPercent: "stat.ap", attackSpeedPercent: "stat.attackSpeed", moveSpeedPercent: "stat.moveSpeed", initialShieldPercent: "augment.stat.initialShield", statusPotencyPercent: "augment.stat.statusPotency" } as const;
   if (def.effect.kind in labels && "percent" in def.effect) return t("augment.percent", { label: t(labels[def.effect.kind as keyof typeof labels]), percent: def.effect.percent });
   if (def.effect.kind === "healAfterBattlePercent") return t("augment.healAfterBattle", { percent: def.effect.percent });
   if (def.effect.kind === "lowHpAttackPowerPercent") return t("augment.lowHpAttack", { threshold: def.effect.belowHpPercent, percent: def.effect.percent });
@@ -48,7 +54,7 @@ export function expeditionAugmentEffectLabel(def: ExpeditionAugmentDef): string 
     const payload = def.effect.payload;
     if (payload.kind === "shield") return t("augment.shield", { percent: payload.maxHpPercent });
     if (payload.kind === "ultimateCostReduction") return t("augment.ultimateCost", { percent: payload.percent });
-    if (payload.kind === "status") return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: payload.status.kind });
+    if (payload.kind === "status" && payload.status.kind in AUGMENT_STATUS_LABEL) return t("augment.statusTrigger", { trigger: t(def.effect.trigger === "onCritical" ? "augment.trigger.critical" : "augment.trigger.hit"), status: t(AUGMENT_STATUS_LABEL[payload.status.kind as keyof typeof AUGMENT_STATUS_LABEL]) });
     if (payload.kind === "conditionalBonusDamage") return t("augment.conditionalDamage", { status: t(payload.requiresStatus === "curse" ? "augment.status.curse" : "augment.status.stun"), percent: payload.percent });
     if (payload.kind === "lowHpDefense") return t("augment.lowHpDefense", { threshold: payload.belowHpPercent, percent: payload.defensePercent });
     if (payload.kind === "heal") return t("augment.healOnKill", { percent: payload.maxHpPercent });
@@ -125,4 +131,27 @@ export function expeditionAugmentRows(
     if (badges && badges.length > 0) rows.push({ relicId, badges });
   }
   return rows;
+}
+
+/** 현황 팝업 한 쪽. 첫 쪽은 전체 적용, 그 뒤는 편성 순서의 렐릭마다 한 쪽이다. */
+export type AugmentStatusPage =
+  | { kind: "party"; badges: AugmentBadgeView[] }
+  | { kind: "relic"; relicId: string; badges: AugmentBadgeView[] };
+
+/**
+ * 현황 팝업의 쪽 차례 — **1쪽 전체 적용, 2쪽부터 1번·2번·3번 렐릭**.
+ *
+ * 한 장에 모두 쌓던 때는 증강이 늘수록 줄이 판 밖으로 밀려났고, 같은 캐릭터의 몫을 찾으려면
+ * 얼굴 액자를 세어 내려가야 했다. 쪽은 받은 것이 없어도 비우지 않는다 — 렐릭 자리와 쪽 번호가
+ * 늘 같아야 "2쪽은 1번 렐릭"이 손에 붙는다.
+ */
+export function expeditionAugmentPages(
+  selections: readonly ExpeditionAugmentSelection[],
+  relicOrder: readonly string[],
+): AugmentStatusPage[] {
+  const groups = expeditionAugmentBadges(selections);
+  return [
+    { kind: "party", badges: groups.global },
+    ...relicOrder.map((relicId): AugmentStatusPage => ({ kind: "relic", relicId, badges: groups.byRelic[relicId] ?? [] })),
+  ];
 }

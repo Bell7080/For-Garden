@@ -13,7 +13,7 @@ export const STATUS_RU = {
   "status.frozen": "Заморозка",
   "status.frozen.detail": "осталось {time} · При разрушении {percent}% макс. ОЗ фикс. урона",
   "status.frenzy": "Неистовство",
-  "status.frenzy.detail": "Атакует своих · Скорость атаки +{percent}% · осталось {time}",
+  "status.frenzy.detail": "Атакует своих · осталось {time}",
   "status.taunt": "Провокация",
   "status.taunt.detail": "Бьёт только провокатора · осталось {time}",
   "status.bleed": "Кровотечение",
@@ -62,4 +62,6 @@ export const STATUS_RU = {
   "status.healCut.detail": "Получаемое лечение −{percent}% · осталось {time}",
   "status.sunken": "Тянущий вниз груз",
   "status.sunken.detail": "Скорость движения и атаки −{percent}% · осталось {time}",
+  "status.echo": "Эхо",
+  "status.echo.detail": "Осталось {time}",
 } as const;

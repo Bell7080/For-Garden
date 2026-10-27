@@ -17,6 +17,9 @@ const ROW = { width: 900, gap: 28, caret: 34 } as const;
  * 아니라 바퀴(`picker: "clock"`)로 고른다. 값 오른쪽의 작은 ▾가 이 줄이 창을 연다는 것을 말한다.
  */
 export class SettingsSelectRow<T extends string | number> extends Phaser.GameObjects.Container {
+  private refreshChoices!: (value: T, choices: readonly T[]) => void;
+
+  setChoices(value: T, choices: readonly T[]): void { if (this.active) this.refreshChoices(value, choices); }
   constructor(scene: Phaser.Scene, popups: PopupLayer, x: number, y: number, label: string, value: T, choices: readonly T[], onChange: (value: T) => void, display: (value: T) => string = String, picker: "list" | "clock" = "list") {
     super(scene, x, y);
     const name = scene.add.text(0, 0, label, textStyle({ role: "body", size: SETTINGS_TEXT.label })).setOrigin(0, 0.5);
@@ -33,15 +36,18 @@ export class SettingsSelectRow<T extends string | number> extends Phaser.GameObj
      */
     const fitName = (): void => { squeezeTextToWidth(name, ROW.width - ROW.caret - shown.width - ROW.gap, 0.8); };
     fitName();
+    this.refreshChoices = (next, available) => { value = next; choices = available; shown.setText(display(value)); fitName(); };
     // 기존 행의 홀로그램 강조색과 눌림 확대를 그대로 두고 표시 문구만 선택적으로 번역한다.
     const hit = scene.add.rectangle(450, 0, ROW.width, 88, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(this));
     const pick = (next: T): void => {
       value = next;
+      if (!scene.scene.isActive()) return;
+      onChange(value);
+      // 저장 콜백이 씬을 재시작할 수도 있다. UI 수명과 설정 저장은 별개다.
       if (!this.active) return;
       shown.setText(display(value));
       fitName();
-      onChange(value);
     };
     hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
     hit.on("pointerup", () => {

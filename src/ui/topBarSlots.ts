@@ -11,10 +11,11 @@ import type { CurrencyIconKey } from "./currencyIcons";
 import type { WalletItemKey } from "../data/items";
 
 /**
- * 칸 하나가 읽는 값. 대개 지갑 칸이지만 **결투 도전권**만 지갑이 아니라 결투장의 오늘 횟수다
- * (`duelAttemptsLeft`) — 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다.
+ * 칸 하나가 읽는 값. 대개 지갑 칸이지만 **결투 도전권**은 결투장의 오늘 횟수(`duelAttemptsLeft`)이고 —
+ * 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다 — **길드 코인**은 길드원 행이 든 값이라
+ * 화면이 받은 값을 `TopBarOptions.guildCoin`으로 넘긴다.
  */
-export type TopBarSlotKey = WalletItemKey | "duelTicket";
+export type TopBarSlotKey = WalletItemKey | "duelTicket" | "guildCoin";
 
 export interface CurrencySlot {
   key: TopBarSlotKey;
@@ -34,7 +35,7 @@ export interface CurrencySlot {
  * 치즈케이크는 정보창의 급여 버튼이 "가진 수/드는 수"로 직접 말하므로, 위에 또 적으면 같은
  * 값을 두 곳에서 읽게 되고 정작 봐야 할 카드 그리드의 자리만 좁아진다.
  */
-export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena";
+export type TopBarCurrencyContext = "default" | "shop" | "recruit" | "none" | "archaeology" | "archaeologyShop" | "loot" | "mileage" | "duel" | "duelArena" | "guild" | "stamina";
 
 const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   /** 일반 상점은 골드와 젬만 세운다 — 여기서 쓰는 재화는 그 둘뿐이라 스테미나 칸이 자리만 먹는다. */
@@ -52,11 +53,10 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
     { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
     { key: "amber", icon: "currency-amber", color: "#ffc98a" },
   ],
-  // 고고학은 제 경제를 갖는다 — 원석이 첫 칸에 서고, 탐사가 함께 캐내는 화석과
-  // 늘 쓰는 골드가 뒤를 잇는다. 스테미나는 이 화면의 조작을 정하지 않으므로 세우지 않는다.
+  // 고고학은 **원석과 골드** 두 칸이다(응태 결정). 원석은 탐사·특성 연구가, 골드는 룬 합성이 쓴다 —
+  // 둘 다 이 화면의 조작을 정한다. 탐사가 함께 캐내는 화석은 세우지 않는다.
   archaeology: [
     { key: "rawStone", icon: "currency-orestone", compact: true, color: "#a9d8e8" },
-    { key: "fossil", icon: "currency-fossil", compact: true, color: "#e6dcc4" },
     { key: "gold", icon: "currency-gold", compact: true, color: "#ffdf9a" },
   ],
   /**
@@ -99,6 +99,17 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   mileage: [
     { key: "dnaFragments", icon: "currency-dna", compact: true, color: "#ffe9a3" },
   ],
+  /** 길드. **길드 코인 한 칸** — 길드 상점의 값이고 길드원 행이 들고 있어 지갑 칸이 아니다. */
+  guild: [
+    { key: "guildCoin", icon: "currency-guild-coin", compact: true, color: "#a8f0c0" },
+  ],
+  /**
+   * 스테미나 한 칸. 레이드·편성처럼 스테미나를 쓰는데 상단에 다른 재화를 세울 자리가 없는 화면의 것이다 —
+   * 출전을 누르기 전에 모자란지가 읽혀야 하고, 누르면 충전 창이 열린다.
+   */
+  stamina: [
+    { key: "stamina", icon: "currency-stamina", color: "#ffe9a3" },
+  ],
   none: [],
 };
 
@@ -115,5 +126,7 @@ export const TOP_BAR_SLOT_KEYS: Record<TopBarCurrencyContext, readonly TopBarSlo
   mileage: SLOTS.mileage.map(({ key }) => key),
   duel: SLOTS.duel.map(({ key }) => key),
   duelArena: SLOTS.duelArena.map(({ key }) => key),
+  guild: SLOTS.guild.map(({ key }) => key),
+  stamina: SLOTS.stamina.map(({ key }) => key),
   none: SLOTS.none.map(({ key }) => key),
 };

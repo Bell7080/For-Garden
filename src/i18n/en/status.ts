@@ -13,7 +13,7 @@ export const STATUS_EN = {
   "status.frozen": "Frozen",
   "status.frozen.detail": "{time} left · {percent}% max HP fixed damage when it breaks",
   "status.frenzy": "Frenzy",
-  "status.frenzy.detail": "Attacks its own side · Attack Speed +{percent}% · {time} left",
+  "status.frenzy.detail": "Attacks its own side · {time} left",
   "status.taunt": "Taunt",
   "status.taunt.detail": "Targets only the taunter · {time} left",
   "status.bleed": "Bleed",
@@ -62,4 +62,6 @@ export const STATUS_EN = {
   "status.healCut.detail": "Healing received −{percent}% · {time} left",
   "status.sunken": "Sinking Weight",
   "status.sunken.detail": "Move and attack speed −{percent}% · {time} left",
+  "status.echo": "Echo",
+  "status.echo.detail": "{time} remaining",
 } as const;

@@ -28,19 +28,22 @@ describe("player profile display", () => {
     expect(highestClearedStage(STAGES, new Set())).toBeUndefined();
   });
 
-  it("애착 초상과 역대 원정 기록을 공개하고 서버 티어가 없으면 항목을 숨긴다", async () => {
+  it("애착 초상과 역대 원정 기록을 공개하고 아레나 기록이 없으면 항목을 숨긴다", async () => {
     const state = createDefaultSession();
     state.favorite = "rex"; state.cleared = new Set(["1-3", "1-1"]); state.expedition.allTimeBestScore = 4321; state.expedition.bestScore = 9999;
-    const hidden = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => null });
+    const hidden = await loadPlayerProfileDisplay(state, { arenaScore: async () => null });
     expect(hidden.competitiveStats).toMatchObject({ favoriteRelic: { relicId: "rex", displayName: "렉시아", portraitAssetId: "lexia" }, highestStage: { stageId: "1-3" }, expedition: { label: "역대 최고", score: 4321 } });
     // 애착 무대는 레벨·돌파·유대·전투력을 함께 싣고, 스토리 진행은 깬 수와 전체 수를 함께 싣는다.
     expect(hidden.competitiveStats.favoriteRelic).toMatchObject({ level: 1, breakthroughGrade: 1, rarity: "SSR" });
     expect(hidden.competitiveStats.favoriteRelic!.power).toBeGreaterThan(0);
     expect(hidden.competitiveStats.storyProgress!.cleared).toBe(2);
     expect(hidden.collection!.owned).toBeGreaterThan(0);
-    expect(hidden.competitiveStats.arenaTier).toBeUndefined();
-    const ranked = await loadPlayerProfileDisplay(state, { getAsyncArenaServerState: async () => ({ seasonTierId: "amber-2", activeDefenseSnapshotId: null, weekly: { weekId: "w", score: 1, wins: 0, losses: 0, updatedAt: "now" }, dailyAttempts: { utcDate: "today", used: 0, limit: 5 }, seasonReward: { seasonId: "s", finalTier: null, rewards: [], claimStatus: "not_eligible" } }) });
-    expect(ranked.competitiveStats.arenaTier).toEqual({ tierId: "amber-2", displayName: "amber-2" });
+    expect(hidden.competitiveStats.arena).toBeUndefined();
+    // 아레나는 RP만 싣는다 — 티어 이름은 화면이 지금 언어로 짓는다.
+    const ranked = await loadPlayerProfileDisplay(state, { arenaScore: async () => 1342 });
+    expect(ranked.competitiveStats.arena).toEqual({ score: 1342 });
+    const failed = await loadPlayerProfileDisplay(state, { arenaScore: async () => { throw Error("ARENA_NETWORK"); } });
+    expect(failed.competitiveStats.arena).toBeUndefined();
   });
 
   it("획득한 공개 수식어만 중복 없이 장착 상한까지 허용한다", () => {
@@ -51,7 +54,7 @@ describe("player profile display", () => {
       { id: "plain", displayName: "관찰자", rarity: "common" },
     ] as const;
     const result = validateEquippedProfileModifiers(catalog, { earnedModifierIds: ["first", "deep", "gold", "plain"], equippedModifierIds: ["first", "locked", "first", "deep", "gold", "plain"] });
-    expect(result.map(({ id }) => id)).toEqual(["first", "deep", "gold"]);
+    expect(result.map(({ id }) => id)).toEqual(["first"]);
     expect(JSON.parse(JSON.stringify(result))).toEqual(result);
   });
 
@@ -101,10 +104,11 @@ describe("profile modifier manager", () => {
 
   it("미획득 장착을 거부하고 유효한 ID 목록만 한 번 저장한다", async () => {
     const { ProfileModifierManager } = await import("../../src/managers/ProfileModifierManager");
+    const { FakeServer } = await import("../../src/api/FakeServer");
     const state = createDefaultSession(); state.earnedProfileModifierIds = ["field-pioneer"];
-    const saves = { save: vi.fn() }; const manager = new ProfileModifierManager(state, saves);
-    expect(() => manager.equip(["locked"])).toThrow();
-    manager.equip(["field-pioneer"]);
+    const saves = { save: vi.fn() }; const manager = new ProfileModifierManager(state, new FakeServer(state, { latencyMs: 0, persistSession: saves.save }));
+    await expect(manager.equip(["locked"])).rejects.toThrow();
+    await manager.equip(["field-pioneer"]);
     expect(state.equippedProfileModifierIds).toEqual(["field-pioneer"]); expect(saves.save).toHaveBeenCalledOnce();
   });
 });

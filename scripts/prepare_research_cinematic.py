@@ -179,6 +179,11 @@ EXPORT_TAIL = (
     "if(i>=r.length)return;"
     "var L=ft[r[i].rarity].level,s=(e-t)/d,k=Math.min(L,Math.floor(Math.max(0,s)*(L+1)/.6));"
     'return{index:i,step:k<L?"tier":s<.86?"flip":"next"}};'
+    # 이미 열린 카드의 등급을 올린다(10연 마지막 칸 SR→SSR 승급). 카드 목록은 얼려 있어 값을 고치지 않고
+    # 한 칸만 바꾼 새 배열로 갈아 끼운다 — 결산 격자의 색과 「SR × 1」 집계가 이 배열에서 나온다.
+    "xo.prototype.promoteReward=function(i,r){"
+    "function p(a){var c=a.slice();c[i]=Object.assign({},c[i],{rarity:r});return Object.freeze(c)}"
+    "this.rewards=p(this.rewards);if(this.deck&&this.deck.rewards)this.deck.rewards=p(this.deck.rewards)};"
     # 건너뛰기는 연출을 지우는 것이 아니라 **결산으로 곧장 간다**.
     "xo.prototype.skipToResult=function(){"
     'if(this.destroyed||this.phase==="result")return;'

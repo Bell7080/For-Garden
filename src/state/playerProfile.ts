@@ -1,3 +1,4 @@
+import { arenaPublicStanding, type ArenaPublicStanding } from "../core/arenaStanding";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { STAGES } from "../data/stages";
 import { highestClearedStage } from "../core/stageProgress";
@@ -49,6 +50,8 @@ export interface PlayerProfileDisplay {
   /** 레벨이 아니라 스테이지 클리어로 여는 다음 콘텐츠(고고학). */
   nextStageUnlock?: { contentId: ContentId; stageId: string };
   equippedModifiers: PublicProfileModifier[];
+  /** 기록 칸 앞에 먼저 세우는 칸 — 길드원 카드의 직책·기여도. 기록 칸은 넷까지라 뒤쪽 기록이 밀려난다. */
+  leadRecords?: { label: string; value: string; sub?: string }[];
 }
 
 export interface FavoriteRelicShowcase {
@@ -69,7 +72,8 @@ export interface FavoriteRelicShowcase {
 
 export interface PlayerCompetitiveStats {
   favoriteRelic: FavoriteRelicShowcase | null;
-  arenaTier?: { tierId: string; displayName: string };
+  /** 아레나 RP. 한 판도 하지 않았거나 공개하지 않았으면 비어 있다(그 칸이 「미배치」로 선다). 티어는 화면이 `arenaStanding`으로 읽는다. */
+  arena?: ArenaPublicStanding;
   highestStage: { stageId: string; displayValue: string } | null;
   /** 스토리 진행 — 깬 관문 수와 전체 관문 수. 친구 카드는 최고 관문만 공개해 비어 있다. */
   storyProgress?: { cleared: number; total: number };
@@ -108,7 +112,7 @@ function profileAvatarRelic(state: Session): { relicId: string; portraitAssetId:
 }
 
 /** 저장 가능한 공개 설정·애착 렐릭과 서버 확정 진행만 읽어 안전한 표시 모델을 만든다. */
-export function playerProfileDisplay(state: Session, equippedModifiers: readonly PublicProfileModifier[] = [], arenaTier?: { tierId: string; displayName: string }, now: Date = new Date()): PlayerProfileDisplay {
+export function playerProfileDisplay(state: Session, equippedModifiers: readonly PublicProfileModifier[] = [], arena?: ArenaPublicStanding, now: Date = new Date()): PlayerProfileDisplay {
   const favorite = favoriteShowcase(state);
   const stage = highestClearedStage(STAGES, state.cleared);
   const card = state.playerCard;
@@ -130,7 +134,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
     researchDays: researchDays(card.createdAt, now),
     competitiveStats: {
       favoriteRelic: favorite,
-      ...(arenaTier ? { arenaTier: { ...arenaTier } } : {}),
+      ...(arena ? { arena: { ...arena } } : {}),
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
@@ -162,7 +166,7 @@ export function friendProfileDisplay(friend: {
   displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
-  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaTier?: { tierId: string; displayName: string }; expeditionScore?: number };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number };
 }): PlayerProfileDisplay {
   const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
   const favorite: FavoriteRelicShowcase | null = relic ? {
@@ -187,10 +191,51 @@ export function friendProfileDisplay(friend: {
     lastActive: friend.lastActive,
     competitiveStats: {
       favoriteRelic: favorite,
-      ...(stats.arenaTier ? { arenaTier: { ...stats.arenaTier } } : {}),
+      ...(arenaPublicStanding(stats.arenaScore) ? { arena: arenaPublicStanding(stats.arenaScore) } : {}),
       highestStage: stats.highestStage ? { ...stats.highestStage } : null,
       ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
     },
     equippedModifiers: friend.equippedModifiers.map((modifier) => ({ ...modifier })),
+  };
+}
+
+/**
+ * 길드원 카드 — 친구 카드와 같은 한 장이다. 공개 값은 길드원이 마지막으로 길드에 들렀을 때 서버가 적어 둔 카드
+ * (`GuildMemberCard`)뿐이라, 거기 없는 것(경험치·도감·결투 티어)은 칸째 세우지 않는다. 기록 칸 앞에는 길드 안의
+ * 자리(직책·기여도)가 먼저 선다.
+ */
+export function guildMemberProfileDisplay(member: {
+  name: string; level: number; frameId: string; avatarRelicId: string;
+  card: { uid: string; bio: string; favorite: { relicId: string; level: number; breakthroughGrade: number; power: number; skinId: string | null } | null; highestStageId: string | null; expeditionBest: number; arenaScore?: number } | null;
+}, lastActive: string, leadRecords: { label: string; value: string; sub?: string }[]): PlayerProfileDisplay {
+  const card = member.card;
+  const relic = card?.favorite ? RELICS.find(({ id }) => id === card.favorite!.relicId) : undefined;
+  const favorite: FavoriteRelicShowcase | null = relic && card?.favorite ? {
+    relicId: relic.id, displayName: relic.name, portraitAssetId: relic.portraitAssetId,
+    level: card.favorite.level, breakthroughGrade: card.favorite.breakthroughGrade, skinId: card.favorite.skinId,
+    rarity: relic.rarity, element: relic.element, role: relic.role, power: card.favorite.power,
+  } : null;
+  const avatarRelic = RELICS.find(({ id }) => id === member.avatarRelicId) ?? relic;
+  const stage = card?.highestStageId ? STAGES.find(({ id }) => id === card.highestStageId) : undefined;
+  return {
+    displayName: member.name,
+    level: member.level,
+    experience: 0,
+    experienceToNext: 0,
+    levelCapped: member.level >= PLAYER_LEVEL_CAP,
+    displayId: card?.uid || "-",
+    bio: card?.bio ?? "",
+    frameId: profileFrameOrDefault(member.frameId).id,
+    avatar: avatarRelic ? { relicId: avatarRelic.id, portraitAssetId: avatarRelic.portraitAssetId } : null,
+    representativeRelic: favorite?.displayName ?? t("profile.noFavorite"),
+    lastActive,
+    competitiveStats: {
+      favoriteRelic: favorite,
+      highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
+      ...(arenaPublicStanding(card?.arenaScore) ? { arena: arenaPublicStanding(card?.arenaScore) } : {}),
+      ...(card ? { expedition: { label: t("profile.expeditionBest"), score: card.expeditionBest } } : {}),
+    },
+    equippedModifiers: [],
+    leadRecords,
   };
 }

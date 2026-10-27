@@ -5,6 +5,7 @@ import { completedAdToken, findAdRewardSlot } from "../data/adRewards";
 import { InventoryManager } from "../managers/InventoryManager";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { session } from "../state/session";
+import { adRewardToRewardItems, type RewardPopupItem } from "../ui/rewardPopupModel";
 import type { SweepTickets } from "../ui/SweepPopup";
 
 /** 소탕권을 채우는 광고 슬롯. 한 번에 몇 장·하루 몇 번인지는 슬롯 표(`AD_REWARD_SLOTS`)가 갖는다. */
@@ -36,10 +37,10 @@ export function sweepTicketState(adFreeMembership: boolean, dailyAdRewards?: Pla
  * 광고를 보고 소탕권을 받는다. 취소·SDK 미준비는 성공을 흉내 내지 않고 `undefined`를 돌려준다.
  * 지급과 횟수 확정은 서버가 하고, 가방은 그 결과를 다시 읽는다.
  */
-export async function watchSweepTicketAd(): Promise<PlayerStateDto["dailyAdRewards"] | undefined> {
+export async function watchSweepTicketAd(): Promise<{ dailyAdRewards: PlayerStateDto["dailyAdRewards"]; items: RewardPopupItem[] } | undefined> {
   const verificationToken = completedAdToken(await presentRewardedAd(SWEEP_TICKET_AD_SLOT));
   if (!verificationToken) return undefined;
   const requestId = globalThis.crypto?.randomUUID?.() ?? `sweep-ad-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const response = await inventory.claimAdReward(gameApi, { slotId: SWEEP_TICKET_AD_SLOT, verificationToken, requestId });
-  return response.dailyAdRewards;
+  return { dailyAdRewards: response.dailyAdRewards, items: adRewardToRewardItems(response) };
 }

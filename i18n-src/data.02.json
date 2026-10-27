@@ -289,16 +289,6 @@
 "Stellt 120 Ausdauer wieder her.",
 "Восстанавливает 120 выносливости."
 ],
-"premium.tab.package": [
-"礼包",
-"แพ็กเกจ",
-"Gói",
-"Paket",
-"Paquetes",
-"Pacotes",
-"Pakete",
-"Наборы"
-],
 "premium.tab.deal": [
 "特惠",
 "ดีล",
@@ -809,6 +799,196 @@
 "Legende des Gartens",
 "Легенда сада"
 ],
+"modifier.millionaire.name": [
+"百万富翁",
+"เศรษฐีเงินล้าน",
+"Triệu phú",
+"Jutawan",
+"Fortuna millonaria",
+"Fortuna milionária",
+"Millionär",
+"Миллионер"
+],
+"modifier.specimen-curator.name": [
+"标本管理员",
+"ผู้ดูแลตัวอย่าง",
+"Người giữ mẫu vật",
+"Kurator Spesimen",
+"Espécimen bajo custodia",
+"Guarda do espécime",
+"Exemplar-Kurator",
+"Хранитель экземпляров"
+],
+"modifier.limit-breaker.name": [
+"超越极限之人",
+"ผู้ก้าวข้ามขีดจำกัด",
+"Người vượt giới hạn",
+"Penembus Batas",
+"Más allá del límite",
+"Além do limite",
+"Grenzbrecher",
+"Сквозь пределы"
+],
+"modifier.kind-researcher.name": [
+"温柔的研究员",
+"นักวิจัยใจดี",
+"Nhà nghiên cứu dịu dàng",
+"Periset yang Lembut",
+"Investigación con cariño",
+"Pesquisa com carinho",
+"Sanfte Forschung",
+"Исследования с заботой"
+],
+"modifier.chief-researcher.name": [
+"首席研究员",
+"หัวหน้านักวิจัย",
+"Trưởng nhóm nghiên cứu",
+"Kepala Riset",
+"Jefatura de investigación",
+"Chefia de pesquisa",
+"Forschungsleitung",
+"Глава исследований"
+],
+"modifier.veteran.name": [
+"百战老将",
+"ผู้ผ่านร้อยสมรภูมิ",
+"Lão luyện trăm trận",
+"Veteran Seratus Laga",
+"Cien batallas",
+"Cem batalhas",
+"Hundert Schlachten",
+"Сто сражений"
+],
+"modifier.front-breaker.name": [
+"战线突破者",
+"ผู้ฝ่าแนวหน้า",
+"Người phá phòng tuyến",
+"Penembus Garis Depan",
+"Ruptura del frente",
+"Ruptura da linha de frente",
+"Frontbrecher",
+"Прорыв фронта"
+],
+"modifier.arena-ruler.name": [
+"决斗场的支配者",
+"ผู้ครองสนามประลอง",
+"Bá chủ đấu trường",
+"Penguasa Arena",
+"Dominio de la arena",
+"Domínio da arena",
+"Herrschaft der Arena",
+"Власть над ареной"
+],
+"modifier.raid-captain.name": [
+"讨伐队长",
+"หัวหน้าหน่วยปราบ",
+"Đội trưởng thảo phạt",
+"Kapten Penakluk",
+"Capitanía de asalto",
+"Capitania de ataque",
+"Raidführung",
+"Глава рейда"
+],
+"modifier.deep-salvager.name": [
+"深海打捞者",
+"นักกู้ซากใต้ทะเลลึก",
+"Người trục vớt biển sâu",
+"Penyelamat Laut Dalam",
+"Rescate abisal",
+"Resgate abissal",
+"Tiefseebergung",
+"Глубоководный подъём"
+],
+"modifier.fossil-appraiser.name": [
+"化石鉴定师",
+"ผู้ประเมินฟอสซิล",
+"Giám định hóa thạch",
+"Penilai Fosil",
+"Ojo para fósiles",
+"Olho para fósseis",
+"Fossilgutachten",
+"Знаток окаменелостей"
+],
+"modifier.city-envoy.name": [
+"都市使节",
+"ทูตแห่งนคร",
+"Sứ giả các thành phố",
+"Utusan Kota",
+"Embajada de las ciudades",
+"Embaixada das cidades",
+"Gesandtschaft der Städte",
+"Посол городов"
+],
+"modifier.story-collector.name": [
+"故事收藏家",
+"นักสะสมเรื่องราว",
+"Người sưu tầm câu chuyện",
+"Pengumpul Kisah",
+"Colección de historias",
+"Coleção de histórias",
+"Geschichtensammlung",
+"Собиратель историй"
+],
+"modifier.cheesecake-artisan.name": [
+"芝士蛋糕匠人",
+"ช่างชีสเค้ก",
+"Nghệ nhân bánh phô mai",
+"Ahli Cheesecake",
+"Arte de la tarta de queso",
+"Arte do cheesecake",
+"Käsekuchen-Kunst",
+"Мастерство чизкейка"
+],
+"modifier.tireless.name": [
+"不知疲倦",
+"ไม่รู้จักเหนื่อย",
+"Không biết mệt",
+"Tak Kenal Lelah",
+"Sin descanso",
+"Sem descanso",
+"Unermüdlich",
+"Без устали"
+],
+"modifier.diligent-researcher.name": [
+"勤勉的研究员",
+"นักวิจัยผู้ขยัน",
+"Nhà nghiên cứu chăm chỉ",
+"Periset Tekun",
+"Investigación constante",
+"Pesquisa constante",
+"Fleißige Forschung",
+"Усердие в исследованиях"
+],
+"modifier.challenger.name": [
+"巅峰挑战者",
+"ผู้ท้าชิงจุดสูงสุด",
+"Kẻ thách thức đỉnh cao",
+"Penantang Puncak",
+"Aspirante a la cima",
+"Desafiante do topo",
+"Gipfelherausforderung",
+"Покорение вершины"
+],
+"modifier.stratum-explorer.name": [
+"地层探索家",
+"นักสำรวจชั้นหิน",
+"Nhà thám hiểm địa tầng",
+"Penjelajah Lapisan",
+"Exploración de estratos",
+"Exploração de estratos",
+"Schichtenforschung",
+"Исследование пластов"
+],
+"modifier.walking-codex.name": [
+"行走的图鉴",
+"สารานุกรมเดินได้",
+"Bách khoa biết đi",
+"Ensiklopedia Berjalan",
+"Enciclopedia andante",
+"Enciclopédia ambulante",
+"Wandelndes Lexikon",
+"Ходячая энциклопедия"
+],
 "profileFrame.field.name": [
 "现场研究员",
 "นักวิจัยภาคสนาม",
@@ -879,16 +1059,6 @@
 "Auf der Spur eines neuen Exemplars",
 "Выслеживаю новый экземпляр"
 ],
-"friend.friend-haneul.lastActive": [
-"刚刚",
-"เมื่อสักครู่",
-"Vừa xong",
-"Baru saja",
-"Justo ahora",
-"Agora mesmo",
-"Gerade eben",
-"Только что"
-],
 "friend.friend-moss.status": [
 "今天也在慢慢复原中",
 "วันนี้ก็ค่อย ๆ ฟื้นคืนอีกเช่นเคย",
@@ -899,16 +1069,6 @@
 "Auch heute wieder in Ruhe restaurieren",
 "И сегодня восстанавливаю не спеша"
 ],
-"friend.friend-moss.lastActive": [
-"12分钟前",
-"12 นาทีที่แล้ว",
-"12 phút trước",
-"12 menit lalu",
-"Hace 12 minutos",
-"Há 12 minutos",
-"Vor 12 Minuten",
-"12 минут назад"
-],
 "friend.friend-haneul.highestStage": [
 "2-5 赤红峡谷",
 "2-5 หุบเขาสีเลือด",
@@ -918,16 +1078,6 @@
 "2-5 Cânion Carmesim",
 "2-5 Karmesinschlucht",
 "2-5 Багровое ущелье"
-],
-"friend.friend-haneul.arenaTier": [
-"黄金 II",
-"ทอง II",
-"Vàng II",
-"Emas II",
-"Oro II",
-"Ouro II",
-"Gold II",
-"Золото II"
 ],
 "adReward.daily-stamina.text": [
 "体力10",
@@ -978,16 +1128,6 @@
 "Produção ×1.5 · 60 min",
 "Produktion ×1,5 · 60 Min.",
 "Добыча ×1,5 · 60 мин"
-],
-"adReward.quick-expedition.text": [
-"快速远征",
-"ออกสำรวจด่วน",
-"Viễn chinh nhanh",
-"Ekspedisi Cepat",
-"Expedición rápida",
-"Expedição rápida",
-"Schnelle Expedition",
-"Быстрая экспедиция"
 ],
 "trade.trade-cheesecake-supply.name": [
 "芝士蛋糕补给",
@@ -1480,16 +1620,7 @@
 "Ich habe den Wind schon gelesen, Senpai.",
 "Я уже прочла ветер, сэмпай."
 ],
-"firstMeeting.meron": [
-"咦？你……不喜欢吗……？",
-"เอ๋? คุณ… ไม่ชอบเหรอ…?",
-"Hả? Anh… không thích sao…?",
-"Eh? Kamu… tidak suka…?",
-"¿Eh? ¿No… te gusta…?",
-"Hã? Você… não gosta…?",
-"Hm? Du… magst es nicht…?",
-"А? Тебе… не нравится…?"
-],
+"firstMeeting.meron": ["咦？您……不喜欢吗……？", "เอ๋? คุณ… ไม่ถูกใจหรือคะ…?", "Dạ? Bạn… không thích ạ…?", "Eh? Anda… tidak suka…?", "¿Eh? ¿No… te gusta…?", "Hã? Você… não gostou…?", "Hm? Ihr… mögt es nicht…?", "А? Вам… не нравится…?"],
 "firstMeeting.pachi": [
 "喂，让开！我在给老大开路。",
 "เฮ้ หลบไป! ฉันกำลังเปิดทางให้บอส",
@@ -1620,16 +1751,7 @@
 "Lass sie alle los. Ich sehe von hier aus zu.",
 "Выпускай всех. Я посмотрю отсюда."
 ],
-"firstMeeting.dian": [
-"我会保护你的，队长！……啊，克罗！希罗！",
-"ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!",
-"Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!",
-"Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!",
-"¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!",
-"Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!",
-"Ich beschütze dich, Captain! …Ah, Kuro! Shiro!",
-"Я защищу тебя, капитан! …Ой, Куро! Широ!"
-],
+"firstMeeting.dian": ["我会保护你的，队长！……啊，克罗！希罗！", "ฉันจะปกป้องคุณเองค่ะ กัปตัน! …อ๊ะ คุโระ! ชิโระ!", "Em sẽ bảo vệ anh, Đội trưởng! …A, Kuro! Shiro!", "Aku akan melindungimu, Kapten! …Ah, Kuro! Shiro!", "¡Yo te protegeré, Capitán! …¡Ah, Kuro! ¡Shiro!", "Eu vou te proteger, Capitão! …Ah, Kuro! Shiro!", "Ich beschütze dich, Captain! …Ah, Kuro! Shiro!", "Я защищу тебя, капитан! …Ой, Куро! Широ!"],
 "event.greatAuk.stage.name": [
 "大海雀海岸发掘地",
 "แหล่งขุดค้นชายฝั่งนกอัลก์ใหญ่",

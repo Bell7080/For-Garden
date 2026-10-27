@@ -1,20 +1,22 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type ExpeditionLeaderboardEntry, type GameApi } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { getRelic } from "../data/relics";
 import { Button } from "./Button";
-import { FaceFrame } from "./FaceFrame";
+import { addRankingFace } from "./rankingFace";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { addPopupBackgroundImage, BACKGROUND } from "./backgrounds";
 import { chipPoints, drawFrameVignette, drawLayer, HOLO } from "./holo";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import {
-  RANKING_LIST, RANKING_VISIBLE_RANKS, placeholderRankingEntries, rankedLeaderboard, rankingMedal,
+  RANKING_LIST, RANKING_VISIBLE_RANKS, displayRankingEntries, rankingMedal,
   rankingRowY, rankingScrollMetrics,
 } from "./expeditionRankingLayout";
 import { COLOR, textStyle } from "./theme";
+import { attachDragScroll } from "./dragScroll";
 
 /** 서버 주차 스냅샷만 사용해 준비와 결과 화면이 공유하는 원정 기록판을 그린다. */
 export class ExpeditionRankingPopup {
@@ -22,6 +24,8 @@ export class ExpeditionRankingPopup {
   private content?: Phaser.GameObjects.Container;
   /** 목록 마스크는 표시 객체의 자식이 아니므로 이 창이 직접 만들고 직접 지운다. */
   private listMask?: Phaser.GameObjects.Rectangle;
+  /** 마지막으로 받은 목록에서 내 등수 — 주간 보상표가 그 구간을 「현재」로 세운다. */
+  private myRank: number | null = null;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, private readonly api: GameApi = gameApi) {}
 
@@ -43,6 +47,7 @@ export class ExpeditionRankingPopup {
       // 가장자리를 안쪽으로 살짝 눌러 원화가 판 테두리에서 끊기지 않고 가라앉게 한다. 줄여 가며
       // 두르는 옛 비네트는 가로세로 비율이 다른 판에서 검은 잔상을 남기므로 쓰지 않는다.
       body.add(drawFrameVignette(this.scene, 0, 0, width, height, { strength: 0.5, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
+      body.add(new Button(this.scene, 0, -height / 2 + 90, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openCompetitiveRewards(this.scene, this.popups, "expedition", this.myRank) }));
       void this.refresh();
     });
   }
@@ -75,8 +80,9 @@ export class ExpeditionRankingPopup {
     this.resetContent();
     const content = this.content;
     if (!content) return;
-    // 실제 이용자 풀이 생기면 표본 보정만 지운다 — 순위·스크롤 규칙은 그대로 남는다.
-    const merged = rankedLeaderboard([...entries, ...placeholderRankingEntries(bestScore, RANKING_VISIBLE_RANKS)]);
+    // 운영 순위에는 실제 기록만 남긴다. 빈 목록·긴 스크롤 표본은 QA에서만 쓴다.
+    const merged = displayRankingEntries(entries, bestScore, QA_TOOLS_ENABLED);
+    this.myRank = merged.find((entry) => entry.isMe)?.rank ?? null;
     // 순위는 누적 보상 점수가 아니라 한 판 최고 점수로 정렬된다는 기준을 제목에서 바로 밝힌다.
     content.add(this.scene.add.text(-410, -720, t("ranking.bestScoreOrder"), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
     content.add(this.scene.add.text(410, -720, t("ranking.tieBreak"), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
@@ -101,15 +107,11 @@ export class ExpeditionRankingPopup {
     merged.forEach((entry, index) => this.renderRank(list, entry, rankingRowY(index)));
 
     // 끌기와 휠이 같은 한계를 쓴다. 줄이 적으면 minY가 0이라 아무 일도 일어나지 않는다.
-    let offset = 0; let dragY = 0;
+    let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); list.y = metrics.startY + offset; };
-    const hit = this.scene.add.rectangle(0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, 0xffffff, 0)
-      .setInteractive({ draggable: true, useHandCursor: true });
-    hit.on("dragstart", (pointer: Phaser.Input.Pointer) => { dragY = pointer.y; });
-    hit.on("drag", (pointer: Phaser.Input.Pointer) => { move(pointer.y - dragY); dragY = pointer.y; });
-    hit.on("wheel", (_pointer: Phaser.Input.Pointer, _dx: number, dy: number) => move(-dy * 0.65));
+    const hit = this.scene.add.rectangle(0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, 0xffffff, 0).setVisible(false);
+    attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
-    content.sendToBack(hit);
   }
 
   /**
@@ -137,13 +139,7 @@ export class ExpeditionRankingPopup {
     row.add(this.scene.add
       .text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor }))
       .setOrigin(0.5));
-    if (entry.favoriteRelicId) {
-      row.add(new FaceFrame(this.scene, RANKING_LIST.faceX, 0, {
-        portraitAssetId: getRelic(entry.favoriteRelicId).portraitAssetId,
-        size: RANKING_LIST.faceSize,
-        color: accent,
-      }));
-    }
+    addRankingFace(this.scene, row, entry.favoriteRelicId, entry.displayName, accent);
     row.add(this.scene.add
       .text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink) }))
       .setOrigin(0, 0.5));

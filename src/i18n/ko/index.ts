@@ -1,3 +1,4 @@
+import { ARENA_KO } from "./arena";
 /**
  * 한국어 표. **모든 언어의 원본이자 대체본이다.**
  *
@@ -18,6 +19,7 @@ import { CAKE_OPERATION_KO } from "./cakeOperation";
 import { EXCAVATION_KO } from "./excavation";
 import { AUGMENT_KO } from "./augment";
 import { FRIENDS_KO } from "./friends";
+import { GUILD_KO } from "./guild";
 import { RUNE_KO } from "./rune";
 import { PARTY_KO } from "./party";
 import { EXPEDITION_REWARD_KO } from "./expeditionReward";
@@ -33,8 +35,13 @@ import { RAID_KO } from "./raid";
 import { BOUNTY_KO } from "./bounty";
 import { DUNGEON_KO } from "./dungeon";
 import { DUEL_KO } from "./duel";
+import { RECOLLECTION_KO } from "./recollection";
+import { DIALOGUE_KO } from "./dialogue";
+import { ACHIEVEMENT_KO } from "./achievement";
+import { SUPPORT_KO } from "./support";
+import { DEBUG_KO } from "./debug";
 
-export const KO = { ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO } as const;
+export const KO = { ...ARENA_KO, ...SETTINGS_KO, ...LOBBY_KO, ...COMMON_KO, ...INFO_KO, ...STATUS_KO, ...LAB_KO, ...EXPEDITION_KO, ...BATTLE_KO, ...CAKE_OPERATION_KO, ...EXCAVATION_KO, ...AUGMENT_KO, ...FRIENDS_KO, ...GUILD_KO, ...RUNE_KO, ...PARTY_KO, ...EXPEDITION_REWARD_KO, ...SAVE_CONFLICT_KO, ...INTERACTION_KO, ...SHOP_KO, ...MISSIONS_KO, ...INVENTORY_KO, ...MISC_KO, ...SKILL_KO, ...SYSTEM_KO, ...RAID_KO, ...BOUNTY_KO, ...DUNGEON_KO, ...DUEL_KO, ...RECOLLECTION_KO, ...DIALOGUE_KO, ...ACHIEVEMENT_KO, ...SUPPORT_KO, ...DEBUG_KO } as const;
 
 /** 화면이 고를 수 있는 문구 키. 한국어 표에 없는 키는 타입에서 막힌다. */
 export type TextKey = keyof typeof KO;

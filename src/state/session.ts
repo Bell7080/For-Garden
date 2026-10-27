@@ -1,15 +1,23 @@
+import { ancientStageFloor, ancientStageId } from "../data/ancientStrataDifficulty";
+import { isStoryDifficultyUnlocked, storyDifficultyOf } from "../core/storyDifficulty";
 /** 씬 사이를 오가는 런타임 상태다. JSON 경계에서는 반드시 SaveData로 변환한다. */
 
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import type { DuelState } from "../core/duelState";
+import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
+import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
+import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
+import { createEmptyTutorialState, type TutorialState } from "../core/tutorial";
+import { createEmptyAchievementState, type AchievementState } from "../core/achievementState";
 import type { RaidDifficulty } from "../data/raid";
 import type { GachaPityState, Wallet } from "../core/gacha";
 import type { RelicProgress, RelicSkinId } from "../core/types";
 import type { ExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
-import { playerExpToNext } from "../core/playerLevel";
+import { playerExpToNext, STARTING_STAMINA } from "../core/playerLevel";
 import { lotExpiresAt, type ItemLot } from "../core/itemLots";
 import { DEFAULT_PROFILE_FRAME_ID } from "../data/profileFrames";
 import { BANNERS } from "../data/banners";
-import { STAGES } from "../data/stages";
+import { ALL_STORY_STAGES as STAGES } from "../data/stages";
 import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
@@ -53,16 +61,23 @@ export interface GameSettings {
      * 한 칸 내려 고르지 않게 한다. 서버 진행이 아니라 화면 선호라 여기 둔다 — 없는 ID는 입구가
      * 열린 가장 높은 단계로 되돌린다.
      */
-    dungeonTiers: { bounty: string; cake: string } };
+    dungeonTiers: { bounty: string; cake: string };
+    /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
+    guildSeen: { war: number; guard: number };
+    /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
+    ancientResetSeen: string;
+    /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */
+    runeBag: { showHolder: boolean; showEquipped: boolean } };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 
 /**
  * 처음 시작할 때 쥐어 주는 렐릭. 전용 전신과 SD가 완성된 개체를 기본 도감에 연다.
  *
+ * 일반 빌드는 기본 편성의 셋(토리카·도디·파루아)만 쥐어 주고, QA 빌드는 확인용으로 일곱을 연다.
  * 파루아가 들어 있는 이유는 기본 편성(아래) 때문이다 — 편성은 보유한 개체만 세울 수 있다.
  */
-const STARTER_RELICS = ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"];
+const STARTER_RELICS = QA_TOOLS_ENABLED ? ["torika", "rex", "spino", "luka", "dodo", "mette", "parua"] : ["torika", "dodo", "parua"];
 /**
  * 기본 편성은 **오프닝의 쁘띠 로그 셋**(토리카·도디·파루아)이다.
  *
@@ -149,6 +164,8 @@ export interface Session {
   party: string[];
   /** 클리어한 스테이지 id. */
   cleared: Set<string>;
+  /** 고대 지층의 달(`YYYY-MM`, UTC). 달이 바뀌면 서버가 `ancient:N` 기록을 지우고 이 값을 넘긴다(`rollAncientSeason`). */
+  ancientSeason?: string;
   /** 보유한 렐릭. 뽑기로 늘어난다. */
   owned: Set<string>;
   /** 로비에 세워 두는 애착 렐릭. 한 명뿐이다. */
@@ -194,6 +211,20 @@ export interface Session {
    * 서버가 처음 읽을 때 빈 모양으로 채운다(`createEmptyDuelState`).
    */
   duel?: DuelState;
+  /**
+   * 받은 우편 ID. 메모리에만 두면 다시 켤 때마다 같은 선물을 또 받는다. **선택 필드다** — 도입 전에 만든 세션은
+   * 비어 있고 서버가 빈 목록으로 읽는다.
+   */
+  claimedMailIds?: string[];
+  /** 신규·정규 출석(`core/attendance.ts`). 선택 필드이며 서버가 처음 읽을 때 빈 모양으로 채운다. */
+  attendance?: AttendanceState;
+  /** 오늘 떨어진 토벌권 수(`core/raidTicketDrops.ts`). 선택 필드다. */
+  raidTicketDrops?: RaidTicketDropState;
+  /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
+  achievements?: AchievementState;
+  /** 첫 플레이 튜토리얼에서 마친 칸(`core/tutorial.ts`). 선택 필드이며 도입 전 저장은 클리어 기록에서 시작점을 정한다. */
+  tutorial?: TutorialState;
+  serverJournal?: ServerJournal;
 }
 
 /** 진행 패스의 저장 모양. 받은 마디는 패스마다 문턱값 목록이다. */
@@ -255,6 +286,8 @@ export interface RaidInstanceState {
   summonedByMe: boolean;
   /** 이 판에서 내가 민 피해의 합(최대 두 판). 정산이 읽는 값이다. */
   myDamage: number;
+  /** Actual shared HP removed, independent of verified personal contribution. */
+  appliedDamage?: number;
   attemptsUsed: number;
   settled: boolean;
 }
@@ -300,6 +333,7 @@ export interface ExpeditionRunState {
   /** 성공한 정산 요청의 고유 키이며 null이면 아직 지갑 이전 전이다. */
   settlementId: string | null;
   /** 보스 제출과 정산 사이 재접속도 같은 서버 멱등 키로 복구한다. */
+  bossReplayVersion?: 2;
   bossSubmissionId: string | null;
   bossSettlementId: string | null;
 }
@@ -318,6 +352,8 @@ export interface ExpeditionState {
   claimedRewardStageIds: string[];
   /** 지난주 기록이 받을 순위 보상. 우편으로 받으면 비워진다(`rollExpeditionPeriods`). */
   pendingRankReward: { weekKey: string; score: number; achievedAt: string } | null;
+  /** 미수령 보상이 여러 주 쌓이면 첫 보상 뒤의 대기를 보존한다. */
+  pendingRankRewards?: { weekKey: string; score: number; achievedAt: string }[];
   /** 주간과 무관하게 지금까지 달성한 가장 높은 점수다. 소탕이 이 값의 비율만 참조한다. */
   allTimeBestScore: number;
   /** 마지막으로 성공 출발한 원정 전용 편성이다. 스토리 파티·발굴 배치와 서로 덮어쓰지 않는다. */
@@ -424,12 +460,20 @@ export interface SaveData {
   relicStory: RelicStoryState;
   progressPasses: ProgressPassState;
   duel: DuelState;
+  claimedMailIds: string[];
+  attendance: AttendanceState;
+  raidTicketDrops: RaidTicketDropState;
+  achievements: AchievementState;
+  tutorial: TutorialState;
+  serverJournal?: ServerJournal;
   settings: GameSettings;
   completedStoryIds: string[];
   observationRecords: ObservationRecord[];
   selectedStageId: string | null;
   party: string[];
   clearedStageIds: string[];
+  /** 고대 지층의 달. 없으면 예전 저장이며, 서버가 처음 넘길 때 기록을 지우지 않고 이번 달로 받아들인다. */
+  ancientSeason?: string;
   ownedRelicIds: string[];
   favorite: string;
   bookmarkedRelicIds: string[];
@@ -504,13 +548,20 @@ export function createDefaultSession(): Session {
     // 등급을 올려 보는 길이 지층 탐사 없이도 열려 있어야 한다. 정식 수급이 붙으면 함께 지운다.
     // 토벌권은 친구 레이드를 여는 입장권이다. 처음 들어온 사람이 레이드 목록의 소환을 한 번은
     // 눌러 볼 수 있게 몇 장 쥐여 준다 — 그 뒤로는 전리품 상점에서 증표로 바꾼다.
-    itemInventory: [
-      // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
-      { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
-      { itemId: "raid-ticket", quantity: 3 },
-      { itemId: "raid-select-ticket", quantity: 1 },
-      ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
-    ],
+    // 시작 지급(에너지 드링크·토벌권·특성 아이템)은 QA 빌드에서만 준다 — 일반 빌드의 가방은 비어서 시작한다.
+    itemInventory: QA_TOOLS_ENABLED
+      ? [
+        // 시작 병도 기한이 있다 — 기한 없는 병이 섞이면 가방이 무엇이 언제 사라지는지 말하지 못한다.
+        { itemId: "stamina-tonic", quantity: 3, lots: [{ quantity: 3, expiresAt: lotExpiresAt(new Date(), 7) }] },
+        { itemId: "raid-ticket", quantity: 3 },
+        { itemId: "raid-select-ticket", quantity: 1 },
+        // 만능 파편은 돌파 확정 창에서 「함께 소모」를 바로 확인해 볼 수 있게 등급마다 넉넉히 둔다.
+        { itemId: "universal-fragment-r", quantity: 10 },
+        { itemId: "universal-fragment-sr", quantity: 10 },
+        { itemId: "universal-fragment-ssr", quantity: 10 },
+        ...STARTER_RUNE_TRAIT_KIT.items.map((entry) => ({ ...entry })),
+      ]
+      : [],
     // 서버 첫 조회가 현재 시각을 기준점으로 확정하며 기본 보관 시간은 서버 상수가 정한다.
     idleExcavation: createIdleExcavationState(),
     archaeology: createArchaeologyState(),
@@ -525,7 +576,9 @@ export function createDefaultSession(): Session {
     bookmarked: new Set<string>(),
     // 임시 뽑기 테스트 지급: 화석·호박석 배너를 각각 100회의 10연속 복원까지 확인할 수 있다.
     // 정식 경제 밸런스를 적용할 때는 fossil 12 / amber 5으로 되돌리고 이 주석도 제거한다.
-    wallet: { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: 60, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
+    wallet: QA_TOOLS_ENABLED
+      ? { fossil: 900, amber: 450, gems: 120, gold: 25_400, stamina: STARTING_STAMINA, dnaFragments: 0, cheesecake: 0, rawStone: STARTER_RUNE_TRAIT_KIT.rawStone, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 }
+      : { fossil: 0, amber: 0, gems: 0, gold: 0, stamina: STARTING_STAMINA, dnaFragments: 0, cheesecake: 0, rawStone: 0, raidSigil: 0, salvageRecord: 0, duelEmblem: 0 },
     // 첫 FakeServer 요청이 서버 시각으로 안전하게 초기화한다.
     staminaUpdatedAt: "",
     gachaPityByGroup: Object.fromEntries([...new Set(BANNERS.map(({ pityGroupId }) => pityGroupId))].map((id) => [id, { pullsSinceSsr: 0, pickupGuaranteed: false }])),
@@ -549,6 +602,13 @@ export function createDefaultSession(): Session {
     expedition: { weekKey: "", dayKey: "", playsToday: 0, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: null, allTimeBestScore: 0, lastParty: [], run: null },
     // 빈 시즌 키도 첫 레이드 조회에서 서버와 같은 UTC 주차로 정규화된다.
     raid: createEmptyRaidState(),
+    // 부트가 세션을 통째로 갈아 끼울 때(`replaceSession`) 지난 계정의 값이 남지 않게 빈 값을 명시한다.
+    claimedMailIds: [],
+    attendance: createEmptyAttendanceState(),
+    serverJournal: emptyServerJournal(),
+    raidTicketDrops: createEmptyRaidTicketDropState(),
+    achievements: createEmptyAchievementState(),
+    tutorial: createEmptyTutorialState(),
   };
 }
 
@@ -561,8 +621,10 @@ export function replaceSession(next: Session): void {
 
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */
 export function isStageUnlocked(stageId: string): boolean {
+  const floor=ancientStageFloor(stageId);
+  if(floor!==undefined) return session.cleared.has(floor===1 ? "1-10" : ancientStageId(floor-1));
   // 스토리 완료 ID를 대응 노드 ID로 바꿔 전투/서사 간선도 같은 집합 판정기를 통과시킨다.
   const completedNodeIds = new Set(session.cleared);
   for (const stage of STAGES) if (stage.kind === "story" && session.completedStoryIds.has(stage.storyId)) completedNodeIds.add(stage.id);
-  return isStageUnlockedByProgress(STAGES, stageId, completedNodeIds);
+  return isStoryDifficultyUnlocked(storyDifficultyOf(stageId), session.cleared) && isStageUnlockedByProgress(STAGES, stageId, completedNodeIds);
 }

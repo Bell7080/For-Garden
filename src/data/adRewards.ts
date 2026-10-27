@@ -13,6 +13,7 @@ export type ExcavationAdEffect =
 
 /** kind로 즉시 재화와 상태 변경을 안전하게 분기하는 광고 보상 합집합이다. */
 export type AdReward =
+  | { readonly kind: "roulette_chances"; readonly quantity: 1 }
   | { readonly kind: "currency"; readonly currency: AdRewardCurrency; readonly amount: number }
   /** 한 번에 둘 이상의 재화(와 가방 아이템)를 함께 주는 광고(전리품 상점의 증표, 일간 보급의 추가 몫). */
   | { readonly kind: "currencies"; readonly grants: readonly { readonly currency: AdRewardCurrency; readonly amount: number }[]; readonly items?: readonly { readonly itemId: AdRewardItemId; readonly quantity: number }[] }
@@ -20,19 +21,18 @@ export type AdReward =
   /** 가방에 쌓이는 아이템. 허용 목록(`AdRewardItemId`)에 있는 것만 광고로 줄 수 있다. */
   | { readonly kind: "item"; readonly itemId: AdRewardItemId; readonly quantity: number }
   /** 결투 도전권. 가방이 아니라 결투장의 오늘 횟수에 더해진다 — 하루가 지나면 기본 몫과 함께 사라진다. */
-  | { readonly kind: "duel_attempt"; readonly quantity: number }
-  /** 실제 점수와 지급량은 광고 검증 뒤 서버 기록만으로 계산한다. */
-  | { readonly kind: "quick_expedition"; readonly scoreRatio: number };
+  | { readonly kind: "duel_attempt"; readonly quantity: number };
 
 /** 광고 노출 위치는 일반 보급과 발굴 화면만 허용한다. */
-export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "quick_expedition" | "dungeon_sweep" | "duel_arena" | "premium_gems" | "premium_daily" | "shop_gold" | "archaeology_shop" | "loot_shop";
+export type AdPlacement = "shop_free_supplies" | "daily_mission_rewards" | "idle_excavation" | "dungeon_sweep" | "duel_arena" | "premium_gems" | "premium_daily" | "shop_gold" | "archaeology_shop" | "loot_shop" | "roulette";
 
 /** 서버 운영 설정의 원본이 되는 허용 슬롯 정의다. */
-export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly weeklyLimitUtc?: number; readonly placement: AdPlacement;
+export interface AdRewardSlot { readonly id: string; readonly displayText: string; readonly reward: AdReward; readonly dailyLimitUtc: number; readonly placement: AdPlacement;
   /** 이 상품(무료 수령)을 먼저 받아야 열리는 슬롯 — 서버가 그 상품의 오늘 몫이 소진됐는지 확인한다. */
   readonly requiresClaimedProductId?: string; }
 
 export const AD_REWARD_SLOTS = [
+  { id: "roulette-spin", displayText: "돌림판 추가 1회", reward: { kind: "roulette_chances", quantity: 1 }, dailyLimitUtc: 3, placement: "roulette" },
   { id: "daily-stamina", displayText: "스테미나 10", reward: { kind: "currency", currency: "stamina", amount: 10 }, dailyLimitUtc: 3, placement: "shop_free_supplies" },
   { id: "daily-cheesecake", displayText: "치즈케이크 20", reward: { kind: "currency", currency: "cheesecake", amount: 20 }, dailyLimitUtc: 3, placement: "daily_mission_rewards" },
   // 수확 배율은 광고 완료 전에 서버가 확정한 현재 미수확분에만 소비되는 일회성 규칙이다.
@@ -56,7 +56,6 @@ export const AD_REWARD_SLOTS = [
   { id: "archaeology-ad", displayText: "원석 100", reward: { kind: "currency", currency: "rawStone", amount: 100 }, dailyLimitUtc: 3, placement: "archaeology_shop" },
   { id: "loot-ad", displayText: "토벌 증표 5 · 인양 증표 5", reward: { kind: "currencies", grants: [{ currency: "raidSigil", amount: 5 }, { currency: "salvageRecord", amount: 5 }] }, dailyLimitUtc: 3, placement: "loot_shop" },
   // 기준 점수가 없거나 광고 검증이 실패하면 서버가 지급을 거절하며 횟수도 소비하지 않는다.
-  { id: "quick-expedition", displayText: "빠른 원정", reward: { kind: "quick_expedition", scoreRatio: 0.25 }, dailyLimitUtc: 2, weeklyLimitUtc: 5, placement: "quick_expedition" },
 ] as const satisfies readonly AdRewardSlot[];
 
 /** 요청 슬롯을 서버 허용 목록과 대조한다. */

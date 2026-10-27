@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import type { RelicDef, StageEnemyDef } from "../core/types";
 import { setDebugEnemyPreview } from "../debug";
 import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
-import { chipPoints, drawHairline, drawLayer } from "./holo";
+import { chipPoints, drawHairline, drawLayer, toPoints } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 import { AffinityBadge } from "./AffinityBadge";
@@ -13,11 +13,12 @@ import { combatPower } from "../core/combatPower";
 
 import { ENCOUNTER_ROLE, encounterRoleFor } from "../core/levelDesign";
 import { addStageEliteMark } from "./stageEliteMark";
-import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewSlotHalfWidth, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT, STORY_PREVIEW, storyPreviewLayout, storyPreviewRewardColumns } from "./nodeEnemyPreviewLayout";
+import { anchorEnemyPreview, enemyPreviewColumns, enemyPreviewRow, NODE_ENEMY_PREVIEW, NODE_ENEMY_SITUATION, NODE_ENEMY_SLOT, STORY_PREVIEW, storyPreviewLayout, storyPreviewRewardColumns } from "./nodeEnemyPreviewLayout";
 import { addSdFootShadow } from "./SdFootShadow";
 import type { StageFirstClearReward } from "../core/stageRewards";
 import { drawGlyph } from "./glyphs";
 import { addStageRewardFrame } from "./stageRewardFrame";
+import { ANCIENT_TRIAL_BACKDROP, type TrialBackdrop } from "./ancientTrialTheme";
 
 /**
  * 스토리 판의 두 칸이 열려 있는가. **관문을 옮겨 다녀도 그대로 남는다** — 줄거리를 접어 둔 손이
@@ -37,6 +38,14 @@ export interface NodeEnemyPreviewOptions {
   sections?: {
     rewards: readonly StageFirstClearReward[];
     rewardsClaimed: boolean;
+    /** 전투 규칙처럼 항상 읽어야 하는 정보는 접지 않고 표시한다. */
+    informationLabel?: string;
+    informationAlwaysOpen?: boolean;
+    /**
+     * 정보 칸 맨 위에 붉게 크게 서는 줄들 — 판을 바꾸는 규칙(고대 지층의 시련)이다. 그 아래 `situation`은 회색 곁말로 남는다.
+     * 한 줄이 한 규칙이고, 줄마다 앞에 작은 마름모가 선다.
+     */
+    informationHighlights?: readonly string[];
     /** 룬 액자를 누르면 부른다 — 받기 전의 룬은 등급·자리만 알려 주는 미리보기 쪽지를 연다. */
     onRuneClick?: (reward: Extract<StageFirstClearReward, { kind: "rune" }>, point: { x: number; y: number }) => void;
   };
@@ -49,6 +58,8 @@ export interface NodeEnemyPreviewOptions {
    * 수를 세어 판단하지 않는다 — 원정의 최종층 보스도 하나이지만 그쪽은 정예가 아니라 보스다.
    */
   elite?: boolean;
+  /** 판의 결 — 고대 지층은 그 층의 시련 색으로 판을 옅게 물들이고 오른쪽 위에 시련 문양을 깐다. */
+  backdrop?: TrialBackdrop;
   top: number;
   bottom: number;
   depth?: number;
@@ -71,6 +82,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   private panelHeight: number = NODE_ENEMY_PREVIEW.height;
   /** 판이 붙은 노드의 화면 y. 칸을 여닫아 다시 그릴 때 같은 자리에 붙인다. */
   private nodeY = 0;
+  /** 마지막 추적에서 노드가 창 안에 있었는가. 늦게 도착한 SD도 같은 값을 따른다. */
+  private nodeVisible = true;
 
   constructor(scene: Phaser.Scene, options: NodeEnemyPreviewOptions) {
     super(scene, scene.scale.width / 2, 0);
@@ -87,10 +100,11 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 새 노드의 제목·레벨·편성을 원자적으로 갈아 끼우고 노드에 꼬리를 붙인다. */
-  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "onEnemyClick" | "sections">> = {}): void {
+  showAt(nodeY: number, options: Partial<Pick<NodeEnemyPreviewOptions, "title" | "situation" | "growth" | "enemies" | "elite" | "backdrop" | "onEnemyClick" | "sections">> = {}): void {
     // 넘기지 않은 칸 구성이 직전 노드의 것으로 남지 않게 한다.
-    this.options = { ...this.options, sections: undefined, ...options };
+    this.options = { ...this.options, sections: undefined, backdrop: undefined, ...options };
     this.nodeY = nodeY;
+    this.nodeVisible = true;
     if (this.options.sections) { this.renderSectioned(false); this.reveal(); return; }
     this.panelHeight = NODE_ENEMY_PREVIEW.height;
     this.removeAll(true); this.clearPuppets();
@@ -116,35 +130,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     }
     this.add(drawHairline(this.scene, 0, NODE_ENEMY_SLOT.dividerY, NODE_ENEMY_PREVIEW.width - 60, { color: COLOR.accent, alpha: 0.35 }));
     const columns = enemyPreviewColumns(this.options.enemies.length);
-    const compact = columns.length > 3;
-    const half = enemyPreviewSlotHalfWidth(this.options.enemies.length);
-    const ground = NODE_ENEMY_SLOT.ground;
-    this.options.enemies.forEach((enemy, index) => {
-      const growth = this.options.growth[index] ?? { level: 1, breakthrough: 0 };
-      const x = columns[index];
-      addSdFootShadow(this.scene, x, ground + 4, compact ? 112 : 150, this);
-      // **카드 그리드와 같은 양식을 쓰되 칸이 아니라 SD로 세운다.** 속성·직군은 왼쪽 위에
-      // 아이콘으로, 돌파는 오른쪽 위에 로마자로 — 화면마다 다른 글로 적으면 같은 값이 어디서는
-      // 표식, 어디서는 문장이 된다.
-      const badgeSize = compact ? 40 : 52;
-      const badgeX = x - half + badgeSize * 0.62;
-      const badgeTop = NODE_ENEMY_SLOT.dividerY + 46;
-      this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badgeSize, 0.62));
-      this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
-      addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
-      // 카드의 이름줄과 같은 규칙이다 — 레벨은 강조색, 이름은 흰색. 체력은 적지 않는다:
-      // 붙어 볼지 정하는 데 필요한 것은 개체별 수치가 아니라 판 아래의 총 전투력 하나다.
-      addUnitNameplate(this.scene, this, x, NODE_ENEMY_SLOT.nameY, growth.level, enemy.name, compact ? 24 : 30);
-      this.overlay.add(addUnitPower(this.scene, undefined, x, NODE_ENEMY_SLOT.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText));
-      const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
-      hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
-      const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
-        * ENCOUNTER_ROLE[encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
-      void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
-      // 셋이 아니라 하나가 선 자리라는 것을 머리 위 이름표가 말한다.
-      if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
-    });
+    this.addEnemyRow(NODE_ENEMY_SLOT.ground, NODE_ENEMY_SLOT.dividerY + 46, NODE_ENEMY_SLOT.nameY, generation, true);
     // **판 아래는 이 편성이 얼마나 센가 한 줄이다.** 개체별 수치를 다 읽지 않고도 붙어 볼지
     // 말지를 정할 수 있어야 한다. 전투력은 표시·정렬 전용이라 전투 계산에는 들어가지 않는다.
     // 이름표는 짧게 둔다 — "예상"이나 "종합" 같은 수식은 무엇을 재는지 바꾸지 않는다.
@@ -155,7 +141,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
       .setOrigin(0.5, 0)
       .setShadow(0, 3, "#05070a", 4, false, true));
     // 상세 진입 E2E는 고정 숫자를 복제하지 않고 실제 적 입력 중심을 사용한다.
-    setDebugEnemyPreview({ top: this.options.top, bottom: this.options.bottom, panelTop: y - NODE_ENEMY_PREVIEW.height / 2, panelBottom: y + NODE_ENEMY_PREVIEW.height / 2, above, enemyTargets: columns.map((x) => ({ x: this.x + x, y: y + ground })) });
+    setDebugEnemyPreview({ top: this.options.top, bottom: this.options.bottom, panelTop: y - NODE_ENEMY_PREVIEW.height / 2, panelBottom: y + NODE_ENEMY_PREVIEW.height / 2, above, enemyTargets: columns.map((x) => ({ x: this.x + x, y: y + NODE_ENEMY_SLOT.ground })) });
     this.reveal();
   }
 
@@ -173,6 +159,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   trackNode(nodeY: number, nodeVisible: boolean): void {
     if (!this.shown) return;
     this.nodeY = nodeY;
+    this.nodeVisible = nodeVisible;
     const previousY = this.y;
     const { y, above } = anchorEnemyPreview(nodeY, this.options.top, this.options.bottom, this.panelHeight);
     this.setY(y); this.drawTail(above);
@@ -215,14 +202,21 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const width = NODE_ENEMY_PREVIEW.width;
     const spec = STORY_PREVIEW;
     const story = this.options.situation;
+    const storyOpen = sections.informationAlwaysOpen === true || sectionOpen.story;
     const textWidth = width - spec.storyText.inset * 2;
     // 줄거리 글은 높이를 먼저 재야 판 높이가 나온다. 잰 글을 그대로 판에 얹는다.
-    const storyText = story && sectionOpen.story
+    const storyText = story && storyOpen
       ? this.scene.add.text(0, 0, story, textStyle({ role: "body", size: spec.storyText.size, color: COLOR.inkDim, wrap: textWidth })).setOrigin(0, 0)
       : undefined;
+    // 붉은 규칙 줄은 회색 곁말보다 크고 굵다 — 판을 고르기 전에 먼저 읽혀야 하는 말이다.
+    const highlight = spec.highlight;
+    const highlights = storyOpen ? (sections.informationHighlights ?? []).map((line) => this.scene.add
+      .text(0, 0, line, textStyle({ role: "emphasis", size: highlight.size, color: COLOR.dangerText, wrap: textWidth - highlight.indent }))
+      .setOrigin(0, 0).setStroke("#05070a", 5)) : [];
+    const highlightHeight = highlights.reduce((sum, text) => sum + text.height + highlight.gap, 0);
     const layout = storyPreviewLayout({
-      enemiesOpen: sectionOpen.enemies, storyOpen: sectionOpen.story, hasStory: Boolean(story),
-      storyTextHeight: storyText?.height ?? 0, rewardCount: sections.rewards.length,
+      enemiesOpen: sectionOpen.enemies, storyOpen, hasStory: Boolean(story) || highlights.length > 0,
+      storyTextHeight: highlightHeight + (storyText?.height ?? 0), rewardCount: sections.rewards.length,
     });
     this.currentSectionLayout = layout;
     this.panelHeight = layout.height;
@@ -231,7 +225,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     this.setY(y);
     // 깎임은 판 높이가 아니라 고정값이다 — 높이를 따르면 줄거리를 펼칠 때 깎임이 커져 글줄의 왼쪽 시작점이 함께 안쪽으로 밀린다.
     const bevel = STORY_PREVIEW.bevel;
-    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: COLOR.accent, edgeAlpha: 0.55 }));
+    this.add(drawLayer(this.scene, 0, 0, chipPoints(width, layout.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), { fill: 0x0b0f15, alpha: 0.92, edge: this.options.backdrop?.tone ?? COLOR.accent, edgeAlpha: this.options.backdrop ? ANCIENT_TRIAL_BACKDROP.edgeAlpha : 0.55 }));
+    if (this.options.backdrop) this.paintBackdrop(this.options.backdrop, width, layout.height, bevel);
     this.tail = this.scene.add.graphics(); this.add(this.tail); this.drawTail(above);
     const left = -width / 2 + Math.max(56, bevel * 0.7);
     const right = width / 2 - 40;
@@ -249,12 +244,24 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
     // ── 줄거리 칸: 한 등급 가볍다 — 머리줄이 낮고 글자가 작고 흐리다.
     if (layout.storyHeaderY !== undefined) {
-      this.addSectionHeader(top + layout.storyHeaderY, spec.storyHeader, sectionOpen.story, () => { sectionOpen.story = !sectionOpen.story; this.renderSectioned(true); this.publishDebug(this.isAbove()); });
-      this.add(this.scene.add.text(left, top + layout.storyHeaderY, t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      this.addSectionToggleLabel(right, top + layout.storyHeaderY, "", sectionOpen.story, 20, COLOR.inkDim);
+      if (!sections.informationAlwaysOpen) this.addSectionHeader(top + layout.storyHeaderY, spec.storyHeader, sectionOpen.story, () => { sectionOpen.story = !sectionOpen.story; this.renderSectioned(true); this.publishDebug(this.isAbove()); });
+      this.add(this.scene.add.text(left, top + layout.storyHeaderY, sections.informationLabel ?? t("enemyPreview.story"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
+      if (!sections.informationAlwaysOpen) this.addSectionToggleLabel(right, top + layout.storyHeaderY, "", sectionOpen.story, 20, COLOR.inkDim);
     }
-    if (storyText && layout.storyTextY !== undefined) { storyText.setPosition(left, top + layout.storyTextY); this.add(storyText); }
-    else storyText?.destroy();
+    if (layout.storyTextY !== undefined) {
+      let lineY = top + layout.storyTextY;
+      for (const text of highlights) {
+        // 표식은 동그라미가 아니라 마름모다(화면 전체 규칙).
+        const half = highlight.mark / 2;
+        const mark = this.scene.add.graphics().fillStyle(COLOR.danger, 1)
+          .fillPoints([new Phaser.Math.Vector2(0, -half), new Phaser.Math.Vector2(half * 0.8, 0), new Phaser.Math.Vector2(0, half), new Phaser.Math.Vector2(-half * 0.8, 0)], true)
+          .setPosition(left + half, lineY + text.height / 2);
+        text.setPosition(left + highlight.indent, lineY);
+        this.add([mark, text]);
+        lineY += text.height + highlight.gap;
+      }
+      if (storyText) { storyText.setPosition(left, lineY); this.add(storyText); }
+    } else { storyText?.destroy(); highlights.forEach((text) => text.destroy()); }
 
     // ── 초회 보상: 접지 않는다. 받은 관문이면 액자마다 검은 막과 노란 체크가 선다.
     if (layout.rewardLabelY !== undefined && layout.rewardRowY !== undefined) {
@@ -308,28 +315,39 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   /** 펼친 적 칸 — 표식·이름줄·SD. 칸 윗변(`bodyTop`, 판 가운데 기준)에서 잰다. */
   private addEnemySlots(bodyTop: number, generation: number, keepPuppets: boolean): void {
     const body = STORY_PREVIEW.enemyBody;
-    const columns = enemyPreviewColumns(this.options.enemies.length);
-    const compact = columns.length > 3;
-    const half = enemyPreviewSlotHalfWidth(this.options.enemies.length);
-    const ground = bodyTop + body.ground;
+    this.addEnemyRow(bodyTop + body.ground, bodyTop + body.badgeTop, bodyTop + body.nameY, generation, !keepPuppets);
+  }
+
+  /**
+   * 적 한 줄 — 원정의 한 장 판과 스토리 판이 같은 자리 계산(`enemyPreviewRow`)을 쓴다.
+   *
+   * **카드 그리드와 같은 양식을 쓰되 칸이 아니라 SD로 세운다.** 속성·직군은 왼쪽 위에 아이콘으로,
+   * 돌파는 오른쪽 위에 로마자로 — 화면마다 다른 글로 적으면 같은 값이 어디서는 표식, 어디서는 문장이 된다.
+   * 레벨은 강조색, 이름은 흰색이고 체력은 적지 않는다: 붙어 볼지 정하는 데 필요한 것은 총 전투력 하나다.
+   */
+  private addEnemyRow(ground: number, badgeTop: number, nameY: number, generation: number, spawn: boolean): void {
+    const row = enemyPreviewRow(this.options.enemies.length);
+    const { half, badge } = row;
+    const slotWidth = half * 2;
     this.options.enemies.forEach((enemy, index) => {
       const growth = this.options.growth[index] ?? { level: 1, breakthrough: 0 };
-      const x = columns[index];
-      addSdFootShadow(this.scene, x, ground + 4, compact ? 112 : 150, this);
-      const badgeSize = compact ? 40 : 52;
-      const badgeX = x - half + badgeSize * 0.62;
-      const badgeTop = bodyTop + body.badgeTop;
-      this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badgeSize, 0.62));
-      this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badgeSize * 0.94, ROLE_ICON[enemy.role], badgeSize * 0.74, 0.62));
-      addBreakthroughGradeMark(this.scene, this, x + half - 20, badgeTop - 4, compact ? 34 : 42, growth.breakthrough + 1);
-      addUnitNameplate(this.scene, this, x, bodyTop + body.nameY, growth.level, enemy.name, compact ? 24 : 30);
-      this.overlay.add(addUnitPower(this.scene, undefined, x, bodyTop + body.nameY - 4, combatPower(enemy.stats), compact ? 20 : 24, COLOR.dangerText));
-      const hit = this.scene.add.rectangle(x, ground - 70, compact ? 145 : 230, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      const x = row.columns[index];
+      addSdFootShadow(this.scene, x, ground + 4, Math.min(150, slotWidth * 0.82), this);
+      const badgeX = x - half + badge * 0.62;
+      this.add(new AffinityBadge(this.scene, badgeX, badgeTop, ELEMENT_ICON[enemy.element], badge, 0.62));
+      this.add(new AffinityBadge(this.scene, badgeX, badgeTop + badge * 0.94, ROLE_ICON[enemy.role], badge * 0.74, 0.62));
+      addBreakthroughGradeMark(this.scene, this, x + half - badge * 0.38, badgeTop - 4, badge * 0.8, growth.breakthrough + 1);
+      addUnitNameplate(this.scene, this, x, nameY, growth.level, enemy.name, row.nameSize, row.nameWidth);
+      this.overlay.add(addUnitPower(this.scene, undefined, x, nameY - 4, combatPower(enemy.stats), row.powerSize, COLOR.dangerText));
+      const hit = this.scene.add.rectangle(x, ground - 70, slotWidth, 300, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      // 누른 칸의 성장 상태를 함께 넘긴다 — 화면이 배열 index로 다시 찾으면 순서가 바뀌는 날 어긋난다.
       hit.on("pointerup", () => this.options.onEnemyClick(enemy, growth)); this.add(hit);
-      const sdHeight = (compact ? 158 : NODE_ENEMY_PREVIEW.sdHeight)
-        * ENCOUNTER_ROLE[encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
-      if (!keepPuppets) void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
-      if (this.options.elite) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, compact ? 22 : 26);
+      // 무리의 작은 몸집(0.8)은 전장에서 "여럿이 온다"를 말하지만 미리보기에서는 누구인지만 흐린다 — 줄이지 않는다.
+      const bodyScale = ENCOUNTER_ROLE[enemy.encounterRole ?? encounterRoleFor(this.options.enemies.length, { elite: this.options.elite === true })].bodyScale;
+      const sdHeight = row.sdHeight * Math.max(1, bodyScale);
+      if (spawn) void this.spawnEnemy(enemy.id, x, ground, sdHeight, generation);
+      // 혼합 편성에서도 정예인 개체의 머리 위에만 이름표를 붙인다.
+      if (enemy.encounterRole === "elite" || (enemy.encounterRole === undefined && this.options.elite)) addStageEliteMark(this.scene, this, x, ground - sdHeight - 6, row.columns.length > 3 ? 22 : 26);
     });
   }
 
@@ -354,6 +372,18 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
   }
 
   /** 컨테이너를 뒤집지 않고 꼬리만 현재 노드 방향으로 다시 그린다. */
+  /** 시련의 결 — 같은 실루엣으로 옅게 물들이고, 깎이지 않은 오른쪽 위 모서리에 문양을 깐다. 글줄·SD보다 아래 층이다. */
+  private paintBackdrop(backdrop: TrialBackdrop, width: number, height: number, bevel: number): void {
+    const spec = ANCIENT_TRIAL_BACKDROP;
+    const wash = this.scene.add.graphics().fillStyle(backdrop.tone, spec.washAlpha);
+    wash.fillPoints(toPoints(chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } })), true);
+    this.add(wash);
+    const cx = width / 2 - spec.motifInset.right, cy = -height / 2 + spec.motifInset.top, r = spec.motifRadius;
+    const motif = this.scene.add.graphics().fillStyle(backdrop.tone, spec.motifAlpha);
+    for (const shape of backdrop.motif) motif.fillPoints(shape.map((point) => new Phaser.Math.Vector2(cx + point.x * r, cy + point.y * r)), true);
+    this.add(motif);
+  }
+
   private drawTail(above: boolean): void {
     if (!this.tail) return;
     const edge = above ? this.panelHeight / 2 : -this.panelHeight / 2;
@@ -362,9 +392,15 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
   /** Puppet은 화면 좌표에 직접 세우며 세대가 바뀐 로드 결과는 즉시 폐기한다. */
   private async spawnEnemy(id: string, x: number, ground: number, height: number, generation: number): Promise<void> {
-    const puppet = await spawnPuppet(this.scene, battleAssetFor(id), { x: this.x + x, groundY: this.y + ground, height, flipX: true, tint: 0xffffff, depth: this.depth + 1 });
+    const spawnedGroundY = this.y + ground;
+    const puppet = await spawnPuppet(this.scene, battleAssetFor(id), { x: this.x + x, groundY: spawnedGroundY, height, flipX: true, tint: 0xffffff, depth: this.depth + 1 });
     if (!this.active || generation !== this.generation || !this.scene.scene.isActive()) { puppet.destroy(); return; }
-    puppet.setVisible(this.revealed); this.puppets.add(puppet);
+    // SD가 내려받히는 동안 지도가 굴렀을 수 있다 — 생성 시점의 자리가 아니라 **지금 판의 자리**에 발을 맞춘다.
+    // 맞추지 않으면 스크롤 중에 연 판의 SD만 그 만큼 아래로 밀려 서 있다.
+    // Mesh의 y는 발끝이 아니라 이미지 한가운데이므로 발끝 좌표를 대입하지 않고 **움직인 만큼만** 더한다 —
+    // 대입하면 모든 SD가 이미지 절반 높이만큼 아래로 내려앉는다.
+    puppet.setY(puppet.y + this.y + ground - spawnedGroundY);
+    puppet.setVisible(this.nodeVisible && this.revealed); this.puppets.add(puppet);
   }
 
   /** 현재 세대를 무효화한 뒤 컨테이너 밖 GPU 개체까지 명시적으로 정리한다. */

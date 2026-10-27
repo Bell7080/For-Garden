@@ -13,7 +13,7 @@ export const STATUS_ES = {
   "status.frozen": "Congelado",
   "status.frozen.detail": "quedan {time} · Al romperse, daño fijo del {percent}% de PV máx.",
   "status.frenzy": "Frenesí",
-  "status.frenzy.detail": "Ataca a su propio bando · Velocidad de ataque +{percent}% · quedan {time}",
+  "status.frenzy.detail": "Ataca a su propio bando · quedan {time}",
   "status.taunt": "Provocación",
   "status.taunt.detail": "Solo ataca a quien provoca · quedan {time}",
   "status.bleed": "Sangrado",
@@ -62,4 +62,6 @@ export const STATUS_ES = {
   "status.healCut.detail": "Curación recibida −{percent}% · quedan {time}",
   "status.sunken": "Peso hundido",
   "status.sunken.detail": "Velocidad de movimiento y ataque −{percent}% · quedan {time}",
+  "status.echo": "Eco",
+  "status.echo.detail": "Queda {time}",
 } as const;

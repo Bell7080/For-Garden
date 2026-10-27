@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** zh-Hans table. Same keys as the Korean table; any key missing here falls back to Korean. */
 import { SETTINGS_ZH_HANS } from "./settings";
 import { LOBBY_ZH_HANS } from "./lobby";
@@ -25,5 +26,16 @@ import { SYSTEM_ZH_HANS } from "./system";
 import { RAID_ZH_HANS } from "./raid";
 import { BOUNTY_ZH_HANS } from "./bounty";
 import { DUNGEON_ZH_HANS } from "./dungeon";
+import { DUEL_ZH_HANS } from "./duel";
 
-export default { ...SETTINGS_ZH_HANS, ...LOBBY_ZH_HANS, ...COMMON_ZH_HANS, ...INFO_ZH_HANS, ...STATUS_ZH_HANS, ...LAB_ZH_HANS, ...EXPEDITION_ZH_HANS, ...BATTLE_ZH_HANS, ...CAKE_OPERATION_ZH_HANS, ...EXCAVATION_ZH_HANS, ...AUGMENT_ZH_HANS, ...FRIENDS_ZH_HANS, ...RUNE_ZH_HANS, ...PARTY_ZH_HANS, ...EXPEDITION_REWARD_ZH_HANS, ...SAVE_CONFLICT_ZH_HANS, ...INTERACTION_ZH_HANS, ...SHOP_ZH_HANS, ...MISSIONS_ZH_HANS, ...INVENTORY_ZH_HANS, ...MISC_ZH_HANS, ...SKILL_ZH_HANS, ...SYSTEM_ZH_HANS, ...RAID_ZH_HANS, ...BOUNTY_ZH_HANS, ...DUNGEON_ZH_HANS };
+import { GUILD_ZH_HANS } from "./guild";
+
+import { SUPPORT_ZH_HANS } from "./support";
+
+import { ACHIEVEMENT_ZH_HANS } from "./achievement";
+
+import { RECOLLECTION_ZH_HANS } from "./recollection";
+
+import { DIALOGUE_ZH_HANS } from "./dialogue";
+
+export default { ...ARENA_TEXT, ...DIALOGUE_ZH_HANS, ...RECOLLECTION_ZH_HANS, ...ACHIEVEMENT_ZH_HANS, ...SUPPORT_ZH_HANS, ...GUILD_ZH_HANS, ...SETTINGS_ZH_HANS, ...LOBBY_ZH_HANS, ...COMMON_ZH_HANS, ...INFO_ZH_HANS, ...STATUS_ZH_HANS, ...LAB_ZH_HANS, ...EXPEDITION_ZH_HANS, ...BATTLE_ZH_HANS, ...CAKE_OPERATION_ZH_HANS, ...EXCAVATION_ZH_HANS, ...AUGMENT_ZH_HANS, ...FRIENDS_ZH_HANS, ...RUNE_ZH_HANS, ...PARTY_ZH_HANS, ...EXPEDITION_REWARD_ZH_HANS, ...SAVE_CONFLICT_ZH_HANS, ...INTERACTION_ZH_HANS, ...SHOP_ZH_HANS, ...MISSIONS_ZH_HANS, ...INVENTORY_ZH_HANS, ...MISC_ZH_HANS, ...SKILL_ZH_HANS, ...SYSTEM_ZH_HANS, ...RAID_ZH_HANS, ...BOUNTY_ZH_HANS, ...DUNGEON_ZH_HANS, ...DUEL_ZH_HANS };

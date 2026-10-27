@@ -28,6 +28,7 @@ export function normalizeExpeditionState(expedition: Partial<ExpeditionState> & 
     allTimeBestScore: Math.max(0, Math.floor(expedition.allTimeBestScore ?? expedition.bestScore ?? 0)),
     claimedRewardStageIds: [...(expedition.claimedRewardStageIds ?? [])],
     pendingRankReward: expedition.pendingRankReward ? { ...expedition.pendingRankReward } : null,
+    pendingRankRewards: (expedition.pendingRankRewards ?? []).map((reward) => ({ ...reward })),
     lastParty: [...(expedition.lastParty ?? [])],
     run: expedition.run ?? null,
   };
@@ -45,9 +46,13 @@ export function rollExpeditionPeriods(expedition: ExpeditionState, now: Date): E
   let next = expedition;
   if (next.dayKey !== dayKey) next = { ...next, dayKey, playsToday: 0 };
   if (next.weekKey !== weekKey) {
-    const pending = next.pendingRankReward
-      ?? (next.weekKey && next.bestScore > 0 ? { weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt } : null);
-    next = { ...next, weekKey, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: pending };
+    const queue = expeditionRankRewardQueue(next);
+    if (next.weekKey && next.bestScore > 0 && !queue.some((reward) => reward.weekKey === next.weekKey)) queue.push({ weekKey: next.weekKey, score: next.bestScore, achievedAt: next.bestAchievedAt });
+    next = { ...next, weekKey, bestScore: 0, bestAchievedAt: "", claimedRewardStageIds: [], pendingRankReward: queue[0] ?? null, pendingRankRewards: queue.slice(1) };
   }
   return next;
+}
+
+export function expeditionRankRewardQueue(state: ExpeditionState): NonNullable<ExpeditionState["pendingRankReward"]>[] {
+  return [...(state.pendingRankReward ? [state.pendingRankReward] : []), ...(state.pendingRankRewards ?? [])].map((reward) => ({ ...reward }));
 }

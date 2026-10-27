@@ -1,3 +1,4 @@
+import { ARENA_TEXT } from "./arena";
 /** id table. Same keys as the Korean table; any key missing here falls back to Korean. */
 import { SETTINGS_ID } from "./settings";
 import { LOBBY_ID } from "./lobby";
@@ -25,5 +26,16 @@ import { SYSTEM_ID } from "./system";
 import { RAID_ID } from "./raid";
 import { BOUNTY_ID } from "./bounty";
 import { DUNGEON_ID } from "./dungeon";
+import { DUEL_ID } from "./duel";
 
-export default { ...SETTINGS_ID, ...LOBBY_ID, ...COMMON_ID, ...INFO_ID, ...STATUS_ID, ...LAB_ID, ...EXPEDITION_ID, ...BATTLE_ID, ...CAKE_OPERATION_ID, ...EXCAVATION_ID, ...AUGMENT_ID, ...FRIENDS_ID, ...RUNE_ID, ...PARTY_ID, ...EXPEDITION_REWARD_ID, ...SAVE_CONFLICT_ID, ...INTERACTION_ID, ...SHOP_ID, ...MISSIONS_ID, ...INVENTORY_ID, ...MISC_ID, ...SKILL_ID, ...SYSTEM_ID, ...RAID_ID, ...BOUNTY_ID, ...DUNGEON_ID };
+import { GUILD_ID } from "./guild";
+
+import { SUPPORT_ID } from "./support";
+
+import { ACHIEVEMENT_ID } from "./achievement";
+
+import { RECOLLECTION_ID } from "./recollection";
+
+import { DIALOGUE_ID } from "./dialogue";
+
+export default { ...ARENA_TEXT, ...DIALOGUE_ID, ...RECOLLECTION_ID, ...ACHIEVEMENT_ID, ...SUPPORT_ID, ...GUILD_ID, ...SETTINGS_ID, ...LOBBY_ID, ...COMMON_ID, ...INFO_ID, ...STATUS_ID, ...LAB_ID, ...EXPEDITION_ID, ...BATTLE_ID, ...CAKE_OPERATION_ID, ...EXCAVATION_ID, ...AUGMENT_ID, ...FRIENDS_ID, ...RUNE_ID, ...PARTY_ID, ...EXPEDITION_REWARD_ID, ...SAVE_CONFLICT_ID, ...INTERACTION_ID, ...SHOP_ID, ...MISSIONS_ID, ...INVENTORY_ID, ...MISC_ID, ...SKILL_ID, ...SYSTEM_ID, ...RAID_ID, ...BOUNTY_ID, ...DUNGEON_ID, ...DUEL_ID };

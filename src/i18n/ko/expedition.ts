@@ -5,7 +5,7 @@ export const EXPEDITION_KO = {
   "expedition.weekly.best": "주간 최고 점수 {score}",
   "expedition.weekly.myBest": "내 주간 최고 점수",
   "expedition.weekly.rank": "주간 {rank}위",
-  "expedition.weekly.rankReward": "주간 보상 · 보석 {gems} · 인양 기록 {salvage}",
+  "expedition.weekly.rankReward": "주간 보상 · 젬 {gems} · 인양 기록 {salvage}",
   "expedition.weekly.unranked": "미등재",
   "expedition.weekly.rolled": "주차가 바뀌었습니다. 다시 들어와 주세요.",
   "expedition.weekly.loadFailed": "기록을 불러오지 못했습니다",
@@ -19,9 +19,9 @@ export const EXPEDITION_KO = {
 
   "expedition.abandon": "포기하기",
   "expedition.abandon.title": "원정 포기",
-  "expedition.abandon.body": "임시 보상 {reward}개가 지갑으로 이전됩니다.\n이번 런의 최고 점수는 주간 기록에 반영되지 않습니다.",
+  "expedition.abandon.body": "원정을 종료하고 지금까지 모은 보상을 받습니다.\n이번 원정 점수는 주간 기록에 반영되지 않습니다.\n표시된 보상은 보유 한도에 따라 줄어들 수 있습니다.",
   "expedition.abandon.confirm": "포기 확정",
-  "expedition.abandon.settle": "포기 전리품 정산",
+  "expedition.abandon.settle": "원정 종료 보상",
 
   "expedition.loot": "획득 전리품",
   "expedition.nodeScore": "노드 점수",
@@ -38,6 +38,9 @@ export const EXPEDITION_KO = {
 
   "expedition.augment.confirmed": "확정 증강 {count}",
   "expedition.augment.applyAll": "전체 적용",
+  "expedition.augment.count": "{count}개",
+  "expedition.augment.slot": "{slot}번 렐릭",
+  "expedition.augment.empty": "받은 증강 없음",
 
   "expedition.sweep.title": "소탕",
   "expedition.sweep.body": "노드 클리어 보상의 75%를 즉시 받습니다. 보물 전리품·폰토스 인양 기록·점수는 남지 않습니다.\n오늘의 원정 기회 1회를 사용하며 되돌릴 수 없습니다.",
@@ -58,14 +61,4 @@ export const EXPEDITION_KO = {
   "expedition.runInProgress": "진행 중인 원정이 있습니다",
   "expedition.devOnly": "개발 빌드에서만 사용할 수 있습니다",
 
-  "expedition.quick.sub": "골드 {gold} · 오늘 {remaining}회",
-  "expedition.quick.cancelled": "광고가 취소되었습니다",
-  "expedition.quick.walletFull": "골드 지갑이 가득 찼습니다",
-  "expedition.quick.done": "빠른 원정 완료",
-  "expedition.quick.walletGain": "실제 지갑 증가",
-  "expedition.quick.verifyFailed": "광고 검증에 실패했습니다 · 다시 시도하세요",
-  "expedition.quick.dailyUsed": "오늘 횟수를 모두 사용했습니다 · 내일 다시 오세요",
-  "expedition.quick.weeklyUsed": "이번 주 횟수를 모두 사용했습니다 · 다음 주에 다시 오세요",
-  "expedition.quick.noBaseline": "기준 점수가 없습니다 · 원정 최고점을 먼저 기록하세요",
-  "expedition.quick.retryLater": "잠시 후 다시 시도해 주세요",
 } as const;

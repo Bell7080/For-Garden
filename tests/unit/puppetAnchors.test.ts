@@ -53,6 +53,11 @@ import {
   TORIKA_SKIN_001_SD_METADATA,
   SUKUSUINO_PORTRAIT_METADATA,
   TABOA_PORTRAIT_METADATA,
+  IKANIXIA_PORTRAIT_METADATA,
+  ATRA_PORTRAIT_METADATA,
+  PULSI_PORTRAIT_METADATA,
+  NEURI_PORTRAIT_METADATA,
+  MIR_PORTRAIT_METADATA,
   VENTIA_PORTRAIT_METADATA,
   VIRIA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
@@ -377,6 +382,12 @@ const REAL_PORTRAITS = [
   // 시즌 보스도 같은 목록에 건다 — 지어낸 프레임만 검사하면 실제 원화가 잘리는 동안에도 통과한다.
   { name: "수쿠스이노", metadata: SUKUSUINO_PORTRAIT_METADATA, head: { x: 608, y: 267 }, eyes: [{ x: 585, y: 265 }, { x: 637, y: 239 }] },
   { name: "타보아", metadata: TABOA_PORTRAIT_METADATA, head: { x: 520, y: 184 }, eyes: [{ x: 498, y: 188 }, { x: 551, y: 147 }] },
+  // 회수조 다섯. 관절은 ZIP 프로젝트의 중심·머리·눈 값이다.
+  { name: "이카닉시아", metadata: IKANIXIA_PORTRAIT_METADATA, head: { x: 490, y: 255 }, eyes: [{ x: 468, y: 256 }, { x: 520, y: 221 }] },
+  { name: "아트라", metadata: ATRA_PORTRAIT_METADATA, head: { x: 530, y: 233 }, eyes: [{ x: 512, y: 233 }, { x: 565, y: 203 }] },
+  { name: "펄시", metadata: PULSI_PORTRAIT_METADATA, head: { x: 736, y: 263 }, eyes: [{ x: 702, y: 216 }, { x: 765, y: 256 }] },
+  { name: "네우리", metadata: NEURI_PORTRAIT_METADATA, head: { x: 470, y: 207 }, eyes: [{ x: 454, y: 206 }, { x: 514, y: 174 }] },
+  { name: "미르", metadata: MIR_PORTRAIT_METADATA, head: { x: 582, y: 339 }, eyes: [{ x: 530, y: 296 }, { x: 605, y: 351 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

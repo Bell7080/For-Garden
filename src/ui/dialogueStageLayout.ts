@@ -1,5 +1,5 @@
 import { BASE_WIDTH } from "../config/gameConfig";
-import type { DialogueAct, DialogueBackdrop, DialogueCue, DialogueStageSlot, DialogueStandingAsset } from "../core/dialogue";
+import type { DialogueAct, DialogueBackdrop, DialogueCue, DialogueSign, DialogueStageSlot, DialogueStandingAsset } from "../core/dialogue";
 import { BACKGROUND } from "./backgroundAssets";
 
 /**
@@ -143,6 +143,47 @@ export interface DialogueActStep {
   dy: number;
   ms: number;
   ease: "Quad.Out" | "Quad.In" | "Sine.InOut" | "Back.Out" | "Linear";
+  /** 가로·세로 배율(제 크기의 몇 배). 적지 않으면 1 — 눌리고 늘어나는 몸짓이 쓴다. */
+  sx?: number;
+  sy?: number;
+  /** 몸에 덮는 색의 진하기(0~1). 어떤 색인지는 `DIALOGUE_ACT_FILL`이 몸짓별로 갖는다. 적지 않으면 0. */
+  fill?: number;
+}
+
+/**
+ * 색이 덮이는 몸짓의 색. 푸르게 질린 겁먹음, 붉게 빠직한 분노, 하얗게 질린 멍함이다.
+ * 전투의 폭주가 쓰는 같은 경로(`setBodyFill`)라 원화의 윤곽과 선은 그대로 남고 색만 덮인다.
+ */
+export const DIALOGUE_ACT_FILL: Readonly<Partial<Record<DialogueAct, number>>> = {
+  fright: 0x5f8dff,
+  rage: 0xff2f2f,
+  faint: 0xe8eef8,
+};
+
+/**
+ * 감정 몸짓의 빛. 몸 전체를 단색으로 덮으면 원화가 물든 것처럼만 읽혀 몸에 덮는 몫은 옅게
+ * (`bodyShare`)만 남기고, 나머지는 몸 둘레로 번지는 **발광**이 맡는다. 몸짓 한 걸음의 `fill`이 곧 두 쪽의 세기다.
+ * 안쪽 고리일수록 진하고 바깥은 옅어 가장자리가 녹는다.
+ */
+export const DIALOGUE_ACT_GLOW = {
+  bodyShare: 0.2,
+  directions: 12,
+  /** 몸에서 떨어진 거리(px)와 그 고리의 진하기 몫. */
+  rings: [
+    { distance: 7, alpha: 0.5 },
+    { distance: 15, alpha: 0.3 },
+    { distance: 26, alpha: 0.16 },
+  ],
+} as const;
+
+/** 몸 뒤에 겹칠 발광 고리들. `amount`는 몸짓 한 걸음의 `fill`(0~1)이고 0이면 비어 있다. 바깥 고리가 먼저(뒤)다. */
+export function actGlowSteps(color: number, amount: number): { dx: number; dy: number; alpha: number; color: number }[] {
+  if (amount <= 0.01) return [];
+  const { rings, directions } = DIALOGUE_ACT_GLOW;
+  return [...rings].reverse().flatMap(({ distance, alpha }) => Array.from({ length: directions }, (_, index) => {
+    const angle = (index / directions) * Math.PI * 2;
+    return { dx: Math.cos(angle) * distance, dy: Math.sin(angle) * distance, alpha: alpha * Math.min(1, amount * 1.4), color };
+  }));
 }
 
 /**
@@ -200,7 +241,104 @@ export const DIALOGUE_ACTS: Readonly<Record<DialogueAct, readonly DialogueActSte
     { dx: 0, dy: 46, ms: 380, ease: "Linear" },
     { dx: 0, dy: 0, ms: 420, ease: "Sine.InOut" },
   ],
+  // 퍽 맞은 듯 꾹 눌렸다가(가로로 퍼지고 세로로 낮아진다) 반동으로 늘어난 뒤 제 크기로 돌아온다.
+  squash: [
+    { dx: 0, dy: 40, sx: 1.2, sy: 0.7, ms: 80, ease: "Quad.Out" },
+    { dx: 0, dy: 40, sx: 1.2, sy: 0.7, ms: 150, ease: "Linear" },
+    { dx: 0, dy: -18, sx: 0.92, sy: 1.1, ms: 130, ease: "Quad.Out" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, ms: 220, ease: "Back.Out" },
+  ],
+  // 착지에서 납작해지고 뜰 때 늘어나는 말랑한 두 번 통통.
+  bounce: [
+    { dx: 0, dy: 14, sx: 1.1, sy: 0.88, ms: 80, ease: "Quad.Out" },
+    { dx: 0, dy: -50, sx: 0.93, sy: 1.1, ms: 130, ease: "Quad.Out" },
+    { dx: 0, dy: 12, sx: 1.1, sy: 0.88, ms: 120, ease: "Quad.In" },
+    { dx: 0, dy: -30, sx: 0.95, sy: 1.07, ms: 100, ease: "Quad.Out" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, ms: 140, ease: "Back.Out" },
+  ],
+  // 푸르게 질려 움츠린 채 잘게 떨다가 서서히 색이 돌아온다.
+  fright: [
+    { dx: 0, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 110, ease: "Quad.Out" },
+    { dx: -6, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: 6, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: -6, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: 6, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: -5, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: 5, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 38, ease: "Linear" },
+    { dx: 0, dy: 18, sx: 0.97, sy: 0.96, fill: 0.6, ms: 220, ease: "Linear" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, fill: 0, ms: 460, ease: "Sine.InOut" },
+  ],
+  // 붉게 빠직하며 한 뼘 부풀어 부들부들 떤다. 색은 전투 폭주처럼 몸 위에만 얹힌다.
+  rage: [
+    { dx: 0, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 110, ease: "Quad.Out" },
+    { dx: -7, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: 7, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: -7, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: 7, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: -5, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: 5, dy: -10, sx: 1.07, sy: 1.07, fill: 0.55, ms: 40, ease: "Linear" },
+    { dx: 0, dy: -10, sx: 1.07, sy: 1.07, fill: 0.5, ms: 200, ease: "Linear" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, fill: 0, ms: 420, ease: "Sine.InOut" },
+  ],
+  // 하얗게 질려 좌우로 휘청이다 정신을 차린다.
+  faint: [
+    { dx: -20, dy: 8, sx: 0.98, sy: 0.98, fill: 0.45, ms: 170, ease: "Sine.InOut" },
+    { dx: 20, dy: 8, sx: 0.98, sy: 0.98, fill: 0.45, ms: 240, ease: "Sine.InOut" },
+    { dx: -12, dy: 4, sx: 0.99, sy: 0.99, fill: 0.3, ms: 200, ease: "Sine.InOut" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, fill: 0, ms: 300, ease: "Sine.InOut" },
+  ],
+  // 으쓱하며 가슴을 편 듯 한 뼘 커졌다가 돌아온다.
+  puff: [
+    { dx: 0, dy: -16, sx: 1.08, sy: 1.1, ms: 170, ease: "Quad.Out" },
+    { dx: 0, dy: -16, sx: 1.08, sy: 1.1, ms: 240, ease: "Linear" },
+    { dx: 0, dy: 0, sx: 1, sy: 1, ms: 280, ease: "Sine.InOut" },
+  ],
 };
+
+/**
+ * 무전 너머의 목소리(`remote`)의 겉모습.
+ *
+ * 마일리지 상점의 홀로그램 점원과 같은 결이되, 캐릭터가 먼저 읽히도록 **거의 불투명하고 옅은 푸른빛**만
+ * 씌운다. 얼굴은 가리지 않는다 — 검게 누르거나 짙게 투명하게 하면 누구인지 보이지 않았다.
+ * 말하는 사람은 더 밝고, 나머지는 가라앉는다.
+ */
+export const DIALOGUE_REMOTE = {
+  tint: 0x6cc8ff,
+  dimTint: 0x3f7396,
+  alpha: 0.9,
+  /** 투영이 일렁이는 폭. 알파가 눈에 띄게 오가 홀로그램임이 읽힌다. */
+  flickerAlpha: 0.12,
+  flickerMs: 1100,
+} as const;
+
+/**
+ * 사람이 아닌 목소리의 글자 딱지. 가운데 캐릭터 자리에 선다.
+ *
+ * 상점의 「매진」 딱지처럼 비스듬히 찍힌 한 장이다 — 종류마다 색만 다르고 모양은 하나다.
+ * 글자는 `dialogue.sign.<종류>` 문구가 갖는다.
+ */
+export const DIALOGUE_SIGN: Readonly<Record<DialogueSign, { color: number; textColor: string }>> = {
+  announce: { color: 0x7fd4ff, textColor: "#d8f4ff" },
+  warning: { color: 0xff4a4a, textColor: "#ffd9d9" },
+  system: { color: 0x7dffb8, textColor: "#dcffee" },
+  broadcast: { color: 0xffc857, textColor: "#fff0cc" },
+  tower: { color: 0x9aa8ff, textColor: "#e3e7ff" },
+};
+
+/** 딱지의 크기·자리. 머리 줄(`DIALOGUE_STANDING_FRAME.headY`) 아래 가슴께에 가로로 길게 찍힌다. */
+export const DIALOGUE_SIGN_LAYOUT = {
+  width: 640,
+  height: 214,
+  /** 딱지 가운데의 y. */
+  y: 700,
+  tiltDeg: -5,
+  textSize: 110,
+  /** 찍히는 연출: 크게 시작해 쾅 하고 제 크기로 내려앉는다. */
+  stampFromScale: 1.55,
+  stampMs: 210,
+  depth: 560,
+  dimAlpha: 0.9,
+} as const;
 
 /**
  * 화면 연출의 세기.
@@ -274,6 +412,8 @@ export const DIALOGUE_BACKDROP: Readonly<Record<DialogueBackdrop, string>> = {
   train: BACKGROUND.storyTrain,
   // 폭파 뒤 전장은 1-1이 실제로 싸우는 스토리 전장이다 — 오프닝이 끝나는 자리가 곧 첫 관문이다.
   battlefield: BACKGROUND.combat,
+  // 배경을 정하지 않은 이야기(애착·곁 이야기 등)의 기본 무대 — 렐릭 도감 탭과 같은 원화다.
+  relics: BACKGROUND.relics,
 };
 
 /**

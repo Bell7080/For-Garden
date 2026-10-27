@@ -1,3 +1,4 @@
+import { DEBUG_KO } from "../../src/i18n/ko/debug";
 import { describe, expect, it } from "vitest";
 import { KO } from "../../src/i18n/ko";
 import { languagesWithCatalog, t } from "../../src/i18n";
@@ -49,7 +50,8 @@ describe("문구 표", () => {
       .filter((key) => !code.includes(`"${key}"`))
       .filter((key) => !prefixes.some((prefix) => key.startsWith(prefix)));
     expect(unused).toEqual([]);
-  });
+    // 표·소스가 커질수록 문자열 대조가 길어져 기본 5초를 넘긴다(부하가 걸린 기기에서 실제로 넘겼다).
+  }, 30_000);
 });
 
 describe("자리 표시", () => {
@@ -70,6 +72,15 @@ describe("자리 표시", () => {
 });
 
 describe("번역 표", () => {
+  it("은 선택 가능한 모든 언어에 전체 UI 문구를 갖춘다", () => {
+    // 대체 한국어가 화면을 살려 주더라도, 번역 누락 자체가 정상인 것은 아니다.
+    for (const [path, catalog] of Object.entries(CATALOGS)) {
+      // QA 디버그 창(`DEBUG_KO`)은 일반 빌드에서 분기째 지워지는 개발 도구라 한국어만 갖는다.
+      const missing = Object.keys(KO).filter((key) => !(key in catalog) && !(key in DEBUG_KO));
+      expect(missing, path).toEqual([]);
+    }
+  });
+
   it("은 한국어에 없는 키를 만들지 않는다", () => {
     // 한국어 표가 원본이라, 여기 없는 키는 화면이 부르지 않으므로 영영 보이지 않는다.
     for (const [path, catalog] of Object.entries(CATALOGS)) {
@@ -115,6 +126,8 @@ describe("언어와 표의 계약", () => {
 const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
   // 그 언어 자신의 표기다. 번역하면 제 언어를 찾을 수 없다.
   "../../src/core/language.ts": "언어 이름은 그 언어로 적는다",
+  // QA 빌드에서만 서는 표본 길드의 이름·공지·멤버 이름이다. 운영 데이터가 아니라 번역 대상이 아니다.
+  "../../src/api/FakeGuildServer.ts": "QA 표본 길드",
   // ZIP 안의 실제 관절 키라 옮기면 찾지 못한다.
   "../../src/puppets/anchors.ts": "Puppet 관절 이름",
   // 화면에 그리지 않는다. E2E가 어느 단계인지 확인하는 데만 쓴다.

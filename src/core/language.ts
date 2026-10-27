@@ -43,6 +43,12 @@ export const SELECTABLE_LANGUAGE_IDS: ReadonlyArray<LanguageId> = [
 export const DEFAULT_LANGUAGE: LanguageId = "ko";
 
 /**
+ * 언어 메뉴를 여는 버튼·설정 줄·선택창 제목의 라벨. 어느 언어로 맞춰져 있어도 메뉴를 바로 찾을 수
+ * 있어야 하므로 번역하지 않고 영어 낱말로 고정한다(응태 결정).
+ */
+export const LANGUAGE_MENU_LABEL = "Language";
+
+/**
  * 설정 화면이 그대로 세우는 그 언어 자신의 이름.
  *
  * 언어 목록은 고르는 사람이 읽을 수 있어야 하므로 번역하지 않는다 — 일본어를 찾는 사람에게

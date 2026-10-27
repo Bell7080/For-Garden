@@ -65,7 +65,7 @@ export function createUnitHealthBarState(ratio = 1): UnitHealthBarState {
 
 /** HP 입력을 비율로 바꾸고, 명시적인 피해 사건에만 잔상과 피격 타이머를 갱신한다. */
 export function setUnitHealthValue(state: UnitHealthBarState, input: number | HealthValueInput): UnitHealthBarState {
-  if (typeof input === "number") return { ...state, target: clamp01(input) };
+  if (typeof input === "number") { const target = clamp01(input); return target === state.target ? state : { ...state, target }; }
   const maxHp = Math.max(1, input.maxHp);
   const target = clamp01(input.currentHp / maxHp);
   const cause = input.cause ?? "sync";
@@ -121,6 +121,7 @@ export function unitShieldBand(shown: number, shield: number, minWidth = 0): { s
 
 /** 한 프레임을 진행한다. 큰 delta도 보간을 초과시키지 않고 잔상을 현재 체력 이상으로 고정한다. */
 export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, motionFactor = 1): UnitHealthBarState {
+  if (state.shown === state.target && state.damageTrail === state.shown && state.shield === state.shieldTarget && state.trailHold === 0 && state.reactionLeft === 0) return state;
   const seconds = Math.max(0, deltaMs) / 1000;
   // 끔은 채움을 즉시 맞추되 붉은 피해 잔상의 색과 대기 시간은 남겨 정보 손실을 막는다.
   const shown = motionFactor === 0 ? state.target : state.shown + (state.target - state.shown) * Math.min(1, seconds * HEALTH_BAR_MOTION.shownEase * motionFactor);

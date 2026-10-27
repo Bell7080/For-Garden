@@ -13,8 +13,8 @@ import { COLOR, textStyle } from "./theme";
 export function contentNameKey(id: ContentId): TextKey {
   const keys: Record<ContentId, TextKey> = {
     excavation: "excavation.title", interaction: "interaction.title", cakeOperation: "cake.title", bounty: "bounty.title",
-    expedition: "expedition.entry", raid: "raid.title", duel: "lobby.duel", archaeology: "nav.archaeology",
-    shop: "lobby.rail.shop", trade: "lobby.rail.trade", friends: "rail.friends",
+    expedition: "expedition.entry", raid: "raid.title", duel: "lobby.duel", archaeology: "nav.archaeology", lab: "nav.lab",
+    shop: "lobby.rail.shop", trade: "lobby.rail.trade", friends: "rail.friends", guild: "rail.guild",
   };
   return keys[id];
 }
@@ -51,6 +51,34 @@ export function collectUnlockCelebrations(): void {
 /** 이 콘텐츠의 열림 연출이 남아 있으면 true를 돌려주고 비운다. */
 export function consumeUnlockCelebration(id: ContentId): boolean {
   return pendingCelebrations.delete(id);
+}
+
+/**
+ * 화면이 다른 판(레벨업 알림)을 먼저 보여 주는 동안 **열림 연출을 묶어 둔다.** 레벨업 판 아래에서 자물쇠가 터지면 어두운 막에
+ * 가려 보이지 않고, 판을 닫은 뒤에는 이미 끝나 있다 — 레벨업 → 닫힘 → 열림 연출이 차례로 돌아야 무엇이 열렸는지 읽힌다.
+ * 묶지 않은 화면에서는 `whenUnlockGateOpen`이 곧바로 부른다.
+ */
+const unlockGates = new WeakMap<Phaser.Scene, Array<() => void>>();
+
+export function holdUnlockCelebrations(scene: Phaser.Scene): void {
+  if (unlockGates.has(scene)) return;
+  unlockGates.set(scene, []);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => unlockGates.delete(scene));
+}
+
+/** 묶어 둔 연출을 풀어 차례로 시작한다. 풀린 연출 수를 돌려준다 — 뒤따르는 판이 그만큼 기다린다. */
+export function releaseUnlockCelebrations(scene: Phaser.Scene): number {
+  const queue = unlockGates.get(scene);
+  unlockGates.delete(scene);
+  queue?.forEach((start) => start());
+  return queue?.length ?? 0;
+}
+
+/** 열림 연출을 시작할 자리. 묶여 있으면 풀릴 때까지 미룬다. */
+export function whenUnlockGateOpen(scene: Phaser.Scene, start: () => void): void {
+  const queue = unlockGates.get(scene);
+  if (queue) queue.push(start);
+  else start();
 }
 
 /** 열림 연출이 끝나는 시각(ms). 호출하는 화면이 뒤따르는 등장을 이 뒤에 건다. */
@@ -156,6 +184,11 @@ export interface LockCoverOptions {
   text?: boolean;
   /** 아래 입력을 이 덮개가 막고 누르면 토스트를 띄운다. 이미 위에 입력면이 있는 자리는 끈다. */
   blockInput?: boolean;
+  /**
+   * 레벨 조건이 아닌 잠금(「Coming soon」)의 문구. 주면 개방 레벨 대신 이 문구를 적고 토스트도 같은 말을 한다.
+   * 이때 `id`는 쓰지 않는다 — 열릴 날이 정해지지 않은 잠금이라 `CONTENT_UNLOCKS`에 넣지 않는다.
+   */
+  message?: string;
 }
 
 /**
@@ -164,7 +197,7 @@ export interface LockCoverOptions {
  * 자물쇠는 받침 판 없이 그림과 그 그림의 검은 복제 그림자만으로 선다 — 덮개가 이미 어두운 면이라 받침을 한 겹 더 깔면
  * 판 위에 판이 쌓인다. 마스크가 아니라 도형 자체를 원본의 깎임으로 만들어 컨테이너 이동·확대와 함께 가므로 어긋나지 않는다.
  */
-export function addLockCover(scene: Phaser.Scene, id: ContentId, width: number, height: number, options: LockCoverOptions = {}): Phaser.GameObjects.Container {
+export function addLockCover(scene: Phaser.Scene, id: ContentId | undefined, width: number, height: number, options: LockCoverOptions = {}): Phaser.GameObjects.Container {
   const cover = scene.add.container(0, 0);
   const shape = chipPoints(width, height, { bevel: options.bevel ?? {} });
   cover.add(drawLayer(scene, 0, 0, shape, { fill: 0x05080c, alpha: LOCK_COVER.dimAlpha, shadow: false }));
@@ -173,10 +206,10 @@ export function addLockCover(scene: Phaser.Scene, id: ContentId, width: number, 
   const lock = addPadlock(scene, 0, text ? -height * 0.1 : 0, lockSize, { color: 0xeef2f6, shadow: true });
   cover.add(lock);
   cover.setData("lock", lock);
-  if (text) cover.add(scene.add.text(0, height * 0.28, contentLockText(id), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5));
+  if (text) cover.add(scene.add.text(0, height * 0.28, options.message ?? (id ? contentLockText(id) : ""), textStyle({ role: "emphasis", size: 30, color: COLOR.accentText })).setOrigin(0.5));
   if (options.blockInput !== false) {
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-    hit.on("pointerup", () => showContentLockedToast(scene, id));
+    hit.on("pointerup", () => { if (options.message) showContentToast(scene, options.message, "locked"); else if (id) showContentLockedToast(scene, id); });
     cover.add(hit);
   }
   return cover;

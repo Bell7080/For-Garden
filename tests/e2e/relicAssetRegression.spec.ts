@@ -1,3 +1,4 @@
+import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { expect, test, type Page } from "@playwright/test";
 import { clearFormationSlot, gridCardPoint, placeInFormationSlot } from "./formationSlotTap";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
@@ -20,7 +21,9 @@ async function openParty(page: Page): Promise<void> {
 test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋을 한 흐름에서 고정한다", async ({ page }, testInfo) => {
   // 도감 전신 둘·편성 SD 셋·전투 SD 여섯을 한 편에서 조립한다 — 기본 240초로는 모자란다.
   test.setTimeout(420_000);
-  await startAfterOpening(page);
+  await startAfterOpening(page, (session) => {
+    for (const id of ["mette", "luka"]) { session.owned.add(id); session.relicProgress[id] = structuredClone(session.relicProgress.torika!); }
+  });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 로비도 같은 manager/resolver 결과를 그리므로 도감·편성·전투와 함께 회귀 캡처한다.
@@ -49,7 +52,7 @@ test("도디·메테의 도감 전신과 루카 포함 편성·전투 SD 에셋�
   // 비동기 조립 결과로 PartyScene에 세 SD 컨테이너가 실제 생길 때까지 기다린다.
   await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.party ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-party-sd.png`);
-  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await tapGame(page, BASE_WIDTH / 2, BACK_SLOT.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.playerOrder)).toEqual(["도디", "메테", "루카"]);
   await captureGame(page, `test-results/${testInfo.project.name}-asset-dodi-mette-luka-battle-sd.png`);
@@ -97,7 +100,7 @@ test("토리카 기본 외형에서 스킨을 장착해 도감·로비·편성·
   await openParty(page);
   await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.party ?? 0) >= 3, true, { timeout: 60_000 });
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-party-sd.png`);
-  await tapGame(page, BASE_WIDTH / 2, 1700);
+  await tapGame(page, BASE_WIDTH / 2, BACK_SLOT.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.playerOrder)).toContain("토리카");
   await captureGame(page, `test-results/${testInfo.project.name}-torika-skin001-battle-sd.png`);

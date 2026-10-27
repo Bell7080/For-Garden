@@ -1,6 +1,8 @@
 /** 1080px 기준에서 프로필과 세 칸 재화 묶음 사이에 실제 여백을 남기는 순수 배치표다. */
 export const TOP_BAR_LAYOUT = {
   clusterCenter: 0.64,
+  /** 스테미나 한 칸만 서는 줄은 오른쪽 끝(설정 아이콘 왼쪽)에 붙어 가운데 제목과 겹치지 않는다. */
+  staminaClusterCenter: 910 / 1080,
   profile: { left: 28, avatarSize: 84, contentGap: 16, maxRight: 390, nameMaxCharacters: 10 },
 } as const;
 

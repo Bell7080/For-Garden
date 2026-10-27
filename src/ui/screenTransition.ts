@@ -193,3 +193,37 @@ export function slideTabPage(scene: Phaser.Scene, targets: readonly (Phaser.Game
     scene.tweens.add({ targets: target, x: restX, alpha: 1, duration: timing.duration, ease: "Cubic.easeOut" });
   }
 }
+
+type FadeTarget = Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.AlphaSingle & Phaser.GameObjects.Components.Transform;
+
+/**
+ * 팝업 층(`PopupLayer`)이 아닌 판 — 드롭다운·로그·전면 정보창 — 이 나타나는 몫. 팝업과 같은 표(`popupIn`)의
+ * 시간으로 **옅게 밝아지며** 선택적으로 `rise`만큼 올라온다. 움직임을 끄면 곧바로 완성된 모습이다.
+ * 이미 도는 연출은 끊고 새로 시작한다.
+ */
+export function playFadeIn(scene: Phaser.Scene, targets: readonly FadeTarget[], options: { rise?: number } = {}): void {
+  const timing = transitionTiming("popupIn", currentMotion());
+  for (const target of targets) {
+    const restY = (target.getData("fadeRestY") as number | undefined) ?? target.y;
+    target.setData("fadeRestY", restY);
+    scene.tweens.killTweensOf(target);
+    target.y = restY;
+    target.alpha = 1;
+    if (timing.duration === 0) continue;
+    const rise = options.rise ?? 0;
+    target.alpha = 0;
+    target.y = restY + rise;
+    scene.tweens.add({ targets: target, alpha: 1, y: restY, duration: Math.round(timing.duration * 0.8), ease: "Cubic.easeOut" });
+  }
+}
+
+/** `playFadeIn`으로 나타난 판이 사라지는 몫. **연출이 끝나면 `done`이 정확히 한 번 돈다.** */
+export function playFadeOut(scene: Phaser.Scene, targets: readonly FadeTarget[], done: () => void): void {
+  const timing = transitionTiming("popupOut", currentMotion());
+  const live = targets.filter((target) => target.active);
+  if (timing.duration === 0 || !scene.sys.isActive() || live.length === 0) { done(); return; }
+  live.forEach((target, index) => {
+    scene.tweens.killTweensOf(target);
+    scene.tweens.add({ targets: target, alpha: 0, duration: timing.duration, ease: "Sine.easeIn", onComplete: index === 0 ? done : undefined });
+  });
+}

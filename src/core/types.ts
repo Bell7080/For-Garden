@@ -31,6 +31,15 @@ export type Role = "warrior" | "tank" | "assassin" | "support";
  */
 export type ReachTier = "melee" | "mid" | "ranged";
 
+/**
+ * 떨어져서 때리는 개체가 **무엇을 날리는가** — 표시 전용이고 전투 규칙은 읽지 않는다.
+ * 활은 화살, 총은 탄환을 쏘게 하려고 개체 이름이 아니라 이 칸 하나로 가른다.
+ */
+/** 근접 평타가 **어떻게 닿는가** — 표시 전용. 생략하면 강타다. */
+export type StrikeKind = "slash" | "claw" | "bite" | "smash";
+
+export type ProjectileKind = "bat" | "bullet" | "arrow" | "volley" | "note" | "paper" | "signal" | "card" | "feather";
+
 /** 프로토타입 렐릭 희귀도. 배열 순서에 기대지 말고 가챠 규칙의 명시적 우선순위를 사용한다. */
 export type RelicRarity = "R" | "SR" | "SSR";
 
@@ -43,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -579,6 +588,22 @@ export type TeamBuff =
       lifeStealPoints: number;
       /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
       seconds: number;
+    }
+  | {
+      /**
+       * 「공명」. 순풍·오더와 같은 팀 강화 슬롯에 서는 **공격 속도 강화**다 — 걸어 준 쪽(`sourceId`)은 이 강화를 받은
+       * 아군이 적을 **처치하는 순간**을 알아듣는다(네우리의 「날개 소리」는 그때 궁극기 게이지를 얻는다).
+       *
+       * 이동 속도·회복·치명타는 올리지 않는다 — 순풍(걸음)·오더(화력)와 한 칸을 나눠 쓰되 서로 다른 축을 말한다.
+       * `sourceId`는 정의에 적지 않고 거는 순간 전투가 새긴다.
+       */
+      kind: "resonance";
+      /** 공격 속도에 곱하는 비율(%)이다. */
+      attackSpeedPercent: number;
+      /** 유지 시간(초). 겹쳐 걸면 남은 시간이 더 긴 쪽으로 갱신된다. */
+      seconds: number;
+      /** 공명을 건 개체의 전투 내 ID. 정의에는 적지 않는다. */
+      sourceId?: string;
     };
 
 /** 모든 스킬의 판별 유니온이며 `damageType in skill`로 공격 여부를 좁힌다. */
@@ -922,7 +947,7 @@ export type CombatStatusEffect =
       /**
        * 도발. 맞은 쪽이 **때린 쪽만** 표적으로 삼는다.
        *
-       * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 그래서 정화의 대상이 아니고,
+       * 기절과 다른 축이다 — 행동을 막지 않고 방향만 돌린다. 강인함은 같은 경계에서 적용하되 정화의 대상은 아니고,
        * 짧게 걸면 "잠깐 이쪽을 보게 만들고 빠진다"가 된다. 엘라의 「인」은 궁극기 계약
        * (`SelfGuard.tauntSeconds`)으로 끌어당겨 걸지만, 이쪽은 **기본 공격 하나가** 건다.
        */
@@ -1051,6 +1076,16 @@ export type CombatStatusEffect =
     }
   | {
       /**
+       * 반향(이카닉시아). **피해가 없는 표식**이다 — 박쥐의 초음파가 울려 아직 그 적의 위치가 아군에게 선명한 동안
+       * 이어진다. 반향이 든 적을 **누가 때리든** 건 쪽(`sourceId`)의 「반향 정위」가 막을 두르고, 펄시의 「급소 겨누기」는
+       * 이 적을 먼저 노린다. 다시 걸면 시간이 갱신될 뿐 겹은 없다.
+       */
+      kind: "echo";
+      /** 반향이 남는 시간(초). 다시 걸면 처음부터 다시 흐른다. */
+      seconds: number;
+    }
+  | {
+      /**
        * 광란. 표적을 **자기 편으로 뒤집는다.**
        *
        * 군중제어와 다른 축이다 — 행동을 막는 것이 아니라 방향을 돌린다. 때릴 자기 편이 남지
@@ -1060,8 +1095,6 @@ export type CombatStatusEffect =
       kind: "frenzy";
       /** 유지 시간(초). 이미 광란 중이면 연장하지 않고 갱신만 한다. */
       seconds: number;
-      /** 광란 중 오르는 공격 속도 비율(%). */
-      attackSpeedPercent: number;
     };
 
 /** 궁극기의 대상 선택은 ID나 설명문 대신 코어가 검증할 수 있는 정적 계약으로 선언한다. */
@@ -1171,6 +1204,8 @@ export type Ultimate = Skill & {
       targeting: "nearbyEnemies";
       /** 거리 단위는 난전 좌표와 같은 px이며, 시전자 중심에서 잰다. */
       radius: number;
+      /** 있으면 반경 안에서 시전자와 가까운 순으로 이만큼만 맞힌다(채널링 틱도 같다). */
+      maxTargets?: number;
     }
   | {
       /**
@@ -1252,8 +1287,8 @@ export type PassiveKind =
   | "battleMaidMastery"
   /** 스피나 전용: 기본 공격의 실제 적중마다 공속을 전투 한정으로 영구 누적한다. */
   | "basicHitAttackSpeedStack"
-  /** 폰토스의 시간 누적 주문력. 잃은 체력 경감은 패시브가 아니라 불사 자리(`ENCOUNTER_ROLE.endless`)가 갖는다. */
-  | "abyssalPressure"
+  /** 폰토스 전용: 일정 간격마다 밀물이 전장의 모든 적을 뒤로 날린다. 시간에 따른 세기 상승은 패시브가 아니라 자리(`ENCOUNTER_ROLE.*.ramp`)가 갖는다. */
+  | "tidalSurge"
   /** 도디 전용: 제공자 생존 여부로 팀 방어와 적 회복을 동시에 조절한다. */
   | "guardianNestAura"
   /** 케리스 전용: 저주에 걸린 적을 직접 때릴 때마다 주문력을 전투 한정으로 누적한다. */
@@ -1294,6 +1329,16 @@ export type PassiveKind =
    * 고르는 이름표일 뿐이다 — 렉시아의 종류에 얹으면 그 문장이 공속·공격력까지 함께 말하게 된다.
    */
   | "openingDive"
+  /** 이카닉시아 전용: 반향이 든 적을 누가 때리든 자신에게 보호막이 쌓인다. */
+  | "echoLocation"
+  /** 아트라 전용: 보호막이 마디로 나뉘어 시간이 지나면 한 마디씩 다시 차오른다. 피해는 횟수가 아니라 양으로 깎는다. */
+  | "segmentBarrier"
+  /** 펄시 전용: 반향이 든 적(없으면 체력이 가장 낮은 적)을 겨누고, 같은 적을 이어 때릴수록 피해가 오른다. */
+  | "vitalAim"
+  /** 네우리 전용: 몇 초마다 가장 센 아군에게 공명을 걸고, 공명 아군의 처치가 궁극기 게이지가 된다. */
+  | "wingHum"
+  /** 미르 전용: 곁에 선 아군 한 명마다 공격력이 오르고 매초 재생한다. */
+  | "workerMarch"
   /** 캐릭터 ID와 무관하게 구조화된 시약 중첩과 반응 보상을 해석한다. */
   | "reagentReaction"
   /**
@@ -1362,6 +1407,16 @@ export type FerocityEffectId =
   /** 파치 전용: 폭주 중 뇌진탕이 확정 치명타가 되고 그 적을 전장 밖으로 튕겨 날린다. */
   | "knockbackSlam"
   | "vanguardCharge"
+  /** 이카닉시아 전용: 폭주 중 박쥐 떼의 범위가 넓어지고 더 빨리 맴돈다. */
+  | "batStorm"
+  /** 아트라 전용: 폭주 중 마디가 더 크고 더 빨리 차오른다. */
+  | "thornBristle"
+  /** 펄시 전용: 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
+  | "frenzyTail"
+  /** 네우리 전용: 폭주 중 공명을 거는 주기가 짧아진다. */
+  | "swiftFlight"
+  /** 미르 전용: 폭주 중 행렬이 더 넓고 더 많은 아군을 센다. */
+  | "marchOfAnts"
   /** 마키 전용: 폭주 중 손질이 터진 피해의 일부를 아군 전체의 회복으로 돌린다. */
   | "butcherFeast"
   /** 델로피 전용: 폭주 중 일반 공격이 중독을 걸거나, 이미 걸린 중독을 그 자리에서 청산한다. */
@@ -1635,6 +1690,38 @@ export type FerocityTrait = {
       attackSpeedPercent: number;
     }
   | {
+      /**
+       * 박쥐 폭풍(이카닉시아). 폭주 중 박쥐 떼의 범위가 `radiusPercent`%, 맴도는 속도가 `tickSpeedPercent`% 오른다.
+       * 한 번에 들어가는 몫은 건드리지 않는다 — 궁극기와 엮지 않고 지금 하던 일만 넓게·빠르게 한다.
+       */
+      effectId: "batStorm";
+      radiusPercent: number;
+      tickSpeedPercent: number;
+    }
+  | {
+      /** 가시 곤두세우기(아트라). 폭주 중 마디가 이 비율만큼 커지고 복구 시계가 이 비율만큼 빨라진다. */
+      effectId: "thornBristle";
+      segmentSizePercent: number;
+      restoreSpeedPercent: number;
+    }
+  | {
+      /** 광폭한 꼬리(펄시). 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
+      effectId: "frenzyTail";
+      attackSpeedPercent: number;
+      extraStacksPerHit: number;
+    }
+  | {
+      /** 가속 비행(네우리). 폭주 중 공명을 거는 주기가 이 비율만큼 짧아진다. */
+      effectId: "swiftFlight";
+      intervalReductionPercent: number;
+    }
+  | {
+      /** 개미 떼의 행진(미르). 폭주 중 행렬 반경이 늘고 더 많은 아군을 센다. */
+      effectId: "marchOfAnts";
+      radiusBonus: number;
+      extraAllies: number;
+    }
+  | {
       effectId: "knockbackSlam";
       /**
        * 폭주에 들어가는 순간 기본 공격의 상태 주기를 곧바로 채워 **다음 한 방**에 터지게 한다.
@@ -1723,7 +1810,6 @@ export type FerocityTrait = {
       /** 케리스 전용: 폭주 중 직접 적중한 적을 짧게 광란시킨다. 전이된 타격에는 걸리지 않는다. */
       effectId: "frenzyGaze";
       seconds: number;
-      attackSpeedPercent: number;
     }
   | {
       /**
@@ -2101,6 +2187,71 @@ export interface Passive {
     healResistancePercent: number;
     drowsy: Extract<CombatStatusEffect, { kind: "drowsy" }>;
   };
+  /**
+   * 「반향 정위」 계약(이카닉시아). 이 개체가 건 반향이 든 적을 **아군 누구든** 때리면 이 개체가 최대 체력의
+   * `shieldMaxHpPercent`%만큼 보호막을 두른다. 막은 `capMaxHpPercent`에 닿은 만큼까지만 쌓이고 다른 막까지 합쳐 잰다.
+   */
+  /**
+   * 「박쥐 떼」 계약(이카닉시아). 매 `intervalSeconds`마다 자기 주위 `radius` 안의 모든 적에게 주문력 `powerPercent`% 마법 피해를
+   * 주고, 그중 가까운 `maxTargets`명만 맞히고, 맞힌 피해의 `healPercent`%만큼 회복한다.
+   */
+  batSwarm?: {
+    radius: number;
+    intervalSeconds: number;
+    powerPercent: number;
+    maxTargets: number;
+    healPercent: number;
+  };
+  echoLocation?: {
+    /** 한 번 맞을 때 두르는 막(최대 체력 비율 %). */
+    shieldMaxHpPercent: number;
+    /** 이 패시브가 채우는 상한(최대 체력 비율 %). */
+    capMaxHpPercent: number;
+  };
+  /**
+   * 「마디 방벽」 계약(아트라). 막이 **마디 `segments`개**로 나뉘어 있고 마디 하나는 최대 체력의 `segmentMaxHpPercent`%다.
+   * `restoreSeconds`마다 한 마디가 다시 차오르고, 일반 공격이 적중하면 시계가 `hitRestoreSeconds`만큼 당겨진다.
+   *
+   * **횟수로 막지 않는다** — 피해는 막의 양을 그대로 깎는 보호막이다. 마디는 막이 다시 차는 단위일 뿐이라 몇 대를
+   * 맞아도 통과하지 못하는 일은 없다(무적이 되는 설계를 걷어 냈다).
+   */
+  segmentBarrier?: {
+    segments: number;
+    /** 마디 하나의 크기(최대 체력 비율 %). */
+    segmentMaxHpPercent: number;
+    /** 한 마디가 다시 차는 시간(초). */
+    restoreSeconds: number;
+    /** 일반 공격이 적중할 때 복구 시계를 당기는 시간(초). */
+    hitRestoreSeconds: number;
+  };
+  /**
+   * 「급소 겨누기」 계약(펄시). 표적을 **반향이 든 적 → 체력이 가장 낮은 적** 순으로 겨누고, 겨눈 적을 이어 때릴수록
+   * 겹마다 피해가 오른다. 표적이 바뀌면 겹은 처음으로 돌아간다. 치명타 가산은 공용 필드(`criticalChancePercent`)가 갖는다.
+   */
+  vitalAim?: {
+    maxStacks: number;
+    /** 겹 하나가 더하는 피해(%). */
+    damagePercentPerStack: number;
+  };
+  /**
+   * 「날개 소리」 계약(네우리). `intervalSeconds`마다 공격력이 가장 높은 생존 아군에게 공명을 걸고, 공명을 받은 아군이
+   * 적을 처치하면 `energyOnKill`만큼 자신의 궁극기 게이지가 찬다.
+   */
+  wingHum?: {
+    intervalSeconds: number;
+    resonance: Extract<TeamBuff, { kind: "resonance" }>;
+    energyOnKill: number;
+  };
+  /**
+   * 「일꾼의 행렬」 계약(미르). 반경 안의 **다른 아군** 한 명마다(최대 `maxAllies`명) 공격력이 `attackPercentPerAlly`%
+   * 오르고 매초 최대 체력의 `regenMaxHpPercentPerAllyPerSecond`%를 되찾는다. 무리 지어 설수록 세지는 몸이다.
+   */
+  workerMarch?: {
+    radius: number;
+    maxAllies: number;
+    attackPercentPerAlly: number;
+    regenMaxHpPercentPerAllyPerSecond: number;
+  };
   prickle?: {
     /** 겹 상한. */
     maxStacks: number;
@@ -2169,8 +2320,8 @@ export interface Passive {
   };
   /** 전투 한정 누적 패시브가 쌓을 수 있는 최대 횟수. 상한이 없으면 한 판이 길수록 끝없이 자란다. */
   maxStacks?: number;
-  /** 심해 압력 전용: 완전히 경과한 매초 기본 주문력에 복리로 누적하는 비율이다. */
-  apPercentPerSecond?: number;
+  /** 밀물 전용: 몇 초마다 어떤 날려버림으로 밀어내는가. 살아 있는 모든 적에게 같은 계약(`knockback`)으로 건다. */
+  tidalSurge?: { intervalSeconds: number; knockback: { seconds: number; speed: number; bounces: number } };
   /** 고품격 식재료 전용: 다시 표적을 고르고 도약하기까지의 간격(초). 적을 처치하면 즉시 앞당긴다. */
   huntCooldownSeconds?: number;
   /**
@@ -2413,6 +2564,13 @@ export interface RelicDef {
    * 없게 필수로 두는 이유는 기본값이 있으면 아무도 고르지 않기 때문이다.
    */
   reachTier: ReachTier;
+  /**
+   * 평타가 날리는 것(`ProjectileKind`). 원거리는 생략하면 신호 마름모, 중거리는 생략하면 채찍이다.
+   * 무엇을 쥐고 싸우는지(활·장총·현악·카드)가 원화에 서 있으면 적는다.
+   */
+  projectile?: ProjectileKind;
+  /** 근접 평타의 결(`StrikeKind`). 칼·집게는 베기, 발톱은 발톱, 턱은 물기이고 생략하면 강타다. */
+  strike?: StrikeKind;
   /** 전투 수치나 장착 룬과 섞이지 않는 정적 방치 발굴 특화다. */
   excavationTrait: ExcavationTrait;
   stats: Stats;
@@ -2426,6 +2584,12 @@ export interface RelicDef {
    * 다르므로 정적 정의로 두고, 정보창은 패시브 아이콘 위에 작은 뱃지로 이것만 알린다.
    */
   ferocityTrait: FerocityTrait;
+  /**
+   * 폭주가 열리기까지 채워야 하는 야성 게이지의 크기다(궁극기 게이지 `cost`와 같은 결). 클수록 늦게 열리고,
+   * 열린 폭주는 크기와 무관하게 8초에 다 닳는다. 생략하면 아군 100, 적 130이다 — 값은 그 폭주가 판을
+   * 얼마나 뒤집는지에 맞춰 개체마다 정한다.
+   */
+  ferocityMax?: number;
   basic: BasicAttack;
   ultimate: Ultimate;
   /**
@@ -2470,10 +2634,21 @@ export interface BreakthroughNone {
  * (`BasicAttack.statusEffectEvery`)을 그대로 타고 세 번에 한 번만 일어난다.
  */
 export type BasicBreakthrough = {
-  /** 「마지막 한 방울」이 맞은 적 주위의 다른 적에게도 그 피해의 일부가 번진다(테쿠). 상태·흡혈 없이 추가 피해만 준다. */
-  kind: "lastDropSplash";
-  sharePercent: number;
+  /**
+   * 일반 공격 **세 번마다** 병뚜껑이 터져 맞힌 적 주위(맞은 적 포함)의 적에게 냉기가 쌓인다(매디의 「소다 터짐」). 빙결 조건 없이 도는 주기형이다.
+   */
+  kind: "sodaPop";
+  /** 몇 번의 일반 공격마다 터지는지. */
+  everyHits: number;
   radius: number;
+  stacks: number;
+} | {
+  /** 「마지막 한 방울」을 맞은 적의 방어력이 겹마다 깎인다(테쿠의 「쓴맛」). 1대1에서도 돈다. 겹은 상한에서 멈추고 시간이 지나면 풀린다. */
+  kind: "bitterTaste";
+  /** 겹당 방어력 감소(%). */
+  defensePercent: number;
+  seconds: number;
+  maxStacks: number;
 } | {
   /** 서리깃이 박힌 적에게 주는 일반 공격 피해가 **그 적의 서리깃 겹마다** 늘어난다(유티의 「갈래깃」). */
   kind: "frostBrand";
@@ -2559,22 +2734,24 @@ export type BasicBreakthrough = {
   kind: "clawBleed";
 } | {
   /**
-   * 평타로 대신 **아군에게 에너지를 건넨 순간** 그 아군들에게 짧은 공격 속도 강화를 건다(스테라의 「바람을 탄 걸음」).
+   * 평타로 대신 **아군에게 에너지를 건넨 순간** 그 아군들에게 짧은 이동 속도 강화를 건다(스테라의 「바람을 탄 걸음」).
    * 이미 순풍·오더가 걸린 아군은 덮지 않는다 — 더 센 지원을 약한 강화로 갈아 끼우지 않기 위해서다.
    */
   kind: "windStep";
-  /** 공격 속도 증가(%). */
-  attackSpeedPercent: number;
+  /** 이동 속도 증가(%). */
+  moveSpeedPercent: number;
   /** 지속 시간(초). */
   seconds: number;
 } | {
   /**
-   * 일반 공격이 **위압이 걸린 적**을 맞힐 때 자기 최대 체력의 일정 %를 보호막으로 두른다(아크의 「짓눌린 자의 대가」). 재사용 대기가
-   * 있어 연타로 쌓이지 않고, 막은 `grantShield` 한 길이다. 위압이 없는 적에게는 붙지 않는다.
+   * 일반 공격이 **위압이 걸린 적**을 맞힐 때, 지금 위압에 걸려 있는 적 수만큼 자기 최대 체력의 일정 %를 보호막으로 두른다(아크의 「먹이 세기」).
+   * 많이 겁줄수록 막이 두꺼워진다. 재사용 대기가 있어 연타로 쌓이지 않고, 막은 `grantShield` 한 길이다.
    */
-  kind: "dreadAegis";
-  /** 자기 최대 체력의 몇 %를 두르는지. */
-  shieldPercent: number;
+  kind: "preyScale";
+  /** 위압에 걸린 적 한 명당 자기 최대 체력의 몇 %를 두르는지. */
+  shieldPercentPerEnemy: number;
+  /** 세는 적 수의 상한. */
+  maxEnemies: number;
   /** 다시 두를 수 있기까지의 시간(초). */
   cooldownSeconds: number;
 } | {
@@ -2600,17 +2777,13 @@ export type BasicBreakthrough = {
   /** 늘어나는 피해(%). */
   damagePercent: number;
 } | {
-  /** 보호막이 남아 있는 동안 기본 공격마다 공격력 비례 물리 피해가 한 번 더 들어간다(파치). 막은 소모하지 않는다. */
+  /** 일반 공격 `everyHits`번마다 헬멧으로 들이받아 공격력 비례 물리 피해가 한 번 더 들어가고 뇌진탕이 걸린다(파치). */
   kind: "helmetBash";
+  everyHits: number;
   attackPercent: number;
 } | {
   /** 저주가 최대인 적을 직접 적중하면 「열 번 찍어」의 집중이 이 수만큼씩 쌓인다(케리스). 평소에는 한 겹이다. */
   kind: "underline";
-  stacks: number;
-} | {
-  /** 얼어 있는 적을 때리면 맞은 적 주위의 다른 적에게 냉기가 이 수만큼 튄다(매디). */
-  kind: "sodaFizz";
-  radius: number;
   stacks: number;
 } | {
   /** 표식이 붙어 있는 동안 그 적이 받는 피해가 이 비율만큼 늘어난다(티아). 표식이 지워지면 끝난다. */
@@ -2705,6 +2878,24 @@ export type BasicBreakthrough = {
  * 궁극기가 세 번이 된다(채널링 궁극기와 같은 규칙이다).
  */
 export type UltimateBreakthrough = {
+  /**
+   * 저주가 걸린 적이 쓰러지면 그 **저주 겹이 주변 적에게 이어진다**(케리스의 「막이 내린 뒤」). 한 번에 이어지는 겹은 `maxCarry`까지이고,
+   * 이어받은 적이 다시 쓰러질 때만 다음 연쇄가 일어나므로 처치가 곧 연쇄가 된다.
+   */
+  kind: "afterglow";
+  radius: number;
+  maxCarry: number;
+} | {
+  /**
+   * 대신 받기(`selfBulwark`) 동안 대신 받은 피해가 **최대 체력의 `thresholdPercent`%** 쌓일 때마다 주위 모든 적에게 고정 피해 파동이 터진다
+   * (노도니아의 「터지는 열기」). 한 번의 대신 받기에서 `maxPulses`번까지이고, 파동 하나는 노도니아 최대 체력의 `pulsePercent`%다.
+   */
+  kind: "heatBurst";
+  thresholdPercent: number;
+  pulsePercent: number;
+  maxPulses: number;
+  radius: number;
+} | {
   /** 연발 궁극기가 두르는 막이 준 피해의 몇 %인지와 그 합계 상한을 키운다(테쿠의 「블렌딩A」). */
   kind: "richBlend";
   shieldFromCriticalPercent: number;
@@ -2722,8 +2913,9 @@ export type UltimateBreakthrough = {
   /** 본 위력의 몇 %로 떨어지는지. */
   powerPercent: number;
 } | {
-  kind: "execution";
-  energyRefundOnKill: number;
+  kind: "ultimateLifeSteal";
+  /** 궁극기의 실제 피해에서 회복하는 추가 비율(%). */
+  damageHealingPercent: number;
 } | {
   /**
    * 궁극기가 회복을 준 아군마다 **그 회복량의 일부를 보호막으로** 한 겹 더 덮는다(도디).
@@ -2774,18 +2966,6 @@ export type UltimateBreakthrough = {
   radius: number;
   /** 본 궁극기 위력의 몇 %로 튀는지. */
   powerPercent: number;
-} | {
-  /**
-   * 대신 받기(`selfBulwark`)가 **끝나는 순간** 그동안 대신 받은 피해의 일부를 주위 모든 적에게 고정 피해로 돌려준다(노도니아의 「절정」).
-   * 공격력·주문력을 쓰지 않는 개체라 고정 피해이고, 적 한 명당 노도니아 최대 체력의 일정 비율을 넘지 않는다.
-   */
-  kind: "bulwarkPayback";
-  /** 대신 받은 피해 합계의 몇 %를 돌려주는지. */
-  returnPercent: number;
-  /** 피해가 닿는 전장 반경(px). */
-  radius: number;
-  /** 적 한 명이 한 번에 받는 상한(노도니아 최대 체력의 %). */
-  capMaxHpPercent: number;
 } | {
   /**
    * 점멸해 꿰뚫은 자리에 **잔상이 늦게 따라붙어 같은 적을 한 번 더 벤다**(루카의 「잔상 베기」). 게이지·야성은 다시 쓰지 않고
@@ -2840,18 +3020,15 @@ export type UltimateBreakthrough = {
   delaySeconds: number;
   powerPercent: number;
 } | {
-  /** 광란에 걸린 적이 같은 편을 때릴 때마다 맞은 적에게 저주가 이 수만큼 걸린다(케리스). */
-  kind: "contagiousFrenzy";
-  stacks: number;
-} | {
   /** 냉방 채널의 매 틱, 얼어 있는 적 한 명당 최대 체력 비율을 회복한다(매디). */
   kind: "coolingVent";
   healMaxHpPercentPerFrozen: number;
   maxFrozenCounted: number;
 } | {
-  /** 표식이 터질 때마다 궁극기 게이지가 이 수만큼 찬다(티아). */
+  /** 표식이 터질 때마다 궁극기 게이지가 이 수만큼 차고, 게이지가 가장 낮은 다른 아군 한 명도 `allyEnergy`를 받는다(티아). */
   kind: "splashCharge";
   energy: number;
+  allyEnergy: number;
 } | {
   /** 궁극기가 터뜨린 덧칠 겹의 일부가 주변 적에게 덧칠로 남는다(메론). */
   kind: "splashPaint";
@@ -2911,6 +3088,10 @@ export type UltimateBreakthrough = {
 } | {
   /** 궁극기를 쓰고 난 직후 곧바로 가장 약한 적에게 순간이동한다(코마). 적 전용. */
   kind: "chasingBlink";
+} | {
+  /** 궁극기가 거는 순풍이 이 시간으로 늘어난다(네우리). 적 전용. */
+  kind: "longGust";
+  seconds: number;
 } | BreakthroughNone;
 
 /**
@@ -2920,9 +3101,38 @@ export type UltimateBreakthrough = {
  * 세져 그 시간만 부풀고, 끝나고 가장 약해지는 자리를 메우지 못한다.
  */
 export type FerocityBreakthrough = {
-  /** 폭주 동안 탄창을 다시 채우는 시간이 줄어든다(테쿠의 「야근, 싫어」). */
-  kind: "quickReload";
-  reloadSeconds: number;
+  /** 폭주에 들어서는 순간 주변의 적 전원에게 저주가 `stacks`겹 걸린다(케리스의 「독자 몰이」). 진입 즉발이다. */
+  kind: "readersGather";
+  radius: number;
+  stacks: number;
+} | {
+  /** 폭주에 들어서는 순간 주변의 적 전원에게 냉기가 `stacks`겹 쌓인다(매디의 「한파」). 최대 중첩에는 닿지 않게 둔다. */
+  kind: "coldSnap";
+  radius: number;
+  stacks: number;
+} | {
+  /** 폭주에 들어서는 순간 희열이 `stacks`겹 한꺼번에 쌓인다(노도니아의 「달아오름」). 상한은 그대로다. */
+  kind: "emberRush";
+  stacks: number;
+} | {
+  /**
+   * 폭주에 들어서는 순간 메테 주위의 **적 전원**에게 스타카토 한 번이 먼저 울린다(메테의 「서곡」). 팀의 합창(크레센도)이 시작되기 전,
+   * 막이 오르는 소리다. 진입 즉발이라 궁극기와 엮이지 않는다.
+   */
+  kind: "overture";
+  radius: number;
+  /** 메테 공격력의 몇 %인 마법 피해인지(스타카토의 계수와 같은 축). */
+  powerPercent: number;
+} | {
+  /**
+   * 폭주에 들어서는 순간, 슈테의 듀오가 노리는 적 **주변의 적 전원**에게 약점 포착이 한꺼번에 찍힌다(슈테의 「광역 핑」).
+   * 표식은 평소와 같이 듀오가 그 적을 때리는 순간 한 번 터진다. 궁극기(오더)는 건드리지 않는다.
+   */
+  kind: "pingBurst";
+  radius: number;
+} | {
+  /** 폭주로 채운 탄창이 비면 쉬지 않고 한 번 더 가득 채운다(테쿠의 「더블 탄창」). 한 번의 폭주에 한 번이다. */
+  kind: "doubleMag";
 } | {
   /** 폭주 중 치명타로 터진 일반 공격이 맞힌 적에게 서리깃을 더 박는다(유티의 「깃날비」). */
   kind: "critPlume";
@@ -2948,21 +3158,9 @@ export type FerocityBreakthrough = {
   kind: "feverAmbush";
   stealthSeconds: number;
 } | {
-  /** 폭주(잠행)에 들어선 뒤 **첫 일반 공격이 반드시 치명타**가 된다(스피나의 기습). */
-  kind: "ambushCrit";
-} | {
-  /** 폭주 동안 평타가 세 걸음마다가 아니라 **매번** 표식을 찍는다(슈테). 폭주가 끝나면 주기로 돌아간다. */
-  kind: "pingStorm";
-} | {
-  /**
-   * 폭주(크레센도) 추가타의 위력이 칠 때마다 점점 커진다(메테의 크레센도). 추가타는 **아군 누구의 평타든** 한 번씩
-   * 따라붙으므로 팀 속도로 쌓인다 — 그래서 상한을 둔다. 폭주가 끝나면 초기화된다.
-   */
-  kind: "crescendoRamp";
-  /** 추가타 한 번마다 오르는 위력(%). */
-  percentPerHit: number;
-  /** 오를 수 있는 최대 위력 증가(%). */
-  maxPercent: number;
+  /** 폭주(잠행) 동안 여울 도약 주기가 `leapEveryHits`회에서 **`everyHits`회**로 줄어든다(스피나). 폭주가 끝나면 원래대로 돌아온다. */
+  kind: "frenzyLeap";
+  everyHits: number;
 } | {
   /**
    * 폭주 중 **치명타로 맞은 적**이 잠깐 휘청인다(이르나의 발목 사격). 일반 공격에만 걸리고 궁극기와 엮지 않는다 —
@@ -2974,14 +3172,6 @@ export type FerocityBreakthrough = {
   staggerSeconds: number;
 } | {
   /**
-   * 폭주 중에는 희열이 **더 많이** 쌓이고(노도니아의 「열기 속의 열기」), 폭주가 끝나면 원래 상한으로 도로 깎인다.
-   * 궁극기와 엮지 않는 평타·재생 축의 효과다.
-   */
-  kind: "heatOverflow";
-  /** 폭주 동안 늘어나는 희열 최대 겹 수. */
-  extraMaxStacks: number;
-} | {
-  /**
    * 폭주 중 **주기 치명타가 더 자주 찬다**(루카의 「발톱 폭풍」). 평타 주기만 줄이며 다른 계약은 건드리지 않는다.
    */
   kind: "frenzyClaws";
@@ -2989,21 +3179,22 @@ export type FerocityBreakthrough = {
   every: number;
 } | {
   /**
-   * 폭주 중 평타가 아군에게 나눠 주는 에너지에 더해, **에너지가 가장 낮은 아군 한 명**에게 한 번 더 건넨다(스테라의 「뒤처진 이 끌어올리기」).
-   * 전원에게 주는 값은 그대로라 총량은 평타 한 번당 이 값만큼만 늘어난다.
+   * 폭주에 **들어서는 순간** 살아 있는 아군 전원에게 짧은 순풍(공격·이동 속도)을 건다(스테라의 「역풍의 신호」).
+   * 회복은 얹지 않는다 — 이 순풍은 속도만 준다. 이미 더 긴 순풍이 걸린 아군은 덮지 않는다.
    */
-  kind: "windPull";
-  /** 가장 낮은 아군이 평타 한 번마다 더 받는 에너지. */
-  extraEnergy: number;
+  kind: "feverGale";
+  seconds: number;
+  /** 공격 속도·이동 속도 증가(%). */
+  speedPercent: number;
 } | {
   /**
-   * 폭주 중 적이 **공포에 빠지는 순간** 그 주변의 다른 적에게 위압이 번진다(아크의 「번지는 공포」). 번진 위압도 위압 규칙(면역·강인함)을
-   * 그대로 따르고, 피해·궁극기 효과는 없다. 공포는 적마다 한 번씩만 걸려 연쇄가 끝난다.
+   * 폭주에 들어서는 순간 주변 적 전원에게 위압이 쌓인다(아크의 「포효 진입」). 위압 규칙(면역·강인함·상한 공포)을 그대로 따르고
+   * 피해·궁극기 효과는 없다.
    */
-  kind: "spreadingDread";
-  /** 번지는 반경(px). */
+  kind: "roarEntry";
+  /** 닿는 반경(px). */
   radius: number;
-  /** 번질 때 쌓는 위압 겹 수. */
+  /** 쌓는 위압 겹 수. */
   stacks: number;
 } | {
   /**
@@ -3031,18 +3222,16 @@ export type FerocityBreakthrough = {
   /** 번지는 반경(px). */
   radius: number;
 } | {
-  /** 폭주로 튕겨 나간 적이 다른 적에게 부딪히면 부딪힌 적에게 뇌진탕이 걸린다. 튕김 한 번에 한 적씩(파치). */
-  kind: "chainCollision";
+  /** 폭주에 들어서는 순간 주변 적을 튕겨 내고, 날아가다 다른 적에게 부딪히면 부딪힌 적에게 뇌진탕이 걸린다. 튕김 한 번에 한 적씩(파치). */
+  kind: "chainEntry";
+  /** 튕겨 내는 반경(px). */
+  entryRadius: number;
+  /** 부딪힘으로 치는 거리(px). */
   radius: number;
 } | {
-  /** 폭주 중 광란에 걸린 적이 쓰러지면 그 자리 주변 적에게 저주가 번진다(케리스). */
-  kind: "finalChapter";
+  /** 폭주에 들어서는 순간 주변 모든 적에게 출혈이 걸리고 손질이 한 겹 쌓인다(마키의 「피 맛」). */
+  kind: "bloodTaste";
   radius: number;
-  stacks: number;
-} | {
-  /** 폭주 중 보호막이 남아 있는 동안 매디를 때린 적에게 냉기가 쌓인다(매디). */
-  kind: "frostCling";
-  stacks: number;
 } | {
   /** 폭주 중 표식 폭발의 추가 피해가 이 배수로 터진다. 막 몫은 그대로다(티아). */
   kind: "bigWave";
@@ -3125,6 +3314,30 @@ export type FerocityBreakthrough = {
  * 패시브의 조건(체력 절반 등)을 그대로 타므로 새 발동 조건을 만들지 않는다.
  */
 export type PassiveBreakthrough = {
+  /**
+   * 희열이 **최대 겹**일 때 노도니아의 재생 틱마다 그 회복량의 `sharePercent`%가 다른 살아 있는 아군에게도 돌아간다(노도니아의 「함께 달콤하게」).
+   * 노도니아 한 명의 재생에서 나오는 몫이라 합계는 겹 수·최대 체력에 묶인다.
+   */
+  kind: "sweetShare";
+  sharePercent: number;
+} | {
+  /**
+   * 메테가 두른 보호막을 가진 아군이 일반 공격을 맞히면, 맞힌 적 주위로 **음파**가 퍼진다(메테의 「공명하는 막」). 막이 남아 있는 내내
+   * 도는 상시 효과이고, 막을 가진 아군마다 재사용 대기가 따로 있어 아군 셋이 동시에 두르고 있어도 합산 빈도가 묶인다.
+   */
+  kind: "resonantShield";
+  radius: number;
+  /** 메테 공격력의 몇 %인 마법 피해인지. */
+  powerPercent: number;
+  /** 같은 아군이 다시 음파를 낼 수 있기까지의 시간(초). */
+  cooldownSeconds: number;
+} | {
+  /**
+   * 전투가 열리면 슈테가 듀오를 **둘** 맺는다(슈테의 「쌍둥이 듀오」). 첫 듀오는 평소처럼 은신·표적·오더를 맡고, 둘째 듀오는
+   * 약점 포착을 터뜨릴 수 있고 핑이 흘려보내는 충전도 함께 받는다. 은신 조건·궁극기·표적 동기화는 첫 듀오 하나에만 묶인다.
+   */
+  kind: "twinDuo";
+} | {
   /** 장전을 시작할 때 최대 체력 비례 보호막을 두른다. 두른 막의 합은 상한에서 멈춘다(테쿠의 「리필, 부탁」). */
   kind: "reloadSip";
   shieldMaxHpPercent: number;
@@ -3155,26 +3368,11 @@ export type PassiveBreakthrough = {
   kind: "fullFocusCrit";
 } | {
   /**
-   * 여울에 잠긴 적을 처치하면 **곧바로 다음 여울로 도약**한다(스피나). 도약 주기 카운트를 채우는 값이라
-   * 깔아 둔 판이 없거나 아무도 잠겨 있지 않으면 뛰지 않는다.
+   * 여울로 **도약해 내려선 순간 잠깐 은신**한다(스피나). 암살자의 생존 몫은 은신으로만 준다.
+   * 쿨다운이 있어 도약 주기가 짧아지는 폭주 중에도 상시 은신이 되지 않는다.
    */
-  kind: "huntChain";
-} | {
-  /**
-   * 듀오가 쓰러지면 가장 가까운 아군과 **새 듀오를 맺는다**(슈테). 전투당 한 번이고, 듀오가 없는 동안 꺼져 있던
-   * 은신·표식·궁극기가 다시 돈다.
-   */
-  kind: "relink";
-} | {
-  /**
-   * 메테의 보호막이 **다 깨지는 순간** 그 자리 주위의 적에게 아다지오의 무게가 내려앉는다(피해와 짧은 경직).
-   * 정화·궁극기 보호막이 모두 같은 보호막 슬롯이라 이 개체 전용 쿨다운이 따로 있다.
-   */
-  kind: "adagioSlam";
-  radius: number;
-  /** 메테 공격력의 몇 %인 마법 피해인지. */
-  powerPercent: number;
-  staggerSeconds: number;
+  kind: "leapVeil";
+  stealthSeconds: number;
   cooldownSeconds: number;
 } | {
   /**
@@ -3184,11 +3382,6 @@ export type PassiveBreakthrough = {
   kind: "highTide";
   /** 늘어나는 피해(%). */
   damagePercent: number;
-} | {
-  /** 희열 한 겹이 돌리는 매초 회복(최대 체력의 %)이 이만큼 늘어난다(노도니아의 「달콤한 상처」). */
-  kind: "sweeterWound";
-  /** 겹당 늘어나는 회복(최대 체력의 %p, 화면에는 %로 적는다). */
-  regenPercentPerStack: number;
 } | {
   /**
    * 무리가 **함께 노리는 적**(다른 아군이 같이 표적으로 삼은 적)에게는 이 개체의 치명타 피해가 늘어난다(루카의 「사냥감 표식」).
@@ -3335,6 +3528,25 @@ export type PassiveBreakthrough = {
   kind: "doubleAmbush";
   /** 연달아 확정 치명타가 되는 일반 공격 수. */
   crits: number;
+} | {
+  /** 일반 공격과 궁극기가 바르는 중독이 이 시간으로 늘어난다(아트라). 적 전용. */
+  kind: "lingeringVenom";
+  poisonSeconds: number;
+} | {
+  /** 행렬의 재생이 아군 한 명당 이 비율(최대 체력 %/초)로 늘어난다(미르). 적 전용. */
+  kind: "deeperMarch";
+  regenMaxHpPercentPerAllyPerSecond: number;
+} | {
+  /** 겨누기가 쌓이는 상한이 이만큼 늘어난다(펄시). 적 전용. */
+  kind: "deepAim";
+  extraStacks: number;
+} | {
+  /** 날갯짓 울림이 가장 센 아군 **둘**에게 공명을 건다(네우리). 적 전용. */
+  kind: "twinHum";
+} | {
+  /** 박쥐 떼가 맞히는 적이 이만큼 늘어난다(이카닉시아). 적 전용. */
+  kind: "swarmDeepen";
+  extraTargets: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */
@@ -3361,7 +3573,9 @@ export interface StageEnemyDef {
   /** 플레이어 렐릭과 같은 한계 돌파 공식을 적용할 정수 단계다. */
   breakthrough: number;
   /** 배열 순서와 무관하게 전열(0)에서 후열(2)까지의 전투 배치를 고정한다. */
-  formationSlot: 0 | 1 | 2;
+  formationSlot: 0 | 1 | 2 | 3 | 4;
+  /** 편성은 그대로 두고 이 개체만 정예 유형으로 서는 관문(4-6·4-9의 코마)에 붙는다. 관문 전체가 정예면 `BattleStageDef.elite`다. */
+  elite?: true;
 }
 
 
@@ -3376,11 +3590,13 @@ export type StageBonusReward =
   | { kind: "currency"; currency: "gold" | "gems" | "rawStone" | "fossil"; amount: number }
   /**
    * 룬은 **고급·희귀만** 둔다 — 스토리는 룬을 처음 쥐여 주는 자리이지 주 수급처가 아니다. 영웅·전설은
-   * 뒤쪽 장(8·9장)에서 연다. `trait`이면 발급할 때 특성 하나를 확정으로 붙인다(하한 고급).
+   * 뒤쪽 장(8·9장)에서 연다. 고대 지층만 101층부터 영웅 룬을 준다(고층 보상). `trait`이면 발급할 때 특성 하나를 확정으로 붙인다(하한 고급).
    */
-  | { kind: "rune"; rarity: "uncommon" | "rare"; part: 0 | 1 | 2; trait?: true };
+  | { kind: "rune"; rarity: "uncommon" | "rare" | "epic"; part: 0 | 1 | 2; trait?: true };
 
 export interface BattleStageDef extends StageBase {
+  /** 고대 지층도 공용 서버 전투/초회 보상 경로를 사용한다. */
+  ancientFloor?: number;
   kind: "battle";
   /**
    * 이 관문에 서는 적. **셋이 기본이고 정예 관문만 하나다.**
@@ -3390,6 +3606,8 @@ export interface BattleStageDef extends StageBase {
    * 있으므로 스토리도 같은 모양을 쓴다. 자리는 배열 순서가 아니라 `formationSlot`이 정한다.
    */
   enemies: readonly StageEnemyDef[];
+  /** 스토리 난이도 종족값 보정. 원본 레벨·돌파·공속·치명타는 바꾸지 않는다. */
+  difficultyStatMultiplier?: number;
   /**
    * **단일 정예 관문**이라는 표식.
    *
@@ -3398,6 +3616,11 @@ export interface BattleStageDef extends StageBase {
    * 정규화라 관문마다 움직이지 않고, 관문을 조이는 것은 언제나 그 관문의 레벨 하나다.
    */
   elite?: true;
+  /**
+   * **서브(SUB) 전투 관문**이라는 표식. 선행 관문을 깨면 열리지만 본편의 선행 목록·「다음 단계」·진행 순위에는
+   * 들지 않는다 — 안 해도 본편이 막히지 않는 선택 전투다. 보상은 젬뿐인 초회 보상이다.
+   */
+  sub?: true;
   rewards: {
     firstClearCheesecake: number;
     repeatClearCheesecake: number;

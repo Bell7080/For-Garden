@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { bindNotificationDot } from "./NotificationDot";
+import { notificationManager } from "../managers/NotificationManager";
 import type { GameApi, ProgressPassDto } from "../api/contracts";
 import { t } from "../i18n";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, HoloBar, toPoints } from "./holo";
@@ -47,6 +49,7 @@ export class LobbyPassCard {
     hit.on("pointerout", () => pressOut(this.frame, "normal", { pop: false }));
     hit.on("pointerup", () => { pressOut(this.frame); this.onOpen(this.passes[this.index]?.id); });
     this.frame.add(hit);
+    bindNotificationDot(scene, this.frame, { x: C.width / 2 - 12, y: -C.height / 2 + 12 }, (listener) => notificationManager.subscribe("passReward", listener));
     this.frame.once(Phaser.GameObjects.Events.DESTROY, () => window.clearInterval(this.timer));
     this.refresh();
   }

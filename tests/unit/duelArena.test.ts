@@ -39,6 +39,15 @@ describe("결투장 점수", () => {
     expect(duelScoreDelta(1_000, 0, false)).toBe(-24);
   });
 
+  it("저티어 발판 — 브론즈 ×2 · 실버 ×1.5 · 골드부터 기본이고 진 판은 절반만 깎인다", () => {
+    expect(duelScoreDelta(0, 0, true)).toBe(40);
+    expect(duelScoreDelta(0, 0, false)).toBe(-7);
+    expect(duelScoreDelta(500, 500, true)).toBe(30);
+    expect(duelScoreDelta(500, 500, false)).toBe(-7);
+    expect(duelScoreDelta(1_000, 1_000, true)).toBe(20);
+    expect(duelScoreDelta(1_000, 1_000, false)).toBe(-14);
+  });
+
   it("다이아몬드까지는 티어 바닥 아래로 떨어지지 않고 마스터부터는 떨어진다", () => {
     expect(applyDuelScore(810, -24)).toBe(800);
     expect(applyDuelScore(2_010, -24)).toBe(1_986);

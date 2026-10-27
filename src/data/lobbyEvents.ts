@@ -22,10 +22,24 @@ export interface LobbyEventDef {
   readonly startsAt: string;
   readonly endsAt: string;
   /**
-   * 카드 뒷배경으로 까는 원화 키. 이벤트마다 어울리는 그림을 깔고 카드 구성도 그 그림의 결에
-   * 맞춘다. 비워 두면 기본 카드(유리 판)로 선다.
+   * 카드 뒷배경으로 까는 원화 키 — **필수다.** 모든 이벤트 카드는 디안 픽업 카드와 같은 한 양식
+   * (원화 · 왼쪽 빗금 · 제목 · 부제 한 줄 · 붉은 기간 시계 · SD)으로 서고, 원화가 없는 카드는 그 양식에서
+   * 빈 판으로 떨어져 덜 만든 것처럼 읽힌다. 부제는 설명문이 아니라 무엇을 하는 이벤트인지 한 마디다
+   * (「디안 한정 픽업 이벤트!」).
    */
-  readonly backdropKey?: string;
+  readonly backdropKey: string;
+  /**
+   * 원화의 어느 부분을 카드에 세우는가 — 카드 폭 대비 확대(`zoom`, 1이면 폭에 꼭 맞춘다)와 원화를 옮기는
+   * 거리. 세로로 긴 모집 원화는 가운데를 자르면 무릎께가 서므로 얼굴께가 오도록 내린다.
+   */
+  readonly backdropFrame?: { readonly zoom: number; readonly offsetX: number; readonly offsetY: number };
+  /** 카드에 세우는 SD. 출격판처럼 몸은 칸 안에 갇히고 머리만 윗변 밖으로 빠져나온다. */
+  readonly sd?: { readonly relicId: string; readonly side: "left" | "right" };
+  /**
+   * 카드 위에 세우는 움직이는 장면. `roulette`는 카드 밑변에서 반쯤 솟은 돌림판이 돌고 재화가 내리며, SD가 그 옆에서
+   * 바퀴를 민다(행운의 돌림판). 비우면 원화 + SD만 선다.
+   */
+  readonly showcase?: "roulette";
   /**
    * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
@@ -34,7 +48,7 @@ export interface LobbyEventDef {
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -43,15 +57,22 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     titleKey: "event.wolfCafe.title",
     subtitleKey: "event.wolfCafe.subtitle",
     backdropKey: BACKGROUND.recruitDian,
+    // 모집 원화는 세로로 길어 그대로 자르면 무릎께가 선다 — 한 뼘 키워 얼굴께를 카드 가운데로 내린다.
+    backdropFrame: { zoom: 1.22, offsetX: 90, offsetY: 336 },
+    sd: { relicId: "dian", side: "right" },
     // 디안 픽업 이벤트는 새 화면이 아니라 디안이 선 호박석 연구(픽업 모집)로 곧장 간다.
     destination: { kind: "lab", bannerId: "amber" },
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },
   {
-    id: "autumn-harvest",
-    titleKey: "event.autumnHarvest.title",
-    subtitleKey: "event.autumnHarvest.subtitle",
+    id: "research-roulette",
+    titleKey: "event.roulette.title",
+    subtitleKey: "event.roulette.subtitle",
+    backdropKey: BACKGROUND.interactionDoppelParlor,
+    destination: { kind: "roulette" },
+    sd: { relicId: "meron", side: "right" },
+    showcase: "roulette",
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
   },

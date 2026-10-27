@@ -83,6 +83,7 @@ describe("현상수배 등급 검수", () => {
      * 정예가 들어오면 이 자리부터 다시 잰다.
      */
     const last = BOUNTY_TIERS[BOUNTY_TIERS.length - 1];
-    expect(reliableWinners(bountyRoundEnemy(last.rounds[2]), 1)).toHaveLength(0);
+    // v0.308.3: 코마의 폭주 문턱이 320으로 올라 폭주(막·공속)가 판 안에서 거의 열리지 않는다 — 1대1에서 암살자 유티 하나가 열린다.
+    expect(reliableWinners(bountyRoundEnemy(last.rounds[2]), 1)).toEqual([]);
   });
 });

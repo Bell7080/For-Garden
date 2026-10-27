@@ -80,6 +80,36 @@ export function canGrantRuneTraitAtLeast(trait: RuneTrait | undefined, minimumGr
   return trait === undefined || RUNE_TRAIT_GRADES.indexOf(trait.grade) < RUNE_TRAIT_GRADES.indexOf(minimumGrade);
 }
 
+/** 추첨이 읽는 풀의 한 칸이다. `minGrade`가 `legendary`면 전설 전용이다. */
+export interface RuneTraitPoolEntry {
+  readonly id: string;
+  readonly minGrade: RuneTraitGrade;
+}
+
+/** 전설이 굴러졌을 때 전설 전용 풀을 먼저 시도하는 확률이다. 값의 원본은 데이터(`LEGENDARY_EXCLUSIVE_SHARE`)가 넘긴다. */
+export const DEFAULT_LEGENDARY_EXCLUSIVE_SHARE = 0.35;
+
+/** 이 등급에서 나올 수 있는 특성 ID들이다. 전설 전용은 전설 등급에서만 든다. */
+export function runeTraitIdsForGrade(pool: readonly RuneTraitPoolEntry[], grade: RuneTraitGrade): string[] {
+  const rank = RUNE_TRAIT_GRADES.indexOf(grade);
+  return pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= rank).map(({ id }) => id);
+}
+
+/**
+ * 등급이 정해진 뒤 특성 ID를 고른다. 전설이면 전설 전용 풀을 `exclusiveShare`로 먼저 시도하고, 아니면
+ * 일반 풀에서 고른다. 난수는 전설일 때 둘, 그 밖에는 하나를 쓴다.
+ */
+export function pickRuneTraitId(pool: readonly RuneTraitPoolEntry[], grade: RuneTraitGrade, random: () => number, exclusiveShare = DEFAULT_LEGENDARY_EXCLUSIVE_SHARE): string {
+  const eligible = pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
+  if (grade === "legendary") {
+    const exclusive = eligible.filter((entry) => entry.minGrade === "legendary");
+    const general = eligible.filter((entry) => entry.minGrade !== "legendary");
+    const useExclusive = exclusive.length > 0 && (general.length === 0 || random() < exclusiveShare);
+    return pick((useExclusive ? exclusive : general).map(({ id }) => id), random());
+  }
+  return pick(eligible.map(({ id }) => id), random());
+}
+
 /** 주입된 [0, 1) 난수로 목록에서 하나를 고른다. 범위를 벗어난 난수는 조용히 통과시키지 않는다. */
 function pick<T>(pool: readonly T[], random: number): T {
   if (pool.length === 0) throw new RangeError("특성 풀이 비어 있습니다.");
@@ -107,9 +137,9 @@ export function rollRuneTraitGrade(minimumGrade: RuneTraitGrade, random: number)
  *
  * `minimumGrade`는 쓴 아이템이 보장하는 하한이다(일반 부여는 고급, 상위 아이템은 영웅).
  */
-export function grantRuneTrait(input: { traitIds: readonly string[]; minimumGrade: RuneTraitGrade; random: () => number }): RuneTrait {
+export function grantRuneTrait(input: { pool: readonly RuneTraitPoolEntry[]; minimumGrade: RuneTraitGrade; random: () => number; exclusiveShare?: number }): RuneTrait {
   const grade = rollRuneTraitGrade(input.minimumGrade, input.random());
-  return { id: pick(input.traitIds, input.random()), grade, upgradeMisses: 0 };
+  return { id: pickRuneTraitId(input.pool, grade, input.random, input.exclusiveShare), grade, upgradeMisses: 0 };
 }
 
 /**
@@ -118,7 +148,7 @@ export function grantRuneTrait(input: { traitIds: readonly string[]; minimumGrad
  * 내려갈 수 있으면 좋은 특성을 얻은 사람이 다시 누를 이유가 사라지고, 이 시스템의 반복은
  * 「더 나은 것을 노리는 일」이 아니라 「지키는 일」이 된다.
  */
-export function rerollRuneTrait(input: { trait: RuneTrait; traitIds: readonly string[]; random: () => number }): RuneTraitRerollOutcome {
+export function rerollRuneTrait(input: { trait: RuneTrait; pool: readonly RuneTraitPoolEntry[]; random: () => number; exclusiveShare?: number }): RuneTraitRerollOutcome {
   const { trait } = input;
   const higher = nextRuneTraitGrade(trait.grade);
   const threshold = RUNE_TRAIT_RULES.pityThreshold[trait.grade];
@@ -127,7 +157,7 @@ export function rerollRuneTrait(input: { trait: RuneTrait; traitIds: readonly st
   const grade = upgraded && higher !== undefined ? higher : trait.grade;
   return {
     candidate: {
-      id: pick(input.traitIds, input.random()),
+      id: pickRuneTraitId(input.pool, grade, input.random, input.exclusiveShare),
       grade,
       // 등급이 오르면 천장은 그 등급에서 새로 돈다. 실패만 쌓는다.
       upgradeMisses: upgraded ? 0 : trait.upgradeMisses + 1,

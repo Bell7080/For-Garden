@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { TAP_DRAG_SLOP } from "../core/tapGuard";
+import { formatCurrency } from "../core/formatCurrency";
 import { drawGlyph, type GlyphName } from "./glyphs";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { chipPoints, drawLayer, HOLO, perspectiveRect, slantedRect } from "./holo";
@@ -10,7 +12,12 @@ import { pressIn, pressOut } from "./pressFeedback";
 import type { PressTier } from "./pressFeedbackStyle";
 
 /** 버튼 탭과 스크롤 드래그를 구분하는 공용 게임 좌표 거리다. */
-export const BUTTON_DRAG_CANCEL_DISTANCE = 24;
+/** 버튼 비용 글자. 줄여 적는 버튼만 K·M으로 접는다. */
+function costText(amount: number, abbreviate = false): string {
+  return abbreviate ? formatCurrency(amount) : amount.toLocaleString();
+}
+
+export const BUTTON_DRAG_CANCEL_DISTANCE = TAP_DRAG_SLOP;
 
 /**
  * 판 양 끝에서 안쪽으로 사라지는 점 패턴.
@@ -87,7 +94,7 @@ export interface ButtonOptions {
    * "얼마가 드는가"는 버튼 밖의 안내문이 아니라 **누르는 것 위**에 있어야 한다. 재화 이름은
    * 글자로 적지 않고 그림으로 둔다 — 아이콘 하나가 "골드"라는 두 글자보다 빨리 읽힌다.
    */
-  cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean };
+  cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean; /** 20K처럼 줄여 적는다. */ abbreviate?: boolean };
   /**
    * 화면에서 가장 중요한 버튼인지.
    *
@@ -128,6 +135,7 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly plate: Phaser.GameObjects.Container;
   private readonly labelSize: number;
   private enabledState = true;
+  private updateCost?: (cost?: { amount: number; affordable?: boolean }) => void;
   /** 누른 동일 포인터만 클릭을 끝낼 수 있게 기억하는 포인터 ID다. */
   private pressedPointerId?: number;
   private pressX = 0;
@@ -213,16 +221,22 @@ export class Button extends Phaser.GameObjects.Container {
       // 재화 수는 라벨보다 굵고 크게, 그러나 **세로로만** 늘인다. 가로로 키우면 자릿수가
       // 늘었을 때 덩어리가 판을 넘는다. 아이콘과는 손가락 하나가 아니라 한 뼘만 띄운다.
       const costStyle = textStyle({ role: "display", size: fontSize * 0.96, color: opts.cost.affordable === false ? COLOR.dangerText : COLOR.ink });
-      const amount = scene.add.text(0, hasSub ? -14 : 0, opts.cost.amount.toLocaleString(), costStyle).setOrigin(0, 0.5).setScale(1, 1.14);
-      const total = label.width + gap + coin + gap * 0.24 + amount.width;
-      const left = -total / 2;
-      label.setX(left + label.width / 2);
-      const coinX = left + label.width + gap + coin / 2;
-      // 그림자를 한 겹 깔아 상단 재화 줄과 같은 방식으로 앉는다.
-      plate.add(scene.add.image(coinX + 3, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55));
-      plate.add(scene.add.image(coinX, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin));
-      amount.setX(coinX + coin / 2 + gap * 0.24);
-      plate.add(amount);
+      const amount = scene.add.text(0, hasSub ? -14 : 0, costText(opts.cost.amount, opts.cost.abbreviate), costStyle).setOrigin(0, 0.5).setScale(1, 1.14);
+      const shadow = scene.add.image(0, (hasSub ? -14 : 0) + 4, opts.cost.icon).setDisplaySize(coin, coin).setTint(0x05070a).setAlpha(0.55);
+      const icon = scene.add.image(0, hasSub ? -14 : 0, opts.cost.icon).setDisplaySize(coin, coin);
+      plate.add([shadow, icon, amount]);
+      this.updateCost = (cost) => {
+        shadow.setVisible(!!cost); icon.setVisible(!!cost); amount.setVisible(!!cost);
+        if (!cost) { label.setX(0); return; }
+        amount.setText(costText(cost.amount, opts.cost?.abbreviate)).setColor(cost.affordable === false ? COLOR.dangerText : COLOR.ink);
+        const total = label.width + gap + coin + gap * 0.24 + amount.width;
+        const left = -total / 2;
+        label.setX(left + label.width / 2);
+        const coinX = left + label.width + gap + coin / 2;
+        shadow.setX(coinX + 3); icon.setX(coinX);
+        amount.setX(coinX + coin / 2 + gap * 0.24);
+      };
+      this.updateCost(opts.cost);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {
@@ -312,6 +326,12 @@ export class Button extends Phaser.GameObjects.Container {
     mark.setPosition(this.labelText.x - this.labelText.width / 2 - size * 0.75, this.labelText.y);
     this.plate.add(mark);
     return mark;
+  }
+
+  /** 비용 표시를 바꿀 때 버튼 입력면·누름 동작은 유지한다. */
+  setCost(cost?: { amount: number; affordable?: boolean }): this {
+    this.updateCost?.(cost);
+    return this;
   }
 
   setSub(text: string): this {

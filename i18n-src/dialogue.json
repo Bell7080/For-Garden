@@ -1,0 +1,52 @@
+{
+  "dialogue.sign.announce": [
+    "通知",
+    "ประกาศ",
+    "THÔNG BÁO",
+    "PENGUMUMAN",
+    "AVISO",
+    "AVISO",
+    "HINWEIS",
+    "ОБЪЯВЛЕНИЕ"
+  ],
+  "dialogue.sign.warning": [
+    "警告",
+    "คำเตือน",
+    "CẢNH BÁO",
+    "PERINGATAN",
+    "ADVERTENCIA",
+    "ALERTA",
+    "WARNUNG",
+    "ВНИМАНИЕ"
+  ],
+  "dialogue.sign.system": [
+    "系统",
+    "ระบบ",
+    "HỆ THỐNG",
+    "SISTEM",
+    "SISTEMA",
+    "SISTEMA",
+    "SYSTEM",
+    "СИСТЕМА"
+  ],
+  "dialogue.sign.broadcast": [
+    "广播",
+    "กระจายเสียง",
+    "PHÁT THANH",
+    "SIARAN",
+    "TRANSMISIÓN",
+    "TRANSMISSÃO",
+    "DURCHSAGE",
+    "ТРАНСЛЯЦИЯ"
+  ],
+  "dialogue.sign.tower": [
+    "管制塔",
+    "หอควบคุม",
+    "THÁP ĐIỀU KHIỂN",
+    "MENARA KONTROL",
+    "TORRE DE CONTROL",
+    "TORRE DE CONTROLE",
+    "KONTROLLTURM",
+    "ДИСПЕТЧЕРСКАЯ"
+  ]
+}

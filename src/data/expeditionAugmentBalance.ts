@@ -1,3 +1,6 @@
+import { EXPEDITION_STAT_AUGMENTS } from "./expeditionStatAugments";
+import { EXPEDITION_TAG_AUGMENTS } from "./expeditionTagAugments";
+import { expeditionTagBalance } from "./expeditionTagBalance";
 import type { ExpeditionAugmentRarity, ExpeditionAugmentTarget } from "./expeditionAugments";
 
 /**
@@ -59,7 +62,11 @@ export const MAX_HP_TRUE_DAMAGE_POLICY = {
 export type ExpeditionAugmentBalanceGlyph = "attack" | "spell" | "survival" | "shield" | "heal" | "status" | "conditional";
 
 export interface ExpeditionAugmentBalanceAudit {
-  equivalentPercent: number;
+  value: number;
+  metric: "equivalentPercent" | "referenceTriggers" | "statValue";
+  equivalentPercent?: number;
+  expectedTriggers?: number;
+  statValue?: number;
   glyph: ExpeditionAugmentBalanceGlyph;
   /** 수치 근거와 공용 메커니즘의 이름을 함께 남겨 자유 퍼센트/별도 콜백의 재도입을 막는다. */
   rationale: string;
@@ -68,6 +75,18 @@ export interface ExpeditionAugmentBalanceAudit {
 
 /** 모든 카탈로그 ID의 수동 검수 장부다. 수치는 대표 전투 환산 뒤 해당 등급·범위 띠 안의 값이다. */
 export const EXPEDITION_AUGMENT_BALANCE = {
+  ...Object.fromEntries(EXPEDITION_STAT_AUGMENTS.map(def => [def.id, [
+    def.effect.kind === "flatStat" ? def.effect.points : def.effect.kind === "moveSpeedPercent" ? def.effect.percent : 0,
+    def.category === "recovery" ? "heal" : def.category === "spell" ? "spell" : def.category === "survival" ? "survival" : "attack",
+    "상시 수치형은 원시 증가량을 기록하고 흡혈·치명·충전·성장 보정의 실제 경로를 별도 검수",
+    "shared stat snapshot + actual HP damage / critical / energy / ferocity / movement",
+  ] as const])),
+  ...Object.fromEntries(EXPEDITION_TAG_AUGMENTS.map(def => [def.id, [
+    expeditionTagBalance(def.id)!.expectedTriggers,
+    def.category === "shield" ? "shield" : def.category === "recovery" ? "heal" : "status",
+    "태그형은 환산 예산 대신 20초 발동 횟수·피해·제어 상한을 별도 검수",
+    "shared status / shell / reagent + action counter",
+  ] as const])),
   "reinforced-core": [8, "attack", "전체 공격력 기준점", "stat multiplier"],
   "predator-instinct": [18, "attack", "개인 집중은 전체안의 약 두 배", "stat multiplier"],
   "echo-circuit": [8, "spell", "공격력 전체안과 대칭", "stat multiplier"],
@@ -104,5 +123,7 @@ export const EXPEDITION_AUGMENT_BALANCE = {
 /** 튜플 장부를 이름 있는 검수 값으로 바꿔 테스트와 향후 운영 도구가 같은 해석을 사용하게 한다. */
 export function expeditionAugmentBalanceAudit(id: string): ExpeditionAugmentBalanceAudit | undefined {
   const row = EXPEDITION_AUGMENT_BALANCE[id as keyof typeof EXPEDITION_AUGMENT_BALANCE];
-  return row && { equivalentPercent: row[0], glyph: row[1], rationale: row[2], sharedMechanic: row[3] };
+  return row && { value: row[0], metric: id.startsWith("tag-") ? "referenceTriggers" : id.startsWith("stat-") ? "statValue" : "equivalentPercent",
+    ...(id.startsWith("tag-") ? { expectedTriggers: row[0] } : id.startsWith("stat-") ? { statValue: row[0] } : { equivalentPercent: row[0] }),
+    glyph: row[1], rationale: row[2], sharedMechanic: row[3] };
 }

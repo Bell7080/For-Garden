@@ -1,0 +1,278 @@
+{
+  "id": "mobility:as400:ms40:offset:augmented",
+  "seed": "mobility:as400:ms40:offset",
+  "stepSeconds": 0.02,
+  "requestedSeconds": 60,
+  "elapsedSeconds": 60,
+  "phase": "fight",
+  "limits": {
+    "maxContinuousSeconds": 2,
+    "maxControlledRatio": 0.4,
+    "minFreeGapSeconds": 0.5,
+    "minimumObservationSeconds": 10
+  },
+  "metadata": {
+    "mode": "mobility",
+    "selections": [
+      {
+        "augmentId": "tag-taunt-basic",
+        "targetRelicId": "cc-0"
+      },
+      {
+        "augmentId": "tag-taunt-basic",
+        "targetRelicId": "cc-1"
+      },
+      {
+        "augmentId": "tag-taunt-basic",
+        "targetRelicId": "cc-2"
+      },
+      {
+        "augmentId": "overclock-field"
+      },
+      {
+        "augmentId": "overclock-field"
+      },
+      {
+        "augmentId": "overclock-field"
+      }
+    ],
+    "nativeEffectsDisabled": true,
+    "fixedContact": false,
+    "overclockStacks": 3,
+    "pairedScenario": "mobility:as400:ms40:offset",
+    "meleeTargetMoveSpeed": 40,
+    "sourceReach": "ranged"
+  },
+  "combatants": [
+    {
+      "fighterId": "player-0",
+      "relicId": "cc-0",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 232,
+      "reach": 600,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "player-1",
+      "relicId": "cc-1",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 232,
+      "reach": 600,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "player-2",
+      "relicId": "cc-2",
+      "side": "player",
+      "attackSpeed": 568,
+      "moveSpeed": 232,
+      "reach": 600,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 0.2640845070422535
+    },
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "attackSpeed": 100,
+      "moveSpeed": 58,
+      "reach": 172,
+      "breakthrough": 0,
+      "attackIntervalSeconds": 1.5
+    }
+  ],
+  "units": [
+    {
+      "fighterId": "enemy-0",
+      "relicId": "cc-target",
+      "side": "enemy",
+      "observedSeconds": 60,
+      "controlledSeconds": 10.76,
+      "controlledRatio": 0.179333,
+      "longestContinuousSeconds": 3.7,
+      "minFreeGapSeconds": 0.44,
+      "longestFreeWindowSeconds": 4.24,
+      "fullLockSeconds": 0,
+      "targetRestrictionSeconds": 10.76,
+      "byKindSeconds": {
+        "taunt": 7.54,
+        "retarget": 3.8
+      },
+      "directAttackFrames": 37,
+      "hostileAttackFrames": 37,
+      "friendlyFireFrames": 0,
+      "targetChanges": 14,
+      "targetReversals": 12,
+      "forcedTargetChanges": 14,
+      "forcedPursuitSeconds": 3.8,
+      "firstHostileAttackSeconds": 4.66,
+      "maxHostileAttackGapSeconds": 4.66,
+      "intervals": [
+        {
+          "start": 0.94,
+          "end": 4.64,
+          "kinds": [
+            "taunt",
+            "retarget"
+          ]
+        },
+        {
+          "start": 7.8,
+          "end": 8.38,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 12.62,
+          "end": 13.2,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 13.64,
+          "end": 13.68,
+          "kinds": [
+            "retarget"
+          ]
+        },
+        {
+          "start": 16.76,
+          "end": 17.34,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 21.58,
+          "end": 22.16,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 22.68,
+          "end": 22.74,
+          "kinds": [
+            "retarget"
+          ]
+        },
+        {
+          "start": 25.72,
+          "end": 26.3,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 30.54,
+          "end": 31.12,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 34.68,
+          "end": 35.26,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 39.5,
+          "end": 40.08,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 43.64,
+          "end": 44.22,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 48.46,
+          "end": 49.04,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 52.6,
+          "end": 53.18,
+          "kinds": [
+            "taunt"
+          ]
+        },
+        {
+          "start": 57.42,
+          "end": 58,
+          "kinds": [
+            "taunt"
+          ]
+        }
+      ],
+      "violations": [
+        "continuous-control",
+        "missing-recovery-window"
+      ],
+      "verdict": "fail"
+    }
+  ],
+  "triggerActivations": [
+    {
+      "fighterId": "player-0",
+      "effectIndex": 0,
+      "payload": "taunt",
+      "trigger": "onBasicHit",
+      "everyN": 4,
+      "cooldownSeconds": 8,
+      "maxTriggers": 6,
+      "times": [
+        0.96,
+        12.64,
+        21.6,
+        30.56,
+        39.52,
+        48.48
+      ]
+    },
+    {
+      "fighterId": "player-2",
+      "effectIndex": 2,
+      "payload": "taunt",
+      "trigger": "onBasicHit",
+      "everyN": 4,
+      "cooldownSeconds": 8,
+      "maxTriggers": 6,
+      "times": [
+        7.82,
+        16.78,
+        25.74,
+        34.7,
+        43.66,
+        52.62
+      ]
+    },
+    {
+      "fighterId": "player-1",
+      "effectIndex": 1,
+      "payload": "taunt",
+      "trigger": "onBasicHit",
+      "everyN": 4,
+      "cooldownSeconds": 8,
+      "maxTriggers": 6,
+      "times": [
+        57.44
+      ]
+    }
+  ],
+  "verdict": "fail"
+}

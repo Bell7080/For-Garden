@@ -9,6 +9,8 @@ import { FaceFrame } from "./FaceFrame";
 import { HoloBar } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
+import { pressIn, pressOut, setPressRest } from "./pressFeedback";
+import { slideTabPage } from "./screenTransition";
 
 /**
  * 결과 기여도 한 줄의 자리.
@@ -44,12 +46,21 @@ export class BattleContributionPopup {
         const label = this.scene.add.text(x, -535, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5);
         const hit = this.scene.add.rectangle(x, -535, 210, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
         // 넓은 투명 입력면은 접근성 배율에서도 글자 자체를 정확히 누를 필요가 없게 한다.
-        hit.on("pointerup", () => { category = item; render(); }); body.add([label, hit]);
+        hit.on("pointerdown", () => pressIn(label));
+        hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
+        hit.on("pointerup", () => {
+          pressOut(label);
+          if (category === item) return;
+          const from = CONTRIBUTION_CATEGORIES.indexOf(category);
+          category = item; render();
+          slideTabPage(this.scene, [content], from, index);
+        });
+        body.add([label, hit]);
         return label;
       });
       const render = (): void => {
         content.removeAll(true);
-        labels.forEach((label, index) => { const selected = CONTRIBUTION_CATEGORIES[index] === category; label.setColor(selected ? COLOR.accentText : COLOR.inkDim).setScale(selected ? 1.08 : 1); });
+        labels.forEach((label, index) => { const selected = CONTRIBUTION_CATEGORIES[index] === category; label.setColor(selected ? COLOR.accentText : COLOR.inkDim).setScale(selected ? 1.08 : 1); setPressRest(label, selected ? 1.08 : 1); });
         const rows = contributionRenderModel(category, result.rows[category]);
         const replayTotal = result.rows.attack.reduce((sum, row) => sum + row.total, 0);
         // 서버 보정이 있을 때만 두 기준을 병기하고 개별 막대는 행동 재생 결과를 그대로 유지한다.

@@ -13,7 +13,7 @@ export const STATUS_VI = {
   "status.frozen": "Đóng băng",
   "status.frozen.detail": "còn {time} · Khi vỡ gây sát thương cố định {percent}% HP tối đa",
   "status.frenzy": "Cuồng bạo",
-  "status.frenzy.detail": "Tấn công phe mình · Tốc đánh +{percent}% · còn {time}",
+  "status.frenzy.detail": "Tấn công phe mình · còn {time}",
   "status.taunt": "Khiêu khích",
   "status.taunt.detail": "Chỉ nhắm kẻ khiêu khích · còn {time}",
   "status.bleed": "Chảy máu",
@@ -62,4 +62,6 @@ export const STATUS_VI = {
   "status.healCut.detail": "Hồi phục nhận −{percent}% · còn {time}",
   "status.sunken": "Sức nặng chìm",
   "status.sunken.detail": "Tốc độ di chuyển và tấn công −{percent}% · còn {time}",
+  "status.echo": "Tiếng vọng",
+  "status.echo.detail": "Còn {time}",
 } as const;

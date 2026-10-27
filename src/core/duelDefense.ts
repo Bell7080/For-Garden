@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "./buildFlavor";
 import { applyDuelScore, DUEL_DEFENSE_SIM, duelDefenseWinChance, duelNewlyReachedTiers, duelStanding, pickDuelOpponents, type DuelTierDef } from "./duelArena";
 import type { DuelNpc } from "./duelNpcPool";
 import { cloneDuelState, DUEL_HISTORY_LIMIT, type DuelHistoryEntry, type DuelState } from "./duelState";
@@ -20,6 +21,7 @@ const HOUR_MS = 3_600_000;
 export function simulateDuelDefenses(
   state: DuelState, now: Date, pool: readonly DuelNpc[], defensePower: number, random: () => number,
 ): DuelDefenseResult {
+  if (!QA_TOOLS_ENABLED) return { state, entries: [], reachedTiers: [] };
   const nowMs = now.getTime();
   const simMs = Date.parse(state.defenseSimAt);
   // 시계가 아직 없거나 기기 시계가 뒤로 갔으면 지금으로 세우기만 한다.

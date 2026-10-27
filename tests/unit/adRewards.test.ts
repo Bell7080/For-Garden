@@ -35,8 +35,8 @@ describe("광고 보상 정적 정의", () => {
 
   it("발굴 버튼은 서버 문구 대신 슬롯별 라벨과 사용/한도 상태를 표시한다", () => {
     // 남은 횟수 2는 사용량 0으로, 남은 횟수 0은 사용량 2와 비활성 상태로 바뀌어야 한다.
-    expect(excavationAdOfferDisplayModel("excavation-harvest", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "0/2", used: 0, limit: 2, enabled: true });
-    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "2/2", used: 2, limit: 2, enabled: false });
+    expect(excavationAdOfferDisplayModel("excavation-speed", 2, 2)).toEqual({ label: "생산량 ×1.5", usage: "2/2", used: 0, limit: 2, enabled: true });
+    expect(excavationAdOfferDisplayModel("excavation-storage", 2, 0)).toEqual({ label: "보관량 ×2", usage: "0/2", used: 2, limit: 2, enabled: false });
   });
 
   it("광고 취소·SDK 실패·재고 없음은 검증 토큰 없이 기본 흐름으로 돌아간다", () => {
@@ -45,13 +45,34 @@ describe("광고 보상 정적 정의", () => {
     expect(completedAdToken({ status: "unavailable" })).toBeUndefined();
     expect(completedAdToken({ status: "completed", verificationToken: "verified" })).toBe("verified");
   });
+
+  it("돌림판 광고는 한 번에 한 회전만 열고 하루 세 번으로 제한한다", () => {
+    expect(findAdRewardSlot("roulette-spin")).toMatchObject({
+      placement: "roulette", dailyLimitUtc: 3, reward: { kind: "roulette_chances", quantity: 1 },
+    });
+  });
 });
 
-/** 빠른 원정 슬롯은 동적 지급량 대신 서버 계산 비율과 두 기간 한도만 공개한다. */
-describe("빠른 원정 광고 정책", () => {
-  it("기준 점수나 지급량 필드 없이 고정 비율과 일일·주간 한도를 정의한다", () => {
-    const slot = findAdRewardSlot("quick-expedition");
-    expect(slot).toMatchObject({ placement: "quick_expedition", dailyLimitUtc: 2, weeklyLimitUtc: 5, reward: { kind: "quick_expedition", scoreRatio: 0.25 } });
-    expect(slot?.reward).not.toHaveProperty("score"); expect(slot?.reward).not.toHaveProperty("amount");
+/** 빠른 원정은 소탕이 대신하므로 광고 슬롯도 정의되지 않는다. */
+describe("빠른 원정 광고 슬롯 제거", () => {
+  it("빠른 원정 슬롯은 더 이상 허용 목록에 없다", () => {
+    expect(findAdRewardSlot("quick-expedition")).toBeUndefined();
+  });
+});
+
+import { excavationStorageFillOfBase } from "../../src/core/idleExcavation";
+import { formatEffectRemaining } from "../../src/ui/excavationAdOfferModel";
+describe("발굴 보관 2배 두 줄 게이지", () => {
+  const rate = { gold: 3600, gems: 0, rawStone: 0, cheesecake: 0 } as never;
+  it("기본 한도를 100%로 두고 2배까지 이어 채운다", () => {
+    const base = 8 * 3600;
+    expect(excavationStorageFillOfBase({ gold: base } as never, rate, base, 2)).toBeCloseTo(1);
+    expect(excavationStorageFillOfBase({ gold: base * 1.5 } as never, rate, base, 2)).toBeCloseTo(1.5);
+    expect(excavationStorageFillOfBase({ gold: base * 3 } as never, rate, base, 2)).toBe(2);
+    expect(excavationStorageFillOfBase({ gold: base * 3 } as never, rate, base, 1)).toBe(1);
+  });
+  it("남은 시간은 숫자로만 적는다", () => {
+    expect(formatEffectRemaining(3_600_000)).toBe("1:00:00");
+    expect(formatEffectRemaining(59_200)).toBe("01:00");
   });
 });

@@ -8,7 +8,7 @@
 import { t, type TextKey } from "../i18n";
 import { runeRarityLabel } from "../core/runes";
 import type { RuneTrait } from "../core/runeTraits";
-import { findRuneTrait, runeTraitValue } from "../data/runeTraits";
+import { findRuneTrait, runeTraitValue, type RuneTraitEffectSpec } from "../data/runeTraits";
 
 /** 쪽지 한 줄이 쓰는 표시 모델이다. */
 export interface RuneTraitView {
@@ -27,27 +27,55 @@ export function runeTraitName(traitId: string): string {
   return t(`rune.trait.${traitId}.name` as TextKey);
 }
 
+/** 풀 자격 표기다. 모든 등급에서 나오는 특성에는 없다. */
+export function runeTraitPoolLabel(traitId: string): string | undefined {
+  const def = findRuneTrait(traitId);
+  if (def === undefined || def.minGrade === "uncommon" || def.minGrade === "rare") return undefined;
+  return t(def.minGrade === "legendary" ? "rune.trait.pool.legendary" : "rune.trait.pool.epic");
+}
+
+/** 효과 정의가 가진 자리 표시 값들을 문구 자리로 옮긴다. 종류가 가진 것만 채운다. */
+function effectParams(effect: RuneTraitEffectSpec): Record<string, string | number> {
+  const params: Record<string, string | number> = {};
+  const raw = effect as unknown as Record<string, unknown>;
+  const num = (key: string): number | undefined => typeof raw[key] === "number" ? raw[key] as number : undefined;
+  const set = (name: string, ...keys: string[]): void => {
+    for (const key of keys) { const value = num(key); if (value !== undefined) { params[name] = value; return; } }
+  };
+  set("seconds", "seconds", "hasteSeconds", "overSeconds");
+  set("threshold", "aboveHpPercent", "belowHpPercent");
+  set("stacks", "maxStacks");
+  set("cooldown", "cooldownSeconds");
+  set("extend", "extendSeconds");
+  set("extendMax", "extendMaxSeconds");
+  set("times", "maxTimes");
+  set("n", "everyNAttacks", "everyN");
+  set("cap", "attackCapPercent");
+  set("min", "minEvery");
+  return params;
+}
+
 /**
  * 특성 한 줄의 표시 모델이다.
  *
- * 자리 표시는 **효과의 종류가 정한다** — `{value}`는 늘 그 등급의 수치이고, 나머지(`seconds`·
- * `threshold`·`stacks`·`cooldown`)는 그 종류가 실제로 가진 것만 채운다.
+ * 자리 표시는 **효과의 종류가 정한다** — `{value}`는 늘 그 등급의 수치이고, 나머지는 그 종류가 실제로
+ * 가진 것만 채운다. 본문 끝에는 **중첩 방식 고정 문장**이 한 줄 붙어 룬을 열면 바로 읽힌다.
  */
 export function runeTraitView(trait: RuneTrait): RuneTraitView {
   const def = findRuneTrait(trait.id);
   const value = runeTraitValue(trait.id, trait.grade);
   const params: Record<string, string | number> = { value };
   if (def !== undefined) {
-    const effect = def.effect;
-    if ("seconds" in effect) params.seconds = effect.seconds;
-    if ("aboveHpPercent" in effect) params.threshold = effect.aboveHpPercent;
-    if ("belowHpPercent" in effect) params.threshold = effect.belowHpPercent;
-    if ("maxStacks" in effect) params.stacks = effect.maxStacks;
-    if ("cooldownSeconds" in effect) params.cooldown = effect.cooldownSeconds;
+    Object.assign(params, effectParams(def.effect));
+    if (def.values2 !== undefined) params.value2 = def.values2[trait.grade];
+    // 합산 상한은 효과가 따로 갖지 않는 특성(예열·치명 증폭)의 「합계 최대」 문장이 읽는다.
+    if (def.sumCap !== undefined) params.cap = def.sumCap;
   }
+  const stacking = def === undefined ? "sum" : def.stacking;
+  const description = `${t(`rune.trait.${trait.id}.desc` as TextKey, params)} ${t(`rune.trait.stack.${stacking}` as TextKey)}`;
   return {
     name: runeTraitName(trait.id),
     gradeLabel: runeRarityLabel(trait.grade),
-    description: t(`rune.trait.${trait.id}.desc` as TextKey, params),
+    description,
   };
 }

@@ -1,0 +1,87 @@
+{
+  "checkedOn": "2026-10-26",
+  "baseRevision": "96cc1eafca62c89501d1fbda26feb1c51a1ffe38",
+  "unit": {
+    "command": "npm test -- --testTimeout 30000 --maxWorkers 2",
+    "filesPassed": 403,
+    "testsPassed": 4797,
+    "skipped": 1,
+    "failed": 0
+  },
+  "finalLocaleRecheck": {
+    "filesPassed": 2,
+    "testsPassed": 22,
+    "failed": 0
+  },
+  "checksPassed": [
+    "build",
+    "build:server",
+    "test:release-fixtures (qa/test/production)",
+    "test:build-isolation",
+    "security:audit (repository/web bundle; 0 findings)",
+    "local UI route, reward and next floor"
+  ],
+  "simulations": {
+    "growthBattles": 264860,
+    "growthCompositions": 418,
+    "growthConfigurations": 1672,
+    "level60ReferenceBattles": 24000,
+    "inputCadenceBattles": 600,
+    "ccCases": 108,
+    "level60SearchBattles": 50825,
+    "level60SearchSettings": 1440,
+    "level60FollowupBattles": 8000
+  },
+  "cc": {
+    "verdict": "risk-detected",
+    "cases": {
+      "pass": 0,
+      "fail": 80,
+      "insufficient": 28
+    },
+    "worstContinuousSeconds": 53.12,
+    "maxObservedHostileAttackGapSecondsInReportedAmoCase": 70.42,
+    "note": "Native taunt/concussion chain remains unresolved; functional test success does not certify CC safety."
+  },
+  "deployment": "No push or deployment performed",
+  "sourceSha256": {
+    "src/core/ancientStrataBattle.ts": "10e43f8be926f617afd63aa6b845f0499df3ae81807d6f9021f26cef761ce2eb",
+    "src/core/ancientStrataSimulation.ts": "a66647cc866af679848eaab0d7c97859d94351140af25d122c14e7a2983d412b",
+    "src/core/skirmish.ts": "485ab5c33289ab05ede156ca87ea627c369f5c1f89c55dd8252578c0b755a645",
+    "src/data/ancientStrataDifficulty.ts": "c1f24ce2ad9753f57f9e7089bebd74061348c2f973a17bfae07e99dd11ff26f2",
+    "src/data/ancientStrataEncounters.ts": "ea59bb799da7c6ae5a0ff7ef7be12d6f0e15cde98dfe30dd82b398c1a03b5e94",
+    "src/server/combatAuthority.ts": "f08a4d857cbe014460c5929b1be5442936271f1c8cc7bfdbafcd8edd6beaeba6",
+    "src/api/FakeServer.ts": "51b959615c26a2df46cfaaa535571d220c05452e9835c8aa034bf57199a7e350",
+    "src/scenes/AncientStrataScene.ts": "a3c14780fc7c20a81370a5c74811c1bfdb21a5114e56b43e7431b66ab56871fb",
+    "src/ui/NodeEnemyPreview.ts": "851700fda1bce7a189525cd41c98c5f103bf51d2a1b2c564f3c8a3e8f3f1fb4f",
+    "scripts/check-ancient-strata-ui.mjs": "74957b4c39f42b6dd65dd09e94211da5544be7e6888719c8ef3b8602f70261fc",
+    "api/game.js": "386b2464b12febd442c97b0f0f90326327a082a1dd8cfacca11dda9a92783498",
+    "src/i18n/de/lobby.ts": "fbb7c424d7830f7781c374b069746085521fa13c6b090cca03b2f3f2fce79815",
+    "src/i18n/en/lobby.ts": "d2fcb17e998105527daf00c8b2b61466b93c7293c838d51b4c6cca4b9e46f830",
+    "src/i18n/es/lobby.ts": "bb733720757db0c0ae01b2f1458ae50bfe56a1faadaeea30e88a194005e071b8",
+    "src/i18n/id/lobby.ts": "b28928cbc020d08cb617ed7d3f55d1912d1b895ae9243e1b434f793658c853f2",
+    "src/i18n/ja/lobby.ts": "00f25b69b15f93dceee72bdcdde2e382f812886b74892e515dd407ae8b32850f",
+    "src/i18n/ko/lobby.ts": "d9a77a5224dfdd867652680b653c7cc1aee4075879d9799173166b6b24b7cdad",
+    "src/i18n/pt-BR/lobby.ts": "fd6e6c658bd758033d07d004d03125d668c6b9a662dcd085244628e36ea608ec",
+    "src/i18n/ru/lobby.ts": "5b85a7cb848e65cc64b37a7f78af3db0115ce1ba1f18c50552e7b0774ae1ac8e",
+    "src/i18n/th/lobby.ts": "7b9b1d40af8a01ca211adbd8bfa1912c404e8bc681df0a31ea0075d650b29cba",
+    "src/i18n/vi/lobby.ts": "acae2e67c56d90524dff4332a4f2f0577782d2ead13add5a56fc2bf1652ae149",
+    "src/i18n/zh-Hans/lobby.ts": "1ab37e9ff0d815b42f37912c4b32e2f931bb10a3e713c820e2787c539712c825",
+    "src/i18n/zh-Hant/lobby.ts": "35fbbd65e1ef6082585899759c5878dc7c5c27a6ed51fd97ae3b5373255246fb"
+  },
+  "balanceFindings": {
+    "theoreticalCeilingStableThrough": 125,
+    "targetUpperApproximation": 120,
+    "aboveTargetFloors": 5,
+    "all124StableCandidatesIncludePachi": true
+  },
+  "followupDiagnosis": {
+    "report": "docs/tank-cc-diagnosis-2026-10-26.md",
+    "baselineMaxContinuousHardCcSeconds": 5.98,
+    "attackGapConfoundedByNonAttackingEnemyUltimateAiBug": true,
+    "previousTerminologyCorrection": "stun, not concussion; 53.12 seconds includes taunt",
+    "engineChanged": false
+  },
+  "engineStatus": "Historical verification before enemy non-attacking ultimate AI fix; not current-engine floor balance.",
+  "aiFixReport": "docs/enemy-utility-ai-fix-2026-10-26.md"
+}

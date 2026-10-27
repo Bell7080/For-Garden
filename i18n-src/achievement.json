@@ -1,0 +1,1002 @@
+{
+  "achievement.title": [
+    "成就",
+    "ความสำเร็จ",
+    "Thành tựu",
+    "Pencapaian",
+    "Logros",
+    "Conquistas",
+    "Erfolge",
+    "Достижения"
+  ],
+  "achievement.tab.all": [
+    "全部",
+    "ทั้งหมด",
+    "Tất cả",
+    "Semua",
+    "Todos",
+    "Todos",
+    "Alle",
+    "Все"
+  ],
+  "achievement.category.growth": [
+    "成长",
+    "เติบโต",
+    "Trưởng thành",
+    "Pertumbuhan",
+    "Crecimiento",
+    "Crescimento",
+    "Wachstum",
+    "Развитие"
+  ],
+  "achievement.category.battle": [
+    "战斗",
+    "ต่อสู้",
+    "Chiến đấu",
+    "Pertempuran",
+    "Combate",
+    "Batalha",
+    "Kampf",
+    "Бой"
+  ],
+  "achievement.category.explore": [
+    "探索",
+    "สำรวจ",
+    "Thám hiểm",
+    "Penjelajahan",
+    "Exploración",
+    "Exploração",
+    "Erkundung",
+    "Разведка"
+  ],
+  "achievement.category.collection": [
+    "收集",
+    "สะสม",
+    "Sưu tầm",
+    "Koleksi",
+    "Colección",
+    "Coleção",
+    "Sammlung",
+    "Коллекция"
+  ],
+  "achievement.category.daily": [
+    "日常",
+    "ประจำวัน",
+    "Thường ngày",
+    "Keseharian",
+    "Vida diaria",
+    "Dia a dia",
+    "Alltag",
+    "Повседневность"
+  ],
+  "achievement.category.feat": [
+    "记录",
+    "สถิติ",
+    "Kỷ lục",
+    "Rekor",
+    "Hazañas",
+    "Feitos",
+    "Rekorde",
+    "Рекорды"
+  ],
+  "achievement.claimAll": [
+    "全部领取",
+    "รับทั้งหมด",
+    "Nhận tất cả",
+    "Klaim Semua",
+    "Reclamar todo",
+    "Resgatar tudo",
+    "Alle abholen",
+    "Забрать всё"
+  ],
+  "achievement.rewardTitle": [
+    "成就奖励",
+    "รางวัลความสำเร็จ",
+    "Thưởng thành tựu",
+    "Hadiah pencapaian",
+    "Recompensas de logros",
+    "Recompensas de conquistas",
+    "Erfolgsbelohnungen",
+    "Награды за достижения"
+  ],
+  "achievement.summary.tiers": [
+    "已达成阶段",
+    "ขั้นที่สำเร็จ",
+    "Mốc đã đạt",
+    "Tahap tercapai",
+    "Hitos alcanzados",
+    "Etapas concluídas",
+    "Erreichte Meilensteine",
+    "Достигнутые этапы"
+  ],
+  "achievement.summary.modifiers": [
+    "称号词 {earned}/{total}",
+    "คำขยาย {earned}/{total}",
+    "Danh xưng {earned}/{total}",
+    "Julukan {earned}/{total}",
+    "Epítetos {earned}/{total}",
+    "Epítetos {earned}/{total}",
+    "Titelzusätze {earned}/{total}",
+    "Эпитеты {earned}/{total}"
+  ],
+  "achievement.state.complete": [
+    "已完成",
+    "เสร็จสิ้น",
+    "Hoàn thành",
+    "Selesai",
+    "Completadas",
+    "Concluídas",
+    "Abgeschlossen",
+    "Завершены"
+  ],
+  "achievement.state.feat": [
+    "一次性记录",
+    "สถิติครั้งเดียว",
+    "Thành tích một lần",
+    "Prestasi sekali",
+    "Hazaña única",
+    "Feito único",
+    "Einmaliger Erfolg",
+    "Разовое достижение"
+  ],
+  "achievement.state.hidden": [
+    "隐藏记录",
+    "สถิติที่ซ่อน",
+    "Thành tích ẩn",
+    "Prestasi tersembunyi",
+    "Hazaña oculta",
+    "Feito oculto",
+    "Verborgener Erfolg",
+    "Скрытое достижение"
+  ],
+  "achievement.objective.hidden": [
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???",
+    "???"
+  ],
+  "achievement.tier": [
+    "第{current}/{total}阶段",
+    "ขั้น {current}/{total}",
+    "Bậc {current}/{total}",
+    "Tahap {current}/{total}",
+    "Etapa {current}/{total}",
+    "Etapa {current}/{total}",
+    "Stufe {current}/{total}",
+    "Этап {current}/{total}"
+  ],
+  "achievement.modifierEarned": [
+    "获得称号词“{name}”！",
+    "ได้รับคำขยาย “{name}” แล้ว!",
+    "Nhận danh xưng “{name}”!",
+    "Julukan “{name}” diperoleh!",
+    "¡Epíteto «{name}» obtenido!",
+    "Epíteto “{name}” obtido!",
+    "Titelzusatz „{name}“ erhalten!",
+    "Получен эпитет «{name}»!"
+  ],
+  "achievement.series.wealth": [
+    "财富积累",
+    "สะสมความมั่งคั่ง",
+    "Tích lũy tài sản",
+    "Menumpuk Kekayaan",
+    "Riqueza creciente",
+    "Riqueza crescente",
+    "Wachsender Reichtum",
+    "Накопление богатства"
+  ],
+  "achievement.series.collector": [
+    "标本收集",
+    "สะสมตัวอย่าง",
+    "Sưu tập mẫu vật",
+    "Koleksi Spesimen",
+    "Colección de especímenes",
+    "Coleção de espécimes",
+    "Exemplarsammlung",
+    "Коллекция экземпляров"
+  ],
+  "achievement.series.nurture": [
+    "成长记录",
+    "บันทึกการเติบโต",
+    "Dấu ấn trưởng thành",
+    "Catatan Pertumbuhan",
+    "Registro de crecimiento",
+    "Registro de crescimento",
+    "Wachstumsbericht",
+    "Хроника роста"
+  ],
+  "achievement.series.limit-break": [
+    "超越极限",
+    "ก้าวข้ามขีดจำกัด",
+    "Vượt giới hạn",
+    "Melampaui Batas",
+    "Más allá del límite",
+    "Além dos limites",
+    "Über die Grenzen",
+    "За пределами"
+  ],
+  "achievement.series.bond": [
+    "日深的羁绊",
+    "สายสัมพันธ์ที่ลึกซึ้ง",
+    "Gắn kết sâu đậm",
+    "Ikatan Mendalam",
+    "Vínculos profundos",
+    "Vínculos profundos",
+    "Wachsende Bindung",
+    "Крепнущие связи"
+  ],
+  "achievement.series.research-level": [
+    "研究员之路",
+    "เส้นทางนักวิจัย",
+    "Con đường nhà nghiên cứu",
+    "Jalan Periset",
+    "El camino del investigador",
+    "O caminho do pesquisador",
+    "Der Forscherweg",
+    "Путь исследователя"
+  ],
+  "achievement.series.victories": [
+    "胜利记录",
+    "บันทึกชัยชนะ",
+    "Dấu ấn chiến thắng",
+    "Catatan Kemenangan",
+    "Registro de victorias",
+    "Registro de vitórias",
+    "Siegesbericht",
+    "Хроника побед"
+  ],
+  "achievement.series.frontline": [
+    "第一支部战线",
+    "แนวหน้าสาขาที่ 1",
+    "Tiền tuyến Chi nhánh 1",
+    "Garis Depan Cabang 1",
+    "Frente de la Sede 1",
+    "Frente da Filial 1",
+    "Front der Zweigstelle 1",
+    "Фронт первого филиала"
+  ],
+  "achievement.series.duelist": [
+    "决斗场之名",
+    "ชื่อเสียงในอารีนา",
+    "Tên tuổi đấu trường",
+    "Nama di Arena",
+    "Un nombre en la arena",
+    "Um nome na arena",
+    "Ein Name in der Arena",
+    "Имя на арене"
+  ],
+  "achievement.series.raider": [
+    "讨伐岁月",
+    "วันแห่งการปราบปราม",
+    "Ngày tháng chinh phạt",
+    "Hari Penaklukan",
+    "Días de cacería",
+    "Dias de caçada",
+    "Tage der Jagd",
+    "Дни покорения"
+  ],
+  "achievement.series.salvager": [
+    "深海打捞",
+    "กู้ซากใต้ทะเลลึก",
+    "Trục vớt biển sâu",
+    "Penyelamatan Laut Dalam",
+    "Rescate abisal",
+    "Resgate abissal",
+    "Tiefseebergung",
+    "Глубоководный подъём"
+  ],
+  "achievement.series.fossil-lab": [
+    "化石研究",
+    "วิจัยฟอสซิล",
+    "Nghiên cứu Hóa thạch",
+    "Riset Fosil",
+    "Investigación de Fósiles",
+    "Pesquisa de Fósseis",
+    "Fossilforschung",
+    "Исследование окаменелостей"
+  ],
+  "achievement.series.harvest": [
+    "采掘收获",
+    "เก็บเกี่ยวจากการขุด",
+    "Thu hoạch Khai thác",
+    "Panen Gali",
+    "Cosecha de excavación",
+    "Colheita de escavação",
+    "Grabungsernte",
+    "Урожай раскопок"
+  ],
+  "achievement.series.dispatch": [
+    "交流派遣",
+    "ส่งออกแลกเปลี่ยน",
+    "Phái cử giao lưu",
+    "Pengiriman Pertukaran",
+    "Envío de intercambio",
+    "Despacho de intercâmbio",
+    "Austauschentsendung",
+    "Обменная отправка"
+  ],
+  "achievement.series.storyteller": [
+    "重温故事",
+    "เรื่องราวที่ย้อนอ่าน",
+    "Chuyện kể ôn lại",
+    "Kisah yang Diulang",
+    "Historias revisitadas",
+    "Histórias revisitadas",
+    "Erneut erzählte Geschichten",
+    "Возвращение к историям"
+  ],
+  "achievement.series.feeding": [
+    "喂食日记",
+    "บันทึกการป้อน",
+    "Nhật ký Cho ăn",
+    "Jurnal Makan",
+    "Diario de alimentación",
+    "Diário de alimentação",
+    "Fütterungsbuch",
+    "Журнал кормления"
+  ],
+  "achievement.series.stamina": [
+    "不倦之手",
+    "มือที่ไม่หยุดพัก",
+    "Đôi tay không nghỉ",
+    "Tangan Tanpa Lelah",
+    "Manos incansables",
+    "Mãos incansáveis",
+    "Unermüdliche Hände",
+    "Неустанные руки"
+  ],
+  "achievement.series.diligence": [
+    "勤勉的一天",
+    "วันอันขยันขันแข็ง",
+    "Một ngày chăm chỉ",
+    "Hari yang Tekun",
+    "Un día diligente",
+    "Um dia dedicado",
+    "Ein fleißiger Tag",
+    "Усердный день"
+  ],
+  "achievement.series.greetings": [
+    "大厅问候",
+    "ทักทายในล็อบบี้",
+    "Lời chào sảnh",
+    "Salam Lobi",
+    "Saludos en el vestíbulo",
+    "Saudações no saguão",
+    "Grüße in der Lobby",
+    "Приветствия в холле"
+  ],
+  "achievement.series.level-cap": [
+    "巅峰标本",
+    "ตัวอย่างที่จุดสูงสุด",
+    "Mẫu vật đỉnh cao",
+    "Spesimen Puncak",
+    "Espécimen en la cima",
+    "Espécime no auge",
+    "Exemplar auf dem Höhepunkt",
+    "Экземпляр на вершине"
+  ],
+  "achievement.series.rune-artisan": [
+    "刻印工坊",
+    "โรงสลัก",
+    "Xưởng khắc ấn",
+    "Bengkel Ukir",
+    "Taller de grabado",
+    "Oficina de gravação",
+    "Gravurwerkstatt",
+    "Гравировочная мастерская"
+  ],
+  "achievement.series.bounty-hunter": [
+    "悬赏猎人",
+    "นักล่าค่าหัว",
+    "Thợ săn Truy nã",
+    "Pemburu Buronan",
+    "Cazador de Se busca",
+    "Caçador de procurados",
+    "Kopfgeldjäger",
+    "Охотник розыска"
+  ],
+  "achievement.series.cake-operation": [
+    "芝士蛋糕大作战",
+    "ปฏิบัติการชีสเค้ก",
+    "Đại chiến Bánh phô mai",
+    "Operasi Cheesecake",
+    "Operación Tarta de queso",
+    "Operação Cheesecake",
+    "Käsekuchen-Operation",
+    "Операция «Чизкейк»"
+  ],
+  "achievement.series.duel-tier": [
+    "决斗场阶梯",
+    "ขั้นบันไดอารีนา",
+    "Bậc thang đấu trường",
+    "Tangga Arena",
+    "Escalones de la arena",
+    "Degraus da arena",
+    "Stufen der Arena",
+    "Ступени арены"
+  ],
+  "achievement.series.archaeologist": [
+    "地层记忆",
+    "ความทรงจำในชั้นดิน",
+    "Ký ức địa tầng",
+    "Kenangan Lapisan Tanah",
+    "Memorias del estrato",
+    "Memórias dos estratos",
+    "Erinnerungen der Erdschichten",
+    "Память пластов"
+  ],
+  "achievement.series.journals": [
+    "其他城市的记录",
+    "บันทึกเมืองอื่น",
+    "Ghi chép thành phố khác",
+    "Catatan Kota Lain",
+    "Registros de otras ciudades",
+    "Registros de outras cidades",
+    "Berichte anderer Städte",
+    "Записи других городов"
+  ],
+  "achievement.series.interviewer": [
+    "观察访谈",
+    "สัมภาษณ์สังเกตการณ์",
+    "Phỏng vấn quan sát",
+    "Wawancara Observasi",
+    "Entrevista de observación",
+    "Entrevista de observação",
+    "Beobachtungsgespräch",
+    "Наблюдение и беседа"
+  ],
+  "achievement.series.chapter-reader": [
+    "最爱篇章",
+    "บทแห่งตัวโปรด",
+    "Chương Yêu thích",
+    "Bab Favorit",
+    "Un capítulo de Favoritos",
+    "Um capítulo de Favoritos",
+    "Ein Kapitel der Favoriten",
+    "Глава любимых"
+  ],
+  "achievement.series.ssr-collector": [
+    "稀有标本",
+    "ตัวอย่างหายาก",
+    "Mẫu vật hiếm",
+    "Spesimen Langka",
+    "Especímenes raros",
+    "Espécimes raros",
+    "Seltene Exemplar",
+    "Редкие экземпляры"
+  ],
+  "achievement.series.rune-hoarder": [
+    "符文收藏库",
+    "คลังรูน",
+    "Kho Rune",
+    "Penyimpanan Rune",
+    "Almacén de runas",
+    "Depósito de runas",
+    "Runenlager",
+    "Хранилище рун"
+  ],
+  "achievement.series.legendary-runes": [
+    "传说碎片",
+    "ชิ้นส่วนในตำนาน",
+    "Mảnh huyền thoại",
+    "Fragmen Legendaris",
+    "Fragmentos legendarios",
+    "Fragmentos lendários",
+    "Legendäre Fragmente",
+    "Легендарные осколки"
+  ],
+  "achievement.series.modifiers": [
+    "名字之前的词",
+    "คำหน้านาม",
+    "Lời trước tên",
+    "Kata di Depan Nama",
+    "Palabras ante un nombre",
+    "Palavras antes do nome",
+    "Worte vor dem Namen",
+    "Слова перед именем"
+  ],
+  "achievement.series.codex-complete": [
+    "图鉴完成",
+    "สมุดภาพสมบูรณ์",
+    "Hoàn thành Lưu trữ",
+    "Arsip Lengkap",
+    "Archivo completo",
+    "Arquivo completo",
+    "Archiv vollständig",
+    "Полный архив"
+  ],
+  "achievement.series.all-elements": [
+    "五种气息",
+    "ลมหายใจทั้งห้า",
+    "Năm luồng hơi thở",
+    "Lima Hembusan",
+    "Cinco alientos",
+    "Cinco sopros",
+    "Fünf Atemzüge",
+    "Пять дыханий"
+  ],
+  "achievement.series.all-squads": [
+    "五支小队",
+    "ห้าหน่วย",
+    "Năm Biệt đội",
+    "Lima Skuad",
+    "Cinco escuadrones",
+    "Cinco esquadrões",
+    "Fünf Trupps",
+    "Пять отрядов"
+  ],
+  "achievement.series.perfect-relic": [
+    "完美复原",
+    "ฟื้นคืนสมบูรณ์",
+    "Phục hồi hoàn hảo",
+    "Restorasi Sempurna",
+    "Restauración perfecta",
+    "Restauração perfeita",
+    "Perfekte Restaurierung",
+    "Идеальное восстановление"
+  ],
+  "achievement.series.rune-set": [
+    "完整之心",
+    "หัวใจไร้ช่องว่าง",
+    "Trái tim trọn vẹn",
+    "Hati Tanpa Celah",
+    "Un corazón completo",
+    "Um coração completo",
+    "Ein lückenloses Herz",
+    "Цельное сердце"
+  ],
+  "achievement.series.named": [
+    "研究员之名",
+    "ชื่อนักวิจัย",
+    "Tên nhà nghiên cứu",
+    "Nama Periset",
+    "El nombre del investigador",
+    "O nome do pesquisador",
+    "Der Name des Forschers",
+    "Имя исследователя"
+  ],
+  "achievement.series.mono-element-party": [
+    "同一种气息",
+    "ลมหายใจสายเดียว",
+    "Một luồng hơi thở",
+    "Satu Hembusan",
+    "Un solo aliento",
+    "Um só sopro",
+    "Ein Atemzug",
+    "Единое дыхание"
+  ],
+  "achievement.series.allied-party": [
+    "三支小队联合",
+    "สามหน่วยรวมใจ",
+    "Ba Biệt đội liên minh",
+    "Tiga Skuad Bersatu",
+    "Tres escuadrones unidos",
+    "Três esquadrões unidos",
+    "Drei vereinte Trupps",
+    "Союз трёх отрядов"
+  ],
+  "achievement.series.ssr-party": [
+    "耀眼的三人",
+    "สามผู้เปล่งประกาย",
+    "Ba người tỏa sáng",
+    "Tiga Sosok Bersinar",
+    "Tres compañeros brillantes",
+    "Três companheiros brilhantes",
+    "Drei strahlende Gefährten",
+    "Три сияющих спутника"
+  ],
+  "achievement.objective.goldPeak": [
+    "持有{value}金币",
+    "มีทอง {value}",
+    "Sở hữu {value} Vàng",
+    "Miliki {value} Emas",
+    "Tener {value} de oro",
+    "Ter {value} de ouro",
+    "{value} Gold besitzen",
+    "Иметь золото: {value}"
+  ],
+  "achievement.objective.relicsOwned": [
+    "拥有{value}种遗物",
+    "มีเรลิก {value} ชนิด",
+    "Sở hữu {value} loại Di vật",
+    "Miliki {value} jenis Relik",
+    "Tener {value} tipos de reliquia",
+    "Ter {value} tipos de relíquia",
+    "{value} Reliktarten besitzen",
+    "Иметь {value} видов реликтов"
+  ],
+  "achievement.objective.maxRelicLevel": [
+    "将一名遗物培养至{value}级",
+    "เลี้ยงเรลิกหนึ่งตัวถึงเลเวล {value}",
+    "Nâng một Di vật lên cấp {value}",
+    "Naikkan satu Relik ke level {value}",
+    "Subir una reliquia al nivel {value}",
+    "Elevar uma relíquia ao nível {value}",
+    "Ein Relikt auf Stufe {value} bringen",
+    "Развить реликт до уровня {value}"
+  ],
+  "achievement.objective.relicsMaxBreakthrough": [
+    "完成{value}名遗物的突破",
+    "ทะลวงเรลิก {value} ตัวจนสมบูรณ์",
+    "Hoàn tất Đột phá cho {value} Di vật",
+    "Selesaikan Terobosan {value} Relik",
+    "Completar la ruptura de {value} reliquias",
+    "Concluir a ruptura de {value} relíquias",
+    "Durchbruch bei {value} Relikten abschließen",
+    "Завершить прорыв {value} реликтов"
+  ],
+  "achievement.objective.relicsMaxBond": [
+    "与{value}名遗物的羁绊达到最大",
+    "เพิ่มสายสัมพันธ์เรลิก {value} ตัวจนสูงสุด",
+    "Đạt Gắn kết tối đa với {value} Di vật",
+    "Maksimalkan Ikatan dengan {value} Relik",
+    "Maximizar el vínculo con {value} reliquias",
+    "Maximizar o vínculo com {value} relíquias",
+    "Bindung zu {value} Relikten maximieren",
+    "Достичь максимальной связи с {value} реликтами"
+  ],
+  "achievement.objective.playerLevel": [
+    "研究员等级达到{value}",
+    "นักวิจัยถึงเลเวล {value}",
+    "Đạt cấp Nhà nghiên cứu {value}",
+    "Capai level Periset {value}",
+    "Alcanzar nivel de investigador {value}",
+    "Alcançar nível de pesquisador {value}",
+    "Forscherstufe {value} erreichen",
+    "Достичь уровня исследователя {value}"
+  ],
+  "achievement.objective.victories": [
+    "赢得{value}场战斗",
+    "ชนะการต่อสู้ {value} ครั้ง",
+    "Thắng {value} trận",
+    "Menang {value} pertempuran",
+    "Ganar {value} combates",
+    "Vencer {value} batalhas",
+    "{value} Kämpfe gewinnen",
+    "Победить в {value} боях"
+  ],
+  "achievement.objective.storyStagesCleared": [
+    "通关{value}个剧情关卡",
+    "ผ่านด่านเนื้อเรื่อง {value} ด่าน",
+    "Vượt {value} màn cốt truyện",
+    "Selesaikan {value} tahap cerita",
+    "Superar {value} fases de historia",
+    "Concluir {value} fases da história",
+    "{value} Story-Stufen abschließen",
+    "Пройти {value} сюжетных этапов"
+  ],
+  "achievement.objective.duelWins": [
+    "赢得{value}场决斗",
+    "ชนะดวล {value} ครั้ง",
+    "Thắng {value} trận đấu tay đôi",
+    "Menang {value} duel",
+    "Ganar {value} duelos",
+    "Vencer {value} duelos",
+    "{value} Duelle gewinnen",
+    "Выиграть {value} дуэлей"
+  ],
+  "achievement.objective.raidRuns": [
+    "出击团队战{value}次",
+    "เข้าร่วมเรด {value} ครั้ง",
+    "Xuất kích Raid {value} lần",
+    "Masuk Raid {value} kali",
+    "Participar en {value} incursiones",
+    "Participar de {value} raids",
+    "{value} Raids betreten",
+    "Войти в рейд {value} раз"
+  ],
+  "achievement.objective.expeditionBest": [
+    "远征最高分达到{value}",
+    "ทำคะแนนออกสำรวจสูงสุด {value}",
+    "Đạt điểm Viễn chinh cao nhất {value}",
+    "Capai skor Ekspedisi terbaik {value}",
+    "Lograr {value} puntos en expedición",
+    "Alcançar {value} pontos na expedição",
+    "Expeditionsbestwert {value} erreichen",
+    "Набрать {value} очков экспедиции"
+  ],
+  "achievement.objective.researchPulls": [
+    "研究{value}次",
+    "วิจัย {value} ครั้ง",
+    "Nghiên cứu {value} lần",
+    "Riset {value} kali",
+    "Investigar {value} veces",
+    "Pesquisar {value} vezes",
+    "{value}-mal forschen",
+    "Провести исследование {value} раз"
+  ],
+  "achievement.objective.harvests": [
+    "采掘收获{value}次",
+    "เก็บเกี่ยวจากการขุด {value} ครั้ง",
+    "Thu hoạch Khai thác {value} lần",
+    "Panen Gali {value} kali",
+    "Cosechar excavación {value} veces",
+    "Colher escavação {value} vezes",
+    "{value}-mal Grabungserträge sammeln",
+    "Собрать урожай раскопок {value} раз"
+  ],
+  "achievement.objective.dispatches": [
+    "完成交流派遣{value}次",
+    "ส่งออกแลกเปลี่ยน {value} ครั้ง",
+    "Hoàn thành {value} chuyến phái cử Giao lưu",
+    "Selesaikan {value} Pengiriman pertukaran",
+    "Completar {value} envíos de intercambio",
+    "Concluir {value} despachos de intercâmbio",
+    "{value} Austauschentsendungen abschließen",
+    "Завершить {value} обменных отправок"
+  ],
+  "achievement.objective.storiesRead": [
+    "阅读{value}篇故事",
+    "อ่านเรื่องราว {value} ตอน",
+    "Đọc {value} câu chuyện",
+    "Baca {value} kisah",
+    "Leer {value} historias",
+    "Ler {value} histórias",
+    "{value} Geschichten lesen",
+    "Прочитать {value} историй"
+  ],
+  "achievement.objective.feedings": [
+    "喂食{value}次",
+    "ป้อน {value} ครั้ง",
+    "Cho ăn {value} lần",
+    "Beri makan {value} kali",
+    "Alimentar {value} veces",
+    "Alimentar {value} vezes",
+    "{value}-mal füttern",
+    "Провести кормление {value} раз"
+  ],
+  "achievement.objective.staminaSpent": [
+    "消耗{value}体力",
+    "ใช้สตามินา {value}",
+    "Dùng {value} Thể lực",
+    "Gunakan {value} Stamina",
+    "Gastar {value} de Estamina",
+    "Gastar {value} de Estamina",
+    "{value} Ausdauer verbrauchen",
+    "Потратить {value} выносливости"
+  ],
+  "achievement.objective.dailyMissionsClaimed": [
+    "完成每日任务{value}次",
+    "ทำภารกิจประจำวัน {value} ครั้ง",
+    "Hoàn thành {value} Nhiệm vụ ngày",
+    "Selesaikan {value} Misi harian",
+    "Completar {value} misiones diarias",
+    "Concluir {value} missões diárias",
+    "{value} tägliche Missionen abschließen",
+    "Выполнить {value} ежедневных заданий"
+  ],
+  "achievement.objective.lobbyGreetings": [
+    "大厅交流{value}次",
+    "แลกเปลี่ยนคำทักทายในล็อบบี้ {value} ครั้ง",
+    "Giao lưu tại sảnh {value} lần",
+    "Tukar salam di lobi {value} kali",
+    "Realizar un intercambio de saludos en el vestíbulo {value} veces",
+    "Fazer intercâmbio de saudações no saguão {value} vezes",
+    "{value}-mal in der Lobby austauschen",
+    "Провести обмен приветствиями в холле {value} раз"
+  ],
+  "achievement.objective.relicsAtLevelCap": [
+    "将{value}名遗物培养至满级",
+    "เลี้ยงเรลิก {value} ตัวถึงเลเวลสูงสุด",
+    "Nâng {value} Di vật lên cấp tối đa",
+    "Naikkan {value} Relik ke level maksimal",
+    "Subir {value} reliquias al nivel máximo",
+    "Elevar {value} relíquias ao nível máximo",
+    "{value} Relikte auf Höchststufe bringen",
+    "Развить {value} реликтов до максимального уровня"
+  ],
+  "achievement.objective.runesEngraved": [
+    "持有{value}枚已刻印符文",
+    "มีรูนสลักแล้ว {value} ชิ้น",
+    "Sở hữu {value} Rune đã khắc ấn",
+    "Miliki {value} Rune terukir",
+    "Tener {value} runas grabadas",
+    "Ter {value} runas gravadas",
+    "{value} gravierte Runen besitzen",
+    "Иметь {value} гравированных рун"
+  ],
+  "achievement.objective.bountyTiersCleared": [
+    "通关悬赏{value}个等级",
+    "ผ่านค่าหัว {value} ระดับ",
+    "Vượt {value} bậc Truy nã",
+    "Selesaikan {value} tingkat Buronan",
+    "Superar {value} niveles de Se busca",
+    "Concluir {value} níveis de Procurados",
+    "{value} Kopfgeldstufen abschließen",
+    "Пройти {value} ступеней розыска"
+  ],
+  "achievement.objective.cakeTiersCleared": [
+    "通关芝士蛋糕大作战{value}个阶段",
+    "ชนะปฏิบัติการชีสเค้ก {value} ขั้น",
+    "Thắng {value} bậc Đại chiến Bánh phô mai",
+    "Menang {value} tingkat Operasi Cheesecake",
+    "Superar {value} niveles de Operación Tarta de queso",
+    "Vencer {value} etapas da Operação Cheesecake",
+    "{value} Stufen der Käsekuchen-Operation gewinnen",
+    "Пройти {value} ступеней операции «Чизкейк»"
+  ],
+  "achievement.objective.duelTierReached": [
+    "达到决斗场第{value}段",
+    "ถึงอารีนาขั้น {value}",
+    "Đạt bậc đấu trường {value}",
+    "Capai tingkat Arena {value}",
+    "Alcanzar categoría de arena {value}",
+    "Alcançar categoria de arena {value}",
+    "Arenarang {value} erreichen",
+    "Достичь ранга арены {value}"
+  ],
+  "achievement.objective.archaeologySitesCompleted": [
+    "完成{value}处考古遗迹探索",
+    "สำรวจโบราณคดี {value} แห่งสำเร็จ",
+    "Hoàn thành {value} di tích Khảo cổ",
+    "Selesaikan {value} situs Arkeologi",
+    "Completar {value} yacimientos de arqueología",
+    "Concluir {value} sítios de arqueologia",
+    "{value} Archäologiestätten abschließen",
+    "Завершить {value} археологических объектов"
+  ],
+  "achievement.objective.observationAnswers": [
+    "回答{value}个观察问题",
+    "ตอบคำถามสังเกตการณ์ {value} ข้อ",
+    "Trả lời {value} câu hỏi quan sát",
+    "Jawab {value} pertanyaan observasi",
+    "Responder {value} preguntas de observación",
+    "Responder {value} perguntas de observação",
+    "{value} Beobachtungsfragen beantworten",
+    "Ответить на {value} вопросов наблюдения"
+  ],
+  "achievement.objective.relicChaptersRead": [
+    "阅读最爱故事{value}章",
+    "อ่านเรื่องราวตัวโปรด {value} บท",
+    "Đọc {value} chương truyện Yêu thích",
+    "Baca {value} bab kisah Favorit",
+    "Leer {value} capítulos de Favoritos",
+    "Ler {value} capítulos de Favoritos",
+    "{value} Favoritenskapitel lesen",
+    "Прочитать {value} глав любимых"
+  ],
+  "achievement.objective.journalsRead": [
+    "阅读{value}篇交流记录",
+    "อ่านบันทึกแลกเปลี่ยน {value} ตอน",
+    "Đọc {value} nhật ký giao lưu",
+    "Baca {value} jurnal pertukaran",
+    "Leer {value} diarios de intercambio",
+    "Ler {value} diários de intercâmbio",
+    "{value} Austauschberichte lesen",
+    "Прочитать {value} обменных записей"
+  ],
+  "achievement.objective.ssrOwned": [
+    "拥有{value}种SSR遗物",
+    "มีเรลิก SSR {value} ชนิด",
+    "Sở hữu {value} loại Di vật SSR",
+    "Miliki {value} jenis Relik SSR",
+    "Tener {value} tipos de reliquia SSR",
+    "Ter {value} tipos de relíquia SSR",
+    "{value} SSR-Reliktarten besitzen",
+    "Иметь {value} видов SSR-реликтов"
+  ],
+  "achievement.objective.runesOwned": [
+    "持有{value}枚符文",
+    "มีรูน {value} ชิ้น",
+    "Sở hữu {value} Rune",
+    "Miliki {value} Rune",
+    "Tener {value} runas",
+    "Ter {value} runas",
+    "{value} Runen besitzen",
+    "Иметь {value} рун"
+  ],
+  "achievement.objective.legendaryRunes": [
+    "持有{value}枚传说符文",
+    "มีรูนตำนาน {value} ชิ้น",
+    "Sở hữu {value} Rune huyền thoại",
+    "Miliki {value} Rune Legendaris",
+    "Tener {value} runas legendarias",
+    "Ter {value} runas lendárias",
+    "{value} legendäre Runen besitzen",
+    "Иметь {value} легендарных рун"
+  ],
+  "achievement.objective.modifiersEarned": [
+    "获得{value}个称号词",
+    "ได้รับคำขยาย {value} คำ",
+    "Nhận {value} danh xưng",
+    "Dapatkan {value} julukan",
+    "Obtener {value} epítetos",
+    "Obter {value} epítetos",
+    "{value} Titelzusätze erhalten",
+    "Получить {value} эпитетов"
+  ],
+  "achievement.objective.codexComplete": [
+    "拥有图鉴中的全部遗物",
+    "มีเรลิกทุกตัวในสมุดภาพ",
+    "Sở hữu mọi Di vật trong Lưu trữ",
+    "Miliki semua Relik dalam arsip",
+    "Tener todas las reliquias del archivo",
+    "Ter todas as relíquias do arquivo",
+    "Alle Relikte des Archiv besitzen",
+    "Иметь всех реликтов архива"
+  ],
+  "achievement.objective.elementsOwned": [
+    "拥有全部{value}种属性的遗物",
+    "มีเรลิกครบ {value} ธาตุ",
+    "Sở hữu Di vật của đủ {value} hệ",
+    "Miliki Relik dari semua {value} elemen",
+    "Tener reliquias de los {value} elementos",
+    "Ter relíquias dos {value} elementos",
+    "Relikte aller {value} Elemente besitzen",
+    "Иметь реликтов всех {value} стихий"
+  ],
+  "achievement.objective.squadsOwned": [
+    "拥有全部{value}支小队的遗物",
+    "มีเรลิกจากครบ {value} หน่วย",
+    "Sở hữu Di vật từ đủ {value} Biệt đội",
+    "Miliki Relik dari semua {value} Skuad",
+    "Tener reliquias de los {value} escuadrones",
+    "Ter relíquias dos {value} esquadrões",
+    "Relikte aller {value} Trupps besitzen",
+    "Иметь реликтов всех {value} отрядов"
+  ],
+  "achievement.objective.perfectRelics": [
+    "满级、突破及羁绊均达最大的遗物",
+    "เรลิกเลเวลสูงสุด ทะลวงเต็ม และสายสัมพันธ์สูงสุด",
+    "Di vật đạt cấp tối đa, Đột phá và Gắn kết tối đa",
+    "Relik dengan level, Terobosan, dan Ikatan maksimal",
+    "Reliquia con nivel, ruptura y vínculo máximos",
+    "Relíquia com nível, ruptura e vínculo máximos",
+    "Relikt mit höchster Stufe, vollem Durchbruch und maximaler Bindung",
+    "Реликт с максимальными уровнем, прорывом и связью"
+  ],
+  "achievement.objective.fullyRunedRelics": [
+    "三个符文槽均装备的遗物",
+    "เรลิกที่ใส่รูนครบสามช่อง",
+    "Di vật lấp đủ ba ô Rune",
+    "Relik dengan tiga slot Rune terisi",
+    "Reliquia con las tres ranuras de runa equipadas",
+    "Relíquia com os três espaços de runa preenchidos",
+    "Relikt mit drei belegten Runenplätzen",
+    "Реликт с тремя заполненными ячейками рун"
+  ],
+  "achievement.objective.nicknameSet": [
+    "设置昵称",
+    "ตั้งชื่อเล่น",
+    "Đặt biệt danh",
+    "Tetapkan nama panggilan",
+    "Elegir un apodo",
+    "Definir um apelido",
+    "Spitznamen festlegen",
+    "Задать псевдоним"
+  ],
+  "achievement.objective.partySameElement": [
+    "用同属性的三人编队",
+    "จัดทีมสามตัวธาตุเดียวกัน",
+    "Lập Đội hình ba người cùng hệ",
+    "Buat Formasi bertiga dengan elemen sama",
+    "Crear una formación de tres del mismo elemento",
+    "Criar uma formação de três do mesmo elemento",
+    "Eine Formation mit drei gleichen Elementen erstellen",
+    "Создать построение из троих одной стихии"
+  ],
+  "achievement.objective.partySquads": [
+    "用来自{value}支不同小队的遗物编队",
+    "จัดทีมเรลิกจาก {value} หน่วยที่ต่างกัน",
+    "Lập Đội hình Di vật từ {value} Biệt đội khác nhau",
+    "Buat Formasi Relik dari {value} Skuad berbeda",
+    "Crear una formación de reliquias de {value} escuadrones distintos",
+    "Criar uma formação de relíquias de {value} esquadrões diferentes",
+    "Eine Formation mit Relikten aus {value} verschiedenen Trupps erstellen",
+    "Создать построение из реликтов {value} разных отрядов"
+  ],
+  "achievement.objective.partySsr": [
+    "用{value}名SSR遗物编队",
+    "จัดทีมเรลิก SSR {value} ตัว",
+    "Lập Đội hình {value} Di vật SSR",
+    "Buat Formasi {value} Relik SSR",
+    "Crear una formación de {value} reliquias SSR",
+    "Criar uma formação de {value} relíquias SSR",
+    "Eine Formation mit {value} SSR-Relikten erstellen",
+    "Создать построение из {value} SSR-реликтов"
+  ]
+}

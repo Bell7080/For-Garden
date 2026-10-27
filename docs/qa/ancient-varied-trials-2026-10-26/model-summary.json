@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "model": "varied-trials-v2",
+  "tickSeconds": 0.02,
+  "repriceBattles": 24000,
+  "switchFrontiers": {
+    "bare": 94,
+    "epic": 106,
+    "ceiling": 123
+  },
+  "ccSummary": {
+    "pass": 0,
+    "fail": 80,
+    "insufficient": 28
+  },
+  "sourceSha256": {
+    "src/core/ancientStrataBattle.ts": "10e43f8be926f617afd63aa6b845f0499df3ae81807d6f9021f26cef761ce2eb",
+    "src/core/ancientStrataSimulation.ts": "a66647cc866af679848eaab0d7c97859d94351140af25d122c14e7a2983d412b",
+    "src/core/skirmish.ts": "485ab5c33289ab05ede156ca87ea627c369f5c1f89c55dd8252578c0b755a645",
+    "src/data/ancientStrataDifficulty.ts": "c1f24ce2ad9753f57f9e7089bebd74061348c2f973a17bfae07e99dd11ff26f2",
+    "src/data/ancientStrataEncounters.ts": "ea59bb799da7c6ae5a0ff7ef7be12d6f0e15cde98dfe30dd82b398c1a03b5e94",
+    "src/server/combatAuthority.ts": "f08a4d857cbe014460c5929b1be5442936271f1c8cc7bfdbafcd8edd6beaeba6"
+  }
+}

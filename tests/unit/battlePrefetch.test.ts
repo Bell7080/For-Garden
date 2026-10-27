@@ -30,7 +30,8 @@ describe("전투 SD 생성", () => {
   it("은 기다리는 동안 씬을 떠나면 도착한 전부를 놓는다", () => {
     const body = battleScene.slice(battleScene.indexOf("await Promise.all(spawns)"));
     const guard = body.slice(0, body.indexOf("for (const entry of ready)"));
-    expect(guard).toContain("!this.scene.isActive()");
+    expect(guard).toContain("!isCurrent()");
+    expect(battleScene).toContain("generation === this.combatGeneration");
     expect(guard).toContain("creature.destroy()");
   });
 });

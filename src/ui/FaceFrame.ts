@@ -153,7 +153,7 @@ const BAKED_FACE_KEYS = new Map<string, string>();
  * 얼굴보다 먼저 읽히며 매 프레임 비용이 된다(각인 룬에서 같은 이유로 걷어 냈다). 띠마다 다른
  * 밝기가 멈춘 채로도 일렁임을 만든다.
  */
-function paintGlassSheen(scene: Phaser.Scene, size: number, color: number): Phaser.GameObjects.Container {
+export function paintGlassSheen(scene: Phaser.Scene, size: number, color: number): Phaser.GameObjects.Container {
   const glass = scene.add.container(0, 0);
   // 띠와 광택도 얼굴과 **같은 도형 안에서만** 그린다. 액자 한 변까지 네모로 칠하면 깎인 두
   // 모서리로 빛이 새어 액자 밖에 색 조각이 남는다 — 마스크가 아니라 칠할 도형을 잘라 둔다.
@@ -202,7 +202,7 @@ function toPoints(flat: readonly number[]): Phaser.Geom.Point[] {
  * 잡혀 **잘라낸 결과가 통째로 비었고**, 빈 점 목록을 받은 `fillPoints`가 예외를 던져 그 액자를
  * 세우던 창이 그리다 말았다(한계 돌파 확정 창이 그랬다). 그래서 감긴 방향을 **재서** 정한다.
  */
-function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
+export function clipPolygonToShape(subject: readonly number[], clip: readonly number[]): number[] {
   let polygon = [...subject];
   const count = clip.length / 2;
   // 신발끈 공식의 부호가 곧 감긴 방향이다. 안쪽은 그 부호와 같은 쪽이다.

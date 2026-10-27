@@ -1,6 +1,8 @@
 import Phaser from "phaser";
+import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
+import { guildApi } from "../api/guildApi";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -15,12 +17,14 @@ import { FaceFrame } from "../ui/FaceFrame";
 import { RARITY_TONE } from "../ui/rarityMark";
 import { drawHairline } from "../ui/holo";
 import { addSceneBackground } from "../ui/backgrounds";
-import { addPriceBar } from "../ui/priceTag";
+import { addPriceBar, GUILD_COIN_ICON } from "../ui/priceTag";
+import { guildShopProducts } from "../ui/guildShopCatalog";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
-import { addItemFrame, addShelfAmount, ITEM_FRAME } from "../ui/itemFrame";
+import { addFramedIcon, addShelfAmount } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
+import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -49,10 +53,11 @@ import {
 import { addClippedHit } from "../ui/clippedHit";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addRuneFrame, runeAccentCss } from "../ui/runeIcons";
-import { productIconTexture, runeProductOf } from "../ui/productIcon";
+import { isRandomRuneProduct, productIconTexture, runeProductOf } from "../ui/productIcon";
 import { addExpiryDaysTag } from "../ui/itemExpiry";
 import { productExpiryDays } from "../ui/productExpiry";
 import { formatRefreshCountdown, nextRefreshAt, shortestRefresh } from "../core/shopRefresh";
+import { showContentIntro } from "../ui/contentIntro";
 
 /** 가치 배지 — 무역 카드의 배지(`TradePackageCard`)와 같은 색이고 칸 우상단에 작게 선다. */
 const SHOP_VALUE_BADGE = { width: 150, height: 44, size: 24 } as const;
@@ -135,6 +140,8 @@ export class ShopScene extends Phaser.Scene {
    * 다시 눌러야 원래 보던 자리로 간다. 돌아갈 화면과 **그 화면의 어느 자리**는 다른 값이다.
    */
   private returnMenu?: LobbyMenu;
+  /** 길드 상점의 길드 코인. 지갑이 아니라 길드원 행이 들고 있어 서버가 상점과 함께 내려 준다. */
+  private guildCoin = 0;
   /** 등장 연출이 시작한 **벽시계** 시각. 0이면 아직 시작하지 않았다. */
   private entranceAt = 0;
 
@@ -174,6 +181,7 @@ export class ShopScene extends Phaser.Scene {
       // 어느 재화를 세울지는 **무대표가** 정한다. 씬에 삼항으로 적어 두었더니 자리가 늘 때마다
       // 그 줄이 길어졌고, 고고학 가게는 거기 없어 로비와 같은 조합을 그대로 세우고 있었다.
       currencies: this.stage.currencies,
+      guildCoin: () => this.guildCoin,
       onSettings: () => startScene(this, "settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
@@ -201,6 +209,7 @@ export class ShopScene extends Phaser.Scene {
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
     playSceneEntrance(this);
+    showContentIntro(this, "shop");
   }
 
   /** 관성은 프레임 시간에 맞춰 감쇠해 고주사율에서도 같은 거리로 멈춘다. */
@@ -472,7 +481,18 @@ export class ShopScene extends Phaser.Scene {
 
   /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
   private async refresh(): Promise<void> {
-    const response = await gameApi.getProducts(this.storefront);
+    if (this.storefront === "guild") {
+      // 길드 상품은 코인이 길드원 행에 있어 상품 표가 아니라 길드 상점 상태에서 같은 모양으로 옮긴다.
+      const shop = await withBusy(this, guildApi.getShop());
+      if (!this.scene.isActive()) return;
+      this.guildCoin = shop.coin;
+      this.topBar?.refresh();
+      this.products = guildShopProducts(shop);
+      this.renderProducts();
+      return;
+    }
+    // 상점에 들어갈 때·산 뒤 목록을 다시 읽을 때 응답이 늦으면 기다림 막이 선다(짧으면 서지 않는다).
+    const response = await withBusy(this, gameApi.getProducts(this.storefront));
     if (!this.scene.isActive()) return;
     // storefront 판정은 검증된 모델 하나가 소유한다. 여기서 filter를 다시 쓰면 같은 규칙이
     // 두 곳에 살아, 한쪽만 고쳐도 화면은 조용히 예전 규칙으로 남는다.
@@ -490,8 +510,9 @@ export class ShopScene extends Phaser.Scene {
     const goldAd = adSpec && (!adSpec.tabs || adSpec.tabs.includes(this.selectedCategory)) ? 1 : 0;
     const rows = Math.ceil((visibleProducts.length + goldAd) / SHOP_CARD.columns);
     for (let row = 0; row < rows; row += 1) this.addShelf(row);
-    visibleProducts.forEach((product, index) => this.addProduct(product, index));
-    if (goldAd) this.addAdCard(visibleProducts.length);
+    // 광고 칸은 언제나 목록 맨 위(1번)에 서고 상품들은 한 칸씩 밀린다.
+    if (goldAd) this.addAdCard(0);
+    visibleProducts.forEach((product, index) => this.addProduct(product, index + goldAd));
     const view = shopGridViewport();
     this.minScrollY = Math.min(0, view.bottom - view.top - shopGridContentHeight(visibleProducts.length + goldAd));
     this.publishControls(visibleProducts);
@@ -556,11 +577,12 @@ export class ShopScene extends Phaser.Scene {
       }));
     } else if (runeProduct) {
       // 룬은 상점에 서는 순간 등급과 자리가 정해져 있다 — 가방의 룬 카드와 같은 액자에 그 조각이 크게 선다.
-      card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, runeProduct.rarity, runeProduct.part));
+      card.add(addRuneFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame, isRandomRuneProduct(product) ? undefined : runeProduct.rarity, runeProduct.part, { mystery: isRandomRuneProduct(product) }));
     } else {
-      const frame = addItemFrame(this, 0, SHOP_CARD.frameY, SHOP_CARD.frame);
       // 그림은 첫 지급품에서 나온다(`productIconTexture`) — 가방에 들어오는 것과 같은 그림이 칸에 선다.
-      frame.add(this.add.image(0, 0, productIconTexture(product)).setDisplaySize(SHOP_CARD.frame * ITEM_FRAME.icon, SHOP_CARD.frame * ITEM_FRAME.icon));
+      // 공용 액자(`addFramedIcon`)를 지나야 만능 파편이 가방과 같은 등급색 유리·홀로그램 결로 선다. 칸 자체가
+      // 구매 확인을 여는 손이라 그림만 안내창을 열지 않는다(`plain`).
+      const frame = addFramedIcon(this, undefined, 0, SHOP_CARD.frameY, SHOP_CARD.frame, productIconTexture(product), { plain: true });
       // 지급 수량은 액자 우하단에 공용 축약 표기로 겹쳐 작은 화면에서도 한눈에 읽힌다. 아이템 묶음도 같다.
       const amountGrant = product.grants.find((grant) => grant.kind === "currency" || grant.kind === "item");
       if (amountGrant) {
@@ -571,7 +593,7 @@ export class ShopScene extends Phaser.Scene {
     // 기한 있는 소비품은 칸 왼쪽 위에 유통기한(`7D`)을 단다 — 가방 칸과 같은 표식이다.
     const expiryDays = productExpiryDays(product.grants);
     if (expiryDays !== undefined) card.add(addExpiryDaysTag(this, -SHOP_CARD.frame / 2 + 4, SHOP_CARD.frameY - SHOP_CARD.frame / 2 + 4, expiryDays));
-    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
+    const name = this.add.text(0, SHOP_CARD.nameY, product.name, textStyle({ role: "emphasis", size: 27, ...(runeProduct && !isRandomRuneProduct(product) ? { color: runeAccentCss(runeProduct.rarity) } : {}) })).setOrigin(0.5);
     // 이름 길이는 언어가 정하고 칸 폭은 둘이 나눠 갖는 고정값이라, 넘치면 글자만 가로로 줄인다.
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
@@ -583,6 +605,10 @@ export class ShopScene extends Phaser.Scene {
       addPriceBar(this, card, 0, SHOP_CARD.price.y, width - SHOP_CARD.price.inset, undefined, product.acquisition.currency, product.acquisition.amount, {
         height: SHOP_CARD.price.height,
         short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
+      });
+    } else if (product.acquisition.kind === "guild_coin") {
+      addPriceBar(this, card, 0, SHOP_CARD.price.y, width - SHOP_CARD.price.inset, undefined, "guildCoin", product.acquisition.amount, {
+        height: SHOP_CARD.price.height, short: this.guildCoin < product.acquisition.amount,
       });
     }
     // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
@@ -612,10 +638,38 @@ export class ShopScene extends Phaser.Scene {
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= SHOP_CARD.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
+        if (product.acquisition.kind === "guild_coin") { this.confirmGuildPurchase(product, product.acquisition.amount); return; }
         new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.exchangeDone")); await this.refresh(); });
       }
     });
     this.content?.add(card);
+  }
+
+  /**
+   * 길드 상품 구매. 값이 길드 코인이라 지갑 결제창(`PurchasePopup`)이 아니라 공용 확인 창이 치를 것과 남는 코인을 말하고,
+   * 확정은 `gameApi.buyGuildProduct`가 한 호출 안에서 한다.
+   */
+  private confirmGuildPurchase(product: ProductDto, price: number): void {
+    if (product.remaining <= 0) return;
+    // 모자라면 창을 열지 않는다 — 값줄의 붉은 수가 이미 이유를 말한다.
+    if (this.guildCoin < price) { this.notice(t("guild.shop.short")); return; }
+    this.popups.confirm({
+      title: product.name,
+      message: t("guild.shop.confirm", { name: product.name }),
+      confirmLabel: t("guild.shop.buy"),
+      costs: [{ iconKey: GUILD_COIN_ICON, amount: price }],
+      balance: { iconKey: GUILD_COIN_ICON, before: this.guildCoin, after: this.guildCoin - price },
+    }, () => {
+      void withBusy(this, gameApi.buyGuildProduct({ productId: product.id })).then(async (result) => {
+        session.wallet = { ...result.wallet };
+        if (!this.scene.isActive()) return;
+        this.guildCoin = result.shop.coin;
+        this.products = guildShopProducts(result.shop);
+        this.topBar?.refresh();
+        this.renderProducts();
+        openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(product.grants) });
+      }, () => { if (this.scene.isActive()) this.notice(t("guild.shop.failed")); });
+    });
   }
 
   /** 가게마다 표(`stage.ad`)가 정한 「광고 보고 받기」 칸. 지급과 횟수는 서버가 확정한다. */
@@ -633,15 +687,17 @@ export class ShopScene extends Phaser.Scene {
       x, y, width: shopCardWidth(), height: SHOP_CARD.height, currency: first.currency, amount: first.amount, extras,
       title: t(spec.titleKey), remaining: status.remaining, limit: status.limit,
       clip: shopGridViewport, isTap: (pointer) => this.insideViewport(pointer) && this.draggedDistance <= SHOP_CARD.dragSlop,
-      onWatch: () => void this.watchAd(spec.slotId),
+      onWatch: () => void this.watchAd(spec.slotId), stampKey: spec.slotId,
     });
   }
 
   private async watchAd(slotId: string): Promise<void> {
     try {
-      if (!(await watchAdSlot(slotId))) { this.notice(t("stamina.adCancelled")); return; }
+      const items = await watchAdSlot(slotId);
+      if (!items) { this.notice(t("stamina.adCancelled")); return; }
       this.topBar?.refresh();
       this.renderProducts();
+      openRewardPopup(this, this.popups, { items });
     } catch { this.notice(t("shop.premium.adFailed")); }
   }
 

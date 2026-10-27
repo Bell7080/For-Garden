@@ -4,6 +4,7 @@ import { chipPoints, drawLayer, drawShapeEdge, slantedRect } from "./holo";
 import { RELIC_SORT_MENU, relicSortMenuHeight, relicSortMenuRowY } from "./relicGridLayout";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { playFadeIn, playFadeOut } from "./screenTransition";
 
 /** 정렬 목록 한 줄. 화면이 아니라 부르는 쪽이 기준과 이름을 함께 넘긴다. */
 export interface SortOption<T extends string> {
@@ -146,10 +147,16 @@ export class SortControl<T extends string> {
       menu.add(hit);
     });
     this.menu = menu;
+    playFadeIn(this.scene, [menu], { rise: -10 });
   }
 
   closeMenu(): void {
-    this.menu?.destroy();
+    const menu = this.menu;
     this.menu = undefined;
+    if (!menu) return;
+    // 접히는 동안 입력을 받지 않는다. 부모가 먼저 죽는 경우(씬 종료)에는 기다리지 않고 지운다.
+    if (!menu.scene || !this.scene.sys.isActive()) { menu.destroy(); return; }
+    menu.list.forEach((child) => child.input && child.disableInteractive());
+    playFadeOut(this.scene, [menu], () => menu.destroy());
   }
 }

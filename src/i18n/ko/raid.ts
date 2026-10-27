@@ -45,12 +45,6 @@ export const RAID_KO = {
   "raid.contribution.value": "내 기여 {damage}",
   "raid.contribution.empty": "아직 아무도 밀지 않았습니다",
   "raid.reward.title": "획득 보상",
-  "raid.reward.progress": "전체 진행",
-  "raid.reward.kill": "토벌",
-  "raid.reward.killYes": "성공",
-  "raid.reward.killNo": "진행 중",
-  "raid.reward.killFailed": "실패",
-  "raid.reward.note": "레이드가 끝나면 완료 탭에서 보상을 받습니다",
   "raid.result.score": "점수 {score}",
   "shop.loot.title": "전리품 상점",
 } as const;

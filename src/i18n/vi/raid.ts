@@ -40,12 +40,6 @@ export const RAID_VI = {
   "raid.contribution.value": "Đóng góp của tôi {damage}",
   "raid.contribution.empty": "Chưa ai ra tay",
   "raid.reward.title": "Thưởng nhận được",
-  "raid.reward.progress": "Tiến độ chung",
-  "raid.reward.kill": "Chinh phạt",
-  "raid.reward.killYes": "Thành công",
-  "raid.reward.killNo": "Đang diễn ra",
-  "raid.reward.killFailed": "Thất bại",
-  "raid.reward.note": "Nhận thưởng tại thẻ Đã xong khi Raid kết thúc",
   "raid.result.score": "Điểm {score}",
   "shop.loot.title": "Cửa hàng chiến lợi phẩm",
 } as const;

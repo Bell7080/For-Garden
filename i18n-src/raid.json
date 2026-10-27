@@ -39,12 +39,6 @@
 "raid.contribution.value": ["我的贡献 {damage}", "การมีส่วนร่วมของฉัน {damage}", "Đóng góp của tôi {damage}", "Kontribusiku {damage}", "Mi contribución {damage}", "Minha contribuição {damage}", "Mein Beitrag {damage}", "Мой вклад {damage}"],
 "raid.contribution.empty": ["还没有人出手", "ยังไม่มีใครลงมือ", "Chưa ai ra tay", "Belum ada yang menyerang", "Nadie ha atacado aún", "Ninguém atacou ainda", "Noch hat niemand zugeschlagen", "Пока никто не бил"],
 "raid.reward.title": ["获得奖励", "รางวัลที่ได้รับ", "Thưởng nhận được", "Hadiah diperoleh", "Recompensas obtenidas", "Recompensas obtidas", "Erhaltene Belohnungen", "Полученные награды"],
-"raid.reward.progress": ["整体进度", "ความคืบหน้าทั้งหมด", "Tiến độ chung", "Progres Total", "Progreso total", "Progresso total", "Gesamtfortschritt", "Общий прогресс"],
-"raid.reward.kill": ["讨伐", "ปราบ", "Chinh phạt", "Penaklukan", "Subyugación", "Subjugação", "Bezwingung", "Усмирение"],
-"raid.reward.killYes": ["成功", "สำเร็จ", "Thành công", "Berhasil", "Éxito", "Sucesso", "Erfolg", "Успех"],
-"raid.reward.killNo": ["进行中", "กำลังดำเนินการ", "Đang diễn ra", "Berlangsung", "En curso", "Em andamento", "Laufend", "Идёт"],
-"raid.reward.killFailed": ["失败", "ล้มเหลว", "Thất bại", "Gagal", "Fallida", "Falhou", "Gescheitert", "Неудача"],
-"raid.reward.note": ["团队战结束后可在已完成标签领取奖励", "รับรางวัลในแท็บเสร็จสิ้นเมื่อเรดจบ", "Nhận thưởng tại thẻ Đã xong khi Raid kết thúc", "Ambil hadiah di tab Selesai setelah Raid berakhir", "Recoge las recompensas en Completadas al terminar la incursión", "Receba as recompensas em Concluídas após o raid", "Nach dem Raid im Tab Abgeschlossen Belohnungen erhalten", "После рейда заберите награды на вкладке завершённых"],
 "raid.result.score": ["得分 {score}", "คะแนน {score}", "Điểm {score}", "Skor {score}", "Puntuación {score}", "Pontuação {score}", "Punkte {score}", "Очки {score}"],
 "shop.loot.title": ["战利品商店", "ร้านค้าของรางวัล", "Cửa hàng chiến lợi phẩm", "Toko Jarahan", "Tienda de botín", "Loja de espólios", "Beute-Shop", "Магазин трофеев"]
 }

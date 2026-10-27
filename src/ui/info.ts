@@ -1743,7 +1743,7 @@ export class InfoManager {
     openExtraStatsPopup(this.scene, this.popups, def, this.shownStats(def), from);
   }
 
-  /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
+  /** 보유한 모든 렐릭에게 공용 외형 선택 진입점을 세운다 — 추가 외형이 없으면 전시관에 기본 외형 한 칸만 선다. */
   private addAppearanceButton(x: number, y: number): void {
     const size = APPEARANCE_BUTTON.size;
     const container = this.scene.add.container(x, y);
@@ -1756,7 +1756,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       const def = this.currentDef;
-      if (!def || skinsForRelic(def.id).length === 0) { pressOut(container); return; }
+      if (!def) { pressOut(container); return; }
       this.openAppearancePanel(def, () => pressOut(container));
     });
     container.add(hit);
@@ -1776,7 +1776,6 @@ export class InfoManager {
    */
   private openAppearancePanel(def: RelicDef, onClose: () => void): void {
     const extra = skinsForRelic(def.id);
-    if (extra.length === 0) return;
     const layout = APPEARANCE_PANEL;
     const entries = appearanceEntries(t("info.skin.default"), def.portraitAssetId, extra, {
       owns: (id) => relicSkinManager.owns(id),
@@ -2085,7 +2084,7 @@ export class InfoManager {
     this.currentDef = def;
     this.ownedNow = owned;
     // 기본 외형 하나뿐이거나 소유자 문맥이 아니면 선택 진입점 자체를 노출하지 않는다.
-    this.appearanceButton?.setVisible(owned && !this.publicProfile && skinsForRelic(def.id).length > 0);
+    this.appearanceButton?.setVisible(owned && !this.publicProfile);
     this.popups.closeAll();
 
     // **미보유도 누구인지는 말한다** — 이름·등급·속성·직군·종·스킬까지는 서고, 원화와 SD만 검은

@@ -40,12 +40,6 @@ export const RAID_ES = {
   "raid.contribution.value": "Mi contribución {damage}",
   "raid.contribution.empty": "Nadie ha atacado aún",
   "raid.reward.title": "Recompensas obtenidas",
-  "raid.reward.progress": "Progreso total",
-  "raid.reward.kill": "Subyugación",
-  "raid.reward.killYes": "Éxito",
-  "raid.reward.killNo": "En curso",
-  "raid.reward.killFailed": "Fallida",
-  "raid.reward.note": "Recoge las recompensas en Completadas al terminar la incursión",
   "raid.result.score": "Puntuación {score}",
   "shop.loot.title": "Tienda de botín",
 } as const;

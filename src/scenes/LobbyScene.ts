@@ -123,16 +123,19 @@ const ATTENDANCE_AUTO_POPUP = import.meta.env?.MODE !== "test";
 const ATTENDANCE_AUTO_WAIT = { stepMs: 400, tries: 60 } as const;
 
 const SORTIE_MENU = {
-  panel: { width: 980, height: 1240, offsetY: -80 },
+  panel: { width: 980, height: 1330, offsetY: -75 },
   shop: { gap: 28, pad: 20, cell: SIDE_SHOP.screen.size, cellGap: 16 },
   motionDelay: 2600,
   dimAlpha: 0.42,
   /**
    * 칸이 판보다 길어서 판 안에서 세로로 굴린다. 보이는 구간(`view`)은 제목표 밑에서 판 밑변까지이고,
    * `bottomPad`만큼 아래 여유를 두어 마지막 칸이 밑변에 붙지 않게 한다. 끌기와 눌림을 가르는 거리가 `slop`이다.
+   * 판 밑변은 굴리지 않아도 맨 아래 칸(고대 지층)의 윗머리가 한 뼘 비치는 자리다 — 아래에 더 있다는 것을 그 칸이 말한다.
    */
-  scroll: { viewTop: -590, viewBottom: 620, bottomPad: 40, slop: 14 },
+  scroll: { viewTop: -635, viewBottom: 665, bottomPad: 40, slop: 14 },
 } as const;
+/** 출격판 전체 폭 칸의 반폭. 판 반폭과의 사이가 꺾쇠가 서는 여백 띠다. */
+const SORTIE_ENTRY_HALF_WIDTH = 400;
 /** 팝업 판(2000) 위. 화면에 직접 세우는 SD는 판보다 앞에 서야 버튼 위로 빠져나온다. */
 const SORTIE_SD_DEPTH = 2101;
 /** 복제 그림자의 색과 진하기. 카드 원화의 그림자와 같은 결로 눌러 둔다. */
@@ -686,7 +689,7 @@ export class LobbyScene extends Phaser.Scene {
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
         {
-          y: -410, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
+          y: -455, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
           onClick: () => { close(); startScene(this, "stageMap"); },
         },
@@ -694,18 +697,18 @@ export class LobbyScene extends Phaser.Scene {
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -204, y: -124, width: 392, height: 200, content: "cakeOperation", label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
+          x: -204, y: -169, width: 392, height: 200, content: "cakeOperation", label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "cakeOperation"); },
         },
         {
-          x: 204, y: -124, width: 392, height: 200, content: "bounty", label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
+          x: 204, y: -169, width: 392, height: 200, content: "bounty", label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          content: "raid", y: 152, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          content: "raid", y: 107, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 지금 월드 폭주에 서 있는 보스가 왼쪽에 선다(스토리 칸과 같은 쪽·같은 크기). 서버와 같은 날짜 키로 구한다.
           sd: battleAssetFor(raidWorldBossId(raidSeasonKey(new Date()))),
@@ -715,12 +718,12 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          content: "expedition", y: 443, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: 398, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
         // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 4-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
         {
-          content: "ancient", y: 734, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
+          content: "ancient", y: 689, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
           onClick: () => { close(); startScene(this, "ancientStrata"); },
         },
@@ -733,7 +736,8 @@ export class LobbyScene extends Phaser.Scene {
       content.setMask(shapeClipMask(this, body, viewShape));
       const bottom = Math.max(...entries.map((entry) => entry.y + entry.height / 2));
       this.sortieScroll = { y: 0, min: Math.min(0, view.viewBottom - view.bottomPad - bottom), dragStart: undefined, dragOrigin: 0, moved: 0 };
-      addScrollHint(this, body, { x: 0, y: (view.viewTop + view.viewBottom) / 2, width: panel.width, height: view.viewBottom - view.viewTop, owner: content, read: () => ({ offset: this.sortieScroll.y, min: this.sortieScroll.min }) });
+      // 꺾쇠는 칸 오른쪽 여백 띠에 선다 — 가운데에 두면 밑변에 비치는 고대 지층 칸의 자물쇠·SD와 겹친다.
+      addScrollHint(this, body, { x: (panel.width / 2 + SORTIE_ENTRY_HALF_WIDTH) / 2, y: (view.viewTop + view.viewBottom) / 2, width: 0, height: view.viewBottom - view.viewTop, owner: content, read: () => ({ offset: this.sortieScroll.y, min: this.sortieScroll.min }) });
       this.sortieSdSpots = [];
       entries.forEach((entry) => {
         const x = entry.x ?? 0;

@@ -40,12 +40,6 @@ export const RAID_ID = {
   "raid.contribution.value": "Kontribusiku {damage}",
   "raid.contribution.empty": "Belum ada yang menyerang",
   "raid.reward.title": "Hadiah diperoleh",
-  "raid.reward.progress": "Progres Total",
-  "raid.reward.kill": "Penaklukan",
-  "raid.reward.killYes": "Berhasil",
-  "raid.reward.killNo": "Berlangsung",
-  "raid.reward.killFailed": "Gagal",
-  "raid.reward.note": "Ambil hadiah di tab Selesai setelah Raid berakhir",
   "raid.result.score": "Skor {score}",
   "shop.loot.title": "Toko Jarahan",
 } as const;

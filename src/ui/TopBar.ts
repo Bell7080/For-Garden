@@ -10,7 +10,9 @@ import { addCurrencyChip, CURRENCY_CHIP } from "./CurrencyChip";
 import { COLOR, textStyle } from "./theme";
 import { playerProfileDisplay, profileAvatarContent, type PlayerProfileDisplay } from "../state/playerProfile";
 import { managerEvents } from "../managers/ManagerEvents";
+import { profileModifierManager } from "../managers/ProfileModifierManager";
 import { compactTopBarName, TOP_BAR_LAYOUT } from "./topBarLayout";
+import { squeezeTextToWidth } from "./textFit";
 import type { WalletItemKey } from "../data/items";
 import { staminaMaxForPlayer } from "../core/stamina";
 import { DUEL_DAILY_ATTEMPTS } from "../core/duelArena";
@@ -84,7 +86,7 @@ export class TopBar {
 
     // 프로필은 "지금 나"를 묻는 화면(로비·모집)의 것이다. 목록만 훑는 화면에서는 세우지
     // 않는다 — 볼 일 없는 이름표가 목록 제목과 같은 높이에서 자리를 다툰다.
-    if (options.profile !== false) this.buildProfile(scene, 28, y + 4, playerProfileDisplay(session), options.onProfile);
+    if (options.profile !== false) this.buildProfile(scene, 28, y + 4, playerProfileDisplay(session, profileModifierManager.equipped()), options.onProfile);
 
     // 재화는 오른쪽에서 왼쪽으로 쌓는다. 설정 아이콘이 오른쪽 끝을 차지하기 때문이다.
     const slots = SLOTS[options.currencies ?? "default"];
@@ -147,7 +149,9 @@ export class TopBar {
     this.profileDetail = scene.add.text(contentRight, y + 13, `LV.${profile.level}`, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(1, 0);
     // 가장자리 바에 별도 배경 판을 더하지 않고 공용 HoloBar의 얇은 홈과 채움만 둔다.
     this.profileExperience = new HoloBar(scene, (contentLeft + contentRight) / 2, y + 51, contentRight - contentLeft, 9, { color: COLOR.accent, trackAlpha: 0.62 }).addTo(chip);
-    this.profileModifier = scene.add.text(contentLeft, y + 63, "", textStyle({ role: "body", size: 16, color: COLOR.accentText })).setOrigin(0, 0);
+    // 대표 수식어는 경험치 줄 아래가 아니라 이름 바로 옆에 붙는다 — 이름과 한 덩어리로 읽혀야 누구의 칭호인지가 선다.
+    // 글자 밑선을 이름과 맞추려고 아래 기준으로 세우고, 자리(x)와 폭은 `layoutProfileNameRow`가 정한다.
+    this.profileModifier = scene.add.text(contentLeft, y + 11 + this.profileName.height - 3, "", textStyle({ role: "body", size: 16, color: COLOR.accentText })).setOrigin(0, 1);
     chip.add([this.profileName, this.profileDetail, this.profileModifier]);
     this.refreshProfile(profile);
     if (onProfile) {
@@ -198,5 +202,30 @@ export class TopBar {
     this.profileExperience?.setValue(profile.levelCapped ? 1 : profile.experience / Math.max(1, profile.experienceToNext));
     // 상단에는 대표 하나만 노출하고 전체 장착 목록은 PlayerProfilePopup에 남겨 재화와 충돌하지 않는다.
     this.profileModifier?.setText(profile.equippedModifiers[0] ? `〈${profile.equippedModifiers[0].displayName}〉` : "");
+    this.layoutProfileNameRow();
+  }
+
+  /**
+   * 첫 줄(이름 + 수식어 ··· 레벨)을 레벨 글자 왼쪽까지의 폭 안에 넣는다.
+   * 둘 다 들어가면 그대로 두고, 넘치면 이름을 먼저 지키되 수식어에도 최소 몫을 남겨 가로로만 누른다.
+   */
+  private layoutProfileNameRow(): void {
+    const name = this.profileName;
+    const modifier = this.profileModifier;
+    const level = this.profileDetail;
+    if (!name || !modifier || !level) return;
+    const { nameModifierGap, levelGap, modifierMinShare } = TOP_BAR_LAYOUT.profile;
+    name.setScale(1, name.scaleY);
+    modifier.setScale(1, modifier.scaleY);
+    const room = level.x - level.width - levelGap - name.x;
+    if (!modifier.text) {
+      if (name.width > room) squeezeTextToWidth(name, room, 0.6);
+      return;
+    }
+    const free = room - nameModifierGap;
+    const modifierRoom = Math.min(modifier.width, Math.max(free - name.width, free * modifierMinShare));
+    if (name.width > free - modifierRoom) squeezeTextToWidth(name, free - modifierRoom, 0.6);
+    if (modifier.width > modifierRoom) squeezeTextToWidth(modifier, modifierRoom, 0.55);
+    modifier.setX(name.x + name.displayWidth + nameModifierGap);
   }
 }

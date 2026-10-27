@@ -40,12 +40,6 @@ export const RAID_ZH_HANS = {
   "raid.contribution.value": "我的贡献 {damage}",
   "raid.contribution.empty": "还没有人出手",
   "raid.reward.title": "获得奖励",
-  "raid.reward.progress": "整体进度",
-  "raid.reward.kill": "讨伐",
-  "raid.reward.killYes": "成功",
-  "raid.reward.killNo": "进行中",
-  "raid.reward.killFailed": "失败",
-  "raid.reward.note": "团队战结束后可在已完成标签领取奖励",
   "raid.result.score": "得分 {score}",
   "shop.loot.title": "战利品商店",
 } as const;

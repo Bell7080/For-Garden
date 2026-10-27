@@ -22,6 +22,8 @@ describe("레이드 배치표", () => {
     expect(RAID_BOSS_SPOT.fade.top).toBeLessThan(RAID_HP_BAR.labelY);
     expect(RAID_BOSS_SPOT.fade.bottom).toBeGreaterThanOrEqual(RAID_HP_BAR.valueY);
     expect(RAID_BOSS_SPOT.fade.bottom).toBeLessThanOrEqual(RAID_BOARD.viewport.top);
+    // 띠가 판 안쪽으로 내려가면 끝나는 자리가 판 위에 끊긴 줄로 남는다.
+    expect(RAID_BOSS_SPOT.fade.bottom).toBe(RAID_BOARD_PLATE.top);
   });
 
   it("출격이 화면 가운데에 홀로 서고 뒤로가기를 침범하지 않는다", () => {

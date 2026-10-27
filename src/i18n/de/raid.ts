@@ -40,12 +40,6 @@ export const RAID_DE = {
   "raid.contribution.value": "Mein Beitrag {damage}",
   "raid.contribution.empty": "Noch hat niemand zugeschlagen",
   "raid.reward.title": "Erhaltene Belohnungen",
-  "raid.reward.progress": "Gesamtfortschritt",
-  "raid.reward.kill": "Bezwingung",
-  "raid.reward.killYes": "Erfolg",
-  "raid.reward.killNo": "Laufend",
-  "raid.reward.killFailed": "Gescheitert",
-  "raid.reward.note": "Nach dem Raid im Tab Abgeschlossen Belohnungen erhalten",
   "raid.result.score": "Punkte {score}",
   "shop.loot.title": "Beute-Shop",
 } as const;

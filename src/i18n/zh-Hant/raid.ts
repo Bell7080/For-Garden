@@ -40,12 +40,6 @@ export const RAID_ZH_HANT = {
   "raid.contribution.value": "我的貢獻 {damage}",
   "raid.contribution.empty": "還沒有人出手",
   "raid.reward.title": "獲得獎勵",
-  "raid.reward.progress": "整體進度",
-  "raid.reward.kill": "討伐",
-  "raid.reward.killYes": "成功",
-  "raid.reward.killNo": "進行中",
-  "raid.reward.killFailed": "失敗",
-  "raid.reward.note": "團隊戰結束後可在已完成標籤領取獎勵",
   "raid.result.score": "得分 {score}",
   "shop.loot.title": "戰利品商店",
 } as const;

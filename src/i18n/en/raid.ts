@@ -40,12 +40,6 @@ export const RAID_EN = {
   "raid.contribution.value": "My contribution {damage}",
   "raid.contribution.empty": "No one has pushed yet",
   "raid.reward.title": "Rewards earned",
-  "raid.reward.progress": "Total Progress",
-  "raid.reward.kill": "Subjugation",
-  "raid.reward.killYes": "Success",
-  "raid.reward.killNo": "In Progress",
-  "raid.reward.killFailed": "Failed",
-  "raid.reward.note": "Claim rewards from the Completed tab once the raid ends",
   "raid.result.score": "Score {score}",
   "shop.loot.title": "Loot Shop",
 } as const;

@@ -40,12 +40,6 @@ export const RAID_JA = {
   "raid.contribution.value": "自分の貢献 {damage}",
   "raid.contribution.empty": "まだ誰も削っていません",
   "raid.reward.title": "獲得報酬",
-  "raid.reward.progress": "全体の進行",
-  "raid.reward.kill": "討伐",
-  "raid.reward.killYes": "成功",
-  "raid.reward.killNo": "進行中",
-  "raid.reward.killFailed": "失敗",
-  "raid.reward.note": "レイド終了後に完了タブで報酬を受け取れます",
   "raid.result.score": "スコア {score}",
   "shop.loot.title": "戦利品ショップ",
 } as const;

@@ -247,7 +247,8 @@ var ARENA_KO = {
   "arena.weekly.rankSection": "\uC21C\uC704 \uBCF4\uB108\uC2A4",
   "arena.weekly.floor": "{score} RP\uBD80\uD130",
   "arena.weekly.endsIn": "\uC8FC\uAC04 \uC815\uC0B0\uAE4C\uC9C0 {days}\uC77C {hours}\uC2DC\uAC04",
-  "arena.weekly.chip": "\uC8FC\uAC04 \uBCF4\uC0C1",
+  "ranking.reward.weekly": "\uC8FC\uAC04 \uBCF4\uC0C1",
+  "ranking.reward.monthly": "\uC6D4\uAC04 \uBCF4\uC0C1",
   "arena.ranking.title": "\uC544\uB808\uB098 \uC21C\uC704",
   "arena.profile.best": "\uCD5C\uACE0 \uAE30\uB85D",
   "arena.profile.lastWeek": "\uC9C0\uB09C\uC8FC",
@@ -822,7 +823,7 @@ var EXPEDITION_KO = {
   "expedition.sortie": "\uCD9C  \uACA9",
   "expedition.sweep": "\uC18C  \uD0D5",
   "expedition.ranking": "\uB7AD\uD0B9",
-  "expedition.weeklyReward": "\uC8FC\uAC04 \uBCF4\uC0C1",
+  "expedition.weeklyScoreReward": "\uC8FC\uAC04 \uC810\uC218 \uBCF4\uC0C1",
   "expedition.syncing": "\uAE30\uB85D \uB3D9\uAE30\uD654 \uC911",
   "expedition.abandon": "\uD3EC\uAE30\uD558\uAE30",
   "expedition.abandon.title": "\uC6D0\uC815 \uD3EC\uAE30",
@@ -2974,8 +2975,12 @@ var DUEL_KO = {
   "rewardTable.rank.single": "{rank}\uC704",
   "rewardTable.rank.range": "{from}~{upTo}\uC704",
   "rewardTable.rank.beyond": "{rank}\uC704 \uC774\uD558",
+  "rewardTable.rank.percent": "\uC0C1\uC704 {percent}%",
+  "rewardTable.rank.participation": "\uCC38\uC5EC \uBCF4\uC0C1",
+  "rewardTable.badge.all": "\uC804\uC6D0",
   "rewardTable.rules.duel": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uACB0\uD22C\uC7A5 \uB300\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.expedition": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uC8FC \uC6D0\uC815 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "rewardTable.rules.ancient": "\uB9E4\uB2EC 1\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uADF8 \uB2EC \uACE0\uB300 \uC9C0\uCE35 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "rewardTable.rules.arena": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00 UTC \uB9C8\uAC10 \xB7 \uC6B0\uD3B8 \uC9C0\uAE09\n\uB9C8\uAC10 \uB54C\uC758 \uD2F0\uC5B4 \uBCF4\uC0C1\uC5D0 \uC21C\uC704 \uBCF4\uB108\uC2A4\uB97C \uB354\uD574 \uC90D\uB2C8\uB2E4. \uADF8 \uC8FC \uB7AD\uD06C\uC804 \uAE30\uB85D\uC774 \uC788\uC5B4\uC57C \uBC1B\uC2B5\uB2C8\uB2E4.",
   "ranking.mine": "\uB0B4 \uC21C\uC704",
   "duel.defense.title": "\uC0C1\uB300 \uBC29\uC5B4\uD300",
@@ -20457,6 +20462,12 @@ var ANCIENT_MONTHLY_RANK_REWARDS = {
   percents: [{ upToPercent: 10, gems: 500 }, { upToPercent: 30, gems: 400 }, { upToPercent: 50, gems: 300 }],
   participation: 200
 };
+function rankRewardBundle(pool, rank, total = rank) {
+  const byRank = pool.ranks.find((row) => rank <= row.upTo);
+  if (byRank) return { ...byRank.rewards };
+  const percent = rank / Math.max(1, total) * 100;
+  return { ...pool.percents.find((row) => percent <= row.upToPercent)?.rewards ?? pool.participation };
+}
 
 // src/data/expedition.ts
 var EXPEDITION_MAP_BALANCE = {
@@ -20575,10 +20586,25 @@ var EXPEDITION_BEST_SCORE_REWARD_STAGES = [
   { id: "best-200k", threshold: 3e5, reward: { currency: "fossil", amount: 2 } }
 ];
 var EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 };
-var EXPEDITION_WEEKLY_RANK_REWARDS = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
-function expeditionRankRewards(rank) {
-  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1);
-  return { ...row.rewards };
+var EXPEDITION_WEEKLY_RANK_POOL = {
+  ranks: [
+    { upTo: 1, rewards: { gems: 3e3, salvageRecord: 400, gold: 5e3, cheesecake: 150 } },
+    { upTo: 3, rewards: { gems: 2500, salvageRecord: 320, gold: 4500, cheesecake: 130 } },
+    { upTo: 10, rewards: { gems: 2e3, salvageRecord: 250, gold: 4e3, cheesecake: 110 } },
+    { upTo: 50, rewards: { gems: 1500, salvageRecord: 180, gold: 3500, cheesecake: 90 } },
+    { upTo: 100, rewards: { gems: 1e3, salvageRecord: 130, gold: 3e3, cheesecake: 70 } },
+    { upTo: 300, rewards: { gems: 500, salvageRecord: 80, gold: 2500, cheesecake: 60 } },
+    { upTo: 1e3, rewards: { gems: 500, salvageRecord: 80, gold: 2e3, cheesecake: 50 } }
+  ],
+  percents: [
+    { upToPercent: 10, rewards: { gems: 500, salvageRecord: 80, gold: 1500, cheesecake: 40 } },
+    { upToPercent: 30, rewards: { gems: 500, salvageRecord: 80, gold: 1200, cheesecake: 30 } },
+    { upToPercent: 50, rewards: { gems: 500, salvageRecord: 80, gold: 1e3, cheesecake: 20 } }
+  ],
+  participation: { gems: 500, salvageRecord: 80, gold: 800, cheesecake: 10 }
+};
+function expeditionRankRewards(rank, total) {
+  return rankRewardBundle(EXPEDITION_WEEKLY_RANK_POOL, rank, total);
 }
 var EXPEDITION_SWEEP_REWARDS = {
   gold: 4e3,
@@ -21425,14 +21451,7 @@ var RELIC_SKINS = [
     name: "\uC5EC\uB984\uBC29\uD559 \uD1A0\uB9AC\uCE74",
     portraitAssetId: "torika-skin-001-portrait",
     sdAssetId: "torika-skin-001-sd"
-  },
-  // 아래 넷은 **이름만 걸어 둔 자리**다. 원화가 아직 없어 에셋 키도 값도 조건도 적지 않으며,
-  // 전시관은 이 넷을 실루엣으로 세우고 얻는 길을 말하지 않는다. 방학·행사처럼 같은 계절 한 벌로
-  // 묶어 두어야 나중에 한 장씩 열릴 때 목록이 흩어지지 않는다.
-  { id: "torika-skin-002", defaultUnlocked: false, relicId: "torika", name: "\uACA8\uC6B8\uBC29\uD559 \uD1A0\uB9AC\uCE74", comingSoon: true },
-  { id: "torika-skin-003", defaultUnlocked: false, relicId: "torika", name: "\uCCB4\uC721\uB300\uD68C \uD1A0\uB9AC\uCE74", comingSoon: true },
-  { id: "torika-skin-004", defaultUnlocked: false, relicId: "torika", name: "\uC57C\uAC04\uC790\uC2B5 \uD1A0\uB9AC\uCE74", comingSoon: true },
-  { id: "torika-skin-005", defaultUnlocked: false, relicId: "torika", name: "\uAD50\uBCF5 \uD1A0\uB9AC\uCE74", comingSoon: true }
+  }
 ];
 function validateRelicSkins(skins, relicIds = new Set(RELICS.map(({ id }) => id))) {
   const seen = /* @__PURE__ */ new Set();
@@ -38825,6 +38844,7 @@ async function run(playerId, req, deps) {
 
 // src/server/supabaseStore.ts
 init_define_import_meta_env();
+var LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80];
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -38870,7 +38890,7 @@ function createSupabaseStore(env) {
       return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) });
     },
     async opsInbox(playerId) {
-      await rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: EXPEDITION_WEEKLY_RANK_REWARDS[index].rewards.salvageRecord ?? 0 })) });
+      await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } }).catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
       await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
         tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),
         ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))

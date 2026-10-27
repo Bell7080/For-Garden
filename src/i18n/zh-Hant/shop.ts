@@ -49,6 +49,7 @@ export const SHOP_ZH_HANT = {
   "shop.premium.pass.metric.storyClears": "劇情通關 {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "研究員等級 {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "團體戰挑戰 {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "地層挖掘 {progress} / {goal}格",
   "shop.premium.pass.rewardTitle": "通行證獎勵",
   "shop.premium.unsupported": "當前版本無法使用支付。",
   "shop.premium.cancelled": "支付已取消。",

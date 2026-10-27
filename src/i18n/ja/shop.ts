@@ -30,6 +30,7 @@ export const SHOP_JA = {
   "shop.premium.pass.metric.storyClears": "ストーリークリア {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "研究員レベル {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "レイド挑戦 {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "地層発掘 {progress} / {goal}マス",
   "shop.premium.pass.rewardTitle": "パス報酬",
   "shop.premium.unsupported": "このビルドでは決済を利用できません。",
   "shop.premium.cancelled": "決済がキャンセルされました。",

@@ -51,6 +51,8 @@ export const LOBBY_ES = {
   "lobby.pass.mission.lead.storyClears": "Supera fases de historia para subir de nivel",
   "lobby.pass.mission.lead.playerLevel": "Sube con tu nivel de investigador",
   "lobby.pass.mission.lead.raidRuns": "Entra en incursiones para subir de nivel",
+  "lobby.pass.mission.strataDigs": "Excava {threshold} casillas",
+  "lobby.pass.mission.lead.strataDigs": "Excava casillas para subir de nivel",
   "lobby.pass.mission.done": "Logrado",
   "lobby.bondXp": "Vínculo +{xp}",
   "lobby.bondLevelUp": "Nivel de Vínculo +{levels}",

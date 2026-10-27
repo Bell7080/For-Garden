@@ -51,6 +51,8 @@ export const LOBBY_PT_BR = {
   "lobby.pass.mission.lead.storyClears": "Conclua fases da história para subir de nível",
   "lobby.pass.mission.lead.playerLevel": "Sobe com seu nível de pesquisador",
   "lobby.pass.mission.lead.raidRuns": "Entre em raides para subir de nível",
+  "lobby.pass.mission.strataDigs": "Escave {threshold} casas",
+  "lobby.pass.mission.lead.strataDigs": "Escave casas para subir de nível",
   "lobby.pass.mission.done": "Concluído",
   "lobby.bondXp": "Vínculo +{xp}",
   "lobby.bondLevelUp": "Nível de Vínculo +{levels}",

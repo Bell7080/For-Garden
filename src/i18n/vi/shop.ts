@@ -49,6 +49,7 @@ export const SHOP_VI = {
   "shop.premium.pass.metric.storyClears": "Hoàn thành cốt truyện {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Cấp nhà nghiên cứu {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Lượt đột kích {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Ô đã khai quật {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Thưởng thẻ",
   "shop.premium.unsupported": "Bản dựng này không hỗ trợ thanh toán.",
   "shop.premium.cancelled": "Đã hủy thanh toán.",

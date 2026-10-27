@@ -28,7 +28,7 @@ const fixed = { now: () => new Date("2026-10-16T00:00:00Z"), random: () => 0.5 }
 
 describe("서버 호출 처리기", () => {
   it("메서드 목록이 GameApi 인터페이스와 같다", () => {
-    const src = readFileSync("src/api/contracts.ts", "utf8");
+    const src = readFileSync("src/api/contracts.ts", "utf8").replace(/\r\n/g, "\n");
     const body = src.slice(src.indexOf("export interface GameApi"));
     const names = [...body.slice(0, body.indexOf("\n}\n")).matchAll(/^  ([a-zA-Z]+)\(/gm)].map((m) => m[1]);
     names.push("getAsyncArenaServerState");

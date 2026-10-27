@@ -51,6 +51,8 @@ export const LOBBY_TH = {
   "lobby.pass.mission.lead.storyClears": "ผ่านด่านเนื้อเรื่องเพื่อเลเวลอัป",
   "lobby.pass.mission.lead.playerLevel": "เลเวลขึ้นตามเลเวลนักวิจัย",
   "lobby.pass.mission.lead.raidRuns": "ท้าทายเรดเพื่อเลเวลอัป",
+  "lobby.pass.mission.strataDigs": "ขุดชั้นดิน {threshold} ช่อง",
+  "lobby.pass.mission.lead.strataDigs": "ขุดช่องชั้นดินเพื่อเพิ่มเลเวล",
   "lobby.pass.mission.done": "สำเร็จ",
   "lobby.bondXp": "สายสัมพันธ์ +{xp}",
   "lobby.bondLevelUp": "เลเวลสายสัมพันธ์ +{levels}",

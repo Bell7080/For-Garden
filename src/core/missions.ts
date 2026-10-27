@@ -12,6 +12,8 @@ export type MissionEvent =
   /** 스테미나를 쓰는 모든 입장이 지나는 `FakeServer.spendStamina` 한 곳에서만 난다. */
   | { type: "stamina_spent"; amount: number }
   | { type: "excavation_harvested" }
+  /** 고고학에서 실제로 발굴한 칸. 패스가 누적 기록을 읽는다. */
+  | { type: "strata_tile_dug" }
   | { type: "interaction_dispatched" }
   /** 일일 임무를 수령한 수. 주간 임무가 "매일 들어와 끝냈는가"를 세는 데 쓴다. */
   | { type: "daily_mission_claimed"; count: number }

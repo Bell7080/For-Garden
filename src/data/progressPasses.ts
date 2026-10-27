@@ -26,11 +26,11 @@ import { findItem } from "./items";
  * - 스토리 패스 ₩9,900 — 다이아 5,200 + 다양한 보상(합계 환산 약 9,800)
  * - 레벨 패스 ₩9,900 — 다이아 5,200 + 다양한 보상(합계 환산 약 9,500)
  * - 레이드 패스 ₩6,900 — 다이아 4,160 + 토벌권·선택 토벌권·증표·화석 등
- * - 고고학 패스(임시) ₩7,900 — 구조만 맞춘 자리표시
+ * - 고고학 패스 ₩7,900 — 지층 발굴 칸 누적 60회까지 진행
  */
 
 /** 패스가 재는 진행도. 값은 서버가 세션에서 읽는다 — 화면이 셈하지 않는다. */
-export type ProgressPassMetric = "storyClears" | "playerLevel" | "raidRuns";
+export type ProgressPassMetric = "storyClears" | "playerLevel" | "raidRuns" | "strataDigs";
 
 export interface ProgressPassMilestone {
   /** 이 마디에 닿는 진행도. 길 안에서 오름차순이고 겹치지 않는다. */
@@ -85,21 +85,21 @@ export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
   {
     id: "level", productId: "premium-level-pass", metric: "playerLevel",
     milestones: [
-      step(3, currency("gold", 5_000), currency("cheesecake", 300), currency("gems", 100)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
-      step(8, currency("gems", 30), currency("gold", 50_000), currency("gems", 200)),
-      step(10, currency("gold", 10_000), currency("amber", 1), currency("gems", 200)),
-      step(13, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
-      step(15, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
-      step(18, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
-      step(20, currency("gold", 15_000), currency("dnaFragments", 20), currency("gems", 300)),
-      step(25, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
-      step(30, currency("gems", 60), currency("gold", 100_000), currency("gems", 350)),
-      step(35, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
-      step(40, currency("gold", 25_000), currency("cheesecake", 600), currency("gems", 400)),
-      step(45, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
-      step(60, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1000)),
+      step(2, currency("gold", 5_000), currency("cheesecake", 300), currency("gems", 100)),
+      step(4, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 150)),
+      step(6, currency("gems", 30), currency("gold", 50_000), currency("gems", 200)),
+      step(8, currency("gold", 10_000), currency("amber", 1), currency("gems", 200)),
+      step(10, item("stamina-tonic", 1), item("stamina-tonic-large", 1), currency("gems", 250)),
+      step(12, currency("gems", 50), currency("cheesecake", 500), currency("gems", 250)),
+      step(14, currency("cheesecake", 80), currency("fossil", 1), currency("gems", 300)),
+      step(16, currency("gold", 15_000), currency("dnaFragments", 20), currency("gems", 300)),
+      step(18, currency("fossil", 1), item("stamina-tonic-large", 1), currency("gems", 350)),
+      step(20, currency("gems", 60), currency("gold", 100_000), currency("gems", 350)),
+      step(22, currency("cheesecake", 150), currency("amber", 1), currency("gems", 400)),
+      step(24, currency("gold", 25_000), currency("cheesecake", 600), currency("gems", 400)),
+      step(26, currency("gems", 80), item("stamina-tonic-large", 2), currency("gems", 450)),
+      step(28, item("stamina-tonic", 1), currency("fossil", 2), currency("gems", 500)),
+      step(30, currency("gems", 150), item("restoration-crystal", 1), currency("gems", 1000)),
     ],
   },
   {
@@ -123,9 +123,8 @@ export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
     ],
   },
   {
-    // 임시 — 패스 탭 줄이 네 칸일 때 옆으로 흐르는 스크롤을 확인하려고 더한 항목이다. 진행도는 새로 세지 않고 연구원
-    // 레벨을 빌려 쓰며(저장 구조를 건드리지 않는다), 정식 고고학 패스가 정해지면 이 항목째 지우거나 바꾼다.
-    id: "archaeology", productId: "premium-archaeology-pass", metric: "playerLevel",
+    // 실제 발굴한 칸 수를 센다. 입장이나 중도 종료만으로 진행하지 않는다.
+    id: "archaeology", productId: "premium-archaeology-pass", metric: "strataDigs",
     milestones: [
       step(3, currency("gold", 5_000), item("strata-ticket", 2), currency("gems", 60)),
       step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),

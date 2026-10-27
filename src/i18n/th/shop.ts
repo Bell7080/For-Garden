@@ -49,6 +49,7 @@ export const SHOP_TH = {
   "shop.premium.pass.metric.storyClears": "ผ่านเนื้อเรื่อง {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "เลเวลนักวิจัย {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "ท้าทายเรด {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "ขุดช่องชั้นดิน {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "รางวัลพาส",
   "shop.premium.unsupported": "บิลด์นี้ไม่รองรับการชำระเงิน",
   "shop.premium.cancelled": "ยกเลิกการชำระเงินแล้ว",

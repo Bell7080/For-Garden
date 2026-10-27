@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { GUILD_ATTENDANCE_CYCLE, GUILD_LEVELS, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, guildCan, type GuildAction, type GuildRole } from "../../src/core/guild";
 import { contentUnlockLevel } from "../../src/core/contentUnlock";
 
-const sql = readFileSync(new URL("../../supabase/migrations/20261019000000_guild_basics.sql", import.meta.url), "utf8");
-const cycleSql = readFileSync(new URL("../../supabase/migrations/20261021000000_guild_attendance_cycle.sql", import.meta.url), "utf8");
+const sql = readFileSync(new URL("../../supabase/migrations/20261019000000_guild_basics.sql", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const cycleSql = readFileSync(new URL("../../supabase/migrations/20261021000000_guild_attendance_cycle.sql", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const numbers = (list: string) => list.split(",").map((v) => Number(v.trim()));
 
 /** DB 함수에 옮겨 적은 표가 순수 모듈의 표와 같은 값인지 지킨다. 한쪽만 고치면 화면과 서버가 갈린다. */

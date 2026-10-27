@@ -60,6 +60,8 @@ export const LOBBY_JA = {
   "lobby.pass.mission.lead.storyClears": "ストーリーをクリアするとレベルが上がります",
   "lobby.pass.mission.lead.playerLevel": "研究員レベルと一緒に上がります",
   "lobby.pass.mission.lead.raidRuns": "レイドに挑戦するとレベルが上がります",
+  "lobby.pass.mission.strataDigs": "地層を{threshold}マス発掘",
+  "lobby.pass.mission.lead.strataDigs": "地層のマスを発掘するとレベルが上がります",
   "lobby.pass.mission.done": "達成",
 
   "lobby.bondXp": "絆 +{xp}",

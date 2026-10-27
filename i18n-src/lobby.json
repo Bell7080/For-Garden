@@ -512,5 +512,25 @@
 "roulette.rates.basis": ["幸运转盘 · 每次转动", "วงล้อนำโชค · ต่อการหมุน 1 ครั้ง", "Vòng quay may mắn · Mỗi lượt quay", "Roda Keberuntungan · Per putaran", "Ruleta de la suerte · Por giro", "Roleta da sorte · Por giro", "Glücksrad · Pro Dreh", "Колесо удачи · За одно вращение"],
 "roulette.rates.rules": ["说明", "หมายเหตุ", "Lưu ý", "Catatan", "Notas", "Observações", "Hinweise", "Примечания"],
 "roulette.rates.noteSlices": ["各格大小相同，但中奖概率各不相同。", "ทุกช่องมีขนาดเท่ากัน แต่อัตราออกของแต่ละช่องต่างกัน", "Các ô có kích thước bằng nhau nhưng tỉ lệ trúng của mỗi ô khác nhau.", "Semua petak berukuran sama, tetapi peluangnya berbeda-beda.", "Todas las casillas tienen el mismo tamaño, pero cada una tiene su propia probabilidad.", "Todas as casas têm o mesmo tamanho, mas cada uma tem sua própria chance.", "Alle Felder sind gleich groß, haben aber unterschiedliche Chancen.", "Все секторы одного размера, но шанс у каждого свой."],
-"roulette.rates.noteServer": ["奖励在请求转动的瞬间确定，关闭窗口也会发放。", "รางวัลจะถูกกำหนดทันทีที่ขอหมุน และจะได้รับแม้ปิดหน้าต่าง", "Phần thưởng được xác định ngay khi quay và vẫn được nhận dù đóng cửa sổ.", "Hadiah ditentukan saat kamu memutar dan tetap diberikan meski jendela ditutup.", "La recompensa se decide al girar y se entrega aunque cierres la ventana.", "A recompensa é definida no momento do giro e é entregue mesmo se você fechar a janela.", "Der Gewinn steht beim Drehen fest und wird auch beim Schließen des Fensters gutgeschrieben.", "Награда определяется в момент вращения и выдаётся, даже если закрыть окно."]
+"roulette.rates.noteServer": ["奖励在请求转动的瞬间确定，关闭窗口也会发放。", "รางวัลจะถูกกำหนดทันทีที่ขอหมุน และจะได้รับแม้ปิดหน้าต่าง", "Phần thưởng được xác định ngay khi quay và vẫn được nhận dù đóng cửa sổ.", "Hadiah ditentukan saat kamu memutar dan tetap diberikan meski jendela ditutup.", "La recompensa se decide al girar y se entrega aunque cierres la ventana.", "A recompensa é definida no momento do giro e é entregue mesmo se você fechar a janela.", "Der Gewinn steht beim Drehen fest und wird auch beim Schließen des Fensters gutgeschrieben.", "Награда определяется в момент вращения и выдаётся, даже если закрыть окно."],
+"lobby.pass.mission.strataDigs": [
+"挖掘{threshold}格地层",
+"ขุดชั้นดิน {threshold} ช่อง",
+"Khai quật {threshold} ô địa tầng",
+"Gali {threshold} petak strata",
+"Excava {threshold} casillas",
+"Escave {threshold} casas",
+"Grabe {threshold} Felder aus",
+"Раскопать {threshold} клеток"
+],
+"lobby.pass.mission.lead.strataDigs": [
+"挖掘地层格子即可升级",
+"ขุดช่องชั้นดินเพื่อเพิ่มเลเวล",
+"Khai quật ô địa tầng để lên cấp",
+"Gali petak strata untuk naik level",
+"Excava casillas para subir de nivel",
+"Escave casas para subir de nível",
+"Grabe Felder aus, um aufzusteigen",
+"Раскапывайте клетки для повышения уровня"
+]
 }

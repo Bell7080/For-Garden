@@ -49,6 +49,7 @@ export const SHOP_RU = {
   "shop.premium.pass.metric.storyClears": "Сюжет пройден {progress} / {goal}",
   "shop.premium.pass.metric.playerLevel": "Уровень исследователя {progress} / {goal}",
   "shop.premium.pass.metric.raidRuns": "Попытки рейда {progress} / {goal}",
+  "shop.premium.pass.metric.strataDigs": "Раскопано клеток {progress} / {goal}",
   "shop.premium.pass.rewardTitle": "Награды пропуска",
   "shop.premium.unsupported": "В этой сборке оплата недоступна.",
   "shop.premium.cancelled": "Оплата отменена.",

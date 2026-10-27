@@ -117,5 +117,15 @@
 "shop.premium.sticker.purchased": ["已购买", "ซื้อแล้ว", "ĐÃ MUA", "TERBELI", "COMPRADO", "COMPRADO", "GEKAUFT", "КУПЛЕНО"],
 "shop.premium.sticker.soldOut": ["售罄", "หมดแล้ว", "HẾT HÀNG", "HABIS", "AGOTADO", "ESGOTADO", "AUSVERKAUFT", "РАСПРОДАНО"],
 "shop.premium.sticker.subscribed": ["订阅中", "ใช้งานอยู่", "ĐANG DÙNG", "AKTIF", "ACTIVO", "ATIVO", "AKTIV", "АКТИВНО"],
-"shop.premium.valueMultiple": ["超值度 {multiple}", "คุ้มค่า {multiple}", "Giá trị {multiple}", "Nilai {multiple}", "Valor {multiple}", "Valor {multiple}", "Wert {multiple}", "Выгода {multiple}"]
+"shop.premium.valueMultiple": ["超值度 {multiple}", "คุ้มค่า {multiple}", "Giá trị {multiple}", "Nilai {multiple}", "Valor {multiple}", "Valor {multiple}", "Wert {multiple}", "Выгода {multiple}"],
+"shop.premium.pass.metric.strataDigs": [
+"地层挖掘 {progress} / {goal}格",
+"ขุดช่องชั้นดิน {progress} / {goal}",
+"Ô đã khai quật {progress} / {goal}",
+"Petak Digali {progress} / {goal}",
+"Casillas excavadas {progress} / {goal}",
+"Casas escavadas {progress} / {goal}",
+"Ausgegrabene Felder {progress} / {goal}",
+"Раскопано клеток {progress} / {goal}"
+]
 }

@@ -121,4 +121,8 @@ export const GLOSSARY_EXCEPTIONS: Readonly<Record<string, readonly GlossaryId[]>
   "achievement.objective.perfectRelics": ["rune"],
   // 화석을 캐낸 실제 장소이지 방치형 자원 수집 기능이 아니다.
   "info.journal.site": ["excavation"],
+  // 고고학 지층의 칸을 캐는 행위이며 로비의 방치형 발굴 기능이 아니다.
+  "lobby.pass.mission.strataDigs": ["excavation"],
+  "lobby.pass.mission.lead.strataDigs": ["excavation"],
+  "shop.premium.pass.metric.strataDigs": ["excavation"],
 };

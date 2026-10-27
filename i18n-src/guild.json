@@ -1270,24 +1270,24 @@
     "День {day}"
   ],
   "guild.attendance.cellGain": [
-    "贡献 +{contribution} · 币 +{coin}",
-    "ผลงาน +{contribution} · เหรียญ +{coin}",
-    "Cống hiến +{contribution} · Xu +{coin}",
-    "Kontrib. +{contribution} · Koin +{coin}",
-    "Contrib. +{contribution} · Monedas +{coin}",
-    "Contrib. +{contribution} · Moedas +{coin}",
-    "Beitrag +{contribution} · Münzen +{coin}",
-    "Вклад +{contribution} · Монеты +{coin}"
+    "贡献 +{contribution}",
+    "ผลงาน +{contribution}",
+    "Cống hiến +{contribution}",
+    "Kontrib. +{contribution}",
+    "Contrib. +{contribution}",
+    "Contrib. +{contribution}",
+    "Beitrag +{contribution}",
+    "Вклад +{contribution}"
   ],
   "guild.attendance.gain": [
-    "每天 贡献 +{contribution} · 公会币 +{coin}\n第7天 贡献 +{finalContribution} · 公会币 +{finalCoin} · 中途缺勤也会接着盖章",
-    "ทุกวัน ผลงาน +{contribution} · เหรียญกิลด์ +{coin}\nวันที่ 7 ผลงาน +{finalContribution} · เหรียญกิลด์ +{finalCoin} · ขาดบางวันก็นับต่อได้",
-    "Mỗi ngày: cống hiến +{contribution} · Xu Bang hội +{coin}\nNgày 7: cống hiến +{finalContribution} · Xu Bang hội +{finalCoin} · Bỏ lỡ ngày vẫn được tính tiếp",
-    "Harian: kontribusi +{contribution} · Koin guild +{coin}\nHari 7: kontribusi +{finalContribution} · Koin guild +{finalCoin} · Hari yang terlewat tidak mengulang",
-    "Cada día: contribución +{contribution} · Monedas del gremio +{coin}\nDía 7: contribución +{finalContribution} · Monedas del gremio +{finalCoin} · Los días perdidos no reinician",
-    "Todo dia: contribuição +{contribution} · Moedas da guilda +{coin}\nDia 7: contribuição +{finalContribution} · Moedas da guilda +{finalCoin} · Dias perdidos não reiniciam",
-    "Täglich: Beitrag +{contribution} · Gildenmünzen +{coin}\nTag 7: Beitrag +{finalContribution} · Gildenmünzen +{finalCoin} · Verpasste Tage setzen nicht zurück",
-    "Каждый день: вклад +{contribution} · Монеты гильдии +{coin}\nДень 7: вклад +{finalContribution} · Монеты гильдии +{finalCoin} · Пропуски не сбрасывают отметки"
+    "每天 贡献 +{contribution} · 第7天 贡献 +{finalContribution}\n中途缺勤也会接着盖章",
+    "ทุกวัน ผลงาน +{contribution} · วันที่ 7 ผลงาน +{finalContribution}\nขาดบางวันก็นับต่อได้",
+    "Mỗi ngày: cống hiến +{contribution} · Ngày 7: cống hiến +{finalContribution}\nBỏ lỡ ngày vẫn được tính tiếp",
+    "Harian: kontribusi +{contribution} · Hari 7: kontribusi +{finalContribution}\nHari yang terlewat tidak mengulang",
+    "Cada día: contribución +{contribution} · Día 7: contribución +{finalContribution}\nLos días perdidos no reinician",
+    "Todo dia: contribuição +{contribution} · Dia 7: contribuição +{finalContribution}\nDias perdidos não reiniciam",
+    "Täglich: Beitrag +{contribution} · Tag 7: Beitrag +{finalContribution}\nVerpasste Tage setzen nicht zurück",
+    "Каждый день: вклад +{contribution} · День 7: вклад +{finalContribution}\nПропуски не сбрасывают отметки"
   ],
   "guild.attendance.receipt": [
     "第{day}天签到",

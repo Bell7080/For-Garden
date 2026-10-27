@@ -114,6 +114,22 @@ export function guildStampSlot(index: number): { x: number; y: number; width: nu
   return { x, y: rows[top ? 0 : 1], width: widths[at], height: last ? cell.height + 10 : cell.height };
 }
 
+/**
+ * 출석 칸 하나의 보상 줄 — 그날 보상 액자 · `+` · 길드 코인 액자. 칸 폭 안에 셋이 들도록 칸 폭에서 거꾸로 잡는다.
+ * 코인 액자는 한 뼘 작아 주인공이 그날 보상임을 크기가 말한다.
+ */
+export function guildStampRewardPair(cellWidth: number, last: boolean): { mainX: number; mainSize: number; plusX: number; coinX: number; coinSize: number } {
+  const mainSize = last ? 104 : 88;
+  const coinSize = last ? 72 : 62;
+  const plus = 26;
+  const span = mainSize + plus + coinSize;
+  const left = -Math.min(span, cellWidth - 16) / 2;
+  const mainX = left + mainSize / 2;
+  const plusX = left + mainSize + plus / 2;
+  const coinX = left + mainSize + plus + coinSize / 2;
+  return { mainX, mainSize, plusX, coinX, coinSize };
+}
+
 /** 길드전·수호전 쪽 — 큰 판 하나에 지금 단계와 남은 시간, 그 아래 줄들. */
 export const GUILD_EVENT_PAGE = {
   plate: { y: 760, height: 620 },

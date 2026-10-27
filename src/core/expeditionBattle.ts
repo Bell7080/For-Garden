@@ -182,7 +182,9 @@ export interface DuelBattleUnit {
  */
 export interface DuelBattleInputDto {
   /** Live arena uses a separately authenticated, immutable server lease. */
-  arena?: {roomId:string;side:number;lease:import("./combatProtocol").CombatLease;practice:boolean};
+  arena?: {roomId:string;side:number;lease:import("./combatProtocol").CombatLease;practice:boolean;
+    /** 친선전이면 그 상대 — 결과를 확정하지 못해 나갈 때도 친선전 선택판으로 돌아간다(`arenaExitRoute`). 랭크전은 비운다. */
+    friendId?:string};
   mode: "duel";
   requestId: string;
   attack: readonly string[];

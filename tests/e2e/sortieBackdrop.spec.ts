@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { tap } from "./canvasInput";
+import { captureGame, tap } from "./canvasInput";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 
 const scene = (page: Page) => page.evaluate(() => window.__PF_DEBUG?.scene);
@@ -18,9 +18,19 @@ test("출격판 밖 허공을 누르면 가려진 칸이 아니라 판이 닫힌
   await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245); // 출격
   await expect.poll(() => titles(page)).toContain("출격");
   await page.waitForTimeout(800);
-  // 판 밑변(중심 -80 + 620) 아래, 상점 곁판 오른쪽 — 잘린 고대 지층 칸이 있던 자리다.
-  await tap(page, BASE_WIDTH / 2 + 200, BASE_HEIGHT / 2 - 80 + 700);
+  // 판 밑변(중심 -75 + 665) 아래, 상점 곁판 오른쪽 — 잘린 고대 지층 칸이 있던 자리다.
+  await tap(page, BASE_WIDTH / 2 + 200, BASE_HEIGHT / 2 - 75 + 775);
   await expect.poll(() => titles(page)).not.toContain("출격");
   await page.waitForTimeout(800);
   expect(await scene(page)).toBe("lobby");
+});
+
+test("출격판은 굴리지 않아도 맨 아래 고대 지층 칸이 한 뼘 비친다", async ({ page }) => {
+  await startAfterOpening(page);
+  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => scene(page)).toBe("lobby");
+  await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245); // 출격
+  await expect.poll(() => titles(page)).toContain("출격");
+  await page.waitForTimeout(2_000);
+  await captureGame(page, `test-results/${test.info().project.name}-sortie-peek.png`);
 });

@@ -502,14 +502,14 @@ export class BattleScene extends Phaser.Scene {
         const season = (await gameApi.getRaids(RANKING_VISIBLE_RANKS)).raids.find(({ id }) => id === input.raidId);
         if (!season) return;
         base = season.myDamage;
-        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage, favoriteRelicId: entry.favoriteRelicId }));
+        peers = season.entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.damage, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId }));
       } else {
-        peers = (await gameApi.getExpeditionLeaderboard(RANKING_VISIBLE_RANKS)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score, favoriteRelicId: entry.favoriteRelicId }));
+        peers = (await gameApi.getExpeditionLeaderboard(RANKING_VISIBLE_RANKS)).entries.filter((entry) => !entry.isMe).map((entry) => ({ id: entry.playerId, name: entry.displayName, score: entry.score, favoriteRelicId: entry.favoriteRelicId, frameId: entry.frameId }));
       }
     } catch { return; }
     if (!this.scene.isActive() || generation !== this.combatGeneration || this.scoreRankHud) return;
     const hud = new ScoreRankingHud(this, this.motion.nonEssentialDistanceFactor > 0);
-    hud.setPeers(peers, { name: session.playerCard.nickname, favoriteRelicId: session.favorite || undefined });
+    hud.setPeers(peers, { name: session.playerCard.nickname, favoriteRelicId: session.favorite || undefined, frameId: session.playerCard.frameId });
     this.scoreRankBase = base;
     this.scoreRankHud = hud;
     hud.update(base + this.bossScoreShown);

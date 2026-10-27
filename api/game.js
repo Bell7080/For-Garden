@@ -19841,7 +19841,8 @@ function raidContributionBoard(entries, limit = 100) {
     displayName: entry.displayName,
     damage: Math.floor(entry.damage),
     isMe: entry.isMe === true,
-    favoriteRelicId: entry.favoriteRelicId
+    favoriteRelicId: entry.favoriteRelicId,
+    frameId: entry.frameId
   }));
 }
 function seedHash(seed) {
@@ -19909,6 +19910,7 @@ function mockSummonContributions(raidId, othersDamage) {
     playerId: friend.id,
     displayName: friend.displayName,
     favoriteRelicId: friend.favoriteRelic?.relicId,
+    frameId: friend.frameId,
     damage: Math.floor(othersDamage * weights[index] / sum)
   }));
 }
@@ -33469,7 +33471,7 @@ var FakeServer = class {
   async getExpeditionLeaderboard(limit = 100) {
     await this.delay();
     const expedition = this.rollExpedition(this.now());
-    const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
+    const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
   /**
@@ -33556,7 +33558,7 @@ var FakeServer = class {
     const rewardOf = (currency3, amount) => ({ currency: currency3, name: findItem(currency3)?.name ?? currency3, amount });
     const settlement = instance.myDamage > 0 ? raidSettlement(instance.difficulty, instance.myDamage, progress.totalHp > 0 ? progress.dealtDamage / progress.totalHp : 0, progress.defeated) : void 0;
     const board = this.raidContext ? (this.raidContext.records.find((row) => row.instance.id === instance.id)?.entries ?? []).filter((entry) => entry.playerId !== this.raidContext.playerId) : instance.kind === "world" ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 864e5))) : mockSummonContributions(instance.id, others);
-    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());

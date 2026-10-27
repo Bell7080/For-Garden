@@ -807,7 +807,7 @@ export class FakeServer implements GameApi {
 
   /** 단일 계정 순위표는 QA 표본이다. 실제 순위 서버가 없으면 일반 빌드에 순위를 만들지 않는다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite }] : [];
+    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
@@ -890,7 +890,7 @@ export class FakeServer implements GameApi {
     const board = this.raidContext ? (this.raidContext.records.find(row => row.instance.id === instance.id)?.entries ?? []).filter(entry => entry.playerId !== this.raidContext!.playerId) : instance.kind === "world"
       ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 86_400_000)))
       : mockSummonContributions(instance.id, others);
-    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());

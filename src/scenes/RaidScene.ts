@@ -11,7 +11,7 @@ import { setDebugRaidStage, setDebugScene } from "../debug";
 import { t } from "../i18n";
 import { portraitAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { Button } from "../ui/Button";
-import { FaceFrame } from "../ui/FaceFrame";
+import { addRankingFace } from "../ui/rankingFace";
 import { addBackButton } from "../ui/IconButton";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { PopupLayer } from "../ui/PopupLayer";
@@ -562,9 +562,7 @@ export class RaidScene extends Phaser.Scene {
     }));
     const rankColor = medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink);
     row.add(this.add.text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor })).setOrigin(0.5));
-    if (entry.favoriteRelicId) {
-      row.add(new FaceFrame(this, RANKING_LIST.faceX, 0, { portraitAssetId: getRelic(entry.favoriteRelicId).portraitAssetId, size: RANKING_LIST.faceSize, color: accent }));
-    }
+    addRankingFace(this, row, entry.favoriteRelicId, entry.displayName, accent, undefined, entry.frameId);
     row.add(this.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink) })).setOrigin(0, 0.5));
     row.add(this.add.text(RANKING_LIST.scoreX, 0, entry.damage.toLocaleString(), textStyle({ role: "display", size: 32, color: rankColor })).setOrigin(1, 0.5));
     list.add(row);

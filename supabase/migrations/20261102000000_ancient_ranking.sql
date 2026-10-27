@@ -2,7 +2,7 @@
 -- 점수는 저장의 clearedStageIds 중 가장 깊은 `ancient:N`이고, 같은 층이면 먼저 닿은(achieved_at) 사람이 위다.
 -- 표를 새로 만들지 않고 server_competitive_scores의 board만 늘린다 — 출시 초기화 목록에 이미 들어 있다.
 alter table public.server_competitive_scores drop constraint if exists server_competitive_scores_board_check;
-alter table public.server_competitive_scores add constraint server_competitive_scores_board_check check(board in('duel','expedition','ancient'));
+alter table public.server_competitive_scores add constraint server_competitive_scores_board_check check(board in('duel','expedition','arena','ancient'));
 
 create function public.server_ancient_floor(p_data jsonb) returns integer language sql immutable set search_path='' as $$
  select coalesce(max(least(200,(substring(e from '^ancient:([0-9]+)$'))::integer)),0)

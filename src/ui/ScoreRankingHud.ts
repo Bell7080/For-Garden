@@ -21,7 +21,7 @@ interface RowView {
 }
 
 /** 내 줄에 서는 얼굴과 이름 — 순위표에서 다른 사람이 나를 보는 것과 같은 얼굴이다. */
-export interface ScoreRankSelf { name: string; favoriteRelicId?: string }
+export interface ScoreRankSelf { name: string; favoriteRelicId?: string; frameId?: string }
 
 /**
  * 보스전 좌상단의 **점수 랭킹 띠** — 내 위로 둘·나·아래로 하나, 1위는 늘 맨 위에 선다.
@@ -150,7 +150,7 @@ export class ScoreRankingHud {
     const bg = this.scene.add.graphics();
     const container = this.scene.add.container(L.left, scoreRankingRowTop(slot, pinned) + L.rowHeight / 2, [bg, rank, name, score]).setDepth(L.depth);
     const medal = rankingMedal(data.rank);
-    addRankingFace(this.scene, container, data.favoriteRelicId, data.name, medal?.edge ?? (me ? COLOR.accent : COLOR.panelEdge), { x: L.faceX, size: L.faceSize });
+    addRankingFace(this.scene, container, data.favoriteRelicId, data.name, medal?.edge ?? (me ? COLOR.accent : COLOR.panelEdge), { x: L.faceX, size: L.faceSize }, me ? this.self.frameId : data.frameId);
     const row: RowView = { container, bg, rank, name, score, slot, pinned, shownRank: data.rank, shownScore: data.score };
     this.paint(row, data);
     return row;

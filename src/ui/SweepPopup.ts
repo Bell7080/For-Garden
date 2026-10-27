@@ -4,6 +4,7 @@ import { t } from "../i18n";
 import { maxSweepCount, settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
 import { formatCurrency } from "../core/formatCurrency";
 import { findItem } from "../data/items";
+import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
 import { Button } from "./Button";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
@@ -37,6 +38,12 @@ export interface SweepPopupOptions {
   /** 멤버십이 아니면 소탕권 줄(가진 수 · 광고 남은 횟수). */
   tickets: () => SweepTickets | undefined;
   onWatchAd: () => Promise<void>;
+  /** 가방에 든 에너지 드링크 수(기본·쎈 것 합). 0이면 스테미나 줄의 버튼이 충전 창을 연다. */
+  drinkCount?: () => number;
+  /** 가장 먼저 사라질 병 하나를 딴다. 끝나면 창이 다시 그려진다. */
+  onUseDrink?: () => Promise<void>;
+  /** 병이 없을 때 스테미나 충전 창을 연다. */
+  onOpenStamina?: () => void;
   /** 배율을 고르고 소탕을 누른 순간. 창은 먼저 닫힌다. */
   onConfirm: (count: number) => void;
 }
@@ -122,10 +129,32 @@ export function openSweepPopup(scene: Phaser.Scene, popups: PopupLayer, options:
         return holder;
       };
       const panelRight = panelWidth / 2 - L.cost.padX;
+      // 스테미나 줄 오른쪽의 드링크 — 소탕권 줄의 광고와 같은 자리·같은 크기다. 병이 있으면 한 병을
+      // 따고(가장 먼저 사라질 것부터), 없으면 스테미나 충전 창을 연다. 모자라면 강조 판으로 선다.
+      const drinkCount = options.drinkCount?.();
+      const staminaShort = held.stamina < settlement.staminaCost;
+      if (drinkCount !== undefined && options.onUseDrink) {
+        const drink = new Button(scene, panelRight - L.ad.width / 2, lineY(0), {
+          width: L.ad.width, height: L.ad.height,
+          label: drinkCount > 0 ? t("dungeon.sweep.drink") : t("dungeon.sweep.recharge"), fontSize: 24,
+          ...(drinkCount > 0 ? { sub: t("dungeon.sweep.drinkHeld", { count: drinkCount }), subFontSize: 16 } : {}),
+          ...(staminaShort ? { variant: "primary" as const } : {}),
+          onClick: () => {
+            if (adBusy) return;
+            if (drinkCount <= 0) { options.onOpenStamina?.(); return; }
+            adBusy = true;
+            void options.onUseDrink!().finally(() => { adBusy = false; if (body.active) render(); });
+          },
+        });
+        drink.fitLabel(L.ad.width - 20);
+        drink.setEnabled(!adBusy);
+        next.add(drink);
+      }
+      const staminaRight = drinkCount !== undefined && options.onUseDrink ? panelRight - L.ad.width - 24 : panelRight;
       addLine(0, t("dungeon.sweep.stamina"), (ix, iy) => tappable(
         scene.add.container(ix, iy, [scene.add.image(0, 0, CURRENCY_ICON_BY_WALLET.stamina).setDisplaySize(L.cost.icon, L.cost.icon)]),
         CURRENCY_ICON_BY_WALLET.stamina,
-      ), settlement.staminaCost, held.stamina, panelRight);
+      ), settlement.staminaCost, held.stamina, staminaRight);
       if (tickets) {
         const ticket = findItem(SWEEP_TICKET_ITEM);
         const short = held.tickets < settlement.ticketCost;
@@ -179,5 +208,8 @@ export function openSweepPopup(scene: Phaser.Scene, popups: PopupLayer, options:
       }).setEnabled(refusal === null && !adBusy));
     };
     render();
+    // 스테미나 창에서 채우고 돌아와도 드는 것·배율 상한이 곧바로 맞도록 지갑을 듣는다.
+    const unsubscribe = managerEvents.subscribe("wallet", () => { if (body.active) render(); });
+    body.once(Phaser.GameObjects.Events.DESTROY, unsubscribe);
   });
 }

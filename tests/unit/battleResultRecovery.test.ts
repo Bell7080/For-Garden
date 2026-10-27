@@ -75,7 +75,7 @@ describe('치즈케이크 결과 표시', () => {
     const failure=vi.fn();
     const Battle=sourceClass('src/scenes/BattleScene.ts','BattleScene',{
       Phaser:{Scene:class{}},gameApi:{completeCakeOperation},session:{cakeOperation:{clearedIndex:0},wallet:{stamina:0}},
-      rememberPlayerExp:vi.fn(),PopupLayer:class{},dungeonRewardItems:()=>[],isCakeTierUnlocked:()=>false,t:(k:string)=>k,
+      rememberPlayerExp:vi.fn(),PopupLayer:class{},dungeonRewardItems:()=>[],withGreatSuccessBonus:(items:unknown)=>items,autoRepeat:{activeFor:()=>undefined},isCakeTierUnlocked:()=>false,t:(k:string)=>k,
       StageCompletePopup:class{open=open;},
     });
     const scene=Object.assign(Object.create(Battle.prototype),{combatGeneration:1,scene:{isActive:()=>true},stageCompleteFighters:()=>[],showResultFailure:failure});

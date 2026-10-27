@@ -188,5 +188,265 @@
 "{used}/{limit}",
 "{used}/{limit}",
 "{used}/{limit}"
+],
+"dungeon.sweep.drink": [
+"使用饮料",
+"ใช้เครื่องดื่ม",
+"Dùng nước",
+"Pakai Minuman",
+"Usar bebida",
+"Usar bebida",
+"Drink nutzen",
+"Выпить напиток"
+],
+"dungeon.sweep.drinkHeld": [
+"持有 {count}",
+"มี {count}",
+"Có {count}",
+"Punya {count}",
+"Tienes {count}",
+"Possui {count}",
+"Besitz {count}",
+"Есть {count}"
+],
+"dungeon.sweep.recharge": [
+"充值",
+"เติม",
+"Nạp",
+"Isi",
+"Recargar",
+"Recarregar",
+"Aufladen",
+"Пополнить"
+],
+"greatSuccess.stamp": [
+"大成功",
+"สำเร็จยิ่ง",
+"Đại thành công",
+"Sukses Besar",
+"¡Éxito!",
+"Sucesso!",
+"Volltreffer",
+"Успех!"
+],
+"greatSuccess.count": [
+"大成功 ×{count}",
+"สำเร็จยิ่ง ×{count}",
+"Đại thành công ×{count}",
+"Sukses Besar ×{count}",
+"Gran éxito ×{count}",
+"Grande sucesso ×{count}",
+"Volltreffer ×{count}",
+"Большой успех ×{count}"
+],
+"autoRepeat.button": [
+"自动战斗",
+"ต่อสู้อัตโนมัติ",
+"Tự động đánh",
+"Tempur Otomatis",
+"Combate automático",
+"Batalha automática",
+"Auto-Kampf",
+"Автобой"
+],
+"autoRepeat.title": [
+"自动战斗",
+"ต่อสู้อัตโนมัติ",
+"Tự động đánh",
+"Tempur Otomatis",
+"Combate automático",
+"Batalha automática",
+"Auto-Kampf",
+"Автобой"
+],
+"autoRepeat.runs": [
+"重复次数",
+"จำนวนรอบ",
+"Số lần lặp",
+"Jumlah Ulang",
+"Repeticiones",
+"Repetições",
+"Wiederholungen",
+"Повторы"
+],
+"autoRepeat.runs.count": [
+"{count}次",
+"{count} รอบ",
+"{count} lần",
+"{count}x",
+"{count} veces",
+"{count} vezes",
+"{count}×",
+"{count} раз"
+],
+"autoRepeat.runs.endless": [
+"无限",
+"ไม่จำกัด",
+"Không giới hạn",
+"Tanpa Batas",
+"Sin límite",
+"Sem limite",
+"Unbegrenzt",
+"Без лимита"
+],
+"autoRepeat.stopOnDefeat": [
+"失败时停止",
+"หยุดเมื่อแพ้",
+"Dừng khi thua",
+"Berhenti saat Kalah",
+"Detener al perder",
+"Parar ao perder",
+"Bei Niederlage stoppen",
+"Стоп при поражении"
+],
+"autoRepeat.autoDrink": [
+"自动使用能量饮料",
+"ใช้เครื่องดื่มพลังงานอัตโนมัติ",
+"Tự dùng nước tăng lực",
+"Otomatis Pakai Minuman Energi",
+"Usar bebidas energéticas auto.",
+"Usar energéticos automaticamente",
+"Energydrinks automatisch nutzen",
+"Автоматически пить энергетики"
+],
+"autoRepeat.start": [
+"开始",
+"เริ่ม",
+"Bắt đầu",
+"Mulai",
+"Iniciar",
+"Iniciar",
+"Start",
+"Начать"
+],
+"autoRepeat.stop": [
+"停止",
+"หยุด",
+"Dừng",
+"Hentikan",
+"Detener",
+"Parar",
+"Stopp",
+"Стоп"
+],
+"autoRepeat.stoppedByUser": [
+"已停止自动战斗。",
+"หยุดต่อสู้อัตโนมัติแล้ว",
+"Đã dừng tự động đánh.",
+"Tempur Otomatis dihentikan.",
+"Combate automático detenido.",
+"Batalha automática parada.",
+"Auto-Kampf gestoppt.",
+"Автобой остановлен."
+],
+"autoRepeat.chip.progress": [
+"自动 {done}/{total}",
+"อัตโนมัติ {done}/{total}",
+"Tự động {done}/{total}",
+"Otomatis {done}/{total}",
+"Auto {done}/{total}",
+"Auto {done}/{total}",
+"Auto {done}/{total}",
+"Авто {done}/{total}"
+],
+"autoRepeat.chip.endless": [
+"自动 第{done}次",
+"อัตโนมัติ รอบ {done}",
+"Tự động lần {done}",
+"Otomatis ke-{done}",
+"Auto n.º {done}",
+"Auto nº {done}",
+"Auto #{done}",
+"Авто №{done}"
+],
+"autoRepeat.chip.stopping": [
+"本场后停止",
+"หยุดหลังรอบนี้",
+"Dừng sau trận này",
+"Berhenti usai ini",
+"Se detiene al final",
+"Para após esta",
+"Stopp nach diesem Kampf",
+"Стоп после боя"
+],
+"autoRepeat.progress": [
+"自动战斗 {done}/{total}",
+"ต่อสู้อัตโนมัติ {done}/{total}",
+"Tự động đánh {done}/{total}",
+"Tempur Otomatis {done}/{total}",
+"Combate automático {done}/{total}",
+"Batalha automática {done}/{total}",
+"Auto-Kampf {done}/{total}",
+"Автобой {done}/{total}"
+],
+"autoRepeat.progressEndless": [
+"自动战斗 {done}次",
+"ต่อสู้อัตโนมัติ {done} รอบ",
+"Tự động đánh {done} lần",
+"Tempur Otomatis {done}x",
+"Combate automático ×{done}",
+"Batalha automática ×{done}",
+"Auto-Kampf ×{done}",
+"Автобой ×{done}"
+],
+"autoRepeat.next": [
+"{progress} · 即将开始下一场",
+"{progress} · ต่อไปในอีกครู่",
+"{progress} · Sắp đến trận tiếp",
+"{progress} · Pertempuran berikutnya",
+"{progress} · Siguiente combate",
+"{progress} · Próxima batalha",
+"{progress} · Nächster Kampf",
+"{progress} · Следующий бой"
+],
+"autoRepeat.nextWithDrink": [
+"{progress} · 使用能量饮料后继续",
+"{progress} · ใช้เครื่องดื่มพลังงานแล้วไปต่อ",
+"{progress} · Dùng nước tăng lực rồi tiếp",
+"{progress} · Pakai Minuman Energi lalu lanjut",
+"{progress} · Usando bebida energética",
+"{progress} · Usando energético",
+"{progress} · Energydrink wird genutzt",
+"{progress} · Выпить энергетик и дальше"
+],
+"autoRepeat.stopped.done": [
+"自动战斗完成 · {done}场{wins}胜",
+"ต่อสู้อัตโนมัติเสร็จ · ชนะ {wins}/{done}",
+"Hoàn tất · thắng {wins}/{done}",
+"Selesai · menang {wins}/{done}",
+"Completado · {wins}/{done} victorias",
+"Concluído · {wins}/{done} vitórias",
+"Fertig · {wins}/{done} Siege",
+"Готово · побед {wins}/{done}"
+],
+"autoRepeat.stopped.defeat": [
+"因失败停止 · {done}场{wins}胜",
+"หยุดเพราะแพ้ · ชนะ {wins}/{done}",
+"Dừng do thua · thắng {wins}/{done}",
+"Berhenti karena kalah · {wins}/{done}",
+"Detenido por derrota · {wins}/{done}",
+"Parado por derrota · {wins}/{done}",
+"Gestoppt (Niederlage) · {wins}/{done}",
+"Стоп: поражение · {wins}/{done}"
+],
+"autoRepeat.stopped.stamina": [
+"体力不足停止 · {done}场{wins}胜",
+"สตามินาไม่พอ · ชนะ {wins}/{done}",
+"Hết Thể lực · thắng {wins}/{done}",
+"Stamina habis · {wins}/{done}",
+"Sin Estamina · {wins}/{done}",
+"Sem Estamina · {wins}/{done}",
+"Keine Ausdauer · {wins}/{done}",
+"Нет Выносливости · {wins}/{done}"
+],
+"autoRepeat.stopped.cancelled": [
+"自动战斗已停止 · {done}场{wins}胜",
+"หยุดต่อสู้อัตโนมัติ · ชนะ {wins}/{done}",
+"Đã dừng · thắng {wins}/{done}",
+"Dihentikan · {wins}/{done}",
+"Detenido · {wins}/{done}",
+"Parado · {wins}/{done}",
+"Gestoppt · {wins}/{done}",
+"Остановлено · {wins}/{done}"
 ]
 }

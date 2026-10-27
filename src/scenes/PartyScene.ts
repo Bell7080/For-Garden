@@ -57,6 +57,8 @@ import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { shrinkTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
+import { autoRepeat } from "../managers/AutoRepeatManager";
+import { openAutoRepeatPopup } from "../ui/AutoRepeatPopup";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -175,6 +177,7 @@ export class PartyScene extends Phaser.Scene {
   /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
   private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
+  private autoRepeatButton?: Button;
   private partyTutorialPhase?: "move" | "hold" | "start";
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
@@ -231,6 +234,7 @@ export class PartyScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.autoRepeatButton = undefined;
     setDebugScene("party");
     this.partyTutorialPhase = this.content.content === "stage" && session.selectedStageId === "1-2" && tutorialManager.next() === "auto" ? "move" : undefined;
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
@@ -337,52 +341,34 @@ export class PartyScene extends Phaser.Scene {
       height: 130,
       label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : t("party.start"),
       fontSize: 44,
-      onClick: async () => {
-        // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-        if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || formationMembers(this.picked).length !== 3) return;
-        this.isEnteringBattle = true;
-        this.startButton.setEnabled(false);
-
-        // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
-        if (this.content.content === "duel" || this.content.content === "duelDefense") {
-          try {
-            await this.enterBattle();
-          } catch (error) {
-            const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
-            this.hint.setText(view.message);
-            this.restoreEntryControls();
-          }
-          return;
-        }
-        // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
-        try {
-          // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
-          const result = await relicCollection.setParty(formationMembers(this.picked));
-          if (!result.ok) {
-            this.isEnteringBattle = false;
-            this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
-            this.refreshButtonState();
-            return;
-          }
-        } catch {
-          // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
-          this.hint.setText(t("party.saveFailed"));
-          this.restoreEntryControls();
-          return;
-        }
-
-        try {
-          // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
-          await this.enterBattle();
-        } catch (error) {
-          // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
-          const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
-          this.hint.setText(view.message);
-          this.restoreEntryControls();
-          if (view.openStaminaPopup) new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
-        }
+      onClick: () => {
+        // 손으로 누른 전투 시작은 자동 전투가 아니다 — 남은 자동 전투를 비우고 한 판만 들어간다.
+        if (!this.isEnteringBattle) autoRepeat.clear();
+        void this.beginEntry();
       },
     });
+
+    // **자동 전투는 던전(대작전·현상수배)에만 선다** — 같은 단계를 같은 편성으로 이어 도는 콘텐츠다.
+    // 전투 시작 바로 왼쪽에 한 뼘 작게 서서, 주 조작이 전투 시작이라는 것을 크기가 말한다.
+    const repeatContent = this.content.content === "cake" || this.content.content === "bounty" ? { content: this.content.content, tierId: this.content.tierId } : undefined;
+    if (repeatContent) {
+      const width = 190;
+      this.autoRepeatButton = new Button(this, cx - 280 - 18 - width / 2, BACK_SLOT.y, {
+        width,
+        height: 104,
+        label: t("autoRepeat.button"),
+        fontSize: 28,
+        onClick: () => {
+          if (this.isEnteringBattle || formationMembers(this.picked).length !== 3) return;
+          openAutoRepeatPopup(this, new PopupLayer(this, 2200), (options) => {
+            autoRepeat.start(repeatContent, options);
+            // 입장이 거절되면 자동 전투도 시작하지 않은 것이다.
+            void this.beginEntry().finally(() => { if (!this.isEnteringBattle) autoRepeat.clear(); });
+          });
+        },
+      });
+      this.autoRepeatButton.fitLabel(width - 24);
+    }
 
     addBackButton(this, () => this.leave());
 
@@ -587,6 +573,53 @@ export class PartyScene extends Phaser.Scene {
     return `${t(`storyDifficulty.${storyDifficultyOf(stage.id)}`)} · ${storyBaseStageId(stage.id)}  ${stage.name}`;
   }
 
+  /** 전투 시작 — 손으로 누른 한 판과 자동 전투의 첫 판이 같은 길을 지난다. */
+  private async beginEntry(): Promise<void> {
+    // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
+    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || formationMembers(this.picked).length !== 3) return;
+    this.isEnteringBattle = true;
+    this.startButton.setEnabled(false);
+
+    // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
+    if (this.content.content === "duel" || this.content.content === "duelDefense") {
+      try {
+        await this.enterBattle();
+      } catch (error) {
+        const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+        this.hint.setText(view.message);
+        this.restoreEntryControls();
+      }
+      return;
+    }
+    // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
+    try {
+      // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
+      const result = await relicCollection.setParty(formationMembers(this.picked));
+      if (!result.ok) {
+        this.isEnteringBattle = false;
+        this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
+        this.refreshButtonState();
+        return;
+      }
+    } catch {
+      // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
+      this.hint.setText(t("party.saveFailed"));
+      this.restoreEntryControls();
+      return;
+    }
+
+    try {
+      // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
+      await this.enterBattle();
+    } catch (error) {
+      // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
+      const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+      this.hint.setText(view.message);
+      this.restoreEntryControls();
+      if (view.openStaminaPopup) new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
+    }
+  }
+
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
   private async enterBattle(): Promise<void> {
     if (this.content.content === "duelDefense") {
@@ -599,6 +632,7 @@ export class PartyScene extends Phaser.Scene {
 
   /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계를 그대로 되살린다. */
   private leave(): void {
+    autoRepeat.clear();
     const content = this.content;
     // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
@@ -958,6 +992,7 @@ export class PartyScene extends Phaser.Scene {
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
   private refreshButtonState(): void {
     this.startButton.setEnabled(formationMembers(this.picked).length === 3 && !this.isEnteringBattle);
+    this.autoRepeatButton?.setEnabled(formationMembers(this.picked).length === 3 && !this.isEnteringBattle);
   }
 
   /** 모든 실패 경로가 진입 잠금과 버튼을 함께 복구하도록 한곳에서 처리한다. */

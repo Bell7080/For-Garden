@@ -7,8 +7,12 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import type { PopupLayer } from "../ui/PopupLayer";
 import { dungeonRewardItems, openRewardPopup } from "../ui/RewardPopup";
+import { withGreatSuccessBonus } from "../ui/rewardPopupModel";
 import { openSweepPopup } from "../ui/SweepPopup";
 import { playSweepSkirmish } from "../ui/SweepSkirmish";
+import { autoRepeat, pickAutoDrink } from "../managers/AutoRepeatManager";
+import { InventoryManager } from "../managers/InventoryManager";
+import { StaminaPopup } from "../ui/StaminaPopup";
 import { sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
 
 /** 소탕 연출은 팝업 층 바로 위에 선다 — 영수증은 연출이 걷힌 뒤에 열린다. */
@@ -74,6 +78,17 @@ export async function openDungeonSweep(flow: DungeonSweepFlow): Promise<void> {
         // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
       }
     },
+    drinkCount: () => autoRepeat.drinks().reduce((sum, drink) => sum + drink.quantity, 0),
+    onUseDrink: async () => {
+      const drink = pickAutoDrink(autoRepeat.drinks());
+      if (!drink) return;
+      try {
+        await new InventoryManager(session).useConsumable(gameApi, drink.itemId);
+      } catch {
+        // 따지 못했다 — 가방과 스테미나는 그대로다.
+      }
+    },
+    onOpenStamina: () => new StaminaPopup(scene, popups, gameApi).open(),
     onConfirm: (count) => void run(flow, count),
   });
 }
@@ -88,7 +103,9 @@ async function run(flow: DungeonSweepFlow, count: number): Promise<void> {
   try {
     const [result] = await Promise.all([request, skirmish.done]);
     if (!scene.scene.isActive()) return;
-    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items: dungeonRewardItems(result.granted, result.bonusItems), playerExp: result.playerExp });
+    // 대성공이 얹은 몫은 액자에 따로 실어, 영수증이 그 판 수만큼 쾅쾅 맥동하며 수를 올린다.
+    const items = withGreatSuccessBonus(dungeonRewardItems(result.granted, result.bonusItems), result.greatSuccessBonus);
+    openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items, playerExp: result.playerExp, greatSuccessCount: result.greatSuccessCount ?? 0 });
   } catch {
     skirmish.close();
     flow.onFailed?.();

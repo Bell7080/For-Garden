@@ -119,6 +119,7 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
+import { greatSuccessBonus, rollGreatSuccessCount } from "../core/greatSuccess";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
 import { resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS } from "../data/expedition";
@@ -2361,7 +2362,8 @@ export class FakeServer implements GameApi {
     if (refusal === "not_enough_stamina") throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     const settlement = settleSweep(cost, request.count, member);
     const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions, itemInventory: spentItems, playerExp } = this.spendStamina(settlement.staminaCost);
-    const granted = this.grantDungeonRewards(nextWallet, settlement.rewards);
+    // 대성공은 판마다 따로 굴린다 — 기본 몫을 먼저 얹고 대성공 몫을 따로 얹어 영수증이 그 몫을 가를 수 있게 한다.
+    const { granted, greatSuccessCount, greatSuccessBonus: bonusGranted } = this.grantDungeonRun(nextWallet, cost.rewards, settlement.count, settlement.rewards);
     let nextMissions = spentMissions;
     for (let index = 0; index < settlement.count; index += 1) nextMissions = applyMissionEvent(nextMissions, { type: "battle_completed", victory: true }, now);
     const ticketItems = spentItems.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
@@ -2370,7 +2372,7 @@ export class FakeServer implements GameApi {
     const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(settlement.count, ticketItems, now);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions; this.state.itemInventory = nextItems;
-    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp, bonusItems };
+    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp, bonusItems, greatSuccessCount, greatSuccessBonus: bonusGranted };
   }
 
   /**
@@ -2388,6 +2390,19 @@ export class FakeServer implements GameApi {
     }
     this.state.raidTicketDrops = rolled.state;
     return { items: inventory, drops };
+  }
+
+  /**
+   * 이긴 판 `runs`번의 기본 보상과 대성공 몫을 함께 얹는다(`core/greatSuccess.ts`). 기본 몫을 먼저
+   * 얹고 대성공 몫을 따로 얹어, 지갑 상한에 걸리면 깎이는 쪽이 대성공 몫이 되게 한다.
+   */
+  private grantDungeonRun(wallet: Session["wallet"], perRun: Readonly<Record<string, number>>, runs: number, total: Readonly<Record<string, number>>): { granted: Partial<Record<keyof Session["wallet"], number>>; greatSuccessCount: number; greatSuccessBonus: Partial<Record<keyof Session["wallet"], number>> } {
+    const base = this.grantDungeonRewards(wallet, total);
+    const greatSuccessCount = rollGreatSuccessCount(runs, this.random);
+    const bonus = this.grantDungeonRewards(wallet, greatSuccessBonus(perRun, greatSuccessCount));
+    const granted: Partial<Record<keyof Session["wallet"], number>> = { ...base };
+    for (const [key, amount] of Object.entries(bonus) as [keyof Session["wallet"], number][]) granted[key] = (granted[key] ?? 0) + amount;
+    return { granted, greatSuccessCount, greatSuccessBonus: bonus };
   }
 
   /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
@@ -2434,7 +2449,8 @@ export class FakeServer implements GameApi {
     const cost = admitted ? cakeOperationRunCost(tier).staminaCost : 0;
     const spent = request.victory && cost > 0 ? this.chargeVictoryStamina(cost) : undefined;
     const nextWallet = { ...(spent?.wallet ?? this.state.wallet) };
-    const granted = request.victory ? this.grantDungeonRewards(nextWallet, cakeOperationRunCost(tier).rewards) : {};
+    const run = request.victory ? this.grantDungeonRun(nextWallet, cakeOperationRunCost(tier).rewards, 1, cakeOperationRunCost(tier).rewards) : undefined;
+    const granted = run?.granted ?? {};
     const index = cakeOperationTierIndex(tier.id);
     const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
     const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
@@ -2452,6 +2468,7 @@ export class FakeServer implements GameApi {
     if (pending?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
     const response: CakeOperationCompleteResponse = {
       ...this.snapshot(), tierId: tier.id, victory: request.victory, granted, unlockedNextTier, bonusItems,
+      ...(run && run.greatSuccessCount > 0 ? { greatSuccess: true, greatSuccessBonus: run.greatSuccessBonus } : {}),
       staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}),
     };
     this.cakeCompletionResults.set(request.requestId, structuredClone(response));
@@ -2573,7 +2590,8 @@ export class FakeServer implements GameApi {
     const cost = bountyRunCost(tier).staminaCost;
     const spent = victory ? this.chargeVictoryStamina(cost) : undefined;
     const nextWallet = { ...(spent?.wallet ?? this.state.wallet) };
-    const granted = victory ? this.grantDungeonRewards(nextWallet, bountyRunCost(tier).rewards) : {};
+    const run = victory ? this.grantDungeonRun(nextWallet, bountyRunCost(tier).rewards, 1, bountyRunCost(tier).rewards) : undefined;
+    const granted = run?.granted ?? {};
     const goldEarned = granted.gold ?? 0;
     const nextBounty = victory ? markBountyTierCleared(this.state.bounty, tier.id) : { clearedTierIds: [...this.state.bounty.clearedTierIds] };
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory }, now);
@@ -2584,7 +2602,8 @@ export class FakeServer implements GameApi {
     this.state.playerResearch = nextResearch; this.state.itemInventory = nextItems;
     this.pendingBountyRuns.delete(request.requestId);
     return {
-      ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds],
+      ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, granted, firstClear, clearedTierIds: [...nextBounty.clearedTierIds],
+      ...(run && run.greatSuccessCount > 0 ? { greatSuccess: true, greatSuccessBonus: run.greatSuccessBonus } : {}),
       staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}), bonusItems,
     };
   }

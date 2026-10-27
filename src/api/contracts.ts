@@ -365,6 +365,10 @@ export interface CakeOperationCompleteResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
+  /** 대성공 판인가(`core/greatSuccess.ts`). 이긴 판만 굴린다. */
+  greatSuccess?: boolean;
+  /** 대성공이 `granted` 안에 얹은 몫. 화면은 기본 몫에서 이 값만큼 수가 올라가는 연출을 그린다. */
+  greatSuccessBonus?: Partial<Record<keyof Wallet, number>>;
   /** 이긴 판에 가끔 얹히는 덤(토벌권). 없으면 빈 목록이다. */
   bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
@@ -397,6 +401,10 @@ export interface DungeonSweepResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 쓴 스테미나가 올린 연구원 경험치. 레벨이 올랐으면 받은 병까지 함께 싣는다. */
   playerExp: PlayerExpReceipt;
+  /** 소탕한 판 중 대성공 판 수. 판마다 서버가 따로 굴린다. */
+  greatSuccessCount?: number;
+  /** 대성공이 `granted` 안에 얹은 몫. */
+  greatSuccessBonus?: Partial<Record<keyof Wallet, number>>;
 }
 
 /** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
@@ -775,7 +783,7 @@ export interface EnterBountyResponse extends PlayerStateDto { tierId: string; re
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; granted?: Partial<Record<keyof Wallet, number>>; greatSuccess?: boolean; greatSuccessBonus?: Partial<Record<keyof Wallet, number>>; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 

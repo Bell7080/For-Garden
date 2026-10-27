@@ -104,6 +104,12 @@ import { motionPolicy, type MotionPolicy } from "../core/settings";
 import type { CompleteStageResponse, RaidDto, SettleExpeditionRunResponse, SubmitExpeditionBossScoreResponse, SubmitRaidDamageResponse } from "../api/contracts";
 import { GameApiError } from "../api/contracts";
 import { currencyRecordToRewardItems, dungeonRewardItems } from "../ui/RewardPopup";
+import { withGreatSuccessBonus } from "../ui/rewardPopupModel";
+import { autoRepeat } from "../managers/AutoRepeatManager";
+import { AUTO_REPEAT_COUNTDOWN_MS, type AutoRepeatDecision } from "../core/autoRepeat";
+import type { AutoRepeatBannerOptions } from "../ui/AutoRepeatBanner";
+import { InventoryManager } from "../managers/InventoryManager";
+import { BATTLE_AUTO_REPEAT_CHIP } from "../ui/battleStatusLayout";
 import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
@@ -710,7 +716,8 @@ export class BattleScene extends Phaser.Scene {
     this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(battleSettings.battleSpeed, false) : 1;
     // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
     // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
-    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && battleSettings.autoUltimate);
+    // 자동 전투(반복 출격) 중에는 손이 없으므로 궁극기도 자동이다.
+    this.autoUltimate = this.battleInput.mode === "duel" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
     this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
@@ -754,6 +761,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.buildBattleControls();
     new BattlePauseButton(this, () => this.openPauseMenu());
+    this.buildAutoRepeatChip();
     const onSleep = (): void => { this.sleptAt = performance.now(); };
     const onWake = (): void => this.onWake();
     this.events.on(Phaser.Scenes.Events.SLEEP, onSleep);
@@ -1134,7 +1142,7 @@ export class BattleScene extends Phaser.Scene {
     this.lastStepAt = now;
     const game = settingsManager.get().game;
     this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(game.battleSpeed, this.battleMember) : 1;
-    this.autoUltimate = this.battleInput.mode === "duel" || (this.featureOpen("auto") && game.autoUltimate);
+    this.autoUltimate = this.battleInput.mode === "duel" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && game.autoUltimate);
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -3040,7 +3048,7 @@ export class BattleScene extends Phaser.Scene {
       }
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const popups = new PopupLayer(this, 2200);
-      const items = dungeonRewardItems(result.granted, result.bonusItems);
+      const items = withGreatSuccessBonus(dungeonRewardItems(result.granted, result.bonusItems), result.greatSuccessBonus);
       // 버튼이 닫기를 먼저 부르지 않지만 닫힘이 기본 길(`onConfirm`)을 부르므로, 고른 길이 있으면 기본 길은 서지 않는다.
       let chosen = false;
       const go = (run: () => void) => () => { chosen = true; run(); };
@@ -3057,6 +3065,8 @@ export class BattleScene extends Phaser.Scene {
         growth: won ? undefined : this.defeatGrowth(() => { chosen = true; }),
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         staminaRefunded: result.staminaRefunded,
+        greatSuccess: won && result.greatSuccess === true,
+        autoRepeat: this.autoRepeatBanner(input.requestId, { content: "cake", tierId: input.tierId }, won, () => cakeOperationRunCost(getCakeOperationTier(input.tierId)).staminaCost, back, () => { chosen = true; }),
         fighters: this.stageCompleteFighters(),
         onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
         onConfirm: () => { if (!chosen && this.scene.isActive()) back(); },
@@ -3066,6 +3076,88 @@ export class BattleScene extends Phaser.Scene {
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       this.showResultFailure(() => void this.finishCakeOperation(input, won), () => startScene(this, "cakeOperation", { tierId: input.tierId }), error, this.cakeCompletion?.requestId === input.requestId ? "display" : "cake");
     }
+  }
+
+  /** 이 판이 자동 전투(반복 출격)의 한 판인가. 던전 두 곳만 돈다. */
+  private autoRepeatSettled?: { requestId: string; banner?: AutoRepeatBannerOptions };
+
+  private autoRepeatContent(): { content: "cake" | "bounty"; tierId: string } | undefined {
+    const input = this.battleInput;
+    if (input.mode !== "cake" && input.mode !== "bounty") return undefined;
+    const content = { content: input.mode, tierId: input.tierId } as const;
+    return autoRepeat.activeFor(content) ? content : undefined;
+  }
+
+  /**
+   * 자동 전투 중이면 우상단(정지 버튼 아래)에 「자동 n/N」 칩이 선다. 누르면 **지금 판까지만** 치르고 멈춘다 —
+   * 판 중간에 끊으면 이긴 판의 보상이 어디로 가는지 흐려진다.
+   */
+  private buildAutoRepeatChip(): void {
+    const content = this.autoRepeatContent();
+    const run = content ? autoRepeat.activeFor(content) : undefined;
+    if (!run) return;
+    const total = run.options.runs;
+    const label = (): string => run.cancelled ? t("autoRepeat.chip.stopping")
+      : total > 0 ? t("autoRepeat.chip.progress", { done: run.completed + 1, total }) : t("autoRepeat.chip.endless", { done: run.completed + 1 });
+    const L = BATTLE_AUTO_REPEAT_CHIP;
+    const chip: Button = new Button(this, L.x, L.y, {
+      width: L.width, height: L.height, label: label(), fontSize: 22, variant: "primary",
+      onClick: () => { autoRepeat.cancel(); chip.setLabel(label()); chip.setEnabled(false); },
+    });
+    chip.setDepth(L.depth);
+    if (run.cancelled) chip.setEnabled(false);
+  }
+
+  /**
+   * 결과판 밑동의 자동 전투 띠. 판을 세고(`autoRepeat.record`) 다음 걸음을 정한다 — 계속이면 카운트다운 뒤
+   * 같은 입장으로 다음 판에 들어가고, 멈춤이면 왜 멈췄는지를 한 줄로 말한다. 돌고 있지 않으면 `undefined`다.
+   */
+  private autoRepeatBanner(requestId: string, content: { content: "cake" | "bounty"; tierId: string }, won: boolean, runCost: () => number, fallback: () => void, choose: () => void): AutoRepeatBannerOptions | undefined {
+    // 표시만 실패해 결과판을 다시 여는 길(`showResultFailure`)이 같은 판을 두 번 세지 않게 판마다 한 번만 정한다.
+    if (this.autoRepeatSettled?.requestId === requestId) return this.autoRepeatSettled.banner;
+    const banner = this.settleAutoRepeat(content, won, runCost, fallback, choose);
+    this.autoRepeatSettled = { requestId, banner };
+    return banner;
+  }
+
+  private settleAutoRepeat(content: { content: "cake" | "bounty"; tierId: string }, won: boolean, runCost: () => number, fallback: () => void, choose: () => void): AutoRepeatBannerOptions | undefined {
+    const run = autoRepeat.activeFor(content);
+    if (!run) return undefined;
+    const staminaCost = runCost();
+    const decision = autoRepeat.record(won, staminaCost);
+    if (decision.kind === "stop") {
+      const stopped = autoRepeat.takeStopped();
+      return { kind: "stopped", label: t(`autoRepeat.stopped.${decision.reason}`, { done: stopped?.completed ?? run.completed, wins: stopped?.wins ?? run.wins }) };
+    }
+    const total = run.options.runs;
+    const progress = total > 0 ? t("autoRepeat.progress", { done: run.completed, total }) : t("autoRepeat.progressEndless", { done: run.completed });
+    return {
+      kind: "countdown",
+      label: decision.kind === "drink" ? t("autoRepeat.nextWithDrink", { progress }) : t("autoRepeat.next", { progress }),
+      ms: AUTO_REPEAT_COUNTDOWN_MS,
+      onStop: () => autoRepeat.clear(),
+      onElapsed: () => { choose(); void this.continueAutoRepeat(content, decision, staminaCost, fallback); },
+    };
+  }
+
+  /** 카운트다운이 끝난 뒤 — 병이 필요하면 따고, 같은 입장으로 다음 판에 들어간다. 막히면 입구로 돌아간다. */
+  private async continueAutoRepeat(content: { content: "cake" | "bounty"; tierId: string }, decision: AutoRepeatDecision, staminaCost: number, fallback: () => void): Promise<void> {
+    const leave = (): void => { autoRepeat.clear(); if (this.scene.isActive()) fallback(); };
+    let next = decision;
+    try {
+      // 병 하나로 모자란 일은 없지만(한 판 10 · 병 60), 규칙이 다시 물어 확인한다.
+      for (let guard = 0; next.kind === "drink" && guard < 3; guard += 1) {
+        await new InventoryManager(session).useConsumable(gameApi, next.itemId);
+        autoRepeat.noteDrink();
+        next = autoRepeat.decide(true, staminaCost);
+      }
+    } catch {
+      leave();
+      return;
+    }
+    if (next.kind !== "continue") { leave(); return; }
+    if (!this.scene.isActive()) return;
+    void enterContentBattle(this, content).catch(leave);
   }
 
   /**
@@ -3118,9 +3210,11 @@ export class BattleScene extends Phaser.Scene {
     const bountyTier = getBountyTier(input.tierId);
     const replayable = isBountyTierUnlocked(bountyTier, settled.clearedTierIds) && session.wallet.stamina >= bountyRunCost(bountyTier).staminaCost;
     const replay = replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "bounty", tierId: input.tierId }, toBounty)) } : undefined;
+    const auto = this.autoRepeatBanner(input.requestId, { content: "bounty", tierId: input.tierId }, step.kind === "clear", () => bountyRunCost(bountyTier).staminaCost, toBounty, () => { chosen = true; });
     if (step.kind === "clear") {
       new StageCompletePopup(this, popups).open({
-        reward: { kind: "loot", items: dungeonRewardItems({ gold: settled.goldEarned }, settled.bonusItems) },
+        reward: { kind: "loot", items: withGreatSuccessBonus(dungeonRewardItems(settled.granted ?? { gold: settled.goldEarned }, settled.bonusItems), settled.greatSuccessBonus) },
+        greatSuccess: settled.greatSuccess === true, autoRepeat: auto,
         replay, fighters, onOpenContribution: openContribution,
         onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });
@@ -3133,7 +3227,7 @@ export class BattleScene extends Phaser.Scene {
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
       growth: this.defeatGrowth(() => { chosen = true; }),
-      replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded,
+      replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded, autoRepeat: auto,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
   }

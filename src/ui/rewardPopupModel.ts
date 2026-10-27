@@ -21,6 +21,8 @@ export interface RewardPopupItem {
   expiresAt?: string;
   /** 지급처별 기한. 없으면 아이템 정의의 기본 기한을 표시한다. */
   expiresInDays?: number;
+  /** `amount` 안에서 대성공이 얹은 몫. 있으면 액자가 기본 몫에서 이만큼 수가 올라가며 맥동한다. */
+  greatBonus?: number;
 }
 
 /** 기존 소지품의 만료일과 섞지 않고 이번 보상의 기한만 읽는다. */
@@ -45,6 +47,19 @@ export function currencyRecordToRewardItems(rewards: Readonly<Record<string, num
     const icon = icons[currency];
     return icon && amount > 0 ? [{ icon, amount: Math.floor(amount) }] : [];
   }));
+}
+
+/**
+ * 대성공이 얹은 몫(재화 키 → 수)을 같은 그림의 액자에 붙인다. 재화 그림은 `currencyRecordToRewardItems`와
+ * 같은 변환을 지나므로 둘이 갈리지 않는다.
+ */
+export function withGreatSuccessBonus(items: readonly RewardPopupItem[], bonus: Readonly<Record<string, number>> | undefined): RewardPopupItem[] {
+  if (!bonus) return [...items];
+  const byIcon = new Map(currencyRecordToRewardItems(bonus).map(({ icon, amount }) => [icon, amount] as const));
+  return items.map((item) => {
+    const extra = typeof item.icon === "string" ? byIcon.get(item.icon) : undefined;
+    return extra ? { ...item, greatBonus: Math.min(extra, item.amount) } : item;
+  });
 }
 
 /** 재화 지급에 이긴 판의 덤(토벌권 등 가방 아이템)을 함께 붙인 한 줄 — 결과판·소탕 영수증이 같은 함수를 지난다. */

@@ -17,6 +17,9 @@
  */
 export const BATTLE_PAUSE_BUTTON = { x: 1080 - 60, y: 62, size: 72, depth: 320 } as const;
 
+/** 자동 전투(반복 출격) 중의 진행 칩 — 정지 버튼 바로 아래, 같은 오른쪽 구석이다. 누르면 지금 판까지만 치른다. */
+export const BATTLE_AUTO_REPEAT_CHIP = { x: 1080 - 130, y: 62 + 72 / 2 + 18 + 32, width: 220, height: 64, depth: 320 } as const;
+
 export const BATTLE_CONTROLS = { rowY: 1288, rightX: 1080 - 130, speedX: 1080 - 335, stackGap: 92, depth: 320 } as const;
 
 /** 전투 프로필 한 칸의 1080×1920 기준 실제 외곽과 내부 기준선이다. */

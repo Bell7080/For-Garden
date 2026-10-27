@@ -211,7 +211,7 @@ export class DungeonLobby {
     const { scene } = this;
     const { arrow, width } = DUNGEON_LOBBY.stage;
     const { theme } = this.options;
-    const x = direction * (width / 2 - arrow.inset);
+    const x = direction * (width / 2 + arrow.outset);
     const button = scene.add.container(x, 20);
     button.add(drawLayer(scene, 0, 0, chipPoints(arrow.size * 0.82, arrow.size * 1.3, { bevel: { topLeft: 14, bottomRight: 14 } }), { fill: theme.deep, alpha: 0.7, shadow: false }));
     button.add(drawGlyph(scene, direction < 0 ? "page-prev" : "page-next", 0, 0, arrow.size * 0.56, theme.accent, 1, 6));
@@ -258,11 +258,12 @@ export class DungeonLobby {
       }).catch(() => undefined);
       if (!spot.labeled) continue;
       // **편성 화면의 적과 같은 어휘로 선다** — 속성·직군은 왼쪽 위, 돌파 등급은 오른쪽 위, 개체 전투력은
-      // 발밑, 레벨·이름은 그 아래 한 줄. 물량형 앞줄은 칸이 좁아 편성 화면의 무리 줄처럼 속성만 남긴다.
+      // 발밑, 레벨·이름은 그 아래 한 줄. 물량형 앞줄은 칸이 좁아 표식만 한 뼘 작게 세우고 돌파 등급은 뺀다.
       const k = height / 210;
       const badgeTop = spot.ground - height + 34 * k;
       if (spot.crowd) {
         labels.add(new AffinityBadge(scene, spot.x - 62, badgeTop, ELEMENT_ICON[unit.element], 42, 0.62));
+        labels.add(new AffinityBadge(scene, spot.x - 62, badgeTop + 40, ROLE_ICON[unit.role], 32, 0.62));
       } else {
         labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop, ELEMENT_ICON[unit.element], 52 * k, 0.62));
         labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop + 49 * k, ROLE_ICON[unit.role], 38 * k, 0.62));

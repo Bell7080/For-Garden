@@ -577,8 +577,9 @@ export class PartyScene extends Phaser.Scene {
     const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
     const badgeX = crowded ? x - 66 : x - 104;
     this.add.existing(new AffinityBadge(this, badgeX, badgeTop, ELEMENT_ICON[def.element], crowded ? 44 : 52, 0.62)).setDepth(3);
+    // 직군은 무리 줄에서도 속성 아래에 선다 — 칸이 좁아 한 뼘 작을 뿐 빠지지 않는다.
+    this.add.existing(new AffinityBadge(this, badgeX, badgeTop + (crowded ? 42 : 49), ROLE_ICON[def.role], crowded ? 32 : 38, 0.62)).setDepth(3);
     if (!crowded) {
-      this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
       const marks = this.add.container(0, 0).setDepth(3);
       addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, enemy.breakthrough + 1);
     }

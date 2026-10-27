@@ -19,7 +19,7 @@ const mode = explicit === "qa" || explicit === "production" ? explicit : isTestP
 
 console.log(`[vercel-build] mode=${mode} (FORGARDEN_BUILD=${explicit || "-"}, host=${host || "-"})`);
 // API 생성물은 클라이언트와 같은 checkout에서 만든다. 실패하면 오래된 서버로 배포하지 않는다.
-const server = spawnSync(process.execPath, ["scripts/build-server.mjs"], { stdio: "inherit" });
+const server = spawnSync(process.execPath, ["scripts/build-server.mjs", mode], { stdio: "inherit" });
 if (server.status !== 0) process.exit(server.status ?? 1);
 const result = spawnSync("npx", ["vite", "build", "--mode", mode], { stdio: "inherit", shell: process.platform === "win32" });
 if (result.status !== 0) process.exit(result.status ?? 1);

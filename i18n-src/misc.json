@@ -1102,24 +1102,54 @@
 "Прочитать всё"
 ],
 "mail.delete.title": [
-"删除已读邮件",
-"ลบจดหมายที่อ่านแล้ว",
-"Xóa thư đã đọc",
-"Hapus Surat yang Dibaca",
-"Eliminar correo leído",
-"Excluir correio lido",
-"Gelesene Post löschen",
-"Удалить прочитанную почту"
+"删除未领取邮件",
+"ลบจดหมายที่ยังไม่ได้รับ",
+"Xóa thư chưa nhận",
+"Hapus Surat yang Belum Diambil",
+"Eliminar correo sin reclamar",
+"Excluir correio não resgatado",
+"Nicht abgeholte Post löschen",
+"Удалить неполученную почту"
 ],
 "mail.delete.message": [
-"删除 {count} 封已读邮件。\n删除后无法恢复。",
-"ลบจดหมายที่อ่านแล้ว {count} ฉบับ\nจดหมายที่ลบแล้วไม่สามารถกู้คืนได้",
-"Xóa {count} thư đã đọc.\nThư đã xóa không thể khôi phục.",
-"Hapus {count} surat yang sudah dibaca.\nSurat yang dihapus tidak dapat dipulihkan.",
-"Se eliminarán {count} correos leídos.\nLos correos eliminados no se pueden recuperar.",
-"Excluir {count} correios lidos.\nCorreios excluídos não podem ser recuperados.",
-"{count} gelesene Nachrichten löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
-"Будет удалено прочитанных сообщений почты: {count}.\nУдалённые сообщения восстановить нельзя."
+"删除 {count} 封未领取邮件。\n附件奖励将无法领取,且无法恢复。",
+"ลบจดหมายที่ยังไม่ได้รับ {count} ฉบับ\nจะไม่สามารถรับรางวัลที่แนบมาได้อีก และไม่สามารถกู้คืนได้",
+"Xóa {count} thư chưa nhận.\nPhần thưởng đính kèm sẽ không thể nhận được nữa và không thể khôi phục.",
+"Hapus {count} surat yang belum diambil.\nHadiah terlampir tidak dapat diambil lagi dan tidak dapat dipulihkan.",
+"Se eliminarán {count} correos sin reclamar.\nLos adjuntos ya no se podrán reclamar y no se pueden recuperar.",
+"Excluir {count} correios não resgatados.\nOs anexos não poderão mais ser resgatados e isso não pode ser desfeito.",
+"{count} nicht abgeholte Post löschen.\nDie Anhänge können nicht mehr abgeholt werden. Das lässt sich nicht rückgängig machen.",
+"Будет удалено неполученной почты: {count}.\nВложенные награды получить будет нельзя, действие необратимо."
+],
+"mail.delete.one.title": [
+"删除邮件",
+"ลบจดหมาย",
+"Xóa thư",
+"Hapus Surat",
+"Eliminar correo",
+"Excluir correio",
+"Post löschen",
+"Удалить почту"
+],
+"mail.delete.one.message": [
+"删除这封邮件。\n删除后无法恢复。",
+"ลบจดหมายฉบับนี้\nจดหมายที่ลบแล้วไม่สามารถกู้คืนได้",
+"Xóa thư này.\nThư đã xóa không thể khôi phục.",
+"Hapus surat ini.\nSurat yang dihapus tidak dapat dipulihkan.",
+"Se eliminará este correo.\nLos correos eliminados no se pueden recuperar.",
+"Excluir este correio.\nCorreios excluídos não podem ser recuperados.",
+"Diese Nachricht löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
+"Эта почта будет удалена.\nУдалённую почту восстановить нельзя."
+],
+"mail.delete.one.unclaimed": [
+"删除这封邮件。\n未领取的附件奖励将无法领取,且无法恢复。",
+"ลบจดหมายฉบับนี้\nจะไม่สามารถรับรางวัลที่ยังไม่ได้รับได้อีก และไม่สามารถกู้คืนได้",
+"Xóa thư này.\nPhần thưởng chưa nhận sẽ không thể nhận được nữa và không thể khôi phục.",
+"Hapus surat ini.\nHadiah yang belum diambil tidak dapat diambil lagi dan tidak dapat dipulihkan.",
+"Se eliminará este correo.\nLos adjuntos sin reclamar ya no se podrán reclamar y no se pueden recuperar.",
+"Excluir este correio.\nOs anexos não resgatados não poderão mais ser resgatados e isso não pode ser desfeito.",
+"Diese Post löschen.\nNicht abgeholte Anhänge können nicht mehr abgeholt werden. Das lässt sich nicht rückgängig machen.",
+"Эта почта будет удалена.\nНеполученные вложения получить будет нельзя, действие необратимо."
 ],
 "mail.delete.confirm": [
 "删除",

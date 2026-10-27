@@ -20,6 +20,8 @@ export const MAIL_POPUP_LAYOUT = {
     /** 안내 한 장 — 머리 줄과 본문 미리보기 한 줄. */
     noticeHeight: 196,
     icon: 92,
+    /** 우편 한 장을 지우는 칩 — 카드 오른쪽 위 구석. 남은 기한 글자는 이 칩의 왼쪽에서 끝난다. */
+    deleteChip: { right: 52, top: 48, glyph: 34, hit: 76 },
   },
   /**
    * 첨부 줄. 한 줄에 일곱 칸이 서고, 넘치면 여섯 칸 뒤에 `+N`이 마지막 칸을 맡는다 — 받을 것이
@@ -34,7 +36,7 @@ export const MAIL_POPUP_LAYOUT = {
     tabY: 648,
     tab: { width: 210, height: 76, gap: 12, left: -470 },
     action: { x: 0, y: 772, width: 380, height: 92 },
-    /** 읽은 우편 삭제 칩 — 라벨 줄 오른쪽 끝. 구석 아래는 뒤로가기 자리라 비운다. */
+    /** 받지 않은 우편 일괄 삭제 칩(우편 탭 전용) — 라벨 줄 오른쪽 끝. 구석 아래는 뒤로가기 자리라 비운다. */
     deleteChip: { x: 430, y: 648, glyph: 40, hit: 80 },
   },
 } as const;

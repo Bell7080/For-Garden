@@ -146,7 +146,7 @@ export class MailPopup {
   }
 
   /** 제목·보낸 이 한 덩어리와 오른쪽 위의 남은 기한. */
-  private addHeadline(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean, nowMs: number): void {
+  private addHeadline(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean, nowMs: number, expiryInset = 0): void {
     const { card } = MAIL_POPUP_LAYOUT;
     const textX = -card.width / 2 + 34 + card.icon + 24;
     const top = y - height / 2 + 26;
@@ -154,7 +154,7 @@ export class MailPopup {
     parent.add(this.scene.add.text(textX, top + 54, mail.sender, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
     const expiry = this.expiryLabel(mail, nowMs);
     const soon = !!mail.expiresAt && !isMailExpired(mail, nowMs) && Date.parse(mail.expiresAt) - nowMs < 3 * 86_400_000;
-    parent.add(this.scene.add.text(card.width / 2 - 34, top + 12, expiry, textStyle({ role: "emphasis", size: 22, color: soon && !dim ? COLOR.dangerText : COLOR.inkDim })).setOrigin(1, 0));
+    parent.add(this.scene.add.text(card.width / 2 - 34 - expiryInset, top + 12, expiry, textStyle({ role: "emphasis", size: 22, color: soon && !dim ? COLOR.dangerText : COLOR.inkDim })).setOrigin(1, 0));
   }
 
   /** 우편 한 장 — 첨부가 밑동에 주르륵 서고, 오른쪽에 받기(또는 받은 뒤의 한 마디). */
@@ -164,7 +164,7 @@ export class MailPopup {
     const expired = isMailExpired(mail, nowMs);
     const dim = expired || mail.claimed;
     this.addCardChrome(parent, mail, y, height, dim, "mail");
-    this.addHeadline(parent, mail, y, height, dim, nowMs);
+    this.addHeadline(parent, mail, y, height, dim, nowMs, MAIL_POPUP_LAYOUT.card.deleteChip.hit);
     const stripY = y + height / 2 - 30 - rewards.size / 2;
     // 첨부 줄 뒤에 얕은 홈을 깔아 "이 봉투에 든 것"이 한 줄로 묶여 읽히게 한다.
     const trayWidth = mailRewardX(rewards.maxVisible - 1) - mailRewardX(0) + rewards.size + 24;
@@ -184,6 +184,26 @@ export class MailPopup {
     // 받기 버튼은 줄에 두지 않는다 — 우편을 눌러 펼친 판에서 글을 읽고 받는다. 줄은 상태만 말한다.
     if (dim) parent.add(this.scene.add.text(card.width / 2 - 96, stripY, t(expired ? "mail.state.expired" : "mail.state.claimed"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
     this.addOpenHit(parent, mail, y, height);
+    this.addCardDeleteChip(parent, mail, y, height, dim);
+  }
+
+  /** 우편 카드 오른쪽 위 구석의 삭제 칩 — 받았든 아니든 이 한 통만 지운다. 안내 카드에는 서지 않는다. */
+  private addCardDeleteChip(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean): void {
+    if (!this.manager.isDeletable(mail)) return;
+    const { card } = MAIL_POPUP_LAYOUT;
+    const chip = card.deleteChip;
+    const box = this.scene.add.container(card.width / 2 - chip.right, y - height / 2 + chip.top);
+    box.add(drawGlyph(this.scene, "trash", 0, 0, chip.glyph, COLOR.danger, dim ? 0.55 : 0.9));
+    const hit = this.scene.add.rectangle(0, 0, chip.hit, chip.hit, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    box.add(hit);
+    hit.on("pointerdown", () => pressIn(box));
+    hit.on("pointerout", () => pressOut(box, "normal", { pop: false }));
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      pressOut(box, "normal", { pop: pointer.getDistance() < 24 });
+      if (pointer.getDistance() >= 24) return;
+      this.popups.confirm({ title: t("mail.delete.one.title"), message: t(mail.claimed ? "mail.delete.one.message" : "mail.delete.one.unclaimed"), confirmLabel: t("mail.delete.confirm"), destructive: true }, () => void this.deleteRead([mail.id]));
+    });
+    parent.add(box);
   }
 
   /** 카드 전체가 우편을 펼치는 입력면이다. 끌어서 흘린 손은 펼치지 않는다. */
@@ -335,9 +355,9 @@ export class MailPopup {
     this.addDeleteChip(footer);
   }
 
-  /** 읽은 우편 삭제 — 작은 붉은 휴지통. 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
+  /** 받지 않은 우편 일괄 삭제 — 작은 붉은 휴지통. 우편 탭에만 서고, 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
   private addDeleteChip(footer: Phaser.GameObjects.Container): void {
-    if (!this.result) return;
+    if (!this.result || this.tab !== "reward") return;
     const { deleteChip: chip } = MAIL_POPUP_LAYOUT.footer;
     const ids = this.manager.deletableIds(this.result, this.tab);
     const chipBox = this.scene.add.container(chip.x, chip.y);

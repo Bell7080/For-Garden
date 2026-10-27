@@ -425,7 +425,8 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
     const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (targets.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
-    const claimable = targets.filter((mail): mail is MailDto => !!mail && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
+    const deletedIds = new Set(this.state.serverJournal?.ops?.deletedMails ?? []);
+    const claimable = targets.filter((mail): mail is MailDto => !!mail && !deletedIds.has(mail.id) && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted: MailRewardDto[] = [];
     const candidate = structuredClone(this.state);
     for (const mail of claimable) for (const reward of mail.rewards) {
@@ -457,11 +458,11 @@ export class FakeServer implements GameApi {
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
   async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); markOpsMailsRead(this.state, request.mailIds); return this.mailListDto(); }
 
-  /** 읽은 안내와 수령을 마쳤거나 만료된 우편만 지운다. 받을 것이 남은 우편은 거절한다. */
+  /** 첨부가 있는 일반 우편만 지운다(받았든 아니든). 공지·패치노트 같은 안내(첨부 없음)는 거절한다. */
   async deleteMails(request: DeleteMailsRequest): Promise<MailListResponse> {
     await this.delay(); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims();
-    const nowMs = this.now().getTime(); const ids = [...new Set(request.mailIds)];
-    const deletable = (mail: MailDto): boolean => (mail.rewards.length > 0 ? mail.claimed || (mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs) : mail.read);
+    const ids = [...new Set(request.mailIds)];
+    const deletable = (mail: MailDto): boolean => mail.rewards.length > 0;
     const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (!ids.length || targets.some((mail) => !mail || !deletable(mail))) throw new Error("MAIL_NOT_DELETABLE");
     markMailsDeleted(this.state, ids);

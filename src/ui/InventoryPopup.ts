@@ -30,6 +30,7 @@ import { universalFragmentRarity } from "../core/relicProgression";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 import { onTap } from "./tapGuard";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 
@@ -198,6 +199,7 @@ export class InventoryPopup {
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
     // 칸 위에서 시작한 손도 내려가도록 씬이 듣는다(`attachDragScroll`) — 끌기 면을 칸 뒤에 두면 룬 위에서는 스크롤이 안 됐다.
     attachDragScroll(this.scene, { owner: content, root: body, bounds: () => maskShape.getBounds(), onDelta: move });
+    addScrollHint(this.scene, layer, { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height, owner: content, read: () => ({ offset, min: metrics.minY }) });
   }
 
   /**

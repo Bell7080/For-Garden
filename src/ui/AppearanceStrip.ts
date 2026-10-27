@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
 import { audioManager } from "../managers/AudioManager";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t } from "../i18n";
@@ -174,6 +175,7 @@ export class AppearanceStrip {
     this.installMask(body, view);
     entries.forEach((entry, index) => this.addCard(entry, index));
     this.installDrag(body);
+    addScrollHint(this.scene, body, { axis: "x", x: (view.left + view.right) / 2, y: layout.strip.y, width: view.right - view.left, height: 0, owner: this.rail, read: () => ({ offset: this.offset, min: appearanceStripMinX(this.entries.length) }) });
     this.paint();
   }
 

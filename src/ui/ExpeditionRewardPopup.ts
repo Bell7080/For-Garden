@@ -2,6 +2,7 @@ import { notificationManager } from "../managers/NotificationManager";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { hasRemoteState } from "../api/resultState";
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type ExpeditionRewardStageDto, type GameApi } from "../api/contracts";
@@ -216,6 +217,7 @@ export class ExpeditionRewardPopup {
     this.ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: sync });
     sync();
     if (maxScroll <= 0) return;
+    addScrollHint(this.scene, parent, { x: 0, y: viewTop + view / 2, width: VIEW.width, height: view, owner: track, read: () => ({ offset: this.scrollY - maxScroll, min: -maxScroll }) });
 
     const scrollTo = (value: number): void => {
       this.scrollY = Phaser.Math.Clamp(value, 0, maxScroll);

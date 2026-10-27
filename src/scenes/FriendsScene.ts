@@ -37,6 +37,7 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { SortControl } from "../ui/SortControl";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
@@ -152,6 +153,7 @@ export class FriendsScene extends Phaser.Scene {
     void this.reload();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: (S.list.top + S.list.bottom) / 2, width: BASE_WIDTH, height: S.list.bottom - S.list.top, depth: 45, read: () => ({ offset: this.scrollOffset, min: this.minScroll }) });
     playSceneEntrance(this);
     showContentIntro(this, "friends");
   }

@@ -1,5 +1,6 @@
 import { formatStorePrice } from "../core/storePrice";
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
 import type { GameApi, ProductDto, ProgressPassDto, ProgressPassMilestoneDto } from "../api/contracts";
 import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
 import { runPlatformPurchase } from "../api/platformPurchase";
@@ -344,6 +345,7 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
     scene.input.off(Phaser.Input.Events.POINTER_WHEEL, onWheel);
     tweens.forEach((tween) => tween.remove());
   });
+  addScrollHint(scene, frame, { x: 0, y: view.height / 2, width: half * 2, height: view.height, owner: frame, read: () => ({ offset: scroll, min }) });
   return {
     content,
     addRow: (row) => { rows.push(row); content.add(row); },

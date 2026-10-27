@@ -11,6 +11,7 @@ import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
@@ -118,6 +119,7 @@ export class MailPopup {
       const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setVisible(false);
       attachDragScroll(this.scene, { owner: drag, root: body, bounds: () => drag.getBounds(), onDelta: (dy) => this.moveScroll(dy) });
       body.add(drag);
+      addScrollHint(this.scene, body, { x: 0, y: (viewport.top + viewport.bottom) / 2, width: viewport.width, height: viewHeight, owner: drag, read: () => ({ offset: this.scroll, min: Number(this.content?.getData("minScroll") ?? 0) }) });
     }
     if (this.mask) content.setMask(this.mask);
     content.setData("minScroll", minScroll);

@@ -37,6 +37,7 @@ import {
 } from "../ui/relicGridLayout";
 import { openElementChartPopup } from "../ui/affinityPopups";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { consumeSceneEntry } from "./sceneEntry";
 import { getRelic } from "../data/relics";
 import {
@@ -219,6 +220,7 @@ export class RelicsScene extends Phaser.Scene {
     const nav = new BottomNav(this, "relics");
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: (VIEWPORT_TOP + VIEWPORT_BOTTOM) / 2, width: BASE_WIDTH, height: VIEWPORT_BOTTOM - VIEWPORT_TOP, depth: 45, read: () => ({ offset: this.content.y, min: this.minScrollY }) });
     playSceneEntrance(this);
     // 강해지는 길로 들어왔으면 그 렐릭의 정보창이 곧장 열린다 — 도감에서 다시 찾지 않는다.
     const openId = this.pendingOpenRelicId;

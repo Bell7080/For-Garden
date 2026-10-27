@@ -77,6 +77,7 @@ import { powerSavingPolicy } from "../core/settings";
 import { LobbyAtmosphere } from "../ui/LobbyAtmosphere";
 import { TRANSITION } from "../core/screenTransition";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
@@ -731,6 +732,7 @@ export class LobbyScene extends Phaser.Scene {
       content.setMask(shapeClipMask(this, body, viewShape));
       const bottom = Math.max(...entries.map((entry) => entry.y + entry.height / 2));
       this.sortieScroll = { y: 0, min: Math.min(0, view.viewBottom - view.bottomPad - bottom), dragStart: undefined, dragOrigin: 0, moved: 0 };
+      addScrollHint(this, body, { x: 0, y: (view.viewTop + view.viewBottom) / 2, width: panel.width, height: view.viewBottom - view.viewTop, owner: content, read: () => ({ offset: this.sortieScroll.y, min: this.sortieScroll.min }) });
       this.sortieSdSpots = [];
       entries.forEach((entry) => {
         const x = entry.x ?? 0;

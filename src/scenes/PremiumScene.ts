@@ -49,6 +49,7 @@ import { formatStorePrice } from "../core/storePrice";
 import { addListPrice, addPremiumValueBadges } from "../ui/premiumValueBadge";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { addClippedHit } from "../ui/clippedHit";
 import { UI_ICON } from "../ui/icons";
@@ -138,6 +139,8 @@ export class PremiumScene extends Phaser.Scene {
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    const premiumView = premiumGridViewport();
+    addScrollHint(this, undefined, { x: (premiumView.left + premiumView.right) / 2, y: (premiumView.top + premiumView.bottom) / 2, width: premiumView.right - premiumView.left, height: premiumView.bottom - premiumView.top, depth: 45, read: () => ({ offset: this.content?.y ?? 0, min: this.minScrollY }) });
     playSceneEntrance(this);
     showContentIntro(this, "premium");
   }

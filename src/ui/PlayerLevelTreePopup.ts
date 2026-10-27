@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
 import { t } from "../i18n";
 import { PLAYER_LEVEL_UP_REWARD } from "../core/playerLevel";
 import { findItem } from "../data/items";
@@ -188,6 +189,8 @@ export class PlayerLevelTreePopup {
     sync();
     const maxScroll = Math.max(0, height - view);
     if (maxScroll <= 0) return;
+    // 길은 아래에서 위로 뻗는다 — 창 위로 더 남았으면 위 꺾쇠, 아래가 남았으면 아래 꺾쇠.
+    addScrollHint(this.scene, parent, { x: 0, y: viewTop + view / 2, width, height: view, owner: track, read: () => ({ offset: this.scrollY - maxScroll, min: -maxScroll }) });
     const scrollTo = (value: number): void => { this.scrollY = Phaser.Math.Clamp(value, 0, maxScroll); track.setY(this.scrollY); };
     const inside = (pointer: Phaser.Input.Pointer): boolean => {
       const matrix = parent.getWorldTransformMatrix();

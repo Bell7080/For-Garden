@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { RuneInstance } from "../core/runes";
 import { session } from "../state/session";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -62,6 +63,8 @@ export function mountRunePickerGrid(
     owner: drag, root: frame, bounds: () => drag.getBounds(),
     onDelta: (dy) => applyScroll(scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
   });
+
+  addScrollHint(scene, frame, { x: 0, y: viewHeight / 2, width: half * 2, height: viewHeight, owner: frame, read: () => ({ offset: scroll, min: minScroll }) });
 
   let controls: RuneListControls | undefined;
   const paint = (): void => {

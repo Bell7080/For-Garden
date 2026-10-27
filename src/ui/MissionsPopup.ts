@@ -14,6 +14,7 @@ import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -167,6 +168,7 @@ export class MissionsPopup {
       owner: drag, root: frame, bounds: () => drag.getBounds(),
       onDelta: (dy) => this.applyScroll(this.scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
     });
+    addScrollHint(this.scene, frame, { x: 0, y: viewHeight / 2, width: half * 2, height: viewHeight, owner: frame, read: () => ({ offset: this.scroll, min: this.minScroll }) });
     return content;
   }
 

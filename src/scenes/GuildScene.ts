@@ -59,6 +59,7 @@ import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { addSideShopButton } from "../ui/sideShop";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
@@ -1180,6 +1181,7 @@ export class GuildScene extends Phaser.Scene {
     this.minScroll = guildMinScroll(count, this.listBottom);
     this.scrollOffset = keep ? Phaser.Math.Clamp(this.scrollOffset, this.minScroll, 0) : 0;
     list.y = S.body.top + this.scrollOffset;
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: S.body.top + viewport / 2, width: BASE_WIDTH, height: viewport, depth: 45, owner: list, read: () => ({ offset: this.scrollOffset, min: this.minScroll }) });
   }
 
   private bindScroll(): void {

@@ -38,6 +38,7 @@ import { couponApi } from "../managers/CouponManager";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 import { attachDragScroll } from "../ui/dragScroll";
+import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 
 /** 행이 흐르는 창 — 마스크와 입력 창이 같은 사각형을 읽는다. */
@@ -114,6 +115,7 @@ export class SettingsScene extends Phaser.Scene {
     const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setDepth(-1);
     // 행 위에서 시작한 손도 내려가야 한다. 끌기 면이 행 뒤에 있으면 행(슬라이더 제외)에서는 스크롤이 시작되지 않았다.
     attachDragScroll(this, { owner: zone, bounds: () => zone.getBounds(), wheelFactor: 1, onDelta: (dy) => this.scrollTo(this.scrollY + dy) });
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: SETTINGS_LIST_WINDOW.top + SETTINGS_LIST_WINDOW.height / 2, width: SETTINGS_LIST_WINDOW.width, height: SETTINGS_LIST_WINDOW.height, owner: zone, depth: 25, read: () => ({ offset: this.scrollY, min: Math.min(0, 1370 - Number(this.content.getData("height") || 0)) }) });
     addBackButton(this, () => this.close()).setDepth(30);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.

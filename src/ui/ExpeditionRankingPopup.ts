@@ -17,6 +17,7 @@ import {
 } from "./expeditionRankingLayout";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 
 /** 서버 주차 스냅샷만 사용해 준비와 결과 화면이 공유하는 원정 기록판을 그린다. */
 export class ExpeditionRankingPopup {
@@ -112,6 +113,7 @@ export class ExpeditionRankingPopup {
     const hit = this.scene.add.rectangle(0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, 0xffffff, 0).setVisible(false);
     attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
+    addScrollHint(this.scene, content, { x: 0, y: metrics.viewportCenterY, width: RANKING_LIST.rowWidth, height: metrics.viewportHeight, owner: hit, read: () => ({ offset, min: metrics.minY }) });
   }
 
   /**

@@ -447,6 +447,7 @@ export function openRunePopup(scene: Phaser.Scene, popups: PopupLayer, options: 
       height: panel.wallet.height,
       color: "#ffdf9a",
       parent: body,
+      rollKey: "rune-popup:gold",
     });
     let batchAction: Button | undefined;
     /** 이번 그림에서 비어 있는 칸들. 누른 순간 그 자리에 예고를 번지게 한다. */

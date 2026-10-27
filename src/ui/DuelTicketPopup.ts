@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { attachRoll } from "./RollingValue";
 import { t } from "../i18n";
 import type { AdPresentationResult, DuelStatusResponse, GameApi } from "../api/contracts";
 import { DUEL_DAILY_ATTEMPTS, DUEL_EXTRA_ATTEMPT_PRICES } from "../core/duelArena";
@@ -91,8 +92,8 @@ export function openDuelTicketPopup(scene: Phaser.Scene, popups: PopupLayer, api
     view.add(drawLayer(scene, 0, LAYOUT.hero.y, panelShape(LAYOUT.hero.width, LAYOUT.hero.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
     const stack = heroStack(LAYOUT.hero.y, true);
     addFramedIcon(scene, view, 0, stack.frameY, LAYOUT.frameSize, TICKET_ICON, { plain: true });
-    view.add(scene.add.text(0, stack.valueY, `${current.attemptsLeft.toLocaleString()} / ${DUEL_DAILY_ATTEMPTS}`, textStyle({ role: "display", size: 52, color: current.attemptsLeft > 0 ? TONE.value : COLOR.dangerText }))
-      .setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true));
+    view.add(attachRoll(scene.add.text(0, stack.valueY, `${current.attemptsLeft.toLocaleString()} / ${DUEL_DAILY_ATTEMPTS}`, textStyle({ role: "display", size: 52, color: current.attemptsLeft > 0 ? TONE.value : COLOR.dangerText }))
+      .setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: "duel-ticket-popup:attempts" }));
     if (stack.timerY !== undefined) view.add(scene.add.text(0, stack.timerY, t("duel.ticketPopup.reset", { time: remainingDetail(nextUtcMidnight(current.serverTime)), count: DUEL_DAILY_ATTEMPTS }), textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
     view.add(addSectionTitle(scene, -LAYOUT.hero.width / 2, LAYOUT.rechargeTitleY, t("stamina.recharge"), { size: 24 }));

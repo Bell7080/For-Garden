@@ -1,4 +1,5 @@
 import { audioManager } from "../managers/AudioManager";
+import { attachRoll } from "./RollingValue";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
@@ -244,6 +245,7 @@ function feedCostRow(
   width: number,
   height: number,
   size: number,
+  rollKey?: string,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x1a1408, alpha: 0.66, edge: FEED_AMBER, edgeAlpha: 0.22 }));
@@ -261,6 +263,8 @@ function feedCostRow(
   // 값이 바뀌면 폭도 바뀌므로 다시 부른다. 덩어리의 왼쪽 끝은 아이콘 반쪽이다.
   const layout = (): void => { group.setX(-(gap + text.width) / 2); };
   layout();
+  // 보유 수가 바뀌면 굴러 가고, 폭이 변하는 동안 덩어리를 계속 가운데에 세운다.
+  attachRoll(text, { memoryKey: rollKey, onChange: layout });
   return { container, text, layout };
 }
 /**
@@ -807,7 +811,7 @@ export class InfoManager {
     container.add([off, on]);
     const label = this.scene.add.text(0, -height / 2 + 22, t("info.feed"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     container.add(label);
-    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
+    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36, "info-feed:button");
     this.feedCost = row.text;
     this.feedCostLayout = row.layout;
     container.add(row.container);
@@ -1238,7 +1242,7 @@ export class InfoManager {
       option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
       option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28);
+      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28, "info-feed-popup:cheesecake");
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();

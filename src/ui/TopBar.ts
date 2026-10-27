@@ -126,9 +126,9 @@ export class TopBar {
   private buildSlot(scene: Phaser.Scene, cx: number, cy: number, slot: CurrencySlot, options: TopBarOptions): Phaser.GameObjects.Text {
     // 스테미나·도전권은 한 칸에 두 수(현재/최대)를 적으므로 글자를 한 뼘 줄인다.
     const valueRatio = slot.key === "stamina" || slot.key === "duelTicket" ? 0.32 : undefined;
-    if (slot.key === "duelTicket") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, valueRatio, onPress: options.onDuelTicket });
-    if (slot.key === "guildCoin") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color });
-    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: options.onCurrency, valueRatio });
+    if (slot.key === "duelTicket") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, valueRatio, onPress: options.onDuelTicket, rollKey: "topbar:duelTicket" });
+    if (slot.key === "guildCoin") return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, rollKey: "topbar:guildCoin" });
+    return addCurrencyChip(scene, cx, cy, slot.icon, { color: slot.color, currency: slot.key, onClick: options.onCurrency, valueRatio, rollKey: `topbar:${slot.key}` });
   }
 
   /** 왼쪽 위 플레이어 칩. 아바타가 없을 때만 표시 이름 머리글자를 넣는다. */

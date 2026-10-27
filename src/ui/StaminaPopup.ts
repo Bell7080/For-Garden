@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { attachRoll } from "./RollingValue";
 import { t } from "../i18n";
 import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
 import type { AdPresentationResult, GameApi, StaminaRechargeStatusDto } from "../api/contracts";
@@ -107,7 +108,7 @@ export class StaminaPopup {
     const stack = heroStack(LAYOUT.hero.y, timer !== undefined);
     // 이미 스테미나 창이라 눌러도 열 창이 없다.
     addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina, { plain: true });
-    view.add(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true));
+    view.add(attachRoll(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: "stamina-popup:stamina" }));
     if (timer && stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
     this.paintRecharge(view, full);

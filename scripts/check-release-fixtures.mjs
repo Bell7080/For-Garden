@@ -25,6 +25,7 @@ try {
           export {normalizeDuelState} from './src/core/duelState';
           export {duelSeasonId} from './src/core/duelArena';
           export {PRODUCTS} from './src/data/shopCatalog';
+          export {premiumStatusOf} from './src/ui/premiumStatus';
           export {EXPEDITION_BEST_SCORE_REWARD_STAGES} from './src/data/expedition';
           export {displayRankingEntries} from './src/ui/expeditionRankingLayout';`,
         resolveDir: process.cwd(),
@@ -219,6 +220,11 @@ try {
       else await assert.rejects(() => placeholderClaim, error => error.code === "AD_TOKEN_INVALID");
       const catalog = await server.getProducts("premium");
       assert.ok(catalog.products.filter(p => p.acquisition.kind === "platform_payment").every(p => !p.purchasable));
+      for (const product of catalog.products.filter(p => p.acquisition.kind === "platform_payment")) {
+        assert.ok(product.remaining > 0, `${product.id}: a new account retains its purchase limit`);
+        assert.equal(module.premiumStatusOf(product), undefined, `${product.id}: payment unavailable must not mean purchased or sold out`);
+        assert.ok(product.disabledReason, `${product.id}: preserve the payment unavailable explanation`);
+      }
       assert.ok((await server.getAdOperationsConfig()).slots.every(slot => slot.enabled === module.PLACEHOLDER_AD_ENABLED), "ad slots follow the pre-release placeholder flag");
       const paidProduct = catalog.products.find(p => p.acquisition.kind === "platform_payment");
       assert.ok(paidProduct);

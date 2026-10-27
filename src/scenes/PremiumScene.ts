@@ -213,9 +213,10 @@ export class PremiumScene extends Phaser.Scene {
     const { x, y } = premiumCardSpot(index, kind);
     const card = this.add.container(x, y);
     const action = productActionModel(product.acquisition, { remaining: product.remaining, available: product.purchasable });
+    const status = premiumStatusOf(product);
     const subscribed = product.subscription !== undefined;
     // 이용 중인 구독은 살 수 없지만 소진된 상품이 아니다 — 흐리게 가라앉히지 않고 테두리가 맥동한다.
-    const soldOut = !product.purchasable && !subscribed;
+    const soldOut = status !== undefined && !subscribed;
     if (kind === "grid") {
       paintShowcaseCard(this, card, { width, height, accent: soldOut ? COLOR.inkDimHex : premiumCardTone(product), dim: soldOut, railX: -width / 2 + 34, stageY: PREMIUM_CARD.frameY + PREMIUM_CARD.frame / 2 });
     } else {
@@ -232,7 +233,6 @@ export class PremiumScene extends Phaser.Scene {
     if (subscribed) this.addActivePulse(card, width, height, premiumCardTone(product));
     this.content?.add(card);
     // 상태 딱지는 흐려진 카드의 알파를 물려받지 않도록 카드 곁에 따로 붙인다.
-    const status = premiumStatusOf(product);
     const stickerKey = `${product.id}:${status ?? ""}`;
     if (status && this.content) addStatusSticker(this, this.content, x, y + (kind === "grid" ? -70 : -10), t(`shop.premium.sticker.${status}`), STICKER_TONE[status], stickerKey);
     else forgetStatusStickers(product.id);

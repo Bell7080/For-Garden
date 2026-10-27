@@ -254,6 +254,8 @@ export const BATTLE_FIELD_BACKGROUND = {
   raid: BACKGROUND.raidField,
   duel: BACKGROUND.duelField,
   ancient: BACKGROUND.ancientField,
+  // 수호전은 지평선까지 이어진 길이 있는 원화라야 무리가 위에서 몰려오는 것이 읽힌다.
+  guildGuard: BACKGROUND.expeditionField,
 } as const;
 
 /**

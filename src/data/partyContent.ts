@@ -7,6 +7,9 @@ import { isRaidDifficulty, type RaidDifficulty } from "./raid";
 import { getRelic } from "./relics";
 import { getStageEnemies, stageEnemyGrowth, stageEnemyRole } from "./stages";
 import { duelGrownStats } from "../core/duelArena";
+import { GUILD_GUARD_ELEMENTS } from "../core/guildPages";
+import type { Element } from "../core/types";
+import { guildGuardRoster } from "./guildGuard";
 
 /**
  * 편성 화면이 **어느 콘텐츠의 편성인가**.
@@ -38,7 +41,9 @@ export type PartyContent =
   /** 결투 공격 — 위에 상대 방어덱이 서고, 전투 시작이 도전권 하나를 쓴다. 시작 편성은 지난 공격덱이다. */
   | { content: "duel"; opponent: DuelPartyOpponent; attack: readonly string[] }
   /** 결투 방어덱 — 위에 적이 없고, 저장이 곧 게시다. 가릴 렐릭의 순서도 여기서 고른다. */
-  | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[] };
+  | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[] }
+  /** 길드 수호전 — 위에 적이 없고(웨이브로 몰려온다) 여섯 칸 두 줄이다. 그날의 적 속성을 함께 든다. */
+  | { content: "guildGuard"; element: Element };
 
 const stringIds = (value: unknown, limit: number): string[] =>
   Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, limit) : [];
@@ -60,7 +65,7 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string }>;
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -68,6 +73,9 @@ export function normalizePartyContent(input: unknown): PartyContent {
   if (data.content === "duelDefense") {
     const defense = stringIds(data.defense, 3);
     return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2) };
+  }
+  if (data.content === "guildGuard" && (GUILD_GUARD_ELEMENTS as readonly string[]).includes(data.element ?? "")) {
+    return { content: "guildGuard", element: data.element as Element };
   }
   // 레이드는 **어느 판인가**까지 있어야 한다 — 판 ID가 빠진 진입은 어느 체력을 깎을지 모른다.
   if (data.content === "raid" && typeof data.raidId === "string" && typeof data.bossRelicId === "string" && isRaidDifficulty(data.difficulty)) {
@@ -130,6 +138,11 @@ export interface PartyPreview {
  */
 export function partyPreview(content: PartyContent, stage: BattleStageDef): PartyPreview {
   if (content.content === "duelDefense") return { shown: [], all: [], role: "normal" };
+  // 수호전은 위에 세울 적이 없다 — 그날 속성의 명단이 자동 배치의 상성 방향만 정한다.
+  if (content.content === "guildGuard") {
+    const roster = guildGuardRoster(content.element);
+    return { shown: [], all: [...roster.grunts, ...roster.elites], role: "swarm" };
+  }
   if (content.content === "duel") {
     // 보이는 칸은 입장이 세울 것과 같은 성장(`duelGrownStats`)으로 선다. 가려진 칸은 상성 계산에도 들지 않는다.
     const shown = content.opponent.units.map((unit) => {

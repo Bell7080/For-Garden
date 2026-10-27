@@ -6,8 +6,12 @@ import { guildApi } from "../api/guildApi";
 import { guildQaClockShift } from "../api/guildQa";
 import {
   GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMe, type GuildMemberView, type GuildMembersResponse,
-  type GuildStateResponse, type GuildSummary,
+  type GuildStateResponse, type GuildSummary, type GuildGuardBoard,
 } from "../api/guildContracts";
+import type { GuildGuardStatusResponse } from "../api/contracts";
+import { GUILD_GUARD } from "../core/guildGuard";
+import { Button } from "../ui/Button";
+import { consumeSceneEntry } from "./sceneEntry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
   GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NOTICE_MAX,
@@ -62,6 +66,15 @@ import { GUILD_COIN_TEXT } from "../ui/topBarSlots";
 import { COLOR, textStyle } from "../ui/theme";
 
 type GuildTab = "info" | "members";
+type GuardTab = "members" | "guilds";
+const GUARD_TABS = [
+  { key: "members", labelKey: "guild.guard.tab.members" },
+  { key: "guilds", labelKey: "guild.guard.tab.guilds" },
+] as const;
+/** 수호전 순위 줄 안의 자리 — 줄 가운데가 0이다. 등수가 맨 왼쪽, 그 오른쪽에 얼굴·뱃지가 선다. */
+const GUARD_ROW = { rankX: -420, faceX: -320, faceSize: 96, textX: -250 } as const;
+/** 수호전 쪽 위의 두 줄 — 그날 속성 · 초기화 시각, 남은 도전 · 오늘 최고와 출격 버튼. */
+const GUARD_HEAD = { start: { width: 280, height: 80 } } as const;
 const PAGES = [
   { key: "info", labelKey: "guild.page.info" },
   { key: "war", labelKey: "guild.page.war" },
@@ -117,6 +130,11 @@ export class GuildScene extends Phaser.Scene {
   private query = "";
   private page: GuildPage = "info";
   private tab: GuildTab = "info";
+  private guardTab: GuardTab = "members";
+  private guardBoard?: GuildGuardBoard;
+  private guardStatus?: GuildGuardStatusResponse;
+  /** 들어올 때 열 큰 탭 — 수호전 결과판에서 돌아오면 수호전 쪽이 바로 선다. */
+  private entryPage: GuildPage = "info";
   /** 길드에 있으면서 다른 길드를 둘러보는 중. 큰 탭을 감추고 목록만 세운다. */
   private browsing = false;
   /** 이번 진입에서 출석판을 이미 띄웠는가 — 같은 날 다시 그려도 두 번 뜨지 않는다. */
@@ -141,9 +159,15 @@ export class GuildScene extends Phaser.Scene {
 
   constructor() { super("guild"); }
 
+  init(data?: { page?: unknown }): void {
+    this.entryPage = data?.page === "guard" || data?.page === "war" ? data.page : "info";
+    consumeSceneEntry(this);
+  }
+
   create(): void {
     setDebugScene("guild");
-    this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = "info"; this.tab = "info";
+    this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = this.entryPage; this.tab = "info";
+    this.guardTab = "members"; this.guardBoard = undefined; this.guardStatus = undefined;
     this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
     this.ticker = undefined;
     addSceneBackground(this, BACKGROUND.lobby);
@@ -204,6 +228,7 @@ export class GuildScene extends Phaser.Scene {
       if (!this.state.guild) this.browsing = false;
       if (!this.state.guild || this.browsing) this.browse = (await guildApi.searchGuilds(this.query)).guilds;
       else if (this.page === "info" && this.tab === "members") this.members = await guildApi.getMembers();
+      else if (this.page === "guard") [this.guardBoard, this.guardStatus] = await Promise.all([guildApi.getGuard(), gameApi.getGuildGuard()]);
       if (this.state.guild && !this.stampChecked) {
         this.stampChecked = true;
         attendance = await guildApi.getAttendance();
@@ -869,14 +894,94 @@ export class GuildScene extends Phaser.Scene {
     }));
   }
 
+  /**
+   * 수호전 쪽 — 위 두 줄에 그날 몰려올 적의 속성·초기화 시각, 남은 도전·오늘 최고와 출격 버튼이 서고, 아래 목록이
+   * 길드 안 순위(오늘 최고 점수) 또는 길드 순위(길드원 최고 점수의 합)를 흐른다. 작은 탭이 두 목록을 가른다.
+   */
   private paintGuard(): void {
-    const v = this.paintEventPlate(t("guild.page.guard"));
-    const element = guildGuardElement(this.now);
-    v.add(new AffinityBadge(this, S.side + 84, P.phase + 6, ELEMENT_ICON[element], 84));
-    this.label(v, S.side + 150, P.phase, t("guild.guard.boss", { element: t(`element.${element}`) }), { role: "display", size: 40, color: COLOR.accentText });
-    const timer = this.label(v, S.side + 48, P.timer, "", { role: "emphasis", size: 28, color: COLOR.ink });
+    this.listBottom = S.body.bottom;
+    const status = this.guardStatus, board = this.guardBoard;
+    const element = status?.element ?? guildGuardElement(this.now);
+    this.controls.add(new AffinityBadge(this, S.side + 30, S.summary.y, ELEMENT_ICON[element as keyof typeof ELEMENT_ICON], 60, 0.7));
+    this.label(this.controls, S.side + 74, S.summary.y, t("guild.guard.today", { element: t(`element.${element}`) }), { role: "display", size: 34, color: COLOR.dangerText });
+    const timer = this.label(this.controls, S.side + S.width, S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
     this.tick(timer, () => t("guild.guard.next", { time: hmText(guildGuardEndsAt(this.now) - this.now) }));
-    [t("guild.guard.rule"), t("guild.guard.reward")].forEach((line, index) => this.label(v, S.side + 48, P.lines.y + index * P.lines.gap, line, { role: "body", size: 30, color: COLOR.ink }));
+    if (status) {
+      this.label(this.controls, S.side, S.controls.y, t("guild.guard.status", { left: status.attemptsLeft, total: GUILD_GUARD.attemptsPerDay, best: status.best.toLocaleString() }), { role: "emphasis", size: 28, color: COLOR.ink });
+      const { width, height } = GUARD_HEAD.start;
+      const start = new Button(this, S.side + S.width - width / 2, S.controls.y, {
+        width, height, label: t("guild.guard.start"), fontSize: 32, variant: "primary",
+        onClick: () => {
+          if (this.busy || status.attemptsLeft <= 0) return;
+          startScene(this, "party", { content: "guildGuard", element });
+        },
+      });
+      start.setEnabled(status.attemptsLeft > 0);
+      this.controls.add(start);
+    }
+    GUARD_TABS.forEach(({ key, labelKey }, index) => {
+      addCategoryTab(this, this.tabRow, {
+        x: guildTabX(index), y: S.tabs.y, width: S.tabs.width, height: S.tabs.height, label: t(labelKey), selected: this.guardTab === key,
+        onSelect: () => {
+          if (this.guardTab === key || this.busy) return;
+          const from = GUARD_TABS.findIndex((candidate) => candidate.key === this.guardTab);
+          this.guardTab = key;
+          this.view.removeAll(true);
+          this.paintGuardList(false);
+          slideTabPage(this, [this.view], from, index);
+        },
+      });
+    });
+    if (board) this.paintGuardList(false);
+  }
+
+  /** 수호전 순위 목록. 아직 아무도 막지 않은 날은 빈 목록 대신 한 줄 안내만 선다. */
+  private paintGuardList(keep: boolean): void {
+    const board = this.guardBoard;
+    if (!board) return;
+    const rows = this.guardTab === "members" ? board.members : board.guilds;
+    if (rows.length === 0) {
+      this.label(this.view, BASE_WIDTH / 2, S.body.top + 120, t("guild.guard.empty"), { role: "body", size: 30, color: COLOR.inkDim }, [0.5, 0.5]);
+      return;
+    }
+    const mine = this.guardTab === "guilds" && board.mine && !board.guilds.some((entry) => entry.isMine) ? board.mine : undefined;
+    if (mine) this.listBottom = S.body.bottom - S.row.height - S.row.gap;
+    this.mountList(rows.length, keep, (row, index) => {
+      if (this.guardTab === "members") this.paintGuardMemberRow(row, board.members[index]);
+      else this.paintGuardGuildRow(row, board.guilds[index]);
+    });
+    if (mine) {
+      // 내 길드가 위 50길드 밖이면 목록 아래에 붙박아 둔다.
+      const row = this.add.container(BASE_WIDTH / 2, this.listBottom + S.row.gap + S.row.height / 2);
+      this.view.add(row);
+      this.paintGuardGuildRow(row, mine);
+    }
+  }
+
+  private guardRank(row: Phaser.GameObjects.Container, rank: number): void {
+    const medal = rank === 1 ? "#f2c14e" : rank === 2 ? "#d7dde6" : rank === 3 ? "#d19a66" : COLOR.ink;
+    this.label(row, GUARD_ROW.rankX, 0, String(rank), { role: "display", size: rank <= 3 ? 44 : 36, color: medal }, [0.5, 0.5]);
+  }
+
+  private paintGuardMemberRow(row: Phaser.GameObjects.Container, entry: GuildGuardBoard["members"][number]): void {
+    this.plate(row, 0, 0, S.width, S.row.height - 4, entry.isMe ? COLOR.accent : undefined);
+    this.guardRank(row, entry.rank);
+    const relic = RELICS.find((candidate) => candidate.id === entry.avatarRelicId);
+    row.add(new ProfileAvatar(this, GUARD_ROW.faceX, 0, { size: GUARD_ROW.faceSize, frameId: entry.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(entry.name.trim())[0] ?? "?" }));
+    const right = S.width / 2 - 36;
+    row.add(squeezeTextToWidth(this.add.text(GUARD_ROW.textX, -20, entry.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), right - 260 - GUARD_ROW.textX));
+    this.label(row, GUARD_ROW.textX, 28, t("friends.researchLevel", { level: entry.level }), { role: "emphasis", size: 26, color: COLOR.accentText });
+    this.label(row, right, 0, entry.score.toLocaleString(), { role: "display", size: 42, color: COLOR.accentText }, [1, 0.5]);
+  }
+
+  private paintGuardGuildRow(row: Phaser.GameObjects.Container, entry: GuildGuardBoard["guilds"][number]): void {
+    this.plate(row, 0, 0, S.width, S.row.height - 4, entry.isMine ? COLOR.accent : undefined);
+    this.guardRank(row, entry.rank);
+    addGuildBadge(this, row, GUARD_ROW.faceX, 0, entry.badge, GUARD_ROW.faceSize);
+    const right = S.width / 2 - 36;
+    row.add(squeezeTextToWidth(this.add.text(GUARD_ROW.textX, -20, entry.name, textStyle({ role: "display", size: 34 })).setOrigin(0, 0.5), right - 260 - GUARD_ROW.textX));
+    this.label(row, GUARD_ROW.textX, 28, t("guild.levelShort", { level: entry.level }), { role: "emphasis", size: 26, color: COLOR.accentText });
+    this.label(row, right, 0, entry.score.toLocaleString(), { role: "display", size: 42, color: COLOR.accentText }, [1, 0.5]);
   }
 
   /* ── 스크롤 목록 ──────────────────────────────────────────────────────── */

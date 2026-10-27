@@ -13,6 +13,7 @@ import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, Co
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
+import { hordeEntrySpots, type HordeSpec } from "./guildGuard";
 import { restoreCueIntensity, stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -40,6 +41,16 @@ export interface Arena {
 /** 난전에 참가한 한 명. 공용 전투 수치에 실시간 좌표와 행동 상태를 더한다. */
 export interface Fighter extends Combatant {
   id: string;
+  /**
+   * 수호전 웨이브로 들어온 몸이 아직 필드 윗변 위(화면 바깥)에 있다. 그동안만 윗변에 붙잡지 않고
+   * 걸어 내려오게 둔다 — 붙잡으면 바깥에서 몰려오는 그림이 필드 끝에서 툭 생겨나는 그림이 된다.
+   */
+  hordeEntering?: boolean;
+  /** 수호전 처치 점수. 쓰러지면 한 번만 센다(`hordeCounted`). */
+  hordeScore?: number;
+  hordeCounted?: boolean;
+  /** 이 높이보다 위로는 나서지 않는다(수호전 두 줄 진형). */
+  leashTop?: number;
   side: Side;
   /** 전투 입력이 정한 Puppet 표시 배율이다. 전투 수치에는 영향을 주지 않는다. */
   bodyScale: number;
@@ -718,6 +729,25 @@ export interface SkirmishState {
   initialEvents: SkirmishEvent[];
   /** 보스전에서만 존재하는 누적 피해·생존 시간·단계 상태다. 같은 진행기가 함께 갱신한다. */
   boss?: SkirmishBossState;
+  /** 수호전처럼 웨이브가 몰려오는 판에서만 존재한다. */
+  horde?: SkirmishHordeState;
+}
+
+/** 웨이브 몰이의 진행 장부. 화면과 서버 재현이 같은 값을 읽는다. */
+export interface SkirmishHordeState {
+  spec: HordeSpec;
+  /** 다음에 세울 웨이브의 자리(0부터). */
+  nextWave: number;
+  nextWaveAt: number;
+  /** 필드가 빈 시각. 비어 있지 않으면 null. */
+  emptySince: number | null;
+  score: number;
+  kills: number;
+  eliteKills: number;
+  /** 필드에 선 적이 상한에 닿아 무너졌다. */
+  overrun: boolean;
+  /** 새 적 ID의 일련번호. */
+  serial: number;
 }
 
 /**
@@ -784,6 +814,8 @@ export interface SkirmishRelicResult { relicId: string; currentHp: number; alive
 
 export interface CreateSkirmishOptions {
   timeLimitSeconds?: number;
+  /** 웨이브 몰이 판(수호전). 있으면 아군 여섯까지, 적은 비어서 시작할 수 있다. */
+  horde?: HordeSpec;
   /** 공유/확장 체력 콘텐츠의 비례 피해 기준. 없으면 실제 최대 체력을 사용한다. */
   enemyPercentHpBases?: readonly number[];
   playerPositions?: readonly { x: number; y: number }[];
@@ -811,6 +843,8 @@ export interface CreateSkirmishOptions {
 
 /** 씬이 모션·피격 숫자·사망 연출을 붙일 수 있도록 이번 프레임에 일어난 일만 모아 돌려준다. */
 export type SkirmishEvent =
+  /** 수호전 웨이브가 화면 위 바깥에 섰다. 씬은 이 ID들의 SD를 새로 세운다. */
+  | { kind: "hordeWave"; wave: number; level: number; fighterIds: string[] }
   /** 소환수 사건은 언제나 런타임 ID와 성장·정산 주체를 함께 실어 씬이 정의를 역탐색하지 않게 한다. */
   /** 귀속 소환수가 처음 서거나 쓰러진 뒤 다시 설 때 한 번씩 온다. 씬은 좌표만 읽는다. */
   | { kind: "packSummon"; fighterId: string; ownerFighterId: string; x: number; y: number }
@@ -1426,6 +1460,9 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
  */
 export const MAX_ENEMY_COUNT = 25;
 
+/** 수호전 웨이브가 화면 바깥에서 필드로 걸어 들어오는 최소 속도(px/초). */
+const HORDE_ENTRY_SPEED = 150;
+
 /** 한 줄에 서는 적의 수. 다섯을 넘는 무리는 이 폭으로 줄을 나눠 뒤로 쌓는다. */
 const HORDE_ROW = 5;
 /** 무리의 줄 간격. 뒤 줄은 맵 끝 쪽(위)이 아니라 전장 안쪽으로 한 뼘씩 들어선다. */
@@ -1582,13 +1619,14 @@ export function createSkirmish(
   playerBreakthroughs: Readonly<Record<string, number>> = {},
   options: CreateSkirmishOptions = {},
 ): SkirmishState {
-  if (playerDefs.length < 1 || playerDefs.length > 5) throw new RangeError("아군은 1~5기를 지원합니다.");
-  if (enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
+  const playerLimit = options.horde ? 6 : 5;
+  if (playerDefs.length < 1 || playerDefs.length > playerLimit) throw new RangeError(`아군은 1~${playerLimit}기를 지원합니다.`);
+  if (options.horde ? enemyDefs.length > MAX_ENEMY_COUNT : enemyDefs.length < 1 || enemyDefs.length > MAX_ENEMY_COUNT) throw new RangeError(`적은 1~${MAX_ENEMY_COUNT}기를 지원합니다.`);
   if (options.timeLimitSeconds !== undefined && (!Number.isFinite(options.timeLimitSeconds) || options.timeLimitSeconds <= 0 || options.timeLimitSeconds > 3600)) throw new RangeError("Invalid combat time limit");
   if (options.enemyPercentHpBases && (options.enemyPercentHpBases.length !== enemyDefs.length || options.enemyPercentHpBases.some(value => !Number.isFinite(value) || value <= 0))) throw new RangeError("Invalid enemy percent HP bases");
   if (options.boss && (!options.boss.phases.length || options.boss.limitSeconds <= 0)) throw new RangeError("보스 단계와 리미트는 유효해야 합니다.");
   const playerSpots = options.playerPositions ?? spawnSpots(arena, "player", playerDefs.length);
-  const enemySpots = options.enemyPositions ?? spawnSpots(arena, "enemy", enemyDefs.length);
+  const enemySpots = options.enemyPositions ?? (enemyDefs.length === 0 ? [] : spawnSpots(arena, "enemy", enemyDefs.length));
   for (const [spots, count] of [[options.playerPositions, playerDefs.length], [options.enemyPositions, enemyDefs.length]] as const) {
     if (spots && (spots.length !== count || spots.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < arena.left || p.x > arena.right || p.y < arena.top || p.y > arena.bottom))) throw new RangeError("Invalid starting positions");
   }
@@ -1636,6 +1674,7 @@ export function createSkirmish(
     augmentEffects: options.augmentEffects ?? [],
     enemyAugmentEffects: options.enemyAugmentEffects ?? [],
     initialEvents: [],
+    horde: options.horde ? { spec: options.horde, nextWave: 0, nextWaveAt: options.horde.firstWaveAt, emptySince: null, score: 0, kills: 0, eliteKills: 0, overrun: false, serial: enemies.length } : undefined,
     boss: options.boss ? { fighterId: bossFighterId, score: 0, survivedFor: 0, phaseIndex: 0, limitReached: false, phases: options.boss.phases, limitSeconds: options.boss.limitSeconds, damageRemainder: 0, tideWarning: false, endsOnKill: options.boss.endsOnKill === true, ...(options.boss.seasonHp !== undefined ? { seasonHp: Math.max(1, Math.round(options.boss.seasonHp)) } : {}) } : undefined,
   };
   // 지휘형 은신과 무리 치명타는 시간이 아니라 두 늑대의 생존 조건이 소유한다.
@@ -5933,7 +5972,7 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   }
   const current = fighter.targetId ? findFighter(state, fighter.targetId) : undefined;
   const keepable = current !== undefined && current.side === wanted && current.id !== fighter.id
-    && isFighterAlive(current) && current.stealthFor <= 0;
+    && isFighterAlive(current) && current.stealthFor <= 0 && !current.hordeEntering;
   if (keepable && !reconsider) return current;
 
   /*
@@ -5957,7 +5996,8 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   let bestScore = Infinity;
   for (const other of state.fighters) {
     // 은신자는 단일 대상 기술의 중심이 될 수 없다. 다른 중심의 범위 피해 판정에서는 별도로 포함한다.
-    if (other.side !== wanted || other.id === fighter.id || !isFighterAlive(other) || other.stealthFor > 0) continue;
+    // 화면 바깥에서 걸어 내려오는 웨이브 몸도 아직 노릴 수 없다 — 필드에 들어선 뒤부터다.
+    if (other.side !== wanted || other.id === fighter.id || !isFighterAlive(other) || other.stealthFor > 0 || other.hordeEntering) continue;
     const crowd = state.fighters.filter(
       (mate) => mate.side === fighter.side && mate.id !== fighter.id && isFighterAlive(mate) && mate.targetId === other.id,
     ).length;
@@ -6998,6 +7038,8 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
  * 졌다"가 아니라 "버티니까 이겼다"가 된다. 판을 닫는 값이지 승패를 주는 값이 아니다.
  */
 function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
+  // 수호전은 웨이브의 레벨·머릿수가 판을 닫는다 — 데스 카운트까지 얹으면 같은 끝을 두 번 민다.
+  if (state.horde) return;
   const due = deathClockTicksAt(state.elapsed);
   while (state.deathClockTicks < due) {
     state.deathClockTicks += 1;
@@ -8868,7 +8910,14 @@ function separate(state: SkirmishState, dt: number): void {
 function clampToArena(state: SkirmishState): void {
   for (const fighter of state.fighters) {
     fighter.x = Math.min(Math.max(fighter.x, state.arena.left), state.arena.right);
-    fighter.y = Math.min(Math.max(fighter.y, state.arena.top), state.arena.bottom);
+    if (fighter.hordeEntering) {
+      // 바깥에서 걸어 내려오는 중 — 윗변에 닿는 순간부터 다른 몸과 같은 땅을 쓴다.
+      if (fighter.y >= state.arena.top) fighter.hordeEntering = false;
+      fighter.y = Math.min(fighter.y, state.arena.bottom);
+      continue;
+    }
+    const top = Math.max(state.arena.top, fighter.leashTop ?? state.arena.top);
+    fighter.y = Math.min(Math.max(fighter.y, top), state.arena.bottom);
   }
 }
 
@@ -9293,6 +9342,11 @@ function settle(state: SkirmishState, events: SkirmishEvent[]): void {
   syncSeasonBoss(state, events);
   const playersLeft = aliveFighters(state, "player").filter(isPartyFighter).length;
   const enemiesLeft = aliveFighters(state, "enemy").filter(isPartyFighter).length;
+  if (state.horde) {
+    // 웨이브는 끝나지 않는다 — 필드가 비어도 다음 웨이브가 온다. 끝은 전멸과 무너짐뿐이다.
+    if (playersLeft === 0 || state.horde.overrun) state.phase = "defeat";
+    else return;
+  }
   // 불사 보스는 적 HP와 무관하게 아군 전멸만 정상 종료로 인정한다.
   if (state.boss && playersLeft === 0) state.phase = "defeat";
   else if (state.boss && state.boss.endsOnKill && enemiesLeft === 0) state.phase = "victory";
@@ -9575,6 +9629,15 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     if (fighter.knockback) {
       advanceKnockback(fighter, dt, state.arena);
       resolveChainCollision(fighter, state, events);
+      continue;
+    }
+    // 수호전 웨이브가 화면 바깥에서 걸어 내려오는 중 — 필드에 들어서기 전에는 표적을 잡지도 때리지도 않는다.
+    // 바깥에서 쏘는 몸이 생기면 보이지 않는 곳에서 맞는 판이 된다. 들어오는 걸음은 조금 서두른다.
+    if (fighter.hordeEntering) {
+      fighter.targetId = null;
+      fighter.engaged = false;
+      fighter.y += Math.max(HORDE_ENTRY_SPEED, fighter.def.stats.moveSpeed * 1.5) * dt;
+      fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       continue;
     }
     if (fighter.stunnedFor > 0 || fighter.staggeredFor > 0 || fighter.frozen) {
@@ -10083,6 +10146,48 @@ function fireUltimateCore(
 }
 
 /**
+ * 웨이브 몰이 한 조각 — 쓰러진 웨이브 몸의 점수를 거두고, 때가 된 웨이브를 화면 위 바깥에 세우고,
+ * 필드에 선 적이 상한에 닿았는지 본다. 난수를 쓰지 않으므로 재현 난수열이 밀리지 않는다.
+ */
+function advanceHorde(state: SkirmishState, events: SkirmishEvent[]): void {
+  const horde = state.horde;
+  if (!horde) return;
+  for (const fighter of state.fighters) {
+    if (fighter.side !== "enemy" || fighter.hordeScore === undefined || fighter.hordeCounted || isFighterAlive(fighter)) continue;
+    fighter.hordeCounted = true;
+    horde.score += fighter.hordeScore;
+    horde.kills += 1;
+    if (fighter.def.encounterRole === "elite") horde.eliteKills += 1;
+  }
+  const alive = aliveFighters(state, "enemy").filter(isPartyFighter).length;
+  if (alive === 0) horde.emptySince ??= state.elapsed;
+  else horde.emptySince = null;
+  const pulledIn = horde.emptySince !== null && state.elapsed - horde.emptySince >= horde.spec.emptyFieldDelay;
+  if (horde.nextWave < horde.spec.waves.length && (state.elapsed >= horde.nextWaveAt || pulledIn)) {
+    const wave = horde.spec.waves[horde.nextWave];
+    const spots = hordeEntrySpots(state.arena, horde.spec.entryY, wave.units.length, wave.index);
+    const ids: string[] = [];
+    wave.units.forEach((unit, i) => {
+      const fighter = makeFighter(unit.def, "enemy", horde.serial, spots[i].x, spots[i].y, 0, 0, unit.bodyScale, state.enemyAugmentEffects ?? []);
+      horde.serial += 1;
+      fighter.hordeEntering = true;
+      fighter.hordeScore = unit.score;
+      state.fighters.push(fighter);
+      ids.push(fighter.id);
+    });
+    horde.nextWave += 1;
+    horde.nextWaveAt = state.elapsed + horde.spec.waveIntervalSeconds;
+    horde.emptySince = null;
+    events.push({ kind: "hordeWave", wave: wave.index, level: wave.level, fighterIds: ids });
+  }
+  // 아직 화면 바깥에서 걸어 내려오는 몸은 세지 않는다 — 방어선을 누르는 것은 필드에 들어선 무리다.
+  if (aliveFighters(state, "enemy").filter((fighter) => isPartyFighter(fighter) && !fighter.hordeEntering).length >= horde.spec.overrunCap) {
+    horde.overrun = true;
+    settle(state, events);
+  }
+}
+
+/**
  * 시간을 dt초만큼 굴린다.
  *
  * 프레임이 길어져도 한 번에 통째로 적분하지 않고 잘게 나눈다. 그러지 않으면 서로를 지나쳐
@@ -10107,6 +10212,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step, rng, events);
+    if (state.horde && state.phase === "fight") advanceHorde(state, events);
     if (state.automaticUltimates) {
       // 화면의 배속·프레임·컷인 대기열과 무관하게 양쪽이 같은 함수/준비 조건을 쓴다.
       // 소환수는 자기 평타 주기에 발동하는 기존 규칙을 유지한다.
@@ -10145,8 +10251,9 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
   }
   if (state.phase === "fight" && state.timeLimitSeconds !== undefined && state.elapsed >= state.timeLimitSeconds - 1e-8) {
     state.timeLimitReached = true;
-    state.phase = "defeat";
-    events.push({ kind: "finish", phase: "defeat" });
+    // 수호전의 제한 시간은 "버텨냈다"로 닫는다 — 막는 판이라 시간을 넘긴 쪽이 이긴 쪽이다.
+    state.phase = state.horde ? "victory" : "defeat";
+    events.push({ kind: "finish", phase: state.phase });
   }
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.
   for (const fighter of state.fighters) {

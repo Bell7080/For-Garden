@@ -65,6 +65,8 @@ export interface GameSettings {
     dungeonTiers: { bounty: string; cake: string };
     /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
     guildSeen: { war: number; guard: number };
+    /** 수호전 여섯 칸 편성(앞줄 0~2 · 뒷줄 3~5, 빈 칸은 `null`). 마지막으로 출격한 편성을 다시 세운다 — 기기 선호다. */
+    guardFormation: (string | null)[];
     /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
     ancientResetSeen: string;
     /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */

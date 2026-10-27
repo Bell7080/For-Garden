@@ -219,6 +219,18 @@ export const BATTLE_CLOCK_LAYOUT = {
 } as const;
 
 /**
+ * 수호전 머리 — 시계 아래에 처치 점수, 그 아래 한 줄에 웨이브와 필드에 선 적 수. 적이 화면 위 바깥에서
+ * 내려오므로(전장 윗선 600) 머리는 그보다 위에서 끝난다. 필드 수가 상한의 `warnRatio`를 넘으면 붉어진다.
+ */
+export const GUILD_GUARD_BATTLE_HUD = { scoreY: 104, scoreSize: 58, lineY: 178, lineSize: 28, warnRatio: 0.75 } as const;
+
+/**
+ * 수호전 프로필 줄 — 여섯이 한 줄에 서도록 같은 프리팹을 `scale`만큼 줄인다. 칸 너비(178)가 줄인 bounds(378 × 0.46 ≈ 174)보다
+ * 넓어 이웃 카드와 겹치지 않고, 앞줄 셋이 왼쪽 · 뒷줄 셋이 오른쪽으로 편성 칸 순서 그대로 선다.
+ */
+export const GUILD_GUARD_PROFILES = { centerY: 1700, scale: 0.46, centersX: [95, 273, 451, 629, 807, 985] } as const;
+
+/**
  * 레이드 전투의 머리 — **시즌 보스의 남은 체력 → 시계 → 점수** 순으로 위에서 쌓인다.
  *
  * 레이드 화면이 가장 크게 세우는 것이 남은 체력 줄이라, 전투 중에도 같은 줄이 맨 위에 서서

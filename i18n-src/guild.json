@@ -1459,16 +1459,6 @@
     "Benötigt {need}+ Gildenmitglieder · Jetzt {count}",
     "Нужно {need}+ участников гильдии · Сейчас {count}"
   ],
-  "guild.guard.boss": [
-    "今日首领 · {element}属性",
-    "บอสวันนี้ · ธาตุ{element}",
-    "Trùm hôm nay · Hệ {element}",
-    "Bos hari ini · {element}",
-    "Jefe de hoy · {element}",
-    "Chefe de hoje · {element}",
-    "Heutiger Boss · {element}",
-    "Босс дня · {element}"
-  ],
   "guild.guard.next": [
     "距下一场 {time}",
     "รอบถัดไปใน {time}",
@@ -1478,26 +1468,6 @@
     "Próxima rodada em {time}",
     "Nächste Runde in {time}",
     "До следующего раунда {time}"
-  ],
-  "guild.guard.rule": [
-    "每天1次 · 3人队伍2组",
-    "วันละ 1 ครั้ง · ทีม 3 คน 2 ชุด",
-    "1 lần/ngày · 2 đội 3 người",
-    "Sekali sehari · Dua dek 3 orang",
-    "Una vez al día · Dos equipos de 3",
-    "Uma vez por dia · Dois times de 3",
-    "Einmal täglich · Zwei 3er-Decks",
-    "Раз в день · Две команды по 3"
-  ],
-  "guild.guard.reward": [
-    "奖励 · 公会币 · 繁荣度",
-    "รางวัล · เหรียญกิลด์ · ความรุ่งเรือง",
-    "Thưởng · Xu Bang hội · Phồn vinh",
-    "Hadiah · Koin guild · Kemakmuran",
-    "Recompensas · Monedas del gremio · Prosperidad",
-    "Recompensas · Moedas da guilda · Prosperidade",
-    "Belohnungen · Gildenmünzen · Wohlstand",
-    "Награды · Монеты гильдии · Процветание"
   ],
   "guild.ranking.prosperity": [
     "复兴度 {value}",
@@ -1618,5 +1588,145 @@
     "Não foi possível comprar",
     "Kauf fehlgeschlagen",
     "Не удалось купить"
+  ],
+  "guild.guard.today": [
+    "今日之敌 · {element}属性",
+    "ศัตรูวันนี้ · ธาตุ{element}",
+    "Kẻ địch hôm nay · Hệ {element}",
+    "Musuh hari ini · {element}",
+    "Enemigos de hoy · {element}",
+    "Inimigos de hoje · {element}",
+    "Heutige Gegner · {element}",
+    "Враги дня · {element}"
+  ],
+  "guild.guard.status": [
+    "剩余挑战 {left}/{total} · 今日最高 {best}",
+    "ท้าทายเหลือ {left}/{total} · สูงสุดวันนี้ {best}",
+    "Lượt còn {left}/{total} · Cao nhất hôm nay {best}",
+    "Sisa {left}/{total} · Terbaik hari ini {best}",
+    "Intentos {left}/{total} · Mejor de hoy {best}",
+    "Tentativas {left}/{total} · Melhor de hoje {best}",
+    "Versuche {left}/{total} · Heute bestes {best}",
+    "Попытки {left}/{total} · Лучшее за день {best}"
+  ],
+  "guild.guard.start": [
+    "出击",
+    "ออกรบ",
+    "Xuất kích",
+    "Berangkat",
+    "Desplegar",
+    "Avançar",
+    "Einsatz",
+    "В бой"
+  ],
+  "guild.guard.tab.members": [
+    "公会成员排名",
+    "อันดับสมาชิกกิลด์",
+    "Hạng thành viên Bang hội",
+    "Peringkat anggota Guild",
+    "Miembros del Gremio",
+    "Membros da Guilda",
+    "Gildenmitglieder",
+    "Участники Гильдии"
+  ],
+  "guild.guard.tab.guilds": [
+    "公会排名",
+    "อันดับกิลด์",
+    "Hạng Bang hội",
+    "Peringkat Guild",
+    "Ranking de Gremios",
+    "Ranking de Guildas",
+    "Gildenrangliste",
+    "Рейтинг Гильдий"
+  ],
+  "guild.guard.empty": [
+    "今日尚无记录",
+    "วันนี้ยังไม่มีบันทึก",
+    "Hôm nay chưa có kỷ lục",
+    "Belum ada catatan hari ini",
+    "Aún no hay registros hoy",
+    "Ainda não há registros hoje",
+    "Heute noch keine Einträge",
+    "Сегодня записей ещё нет"
+  ],
+  "guild.guard.party.title": [
+    "守护战编队",
+    "จัดทีมศึกพิทักษ์",
+    "Đội hình Thủ hộ chiến",
+    "Formasi Pertahanan",
+    "Formación de Defensa",
+    "Formação da Defesa",
+    "Formation der Verteidigung",
+    "Построение обороны"
+  ],
+  "guild.guard.party.element": [
+    "今日之敌",
+    "ศัตรูวันนี้",
+    "Kẻ địch hôm nay",
+    "Musuh hari ini",
+    "Enemigos de hoy",
+    "Inimigos de hoje",
+    "Heutige Gegner",
+    "Враги дня"
+  ],
+  "guild.guard.party.front": [
+    "前排",
+    "แถวหน้า",
+    "Hàng trước",
+    "Depan",
+    "Frente",
+    "Frente",
+    "Vorne",
+    "Перед"
+  ],
+  "guild.guard.party.back": [
+    "后排",
+    "แถวหลัง",
+    "Hàng sau",
+    "Belakang",
+    "Atrás",
+    "Trás",
+    "Hinten",
+    "Тыл"
+  ],
+  "guild.guard.battle.line": [
+    "第{wave}波 · 场上 {field}/{cap}",
+    "คลื่น {wave} · สนาม {field}/{cap}",
+    "Đợt {wave} · Sân {field}/{cap}",
+    "Gelombang {wave} · Medan {field}/{cap}",
+    "Oleada {wave} · Campo {field}/{cap}",
+    "Onda {wave} · Campo {field}/{cap}",
+    "Welle {wave} · Feld {field}/{cap}",
+    "Волна {wave} · Поле {field}/{cap}"
+  ],
+  "guild.guard.result.footnote": [
+    "{score}分 · 第{wave}波 · 击败 {kills}",
+    "{score} คะแนน · คลื่น {wave} · กำจัด {kills}",
+    "{score} điểm · Đợt {wave} · Hạ {kills}",
+    "{score} poin · Gelombang {wave} · {kills} dikalahkan",
+    "{score} pts · Oleada {wave} · {kills} derrotados",
+    "{score} pts · Onda {wave} · {kills} derrotados",
+    "{score} Pkt. · Welle {wave} · {kills} besiegt",
+    "{score} очк. · Волна {wave} · Побеждено {kills}"
+  ],
+  "guild.error.GUARD_LIMIT": [
+    "今日的守护战挑战已用完",
+    "วันนี้ใช้สิทธิ์ศึกพิทักษ์หมดแล้ว",
+    "Hôm nay đã hết lượt Thủ hộ chiến",
+    "Kesempatan Pertahanan hari ini habis",
+    "No quedan intentos de Defensa hoy",
+    "Sem tentativas de Defesa hoje",
+    "Heute keine Verteidigungsversuche mehr",
+    "Попытки обороны на сегодня закончились"
+  ],
+  "guild.error.GUARD_NOT_ENTERED": [
+    "没有守护战入场记录",
+    "ไม่พบการเข้าศึกพิทักษ์",
+    "Không có lượt vào Thủ hộ chiến",
+    "Tidak ada catatan masuk Pertahanan",
+    "No hay entrada de Defensa",
+    "Nenhuma entrada de Defesa",
+    "Kein Verteidigungseintritt gefunden",
+    "Нет записи входа в оборону"
   ]
 }

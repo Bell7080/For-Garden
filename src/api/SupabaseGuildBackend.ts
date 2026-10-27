@@ -52,6 +52,12 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
     disbandGuild: async (actor) => { await run(actor, "disbandGuild"); },
     getAttendance: (actor) => run(actor, "getAttendance"),
     getShop: (actor) => run(actor, "getShop"),
+    getGuard: (actor) => run(actor, "getGuard"),
+    recordGuard: async (actor, record, requestId) => {
+      const whole = (value: unknown, max: number): boolean => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= max;
+      if (!whole(record?.day, 1_000_000) || !whole(record.score, 10_000_000) || !whole(record.coin, 100)) invalid();
+      return run(actor, "recordGuard", [{ day: record.day, score: record.score, coin: record.coin }], requestId);
+    },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));
       if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");

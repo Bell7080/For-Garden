@@ -6,6 +6,8 @@ import { ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from '../../src/dat
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from '../../src/core/arenaStanding';
 import { DUEL_TIERS } from '../../src/core/duelArena';
 import { RAID_DIFFICULTY } from '../../src/data/raid';
+import { GUILD_GUARD } from '../../src/core/guildGuard';
+import { GUILD_GUARD_COIN, guildGuardCoin } from '../../src/core/guildGuardBattle';
 import { EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, EXPEDITION_TREASURE_REWARD_BALANCE } from '../../src/data/expedition';
 describe('젬 보상 볼륨',()=>{
  it('일간·주간 임무 및 연구도 완료의 젬 합계를 상향한 표로 지급한다',()=>{
@@ -53,5 +55,12 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(ANCIENT_MONTHLY_RANK_REWARDS.ranks.map(r=>r.gems),approvalMessage).toEqual([3000,2500,2000,1500,1000,900,750,600]);
   expect(ANCIENT_MONTHLY_RANK_REWARDS.percents.map(r=>r.gems),approvalMessage).toEqual([500,400,300]);
   expect(ANCIENT_MONTHLY_RANK_REWARDS.participation,approvalMessage).toBe(200);
+ });
+ // 2026-10-27 응태 승인: 길드 수호전 한 판 코인 5~20, 하루 두 판(하루 40 · 주 280이 끝).
+ it('길드 수호전 코인은 한 판 20 · 하루 40을 넘지 않는다',()=>{
+  expect(GUILD_GUARD_COIN,approvalMessage).toEqual({base:5,perScore:150,cap:20});
+  expect(guildGuardCoin(Number.MAX_SAFE_INTEGER),approvalMessage).toBe(20);
+  expect(GUILD_GUARD.attemptsPerDay,approvalMessage).toBe(2);
+  expect(guildGuardCoin(Number.MAX_SAFE_INTEGER)*GUILD_GUARD.attemptsPerDay*7,approvalMessage).toBeLessThanOrEqual(280);
  });
 });

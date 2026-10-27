@@ -167,3 +167,15 @@ export function partyLaneBox(slot: number): PreviewBox {
   const { top, bottom, width } = PARTY_LANES;
   return { x: PARTY_PREVIEW_COLUMNS[slot], y: (top + bottom) / 2, width, height: bottom - top };
 }
+
+/**
+ * **수호전은 여섯 칸 두 줄이다** — 앞줄 셋(0~2)이 위(적이 내려오는 쪽), 뒷줄 셋(3~5)이 아래다. 마주 선 편이
+ * 없으므로 대치선 자리까지 앞줄이 끌어올려 서고(`frontLift`), 뒷줄은 다른 편성의 아군 줄 그대로다.
+ * 그날 속성과 전투력은 제목 아래 한 줄(`infoY`)에 서고, 줄 이름(앞줄·뒷줄)은 왼쪽 가장자리(`rowLabelX`)가 말한다.
+ */
+export const PARTY_GUARD = { frontLift: 340, infoY: 196, rowLabelX: 70, rowLabelWidth: 120 } as const;
+
+/** 수호전 칸 하나가 끌어올려진 거리 — 앞줄만 오른다. */
+export function partyGuardSlotLift(slot: number): number {
+  return slot < 3 ? PARTY_GUARD.frontLift : 0;
+}

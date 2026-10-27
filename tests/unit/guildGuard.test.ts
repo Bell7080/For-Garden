@@ -1,0 +1,106 @@
+import { describe, expect, it } from "vitest";
+import { captureExpeditionRelicSnapshot } from "../../src/core/expeditionSnapshot";
+import { GUILD_GUARD, arrangeGuardFormation, buildGuardWave, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
+import { GUILD_GUARD_COIN, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
+import { GUILD_GUARD_ELEMENTS } from "../../src/core/guildPages";
+import { guildGuardRoster } from "../../src/data/guildGuard";
+import { getRelic } from "../../src/data/relics";
+import { createInitialRelicProgress } from "../../src/state/session";
+
+const lineup = (ids: readonly (string | null)[], level: number): GuildGuardLineup => ids.map((id) => id === null ? null : {
+  relicId: id,
+  snapshot: captureExpeditionRelicSnapshot(getRelic(id), { ...createInitialRelicProgress(), level, breakthrough: Math.max(0, Math.ceil((level - 20) / 10)) }, [], null),
+});
+
+describe("수호전 웨이브", () => {
+  it("웨이브마다 레벨이 오르고 정예는 셋째 웨이브부터 섞인다", () => {
+    expect(guardWaveLevel(1)).toBe(GUILD_GUARD.startLevel);
+    expect(guardWaveLevel(5)).toBeGreaterThan(guardWaveLevel(4));
+    expect(guardWaveLevel(999)).toBe(GUILD_GUARD.maxLevel);
+    expect(guardWaveCounts(1).elites).toBe(0);
+    expect(guardWaveCounts(3).elites).toBe(1);
+    expect(guardWaveCounts(60).grunts).toBeLessThanOrEqual(GUILD_GUARD.gruntCap);
+  });
+
+  it("다섯 속성 모두 잡졸과 정예를 그 속성에서만 고른다", () => {
+    for (const element of GUILD_GUARD_ELEMENTS) {
+      const roster = guildGuardRoster(element);
+      expect(roster.grunts.length, element).toBeGreaterThan(0);
+      expect(roster.elites.length, element).toBeGreaterThan(0);
+      for (const def of [...roster.grunts, ...roster.elites]) expect(def.element).toBe(element);
+      const wave = buildGuardWave(roster, 3);
+      expect(wave.units.filter((unit) => unit.role === "elite")).toHaveLength(1);
+    }
+  });
+
+  it("앞줄은 뒷줄보다 위(적 쪽)에 서고 더 깊이 나간다", () => {
+    for (let slot = 0; slot < 3; slot += 1) {
+      const front = guildGuardSlotSpot(slot), back = guildGuardSlotSpot(slot + 3);
+      expect(front.x).toBe(back.x);
+      expect(front.y).toBeLessThan(back.y);
+      expect(front.leashTop).toBeLessThan(back.leashTop);
+    }
+  });
+});
+
+describe("수호전 규칙", () => {
+  it("하루 두 번, 날이 바뀌면 다시 두 번", () => {
+    const now = Date.UTC(2026, 9, 27, 12);
+    const day = guildGuardDayKey(now);
+    expect(guildGuardAttemptsLeft(undefined, now)).toBe(2);
+    expect(guildGuardAttemptsLeft({ day, used: 1 }, now)).toBe(1);
+    expect(guildGuardAttemptsLeft({ day, used: 2 }, now)).toBe(0);
+    expect(guildGuardAttemptsLeft({ day, used: 2 }, now + 86_400_000)).toBe(2);
+  });
+
+  it("편성은 여섯 칸·중복 없음·한 명 이상", () => {
+    expect(normalizeGuildGuardFormation(["a", null, null, "b", null, null])).toEqual(["a", null, null, "b", null, null]);
+    expect(() => normalizeGuildGuardFormation(["a", "a", null, null, null, null])).toThrow();
+    expect(() => normalizeGuildGuardFormation([null, null, null, null, null, null])).toThrow();
+    expect(() => normalizeGuildGuardFormation(["a"])).toThrow();
+  });
+
+  it("코인은 한 판 5~20이다(하루 두 판 40이 끝)", () => {
+    expect(guildGuardCoin(0)).toBe(GUILD_GUARD_COIN.base);
+    expect(guildGuardCoin(150)).toBe(6);
+    expect(guildGuardCoin(1_000_000)).toBe(GUILD_GUARD_COIN.cap);
+    expect(GUILD_GUARD_COIN.cap * GUILD_GUARD.attemptsPerDay).toBeLessThanOrEqual(40);
+  });
+
+  it("순위는 점수 내림차순, 같으면 먼저 낸 사람", () => {
+    const ranked = rankGuildGuardMembers([
+      { accountId: "a", name: "A", score: 100, at: 2 },
+      { accountId: "b", name: "B", score: 300, at: 5 },
+      { accountId: "c", name: "C", score: 100, at: 1 },
+    ]);
+    expect(ranked.map(({ accountId }) => accountId)).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("수호전 재현", () => {
+  it("같은 편성·시드면 같은 점수가 나오고, 키운 편성이 더 멀리 간다", () => {
+    const roster = guildGuardRoster("earth");
+    const ids = ["deina", "rex", "ark", "terisa", "stella", "mette"];
+    const weak = replayGuildGuard(lineup(ids, 1), getRelic, roster, "seed-a");
+    const again = replayGuildGuard(lineup(ids, 1), getRelic, roster, "seed-a");
+    expect(again).toEqual(weak);
+    expect(weak.score).toBeGreaterThan(0);
+    const strong = replayGuildGuard(lineup(ids, 30), getRelic, roster, "seed-a");
+    expect(strong.score).toBeGreaterThan(weak.score);
+    expect(strong.waves).toBeGreaterThan(weak.waves);
+  }, 60_000);
+
+  it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
+    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 10), getRelic, guildGuardRoster("fire"), "seed-b");
+    expect(outcome.kills).toBeGreaterThan(0);
+  }, 60_000);
+});
+
+describe("수호전 자동 배치", () => {
+  it("앞줄에 탱커·전사를 먼저 세우고 모자란 칸은 비운다", () => {
+    const tank = { ...getRelic("deina"), id: "t", role: "tank" as const };
+    const support = { ...getRelic("deina"), id: "s", role: "support" as const };
+    const warrior = { ...getRelic("deina"), id: "w", role: "warrior" as const };
+    expect(arrangeGuardFormation([support, tank, warrior])).toEqual(["t", "w", "s", null, null, null]);
+  });
+});

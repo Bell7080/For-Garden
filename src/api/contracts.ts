@@ -1108,6 +1108,9 @@ export interface GameApi extends AsyncArenaProfileApi {
   changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse>;
   /** 오늘의 출석 도장을 찍고 고른 보상을 받는다. 길드 부흥도·기여도도 함께 오른다. */
   stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse>;
+  getGuildGuard(): Promise<GuildGuardStatusResponse>;
+  enterGuildGuard(request: EnterGuildGuardRequest): Promise<EnterGuildGuardResponse>;
+  submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse>;
   /** 길드 코인으로 상점 상품을 산다. */
   buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
   /** 장착 수식어 목록을 확정한다. */
@@ -1307,3 +1310,35 @@ export interface StampGuildAttendanceResponse extends PlayerStateDto {
   day: number;
 }
 export interface BuyGuildProductResponse extends PlayerStateDto { shop: import("./guildContracts").GuildShopState; productId: string }
+
+// ── 길드 수호전 ────────────────────────────────────────────────────────────────
+/** 오늘 수호전의 내 자리 — 속성·남은 도전·오늘 최고 점수. 길드에 들어 있어야 한다. */
+export interface GuildGuardStatusResponse {
+  day: number;
+  element: import("../core/types").Element;
+  attemptsLeft: number;
+  /** 오늘 내 최고 점수(없으면 0). */
+  best: number;
+  /** 오늘 판이 닫히는 시각(ms). */
+  endsAt: number;
+  serverTime: number;
+}
+/** 여섯 칸(앞 0~2 · 뒤 3~5) 편성으로 입장한다. 도전 한 번을 여기서 쓰고 성장·룬을 이 순간의 모습으로 굳힌다. */
+export interface EnterGuildGuardRequest { requestId: string; formation: (string | null)[] }
+export interface EnterGuildGuardResponse {
+  requestId: string;
+  seed: string;
+  element: import("../core/types").Element;
+  lineup: (import("../core/guildGuardBattle").GuildGuardSlotUnit | null)[];
+  attemptsLeft: number;
+}
+/** 입장 영수증으로 판을 확정한다. 클라이언트가 말하는 점수는 없다 — 서버가 같은 시드로 다시 굴린다. */
+export interface SubmitGuildGuardRequest { requestId: string }
+export interface SubmitGuildGuardResponse {
+  outcome: import("../core/guildGuardBattle").GuildGuardOutcome;
+  /** 이번 판으로 받은 길드 코인. */
+  coin: number;
+  /** 오늘 내 최고 점수(이번 판 반영 뒤). */
+  best: number;
+  attemptsLeft: number;
+}

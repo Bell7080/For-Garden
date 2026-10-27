@@ -12,7 +12,7 @@ export const GUILD_ERROR_CODES = [
   "UNAVAILABLE", "LEVEL_LOCKED", "ALREADY_IN_GUILD", "NOT_IN_GUILD", "NAME_INVALID", "NAME_TAKEN", "NAME_BLOCKED", "BADGE_INVALID",
   "GUILD_NOT_FOUND", "GUILD_FULL", "LEAVE_COOLDOWN", "REQUEST_EXISTS", "REQUEST_NOT_FOUND", "MEMBER_NOT_FOUND",
   "NO_PERMISSION", "ROLE_FULL", "INVALID_TARGET", "LEADER_CANNOT_LEAVE", "ALREADY_STAMPED", "PRODUCT_NOT_FOUND",
-  "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST",
+  "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST", "GUARD_LIMIT", "GUARD_NOT_ENTERED",
 ] as const;
 export type GuildErrorCode = (typeof GUILD_ERROR_CODES)[number];
 export const isGuildErrorCode = (value: string): value is GuildErrorCode => (GUILD_ERROR_CODES as readonly string[]).includes(value);
@@ -86,6 +86,20 @@ export interface GuildAttendanceState {
   stampedToday: boolean;
   serverTime: number;
 }
+/** 수호전 길드 안 순위 한 줄 — 오늘 최고 점수. */
+export interface GuildGuardMemberEntry { rank: number; userId: string; name: string; level: number; avatarRelicId: string; frameId: string; score: number; isMe: boolean }
+/** 수호전 길드 순위 한 줄 — 길드원 오늘 최고 점수의 합. */
+export interface GuildGuardGuildEntry { rank: number; id: string; name: string; badge: GuildBadge; level: number; score: number; isMine: boolean }
+/** 수호전 판 — 오늘(UTC 날짜 번호)의 길드 안·길드 순위. 도전 횟수와 편성은 게임 서버(`getGuildGuard`)가 갖는다. */
+export interface GuildGuardBoard {
+  day: number;
+  members: GuildGuardMemberEntry[];
+  /** 위 50길드. 내 길드가 그 밖이면 `mine`이 따로 말한다. */
+  guilds: GuildGuardGuildEntry[];
+  mine: GuildGuardGuildEntry | null;
+  serverTime: number;
+}
+
 export interface GuildShopItem { productId: string; price: number; weeklyLimit: number; bought: number }
 export interface GuildShopState { coin: number; items: GuildShopItem[]; serverTime: number }
 
@@ -105,15 +119,16 @@ export interface GuildApi {
   disbandGuild(): Promise<void>;
   getAttendance(): Promise<GuildAttendanceState>;
   getShop(): Promise<GuildShopState>;
+  getGuard(): Promise<GuildGuardBoard>;
 }
 
 export const GUILD_API_METHODS = [
   "getGuild", "searchGuilds", "getMembers", "joinGuild", "cancelJoinRequest", "leaveGuild", "decideJoinRequest", "kickMember",
-  "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop",
+  "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop", "getGuard",
 ] as const satisfies readonly (keyof GuildApi)[];
 export type GuildApiMethod = (typeof GUILD_API_METHODS)[number];
 export const isGuildApiMethod = (value: string): value is GuildApiMethod => (GUILD_API_METHODS as readonly string[]).includes(value);
-export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop"];
+export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard"];
 
 /**
  * 길드 백엔드 — `GuildApi`의 모든 조작에 호출자(`actor`)를 앞세우고, 지갑이 얽힌 네 조작을 더한 것이다.
@@ -134,6 +149,12 @@ export interface GuildBackend {
   disbandGuild(actor: GuildActor): Promise<void>;
   getAttendance(actor: GuildActor): Promise<GuildAttendanceState>;
   getShop(actor: GuildActor): Promise<GuildShopState>;
+  getGuard(actor: GuildActor): Promise<GuildGuardBoard>;
+  /**
+   * 수호전 한 판의 기록 — 게임 서버가 다시 굴려 확정한 점수와 그 판의 코인만 넘긴다. 오늘 최고 점수를 갱신하고 코인을
+   * 길드원 행에 더한다. 돌려주는 `best`는 오늘 최고, `coin`은 더한 뒤의 보유 코인이다.
+   */
+  recordGuard(actor: GuildActor, record: { day: number; score: number; coin: number }, requestId: string): Promise<{ best: number; coin: number }>;
   /** 길드를 만든다. 젬 차감은 부르는 쪽(`GameApi`)이 한 호출 안에서 확정한다. */
   createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse>;
   /** 길드장만. 바뀌었는지와 값을 치러야 했는지(첫 변경은 무료)를 돌려줘 부르는 쪽이 젬을 받을지 정한다. */

@@ -73,7 +73,12 @@ import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend } from "./guildContracts";
-import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, GuildGuardStatusResponse, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
+import { GUILD_GUARD, guildGuardAttemptsLeft, guildGuardDayKey, normalizeGuildGuardFormation } from "../core/guildGuard";
+import { guildGuardCoin, replayGuildGuard } from "../core/guildGuardBattle";
+import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
+import { guildGuardRoster } from "../data/guildGuard";
+import { guildQaClockShift } from "./guildQaClock";
 import { nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
@@ -1680,6 +1685,82 @@ export class FakeServer implements GameApi {
     this.persist(next);
     this.state.wallet = wallet; this.state.itemInventory = inventory;
     return { ...this.snapshot(), shop: bought.shop, productId: product.id };
+  }
+
+  /** 수호전의 시계 — QA 시계 이동이 화면과 같은 날·같은 속성을 보게 한다(일반 빌드는 0). */
+  private guardNow(): number { return this.now().getTime() + guildQaClockShift(); }
+
+  async getGuildGuard(): Promise<GuildGuardStatusResponse> {
+    await this.delay();
+    const now = this.guardNow();
+    const day = guildGuardDayKey(now);
+    const record = this.state.serverJournal?.guildGuard;
+    return {
+      day, element: guildGuardElement(now), attemptsLeft: guildGuardAttemptsLeft(record, now),
+      best: record?.day === day ? record.best : 0, endsAt: guildGuardEndsAt(now), serverTime: now,
+    };
+  }
+
+  /**
+   * 수호전 입장 — 길드원만, 하루 두 번. 도전 한 번을 여기서 쓰고 편성의 성장·룬을 이 순간의 모습으로 굳힌다.
+   * 시드도 서버가 정한다. 궁극기까지 자동이라 판의 결과는 이 영수증이 다 정하고, 제출은 같은 시드로 다시 굴리기만 한다.
+   */
+  async enterGuildGuard(request: EnterGuildGuardRequest): Promise<EnterGuildGuardResponse> {
+    await this.delay();
+    if (typeof request?.requestId !== "string" || request.requestId.length === 0 || request.requestId.length > 64) throw new GuildApiError("INVALID_REQUEST");
+    const existing = this.state.serverJournal?.guildGuardAdmissions?.[request.requestId];
+    if (existing) {
+      return { requestId: request.requestId, seed: existing.seed, element: existing.element as EnterGuildGuardResponse["element"], lineup: structuredClone(existing.lineup), attemptsLeft: guildGuardAttemptsLeft(this.state.serverJournal?.guildGuard, this.guardNow()) };
+    }
+    let formation: (string | null)[];
+    try { formation = normalizeGuildGuardFormation(Array.isArray(request.formation) ? request.formation : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
+    if (formation.some((id) => id !== null && !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    const membership = await this.guildBackend.getGuild(this.guildActor());
+    if (!membership.guild) throw new GuildApiError("NOT_IN_GUILD");
+    const now = this.guardNow();
+    const day = guildGuardDayKey(now);
+    const record = this.state.serverJournal?.guildGuard;
+    if (guildGuardAttemptsLeft(record, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
+    const element = guildGuardElement(now);
+    const lineup = formation.map((relicId) => relicId === null ? null : {
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
+    });
+    const seed = globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`;
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const used = record?.day === day ? record.used : 0;
+    journal.guildGuard = { day, used: used + 1, best: record?.day === day ? record.best : 0 };
+    const admissions = Object.fromEntries(Object.entries(journal.guildGuardAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
+    admissions[request.requestId] = { seed: seed.slice(0, 64), day, element, expiresAt: new Date(now + (GUILD_GUARD.timeLimitSeconds + 1_800) * 1_000).toISOString(), lineup };
+    journal.guildGuardAdmissions = admissions;
+    const next = { ...this.state, serverJournal: journal };
+    this.persist(next);
+    this.state.serverJournal = journal;
+    return { requestId: request.requestId, seed: admissions[request.requestId].seed, element, lineup: structuredClone(lineup), attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
+  }
+
+  /** 입장 영수증의 편성·시드로 판을 서버에서 다시 굴려 점수를 확정하고 길드 코인과 오늘 기록을 길드에 남긴다. */
+  async submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse> {
+    await this.delay();
+    const cached = this.readReceipt<SubmitGuildGuardResponse>("guildGuard", request?.requestId ?? "", "submit");
+    if (cached) return cached;
+    const admission = this.state.serverJournal?.guildGuardAdmissions?.[request?.requestId ?? ""];
+    if (!admission || admission.settled) throw new GuildApiError("GUARD_NOT_ENTERED");
+    const outcome = replayGuildGuard(admission.lineup, (id) => RELICS.find((relic) => relic.id === id)!, guildGuardRoster(admission.element as EnterGuildGuardResponse["element"]), admission.seed);
+    const coin = guildGuardCoin(outcome.score);
+    // 같은 요청 ID로 길드에 기록하므로 재전송이 코인을 두 번 주지 않는다.
+    await this.guildBackend.recordGuard(this.guildActor(), { day: admission.day, score: outcome.score, coin }, `guard:${request.requestId}`);
+    const now = this.guardNow();
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const record = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
+    journal.guildGuard = { ...record, best: Math.max(record.best, outcome.score) };
+    journal.guildGuardAdmissions = { ...journal.guildGuardAdmissions, [request.requestId]: { ...admission, settled: true } };
+    const result: SubmitGuildGuardResponse = { outcome, coin, best: journal.guildGuard.day === guildGuardDayKey(now) ? journal.guildGuard.best : outcome.score, attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
+    const next = { ...this.state, serverJournal: journal };
+    this.recordReceipt(next, "guildGuard", request.requestId, "submit", result);
+    this.persist(next);
+    this.state.serverJournal = next.serverJournal;
+    return result;
   }
 
   /**

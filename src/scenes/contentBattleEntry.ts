@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { BountyBattleInputDto } from "../core/bountyRun";
-import type { CakeBattleInputDto, DuelBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
+import type { CakeBattleInputDto, DuelBattleInputDto, GuildGuardBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
 import type { PartyContent } from "../data/partyContent";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { session } from "../state/session";
@@ -18,8 +18,16 @@ import { startScene } from "../ui/screenTransition";
  * 값을 확인할 뿐이고, 연구원 경험치 영수증도 결과 확정이 돌려준다. 레이드만 입장에서 스테미나와 도전
  * 한 번을 함께 쓰므로 그 경험치는 여기서 결과판에 맡겨 둔다(`rememberPlayerExp`).
  */
-export async function enterContentBattle(scene: Phaser.Scene, content: PartyContent, relicIds: readonly string[] = []): Promise<void> {
+export async function enterContentBattle(scene: Phaser.Scene, content: PartyContent, relicIds: readonly string[] = [], formation: readonly (string | null)[] = []): Promise<void> {
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${content.content}-entry-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  if (content.content === "guildGuard") {
+    // 수호전은 빈 칸까지 자리가 뜻을 가진다(앞줄·뒷줄) — 멤버 목록이 아니라 여섯 칸을 그대로 보낸다.
+    const admission = await gameApi.enterGuildGuard({ requestId, formation: [...formation] });
+    startScene(scene, "battle", {
+      mode: "guildGuard", requestId: admission.requestId, element: admission.element, lineup: admission.lineup, seed: admission.seed,
+    } satisfies GuildGuardBattleInputDto);
+    return;
+  }
   if (content.content === "duel") {
     // 도전권은 입장이 쓰고, 상대의 가려진 칸까지 영수증이 실제 편성으로 돌려준다.
     const admission = await gameApi.enterDuel({ opponentId: content.opponent.id, relicIds: [...relicIds], requestId });

@@ -8,10 +8,11 @@ import {
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { combatPower } from "../core/combatPower";
 import { rankGuildWar } from "../core/guildWar";
+import { guildGuardDayKey, guildGuardTotal, rankGuildGuardMembers } from "../core/guildGuard";
 import { PLAYABLE_RELICS } from "../data/relics";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
-  type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
 } from "./guildContracts";
 
 interface MemberRow {
@@ -22,6 +23,10 @@ interface MemberRow {
   attendanceCount: number; attendanceLast: string | null;
   card: GuildMemberCard | null;
   purchases: Map<string, number>; purchaseWeekKey: string;
+  /** 수호전 — 기록한 날(UTC 날짜 번호)과 그날 최고 점수·처음 그 점수를 낸 시각. */
+  guardDay: number; guardBest: number; guardAt: number;
+  /** QA 표본 길드원 — 수호전 기록을 날마다 정해진 값으로 채운다(`sampleGuard`). */
+  sample?: boolean;
 }
 interface GuildRow {
   id: string; name: string; badge: GuildBadge; joinMode: GuildJoinMode; notice: string; prosperity: number; createdAt: number; badgeChanges: number;
@@ -69,10 +74,10 @@ export class FakeGuildServer implements GuildBackend {
           highestStageId: level >= 30 ? "2-5" : "1-8", expeditionBest: (seed % 90) * 1_000,
         };
         const member = this.newMember({ userId, name: memberName, level, avatarRelicId: relic.id, frameId, card }, role, this.now() - i * 3_600_000);
-        member.contributionTotal = 200 + (seed % 4_000); member.contributionWeek = seed % 700; member.coin = 0;
+        member.contributionTotal = 200 + (seed % 4_000); member.contributionWeek = seed % 700; member.coin = 0; member.sample = true;
         members.set(userId, member);
       }
-      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map(), warScore, warReachedAt: this.now(), guardScore: warScore === null ? null : Math.round(warScore * 24) });
+      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map(), warScore, warReachedAt: this.now() });
       for (const userId of members.keys()) this.userGuild.set(userId, id);
     };
     // 길드전·수호전을 해 볼 수 있게 열 명 이상인 길드를 여럿 둔다. 점수는 열린 길드마다 조금씩 다르다.
@@ -89,6 +94,7 @@ export class FakeGuildServer implements GuildBackend {
       userId: actor.userId, name: actor.name, level: actor.level, role, avatarRelicId: actor.avatarRelicId, frameId: actor.frameId,
       joinedAt: at, lastActiveAt: at, coin: 0, contributionWeekKey: guildWeekKey(at), contributionWeek: 0, contributionTotal: 0,
       attendanceCount: 0, attendanceLast: null, card: actor.card ? structuredClone(actor.card) : null, purchases: new Map(), purchaseWeekKey: guildWeekKey(at),
+      guardDay: -1, guardBest: 0, guardAt: 0,
     };
   }
 
@@ -115,7 +121,7 @@ export class FakeGuildServer implements GuildBackend {
   private summary(guild: GuildRow): GuildSummary {
     const level = this.level(guild);
     return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice,
-      prosperity: guild.prosperity, contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0), warScore: guild.warScore ?? null, guardScore: guild.guardScore ?? null };
+      prosperity: guild.prosperity, contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0), warScore: guild.warScore ?? null, guardScore: this.guardScoreOf(guild) };
   }
   private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), createdAt: guild.createdAt, warRank: this.warRankOf(guild), badgeFree: guild.badgeChanges === 0 }; }
   /** 길드전 등수 — 점수가 있는 길드끼리 줄 세운다. 점수가 없으면 null이다. */
@@ -343,6 +349,55 @@ export class FakeGuildServer implements GuildBackend {
     });
   }
 
+  // ── 수호전 ─────────────────────────────────────────────────────────────────
+  /** 표본 길드원의 오늘 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
+  private sampleGuard(member: MemberRow, day: number): void {
+    if (!member.sample || member.guardDay === day) return;
+    let h = 2166136261;
+    for (const ch of `${member.userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+    h >>>= 0;
+    member.guardDay = day;
+    member.guardBest = h % 5 === 0 ? 0 : 80 + (h % 400) + member.level * (10 + (h >>> 8) % 25);
+    member.guardAt = day * 86_400_000 + (h % 80_000_000);
+  }
+  /** 오늘의 기록만 센다 — 지난날의 최고는 0이다. */
+  private guardBestOf(member: MemberRow, day: number): number {
+    this.sampleGuard(member, day);
+    return member.guardDay === day ? member.guardBest : 0;
+  }
+  /** 길드 수호전 점수 = 길드원 오늘 최고의 합. QA가 정해 둔 값(`qaSetScores`)이 있으면 그 값을 더한다. */
+  private guardScoreOf(guild: GuildRow): number | null {
+    const day = guildGuardDayKey(this.now());
+    const total = guildGuardTotal([...guild.members.values()].map((m) => ({ score: this.guardBestOf(m, day) })));
+    return guild.guardScore == null ? total : guild.guardScore + total;
+  }
+
+  async getGuard(actor: GuildActor): Promise<GuildGuardBoard> {
+    const { guild } = this.requireGuild(actor);
+    const now = this.now();
+    const day = guildGuardDayKey(now);
+    const members = rankGuildGuardMembers([...guild.members.values()].map((m) => ({
+      accountId: m.userId, userId: m.userId, name: m.name, level: m.level, avatarRelicId: m.avatarRelicId, frameId: m.frameId,
+      score: this.guardBestOf(m, day), at: m.guardDay === day ? m.guardAt : Number.MAX_SAFE_INTEGER, isMe: m.userId === actor.userId,
+    }))).map(({ rank, userId, name, level, avatarRelicId, frameId, score, isMe }) => ({ rank, userId, name, level, avatarRelicId, frameId, score, isMe }));
+    const ranked: GuildGuardGuildEntry[] = [...this.guilds.values()]
+      .map((g) => ({ id: g.id, name: g.name, badge: { ...g.badge }, level: this.level(g), score: this.guardScoreOf(g) ?? 0, isMine: g.id === guild.id }))
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    return { day, members, guilds: ranked.slice(0, 50), mine: ranked.find((entry) => entry.isMine) ?? null, serverTime: now };
+  }
+
+  async recordGuard(actor: GuildActor, record: { day: number; score: number; coin: number }, requestId: string): Promise<{ best: number; coin: number }> {
+    return this.once(actor, requestId, () => {
+      const { me } = this.requireGuild(actor);
+      const score = Math.max(0, Math.round(record.score));
+      if (me.guardDay !== record.day) { me.guardDay = record.day; me.guardBest = 0; me.guardAt = 0; }
+      if (score > me.guardBest || me.guardAt === 0) { me.guardBest = Math.max(me.guardBest, score); me.guardAt = this.now(); }
+      me.coin += Math.max(0, Math.round(record.coin));
+      return { best: me.guardBest, coin: me.coin };
+    });
+  }
+
   // ── QA 전용 — 길드전·수호전 시험판(`guildQa`)이 쓰는 조회·조작. 운영 서버의 계약에는 없다. ─────────────
   /** 모든 길드의 id·이름·점수. */
   qaGuilds(): { id: string; name: string; badge: GuildBadge; level: number; memberCount: number; warScore: number | null; guardScore: number | null; warReachedAt: number }[] {
@@ -372,7 +427,7 @@ export class FakeGuildServer implements GuildBackend {
       const relic = PLAYABLE_RELICS[(index * 7 + 3) % PLAYABLE_RELICS.length];
       const level = Math.max(8, 44 - index * 2);
       const member = this.newMember({ userId, name: `${SAMPLE_NAMES[index % SAMPLE_NAMES.length]}${index + 1}`, level, avatarRelicId: relic.id, frameId: "holo" }, "member", this.now());
-      member.contributionTotal = 150 + index * 37;
+      member.contributionTotal = 150 + index * 37; member.sample = true;
       guild.members.set(userId, member); this.userGuild.set(userId, guild.id);
       added += 1;
     }

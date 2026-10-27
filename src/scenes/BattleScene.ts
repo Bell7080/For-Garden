@@ -45,6 +45,12 @@ import {
 } from "../core/skirmish";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
+import { createGuildGuardSkirmish } from "../core/guildGuardBattle";
+import { guildGuardRoster } from "../data/guildGuard";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
+import { GUILD_COIN_ICON } from "../ui/priceTag";
+import type { GuildGuardBattleInputDto } from "../core/expeditionBattle";
+import type { SubmitGuildGuardResponse } from "../api/contracts";
 import { getBattleStage, getStage, getStageEnemies, stageEnemyGrowth } from "../data/stages";
 import { nextBattleStage } from "../core/stageProgress";
 import { BOUNTY, bountyRoundEnemy, getBountyTier } from "../data/bounty";
@@ -111,7 +117,7 @@ import { autoRepeat } from "../managers/AutoRepeatManager";
 import { AUTO_REPEAT_COUNTDOWN_MS, type AutoRepeatDecision } from "../core/autoRepeat";
 import type { AutoRepeatBannerOptions } from "../ui/AutoRepeatBanner";
 import { InventoryManager } from "../managers/InventoryManager";
-import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
+import { BATTLE_CLOCK_LAYOUT, BATTLE_CONTROLS, BATTLE_STATUS_LAYOUT, GUILD_GUARD_BATTLE_HUD, GUILD_GUARD_PROFILES, RAID_BATTLE_HUD } from "../ui/battleStatusLayout";
 import { RAID_HP_BAR_COLOR } from "../ui/raidLayout";
 import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
@@ -392,6 +398,11 @@ export class BattleScene extends Phaser.Scene {
   private bossScoreShown = 0;
   private bossScoreTarget = 0;
   private bossScoreScale = 1;
+  /** 수호전 머리 — 처치 점수와 웨이브·필드 줄. */
+  private guardScoreLabel?: Phaser.GameObjects.Text;
+  private guardLineLabel?: Phaser.GameObjects.Text;
+  private guardScoreShown = 0;
+  private guardWave = 0;
   private scoreRankHud?: ScoreRankingHud;
   /** 랭킹 띠가 내 점수에 더하는 이전 판의 몫(레이드는 지난 도전의 피해, 원정은 없음). */
   private scoreRankBase = 0;
@@ -635,12 +646,15 @@ export class BattleScene extends Phaser.Scene {
       // 결투는 입장이 확정한 공격덱으로 싸운다 — 그 사이 편성을 바꿔도 이 판은 그 셋이다.
       : this.battleInput.mode === "duel" ? [...this.battleInput.attack]
       : this.battleInput.mode === "raid" && this.battleInput.relics ? this.battleInput.relics.map(({ relicId }) => relicId)
+      // 수호전은 입장이 굳힌 여섯 칸 중 채운 자리만, 자리 순서대로 선다(앞줄 0~2 · 뒷줄 3~5).
+      : this.battleInput.mode === "guildGuard" ? this.battleInput.lineup.flatMap((unit) => unit ? [unit.relicId] : [])
       : session.party;
     // **원정은 떠난 순간의 모습으로 싸운다**(`ExpeditionRelicSnapshot`). 스무 층 도중에 급여·돌파·
     // 룬·외형을 바꿔도 이 런의 전투는 출발할 때 굳힌 값만 읽는다. 그 밖의 전투는 지금 성장이다.
     const expeditionMode = this.battleInput.mode === "expedition" || this.battleInput.mode === "expeditionBoss";
     this.frozenRelics = expeditionMode ? new Map(partyIds.map((id) => [id, expeditionManager.snapshotFor(id)]))
-      : this.battleInput.mode === "raid" && this.battleInput.relics ? new Map(this.battleInput.relics.map(({ relicId, snapshot }) => [relicId, snapshot])) : undefined;
+      : this.battleInput.mode === "raid" && this.battleInput.relics ? new Map(this.battleInput.relics.map(({ relicId, snapshot }) => [relicId, snapshot]))
+        : this.battleInput.mode === "guildGuard" ? new Map(this.battleInput.lineup.flatMap((unit) => unit ? [[unit.relicId, unit.snapshot] as const] : [])) : undefined;
     const frozen = this.frozenRelics;
     const bonds = Object.fromEntries(partyIds.map((id) => [id, frozen?.get(id)?.bondLevel ?? session.relicProgress[id]?.bondLevel ?? 0]));
     // 각성 단계도 같은 방식으로 스냅샷을 넘긴다. 전투 코어는 저장 상태를 직접 읽지 않는다.
@@ -660,6 +674,8 @@ export class BattleScene extends Phaser.Scene {
         : this.battleInput.mode === "bounty" ? [bountyRoundEnemy(getBountyTier(this.battleInput.tierId).rounds[this.battleInput.round])]
         // 결투의 상대는 입장 영수증이 굳힌 성장 능력치 그대로다. 씬이 레벨에서 다시 구하지 않는다.
         : this.battleInput.mode === "duel" ? this.battleInput.units.map((unit) => ({ ...getRelic(unit.relicId), stats: { ...unit.stats } }))
+        // 수호전의 적은 처음부터 서 있지 않다 — 웨이브가 화면 위 밖에서 몰고 온다.
+        : this.battleInput.mode === "guildGuard" ? []
         : getStageEnemies(stage);
     const expeditionConfig = this.battleInput.mode === "expedition" ? createExpeditionSkirmishConfig(this.battleInput, players, stageEnemies)
       : this.battleInput.mode === "expeditionBoss" ? createExpeditionBossSkirmishConfig(this.battleInput, players, stageEnemies)
@@ -671,7 +687,8 @@ export class BattleScene extends Phaser.Scene {
       runes: frozen?.get(id)?.runes ?? relicProgression.getProgress(id).heartGemSlots
         .flatMap((instanceId) => instanceId === null ? [] : session.runeInventory.filter((rune) => rune.instanceId === instanceId)),
     })));
-    this.state = createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, battleArena(this.battleInput.mode), bonds, breakthroughs, expeditionConfig ? {
+    // 수호전은 서버 재현과 **같은 함수**로 판을 세운다 — 자리·뒷줄의 윗선·웨이브 표를 씬이 따로 적지 않는다.
+    this.state = this.battleInput.mode === "guildGuard" ? createGuildGuardSkirmish(this.battleInput.lineup, getRelic, guildGuardRoster(this.battleInput.element)) : createSkirmish(expeditionConfig?.playerDefs ?? players, expeditionConfig?.enemyDefs ?? stageEnemies, battleArena(this.battleInput.mode), bonds, breakthroughs, expeditionConfig ? {
       // 원정 입력 모델이 HP·증강·크기까지 만들고 씬은 공용 난전을 연결하기만 한다.
       playerInitialStates: expeditionConfig.playerInitialStates,
       augmentEffects: [...expeditionConfig.augmentEffects, ...traitEffects],
@@ -706,7 +723,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.combatLease) this.state=combatState(this.combatLease);
     // 테스트 초기 상태는 코어 생성이 끝난 단 한 경계에서만 적용해 씬 로직과 전투 공식을 오염시키지 않는다.
     this.bossStepRemainder = 0;
-    this.rng = this.combatLease ? bossBattleRandom(this.combatLease.seed) : (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2
+    this.rng = this.combatLease ? bossBattleRandom(this.combatLease.seed) : this.battleInput.mode === "guildGuard" ? bossBattleRandom(this.battleInput.seed) : (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2
       ? bossBattleRandom(this.battleInput.mode === "raid" ? this.battleInput.replaySeed ?? this.battleInput.requestId : JSON.stringify([this.battleInput.runId, this.battleInput.nodeId])) : battleRandom();
     applyBattleTestPreset(this.state);
     // 실시간 아레나의 위쪽 자리는 전장을 거울에 비춰 본다 — 제 편이 아래, 초록 체력으로 선다.
@@ -740,7 +757,7 @@ export class BattleScene extends Phaser.Scene {
     // 결투는 양쪽 모두 자동 궁극기로만 싸운다 — 수동 개입이 비동기 상대와의 판을 가르지 않게 한다.
     // 오프닝 첫 전투는 궁극기를 손으로 쓰는 법을 익히는 판이라 자동도 꺼 둔다.
     // 자동 전투(반복 출격) 중에는 손이 없으므로 궁극기도 자동이다.
-    this.autoUltimate = this.battleInput.mode === "duel" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
+    this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
     this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
     this.ultimateSequence = createUltimateSequenceState();
@@ -781,6 +798,7 @@ export class BattleScene extends Phaser.Scene {
     this.clockLabel.setStroke("#000000", 6).setShadow(0, 3, "#000000", 4, false, true);
     this.buildDeathWash();
     if (this.battleInput.mode === "expeditionBoss" || this.battleInput.mode === "raid") this.buildBossScoreHud();
+    if (this.battleInput.mode === "guildGuard") this.buildGuardHud();
 
     this.buildBattleControls();
     new BattlePauseButton(this, () => this.openPauseMenu());
@@ -1064,8 +1082,8 @@ export class BattleScene extends Phaser.Scene {
       label: this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff"),
       width,
       onClick: () => {
-        // 결투는 자동으로 고정이다. 눌러도 꺼지지 않고 저장값도 건드리지 않는다.
-        if (this.battleInput.mode === "duel") return;
+        // 결투·수호전은 자동으로 고정이다. 눌러도 꺼지지 않고 저장값도 건드리지 않는다.
+        if (this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard") return;
         this.autoUltimate = !this.autoUltimate;
         // 자동 궁극기도 배속과 같은 플레이 습관이므로 토글하는 즉시 저장한다.
         settingsManager.update({ game: { autoUltimate: this.autoUltimate } });
@@ -1165,7 +1183,7 @@ export class BattleScene extends Phaser.Scene {
     this.lastStepAt = now;
     const game = settingsManager.get().game;
     this.battleSpeed = this.featureOpen("speed") ? usableBattleSpeed(game.battleSpeed, this.battleMember) : 1;
-    this.autoUltimate = this.battleInput.mode === "duel" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && game.autoUltimate);
+    this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && game.autoUltimate);
     this.refreshSpeedChip();
     this.autoChip.setLabel(this.autoUltimate ? t("battle.chip.autoOn") : t("battle.chip.autoOff")).setActive(this.autoUltimate);
     if (this.reopenPauseOnWake) { this.reopenPauseOnWake = false; this.openPauseMenu(); }
@@ -1229,7 +1247,7 @@ export class BattleScene extends Phaser.Scene {
    *
    * 물량형 던전의 무리도 여기서 한꺼번에 선다 — 적이 열다섯이어도 같은 경로다.
    */
-  private async spawnFighters(): Promise<void> {
+  private async spawnFighters(reinforce = false): Promise<void> {
     const generation = this.combatGeneration;
     const isCurrent = () => this.scene.isActive() && generation === this.combatGeneration;
     const creationQueue = new PuppetCreationQueue({ isCurrent });
@@ -1338,6 +1356,8 @@ export class BattleScene extends Phaser.Scene {
     for (const view of this.views.values()) {
       if (!view.dead) view.creature.setVisible(true).setAnimationFrozen(false);
     }
+    // 수호전 웨이브의 증원은 이미 흐르는 판에 끼어든다 — 시작 시계를 다시 맞추지 않는다.
+    if (reinforce) return;
     // 마지막 한 명까지 서고 나서 시간을 흘려야 먼저 뜬 캐릭터만 앞서 달려가지 않는다.
     this.lastStepAt = performance.now();
     // 서자마자 부딪히지 않는다 — 전장을 한 번 훑어볼 틈을 둔다(모든 전투 공통).
@@ -1358,16 +1378,19 @@ export class BattleScene extends Phaser.Scene {
       bottomAlpha: 0.9,
     });
     drawHairline(this, BASE_WIDTH / 2, PROFILE_TOP + 20, BASE_WIDTH, { color: COLOR.accent, alpha: 0.2 });
+    // 수호전은 여섯이 한 줄에 선다 — 같은 프리팹을 줄여 세운다(`GUILD_GUARD_PROFILES`).
+    const six = this.battleInput.mode === "guildGuard";
     this.partyFighters().forEach((fighter, index) => {
-      const x = 190 + index * 350;
+      const x = six ? GUILD_GUARD_PROFILES.centersX[index] : 190 + index * 350;
       // 세 화면은 같은 프리팹을 쓰며 전투 씬은 실시간 입력만 연결한다.
-      const prefab = new BattleProfile(this, x, 1620, {
+      const prefab = new BattleProfile(this, x, six ? GUILD_GUARD_PROFILES.centerY : 1620, {
         relic: fighter.def, level: this.frozenRelics?.get(fighter.def.id)?.level ?? relicProgression.getProgress(fighter.def.id).level, breakthroughGrade: fighter.breakthrough + 1,
         skinId: this.frozenRelics?.get(fighter.def.id)?.skinId,
         currentHp: fighter.hp, maxHp: fighter.maxHp, ferocity: fighter.ferocity,
         active: false, readOnly: false, sub: fighter.def.ultimate.name,
         battleUiMotion: this.motion.effectiveBattleUiMotion,
       });
+      if (six) prefab.setScale(GUILD_GUARD_PROFILES.scale);
       const { card, glow, sweep, charge, hpLabel, hpBar, ferocityLabel, ferocityBar } = prefab;
       // 궁극기 게이지는 카드 위에 덮인 어둠이다. 시계 방향으로 걷히다가 다 차면 사라져
       // 그림이 온전히 밝아진다 — 준비됐는지를 바가 아니라 얼굴이 말한다.
@@ -1419,8 +1442,8 @@ export class BattleScene extends Phaser.Scene {
       if (this.battleInput.mode !== "duel" && !this.ultimateTutorial.active) audioManager?.playUi("ui.deny");
       return;
     }
-    // 결투는 수동 발동이 없다 — 자동 궁극기만 판을 움직인다.
-    if (this.battleInput.mode === "duel") return;
+    // 결투·수호전은 수동 발동이 없다 — 자동 궁극기만 판을 움직인다(수호전은 서버가 같은 판을 다시 굴린다).
+    if (this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard") return;
     // 안내 중에는 밝힌 카드만 받는다. 그 카드를 누르는 순간 안내가 걷히고 시간이 다시 흐른다.
     if (this.ultimateTutorial.active) {
       if (fighter.id !== this.ultimateTutorial.fighterId) return;
@@ -1659,7 +1682,7 @@ export class BattleScene extends Phaser.Scene {
     const events: SkirmishEvent[] = [];
     // 코어는 언제나 원래 좌표에서 진행한다 — 거울은 그리는 동안에만 씌운다.
     this.unflipView();
-    if (this.combatLease || (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2) {
+    if (this.combatLease || this.battleInput.mode === "guildGuard" || (this.battleInput.mode === "raid" || this.battleInput.mode === "expeditionBoss") && this.battleInput.replayVersion === 2) {
       this.bossStepRemainder += Math.min(0.25, dt) * this.battleSpeed * 1_000;
       while (this.bossStepRemainder >= BOSS_STEP_MS && this.state.phase === "fight") {
         events.push(...stepSkirmish(this.state, BOSS_STEP_MS / 1_000, this.rng));
@@ -1688,6 +1711,7 @@ export class BattleScene extends Phaser.Scene {
       this.scoreRankHud?.update(this.scoreRankBase + this.bossScoreShown);
       this.paintRaidSeasonHud();
     }
+    if (this.state.horde) this.paintGuardHud(elapsed);
     // 상태 종료와 좌표를 먼저 Puppet에 동기화한 뒤 공격 사건을 재생해야, 기절이 풀린 같은 스텝의
     // 공격 모션을 뒤늦은 idle 전환이 덮어쓰지 않는다.
     this.syncViews();
@@ -2177,6 +2201,11 @@ export class BattleScene extends Phaser.Scene {
         playMotion(this, view.creature, "attack");
         audioManager?.playSfx("battle.summon");
       }
+      return undefined;
+    }
+    // 수호전 웨이브 — 화면 위 바깥에 선 새 몸들의 SD를 세운다. 처치 점수·머릿수는 HUD가 매 프레임 읽는다.
+    if (event.kind === "hordeWave") {
+      this.onHordeWave(event);
       return undefined;
     }
 
@@ -2975,6 +3004,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.battleInput.mode === "cake") { void this.finishCakeOperation(this.battleInput, won); return; }
     if (this.battleInput.mode === "bounty") { void this.finishBountyRound(this.battleInput, won); return; }
     if (this.battleInput.mode === "duel") { void this.finishDuel(this.battleInput, won); return; }
+    if (this.battleInput.mode === "guildGuard") { void this.finishGuildGuard(this.battleInput); return; }
     const stage = getBattleStage(session.selectedStageId ?? "1-1");
     if (!won) { this.finishStageDefeat(stage); return; }
     void this.finishStageVictory(stage);
@@ -3439,6 +3469,72 @@ export class BattleScene extends Phaser.Scene {
    * 이긴·진 결과를 그리는 모든 모드가 같은 판을 쓴다.
    */
   private resultFailureUi?: Phaser.GameObjects.Container;
+  /**
+   * 수호전 머리 — 시계 아래에 처치 점수가 크게, 그 아래 한 줄에 웨이브 번호와 필드에 선 적 수(상한까지)가 선다.
+   * 필드 수가 상한에 가까워지면 붉어진다 — 그것이 이 판이 끝나는 두 길 중 하나다.
+   */
+  private buildGuardHud(): void {
+    const L = GUILD_GUARD_BATTLE_HUD;
+    this.guardWave = 0;
+    this.guardScoreShown = 0;
+    this.guardScoreLabel = this.add.text(BASE_WIDTH / 2, L.scoreY, "0", textStyle({ role: "display", size: L.scoreSize, color: COLOR.sortieText }))
+      .setOrigin(0.5, 0).setDepth(90).setStroke("#000000", 6).setShadow(0, 3, "#000000", 4, false, true);
+    this.guardLineLabel = this.add.text(BASE_WIDTH / 2, L.lineY, "", textStyle({ role: "emphasis", size: L.lineSize, color: COLOR.ink }))
+      .setOrigin(0.5, 0).setDepth(90).setStroke("#000000", 5);
+    this.paintGuardHud(0);
+  }
+
+  private paintGuardHud(elapsedMs: number): void {
+    const horde = this.state.horde;
+    if (!horde || !this.guardScoreLabel || !this.guardLineLabel) return;
+    const motion = stepBattleScoreMotion(this.guardScoreShown, Math.round(horde.score), elapsedMs);
+    this.guardScoreShown = motion.shown;
+    this.guardScoreLabel.setText(this.guardScoreShown.toLocaleString());
+    const onField = this.state.fighters.filter((fighter) => fighter.side === "enemy" && isFighterAlive(fighter) && isPartyFighter(fighter) && !fighter.hordeEntering).length;
+    const cap = horde.spec.overrunCap;
+    this.guardLineLabel.setText(t("guild.guard.battle.line", { wave: this.guardWave, field: onField, cap }))
+      .setColor(onField >= cap * GUILD_GUARD_BATTLE_HUD.warnRatio ? COLOR.dangerText : COLOR.ink);
+  }
+
+  /** 새 웨이브 — 화면 위 바깥에 선 몸들의 SD를 세우고 정보창이 그 웨이브의 레벨을 읽게 한다. */
+  private onHordeWave(event: Extract<SkirmishEvent, { kind: "hordeWave" }>): void {
+    this.guardWave = event.wave;
+    for (const id of event.fighterIds) {
+      const fighter = this.state.fighters.find((entry) => entry.id === id);
+      if (fighter) this.enemySnapshots.set(id, { def: fighter.def, level: event.level, breakthrough: requiredBreakthroughForLevel(event.level) });
+    }
+    void this.spawnFighters(true);
+    if (event.wave > 1) audioManager?.playSfx("battle.summon");
+  }
+
+  /** 수호전 확정 — 서버가 입장 영수증의 편성·시드로 판을 다시 굴려 점수·코인을 정한다. 화면의 점수는 보내지 않는다. */
+  private async finishGuildGuard(input: GuildGuardBattleInputDto): Promise<void> {
+    const generation = this.combatGeneration;
+    const retry = (): void => { void this.finishGuildGuard(input); };
+    const leave = (): void => startScene(this, "guild", { page: "guard" });
+    let result: SubmitGuildGuardResponse;
+    try {
+      result = await gameApi.submitGuildGuard({ requestId: input.requestId });
+    } catch (error) {
+      if (this.scene.isActive() && generation === this.combatGeneration) this.showResultFailure(retry, leave, error, "guildGuard");
+      return;
+    }
+    if (!this.scene.isActive() || generation !== this.combatGeneration) return;
+    const popups = new PopupLayer(this, 2200);
+    const { outcome } = result;
+    new StageCompletePopup(this, popups).open({
+      reward: {
+        kind: "loot",
+        items: [{ icon: GUILD_COIN_ICON, amount: result.coin }],
+        footnote: t("guild.guard.result.footnote", { score: outcome.score.toLocaleString(), wave: outcome.waves, kills: outcome.kills }),
+        settlement: true,
+      },
+      fighters: this.stageCompleteFighters(),
+      onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      onConfirm: leave,
+    });
+  }
+
   private showResultFailure(retry: () => void, leave: () => void, error?: unknown, phase: BattleResultPhase = "stage"): void {
     const failure = battleResultFailure(error, phase);
     console.error("[battle-result]", { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId, clientVersion: packageInfo.version });

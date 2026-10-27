@@ -29,13 +29,15 @@ describe("로비로 돌아갈 자리", () => {
 
 describe("전투 모드별 전장", () => {
   it("는 콘텐츠마다 다른 장소에 선다", () => {
-    // 같은 원화를 나눠 쓰는 것은 한 장소에서 이어지는 원정 둘뿐이다.
+    // 같은 원화를 나눠 쓰는 것은 한 장소에서 이어지는 원정 둘과, 전용 원화가 오기 전까지 원정의 긴 길을 빌려 쓰는
+    // 길드 수호전뿐이다(무리가 화면 위에서 내려오는 길이 있는 원화가 그것 하나다).
     expect(BATTLE_FIELD_BACKGROUND.cake).toBe(BACKGROUND.cakeField);
     expect(BATTLE_FIELD_BACKGROUND.bounty).toBe(BACKGROUND.bountyField);
     expect(BATTLE_FIELD_BACKGROUND.raid).toBe(BACKGROUND.raidField);
     expect(BATTLE_FIELD_BACKGROUND.expeditionBoss).toBe(BATTLE_FIELD_BACKGROUND.expedition);
     const fields = Object.values(BATTLE_FIELD_BACKGROUND);
-    expect(new Set(fields).size).toBe(fields.length - 1);
+    expect(BATTLE_FIELD_BACKGROUND.guildGuard).toBe(BATTLE_FIELD_BACKGROUND.expedition);
+    expect(new Set(fields).size).toBe(fields.length - 2);
   });
 
   it("는 전장에 진입 화면 배경을 깔지 않는다", () => {

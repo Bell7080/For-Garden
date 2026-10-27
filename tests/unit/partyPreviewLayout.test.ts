@@ -15,6 +15,8 @@ import {
   PARTY_DEFENSE,
   partyDefenseAllyRow,
   partyDefensePowerBounds,
+  PARTY_GUARD,
+  partyGuardSlotLift,
 } from "../../src/ui/partyPreviewLayout";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 
@@ -161,5 +163,19 @@ describe("현상수배 레인", () => {
     // 글자 30px의 글리프 밑변(약 +34)까지 품고, 그 아래 자동 배치 줄(윗변 약 896)에는 닿지 않는다.
     expect(PARTY_LANES.bottom).toBeGreaterThan(PARTY_PREVIEW.allyRow + 26 + 34);
     expect(PARTY_LANES.bottom).toBeLessThan(896);
+  });
+});
+
+describe("수호전 두 줄 편성 배치", () => {
+  it("앞줄 이름줄이 뒷줄 칸 판에 닿지 않고, 앞줄 판이 정보 줄 아래에서 시작한다", () => {
+    const frontRow = PARTY_PREVIEW.allyRow - partyGuardSlotLift(0);
+    const frontNameplateBottom = frontRow + 26 + 34;
+    expect(frontNameplateBottom).toBeLessThan(partyAllyPlateBox(0, partyGuardSlotLift(3)).y - (PARTY_ALLY_PLATE.bottom - PARTY_ALLY_PLATE.top) / 2);
+    const frontPlateTop = PARTY_ALLY_PLATE.top - partyGuardSlotLift(0);
+    expect(frontPlateTop).toBeGreaterThan(PARTY_GUARD.infoY + PARTY_POWER_PLATE.height / 2);
+  });
+
+  it("줄 이름은 첫 칸의 판 왼쪽 밖에 선다", () => {
+    expect(PARTY_GUARD.rowLabelX + PARTY_GUARD.rowLabelWidth / 2).toBeLessThanOrEqual(PARTY_PREVIEW_COLUMNS[0] - PARTY_PREVIEW.slotWidth / 2 + 2);
   });
 });

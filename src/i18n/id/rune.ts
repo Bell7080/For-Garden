@@ -27,6 +27,8 @@ export const RUNE_ID = {
   "rune.craftAllDone": "Asah semua selesai",
   "rune.unequip": "Lepas",
   "rune.equip": "Pakai",
+  "rune.openBag": "Lihat Tas",
+  "rune.traitResearch": "Riset Sifat",
   "rune.engraved": "Ukiran selesai",
   "rune.craftProgress": "Asah {done} / {total}",
   "rune.completed": "Rune telah selesai.",

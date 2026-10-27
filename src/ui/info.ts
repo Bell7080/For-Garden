@@ -1402,9 +1402,12 @@ export class InfoManager {
     hit.on("pointerup", () => {
       // 채운 조각은 룬 쪽지(세공은 거기서 한 번 더 고른다), 빈 조각은 장착 가방을 연다.
       if (currentRuneId) {
+        // 끼워 둔 룬에서 곧장 같은 자리의 가방으로 건너가 갈아 낀다 — 해제를 먼저 누르지 않아도 된다.
+        const mutable = this.capabilities.mutateProgress;
         openRuneInfoPopup(this.scene, this.popups, {
           runeInstanceId: currentRuneId,
           onChanged: () => this.refreshGrowth(),
+          ...(mutable ? { openBag: () => this.openGemPicker(index), traitResearch: true } : {}),
         });
       } else this.openGemPicker(index);
     });

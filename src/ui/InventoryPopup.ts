@@ -302,7 +302,7 @@ export class InventoryPopup {
   private select(item: InventoryDisplayItem): void {
     // 룬 쪽지는 누른 칸에 붙지 않고 화면 가운데에 선다 — 옵션 다섯 줄을 담을 만큼 커진 판이라
     // 가장자리 칸에 붙이면 판 밖 우하단 뒤로가기와 겹친다.
-    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api }); return; }
+    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true }); return; }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups).open({

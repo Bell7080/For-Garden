@@ -27,6 +27,8 @@ export const RUNE_JA = {
   "rune.craftAllDone": "一括研磨完了",
   "rune.unequip": "外す",
   "rune.equip": "装着",
+  "rune.openBag": "バッグを見る",
+  "rune.traitResearch": "特性研究",
   "rune.engraved": "刻印完了",
   "rune.craftProgress": "研磨 {done} / {total}",
 

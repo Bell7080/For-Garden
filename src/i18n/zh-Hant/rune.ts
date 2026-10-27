@@ -27,6 +27,8 @@ export const RUNE_ZH_HANT = {
   "rune.craftAllDone": "一鍵打磨完成",
   "rune.unequip": "卸下",
   "rune.equip": "裝備",
+  "rune.openBag": "查看揹包",
+  "rune.traitResearch": "特性研究",
   "rune.engraved": "刻印完成",
   "rune.craftProgress": "打磨 {done} / {total}",
   "rune.completed": "符文已完成。",

@@ -78,6 +78,8 @@ export interface AudioBackend {
   create(key: string, loop: boolean): ManagedSound;
   fade(sound: ManagedSound, volume: number, durationMs: number, done?: () => void): void;
   cancelFade(sound: ManagedSound): void;
+  /** 디코드하지 않고 흘려 재생할 긴 곡을 키에 묶는다(배경음). 대역 백엔드는 없어도 된다. */
+  registerStream?(key: string, url: string): void;
 }
 
 /** 씬이 중앙 사운드의 생성·정지를 직접 만지지 않도록 제공하는 수명 주기 핸들이다. */
@@ -254,6 +256,9 @@ export class AudioManager {
     return sound.play();
   }
 
+  /** 긴 곡을 디코드 없이 흘려 재생하도록 키에 묶는다 — 그 뒤 `playMusic(key)`가 곧바로 튼다. */
+  registerStream(key: string, url: string): void { this.backend.registerStream?.(key, url); }
+
   /** 지금 배경음으로 재생 중인(혹은 재생하려는) 트랙 키다. */
   get currentMusicKey(): string | undefined { return this.musicKey; }
 
@@ -335,13 +340,23 @@ export class AudioManager {
 /** Phaser의 생성·Tween 세부 구현을 중앙 관리자가 쓰는 작은 계약으로 변환한다. */
 export class PhaserAudioBackend implements AudioBackend {
   private readonly fades = new Map<ManagedSound, number>();
+  private readonly streams = new Map<string, string>();
   constructor(private readonly game: Phaser.Game) {}
 
-  /** Phaser 오디오 캐시에 실제 키가 준비됐는지 확인한다. */
-  has(key: string): boolean { return this.game.cache.audio.exists(key); }
+  /** Phaser 오디오 캐시에 실제 키가 준비됐는지 확인한다. 흘려 재생하는 곡은 묶어 둔 순간부터 있다. */
+  has(key: string): boolean { return this.streams.has(key) || this.game.cache.audio.exists(key); }
 
   /** Phaser Sound 인스턴스 생성은 이 어댑터를 통해서만 수행한다. */
-  create(key: string, loop: boolean): ManagedSound { return this.game.sound.add(key, { loop }) as unknown as ManagedSound; }
+  create(key: string, loop: boolean): ManagedSound {
+    const url = this.streams.get(key);
+    if (url) {
+      const manager = this.game.sound as Phaser.Sound.BaseSoundManager & { context?: AudioContext; destination?: AudioNode };
+      return new StreamedSound(url, loop, manager.context, manager.destination);
+    }
+    return this.game.sound.add(key, { loop }) as unknown as ManagedSound;
+  }
+
+  registerStream(key: string, url: string): void { this.streams.set(key, url); }
 
   /** 씬과 독립된 애니메이션 프레임으로 볼륨을 전환하고 완료 콜백을 한 번 전달한다. */
   fade(sound: ManagedSound, volume: number, durationMs: number, done?: () => void): void {
@@ -363,6 +378,101 @@ export class PhaserAudioBackend implements AudioBackend {
     const frame = this.fades.get(sound);
     if (frame !== undefined) cancelAnimationFrame(frame);
     this.fades.delete(sound);
+  }
+}
+
+/**
+ * 배경음은 디코드하지 않고 `<audio>`로 흘려 재생한다. 3분짜리 곡을 `decodeAudioData`로 풀면 PCM이 50~60MB이고
+ * 그 디코드가 데스크톱에서도 1초, 메인 스레드를 300ms 붙잡았다 — 화면이 바뀔 때마다 그 값을 치르면 모바일은
+ * 진입이 멎고, 앞 곡과 새 곡이 잠깐 함께 올라 탭이 죽는다. 흘려 재생하면 몇 MB만 든다.
+ * 소리는 `MediaElementAudioSourceNode` → 이득 노드로 Phaser 그래프에 붙인다 — iOS는 요소의 `volume`을 무시하므로
+ * 페이드·음량은 이득 노드가 맡는다. 자동 재생이 막히면 첫 입력에서 다시 튼다.
+ */
+class StreamedSound implements ManagedSound {
+  volume = 0;
+  isPlaying = false;
+  private readonly element: HTMLAudioElement;
+  private readonly gain?: GainNode;
+  private source?: MediaElementAudioSourceNode;
+  private destroyed = false;
+  private retry?: () => void;
+
+  constructor(url: string, loop: boolean, context?: AudioContext, destination?: AudioNode) {
+    this.element = new Audio(url);
+    this.element.loop = loop;
+    this.element.preload = "auto";
+    if (context) {
+      try {
+        this.source = context.createMediaElementSource(this.element);
+        this.gain = context.createGain();
+        this.gain.gain.value = 0;
+        this.source.connect(this.gain).connect(destination ?? context.destination);
+      } catch {
+        this.source = undefined;
+      }
+    }
+    this.apply();
+  }
+
+  play(): boolean {
+    if (this.destroyed) return false;
+    this.isPlaying = true;
+    this.start();
+    return true;
+  }
+
+  stop(): void {
+    this.pause();
+    this.element.currentTime = 0;
+  }
+
+  pause(): void {
+    this.isPlaying = false;
+    this.clearRetry();
+    this.element.pause();
+  }
+
+  resume(): void { this.play(); }
+
+  setVolume(volume: number): this {
+    this.volume = volume;
+    this.apply();
+    return this;
+  }
+
+  destroy(): void {
+    if (this.destroyed) return;
+    this.pause();
+    this.destroyed = true;
+    this.source?.disconnect();
+    this.gain?.disconnect();
+    // 주소를 비워야 브라우저가 받아 둔 조각과 디코더를 놓는다.
+    this.element.removeAttribute("src");
+    this.element.load();
+  }
+
+  private apply(): void {
+    const value = Math.max(0, Math.min(1, this.volume));
+    if (this.gain) this.gain.gain.value = value;
+    else this.element.volume = value;
+  }
+
+  private start(): void {
+    void this.element.play().catch(() => {
+      // 아직 손이 닿지 않아 막혔다 — 첫 입력에서 다시 튼다(그때도 틀 생각일 때만).
+      if (this.retry || this.destroyed) return;
+      this.retry = (): void => {
+        this.clearRetry();
+        if (this.isPlaying && !this.destroyed) this.start();
+      };
+      for (const type of ["pointerdown", "touchend", "keydown"]) window.addEventListener(type, this.retry, { once: true });
+    });
+  }
+
+  private clearRetry(): void {
+    if (!this.retry) return;
+    for (const type of ["pointerdown", "touchend", "keydown"]) window.removeEventListener(type, this.retry);
+    this.retry = undefined;
   }
 }
 

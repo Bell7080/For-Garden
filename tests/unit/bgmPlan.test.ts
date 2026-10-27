@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { allBgmTracks, BGM_TRACKS, bgmTrackForScene, bgmTracksToEvict } from "../../src/core/bgmPlan";
+import { BGM_TRACKS, bgmTrackForScene } from "../../src/core/bgmPlan";
 import { BATTLE_SOUND_ASSETS, RESEARCH_SOUND_ASSETS, SCENE_SOUND_ASSETS, UI_SOUND_ASSETS } from "../../src/managers/AudioManager";
 
 /** 소스에 실제로 선언된 씬 키(`super("key")`·`super({ key })`·`static KEY`). */
@@ -52,16 +52,6 @@ describe("배경음 표", () => {
     expect(bgmTrackForScene("battle", { mode: "raid" })).toBe(BGM_TRACKS.boss);
     expect(bgmTrackForScene("battle", { mode: "expeditionBoss" })).toBe(BGM_TRACKS.boss);
     for (const mode of ["stage", "expedition", "cake", "bounty", "duel"]) expect(bgmTrackForScene("battle", { mode }), mode).toBe(BGM_TRACKS.battle);
-  });
-
-  it("미리 받아 두는 목록이 모든 곡을 담는다", () => {
-    expect(new Set(allBgmTracks().map((t) => t.key))).toEqual(new Set(Object.values(BGM_TRACKS).map((t) => t.key)));
-  });
-
-  it("지금 곡을 뺀 모든 곡이 디코드 해제 대상이다", () => {
-    const evict = bgmTracksToEvict(BGM_TRACKS.battle.key).map((t) => t.key);
-    expect(evict).not.toContain(BGM_TRACKS.battle.key);
-    expect(evict).toHaveLength(allBgmTracks().length - 1);
   });
 
   it("겹침 층(설정·효과)은 표에 없어 곡을 건드리지 않는다", () => {

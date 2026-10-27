@@ -14,7 +14,7 @@ import { PortraitCard } from '../ui/PortraitCard';
 import { formationRosterGrid, PORTRAIT_GRID_MASK_GAP } from '../ui/portraitGrid';
 import { addArenaBackdrop, ARENA_TONE } from '../ui/arenaTheme';
 import { session } from '../state/session';
-import { addClippedHit } from '../ui/clippedHit';
+import { addClippedHit, clipHit } from '../ui/clippedHit';
 import { ARENA_ROOM_LAYOUT } from '../ui/arenaRoomLayout';
 import { addArenaMascots } from '../ui/ArenaMascots';
 import { addArenaRuleChips } from '../ui/arenaRuleChips';
@@ -497,6 +497,8 @@ export class ArenaRoomScene extends Phaser.Scene {
         head: 'inside', selectedStyle: 'pressed',
       });
       card.setName(`arena-card-${unit.def.id}`);
+      // 격자 창(마스크와 같은 사각형) 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 슬롯·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: 1080, top: G.top, bottom: G.bottom }));
       content.add(card);
       // 층은 원화 → 이름줄 → 덮개 → 글자/X 순이다. 덮개는 카드가 그린 칩 실루엣을 그대로 받는다.
       const dim = this.add.container(0, 0).setVisible(false);

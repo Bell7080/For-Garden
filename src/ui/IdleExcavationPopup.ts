@@ -20,6 +20,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
+import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import { combatPower } from "../core/combatPower";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -624,6 +625,8 @@ export class IdleExcavationPopup {
       });
       card.setSelected(this.draft!.includes(relic.id));
       this.rosterCards.set(relic.id, card);
+      // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
+      clipHit(card.hit, containerClip(content, GRID_VIEW.left, GRID_VIEW.top, GRID_VIEW.right, GRID_VIEW.bottom));
       // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
       bindLongPress(this.scene, card.hit, {
         onTap: () => {

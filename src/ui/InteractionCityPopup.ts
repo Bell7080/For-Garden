@@ -21,6 +21,7 @@ import { placePuppet, spawnPuppet, type PuppetCreature } from "../puppets/assets
 import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "./Button";
+import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import {
   formationRosterColumnX,
@@ -523,6 +524,8 @@ export class InteractionCityPopup {
         const clock = card.setAwayOverlay(t("interaction.awayOverlay"), interactionRemainingLabel(Math.max(0, until - this.now())));
         this.awayClocks.push({ text: clock, completesAt: until });
       }
+      // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
+      clipHit(card.hit, containerClip(parent, ROSTER_VIEW.left, ROSTER_VIEW.top, ROSTER_VIEW.right, ROSTER_VIEW.bottom));
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
           // 다른 도시에 나가 있는 이는 고를 수 없다 — 덮개와 남은 시간이 이미 그 이유를 말한다.

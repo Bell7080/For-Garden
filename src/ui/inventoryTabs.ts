@@ -8,6 +8,11 @@ export const INVENTORY_TAB_LAYOUT = {
   selectedScale: 1.1,
 } as const;
 
+/** 목록 창 아래변과 탭 윗변 사이의 틈. 목록은 이 선까지만 보이고 손도 이 선까지만 받는다. */
+export const INVENTORY_TAB_CLEARANCE = 20;
+/** 목록 창의 아래변(판 가운데 기준). E2E가 "창 밖" 자리를 같은 값에서 읽는다. */
+export const INVENTORY_LIST_BOTTOM = INVENTORY_TAB_LAYOUT.centerY - INVENTORY_TAB_LAYOUT.height * INVENTORY_TAB_LAYOUT.selectedScale / 2 - INVENTORY_TAB_CLEARANCE;
+
 /** 탭 줄이 팝업 가운데를 기준으로 좌우 대칭을 유지하도록 로컬 중심점을 계산한다. */
 export function inventoryCategoryTabPosition(index: number): { x: number; y: number } {
   const { count, width, gap, centerY } = INVENTORY_TAB_LAYOUT;

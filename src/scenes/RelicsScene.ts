@@ -15,6 +15,7 @@ import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
+import { clipHit } from "../ui/clippedHit";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
@@ -368,6 +369,8 @@ export class RelicsScene extends Phaser.Scene {
         // 전신 원화는 보이는 줄 근처만 올린다(`syncPortraitResidency`).
         deferPortrait: true,
       });
+      // 스크롤 창(가위 클립) 안에서만 손을 받는다 — 밖으로 흘러간 카드가 하단 탭·상단 줄 위를 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }));
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.

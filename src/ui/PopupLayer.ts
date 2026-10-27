@@ -371,7 +371,9 @@ export class PopupLayer {
     if (options.backButton) {
       // 판이 아니라 **화면**에 세운다. 판 안에 두면 판을 옮기거나 기울일 때 함께 돌아가고,
       // 판 밖 우하단이라는 자리 자체가 사라진다. 층이 닫힐 때 같이 지운다.
-      const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => close() })
+      // 위에 다른 판(상세·확인 창)이 얹혀 있으면 뒤로가기는 **맨 위 판부터** 닫는다 — 아래 판의 버튼이 먼저 눌려
+      // 아래 판만 닫히고 위 판이 홀로 남던 문제를 막는다.
+      const back = new IconButton(this.scene, BACK_SLOT.x, BACK_SLOT.y, { icon: UI_ICON.back, onClick: () => { const top = this.stack[this.stack.length - 1]; this.close(top && top !== layer ? top : layer); } })
         .setDepth(POPUP_BACK_BUTTON_DEPTH + this.stack.length * 2);
       this.backByLayer.set(layer, back);
       // 층이 연출 없이 통째로 죽는 길(씬 종료)에서도 함께 지운다.

@@ -9,6 +9,14 @@ import { describe, expect, it } from "vitest";
 describe("PopupLayer 부팅 계약", () => {
   const source = readFileSync(new URL("../../src/ui/PopupLayer.ts", import.meta.url), "utf8");
 
+  it("판 밖 뒤로가기는 위에 얹힌 판이 있으면 맨 위 판부터 닫는다", () => {
+    const start = source.indexOf("const back = new IconButton(");
+    expect(start).toBeGreaterThan(-1);
+    const line = source.slice(start, source.indexOf("\n", start));
+    expect(line).toContain("this.stack[this.stack.length - 1]");
+    expect(line).toContain("top !== layer");
+  });
+
   it("생성자는 씬 이벤트를 건드리지 않는다", () => {
     const start = source.indexOf("constructor(private readonly scene: Phaser.Scene");
     expect(start).toBeGreaterThan(-1);

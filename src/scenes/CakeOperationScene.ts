@@ -9,7 +9,8 @@ import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
 import { openDungeonSweep } from "./dungeonSweepFlow";
-import { groupCombatPower } from "../core/combatPower";
+import { combatPower, groupCombatPower } from "../core/combatPower";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
 import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { DungeonLobby } from "../ui/DungeonLobby";
@@ -124,8 +125,11 @@ export class CakeOperationScene extends Phaser.Scene {
         const level = cakeOperationEnemyDisplayLevel(entry).level;
         return {
           id: entry.id, name: entry.name, level,
-          // 다섯 자매가 차례로 되풀이되므로 앞의 다섯이 곧 이 판의 얼굴 전부다.
-          lineup: enemies.slice(0, CAKE_OPERATION_ENEMY_IDS.length).map((def) => ({ relicId: def.id, name: def.name, level })),
+          // 몰려오는 수 그대로 세운다 — 다섯 자매가 차례로 되풀이되므로 앞줄 다섯이 곧 이 판의 얼굴 전부다.
+          lineup: enemies.map((def) => ({
+            relicId: def.id, name: def.name, level,
+            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
+          })),
           hordeCount: enemies.length,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },

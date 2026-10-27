@@ -1,18 +1,18 @@
 import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { formatCurrency } from "../core/formatCurrency";
-import type { Element } from "../core/types";
+import type { Element, Role } from "../core/types";
 import { t } from "../i18n";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
-import { ELEMENT_ICON } from "./affinityIcons";
+import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
-import { DUNGEON_LOBBY, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX } from "./dungeonLobbyLayout";
+import { DUNGEON_LOBBY, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
 import type { DungeonTheme } from "./dungeonTheme";
 import { drawGlyph } from "./glyphs";
-import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { addPadlock } from "./Padlock";
 import { pressIn, pressOut } from "./pressFeedback";
@@ -20,13 +20,19 @@ import { addSdFootShadow } from "./SdFootShadow";
 import { addSectionTitle } from "./SectionTitle";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
-import { addUnitNameplate } from "./unitNameplate";
+import { addUnitNameplate, addUnitPower } from "./unitNameplate";
+import { addBreakthroughGradeMark } from "./rarityMark";
 
 /** 무대에 서는 적 하나. */
 export interface DungeonLineupUnit {
   relicId: string;
   name: string;
   level: number;
+  /** 편성 화면의 적과 같은 표식 — 속성·직군(왼쪽 위), 돌파 등급(오른쪽 위), 개체 전투력(발밑). */
+  element: Element;
+  role: Role;
+  breakthrough: number;
+  power: number;
   /** 현상수배만 — 몇 라운드에 서는 정예인지(1부터). */
   round?: number;
 }
@@ -37,7 +43,7 @@ export interface DungeonLobbyTier {
   name: string;
   /** 그 판의 적이 싸우는 레벨 — 화면에 선 `LV.n`이 곧 실제로 싸우는 레벨이다. */
   level: number;
-  /** 무대에 세울 적. 물량형은 대표 얼굴(자매 다섯)만 세우고 몰려오는 수는 `hordeCount`가 말한다. */
+  /** 무대에 세울 적. 물량형은 몰려오는 수 그대로 세우고 앞줄 다섯만 이름줄·표식을 단다. */
   lineup: readonly DungeonLineupUnit[];
   hordeCount?: number;
   /** 그 판에 서는 적의 속성 — 겹치지 않게 처음 나오는 순서로. 편성 전에 상성을 읽게 한다. */
@@ -222,7 +228,6 @@ export class DungeonLobby {
    */
   private paintLineup(tier: DungeonLobbyTier, direction: number): void {
     const { scene } = this;
-    const S = DUNGEON_LOBBY.stage;
     const { theme } = this.options;
     const request = ++this.lineupRequest;
     const previous = this.lineup;
@@ -239,8 +244,8 @@ export class DungeonLobby {
     for (const index of order) {
       const unit = tier.lineup[index];
       const spot = dungeonLineupSpot(index, count);
-      const height = spot.crowd ? S.crowdSd : S.sd;
-      addSdFootShadow(scene, spot.x, spot.ground, spot.crowd ? 150 : 200, ground);
+      const { height } = spot;
+      addSdFootShadow(scene, spot.x, spot.ground, height * 0.72, ground);
       const slot = scene.add.container(0, 0);
       figures.add(slot);
       void spawnPuppet(scene, battleAssetFor(unit.relicId), {
@@ -251,7 +256,20 @@ export class DungeonLobby {
         puppet.disableInteractive();
         slot.add(puppet);
       }).catch(() => undefined);
-      addUnitNameplate(scene, labels, spot.x, spot.ground + 22, unit.level, unit.name, spot.crowd ? 24 : 30, spot.crowd ? 168 : 270);
+      if (!spot.labeled) continue;
+      // **편성 화면의 적과 같은 어휘로 선다** — 속성·직군은 왼쪽 위, 돌파 등급은 오른쪽 위, 개체 전투력은
+      // 발밑, 레벨·이름은 그 아래 한 줄. 물량형 앞줄은 칸이 좁아 편성 화면의 무리 줄처럼 속성만 남긴다.
+      const k = height / 210;
+      const badgeTop = spot.ground - height + 34 * k;
+      if (spot.crowd) {
+        labels.add(new AffinityBadge(scene, spot.x - 62, badgeTop, ELEMENT_ICON[unit.element], 42, 0.62));
+      } else {
+        labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop, ELEMENT_ICON[unit.element], 52 * k, 0.62));
+        labels.add(new AffinityBadge(scene, spot.x - 104 * k, badgeTop + 49 * k, ROLE_ICON[unit.role], 38 * k, 0.62));
+        addBreakthroughGradeMark(scene, labels, spot.x + 104 * k, badgeTop - 4, 42 * k, unit.breakthrough + 1);
+      }
+      addUnitPower(scene, labels, spot.x, spot.ground + 18, unit.power, spot.crowd ? 20 : 26, COLOR.dangerText);
+      addUnitNameplate(scene, labels, spot.x, spot.ground + 22, unit.level, unit.name, spot.crowd ? 24 : 30, spot.crowd ? 150 : 270);
       if (unit.round !== undefined) {
         // 라운드 표 — 테마 색 판에 짙은 글자. 정수리 위에 서서 그 정예가 몇 번째 상대인지 말한다.
         const y = spot.ground - height - 34;
@@ -306,26 +324,58 @@ export class DungeonLobby {
    */
   private addSummary(tier: DungeonLobbyTier): void {
     const { scene } = this;
-    const { y, width, height, element } = DUNGEON_LOBBY.summary;
-    const { theme } = this.options;
-    const panel = scene.add.container(BASE_WIDTH / 2, y);
-    panel.add(drawLayer(scene, 0, 0, slantedRect(width, height, 26), { fill: COLOR.panel, alpha: HOLO.glass, edge: theme.accent, edgeAlpha: 0.85 }));
-    const half = width / 2;
-    const divider = 40;
-    const titleY = -height / 2 - 4;
-    addSectionTitle(scene, -half, titleY, t("dungeon.enemyPower"), { parent: panel });
-    const valueY = 10;
-    panel.add(scene.add.text(-half + 48, valueY, tier.enemyPower.toLocaleString(), textStyle({ role: "display", size: 46, color: COLOR.dangerText })).setOrigin(0, 0.5));
-    const last = divider - element.rightInset - element.size / 2;
-    tier.elements.forEach((value, index) => {
+    const { element, reward } = DUNGEON_LOBBY.summary;
+    const bodyY = DUNGEON_LOBBY.summary.header / 2;
+    const power = this.addSummaryCard(0, t("dungeon.enemyPower"));
+    const powerCard = dungeonSummaryCard(0);
+    const value = scene.add.text(-powerCard.width / 2 + 34, bodyY, tier.enemyPower.toLocaleString(), textStyle({ role: "display", size: 54, color: COLOR.dangerText })).setOrigin(0, 0.5);
+    power.add(value);
+    const last = powerCard.width / 2 - element.rightInset - element.size / 2;
+    tier.elements.forEach((entry, index) => {
       const x = last - (tier.elements.length - 1 - index) * element.step;
-      panel.add(new AffinityBadge(scene, x, valueY, ELEMENT_ICON[value], element.size, 0.62));
+      power.add(new AffinityBadge(scene, x, bodyY, ELEMENT_ICON[entry], element.size, 0.62));
     });
-    panel.add(scene.add.rectangle(divider, 0, 2, height - 44, COLOR.panelEdge, 0.6));
-    addSectionTitle(scene, divider + DUNGEON_LOBBY.summary.titleGap, titleY, t("dungeon.reward"), { parent: panel });
-    const size = 88;
-    panel.add(addFramedIcon(scene, undefined, half - 48 - size / 2, valueY, size, tier.reward.icon, { amount: formatCurrency(tier.reward.amount) }));
-    this.layer.add(panel);
+    const rewardCard = dungeonSummaryCard(1);
+    const prize = this.addSummaryCard(1, t("dungeon.reward"));
+    const iconX = -rewardCard.width / 2 + 30 + reward.icon / 2;
+    prize.add(addFramedIcon(scene, undefined, iconX, bodyY, reward.icon, tier.reward.icon));
+    const amount = scene.add.text(iconX + reward.icon / 2 + 18, bodyY, formatCurrency(tier.reward.amount), textStyle({ role: "display", size: 44, color: this.options.theme.accentText })).setOrigin(0, 0.5);
+    squeezeTextToWidth(amount, rewardCard.width / 2 - 24 - amount.x);
+    prize.add(amount);
+  }
+
+  /**
+   * 요약 카드 한 장 — 깎인 유리판 위에 테마 색으로 물든 머리 띠와 빗금 이름표가 선다. 판 안의 몸통 좌표는
+   * 카드 중심 기준이고 머리 띠만큼 아래로 내려 앉는다.
+   */
+  private addSummaryCard(index: 0 | 1, label: string): Phaser.GameObjects.Container {
+    const { scene } = this;
+    const { theme } = this.options;
+    const { y, height, header, bevel } = DUNGEON_LOBBY.summary;
+    const { x, width } = dungeonSummaryCard(index);
+    const card = scene.add.container(x, y);
+    const shape = chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } });
+    card.add(drawLayer(scene, 0, 0, shape, { fill: theme.deep, alpha: 0.86, edge: theme.accent, edgeAlpha: 0.95, edgeWidth: 4 }));
+    // 머리 띠 — 판과 같은 깎임을 따라 윗부분만 테마 색으로 옅게 물든다.
+    const band = scene.add.graphics();
+    band.fillStyle(theme.accent, 0.16);
+    const top = -height / 2;
+    band.fillPoints([
+      new Phaser.Math.Vector2(-width / 2 + bevel, top), new Phaser.Math.Vector2(width / 2, top),
+      new Phaser.Math.Vector2(width / 2, top + header), new Phaser.Math.Vector2(-width / 2, top + header),
+      new Phaser.Math.Vector2(-width / 2, top + bevel),
+    ], true);
+    band.fillStyle(theme.accent, 0.5);
+    band.fillRect(-width / 2 + 18, top + header, width - 36, 2);
+    card.add(band);
+    const slashX = -width / 2 + bevel + 16;
+    const headerY = top + header / 2 + 1;
+    card.add(scene.add.text(slashX, headerY, "/", textStyle({ role: "display", size: 28, color: theme.accentText })).setOrigin(0, 0.5));
+    const name = scene.add.text(slashX + 24, headerY, label, textStyle({ role: "emphasis", size: 26, color: theme.accentText })).setOrigin(0, 0.5);
+    squeezeTextToWidth(name, width / 2 - 20 - name.x);
+    card.add(name);
+    this.layer.add(card);
+    return card;
   }
 
   /** 출격·소탕. 출격은 한 판의 비용을 버튼 안에서 말하고, 소탕의 비용은 소탕 창이 말한다. */

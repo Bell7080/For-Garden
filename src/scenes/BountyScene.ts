@@ -8,6 +8,7 @@ import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
 import { openDungeonSweep } from "./dungeonSweepFlow";
 import { combatPower } from "../core/combatPower";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { getRelic } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { t } from "../i18n";
@@ -132,7 +133,14 @@ export class BountyScene extends Phaser.Scene {
         id: row.tier.id, name: row.tier.name,
         // 한 등급의 셋은 같은 레벨로 선다.
         level: bountyRoundLevel(row.tier.rounds[0]),
-        lineup: row.tier.rounds.map((round, index) => ({ relicId: round.relicId, name: getRelic(round.relicId).name, level: bountyRoundLevel(round), round: index + 1 })),
+        lineup: row.tier.rounds.map((round, index) => {
+          const def = bountyRoundEnemy(round);
+          const level = bountyRoundLevel(round);
+          return {
+            relicId: round.relicId, name: def.name, level, round: index + 1,
+            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
+          };
+        }),
         elements: distinctElements(row.tier.rounds.map((round) => getRelic(round.relicId).element)),
         reward: { icon: "currency-gold", amount: row.tier.rewardGold },
         enemyPower: row.tier.rounds.reduce((sum, round) => sum + combatPower(bountyRoundEnemy(round).stats), 0),

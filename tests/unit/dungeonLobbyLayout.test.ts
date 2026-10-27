@@ -40,7 +40,7 @@ describe("던전 입구 배치표", () => {
     for (const count of [3, 5, 10, 15]) {
       for (let index = 0; index < count; index += 1) {
         const spot = dungeonLineupSpot(index, count);
-        expect(Math.abs(spot.x)).toBeLessThan(half - DUNGEON_LOBBY.stage.arrow.inset - 40);
+        expect(Math.abs(spot.x)).toBeLessThan(half - 40);
         expect(spot.ground).toBeLessThan(DUNGEON_LOBBY.stage.height / 2 - 40);
       }
     }
@@ -53,6 +53,14 @@ describe("던전 입구 배치표", () => {
     const crowd = Array.from({ length: 15 }, (_, index) => dungeonLineupSpot(index, 15));
     expect(crowd.filter((spot) => spot.labeled)).toHaveLength(5);
     for (const spot of crowd) expect(spot.ground - spot.height).toBeGreaterThan(-height / 2 + band - 40);
+  });
+
+  it("넘김 화살표는 무대 바깥 여백에 서고 화면 밖으로 나가지 않는다", () => {
+    const { width, arrow } = DUNGEON_LOBBY.stage;
+    const halfArrow = (arrow.size * 0.82) / 2;
+    // 안쪽 끝이 무대 가장자리 근처까지만 들어온다 — 양 끝 적의 표식과 겹치지 않는다.
+    expect(width / 2 + arrow.outset - halfArrow).toBeGreaterThanOrEqual(width / 2 - 4);
+    expect(BASE_WIDTH / 2 + width / 2 + arrow.outset + halfArrow).toBeLessThanOrEqual(BASE_WIDTH);
   });
 
   it("조작 버튼은 화면 가운데를 기준으로 균등하게 선다", () => {

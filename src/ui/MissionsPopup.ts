@@ -14,6 +14,7 @@ import { squeezeTextToWidth } from "./textFit";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { chipPoints, drawLayer, drawShapeEdge, HoloBar, HOLO, slantedRect, toPoints } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
@@ -29,6 +30,7 @@ import { MISSIONS_POPUP_LAYOUT, missionListContentHeight, missionRowY, missionsT
  */
 const MISSION_ORDER_MEMORY = new Map<string, MissionOrderMemory>();
 import { shapeClipMask } from "./popupArt";
+import { clipInteractiveTree, containerClip } from "./clippedHit";
 import { withBusy } from "./BusyOverlay";
 
 const PERIODS: readonly MissionPeriod[] = ["daily", "weekly"];
@@ -117,6 +119,9 @@ export class MissionsPopup {
     this.rows = [];
     const content = this.buildScrollList(missions.length);
     missions.forEach((raw, index) => this.renderMission(content, raw, index));
+    // 반쯤 걸친 줄의 보상 액자가 창 밖(탭 줄)에서 손을 받지 않게 한다 — 마스크는 그림만 자른다.
+    const { list: view } = MISSIONS_POPUP_LAYOUT;
+    if (content.parentContainer) clipInteractiveTree(content, containerClip(content.parentContainer, -(view.cardWidth / 2 + 20), 0, view.cardWidth / 2 + 20, view.bottom - view.top));
     // **줄이 제자리를 찾아 스르륵 옮겨 간다.** 처음 열 때는 데이터 순서의 자리에서, 받은 뒤에는
     // 방금 서 있던 자리에서 출발한다 — 순서가 뚝 바뀌면 방금 받은 임무가 어디로 갔는지 놓친다.
     // 다른 탭에서 넘어오면 **지난번에 서 있던 자리**에서 출발한다 — 바뀐 것이 없으면 아무 줄도 움직이지 않는다.
@@ -167,6 +172,7 @@ export class MissionsPopup {
       owner: drag, root: frame, bounds: () => drag.getBounds(),
       onDelta: (dy) => this.applyScroll(this.scroll + dy / (frame.getWorldTransformMatrix().scaleY || 1)),
     });
+    addScrollHint(this.scene, frame, { x: 0, y: viewHeight / 2, width: half * 2, height: viewHeight, owner: frame, read: () => ({ offset: this.scroll, min: this.minScroll }) });
     return content;
   }
 

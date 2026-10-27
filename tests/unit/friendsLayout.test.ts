@@ -58,7 +58,8 @@ describe("친구 화면 배치", () => {
 
   it("프로필 카드 하단 조작이 기록 아래, 판 안에 든다", () => {
     const a = PLAYER_PROFILE_LAYOUT.actions;
-    expect(a.y - a.height / 2).toBeGreaterThan(529);
+    const r = PLAYER_PROFILE_LAYOUT.records;
+    expect(a.y - a.height / 2).toBeGreaterThan(r.firstY + r.rowGap * (r.rows - 1) + r.height / 2);
     expect(a.y + a.height / 2).toBeLessThan(740 - 20);
   });
 });

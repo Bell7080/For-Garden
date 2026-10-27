@@ -18,6 +18,7 @@ import { chipPoints, drawLayer, HOLO, slantedRect } from "./holo";
 import { POPUP_TITLE_SIZE, type PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 
 /**
  * 결투장 순위 — 원정 순위표와 **같은 줄 규격**(`RANKING_LIST`)·같은 금은동을 쓴다. 다른 것은 점수 옆에
@@ -123,6 +124,7 @@ export class DuelRankingPopup {
     const hit = addClippedHit(this.scene, content, 0, metrics.viewportCenterY, RANKING_LIST.rowWidth, metrics.viewportHeight, () => clip);
     hit.disableInteractive();
     attachDragScroll(this.scene, { owner: hit, root: content, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
+    addScrollHint(this.scene, content, { x: 0, y: metrics.viewportCenterY, width: RANKING_LIST.rowWidth, height: metrics.viewportHeight, owner: hit, read: () => ({ offset, min: metrics.minY }) });
   }
 
   /** 1·2·3등의 단 — 가운데가 1등이고 가장 높다. 단의 색은 순위표 줄의 금·은·동과 같다. */

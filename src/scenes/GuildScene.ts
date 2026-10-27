@@ -55,10 +55,11 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { FaceFrame } from "../ui/FaceFrame";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
-import { addPriceBar, GUILD_COIN_ICON } from "../ui/priceTag";
+import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { addSideShopButton } from "../ui/sideShop";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
@@ -715,7 +716,7 @@ export class GuildScene extends Phaser.Scene {
     const free = !creating && guild?.badgeFree === true;
     const P = guildEditorSpots(creating);
     const cost = creating ? GUILD_CREATE_GEMS : free ? 0 : GUILD_BADGE_CHANGE_GEMS;
-    this.popups.open({ width: E.width, height: P.height, title: t(creating ? "guild.create.title" : "guild.badge.title"), closeOnBackdrop: false, dim: true }, (body, close) => {
+    this.popups.open({ width: E.width, height: P.height, title: t(creating ? "guild.create.title" : "guild.badge.title"), closeOnBackdrop: false, dim: true, backButton: true }, (body, close) => {
       const left = -E.inner / 2;
 
       // ── 문장 무대 — 정보 탭 머리와 같은 문법(왼쪽 큰 배지, 오른쪽 이름·레벨·가입 방식). 고른 값이 곧바로 여기 선다.
@@ -789,12 +790,12 @@ export class GuildScene extends Phaser.Scene {
       };
       paintWorkshop();
 
-      // ── 비용 · 취소 / 확정
-      if (free) this.label(body, 0, P.cost, t("guild.badge.free"), { role: "emphasis", size: 30, color: COLOR.accentText }, [0.5, 0.5]);
-      else addPriceBar(this, body, 0, P.cost, E.inner, undefined, "gems", cost, { short: session.wallet.gems < cost, height: E.cost.height });
-      const half = (E.buttons.width + E.buttons.gap) / 2;
-      addRowButton(this, body, -half, P.submit, E.buttons.width, E.buttons.height, t("popup.cancel"), "neutral", () => FULL_CLIP, () => true, close);
-      addRowButton(this, body, half, P.submit, E.buttons.width, E.buttons.height, t(creating ? "guild.create.submit" : "guild.badge.apply"), "accent", () => FULL_CLIP, () => true, () => {
+      // ── 확정 — 값은 상점 결제처럼 버튼 판 안에 박는다(첫 배지 변경은 「무료」 표). 취소는 판 밖 우하단 뒤로가기다.
+      body.add(new Button(this, 0, P.submit, {
+        width: E.submit.width, height: E.submit.height, fontSize: 34, variant: "primary",
+        label: t(creating ? "guild.create.submit" : "guild.badge.apply"),
+        ...(free ? { tag: t("product.price.free") } : { cost: { icon: CURRENCY_ICON_BY_WALLET.gems, amount: cost, affordable: session.wallet.gems >= cost } }),
+        onClick: () => {
         if (!isGuildBadge(badge)) { this.toast(t("guild.error.BADGE_INVALID")); return; }
         if (creating) {
           const checked = validateGuildName(input?.value ?? "");
@@ -816,7 +817,7 @@ export class GuildScene extends Phaser.Scene {
           costs: [{ iconKey: CURRENCY_ICON_BY_WALLET.gems, amount: GUILD_BADGE_CHANGE_GEMS }],
           balance: { iconKey: CURRENCY_ICON_BY_WALLET.gems, before: session.wallet.gems, after: session.wallet.gems - GUILD_BADGE_CHANGE_GEMS },
         }, change);
-      });
+      } }));
     });
   }
 
@@ -1180,6 +1181,7 @@ export class GuildScene extends Phaser.Scene {
     this.minScroll = guildMinScroll(count, this.listBottom);
     this.scrollOffset = keep ? Phaser.Math.Clamp(this.scrollOffset, this.minScroll, 0) : 0;
     list.y = S.body.top + this.scrollOffset;
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: S.body.top + viewport / 2, width: BASE_WIDTH, height: viewport, depth: 45, owner: list, read: () => ({ offset: this.scrollOffset, min: this.minScroll }) });
   }
 
   private bindScroll(): void {

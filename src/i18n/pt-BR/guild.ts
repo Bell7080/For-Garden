@@ -43,7 +43,6 @@ export const GUILD_PT_BR = {
   "guild.badge.icon": "Símbolo",
   "guild.badge.iconColor": "Cor do símbolo",
   "guild.badge.apply": "Alterar emblema",
-  "guild.badge.free": "A primeira alteração é grátis",
   "guild.badge.confirmTitle": "Alterar emblema",
   "guild.badge.confirmMessage": "Alterar o emblema da guilda.",
   "guild.badge.done": "Emblema alterado",

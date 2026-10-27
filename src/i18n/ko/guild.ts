@@ -47,7 +47,6 @@ export const GUILD_KO = {
   "guild.badge.icon": "문양",
   "guild.badge.iconColor": "문양색",
   "guild.badge.apply": "배지 변경",
-  "guild.badge.free": "첫 변경은 무료입니다",
   "guild.badge.confirmTitle": "배지 변경",
   "guild.badge.confirmMessage": "길드 배지를 바꿉니다.",
   "guild.badge.done": "배지를 바꿨습니다",

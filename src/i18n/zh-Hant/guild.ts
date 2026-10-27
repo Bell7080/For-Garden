@@ -43,7 +43,6 @@ export const GUILD_ZH_HANT = {
   "guild.badge.icon": "圖案",
   "guild.badge.iconColor": "圖案顏色",
   "guild.badge.apply": "更換徽章",
-  "guild.badge.free": "首次更換免費",
   "guild.badge.confirmTitle": "更換徽章",
   "guild.badge.confirmMessage": "更換公會徽章。",
   "guild.badge.done": "已更換徽章",

@@ -13,7 +13,19 @@ export const ACCOUNT_ID_POPUP = {
   fieldRoom: 108,
   noteRoom: 92,
   submit: { width: 360, height: 92 },
-  bottomRoom: 150,
+  /** 제출 버튼 아래 여백. 닫기는 판 밖 우하단의 공용 뒤로가기가 맡아 판 안에 취소 줄이 없다. */
+  bottomRoom: 96,
+} as const;
+
+/**
+ * 계정 창(아이디·이메일)의 안내역 자리. 토리카 SD가 판 윗변 오른쪽에 올라서고, 말풍선은 제목표 위로
+ * 비켜 판 왼쪽 위에 뜬다 — 판 안의 입력 줄을 하나도 밀어내지 않는다.
+ */
+export const ACCOUNT_GUIDE = {
+  sd: { inset: 150, height: 230, sink: 18, hitWidth: 200, shadow: 150 },
+  bubble: { inset: 20, width: 560, lift: 58, bodySize: 28, nameSize: 24, minHeight: 104, holdMs: 600_000 },
+  pokeKeys: ["account.guide.poke1", "account.guide.poke2", "account.guide.poke3"],
+  pokeReturnMs: 2400,
 } as const;
 
 export type AccountIdPopupMode = "both" | "link";

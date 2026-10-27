@@ -43,7 +43,6 @@ export const GUILD_TH = {
   "guild.badge.icon": "สัญลักษณ์",
   "guild.badge.iconColor": "สีสัญลักษณ์",
   "guild.badge.apply": "เปลี่ยนตรา",
-  "guild.badge.free": "เปลี่ยนครั้งแรกฟรี",
   "guild.badge.confirmTitle": "เปลี่ยนตรา",
   "guild.badge.confirmMessage": "เปลี่ยนตรากิลด์",
   "guild.badge.done": "เปลี่ยนตราแล้ว",

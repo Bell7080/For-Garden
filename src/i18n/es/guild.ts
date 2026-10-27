@@ -43,7 +43,6 @@ export const GUILD_ES = {
   "guild.badge.icon": "Símbolo",
   "guild.badge.iconColor": "Color del símbolo",
   "guild.badge.apply": "Cambiar emblema",
-  "guild.badge.free": "El primer cambio es gratis",
   "guild.badge.confirmTitle": "Cambiar emblema",
   "guild.badge.confirmMessage": "Cambiar el emblema del gremio.",
   "guild.badge.done": "Emblema cambiado",

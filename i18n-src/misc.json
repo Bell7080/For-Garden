@@ -1921,6 +1921,46 @@
 "Arena-Rang",
 "Ранг арены"
 ],
+"profile.duelTier": [
+"决斗段位",
+"ระดับดวล",
+"Hạng Đấu tay đôi",
+"Tingkat Duel",
+"Rango de duelo",
+"Divisão de duelo",
+"Duell-Rang",
+"Ранг дуэли"
+],
+"profile.record.ancient": [
+"远古地层最高层",
+"ชั้นดินโบราณสูงสุด",
+"Địa tầng cổ đại cao nhất",
+"Strata Kuno tertinggi",
+"Récord de Estratos antiguos",
+"Recorde dos Estratos antigos",
+"Uralte Schichten – Rekord",
+"Рекорд Древних пластов"
+],
+"profile.record.ancientFloor": [
+"第{floor}层",
+"ชั้น {floor}",
+"Tầng {floor}",
+"Lantai {floor}",
+"Piso {floor}",
+"Andar {floor}",
+"Ebene {floor}",
+"Этаж {floor}"
+],
+"profile.record.ancientMonth": [
+"本月",
+"เดือนนี้",
+"Tháng này",
+"Bulan ini",
+"Este mes",
+"Este mês",
+"Diesen Monat",
+"В этом месяце"
+],
 "profile.noRecord": [
 "无记录",
 "ไม่มีบันทึก",
@@ -2915,6 +2955,14 @@
   "error.account.loginUnsupported": ["暂不支持此登录方式。", "ยังไม่รองรับวิธีเข้าสู่ระบบนี้", "Chưa hỗ trợ cách đăng nhập này.", "Metode login ini belum didukung.", "Este método de acceso aún no está disponible.", "Este método de entrada ainda não é compatível.", "Diese Anmeldemethode wird noch nicht unterstützt.", "Этот способ входа пока не поддерживается."],
   "title.login.account": ["账号登录", "เข้าสู่ระบบด้วยบัญชี", "Đăng nhập tài khoản", "Login akun", "Acceso con cuenta", "Entrar com conta", "Konto-Anmeldung", "Вход по аккаунту"],
   "account.id.title": ["账号登录", "เข้าสู่ระบบด้วยบัญชี", "Đăng nhập tài khoản", "Login akun", "Acceso con cuenta", "Entrar com conta", "Konto-Anmeldung", "Вход по аккаунту"],
+  "account.guide.signIn": ["队长，请出示通行证！", "กัปตัน ขอดูบัตรผ่านหน่อยนะคะ!", "Đội trưởng, cho em xem thẻ ra vào nhé!", "Kapten, boleh lihat kartu aksesnya?", "Capitán, ¿me enseña su pase?", "Capitão, posso ver seu crachá?", "Captain, darf ich deinen Ausweis sehen?", "Капитан, покажите пропуск!"],
+  "account.guide.register": ["新的通行证，我马上帮你做好！", "บัตรผ่านใหม่ หนูจะทำให้เดี๋ยวนี้เลยค่ะ!", "Thẻ mới, em làm ngay cho nhé!", "Kartu akses baru, langsung kubuatkan!", "¡Le hago un pase nuevo ahora mismo!", "Eu faço um crachá novo agora mesmo!", "Ich mache dir sofort einen neuen Ausweis!", "Новый пропуск сделаю прямо сейчас!"],
+  "account.guide.link": ["到现在的记录，我会好好贴在通行证上！", "บันทึกทั้งหมดจนถึงตอนนี้ หนูจะแนบไว้กับบัตรผ่านให้นะคะ!", "Hồ sơ từ trước đến giờ, em sẽ gắn chặt vào thẻ!", "Semua catatan sampai sekarang akan kutempel di kartu akses!", "¡Pegaré todos sus registros al pase, prometido!", "Vou prender todos os registros no crachá, prometo!", "Alle bisherigen Aufzeichnungen hefte ich an den Ausweis!", "Все записи до сих пор прикреплю к пропуску!"],
+  "account.guide.email": ["告诉我邮箱地址，我就发验证码过去！", "บอกอีเมลมา แล้วหนูจะส่งรหัสยืนยันให้นะคะ!", "Chỉ cần cho em địa chỉ email, em sẽ gửi mã xác nhận!", "Cukup beri tahu email, nanti kukirim kodenya!", "¡Dígame su correo y le envío un código!", "É só me dizer o e-mail que eu mando um código!", "Sag mir nur deine E-Mail, dann schicke ich einen Code!", "Скажите почту — и я пришлю код!"],
+  "account.guide.emailSent": ["打开邮箱看看吧，验证码应该到了！", "ลองเปิดกล่องจดหมายดูนะคะ รหัสน่าจะมาถึงแล้ว!", "Mở hộp thư xem nhé, mã chắc đã tới rồi!", "Coba buka kotak masuk, kodenya pasti sudah sampai!", "Revise su bandeja de entrada. ¡El código ya debería estar ahí!", "Abra a caixa de entrada. O código já deve ter chegado!", "Schau in dein Postfach, der Code sollte da sein!", "Загляните в почту — код уже должен прийти!"],
+  "account.guide.poke1": ["呀！好、好痒……！", "อุ๊ย จะ จั๊กจี้ค่ะ…!", "Á! Nh-nhột quá…!", "Eek! G-geli…!", "¡Ay! Me, me hace cosquillas…!", "Ai! F-faz cócegas…!", "Huch! D-das kitzelt…!", "Ой! Щ-щекотно…!"],
+  "account.guide.poke2": ["正在审核出入！我会认真的！", "กำลังตรวจบัตรผ่านอยู่ค่ะ! จะตั้งใจทำนะคะ!", "Đang kiểm tra ra vào mà! Em nghiêm túc đó!", "Lagi periksa akses! Aku serius, lho!", "¡Estoy revisando pases! ¡Voy en serio!", "Estou conferindo crachás! É sério!", "Ich prüfe gerade Ausweise! Ganz ernsthaft!", "Я проверяю пропуска! Всё серьёзно!"],
+  "account.guide.poke3": ["通过了的话……一起吃点心吧！", "ถ้าผ่านแล้ว… มากินขนมด้วยกันนะคะ!", "Qua được rồi thì… cùng ăn bánh nhé!", "Kalau sudah lolos… makan camilan bareng, ya!", "Cuando pase… ¡compartamos un bocadillo!", "Depois de passar… vamos dividir um lanche!", "Wenn du durch bist… teilen wir einen Snack!", "Как пройдёте… давайте перекусим вместе!"],
   "account.id.linkTitle": ["绑定账号", "เชื่อมต่อบัญชี", "Liên kết tài khoản", "Tautkan akun", "Vincular cuenta", "Vincular conta", "Konto verknüpfen", "Привязка аккаунта"],
   "account.id.tab.signIn": ["登录", "เข้าสู่ระบบ", "Đăng nhập", "Masuk", "Acceder", "Entrar", "Anmelden", "Вход"],
   "account.id.tab.register": ["注册", "สมัครสมาชิก", "Đăng ký", "Daftar", "Registrarse", "Cadastrar", "Registrieren", "Регистрация"],

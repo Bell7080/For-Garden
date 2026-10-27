@@ -81,6 +81,10 @@ describe("스크롤 창 입력 제약", () => {
       ["src/scenes/InteractionScene.ts", /clipHit\(hit/],
       ["src/ui/ExpeditionMapView.ts", /clipHit\(hit/],
       ["src/ui/ArchaeologyMapView.ts", /clipHit\(hit/],
+      // 출격판: 판 아래로 흘러 잘린 원정·고대 지층 칸이 판 밖 허공에서 눌리던 버그.
+      ["src/scenes/LobbyScene.ts", /clipInteractiveTree\(content, containerClip\(body/],
+      ["src/ui/MissionsPopup.ts", /clipInteractiveTree\(content/],
+      ["src/ui/PassPopup.ts", /clipInteractiveTree\(row, clip\)/],
     ];
     for (const [path, pattern] of wired) expect(readFileSync(path, "utf8"), path).toMatch(pattern);
     expect(readFileSync("src/ui/InventoryPopup.ts", "utf8")).not.toMatch(/setInteractive\(/);

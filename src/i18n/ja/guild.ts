@@ -43,7 +43,6 @@ export const GUILD_JA = {
   "guild.badge.icon": "模様",
   "guild.badge.iconColor": "模様の色",
   "guild.badge.apply": "バッジ変更",
-  "guild.badge.free": "初回の変更は無料です",
   "guild.badge.confirmTitle": "バッジ変更",
   "guild.badge.confirmMessage": "ギルドバッジを変更します。",
   "guild.badge.done": "バッジを変更しました",

@@ -39,6 +39,8 @@ export interface GuildMemberCard {
   expeditionBest: number;
   /** 고대 지층에서 가장 깊이 깬 층(0이면 아직 들어가지 않았다). 예전 카드에는 없다. */
   ancientFloor?: number;
+  /** 결투장 점수(이번 시즌). 결투장을 연 적이 없으면 비어 있다. 예전 카드에는 없다. */
+  duelScore?: number;
   /** 아레나 RP — 한 판이라도 한 길드원만 서버가 싣는다(`server_arena_weekly` 트리거). */
   arenaScore?: number;
 }

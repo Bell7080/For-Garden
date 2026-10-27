@@ -1137,6 +1137,8 @@ var GUILD_KO = {
   "guild.create.title": "\uAE38\uB4DC \uB9CC\uB4E4\uAE30",
   "guild.create.nameLabel": "\uAE38\uB4DC \uC774\uB984",
   "guild.create.nameAria": "\uAE38\uB4DC \uC774\uB984 \uC785\uB825",
+  "guild.create.nameRule": "{min}~{max}\uC790",
+  "guild.create.joinLabel": "\uAC00\uC785 \uBC29\uC2DD",
   "guild.create.confirmTitle": "\uAE38\uB4DC \uB9CC\uB4E4\uAE30",
   "guild.create.confirmMessage": "\u300C{name}\u300D \uAE38\uB4DC\uB97C \uB9CC\uB4ED\uB2C8\uB2E4.",
   "guild.create.submit": "\uB9CC\uB4E4\uAE30",
@@ -1150,9 +1152,7 @@ var GUILD_KO = {
   "guild.badge.shapeColor": "\uBC14\uD0D5\uC0C9",
   "guild.badge.icon": "\uBB38\uC591",
   "guild.badge.iconColor": "\uBB38\uC591\uC0C9",
-  "guild.badge.index": "{index}/{count}",
   "guild.badge.apply": "\uBC30\uC9C0 \uBCC0\uACBD",
-  "guild.badge.free": "\uCCAB \uBCC0\uACBD\uC740 \uBB34\uB8CC\uC785\uB2C8\uB2E4",
   "guild.badge.confirmTitle": "\uBC30\uC9C0 \uBCC0\uACBD",
   "guild.badge.confirmMessage": "\uAE38\uB4DC \uBC30\uC9C0\uB97C \uBC14\uAFC9\uB2C8\uB2E4.",
   "guild.badge.done": "\uBC30\uC9C0\uB97C \uBC14\uAFE8\uC2B5\uB2C8\uB2E4",
@@ -1984,6 +1984,10 @@ var MISC_KO = {
   "profile.levelTree.stamina": "\uC2A4\uD14C\uBBF8\uB098 \uC0C1\uD55C {max}",
   "profile.unset": "\uBBF8\uC9C0\uC815",
   "profile.arenaTier": "\uC544\uB808\uB098 \uD2F0\uC5B4",
+  "profile.duelTier": "\uACB0\uD22C\uC7A5 \uD2F0\uC5B4",
+  "profile.record.ancient": "\uACE0\uB300 \uC9C0\uCE35 \uCD5C\uACE0\uCE35",
+  "profile.record.ancientFloor": "{floor}\uCE35",
+  "profile.record.ancientMonth": "\uC774\uBC88 \uB2EC",
   "profile.noRecord": "\uAE30\uB85D \uC5C6\uC74C",
   // 스테이지 결과
   "stageComplete.contribution": "\uACF5\uACA9 \xB7 \uBC29\uC5B4 \xB7 \uD68C\uBCF5",
@@ -2078,6 +2082,14 @@ var MISC_KO = {
   "error.account.loginUnsupported": "\uC544\uC9C1 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uB85C\uADF8\uC778\uC785\uB2C8\uB2E4.",
   "title.login.account": "\uACC4\uC815 \uB85C\uADF8\uC778",
   "account.id.title": "\uACC4\uC815 \uB85C\uADF8\uC778",
+  "account.guide.signIn": "\uB300\uC7A5\uB2D8, \uCD9C\uC785\uC99D \uBCF4\uC5EC \uC8FC\uC138\uC694!",
+  "account.guide.register": "\uC0C8 \uCD9C\uC785\uC99D\uC740 \uC81C\uAC00 \uBC14\uB85C \uB9CC\uB4E4\uC5B4 \uB4DC\uB9B4\uAC8C\uC694!",
+  "account.guide.link": "\uC9C0\uAE08\uAE4C\uC9C0\uC758 \uAE30\uB85D, \uCD9C\uC785\uC99D\uC5D0 \uAF2D \uBD99\uC5EC \uB458\uAC8C\uC694!",
+  "account.guide.email": "\uBA54\uC77C \uC8FC\uC18C\uB9CC \uC54C\uB824 \uC8FC\uC2DC\uBA74 \uD655\uC778 \uCF54\uB4DC\uB97C \uBCF4\uB0B4 \uB4DC\uB824\uC694!",
+  "account.guide.emailSent": "\uBA54\uC77C\uD568\uC744 \uC5F4\uC5B4 \uBCF4\uC138\uC694. \uCF54\uB4DC\uAC00 \uB3C4\uCC29\uD588\uC744 \uAC70\uC608\uC694!",
+  "account.guide.poke1": "\uD788\uC775, \uAC00, \uAC04\uC9C0\uB7EC\uC6CC\uC694\u2026!",
+  "account.guide.poke2": "\uCD9C\uC785 \uC2EC\uC0AC \uC911\uC774\uC5D0\uC694! \uC9C4\uC9C0\uD558\uAC8C \uD560\uAC8C\uC694!",
+  "account.guide.poke3": "\uD1B5\uACFC\uD558\uBA74\u2026 \uAC04\uC2DD \uAC19\uC774 \uBA39\uC5B4\uC694!",
   "account.id.linkTitle": "\uACC4\uC815 \uC5F0\uB3D9",
   "account.id.tab.signIn": "\uB85C\uADF8\uC778",
   "account.id.tab.register": "\uD68C\uC6D0\uAC00\uC785",
@@ -12096,6 +12108,7 @@ init_define_import_meta_env();
 // src/core/buildFlavor.ts
 init_define_import_meta_env();
 var QA_TOOLS_ENABLED = false;
+var QA_GUILD_AUTO_JOIN = QA_TOOLS_ENABLED && true;
 
 // src/core/saveStorage.ts
 var LOCAL_SAVE_FLAVOR = false ? "test" : QA_TOOLS_ENABLED ? "qa" : "production";
@@ -18216,7 +18229,7 @@ function getAncientStrataStage(floor) {
     name: `B${floor}`,
     ancientFloor: floor,
     sub: true,
-    prerequisiteStageIds: [floor === 1 ? "1-10" : ancientStageId(floor - 1)],
+    prerequisiteStageIds: [floor === 1 ? "4-10" : ancientStageId(floor - 1)],
     enemies: d.enemies.map((enemy, index) => ({
       relicId: enemy.id,
       level: d.level,
@@ -28248,7 +28261,7 @@ var CONTENT_UNLOCKS = [
   { id: "raid", level: 8 },
   { id: "expedition", level: 9 }
 ];
-var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10" };
+var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10", ancient: "4-10" };
 var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
 var CONTENT_LEVEL_GATES_ENABLED = true;
 function contentUnlockLevel(id) {
@@ -28271,6 +28284,10 @@ function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
 }
 
 // src/state/playerProfile.ts
+function publicDuelScore(duel2, now) {
+  if (!duel2 || duel2.seasonId === "") return void 0;
+  return Math.max(0, Math.floor(rollDuelPeriods(duel2, now).score));
+}
 function favoriteShowcase(state) {
   const relic = RELICS.find(({ id }) => id === state.favorite);
   if (!relic) return null;
@@ -28308,6 +28325,7 @@ function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__
   const research = state.playerResearch;
   const next = nextContentUnlock(research.level);
   const nextStage = nextStageUnlock(state.cleared);
+  const duelScore = publicDuelScore(state.duel, now);
   return {
     // 기본 이름은 표가 아니라 부를 때 고른다 — 표는 모듈을 읽는 순간 굳어 언어를 따라오지 않는다.
     displayName: card.nickname || t("profile.defaultName"),
@@ -28327,7 +28345,9 @@ function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
-      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) }
+      expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) },
+      ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
+      ...duelScore !== void 0 ? { duelScore } : {}
     },
     collection: { owned: PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id)).length, total: PLAYABLE_RELICS.length },
     ...next ? { nextUnlock: { contentId: next.id, level: next.level } } : {},
@@ -32612,6 +32632,21 @@ var FakeGuildServer = class {
     this.requestedBy.delete(actor.userId);
     return id;
   }
+  /**
+   * QA 빌드가 접속하자마자 길드전·수호전을 시험할 수 있게 호출자를 표본 길드의 **길드장**으로 앉힌다. 원래 길드장(표본)은
+   * 부길드장으로 내려 직위 상한을 지킨다. 이미 어느 길드에 있으면 그대로 둔다.
+   */
+  qaJoinAsLeader(actor, guildId) {
+    const guild = this.guilds.get(guildId);
+    if (!guild || this.userGuild.has(actor.userId)) return false;
+    for (const member of guild.members.values()) if (member.role === "leader") member.role = "vice";
+    const vices = [...guild.members.values()].filter((m) => m.role === "vice").sort((a, b) => b.joinedAt - a.joinedAt);
+    for (const extra of vices.slice(GUILD_ROLE_LIMIT.vice)) extra.role = "officer";
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    this.userGuild.set(actor.userId, guildId);
+    this.requestedBy.delete(actor.userId);
+    return true;
+  }
   /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
   addProsperityForTest(guildId, amount) {
     const guild = this.guilds.get(guildId);
@@ -32622,6 +32657,9 @@ var SAMPLE_NAMES = ["\uD558\uB298", "\uC0C8\uBD04", "\uC774\uC2AC", "\uB9C8\uB8E
 var SAMPLE_BIOS = ["\uC624\uB298\uB3C4 \uBCF5\uC6D0 \uC911", "\uCE58\uC988\uCF00\uC774\uD06C\uB294 \uC0AC\uB791\uC785\uB2C8\uB2E4", "\uAE38\uB4DC\uC804 \uAC19\uC774 \uD574\uC694", "\uB290\uAE0B\uD558\uAC8C \uAC00\uB294 \uC911", "\uC218\uD638\uC804 \uAC1C\uADFC \uBAA9\uD45C", "\uACE0\uACE0\uD559 \uC804\uBB38\uAC00", "\uC798 \uBD80\uD0C1\uB4DC\uB9BD\uB2C8\uB2E4"];
 var roleRank = (role) => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
 var localGuildBackend = new FakeGuildServer(() => Date.now() + guildQaClockShift());
+
+// src/api/guildApi.ts
+init_define_import_meta_env();
 
 // src/api/guildActor.ts
 init_define_import_meta_env();
@@ -32639,6 +32677,7 @@ function guildActorFrom(state, userId) {
 function guildMemberCardFrom(state) {
   const profile = playerProfileDisplay(state);
   const favorite = profile.competitiveStats.favoriteRelic;
+  const duel2 = publicDuelScore(state.duel, /* @__PURE__ */ new Date());
   return {
     uid: state.playerCard.uid.slice(0, 32),
     bio: state.playerCard.bio.slice(0, 80),
@@ -32651,9 +32690,37 @@ function guildMemberCardFrom(state) {
     } : null,
     highestStageId: profile.competitiveStats.highestStage?.stageId ?? null,
     expeditionBest: Math.max(0, Math.floor(state.expedition.allTimeBestScore)),
-    ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR)
+    ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
+    ...duel2 !== void 0 ? { duelScore: duel2 } : {}
   };
 }
+
+// src/api/guildApi.ts
+function bindLocal(backend) {
+  const api = {};
+  for (const name of GUILD_API_METHODS)
+    api[name] = (...args) => backend[name](guildActorFrom(session, "local-player"), ...args);
+  return api;
+}
+var localGuildApi = bindLocal(localGuildBackend);
+var activeGuildApi = localGuildApi;
+var guildSandbox = QA_GUILD_AUTO_JOIN;
+var isGuildSandbox = () => guildSandbox;
+var qaAutoJoined = false;
+var QA_AUTO_GUILD_ID = "sample-1";
+function ensureQaGuildMembership() {
+  if (!QA_GUILD_AUTO_JOIN || qaAutoJoined || !guildSandbox) return;
+  qaAutoJoined = true;
+  localGuildBackend.qaJoinAsLeader(guildActorFrom(session, "local-player"), QA_AUTO_GUILD_ID);
+}
+var guildApi = new Proxy({}, {
+  get(_target, key) {
+    if (guildSandbox) ensureQaGuildMembership();
+    const target = guildSandbox ? localGuildApi : activeGuildApi;
+    const value = target[key];
+    return typeof value === "function" ? value.bind(target) : void 0;
+  }
+});
 
 // src/core/guildGuardBattle.ts
 init_define_import_meta_env();
@@ -37939,6 +38006,16 @@ function qaRandom() {
   return hook ? hook() : Math.random();
 }
 var localGameApi = new FakeServer();
+var SANDBOX_GUILD_METHODS = /* @__PURE__ */ new Set([
+  "createGuild",
+  "changeGuildBadge",
+  "stampGuildAttendance",
+  "buyGuildProduct",
+  "getGuildGuard",
+  "enterGuildGuard",
+  "submitGuildGuard",
+  "placeGuildWarDefense"
+]);
 var activeGameApi = localGameApi;
 var remoteMissionListeners = /* @__PURE__ */ new Set();
 var gameApi = new Proxy({}, {
@@ -37954,7 +38031,8 @@ var gameApi = new Proxy({}, {
         };
       };
     }
-    return (...args) => activeGameApi[prop](...args);
+    const target = isGuildSandbox() && SANDBOX_GUILD_METHODS.has(prop) ? localGameApi : activeGameApi;
+    return (...args) => target[prop](...args);
   }
 });
 
@@ -38317,6 +38395,9 @@ function publicProfile(state, playerId, now) {
   const relic = getRelic(state.favorite);
   const progress = state.relicProgress[relic.id];
   const ancientFloor = ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR);
+  const stage = highestClearedStage(STAGES, state.cleared);
+  const duelScore = publicDuelScore(state.duel, now);
+  const skinId = state.equippedRelicSkinIds[relic.id];
   return {
     id: playerId,
     uid: state.playerCard.uid,
@@ -38329,13 +38410,20 @@ function publicProfile(state, playerId, now) {
     equippedModifiers: new ProfileModifierManager(state).equipped().map(({ id, displayName, rarity }) => ({ id, displayName, rarity })),
     favoriteRelic: {
       relicId: relic.id,
+      ...skinId ? { equippedSkinId: skinId } : {},
       level: progress?.level ?? 1,
-      breakthroughGrade: progress?.breakthrough ?? 0,
+      // 공개 값은 표식에 서는 등급(I~V)이다 — 돌파 단계(0~4)를 그대로 실으면 친구 카드가 한 등급 낮게 선다.
+      breakthroughGrade: breakthroughGrade(progress?.breakthrough ?? 0),
       stats: new RelicProgressionManager(state).getFinalStats(relic.id),
       skillIds: [relic.basic.id, relic.passive.id, relic.ultimate.id]
     },
-    // 고대 지층 지도가 친구를 그 층 노드 옆에 세운다. 깬 층이 없으면 키를 생략한다.
-    competitiveStats: ancientFloor > 0 ? { ancientFloor } : {}
+    // 친구 카드의 기록 칸과 고대 지층 지도(친구를 그 층 노드 옆에 세운다)가 읽는다. 없는 기록은 키를 생략한다.
+    competitiveStats: {
+      ...stage ? { highestStage: { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } } : {},
+      ...state.expedition.allTimeBestScore > 0 ? { expeditionScore: Math.floor(state.expedition.allTimeBestScore) } : {},
+      ...ancientFloor > 0 ? { ancientFloor } : {},
+      ...duelScore !== void 0 ? { duelScore } : {}
+    }
   };
 }
 

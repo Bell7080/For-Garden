@@ -26,6 +26,7 @@ import {
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { attachDragScroll } from "../ui/dragScroll";
+import { addScrollHint } from "../ui/ScrollHint";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -548,6 +549,7 @@ export class RaidScene extends Phaser.Scene {
     const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0).setVisible(false);
     attachDragScroll(this, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
+    addScrollHint(this, content, { x: RAID_BOARD.centerX, y: viewport.centerY, width: RANKING_LIST.rowWidth, height: viewport.height, owner: hit, read: () => ({ offset, min: minY }) });
   }
 
   /** 한 줄. 1·2·3등의 금·은·동과 내 줄의 강조는 순위표와 같은 표를 읽는다. */

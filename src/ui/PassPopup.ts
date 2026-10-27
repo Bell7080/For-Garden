@@ -1,5 +1,6 @@
 import { formatStorePrice } from "../core/storePrice";
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
 import type { GameApi, ProductDto, ProgressPassDto, ProgressPassMilestoneDto } from "../api/contracts";
 import type { PlatformPaymentAdapter } from "../api/PlatformPayment";
 import { runPlatformPurchase } from "../api/platformPurchase";
@@ -20,6 +21,7 @@ import { addFrameAmount, addFramedIcon, guideForIcon } from "./itemFrame";
 import { PASS_POPUP, passPopupArrowSpot, passPopupCanStep, passPopupColumns, passPopupFrameXs, passPopupListHeaderY, passPopupMinScroll, passPopupPassFollow, passPopupPassMinScroll, passPopupPassStrip, passPopupPassTabs, passPopupRailFill, passPopupRowY, passPopupScrollFor, passPopupViewport } from "./passPopupLayout";
 import { passLevelOf, passReadyCount, storyPassStageId } from "./passPopupModel";
 import { shapeClipMask } from "./popupArt";
+import { clipInteractiveTree, containerClip } from "./clippedHit";
 import { pressIn, pressOut } from "./pressFeedback";
 import { slideTabPage } from "./screenTransition";
 import { motionPolicy } from "../core/settings";
@@ -302,6 +304,8 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
   const tweens: Phaser.Tweens.Tween[] = [];
   const min = passPopupMinScroll(count);
   let scroll = Phaser.Math.Clamp(start, min, 0);
+  const clip = containerClip(frame, -half, 0, half, view.height);
+  const clipped = new WeakSet<Phaser.GameObjects.Container>();
   let press: { y: number; scroll: number } | undefined;
   let moved = false;
 
@@ -344,12 +348,17 @@ function mountScrollList(scene: Phaser.Scene, root: Phaser.GameObjects.Container
     scene.input.off(Phaser.Input.Events.POINTER_WHEEL, onWheel);
     tweens.forEach((tween) => tween.remove());
   });
+  addScrollHint(scene, frame, { x: 0, y: view.height / 2, width: half * 2, height: view.height, owner: frame, read: () => ({ offset: scroll, min }) });
   return {
     content,
     addRow: (row) => { rows.push(row); content.add(row); },
     dragging: () => moved,
     track: (tween) => { tweens.push(tween); },
-    refresh: () => apply(scroll),
+    // 반쯤 걸친 줄의 액자가 창 밖(탭 줄)에서 손을 받지 않게, 새로 붙은 줄의 입력면을 창 안으로 좁힌다.
+    refresh: () => {
+      for (const row of rows) if (!clipped.has(row)) { clipped.add(row); clipInteractiveTree(row, clip); }
+      apply(scroll);
+    },
   };
 }
 

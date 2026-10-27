@@ -4,8 +4,43 @@ import { startAfterOpening } from "./openingSave";
 import { RELICS, sortRelicsBySpecimenNumber } from "../../src/data/relics";
 import { compareBookmarkedOwnedRelics } from "../../src/core/relicCatalog";
 import type { Session } from "../../src/state/session";
-import { captureGame, tap, tapUntil } from "./canvasInput";
+import { canvasBox, captureGame, tap, tapUntil, waitForCanvasInputFrame } from "./canvasInput";
 import { RUNE_CRAFT_PANEL, runeCraftLayout } from "../../src/ui/runeCraftLayout";
+import { RUNE_PICK_GRID, runePickerSize } from "../../src/ui/runePickerLayout";
+
+test("룬 선택창은 검색과 필터 초기화를 지원하고 상세창 뒤의 입력을 숨긴다", async ({ page }, testInfo) => {
+  await startAfterOpening(page, (session) => {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map(key => [key, 1])) as Record<RuneStatKey, number>;
+    session.runeInventory = ["검색 A", "검색 B"].map((baseName, i) => ({ ...createRuneInstance({ instanceId: `picker-${i}`, baseName, rarity: "uncommon", part: 0, statValues: values, random: () => 0 }), customName: baseName }));
+    session.relicProgress[firstCatalogRelicId(session)].heartGemSlots[0] = null;
+  });
+  await tap(page, W / 2, H / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
+  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.infoGemSlots?.length)).toBe(3);
+  await tap(page, 688, 1350);
+  const input = page.getByPlaceholder("이름 검색");
+  await expect(input).toBeVisible();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await input.fill("검색 A");
+  const top = H / 2 - runePickerSize(2).height / 2;
+  const canvas = await canvasBox(page);
+  const search = await input.boundingBox();
+  expect(search).not.toBeNull();
+  expect(Math.abs(search!.x - (canvas.x + 145 * canvas.width / W))).toBeLessThan(2);
+  expect(Math.abs(search!.y - (canvas.y + (top + 121) * canvas.height / H))).toBeLessThan(2);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-picker-search.png`);
+  await tap(page, W / 2 + 265, top + 222);
+  await expect(input).toHaveValue("");
+  await input.fill("검색 A");
+  await waitForCanvasInputFrame(page);
+  await waitForCanvasInputFrame(page);
+  await tap(page, W / 2 - (RUNE_PICK_GRID.columns - 1) * RUNE_PICK_GRID.cellWidth / 2, top + RUNE_PICK_GRID.headerHeight);
+  await expect(input).toBeHidden();
+  await tap(page, 20, 20);
+  await expect(input).toBeVisible();
+});
 
 const W = 1080;
 const H = 1920;

@@ -8,7 +8,7 @@ import { DUEL_TIERS } from '../../src/core/duelArena';
 import { RAID_DIFFICULTY } from '../../src/data/raid';
 import { GUILD_GUARD } from '../../src/core/guildGuard';
 import { GUILD_GUARD_COIN, guildGuardCoin } from '../../src/core/guildGuardBattle';
-import { EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, EXPEDITION_TREASURE_REWARD_BALANCE } from '../../src/data/expedition';
+import { EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, EXPEDITION_TREASURE_REWARD_BALANCE, EXPEDITION_WEEKLY_RANK_POOL } from '../../src/data/expedition';
 describe('젬 보상 볼륨',()=>{
  it('일간·주간 임무 및 연구도 완료의 젬 합계를 상향한 표로 지급한다',()=>{
   const total=(period:'daily'|'weekly')=>MISSIONS.filter(m=>m.period===period&&m.reward.currency==='gems').reduce((sum,m)=>sum+m.reward.amount,0)+RESEARCH_REWARD_STAGES[period].flatMap(s=>s.rewards).filter(r=>r.currency==='gems').reduce((sum,r)=>sum+r.amount,0);
@@ -46,6 +46,19 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(DUEL_TIERS.map(t=>t.seasonReward.gems),approvalMessage).toEqual([300,500,1000,1500,2000,2500,3000,3500]);
   // 한 주에 한 사람이 받는 경쟁 젬의 끝(결투장 1위 + 원정 1위 + 아레나 마스터·1위)
   expect(WEEKLY_RANK_GEMS[0].gems*2+ARENA_TIERS.at(-1)!.weeklyReward.gems+ARENA_WEEKLY_RANK_GEMS[0].gems,approvalMessage).toBeLessThanOrEqual(9500);
+ });
+ // 2026-10-27 응태 요청: 원정 주간 순위를 표준 보상 풀(1,000위 밖 백분율 구간 + 참여)로 옮기고 골드·치즈케이크를 얹었다.
+ // 젬·인양 기록은 예전 표 그대로(101위 밖 500·80)이고, 얹은 몫의 끝(1위 골드 5,000·치즈케이크 150)은 원정 주간 공급의 약 13.5%다(승인선 20% 아래).
+ it('원정 주간 순위 풀은 예전 젬·인양 기록을 넘지 않고 얹은 골드·치즈케이크는 주간 공급의 20% 아래다',()=>{
+  const rows=[...EXPEDITION_WEEKLY_RANK_POOL.ranks.map(r=>r.rewards),...EXPEDITION_WEEKLY_RANK_POOL.percents.map(r=>r.rewards),EXPEDITION_WEEKLY_RANK_POOL.participation];
+  expect(EXPEDITION_WEEKLY_RANK_POOL.ranks.slice(0,5).map(r=>r.rewards.gems),approvalMessage).toEqual(WEEKLY_RANK_GEMS.slice(0,5).map(r=>r.gems));
+  expect(rows.every(r=>(r.gems??0)<=3000&&(r.salvageRecord??0)<=400),approvalMessage).toBe(true);
+  expect(rows.slice(5).every(r=>r.gems===500&&r.salvageRecord===80),approvalMessage).toBe(true);
+  const weeklyRuns=7/0.75;
+  for(const key of ['gold','cheesecake'] as const){
+   const top=Math.max(...rows.map(r=>r[key]??0));
+   expect(top,approvalMessage).toBeLessThanOrEqual(EXPEDITION_SWEEP_REWARDS[key]*weeklyRuns*0.2);
+  }
  });
  // 2026-10-27 응태 승인: 고대 지층은 매달 초기화되고 초회 보상을 매달 전부 다시 준다(200층 끝까지 젬 6,500/월).
  // 월간 순위는 1위 3,000 · 1,000위 밖은 백분율 구간 + 참여 200.

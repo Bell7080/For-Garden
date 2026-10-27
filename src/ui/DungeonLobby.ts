@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { formatCurrency } from "../core/formatCurrency";
-import type { Element, Role } from "../core/types";
+import type { Element, RelicDef, Role } from "../core/types";
 import { t } from "../i18n";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
@@ -11,10 +11,12 @@ import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
 import { DUNGEON_LOBBY, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
 import type { DungeonTheme } from "./dungeonTheme";
+import { EnemyInfoPopup } from "./EnemyInfoPopup";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
 import { addFramedIcon } from "./itemFrame";
 import { addPadlock } from "./Padlock";
+import { PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { addSdFootShadow } from "./SdFootShadow";
 import { addSectionTitle } from "./SectionTitle";
@@ -26,6 +28,8 @@ import { addBreakthroughGradeMark } from "./rarityMark";
 /** 무대에 서는 적 하나. */
 export interface DungeonLineupUnit {
   relicId: string;
+  /** 그 판에서 실제로 서는 정의(레벨·돌파·유형 몫이 반영된 값). 누르면 이 값 그대로 적 정보창이 열린다. */
+  def: RelicDef;
   name: string;
   level: number;
   /** 편성 화면의 적과 같은 표식 — 속성·직군(왼쪽 위), 돌파 등급(오른쪽 위), 개체 전투력(발밑). */
@@ -103,6 +107,8 @@ export class DungeonLobby {
   private lineupRequest = 0;
   private state?: DungeonLobbyState;
   private swipeFrom?: number;
+  /** 무대의 적을 누르면 여는 창 — 편성·전투 화면과 같은 적 정보 팝업 한 장이다. */
+  private readonly enemyInfo: EnemyInfoPopup;
 
   constructor(private readonly scene: Phaser.Scene, private readonly handlers: DungeonLobbyHandlers, private readonly options: DungeonLobbyOptions) {
     const S = DUNGEON_LOBBY.stage;
@@ -111,6 +117,7 @@ export class DungeonLobby {
     this.stageChrome = scene.add.container(0, 0);
     this.stage.add(this.stageChrome);
     this.layer = scene.add.container(0, 0);
+    this.enemyInfo = new EnemyInfoPopup(scene, new PopupLayer(scene, 2200));
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.lineupRequest += 1; });
   }
 
@@ -147,15 +154,25 @@ export class DungeonLobby {
     // 윗변 한 줄만 테마 색으로 — 사방을 두르지 않는 화면 규칙이다.
     this.stage.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: 0, edge: theme.accent, edgeAlpha: 0.95, edgeWidth: 5, shadow: false }));
     const hit = scene.add.rectangle(0, 0, S.width, S.height, 0xffffff, 0).setInteractive();
-    hit.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => { this.swipeFrom = pointer.x; });
-    hit.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
+    this.listenSwipe(hit);
+    this.stage.add(hit);
+  }
+
+  /**
+   * 무대를 밀어 넘기는 손짓. 바닥 입력면과 적 하나하나의 입력면이 같은 규칙을 쓴다 — 적 위에서
+   * 시작한 밀기도 단계를 넘기고, 거의 움직이지 않고 뗀 손만 `onTap`(그 적의 정보창)으로 간다.
+   */
+  private listenSwipe(target: Phaser.GameObjects.GameObject, onTap?: () => void): void {
+    const S = DUNGEON_LOBBY.stage;
+    target.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => { this.swipeFrom = pointer.x; });
+    target.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
       if (this.swipeFrom === undefined) return;
       const dx = pointer.x - this.swipeFrom;
       this.swipeFrom = undefined;
       if (Math.abs(dx) >= S.swipe) this.step(dx < 0 ? 1 : -1);
+      else if (Math.abs(dx) <= S.tapSlop) onTap?.();
     });
-    hit.on(Phaser.Input.Events.POINTER_OUT, () => { this.swipeFrom = undefined; });
-    this.stage.add(hit);
+    target.on(Phaser.Input.Events.POINTER_OUT, () => { this.swipeFrom = undefined; });
   }
 
   /** 옆 단계로 넘긴다. 끝에서는 멈춘다(돌아 감기지 않는다 — 1단계 옆이 마지막 단계면 사다리가 끊겨 읽힌다). */
@@ -256,6 +273,12 @@ export class DungeonLobby {
         puppet.disableInteractive();
         slot.add(puppet);
       }).catch(() => undefined);
+      // **적을 누르면 정보창이 열린다** — 편성·전투 화면과 같은 규칙. 뒷줄부터 세우므로 겹친 자리는
+      // 앞줄 입력면이 위에서 먼저 받는다. 잠긴 단계도 누가 기다리는지 볼 수 있다.
+      const tap = scene.add.rectangle(spot.x, spot.ground - height / 2, height * (spot.crowd ? 0.62 : 0.86), height + 40, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      this.listenSwipe(tap, () => this.enemyInfo.show({ def: unit.def, level: unit.level, breakthrough: unit.breakthrough }));
+      ground.add(tap);
       if (!spot.labeled) continue;
       // **편성 화면의 적과 같은 어휘로 선다** — 속성·직군은 왼쪽 위, 돌파 등급은 오른쪽 위, 개체 전투력은
       // 발밑, 레벨·이름은 그 아래 한 줄. 물량형 앞줄은 칸이 좁아 표식만 한 뼘 작게 세우고 돌파 등급은 뺀다.

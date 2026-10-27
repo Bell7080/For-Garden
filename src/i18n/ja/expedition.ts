@@ -14,7 +14,7 @@ export const EXPEDITION_JA = {
   "expedition.sortie": "出  撃",
   "expedition.sweep": "掃  討",
   "expedition.ranking": "ランキング",
-  "expedition.weeklyReward": "週間報酬",
+  "expedition.weeklyScoreReward": "週間スコア報酬",
   "expedition.syncing": "記録を同期中",
 
   "expedition.abandon": "撤退する",

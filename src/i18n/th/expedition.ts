@@ -13,7 +13,7 @@ export const EXPEDITION_TH = {
   "expedition.sortie": "ออ ก รบ",
   "expedition.sweep": "กว าด ล้ าง",
   "expedition.ranking": "อันดับ",
-  "expedition.weeklyReward": "รางวัลรายสัปดาห์",
+  "expedition.weeklyScoreReward": "รางวัลคะแนนรายสัปดาห์",
   "expedition.syncing": "กำลังซิงก์สถิติ",
   "expedition.abandon": "ละทิ้ง",
   "expedition.abandon.title": "ละทิ้งการออกสำรวจ",

@@ -127,7 +127,7 @@ export class CakeOperationScene extends Phaser.Scene {
           id: entry.id, name: entry.name, level,
           // 몰려오는 수 그대로 세운다 — 다섯 자매가 차례로 되풀이되므로 앞줄 다섯이 곧 이 판의 얼굴 전부다.
           lineup: enemies.map((def) => ({
-            relicId: def.id, name: def.name, level,
+            def, relicId: def.id, name: def.name, level,
             element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
           })),
           hordeCount: enemies.length,

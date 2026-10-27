@@ -137,7 +137,7 @@ export class BountyScene extends Phaser.Scene {
           const def = bountyRoundEnemy(round);
           const level = bountyRoundLevel(round);
           return {
-            relicId: round.relicId, name: def.name, level, round: index + 1,
+            def, relicId: round.relicId, name: def.name, level, round: index + 1,
             element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
           };
         }),

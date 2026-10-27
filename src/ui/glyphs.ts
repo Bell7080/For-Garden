@@ -38,6 +38,7 @@ export type GlyphName =
   | "edit"
   | "bar-chart"
   | "arena-tier"
+  | "rank-reward"
   | "page-prev"
   | "page-next"
   | "remove"
@@ -83,6 +84,15 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.75, -r * 0.85, r * 0.75, -r * 0.85, r * 0.58, r * 0.38, 0, r * 0.9, -r * 0.58, r * 0.38), true);
       g.lineBetween(-r * 0.38, -r * 0.2, r * 0.38, -r * 0.2);
       g.lineBetween(-r * 0.25, r * 0.18, r * 0.25, r * 0.18);
+      break;
+    case "rank-reward":
+      // 순위 보상 — 리본 두 갈래에 매달린 마름모 메달. 순위표(방패)와 한 쌍으로 서되 "받는 것"으로 읽힌다.
+      g.strokePoints(points(-r * 0.62, -r * 0.92, -r * 0.18, -r * 0.18), false);
+      g.strokePoints(points(r * 0.62, -r * 0.92, r * 0.18, -r * 0.18), false);
+      g.lineBetween(-r * 0.62, -r * 0.92, -r * 0.22, -r * 0.92);
+      g.lineBetween(r * 0.62, -r * 0.92, r * 0.22, -r * 0.92);
+      g.strokePoints(points(0, -r * 0.3, r * 0.6, r * 0.3, 0, r * 0.92, -r * 0.6, r * 0.3), true);
+      g.strokePoints(points(0, r * 0.06, r * 0.22, r * 0.3, 0, r * 0.54, -r * 0.22, r * 0.3), true);
       break;
     case "bar-chart":
       // 서로 다른 높이의 세 막대와 바닥선만으로 작은 크기에서도 기여도 그래프를 읽게 한다.

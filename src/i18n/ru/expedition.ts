@@ -13,7 +13,7 @@ export const EXPEDITION_RU = {
   "expedition.sortie": "В  Б О Й",
   "expedition.sweep": "З А Ч И С Т К А",
   "expedition.ranking": "Рейтинг",
-  "expedition.weeklyReward": "Награды недели",
+  "expedition.weeklyScoreReward": "Награды за очки недели",
   "expedition.syncing": "Синхронизация рекорда",
   "expedition.abandon": "Сдаться",
   "expedition.abandon.title": "Прервать экспедицию",

@@ -22,7 +22,11 @@ import { COLOR, textStyle } from "./theme";
  */
 export type RewardTableBadge =
   | { kind: "tier"; tier: DuelTierId }
-  | { kind: "rank"; from: number; upTo: number | null };
+  | { kind: "rank"; from: number; upTo: number | null }
+  /** 1,000위 밖의 상위 백분율 구간(`RankRewardPool.percents`). */
+  | { kind: "percent"; upToPercent: number }
+  /** 기록을 남긴 나머지 모두(`RankRewardPool.participation`). */
+  | { kind: "participation" };
 
 export interface RewardTableRow {
   badge: RewardTableBadge;
@@ -79,7 +83,8 @@ function paintRow(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, y: 
     holder.add(drawLayer(scene, REWARD_TABLE.badgeX, 0, slantedRect(plate.width, plate.height, 12), {
       fill: medal?.fill ?? 0x0b1016, alpha: 0.95, edge: medal?.edge ?? COLOR.panelEdge, edgeAlpha: medal ? 0.95 : 0.6, shadow: false,
     }));
-    const label = rankBandLabel(row.badge.from, row.badge.upTo);
+    const label = row.badge.kind === "rank" ? rankBandLabel(row.badge.from, row.badge.upTo)
+      : row.badge.kind === "percent" ? `${row.badge.upToPercent}%` : t("rewardTable.badge.all");
     holder.add(squeezeTextToWidth(scene.add.text(REWARD_TABLE.badgeX, 0, label, textStyle({ role: "display", size: medal ? 36 : 30, color: medal?.text ?? COLOR.ink })).setOrigin(0.5), plate.width - 16));
   }
 

@@ -1,4 +1,4 @@
-import { EXPEDITION_WEEKLY_RANK_REWARDS } from "../data/expedition";
+import { EXPEDITION_WEEKLY_RANK_POOL } from "../data/expedition";
 import { ANCIENT_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from "../data/competitiveRewards";
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from "../core/arenaStanding";
 import { expeditionWeekKey } from "../core/expeditionBoss";
@@ -9,6 +9,9 @@ import type { OpsInbox } from "../core/opsInbox";
 import { requestBudget } from "./requestPolicy";
 import { worldRaidDefinitions, type SharedRaidContext } from "./sharedRaids";
 import { GameCallError, StateConflictError, type StateStore } from "./gameHandler";
+
+/** v2 함수가 없는 운영 DB에 넘기는 예전 원정 인양 기록 표(`WEEKLY_RANK_GEMS`와 같은 줄). 마이그레이션이 적용되면 지운다. */
+const LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80] as const;
 
 interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
 
@@ -51,7 +54,10 @@ export function createSupabaseStore(env: Env) {
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {
-      await rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: EXPEDITION_WEEKLY_RANK_REWARDS[index].rewards.salvageRecord ?? 0 })) });
+      // 원정은 표준 보상 풀(1,000위 밖 백분율 구간 + 여러 재화)이다 — v2 함수가 받는다. 운영 DB에 v2가 아직 없으면
+      // 예전 함수에 예전 표(젬 + 인양 기록, 101위 밖 한 줄)를 넘긴다: 마이그레이션 전후 어느 쪽이든 우편이 끊기지 않는다.
+      await rpc("server_competitive_rewards_v2", { p_player: playerId, p_rules: { duel: WEEKLY_RANK_GEMS, expedition: EXPEDITION_WEEKLY_RANK_POOL } })
+        .catch(() => rpc("server_competitive_rewards", { p_player: playerId, p_rules: WEEKLY_RANK_GEMS.map((row, index) => ({ ...row, salvageRecord: LEGACY_EXPEDITION_RANK_SALVAGE[index] ?? 0 })) }));
       // 아레나는 판마다 주지 않고 닫힌 주의 티어·순위로 한 통을 보낸다. 표는 arenaStanding.ts 한 곳에서 넘긴다.
       await rpc("server_arena_weekly_rewards", { p_player: playerId, p_rules: {
         tiers: ARENA_TIERS.map((tier) => ({ floor: tier.floor, ...tier.weeklyReward })),

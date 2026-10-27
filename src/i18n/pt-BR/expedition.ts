@@ -13,7 +13,7 @@ export const EXPEDITION_PT_BR = {
   "expedition.sortie": "P A R T I R",
   "expedition.sweep": "V A R R E R",
   "expedition.ranking": "Classificação",
-  "expedition.weeklyReward": "Recompensas semanais",
+  "expedition.weeklyScoreReward": "Prêmios de pontos semanais",
   "expedition.syncing": "Sincronizando o recorde",
   "expedition.abandon": "Abandonar",
   "expedition.abandon.title": "Abandonar Expedição",

@@ -869,7 +869,7 @@
     "Wochenabschluss in {days} T. {hours} Std.",
     "До итогов недели: {days} д. {hours} ч."
   ],
-  "arena.weekly.chip": [
+  "ranking.reward.weekly": [
     "每周奖励",
     "รายสัปดาห์",
     "Thưởng tuần",
@@ -879,6 +879,7 @@
     "Woche",
     "Неделя"
   ],
+"ranking.reward.monthly": ["每月奖励", "รายเดือน", "Thưởng tháng", "Bulanan", "Mensual", "Mensal", "Monat", "Месяц"],
   "arena.ranking.title": [
     "竞技场排名",
     "อันดับอารีนา",

@@ -1,5 +1,6 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { openCompetitiveRewards } from "./CompetitiveRewardPopup";
+import { addRankRewardChip, RANKING_POPUP_REWARD_CHIP } from "./RankingChips";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -48,7 +49,7 @@ export class ExpeditionRankingPopup {
       // 가장자리를 안쪽으로 살짝 눌러 원화가 판 테두리에서 끊기지 않고 가라앉게 한다. 줄여 가며
       // 두르는 옛 비네트는 가로세로 비율이 다른 판에서 검은 잔상을 남기므로 쓰지 않는다.
       body.add(drawFrameVignette(this.scene, 0, 0, width, height, { strength: 0.5, spread: 0.18 }).setMask(popupBodyShapeMask(this.scene, body, shape)));
-      body.add(new Button(this.scene, 0, -height / 2 + 90, { width: 300, height: 68, fontSize: 26, label: t("expedition.weeklyReward"), onClick: () => openCompetitiveRewards(this.scene, this.popups, "expedition", this.myRank) }));
+      addRankRewardChip(this.scene, body, -width / 2 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, { period: "weekly", onClick: () => openCompetitiveRewards(this.scene, this.popups, "expedition", this.myRank) });
       void this.refresh();
     });
   }
@@ -85,8 +86,8 @@ export class ExpeditionRankingPopup {
     const merged = displayRankingEntries(entries, bestScore, QA_TOOLS_ENABLED);
     this.myRank = merged.find((entry) => entry.isMe)?.rank ?? null;
     // 순위는 누적 보상 점수가 아니라 한 판 최고 점수로 정렬된다는 기준을 제목에서 바로 밝힌다.
-    content.add(this.scene.add.text(-410, -720, t("ranking.bestScoreOrder"), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
-    content.add(this.scene.add.text(410, -720, t("ranking.tieBreak"), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
+    content.add(this.scene.add.text(-410, -696, t("ranking.bestScoreOrder"), textStyle({ role: "display", size: 36, color: COLOR.accentText })).setOrigin(0, 0.5));
+    content.add(this.scene.add.text(410, -696, t("ranking.tieBreak"), textStyle({ role: "body", size: 19, color: COLOR.inkDim })).setOrigin(1, 0.5));
 
     /*
      * **100등까지 아래로 내려 본다.** 여덟 줄만 세워 두면 내가 몇 등인지, 위가 얼마나 먼지를

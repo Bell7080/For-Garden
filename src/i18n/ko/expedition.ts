@@ -14,7 +14,7 @@ export const EXPEDITION_KO = {
   "expedition.sortie": "출  격",
   "expedition.sweep": "소  탕",
   "expedition.ranking": "랭킹",
-  "expedition.weeklyReward": "주간 보상",
+  "expedition.weeklyScoreReward": "주간 점수 보상",
   "expedition.syncing": "기록 동기화 중",
 
   "expedition.abandon": "포기하기",

@@ -46,6 +46,8 @@ export const DUNGEON_LOBBY = {
     arrow: { outset: 30, size: 64 },
     /** 이만큼 밀어야 단계가 넘어간다. */
     swipe: 70,
+    /** 이만큼 안에서 뗀 손은 밀기가 아니라 누름이다 — 그 적의 정보창을 연다. 사이 구간은 아무 일도 없다. */
+    tapSlop: 24,
   },
   /** 난이도 번호 줄. 고른 칸은 한 뼘 커지고 테마 색으로 찬다. */
   strip: { titleY: 1100, y: 1190, chipWidth: 80, chipHeight: 96, gap: 10, selectedScale: 1.12 },

@@ -13,7 +13,7 @@ export const EXPEDITION_ID = {
   "expedition.sortie": "B E R A N G K A T",
   "expedition.sweep": "S A P U",
   "expedition.ranking": "Peringkat",
-  "expedition.weeklyReward": "Hadiah Mingguan",
+  "expedition.weeklyScoreReward": "Hadiah Skor Mingguan",
   "expedition.syncing": "Menyinkronkan rekor",
   "expedition.abandon": "Menyerah",
   "expedition.abandon.title": "Tinggalkan Ekspedisi",

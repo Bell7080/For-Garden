@@ -120,16 +120,7 @@
 "Rangliste",
 "Рейтинг"
 ],
-"expedition.weeklyReward": [
-"每周奖励",
-"รางวัลรายสัปดาห์",
-"Thưởng tuần",
-"Hadiah Mingguan",
-"Recompensas semanales",
-"Recompensas semanais",
-"Wochenbelohnungen",
-"Награды недели"
-],
+"expedition.weeklyScoreReward": ["每周分数奖励", "รางวัลคะแนนรายสัปดาห์", "Thưởng điểm tuần", "Hadiah Skor Mingguan", "Premios de puntos semanales", "Prêmios de pontos semanais", "Wochenpunkte-Belohnungen", "Награды за очки недели"],
 "expedition.syncing": [
 "正在同步记录",
 "กำลังซิงก์สถิติ",

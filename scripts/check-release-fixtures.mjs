@@ -14,7 +14,7 @@ try {
     const outfile = join(directory, `${mode}.mjs`);
     await build({
       stdin: {
-        contents: `export {TEMP_AD_REWARD_ENABLED,tempAdToken} from './src/core/tempAd';
+        contents: `export {TEMP_AD_REWARD_ENABLED,tempAdToken,PLACEHOLDER_AD_ENABLED,placeholderAdToken} from './src/core/tempAd';
           export {runPlatformPurchase} from './src/api/platformPurchase';
           export {connectServerProgress} from './src/api/serverProgress';
           export {FakeServer} from './src/api/FakeServer';
@@ -211,9 +211,15 @@ try {
       const tempState = createDefaultSession();
       const tempServer = new FakeServer(tempState, options);
       await assert.rejects(() => tempServer.claimAdReward({ requestId: "release-temp-ad", slotId: "gold-ad", verificationToken: module.tempAdToken("gold-ad") }), error => error.code === "AD_TOKEN_INVALID");
+      // 자리표시 광고 토큰은 켜진 동안만 받아들이고, 실제 검증자가 주입되면 그쪽만 따른다.
+      const placeholderState = createDefaultSession();
+      const placeholderServer = new FakeServer(placeholderState, options);
+      const placeholderClaim = placeholderServer.claimAdReward({ requestId: "release-placeholder-ad", slotId: "gold-ad", verificationToken: module.placeholderAdToken("gold-ad") });
+      if (module.PLACEHOLDER_AD_ENABLED) await placeholderClaim;
+      else await assert.rejects(() => placeholderClaim, error => error.code === "AD_TOKEN_INVALID");
       const catalog = await server.getProducts("premium");
       assert.ok(catalog.products.filter(p => p.acquisition.kind === "platform_payment").every(p => !p.purchasable));
-      assert.ok((await server.getAdOperationsConfig()).slots.every(slot => !slot.enabled));
+      assert.ok((await server.getAdOperationsConfig()).slots.every(slot => slot.enabled === module.PLACEHOLDER_AD_ENABLED), "ad slots follow the pre-release placeholder flag");
       const paidProduct = catalog.products.find(p => p.acquisition.kind === "platform_payment");
       assert.ok(paidProduct);
       let sdkCalled = false;

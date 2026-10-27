@@ -29337,6 +29337,10 @@ var TEMP_AD_REWARD_ENABLED = QA_TOOLS_ENABLED;
 function tempAdToken(slotId) {
   return `temp-ad:${slotId}`;
 }
+var PLACEHOLDER_AD_ENABLED = true;
+function placeholderAdToken(slotId) {
+  return `placeholder-ad:${slotId}`;
+}
 
 // src/core/gacha.ts
 init_define_import_meta_env();
@@ -32950,9 +32954,9 @@ var FakeServer = class {
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
-    this.adVerificationAvailable = options.verifyAdToken !== void 0 || QA_TOOLS_ENABLED;
+    this.adVerificationAvailable = options.verifyAdToken !== void 0 || QA_TOOLS_ENABLED || PLACEHOLDER_AD_ENABLED;
     this.paymentVerificationAvailable = options.verifyPurchaseReceipt !== void 0 || QA_TOOLS_ENABLED;
-    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}` || TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId));
+    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => QA_TOOLS_ENABLED && token === `verified:${slotId}` || TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId) || PLACEHOLDER_AD_ENABLED && token === placeholderAdToken(slotId));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
     this.guildBackend = options.guild ?? localGuildBackend;

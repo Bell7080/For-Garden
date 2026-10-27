@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { QA_TOOLS_ENABLED } from "../../src/core/buildFlavor";
-import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../../src/core/tempAd";
+import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../../src/core/tempAd";
 import { presentRewardedAd, releaseAdWait, setTempAdPlayer } from "../../src/platform/rewardedAds";
 import { platformPayment } from "../../src/platform/payment";
 import { PRODUCTS } from "../../src/data/shopCatalog";
@@ -55,5 +55,13 @@ describe("QA 빌드의 광고·결제 우회", () => {
     expect(TEMP_AD_REWARD_ENABLED).toBe(true);
     expect(tempAdToken("gold-ad")).toBe("temp-ad:gold-ad");
     expect(tempAdToken("gold-ad")).not.toBe(tempAdToken("gem-ad"));
+  });
+});
+
+describe("출시 전 자리표시 광고", () => {
+  it("QA 토큰과 접두사가 다르고 슬롯마다 갈린다", () => {
+    expect(PLACEHOLDER_AD_ENABLED).toBe(true);
+    expect(placeholderAdToken("gold-ad")).toBe("placeholder-ad:gold-ad");
+    expect(placeholderAdToken("gold-ad")).not.toBe(tempAdToken("gold-ad"));
   });
 });

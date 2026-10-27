@@ -2720,7 +2720,7 @@
 **표본 친구·가짜 레이드 참가자·시작 재화·임시 지급도 같은 스위치 뒤에만 둔다** — 일반 빌드는 실서버가 붙기 전까지
 아무것도 얹지 않는다. 실서버 연동의 순서와 방침은 `docs/supabase-plan.md`가 갖는다.
 
-- **임시 광고 토큰은 QA 전용이다**(`src/core/tempAd.ts`). 일반 앱·서버 빌드는 `temp-ad:`·`verified:` 문자열을 광고 완료로 인정하지 않는다. 실제 광고 SSV가 없으면 보상 슬롯을 비활성화하며, 실제 결제 검증자가 없으면 결제 상품도 구매 불가로 내려준다. 보안 점검 이후 이 우회를 일반 빌드에서 다시 켜지 않는다. `npm run test:release-fixtures`로 실제 빌드를 검증한다.
+- **임시 광고 토큰은 QA 전용이다**(`src/core/tempAd.ts`). 일반 앱·서버 빌드는 `temp-ad:`·`verified:` 문자열을 광고 완료로 인정하지 않는다. 실제 광고 SSV가 없으면 보상 슬롯을 비활성화하며, 실제 결제 검증자가 없으면 결제 상품도 구매 불가로 내려준다. 보안 점검 이후 이 우회를 일반 빌드에서 다시 켜지 않는다. **예외 하나 (응태 결정, 2026-10-27): 출시 전 「자리표시 광고」** — `PLACEHOLDER_AD_ENABLED`(`src/core/tempAd.ts`)가 켜진 동안만 일반 빌드도 「광고 실행 중」 팝업을 거쳐 `placeholder-ad:<슬롯>` 토큰으로 보상을 받는다. 실제 광고 브리지·`verifyAdToken`이 주입되면 그쪽이 먼저이며 이 경로는 쓰이지 않는다. **정식 출시·결제 전에 실제 광고로 교체하고 상수와 관련 코드를 지운다**(출시 차단, `docs/release-fixture-cleanup.md`). QA 토큰(`temp-ad:`·`verified:`)은 여전히 QA 전용이다. `npm run test:release-fixtures`로 실제 빌드를 검증한다.
 - **모의 경쟁·지급은 QA 전용이다.** 결투 NPC/가짜 방어전·고정 1위·그 순위 우편·고정 환영/업데이트 우편·시작 친구 포인트 120·테스트 광고/결제 서명은 일반/서버 빌드에서 사용하지 않는다. 실제 순위를 확인하지 못하면 null을 반환한다. `docs/release-fixture-cleanup.md`와 `npm run test:release-fixtures`를 따른다. 업적·길드·설명용 PvP 진입점은 사용자 요청으로 유지한다.
 - **로컬 저장도 빌드별로 분리한다.** `src/core/saveStorage.ts`의 production/qa/test 키를 사용한다. 구형 공용 `eternal-city.local-save`는 출처가 없어 자동 이관·삭제하지 않는다. 일반·QA·test 모두 새 키에서 시작하며, 구형 정상 진행의 복원은 별도 검증·명시적 이관을 요구한다. `SaveData`/원격 DTO에는 키나 로컬 빌드 필드를 섞지 않는다.
 - `npm run dev`는 QA 도구와 qa 저장을 사용한다. `vite --mode production`도 DEV가 true면 QA다. 일반 조건 검증은 `npm run build` 산출물로 한다. E2E의 Node 헬퍼는 `tests/e2e/openingSave.ts`의 `E2E_SAVE_STORAGE_KEY`를 브라우저에 인자로 넘긴다. 키를 문자열로 복제하거나 Node의 `import.meta.env`로 추측하지 않는다.

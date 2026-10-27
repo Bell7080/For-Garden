@@ -42,6 +42,11 @@
 - DB나 외부 검증 서비스, 전체 E2E는 실행하지 않았다. 주입 검증기를 사용한 검사는 실제 사업자 연동 완료를 뜻하지 않는다.
 
 
+## 출시 차단 — 자리표시 광고(`PLACEHOLDER_AD_ENABLED`)
+
+- 출시 전에는 일반·서버 빌드도 임시 「광고 실행 중」 팝업이 보상까지 이어진다(응태 결정, 2026-10-27). 토큰은 `placeholder-ad:<슬롯>`이며 **클라이언트가 위조할 수 있어** 플레이어·결제가 없는 동안만 허용한다.
+- 실제 광고 SDK를 붙이면 `window.__PF_REWARDED_ADS__`가 먼저 쓰이고 서버에는 `verifyAdToken`(SSV)을 주입한다. 교체가 끝나면 `PLACEHOLDER_AD_ENABLED`를 false로 내리고 `tempAd.ts`·`rewardedAds.ts`·`FakeServer.ts`의 자리표시 분기를 지운다. `npm run test:release-fixtures`가 이 플래그를 따라 production 동작을 검사한다.
+
 ## 출시 차단 — 웹 토큰 보관소(`src/api/webTokenStore.ts`)
 
 - 웹 빌드는 게스트 로그인 토큰을 `localStorage`에 둔다(v0.296.1, 응태 결정). 플레이어와 결제가 없는 출시 전에만 허용한 임시 예외다.

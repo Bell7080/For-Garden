@@ -8,7 +8,7 @@ import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, re
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
-import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../core/tempAd";
+import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
 import { bannerAcceptsCount, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
@@ -274,9 +274,9 @@ export class FakeServer implements GameApi {
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
     this.now = options.now ?? serverNow;
     // 테스트용 서명 형식은 QA에서만 받는다. 일반/서버 빌드는 실제 SSV 검증기가 없으면 거절한다.
-    this.adVerificationAvailable = options.verifyAdToken !== undefined || QA_TOOLS_ENABLED;
+    this.adVerificationAvailable = options.verifyAdToken !== undefined || QA_TOOLS_ENABLED || PLACEHOLDER_AD_ENABLED;
     this.paymentVerificationAvailable = options.verifyPurchaseReceipt !== undefined || QA_TOOLS_ENABLED;
-    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => (QA_TOOLS_ENABLED && token === `verified:${slotId}`) || (TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId)));
+    this.verifyAdToken = options.verifyAdToken ?? ((token, slotId) => (QA_TOOLS_ENABLED && token === `verified:${slotId}`) || (TEMP_AD_REWARD_ENABLED && token === tempAdToken(slotId)) || (PLACEHOLDER_AD_ENABLED && token === placeholderAdToken(slotId)));
     this.verifyReceipt = options.verifyPurchaseReceipt ?? ((receipt, productId) => QA_TOOLS_ENABLED && receipt.startsWith(`verified-receipt:${productId}:`) ? receipt.slice(`verified-receipt:${productId}:`.length) : null);
     this.persistSession = options.persistSession;
     this.guildBackend = options.guild ?? localGuildBackend;

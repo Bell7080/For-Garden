@@ -1,6 +1,6 @@
 import type { AdPresentationResult } from "../api/contracts";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
-import { TEMP_AD_REWARD_ENABLED, tempAdToken } from "../core/tempAd";
+import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
 
 /** 네이티브 셸이 주입하는 최소 광고 SDK 계약이다. 웹 단독 빌드는 성공을 가장하지 않는다. */
 interface RewardedAdBridge { present(slotId: string): Promise<AdPresentationResult>; }
@@ -50,6 +50,11 @@ export async function presentRewardedAd(slotId: string): Promise<AdPresentationR
   if (TEMP_AD_REWARD_ENABLED && !bridge) {
     if (!(await playTempAd())) return { status: "dismissed", reason: "temp_ad_closed" };
     return { status: "completed", verificationToken: tempAdToken(slotId) };
+  }
+  // 출시 전 자리표시 광고 — 실제 광고 브리지가 없을 때만 선다. 브리지가 주입되면 아래 present가 대신한다.
+  if (PLACEHOLDER_AD_ENABLED && !bridge) {
+    if (!(await playTempAd())) return { status: "dismissed", reason: "temp_ad_closed" };
+    return { status: "completed", verificationToken: placeholderAdToken(slotId) };
   }
   if (!bridge) return { status: "unavailable", reason: "sdk_not_initialized" };
   return bridge.present(slotId);

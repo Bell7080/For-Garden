@@ -240,7 +240,7 @@ export class AncientStrataScene extends Phaser.Scene {
       // 노드의 그림은 그 층이 어떤 무리인가다 — 적 정보창·원정 지도와 같은 역할 아이콘(잡졸·무리·정예).
       const role = definition.enemies[0]?.encounterRole ?? "normal";
       if (this.textures.exists(encounterRoleIcon(role))) {
-        map.add(this.add.image(point.x, point.y - size * 0.04, encounterRoleIcon(role)).setDisplaySize(size * 0.6, size * 0.6)
+        map.add(this.add.image(point.x, point.y, encounterRoleIcon(role)).setDisplaySize(size * 0.78, size * 0.78)
           .setTint(style.icon).setAlpha(locked ? 0.7 : 1));
       }
       // 아직 닿지 않은 층만 오른쪽 위에 자물쇠가 작게 선다.

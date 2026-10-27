@@ -121,8 +121,8 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
     const tint = reachable ? COLOR.sortie : COLOR.inkDimHex;
     const roleIcon = BATTLE_NODE_TYPES.has(node.type) ? encounterRoleIcon(expeditionNodeRole(node.type, node.floor)) : undefined;
     visual.add(roleIcon && this.scene.textures.exists(roleIcon)
-      ? this.scene.add.image(0, 0, roleIcon).setDisplaySize(baseSize * 0.62, baseSize * 0.62).setTint(tint)
-      : drawGlyph(this.scene, `expedition-${node.type}` as GlyphName, 0, 0, baseSize * 0.54, tint, 1, 3));
+      ? this.scene.add.image(0, 0, roleIcon).setDisplaySize(baseSize * 0.8, baseSize * 0.8).setTint(tint)
+      : drawGlyph(this.scene, `expedition-${node.type}` as GlyphName, 0, 0, baseSize * 0.68, tint, 1, 3));
     this.world.add(visual);
 
     // 손가락 입력면은 축소되는 시각 노드보다 항상 크게 유지한다.

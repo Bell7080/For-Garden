@@ -171,6 +171,15 @@ const debuffColor = (id: DebuffId): number => Phaser.Display.Color.HexStringToCo
  * 탱탱볼처럼 파바박 튕기다 번쩍 사라진다 — 끝을 시간이 아니라 **부딪히는 횟수**로 정하는
  * 이유는 전장 크기와 속도가 달라져도 같은 무게로 읽히게 하기 위해서다.
  */
+/**
+ * 벽에 몇 번째로 부딪혔나로 소리를 고른다 — 첫 번은 퍽, 그 뒤는 탁, 세 번째마다 띠용. 같은 소리만 되풀이하면
+ * 튕김이 기계음처럼 들리고, 띠용만 내면 매 부딪힘이 장난으로만 읽힌다.
+ */
+function wallBounceCue(hit: number): "battle.wallThud" | "battle.wallTap" | "battle.boing" {
+  if (hit === 0) return "battle.wallThud";
+  return hit % 3 === 2 ? "battle.boing" : "battle.wallTap";
+}
+
 const DEATH_FLIGHT = {
   /** 처음 튀어 나가는 속도(px/s). 곡선으로 흐르지 않을 만큼 세다. */
   speed: 2600,
@@ -292,6 +301,10 @@ interface FighterView {
   squashDir: number;
   /** 튕겨 날아가는 동안 도는 방향. 코어의 `knockback`이 남아 있는 동안만 돈다. */
   spinDir: number;
+  /** 지난 프레임에 남아 있던 튕김 수. 줄어든 프레임이 곧 벽에 부딪힌 순간이라 그때 소리를 낸다. */
+  bouncesLeft?: number;
+  /** 이번 비행에서 벽에 부딪힌 횟수(소리 고르기용). */
+  wallHits: number;
   dead: boolean;
 }
 
@@ -1296,7 +1309,7 @@ export class BattleScene extends Phaser.Scene {
           event.stopPropagation();
           this.openStatusList(fighter.id);
         });
-      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverAt: 0, feverEndedAt: undefined, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, dead: false });
+      this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverAt: 0, feverEndedAt: undefined, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, wallHits: 0, dead: false });
       // 새끼 늑대 자리는 쓰러진 채로 열린다 — 부르는 순간 `packSummon`이 일으켜 세울 때까지 보이지 않는다.
       if (fighter.hp <= 0 && isPupFighter(fighter)) {
         const idle = this.views.get(fighter.id);
@@ -2412,6 +2425,7 @@ export class BattleScene extends Phaser.Scene {
     // 날아가기 전에 한 번 꾹 눌린다. 이 한 프레임이 "따악 맞았다"를 만든다.
     this.startSquash(view, launch.x >= 0 ? 1 : -1);
     const spin = launch.x >= 0 ? 1 : -1;
+    let wallHits = 0;
     this.tweens.chain({
       targets: view.creature,
       tweens: legs.map((leg) => ({
@@ -2423,7 +2437,10 @@ export class BattleScene extends Phaser.Scene {
         ease: "Linear",
         onComplete: () => {
           // 벽에 닿는 순간에만 조각이 튄다. 구간마다 터뜨리면 날아가는 내내 잔상이 남는다.
-          if (leg.bounced) this.effects.burst("death", leg.x, leg.y, { color: view.feverTint, scale: view.fighter.bodyScale * 0.6 });
+          if (leg.bounced) {
+            this.effects.burst("death", leg.x, leg.y, { color: view.feverTint, scale: view.fighter.bodyScale * 0.6 });
+            audioManager?.playSfx(wallBounceCue(wallHits++));
+          }
         },
       })),
       onComplete: () => {
@@ -2535,9 +2552,19 @@ export class BattleScene extends Phaser.Scene {
       }
       // 튕겨 날아가는 동안에는 계속 돈다. 좌표는 코어가 옮기고 회전만 화면이 얹는다.
       if (fighter.knockback) {
+        if (view.bouncesLeft !== undefined && fighter.knockback.bouncesLeft < view.bouncesLeft) audioManager?.playSfx(wallBounceCue(view.wallHits++));
+        view.bouncesLeft = fighter.knockback.bouncesLeft;
         view.creature.setAngle(view.creature.angle + KNOCKBACK_SPIN * view.spinDir * this.game.loop.delta / 1_000);
-      } else if (view.creature.angle !== 0) {
-        view.creature.setAngle(0);
+      } else {
+        // 마지막 튕김은 비행이 끝나는 프레임과 겹쳐 위의 비교에 걸리지 않는다 — 끝난 순간 한 번 더 울린다.
+        // 시간이 다해 허공에서 멈춘 비행은 부딪힌 것이 아니므로 벽에 닿아 있을 때만 울린다.
+        if (view.bouncesLeft !== undefined) {
+          const arena = this.state.arena;
+          if (fighter.x <= arena.left || fighter.x >= arena.right || fighter.y <= arena.top || fighter.y >= arena.bottom) audioManager?.playSfx(wallBounceCue(view.wallHits));
+          view.bouncesLeft = undefined;
+          view.wallHits = 0;
+        }
+        if (view.creature.angle !== 0) view.creature.setAngle(0);
       }
       // 아래에 선 캐릭터가 앞에 오도록 발 높이로 앞뒤를 정한다.
       view.creature.setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase);

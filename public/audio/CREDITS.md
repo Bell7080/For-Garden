@@ -108,6 +108,9 @@
 | `battle/battle-summon.mp3` | `1gjUpzMJczuDroTGIGvh` | Small magic poof as a little creature pops into the battlefield, soft puff of smoke with a tiny sparkle, short, cute game, no voice, no barking |
 | `ui/equip-on.mp3` | `tYNne0hn6EG9hWQ0cXCE` | Socketing a gem rune into equipment, one short crisp metal clasp click with a tiny crystalline shine, game UI, no voice, no reverb |
 | `battle/battle-shield-break.mp3` | `043vqjlym0dXup2Wo1pB` | Thin blue magical energy barrier shattering, brittle glassy crack and small tinkle of shards, short and light, fantasy game, no voice, no reverb |
+| `battle/battle-wall-thud.mp3` | `9ESIGwfR8nvlrFUxLMuN` | Cartoon character body slamming flat into a wall, comedic soft "thwump" bonk, punchy cushioned impact with a tiny wooden knock, no voice, dry, single hit |
+| `battle/battle-wall-tap.mp3` | `XBpuhJ3vNkbQ0YWXgRbN` | Small cartoon rubber ball bouncing off a wooden wall, short light "tak" tap, bright and bouncy, single quick hit, dry, no voice |
+| `battle/battle-boing.mp3` | `aje9B0K5JWpXBcXbo6en` | Classic cartoon spring boing, comedic "doing-doing" wobbly jaw harp spring sound, playful, bright, short, no voice |
 
 ### 손질 기록 (v0.363.0)
 
@@ -122,3 +125,7 @@
 
 - 위 18종(`battle-block` ~ `battle-shield-break`)은 화면 순간(막이 깨지는 프레임, 칸에 내려놓는 순간 등)에 맞춰 앞머리 무음을 걷고 길이를 0.13~1.4초로 끊었다. 테이크는 3개씩 뽑아 클리핑·피크 위치·스펙트럼 중심으로 골랐다.
 - 새 파일 없이 기존 음원을 빌려 쓰는 큐: `story.hop`(대사 몸짓) = `sweep-hop` 작게, 넉백·대사 퇴장 = `sweep-blastoff`, 정산·수확·교류 귀환 = `ui-reward`, 순위 오르기 = `roulette-tick`.
+
+### 손질 기록 (v0.365.0)
+
+- `battle-wall-thud`·`battle-wall-tap`·`battle-boing`: 날려버림·쓰러진 몸이 전장 벽에 튕기는 순간용. 테이크 4개씩 뽑아 클리핑 없고 피크가 앞(5~30ms)에 선 것을 골랐고, 길이는 0.28~0.58초로 끊었다. 첫 부딪힘은 퍽(thud), 이어지는 튕김은 탁(tap), 세 번째마다 띠용(boing)으로 섞어 쓴다.

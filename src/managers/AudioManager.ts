@@ -16,6 +16,7 @@ export type SfxCue =
   | "battle.shield" | "battle.death" | "battle.cutin" | "battle.fever" | "battle.start" | "raid.summon"
   | "research.reveal.common" | "research.reveal.sr" | "research.reveal.ssr" | "research.omen" | "research.showcase"
   | "battle.ultimateReady" | "battle.shieldBreak" | "battle.stun" | "battle.sleep" | "battle.summon" | "battle.deathClock" | "battle.block"
+  | "battle.wallThud" | "battle.wallTap" | "battle.boing"
   | "research.shatter" | "dig.hit" | "dig.treasure" | "sweep.scuffle" | "sweep.blastoff" | "sweep.hop"
   | "story.explosion" | "story.alarm" | "story.rumble" | "story.impact" | "story.titleCard" | "story.hop";
 
@@ -43,7 +44,8 @@ export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]
 export const BATTLE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ...["battle-ultimate", "battle-victory", "battle-defeat", "battle-hit", "battle-hit-magic", "battle-crit", "battle-heal", "battle-shield",
     "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon", "sweep-scuffle", "sweep-blastoff", "sweep-hop",
-    "battle-ult-ready", "battle-shield-break", "battle-stun", "battle-sleep", "battle-summon", "battle-death-clock", "battle-block"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
+    "battle-ult-ready", "battle-shield-break", "battle-stun", "battle-sleep", "battle-summon", "battle-death-clock", "battle-block",
+    "battle-wall-thud", "battle-wall-tap", "battle-boing"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
 ];
 
 /** 연구소 효과음의 에셋 목록이다(화석 균열·카드 공개·SSR 전조·새 렐릭 소개). */
@@ -155,6 +157,10 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "battle.summon": { key: "battle-summon", bus: "sfx", gain: 0.55, minGapMs: 300 },
   "battle.deathClock": { key: "battle-death-clock", bus: "sfx", gain: 0.75 },
   "battle.block": { key: "battle-block", bus: "sfx", gain: 0.4, minGapMs: 150 },
+  // 날려버림·쓰러진 몸이 전장 벽에 튕길 때 — 첫 부딪힘은 퍽, 이어지는 튕김은 탁, 사이사이 띠용(`wallBounceCue`).
+  "battle.wallThud": { key: "battle-wall-thud", bus: "sfx", gain: 0.55, minGapMs: 60 },
+  "battle.wallTap": { key: "battle-wall-tap", bus: "sfx", gain: 0.45, minGapMs: 50 },
+  "battle.boing": { key: "battle-boing", bus: "sfx", gain: 0.5, minGapMs: 120 },
   "research.shatter": { key: "research-shatter", bus: "sfx", gain: 0.55, minGapMs: 80 },
   "research.reveal.common": { key: "reveal-common", bus: "sfx", gain: 0.6, minGapMs: 50 },
   "research.reveal.sr": { key: "reveal-sr", bus: "sfx", gain: 0.75, minGapMs: 50 },

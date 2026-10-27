@@ -27,7 +27,14 @@ export class BgmDirector {
 
   /** 모든 등록된 씬의 시작·재개 사건에 연결한다. 설정·효과 겹침 층은 표에 없어 곡이 그대로다. */
   attach(): void {
-    for (const scene of this.game.scene.getScenes(false)) {
+    // 게임 READY 직후에는 씬 관리자가 아직 씬을 만들지 않아 목록이 비어 있다 — 그때 연결하면 어느 씬에도 걸리지
+    // 않아 부트에서 건 타이틀 곡이 게임 내내 흐른다. 씬이 선 첫 프레임까지 미룬다.
+    const scenes = this.game.scene.getScenes(false);
+    if (scenes.length === 0) {
+      this.game.events.once(Phaser.Core.Events.POST_STEP, () => this.attach());
+      return;
+    }
+    for (const scene of scenes) {
       const key = scene.scene.key;
       if (!bgmTrackForScene(key)) continue;
       const onEnter = (): void => this.request(key, scene.sys.settings.data);

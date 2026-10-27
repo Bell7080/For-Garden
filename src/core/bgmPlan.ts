@@ -75,19 +75,6 @@ const SCENE_TRACK: Readonly<Record<string, BgmTrackId>> = {
   arenaMatch: "battle",
 };
 
-/** 표에 올라 있는 모든 곡(받아 두기 순서: 기본 곡이 맨 앞). */
-export function allBgmTracks(): BgmTrack[] {
-  return [BGM_TRACKS.title, BGM_TRACKS.lobby, BGM_TRACKS.glassCity, BGM_TRACKS.battle, BGM_TRACKS.researchSpire, BGM_TRACKS.shop, BGM_TRACKS.boss];
-}
-
-/**
- * 지금 흐르는 곡(`keepKey`)을 뺀 나머지 곡. 디코드된 PCM은 곡당 30~50MB라 이 목록은 메모리에서 놓아야 하는
- * 곡이다(같은 파일을 쓰는 곡이 있어도 키가 다르면 따로 디코드된다).
- */
-export function bgmTracksToEvict(keepKey: string): BgmTrack[] {
-  return allBgmTracks().filter((track) => track.key !== keepKey);
-}
-
 /** 전투 씬 하나가 여러 콘텐츠를 맡으므로, 보스 판은 씬 키가 아니라 진입 데이터의 `mode`로 가른다. */
 const BOSS_BATTLE_MODES: ReadonlySet<string> = new Set(["raid", "expeditionBoss"]);
 

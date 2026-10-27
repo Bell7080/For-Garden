@@ -1,6 +1,7 @@
 # 최신 main 마이그레이션 적용 확인
 
 - 기준: origin/main `8e3410f9` (v0.368.0), 로컬 작업 복원 후 v0.369.0으로 통합.
+- 푸시 직전 추가된 `aebb59f2` (v0.368.1, 배경음 스트리밍 재생)도 함께 병합했다. 해당 커밋에는 새 DB 마이그레이션이 없다.
 - 대상: forgarden-test (`rscxzfdnbdmftortrcqt`), forgarden-prod (`udujahnlyhedlrfbaaow`).
 - 저장소의 SQL 원문을 변경하지 않고 테스트 → 운영 순서로 적용했다. 초기화용 ops SQL은 실행하지 않았다.
 
@@ -28,3 +29,5 @@ Supabase 보안 advisor도 조회했다. 서버 전용 테이블의 정책 없�
 - [SECURITY DEFINER RPC 점검](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)
 
 게임 서버 생성물 api/game.js·api/account.js는 최신 main과 에너지/업적 변경을 포함해 production 모드로 다시 생성했다.
+
+검증: 전체 단위 테스트 4,979개 통과(4개 건너뜀). 배경음 커밋 추가 병합 후 관련 65개 테스트·타입 검사·일반 빌드·서버 번들 재생성을 다시 통과했다. Windows 전체 검사에는 설치된 Git의 usr/bin을 PATH에 넣어 unzip을 제공했다.

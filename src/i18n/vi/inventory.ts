@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_VI = {
-  "stamina.back": "Quay lại",
   "inventory.title": "Túi đồ",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Tiền tệ",
@@ -44,7 +43,8 @@ export const INVENTORY_VI = {
   "stamina.watchAd": "Xem",
   "stamina.rechargeFailed": "Nạp lại thất bại. Hãy thử lại sau.",
   "stamina.adCancelled": "Quảng cáo đã hủy hoặc chưa sẵn sàng.",
-  "stamina.nextRecovery": "Hồi tiếp theo sau {time}",
+  "stamina.nextRecovery": "Hồi 1 mỗi {minutes} phút · lần tiếp theo sau {time}",
+  "stamina.regenEvery": "Hồi 1 mỗi {minutes} phút",
   "sortie.cake.name": "Chiến dịch Bánh",
   "sortie.cake.kind": "Hầm ngục bầy đàn",
   "sortie.cake.goal": "Đánh bại bầy địch ào tới cùng lúc",

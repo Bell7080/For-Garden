@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_TH = {
-  "stamina.back": "กลับ",
   "inventory.title": "กระเป๋า",
   "inventory.tab.rune": "รูน",
   "inventory.tab.currency": "สกุลเงิน",
@@ -44,7 +43,8 @@ export const INVENTORY_TH = {
   "stamina.watchAd": "ดู",
   "stamina.rechargeFailed": "เติมไม่สำเร็จ ลองใหม่ภายหลัง",
   "stamina.adCancelled": "โฆษณาถูกยกเลิกหรือยังไม่พร้อม",
-  "stamina.nextRecovery": "ฟื้นฟูครั้งถัดไปใน {time}",
+  "stamina.nextRecovery": "ฟื้นฟู 1 ทุก {minutes} นาที · ครั้งถัดไปใน {time}",
+  "stamina.regenEvery": "ฟื้นฟู 1 ทุก {minutes} นาที",
   "sortie.cake.name": "ปฏิบัติการเค้ก",
   "sortie.cake.kind": "ดันเจียนฝูงศัตรู",
   "sortie.cake.goal": "จัดการฝูงศัตรูที่บุกมาพร้อมกัน",

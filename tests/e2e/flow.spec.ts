@@ -39,14 +39,14 @@ test("충전 직후 결과판의 같은 다음 단계 버튼으로 입장한다"
   await captureGame(page, "docs/qa/energy-achievements-2026-10-27/energy-before.png");
   const guide = currencyGuide("stamina");
   const layout = staminaPopupLayout(Math.max(guide.uses.length, guide.sources.length));
-  // 우상단에는 닫기 입력도 남기지 않는다. 돌아가기는 하단 버튼 한 곳이 맡는다.
+  // 우상단에는 닫기 입력도 남기지 않는다. 돌아가기는 판 밖 우하단 공용 뒤로가기 한 곳이 맡는다.
   await tap(page, BASE_WIDTH / 2 + layout.width / 2 - POPUP_CLOSE_LAYOUT.centerInset, BASE_HEIGHT / 2 - layout.height / 2 + POPUP_CLOSE_LAYOUT.centerInset);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("스테미나");
   await tap(page, BASE_WIDTH / 2 + layout.cell.centers[0], BASE_HEIGHT / 2 + layout.cell.y + STAMINA_CELL.buttonY);
   await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).wallet.stamina, E2E_SAVE_STORAGE_KEY)).toBe(60);
   await page.waitForTimeout(500);
   await captureGame(page, "docs/qa/energy-achievements-2026-10-27/energy-recharged.png");
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 + layout.returnButton!.y);
+  await tap(page, BACK_SLOT.x, BACK_SLOT.y);
   await expect.poll(() => page.evaluate(() => Boolean(window.__PF_DEBUG?.popupTitles?.includes("스테미나")))).toBe(false);
   await tap(page, 268, 1490);
   await expect.poll(() => scene(page), { timeout: 30_000 }).toBe("party");

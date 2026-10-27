@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ZH_HANT = {
-  "stamina.back": "返回",
   "inventory.title": "揹包",
   "inventory.tab.rune": "符文",
   "inventory.tab.currency": "貨幣",
@@ -44,7 +43,8 @@ export const INVENTORY_ZH_HANT = {
   "stamina.watchAd": "觀看",
   "stamina.rechargeFailed": "充能失敗。請稍後再試。",
   "stamina.adCancelled": "廣告已取消或尚未就緒。",
-  "stamina.nextRecovery": "距離下次恢復 {time}",
+  "stamina.nextRecovery": "每{minutes}分鐘恢復1點 · 距離下次恢復 {time}",
+  "stamina.regenEvery": "每{minutes}分鐘恢復1點",
   "sortie.cake.name": "蛋糕作戰",
   "sortie.cake.kind": "物量副本",
   "sortie.cake.goal": "擊退一齊湧來的敵群",

@@ -1,6 +1,5 @@
 /** 가방·스테미나 창·출격 미리보기의 일본어 표. */
 export const INVENTORY_JA = {
-  "stamina.back": "戻る",
   "inventory.title": "バッグ",
   "inventory.tab.rune": "ルーン",
   "inventory.tab.currency": "通貨",
@@ -45,7 +44,8 @@ export const INVENTORY_JA = {
   "stamina.watchAd": "視聴",
   "stamina.rechargeFailed": "チャージに失敗しました。しばらくしてからもう一度お試しください。",
   "stamina.adCancelled": "広告がキャンセルされたか、準備できていません。",
-  "stamina.nextRecovery": "次の回復まで {time}",
+  "stamina.nextRecovery": "{minutes}分ごとに1回復 · 次の回復まで {time}",
+  "stamina.regenEvery": "{minutes}分ごとに1回復",
 
   "sortie.cake.name": "ケーキ大作戦",
   "sortie.cake.kind": "物量ダンジョン",

@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ID = {
-  "stamina.back": "Kembali",
   "inventory.title": "Tas",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Mata Uang",
@@ -44,7 +43,8 @@ export const INVENTORY_ID = {
   "stamina.watchAd": "Tonton",
   "stamina.rechargeFailed": "Isi ulang gagal. Coba lagi sebentar lagi.",
   "stamina.adCancelled": "Iklan dibatalkan atau belum siap.",
-  "stamina.nextRecovery": "{time} hingga pemulihan berikutnya",
+  "stamina.nextRecovery": "+1 setiap {minutes} menit · berikutnya dalam {time}",
+  "stamina.regenEvery": "+1 setiap {minutes} menit",
   "sortie.cake.name": "Operasi Kue",
   "sortie.cake.kind": "Dungeon Gerombolan",
   "sortie.cake.goal": "Kalahkan gerombolan yang menyerbu sekaligus",

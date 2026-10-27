@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_RU = {
-  "stamina.back": "Назад",
   "inventory.title": "Сумка",
   "inventory.tab.rune": "Руны",
   "inventory.tab.currency": "Валюта",
@@ -44,7 +43,8 @@ export const INVENTORY_RU = {
   "stamina.watchAd": "Смотреть",
   "stamina.rechargeFailed": "Пополнение не удалось. Повторите чуть позже.",
   "stamina.adCancelled": "Реклама отменена или не готова.",
-  "stamina.nextRecovery": "До восстановления {time}",
+  "stamina.nextRecovery": "+1 каждые {minutes} мин · следующее через {time}",
+  "stamina.regenEvery": "+1 каждые {minutes} мин",
   "sortie.cake.name": "Тортовая операция",
   "sortie.cake.kind": "Подземелье орды",
   "sortie.cake.goal": "Одолейте орду, что наступает разом",

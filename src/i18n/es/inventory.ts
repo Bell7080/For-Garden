@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_ES = {
-  "stamina.back": "Volver",
   "inventory.title": "Bolsa",
   "inventory.tab.rune": "Runa",
   "inventory.tab.currency": "Moneda",
@@ -44,7 +43,8 @@ export const INVENTORY_ES = {
   "stamina.watchAd": "Ver",
   "stamina.rechargeFailed": "La recarga falló. Inténtalo de nuevo en un momento.",
   "stamina.adCancelled": "El anuncio se canceló o no está listo.",
-  "stamina.nextRecovery": "{time} para la próxima recuperación",
+  "stamina.nextRecovery": "+1 cada {minutes} min · la próxima en {time}",
+  "stamina.regenEvery": "+1 cada {minutes} min",
   "sortie.cake.name": "Operación Tarta",
   "sortie.cake.kind": "Mazmorra de hordas",
   "sortie.cake.goal": "Derrota a la horda que llega de golpe",

@@ -1,6 +1,5 @@
 /** 가방·스테미나 창·출격 미리보기의 문구. */
 export const INVENTORY_KO = {
-  "stamina.back": "돌아가기",
   "inventory.title": "가방",
   "inventory.tab.rune": "룬",
   "inventory.tab.currency": "재화",
@@ -45,7 +44,8 @@ export const INVENTORY_KO = {
   "stamina.watchAd": "시청",
   "stamina.rechargeFailed": "충전에 실패했습니다. 잠시 뒤 다시 시도해 주세요.",
   "stamina.adCancelled": "광고가 취소되었거나 준비되지 않았습니다.",
-  "stamina.nextRecovery": "다음 회복까지 {time}",
+  "stamina.nextRecovery": "{minutes}분마다 1 회복 · 다음 회복까지 {time}",
+  "stamina.regenEvery": "{minutes}분마다 1 회복",
 
   "sortie.cake.name": "케이크 대작전",
   "sortie.cake.kind": "물량 던전",

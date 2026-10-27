@@ -38,6 +38,8 @@ export interface NodeEnemyPreviewOptions {
   sections?: {
     rewards: readonly StageFirstClearReward[];
     rewardsClaimed: boolean;
+    /** 다시 깰 때마다 받는 보상(스토리의 소량 치즈케이크). 비우면 그 줄을 세우지 않는다. */
+    repeatRewards?: readonly StageFirstClearReward[];
     /** 전투 규칙처럼 항상 읽어야 하는 정보는 접지 않고 표시한다. */
     informationLabel?: string;
     informationAlwaysOpen?: boolean;
@@ -217,6 +219,7 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     const layout = storyPreviewLayout({
       enemiesOpen: sectionOpen.enemies, storyOpen, hasStory: Boolean(story) || highlights.length > 0,
       storyTextHeight: highlightHeight + (storyText?.height ?? 0), rewardCount: sections.rewards.length,
+      repeatCount: sections.repeatRewards?.length ?? 0,
     });
     this.currentSectionLayout = layout;
     this.panelHeight = layout.height;
@@ -265,7 +268,8 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
     // ── 초회 보상: 접지 않는다. 받은 관문이면 액자마다 검은 막과 노란 체크가 선다.
     if (layout.rewardLabelY !== undefined && layout.rewardRowY !== undefined) {
-      this.add(this.scene.add.text(left, top + layout.rewardLabelY, t("stageComplete.firstClear"), textStyle({ role: "emphasis", size: spec.reward.labelSize, color: COLOR.inkDim })).setOrigin(0, 0));
+      // 머리말은 강조색 이름표 칩이다 — 회색 글줄일 때는 판 맨 아래에서 무엇의 보상인지가 액자보다 늦게 읽혔다.
+      this.addRewardTag(left, top + layout.rewardLabelY + spec.reward.tag.height / 2, t("stageComplete.firstClear"), "first");
       const columns = storyPreviewRewardColumns(sections.rewards.length, width);
       sections.rewards.forEach((reward, index) => {
         const x = columns[index];
@@ -278,12 +282,47 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
         this.add(hit);
       });
     }
+    // ── 반복 클리어 보상: 이름표와 작은 액자가 한 줄에 마주 선다. 받은 표시는 없다 — 깰 때마다 받는다.
+    if (layout.repeatRowY !== undefined && sections.repeatRewards?.length) {
+      const repeat = spec.repeat;
+      const y = top + layout.repeatRowY;
+      const tagRight = this.addRewardTag(left, y, t("stageComplete.repeatClear"), "repeat");
+      sections.repeatRewards.forEach((reward, index) => {
+        addStageRewardFrame(this.scene, this, tagRight + repeat.frameGap + repeat.frame / 2 + index * (repeat.frame + repeat.frameGap), y, repeat.frame, reward);
+      });
+    }
 
     if (keepPuppets && previousGroundScreen !== undefined) {
       const nextGroundScreen = this.sectionGroundScreen();
       if (nextGroundScreen !== undefined) for (const puppet of this.puppets) puppet.setY(puppet.y + nextGroundScreen - previousGroundScreen);
     }
     this.publishDebug(above);
+  }
+
+  /**
+   * 보상 줄의 이름표 칩 — 왼쪽 위·오른쪽 아래만 깎인 판(화면 전체의 실루엣)에 글자를 얹는다. 초회는 강조색으로
+   * 채워 판 맨 아래에서도 먼저 읽히고, 반복은 어두운 유리에 흐린 강조선만 둘러 한 단계 가볍다. 칩의 오른쪽 끝 x를 돌려준다.
+   */
+  private addRewardTag(left: number, centerY: number, label: string, kind: "first" | "repeat"): number {
+    const first = kind === "first";
+    const spec = STORY_PREVIEW;
+    const height = first ? spec.reward.tag.height : spec.repeat.tagHeight;
+    const style = first
+      ? textStyle({ role: "display", size: spec.reward.labelSize, color: "#1a1205" })
+      : textStyle({ role: "emphasis", size: spec.repeat.labelSize, color: COLOR.ink });
+    const text = this.scene.add.text(0, centerY, label, style).setOrigin(0, 0.5);
+    const width = text.width + spec.reward.tag.padX * 2 + (first ? 18 : 0);
+    const bevel = spec.reward.tag.bevel;
+    this.add(drawLayer(this.scene, left + width / 2, centerY, chipPoints(width, height, { bevel: { topLeft: bevel, bottomRight: bevel } }), first
+      ? { fill: COLOR.accent, alpha: 0.96, shadow: { x: 3, y: 4 } }
+      : { fill: 0x1a222c, alpha: 0.95, edge: COLOR.accent, edgeAlpha: 0.4, shadow: { x: 3, y: 4 } }));
+    if (first) {
+      // 제목표와 같은 빗금이 이름표 왼쪽에 서서 「보상」이라는 한 덩어리를 판에 묶는다.
+      this.add(this.scene.add.text(left + spec.reward.tag.padX - 2, centerY, "/", textStyle({ role: "display", size: spec.reward.labelSize + 4, color: "#5a3e0c" })).setOrigin(0, 0.5));
+    }
+    text.setX(left + spec.reward.tag.padX + (first ? 18 : 0));
+    this.add(text);
+    return left + width;
   }
 
   /** SD 발끝의 화면 y. 적 칸이 접혀 있으면 없다. */

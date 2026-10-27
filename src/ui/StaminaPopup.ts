@@ -81,13 +81,9 @@ export class StaminaPopup {
 
   open(): void {
     const guide = currencyGuide("stamina");
-    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34, hideCloseButton: true, closeOnBackdrop: false }, (body, close) => {
+    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34, hideCloseButton: true, backButton: true, closeOnBackdrop: false }, (body) => {
       const view = this.scene.add.container(0, 0);
       body.add(view);
-      const back = LAYOUT.returnButton;
-      if (back) body.add(new Button(this.scene, 0, back.y, {
-        width: back.width, height: back.height, label: t("stamina.back"), fontSize: 30, onClick: close,
-      }));
       const render = (): void => { view.removeAll(true); this.paint(view); };
       this.repaint = render;
       render();
@@ -109,12 +105,12 @@ export class StaminaPopup {
 
     // 전용 판: 이 창에서 가장 먼저 읽어야 하는 "지금 얼마 남았나"를 그림과 수 한 덩어리로 모은다.
     view.add(drawLayer(this.scene, 0, LAYOUT.hero.y, panelShape(LAYOUT.hero.width, LAYOUT.hero.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
-    // 시간 줄이 없는 순간(가득 참)에도 남은 둘이 위로 쏠리지 않도록 덩어리째 가운데에 세운다.
-    const stack = heroStack(LAYOUT.hero.y, timer !== undefined);
+    // 시간표는 가득 찼을 때도 주기 한 마디로 남아, 덩어리는 늘 세 줄이다.
+    const stack = heroStack(LAYOUT.hero.y, true);
     // 이미 스테미나 창이라 눌러도 열 창이 없다.
     addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina, { plain: true });
     view.add(attachRoll(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: "stamina-popup:stamina" }));
-    if (timer && stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
+    if (stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
     this.paintRecharge(view, full);
 
@@ -174,7 +170,7 @@ export class StaminaPopup {
     if (view.detail) cell.add(squeezeTextToWidth(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5), width - CELL.padX * 2));
     const button = new Button(this.scene, 0, CELL.buttonY, {
       width: width - CELL.padX * 2, height: CELL.buttonHeight, label: view.label, fontSize: 24, variant: "primary",
-      cost: view.cost, onClick: () => this.request(source),
+      cost: view.cost, art: view.art, onClick: () => this.request(source),
     }).setEnabled(view.enabled && !full && !this.pending);
     cell.add(button);
     if (source.kind === "consumable") this.paintSwap(cell, source);
@@ -184,6 +180,8 @@ export class StaminaPopup {
   /** 세 수단이 화면에 세울 값. 회복량·값·남은 횟수는 전부 데이터에서 읽고 여기서 지어내지 않는다. */
   private cellContent(source: StaminaRechargeSource, full: boolean): {
     texture?: string; name: string; gain: number; detail: string; label: string; enabled: boolean;
+    /** 버튼 라벨 왼쪽의 그림(광고). */
+    art?: string;
     /** 액자 우하단에 겹칠 보유 수. 광고처럼 가진 것이 없는 수단은 비운다. */
     owned?: number;
     cost?: { icon: "currency-gems"; amount: number; affordable: boolean };
@@ -213,7 +211,8 @@ export class StaminaPopup {
         // 누진 값이라 오늘 몇 번째인지와 값이 처음으로 돌아가는 날짜를 함께 말한다.
         detail: source.escalating && this.rechargeStatus ? t("stamina.gemDetail", { count: this.rechargeStatus.purchasedToday, reset: formatResetStamp(this.rechargeStatus.resetsAt) }) : "",
         owned: held,
-        label: t("stamina.recharge"),
+        // 버튼은 젬 그림과 값만 말한다 — 「충전」 글자는 칸의 회복량(+N)이 이미 하는 말이다.
+        label: "",
         enabled: held >= cost,
         cost: { icon: "currency-gems", amount: cost, affordable: held >= cost },
       };
@@ -227,9 +226,10 @@ export class StaminaPopup {
       texture: UI_ICON.ad,
       name: source.name,
       gain: ad?.amount ?? 0,
-      // 남은 횟수는 다음에 누를 수 있는지를 정하므로 이름 아래 한 줄로 남긴다.
-      detail: t("stamina.adRemaining", { left: Math.max(0, limit - used), limit }),
-      label: t("stamina.watchAd"),
+      // 남은 횟수는 버튼이 광고 그림과 함께 `3/3`으로 말한다 — 이름 아래 글줄로 두 번 적지 않는다.
+      detail: "",
+      label: `${Math.max(0, limit - used)}/${limit}`,
+      art: UI_ICON.ad,
       enabled: ad !== undefined && used < limit && !full,
     };
   }

@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_DE = {
-  "stamina.back": "Zurück",
   "inventory.title": "Tasche",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Währung",
@@ -44,7 +43,8 @@ export const INVENTORY_DE = {
   "stamina.watchAd": "Ansehen",
   "stamina.rechargeFailed": "Das Aufladen ist fehlgeschlagen. Versuche es gleich erneut.",
   "stamina.adCancelled": "Die Werbung wurde abgebrochen oder ist nicht bereit.",
-  "stamina.nextRecovery": "{time} bis zur nächsten Erholung",
+  "stamina.nextRecovery": "+1 alle {minutes} Min. · nächste in {time}",
+  "stamina.regenEvery": "+1 alle {minutes} Min.",
   "sortie.cake.name": "Kuchen-Operation",
   "sortie.cake.kind": "Horden-Dungeon",
   "sortie.cake.goal": "Besiege die Horde, die auf einmal anstürmt",

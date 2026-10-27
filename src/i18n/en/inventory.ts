@@ -1,6 +1,5 @@
 /** The bag, the Stamina window and the sortie entries. */
 export const INVENTORY_EN = {
-  "stamina.back": "Back",
   "inventory.title": "Bag",
   "inventory.tab.rune": "Rune",
   "inventory.tab.currency": "Currency",
@@ -44,7 +43,8 @@ export const INVENTORY_EN = {
   "stamina.watchAd": "Watch",
   "stamina.rechargeFailed": "The recharge failed. Please try again shortly.",
   "stamina.adCancelled": "The ad was cancelled or is not ready.",
-  "stamina.nextRecovery": "{time} until the next recovery",
+  "stamina.nextRecovery": "+1 every {minutes} min · next in {time}",
+  "stamina.regenEvery": "+1 every {minutes} min",
   "sortie.cake.name": "Cake Operation",
   "sortie.cake.kind": "Swarm Dungeon",
   "sortie.cake.goal": "Defeat the horde rushing in all at once",

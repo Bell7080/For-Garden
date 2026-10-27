@@ -11,6 +11,8 @@ import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
+import { addClippedHit } from "./clippedHit";
+import type { ClipRect } from "./clipRect";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
@@ -194,9 +196,7 @@ export class MailPopup {
     const chip = card.deleteChip;
     const box = this.scene.add.container(card.width / 2 - chip.right, y - height / 2 + chip.top);
     box.add(drawGlyph(this.scene, "trash", 0, 0, chip.glyph, COLOR.danger, dim ? 0.55 : 0.9));
-    const hit = this.scene.add.rectangle(0, 0, chip.hit, chip.hit, 0xffffff, 0);
-    this.makeListHit(hit, box.y, chip.hit);
-    box.add(hit);
+    const hit = addClippedHit(this.scene, box, 0, 0, chip.hit, chip.hit, this.listClip);
     hit.on("pointerdown", () => pressIn(box));
     hit.on("pointerout", () => pressOut(box, "normal", { pop: false }));
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
@@ -207,26 +207,17 @@ export class MailPopup {
     parent.add(box);
   }
 
-  /**
-   * 목록 안의 입력면은 **보이는 창 안쪽만** 손을 받는다. 마스크는 그림만 자르고 입력은 자르지 않아서, 창 밖으로
-   * 흘러간 카드의 입력면이 하단 줄(일괄 삭제 칩·탭)을 덮어 손이 카드로 샜다.
-   */
-  private makeListHit(hit: Phaser.GameObjects.Rectangle, centerY: number, height: number): void {
-    const { viewport } = MAIL_POPUP_LAYOUT;
-    const area = new Phaser.Geom.Rectangle(0, 0, hit.width, height);
-    hit.setInteractive({ hitArea: area, useHandCursor: true, hitAreaCallback: (shape: Phaser.Geom.Rectangle, x: number, y: number) => {
-      if (!Phaser.Geom.Rectangle.Contains(shape, x, y)) return false;
-      const listY = centerY - height / 2 + y;
-      return listY + this.scroll >= 0 && listY + this.scroll <= viewport.bottom - viewport.top;
-    } });
-  }
+  /** 우편 목록 창(월드 좌표). 마스크 도형이 곧 보이는 창이라 입력면도 같은 사각형 안에서만 손을 받는다(`addClippedHit`). */
+  private readonly listClip = (): ClipRect => {
+    if (!this.maskShape?.active) return { left: 0, right: 0, top: 0, bottom: 0 };
+    const { left, right, top, bottom } = this.maskShape.getBounds();
+    return { left, right, top, bottom };
+  };
 
   /** 카드 전체가 우편을 펼치는 입력면이다. 끌어서 흘린 손은 펼치지 않는다. */
   private addOpenHit(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number): void {
-    const hit = this.scene.add.rectangle(0, y, MAIL_POPUP_LAYOUT.card.width, height, 0xffffff, 0);
-    this.makeListHit(hit, y, height);
+    const hit = addClippedHit(this.scene, parent, 0, y, MAIL_POPUP_LAYOUT.card.width, height, this.listClip);
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.getDistance() < 24) void this.openMail(mail); });
-    parent.add(hit);
   }
 
   /** 안내 한 장 — 본문 첫 줄만 미리 보이고 누르면 글 전체가 열린다. */

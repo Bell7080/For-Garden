@@ -14,7 +14,7 @@ import { PortraitCard } from '../ui/PortraitCard';
 import { formationRosterGrid, PORTRAIT_GRID_MASK_GAP } from '../ui/portraitGrid';
 import { addArenaBackdrop, ARENA_TONE } from '../ui/arenaTheme';
 import { session } from '../state/session';
-import { addClippedHit } from '../ui/clippedHit';
+import { addClippedHit, clipHit } from '../ui/clippedHit';
 import { ARENA_ROOM_LAYOUT } from '../ui/arenaRoomLayout';
 import { addArenaMascots } from '../ui/ArenaMascots';
 import { addArenaRuleChips } from '../ui/arenaRuleChips';
@@ -22,6 +22,7 @@ import { squeezeTextToWidth } from '../ui/textFit';
 
 import type { ClipRect } from '../ui/clipRect';
 import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
+import { arenaExitRoute } from '../core/arenaExit';
 import { onTap } from "../ui/tapGuard";
 
 /**
@@ -85,6 +86,11 @@ export class ArenaRoomScene extends Phaser.Scene {
   private clock!: Phaser.GameObjects.Text;
   /** 밴·배치 동안만 서는 작은 기권 버튼(왼쪽 위). */
   private forfeitButton!: Button;
+  /** 친선전의 큰 취소 — 요청 대기·방을 아직 못 받은 동안 선다. 친선전에는 뒤로가기를 두지 않는다. */
+  private cancelButton!: Button;
+  /** 친선전으로 들어왔다면 그 상대 — 방을 받기 전에도 나가는 길(친선전 선택판)을 안다. */
+  private friendId?: string;
+  private backButton?: Phaser.GameObjects.GameObject;
   private error!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
   private title!: Phaser.GameObjects.Text;
@@ -111,7 +117,7 @@ export class ArenaRoomScene extends Phaser.Scene {
   /** 밴이 끝난 뒤 한 번 — 밴 칸이 세 칸으로 갈라지는 연출을 다음 칠에서 돌린다. */
   private unfold = false;
   constructor() { super('arenaRoom'); }
-  init(input: { roomId: string }): void { this.roomId = input.roomId; }
+  init(input: { roomId: string; friendId?: string }): void { this.roomId = input.roomId; this.friendId = input.friendId; }
 
   create(): void {
     this.status = undefined;
@@ -144,8 +150,12 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.banColumn = this.add.container(0, 0);
     this.controls = this.add.container(0, 0).setDepth(5);
     this.error = this.add.text(470, L.error.y, '', textStyle({ role: "body", size: 24, color: ARENA_TONE.sparkText, wrap: 760, align: 'center' })).setOrigin(.5).setDepth(6);
-    addBackButton(this, () => this.confirmForfeit());
-    this.forfeitButton = new Button(this, L.forfeit.x, L.forfeit.y, { width: L.forfeit.width, height: L.forfeit.height, fontSize: 24, label: t("arena.room.forfeitShort"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => this.confirmForfeit() }).setVisible(false);
+    this.backButton = undefined;
+    // 랭크전만 뒤로가기를 둔다. 친선전은 큰 「취소」(요청 대기)와 왼쪽 위 「취소」(밴·배치)가 나가는 길이다.
+    if (!this.friendId) this.backButton = addBackButton(this, () => this.confirmForfeit());
+    this.forfeitButton = new Button(this, L.forfeit.x, L.forfeit.y, { width: L.forfeit.width, height: L.forfeit.height, fontSize: 24, label: t(this.friendId ? "arena.room.cancel" : "arena.room.forfeitShort"), ...DESTRUCTIVE_BUTTON_STYLE, onClick: () => this.confirmForfeit() }).setVisible(false);
+    // 매칭 대기 화면의 「매칭 취소」와 같은 큰 분홍 판 — 기다리는 동안 화면에서 가장 큰 조작이다.
+    this.cancelButton = new Button(this, L.cancel.x, L.cancel.y, { width: L.cancel.width, height: L.cancel.height, label: t("arena.invite.cancel"), fontSize: 46, variant: 'primary', fill: 0xc2387d, accentColor: ARENA_TONE.spark, accentTextColor: COLOR.ink, decorDots: true, onClick: () => void this.cancelInvite() }).setDepth(5).setVisible(Boolean(this.friendId));
     this.bindGridScroll();
     const unsubscribe = subscribeArenaChanges(() => void this.fetchStatus());
     // 창을 닫거나 다른 페이지로 떠나면 밴·배치 중인 판은 기권이다. 앱을 잠깐 내린 것은 서버의 침묵 규칙이 맡는다.
@@ -164,13 +174,48 @@ export class ArenaRoomScene extends Phaser.Scene {
     this.clock.setText(live ? String(Math.max(0, Math.ceil((r.deadline - Date.now()) / 1000))) : '');
   }
 
-  /** 기권은 되돌릴 수 없어 확인 창을 한 번 지난다 — 랭크전이면 패배로 RP를 잃는다. */
+  /** 나가는 길 — 친선전은 친구 화면의 친선전 선택판, 랭크전은 아레나 입구(`arenaExitRoute`). */
+  private leave(): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    const route = arenaExitRoute(this.status?.room, this.status?.playerId, this.friendId);
+    startScene(this, route.scene, route.scene === 'friends' ? route.data : undefined);
+  }
+
+  /** 기권은 되돌릴 수 없어 확인 창을 한 번 지난다 — 랭크전이면 패배로 RP를 잃는다. 친선전은 기권한 뒤 곧장 나간다. */
   private confirmForfeit(): void {
     const r = this.status?.room;
     const live = r && ['ban', 'place', 'battle'].includes(r.phase);
-    if (!live) { startScene(this, 'arena'); return; }
+    if (!live) { this.leave(); return; }
     const p = new PopupLayer(this, 2400);
-    p.confirm({ title: t("arena.room.leave"), message: r.ranked ? t("arena.room.leaveConfirm") : t("arena.room.leaveConfirmFriendly"), confirmLabel: t("arena.room.forfeit"), destructive: true }, () => void this.act({ kind: 'forfeit' }));
+    p.confirm({ title: t(r.ranked ? "arena.room.leave" : "arena.room.cancelTitle"), message: r.ranked ? t("arena.room.leaveConfirm") : t("arena.room.leaveConfirmFriendly"), confirmLabel: t(r.ranked ? "arena.room.forfeit" : "arena.room.cancel"), destructive: true }, () => void (r.ranked ? this.act({ kind: 'forfeit' }) : this.forfeitAndLeave()));
+  }
+
+  /** 요청 취소 — 보낸 요청을 거두고(보낸 쪽의 기권이 곧 철회다) 친선전 선택판으로 돌아간다. */
+  private async cancelInvite(): Promise<void> {
+    const r = this.status?.room;
+    if (r && r.phase === 'invited' && this.side(r, this.status!.playerId) === 0) await this.forfeitAndLeave();
+    else this.leave();
+  }
+
+  /**
+   * 친선전에서 나가기 — 기권(요청 대기 중이면 철회)을 서버가 받은 뒤에만 나간다. 묻는 중인 조회(`busy`)가 있어도
+   * 기다리지 않고 보낸다: `act`처럼 건너뛰면 요청이 남은 채 화면만 떠난다. 실패하면 남아서 사유를 보인다.
+   */
+  private async forfeitAndLeave(): Promise<void> {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    try {
+      const s = await arenaCall('action', { roomId: this.roomId, action: { kind: 'forfeit' } });
+      this.status = s;
+    } catch (e) {
+      this.transitioning = false;
+      if (this.scene.isActive()) this.error.setText(arenaError(e));
+      return;
+    }
+    if (!this.scene.isActive()) return;
+    this.transitioning = false;
+    this.leave();
   }
 
   private async fetchStatus(): Promise<void> {
@@ -215,7 +260,7 @@ export class ArenaRoomScene extends Phaser.Scene {
       startScene(this, 'battle', {
         mode: 'duel', requestId: r.id, attack: r.picks[me].map((p) => p.relicId), opponentName: opponent.name, opponentScore: 0,
         units: r.picks[foe].map((p) => { const u = opponent.roster.find((unit) => unit.def.id === p.relicId)!; return { relicId: p.relicId, level: u.level, breakthrough: u.breakthrough, stats: u.def.stats }; }),
-        arena: { roomId: r.id, side, lease: r.lease, practice: (r as ArenaRoom & { practice?: boolean }).practice === true },
+        arena: { roomId: r.id, side, lease: r.lease, practice: (r as ArenaRoom & { practice?: boolean }).practice === true, ...(r.ranked ? {} : { friendId: opponent.id }) },
       });
       return;
     }
@@ -239,6 +284,10 @@ export class ArenaRoomScene extends Phaser.Scene {
     const L = ARENA_ROOM_LAYOUT;
     const mine = r.players[side], opponent = r.players[1 - side];
     this.forfeitButton.setVisible(r.phase === 'ban' || r.phase === 'place');
+    this.cancelButton.setVisible(!r.ranked && r.phase === 'invited');
+    // 들어온 길과 방의 종류가 갈리면(아레나 입구의 「진행 중인 판으로」로 친선 방에 들어온 경우 등) 방이 바로잡는다.
+    if (r.ranked && !this.backButton) this.backButton = addBackButton(this, () => this.confirmForfeit());
+    if (!r.ranked && this.backButton) { this.backButton.destroy(); this.backButton = undefined; this.forfeitButton.setLabel(t("arena.room.cancel")); }
     if (r.phase === 'invited' || r.phase === 'done' || r.phase === 'declined') {
       this.clearGrid();
       this.slots.removeAll(true);
@@ -256,7 +305,7 @@ export class ArenaRoomScene extends Phaser.Scene {
       line(-120, r.phase === 'declined' ? t("arena.invite.closed") : r.winner === null ? t("arena.result.drawLabel") : r.winner === side ? t("arena.result.winLabel") : t("arena.result.lossLabel"), 54, r.winner === side ? ARENA_TONE.allyText : COLOR.ink);
       line(-20, r.ranked ? t("arena.result.applied") : t("arena.result.friendlyNotice"), 28, COLOR.inkDim);
       if (r.phase === 'done' && r.reason === 'forfeit') line(40, r.winner === side ? t("arena.result.foeForfeit") : t("arena.result.selfForfeit"), 26, ARENA_TONE.accentText);
-      panel.add(new Button(this, 0, 150, { width: 700, height: 110, label: t("arena.result.return"), variant: 'primary', fill: ARENA_TONE.confirm, accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, onClick: () => startScene(this, 'arena') }));
+      panel.add(new Button(this, 0, 150, { width: 700, height: 110, label: t("arena.result.return"), variant: 'primary', fill: ARENA_TONE.confirm, accentColor: ARENA_TONE.accent, accentTextColor: COLOR.ink, onClick: () => this.leave() }));
       return;
     }
     const ban = r.phase === 'ban', act = this.canAct(r, side);
@@ -284,19 +333,20 @@ export class ArenaRoomScene extends Phaser.Scene {
    * 걸고 기다리는지가 읽히지 않았다.
    */
   private paintInviteWaiting(panel: Phaser.GameObjects.Container, r: ArenaRoom, side: number): void {
+    const W = ARENA_ROOM_LAYOUT.inviteWaiting;
     panel.removeAll(true);
-    panel.add(drawLayer(this, 0, 0, chipPoints(940, 700, { bevel: { topLeft: 48, bottomRight: 48 } }), { fill: ARENA_TONE.panel, alpha: .95, edge: ARENA_TONE.accent, edgeAlpha: .85, glow: { color: ARENA_TONE.glow, strength: .3, height: .85 } }));
+    panel.add(drawLayer(this, 0, 0, chipPoints(W.panel.width, W.panel.height, { bevel: { topLeft: 48, bottomRight: 48 } }), { fill: ARENA_TONE.panel, alpha: .95, edge: ARENA_TONE.accent, edgeAlpha: .85, glow: { color: ARENA_TONE.glow, strength: .3, height: .85 } }));
     const name = (x: number, text: string, color: string, label: string): void => {
-      panel.add(this.add.text(x, -250, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(.5));
-      panel.add(squeezeTextToWidth(this.add.text(x, -205, text, textStyle({ role: "display", size: 38, color })).setOrigin(.5).setStroke('#05070a', 5), 330));
+      panel.add(this.add.text(x, W.labelY, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(.5));
+      panel.add(squeezeTextToWidth(this.add.text(x, W.nameY, text, textStyle({ role: "display", size: 38, color })).setOrigin(.5).setStroke('#05070a', 5), 330));
     };
     name(-260, r.players[side].name, ARENA_TONE.allyText, t("arena.invite.me"));
     name(260, r.players[1 - side].name, ARENA_TONE.foeText, t("arena.invite.opponent"));
-    addArenaMascots(this, panel, 0, 70, 230, true, 10, { spread: .9 });
-    const waiting = this.add.text(0, 140, t("arena.invite.waiting"), textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true);
+    addArenaMascots(this, panel, 0, W.mascotY, W.mascotHeight, true, 10, { spread: .9 });
+    const waiting = this.add.text(0, W.waitingY, t("arena.invite.waiting"), textStyle({ role: "display", size: 32, color: COLOR.ink })).setOrigin(.5).setShadow(0, 3, '#000000', 0, true, true);
     panel.add(waiting);
     if (!session.settings.accessibility.reduceMotion) this.tweens.add({ targets: waiting, alpha: .45, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    addArenaRuleChips(this, panel, 0, 240, r.rules, { size: 24, maxWidth: 880 });
+    addArenaRuleChips(this, panel, 0, W.chipsY, r.rules, { size: 24, maxWidth: 880 });
   }
 
   private rulesLine(r: ArenaRoom): string {
@@ -497,6 +547,8 @@ export class ArenaRoomScene extends Phaser.Scene {
         head: 'inside', selectedStyle: 'pressed',
       });
       card.setName(`arena-card-${unit.def.id}`);
+      // 격자 창(마스크와 같은 사각형) 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 슬롯·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: 1080, top: G.top, bottom: G.bottom }));
       content.add(card);
       // 층은 원화 → 이름줄 → 덮개 → 글자/X 순이다. 덮개는 카드가 그린 칩 실루엣을 그대로 받는다.
       const dim = this.add.container(0, 0).setVisible(false);

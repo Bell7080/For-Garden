@@ -27,6 +27,8 @@ export const RUNE_DE = {
   "rune.craftAllDone": "Alles veredelt",
   "rune.unequip": "Ablegen",
   "rune.equip": "Anlegen",
+  "rune.openBag": "Tasche ansehen",
+  "rune.traitResearch": "Merkmalsforschung",
   "rune.engraved": "Gravur abgeschlossen",
   "rune.craftProgress": "Veredelung {done} / {total}",
   "rune.completed": "Die Rune ist vollendet.",

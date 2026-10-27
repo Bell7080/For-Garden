@@ -5,6 +5,7 @@ import { storyDifficultyOf } from "../core/storyDifficulty";
 import { storyStages } from "../data/stages";
 import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
 import { arenaCall } from "../api/arenaApi";
+import { arenaExitRoute } from "../core/arenaExit";
 import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
 import packageInfo from "../../package.json";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -3314,8 +3315,8 @@ export class BattleScene extends Phaser.Scene {
       const r=status.room!;
       const title=r.winner===null?t("arena.result.draw"):r.winner===input.side?t("arena.result.win"):t("arena.result.loss");
       if(r.winner!==null)audioManager?.playSfx(r.winner===input.side?"battle.victory":"battle.defeat");
-      new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>startScene(this,input.practice?"friends":"arena"));
-    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>startScene(this,"arena"),error,"duel");}
+      new PopupLayer(this,2200).confirm({title,message:r.ranked?t("arena.result.ranked",{score:status.score}):t("arena.result.friendly"),confirmLabel:t("arena.result.back"),cancelLabel:false},()=>{const route=arenaExitRoute(r,status.playerId,input.friendId);startScene(this,route.scene,route.scene==="friends"?route.data:undefined);});
+    }catch(error){if(this.scene.isActive()&&generation===this.combatGeneration)this.showResultFailure(()=>void this.finishArena(),()=>{const route=arenaExitRoute(undefined,undefined,input.friendId);startScene(this,route.scene,route.scene==="friends"?route.data:undefined);},error,"duel");}
   }
 
   private async finishDuel(input: DuelBattleInputDto, won: boolean): Promise<void> {

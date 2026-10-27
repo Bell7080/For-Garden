@@ -27,6 +27,8 @@ export const RUNE_KO = {
   "rune.craftAllDone": "일괄 세공 완료",
   "rune.unequip": "해제",
   "rune.equip": "장착",
+  "rune.openBag": "가방 보기",
+  "rune.traitResearch": "특성 연구",
   "rune.engraved": "각인 완료",
   "rune.craftProgress": "세공 {done} / {total}",
 

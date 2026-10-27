@@ -80,11 +80,11 @@ function consumeNavDirection(): -1 | 1 | undefined {
  * 방향을 함께 받는 이유는 그것이 **연출이 아니라 자리**이기 때문이다 — 오른쪽 탭으로 갔으면
  * 새 화면은 오른쪽에서 들어와야 그 화면이 줄의 어디에 있는지 손이 기억한다.
  */
-export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 0 | 1): void {
+export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 0 | 1, data?: object): void {
   pendingNavDirection = direction === 0 ? undefined : direction;
   // 나란히 놓인 자리로 옆걸음 — 라벨 탭과 같은 「스르륵」이 화면이 옆에서 미끄러져 드는 것과 맞는다.
   audioManager?.playUi("ui.tab");
-  startScene(scene, key);
+  startScene(scene, key, data);
 }
 
 /**

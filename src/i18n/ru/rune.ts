@@ -27,6 +27,8 @@ export const RUNE_RU = {
   "rune.craftAllDone": "Огранка завершена",
   "rune.unequip": "Снять",
   "rune.equip": "Надеть",
+  "rune.openBag": "Открыть сумку",
+  "rune.traitResearch": "Исследование черт",
   "rune.engraved": "Гравировка завершена",
   "rune.craftProgress": "Огранка {done} / {total}",
   "rune.completed": "Руна завершена.",

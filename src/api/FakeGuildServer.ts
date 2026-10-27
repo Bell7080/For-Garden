@@ -6,6 +6,9 @@ import {
   type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
+import { combatPower } from "../core/combatPower";
+import { rankGuildWar } from "../core/guildWar";
+import { PLAYABLE_RELICS } from "../data/relics";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
   type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
@@ -22,6 +25,8 @@ interface MemberRow {
 }
 interface GuildRow {
   id: string; name: string; badge: GuildBadge; joinMode: GuildJoinMode; notice: string; prosperity: number; createdAt: number; badgeChanges: number;
+  /** QA 길드전·수호전 점수(`guildQa`가 정한다). 열리기 전에는 null이라 순위 줄이 「-」로 선다. */
+  warScore?: number | null; warReachedAt?: number; guardScore?: number | null;
   members: Map<string, MemberRow>; requests: Map<string, { actor: GuildActor; requestedAt: number }>;
 }
 
@@ -45,19 +50,38 @@ export class FakeGuildServer implements GuildBackend {
   }
 
   private seedSamples(): void {
-    const sample = (name: string, badge: GuildBadge, joinMode: GuildJoinMode, prosperity: number, count: number, notice: string) => {
+    const roster = PLAYABLE_RELICS;
+    const hash = (text: string): number => { let h = 2166136261; for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619); return h >>> 0; };
+    const sample = (name: string, badge: GuildBadge, joinMode: GuildJoinMode, prosperity: number, count: number, notice: string, warScore: number | null) => {
       const id = `sample-${++this.sequence}`;
       const members = new Map<string, MemberRow>();
       for (let i = 0; i < count; i++) {
         const userId = `${id}-m${i}`;
-        members.set(userId, this.newMember({ userId, name: i === 0 ? `${name} 마스터` : `연구원${i + 1}`, level: 30 - i, avatarRelicId: "torika", frameId: "holo" }, i === 0 ? "leader" : i < 3 ? "officer" : "member", this.now() - i * 3_600_000));
+        const seed = hash(userId);
+        const relic = roster[seed % roster.length];
+        const level = Math.max(8, Math.min(60, 54 - i * 3 + (seed % 7)));
+        const role: GuildRole = i === 0 ? "leader" : i === 1 ? "vice" : i < 4 ? "officer" : "member";
+        const memberName = i === 0 ? `${name} 마스터` : `${SAMPLE_NAMES[(seed >>> 3) % SAMPLE_NAMES.length]}${i + 1}`;
+        const frameId = level >= 45 ? "garden" : level >= 30 ? "abyss" : level >= 20 ? "amber" : "holo";
+        const card: GuildMemberCard = {
+          uid: `QA${String(seed).padStart(10, "0").slice(0, 10)}`, bio: SAMPLE_BIOS[seed % SAMPLE_BIOS.length],
+          favorite: { relicId: relic.id, level, breakthroughGrade: Math.min(5, 1 + Math.floor(level / 14)), power: Math.round(combatPower(relic.stats) * (0.6 + level / 40)), skinId: null },
+          highestStageId: level >= 30 ? "2-5" : "1-8", expeditionBest: (seed % 90) * 1_000,
+        };
+        const member = this.newMember({ userId, name: memberName, level, avatarRelicId: relic.id, frameId, card }, role, this.now() - i * 3_600_000);
+        member.contributionTotal = 200 + (seed % 4_000); member.contributionWeek = seed % 700; member.coin = 0;
+        members.set(userId, member);
       }
-      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map() });
+      this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map(), warScore, warReachedAt: this.now(), guardScore: warScore === null ? null : Math.round(warScore * 24) });
       for (const userId of members.keys()) this.userGuild.set(userId, id);
     };
-    sample("포가든 수호대", { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" }, "open", 12_000, 14, "함께 성장해요!");
-    sample("이끼 연구소", { shape: "hexagon", shapeColor: "green", icon: "leaf", iconColor: "ink" }, "approval", 3_000, 8, "느긋하게 복원합니다.");
-    sample("새벽 발굴단", { shape: "banner", shapeColor: "violet", icon: "moon", iconColor: "amber" }, "open", 700, 3, "");
+    // 길드전·수호전을 해 볼 수 있게 열 명 이상인 길드를 여럿 둔다. 점수는 열린 길드마다 조금씩 다르다.
+    sample("포가든 수호대", { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" }, "open", 12_000, 16, "함께 성장해요!", 1_340);
+    sample("이끼 연구소", { shape: "hexagon", shapeColor: "green", icon: "leaf", iconColor: "ink" }, "approval", 3_000, 12, "느긋하게 복원합니다.", 1_180);
+    sample("새벽 발굴단", { shape: "banner", shapeColor: "violet", icon: "moon", iconColor: "amber" }, "open", 700, 3, "", null);
+    sample("붉은 사막 탐험대", { shape: "shield", shapeColor: "crimson", icon: "flame", iconColor: "amber" }, "open", 8_500, 14, "사막은 아침에 건넌다.", 1_260);
+    sample("심해 기록 연맹", { shape: "hexagon", shapeColor: "blue", icon: "moon", iconColor: "silver" }, "approval", 5_200, 12, "기록은 곧 힘.", 1_090);
+    sample("바람 언덕 학회", { shape: "banner", shapeColor: "green", icon: "leaf", iconColor: "amber" }, "open", 2_100, 10, "", 1_020);
   }
 
   private newMember(actor: GuildActor, role: GuildRole, at: number): MemberRow {
@@ -91,9 +115,15 @@ export class FakeGuildServer implements GuildBackend {
   private summary(guild: GuildRow): GuildSummary {
     const level = this.level(guild);
     return { id: guild.id, name: guild.name, badge: { ...guild.badge }, level, memberCount: guild.members.size, capacity: guildCapacity(level), joinMode: guild.joinMode, leaderName: this.leaderOf(guild).name, notice: guild.notice,
-      prosperity: guild.prosperity, contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0), warScore: null, guardScore: null };
+      prosperity: guild.prosperity, contributionTotal: [...guild.members.values()].reduce((sum, m) => sum + m.contributionTotal, 0), warScore: guild.warScore ?? null, guardScore: guild.guardScore ?? null };
   }
-  private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), createdAt: guild.createdAt, warRank: null, badgeFree: guild.badgeChanges === 0 }; }
+  private detail(guild: GuildRow): GuildDetail { return { ...this.summary(guild), createdAt: guild.createdAt, warRank: this.warRankOf(guild), badgeFree: guild.badgeChanges === 0 }; }
+  /** 길드전 등수 — 점수가 있는 길드끼리 줄 세운다. 점수가 없으면 null이다. */
+  private warRankOf(guild: GuildRow): number | null {
+    if (guild.warScore == null) return null;
+    const standings = [...this.guilds.values()].filter((g) => g.warScore != null).map((g) => ({ guildId: g.id, score: g.warScore!, reachedAt: g.warReachedAt ?? 0 }));
+    return rankGuildWar(standings).find((entry) => entry.guildId === guild.id)?.rank ?? null;
+  }
   private assertUnlocked(actor: GuildActor): void {
     if (this.options.levelGate !== false && !isContentUnlocked("guild", actor.level)) fail("LEVEL_LOCKED");
   }
@@ -313,9 +343,60 @@ export class FakeGuildServer implements GuildBackend {
     });
   }
 
+  // ── QA 전용 — 길드전·수호전 시험판(`guildQa`)이 쓰는 조회·조작. 운영 서버의 계약에는 없다. ─────────────
+  /** 모든 길드의 id·이름·점수. */
+  qaGuilds(): { id: string; name: string; badge: GuildBadge; level: number; memberCount: number; warScore: number | null; guardScore: number | null; warReachedAt: number }[] {
+    return [...this.guilds.values()].map((g) => ({ id: g.id, name: g.name, badge: { ...g.badge }, level: this.level(g), memberCount: g.members.size, warScore: g.warScore ?? null, guardScore: g.guardScore ?? null, warReachedAt: g.warReachedAt ?? 0 }));
+  }
+  /** 한 길드의 길드원 공개 값. */
+  qaMembers(guildId: string): { userId: string; name: string; level: number; role: GuildRole; avatarRelicId: string; frameId: string }[] {
+    return [...(this.guilds.get(guildId)?.members.values() ?? [])].map(({ userId, name, level, role, avatarRelicId, frameId }) => ({ userId, name, level, role, avatarRelicId, frameId }));
+  }
+  qaGuildOf(userId: string): string | undefined { return this.userGuild.get(userId); }
+  qaSetScores(guildId: string, scores: { warScore?: number | null; guardScore?: number | null }): void {
+    const guild = this.guilds.get(guildId);
+    if (!guild) return;
+    if (scores.warScore !== undefined) { if (scores.warScore !== guild.warScore) guild.warReachedAt = this.now(); guild.warScore = scores.warScore; }
+    if (scores.guardScore !== undefined) guild.guardScore = scores.guardScore;
+  }
+  /** 길드원이 모자라면 표본 길드원으로 채운다(정원은 넘기지 않는다). 채운 수를 돌려준다. */
+  qaFillMembers(guildId: string, target: number): number {
+    const guild = this.guilds.get(guildId);
+    if (!guild) return 0;
+    let added = 0;
+    const capacity = guildCapacity(this.level(guild));
+    while (guild.members.size < Math.min(target, capacity)) {
+      const index = guild.members.size + added;
+      const userId = `${guild.id}-qa${index}`;
+      if (guild.members.has(userId)) { added += 1; continue; }
+      const relic = PLAYABLE_RELICS[(index * 7 + 3) % PLAYABLE_RELICS.length];
+      const level = Math.max(8, 44 - index * 2);
+      const member = this.newMember({ userId, name: `${SAMPLE_NAMES[index % SAMPLE_NAMES.length]}${index + 1}`, level, avatarRelicId: relic.id, frameId: "holo" }, "member", this.now());
+      member.contributionTotal = 150 + index * 37;
+      guild.members.set(userId, member); this.userGuild.set(userId, guild.id);
+      added += 1;
+    }
+    return added;
+  }
+  /** 호출자가 길드에 없으면 새로 만들고(길드장), 있으면 그 길드를 돌려준다. 젬·레벨 조건은 보지 않는다. */
+  qaEnsureGuild(actor: GuildActor, badge: GuildBadge, name = "QA 연합"): string {
+    const current = this.userGuild.get(actor.userId);
+    if (current && this.guilds.has(current)) return current;
+    let unique = name; let n = 1;
+    while ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(unique))) unique = `${name} ${++n}`;
+    const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
+    const guild: GuildRow = { id, name: unique, badge: { ...badge }, joinMode: "open", notice: "", prosperity: 3_000, createdAt: this.now(), badgeChanges: 0, members: new Map(), requests: new Map() };
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    this.guilds.set(id, guild); this.userGuild.set(actor.userId, id); this.requestedBy.delete(actor.userId);
+    return id;
+  }
+
   /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
   addProsperityForTest(guildId: string, amount: number): void { const guild = this.guilds.get(guildId); if (guild) guild.prosperity += amount; }
 }
+
+const SAMPLE_NAMES = ["하늘", "새봄", "이슬", "마루", "다온", "보람", "나래", "가람", "솔", "누리", "한결", "도담", "모아", "미르", "아라", "초롱", "온새미", "라온", "해든", "소담"];
+const SAMPLE_BIOS = ["오늘도 복원 중", "치즈케이크는 사랑입니다", "길드전 같이 해요", "느긋하게 가는 중", "수호전 개근 목표", "고고학 전문가", "잘 부탁드립니다"];
 
 const roleRank = (role: GuildRole): number => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
 

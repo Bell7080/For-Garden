@@ -3,6 +3,7 @@ import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
+import { guildQaClockShift } from "../api/guildQa";
 import {
   GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMe, type GuildMemberView, type GuildMembersResponse,
   type GuildStateResponse, type GuildSummary,
@@ -165,7 +166,7 @@ export class GuildScene extends Phaser.Scene {
   /* ── 데이터·오류 ──────────────────────────────────────────────────────── */
 
   private get myRole(): GuildRole | undefined { return this.state?.me?.role; }
-  private get now(): number { return Date.now() + this.clockOffset; }
+  private get now(): number { return Date.now() + this.clockOffset + guildQaClockShift(); }
   private get inGuild(): boolean { return Boolean(this.state?.guild); }
 
   private toast(message: string, tone: "locked" | "unlocked" = "locked"): void { showContentToast(this, message, tone); }

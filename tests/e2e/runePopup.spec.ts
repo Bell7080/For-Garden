@@ -147,3 +147,51 @@ test("골드 부족이면 능력치를 골라도 강화 요청을 잠근다", as
   await tap(page, W / 2, craftTop + craft.buttonY);
   await captureGame(page, `test-results/${test.info().project.name}-rune-insufficient-gold.png`);
 });
+
+/** 끼워 둔 룬의 쪽지를 연다. 세공 버튼 자리에서 바로가기 줄(가방 보기·특성 연구)의 자리를 구한다. */
+async function openEquippedRuneNote(page: Page): Promise<{ bag: { x: number; y: number }; trait: { x: number; y: number } }> {
+  await tap(page, W / 2, H / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, W * 0.3, H - 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "relics");
+  await tapUntil(page, 200, 620, async () => (await page.evaluate(() => window.__PF_DEBUG?.infoOpen)) === true);
+  await page.waitForTimeout(1200);
+  await expect.poll(() => page.evaluate(() => Boolean(window.__PF_DEBUG?.infoGemSlots?.[0])), { timeout: 15_000 }).toBe(true);
+  await tap(page, 688, 1350);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.runeNoteCraft !== undefined)).toBe(true);
+  const craft = (await page.evaluate(() => window.__PF_DEBUG!.runeNoteCraft!))!;
+  // 바로가기 줄은 버튼 줄 바로 아래(버튼 74의 절반 + 22 + 60의 절반), 판 가운데 ±135에 선다.
+  const y = craft.y + 37 + 22 + 30;
+  return { bag: { x: W / 2 - 135, y }, trait: { x: W / 2 + 135, y } };
+}
+
+test("끼워 둔 룬의 쪽지에서 가방 보기로 같은 자리의 장착 가방을 연다", async ({ page }, testInfo) => {
+  await startAfterOpening(page, (session) => {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+    const equipped = createRuneInstance({ instanceId: "e2e-equipped", baseName: "장착 룬", rarity: "rare", part: 0, statValues: values, random: () => 0 });
+    const spare = createRuneInstance({ instanceId: "e2e-spare", baseName: "예비 룬", rarity: "epic", part: 0, statValues: values, random: () => 0.5 });
+    session.runeInventory = [equipped, spare];
+    session.relicProgress[firstCatalogRelicId(session)].heartGemSlots[0] = equipped.instanceId;
+  });
+  const spots = await openEquippedRuneNote(page);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-note-shortcuts.png`);
+  await tap(page, spots.bag.x, spots.bag.y);
+  await expect.poll(() => page.evaluate(() => (window.__PF_DEBUG?.popupTitles ?? []).some((title) => title.includes("가방")))).toBe(true);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-note-bag.png`);
+});
+
+test("룬 쪽지의 특성 연구는 고고학 연구대로 건너가 그 룬을 꽂는다", async ({ page }, testInfo) => {
+  await startAfterOpening(page, (session) => {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 1])) as Record<RuneStatKey, number>;
+    const equipped = createRuneInstance({ instanceId: "e2e-equipped", baseName: "장착 룬", rarity: "rare", part: 0, statValues: values, random: () => 0 });
+    const spare = createRuneInstance({ instanceId: "e2e-spare", baseName: "예비 룬", rarity: "epic", part: 0, statValues: values, random: () => 0.5 });
+    session.runeInventory = [equipped, spare];
+    session.relicProgress[firstCatalogRelicId(session)].heartGemSlots[0] = equipped.instanceId;
+    // 고고학은 1-10 클리어로 열린다 — 닫혀 있으면 바로가기가 자물쇠만 말하고 건너가지 않는다.
+    session.cleared.add("1-10");
+  });
+  const spots = await openEquippedRuneNote(page);
+  await tap(page, spots.trait.x, spots.trait.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene), { timeout: 10_000 }).toBe("archaeology");
+  await page.waitForTimeout(1500);
+  await captureGame(page, `test-results/${testInfo.project.name}-rune-trait-research.png`);
+});

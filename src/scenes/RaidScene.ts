@@ -291,7 +291,9 @@ export class RaidScene extends Phaser.Scene {
     if (!layers) return;
     layers.removeAll(true);
     const stack = raidLayerStack(raids.map(({ kind }) => kind));
+    const { top: clipTop, bottom: clipBottom } = RAID_LIST.viewport;
     raids.forEach((raid, index) => addRaidLayer(this, layers, raid, stack.centers[index]!, {
+      clip: () => ({ left: 0, right: BASE_WIDTH, top: clipTop, bottom: clipBottom }),
       // 끝난 판은 칠 수 없으니 판으로 넘어가지 않는다 — 정산은 층을 덮는 덮개가 그 자리에서 맡는다.
       onTap: () => { if (!this.dragged && (raid.status !== "completed" || raid.pendingRequestId)) this.openRaid(raid.id); },
       onSettle: (dismiss) => { if (!this.dragged) void this.settle(raid.id, dismiss); },

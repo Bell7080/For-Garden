@@ -27,6 +27,8 @@ export const RUNE_PT_BR = {
   "rune.craftAllDone": "Lapidação concluída",
   "rune.unequip": "Remover",
   "rune.equip": "Equipar",
+  "rune.openBag": "Ver bolsa",
+  "rune.traitResearch": "Pesquisa de traços",
   "rune.engraved": "Gravação concluída",
   "rune.craftProgress": "Lapidação {done} / {total}",
   "rune.completed": "A Runa está completa.",

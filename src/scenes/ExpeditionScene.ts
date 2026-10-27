@@ -33,6 +33,7 @@ import { PARTY_POWER_PLATE } from "../ui/partyPreviewLayout";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
+import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
@@ -890,6 +891,8 @@ export class ExpeditionScene extends Phaser.Scene {
         selectedStyle: "pressed",
         deferPortrait: true,
       });
+      // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 편성판·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: ROSTER_VIEWPORT.top, bottom: ROSTER_VIEWPORT.bottom }));
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
       bindLongPress(this, card.hit, {

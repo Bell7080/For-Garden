@@ -1,3 +1,5 @@
+import { clipInteractiveTree } from "../ui/clippedHit";
+import type { ClipRect } from "../ui/clipRect";
 import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
 import { gameApi } from "../api/FakeServer";
@@ -37,6 +39,10 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 import { attachDragScroll } from "../ui/dragScroll";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+
+/** 행이 흐르는 창 — 마스크와 입력 창이 같은 사각형을 읽는다. */
+const SETTINGS_LIST_WINDOW = { left: 34, top: SETTINGS_HEAD.contentTop - 10, width: 1012, height: 1430 };
+const SETTINGS_LIST_CLIP = (): ClipRect => ({ left: SETTINGS_LIST_WINDOW.left, right: SETTINGS_LIST_WINDOW.left + SETTINGS_LIST_WINDOW.width, top: SETTINGS_LIST_WINDOW.top, bottom: SETTINGS_LIST_WINDOW.top + SETTINGS_LIST_WINDOW.height });
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -96,7 +102,7 @@ export class SettingsScene extends Phaser.Scene {
     this.buildTabs();
     this.content = this.add.container(0, SETTINGS_HEAD.contentTop);
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
-    maskShape.fillStyle(0xffffff).fillRect(34, SETTINGS_HEAD.contentTop - 10, 1012, 1430);
+    maskShape.fillStyle(0xffffff).fillRect(SETTINGS_LIST_WINDOW.left, SETTINGS_LIST_WINDOW.top, SETTINGS_LIST_WINDOW.width, SETTINGS_LIST_WINDOW.height);
     this.content.setMask(maskShape.createGeometryMask()); this.buildRows();
     void gameApi.getPlayerState().then((state) => {
       if (!this.scene.isActive() || generation !== this.viewGeneration) return;
@@ -287,6 +293,8 @@ export class SettingsScene extends Phaser.Scene {
     // 마지막 섹션의 판은 아직 그려지지 않았다 — 닫아야 선다.
     endSection();
     this.content.setData("height", y + 70); this.scrollTo(this.scrollY);
+    // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 행이 아래의 탭·뒤로가기를 덮지 않게.
+    clipInteractiveTree(this.content, SETTINGS_LIST_CLIP);
   }
 
   /**

@@ -27,6 +27,8 @@ export const RUNE_ES = {
   "rune.craftAllDone": "Tallado completo",
   "rune.unequip": "Quitar",
   "rune.equip": "Equipar",
+  "rune.openBag": "Ver bolsa",
+  "rune.traitResearch": "Investigación de rasgos",
   "rune.engraved": "Grabado completado",
   "rune.craftProgress": "Tallado {done} / {total}",
   "rune.completed": "La Runa está completa.",

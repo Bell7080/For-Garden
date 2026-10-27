@@ -1,6 +1,7 @@
 import { NotificationDot } from "../ui/NotificationDot";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
+import { consumeSceneEntry } from "./sceneEntry";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { socialApi, SocialApiError, type FriendListResponse, type FriendRequestEntry, type FriendRequestsResponse, type UserSearchEntry } from "../api/FakeSocialServer";
@@ -115,7 +116,19 @@ export class FriendsScene extends Phaser.Scene {
   private dragMoved = 0;
   private busy = false;
 
+  /**
+   * 친선 아레나에서 돌아왔다면 그 상대 — 목록을 받은 뒤 그 친구의 친선전 선택판을 다시 연다(`arenaExitRoute`).
+   * 친선전에서 나가면 어디서 나가든 이 판으로 돌아와야 한다: 랭크 아레나 입구로 떨어지면 다시 붙으려고
+   * 친구 목록부터 다시 찾아 들어와야 한다.
+   */
+  private arenaFriendId?: string;
+
   constructor() { super("friends"); }
+
+  init(input?: { arenaFriendId?: string }): void {
+    this.arenaFriendId = input?.arenaFriendId;
+    consumeSceneEntry(this);
+  }
 
   create(): void {
     setDebugScene("friends");
@@ -169,6 +182,16 @@ export class FriendsScene extends Phaser.Scene {
     }
     void notificationManager.refresh().catch(() => undefined);
     this.paintAll(keepScroll);
+    this.reopenArenaFriend();
+  }
+
+  /** 친선 아레나에서 돌아온 첫 목록에서 한 번만 — 그 친구의 친선전 선택판을 연다. 친구가 아니게 됐으면 목록만 선다. */
+  private reopenArenaFriend(): void {
+    const id = this.arenaFriendId;
+    this.arenaFriendId = undefined;
+    const profile = id ? this.friendData?.friends.find((f) => f.id === id) : undefined;
+    if (!profile || this.popups.isOpen) return;
+    openArenaFriendPopup(this, this.popups, { id: profile.id, name: profile.displayName, frameId: profile.frameId, favoriteRelicId: profile.favoriteRelic.relicId, level: profile.level });
   }
 
   private paintAll(keepScroll = false): void {

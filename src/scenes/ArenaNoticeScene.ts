@@ -99,7 +99,7 @@ export class ArenaNoticeScene extends Phaser.Scene {
                 this.banner = undefined;
                 if (kind === 'accept' && status.room) {
                     const source = this.scene.manager.getScenes(true).find(s => s !== this && s.scene.key !== 'effectOverlay');
-                    source?.scene.start('arenaRoom', { roomId: r.id });
+                    source?.scene.start('arenaRoom', { roomId: r.id, friendId: r.players[0].id });
                 }
             }
             catch (e) {

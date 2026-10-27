@@ -60,6 +60,7 @@ import type { ArchaeologyStateResponse } from "../api/contracts";
 import { formatCountdown } from "../core/formatCountdown";
 import { archaeologyProgressManager } from "../managers/ArchaeologyProgressManager";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
+import { consumeSceneEntry } from "./sceneEntry";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
 
@@ -274,6 +275,19 @@ export class ArchaeologyScene extends Phaser.Scene {
 
   constructor() {
     super("archaeology");
+  }
+
+  /**
+   * 룬 쪽지의 「특성 연구」로 들어오면 연구 탭을 열고 그 룬을 연구대에 꽂은 채로 선다(`goToTraitResearch`).
+   * 빈손으로 들어온 사람은 지난번 탭 그대로다.
+   */
+  init(data?: { tab?: unknown; benchRuneId?: unknown }): void {
+    if (typeof data?.benchRuneId === "string" && session.runeInventory.some(({ instanceId }) => instanceId === data.benchRuneId)) {
+      this.tab = "research";
+      this.benchRuneId = data.benchRuneId;
+      this.benchJustSlotted = true;
+    }
+    consumeSceneEntry(this);
   }
 
   create(): void {

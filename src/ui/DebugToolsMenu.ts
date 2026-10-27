@@ -1,5 +1,8 @@
 import type Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
+import { guildQaForceGuardElement, guildQaForcePhase, guildQaPrepare, guildQaResetClock } from "../api/guildQa";
+import { GUILD_GUARD_ELEMENTS } from "../core/guildPages";
+import type { Element } from "../core/types";
 import type { DebugCommand } from "../core/debugCommand";
 import type { Wallet } from "../core/gacha";
 import { PLAYER_LEVEL_CAP } from "../core/playerLevel";
@@ -91,6 +94,27 @@ const MENU: readonly { id: string; labelKey: TextKey; open: (host: Host) => void
   { id: "breakthroughSet", labelKey: "settings.debug.menu.breakthroughSet", open: (host) => pickRelic(host, "owned", null, (id) => void run(host, { kind: "breakthroughSet", relicId: id })) },
   { id: "universalFragments", labelKey: "settings.debug.menu.universalFragments", open: (host) => pickFrom(host, t("settings.debug.pick.amount"), [1, 5, 10, 50].map((amount) => ({ id: String(amount), label: `+${amount}` })), (amount) => void run(host, { kind: "universalFragments", amount: Number(amount) })) },
   { id: "tenUpgrade", labelKey: "settings.debug.menu.tenUpgrade", open: (host) => void run(host, { kind: "tenUpgrade" }, "armed") },
+  { id: "guildQa", labelKey: "settings.debug.menu.guildQa", open: (host) => pickFrom(host, t("settings.debug.menu.guildQa"), [
+    { id: "prepare", label: t("settings.debug.guild.prepare") },
+    { id: "war", label: t("settings.debug.guild.war") },
+    { id: "prep", label: t("settings.debug.guild.prep") },
+    { id: "guard", label: t("settings.debug.guild.guard") },
+    { id: "reset", label: t("settings.debug.guild.resetClock") },
+  ], (id) => {
+    const say = (message: string): void => { host.popups.confirm({ title: t("settings.debug.title"), message, confirmLabel: t("settings.action.confirm"), cancelLabel: false }); };
+    const prepared = (): boolean => {
+      const result = guildQaPrepare();
+      if (result) say(t("settings.debug.guild.ready", { name: result.name, count: result.members }));
+      return result !== null;
+    };
+    if (id === "prepare") prepared();
+    else if (id === "war" || id === "prep") { guildQaForcePhase(id === "war" ? "battle" : "prep"); prepared(); }
+    else if (id === "guard") host.scene.time.delayedCall(0, () => pickFrom(host, t("settings.debug.guild.guard"), GUILD_GUARD_ELEMENTS.map((element) => ({ id: element, label: t(`element.${element}`) })), (element) => {
+      guildQaForceGuardElement(element as Element);
+      prepared();
+    }));
+    else { guildQaResetClock(); say(t("settings.debug.guild.clockReset")); }
+  }) },
   { id: "unlockStories", labelKey: "settings.debug.menu.unlockStories", open: (host) => void run(host, { kind: "unlockStories" }) },
 ];
 

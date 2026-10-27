@@ -27,6 +27,8 @@ export const RUNE_TH = {
   "rune.craftAllDone": "เจียระไนทั้งหมดเสร็จสิ้น",
   "rune.unequip": "ถอด",
   "rune.equip": "สวมใส่",
+  "rune.openBag": "ดูกระเป๋า",
+  "rune.traitResearch": "วิจัยคุณลักษณะ",
   "rune.engraved": "สลักเสร็จแล้ว",
   "rune.craftProgress": "เจียระไน {done} / {total}",
   "rune.completed": "รูนเสร็จสมบูรณ์แล้ว",

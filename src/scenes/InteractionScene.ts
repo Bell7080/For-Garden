@@ -1,3 +1,4 @@
+import { clipHit } from "../ui/clippedHit";
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
@@ -397,7 +398,9 @@ export class InteractionScene extends Phaser.Scene {
     if (!locked) layer.add(this.buildStateChip(view, index, artWidth, bottom));
 
     if (!locked) {
-      const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      // 층이 흐르는 창 안에서만 손을 받는다 — 창 밖으로 흘러간 층이 밑동의 뒤로가기·빈 자리를 덮지 않게.
+      const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0);
+      clipHit(hit, () => ({ left: 0, right: BASE_WIDTH, top: INTERACTION_LAYER.viewport.top, bottom: INTERACTION_LAYER.viewport.bottom }));
       hit.on("pointerdown", () => pressIn(layer));
       hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
       onTap(hit, () => { pressOut(layer); this.openCity(view); }, layer);

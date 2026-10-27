@@ -1,3 +1,4 @@
+import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { session } from "../state/session";
 import { localGuildBackend } from "./FakeGuildServer";
 import { guildActorFrom } from "./guildActor";
@@ -17,10 +18,19 @@ let activeGuildApi: GuildApi = localGuildApi;
 /** 서버가 길드를 소유하는 구현으로 갈아 끼운다. `null`이면 이 기기의 임시 구현으로 돌아간다. */
 export function installGuildApi(api: GuildApi | null): void { activeGuildApi = api ?? localGuildApi; }
 
+/**
+ * QA 전용 — 서버가 연결된 QA 빌드에서도 길드만 이 기기의 임시 구현(표본 길드·길드원)으로 돌린다.
+ * 일반 빌드에서는 켤 수 없다. 지갑이 얽힌 조작(만들기·출석·상점)은 `gameApi`가 서버로 보내므로 이 모드에서는 쓰지 않는다.
+ */
+let guildSandbox = false;
+export function setGuildSandbox(on: boolean): void { guildSandbox = QA_TOOLS_ENABLED && on; }
+export const isGuildSandbox = (): boolean => guildSandbox;
+
 /** 씬이 공유하는 길드 진입점. 부르는 순간의 구현으로 넘긴다. */
 export const guildApi: GuildApi = new Proxy({} as GuildApi, {
   get(_target, key) {
-    const value = activeGuildApi[key as keyof GuildApi];
-    return typeof value === "function" ? value.bind(activeGuildApi) : undefined;
+    const target = guildSandbox ? localGuildApi : activeGuildApi;
+    const value = target[key as keyof GuildApi];
+    return typeof value === "function" ? value.bind(target) : undefined;
   },
 });

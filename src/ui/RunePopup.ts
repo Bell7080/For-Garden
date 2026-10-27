@@ -28,6 +28,10 @@ import { formatCurrency } from "../core/formatCurrency";
 import { FaceFrame } from "./FaceFrame";
 import { COLOR, textStyle } from "./theme";
 import { audioManager } from "../managers/AudioManager";
+import { contentOpen, showContentLockedToast } from "./contentLock";
+import { LOCK_DIM } from "./lockStyle";
+import { startNavScene } from "./screenTransition";
+import { NAV_TABS, navTabDirection } from "../core/navTabs";
 
 /**
  * 룬 옵션 키의 공용 표시명이다.
@@ -65,6 +69,14 @@ export interface RuneEquipTarget {
 
 export interface RuneInfoPopupOptions extends RunePopupOptions {
   equip?: RuneEquipTarget;
+  /**
+   * 「가방 보기」 — 끼워 둔 룬의 쪽지에서 **같은 자리의 장착 가방**으로 곧장 건너간다. 부른 화면이
+   * 그 가방을 여는 법을 넘긴다(정보창의 칸 하나). 거기서 고른 룬은 해제 없이 그 칸에 들어가고 원래
+   * 룬은 가방으로 돌아간다 — 해제를 먼저 누르던 한 걸음을 덜려는 길이다.
+   */
+  openBag?: () => void;
+  /** 「특성 연구」 — 고고학의 특성 연구대로 건너가 이 룬을 바로 꽂는다. 화면을 떠나도 되는 자리만 켠다. */
+  traitResearch?: boolean;
 }
 
 /**
@@ -231,7 +243,10 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
   const traitBody = traitView
     ? keywords.layout(traitView.description, { width: panel.width - panel.trait.inset * 2, size: panel.trait.bodySize, color: COLOR.ink })
     : undefined;
-  const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0);
+  // 바로가기 줄은 갈 곳이 있을 때만 선다. 가방 보기는 끼워 둔 룬에서만 뜻이 있다.
+  const showBag = options.openBag !== undefined && equippedRuneSlot(rune.instanceId) !== undefined;
+  const showTrait = options.traitResearch === true;
+  const layout = runeNoteLayout(stats.length, traitBody ? Math.max(1, traitBody.getBounds().height) : 0, showBag || showTrait);
   popups.open({ width: panel.width, height: layout.height, title: t("rune.title"), titleSize: POPUP_TITLE_SIZE.workboard, y: panel.centerY, dim: true, backButton: true, onClose: options.onClose }, (body, close) => {
     const top = -layout.height / 2;
     // 판매 버튼은 자물쇠 칩이 다시 칠할 대상이라 먼저 만들고, 자리는 아래 버튼 줄에서 정한다.
@@ -379,7 +394,50 @@ export function openRuneInfoPopup(scene: Phaser.Scene, popups: PopupLayer, optio
     if (equipped) sell.destroy();
     else { body.add(sell.setPosition(main.sellX, buttonY)); sell.setEnabled(!rune.locked); }
     marks.paint(rune);
+
+    if (layout.shortcutY !== null) {
+      const shortcut = panel.shortcut;
+      const shortcuts: { label: string; icon?: "lock"; locked?: boolean; onClick: () => void }[] = [];
+      if (showBag && options.openBag) {
+        const openBag = options.openBag;
+        shortcuts.push({ label: t("rune.openBag"), onClick: () => { close(); openBag(); } });
+      }
+      if (showTrait) {
+        // 잠금 판정은 하단 탭의 고고학 자물쇠와 같은 한 함수다 — 둘이 따로 재면 탭은 열렸는데 바로가기만 잠긴다.
+        const locked = !contentOpen("archaeology");
+        shortcuts.push({
+          label: t("rune.traitResearch"), icon: locked ? "lock" : undefined, locked,
+          onClick: () => {
+            if (locked) { showContentLockedToast(scene, "archaeology"); return; }
+            close();
+            goToTraitResearch(scene, rune.instanceId);
+          },
+        });
+      }
+      shortcuts.forEach((entry, index) => {
+        const x = (index - (shortcuts.length - 1) / 2) * shortcut.spacing;
+        const button = new Button(scene, x, top + layout.shortcutY!, {
+          width: shortcut.width, height: shortcut.height, label: entry.label, fontSize: shortcut.fontSize, icon: entry.icon,
+          onClick: entry.onClick,
+        });
+        // 잠긴 바로가기도 눌리긴 한다(누르면 개방 조건을 말한다) — 꺼진 것처럼만 가라앉힌다.
+        if (entry.locked) button.setAlpha(LOCK_DIM.entranceAlpha + 0.22);
+        body.add(button);
+      });
+    }
   });
+}
+
+/**
+ * 특성 연구대로 건너간다.
+ *
+ * 고고학은 하단 탭의 한 자리라 **탭을 누를 때와 같은 옆걸음**(`startNavScene`)으로 들어가고, 지금
+ * 화면이 다섯 자리 중 하나면 그 차례에서 방향을 고른다. 들어간 화면은 연구 탭을 열고 이 룬을
+ * 연구대에 꽂은 채로 선다 — 연구대의 고르기 창을 다시 거치지 않는다.
+ */
+function goToTraitResearch(scene: Phaser.Scene, runeInstanceId: string): void {
+  const from = NAV_TABS.find((tab) => tab.scene === scene.scene.key);
+  startNavScene(scene, "archaeology", from ? navTabDirection(from.key, "archaeology") : 0, { tab: "research", benchRuneId: runeInstanceId });
 }
 
 /**

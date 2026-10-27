@@ -27,6 +27,8 @@ export const RUNE_EN = {
   "rune.craftAllDone": "Polish All complete",
   "rune.unequip": "Unequip",
   "rune.equip": "Equip",
+  "rune.openBag": "View Bag",
+  "rune.traitResearch": "Trait Research",
   "rune.engraved": "Engraving complete",
   "rune.craftProgress": "Polish {done} / {total}",
   "rune.completed": "The Rune is complete.",

@@ -27,6 +27,8 @@ export const RUNE_VI = {
   "rune.craftAllDone": "Mài tất cả hoàn tất",
   "rune.unequip": "Tháo",
   "rune.equip": "Trang bị",
+  "rune.openBag": "Xem túi đồ",
+  "rune.traitResearch": "Nghiên cứu đặc tính",
   "rune.engraved": "Đã Khắc xong",
   "rune.craftProgress": "Mài {done} / {total}",
   "rune.completed": "Rune đã hoàn thiện.",

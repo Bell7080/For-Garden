@@ -3,8 +3,9 @@ import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
+import { guildQaClockShift } from "../api/guildQa";
 import {
-  GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMemberView, type GuildMembersResponse,
+  GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMe, type GuildMemberView, type GuildMembersResponse,
   type GuildStateResponse, type GuildSummary,
 } from "../api/guildContracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -22,7 +23,7 @@ import { isOnline, lastActiveAge } from "../core/social";
 import { RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { settingsManager } from "../managers/SettingsManager";
-import { guildMemberProfileDisplay } from "../state/playerProfile";
+import { guildMemberProfileDisplay, playerProfileDisplay } from "../state/playerProfile";
 import { session } from "../state/session";
 import { AffinityBadge } from "../ui/AffinityBadge";
 import { ELEMENT_ICON } from "../ui/affinityIcons";
@@ -49,6 +50,7 @@ import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup
 import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
+import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
 import { openRewardPopup, type RewardPopupItem } from "../ui/RewardPopup";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
@@ -56,6 +58,7 @@ import { addSideShopButton } from "../ui/sideShop";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
 import { TopBar } from "../ui/TopBar";
+import { GUILD_COIN_TEXT } from "../ui/topBarSlots";
 import { COLOR, textStyle } from "../ui/theme";
 
 type GuildTab = "info" | "members";
@@ -81,8 +84,8 @@ const ASSIGNABLE_ROLES = ["vice", "officer", "member"] as const;
 const RED_DOT = 0xe5484d;
 const ONLINE_COLOR = COLOR.hpFill;
 const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`;
-/** 길드 코인의 결 — 상단 줄 칸과 같은 초록빛. */
-const COIN_TEXT = "#a8f0c0";
+/** 길드 코인의 결 — 코인 일러스트의 금빛. 상단 줄 칸과 같은 값을 읽는다. */
+const COIN_TEXT = GUILD_COIN_TEXT;
 
 const hmText = (ms: number): string => {
   const minutes = Math.max(1, Math.ceil(ms / 60_000));
@@ -163,7 +166,7 @@ export class GuildScene extends Phaser.Scene {
   /* ── 데이터·오류 ──────────────────────────────────────────────────────── */
 
   private get myRole(): GuildRole | undefined { return this.state?.me?.role; }
-  private get now(): number { return Date.now() + this.clockOffset; }
+  private get now(): number { return Date.now() + this.clockOffset + guildQaClockShift(); }
   private get inGuild(): boolean { return Boolean(this.state?.guild); }
 
   private toast(message: string, tone: "locked" | "unlocked" = "locked"): void { showContentToast(this, message, tone); }
@@ -428,9 +431,7 @@ export class GuildScene extends Phaser.Scene {
     const notice = guild.notice || t("guild.info.noticeEmpty");
     v.add(this.add.text(I.left + 36, I.notice.y + 36, notice, textStyle({ role: "body", size: 30, color: guild.notice ? COLOR.ink : COLOR.inkDim, wrap: I.width - 72 })).setOrigin(0, 0));
 
-    this.label(v, I.left, I.me.y, t("guild.info.me", { role: t(`guild.role.${me.role}`) }), { role: "display", size: 32, color: COLOR.ink });
-    this.label(v, I.left, I.me.y + I.me.gap, t("guild.info.contribution", { week: me.contributionWeek.toLocaleString(), total: me.contributionTotal.toLocaleString() }), { role: "emphasis", size: 28, color: COLOR.accentText });
-    this.label(v, I.left, I.me.y + I.me.gap * 2, t("guild.info.coin", { coin: me.coin.toLocaleString() }), { role: "emphasis", size: 28, color: COIN_TEXT });
+    this.paintMyCard(v, me);
 
     const buttons: { label: string; run: () => void }[] = [];
     if (guildCan(me.role, "notice") || guildCan(me.role, "joinMode")) buttons.push({ label: t("guild.info.settings"), run: () => this.openSettings() });
@@ -439,6 +440,33 @@ export class GuildScene extends Phaser.Scene {
       const x = I.left + I.actions.width / 2 + index * (I.actions.width + I.actions.gap);
       addRowButton(this, v, x, I.actions.y, I.actions.width, I.actions.height, button.label, "neutral", () => FULL_CLIP, () => true, button.run);
     });
+  }
+
+  /**
+   * 길드 전용 플레이어 카드 — 길드 안의 나를 한 장으로 말한다. 왼쪽에 얼굴·테두리(상단 줄·프로필 카드와 같은 `ProfileAvatar`),
+   * 그 옆에 이름·연구원 레벨과 직책 칩, 오른쪽 끝에 이번 주 기여도(큰 수) · 누적 · 보유 길드 코인이 선다.
+   * 이름·얼굴은 내 프로필에서, 직책·기여·코인은 길드원 행(`GuildMe`)에서 온다.
+   */
+  private paintMyCard(v: Phaser.GameObjects.Container, me: GuildMe): void {
+    const C = I.card, profile = playerProfileDisplay(session);
+    const cy = C.y + C.height / 2, left = I.left, right = I.left + I.width;
+    this.plate(v, left + I.width / 2, cy, I.width, C.height, COLOR.accent);
+    v.add(new ProfileAvatar(this, left + 28 + C.avatar / 2 + 8, cy, { size: C.avatar, frameId: profile.frameId, portraitAssetId: profile.avatar?.portraitAssetId, fallback: Array.from(profile.displayName.trim())[0] ?? "?" }));
+    const textX = left + 28 + C.avatar + 52, statX = right - 34;
+    const nameRoom = statX - 250 - textX;
+    v.add(squeezeTextToWidth(this.add.text(textX, cy - 40, profile.displayName, textStyle({ role: "display", size: 38 })).setOrigin(0, 0.5), nameRoom));
+    this.label(v, textX, cy + 6, t("friends.researchLevel", { level: profile.level }), { role: "emphasis", size: 26, color: COLOR.ink });
+    const leader = me.role === "leader", tone = leader ? 0xf2c14e : COLOR.accent;
+    const roleText = this.add.text(0, 0, t(`guild.role.${me.role}`), textStyle({ role: "emphasis", size: 26, color: hex(tone) })).setOrigin(0.5);
+    const chipW = Math.max(130, roleText.displayWidth + 44), chipH = 46;
+    this.plate(v, textX + chipW / 2, cy + 52, chipW, chipH, tone);
+    roleText.setPosition(textX + chipW / 2, cy + 52);
+    v.add(roleText);
+    this.label(v, statX, cy - 54, t("guild.members.week"), { role: "body", size: 24, color: COLOR.inkDim }, [1, 0.5]);
+    this.label(v, statX, cy - 12, me.contributionWeek.toLocaleString(), { role: "display", size: 50, color: COLOR.accentText }, [1, 0.5]);
+    this.label(v, statX, cy + 28, t("guild.members.total", { value: me.contributionTotal.toLocaleString() }), { role: "body", size: 24, color: COLOR.ink }, [1, 0.5]);
+    const coin = this.label(v, statX, cy + 66, me.coin.toLocaleString(), { role: "emphasis", size: 30, color: COIN_TEXT }, [1, 0.5]);
+    v.add(this.add.image(statX - coin.displayWidth - 24, cy + 66, GUILD_COIN_ICON).setDisplaySize(40, 40));
   }
 
   private openSettings(): void {

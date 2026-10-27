@@ -133,6 +133,19 @@ describe("룬 쪽지 배치표", () => {
     expect(runeNoteLayout(5, 116).height - runeNoteLayout(5, 58).height).toBe(58);
   });
 
+  it("바로가기 줄(가방 보기·특성 연구)은 버튼 줄 아래에 겹치지 않고 서고, 없으면 판이 늘지 않는다", () => {
+    expect(runeNoteLayout(5).shortcutY).toBeNull();
+    const layout = runeNoteLayout(5, 116, true);
+    const { shortcut, buttonHeight, width } = RUNE_NOTE_PANEL;
+    expect(layout.shortcutY! - shortcut.height / 2).toBeGreaterThan(layout.buttonY + buttonHeight / 2);
+    expect(layout.height).toBeGreaterThan(runeNoteLayout(5, 116).height);
+    // 둘이 나란히 서도 판 안에 들고 서로 닿지 않는다.
+    expect(shortcut.spacing).toBeGreaterThan(shortcut.width);
+    expect(shortcut.spacing / 2 + shortcut.width / 2).toBeLessThan(width / 2);
+    expect(RUNE_NOTE_PANEL.centerY - layout.height / 2).toBeGreaterThanOrEqual(24);
+    expect(RUNE_NOTE_PANEL.centerY + layout.height / 2).toBeLessThan(BACK_SLOT.y - BACK_BUTTON_SIZE / 2);
+  });
+
   it("특성이 붙은 전설 룬도 화면과 뒤로가기 자리를 넘지 않는다", () => {
     const layout = runeNoteLayout(5, 116);
     expect(RUNE_NOTE_PANEL.centerY - layout.height / 2).toBeGreaterThanOrEqual(24);

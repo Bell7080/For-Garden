@@ -269,6 +269,26 @@
 "Anlegen",
 "Надеть"
 ],
+"rune.openBag": [
+"查看背包",
+"ดูกระเป๋า",
+"Xem túi đồ",
+"Lihat Tas",
+"Ver bolsa",
+"Ver bolsa",
+"Tasche ansehen",
+"Открыть сумку"
+],
+"rune.traitResearch": [
+"特性研究",
+"วิจัยคุณลักษณะ",
+"Nghiên cứu đặc tính",
+"Riset Sifat",
+"Investigación de rasgos",
+"Pesquisa de traços",
+"Merkmalsforschung",
+"Исследование черт"
+],
 "rune.engraved": [
 "刻印完成",
 "สลักเสร็จแล้ว",

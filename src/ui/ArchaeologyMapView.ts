@@ -1,3 +1,4 @@
+import { clipHit } from "./clippedHit";
 import Phaser from "phaser";
 import { BUTTON_DRAG_CANCEL_DISTANCE } from "./Button";
 import { archaeologyNodeState, isArchaeologyMapDrag, type ArchaeologyNodeState } from "../core/archaeologyMap";
@@ -144,7 +145,9 @@ export class ArchaeologyMapView extends Phaser.GameObjects.Container {
         this.cooling.push({ until: cooldownUntilMs, totalMs: siteCooldownMs(site), text: stateText, wedge, shape });
       }
 
-      const hit = scene.add.rectangle(site.x, site.y, ARCHAEOLOGY_MAP_LAYOUT.hitSize, ARCHAEOLOGY_MAP_LAYOUT.hitSize, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const hit = scene.add.rectangle(site.x, site.y, ARCHAEOLOGY_MAP_LAYOUT.hitSize, ARCHAEOLOGY_MAP_LAYOUT.hitSize, 0xffffff, 0.001);
+      // 지도 창(마스크와 같은 사각형) 안에서만 손을 받는다 — 창 밖으로 흘러간 노드가 위아래 UI를 덮지 않게.
+      clipHit(hit, () => ({ left: 0, right: scene.scale.width, top: options.top, bottom: options.bottom }));
       hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => { this.pressed = site; this.begin(pointer); }); this.world.add(hit);
     });
     const surface = scene.add.zone(scene.scale.width / 2, viewportHeight / 2, scene.scale.width, viewportHeight).setInteractive(); surface.on("pointerdown", (p: Phaser.Input.Pointer) => this.begin(p)); this.addAt(surface, 0);

@@ -26,6 +26,7 @@ import { GameApiError } from "../api/contracts";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
+import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -814,6 +815,8 @@ export class PartyScene extends Phaser.Scene {
         selectedStyle: "pressed",
         deferPortrait: true,
       });
+      // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 편성판·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: this.rosterViewport.top, bottom: this.rosterViewport.bottom }));
       this.bindCardInput(card.hit, relic);
       this.cards.set(relic.id, { card, role });
       content.add(card);

@@ -185,6 +185,14 @@ export const RUNE_NOTE_PANEL = {
   buttonGap: 84,
   buttonHeight: 74,
   bottomMargin: 46,
+  /**
+   * 버튼 줄 아래의 **바로가기 줄**(가방 보기 · 특성 연구).
+   *
+   * 다른 화면으로 건너가는 길이라 세공·장착과 같은 무게로 한 줄에 세우지 않는다 — 넷이 한 줄이면
+   * 폭이 모자라 서로 겹치고, 무엇이 이 쪽지의 주 조작인지도 흐려진다. 한 뼘 낮고 옅은 판으로
+   * 아래에 따로 선다. 둘 다 서지 않는 쪽지에는 이 줄 자체가 없다.
+   */
+  shortcut: { gap: 22, height: 60, width: 250, spacing: 270, fontSize: 22 },
 } as const;
 
 /** 룬 쪽지 한 장의 자리. `y`는 모두 판 윗변 기준이다. */
@@ -193,6 +201,8 @@ export interface RuneNoteLayout {
   statRows: readonly number[];
   progressY: number;
   buttonY: number;
+  /** 바로가기 줄의 가운데. 바로가기가 없으면 null이다. */
+  shortcutY: number | null;
   /** 특성 칸의 자리. 특성이 없으면 null이라 화면이 그릴 것이 없다. */
   trait: { dividerY: number; labelY: number; nameY: number; bodyY: number } | null;
 }
@@ -204,7 +214,7 @@ export interface RuneNoteLayout {
  * 아는 화면이 하고, 여기서는 그 높이를 받아 쌓기만 한다 — 줄 수를 여기서 어림하면 언어를
  * 바꿀 때마다 설명이 버튼을 파고든다. 0이면 특성 칸이 통째로 서지 않는다.
  */
-export function runeNoteLayout(statCount: number, traitBodyHeight = 0): RuneNoteLayout {
+export function runeNoteLayout(statCount: number, traitBodyHeight = 0, shortcuts = false): RuneNoteLayout {
   const panel = RUNE_NOTE_PANEL;
   const statRows = Array.from({ length: Math.max(0, statCount) }, (_, index) => panel.firstStatY + index * panel.statStep);
   const statsBottom = (statRows.at(-1) ?? panel.firstStatY) + panel.statStep / 2;
@@ -220,11 +230,14 @@ export function runeNoteLayout(statCount: number, traitBodyHeight = 0): RuneNote
   const contentBottom = trait ? trait.bodyY + traitBodyHeight + panel.trait.bottomGap : statsBottom;
   const progressY = contentBottom + panel.progressGap;
   const buttonY = progressY + panel.buttonGap;
+  const shortcutY = shortcuts ? buttonY + panel.buttonHeight / 2 + panel.shortcut.gap + panel.shortcut.height / 2 : null;
+  const lastBottom = shortcutY === null ? buttonY + panel.buttonHeight / 2 : shortcutY + panel.shortcut.height / 2;
   return {
-    height: buttonY + panel.buttonHeight / 2 + panel.bottomMargin,
+    height: lastBottom + panel.bottomMargin,
     statRows,
     progressY,
     buttonY,
+    shortcutY,
     trait,
   };
 }

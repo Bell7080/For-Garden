@@ -15,6 +15,9 @@ import type { WalletItemKey } from "../data/items";
  * 하루가 지나면 사라지는 횟수라 지갑에 두면 저장에 남는다 — **길드 코인**은 길드원 행이 든 값이라
  * 화면이 받은 값을 `TopBarOptions.guildCoin`으로 넘긴다.
  */
+/** 길드 코인의 글자색 — 코인 일러스트의 금빛(골드 `#ffdf9a`보다 짙은 호박금). 상단 줄·길드 화면이 같은 값을 읽는다. */
+export const GUILD_COIN_TEXT = "#f0c45e";
+
 export type TopBarSlotKey = WalletItemKey | "duelTicket" | "guildCoin";
 
 export interface CurrencySlot {
@@ -101,7 +104,7 @@ const SLOTS: Record<TopBarCurrencyContext, readonly CurrencySlot[]> = {
   ],
   /** 길드. **길드 코인 한 칸** — 길드 상점의 값이고 길드원 행이 들고 있어 지갑 칸이 아니다. */
   guild: [
-    { key: "guildCoin", icon: "currency-guild-coin", compact: true, color: "#a8f0c0" },
+    { key: "guildCoin", icon: "currency-guild-coin", compact: true, color: GUILD_COIN_TEXT },
   ],
   /**
    * 스테미나 한 칸. 레이드·편성처럼 스테미나를 쓰는데 상단에 다른 재화를 세울 자리가 없는 화면의 것이다 —

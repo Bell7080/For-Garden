@@ -81,8 +81,9 @@ export const GUILD_INFO = {
   barText: { y: 740 },
   perks: { y: 820, gap: 50 },
   notice: { y: 940, height: 250 },
-  me: { y: 1260, gap: 46 },
-  actions: { y: 1440, width: 280, height: 84, gap: 20 },
+  /** 길드 전용 플레이어 카드 — 윗변 y와 높이. 안쪽 자리는 카드 가운데 기준이다. */
+  card: { y: 1212, height: 176, avatar: 104 },
+  actions: { y: 1452, width: 280, height: 84, gap: 20 },
 } as const;
 
 /**

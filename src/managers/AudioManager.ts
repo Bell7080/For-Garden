@@ -15,14 +15,15 @@ export type SfxCue =
   | "battle.ultimate" | "battle.victory" | "battle.defeat" | "battle.hit" | "battle.hitMagic" | "battle.crit" | "battle.heal"
   | "battle.shield" | "battle.death" | "battle.cutin" | "battle.fever" | "battle.start" | "raid.summon"
   | "research.reveal.common" | "research.reveal.sr" | "research.reveal.ssr" | "research.omen" | "research.showcase"
-  | "dig.hit" | "dig.treasure"
+  | "dig.hit" | "dig.treasure" | "sweep.scuffle" | "sweep.blastoff" | "sweep.hop"
   | "story.explosion" | "story.alarm" | "story.rumble" | "story.impact";
 
 /** 버튼·팝업·탭처럼 화면 조작에 붙는 소리다. 씬이 고르지 않고 공용 UI 경계가 `playUi`로 부른다. */
 export type UiCue =
   | "ui.click" | "ui.tap" | "ui.back" | "ui.toggle" | "ui.panel.open" | "ui.panel.close" | "ui.tab" | "ui.confirm" | "ui.deny"
-  | "ui.reward" | "ui.levelup" | "ui.unlock" | "ui.purchase" | "ui.feed" | "ui.breakthrough"
-  | "rune.success" | "rune.fail" | "rune.engrave" | "title.start";
+  | "ui.reward" | "ui.levelup" | "ui.unlock" | "ui.purchase" | "ui.feed" | "ui.breakthrough" | "relic.poke"
+  | "rune.success" | "rune.fail" | "rune.engrave" | "rune.synth" | "title.start"
+  | "roulette.tick" | "roulette.win" | "attendance.stamp" | "success.fanfare" | "success.count" | "mission.claim";
 
 /**
  * 효과음 에셋 목록이다. ElevenLabs(Starter, 상업 이용 가능)로 생성해 다듬은 출시용 음원이며 출처·프롬프트는
@@ -30,13 +31,15 @@ export type UiCue =
  */
 export const UI_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ...["ui-click", "ui-tap", "ui-back", "ui-toggle", "ui-panel-open", "ui-panel-close", "ui-tab", "ui-confirm", "ui-deny", "ui-reward", "ui-levelup",
-    "ui-unlock", "ui-purchase", "ui-feed", "ui-breakthrough", "rune-success", "rune-fail", "rune-engrave", "title-start"].map((key) => [key, `audio/ui/${key}.mp3`] as const),
+    "ui-unlock", "ui-purchase", "ui-feed", "ui-breakthrough", "rune-success", "rune-fail", "rune-engrave", "rune-synth", "title-start", "relic-poke"].map((key) => [key, `audio/ui/${key}.mp3`] as const),
+  // 보상의 순간 — 룰렛·출석 도장·대성공·임무 수령.
+  ...["roulette-tick", "roulette-win", "attendance-stamp", "success-fanfare", "success-count", "mission-claim"].map((key) => [key, `audio/reward/${key}.mp3`] as const),
 ];
 
 /** 전투 효과음의 에셋 목록이다. */
 export const BATTLE_SOUND_ASSETS: ReadonlyArray<readonly [key: string, path: string]> = [
   ...["battle-ultimate", "battle-victory", "battle-defeat", "battle-hit", "battle-hit-magic", "battle-crit", "battle-heal", "battle-shield",
-    "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
+    "battle-death", "battle-cutin", "battle-fever", "battle-start", "raid-summon", "sweep-scuffle", "sweep-blastoff", "sweep-hop"].map((key) => [key, `audio/battle/${key}.mp3`] as const),
 ];
 
 /** 연구소 효과음의 에셋 목록이다(화석 균열·카드 공개·SSR 전조·새 렐릭 소개). */
@@ -102,10 +105,20 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "ui.purchase": { key: "ui-purchase", bus: "ui", gain: 0.75 },
   // 급여는 다다닥 두드리는 조작이라 간격을 짧게 두되 겹쳐 쌓이지 않게 한다.
   "ui.feed": { key: "ui-feed", bus: "ui", gain: 0.5, minGapMs: 70 },
+  // 렐릭(로비 전신·정보창 원화)을 콕 누른 손맛 — 말랑한 보용.
+  "relic.poke": { key: "relic-poke", bus: "ui", gain: 0.6, minGapMs: 110 },
   "ui.breakthrough": { key: "ui-breakthrough", bus: "ui", gain: 0.85 },
   "rune.success": { key: "rune-success", bus: "ui", gain: 0.75 },
   "rune.fail": { key: "rune-fail", bus: "ui", gain: 0.7 },
   "rune.engrave": { key: "rune-engrave", bus: "ui", gain: 0.85 },
+  "rune.synth": { key: "rune-synth", bus: "ui", gain: 0.7 },
+  // 룰렛 틱은 칸을 지날 때마다 울리므로 빨리 돌 때 겹쳐 뭉개지지 않게 간격을 둔다.
+  "roulette.tick": { key: "roulette-tick", bus: "ui", gain: 0.45, minGapMs: 45 },
+  "roulette.win": { key: "roulette-win", bus: "ui", gain: 0.8 },
+  "attendance.stamp": { key: "attendance-stamp", bus: "ui", gain: 0.85 },
+  "success.fanfare": { key: "success-fanfare", bus: "ui", gain: 0.85 },
+  "success.count": { key: "success-count", bus: "ui", gain: 0.5, minGapMs: 60 },
+  "mission.claim": { key: "mission-claim", bus: "ui", gain: 0.8 },
   "title.start": { key: "title-start", bus: "ui", gain: 0.8 },
   "battle.ultimate": { key: "battle-ultimate", bus: "sfx", gain: 0.7, minGapMs: 120 },
   "battle.cutin": { key: "battle-cutin", bus: "sfx", gain: 0.7, minGapMs: 200 },
@@ -128,6 +141,9 @@ const CUES: Record<AudioCue, { key: string; bus: AudioBus; gain?: number; minGap
   "research.showcase": { key: "research-showcase", bus: "sfx", gain: 0.8 },
   "dig.hit": { key: "dig-hit", bus: "sfx", gain: 0.7, minGapMs: 80 },
   "dig.treasure": { key: "dig-treasure", bus: "sfx", gain: 0.8, minGapMs: 120 },
+  "sweep.scuffle": { key: "sweep-scuffle", bus: "sfx", gain: 0.6 },
+  "sweep.blastoff": { key: "sweep-blastoff", bus: "sfx", gain: 0.7 },
+  "sweep.hop": { key: "sweep-hop", bus: "sfx", gain: 0.85, minGapMs: 120 },
   "story.explosion": { key: "story-explosion", bus: "sfx", gain: 0.8 },
   "story.alarm": { key: "story-alarm", bus: "sfx", gain: 0.6 },
   "story.rumble": { key: "story-rumble", bus: "sfx", gain: 0.75 },

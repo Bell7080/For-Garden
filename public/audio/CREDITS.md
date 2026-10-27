@@ -22,7 +22,8 @@
 
 | 파일 | 길이 | 쓰는 화면 |
 | --- | --- | --- |
-| `bgm/bgm-title.mp3` | 약 2분 57초 | 타이틀·오프닝·로비 |
+| `bgm/bgm-title.mp3` | 약 2분 57초 | 부트·타이틀·오프닝 — 열차 안 토리카, 레일 리듬의 잔잔한 피아노·기타 (생성 ID `YCz6BZ30bNeLkuDTtYUI`, v0.363.0에서 교체) |
+| `bgm/bgm-lobby.mp3` | 약 2분 57초 | 로비(연구소) — 잔잔한 일렉 피아노·나일론 기타 (생성 ID `dESXuOzV94iTqLRqAbF9`, v0.363.0) |
 | `bgm/bgm-battle.mp3` | 약 2분 57초 | 일반 전투·아레나 대전 |
 | `bgm/bgm-boss.mp3` | 약 2분 57초 | 레이드·원정 보스 전투 |
 | `bgm/bgm-shop.mp3` | 약 2분 29초 | 상점·프리미엄 상점 |
@@ -35,8 +36,8 @@
 | --- | --- | --- |
 | `ui/ui-click.mp3` | `4AAsZ1zyEBwYKL27Lkki` | Soft crisp mobile game UI button tap, short glassy click with a tiny bright digital tick, clean, no reverb |
 | `ui/ui-tap.mp3` | `ysHLnZqQM4ib9nwnaZMo` | Very faint soft airy tick, tiny muted digital blip for tapping empty screen, subtle and gentle, close-mic, no reverb |
-| `ui/ui-back.mp3` | `pVjY3TlTX2idW3Gz03PK` | Soft mobile game back button sound, short descending two-tone glassy blip with a light reverse swish, clean UI cancel |
-| `ui/ui-tab.mp3` | `EZx634YLucdUIGmQ4Eyv` | Light quick holographic swipe for switching tabs, short airy whoosh with a soft digital tick at the end, clean game UI |
+| `ui/ui-back.mp3` | `j1YsFOVGoSkFzXrCma0o` | Gentle muted mobile game back button, soft low dull thud like a felt-covered wooden tap, short and calm, rounded warm tone, no high pitch, no sparkle, no reverb |
+| `ui/ui-tab.mp3` | `9BJNBrPOIN1tLt2YImGp` | Smooth soft sliding swish for switching tabs in a mobile game, airy paper-like whoosh gliding sideways, gentle and silky, quick fade out, no click, no reverb |
 | `ui/ui-toggle.mp3` | `8j4f7rjhwj1q71MoJO2c` | Small switch toggle click, crisp tiny plastic snap with a soft digital tick, game settings |
 | `ui/ui-panel-open.mp3` | `MSFAnmo1jl4B1yrEAWat` | Holographic panel popping open, soft rising glassy shimmer with a gentle bright pop, futuristic mobile game UI window open |
 | `ui/ui-panel-close.mp3` | `2pSoYWzPwKzMEFNg8ryC` | Holographic panel closing, soft short descending glassy swish ending in a muted tick, futuristic mobile game UI window close |
@@ -76,4 +77,24 @@
 | `story/story-rumble.mp3` | `Suwlny2WhXOA2xrWL1VM` | Low ground tremor rumbling, building shaking with rattling objects, short earthquake |
 | `story/story-impact.mp3` | `0rA9lVxzjEWkSwAvvlPF` | Comical body collision bump, soft heavy thud with a cartoon boing, two characters bumping into each other |
 | `battle/raid-summon.mp3` | `WqZGgtPxq0Dnt5PW4QcK` | Dark magical seal charging with swirling ominous energy, building tension, then a violent burst explosion and a deep monster roar |
+| `reward/roulette-tick.mp3` | `TzviVdqq8PYZjwAGQNzL` | Single crisp prize wheel peg tick, a short plastic flapper clicking against one peg, dry and bright, very short, no reverb |
+| `reward/roulette-win.mp3` | `qrmlsdPiBaTAPzxHTwom` | Prize wheel stops on a winner, cheerful bright bell ding with a sparkly coin shimmer and short happy chime rise, cute mobile game reward |
+| `reward/attendance-stamp.mp3` | `MHGn5yXgQbDG4xDxp7kI` | Heavy rubber stamp slammed down hard on a wooden desk, satisfying deep thump with a paper slap, punchy and solid, single hit |
+| `reward/success-fanfare.mp3` | `IvrmtHv6Mhj97c7R7Eop` | Jackpot great success fanfare for a cute fantasy mobile game, short triumphant brass and bell flourish with sparkling coin shower and a cheerful final hit |
+| `reward/success-count.mp3` | `DDOCAtt2rMK6LJZ7VZij` | Quick bright coin count tick, a single small gold coin clink with a tiny sparkle, very short, mobile game reward counter |
+| `reward/mission-claim.mp3` | `813cefeIS8rh3Gq5Q5eN` | Mission reward claimed, satisfying bright collect chime, quick ascending three-note glassy ding with soft coin jingle, clean mobile game UI |
+| `battle/sweep-scuffle.mp3` | `C3iY9VGGVhUJ3LMZ19LP` | Cartoon dust cloud brawl, comical rapid soft punches and bonks with whooshes inside a fight cloud, playful and light, no voices |
+| `battle/sweep-blastoff.mp3` | `9As5oICh13RfwJ5JmcyO` | Cartoon character knocked flying into the sky, rising whistle whoosh that fades away ending in a tiny twinkling star ding, comical |
+| `ui/rune-synth.mp3` | `baolaubXqCDrPe3TOoub` | Three magic gems being sucked into a glowing center, swirling crystalline whoosh building up quickly then a soft magical pop, fantasy crafting |
+| `ui/relic-poke.mp3` | `VWQu8S584PHXUxrO5cpB` | Poking a soft squishy cute character's cheek, gentle bouncy jelly boing with a soft plush squish, round and warm, playful and short, mobile game, no voice, no reverb |
+| `battle/sweep-hop.mp3` | `nC5wxS4KBVF5TsFHPusz` | Tiny cute character happy hop, short soft springy boing pop, light and bouncy, single hop, cartoon mobile game, no voice, no reverb |
 | `ui/title-start.mp3` | `CuOlqyRhmMb27qQi0oR0` | Game start button, bright magical whoosh into a rich shimmering chime swell, inviting and grand |
+
+### 손질 기록 (v0.363.0)
+
+- `battle-victory`·`battle-defeat`: 원본 테이크(위 생성 ID)를 1.35배속(음정 유지)으로 당기고 2.6초에서 0.7초 페이드로 끊었다. 결과판이 뜨는 순간에만 울린다.
+- `ui-tap`: 원본 앞머리 0.24초의 잡음을 잘라 누른 순간 곧바로 울리게 했다. `ui-feed`: 두 번째 타격을 잘라 0.16초로 줄였다(꾹 누르면 85ms마다 먹인다). `ui-levelup`: 1.2배속·3.1초로 줄였다.
+- `sweep-scuffle`: 먼지구름(1.1초)에 맞춰 0.87배속으로 늘였다.
+- BGM 프롬프트(v0.363.0) — 타이틀: "Gentle, wistful instrumental theme of a girl riding a quiet train through a dreamy fantasy countryside, gazing out the window. Soft steady train-wheel rhythm on the rails as subtle brushed percussion, warm felt piano melody, mellow acoustic guitar, soft string pads, faint music box sparkle, slow relaxed tempo around 80 BPM ..." / 로비: "Soft, relaxing lo-fi style home theme for a cozy fantasy mobile game lobby. Slow tempo around 75 BPM, mellow electric piano and gentle nylon guitar ...". 옛 타이틀은 음량 폭(LRA)이 16.9 LU라 조용하다 크게 치솟았고, 새 두 곡은 2~3 LU다.
+- `rune-fail`·`roulette-tick`·`ui-toggle`·`ui-unlock`·`dig-hit`·`research-crack`: 앞머리 무음 7~21ms를 걷어 냈다.
+

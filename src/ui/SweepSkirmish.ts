@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { motionPolicy } from "../core/settings";
@@ -213,6 +214,8 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
     scene.time.delayedCall(still ? 0 : L.lunge.ms * 0.8, () => {
       if (finished) return;
       spark(hitX, hitY, attacker === "hero" ? COLOR.accent : COLOR.danger, finisher ? 1.8 : 1);
+      // 닿는 순간에 친다 — 내딛는 시점에 울리면 맞기도 전에 소리가 먼저 난다.
+      if (!finisher) audioManager?.playSfx("battle.hit");
       dust(spots[target], groundY, finisher ? 1 : 0.6, direction * 40);
       if (attacker === "hero") lootFrom(hitX, hitY, finisher ? L.loot.finisher : L.loot.perHit);
       if (finisher) { blastOff(); return; }
@@ -224,6 +227,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
 
   /** 먼지구름 속 투닥투닥 — 두 몸이 가운데로 모여 부들부들 엉기고, 구름 둘레로 불꽃이 톡톡 튄다. */
   const scuffle = (): void => {
+    audioManager?.playSfx("sweep.scuffle");
     if (finished) return;
     const centerX = cx;
     const cloudY = groundY - L.sdHeight * 0.4;
@@ -281,6 +285,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
     const toY = cy + L.blastOff.toY;
     scene.tweens.add({ targets: shadows.enemy, alpha: 0, duration: 200 });
     if (!still) scene.cameras.main.shake(160, 0.005);
+    audioManager?.playSfx("sweep.blastoff");
     if (enemy?.active) {
       playMotion(scene, enemy, "hit");
       if (still) scene.tweens.add({ targets: enemy, alpha: 0, duration: 260 });
@@ -328,6 +333,7 @@ export function playSweepSkirmish(scene: Phaser.Scene, options: SweepSkirmishOpt
       scene.time.delayedCall(hop * hopMs, () => {
         if (finished || !hero.active) return;
         playMotion(scene, hero, "attack", 2);
+        audioManager?.playSfx("sweep.hop");
         scene.tweens.add({ targets: hero, y: groundY - hopHeight, duration: hopMs / 2, yoyo: true, ease: "Quad.Out" });
         // 뜬 만큼 발밑 그림자가 작아진다 — 몸이 정말 떠올랐다는 것을 바닥이 말한다.
         scene.tweens.add({ targets: shadows.hero, scale: 0.7, duration: hopMs / 2, yoyo: true, ease: "Quad.Out" });

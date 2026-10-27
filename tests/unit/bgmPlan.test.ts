@@ -35,8 +35,10 @@ describe("배경음 표", () => {
     expect(bgmTrackForScene("BattleScene")).toBeUndefined();
   });
 
-  it("타이틀·로비는 기본 곡, 연구소·고고학은 연구탑 곡, 상점은 상점 곡, 전투는 전투 곡이다", () => {
-    for (const key of ["boot", "title", "opening", "lobby"]) expect(bgmTrackForScene(key), key).toBe(BGM_TRACKS.title);
+  it("타이틀은 기본 곡, 로비는 로비 곡, 연구소·고고학은 연구탑 곡, 상점은 상점 곡, 전투는 전투 곡이다", () => {
+    for (const key of ["boot", "title", "opening"]) expect(bgmTrackForScene(key), key).toBe(BGM_TRACKS.title);
+    expect(bgmTrackForScene("lobby")).toBe(BGM_TRACKS.lobby);
+    expect(BGM_TRACKS.lobby.key).not.toBe(BGM_TRACKS.title.key);
     expect(bgmTrackForScene("lab")).toBe(BGM_TRACKS.researchSpire);
     expect(bgmTrackForScene("archaeology")).toBe(BGM_TRACKS.researchSpire);
     expect(bgmTrackForScene("shop")).toBe(BGM_TRACKS.shop);

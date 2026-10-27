@@ -43,7 +43,7 @@ export interface RewardPopupOptions {
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
   /** 영수증이 열릴 때 울릴 소리. 구매처럼 결제가 확정된 결과는 보상음 대신 결제음을 낸다. */
-  sound?: "ui.reward" | "ui.purchase";
+  sound?: "ui.reward" | "ui.purchase" | "mission.claim";
   /**
    * 판 **밖 아래**에 서는 한 줄.
    *

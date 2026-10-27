@@ -83,7 +83,7 @@ export function countAmount(scene: Phaser.Scene, text: Phaser.GameObjects.Text |
  * 각도·거리를 정한다) — 같은 대성공은 늘 같은 그림이다.
  */
 export function playFanfare(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, x: number, y: number): void {
-  audioManager?.playUi("ui.levelup");
+  audioManager?.playUi("success.fanfare");
   const C = GREAT_SUCCESS_FX.confetti;
   for (let index = 0; index < C.pieces; index += 1) {
     const ratio = index / Math.max(1, C.pieces - 1);
@@ -137,6 +137,7 @@ export function playGreatSuccess(scene: Phaser.Scene, parent: Phaser.GameObjects
   for (let beat = 0; beat < pulses; beat += 1) {
     after(scene, GREAT_SUCCESS_FX.startDelayMs + 140 + beat * P.gapMs, () => {
       if (!parent.active) return;
+      audioManager?.playUi("success.count");
       for (const frame of frames) {
         if (!frame.holder.active) continue;
         pulseFrame(scene, frame.holder, frame.size);

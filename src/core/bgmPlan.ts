@@ -5,12 +5,12 @@
  * (설정 겹침 화면·효과 겹침 층)은 **지금 흐르는 곡을 그대로 둔다**. 같은 키의 파일을 바꿔 끼우면 코드는
  * 그대로다. 같은 곡이 이어지는 화면 전환은 되감지 않는다.
  *
- * 유리 도시·연구 탑은 사용자가 직접 넣은 곡이고, 나머지(타이틀·전투·보스·상점)는 ElevenLabs(Starter, 상업 이용
+ * 유리 도시·연구 탑은 사용자가 직접 넣은 곡이고, 나머지(타이틀·로비·전투·보스·상점)는 ElevenLabs(Starter, 상업 이용
  * 가능)로 만든 출시용 곡이다 — 출처는 `public/audio/CREDITS.md`. 새 곡은 −14 LUFS로 구웠고 사용자 곡은 그보다
  * 2.5dB쯤 커서 `gain`으로 맞춘다(파일은 건드리지 않는다).
  */
 
-export type BgmTrackId = "title" | "glassCity" | "researchSpire" | "battle" | "boss" | "shop";
+export type BgmTrackId = "title" | "lobby" | "glassCity" | "researchSpire" | "battle" | "boss" | "shop";
 
 export interface BgmTrack {
   /** Phaser 오디오 캐시 키. */
@@ -22,8 +22,10 @@ export interface BgmTrack {
 }
 
 export const BGM_TRACKS: Readonly<Record<BgmTrackId, BgmTrack>> = {
-  // 부팅(로딩)·타이틀·오프닝·로비의 곡. 로딩부터 로비까지 한 곡으로 이어진다.
+  // 부팅(로딩)·타이틀·오프닝의 곡. 로딩부터 첫 이야기까지 한 곡으로 이어진다.
   title: { key: "bgm-title", path: "audio/bgm/bgm-title.mp3", gain: 1 },
+  // 로비 전용 — 캐릭터를 오래 바라보는 화면이라 잔잔하고 따뜻한 곡을 따로 둔다(타이틀 곡과 가른다).
+  lobby: { key: "bgm-lobby", path: "audio/bgm/bgm-lobby.mp3", gain: 0.9 },
   // 이야기·지도·편성·도감·친구·길드·콘텐츠 입구처럼 로비에서 갈라져 나가 머무는 화면의 곡(기존 시안).
   glassCity: { key: "bgm-glass-city", path: "audio/bgm/bgm-glass-city.mp3", gain: 0.75 },
   // 연구소·고고학·상점처럼 조용히 만지작거리는 화면의 곡.
@@ -46,7 +48,7 @@ const SCENE_TRACK: Readonly<Record<string, BgmTrackId>> = {
   boot: "title",
   title: "title",
   opening: "title",
-  lobby: "title",
+  lobby: "lobby",
   stageStory: "glassCity",
   stageMap: "glassCity",
   sortiePreview: "glassCity",
@@ -75,7 +77,7 @@ const SCENE_TRACK: Readonly<Record<string, BgmTrackId>> = {
 
 /** 표에 올라 있는 모든 곡(받아 두기 순서: 기본 곡이 맨 앞). */
 export function allBgmTracks(): BgmTrack[] {
-  return [BGM_TRACKS.title, BGM_TRACKS.glassCity, BGM_TRACKS.battle, BGM_TRACKS.researchSpire, BGM_TRACKS.shop, BGM_TRACKS.boss];
+  return [BGM_TRACKS.title, BGM_TRACKS.lobby, BGM_TRACKS.glassCity, BGM_TRACKS.battle, BGM_TRACKS.researchSpire, BGM_TRACKS.shop, BGM_TRACKS.boss];
 }
 
 /**

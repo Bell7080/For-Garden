@@ -387,6 +387,6 @@ export class MissionsPopup {
     this.render();
     await notificationManager.refresh();
     const items = result.granted.filter(({ amount }) => amount > 0).map(({ currency, amount }) => ({ icon: CURRENCY_ICON_BY_WALLET[currency], amount }));
-    if (items.length) openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), items });
+    if (items.length) openRewardPopup(this.scene, this.popups, { title: t("missions.rewardTitle"), sound: "mission.claim", items });
   }
 }

@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
@@ -609,7 +610,9 @@ export class InfoManager {
       .rectangle(PORTRAIT_FOCUS.x, PORTRAIT_FOCUS.y, 340, 620, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     body.on("pointerup", () => {
-      if (this.portrait) playMotion(scene, this.portrait, "hit");
+      if (!this.portrait) return;
+      playMotion(scene, this.portrait, "hit");
+      audioManager?.playUi("relic.poke");
     });
     this.root.add(body);
     this.enableSwipe();

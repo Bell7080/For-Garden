@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import { sortRewardItems } from "./rewardOrder";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -216,6 +217,11 @@ export class StageCompletePopup {
 
   open(options: StageCompletePopupOptions): void {
     const defeated = options.reward.kind === "defeat";
+    // 승패음은 판이 뜨는 순간에만 짧게 운다 — 쓰러지는 연출 동안 먼저 울리면 결과판과 박자가 갈린다.
+    // 정산(원정·레이드)은 이기고 진 판이 아니라 보상음으로 연다.
+    const settlement = options.reward.kind === "loot" && options.reward.settlement === true;
+    if (settlement) audioManager?.playUi("ui.reward");
+    else audioManager?.playSfx(defeated ? "battle.defeat" : "battle.victory");
     this.shiftY = options.standing ? STANDING_SHIFT : 0;
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();

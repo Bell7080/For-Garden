@@ -2858,7 +2858,6 @@ export class BattleScene extends Phaser.Scene {
   private finishBattle(phase: "victory" | "defeat"): void {
     if (this.finished) return;
     this.finished = true;
-    audioManager?.playSfx(phase === "victory" ? "battle.victory" : "battle.defeat");
     // 비동기 정산보다 먼저 아군 세 분류를 깊은 복사해 이후 state 사망 연출·HP 변경과 분리한다.
     const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,

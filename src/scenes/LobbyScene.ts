@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import { openRoulettePopup } from "../ui/RoulettePopup";
 import { nicknameCreationRequired } from "../core/playerCard";
 import { ARENA_TONE } from "../ui/arenaTheme";
@@ -1090,6 +1091,7 @@ export class LobbyScene extends Phaser.Scene {
   private interactWithFavorite(relicId: string): void {
     if (this.interactionPending) return;
     this.interactionPending = true;
+    audioManager?.playUi("relic.poke");
     void gameApi.interactInLobby(relicId).then((result) => {
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);

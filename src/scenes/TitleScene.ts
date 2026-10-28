@@ -23,7 +23,7 @@ import { drawCornerShroud, drawVignette } from "../ui/holo";
 import packageInfo from "../../package.json";
 import { reconcileLaunchEpoch } from "../api/launchEpoch";
 import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
-import { startScene } from "../ui/screenTransition";
+import { leaveTitle, startScene } from "../ui/screenTransition";
 import { withBusy } from "../ui/BusyOverlay";
 import { dialogueStandingOrder } from "../core/dialogue";
 import { speakerStanding } from "../data/dialogues/speakerStanding";
@@ -529,7 +529,7 @@ export class TitleScene extends Phaser.Scene {
             if (!current()) return;
             if (connected.ok) {
               if (connected.mode === "server") startLiveOps();
-              startScene(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
+              leaveTitle(this, openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared) ? "opening" : "lobby");
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");

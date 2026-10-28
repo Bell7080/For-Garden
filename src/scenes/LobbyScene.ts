@@ -11,7 +11,7 @@ import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { getRelic } from "../data/relics";
-import { enableHitOnClick, spawnPuppet } from "../puppets/assets";
+import { spawnPuppet } from "../puppets/assets";
 import { session } from "../state/session";
 import { latinEcho } from "../ui/latinEcho";
 import { BottomNav, NAV_TOP } from "../ui/BottomNav";
@@ -43,7 +43,9 @@ import { perspectiveButtonNotificationAnchor } from "../ui/notificationDotStyle"
 import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { AchievementsPopup } from "../ui/AchievementsPopup";
-import { lobbyPortraitPlacement } from "../ui/portraitPlacement";
+import { LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../ui/portraitPlacement";
+import { LOBBY_FAVORITE_ENTRANCE, LOBBY_FAVORITE_SQUISH, lobbyFavoriteAct, lobbyFavoriteGhosts } from "../ui/lobbyFavoriteMotion";
+import { playPuppetAct, type PuppetActHandle } from "../ui/puppetAct";
 import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { showBondGain, type BondGain } from "../ui/bondGainMark";
@@ -74,7 +76,7 @@ import { openPassPopup } from "../ui/PassPopup";
 import { LobbyPassCard } from "../ui/LobbyPassCard";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
 import type { CurrencyGuideAction } from "../data/currencyGuide";
-import { powerSavingPolicy } from "../core/settings";
+import { motionPolicy, powerSavingPolicy } from "../core/settings";
 import { LobbyAtmosphere } from "../ui/LobbyAtmosphere";
 import { TRANSITION } from "../core/screenTransition";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
@@ -184,6 +186,14 @@ export class LobbyScene extends Phaser.Scene {
   private atmosphere?: LobbyAtmosphere;
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
+  /** 애착 렐릭을 누른 횟수 — 몸짓 차례(`lobbyFavoriteAct`)를 고른다. */
+  private pokeIndex = 0;
+  /** 지금 도는 애착 렐릭의 몸짓. 다시 누르면 끊고 제자리에서 새로 뛴다. */
+  private favoriteAct?: PuppetActHandle;
+  /** 애착 렐릭이 들어서는 연출. 끝나기 전에 누르면 곧바로 완성된 자리로 세우고 몸짓을 튼다. */
+  private favoriteEntrance?: Phaser.Tweens.Tween;
+  /** 애착 렐릭의 제자리. 몸짓은 늘 여기서 시작해 여기로 끝난다(뛰는 중의 좌표를 읽으면 조금씩 흘러내린다). */
+  private favoriteRest?: { x: number; y: number; scale: number };
   private interactionPending = false;
   /** 로비의 말 한 장. 누를 때마다 갈아 끼우므로 씬이 하나만 들고 있는다. */
   private dialogue?: DialogueBubble;
@@ -1081,23 +1091,88 @@ export class LobbyScene extends Phaser.Scene {
       ...lobbyPortraitPlacement(asset),
       // 전용 원화가 연결된 두 캐릭터는 원본 색을 유지한다.
       depth: LOBBY_PORTRAIT_DEPTH,
+      // 들어서는 연출(`fadeInFavorite`)이 첫 프레임부터 맡도록 숨긴 채로 세운다.
+      startPaused: true,
     });
     // 로비 대표 Puppet만 장식 예산을 opt-in하며 입력과 서버/게임 시계에는 영향을 주지 않는다.
     nextFavorite.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     // 현재 가드는 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막고 최신 요청만 남긴다.
     if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.
+    this.favoriteAct?.stop();
+    this.favoriteAct = undefined;
+    this.favoriteEntrance?.stop();
+    this.favoriteEntrance = undefined;
     this.favorite?.destroy();
     this.favorite = nextFavorite;
     this.atmosphere?.setRelic(def.element, def.role);
-    enableHitOnClick(this, nextFavorite);
-    nextFavorite.on("pointerup", () => this.interactWithFavorite(def.id));
+    this.fadeInFavorite(nextFavorite);
+    // 누르면 대사 화면의 몸짓(뽀용·띠용…)으로 반응한다. 동작 「hit」은 몸짓이 idle을 멈추는 동안 굳으므로 쓰지 않는다.
+    nextFavorite.setInteractive({ useHandCursor: true });
+    nextFavorite.on("pointerup", () => {
+      this.pokeFavorite(nextFavorite);
+      this.interactWithFavorite(def.id);
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => nextFavorite.destroy());
 
     // 캐릭터 하단 이름/종 설명은 제거해 로비가 원화 감상 화면처럼 보이게 한다.
   }
 
-  /** Puppet hit 반응과 함께 짧은 대사 및 서버가 확정한 일일 유대 결과를 표시한다. */
+  /**
+   * 애착 렐릭이 한 뼘 아래에서 스르륵 떠오르며 밝아진다. 지나온 자리에 옅은 투영 잔상이 남았다가 몸으로 모인다
+   * (`lobbyFavoriteGhosts`). 잔상은 들어서는 동안만 그리고, 움직임 줄이기에서는 떠오르지도 잔상을 남기지도 않고 밝아지기만 한다.
+   */
+  private fadeInFavorite(creature: PuppetCreature): void {
+    const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
+    const restY = creature.y;
+    this.favoriteRest = { x: creature.x, y: restY, scale: creature.scaleY };
+    const { durationMs, rise } = LOBBY_FAVORITE_ENTRANCE;
+    const progress = { value: 0 };
+    const paint = (): void => {
+      if (!creature.active) return;
+      const left = 1 - progress.value;
+      creature.setY(restY + rise * factor * left * left);
+      creature.setAlpha(progress.value);
+      creature.setAfterimages(lobbyFavoriteGhosts(progress.value, factor));
+    };
+    creature.setVisible(true).setAnimationFrozen(false);
+    paint();
+    this.favoriteEntrance = this.tweens.add({
+      targets: progress,
+      value: 1,
+      duration: Math.round(durationMs * (factor > 0 ? 1 : 0.5)),
+      ease: "Sine.easeOut",
+      onUpdate: paint,
+      onComplete: () => {
+        this.favoriteEntrance = undefined;
+        if (!creature.active) return;
+        creature.setY(restY).setAlpha(1).setAfterimages([]);
+      },
+    });
+  }
+
+  /** 누를 때마다 다음 몸짓으로 톡 반응한다. 들어서는 중이면 그 연출을 끝낸 자리에서 뛴다. */
+  private pokeFavorite(creature: PuppetCreature): void {
+    const rest = this.favoriteRest;
+    if (!creature.active || !rest) return;
+    this.favoriteAct?.stop();
+    if (this.favoriteEntrance) {
+      this.favoriteEntrance.stop();
+      this.favoriteEntrance = undefined;
+      creature.setAlpha(1).setAfterimages([]);
+    }
+    const handle = playPuppetAct(
+      this,
+      creature,
+      { ...rest, floorOffset: LOBBY_PORTRAIT_SPOT.floor - rest.y, scaleAmount: LOBBY_FAVORITE_SQUISH },
+      lobbyFavoriteAct(this.pokeIndex++),
+      motionPolicy(session.settings).nonEssentialDistanceFactor,
+      () => { if (this.favoriteAct === handle) this.favoriteAct = undefined; },
+    );
+    this.favoriteAct = handle;
+  }
+
+  /** 몸짓 반응과 함께 짧은 대사 및 서버가 확정한 일일 유대 결과를 표시한다. */
   private interactWithFavorite(relicId: string): void {
     if (this.interactionPending) return;
     this.interactionPending = true;

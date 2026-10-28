@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
-import { transitionTiming, type TransitionMotion } from "../core/screenTransition";
+import { TITLE_EXIT_GUARD_MS, transitionTiming, type TransitionMotion } from "../core/screenTransition";
 import { session } from "../state/session";
 import { audioManager } from "../managers/AudioManager";
 
@@ -34,6 +34,18 @@ export function playSceneEntrance(scene: Phaser.Scene): void {
     pendingRefreshKey = undefined;
     pendingNavDirection = undefined;
     scene.cameras.main.setAlpha(1);
+    return;
+  }
+  // 타이틀에서 막 들어온 화면은 검은 화면에서 스르륵 밝아진다(`leaveTitle`).
+  if (pendingFromTitle) {
+    pendingFromTitle = false;
+    pendingNavDirection = undefined;
+    const fade = transitionTiming("titleIn", currentMotion());
+    const camera = scene.cameras.main;
+    camera.setScroll(camera.scrollX, 0);
+    if (fade.duration === 0) { camera.setAlpha(1); return; }
+    camera.setAlpha(fade.alpha);
+    scene.tweens.add({ targets: camera, alpha: 1, duration: fade.duration, ease: "Sine.easeInOut" });
     return;
   }
   // 핵심 화면 다섯 사이를 오간 것이면 그 방향으로 **옆에서** 들어온다.
@@ -100,6 +112,32 @@ export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 
 export function startScene(scene: Phaser.Scene, key: string, data?: object): void {
   pendingRefreshKey = undefined;
   scene.scene.start(key, data);
+}
+
+/** 타이틀에서 막 넘어왔는가. 다음 `playSceneEntrance`가 읽는 순간 비운다. */
+let pendingFromTitle = false;
+
+/**
+ * 타이틀을 떠나 게임으로 들어간다 — 타이틀이 검게 잦아든 뒤 다음 화면이 그 어둠에서 밝아진다.
+ *
+ * 잦아드는 동안 기다리는 것은 카메라 연출이지만 **상한은 벽시계가 지킨다**(`TITLE_EXIT_GUARD_MS`) —
+ * 씬 시계는 프레임이 돌아야 깨어나 바쁜 기기에서 한참 밀린다(`TRANSITION` 머리 주석). 둘 중 먼저 오는
+ * 쪽이 한 번만 화면을 바꾼다. 움직임 줄이기에서는 기다리지 않고 곧바로 바꾼다.
+ */
+export function leaveTitle(scene: Phaser.Scene, key: string, data?: object): void {
+  const fade = transitionTiming("titleOut", currentMotion());
+  let done = false;
+  const go = (): void => {
+    if (done) return;
+    done = true;
+    pendingFromTitle = true;
+    startScene(scene, key, data);
+  };
+  if (fade.duration === 0) { go(); return; }
+  scene.input.enabled = false;
+  scene.cameras.main.fadeOut(fade.duration, 0, 0, 0);
+  scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, go);
+  globalThis.setTimeout(() => { if (scene.sys.isActive()) go(); }, TITLE_EXIT_GUARD_MS);
 }
 
 /**

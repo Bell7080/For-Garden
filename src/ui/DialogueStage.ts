@@ -23,11 +23,8 @@ import {
   type PuppetCreature,
 } from "../puppets/assets";
 import { addSceneBackground, ensureBackgroundTexture } from "./backgrounds";
+import { playPuppetAct, type PuppetActHandle } from "./puppetAct";
 import {
-  DIALOGUE_ACTS,
-  DIALOGUE_ACT_FILL,
-  DIALOGUE_ACT_GLOW,
-  actGlowSteps,
   DIALOGUE_ALARM,
   DIALOGUE_REMOTE,
   DIALOGUE_SIGN,
@@ -85,9 +82,7 @@ interface StageMember {
   unitScale: number;
   headOffset: { x: number; y: number };
   /** 지금 도는 연출. 다음 연출이 오면 끊고 제자리에서 다시 시작한다. */
-  act?: Phaser.Tweens.TweenChain;
-  /** 색이 덮이는 몸짓의 진하기 보간용. */
-  fillAct?: Phaser.Tweens.TweenChain;
+  act?: PuppetActHandle;
 }
 
 /**
@@ -429,78 +424,26 @@ export class DialogueStage {
 
   /**
    * 제자리에서 시작해 제자리로 끝나는 몸짓. 앞 몸짓이 남아 있으면 끊고 제자리에서 다시 시작한다.
-   *
-   * 위치(`dx`·`dy`)뿐 아니라 **배율**(눌림·늘어남)과 **몸에 덮는 색**(푸름·붉음)도 같은 걸음에서
-   * 함께 옮긴다. 움직임 줄이기는 위치와 배율의 변화폭을 같이 줄인다 — 색은 움직임이 아니라 남긴다.
+   * 걸음·색·소리는 로비의 애착 렐릭과 같은 한 벌(`playPuppetAct`)이다.
    */
   private playAct(member: StageMember, act: DialogueAct): void {
     this.stopAct(member);
-    const { creature } = member;
-    creature.setPosition(member.baseX, member.baseY);
-    const factor = this.distanceFactor();
-    const rest = member.restScale;
-    // 몸짓 동안은 idle을 그 자리에서 멈춘다 — 몸이 뛰는 동안 팔다리까지 따로 흔들리면 한 동작으로
-    // 읽히지 않는다. 끝나면 멈춘 프레임에서 그대로 이어 간다(`stopAct`가 풀어 준다).
-    creature.setAnimationFrozen(true);
-    const steps = DIALOGUE_ACTS[act];
-    // 통통 뛰는 몸짓만 소리를 낸다 — 끄덕·부들까지 울리면 대사마다 소리가 붙어 시끄럽다.
-    if (act === "hop" || act === "hopTwice") audioManager?.playSfx("story.hop");
-    member.act = this.scene.tweens.chain({
-      targets: creature,
-      tweens: steps.map((step) => ({
-        x: member.baseX + step.dx * factor,
-        y: member.baseY + step.dy * factor,
-        scaleX: rest * (1 + ((step.sx ?? 1) - 1) * factor),
-        scaleY: rest * (1 + ((step.sy ?? 1) - 1) * factor),
-        duration: step.ms,
-        ease: step.ease,
-      })),
-      onComplete: () => {
-        member.act = undefined;
-        if (!creature.active) return;
-        creature.setPosition(member.baseX, member.baseY);
-        creature.setScale(rest);
-        creature.setAnimationFrozen(false);
-      },
-    });
-    const color = DIALOGUE_ACT_FILL[act];
-    if (color === undefined) return;
-    const proxy = { amount: 0 };
-    member.fillAct = this.scene.tweens.chain({
-      targets: proxy,
-      tweens: steps.map((step) => ({
-        amount: step.fill ?? 0,
-        duration: step.ms,
-        ease: step.ease === "Back.Out" ? "Quad.Out" : step.ease,
-        onUpdate: () => { if (creature.active) this.paintActGlow(creature, color, proxy.amount); },
-      })),
-      onComplete: () => {
-        member.fillAct = undefined;
-        if (creature.active) this.paintActGlow(creature, color, 0);
-      },
-    });
-  }
-
-  /** 감정 몸짓의 색 — 몸에는 옅게만 덮고 둘레에 빛을 번지게 한다. */
-  private paintActGlow(creature: PuppetCreature, color: number, amount: number): void {
-    creature.setBodyFill(color, amount * DIALOGUE_ACT_GLOW.bodyShare);
-    creature.setAfterimages(actGlowSteps(color, amount));
+    const handle = playPuppetAct(
+      this.scene,
+      member.creature,
+      { x: member.baseX, y: member.baseY, scale: member.restScale },
+      act,
+      this.distanceFactor(),
+      () => { if (member.act === handle) member.act = undefined; },
+    );
+    member.act = handle;
   }
 
   /** 도는 몸짓을 끊는다. 멈춰 둔 idle·눌린 배율·덮인 색도 함께 되돌려, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
   private stopAct(member: StageMember): void {
-    const interrupted = member.act !== undefined || member.fillAct !== undefined;
     member.act?.stop();
     member.act = undefined;
-    member.fillAct?.stop();
-    member.fillAct = undefined;
-    const { creature } = member;
-    if (!creature.active) return;
-    creature.setAnimationFrozen(false);
-    if (!interrupted) return;
-    creature.setScale(member.restScale);
-    creature.setBodyFill(0xffffff, 0);
-    creature.setAfterimages([]);
+    if (member.creature.active) member.creature.setAnimationFrozen(false);
   }
 
   // ── 무전 너머의 목소리 ─────────────────────────────────────────────

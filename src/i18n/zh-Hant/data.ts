@@ -611,6 +611,8 @@ export default {
   "keyword.attack-speed.description": "決定普通攻擊間隔的屬性。越高攻擊越頻繁，部分技能會將當前數值轉化為傷害。",
   "keyword.stealth.term": "隱身",
   "keyword.stealth.description": "持續期間，單位不會成為敵人單體攻擊可選擇的目標。隱身解除後會重新成為目標。",
+  "keyword.ingredient.term": "食材",
+  "keyword.ingredient.description": "馬加薩鎖定的敵人。每次攻擊食材，攻擊速度和移動速度提高5%（最多10層）；攻擊其他敵人時全部解除。",
   "keyword.transfer.term": "轉移",
   "keyword.transfer.description": "以主目標在經過防禦、護盾與傷害減免後實際損失的生命為基準，將其中一部分轉移給其他目標。",
   "keyword.pack-hunt.term": "群獵",

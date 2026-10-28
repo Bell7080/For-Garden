@@ -451,7 +451,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.vitalAim": "连续对同一敌人进行[[basic-attack|普通攻击]]会叠加[[vital-aim|瞄准]]，提高对其伤害。切换目标时重置。",
   "skill.passive.wingHum": "每{seconds}秒为攻击力最高的友军施加[[resonance|共鸣]]。亲自击败敌人时恢复{energy}必杀技能量。",
   "skill.passive.workerMarch": "附近友军越多，[[worker-march|行列]]越长，造成的伤害越高，并缓慢恢复生命。",
-  "skill.passive.todaysIngredient": "锁定生命比例最低的敌人作为「食材」，对其造成的伤害提高{damage}%。食材倒下前不会改变。击败食材时恢复最大生命的{heal}%，[[atk|攻击力]]提高{attack}%（最多{stacks}层）。",
+  "skill.passive.todaysIngredient": "将最近的敌人无视[[stealth|隐身]]锁定为[[ingredient|食材]]，对其造成的伤害提高{damage}%。食材倒下前不会改变。击败食材时恢复最大生命的{heal}%，[[atk|攻击力]]提高{attack}%（最多{stacks}层）。",
   "skill.passive.flinchBlink": "短时间内失去最大生命的{percent}%以上时，跃至最近敌人的背后，下一次[[basic-attack|普通攻击]]必定暴击。冷却{seconds}秒。",
   "skill.passive.cellRank": "受到被自己[[taunt|嘲讽]]的敌人攻击时，获得相当于最大生命{percent}%的[[shield|护盾]]。每{seconds}秒一次，以此累积的护盾最多为最大生命的{cap}%。",
   "skill.passive.restraintLocks": "带着{count}把锁战斗。生命每降到{thresholds}%以下时解开一把，[[attack-speed|攻击速度]]提高{attack}%，[[move-speed|移动速度]]提高{move}%，并[[knockback|击飞]]周围敌人。每解开一把锁，冲刺距离增加{reach}%；全部解开后，[[basic-attack|普通攻击]]会打击周围所有敌人。",

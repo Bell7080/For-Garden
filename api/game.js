@@ -2596,7 +2596,7 @@ var SKILL_KO = {
   "skill.passive.vitalAim": "\uAC19\uC740 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uC774\uC5B4 \uCE60 \uB54C\uB9C8\uB2E4 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC5EC \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4. \uD45C\uC801\uC774 \uBC14\uB00C\uBA74 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC313\uB294\uB2E4.",
   "skill.passive.wingHum": "{seconds}\uCD08\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4. \uC9C1\uC811 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {energy} \uCC2C\uB2E4.",
   "skill.passive.workerMarch": "\uACC1\uC5D0 \uC120 \uC544\uAD70\uC774 \uB9CE\uC744\uC218\uB85D [[worker-march|\uD589\uB82C]]\uC774 \uAE38\uC5B4\uC838 \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C0\uACE0 \uCCB4\uB825\uC774 \uC11C\uC11C\uD788 \uCC28\uC624\uB978\uB2E4.",
-  "skill.passive.todaysIngredient": "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC744 \u300C\uC7AC\uB8CC\u300D\uB85C \uB178\uB824 \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 {damage}% \uCEE4\uC9C4\uB2E4. \uC7AC\uB8CC\uB294 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uBC14\uB00C\uC9C0 \uC54A\uB294\uB2E4. \uC7AC\uB8CC\uB97C \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {heal}%\uB97C \uD68C\uBCF5\uD558\uACE0 [[atk|\uACF5\uACA9\uB825]]\uC774 {attack}% \uC624\uB978\uB2E4(\uCD5C\uB300 {stacks}\uACB9).",
+  "skill.passive.todaysIngredient": "\uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC744 [[stealth|\uC740\uC2E0]]\uACFC \uBB34\uAD00\uD558\uAC8C [[ingredient|\uC7AC\uB8CC]]\uB85C \uCC0D\uC5B4 \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 {damage}% \uCEE4\uC9C4\uB2E4. \uC7AC\uB8CC\uB294 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uBC14\uB00C\uC9C0 \uC54A\uB294\uB2E4. \uC7AC\uB8CC\uB97C \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {heal}%\uB97C \uD68C\uBCF5\uD558\uACE0 [[atk|\uACF5\uACA9\uB825]]\uC774 {attack}% \uC624\uB978\uB2E4(\uCD5C\uB300 {stacks}\uACB9).",
   "skill.passive.flinchBlink": "\uC9E7\uC740 \uC0AC\uC774\uC5D0 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}% \uC774\uC0C1\uC744 \uC783\uC73C\uBA74 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC758 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uACE0, \uB2E4\uC74C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uB85C \uB4E4\uC5B4\uAC04\uB2E4. \uC7AC\uC0AC\uC6A9 \uB300\uAE30 {seconds}\uCD08.",
   "skill.passive.cellRank": "\uC790\uC2E0\uC5D0\uAC8C [[taunt|\uB3C4\uBC1C]]\uB41C \uC801\uC5D0\uAC8C \uB9DE\uC73C\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uC774\uBA70, \uC774\uB807\uAC8C \uC313\uB294 \uB9C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0\uB2E4.",
   "skill.passive.restraintLocks": "\uC790\uBB3C\uC1E0 {count}\uAC1C\uB97C \uB2E8 \uCC44 \uC2F8\uC6B4\uB2E4. \uCCB4\uB825\uC774 {thresholds}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 \uD558\uB098\uC529 \uD480\uB9AC\uBA70 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uC8FC\uC704 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]]. \uD480\uB9B0 \uC790\uBB3C\uC1E0\uB9C8\uB2E4 \uC9C8\uC8FC\uAC00 {reach}% \uB354 \uBA40\uB9AC \uB098\uC544\uAC00\uACE0, \uBAA8\uB450 \uD480\uB9AC\uBA74 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC744 \uCE5C\uB2E4.",
@@ -5475,6 +5475,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     ingredientId: null,
     ingredientStacks: 0,
     ingredientKillsPending: 0,
+    ingredientHaste: 0,
     flinch: { cooldown: 0, window: 0, taken: 0, pending: false },
     locksBroken: 0,
     cellRankReadyAt: 0,
@@ -6867,6 +6868,10 @@ function reactRaiders(target, attacker, state, events, useUltimate) {
   }
   const barrier = target.def.passive.segmentBarrier;
   if (barrier && target.barrierIn > 0) target.barrierIn = Math.max(0, target.barrierIn - barrier.hitRestoreSeconds);
+  const ingredient = attacker.def.passive.todaysIngredient;
+  if (ingredient) {
+    attacker.ingredientHaste = target.id === attacker.ingredientId ? Math.min(ingredient.hasteMaxStacks, attacker.ingredientHaste + 1) : 0;
+  }
   const aim = attacker.def.passive.vitalAim;
   if (aim && !useUltimate) {
     const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
@@ -6953,14 +6958,18 @@ function confinementAttackSpeedPercent(fighter) {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.attackSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && (trait.effectId === "appetiteFrenzy" || trait.effectId === "corneredBeast") ? trait.attackSpeedPercent : 0;
-  return unlocked + fever;
+  return unlocked + fever + ingredientHastePercent(fighter);
 }
 function confinementMoveSpeedPercent(fighter) {
   const locks = fighter.def.passive.restraintLocks;
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.moveSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && trait.effectId === "corneredBeast" ? trait.moveSpeedPercent : 0;
-  return unlocked + fever;
+  return unlocked + fever + ingredientHastePercent(fighter);
+}
+function ingredientHastePercent(fighter) {
+  const plan = fighter.def.passive.todaysIngredient;
+  return plan ? fighter.ingredientHaste * plan.hastePercentPerHit : 0;
 }
 function lockChargeReachFactor(fighter) {
   const locks = fighter.def.passive.restraintLocks;
@@ -8909,8 +8918,8 @@ function resolveTarget(state, fighter, reconsider = false) {
   }
   if (!frenzied && fighter.def.passive.todaysIngredient) {
     const marked = fighter.ingredientId ? findFighter(state, fighter.ingredientId) : void 0;
-    const usable = (other) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other) && other.stealthFor <= 0 && !other.hordeEntering;
-    const chosen2 = marked && usable(marked) ? marked : state.fighters.filter(usable).map((other, index) => ({ other, index })).sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
+    const usable = (other) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other) && !other.hordeEntering;
+    const chosen2 = marked && usable(marked) ? marked : state.fighters.filter(usable).map((other, index) => ({ other, index })).sort((a, b) => distance(fighter, a.other) - distance(fighter, b.other) || a.index - b.index)[0]?.other;
     if (chosen2) {
       fighter.ingredientId = chosen2.id;
       if (fighter.targetId !== chosen2.id) fighter.engaged = false;
@@ -16321,8 +16330,8 @@ var RELICS = [
       effectType: "physical",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 재료에게 더 주는 피해(%)를 담아 둔다.
       value: 15,
-      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3 },
-      desc: "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC744 \uC7AC\uB8CC\uB85C \uB178\uB9AC\uACE0, \uC7AC\uB8CC\uB97C \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uD68C\uBCF5\uD558\uBA70 \uACF5\uACA9\uB825\uC774 \uC313\uC778\uB2E4."
+      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePercentPerHit: 5, hasteMaxStacks: 10 },
+      desc: "\uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC744 \uC740\uC2E0\uACFC \uBB34\uAD00\uD558\uAC8C \uC7AC\uB8CC\uB85C \uB178\uB9AC\uACE0, \uC7AC\uB8CC\uB97C \uB54C\uB9B4\uC218\uB85D \uBE68\uB77C\uC9C0\uBA70 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uD68C\uBCF5\uD558\uACE0 \uACF5\uACA9\uB825\uC774 \uC313\uC778\uB2E4."
     },
     basic: {
       id: "magasa-basic",
@@ -16508,8 +16517,8 @@ var RELICS = [
     basic: {
       id: "raja-basic",
       name: "\uCCA0\uAD8C",
-      power: 130,
-      // v0.391.2 응태 요청: 100 → 130
+      power: 150,
+      // v0.391.5 응태 요청: 100 → 130 → 150
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

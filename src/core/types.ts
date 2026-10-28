@@ -2308,14 +2308,17 @@ export interface Passive {
     regenMaxHpPercentPerAllyPerSecond: number;
   };
   /**
-   * 「오늘의 재료」 계약(마가사). 체력 비율이 가장 낮은 적을 재료로 찍어 그 적이 쓰러질 때까지 쫓는다. 재료에게는 피해가
+   * 「오늘의 재료」 계약(마가사). 가장 가까운 적을 은신과 무관하게 재료로 찍어 그 적이 쓰러질 때까지 쫓는다. 재료에게는 피해가
    * `damagePercent`% 더 들고, 재료를 쓰러뜨리면 최대 체력의 `killHealMaxHpPercent`%를 되찾으며 공격력이 한 겹(최대 `maxStacks`) 오른다.
+   * 재료를 때릴 때마다 공격 속도·이동 속도가 `hastePercentPerHit`%씩 오르고(최대 `hasteMaxStacks`겹), 다른 적을 때리면 풀린다.
    */
   todaysIngredient?: {
     damagePercent: number;
     killHealMaxHpPercent: number;
     attackPercentPerStack: number;
     maxStacks: number;
+    hastePercentPerHit: number;
+    hasteMaxStacks: number;
   };
   /**
    * 「움찔」 계약(노아). 한 번에 최대 체력의 `burstMaxHpPercent`% 이상 깎이면 가장 가까운 적의 등 뒤로 튀어 나가고,

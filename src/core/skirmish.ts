@@ -695,6 +695,8 @@ export interface Fighter extends Combatant {
   ingredientStacks: number;
   /** 재료를 쓰러뜨린 뒤 다음 시계에서 치를 보상 수. 처치 훅에는 회복할 판이 없어 미뤄 둔다. */
   ingredientKillsPending: number;
+  /** 재료를 이어 때려 쌓은 공속·이속 겹. 재료가 아닌 적을 때리면 0으로 돌아간다. */
+  ingredientHaste: number;
   /** 「움찔」(노아)의 재사용 대기(초)와, 짧은 창 안에 받은 피해의 합. 창이 닫히면 합도 비운다. */
   flinch: { cooldown: number; window: number; taken: number; pending: boolean };
   /** 「구속복」(카르노)에서 이미 풀린 자물쇠 수. 체력이 다시 차도 잠기지 않는다. */
@@ -1465,6 +1467,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     ingredientId: null,
     ingredientStacks: 0,
     ingredientKillsPending: 0,
+    ingredientHaste: 0,
     flinch: { cooldown: 0, window: 0, taken: 0, pending: false },
     locksBroken: 0,
     cellRankReadyAt: 0,
@@ -3509,6 +3512,11 @@ function reactRaiders(target: Fighter, attacker: Fighter, state: SkirmishState, 
   }
   const barrier = target.def.passive.segmentBarrier;
   if (barrier && target.barrierIn > 0) target.barrierIn = Math.max(0, target.barrierIn - barrier.hitRestoreSeconds);
+  // 오늘의 재료(마가사) — 재료를 칠 때마다 손발이 빨라지고, 다른 적을 치면 처음으로 돌아간다.
+  const ingredient = attacker.def.passive.todaysIngredient;
+  if (ingredient) {
+    attacker.ingredientHaste = target.id === attacker.ingredientId ? Math.min(ingredient.hasteMaxStacks, attacker.ingredientHaste + 1) : 0;
+  }
   const aim = attacker.def.passive.vitalAim;
   if (aim && !useUltimate) {
     const bonus = attacker.ferocityFever && attacker.def.ferocityTrait.effectId === "frenzyTail" ? attacker.def.ferocityTrait.extraStacksPerHit : 0;
@@ -3601,7 +3609,7 @@ function confinementAttackSpeedPercent(fighter: Fighter): number {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.attackSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && (trait.effectId === "appetiteFrenzy" || trait.effectId === "corneredBeast") ? trait.attackSpeedPercent : 0;
-  return unlocked + fever;
+  return unlocked + fever + ingredientHastePercent(fighter);
 }
 
 /** 감금 무리가 제 걸음을 빠르게 하는 몫(%) — 풀린 자물쇠와 「궁지에 몰린 짐승」. */
@@ -3610,7 +3618,13 @@ function confinementMoveSpeedPercent(fighter: Fighter): number {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.moveSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && trait.effectId === "corneredBeast" ? trait.moveSpeedPercent : 0;
-  return unlocked + fever;
+  return unlocked + fever + ingredientHastePercent(fighter);
+}
+
+/** 「오늘의 재료」(마가사) — 재료를 이어 때려 쌓은 공속·이속 몫(%). 두 속도가 같은 값을 얹는다. */
+export function ingredientHastePercent(fighter: Fighter): number {
+  const plan = fighter.def.passive.todaysIngredient;
+  return plan ? fighter.ingredientHaste * plan.hastePercentPerHit : 0;
 }
 
 /** 풀린 자물쇠마다 질주가 더 멀리 나아가는 배율. 자물쇠가 없는 개체는 1이다. */
@@ -5713,6 +5727,10 @@ function expeditionAndKitBuffs(state: SkirmishState, fighter: Fighter): ActiveCo
   if (aim && fighter.aim && fighter.aim.stacks > 0) {
     push("vital-aim", fighter.def.passive.id, fighter.def.passive.name, `같은 적을 겨눌수록 피해 +${fighter.aim.stacks * aim.damagePercentPerStack}%`, { kind: "conditional" }, fighter.aim.stacks);
   }
+  const ingredient = fighter.def.passive.todaysIngredient;
+  if (ingredient && fighter.ingredientHaste > 0) {
+    push("ingredient-haste", fighter.def.passive.id, fighter.def.passive.name, `재료를 칠수록 공격 속도·이동 속도 +${ingredientHastePercent(fighter)}%`, { kind: "conditional" }, fighter.ingredientHaste);
+  }
   if (fighter.def.passive.kind === "bleedStreak" && fighter.streakCount > 0) {
     push("bleed-streak", fighter.def.passive.id, fighter.def.passive.name, `같은 적을 ${fighter.def.passive.value}번 이어 때리면 출혈`, { kind: "conditional" }, fighter.streakCount);
   }
@@ -6356,17 +6374,16 @@ function resolveTarget(state: SkirmishState, fighter: Fighter, reconsider = fals
   }
 
   /*
-   * 오늘의 재료(마가사)는 거리보다 **누가 가장 지쳤나**가 먼저다. 표식은 그 적이 쓰러질 때까지 바뀌지
-   * 않는다 — 2초 재평가마다 가장 낮은 적으로 갈아타면 끝내기 직전의 재료를 버리고 돌아선다.
-   * 광란 중에는 편이 뒤집히므로 공용 규칙을 따른다.
+   * 오늘의 재료(마가사)는 **가장 가까운 적**을 찍고 은신으로 숨어도 놓치지 않는다(v0.391.5 응태 요청 — 예전에는
+   * 체력 비율이 가장 낮은 적이었다). 표식은 그 적이 쓰러질 때까지 바뀌지 않는다 — 2초 재평가마다 갈아타면
+   * 이어 때려 쌓은 가속이 매번 풀린다. 광란 중에는 편이 뒤집히므로 공용 규칙을 따른다.
    */
   if (!frenzied && fighter.def.passive.todaysIngredient) {
     const marked = fighter.ingredientId ? findFighter(state, fighter.ingredientId) : undefined;
-    const usable = (other: Fighter) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other)
-      && other.stealthFor <= 0 && !other.hordeEntering;
+    const usable = (other: Fighter) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other) && !other.hordeEntering;
     const chosen = marked && usable(marked) ? marked : state.fighters.filter(usable)
       .map((other, index) => ({ other, index }))
-      .sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
+      .sort((a, b) => distance(fighter, a.other) - distance(fighter, b.other) || a.index - b.index)[0]?.other;
     if (chosen) {
       fighter.ingredientId = chosen.id;
       if (fighter.targetId !== chosen.id) fighter.engaged = false;

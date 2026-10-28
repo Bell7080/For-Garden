@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, effectiveLocksBroken, fireUltimate, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, effectiveLocksBroken, fireUltimate, ingredientHastePercent, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 
@@ -32,14 +32,40 @@ describe("감금조 정체성", () => {
 });
 
 describe("마가사 「오늘의 재료」", () => {
-  it("체력 비율이 가장 낮은 적을 재료로 정하고, 다른 적이 더 약해져도 갈아타지 않는다", () => {
+  it("가장 가까운 적을 은신과 무관하게 재료로 정하고, 다른 적이 더 가까워져도 갈아타지 않는다", () => {
     const { state, hero, foes } = setup("magasa", ["amo", "toby", "ripa"]);
-    foes[1].hp = foes[1].maxHp * 0.3;
+    foes[1].x = hero.x; foes[1].y = hero.y - 120;
+    foes[1].stealthFor = 5;
     run(state, 0.3);
     expect(hero.ingredientId).toBe(foes[1].id);
-    foes[0].hp = foes[0].maxHp * 0.1;
+    expect(hero.targetId).toBe(foes[1].id);
+    foes[0].x = hero.x + 30; foes[0].y = hero.y - 40;
     run(state, 2.5);
     expect(hero.ingredientId).toBe(foes[1].id);
+  });
+
+  it("재료를 때릴수록 공속·이속이 5%씩 오르고 다른 적을 때리면 풀린다", () => {
+    const { state, hero, foes } = setup("magasa", ["toby", "amo"]);
+    const plan = getRelic("magasa").passive.todaysIngredient!;
+    expect(plan.hastePercentPerHit).toBe(5);
+    foes[0].x = hero.x; foes[0].y = hero.y - 60;
+    foes[0].hp = foes[0].maxHp * 50;
+    foes[0].maxHp *= 50;
+    const before = currentAttackSpeed(hero, state);
+    const walk = moveSpeed(hero, state);
+    let guard = 0;
+    while (hero.ingredientHaste < 2 && guard++ < 400) run(state, 0.05);
+    expect(hero.ingredientId).toBe(foes[0].id);
+    expect(ingredientHastePercent(hero)).toBe(hero.ingredientHaste * 5);
+    expect(currentAttackSpeed(hero, state)).toBeGreaterThan(before);
+    expect(moveSpeed(hero, state)).toBeGreaterThan(walk);
+    hero.ingredientHaste = plan.hasteMaxStacks;
+    // 도발 등으로 재료가 아닌 적을 친 순간 겹이 모두 풀린다.
+    foes[1].x = hero.x + 40; foes[1].y = hero.y - 50;
+    hero.targetId = foes[1].id;
+    guard = 0;
+    while (hero.ingredientHaste === plan.hasteMaxStacks && guard++ < 400) run(state, 0.05);
+    expect(hero.ingredientHaste).toBe(0);
   });
 
   it("재료를 쓰러뜨리면 공격력 겹이 쌓이고 다음 재료를 고른다", () => {

@@ -178,6 +178,10 @@ export const KEYWORDS: readonly KeywordDef[] = [
     description: "같은 적을 [[basic-attack|기본 공격]]으로 칠 때마다 한 겹 쌓이고, 겹마다 그 적에게 주는 피해가 8% 커진다. 최대 6겹이며 표적이 바뀌면 사라진다.",
   },
   {
+    id: "ingredient", term: "재료", kind: "buff",
+    description: "마가사가 찍은 적이다. 재료를 때릴 때마다 공격 속도·이동 속도가 5% 오르고(최대 10겹), 다른 적을 때리면 모두 풀린다.",
+  },
+  {
     id: "resonance", term: "공명", kind: "buff",
     description: "5초 동안 공격 속도가 30% 오르는 아군 강화다. 순풍·오더와 같은 칸을 쓰므로 남은 시간이 더 긴 쪽만 남는다.",
   },

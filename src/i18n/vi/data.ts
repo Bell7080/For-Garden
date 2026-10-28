@@ -611,6 +611,8 @@ export default {
   "keyword.attack-speed.description": "Chỉ số quyết định khoảng cách giữa các đòn đánh thường. Càng cao đánh càng dày, và vài kỹ năng biến giá trị hiện tại thành sát thương.",
   "keyword.stealth.term": "Tàng hình",
   "keyword.stealth.description": "Trong thời gian đó, đơn vị không thể bị đòn đánh đơn mục tiêu của địch chọn. Khi Tàng hình vỡ, nó lại thành mục tiêu.",
+  "keyword.ingredient.term": "Nguyên liệu",
+  "keyword.ingredient.description": "Kẻ địch Magasa đã đánh dấu. Mỗi đòn trúng Nguyên liệu tăng tốc đánh và tốc chạy 5% (tối đa 10 tầng); đánh địch khác sẽ mất hết.",
   "keyword.transfer.term": "Chuyển",
   "keyword.transfer.description": "Chuyển một phần sang mục tiêu khác, dựa trên lượng HP mục tiêu chính thực mất sau khi áp dụng Thủ, khiên và giảm sát thương.",
   "keyword.pack-hunt.term": "Săn theo bầy",

@@ -611,6 +611,8 @@ export default {
   "keyword.attack-speed.description": "Der Wert, der den Abstand zwischen Normalangriffen bestimmt. Höher heißt häufiger; manche Fähigkeiten wandeln den aktuellen Wert in Schaden um.",
   "keyword.stealth.term": "Tarnung",
   "keyword.stealth.description": "Solange sie wirkt, kann die Einheit nicht von gegnerischen Einzelzielangriffen gewählt werden. Bricht die Tarnung, wird sie wieder zum Ziel.",
+  "keyword.ingredient.term": "Zutat",
+  "keyword.ingredient.description": "Von Magasa markierter Gegner. Jeder Treffer auf die Zutat erhöht Angriffs- und Lauftempo um 5% (bis zu 10 Stapel); ein Treffer auf einen anderen Gegner löscht alle.",
   "keyword.transfer.term": "Übertragung",
   "keyword.transfer.description": "Überträgt einen Teil auf ein anderes Ziel, basierend auf dem Leben, das das Hauptziel nach Verteidigung, Schilden und Schadensminderung tatsächlich verloren hat.",
   "keyword.pack-hunt.term": "Rudeljagd",

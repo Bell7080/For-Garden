@@ -373,7 +373,7 @@ export const SKILL_KO = {
   "skill.passive.vitalAim": "같은 적을 [[basic-attack|기본 공격]]으로 이어 칠 때마다 [[vital-aim|겨누기]]가 쌓여 그 적에게 주는 피해가 커진다. 표적이 바뀌면 처음부터 다시 쌓는다.",
   "skill.passive.wingHum": "{seconds}초마다 공격력이 가장 높은 아군에게 [[resonance|공명]]을 건다. 직접 적을 쓰러뜨리면 궁극기 게이지가 {energy} 찬다.",
   "skill.passive.workerMarch": "곁에 선 아군이 많을수록 [[worker-march|행렬]]이 길어져 주는 피해가 커지고 체력이 서서히 차오른다.",
-  "skill.passive.todaysIngredient": "체력 비율이 가장 낮은 적을 「재료」로 노려 그 적에게 주는 피해가 {damage}% 커진다. 재료는 쓰러질 때까지 바뀌지 않는다. 재료를 쓰러뜨리면 최대 체력의 {heal}%를 회복하고 [[atk|공격력]]이 {attack}% 오른다(최대 {stacks}겹).",
+  "skill.passive.todaysIngredient": "가장 가까운 적을 [[stealth|은신]]과 무관하게 [[ingredient|재료]]로 찍어 그 적에게 주는 피해가 {damage}% 커진다. 재료는 쓰러질 때까지 바뀌지 않는다. 재료를 쓰러뜨리면 최대 체력의 {heal}%를 회복하고 [[atk|공격력]]이 {attack}% 오른다(최대 {stacks}겹).",
   "skill.passive.flinchBlink": "짧은 사이에 최대 체력의 {percent}% 이상을 잃으면 가장 가까운 적의 등 뒤로 뛰어 물러나고, 다음 [[basic-attack|기본 공격]]이 반드시 치명타로 들어간다. 재사용 대기 {seconds}초.",
   "skill.passive.cellRank": "자신에게 [[taunt|도발]]된 적에게 맞으면 최대 체력의 {percent}%만큼 [[shield|보호막]]을 얻는다. {seconds}초에 한 번이며, 이렇게 쌓는 막은 최대 체력의 {cap}%까지다.",
   "skill.passive.restraintLocks": "자물쇠 {count}개를 단 채 싸운다. 체력이 {thresholds}% 아래로 떨어질 때마다 하나씩 풀리며 [[attack-speed|공격 속도]]가 {attack}%, [[move-speed|이동 속도]]가 {move}% 오르고 주위 적을 [[knockback|날려버린다]]. 풀린 자물쇠마다 질주가 {reach}% 더 멀리 나아가고, 모두 풀리면 [[basic-attack|기본 공격]]이 주위의 모든 적을 친다.",

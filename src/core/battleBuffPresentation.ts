@@ -37,6 +37,7 @@ const KIT_VISUAL: Readonly<Record<string, Omit<BattleBuffVisual, "fallback"> & {
   "luka-passive": { category: "speed", glyph: "skill", fallback: "haste" },
   "kill-haste": { category: "speed", glyph: "killHaste" },
   "many-eyes": { category: "speed", glyph: "haste" },
+  "ingredient-haste": { category: "speed", glyph: "skill", fallback: "haste" },
   "augment-warm-up": { category: "speed", glyph: "warmUp" },
   "hastened-attacks": { category: "speed", glyph: "skill", fallback: "haste" },
   "trait-regen": { category: "heal", glyph: "regen" },

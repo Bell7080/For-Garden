@@ -474,7 +474,7 @@ export const SKILL_JA = {
   "skill.passive.vitalAim": "同じ敵への[[basic-attack|基本攻撃]]で[[vital-aim|狙い]]が重なり、その敵へのダメージが増える。標的が変わると最初から溜め直す。",
   "skill.passive.wingHum": "{seconds}秒ごとに攻撃力が最も高い味方に[[resonance|共鳴]]を付与する。自分で敵を倒すと必殺技ゲージが{energy}回復する。",
   "skill.passive.workerMarch": "近くの味方が多いほど[[worker-march|行列]]が伸び、与ダメージが増え、体力が徐々に回復する。",
-  "skill.passive.todaysIngredient": "体力の割合が最も低い敵を「食材」として狙い、その敵に与えるダメージが{damage}%増える。食材は倒れるまで変わらない。食材を倒すと最大体力の{heal}%を回復し、[[atk|攻撃力]]が{attack}%上がる(最大{stacks}重)。",
+  "skill.passive.todaysIngredient": "最も近い敵を[[stealth|隠密]]に関係なく[[ingredient|食材]]として狙い、その敵に与えるダメージが{damage}%増える。食材は倒れるまで変わらない。食材を倒すと最大体力の{heal}%を回復し、[[atk|攻撃力]]が{attack}%上がる(最大{stacks}重)。",
   "skill.passive.flinchBlink": "短い間に最大体力の{percent}%以上を失うと、最も近い敵の背後へ跳んで退き、次の[[basic-attack|基本攻撃]]が必ず会心になる。再使用待機{seconds}秒。",
   "skill.passive.cellRank": "自分に[[taunt|挑発]]された敵から攻撃を受けると、最大体力の{percent}%分の[[shield|シールド]]を得る。{seconds}秒に1回で、こうして重ねるシールドは最大体力の{cap}%までだ。",
   "skill.passive.restraintLocks": "錠前を{count}個つけたまま戦う。体力が{thresholds}%を下回るたびに1つ外れ、[[attack-speed|攻撃速度]]が{attack}%、[[move-speed|移動速度]]が{move}%上がり、周囲の敵を[[knockback|吹き飛ばす]]。外れた錠前ごとに突進が{reach}%遠くまで届き、すべて外れると[[basic-attack|基本攻撃]]が周囲の敵すべてを打つ。",

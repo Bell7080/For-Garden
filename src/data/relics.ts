@@ -3535,8 +3535,8 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 재료에게 더 주는 피해(%)를 담아 둔다.
       value: 15,
-      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3 },
-      desc: "체력 비율이 가장 낮은 적을 재료로 노리고, 재료를 쓰러뜨리면 회복하며 공격력이 쌓인다.",
+      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePercentPerHit: 5, hasteMaxStacks: 10 },
+      desc: "가장 가까운 적을 은신과 무관하게 재료로 노리고, 재료를 때릴수록 빨라지며 쓰러뜨리면 회복하고 공격력이 쌓인다.",
     },
     basic: {
       id: "magasa-basic",
@@ -3720,7 +3720,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "raja-basic",
       name: "철권",
-      power: 130, // v0.391.2 응태 요청: 100 → 130
+      power: 150, // v0.391.5 응태 요청: 100 → 130 → 150
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

@@ -1164,6 +1164,10 @@ var GUILD_KO = {
   "guild.info.perkExcavation": "\uBC1C\uAD74 \uC0DD\uC0B0 +{value}%",
   "guild.info.perkDispatch": "\uAD50\uB958 \uD30C\uACAC \uC2DC\uAC04 \u2212{value}%",
   "guild.info.perkNone": "\uD61C\uD0DD\uC740 \uB808\uBCA8 3\uBD80\uD130 \uC5F4\uB9BD\uB2C8\uB2E4",
+  "guild.info.perkShop": "\uAE38\uB4DC \uC0C1\uC810 \uB808\uBCA8 \uCE78 \uAC1C\uBC29",
+  "guild.levelUp.title": "\uAE38\uB4DC \uB808\uBCA8 \uC5C5",
+  "guild.levelUp.message": "\uAE38\uB4DC\uAC00 Lv.{level:\uC774} \uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  "guild.levelUp.ok": "\uD655\uC778",
   "guild.info.noticeEmpty": "\uACF5\uC9C0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.info.settings": "\uAE38\uB4DC \uC124\uC815",
   "guild.info.leave": "\uD0C8\uD1F4",
@@ -20879,7 +20883,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -20932,6 +20936,7 @@ function normalizeSettings(value) {
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
       guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) },
+      guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null) : [],
       ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
@@ -31888,6 +31893,7 @@ var GUILD_NAME_MIN = 2;
 var GUILD_NAME_MAX = 12;
 var GUILD_NOTICE_MAX = 120;
 var GUILD_LEAVE_COOLDOWN_MS = 24 * 36e5;
+var GUILD_LEADER_TRANSFER_DAYS = 14;
 var GUILD_MAX_LEVEL = 10;
 var GUILD_ROLE_LIMIT = { leader: 1, vice: 2, officer: 5, member: Number.POSITIVE_INFINITY };
 var ROLE_RANK = { leader: 3, vice: 2, officer: 1, member: 0 };
@@ -31918,6 +31924,19 @@ function guildLevelOf(prosperity) {
 }
 var levelDef = (level) => GUILD_LEVELS[Math.min(GUILD_MAX_LEVEL, Math.max(1, Math.floor(level))) - 1];
 var guildCapacity = (level) => levelDef(level).capacity;
+function guildPerks(level) {
+  return {
+    excavationBonusPercent: level >= 7 ? 10 : level >= 3 ? 5 : 0,
+    dispatchTimeReductionPercent: level >= 9 ? 10 : level >= 5 ? 5 : 0,
+    shopSlots: level >= GUILD_MAX_LEVEL ? 4 : 3
+  };
+}
+function guildDispatchMinutes(minutes, reductionPercent) {
+  return Math.max(1, Math.round(minutes * (100 - reductionPercent) / 100));
+}
+function guildExcavationBonus(harvested, bonusPercent) {
+  return Math.floor(Math.max(0, harvested) * bonusPercent / 100);
+}
 var guildGlyphCount = (text) => typeof Intl !== "undefined" && "Segmenter" in Intl ? [...new Intl.Segmenter(void 0, { granularity: "grapheme" }).segment(text)].length : Array.from(text).length;
 var normalizeGuildName = (raw) => raw.normalize("NFC").replace(/\s+/g, " ").trim();
 function validateGuildName(raw) {
@@ -31963,6 +31982,11 @@ var GUILD_SHOP_PRODUCTS = [
   { id: "guild-supply", tab: "guildLevel", price: 160, limit: 1, refresh: "weekly", minGuildLevel: 10, grant: { gold: 11e3, cheesecake: 48, item: { id: "stamina-tonic", quantity: 1 } } }
 ];
 var findGuildProduct = (id) => GUILD_SHOP_PRODUCTS.find((p) => p.id === id);
+function guildSuccessor(members) {
+  const eligible2 = members.filter((m) => m.role === "vice" || m.role === "officer");
+  eligible2.sort((a, b) => b.contributionTotal - a.contributionTotal || ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.joinedAt - b.joinedAt || a.userId.localeCompare(b.userId));
+  return eligible2[0]?.userId ?? null;
+}
 
 // src/core/guildBadge.ts
 init_define_import_meta_env();
@@ -32198,7 +32222,17 @@ var FakeGuildServer = class {
     const me = guild?.members.get(actor.userId);
     if (!guild || !me) return fail2("NOT_IN_GUILD");
     this.touch(me, actor);
+    this.reviewLeader(guild);
     return { guild, me };
+  }
+  /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
+  reviewLeader(guild) {
+    const leader = this.leaderOf(guild);
+    if (this.now() - leader.lastActiveAt < GUILD_LEADER_TRANSFER_DAYS * 864e5) return;
+    const heir = guildSuccessor([...guild.members.values()]);
+    if (!heir) return;
+    leader.role = "member";
+    guild.members.get(heir).role = "leader";
   }
   /** 호출마다 이름·레벨·마지막 접속을 최신으로 맞추고 주가 넘어갔으면 주간 기여도를 비운다. */
   touch(member, actor) {
@@ -32281,7 +32315,10 @@ var FakeGuildServer = class {
   async getGuild(actor) {
     const guild = this.myGuild(actor);
     const me = guild?.members.get(actor.userId);
-    if (guild && me) this.touch(me, actor);
+    if (guild && me) {
+      this.touch(me, actor);
+      this.reviewLeader(guild);
+    }
     return {
       guild: guild ? this.detail(guild) : null,
       me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,
@@ -33764,6 +33801,11 @@ var SettingsManager = class extends EventTarget {
     if (current[page] === key) return;
     this.update({ game: { guildSeen: { ...current, [page]: key } } });
   }
+  /** 지금 길드 레벨을 봤다고 적는다(`guildLevelUpNotice`의 키). */
+  rememberGuildLevel(key) {
+    if (this.get().game.guildLevelSeen === key) return;
+    this.update({ game: { guildLevelSeen: key } });
+  }
   /** 고대 지층 초기화 예고 창을 오늘 봤다고 적는다 — 같은 날 다시 띄우지 않는다. */
   rememberAncientResetSeen(day) {
     if (this.get().game.ancientResetSeen === day) return;
@@ -34026,9 +34068,20 @@ var FakeServer = class {
       return { id, element: relic.element, role: relic.role, squad: relic.squad };
     });
   }
+  /** 도시의 파견 시간은 길드 레벨 혜택을 덜어 내려보낸다 — 화면이 혜택을 다시 셈하지 않고 이 값을 그대로 적는다. */
   async getInteractionCities() {
     await this.delay();
-    return { cities: INTERACTION_CITIES.map((city) => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+    const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
+    return { cities: INTERACTION_CITIES.map((city) => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+  }
+  /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
+  async currentGuildPerks() {
+    try {
+      const { guild } = await this.guildBackend.getGuild(this.guildActor());
+      return guildPerks(guild?.level ?? 0);
+    } catch {
+      return guildPerks(0);
+    }
   }
   async getInteractionDispatch() {
     await this.delay();
@@ -34048,11 +34101,12 @@ var FakeServer = class {
     if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uD30C\uACAC \uC911\uC778 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     const error = validateInteractionFormation(request.party, this.state.owned);
     if (error) throw new GameApiError("INVALID_STATE", `\uAD50\uB958 \uD3B8\uC131\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4: ${error}`);
+    const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
     const now = this.now();
     const traits = this.interactionTraits(request.party);
     const rewards = rollInteractionRewards(city, traits, this.random);
     const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}-${this.interactionSequence += 1}`;
-    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city)).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
+    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent) })).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
     const free = this.state.interaction.slots.findIndex((slot) => slot === null || slot.claimed);
     if (free >= 0) this.state.interaction.slots[free] = dispatch;
     else this.state.interaction.slots.push(dispatch);
@@ -35614,10 +35668,16 @@ var FakeServer = class {
     const cached = this.excavationHarvestResults.get(request.requestId);
     if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining }, fullBonus: { ...cached.fullBonus } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "\uC218\uD655 \uC694\uCCAD ID\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4.");
+    const { excavationBonusPercent } = await this.currentGuildPerks();
     const now = this.now();
     const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const capacity = excavationStorageCapacity(excavationProductionDisplayModel(settled.assignedRelicIds, RELICS, this.state.relicProgress).totalsPerHour, excavationStorageLimitSeconds(settled, now));
     const result = harvestIdleExcavation(settled, this.state.wallet, capacity);
+    for (const currency3 of EXCAVATION_CURRENCIES) {
+      const bonus = Math.min(guildExcavationBonus(result.granted[currency3], excavationBonusPercent), Math.max(0, WALLET_CAPS[currency3] - result.wallet[currency3]));
+      result.granted[currency3] += bonus;
+      result.wallet[currency3] += bonus;
+    }
     const harvested = Object.values(result.granted).some((amount) => (amount ?? 0) > 0);
     const nextMissions = harvested ? applyMissionEvent(this.state.missions, { type: "excavation_harvested" }, now) : this.state.missions;
     const nextState = { ...this.state, idleExcavation: result.state, wallet: result.wallet, missions: nextMissions };

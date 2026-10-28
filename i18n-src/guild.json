@@ -549,6 +549,46 @@
     "Vorteile ab Stufe 3",
     "Бонусы открываются на уровне 3"
   ],
+  "guild.info.perkShop": [
+    "公会商店等级栏开放",
+    "เปิดช่องเลเวลในร้านค้ากิลด์",
+    "Mở ô cấp ở Cửa hàng Bang hội",
+    "Slot level Toko Guild terbuka",
+    "Casilla de nivel de la Tienda del gremio",
+    "Espaço de nível da Loja da guilda",
+    "Stufenplatz im Gildenshop frei",
+    "Ячейка уровня в Магазине гильдии"
+  ],
+  "guild.levelUp.title": [
+    "公会升级",
+    "กิลด์เลเวลอัป",
+    "Bang hội lên cấp",
+    "Guild naik level",
+    "El gremio sube de nivel",
+    "A guilda subiu de nível",
+    "Gilden-Stufenaufstieg",
+    "Гильдия повысила уровень"
+  ],
+  "guild.levelUp.message": [
+    "公会已升至 Lv.{level}。",
+    "กิลด์ขึ้นเป็น Lv.{level} แล้ว",
+    "Bang hội đã đạt Lv.{level}.",
+    "Guild mencapai Lv.{level}.",
+    "El gremio alcanzó Nv.{level}.",
+    "A guilda alcançou Nv.{level}.",
+    "Die Gilde hat Lv.{level} erreicht.",
+    "Гильдия достигла ур. {level}."
+  ],
+  "guild.levelUp.ok": [
+    "确定",
+    "ตกลง",
+    "OK",
+    "OK",
+    "Aceptar",
+    "OK",
+    "OK",
+    "ОК"
+  ],
   "guild.info.noticeEmpty": [
     "暂无公告",
     "ไม่มีประกาศ",

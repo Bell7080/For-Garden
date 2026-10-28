@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { GUILD_ATTENDANCE_CYCLE, GUILD_LEVELS, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, guildCan, type GuildAction, type GuildRole } from "../../src/core/guild";
+import { GUILD_ATTENDANCE_CYCLE, GUILD_LEADER_TRANSFER_DAYS, GUILD_LEVELS, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, guildCan, type GuildAction, type GuildRole } from "../../src/core/guild";
 import { contentUnlockLevel } from "../../src/core/contentUnlock";
 import { GUILD_WAR_GRUNTS } from "../../src/core/guildWar";
 
@@ -21,6 +21,13 @@ describe("길드 SQL 표", () => {
     const shopSql = readFileSync(new URL("../../supabase/migrations/20261110000000_guild_shop_tabs.sql", import.meta.url), "utf8");
     const json = /select '(\[\{"productId".*?\])'::jsonb/.exec(shopSql)?.[1];
     expect(JSON.parse(json!)).toEqual(GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, limit: p.limit, refresh: p.refresh, ...(p.minGuildLevel ? { minGuildLevel: p.minGuildLevel } : {}) })));
+  });
+
+  it("길드장 자동 위임의 날수와 후계 순서가 TS와 같다", () => {
+    const succession = readFileSync(new URL("../../supabase/migrations/20261111000000_guild_leader_succession.sql", import.meta.url), "utf8");
+    expect(succession).toContain(`interval '${GUILD_LEADER_TRANSFER_DAYS} days'`);
+    // guildSuccessor: 부길드장·임원만 · 누적 기여도 → 직위 → 가입 시각 → id 순.
+    expect(succession).toMatch(/role in \('vice','officer'\)\s+order by contribution_total desc, case role when 'vice' then 2 else 1 end desc, joined_at asc, player_id::text asc/);
   });
 
   it("개방 레벨이 TS와 같다", () => {

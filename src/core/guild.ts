@@ -92,6 +92,26 @@ export function guildPerks(level: number): GuildPerks {
   };
 }
 
+/**
+ * 길드 레벨업 알림. 본 값은 기기에 `길드 id:레벨`로 남는다(`settings.game.guildLevelSeen`). 같은 길드에서 본 레벨보다 올랐을
+ * 때만 띄우고(`from`이 그 전 레벨), 처음 보는 길드(창설·가입·옮김)는 띄우지 않고 적어 두기만 한다.
+ */
+export function guildLevelUpNotice(seen: string, guildId: string, level: number): { key: string; from: number | null } {
+  const key = `${guildId}:${level}`;
+  const [seenId, seenLevel] = [seen.slice(0, seen.lastIndexOf(":")), Number(seen.slice(seen.lastIndexOf(":") + 1))];
+  return { key, from: seenId === guildId && Number.isInteger(seenLevel) && seenLevel < level ? seenLevel : null };
+}
+
+/** 레벨 혜택이 줄인 교류 파견 시간(분). 반올림하고 1분 아래로는 내리지 않는다. */
+export function guildDispatchMinutes(minutes: number, reductionPercent: number): number {
+  return Math.max(1, Math.round(minutes * (100 - reductionPercent) / 100));
+}
+
+/** 레벨 혜택이 발굴 수확에 얹는 몫 — 실제로 걷은 양의 몇 %를 내림한 정수다. */
+export function guildExcavationBonus(harvested: number, bonusPercent: number): number {
+  return Math.floor(Math.max(0, harvested) * bonusPercent / 100);
+}
+
 // ── 이름 ───────────────────────────────────────────────────────────────────────
 
 export type GuildNameProblem = "empty" | "short" | "long" | "invalid";

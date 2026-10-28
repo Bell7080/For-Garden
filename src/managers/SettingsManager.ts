@@ -60,6 +60,12 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { guildSeen: { ...current, [page]: key } } });
   }
 
+  /** 지금 길드 레벨을 봤다고 적는다(`guildLevelUpNotice`의 키). */
+  rememberGuildLevel(key: string): void {
+    if (this.get().game.guildLevelSeen === key) return;
+    this.update({ game: { guildLevelSeen: key } });
+  }
+
   /** 고대 지층 초기화 예고 창을 오늘 봤다고 적는다 — 같은 날 다시 띄우지 않는다. */
   rememberAncientResetSeen(day: string): void {
     if (this.get().game.ancientResetSeen === day) return;

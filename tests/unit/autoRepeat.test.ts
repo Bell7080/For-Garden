@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_AUTO_REPEAT_OPTIONS, nextAutoRepeatStep, normalizeAutoRepeatOptions, pickAutoDrink, type AutoRepeatOptions } from "../../src/core/autoRepeat";
+import { AUTO_REPEAT_MAX_RUNS, DEFAULT_AUTO_REPEAT_OPTIONS, autoRepeatRunCap, nextAutoRepeatStep, normalizeAutoRepeatOptions, pickAutoDrink, type AutoRepeatOptions } from "../../src/core/autoRepeat";
 
 const options = (patch: Partial<AutoRepeatOptions> = {}): AutoRepeatOptions => ({ ...DEFAULT_AUTO_REPEAT_OPTIONS, ...patch });
 const drink = { itemId: "stamina-tonic", quantity: 2, amount: 60 };
@@ -14,9 +14,16 @@ describe("자동 전투 다음 걸음", () => {
     expect(nextAutoRepeatStep({ options: options({ stopOnDefeat: false }), completed: 1, won: false, stamina: 30, staminaCost: 10, drinks: [] })).toEqual({ kind: "continue" });
   });
 
-  it("정한 횟수를 채우면 멈추고, 무제한은 멈추지 않는다", () => {
+  it("정한 횟수를 채우면 멈춘다", () => {
     expect(nextAutoRepeatStep({ options: options({ runs: 5 }), completed: 5, won: true, stamina: 99, staminaCost: 10, drinks: [] })).toEqual({ kind: "stop", reason: "done" });
-    expect(nextAutoRepeatStep({ options: options({ runs: 0 }), completed: 500, won: true, stamina: 99, staminaCost: 10, drinks: [] })).toEqual({ kind: "continue" });
+    expect(nextAutoRepeatStep({ options: options({ runs: 5 }), completed: 4, won: true, stamina: 99, staminaCost: 10, drinks: [] })).toEqual({ kind: "continue" });
+  });
+
+  it("횟수 막대의 끝은 스테미나(자동 사용을 켜면 병까지)가 정한다", () => {
+    expect(autoRepeatRunCap({ stamina: 64, staminaCost: 10, drinkStamina: 120, autoDrink: false })).toBe(6);
+    expect(autoRepeatRunCap({ stamina: 64, staminaCost: 10, drinkStamina: 120, autoDrink: true })).toBe(18);
+    expect(autoRepeatRunCap({ stamina: 5, staminaCost: 10, drinkStamina: 0, autoDrink: true })).toBe(0);
+    expect(autoRepeatRunCap({ stamina: 9999, staminaCost: 10, drinkStamina: 0, autoDrink: false })).toBe(AUTO_REPEAT_MAX_RUNS);
   });
 
   it("스테미나가 모자라면 자동 사용을 켰을 때만 병을 딴다", () => {
@@ -34,7 +41,9 @@ describe("자동 전투 다음 걸음", () => {
   });
 
   it("저장 값은 선택지 안으로 좁힌다", () => {
-    expect(normalizeAutoRepeatOptions({ runs: 7, stopOnDefeat: "yes", autoDrink: true })).toEqual({ runs: 10, stopOnDefeat: true, autoDrink: true });
+    expect(normalizeAutoRepeatOptions({ runs: 7, stopOnDefeat: "yes", autoDrink: true })).toEqual({ runs: 7, stopOnDefeat: true, autoDrink: true });
+    expect(normalizeAutoRepeatOptions({ runs: 0 }).runs).toBe(10);
+    expect(normalizeAutoRepeatOptions({ runs: AUTO_REPEAT_MAX_RUNS + 1 }).runs).toBe(10);
     expect(normalizeAutoRepeatOptions(undefined)).toEqual(DEFAULT_AUTO_REPEAT_OPTIONS);
   });
 });

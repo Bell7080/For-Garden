@@ -9,8 +9,9 @@ import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
-import { DUNGEON_LOBBY, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
+import { DUNGEON_LOBBY, dungeonActionButtonWidth, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
 import type { DungeonTheme } from "./dungeonTheme";
+import { DUNGEON_RUN_TONE } from "./dungeonRunPopupLayout";
 import { EnemyInfoPopup } from "./EnemyInfoPopup";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer } from "./holo";
@@ -68,14 +69,17 @@ export interface DungeonLobbyState {
   sortieCost: number;
   sortieAffordable: boolean;
   sortieEnabled: boolean;
-  /** 소탕 창을 열 수 있는가(이긴 단계). 횟수·소탕권은 그 창(`openSweepPopup`)이 고른다. */
+  /** 소탕 창을 열 수 있는가(이긴 단계). 횟수·소탕권은 그 창(`openDungeonRunPopup`)이 고른다. */
   sweepEnabled: boolean;
+  /** 자동 전투 창을 열 수 있는가(열린 단계). 횟수·옵션은 같은 횟수 창이 고른다. */
+  autoEnabled: boolean;
 }
 
 export interface DungeonLobbyHandlers {
   onSelectTier: (id: string) => void;
   onSortie: () => void;
   onSweep: () => void;
+  onAuto: () => void;
 }
 
 export interface DungeonLobbyOptions {
@@ -403,24 +407,38 @@ export class DungeonLobby {
   }
 
   /** 출격·소탕. 출격은 한 판의 비용을 버튼 안에서 말하고, 소탕의 비용은 소탕 창이 말한다. */
+  /**
+   * 조작 줄 — **왼쪽 자동 전투 · 가운데 출격 · 오른쪽 소탕**. 자동 전투는 전투 안이 아니라 여기서 건다 —
+   * 몇 판을 돌지 고르는 일은 싸우기 전의 결정이라, 판 한가운데의 칩으로 두면 첫 판은 늘 손으로 들어가야 했다.
+   * 두 곁 버튼은 횟수 창과 같은 색(`DUNGEON_RUN_TONE` — 자동 전투 비취 · 소탕 호박)의 윗선을 달아 어느 창을 여는지
+   * 미리 말한다. 주 조작인 출격만 강조 판이고 한 뼘 넓다.
+   */
   private addActions(state: DungeonLobbyState): void {
     const { scene } = this;
-    const { y, width, height } = DUNGEON_LOBBY.action;
+    const { y, height } = DUNGEON_LOBBY.action;
     const { theme } = this.options;
-    const sortie = new Button(scene, dungeonActionButtonX(0), y, {
-      width, height, label: t("dungeon.sortie"), variant: "primary", fill: theme.deep, accentColor: theme.accent, accentTextColor: theme.accentText, decorDots: true,
+    const auto = new Button(scene, dungeonActionButtonX(0), y, {
+      width: dungeonActionButtonWidth(0), height, label: t("autoRepeat.button"), icon: "auto", fill: theme.deep, fontSize: 30,
+      accentColor: DUNGEON_RUN_TONE.auto.accent, accentTextColor: DUNGEON_RUN_TONE.auto.accentText,
+      onClick: () => this.handlers.onAuto(),
+    });
+    auto.fitLabel(dungeonActionButtonWidth(0) - 80);
+    auto.setEnabled(state.autoEnabled);
+    const sortie = new Button(scene, dungeonActionButtonX(1), y, {
+      width: dungeonActionButtonWidth(1), height, label: t("dungeon.sortie"), variant: "primary", fill: theme.deep, accentColor: theme.accent, accentTextColor: theme.accentText, decorDots: true,
       cost: { icon: "currency-stamina", amount: state.sortieCost, affordable: state.sortieAffordable },
       onClick: () => this.handlers.onSortie(),
     });
     sortie.setEnabled(state.sortieEnabled);
-    const sweep = new Button(scene, dungeonActionButtonX(1), y, {
+    const sweep = new Button(scene, dungeonActionButtonX(2), y, {
       // 꺼져 있어도 판이 보여야 자리가 읽힌다 — 기본 유리판은 원화 위에서 글자만 남았다.
-      width, height, label: t("dungeon.sweep"), fill: theme.deep,
+      width: dungeonActionButtonWidth(2), height, label: t("dungeon.sweep"), fill: theme.deep, fontSize: 30,
+      accentColor: DUNGEON_RUN_TONE.sweep.accent, accentTextColor: DUNGEON_RUN_TONE.sweep.accentText,
       onClick: () => this.handlers.onSweep(),
     });
     sweep.setEnabled(state.sweepEnabled);
-    // 공용 꺼짐(0.35)은 밝은 원화 위에서 판째 사라져 자리가 읽히지 않았다 — 입구의 두 버튼은 조금 덜 흐린다.
-    for (const button of [sortie, sweep]) if (button.alpha < 1) button.setAlpha(0.62);
-    this.layer.add([sortie, sweep]);
+    // 공용 꺼짐(0.35)은 밝은 원화 위에서 판째 사라져 자리가 읽히지 않았다 — 입구의 버튼은 조금 덜 흐린다.
+    for (const button of [auto, sortie, sweep]) if (button.alpha < 1) button.setAlpha(0.62);
+    this.layer.add([auto, sortie, sweep]);
   }
 }

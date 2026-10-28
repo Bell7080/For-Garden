@@ -86,7 +86,6 @@ import {
   type BattleSpeed,
 } from "../core/battleControls";
 import { ControlChip } from "../ui/ControlChip";
-import { openAutoRepeatPopup } from "../ui/AutoRepeatPopup";
 import { BattlePauseButton } from "../ui/BattlePauseButton";
 import { battlePauseActions } from "../core/battlePauseMenu";
 import { EffectOverlayScene } from "./EffectOverlayScene";
@@ -3230,20 +3229,19 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /**
-   * **자동 전투 토글** — 던전(대작전·현상수배) 판에서만, 우하단 조작 줄의 배속 칩 바로 위에 선다.
-   * 꺼져 있으면 누를 때 편성 화면과 같은 옵션 창이 열리고 「시작」하면 **지금 판이 첫 판**으로 세어진다.
-   * 켜져 있으면 진행(「자동 n/N」)을 금빛으로 말하고, 누르면 지금 판까지만 치르고 멈춘다(판 중간에 끊으면
-   * 이긴 판의 보상이 어디로 가는지 흐려진다). 멈춤 예약 중에 다시 누르면 예약을 거둔다.
+   * **자동 전투 칩** — 던전 입구에서 건 자동 전투가 **돌고 있을 때만** 우하단 조작 줄의 배속 칩 바로 위에 선다.
+   * 거는 자리는 입구(`openDungeonAutoBattle`)라 꺼진 판에는 칩이 없다. 진행(「자동 n/N」)을 금빛으로 말하고,
+   * 누르면 지금 판까지만 치르고 멈춘다(판 중간에 끊으면 이긴 판의 보상이 어디로 가는지 흐려진다). 멈춤 예약
+   * 중에 다시 누르면 예약을 거둔다.
    */
   private buildAutoRepeatChip(): void {
     const content = this.dungeonContent();
-    if (!content) return;
+    if (!content || !autoRepeat.activeFor(content)) return;
     const label = (): string => {
       const run = autoRepeat.activeFor(content);
       if (!run) return t("autoRepeat.button");
       if (run.cancelled) return t("autoRepeat.chip.stopping");
-      const total = run.options.runs;
-      return total > 0 ? t("autoRepeat.chip.progress", { done: run.completed + 1, total }) : t("autoRepeat.chip.endless", { done: run.completed + 1 });
+      return t("autoRepeat.chip.progress", { done: run.completed + 1, total: run.options.runs });
     };
     const refresh = (): void => {
       const run = autoRepeat.activeFor(content);
@@ -3256,20 +3254,9 @@ export class BattleScene extends Phaser.Scene {
       onClick: () => {
         if (this.finished) return;
         const run = autoRepeat.activeFor(content);
-        if (run) {
-          if (run.cancelled) autoRepeat.resume(); else autoRepeat.cancel();
-          refresh();
-          return;
-        }
-        openAutoRepeatPopup(this, this.buffPopups, (options) => {
-          if (this.finished) return;
-          autoRepeat.start(content, options);
-          // 자동 전투는 손이 없는 판이라 궁극기도 자동이다(편성 화면에서 시작할 때와 같다).
-          this.autoUltimate = true;
-          this.autoChip.setLabel(t("battle.chip.autoOn")).setActive(true);
-          refresh();
-          this.refreshDebug();
-        });
+        if (!run) return;
+        if (run.cancelled) autoRepeat.resume(); else autoRepeat.cancel();
+        refresh();
       },
     });
     chip.setDepth(BATTLE_CONTROLS.depth);
@@ -3297,8 +3284,7 @@ export class BattleScene extends Phaser.Scene {
       const stopped = autoRepeat.takeStopped();
       return { kind: "stopped", label: t(`autoRepeat.stopped.${decision.reason}`, { done: stopped?.completed ?? run.completed, wins: stopped?.wins ?? run.wins }) };
     }
-    const total = run.options.runs;
-    const progress = total > 0 ? t("autoRepeat.progress", { done: run.completed, total }) : t("autoRepeat.progressEndless", { done: run.completed });
+    const progress = t("autoRepeat.progress", { done: run.completed, total: run.options.runs });
     return {
       kind: "countdown",
       label: decision.kind === "drink" ? t("autoRepeat.nextWithDrink", { progress }) : t("autoRepeat.next", { progress }),

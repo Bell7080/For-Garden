@@ -3,7 +3,7 @@ import { BASE_WIDTH } from "../../src/config/gameConfig";
 import { BOUNTY_TIERS } from "../../src/data/bounty";
 import { CAKE_OPERATION_TIERS } from "../../src/data/cakeOperation";
 import {
-  DUNGEON_LOBBY, dungeonActionButtonX, dungeonActionFitsAboveBackButton, dungeonLineupSpot,
+  DUNGEON_LOBBY, dungeonActionButtonWidth, dungeonActionButtonX, dungeonActionFitsAboveBackButton, dungeonLineupSpot,
   dungeonStageBounds, dungeonStripBounds, dungeonStripChipX, dungeonSummaryCard, dungeonSummaryTop,
 } from "../../src/ui/dungeonLobbyLayout";
 import { DUNGEON_THEME } from "../../src/ui/dungeonTheme";
@@ -63,8 +63,16 @@ describe("던전 입구 배치표", () => {
     expect(BASE_WIDTH / 2 + width / 2 + arrow.outset + halfArrow).toBeLessThanOrEqual(BASE_WIDTH);
   });
 
-  it("조작 버튼은 화면 가운데를 기준으로 균등하게 선다", () => {
-    expect((dungeonActionButtonX(0) + dungeonActionButtonX(1)) / 2).toBeCloseTo(BASE_WIDTH / 2, 5);
+  it("조작 버튼 셋은 출격을 가운데에 두고 겹치지 않으며 요약 카드 줄과 같은 폭에 선다", () => {
+    expect(dungeonActionButtonX(1)).toBeCloseTo(BASE_WIDTH / 2, 5);
+    expect((dungeonActionButtonX(0) + dungeonActionButtonX(2)) / 2).toBeCloseTo(BASE_WIDTH / 2, 5);
+    expect(dungeonActionButtonWidth(1)).toBeGreaterThan(dungeonActionButtonWidth(0));
+    for (let index = 1; index < 3; index += 1) {
+      expect(dungeonActionButtonX(index) - dungeonActionButtonWidth(index) / 2).toBeGreaterThan(dungeonActionButtonX(index - 1) + dungeonActionButtonWidth(index - 1) / 2);
+    }
+    const left = dungeonActionButtonX(0) - dungeonActionButtonWidth(0) / 2;
+    const cardLeft = dungeonSummaryCard(0).x - dungeonSummaryCard(0).width / 2;
+    expect(left).toBeCloseTo(cardLeft, 5);
   });
 
   /** 두 카드는 화면 안·가운데에 서고, 다섯 속성 뱃지가 전투력 숫자 자리(일곱 자리)를 파고들지 않는다. */

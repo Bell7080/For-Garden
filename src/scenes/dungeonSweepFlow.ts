@@ -8,10 +8,13 @@ import { session } from "../state/session";
 import type { PopupLayer } from "../ui/PopupLayer";
 import { dungeonRewardItems, openRewardPopup } from "../ui/RewardPopup";
 import { withGreatSuccessBonus } from "../ui/rewardPopupModel";
-import { openSweepPopup } from "../ui/SweepPopup";
+import { openDungeonRunPopup } from "../ui/DungeonRunPopup";
 import { playSweepSkirmish } from "../ui/SweepSkirmish";
-import { autoRepeat, pickAutoDrink } from "../managers/AutoRepeatManager";
-import { InventoryManager } from "../managers/InventoryManager";
+import { autoRepeat } from "../managers/AutoRepeatManager";
+import { settingsManager } from "../managers/SettingsManager";
+import type { AutoRepeatOptions } from "../core/autoRepeat";
+import type { CurrencyIconKey } from "../ui/currencyIcons";
+import { enterContentBattle } from "./contentBattleEntry";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
 
@@ -43,7 +46,7 @@ export interface DungeonSweepFlow {
 /**
  * 던전 입구의 소탕 한 벌 — **소탕 창 → 연출 → 영수증**. 현상수배와 치즈케이크 대작전이 같은 길을 지난다.
  *
- * 배율은 소탕 창(`openSweepPopup`)이 고르고, 누르면 서버 요청과 소탕 연출(`playSweepSkirmish`)이 **나란히**
+ * 횟수는 횟수 창(`openDungeonRunPopup`)이 고르고, 누르면 서버 요청과 소탕 연출(`playSweepSkirmish`)이 **나란히**
  * 돈다 — 연출이 결과를 기다리게 하지도, 결과가 연출을 끊지도 않는다. 둘 다 끝나면 영수증이 경험치
  * 블록과 함께 열린다. 거절되면 연출을 곧바로 걷고 아무것도 알리지 않는다(지급이 서지 않았다).
  */
@@ -61,11 +64,13 @@ export async function openDungeonSweep(flow: DungeonSweepFlow): Promise<void> {
     if (scene.scene.isActive()) flow.onFailed?.();
     return;
   } finally { flow.setBusy(false); }
-  openSweepPopup(scene, popups, {
+  openDungeonRunPopup(scene, popups, {
+    mode: "sweep",
     tierName: flow.tierName,
     level: flow.level,
     cost: flow.cost,
     cleared: flow.cleared,
+    recharge: new StaminaPopup(scene, popups, gameApi),
     membership: () => membership,
     tickets: () => sweepTicketState(membership, flow.dailyAdRewards()),
     onWatchAd: async () => {
@@ -78,18 +83,49 @@ export async function openDungeonSweep(flow: DungeonSweepFlow): Promise<void> {
         // 지급이 서지 않았다 — 가방과 횟수는 그대로다.
       }
     },
-    drinkCount: () => autoRepeat.drinks().reduce((sum, drink) => sum + drink.quantity, 0),
-    onUseDrink: async () => {
-      const drink = pickAutoDrink(autoRepeat.drinks());
-      if (!drink) return;
-      try {
-        await new InventoryManager(session).useConsumable(gameApi, drink.itemId);
-      } catch {
-        // 따지 못했다 — 가방과 스테미나는 그대로다.
-      }
-    },
-    onOpenStamina: () => new StaminaPopup(scene, popups, gameApi).open(),
     onConfirm: (count) => void run(flow, count),
+  });
+}
+
+export interface DungeonAutoBattleFlow {
+  scene: Phaser.Scene;
+  popups: PopupLayer;
+  content: { content: "cake" | "bounty"; tierId: string };
+  tierName: string;
+  level: number;
+  staminaCost: number;
+  reward: { icon: CurrencyIconKey; amount: number };
+  /** 편성이 비었으면 편성 화면부터 연다 — 자동 전투는 지금 편성 그대로 출격한다. */
+  openParty: () => void;
+  setBusy: (busy: boolean) => void;
+}
+
+/**
+ * 던전 입구의 **자동 전투** — 횟수 창(`openDungeonRunPopup`의 `auto`)에서 횟수·옵션을 고르고 시작하면 지금
+ * 편성 그대로 곧장 첫 판에 들어간다. 판 사이의 넘김은 결과판의 카운트다운이, 멈춤은 그 띠의 「중지」와
+ * 전투 화면의 자동 칩이 맡는다. 입장이 거절되면 자동 전투도 시작하지 않은 것이다.
+ */
+export function openDungeonAutoBattle(flow: DungeonAutoBattleFlow): void {
+  const { scene, popups } = flow;
+  if (relicCollection.validParty.length === 0) { flow.openParty(); return; }
+  openDungeonRunPopup(scene, popups, {
+    mode: "auto",
+    tierName: flow.tierName,
+    level: flow.level,
+    staminaCost: flow.staminaCost,
+    reward: flow.reward,
+    recharge: new StaminaPopup(scene, popups, gameApi),
+    drinks: () => autoRepeat.drinks(),
+    initial: settingsManager.get().game.autoRepeat,
+    save: (options: AutoRepeatOptions) => settingsManager.update({ game: { autoRepeat: { ...options } } }),
+    onStart: (options) => {
+      autoRepeat.start(flow.content, options);
+      flow.setBusy(true);
+      void enterContentBattle(scene, flow.content).catch(() => {
+        autoRepeat.clear();
+        if (scene.scene.isActive()) flow.setBusy(false);
+      });
+    },
   });
 }
 

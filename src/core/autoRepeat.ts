@@ -8,9 +8,12 @@
  * 씬이 조건을 저마다 적으면 "졌는데 다음 판이 열렸다"가 생긴다.
  */
 
-/** 반복 횟수 선택지. 0은 「스테미나가 떨어질 때까지」다. */
-export const AUTO_REPEAT_RUN_CHOICES = [5, 10, 20, 50, 0] as const;
-export type AutoRepeatRuns = (typeof AUTO_REPEAT_RUN_CHOICES)[number];
+/**
+ * 반복 횟수의 끝. 횟수는 입구의 자동 전투 창이 **스테미나가 허락하는 만큼** 막대로 고른다(1부터).
+ * 끝없이 도는 선택지는 두지 않는다 — 막대의 MAX가 곧 「지금 스테미나로 돌 수 있는 만큼」이다.
+ */
+export const AUTO_REPEAT_MAX_RUNS = 99;
+export type AutoRepeatRuns = number;
 
 export interface AutoRepeatOptions {
   runs: AutoRepeatRuns;
@@ -42,12 +45,12 @@ export type AutoRepeatDecision =
   | { kind: "drink"; itemId: string }
   | { kind: "stop"; reason: AutoRepeatStopReason };
 
-/** 저장 값을 선택지 안으로 좁힌다. */
+/** 저장 값을 범위(1~`AUTO_REPEAT_MAX_RUNS`) 안으로 좁힌다. 옛 무제한(0)은 기본값으로 돌아간다. */
 export function normalizeAutoRepeatOptions(value: unknown): AutoRepeatOptions {
   const record = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
   const d = DEFAULT_AUTO_REPEAT_OPTIONS;
   return {
-    runs: (AUTO_REPEAT_RUN_CHOICES as readonly number[]).includes(record.runs as number) ? record.runs as AutoRepeatRuns : d.runs,
+    runs: Number.isInteger(record.runs) && (record.runs as number) >= 1 && (record.runs as number) <= AUTO_REPEAT_MAX_RUNS ? record.runs as number : d.runs,
     stopOnDefeat: typeof record.stopOnDefeat === "boolean" ? record.stopOnDefeat : d.stopOnDefeat,
     autoDrink: typeof record.autoDrink === "boolean" ? record.autoDrink : d.autoDrink,
   };
@@ -83,4 +86,16 @@ export function nextAutoRepeatStep(input: {
   if (input.stamina >= input.staminaCost) return { kind: "continue" };
   const drink = options.autoDrink ? pickAutoDrink(input.drinks) : undefined;
   return drink ? { kind: "drink", itemId: drink.itemId } : { kind: "stop", reason: "stamina" };
+}
+
+/**
+ * 지금 스테미나로 돌 수 있는 판 수 — 자동 전투 창 막대의 끝(MAX)이다.
+ *
+ * 드링크 자동 사용을 켰으면 가방의 병이 채울 몫까지 센다(병은 모자랄 때만 딴다). 진 판은 스테미나를
+ * 쓰지 않지만 몇 판을 질지는 모르므로 모두 이긴다고 보고 잰다. 한 판도 못 돌면 0이다.
+ */
+export function autoRepeatRunCap(input: { stamina: number; staminaCost: number; drinkStamina: number; autoDrink: boolean }): number {
+  if (input.staminaCost <= 0) return AUTO_REPEAT_MAX_RUNS;
+  const pool = input.stamina + (input.autoDrink ? Math.max(0, input.drinkStamina) : 0);
+  return Math.max(0, Math.min(AUTO_REPEAT_MAX_RUNS, Math.floor(pool / input.staminaCost)));
 }

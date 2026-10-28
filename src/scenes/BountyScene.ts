@@ -6,7 +6,8 @@ import { bountyRunCost, bountyTierProgress, isBountyTierCleared } from "../core/
 import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
-import { openDungeonSweep } from "./dungeonSweepFlow";
+import { openDungeonAutoBattle, openDungeonSweep } from "./dungeonSweepFlow";
+import { autoRepeat } from "../managers/AutoRepeatManager";
 import { combatPower } from "../core/combatPower";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { getRelic } from "../data/relics";
@@ -70,6 +71,8 @@ export class BountyScene extends Phaser.Scene {
   create(): void {
     setDebugScene("bounty");
     this.busy = false;
+    // 입구에 섰다는 것은 자동 전투가 끝났다는 뜻이다(멈췄거나 전투에서 나왔다) — 남은 것을 비운다.
+    autoRepeat.clear();
     this.clearedTierIds = session.bounty.clearedTierIds;
     // 돌아온 등급 → 마지막으로 고른 등급 → 열린 가장 높은 등급 순이다(`refresh`가 잠긴 값을 고친다).
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.bounty;
@@ -88,6 +91,7 @@ export class BountyScene extends Phaser.Scene {
       onSelectTier: (id) => this.selectTier(id),
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
+      onAuto: () => this.autoBattle(),
     }, { theme: DUNGEON_THEME.bounty, fieldKey: battleFieldBackground("bounty") });
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
     this.refresh();
@@ -152,6 +156,7 @@ export class BountyScene extends Phaser.Scene {
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
       sortieEnabled: !this.busy && selected?.unlocked === true,
       sweepEnabled: !this.busy && selected?.cleared === true,
+      autoEnabled: !this.busy && selected?.unlocked === true,
     });
   }
 
@@ -164,6 +169,21 @@ export class BountyScene extends Phaser.Scene {
       return;
     }
     startScene(this, "party", { content: "bounty", tierId: this.selectedTierId } satisfies PartySceneData);
+  }
+
+  /** 자동 전투 — 횟수 창에서 고르고 시작하면 지금 편성 그대로 첫 판에 들어간다. */
+  private autoBattle(): void {
+    if (this.busy) return;
+    const tier = getBountyTier(this.selectedTierId);
+    openDungeonAutoBattle({
+      scene: this, popups: this.popups,
+      content: { content: "bounty", tierId: tier.id },
+      tierName: tier.name, level: bountyRoundLevel(tier.rounds[0]),
+      staminaCost: bountyRunCost(tier).staminaCost,
+      reward: { icon: "currency-gold", amount: tier.rewardGold },
+      openParty: () => startScene(this, "party", { content: "bounty", tierId: tier.id } satisfies PartySceneData),
+      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
+    });
   }
 
   /** 소탕 — 배율을 고르는 창을 열고, 누르면 연출과 서버 요청이 나란히 돈 뒤 영수증이 열린다. */

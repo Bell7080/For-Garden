@@ -24,6 +24,7 @@ import { adRewardToRewardItems } from "./rewardPopupModel";
 import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
 import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
+import { DUNGEON_RUN_CELL } from "./dungeonRunPopupLayout";
 import { UI_ICON } from "./icons";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -175,6 +176,40 @@ export class StaminaPopup {
     cell.add(button);
     if (source.kind === "consumable") this.paintSwap(cell, source);
     return cell;
+  }
+
+  /**
+   * **다른 창 안에 충전 칸 셋만 작게 세운다** — 던전의 자동 전투·소탕 창(`DungeonRunPopup`)이 부른다.
+   *
+   * 칸이 하는 일(병 따기 · 젬 확인 창 · 광고)은 이 창의 칸과 **같은 길**(`request`)을 지난다 — 같은
+   * 「충전」이 창마다 다른 규칙으로 돌면 한쪽만 확인 창을 건너뛰거나 광고 횟수를 다르게 센다. 다시
+   * 그리는 일은 부르는 창이 맡으므로 그 함수를 넘겨받는다. 병은 갈아 끼우는 화살표 없이 **가진 병 중
+   * 먼저 세울 것**을 고른다(작은 칸에 화살표까지 세우면 그림이 묻힌다).
+   */
+  mountCompact(view: Phaser.GameObjects.Container, area: { y: number; width: number; height: number; centers: readonly number[]; edge?: number }, repaint: () => void): void {
+    if (!this.repaint) void this.api.getStaminaRechargeStatus().then((status) => { this.rechargeStatus = status; this.repaint?.(); }, () => undefined);
+    this.repaint = repaint;
+    const full = session.wallet.stamina >= STAMINA_HOLD_LIMIT;
+    const C = DUNGEON_RUN_CELL;
+    STAMINA_RECHARGE_SOURCES.forEach((source, index) => {
+      const x = area.centers[index];
+      if (x === undefined) return;
+      if (source.kind === "consumable") {
+        const owned = source.itemIds.findIndex((itemId) => (session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0) > 0);
+        if (owned >= 0) this.tonicIndex = owned;
+      }
+      const cell = this.scene.add.container(x, area.y);
+      cell.add(drawLayer(this.scene, 0, 0, panelShape(area.width, area.height), { fill: 0x10151c, alpha: 0.94, edge: area.edge ?? COLOR.accent, edgeAlpha: 0.4 }));
+      const content = this.cellContent(source, full);
+      if (content.texture) addFramedIcon(this.scene, cell, C.frameX, C.frameY, C.frameSize, content.texture, { amount: content.owned === undefined ? undefined : formatCurrency(content.owned), plain: true });
+      cell.add(this.scene.add.text(C.gainX, C.gainY, `+${content.gain}`, textStyle({ role: "display", size: C.gainSize, color: TONE.value })).setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
+      cell.add(squeezeTextToWidth(this.scene.add.text(C.nameX, C.nameY, content.name, textStyle({ role: "emphasis", size: C.nameSize, color: COLOR.inkDim })).setOrigin(0.5), area.width / 2 - 4));
+      cell.add(new Button(this.scene, 0, C.buttonY, {
+        width: area.width - C.padX * 2, height: C.buttonHeight, label: content.label, fontSize: 22, variant: "primary",
+        cost: content.cost, art: content.art, onClick: () => this.request(source),
+      }).setEnabled(content.enabled && !full && !this.pending));
+      view.add(cell);
+    });
   }
 
   /** 세 수단이 화면에 세울 값. 회복량·값·남은 횟수는 전부 데이터에서 읽고 여기서 지어내지 않는다. */

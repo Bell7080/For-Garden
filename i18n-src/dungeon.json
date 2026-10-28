@@ -79,26 +79,6 @@
 "{name} · LV.{level}",
 "{name} · LV.{level}"
 ],
-"dungeon.sweep.needHave": [
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}",
-"{need} / {have}"
-],
-"dungeon.sweep.stamina": [
-"体力",
-"สตามินา",
-"Thể lực",
-"Stamina",
-"Estamina",
-"Estamina",
-"Ausdauer",
-"Выносливость"
-],
 "dungeon.sweep.membership": [
 "无需扫荡券即可扫荡。",
 "กวาดล้างได้โดยไม่ต้องใช้ตั๋วกวาดล้าง",
@@ -199,36 +179,6 @@
 "{used}/{limit}",
 "{used}/{limit}"
 ],
-"dungeon.sweep.drink": [
-"使用饮料",
-"ใช้เครื่องดื่ม",
-"Dùng nước",
-"Pakai Minuman",
-"Usar bebida",
-"Usar bebida",
-"Drink nutzen",
-"Выпить напиток"
-],
-"dungeon.sweep.drinkHeld": [
-"持有 {count}",
-"มี {count}",
-"Có {count}",
-"Punya {count}",
-"Tienes {count}",
-"Possui {count}",
-"Besitz {count}",
-"Есть {count}"
-],
-"dungeon.sweep.recharge": [
-"充值",
-"เติม",
-"Nạp",
-"Isi",
-"Recargar",
-"Recarregar",
-"Aufladen",
-"Пополнить"
-],
 "greatSuccess.stamp": [
 "大成功",
 "สำเร็จยิ่ง",
@@ -269,36 +219,6 @@
 "Auto-Kampf",
 "Автобой"
 ],
-"autoRepeat.runs": [
-"重复次数",
-"จำนวนรอบ",
-"Số lần lặp",
-"Jumlah Ulang",
-"Repeticiones",
-"Repetições",
-"Wiederholungen",
-"Повторы"
-],
-"autoRepeat.runs.count": [
-"{count}次",
-"{count} รอบ",
-"{count} lần",
-"{count}x",
-"{count} veces",
-"{count} vezes",
-"{count}×",
-"{count} раз"
-],
-"autoRepeat.runs.endless": [
-"无限",
-"ไม่จำกัด",
-"Không giới hạn",
-"Tanpa Batas",
-"Sin límite",
-"Sem limite",
-"Unbegrenzt",
-"Без лимита"
-],
 "autoRepeat.stopOnDefeat": [
 "失败时停止",
 "หยุดเมื่อแพ้",
@@ -318,16 +238,6 @@
 "Usar energéticos automaticamente",
 "Energydrinks automatisch nutzen",
 "Автоматически пить энергетики"
-],
-"autoRepeat.start": [
-"开始",
-"เริ่ม",
-"Bắt đầu",
-"Mulai",
-"Iniciar",
-"Iniciar",
-"Start",
-"Начать"
 ],
 "autoRepeat.stop": [
 "停止",
@@ -359,16 +269,6 @@
 "Auto {done}/{total}",
 "Авто {done}/{total}"
 ],
-"autoRepeat.chip.endless": [
-"自动 第{done}次",
-"อัตโนมัติ รอบ {done}",
-"Tự động lần {done}",
-"Otomatis ke-{done}",
-"Auto n.º {done}",
-"Auto nº {done}",
-"Auto #{done}",
-"Авто №{done}"
-],
 "autoRepeat.chip.stopping": [
 "本场后停止",
 "หยุดหลังรอบนี้",
@@ -388,16 +288,6 @@
 "Batalha automática {done}/{total}",
 "Auto-Kampf {done}/{total}",
 "Автобой {done}/{total}"
-],
-"autoRepeat.progressEndless": [
-"自动战斗 {done}次",
-"ต่อสู้อัตโนมัติ {done} รอบ",
-"Tự động đánh {done} lần",
-"Tempur Otomatis {done}x",
-"Combate automático ×{done}",
-"Batalha automática ×{done}",
-"Auto-Kampf ×{done}",
-"Автобой ×{done}"
 ],
 "autoRepeat.next": [
 "{progress} · 即将开始下一场",
@@ -458,5 +348,125 @@
 "Parado · {wins}/{done}",
 "Gestoppt · {wins}/{done}",
 "Остановлено · {wins}/{done}"
+],
+"dungeon.run.recharge": [
+"补充体力",
+"เติมสตามินา",
+"Hồi thể lực",
+"Isi Ulang Stamina",
+"Recargar estamina",
+"Recarregar estamina",
+"Ausdauer auffüllen",
+"Восполнить выносливость"
+],
+"dungeon.run.held": [
+"持有 {amount}",
+"มี {amount}",
+"Đang có {amount}",
+"Dimiliki {amount}",
+"Tienes {amount}",
+"Possui {amount}",
+"Besitz {amount}",
+"Есть {amount}"
+],
+"dungeon.run.ticketHeld": [
+"{name} 持有 {count}",
+"{name} มี {count}",
+"{name} đang có {count}",
+"{name} dimiliki {count}",
+"{name}: tienes {count}",
+"{name}: possui {count}",
+"{name}: Besitz {count}",
+"{name}: есть {count}"
+],
+"dungeon.run.count": [
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}",
+"{count} / {max}"
+],
+"dungeon.run.min": [
+"MIN",
+"MIN",
+"MIN",
+"MIN",
+"MIN",
+"MIN",
+"MIN",
+"MIN"
+],
+"dungeon.run.perRun": [
+"每次体力 {cost}",
+"สตามินา {cost} ต่อครั้ง",
+"{cost} thể lực mỗi lượt",
+"Stamina {cost} per putaran",
+"{cost} de estamina por intento",
+"{cost} de estamina por tentativa",
+"{cost} Ausdauer pro Durchgang",
+"{cost} выносливости за забег"
+],
+"dungeon.run.cost": [
+"预计消耗",
+"ค่าใช้จ่ายโดยประมาณ",
+"Tiêu hao dự kiến",
+"Perkiraan Biaya",
+"Coste estimado",
+"Custo estimado",
+"Erwartete Kosten",
+"Ожидаемые затраты"
+],
+"dungeon.run.rewardAuto": [
+"预计获得 · 全胜时",
+"รางวัลโดยประมาณ · หากชนะทั้งหมด",
+"Dự kiến nhận · nếu thắng hết",
+"Perkiraan Hadiah · jika menang semua",
+"Ganancia estimada · si ganas todas",
+"Ganho estimado · se vencer todas",
+"Erwarteter Ertrag · bei allen Siegen",
+"Ожидаемая награда · при всех победах"
+],
+"dungeon.run.short": [
+"不足",
+"ไม่พอ",
+"Thiếu",
+"Kurang",
+"Falta",
+"Falta",
+"Fehlt",
+"Не хватает"
+],
+"dungeon.run.drinks": [
+"最多使用 {count} 瓶饮料",
+"ใช้เครื่องดื่มสูงสุด {count} ขวด",
+"Dùng tối đa {count} chai nước",
+"Memakai hingga {count} minuman",
+"Usa hasta {count} bebidas",
+"Usa até {count} bebidas",
+"Nutzt bis zu {count} Getränke",
+"До {count} напитков"
+],
+"dungeon.run.startAuto": [
+"开始自动战斗",
+"เริ่มต่อสู้อัตโนมัติ",
+"Bắt đầu tự đánh",
+"Mulai Tempur Otomatis",
+"Iniciar combate automático",
+"Iniciar batalha automática",
+"Auto-Kampf starten",
+"Начать автобой"
+],
+"dungeon.run.startSweep": [
+"扫荡 {count} 次",
+"กวาดล้าง {count} ครั้ง",
+"Càn quét {count} lần",
+"Sapu Bersih {count}×",
+"Barrido ×{count}",
+"Varredura ×{count}",
+"{count}× Säubern",
+"Зачистка ×{count}"
 ]
 }

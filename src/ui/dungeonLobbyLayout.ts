@@ -63,7 +63,11 @@ export const DUNGEON_LOBBY = {
     element: { size: 42, step: 46, rightInset: 30 },
     reward: { icon: 88 },
   },
-  action: { y: 1590, width: 400, height: 116, gap: 32 },
+  /**
+   * 조작 줄 — 왼쪽 자동 전투 · 가운데 출격(주 조작이라 한 뼘 넓다) · 오른쪽 소탕. 셋과 틈의 합이 요약 카드 줄과
+   * 같은 폭(940)이라 위아래 두 줄의 양 끝이 맞는다.
+   */
+  action: { y: 1590, width: 340, sideWidth: 280, height: 116, gap: 20 },
 } as const;
 
 /** 무대의 위아래 끝. */
@@ -136,11 +140,19 @@ export function dungeonSummaryCard(index: 0 | 1): { x: number; width: number } {
     : { x: left + powerWidth + gap + rewardWidth / 2, width: rewardWidth };
 }
 
-/** 조작 버튼 `index`의 중심 x(0 = 출격, 1 = 소탕). */
+/** 조작 버튼 `index`의 폭(0 = 자동 전투, 1 = 출격, 2 = 소탕). */
+export function dungeonActionButtonWidth(index: number): number {
+  const { width, sideWidth } = DUNGEON_LOBBY.action;
+  return index === 1 ? width : sideWidth;
+}
+
+/** 조작 버튼 `index`의 중심 x(0 = 자동 전투, 1 = 출격, 2 = 소탕). */
 export function dungeonActionButtonX(index: number): number {
-  const { width, gap } = DUNGEON_LOBBY.action;
-  const span = 2 * width + gap;
-  return BASE_WIDTH / 2 - span / 2 + width / 2 + index * (width + gap);
+  const { gap } = DUNGEON_LOBBY.action;
+  const span = [0, 1, 2].reduce((sum, i) => sum + dungeonActionButtonWidth(i), 0) + gap * 2;
+  let x = BASE_WIDTH / 2 - span / 2;
+  for (let i = 0; i < index; i += 1) x += dungeonActionButtonWidth(i) + gap;
+  return x + dungeonActionButtonWidth(index) / 2;
 }
 
 /** 조작 줄 밑변이 우하단 뒤로가기 윗변보다 위인가. */

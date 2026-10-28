@@ -61,7 +61,6 @@ import { shrinkTextToWidth, squeezeTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
 import { autoRepeat } from "../managers/AutoRepeatManager";
-import { openAutoRepeatPopup } from "../ui/AutoRepeatPopup";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -184,7 +183,6 @@ export class PartyScene extends Phaser.Scene {
   /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
   private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
-  private autoRepeatButton?: Button;
   private partyTutorialPhase?: "move" | "hold" | "start";
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
@@ -265,7 +263,6 @@ export class PartyScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.autoRepeatButton = undefined;
     setDebugScene("party");
     this.partyTutorialPhase = this.content.content === "stage" && session.selectedStageId === "1-2" && tutorialManager.next() === "auto" ? "move" : undefined;
     // 직전 스토리 편성만 복원한다. 원정·발굴은 각 콘텐츠가 소유한 별도 저장 필드를 유지한다.
@@ -383,28 +380,6 @@ export class PartyScene extends Phaser.Scene {
         void this.beginEntry();
       },
     });
-
-    // **자동 전투는 던전(대작전·현상수배)에만 선다** — 같은 단계를 같은 편성으로 이어 도는 콘텐츠다.
-    // 전투 시작 바로 왼쪽에 한 뼘 작게 서서, 주 조작이 전투 시작이라는 것을 크기가 말한다.
-    const repeatContent = this.content.content === "cake" || this.content.content === "bounty" ? { content: this.content.content, tierId: this.content.tierId } : undefined;
-    if (repeatContent) {
-      const width = 190;
-      this.autoRepeatButton = new Button(this, cx - 280 - 18 - width / 2, BACK_SLOT.y, {
-        width,
-        height: 104,
-        label: t("autoRepeat.button"),
-        fontSize: 28,
-        onClick: () => {
-          if (this.isEnteringBattle || !this.ready()) return;
-          openAutoRepeatPopup(this, new PopupLayer(this, 2200), (options) => {
-            autoRepeat.start(repeatContent, options);
-            // 입장이 거절되면 자동 전투도 시작하지 않은 것이다.
-            void this.beginEntry().finally(() => { if (!this.isEnteringBattle) autoRepeat.clear(); });
-          });
-        },
-      });
-      this.autoRepeatButton.fitLabel(width - 24);
-    }
 
     addBackButton(this, () => this.leave());
 
@@ -1105,7 +1080,6 @@ export class PartyScene extends Phaser.Scene {
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
   private refreshButtonState(): void {
     this.startButton.setEnabled(this.ready() && !this.isEnteringBattle);
-    this.autoRepeatButton?.setEnabled(this.ready() && !this.isEnteringBattle);
   }
 
   /** 모든 실패 경로가 진입 잠금과 버튼을 함께 복구하도록 한곳에서 처리한다. */

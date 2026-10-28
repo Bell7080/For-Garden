@@ -8,7 +8,8 @@ import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLe
 import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
-import { openDungeonSweep } from "./dungeonSweepFlow";
+import { openDungeonAutoBattle, openDungeonSweep } from "./dungeonSweepFlow";
+import { autoRepeat } from "../managers/AutoRepeatManager";
 import { combatPower, groupCombatPower } from "../core/combatPower";
 import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
@@ -71,6 +72,8 @@ export class CakeOperationScene extends Phaser.Scene {
     prefetchBattlePuppets(relicCollection.validParty, CAKE_OPERATION_ENEMY_IDS);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
+    // 입구에 섰다는 것은 자동 전투가 끝났다는 뜻이다(멈췄거나 전투에서 나왔다) — 남은 것을 비운다.
+    autoRepeat.clear();
     // 돌아온 단계 → 마지막으로 고른 단계 → 마지막으로 이긴 단계의 다음 칸 순이다. 잠긴 값은 `refresh`가 고친다.
     const next = Math.min(session.cakeOperation.clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1);
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.cake;
@@ -95,6 +98,7 @@ export class CakeOperationScene extends Phaser.Scene {
       },
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
+      onAuto: () => this.autoBattle(),
     }, { theme: DUNGEON_THEME.cake, fieldKey: battleFieldBackground("cake") });
     this.refresh();
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
@@ -143,6 +147,7 @@ export class CakeOperationScene extends Phaser.Scene {
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
       sortieEnabled: !this.busy && isCakeTierUnlocked(tier.id, clearedIndex),
       sweepEnabled: !this.busy && cakeOperationTierIndex(tier.id) <= clearedIndex,
+      autoEnabled: !this.busy && isCakeTierUnlocked(tier.id, clearedIndex),
     });
   }
 
@@ -155,6 +160,21 @@ export class CakeOperationScene extends Phaser.Scene {
       return;
     }
     startScene(this, "party", { content: "cake", tierId: this.selectedTierId } satisfies PartySceneData);
+  }
+
+  /** 자동 전투 — 횟수 창에서 고르고 시작하면 지금 편성 그대로 첫 판에 들어간다. */
+  private autoBattle(): void {
+    if (this.busy) return;
+    const tier = this.selectedTier();
+    openDungeonAutoBattle({
+      scene: this, popups: this.popups,
+      content: { content: "cake", tierId: tier.id },
+      tierName: tier.name, level: cakeOperationEnemyDisplayLevel(tier).level,
+      staminaCost: cakeOperationRunCost(tier).staminaCost,
+      reward: { icon: "currency-cheesecake", amount: tier.rewardCheesecake },
+      openParty: () => startScene(this, "party", { content: "cake", tierId: tier.id } satisfies PartySceneData),
+      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
+    });
   }
 
   /** 소탕 — 배율을 고르는 창을 열고, 누르면 연출과 서버 요청이 나란히 돈 뒤 영수증이 열린다. */

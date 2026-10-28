@@ -1,31 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SWEEP_POPUP, sweepCountControlX, sweepPopupHeight } from "../../src/ui/sweepPopupLayout";
 import { SWEEP_SKIRMISH, sweepBandSlab, sweepLootArc, sweepLootPoint, sweepSkirmishBeats, sweepSkirmishDurationMs, sweepSkirmishTimeline } from "../../src/ui/sweepSkirmishLayout";
-
-describe("소탕 창 배치표", () => {
-  it("배율 줄의 조각은 겹치지 않고 판 안에 든다", () => {
-    const { step, plate, max } = SWEEP_POPUP.count;
-    const x = sweepCountControlX();
-    const spans: [number, number][] = [
-      [x.minus - step / 2, x.minus + step / 2], [x.plate - plate / 2, x.plate + plate / 2],
-      [x.plus - step / 2, x.plus + step / 2], [x.max - max / 2, x.max + max / 2],
-    ];
-    for (let index = 1; index < spans.length; index += 1) expect(spans[index][0]).toBeGreaterThan(spans[index - 1][1]);
-    expect(spans[0][0]).toBeGreaterThan(-SWEEP_POPUP.width / 2);
-    expect(spans[spans.length - 1][1]).toBeLessThan(SWEEP_POPUP.width / 2);
-  });
-
-  it("위에서부터 배율 → 드는 것 → 안내 → 받을 것 → 버튼 순으로 겹치지 않고 쌓인다", () => {
-    const L = SWEEP_POPUP;
-    expect(L.count.y + L.count.height / 2).toBeLessThan(L.cost.top);
-    expect(L.cost.top + L.cost.height).toBeLessThan(L.notice.y - L.notice.size);
-    expect(L.notice.y + L.notice.size).toBeLessThan(L.reward.titleY - 12);
-    expect(L.reward.y + L.reward.frame / 2).toBeLessThan(L.buttons.y - L.buttons.height / 2);
-    expect(sweepPopupHeight()).toBe(L.buttons.y + L.buttons.height / 2 + L.bottomPad);
-    // 두 버튼은 판 폭 안에 든다.
-    expect(L.buttons.width * 2 + L.buttons.gap).toBeLessThan(L.width - 80);
-  });
-});
 
 describe("소탕 연출", () => {
   it("애착 렐릭이 먼저 치고 마지막 한 방으로 끝나며, 박자는 앞으로만 흐른다", () => {

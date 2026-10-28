@@ -1102,12 +1102,16 @@
   아니라 **적 전투력 · 보상 카드 둘**이고 머리 띠가 테마 색으로 물든다(`dungeonSummaryCard`).
   **현상수배 단계 ID는 저장 키라 순서와 다르다**(`bounty-1`~`bounty-10`) — 위 단계를 깬 기록은
   아래 단계도 깬 것으로 센다(`isBountyTierCleared`).
-  **몇 번 소탕할지는 입구가 아니라 소탕 창이 고른다**(`openSweepPopup` + 자리 `sweepPopupLayout.ts`,
-  흐름 `scenes/dungeonSweepFlow.ts`). 입구 한 줄에 − 횟수 + MAX · 소탕권 · 광고가 붙어 서던 때는 무엇을
-  치르고 무엇을 받는지가 한눈에 읽히지 않았다. 창은 단계 이름 → 배율(− ×N + MAX) → 드는 것(스테미나 ·
-  소탕권이 `드는 수 / 가진 수`로, 배율마다 한 장씩) → 받을 것 → 취소·소탕 순이다. 소탕권이 모자라면 그
-  수가 붉고 **광고 버튼이 강조 판으로** 바뀌며 소탕이 꺼지고, 멤버십이면 소탕권 줄 대신 「소탕권 없이
-  소탕 가능.」이 선다. 판정은 창이 새로 짓지 않고 `sweepRefusal`·`maxSweepCount`를 읽는다.
+  **몇 번 돌지는 입구가 아니라 횟수 창이 고른다**(`openDungeonRunPopup` + 자리 `dungeonRunPopupLayout.ts`,
+  흐름 `scenes/dungeonSweepFlow.ts`). 입구의 조작 줄은 **자동 전투 · 출격 · 소탕** 셋이고(`dungeonActionButtonX`), 자동 전투와
+  소탕이 **같은 창 한 장**을 연다 — 위에서부터 단계 이름 → 큰 횟수(`N / 최대`)와 MIN·MAX → **− 막대 +**(끌어서 고른다,
+  `runSliderValue`) → 스테미나 충전 칸 셋(스테미나 창과 같은 경계 · `StaminaPopup.mountCompact` — 창 안에서 바로 채우면 막대 끝이
+  늘어난다) → 갈래 줄(자동 전투는 「패배 시 중단」·「드링크 자동 사용」 칩, 소탕은 소탕권 보유 + 광고 또는 멤버십 한 줄) → 예상 소모 |
+  예상 획득 → 확정 버튼이고, 취소는 판 밖 우하단 뒤로가기다. **두 창은 색 한 벌만 다르다**(`DUNGEON_RUN_TONE` — 자동 전투 비취,
+  소탕 호박). 막대의 끝은 소탕이 `maxSweepCount`, 자동 전투가 `autoRepeatRunCap`(스테미나 + 드링크 자동 사용을 켰을 때 가방의 병,
+  상한 `AUTO_REPEAT_MAX_RUNS`)이다 — 무제한 반복은 두지 않는다. 판정은 창이 새로 짓지 않고 `sweepRefusal`을 읽는다.
+  **자동 전투는 입구에서 시작한다** — 지금 편성(`session.party`)으로 곧바로 `enterContentBattle`을 지나고, 편성이 비었으면 편성 화면을
+  연다. 전투 화면에는 시작 버튼이 없고 돌고 있는 동안만 진행 칩(눌러 중지 예약)이 선다. 입구에 들어오면 남은 반복을 비운다.
   **소탕을 누르면 영수증이 곧바로 뜨지 않는다** — **그 콘텐츠의 전장 원화**(`battleFieldBackground`)를 깐
   가로 띠(`SweepSkirmish` + 시간표 `sweepSkirmishTimeline`)가 스윽 올라와 한 판을 짧은 만화로 대신한다:
   (전장이 비치도록 암전·누름을 옅게 둔다 — `dimAlpha`·`fieldOverlay`·`vignette`) 주고받기 → 먼지구름 속 투닥투닥 → 몰아치기 → 적이 빙글빙글 **날아가 별이 되고** → 애착 렐릭이 **뿅뿅**

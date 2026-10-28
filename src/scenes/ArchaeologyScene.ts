@@ -14,6 +14,7 @@ import { resolveArchaeologyFocusSite, siteRewardRating, type ArchaeologyPreviewR
 import { archaeologySitePopupLayout } from "../ui/archaeologySitePopupLayout";
 import { archaeologyRatingColor, STRATA_FOG_TONE } from "../ui/strataTones";
 import { ArchaeologyMapView } from "../ui/ArchaeologyMapView";
+import { addStrataCrystalBand } from "../ui/StrataCrystalBand";
 import { session } from "../state/session";
 import { canGrantRuneTraitAtLeast, canUpgradeRuneTraitGrade, RUNE_TRAIT_RULES } from "../core/runeTraits";
 import { RUNE_TRAIT_ITEMS } from "../data/runeTraits";
@@ -933,16 +934,19 @@ export class ArchaeologyScene extends Phaser.Scene {
           textStyle({ role: "emphasis", size: 21, color: COLOR.ink })).setOrigin(0.5).setStroke("#05070a", 5));
       });
 
-      // 결정: 방치로 맺힌 단계와 다음 단계까지 남은 시간. 맺힐 결정이 없는 유적에는 이 줄이 없다.
+      // 결정: 방치로 맺힌 단계와 다음 단계까지 남은 시간을 결정색 띠 한 장이 말한다. 맺힐 결정이 없는 유적에는 띠가 없다.
       if ((site.crystal?.length ?? 0) > 0) {
         const nextAt = state.nextCrystalAt === null ? null : Date.parse(state.nextCrystalAt);
         const crystalText = state.crystalStage > 0
           ? t("archaeology.crystal.stage", { stage: state.crystalStage, digs: modifiers.digs })
           : t("archaeology.crystal.none");
-        const nextText = nextAt !== null && Number.isFinite(nextAt) && nextAt > Date.now()
-          ? `  ·  ${t("archaeology.crystal.next", { time: formatCountdown(nextAt - Date.now()) })}` : "";
-        body.add(this.add.text(0, spot.crystalY, crystalText + nextText,
-          textStyle({ role: "emphasis", size: 25, color: state.crystalStage > 0 ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
+        const detail = nextAt !== null && Number.isFinite(nextAt) && nextAt > Date.now()
+          ? t("archaeology.crystal.next", { time: formatCountdown(nextAt - Date.now()) }) : undefined;
+        body.add(addStrataCrystalBand(this, 0, spot.crystal.y, {
+          width: spot.crystal.width, height: spot.crystal.height,
+          stage: state.crystalStage, maxStage: site.crystal?.length ?? 0, title: crystalText, detail,
+          still: motionPolicy(session.settings).nonEssentialDistanceFactor === 0,
+        }));
       }
 
       /*

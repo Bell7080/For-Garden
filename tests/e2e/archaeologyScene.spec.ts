@@ -3,6 +3,7 @@ import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapBurst } from "./canvasInput";
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { archaeologySitePopupLayout } from "../../src/ui/archaeologySitePopupLayout";
+import { ARCHAEOLOGY_SITES } from "../../src/data/archaeologySites";
 
 /**
  * 고고학 화면과 그 상점의 눈 검사.
@@ -56,15 +57,21 @@ async function startFirstArchaeologySite(page: Page): Promise<void> {
   await tapPreviewStart(page);
 }
 
+/** 결정이 맺히는 유적은 결정 띠만큼 창이 길어진다 — 화면과 같은 표에서 자리를 읽는다. */
+function previewLayout(siteId: string): ReturnType<typeof archaeologySitePopupLayout> {
+  const site = ARCHAEOLOGY_SITES.find((entry) => entry.id === siteId);
+  return archaeologySitePopupLayout(3, (site?.crystal?.length ?? 0) > 0);
+}
+
 /** 미리보기 창의 「탐사 시작」. 창 크기는 보상 줄 수에서 자라므로 자리도 그 표에서 읽는다. */
-async function tapPreviewStart(page: Page): Promise<void> {
-  const spot = archaeologySitePopupLayout(3);
+async function tapPreviewStart(page: Page, siteId = "garden-gate"): Promise<void> {
+  const spot = previewLayout(siteId);
   await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[1], BASE_HEIGHT / 2 + spot.buttonY);
 }
 
 /** 같은 창의 「닫기」. */
-async function tapPreviewClose(page: Page): Promise<void> {
-  const spot = archaeologySitePopupLayout(3);
+async function tapPreviewClose(page: Page, siteId = "garden-gate"): Promise<void> {
+  const spot = previewLayout(siteId);
   await tap(page, BASE_WIDTH / 2 + spot.buttonCenters[0], BASE_HEIGHT / 2 + spot.buttonY);
 }
 
@@ -233,9 +240,9 @@ test("유적 지도 이동 → 잠긴 유적 확인 → 열린 유적 미리보�
   await tap(page, sanctum.x, sanctum.y);
   await page.waitForTimeout(300);
   // 잠긴 미리보기의 시작 자리는 입력해도 판이 생기지 않는다.
-  await tapPreviewStart(page);
+  await tapPreviewStart(page, "deep-sanctum");
   expect(await page.evaluate(() => window.__PF_DEBUG?.archaeologyDig?.tiles.length ?? 0)).toBe(0);
-  await tapPreviewClose(page);
+  await tapPreviewClose(page, "deep-sanctum");
   await page.waitForTimeout(250);
 
   // 지도를 원위치로 되밀고 열린 첫 유적의 미리보기에서 탐사를 시작한다.

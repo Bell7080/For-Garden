@@ -7,13 +7,13 @@ const NOW = new Date("2026-03-10T00:00:00.000Z");
 const ago = (hours: number): string => new Date(NOW.getTime() - hours * HOUR).toISOString();
 
 describe("고고학 결정과 재탐사 대기", () => {
-  it("높은 유적일수록 재탐사까지 길고 가장 깊은 곳은 72시간이다", () => {
+  it("높은 유적일수록 재탐사까지 길고 가장 깊은 곳은 36시간이다", () => {
     const hours = ARCHAEOLOGY_SITES.map((site) => site.cooldownHours);
     expect(Math.min(...hours)).toBe(6);
-    expect(Math.max(...hours)).toBe(72);
+    expect(Math.max(...hours)).toBe(36);
     const ordered = [...ARCHAEOLOGY_SITES].sort((a, b) => a.minimumLevel - b.minimumLevel).map((site) => site.cooldownHours);
     expect(ordered).toEqual([...ordered].sort((a, b) => a - b));
-    expect(siteCooldownMs(findArchaeologySite("first-seed")!)).toBe(72 * HOUR);
+    expect(siteCooldownMs(findArchaeologySite("first-seed")!)).toBe(36 * HOUR);
   });
 
   it("저레벨 유적은 방치한 시간에 따라 결정이 맺히고 굴착이 +1/+2 늘어난다", () => {

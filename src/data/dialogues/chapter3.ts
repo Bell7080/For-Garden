@@ -122,7 +122,7 @@ export const STAGE_3_10_PRE: DialogueStory = {
   ]),
 };
 
-/** 3-10 후 — 이카닉시아가 물러난다. 코마의 입장은 끝까지 모호하다. */
+/** 3-10 후 — 이카닉시아가 물러난다. 코마는 끝내 대답하지 않는다. */
 export const STAGE_3_10_POST: DialogueStory = {
   id: "stage-3-10-post",
   startNodeId: "fall",
@@ -132,8 +132,8 @@ export const STAGE_3_10_POST: DialogueStory = {
     { id: "wing", speaker: "", body: "날개 망토가 천천히 허공으로 올라간다. 회수조의 그림자가 하나씩 따라 사라진다.", standing: "ikanixia", leave: "blastOff", cast: [] },
     { id: "koma", speaker: "코마", body: "…당신은 아직 목록에 있다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "koma2", speaker: "코마", body: "내 번호는, 지웠다. 그건 내가 정했다.", standing: "koma", act: "shrink" },
-    { id: "lexia", speaker: "렉시아", body: "…무슨 소린지는 모르겠어. 그래도 앞으로 같은 편이라면 환영이야.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
-    { id: "koma3", speaker: "코마", body: "…편은 아니다. 아직은.", standing: "koma", act: "recoil" },
+    { id: "lexia", speaker: "렉시아", body: "…지웠다니, 무슨 소리야? 그럼 너는 이제 어디로 가는데?", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
+    { id: "koma3", speaker: "", body: "대답은 없다. 코마는 가리개를 고쳐 쓰고, 연구원 쪽을 한 번 돌아본 뒤 회수조가 사라진 반대편 통로로 걸어간다." },
   ]),
 };
 

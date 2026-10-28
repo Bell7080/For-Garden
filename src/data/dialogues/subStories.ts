@@ -53,7 +53,7 @@ export const STAGE_2_6_SAME_LINE: DialogueStory = {
       ],
     },
     { id: "returnA", speaker: "코마", body: "…아직이다. 확인이 끝나면 돌려준다.", standing: "koma", act: "recoil", nextId: "tail" },
-    { id: "okayB", speaker: "코마", body: "…그 질문, 위에서는 없었다. 아직이다. 확인이 끝나면 돌려준다.", standing: "koma", act: "recoil", nextId: "tail" },
+    { id: "okayB", speaker: "코마", body: "……확인이 끝나면 돌려준다.", standing: "koma", act: "recoil", nextId: "tail" },
     { id: "tail", speaker: "", body: "코마는 사원증을 품에 넣고 어둠 속으로 한 걸음 물러난다. 꼬리가 바닥을 낮게 쓴다.", standing: "koma", cast: SOLO("koma") },
   ]),
 };

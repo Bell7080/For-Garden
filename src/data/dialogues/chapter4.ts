@@ -6,7 +6,7 @@ import { linear } from "./linear";
  *
  * 3장 끝에서 이카닉시아는 물러났지만 회수는 멈추지 않았다. 지부는 회수조와 코마 조(테러조)를 한 선로에 세워
  * 합동 추격을 명령한다. 본편 줄거리가 확정되기 전이라 이 장의 대사는 장의 문을 여는 것(4-1 전), 코마가 길을 막는 것(4-4 전),
- * 마감 정예 둘(4-10 전·후)만 둔다. 코마의 입장은 3장 그대로 모호하게 — 명령을 따르는 것이지 편을 정한 것이 아니다.
+ * 마감 정예 둘(4-10 전·후)만 둔다. 코마의 입장은 3장 그대로 모호하게 — 말로 밝히지 않고, 명령을 따르는 걸음과 짧은 침묵으로만 남긴다.
  */
 
 /** 4-1 전 — 합동 추격의 시작. 두 무리가 한 선로에 선다. */
@@ -29,7 +29,7 @@ export const STAGE_4_4_PRE: DialogueStory = {
   nodes: linear([
     { id: "block", speaker: "", body: "봉인된 갱도 앞에 아트라와 아모가 나란히 서 있다. 그 뒤로 가리개를 쓴 그림자가 지나간다.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
     { id: "atra", speaker: "아트라", body: "아, 안 비켜요… 명, 명령이라서… 죄, 죄송해요…", standing: "atra", act: "tremble" },
-    { id: "koma", speaker: "코마", body: "…명령이다. 편을 정한 건 아니다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "koma", speaker: "코마", body: "…여기는 지나갈 수 없다. 돌아가라.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
   ]),
 };
 

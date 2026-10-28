@@ -154,7 +154,7 @@ export const STAGE_2_8_PRE: DialogueStory = {
     { id: "furnace", speaker: "", body: "꺼져 가는 용광로 곁. 코마가 쪼그려 앉아 벽의 폐기 표식을 닦고 있다.", standing: "koma", cast: SOLO("koma") },
     { id: "see", speaker: "코마", body: "…왔나.", standing: "koma", act: "nod" },
     { id: "fight", speaker: "토리카", body: "싸우실 건가요, 코마 씨?", standing: "torika", cast: PAIR("koma"), act: "lean" },
-    { id: "no", speaker: "코마", body: "싸우지 않는다. 지금은.", standing: "koma" },
+    { id: "no", speaker: "코마", body: "싸우지 않는다.", standing: "koma" },
     { id: "above", speaker: "코마", body: "위에서는 아직 모른다. 이 표식을 닦는 것도. 너희가 여기까지 온 것도.", standing: "koma", act: "shrink" },
     { id: "trio", speaker: "리파", body: "…코마, 너 지금 뭐 하는 거야? 위에서 모르는 일을 해도 돼?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
     { id: "leave", speaker: "코마", body: "…가라. 대신 이쪽으로 오지 마라.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" },

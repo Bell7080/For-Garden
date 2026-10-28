@@ -6,4 +6,4 @@
  */
 export const ENEMY_SD_ASSET_IDS = ["pontos", "toby", "amo", "ripa", "koma",
   "raitia-grass", "raitia-water", "raitia-fire", "raitia-earth", "raitia-wind", "sukusuino", "taboa", "quetzalcoatlus",
-  "ikanixia", "atra", "pulsi", "neuri", "mir"] as const;
+  "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno"] as const;

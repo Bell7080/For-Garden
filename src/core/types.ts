@@ -52,7 +52,7 @@ export type RelicRarity = "R" | "SR" | "SSR";
  */
 export type RaitiaAssetId = "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind";
 
-export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir";
+export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "mette" | "tia" | "stella" | "meron" | "pachi" | "maki" | "keris" | "delopi" | "ella" | "nodonia" | "deina" | "irna" | "maddy" | "toby" | "amo" | "ripa" | "koma" | "raitia-grass" | "raitia-water" | "raitia-fire" | "raitia-earth" | "raitia-wind" | "pontos" | "sukusuino" | "taboa" | "quetzalcoatlus" | "parua" | "dian" | "kuro" | "shiro" | "shute" | "terisa" | "morphe" | "dimo" | "kento" | "mosana" | "anka" | "ark" | "yuti" | "teku" | "ikanixia" | "atra" | "pulsi" | "neuri" | "mir" | "magasa" | "noa" | "raja" | "carno";
 
 /**
  * 저장 데이터에서 선택·소유 외형을 식별하는 안정적인 ID다.
@@ -1372,7 +1372,15 @@ export type PassiveKind =
    * 테쿠 전용: **탄창이 도는 평타.** 4발짜리 탄창(`Passive.refill`)을 다 쓰면 「리필」하느라 잠깐 쉰다.
    * 공격 속도는 고정이고, 룬·아군 강화로 받은 추가 공격 속도는 같은 비율의 공격력으로 바뀐다.
    */
-  | "refillMagazine";
+  | "refillMagazine"
+  /** 마가사 전용: 체력 비율이 가장 낮은 적을 「오늘의 재료」로 찍어 쫓고, 그 적을 쓰러뜨리면 회복하며 공격력이 쌓인다. */
+  | "todaysIngredient"
+  /** 노아 전용: 한 번에 크게 맞으면 가장 가까운 적의 등 뒤로 튀어 나가고, 다음 기본 공격이 확정 치명타다. */
+  | "flinchBlink"
+  /** 라자 전용: 자신에게 도발된 적이 때릴 때마다 보호막을 얻는다. */
+  | "cellRank"
+  /** 카르노 전용: 구속구 넷이 체력 문턱마다 끊어지며 빨라지고, 모두 끊어지면 기본 공격이 주위를 휩쓴다. */
+  | "restraintLocks";
 
 /** 전투 엔진이 판별하는 야성 특성 효과 ID다. 새 효과는 수치 계약과 함께 명시적으로 추가한다. */
 export type FerocityEffectId =
@@ -1447,7 +1455,15 @@ export type FerocityEffectId =
   /** 유티 전용: 폭주 중 갈래가 늘어나고 공격 속도가 오른다. */
   | "extraFork"
   /** 이르나 전용: 폭주 중 기본 공격이 대상의 방어를 일부 지나친다. */
-  | "stormAim";
+  | "stormAim"
+  /** 마가사 전용: 폭주 중 공격 속도가 오르고, 자신이 건 출혈의 피해 일부가 체력으로 돌아온다. */
+  | "appetiteFrenzy"
+  /** 노아 전용: 폭주 중 공격·이동 속도가 오르고 「움찔」의 재사용 대기가 짧아진다. */
+  | "corneredBeast"
+  /** 라자 전용: 폭주 중 궁극기의 도발 범위가 넓어지고 경직이 더 잦아진다. */
+  | "rollCallRefusal"
+  /** 카르노 전용: 폭주 중 구속구가 모두 끊어진 것으로 본다. */
+  | "restraintCollapse";
 
 /**
  * 개체별 피버 발현 정적 데이터다.
@@ -1698,6 +1714,29 @@ export type FerocityTrait = {
       effectId: "thornBristle";
       segmentSizePercent: number;
       restoreSpeedPercent: number;
+    }
+  | {
+      /** 식욕 폭주(마가사). 폭주 중 공격 속도가 오르고, 자신이 건 출혈이 깎은 체력의 일부를 되찾는다. */
+      effectId: "appetiteFrenzy";
+      attackSpeedPercent: number;
+      bleedHealPercent: number;
+    }
+  | {
+      /** 궁지에 몰린 짐승(노아). 폭주 중 공격·이동 속도가 오르고 「움찔」의 재사용 대기가 이 값으로 줄어든다. */
+      effectId: "corneredBeast";
+      attackSpeedPercent: number;
+      moveSpeedPercent: number;
+      flinchCooldownSeconds: number;
+    }
+  | {
+      /** 점호 거부(라자). 폭주 중 궁극기의 끌어당김 반경이 오르고, 기본 공격의 부가 효과가 이 타수마다 터진다. */
+      effectId: "rollCallRefusal";
+      pullRadiusPercent: number;
+      statusEffectEvery: number;
+    }
+  | {
+      /** 구속 붕괴(카르노). 폭주 중 남은 구속구가 모두 끊어진 것으로 본다. */
+      effectId: "restraintCollapse";
     }
   | {
       /** 광폭한 꼬리(펄시). 폭주 중 공격 속도가 오르고 한 대에 겨누기 겹이 더 쌓인다. */
@@ -2246,6 +2285,49 @@ export interface Passive {
     maxAllies: number;
     attackPercentPerAlly: number;
     regenMaxHpPercentPerAllyPerSecond: number;
+  };
+  /**
+   * 「오늘의 재료」 계약(마가사). 체력 비율이 가장 낮은 적을 재료로 찍어 그 적이 쓰러질 때까지 쫓는다. 재료에게는 피해가
+   * `damagePercent`% 더 들고, 재료를 쓰러뜨리면 최대 체력의 `killHealMaxHpPercent`%를 되찾으며 공격력이 한 겹(최대 `maxStacks`) 오른다.
+   */
+  todaysIngredient?: {
+    damagePercent: number;
+    killHealMaxHpPercent: number;
+    attackPercentPerStack: number;
+    maxStacks: number;
+  };
+  /**
+   * 「움찔」 계약(노아). 한 번에 최대 체력의 `burstMaxHpPercent`% 이상 깎이면 가장 가까운 적의 등 뒤로 튀어 나가고,
+   * 그다음 기본 공격 한 번이 확정 치명타가 된다. 재사용 대기는 `cooldownSeconds`초다.
+   */
+  flinchBlink?: {
+    burstMaxHpPercent: number;
+    cooldownSeconds: number;
+    landingDistance: number;
+  };
+  /**
+   * 「감방 서열」 계약(라자). 자신에게 도발된 적이 때릴 때마다 최대 체력의 `shieldMaxHpPercent`%를 보호막으로 얻는다.
+   * `intervalSeconds`초에 한 번까지이고 두른 막 전체가 `capMaxHpPercent`%에 닿으면 더 두르지 않는다.
+   */
+  cellRank?: {
+    shieldMaxHpPercent: number;
+    intervalSeconds: number;
+    capMaxHpPercent: number;
+  };
+  /**
+   * 「구속복」 계약(카르노). 체력이 `thresholds`(최대 체력 %, 내림차순)를 하나씩 지날 때마다 구속구가 끊어져 공격 속도
+   * `attackSpeedPercent`%·이동 속도 `moveSpeedPercent`%가 오르고 주위 `burstRadius` 안의 적을 날려버린다. 모두 끊어지면
+   * 기본 공격이 주위 `liberatedRadius` 안의 모든 적을 친다(「해방」).
+   */
+  restraintLocks?: {
+    thresholds: readonly number[];
+    attackSpeedPercent: number;
+    moveSpeedPercent: number;
+    burstRadius: number;
+    knockback: { seconds: number; speed: number; bounces: number };
+    liberatedRadius: number;
+    /** 끊어진 구속구 하나마다 궁극기 돌진 거리가 이만큼(%) 늘어난다. */
+    chargeReachPercentPerLock: number;
   };
   prickle?: {
     /** 겹 상한. */

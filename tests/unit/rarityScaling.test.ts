@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { combatPower } from "../../src/core/combatPower";
 import { applyLevelGrowth, RELIC_LEVEL_CAP } from "../../src/core/relicProgression";
-import { ENEMY_BIRTH_TIERS, COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
+import { ENEMY_BIRTH_STAGE_FACTOR, ENEMY_BIRTH_TIERS, COMMON_SECONDARY_STATS, RARITY_LEVEL_GROWTH, RARITY_ORDER, RARITY_STAT_BAND, withinRarityBand } from "../../src/core/rarityScaling";
 import { getRelic, PLAYABLE_RELICS, RELICS } from "../../src/data/relics";
 import type { RelicDef, Stats } from "../../src/core/types";
 
@@ -187,11 +187,17 @@ describe("치명타형 정체성", () => {
 });
 
 describe("적 전용 태생 단계", () => {
-  it("회수조는 정의가 자기 등급 띠 안에 서고 1단계 배수만 얹는다", () => {
+  it("태생 단계가 있는 적은 정의가 자기 등급 띠 안에 서고 단계 배수만 얹는다", () => {
     for (const id of Object.keys(ENEMY_BIRTH_TIERS)) {
       const relic = getRelic(id);
       expect(withinRarityBand(combatPower(relic.stats), relic.rarity), id).toBe(true);
-      expect(ENEMY_BIRTH_TIERS[id].statFactor).toBe(1.3);
+      expect(ENEMY_BIRTH_TIERS[id].statFactor).toBe(ENEMY_BIRTH_STAGE_FACTOR[ENEMY_BIRTH_TIERS[id].stage]);
     }
+  });
+
+  it("회수조 1.3 · 감옥 무리 1.7 · 공멸 주축 3.0", () => {
+    for (const id of ["mir", "pulsi", "neuri", "atra", "ikanixia"]) expect(ENEMY_BIRTH_TIERS[id].statFactor, id).toBe(1.3);
+    for (const id of ["magasa", "noa", "raja"]) expect(ENEMY_BIRTH_TIERS[id].statFactor, id).toBe(1.7);
+    expect(ENEMY_BIRTH_TIERS.carno.statFactor).toBe(3);
   });
 });

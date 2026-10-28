@@ -103,6 +103,14 @@ import {
   NEURI_SD_METADATA,
   MIR_PORTRAIT_METADATA,
   MIR_SD_METADATA,
+  MAGASA_PORTRAIT_METADATA,
+  MAGASA_SD_METADATA,
+  NOA_PORTRAIT_METADATA,
+  NOA_SD_METADATA,
+  RAJA_PORTRAIT_METADATA,
+  RAJA_SD_METADATA,
+  CARNO_PORTRAIT_METADATA,
+  CARNO_SD_METADATA,
   QUETZALCOATLUS_PORTRAIT_METADATA,
   QUETZALCOATLUS_SD_METADATA,
   VENTIA_SD_METADATA,
@@ -520,6 +528,15 @@ export const NEURI_ASSET: PuppetAsset = { url: `${base}puppets/enemy_013.zip`, .
 export const NEURI_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_013.zip`, ...NEURI_SD_METADATA };
 export const MIR_ASSET: PuppetAsset = { url: `${base}puppets/enemy_014.zip`, ...MIR_PORTRAIT_METADATA };
 export const MIR_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_014.zip`, ...MIR_SD_METADATA };
+/** 5장 감옥 무리(마가사·노아·라자)와 카르노. 번호는 원화가 들어올 자리다 — ZIP이 오기 전에는 화면이 빈 자리로 둔다. */
+export const MAGASA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_015.zip`, ...MAGASA_PORTRAIT_METADATA };
+export const MAGASA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_015.zip`, ...MAGASA_SD_METADATA };
+export const NOA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_016.zip`, ...NOA_PORTRAIT_METADATA };
+export const NOA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_016.zip`, ...NOA_SD_METADATA };
+export const RAJA_ASSET: PuppetAsset = { url: `${base}puppets/enemy_017.zip`, ...RAJA_PORTRAIT_METADATA };
+export const RAJA_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_017.zip`, ...RAJA_SD_METADATA };
+export const CARNO_ASSET: PuppetAsset = { url: `${base}puppets/enemy_018.zip`, ...CARNO_PORTRAIT_METADATA };
+export const CARNO_SD_ASSET: PuppetAsset = { url: `${base}puppets/enemySD_018.zip`, ...CARNO_SD_METADATA };
 
 /** **코아틀 전신.** 셋째 레이드 보스다(`raid_003`). */
 export const QUETZALCOATLUS_ASSET: PuppetAsset = { url: `${base}puppets/raid_003.zip`, ...QUETZALCOATLUS_PORTRAIT_METADATA };
@@ -569,6 +586,10 @@ const PORTRAIT_ASSETS = {
   pulsi: PULSI_ASSET,
   neuri: NEURI_ASSET,
   mir: MIR_ASSET,
+  magasa: MAGASA_ASSET,
+  noa: NOA_ASSET,
+  raja: RAJA_ASSET,
+  carno: CARNO_ASSET,
   quetzalcoatlus: QUETZALCOATLUS_ASSET,
   parua: PARUA_ASSET,
   dian: DIAN_ASSET,
@@ -914,6 +935,10 @@ export const ENEMY_SD_ASSETS_BY_ID: Readonly<Record<string, PuppetAsset>> = {
   pulsi: PULSI_SD_ASSET,
   neuri: NEURI_SD_ASSET,
   mir: MIR_SD_ASSET,
+  magasa: MAGASA_SD_ASSET,
+  noa: NOA_SD_ASSET,
+  raja: RAJA_SD_ASSET,
+  carno: CARNO_SD_ASSET,
 };
 
 /** SD 스킨도 렐릭 ID 아래에만 등록해 다른 렐릭으로 폴백할 수 없게 한다. */

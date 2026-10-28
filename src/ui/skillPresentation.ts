@@ -304,6 +304,16 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
   if (trait.effectId === "marchOfAnts") {
     return t("skill.ferocity.marchOfAnts", { radius: trait.radiusBonus, allies: trait.extraAllies });
   }
+  if (trait.effectId === "appetiteFrenzy") {
+    return t("skill.ferocity.appetiteFrenzy", { percent: trait.attackSpeedPercent, heal: trait.bleedHealPercent });
+  }
+  if (trait.effectId === "corneredBeast") {
+    return t("skill.ferocity.corneredBeast", { attack: trait.attackSpeedPercent, move: trait.moveSpeedPercent, seconds: trait.flinchCooldownSeconds });
+  }
+  if (trait.effectId === "rollCallRefusal") {
+    return t("skill.ferocity.rollCallRefusal", { percent: trait.pullRadiusPercent, every: trait.statusEffectEvery });
+  }
+  if (trait.effectId === "restraintCollapse") return t("skill.ferocity.restraintCollapse");
 
   // 방어력 계수는 토리카처럼 추가 피해가 있는 범위 타격만 노출하고, 일반 전이 특성은 원래 피해 비율만 보여 준다.
   const speed = trait.attackSpeedBonusPercent === undefined ? ""
@@ -676,6 +686,25 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     return t("skill.passive.wingHum", { seconds: passive.wingHum.intervalSeconds, energy: passive.wingHum.energyOnKill });
   }
   if (passive.kind === "workerMarch" && passive.workerMarch !== undefined) return t("skill.passive.workerMarch");
+  // 감금 무리 넷은 규칙어를 새로 만들지 않았다 — 쓰는 개체가 하나뿐인 규칙이라 수치를 본문이 직접 적는다.
+  if (passive.kind === "todaysIngredient" && passive.todaysIngredient !== undefined) {
+    const plan = passive.todaysIngredient;
+    return t("skill.passive.todaysIngredient", { damage: plan.damagePercent, heal: plan.killHealMaxHpPercent, attack: plan.attackPercentPerStack, stacks: plan.maxStacks });
+  }
+  if (passive.kind === "flinchBlink" && passive.flinchBlink !== undefined) {
+    return t("skill.passive.flinchBlink", { percent: passive.flinchBlink.burstMaxHpPercent, seconds: passive.flinchBlink.cooldownSeconds });
+  }
+  if (passive.kind === "cellRank" && passive.cellRank !== undefined) {
+    const plan = passive.cellRank;
+    return t("skill.passive.cellRank", { percent: plan.shieldMaxHpPercent, seconds: plan.intervalSeconds, cap: plan.capMaxHpPercent });
+  }
+  if (passive.kind === "restraintLocks" && passive.restraintLocks !== undefined) {
+    const plan = passive.restraintLocks;
+    return t("skill.passive.restraintLocks", {
+      count: plan.thresholds.length, thresholds: plan.thresholds.join("·"),
+      attack: plan.attackSpeedPercent, move: plan.moveSpeedPercent, reach: plan.chargeReachPercentPerLock,
+    });
+  }
   if (passive.kind === "whiteNoise" && passive.whiteNoise !== undefined) {
     const plan = passive.whiteNoise;
     const heal = guard === undefined

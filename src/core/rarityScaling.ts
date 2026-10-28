@@ -66,9 +66,10 @@ export function withinRarityBand(power: number, rarity: RelicRarity): boolean {
  * (`applyEncounterScaling`의 `birthFactor`). 같은 `LV.n`이 더 세므로 더 낮은 레벨에서 같은 세기를 내고
  * 한계 돌파가 단계적으로 열린다. 성장률(`ENEMY_LEVEL_GROWTH_PERCENT`)은 그대로 단일 값(2.2%)이다.
  *
- * 0단계(테러조)=×1.0, 1단계(회수조)=×1.3. 6장 이후 개체는 더 높은 단계를 한 줄 더한다.
+ * 0단계(테러조)=×1.0, 1단계(회수조)=×1.3, 2단계(감옥 무리 — 마가사·노아·라자)=×1.7, 3단계(공멸 주축 — 카르노)=×3.0.
+ * 번호는 0부터 센다 — 기획에서 부르는 「4단계 공멸 주축」이 여기의 3이다.
  */
-export const ENEMY_BIRTH_STAGE_FACTOR: Readonly<Record<number, number>> = { 0: 1, 1: 1.3 };
+export const ENEMY_BIRTH_STAGE_FACTOR: Readonly<Record<number, number>> = { 0: 1, 1: 1.3, 2: 1.7, 3: 3 };
 
 export const ENEMY_BIRTH_TIERS: Readonly<Record<string, { readonly stage: number; readonly statFactor: number }>> = {
   mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
@@ -76,4 +77,8 @@ export const ENEMY_BIRTH_TIERS: Readonly<Record<string, { readonly stage: number
   neuri: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   atra: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  magasa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  noa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  raja: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  carno: { stage: 3, statFactor: ENEMY_BIRTH_STAGE_FACTOR[3] },
 };

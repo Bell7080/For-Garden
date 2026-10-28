@@ -22,9 +22,9 @@ import { DUEL_PROFILE as P, DUEL_TIER_COLOR, duelProfileRowY } from '../ui/duelL
 import { HoloBar } from '../ui/holo';
 import { addSectionTitle } from '../ui/SectionTitle';
 import { squeezeTextToWidth } from '../ui/textFit';
-import { addRankChip, addRankRewardChip } from "../ui/RankingChips";
+import { addRankChip } from "../ui/RankingChips";
 import { DuelRankingPopup, type RankingSource } from '../ui/DuelRankingPopup';
-import { openArenaWeeklyRewards } from '../ui/ArenaRewardPopup';
+import { openArenaTierRewards, openArenaWeeklyRewards } from '../ui/ArenaRewardPopup';
 
 /**
  * 아레나 입구 — 결투장 입구와 같은 구도로 **내 자리**를 보여 준다. 가운데 티어 휘장과 다음 티어까지의 게이지,
@@ -80,13 +80,10 @@ export class ArenaScene extends Phaser.Scene {
         const days = Math.max(0, (Date.parse(s.weekEndsAt) - Date.parse(s.serverTime)) / 86_400_000);
         this.view.add(this.add.text(S.side, S.season.y, t("arena.weekly.endsIn", { days: Math.floor(days), hours: Math.floor((days % 1) * 24) }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, .5));
     }
-    /** 왼쪽 칩 둘 — 순위(오른쪽에 내 등수)와 주간 보상(티어 보상 + 순위 보너스 표). */
+    /** 왼쪽 순위 칩(오른쪽에 내 등수). 주간 보상·티어 표는 순위표 창 안의 칩·버튼이 연다 — 로비에 같은 칩을 또 세우지 않는다. */
     private paintSideChips(s: ArenaStatus, tierId: ArenaTierId): void {
-        const { rankChip, rewardChip } = S;
-        const played = s.wins + s.losses > 0;
-        const rank = s.rank ?? null;
-        addRankChip(this, this.view, rankChip.x, rankChip.y, { size: rankChip.size, rank, rankColor: ARENA_TONE.accentText, onClick: () => new DuelRankingPopup(this, this.popups, tierId, undefined, this.rankingSource(s)).open() });
-        addRankRewardChip(this, this.view, rewardChip.x, rewardChip.y, { period: "weekly", size: rewardChip.size, onClick: () => openArenaWeeklyRewards(this, this.popups, played ? s.score : null, rank) });
+        const { rankChip } = S;
+        addRankChip(this, this.view, rankChip.x, rankChip.y, { size: rankChip.size, rank: s.rank ?? null, rankColor: ARENA_TONE.accentText, onClick: () => new DuelRankingPopup(this, this.popups, tierId, undefined, this.rankingSource(s)).open() });
     }
     private rankingSource(s: ArenaStatus): RankingSource {
         const played = s.wins + s.losses > 0;
@@ -100,8 +97,8 @@ export class ArenaScene extends Phaser.Scene {
                     : null);
                 return { entries, me: mine };
             },
-            openRewards: (me) => openArenaWeeklyRewards(this, this.popups, played ? s.score : null, me?.rank ?? null),
-            openTiers: () => openArenaWeeklyRewards(this, this.popups, played ? s.score : null, s.rank ?? null),
+            openRewards: (me) => openArenaWeeklyRewards(this, this.popups, me?.rank ?? s.rank ?? null),
+            openTiers: () => openArenaTierRewards(this, this.popups, played ? s.score : null),
         };
     }
     /** 가운데 위 — 티어 휘장, 티어 이름, 다음 티어까지의 RP 게이지와 그 끝의 다음 휘장(결투장과 같은 구도). */

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FakeGuildServer } from "../../src/api/FakeGuildServer";
 import { FakeServer } from "../../src/api/FakeServer";
 import { GuildApiError, type GuildActor } from "../../src/api/guildContracts";
-import { GUILD_ATTENDANCE_CYCLE, GUILD_CREATE_GEMS } from "../../src/core/guild";
+import { GUILD_ATTENDANCE_CYCLE, GUILD_CREATE_GEMS, GUILD_RENAME_GEMS } from "../../src/core/guild";
 import { createDefaultSession } from "../../src/state/session";
 
 const BADGE = { shape: "shield", shapeColor: "blue", icon: "sword", iconColor: "silver" } as const;
@@ -87,6 +87,31 @@ describe("FakeServer 길드 조작", () => {
     expect(await code(() => server.changeGuildBadge({ badge: { shape: "hexagon", shapeColor: "crimson", icon: "leaf", iconColor: "ink" } }))).toBe("ok");
     expect(state.wallet.gems).toBe(10);
     expect(await code(() => server.changeGuildBadge({ badge: { shape: "banner", shapeColor: "crimson", icon: "leaf", iconColor: "ink" } }))).toBe("INSUFFICIENT_GEMS");
+  });
+
+  it("이름 변경은 길드장만 젬 2,000으로 하고 같은 이름·겹치는 이름은 받지 않는다", async () => {
+    const guild = new FakeGuildServer(() => Date.UTC(2026, 9, 14, 12), { seed: false, levelGate: false });
+    await guild.createGuild(actor("other"), { name: "달빛", joinMode: "open", badge: BADGE }, "o1");
+    const state = createDefaultSession();
+    state.wallet.gems = 5_000;
+    state.playerResearch.level = 20;
+    const server = new FakeServer(state, { latencyMs: 0, guild, persistSession: () => undefined });
+    await server.createGuild({ name: "별빛", joinMode: "open", badge: { ...BADGE } });
+    const before = state.wallet.gems;
+    // 같은 이름은 값을 받지 않는다.
+    expect(await code(() => server.renameGuild({ name: "별빛" }))).toBe("ok");
+    expect(state.wallet.gems).toBe(before);
+    expect(await code(() => server.renameGuild({ name: "달빛" }))).toBe("NAME_TAKEN");
+    expect(await code(() => server.renameGuild({ name: "!" }))).toBe("NAME_INVALID");
+    expect(state.wallet.gems).toBe(before);
+    expect(await code(() => server.renameGuild({ name: "새벽 별" }))).toBe("ok");
+    expect(state.wallet.gems).toBe(before - GUILD_RENAME_GEMS);
+    expect((await guild.getGuild(actor("local-player"))).guild?.name).toBe("새벽 별");
+    state.wallet.gems = 10;
+    expect(await code(() => server.renameGuild({ name: "노을" }))).toBe("INSUFFICIENT_GEMS");
+    // 길드장이 아니면 못 바꾼다.
+    await guild.joinGuild(actor("member"), (await guild.getGuild(actor("other"))).guild!.id);
+    expect(await code(() => guild.renameGuild(actor("member"), "바람", "m1"))).toBe("NO_PERMISSION");
   });
 
   it("젬이 모자라면 길드가 생기지 않는다", async () => {

@@ -68,14 +68,14 @@ import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRanking
 import { WALLET_CAPS } from "../data/economy";
 import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
-import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks } from "../core/guild";
+import { GUILD_BADGE_CHANGE_GEMS, GUILD_RENAME_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks, validateGuildName } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
 import { isGuildSandbox } from "./guildApi";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend, type GuildWarMapState } from "./guildContracts";
 import { normalizeGuildWarDeck, parseGuildWarSlotId } from "../core/guildWarMap";
-import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, EnterGuildWarAttackRequest, EnterGuildWarAttackResponse, SubmitGuildWarAttackRequest, SubmitGuildWarAttackResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, RenameGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, EnterGuildWarAttackRequest, EnterGuildWarAttackResponse, SubmitGuildWarAttackRequest, SubmitGuildWarAttackResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
 import { GUILD_GUARD, guildGuardAttemptsLeft, guildGuardDayKey, normalizeGuildGuardFormation } from "../core/guildGuard";
 import { guildGuardCoin, replayGuildGuard } from "../core/guildGuardBattle";
 import { replayGuildWar } from "../core/guildWarBattle";
@@ -1661,6 +1661,22 @@ export class FakeServer implements GameApi {
     const { charged } = await this.guildBackend.changeBadge(actor, request.badge, this.guildRequestId("badge"));
     if (charged) {
       const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_BADGE_CHANGE_GEMS } };
+      this.persist(next);
+      this.state.wallet = next.wallet;
+    }
+    return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
+  }
+
+  async renameGuild(request: RenameGuildRequest): Promise<GuildWalletResponse> {
+    await this.delay();
+    const actor = this.guildActor();
+    const current = await this.guildBackend.getGuild(actor);
+    const checked = validateGuildName(String(request?.name ?? ""));
+    if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
+    if (current.guild !== null && current.guild.name !== checked.name) this.assertGuildGems(GUILD_RENAME_GEMS);
+    const { changed } = await this.guildBackend.renameGuild(actor, checked.name, this.guildRequestId("rename"));
+    if (changed) {
+      const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_RENAME_GEMS } };
       this.persist(next);
       this.state.wallet = next.wallet;
     }
@@ -4554,7 +4570,7 @@ function qaRandom(): number {
 const localGameApi = new FakeServer();
 /** 길드 샌드박스(QA)일 때 이 기기의 구현으로 돌리는 조작 — 길드 백엔드를 읽거나 길드 코인·기록을 남기는 것 전부. */
 const SANDBOX_GUILD_METHODS: ReadonlySet<string> = new Set([
-  "createGuild", "changeGuildBadge", "stampGuildAttendance", "buyGuildProduct",
+  "createGuild", "changeGuildBadge", "renameGuild", "stampGuildAttendance", "buyGuildProduct",
   "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense", "enterGuildWarAttack", "submitGuildWarAttack",
 ] satisfies (keyof GameApi)[]);
 let activeGameApi: GameApi = localGameApi;

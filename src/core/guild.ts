@@ -8,6 +8,8 @@
 export const GUILD_CREATE_GEMS = 2_000;
 /** 길드장이 뱃지를 바꿀 때의 젬. 첫 생성에서 고른 뱃지는 무료다. */
 export const GUILD_BADGE_CHANGE_GEMS = 500;
+/** 길드장이 길드 이름을 바꿀 때의 젬. 이름 규칙(문자·숫자·공백 2~12자 · 중복 금지)은 만들 때와 같다. */
+export const GUILD_RENAME_GEMS = 2_000;
 export const GUILD_NAME_MIN = 2;
 export const GUILD_NAME_MAX = 12;
 export const GUILD_NOTICE_MAX = 120;

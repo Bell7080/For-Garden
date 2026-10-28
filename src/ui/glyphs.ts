@@ -55,7 +55,11 @@ export type GlyphName =
   | "affinity"
   | "sort-arrow"
   | "trash"
-  | "check";
+  | "check"
+  | "promote"
+  | "demote"
+  | "crown"
+  | "kick";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -178,6 +182,29 @@ export function drawGlyph(
       // 꺾인 자리에서 획 끝이 둥글게 겹쳐 각진 아이콘 결에서 벗어난다.
       g.fillStyle(color, alpha);
       g.fillPoints(points(-r * 0.9, -r * 0.02, -r * 0.56, -r * 0.36, -r * 0.2, r * 0.02, r * 0.58, -r * 0.8, r * 0.92, -r * 0.46, -r * 0.2, r * 0.7), true);
+      break;
+    case "promote":
+      // 길드 직책 올리기 — 겹친 위 꺾쇠 둘. 위쪽 꺾쇠만 채워 "한 칸 위로"를 말한다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.82, -r * 0.06, 0, -r * 0.88, r * 0.82, -r * 0.06, r * 0.5, r * 0.22, 0, -r * 0.3, -r * 0.5, r * 0.22), true);
+      g.strokePoints(points(-r * 0.7, r * 0.78, 0, r * 0.08, r * 0.7, r * 0.78), false);
+      break;
+    case "demote":
+      // 길드 직책 내리기 — 아래 꺾쇠 하나.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.82, -r * 0.3, 0, r * 0.52, r * 0.82, -r * 0.3, r * 0.5, -r * 0.58, 0, -r * 0.06, -r * 0.5, -r * 0.58), true);
+      break;
+    case "crown":
+      // 길드장 위임 — 각진 세 봉우리 왕관과 띠.
+      g.strokePoints(points(-r * 0.86, r * 0.5, -r * 0.86, -r * 0.62, -r * 0.4, -r * 0.08, 0, -r * 0.8, r * 0.4, -r * 0.08, r * 0.86, -r * 0.62, r * 0.86, r * 0.5), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.86, r * 0.62, r * 0.86, r * 0.62, r * 0.86, r * 0.86, -r * 0.86, r * 0.86), true);
+      break;
+    case "kick":
+      // 길드에서 내보내기 — 열린 문틀과 밖으로 나가는 화살.
+      g.strokePoints(points(r * 0.1, -r * 0.86, -r * 0.82, -r * 0.86, -r * 0.82, r * 0.86, r * 0.1, r * 0.86), false);
+      g.lineBetween(-r * 0.3, 0, r * 0.86, 0);
+      g.strokePoints(points(r * 0.46, -r * 0.4, r * 0.86, 0, r * 0.46, r * 0.4), false);
       break;
     case "remove":
       // 굵은 가로줄 하나. 편성 자리에서 캐릭터를 빼는 조작은 어디서나 이 표식만 쓴다 —

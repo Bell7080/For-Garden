@@ -1109,6 +1109,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   createGuild(request: CreateGuildRequest): Promise<GuildWalletResponse>;
   /** 길드 뱃지를 바꾼다(길드장). 실제로 바뀌면 젬을 차감한다. */
   changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse>;
+  /** 길드장만 · 젬 `GUILD_RENAME_GEMS`. 같은 이름이면 값을 받지 않는다. */
+  renameGuild(request: RenameGuildRequest): Promise<GuildWalletResponse>;
   /** 오늘의 출석 도장을 찍고 고른 보상을 받는다. 길드 부흥도·기여도도 함께 오른다. */
   stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse>;
   getGuildGuard(): Promise<GuildGuardStatusResponse>;
@@ -1308,6 +1310,7 @@ export function persistenceFailed(error: unknown, messageKey: TextKey = "error.p
 // ── 길드: 지갑이 얽힌 조작 ─────────────────────────────────────────────────────
 export interface CreateGuildRequest { name: string; joinMode: import("../core/guild").GuildJoinMode; badge: import("../core/guildBadge").GuildBadge }
 export interface ChangeGuildBadgeRequest { badge: import("../core/guildBadge").GuildBadge }
+export interface RenameGuildRequest { name: string }
 export type StampGuildAttendanceRequest = Record<string, never>;
 export interface BuyGuildProductRequest { productId: string }
 export interface GuildWalletResponse extends PlayerStateDto { guild: import("./guildContracts").GuildStateResponse }

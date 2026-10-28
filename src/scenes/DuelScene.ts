@@ -1,3 +1,4 @@
+import { showContentToast } from "../ui/ContentToast";
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -345,7 +346,7 @@ export class DuelScene extends Phaser.Scene {
       after?.();
     } catch (error) {
       if (!this.scene.isActive()) return;
-      this.popups.confirm({ title: t("lobby.duel"), message: this.errorMessage(error), confirmLabel: t("duel.ok"), cancelLabel: false });
+      showContentToast(this, this.errorMessage(error), "refused");
     } finally {
       this.busy = false;
     }
@@ -359,7 +360,8 @@ export class DuelScene extends Phaser.Scene {
       if (!this.scene.isActive()) return;
       openRewardPopup(this, this.popups, { items: currencyRecordToRewardItems({ duelEmblem: claimed.duelEmblem, gems: claimed.gems }), onConfirm: () => void this.fetchStatus() });
     } catch (error) {
-      if (this.scene.isActive()) this.popups.confirm({ title: t("lobby.duel"), message: this.errorMessage(error), confirmLabel: t("duel.ok"), cancelLabel: false });
+      // 젬 부족·도전권 한도 같은 거절은 확인 창이 아니라 공용 토스트로 짧게 알린다.
+      if (this.scene.isActive()) showContentToast(this, this.errorMessage(error), "refused");
     } finally {
       this.busy = false;
     }

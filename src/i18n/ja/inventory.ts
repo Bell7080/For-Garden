@@ -28,9 +28,7 @@ export const INVENTORY_JA = {
   "inventory.source.shops": "ショップ",
   "inventory.source.ad": "広告報酬",
   "inventory.useButton": "使用する",
-  "inventory.useDone": "使用完了",
   "inventory.staminaGained": "スタミナ +{amount}",
-  "inventory.useFailed": "使用できません",
   "inventory.staminaFull": "スタミナが満タンです",
 
   "stamina.sources": "入手先",

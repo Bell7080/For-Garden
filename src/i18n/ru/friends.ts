@@ -37,8 +37,6 @@ export const FRIENDS_RU = {
   "friends.remove.title": "Удалить друга",
   "friends.remove.message": "Удалить {name} из друзей?",
   "friends.remove.confirm": "Удалить",
-  "friends.error.title": "Уведомление",
-  "friends.error.ok": "ОК",
   "friends.error.friendLimit": "Список друзей полон, принять новых нельзя.",
   "friends.error.requestLimit": "Достигнут лимит отправленных заявок.",
   "friends.error.alreadyFriend": "Вы уже друзья.",

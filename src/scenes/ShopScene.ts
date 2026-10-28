@@ -1,5 +1,5 @@
+import { showContentToast } from "../ui/ContentToast";
 import Phaser from "phaser";
-import { audioManager } from "../managers/AudioManager";
 import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -805,11 +805,8 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /** 결과 안내는 격자 마스크 밖의 고정 계층에 두어 스크롤과 함께 움직이지 않게 한다. */
+  /** 결과 안내는 잠금 안내와 같은 공용 토스트다 — 받지 못한 안내(모자람·실패)는 「아직」 소리를 함께 낸다. */
   private notice(message: string, refused = false): void {
-    // 받지 못한 안내(이미 받음·모자람·실패)는 「아직」 소리를 함께 낸다 — 같은 토스트라도 성공과 갈린다.
-    if (refused) audioManager?.playUi("ui.deny");
-    const view = shopGridViewport();
-    const toast = this.add.text((view.left + view.right) / 2, view.bottom - 36, message, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5).setDepth(500);
-    this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });
+    showContentToast(this, message, refused ? "refused" : "info");
   }
 }

@@ -1,3 +1,4 @@
+import { showContentToast } from "../ui/ContentToast";
 import { NotificationDot } from "../ui/NotificationDot";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
@@ -505,10 +506,9 @@ export class FriendsScene extends Phaser.Scene {
     if (this.scene.isActive()) await this.reload(keepScroll);
   }
 
-  /** 알리기만 하는 확인 창 — 거절 사유는 문장 한 줄이다. */
+  /** 거절 사유는 문장 한 줄이라 잠금 안내와 같은 공용 토스트로 띄운다 — 열린 창 위에서도 선다. */
   private notify(message: string): void {
-    if (this.popups.isOpen) return;
-    this.popups.confirm({ title: t("friends.error.title"), message, confirmLabel: t("friends.error.ok"), cancelLabel: false });
+    showContentToast(this, message, "refused");
   }
 
   /** 카드 — 자기 카드와 같은 한 장이되 편집이 없고, 애착 렐릭을 누르면 읽기 전용 정보창이 열린다. */

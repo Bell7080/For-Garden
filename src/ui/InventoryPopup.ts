@@ -1,3 +1,4 @@
+import { showContentToast } from "./ContentToast";
 import Phaser from "phaser";
 import { audioManager } from "../managers/AudioManager";
 import { slideTabPage } from "./screenTransition";
@@ -16,7 +17,7 @@ import { equippedRuneSlot, openRuneInfoPopup } from "./RunePopup";
 import { createRuneListState, RuneListControls, visibleRuneList, type RuneListState } from "./RuneListControls";
 import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 import { addRuneCard, runeTexture } from "./runeIcons";
-import { COLOR, textStyle } from "./theme";
+import { COLOR } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
 import { managerEvents } from "../managers/ManagerEvents";
 import { CurrencyGuidePopup } from "./CurrencyGuidePopup";
@@ -323,20 +324,16 @@ export class InventoryPopup {
   /**
    * 소비품 한 개를 쓴다. 지갑 갱신은 InventoryManager.useConsumable이 managerEvents로 발행하므로
    * (TopBar가 구독) 여기서 다시 알리지 않는다. 받은 몫은 이미 지급이 끝난 영수증이라 `RewardPopup`
-   * 양식이 아니라 짧은 결과 쪽지로 알린다.
+   * 양식이 아니라 잠금 안내와 같은 공용 토스트(`showContentToast`)로 짧게 알린다.
    */
   private useConsumable(itemId: string, lotExpiresAt?: string): void {
-    const notice = (title: TextKey, text: string): void => {
-      this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
-    };
     void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
       audioManager?.playUi("stamina.refill");
-      notice("inventory.useDone", t("inventory.staminaGained", { amount: result.appliedAmount }));
+      showContentToast(this.scene, t("inventory.staminaGained", { amount: result.appliedAmount }), "info");
       if (this.view) this.render(this.view);
     }).catch((error: unknown) => {
-      // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다.
-      if (error instanceof GameApiError && error.code === "STAMINA_FULL") audioManager?.playUi("ui.deny");
-      if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
+      // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다(토스트가 「아직」 소리를 낸다).
+      if (error instanceof GameApiError && error.code === "STAMINA_FULL") showContentToast(this.scene, t("inventory.staminaFull"), "refused");
       else console.error("소비품 사용 실패", error);
     });
   }

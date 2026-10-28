@@ -189,16 +189,6 @@
 "Benutzen",
 "Использовать"
 ],
-"inventory.useDone": [
-"已使用",
-"ใช้แล้ว",
-"Đã dùng",
-"Digunakan",
-"Usado",
-"Usado",
-"Benutzt",
-"Использовано"
-],
 "inventory.staminaGained": [
 "体力 +{amount}",
 "สตามินา +{amount}",
@@ -478,16 +468,6 @@
 "Formação e batalha desta operação abrem mais tarde",
 "Formation und Kampf dieser Operation öffnen später",
 "Построение и бой этой операции откроются позже"
-],
-"inventory.useFailed": [
-"无法使用",
-"ใช้ไม่ได้",
-"Không thể dùng",
-"Tidak bisa dipakai",
-"No se puede usar",
-"Não pode usar",
-"Nicht nutzbar",
-"Нельзя использовать"
 ],
 "inventory.staminaFull": [
 "体力已满",

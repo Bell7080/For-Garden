@@ -37,8 +37,6 @@ export const FRIENDS_ID = {
   "friends.remove.title": "Hapus teman",
   "friends.remove.message": "Hapus {name} dari teman?",
   "friends.remove.confirm": "Hapus",
-  "friends.error.title": "Pemberitahuan",
-  "friends.error.ok": "OK",
   "friends.error.friendLimit": "Daftar teman penuh, tidak bisa menerima lagi.",
   "friends.error.requestLimit": "Batas permintaan terkirim tercapai.",
   "friends.error.alreadyFriend": "Sudah berteman.",

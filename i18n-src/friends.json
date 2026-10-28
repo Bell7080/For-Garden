@@ -36,8 +36,6 @@
   "friends.remove.title": ["删除好友", "ลบเพื่อน", "Xóa bạn", "Hapus teman", "Eliminar amigo", "Remover amigo", "Freund entfernen", "Удалить друга"],
   "friends.remove.message": ["要将{name}从好友中删除吗？", "ลบ {name} ออกจากเพื่อนหรือไม่?", "Xóa {name} khỏi bạn bè?", "Hapus {name} dari teman?", "¿Eliminar a {name} de tus amigos?", "Remover {name} dos amigos?", "{name} aus der Freundesliste entfernen?", "Удалить {name} из друзей?"],
   "friends.remove.confirm": ["删除", "ลบ", "Xóa", "Hapus", "Eliminar", "Remover", "Entfernen", "Удалить"],
-  "friends.error.title": ["通知", "แจ้งเตือน", "Thông báo", "Pemberitahuan", "Aviso", "Aviso", "Hinweis", "Уведомление"],
-  "friends.error.ok": ["确认", "ตกลง", "Xác nhận", "OK", "Aceptar", "Confirmar", "OK", "ОК"],
   "friends.error.friendLimit": ["好友数量已满，无法再接受。", "เพื่อนเต็มแล้ว รับเพิ่มไม่ได้", "Danh sách bạn đã đầy, không thể nhận thêm.", "Daftar teman penuh, tidak bisa menerima lagi.", "Lista de amigos llena. No puedes aceptar más.", "Lista de amigos cheia. Não é possível aceitar mais.", "Freundesliste voll. Keine weiteren Anfragen möglich.", "Список друзей полон, принять новых нельзя."],
   "friends.error.requestLimit": ["发出的申请已达上限。", "ส่งคำขอครบขีดจำกัดแล้ว", "Đã đạt giới hạn lời mời gửi.", "Batas permintaan terkirim tercapai.", "Límite de solicitudes enviadas alcanzado.", "Limite de solicitações enviadas atingido.", "Limit gesendeter Anfragen erreicht.", "Достигнут лимит отправленных заявок."],
   "friends.error.alreadyFriend": ["已经是好友了。", "เป็นเพื่อนกันแล้ว", "Đã là bạn bè.", "Sudah berteman.", "Ya sois amigos.", "Vocês já são amigos.", "Ihr seid bereits befreundet.", "Вы уже друзья."],

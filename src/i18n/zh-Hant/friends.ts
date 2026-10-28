@@ -37,8 +37,6 @@ export const FRIENDS_ZH_HANT = {
   "friends.remove.title": "刪除好友",
   "friends.remove.message": "要將{name}從好友中刪除嗎？",
   "friends.remove.confirm": "刪除",
-  "friends.error.title": "通知",
-  "friends.error.ok": "確認",
   "friends.error.friendLimit": "好友數量已滿，無法再接受。",
   "friends.error.requestLimit": "發出的申請已達上限。",
   "friends.error.alreadyFriend": "已經是好友了。",

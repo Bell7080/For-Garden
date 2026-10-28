@@ -37,8 +37,6 @@ export const FRIENDS_ES = {
   "friends.remove.title": "Eliminar amigo",
   "friends.remove.message": "¿Eliminar a {name} de tus amigos?",
   "friends.remove.confirm": "Eliminar",
-  "friends.error.title": "Aviso",
-  "friends.error.ok": "Aceptar",
   "friends.error.friendLimit": "Lista de amigos llena. No puedes aceptar más.",
   "friends.error.requestLimit": "Límite de solicitudes enviadas alcanzado.",
   "friends.error.alreadyFriend": "Ya sois amigos.",

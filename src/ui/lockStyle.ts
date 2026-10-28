@@ -29,9 +29,10 @@ export const LOCK_DIM = { plateAlpha: 0.4, labelAlpha: 0.38, lockAlpha: 0.72, en
 /** 잠금·개방 토스트. 자리는 예전과 같고 뒤판이 글자를 받친다. */
 export const LOCK_TOAST = {
   y: BASE_HEIGHT - 420,
-  depth: 3000,
+  depth: 9000,
   height: 88,
   padX: 48,
+  padY: 22,
   iconGap: 18,
   minWidth: 360,
   edgeMargin: 40,
@@ -47,6 +48,11 @@ export const LOCK_TOAST = {
 export function toastWidth(textWidth: number, withIcon: boolean): number {
   const raw = textWidth + LOCK_TOAST.padX * 2 + (withIcon ? 40 + LOCK_TOAST.iconGap : 0);
   return Math.min(BASE_WIDTH - LOCK_TOAST.edgeMargin * 2, Math.max(LOCK_TOAST.minWidth, Math.ceil(raw)));
+}
+
+/** 토스트 글자가 접히는 폭 — 판이 화면 밖으로 나가지 않는 최대 폭에서 여백(과 자물쇠 자리)을 뺀 값. */
+export function toastTextWrap(withIcon: boolean): number {
+  return BASE_WIDTH - LOCK_TOAST.edgeMargin * 2 - LOCK_TOAST.padX * 2 - (withIcon ? 40 + LOCK_TOAST.iconGap : 0);
 }
 
 export interface PadlockGeometry {

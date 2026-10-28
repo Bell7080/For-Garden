@@ -37,8 +37,6 @@ export const FRIENDS_KO = {
   "friends.remove.title": "친구 삭제",
   "friends.remove.message": "{name:을} 친구에서 삭제할까요?",
   "friends.remove.confirm": "삭제",
-  "friends.error.title": "알림",
-  "friends.error.ok": "확인",
   "friends.error.friendLimit": "친구 수가 가득 차 더 수락할 수 없습니다.",
   "friends.error.requestLimit": "보낸 신청이 가득 찼습니다.",
   "friends.error.alreadyFriend": "이미 친구입니다.",

@@ -40,7 +40,7 @@ import { withBusy } from "../ui/BusyOverlay";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addClippedHit } from "../ui/clippedHit";
 import type { ClipRect } from "../ui/clipRect";
-import { showContentToast } from "../ui/ContentToast";
+import { showContentToast, type ContentToastTone } from "../ui/ContentToast";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
 import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWidgets";
@@ -225,7 +225,7 @@ export class GuildScene extends Phaser.Scene {
   private get now(): number { return Date.now() + this.clockOffset + guildQaClockShift(); }
   private get inGuild(): boolean { return Boolean(this.state?.guild); }
 
-  private toast(message: string, tone: "locked" | "unlocked" = "locked"): void { showContentToast(this, message, tone); }
+  private toast(message: string, tone: ContentToastTone = "refused"): void { showContentToast(this, message, tone); }
 
   private fail(error: unknown): void {
     const raw = error instanceof GuildApiError ? error.code : error instanceof Error ? error.message : "";
@@ -1237,7 +1237,7 @@ export class GuildScene extends Phaser.Scene {
       pressOut(node);
       if (!this.canTap() || this.popups.isOpen) return;
       if (holder) this.openWarSlot(map, slot);
-      else if (map.phase !== "prep") this.toast(t("guild.error.WAR_LOCKED"));
+      else if (map.phase !== "prep") this.toast(t("guild.error.WAR_LOCKED"), "locked");
       else this.openWarDefense(map, slot.id);
     });
   }

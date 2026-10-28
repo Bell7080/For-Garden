@@ -37,8 +37,6 @@ export const FRIENDS_DE = {
   "friends.remove.title": "Freund entfernen",
   "friends.remove.message": "{name} aus der Freundesliste entfernen?",
   "friends.remove.confirm": "Entfernen",
-  "friends.error.title": "Hinweis",
-  "friends.error.ok": "OK",
   "friends.error.friendLimit": "Freundesliste voll. Keine weiteren Anfragen möglich.",
   "friends.error.requestLimit": "Limit gesendeter Anfragen erreicht.",
   "friends.error.alreadyFriend": "Ihr seid bereits befreundet.",

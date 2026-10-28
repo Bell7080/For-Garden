@@ -37,8 +37,6 @@ export const FRIENDS_JA = {
   "friends.remove.title": "フレンド削除",
   "friends.remove.message": "{name}をフレンドから削除しますか?",
   "friends.remove.confirm": "削除",
-  "friends.error.title": "お知らせ",
-  "friends.error.ok": "OK",
   "friends.error.friendLimit": "フレンドが上限に達しています。",
   "friends.error.requestLimit": "送信中の申請が上限に達しています。",
   "friends.error.alreadyFriend": "すでにフレンドです。",

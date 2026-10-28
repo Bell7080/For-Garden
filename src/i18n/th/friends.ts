@@ -37,8 +37,6 @@ export const FRIENDS_TH = {
   "friends.remove.title": "ลบเพื่อน",
   "friends.remove.message": "ลบ {name} ออกจากเพื่อนหรือไม่?",
   "friends.remove.confirm": "ลบ",
-  "friends.error.title": "แจ้งเตือน",
-  "friends.error.ok": "ตกลง",
   "friends.error.friendLimit": "เพื่อนเต็มแล้ว รับเพิ่มไม่ได้",
   "friends.error.requestLimit": "ส่งคำขอครบขีดจำกัดแล้ว",
   "friends.error.alreadyFriend": "เป็นเพื่อนกันแล้ว",

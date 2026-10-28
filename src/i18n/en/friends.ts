@@ -37,8 +37,6 @@ export const FRIENDS_EN = {
   "friends.remove.title": "Remove Friend",
   "friends.remove.message": "Remove {name} from your friends?",
   "friends.remove.confirm": "Remove",
-  "friends.error.title": "Notice",
-  "friends.error.ok": "OK",
   "friends.error.friendLimit": "Your friend list is full.",
   "friends.error.requestLimit": "You have too many pending requests.",
   "friends.error.alreadyFriend": "Already friends.",

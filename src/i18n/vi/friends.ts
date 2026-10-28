@@ -37,8 +37,6 @@ export const FRIENDS_VI = {
   "friends.remove.title": "Xóa bạn",
   "friends.remove.message": "Xóa {name} khỏi bạn bè?",
   "friends.remove.confirm": "Xóa",
-  "friends.error.title": "Thông báo",
-  "friends.error.ok": "Xác nhận",
   "friends.error.friendLimit": "Danh sách bạn đã đầy, không thể nhận thêm.",
   "friends.error.requestLimit": "Đã đạt giới hạn lời mời gửi.",
   "friends.error.alreadyFriend": "Đã là bạn bè.",

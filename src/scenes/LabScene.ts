@@ -1,3 +1,4 @@
+import { showContentToast } from "../ui/ContentToast";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -10,7 +11,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
 import { getRelic } from "../data/relics";
 import { session } from "../state/session";
-import { BottomNav, NAV_TOP } from "../ui/BottomNav";
+import { BottomNav } from "../ui/BottomNav";
 import { Button } from "../ui/Button";
 import { TopBar } from "../ui/TopBar";
 import { drawLayer, slantedRect, toPoints } from "../ui/holo";
@@ -442,11 +443,7 @@ export class LabScene extends Phaser.Scene {
 
   /** 임시 API 오류도 게임 테마 안에서 짧게 안내한다. */
   private showNotice(message: string): void {
-    const notice = this.add
-      .text(BASE_WIDTH / 2, NAV_TOP - 390, message, textStyle({ role: "emphasis", size: 28, color: COLOR.accentText }))
-      .setOrigin(0.5)
-      .setDepth(700);
-    this.time.delayedCall(1800, () => notice.destroy());
+    showContentToast(this, message, "refused");
   }
 
   /** 등급 네 줄을 눌러 펼치는 확률표(`GachaRatesPopup`). 숫자는 배너 정의에서 그대로 셈한다. */

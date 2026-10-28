@@ -931,6 +931,7 @@ var BATTLE_KO = {
   "battle.result.saveFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "battle.result.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
   "battle.result.nodeScore": "\uC6D0\uC815 \uC810\uC218 +{score}",
+  "battle.result.runScore": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218 {score} \xB7 \uC8FC\uAC04 \uAE30\uB85D \uBC18\uC601",
   "battle.pause.continue": "\uC774\uC5B4\uC11C",
   "battle.pause.toTitle": "\uD0C0\uC774\uD2C0\uB85C",
   "battle.pause.toTitleConfirm": "\uD0C0\uC774\uD2C0\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uC774 \uC804\uD22C\uB294 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4.",
@@ -1333,6 +1334,11 @@ var GUILD_KO = {
   "guild.guard.party.element": "\uC624\uB298\uC758 \uC801",
   "guild.guard.party.front": "\uC55E\uC904",
   "guild.guard.party.back": "\uB4B7\uC904",
+  "guild.guard.preview.title": "\uC624\uB298\uC758 \uC801",
+  "guild.guard.preview.power": "\uCCAB \uC6E8\uC774\uBE0C \uC804\uD22C\uB825 {power}",
+  "guild.guard.preview.rule": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uB808\uBCA8 +{level} \xB7 \uC815\uC608\uB294 {every}\uC6E8\uC774\uBE0C\uB9C8\uB2E4",
+  "guild.guard.preview.level": "LV.{level}",
+  "guild.guard.preview.wave": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.battle.line": "\uC6E8\uC774\uBE0C {wave} \xB7 \uD544\uB4DC {field}/{cap}",
   "guild.guard.result.footnote": "{score}\uC810 \xB7 \uC6E8\uC774\uBE0C {wave} \xB7 \uCC98\uCE58 {kills}",
   "guild.error.GUARD_LIMIT": "\uC624\uB298 \uC218\uD638\uC804 \uB3C4\uC804\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4",
@@ -2869,8 +2875,8 @@ var DUNGEON_KO = {
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",
-  "dungeon.sweep.ad": "\uAD11\uACE0 +{count}",
-  "dungeon.sweep.adUsage": "{used}/{limit}",
+  "dungeon.sweep.ad": "\uAD11\uACE0 \uBCF4\uACE0 {count}\uAC1C \uBC1B\uAE30",
+  "dungeon.sweep.adUsage": "{left}/{limit}",
   "dungeon.sortie": "\uCD9C\uACA9",
   "dungeon.sweep": "\uC18C\uD0D5",
   "dungeon.sweep.title": "\uC18C\uD0D5 \uC644\uB8CC",
@@ -35179,7 +35185,8 @@ var FakeServer = class {
     }
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), this.now());
     const finalScore = calculateExpeditionRunScore(run2).runScore;
-    const improved = request.outcome === "completed" && finalScore > weekly.bestScore;
+    const defeated = request.outcome === "abandoned" && run2.relics.length > 0 && run2.relics.every((relic) => !relic.alive);
+    const improved = (request.outcome === "completed" || defeated) && finalScore > weekly.bestScore;
     const expedition = {
       ...weekly,
       playsToday: weekly.playsToday + 1,
@@ -35187,7 +35194,7 @@ var FakeServer = class {
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null
     };
-    const result = { runId: run2.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
+    const result = { runId: run2.runId, settlementId: request.settlementId, outcome: request.outcome, granted, runScore: finalScore };
     const candidate = { ...this.state, wallet, expedition };
     this.recordReceipt(candidate, "expeditionSettle", request.settlementId, identity, result);
     this.commitRaidState(candidate);

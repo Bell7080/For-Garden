@@ -51,6 +51,7 @@ export const BATTLE_KO = {
   "battle.result.saveFailed": "결과를 저장하지 못했습니다",
   "battle.result.retry": "다시 시도",
   "battle.result.nodeScore": "원정 점수 +{score}",
+  "battle.result.runScore": "이번 원정 점수 {score} · 주간 기록 반영",
   "battle.pause.continue": "이어서",
   "battle.pause.toTitle": "타이틀로",
   "battle.pause.toTitleConfirm": "타이틀로 돌아갑니다. 이 전투는 처음부터 다시 시작합니다.",

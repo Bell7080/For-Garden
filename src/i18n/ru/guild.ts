@@ -43,6 +43,7 @@ export const GUILD_RU = {
   "guild.badge.icon": "Символ",
   "guild.badge.iconColor": "Цвет символа",
   "guild.badge.apply": "Сменить эмблему",
+  "guild.badge.firstFree": "Первый раз бесплатно!",
   "guild.badge.confirmTitle": "Сменить эмблему",
   "guild.badge.confirmMessage": "Сменить эмблему гильдии.",
   "guild.badge.done": "Эмблема изменена",

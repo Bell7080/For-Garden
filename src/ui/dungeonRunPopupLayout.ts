@@ -25,7 +25,7 @@ export const DUNGEON_RUN_POPUP = {
   /** 스테미나 충전 — 제목표와 같은 크기의 칸 셋. */
   recharge: { titleY: 432, top: 462, height: 188, gap: 16 },
   /** 갈래 줄 — 자동 전투는 옵션 칩 둘, 소탕은 소탕권 줄. */
-  branch: { y: 712, height: 84, adWidth: 236, adHeight: 62, icon: 52 },
+  branch: { y: 712, height: 84, adWidth: 270, adHeight: 62, adGap: 16, icon: 52 },
   /** 예상 소모(왼쪽) | 예상 획득(오른쪽). */
   summary: { top: 776, height: 214, titleY: 38, frame: 104, frameY: 128, gap: 126, valueSize: 34 },
   notice: { y: 1018, size: 22 },

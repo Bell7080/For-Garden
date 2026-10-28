@@ -17,6 +17,7 @@ import { chipPoints, drawHairline, drawLayer } from "./holo";
 import { addClippedHit } from "./clippedHit";
 import { EXPEDITION_AUGMENT_STATUS } from "./expeditionLayout";
 import { expeditionAugmentPages, type AugmentBadgeView, type AugmentStatusPage } from "./expeditionAugmentBadges";
+import { addScrollHint } from "./ScrollHint";
 
 /** 손을 이만큼 옆으로 밀면 쪽을 넘긴다. 세로로 더 움직였으면 목록을 흘리는 손이다. */
 const SWIPE_DISTANCE = 90;
@@ -161,6 +162,10 @@ export class ExpeditionAugmentStatusPopup {
     this.scroll = Phaser.Math.Clamp(this.scroll, this.minScroll, 0);
     list.y = L.viewport.top + this.scroll;
     if (this.mask) list.setMask(this.mask);
+    addScrollHint(this.scene, container, {
+      x: 0, y: (L.viewport.top + L.viewport.bottom) / 2, width: L.viewport.width, height: L.viewport.bottom - L.viewport.top,
+      owner: list, read: () => ({ offset: this.scroll, min: this.minScroll }),
+    });
     previous?.destroy();
     this.page = container;
     this.list = list;

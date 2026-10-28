@@ -20,6 +20,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { recollectionArtCrop, recollectionArtFocus, recollectionListHeight, recollectionRowAt, recollectionRowY, recollectionViewportHeight, RECOLLECTION_LAYOUT } from "./recollectionLayout";
 import { COLOR, textStyle } from "./theme";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
+import { addScrollHint } from "./ScrollHint";
 
 /** 손가락이 이만큼 움직이면 누름이 아니라 끌기다 — 목록을 흘리다 뗀 손이 이야기를 열지 않게 한다. */
 const TAP_SLOP = 14;
@@ -134,6 +135,10 @@ export class RecollectionPopup {
     content.setMask(shapeClipMask(this.scene, frame, [-half, 0, half, 0, half, viewHeight, -half, viewHeight]));
     this.content = content;
     this.minScroll = Math.min(0, viewHeight - recollectionListHeight(this.entries.length));
+    addScrollHint(this.scene, frame, {
+      x: 0, y: viewHeight / 2, width: half * 2, height: viewHeight, owner: content,
+      read: () => ({ offset: this.scroll, min: this.minScroll }),
+    });
     const localY = (pointer: Phaser.Input.Pointer): number => {
       const matrix = frame.getWorldTransformMatrix();
       return (pointer.worldY - matrix.ty) / (matrix.scaleY || 1) - this.scroll;

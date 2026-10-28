@@ -76,6 +76,7 @@ import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransit
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -839,6 +840,11 @@ export class ExpeditionScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
     this.rosterView = DEFAULT_ROSTER_VIEW;
     this.fillRosterGrid();
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (ROSTER_VIEWPORT.top + ROSTER_VIEWPORT.bottom) / 2, width: BASE_WIDTH,
+      height: ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top, depth: 45,
+      read: () => ({ offset: this.rosterScrollY, min: this.rosterMinScroll }),
+    });
     // 편성판 바로 아래 한 줄 — 도감과 같은 필터·정렬. 그리드가 시작하는 머리 끝선 위에 앉는다.
     new RosterControls(this, {
       left: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, 0) - ROSTER.cardWidth / 2,

@@ -42,6 +42,7 @@ import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 제목·구간 버튼·뒤로가기가 앉는 깊이. 비네트(40)보다 위다. */
 const CHROME_DEPTH = 50;
@@ -148,6 +149,12 @@ export class AncientStrataScene extends Phaser.Scene {
     this.buildMap();
     void this.loadPeers();
     this.enableDragScroll();
+    // 1층이 아래에서 시작해 위로 이어진다 — 위 끝(max)이 앞이다(스테이지 지도와 같은 방향).
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (ANCIENT_MAP.window.top + ANCIENT_MAP.window.bottom) / 2, width: BASE_WIDTH,
+      height: ANCIENT_MAP.window.bottom - ANCIENT_MAP.window.top, depth: 45,
+      read: () => ({ offset: (this.map?.y ?? this.limits.min) - this.limits.max, min: this.limits.min - this.limits.max }),
+    });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다 — 조각마다 트윈을 걸지 않으므로 `create`의 맨 끝이다.
     playSceneEntrance(this);
     this.warnReset();

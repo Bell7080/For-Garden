@@ -95,6 +95,8 @@ export const LOBBY_RU = {
   "ancient.trial.deadline": "Лимит времени: 45 секунд · Здоровье врагов −12%",
   "ancient.trial.shield": "Начальный щит врагов: 30% макс. здоровья",
   "ancient.trial.charge": "Начальная энергия ультимейта врагов +50%",
+  "ancient.trial.frenzy": "Скорость атаки врагов +25%",
+  "ancient.trial.precision": "Шанс крита врагов +30%",
   "ancient.depthMultiplier": "Множители глубины",
   "ancient.deepTrial": "Глубина · Урон от % здоровья использует эквивалент B120",
   "ancient.requirement": "Сначала пройдите {stage}",
@@ -113,5 +115,7 @@ export const LOBBY_RU = {
   "ancient.trialTag.deadline": "Отсчёт",
   "ancient.trialTag.shield": "Барьер",
   "ancient.trialTag.charge": "Перегрузка",
+  "ancient.trialTag.frenzy": "Шквал",
+  "ancient.trialTag.precision": "Уязвимость",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

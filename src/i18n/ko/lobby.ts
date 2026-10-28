@@ -101,6 +101,8 @@ export const LOBBY_KO = {
   "ancient.trial.deadline": "제한 시간 45초 · 적 체력 −12%",
   "ancient.trial.shield": "적 시작 보호막: 최대 체력의 30%",
   "ancient.trial.charge": "적 시작 궁극기 게이지 +50%",
+  "ancient.trial.frenzy": "적 공격 속도 +25%",
+  "ancient.trial.precision": "적 치명타 확률 +30%",
   "ancient.depthMultiplier": "지층 배율",
   "ancient.deepTrial": "심층 시련 · 비례 피해는 120층 환산 체력 기준",
   "ancient.requirement": "먼저 {stage} 클리어",
@@ -119,5 +121,7 @@ export const LOBBY_KO = {
   "ancient.trialTag.deadline": "초읽기",
   "ancient.trialTag.shield": "결계",
   "ancient.trialTag.charge": "과충전",
+  "ancient.trialTag.frenzy": "속공",
+  "ancient.trialTag.precision": "급소",
   "ancient.trialLine": "「{name}」 {effect}",
 } as const;

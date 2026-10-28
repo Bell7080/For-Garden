@@ -95,6 +95,8 @@ export const LOBBY_ES = {
   "ancient.trial.deadline": "Límite de 45 segundos · Vida enemiga −12%",
   "ancient.trial.shield": "Escudo inicial enemigo: 30% de vida máxima",
   "ancient.trial.charge": "Energía definitiva inicial enemiga +50%",
+  "ancient.trial.frenzy": "Velocidad de ataque enemiga +25%",
+  "ancient.trial.precision": "Probabilidad crítica enemiga +30%",
   "ancient.depthMultiplier": "Multiplicadores de profundidad",
   "ancient.deepTrial": "Prueba profunda · Daño porcentual basado en vida de B120",
   "ancient.requirement": "Supera {stage} primero",
@@ -113,5 +115,7 @@ export const LOBBY_ES = {
   "ancient.trialTag.deadline": "Cuenta atrás",
   "ancient.trialTag.shield": "Barrera",
   "ancient.trialTag.charge": "Sobrecarga",
+  "ancient.trialTag.frenzy": "Celeridad",
+  "ancient.trialTag.precision": "Punto débil",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

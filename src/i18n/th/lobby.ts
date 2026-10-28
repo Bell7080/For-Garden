@@ -95,6 +95,8 @@ export const LOBBY_TH = {
   "ancient.trial.deadline": "จำกัดเวลา 45 วินาที · HP ศัตรู −12%",
   "ancient.trial.shield": "โล่เริ่มต้นศัตรู: 30% ของ HP สูงสุด",
   "ancient.trial.charge": "พลังงานท่าไม้ตายเริ่มต้นศัตรู +50%",
+  "ancient.trial.frenzy": "ความเร็วโจมตีศัตรู +25%",
+  "ancient.trial.precision": "อัตราคริติคอลศัตรู +30%",
   "ancient.depthMultiplier": "ตัวคูณความลึก",
   "ancient.deepTrial": "บททดสอบชั้นลึก · ดาเมจ % HP ใช้ค่า HP เทียบเท่า B120",
   "ancient.requirement": "ผ่าน {stage} ก่อน",
@@ -113,5 +115,7 @@ export const LOBBY_TH = {
   "ancient.trialTag.deadline": "นับถอยหลัง",
   "ancient.trialTag.shield": "บาเรียร์",
   "ancient.trialTag.charge": "ชาร์จเกิน",
+  "ancient.trialTag.frenzy": "จู่โจมเร็ว",
+  "ancient.trialTag.precision": "จุดตาย",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

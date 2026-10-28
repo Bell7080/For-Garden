@@ -82,6 +82,9 @@ export function getAncientStrataFloor(floor: number, season: string = activeSeas
   const enemyAugmentEffects: ExpeditionAugmentEffect[] = [
     ...(trial.initialShieldPercent ? [{ kind: "initialShieldPercent" as const, percent: trial.initialShieldPercent, scope: { kind: "all" as const } }] : []),
     ...(trial.openingEnergyPercent ? [{ kind: "openingEnergyPercent" as const, percent: trial.openingEnergyPercent, scope: { kind: "all" as const } }] : []),
+    // 공속은 능력치에 굽지 않고 증강으로 얹는다 — 굽으면 위의 공격 압박 정규화(공격 × 공속)가 그만큼 공격을 깎아 시련이 사라진다.
+    ...(trial.attackSpeedPercent ? [{ kind: "attackSpeedPercent" as const, percent: trial.attackSpeedPercent, scope: { kind: "all" as const } }] : []),
+    ...(trial.critChancePoints ? [{ kind: "flatStat" as const, stat: "critChance" as const, points: trial.critChancePoints, scope: { kind: "all" as const } }] : []),
   ];
   const band = ANCIENT_DIFFICULTY_BANDS.find(band => floor <= band.last)!;
   return { floor, level: ANCIENT_STRATA_ENEMY_LEVEL, breakthrough: 0, focus: band.focus,

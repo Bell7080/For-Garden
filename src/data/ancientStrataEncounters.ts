@@ -33,10 +33,14 @@ export interface AncientTrial {
   readonly initialShieldPercent?: number;
   /** 적 전원의 궁극기 게이지가 몇 % 찬 채로 시작하나. */
   readonly openingEnergyPercent?: number;
+  /** 적 전원의 공격 속도가 몇 % 오르나(곱셈 — 원정 증강 `attackSpeedPercent`와 같은 길). 공격 예산을 맞춘 **뒤에** 얹는다. */
+  readonly attackSpeedPercent?: number;
+  /** 적 전원의 치명타 확률에 몇 %를 더하나(덧셈 — `flatStat critChance`와 같은 길). */
+  readonly critChancePoints?: number;
 }
-export type AncientTrialId = "endurance" | "armor" | "assault" | "deadline" | "shield" | "charge";
-export const ANCIENT_TRIAL_IDS: readonly AncientTrialId[] = ["endurance","armor","assault","deadline","shield","charge"];
-/** 시련 하나가 판을 얼마나 바꾸는가(2026-10-27 상향 — 체력·공격 +30%, 방어 +50%, 막 30%, 궁극기 50%, 시한 45초). */
+export type AncientTrialId = "endurance" | "armor" | "assault" | "deadline" | "shield" | "charge" | "frenzy" | "precision";
+export const ANCIENT_TRIAL_IDS: readonly AncientTrialId[] = ["endurance","armor","assault","deadline","shield","charge","frenzy","precision"];
+/** 시련 하나가 판을 얼마나 바꾸는가(2026-10-27 상향 — 체력·공격 +30%, 방어 +50%, 막 30%, 궁극기 50%, 시한 45초 · 2026-10-28 공속 +25%·치명타 +30% 추가). */
 export const ANCIENT_TRIALS = {
   endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
   armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
@@ -44,6 +48,10 @@ export const ANCIENT_TRIALS = {
   deadline: { hp: .88, attack: 1, defense: 1, seconds: 45 },
   shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
   charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 },
+  // 2026-10-28 응태 요청 — 공속 +25%는 평타 압박을 맹공(+30%)보다 조금 덜 올린다(궁극기 충전도 함께 빨라지므로).
+  // 치명타 +30%는 기본 10% → 40%라 평균 피해 기대치가 ×1.05 → ×1.20(약 +14%)이고, 한 방의 흔들림이 시련의 몫이다.
+  frenzy: { hp: 1, attack: 1, defense: 1, seconds: 90, attackSpeedPercent: 25 },
+  precision: { hp: 1, attack: 1, defense: 1, seconds: 90, critChancePoints: 30 },
 } as const satisfies Record<AncientTrialId, AncientTrial>;
 
 export function ancientEncounterRole(kind: AncientEncounterKind, index: number): EncounterRole {

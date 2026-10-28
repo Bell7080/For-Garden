@@ -100,6 +100,8 @@ export const LOBBY_JA = {
   "ancient.trial.deadline": "制限時間45秒 · 敵のHP−12%",
   "ancient.trial.shield": "敵は最大HPの30%のシールドで開始",
   "ancient.trial.charge": "敵の開始時必殺技ゲージ+50%",
+  "ancient.trial.frenzy": "敵の攻撃速度+25%",
+  "ancient.trial.precision": "敵のクリティカル率+30%",
   "ancient.depthMultiplier": "階層倍率",
   "ancient.deepTrial": "深層試練 · HP割合ダメージはB120換算HP基準",
   "ancient.requirement": "先に{stage}をクリア",
@@ -118,5 +120,7 @@ export const LOBBY_JA = {
   "ancient.trialTag.deadline": "秒読み",
   "ancient.trialTag.shield": "結界",
   "ancient.trialTag.charge": "過充填",
+  "ancient.trialTag.frenzy": "速攻",
+  "ancient.trialTag.precision": "急所",
   "ancient.trialLine": "「{name}」 {effect}",
 } as const;

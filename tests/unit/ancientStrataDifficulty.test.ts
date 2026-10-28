@@ -47,7 +47,7 @@ describe("고대 지층 200층 난이도 계약", () => {
       expect(next.repeatClearRewards).toEqual([]);
       previous=next;
     }
-    expect(kinds.size).toBe(5);expect(trials.size).toBe(6);expect(templates.size).toBe(10);
+    expect(kinds.size).toBe(5);expect(trials.size).toBe(8);expect(templates.size).toBe(10);
     const first20=Array.from({length:20},(_,i)=>getAncientStrataFloor(i+1));
     expect(new Set(first20.map(d=>JSON.stringify([d.encounterKind,d.enemies.map(e=>e.id),d.trialId]))).size).toBe(20);
     expect(ANCIENT_DIFFICULTY_BANDS.at(-1)?.last).toBe(200);

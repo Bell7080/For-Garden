@@ -95,6 +95,8 @@ export const LOBBY_ZH_HANS = {
   "ancient.trial.deadline": "限时45秒 · 敌方生命值−12%",
   "ancient.trial.shield": "敌方开场获得最大生命值30%的护盾",
   "ancient.trial.charge": "敌方初始必杀技能量+50%",
+  "ancient.trial.frenzy": "敌方攻击速度+25%",
+  "ancient.trial.precision": "敌方暴击率+30%",
   "ancient.depthMultiplier": "地层倍率",
   "ancient.deepTrial": "深层试炼 · 生命比例伤害以B120换算生命为基准",
   "ancient.requirement": "先通关{stage}",
@@ -113,5 +115,7 @@ export const LOBBY_ZH_HANS = {
   "ancient.trialTag.deadline": "倒计时",
   "ancient.trialTag.shield": "结界",
   "ancient.trialTag.charge": "过充能",
+  "ancient.trialTag.frenzy": "速攻",
+  "ancient.trialTag.precision": "要害",
   "ancient.trialLine": "「{name}」{effect}",
 } as const;

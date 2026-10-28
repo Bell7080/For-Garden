@@ -95,6 +95,8 @@ export const LOBBY_DE = {
   "ancient.trial.deadline": "Zeitlimit: 45 Sekunden · Gegner-LP −12%",
   "ancient.trial.shield": "Gegner starten mit Schild: 30% der max. LP",
   "ancient.trial.charge": "Anfängliche Ultimativenergie der Gegner +50%",
+  "ancient.trial.frenzy": "Angriffstempo der Gegner +25%",
+  "ancient.trial.precision": "Kritische Rate der Gegner +30%",
   "ancient.depthMultiplier": "Tiefenmultiplikatoren",
   "ancient.deepTrial": "Tiefenprüfung · %-LP-Schaden nutzt auf B120 begrenzte LP",
   "ancient.requirement": "Zuerst {stage} abschließen",
@@ -113,5 +115,7 @@ export const LOBBY_DE = {
   "ancient.trialTag.deadline": "Countdown",
   "ancient.trialTag.shield": "Barriere",
   "ancient.trialTag.charge": "Überladung",
+  "ancient.trialTag.frenzy": "Raserei",
+  "ancient.trialTag.precision": "Schwachpunkt",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

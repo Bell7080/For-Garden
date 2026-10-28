@@ -95,6 +95,8 @@ export const LOBBY_VI = {
   "ancient.trial.deadline": "Giới hạn 45 giây · HP địch −12%",
   "ancient.trial.shield": "Khiên đầu trận của địch: 30% HP tối đa",
   "ancient.trial.charge": "Năng lượng Tuyệt kỹ ban đầu của địch +50%",
+  "ancient.trial.frenzy": "Tốc đánh của địch +25%",
+  "ancient.trial.precision": "Tỉ lệ chí mạng của địch +30%",
   "ancient.depthMultiplier": "Hệ số độ sâu",
   "ancient.deepTrial": "Thử thách sâu · Sát thương % HP dùng HP quy đổi B120",
   "ancient.requirement": "Hoàn thành {stage} trước",
@@ -113,5 +115,7 @@ export const LOBBY_VI = {
   "ancient.trialTag.deadline": "Đếm Ngược",
   "ancient.trialTag.shield": "Kết Giới",
   "ancient.trialTag.charge": "Quá Tải",
+  "ancient.trialTag.frenzy": "Tốc Công",
+  "ancient.trialTag.precision": "Tử Huyệt",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

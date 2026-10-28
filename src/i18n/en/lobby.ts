@@ -95,6 +95,8 @@ export const LOBBY_EN = {
   "ancient.trial.deadline": "45-second time limit · Enemy HP −12%",
   "ancient.trial.shield": "Enemies start with a 30% max-HP shield",
   "ancient.trial.charge": "Enemy starting ultimate energy +50%",
+  "ancient.trial.frenzy": "Enemy attack speed +25%",
+  "ancient.trial.precision": "Enemy critical rate +30%",
   "ancient.depthMultiplier": "Depth multipliers",
   "ancient.deepTrial": "Deep trial · %-HP damage uses B120-equivalent HP",
   "ancient.requirement": "Clear {stage} first",
@@ -113,5 +115,7 @@ export const LOBBY_EN = {
   "ancient.trialTag.deadline": "Countdown",
   "ancient.trialTag.shield": "Barrier",
   "ancient.trialTag.charge": "Overcharge",
+  "ancient.trialTag.frenzy": "Blitz",
+  "ancient.trialTag.precision": "Weak Point",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

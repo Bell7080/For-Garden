@@ -27,15 +27,18 @@ export class StageStoryScene extends Phaser.Scene {
   private exitTo = "stageMap";
   /** 있으면 `exitTo` 대신 이 길로 이어 간다 — 전 대사 뒤 편성, 후 대사 뒤 결과판의 다음 길. */
   private then?: SceneRoute;
+  /** 겹쳐 열렸으면 끝난 뒤 넘어가지 않고 이 씬을 깨운다(`launchStoryOverlay`). 애착 젬은 깨어난 쪽이 받는다. */
+  private overlayOf?: string;
   private popups!: PopupLayer;
   /** 마지막 입력과 스킵이 겹쳐도 완료 저장과 다음 화면 전환은 한 번만 수행한다. */
   private leaving = false;
 
   constructor() { super("stageStory"); }
 
-  create(data: { storyId: string; exitTo?: "lobby" | "stageMap"; then?: SceneRoute }): void {
+  create(data: { storyId: string; exitTo?: "lobby" | "stageMap"; then?: SceneRoute; overlayOf?: string }): void {
     this.exitTo = data.exitTo ?? "stageMap";
     this.then = data.then;
+    this.overlayOf = data.overlayOf;
     this.leaving = false;
     // 대사 씬도 다른 ready 소유 씬과 같은 시작/종료 초기화 규칙을 사용한다.
     bindDebugReadyLifecycle(this.events);
@@ -92,10 +95,14 @@ export class StageStoryScene extends Phaser.Scene {
         gems = receipt.gemsGranted;
         if (receipt.wallet) session.wallet = { ...receipt.wallet };
       })
-      .then(() => this.claimChapterGems())
+      // 겹쳐 연 이야기는 젬을 여기서 받지 않는다 — 깨어난 판 위에 보상 창을 띄워 그쪽에서 받는다.
+      .then(() => (this.overlayOf ? undefined : this.claimChapterGems()))
       .then(() => {
         const leave = (): void => {
-          if (this.then) startScene(this, this.then.scene, this.then.data);
+          if (this.overlayOf) {
+            this.scene.wake(this.overlayOf);
+            this.scene.stop();
+          } else if (this.then) startScene(this, this.then.scene, this.then.data);
           else startScene(this, this.exitTo);
         };
         // 이야기 서브를 처음 읽었으면 받은 젬을 영수증으로 알리고, 닫으면 넘어간다.

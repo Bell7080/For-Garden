@@ -253,6 +253,12 @@ function ensure(): DebugState {
   return window.__PF_DEBUG;
 }
 
+/** 지금 공개 중인 화면 이름 — 겹쳐 연 씬이 닫히고 아래 씬이 깨어날 때 되돌려 놓는다. */
+export function debugSceneName(): string | undefined {
+  if (!QA_TOOLS_ENABLED) return undefined;
+  return ensure().scene;
+}
+
 export function setDebugScene(scene: string, screenTitle?: string): void {
   if (!QA_TOOLS_ENABLED) return;
   const state = ensure();

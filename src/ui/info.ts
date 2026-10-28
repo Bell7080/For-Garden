@@ -19,9 +19,11 @@ import { formatCurrency } from "../core/formatCurrency";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
 import { KeywordManager } from "../managers/KeywordManager";
 import { relicStories } from "../managers/RelicStoryManager";
-import { BOND_STORY_GEM_REWARD } from "../core/relicStory";
+import { BOND_STORY_GEM_REWARD, type BondStoryLevel } from "../core/relicStory";
 import { relicStoryFor } from "../data/relicStories";
-import { playFadeIn, playFadeOut, startScene } from "./screenTransition";
+import { playFadeIn, playFadeOut } from "./screenTransition";
+import { launchStoryOverlay } from "../scenes/storyOverlay";
+import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import {
   battleAssetFor,
@@ -281,6 +283,12 @@ const BOND_STORY_STEPS: readonly { level: number; title: () => string }[] = [
   { level: 7, title: () => t("info.story.3") },
   { level: 10, title: () => t("info.story.4") },
 ];
+
+/**
+ * 유대 상세 판의 크기. 애착 스토리 네 장(2×2)의 아랫줄이 900 높이의 판 밑변 밖으로 삐져나와
+ * 칸 아래에 뒷배경이 없었다 — 판을 내용에 맞춰 키우고, 키운 만큼 내용 전체를 위로 올린다.
+ */
+const BOND_DETAIL = { width: 820, height: 976, shift: -38 } as const;
 
 /** 돌파 버튼과 팝업이 함께 쓰는 색. 레벨(초록)과 갈라 놓아 다른 종류의 성장임을 알린다. */
 const BREAK_EDGE = 0xa88cf0;
@@ -1633,7 +1641,10 @@ export class InfoManager {
     const progress = relicProgression.getProgress(def.id);
     const level = progress.bondLevel;
     const next = Math.min(BOND_LEVEL_CAP, level + 1);
-    this.popups.open({ width: 820, height: 900, title: t("info.bond.level", { level: `${level} / ${BOND_LEVEL_CAP}` }), tilt: -1.2, ...anchorOf(from) }, (body) => {
+    this.popups.open({ width: BOND_DETAIL.width, height: BOND_DETAIL.height, title: t("info.bond.level", { level: `${level} / ${BOND_LEVEL_CAP}` }), tilt: -1.2, ...anchorOf(from) }, (frame) => {
+      // 판을 키운 만큼 내용 전체를 위로 올린다 — 칸을 하나씩 옮기면 맨 아래 줄만 따로 논다.
+      const body = this.scene.add.container(0, BOND_DETAIL.shift);
+      frame.add(body);
       const rows: [string, string, string][] = [
         [t("info.bond.ferocityGain"), "+" + Math.round((BOND_FEROCITY_MULTIPLIER[level] - 1) * 100) + "%", "+" + Math.round((BOND_FEROCITY_MULTIPLIER[next] - 1) * 100) + "%"],
         [t("info.bond.lobbyInteraction"), t("info.bond.oncePerDay", { amount: `${BOND_XP_REWARD.firstLobbyInteraction} EXP` }), t("info.bond.same")],
@@ -1677,7 +1688,7 @@ export class InfoManager {
           }
           if (open) {
             const hit = this.scene.add.rectangle(0, 0, cellW, cellH, 0xffffff, 0).setInteractive({ useHandCursor: true });
-            hit.on("pointerup", () => startScene(this.scene, "stageStory", { storyId: chapter.storyId, exitTo: "lobby" }));
+            hit.on("pointerup", () => this.readBondChapter(def.id, chapter.level, chapter.storyId, from));
             cell.add(hit);
           }
           body.add(cell);
@@ -1703,6 +1714,25 @@ export class InfoManager {
         );
       });
     });
+  }
+
+  /**
+   * 애착 스토리 한 장을 **이 화면 위에 겹쳐** 읽는다. 끝나거나 건너뛰면 정보창과 유대 판이 연 그대로 돌아오고,
+   * 아직 받지 않은 장이면 그 위에 젬 보상 창이 뜬다 — 로비로 튕겨 판을 다시 찾아 열지 않게 한다.
+   */
+  private readBondChapter(relicId: string, level: BondStoryLevel, storyId: string, from: PopupSource): void {
+    launchStoryOverlay(this.scene, storyId, () => void this.claimBondChapter(relicId, level, from));
+  }
+
+  private async claimBondChapter(relicId: string, level: BondStoryLevel, from: PopupSource): Promise<void> {
+    const chapter = relicStories.chapterViews(relicId).find((view) => view.level === level);
+    if (!chapter?.unlocked || chapter.claimed) return;
+    const gems = await relicStories.claimChapter(relicId, level).catch(() => undefined);
+    if (gems === undefined || this.currentDef?.id !== relicId || !this.popups.isOpen) return;
+    // 유대 판을 받음 상태로 갈아 끼운다 — 같은 제목이라 깜빡이지 않고 그 자리에서 바뀐다.
+    this.popups.closeTop();
+    this.openBondDetail(from);
+    openRewardPopup(this.scene, this.popups, { items: currencyRecordToRewardItems({ gems }) });
   }
 
   /** 세 룬을 한 장에 펼쳐 무엇이 얼마나 붙었는지 한 번에 본다. */

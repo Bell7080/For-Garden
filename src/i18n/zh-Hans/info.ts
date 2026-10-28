@@ -109,6 +109,8 @@ export const INFO_ZH_HANS = {
   "info.diary.answerChip": "回答 {n}",
   "info.diary.locked": "这个提问将在{days}天后开放。",
   "info.diary.reward": "回答即可获得{gems}颗宝石",
+  "info.diary.rewardDone": "已领取",
+  "info.diary.rewardReady": "点击领取宝石",
   "info.diary.title": "观察提问 {index} / {total}",
   "info.journal.diaryTitle": "观察日记",
   "info.journal.fossilRecord": "采掘记录",

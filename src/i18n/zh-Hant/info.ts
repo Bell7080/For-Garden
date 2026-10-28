@@ -109,6 +109,8 @@ export const INFO_ZH_HANT = {
   "info.diary.answerChip": "回答 {n}",
   "info.diary.locked": "這個提問將在{days}天后開放。",
   "info.diary.reward": "回答即可獲得{gems}顆寶石",
+  "info.diary.rewardDone": "已領取",
+  "info.diary.rewardReady": "點擊領取寶石",
   "info.diary.title": "觀察提問 {index} / {total}",
   "info.journal.diaryTitle": "觀察日記",
   "info.journal.fossilRecord": "採掘記錄",

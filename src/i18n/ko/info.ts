@@ -83,6 +83,8 @@ export const INFO_KO = {
   "info.diary.title": "관찰 질문 {index} / {total}",
   "info.diary.locked": "{days}일 뒤에 열리는 질문이에요.",
   "info.diary.reward": "답하면 젬 {gems}개를 받아요",
+  "info.diary.rewardDone": "받은 보상",
+  "info.diary.rewardReady": "눌러서 젬 받기",
   "info.diary.answerChip": "답변 {n}",
 
   "info.bond.level": "유대 {level}",

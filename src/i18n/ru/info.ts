@@ -109,6 +109,8 @@ export const INFO_RU = {
   "info.diary.answerChip": "Ответ {n}",
   "info.diary.locked": "Этот вопрос откроется через {days} дн.",
   "info.diary.reward": "Ответьте и получите самоцветов: {gems}",
+  "info.diary.rewardDone": "Получено",
+  "info.diary.rewardReady": "Нажмите, чтобы получить самоцветы",
   "info.diary.title": "Вопрос наблюдения {index} / {total}",
   "info.journal.diaryTitle": "Дневник наблюдений",
   "info.journal.fossilRecord": "Запись о раскопках",

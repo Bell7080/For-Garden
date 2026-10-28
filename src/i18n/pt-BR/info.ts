@@ -109,6 +109,8 @@ export const INFO_PT_BR = {
   "info.diary.answerChip": "Resposta {n}",
   "info.diary.locked": "Esta pergunta abre em {days} dias.",
   "info.diary.reward": "Responda para receber {gems} gemas",
+  "info.diary.rewardDone": "Resgatado",
+  "info.diary.rewardReady": "Toque para resgatar gemas",
   "info.diary.title": "Pergunta de observação {index} / {total}",
   "info.journal.diaryTitle": "Diário de observação",
   "info.journal.fossilRecord": "Registro de escavação",

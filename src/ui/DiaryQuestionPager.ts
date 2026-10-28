@@ -5,7 +5,9 @@ import { t } from "../i18n";
 import { relicStories } from "../managers/RelicStoryManager";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
-import { drawHairline, drawLayer, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, slantedRect, toPoints } from "./holo";
+import { drawGlyph } from "./glyphs";
+import { shrinkTextToWidth } from "./textFit";
 import type { PopupLayer } from "./PopupLayer";
 import { RewardFrame } from "./RewardFrame";
 import { currencyRecordToRewardItems, openRewardPopup } from "./RewardPopup";
@@ -93,8 +95,6 @@ export function renderDiaryQuestionPage(
       button.add(hit);
       page.add(button);
     });
-    const hintY = y + question.choices.length * (size.choice.height + size.spacing.choiceGap) + 8;
-    page.add(scene.add.text(0, hintY, t("info.diary.reward", { gems: DIARY_QUESTION_GEM_REWARD }), textStyle({ role: "body", size: size.font.small, color: COLOR.inkDim, align: "center" })).setOrigin(0.5, 0));
     addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged, "pending");
     return;
   }
@@ -127,9 +127,25 @@ export function renderDiaryQuestionPage(
   addQuestionRewardFrame(scene, page, relicId, question.id, popups, rewardY, state, onChanged, view.rewardClaimed ? "claimed" : "claimable");
 }
 
+/** 질문 쪽 보상 칸의 자리와 상태별 결. 못 받는 칸과 받을 수 있는 칸이 색·빛·글로 한눈에 갈린다. */
+const QUESTION_REWARD = {
+  width: 420,
+  height: 190,
+  bevel: 30,
+  frameSize: 128,
+  frameY: -20,
+  captionY: 70,
+  captionSize: 22,
+  /** 아직 못 받는 칸은 액자째 가라앉힌다. */
+  pendingAlpha: 0.42,
+} as const;
+
 /**
- * 질문 쪽 맨 아래 가운데의 **보상 아이콘** — 답하기 전에도 서서 얼마를 주는지 말한다.
- * 층(유리 한 장)은 늘 같고, 답하면 **안쪽 액자만** 임무의 받을 수 있는 보상처럼 숨 쉬며 눌러서 받는다. 받은 뒤에는 어둡게 남는다.
+ * 질문 쪽 맨 아래 가운데의 **보상 칸** — 답하기 전에도 서서 얼마를 주는지 말한다.
+ *
+ * 세 상태가 같은 유리판에 서 있으면 지금 누를 수 있는지를 액자의 맥동 하나로만 읽어야 했다. 그래서 상태마다 판의 결을 바꾼다 —
+ * **못 받음**은 어둡게 가라앉은 판에 반투명 액자와 자물쇠, **받을 수 있음**은 금빛으로 물든 판·테두리에 액자 뒤 빛무리가 숨 쉬고,
+ * **받음**은 회색 액자 위에 체크가 선다. 판 아래 한 줄이 같은 말을 글로 한다(받을 수 있으면 금빛).
  */
 function addQuestionRewardFrame(
   scene: Phaser.Scene,
@@ -142,11 +158,30 @@ function addQuestionRewardFrame(
   onChanged: () => void,
   mode: "pending" | "claimable" | "claimed",
 ): void {
-  const holder = scene.add.container(0, y);
-  holder.add(drawLayer(scene, 0, 0, slantedRect(420, 190, 30), { fill: 0x10151c, alpha: 0.78, edge: COLOR.accent, edgeAlpha: 0.22 }));
+  const L = QUESTION_REWARD;
   const claimable = mode === "claimable";
-  const frame = new RewardFrame(scene, 0, 0, {
-    icon: "currency-gems", amount: DIARY_QUESTION_GEM_REWARD, size: 128, state: claimable ? "claimable" : mode === "claimed" ? "claimed" : "normal",
+  const moving = motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
+  const holder = scene.add.container(0, y);
+  const plate = slantedRect(L.width, L.height, L.bevel);
+  holder.add(drawLayer(scene, 0, 0, plate, claimable
+    ? { fill: 0x2a1e0a, alpha: 0.9, edge: COLOR.missionClaim, edgeAlpha: 0.95 }
+    : mode === "claimed"
+      ? { fill: 0x10141a, alpha: 0.72, edge: 0x68717d, edgeAlpha: 0.3 }
+      : { fill: 0x0a0d12, alpha: 0.62, edge: COLOR.accent, edgeAlpha: 0.1 }));
+  if (claimable) {
+    // 판이 금빛으로 물들고 액자 뒤 빛무리가 숨 쉰다 — 임무의 받을 보상과 같은 빛이다.
+    const glow = L.frameSize + 30;
+    const halo = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    halo.fillStyle(COLOR.missionClaim, 0.42).fillPoints(toPoints(chipPoints(glow, glow, { bevel: { topLeft: glow * 0.24, topRight: 0, bottomRight: glow * 0.24, bottomLeft: 0 } })), true);
+    halo.setY(L.frameY);
+    holder.add(halo);
+    if (moving) {
+      const pulse = scene.tweens.add({ targets: halo, alpha: { from: 0.35, to: 1 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      halo.once(Phaser.GameObjects.Events.DESTROY, () => pulse.remove());
+    }
+  }
+  const frame = new RewardFrame(scene, 0, L.frameY, {
+    icon: "currency-gems", amount: DIARY_QUESTION_GEM_REWARD, size: L.frameSize, state: claimable ? "claimable" : mode === "claimed" ? "claimed" : "normal",
     onClick: claimable ? () => {
       if (state.busy) return;
       state.busy = true;
@@ -156,9 +191,25 @@ function addQuestionRewardFrame(
         .finally(() => { state.busy = false; if (page.scene) onChanged(); });
     } : undefined,
   });
+  if (mode === "pending") frame.setAlpha(L.pendingAlpha);
   holder.add(frame);
+  // 못 받는 칸은 자물쇠가, 받은 칸은 체크가 액자 위에서 상태를 말한다. 그림 뒤에 검은 복제를 깔아 액자 선에서 떼어 놓는다.
+  if (mode !== "claimable") {
+    const glyph = mode === "pending" ? "lock" : "check";
+    const size = mode === "pending" ? 44 : 62;
+    const gx = mode === "pending" ? -L.frameSize / 2 + 6 : 0;
+    const gy = mode === "pending" ? L.frameY - L.frameSize / 2 + 6 : L.frameY;
+    holder.add(drawGlyph(scene, glyph, gx + 3, gy + 4, size, 0x000000, 0.75, mode === "claimed" ? 9 : undefined));
+    holder.add(drawGlyph(scene, glyph, gx, gy, size, mode === "pending" ? 0xc9d1dc : 0xf2f0ec, 1, mode === "claimed" ? 9 : undefined));
+  }
+  const caption = scene.add.text(0, L.captionY, mode === "pending" ? t("info.diary.reward", { gems: DIARY_QUESTION_GEM_REWARD }) : t(claimable ? "info.diary.rewardReady" : "info.diary.rewardDone"),
+    claimable
+      ? textStyle({ role: "emphasis", size: L.captionSize, color: "#" + COLOR.missionClaim.toString(16).padStart(6, "0"), align: "center" })
+      : textStyle({ role: "body", size: L.captionSize, color: COLOR.inkDim, align: "center" })).setOrigin(0.5);
+  shrinkTextToWidth(caption, L.width - 60);
+  holder.add(caption);
   page.add(holder);
-  if (claimable && motionPolicy(session.settings).nonEssentialDistanceFactor > 0) {
+  if (claimable && moving) {
     const tween = scene.tweens.add({ targets: frame, scale: { from: 1, to: 1.08 }, duration: 620, yoyo: true, repeat: -1, ease: "Sine.InOut" });
     frame.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
   }

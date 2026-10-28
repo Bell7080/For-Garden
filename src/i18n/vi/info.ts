@@ -109,6 +109,8 @@ export const INFO_VI = {
   "info.diary.answerChip": "Câu trả lời {n}",
   "info.diary.locked": "Câu hỏi này sẽ mở sau {days} ngày.",
   "info.diary.reward": "Trả lời để nhận {gems} Ngọc",
+  "info.diary.rewardDone": "Đã nhận",
+  "info.diary.rewardReady": "Chạm để nhận Ngọc",
   "info.diary.title": "Câu hỏi quan sát {index} / {total}",
   "info.journal.diaryTitle": "Nhật ký quan sát",
   "info.journal.fossilRecord": "Hồ sơ khai thác",

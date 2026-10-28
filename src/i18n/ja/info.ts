@@ -118,6 +118,8 @@ export const INFO_JA = {
   "info.diary.answerChip": "回答 {n}",
   "info.diary.locked": "この質問は{days}日後に開きます。",
   "info.diary.reward": "答えるとジェムを{gems}個受け取れます",
+  "info.diary.rewardDone": "受け取り済み",
+  "info.diary.rewardReady": "タップしてジェムを受け取る",
   "info.diary.title": "観察質問 {index} / {total}",
   "info.journal.diaryTitle": "観察日記",
   "info.journal.fossilRecord": "採掘記録",

@@ -109,6 +109,8 @@ export const INFO_ID = {
   "info.diary.answerChip": "Jawaban {n}",
   "info.diary.locked": "Pertanyaan ini terbuka dalam {days} hari.",
   "info.diary.reward": "Jawab untuk mendapat {gems} Permata",
+  "info.diary.rewardDone": "Sudah diterima",
+  "info.diary.rewardReady": "Ketuk untuk ambil Permata",
   "info.diary.title": "Pertanyaan Observasi {index} / {total}",
   "info.journal.diaryTitle": "Diari Observasi",
   "info.journal.fossilRecord": "Catatan Penggalian",

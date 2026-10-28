@@ -1,78 +1,94 @@
 import Phaser from "phaser";
 import type { ActiveCombatBuff } from "../core/skirmish";
-import { battleBuffEffectShape, battleBuffProgress, type BattleBuffEffectShape } from "../core/battleBuffPresentation";
+import { battleBuffProgress, type BattleBuffCategory, type BattleBuffVisual } from "../core/battleBuffPresentation";
 import type { BattleUiMotion } from "../core/settings";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { battleBuffStackSpot } from "./battleStatusLayout";
+import { battleBuffStackSpot, BATTLE_PROFILE_LAYOUT } from "./battleStatusLayout";
 import { COLOR, textStyle } from "./theme";
 import { session } from "../state/session";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { pressIn, pressOut } from "./pressFeedback";
+import { BUFF_GLYPHS } from "./statusGlyphShapes";
+import { paintStatusGlyph, shadeColor } from "./statusGlyph";
+
+/**
+ * 버프 계열의 색. 칩 바탕(짙게 누른 면)·테두리·시간 막대가 이 한 색을 쓴다.
+ *
+ * 예전에는 버프를 건 **렐릭의 색** 하나로 칠해, 한 렐릭이 건 가속·지속 회복·연타 강화가 같은 판에
+ * 같은 그림으로 섰다. 무엇을 올리는지가 먼저 읽혀야 하므로 계열이 색을 갖는다.
+ */
+export const BATTLE_BUFF_TONE: Readonly<Record<BattleBuffCategory, number>> = {
+  attack: 0xff8a4c,
+  speed: 0x5fd4ff,
+  defense: 0x7fa6ff,
+  heal: COLOR.hpFill,
+  special: 0xe8c45a,
+};
+
+/** 칩 안의 그림 — 스킬 일러스트(흰 실루엣 텍스처)거나 공용 문양이다. */
+export type BattleBuffArt = { kind: "texture"; key: string } | { kind: "glyph"; visual: BattleBuffVisual };
 
 /** 전투 프로필에 붙는 작은 버프 액자. 진행 Graphics는 생성 후 지우고 다시 그려 재사용한다. */
 export class BattleBuffChip extends Phaser.GameObjects.Container {
-  private readonly progress = this.scene.add.graphics();
-  private progressKind?: string;
-  private progressRatio = -1;
-  private progressSize = -1;
+  private readonly gauge = this.scene.add.graphics();
+  private gaugeRatio = -2;
   private readonly hit: Phaser.GameObjects.Rectangle;
   /** 겹 수 글자. 겹이 오르내릴 때 칩을 다시 만들지 않고 이 글자만 갈아 끼운다. */
   private stacksText?: Phaser.GameObjects.Text;
+  private stacksGroup?: Phaser.GameObjects.Container;
   private timing: ActiveCombatBuff["timing"];
+  private readonly color: number;
 
-  constructor(scene: Phaser.Scene, size: number, tint: number, texture: string, buff: ActiveCombatBuff, motion: BattleUiMotion, onPress: () => void) {
+  constructor(scene: Phaser.Scene, size: number, visual: BattleBuffVisual, art: BattleBuffArt, buff: ActiveCombatBuff, motion: BattleUiMotion, onPress: () => void) {
     super(scene, 0, 0);
     this.timing = buff.timing;
+    this.color = BATTLE_BUFF_TONE[visual.category];
     const shape = chipPoints(size, size, { bevel: { topLeft: 12, topRight: 0, bottomRight: 12, bottomLeft: 0 } });
-    this.add(drawLayer(scene, 0, 0, shape, { fill: tint, alpha: 0.9 }));
-    this.add(scene.add.image(0, 0, texture).setDisplaySize(size * 0.72, size * 0.72).setTint(tint));
-    // 원화 위의 고대비 실루엣은 색각과 작은 화면에서도 효과 계열을 중복 부호화한다.
-    this.add(this.drawEffectShape(size, battleBuffEffectShape(buff)));
-    this.add([drawInnerVignette(scene, 0, 0, shape, { strength: 0.55 }), this.progress]);
+    // 머리 위 상태 칩과 같은 결 — 계열 색을 짙게 누른 면 위에 흰 그림이 잉크 외곽을 두르고 선다.
+    this.add(drawLayer(scene, 0, 0, shape, { fill: shadeColor(this.color, 0.34), alpha: 0.96, shadow: BATTLE_PROFILE_LAYOUT.buffShadow }));
+    this.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.45 }));
+    if (art.kind === "texture") {
+      // 스킬 일러스트는 흰 실루엣이라 그대로 세우고, 검은 복제를 비껴 깔아 바탕에서 떼어 낸다.
+      const artSize = size * 0.78;
+      this.add(scene.add.image(2, 3, art.key).setDisplaySize(artSize, artSize).setTintFill(0x000000).setAlpha(0.85));
+      this.add(scene.add.image(0, 0, art.key).setDisplaySize(artSize, artSize));
+    } else {
+      this.add(paintStatusGlyph(scene, BUFF_GLYPHS[art.visual.glyph === "skill" ? art.visual.fallback : art.visual.glyph], size * 0.38, 1.6));
+    }
+    this.add(drawShapeOutline(scene, 0, 0, shape, { color: this.color, alpha: 0.95, width: 2.5 }));
     // 효과 이름을 임의 도형으로 재해석하지 않고 공용 status 정책의 안정 키를 사용한다.
     addColorAssistMark(scene, this, -size / 2 + COLOR_ASSIST_LAYOUT.statusChip.inset, -size / 2 + COLOR_ASSIST_LAYOUT.statusChip.inset, COLOR_ASSIST_LAYOUT.statusChip.size, session.settings.accessibility.colorAssist, "status", "buff");
     // 보이는 56px 액자보다 입력판을 넓혀 최소 64px 터치 영역을 확보한다.
     this.hit = scene.add.rectangle(0, 0, Math.max(64, size), Math.max(64, size), 0xffffff, 0).setInteractive({ useHandCursor: true });
-    // 진행 정보는 모든 움직임 설정에서 유지하고, reduced/off는 눌림 장식의 크기만 줄인다.
     // 전투 UI 움직임을 끈 사람에게는 눌림 장식도 세우지 않는다. 나머지는 공용 눌림 연출이다.
     const pressable = motion !== "off";
     this.hit.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); if (pressable) pressIn(this); });
     this.hit.on("pointerup", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); pressOut(this); onPress(); });
     this.hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
-    this.add([drawShapeOutline(scene, 0, 0, shape, { color: tint, alpha: 0.9, width: 2 }), this.hit]);
-    // 겹치는 값(주기 타격의 몇 대째)은 칩을 여러 장 세우지 않고 **우하단 숫자 하나**가 말한다.
-    // 머리 위 상태 칩과 같은 자리·같은 규칙을 쓴다.
-    if (buff.stacks !== undefined) this.add(this.drawStacks(size, tint, buff.stacks));
+    this.add([this.gauge, this.hit]);
+    // 겹치는 값(주기 타격의 몇 대째)은 칩을 여러 장 세우지 않고 **우상단 숫자 하나**가 말한다 —
+    // 머리 위 상태 칩과 같은 자리라, 칩 안의 그림을 덮지 않는다.
+    if (buff.stacks !== undefined) this.add(this.drawStacks(size, buff.stacks));
     this.redraw(size);
     scene.add.existing(this);
   }
 
-  /** 칩 우하단의 겹 수. 작은 판을 깔아 밝은 배경 원화 위에서도 수가 살아남는다. */
-  private drawStacks(size: number, _tint: number, stacks: number): Phaser.GameObjects.Container {
-    // 자리와 크기는 액자 크기에서 나온다 — 머리 위 칩(22px)의 값을 그대로 쓰면 56px 액자에서
-    // 판이 점만큼 작아 숫자가 밖으로 넘친다.
+  /** 칩 우상단 모서리에 걸터앉은 겹 수. 계열 색 테를 두른 검은 판 위 흰 글자다. */
+  private drawStacks(size: number, stacks: number): Phaser.GameObjects.Container {
     const spot = battleBuffStackSpot(size);
     const group = this.scene.add.container(0, 0);
-    group.add(this.scene.add.circle(spot.x, spot.y, spot.plateRadius, COLOR.void, 0.94));
-    // 액자 색을 따르지 않고 **흰 글자에 검은 테두리**다. 파치의 4타처럼 지금 몇 대째인지는
-    // 액자 그림보다 먼저 읽혀야 하는 수인데, 액자와 같은 색이면 그림에 묻힌다.
+    const plate = this.scene.add.graphics();
+    const r = spot.plateRadius;
+    plate.fillStyle(COLOR.void, 0.96).fillRect(spot.x - r, spot.y - r, r * 2, r * 2);
+    plate.lineStyle(2, this.color, 1).strokeRect(spot.x - r, spot.y - r, r * 2, r * 2);
+    group.add(plate);
     this.stacksText = this.scene.add
       .text(spot.x, spot.y + 1, String(stacks), textStyle({ role: "display", size: spot.fontSize, color: "#ffffff" }))
       .setOrigin(0.5)
       .setStroke("#05070a", spot.strokeWidth);
     group.add(this.stacksText);
+    this.stacksGroup = group;
     return group;
-  }
-
-  /** 네 가지 각진 문양을 흰색으로 겹쳐 색상 없이도 공격·속도·지원·특수를 구별한다. */
-  private drawEffectShape(size: number, shape: BattleBuffEffectShape): Phaser.GameObjects.Graphics {
-    const glyph = this.scene.add.graphics().setPosition(size * 0.23, -size * 0.23);
-    glyph.lineStyle(3, 0xffffff, 0.96);
-    if (shape === "attack") glyph.beginPath().moveTo(-8, 7).lineTo(7, -8).moveTo(1, -8).lineTo(7, -8).lineTo(7, -2).strokePath();
-    else if (shape === "speed") glyph.beginPath().moveTo(-9, -6).lineTo(-2, 0).lineTo(-9, 6).moveTo(0, -6).lineTo(7, 0).lineTo(0, 6).strokePath();
-    else if (shape === "support") glyph.strokeTriangle(0, -9, 9, 7, -9, 7);
-    else glyph.beginPath().moveTo(0, -9).lineTo(3, -3).lineTo(9, 0).lineTo(3, 3).lineTo(0, 9).lineTo(-3, 3).lineTo(-9, 0).lineTo(-3, -3).closePath().strokePath();
-    return glyph;
   }
 
   /** 같은 칩 인스턴스의 Graphics만 다시 칠해 매 프레임 표시 객체를 할당하지 않는다. */
@@ -85,26 +101,24 @@ export class BattleBuffChip extends Phaser.GameObjects.Container {
   /** 겹 수만 갈아 끼운다. 칩을 다시 만들면 매 타격마다 액자가 깜빡인다. */
   public setStacks(stacks: number | undefined): this {
     if (this.stacksText && stacks !== undefined) this.stacksText.setText(String(stacks));
+    this.stacksGroup?.setVisible(stacks !== undefined);
     return this;
   }
 
+  /**
+   * 남은 시간은 칩 밑변 아래 막대가 계열 색으로 말한다 — 왼쪽부터 줄어 다 비는 순간이 끝나는 순간이다.
+   * 예전처럼 그림 위를 검은 부채꼴로 덮으면 시간이 갈수록 그림이 가려졌다. 조건부·영구 버프는 막대가 없다.
+   */
   private redraw(size: number): void {
     const model = battleBuffProgress(this.timing);
-    if (model.kind === this.progressKind && model.remainingRatio === this.progressRatio && size === this.progressSize) return;
-    this.progressKind = model.kind; this.progressRatio = model.remainingRatio; this.progressSize = size;
-    const radius = size / 2 - 3;
-    this.progress.clear();
-    if (model.kind === "conditional" || model.kind === "permanent") {
-      // 조건부는 이중 링, 영구는 점선 링으로 시간형의 어두운 부채꼴과 형태부터 달리한다.
-      this.progress.lineStyle(3, 0xffffff, 0.95);
-      if (model.kind === "conditional") this.progress.strokeCircle(0, 0, radius).strokeCircle(0, 0, radius - 5);
-      else for (let index = 0; index < 8; index += 1) this.progress.arc(0, 0, radius, index * Math.PI / 4, index * Math.PI / 4 + Math.PI / 8).strokePath();
-      return;
-    }
-    if (model.elapsedTurns <= 0) return;
-    // 12시부터 시계 방향으로 어두운 부채꼴을 늘려 남은 영역이 비워지는 과정을 보인다.
-    const start = -Math.PI / 2;
-    this.progress.fillStyle(0x05070a, 0.72).beginPath().moveTo(0, 0);
-    this.progress.arc(0, 0, radius, start, start + Math.PI * 2 * model.elapsedTurns, false).closePath().fillPath();
+    const ratio = model.kind === "countdown" ? Math.round(model.remainingRatio * size) / size : -1;
+    if (ratio === this.gaugeRatio) return;
+    this.gaugeRatio = ratio;
+    this.gauge.clear();
+    if (ratio < 0) return;
+    const { gap, height } = BATTLE_PROFILE_LAYOUT.buffGauge;
+    const top = size / 2 + gap;
+    this.gauge.fillStyle(0x000000, 0.85).fillRect(-size / 2 - 1, top - 1, size + 2, height + 2);
+    if (ratio > 0) this.gauge.fillStyle(this.color, 1).fillRect(-size / 2, top, size * ratio, height);
   }
 }

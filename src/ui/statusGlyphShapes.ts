@@ -1,4 +1,5 @@
 import type { UnitStatusId } from "./unitStatusModel";
+import type { BattleBuffGlyphId } from "../core/battleBuffPresentation";
 
 /**
  * 머리 위 상태 칩 안에 서는 **상태마다 다른 그림**.
@@ -119,4 +120,34 @@ export const STATUS_GLYPHS: Readonly<Record<UnitStatusId, StatusGlyph>> = {
   fangShave: [ring(...SHIELD), fill([-0.3, -0.72], [0, -0.22], [0.3, -0.72])],
   quarry: [ring([0, -0.84], [0.84, 0], [0, 0.84], [-0.84, 0]), fill([0, -0.3], [0.3, 0], [0, 0.3], [-0.3, 0])],
   resistShred: [ring(...SHIELD), line([0.08, -0.72], [-0.16, -0.22], [0.16, 0.08], [-0.06, 0.6])],
+};
+
+/** 팔각으로 깎은 고리. 표적·조준처럼 "한 점"을 말하는 그림이 쓴다. */
+function octagonRing(r: number): StatusGlyphPart {
+  const k = r * 0.42;
+  return ring([-k, -r], [k, -r], [r, -k], [r, k], [k, r], [-k, r], [-r, k], [-r, -k]);
+}
+
+/**
+ * 전투 프로필 버프 칩 안에 서는 **공용 문양**(`BattleBuffGlyphId`).
+ *
+ * 렐릭 스킬이 건 버프는 그 스킬의 일러스트가 서지만, 원정 증강처럼 제 그림이 없는 버프는 예전에
+ * 렐릭의 폭주 그림 한 장을 모두 함께 썼다 — 가속·지속 회복·연타 강화가 같은 그림이었다. 머리 위
+ * 칩과 같은 결(면 + 굵은 선, 잉크 외곽)로 버프마다 다른 그림을 준다.
+ */
+export const BUFF_GLYPHS: Readonly<Record<BattleBuffGlyphId, StatusGlyph>> = {
+  haste: STATUS_GLYPHS.tailwind,
+  killHaste: [line([-0.7, -0.56], [0.06, 0.06], [-0.7, 0.68]), sparkle(0.42, -0.4, 0.42)],
+  regen: STATUS_GLYPHS.regeneration,
+  guard: [fill(...SHIELD)],
+  rage: [fill([0, -0.86], [0.3, -0.36], [0.6, -0.58], [0.72, 0.14], [0.42, 0.74], [-0.42, 0.74], [-0.72, 0.14], [-0.5, -0.4], [-0.22, -0.18])],
+  streak: [octagonRing(0.8), fill([-0.22, -0.22], [0.22, -0.22], [0.22, 0.22], [-0.22, 0.22])],
+  warmUp: [fill([-0.8, 0.3], [-0.42, 0.3], [-0.42, 0.8], [-0.8, 0.8]), fill([-0.2, -0.16], [0.18, -0.16], [0.18, 0.8], [-0.2, 0.8]), fill([0.42, -0.62], [0.8, -0.62], [0.8, 0.8], [0.42, 0.8])],
+  critical: [line([0, -0.92], [0, 0.92]), line([-0.92, 0], [0.92, 0]), fill([0, -0.46], [0.46, 0], [0, 0.46], [-0.46, 0])],
+  counter: [line([-0.78, 0.6], [-0.3, -0.6]), line([-0.24, 0.6], [0.24, -0.6]), line([0.3, 0.6], [0.78, -0.6])],
+  devour: [fill([-0.84, -0.7], [0.84, -0.7], [0.56, -0.2], [0.28, -0.56], [0, -0.06], [-0.28, -0.56], [-0.56, -0.2]), fill([-0.84, 0.7], [-0.56, 0.2], [-0.28, 0.56], [0, 0.06], [0.28, 0.56], [0.56, 0.2], [0.84, 0.7])],
+  bleed: STATUS_GLYPHS.bleed,
+  curse: STATUS_GLYPHS.curse,
+  focus: [octagonRing(0.56), line([0, -0.92], [0, -0.36]), line([0, 0.36], [0, 0.92]), line([-0.92, 0], [-0.36, 0]), line([0.36, 0], [0.92, 0])],
+  special: [fill([0, -0.84], [0.56, 0], [0, 0.84], [-0.56, 0]), sparkle(0.62, -0.62, 0.26)],
 };

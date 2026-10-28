@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { BATTLE_STATUS_LAYOUT as L, unitStatusChipOffsets } from "./battleStatusLayout";
 import { chipPoints, drawInnerVignette, drawLayer, drawShapeOutline } from "./holo";
-import { STATUS_GLYPHS, type StatusGlyph } from "./statusGlyphShapes";
+import { STATUS_GLYPHS } from "./statusGlyphShapes";
+import { paintStatusGlyph, shadeColor } from "./statusGlyph";
 import type { UnitStatusView } from "./unitStatusModel";
 import { COLOR, textStyle } from "./theme";
 
@@ -14,11 +15,6 @@ interface ChipView {
   plate: Phaser.GameObjects.Graphics;
   color: number;
   gaugeRatio?: number;
-}
-
-/** 색을 검정 쪽으로 눌러 칩 바탕을 만든다. 같은 계열이되 흰 그림이 올라앉을 만큼 어둡다. */
-function shade(color: number, keep: number): number {
-  return (Math.round(((color >> 16) & 0xff) * keep) << 16) | (Math.round(((color >> 8) & 0xff) * keep) << 8) | Math.round((color & 0xff) * keep);
 }
 
 /**
@@ -78,9 +74,9 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     const container = scene.add.container(0, 0);
     const shape = chipShape();
     // 그림자는 칩 크기에 맞춘다 — 판때기 기준 그림자는 이 칩에서 칩 절반만큼 튀어나간다.
-    container.add(drawLayer(scene, 0, 0, shape, { fill: shade(view.color, 0.34), alpha: 0.96, shadow: L.chipShadow }));
+    container.add(drawLayer(scene, 0, 0, shape, { fill: shadeColor(view.color, 0.34), alpha: 0.96, shadow: L.chipShadow }));
     container.add(drawInnerVignette(scene, 0, 0, shape, { strength: 0.45 }));
-    container.add(this.drawGlyph(STATUS_GLYPHS[view.id], size * 0.38));
+    container.add(paintStatusGlyph(scene, STATUS_GLYPHS[view.id], size * 0.38));
     container.add(drawShapeOutline(scene, 0, 0, shape, { color: view.color, alpha: 1, width: 2 }));
     const gauge = scene.add.graphics();
     container.add(gauge);
@@ -99,28 +95,6 @@ export class UnitStatusChips extends Phaser.GameObjects.Container {
     return chip;
   }
 
-  /**
-   * 상태 그림 한 장. 같은 모양을 **검게 두껍게 한 번 깐 뒤 흰색으로** 다시 그린다 — 잉크 외곽이
-   * 있어야 밝은 상태 색 바탕 위에서도, 칩이 작아져도 실루엣이 끊기지 않는다.
-   */
-  private drawGlyph(glyph: StatusGlyph, scale: number): Phaser.GameObjects.Graphics {
-    const g = this.scene.add.graphics();
-    const toPoints = (points: readonly (readonly [number, number])[]) => points.map(([x, y]) => new Phaser.Geom.Point(x * scale, y * scale));
-    const pass = (color: number, lineWidth: number, outline: number): void => {
-      for (const part of glyph) {
-        const points = toPoints(part.points);
-        if (part.kind === "fill") {
-          g.fillStyle(color, 1).fillPoints(points, true);
-          if (outline > 0) g.lineStyle(outline, color, 1).strokePoints(points, true, true);
-        } else {
-          g.lineStyle(lineWidth, color, 1).strokePoints(points, part.closed ?? false, part.closed ?? false);
-        }
-      }
-    };
-    pass(0x000000, 5, 3.2);
-    pass(0xffffff, 2.4, 0);
-    return g;
-  }
 
   /**
    * 남은 시간을 칩 밑변 아래 가는 막대로 그린다. 왼쪽부터 줄어들어 다 비는 순간이 곧 풀리는 순간이다.

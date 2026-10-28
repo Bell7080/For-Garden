@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { ferocityMaxOf } from "../core/ferocity";
-import type { RelicDef, RelicSkinId, SkillIconAssetId } from "../core/types";
+import type { RelicDef, RelicSkinId } from "../core/types";
 import { portraitAssetForSkin } from "../puppets/assets";
 import type { ActiveCombatBuff } from "../core/skirmish";
 import type { BattleUiMotion } from "../core/settings";
@@ -13,9 +13,17 @@ import { PortraitCard, type PortraitAlphaOverlay } from "./PortraitCard";
 import { expeditionAugmentChipOffsets, BATTLE_PROFILE_LAYOUT as L } from "./battleStatusLayout";
 import { ExpeditionAugmentChip } from "./ExpeditionAugmentChip";
 import type { AugmentBadgeView } from "./expeditionAugmentBadges";
-import { skillArtFor, skillArtTint, type SkillArtSlot } from "./skillArt";
-import { FALLBACK_SKILL_ICON } from "./skillIcons";
-import { BattleBuffChip } from "./BattleBuffChip";
+import { skillArtFor, type SkillArtSlot } from "./skillArt";
+import { BATTLE_BUFF_TONE, BattleBuffChip, type BattleBuffArt } from "./BattleBuffChip";
+import { battleBuffVisual } from "../core/battleBuffPresentation";
+
+/** 버프를 건 스킬이 그 렐릭의 어느 칸(일반 공격·패시브·궁극기·폭주)인지. 그 칸의 일러스트가 칩에 선다. */
+function buffSkillSlot(relic: RelicDef, skillId: string): SkillArtSlot {
+  if (skillId === relic.basic.id) return "basic";
+  if (skillId === relic.passive.id || skillId === `${relic.id}-passive`) return "passive";
+  if (skillId === relic.ultimate.id) return "ultimate";
+  return "ferocity";
+}
 
 /** 카드 전체를 덮고도 가장 먼 모서리까지 닿는 충전 부채꼴 반지름이다. */
 const CHARGE_VEIL_RADIUS = 240;
@@ -26,8 +34,6 @@ export const CHARGE_VEIL_ALPHA = 0.58;
 export interface BattleBuffRenderModel {
   buff: ActiveCombatBuff;
   sourceRelic: RelicDef;
-  /** 향후 공용 버프 아이콘이 늘어날 때도 기존 폴백 레지스트리를 통과하게 하는 선택값이다. */
-  fallbackIcon?: SkillIconAssetId;
   /** 칩 상세는 씬이 소유한 PopupLayer를 통해 열어야 하므로 프리팹은 입력 의도만 전달한다. */
   onPress?: () => void;
 }
@@ -188,7 +194,7 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     // 집계 칩은 실제 버프와 키/슬롯 생명주기를 섞지 않고 마지막 고정 슬롯만 사용한다.
     this.onOverflowPress = onOverflowPress;
     const model = overflow > 0 ? models[visibleCount] : undefined;
-    const key = model ? `${this.buffKey(model.buff)}:${model.buff.skillId}:${model.buff.timing.kind}:${model.sourceRelic.id}:${model.fallbackIcon ?? ""}:${overflow}` : undefined;
+    const key = model ? `${this.buffKey(model.buff)}:${model.buff.skillId}:${model.buff.timing.kind}:${model.sourceRelic.id}:${overflow}` : undefined;
     if (key !== this.overflowKey) {
       this.overflowChip?.destroy(true);
       this.overflowChip = undefined;
@@ -248,14 +254,14 @@ export class BattleProfile extends Phaser.GameObjects.Container {
     const { chipSize, gap, maxVisible, y } = L.buffRow;
     const rowWidth = maxVisible * chipSize + (maxVisible - 1) * gap;
     const x = -rowWidth / 2 + chipSize / 2 + slot * (chipSize + gap);
-    const tint = skillArtTint(model.sourceRelic.element, model.sourceRelic.role);
-    const slotName: SkillArtSlot = model.buff.skillId === "luka-passive" ? "passive" : "ferocity";
-    const dedicated = skillArtFor(model.sourceRelic.id, slotName);
-    const texture = dedicated && this.scene.textures.exists(dedicated) ? dedicated : (model.fallbackIcon ?? FALLBACK_SKILL_ICON);
-    const chip = new BattleBuffChip(this.scene, chipSize, tint, texture, model.buff, this.battleUiMotion, () => onPress?.()).setPosition(x, y);
+    const visual = battleBuffVisual(model.buff);
+    // 렐릭 스킬이 건 버프는 그 스킬의 일러스트, 증강처럼 그림이 없는 버프는 공용 문양이 선다.
+    const dedicated = visual.glyph === "skill" ? skillArtFor(model.sourceRelic.id, buffSkillSlot(model.sourceRelic, model.buff.skillId)) : undefined;
+    const art: BattleBuffArt = dedicated && this.scene.textures.exists(dedicated) ? { kind: "texture", key: dedicated } : { kind: "glyph", visual };
+    const chip = new BattleBuffChip(this.scene, chipSize, visual, art, model.buff, this.battleUiMotion, () => onPress?.()).setPosition(x, y);
     // +N은 장식 아이콘보다 우선하는 고대비 숫자로 집계 동작임을 명확히 한다.
     if (aggregateLabel) chip.add(this.scene.add.text(0, 0, aggregateLabel, textStyle({ role: "display", size: 25, color: "#ffffff" })).setOrigin(0.5).setShadow(2, 3, "#05070a", 1));
-    return { container: chip, tint };
+    return { container: chip, tint: BATTLE_BUFF_TONE[visual.category] };
   }
 
   /** 활성 상태는 공용 카드 발광으로만 표현하며 읽기 전용 프로필에는 입력을 열지 않는다. */

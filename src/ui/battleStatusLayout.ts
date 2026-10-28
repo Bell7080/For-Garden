@@ -36,6 +36,10 @@ export const BATTLE_PROFILE_LAYOUT = {
    * 맞추면 이미 읽고 있던 아이콘까지 좌우로 흔들리므로 빈 슬롯만 재사용한다.
    */
   buffRow: { y: -229, chipSize: 56, gap: 12, maxVisible: 4 },
+  /** 버프 칩 밑변 아래의 남은 시간 막대. */
+  buffGauge: { gap: 3, height: 6 },
+  /** 버프 칩의 그림자. 판때기 기본 그림자(9·13px)는 56px 칩에서 옆 칩까지 덮는다. */
+  buffShadow: { x: 3, y: 4 },
   /** 원정 증강 표식 줄. 버프 액자와 같은 높이에 더 작은 칩으로 선다. */
   augmentRow: { y: -229, chipSize: 40, gap: 7, maxVisible: 5 },
   /** 발광과 그 위의 버프 액자까지 포함한 로컬 bounds다. */
@@ -55,20 +59,19 @@ export const BATTLE_PROFILE_LAYOUT = {
 } as const;
 
 /**
- * 프로필 버프 액자의 겹 수가 앉는 자리.
+ * 프로필 버프 액자의 겹 수가 앉는 자리 — 머리 위 상태 칩과 같이 **우상단 모서리에 걸터앉는다.**
  *
- * 머리 위 상태 칩(22px)의 값을 그대로 쓰면 56px 액자에서는 판이 점만큼 작아 숫자가 그 밖으로
- * 넘치고, 액자 색과 같은 글자라 그림 위에서 읽히지도 않는다. 크기에 비례해 키우고 **흰 글자에
- * 검은 테두리**를 둘러 어떤 액자 색 위에서도 같은 무게로 읽히게 한다.
+ * 칩 안쪽(우하단)에 두던 때는 판이 그림을 덮었다. 모서리에 걸쳐 두면 그림은 온전히 남고, 칩
+ * 크기에 비례해 판·글자가 함께 커져 어떤 크기에서도 같은 무게로 읽힌다. 옆 칩과의 틈(`buffRow.gap`)
+ * 안에서만 삐져나온다.
  */
 export function battleBuffStackSpot(size: number) {
-  const plateRadius = Math.max(BATTLE_STATUS_LAYOUT.stackCount.plateRadius, size * 0.19);
+  const plateRadius = size * 0.2;
   return {
     plateRadius,
-    // 액자 오른쪽 아래는 빗변으로 깎여 있으므로 두 변에서 같은 만큼만 들어가면 그 빗변을 넘는다.
-    x: size / 2 - plateRadius - 2,
-    y: size / 2 - plateRadius - 2,
-    fontSize: Math.max(BATTLE_STATUS_LAYOUT.stackCount.size, Math.round(size * 0.3)),
+    x: size * 0.36,
+    y: -size * 0.39,
+    fontSize: Math.max(BATTLE_STATUS_LAYOUT.stackCount.size, Math.round(size * 0.4)),
     strokeWidth: Math.max(3, Math.round(size * 0.075)),
   };
 }

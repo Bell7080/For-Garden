@@ -65,18 +65,28 @@ describe("증강 표식 줄", () => {
 });
 
 describe("버프 액자의 겹 수", () => {
-  it("는 액자 크기에 비례해 커지고 액자 안에 머문다", () => {
+  it("는 액자 우상단 모서리에 걸터앉고 액자 크기에 비례해 커진다", () => {
     const size = BATTLE_PROFILE_LAYOUT.buffRow.chipSize;
     const spot = battleBuffStackSpot(size);
     // 파치의 4타처럼 지금 몇 대째인지는 액자 그림보다 먼저 읽혀야 한다.
-    expect(spot.fontSize).toBeGreaterThan(12);
+    expect(spot.fontSize).toBeGreaterThan(16);
     expect(spot.strokeWidth).toBeGreaterThan(0);
-    expect(spot.x + spot.plateRadius).toBeLessThanOrEqual(size / 2);
-    expect(spot.y + spot.plateRadius).toBeLessThanOrEqual(size / 2);
+    // 판의 가운데는 액자 안, 판의 바깥 끝은 모서리를 넘어선다 — 걸터앉는다.
+    expect(spot.x).toBeLessThan(size / 2);
+    expect(-spot.y).toBeLessThan(size / 2);
+    expect(spot.x + spot.plateRadius).toBeGreaterThan(size / 2);
+    expect(-spot.y + spot.plateRadius).toBeGreaterThan(size / 2);
   });
 
-  it("는 머리 위 작은 칩에서도 판이 칩 밖으로 넘치지 않는다", () => {
-    const spot = battleBuffStackSpot(22);
-    expect(spot.x + spot.plateRadius).toBeLessThanOrEqual(11);
+  it("는 옆 칩과의 틈 안에서만 삐져나온다", () => {
+    const { chipSize, gap } = BATTLE_PROFILE_LAYOUT.buffRow;
+    const spot = battleBuffStackSpot(chipSize);
+    expect(spot.x + spot.plateRadius - chipSize / 2).toBeLessThan(gap / 2);
+  });
+
+  it("는 시간 막대와 겹치지 않는다(막대는 아래, 겹 수는 위)", () => {
+    const size = BATTLE_PROFILE_LAYOUT.buffRow.chipSize;
+    const spot = battleBuffStackSpot(size);
+    expect(spot.y + spot.plateRadius).toBeLessThan(size / 2 + BATTLE_PROFILE_LAYOUT.buffGauge.gap);
   });
 });

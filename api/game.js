@@ -28502,21 +28502,21 @@ var PROGRESS_PASSES = [
     productId: "premium-archaeology-pass",
     metric: "strataDigs",
     milestones: [
-      step(3, currency("gold", 5e3), item("strata-ticket", 2), currency("gems", 60)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
-      step(8, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
-      step(10, currency("gold", 1e4), currency("amber", 1), currency("gems", 150)),
-      step(13, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
-      step(15, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
-      step(18, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
-      step(20, currency("gold", 15e3), currency("amber", 1), currency("gems", 200)),
-      step(25, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
-      step(30, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
-      step(35, currency("cheesecake", 150), currency("gold", 1e5), currency("gems", 250)),
-      step(40, currency("gold", 25e3), currency("amber", 1), currency("gems", 250)),
-      step(45, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
-      step(60, currency("gems", 150), currency("amber", 3), currency("gems", 600))
+      step(15, currency("gold", 5e3), item("strata-ticket", 2), currency("gems", 60)),
+      step(25, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
+      step(40, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
+      step(50, currency("gold", 1e4), currency("amber", 1), currency("gems", 150)),
+      step(65, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
+      step(75, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
+      step(90, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
+      step(100, currency("gold", 15e3), currency("amber", 1), currency("gems", 200)),
+      step(125, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
+      step(150, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
+      step(175, currency("cheesecake", 150), currency("gold", 1e5), currency("gems", 250)),
+      step(200, currency("gold", 25e3), currency("amber", 1), currency("gems", 250)),
+      step(225, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
+      step(250, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
+      step(300, currency("gems", 150), currency("amber", 3), currency("gems", 600))
     ]
   }
 ];

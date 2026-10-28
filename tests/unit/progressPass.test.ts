@@ -149,8 +149,10 @@ describe("FakeServer 진행 패스", () => {
     const manager = new SaveManager(new MemoryStorage());
     manager.save(state);
     expect(manager.load()!.missions.lifetime?.strata_tile_dug).toBe(3);
+    await expect(server.claimProgressPass({ passId: "archaeology", requestId: "dig-early" })).rejects.toMatchObject({ code: "NOTHING_TO_CLAIM" });
+    state.missions.lifetime = { ...state.missions.lifetime, strata_tile_dug: 15 };
     const reward = await server.claimProgressPass({ passId: "archaeology", requestId: "dig-free" });
-    expect(reward.claimedFreeThresholds).toEqual([3]);
+    expect(reward.claimedFreeThresholds).toEqual([15]);
   });
 
   it("열지 않아도 무료 칸은 받고, 연 뒤에는 지나온 유료 칸을 한꺼번에 한 번만 준다", async () => {

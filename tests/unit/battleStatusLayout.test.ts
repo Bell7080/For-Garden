@@ -24,15 +24,16 @@ describe("머리 위 상태 칩 줄", () => {
     expect(BATTLE_STATUS_LAYOUT.chipGap).toBeGreaterThan(0);
   });
 
-  it("은 겹 수를 칩 우하단 안쪽에 둔다", () => {
-    const count = BATTLE_STATUS_LAYOUT.stackCount;
-    // 우하단이다 — 가운데(0,0)에 적으면 표식 그림과 숫자가 겹쳐 둘 다 흐려진다.
+  it("은 겹 수를 칩 우상단 모서리에 걸쳐 둔다", () => {
+    const { stackCount: count, chipSize, chipGap } = BATTLE_STATUS_LAYOUT;
+    // 우상단이다 — 가운데나 아래에 적으면 상태 그림을 덮는다. 우상단은 깎이지 않은 모서리라 판이 걸터앉는다.
     expect(count.offsetX).toBeGreaterThan(0);
-    expect(count.offsetY).toBeGreaterThan(0);
-    // 판이 칩 밖으로 크게 삐져나오면 옆 칩과 붙어 어느 칩의 수인지 흐려진다.
-    expect(count.offsetX + count.plateRadius).toBeLessThanOrEqual(BATTLE_STATUS_LAYOUT.chipSize / 2 + BATTLE_STATUS_LAYOUT.chipGap);
-    // 작은 칩이라 수가 칩보다 커지지 않게 둔다.
-    expect(count.size).toBeLessThan(BATTLE_STATUS_LAYOUT.chipSize);
+    expect(count.offsetY).toBeLessThan(0);
+    // 옆 칩과의 틈을 넘어 이웃 칩을 덮지 않는다.
+    expect(count.offsetX + count.plateRadius).toBeLessThanOrEqual(chipSize / 2 + chipGap);
+    // 판 가운데는 칩 안에 있어 어느 칩의 수인지 흐려지지 않는다.
+    expect(Math.abs(count.offsetY)).toBeLessThan(chipSize / 2);
+    expect(count.size).toBeLessThan(chipSize);
   });
 
   it("은 체력 바와 겹치지 않을 만큼 위로 띄운다", () => {
@@ -97,26 +98,15 @@ describe("공용 전투 프로필 배치", () => {
 
 });
 
-describe("겹 수 배지는 칩 안에 앉는다", () => {
-  const { chipSize, chipBevel, stackCount } = BATTLE_STATUS_LAYOUT;
-  const half = chipSize / 2;
-
-  it("판이 칩의 네 변을 넘지 않는다", () => {
-    // 넘치면 바로 아래 체력 바 위로 흘러내린다 — 칩을 줄이고 이 값을 그대로 둬서 실제로 그랬다.
-    expect(stackCount.offsetX + stackCount.plateRadius).toBeLessThanOrEqual(half);
-    expect(stackCount.offsetY + stackCount.plateRadius).toBeLessThanOrEqual(half);
-  });
-
-  it("깎인 오른쪽 아래 빗변도 넘지 않는다", () => {
-    // 빗변은 (half, half-bevel)과 (half-bevel, half)를 잇는다 → x + y = chipSize - bevel.
-    const line = chipSize - chipBevel;
-    const distance = (line - stackCount.offsetX - stackCount.offsetY) / Math.SQRT2;
-    expect(distance).toBeGreaterThanOrEqual(stackCount.plateRadius);
-  });
-
-  it("숫자도 칩 아래 변을 넘지 않는다", () => {
-    // 글자는 판보다 조금 크게 그려지므로 반높이로 함께 본다.
-    expect(stackCount.offsetY + stackCount.size / 2).toBeLessThanOrEqual(half);
+describe("남은 시간 막대", () => {
+  it("은 칩 밑변 아래에 서고 체력 바의 끝 빗금에 닿지 않는다", () => {
+    const { chipRowLift, chipSize, timeGauge, hpBarCapHalfHeight } = BATTLE_STATUS_LAYOUT;
+    // 그림 위를 덮지 않는다 — 막대는 칩 밖, 밑변 아래에서 시작한다.
+    expect(timeGauge.gap).toBeGreaterThan(0);
+    // 테두리 1px까지 더한 막대의 아래 끝이 바의 끝 빗금 꼭대기보다 위다.
+    const gaugeBottom = -chipRowLift + chipSize / 2 + timeGauge.gap + timeGauge.height + 1;
+    expect(gaugeBottom).toBeLessThan(-hpBarCapHalfHeight);
+    expect(timeGauge.height).toBeGreaterThanOrEqual(3);
   });
 });
 

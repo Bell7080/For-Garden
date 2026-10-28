@@ -1251,10 +1251,13 @@ export class FakeServer implements GameApi {
     }
     // 완료 런은 활성 슬롯에서 즉시 제거한다. 멱등 재응답은 아래 정산 결과 캐시가 소유하므로
     // settled 표식을 활성 run에 남겨 다음 진입을 가로막지 않는다.
-    // 최고점은 정상 완료한 한 판 점수로 갱신한다(합치지 않는다). 오늘의 한 판도 여기서 센다.
+    // 최고점은 한 판 점수로 갱신한다(합치지 않는다). 오늘의 한 판도 여기서 센다.
+    // 정상 완료한 판과, 서버가 기록한 노드 결과로 전멸이 확인된 판(중도 패배)이 주간 기록에 든다 —
+    // 스스로 그만둔 판은 들지 않는다. 소탕 자격(allTimeBestScore)은 보스 제출만 연다.
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), this.now());
     const finalScore = calculateExpeditionRunScore(run).runScore;
-    const improved = request.outcome === "completed" && finalScore > weekly.bestScore;
+    const defeated = request.outcome === "abandoned" && run.relics.length > 0 && run.relics.every((relic) => !relic.alive);
+    const improved = (request.outcome === "completed" || defeated) && finalScore > weekly.bestScore;
     const expedition = {
       ...weekly,
       playsToday: weekly.playsToday + 1,
@@ -1262,7 +1265,7 @@ export class FakeServer implements GameApi {
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null,
     };
-    const result = { runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
+    const result = { runId: run.runId, settlementId: request.settlementId, outcome: request.outcome, granted, runScore: finalScore };
     const candidate = { ...this.state, wallet, expedition };
     this.recordReceipt(candidate, "expeditionSettle", request.settlementId, identity, result);
     this.commitRaidState(candidate);

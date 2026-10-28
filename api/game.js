@@ -931,6 +931,7 @@ var BATTLE_KO = {
   "battle.result.saveFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "battle.result.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
   "battle.result.nodeScore": "\uC6D0\uC815 \uC810\uC218 +{score}",
+  "battle.result.runScore": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218 {score} \xB7 \uC8FC\uAC04 \uAE30\uB85D \uBC18\uC601",
   "battle.pause.continue": "\uC774\uC5B4\uC11C",
   "battle.pause.toTitle": "\uD0C0\uC774\uD2C0\uB85C",
   "battle.pause.toTitleConfirm": "\uD0C0\uC774\uD2C0\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uC774 \uC804\uD22C\uB294 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4.",
@@ -35562,7 +35563,8 @@ var FakeServer = class {
     }
     const weekly = rollExpeditionPeriods(normalizeExpeditionState(this.state.expedition), this.now());
     const finalScore = calculateExpeditionRunScore(run2).runScore;
-    const improved = request.outcome === "completed" && finalScore > weekly.bestScore;
+    const defeated = request.outcome === "abandoned" && run2.relics.length > 0 && run2.relics.every((relic) => !relic.alive);
+    const improved = (request.outcome === "completed" || defeated) && finalScore > weekly.bestScore;
     const expedition = {
       ...weekly,
       playsToday: weekly.playsToday + 1,
@@ -35570,7 +35572,7 @@ var FakeServer = class {
       bestAchievedAt: improved ? this.now().toISOString() : weekly.bestAchievedAt,
       run: null
     };
-    const result = { runId: run2.runId, settlementId: request.settlementId, outcome: request.outcome, granted };
+    const result = { runId: run2.runId, settlementId: request.settlementId, outcome: request.outcome, granted, runScore: finalScore };
     const candidate = { ...this.state, wallet, expedition };
     this.recordReceipt(candidate, "expeditionSettle", request.settlementId, identity, result);
     this.commitRaidState(candidate);

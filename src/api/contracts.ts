@@ -426,7 +426,7 @@ export interface ClaimAdRewardResponse extends PlayerStateDto { items: Inventory
 /** 클라이언트는 런/정산 식별자와 종료 사유만 보내며 보상 수치는 보낼 수 없다. */
 export interface SettleExpeditionRunRequest { runId: string; settlementId: string; outcome: "completed" | "abandoned"; }
 /** 지갑 상한 적용 뒤 실제 이전량을 돌려주는 원자 정산 결과다. */
-export interface SettleExpeditionRunResponse extends PlayerStateDto { runId: string; settlementId: string; outcome: "completed" | "abandoned"; granted: Record<string, number>; }
+export interface SettleExpeditionRunResponse extends PlayerStateDto { runId: string; settlementId: string; outcome: "completed" | "abandoned"; granted: Record<string, number>; /** 이 판의 최종 점수. 완료·중도 패배한 판은 주간 최고 기록에 든다. */ runScore?: number; }
 /** 클라이언트는 실제 보상이 아닌 전투 결과만 제출하며, requestId는 재시도를 묶는다. */
 export interface CompleteExpeditionNodeRequest { requestId: string; runId: string; nodeId: string; relicHp: number[]; }
 /** 서버가 결정한 증가분·확정 점수·상한 상태를 돌려줘 HUD가 저장 결과를 그대로 그린다. */

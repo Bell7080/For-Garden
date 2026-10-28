@@ -48,6 +48,7 @@ export const BATTLE_DE = {
   "battle.result.saveFailed": "Ergebnis konnte nicht gespeichert werden",
   "battle.result.retry": "Erneut versuchen",
   "battle.result.nodeScore": "Expedition-Punkte +{score}",
+  "battle.result.runScore": "Expedition-Punkte dieser Runde {score} · Zählt für den Wochenrekord",
   "battle.pause.continue": "Weiter",
   "battle.pause.toTitle": "Zum Titel",
   "battle.pause.toTitleConfirm": "Zurück zum Titelbildschirm. Dieser Kampf beginnt von vorn.",

@@ -48,6 +48,7 @@ export const BATTLE_EN = {
   "battle.result.saveFailed": "Could not save the result",
   "battle.result.retry": "Try Again",
   "battle.result.nodeScore": "Expedition Score +{score}",
+  "battle.result.runScore": "Expedition Score {score} · Counts toward weekly record",
   "battle.pause.continue": "Continue",
   "battle.pause.toTitle": "To Title",
   "battle.pause.toTitleConfirm": "Return to the title screen. This battle will start over.",

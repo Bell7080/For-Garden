@@ -3629,6 +3629,8 @@ export class BattleScene extends Phaser.Scene {
                 // 그 영수증을 같은 판의 보상 줄이 그대로 말한다.
                 items: currencyRecordToRewardItems(settlement.granted),
                 settlement: true,
+                // 전멸한 판도 그때까지 오른 점수가 주간 기록에 든다 — 그 점수를 여기서 말한다.
+                footnote: settlement.runScore && settlement.runScore > 0 ? t("battle.result.runScore", { score: Math.floor(settlement.runScore).toLocaleString() }) : undefined,
               },
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),

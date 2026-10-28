@@ -310,9 +310,9 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     tabs: GUILD_TABS,
     // 값은 길드 코인 하나라 그 칸만 세운다(`topBarSlots`의 `guild`).
     currencies: "guild",
-    // 관절 오른쪽으로 꼬리 곤봉이 567px 뻗은 원화라 하이네 키(1010)로는 곤봉이 절반 넘게 잘린다. 키를 줄여 얼굴이 하이네와
-    // 맞먹게(두 눈 사이 ≈56px) 두고, 곤봉 끝만 오른쪽 변에 살짝 걸리게 한다 — 어린 개체라 작게 서는 것도 맞는다.
-    merchantSpot: { headX: 744, height: 940 },
+    // 관절 오른쪽으로 꼬리 곤봉이 567px 뻗은 원화다. 얼굴을 키워 한 뼘 오른쪽에 세우고(배율 ≈0.75, 머리끝 y≈180),
+    // 곤봉 끝 140px쯤은 오른쪽 변 밖으로 잘라 둔다 — 꼬리는 몸이라 잘려도 누구인지 흐려지지 않는다(응태 요청).
+    merchantSpot: { headX: 790, height: 1035 },
   },
 };
 

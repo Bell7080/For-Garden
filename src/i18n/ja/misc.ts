@@ -259,6 +259,7 @@ export const MISC_JA = {
   "profile.record.ancient": "古代地層 最高到達",
   "profile.record.ancientFloor": "{floor}層",
   "profile.record.ancientMonth": "今月",
+  "profile.storyClears.locked": "未開放",
   "profile.noRecord": "記録なし",
 
   "stageComplete.contribution": "攻撃 · 防御 · 回復",

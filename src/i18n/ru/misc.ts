@@ -248,6 +248,7 @@ export const MISC_RU = {
   "profile.record.ancient": "Рекорд Древних пластов",
   "profile.record.ancientFloor": "Этаж {floor}",
   "profile.record.ancientMonth": "В этом месяце",
+  "profile.storyClears.locked": "Закрыто",
   "profile.noRecord": "Нет записи",
   "stageComplete.contribution": "Атака · Защита · Лечение",
   "stageComplete.tapToConfirm": "Коснитесь экрана, чтобы подтвердить",

@@ -53,6 +53,11 @@ export const PLAYER_PROFILE_LAYOUT = {
    * 칸 가운데에서 잰 거리다.
    */
   records: { titleY: 184, firstY: 262, rowGap: 122, rows: 3, columnX: 222, width: 426, height: 108, labelY: -30, valueY: 8, barY: 38, emblem: 46 },
+  /**
+   * 「최대 스토리」 칸이 아래로 늘어나며 펼치는 난이도별 클리어 판. 칸과 같은 폭으로 칸 밑변에 바로 붙고, 줄은 난이도마다
+   * 하나라 5~7장이 늘어도 높이가 그대로다. `chevron`은 칸 오른쪽의 펼침 표식 크기다.
+   */
+  storyClears: { rowHeight: 62, rowGap: 8, padX: 14, padTop: 12, padBottom: 16, chevron: 26, openMs: 160 },
   nextUnlock: { y: 600 },
   /** 친구 카드 밑동의 조작 줄(즐겨찾기·삭제). 다음 해금 줄이 없는 친구 카드가 그 자리를 쓴다. */
   actions: { y: 636, height: 88, gap: 16, fontSize: 32 },
@@ -99,3 +104,25 @@ export function avatarPickerHeight(photoCount: number, frameCount: number, modif
 
 /** 한 줄 입력 창(닉네임·한 줄 소개). */
 export const TEXT_EDITOR = { width: 900, height: 470, noticeY: -118, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
+
+/** 난이도별 클리어 판의 높이 — 줄 수에서 거꾸로 구한다. */
+export function storyClearsPanelHeight(rows: number): number {
+  const { rowHeight, rowGap, padTop, padBottom } = PLAYER_PROFILE_LAYOUT.storyClears;
+  return padTop + rows * rowHeight + Math.max(0, rows - 1) * rowGap + padBottom;
+}
+
+/**
+ * 연구 기록 칸의 색 — 칸마다 그 콘텐츠의 결을 한 색으로 입힌다(윗변 선·옅은 물듦·왼쪽 빗금·이름표·진행 줄).
+ * 스토리는 쉬움 난이도와 같은 금빛, 지층은 흙빛 호박, 결투장은 붉은빛, 아레나는 푸른빛, 원정은 바다 청록, 도감은 잎빛이다.
+ * 결투장·아레나의 값 글자는 티어 색이 그대로 맡는다.
+ */
+export const PROFILE_RECORD_TONE = {
+  lead: { edge: 0xd8b978, text: "#e8cf9c" },
+  story: { edge: 0xe6bc57, text: "#f5d47b" },
+  ancient: { edge: 0xc98a52, text: "#f0b783" },
+  duel: { edge: 0xe0605a, text: "#ff9c94" },
+  arena: { edge: 0x6f8cff, text: "#a9bbff" },
+  expedition: { edge: 0x3fc1b0, text: "#86e3d6" },
+  collection: { edge: 0x7fd36b, text: "#b6ef9e" },
+} as const;
+export type ProfileRecordToneId = keyof typeof PROFILE_RECORD_TONE;

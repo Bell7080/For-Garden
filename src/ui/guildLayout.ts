@@ -226,8 +226,9 @@ export function guildWarNodeSpot(slot: { branch: number; kind: "boss" | "elite" 
  */
 export const GUILD_GUARD_PAGE = {
   centerX: (GUILD_INFO.rail.x + GUILD_INFO.rail.size / 2 + BASE_WIDTH) / 2,
-  enemies: { label: 440, y: 560, size: 128, gap: 22 },
-  record: { y: 860, width: 760, height: 300 },
+  /** 오늘의 적 — 현상수배 입구처럼 SD가 바닥(`ground`)에 서고 발밑에 레벨·이름이 선다. `spacing`은 SD 사이 간격이다. */
+  enemies: { label: 430, ground: 690, height: 170, spacing: 240, nameSize: 26, nameWidth: 220 },
+  record: { y: 930, width: 760, height: 300 },
   ranking: { y: 1556, width: 330, height: 82, gap: 24 },
   sortie: { y: 1676, width: 560, height: 124 },
 } as const;

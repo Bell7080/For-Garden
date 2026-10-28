@@ -96,3 +96,17 @@ test("레벨 칩은 레벨별 개방 가지나무를, 경험치 줄은 얼마 �
   await page.waitForTimeout(800);
   await captureGame(page, `test-results/${test.info().project.name}-player-level-tree.png`);
 });
+
+test("최대 스토리 칸의 v는 난이도별 클리어 판을 아래로 펼친다", async ({ page }) => {
+  await startAfterOpening(page, (session) => { session.cleared = new Set([...session.cleared, "1-1", "1-2", "1-3", "4-10", "normal:1-1", "normal:1-2", "normal:1-3"]); });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tap(page, 176, 86);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.playerProfileOpen)).toBe(true);
+  await page.waitForTimeout(800);
+  const { records } = PLAYER_PROFILE_LAYOUT;
+  await tap(page, WIDTH / 2 - records.columnX, HEIGHT / 2 + records.firstY);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeDefined();
+  await page.waitForTimeout(600);
+  await captureGame(page, `test-results/${test.info().project.name}-player-story-clears.png`);
+});

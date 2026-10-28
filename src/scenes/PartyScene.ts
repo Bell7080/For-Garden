@@ -218,6 +218,12 @@ export class PartyScene extends Phaser.Scene {
   private rosterViewport: { top: number; bottom: number } = ROSTER_VIEWPORT;
 
   /** 수호전은 여섯 칸 두 줄(앞줄 0~2 · 뒷줄 3~5)이다. 나머지 편성은 세 칸 한 줄이다. */
+  /** 입구의 자동 전투 창에서 넘어온 던전 편성인가 — 그 창이 시작해 둔 자동 전투가 이 단계의 것일 때만이다. */
+  private get autoEntry(): boolean {
+    const content = this.content;
+    return (content.content === "cake" || content.content === "bounty") && content.auto === true && autoRepeat.activeFor(content) !== undefined;
+  }
+
   private get guard(): boolean { return this.content.content === "guildGuard"; }
   /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
   private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
@@ -378,11 +384,12 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
       height: 130,
-      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : t("party.start"),
+      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : this.autoEntry ? t("dungeon.run.startAuto") : t("party.start"),
       fontSize: 44,
       onClick: () => {
         // 손으로 누른 전투 시작은 자동 전투가 아니다 — 남은 자동 전투를 비우고 한 판만 들어간다.
-        if (!this.isEnteringBattle) autoRepeat.clear();
+        // 입구의 자동 전투 창에서 넘어온 편성만 예외다: 그 전투 시작이 곧 자동 전투의 첫 판이다.
+        if (!this.isEnteringBattle && !this.autoEntry) autoRepeat.clear();
         void this.beginEntry();
       },
     });
@@ -566,18 +573,18 @@ export class PartyScene extends Phaser.Scene {
    */
   private openGuardRoster(element: RelicDef["element"]): void {
     const { entries, firstWave } = guardRosterPreview(guildGuardRoster(element));
-    const groups = [entries.filter((entry) => entry.role === "swarm"), entries.filter((entry) => entry.role === "elite")];
+    const groups = [entries];
     const layout = guardRosterPopupLayout(groups.map((group) => group.length));
     const L = PARTY_GUARD_ROSTER;
     const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length);
     this.guardPopups ??= new PopupLayer(this, 2100);
     this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
       body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
-      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, every: GUILD_GUARD.eliteEvery }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
+      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, cap: GUILD_GUARD.overrunCap, cut: 100 - GUILD_GUARD.allyRestorePercent }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
       const nonEmpty = groups.filter((group) => group.length > 0);
       layout.sections.forEach((section, index) => {
         const group = nonEmpty[index];
-        body.add(addSectionTitle(this, -L.width / 2 + 48, section.titleY, t(group[0].role === "elite" ? "info.enemy.role.elite" : "info.enemy.role.swarm"), { size: 28 }));
+        body.add(addSectionTitle(this, -L.width / 2 + 48, section.titleY, t("info.enemy.role.swarm"), { size: 28 }));
         group.forEach((entry, at) => {
           const cell = section.cells[at];
           const face = new FaceFrame(this, cell.x, cell.y, { portraitAssetId: entry.def.portraitAssetId, size: L.face });

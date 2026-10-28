@@ -61,6 +61,11 @@ import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup
 import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { FaceFrame } from "../ui/FaceFrame";
+import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
+import { addSdFootShadow } from "../ui/SdFootShadow";
+import { addUnitNameplate } from "../ui/unitNameplate";
+import { battleAssetFor, spawnPuppet } from "../puppets/assets";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
@@ -178,6 +183,9 @@ export class GuildScene extends Phaser.Scene {
   private dragLastY = 0;
   private dragMoved = 0;
   private busy = false;
+  private guardEnemyInfo!: EnemyInfoPopup;
+  /** 오늘의 적 SD 줄을 다시 그릴 때 늦게 도착한 SD를 버리는 번호. */
+  private guardLineupRequest = 0;
   private backdrop?: Phaser.GameObjects.Image;
   private backdropKey: string = BACKGROUND.guild;
 
@@ -199,6 +207,7 @@ export class GuildScene extends Phaser.Scene {
     this.backdrop = addSceneBackground(this, this.backdropKey);
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.50).setDepth(-29);
     this.popups = new PopupLayer(this);
+    this.guardEnemyInfo = new EnemyInfoPopup(this, new PopupLayer(this, 2200));
     this.topBar = new TopBar(this, 40, {
       profile: false, currencies: "guild", guildCoin: () => (this.state ? this.state.me?.coin ?? 0 : undefined),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
@@ -1388,15 +1397,27 @@ export class GuildScene extends Phaser.Scene {
     this.controls.add(new RailButton(this, I.rail.x, I.rail.ranking, { icon: "rank-reward", label: t("guild.guard.reward"), size: I.rail.size, accent: true, onClick: () => { if (!this.busy) this.openGuardRewards(); } }));
     this.controls.add(addSideShopButton(this, I.rail.x, I.rail.shop, I.rail.size, t("guild.shop.title"), () => this.openShop()));
 
-    // 오늘의 적 — 무리 먼저, 그다음 정예. 얼굴을 누르면 그 개체가 처음 서는 웨이브의 모습으로 정보창이 열린다.
+    // 오늘의 적 — 현상수배 입구의 적 줄처럼 SD로 선다. 누르면 그 개체가 처음 서는 웨이브의 모습으로 정보창이 열린다.
     const { entries } = guardRosterPreview(guildGuardRoster(element as Element));
     const E = G.enemies;
     this.label(this.controls, G.centerX, E.label, t("guild.guard.preview.title"), { role: "emphasis", size: 28, color: COLOR.inkDim }, [0.5, 0.5]);
-    const span = entries.length * E.size + (entries.length - 1) * E.gap;
+    const request = ++this.guardLineupRequest;
     entries.forEach((entry, index) => {
-      const x = G.centerX - span / 2 + E.size / 2 + index * (E.size + E.gap);
-      if (entry.def.portraitAssetId) this.controls.add(new FaceFrame(this, x, E.y, { portraitAssetId: entry.def.portraitAssetId, size: E.size, color: entry.role === "elite" ? COLOR.danger : undefined }));
-      this.label(this.controls, x, E.y + E.size / 2 + 24, entry.role === "elite" ? t("guild.guard.elite") : t("guild.guard.preview.level", { level: entry.level }), { role: "emphasis", size: 22, color: entry.role === "elite" ? COLOR.dangerText : COLOR.inkDim }, [0.5, 0.5]);
+      const x = G.centerX + (index - (entries.length - 1) / 2) * E.spacing;
+      addSdFootShadow(this, x, E.ground, E.height * 0.72, this.controls);
+      const slot = this.add.container(0, 0);
+      this.controls.add(slot);
+      void spawnPuppet(this, battleAssetFor(entry.def.id), {
+        x, groundY: E.ground, height: E.height, depth: 0, flipX: true,
+        isStale: () => request !== this.guardLineupRequest || !slot.active,
+      }).then((puppet) => {
+        if (request !== this.guardLineupRequest || !slot.active) { puppet.destroy(); return; }
+        puppet.disableInteractive();
+        slot.add(puppet);
+      }).catch(() => undefined);
+      addUnitNameplate(this, this.controls, x, E.ground + 22, entry.level, entry.def.name, E.nameSize, E.nameWidth);
+      addClippedHit(this, this.controls, x, E.ground - E.height / 2 + 20, E.height * 0.86, E.height + 80, () => FULL_CLIP, { useHandCursor: true })
+        .on("pointerup", () => { if (!this.busy) this.guardEnemyInfo.show({ def: entry.def, level: entry.level, breakthrough: requiredBreakthroughForLevel(entry.level) }); });
     });
 
     // 오늘 기록 판 — 오늘 최고 점수를 크게, 남은 도전을 그 아래에.

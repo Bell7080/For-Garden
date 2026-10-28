@@ -54,6 +54,15 @@ describe("지도 노드 상태", () => {
 describe("유적 미리보기 창", () => {
   const spot = archaeologySitePopupLayout(3);
 
+  it("의 결정 띠는 기대 획득 판과 이유 줄 사이에 겹치지 않고 선다", () => {
+    const withCrystal = archaeologySitePopupLayout(3, true);
+    const band = withCrystal.crystal;
+    expect(band.y - band.height / 2).toBeGreaterThan(withCrystal.panel.y + withCrystal.panel.height / 2);
+    expect(band.y + band.height / 2).toBeLessThan(withCrystal.reasonY - 14);
+    expect(band.width).toBe(withCrystal.panel.width);
+    expect(withCrystal.height - spot.height).toBeGreaterThanOrEqual(band.height);
+  });
+
   it("의 높이는 보상 줄 수에서 자란다", () => {
     expect(archaeologySitePopupLayout(4).height).toBeGreaterThan(spot.height);
     expect(spot.rowYs).toHaveLength(3);

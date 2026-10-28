@@ -26,8 +26,12 @@ const BASE = {
   panelPadTop: 54,
   panelPadBottom: 24,
   panelToReason: 48,
-  /** 결정 줄이 서는 사이는 판과 이유 줄 사이에 한 줄을 더한다. */
-  crystalLine: 46,
+  /**
+   * 결정 띠. 노란 글 한 줄로 두던 때는 이유 줄과 같은 무게라 결정이 맺혔는지 눈에 걸리지 않았다 —
+   * 판 아래에 결정색 띠 한 장(단계 마름모 + 두 줄 글)으로 세운다.
+   */
+  crystalGap: 30,
+  crystalHeight: 104,
   reasonToButton: 64,
   buttonHeight: 92,
   bottomPad: 42,
@@ -45,8 +49,8 @@ export interface ArchaeologySitePopupLayout {
   labelX: number;
   gaugeX: number;
   gauge: { width: number; height: number };
-  /** 결정 줄의 중심 y. 결정이 없는 유적에서는 쓰지 않는다. */
-  crystalY: number;
+  /** 결정 띠. 결정이 없는 유적에서는 쓰지 않는다. */
+  crystal: { y: number; width: number; height: number };
   reasonY: number;
   buttonY: number;
   buttonWidth: number;
@@ -59,15 +63,15 @@ export interface ArchaeologySitePopupLayout {
 export function archaeologySitePopupLayout(rows: number, withCrystal = false): ArchaeologySitePopupLayout {
   const safeRows = Math.max(1, Math.floor(rows));
   const panelHeight = BASE.panelPadTop + safeRows * BASE.rowHeight + BASE.panelPadBottom;
-  const extra = withCrystal ? BASE.crystalLine : 0;
+  const extra = withCrystal ? BASE.crystalGap + BASE.crystalHeight : 0;
   const height = BASE.subtitleTop + BASE.subtitleToPanel
     + panelHeight + BASE.panelToReason + BASE.reasonToButton + BASE.buttonHeight / 2 + BASE.bottomPad + extra;
   const top = -height / 2;
   const subtitleY = top + BASE.subtitleTop;
   const panelTop = subtitleY + BASE.subtitleToPanel;
   const panelWidth = BASE.width - BASE.padX * 2;
-  const crystalY = panelTop + panelHeight + BASE.panelToReason;
-  const reasonY = crystalY + extra;
+  const crystalTop = panelTop + panelHeight + BASE.crystalGap;
+  const reasonY = panelTop + panelHeight + BASE.panelToReason + extra;
   const buttonY = reasonY + BASE.reasonToButton;
   const buttonWidth = (panelWidth - 28) / 2;
   return {
@@ -80,7 +84,7 @@ export function archaeologySitePopupLayout(rows: number, withCrystal = false): A
     // 게이지는 판 오른쪽 변에서 물러나 선다. 이름표는 왼쪽에 붙어 둘이 마주 본다.
     gaugeX: panelWidth / 2 - 26 - BASE.gauge.width / 2,
     gauge: BASE.gauge,
-    crystalY,
+    crystal: { y: crystalTop + BASE.crystalHeight / 2, width: panelWidth, height: BASE.crystalHeight },
     reasonY,
     buttonY,
     buttonWidth,

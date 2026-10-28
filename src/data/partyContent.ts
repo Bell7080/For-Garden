@@ -38,7 +38,8 @@ export interface DuelPartyOpponent {
 export type PartyContent =
   | { content: "stage" }
   | { content: "raid"; raidId: string; bossRelicId: string; difficulty: RaidDifficulty }
-  | { content: "bounty" | "cake"; tierId: string }
+  /** 던전 — `auto`면 입구의 자동 전투 창에서 넘어온 편성이라, 전투 시작이 곧 자동 전투의 첫 판이다. */
+  | { content: "bounty" | "cake"; tierId: string; auto?: true }
   /** 결투 공격 — 위에 상대 방어덱이 서고, 전투 시작이 도전권 하나를 쓴다. 시작 편성은 지난 공격덱이다. */
   | { content: "duel"; opponent: DuelPartyOpponent; attack: readonly string[] }
   /** 결투 방어덱 — 위에 적이 없고, 저장이 곧 게시다. 가릴 렐릭의 순서도 여기서 고른다. */
@@ -73,7 +74,7 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown; defenderName: string; units: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown; defenderName: string; units: unknown }>;
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -104,10 +105,10 @@ export function normalizePartyContent(input: unknown): PartyContent {
     return { content: "raid", raidId: data.raidId, bossRelicId: data.bossRelicId, difficulty: data.difficulty };
   }
   if (data.content === "bounty" && BOUNTY_TIERS.some(({ id }) => id === data.tierId)) {
-    return { content: "bounty", tierId: data.tierId as string };
+    return { content: "bounty", tierId: data.tierId as string, ...(data.auto === true ? { auto: true as const } : {}) };
   }
   if (data.content === "cake" && CAKE_OPERATION_TIERS.some(({ id }) => id === data.tierId)) {
-    return { content: "cake", tierId: data.tierId as string };
+    return { content: "cake", tierId: data.tierId as string, ...(data.auto === true ? { auto: true as const } : {}) };
   }
   return { content: "stage" };
 }
@@ -166,7 +167,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
   // 수호전은 위에 세울 적이 없다 — 그날 속성의 명단이 자동 배치의 상성 방향만 정한다.
   if (content.content === "guildGuard") {
     const roster = guildGuardRoster(content.element);
-    return { shown: [], all: [...new Set([...roster.grunts, ...roster.elites])], role: "swarm" };
+    return { shown: [], all: [...new Set(roster.units)], role: "swarm" };
   }
   if (content.content === "guildWar") {
     // 방어덱은 게시한 순간의 레벨·돌파로 선다 — 입장이 돌려줄 스냅샷과 같은 성장 축이다(룬만 빠진다).

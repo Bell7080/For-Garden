@@ -388,7 +388,7 @@
 - **길드 상태는 `GuildBackend`가 소유하고 지갑이 얽힌 네 조작(`createGuild`·`changeGuildBadge`·`stampGuildAttendance`·`buyGuildProduct`)만 `GameApi`가 한 호출 안에서 확정한다.** 호출자(이름·레벨·얼굴)는 클라이언트가 보내지 않고 서버가 저장된 진행에서 만든다(`guildActorFrom`). 길드 코인은 길드원 행이 들고 지갑에 두지 않는다.
 - **뱃지는 길드장만 바꾸고 첫 변경은 무료, 이후 젬 500이다.** 길드 만들기는 젬 2,000, 레벨 7부터 열린다(`CONTENT_UNLOCKS`). 이름은 2~12자의 문자·숫자·공백이고 문자 검증은 TS가 먼저 한다.
 - **출석은 탭이 아니라 7일 순환 도장판이다**(`GUILD_ATTENDANCE_CYCLE`). 길드 화면에 처음 들어온 날 판이 떠 도장이 찍히고, 빠진 날은 초기화하지 않으며 7일차 다음 날 1일차로 돌아간다. 고를 것이 없다(골드·치즈케이크가 번갈아, 7일차 젬) — 기여도·코인·부흥도는 7일차만 더 크다.
-- **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. **길드 상점은 일반 상점과 같은 `ShopScene`(`guild` 자리)이다** — 상품은 `guildShopProducts`가 같은 `ProductDto`로 옮기고 값은 길드 코인(`guild_coin` 획득 방식), 구매는 공용 확인 창 → `buyGuildProduct`다. 출석판 위에는 나와 바로 위 길드원의 이번 주 기여가 서고 넘으면 역전 연출이 돈다(`guildAttendanceRace`). 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
+- **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. **길드 상점은 일반 상점과 같은 `ShopScene`(`guild` 자리)이다** — 상품은 `guildShopProducts`가 같은 `ProductDto`로 옮기고 값은 길드 코인(`guild_coin` 획득 방식), 구매는 다른 상점과 같은 구매 작업판(`PurchasePopup.openGuild` — 잔액만 길드 코인) → `buyGuildProduct`다. 출석판 위에는 나와 바로 위 길드원의 이번 주 기여가 서고 넘으면 역전 연출이 돈다(`guildAttendanceRace`). 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
 - **QA 빌드는 임시 길드 「포가든 수호대」의 길드장으로 시작한다**(`QA_GUILD_AUTO_JOIN` — 길드 샌드박스 기본 켜짐, 길드에 얽힌 `gameApi` 조작도 이 기기가 받는다). E2E(`test`)와 일반 빌드는 끈다.
 - **배지 값은 번호가 아니라 견본으로 고른다** — 만들기·배지 창의 배지 공방(`guildSwatchSpot`)이 실제 배지 견본을 늘어놓는다. 창을 하나 더 여는 고르기 창을 다시 만들지 않는다. 값은 확정 버튼 판 안에 박고(첫 배지 변경은 값 자리에 `tag`로 「무료」, 오른쪽 위에 `ribbon` 딱지 「첫 회 무료!」), 취소는 판 밖 우하단 뒤로가기(`backButton`)다 — 값 줄·취소 버튼을 따로 세우지 않는다.
 - 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 진행 상황·미비점·상점 구성안은 `docs/guild-plan.md`가 갖는다.
@@ -1110,8 +1110,8 @@
   예상 획득 → 확정 버튼이고, 취소는 판 밖 우하단 뒤로가기다. **두 창은 색 한 벌만 다르다**(`DUNGEON_RUN_TONE` — 자동 전투 비취,
   소탕 호박). 막대의 끝은 소탕이 `maxSweepCount`, 자동 전투가 `autoRepeatRunCap`(스테미나 + 드링크 자동 사용을 켰을 때 가방의 병,
   상한 `AUTO_REPEAT_MAX_RUNS`)이다 — 무제한 반복은 두지 않는다. 판정은 창이 새로 짓지 않고 `sweepRefusal`을 읽는다.
-  **자동 전투는 입구에서 시작한다** — 지금 편성(`session.party`)으로 곧바로 `enterContentBattle`을 지나고, 편성이 비었으면 편성 화면을
-  연다. 전투 화면에는 시작 버튼이 없고 돌고 있는 동안만 진행 칩(눌러 중지 예약)이 선다. 입구에 들어오면 남은 반복을 비운다.
+  **자동 전투는 창에서 시작해 편성 화면을 거친다** — 「자동 전투 시작」이 자동 전투를 걸어 두고 그 단계의 공용 편성 화면(`PartySceneData`의
+  `auto`)을 연다. 거기서는 전투 시작 버튼이 「자동 전투 시작」으로 서고, 누르면 첫 판이다. 편성에서 뒤로 나가면 걸어 둔 자동 전투도 비운다. 전투 화면에는 시작 버튼이 없고 돌고 있는 동안만 진행 칩(눌러 중지 예약)이 선다. 입구에 들어오면 남은 반복을 비운다.
   **소탕을 누르면 영수증이 곧바로 뜨지 않는다** — **그 콘텐츠의 전장 원화**(`battleFieldBackground`)를 깐
   가로 띠(`SweepSkirmish` + 시간표 `sweepSkirmishTimeline`)가 스윽 올라와 한 판을 짧은 만화로 대신한다:
   (전장이 비치도록 암전·누름을 옅게 둔다 — `dimAlpha`·`fieldOverlay`·`vignette`) 주고받기 → 먼지구름 속 투닥투닥 → 몰아치기 → 적이 빙글빙글 **날아가 별이 되고** → 애착 렐릭이 **뿅뿅**

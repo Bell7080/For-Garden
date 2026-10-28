@@ -1961,6 +1961,16 @@
 "Diesen Monat",
 "В этом месяце"
 ],
+"profile.storyClears.locked": [
+"未开放",
+"ยังไม่เปิด",
+"Chưa mở",
+"Belum terbuka",
+"Bloqueado",
+"Bloqueado",
+"Gesperrt",
+"Закрыто"
+],
 "profile.noRecord": [
 "无记录",
 "ไม่มีบันทึก",

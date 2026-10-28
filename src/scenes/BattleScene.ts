@@ -31,6 +31,7 @@ import {
   canFireUltimate,
   createSkirmish,
   fireUltimate,
+  hordeFieldCount,
   isFighterAlive,
   isPartyFighter,
   isPupFighter,
@@ -3498,7 +3499,7 @@ export class BattleScene extends Phaser.Scene {
     const motion = stepBattleScoreMotion(this.guardScoreShown, Math.round(horde.score), elapsedMs);
     this.guardScoreShown = motion.shown;
     this.guardScoreLabel.setText(this.guardScoreShown.toLocaleString());
-    const onField = this.state.fighters.filter((fighter) => fighter.side === "enemy" && isFighterAlive(fighter) && isPartyFighter(fighter) && !fighter.hordeEntering).length;
+    const onField = hordeFieldCount(this.state);
     const cap = horde.spec.overrunCap;
     this.guardLineLabel.setText(t("guild.guard.battle.line", { wave: this.guardWave, field: onField, cap }))
       .setColor(onField >= cap * GUILD_GUARD_BATTLE_HUD.warnRatio ? COLOR.dangerText : COLOR.ink);

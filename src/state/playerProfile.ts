@@ -3,7 +3,8 @@ import { ancientHighestCleared } from "../core/ancientStrata";
 import { rollDuelPeriods, type DuelState } from "../core/duelState";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import { PLAYABLE_RELICS, RELICS } from "../data/relics";
-import { STAGES } from "../data/stages";
+import { STAGES, storyStages } from "../data/stages";
+import { sanitizeStoryClears, storyClearRecords, type StoryClearRecord } from "../core/storyClearRecord";
 import { highestClearedStage } from "../core/stageProgress";
 import { breakthroughGrade, calculateFinalStats } from "../core/relicProgression";
 import { combatPower } from "../core/combatPower";
@@ -80,6 +81,8 @@ export interface PlayerCompetitiveStats {
   highestStage: { stageId: string; displayValue: string } | null;
   /** 스토리 진행 — 깬 관문 수와 전체 관문 수. 친구 카드는 최고 관문만 공개해 비어 있다. */
   storyProgress?: { cleared: number; total: number };
+  /** 난이도별 스토리 클리어 — 「최대 스토리」 칸의 펼침이 읽는다. 없으면(구버전 서버·길드원 카드) 펼침 표시를 세우지 않는다. */
+  storyClears?: StoryClearRecord[];
   /** 원정 최고. 공개하지 않은 친구는 비어 있다(그 칸이 서지 않는다). */
   expedition?: { label: string; score: number };
   /** 고대 지층 — 이번 달 가장 깊이 깬 층(0이면 아직 한 층도 깨지 않았다). 공개하지 않은 친구는 비어 있다. */
@@ -168,6 +171,7 @@ export function playerProfileDisplay(state: Session, equippedModifiers: readonly
       ...(arena ? { arena: { ...arena } } : {}),
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
+      storyClears: storyClearRecords(storyStages, state.cleared),
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
       expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) },
       ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
@@ -199,7 +203,7 @@ export function friendProfileDisplay(friend: {
   displayName: string; level: number; uid: string; frameId: string; status: string; lastActive: string; avatarRelicId?: string | null;
   equippedModifiers: readonly PublicProfileModifier[];
   favoriteRelic: { relicId: string; equippedSkinId?: string | null; level: number; breakthroughGrade: number; stats: Parameters<typeof combatPower>[0] };
-  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; arenaScore?: number; expeditionScore?: number; ancientFloor?: number; duelScore?: number };
+  competitiveStats: { highestStage?: { stageId: string; displayValue: string }; storyClears?: readonly { difficulty: string; open?: boolean; stageId?: string }[]; arenaScore?: number; expeditionScore?: number; ancientFloor?: number; duelScore?: number };
 }): PlayerProfileDisplay {
   const relic = RELICS.find(({ id }) => id === friend.favoriteRelic.relicId);
   const favorite: FavoriteRelicShowcase | null = relic ? {
@@ -226,6 +230,7 @@ export function friendProfileDisplay(friend: {
       favoriteRelic: favorite,
       ...(arenaPublicStanding(stats.arenaScore) ? { arena: arenaPublicStanding(stats.arenaScore) } : {}),
       highestStage: stats.highestStage ? localStage(stats.highestStage.stageId, stats.highestStage.displayValue) : null,
+      ...(sanitizeStoryClears(stats.storyClears) ? { storyClears: sanitizeStoryClears(stats.storyClears)! } : {}),
       ...(stats.expeditionScore !== undefined ? { expedition: { label: t("profile.expeditionBest"), score: stats.expeditionScore } } : {}),
       // 지층은 깬 층이 없으면 서버가 키를 생략한다 — 그 친구는 아직 들어가지 않은 것이라 0층으로 선다.
       ancientFloor: Math.max(0, Math.floor(stats.ancientFloor ?? 0)),

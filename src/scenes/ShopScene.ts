@@ -18,14 +18,14 @@ import { FaceFrame } from "../ui/FaceFrame";
 import { RARITY_TONE } from "../ui/rarityMark";
 import { drawHairline } from "../ui/holo";
 import { addSceneBackground } from "../ui/backgrounds";
-import { addPriceBar, GUILD_COIN_ICON } from "../ui/priceTag";
+import { addPriceBar } from "../ui/priceTag";
 import { guildShopProducts } from "../ui/guildShopCatalog";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { addBackButton } from "../ui/IconButton";
 import { addFramedIcon, addShelfAmount } from "../ui/itemFrame";
 import { tradePackageValuePercent } from "../data/tradePackages";
-import { openRewardPopup, productGrantsToRewardItems } from "../ui/RewardPopup";
+import { openRewardPopup } from "../ui/RewardPopup";
 import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/soldOutStamp";
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
@@ -655,7 +655,7 @@ export class ShopScene extends Phaser.Scene {
       // 스크롤 드래그가 끝난 손을 구매 탭으로 오인하지 않는다.
       if (this.draggedDistance <= SHOP_CARD.dragSlop) {
         // 비활성 상품도 이유와 상세 정보를 읽을 수 있으며 카드 탭 자체는 절대 즉시 구매하지 않는다.
-        if (product.acquisition.kind === "guild_coin") { this.confirmGuildPurchase(product, product.acquisition.amount); return; }
+        if (product.acquisition.kind === "guild_coin") { this.confirmGuildPurchase(product); return; }
         new PurchasePopup(this, this.popups, gameApi, session.wallet).open(product, async (result) => { this.applyPurchaseResult(result); this.notice(t("shop.exchangeDone")); await this.refresh(); });
       }
     });
@@ -663,31 +663,18 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /**
-   * 길드 상품 구매. 값이 길드 코인이라 지갑 결제창(`PurchasePopup`)이 아니라 공용 확인 창이 치를 것과 남는 코인을 말하고,
-   * 확정은 `gameApi.buyGuildProduct`가 한 호출 안에서 한다.
+   * 길드 상품 구매. 판은 다른 상점과 같은 구매 작업판(`PurchasePopup`)이고, 잔액은 길드 코인, 확정은
+   * `gameApi.buyGuildProduct`다 — 영수증까지 그 판이 띄우고 여기서는 받은 길드 상점 상태만 다시 그린다.
    */
-  private confirmGuildPurchase(product: ProductDto, price: number): void {
-    if (product.remaining <= 0) return;
-    if (product.disabledReason) { this.notice(product.disabledReason, true); return; }
-    // 모자라면 창을 열지 않는다 — 값줄의 붉은 수가 이미 이유를 말한다.
-    if (this.guildCoin < price) { this.notice(t("guild.shop.short"), true); return; }
-    this.popups.confirm({
-      title: product.name,
-      message: t("guild.shop.confirm", { name: product.name }),
-      confirmLabel: t("guild.shop.buy"),
-      costs: [{ iconKey: GUILD_COIN_ICON, amount: price }],
-      balance: { iconKey: GUILD_COIN_ICON, before: this.guildCoin, after: this.guildCoin - price },
-    }, () => {
-      void withBusy(this, gameApi.buyGuildProduct({ productId: product.id })).then(async (result) => {
-        session.wallet = { ...result.wallet };
-        if (!this.scene.isActive()) return;
-        this.guildCoin = result.shop.coin;
-        this.guildCoinLoaded = true;
-        this.products = guildShopProducts(result.shop);
-        this.topBar?.refresh();
-        this.renderProducts();
-        openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(product.grants) });
-      }, () => { if (this.scene.isActive()) this.notice(t("guild.shop.failed"), true); });
+  private confirmGuildPurchase(product: ProductDto): void {
+    new PurchasePopup(this, this.popups, gameApi, session.wallet).openGuild(product, this.guildCoin, (result) => {
+      session.wallet = { ...result.wallet };
+      if (!this.scene.isActive()) return;
+      this.guildCoin = result.shop.coin;
+      this.guildCoinLoaded = true;
+      this.products = guildShopProducts(result.shop);
+      this.topBar?.refresh();
+      this.renderProducts();
     });
   }
 

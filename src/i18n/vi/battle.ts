@@ -48,6 +48,7 @@ export const BATTLE_VI = {
   "battle.result.saveFailed": "Không thể lưu kết quả",
   "battle.result.retry": "Thử lại",
   "battle.result.nodeScore": "Điểm Viễn chinh +{score}",
+  "battle.result.runScore": "Điểm Viễn chinh lần này {score} · Tính vào kỷ lục tuần",
   "battle.pause.continue": "Tiếp tục",
   "battle.pause.toTitle": "Về màn hình chính",
   "battle.pause.toTitleConfirm": "Quay về màn hình chính. Trận này sẽ bắt đầu lại từ đầu.",

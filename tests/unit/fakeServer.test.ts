@@ -1192,6 +1192,26 @@ describe("FakeServer 원정 정산", () => {
     expect(state.expedition.allTimeBestScore).toBe(0);
   });
 
+  it("중도 패배(서버가 확인한 전멸)한 판의 점수는 주간 최고점에 들고 소탕 자격은 열지 않는다", async () => {
+    const state = makeSession();
+    const now = () => new Date("2026-08-25T12:00:00Z");
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, now);
+    manager.start(["torika", "rex", "dodo"]);
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now });
+    const runId = state.expedition.run!.runId;
+    const first = state.expedition.run!.nodes.find(({ floor }) => floor === 1)!;
+    const cleared = await server.completeExpeditionNode({ requestId: "climb-1", runId, nodeId: first.id, relicHp: [100, 90, 80] });
+    const second = state.expedition.run!.nodes.find(({ id }) => first.successorIds.includes(id))!;
+    await server.completeExpeditionNode({ requestId: "wipe-2", runId, nodeId: second.id, relicHp: [0, 0, 0] });
+    const settled = await server.settleExpeditionRun({ runId, settlementId: `${runId}:defeat`, outcome: "abandoned" });
+    expect(cleared.nodeScore).toBeGreaterThan(0);
+    expect(settled.runScore).toBe(cleared.nodeScore);
+    expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(cleared.nodeScore);
+    expect(state.expedition.bestAchievedAt).toBe(now().toISOString());
+    // 소탕은 끝까지 싸운 판만 연다.
+    expect(state.expedition.allTimeBestScore).toBe(0);
+  });
+
   it("보스에게 입힌 피해량은 승패와 무관하게 주간 랭킹과 역대 최고점을 갱신한다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));

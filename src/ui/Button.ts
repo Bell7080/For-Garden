@@ -94,7 +94,17 @@ export interface ButtonOptions {
    * "얼마가 드는가"는 버튼 밖의 안내문이 아니라 **누르는 것 위**에 있어야 한다. 재화 이름은
    * 글자로 적지 않고 그림으로 둔다 — 아이콘 하나가 "골드"라는 두 글자보다 빨리 읽힌다.
    */
-  cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean; /** 20K처럼 줄여 적는다. */ abbreviate?: boolean };
+  cost?: { icon: CurrencyIconKey | "item-raid-ticket" | "item-raid-select-ticket"; amount: number; affordable?: boolean; /** 20K처럼 줄여 적는다. */ abbreviate?: boolean; /** 그림 배율. 여백이 넓은 아이템 그림(토벌권)만 키운다. */ iconScale?: number };
+  /**
+   * 비용 자리에 값 대신 서는 한 마디(「무료」처럼). 값 글자와 같은 굵기·자리라 값을 치르는 버튼과 같은
+   * 양식으로 "치르지 않는다"를 말한다 — 버튼 밖의 안내문으로 적으면 다른 양식이 된다. `cost`와 함께 쓰지 않는다.
+   */
+  tag?: string;
+  /**
+   * 판 오른쪽 위 모서리에 걸쳐 붙는 딱지(「첫 회 무료!」처럼). 값 자리는 그대로 두고, **왜** 그 값인지를
+   * 모서리에서 짧게 말한다. 판 밖으로 반쯤 걸쳐 비스듬히 찍혀 판의 일부가 아니라 붙인 표로 읽힌다.
+   */
+  ribbon?: string;
   /**
    * 화면에서 가장 중요한 버튼인지.
    *
@@ -107,6 +117,8 @@ export interface ButtonOptions {
   accentColor?: number;
   /** 강조색과 함께 쓸 글자색. 넘기지 않으면 기본 잉크색이다. */
   accentTextColor?: string;
+  /** 라벨 글자색. 판 색과 한 벌로 물들이는 버튼(레이드 소환)만 쓴다. 넘기지 않으면 기본 잉크색이다. */
+  labelColor?: string;
   /**
    * 판 양 끝에 점을 촘촘히 찍어 안쪽으로 흩어지게 한다. 그라데이션 대신 점의 밀도로 농담을
    * 만드는 옛 인쇄 방식이라, 평평한 유리판에 얹어도 광택처럼 들뜨지 않는다.
@@ -190,7 +202,7 @@ export class Button extends Phaser.GameObjects.Container {
     const fontSize = opts.fontSize ?? 36;
     const iconSize = fontSize * 1.35;
     const label = scene.add
-      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize }))
+      .text(0, hasSub ? -14 : 0, opts.label, textStyle({ role: "display", size: fontSize, ...(opts.labelColor ? { color: opts.labelColor } : {}) }))
       .setOrigin(0.5);
     plate.add(label);
     this.labelText = label;
@@ -216,7 +228,7 @@ export class Button extends Phaser.GameObjects.Container {
     }
     if (opts.cost) {
       // 라벨과 비용을 한 덩어리로 보고 판 가운데에 세운다. 값이 길어져도 덩어리째 가운데다.
-      const coin = fontSize * 1.3;
+      const coin = fontSize * 1.3 * (opts.cost.iconScale ?? 1);
       const gap = fontSize * 0.42;
       // 재화 수는 라벨보다 굵고 크게, 그러나 **세로로만** 늘인다. 가로로 키우면 자릿수가
       // 늘었을 때 덩어리가 판을 넘는다. 아이콘과는 손가락 하나가 아니라 한 뼘만 띄운다.
@@ -237,6 +249,28 @@ export class Button extends Phaser.GameObjects.Container {
         amount.setX(coinX + coin / 2 + gap * 0.24);
       };
       this.updateCost(opts.cost);
+    }
+    if (opts.tag !== undefined && !opts.cost) {
+      // 비용과 같은 자리·같은 결의 글자 — 라벨 오른쪽에 강조색으로, 세로로만 늘인다.
+      const tagText = scene.add
+        .text(0, hasSub ? -14 : 0, opts.tag, textStyle({ role: "display", size: fontSize * 0.96, color: primary ? accentText : COLOR.ink }))
+        .setOrigin(0, 0.5)
+        .setScale(1, 1.14);
+      const gap = fontSize * 0.5;
+      const total = label.width + gap + tagText.width;
+      label.setX(-total / 2 + label.width / 2);
+      plate.add(tagText.setX(-total / 2 + label.width + gap));
+    }
+    if (opts.ribbon !== undefined) {
+      // 오른쪽 위 모서리에 반쯤 걸쳐 비스듬히 찍힌 딱지. 붉은 면에 흰 글자라 판의 강조색과 갈린다.
+      const ribbonText = scene.add.text(0, 0, opts.ribbon, textStyle({ role: "display", size: fontSize * 0.72, color: "#ffffff" })).setOrigin(0.5);
+      const ribbonW = ribbonText.width + fontSize * 0.9;
+      const ribbonH = fontSize * 1.15;
+      const ribbon = scene.add.container(width / 2 - ribbonW * 0.42, -height / 2 + ribbonH * 0.08).setRotation(Phaser.Math.DegToRad(6));
+      const ribbonShape = chipPoints(ribbonW, ribbonH, { bevel: { topLeft: ribbonH * 0.34, bottomRight: ribbonH * 0.34 } });
+      ribbon.add(drawLayer(scene, 0, 0, ribbonShape, { fill: COLOR.danger, alpha: 1, edge: 0xffffff, edgeAlpha: 0.55, shadow: { x: 3, y: 5 } }));
+      ribbon.add(ribbonText);
+      plate.add(ribbon);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {

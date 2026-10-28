@@ -110,7 +110,7 @@ function serialize<T>(task: () => Promise<T>): Promise<T> {
 
 
 /** 운영 우편·재화 조정을 읽어 반영하는 호출 — 우편·알림·가방처럼 지금 값을 보여 주는 조회와 수령이다. */
-const OPS_SYNC_METHODS = new Set(["getNotificationSignals", "getMails", "markMailsRead", "claimMailRewards", "getInventory", "getPlayerState"]);
+const OPS_SYNC_METHODS = new Set(["getNotificationSignals", "getMails", "markMailsRead", "deleteMails", "claimMailRewards", "getInventory", "getPlayerState"]);
 
 export function handleGameCall(playerId: string, req: GameCallRequest, deps: GameHandlerDeps): Promise<GameCallResponse> {
   if (!validCall(req)) throw new GameCallError(400, "invalid_request");
@@ -185,7 +185,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     let applied: OpsAppliedAdjustment[] = [];
     if (ops) {
       applied = applyOpsAdjustments(state, ops.adjustments, now);
-      server.attachOpsMails(ops.mails);
+      server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
     }
     let result: unknown;
     try {

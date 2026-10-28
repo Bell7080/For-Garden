@@ -23,10 +23,10 @@ let activeSeason = "";
 export function setActiveAncientSeason(season: string): void { activeSeason = season; }
 export function activeAncientSeason(): string { return activeSeason; }
 
-/** 1층의 출발점 — 보통 2-10 전체의 체력·압박·방어 예산(2026-10-27, 쉬움 1-10 정예에서 올렸다). */
-const ANCIENT_REFERENCE_STAGE = "normal:2-10";
+/** 1층의 출발점 — 보통 1-5 전체의 체력·압박·방어 예산(2026-10-27, 응태 요청으로 보통 2-10에서 낮췄다). */
+const ANCIENT_REFERENCE_STAGE = "normal:1-5";
 
-/** 보통 2-10의 예산을 출발점으로 삼되, 층마다 조우와 시련을 바꾼다. */
+/** 보통 1-5의 예산을 출발점으로 삼되, 층마다 조우와 시련을 바꾼다. */
 export function ancientStrataMultipliers(floor: number): { hp: number; attack: number; defense: number } {
   assertAncientFloor(floor);
   const result = { hp: 1, attack: 1, defense: 1 };
@@ -82,6 +82,9 @@ export function getAncientStrataFloor(floor: number, season: string = activeSeas
   const enemyAugmentEffects: ExpeditionAugmentEffect[] = [
     ...(trial.initialShieldPercent ? [{ kind: "initialShieldPercent" as const, percent: trial.initialShieldPercent, scope: { kind: "all" as const } }] : []),
     ...(trial.openingEnergyPercent ? [{ kind: "openingEnergyPercent" as const, percent: trial.openingEnergyPercent, scope: { kind: "all" as const } }] : []),
+    // 공속은 능력치에 굽지 않고 증강으로 얹는다 — 굽으면 위의 공격 압박 정규화(공격 × 공속)가 그만큼 공격을 깎아 시련이 사라진다.
+    ...(trial.attackSpeedPercent ? [{ kind: "attackSpeedPercent" as const, percent: trial.attackSpeedPercent, scope: { kind: "all" as const } }] : []),
+    ...(trial.critChancePoints ? [{ kind: "flatStat" as const, stat: "critChance" as const, points: trial.critChancePoints, scope: { kind: "all" as const } }] : []),
   ];
   const band = ANCIENT_DIFFICULTY_BANDS.find(band => floor <= band.last)!;
   return { floor, level: ANCIENT_STRATA_ENEMY_LEVEL, breakthrough: 0, focus: band.focus,
@@ -108,7 +111,7 @@ export function createAncientStrataSkirmish(floor: number, players: readonly Rel
 export function getAncientStrataStage(floor: number): BattleStageDef {
   const d = getAncientStrataFloor(floor);
   return { kind: "battle", id: ancientStageId(floor), name: `B${floor}`, ancientFloor: floor, sub: true,
-    prerequisiteStageIds: [floor === 1 ? "1-10" : ancientStageId(floor-1)],
+    prerequisiteStageIds: [floor === 1 ? "4-10" : ancientStageId(floor-1)],
     enemies: d.enemies.map((enemy,index)=>({ relicId:enemy.id,level:d.level,breakthrough:0,formationSlot:index as 0|1|2|3|4,
       ...(enemy.encounterRole === "elite" ? { elite:true as const } : {}) })),
     ...(d.encounterKind === "elite" || d.encounterKind === "eliteDuo" ? { elite:true as const } : {}),

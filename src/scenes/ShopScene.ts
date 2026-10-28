@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -44,6 +45,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { LOBBY_RETURN, normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { shapeClipMask } from "../ui/popupArt";
 import { playSceneEntrance, startScene, slideTabPage } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import {
   SHOP_BOARD, SHOP_CARD, SHOP_ENTRANCE, SHOP_SHELF, SHOP_REFRESH_CLOCK, SHOP_STAGE, SHOP_TAB_ROW, SHOP_TITLE,
   shopBoardSize, shopCardSpot, shopCardWidth, shopDialogueSpot, shopGridContentHeight, shopGridViewport,
@@ -208,6 +210,8 @@ export class ShopScene extends Phaser.Scene {
     });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    const shopView = shopGridViewport();
+    addScrollHint(this, undefined, { x: (shopView.left + shopView.right) / 2, y: (shopView.top + shopView.bottom) / 2, width: shopView.right - shopView.left, height: shopView.bottom - shopView.top, depth: 45, read: () => ({ offset: this.content?.y ?? 0, min: this.minScrollY }) });
     playSceneEntrance(this);
     showContentIntro(this, "shop");
   }
@@ -598,7 +602,8 @@ export class ShopScene extends Phaser.Scene {
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
     card.add(name);
-    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
+    // 아직 열리지 않은 칸(길드 레벨)은 남은 횟수 대신 언제 열리는지를 같은 자리에 적는다.
+    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, product.disabledReason ?? t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
     // **값은 액자가 아니라 가로로 긴 줄이다**(무역 카드와 같은 한 장). 칸마다 값이 하나뿐이라
     // 작은 네모로 두면 넓은 칸 구석에 외따로 뜬 조각으로 읽힌다.
     if (product.acquisition.kind === "currency") {
@@ -651,8 +656,9 @@ export class ShopScene extends Phaser.Scene {
    */
   private confirmGuildPurchase(product: ProductDto, price: number): void {
     if (product.remaining <= 0) return;
+    if (product.disabledReason) { this.notice(product.disabledReason, true); return; }
     // 모자라면 창을 열지 않는다 — 값줄의 붉은 수가 이미 이유를 말한다.
-    if (this.guildCoin < price) { this.notice(t("guild.shop.short")); return; }
+    if (this.guildCoin < price) { this.notice(t("guild.shop.short"), true); return; }
     this.popups.confirm({
       title: product.name,
       message: t("guild.shop.confirm", { name: product.name }),
@@ -668,7 +674,7 @@ export class ShopScene extends Phaser.Scene {
         this.topBar?.refresh();
         this.renderProducts();
         openRewardPopup(this, this.popups, { items: productGrantsToRewardItems(product.grants) });
-      }, () => { if (this.scene.isActive()) this.notice(t("guild.shop.failed")); });
+      }, () => { if (this.scene.isActive()) this.notice(t("guild.shop.failed"), true); });
     });
   }
 
@@ -698,7 +704,7 @@ export class ShopScene extends Phaser.Scene {
       this.topBar?.refresh();
       this.renderProducts();
       openRewardPopup(this, this.popups, { items });
-    } catch { this.notice(t("shop.premium.adFailed")); }
+    } catch { this.notice(t("shop.premium.adFailed"), true); }
   }
 
   /** 격자가 흐르는 창 안의 손인지. 마스크와 같은 값을 읽어 보이는 것과 눌리는 것을 맞춘다. */
@@ -793,7 +799,9 @@ export class ShopScene extends Phaser.Scene {
   }
 
   /** 결과 안내는 격자 마스크 밖의 고정 계층에 두어 스크롤과 함께 움직이지 않게 한다. */
-  private notice(message: string): void {
+  private notice(message: string, refused = false): void {
+    // 받지 못한 안내(이미 받음·모자람·실패)는 「아직」 소리를 함께 낸다 — 같은 토스트라도 성공과 갈린다.
+    if (refused) audioManager?.playUi("ui.deny");
     const view = shopGridViewport();
     const toast = this.add.text((view.left + view.right) / 2, view.bottom - 36, message, textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(0.5).setDepth(500);
     this.tweens.add({ targets: toast, alpha: 0, delay: 900, duration: 500, onComplete: () => toast.destroy() });

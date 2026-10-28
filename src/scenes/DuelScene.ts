@@ -18,6 +18,7 @@ import { openDuelDefensePreview } from "../ui/DuelDefensePreviewPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { openDuelTicketPopup } from "../ui/DuelTicketPopup";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
+import { addRankChip } from "../ui/RankingChips";
 import { addDuelTierEmblem } from "../ui/DuelTierEmblem";
 import { DUEL_PROFILE as P, DUEL_SCREEN as S, DUEL_TIER_COLOR, duelProfileRowY, duelTabX } from "../ui/duelLayout";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
@@ -26,7 +27,6 @@ import { addSectionTitle } from "../ui/SectionTitle";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { addBackButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
-import { RailButton } from "../ui/RailButton";
 import { NotificationDot } from "../ui/NotificationDot";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { currencyRecordToRewardItems } from "../ui/rewardPopupModel";
@@ -168,12 +168,7 @@ export class DuelScene extends Phaser.Scene {
   /** 왼쪽 칩 둘 — 순위(누르면 순위표, 그 안에서 티어 안내)와 결투 상점. */
   private paintSideChips(status: DuelStatusResponse): void {
     const { rankChip, shopChip } = S;
-    this.view.add(new RailButton(this, rankChip.x, rankChip.y, {
-      icon: "arena-tier", label: t("duel.link.ranking"), size: rankChip.size,
-      onClick: () => new DuelRankingPopup(this, this.popups, status.tierId).open(),
-    }));
-    const rank = status.rank === null ? t("duel.rank.none") : t("duel.rank.value", { rank: status.rank.toLocaleString() });
-    this.view.add(this.add.text(rankChip.x + rankChip.size / 2 + 18, rankChip.y, rank, textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(0, 0.5).setStroke("#05070a", 6));
+    addRankChip(this, this.view, rankChip.x, rankChip.y, { size: rankChip.size, rank: status.rank, onClick: () => new DuelRankingPopup(this, this.popups, status.tierId).open() });
     this.view.add(addSideShopButton(this, shopChip.x, shopChip.y, shopChip.size, t("shop.duel.title"),
       () => startScene(this, "shop", { storefront: "duel", returnScene: "duel" })));
   }

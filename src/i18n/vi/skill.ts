@@ -271,7 +271,7 @@ export const SKILL_VI = {
   "skill.keyword.staccato.term": "Staccato",
   "skill.keyword.staccato.description": "Một đòn phép thêm giống hệt [[basic-attack|đòn đánh thường]] của Mette. Nó làm mục tiêu trúng đòn [[stagger|Khựng]].",
   "skill.keyword.plume.term": "Lông Sương",
-  "skill.keyword.plume.description": "Chiếc lông cắm vào kẻ địch. Mỗi kẻ địch chịu tối đa {max} tầng trong {hold} giây, mỗi tầng mới đặt lại thời gian. Đủ {max} tầng, lông biến mất và chuyển thành chảy máu giảm Tốc đánh và Tốc chạy {slowPercent}% trong {slowSeconds} giây, gây sát thương bằng {percent}% Công của người gây trong {seconds} giây. Chảy máu không cộng dồn, gắn lại sẽ làm mới.",
+  "skill.keyword.plume.description": "Chiếc lông cắm vào kẻ địch. Mỗi kẻ địch chịu tối đa {max} tầng trong {hold} giây, mỗi tầng mới đặt lại thời gian. Đủ {max} tầng, lông biến mất và chuyển thành Tê cóng giảm Tốc đánh và Tốc chạy {slowPercent}% trong {slowSeconds} giây, gây sát thương bằng {percent}% Công của người gây trong {seconds} giây. Tê cóng không cộng dồn, gắn lại sẽ làm mới.",
   "skill.keyword.summon.description": "Triệu hồi cận chiến có {stat}, HP, Thủ và Kháng dựa trên {stat} của {owner}. Tự chọn mục tiêu và dùng Tuyệt kỹ bằng thanh của riêng nó.{resummon}",
   "skill.keyword.summon.resummon": " Khi gục, nó đứng dậy sau {seconds} giây với {percent}% HP tối đa.",
   "skill.ferocity.valueLabel": "Đặc tính Dã tính",

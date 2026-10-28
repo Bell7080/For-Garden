@@ -120,16 +120,7 @@
 "Rangliste",
 "Рейтинг"
 ],
-"expedition.weeklyReward": [
-"每周奖励",
-"รางวัลรายสัปดาห์",
-"Thưởng tuần",
-"Hadiah Mingguan",
-"Recompensas semanales",
-"Recompensas semanais",
-"Wochenbelohnungen",
-"Награды недели"
-],
+"expedition.weeklyScoreReward": ["每周分数奖励", "รางวัลคะแนนรายสัปดาห์", "Thưởng điểm tuần", "Hadiah Skor Mingguan", "Premios de puntos semanales", "Prêmios de pontos semanais", "Wochenpunkte-Belohnungen", "Награды за очки недели"],
 "expedition.syncing": [
 "正在同步记录",
 "กำลังซิงก์สถิติ",
@@ -262,16 +253,6 @@
 "Rast",
 "Привал"
 ],
-"expedition.node.restBody": [
-"治疗远征队并完成此休息点。",
-"ฟื้นฟูทีมออกสำรวจและจบจุดพักนี้",
-"Hồi phục đội viễn chinh và hoàn tất điểm nghỉ này.",
-"Pulihkan tim ekspedisi dan selesaikan titik istirahat ini.",
-"Cura al equipo de expedición y termina este punto de descanso.",
-"Cure a equipe da expedição e conclua este ponto de descanso.",
-"Heile das Expeditionsteam und schließe diesen Rastpunkt ab.",
-"Вылечите отряд экспедиции и завершите этот привал."
-],
 "expedition.node.restConfirm": [
 "休息",
 "พักผ่อน",
@@ -281,6 +262,76 @@
 "Descansar",
 "Rasten",
 "Отдохнуть"
+],
+"expedition.rest.summary": [
+"存活遗物 HP +{heal}%",
+"เรลิกที่ยังอยู่ฟื้น HP +{heal}%",
+"Di vật còn sống hồi +{heal}% HP",
+"Relik yang hidup pulih +{heal}% HP",
+"Reliquias en pie recuperan +{heal}% de PV",
+"Relíquias de pé recuperam +{heal}% de PV",
+"Lebende Relikte heilen +{heal}% LP",
+"Живые Реликты восстанавливают +{heal}% ОЗ"
+],
+"expedition.rest.summaryRevive": [
+"存活遗物 HP +{heal}%  ·  复活一名（HP {revive}%）",
+"เรลิกที่ยังอยู่ HP +{heal}%  ·  ชุบชีวิตหนึ่งตัว (HP {revive}%)",
+"Di vật còn sống +{heal}% HP  ·  Hồi sinh một ({revive}% HP)",
+"Relik hidup +{heal}% HP  ·  Bangkitkan satu ({revive}% HP)",
+"Reliquias en pie +{heal}% PV  ·  Revive a una ({revive}% PV)",
+"Relíquias de pé +{heal}% PV  ·  Reviva uma ({revive}% PV)",
+"Lebende Relikte +{heal}% LP  ·  Eines wiederbeleben ({revive}% LP)",
+"Живые Реликты +{heal}% ОЗ  ·  Воскресить одного ({revive}% ОЗ)"
+],
+"expedition.rest.pick": [
+"请选择要复活的遗物",
+"เลือกเรลิกที่จะชุบชีวิต",
+"Chọn Di vật để hồi sinh",
+"Pilih Relik yang akan dibangkitkan",
+"Elige una Reliquia para revivir",
+"Escolha uma Relíquia para reviver",
+"Wähle ein Relikt zum Wiederbeleben",
+"Выберите Реликт для воскрешения"
+],
+"expedition.rest.tapRevive": [
+"点击复活",
+"แตะเพื่อชุบชีวิต",
+"Chạm để hồi sinh",
+"Ketuk untuk membangkitkan",
+"Toca para revivir",
+"Toque para reviver",
+"Tippen zum Wiederbeleben",
+"Нажмите, чтобы воскресить"
+],
+"expedition.rest.revive": [
+"复活",
+"ชุบชีวิต",
+"Hồi sinh",
+"Bangkit",
+"Revivir",
+"Reviver",
+"Wiederbeleben",
+"Воскрешение"
+],
+"expedition.rest.revived": [
+"复活！",
+"ฟื้นแล้ว!",
+"Hồi sinh!",
+"Bangkit!",
+"¡Revivió!",
+"Reviveu!",
+"Wiederbelebt!",
+"Воскрешён!"
+],
+"expedition.rest.full": [
+"已满",
+"เต็ม",
+"Đầy",
+"Penuh",
+"Al máximo",
+"Cheio",
+"Voll",
+"Максимум"
 ],
 "expedition.augment.confirmed": [
 "已确定增幅 {count}",

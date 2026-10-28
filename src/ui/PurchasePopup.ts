@@ -1,4 +1,5 @@
 import { formatStorePrice } from "../core/storePrice";
+import { audioManager } from "../managers/AudioManager";
 import { addRewardExpiryTag } from "./rewardExpiry";
 import { addListPrice, addPremiumValueBadges } from "./premiumValueBadge";
 import Phaser from "phaser";
@@ -396,8 +397,14 @@ export class PurchasePopup {
     button.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.55, width: 2 }));
     paint(button);
     view.add(button);
-    if (!enabled) { button.setAlpha(0.5); return; }
-    const hit = this.scene.add.zone(0, 0, width, height).setInteractive({ useHandCursor: true });
+    const hit = this.scene.add.zone(0, 0, width, height).setInteractive({ useHandCursor: enabled });
+    if (!enabled) {
+      // 살 수 없는 값을 누른 손에도 답한다 — 붉은 값이 이유를 말하고 소리가 「안 된다」를 말한다.
+      button.setAlpha(0.5);
+      button.add(hit);
+      hit.on("pointerup", () => audioManager?.playUi("ui.deny"));
+      return;
+    }
     button.add(hit);
     hit.on("pointerdown", () => pressIn(button));
     hit.on("pointerout", () => pressOut(button, "normal", { pop: false }));
@@ -479,6 +486,7 @@ export class PurchasePopup {
       for (const relicId of result.newRelicIds ?? []) await this.introduceRelic(relicId);
       openRewardPopup(this.scene, this.popups, {
         title: t("shop.purchase.rewardTitle"),
+        sound: "ui.purchase",
         items: productGrantsToRewardItems(result.granted, result.grantedRunes),
         onConfirm: () => { void onPurchased(result); },
       });

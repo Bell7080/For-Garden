@@ -5,6 +5,7 @@ import {
 } from "../../src/core/guild";
 import { TRADE_GEM_RATE } from "../../src/data/tradePackages";
 import { DUEL_SHOP_ITEM_GEM_VALUE } from "../../src/data/duelShop";
+import { SHOP_PRODUCTS } from "../../src/data/products";
 
 describe("길드 레벨", () => {
   it("은 부흥도와 정원이 오르기만 하고 10에서 멈춘다", () => {
@@ -86,13 +87,37 @@ describe("길드 보상 값", () => {
     for (const d of GUILD_ATTENDANCE_CYCLE.slice(0, 6)) expect(d.contribution).toBeLessThan(GUILD_ATTENDANCE_CYCLE[6].contribution);
   });
 
-  it("상점은 받는 것의 젬 값이 낸 값의 1.0~1.25배 안이다", () => {
-    for (const product of GUILD_SHOP_PRODUCTS) {
+  it("상점은 받는 것의 젬 값이 낸 값의 1.0~1.25배 안이다(룬 제외)", () => {
+    for (const product of GUILD_SHOP_PRODUCTS.filter((p) => !p.grant.rune)) {
       const paid = product.price * GUILD_COIN_GEM_VALUE;
       const got = (product.grant.gold ?? 0) / TRADE_GEM_RATE.gold + (product.grant.cheesecake ?? 0) / TRADE_GEM_RATE.cheesecake
+        + (product.grant.fossil ?? 0) / TRADE_GEM_RATE.fossil
         + (product.grant.item ? product.grant.item.quantity * (DUEL_SHOP_ITEM_GEM_VALUE[product.grant.item.id] ?? Number.NaN) : 0);
       expect(got / paid, product.id).toBeGreaterThanOrEqual(1);
       expect(got / paid, product.id).toBeLessThanOrEqual(1.25);
     }
+  });
+
+  it("룬은 고고학(원석)보다 조금 비싸고 일반 상점(골드)보다 싸다", () => {
+    const rune = GUILD_SHOP_PRODUCTS.find((p) => p.grant.rune === "rare")!;
+    const gems = rune.price * GUILD_COIN_GEM_VALUE;
+    const archaeology = SHOP_PRODUCTS.find((p) => p.id === "arch-rune-daily-rare")!.acquisition;
+    const shop = SHOP_PRODUCTS.find((p) => p.id === "shop-rune-weekly")!.acquisition;
+    if (archaeology.kind !== "currency" || shop.kind !== "currency") throw new Error("룬 시세 상품이 재화 값이 아니다");
+    expect(gems).toBeGreaterThan(archaeology.amount / TRADE_GEM_RATE[archaeology.currency]);
+    expect(gems).toBeLessThan(shop.amount / TRADE_GEM_RATE[shop.currency]);
+  });
+
+  it("화석은 월 한 개뿐이고 만능 파편은 팔지 않는다", () => {
+    const fossil = GUILD_SHOP_PRODUCTS.filter((p) => p.grant.fossil);
+    expect(fossil.reduce((sum, p) => sum + p.limit * (p.grant.fossil ?? 0) * (p.refresh === "weekly" ? 4 : 1), 0)).toBeLessThanOrEqual(1);
+    expect(GUILD_SHOP_PRODUCTS.some((p) => p.grant.item?.id.startsWith("universal-fragment"))).toBe(false);
+  });
+
+  it("길드 레벨 칸은 레벨 혜택의 넷째 칸이 열리는 레벨에 선다", () => {
+    const opens = GUILD_LEVELS.find((l) => guildPerks(l.level).shopSlots > 3)!.level;
+    const levelSlots = GUILD_SHOP_PRODUCTS.filter((p) => p.tab === "guildLevel");
+    expect(levelSlots.length).toBe(1);
+    for (const p of levelSlots) expect(p.minGuildLevel).toBe(opens);
   });
 });

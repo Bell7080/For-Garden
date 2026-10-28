@@ -86,6 +86,21 @@ export const TRANSITION = {
    * 화면 전환보다 짧고 가깝다: 화면이 아니라 판 한 장이 갈리는 것이라서다.
    */
   tabPage: { duration: 170, distance: 56, alpha: 0.35, scale: 1 },
+  /**
+   * 타이틀을 떠날 때 — 화면이 검게 잦아든다. **이 전환 하나만 나가는 연출을 갖는다.**
+   *
+   * 위 「나가는 연출은 두지 않는다」의 이유(씬 시계가 바쁜 프레임에 밀린다)는 타이틀에서도 같으므로,
+   * 기다림의 상한은 씬 시계가 아니라 벽시계(`TITLE_EXIT_GUARD_MS`)가 지킨다. 타이틀 → 로비는 한 판에
+   * 한 번뿐이고, 로그인·연결을 기다린 끝이라 툭 갈리면 「튕겨 들어간」 것처럼 읽혔다.
+   */
+  titleOut: { duration: 280, distance: 0, alpha: 0, scale: 1 },
+  /**
+   * 타이틀에서 들어온 첫 화면 — 검은 화면에서 스르륵 밝아진다.
+   *
+   * 다른 전환이 검은 화면에서 시작하지 않는 이유는 자주 오가는 손에 번쩍임으로 읽혀서인데, 이 길은
+   * 접속마다 한 번뿐이고 바로 앞이 검게 잦아든 타이틀이라 오히려 이어진다. 그래서 더 길고 깊다.
+   */
+  titleIn: { duration: 640, distance: 0, alpha: 0, scale: 1 },
   /** 팝업이 열릴 때 — 누른 자리에서 부풀어 오른다. */
   popupIn: { duration: 210, distance: 0, alpha: 0, scale: 0.94 },
   /**
@@ -99,6 +114,9 @@ export const TRANSITION = {
 
 /** 위 표의 어느 전환인가. */
 export type TransitionKind = keyof typeof TRANSITION;
+
+/** 타이틀이 검게 잦아드는 동안 기다리는 상한(ms). 씬 시계가 밀려도 이 시각에는 다음 화면으로 간다. */
+export const TITLE_EXIT_GUARD_MS = TRANSITION.titleOut.duration + 220;
 
 /**
  * 움직임 설정을 먹인 실제 값.

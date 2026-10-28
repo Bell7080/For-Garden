@@ -759,6 +759,36 @@
     "Aufgeben",
     "Сдаться"
   ],
+  "arena.room.cancel": [
+    "取消",
+    "ยกเลิก",
+    "Hủy",
+    "Batal",
+    "Cancelar",
+    "Cancelar",
+    "Abbrechen",
+    "Отмена"
+  ],
+  "arena.room.cancelTitle": [
+    "取消友谊赛",
+    "ยกเลิกแมตช์กระชับมิตร",
+    "Hủy trận giao hữu",
+    "Batalkan Laga Persahabatan",
+    "Cancelar amistoso",
+    "Cancelar amistoso",
+    "Freundschaftsspiel abbrechen",
+    "Отменить товарищеский бой"
+  ],
+  "arena.invite.cancel": [
+    "取消请求",
+    "ยกเลิกคำขอ",
+    "Hủy lời mời",
+    "Batalkan Permintaan",
+    "Cancelar solicitud",
+    "Cancelar solicitação",
+    "Anfrage zurückziehen",
+    "Отменить запрос"
+  ],
   "arena.result.foeForfeit": [
     "对手弃权或离开，你获胜了。",
     "คู่ต่อสู้ยอมแพ้หรือออกไป คุณชนะ",
@@ -839,7 +869,7 @@
     "Wochenabschluss in {days} T. {hours} Std.",
     "До итогов недели: {days} д. {hours} ч."
   ],
-  "arena.weekly.chip": [
+  "ranking.reward.weekly": [
     "每周奖励",
     "รายสัปดาห์",
     "Thưởng tuần",
@@ -849,6 +879,7 @@
     "Woche",
     "Неделя"
   ],
+"ranking.reward.monthly": ["每月奖励", "รายเดือน", "Thưởng tháng", "Bulanan", "Mensual", "Mensal", "Monat", "Месяц"],
   "arena.ranking.title": [
     "竞技场排名",
     "อันดับอารีนา",

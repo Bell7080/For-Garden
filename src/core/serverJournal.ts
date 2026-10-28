@@ -20,7 +20,21 @@ export interface ServerJournal {
   ops?: OpsJournal;
   /** QA 디버그 도구가 걸어 둔 「다음 10연 승급 찬스」. 개발 도구가 켜진 서버만 읽고, 10연 한 번에 꺼낸다. */
   qaTenUpgrade?: boolean;
+  /** 수호전 오늘의 도전 수와 최고 점수(UTC 날짜 번호로 묶인다). */
+  guildGuard?: { day: number; used: number; best: number };
+  /** 수호전 입장 영수증 — 입장 순간의 편성 사본과 시드. 제출은 이것으로만 다시 굴린다. */
+  guildGuardAdmissions?: Record<string, GuildGuardAdmission>;
   subscriptionMails?: Record<string, { entitlementId: string; productId: string; sentAt: string; expiresAt: string; itemId: string; amount: number }>;
+}
+
+export interface GuildGuardAdmission {
+  seed: string;
+  day: number;
+  element: string;
+  expiresAt: string;
+  lineup: ({ relicId: string; snapshot: ExpeditionRelicSnapshot } | null)[];
+  /** 확정된 판이면 그 결과(재전송은 같은 답을 받는다). */
+  settled?: boolean;
 }
 
 export const emptyServerJournal = (): ServerJournal => ({ receipts: {}, raidAdmissions: {} });
@@ -43,6 +57,12 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
     && (journal.subscriptionMails === undefined || record(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record(mail)
       && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string"
       && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0))
+    && (journal.guildGuard === undefined || record(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0)
+    && (journal.guildGuardAdmissions === undefined || record(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record(admission)
+      && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string"
+      && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === undefined || typeof admission.settled === "boolean")
+      && Array.isArray(admission.lineup) && admission.lineup.length === 6
+      && admission.lineup.every((slot) => slot === null || record(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))
     && record(journal.receipts) && record(journal.raidAdmissions)
     && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record(receipt) && typeof receipt.identity === "string" && record(receipt.result) && json(receipt.result))
     && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record(admission) && typeof admission.raidId === "string"

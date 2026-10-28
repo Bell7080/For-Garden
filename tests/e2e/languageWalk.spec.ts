@@ -4,7 +4,7 @@ import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, tapUntil } from "./canvasInput";
 import { settingsTabX } from "../../src/ui/settingsLayout";
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
-import { GUILD_EDITOR, GUILD_SCREEN } from "../../src/ui/guildLayout";
+import { GUILD_EDITOR, GUILD_SCREEN, guildEditorSpots, guildSwatchSpot } from "../../src/ui/guildLayout";
 
 test("영어 길드 배지는 목록에서 모양과 색을 골라도 편집창을 유지한다", async ({ page }, testInfo) => {
   await startAfterOpening(page, (saved) => {
@@ -18,17 +18,15 @@ test("영어 길드 배지는 목록에서 모양과 색을 골라도 편집창�
   await tapUntil(page, guild.x, guild.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "guild");
   await tapUntil(page, GUILD_SCREEN.side + GUILD_SCREEN.width - 100, GUILD_SCREEN.controls.y,
     async () => (await page.evaluate(() => window.__PF_DEBUG?.popupTitles))?.includes("Create guild") === true);
-  await tap(page, BASE_WIDTH / 2 + 190, BASE_HEIGHT / 2 + GUILD_EDITOR.cyclers.top);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["Create guild", "Shape"]);
-  await captureGame(page, testInfo.outputPath("guild-shape-picker.png"));
-  // 두 번째 모양을 고른다. 만들기 창은 유지하고 선택한 모양만 미리보기에 반영한다.
-  await tap(page, BASE_WIDTH / 2 - 95, BASE_HEIGHT / 2 - 130);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["Create guild"]);
+  // 배지 공방 — 견본을 누르면 창이 하나 더 열리지 않고 그 자리에서 바뀐다.
+  const spots = guildEditorSpots(true);
   await captureGame(page, testInfo.outputPath("guild-editor.png"));
-  await tap(page, BASE_WIDTH / 2 + 190, BASE_HEIGHT / 2 + GUILD_EDITOR.cyclers.top + GUILD_EDITOR.cyclers.gap);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["Create guild", "Background color"]);
-  await captureGame(page, testInfo.outputPath("guild-color-picker.png"));
-  await tap(page, BASE_WIDTH / 2 - 285, BASE_HEIGHT / 2 - 235);
+  const second = guildSwatchSpot(1, 8, spots.gridTop);
+  await tap(page, BASE_WIDTH / 2 + second.x, BASE_HEIGHT / 2 + second.y);
+  const tabWidth = (GUILD_EDITOR.inner - GUILD_EDITOR.tabs.gap * 3) / 4;
+  await tap(page, BASE_WIDTH / 2 - GUILD_EDITOR.inner / 2 + tabWidth * 1.5 + GUILD_EDITOR.tabs.gap, BASE_HEIGHT / 2 + spots.tabs);
+  await page.waitForTimeout(300);
+  await captureGame(page, testInfo.outputPath("guild-color-swatches.png"));
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toEqual(["Create guild"]);
 });
 

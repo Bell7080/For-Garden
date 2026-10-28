@@ -1,6 +1,7 @@
 import { GUILD_NOTICE_MAX, findGuildProduct, guildGlyphCount, guildNameKey, validateGuildName } from "../core/guild";
 import type { GuildJoinMode, GuildRole } from "../core/guild";
 import { isGuildBadge, type GuildBadge } from "../core/guildBadge";
+import { GUILD_WAR_DECK_SIZE, parseGuildWarSlotId } from "../core/guildWarMap";
 import { GuildApiError, type GuildActor, type GuildBackend } from "./guildContracts";
 
 /** DB 함수 `server_guild_call`을 부르는 얇은 호출자다(서비스 롤 키는 서버 환경에만 있다). */
@@ -52,6 +53,21 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
     disbandGuild: async (actor) => { await run(actor, "disbandGuild"); },
     getAttendance: (actor) => run(actor, "getAttendance"),
     getShop: (actor) => run(actor, "getShop"),
+    getGuard: (actor) => run(actor, "getGuard"),
+    getRanking: (actor) => run(actor, "getRanking"),
+    recordGuard: async (actor, record, requestId) => {
+      const whole = (value: unknown, max: number): boolean => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= max;
+      if (!whole(record?.day, 1_000_000) || !whole(record.score, 10_000_000) || !whole(record.coin, 100)) invalid();
+      return run(actor, "recordGuard", [{ day: record.day, score: record.score, coin: record.coin }], requestId);
+    },
+    getWarMap: (actor) => run(actor, "getWarMap"),
+    clearWarSlot: (actor, slotId) => (parseGuildWarSlotId(slotId) ? run(actor, "clearWarSlot", [slotId]) : invalid()),
+    placeWarDefense: (actor, input, requestId) => {
+      // 덱과 스냅샷은 게임 서버가 보유·성장을 확인해 만든 값이다. DB는 칸·국면·중복만 판정한다.
+      if (!parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE
+        || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
+      return run(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
+    },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));
       if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");

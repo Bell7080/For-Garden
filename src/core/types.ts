@@ -60,12 +60,7 @@ export type PortraitAssetId = "torika" | "lexia" | "seira" | "luka" | "dodi" | "
  * 파일명이나 에셋 번호와 직접 결합하지 않으며, 스킨은 능력치·스킬을 전혀 갖지 않는 외형 전용
  * 데이터다. 새 외형을 출시할 때 이 유니온에 영구 ID를 추가하고 기존 ID의 의미는 바꾸지 않는다.
  */
-export type RelicSkinId =
-  | "torika-skin-001"
-  | "torika-skin-002"
-  | "torika-skin-003"
-  | "torika-skin-004"
-  | "torika-skin-005";
+export type RelicSkinId = "torika-skin-001";
 
 export interface Stats {
   /** 생존력과 물리·마법 공격의 기반이 되는 주 능력치다. */
@@ -815,22 +810,22 @@ export type CombatStatusEffect =
   | { kind: "stagger"; /** 기절 저항을 무시하는 순간 행동 차단 시간(초). */ seconds: number }
   | {
       /**
-       * 서리깃. 맞을 때마다 한 겹 박히고, 상한에 닿는 순간 **서리 출혈로 바뀌며 겹이 비워진다.**
+       * 서리깃. 맞을 때마다 한 겹 박히고, 상한에 닿는 순간 **동상으로 바뀌며 겹이 비워진다.**
        *
        * 손질처럼 상한에서 스스로 터지지만 터지는 것이 한 번의 피해가 아니라 **시간을 두고 깎는
-       * 출혈과 둔화**다. 서리 출혈은 중첩되지 않고 다시 터질 때 새로 갱신된다. 겹은 맞을 때마다
+       * 동상(출혈과 둔화)**이다. 동상은 중첩되지 않고 다시 터질 때 새로 갱신된다. 겹은 맞을 때마다
        * 유지 시간이 새로 시작되고, 그 시간 안에 상한에 닿지 못하면 통째로 사라진다.
        */
       kind: "frostPlume";
-      /** 이 겹에 닿으면 서리 출혈로 바뀐다. */
+      /** 이 겹에 닿으면 동상으로 바뀐다. */
       maxStacks: number;
       /** 겹이 유지되는 시간(초). 새 겹이 박힐 때마다 다시 센다. */
       holdSeconds: number;
-      /** 서리 출혈이 시전자 공격력에서 뽑는 총 피해 비율(%). */
+      /** 동상이 시전자 공격력에서 뽑는 총 피해 비율(%). */
       burstPower: number;
-      /** 서리 출혈이 그 피해를 나눠 입히는 시간(초). 매초 한 번 틱이 든다. */
+      /** 동상이 그 피해를 나눠 입히는 시간(초). 매초 한 번 틱이 든다. */
       burstSeconds: number;
-      /** 서리 출혈이 거는 둔화 시간(초). */
+      /** 동상이 거는 둔화 시간(초). */
       slowSeconds: number;
       /** 둔화로 깎는 공격 속도·이동 속도(%). */
       slowPercent: number;

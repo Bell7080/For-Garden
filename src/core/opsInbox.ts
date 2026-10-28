@@ -15,7 +15,9 @@ import type { Session } from "../state/session";
 export interface OpsMailSource { id: string; title: string; body: string; rewards: { asset: string; amount: number }[]; sentAt: string; expiresAt: string | null; }
 /** 아직 반영되지 않은 재화 조정. */
 export interface OpsAdjustmentSource { id: string; asset: string; delta: number; note?: string | null; createdAt: string; }
-export interface OpsInbox { mails: OpsMailSource[]; adjustments: OpsAdjustmentSource[]; }
+/** 어드민이 올린 패치노트. 게임의 우편함에서는 첨부 없는 「패치노트」 탭의 안내 한 통이 된다. */
+export interface OpsPatchNoteSource { id: string; version: string; title: string; releasedAt: string; items: { kind: string; text: string }[]; note: string; }
+export interface OpsInbox { mails: OpsMailSource[]; adjustments: OpsAdjustmentSource[]; patchNotes?: OpsPatchNoteSource[]; }
 /** 서버가 확정한 조정의 결과 — DB 원장에 실제 반영량과 잔액이 남는다. */
 export interface OpsAppliedAdjustment { id: string; applied: number; balance: number; }
 
@@ -123,6 +125,20 @@ export function opsMailToDto(source: OpsMailSource, sender: string, readIds: Rea
       : { kind: "item", itemId: reward.asset.slice(OPS_ITEM_PREFIX.length), amount: reward.amount });
   const id = `${OPS_MAIL_PREFIX}${source.id}`;
   return { id, title: source.title, sender, body: source.body, sentAt: source.sentAt, expiresAt: source.expiresAt, read: readIds.has(id), claimed: false, rewards };
+}
+
+/** 패치노트 우편의 ID 접두 — 운영 우편(`ops:`)이라 읽음·삭제 기록이 그대로 남는다. */
+export const OPS_PATCH_PREFIX = `${OPS_MAIL_PREFIX}patch:`;
+
+/**
+ * 패치노트를 첨부 없는 안내 우편으로 바꾼다. 항목 종류의 표기는 호출한 쪽(문구 표)이 넘긴다 — 이 모듈은 언어를 모른다.
+ * 기한이 없고 지울 수 없다(첨부가 없는 안내는 삭제 불가).
+ */
+export function opsPatchNoteToDto(source: OpsPatchNoteSource, text: { sender: string; title: string; kinds: Readonly<Record<string, string>> }, readIds: ReadonlySet<string>): MailDto {
+  const id = `${OPS_PATCH_PREFIX}${source.id}`;
+  const lines = source.items.filter((item) => item.text.trim()).map((item) => `${text.kinds[item.kind] ?? text.kinds.etc ?? ""} ${item.text.trim()}`.trim());
+  const body = [...lines, ...(source.note.trim() ? ["", source.note.trim()] : [])].join("\n");
+  return { id, title: text.title, sender: text.sender, body, sentAt: source.releasedAt, expiresAt: null, read: readIds.has(id), claimed: false, rewards: [] };
 }
 
 /** 읽음 표시를 저장에 남긴다. */

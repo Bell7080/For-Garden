@@ -8,9 +8,12 @@ import { CAKE_OPERATION_TIERS, cakeOperationEnemies, cakeOperationEnemyDisplayLe
 import type { PlayerStateDto } from "../api/contracts";
 import { settingsManager } from "../managers/SettingsManager";
 import { distinctElements } from "../core/element";
-import { openDungeonSweep } from "./dungeonSweepFlow";
-import { groupCombatPower } from "../core/combatPower";
+import { openDungeonAutoBattle, openDungeonSweep } from "./dungeonSweepFlow";
+import { autoRepeat } from "../managers/AutoRepeatManager";
+import { combatPower, groupCombatPower } from "../core/combatPower";
+import { requiredBreakthroughForLevel } from "../core/levelDesign";
 import { DUNGEON_LOBBY } from "../ui/dungeonLobbyLayout";
+import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { DungeonLobby } from "../ui/DungeonLobby";
 import { addBackButton } from "../ui/IconButton";
 import { addSceneBackground, BACKGROUND, battleFieldBackground } from "../ui/backgrounds";
@@ -69,10 +72,14 @@ export class CakeOperationScene extends Phaser.Scene {
     prefetchBattlePuppets(relicCollection.validParty, CAKE_OPERATION_ENEMY_IDS);
     setDebugScene("cakeOperation", t("cake.title"));
     this.busy = false;
+    // 입구에 섰다는 것은 자동 전투가 끝났다는 뜻이다(멈췄거나 전투에서 나왔다) — 남은 것을 비운다.
+    autoRepeat.clear();
     // 돌아온 단계 → 마지막으로 고른 단계 → 마지막으로 이긴 단계의 다음 칸 순이다. 잠긴 값은 `refresh`가 고친다.
     const next = Math.min(session.cakeOperation.clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1);
     const remembered = this.entry.tierId ?? settingsManager.get().game.dungeonTiers.cake;
     this.selectedTierId = cakeOperationTierIndex(remembered) >= 0 ? remembered : CAKE_OPERATION_TIERS[Math.max(0, next)].id;
+    // 들어오는 순간만 잠긴 단계를 열린 가장 높은 단계로 고친다 — 그 뒤로는 잠긴 단계도 넘겨 볼 수 있다.
+    if (!isCakeTierUnlocked(this.selectedTierId, session.cakeOperation.clearedIndex)) this.selectedTierId = CAKE_OPERATION_TIERS[Math.max(0, next)].id;
 
     addSceneBackground(this, BACKGROUND.sortieCake);
     drawVignette(this, BASE_WIDTH, BASE_HEIGHT, { strength: 0.72 });
@@ -82,10 +89,17 @@ export class CakeOperationScene extends Phaser.Scene {
     // 소탕 창의 스테미나·소탕권 그림도 같은 안내창으로 이어진다(`addFramedIcon`·`guideForIcon`).
     bindCurrencyGuide({ scene: this, popups: this.popups });
     this.lobby = new DungeonLobby(this, {
-      onSelectTier: (id) => { if (!this.busy) { this.selectedTierId = id; settingsManager.rememberDungeonTier("cake", id); this.refresh(); } },
+      onSelectTier: (id) => {
+        if (this.busy) return;
+        this.selectedTierId = id;
+        // 잠긴 단계도 넘겨 볼 수 있지만 다음 진입이 되살릴 자리로는 열린 단계만 남긴다.
+        if (isCakeTierUnlocked(id, session.cakeOperation.clearedIndex)) settingsManager.rememberDungeonTier("cake", id);
+        this.refresh();
+      },
       onSortie: () => this.openParty(),
       onSweep: () => this.sweep(),
-    });
+      onAuto: () => this.autoBattle(),
+    }, { theme: DUNGEON_THEME.cake, fieldKey: battleFieldBackground("cake") });
     this.refresh();
     addBackButton(this, () => startScene(this, "lobby", LOBBY_RETURN.sortie));
 
@@ -104,29 +118,36 @@ export class CakeOperationScene extends Phaser.Scene {
     return CAKE_OPERATION_TIERS[cakeOperationTierIndex(this.selectedTierId)];
   }
 
-  /** 고른 단계·소탕 횟수·해금 상태를 한 번에 화면에 반영한다. */
+  /** 고른 단계·해금 상태를 한 번에 화면에 반영한다. */
   private refresh(): void {
     const clearedIndex = session.cakeOperation.clearedIndex;
-    // 기억한 단계가 아직 잠겨 있으면(저장을 되돌린 경우 등) 열린 가장 높은 단계로 내려온다.
-    if (!isCakeTierUnlocked(this.selectedTierId, clearedIndex)) this.selectedTierId = CAKE_OPERATION_TIERS[Math.min(clearedIndex + 1, CAKE_OPERATION_TIERS.length - 1)].id;
     const tier = this.selectedTier();
     const cost = cakeOperationRunCost(tier);
     this.lobby?.render({
-      tiers: CAKE_OPERATION_TIERS.map((entry) => {
+      tiers: CAKE_OPERATION_TIERS.map((entry, index) => {
         const enemies = cakeOperationEnemies(entry);
+        const level = cakeOperationEnemyDisplayLevel(entry).level;
         return {
-          id: entry.id, name: entry.name, level: cakeOperationEnemyDisplayLevel(entry).level,
+          id: entry.id, name: entry.name, level,
+          // 몰려오는 수 그대로 세운다 — 다섯 자매가 차례로 되풀이되므로 앞줄 다섯이 곧 이 판의 얼굴 전부다.
+          lineup: enemies.map((def) => ({
+            def, relicId: def.id, name: def.name, level,
+            element: def.element, role: def.role, breakthrough: requiredBreakthroughForLevel(level), power: combatPower(def.stats),
+          })),
+          hordeCount: enemies.length,
           elements: distinctElements(enemies.map((def) => def.element)),
           reward: { icon: "currency-cheesecake", amount: entry.rewardCheesecake },
           enemyPower: groupCombatPower(enemies.map((def) => def.stats)),
           unlocked: isCakeTierUnlocked(entry.id, clearedIndex),
+          cleared: index <= clearedIndex,
         };
       }),
       selectedId: tier.id,
       sortieCost: cost.staminaCost,
       sortieAffordable: session.wallet.stamina >= cost.staminaCost,
-      sortieEnabled: !this.busy,
+      sortieEnabled: !this.busy && isCakeTierUnlocked(tier.id, clearedIndex),
       sweepEnabled: !this.busy && cakeOperationTierIndex(tier.id) <= clearedIndex,
+      autoEnabled: !this.busy && isCakeTierUnlocked(tier.id, clearedIndex),
     });
   }
 
@@ -139,6 +160,21 @@ export class CakeOperationScene extends Phaser.Scene {
       return;
     }
     startScene(this, "party", { content: "cake", tierId: this.selectedTierId } satisfies PartySceneData);
+  }
+
+  /** 자동 전투 — 횟수 창에서 고르고 시작하면 지금 편성 그대로 첫 판에 들어간다. */
+  private autoBattle(): void {
+    if (this.busy) return;
+    const tier = this.selectedTier();
+    openDungeonAutoBattle({
+      scene: this, popups: this.popups,
+      content: { content: "cake", tierId: tier.id },
+      tierName: tier.name, level: cakeOperationEnemyDisplayLevel(tier).level,
+      staminaCost: cakeOperationRunCost(tier).staminaCost,
+      reward: { icon: "currency-cheesecake", amount: tier.rewardCheesecake },
+      openParty: () => startScene(this, "party", { content: "cake", tierId: tier.id } satisfies PartySceneData),
+      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
+    });
   }
 
   /** 소탕 — 배율을 고르는 창을 열고, 누르면 연출과 서버 요청이 나란히 돈 뒤 영수증이 열린다. */

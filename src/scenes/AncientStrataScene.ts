@@ -31,15 +31,18 @@ import { guildApi } from "../api/guildApi";
 import { RELICS } from "../data/relics";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { DuelRankingPopup } from "../ui/DuelRankingPopup";
+import { addRankChip } from "../ui/RankingChips";
+import { openRankPoolRewards } from "../ui/CompetitiveRewardPopup";
+import { ANCIENT_MONTHLY_RANK_REWARDS, rankTableAsPool } from "../data/competitiveRewards";
 import { FaceFrame } from "../ui/FaceFrame";
 import { drawGlyph } from "../ui/glyphs";
-import { RailButton } from "../ui/RailButton";
 import { encounterRoleIcon } from "../ui/encounterRolePresentation";
 import { chipPoints, drawLayer, drawVignette } from "../ui/holo";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { stageChapterNavigationLayout } from "../ui/stageChapterLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { LOBBY_RETURN } from "./lobbyEntry";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 제목·구간 버튼·뒤로가기가 앉는 깊이. 비네트(40)보다 위다. */
 const CHROME_DEPTH = 50;
@@ -146,6 +149,12 @@ export class AncientStrataScene extends Phaser.Scene {
     this.buildMap();
     void this.loadPeers();
     this.enableDragScroll();
+    // 1층이 아래에서 시작해 위로 이어진다 — 위 끝(max)이 앞이다(스테이지 지도와 같은 방향).
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (ANCIENT_MAP.window.top + ANCIENT_MAP.window.bottom) / 2, width: BASE_WIDTH,
+      height: ANCIENT_MAP.window.bottom - ANCIENT_MAP.window.top, depth: 45,
+      read: () => ({ offset: (this.map?.y ?? this.limits.min) - this.limits.max, min: this.limits.min - this.limits.max }),
+    });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다 — 조각마다 트윈을 걸지 않으므로 `create`의 맨 끝이다.
     playSceneEntrance(this);
     this.warnReset();
@@ -267,7 +276,7 @@ export class AncientStrataScene extends Phaser.Scene {
         this.selectedNodeY = point.y;
         this.selectedFloor=floor;
         const unlocked=isStageUnlocked(ancientStageId(floor));
-        this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?"1-10":`B${floor-1}`}));
+        this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?"4-10":`B${floor-1}`}));
         this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
           situation: `${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
           enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),
@@ -286,27 +295,25 @@ export class AncientStrataScene extends Phaser.Scene {
 
   /** 왼쪽 위 순위 칩 — 결투장과 같은 칩이고, 오른쪽에 내 등수가 선다. 누르면 결투장과 같은 순위표가 열린다. */
   private paintRankChip(): void {
-    const { rankChip, rankText } = ANCIENT_CHROME;
+    const { rankChip } = ANCIENT_CHROME;
     const source = {
       title: t("ancient.ranking.title"),
       load: async () => {
         const ranking = await gameApi.getAncientRanking();
-        const row = (entry: (typeof ranking.entries)[number]) => ({ rank: entry.rank, displayName: entry.displayName, score: entry.floor, isMe: entry.isMe, favoriteRelicId: entry.favoriteRelicId });
+        const row = (entry: (typeof ranking.entries)[number]) => ({ rank: entry.rank, displayName: entry.displayName, score: entry.floor, isMe: entry.isMe, favoriteRelicId: entry.favoriteRelicId, avatarRelicId: entry.avatarRelicId, frameId: entry.frameId });
         return { entries: ranking.entries.map(row), me: ranking.me ? row(ranking.me) : null };
       },
       formatScore: (floor: number) => `B${floor}`,
+      // 매달 마감하는 순위라 보상 칩은 「월간 보상」이다. 1,000위 밖의 내 구간은 참가자 수를 몰라 표가 「현재」를 달지 않는다.
+      rewardPeriod: "monthly" as const,
+      openRewards: (me: { rank: number } | null) => openRankPoolRewards(this, this.popups, { pool: rankTableAsPool(ANCIENT_MONTHLY_RANK_REWARDS), period: "monthly", rules: t("rewardTable.rules.ancient"), myRank: me?.rank ?? null }),
     };
-    new RailButton(this, rankChip.x, rankChip.y, {
-      icon: "arena-tier", label: t("duel.link.ranking"), size: rankChip.size,
+    const chip = addRankChip(this, null, rankChip.x, rankChip.y, {
+      size: rankChip.size,
       onClick: () => new DuelRankingPopup(this, this.popups, "bronze", gameApi, source).open(),
     }).setDepth(CHROME_DEPTH);
-    const text = this.add.text(rankText.x, rankChip.y, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
-      .setOrigin(0, 0.5).setStroke("#05070a", 6).setDepth(CHROME_DEPTH);
     // 순위를 읽지 못하면 그 자리를 비운다 — 상태 문구로 채우지 않는다.
-    gameApi.getAncientRanking().then((ranking) => {
-      if (!text.active) return;
-      text.setText(ranking.me ? t("duel.rank.value", { rank: ranking.me.rank.toLocaleString() }) : t("duel.rank.none"));
-    }).catch(() => undefined);
+    gameApi.getAncientRanking().then((ranking) => chip.setRank(ranking.me ? ranking.me.rank : null)).catch(() => undefined);
   }
 
   /** 오른쪽 위 「친구 / 길드」 전환 — 고른 쪽 사람들만 노드 옆에 선다. */

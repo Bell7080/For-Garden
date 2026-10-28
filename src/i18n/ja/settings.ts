@@ -88,6 +88,7 @@ export const SETTINGS_JA = {
   "settings.support.clearCache": "キャッシュの削除",
   "settings.support.terms": "利用規約",
   "settings.support.privacy": "プライバシーポリシー",
+  "settings.support.policies": "規約・提供割合",
   "settings.support.resetSettings": "設定を初期化",
   "settings.support.resetSave": "セーブデータを初期化",
   "settings.support.withdraw": "アカウントの削除",

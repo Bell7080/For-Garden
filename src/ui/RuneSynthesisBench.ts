@@ -72,7 +72,7 @@ function openSynthesisPicker(options: { scene: Phaser.Scene; popups: PopupLayer;
       body.add(scene.add.text(0, 10, t("archaeology.synth.pickEmpty"), textStyle({ role: "body", size: 28, color: COLOR.inkDim, align: "center", wrap: width - 140 })).setOrigin(0.5));
       return;
     }
-    mountRunePickerGrid(scene, body, { runes, isCovered: () => popups.isOpen, onPick: (rune) => { close(); options.onPick(rune); } });
+    mountRunePickerGrid(scene, body, { popups, runes, isCovered: () => popups.isOpen, isActive: () => popups.isTop(body), onPick: (rune) => { close(); options.onPick(rune); } });
   });
 }
 

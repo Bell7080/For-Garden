@@ -10,6 +10,7 @@ import {
   setUnitHealthValue,
   setUnitShield,
   stepUnitHealthBar,
+  visibleDamageTrail,
   type HealthValueInput,
   type UnitHealthBarState,
 } from "./unitHealthBarState";
@@ -125,7 +126,7 @@ export class UnitHealthBar extends Phaser.GameObjects.Container {
     this.graph.fillPoints(body, true);
     // 채움은 왼쪽 끝에서 자란다. 같은 기울기로 잘라야 몸통과 한 조각으로 보인다.
     // 붉은 잔상을 현재 체력 아래에 먼저 칠한다. 색은 홀로그램 공용 danger 토큰만 사용한다.
-    const trailFilled = width * this.health.damageTrail;
+    const trailFilled = width * visibleDamageTrail(this.health);
     if (trailFilled > 0.5) this.paintFill(trailFilled, COLOR.danger, 0.95);
     const filled = width * this.health.shown;
     if (filled > 0.5) {

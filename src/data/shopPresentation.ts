@@ -165,7 +165,8 @@ const MILEAGE_TABS: readonly { id: string; label: string }[] = [
 ];
 
 /** 길드 상점은 주간 한 갈래다 — 상품이 모두 주간 한도로 돌아온다(`GUILD_SHOP_PRODUCTS`). */
-const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }];
+/** 길드 상점 탭 — id가 곧 `GuildShopProduct.tab`이다. */
+const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }, { id: "monthly", label: "월간" }, { id: "guildLevel", label: "길드 레벨" }];
 
 /** 길드 상점의 임시 점원(오비)이 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
 const GUILD_MERCHANT_LINE_KEYS: readonly TextKey[] = ["guild.shop.line1", "guild.shop.line2", "guild.shop.line3"];
@@ -284,7 +285,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 길드 전용 점원 원화가 오기 전까지 오비가 임시로 선다. 대사는 길드 상점 문구다.
     merchant: SHOP_MERCHANT,
     lineKeys: GUILD_MERCHANT_LINE_KEYS,
-    background: BACKGROUND.lobby,
+    background: BACKGROUND.guildShop,
     titleKey: "guild.shop.title",
     tabs: GUILD_TABS,
     // 값은 길드 코인 하나라 그 칸만 세운다(`topBarSlots`의 `guild`).

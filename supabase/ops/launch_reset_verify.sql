@@ -5,14 +5,15 @@
 with
   reset_tables(t) as (values
     ('public.player_saves'), ('public.player_assets'), ('public.player_adjustments'), ('public.asset_ledger'), ('public.currency_log'), ('public.mail_claims'),
-    ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.request_receipts'),
+    ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.coupon_web_tickets'), ('public.request_receipts'),
     ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'),
     ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.arena_signals'), ('public.arena_ratings'), ('public.arena_rooms'), ('public.arena_seats'), ('public.arena_queue'), ('public.arena_receipts'), ('public.server_friend_favorites'),
     ('public.server_social_wallets'), ('public.server_rate_windows'), ('public.server_social_receipts'),
     ('public.server_competitive_scores'), ('public.server_competitive_results'), ('public.server_competitive_awards'),
     ('public.server_raids'), ('public.server_raid_members'),
     ('public.guilds'), ('public.guild_members'), ('public.guild_requests'), ('public.guild_attendance'),
-    ('public.guild_left'), ('public.guild_receipts'), ('public.website_registration_limits')
+    ('public.guild_left'), ('public.guild_receipts'), ('public.guild_war_defense'), ('public.guild_week_ledger'), ('public.guild_guard_ledger'),
+    ('public.guild_rank_results'), ('public.guild_rank_totals'), ('public.guild_rank_awards'), ('public.website_registration_limits')
   ),
   -- players와 admin_audit_log는 비운 뒤 운영자 행/초기화 기록이 새로 들어가므로 따로 본다.
   special_tables(t) as (values

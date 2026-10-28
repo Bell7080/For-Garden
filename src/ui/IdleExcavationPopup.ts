@@ -1,4 +1,6 @@
 import { hasRemoteState } from "../api/resultState";
+import { playFormationTapSound } from "./formationSound";
+import { audioManager } from "../managers/AudioManager";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import Phaser from "phaser";
 import { releaseAdWait } from "../platform/rewardedAds";
@@ -18,6 +20,7 @@ import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { notificationManager } from "../managers/NotificationManager";
 import { Button } from "./Button";
 import { chipPoints, drawHairline, drawLayer, HOLO, HoloBar, slantedRect } from "./holo";
+import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import { combatPower } from "../core/combatPower";
 import { relicProgression } from "../managers/RelicProgressionManager";
@@ -48,6 +51,7 @@ import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
 import { withBusy } from "./BusyOverlay";
+import { addScrollHint } from "./ScrollHint";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -622,6 +626,8 @@ export class IdleExcavationPopup {
       });
       card.setSelected(this.draft!.includes(relic.id));
       this.rosterCards.set(relic.id, card);
+      // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
+      clipHit(card.hit, containerClip(content, GRID_VIEW.left, GRID_VIEW.top, GRID_VIEW.right, GRID_VIEW.bottom));
       // 짧은 탭은 배치, 꾹 누름은 상세다. 편성 그리드와 같은 조작이라 화면마다 다르게 익히지 않는다.
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
@@ -629,6 +635,7 @@ export class IdleExcavationPopup {
           // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다. 그때는 편성이 그대로라
           // 슬롯 줄도 목록도 다시 만들 이유가 없다.
           const result = tapRosterRelic(this.draft, this.selectedSlot, relic.id);
+          playFormationTapSound(this.draft, result.formation, relic.id);
           const moved = result.formation.join("|") !== this.draft.join("|");
           this.draft = result.formation as Formation;
           this.selectedSlot = result.selectedSlot;
@@ -689,6 +696,11 @@ export class IdleExcavationPopup {
     const thumbHeight = contentHeight > viewportHeight ? Math.max(54, viewportHeight * viewportHeight / contentHeight) : viewportHeight;
     const thumb = this.scene.add.rectangle(railX, GRID_VIEW.top + thumbHeight / 2, 7, thumbHeight, COLOR.accent, contentHeight > viewportHeight ? 0.7 : 0.18);
     parent.add([rail, thumb]);
+    addScrollHint(this.scene, parent, {
+      x: (GRID_VIEW.left + GRID_VIEW.right) / 2, y: (GRID_VIEW.top + GRID_VIEW.bottom) / 2,
+      width: GRID_VIEW.right - GRID_VIEW.left, height: viewportHeight, owner: thumb,
+      read: () => ({ offset: this.gridScrollY, min: minScroll }),
+    });
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);
       grid.setY(GRID_VIEW.top + this.gridScrollY);
@@ -988,6 +1000,8 @@ export class IdleExcavationPopup {
       if (!hasRemoteState(result)) session.wallet = { ...result.wallet };
       session.idleExcavation = { ...result.excavation, assignedRelicIds: copyFormation(result.excavation.assignedRelicIds), unclaimed: { ...result.excavation.unclaimed } };
       this.confirmed = result; this.saving = false; this.harvestRequestId = undefined; this.harvestResult = result; this.renderStatus();
+      // 쌓인 재화가 지갑으로 들어온 순간 — 수확 결과가 판에 서는 프레임과 같다.
+      audioManager?.playUi("ui.reward");
       // 성공 수확만 알림 해제 계기가 되며 manager가 새 서버 잔량을 즉시 다시 확정한다.
       void notificationManager.refresh().catch(() => undefined);
     } catch {

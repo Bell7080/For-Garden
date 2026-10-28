@@ -1,4 +1,6 @@
+import { clipHit } from "../ui/clippedHit";
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { INTERACTION_DEPARTMENT_LABEL, interactionDurationLabel } from "../data/interactionCities";
@@ -22,6 +24,7 @@ import { shapeClipMask } from "../ui/popupArt";
 import { drawGlyph } from "../ui/glyphs";
 import { STAGES } from "../data/stages";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { showContentIntro } from "../ui/contentIntro";
 import { onTap } from "../ui/tapGuard";
@@ -82,6 +85,8 @@ export class InteractionScene extends Phaser.Scene {
   /** 층마다 세워 둔 컨테이너와 그 상태. 바뀐 층만 갈아 끼우는 데 쓴다. */
   private layerNodes: Phaser.GameObjects.Container[] = [];
   private layerSignatures: string[] = [];
+  /** 지난번에 그린 층의 상태 — 나가 있던 파견이 돌아온 순간(away → done)을 소리로 알린다. */
+  private layerStates: string[] = [];
   /** 초마다 글자만 갈아 끼우는 남은 시간 줄. 층 순서와 같은 자리에 들어간다. */
   private remainingLabels: (Phaser.GameObjects.Text | undefined)[] = [];
   private layerMask?: Phaser.GameObjects.Graphics;
@@ -99,7 +104,7 @@ export class InteractionScene extends Phaser.Scene {
     // **씬 객체는 재진입해도 그대로 재사용된다.** 지난 방문의 층 서명이 남아 있으면 시계가 "상태가 같다"고
     // 보고 목록을 그리지 않아, 서버 응답이 늦거나 실패한 재입장에서 빈 화면으로 멈췄다. 방문마다 처음부터 센다.
     this.alive = true;
-    this.layerSignature = ""; this.layerSignatures = []; this.layerNodes = []; this.remainingLabels = [];
+    this.layerSignature = ""; this.layerSignatures = []; this.layerStates = []; this.layerNodes = []; this.remainingLabels = [];
     this.scrollY = 0; this.minScroll = 0;
     this.cityPopup = undefined; this.journalPopup = undefined;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.alive = false; this.cityPopup = undefined; this.journalPopup = undefined; });
@@ -128,6 +133,7 @@ export class InteractionScene extends Phaser.Scene {
     this.time.addEvent({ delay: CLOCK_TICK_MS, loop: true, callback: () => this.tickClock() });
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: (INTERACTION_LAYER.viewport.top + INTERACTION_LAYER.viewport.bottom) / 2, width: BASE_WIDTH, height: INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top, depth: 42, read: () => ({ offset: this.scrollY, min: this.minScroll }) });
     playSceneEntrance(this);
     showContentIntro(this, "interaction");
   }
@@ -238,7 +244,11 @@ export class InteractionScene extends Phaser.Scene {
   private tickClock(): void {
     if (!this.layers) return;
     const views = this.currentViews();
-    if (InteractionScene.signature(views) !== this.layerSignature) { this.drawLayers(); return; }
+    if (InteractionScene.signature(views) !== this.layerSignature) {
+      if (views.some((view, index) => view.state === "done" && this.layerStates[index] === "away")) audioManager?.playUi("ui.reward");
+      this.drawLayers();
+      return;
+    }
     views.forEach((view, index) => {
       if (view.state !== "away") return;
       this.remainingLabels[index]?.setText(t("interaction.dispatched", { remaining: interactionRemainingLabel(view.remainingMs ?? 0) }));
@@ -274,6 +284,7 @@ export class InteractionScene extends Phaser.Scene {
       this.layerNodes = views.map((view, index) => { const layer = this.buildLayer(view, index); container.add(layer); return layer; });
     }
     this.layerSignatures = signatures;
+    this.layerStates = views.map((view) => view.state);
     this.layerSignature = InteractionScene.signature(views);
 
     const viewportHeight = INTERACTION_LAYER.viewport.bottom - INTERACTION_LAYER.viewport.top;
@@ -389,7 +400,9 @@ export class InteractionScene extends Phaser.Scene {
     if (!locked) layer.add(this.buildStateChip(view, index, artWidth, bottom));
 
     if (!locked) {
-      const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+      // 층이 흐르는 창 안에서만 손을 받는다 — 창 밖으로 흘러간 층이 밑동의 뒤로가기·빈 자리를 덮지 않게.
+      const hit = this.add.rectangle(0, 0, artWidth, height, 0xffffff, 0);
+      clipHit(hit, () => ({ left: 0, right: BASE_WIDTH, top: INTERACTION_LAYER.viewport.top, bottom: INTERACTION_LAYER.viewport.bottom }));
       hit.on("pointerdown", () => pressIn(layer));
       hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
       onTap(hit, () => { pressOut(layer); this.openCity(view); }, layer);

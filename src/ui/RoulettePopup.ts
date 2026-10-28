@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { gameApi } from "../api/FakeServer";
@@ -200,6 +201,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
       const complete = (): void => {
         if (!alive) return;
         busy = false; refresh(); wheelParts.setBulbSpeed(1);
+        audioManager?.playUi("roulette.win");
         wheelParts.celebrate(result.index);
         const items = currencyRecordToRewardItems(result.granted);
         if (items.length) scene.time.delayedCall(420, () => {
@@ -211,7 +213,17 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
       wheelParts.setBulbSpeed(3);
       if (!loops()) {
         wheel.angle = target; wheelParts.sync(); complete();
-      } else rotate = scene.tweens.add({ targets: wheel, angle, duration: 3600, ease: "Cubic.Out", onUpdate: wheelParts.sync, onComplete: complete });
+      } else {
+        // 칸 경계를 하나 넘을 때마다 바늘이 걸리는 틱 — 돌아가는 속도가 그대로 소리의 빠르기가 된다.
+        const slice = 360 / ROULETTE_REWARDS.length;
+        let lastSlice = Math.floor(wheel.angle / slice);
+        rotate = scene.tweens.add({ targets: wheel, angle, duration: 3600, ease: "Cubic.Out", onComplete: complete,
+          onUpdate: () => {
+            wheelParts.sync();
+            const current = Math.floor(wheel.angle / slice);
+            if (current !== lastSlice) { lastSlice = current; audioManager?.playUi("roulette.tick"); }
+          } });
+      }
     };
     async function requestSpin(): Promise<void> {
       const result = await gameApi.spinRoulette({ requestId: spinRequestId ??= crypto.randomUUID() });

@@ -25,7 +25,7 @@ export const INVENTORY_LAYOUT = {
 
 
 /** 가방 정렬 선택은 UI 상태로 보관하고 Manager만 비교 규칙을 소유한다. */
-export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped" | "relic";
+export type InventorySortKey = "acquired" | "rarity" | "part" | "enhancement" | "equipped" | "relic" | "trait";
 export interface InventorySort { key: InventorySortKey; direction: "asc" | "desc"; }
 /** 렐릭 순 정렬에서 아무도 안 낀 룬이 서는 자리 — 도감의 어느 렐릭보다 뒤. */
 const UNEQUIPPED_RELIC_RANK = 1_000_000;
@@ -54,7 +54,7 @@ export function sortRunesByRelic<T extends { instanceId: string; part: number }>
 export const DEFAULT_INVENTORY_SORT: InventorySort = { key: "relic", direction: "asc" };
 const RARITY_ORDER = { uncommon: 0, rare: 1, epic: 2, legendary: 3 } as const;
 
-export type InventoryGridLayout = Pick<typeof INVENTORY_LAYOUT, "columns" | "cellWidth" | "cellHeight" | "viewportHeight">;
+export type InventoryGridLayout = Pick<typeof INVENTORY_LAYOUT, "columns" | "cellWidth" | "cellHeight"> & { readonly viewportHeight: number };
 
 /** 전달받은 열·행·보기 높이만으로 실제 항목 기반 스크롤 범위를 계산한다. */
 export function inventoryScrollMetrics(itemCount: number, layout: InventoryGridLayout = INVENTORY_LAYOUT): { contentHeight: number; minY: number } {
@@ -264,7 +264,10 @@ export class InventoryManager {
       const equipped = new Set(Object.values(this.state.relicProgress).flatMap(({ heartGemSlots }) => heartGemSlots.filter((id): id is string => id !== null)));
       const holderOrder = runeHolderOrder(this.state.relicProgress);
       const original = this.state.runeInventory.map((rune, index) => ({ rune, index }));
-      const value = ({ rune, index }: (typeof original)[number]): number => sort.key === "relic" ? runeRelicRank(holderOrder, rune) : sort.key === "acquired" ? (rune.sequence ?? index) : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0) : Number(equipped.has(rune.instanceId));
+      const value = ({ rune, index }: (typeof original)[number]): number => sort.key === "relic" ? runeRelicRank(holderOrder, rune) : sort.key === "acquired" ? (rune.sequence ?? index) : sort.key === "rarity" ? RARITY_ORDER[rune.rarity] : sort.key === "part" ? rune.part : sort.key === "enhancement" ? Object.values(rune.enhancementHistory).reduce((sum, history) => sum + (history?.length ?? 0), 0)
+        // 특성 순: 특성 없는 룬(0) → 특성 등급이 낮은 것부터. 내림차순이면 높은 특성이 맨 앞에 선다.
+        : sort.key === "trait" ? (rune.trait ? RARITY_ORDER[rune.trait.grade] + 1 : 0)
+        : Number(equipped.has(rune.instanceId));
       const direction = sort.direction === "asc" ? 1 : -1;
       return [...original].sort((a, b) => direction * (value(a) - value(b)) || a.rune.instanceId.localeCompare(b.rune.instanceId) || a.index - b.index).map(({ rune }) => ({ kind: "rune" as const, category, id: rune.instanceId, definition, quantity: 1 as const, rune }));
     }

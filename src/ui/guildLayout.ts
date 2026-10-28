@@ -79,10 +79,11 @@ export const GUILD_INFO = {
   leader: { x: 425, y: 584 },
   bar: { y: 690, height: 30 },
   barText: { y: 740 },
-  perks: { y: 820, gap: 50 },
+  perks: { y: 820, gap: 44 },
   notice: { y: 940, height: 250 },
-  me: { y: 1260, gap: 46 },
-  actions: { y: 1440, width: 280, height: 84, gap: 20 },
+  /** 길드 전용 플레이어 카드 — 윗변 y와 높이. 안쪽 자리는 카드 가운데 기준이다. */
+  card: { y: 1212, height: 176, avatar: 104 },
+  actions: { y: 1452, width: 280, height: 84, gap: 20 },
 } as const;
 
 /**
@@ -113,23 +114,107 @@ export function guildStampSlot(index: number): { x: number; y: number; width: nu
   return { x, y: rows[top ? 0 : 1], width: widths[at], height: last ? cell.height + 10 : cell.height };
 }
 
-/** 길드전·수호전 쪽 — 큰 판 하나에 지금 단계와 남은 시간, 그 아래 줄들. */
-export const GUILD_EVENT_PAGE = {
-  plate: { y: 760, height: 620 },
-  heading: 520,
-  phase: 610,
-  timer: 690,
-  lines: { y: 800, gap: 56 },
-  note: 1180,
+/**
+ * 출석 칸 하나의 보상 줄 — 그날 보상 액자 · `+` · 길드 코인 액자. 칸 폭 안에 셋이 들도록 칸 폭에서 거꾸로 잡는다.
+ * 코인 액자는 한 뼘 작아 주인공이 그날 보상임을 크기가 말한다.
+ */
+export function guildStampRewardPair(cellWidth: number, last: boolean): { mainX: number; mainSize: number; plusX: number; coinX: number; coinSize: number } {
+  const mainSize = last ? 104 : 88;
+  const coinSize = last ? 72 : 62;
+  const plus = 26;
+  const span = mainSize + plus + coinSize;
+  const left = -Math.min(span, cellWidth - 16) / 2;
+  const mainX = left + mainSize / 2;
+  const plusX = left + mainSize + plus / 2;
+  const coinX = left + mainSize + plus + coinSize / 2;
+  return { mainX, mainSize, plusX, coinX, coinSize };
+}
+
+/**
+ * 길드 만들기·배지 창 — 위에서부터 **문장 무대**(큰 배지 + 이름·레벨·가입 방식, 정보 탭 머리와 같은 문법) → 이름 입력 →
+ * 가입 방식 → **배지 공방**(네 갈래 전환 라벨 + 실제 배지 견본 격자) → 비용 → 취소·확정. 값을 고르는 칸을 「1/8」 같은 번호 버튼으로
+ * 두지 않고 고를 견본을 그 자리에 늘어놓는다 — 번호는 무엇인지 말하지 못하고, 창을 하나 더 열어야 고를 수 있었다.
+ * 창 높이는 쌓인 줄에서 거꾸로 구한다. 좌표는 모두 창 가운데가 0이다.
+ */
+export const GUILD_EDITOR = {
+  width: 980,
+  inner: 860,
+  stage: { height: 236, badge: 196, badgeX: -282, textX: -150, bevel: 28 },
+  input: { height: 80 },
+  join: { width: 392, height: 76 },
+  tabs: { height: 70, gap: 10, labelSize: 28 },
+  swatch: { size: 120, gap: 18, badge: 84, rows: 2 },
+  /** 확정 버튼 하나 — 값(또는 「무료」)을 판 안에 박는다. 취소는 판 밖 우하단 공용 뒤로가기가 맡는다. */
+  submit: { width: 560, height: 100 },
 } as const;
 
-/** 길드 만들기·뱃지 창의 자리 — 창 가운데가 0이다. */
-export const GUILD_EDITOR = {
-  width: 900,
-  nameLabel: -520, nameInput: -450,
-  joinMode: -350,
-  preview: { y: -190, size: 230 },
-  cyclers: { top: 10, gap: 84 },
-  note: 400,
-  submit: 490,
+export interface GuildEditorSpots {
+  height: number;
+  stage: number;
+  nameLabel?: number; nameInput?: number;
+  joinLabel?: number; join?: number;
+  tabs: number; gridTop: number;
+  submit: number;
+}
+
+/** 만들기(`creating`)·배지 변경 창의 줄 자리 — 위에서부터 쌓아 높이를 정한 뒤 가운데 기준으로 옮긴다. */
+export function guildEditorSpots(creating: boolean): GuildEditorSpots {
+  const E = GUILD_EDITOR;
+  let y = 100;
+  const at: Record<string, number> = {};
+  at.stage = y + E.stage.height / 2; y += E.stage.height + 52;
+  if (creating) {
+    at.nameLabel = y + 16; at.nameInput = y + 48 + E.input.height / 2; y += 48 + E.input.height + 30;
+    at.joinLabel = y + 16; at.join = y + 48 + E.join.height / 2; y += 48 + E.join.height + 48;
+  }
+  at.tabs = y + E.tabs.height / 2; y += E.tabs.height + 30;
+  at.gridTop = y; y += E.swatch.rows * E.swatch.size + (E.swatch.rows - 1) * E.swatch.gap + 48;
+  at.submit = y + E.submit.height / 2; y += E.submit.height + 64;
+  const height = y;
+  const shift = (v: number | undefined): number | undefined => (v === undefined ? undefined : v - height / 2);
+  return {
+    height, stage: shift(at.stage)!, nameLabel: shift(at.nameLabel), nameInput: shift(at.nameInput), joinLabel: shift(at.joinLabel), join: shift(at.join),
+    tabs: shift(at.tabs)!, gridTop: shift(at.gridTop)!, submit: shift(at.submit)!,
+  };
+}
+
+/** 견본 격자 칸 `index`의 가운데 — `count`개를 두 줄로 나눠 가운데에 모은다(여덟 개면 넷씩, 열두 개면 여섯씩). */
+export function guildSwatchSpot(index: number, count: number, gridTop: number): { x: number; y: number } {
+  const { size, gap, rows } = GUILD_EDITOR.swatch;
+  const columns = Math.ceil(count / rows);
+  const row = Math.floor(index / columns);
+  const inRow = Math.min(columns, count - row * columns);
+  const col = index - row * columns;
+  return { x: (col - (inRow - 1) / 2) * (size + gap), y: gridTop + row * (size + gap) + size / 2 };
+}
+
+/**
+ * 길드전 방어진 지도 — 지부 셋이 세로 기둥 셋으로 나란히 서고, 기둥마다 위에서부터 우두머리 → 정예 둘 → 일반 칸 격자(두 줄)다.
+ * 칸이 클수록 무거운 자리라 크기가 곧 위계를 말한다. 일반 칸은 레벨이 늘리므로 격자 줄 수가 늘어도 본문 안에 든다(최대 7칸 → 4줄).
+ */
+export const GUILD_WAR_MAP = {
+  column: { width: 300, gap: 15, top: 400, bottom: 1500 },
+  header: 440,
+  boss: { y: 568, size: 136 },
+  elite: { y: 776, size: 108, dx: 66 },
+  grunt: { y: 950, size: 88, dx: 60, step: 136 },
+  /** 칸 아래 이름줄이 칸 밑변에서 떨어지는 거리. */
+  nameGap: 22,
+  /** 아래 참가 조건 줄 — 작은 탭이 없는 쪽이라 그 자리를 쓴다. */
+  note: 1690,
 } as const;
+
+/** 지부 `branch`(1~3) 기둥의 가운데 x. */
+export function guildWarColumnX(branch: number): number {
+  const { width, gap } = GUILD_WAR_MAP.column;
+  return BASE_WIDTH / 2 + (branch - 2) * (width + gap);
+}
+
+/** 칸 하나의 가운데와 크기. */
+export function guildWarNodeSpot(slot: { branch: number; kind: "boss" | "elite" | "grunt"; index: number }): { x: number; y: number; size: number } {
+  const x = guildWarColumnX(slot.branch);
+  const M = GUILD_WAR_MAP;
+  if (slot.kind === "boss") return { x, y: M.boss.y, size: M.boss.size };
+  if (slot.kind === "elite") return { x: x + (slot.index === 0 ? -1 : 1) * M.elite.dx, y: M.elite.y, size: M.elite.size };
+  return { x: x + (slot.index % 2 === 0 ? -1 : 1) * M.grunt.dx, y: M.grunt.y + Math.floor(slot.index / 2) * M.grunt.step, size: M.grunt.size };
+}

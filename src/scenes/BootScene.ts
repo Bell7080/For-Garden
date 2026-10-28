@@ -1,4 +1,5 @@
 import { finishOAuthPopup } from "../api/webOAuth";
+import { clearRollMemory } from "../core/valueRoll";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { playerCardManager } from "../managers/PlayerCardManager";
 import Phaser from "phaser";
@@ -25,6 +26,8 @@ export class BootScene extends Phaser.Scene {
     setDebugScene("boot");
     // 서버 연결은 보안 저장소와 설정이 있는 빌드에서만 선다. 호출은 쓸 때 처음 일어나므로 부팅을 기다리게 하지 않는다.
     installBackend();
+    // 계정·저장이 바뀌었을 수 있으니 숫자 롤링의 출발점을 비운다(다른 계정의 값에서 굴러 오지 않게).
+    clearRollMemory();
     let firstRun = false;
     try {
       const loaded = saveManager.load();

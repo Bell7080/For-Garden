@@ -22,6 +22,7 @@ import { isStageUnlockedByProgress } from "../core/stageProgress";
 import { BOND_XP_REWARD, grantBondXp } from "../core/bond";
 import type { MissionState } from "../core/missions";
 import type { RuneInstance } from "../core/runes";
+import type { RuneTraitView } from "../core/runeListFilter";
 import { createDefaultSettings } from "../core/settings";
 import type { LanguageId } from "../core/language";
 import { createIdleExcavationState, type IdleExcavationState } from "../core/idleExcavation";
@@ -63,11 +64,17 @@ export interface GameSettings {
      */
     dungeonTiers: { bounty: string; cake: string };
     /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
-    guildSeen: { war: number; guard: number };
+    guildSeen: { war: number; guard: number; guardReward: number };
+    /** 마지막으로 본 길드 레벨(`길드 id:레벨`, 비었으면 아직 없음). 오르면 길드 화면이 레벨업 창을 한 번 띄운다 — 기기 선호다. */
+    guildLevelSeen: string;
+    /** 수호전 여섯 칸 편성(앞줄 0~2 · 뒷줄 3~5, 빈 칸은 `null`). 마지막으로 출격한 편성을 다시 세운다 — 기기 선호다. */
+    guardFormation: (string | null)[];
     /** 고대 지층 초기화 예고 창을 마지막으로 본 날(`YYYY-MM-DD`, UTC). 하루 한 번만 띄운다 — 기기 선호다. */
     ancientResetSeen: string;
     /** 룬 가방·장착 가방의 보기 토글 — 장착자 얼굴을 갈마들어 보일지, 장착 중인 룬을 목록에 세울지. 기기 선호다. */
-    runeBag: { showHolder: boolean; showEquipped: boolean } };
+    runeBag: { showHolder: boolean; showEquipped: boolean; trait: RuneTraitView; bookmarkedOnly: boolean };
+    /** 던전 자동 전투(반복 출격)의 옵션 — 횟수·패배 시 중단·드링크 자동 사용(`core/autoRepeat.ts`). 기기 선호다. */
+    autoRepeat: import("../core/autoRepeat").AutoRepeatOptions };
   account: { provider: "guest" | "google" | "apple"; displayId: string };
 }
 
@@ -622,7 +629,7 @@ export function replaceSession(next: Session): void {
 /** 첫 스테이지와, 직전 스테이지를 깬 스테이지만 들어갈 수 있다. */
 export function isStageUnlocked(stageId: string): boolean {
   const floor=ancientStageFloor(stageId);
-  if(floor!==undefined) return session.cleared.has(floor===1 ? "1-10" : ancientStageId(floor-1));
+  if(floor!==undefined) return session.cleared.has(floor===1 ? "4-10" : ancientStageId(floor-1));
   // 스토리 완료 ID를 대응 노드 ID로 바꿔 전투/서사 간선도 같은 집합 판정기를 통과시킨다.
   const completedNodeIds = new Set(session.cleared);
   for (const stage of STAGES) if (stage.kind === "story" && session.completedStoryIds.has(stage.storyId)) completedNodeIds.add(stage.id);

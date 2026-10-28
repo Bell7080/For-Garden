@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
-import { inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
+import { INVENTORY_LIST_BOTTOM, inventoryCategoryTabPosition } from "../../src/ui/inventoryTabs";
+import { INVENTORY_LAYOUT, inventoryGridPosition } from "../../src/managers/InventoryManager";
 import { createRuneInstance, type RuneStatKey } from "../../src/core/runes";
 import { captureGame, tap, tapUntil, waitForDebugState } from "./canvasInput";
 // 레일 자리는 화면이 소유한 배치표에서 읽는다 — 좌표를 스펙에 베껴 두면 줄이 옮겨질 때 조용히 빗나간다.
@@ -115,4 +116,31 @@ test("기한이 있는 병은 가방 칸 왼쪽 위에 붉은 표식(7D · 24H �
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("consumable");
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
   await captureGame(page, `test-results/${test.info().project.name}-inventory-expiry-tags.png`);
+});
+
+test("창 밖으로 잘려 안 보이는 룬 카드는 손을 받지 않는다 — 아래 빈 자리를 눌러도 룬 쪽지가 열리지 않는다", async ({ page }) => {
+  test.setTimeout(240_000);
+  await startAfterOpening(page, (state) => {
+    const values = Object.fromEntries(["hp", "atk", "ap", "def", "res", "moveSpeed", "attackSpeed", "lifeSteal", "critChance", "critDamage", "ferocityGain", "energyGain"].map((key) => [key, 10])) as Record<RuneStatKey, number>;
+    // 창보다 긴 목록 — 마지막 줄들은 창 아래변 밖에 가려진 채 남는다.
+    state.runeInventory = Array.from({ length: 32 }, (_, index) => createRuneInstance({
+      instanceId: `bag-clip-${index}`, baseName: "초록 조각", rarity: "uncommon", part: (index % 3) as 0 | 1 | 2, statValues: values, random: () => 0,
+    }));
+  });
+  await tap(page, WIDTH / 2, HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await tapUntil(page, LOBBY_RAIL_BOUNDS.utility.inventory.x, LOBBY_RAIL_BOUNDS.utility.inventory.y, async () => (await page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)) !== undefined);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.inventoryCategory)).toBe("rune");
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles, ["가방"]);
+  // 첫 열의 중심 x. 창 아래변 바로 밑(탭과의 틈)에는 가려진 카드가 있지만 보이지 않으므로 눌려서는 안 된다.
+  const columnX = WIDTH / 2 + inventoryGridPosition(0, INVENTORY_LAYOUT).x;
+  // 카드 사이 틈(28px)에 걸려 빗나가지 않도록 틈 안(20px)의 여러 높이를 누른다.
+  for (const gap of [2, 7, 12, 17]) {
+    await tap(page, columnX, HEIGHT / 2 + INVENTORY_LIST_BOTTOM + gap);
+    await page.waitForTimeout(250);
+    expect(await page.evaluate(() => window.__PF_DEBUG?.popupTitles), `창 아래변 +${gap}px`).toEqual(["가방"]);
+  }
+  // 같은 열의 창 안쪽(아래변 위 한 뼘)은 그대로 눌려 룬 쪽지가 열린다 — 입력을 통째로 막은 것이 아니다.
+  await tap(page, columnX, HEIGHT / 2 + INVENTORY_LIST_BOTTOM - 40);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles?.length ?? 0)).toBeGreaterThan(1);
 });

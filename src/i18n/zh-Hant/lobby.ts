@@ -95,6 +95,8 @@ export const LOBBY_ZH_HANT = {
   "ancient.trial.deadline": "限時45秒 · 敵方生命值−12%",
   "ancient.trial.shield": "敵方開場獲得最大生命值30%的護盾",
   "ancient.trial.charge": "敵方初始必殺技能量+50%",
+  "ancient.trial.frenzy": "敵方攻擊速度+25%",
+  "ancient.trial.precision": "敵方暴擊率+30%",
   "ancient.depthMultiplier": "地層倍率",
   "ancient.deepTrial": "深層試煉 · 生命比例傷害以B120換算生命為基準",
   "ancient.requirement": "先通關{stage}",
@@ -113,5 +115,7 @@ export const LOBBY_ZH_HANT = {
   "ancient.trialTag.deadline": "倒數",
   "ancient.trialTag.shield": "結界",
   "ancient.trialTag.charge": "過充能",
+  "ancient.trialTag.frenzy": "速攻",
+  "ancient.trialTag.precision": "要害",
   "ancient.trialLine": "「{name}」{effect}",
 } as const;

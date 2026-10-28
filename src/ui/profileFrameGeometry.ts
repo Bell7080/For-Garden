@@ -23,7 +23,12 @@ export const PROFILE_FRAME_PAD = 0.07;
  */
 export const PROFILE_FRAME_REACH = 0.72;
 
-export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown"];
+/** 한 변 `room`짜리 자리에 장식까지 드는 가장 큰 얼굴 한 변. 액자 하나가 서던 자리를 프로필로 바꿀 때 쓴다. */
+export function profileAvatarSizeFor(room: number): number {
+  return Math.floor(room / (2 * PROFILE_FRAME_REACH));
+}
+
+export const FRAME_STYLE_RANK: readonly ProfileFrameStyle[] = ["plain", "bracket", "gem", "wing", "vine", "crown", "strata", "laurel", "prism"];
 
 export function profileFrameOuter(size: number): number {
   return size * (1 + PROFILE_FRAME_PAD * 2);
@@ -128,6 +133,32 @@ export function profileFrameShapes(size: number, style: ProfileFrameStyle): Prof
   if (style === "crown") shapes.rings.push({ side: outer + size * 0.09, width: Math.max(2, size * 0.018), tone: "frame", alpha: 0.7 });
 
   switch (style) {
+    case "strata": {
+      for (const offset of [0.025, 0.075, 0.125]) {
+        for (const side of [-1, 1]) shapes.strokes.push({ width: size * 0.018, points: [
+          { x: side * (anchor.half + offset * size), y: -size * 0.25 },
+          { x: side * (anchor.half + offset * size), y: size * 0.25 },
+        ] });
+      }
+      diamond(anchor.top, 0.09, 0.11);
+      diamond(anchor.bottom, 0.08, 0.1);
+      break;
+    }
+    case "laurel": {
+      for (const side of [-1, 1]) for (let index = 0; index < 5; index++) {
+        shapes.blades.push({ x: side * (anchor.half - size * 0.025), y: size * (0.28 - index * 0.125), angle: side > 0 ? -Math.PI / 3 : -2 * Math.PI / 3, length: size * 0.18, width: size * 0.035 });
+      }
+      diamond(anchor.bottom, 0.12, 0.09);
+      break;
+    }
+    case "prism": {
+      for (const point of [anchor.top, anchor.bottom, anchor.left, anchor.right]) {
+        diamond(point, 0.1, 0.12);
+        diamond(point, 0.04, 0.075, "light");
+      }
+      for (const cut of cuts) shapes.strokes.push({ width: size * 0.025, points: cutBracket(cut, size * 0.06, anchor.bevel, size * 0.07) });
+      break;
+    }
     case "plain":
       break;
     case "bracket": {

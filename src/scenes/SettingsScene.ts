@@ -1,3 +1,5 @@
+import { clipInteractiveTree } from "../ui/clippedHit";
+import type { ClipRect } from "../ui/clipRect";
 import { openAccountEmailPopup } from "../ui/AccountEmailPopup";
 import { availableBattleSpeeds, usableBattleSpeed } from "../core/battleControls";
 import { gameApi } from "../api/FakeServer";
@@ -28,11 +30,20 @@ import { SETTINGS_HEAD, SETTINGS_ROW, SETTINGS_SECTION, SETTINGS_SUPPORT, SETTIN
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addSectionTitle } from "../ui/SectionTitle";
 import { validateSettingsOverlay, validateSettingsReturn, type SettingsEntryData, type SettingsOverlayHost, type SettingsReturnScene } from "./settingsNavigation";
-import { openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { isIosApp, openCouponPage, openPolicyDocument, type PolicyPath } from "./policyNavigation";
+import { Button } from "../ui/Button";
+import { UI_ICON } from "../ui/icons";
+import { couponErrorKey, openCouponPopup } from "../ui/CouponPopup";
+import { couponApi } from "../managers/CouponManager";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene, slideTabPage } from "../ui/screenTransition";
 import { attachDragScroll } from "../ui/dragScroll";
+import { addScrollHint } from "../ui/ScrollHint";
 import { pressIn, pressOut } from "../ui/pressFeedback";
+
+/** 행이 흐르는 창 — 마스크와 입력 창이 같은 사각형을 읽는다. */
+const SETTINGS_LIST_WINDOW = { left: 34, top: SETTINGS_HEAD.contentTop - 10, width: 1012, height: 1430 };
+const SETTINGS_LIST_CLIP = (): ClipRect => ({ left: SETTINGS_LIST_WINDOW.left, right: SETTINGS_LIST_WINDOW.left + SETTINGS_LIST_WINDOW.width, top: SETTINGS_LIST_WINDOW.top, bottom: SETTINGS_LIST_WINDOW.top + SETTINGS_LIST_WINDOW.height });
 
 /** 상단 탭은 긴 설정을 의미 단위로 나눠 좁은 화면에서도 한 섹션만 스크롤하게 한다. */
 const TABS = [
@@ -92,7 +103,7 @@ export class SettingsScene extends Phaser.Scene {
     this.buildTabs();
     this.content = this.add.container(0, SETTINGS_HEAD.contentTop);
     const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
-    maskShape.fillStyle(0xffffff).fillRect(34, SETTINGS_HEAD.contentTop - 10, 1012, 1430);
+    maskShape.fillStyle(0xffffff).fillRect(SETTINGS_LIST_WINDOW.left, SETTINGS_LIST_WINDOW.top, SETTINGS_LIST_WINDOW.width, SETTINGS_LIST_WINDOW.height);
     this.content.setMask(maskShape.createGeometryMask()); this.buildRows();
     void gameApi.getPlayerState().then((state) => {
       if (!this.scene.isActive() || generation !== this.viewGeneration) return;
@@ -104,6 +115,7 @@ export class SettingsScene extends Phaser.Scene {
     const zone = this.add.zone(BASE_WIDTH / 2, SETTINGS_HEAD.contentTop + 705, BASE_WIDTH, 1430).setDepth(-1);
     // 행 위에서 시작한 손도 내려가야 한다. 끌기 면이 행 뒤에 있으면 행(슬라이더 제외)에서는 스크롤이 시작되지 않았다.
     attachDragScroll(this, { owner: zone, bounds: () => zone.getBounds(), wheelFactor: 1, onDelta: (dy) => this.scrollTo(this.scrollY + dy) });
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: SETTINGS_LIST_WINDOW.top + SETTINGS_LIST_WINDOW.height / 2, width: SETTINGS_LIST_WINDOW.width, height: SETTINGS_LIST_WINDOW.height, owner: zone, depth: 25, read: () => ({ offset: this.scrollY, min: Math.min(0, 1370 - Number(this.content.getData("height") || 0)) }) });
     addBackButton(this, () => this.close()).setDepth(30);
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
@@ -283,6 +295,8 @@ export class SettingsScene extends Phaser.Scene {
     // 마지막 섹션의 판은 아직 그려지지 않았다 — 닫아야 선다.
     endSection();
     this.content.setData("height", y + 70); this.scrollTo(this.scrollY);
+    // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 행이 아래의 탭·뒤로가기를 덮지 않게.
+    clipInteractiveTree(this.content, SETTINGS_LIST_CLIP);
   }
 
   /**
@@ -310,7 +324,14 @@ export class SettingsScene extends Phaser.Scene {
   private buildSupportRows(y: number, section: (title: string) => number): number {
     y = section(t("settings.section.account"));
     const account = this.accountState;
-    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 }))); y += SETTINGS_SUPPORT.accountSummaryRoom;
+    this.content.add(this.add.text(90, y, t("settings.account.summary", { kind: t(account.kind === "guest" ? "settings.account.guest" : "settings.account.linked"), provider: account.provider.toUpperCase(), maskedId: account.maskedId }), textStyle({ role: "body", size: SETTINGS_TEXT.note, color: COLOR.inkDim, lineSpacing: 10 })));
+    // 쿠폰은 계정에 붙는 일이라 계정 판의 오른쪽 위, 요약 옆에 크게 선다 — 지원 판의 글자 줄 사이에 묻히지 않게.
+    const coupon = SETTINGS_SUPPORT.coupon;
+    this.content.add(new Button(this, coupon.x, y + coupon.dy, { width: coupon.width, height: coupon.height,
+      label: t("settings.account.coupon"), fontSize: 30, art: UI_ICON.ticket, variant: "primary", fill: coupon.fill, decorDots: true,
+      onClick: () => { if (!this.accountBusy) this.openCoupon(); },
+    }).fitLabel(coupon.width - 130));
+    y += SETTINGS_SUPPORT.accountSummaryRoom;
     const linkedId = this.accountIdentities.some(identity => identity.provider === "password") || account.provider === "password";
     if (!linkedId) this.addTextAction(90, y, t("settings.account.linkId"), () => this.linkWithId(), false, 280);
     else this.content.add(this.add.text(90, y, t("account.identity.connected", { provider: "ID" }), textStyle({ role: "body", size: 24, color: COLOR.inkDim })));
@@ -333,6 +354,8 @@ export class SettingsScene extends Phaser.Scene {
     this.addTextAction(90, y, t("settings.support.clearCache"), () => void this.clearCache()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.terms"), () => this.openPolicy("/terms")); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.privacy"), () => this.openPolicy("/privacy")); y += SETTINGS_SUPPORT.actionStep;
+    // 운영정책·환불·청소년 보호·확률 정보·사업자 정보는 홈페이지 안내 센터 한 곳에 모여 있다.
+    this.addTextAction(90, y, t("settings.support.policies"), () => this.openPolicy("/legal")); y += SETTINGS_SUPPORT.actionStep;
     // 환경설정 복원은 일반 강조색으로 두어 위험색을 쓰는 진행 삭제·계정 탈퇴와 시각적으로 구분한다.
     this.addTextAction(90, y, t("settings.support.resetSettings"), () => this.confirmSettingsReset()); y += SETTINGS_SUPPORT.actionStep;
     this.addTextAction(90, y, t("settings.support.resetSave"), () => this.confirmLocalReset(), true); y += SETTINGS_SUPPORT.actionStep;
@@ -355,6 +378,19 @@ export class SettingsScene extends Phaser.Scene {
   private async clearCache(): Promise<void> {
     if ("caches" in globalThis) await Promise.all((await caches.keys()).map(key => caches.delete(key)));
     this.popups.confirm({ title: t("settings.support.cacheCleared"), message: t("settings.support.cacheClearedBody"), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+  }
+
+  /**
+   * 쿠폰: 안드로이드·웹은 게임 안 입력창, iOS 앱은 홈페이지 쿠폰 페이지(같은 계정이 채워진 채)로 보낸다.
+   * iOS는 연결 티켓을 받은 뒤 시스템 브라우저를 연다 — 앱 브리지는 손짓 제한이 없다.
+   */
+  private openCoupon(): void {
+    if (!isIosApp()) { openCouponPopup(this, this.popups); return; }
+    this.accountBusy = true;
+    void couponApi().createWebTicket().then((result) => {
+      if (result.ok || result.error === "unsupported") openCouponPage(result.ok ? result.value : null);
+      else this.popups.confirm({ title: t("coupon.title"), message: t(couponErrorKey(result.error)), confirmLabel: t("settings.action.confirm"), cancelLabel: false });
+    }).finally(() => { this.accountBusy = false; });
   }
 
   /** 정책은 새 탭을 우선 사용하되 팝업 차단 시 같은 탭으로 이동해 문서 접근을 보장한다. */

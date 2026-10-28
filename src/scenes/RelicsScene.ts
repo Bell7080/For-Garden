@@ -15,6 +15,7 @@ import { ScissorContainer } from "../ui/ScissorContainer";
 import { CharacterInfoManager } from "../managers/CharacterInfoManager";
 import { TopBar } from "../ui/TopBar";
 import { PortraitCard } from "../ui/PortraitCard";
+import { clipHit } from "../ui/clippedHit";
 import { PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
@@ -36,6 +37,7 @@ import {
 } from "../ui/relicGridLayout";
 import { openElementChartPopup } from "../ui/affinityPopups";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { consumeSceneEntry } from "./sceneEntry";
 import { getRelic } from "../data/relics";
 import {
@@ -218,6 +220,7 @@ export class RelicsScene extends Phaser.Scene {
     const nav = new BottomNav(this, "relics");
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: (VIEWPORT_TOP + VIEWPORT_BOTTOM) / 2, width: BASE_WIDTH, height: VIEWPORT_BOTTOM - VIEWPORT_TOP, depth: 45, read: () => ({ offset: this.content.y, min: this.minScrollY }) });
     playSceneEntrance(this);
     // 강해지는 길로 들어왔으면 그 렐릭의 정보창이 곧장 열린다 — 도감에서 다시 찾지 않는다.
     const openId = this.pendingOpenRelicId;
@@ -368,6 +371,8 @@ export class RelicsScene extends Phaser.Scene {
         // 전신 원화는 보이는 줄 근처만 올린다(`syncPortraitResidency`).
         deferPortrait: true,
       });
+      // 스크롤 창(가위 클립) 안에서만 손을 받는다 — 밖으로 흘러간 카드가 하단 탭·상단 줄 위를 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: VIEWPORT_TOP, bottom: VIEWPORT_BOTTOM }));
       this.content.add(card);
       if (this.playIntro) this.playCardIntro(card, introIndex, y);
       // 카드를 누르면 바로 정보창이 열린다. 애착 설정도 그 안의 뱃지가 맡는다.

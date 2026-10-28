@@ -1,5 +1,6 @@
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { LIFETIME_COUNT_CAP } from "./missions";
+import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 
 /*
  * 업적 저장 모양만 따로 둔다 — `state/session.ts`가 읽는 파일이라 렐릭·스테이지 표처럼 무거운 데이터를
@@ -14,6 +15,8 @@ export interface AchievementState {
    * 지나는 저장 경계(`FakeServer.persist`)가 최고치만 올린다.
    */
   goldPeak: number;
+  /** 월간 지층 초기화와 무관하게 유지하는 최고 도달 기록. 구 저장은 현재 층으로 보충한다. */
+  ancientFloorPeak?: number;
 }
 
 export function createEmptyAchievementState(): AchievementState { return { claimed: {}, goldPeak: 0 }; }
@@ -29,13 +32,15 @@ export function normalizeAchievementState(value: unknown): AchievementState {
     const count = Math.min(series.tiers.length, whole(claimedSource[series.id]));
     if (count > 0) claimed[series.id] = count;
   }
-  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)) };
+  const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
+  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}) };
 }
 
 export function isValidAchievementState(value: unknown): value is AchievementState {
   if (!value || typeof value !== "object") return false;
   const state = value as AchievementState;
   if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
+  if (state.ancientFloorPeak !== undefined && (!Number.isInteger(state.ancientFloorPeak) || state.ancientFloorPeak < 0 || state.ancientFloorPeak > ANCIENT_STRATA_MAX_FLOOR)) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);

@@ -1,6 +1,7 @@
 import { NotificationDot } from "../ui/NotificationDot";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { openArenaFriendPopup } from "../ui/ArenaFriendPopup";
+import { consumeSceneEntry } from "./sceneEntry";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { socialApi, SocialApiError, type FriendListResponse, type FriendRequestEntry, type FriendRequestsResponse, type UserSearchEntry } from "../api/FakeSocialServer";
@@ -12,7 +13,7 @@ import {
 } from "../core/social";
 import type { FriendProfile } from "../data/friends";
 import { profileFrameOrDefault } from "../data/profileFrames";
-import { getRelic } from "../data/relics";
+import { getRelic, RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { notificationManager } from "../managers/NotificationManager";
 import { friendProfileDisplay } from "../state/playerProfile";
@@ -30,12 +31,13 @@ import {
   friendsChipX, friendsChipXFromRight, friendsMinScroll, friendsRowY, friendsSearchRow, friendsSortX, friendsTabX,
 } from "../ui/friendsLayout";
 import { addFriendChip, addRowButton } from "../ui/friendsWidgets";
-import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup";
+import { PlayerProfilePopup, type ProfileAction, type ProfileMarks } from "../ui/PlayerProfilePopup";
 import { compactProfileText } from "../ui/playerProfileLayout";
 import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { playSceneEntrance, slideTabPage, startScene } from "../ui/screenTransition";
+import { addScrollHint } from "../ui/ScrollHint";
 import { SortControl } from "../ui/SortControl";
 import { squeezeTextToWidth } from "../ui/textFit";
 import { TextInputField } from "../ui/TextInputField";
@@ -115,7 +117,19 @@ export class FriendsScene extends Phaser.Scene {
   private dragMoved = 0;
   private busy = false;
 
+  /**
+   * 친선 아레나에서 돌아왔다면 그 상대 — 목록을 받은 뒤 그 친구의 친선전 선택판을 다시 연다(`arenaExitRoute`).
+   * 친선전에서 나가면 어디서 나가든 이 판으로 돌아와야 한다: 랭크 아레나 입구로 떨어지면 다시 붙으려고
+   * 친구 목록부터 다시 찾아 들어와야 한다.
+   */
+  private arenaFriendId?: string;
+
   constructor() { super("friends"); }
+
+  init(input?: { arenaFriendId?: string }): void {
+    this.arenaFriendId = input?.arenaFriendId;
+    consumeSceneEntry(this);
+  }
 
   create(): void {
     setDebugScene("friends");
@@ -139,6 +153,7 @@ export class FriendsScene extends Phaser.Scene {
     void this.reload();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
     // 움직이므로, 이 뒤에 무엇을 더 세워도 함께 지나간다 — 그래서 `create`의 맨 끝이다.
+    addScrollHint(this, undefined, { x: BASE_WIDTH / 2, y: (S.list.top + S.list.bottom) / 2, width: BASE_WIDTH, height: S.list.bottom - S.list.top, depth: 45, read: () => ({ offset: this.scrollOffset, min: this.minScroll }) });
     playSceneEntrance(this);
     showContentIntro(this, "friends");
   }
@@ -169,6 +184,16 @@ export class FriendsScene extends Phaser.Scene {
     }
     void notificationManager.refresh().catch(() => undefined);
     this.paintAll(keepScroll);
+    this.reopenArenaFriend();
+  }
+
+  /** 친선 아레나에서 돌아온 첫 목록에서 한 번만 — 그 친구의 친선전 선택판을 연다. 친구가 아니게 됐으면 목록만 선다. */
+  private reopenArenaFriend(): void {
+    const id = this.arenaFriendId;
+    this.arenaFriendId = undefined;
+    const profile = id ? this.friendData?.friends.find((f) => f.id === id) : undefined;
+    if (!profile || this.popups.isOpen) return;
+    openArenaFriendPopup(this, this.popups, { id: profile.id, name: profile.displayName, frameId: profile.frameId, favoriteRelicId: profile.favoriteRelic.relicId, level: profile.level });
   }
 
   private paintAll(keepScroll = false): void {
@@ -369,7 +394,8 @@ export class FriendsScene extends Phaser.Scene {
   private paintRowBody(row: Phaser.GameObjects.Container, profile: FriendProfile, textRight: number, extra?: string): void {
     const frame = profileFrameOrDefault(profile.frameId);
     row.add(drawLayer(this, 0, 0, chipPoints(S.width, S.row.height, { bevel: { topLeft: 42, topRight: 0, bottomRight: 42, bottomLeft: 0 } }), { fill: 0x1a1f27, alpha: HOLO.glass, edge: frame.color, edgeAlpha: 0.6 }));
-    const relic = getRelic(profile.favoriteRelic.relicId);
+    // 얼굴은 그 친구가 고른 프로필 사진 — 카드와 같은 고르기다(없으면 애착 렐릭).
+    const relic = RELICS.find(({ id }) => id === profile.avatarRelicId) ?? getRelic(profile.favoriteRelic.relicId);
     row.add(new ProfileAvatar(this, R.avatar.x, 0, {
       size: R.avatar.size, frameId: frame.id, portraitAssetId: relic.portraitAssetId, fallback: Array.from(profile.displayName.trim())[0] ?? "?",
     }));
@@ -490,27 +516,26 @@ export class FriendsScene extends Phaser.Scene {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
       {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,{id:profile.id,name:profile.displayName,frameId:profile.frameId,favoriteRelicId:profile.favoriteRelic.relicId,level:profile.level});}},
-      {
-        label: t(favorite ? "friends.action.unfavorite" : "friends.action.favorite"),
-        onClick: () => {
-          popup.close();
-          void this.mutate(() => socialApi.setFavorite(profile.id, !favorite), true).then(() => {
-            if (this.scene.isActive()) this.openProfile(profile, true, !favorite, true);
-          });
-        },
-      },
-      {
-        label: t("friends.action.remove"), destructive: true,
-        onClick: () => this.popups.confirm({
-          title: t("friends.remove.title"), message: t("friends.remove.message", { name: profile.displayName }),
-          confirmLabel: t("friends.remove.confirm"), destructive: true,
-        }, () => { popup.close(); void this.mutate(() => socialApi.removeFriend(profile.id), true); }),
-      },
     ] : [];
+    // 즐겨찾기·삭제는 밑동 버튼이 아니라 카드 머리의 표식 칩이다(렐릭 정보창·룬 쪽지와 같은 한 장).
+    const marks: ProfileMarks | undefined = isFriend ? {
+      favorite,
+      onToggleFavorite: () => {
+        popup.close();
+        void this.mutate(() => socialApi.setFavorite(profile.id, !favorite), true).then(() => {
+          if (this.scene.isActive()) this.openProfile(profile, true, !favorite, true);
+        });
+      },
+      onRemove: () => this.popups.confirm({
+        title: t("friends.remove.title"), message: t("friends.remove.message", { name: profile.displayName }),
+        confirmLabel: t("friends.remove.confirm"), destructive: true,
+      }, () => { popup.close(); void this.mutate(() => socialApi.removeFriend(profile.id), true); }),
+    } : undefined;
     const popup = new PlayerProfilePopup(this, this.popups, friendProfileDisplay({ ...profile, lastActive: this.ageText(profile.lastActiveAt) }), () => undefined, undefined, {
       title: t("friends.profile"),
       onFavorite: () => this.info.showFriend(profile.favoriteRelic),
       actions,
+      marks,
     });
     popup.open({ instant });
   }

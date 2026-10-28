@@ -6,7 +6,8 @@ import { INK_STYLE, inkTextureKey, type InkShapeId } from "../ui/inkShapes";
 import { FEVER_INK, feverAngerPlacement, feverSirenRings } from "../ui/feverInk";
 import { healVisual, SHIELD_AURA_SHAPE, shieldAuraStyle, shieldGainVisual } from "../ui/restoreEffects";
 import { lashPoints } from "../ui/reachStrikeShape";
-import { flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
+import { flatDiamondPoints, flashPolicy, inkBlotPoints, mawTeeth, slashPoints, SIGNATURE_INK_WIDTH, SIGNATURE_SPECS, waveCrestPoints, type CombatPalette, type SignatureId, type StrokePoint } from "../ui/signatureEffects";
+import { allowStatusCue, cueAngle, STATUS_CUE, stunOrbit, type StatusCueId } from "../ui/statusCueEffects";
 import { damagePopupStyle, risingAlpha, shouldShowDamagePopup, type DamagePopupRequest } from "../ui/damageNumbers";
 import { battlefieldWashBands, groundAreaStyle, laneAreaPoints, radialAreaPoints, type GroundAreaRequest, type GroundAreaShape, type GroundAreaStyle } from "../ui/groundAreas";
 import { COLOR, textStyle } from "../ui/theme";
@@ -61,6 +62,21 @@ export interface EffectManagerOptions {
    * 파편과 같은 깊이에 두었을 때는 화면 옆에 붙는 기여도 판 위로 푸른 원이 떠올랐다.
    */
   bodyDepth?: number;
+}
+
+/** 상태 연출이 한 프레임에 여는 최대 수. 순풍이 편성 다섯에게 한꺼번에 들어가는 몫이다. */
+const STATUS_CUE_PER_FRAME = 5;
+
+/** 전용 연출에 씬이 넘기는 자리. 바닥에 서는 연출은 몸 가운데가 아니라 발밑을 쓴다. */
+export interface SignatureOptions {
+  /** 때린 쪽 몸 가운데. */
+  from?: { x: number; y: number };
+  /** 맞은 쪽 발밑(바닥). */
+  ground?: { x: number; y: number };
+  /** 때린 쪽 발밑(바닥). */
+  casterGround?: { x: number; y: number };
+  step?: number;
+  scale?: number;
 }
 
 export interface BurstOptions {
@@ -214,6 +230,10 @@ export class EffectManager {
   private readonly shieldAuras = new Map<string, { graphics: Phaser.GameObjects.Graphics; key: string }>();
   private frame = -1;
   private openedThisFrame = 0;
+  /** 상태 연출의 프레임 예산. 타격 예산과 따로 센다(`statusCue`). */
+  private statusFrame = -1;
+  private statusThisFrame = 0;
+  private readonly lastStatusAt = new Map<StatusCueId, number>();
 
   constructor(scene: Phaser.Scene, options: EffectManagerOptions) {
     this.scene = scene;
@@ -1270,17 +1290,29 @@ export class EffectManager {
     id: SignatureId,
     at: { x: number; y: number },
     palette: CombatPalette,
-    options: { from?: { x: number; y: number }; step?: number; scale?: number } = {},
+    options: SignatureOptions = {},
   ): void {
     const now = this.rollFrame();
     if (this.openedThisFrame >= EFFECT_BUDGET.perFrame) return;
     this.openedThisFrame += 1;
     const scale = options.scale ?? 1;
-    if (id === "rexMaw") this.openMaw(at, palette, scale, now);
-    else if (id === "spinoDoubleTap") this.openDoubleTap(at, palette, options.from);
-    else if (id === "pachiSlam") this.openSlam(at, palette, scale, now);
-    else if (id === "nodoniaShare") this.openShareFlow(options.from ?? at, at, palette, now);
-    else this.openInkStroke(at, palette, options.step ?? 0, options.from, now);
+    const ground = options.ground ?? at;
+    const casterGround = options.casterGround ?? options.from ?? at;
+    switch (id) {
+      case "rexMaw": this.openMaw(at, palette, scale, now); return;
+      case "spinoDoubleTap": this.openDoubleTap(at, palette, options.from); return;
+      case "pachiSlam": this.openSlam(at, palette, scale, now); return;
+      case "nodoniaShare": this.openShareFlow(options.from ?? at, at, palette, now); return;
+      case "ellaInkStroke": this.openInkStroke(at, palette, options.step ?? 0, options.from, now); return;
+      case "pontosShockwave": this.openPontosShockwave(casterGround, palette, now); return;
+      case "pontosTidalCrash": this.openTidalCrash(at, ground, palette, scale, now); return;
+      case "sukuDeathRoll": this.openDeathRoll(at, palette, scale, now); return;
+      case "sukuDrowningMaw": this.openDrowningMaw(at, ground, palette, scale, now); return;
+      case "taboaConstrict": this.openConstrict(at, palette, scale, now); return;
+      case "taboaEmbrace": this.openEmbrace(casterGround, options.from ?? at, palette, now); return;
+      case "coatlBeakLance": this.openBeakLance(at, options.from, palette, scale, now); return;
+      case "coatlStormDive": this.openStormDive(at, ground, options.from, palette, scale, now); return;
+    }
   }
 
   /** 풀에서 그래픽 한 장을 꺼내 한 번 그리고 스스로 회수되는 tween을 건다. */
@@ -1308,8 +1340,8 @@ export class EffectManager {
   }
 
   /** 렉시아 — 위아래 턱이 맞물렸다 사라진다. 닫히는 동안이 곧 무는 동작이다. */
-  private openMaw(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
-    const spec = SIGNATURE_SPECS.rexMaw;
+  private openMaw(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number, ms: number = SIGNATURE_SPECS.rexMaw.ms): void {
+    const spec = { ...SIGNATURE_SPECS.rexMaw, ms };
     const half = spec.halfWidth * scale;
     const depth = spec.depth * scale;
     const upper = mawTeeth(half, depth, spec.teeth, 1);
@@ -1443,6 +1475,262 @@ export class EffectManager {
     });
   }
 
+
+  /**
+   * 바닥에 누운 마름모 한 겹이 `from`배에서 `to`배로 자라거나 조인다(값은 반지름 배율).
+   * 먹선이 경계를 쥐고 그 위에 색 선이 돈다 — 전장의 다른 잉크 파문과 같은 두 겹이다.
+   */
+  private openFlatRing(
+    x: number, y: number, radius: number, squash: number, range: readonly [number, number],
+    ms: number, width: number, color: number, alpha: number, now: number, depth: number, delay = 0,
+  ): void {
+    const open = (): void => this.openShape(x, y, ms, delay > 0 ? this.scene.time.now : now, depth, false, (graphics, t) => {
+      const eased = 1 - (1 - t) ** 3;
+      const points = flatDiamondPoints(radius * (range[0] + (range[1] - range[0]) * eased), squash);
+      const fade = 1 - t * t;
+      const line = Math.max(1, width * (1 - t * 0.5));
+      graphics.lineStyle(line + SIGNATURE_INK_WIDTH, INK_COLOR, fade);
+      graphics.strokePoints(points, true);
+      graphics.lineStyle(line, color, alpha * fade);
+      graphics.strokePoints(points, true);
+    });
+    if (delay > 0) this.scene.time.delayedCall(delay, open); else open();
+  }
+
+  /**
+   * 한 점에서 잉크 조각 `count`개가 바깥으로 벌어진다. 각은 난수 없이 고르게 나눈다
+   * (`cueAngle`) — 같은 연출이 늘 같은 그림이어야 모양으로 익는다.
+   */
+  private openSpray(
+    shape: InkShapeId, x: number, y: number, count: number, travel: number, scale: number,
+    ms: number, color: number, upward: boolean, staggerMs = 0, aim = false,
+  ): void {
+    const pieces = Math.max(1, Math.round(count * this.quality.particleRatio));
+    for (let index = 0; index < pieces; index += 1) {
+      const angle = cueAngle(index, pieces, upward);
+      this.openInkPiece(shape, color, ms, index * staggerMs, (image, t) => {
+        const distance = travel * (1 - (1 - t) ** 3);
+        image.setPosition(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance)
+          // 물방울·파편은 날아가는 쪽을 향해 눕는다. 별·불꽃은 제자리에서 돈다.
+          .setRotation(aim ? angle + Math.PI / 2 : t * 3)
+          .setScale(scale * (1 - t * 0.35));
+      });
+    }
+  }
+
+  /** 폰토스 평타 — 발밑에서 두 겹 해일 파문이 밀려 나가고 물방울이 위로 튄다. */
+  private openPontosShockwave(feet: { x: number; y: number }, palette: CombatPalette, now: number): void {
+    const spec = SIGNATURE_SPECS.pontosShockwave;
+    this.openFlatRing(feet.x, feet.y, spec.radius, spec.squash, [0.3, 1], spec.ms, spec.width, palette.main, spec.alpha, now, this.groundDepth);
+    this.openFlatRing(feet.x, feet.y, spec.radius * 1.18, spec.squash, [0.3, 1], spec.ms, spec.width * 0.7, palette.sub, spec.alpha, now, this.groundDepth, spec.waveGapMs);
+    this.openSpray("drop", feet.x, feet.y - 20, spec.drops, spec.dropTravel, 0.95, spec.ms, palette.main, true, 0, true);
+  }
+
+  /** 폰토스 궁극기 — 물마루가 말려 내려와 부서지고 바닥이 두 번 울린다. */
+  private openTidalCrash(at: { x: number; y: number }, ground: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.pontosTidalCrash;
+    const size = Math.min(1.4, Math.max(0.9, scale));
+    const crest = waveCrestPoints(spec.width * size, spec.height * size, spec.curl * size);
+    this.openShape(ground.x, ground.y, spec.dropMs, now, this.depth, false, (graphics, t) => {
+      // 위에서 덮쳐 내려온다 — 내려오는 동안은 또렷하고, 바닥에 닿는 끝에서만 옅어진다.
+      const eased = t * t;
+      const lift = (1 - eased) * spec.height * size * 1.6;
+      const fade = t < 0.75 ? 1 : 1 - (t - 0.75) / 0.25;
+      const points = crest.map((point) => ({ x: point.x, y: point.y - lift }));
+      graphics.fillStyle(palette.main, spec.alpha * fade);
+      graphics.fillPoints(points, true);
+      graphics.fillStyle(lightenColor(palette.main, 0.45), 0.5 * spec.alpha * fade);
+      graphics.fillPoints(points.slice(1, 6).concat([{ x: points[6].x, y: points[3].y * 0.6 + points[6].y * 0.4 }]), true);
+      graphics.lineStyle(SIGNATURE_INK_WIDTH + 2, INK_COLOR, fade);
+      graphics.strokePoints(points, true);
+      graphics.lineStyle(2, palette.sub, fade);
+      graphics.strokePoints(points, true);
+    });
+    this.openFlatRing(ground.x, ground.y, spec.ringRadius * size, 0.38, [0.35, 1], spec.ringMs, 12, palette.main, spec.alpha, now, this.groundDepth, spec.dropMs);
+    this.openFlatRing(ground.x, ground.y, spec.ringRadius * size * 1.25, 0.38, [0.35, 1], spec.ringMs, 8, palette.sub, spec.alpha, now, this.groundDepth, spec.dropMs + 120);
+    this.scene.time.delayedCall(spec.dropMs, () => {
+      this.openSpray("drop", ground.x, ground.y - 24, spec.drops, spec.dropTravel * size, 1.1, 420, palette.main, true, 0, true);
+      this.openInkStar(at.x, at.y, 1.25 * size, palette.main, {});
+    });
+  }
+
+  /** 수쿠스이노 평타 — 작은 턱이 물고, 그 둘레를 초승달 둘이 감기며 비튼다. */
+  private openDeathRoll(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.sukuDeathRoll;
+    this.openMaw(at, palette, spec.maw * scale, now, spec.ms);
+    for (let index = 0; index < 2; index += 1) {
+      const base = index * Math.PI;
+      this.openInkPiece("blade", palette.sub, spec.ms * 1.5, 0, (image, t) => {
+        const angle = base + t * spec.rollTurns * Math.PI * 2;
+        const radius = spec.rollRadius * scale;
+        image.setPosition(at.x + Math.cos(angle) * radius, at.y + Math.sin(angle) * radius * 0.5)
+          .setRotation(angle + Math.PI / 2)
+          .setScale(spec.bladeScale * scale);
+      });
+    }
+  }
+
+  /** 수쿠스이노 궁극기 — 크게 벌어진 아가리가 닫히고 닫힌 자리에서 물보라가 솟는다. */
+  private openDrowningMaw(at: { x: number; y: number }, ground: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.sukuDrowningMaw;
+    const size = Math.min(1.3, Math.max(0.85, scale));
+    this.openMaw(at, palette, spec.maw * size, now, spec.ms);
+    this.openFlatRing(ground.x, ground.y, spec.ringRadius * size, 0.38, [0.3, 1], spec.ringMs, 11, palette.main, 0.8, now, this.groundDepth, spec.ms * 0.85);
+    this.scene.time.delayedCall(spec.ms * 0.85, () => this.openSpray("drop", ground.x, ground.y - 20, spec.drops, spec.dropTravel * size, 1, 420, palette.main, true, 0, true));
+  }
+
+  /** 타보아 평타 — 고리 셋이 바깥에서 표적을 조여 든다. */
+  private openConstrict(at: { x: number; y: number }, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.taboaConstrict;
+    for (let coil = 0; coil < spec.coils; coil += 1) {
+      // 고리마다 높이를 어긋나게 둬 몸을 아래위로 감은 것처럼 보인다.
+      const lift = (coil - (spec.coils - 1) / 2) * 30 * scale;
+      this.openFlatRing(at.x, at.y + lift, spec.radius * scale, spec.squash, [1.35, 0.55], spec.ms, spec.width, coil % 2 === 0 ? palette.main : palette.sub, spec.alpha, now, this.depth, coil * spec.gapMs);
+    }
+  }
+
+  /** 타보아 궁극기 — 몸 둘레의 큰 고리가 감기며 조이고 열기가 솟는다. */
+  private openEmbrace(feet: { x: number; y: number }, body: { x: number; y: number }, palette: CombatPalette, now: number): void {
+    const spec = SIGNATURE_SPECS.taboaEmbrace;
+    for (let coil = 0; coil < spec.coils; coil += 1) {
+      this.openFlatRing(feet.x, feet.y, spec.radius * (1 - coil * 0.12), spec.squash, [1.15, 0.35], spec.ms, spec.width, coil % 2 === 0 ? palette.main : palette.sub, spec.alpha, now, this.groundDepth, coil * spec.gapMs);
+    }
+    this.openSpray("spark", body.x, body.y, spec.sparks, spec.sparkTravel, 1.1, spec.ms, lightenColor(palette.main, 0.3), true, 40);
+  }
+
+  /** 코아틀 평타 — 부리 창이 표적을 꿰뚫고 뒤까지 뻗는다. */
+  private openBeakLance(at: { x: number; y: number }, from: { x: number; y: number } | undefined, palette: CombatPalette, scale: number, now: number): void {
+    const spec = SIGNATURE_SPECS.coatlBeakLance;
+    const angle = from ? Math.atan2(at.y - from.y, at.x - from.x) : 0;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const length = spec.length * Math.max(0.85, scale);
+    this.openShape(at.x, at.y, spec.ms, now, this.depth, false, (graphics, t) => {
+      // 처음 4할에 끝까지 찌르고 그대로 머문 뒤 빠진다 — 자라는 동안 사라지면 찌른 것이 남지 않는다.
+      const reach = Math.min(1, t / 0.4);
+      const tipAt = length * spec.beyond * reach;
+      const rootAt = -length * (1 - spec.beyond);
+      const span = tipAt - rootAt;
+      const mid = { x: dx * (rootAt + span / 2), y: dy * (rootAt + span / 2) };
+      const points = slashPoints(mid, (angle * 180) / Math.PI, span, spec.rootWidth, spec.tipWidth);
+      const fade = t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45;
+      graphics.fillStyle(palette.main, spec.alpha * fade);
+      graphics.fillPoints(points, true);
+      graphics.lineStyle(SIGNATURE_INK_WIDTH * 0.7, INK_COLOR, fade);
+      graphics.strokePoints(points, true);
+      graphics.lineStyle(2, palette.sub, fade);
+      graphics.strokePoints(points, true);
+    });
+  }
+
+  /** 코아틀 궁극기 — 내리꽂은 길에 속도선이 남고 깃털이 흩어지며 바닥이 울린다. */
+  private openStormDive(
+    at: { x: number; y: number }, ground: { x: number; y: number }, from: { x: number; y: number } | undefined,
+    palette: CombatPalette, scale: number, now: number,
+  ): void {
+    const spec = SIGNATURE_SPECS.coatlStormDive;
+    const far = from && Math.hypot(at.x - from.x, at.y - from.y) > 12;
+    // 강하는 위에서 비스듬히 내리꽂는다 — 길을 모르면 왼쪽 위에서 들어온 것으로 그린다.
+    const angle = far ? Math.atan2(at.y - from.y, at.x - from.x) : Math.atan2(1, 0.6);
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    const nx = -dy;
+    const ny = dx;
+    this.openShape(at.x, at.y, spec.ms, now, this.depth, false, (graphics, t) => {
+      const fade = 1 - t * t;
+      for (let line = 0; line < spec.lines; line += 1) {
+        const lane = line - (spec.lines - 1) / 2;
+        const length = spec.length * (line % 2 === 0 ? 1 : 0.7);
+        // 선은 맞은 자리 뒤쪽에 서서 진행 방향으로 미끄러지며 빠진다.
+        const back = length * 0.6 + (1 - t) * 60 - lane * lane * 12;
+        const center = { x: nx * lane * spec.spread - dx * back, y: ny * lane * spec.spread - dy * back };
+        const points = slashPoints(center, (angle * 180) / Math.PI, length, 3, 12);
+        graphics.fillStyle(lightenColor(palette.main, 0.35), spec.alpha * fade);
+        graphics.fillPoints(points, true);
+        graphics.lineStyle(3, INK_COLOR, fade);
+        graphics.strokePoints(points, true);
+      }
+    });
+    const size = Math.min(1.3, Math.max(0.85, scale));
+    this.openFlatRing(ground.x, ground.y, spec.ringRadius * size, 0.38, [0.3, 1], spec.ringMs, 10, palette.main, spec.alpha, now, this.groundDepth, 80);
+    this.openSpray("feather", at.x, at.y, spec.feathers, spec.featherTravel * size, 0.9, 460, palette.sub, false, 0, true);
+  }
+
+  /**
+   * 상태가 걸린 순간·겹이 터진 순간의 공용 연출(`STATUS_CUE`).
+   *
+   * 타격 예산(`perFrame`)과 갈라 센다 — 순풍처럼 편성 전원에게 한꺼번에 드는 강화가 타격 예산에
+   * 걸리면 둘째·셋째 아군만 연출 없이 지나간다. 대신 제 상한이 있어 광역 기절이 끓지 않는다.
+   */
+  statusCue(id: StatusCueId, x: number, y: number, color: number, scale = 1): void {
+    const now = this.rollFrame();
+    if (this.statusFrame !== this.frame) { this.statusFrame = this.frame; this.statusThisFrame = 0; }
+    if (this.statusThisFrame >= STATUS_CUE_PER_FRAME) return;
+    if (!allowStatusCue(id, now, this.lastStatusAt.get(id))) return;
+    this.lastStatusAt.set(id, now);
+    this.statusThisFrame += 1;
+    const spec = STATUS_CUE[id];
+    const size = Math.min(1.4, Math.max(0.75, scale));
+    if (id === "stun") {
+      for (let index = 0; index < spec.pieces; index += 1) {
+        this.openInkPiece("star", color, spec.ms, 0, (image, t) => {
+          const point = stunOrbit(index, spec.pieces, t, spec.travel * size);
+          // 뒤로 도는 별은 조금 작게 — 납작한 타원이 머리 둘레를 감은 것으로 읽힌다.
+          image.setPosition(x + point.x, y + point.y).setRotation(t * 5).setScale(spec.scale * size * (point.y < 0 ? 0.78 : 1));
+        });
+      }
+      return;
+    }
+    if (id === "frozen") {
+      this.openSpray("shard", x, y, spec.pieces, spec.travel * size, spec.scale * size, spec.ms, color, false, 0, true);
+      this.openFlatRing(x, y, 96 * size, 0.72, [1.3, 0.6], spec.ms, 6, color, 0.85, now, this.depth);
+      return;
+    }
+    if (id === "fear") {
+      // 식은땀 둘이 머리 양옆으로 튄다. 파문은 벌어지지 않고 **움츠러든다**.
+      for (let index = 0; index < spec.pieces; index += 1) {
+        const side = index === 0 ? -1 : 1;
+        this.openInkPiece("drop", color, spec.ms, index * spec.staggerMs, (image, t) => {
+          const reach = spec.travel * size * (1 - (1 - t) ** 2);
+          image.setPosition(x + side * (30 + reach), y - reach * 0.5 + t * t * 24).setRotation(side * (0.6 + t * 0.4)).setScale(spec.scale * size);
+        });
+      }
+      this.openFlatRing(x, y + 50 * size, 90 * size, 0.6, [1.2, 0.45], spec.ms, 5, color, 0.8, now, this.depth);
+      return;
+    }
+    if (id === "sleep") {
+      for (let index = 0; index < spec.pieces; index += 1) {
+        this.openInkPiece("puff", color, spec.ms, index * spec.staggerMs, (image, t) => {
+          // 졸음은 곧게 오르지 않고 한쪽으로 기울며 느리게 떠간다.
+          const rise = spec.travel * size * t;
+          image.setPosition(x + 18 + index * 16 + Math.sin(t * Math.PI * 1.5) * 10, y - rise).setRotation(0.2).setScale(spec.scale * size * (0.7 + index * 0.18 + t * 0.2));
+        });
+      }
+      return;
+    }
+    if (id === "buff") {
+      for (let index = 0; index < spec.pieces; index += 1) {
+        const lane = index - (spec.pieces - 1) / 2;
+        this.openInkPiece("arrow", color, spec.ms, Math.abs(lane) * spec.staggerMs, (image, t) => {
+          const rise = spec.travel * size * (1 - (1 - t) ** 2);
+          // 가운데 화살이 가장 높이 솟는다 — 셋이 같은 키면 위로 오른다는 방향보다 줄이 먼저 읽힌다.
+          image.setPosition(x + lane * 34 * size, y + 46 * size - rise * (1 - Math.abs(lane) * 0.25))
+            .setRotation(-Math.PI / 2).setScale(spec.scale * size);
+        });
+      }
+      return;
+    }
+    if (id === "dotStart") {
+      this.openSpray("drop", x, y, spec.pieces, spec.travel * size, spec.scale * size, spec.ms, color, true, 0, true);
+      this.openInkStar(x, y, 0.5 * size, color, {});
+      return;
+    }
+    // debuffBurst — 쌓아 둔 것이 한꺼번에 터진다. 별 하나와 바깥으로 벌어지는 네 갈래 불꽃.
+    this.openInkStar(x, y, 1 * size, color, {});
+    this.openSpray("spark", x, y, spec.pieces, spec.travel * size, spec.scale * size, spec.ms, color, false);
+    this.openRing(x, y, 104 * size, spec.ms, 6, color, 0, true);
+  }
+
   /** 씬이 꺼질 때 emitter와 두 풀을 모두 폐기한다. */
   destroy(): void {
     for (const key of [...this.sustained.keys()]) this.removeSustained(key);
@@ -1463,5 +1751,6 @@ export class EffectManager {
     this.shieldAuras.forEach((aura) => aura.graphics.destroy());
     this.shieldAuras.clear();
     this.lastAt.clear();
+    this.lastStatusAt.clear();
   }
 }

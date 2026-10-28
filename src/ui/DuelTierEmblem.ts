@@ -2,13 +2,14 @@ import Phaser from "phaser";
 import type { DuelTierId } from "../core/duelArena";
 import { duelDivisionNumeral } from "../core/duelArena";
 import { DUEL_TIER_COLOR } from "./duelLayout";
+import { duelTierOrnaments } from "./duelTierEmblemShape";
 import { drawLayer } from "./holo";
 import { textStyle } from "./theme";
 
 /**
- * 티어 표식 — 마름모 두 겹과 단계 로마자.
+ * 티어 표식 — 마름모 두 겹과 단계 로마자, 그리고 티어가 오를수록 붙는 장식(`duelTierOrnaments`).
  *
- * 전용 문장(紋章) 원화가 오기 전까지 서는 **자리표시**다. 원화가 오면 이 함수 안만 갈아 끼우면 되도록
+ * 전용 문장(紋章) 원화가 오기 전까지 서는 **자리표시(임시)**다. 원화가 오면 이 함수 안만 갈아 끼우면 되도록
  * 결투장 화면·티어 안내·순위표가 모두 이 한 함수를 부른다. 동그라미를 쓰지 않는다(화면 규칙).
  */
 export function addDuelTierEmblem(
@@ -26,6 +27,13 @@ export function addDuelTierEmblem(
     const w = (size / 2) * scale; const h = (size / 2) * scale * 1.08;
     return [0, -h, w * 0.92, -h * 0.06, 0, h, -w, h * 0.06];
   };
+  // 장식은 바깥 검은 판 뒤에 깔려 마름모가 늘 맨 앞에서 읽힌다. 광채는 옅게, 날개·왕관은 티어 색으로 칠한다.
+  const half = size / 2;
+  for (const ornament of duelTierOrnaments(tierId)) {
+    const shape = ornament.points.map((value) => value * half);
+    if (ornament.layer === "rays") emblem.add(drawLayer(scene, 0, 0, shape, { fill: tone.fill, alpha: 0.55, shadow: false }));
+    else emblem.add(drawLayer(scene, 0, 0, shape, { fill: tone.fill, alpha: 0.92, sheen: 0.1, shadow: { x: 0, y: Math.max(2, size * 0.04) } }));
+  }
   emblem.add(drawLayer(scene, 0, 0, diamond(1), { fill: 0x05070a, alpha: 0.86, glow: { color: tone.fill, strength: 0.5 } }));
   emblem.add(drawLayer(scene, 0, 0, diamond(0.78), { fill: tone.fill, alpha: 0.88, shadow: false, sheen: 0.07 }));
   emblem.add(drawLayer(scene, 0, 0, diamond(0.46), { fill: 0x05070a, alpha: 0.55, shadow: false }));

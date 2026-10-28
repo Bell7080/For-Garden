@@ -95,6 +95,8 @@ export const LOBBY_ID = {
   "ancient.trial.deadline": "Batas waktu 45 detik · HP musuh −12%",
   "ancient.trial.shield": "Perisai awal musuh: 30% HP maksimum",
   "ancient.trial.charge": "Energi ultimate awal musuh +50%",
+  "ancient.trial.frenzy": "Kecepatan serangan musuh +25%",
+  "ancient.trial.precision": "Peluang kritis musuh +30%",
   "ancient.depthMultiplier": "Pengganda kedalaman",
   "ancient.deepTrial": "Ujian dalam · Kerusakan % HP memakai HP setara B120",
   "ancient.requirement": "Selesaikan {stage} dahulu",
@@ -113,5 +115,7 @@ export const LOBBY_ID = {
   "ancient.trialTag.deadline": "Hitung Mundur",
   "ancient.trialTag.shield": "Penghalang",
   "ancient.trialTag.charge": "Kelebihan Daya",
+  "ancient.trialTag.frenzy": "Serbuan Kilat",
+  "ancient.trialTag.precision": "Titik Lemah",
   "ancient.trialLine": "{name}: {effect}",
 } as const;

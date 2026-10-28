@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { slideTabPage } from "./screenTransition";
 import { t, type TextKey } from "../i18n";
 import { GameApiError, type GameApi } from "../api/contracts";
@@ -8,12 +9,12 @@ import { DEFAULT_INVENTORY_SORT, INVENTORY_LAYOUT, InventoryManager, inventoryGr
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
 import { addFrameAmount, addItemFrame, ITEM_FRAME } from "./itemFrame";
-import { INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
+import { INVENTORY_TAB_CLEARANCE, INVENTORY_TAB_LAYOUT, inventoryCategoryTabPosition } from "./inventoryTabs";
 import { addCategoryTab } from "./CategoryTab";
-import { SortControl } from "./SortControl";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { equippedRuneSlot, openRuneInfoPopup } from "./RunePopup";
-import { addRuneBagToggles } from "./runeHolderCycle";
+import { createRuneListState, RuneListControls, visibleRuneList, type RuneListState } from "./RuneListControls";
+import { RUNE_LIST_CONTROLS } from "./runeListControlsLayout";
 import { addRuneCard, runeTexture } from "./runeIcons";
 import { COLOR, textStyle } from "./theme";
 import { formatCurrency } from "../core/formatCurrency";
@@ -29,21 +30,27 @@ import { universalFragmentRarity } from "../core/relicProgression";
 import { addUniversalFragmentArt, addUniversalFragmentGlass, universalFragmentTexture } from "./universalFragmentArt";
 import { onTap } from "./tapGuard";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
+import { addClippedHit } from "./clippedHit";
+import type { ClipRect } from "./clipRect";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
 ];
 // 900px 작업판에서 좌우 48px만 안전 여백으로 남기고 본문이 나머지를 모두 사용한다.
-const POPUP_WIDTH = 900; const POPUP_HEIGHT = 1510; const BODY_SAFE_X = 48; const LIST_TOP = -550; const TAB_CLEARANCE = 20;
-/** 룬 탭의 조작 줄 — 제목표 띠와 목록 윗변 사이에 선다. */
-const RUNE_SORT_ROW = { y: -622, height: 64, sortWidth: 250, dirWidth: 68, gap: 12 } as const;
+const POPUP_WIDTH = 900; const POPUP_HEIGHT = 1510; const BODY_SAFE_X = 48; const LIST_TOP = -550; const TAB_CLEARANCE = INVENTORY_TAB_CLEARANCE;
+/**
+ * 룬 탭의 조작 두 줄(필터·검색·정렬 / 토글) — 첫 줄 가운데가 제목표 띠 바로 아래에 선다.
+ * 두 줄이 서는 만큼 룬 탭만 목록 윗변이 내려간다(`RUNE_LIST_TOP`).
+ */
+const RUNE_CONTROLS_Y = -622;
+const RUNE_LIST_TOP = RUNE_CONTROLS_Y - RUNE_LIST_CONTROLS.rowHeight / 2 + RUNE_LIST_CONTROLS.height + 18;
 const TAB_TOP = INVENTORY_TAB_LAYOUT.centerY - INVENTORY_TAB_LAYOUT.height * INVENTORY_TAB_LAYOUT.selectedScale / 2;
-const VIEWPORT = {
-  x: 0,
-  y: (LIST_TOP + TAB_TOP - TAB_CLEARANCE) / 2,
-  width: POPUP_WIDTH - BODY_SAFE_X * 2,
-  height: TAB_TOP - TAB_CLEARANCE - LIST_TOP,
-} as const;
+/** 목록이 보이는 사각형(판 가운데 기준). 윗변만 탭에 따라 다르다. */
+function listViewport(top: number): { x: number; y: number; width: number; height: number } {
+  return { x: 0, y: (top + TAB_TOP - TAB_CLEARANCE) / 2, width: POPUP_WIDTH - BODY_SAFE_X * 2, height: TAB_TOP - TAB_CLEARANCE - top };
+}
+const VIEWPORT = listViewport(LIST_TOP);
 
 /**
  * 액자가 카드 한 변에서 차지하는 비율.
@@ -66,6 +73,11 @@ export class InventoryPopup {
   private category: ItemCategory = "rune";
   /** 정렬 선택은 팝업 생명주기 동안 유지하며 변경 렌더는 스크롤을 항상 원점으로 만든다. */
   private sort: InventorySort = { ...DEFAULT_INVENTORY_SORT };
+  /** 룬 탭의 검색·필터·정렬. 토글은 설정(`settings.game.runeBag`)에 남는다. */
+  private readonly runeList: RuneListState = createRuneListState();
+  /** 목록만 담는 층. 조건이 바뀌면 이 층만 다시 그린다 — 조작 줄까지 다시 세우면 검색 칸의 초점이 끊긴다. */
+  private listLayer?: Phaser.GameObjects.Container;
+  private runeControls?: RuneListControls;
   private maskShape?: Phaser.GameObjects.Rectangle;
   /** 마스크를 실제로 걸어 둔 컨테이너. 풀 때 이 자리에서 지워야 죽은 마스크가 남지 않는다. */
   private maskedContent?: Phaser.GameObjects.Container;
@@ -124,41 +136,70 @@ export class InventoryPopup {
    * 때만이다. 정렬을 바꾸거나 쓰고 난 뒤 다시 그릴 때까지 깔리면 같은 목록이 매번 새로 열린 것처럼 읽힌다.
    */
   private render(body: Phaser.GameObjects.Container, deal = false): void {
-    this.dealing = deal && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
     // 탭 전환 전에 display-list 밖의 GeometryMask까지 명시적으로 해제한다.
     this.destroyMask();
     body.removeAll(true);
+    this.runeControls = undefined;
     // Canvas DOM만 보는 E2E에는 비동기 조회 완료와 실제 선택 탭을 최소 디버그 상태로 알린다.
     setDebugInventoryCategory(this.category);
+    const layer = this.scene.add.container(0, 0);
+    this.listLayer = layer;
+    body.add(layer);
+    // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
+    CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
+    if (this.category === "rune") {
+      const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
+      this.runeControls = new RuneListControls({
+        scene: this.scene, parent: body, popups: this.popups, left: -right, right, y: RUNE_CONTROLS_Y,
+        state: this.runeList, parts: true, onChange: () => this.renderList(body, false),
+        isActive: () => this.popups.isTop(body),
+      });
+    }
+    this.renderList(body, deal);
+  }
+
+  /** 목록 층만 다시 그린다. 정렬·필터·검색·토글이 바뀔 때와 탭을 그릴 때 지난다. */
+  private renderList(body: Phaser.GameObjects.Container, deal: boolean): void {
+    const layer = this.listLayer;
+    if (!layer?.active) return;
+    this.dealing = deal && motionPolicy(session.settings).nonEssentialDistanceFactor > 0;
+    this.destroyMask();
+    layer.removeAll(true);
     // 매 렌더마다 비워 실제로 현재 탭에 놓인 이미지 키만 E2E에 남긴다.
     const textureKeys: string[] = [];
     setDebugInventoryTextureKeys(textureKeys);
-    const runeBag = session.settings.game.runeBag;
-    // 「장착 룬」을 끄면 누군가 끼고 있는 룬은 목록에서 빠진다 — 갈아 끼울 룬만 훑을 때 쓴다.
-    const visible = this.inventory.displayList(this.category, this.sort)
-      .filter((item) => item.kind !== "rune" || runeBag.showEquipped || equippedRuneSlot(item.rune.instanceId) === undefined);
-    // 첫 카드가 큰 작업판 제목의 세로 영역을 침범하지 않도록 기존 목록을 50px 내린다.
+    const runeTab = this.category === "rune";
+    const viewport = runeTab ? listViewport(RUNE_LIST_TOP) : VIEWPORT;
+    const all = this.inventory.displayList(this.category, runeTab ? this.runeList.sort : this.sort);
+    // 룬은 공용 거르기(`visibleRuneList` — 토글·필터·검색)를 지난다. 정렬 순서는 위 목록이 이미 갖는다.
+    const keep = runeTab ? new Set(visibleRuneList(this.runeList).map((rune) => rune.instanceId)) : undefined;
+    const visible = keep ? all.filter((item) => item.kind === "rune" && keep.has(item.rune.instanceId)) : all;
+    this.runeControls?.setCount(visible.length, all.length);
     // 첫 카드의 윗변을 마스크 윗변에 맞춰 아이콘/액자가 절반 잘리지 않게 한다.
-    const contentStartY = VIEWPORT.y - VIEWPORT.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
+    const contentStartY = viewport.y - viewport.height / 2 + INVENTORY_LAYOUT.cellHeight / 2;
     const content = this.scene.add.container(0, contentStartY);
     // 입력면과 마스크는 같은 팝업 로컬 사각형에서 만들어 좌표계 불일치를 차단한다.
     const matrix = body.getWorldTransformMatrix();
-    const maskCenter = matrix.transformPoint(VIEWPORT.x, VIEWPORT.y);
-    const maskRight = matrix.transformPoint(VIEWPORT.x + VIEWPORT.width / 2, VIEWPORT.y);
-    const maskBottom = matrix.transformPoint(VIEWPORT.x, VIEWPORT.y + VIEWPORT.height / 2);
+    const maskCenter = matrix.transformPoint(viewport.x, viewport.y);
+    const maskRight = matrix.transformPoint(viewport.x + viewport.width / 2, viewport.y);
+    const maskBottom = matrix.transformPoint(viewport.x, viewport.y + viewport.height / 2);
     // GeometryMask는 display-list 밖에 있으므로 팝업 컨테이너의 현재 월드 배율까지 반영한다.
     this.maskShape = this.scene.add.rectangle(maskCenter.x, maskCenter.y, Math.hypot(maskRight.x - maskCenter.x, maskRight.y - maskCenter.y) * 2, Math.hypot(maskBottom.x - maskCenter.x, maskBottom.y - maskCenter.y) * 2, 0xffffff).setVisible(false);
-    this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); this.maskedContent = content; body.add(content);
-    visible.forEach((item, index) => this.addCard(content, item, index, textureKeys));
+    this.geometryMask = this.maskShape.createGeometryMask(); content.setMask(this.geometryMask); this.maskedContent = content; layer.add(content);
+    // 카드 입력면은 마스크가 보여 주는 창 안에서만 손을 받는다 — 마스크는 그림만 자르므로 창 밖으로 흘러간 카드가 하단 탭·빈 공간을 덮는다.
+    const maskShape = this.maskShape;
+    const clip = (): ClipRect => {
+      if (!maskShape.active) return { left: 0, right: 0, top: 0, bottom: 0 };
+      const { left, right, top, bottom } = maskShape.getBounds();
+      return { left, right, top, bottom };
+    };
+    visible.forEach((item, index) => this.addCard(content, item, index, textureKeys, clip));
     setDebugInventoryTextureKeys(textureKeys);
-    const metrics = inventoryScrollMetrics(visible.length); let offset = 0;
+    const metrics = inventoryScrollMetrics(visible.length, runeTab ? { ...INVENTORY_LAYOUT, viewportHeight: viewport.height } : INVENTORY_LAYOUT); let offset = 0;
     const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, metrics.minY, 0); content.y = contentStartY + offset; };
     // 칸 위에서 시작한 손도 내려가도록 씬이 듣는다(`attachDragScroll`) — 끌기 면을 칸 뒤에 두면 룬 위에서는 스크롤이 안 됐다.
-    const maskShape = this.maskShape!;
     attachDragScroll(this.scene, { owner: content, root: body, bounds: () => maskShape.getBounds(), onDelta: move });
-    // 생성과 입력 피드백은 한 헬퍼를 통과시켜 네 탭의 면·클릭 범위가 갈라지지 않게 한다.
-    CATEGORIES.forEach((tab, index) => this.addCategoryTab(body, tab, index));
-    if (this.category === "rune") this.addSortControls(body, visible.length);
+    addScrollHint(this.scene, layer, { x: viewport.x, y: viewport.y, width: viewport.width, height: viewport.height, owner: content, read: () => ({ offset, min: metrics.minY }) });
   }
 
   /**
@@ -185,35 +226,6 @@ export class InventoryPopup {
   }
 
   /**
-   * 룬 탭의 조작 줄 — 왼쪽에 보유 수, 오른쪽에 **도감과 같은 정렬 칩 + 방향 칩**(`SortControl`).
-   *
-   * 기준 다섯을 맨 글자로 늘어놓던 때는 무엇이 눌리는 것인지, 지금 어느 기준인지가 작은 화살표
-   * 하나로만 읽혔다. 도감과 같은 손짓(열고 고르는 목록 · 따로 선 방향)이면 두 화면에서 배운 것이
-   * 그대로 통한다. 바꾸면 스크롤은 원점으로 돌아간다.
-   */
-  private addSortControls(body: Phaser.GameObjects.Container, count: number): void {
-    const { y, height, sortWidth, dirWidth, gap } = RUNE_SORT_ROW;
-    const right = POPUP_WIDTH / 2 - BODY_SAFE_X;
-    const dirX = right - dirWidth / 2;
-    const options: readonly { id: InventorySort["key"]; labelKey: TextKey }[] = [
-      { id: "relic", labelKey: "inventory.sort.relic" }, { id: "acquired", labelKey: "inventory.sort.acquired" }, { id: "rarity", labelKey: "inventory.sort.rarity" }, { id: "part", labelKey: "inventory.sort.part" },
-      { id: "enhancement", labelKey: "inventory.sort.craft" }, { id: "equipped", labelKey: "inventory.sort.equipped" },
-    ];
-    const countLabel = this.scene.add.text(-right, y, t("inventory.rune.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5);
-    const countValue = this.scene.add.text(-right + countLabel.width + 12, y, count.toLocaleString(), textStyle({ role: "display", size: 34, color: COLOR.accentText })).setOrigin(0, 0.5);
-    body.add([countLabel, countValue]);
-    // 보기 토글은 보유 수 바로 오른쪽에 선다 — 정렬 칩과 한 줄이지만 목록을 거르는 조작이라 왼쪽 덩어리에 묶는다.
-    addRuneBagToggles(this.scene, body, Math.max(countValue.x + countValue.width + 20, -right + 150), y, () => this.render(body));
-    new SortControl(this.scene, {
-      x: dirX - dirWidth / 2 - gap - sortWidth / 2, y, height, sortWidth, dirWidth, gap, fontSize: 24, parent: body,
-      sortOptions: options.map(({ id, labelKey }) => ({ id, label: t(labelKey) })),
-      sortMode: this.sort.key, descending: this.sort.direction === "desc",
-      onSort: (key) => { this.sort = { ...this.sort, key }; this.render(body); },
-      onDirection: (descending) => { this.sort = { ...this.sort, direction: descending ? "desc" : "asc" }; this.render(body); },
-    });
-  }
-
-  /**
    * 마스크를 푼다. GeometryMask와 원본 도형은 컨테이너 자식이 아니라 소유자가 직접 파괴한다.
    *
    * **걸어 둔 바로 그 컨테이너에서 지운다.** 마스크는 `view`가 아니라 그 자식인 목록
@@ -233,7 +245,7 @@ export class InventoryPopup {
    * 서지 못하고, 그 글은 눌러서 여는 쪽지가 이미 말한다. 수량만 액자 오른쪽 아래에 겹쳐
    * 한 그림과 한 수로 읽히게 한다.
    */
-  private addCard(content: Phaser.GameObjects.Container, item: InventoryDisplayItem, index: number, textureKeys: string[]): void {
+  private addCard(content: Phaser.GameObjects.Container, item: InventoryDisplayItem, index: number, textureKeys: string[], clip: () => ClipRect): void {
     const { x, y } = inventoryGridPosition(index, INVENTORY_LAYOUT);
     const { cardWidth, cardHeight } = INVENTORY_LAYOUT;
     // 룬은 카드 한 장이 통째로 공용 프리팹이다. 장착용 가방과 같은 한 장을 써야 한쪽만
@@ -245,7 +257,7 @@ export class InventoryPopup {
         holder: slot && session.settings.game.runeBag.showHolder ? { relicId: slot.relicId } : undefined,
       });
       textureKeys.push(runeTexture(item.rune.rarity, item.rune.part));
-      this.addCardInput(content, card, item, cardWidth, cardHeight);
+      this.addCardInput(content, card, item, cardWidth, cardHeight, clip);
       return;
     }
     const card = this.scene.add.container(x, y);
@@ -277,15 +289,14 @@ export class InventoryPopup {
     // 마주 보는 자리다. 표식은 초마다 제 한 마디를 다시 적는다(`7D` → … → `24H` → … → `60M`).
     const expiry = item.kind === "stack" && item.lot ? { expiresAt: item.lot.expiresAt } : soonestItemExpiry(item.definition.id);
     if (expiry) card.add(addExpiryTag(this.scene, -frameSize / 2 + 4, -frameSize / 2 + 4, expiry.expiresAt));
-    this.addCardInput(content, card, item, cardWidth, cardHeight);
+    this.addCardInput(content, card, item, cardWidth, cardHeight, clip);
   }
 
   /** 카드 종류와 무관하게 같은 입력면과 같은 상세 진입을 쓴다. */
-  private addCardInput(content: Phaser.GameObjects.Container, card: Phaser.GameObjects.Container, item: InventoryDisplayItem, width: number, height: number): void {
-    const hit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  private addCardInput(content: Phaser.GameObjects.Container, card: Phaser.GameObjects.Container, item: InventoryDisplayItem, width: number, height: number, clip: () => ClipRect): void {
+    const hit = addClippedHit(this.scene, card, 0, 0, width, height, clip);
     // 클릭 순간의 월드 변환을 읽어 팝업 이동·배율·스크롤 이후에도 상세창이 카드에 붙게 한다.
     onTap(hit, () => this.select(item));
-    card.add(hit);
     content.add(card);
     if (!this.dealing) return;
     // 도감의 카드처럼 한 뼘 아래에서 떠오르며 차례로 깔린다. 지연에는 상한이 있어 첫 줄 뒤는 함께 선다.
@@ -300,7 +311,7 @@ export class InventoryPopup {
   private select(item: InventoryDisplayItem): void {
     // 룬 쪽지는 누른 칸에 붙지 않고 화면 가운데에 선다 — 옵션 다섯 줄을 담을 만큼 커진 판이라
     // 가장자리 칸에 붙이면 판 밖 우하단 뒤로가기와 겹친다.
-    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api }); return; }
+    if (item.kind === "rune") { openRuneInfoPopup(this.scene, this.popups, { runeInstanceId: item.rune.instanceId, api: this.api, traitResearch: true }); return; }
     // 재화 카드는 상단 칩과 같은 안내 프리팹을 스택 위에 쌓아 가방 자체를 보존한다.
     if (item.category === "currency" && item.definition.icon.kind === "currency") { new CurrencyGuidePopup(this.scene, this.popups, this.onCurrencyAction).open(item.definition.icon.key); return; }
     new ItemGuidePopup(this.scene, this.popups).open({
@@ -319,10 +330,12 @@ export class InventoryPopup {
       this.popups.open({ width: 440, height: 250, title: t(title), dim: true }, (body) => body.add(this.scene.add.text(0, 0, text, textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(0.5)));
     };
     void this.inventory.useConsumable(this.api, itemId, lotExpiresAt).then((result) => {
+      audioManager?.playUi("stamina.refill");
       notice("inventory.useDone", t("inventory.staminaGained", { amount: result.appliedAmount }));
       if (this.view) this.render(this.view);
     }).catch((error: unknown) => {
       // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다.
+      if (error instanceof GameApiError && error.code === "STAMINA_FULL") audioManager?.playUi("ui.deny");
       if (error instanceof GameApiError && error.code === "STAMINA_FULL") notice("inventory.useFailed", t("inventory.staminaFull"));
       else console.error("소비품 사용 실패", error);
     });

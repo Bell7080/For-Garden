@@ -135,7 +135,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
   ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 20.8, 0.97],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
-  ["현상수배 5단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS[4].rounds[0])], "normal", "bounty", 8.2, 0.74],
+  // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.
+  ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds[0])], "normal", "bounty", 18.5, 0.98],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
   ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 52.8, 0.79],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
@@ -177,7 +178,7 @@ describe("콘텐츠별 전투 시간 실측", () => {
     const offTarget = AUDIT.filter(([, , , role, , ttk, hp]) => !isEncounterOnTarget(role, { ttkSeconds: ttk, remainingHp: hp }));
     expect(offTarget.map(([label]) => label)).toEqual([
       "스토리 1-9", "스토리 1-5 정예", "스토리 1-10 정예", "스토리 3-9",
-      "현상수배 1단계", "현상수배 5단계", "대작전 1단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
+      "현상수배 1단계", "현상수배 10단계", "대작전 1단계", "대작전 8단계", "원정 일반 5층", "원정 정예 10층",
     ]);
   });
 });

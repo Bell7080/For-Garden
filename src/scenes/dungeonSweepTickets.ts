@@ -6,7 +6,7 @@ import { InventoryManager } from "../managers/InventoryManager";
 import { presentRewardedAd } from "../platform/rewardedAds";
 import { session } from "../state/session";
 import { adRewardToRewardItems, type RewardPopupItem } from "../ui/rewardPopupModel";
-import type { SweepTickets } from "../ui/SweepPopup";
+import type { SweepTickets } from "../ui/DungeonRunPopup";
 
 /** 소탕권을 채우는 광고 슬롯. 한 번에 몇 장·하루 몇 번인지는 슬롯 표(`AD_REWARD_SLOTS`)가 갖는다. */
 export const SWEEP_TICKET_AD_SLOT = "sweep-tickets";

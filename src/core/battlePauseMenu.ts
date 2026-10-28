@@ -24,6 +24,7 @@ export function battlePauseActions(mode: BattleSceneInputDto["mode"], intro: boo
   if (mode === "stage" && intro) return { retry: false, settings: false, exit: "title" };
   if (mode === "stage" || mode === "cake" || mode === "bounty") return { retry: true, settings: true, exit: "leave" };
   // 결투는 도전권을 입장에서 썼다 — 나가면 그 판을 진 것으로 끝낸다.
-  if (mode === "raid" || mode === "expeditionBoss" || mode === "duel") return { retry: false, settings: true, exit: "forfeit" };
+  // 수호전도 입장이 도전 한 번을 썼다. 판은 입장의 편성·시드가 다 정하므로 나가기는 남은 판을 건너뛰고 확정 결과를 받는다.
+  if (mode === "raid" || mode === "expeditionBoss" || mode === "duel" || mode === "guildGuard") return { retry: false, settings: true, exit: "forfeit" };
   return { retry: false, settings: true, exit: null };
 }

@@ -75,11 +75,14 @@ describe("FakeServer 치즈케이크 대작전", () => {
     const state = makeSession(); const server = make(state);
     await server.enterCakeOperation({ tierId: TIER.id, requestId: "enter-2" });
     const done = await server.completeCakeOperation({ tierId: TIER.id, requestId: "enter-2", victory: true });
-    expect(done.granted.cheesecake).toBe(TIER.rewardCheesecake);
+    // 난수가 늘 0이라 대성공이다 — 기본 몫에 절반이 더 얹힌다.
+    expect(done.greatSuccess).toBe(true);
+    expect(done.greatSuccessBonus?.cheesecake).toBe(Math.floor(TIER.rewardCheesecake / 2));
+    expect(done.granted.cheesecake).toBe(TIER.rewardCheesecake + Math.floor(TIER.rewardCheesecake / 2));
     expect(done.unlockedNextTier).toBe(true);
     expect(state.cakeOperation.clearedIndex).toBe(0);
     await expect(server.completeCakeOperation({ tierId: TIER.id, requestId: "enter-2", victory: true })).resolves.toEqual(done);
-    expect(state.wallet.cheesecake).toBe(TIER.rewardCheesecake);
+    expect(state.wallet.cheesecake).toBe(TIER.rewardCheesecake + Math.floor(TIER.rewardCheesecake / 2));
   });
 
   it("패배는 보상도 해금도 남기지 않는다", async () => {
@@ -117,12 +120,14 @@ describe("FakeServer 치즈케이크 대작전", () => {
     state.cakeOperation = { clearedIndex: 0 };
     const swept = await server.sweepCakeOperation({ tierId: TIER.id, count: 3, requestId: "sweep-3" });
     expect(swept).toMatchObject({ count: 3, staminaSpent: COST * 3, ticketsSpent: 3 });
-    expect(swept.granted.cheesecake).toBe(TIER.rewardCheesecake * 3);
+    // 세 판 모두 대성공(난수 0) — 판마다 절반이 더 얹힌다.
+    expect(swept.greatSuccessCount).toBe(3);
+    expect(swept.granted.cheesecake).toBe((TIER.rewardCheesecake + Math.floor(TIER.rewardCheesecake / 2)) * 3);
     expect(state.wallet.stamina).toBe(100 - COST * 3);
     expect(state.itemInventory).toEqual([{ itemId: SWEEP_TICKET_ITEM, quantity: 2 }]);
     // 같은 요청 ID로 다시 불러도 한 번만 오간다.
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 3, requestId: "sweep-3" })).resolves.toEqual(swept);
-    expect(state.wallet.cheesecake).toBe(TIER.rewardCheesecake * 3);
+    expect(state.wallet.cheesecake).toBe((TIER.rewardCheesecake + Math.floor(TIER.rewardCheesecake / 2)) * 3);
     // 남은 두 장으로 세 번은 안 된다.
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 3, requestId: "sweep-4" })).rejects.toMatchObject({ code: "SWEEP_TICKET_SHORTAGE" });
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 0, requestId: "sweep-5" })).rejects.toMatchObject({ code: "INVALID_STATE" });

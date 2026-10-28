@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import { clipHit } from "./clippedHit";
+import type { ClipRect } from "./clipRect";
+import { audioManager } from "../managers/AudioManager";
 import { portraitCardZoom } from "./portraitPlacement";
 import type { RaidDto } from "../api/contracts";
 import { RAID_DIFFICULTY, RAID_SUMMON_DIFFICULTIES, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
@@ -32,6 +35,8 @@ export interface RaidLayerHandlers {
    * `dismiss`는 그 덮개가 걷히는 연출이고, 다 걷히면 풀린다 — 부른 쪽이 서버 응답과 나란히 기다린다.
    */
   onSettle?: (dismiss: () => Promise<void>) => void;
+  /** 층이 흐르는 창(월드 좌표). 주면 입력면이 그 창 안에서만 손을 받는다 — 창 밖으로 흘러간 층이 밑동의 탭·버튼을 덮지 않게. */
+  clip?: () => ClipRect;
 }
 
 /** 층 윗변에 걸터앉는 제목표. 월드 폭주는 그 이름, 소환 레이드는 난이도다. */
@@ -117,7 +122,8 @@ export function addRaidLayer(
   // 따라오지 않는다(교류 층과 같은 이유).
   void loadFaceBand(scene, layer, raid.bossRelicId, width + slant, height, shape, completed);
   // 입력면은 판 바로 위에 깐다 — 그 위에 서는 정산 버튼이 먼저 손을 받는다.
-  const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  const hit = scene.add.rectangle(0, 0, width - slant, height, 0xffffff, 0);
+  if (handlers.clip) clipHit(hit, handlers.clip); else hit.setInteractive({ useHandCursor: true });
   hit.on("pointerdown", () => pressIn(layer));
   hit.on("pointerout", () => pressOut(layer, "normal", { pop: false }));
   hit.on("pointerup", () => { pressOut(layer); handlers.onTap(); });
@@ -176,7 +182,7 @@ export function addRaidLayer(
   layer.add(shadowed(scene.add
     .text(barWidth / 2, height / 2 - hp.labelUp, t("raid.world.percent", { percent }), textStyle({ role: "display", size: 30, color: COLOR.ink }))
     .setOrigin(1, 0.5), 6));
-  if (completed && !raid.pendingRequestId && raid.settlement.length > 0 && !raid.settled && handlers.onSettle) addSettleCover(scene, layer, shape, width - slant, height, settle, handlers.onSettle);
+  if (completed && !raid.pendingRequestId && raid.settlement.length > 0 && !raid.settled && handlers.onSettle) addSettleCover(scene, layer, shape, width - slant, height, settle, handlers.onSettle, handlers.clip);
   return layer;
 }
 
@@ -193,6 +199,7 @@ function addSettleCover(
   height: number,
   spec: typeof RAID_LIST.settle,
   onSettle: (dismiss: () => Promise<void>) => void,
+  clip?: () => ClipRect,
 ): void {
   const cover = scene.add.container(0, 0);
   layer.add(cover);
@@ -218,7 +225,8 @@ function addSettleCover(
   const breath = scene.tweens.add({ targets: label, alpha: spec.breath.from, duration: spec.breath.ms, yoyo: true, repeat: -1, ease: "Sine.InOut" });
   const still = motionPolicy(session.settings).nonEssentialDistanceFactor === 0;
   if (still) breath.pause();
-  const hit = scene.add.rectangle(0, 0, hitWidth, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+  const hit = scene.add.rectangle(0, 0, hitWidth, height, 0xffffff, 0);
+  if (clip) clipHit(hit, clip); else hit.setInteractive({ useHandCursor: true });
   cover.add(hit);
   hit.on("pointerdown", () => pressIn(label));
   hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
@@ -228,6 +236,8 @@ function addSettleCover(
       if (!cover.active) { resolve(); return; }
       hit.disableInteractive();
       breath.stop();
+      // 덮개가 걷혀 올라가는 순간 — 정산 창이 뜨기 전의 한 박자다.
+      audioManager?.playUi("settle.lift");
       const duration = still ? 0 : spec.dismissMs;
       scene.tweens.add({ targets: [label, echo], scale: spec.dismissScale, alpha: 0, duration, ease: "Cubic.Out" });
       scene.tweens.add({ targets: cover, alpha: 0, duration, ease: "Quad.In", onComplete: () => resolve() });

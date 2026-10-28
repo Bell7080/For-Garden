@@ -29,7 +29,7 @@ export const ITEM_RASTER_ICON_ASSETS = [
   ["item-ancient-core", "sprites/items/ancient-core.webp"],
   ["item-refined-core", "sprites/items/refined-core.webp"],
   ["item-restoration-crystal", "sprites/items/restoration-crystal.webp"],
-  // 만능 파편 셋은 등급색으로 구운 **홀로그램 결정 조각**이다(`scripts/draw_universal_fragment.py`) — 액자의
+  // 만능 파편 셋은 등급색 **결정 일러스트**다(`scripts/prepare_icons.py`가 구운 것 — 액자를 꽉 채운다) — 액자의
   // 유리 결과 주사선·훑는 빛은 `addFramedIcon`이 `universalFragmentArt.ts`로 얹는다.
   ["item-universal-fragment-r", "sprites/items/universal-fragment-r.webp"],
   ["item-universal-fragment-sr", "sprites/items/universal-fragment-sr.webp"],

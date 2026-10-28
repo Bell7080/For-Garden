@@ -23,11 +23,8 @@ import {
   type PuppetCreature,
 } from "../puppets/assets";
 import { addSceneBackground, ensureBackgroundTexture } from "./backgrounds";
+import { playPuppetAct, type PuppetActHandle } from "./puppetAct";
 import {
-  DIALOGUE_ACTS,
-  DIALOGUE_ACT_FILL,
-  DIALOGUE_ACT_GLOW,
-  actGlowSteps,
   DIALOGUE_ALARM,
   DIALOGUE_REMOTE,
   DIALOGUE_SIGN,
@@ -50,6 +47,7 @@ import {
 import { speakerStanding } from "../data/dialogues/speakerStanding";
 import { drawVignette } from "./holo";
 import { textStyle } from "./theme";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
@@ -84,9 +82,7 @@ interface StageMember {
   unitScale: number;
   headOffset: { x: number; y: number };
   /** 지금 도는 연출. 다음 연출이 오면 끊고 제자리에서 다시 시작한다. */
-  act?: Phaser.Tweens.TweenChain;
-  /** 색이 덮이는 몸짓의 진하기 보간용. */
-  fillAct?: Phaser.Tweens.TweenChain;
+  act?: PuppetActHandle;
 }
 
 /**
@@ -308,6 +304,8 @@ export class DialogueStage {
     // 함께 날아가는 사람들은 **한 점으로 모인다** — 저마다 제 자리에서 같은 방향으로 날면
     // 왼쪽 사람이 가운데를 가로질러 서로 엇갈렸다. 모인 자리에서 별 하나가 반짝인다.
     creature.setAnimationFrozen(true);
+    // 함께 날아가도 소리는 한 번 — 첫 사람이 튀어 나가는 순간이다.
+    if (order === 0) audioManager?.playSfx("sweep.blastoff");
     // 날아가는 몸은 대사판 윗선에서 자르지 않는다 — 화면 위로 나가는 길이라 잘릴 자리가 없고,
     // 원점 둘레로 도는 동안 마스크에 걸리면 몸이 반쪽씩 깜빡인다.
     creature.clearMask();
@@ -426,76 +424,26 @@ export class DialogueStage {
 
   /**
    * 제자리에서 시작해 제자리로 끝나는 몸짓. 앞 몸짓이 남아 있으면 끊고 제자리에서 다시 시작한다.
-   *
-   * 위치(`dx`·`dy`)뿐 아니라 **배율**(눌림·늘어남)과 **몸에 덮는 색**(푸름·붉음)도 같은 걸음에서
-   * 함께 옮긴다. 움직임 줄이기는 위치와 배율의 변화폭을 같이 줄인다 — 색은 움직임이 아니라 남긴다.
+   * 걸음·색·소리는 로비의 애착 렐릭과 같은 한 벌(`playPuppetAct`)이다.
    */
   private playAct(member: StageMember, act: DialogueAct): void {
     this.stopAct(member);
-    const { creature } = member;
-    creature.setPosition(member.baseX, member.baseY);
-    const factor = this.distanceFactor();
-    const rest = member.restScale;
-    // 몸짓 동안은 idle을 그 자리에서 멈춘다 — 몸이 뛰는 동안 팔다리까지 따로 흔들리면 한 동작으로
-    // 읽히지 않는다. 끝나면 멈춘 프레임에서 그대로 이어 간다(`stopAct`가 풀어 준다).
-    creature.setAnimationFrozen(true);
-    const steps = DIALOGUE_ACTS[act];
-    member.act = this.scene.tweens.chain({
-      targets: creature,
-      tweens: steps.map((step) => ({
-        x: member.baseX + step.dx * factor,
-        y: member.baseY + step.dy * factor,
-        scaleX: rest * (1 + ((step.sx ?? 1) - 1) * factor),
-        scaleY: rest * (1 + ((step.sy ?? 1) - 1) * factor),
-        duration: step.ms,
-        ease: step.ease,
-      })),
-      onComplete: () => {
-        member.act = undefined;
-        if (!creature.active) return;
-        creature.setPosition(member.baseX, member.baseY);
-        creature.setScale(rest);
-        creature.setAnimationFrozen(false);
-      },
-    });
-    const color = DIALOGUE_ACT_FILL[act];
-    if (color === undefined) return;
-    const proxy = { amount: 0 };
-    member.fillAct = this.scene.tweens.chain({
-      targets: proxy,
-      tweens: steps.map((step) => ({
-        amount: step.fill ?? 0,
-        duration: step.ms,
-        ease: step.ease === "Back.Out" ? "Quad.Out" : step.ease,
-        onUpdate: () => { if (creature.active) this.paintActGlow(creature, color, proxy.amount); },
-      })),
-      onComplete: () => {
-        member.fillAct = undefined;
-        if (creature.active) this.paintActGlow(creature, color, 0);
-      },
-    });
-  }
-
-  /** 감정 몸짓의 색 — 몸에는 옅게만 덮고 둘레에 빛을 번지게 한다. */
-  private paintActGlow(creature: PuppetCreature, color: number, amount: number): void {
-    creature.setBodyFill(color, amount * DIALOGUE_ACT_GLOW.bodyShare);
-    creature.setAfterimages(actGlowSteps(color, amount));
+    const handle = playPuppetAct(
+      this.scene,
+      member.creature,
+      { x: member.baseX, y: member.baseY, scale: member.restScale },
+      act,
+      this.distanceFactor(),
+      () => { if (member.act === handle) member.act = undefined; },
+    );
+    member.act = handle;
   }
 
   /** 도는 몸짓을 끊는다. 멈춰 둔 idle·눌린 배율·덮인 색도 함께 되돌려, 끊긴 몸짓이 인물을 굳혀 두지 않게 한다. */
   private stopAct(member: StageMember): void {
-    const interrupted = member.act !== undefined || member.fillAct !== undefined;
     member.act?.stop();
     member.act = undefined;
-    member.fillAct?.stop();
-    member.fillAct = undefined;
-    const { creature } = member;
-    if (!creature.active) return;
-    creature.setAnimationFrozen(false);
-    if (!interrupted) return;
-    creature.setScale(member.restScale);
-    creature.setBodyFill(0xffffff, 0);
-    creature.setAfterimages([]);
+    if (member.creature.active) member.creature.setAnimationFrozen(false);
   }
 
   // ── 무전 너머의 목소리 ─────────────────────────────────────────────
@@ -602,6 +550,7 @@ export class DialogueStage {
   /** 흔들림·섬광·경보 가운데 폭파를 뺀 것. 폭파는 무대를 갈아 끼우므로 기다려야 한다. */
   private playCue(cue: DialogueCue): void {
     const spec = DIALOGUE_CUES[cue];
+    audioManager?.playSfx(`story.${cue}`);
     this.shake(spec.shakeMs, spec.shakeIntensity);
     if (spec.flashAlpha > 0) this.flash(spec.flashAlpha, 60, 240);
     if (cue === "alarm") this.startAlarm();
@@ -680,6 +629,8 @@ export class DialogueStage {
    */
   private async explode(backdrop?: DialogueBackdrop): Promise<void> {
     const spec = DIALOGUE_CUES.explosion;
+    // 폭파는 `playCue`를 지나지 않으므로 소리도 여기서 낸다 — 흔들림·섬광과 같은 프레임이다.
+    audioManager?.playSfx("story.explosion");
     this.shake(spec.shakeMs, spec.shakeIntensity);
     this.burstShards();
     const reduce = settingsManager.get().accessibility.reduceFlashes;

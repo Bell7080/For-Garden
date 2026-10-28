@@ -40,12 +40,6 @@ export const RAID_TH = {
   "raid.contribution.value": "การมีส่วนร่วมของฉัน {damage}",
   "raid.contribution.empty": "ยังไม่มีใครลงมือ",
   "raid.reward.title": "รางวัลที่ได้รับ",
-  "raid.reward.progress": "ความคืบหน้าทั้งหมด",
-  "raid.reward.kill": "ปราบ",
-  "raid.reward.killYes": "สำเร็จ",
-  "raid.reward.killNo": "กำลังดำเนินการ",
-  "raid.reward.killFailed": "ล้มเหลว",
-  "raid.reward.note": "รับรางวัลในแท็บเสร็จสิ้นเมื่อเรดจบ",
   "raid.result.score": "คะแนน {score}",
   "shop.loot.title": "ร้านค้าของรางวัล",
 } as const;

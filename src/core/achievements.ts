@@ -9,6 +9,8 @@ import { PLAYABLE_RELICS } from "../data/relics";
 import { RECOLLECTION_ENTRIES } from "../data/recollectionCatalog";
 import type { Session } from "../state/session";
 import type { AchievementState } from "./achievementState";
+import { ancientHighestCleared } from "./ancientStrata";
+import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 
 export { createEmptyAchievementState, isValidAchievementState, normalizeAchievementState, type AchievementState } from "./achievementState";
 
@@ -40,6 +42,12 @@ export function achievementFacts(state: Session): AchievementFacts {
   const reachedDuel = (state.duel?.reachedTierIds ?? []).map((id) => DUEL_TIERS.findIndex((tier) => tier.id === id));
   const bountyIds = new Set(BOUNTY_TIERS.map(({ id }) => id));
   return {
+    ancientFloorPeak: Math.max(state.achievements?.ancientFloorPeak ?? 0, ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR)),
+    normalStagesCleared: storyStageIds.filter((id) => state.cleared.has(`normal:${id}`)).length,
+    hardStagesCleared: storyStageIds.filter((id) => state.cleared.has(`hard:${id}`)).length,
+    enhancedRunes: runes.filter((rune) => rune.enhancementComplete).length,
+    traitRunes: runes.filter((rune) => rune.trait !== undefined).length,
+    legendaryTraits: runes.filter((rune) => rune.trait?.grade === "legendary").length,
     goldPeak: Math.max(state.achievements?.goldPeak ?? 0, state.wallet.gold),
     relicsOwned: playable.length,
     maxRelicLevel: progress.reduce((best, entry) => Math.max(best, entry.level), 0),

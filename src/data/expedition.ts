@@ -1,4 +1,4 @@
-import { WEEKLY_RANK_GEMS } from "./competitiveRewards";
+import { rankRewardBundle, type RankRewardPool } from "./competitiveRewards";
 /** 원정 맵에서 보스 외 노드를 뽑을 때 사용하는 정적 밸런스 한 벌이다. */
 export const EXPEDITION_MAP_BALANCE = {
   /** 시작과 보스 사이의 층 수 및 각 층의 가로 노드 범위다. */
@@ -28,7 +28,8 @@ export const EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"] as const;
 /** 노드별 적 수와 능력치/렌더 배율의 단일 밸런스 표다. 스토리 전투의 기존 3대3에는 관여하지 않는다. */
 export const EXPEDITION_COMBAT_BALANCE = {
   normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
-  elite: { enemyCount: 1, statScale: 1.65, bodyScale: 1.1 },
+  /** v0.377.1: 1.65 → 1.5, v0.381.1: 1.5 → 1.25(응태 결정 — 정예 코마가 여전히 너무 세다). 코마는 그대로 선다. */
+  elite: { enemyCount: 1, statScale: 1.25, bodyScale: 1.1 },
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 },
 } as const;
 
@@ -194,14 +195,34 @@ export const EXPEDITION_DAILY_POLICY = { maxPlaysPerDay: 1 } as const;
 
 /**
  * 주간 순위 보상 — 한 주가 끝나면 그 주 최고 점수의 순위로 우편을 보낸다(`pendingRankReward`).
- * `upTo`까지의 순위가 그 줄의 보상을 받고, 마지막 줄은 기록을 남긴 모두의 몫이다. 인양 기록과
- * 젬을 함께 준다 — 순위가 상점 재화까지 끌고 가야 주마다 기록을 다시 쓸 이유가 된다.
+ * 모든 랭킹의 표준 모양(`RankRewardPool`)이다: 1,000위까지 순위 구간, 그 밖은 상위 백분율 구간, 끝은 기록을 남긴 모두의 참여 몫.
+ *
+ * **젬·인양 기록은 예전 표 그대로다**(1위 3,000·400 … 101위 밖 500·80) — 1,000위 밖이 늘어도 아무도 덜 받지 않는다.
+ * 그 위에 골드·치즈케이크를 순위대로 얹어 아래쪽도 "몇 등이었나"가 손에 남게 했다(2026-10-27 응태 요청 「1,000등 아래도 다양한 보상풀」).
+ * 얹은 몫의 끝(1위 골드 5,000·치즈케이크 150)은 원정 한 주 기대 공급(소탕 고정표 ÷ 0.75 × 7판 ≈ 골드 37,000·치즈케이크 1,120)의
+ * 약 13.5%로, 반복 보상 승인선(20%) 아래다 — `rewardVolumes.test`가 지킨다.
  */
-export const EXPEDITION_WEEKLY_RANK_REWARDS: readonly { upTo: number | null; rewards: Partial<Record<ExpeditionRewardCurrency, number>> }[] = WEEKLY_RANK_GEMS.map((row, index) => ({ upTo: row.upTo, rewards: { gems: row.gems, salvageRecord: [400, 320, 250, 180, 130, 80][index] } }));
+export const EXPEDITION_WEEKLY_RANK_POOL: RankRewardPool = {
+  ranks: [
+    { upTo: 1, rewards: { gems: 3000, salvageRecord: 400, gold: 5000, cheesecake: 150 } },
+    { upTo: 3, rewards: { gems: 2500, salvageRecord: 320, gold: 4500, cheesecake: 130 } },
+    { upTo: 10, rewards: { gems: 2000, salvageRecord: 250, gold: 4000, cheesecake: 110 } },
+    { upTo: 50, rewards: { gems: 1500, salvageRecord: 180, gold: 3500, cheesecake: 90 } },
+    { upTo: 100, rewards: { gems: 1000, salvageRecord: 130, gold: 3000, cheesecake: 70 } },
+    { upTo: 300, rewards: { gems: 500, salvageRecord: 80, gold: 2500, cheesecake: 60 } },
+    { upTo: 1000, rewards: { gems: 500, salvageRecord: 80, gold: 2000, cheesecake: 50 } },
+  ],
+  percents: [
+    { upToPercent: 10, rewards: { gems: 500, salvageRecord: 80, gold: 1500, cheesecake: 40 } },
+    { upToPercent: 30, rewards: { gems: 500, salvageRecord: 80, gold: 1200, cheesecake: 30 } },
+    { upToPercent: 50, rewards: { gems: 500, salvageRecord: 80, gold: 1000, cheesecake: 20 } },
+  ],
+  participation: { gems: 500, salvageRecord: 80, gold: 800, cheesecake: 10 },
+};
 
-export function expeditionRankRewards(rank: number): Partial<Record<ExpeditionRewardCurrency, number>> {
-  const row = EXPEDITION_WEEKLY_RANK_REWARDS.find(({ upTo }) => upTo === null || rank <= upTo) ?? EXPEDITION_WEEKLY_RANK_REWARDS.at(-1)!;
-  return { ...row.rewards };
+/** 그 순위의 보상. 참가자 수(`total`)를 모르면 1,000위 밖은 참여 몫이다. */
+export function expeditionRankRewards(rank: number, total?: number): Partial<Record<ExpeditionRewardCurrency, number>> {
+  return rankRewardBundle(EXPEDITION_WEEKLY_RANK_POOL, rank, total);
 }
 
 /**

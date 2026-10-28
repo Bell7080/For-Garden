@@ -130,4 +130,4 @@ export class LobbyMenuTray {
 }
 
 /** 칩에 쓰는 글리프 이름을 한곳에서 정한다. */
-export const LOBBY_MENU_GLYPH = { recollection: "scroll", achievement: "arena-tier" } as const satisfies Record<string, GlyphName>;
+export const LOBBY_MENU_GLYPH = { recollection: "scroll", achievement: "trophy" } as const satisfies Record<string, GlyphName>;

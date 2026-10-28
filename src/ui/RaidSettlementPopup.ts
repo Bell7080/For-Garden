@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import type { RaidDto, RaidRewardDto } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { formatCurrency } from "../core/formatCurrency";
@@ -80,6 +81,8 @@ export function openRaidSettlementPopup(scene: Phaser.Scene, popups: PopupLayer,
     items.forEach((reward, index) => {
       addFramedIcon(scene, body, startX + index * L.reward.gap, y(L.reward.frameY), L.reward.frame, CURRENCY_ICON_BY_WALLET[reward.currency as keyof typeof CURRENCY_ICON_BY_WALLET] ?? "", { amount: formatCurrency(reward.amount) });
     });
+    // 공용 보상 영수증을 거치지 않는 창이라 받는 순간의 소리를 여기서 낸다.
+    if (items.length > 0) audioManager?.playUi("ui.reward");
     if (items.length === 0) {
       body.add(scene.add.text(0, y(L.reward.frameY), t("raid.settle.done"), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5));
     }

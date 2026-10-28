@@ -45,7 +45,7 @@ describe("다시 그리기", () => {
   });
 
   it("는 편성에서 자리를 바꾼 SD를 새로 세우지 않고 옮긴다", () => {
-    expect(read("src/scenes/PartyScene.ts")).toContain("moved.creature.x += PREVIEW_COLUMNS[i] - PREVIEW_COLUMNS[moved.from];");
+    expect(read("src/scenes/PartyScene.ts")).toContain("placePuppet(moved.creature,");
   });
 
   it("는 레이드 탭을 씬 재시작 없이 바꾼다", () => {

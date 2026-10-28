@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import { accountApi, type AccountState } from "../api/AccountApi";
 import { t } from "../i18n";
+import { addAccountGuide } from "./AccountGuide";
 import { Button } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
 import { TextInputField } from "./TextInputField";
@@ -8,9 +9,10 @@ import { COLOR, textStyle } from "./theme";
 /** 이메일/연동과 다른 계정 로그인은 처음부터 다른 의도로 고정한다. */
 export function openAccountEmailPopup(scene: Phaser.Scene, layer: PopupLayer, intent: "link" | "sign-in", onDone: (state: AccountState) => void, onClose?: () => void): void {
     let email = "", code = "", sent = false, busy = false, alive = true, retryAt = 0;
-    layer.open({ width: 850, height: 740, title: t("account.email.title"), hideCloseButton: true, canClose: () => !busy, onClose: () => { alive = false; onClose?.(); } }, (body, close) => {
+    layer.open({ width: 850, height: 740, title: t("account.email.title"), dim: true, closeOnBackdrop: false, backButton: true, canClose: () => !busy, onClose: () => { alive = false; onClose?.(); } }, (body, close) => {
         const view = scene.add.container(0, 0);
         body.add(view);
+        const guide = addAccountGuide(scene, body, 850, 740);
         const render = (message = "") => {
             view.removeAll(true);
             view.add(scene.add.text(0, -245, t(sent ? "account.email.sent" : "account.email.note"), textStyle({ role: "body", size: 26, align: "center", wrap: 720, color: COLOR.inkDim })).setOrigin(.5));
@@ -21,14 +23,13 @@ export function openAccountEmailPopup(scene: Phaser.Scene, layer: PopupLayer, in
                 view.add(new TextInputField(scene, 0, 62, { width: 690, height: 80, value: code, maxGlyphs: 10, ariaLabel: t("account.email.code"), autocomplete: "one-time-code", onChange: v => { code = v; } }));
             }
             view.add(scene.add.text(0, 145, message, textStyle({ role: "body", size: 23, color: COLOR.dangerText, align: "center", wrap: 720 })).setOrigin(.5));
-            const submit = new Button(scene, -125, 235, { width: 420, height: 84, label: t(sent ? "account.email.verify" : "account.email.send"), variant: "primary", onClick: () => {
+            const submit = new Button(scene, 0, 235, { width: 420, height: 84, label: t(sent ? "account.email.verify" : "account.email.send"), variant: "primary", onClick: () => {
                     if (busy || Date.now() < retryAt)
                         return;
                     const address = email.trim();
                     const token = code.trim();
                     busy = true;
                     submit.setEnabled(false);
-                    cancel.setEnabled(false);
                     const execute = async () => {
                         try {
                             const result = sent ? await accountApi.verifyEmailCode?.(address, token, intent) : await accountApi.requestEmailCode?.(address, intent);
@@ -53,6 +54,7 @@ export function openAccountEmailPopup(scene: Phaser.Scene, layer: PopupLayer, in
                             sent = true;
                             email = address;
                             render();
+                            guide.say("account.guide.emailSent");
                         }
                         catch {
                             busy = false;
@@ -62,10 +64,9 @@ export function openAccountEmailPopup(scene: Phaser.Scene, layer: PopupLayer, in
                     };
                     void execute();
                 } });
-            const cancel = new Button(scene, 240, 235, { width: 210, height: 84, label: t("popup.cancel"), onClick: () => { if (!busy)
-                    close(); } });
-            view.add([submit, cancel]);
+            view.add(submit);
         };
         render();
+        guide.say("account.guide.email");
     });
 }

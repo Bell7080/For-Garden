@@ -1,3 +1,4 @@
+import { clipHit } from "./clippedHit";
 import Phaser from "phaser";
 import type { ExpeditionMapNode, ExpeditionNodeType } from "../core/expeditionMap";
 import { expeditionNodeRole } from "../data/expeditionEnemies";
@@ -129,7 +130,8 @@ export class ExpeditionMapView extends Phaser.GameObjects.Container {
     const hit = this.scene.add.rectangle(point.x, point.y, EXPEDITION_MAP_LAYOUT.hitSize, EXPEDITION_MAP_LAYOUT.hitSize, 0xffffff, 0);
     this.world.add(hit);
     if (!reachable) return;
-    hit.setInteractive({ useHandCursor: true });
+    // 지도 창(마스크와 같은 사각형) 안에서만 손을 받는다 — 창 밖으로 흘러간 노드가 위아래 UI를 덮지 않게.
+    clipHit(hit, () => ({ left: 0, right: this.scene.scale.width, top: this.options.top, bottom: this.options.bottom }));
     hit.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       this.pressedNode = node;
       this.pressedVisual = { object: visual, scale };

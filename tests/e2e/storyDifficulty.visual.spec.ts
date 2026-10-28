@@ -15,13 +15,13 @@ test("스토리 난이도 선택 · 원본 코마 정예 · 전투 SUB · 해금
   });
   await sourceScene(page, "window.__STORY_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('stageMap');");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
-  await tap(page, 540, 392);
+  await tap(page, 96, 96);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("난이도 선택");
   await captureGame(page, info.outputPath("difficulty-picker.png"));
   // 어려움은 보통 4-10을 완료하기 전에는 선택할 수 없다.
-  await tap(page, 540, 1185);
+  await tap(page, 540, 1346);
   expect(await page.evaluate(() => (window as any).__STORY_GAME.scene.getScene("stageMap").difficulty)).toBe("easy");
-  await tap(page, 540, 985);
+  await tap(page, 540, 1020);
   await expect.poll(() => page.evaluate(() => (window as any).__STORY_GAME.scene.getScene("stageMap").selected)).toBe("normal:1-10");
   expect(await page.evaluate(() => (window as any).__STORY_GAME.scene.getScene("stageMap").chapterStages(1).map((s: any) => s.kind))).toEqual(Array(11).fill("battle"));
   const koma = await page.evaluate(async () => { const root = "/src/"; const stages = await import(/* @vite-ignore */root+"data/stages.ts"); const stage = stages.getBattleStage("normal:1-10"); return { ids: stage.enemies.map((e: any) => e.relicId), elite: stage.elite }; });
@@ -37,11 +37,11 @@ test("스토리 난이도 선택 · 원본 코마 정예 · 전투 SUB · 해금
   });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("새로운 난이도가 열렸어요!");
   await captureGame(page, info.outputPath("hard-unlocked.png"));
-  await tap(page, 540, 1205);
+  await tap(page, 540, 1236);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles ?? [])).not.toContain("새로운 난이도가 열렸어요!");
-  await tap(page, 540, 392);
+  await tap(page, 96, 96);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("난이도 선택");
-  await tap(page, 540, 1185);
+  await tap(page, 540, 1346);
   await expect.poll(() => page.evaluate(() => (window as any).__STORY_GAME.scene.getScene("stageMap").selected)).toBe("hard:1-1");
   await captureGame(page, info.outputPath("hard-map.png"));
   await page.reload();

@@ -1,6 +1,6 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { generateExpeditionMap } from "../core/expeditionMap";
-import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent } from "../core/expeditionAugments";
+import { applyExpeditionAfterBattleHeal, applyExpeditionRest, expeditionAfterBattleHealPercent, isExpeditionReviveTarget } from "../core/expeditionAugments";
 import { calculateExpeditionRunScore, expeditionRewardRandom, expeditionRewardRule, generateExpeditionAugmentOffers, validateExpeditionAugmentChoice, type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionNodeType } from "../core/expeditionMap";
 import type { SkirmishRelicResult } from "../core/skirmish";
@@ -243,15 +243,19 @@ export class ExpeditionManager {
     return true;
   }
 
-  /** 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다. */
-  completeRestNode(nodeId: string): boolean {
+  /**
+   * 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다.
+   * 깨울 렐릭(`reviveRelicId`)은 화면이 고른 값이라 그대로 믿지 않는다 — 이 런의 쓰러진 편성원이 아니면 거절한다.
+   */
+  completeRestNode(nodeId: string, reviveRelicId?: string): boolean {
     const run = this.state.expedition.run;
     const node = run?.nodes.find(({ id }) => id === nodeId);
     if (!run || node?.type !== "rest" || run.settled || run.visitedNodeIds.includes(nodeId)
       || (run.currentNodeId !== null && !run.nodes.find(({ id }) => id === run.currentNodeId)?.successorIds.includes(nodeId))
-      || run.relics.every(({ alive }) => !alive)) return false;
+      || run.relics.every(({ alive }) => !alive)
+      || (reviveRelicId !== undefined && (typeof reviveRelicId !== "string" || !isExpeditionReviveTarget(run.relics, reviveRelicId)))) return false;
     const next = structuredClone(run);
-    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent) as ExpeditionRunState["relics"];
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent, reviveRelicId) as ExpeditionRunState["relics"];
     next.currentNodeId = nodeId;
     next.visitedNodeIds.push(nodeId);
     this.commit({ ...this.state.expedition, run: next });
@@ -325,7 +329,7 @@ export class ExpeditionClient {
     return this.api.startExpeditionRun({ relicIds: [...relicIds], shortcut: "boss" });
   }
 
-  async completeRestNode(nodeId: string): Promise<boolean> { return (await this.api.completeExpeditionRest({ nodeId })).ok; }
+  async completeRestNode(nodeId: string, reviveRelicId?: string): Promise<boolean> { return (await this.api.completeExpeditionRest({ nodeId, ...(reviveRelicId ? { reviveRelicId } : {}) })).ok; }
   async beginAugmentReward(nodeId: string): Promise<ExpeditionRunState["pendingAugmentReward"]> { return (await this.api.beginExpeditionAugment({ nodeId })).pending; }
   async chooseAugment(selection: ExpeditionAugmentSelection): Promise<boolean> { return (await this.api.chooseExpeditionAugment({ selection })).ok; }
   async prepareBossRequests(nodeId: string): Promise<{ requestId: string; settlementId: string; replayVersion: 2 } | null> { return (await this.api.prepareExpeditionBoss({ nodeId })).ids; }

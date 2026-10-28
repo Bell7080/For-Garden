@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { chipPoints, drawLayer } from "./holo";
@@ -73,7 +74,8 @@ export class StrataRewardPop {
     this.tween({ targets: body, scale: 1, alpha: 1, y: 0, duration: reduced ? 1 : cfg.appearMs, ease: "Back.Out" });
     this.tween({ targets: halo, alpha: 1, duration: cfg.appearMs, ease: "Quad.Out" });
     this.tween({ targets: shadow, alpha: 1, scale: 1, duration: cfg.appearMs, ease: "Quad.Out" });
-    if (spec.tier !== "common") this.celebrate(tier, glow, reduced);
+    // 귀한 것(화석·다이아·영웅 룬 이상)만 반짝이는 소리를 낸다 — 흔한 조각까지 울리면 그 소리가 뜻을 잃는다.
+    if (spec.tier !== "common") { audioManager?.playSfx("dig.treasure"); this.celebrate(tier, glow, reduced); }
 
     // 머무는 동안 살짝 떠 있다. 반복이 꺼진 설정에서는 가만히 선다.
     if (!reduced && motionPolicy(session.settings).nonEssentialRepeatFactor > 0) {

@@ -79,6 +79,66 @@
 "Angelegt",
 "Надетые"
 ],
+"rune.bag.bookmarked": [
+"收藏",
+"บุ๊กมาร์ก",
+"Đánh dấu",
+"Penanda",
+"Marcadores",
+"Marcadores",
+"Lesezeichen",
+"Закладки"
+],
+"rune.bag.trait.all": [
+"特性",
+"คุณลักษณะ",
+"Đặc tính",
+"Sifat",
+"Rasgo",
+"Traço",
+"Merkmal",
+"Черта"
+],
+"rune.bag.trait.with": [
+"有特性",
+"มีคุณลักษณะ",
+"Có đặc tính",
+"Ada sifat",
+"Con rasgo",
+"Com traço",
+"Mit Merkmal",
+"С чертой"
+],
+"rune.bag.trait.without": [
+"无特性",
+"ไม่มีคุณลักษณะ",
+"Không đặc tính",
+"Tanpa sifat",
+"Sin rasgo",
+"Sem traço",
+"Ohne Merkmal",
+"Без черты"
+],
+"rune.search": [
+"名称·属性·特性",
+"ชื่อ·ตัวเลือก·คุณลักษณะ",
+"Tên·tùy chọn·đặc tính",
+"Nama·opsi·sifat",
+"Nombre, opción, rasgo",
+"Nome, opção, traço",
+"Name, Option, Merkmal",
+"Имя, опция, черта"
+],
+"rune.list.count": [
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}",
+"{shown} / {total}"
+],
 "rune.namePlaceholder": [
 "符文名称（1-16字）",
 "ชื่อรูน (1-16 ตัวอักษร)",
@@ -208,6 +268,26 @@
 "Equipar",
 "Anlegen",
 "Надеть"
+],
+"rune.openBag": [
+"查看背包",
+"ดูกระเป๋า",
+"Xem túi đồ",
+"Lihat Tas",
+"Ver bolsa",
+"Ver bolsa",
+"Tasche ansehen",
+"Открыть сумку"
+],
+"rune.traitResearch": [
+"特性研究",
+"วิจัยคุณลักษณะ",
+"Nghiên cứu đặc tính",
+"Riset Sifat",
+"Investigación de rasgos",
+"Pesquisa de traços",
+"Merkmalsforschung",
+"Исследование черт"
 ],
 "rune.engraved": [
 "刻印完成",

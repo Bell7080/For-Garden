@@ -291,7 +291,7 @@ export const SKILL_JA = {
   "skill.keyword.staccato.term": "スタッカート",
   "skill.keyword.staccato.description": "メテの[[basic-attack|通常攻撃]]と同じ魔法の追加打だ。命中した対象を[[stagger|硬直]]させる。",
   "skill.keyword.plume.term": "霜羽",
-  "skill.keyword.plume.description": "敵に刺さる羽根。敵ごとに最大{max}重まで重なり、{hold}秒間残る。新しい重が刺さるたびに時間が数え直される。{max}重になると羽根は消え、{slowSeconds}秒間攻撃速度と移動速度を{slowPercent}%下げる出血に変わり、{seconds}秒かけて付与した側の攻撃力の{percent}%のダメージを与える。出血は重ならず、かけ直すと更新される。",
+  "skill.keyword.plume.description": "敵に刺さる羽根。敵ごとに最大{max}重まで重なり、{hold}秒間残る。新しい重が刺さるたびに時間が数え直される。{max}重になると羽根は消え、{slowSeconds}秒間攻撃速度と移動速度を{slowPercent}%下げる凍傷に変わり、{seconds}秒かけて付与した側の攻撃力の{percent}%のダメージを与える。凍傷は重ならず、かけ直すと更新される。",
   "skill.keyword.summon.description": "{owner}の{stat}が{stat}・体力・防御力・抵抗力を決める近距離召喚獣だ。自ら標的を選び、自分のゲージで必殺技を使う。{resummon}",
   "skill.keyword.summon.resummon": "倒れると{seconds}秒後に最大体力の{percent}%で再び立つ。",
   "skill.ferocity.valueLabel": "野性発現",

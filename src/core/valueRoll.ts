@@ -35,3 +35,17 @@ export function rollText(to: string, value: number): string {
   const shown = parsed.commas ? Number(fixed).toLocaleString("en-US", { minimumFractionDigits: parsed.decimals, maximumFractionDigits: parsed.decimals }) : fixed;
   return to.slice(0, parsed.start) + shown + parsed.suffix + to.slice(parsed.end);
 }
+
+/**
+ * 화면이 다시 서도 이어지는 "마지막으로 보여 준 글자" 기억.
+ *
+ * 전투를 다녀와 상단 줄이 새로 서거나 창이 매 초 다시 그려지면 칸이 빈 글자에서 시작해, 값이 변했어도
+ * 굴릴 출발점이 없다. 칸이 **자리 이름**(`topbar:gold`, `stamina-popup:stamina`)으로 마지막에 보인
+ * 글자를 적어 두면 다시 선 칸이 거기서부터 새 값으로 굴러 간다. 자리마다 따로 두는 이유는 같은 재화를
+ * 보이는 두 칸이 서로의 출발점을 덮어쓰지 않게 하려는 것이다. 계정이 바뀌면 부트가 비운다.
+ */
+const rollMemory = new Map<string, string>();
+
+export function recallRoll(key: string): string | undefined { return rollMemory.get(key); }
+export function rememberRoll(key: string, text: string): void { rollMemory.set(key, text); }
+export function clearRollMemory(): void { rollMemory.clear(); }

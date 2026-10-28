@@ -46,6 +46,46 @@ describe("player profile display", () => {
     expect(failed.competitiveStats.arena).toBeUndefined();
   });
 
+  it("고대 지층 이번 달 최고층과 결투장 점수를 싣고, 친구 카드도 공개 프로필의 같은 값을 읽는다", async () => {
+    const { publicProfile } = await import("../../src/server/publicProfile");
+    const { friendProfileDisplay } = await import("../../src/state/playerProfile");
+    const { duelSeasonId } = await import("../../src/core/duelArena");
+    const { createEmptyDuelState } = await import("../../src/core/duelState");
+    const now = new Date("2026-10-27T12:00:00Z");
+    const state = createDefaultSession();
+    state.favorite = "rex"; state.cleared = new Set(["1-1", "1-3", "ancient:1", "ancient:12"]); state.expedition.allTimeBestScore = 4321;
+    // 결투장을 연 적이 없으면 「미배치」 — 점수를 싣지 않는다.
+    expect(playerProfileDisplay(state, [], undefined, now).competitiveStats).toMatchObject({ ancientFloor: 12 });
+    expect(playerProfileDisplay(state, [], undefined, now).competitiveStats.duelScore).toBeUndefined();
+    state.duel = { ...createEmptyDuelState(), seasonId: duelSeasonId(now), score: 1420 };
+    expect(playerProfileDisplay(state, [], undefined, now).competitiveStats.duelScore).toBe(1420);
+    // 서버가 친구에게 공개하는 값 — 돌파 등급은 표식 등급(I~V)이다.
+    const shared = publicProfile(state, "player-1", now);
+    expect(shared.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expeditionScore: 4321, ancientFloor: 12, duelScore: 1420 });
+    expect(shared.favoriteRelic.breakthroughGrade).toBe(1);
+    const friend = friendProfileDisplay({ ...shared, lastActive: "" });
+    expect(friend.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expedition: { score: 4321 }, ancientFloor: 12, duelScore: 1420 });
+    expect(friend.competitiveStats.favoriteRelic?.breakthroughGrade).toBe(1);
+  });
+
+  it("스토리 기록이 빠진 예전 공개 프로필은 그 친구의 저장에서 기록 칸을 다시 짓는다", async () => {
+    const { refreshStaleProfileRecords } = await import("../../src/server/friendProfileFallback");
+    const { saveManager } = await import("../../src/state/SaveManager");
+    const now = new Date("2026-10-27T12:00:00Z");
+    const state = createDefaultSession();
+    state.cleared = new Set(["1-1", "1-3", "ancient:5"]); state.expedition.allTimeBestScore = 900;
+    const saved = JSON.parse(JSON.stringify(saveManager.exportData(state)));
+    const stale = { id: "p-old", competitiveStats: { ancientFloor: 5, arenaScore: 1300 } };
+    const fresh = { id: "p-new", competitiveStats: { highestStage: { stageId: "2-1", displayValue: "2-1" } } };
+    const load = vi.fn(async (id: string) => id === "p-old" ? { data: saved } : null);
+    const result = { friends: [stale, fresh], incoming: [{ profile: { id: "p-missing", competitiveStats: {} } }] };
+    await refreshStaleProfileRecords(result, load, now);
+    expect(stale.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expeditionScore: 900, ancientFloor: 5, arenaScore: 1300 });
+    // 이미 새 값을 실은 프로필은 저장을 읽지 않는다.
+    expect(load).not.toHaveBeenCalledWith("p-new");
+    expect(result.incoming[0].profile.competitiveStats).toEqual({});
+  });
+
   it("획득한 공개 수식어만 중복 없이 장착 상한까지 허용한다", () => {
     const catalog = [
       { id: "first", displayName: "최초의 복원", rarity: "rare" },
@@ -68,7 +108,7 @@ describe("player profile display", () => {
     expect(L.header.levelChip.y + L.header.levelChip.height / 2).toBeLessThan(L.bio.y - L.bio.height / 2);
     expect(L.bio.y + L.bio.height / 2).toBeLessThan(L.showcase.titleY);
     expect(L.showcase.bottom).toBeLessThan(L.records.titleY);
-    const recordsBottom = L.records.firstY + L.records.rowGap + L.records.height / 2;
+    const recordsBottom = L.records.firstY + L.records.rowGap * (L.records.rows - 1) + L.records.height / 2;
     expect(recordsBottom).toBeLessThan(L.nextUnlock.y - 20);
     expect(L.nextUnlock.y + 20).toBeLessThan(L.popup.height / 2 - 40);
     // 얼굴 테두리의 장식까지 판 안에 든다 — 도형 하나하나의 검사는 profileFrameGeometry.test.ts가 맡는다.

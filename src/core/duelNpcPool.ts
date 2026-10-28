@@ -29,6 +29,9 @@ export interface DuelNpc {
   displayName: string;
   score: number;
   favoriteRelicId: string;
+  /** 실제 계정이 고른 프로필 사진·테두리. 표본 상대에게는 없다. */
+  avatarRelicId?: string | null;
+  frameId?: string | null;
   /** 서는 순서(왼쪽·가운데·오른쪽). 자동 편성과 같은 직군 배치다. */
   units: DuelNpcUnit[];
   /** 가려지는 순서(전투력 높은 것부터). */

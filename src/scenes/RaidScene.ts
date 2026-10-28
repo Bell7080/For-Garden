@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, raidRunStamina, raidSettlementDisplayOrder, type RaidDifficulty } from "../data/raid";
+import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, raidRunStamina, type RaidDifficulty } from "../data/raid";
 import { session } from "../state/session";
 import { getRelic } from "../data/relics";
 import { setDebugRaidStage, setDebugScene } from "../debug";
@@ -21,11 +21,12 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
 import {
-  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_LIST, RAID_LIST_CHROME,
+  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_LIST, RAID_LIST_CHROME, RAID_SUMMON_TONE,
   RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight,
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
 import { attachDragScroll } from "../ui/dragScroll";
+import { addScrollHint } from "../ui/ScrollHint";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { prefetchBattlePuppets } from "../puppets/battlePrefetch";
 import { relicCollection } from "../managers/RelicCollectionManager";
@@ -35,7 +36,6 @@ import { addRaidBossPickLayer, addRaidDifficultyPickLayer, addRaidLayer, raidTag
 import { playRaidSummonCinematic } from "../ui/RaidSummonCinematic";
 import { addCategoryTab } from "../ui/CategoryTab";
 import { addFramedIcon } from "../ui/itemFrame";
-import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { openRaidSettlementPopup } from "../ui/RaidSettlementPopup";
 import { consumeSceneEntry } from "./sceneEntry";
 import { findItem } from "../data/items";
@@ -143,11 +143,14 @@ export class RaidScene extends Phaser.Scene {
      * **기여 목록은 제 판 위에 선다.** 보스를 끊는 대신 반투명 유리 한 겹을 그 앞에 깔면
      * 원화는 판 너머로 비치면서도 목록과 분리된다 — 잘라서 만드는 분리는 단면을 남기지만
      * 겹쳐서 만드는 분리는 깊이를 남긴다. 판은 정보창의 칸(`addInfoPanel`)과 같은 남색 유리다.
+     *
+     * **그림자를 깔지 않는다.** 화면 폭을 다 쓰는 판이라 아래·오른쪽으로 민 그림자가 판 윗변 13px과
+     * 왼쪽 변 9px만 비워 두어, 제목표 옆으로 끊긴 띠가 한 줄 더 보였다. 그 몫의 어둠은 판 자체가 갖는다.
      */
     const plate = RAID_BOARD_PLATE;
     const plateShape = slantedRect(plate.width, plate.bottom - plate.top);
     this.add.existing(drawLayer(this, BASE_WIDTH / 2, (plate.top + plate.bottom) / 2,
-      plateShape, { fill: 0x0b0f15, alpha: 0.6, edge: COLOR.accent, edgeAlpha: 0.4 },
+      plateShape, { fill: 0x0b0f15, alpha: 0.74, edge: COLOR.accent, edgeAlpha: 0.4, shadow: false },
     )).setDepth(9);
     this.add.existing(drawShapeEdge(this, BASE_WIDTH / 2, (plate.top + plate.bottom) / 2, plateShape, "bottom", { color: COLOR.accent, alpha: 0.22, inset: 10 })).setDepth(9);
     void this.refresh();
@@ -291,7 +294,9 @@ export class RaidScene extends Phaser.Scene {
     if (!layers) return;
     layers.removeAll(true);
     const stack = raidLayerStack(raids.map(({ kind }) => kind));
+    const { top: clipTop, bottom: clipBottom } = RAID_LIST.viewport;
     raids.forEach((raid, index) => addRaidLayer(this, layers, raid, stack.centers[index]!, {
+      clip: () => ({ left: 0, right: BASE_WIDTH, top: clipTop, bottom: clipBottom }),
       // 끝난 판은 칠 수 없으니 판으로 넘어가지 않는다 — 정산은 층을 덮는 덮개가 그 자리에서 맡는다.
       onTap: () => { if (!this.dragged && (raid.status !== "completed" || raid.pendingRequestId)) this.openRaid(raid.id); },
       onSettle: (dismiss) => { if (!this.dragged) void this.settle(raid.id, dismiss); },
@@ -340,16 +345,20 @@ export class RaidScene extends Phaser.Scene {
     const content = this.content;
     if (!content) return;
     const { y, height, fontSize, select, normal } = RAID_LIST_CHROME.summon;
-    const button = (slot: { centerX: number; width: number }, label: string, enabled: boolean, onClick: () => void): void => {
+    // 판은 쓰는 토벌권의 색을 입고, 라벨 오른쪽에 그 토벌권 그림과 한 번에 드는 수가 선다.
+    const button = (slot: { centerX: number; width: number }, kind: "select" | "normal", label: string, owned: number, onClick: () => void): void => {
+      const tone = RAID_SUMMON_TONE[kind];
       const entry = new Button(this, slot.centerX, y, {
         width: slot.width, height, label, fontSize, variant: "primary",
-        accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick,
+        fill: tone.fill, accentColor: tone.edge, accentTextColor: tone.text, labelColor: tone.text,
+        cost: { icon: kind === "select" ? "item-raid-select-ticket" : "item-raid-ticket", amount: RAID_SUMMON_TICKET_COST, iconScale: 1.8, affordable: owned >= RAID_SUMMON_TICKET_COST },
+        onClick,
       });
-      entry.setEnabled(enabled);
+      entry.setEnabled(owned >= RAID_SUMMON_TICKET_COST);
       content.add(entry);
     };
-    button(select, t("raid.summon.select"), tickets.select > 0, () => this.openBossPickPopup());
-    button(normal, t("raid.summon.button"), tickets.normal > 0, () => void this.summon(undefined));
+    button(select, "select", t("raid.summon.select"), tickets.select, () => this.openBossPickPopup());
+    button(normal, "normal", t("raid.summon.button"), tickets.normal, () => void this.summon(undefined));
   }
 
   /**
@@ -484,7 +493,6 @@ export class RaidScene extends Phaser.Scene {
     const ends = new Date(raid.endsAt);
     const endsLabel = `${String(ends.getMonth() + 1).padStart(2, "0")}-${String(ends.getDate()).padStart(2, "0")} ${String(ends.getHours()).padStart(2, "0")}:${String(ends.getMinutes()).padStart(2, "0")}`;
     content.add(this.add.text(RAID_HEADER.titleX + 4, RAID_HEADER.seasonY, raid.status === "completed" ? t(raid.defeated ? "raid.boss.defeated" : "raid.layer.ended") : t("raid.endsAt", { time: endsLabel }), textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(0, 0));
-    content.add(new Button(this, BASE_WIDTH - 190, RAID_HEADER.titleY + 24, { width: 228, height: 82, label: t("raid.reward.title"), fontSize: 26, onClick: () => this.openRewardPopup(raid) }));
     if (raid.status === "active") {
       content.add(this.add.text(RAID_HEADER.titleX + 4, RAID_HEADER.attemptsY, t("raid.attempts", { remaining: Math.max(0, raid.attemptsLimit - raid.attemptsUsed), limit: raid.attemptsLimit }), textStyle({ role: "emphasis", size: 25, color: COLOR.sortieText })).setOrigin(0, 0));
     }
@@ -546,6 +554,7 @@ export class RaidScene extends Phaser.Scene {
     const hit = this.add.rectangle(RAID_BOARD.centerX, viewport.centerY, RANKING_LIST.rowWidth, viewport.height, 0xffffff, 0).setVisible(false);
     attachDragScroll(this, { owner: hit, root: content, bounds: () => hit.getBounds(), onDelta: move });
     content.add(hit);
+    addScrollHint(this, content, { x: RAID_BOARD.centerX, y: viewport.centerY, width: RANKING_LIST.rowWidth, height: viewport.height, owner: hit, read: () => ({ offset, min: minY }) });
   }
 
   /** 한 줄. 1·2·3등의 금·은·동과 내 줄의 강조는 순위표와 같은 표를 읽는다. */
@@ -562,7 +571,7 @@ export class RaidScene extends Phaser.Scene {
     }));
     const rankColor = medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink);
     row.add(this.add.text(RANKING_LIST.rankX, 0, `${entry.rank}`, textStyle({ role: "display", size: medal ? 44 : 34, color: rankColor })).setOrigin(0.5));
-    addRankingFace(this, row, entry.favoriteRelicId, entry.displayName, accent, undefined, entry.frameId);
+    addRankingFace(this, row, entry, entry.displayName);
     row.add(this.add.text(RANKING_LIST.nameX, 0, entry.displayName, textStyle({ role: "emphasis", size: 30, color: medal?.text ?? (entry.isMe ? COLOR.accentText : COLOR.ink) })).setOrigin(0, 0.5));
     row.add(this.add.text(RANKING_LIST.scoreX, 0, entry.damage.toLocaleString(), textStyle({ role: "display", size: 32, color: rankColor })).setOrigin(1, 0.5));
     list.add(row);
@@ -607,47 +616,6 @@ export class RaidScene extends Phaser.Scene {
     });
     this.sortieButton.setEnabled(canSortie);
     content.add(this.sortieButton);
-  }
-
-  /**
-   * 보상 창 — 판이 끝나면 받는 **정산**의 내역이다.
-   *
-   * 몫은 셋이다: 내가 민 몫(두 판의 합이 목표에 닿을수록), 판 전체가 깎인 몫, 토벌 몫. 여기서는
-   * 계산하지 않고 서버가 실은 합계와 그 재료(내 기여·전체 진행·토벌 여부)만 나란히 세운다. 한 판을
-   * 칠 때마다 곧바로 받는 골드는 결과판이 말한다.
-   */
-  private openRewardPopup(raid: RaidDto): void {
-    const width = 780;
-    const participated = raid.settlement.length > 0;
-    const shown = raidSettlementDisplayOrder(raid.settlement);
-    const rows = [
-      [t("raid.contribution.mine"), raid.myDamage.toLocaleString()],
-      [t("raid.reward.progress"), t("raid.world.percent", { percent: raid.totalHp > 0 ? Math.floor(raid.dealtDamage / raid.totalHp * 100) : 0 })],
-      [t("raid.reward.kill"), t(raid.defeated ? "raid.reward.killYes" : raid.status === "completed" ? "raid.reward.killFailed" : "raid.reward.killNo")],
-    ] as const;
-    const rowHeight = 64;
-    const frame = participated ? 132 : 0;
-    const height = 200 + frame + 40 + rows.length * rowHeight + 110;
-    this.popups.open({ width, height, title: t("raid.reward.title"), dim: true, closeOnBackdrop: true }, (body) => {
-      let y = -height / 2 + 110;
-      // 기여가 없으면 최대 보상 대신 아이콘 없이 「기여 없음」만 세운다.
-      const label = !participated ? t("raid.settle.none") : raid.settled ? t("raid.settle.done")
-        : raid.status === "completed" ? t("raid.settle.ready") : t("raid.settle.expected");
-      body.add(this.add.text(0, y, label, textStyle({ role: "emphasis", size: 27, color: participated ? COLOR.accentText : COLOR.inkDim })).setOrigin(0.5));
-      y += 30 + frame / 2;
-      if (participated) {
-        shown.forEach((reward, index) => {
-          addFramedIcon(this, body, (index - (shown.length - 1) / 2) * (frame + 24), y, frame, CURRENCY_ICON_BY_WALLET[reward.currency], { amount: reward.amount.toLocaleString() });
-        });
-      }
-      y += frame / 2 + 60;
-      rows.forEach(([name, value]) => {
-        body.add(this.add.text(-width / 2 + 90, y, name, textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0, 0.5));
-        body.add(this.add.text(width / 2 - 90, y, value, textStyle({ role: "display", size: 28, color: COLOR.ink })).setOrigin(1, 0.5));
-        y += rowHeight;
-      });
-      body.add(this.add.text(0, y + 24, t("raid.reward.note"), textStyle({ role: "body", size: 22, color: COLOR.inkDim, align: "center", wrap: width - 120 })).setOrigin(0.5));
-    });
   }
 
   /** 불러오지 못했으면 그 자리를 비운다 — 실패를 문장으로 세워도 지금 할 일이 바뀌지 않는다. */

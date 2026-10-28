@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { attachRoll } from "./RollingValue";
 import { remainingDetail } from "./itemExpiry";
 import { t } from "../i18n";
 import type { ItemDefinition } from "../data/items";
@@ -57,8 +58,8 @@ export class ItemGuidePopup {
       }
       if (fragmentRarity) body.add(addUniversalFragmentGlass(this.scene, hero.frameSize, fragmentRarity).setPosition(iconX, heroY));
       body.add(this.scene.add.text(hero.width / 2 - 40, heroY - 28, t("inventory.guide.held"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(1, 0.5));
-      body.add(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
-        .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true));
+      body.add(attachRoll(this.scene.add.text(hero.width / 2 - 40, heroY + 18, quantity.toLocaleString(), textStyle({ role: "display", size: 52, color: "#ffe9a3" }))
+        .setOrigin(1, 0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: `item-guide:${definition.id}` }));
       if (expiry) {
         // 가방 칸의 표식(`7D`)이 줄여 적은 것을 여기서는 자세히 — 가장 먼저 사라질 묶음의 수와 남은
         // 일·시간(하루 안이면 시·분, 한 시간 안이면 분·초)을 초마다 다시 적는다.

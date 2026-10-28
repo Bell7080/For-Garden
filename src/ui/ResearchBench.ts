@@ -72,7 +72,7 @@ function openRunePicker(options: { scene: Phaser.Scene; popups: PopupLayer; onPi
     Number(b.trait !== undefined) - Number(a.trait !== undefined) || (a.sequence ?? 0) - (b.sequence ?? 0));
   const { width, height } = runePickerSize(runes.length);
   popups.open({ width, height, title: t("archaeology.bench.pick"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-    mountRunePickerGrid(scene, body, { runes, isCovered: () => popups.isOpen, onPick: (rune) => { close(); options.onPick(rune); } });
+    mountRunePickerGrid(scene, body, { popups, runes, isCovered: () => popups.isOpen, isActive: () => popups.isTop(body), onPick: (rune) => { close(); options.onPick(rune); } });
   });
 }
 

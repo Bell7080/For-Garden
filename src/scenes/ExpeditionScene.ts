@@ -1,4 +1,5 @@
 import { bindNotificationDot } from "../ui/NotificationDot";
+import { playFormationTapSound } from "../ui/formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { notificationManager } from "../managers/NotificationManager";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
@@ -32,6 +33,7 @@ import { PARTY_POWER_PLATE } from "../ui/partyPreviewLayout";
 import { addBreakthroughGradeMark } from "../ui/rarityMark";
 import { addUnitNameplate, addUnitPower } from "../ui/unitNameplate";
 import { BACK_SLOT } from "../ui/popupGeometry";
+import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, syncPortraitResidency } from "../ui/portraitGrid";
 import { addFramedIcon } from "../ui/itemFrame";
@@ -73,7 +75,10 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { withBusy } from "../ui/BusyOverlay";
+import { openExpeditionRestPopup } from "../ui/ExpeditionRestPopup";
+import { playExpeditionRestRecap, type ExpeditionRestRecapEntry } from "../ui/expeditionRestRecap";
 import { showContentIntro } from "../ui/contentIntro";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 편성 목록은 어디서나 네 칸이 한 줄이다. 카드 크기와 줄 간격은 폭에서 공용 규칙이 구한다. */
 const ROSTER = formationRosterGrid(BASE_WIDTH - 96);
@@ -207,6 +212,8 @@ export class ExpeditionScene extends Phaser.Scene {
   private bossPortrait?: PuppetCreature;
   /** 증강 팝업이 아군 그리드를 다시 그리지 않고 이 생존 HUD를 그대로 빌려 쓴다. */
   private relicProfiles = new Map<string, BattleProfile>();
+  /** 방금 끝낸 휴식 전의 체력. 지도가 다시 서면 HUD가 이 값에서 차오른다. 한 번 그리면 비운다. */
+  private restRecap?: readonly ExpeditionRestRecapEntry[];
   private sweepButton?: Button;
   /** 소탕 요청부터 서버 확정까지 연타를 막는다. */
   private sweepPending = false;
@@ -216,8 +223,9 @@ export class ExpeditionScene extends Phaser.Scene {
   }
 
   /** 로비에서 새로 들어오면 늘 기록 화면부터다. 편성은 출격 버튼이 여는 다음 단계다. */
-  init(data?: { stage?: "ranking" | "preparation" }): void {
+  init(data?: { stage?: "ranking" | "preparation"; restRecap?: readonly ExpeditionRestRecapEntry[] }): void {
     this.stage = data?.stage ?? "ranking";
+    this.restRecap = data?.restRecap;
     consumeSceneEntry(this);
   }
 
@@ -401,10 +409,17 @@ export class ExpeditionScene extends Phaser.Scene {
     }
     this.nodeTransitionPending = true;
     if (node.type === "rest") {
-      this.popups.confirm({ title: t("expedition.node.rest"), message: t("expedition.node.restBody"), confirmLabel: t("expedition.node.restConfirm") }, () => {
+      // 휴식 창이 누가 얼마나 회복되고 누구를 깨울지를 미리 보여 주고, 고른 값으로 서버에 한 번만 보낸다.
+      const before = run.relics.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive }));
+      const members = run.relics.map(({ relicId, currentHp, alive }) => {
+        const frozen = expeditionManager.snapshotFor(relicId);
+        return { relicId, currentHp, alive, level: frozen.level, maxHp: Math.max(1, Math.round(frozen.stats.hp)), skinId: frozen.skinId };
+      });
+      openExpeditionRestPopup(this, this.popups, members, (reviveRelicId) => {
         this.nodeTransitionPending = true;
         // 서버의 단일 저장이 실패하면 잠금을 풀 뿐, 부분 회복 상태는 존재하지 않는다.
-        void withBusy(this, expeditionManager.completeRestNode(node.id)).then((ok) => { if (ok) restartScene(this); else this.nodeTransitionPending = false; }).catch(() => { this.nodeTransitionPending = false; });
+        // 지도가 다시 서면 HUD가 휴식 전 체력에서 차오르며 오른 양을 띄운다(`restRecap`).
+        void withBusy(this, expeditionManager.completeRestNode(node.id, reviveRelicId)).then((ok) => { if (ok) restartScene(this, { restRecap: before }); else this.nodeTransitionPending = false; }).catch(() => { this.nodeTransitionPending = false; });
       });
       this.nodeTransitionPending = false;
       return;
@@ -526,16 +541,18 @@ export class ExpeditionScene extends Phaser.Scene {
     const personal = expeditionAugmentBadges(augments).byRelic;
     relics.forEach((state, index) => {
       const def = getRelic(state.relicId); const x = BATTLE_PROFILE_LAYOUT.expedition.centersX[index];
-      const hpRatio = Math.max(0, Math.min(100, state.currentHp)) / 100;
+      // 방금 휴식을 마쳤다면 휴식 **전** 체력으로 세운 뒤 차오르게 한다(`playExpeditionRestRecap`).
+      const shown = this.restRecap?.find(({ relicId }) => relicId === state.relicId) ?? state;
+      const hpRatio = Math.max(0, Math.min(100, shown.currentHp)) / 100;
       // 지도는 **떠날 때 굳힌 모습**을 그린다 — 도중에 키워도 이 런의 체력·레벨·등급·외형은 그대로다.
       const frozen = expeditionManager.snapshotFor(def.id);
       const maxHp = Math.round(frozen.stats.hp);
-      const currentHp = state.alive ? Math.round(maxHp * hpRatio) : 0;
+      const currentHp = shown.alive ? Math.round(maxHp * hpRatio) : 0;
       // 지도는 카드·게이지·글자를 개별 축소하지 않고 전투와 같은 한 칸을 그대로 세운다.
       // 생존은 노란 발광으로 알리지 않는다 — 그 발광은 전투에서 "궁극기가 찼다"는 뜻이다.
       const profile = new BattleProfile(this, x, BATTLE_PROFILE_LAYOUT.expedition.centerY, {
         relic: def, level: frozen.level, breakthroughGrade: frozen.breakthrough + 1, skinId: frozen.skinId,
-        currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !state.alive,
+        currentHp, maxHp, ferocity: 0, active: false, readOnly: true, dead: !shown.alive,
       }).setScale(BATTLE_PROFILE_LAYOUT.expedition.scale);
       // 지도 HUD의 칸도 편성 그리드와 같은 꾹 누름으로 상세를 연다. 증강 대상 고르기는
       // 같은 입력면에 짧은 탭만 얹으므로 둘이 부딪히지 않는다.
@@ -551,6 +568,14 @@ export class ExpeditionScene extends Phaser.Scene {
       });
       this.relicProfiles.set(state.relicId, profile);
     });
+    if (this.restRecap) {
+      const before = this.restRecap;
+      this.restRecap = undefined;
+      playExpeditionRestRecap(this, before, relics, (relicId) => {
+        const profile = this.relicProfiles.get(relicId);
+        return profile ? { profile, maxHp: Math.round(expeditionManager.snapshotFor(relicId).stats.hp) } : undefined;
+      });
+    }
   }
 
   /**
@@ -684,7 +709,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const utilityRightX = BASE_WIDTH / 2 + utilityTotal / 2 - utility.width / 2;
     // 보스 전신(depth 5)보다 위에 그려야 발끝·옷자락 뒤로 조작이 숨지 않는다.
     new Button(this, utilityLeftX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.ranking"), fontSize: 26, onClick: () => new ExpeditionRankingPopup(this, this.popups).open() }).setDepth(12);
-    const rewardButton = new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
+    const rewardButton = new Button(this, utilityRightX, utility.y, { width: utility.width, height: utility.height, label: t("expedition.weeklyScoreReward"), fontSize: 26, onClick: () => void new ExpeditionRewardPopup(this, this.popups).open() }).setDepth(12);
 
     bindNotificationDot(this, rewardButton, { x: utility.width / 2 - 16, y: -utility.height / 2 + 12 }, listener => notificationManager.subscribe("expeditionReward", listener));
     const actionsTotal = actions.sortieWidth + actions.sweepWidth + actions.gap;
@@ -837,6 +862,11 @@ export class ExpeditionScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
     this.rosterView = DEFAULT_ROSTER_VIEW;
     this.fillRosterGrid();
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (ROSTER_VIEWPORT.top + ROSTER_VIEWPORT.bottom) / 2, width: BASE_WIDTH,
+      height: ROSTER_VIEWPORT.bottom - ROSTER_VIEWPORT.top, depth: 45,
+      read: () => ({ offset: this.rosterScrollY, min: this.rosterMinScroll }),
+    });
     // 편성판 바로 아래 한 줄 — 도감과 같은 필터·정렬. 그리드가 시작하는 머리 끝선 위에 앉는다.
     new RosterControls(this, {
       left: BASE_WIDTH / 2 + formationRosterColumnX(ROSTER, 0) - ROSTER.cardWidth / 2,
@@ -889,6 +919,8 @@ export class ExpeditionScene extends Phaser.Scene {
         selectedStyle: "pressed",
         deferPortrait: true,
       });
+      // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 편성판·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: ROSTER_VIEWPORT.top, bottom: ROSTER_VIEWPORT.bottom }));
       // 카드는 선택만 바꾸며 Session을 쓰지 않는다. 시작 버튼에서 매니저가 최종 소유 검증을 반복한다.
       // 짧은 탭은 편성 토글, 꾹 누름은 상세다. 끌어서 스크롤한 손가락은 둘 다 아니다.
       bindLongPress(this, card.hit, {
@@ -1104,6 +1136,7 @@ export class ExpeditionScene extends Phaser.Scene {
    */
   private toggle(relicId: string): void {
     const result = tapRosterRelic(this.selected, this.selectedSlot, relicId);
+    playFormationTapSound(this.selected, result.formation, relicId);
     this.selected = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refreshPreparationSelection();

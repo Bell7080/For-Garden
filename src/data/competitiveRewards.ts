@@ -35,3 +35,60 @@ export function rankRewardGems(table: RankRewardTable, rank: number, total: numb
   const percent = rank / Math.max(1, total) * 100;
   return table.percents.find((row) => percent <= row.upToPercent)?.gems ?? table.participation;
 }
+
+/** 순위 보상 한 묶음 — 우편에 함께 드는 재화(지갑 키)와 수량. */
+export type RankRewardBundle = Partial<Record<"gems" | "salvageRecord" | "gold" | "cheesecake", number>>;
+
+/**
+ * 여러 재화를 함께 주는 순위 보상 풀 — 모양은 `RankRewardTable`과 같다(순위 구간 → 1,000위 밖 백분율 구간 → 참여).
+ * 원정 주간 순위가 쓴다. 젬만 주는 표는 `rankTableAsPool`로 같은 모양이 되어 보상표 창이 한 길로 그린다.
+ */
+export interface RankRewardPool {
+  readonly ranks: readonly { readonly upTo: number; readonly rewards: RankRewardBundle }[];
+  readonly percents: readonly { readonly upToPercent: number; readonly rewards: RankRewardBundle }[];
+  readonly participation: RankRewardBundle;
+}
+
+export const rankTableAsPool = (table: RankRewardTable): RankRewardPool => ({
+  ranks: table.ranks.map((row) => ({ upTo: row.upTo, rewards: { gems: row.gems } })),
+  percents: table.percents.map((row) => ({ upToPercent: row.upToPercent, rewards: { gems: row.gems } })),
+  participation: { gems: table.participation },
+});
+
+/**
+ * 풀에서 그 자리의 묶음. `total`(그 기간 참가자 수)을 모르면 1,000위 밖은 참여 몫으로 본다 — 모르는 값으로 더 주지 않는다.
+ * 서버(`server_competitive_rewards_v2`)가 같은 규칙으로 고른다.
+ */
+export function rankRewardBundle(pool: RankRewardPool, rank: number, total: number = rank): RankRewardBundle {
+  const byRank = pool.ranks.find((row) => rank <= row.upTo);
+  if (byRank) return { ...byRank.rewards };
+  const percent = rank / Math.max(1, total) * 100;
+  return { ...(pool.percents.find((row) => percent <= row.upToPercent)?.rewards ?? pool.participation) };
+}
+
+/**
+ * 길드 주간 순위 — 매주 월요일 00:00(UTC) 마감. 그 주 길드원 기여도의 합으로 줄을 세우고, 그 주에 기여도가 1 이상인
+ * 길드원 모두가 길드 순위의 몫을 우편으로 받는다(한 사람은 한 주에 한 번 — 그 주 기여도가 가장 큰 길드의 몫).
+ * 2026-10-28 응태 승인 — 공급량 표는 VERSION.md v0.378.0. 서버(`server_guild_weekly_rewards`)가 같은 표를 받는다.
+ */
+export const GUILD_WEEKLY_RANK_REWARDS: RankRewardTable = {
+  ranks: [
+    { upTo: 1, gems: 300 }, { upTo: 2, gems: 250 }, { upTo: 3, gems: 200 }, { upTo: 10, gems: 150 },
+    { upTo: 50, gems: 120 }, { upTo: 100, gems: 100 }, { upTo: 300, gems: 80 }, { upTo: 1000, gems: 60 },
+  ],
+  percents: [{ upToPercent: 10, gems: 50 }, { upToPercent: 30, gems: 40 }, { upToPercent: 50, gems: 30 }],
+  participation: 20,
+};
+
+/**
+ * 수호전 일일 길드 순위 — 매일 00:00(UTC) 마감. **값은 젬이 아니라 길드 코인이다**(표 모양을 같이 쓰려고 칸 이름만 `gems`).
+ * 그날 수호전을 한 판 이상 한 길드원이 그 길드 순위의 몫을 길드원 행의 코인으로 받는다(우편이 아니다 — 코인은 지갑에 없다).
+ * 2026-10-28 응태 승인. DB 함수(`server_guild_settle_guard`)에 같은 표를 옮겨 적었고 `guildSql.test`가 대조한다.
+ */
+export const GUILD_GUARD_DAILY_RANK_COINS: RankRewardTable = {
+  ranks: [
+    { upTo: 1, gems: 30 }, { upTo: 3, gems: 25 }, { upTo: 10, gems: 20 }, { upTo: 50, gems: 15 }, { upTo: 100, gems: 12 }, { upTo: 1000, gems: 10 },
+  ],
+  percents: [{ upToPercent: 10, gems: 8 }, { upToPercent: 30, gems: 6 }, { upToPercent: 50, gems: 5 }],
+  participation: 4,
+};

@@ -182,7 +182,9 @@ export interface DuelBattleUnit {
  */
 export interface DuelBattleInputDto {
   /** Live arena uses a separately authenticated, immutable server lease. */
-  arena?: {roomId:string;side:number;lease:import("./combatProtocol").CombatLease;practice:boolean};
+  arena?: {roomId:string;side:number;lease:import("./combatProtocol").CombatLease;practice:boolean;
+    /** 친선전이면 그 상대 — 결과를 확정하지 못해 나갈 때도 친선전 선택판으로 돌아간다(`arenaExitRoute`). 랭크전은 비운다. */
+    friendId?:string};
   mode: "duel";
   requestId: string;
   attack: readonly string[];
@@ -191,8 +193,21 @@ export interface DuelBattleInputDto {
   units: readonly DuelBattleUnit[];
 }
 
+/**
+ * 길드 수호전 — 앞 셋·뒤 셋 여섯 자리(`formation`, 빈 칸은 null)가 위에서 몰려오는 그날 속성의 무리를 막는다.
+ * 도전은 **입장에서 이미 썼다**(`enterGuildGuard`). 편성은 입장이 굳힌 스냅샷이고, 시드는 그 영수증의 것이라 서버가 같은 판을 다시 굴린다.
+ */
+export interface GuildGuardBattleInputDto {
+  mode: "guildGuard";
+  requestId: string;
+  element: import("./types").Element;
+  /** 입장이 굳힌 여섯 자리(빈 칸 null) — 서버 재현과 같은 성장 스냅샷이다. */
+  lineup: import("./guildGuardBattle").GuildGuardLineup;
+  seed: string;
+}
+
 /** 일반 스테이지 진입과 원정·레이드·대작전·현상수배·결투 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto | DuelBattleInputDto;
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto | DuelBattleInputDto | GuildGuardBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
@@ -207,6 +222,9 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     // 결투는 영수증과 양 편 셋이 모두 있어야 한다 — 하나라도 빠지면 어느 판의 결과인지 붙일 수 없다.
     if (candidate.mode === "duel" && typeof candidate.requestId === "string" && Array.isArray(candidate.attack) && candidate.attack.length === 3
       && Array.isArray(candidate.units) && candidate.units.length === 3 && typeof candidate.opponentName === "string" && Number.isFinite(candidate.opponentScore)) return candidate;
+    // 수호전은 여섯 칸과 영수증·시드가 모두 있어야 서버 재현과 같은 판이 선다.
+    if (candidate.mode === "guildGuard" && typeof candidate.requestId === "string" && typeof candidate.element === "string"
+      && Array.isArray(candidate.lineup) && candidate.lineup.length === 6 && typeof candidate.seed === "string") return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.
     if (candidate.mode === "stage" && candidate.exitTo === "lobby") {
       return typeof candidate.epilogueStoryId === "string"

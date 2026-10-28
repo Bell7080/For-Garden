@@ -24,7 +24,7 @@ function service(unlocked = true, unlockedFloor = 1) {
     state.owned.add(id);
     state.relicProgress[id]={...createInitialRelicProgress(),level:60,breakthrough:4};
   }
-  if(unlocked)state.cleared.add("1-10");
+  if(unlocked)state.cleared.add("4-10");
   for(let floor=1;floor<unlockedFloor;floor++)state.cleared.add(ancientStageId(floor));
   let stored:StoredState={data:saveManager.exportData(state),revision:"1"};
   const receipts=new Map<string,unknown>();
@@ -56,7 +56,7 @@ async function verifiedWin(s:ReturnType<typeof service>) {
 }
 
 describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
-  it.each([1,2,3,4,5,6,121])("%i층의 시련과 심층 피해 기준을 서버 발급 전투에도 적용한다",async floor=>{
+  it.each([1,2,3,4,5,6,7,8,121])("%i층의 시련과 심층 피해 기준을 서버 발급 전투에도 적용한다",async floor=>{
     const s=service(true,floor),stageId=ancientStageId(floor);
     await s.call("enterStage",[{stageId,requestId:`trial-entry-${floor}`}]);
     const lease=(await s.call("prepareCombat",[{input:{mode:"stage"},stageId}])).result as CombatLease;
@@ -64,14 +64,18 @@ describe("고대 지층 서버 입장·첫 보상·재전송",()=>{
     expect(fight.timeLimitSeconds).toBe(definition.timeLimitSeconds);
     expect(fight.automaticUltimates).not.toBe(true);
     const enemies=fight.fighters.filter(f=>f.side==="enemy"&&f.summonOwnerId===null);
-    expect(enemies.map(f=>f.def.stats)).toEqual(definition.enemies.map(e=>e.stats));
+    // 속공·급소 시련은 정의의 능력치가 아니라 적 증강으로 얹혀 전투원에게만 보인다.
+    const speed=1+(definition.trial.attackSpeedPercent??0)/100, crit=definition.trial.critChancePoints??0;
+    expect(enemies.map(f=>f.def.stats)).toEqual(definition.enemies.map(e=>({...e.stats,attackSpeed:e.stats.attackSpeed*speed,critChance:e.stats.critChance+crit})));
     expect(enemies.map(f=>f.percentHpBasis)).toEqual(definition.enemyPercentHpBases);
     // 시련은 달마다 다른 층에 서므로 층 번호가 아니라 그 층의 시련으로 확인한다.
     if(definition.trialId==="shield")expect(enemies.every(f=>f.shield.amount/f.maxHp>=.29)).toBe(true);
     if(definition.trialId==="charge")expect(enemies.every(f=>f.energy/f.def.ultimate.cost>=.49)).toBe(true);
+    if(definition.trialId==="frenzy")expect(enemies.every((f,i)=>f.def.stats.attackSpeed===definition.enemies[i].stats.attackSpeed*1.25)).toBe(true);
+    if(definition.trialId==="precision")expect(enemies.every((f,i)=>f.def.stats.critChance===definition.enemies[i].stats.critChance+30)).toBe(true);
   });
 
-  it("1-10 이전 입장과 층 건너뛰기·클라이언트 승리 주장만으로는 보상을 허용하지 않는다",async()=>{
+  it("4-10 이전 입장과 층 건너뛰기·클라이언트 승리 주장만으로는 보상을 허용하지 않는다",async()=>{
     const locked=service(false);
     await expect(locked.call("enterStage",[{stageId:"ancient:1",requestId:"entry-locked"}])).rejects.toThrow();
     const s=service();

@@ -1,5 +1,7 @@
+import { audioManager } from "../managers/AudioManager";
 import { sortRewardItems } from "./rewardOrder";
 import Phaser from "phaser";
+import { pressResultAction as pressAction } from "../core/stageCompleteAction";
 import { t } from "../i18n";
 import { formatCurrency } from "../core/formatCurrency";
 import { getRelic } from "../data/relics";
@@ -29,6 +31,8 @@ import { openRuneInfoPopup } from "./RunePopup";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
+import { playGreatSuccess, type GreatSuccessFrame } from "./greatSuccessFx";
+import { addAutoRepeatBanner, type AutoRepeatBannerOptions } from "./AutoRepeatBanner";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
 export interface StageCompleteFighter {
@@ -71,13 +75,6 @@ export type StageCompleteReward =
       footnote?: string;
     };
 
-/** 꺼진 길에 대신 할 일이 있으면 그것만 부르고 판은 열어 둔다. 아니면 고른 길을 알리고 닫는다. */
-function pressAction(action: StageCompleteAction, close: () => void): void {
-  if (action.disabled && action.onBlocked) { action.onBlocked(); return; }
-  action.onPress();
-  close();
-}
-
 /** 실패 결산창의 버튼 한 장. 무엇을 하면 강해지는지만 말한다. */
 export interface StageCompleteAction {
   readonly label: string;
@@ -86,6 +83,8 @@ export interface StageCompleteAction {
   readonly primary?: boolean;
   /** 지금은 갈 수 없는 길(스테미나가 모자란 다시 하기 등). 버튼은 서되 꺼져 있다. */
   readonly disabled?: boolean;
+  /** 충전처럼 결과판이 열린 동안 바뀌는 조건은 누르는 순간 다시 읽는다. */
+  readonly isBlocked?: () => boolean;
   /** 꺼진 길을 눌렀을 때 대신 할 일(스테미나 충전 창). 있으면 버튼은 켜진 채 서고, 누르면 판을 닫지 않고 이것만 부른다. */
   readonly onBlocked?: () => void;
   /** 나가기처럼 판을 떠나는 길. 글자만 붉게 선다. */
@@ -129,6 +128,16 @@ export interface StageCompletePopupOptions {
    * (판 닫기는 이 팝업이 한다). 길 자체는 `growthPaths`가 편성 상태에서 정한다.
    */
   growth?: { paths: readonly GrowthPath[]; onPick: (path: GrowthPath) => void };
+  /**
+   * 대성공 판(`core/greatSuccess.ts`). 보상 액자 중 `greatBonus`가 실린 칸이 팡파레와 함께 쾅 맥동하고
+   * 우상단에 「대성공」 도장이 박히며, 수가 기본 몫에서 받은 몫까지 올라간다.
+   */
+  greatSuccess?: boolean;
+  /**
+   * 자동 전투 중이면 화면 밑동의 「화면을 눌러 확인」 자리에 카운트다운 띠가 선다(`AutoRepeatBanner`).
+   * 시간이 다 되면 `onElapsed`를 부르고 판을 닫는다 — 닫힘이 부르는 기본 길(`onConfirm`)은 부르는 쪽이 막는다.
+   */
+  autoRepeat?: AutoRepeatBannerOptions;
 }
 
 /** 결투 티어 블록이 경험치 블록 자리를 쓸 때 그 아래 내용이 내려서는 만큼. */
@@ -204,6 +213,11 @@ export class StageCompletePopup {
 
   open(options: StageCompletePopupOptions): void {
     const defeated = options.reward.kind === "defeat";
+    // 승패음은 판이 뜨는 순간에만 짧게 운다 — 쓰러지는 연출 동안 먼저 울리면 결과판과 박자가 갈린다.
+    // 정산(원정·레이드)은 이기고 진 판이 아니라 보상음으로 연다.
+    const settlement = options.reward.kind === "loot" && options.reward.settlement === true;
+    if (settlement) audioManager?.playUi("ui.reward");
+    else audioManager?.playSfx(defeated ? "battle.defeat" : "battle.victory");
     this.shiftY = options.standing ? STANDING_SHIFT : 0;
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();
@@ -213,6 +227,7 @@ export class StageCompletePopup {
       ? (clearRewards.length > 0 ? clearRewards.length : Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
       : loot.length;
     let hint: Phaser.GameObjects.Text | undefined;
+    let autoBanner: { destroy: () => void } | undefined;
     let refundToast: Phaser.GameObjects.Container | undefined;
     /** Puppet은 컨테이너 변환을 물려받지 않으므로 원점(0,0)에 선 전용 레이어에 화면 좌표로 세운다. */
     let puppetLayer: Phaser.GameObjects.Container | undefined;
@@ -229,6 +244,7 @@ export class StageCompletePopup {
       onClose: () => {
         disposed = true;
         hint?.destroy();
+        autoBanner?.destroy();
         if (refundToast) { this.scene.tweens.killTweensOf(refundToast); refundToast.destroy(); }
         for (const puppet of puppets) { puppetLayer?.remove(puppet, false); puppet.destroy(); }
         puppets.clear();
@@ -292,16 +308,20 @@ export class StageCompletePopup {
         if ((options.staminaRefunded ?? 0) > 0) refundToast = this.showStaminaRefundToast(options.staminaRefunded ?? 0, (body.parentContainer?.depth ?? 0) + 1);
       }
       else {
-        this.buildLoot(body, loot, options.reward.footnote);
+        this.buildLoot(body, loot, options.reward.footnote, options.greatSuccess === true);
         if (options.replay) this.buildReplay(body, close, options.replay);
       }
 
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
       // 같은 popups 위에 한 겹 더 쌓여도 그 뒤로 가려지고, 새치기하듯 계속 앞에 남지 않는다.
-      hint = this.scene.add
-        .text(this.scene.scale.width / 2, this.scene.scale.height - 130, t("stageComplete.tapToConfirm"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
-        .setOrigin(0.5).setAlpha(0.62).setDepth((body.parentContainer?.depth ?? 0) + 1);
-      hint.setShadow(0, 3, "#000000", 4, false, true);
+      if (options.autoRepeat) {
+        autoBanner = addAutoRepeatBanner(this.scene, (body.parentContainer?.depth ?? 0) + 1, options.autoRepeat, close);
+      } else {
+        hint = this.scene.add
+          .text(this.scene.scale.width / 2, this.scene.scale.height - 130, t("stageComplete.tapToConfirm"), textStyle({ role: "emphasis", size: 30, color: COLOR.ink }))
+          .setOrigin(0.5).setAlpha(0.62).setDepth((body.parentContainer?.depth ?? 0) + 1);
+        hint.setShadow(0, 3, "#000000", 4, false, true);
+      }
     });
   }
 
@@ -415,7 +435,7 @@ export class StageCompletePopup {
   private buildReplay(body: Phaser.GameObjects.Container, close: () => void, replay: StageCompleteAction): void {
     body.add(new Button(this.scene, 0, REPLAY.y, {
       width: REPLAY.width, height: REPLAY.height, label: replay.label, fontSize: 30, variant: "primary",
-      onClick: () => { replay.onPress(); close(); },
+      onClick: () => pressAction(replay, close),
     }));
   }
 
@@ -521,7 +541,7 @@ export class StageCompletePopup {
    * 점수 증가분은 액자로 세우지 않는다 — 지갑에 들어온 재화가 아니라 **이번 판이 얼마를
    * 보탰는가**라, 줄 아래 글자 한 줄이 그 몫을 맡는다(`RewardPopup`의 `footnote`와 같은 규칙).
    */
-  private buildLoot(body: Phaser.GameObjects.Container, rawItems: readonly RewardPopupItem[], footnote?: string): void {
+  private buildLoot(body: Phaser.GameObjects.Container, rawItems: readonly RewardPopupItem[], footnote?: string, greatSuccess = false): void {
     const items = sortRewardItems(rawItems);
     const rowY = REWARD_ROW.y + this.shiftY;
     if (items.length === 0) {
@@ -532,17 +552,21 @@ export class StageCompletePopup {
     // 가로로 훑을 수 있는 영수증이 아니라 한눈에 읽는 결과판이라 줄이 흐르면 안 된다.
     const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, items.length - 1));
     const startX = -((items.length - 1) * gap) / 2;
+    const great: GreatSuccessFrame[] = [];
     items.forEach((item, index) => {
       const x = startX + index * gap;
       const holder = addFramedIcon(this.scene, body, x, rowY, REWARD_ROW.frame, typeof item.icon === "string" ? item.icon : "", {
         amount: formatCurrency(item.amount),
       });
       addRewardExpiryTag(this.scene, holder, REWARD_ROW.frame, item);
+      if (greatSuccess && (item.greatBonus ?? 0) > 0) great.push({ holder, size: REWARD_ROW.frame, amount: item.amount, bonus: item.greatBonus ?? 0 });
       // 계정 장식처럼 전용 텍스처가 없는 결과만 기존 홀로그램 글리프 체계로 대신한다.
       if (typeof item.icon !== "string") holder.addAt(drawGlyph(this.scene, item.icon.key, 0, 0, REWARD_ROW.frame * 0.56, COLOR.accent), 1);
       if (item.label) body.add(this.scene.add.text(x, rowY + REWARD_ROW.frame / 2 + 26, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
     });
     if (footnote) this.buildFootnote(body, rowY + REWARD_ROW.frame / 2 + 66, footnote);
+    // 한 판의 대성공은 한 번 쾅 — 팡파레는 액자 줄 바로 위에서 터진다.
+    playGreatSuccess(this.scene, body, great, 1, { x: 0, y: rowY - REWARD_ROW.frame / 2 });
   }
 
   /** 이번 판이 점수를 얼마나 보탰는가. 재화가 아니므로 액자가 아니라 글자 한 줄이다. */

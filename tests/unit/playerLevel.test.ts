@@ -82,6 +82,9 @@ describe("레벨이 여는 콘텐츠", () => {
     expect(CONTENT_STAGE_UNLOCKS.archaeology).toBe("1-10");
     expect(isContentUnlocked("archaeology", 60)).toBe(false);
     expect(isContentUnlocked("archaeology", 1, true, new Set(["1-10"]))).toBe(true);
+    expect(CONTENT_STAGE_UNLOCKS.ancient).toBe("4-10");
+    expect(isContentUnlocked("ancient", 60, true, new Set(["1-10"]))).toBe(false);
+    expect(isContentUnlocked("ancient", 1, true, new Set(["4-10"]))).toBe(true);
     expect(CONTENT_LEVEL_GATES_ENABLED).toBe(true);
     // 스토리·연구소·도감·임무·우편·가방·프리미엄은 표에 없어 시작부터 열려 있다.
     expect(CONTENT_UNLOCKS.map(({ id }) => id as string)).not.toContain("lab");

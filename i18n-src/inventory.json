@@ -49,16 +49,6 @@
 "Material",
 "Материалы"
 ],
-"inventory.rune.count": [
-"持有",
-"ที่มี",
-"Đang có",
-"Dimiliki",
-"En posesión",
-"Em posse",
-"Besitz",
-"Есть"
-],
 "inventory.sort.acquired": [
 "获得顺序",
 "ลำดับที่ได้",
@@ -118,6 +108,16 @@
 "Relíquia",
 "Relikt",
 "Реликт"
+],
+"inventory.sort.trait": [
+"特性",
+"คุณลักษณะ",
+"Đặc tính",
+"Sifat",
+"Rasgo",
+"Traço",
+"Merkmal",
+"Черта"
 ],
 "inventory.guide.held": [
 "持有",
@@ -310,14 +310,24 @@
 "Реклама отменена или не готова."
 ],
 "stamina.nextRecovery": [
-"距离下次恢复 {time}",
-"ฟื้นฟูครั้งถัดไปใน {time}",
-"Hồi tiếp theo sau {time}",
-"{time} hingga pemulihan berikutnya",
-"{time} para la próxima recuperación",
-"{time} até a próxima recuperação",
-"{time} bis zur nächsten Erholung",
-"До восстановления {time}"
+"每{minutes}分钟恢复{amount}点 · 距离下次恢复 {time}",
+"ฟื้นฟู {amount} ทุก {minutes} นาที · ครั้งถัดไปใน {time}",
+"Hồi {amount} mỗi {minutes} phút · lần tiếp theo sau {time}",
+"+{amount} setiap {minutes} menit · berikutnya dalam {time}",
+"+{amount} cada {minutes} min · la próxima en {time}",
+"+{amount} a cada {minutes} min · a próxima em {time}",
+"+{amount} alle {minutes} Min. · nächste in {time}",
+"+{amount} каждые {minutes} мин · следующее через {time}"
+],
+"stamina.regenEvery": [
+"每{minutes}分钟恢复{amount}点",
+"ฟื้นฟู {amount} ทุก {minutes} นาที",
+"Hồi {amount} mỗi {minutes} phút",
+"+{amount} setiap {minutes} menit",
+"+{amount} cada {minutes} min",
+"+{amount} a cada {minutes} min",
+"+{amount} alle {minutes} Min.",
+"+{amount} каждые {minutes} мин"
 ],
 "sortie.cake.name": [
 "蛋糕作战",

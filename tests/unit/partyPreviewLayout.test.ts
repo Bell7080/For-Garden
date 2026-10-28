@@ -15,6 +15,8 @@ import {
   PARTY_DEFENSE,
   partyDefenseAllyRow,
   partyDefensePowerBounds,
+  PARTY_GUARD,
+  partyGuardSlotLift,
 } from "../../src/ui/partyPreviewLayout";
 import { ENCOUNTER_ROLE } from "../../src/core/levelDesign";
 
@@ -98,8 +100,9 @@ describe("콘텐츠 편성 미리보기", () => {
 
   it("한꺼번에 몰려오는 수는 적 이름줄과 전투력 판 사이에 선다", () => {
     const bounds = partyPowerPlateBounds();
-    expect(PARTY_PREVIEW.hordeCountY - 15).toBeGreaterThan(ENEMY_NAMEPLATE_BOTTOM);
-    expect(PARTY_PREVIEW.hordeCountY + 15).toBeLessThan(bounds.top);
+    // 글자 24px → 줄 높이 약 36.
+    expect(PARTY_PREVIEW.hordeCountY - 18).toBeGreaterThan(ENEMY_NAMEPLATE_BOTTOM);
+    expect(PARTY_PREVIEW.hordeCountY + 18).toBeLessThan(bounds.top);
   });
 
   it("레이드 보스는 상한까지만 커져 머리가 화면 제목을 뚫지 않는다", () => {
@@ -138,5 +141,41 @@ describe("결투 방어덱 편성", () => {
     // 이름줄은 발끝 아래 +26부터 30px 글자다.
     expect(power.top).toBeGreaterThan(row + 26 + 34);
     expect(power.bottom).toBeLessThan(PARTY_DEFENSE.rosterTop);
+  });
+});
+
+describe("현상수배 레인", () => {
+  it("세 레인은 겹치지 않고, 적과 아군의 표식·이름줄을 한 판 안에 품는다", async () => {
+    const { PARTY_LANES, partyLaneBox } = await import("../../src/ui/partyPreviewLayout");
+    for (let slot = 0; slot < 3; slot += 1) {
+      const box = partyLaneBox(slot);
+      const left = box.x - box.width / 2;
+      const right = box.x + box.width / 2;
+      // 속성 뱃지(중심 x-104, 폭 52)와 돌파 표식(중심 x+104)이 레인 안이다.
+      expect(left).toBeLessThanOrEqual(box.x - 104 - 26 + 1);
+      expect(right).toBeGreaterThanOrEqual(box.x + 104 + 21);
+      if (slot > 0) expect(left).toBeGreaterThan(partyLaneBox(slot - 1).x + box.width / 2);
+    }
+    // 라운드 표는 화면 제목(70 + 46px) 아래, 적의 머리 위다.
+    expect(PARTY_LANES.top).toBeGreaterThan(70 + 46 * 1.52);
+    expect(PARTY_LANES.top + PARTY_LANES.header).toBeLessThan(PARTY_PREVIEW.enemyRow - PARTY_PREVIEW.height);
+    // 아군 이름줄(발끝 +26, 30px 글자)까지 품는다.
+    // 글자 30px의 글리프 밑변(약 +34)까지 품고, 그 아래 자동 배치 줄(윗변 약 896)에는 닿지 않는다.
+    expect(PARTY_LANES.bottom).toBeGreaterThan(PARTY_PREVIEW.allyRow + 26 + 34);
+    expect(PARTY_LANES.bottom).toBeLessThan(896);
+  });
+});
+
+describe("수호전 두 줄 편성 배치", () => {
+  it("앞줄 이름줄이 뒷줄 칸 판에 닿지 않고, 앞줄 판이 정보 줄 아래에서 시작한다", () => {
+    const frontRow = PARTY_PREVIEW.allyRow - partyGuardSlotLift(0);
+    const frontNameplateBottom = frontRow + 26 + 34;
+    expect(frontNameplateBottom).toBeLessThan(partyAllyPlateBox(0, partyGuardSlotLift(3)).y - (PARTY_ALLY_PLATE.bottom - PARTY_ALLY_PLATE.top) / 2);
+    const frontPlateTop = PARTY_ALLY_PLATE.top - partyGuardSlotLift(0);
+    expect(frontPlateTop).toBeGreaterThan(PARTY_GUARD.infoY + PARTY_POWER_PLATE.height / 2);
+  });
+
+  it("줄 이름은 첫 칸의 판 왼쪽 밖에 선다", () => {
+    expect(PARTY_GUARD.rowLabelX + PARTY_GUARD.rowLabelWidth / 2).toBeLessThanOrEqual(PARTY_PREVIEW_COLUMNS[0] - PARTY_PREVIEW.slotWidth / 2 + 2);
   });
 });

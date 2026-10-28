@@ -1,4 +1,5 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
+import { playFormationTapSound } from "../ui/formationSound";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
@@ -25,11 +26,13 @@ import { GameApiError } from "../api/contracts";
 import { Button } from "../ui/Button";
 import { addBackButton } from "../ui/IconButton";
 import { BACK_SLOT } from "../ui/popupGeometry";
+import { clipHit } from "../ui/clippedHit";
 import { PortraitCard } from "../ui/PortraitCard";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridContentHeight, portraitGridFirstRowY, portraitGridHeadroom, syncPortraitResidency } from "../ui/portraitGrid";
 import { relicProgression } from "../managers/RelicProgressionManager";
 import { COLOR, textStyle } from "../ui/theme";
-import { drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { chipPoints, drawLayer, HOLO, slantedRect } from "../ui/holo";
+import { DUNGEON_THEME } from "../ui/dungeonTheme";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { autoPickParty, RECOMMENDED_SLOT_ROLES, relicAffinityDirection } from "../core/partyAffinity";
 import { settingsManager } from "../managers/SettingsManager";
@@ -46,7 +49,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
+import { PARTY_GUARD, partyGuardSlotLift, PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_LANES, partyLaneBox, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -54,9 +57,10 @@ import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { TopBar } from "../ui/TopBar";
 import { openCurrencyGuide } from "../ui/currencyGuideEntry";
-import { shrinkTextToWidth } from "../ui/textFit";
+import { shrinkTextToWidth, squeezeTextToWidth } from "../ui/textFit";
 import { partyEntryErrorView } from "./partyEntryError";
 import { enterContentBattle } from "./contentBattleEntry";
+import { autoRepeat } from "../managers/AutoRepeatManager";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { normalizePartyContent, partyPreview, type PartyContent, type PartyPreview, type PartyPreviewEnemy } from "../data/partyContent";
 import { consumeSceneEntry } from "./sceneEntry";
@@ -66,6 +70,10 @@ import { addSdFootShadow } from "../ui/SdFootShadow";
 import { duelBlindOrder } from "../core/duelArena";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
+import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES } from "../core/guildGuard";
+import { guildWarSlotLabel } from "../ui/guildWarLabels";
+import { GuildApiError } from "../api/guildContracts";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /**
  * 미리보기 전장.
@@ -204,6 +212,30 @@ export class PartyScene extends Phaser.Scene {
   private allyLift = 0;
   private allyRow: number = PARTY_PREVIEW.allyRow;
   private rosterViewport: { top: number; bottom: number } = ROSTER_VIEWPORT;
+
+  /** 수호전은 여섯 칸 두 줄(앞줄 0~2 · 뒷줄 3~5)이다. 나머지 편성은 세 칸 한 줄이다. */
+  private get guard(): boolean { return this.content.content === "guildGuard"; }
+  /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
+  private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
+  private get slotCount(): number { return this.guard ? GUILD_GUARD.slots : 3; }
+  /** 전투 시작에 필요한 인원 — 수호전은 비운 칸이 있어도 한 명부터 나간다. */
+  private get requiredMembers(): number { return this.guard ? 1 : 3; }
+  private slotLift(slot: number): number { return this.guard ? partyGuardSlotLift(slot) : this.allyLift; }
+  private slotX(slot: number): number { return PREVIEW_COLUMNS[slot % 3]; }
+  /** 그 칸의 SD가 발을 딛는 줄. */
+  private slotRow(slot: number): number { return PARTY_PREVIEW.allyRow - this.slotLift(slot); }
+  private slotBox(slot: number): ReturnType<typeof partyAllySlotBox> { return partyAllySlotBox(slot % 3, this.slotLift(slot)); }
+  private ready(): boolean {
+    const count = formationMembers(this.picked).length;
+    return this.guard ? count >= this.requiredMembers : count === 3;
+  }
+  /** 자동 배치 — 수호전은 여섯을 골라 앞줄부터 몸으로 막는 직군을 세운다. */
+  private autoFormation(): (string | null)[] {
+    if (!this.guard) return toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+    const ids = autoPickParty(relicCollection.owned, this.enemies, GUILD_GUARD.slots);
+    return arrangeGuardFormation(ids.map((id) => getRelic(id)));
+  }
+
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
   private enemyInfo!: EnemyInfoPopup;
@@ -237,16 +269,21 @@ export class PartyScene extends Phaser.Scene {
     // 결투는 제 편성을 따로 갖는다 — 공격은 지난 공격덱, 방어는 게시한 방어덱에서 시작한다.
     // 스토리 편성(`session.party`)을 건드리지 않는다.
     const owned = new Set(relicCollection.owned.map(({ id }) => id));
-    const duelStart = this.content.content === "duel" ? this.content.attack : this.content.content === "duelDefense" ? this.content.defense : undefined;
+    const duelStart = this.content.content === "duel" ? this.content.attack : this.content.content === "duelDefense" ? this.content.defense : this.content.content === "guildWarDefense" ? this.content.deck : undefined;
     const duelPicks = duelStart?.filter((id) => owned.has(id));
     this.picked = toFormationSlots(duelPicks && duelPicks.length === 3 ? duelPicks : relicCollection.validParty, 3);
+    if (this.guard) {
+      // 수호전은 마지막으로 출격한 여섯 칸을 다시 세운다 — 그새 잃은 렐릭·겹친 칸만 비운다.
+      const seen = new Set<string>();
+      this.picked = toFormationSlots(settingsManager.get().game.guardFormation.map((id) => (id && owned.has(id) && !seen.has(id) && seen.add(id) ? id : null)), GUILD_GUARD.slots);
+    }
     this.blindChoice = this.content.content === "duelDefense" ? [...this.content.blindChoice] : [];
     this.selectedSlot = undefined;
     this.cards.clear();
     this.rosterView = DEFAULT_ROSTER_VIEW;
     this.allySlots = [];
     this.isEnteringBattle = false;
-    const defense = this.content.content === "duelDefense";
+    const defense = this.defenseOnly;
     this.allyLift = defense ? PARTY_DEFENSE.lift : 0;
     this.allyRow = defense ? partyDefenseAllyRow() : PARTY_PREVIEW.allyRow;
     this.rosterViewport = defense ? { ...ROSTER_VIEWPORT, top: PARTY_DEFENSE.rosterTop } : ROSTER_VIEWPORT;
@@ -263,12 +300,12 @@ export class PartyScene extends Phaser.Scene {
     this.preview = partyPreview(this.content, stage);
     this.enemies = this.preview.all;
     // 손상된 런타임 파티만 보유 목록 기반 자동 편성으로 안전하게 대체한다.
-    if (formationMembers(this.picked).length !== 3) this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+    if (this.guard ? formationMembers(this.picked).length === 0 : formationMembers(this.picked).length !== 3) this.picked = this.autoFormation();
     // **전투에 설 SD를 지금부터 읽는다.** 편성을 고르는 동안이 그대로 로딩 시간이 되므로,
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
     // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
-    const staminaContent = this.content.content !== "duel" && this.content.content !== "duelDefense";
+    const staminaContent = this.content.content !== "duel" && !this.defenseOnly && !this.guard;
     const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
@@ -306,7 +343,7 @@ export class PartyScene extends Phaser.Scene {
       label: t("party.autoPlace"),
       fontSize: 26,
       onClick: () => {
-        this.picked = toFormationSlots(autoPickParty(relicCollection.owned, this.enemies), 3);
+        this.picked = this.autoFormation();
         this.prefetchBattleSds();
         this.selectedSlot = undefined;
         this.refresh();
@@ -335,52 +372,12 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
       height: 130,
-      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : t("party.start"),
+      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : t("party.start"),
       fontSize: 44,
-      onClick: async () => {
-        // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-        if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || formationMembers(this.picked).length !== 3) return;
-        this.isEnteringBattle = true;
-        this.startButton.setEnabled(false);
-
-        // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
-        if (this.content.content === "duel" || this.content.content === "duelDefense") {
-          try {
-            await this.enterBattle();
-          } catch (error) {
-            const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
-            this.hint.setText(view.message);
-            this.restoreEntryControls();
-          }
-          return;
-        }
-        // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
-        try {
-          // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
-          const result = await relicCollection.setParty(formationMembers(this.picked));
-          if (!result.ok) {
-            this.isEnteringBattle = false;
-            this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
-            this.refreshButtonState();
-            return;
-          }
-        } catch {
-          // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
-          this.hint.setText(t("party.saveFailed"));
-          this.restoreEntryControls();
-          return;
-        }
-
-        try {
-          // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
-          await this.enterBattle();
-        } catch (error) {
-          // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
-          const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
-          this.hint.setText(view.message);
-          this.restoreEntryControls();
-          if (view.openStaminaPopup) new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
-        }
+      onClick: () => {
+        // 손으로 누른 전투 시작은 자동 전투가 아니다 — 남은 자동 전투를 비우고 한 판만 들어간다.
+        if (!this.isEnteringBattle) autoRepeat.clear();
+        void this.beginEntry();
       },
     });
 
@@ -424,10 +421,14 @@ export class PartyScene extends Phaser.Scene {
   private buildPreview(preview: PartyPreview): void {
     // **방어덱 편성에는 마주 선 편이 없다** — 원정 편성처럼 아군만 선다. 대치선·VS·적 전투력을 세우면
     // 빈 적진과 0을 마주 보는 판이 되어, 누구와 싸우는지 모르는 편성이 아니라 적을 빠뜨린 화면으로 읽힌다.
-    const allyOnly = this.content.content === "duelDefense";
+    const allyOnly = this.defenseOnly || this.guard;
+    // 현상수배는 1대1 세 판이라 한 장면의 대치선·총합 대신 자리마다 레인 한 장이 선다(`PARTY_LANES`).
+    const lanes = this.content.content === "bounty";
     this.enemyPowerText = undefined;
+    this.allyPowerText = undefined;
+    if (lanes) this.paintBountyLanes(preview.shown.length);
     // 두 줄 사이의 대치선.
-    if (!allyOnly) this.add
+    if (!allyOnly && !lanes) this.add
       .line(0, 0, 120, FRONT_LINE, BASE_WIDTH - 120, FRONT_LINE, COLOR.panelEdge)
       .setOrigin(0)
       .setLineWidth(2)
@@ -447,7 +448,7 @@ export class PartyScene extends Phaser.Scene {
     });
     if (preview.hordeCount !== undefined) {
       // 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 말한다. 대치선 판 위, 적 이름줄 아래다.
-      this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
+      this.add.text(BASE_WIDTH / 2, PARTY_PREVIEW.hordeCountY, t("party.hordeCount", { count: preview.hordeCount }), textStyle({ role: "display", size: 24, color: COLOR.dangerText }))
         .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
     }
 
@@ -459,18 +460,19 @@ export class PartyScene extends Phaser.Scene {
     // 그림자만으로 떨어져 나오지도 못했다. 판이 배경과 글자를 가르고, 대치선은 그 판 양옆으로
     // 이어져 "여기가 두 편이 마주 보는 자리"를 한 번 더 말한다.
     // 방어덱은 마주 볼 편이 없어 그 줄을 끌어올린 아군 이름줄 바로 아래에 세운다(`PARTY_DEFENSE`).
-    const powerY = allyOnly ? this.allyRow + PARTY_DEFENSE.powerGap : POWER_ROW;
-    drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
+    const powerY = this.guard ? PARTY_GUARD.infoY : allyOnly ? this.allyRow + PARTY_DEFENSE.powerGap : POWER_ROW;
+    if (this.content.content === "guildGuard") this.paintGuardInfo(this.content.element, powerY);
+    if (!lanes) drawLayer(this, BASE_WIDTH / 2, powerY, slantedRect(PARTY_POWER_PLATE.width, PARTY_POWER_PLATE.height), {
       fill: COLOR.panel,
       alpha: HOLO.glass,
       edge: COLOR.panelEdge,
       edgeAlpha: 0.85,
     });
-    this.allyPowerText = this.add
+    if (!lanes) this.allyPowerText = this.add
       .text(allyOnly ? BASE_WIDTH / 2 : BASE_WIDTH / 2 + 30, powerY, "", textStyle({ role: "display", size: 30, color: COLOR.accentText }))
       .setOrigin(allyOnly ? 0.5 : 0, 0.5)
       .setShadow(0, 3, "#05070a", 4, false, true);
-    if (!allyOnly) {
+    if (!allyOnly && !lanes) {
       this.enemyPowerText = this.add
         .text(BASE_WIDTH / 2 - 30, POWER_ROW, "", textStyle({ role: "display", size: 30, color: COLOR.dangerText }))
         .setOrigin(1, 0.5)
@@ -478,13 +480,13 @@ export class PartyScene extends Phaser.Scene {
       this.add.text(BASE_WIDTH / 2, POWER_ROW, "VS", textStyle({ role: "display", size: 24, color: COLOR.inkDim })).setOrigin(0.5, 0.5);
     }
 
-    PREVIEW_COLUMNS.forEach((x, slot) => {
+    Array.from({ length: this.slotCount }, (_unused, slot) => this.slotX(slot)).forEach((x, slot) => {
       // 칸의 밑판은 편성이 바뀔 때마다 다시 그리므로 여기서 세우지 않는다 — 서 있는 자리와 빈
       // 자리가 다른 것을 담기 때문이다(발굴·원정·파견과 같은 공용 판 한 장).
       // 칸의 좌측 하단에 붙여 SD가 비동기로 도착해도 표식 위치가 흔들리지 않게 한다.
-      const affinityDirection = new AffinityDirection(this, x - 82, this.allyRow - 20).setDepth(2);
+      const affinityDirection = new AffinityDirection(this, x - 82, this.slotRow(slot) - 20).setDepth(2);
       // SD와 같은 높이의 투명 슬롯 면이 입력을 소유해 Puppet 로딩 성공 여부가 조작을 바꾸지 않는다.
-      const box = partyAllySlotBox(slot, this.allyLift);
+      const box = this.slotBox(slot);
       const hit = this.add.rectangle(box.x, box.y, box.width, box.height, 0xffffff, 0)
         .setName(`party-ally-slot-${slot + 1}`).setDepth(3).setInteractive({ useHandCursor: true });
       this.allySlots.push({ affinityDirection, request: 0, hit });
@@ -497,16 +499,16 @@ export class PartyScene extends Phaser.Scene {
     this.allyMarks = this.add.container(0, 0).setDepth(6);
     // 공용 표현기는 화면 좌표 Puppet을 기존 placePuppet 콜백으로 옮겨 컨테이너 변환에 기대지 않는다.
     this.dragVisual = createFormationDragVisualController({
-      scene: this, slots: PREVIEW_COLUMNS.map((_x, slot) => partyAllySlotBox(slot, this.allyLift)),
+      scene: this, slots: this.allySlots.map((_slot, index) => this.slotBox(index)),
       formation: () => this.picked, color: COLOR.ally, zoneDepth: -11, dimDepth: -13,
       // 감광은 아군 칸이 사는 띠만 덮는다. 대치선부터 덮으면 그 위에 걸터앉은 전투력 판까지 함께
       // 어두워져, 끄는 동안 두 편의 무게가 먼저 사라진다.
-      dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top - this.allyLift + this.allyRow + 120) / 2, width: BASE_WIDTH, height: this.allyRow + 120 - PARTY_ALLY_PLATE.top + this.allyLift },
+      dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top - this.slotLift(0) + this.allyRow + 120) / 2, width: BASE_WIDTH, height: this.allyRow + 120 - PARTY_ALLY_PLATE.top + this.slotLift(0) },
       renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
       restore: () => this.restoreDragPuppets(),
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
-    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...partyAllySlotBox(index, this.allyLift) })), {
+    bindFormationDrag(this, this.allySlots.map((slot, index) => ({ hit: slot.hit, ...this.slotBox(index) })), {
       // 배열과 저장은 `drop`에서만 바뀐다. 아래 둘은 화면에만 손대므로 취소해도 편성이 남지 않는다.
       dragStart: (slot, x, y) => this.dragVisual?.beginDrag(slot, x, y),
       dragMove: (slot, x, y) => this.dragVisual?.moveDrag(slot, x, y),
@@ -525,6 +527,53 @@ export class PartyScene extends Phaser.Scene {
         this.refresh();
       },
     }, { longPressGauge: (slot) => this.picked[slot] !== undefined });
+  }
+
+  /**
+   * 수호전의 정보 줄과 줄 이름. 제목 아래에 그날 몰려올 적의 속성이 전투력 판 왼쪽에 서고, 두 줄의 왼쪽
+   * 가장자리에 앞줄·뒷줄이 선다 — 위가 적이 내려오는 쪽이라는 것을 자리 이름이 말한다.
+   */
+  private paintGuardInfo(element: RelicDef["element"], y: number): void {
+    const badgeX = BASE_WIDTH / 2 - PARTY_POWER_PLATE.width / 2 - 52;
+    this.add.existing(new AffinityBadge(this, badgeX, y, ELEMENT_ICON[element], 60, 0.7)).setDepth(3);
+    const label = this.add.text(badgeX - 40, y, t("guild.guard.party.element"), textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
+      .setOrigin(1, 0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
+    squeezeTextToWidth(label, badgeX - 60);
+    ([["guild.guard.party.front", 0], ["guild.guard.party.back", 3]] as const).forEach(([key, slot]) => {
+      const text = this.add.text(PARTY_GUARD.rowLabelX, this.slotRow(slot) - PREVIEW_HEIGHT / 2, t(key), textStyle({ role: "display", size: 28, color: slot === 0 ? COLOR.dangerText : COLOR.accentText }))
+        .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
+      squeezeTextToWidth(text, PARTY_GUARD.rowLabelWidth);
+    });
+  }
+
+  /**
+   * 현상수배의 레인 셋. 자리마다 세로로 긴 판이 적 하나와 아군 하나를 한 판에 묶고, 머리에 그 판의
+   * 라운드가, 대치선 자리에 「VS」가 선다. 색은 현상수배 입구와 같은 소라빛이다.
+   */
+  private paintBountyLanes(rounds: number): void {
+    const theme = DUNGEON_THEME.bounty;
+    const { header, bevel } = PARTY_LANES;
+    for (let slot = 0; slot < Math.min(rounds, PREVIEW_COLUMNS.length); slot += 1) {
+      const box = partyLaneBox(slot);
+      drawLayer(this, box.x, box.y, chipPoints(box.width, box.height, { bevel: { topLeft: bevel, bottomRight: bevel } }), {
+        fill: COLOR.panel, alpha: HOLO.glass * 0.55, edge: theme.accent, edgeAlpha: 0.9, shadow: false,
+      }).setDepth(-16);
+      // 머리의 라운드 표 — 테마 색으로 찬 띠에 짙은 글자.
+      const headerY = PARTY_LANES.top + header / 2;
+      drawLayer(this, box.x, headerY, chipPoints(box.width, header, { bevel: { topLeft: bevel, bottomRight: 0 } }), {
+        fill: theme.accent, alpha: 0.92, shadow: false,
+      }).setDepth(-15);
+      const label = this.add.text(box.x, headerY, t("bounty.formation.round", { round: slot + 1 }), textStyle({ role: "display", size: 30, color: theme.deepText }))
+        .setOrigin(0.5).setDepth(-15);
+      squeezeTextToWidth(label, box.width - 40);
+      // 대치선 자리의 VS — 그 레인 안에서만 짧게 긋는다.
+      const line = this.add.graphics().setDepth(-15);
+      line.lineStyle(2, theme.accent, 0.55);
+      line.lineBetween(box.x - box.width / 2 + 18, FRONT_LINE, box.x - 34, FRONT_LINE);
+      line.lineBetween(box.x + 34, FRONT_LINE, box.x + box.width / 2 - 18, FRONT_LINE);
+      this.add.text(box.x, FRONT_LINE, "VS", textStyle({ role: "display", size: 30, color: theme.accentText }))
+        .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(-15);
+    }
   }
 
   /** 적 하나. 노드 미리보기와 같은 어휘(속성·직군 왼쪽 위, 돌파 오른쪽 위, 레벨·이름 한 줄)로 선다. */
@@ -546,18 +595,17 @@ export class PartyScene extends Phaser.Scene {
     const headY = ENEMY_ROW - PREVIEW_HEIGHT * bodyScale - 6;
     // 현상수배는 정예마다 **몇 라운드에 서는지**를 머리 위에 적는다 — 아래 같은 열의 아군이 그
     // 라운드에 나간다. 셋이 아니라 하나가 선 자리(정예)는 머리 위 이름표가 말한다.
-    if (enemy.round !== undefined) {
-      this.add.text(x, headY, t("bounty.formation.round", { round: enemy.round }), textStyle({ role: "display", size: 26, color: COLOR.sortieText }))
-        .setOrigin(0.5, 1).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
-    } else if (elite) {
+    // 현상수배는 그 라운드를 레인 머리가 말한다(`paintBountyLanes`).
+    if (enemy.round === undefined && elite) {
       addStageEliteMark(this, undefined, x, headY, 28).setDepth(3);
     }
 
     const badgeTop = ENEMY_ROW - PREVIEW_HEIGHT + 34;
     const badgeX = crowded ? x - 66 : x - 104;
     this.add.existing(new AffinityBadge(this, badgeX, badgeTop, ELEMENT_ICON[def.element], crowded ? 44 : 52, 0.62)).setDepth(3);
+    // 직군은 무리 줄에서도 속성 아래에 선다 — 칸이 좁아 한 뼘 작을 뿐 빠지지 않는다.
+    this.add.existing(new AffinityBadge(this, badgeX, badgeTop + (crowded ? 42 : 49), ROLE_ICON[def.role], crowded ? 32 : 38, 0.62)).setDepth(3);
     if (!crowded) {
-      this.add.existing(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62)).setDepth(3);
       const marks = this.add.container(0, 0).setDepth(3);
       addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, enemy.breakthrough + 1);
     }
@@ -581,10 +629,65 @@ export class PartyScene extends Phaser.Scene {
     const content = this.content;
     if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
+    if (content.content === "guildGuard") return t("guild.guard.party.title");
+    if (content.content === "guildWarDefense") return t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) });
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
     return `${t(`storyDifficulty.${storyDifficultyOf(stage.id)}`)} · ${storyBaseStageId(stage.id)}  ${stage.name}`;
+  }
+
+  /** 전투 시작 — 손으로 누른 한 판과 자동 전투의 첫 판이 같은 길을 지난다. */
+  private async beginEntry(): Promise<void> {
+    // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
+    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || !this.ready()) return;
+    this.isEnteringBattle = true;
+    this.startButton.setEnabled(false);
+
+    // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
+    if (this.content.content === "duel" || this.defenseOnly || this.guard) {
+      try {
+        if (this.guard) settingsManager.update({ game: { guardFormation: [...this.picked] } });
+        await this.enterBattle();
+      } catch (error) {
+        if (error instanceof GuildApiError) {
+          this.hint.setText(t(`guild.error.${error.code}`));
+          this.restoreEntryControls();
+          return;
+        }
+        const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+        this.hint.setText(view.message);
+        this.restoreEntryControls();
+      }
+      return;
+    }
+    // 로컬 편성 저장과 서버 입장은 실패 원인과 복구 행동이 다르므로 서로 다른 예외 경계로 둔다.
+    try {
+      // 화면에 그린 뒤 보유 상태가 바뀔 수 있으므로 전환 직전에 매니저에서 다시 검증한다.
+      const result = await relicCollection.setParty(formationMembers(this.picked));
+      if (!result.ok) {
+        this.isEnteringBattle = false;
+        this.hint.setText(this.partyFailureMessage(result.reason, result.relicId));
+        this.refreshButtonState();
+        return;
+      }
+    } catch {
+      // 이 문구는 setParty의 영속 저장 예외에만 사용해 입장 API 오류와 섞이지 않게 한다.
+      this.hint.setText(t("party.saveFailed"));
+      this.restoreEntryControls();
+      return;
+    }
+
+    try {
+      // 서버가 입장 비용을 확정한 뒤에만 전투로 전환해 같은 요청 재시도에서 중복 차감되지 않게 한다.
+      await this.enterBattle();
+    } catch (error) {
+      // instanceof 판정이 계약의 런타임 오류 타입을 기준으로 수행됨을 import 수준에서도 명확히 한다.
+      const view = partyEntryErrorView(error instanceof GameApiError ? error : undefined);
+      this.hint.setText(view.message);
+      this.restoreEntryControls();
+      if (view.openStaminaPopup) new StaminaPopup(this, new PopupLayer(this, 2200), gameApi).open();
+    }
   }
 
   /** 전투 시작이 부르는 입장 — 결과판의 「다시 하기」와 같은 길이다(`enterContentBattle`). */
@@ -594,15 +697,23 @@ export class PartyScene extends Phaser.Scene {
       startScene(this, "duel");
       return;
     }
-    await enterContentBattle(this, this.content, formationMembers(this.picked));
+    if (this.content.content === "guildWarDefense") {
+      await withBusy(this, gameApi.placeGuildWarDefense({ slotId: this.content.slotId, relicIds: formationMembers(this.picked) }));
+      startScene(this, "guild", { page: "war", toast: "placed" });
+      return;
+    }
+    await enterContentBattle(this, this.content, formationMembers(this.picked), this.picked);
   }
 
   /** 뒤로가기는 들어온 입구로 돌아간다. 던전은 고르던 단계를 그대로 되살린다. */
   private leave(): void {
+    autoRepeat.clear();
     const content = this.content;
     // 레이드 편성에서 나가는 길은 목록이 아니라 고른 그 판이다 — 한 단계 앞이다.
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
     else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
+    else if (content.content === "guildGuard") startScene(this, "guild", { page: "guard" });
+    else if (content.content === "guildWarDefense") startScene(this, "guild", { page: "war" });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
     else startScene(this, ancientStageFloor(session.selectedStageId) !== undefined ? "ancientStrata" : "stageMap");
@@ -645,7 +756,8 @@ export class PartyScene extends Phaser.Scene {
         return;
       }
       const target = preview.findIndex((other) => other.relicId === relicId);
-      placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[target < 0 ? index : target], groundY: this.allyRow, height: PREVIEW_HEIGHT, flipX: false });
+      const at = target < 0 ? index : target;
+      placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: this.slotX(at), groundY: this.slotRow(at), height: PREVIEW_HEIGHT, flipX: false });
       creature.setDepth(-10).setAlpha(target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
     });
   }
@@ -655,7 +767,7 @@ export class PartyScene extends Phaser.Scene {
     this.allySlots.forEach((slot, index) => {
       const relicId = this.picked[index];
       if (!slot.creature || !relicId) return;
-      placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: PREVIEW_COLUMNS[index], groundY: this.allyRow, height: PREVIEW_HEIGHT, flipX: false });
+      placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: this.slotX(index), groundY: this.slotRow(index), height: PREVIEW_HEIGHT, flipX: false });
       slot.creature.setDepth(-10).setAlpha(1);
     });
   }
@@ -686,7 +798,7 @@ export class PartyScene extends Phaser.Scene {
     slot.creature = undefined;
     if (!relicId) return;
 
-    const creature = await this.standSD(relicId, PREVIEW_COLUMNS[index], this.allyRow, false);
+    const creature = await this.standSD(relicId, this.slotX(index), this.slotRow(index), false);
     if (!creature) return;
     // 기다리는 사이 편성이 바뀌었다면 방금 세운 SD는 쓰지 않는다.
     if (request !== slot.request) {
@@ -710,6 +822,11 @@ export class PartyScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
     this.fillRoster();
     this.bindRosterScroll();
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (this.rosterViewport.top + this.rosterViewport.bottom) / 2, width: BASE_WIDTH,
+      height: this.rosterViewport.bottom - this.rosterViewport.top, depth: 45,
+      read: () => ({ offset: this.rosterScrollY, min: this.rosterMinScroll }),
+    });
   }
 
   /**
@@ -746,6 +863,8 @@ export class PartyScene extends Phaser.Scene {
         selectedStyle: "pressed",
         deferPortrait: true,
       });
+      // 마스크가 보여 주는 창 안에서만 손을 받는다 — 밖으로 흘러간 카드가 위 편성판·아래 버튼을 덮지 않게.
+      clipHit(card.hit, () => ({ left: 0, right: BASE_WIDTH, top: this.rosterViewport.top, bottom: this.rosterViewport.bottom }));
       this.bindCardInput(card.hit, relic);
       this.cards.set(relic.id, { card, role });
       content.add(card);
@@ -833,6 +952,7 @@ export class PartyScene extends Phaser.Scene {
    */
   private toggle(relicId: string): void {
     const result = tapRosterRelic(this.picked, this.selectedSlot, relicId);
+    playFormationTapSound(this.picked, result.formation, relicId);
     this.picked = result.formation;
     this.selectedSlot = result.selectedSlot;
     this.refresh();
@@ -870,7 +990,8 @@ export class PartyScene extends Phaser.Scene {
       const moved = id !== undefined && slot.currentId !== id ? moving.get(id) : undefined;
       if (moved) {
         moving.delete(id!);
-        moved.creature.x += PREVIEW_COLUMNS[i] - PREVIEW_COLUMNS[moved.from];
+        // 수호전은 줄을 건너 옮기기도 하므로 x만 밀지 않고 그 칸의 자리에 다시 세운다.
+        placePuppet(moved.creature, relicAppearanceManager.battleAssetFor(id!), { x: this.slotX(i), groundY: this.slotRow(i), height: PREVIEW_HEIGHT, flipX: false });
         slot.creature = moved.creature;
         slot.request += 1;
       }
@@ -886,22 +1007,23 @@ export class PartyScene extends Phaser.Scene {
       // 자리는 왼쪽부터 순서 그대로이고, 그 글자가 정작 이름줄보다 아래에서 자리만 차지했다.
       if (marks && id) {
         const def = getRelic(id);
-        const badgeTop = this.allyRow - PREVIEW_HEIGHT + 34;
-        marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
-        marks.add(new AffinityBadge(this, PREVIEW_COLUMNS[i] - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
-        addBreakthroughGradeMark(this, marks, PREVIEW_COLUMNS[i] + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
-        addUnitNameplate(this, marks, PREVIEW_COLUMNS[i], this.allyRow + 26, relicProgression.getProgress(id).level, def.name, 30);
-        addUnitPower(this, marks, PREVIEW_COLUMNS[i], this.allyRow + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
+        const x = this.slotX(i), row = this.slotRow(i);
+        const badgeTop = row - PREVIEW_HEIGHT + 34;
+        marks.add(new AffinityBadge(this, x - 104, badgeTop, ELEMENT_ICON[def.element], 52, 0.62));
+        marks.add(new AffinityBadge(this, x - 104, badgeTop + 49, ROLE_ICON[def.role], 38, 0.62));
+        addBreakthroughGradeMark(this, marks, x + 104, badgeTop - 4, 42, relicProgression.getBreakthroughGrade(id));
+        addUnitNameplate(this, marks, x, row + 26, relicProgression.getProgress(id).level, def.name, 30);
+        addUnitPower(this, marks, x, row + 22, combatPower(relicProgression.getFinalStats(id)), 24, COLOR.accentText);
       }
 
       if (!chrome || !plate) return;
-      const box = partyAllySlotBox(i, this.allyLift);
+      const box = this.slotBox(i);
       if (i === this.selectedSlot) addFormationSlotSelection(this, plate, box, COLOR.ally);
       // 고른 칸 밑판 **위에** 칸 판을 깐다(발굴과 같은 순서). 밑판이 칸 판을 덮으면 고른 자리만
       // 다른 색 유리가 되어, 판이 아니라 칠이 바뀐 것처럼 보인다.
-      addFormationSlotPlate(this, plate, partyAllyPlateBox(i, this.allyLift), {
+      addFormationSlotPlate(this, plate, partyAllyPlateBox(i % 3, this.slotLift(i)), {
         occupied: Boolean(id), index: i, groundOffset: partyAllyGroundOffset(),
-        recommendedRoles: settingsManager.get().game.formationRoleHint ? RECOMMENDED_SLOT_ROLES[i] : undefined,
+        recommendedRoles: settingsManager.get().game.formationRoleHint ? (this.guard ? GUILD_GUARD_SLOT_ROLES : RECOMMENDED_SLOT_ROLES)[i] : undefined,
       });
       // 빼는 표식은 **고른 자리에 누군가 서 있을 때만** 선다. 늘 세워 두면 세 자리 위에 붉은
       // 표식이 셋 늘어서 SD보다 먼저 읽힌다.
@@ -917,7 +1039,7 @@ export class PartyScene extends Phaser.Scene {
     if (this.content.content === "duelDefense" && chrome) this.paintBlindChips(chrome, members);
     const allyPower = members.reduce((sum, id) => sum + combatPower(relicProgression.getFinalStats(id)), 0).toLocaleString();
     // 마주 선 편이 없으면 「N 아군」처럼 VS 오른쪽에 붙던 꼴이 아니라 전투력 한 줄로 선다.
-    this.allyPowerText?.setText(this.content.content === "duelDefense" ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
+    this.allyPowerText?.setText(this.defenseOnly || this.guard ? t("duel.power", { power: allyPower }) : t("party.allyPower", { power: allyPower }));
 
     this.refreshButtonState();
     // 자동 배치 직후 방향 표식이 실제로 나타났는지 캔버스 밖 E2E가 판별하는 읽기 전용 수치다.
@@ -926,10 +1048,10 @@ export class PartyScene extends Phaser.Scene {
       visibleAffinityDirections: this.allySlots.filter((slot) => slot.affinityDirection.visible).length,
       selectedCount: members.length,
       // 입력면 중심을 공개해 E2E가 SD 로딩이나 하드코딩 좌표에 의존하지 않게 한다.
-      slots: PREVIEW_COLUMNS.map((x) => ({ x, y: this.allyRow - PREVIEW_HEIGHT / 2 })),
+      slots: this.allySlots.map((_slot, index) => ({ x: this.slotX(index), y: this.slotRow(index) - PREVIEW_HEIGHT / 2 })),
       selectedSlot: this.selectedSlot,
     });
-    this.hint.setText(members.length === 3 ? t("party.ready") : t("party.needMore", { count: 3 - members.length }));
+    this.hint.setText(this.ready() ? t("party.ready") : t("party.needMore", { count: this.requiredMembers - members.length }));
   }
 
   /**
@@ -957,7 +1079,7 @@ export class PartyScene extends Phaser.Scene {
 
   /** 선택 수와 전투 진입 잠금을 함께 반영해 버튼 활성 상태를 한곳에서 계산한다. */
   private refreshButtonState(): void {
-    this.startButton.setEnabled(formationMembers(this.picked).length === 3 && !this.isEnteringBattle);
+    this.startButton.setEnabled(this.ready() && !this.isEnteringBattle);
   }
 
   /** 모든 실패 경로가 진입 잠금과 버튼을 함께 복구하도록 한곳에서 처리한다. */

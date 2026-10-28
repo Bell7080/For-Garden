@@ -14,6 +14,7 @@
 
 import type Phaser from "phaser";
 import { CLOSE_INPUT_GUARD_MS } from "./closeInputGuard";
+import { audioManager } from "../managers/AudioManager";
 import { activeFontFamily, FONT_FALLBACK } from "./fonts";
 import { bakeCinematicFace, bakeCinematicIcon, bakeCinematicPortrait, prewarmCinematicArt } from "./researchCinematicArt";
 import { canCloseResult, RESULT_TAP_LOCK_MS, type CinematicCardArt, type CinematicReward } from "./researchCinematicModel";
@@ -259,6 +260,8 @@ function escapeHtml(value: string): string {
 export class ResearchCinematic {
   private readonly root: HTMLElement;
   private readonly instance: CinematicInstance;
+  /** 카드마다의 등급. 찬스 칸이 SSR로 격상되면 함께 바뀐다 — 뒤집는 순간의 공개음을 고른다. */
+  private grades: string[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly game: Phaser.Game;
   private readonly observer: ResizeObserver;
@@ -345,6 +348,7 @@ export class ResearchCinematic {
     });
     root.querySelector(".rc-skip")?.addEventListener("click", () => this.skip());
 
+    this.grades = options.rewards.map(({ rarity }) => rarity);
     this.instance = new bundle.Cinematic(root, {
       rewards: options.rewards,
       reducedMotion: options.reducedMotion,
@@ -408,6 +412,7 @@ export class ResearchCinematic {
     // 결산 격자의 색과 「SR × 1」 같은 등급별 장수는 에셋의 카드 목록에서 나오므로 거기서도 올린다.
     this.untease(index);
     this.instance.promoteReward?.(index, rarity);
+    this.grades[index] = rarity;
     const grade = card.querySelector<HTMLElement>(".card-grade");
     if (grade) grade.textContent = rarity;
     const paint = () => {
@@ -617,7 +622,7 @@ export class ResearchCinematic {
       void this.runIntroduction(next.index).then(() => {
         if (this.closed) return;
         this.instance.advance();
-        this.scheduleShatter();
+        this.afterAdvance();
       });
       return;
     }
@@ -632,12 +637,25 @@ export class ResearchCinematic {
         return this.runIntroduction(next.index).then(() => {
           if (this.closed) return;
           this.instance.advance();
-          this.scheduleShatter();
+          this.afterAdvance();
         });
       });
       return;
     }
     this.instance.advance();
+    this.afterAdvance();
+  }
+
+  /**
+   * 손이 한 걸음 넘긴 뒤. 묶음의 자체 신시사이저 소리는 꺼져 있으므로 게임의 효과음으로 그 걸음을
+   * 알린다 — 뒤집히는 순간에만 등급의 공개음이 울리고, 등급 칸이 켜지는 걸음은 조용하다.
+   */
+  private afterAdvance(): void {
+    const index = this.instance.revealIndex;
+    if (this.instance.revealStep === "flip" && index !== undefined) {
+      const grade = this.grades[index];
+      audioManager?.playSfx(grade === "SSR" ? "research.reveal.ssr" : grade === "SR" ? "research.reveal.sr" : "research.reveal.common");
+    }
     this.scheduleShatter();
   }
 
@@ -761,6 +779,8 @@ export class ResearchCinematic {
     const box = card?.querySelector<HTMLElement>(".card-art");
     if (!box) return;
     box.className = instant ? "card-art card-art-framed" : "card-art card-art-framed rc-shattering";
+    // 섬광과 함께 원화가 파편으로 깨지는 순간 — 건너뛰어 한꺼번에 바뀌는 칸은 조용하다.
+    if (!instant) audioManager?.playSfx("research.shatter");
   }
 
   /** 뼈대나 그림이 늦게 선 칸에 이미 정해진 파편 상태를 입힌다. 섬광은 다시 켜지 않는다. */

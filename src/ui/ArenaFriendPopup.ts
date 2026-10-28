@@ -40,7 +40,7 @@ export function openArenaFriendPopup(scene: Phaser.Scene, popups: PopupLayer, fr
         const status = await arenaCall('practice', { target: friend.id, rules: { ban: true, order: 'random', placement: 'alternate', unique: true } });
         if (!scene.scene.isActive()) return;
         close();
-        startScene(scene, 'arenaRoom', { roomId: status.room!.id });
+        startScene(scene, 'arenaRoom', { roomId: status.room!.id, friendId: friend.id });
       } catch (e) {
         if (body.active) error.setText(arenaError(e));
       } finally { busy = false; }
@@ -107,7 +107,7 @@ export function openArenaSetupPopup(scene: Phaser.Scene, popups: PopupLayer, fri
         const status = await arenaCall('invite', { target: friend.id, rules });
         if (!scene.scene.isActive()) return;
         close();
-        startScene(scene, 'arenaRoom', { roomId: status.room!.id });
+        startScene(scene, 'arenaRoom', { roomId: status.room!.id, friendId: friend.id });
       } catch (e) {
         busy = false;
         if (body.active) error.setText(arenaError(e));

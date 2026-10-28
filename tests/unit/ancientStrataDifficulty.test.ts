@@ -8,15 +8,15 @@ import { ancientReferenceParty, ancientReferenceRunes, simulateAncientStrataRun 
 import { assertValidRuneInstance } from "../../src/core/runes";
 import { createCcCombatScenario } from "../../src/core/ccAuditScenarios";
 
-/** 1층의 출발점 — 보통 2-10 적 전원의 체력 합. */
-const referenceHp = () => getStageEnemies(getBattleStage("normal:2-10")).reduce((sum, e) => sum + e.stats.hp, 0);
+/** 1층의 출발점 — 보통 1-5 적 전원의 체력 합. */
+const referenceHp = () => getStageEnemies(getBattleStage("normal:1-5")).reduce((sum, e) => sum + e.stats.hp, 0);
 
 describe("고대 지층 200층 난이도 계약", () => {
-  it("1층은 보통 2-10 체력 예산에 맞춘 일반 3인으로 시작한다", () => {
+  it("1층은 보통 1-5 체력 예산에 맞춘 일반 3인으로 시작한다", () => {
     const definition = getAncientStrataFloor(1), reference = referenceHp();
     expect(definition.enemies.map(e => e.encounterRole)).toEqual(["normal", "normal", "normal"]);
     expect(definition.enemies.map(e => e.id)).toEqual(["amo", "toby", "ripa"]);
-    // 1층의 시련은 강인(체력 +30%)이고 일반 3인 조우의 체력 몫은 0.91이다 — 보통 2-10 총량 × 1.3 × 0.91.
+    // 1층의 시련은 강인(체력 +30%)이고 일반 3인 조우의 체력 몫은 0.91이다 — 보통 1-5 총량 × 1.3 × 0.91.
     expect(definition.trialId).toBe("endurance");
     expect(definition.enemies.reduce((sum,e)=>sum+e.stats.hp,0) / reference).toBeCloseTo(1.183, 2);
     expect(definition.enemyBreakthroughs).toEqual([0,0,0]);
@@ -47,7 +47,7 @@ describe("고대 지층 200층 난이도 계약", () => {
       expect(next.repeatClearRewards).toEqual([]);
       previous=next;
     }
-    expect(kinds.size).toBe(5);expect(trials.size).toBe(6);expect(templates.size).toBe(10);
+    expect(kinds.size).toBe(5);expect(trials.size).toBe(8);expect(templates.size).toBe(10);
     const first20=Array.from({length:20},(_,i)=>getAncientStrataFloor(i+1));
     expect(new Set(first20.map(d=>JSON.stringify([d.encounterKind,d.enemies.map(e=>e.id),d.trialId]))).size).toBe(20);
     expect(ANCIENT_DIFFICULTY_BANDS.at(-1)?.last).toBe(200);

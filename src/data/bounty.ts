@@ -47,46 +47,62 @@ export const BOUNTY = {
 } as const;
 
 /**
- * 등급 사다리.
+ * 등급 사다리 — **열 등급**.
  *
- * **한 등급 안의 셋은 같은 레벨로 자라 있고, 다른 것은 누가 서는가뿐이다.** 관문을 조이는
- * 손잡이를 그 등급의 레벨 하나로 두기 위해서다.
+ * **한 등급 안의 셋은 같은 레벨로 자라 있고, 등급마다 서는 정예가 바뀐다.** 다섯 등급이 모두 토비 → 아모
+ * → 코마였을 때는 등급이 레벨만 다른 같은 판이라 한 번 맞춘 세 명을 끝까지 그대로 썼다. 지금은 아래
+ * 등급에 가벼운 정예(네우리·펄시·미르·리파)가 서고, 위로 갈수록 무거운 정예(아모·아트라·코마·이카닉시아)가
+ * 자리를 넓혀 **등급마다 누구를 어느 라운드에 낼지**를 다시 고르게 한다. 마지막 라운드는 늘 그 등급에서
+ * 가장 무거운 정예다 — 누구를 마지막까지 남길지가 이 던전의 판단이다.
  *
- * 라운드 순서는 **토비 → 아모 → 코마**다. 1대1 실측에서 코마가 같은 레벨의 다른 둘보다 훨씬
- * 무거워(레벨 20 파티 기준 확실히 이기는 개체가 실효 15에서 토비 15종 · 아모 13종 · 코마
- * 6종), 그 하나가 마지막 라운드의 벽이 된다. **코마에 얹는 것은 아무것도 없다** — 자란 레벨만으로
- * 이미 나머지 둘의 몫을 한다.
+ * 값은 눈대중이 아니라 `tests/unit/bountyBalance.test.ts`가 `duelBalance`로 다시 잰다 — 등급마다 상정한
+ * 성장 수준에서 세 라운드 모두 낼 개체가 셋 이상 남는지, 그리고 **레벨 20 파티를 세워 두고 등급만
+ * 올렸을 때 낼 수 있는 개체가 줄곧 줄어드는지**(70 → 68 → 59 → 44 → 41 → 28 → 25 → 16 → 13 → 4)다.
  *
- * 값은 눈대중이 아니라 `tests/unit/bountyBalance.test.ts`가 `duelBalance`로 다시 잰다. 보유
- * 렐릭 21종을 세 seed로 붙여 **확실히 이기는 개체 수**를 세고, 두 가지를 확인한다 — 등급마다
- * 상정한 성장 수준에서 세 라운드 모두 세 명 이상이 남는지(편성 칸이 셋이므로 라운드마다 다른
- * 개체가 필요하다), 그리고 **같은 파티를 세워 두고 등급만 올렸을 때 낼 수 있는 개체가 실제로
- * 줄어드는지**다.
+ * **ID는 저장 키라 순서와 따로 논다.** 다섯 등급이던 때의 `bounty-1`~`bounty-5`는 같은 레벨대의 새 자리
+ * (1 · 3 · 5 · 7 · 10급)로 옮겨 앉고, 그 사이에 새로 선 다섯이 `bounty-6`~`bounty-10`이다 — 이미 깬 등급이
+ * 저장 이관 없이 비슷한 무게의 자리를 그대로 깬 것으로 남는다. 위 등급을 깼으면 아래 등급은 모두 깬
+ * 것으로 본다(`isBountyTierCleared`).
  *
- * 뒤엣것이 처음 표를 되돌렸다. 레벨을 다섯씩 올리던 첫 표는 레벨 20 파티 기준으로 2급과 3급이
- * **똑같은 무게**(32종)였다 — 등급이 보상만 다른 같은 관문이 되는 자리다. 지금은 레벨이
- * 등급마다 크게 벌어져(5 → 18 → 32 → 46 → 60) 레벨 20 파티가 낼 수 있는 수가
- * 44 → 34 → 25 → 16 → 11로 내려간다. 스테미나는 모든 등급이 10이라 위 등급일수록 1당 골드가
- * 크게 좋아지고(120 → 2,640), 그 몫만큼 5급은 돌파를 끝까지 연 만렙(LV.60)의 자리다.
+ * 골드는 예전 다섯 자리(1,200 · 3,300 · 6,400 · 14,400 · 26,400)의 레벨-골드 곡선 위에 새 레벨을 얹어
+ * 다시 읽었다. 스테미나는 모든 등급이 10이라 위 등급일수록 1당 골드가 크게 좋아진다(120 → 2,800).
+ * 맨 위는 예전 5급과 같은 LV.60에 더 무거운 셋이 서는 자리라 한 판 몫을 6%만 얹었다(26,400 → 28,000 —
+ * 반복 보상 승인선 20% 안).
  */
 export const BOUNTY_TIERS: readonly BountyTierDef[] = [
   // 1급은 스토리 1장을 막 민 파티(레벨 15 언저리)가 들어서는 자리다.
   { id: "bounty-1", order: 1, name: "현상수배 1급", rewardGold: 1_200, rounds: [
-    { relicId: "toby", level: 5 }, { relicId: "amo", level: 5 }, { relicId: "koma", level: 5 },
+    { relicId: "neuri", level: 5 }, { relicId: "pulsi", level: 5 }, { relicId: "amo", level: 5 },
   ] },
-  // 2급부터 돌파 없는 상한(20)을 넘는다.
-  { id: "bounty-2", order: 2, name: "현상수배 2급", rewardGold: 3_300, rounds: [
-    { relicId: "toby", level: 18 }, { relicId: "amo", level: 18 }, { relicId: "koma", level: 18 },
+  { id: "bounty-6", order: 2, name: "현상수배 2급", rewardGold: 2_200, rounds: [
+    { relicId: "ripa", level: 11 }, { relicId: "toby", level: 11 }, { relicId: "amo", level: 11 },
   ] },
-  { id: "bounty-3", order: 3, name: "현상수배 3급", rewardGold: 6_400, rounds: [
-    { relicId: "toby", level: 32 }, { relicId: "amo", level: 32 }, { relicId: "koma", level: 32 },
+  { id: "bounty-2", order: 3, name: "현상수배 3급", rewardGold: 3_200, rounds: [
+    { relicId: "mir", level: 17 }, { relicId: "pulsi", level: 17 }, { relicId: "koma", level: 17 },
   ] },
-  { id: "bounty-4", order: 4, name: "현상수배 4급", rewardGold: 14_400, rounds: [
-    { relicId: "toby", level: 46 }, { relicId: "amo", level: 46 }, { relicId: "koma", level: 46 },
+  // 4급부터 돌파 없는 상한(20)을 넘는다.
+  { id: "bounty-7", order: 4, name: "현상수배 4급", rewardGold: 4_400, rounds: [
+    { relicId: "toby", level: 23 }, { relicId: "amo", level: 23 }, { relicId: "koma", level: 23 },
   ] },
-  // 5급은 돌파로 상한을 연 만렙 셋의 자리다.
-  { id: "bounty-5", order: 5, name: "현상수배 5급", rewardGold: 26_400, rounds: [
-    { relicId: "toby", level: 60 }, { relicId: "amo", level: 60 }, { relicId: "koma", level: 60 },
+  { id: "bounty-3", order: 5, name: "현상수배 5급", rewardGold: 5_700, rounds: [
+    { relicId: "neuri", level: 29 }, { relicId: "atra", level: 29 }, { relicId: "koma", level: 29 },
+  ] },
+  // 6급부터 이카닉시아가 마지막 라운드의 벽으로 선다.
+  { id: "bounty-8", order: 6, name: "현상수배 6급", rewardGold: 7_800, rounds: [
+    { relicId: "pulsi", level: 35 }, { relicId: "amo", level: 35 }, { relicId: "ikanixia", level: 35 },
+  ] },
+  { id: "bounty-4", order: 7, name: "현상수배 7급", rewardGold: 11_500, rounds: [
+    { relicId: "mir", level: 41 }, { relicId: "atra", level: 41 }, { relicId: "ikanixia", level: 41 },
+  ] },
+  { id: "bounty-9", order: 8, name: "현상수배 8급", rewardGold: 15_000, rounds: [
+    { relicId: "ripa", level: 47 }, { relicId: "atra", level: 47 }, { relicId: "ikanixia", level: 47 },
+  ] },
+  { id: "bounty-10", order: 9, name: "현상수배 9급", rewardGold: 20_000, rounds: [
+    { relicId: "ripa", level: 53 }, { relicId: "koma", level: 53 }, { relicId: "ikanixia", level: 53 },
+  ] },
+  // 10급은 돌파로 상한을 연 만렙 셋, 그것도 가장 무거운 셋의 자리다.
+  { id: "bounty-5", order: 10, name: "현상수배 10급", rewardGold: 28_000, rounds: [
+    { relicId: "amo", level: 60 }, { relicId: "koma", level: 60 }, { relicId: "ikanixia", level: 60 },
   ] },
 ];
 

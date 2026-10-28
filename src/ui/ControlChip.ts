@@ -7,6 +7,7 @@ import { chipPoints, drawLayer, HOLO } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { squeezeTextToWidth } from "./textFit";
+import { audioManager } from "../managers/AudioManager";
 
 export interface ControlChipOptions {
   /** 조작 의미를 나타내는 공용 선 아이콘이다. */
@@ -62,7 +63,7 @@ export class ControlChip extends Phaser.GameObjects.Container {
     const hit = scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     hit.on("pointerdown", () => pressIn(this));
     hit.on("pointerout", () => pressOut(this, "normal", { pop: false }));
-    hit.on("pointerup", () => { pressOut(this); options.onClick(); });
+    hit.on("pointerup", () => { pressOut(this); audioManager?.playUi("ui.toggle"); options.onClick(); });
     this.add(hit);
     this.once(Phaser.GameObjects.Events.DESTROY, () => this.stopSpin());
     scene.add.existing(this);

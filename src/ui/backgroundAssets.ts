@@ -12,6 +12,12 @@ import type { AncientBackdrop } from "../core/ancientStrata";
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
   lobby: "background-lobby",
+  guild: "background-guild",
+  guildShop: "background-guild-shop",
+  guildWar: "background-guild-war",
+  guildWarField: "background-guild-war-field",
+  guildGuard: "background-guild-guard",
+  guildGuardField: "background-guild-guard-field",
   relics: "background-relics",
   info: "background-info",
   battleArea: "background-battle-area",
@@ -160,6 +166,12 @@ export const BACKGROUND = {
 export const BACKGROUND_ASSETS = [
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
   [BACKGROUND.lobby, "sprites/background/background_001.webp"],
+  [BACKGROUND.guild, "sprites/background/guild_main.webp"],
+  [BACKGROUND.guildShop, "sprites/background/guild_shop.webp"],
+  [BACKGROUND.guildWar, "sprites/background/guild_war_stage.webp"],
+  [BACKGROUND.guildWarField, "sprites/background/guild_war_field.webp"],
+  [BACKGROUND.guildGuard, "sprites/background/guild_guard_stage.webp"],
+  [BACKGROUND.guildGuardField, "sprites/background/guild_guard_field.webp"],
   [BACKGROUND.relics, "sprites/background/background_002.webp"],
   [BACKGROUND.info, "sprites/background/background_003.webp"],
   [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
@@ -254,6 +266,9 @@ export const BATTLE_FIELD_BACKGROUND = {
   raid: BACKGROUND.raidField,
   duel: BACKGROUND.duelField,
   ancient: BACKGROUND.ancientField,
+  guildWar: BACKGROUND.guildWarField,
+  guildWarDefense: BACKGROUND.guildWarField,
+  guildGuard: BACKGROUND.guildGuardField,
 } as const;
 
 /**

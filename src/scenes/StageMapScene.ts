@@ -2,6 +2,7 @@ import { fitTextToBox } from "../ui/textFit";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyBaseStageId, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { storyStages, ALL_STORY_STAGES } from "../data/stages";
+import { addStoryDifficultyIcon } from "../ui/StoryDifficultyIcon";
 import { openStoryDifficultyPicker } from "../ui/StoryDifficultyPopup";
 import { selectStoryStage } from "../managers/StageSelectionManager";
 import { followTutorialTarget } from "../ui/tutorialTarget";
@@ -37,6 +38,7 @@ import { gameApi } from "../api/FakeServer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { showContentIntro } from "../ui/contentIntro";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -46,7 +48,7 @@ const NODE_GAP = 230;
 const DRAG_SLOP = TAP_DRAG_SLOP;
 
 /** 챕터 제목 두 줄. 상단 재화 줄(y 40~136) 아래에 선다. */
-const STAGE_MAP_TITLE = { titleY: 205, subtitleY: 278, titleSize: 62, subtitleSize: 36, titleWidth: 900, difficultyY: 392, bandHeight: 470 } as const;
+const STAGE_MAP_TITLE = { titleY: 205, subtitleY: 278, titleSize: 62, subtitleSize: 36, titleWidth: 900, bandHeight: 470 } as const;
 
 /**
  * 전투·편성에서 돌아올 때 방금 보던 관문을 유지하기 위한 기억. 스토리를 완전히 나가면(뒤로가기) 지워서
@@ -91,7 +93,7 @@ export class StageMapScene extends Phaser.Scene {
   /** 다시 그릴 때도 현재 보고 있는 구역을 잃지 않는 명시적 챕터 번호다. */
   private currentChapter = 1;
   private difficulty: StoryDifficulty = "easy";
-  private difficultyButton?: Button;
+  private difficultyButton?: Phaser.GameObjects.Container;
   private chapterTitle!: Phaser.GameObjects.Text;
   private chapterSubtitle!: Phaser.GameObjects.Text;
   private previousChapterButton!: Button;
@@ -188,6 +190,11 @@ export class StageMapScene extends Phaser.Scene {
     this.currentChapter = latest.chapter ?? 1;
     this.buildMap();
     this.enableDragScroll();
+    // 지도는 1-1이 아래에서 시작해 위로 이어진다 — 윗끝(scrollMax)이 앞이고 아래로 밀릴수록 위 관문이 보인다.
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (WINDOW.top + WINDOW.bottom) / 2, width: BASE_WIDTH, height: WINDOW.bottom - WINDOW.top, depth: 45,
+      read: () => ({ offset: this.map.y - this.scrollMax, min: this.scrollMin - this.scrollMax }),
+    });
     this.select(latest, true);
     this.refreshDifficultyButton();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를
@@ -215,11 +222,10 @@ export class StageMapScene extends Phaser.Scene {
 
   private refreshDifficultyButton(): void {
     this.difficultyButton?.destroy();
-    const tone = STORY_DIFFICULTY[this.difficulty];
-    this.difficultyButton = new Button(this, BASE_WIDTH / 2, STAGE_MAP_TITLE.difficultyY, { width: 270, height: 82,
-      label: `${t(`storyDifficulty.${this.difficulty}`)} ▾`, fontSize: 30, accentColor: tone.color, accentTextColor: tone.text,
-      onClick: () => openStoryDifficultyPicker(this, this.enemyPopups, this.difficulty, difficulty => this.changeDifficulty(difficulty)),
-    }).setDepth(CHROME_DEPTH);
+    // 난이도는 제목 아래 가운데 버튼이 아니라 왼쪽의 작은 아이콘 칩이다 — 고르는 창은 출격판 양식으로 연다.
+    this.difficultyButton = addStoryDifficultyIcon(this, this.difficulty,
+      () => openStoryDifficultyPicker(this, this.enemyPopups, this.difficulty, difficulty => this.changeDifficulty(difficulty)),
+    ).setDepth(CHROME_DEPTH);
   }
 
   private changeDifficulty(difficulty: StoryDifficulty): void {
@@ -451,6 +457,8 @@ export class StageMapScene extends Phaser.Scene {
       // 초회 보상은 판 맨 아래 한 줄로 늘 선다. 이미 깬 관문이면 받은 표시(검은 막 + 노란 체크)다.
       sections: {
         rewards: stageFirstClearRewards(stage), rewardsClaimed: session.cleared.has(stage.id),
+        // 다시 깰 때마다 받는 소량 — 서버(`completeStage`)가 지급하는 같은 값을 읽는다.
+        repeatRewards: stage.rewards.repeatClearCheesecake > 0 ? [{ kind: "currency", currency: "cheesecake", amount: stage.rewards.repeatClearCheesecake }] : [],
         onRuneClick: (reward, point) => openStageRunePreview(this, this.enemyPopups, reward, point),
       },
       // 전투 전에도 전투와 동일한 공용 적 정보창으로 연결한다.

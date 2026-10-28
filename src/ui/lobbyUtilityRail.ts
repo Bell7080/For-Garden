@@ -1,4 +1,3 @@
-import { UI_ICON } from "./icons";
 import { t } from "../i18n";
 import { LOBBY_RAIL_BOUNDS } from "./lobbyLayout";
 
@@ -19,6 +18,6 @@ export function createLobbyUtilityRail(actions: LobbyUtilityRailActions) {
     { bounds: LOBBY_RAIL_BOUNDS.utility.mail, icon: "mail", label: t("rail.mail"), event: false, onClick: actions.openMail },
     { bounds: LOBBY_RAIL_BOUNDS.utility.guild, icon: "guild", label: t("rail.guild"), event: false, onClick: actions.openGuild },
     { bounds: LOBBY_RAIL_BOUNDS.utility.friends, icon: "friends", label: t("rail.friends"), event: false, onClick: actions.openFriends },
-    { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: UI_ICON.bag, label: t("rail.bag"), event: false, onClick: actions.openInventory },
+    { bounds: LOBBY_RAIL_BOUNDS.utility.inventory, icon: "bag", label: t("rail.bag"), event: false, onClick: actions.openInventory },
   ] as const;
 }

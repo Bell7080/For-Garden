@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -50,6 +51,7 @@ export function playRuneSynthesisEffect(options: RuneSynthesisEffectOptions): vo
   const camera = scene.cameras.main;
   const layer = scene.add.container(0, 0).setDepth(options.depth);
   let impacted = false;
+  audioManager?.playUi("rune.synth");
 
   // 모이는 빛 — 가운데에서 부풀며 숨을 고른다.
   const gather = scene.add.image(center.x, center.y, EFFECT_TEXTURE.glow).setTint(color).setDisplaySize(80, 80)

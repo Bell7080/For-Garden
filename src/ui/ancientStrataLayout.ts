@@ -59,8 +59,6 @@ export function ancientScrollLimits(): { min: number; max: number; artTop: numbe
  */
 export const ANCIENT_CHROME = {
   rankChip: { x: 112, y: 330, size: 104 },
-  /** 순위 칩 오른쪽에 붙는 내 등수. */
-  rankText: { x: 182 },
   socialTabs: { right: 40, y: 344, width: 150, height: 64, gap: 8 },
 } as const;
 

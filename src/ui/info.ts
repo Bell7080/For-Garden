@@ -1,3 +1,5 @@
+import { audioManager } from "../managers/AudioManager";
+import { attachRoll } from "./RollingValue";
 import { defenseGainKeywords, defenseGainSummary } from "./statGainKeywords";
 import { buildSummonKeywords } from "./summonKeywords";
 import { ferocityMaxOf } from "../core/ferocity";
@@ -5,6 +7,8 @@ import { Button } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
+import { PuppetPoker } from "./puppetAct";
+import { INFO_PORTRAIT_SQUISH } from "./pokeMotion";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
@@ -23,7 +27,6 @@ import {
   battleAssetFor,
   enableHitOnClick,
   placePuppet,
-  playMotion,
   PuppetSpawnCancelled,
   portraitAssetForSkin,
   sdAssetForSkin,
@@ -49,10 +52,9 @@ import { motionPolicy } from "../core/settings";
 import { RewardFrame } from "./RewardFrame";
 import { addColorAssistMark, COLOR_ASSIST_LAYOUT } from "./colorAssist";
 import { addMarkChip } from "./MarkChip";
-import { addRuneCard, addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
+import { addRuneFrame, RUNE_ACCENT, RUNE_CENTER_Y, runeTexture } from "./runeIcons";
 import { reachLabel, STAT_TONE, reachToneHex } from "./statTones";
-import { equippedRuneSlot, openRuneInfoPopup, runeStatLabel } from "./RunePopup";
-import { addRuneBagToggles } from "./runeHolderCycle";
+import { openRuneInfoPopup, runeStatLabel } from "./RunePopup";
 import { t, type TextKey } from "../i18n";
 import { combatPower } from "../core/combatPower";
 import { StatRadar } from "./StatRadar";
@@ -89,8 +91,9 @@ import { FEED_TAP, FeedHoldRepeater } from "./feedTapStyle";
 import { addSdFootShadow } from "./SdFootShadow";
 import { withBusy } from "./BusyOverlay";
 import { findItem } from "../data/items";
-import { sortRunesByRelic } from "../managers/InventoryManager";
-import { universalFragmentTexture, universalFragmentTone } from "./universalFragmentArt";
+import { mountRunePickerGrid } from "./runePickerGrid";
+import { runePickerSize } from "./runePickerLayout";
+import { universalFragmentTexture } from "./universalFragmentArt";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -243,6 +246,7 @@ function feedCostRow(
   width: number,
   height: number,
   size: number,
+  rollKey?: string,
 ): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text; layout: () => void } {
   const container = scene.add.container(x, y);
   container.add(drawLayer(scene, 0, 0, slantedRect(width, height, 8), { fill: 0x1a1408, alpha: 0.66, edge: FEED_AMBER, edgeAlpha: 0.22 }));
@@ -260,6 +264,8 @@ function feedCostRow(
   // 값이 바뀌면 폭도 바뀌므로 다시 부른다. 덩어리의 왼쪽 끝은 아이콘 반쪽이다.
   const layout = (): void => { group.setX(-(gap + text.width) / 2); };
   layout();
+  // 보유 수가 바뀌면 굴러 가고, 폭이 변하는 동안 덩어리를 계속 가운데에 세운다.
+  attachRoll(text, { memoryKey: rollKey, onChange: layout });
   return { container, text, layout };
 }
 /**
@@ -338,7 +344,7 @@ const STAT_CHIPS: readonly { key: keyof Stats; labelKey: TextKey; color: number 
  * 다른 크기로 서면 어느 쪽이 원래 모습인지 알 수 없다. `headerHeight`는 제목
  * 아래로 첫 줄 카드 **중심**이 서는 자리다.
  */
-const RUNE_PICKER = { columns: 4, cardWidth: 180, cardHeight: 180, cellWidth: 208, cellHeight: 208, padX: 48, headerHeight: 220, toggleY: 82 } as const;
+
 
 /**
  * 능력치 상세가 서는 세로 자리.
@@ -506,6 +512,8 @@ export class InfoManager {
   private currentDef?: RelicDef;
   private ownedNow = true;
   private portrait?: PuppetCreature;
+  /** 전신을 누르면 뽀용·띠용 — 로비의 애착 렐릭과 같은 한 벌. */
+  private portraitPoker?: PuppetPoker;
   private portraitWanted = false;
   private portraitRequest = 0;
   /** 지금 선 전신·SD가 어느 원화인가. 같은 원화면 다시 열 때 새로 세우지 않는다. */
@@ -608,8 +616,11 @@ export class InfoManager {
     const body = scene.add
       .rectangle(PORTRAIT_FOCUS.x, PORTRAIT_FOCUS.y, 340, 620, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
+    this.portraitPoker = new PuppetPoker(scene, { scaleAmount: INFO_PORTRAIT_SQUISH });
     body.on("pointerup", () => {
-      if (this.portrait) playMotion(scene, this.portrait, "hit");
+      if (!this.portrait) return;
+      this.portraitPoker?.poke(this.portrait, motionPolicy(session.settings).nonEssentialDistanceFactor);
+      audioManager?.playUi("relic.poke");
     });
     this.root.add(body);
     this.enableSwipe();
@@ -804,7 +815,7 @@ export class InfoManager {
     container.add([off, on]);
     const label = this.scene.add.text(0, -height / 2 + 22, t("info.feed"), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5);
     container.add(label);
-    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36);
+    const row = feedCostRow(this.scene, 0, 16, width - 40, 54, 36, "info-feed:button");
     this.feedCost = row.text;
     this.feedCostLayout = row.layout;
     container.add(row.container);
@@ -969,9 +980,9 @@ export class InfoManager {
         // 파편은 그 개체의 얼굴 조각이다. 액자 없이 그림만 세운다.
         row.add(new FaceFrame(this.scene, iconX, 0, { portraitAssetId: def.portraitAssetId, size: BREAK_BUTTON.icon, bare: true }));
       } else if (kind === "universal") {
-        // 만능 파편의 문양을 그 등급색으로 물들여 액자 없이 세운다.
+        // 만능 파편의 일러스트를 액자 없이 세운다(등급색은 그림이 이미 갖고 있다).
         const key = universalFragmentTexture(def.rarity);
-        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon).setTint(universalFragmentTone(def.rarity)));
+        if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
       } else {
         const key = CURRENCY_ICON_BY_WALLET.cheesecake;
         if (this.scene.textures.exists(key)) row.add(this.scene.add.image(iconX, 0, key).setDisplaySize(BREAK_BUTTON.icon, BREAK_BUTTON.icon));
@@ -1235,7 +1246,7 @@ export class InfoManager {
       option.add(drawLayer(this.scene, 0, 0, slantedRect(212, 116, 14), { fill: 0x3d2f12, alpha: 0.92, edge: FEED_AMBER, edgeAlpha: enough ? 0.8 : 0.3 }));
       option.add(this.scene.add.text(0, -34, label, textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
       // 버튼과 같은 값줄이다. 여기서 바뀌는 것은 오른쪽 수(한 번에 나가는 양)뿐이다.
-      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28);
+      const price = feedCostRow(this.scene, 0, 20, 184, 48, 28, "info-feed-popup:cheesecake");
       price.text.setText(formatCurrency(session.wallet.cheesecake) + "/" + formatCurrency(cost));
       price.text.setColor(enough ? FEED_TEXT : COLOR.dangerText);
       price.layout();
@@ -1395,9 +1406,12 @@ export class InfoManager {
     hit.on("pointerup", () => {
       // 채운 조각은 룬 쪽지(세공은 거기서 한 번 더 고른다), 빈 조각은 장착 가방을 연다.
       if (currentRuneId) {
+        // 끼워 둔 룬에서 곧장 같은 자리의 가방으로 건너가 갈아 낀다 — 해제를 먼저 누르지 않아도 된다.
+        const mutable = this.capabilities.mutateProgress;
         openRuneInfoPopup(this.scene, this.popups, {
           runeInstanceId: currentRuneId,
           onChanged: () => this.refreshGrowth(),
+          ...(mutable ? { openBag: () => this.openGemPicker(index), traitResearch: true } : {}),
         });
       } else this.openGemPicker(index);
     });
@@ -1434,54 +1448,16 @@ export class InfoManager {
     const def = this.currentDef;
     if (!def || !this.ownedNow) return;
     // 룬은 제 자리에만 들어간다. 다른 조각까지 늘어놓으면 고를 수 없는 것을 고르게 된다.
-    const runes = sortRunesByRelic(session.runeInventory.filter((rune) => rune.part === index), session.relicProgress);
-    const columns = RUNE_PICKER.columns;
-    const rows = Math.max(1, Math.ceil(runes.length / columns));
-    const pickerWidth = columns * RUNE_PICKER.cellWidth + RUNE_PICKER.padX * 2;
-    // 판 높이는 가진 룬 수를 따르되 화면을 넘지 않는다. 못으로 박아 두면 룬이 늘어난 만큼 잘린다.
-    const pickerHeight = Math.min(BASE_HEIGHT - 120, RUNE_PICKER.headerHeight + (rows - 1) * RUNE_PICKER.cellHeight + RUNE_PICKER.cardHeight / 2 + 48);
-    // 룬을 다루는 판은 모두 **판 밖 우하단의 공용 뒤로가기**로 닫는다. 가방 → 쪽지 → 세공이
-    // 이어지는 흐름에서 닫는 자리가 판마다 달라지면 한 손짓으로 물러날 수 없다.
-    this.popups.open({ width: pickerWidth, height: pickerHeight, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
-      const top = -pickerHeight / 2;
-      const firstX = -((columns - 1) * RUNE_PICKER.cellWidth) / 2;
-      // 보기 토글이 바뀌면 판은 두고 카드 묶음만 갈아 끼운다. 판 높이는 거르기 전의 수로 정해 두어
-      // 토글을 누를 때마다 판이 줄었다 늘지 않는다.
-      const grid = this.scene.add.container(0, 0);
-      body.add(grid);
-      const paint = (): void => {
-        grid.removeAll(true);
-        const view = session.settings.game.runeBag;
-        const shown = view.showEquipped ? runes : runes.filter((rune) => equippedRuneSlot(rune.instanceId) === undefined);
-        shown.forEach((rune, order) => {
-          const x = firstX + (order % columns) * RUNE_PICKER.cellWidth;
-          const y = top + RUNE_PICKER.headerHeight + Math.floor(order / columns) * RUNE_PICKER.cellHeight;
-          const holder = equippedRuneSlot(rune.instanceId);
-          const card = addRuneCard(this.scene, x, y, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, rune, {
-            dimmed: holder !== undefined,
-            holder: holder && view.showHolder ? { relicId: holder.relicId } : undefined,
-          });
-          const hit = this.scene.add.rectangle(0, 0, RUNE_PICKER.cardWidth, RUNE_PICKER.cardHeight, 0xffffff, 0).setInteractive({ useHandCursor: true });
-          hit.on("pointerdown", () => pressIn(card));
-          hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(card, "normal", { pop: false }); });
-          hit.on("pointerup", () => {
-            pressOut(card);
-            // 가방에서도 곧바로 끼우지 않고 쪽지를 먼저 연다. 무엇을 끼우는지 보고 고르게 한다.
-            // 다른 렐릭이 끼고 있는 룬이면 쪽지의 장착이 「해제하고 장착할까요?」를 먼저 묻는다.
-            openRuneInfoPopup(this.scene, this.popups, {
-              runeInstanceId: rune.instanceId,
-              onChanged: () => this.refreshGrowth(),
-              // 정보창에서 연 룬이므로 쪽지에 장착 버튼이 함께 선다.
-              equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
-            });
-          });
-          card.add(hit);
-          grid.add(card);
-        });
-      };
-      // 토글 줄은 제목표 아래, 첫 줄 카드 위의 빈 띠에 왼쪽부터 선다.
-      addRuneBagToggles(this.scene, body, -pickerWidth / 2 + RUNE_PICKER.padX, top + RUNE_PICKER.toggleY, paint);
-      paint();
+    const runes = session.runeInventory.filter(rune => rune.part === index);
+    const { width, height } = runePickerSize(runes.length);
+    this.popups.open({ width, height, title: t("info.rune.bag", { part: runePartLabel(index as RunePart) }), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, backButton: true }, (body, close) => {
+      mountRunePickerGrid(this.scene, body, {
+        popups: this.popups, runes, parts: false, isCovered: () => this.popups.isOpen, isActive: () => this.popups.isTop(body),
+        onPick: rune => openRuneInfoPopup(this.scene, this.popups, {
+          runeInstanceId: rune.instanceId, onChanged: () => this.refreshGrowth(),
+          equip: { relicId: def.id, slotIndex: index, onEquipped: () => { close(); this.refreshGrowth(); } },
+        }),
+      });
     });
   }
 
@@ -1602,6 +1578,7 @@ export class InfoManager {
       ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
       : relicAppearanceManager.portraitAssetFor(def.id);
     const portrait = this.portrait;
+    this.portraitPoker?.cancel(portrait);
     // 되돌아오는 트윈이 아직 돌고 있으면 여기서 끊는다. 그대로 두면 감상 중에도 원화가
     // 제자리를 향해 계속 움직인다.
     this.scene.tweens.killTweensOf(portrait);
@@ -1636,6 +1613,7 @@ export class InfoManager {
     // 원화 크기가 그대로인 이유가 여기에 있다.
     const home = this.portraitHome;
     if (portrait && home) {
+      this.portraitPoker?.cancel(portrait);
       this.scene.tweens.killTweensOf(portrait);
       this.scene.tweens.add({ targets: portrait, x: home.x, y: home.y, scale: home.scale, duration: 320, ease: "Cubic.Out" });
     }
@@ -1771,7 +1749,7 @@ export class InfoManager {
     openExtraStatsPopup(this.scene, this.popups, def, this.shownStats(def), from);
   }
 
-  /** 추가 외형이 있는 렐릭에게만 공용 외형 선택 진입점을 세운다. */
+  /** 보유한 모든 렐릭에게 공용 외형 선택 진입점을 세운다 — 추가 외형이 없으면 전시관에 기본 외형 한 칸만 선다. */
   private addAppearanceButton(x: number, y: number): void {
     const size = APPEARANCE_BUTTON.size;
     const container = this.scene.add.container(x, y);
@@ -1784,7 +1762,7 @@ export class InfoManager {
     hit.on("pointerout", () => { if (!this.popups.isOpen) pressOut(container, "normal", { pop: false }); });
     hit.on("pointerup", () => {
       const def = this.currentDef;
-      if (!def || skinsForRelic(def.id).length === 0) { pressOut(container); return; }
+      if (!def) { pressOut(container); return; }
       this.openAppearancePanel(def, () => pressOut(container));
     });
     container.add(hit);
@@ -1804,7 +1782,6 @@ export class InfoManager {
    */
   private openAppearancePanel(def: RelicDef, onClose: () => void): void {
     const extra = skinsForRelic(def.id);
-    if (extra.length === 0) return;
     const layout = APPEARANCE_PANEL;
     const entries = appearanceEntries(t("info.skin.default"), def.portraitAssetId, extra, {
       owns: (id) => relicSkinManager.owns(id),
@@ -1916,6 +1893,7 @@ export class InfoManager {
     // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
     portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
+    this.portraitPoker?.cancel();
     this.portrait?.destroy();
     this.portrait = portrait;
     this.portraitUrl = asset.url;
@@ -2113,7 +2091,7 @@ export class InfoManager {
     this.currentDef = def;
     this.ownedNow = owned;
     // 기본 외형 하나뿐이거나 소유자 문맥이 아니면 선택 진입점 자체를 노출하지 않는다.
-    this.appearanceButton?.setVisible(owned && !this.publicProfile && skinsForRelic(def.id).length > 0);
+    this.appearanceButton?.setVisible(owned && !this.publicProfile);
     this.popups.closeAll();
 
     // **미보유도 누구인지는 말한다** — 이름·등급·속성·직군·종·스킬까지는 서고, 원화와 SD만 검은
@@ -2178,7 +2156,7 @@ export class InfoManager {
       this.closing = false;
       this.scene.tweens.killTweensOf([this.root, this.chrome]);
       this.root.setAlpha(1); this.chrome.setAlpha(1);
-      if (this.portrait) { this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
+      if (this.portrait) { this.portraitPoker?.cancel(this.portrait); this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
       if (this.figure) { this.scene.tweens.killTweensOf(this.figure); this.figure.setAlpha(this.portraitAlpha()); }
     }
     this.root.setVisible(true);

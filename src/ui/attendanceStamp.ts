@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -64,6 +65,7 @@ export function playAttendanceStamp(
   scene.tweens.add({
     targets: stamp, scale: 1, alpha: 1, duration: ATTENDANCE_STAMP.slamMs, ease: "Cubic.easeIn",
     onComplete: () => {
+      audioManager?.playUi("attendance.stamp");
       callbacks.onImpact?.();
       if (motion.cameraShakeFactor > 0) scene.cameras.main.shake(ATTENDANCE_STAMP.shake.duration, ATTENDANCE_STAMP.shake.intensity * motion.cameraShakeFactor);
       if (motion.nonEssentialRepeatFactor > 0) burstShards(scene, parent, x, y, size, color);

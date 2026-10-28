@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { duelDivisionNumeral, duelStanding } from "../core/duelArena";
 import { duelGaugeSteps, type DuelGaugeStep } from "../core/duelStandingTrack";
@@ -71,6 +72,8 @@ export function addDuelStandingRow(scene: Phaser.Scene, body: Phaser.GameObjects
     }
     if (pop && !still) {
       scene.tweens.add({ targets: [emblem, nameText], scale: { from: 1.3, to: 1 }, duration: 280, ease: "Back.Out" });
+      // 휘장이 갈아 끼워지는 순간 — 오르면 승급, 내리면 낮게 한 번.
+      audioManager?.playUi(delta >= 0 ? "ui.levelup" : "ui.deny");
     }
   };
   const setRatio = (step: DuelGaugeStep, ratio: number): void => {

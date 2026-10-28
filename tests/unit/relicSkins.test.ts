@@ -11,7 +11,7 @@ describe("relic skins", () => {
   it("토리카 추가 외형은 torika에만 연결된다", () => {
     // 표시명이나 파일 번호가 아니라 저장 호환 렐릭 ID로 소유 대상을 고정한다.
     expect(skinsForRelic("torika").map(({ id }) => id))
-      .toEqual(["torika-skin-001", "torika-skin-002", "torika-skin-003", "torika-skin-004", "torika-skin-005"]);
+      .toEqual(["torika-skin-001"]);
     expect(RELIC_SKINS.filter(({ id }) => id === "torika-skin-001").map(({ relicId }) => relicId)).toEqual(["torika"]);
     expect(skinsForRelic("rex")).toEqual([]);
   });
@@ -25,7 +25,7 @@ describe("relic skins", () => {
     }
     expect(() => validateRelicSkins(RELIC_SKINS)).not.toThrow();
     // 한쪽만 적힌 외형은 어느 쪽이든 거부한다.
-    const half = { ...RELIC_SKINS[0], id: "torika-skin-002" as const, sdAssetId: undefined };
+    const half = { ...RELIC_SKINS[0], id: "torika-skin-001" as const, sdAssetId: undefined };
     expect(() => validateRelicSkins([half])).toThrow();
     // 미출시 외형에 논리 키를 미리 적어 두면 없는 배포 파일을 요구하게 된다.
     expect(() => validateRelicSkins([{ ...RELIC_SKINS[0], comingSoon: true }])).toThrow();

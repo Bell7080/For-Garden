@@ -28,6 +28,8 @@ import { addPlayerExpGainRow } from "./PlayerExpGainRow";
 import { PLAYER_EXP_ROW } from "./playerExpLayout";
 import { guardInputAfterClose } from "./closeInputGuard";
 import { addRewardExpiryTag } from "./rewardExpiry";
+import { greatSuccessPulses } from "../core/greatSuccess";
+import { GREAT_SUCCESS_FX, greatSuccessReduced, playGreatSuccess, type GreatSuccessFrame } from "./greatSuccessFx";
 
 // 기존 호출부는 UI 진입점 하나만 알면 되도록 순수 표시 변환도 함께 다시 내보낸다.
 export { currencyRecordToRewardItems, dungeonRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
@@ -40,6 +42,8 @@ export interface RewardPopupOptions {
   /** 뒤 화면을 누르는 암전 강도. 기본은 원래 화면의 맥락이 남는 은은한 검정이다. */
   dimAlpha?: number;
   items: readonly RewardPopupItem[];
+  /** 영수증이 열릴 때 울릴 소리. 구매처럼 결제가 확정된 결과는 보상음 대신 결제음을 낸다. */
+  sound?: "ui.reward" | "ui.purchase" | "mission.claim";
   /**
    * 판 **밖 아래**에 서는 한 줄.
    *
@@ -53,6 +57,11 @@ export interface RewardPopupOptions {
    * 블록(`PlayerExpGainRow`)이 서고, 판은 그만큼 위로 자란다.
    */
   playerExp?: PlayerExpReceipt;
+  /**
+   * 소탕한 판 중 대성공 판 수. 있으면 판 머리 오른쪽에 삐딱한 「대성공 ×N」이 박히고, `greatBonus`가 실린
+   * 액자들이 그 수만큼(최대 다섯) 쾅쾅 맥동하며 수가 나눠 오른다.
+   */
+  greatSuccessCount?: number;
   onConfirm?: () => void;
 }
 
@@ -77,7 +86,7 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     options.onConfirm?.();
     return;
   }
-  audioManager?.playUi("ui.reward");
+  audioManager?.playUi(options.sound ?? "ui.reward");
   // 안내창을 아직 잇지 않은 화면에서도 영수증의 액자는 같은 창을 연다.
   if (!hasGuideOpeners(scene)) bindCurrencyGuide({ scene, popups });
 
@@ -120,11 +129,14 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
     }
     const reduced = motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0;
     const strip = scene.add.container(0, shift);
+    const great: GreatSuccessFrame[] = [];
+    const greatCount = Math.max(0, Math.floor(options.greatSuccessCount ?? 0));
     items.forEach((item, index) => {
       const cell = layout.cells[index]!;
       const holder = scene.add.container(cell.x, cell.y);
       strip.add(holder);
-      addRewardCell(scene, popups, holder, item);
+      const framed = addRewardCell(scene, popups, holder, item);
+      if (greatCount > 0 && framed && (item.greatBonus ?? 0) > 0) great.push({ holder: framed, size: REWARD_POPUP.frame, amount: item.amount, bonus: item.greatBonus ?? 0 });
       if (item.label) strip.add(scene.add.text(cell.x, cell.labelY, item.label, textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
       if (reduced) return;
       // 위에서 아래로, 줄 순서대로 떨어지듯 쌓인다. 첫 박자는 트윈의 `delay`가 기다린다(씬 시계가 아니다).
@@ -133,6 +145,17 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
       scene.tweens.add({ targets: holder, alpha: 1, y: cell.y, duration: 260, delay, ease: "Back.Out" });
     });
     body.add(strip);
+    if (greatCount > 0) {
+      // 판 머리 오른쪽의 삐딱한 「대성공 ×N」 — 몇 판이 대성공이었는지는 이 한 마디가 말한다.
+      const badge = scene.add.text(REWARD_POPUP.width / 2 - 150, -height / 2 + 6, t("greatSuccess.count", { count: greatCount }), textStyle({ role: "display", size: 40, color: GREAT_SUCCESS_FX.stamp.color }))
+        .setOrigin(0.5).setAngle(GREAT_SUCCESS_FX.stamp.angle).setStroke(GREAT_SUCCESS_FX.stamp.stroke, 8).setShadow(2, 5, "#000000", 4, false, true);
+      body.add(badge);
+      if (!greatSuccessReduced()) {
+        badge.setScale(GREAT_SUCCESS_FX.stamp.slamFrom).setAlpha(0);
+        scene.tweens.add({ targets: badge, scale: 1, alpha: 1, duration: GREAT_SUCCESS_FX.stamp.slamMs, delay: GREAT_SUCCESS_FX.startDelayMs, ease: "Back.Out" });
+      }
+      playGreatSuccess(scene, strip, great, greatSuccessPulses(greatCount), { x: 0, y: (layout.cells[0]?.y ?? 0) - REWARD_POPUP.frame / 2 });
+    }
 
     body.add(drawHairline(scene, 0, 108 + shift + layout.growHalf, 700, { color: COLOR.accent, alpha: 0.3 }));
     if (options.footnote) {
@@ -153,13 +176,13 @@ export function openRewardPopup(scene: Phaser.Scene, popups: PopupLayer, options
 }
 
 /** 영수증 칸 하나 — 액자와 그것을 눌렀을 때 열리는 안내까지 한 곳에서 잇는다. */
-function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.GameObjects.Container, item: RewardPopupItem): void {
+function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.GameObjects.Container, item: RewardPopupItem): Phaser.GameObjects.Container | undefined {
   const size = REWARD_POPUP.frame;
   if (item.relicId) {
     // 파편은 그 개체의 얼굴을 꽉 채운 유리 액자다 — 연구 결과판의 중복 파편과 같은 한 장이다.
     const def = getRelic(item.relicId);
     holder.add(new FaceFrame(scene, 0, 0, { portraitAssetId: def.portraitAssetId, size, color: RARITY_TONE[def.rarity].chip, gem: RARITY_TONE[def.rarity].chip, amount: formatCurrency(item.amount) }));
-    return;
+    return undefined;
   }
   const texture = typeof item.icon === "string" ? item.icon : "";
   const runeMatch = RUNE_ICON_PATTERN.exec(texture);
@@ -171,7 +194,7 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
     const frame = addRuneFrame(scene, 0, 0, size, rarity, rune?.part ?? part, rune ? { mainStats: rune.mainStats, engraved: rune.engravings.length > 0 } : {});
     holder.add(frame);
     if (rune) addPressOpen(scene, holder, size, () => openRuneInfoPopup(scene, popups, { runeInstanceId: rune.instanceId }));
-    return;
+    return undefined;
   }
   // 액자·그림·그늘·수량은 어디서나 같은 공용 프리팹 한 장이 그린다. 증가량인 것은 창 제목이
   // 이미 말하므로 `+`를 붙이지 않는다. 재화·아이템 그림은 이 프리팹이 안내창까지 잇는다.
@@ -182,6 +205,7 @@ function addRewardCell(scene: Phaser.Scene, popups: PopupLayer, holder: Phaser.G
     framed.addAt(drawGlyph(scene, item.icon.key, 0, 0, size * 0.56, COLOR.accent), 1);
     addPressOpen(scene, holder, size, () => openPlainNote(scene, popups, item));
   }
+  return framed;
 }
 
 function addPressOpen(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, size: number, open: () => void): void {

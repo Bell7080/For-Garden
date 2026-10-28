@@ -3,8 +3,9 @@ import { MISSIONS, RESEARCH_REWARD_STAGES } from "../core/missions";
 import type { ProfileFrameDefinition } from "../data/profileFrames";
 import type { ProfileModifierDefinition } from "../data/profileModifiers";
 
-/** 테두리가 열리는 조건 — 연구원 레벨 하나다. */
+/** 레벨 또는 특정 업적 단계의 보상 수령 조건. */
 export function frameUnlockText(frame: ProfileFrameDefinition): string {
+  if (frame.unlockAchievement) return t("profile.unlock.achievementTier", { name: t(`achievement.series.${frame.unlockAchievement.id}` as Parameters<typeof t>[0]), tier: frame.unlockAchievement.tiers });
   return t("profile.unlock.frameLevel", { level: frame.unlockLevel });
 }
 

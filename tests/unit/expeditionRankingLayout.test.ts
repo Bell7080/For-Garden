@@ -5,6 +5,7 @@ import {
   rankingMedal, rankingRowY, rankingScrollMetrics,
 } from "../../src/ui/expeditionRankingLayout";
 import { PLAYABLE_RELICS } from "../../src/data/relics";
+import { PROFILE_FRAME_REACH } from "../../src/ui/profileFrameGeometry";
 import { insidePopupBody } from "../../src/ui/staminaPopupLayout";
 
 /** 순위 팝업은 화면을 거의 다 쓰는 작업판이다. 줄과 창이 그 판 안에 드는지 여기서 고정한다. */
@@ -33,7 +34,11 @@ describe("원정 주간 기록 순위표", () => {
     for (const x of [RANKING_LIST.rankX, RANKING_LIST.faceX, RANKING_LIST.nameX, RANKING_LIST.scoreX]) {
       expect(Math.abs(x)).toBeLessThan(RANKING_LIST.rowWidth / 2);
     }
-    expect(RANKING_LIST.faceSize).toBeLessThan(RANKING_LIST.rowHeight);
+    // 줄의 얼굴은 플레이어 프로필 한 장 — 테두리 장식까지 줄 높이 안, 등수와 이름 사이에 든다.
+    const reach = RANKING_LIST.avatarSize * PROFILE_FRAME_REACH;
+    expect(reach * 2).toBeLessThanOrEqual(RANKING_LIST.rowHeight);
+    expect(RANKING_LIST.faceX + reach).toBeLessThan(RANKING_LIST.nameX);
+    expect(RANKING_LIST.faceX - reach).toBeGreaterThan(RANKING_LIST.rankX + 24);
   });
 
   it("은 금·은·동을 1·2·3등에만 준다", () => {

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { applyOpsAdjustments, drainOpsNotices, isValidOpsJournal, opsJournalOf, opsMailToDto } from "../../src/core/opsInbox";
+import { applyOpsAdjustments, drainOpsNotices, isValidOpsJournal, opsJournalOf, opsMailToDto, opsPatchNoteToDto } from "../../src/core/opsInbox";
 import { handleGameCall, StateConflictError, type StateStore, type StoredState } from "../../src/server/gameHandler";
 import type { OpsInbox } from "../../src/core/opsInbox";
 import { createDefaultSession } from "../../src/state/session";
+import { mailTabOf } from "../../src/ui/mailPopupLayout";
 import { opsNoticeLines, opsNoticeReceipt } from "../../src/ui/opsNoticeText";
 
 const now = new Date("2026-10-18T00:00:00Z");
@@ -101,5 +102,15 @@ describe("운영 아이템 조정·안내 영수증", () => {
   it("우편의 아이템 첨부는 아이템 보상으로 옮긴다", () => {
     const dto = opsMailToDto({ id: "u2", title: "t", body: "b", rewards: [{ asset: "item:sweep-ticket", amount: 3 }, { asset: "item:nope", amount: 1 }], sentAt: now.toISOString(), expiresAt: null }, "운영팀", new Set());
     expect(dto.rewards).toEqual([{ kind: "item", itemId: "sweep-ticket", amount: 3 }]);
+  });
+});
+
+describe("어드민 패치노트 우편", () => {
+  it("첨부 없는 패치노트 탭의 안내로 바뀌고 항목 표기를 붙인다", () => {
+    const dto = opsPatchNoteToDto({ id: "p1", version: "1.0.1", title: "", releasedAt: "2026-10-27T00:00:00Z", items: [{ kind: "fix", text: "우편 삭제 수정" }, { kind: "zzz", text: "기타" }], note: "감사합니다" }, { sender: "운영팀", title: "v1.0.1", kinds: { fix: "[수정]", etc: "[기타]" } }, new Set());
+    expect(dto.id).toBe("ops:patch:p1");
+    expect(dto.rewards).toEqual([]);
+    expect(dto.body).toBe("[수정] 우편 삭제 수정\n[기타] 기타\n\n감사합니다");
+    expect(mailTabOf(dto)).toBe("patch");
   });
 });

@@ -1,6 +1,8 @@
+import { DEFAULT_AUTO_REPEAT_OPTIONS, normalizeAutoRepeatOptions } from "./autoRepeat";
 import type { GameSettings } from "../state/session";
 import { DEFAULT_LANGUAGE, normalizeLanguage } from "./language";
 import { BATTLE_SPEEDS } from "./battleControls";
+import { RUNE_TRAIT_VIEWS } from "./runeListFilter";
 
 /** Phaser나 저장소 없이도 서버·테스트가 함께 쓸 수 있는 설정 허용값이다. */
 // 실제 전투 조작의 배속 순환과 저장 허용값을 같은 표로 맞춘다 — 표는 `battleControls.ts` 하나가 갖는다.
@@ -150,7 +152,7 @@ export function createDefaultSettings(): GameSettings {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" },
@@ -191,10 +193,21 @@ export function normalizeSettings(value: unknown): GameSettings {
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) },
+      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward) },
+      guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
+      // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
+      guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => (typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null)) : [],
       ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
       // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
-      runeBag: { showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder), showEquipped: bool(record(g.runeBag).showEquipped, d.game.runeBag.showEquipped) } },
+      runeBag: {
+        showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder),
+        showEquipped: bool(record(g.runeBag).showEquipped, d.game.runeBag.showEquipped),
+        // 특성 유무·즐겨찾기 토글이 생기기 전의 저장은 모두 보이는 쪽(전체·끔)으로 읽는다.
+        trait: allowed(record(g.runeBag).trait, RUNE_TRAIT_VIEWS, d.game.runeBag.trait),
+        bookmarkedOnly: bool(record(g.runeBag).bookmarkedOnly, d.game.runeBag.bookmarkedOnly),
+      },
+      // 필드가 없던 저장은 기본 옵션(10판 · 패배 시 중단 · 드링크 끔)으로 이관한다.
+      autoRepeat: normalizeAutoRepeatOptions(g.autoRepeat) },
     // 인증 토큰은 이 모델에 애초에 자리를 만들지 않아 로컬 저장으로 새는 경로를 차단한다.
     account: { provider: allowed(a.provider, ["guest", "google", "apple"] as const, d.account.provider), displayId: typeof a.displayId === "string" && a.displayId.length <= 80 ? a.displayId : d.account.displayId },
   };

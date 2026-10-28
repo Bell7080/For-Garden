@@ -43,7 +43,9 @@ export function addStageRewardFrame(
     // 룬 액자는 깎임이 한 뼘 얕다(`addRuneFrame`) — 같은 깎임으로 덮어야 막이 모서리 밖으로 새지 않는다.
     const bevel = size * (reward.kind === "rune" ? 0.2 : ITEM_FRAME.bevel);
     const shape = chipPoints(size, size, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } });
-    holder.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: STAGE_REWARD_CLAIMED.dim }));
+    // 막에는 그림자를 깔지 않는다 — 판때기 기본 그림자(오른쪽 아래로 민 검은 복제)가 막 위에 한 겹 더 서면
+    // 액자 밖으로 검은 조각이 튀어나와, 막이 액자 앞에 떠 있는 것처럼 보였다.
+    holder.add(drawLayer(scene, 0, 0, shape, { fill: 0x000000, alpha: STAGE_REWARD_CLAIMED.dim, shadow: false }));
     // 체크에도 검은 그림자를 한 겹 — 밝은 재화 그림 위에서도 노란 획이 떨어져 보이게 한다.
     holder.add(drawGlyph(scene, "check", 3, 4, size * STAGE_REWARD_CLAIMED.check, 0x000000, 0.7));
     holder.add(drawGlyph(scene, "check", 0, 0, size * STAGE_REWARD_CLAIMED.check, COLOR.accent));

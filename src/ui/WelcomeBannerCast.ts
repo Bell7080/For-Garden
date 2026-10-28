@@ -1,3 +1,4 @@
+import { audioManager } from "../managers/AudioManager";
 import Phaser from "phaser";
 import { getRelic } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
@@ -105,6 +106,7 @@ export class WelcomeBannerCast {
   /** 누르면 그 개체가 톡 뛰고 정보창이 열린다. 뛰는 것을 기다리지 않는다. */
   private inspect(relicId: string, index: number): void {
     const puppet = this.puppets.get(index);
+    audioManager?.playUi("relic.poke");
     if (puppet && this.animate && !this.scene.tweens.isTweening(puppet)) {
       const { hop } = WELCOME_CAST;
       this.scene.tweens.add({ targets: puppet, y: puppet.y - hop.height, duration: hop.duration, yoyo: true, ease: "Quad.Out" });

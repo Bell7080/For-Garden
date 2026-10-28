@@ -101,7 +101,7 @@ export function staminaPopupLayout(useRows: number, cells = 3, withUses = true):
   const usesTitleTop = hairlineTop + BASE.hairlineToTitle;
   const firstRowTop = usesTitleTop + BASE.titleToRow;
   // 획득처·사용처 구역이 없는 창(결투 도전권)은 충전 칸 밑에서 끝난다.
-  const height = withUses ? firstRowTop + Math.max(0, useRows - 1) * BASE.usesRowHeight + BASE.bottomPad : cellBottom + BASE.bottomPad;
+  const height = withUses ? firstRowTop + Math.max(0, useRows - 1) * BASE.usesRowHeight + BASE.usesRowHeight / 2 + BASE.bottomPad : cellBottom + BASE.bottomPad;
   const top = -height / 2;
 
   const heroY = top + heroTop + BASE.heroHeight / 2;

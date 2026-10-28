@@ -27,7 +27,8 @@ export type ProductStorefront = "shop" | "trade" | "premium" | "archaeology" | "
  *
  * 두 규칙 모두 `tests/unit/shopCatalog.test.ts`가 자리별로 지킨다.
  */
-export type ShopCategory = "gold" | "gems" | "special" | "daily" | "weekly";
+/** `monthly`·`guildLevel`은 길드 상점의 탭이다(`GuildShopTab`). */
+export type ShopCategory = "gold" | "gems" | "special" | "daily" | "weekly" | "monthly" | "guildLevel";
 
 /**
  * 전리품 상점의 목록 갈래 — **쓰는 증표**로 가른다.

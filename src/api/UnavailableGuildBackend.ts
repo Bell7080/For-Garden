@@ -4,6 +4,6 @@ import { GuildApiError, GUILD_API_METHODS, type GuildBackend } from "./guildCont
 export function createUnavailableGuildBackend(): GuildBackend {
   const refuse = async (): Promise<never> => { throw new GuildApiError("UNAVAILABLE", "UNAVAILABLE"); };
   const backend = {} as Record<string, unknown>;
-  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "stampAttendance", "purchase"]) backend[name] = refuse;
+  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "stampAttendance", "purchase", "recordGuard", "placeWarDefense"]) backend[name] = refuse;
   return backend as unknown as GuildBackend;
 }

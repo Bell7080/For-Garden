@@ -4,7 +4,10 @@ import { padlockGeometry } from "./lockStyle";
 /**
  * 화면에서 쓰는 선 아이콘 모음.
  *
- * 아직 아트가 없어 도형으로 그린다. 채운 덩어리 대신 얇은 선을 쓰는 이유는, 판때기 없는
+ * 아직 아트가 없어 도형으로 그린다 — 전부 **임시(자리표시) 아이콘**이고, 아트가 오면 이 파일만 갈아 끼운다.
+ * 결은 「주간 보상」(`rank-reward`) 칩 하나에 맞춘다: 곡선 없이 꺾은 얇은 선, 속을 비운 실루엣, 가운데 작은
+ * 채운 마름모 하나로 눈이 앉을 자리를 만든다. 칩의 색(회색·금빛)은 아이콘이 아니라 `RailButton`이 정한다.
+ * 채운 덩어리 대신 얇은 선을 쓰는 이유는, 판때기 없는
  * 유리면 위에서 굵은 실루엣이 얼룩처럼 보이기 때문이다. 아트가 나오면 이 파일만 바꾸면 된다.
  * 모든 글리프는 (0,0)을 중심으로 하고, `size`는 한 변의 지름이다.
  */
@@ -38,6 +41,10 @@ export type GlyphName =
   | "edit"
   | "bar-chart"
   | "arena-tier"
+  | "ranking"
+  | "trophy"
+  | "bag"
+  | "rank-reward"
   | "page-prev"
   | "page-next"
   | "remove"
@@ -79,10 +86,47 @@ export function drawGlyph(
       g.lineBetween(-r, 0, r, 0);
       break;
     case "arena-tier":
-      // 공용 각진 방패/계급선으로 티어를 표현해 각 씬이 배지를 다시 조립하지 않게 한다.
-      g.strokePoints(points(-r * 0.75, -r * 0.85, r * 0.75, -r * 0.85, r * 0.58, r * 0.38, 0, r * 0.9, -r * 0.58, r * 0.38), true);
-      g.lineBetween(-r * 0.38, -r * 0.2, r * 0.38, -r * 0.2);
-      g.lineBetween(-r * 0.25, r * 0.18, r * 0.25, r * 0.18);
+      // 계급장 — 각진 방패 안에 겹친 갈매기 두 줄. 티어(얼마나 올랐나)를 말하고, 길드(성채)와 모양이 갈린다.
+      g.strokePoints(points(-r * 0.74, -r * 0.88, r * 0.74, -r * 0.88, r * 0.74, r * 0.16, 0, r * 0.94, -r * 0.74, r * 0.16), true);
+      g.strokePoints(points(-r * 0.44, -r * 0.5, 0, -r * 0.2, r * 0.44, -r * 0.5), false);
+      g.strokePoints(points(-r * 0.44, -r * 0.08, 0, r * 0.22, r * 0.44, -r * 0.08), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, r * 0.38, r * 0.14, r * 0.52, 0, r * 0.66, -r * 0.14, r * 0.52), true);
+      break;
+    case "ranking":
+      // 순위 — 가운데가 가장 높은 시상대 세 칸과 그 위의 채운 마름모. 「주간 보상」 메달과 한 쌍으로 선다.
+      g.strokePoints(points(-r * 0.92, r * 0.86, -r * 0.92, r * 0.14, -r * 0.32, r * 0.14, -r * 0.32, -r * 0.26, r * 0.32, -r * 0.26, r * 0.32, r * 0.38, r * 0.92, r * 0.38, r * 0.92, r * 0.86), true);
+      g.lineBetween(-r * 0.32, r * 0.14, -r * 0.32, r * 0.86);
+      g.lineBetween(r * 0.32, r * 0.38, r * 0.32, r * 0.86);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.92, r * 0.2, -r * 0.68, 0, -r * 0.44, -r * 0.2, -r * 0.68), true);
+      break;
+    case "trophy":
+      // 업적 — 각진 잔과 두 손잡이, 받침. 잔 안의 채운 마름모가 "이뤄 낸 것"을 가리킨다.
+      g.strokePoints(points(-r * 0.58, -r * 0.84, r * 0.58, -r * 0.84, r * 0.48, -r * 0.1, r * 0.16, r * 0.2, -r * 0.16, r * 0.2, -r * 0.48, -r * 0.1), true);
+      g.strokePoints(points(-r * 0.58, -r * 0.68, -r * 0.9, -r * 0.68, -r * 0.82, -r * 0.3, -r * 0.5, -r * 0.22), false);
+      g.strokePoints(points(r * 0.58, -r * 0.68, r * 0.9, -r * 0.68, r * 0.82, -r * 0.3, r * 0.5, -r * 0.22), false);
+      g.lineBetween(0, r * 0.2, 0, r * 0.56);
+      g.strokePoints(points(-r * 0.46, r * 0.9, -r * 0.3, r * 0.56, r * 0.3, r * 0.56, r * 0.46, r * 0.9), true);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.64, r * 0.18, -r * 0.42, 0, -r * 0.2, -r * 0.18, -r * 0.42), true);
+      break;
+    case "bag":
+      // 가방 — 각진 손잡이와 덮개, 가운데 채운 마름모 잠금쇠. 상점(가게 차양)과 모양이 갈린다.
+      g.strokePoints(points(-r * 0.8, -r * 0.3, r * 0.8, -r * 0.3, r * 0.9, r * 0.9, -r * 0.9, r * 0.9), true);
+      g.strokePoints(points(-r * 0.34, -r * 0.3, -r * 0.34, -r * 0.62, -r * 0.18, -r * 0.86, r * 0.18, -r * 0.86, r * 0.34, -r * 0.62, r * 0.34, -r * 0.3), false);
+      g.strokePoints(points(-r * 0.84, r * 0.1, -r * 0.2, r * 0.1, 0, r * 0.3, r * 0.2, r * 0.1, r * 0.84, r * 0.1), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, r * 0.3, r * 0.16, r * 0.46, 0, r * 0.62, -r * 0.16, r * 0.46), true);
+      break;
+    case "rank-reward":
+      // 순위 보상 — 리본 두 갈래에 매달린 마름모 메달. 순위표(방패)와 한 쌍으로 서되 "받는 것"으로 읽힌다.
+      g.strokePoints(points(-r * 0.62, -r * 0.92, -r * 0.18, -r * 0.18), false);
+      g.strokePoints(points(r * 0.62, -r * 0.92, r * 0.18, -r * 0.18), false);
+      g.lineBetween(-r * 0.62, -r * 0.92, -r * 0.22, -r * 0.92);
+      g.lineBetween(r * 0.62, -r * 0.92, r * 0.22, -r * 0.92);
+      g.strokePoints(points(0, -r * 0.3, r * 0.6, r * 0.3, 0, r * 0.92, -r * 0.6, r * 0.3), true);
+      g.strokePoints(points(0, r * 0.06, r * 0.22, r * 0.3, 0, r * 0.54, -r * 0.22, r * 0.3), true);
       break;
     case "bar-chart":
       // 서로 다른 높이의 세 막대와 바닥선만으로 작은 크기에서도 기여도 그래프를 읽게 한다.
@@ -182,11 +226,11 @@ export function drawGlyph(
       ), true);
       break;
     case "shop":
-      // 손잡이 달린 가방.
-      g.strokeRoundedRect(-r * 0.85, -r * 0.25, r * 1.7, r * 1.2, r * 0.2);
-      g.beginPath();
-      g.arc(0, -r * 0.25, r * 0.45, Math.PI, 0);
-      g.strokePath();
+      // 가게 — 톱니 진 차양과 열린 문. 둥근 손잡이 가방이던 때는 가방(인벤토리)과 같은 그림으로 읽혔다.
+      g.strokePoints(points(-r * 0.92, -r * 0.34, -r * 0.72, -r * 0.84, r * 0.72, -r * 0.84, r * 0.92, -r * 0.34), false);
+      g.strokePoints(points(-r * 0.92, -r * 0.34, -r * 0.69, -r * 0.14, -r * 0.46, -r * 0.34, -r * 0.23, -r * 0.14, 0, -r * 0.34, r * 0.23, -r * 0.14, r * 0.46, -r * 0.34, r * 0.69, -r * 0.14, r * 0.92, -r * 0.34), false);
+      g.strokePoints(points(-r * 0.76, -r * 0.2, -r * 0.76, r * 0.9, r * 0.76, r * 0.9, r * 0.76, -r * 0.2), false);
+      g.strokePoints(points(-r * 0.24, r * 0.9, -r * 0.24, r * 0.28, r * 0.24, r * 0.28, r * 0.24, r * 0.9), false);
       break;
     case "mail":
       // 봉투.
@@ -194,17 +238,14 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.9, -r * 0.6, 0, r * 0.15, r * 0.9, -r * 0.6), false);
       break;
     case "guild":
-      // 방패 문장 — 모서리를 각지게 맞춘다.
-      g.beginPath();
-      g.moveTo(-r * 0.75, -r * 0.8);
-      g.lineTo(r * 0.75, -r * 0.8);
-      g.lineTo(r * 0.75, r * 0.1);
-      g.lineTo(0, r * 0.95);
-      g.lineTo(-r * 0.75, r * 0.1);
-      g.closePath();
-      g.strokePath();
-      g.lineBetween(0, -r * 0.8, 0, r * 0.95);
-      g.lineBetween(-r * 0.75, -r * 0.25, r * 0.75, -r * 0.25);
+      // 성채 — 톱니 성벽 셋과 각진 아치 문. 방패를 쓰던 때는 티어 계급장과 같은 실루엣이었다.
+      g.strokePoints(points(
+        -r * 0.82, r * 0.9, -r * 0.82, -r * 0.86, -r * 0.5, -r * 0.86, -r * 0.5, -r * 0.56, -r * 0.16, -r * 0.56, -r * 0.16, -r * 0.86,
+        r * 0.16, -r * 0.86, r * 0.16, -r * 0.56, r * 0.5, -r * 0.56, r * 0.5, -r * 0.86, r * 0.82, -r * 0.86, r * 0.82, r * 0.9,
+      ), true);
+      g.strokePoints(points(-r * 0.3, r * 0.9, -r * 0.3, r * 0.3, 0, r * 0.02, r * 0.3, r * 0.3, r * 0.3, r * 0.9), false);
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(0, -r * 0.42, r * 0.14, -r * 0.28, 0, -r * 0.14, -r * 0.14, -r * 0.28), true);
       break;
     case "friends":
       // 어깨를 나란히 한 둘.
@@ -225,10 +266,12 @@ export function drawGlyph(
       g.strokePoints(points(-r * 0.4, r * 0.05, -r * 0.85, r * 0.45, -r * 0.4, r * 0.85), false);
       break;
     case "event":
-      // 깃대에 걸린 삼각 깃발 — 지금 열려 있는 행사.
-      g.lineBetween(-r * 0.55, -r * 0.85, -r * 0.55, r * 0.9);
-      g.strokePoints(points(-r * 0.55, -r * 0.8, r * 0.85, -r * 0.4, -r * 0.55, r * 0.05), true);
-      g.lineBetween(-r * 0.85, r * 0.9, -r * 0.25, r * 0.9);
+      // 선물 상자 — 뚜껑·몸통·세로 리본과 두 갈래 매듭. 깃발이던 때는 원정(깃발)과 같은 그림이었다.
+      g.strokePoints(points(-r * 0.88, -r * 0.36, r * 0.88, -r * 0.36, r * 0.88, 0, -r * 0.88, 0), true);
+      g.strokePoints(points(-r * 0.74, 0, -r * 0.74, r * 0.9, r * 0.74, r * 0.9, r * 0.74, 0), false);
+      g.lineBetween(0, -r * 0.36, 0, r * 0.9);
+      g.strokePoints(points(0, -r * 0.36, -r * 0.5, -r * 0.9, -r * 0.66, -r * 0.5), true);
+      g.strokePoints(points(0, -r * 0.36, r * 0.5, -r * 0.9, r * 0.66, -r * 0.5), true);
       break;
     case "settings":
       // 톱니 — 굵은 선 여섯 줄과 가운데 원.

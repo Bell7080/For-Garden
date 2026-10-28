@@ -12,6 +12,7 @@ import { addSectionTitle } from "./SectionTitle";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 
 const H = DUEL_SCREEN.history;
 const ROW_WIDTH = DUEL_SCREEN.width;
@@ -50,6 +51,7 @@ export function paintDuelHistory(scene: Phaser.Scene, parent: Phaser.GameObjects
   let offset = 0;
   const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = H.top + offset; };
   attachDragScroll(scene, { owner: hit, root: parent, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });
+  addScrollHint(scene, parent, { x: BASE_WIDTH / 2, y: H.top + viewport / 2, width: ROW_WIDTH, height: viewport, owner: hit, read: () => ({ offset, min: minY }) });
 }
 
 function paintRow(scene: Phaser.Scene, list: Phaser.GameObjects.Container, entry: DuelHistoryEntry, y: number, nowMs: number): void {

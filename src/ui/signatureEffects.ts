@@ -55,14 +55,35 @@ export type SignatureMoment =
   /** 앞에 선 개체가 아군의 피해를 대신 받은 순간. */
   | "damageShared"
   /** 순환 평타의 한 걸음. 걸음 번호는 씬이 함께 넘긴다. */
-  | "basicStep";
+  | "basicStep"
+  /**
+   * 순환·연격이 없는 **일반 공격 한 방**. 보스·불사처럼 판 하나를 혼자 짊어지는 개체만 이 순간을
+   * 갖는다 — 모든 개체가 평타마다 전용 연출을 열면 난전이 연출로 뒤덮인다.
+   */
+  | "basic";
 
 export type SignatureId =
   | "rexMaw"
   | "spinoDoubleTap"
   | "pachiSlam"
   | "nodoniaShare"
-  | "ellaInkStroke";
+  | "ellaInkStroke"
+  /** 폰토스 평타 — 발밑에서 두 겹 해일 파문이 밀려 나가고 물방울이 튄다. */
+  | "pontosShockwave"
+  /** 폰토스 궁극기 — 거대한 물마루가 말려 내려와 부서지고 바닥이 두 번 울린다. */
+  | "pontosTidalCrash"
+  /** 수쿠스이노 평타 — 물고 비튼다(죽음의 물레). 작은 턱 + 감기는 초승달 둘. */
+  | "sukuDeathRoll"
+  /** 수쿠스이노 궁극기 — 크게 벌어진 아가리가 닫히고 물보라가 솟는다. */
+  | "sukuDrowningMaw"
+  /** 타보아 평타 — 고리 셋이 표적을 조여 든다. */
+  | "taboaConstrict"
+  /** 타보아 궁극기 — 몸 둘레의 큰 고리가 감기며 열기가 솟는다. */
+  | "taboaEmbrace"
+  /** 코아틀 평타 — 부리 창이 표적을 꿰뚫고 뒤까지 뻗는다. */
+  | "coatlBeakLance"
+  /** 코아틀 궁극기 — 급강하의 속도선이 지나간 길에 깃털이 흩어지고 바닥이 울린다. */
+  | "coatlStormDive";
 
 /**
  * 개체 × 순간 → 연출.
@@ -76,7 +97,15 @@ const SIGNATURE_TABLE: Readonly<Record<string, Partial<Record<SignatureMoment, S
   pachi: { concussion: "pachiSlam" },
   nodonia: { damageShared: "nodoniaShare" },
   ella: { basicStep: "ellaInkStroke" },
+  // 보스·불사 — 판 하나를 혼자 맡는 자리라 평타와 궁극기 둘 다 제 연출을 갖는다.
+  pontos: { basic: "pontosShockwave", ultimate: "pontosTidalCrash" },
+  sukusuino: { basic: "sukuDeathRoll", ultimate: "sukuDrowningMaw" },
+  taboa: { basic: "taboaConstrict", ultimate: "taboaEmbrace" },
+  quetzalcoatlus: { basic: "coatlBeakLance", ultimate: "coatlStormDive" },
 };
+
+/** 평타와 궁극기 모두 전용 연출을 갖는 개체 — 보스·불사 자리에 서는 개체다. */
+export const SIGNATURE_BOSS_IDS = ["pontos", "sukusuino", "taboa", "quetzalcoatlus"] as const;
 
 export function signatureFor(relicId: string, moment: SignatureMoment): SignatureId | undefined {
   return SIGNATURE_TABLE[relicId]?.[moment];
@@ -199,7 +228,85 @@ export const SIGNATURE_SPECS = {
     /** 「화」가 갈라지는 각(도). 두 획이 한 뿌리에서 벌어진다. */
     splitAngle: 26,
   },
+  /**
+   * 폰토스 — 심해 충격파.
+   *
+   * 주위를 한꺼번에 치는 평타라 맞은 쪽이 아니라 **폰토스의 발밑**에서 벌어진다. 공용 파문은 맞은
+   * 자리마다 하나씩 서서 누가 밀어낸 것인지 흐렸다. 바닥에 누운 두 겹이 박자를 두고 밀려 나가고
+   * 물방울 몇이 위로 튄다.
+   */
+  pontosShockwave: { radius: 230, squash: 0.36, ms: 360, waveGapMs: 110, width: 10, drops: 5, dropTravel: 96, alpha: 0.8 },
+  /**
+   * 폰토스 — 리바이어던 해일.
+   *
+   * 전장 전체를 치는 궁극기라 가장자리 워시가 이미 "모두 맞았다"를 말한다. 여기서는 **해일이 덮친
+   * 한 자리**를 그린다 — 위에서 말려 내려오는 물마루가 부서지며 바닥이 두 번 울린다.
+   */
+  pontosTidalCrash: { width: 360, height: 150, curl: 70, dropMs: 260, ringRadius: 300, ringMs: 420, drops: 8, dropTravel: 150, alpha: 0.78 },
+  /**
+   * 수쿠스이노 — 죽음의 물레. 물고 비튼다.
+   *
+   * 렉시아의 턱보다 한참 작은 턱이 닫히고, 그 둘레를 초승달 둘이 감긴다 — 비트는 것이 곧 물레다.
+   */
+  sukuDeathRoll: { maw: 0.46, ms: 220, rollRadius: 58, rollTurns: 0.75, bladeScale: 0.42 },
+  /**
+   * 수쿠스이노 — 수장의 아가리.
+   *
+   * 렉시아의 무는 그림과 같은 문법이지만 훨씬 크게 벌어졌다 닫히고, 닫힌 자리에서 물보라가 솟아
+   * 물속으로 끌어들인다는 것이 남는다.
+   */
+  sukuDrowningMaw: { maw: 1.55, ms: 280, ringRadius: 210, ringMs: 380, drops: 6, dropTravel: 130 },
+  /**
+   * 타보아 — 옥죄기. 고리 셋이 바깥에서 조여 든다.
+   *
+   * 공용 파문은 벌어지기만 해 "조인다"가 반대로 읽혔다. 같은 마름모를 **줄여 가며** 그린다.
+   */
+  taboaConstrict: { radius: 120, squash: 0.5, coils: 3, ms: 300, gapMs: 55, width: 8, alpha: 0.8 },
+  /**
+   * 타보아 — 질식의 포옹. 몸 둘레를 큰 고리가 감기며 조이고 열기가 솟는다.
+   */
+  taboaEmbrace: { radius: 400, squash: 0.42, coils: 3, ms: 460, gapMs: 90, width: 12, sparks: 6, sparkTravel: 120, alpha: 0.78 },
+  /**
+   * 코아틀 — 창날 부리. 꿰뚫는 평타라 맞은 자리를 지나 뒤까지 뻗는다.
+   *
+   * 판정이 표적 뒤의 적까지 나눠 맞히므로(관통) 창 끝이 표적 너머로 나가야 그 규칙이 보인다.
+   */
+  coatlBeakLance: { length: 260, beyond: 0.55, rootWidth: 20, tipWidth: 2, ms: 170, alpha: 0.85 },
+  /**
+   * 코아틀 — 폭풍 강하. 내리꽂은 길에 속도선이 남고 깃털이 흩어지며 바닥이 울린다.
+   *
+   * 3배속에서는 강하가 순간이동처럼 보이므로 **길을 선으로 남긴다**(돌진 잔상과 같은 이유다).
+   */
+  coatlStormDive: { lines: 5, length: 300, spread: 34, ms: 300, feathers: 6, featherTravel: 140, ringRadius: 220, ringMs: 360, alpha: 0.8 },
 } as const;
+
+/**
+ * 말려 내려오는 물마루의 외곽선. 앞쪽 끝이 안으로 말려 들어간 갈고리 꼴이다.
+ *
+ * 반원으로 그리면 둥근 지붕이라 파도가 아니라 언덕으로 보인다. 위쪽 능선이 앞으로 쏠리고 끝이
+ * 아래로 꺾여야 덮치는 물로 읽힌다.
+ */
+export function waveCrestPoints(width: number, height: number, curl: number): StrokePoint[] {
+  const half = width / 2;
+  return [
+    { x: -half, y: 0 },
+    { x: -half * 0.55, y: -height * 0.55 },
+    { x: -half * 0.05, y: -height * 0.92 },
+    { x: half * 0.45, y: -height },
+    { x: half * 0.82, y: -height * 0.78 },
+    { x: half, y: -height * 0.42 },
+    // 앞 끝이 안으로 말린다.
+    { x: half - curl * 0.35, y: -height * 0.18 },
+    { x: half - curl, y: -height * 0.34 },
+    { x: half - curl * 1.4, y: -height * 0.12 },
+    { x: half * 0.35, y: 0 },
+  ];
+}
+
+/** 바닥에 누운 마름모 한 겹. 정원을 그리면 캐릭터 앞에 세운 고리로 보인다. */
+export function flatDiamondPoints(radius: number, squash: number): StrokePoint[] {
+  return [{ x: 0, y: -radius * squash }, { x: radius, y: 0 }, { x: 0, y: radius * squash }, { x: -radius, y: 0 }];
+}
 
 /**
  * 맞물리는 턱 한 줄의 외곽선.

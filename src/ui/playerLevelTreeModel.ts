@@ -41,7 +41,7 @@ export function playerLevelMilestones(gates = CONTENT_LEVEL_GATES_ENABLED): Play
     .map((level) => ({
       level,
       unlocks: [
-        ...PROFILE_FRAMES.filter((frame) => frame.unlockLevel === level).map((frame) => ({ kind: "frame" as const, frameId: frame.id })),
+        ...PROFILE_FRAMES.filter((frame) => !frame.unlockAchievement && frame.unlockLevel === level).map((frame) => ({ kind: "frame" as const, frameId: frame.id })),
         ...(gates ? CONTENT_UNLOCKS.filter((entry) => entry.level === level).map((entry) => ({ kind: "content" as const, contentId: entry.id })) : []),
       ],
       staminaMax: staminaMaxForResearchLevel(level),

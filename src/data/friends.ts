@@ -9,6 +9,8 @@ export interface FriendProfile extends PublicProfileHeaderDto {
   uid: string;
   /** 두른 프로필 테두리. 모르는 값이면 기본 테두리로 선다. */
   frameId: string;
+  /** 고른 프로필 사진(렐릭 ID). 없으면 애착 렐릭 얼굴이 선다. */
+  avatarRelicId?: string | null;
   /** 한 줄 소개(인사말). 자기 카드의 `bio`와 같은 자리에 선다. */
   status: string;
   /** 마지막 활동 시각(ms). 접속 중 표시와 접속순 정렬이 이 값 하나를 읽는다. */

@@ -80,6 +80,7 @@ export const SETTINGS_EN = {
   "settings.support.clearCache": "Clear Cache",
   "settings.support.terms": "Terms of Service",
   "settings.support.privacy": "Privacy Policy",
+  "settings.support.policies": "Policies & Probabilities",
   "settings.support.resetSettings": "Reset Settings",
   "settings.support.resetSave": "Reset Save Data",
   "settings.support.withdraw": "Delete Account",

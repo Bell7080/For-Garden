@@ -1061,6 +1061,16 @@
 "Mitteilungen",
 "Объявления"
 ],
+"mail.tab.patch": [
+"更新说明",
+"บันทึกแพตช์",
+"Ghi chú bản cập nhật",
+"Catatan Patch",
+"Notas del parche",
+"Notas da atualização",
+"Patchnotes",
+"Список изменений"
+],
 "mail.claim": [
 "领取",
 "รับ",
@@ -1102,24 +1112,54 @@
 "Прочитать всё"
 ],
 "mail.delete.title": [
-"删除已读邮件",
-"ลบจดหมายที่อ่านแล้ว",
-"Xóa thư đã đọc",
-"Hapus Surat yang Dibaca",
-"Eliminar correo leído",
-"Excluir correio lido",
-"Gelesene Post löschen",
-"Удалить прочитанную почту"
+"删除已领取邮件",
+"ลบจดหมายที่รับแล้ว",
+"Xóa thư đã nhận",
+"Hapus Surat yang Sudah Diambil",
+"Eliminar correo reclamado",
+"Excluir correio resgatado",
+"Abgeholte Post löschen",
+"Удалить полученную почту"
 ],
 "mail.delete.message": [
-"删除 {count} 封已读邮件。\n删除后无法恢复。",
-"ลบจดหมายที่อ่านแล้ว {count} ฉบับ\nจดหมายที่ลบแล้วไม่สามารถกู้คืนได้",
-"Xóa {count} thư đã đọc.\nThư đã xóa không thể khôi phục.",
-"Hapus {count} surat yang sudah dibaca.\nSurat yang dihapus tidak dapat dipulihkan.",
-"Se eliminarán {count} correos leídos.\nLos correos eliminados no se pueden recuperar.",
-"Excluir {count} correios lidos.\nCorreios excluídos não podem ser recuperados.",
-"{count} gelesene Nachrichten löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
-"Будет удалено прочитанных сообщений почты: {count}.\nУдалённые сообщения восстановить нельзя."
+"删除 {count} 封已领取邮件。\n无法恢复。",
+"ลบจดหมายที่รับแล้ว {count} ฉบับ\nไม่สามารถกู้คืนได้",
+"Xóa {count} thư đã nhận.\nKhông thể khôi phục.",
+"Hapus {count} surat yang sudah diambil.\nTidak dapat dipulihkan.",
+"Se eliminarán {count} correos reclamados.\nNo se pueden recuperar.",
+"Excluir {count} correios resgatados.\nIsso não pode ser desfeito.",
+"{count} abgeholte Post löschen.\nDas lässt sich nicht rückgängig machen.",
+"Будет удалено полученной почты: {count}.\nДействие необратимо."
+],
+"mail.delete.one.title": [
+"删除邮件",
+"ลบจดหมาย",
+"Xóa thư",
+"Hapus Surat",
+"Eliminar correo",
+"Excluir correio",
+"Post löschen",
+"Удалить почту"
+],
+"mail.delete.one.message": [
+"删除这封邮件。\n删除后无法恢复。",
+"ลบจดหมายฉบับนี้\nจดหมายที่ลบแล้วไม่สามารถกู้คืนได้",
+"Xóa thư này.\nThư đã xóa không thể khôi phục.",
+"Hapus surat ini.\nSurat yang dihapus tidak dapat dipulihkan.",
+"Se eliminará este correo.\nLos correos eliminados no se pueden recuperar.",
+"Excluir este correio.\nCorreios excluídos não podem ser recuperados.",
+"Diese Nachricht löschen.\nGelöschte Post kann nicht wiederhergestellt werden.",
+"Эта почта будет удалена.\nУдалённую почту восстановить нельзя."
+],
+"mail.delete.one.unclaimed": [
+"删除这封邮件。\n未领取的附件奖励将无法领取,且无法恢复。",
+"ลบจดหมายฉบับนี้\nจะไม่สามารถรับรางวัลที่ยังไม่ได้รับได้อีก และไม่สามารถกู้คืนได้",
+"Xóa thư này.\nPhần thưởng chưa nhận sẽ không thể nhận được nữa và không thể khôi phục.",
+"Hapus surat ini.\nHadiah yang belum diambil tidak dapat diambil lagi dan tidak dapat dipulihkan.",
+"Se eliminará este correo.\nLos adjuntos sin reclamar ya no se podrán reclamar y no se pueden recuperar.",
+"Excluir este correio.\nOs anexos não resgatados não poderão mais ser resgatados e isso não pode ser desfeito.",
+"Diese Post löschen.\nNicht abgeholte Anhänge können nicht mehr abgeholt werden. Das lässt sich nicht rückgängig machen.",
+"Эта почта будет удалена.\nНеполученные вложения получить будет нельзя, действие необратимо."
 ],
 "mail.delete.confirm": [
 "删除",
@@ -1171,15 +1211,75 @@
 "Keine Mitteilungen",
 "Нет объявлений"
 ],
-"mail.notice.heading": [
-"公告",
-"ประกาศ",
-"Thông báo",
-"Pengumuman",
-"Aviso",
-"Aviso",
-"Mitteilung",
-"Объявление"
+"mail.empty.patch": [
+"没有收到的更新说明",
+"ไม่มีบันทึกแพตช์",
+"Chưa có ghi chú bản cập nhật",
+"Belum ada catatan patch",
+"No hay notas del parche",
+"Nenhuma nota de atualização",
+"Keine Patchnotes",
+"Списков изменений нет"
+],
+"mail.patch.title": [
+"v{version} 更新说明",
+"แพตช์ v{version}",
+"Ghi chú bản cập nhật v{version}",
+"Catatan Patch v{version}",
+"Notas del parche v{version}",
+"Notas da atualização v{version}",
+"Patchnotes v{version}",
+"Список изменений v{version}"
+],
+"mail.patch.kind.new": [
+"[新增]",
+"[ใหม่]",
+"[Mới]",
+"[Baru]",
+"[Nuevo]",
+"[Novo]",
+"[Neu]",
+"[Новое]"
+],
+"mail.patch.kind.improve": [
+"[改进]",
+"[ปรับปรุง]",
+"[Cải thiện]",
+"[Perbaikan]",
+"[Mejora]",
+"[Melhoria]",
+"[Verbessert]",
+"[Улучшено]"
+],
+"mail.patch.kind.fix": [
+"[修复]",
+"[แก้ไข]",
+"[Sửa lỗi]",
+"[Perbaikan Bug]",
+"[Corregido]",
+"[Corrigido]",
+"[Behoben]",
+"[Исправлено]"
+],
+"mail.patch.kind.balance": [
+"[平衡]",
+"[บาลานซ์]",
+"[Cân bằng]",
+"[Keseimbangan]",
+"[Equilibrio]",
+"[Balanceamento]",
+"[Balance]",
+"[Баланс]"
+],
+"mail.patch.kind.etc": [
+"[其他]",
+"[อื่นๆ]",
+"[Khác]",
+"[Lainnya]",
+"[Otros]",
+"[Outros]",
+"[Sonstiges]",
+"[Прочее]"
 ],
 "journal.city.title": [
 "城市日志",
@@ -1820,6 +1920,46 @@
 "Divisão da arena",
 "Arena-Rang",
 "Ранг арены"
+],
+"profile.duelTier": [
+"决斗段位",
+"ระดับดวล",
+"Hạng Đấu tay đôi",
+"Tingkat Duel",
+"Rango de duelo",
+"Divisão de duelo",
+"Duell-Rang",
+"Ранг дуэли"
+],
+"profile.record.ancient": [
+"远古地层最高层",
+"ชั้นดินโบราณสูงสุด",
+"Địa tầng cổ đại cao nhất",
+"Strata Kuno tertinggi",
+"Récord de Estratos antiguos",
+"Recorde dos Estratos antigos",
+"Uralte Schichten – Rekord",
+"Рекорд Древних пластов"
+],
+"profile.record.ancientFloor": [
+"第{floor}层",
+"ชั้น {floor}",
+"Tầng {floor}",
+"Lantai {floor}",
+"Piso {floor}",
+"Andar {floor}",
+"Ebene {floor}",
+"Этаж {floor}"
+],
+"profile.record.ancientMonth": [
+"本月",
+"เดือนนี้",
+"Tháng này",
+"Bulan ini",
+"Este mes",
+"Este mês",
+"Diesen Monat",
+"В этом месяце"
 ],
 "profile.noRecord": [
 "无记录",
@@ -2815,6 +2955,14 @@
   "error.account.loginUnsupported": ["暂不支持此登录方式。", "ยังไม่รองรับวิธีเข้าสู่ระบบนี้", "Chưa hỗ trợ cách đăng nhập này.", "Metode login ini belum didukung.", "Este método de acceso aún no está disponible.", "Este método de entrada ainda não é compatível.", "Diese Anmeldemethode wird noch nicht unterstützt.", "Этот способ входа пока не поддерживается."],
   "title.login.account": ["账号登录", "เข้าสู่ระบบด้วยบัญชี", "Đăng nhập tài khoản", "Login akun", "Acceso con cuenta", "Entrar com conta", "Konto-Anmeldung", "Вход по аккаунту"],
   "account.id.title": ["账号登录", "เข้าสู่ระบบด้วยบัญชี", "Đăng nhập tài khoản", "Login akun", "Acceso con cuenta", "Entrar com conta", "Konto-Anmeldung", "Вход по аккаунту"],
+  "account.guide.signIn": ["队长，请出示通行证！", "กัปตัน ขอดูบัตรผ่านหน่อยนะคะ!", "Đội trưởng, cho em xem thẻ ra vào nhé!", "Kapten, boleh lihat kartu aksesnya?", "Capitán, ¿me enseña su pase?", "Capitão, posso ver seu crachá?", "Captain, darf ich deinen Ausweis sehen?", "Капитан, покажите пропуск!"],
+  "account.guide.register": ["新的通行证，我马上帮你做好！", "บัตรผ่านใหม่ หนูจะทำให้เดี๋ยวนี้เลยค่ะ!", "Thẻ mới, em làm ngay cho nhé!", "Kartu akses baru, langsung kubuatkan!", "¡Le hago un pase nuevo ahora mismo!", "Eu faço um crachá novo agora mesmo!", "Ich mache dir sofort einen neuen Ausweis!", "Новый пропуск сделаю прямо сейчас!"],
+  "account.guide.link": ["到现在的记录，我会好好贴在通行证上！", "บันทึกทั้งหมดจนถึงตอนนี้ หนูจะแนบไว้กับบัตรผ่านให้นะคะ!", "Hồ sơ từ trước đến giờ, em sẽ gắn chặt vào thẻ!", "Semua catatan sampai sekarang akan kutempel di kartu akses!", "¡Pegaré todos sus registros al pase, prometido!", "Vou prender todos os registros no crachá, prometo!", "Alle bisherigen Aufzeichnungen hefte ich an den Ausweis!", "Все записи до сих пор прикреплю к пропуску!"],
+  "account.guide.email": ["告诉我邮箱地址，我就发验证码过去！", "บอกอีเมลมา แล้วหนูจะส่งรหัสยืนยันให้นะคะ!", "Chỉ cần cho em địa chỉ email, em sẽ gửi mã xác nhận!", "Cukup beri tahu email, nanti kukirim kodenya!", "¡Dígame su correo y le envío un código!", "É só me dizer o e-mail que eu mando um código!", "Sag mir nur deine E-Mail, dann schicke ich einen Code!", "Скажите почту — и я пришлю код!"],
+  "account.guide.emailSent": ["打开邮箱看看吧，验证码应该到了！", "ลองเปิดกล่องจดหมายดูนะคะ รหัสน่าจะมาถึงแล้ว!", "Mở hộp thư xem nhé, mã chắc đã tới rồi!", "Coba buka kotak masuk, kodenya pasti sudah sampai!", "Revise su bandeja de entrada. ¡El código ya debería estar ahí!", "Abra a caixa de entrada. O código já deve ter chegado!", "Schau in dein Postfach, der Code sollte da sein!", "Загляните в почту — код уже должен прийти!"],
+  "account.guide.poke1": ["呀！好、好痒……！", "อุ๊ย จะ จั๊กจี้ค่ะ…!", "Á! Nh-nhột quá…!", "Eek! G-geli…!", "¡Ay! Me, me hace cosquillas…!", "Ai! F-faz cócegas…!", "Huch! D-das kitzelt…!", "Ой! Щ-щекотно…!"],
+  "account.guide.poke2": ["正在审核出入！我会认真的！", "กำลังตรวจบัตรผ่านอยู่ค่ะ! จะตั้งใจทำนะคะ!", "Đang kiểm tra ra vào mà! Em nghiêm túc đó!", "Lagi periksa akses! Aku serius, lho!", "¡Estoy revisando pases! ¡Voy en serio!", "Estou conferindo crachás! É sério!", "Ich prüfe gerade Ausweise! Ganz ernsthaft!", "Я проверяю пропуска! Всё серьёзно!"],
+  "account.guide.poke3": ["通过了的话……一起吃点心吧！", "ถ้าผ่านแล้ว… มากินขนมด้วยกันนะคะ!", "Qua được rồi thì… cùng ăn bánh nhé!", "Kalau sudah lolos… makan camilan bareng, ya!", "Cuando pase… ¡compartamos un bocadillo!", "Depois de passar… vamos dividir um lanche!", "Wenn du durch bist… teilen wir einen Snack!", "Как пройдёте… давайте перекусим вместе!"],
   "account.id.linkTitle": ["绑定账号", "เชื่อมต่อบัญชี", "Liên kết tài khoản", "Tautkan akun", "Vincular cuenta", "Vincular conta", "Konto verknüpfen", "Привязка аккаунта"],
   "account.id.tab.signIn": ["登录", "เข้าสู่ระบบ", "Đăng nhập", "Masuk", "Acceder", "Entrar", "Anmelden", "Вход"],
   "account.id.tab.register": ["注册", "สมัครสมาชิก", "Đăng ký", "Daftar", "Registrarse", "Cadastrar", "Registrieren", "Регистрация"],
@@ -3063,5 +3211,6 @@
 "O maior nível de traço entre as entradas define a linha. Cada runa extra com traço move {shift}% de \"Sem traço\" para esse nível.",
 "Die höchste Merkmalsstufe der Einsätze wählt die Zeile. Jede weitere Rune mit Merkmal verschiebt {shift}% von „Kein Merkmal“ auf diese Stufe.",
 "Строку определяет высшая черта среди вложенных рун. Каждая дополнительная руна с чертой переносит {shift}% из «Без черты» в этот уровень."
-]
+],
+  "profile.unlock.achievementTier": ["领取成就「{name}」第{tier}阶段奖励","รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"","Nhận thưởng bậc {tier} của thành tựu \"{name}\"","Klaim hadiah tingkat {tier} pencapaian \"{name}\"","Reclama el nivel {tier} del logro «{name}»","Resgate o nível {tier} da conquista \"{name}\"","Hole Stufe {tier} des Erfolgs „{name}“ ab","Получите награду за ступень {tier} достижения «{name}»"]
 }

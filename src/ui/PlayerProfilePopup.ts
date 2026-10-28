@@ -1,5 +1,6 @@
 import { arenaStanding } from "../core/arenaStanding";
-import type { DuelTierId } from "../core/duelArena";
+import { duelDivisionNumeral, duelStanding, type DuelTierId } from "../core/duelArena";
+import { squeezeTextToWidth } from "./textFit";
 import { addDuelTierEmblem } from "./DuelTierEmblem";
 import { DUEL_TIER_COLOR } from "./duelLayout";
 import Phaser from "phaser";
@@ -29,6 +30,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 import { addSdFootShadow } from "./SdFootShadow";
+import { addMarkChip } from "./MarkChip";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -57,6 +59,14 @@ export interface ProfileAction { label: string; destructive?: boolean; onClick: 
  * **누구를 아끼는가**(애착 렐릭이 홀로그램 바닥 위에 서서 숨 쉬고, 옆에 레벨·돌파·유대·전투력),
  * **무엇을 이뤘나**(스토리 진행·원정 최고·도감·결투장)를 쌓는다. 자기 카드에만 편집이 선다.
  */
+/** 친구 카드 머리의 표식 칩 — 켜짐 색은 룬 쪽지의 즐겨찾기(금빛)와 확인 창의 파괴적 조작(붉은빛)과 같다. */
+export interface ProfileMarks {
+  favorite: boolean;
+  onToggleFavorite: () => void;
+  onRemove: () => void;
+}
+const PROFILE_MARK_ON = { favorite: 0xf2c744, remove: 0xe0605a } as const;
+
 export class PlayerProfilePopup {
   private opened = false;
 
@@ -68,7 +78,7 @@ export class PlayerProfilePopup {
     /** 자기 카드에만 온다 — 각 요소를 누르면 그 요소만 고치는 창이 열린다. 친구 카드에는 없다. */
     private readonly editors?: ProfileEditors,
     /** 친구 카드: 머리글과, 애착 렐릭을 눌렀을 때 여는 읽기 전용 정보창. */
-    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[] } = {},
+    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[]; marks?: ProfileMarks } = {},
   ) {}
 
   open(options: { instant?: boolean } = {}): void {
@@ -123,7 +133,8 @@ export class PlayerProfilePopup {
     }
 
     const left = header.textLeft;
-    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
+    // 친구 카드는 이름줄 오른쪽 끝에 표식 칩이 서므로 이름을 그만큼 짧게 끊는다.
+    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, this.options.marks ? 9 : 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
       .setOrigin(0, 0.5).setShadow(0, 3, "#000000", 6, false, true);
     body.add(name);
     if (this.editors) {
@@ -132,6 +143,8 @@ export class PlayerProfilePopup {
       body.add(drawGlyph(this.scene, "edit", pencilX, header.nameY, 28, COLOR.accent, 0.85));
       this.bindEdit(body, name, left + (name.width + 60) / 2, header.nameY, name.width + 70, 70, this.editors.nickname);
     }
+
+    if (this.options.marks) this.buildMarks(body, this.options.marks);
 
     // 수식어는 이름 바로 아래 한 줄. 장착한 것만 서고 비었으면 그 줄은 비어 있다.
     const { modifiers } = PLAYER_PROFILE_LAYOUT;
@@ -396,7 +409,9 @@ export class PlayerProfilePopup {
     // 공개하지 않은 기록은 칸째 뺀다 — 0이나 "기록 없음"으로 채우면 없는 기록을 있는 것처럼 말한다.
     // 아레나 티어는 결투장과 같은 휘장 표로 읽는다 — RP만 공개되고 티어 이름은 지금 언어로 짓는다.
     const arena = stats.arena ? arenaStanding(stats.arena.score) : undefined;
-    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId }[] = [
+    // 결투장도 같은 휘장 표를 읽는다 — 점수만 공개되고 티어·단계는 지금 언어로 짓는다.
+    const duel = stats.duelScore !== undefined ? duelStanding(stats.duelScore) : undefined;
+    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId; division?: number | null }[] = [
       // 길드원 카드는 길드 안의 자리(직책·기여도)를 먼저 세운다 — 길드 화면에서 연 카드가 말해야 하는 것이 그것이다.
       ...(this.profile.leadRecords ?? []),
       {
@@ -404,6 +419,15 @@ export class PlayerProfilePopup {
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
         ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
       },
+      // 고대 지층은 매달 초기화되므로 이번 달에 가장 깊이 깬 층이다 — 순위표와 같은 값.
+      ...(stats.ancientFloor !== undefined ? [{
+        label: t("profile.record.ancient"),
+        value: stats.ancientFloor > 0 ? t("profile.record.ancientFloor", { floor: stats.ancientFloor }) : t("profile.noRecord"),
+        sub: t("profile.record.ancientMonth"),
+      }] : []),
+      duel && stats.duelScore !== undefined
+        ? { label: t("profile.duelTier"), value: `${t(`duel.tier.${duel.tier.id}`)} ${duelDivisionNumeral(duel.division)}`.trim(), sub: t("duel.score", { score: stats.duelScore.toLocaleString() }), tier: duel.tier.id, division: duel.division }
+        : { label: t("profile.duelTier"), value: t("profile.record.unranked") },
       arena && stats.arena
         ? { label: t("profile.arenaTier"), value: t(`duel.tier.${arena.tier.id}`), sub: t("arena.rp", { score: stats.arena.score.toLocaleString() }), tier: arena.tier.id }
         : { label: t("profile.arenaTier"), value: t("profile.record.unranked") },
@@ -413,21 +437,29 @@ export class PlayerProfilePopup {
         value: `${collection.owned} / ${collection.total}`,
         progress: profileProgressRatio(collection.owned, collection.total),
       }] : []),
-    ].slice(0, 4);
+    ].slice(0, records.rows * 2);
     tiles.forEach((tile, index) => {
       const x = (index % 2 === 0 ? -1 : 1) * records.columnX;
       const y = records.firstY + Math.floor(index / 2) * records.rowGap;
       const shape = chipPoints(records.width, records.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
       body.add(drawLayer(this.scene, x, y, shape, { fill: 0x121a24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
       const left = x - records.width / 2 + 30;
-      body.add(this.scene.add.text(left, y - 40, tile.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
-      if (tile.tier) addDuelTierEmblem(this.scene, body, left + 26, y + 4, 52, tile.tier);
-      const valueX = tile.tier ? left + 62 : left;
-      body.add(this.scene.add.text(valueX, y + 4, tile.value, textStyle({ role: "display", size: 34, color: tile.tier ? DUEL_TIER_COLOR[tile.tier].text : COLOR.ink })).setOrigin(0, 0.5));
-      if (tile.sub) body.add(this.scene.add.text(x + records.width / 2 - 26, y - 40, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5));
+      const label = this.scene.add.text(left, y + records.labelY, tile.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      body.add(label);
+      if (tile.tier) addDuelTierEmblem(this.scene, body, left + records.emblem / 2, y + records.valueY, records.emblem, tile.tier, tile.division ?? null);
+      const valueX = tile.tier ? left + records.emblem + 12 : left;
+      const value = this.scene.add.text(valueX, y + records.valueY, tile.value, textStyle({ role: "display", size: 32, color: tile.tier ? DUEL_TIER_COLOR[tile.tier].text : COLOR.ink })).setOrigin(0, 0.5);
+      body.add(value);
+      squeezeTextToWidth(value, x + records.width / 2 - 24 - valueX);
+      if (tile.sub) {
+        const sub = this.scene.add.text(x + records.width / 2 - 26, y + records.labelY, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5);
+        body.add(sub);
+        // 이름표와 곁말이 한 줄을 나눠 쓴다 — 긴 언어에서 둘이 겹치지 않게 이름표 쪽을 누른다.
+        squeezeTextToWidth(label, Math.max(80, records.width - 56 - sub.width - 16));
+      }
       if (tile.progress !== undefined) {
         const barWidth = records.width - 60;
-        new HoloBar(this.scene, x, y + 46, barWidth, 10, { color: COLOR.accent, trackAlpha: 0.8 }).addTo(body).setValue(tile.progress);
+        new HoloBar(this.scene, x, y + records.barY, barWidth, 10, { color: COLOR.accent, trackAlpha: 0.8 }).addTo(body).setValue(tile.progress);
       }
     });
   }
@@ -446,6 +478,20 @@ export class PlayerProfilePopup {
       body.add(this.scene.add.text(-270, y, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
     });
   }
+  /**
+   * 친구 카드의 표식 칩 — 즐겨찾기(별)와 삭제(휴지통)가 이름줄 오른쪽 끝에 정보창·룬 쪽지와 같은 칩으로 선다.
+   * 밑동 조작 줄에는 친선전처럼 상대와 무엇을 하는 조작만 남는다.
+   */
+  private buildMarks(body: Phaser.GameObjects.Container, marks: ProfileMarks): void {
+    const { header } = PLAYER_PROFILE_LAYOUT;
+    const { size, gap } = header.marks;
+    const removeX = header.textRight - size / 2;
+    const star = addMarkChip(this.scene, body, removeX - gap, header.nameY, { glyph: "bookmark", onColor: PROFILE_MARK_ON.favorite, size, onToggle: marks.onToggleFavorite });
+    star.paint(marks.favorite);
+    const remove = addMarkChip(this.scene, body, removeX, header.nameY, { glyph: "trash", onColor: PROFILE_MARK_ON.remove, size, onToggle: marks.onRemove });
+    remove.paint(true);
+  }
+
   /** 카드 밑동의 조작 줄 — 칸 수와 상관없이 같은 폭으로 나눠 서고, 파괴적인 조작은 확인 창과 같은 붉은 판이다. */
   private buildActions(body: Phaser.GameObjects.Container): void {
     const actions = this.options.actions ?? [];

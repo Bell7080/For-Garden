@@ -31,6 +31,11 @@ import { reachLabel, STAT_TONE } from "./statTones";
 import { COLOR, textStyle } from "./theme";
 import { t } from "../i18n";
 import { pressIn, pressOut } from "./pressFeedback";
+import { motionPolicy } from "../core/settings";
+import { settingsManager } from "../managers/SettingsManager";
+import { audioManager } from "../managers/AudioManager";
+import { PuppetPoker } from "./puppetAct";
+import { INFO_PORTRAIT_SQUISH } from "./pokeMotion";
 
 /** 그 적이 실제로 서 있는 상태. 화면이 레벨 보정을 다시 하지 않고 배치된 값을 그대로 받는다. */
 export interface EnemyInfoSnapshot {
@@ -61,6 +66,8 @@ export class EnemyInfoPopup {
   private chrome?: Phaser.GameObjects.Container;
   private portrait?: PuppetCreature;
   private figure?: PuppetCreature;
+  /** 전신을 누르면 뽀용·띠용 — 아군 정보창·로비와 같은 한 벌. */
+  private readonly portraitPoker: PuppetPoker;
   /** 감상 중에만 사는 것들. 원화를 되돌릴 자리와 판을 덮은 입력면을 함께 붙잡는다. */
   private gallery?: { exit: Phaser.GameObjects.Rectangle; home: { x: number; y: number; scale: number }; mask: Phaser.Display.Masks.GeometryMask; onClose?: () => void };
   private galleryBody?: Phaser.GameObjects.Container;
@@ -72,6 +79,7 @@ export class EnemyInfoPopup {
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {
     this.keywords = new KeywordManager(scene, popups);
+    this.portraitPoker = new PuppetPoker(scene, { scaleAmount: INFO_PORTRAIT_SQUISH });
   }
 
   /** 배치된 그 개체를 그대로 연다. 창은 레벨·돌파를 다시 계산하지 않는다. */
@@ -90,6 +98,16 @@ export class EnemyInfoPopup {
       const { chrome, mask, depth } = mountInfoPopupFrame(this.scene, this.popups, body, ENEMY_INFO);
       this.chrome = chrome;
       const ctx = { scene: this.scene, popups: this.popups, keywords: this.keywords };
+      // 인물을 누르는 자리 — 아군 정보창처럼 코어 관절 둘레의 몸통만 받는다. 맨 아래에 깔아 그 위의 칸·액자가 먼저 손을 받는다.
+      const portraitTap = this.scene.add
+        .rectangle(ENEMY_INFO.portrait.x, ENEMY_INFO.portrait.coreY, ENEMY_INFO.portraitTap.width, ENEMY_INFO.portraitTap.height, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+      portraitTap.on("pointerup", () => {
+        if (!this.portrait || this.gallery) return;
+        this.portraitPoker.poke(this.portrait, motionPolicy(settingsManager.get()).nonEssentialDistanceFactor);
+        audioManager?.playUi("relic.poke");
+      });
+      chrome.addAt(portraitTap, 0);
       paintInfoHeader(ctx, chrome, snapshot.def, ENEMY_INFO);
       this.paintLevel(chrome, snapshot);
       paintInfoStats(ctx, chrome, snapshot.def, ENEMY_INFO);
@@ -128,6 +146,7 @@ export class EnemyInfoPopup {
     this.gallery?.exit.destroy(); this.gallery = undefined;
     this.galleryBody = undefined;
     this.shownDef = undefined;
+    this.portraitPoker.cancel();
     this.portrait?.destroy(); this.portrait = undefined;
     this.figure?.destroy(); this.figure = undefined;
     this.chrome?.destroy(); this.chrome = undefined;
@@ -144,6 +163,7 @@ export class EnemyInfoPopup {
   private enterGallery(onClose: (() => void) | undefined, mask: Phaser.Display.Masks.GeometryMask): void {
     const portrait = this.portrait;
     if (!portrait || this.gallery) return;
+    this.portraitPoker.cancel(portrait);
     const home = { x: portrait.x, y: portrait.y, scale: portrait.scaleX };
     const def = this.shownDef;
     if (!def) return;

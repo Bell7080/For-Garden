@@ -40,12 +40,6 @@ export const RAID_RU = {
   "raid.contribution.value": "Мой вклад {damage}",
   "raid.contribution.empty": "Пока никто не бил",
   "raid.reward.title": "Полученные награды",
-  "raid.reward.progress": "Общий прогресс",
-  "raid.reward.kill": "Усмирение",
-  "raid.reward.killYes": "Успех",
-  "raid.reward.killNo": "Идёт",
-  "raid.reward.killFailed": "Неудача",
-  "raid.reward.note": "После рейда заберите награды на вкладке завершённых",
   "raid.result.score": "Очки {score}",
   "shop.loot.title": "Магазин трофеев",
 } as const;

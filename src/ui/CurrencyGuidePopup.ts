@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { attachRoll } from "./RollingValue";
 import { t } from "../i18n";
 import { currencyGuide, type CurrencyGuideAction } from "../data/currencyGuide";
 import type { WalletItemKey } from "../data/items";
@@ -60,10 +61,10 @@ export class CurrencyGuidePopup {
     // 액자·그림·그늘은 어디서나 같은 공용 프리팹 한 장이 그린다.
     // 이미 그 재화를 보고 있는 자리라 눌러도 열 창이 없다.
     addFramedIcon(this.scene, body, iconX, HERO.y, HERO.frameSize, CURRENCY_ICON_BY_WALLET[key], { plain: true });
-    body.add(this.scene.add
+    body.add(attachRoll(this.scene.add
       .text(HERO.width / 2 - 40, HERO.y, amount.toLocaleString(), textStyle({ role: "display", size: 52, color: TONE.value }))
       .setOrigin(1, 0.5)
-      .setShadow(2, 6, "#05070a", 7, false, true));
+      .setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: `currency-guide:${key}` }));
   }
 
   /** 공용 HoloBar의 얇은 선과 평면 카드로 목록의 정보 위계를 통일한다. */

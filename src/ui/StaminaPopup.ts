@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { attachRoll } from "./RollingValue";
+import { audioManager } from "../managers/AudioManager";
 import { t } from "../i18n";
 import { remainingDetail, soonestItemExpiry } from "./itemExpiry";
 import type { AdPresentationResult, GameApi, StaminaRechargeStatusDto } from "../api/contracts";
@@ -22,6 +24,7 @@ import { adRewardToRewardItems } from "./rewardPopupModel";
 import { addSectionTitle } from "./SectionTitle";
 import { staminaTimerLine } from "./staminaDisplay";
 import { heroStack, POPUP_BEVEL_RATIO, STAMINA_CELL, STAMINA_SWAP, staminaPopupLayout } from "./staminaPopupLayout";
+import { DUNGEON_RUN_CELL } from "./dungeonRunPopupLayout";
 import { UI_ICON } from "./icons";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
@@ -79,7 +82,7 @@ export class StaminaPopup {
 
   open(): void {
     const guide = currencyGuide("stamina");
-    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34 }, (body) => {
+    this.popups.open({ width: LAYOUT.width, height: LAYOUT.height, title: guide.name, dim: true, dimAlpha: 0.34, hideCloseButton: true, backButton: true, closeOnBackdrop: false }, (body) => {
       const view = this.scene.add.container(0, 0);
       body.add(view);
       const render = (): void => { view.removeAll(true); this.paint(view); };
@@ -103,12 +106,12 @@ export class StaminaPopup {
 
     // 전용 판: 이 창에서 가장 먼저 읽어야 하는 "지금 얼마 남았나"를 그림과 수 한 덩어리로 모은다.
     view.add(drawLayer(this.scene, 0, LAYOUT.hero.y, panelShape(LAYOUT.hero.width, LAYOUT.hero.height), { fill: 0x101720, alpha: 0.9, edge: COLOR.accent, edgeAlpha: 0.35 }));
-    // 시간 줄이 없는 순간(가득 참)에도 남은 둘이 위로 쏠리지 않도록 덩어리째 가운데에 세운다.
-    const stack = heroStack(LAYOUT.hero.y, timer !== undefined);
+    // 시간표는 가득 찼을 때도 주기 한 마디로 남아, 덩어리는 늘 세 줄이다.
+    const stack = heroStack(LAYOUT.hero.y, true);
     // 이미 스테미나 창이라 눌러도 열 창이 없다.
     addFramedIcon(this.scene, view, 0, stack.frameY, LAYOUT.frameSize, CURRENCY_ICON_BY_WALLET.stamina, { plain: true });
-    view.add(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true));
-    if (timer && stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
+    view.add(attachRoll(this.scene.add.text(0, stack.valueY, `${amount.toLocaleString()} / ${maximum.toLocaleString()}`, textStyle({ role: "display", size: 52, color: TONE.value })).setOrigin(0.5).setShadow(2, 6, "#05070a", 7, false, true), { memoryKey: "stamina-popup:stamina" }));
+    if (stack.timerY !== undefined) view.add(this.scene.add.text(0, stack.timerY, timer, textStyle({ role: "body", size: 22, color: TONE.timer })).setOrigin(0.5));
 
     this.paintRecharge(view, full);
 
@@ -168,16 +171,52 @@ export class StaminaPopup {
     if (view.detail) cell.add(squeezeTextToWidth(this.scene.add.text(0, CELL.detailY, view.detail, textStyle({ role: "body", size: CELL.detailSize, color: COLOR.inkDim })).setOrigin(0.5), width - CELL.padX * 2));
     const button = new Button(this.scene, 0, CELL.buttonY, {
       width: width - CELL.padX * 2, height: CELL.buttonHeight, label: view.label, fontSize: 24, variant: "primary",
-      cost: view.cost, onClick: () => this.request(source),
+      cost: view.cost, art: view.art, onClick: () => this.request(source),
     }).setEnabled(view.enabled && !full && !this.pending);
     cell.add(button);
     if (source.kind === "consumable") this.paintSwap(cell, source);
     return cell;
   }
 
+  /**
+   * **다른 창 안에 충전 칸 셋만 작게 세운다** — 던전의 자동 전투·소탕 창(`DungeonRunPopup`)이 부른다.
+   *
+   * 칸이 하는 일(병 따기 · 젬 확인 창 · 광고)은 이 창의 칸과 **같은 길**(`request`)을 지난다 — 같은
+   * 「충전」이 창마다 다른 규칙으로 돌면 한쪽만 확인 창을 건너뛰거나 광고 횟수를 다르게 센다. 다시
+   * 그리는 일은 부르는 창이 맡으므로 그 함수를 넘겨받는다. 병은 갈아 끼우는 화살표 없이 **가진 병 중
+   * 먼저 세울 것**을 고른다(작은 칸에 화살표까지 세우면 그림이 묻힌다).
+   */
+  mountCompact(view: Phaser.GameObjects.Container, area: { y: number; width: number; height: number; centers: readonly number[]; edge?: number }, repaint: () => void): void {
+    if (!this.repaint) void this.api.getStaminaRechargeStatus().then((status) => { this.rechargeStatus = status; this.repaint?.(); }, () => undefined);
+    this.repaint = repaint;
+    const full = session.wallet.stamina >= STAMINA_HOLD_LIMIT;
+    const C = DUNGEON_RUN_CELL;
+    STAMINA_RECHARGE_SOURCES.forEach((source, index) => {
+      const x = area.centers[index];
+      if (x === undefined) return;
+      if (source.kind === "consumable") {
+        const owned = source.itemIds.findIndex((itemId) => (session.itemInventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0) > 0);
+        if (owned >= 0) this.tonicIndex = owned;
+      }
+      const cell = this.scene.add.container(x, area.y);
+      cell.add(drawLayer(this.scene, 0, 0, panelShape(area.width, area.height), { fill: 0x10151c, alpha: 0.94, edge: area.edge ?? COLOR.accent, edgeAlpha: 0.4 }));
+      const content = this.cellContent(source, full);
+      if (content.texture) addFramedIcon(this.scene, cell, C.frameX, C.frameY, C.frameSize, content.texture, { amount: content.owned === undefined ? undefined : formatCurrency(content.owned), plain: true });
+      cell.add(this.scene.add.text(C.gainX, C.gainY, `+${content.gain}`, textStyle({ role: "display", size: C.gainSize, color: TONE.value })).setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true));
+      cell.add(squeezeTextToWidth(this.scene.add.text(C.nameX, C.nameY, content.name, textStyle({ role: "emphasis", size: C.nameSize, color: COLOR.inkDim })).setOrigin(0.5), area.width / 2 - 4));
+      cell.add(new Button(this.scene, 0, C.buttonY, {
+        width: area.width - C.padX * 2, height: C.buttonHeight, label: content.label, fontSize: 22, variant: "primary",
+        cost: content.cost, art: content.art, onClick: () => this.request(source),
+      }).setEnabled(content.enabled && !full && !this.pending));
+      view.add(cell);
+    });
+  }
+
   /** 세 수단이 화면에 세울 값. 회복량·값·남은 횟수는 전부 데이터에서 읽고 여기서 지어내지 않는다. */
   private cellContent(source: StaminaRechargeSource, full: boolean): {
     texture?: string; name: string; gain: number; detail: string; label: string; enabled: boolean;
+    /** 버튼 라벨 왼쪽의 그림(광고). */
+    art?: string;
     /** 액자 우하단에 겹칠 보유 수. 광고처럼 가진 것이 없는 수단은 비운다. */
     owned?: number;
     cost?: { icon: "currency-gems"; amount: number; affordable: boolean };
@@ -207,7 +246,8 @@ export class StaminaPopup {
         // 누진 값이라 오늘 몇 번째인지와 값이 처음으로 돌아가는 날짜를 함께 말한다.
         detail: source.escalating && this.rechargeStatus ? t("stamina.gemDetail", { count: this.rechargeStatus.purchasedToday, reset: formatResetStamp(this.rechargeStatus.resetsAt) }) : "",
         owned: held,
-        label: t("stamina.recharge"),
+        // 버튼은 젬 그림과 값만 말한다 — 「충전」 글자는 칸의 회복량(+N)이 이미 하는 말이다.
+        label: "",
         enabled: held >= cost,
         cost: { icon: "currency-gems", amount: cost, affordable: held >= cost },
       };
@@ -221,9 +261,10 @@ export class StaminaPopup {
       texture: UI_ICON.ad,
       name: source.name,
       gain: ad?.amount ?? 0,
-      // 남은 횟수는 다음에 누를 수 있는지를 정하므로 이름 아래 한 줄로 남긴다.
-      detail: t("stamina.adRemaining", { left: Math.max(0, limit - used), limit }),
-      label: t("stamina.watchAd"),
+      // 남은 횟수는 버튼이 광고 그림과 함께 `3/3`으로 말한다 — 이름 아래 글줄로 두 번 적지 않는다.
+      detail: "",
+      label: `${Math.max(0, limit - used)}/${limit}`,
+      art: UI_ICON.ad,
       enabled: ad !== undefined && used < limit && !full,
     };
   }
@@ -283,8 +324,11 @@ export class StaminaPopup {
       if (source.kind === "consumable") await this.inventory.useConsumable(this.api, this.selectedTonic(source));
       else if (source.kind === "currency") this.rechargeStatus = (await this.inventory.rechargeStamina(this.api, source.id)).status;
       else await this.watchAd(source.slotId);
+      // 스테미나 수가 다시 칠해지는 그 순간 — 차오르는 거품 소리가 「채워졌다」를 말한다. 광고는 보상 영수증이 제 소리를 낸다.
+      if (source.kind !== "ad") audioManager?.playUi("stamina.refill");
     } catch {
       this.message = t("stamina.rechargeFailed");
+      audioManager?.playUi("ui.deny");
     } finally {
       this.pending = false; this.repaint?.();
     }

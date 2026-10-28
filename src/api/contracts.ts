@@ -293,8 +293,10 @@ export interface PublicCompetitiveStatsDto {
   /** 아레나 RP. 티어는 화면이 `arenaStanding`으로 읽는다 — 이름을 서버가 굳혀 보내면 언어를 따라오지 않는다. */
   arenaScore?: number;
   expeditionScore?: number;
-  /** 고대 지층에서 가장 깊이 깬 층. 한 층도 깨지 않았으면 생략한다. */
+  /** 고대 지층에서 가장 깊이 깬 층(이번 달). 한 층도 깨지 않았으면 생략한다. */
   ancientFloor?: number;
+  /** 결투장 점수(이번 시즌). 티어·단계는 화면이 `duelStanding`으로 읽는다. 결투장을 연 적이 없으면 생략한다. */
+  duelScore?: number;
 }
 
 /** 네트워크로 직렬화할 수 있는 플레이어 진행 정보의 최소 규격이다. */
@@ -365,6 +367,10 @@ export interface CakeOperationCompleteResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 이 판으로 새 단계가 열렸는가. */
   unlockedNextTier: boolean;
+  /** 대성공 판인가(`core/greatSuccess.ts`). 이긴 판만 굴린다. */
+  greatSuccess?: boolean;
+  /** 대성공이 `granted` 안에 얹은 몫. 화면은 기본 몫에서 이 값만큼 수가 올라가는 연출을 그린다. */
+  greatSuccessBonus?: Partial<Record<keyof Wallet, number>>;
   /** 이긴 판에 가끔 얹히는 덤(토벌권). 없으면 빈 목록이다. */
   bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[];
   /** 이 판에서 실제로 쓴 스테미나(진 판은 0)와 돌려준 몫. */
@@ -397,6 +403,10 @@ export interface DungeonSweepResponse extends PlayerStateDto {
   granted: Partial<Record<keyof Wallet, number>>;
   /** 쓴 스테미나가 올린 연구원 경험치. 레벨이 올랐으면 받은 병까지 함께 싣는다. */
   playerExp: PlayerExpReceipt;
+  /** 소탕한 판 중 대성공 판 수. 판마다 서버가 따로 굴린다. */
+  greatSuccessCount?: number;
+  /** 대성공이 `granted` 안에 얹은 몫. */
+  greatSuccessBonus?: Partial<Record<keyof Wallet, number>>;
 }
 
 /** 공개 프로필 API가 확정한 업적 획득 목록과 사용자의 장착 선택이며 모두 ID로만 직렬화한다. */
@@ -775,7 +785,7 @@ export interface EnterBountyResponse extends PlayerStateDto { tierId: string; re
 /** 세 라운드의 결과를 한 번에 확정한다. 진 판도 보내 기록이 이긴 판만의 것이 되지 않게 한다. */
 export interface CompleteBountyRequest { tierId: string; requestId: string; victory: boolean; clearedRounds: number; }
 /** 골드 지급과 등급 해금을 한 처리로 확정하고 화면이 다시 계산하지 않게 결과만 돌려준다. */
-export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
+export interface CompleteBountyResponse extends PlayerStateDto { tierId: string; victory: boolean; clearedRounds: number; goldEarned: number; granted?: Partial<Record<keyof Wallet, number>>; greatSuccess?: boolean; greatSuccessBonus?: Partial<Record<keyof Wallet, number>>; firstClear: boolean; clearedTierIds: string[]; staminaSpent: number; staminaRefunded: number; playerExp?: PlayerExpReceipt; bonusItems?: import("../core/raidTicketDrops").BonusItemDrop[]; }
 /** 깬 등급을 조회한다. 하루 입장 제한은 없다. */
 export interface BountyStatusResponse { clearedTierIds: string[]; serverTime: string; }
 
@@ -786,6 +796,8 @@ export interface DuelOpponentUnitDto { relicId: string | null; level: number; br
 export interface DuelOpponentDto {
   id: string; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; division: number | null;
   favoriteRelicId: string; totalPower: number;
+  /** 그 사람의 프로필 사진·테두리. 사진이 가려진 방어 칸이면 서버가 비운다(얼굴로 가린 칸이 드러나지 않게). */
+  avatarRelicId?: string | null; frameId?: string | null;
   units: DuelOpponentUnitDto[];
   /** 이 후보와 이미 싸웠다 — 다시 도전할 수 없다. */
   fought: boolean;
@@ -834,9 +846,9 @@ export interface ResolveDuelResponse extends PlayerStateDto {
   /** 이 판 뒤의 연승과, 이 판에 얹힌 연승 보너스(`delta`에 이미 들어 있다). */
   winStreak: number; streakBonus: number;
 }
-export interface DuelRankingEntryDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
+export interface DuelRankingEntryDto extends ProfileFaceDto { rank: number; displayName: string; score: number; tierId: import("../core/duelArena").DuelTierId; favoriteRelicId: string; isMe: boolean; }
 /** 고대 지층 상시 순위 한 줄 — 점수는 가장 깊이 깬 층이고 같은 층이면 먼저 닿은 사람이 위다. */
-export interface AncientRankingEntryDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
+export interface AncientRankingEntryDto extends ProfileFaceDto { rank: number; playerId: string; displayName: string; floor: number; favoriteRelicId: string; isMe: boolean; }
 export interface AncientRankingResponse { entries: AncientRankingEntryDto[]; me: AncientRankingEntryDto | null; }
 export interface DuelRankingResponse { entries: DuelRankingEntryDto[]; me: DuelRankingEntryDto | null; seasonEndsAt: string; }
 export interface ClaimDuelSeasonRewardResponse extends PlayerStateDto { seasonId: string; tierId: import("../core/duelArena").DuelTierId; duelEmblem: number; gems: number; }
@@ -879,6 +891,12 @@ export interface ExpeditionWeeklyBestResponse { weekKey: string; bestScore: numb
 /** stageId="all"이면 현재 달성한 미수령 단계를 한 트랜잭션에서 모두 받는다. */
 export interface ClaimExpeditionRewardRequest { requestId: string; stageId: string; }
 export interface ClaimExpeditionRewardResponse { rewards?: { currency: ExpeditionRewardCurrency; amount: number }[]; claimedNowStageIds?: string[]; weekKey: string; stageId: string; claimedStageIds: string[]; reward: { currency: ExpeditionRewardCurrency; amount: number }; alreadyClaimed: boolean; wallet: PlayerStateDto["wallet"]; }
+/**
+ * 순위·명단 한 줄의 **플레이어 프로필 얼굴** — 그 사람이 고른 프로필 사진(`avatarRelicId`)과 두른 테두리(`frameId`).
+ * 친구·길드·상단 줄이 그리는 `ProfileAvatar`와 같은 한 장을 세우는 값이라, 순위표만 애착 렐릭 얼굴로 서지 않는다.
+ * 둘 다 선택이다 — 비면 사진은 `favoriteRelicId`, 테두리는 기본으로 선다(옛 서버·표본 줄).
+ */
+export interface ProfileFaceDto { avatarRelicId?: string | null; frameId?: string | null; }
 /** 동점은 최고 점수 달성 시각이 빠른 이용자를 우선하며 그 뒤 안정적인 playerId 순으로 정렬한다. */
 /**
  * 순위 한 줄.
@@ -886,7 +904,7 @@ export interface ClaimExpeditionRewardResponse { rewards?: { currency: Expeditio
  * `favoriteRelicId`는 그 사람의 **애착 렐릭**이며 순위표가 얼굴을 세우는 유일한 근거다 —
  * 화면이 playerId로 아무 개체나 골라 세우면 서버가 말한 적 없는 프로필을 그리게 된다.
  */
-export interface ExpeditionLeaderboardEntry { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; frameId?: string; }
+export interface ExpeditionLeaderboardEntry extends ProfileFaceDto { rank: number; playerId: string; displayName: string; score: number; achievedAt: string; isMe: boolean; favoriteRelicId?: string; }
 export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy: "earliest-achieved-at"; entries: ExpeditionLeaderboardEntry[]; }
 
 /**
@@ -896,7 +914,7 @@ export interface ExpeditionLeaderboardResponse { weekKey: string; tieBreakPolicy
  * 겨루므로 응답의 주어가 내 기록이고, 레이드는 **보스 한 마리의 남은 체력**이 주어다 —
  * 그래서 시즌 응답이 먼저 들고 오는 것이 순위가 아니라 `remainingHp`다.
  */
-export interface RaidContributionEntryDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; /** 그 사람이 두른 프로필 테두리 — 순위 줄의 얼굴이 프로필 얼굴(`ProfileAvatar`)로 선다. */ frameId?: string; }
+export interface RaidContributionEntryDto extends ProfileFaceDto { rank: number; playerId: string; displayName: string; damage: number; isMe: boolean; favoriteRelicId?: string; }
 /** 정산·한 판 보상의 한 줄. 화면은 이 값을 액자에 그대로 세운다. */
 export interface RaidRewardDto { currency: WalletItemKey; name: string; amount: number; }
 /**
@@ -1006,7 +1024,8 @@ export interface StartExpeditionRunRequest {
   shortcut?: "boss";
 }
 export type StartExpeditionRunResponse = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
-export interface CompleteExpeditionRestRequest { nodeId: string }
+/** `reviveRelicId`는 휴식에서 깨울 렐릭이다. 비우면 편성 순서상 첫 사망자를 깨운다(예전 요청과 같다). */
+export interface CompleteExpeditionRestRequest { nodeId: string; reviveRelicId?: string }
 export interface BeginExpeditionAugmentRequest { nodeId: string }
 export interface BeginExpeditionAugmentResponse { pending: ExpeditionRunState["pendingAugmentReward"] }
 export interface ChooseExpeditionAugmentRequest { selection: ExpeditionAugmentSelection }
@@ -1092,6 +1111,11 @@ export interface GameApi extends AsyncArenaProfileApi {
   changeGuildBadge(request: ChangeGuildBadgeRequest): Promise<GuildWalletResponse>;
   /** 오늘의 출석 도장을 찍고 고른 보상을 받는다. 길드 부흥도·기여도도 함께 오른다. */
   stampGuildAttendance(request: StampGuildAttendanceRequest): Promise<StampGuildAttendanceResponse>;
+  getGuildGuard(): Promise<GuildGuardStatusResponse>;
+  enterGuildGuard(request: EnterGuildGuardRequest): Promise<EnterGuildGuardResponse>;
+  submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse>;
+  /** 길드전 방어덱 게시 — 정비일에만, 우리 길드 지도의 빈 칸 하나에. 보유·성장은 서버가 확인해 굳힌다. */
+  placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<import("./guildContracts").GuildWarMapState>;
   /** 길드 코인으로 상점 상품을 산다. */
   buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
   /** 장착 수식어 목록을 확정한다. */
@@ -1291,3 +1315,37 @@ export interface StampGuildAttendanceResponse extends PlayerStateDto {
   day: number;
 }
 export interface BuyGuildProductResponse extends PlayerStateDto { shop: import("./guildContracts").GuildShopState; productId: string }
+
+// ── 길드 수호전 ────────────────────────────────────────────────────────────────
+/** 오늘 수호전의 내 자리 — 속성·남은 도전·오늘 최고 점수. 길드에 들어 있어야 한다. */
+export interface GuildGuardStatusResponse {
+  day: number;
+  element: import("../core/types").Element;
+  attemptsLeft: number;
+  /** 오늘 내 최고 점수(없으면 0). */
+  best: number;
+  /** 오늘 판이 닫히는 시각(ms). */
+  endsAt: number;
+  serverTime: number;
+}
+/** 여섯 칸(앞 0~2 · 뒤 3~5) 편성으로 입장한다. 도전 한 번을 여기서 쓰고 성장·룬을 이 순간의 모습으로 굳힌다. */
+export interface EnterGuildGuardRequest { requestId: string; formation: (string | null)[] }
+export interface EnterGuildGuardResponse {
+  requestId: string;
+  seed: string;
+  element: import("../core/types").Element;
+  lineup: (import("../core/guildGuardBattle").GuildGuardSlotUnit | null)[];
+  attemptsLeft: number;
+}
+/** 방어진 지도의 칸 하나에 렐릭 셋을 세운다. */
+export interface PlaceGuildWarDefenseRequest { requestId?: string; slotId: string; relicIds: string[] }
+/** 입장 영수증으로 판을 확정한다. 클라이언트가 말하는 점수는 없다 — 서버가 같은 시드로 다시 굴린다. */
+export interface SubmitGuildGuardRequest { requestId: string }
+export interface SubmitGuildGuardResponse {
+  outcome: import("../core/guildGuardBattle").GuildGuardOutcome;
+  /** 이번 판으로 받은 길드 코인. */
+  coin: number;
+  /** 오늘 내 최고 점수(이번 판 반영 뒤). */
+  best: number;
+  attemptsLeft: number;
+}

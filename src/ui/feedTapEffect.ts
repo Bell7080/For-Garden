@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { motionPolicy } from "../core/settings";
 import { settingsManager } from "../managers/SettingsManager";
 import { FEED_TAP, feedArcPoint, feedBurstPath, feedComboVisible, feedCakeScale } from "./feedTapStyle";
@@ -38,6 +39,7 @@ export class FeedTapEffect {
     const now = this.scene.time.now;
     this.streak = now - this.lastTapAt <= FEED_TAP.combo.resetMs ? this.streak + 1 : 1;
     this.lastTapAt = now;
+    audioManager?.playUi("ui.feed");
     const calm = this.calm();
     if (!calm) this.burst(FEED_TAP.pieces.tap);
     this.paintCombo(calm);
@@ -48,6 +50,7 @@ export class FeedTapEffect {
    * 한 덩어리로 뭉쳐 몇 개인지 읽히지 않는다.
    */
   feast(pieces: number): void {
+    audioManager?.playUi("ui.feed");
     if (this.calm()) return;
     const { size, gapMs } = FEED_TAP.wave;
     for (let start = 0, wave = 0; start < pieces; start += size, wave += 1) {

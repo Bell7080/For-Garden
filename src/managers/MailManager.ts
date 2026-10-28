@@ -17,11 +17,14 @@ export class MailManager {
   /** 안내 여럿을 한 번에 읽음으로 확정한다. */
   async readAll(mailIds: readonly string[]): Promise<MailListResponse> { const ids = [...new Set(mailIds)].filter(Boolean); if (!ids.length) throw new Error("MAIL_ID_REQUIRED"); const result = await this.api.markMailsRead({ mailIds: ids }); this.assertList(result); this.publishMail(result); return structuredClone(result); }
 
-  /** 읽은 우편을 지운다. 서버가 받을 것이 남은 우편은 거절한다. */
+  /** 우편을 지운다. 서버가 첨부 없는 안내(공지·패치노트)는 거절한다. 받지 않은 우편도 지울 수 있다. */
   async delete(mailIds: readonly string[]): Promise<MailListResponse> { const ids = [...new Set(mailIds)].filter(Boolean); if (!ids.length) throw new Error("MAIL_ID_REQUIRED"); const result = await this.api.deleteMails({ mailIds: ids }); this.assertList(result); this.publishMail(result); return structuredClone(result); }
 
-  /** 지울 수 있는 우편 — 읽은 안내, 수령을 마쳤거나 만료된 우편. 서버 규칙(`deleteMails`)과 같다. */
-  deletableIds(result: MailListResponse, tab: "reward" | "notice"): string[] { const now = Date.parse(result.serverTime); return result.mails.filter((mail) => (mail.rewards.length > 0) === (tab === "reward") && (mail.rewards.length > 0 ? mail.claimed || (mail.expiresAt !== null && Date.parse(mail.expiresAt) <= now) : mail.read)).map(({ id }) => id); }
+  /** 지울 수 있는 우편인가 — 첨부가 있는 일반 우편만. 안내(공지·패치노트)는 지울 수 없다. 서버 규칙(`deleteMails`)과 같다. */
+  isDeletable(mail: Pick<MailDto, "rewards">): boolean { return mail.rewards.length > 0; }
+
+  /** 일괄 삭제 대상 — 우편 탭의 **아직 받지 않은** 우편(만료로 못 받게 된 것 포함). 안내 탭은 비어 있다. */
+  deletableIds(result: MailListResponse, tab: "reward" | "notice" | "patch"): string[] { return tab === "reward" ? result.mails.filter((mail) => this.isDeletable(mail) && mail.claimed).map(({ id }) => id) : []; }
 
   /** 단일 수령도 일괄 수령과 같은 멱등 계약을 사용한다. */
   async claim(mailIds: readonly string[], requestId: string = crypto.randomUUID()): Promise<ClaimMailRewardsResponse> {

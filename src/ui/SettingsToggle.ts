@@ -5,6 +5,7 @@ import { squeezeTextToWidth } from "./textFit";
 import { SETTINGS_TEXT } from "./settingsLayout";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
+import { audioManager } from "../managers/AudioManager";
 
 /**
  * 설정 스위치 한 줄.
@@ -58,6 +59,7 @@ export class SettingsToggle extends Phaser.GameObjects.Container {
       if (pending) return;
       pressOut(this.track);
       this.value = !this.value;
+      audioManager?.playUi("ui.toggle");
       this.paint();
       pending = true;
       try {

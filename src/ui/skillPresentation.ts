@@ -343,7 +343,7 @@ export function elationKeyword(passive: Passive): KeywordDef | undefined {
 }
 
 /**
- * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 둔화 출혈로 바뀌는 규칙을 말한다.
+ * 「서리깃」 태그(유티). 평타·궁극기가 쌓는 겹이 상한에서 동상로 바뀌는 규칙을 말한다.
  * 수치는 일반 공격이 거는 상태 계약에서 읽어 조정하면 팝업도 함께 바뀐다.
  */
 export function plumeKeyword(def: RelicDef, atk?: number): KeywordDef | undefined {

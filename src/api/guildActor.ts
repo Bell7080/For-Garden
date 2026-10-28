@@ -1,6 +1,6 @@
 import { t } from "../i18n";
 import type { Session } from "../state/session";
-import { playerProfileDisplay } from "../state/playerProfile";
+import { playerProfileDisplay, publicDuelScore } from "../state/playerProfile";
 import { ancientHighestCleared } from "../core/ancientStrata";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { GuildActor, GuildMemberCard } from "./guildContracts";
@@ -22,6 +22,7 @@ export function guildActorFrom(state: Session, userId: string): GuildActor {
 export function guildMemberCardFrom(state: Session): GuildMemberCard {
   const profile = playerProfileDisplay(state);
   const favorite = profile.competitiveStats.favoriteRelic;
+  const duel = publicDuelScore(state.duel, new Date());
   return {
     uid: state.playerCard.uid.slice(0, 32),
     bio: state.playerCard.bio.slice(0, 80),
@@ -33,5 +34,6 @@ export function guildMemberCardFrom(state: Session): GuildMemberCard {
     highestStageId: profile.competitiveStats.highestStage?.stageId ?? null,
     expeditionBest: Math.max(0, Math.floor(state.expedition.allTimeBestScore)),
     ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
+    ...(duel !== undefined ? { duelScore: duel } : {}),
   };
 }

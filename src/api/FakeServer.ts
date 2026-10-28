@@ -1,3 +1,4 @@
+import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
 import type { SpinRouletteResponse } from "./contracts";
@@ -26,7 +27,7 @@ import { ATTENDANCE_TRACK_IDS, attendanceTrackView, claimAttendanceAdBonus, clai
 import { ATTENDANCE_AD_REWARDS, ATTENDANCE_AD_SLOT_ID, ATTENDANCE_REWARDS } from "../data/attendance";
 import { isContentUnlocked } from "../core/contentUnlock";
 import { normalizeRaidTicketDropState, rollRaidTicketDrops, type BonusItemDrop } from "../core/raidTicketDrops";
-import { bountyRunCost, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
+import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTierCleared } from "../core/bountyRun";
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
@@ -65,14 +66,21 @@ import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, type OpsMailSource } from "../core/opsInbox";
+import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
-import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
+import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
+import { isGuildSandbox } from "./guildApi";
 import { guildActorFrom } from "./guildActor";
-import { GuildApiError, type GuildBackend } from "./guildContracts";
-import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, GuildWalletResponse, StampGuildAttendanceRequest, StampGuildAttendanceResponse } from "./contracts";
+import { GuildApiError, type GuildBackend, type GuildWarMapState } from "./guildContracts";
+import { normalizeGuildWarDeck, parseGuildWarSlotId } from "../core/guildWarMap";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
+import { GUILD_GUARD, guildGuardAttemptsLeft, guildGuardDayKey, normalizeGuildGuardFormation } from "../core/guildGuard";
+import { guildGuardCoin, replayGuildGuard } from "../core/guildGuardBattle";
+import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
+import { guildGuardRoster } from "../data/guildGuard";
+import { guildQaClockShift } from "./guildQaClock";
 import { nextTutorialStep, advanceTutorialOnStageClear, canCompleteTutorialStep, isContentIntroId, isContentIntroSeen, isTutorialStepDone, isTutorialStepId, normalizeTutorialState, TUTORIAL_REWARDS, type TutorialState } from "../core/tutorial";
 import { mileageFragmentRelicId } from "../data/mileageClerk";
 import { BOND_STORY_GEM_REWARD, BOND_STORY_LEVELS, DIARY_QUESTION_GEM_REWARD, bondChapterId, diaryQuestionUnlockAt, type BondStoryLevel } from "../core/relicStory";
@@ -100,7 +108,7 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, RAID_TICKET_ITEM } from "../data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
@@ -110,7 +118,7 @@ import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
+import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
@@ -118,6 +126,7 @@ import type { EnterStageRequest, EnterStageResponse, StageClearGrantDto } from "
 import type { CakeOperationCompleteRequest, CakeOperationCompleteResponse, CakeOperationEnterResponse, CakeOperationRunRequest, DungeonSweepRequest, DungeonSweepResponse } from "./contracts";
 import { cakeOperationRunCost, cakeOperationTierIndex, getCakeOperationTier, isCakeTierUnlocked } from "../data/cakeOperation";
 import { settleSweep, sweepRefusal, SWEEP_TICKET_ITEM, type DungeonRunCost } from "../core/dungeonShortcut";
+import { greatSuccessBonus, rollGreatSuccessCount } from "../core/greatSuccess";
 import type { AttendanceStatusResponse, ClaimAttendanceAdRequest, ClaimAttendanceRequest, ClaimAttendanceResponse, ClaimMailRewardsRequest, ClaimMailRewardsResponse, MailDto, MailListResponse, MailRewardDto, DeleteMailsRequest, MarkMailsReadRequest } from "./contracts";
 import { resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS } from "../data/expedition";
@@ -332,7 +341,16 @@ export class FakeServer implements GameApi {
     return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, role: relic.role, squad: relic.squad }; });
   }
 
-  async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() }; }
+  /** 도시의 파견 시간은 길드 레벨 혜택을 덜어 내려보낸다 — 화면이 혜택을 다시 셈하지 않고 이 값을 그대로 적는다. */
+  async getInteractionCities(): Promise<InteractionCitiesResponse> {
+    await this.delay(); const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
+    return { cities: INTERACTION_CITIES.map(city => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+  }
+
+  /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
+  private async currentGuildPerks(): Promise<GuildPerks> {
+    try { const { guild } = await this.guildBackend.getGuild(this.guildActor()); return guildPerks(guild?.level ?? 0); } catch { return guildPerks(0); }
+  }
 
   async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return this.interactionDispatchResponse(); }
 
@@ -351,6 +369,7 @@ export class FakeServer implements GameApi {
     const away = new Set(this.state.interaction.slots.flatMap((slot) => slot && !slot.claimed ? slot.party : []));
     if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "이미 파견 중인 렐릭입니다.");
     const error = validateInteractionFormation(request.party, this.state.owned); if (error) throw new GameApiError("INVALID_STATE", `교류 편성이 올바르지 않습니다: ${error}`);
+    const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
     const now = this.now(); const traits = this.interactionTraits(request.party);
     // 돌아올 것은 출발하는 순간 모두 굴려 둔다 — 인원과 특화가 그 양을 정한다.
     const rewards = rollInteractionRewards(city, traits, this.random);
@@ -358,7 +377,7 @@ export class FakeServer implements GameApi {
     // 멈춘 테스트나 같은 밀리초의 연속 출발에서 같은 id가 나오고, 그러면 수령이 엉뚱한 파견을
     // 집는다. 계정 안에서 증가하는 번호를 함께 넣는다.
     const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}-${(this.interactionSequence += 1)}`;
-    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city)).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
+    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent) })).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
     // 수령이 끝난 자리를 먼저 재사용하고, 없으면 새 자리를 잇는다.
     const free = this.state.interaction.slots.findIndex((slot) => slot === null || slot.claimed);
     if (free >= 0) this.state.interaction.slots[free] = dispatch; else this.state.interaction.slots.push(dispatch);
@@ -412,7 +431,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
-  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); return this.mailListDto(); }
+  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); await this.syncGuildRankMails(); this.applySavedMailClaims(); return this.mailListDto(); }
 
   /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
   async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
@@ -424,7 +443,8 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "우편 수령 요청 ID가 필요합니다.");
     const ids = [...new Set(request.mailIds)]; const nowMs = this.now().getTime(); const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (targets.some((mail, index) => !mail && !this.state.claimedMailIds?.includes(ids[index]))) throw new GameApiError("INVALID_STATE", "존재하지 않는 우편입니다.");
-    const claimable = targets.filter((mail): mail is MailDto => !!mail && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
+    const deletedIds = new Set(this.state.serverJournal?.ops?.deletedMails ?? []);
+    const claimable = targets.filter((mail): mail is MailDto => !!mail && !deletedIds.has(mail.id) && mail.rewards.length > 0 && !mail.claimed && (!mail.expiresAt || Date.parse(mail.expiresAt) > nowMs));
     const granted: MailRewardDto[] = [];
     const candidate = structuredClone(this.state);
     for (const mail of claimable) for (const reward of mail.rewards) {
@@ -456,11 +476,11 @@ export class FakeServer implements GameApi {
   /** 안내 우편도 열람 즉시 점에서 빠지도록 읽음 상태만 안전하게 변경한다. */
   async markMailsRead(request: MarkMailsReadRequest): Promise<MailListResponse> { await this.delay(); const ids = new Set(request.mailIds); this.mails.forEach((mail) => { if (ids.has(mail.id)) mail.read = true; }); markOpsMailsRead(this.state, request.mailIds); return this.mailListDto(); }
 
-  /** 읽은 안내와 수령을 마쳤거나 만료된 우편만 지운다. 받을 것이 남은 우편은 거절한다. */
+  /** 첨부가 있는 일반 우편만 지운다(받았든 아니든). 공지·패치노트 같은 안내(첨부 없음)는 거절한다. */
   async deleteMails(request: DeleteMailsRequest): Promise<MailListResponse> {
     await this.delay(); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims();
-    const nowMs = this.now().getTime(); const ids = [...new Set(request.mailIds)];
-    const deletable = (mail: MailDto): boolean => (mail.rewards.length > 0 ? mail.claimed || (mail.expiresAt !== null && Date.parse(mail.expiresAt) <= nowMs) : mail.read);
+    const ids = [...new Set(request.mailIds)];
+    const deletable = (mail: MailDto): boolean => mail.rewards.length > 0;
     const targets = ids.map((id) => this.mails.find((mail) => mail.id === id));
     if (!ids.length || targets.some((mail) => !mail || !deletable(mail))) throw new Error("MAIL_NOT_DELETABLE");
     markMailsDeleted(this.state, ids);
@@ -471,11 +491,13 @@ export class FakeServer implements GameApi {
    * 운영 도구가 보낸 우편을 이 서버의 우편 목록에 합친다. 서버 호출 한 번이 시작할 때 부르며,
    * 수령·읽음은 저장(`claimedMailIds`·운영 기록)에 남아 다음 호출에서도 이어진다.
    */
-  attachOpsMails(sources: readonly OpsMailSource[]): void {
+  attachOpsMails(sources: readonly OpsMailSource[], patchNotes: readonly OpsPatchNoteSource[] = []): void {
     for (let index = this.mails.length - 1; index >= 0; index -= 1) if (isOpsMailId(this.mails[index].id)) this.mails.splice(index, 1);
     const read = new Set(this.state.serverJournal?.ops?.readMails ?? []);
     const mails = sources.map((source) => opsMailToDto(source, t("mail.ops.sender"), read));
-    this.mails.unshift(...mails);
+    const kinds = { new: t("mail.patch.kind.new"), improve: t("mail.patch.kind.improve"), fix: t("mail.patch.kind.fix"), balance: t("mail.patch.kind.balance"), etc: t("mail.patch.kind.etc") };
+    const notes = patchNotes.map((note) => opsPatchNoteToDto(note, { sender: t("mail.ops.sender"), title: t("mail.patch.title", { version: note.version }) + (note.title.trim() ? ` · ${note.title.trim()}` : ""), kinds }, read));
+    this.mails.unshift(...mails, ...notes);
     this.applySavedMailClaims();
   }
 
@@ -645,7 +667,7 @@ export class FakeServer implements GameApi {
 
   async completeExpeditionRest(request: CompleteExpeditionRestRequest): Promise<{ ok: boolean }> {
     await this.delay();
-    return { ok: this.expeditionRules().completeRestNode(request.nodeId) };
+    return { ok: this.expeditionRules().completeRestNode(request.nodeId, request.reviveRelicId) };
   }
 
   async beginExpeditionAugment(request: BeginExpeditionAugmentRequest): Promise<BeginExpeditionAugmentResponse> {
@@ -808,7 +830,7 @@ export class FakeServer implements GameApi {
 
   /** 단일 계정 순위표는 QA 표본이다. 실제 순위 서버가 없으면 일반 빌드에 순위를 만들지 않는다. */
   async getExpeditionLeaderboard(limit = 100): Promise<ExpeditionLeaderboardResponse> {
-    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId }] : [];
+    await this.delay(); const expedition = this.rollExpedition(this.now()); const entries = QA_TOOLS_ENABLED && expedition.bestScore > 0 ? [{ rank: 1, playerId: "local-player", displayName: t("profile.defaultName"), score: expedition.bestScore, achievedAt: expedition.bestAchievedAt, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) }] : [];
     return { weekKey: expedition.weekKey, tieBreakPolicy: "earliest-achieved-at", entries: entries.slice(0, Math.max(0, limit)) };
   }
 
@@ -891,7 +913,7 @@ export class FakeServer implements GameApi {
     const board = this.raidContext ? (this.raidContext.records.find(row => row.instance.id === instance.id)?.entries ?? []).filter(entry => entry.playerId !== this.raidContext!.playerId) : instance.kind === "world"
       ? mockRaidContributions(instance.openedAt.slice(0, 10), Math.min(1, Math.max(0, (now.getTime() - Date.parse(instance.openedAt)) / 86_400_000)))
       : mockSummonContributions(instance.id, others);
-    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, frameId: this.state.playerCard.frameId };
+    const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) };
     return {
       ...(() => {
         const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
@@ -952,7 +974,7 @@ export class FakeServer implements GameApi {
     if (select && !(RAID_BOSS_POOL as readonly string[]).includes(request.bossRelicId!)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 보스입니다.");
     const ticketId = select ? RAID_SELECT_TICKET_ITEM : RAID_TICKET_ITEM;
     const stack = this.state.itemInventory.find((entry) => entry.itemId === ticketId);
-    if (!stack || stack.quantity <= 0) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
+    if (!stack || stack.quantity < RAID_SUMMON_TICKET_COST) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
     const now = this.now();
     const { bossRelicId, difficulty } = select
       ? { bossRelicId: request.bossRelicId!, difficulty: request.difficulty! }
@@ -963,7 +985,7 @@ export class FakeServer implements GameApi {
       summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false,
     };
     const nextState = structuredClone(this.state);
-    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? (entry.quantity > 1 ? [{ ...entry, quantity: entry.quantity - 1 }] : []) : [entry]);
+    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? (entry.quantity > RAID_SUMMON_TICKET_COST ? [{ ...entry, quantity: entry.quantity - RAID_SUMMON_TICKET_COST }] : []) : [entry]);
     nextState.raid = { instances: [...nextState.raid.instances, instance] };
     this.commitRaidState(nextState);
     const response: SummonRaidResponse = { ...this.snapshot(), raid: this.raidDto(instance, now), tickets: this.raidTickets() };
@@ -1592,7 +1614,7 @@ export class FakeServer implements GameApi {
       case "frame": {
         const frame = findProfileFrame(request.frameId);
         if (!frame) return { ok: false, reason: "unknownFrame" };
-        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level)) return { ok: false, reason: "frameLocked" };
+        if (!isProfileFrameUnlocked(frame, this.state.playerResearch.level, this.state.achievements?.claimed)) return { ok: false, reason: "frameLocked" };
         next = { ...card, frameId: request.frameId };
         break;
       }
@@ -1668,13 +1690,112 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const wallet = { ...this.state.wallet };
     let inventory = this.state.itemInventory;
+    let runes = this.state.runeInventory;
     if (product.grant.gold) wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + product.grant.gold);
     if (product.grant.cheesecake) wallet.cheesecake = Math.min(WALLET_CAPS.cheesecake, wallet.cheesecake + product.grant.cheesecake);
+    if (product.grant.fossil) wallet.fossil = Math.min(WALLET_CAPS.fossil, wallet.fossil + product.grant.fossil);
     if (product.grant.item) inventory = this.grantItem(inventory, product.grant.item.id, product.grant.item.quantity, now).inventory;
-    const next = { ...this.state, wallet, itemInventory: inventory };
+    // 룬의 자리·옵션은 서버 난수로 확정한다(일반 상점의 랜덤 룬과 같은 `createGrantedRune`).
+    if (product.grant.rune) runes = [...runes, this.createGrantedRune(product.grant.rune, runes)];
+    const next = { ...this.state, wallet, itemInventory: inventory, runeInventory: runes };
     this.persist(next);
-    this.state.wallet = wallet; this.state.itemInventory = inventory;
+    this.state.wallet = wallet; this.state.itemInventory = inventory; this.state.runeInventory = runes;
     return { ...this.snapshot(), shop: bought.shop, productId: product.id };
+  }
+
+  /** 수호전의 시계 — QA 시계 이동이 화면과 같은 날·같은 속성을 보게 한다(일반 빌드는 0). */
+  private guardNow(): number { return this.now().getTime() + guildQaClockShift(); }
+
+  async getGuildGuard(): Promise<GuildGuardStatusResponse> {
+    await this.delay();
+    const now = this.guardNow();
+    const day = guildGuardDayKey(now);
+    const record = this.state.serverJournal?.guildGuard;
+    return {
+      day, element: guildGuardElement(now), attemptsLeft: guildGuardAttemptsLeft(record, now),
+      best: record?.day === day ? record.best : 0, endsAt: guildGuardEndsAt(now), serverTime: now,
+    };
+  }
+
+  /**
+   * 수호전 입장 — 길드원만, 하루 두 번. 도전 한 번을 여기서 쓰고 편성의 성장·룬을 이 순간의 모습으로 굳힌다.
+   * 시드도 서버가 정한다. 궁극기까지 자동이라 판의 결과는 이 영수증이 다 정하고, 제출은 같은 시드로 다시 굴리기만 한다.
+   */
+  async enterGuildGuard(request: EnterGuildGuardRequest): Promise<EnterGuildGuardResponse> {
+    await this.delay();
+    if (typeof request?.requestId !== "string" || request.requestId.length === 0 || request.requestId.length > 64) throw new GuildApiError("INVALID_REQUEST");
+    const existing = this.state.serverJournal?.guildGuardAdmissions?.[request.requestId];
+    if (existing) {
+      return { requestId: request.requestId, seed: existing.seed, element: existing.element as EnterGuildGuardResponse["element"], lineup: structuredClone(existing.lineup), attemptsLeft: guildGuardAttemptsLeft(this.state.serverJournal?.guildGuard, this.guardNow()) };
+    }
+    let formation: (string | null)[];
+    try { formation = normalizeGuildGuardFormation(Array.isArray(request.formation) ? request.formation : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
+    if (formation.some((id) => id !== null && !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    const membership = await this.guildBackend.getGuild(this.guildActor());
+    if (!membership.guild) throw new GuildApiError("NOT_IN_GUILD");
+    const now = this.guardNow();
+    const day = guildGuardDayKey(now);
+    const record = this.state.serverJournal?.guildGuard;
+    if (guildGuardAttemptsLeft(record, now) <= 0) throw new GuildApiError("GUARD_LIMIT");
+    const element = guildGuardElement(now);
+    const lineup = formation.map((relicId) => relicId === null ? null : {
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
+    });
+    const seed = globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`;
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const used = record?.day === day ? record.used : 0;
+    journal.guildGuard = { day, used: used + 1, best: record?.day === day ? record.best : 0 };
+    const admissions = Object.fromEntries(Object.entries(journal.guildGuardAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
+    admissions[request.requestId] = { seed: seed.slice(0, 64), day, element, expiresAt: new Date(now + (GUILD_GUARD.timeLimitSeconds + 1_800) * 1_000).toISOString(), lineup };
+    journal.guildGuardAdmissions = admissions;
+    const next = { ...this.state, serverJournal: journal };
+    this.persist(next);
+    this.state.serverJournal = journal;
+    return { requestId: request.requestId, seed: admissions[request.requestId].seed, element, lineup: structuredClone(lineup), attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
+  }
+
+  /** 입장 영수증의 편성·시드로 판을 서버에서 다시 굴려 점수를 확정하고 길드 코인과 오늘 기록을 길드에 남긴다. */
+  async submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse> {
+    await this.delay();
+    const cached = this.readReceipt<SubmitGuildGuardResponse>("guildGuard", request?.requestId ?? "", "submit");
+    if (cached) return cached;
+    const admission = this.state.serverJournal?.guildGuardAdmissions?.[request?.requestId ?? ""];
+    if (!admission || admission.settled) throw new GuildApiError("GUARD_NOT_ENTERED");
+    const outcome = replayGuildGuard(admission.lineup, (id) => RELICS.find((relic) => relic.id === id)!, guildGuardRoster(admission.element as EnterGuildGuardResponse["element"]), admission.seed);
+    const coin = guildGuardCoin(outcome.score);
+    // 같은 요청 ID로 길드에 기록하므로 재전송이 코인을 두 번 주지 않는다.
+    await this.guildBackend.recordGuard(this.guildActor(), { day: admission.day, score: outcome.score, coin }, `guard:${request.requestId}`);
+    const now = this.guardNow();
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const record = journal.guildGuard?.day === admission.day ? journal.guildGuard : { day: admission.day, used: 0, best: 0 };
+    journal.guildGuard = { ...record, best: Math.max(record.best, outcome.score) };
+    journal.guildGuardAdmissions = { ...journal.guildGuardAdmissions, [request.requestId]: { ...admission, settled: true } };
+    const result: SubmitGuildGuardResponse = { outcome, coin, best: journal.guildGuard.day === guildGuardDayKey(now) ? journal.guildGuard.best : outcome.score, attemptsLeft: guildGuardAttemptsLeft(journal.guildGuard, now) };
+    const next = { ...this.state, serverJournal: journal };
+    this.recordReceipt(next, "guildGuard", request.requestId, "submit", result);
+    this.persist(next);
+    this.state.serverJournal = next.serverJournal;
+    return result;
+  }
+
+  /**
+   * 길드전 방어덱 게시 — 보유한 렐릭 셋만, 이 순간의 성장·룬으로 굳혀 길드 지도에 세운다. 칸·국면·중복은 길드 백엔드가
+   * 판정한다. 전투일에 상대가 이 스냅샷과 싸우므로 게시한 뒤 키운 몫은 다시 게시해야 든다.
+   */
+  async placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<GuildWarMapState> {
+    await this.delay();
+    let relicIds: string[];
+    try { relicIds = normalizeGuildWarDeck(Array.isArray(request?.relicIds) ? request.relicIds : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
+    if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const lineup = relicIds.map((relicId) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
+    }));
+    const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
+    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
   }
 
   /**
@@ -1813,9 +1934,15 @@ export class FakeServer implements GameApi {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
     if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining }, fullBonus: { ...cached.fullBonus } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
+    const { excavationBonusPercent } = await this.currentGuildPerks();
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const capacity = excavationStorageCapacity(excavationProductionDisplayModel(settled.assignedRelicIds, RELICS, this.state.relicProgress).totalsPerHour, excavationStorageLimitSeconds(settled, now));
     const result = harvestIdleExcavation(settled, this.state.wallet, capacity);
+    // 길드 레벨 혜택은 걷은 양 위에 얹는다 — 생산 속도를 바꾸지 않으므로 저장소 한도·가득 참 보너스와 섞이지 않는다.
+    for (const currency of EXCAVATION_CURRENCIES) {
+      const bonus = Math.min(guildExcavationBonus(result.granted[currency], excavationBonusPercent), Math.max(0, WALLET_CAPS[currency] - result.wallet[currency]));
+      result.granted[currency] += bonus; result.wallet[currency] += bonus;
+    }
     // 실제로 걷어 들인 것이 있을 때만 수확 임무를 센다 — 빈 손으로 누른 것은 수확이 아니다.
     const harvested = Object.values(result.granted).some((amount) => (amount ?? 0) > 0);
     const nextMissions = harvested ? applyMissionEvent(this.state.missions, { type: "excavation_harvested" }, now) : this.state.missions;
@@ -2357,7 +2484,8 @@ export class FakeServer implements GameApi {
     if (refusal === "not_enough_stamina") throw new GameApiError("INSUFFICIENT_STAMINA", "스테미나가 부족합니다.");
     const settlement = settleSweep(cost, request.count, member);
     const { wallet: nextWallet, playerResearch: nextResearch, missions: spentMissions, itemInventory: spentItems, playerExp } = this.spendStamina(settlement.staminaCost);
-    const granted = this.grantDungeonRewards(nextWallet, settlement.rewards);
+    // 대성공은 판마다 따로 굴린다 — 기본 몫을 먼저 얹고 대성공 몫을 따로 얹어 영수증이 그 몫을 가를 수 있게 한다.
+    const { granted, greatSuccessCount, greatSuccessBonus: bonusGranted } = this.grantDungeonRun(nextWallet, cost.rewards, settlement.count, settlement.rewards);
     let nextMissions = spentMissions;
     for (let index = 0; index < settlement.count; index += 1) nextMissions = applyMissionEvent(nextMissions, { type: "battle_completed", victory: true }, now);
     const ticketItems = spentItems.flatMap((entry) => entry.itemId !== SWEEP_TICKET_ITEM || settlement.ticketCost === 0 ? [entry]
@@ -2366,7 +2494,7 @@ export class FakeServer implements GameApi {
     const { items: nextItems, drops: bonusItems } = this.rollBonusDrops(settlement.count, ticketItems, now);
     this.persist({ ...this.state, wallet: nextWallet, playerResearch: nextResearch, missions: nextMissions, itemInventory: nextItems });
     this.state.wallet = nextWallet; this.state.playerResearch = nextResearch; this.state.missions = nextMissions; this.state.itemInventory = nextItems;
-    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp, bonusItems };
+    return { ...this.snapshot(), tierId, count: settlement.count, staminaSpent: settlement.staminaCost, ticketsSpent: settlement.ticketCost, granted, playerExp, bonusItems, greatSuccessCount, greatSuccessBonus: bonusGranted };
   }
 
   /**
@@ -2384,6 +2512,19 @@ export class FakeServer implements GameApi {
     }
     this.state.raidTicketDrops = rolled.state;
     return { items: inventory, drops };
+  }
+
+  /**
+   * 이긴 판 `runs`번의 기본 보상과 대성공 몫을 함께 얹는다(`core/greatSuccess.ts`). 기본 몫을 먼저
+   * 얹고 대성공 몫을 따로 얹어, 지갑 상한에 걸리면 깎이는 쪽이 대성공 몫이 되게 한다.
+   */
+  private grantDungeonRun(wallet: Session["wallet"], perRun: Readonly<Record<string, number>>, runs: number, total: Readonly<Record<string, number>>): { granted: Partial<Record<keyof Session["wallet"], number>>; greatSuccessCount: number; greatSuccessBonus: Partial<Record<keyof Session["wallet"], number>> } {
+    const base = this.grantDungeonRewards(wallet, total);
+    const greatSuccessCount = rollGreatSuccessCount(runs, this.random);
+    const bonus = this.grantDungeonRewards(wallet, greatSuccessBonus(perRun, greatSuccessCount));
+    const granted: Partial<Record<keyof Session["wallet"], number>> = { ...base };
+    for (const [key, amount] of Object.entries(bonus) as [keyof Session["wallet"], number][]) granted[key] = (granted[key] ?? 0) + amount;
+    return { granted, greatSuccessCount, greatSuccessBonus: bonus };
   }
 
   /** 지갑 상한을 넘기지 않고 지급하며, 실제로 늘어난 몫만 돌려준다. */
@@ -2430,7 +2571,8 @@ export class FakeServer implements GameApi {
     const cost = admitted ? cakeOperationRunCost(tier).staminaCost : 0;
     const spent = request.victory && cost > 0 ? this.chargeVictoryStamina(cost) : undefined;
     const nextWallet = { ...(spent?.wallet ?? this.state.wallet) };
-    const granted = request.victory ? this.grantDungeonRewards(nextWallet, cakeOperationRunCost(tier).rewards) : {};
+    const run = request.victory ? this.grantDungeonRun(nextWallet, cakeOperationRunCost(tier).rewards, 1, cakeOperationRunCost(tier).rewards) : undefined;
+    const granted = run?.granted ?? {};
     const index = cakeOperationTierIndex(tier.id);
     const unlockedNextTier = request.victory && index > this.state.cakeOperation.clearedIndex;
     const nextCake = unlockedNextTier ? { clearedIndex: index } : { ...this.state.cakeOperation };
@@ -2448,6 +2590,7 @@ export class FakeServer implements GameApi {
     if (pending?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
     const response: CakeOperationCompleteResponse = {
       ...this.snapshot(), tierId: tier.id, victory: request.victory, granted, unlockedNextTier, bonusItems,
+      ...(run && run.greatSuccessCount > 0 ? { greatSuccess: true, greatSuccessBonus: run.greatSuccessBonus } : {}),
       staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}),
     };
     this.cakeCompletionResults.set(request.requestId, structuredClone(response));
@@ -2545,7 +2688,7 @@ export class FakeServer implements GameApi {
     if (cached) return structuredClone(cached);
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "입장 요청 ID가 필요합니다.");
     const tier = this.bountyTier(request.tierId);
-    const cleared = this.state.bounty.clearedTierIds.includes(tier.id);
+    const cleared = isBountyTierCleared(tier, this.state.bounty.clearedTierIds);
     const response = this.sweepDungeon(request, tier.id, bountyRunCost(tier), cleared, this.now());
     this.bountySweepResults.set(request.requestId, structuredClone(response));
     return response;
@@ -2569,7 +2712,8 @@ export class FakeServer implements GameApi {
     const cost = bountyRunCost(tier).staminaCost;
     const spent = victory ? this.chargeVictoryStamina(cost) : undefined;
     const nextWallet = { ...(spent?.wallet ?? this.state.wallet) };
-    const granted = victory ? this.grantDungeonRewards(nextWallet, bountyRunCost(tier).rewards) : {};
+    const run = victory ? this.grantDungeonRun(nextWallet, bountyRunCost(tier).rewards, 1, bountyRunCost(tier).rewards) : undefined;
+    const granted = run?.granted ?? {};
     const goldEarned = granted.gold ?? 0;
     const nextBounty = victory ? markBountyTierCleared(this.state.bounty, tier.id) : { clearedTierIds: [...this.state.bounty.clearedTierIds] };
     const nextMissions = applyMissionEvent(spent?.missions ?? this.state.missions, { type: "battle_completed", victory }, now);
@@ -2580,7 +2724,8 @@ export class FakeServer implements GameApi {
     this.state.playerResearch = nextResearch; this.state.itemInventory = nextItems;
     this.pendingBountyRuns.delete(request.requestId);
     return {
-      ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, firstClear, clearedTierIds: [...nextBounty.clearedTierIds],
+      ...this.snapshot(), tierId: tier.id, victory, clearedRounds: request.clearedRounds, goldEarned, granted, firstClear, clearedTierIds: [...nextBounty.clearedTierIds],
+      ...(run && run.greatSuccessCount > 0 ? { greatSuccess: true, greatSuccessBonus: run.greatSuccessBonus } : {}),
       staminaSpent: spent ? cost : 0, staminaRefunded: spent ? 0 : cost, ...(spent ? { playerExp: spent.playerExp } : {}), bonusItems,
     };
   }
@@ -2644,6 +2789,9 @@ export class FakeServer implements GameApi {
       return [{
         id: npc.id, displayName: npc.displayName, score: npc.score, tierId: npcStanding.tier.id, division: npcStanding.division,
         favoriteRelicId: hidden.has(npc.favoriteRelicId) ? npc.units.find(({ relicId }) => !hidden.has(relicId))!.relicId : npc.favoriteRelicId,
+        // 프로필 사진이 가려진 방어 칸이면 비운다 — 얼굴 한 장으로 가린 칸이 드러나면 안 된다.
+        avatarRelicId: npc.avatarRelicId && !hidden.has(npc.avatarRelicId) ? npc.avatarRelicId : null,
+        frameId: npc.frameId ?? null,
         totalPower: npc.units.reduce((sum, { power }) => sum + power, 0),
         units: npc.units.map(({ relicId, level, breakthrough, power }) => ({ relicId: hidden.has(relicId) ? null : relicId, level, breakthrough, power })),
         fought: duel.foughtIds.includes(npc.id),
@@ -2825,7 +2973,7 @@ export class FakeServer implements GameApi {
     if (this.duelContext) {
       const duel = this.duelNow(this.now());
       const entries = this.duelContext.ranking.map((row, index) => ({ ...row, rank: index + 1, tierId: duelTier(row.score).id, isMe: row.id === this.duelContext!.playerId }));
-      const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, isMe: true };
+      const me = { rank: this.duelContext.rank, displayName: this.state.playerCard.nickname || t("duel.ranking.me"), score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true };
       return { entries, me, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
     }
     if (!QA_TOOLS_ENABLED) return { entries: [], me: null, seasonEndsAt: duelSeasonEndsAt(this.now()).toISOString() };
@@ -2834,7 +2982,7 @@ export class FakeServer implements GameApi {
     const meRank = this.duelMyRank(duel);
     const meName = this.state.playerCard.nickname || t("duel.ranking.me");
     const favorite = this.state.favorite ?? duel.defense[0] ?? duel.attack[0] ?? "torika";
-    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: favorite, isMe: true };
+    const me = meRank === null ? null : { rank: meRank, displayName: meName, score: duel.score, tierId: duelTier(duel.score).id, favoriteRelicId: favorite, ...profileFace(this.state), isMe: true };
     const npcs = [...this.duelPool(now)].sort((a, b) => b.score - a.score);
     const rows = npcs.map(({ displayName, score, favoriteRelicId }) => ({ displayName, score, tierId: duelTier(score).id, favoriteRelicId, isMe: false }));
     if (me) rows.splice(me.rank - 1, 0, { ...me });
@@ -2854,7 +3002,7 @@ export class FakeServer implements GameApi {
     const name = this.state.playerCard.nickname || t("profile.defaultName");
     const rows = [
       ...QA_ANCIENT_RANKING.map((row) => ({ ...row, isMe: false })),
-      ...(floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, isMe: true }] : []),
+      ...(floor > 0 ? [{ playerId: "local-player", displayName: name, floor, favoriteRelicId: this.state.favorite, ...profileFace(this.state), isMe: true }] : []),
     ].sort((a, b) => b.floor - a.floor);
     const entries = rows.slice(0, 100).map((row, index) => ({ ...row, rank: index + 1 }));
     return { entries, me: entries.find((row) => row.isMe) ?? null };
@@ -3663,6 +3811,7 @@ export class FakeServer implements GameApi {
    * (2026-10-27 응태 승인 — 매달 초회 보상 전체 재지급). 그 달의 명단·시련이 정의에 들도록 지금 달을 함께 맞춘다.
    */
   private rollAncientSeasonNow(now = this.now()): void {
+    this.raiseAchievementPeaks(this.state);
     const next = rollAncientSeason(this.state.ancientSeason ?? "", this.state.cleared, now);
     if (next) { this.state.ancientSeason = next.season; this.state.cleared = next.cleared; }
     setActiveAncientSeason(this.state.ancientSeason ?? "");
@@ -4172,6 +4321,25 @@ export class FakeServer implements GameApi {
   }
 
 
+  /**
+   * 마감된 주의 길드 주간 순위 보상을 우편으로 세운다 — 길드 백엔드가 받을 몫을 한 번씩 꺼내 주는 경우(로컬 백엔드)만이다.
+   * 운영 서버는 우편함 조회에서 DB 함수(`server_guild_weekly_rewards`)가 우편을 직접 넣는다. 길드 저장소에 닿지 않으면 다음 조회로 미룬다.
+   */
+  private async syncGuildRankMails(): Promise<void> {
+    if (!this.guildBackend.claimWeeklyRankRewards) return;
+    const awards = await this.guildBackend.claimWeeklyRankRewards(this.guildActor()).catch(() => []);
+    for (const award of awards) {
+      const id = `guild-week:${award.week}`;
+      if (this.mails.some((mail) => mail.id === id)) continue;
+      const sentAt = new Date(`${award.week}T00:00:00.000Z`); sentAt.setUTCDate(sentAt.getUTCDate() + 7);
+      this.mails.unshift({
+        id, title: t("guild.mail.weekly.title"), sender: t("guild.mail.weekly.sender"),
+        body: t("guild.mail.weekly.body", { guild: award.guildName, rank: award.rank.toLocaleString() }),
+        sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards: [{ kind: "currency", currency: "gems", amount: award.gems }],
+      });
+    }
+  }
+
   /** 주입 어댑터를 우선 사용하고, 없으면 공유 세션만 브라우저에 저장해 독립 테스트 부작용을 막는다. */
   /**
    * 스테미나를 쓰는 **모든** 경계가 지나는 한 곳 — 쓴 만큼 연구원 경험치가 오른다(`playerLevel.ts`).
@@ -4243,8 +4411,8 @@ export class FakeServer implements GameApi {
   private persist(next: Session): void {
     // 발굴권은 고고학 입장 횟수 그 자체다 — 어느 경로로 받았든 가방에 남기지 않고 횟수에 더한다(`max` 초과 허용).
     this.absorbStrataTicketsInto(next);
-    // 최고 보유 골드는 지갑만 보고는 알 수 없다 — 모든 쓰기가 지나는 이 자리에서 최고치만 올린다(업적).
-    this.raiseGoldPeak(next);
+    // 골드와 지층 최고 기록은 소비·월간 초기화 후에도 유지한다.
+    this.raiseAchievementPeaks(next);
     // 모든 쓰기 API가 공유하는 마지막 경계에서 음수·상한·중복을 저장 전에 차단한다.
     this.validateState(next);
     // validateState의 도메인 오류는 그대로 두고 실제 저장 장치 오류만 공용 API 실패로 분류한다.
@@ -4254,15 +4422,16 @@ export class FakeServer implements GameApi {
     } catch (error) {
       throw persistenceFailed(error);
     }
-    // 호출자는 nextState의 몇 칸만 this.state에 옮겨 담으므로, 저장 경계가 올린 최고 골드는 여기서 맞춘다.
+    // 호출자는 nextState의 몇 칸만 옮기므로 저장 경계가 올린 업적 최고 기록도 함께 맞춘다.
     if (next.achievements) this.state.achievements = next.achievements;
     this.signalMissionNotice(next);
   }
 
-  private raiseGoldPeak(next: Session): void {
+  private raiseAchievementPeaks(next: Session): void {
     const achievements = normalizeAchievementState(next.achievements);
-    if (next.wallet.gold <= achievements.goldPeak && next.achievements) return;
-    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold) };
+    const ancientFloorPeak = Math.max(achievements.ancientFloorPeak ?? 0, ancientHighestCleared(next.cleared, ANCIENT_STRATA_MAX_FLOOR));
+    if (next.wallet.gold <= achievements.goldPeak && ancientFloorPeak === (achievements.ancientFloorPeak ?? 0) && next.achievements) return;
+    const raised = { ...achievements, goldPeak: Math.max(achievements.goldPeak, next.wallet.gold), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}) };
     next.achievements = raised;
   }
 
@@ -4324,6 +4493,11 @@ function qaRandom(): number {
 }
 
 const localGameApi = new FakeServer();
+/** 길드 샌드박스(QA)일 때 이 기기의 구현으로 돌리는 조작 — 길드 백엔드를 읽거나 길드 코인·기록을 남기는 것 전부. */
+const SANDBOX_GUILD_METHODS: ReadonlySet<string> = new Set([
+  "createGuild", "changeGuildBadge", "stampGuildAttendance", "buyGuildProduct",
+  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense",
+] satisfies (keyof GameApi)[]);
 let activeGameApi: GameApi = localGameApi;
 const remoteMissionListeners = new Set<() => void>();
 let lastRemoteMissionScore: number | undefined;
@@ -4359,6 +4533,8 @@ export const gameApi: GameApi = new Proxy({} as GameApi, {
         return () => { stopLocal(); remoteMissionListeners.delete(listener); };
       };
     }
-    return (...args: unknown[]) => (activeGameApi as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args);
+    // QA 길드 샌드박스에서는 길드가 이 기기에만 있으므로, 길드에 얽힌 조작도 이 기기의 구현이 받는다(서버는 그 길드를 모른다).
+    const target = isGuildSandbox() && SANDBOX_GUILD_METHODS.has(prop) ? localGameApi : activeGameApi;
+    return (...args: unknown[]) => (target as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args);
   },
 });

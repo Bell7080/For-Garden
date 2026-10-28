@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { addScrollHint } from "./ScrollHint";
+import { audioManager } from "../managers/AudioManager";
 import { portraitCardZoom } from "./portraitPlacement";
 import { t } from "../i18n";
 import type { RelicDef, RelicSkinId } from "../core/types";
@@ -173,6 +175,7 @@ export class AppearanceStrip {
     this.installMask(body, view);
     entries.forEach((entry, index) => this.addCard(entry, index));
     this.installDrag(body);
+    addScrollHint(this.scene, body, { axis: "x", x: (view.left + view.right) / 2, y: layout.strip.y, width: view.right - view.left, height: 0, owner: this.rail, read: () => ({ offset: this.offset, min: appearanceStripMinX(this.entries.length) }) });
     this.paint();
   }
 
@@ -369,6 +372,7 @@ export class AppearanceStrip {
     try {
       const result = await withBusy(this.scene, gameApi.purchaseRelicSkin({ relicId: this.def.id, skinId, requestId: `skin:${this.def.id}:${skinId}` }));
       relicSkinManager.markPurchased(this.def.id, result.skinId);
+      audioManager?.playUi("ui.purchase");
       this.hooks.onWalletChange?.();
     } catch {
       // 실패는 값 줄이 이미 말한다(모자란 수가 붉다). 상태 문구로 같은 말을 되풀이하지 않는다.

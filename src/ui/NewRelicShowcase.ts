@@ -227,6 +227,8 @@ class NewRelicShowcase {
    * 겹쳐 밝아지는 합성이라 옅게 깔고, 조각은 동그라미가 아니라 마름모다.
    */
   private playOmen(): void {
+    // 3D 전조는 제 무대에 맞춘 소리를 따로 갖는다. 이 길은 그 무대가 없을 때의 대체라 여기서 운다.
+    audioManager?.playSfx("research.omen");
     const { scene } = this;
     const O = SHOWCASE_OMEN;
     const motion = !this.options.reduceMotion;
@@ -568,6 +570,7 @@ class NewRelicShowcase {
     this.tapLockedUntil = performance.now() + SHOWCASE_TAP_LOCK_MS.stage;
     setDebugRelicShowcase({ relicId: this.relicId, phase: "stage" });
     this.stopVoice();
+    audioManager?.playSfx("research.showcase");
     const { scene, composition } = this;
     const motion = !this.options.reduceMotion;
     const flashes = flashPolicy(this.options.reduceFlashes);

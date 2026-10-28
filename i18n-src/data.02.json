@@ -359,6 +359,26 @@
 "Wöchentlich",
 "Еженедельно"
 ],
+"shop.tab.monthly": [
+"每月",
+"รายเดือน",
+"Hằng tháng",
+"Bulanan",
+"Mensual",
+"Mensal",
+"Monatlich",
+"Ежемесячно"
+],
+"shop.tab.guildLevel": [
+"公会等级",
+"เลเวลกิลด์",
+"Cấp bang hội",
+"Level Guild",
+"Nivel del gremio",
+"Nível da guilda",
+"Gildenstufe",
+"Уровень гильдии"
+],
 "banner.welcome.name": [
 "首次复原研究",
 "วิจัยฟื้นคืนครั้งแรก",
@@ -398,46 +418,6 @@
 "Torika de férias de verão",
 "Sommerferien-Torika",
 "Торика на летних каникулах"
-],
-"skin.torika-skin-002.name": [
-"寒假托莉卡",
-"โทริกะปิดเทอมฤดูหนาว",
-"Torika nghỉ đông",
-"Torika Liburan Musim Dingin",
-"Torika de vacaciones de invierno",
-"Torika de férias de inverno",
-"Winterferien-Torika",
-"Торика на зимних каникулах"
-],
-"skin.torika-skin-003.name": [
-"运动会托莉卡",
-"โทริกะวันกีฬาสี",
-"Torika hội thao",
-"Torika Hari Olahraga",
-"Torika del día deportivo",
-"Torika do dia esportivo",
-"Sportfest-Torika",
-"Торика на спортивном празднике"
-],
-"skin.torika-skin-004.name": [
-"夜自习托莉卡",
-"โทริกะอ่านหนังสือกลางคืน",
-"Torika tự học buổi tối",
-"Torika Belajar Malam",
-"Torika de estudio nocturno",
-"Torika de estudo noturno",
-"Nachtlern-Torika",
-"Торика на вечерней учёбе"
-],
-"skin.torika-skin-005.name": [
-"校服托莉卡",
-"โทริกะชุดนักเรียน",
-"Torika đồng phục",
-"Torika Seragam Sekolah",
-"Torika con uniforme escolar",
-"Torika de uniforme escolar",
-"Schuluniform-Torika",
-"Торика в школьной форме"
 ],
 "stamina.source.stamina-gems.name": [
 "紧急补给",
@@ -1791,5 +1771,14 @@
 "Conclua o relatório de escavação do Arau-gigante",
 "Schließe den Grabungsbericht zum Riesenalk ab",
 "Завершить отчёт о раскопках гагарки"
-]
+],
+  "modifier.ancient-pathfinder.name": ["太古开拓者","ผู้บุกเบิกยุคโบราณ","Người mở lối cổ đại","Perintis Purba","Pionero ancestral","Desbravador ancestral","Uralter Wegbereiter","Первопроходец древности"],
+  "modifier.seasoned-pioneer.name": ["熟练先锋","แนวหน้าผู้ชำนาญ","Tiên phong lão luyện","Pelopor Berpengalaman","Vanguardia veterana","Vanguarda experiente","Erfahrene Vorhut","Опытный авангард"],
+  "modifier.unyielding-pioneer.name": ["不屈先锋","แนวหน้าผู้ไม่ย่อท้อ","Tiên phong bất khuất","Pelopor Pantang Menyerah","Vanguardia inquebrantable","Vanguarda inabalável","Unbeugsame Vorhut","Несгибаемый авангард"],
+  "modifier.rune-master.name": ["符文琢磨名匠","ปรมาจารย์รูน","Bậc thầy rune","Ahli Rune","Maestro de runas","Mestre das runas","Runenmeister","Мастер рун"],
+  "modifier.trait-scholar.name": ["特性探索者","ผู้ศึกษาคุณลักษณะ","Học giả đặc tính","Cendekiawan Trait","Erudito de rasgos","Estudioso de traços","Merkmalsgelehrter","Знаток свойств"],
+  "modifier.master-mentor.name": ["完美引路人","ผู้ชี้นำสู่ความสมบูรณ์","Người dẫn lối hoàn thiện","Pembimbing Kesempurnaan","Mentor de la perfección","Mentor da perfeição","Mentor der Vollendung","Наставник совершенства"],
+  "profileFrame.ancient.name": ["太古地层","ชั้นดินดึกดำบรรพ์","Địa tầng thái cổ","Lapisan Purba","Estratos ancestrales","Estratos ancestrais","Uralte Schichten","Древние пласты"],
+  "profileFrame.conqueror.name": ["不屈月桂","พวงเกียรติยศอันแน่วแน่","Vòng nguyệt quế bất khuất","Mahkota Keteguhan","Laurel inquebrantable","Louro inabalável","Unbeugsamer Lorbeer","Несгибаемый лавр"],
+  "profileFrame.runic.name": ["符文光辉","ประกายรูน","Ánh sáng rune","Kilau Rune","Resplandor rúnico","Radiância rúnica","Runenglanz","Рунное сияние"]
 }

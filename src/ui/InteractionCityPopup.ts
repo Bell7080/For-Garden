@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { playFormationTapSound } from "./formationSound";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
@@ -20,6 +21,7 @@ import { placePuppet, spawnPuppet, type PuppetCreature } from "../puppets/assets
 import { session } from "../state/session";
 import type { InteractionDispatchSnapshot } from "../state/session";
 import { Button } from "./Button";
+import { clipHit, containerClip } from "./clippedHit";
 import { PortraitCard } from "./PortraitCard";
 import {
   formationRosterColumnX,
@@ -59,6 +61,7 @@ import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
 import { onTap } from "./tapGuard";
+import { addScrollHint } from "./ScrollHint";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -522,12 +525,15 @@ export class InteractionCityPopup {
         const clock = card.setAwayOverlay(t("interaction.awayOverlay"), interactionRemainingLabel(Math.max(0, until - this.now())));
         this.awayClocks.push({ text: clock, completesAt: until });
       }
+      // 마스크와 같은 사각형 안에서만 손을 받는다 — 창 밖으로 흘러간 카드가 아래 버튼·위 슬롯을 덮지 않게.
+      clipHit(card.hit, containerClip(parent, ROSTER_VIEW.left, ROSTER_VIEW.top, ROSTER_VIEW.right, ROSTER_VIEW.bottom));
       bindLongPress(this.scene, card.hit, {
         onTap: () => {
           // 다른 도시에 나가 있는 이는 고를 수 없다 — 덮개와 남은 시간이 이미 그 이유를 말한다.
           if (until !== undefined) return;
           // 이미 어느 칸에 선 렐릭이면 옮기지 않고 그 칸을 고른다.
           const result = tapRosterRelic(this.party, this.selectedSlot, relic.id);
+          playFormationTapSound(this.party, result.formation, relic.id);
           this.party = result.formation;
           this.selectedSlot = result.selectedSlot;
           this.renderSlots(view);
@@ -683,6 +689,11 @@ export class InteractionCityPopup {
     syncMask();
     grid.setMask(mask.createGeometryMask());
     const ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });
+    addScrollHint(this.scene, parent, {
+      x: (ROSTER_VIEW.left + ROSTER_VIEW.right) / 2, y: (ROSTER_VIEW.top + ROSTER_VIEW.bottom) / 2,
+      width: ROSTER_VIEW.right - ROSTER_VIEW.left, height: viewportHeight, owner: grid,
+      read: () => ({ offset: this.gridScrollY, min: minScroll }),
+    });
 
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);

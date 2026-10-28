@@ -79,6 +79,7 @@
 "settings.support.clearCache": ["清除缓存", "ล้างแคช", "Xóa bộ nhớ đệm", "Hapus Cache", "Borrar caché", "Limpar cache", "Cache leeren", "Очистить кэш"],
 "settings.support.terms": ["服务条款", "ข้อกำหนดการใช้บริการ", "Điều khoản dịch vụ", "Ketentuan Layanan", "Términos del servicio", "Termos de Serviço", "Nutzungsbedingungen", "Условия использования"],
 "settings.support.privacy": ["隐私政策", "นโยบายความเป็นส่วนตัว", "Chính sách quyền riêng tư", "Kebijakan Privasi", "Política de privacidad", "Política de Privacidade", "Datenschutzerklärung", "Политика конфиденциальности"],
+"settings.support.policies": ["政策与概率信息", "นโยบายและอัตราการได้รับ", "Chính sách & tỉ lệ", "Kebijakan & Peluang", "Políticas y probabilidades", "Políticas e probabilidades", "Richtlinien & Wahrscheinlichkeiten", "Правила и вероятности"],
 "settings.support.resetSettings": ["重置设置", "รีเซ็ตการตั้งค่า", "Đặt lại cài đặt", "Reset Pengaturan", "Restablecer ajustes", "Redefinir configurações", "Einstellungen zurücksetzen", "Сбросить настройки"],
 "settings.support.resetSave": ["重置存档数据", "รีเซ็ตข้อมูลเซฟ", "Đặt lại dữ liệu lưu", "Reset Data Simpanan", "Restablecer datos guardados", "Redefinir dados salvos", "Speicherstand zurücksetzen", "Сбросить сохранение"],
 "settings.support.withdraw": ["注销账号", "ลบบัญชี", "Xóa tài khoản", "Hapus Akun", "Eliminar cuenta", "Excluir conta", "Konto löschen", "Удалить аккаунт"],

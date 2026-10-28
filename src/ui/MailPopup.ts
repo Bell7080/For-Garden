@@ -11,6 +11,9 @@ import { Button } from "./Button";
 import { addCategoryTab } from "./CategoryTab";
 import { slideTabPage } from "./screenTransition";
 import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
+import { addClippedHit } from "./clippedHit";
+import type { ClipRect } from "./clipRect";
 import { chipPoints, drawLayer, drawShapeEdge, HOLO, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon, addItemFrame } from "./itemFrame";
@@ -29,7 +32,7 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { isMailExpired, MAIL_DETAIL_LAYOUT, mailDetailRail, MAIL_POPUP_LAYOUT, mailListRows, mailRemaining, mailRewardSlots, mailRewardX, sortMailRewards, mailTabOf, mailTabX, sortMails, type MailTab } from "./mailPopupLayout";
 import { withBusy } from "./BusyOverlay";
 
-const TABS: readonly MailTab[] = ["reward", "notice"];
+const TABS: readonly MailTab[] = ["reward", "notice", "patch"];
 
 /** 첨부물 한 칸의 그림 키 — 출석과 같은 한 규칙이다. */
 const mailRewardTexture = rewardDtoTexture;
@@ -93,7 +96,7 @@ export class MailPopup {
       if (this.tab === "reward") this.renderRewardMail(content, mail, rows.centers[index], nowMs);
       else this.renderNotice(content, mail, rows.centers[index], nowMs);
     });
-    if (mails.length === 0) content.add(this.scene.add.text(0, (viewport.bottom - viewport.top) / 2, t(this.tab === "reward" ? "mail.empty.reward" : "mail.empty.notice"), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
+    if (mails.length === 0) content.add(this.scene.add.text(0, (viewport.bottom - viewport.top) / 2, t(`mail.empty.${this.tab}`), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5));
     previous?.destroy();
     this.content = content;
     this.attachScroll(content, rows.contentHeight);
@@ -116,6 +119,7 @@ export class MailPopup {
       const drag = this.scene.add.rectangle(0, (viewport.top + viewport.bottom) / 2, viewport.width, viewHeight, 0xffffff, 0).setVisible(false);
       attachDragScroll(this.scene, { owner: drag, root: body, bounds: () => drag.getBounds(), onDelta: (dy) => this.moveScroll(dy) });
       body.add(drag);
+      addScrollHint(this.scene, body, { x: 0, y: (viewport.top + viewport.bottom) / 2, width: viewport.width, height: viewHeight, owner: drag, read: () => ({ offset: this.scroll, min: Number(this.content?.getData("minScroll") ?? 0) }) });
     }
     if (this.mask) content.setMask(this.mask);
     content.setData("minScroll", minScroll);
@@ -146,7 +150,7 @@ export class MailPopup {
   }
 
   /** 제목·보낸 이 한 덩어리와 오른쪽 위의 남은 기한. */
-  private addHeadline(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean, nowMs: number): void {
+  private addHeadline(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean, nowMs: number, expiryInset = 0): void {
     const { card } = MAIL_POPUP_LAYOUT;
     const textX = -card.width / 2 + 34 + card.icon + 24;
     const top = y - height / 2 + 26;
@@ -154,7 +158,7 @@ export class MailPopup {
     parent.add(this.scene.add.text(textX, top + 54, mail.sender, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0));
     const expiry = this.expiryLabel(mail, nowMs);
     const soon = !!mail.expiresAt && !isMailExpired(mail, nowMs) && Date.parse(mail.expiresAt) - nowMs < 3 * 86_400_000;
-    parent.add(this.scene.add.text(card.width / 2 - 34, top + 12, expiry, textStyle({ role: "emphasis", size: 22, color: soon && !dim ? COLOR.dangerText : COLOR.inkDim })).setOrigin(1, 0));
+    parent.add(this.scene.add.text(card.width / 2 - 34 - expiryInset, top + 12, expiry, textStyle({ role: "emphasis", size: 22, color: soon && !dim ? COLOR.dangerText : COLOR.inkDim })).setOrigin(1, 0));
   }
 
   /** 우편 한 장 — 첨부가 밑동에 주르륵 서고, 오른쪽에 받기(또는 받은 뒤의 한 마디). */
@@ -164,7 +168,7 @@ export class MailPopup {
     const expired = isMailExpired(mail, nowMs);
     const dim = expired || mail.claimed;
     this.addCardChrome(parent, mail, y, height, dim, "mail");
-    this.addHeadline(parent, mail, y, height, dim, nowMs);
+    this.addHeadline(parent, mail, y, height, dim, nowMs, MAIL_POPUP_LAYOUT.card.deleteChip.hit);
     const stripY = y + height / 2 - 30 - rewards.size / 2;
     // 첨부 줄 뒤에 얕은 홈을 깔아 "이 봉투에 든 것"이 한 줄로 묶여 읽히게 한다.
     const trayWidth = mailRewardX(rewards.maxVisible - 1) - mailRewardX(0) + rewards.size + 24;
@@ -184,13 +188,38 @@ export class MailPopup {
     // 받기 버튼은 줄에 두지 않는다 — 우편을 눌러 펼친 판에서 글을 읽고 받는다. 줄은 상태만 말한다.
     if (dim) parent.add(this.scene.add.text(card.width / 2 - 96, stripY, t(expired ? "mail.state.expired" : "mail.state.claimed"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
     this.addOpenHit(parent, mail, y, height);
+    this.addCardDeleteChip(parent, mail, y, height, dim);
   }
+
+  /** 우편 카드 오른쪽 위 구석의 삭제 칩 — 받았든 아니든 이 한 통만 지운다. 안내 카드에는 서지 않는다. */
+  private addCardDeleteChip(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number, dim: boolean): void {
+    if (!this.manager.isDeletable(mail)) return;
+    const { card } = MAIL_POPUP_LAYOUT;
+    const chip = card.deleteChip;
+    const box = this.scene.add.container(card.width / 2 - chip.right, y - height / 2 + chip.top);
+    box.add(drawGlyph(this.scene, "trash", 0, 0, chip.glyph, COLOR.danger, dim ? 0.55 : 0.9));
+    const hit = addClippedHit(this.scene, box, 0, 0, chip.hit, chip.hit, this.listClip);
+    hit.on("pointerdown", () => pressIn(box));
+    hit.on("pointerout", () => pressOut(box, "normal", { pop: false }));
+    hit.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      pressOut(box, "normal", { pop: pointer.getDistance() < 24 });
+      if (pointer.getDistance() >= 24) return;
+      this.popups.confirm({ title: t("mail.delete.one.title"), message: t(mail.claimed ? "mail.delete.one.message" : "mail.delete.one.unclaimed"), confirmLabel: t("mail.delete.confirm"), destructive: true }, () => void this.deleteRead([mail.id]));
+    });
+    parent.add(box);
+  }
+
+  /** 우편 목록 창(월드 좌표). 마스크 도형이 곧 보이는 창이라 입력면도 같은 사각형 안에서만 손을 받는다(`addClippedHit`). */
+  private readonly listClip = (): ClipRect => {
+    if (!this.maskShape?.active) return { left: 0, right: 0, top: 0, bottom: 0 };
+    const { left, right, top, bottom } = this.maskShape.getBounds();
+    return { left, right, top, bottom };
+  };
 
   /** 카드 전체가 우편을 펼치는 입력면이다. 끌어서 흘린 손은 펼치지 않는다. */
   private addOpenHit(parent: Phaser.GameObjects.Container, mail: MailDto, y: number, height: number): void {
-    const hit = this.scene.add.rectangle(0, y, MAIL_POPUP_LAYOUT.card.width, height, 0xffffff, 0).setInteractive({ useHandCursor: true });
+    const hit = addClippedHit(this.scene, parent, 0, y, MAIL_POPUP_LAYOUT.card.width, height, this.listClip);
     hit.on("pointerup", (pointer: Phaser.Input.Pointer) => { if (pointer.getDistance() < 24) void this.openMail(mail); });
-    parent.add(hit);
   }
 
   /** 안내 한 장 — 본문 첫 줄만 미리 보이고 누르면 글 전체가 열린다. */
@@ -226,7 +255,7 @@ export class MailPopup {
     const textWidth = L.width - L.padX * 2;
     const hasRewards = mail.rewards.length > 0;
     let close: (() => void) | undefined;
-    this.popups.open({ width: L.width, height: L.height, title: t(hasRewards ? "mail.tab.reward" : "mail.notice.heading"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
+    this.popups.open({ width: L.width, height: L.height, title: t(`mail.tab.${mailTabOf(mail)}`), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.6, closeOnBackdrop: true }, (body, closePopup) => {
       close = closePopup;
       body.add(this.scene.add.text(left, L.titleY, mail.title, textStyle({ role: "display", size: 36, color: COLOR.ink, wrap: textWidth })).setOrigin(0, 0.5));
       body.add(this.scene.add.text(left, L.metaY, `${mail.sender}  ·  ${mail.sentAt.slice(0, 10)}  ·  ${this.expiryLabel(mail, nowMs)}`, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
@@ -316,7 +345,7 @@ export class MailPopup {
     const nowMs = Date.parse(this.result.serverTime);
     TABS.forEach((tab, index) => {
       const pending = this.result!.mails.filter((mail) => mailTabOf(mail) === tab && !isMailExpired(mail, nowMs) && (tab === "reward" ? !mail.claimed : !mail.read)).length;
-      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(tab === "reward" ? "mail.tab.reward" : "mail.tab.notice"), selected: tab === this.tab, onSelect: () => this.select(tab) });
+      const label = addCategoryTab(this.scene, footer, { x: mailTabX(index), y: layout.tabY, width: layout.tab.width, height: layout.tab.height, label: t(`mail.tab.${tab}`), selected: tab === this.tab, onSelect: () => this.select(tab) });
       if (pending > 0) {
         const badge = this.scene.add.text(layout.tab.width / 2 - 14, -layout.tab.height / 2 + 4, `${pending}`, textStyle({ role: "display", size: 20, color: "#1a1206" })).setOrigin(0.5);
         const plate = this.scene.add.graphics({ x: badge.x, y: badge.y });
@@ -326,7 +355,7 @@ export class MailPopup {
       }
     });
     const claimable = this.manager.claimableIds(this.result);
-    const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === "notice" && !mail.read).map(({ id }) => id);
+    const unreadNotices = this.result.mails.filter((mail) => mailTabOf(mail) === this.tab && !mail.read).map(({ id }) => id);
     const action = this.tab === "reward"
       ? new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.claimAll"), variant: "primary", onClick: () => void this.claim(claimable) })
       : new Button(this.scene, layout.action.x, layout.action.y, { width: layout.action.width, height: layout.action.height, label: t("mail.readAll"), onClick: () => void this.readAll(unreadNotices) });
@@ -335,9 +364,9 @@ export class MailPopup {
     this.addDeleteChip(footer);
   }
 
-  /** 읽은 우편 삭제 — 작은 붉은 휴지통. 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
+  /** 이미 받은 우편 일괄 삭제 — 작은 붉은 휴지통. 우편 탭에만 서고, 지울 것이 없으면 누를 수 없는 채로 옅게 선다. */
   private addDeleteChip(footer: Phaser.GameObjects.Container): void {
-    if (!this.result) return;
+    if (!this.result || this.tab !== "reward") return;
     const { deleteChip: chip } = MAIL_POPUP_LAYOUT.footer;
     const ids = this.manager.deletableIds(this.result, this.tab);
     const chipBox = this.scene.add.container(chip.x, chip.y);

@@ -144,7 +144,17 @@ export const STORY_PREVIEW = {
   storyText: { size: 24, inset: 56, padTop: 2, padBottom: 22 },
   /** 정보 칸 맨 위의 붉은 규칙 줄(`informationHighlights`) — 마름모 표식 + 들여 쓴 글, 줄 사이 간격. */
   highlight: { size: 30, mark: 16, indent: 30, gap: 10 },
-  reward: { labelGap: 20, labelSize: 22, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
+  /**
+   * 초회 보상 — 머리말은 맨 글자가 아니라 **이름표 칩**(`tag`)이다. 회색 글줄 하나였을 때는 판 맨 아래에서
+   * 무엇의 보상인지가 액자보다 늦게 읽혔다.
+   */
+  reward: { labelGap: 20, labelSize: 24, tag: { height: 42, padX: 20, bevel: 14 }, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
+  /**
+   * 반복 클리어 보상 — 초회 보상 아래에 **같은 양식**(이름표 줄 → 액자 줄, 같은 칸·같은 크기)으로 선다.
+   * 이름표와 작은 액자를 한 줄에 붙여 두던 때는 액자가 작아 초회 줄보다 왼쪽으로 쏠려 두 줄이 어긋나 보였다.
+   * 무게는 이름표의 색(어두운 유리)만 가른다.
+   */
+  repeat: { gap: 26 },
 } as const;
 
 export interface StoryPreviewLayoutInput {
@@ -155,6 +165,8 @@ export interface StoryPreviewLayoutInput {
   /** 펼친 줄거리 글의 실제 높이(재서 넘긴다). */
   storyTextHeight: number;
   rewardCount: number;
+  /** 반복 클리어 보상 수. 없거나 0이면 그 줄을 세우지 않는다. */
+  repeatCount?: number;
 }
 
 export interface StoryPreviewLayout {
@@ -168,6 +180,9 @@ export interface StoryPreviewLayout {
   storyTextY?: number;
   rewardLabelY?: number;
   rewardRowY?: number;
+  /** 반복 클리어 보상 이름표의 윗변과 액자 줄의 가운데 — 초회 보상과 같은 짜임이다. */
+  repeatLabelY?: number;
+  repeatRowY?: number;
 }
 
 /** 여닫힌 상태에서 각 줄의 자리와 판 높이를 판 윗변 기준으로 구한다. */
@@ -198,12 +213,19 @@ export function storyPreviewLayout(input: StoryPreviewLayoutInput): StoryPreview
   if (input.rewardCount > 0) {
     dividers.push(cursor);
     rewardLabelY = cursor + spec.reward.labelGap;
-    rewardRowY = rewardLabelY + spec.reward.labelSize + spec.reward.rowGap + spec.reward.frame / 2;
-    cursor = rewardRowY + spec.reward.frame / 2 + spec.reward.padBottom;
-  } else {
-    cursor += spec.reward.padBottom;
+    rewardRowY = rewardLabelY + spec.reward.tag.height + spec.reward.rowGap + spec.reward.frame / 2;
+    cursor = rewardRowY + spec.reward.frame / 2;
   }
-  return { height: cursor, titleY: spec.padTop, dividers, enemyHeaderY, enemyBodyTop, storyHeaderY, storyTextY, rewardLabelY, rewardRowY };
+  let repeatLabelY: number | undefined;
+  let repeatRowY: number | undefined;
+  if ((input.repeatCount ?? 0) > 0) {
+    if (input.rewardCount === 0) dividers.push(cursor);
+    repeatLabelY = cursor + (input.rewardCount > 0 ? spec.repeat.gap : spec.reward.labelGap);
+    repeatRowY = repeatLabelY + spec.reward.tag.height + spec.reward.rowGap + spec.reward.frame / 2;
+    cursor = repeatRowY + spec.reward.frame / 2;
+  }
+  cursor += spec.reward.padBottom;
+  return { height: cursor, titleY: spec.padTop, dividers, enemyHeaderY, enemyBodyTop, storyHeaderY, storyTextY, rewardLabelY, rewardRowY, repeatLabelY, repeatRowY };
 }
 
 /** 보상 액자 줄의 x. 판 폭 안에 들도록 간격만 좁힌다. */

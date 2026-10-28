@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { openPolicyDocument, type PolicyWindow } from "../../src/scenes/policyNavigation";
+import { isIosApp, openCouponPage, openPolicyDocument, type PolicyWindow } from "../../src/scenes/policyNavigation";
 
 /** 팝업 허용 여부와 관계없이 정책 문서에 도달하는 브라우저 분기를 고정한다. */
 describe("정책 문서 이동", () => {
@@ -16,6 +16,12 @@ describe("정책 문서 이동", () => {
     const assign = vi.fn();
     openPolicyDocument("/privacy", { location: { href: "https://garden.example/", assign }, open } as PolicyWindow);
     expect(assign).toHaveBeenCalledWith("https://forgarden-web.vercel.app/privacy");
+  });
+
+  it("정책 안내 센터(운영정책·환불·확률·사업자 정보)도 같은 홈페이지 고정 주소로 연다", () => {
+    const open = vi.fn(() => ({}) as Window);
+    openPolicyDocument("/legal", { location: { href: "https://garden.example/", assign: vi.fn() }, open } as PolicyWindow);
+    expect(open).toHaveBeenCalledWith("https://forgarden-web.vercel.app/legal", "_blank", "noopener,noreferrer");
   });
 });
 
@@ -35,5 +41,18 @@ describe("앱 셸에서의 정책 문서 이동", () => {
     const assign = vi.fn();
     openPolicyDocument("/terms", { location: { href: "https://localhost/", assign }, open, Capacitor: { isNativePlatform: () => true } } as PolicyWindow);
     expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("쿠폰 페이지는 연결 티켓을 주소 조각(#)에 실어 연다", () => {
+    const open = vi.fn(() => ({}) as Window);
+    openCouponPage("ab/c", { location: { href: "https://garden.example/", assign: vi.fn() }, open } as PolicyWindow);
+    expect(open).toHaveBeenCalledWith("https://forgarden-web.vercel.app/coupon#t=ab%2Fc", "_blank", "noopener,noreferrer");
+  });
+
+  it("iOS 앱 셸만 쿠폰을 홈페이지로 보낸다", () => {
+    const shell = (platform: string, native = true) => ({ location: { href: "", assign: vi.fn() }, open: vi.fn(), Capacitor: { isNativePlatform: () => native, getPlatform: () => platform } }) as unknown as PolicyWindow;
+    expect(isIosApp(shell("ios"))).toBe(true);
+    expect(isIosApp(shell("android"))).toBe(false);
+    expect(isIosApp(shell("ios", false))).toBe(false);
   });
 });

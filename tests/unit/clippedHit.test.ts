@@ -13,7 +13,6 @@ import { pointInClip } from "../../src/ui/clipRect";
  */
 const LEGACY = [
   "src/scenes/ExpeditionScene.ts",
-  "src/scenes/InteractionScene.ts",
   "src/scenes/LobbyScene.ts",
   "src/scenes/PartyScene.ts",
   "src/scenes/RaidScene.ts",
@@ -27,7 +26,6 @@ const LEGACY = [
   "src/ui/ExpeditionMapView.ts",
   "src/ui/IdleExcavationPopup.ts",
   "src/ui/InteractionCityPopup.ts",
-  "src/ui/InventoryPopup.ts",
   "src/ui/MailPopup.ts",
   "src/ui/ObservationJournal.ts",
   "src/ui/PassPopup.ts",
@@ -66,6 +64,30 @@ describe("스크롤 창 입력 제약", () => {
       expect(text, path).toContain("addClippedHit(");
       expect(text, path).not.toMatch(/add\.rectangle\([^)]*\)\.setInteractive/);
     }
+  });
+
+  it("가방·우편함·로스터 그리드·설정·도감 등 흐르는 목록은 입력면을 창 안으로 좁힌다", () => {
+    const wired: Array<[string, RegExp]> = [
+      ["src/ui/InventoryPopup.ts", /addClippedHit\(/],
+      ["src/ui/MailPopup.ts", /addClippedHit\(/],
+      ["src/scenes/PartyScene.ts", /clipHit\(card\.hit/],
+      ["src/scenes/ExpeditionScene.ts", /clipHit\(card\.hit/],
+      ["src/scenes/RelicsScene.ts", /clipHit\(card\.hit/],
+      ["src/scenes/ArenaRoomScene.ts", /clipHit\(card\.hit/],
+      ["src/ui/IdleExcavationPopup.ts", /clipHit\(card\.hit/],
+      ["src/ui/InteractionCityPopup.ts", /clipHit\(card\.hit/],
+      ["src/scenes/SettingsScene.ts", /clipInteractiveTree\(/],
+      ["src/scenes/RaidScene.ts", /clip: \(\) =>/],
+      ["src/scenes/InteractionScene.ts", /clipHit\(hit/],
+      ["src/ui/ExpeditionMapView.ts", /clipHit\(hit/],
+      ["src/ui/ArchaeologyMapView.ts", /clipHit\(hit/],
+      // 출격판: 판 아래로 흘러 잘린 원정·고대 지층 칸이 판 밖 허공에서 눌리던 버그.
+      ["src/scenes/LobbyScene.ts", /clipInteractiveTree\(content, containerClip\(body/],
+      ["src/ui/MissionsPopup.ts", /clipInteractiveTree\(content/],
+      ["src/ui/PassPopup.ts", /clipInteractiveTree\(row, clip\)/],
+    ];
+    for (const [path, pattern] of wired) expect(readFileSync(path, "utf8"), path).toMatch(pattern);
+    expect(readFileSync("src/ui/InventoryPopup.ts", "utf8")).not.toMatch(/setInteractive\(/);
   });
 
   it("창 경계는 포함하고 밖은 거른다", () => {

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { audioManager } from "../managers/AudioManager";
 import { BASE_WIDTH } from "../config/gameConfig";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
@@ -21,6 +22,8 @@ const live = new WeakMap<Phaser.Scene, Phaser.GameObjects.Container>();
 export function showContentToast(scene: Phaser.Scene, message: string, tone: ContentToastTone): Phaser.GameObjects.Container {
   live.get(scene)?.destroy();
   const unlocked = tone === "unlocked";
+  // 잠긴 칸을 누른 손에는 막혔다는 소리로 답한다. 개방 소리는 자물쇠가 풀리는 연출(`playUnlockSequence`)이 낸다.
+  if (!unlocked) audioManager?.playUi("ui.deny");
   const label = scene.add.text(0, 0, message, textStyle({ role: "emphasis", size: LOCK_TOAST.fontSize, color: unlocked ? COLOR.accentText : COLOR.ink })).setOrigin(0.5);
   const width = toastWidth(label.width, !unlocked);
   const box = scene.add.container(BASE_WIDTH / 2, LOCK_TOAST.y).setDepth(LOCK_TOAST.depth);

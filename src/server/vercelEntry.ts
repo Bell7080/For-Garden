@@ -3,6 +3,7 @@ import { handleArenaCall } from "./liveArena";
 /** 인증된 본인의 게임·친구 상태만 조작하는 HTTP 경계. */
 import { GameCallError, handleGameCall } from "./gameHandler";
 import { createSupabaseStore } from "./supabaseStore";
+import { refreshStaleProfileRecords } from "./friendProfileFallback";
 import { isServerGameMethod } from "./gameMethods";
 import { isSocialMethod } from "../api/RemoteSocialApi";
 import { GuildApiError, isGuildApiMethod, type GuildBackend } from "../api/guildContracts";
@@ -58,7 +59,10 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     } else if (body.method.startsWith("social.")) {
       const method=body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400,"unknown_method");
-      res.status(200).json(await store.socialCall(user.id,method,body.args??[],body.requestId));
+      const response = await store.socialCall(user.id,method,body.args??[],body.requestId) as { result?: unknown } | null;
+      // 목록 조회만 — 예전 공개 프로필에 빠진 스토리·원정 기록을 그 친구의 저장에서 채운다.
+      if (["getFriends","getRequests","searchUsers","getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), new Date());
+      res.status(200).json(response);
     } else {
       res.status(200).json(await handleGameCall(user.id,body,{store,strict:true,guild,developmentTools:qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS)}));
     }

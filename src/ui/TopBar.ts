@@ -27,8 +27,12 @@ export interface TopBarOptions {
   onSettings?: () => void; onProfile?: (profile: PlayerProfileDisplay) => void; onCurrency?: (currency: WalletItemKey) => void; currencies?: TopBarCurrencyContext; profile?: boolean;
   /** 결투 도전권 칸의 누름. 지갑 칸이 아니라 `onCurrency`로 넘길 수 없다. */
   onDuelTicket?: () => void;
-  /** 길드 코인 칸이 읽는 값. 지갑이 아니라 길드원 행이 들고 있어 화면이 서버에서 받은 값을 건넨다. */
-  guildCoin?: () => number;
+  /**
+   * 길드 코인 칸이 읽는 값. 지갑이 아니라 길드원 행이 들고 있어 화면이 서버에서 받은 값을 건넨다.
+   * 서버가 아직 답하지 않았으면 `undefined`를 돌려준다 — 그동안 칸은 지난번 보인 값을 지키고,
+   * 0으로 적지 않는다(0을 적으면 들어올 때마다 0으로 굴렀다가 다시 오른다).
+   */
+  guildCoin?: () => number | undefined;
   /**
    * 줄 전체를 올려 앉힐 깊이. 흐르는 지도처럼 그 위로 다른 층이 지나가는 화면에서만 준다 —
    * 비우면 예전처럼 만든 순서대로 쌓인다.
@@ -75,7 +79,7 @@ export class TopBar {
   private avatar?: Phaser.GameObjects.Container;
   private avatarSize = 84;
   private avatarKey?: string;
-  private readonly readGuildCoin?: () => number;
+  private readonly readGuildCoin?: () => number | undefined;
 
   constructor(scene: Phaser.Scene, y = 40, options: TopBarOptions = {}) {
     this.readGuildCoin = options.guildCoin;
@@ -182,7 +186,11 @@ export class TopBar {
   refresh(): void {
     for (const { slot, text } of this.slots) {
       // 도전권은 하루 기본 몫과 함께 읽어야 뜻이 서는 횟수다 — 스테미나와 같은 `남은/기본` 한 덩어리.
-      if (slot.key === "guildCoin") { text.setText(formatCurrency(Math.max(0, this.readGuildCoin?.() ?? 0))); continue; }
+      if (slot.key === "guildCoin") {
+        const coin = this.readGuildCoin?.();
+        if (coin !== undefined) text.setText(formatCurrency(Math.max(0, coin)));
+        continue;
+      }
       if (slot.key === "duelTicket") { text.setText(`${duelAttemptsLeft(rollDuelPeriods(session.duel ?? createEmptyDuelState(), new Date()))}/${DUEL_DAILY_ATTEMPTS}`); continue; }
       const amount = session.wallet[slot.key];
       // 스테미나만 상한과 함께 읽어야 뜻이 서는 재화다. 현재와 최대를 **같은 양식·같은 색**으로

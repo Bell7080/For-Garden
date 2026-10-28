@@ -144,6 +144,8 @@ export class ShopScene extends Phaser.Scene {
   private returnMenu?: LobbyMenu;
   /** 길드 상점의 길드 코인. 지갑이 아니라 길드원 행이 들고 있어 서버가 상점과 함께 내려 준다. */
   private guildCoin = 0;
+  /** 길드 상점 응답을 받았는가. 받기 전에는 상단 코인 칸이 0을 적지 않고 지난 값을 지킨다. */
+  private guildCoinLoaded = false;
   /** 등장 연출이 시작한 **벽시계** 시각. 0이면 아직 시작하지 않았다. */
   private entranceAt = 0;
 
@@ -151,6 +153,8 @@ export class ShopScene extends Phaser.Scene {
 
   init(data?: { storefront?: ProductStorefront; returnScene?: string; returnMenu?: LobbyMenu }): void {
     this.storefront = data?.storefront ?? "shop";
+    // 씬 인스턴스는 재사용되므로 들어올 때마다 길드 코인을 아직 모르는 상태로 되돌린다.
+    this.guildCoinLoaded = false;
     this.stage = shopStagePresentation(this.storefront);
     this.returnScene = data?.returnScene ?? "lobby";
     // 진입 데이터의 이름은 `returnMenu`이므로 판 이름만 떼어 같은 검증을 지난다.
@@ -183,7 +187,7 @@ export class ShopScene extends Phaser.Scene {
       // 어느 재화를 세울지는 **무대표가** 정한다. 씬에 삼항으로 적어 두었더니 자리가 늘 때마다
       // 그 줄이 길어졌고, 고고학 가게는 거기 없어 로비와 같은 조합을 그대로 세우고 있었다.
       currencies: this.stage.currencies,
-      guildCoin: () => this.guildCoin,
+      guildCoin: () => (this.guildCoinLoaded ? this.guildCoin : undefined),
       onSettings: () => startScene(this, "settings", { returnScene: this.returnScene }),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
@@ -490,6 +494,7 @@ export class ShopScene extends Phaser.Scene {
       const shop = await withBusy(this, guildApi.getShop());
       if (!this.scene.isActive()) return;
       this.guildCoin = shop.coin;
+      this.guildCoinLoaded = true;
       this.topBar?.refresh();
       this.products = guildShopProducts(shop);
       this.renderProducts();
@@ -670,6 +675,7 @@ export class ShopScene extends Phaser.Scene {
         session.wallet = { ...result.wallet };
         if (!this.scene.isActive()) return;
         this.guildCoin = result.shop.coin;
+        this.guildCoinLoaded = true;
         this.products = guildShopProducts(result.shop);
         this.topBar?.refresh();
         this.renderProducts();

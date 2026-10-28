@@ -204,7 +204,7 @@ export class GuildScene extends Phaser.Scene {
     this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.50).setDepth(-29);
     this.popups = new PopupLayer(this);
     this.topBar = new TopBar(this, 40, {
-      profile: false, currencies: "guild", guildCoin: () => this.state?.me?.coin ?? 0,
+      profile: false, currencies: "guild", guildCoin: () => (this.state ? this.state.me?.coin ?? 0 : undefined),
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(S.title.x, S.title.y, t("guild.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0.5).setShadow(0, 4, "#05070a", 6, false, true);

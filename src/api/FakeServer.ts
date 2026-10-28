@@ -667,7 +667,7 @@ export class FakeServer implements GameApi {
 
   async completeExpeditionRest(request: CompleteExpeditionRestRequest): Promise<{ ok: boolean }> {
     await this.delay();
-    return { ok: this.expeditionRules().completeRestNode(request.nodeId) };
+    return { ok: this.expeditionRules().completeRestNode(request.nodeId, request.reviveRelicId) };
   }
 
   async beginExpeditionAugment(request: BeginExpeditionAugmentRequest): Promise<BeginExpeditionAugmentResponse> {

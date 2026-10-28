@@ -196,15 +196,26 @@ export function applyExpeditionAfterBattleHeal(relics: readonly ExpeditionRelicH
     : { ...relic, currentHp: 0, alive: false });
 }
 
-/** 전멸 뒤의 우회 부활을 막고, 생존자가 있을 때만 생존자 회복과 첫 사망자 부활을 적용한다. */
-export function applyExpeditionRest(relics: readonly ExpeditionRelicHealth[], healPercent = 30, revivePercent = 25): ExpeditionRelicHealth[] {
+/**
+ * 전멸 뒤의 우회 부활을 막고, 생존자가 있을 때만 생존자 회복과 사망자 한 기 부활을 적용한다.
+ * 깨울 렐릭은 플레이어가 고른다(`reviveRelicId`). 고르지 않으면 편성 순서상 첫 사망자다 — 예전 요청과 같은 결과다.
+ * 고른 렐릭이 쓰러진 편성원이 아니면 아무도 깨우지 않는다(검증은 `isExpeditionReviveTarget`이 먼저 한다).
+ */
+export function applyExpeditionRest(relics: readonly ExpeditionRelicHealth[], healPercent = 30, revivePercent = 25, reviveRelicId?: string): ExpeditionRelicHealth[] {
   if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return relics.map((relic) => ({ ...relic, currentHp: 0, alive: false }));
-  let revived = false;
+  const target = reviveRelicId ?? relics.find((relic) => !(relic.alive && relic.currentHp > 0))?.relicId;
   return relics.map((relic) => {
     if (relic.alive && relic.currentHp > 0) return { ...relic, currentHp: Math.min(100, relic.currentHp + healPercent), alive: true };
-    if (!revived) { revived = true; return { ...relic, currentHp: revivePercent, alive: true }; }
+    if (relic.relicId === target) return { ...relic, currentHp: revivePercent, alive: true };
     return { ...relic, currentHp: 0, alive: false };
   });
+}
+
+/** 휴식에서 깨울 수 있는 렐릭인가 — 이 런의 편성원이고 지금 쓰러져 있으며, 깨워 줄 생존자가 남아 있어야 한다. */
+export function isExpeditionReviveTarget(relics: readonly ExpeditionRelicHealth[], relicId: string): boolean {
+  if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return false;
+  const relic = relics.find((entry) => entry.relicId === relicId);
+  return !!relic && !(relic.alive && relic.currentHp > 0);
 }
 
 /** 조건이 맞는 표적에게만 얹히는 피해 증가율을 배율로 합산한다. 조건이 없으면 1이다. */

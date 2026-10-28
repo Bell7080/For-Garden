@@ -81,6 +81,28 @@ describe("ExpeditionManager", () => {
     expect(manager.status().playsToday).toBe(0);
   });
 
+  it("revives the relic the player picked at a rest node and rejects anyone else", () => {
+    const state = createDefaultSession();
+    const manager = new ExpeditionManager(state, { save: vi.fn() }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["torika", "rex", "spino"]);
+    const node = state.expedition.run!.nodes.find(({ type }) => type === "rest")!;
+    const relics = state.expedition.run!.relics;
+    relics[0].currentHp = 40;
+    relics[1].currentHp = 0; relics[1].alive = false;
+    relics[2].currentHp = 0; relics[2].alive = false;
+
+    // 살아 있는 렐릭이나 편성 밖 렐릭은 깨울 대상이 아니다 — 아무것도 저장하지 않는다.
+    expect(manager.completeRestNode(node.id, "torika")).toBe(false);
+    expect(manager.completeRestNode(node.id, "pachy")).toBe(false);
+    expect(state.expedition.run!.visitedNodeIds).not.toContain(node.id);
+
+    expect(manager.completeRestNode(node.id, "spino")).toBe(true);
+    const after = state.expedition.run!.relics;
+    expect(after.map(({ relicId, currentHp, alive }) => [relicId, currentHp, alive])).toEqual([
+      ["torika", 70, true], ["rex", 0, false], ["spino", 25, true],
+    ]);
+  });
+
   it("heals and completes a rest node in one save so retry cannot heal twice", () => {
     const state = createDefaultSession();
     const save = vi.fn();

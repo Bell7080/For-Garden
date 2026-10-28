@@ -52,7 +52,7 @@
 | 클릭 대사(유대 대사) | `relicStories/<id>.ts`의 `bondLines` | 레벨 0~10 × 3~4줄. 가장 자주 읽힌다 |
 | 첫 만남 한마디 | `src/data/relicFirstMeetings.ts` | 소개 장면의 첫 줄 — 목소리가 한 줄로 읽혀야 한다 |
 | 마일리지 점원 | `src/i18n/ko/shop.ts` `mileage.clerk.*` | 투영으로 서 있는 개체가 건네는 말 |
-| 상점 점원 | `src/data/shopPresentation.ts` + 문구 표 | 오비·프로티아·하이네·록스우 |
+| 상점 점원 | `src/data/shopPresentation.ts` + 문구 표 | 오비·프로티아·하이네·록스우·글리아 |
 | 관찰 일지·질문·애착 스토리 | `relicStories/<id>.ts` | 서술이 길어 소재 집착이 일지·장 대사로 새기 쉽다 |
 
 ## 5. 발전시키는 법

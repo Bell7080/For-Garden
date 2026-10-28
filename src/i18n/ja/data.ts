@@ -1883,6 +1883,7 @@ export default {
   "product.duel-monthly-refined-core.name": "精製された古代核",
   "product.duel-monthly-crystal.name": "完全復元結晶",
   "shopClerk.roxwoo.name": "ロクスウ",
+  "shopClerk.glia.name": "グリア",
   "adReward.gem-ad.text": "Gems 50",
   "adReward.daily-bonus-ad.text": "Extra Daily Supplies",
   "adReward.gold-ad.text": "Gold 5,000",

@@ -565,6 +565,16 @@ export const DUEL_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
   joints: { center: [512, 295], head: [541, 194], eyes: [[520, 157], [561, 189]], feet: [[292, 1538], [919, 1678]] },
 };
 
+/**
+ * 길드 상점 점원 **글리아**(글립토돈)의 전신. ZIP의 alpha 경계(> 16)와 `puppet.json` 관절을 실측했다.
+ * 발 관절이 캔버스 밖에 박혀 있지만 상점 무대는 머리 관절만 쓴다.
+ */
+export const GUILD_CLERK_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1055, imageHeight: 1491,
+  content: { left: 79, top: 77, right: 1029, bottom: 1449 },
+  joints: { center: [497, 427], head: [462, 316], eyes: [[426, 334], [501, 302]], feet: [[375, 1733], [623, 1540]] },
+};
+
 /*
  * **레이티아 다섯 자매의 실측값.**
  *

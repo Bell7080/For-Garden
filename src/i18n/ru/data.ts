@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Очищенное древнее ядро",
   "product.duel-monthly-crystal.name": "Кристалл полного восстановления",
   "shopClerk.roxwoo.name": "Роксу",
+  "shopClerk.glia.name": "Глия",
   "adReward.gem-ad.text": "Самоцветы 50",
   "adReward.daily-bonus-ad.text": "Дополнительные ежедневные припасы",
   "adReward.gold-ad.text": "Золото 5 000",

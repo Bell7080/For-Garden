@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "精炼的古代核心",
   "product.duel-monthly-crystal.name": "完全复原结晶",
   "shopClerk.roxwoo.name": "洛克斯乌",
+  "shopClerk.glia.name": "格莉娅",
   "adReward.gem-ad.text": "宝石 50",
   "adReward.daily-bonus-ad.text": "额外每日补给",
   "adReward.gold-ad.text": "金币 5,000",

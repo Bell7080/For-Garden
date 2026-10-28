@@ -1,5 +1,5 @@
 import { registerDataText, type TextKey } from "../i18n";
-import { ARCHAEOLOGY_CLERK_ASSET, DUEL_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
+import { ARCHAEOLOGY_CLERK_ASSET, DUEL_CLERK_ASSET, GUILD_CLERK_ASSET, LOOT_CLERK_ASSET, SHOP_CLERK_ASSET, type PuppetAsset } from "../puppets/assets";
 import { BACKGROUND } from "../ui/backgroundAssets";
 import type { ProductStorefront } from "./products";
 import type { TopBarCurrencyContext } from "../ui/topBarSlots";
@@ -168,8 +168,29 @@ const MILEAGE_TABS: readonly { id: string; label: string }[] = [
 /** 길드 상점 탭 — id가 곧 `GuildShopProduct.tab`이다. */
 const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }, { id: "monthly", label: "월간" }, { id: "guildLevel", label: "길드 레벨" }];
 
-/** 길드 상점의 임시 점원(오비)이 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
-const GUILD_MERCHANT_LINE_KEYS: readonly TextKey[] = ["guild.shop.line1", "guild.shop.line2", "guild.shop.line3"];
+/**
+ * 길드 상점 무대에 서는 점원 — **글리아**.
+ *
+ * **글립토돈**의 화석을 복원한 어린 개체이고, 길드 코인을 받는 자리의 **회계**를 맡는다. 원화가 곧 성격이다 — 등딱지 무늬의
+ * 두툼한 후드를 눌러쓰고, 한 손에는 깃펜을, 다른 팔은 팔짱을 낀 채 볼을 부풀리고 있다. 단단한 껍데기로 몸을 감싸던 종이라
+ * 셈도 빈틈없이 감싸 둔다 — 한 닢 단위로 세고, 외상을 주지 않고, 한도를 넘겨 주지 않는다. 깐깐하지만 심술은 아니어서, 살
+ * 사람의 남는 코인까지 먼저 셈해 준다.
+ *
+ * 다른 점원과 **결이 갈리는 자리**가 여기 있다. 오비는 수줍게 권하고, 프로티아는 값의 근거를 대며, 하이네는 값을 즐기고,
+ * 록스우는 팔려고 하지 않는다. 글리아는 **장부를 맞춘다** — 어른스럽게 굴려는 아이라 말은 또박또박한 해요체이고, 어리다는
+ * 말을 듣지 않으려고 셈을 틀리지 않는다.
+ *
+ * 이름은 다른 점원과 같은 이유로 이 표가 소유한다 — 도감에 서지 않는 상점 전용 개체다.
+ */
+export const GUILD_MERCHANT: { readonly name: string; readonly asset: PuppetAsset } = {
+  name: "글리아",
+  asset: GUILD_CLERK_ASSET,
+};
+
+registerDataText(GUILD_MERCHANT, "name", "shopClerk.glia.name");
+
+/** 글리아가 돌아가며 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
+const GUILD_MERCHANT_LINE_KEYS: readonly TextKey[] = ["guild.shop.line1", "guild.shop.line2", "guild.shop.line3", "guild.shop.line4", "guild.shop.line5"];
 
 export interface ShopStagePresentation {
   readonly merchant: { readonly name: string; readonly asset: PuppetAsset };
@@ -282,14 +303,16 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     merchantSpot: { headX: 744, height: 1560 },
   },
   guild: {
-    // 길드 전용 점원 원화가 오기 전까지 오비가 임시로 선다. 대사는 길드 상점 문구다.
-    merchant: SHOP_MERCHANT,
+    merchant: GUILD_MERCHANT,
     lineKeys: GUILD_MERCHANT_LINE_KEYS,
     background: BACKGROUND.guildShop,
     titleKey: "guild.shop.title",
     tabs: GUILD_TABS,
     // 값은 길드 코인 하나라 그 칸만 세운다(`topBarSlots`의 `guild`).
     currencies: "guild",
+    // 관절 오른쪽으로 꼬리 곤봉이 567px 뻗은 원화라 하이네 키(1010)로는 곤봉이 절반 넘게 잘린다. 키를 줄여 얼굴이 하이네와
+    // 맞먹게(두 눈 사이 ≈56px) 두고, 곤봉 끝만 오른쪽 변에 살짝 걸리게 한다 — 어린 개체라 작게 서는 것도 맞는다.
+    merchantSpot: { headX: 744, height: 940 },
   },
 };
 

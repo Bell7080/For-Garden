@@ -1850,34 +1850,54 @@
     "Обгон!"
   ],
   "guild.shop.line1": [
-    "收公会硬币哦。这是本周的货。",
-    "รับเหรียญกิลด์ค่ะ นี่ของสัปดาห์นี้",
-    "Nhận xu bang hội ạ. Hàng tuần này đây.",
-    "Koin guild diterima. Ini stok minggu ini.",
-    "Acepto monedas de gremio. Es el surtido de esta semana.",
-    "Aceito moedas de guilda. É o estoque desta semana.",
-    "Gildenmünzen werden angenommen. Das ist die Ware dieser Woche.",
-    "Принимаю монеты гильдии. Это товары этой недели."
+    "公会硬币请一枚一枚数好再给我。要记进账本的。",
+    "ช่วยนับเหรียญกิลด์ทีละเหรียญด้วยค่ะ ต้องลงบัญชีน่ะค่ะ",
+    "Xu bang hội xin đếm từng đồng một ạ. Em còn phải ghi sổ.",
+    "Tolong hitung koin guild satu per satu, ya. Semuanya harus dicatat di buku besar.",
+    "Cuente las monedas de gremio una por una, por favor. Tengo que anotarlas en el libro.",
+    "Conte as moedas de guilda uma por uma, por favor. Preciso anotar no livro-caixa.",
+    "Bitte zählen Sie die Gildenmünzen einzeln ab. Die kommen ins Kassenbuch.",
+    "Монеты гильдии, пожалуйста, по одной. Мне нужно всё занести в книгу."
   ],
   "guild.shop.line2": [
-    "大家都是盖完出勤章再来的。",
-    "ทุกคนมาหลังประทับตราเข้าร่วมแล้ว",
-    "Mọi người đều đóng dấu điểm danh rồi mới ghé.",
-    "Semua mampir setelah cap absen.",
-    "Todos vienen después de sellar la asistencia.",
-    "Todo mundo passa aqui depois do carimbo de presença.",
-    "Alle kommen nach dem Anwesenheitsstempel vorbei.",
-    "Все заходят после отметки посещения."
+    "不能赊账。就算公会会长来求也不行。",
+    "ไม่รับติดค่ะ ต่อให้หัวหน้ากิลด์มาขอก็ไม่ได้ค่ะ",
+    "Không bán chịu đâu ạ. Thủ lĩnh Bang hội nhờ cũng không được.",
+    "Tidak ada utang. Ketua guild yang minta pun tidak bisa.",
+    "No se fía. Ni aunque lo pida el líder del gremio.",
+    "Nada de fiado. Nem com pedido da liderança da guilda.",
+    "Anschreiben gibt es nicht. Auch nicht, wenn die Gildenleitung fragt.",
+    "В долг не даю. Даже если попросит глава гильдии."
   ],
   "guild.shop.line3": [
-    "下周会再补货的。",
-    "สัปดาห์หน้าจะเติมของให้อีกนะ",
-    "Tuần sau em lại bổ sung nhé.",
-    "Minggu depan akan diisi lagi.",
-    "La próxima semana repongo.",
-    "Semana que vem eu reponho.",
-    "Nächste Woche fülle ich wieder auf.",
-    "На следующей неделе пополню."
+    "要买那个？等一下，我先帮你算算剩下的硬币。",
+    "จะซื้ออันนั้นเหรอคะ? เดี๋ยวก่อน ขอคำนวณเหรียญที่เหลือก่อนนะคะ",
+    "Mua cái đó ạ? Khoan, để em tính số xu còn lại trước đã.",
+    "Mau beli itu? Tunggu, biar kuhitung dulu sisa koinnya.",
+    "¿Va a comprar eso? Espere, primero calculo las monedas que le quedan.",
+    "Vai levar isso? Espere, deixe eu calcular primeiro as moedas que sobram.",
+    "Das wollen Sie kaufen? Moment, ich rechne erst Ihre übrigen Münzen aus.",
+    "Вы это берёте? Подождите, сначала посчитаю, сколько монет останется."
+  ],
+  "guild.shop.line4": [
+    "每周限额只到本周为止。不会留到下周。",
+    "ลิมิตรายสัปดาห์ใช้ได้ถึงสัปดาห์นี้เท่านั้นค่ะ ไม่ยกไปสัปดาห์หน้านะคะ",
+    "Giới hạn tuần chỉ tính đến hết tuần này ạ. Không dồn sang tuần sau đâu.",
+    "Batas mingguan hanya berlaku sampai minggu ini. Tidak ada yang dibawa ke minggu depan.",
+    "El límite semanal vale solo hasta esta semana. No se acumula.",
+    "O limite semanal vale só até esta semana. Não acumula para a próxima.",
+    "Das Wochenlimit gilt nur bis Ende dieser Woche. Übertragen wird nichts.",
+    "Недельный лимит действует только до конца недели. На следующую не переносится."
+  ],
+  "guild.shop.line5": [
+    "刚才那笔账，差了一枚。……再数一遍吧。",
+    "เมื่อกี้นับผิดไปหนึ่งเหรียญนะคะ …ลองนับใหม่ดูค่ะ",
+    "Lúc nãy tính lệch mất một đồng đấy ạ. …Đếm lại đi.",
+    "Hitungan tadi meleset satu koin. …Coba hitung lagi.",
+    "La cuenta de antes estaba mal por una moneda. …Vuelva a contar.",
+    "Aquela conta de antes errou por uma moeda. …Conte de novo.",
+    "Die Rechnung vorhin lag um eine Münze daneben. …Zählen Sie noch mal.",
+    "Тот подсчёт был с ошибкой на одну монету. …Пересчитайте."
   ],
   "guild.shop.confirm": [
     "要购买「{name}」吗？",

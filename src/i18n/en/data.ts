@@ -1870,6 +1870,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Refined Ancient Core",
   "product.duel-monthly-crystal.name": "Full Restoration Crystal",
   "shopClerk.roxwoo.name": "Roxwoo",
+  "shopClerk.glia.name": "Glia",
   "adReward.gem-ad.text": "Gems 50",
   "adReward.daily-bonus-ad.text": "Extra Daily Supplies",
   "adReward.gold-ad.text": "Gold 5,000",

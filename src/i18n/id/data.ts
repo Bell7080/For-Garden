@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Inti Purba Murni",
   "product.duel-monthly-crystal.name": "Kristal Restorasi Penuh",
   "shopClerk.roxwoo.name": "Roxwoo",
+  "shopClerk.glia.name": "Glia",
   "adReward.gem-ad.text": "Permata 50",
   "adReward.daily-bonus-ad.text": "Suplai Harian Tambahan",
   "adReward.gold-ad.text": "Emas 5.000",

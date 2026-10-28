@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Lõi cổ đại tinh luyện",
   "product.duel-monthly-crystal.name": "Tinh thể Phục hồi hoàn toàn",
   "shopClerk.roxwoo.name": "Roxwoo",
+  "shopClerk.glia.name": "Glia",
   "adReward.gem-ad.text": "Ngọc 50",
   "adReward.daily-bonus-ad.text": "Bổ sung tiếp tế hằng ngày",
   "adReward.gold-ad.text": "Vàng 5,000",

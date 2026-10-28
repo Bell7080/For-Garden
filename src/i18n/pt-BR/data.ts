@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Núcleo antigo refinado",
   "product.duel-monthly-crystal.name": "Cristal de restauração total",
   "shopClerk.roxwoo.name": "Roxwoo",
+  "shopClerk.glia.name": "Glia",
   "adReward.gem-ad.text": "Gemas 50",
   "adReward.daily-bonus-ad.text": "Suprimentos diários adicionais",
   "adReward.gold-ad.text": "Ouro 5.000",

@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "แกนโบราณที่ขัดเกลา",
   "product.duel-monthly-crystal.name": "ผลึกฟื้นคืนสมบูรณ์",
   "shopClerk.roxwoo.name": "ร็อกซู",
+  "shopClerk.glia.name": "กลีอา",
   "adReward.gem-ad.text": "เจม 50",
   "adReward.daily-bonus-ad.text": "เสบียงรายวันเพิ่มเติม",
   "adReward.gold-ad.text": "ทอง 5,000",

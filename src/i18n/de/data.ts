@@ -1834,6 +1834,7 @@ export default {
   "product.duel-monthly-refined-core.name": "Veredelter uralter Kern",
   "product.duel-monthly-crystal.name": "Kristall der vollständigen Restaurierung",
   "shopClerk.roxwoo.name": "Roxwoo",
+  "shopClerk.glia.name": "Glia",
   "adReward.gem-ad.text": "Juwelen 50",
   "adReward.daily-bonus-ad.text": "Zusätzliche Tagesversorgung",
   "adReward.gold-ad.text": "Gold 5.000",

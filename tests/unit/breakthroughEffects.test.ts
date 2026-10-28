@@ -1942,3 +1942,34 @@ describe("보스 한계 돌파 — 폰토스·수쿠스이노·타보아·코아
     for (let i = 1; i < pinnedAt.length; i += 1) expect(pinnedAt[i] - pinnedAt[i - 1]).toBeGreaterThanOrEqual(2.9);
   });
 });
+
+describe("한계 돌파 — 감금조 넷(마가사·노아·라자·카르)", () => {
+  const SLOTS = ["basic", "ultimate", "ferocity", "passive"] as const;
+
+  it("네 개체 모두 네 칸이 채워져 있고 설명문이 키 그대로 새지 않는다", () => {
+    for (const id of ["magasa", "noa", "raja", "carno"]) {
+      const def = getRelic(id);
+      for (const slot of SLOTS) {
+        expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).not.toBe("none");
+        const text = breakthroughEffectText(def, slot);
+        expect(text, `${id} ${slot}`).toBeTruthy();
+        expect(text).not.toContain("skill.breakthrough");
+        expect(text).not.toMatch(/\{[a-z]+\}/);
+      }
+    }
+  });
+
+  it("카르 IV — 폭주에 들어서는 순간 주변 적이 기절하고 열리기 전에는 아무 일도 없다", () => {
+    const run = (breakthrough: number) => {
+      const state = createSkirmish([getRelic("torika")], [getRelic("carno")], ARENA, {}, {}, { enemyBreakthroughs: [breakthrough] });
+      const boss = findFighter(state, "enemy-0")!;
+      const ally = findFighter(state, "player-0")!;
+      boss.x = 500; boss.y = 400; ally.x = 500; ally.y = 480;
+      gainFerocity(boss, ferocityMaxOf(boss.def), state, []);
+      expect(boss.ferocityFever).toBe(true);
+      return ally.stunnedFor;
+    };
+    expect(run(2)).toBe(0);
+    expect(run(3)).toBeGreaterThan(0);
+  });
+});

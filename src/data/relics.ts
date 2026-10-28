@@ -3565,11 +3565,10 @@ export const RELICS: RelicDef[] = [
     },
     // 깊은 출혈은 다지기가 이미 갖고 있어 평타 칸은 비워 둔다. 만찬이 더 배를 채우고(III) 폭주하면 칼끝이 급소를 찾는다(IV).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      // 궁극기에 이미 적힌 25%에 더해진다(합 40%).
-      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 15 },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" },
+      basic: { kind: "seasoning", damagePercent: 25 },
+      ultimate: { kind: "sideDish", sharePercent: 50, radius: 200 },
+      ferocity: { kind: "servingCall", radius: 260 },
+      passive: { kind: "saltedIngredient", reductionPercent: 30 },
     },
   },
   {
@@ -3655,10 +3654,10 @@ export const RELICS: RelicDef[] = [
     },
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
     breakthroughEffects: {
-      basic: { kind: "bleedingSmash" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" },
+      basic: { kind: "snagClaw", speedPercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 8 },
+      ferocity: { kind: "clawFlurry", extraHits: 1 },
+      passive: { kind: "tailHide", seconds: 2 },
     },
   },
   {
@@ -3741,10 +3740,10 @@ export const RELICS: RelicDef[] = [
     },
     // 한계 돌파는 설계 절차(`docs/breakthrough-design.md`)로 추천안을 확인받은 뒤 채운다.
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" },
+      basic: { kind: "chainWrap", speedPercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "cageIn", tauntSeconds: 2 },
+      ferocity: { kind: "ironBarSweep", radius: 200, maxTargets: 3 },
+      passive: { kind: "youngestCare", sharePercent: 15 },
     },
   },
   {
@@ -3837,10 +3836,10 @@ export const RELICS: RelicDef[] = [
     },
     // 뿔이 상대를 멈칫하게 하고(II) 질주의 폭이 넓어지며(III) 폭주하면 급소가 터진다(IV).
     breakthroughEffects: {
-      basic: { kind: "shellKnock", seconds: 0.3 },
-      ultimate: { kind: "widenArea", radius: 130 },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" },
+      basic: { kind: "twinHorn", sharePercent: 60 },
+      ultimate: { kind: "dustCloud", radius: 240, stacks: 2, speedPercentPerStack: 8, maxStacks: 5 },
+      ferocity: { kind: "chainSwing", radius: 260, powerPercent: 120, stunSeconds: 0.6 },
+      passive: { kind: "chainShrapnel", powerPercent: 40 },
     },
   },
   {

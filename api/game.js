@@ -2753,7 +2753,23 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.roarEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC774 {stacks}\uACB9 \uC313\uC778\uB2E4.",
   "skill.breakthrough.effect.ferocity.chainEntry": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801\uC744 \uD55C\uAEBC\uBC88\uC5D0 \uD295\uACA8 \uB0B8\uB2E4. \uB0A0\uC544\uAC00\uB2E4 \uB2E4\uB978 \uC801\uC5D0\uAC8C \uBD80\uB52A\uD788\uBA74 \uBD80\uB52A\uD78C \uC801\uC5D0\uAC8C [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uAC78\uB9B0\uB2E4. \uD55C \uBC88 \uD295\uAE38 \uB54C \uD55C \uC801\uC529\uC774\uB2E4.",
   "skill.breakthrough.effect.ferocity.doubleMag": "[[ferocity|\uD3ED\uC8FC]]\uB85C \uCC44\uC6B4 \uD0C4\uCC3D\uC774 \uBE44\uBA74 \uC26C\uC9C0 \uC54A\uACE0 \uD55C \uBC88 \uB354 \uAC00\uB4DD \uCC44\uC6CC \uBAA8\uB4E0 \uBC1C\uC774 \u300C\uB9C8\uC9C0\uB9C9 \uD55C \uBC29\uC6B8\u300D\uC774 \uB41C\uB2E4. \uD55C \uBC88\uC758 \uD3ED\uC8FC\uC5D0 \uD55C \uBC88\uB9CC \uBC1C\uB3D9\uD55C\uB2E4.",
-  "skill.breakthrough.effect.ferocity.bloodTaste": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC774 \uAC78\uB9AC\uACE0 [[butcher|\uC190\uC9C8]]\uC774 \uD55C \uACB9 \uC313\uC778\uB2E4."
+  "skill.breakthrough.effect.ferocity.bloodTaste": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC774 \uAC78\uB9AC\uACE0 [[butcher|\uC190\uC9C8]]\uC774 \uD55C \uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.basic.seasoning": "\u300C{name}\u300D\uC774 [[bleed|\uCD9C\uD608]] \uC911\uC778 \uC801\uC5D0\uAC8C \uC801\uC911\uD558\uBA74 \uD53C\uD574\uAC00 {percent}% \uB298\uC5B4\uB09C\uB2E4.",
+  "skill.breakthrough.effect.basic.snagClaw": "[[combo|\uC5F0\uACA9]]\uC758 \uB9C8\uC9C0\uB9C9 \uD0C0\uAC00 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.basic.chainWrap": "\u300C{name}\u300D\uC774 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.basic.twinHorn": "\u300C{name}\u300D\uC774 \uB9DE\uC740 \uC801\uACFC \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uB2E4\uB978 \uC801 \uD55C \uBA85\uB3C4 {percent}%\uC758 \uD53C\uD574\uB97C \uBC1B\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.sideDish": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801 \uACC1\uC758 \uB2E4\uB978 \uC801 \uD55C \uBA85\uB3C4 {percent}%\uC758 \uD53C\uD574\uB97C \uBC1B\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.startledLeap": "\u300C{name}\u300D\uB85C \uB6F0\uC5B4\uB4E0 \uC790\uB9AC \uC8FC\uC704\uC758 \uC801\uC774 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uD55C\uB2E4. \uAC19\uC740 \uC801\uC5D0\uAC8C\uB294 {lockout}\uCD08 \uC548\uC5D0 \uB2E4\uC2DC \uAC78\uB9AC\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.breakthrough.effect.ultimate.cageIn": "\u300C{name}\u300D\uC5D0 \uB04C\uB824\uC628 \uC801 \uC804\uC6D0\uC774 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uB41C\uB2E4.",
+  "skill.breakthrough.effect.ultimate.dustCloud": "\u300C{name}\u300D\uC758 \uC9C8\uC8FC\uAC00 \uB05D\uB09C \uC790\uB9AC \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC5D0\uAC8C [[chill|\uB454\uD654]]\uAC00 {stacks}\uACB9 \uC313\uC778\uB2E4.",
+  "skill.breakthrough.effect.ferocity.servingCall": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC774 [[bleed|\uCD9C\uD608]]\uD55C\uB2E4.",
+  "skill.breakthrough.effect.ferocity.clawFlurry": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 [[combo|\uC5F0\uACA9]]\uC774 {hits}\uBC88 \uB354 \uB098\uAC04\uB2E4.",
+  "skill.breakthrough.effect.ferocity.ironBarSweep": "[[ferocity|\uD3ED\uC8FC]] \uC911 \u300C{name}\u300D\uC758 [[stagger|\uACBD\uC9C1]]\uC774 \uB9DE\uC740 \uC801 \uC8FC\uC704\uC758 \uC801 \uCD5C\uB300 {count}\uBA85\uC5D0\uAC8C\uB3C4 \uBC88\uC9C4\uB2E4.",
+  "skill.breakthrough.effect.ferocity.chainSwing": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 \uC8FC\uC704\uC758 \uC801 \uC804\uC6D0\uC774 \uACF5\uACA9\uB825\uC758 {percent}% \uBB3C\uB9AC \uD53C\uD574\uB97C \uBC1B\uACE0 {seconds}\uCD08 \uB3D9\uC548 [[stun|\uAE30\uC808]]\uD55C\uB2E4.",
+  "skill.breakthrough.effect.passive.saltedIngredient": "\u300C{name}\u300D\uC73C\uB85C \uB178\uB9B0 \uC801\uC774 \uBC1B\uB294 \uD68C\uBCF5\uC774 {percent}% \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.breakthrough.effect.passive.tailHide": "\u300C{name}\u300D\uC73C\uB85C \uB4A4\uB85C \uB6F0\uB294 \uC21C\uAC04 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4. [[basic-attack|\uC77C\uBC18 \uACF5\uACA9]]\uC744 \uCE58\uBA74 \uD480\uB9B0\uB2E4.",
+  "skill.breakthrough.effect.passive.youngestCare": "\u300C{name}\u300D\uC73C\uB85C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uC744 \uB54C \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uB2E4\uB978 \uC544\uAD70\uB3C4 \uADF8 {percent}%\uB97C \uC5BB\uB294\uB2E4.",
+  "skill.breakthrough.effect.passive.chainShrapnel": "\uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uB294 \uC21C\uAC04\uC758 \uD130\uC9D0\uC774 \uC8FC\uC704 \uC801\uC5D0\uAC8C \uACF5\uACA9\uB825\uC758 {percent}% \uD53C\uD574\uB3C4 \uC900\uB2E4."
 };
 
 // src/i18n/ko/system.ts
@@ -6938,7 +6954,14 @@ function reactCellRank(target, attacker, state, events) {
   const room = cap - target.shield.amount;
   if (room <= 0) return;
   target.cellRankReadyAt = state.elapsed + plan.intervalSeconds;
-  grantShield(state, target, target.id, Math.min(room, Math.max(1, target.maxHp * plan.shieldMaxHpPercent / 100)), events);
+  const granted = Math.min(room, Math.max(1, target.maxHp * plan.shieldMaxHpPercent / 100));
+  grantShield(state, target, target.id, granted, events);
+  const care = openedBreakthrough(target, "passive", (effects) => effects.passive);
+  if (care?.kind === "youngestCare") {
+    const weakest = aliveFighters(state, target.side).filter((ally) => ally.id !== target.id).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    const allyRoom = weakest ? weakest.maxHp * plan.capMaxHpPercent / 100 - weakest.shield.amount : 0;
+    if (weakest && allyRoom > 0) grantShield(state, weakest, target.id, Math.min(allyRoom, Math.max(1, granted * care.sharePercent / 100)), events);
+  }
 }
 function appetiteBleedHeal(state, sourceId, dealt, events) {
   if (!sourceId || !(dealt > 0)) return;
@@ -7038,7 +7061,18 @@ function tickConfinement(fighter, dt, state) {
     const bound = fighter.stunnedFor > 0 || fighter.frozen !== null || fighter.knockback !== null;
     if (fighter.flinch.pending && !bound) {
       fighter.flinch = { cooldown: flinchCooldownSeconds(fighter, flinch.cooldownSeconds), window: 0, taken: 0, pending: false };
-      if (leapBehindNearestEnemy(fighter, state, flinch.landingDistance)) fighter.empoweredBasic = true;
+      if (leapBehindNearestEnemy(fighter, state, flinch.landingDistance)) {
+        fighter.empoweredBasic = true;
+        const hide = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+        if (hide?.kind === "tailHide") {
+          fighter.stealthFor = Math.max(fighter.stealthFor, hide.seconds);
+          fighter.stealthBreaksOnBasic = true;
+          for (const other of state.fighters) if (other.targetId === fighter.id) {
+            other.targetId = null;
+            other.engaged = false;
+          }
+        }
+      }
     }
   }
   const locks = passive.restraintLocks;
@@ -7050,6 +7084,8 @@ function tickConfinement(fighter, dt, state) {
       for (const other of state.fighters) {
         if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > locks.burstRadius) continue;
         applyCombatStatusEffect(other, { kind: "knockback", ...locks.knockback }, events, state, fighter.id, false);
+        const shrapnel = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+        if (shrapnel?.kind === "chainShrapnel") extraStrike(fighter, other, shrapnel.powerPercent, "atk", "physical", state, events);
       }
       events.push({
         kind: "areaImpact",
@@ -8025,6 +8061,7 @@ function bossDamageMultiplier(attacker, target, useUltimate) {
   if (!useUltimate) {
     const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
     if (basic?.kind === "coiledTarget" && target.chill) multiplier *= 1 + target.chill.stacks * basic.damagePercentPerStack / 100;
+    if (basic?.kind === "seasoning" && target.bleed) multiplier *= 1 + basic.damagePercent / 100;
   }
   const passive = openedBreakthrough(attacker, "passive", (effects) => effects.passive);
   if (passive?.kind === "warmBody" && !useUltimate && attacker.def.passive.kind === "basicHitAttackSpeedStack") {
@@ -8075,9 +8112,24 @@ function strikeBossBasicBreakthrough(attacker, target, input, critical, state, e
     events.push(...applyStagger(target, passive.staggerSeconds * attacker.statusPotencyMultiplier, state));
   }
 }
-function strikeEnemyBasicBreakthrough(attacker, target, input, critical, state, events) {
+function strikeEnemyBasicBreakthrough(attacker, target, input, critical, state, events, comboFinisher = false) {
+  const sweep = feverBreakthrough(attacker);
+  if (sweep?.kind === "ironBarSweep" && isFighterAlive(target)) {
+    const stagger = attacker.def.basic.statusEffects?.find((effect) => effect.kind === "stagger");
+    if (stagger?.kind === "stagger") {
+      const near = aliveFighters(state, target.side).filter((other) => other.id !== target.id && distance(target, other) <= sweep.radius).sort((a, b) => distance(target, a) - distance(target, b)).slice(0, sweep.maxTargets);
+      for (const other of near) events.push(...applyStagger(other, stagger.seconds * attacker.statusPotencyMultiplier, state));
+    }
+  }
   const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (!basic || !isFighterAlive(target)) return;
+  if (basic.kind === "chainWrap" || basic.kind === "snagClaw" && comboFinisher) {
+    applyCombatStatusEffect(target, { kind: "chill", speedPercentPerStack: basic.speedPercentPerStack, maxStacks: basic.maxStacks }, events, state, attacker.id);
+  }
+  if (basic.kind === "twinHorn") {
+    const other = aliveFighters(state, target.side).filter((candidate) => candidate.id !== target.id).sort((a, b) => distance(target, a) - distance(target, b))[0];
+    if (other) strikeSecondary(attacker, other, input, basic.sharePercent, critical, state, events);
+  }
   if (basic.kind === "fangShave") {
     const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
     target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent, total: basic.seconds };
@@ -8103,6 +8155,14 @@ function afterUltimateBreakthrough(attacker, state, events) {
   const plan = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (plan?.kind === "cheekShield") grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * plan.shieldMaxHpPercent / 100)), events);
   if (plan?.kind === "chasingBlink" && attacker.def.passive.kind === "stalkerBlink") attacker.huntCooldown = 0;
+  if (plan?.kind === "dustCloud" && attacker.def.ultimate.targeting === "chargeLine") {
+    for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
+      if (distance(attacker, foe) > plan.radius) continue;
+      for (let i = 0; i < plan.stacks; i += 1) {
+        applyCombatStatusEffect(foe, { kind: "chill", speedPercentPerStack: plan.speedPercentPerStack, maxStacks: plan.maxStacks }, events, state, attacker.id);
+      }
+    }
+  }
 }
 function strikeSecondary(attacker, secondary, input, percent, critical, state, events) {
   const defensive = defensiveDefinition(secondary, state);
@@ -8826,13 +8886,23 @@ function encounterHealingReductionPercent(state, receiverSide) {
 function isHealingCancelledByPontus(state, target) {
   return state.fighters.some((enemy) => enemy.side !== target.side && isFighterAlive(enemy) && enemy.ferocityFever && enemy.def.ferocityTrait.effectId === "pontusRage" && enemy.def.ferocityTrait.cancelEnemyHealing);
 }
+function saltedIngredientPercent(state, target) {
+  let percent = 0;
+  for (const other of state.fighters) {
+    if (other.side === target.side || other.ingredientId !== target.id || !isFighterAlive(other) || !other.def.passive.todaysIngredient) continue;
+    const plan = openedBreakthrough(other, "passive", (effects) => effects.passive);
+    if (plan?.kind === "saltedIngredient") percent = Math.max(percent, plan.reductionPercent);
+  }
+  return percent;
+}
 function applyHealing(state, target, requested, casterId = target.id) {
   if (isHealingCancelledByPontus(state, target)) return 0;
   const reduction = Math.max(
     strongestLivingAura(state, target.side, "enemyHealingReceivedReductionPercent"),
     target.bleed?.healingReceivedReductionPercent ?? 0,
     encounterHealingReductionPercent(state, target.side),
-    target.bt.healCut?.percent ?? 0
+    target.bt.healCut?.percent ?? 0,
+    saltedIngredientPercent(state, target)
   );
   const before = target.hp;
   target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side));
@@ -9339,6 +9409,26 @@ function gainFerocity(fighter, base, state, events) {
         if (bleed) applyCombatStatusEffect(foe, bleed, events, state, fighter.id);
         if (butcher && isFighterAlive(foe)) applyCombatStatusEffect(foe, butcher, events, state, fighter.id);
       }
+    }
+    if (feverBreakthrough2?.kind === "servingCall") {
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+        refreshBleed(foe, BLEED.seconds * fighter.statusPotencyMultiplier, BLEED.percentPerSecond, events, fighter.id);
+      }
+    }
+    if (feverBreakthrough2?.kind === "chainSwing") {
+      for (const foe of aliveFighters(state, fighter.side === "player" ? "enemy" : "player")) {
+        if (distance(fighter, foe) > feverBreakthrough2.radius) continue;
+        extraStrike(fighter, foe, feverBreakthrough2.powerPercent, "atk", "physical", state, events);
+        if (isFighterAlive(foe)) events.push(...applyStun(foe, feverBreakthrough2.stunSeconds * fighter.statusPotencyMultiplier, state));
+      }
+      events.push({
+        kind: "areaImpact",
+        attackerId: fighter.id,
+        ultimate: false,
+        damageType: "physical",
+        area: { shape: "radial", x: fighter.x, y: fighter.y, radius: feverBreakthrough2.radius }
+      });
     }
     if (feverBreakthrough2?.kind === "emberRush") for (let i = 0; i < feverBreakthrough2.stacks; i += 1) gainElation(fighter);
     if (feverBreakthrough2?.kind === "pingBurst") {
@@ -10309,6 +10399,12 @@ function irnaBreakthroughSkill(attacker, target, skill, useUltimate) {
   if (multiplier === 1 || !("power" in skill) || skill.power === void 0) return skill;
   return { ...skill, power: skill.power * multiplier };
 }
+function strikeSideDish(attacker, target, input, critical, state, events) {
+  const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+  if (effect?.kind !== "sideDish") return;
+  const other = aliveFighters(state, target.side).filter((candidate) => candidate.id !== target.id && distance(target, candidate) <= effect.radius).sort((a, b) => distance(target, a) - distance(target, b))[0];
+  if (other) strikeSecondary(attacker, other, input, effect.sharePercent, critical, state, events);
+}
 function strikeShrapnel(attacker, target, input, critical, state, events) {
   const effect = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
   if (effect?.kind !== "shrapnel") return;
@@ -10375,7 +10471,8 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const combo = !useUltimate ? attacker.def.basic.combo : void 0;
   const volley = !useUltimate && attacker.volley ? attacker.volley : void 0;
   if ((combo || volley) && comboHit === void 0) {
-    const hitCount = volley ? volley.hitCount : rng() < combo.chancePercent / 100 ? combo.hitCount : 1;
+    const flurry = feverBreakthrough(attacker);
+    const hitCount = volley ? volley.hitCount : rng() < combo.chancePercent / 100 ? combo.hitCount + (flurry?.kind === "clawFlurry" ? flurry.extraHits : 0) : 1;
     for (let hit = 0; hit < hitCount && isFighterAlive(target); hit += 1) {
       strike(attacker, target, rng, state, events, false, { grantActionResources: hit === 0 });
     }
@@ -10635,8 +10732,10 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     const card = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (card?.kind === "extraCard") throwExtraCard(attacker, target, damageInput, card, damageInput.damageType, state, events);
   }
-  if (useUltimate) strikeShrapnel(attacker, target, damageInput, critical, state, events);
-  else strikeBitterTaste(attacker, target, lastDropShot);
+  if (useUltimate) {
+    strikeShrapnel(attacker, target, damageInput, critical, state, events);
+    strikeSideDish(attacker, target, damageInput, critical, state, events);
+  } else strikeBitterTaste(attacker, target, lastDropShot);
   if (useUltimate && !comboHit && isFighterAlive(target)) {
     const slash = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (slash?.kind === "afterimageSlash") attacker.bt.afterimages.push({ targetId: target.id, remaining: slash.delaySeconds });
@@ -10666,7 +10765,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     if (ankle?.kind === "ankleShot") events.push(...applyStagger(target, ankle.staggerSeconds * attacker.statusPotencyMultiplier, state));
   }
   if (!useUltimate && !resolution.ignored) strikeBossBasicBreakthrough(attacker, target, damageInput, critical, state, events);
-  if (!useUltimate && !resolution.ignored) strikeEnemyBasicBreakthrough(attacker, target, damageInput, critical, state, events);
+  if (!useUltimate && !resolution.ignored) strikeEnemyBasicBreakthrough(attacker, target, damageInput, critical, state, events, comboHit !== void 0 && !comboHit.grantActionResources);
   if (!useUltimate && isFighterAlive(target) && !resolution.ignored) fireObservationVolley(attacker, target, state, events);
   const channelRider = !useUltimate && attacker.artChannel ? attacker.def.ultimate.channel?.basicStatusEffects : void 0;
   if (channelRider && isFighterAlive(target)) {
@@ -12042,6 +12141,16 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
         attacker.bt.sinks.push({ targetId: other.id, remaining: plan.tauntSeconds, tickIn: 1 });
       }
     }
+    const cage = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (cage?.kind === "cageIn" && plan.pullOnly) {
+      for (const other of pulled) {
+        applyCombatStatusEffect(other, { kind: "taunt", seconds: cage.tauntSeconds }, events, state, attacker.id);
+        if (other.taunted?.sourceId === attacker.id) {
+          other.targetId = attacker.id;
+          other.engaged = false;
+        }
+      }
+    }
     if (plan.resetShellGuardCooldown === true) attacker.shellGuardCooldownRemaining = 0;
     if (plan.prickleGain !== void 0) {
       gainPrickle(attacker, plan.prickleGain);
@@ -12067,6 +12176,15 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
     attacker.stealthFor = Math.max(attacker.stealthFor, setup.stealthSeconds);
     attacker.stealthBreaksOnBasic = setup.stealthBreaksOnBasic;
     leapToLowestHpEnemy(attacker, state, setup.landingDistance);
+    const startle = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
+    if (startle?.kind === "startledLeap") {
+      for (const foe of aliveFighters(state, attacker.side === "player" ? "enemy" : "player")) {
+        const lockKey = `stun:${foe.id}`;
+        if (distance(attacker, foe) > startle.radius || (attacker.bt.pinnedUntil[lockKey] ?? 0) > state.elapsed) continue;
+        attacker.bt.pinnedUntil[lockKey] = state.elapsed + startle.lockoutSeconds;
+        events.push(...applyStun(foe, startle.stunSeconds * attacker.statusPotencyMultiplier, state));
+      }
+    }
     for (const other of state.fighters) if (other.targetId === attacker.id) {
       other.targetId = null;
       other.engaged = false;
@@ -16360,11 +16478,10 @@ var RELICS = [
     },
     // 깊은 출혈은 다지기가 이미 갖고 있어 평타 칸은 비워 둔다. 만찬이 더 배를 채우고(III) 폭주하면 칼끝이 급소를 찾는다(IV).
     breakthroughEffects: {
-      basic: { kind: "none" },
-      // 궁극기에 이미 적힌 25%에 더해진다(합 40%).
-      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 15 },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" }
+      basic: { kind: "seasoning", damagePercent: 25 },
+      ultimate: { kind: "sideDish", sharePercent: 50, radius: 200 },
+      ferocity: { kind: "servingCall", radius: 260 },
+      passive: { kind: "saltedIngredient", reductionPercent: 30 }
     }
   },
   {
@@ -16450,10 +16567,10 @@ var RELICS = [
     },
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
     breakthroughEffects: {
-      basic: { kind: "bleedingSmash" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" }
+      basic: { kind: "snagClaw", speedPercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "startledLeap", radius: 220, stunSeconds: 0.8, lockoutSeconds: 8 },
+      ferocity: { kind: "clawFlurry", extraHits: 1 },
+      passive: { kind: "tailHide", seconds: 2 }
     }
   },
   {
@@ -16540,10 +16657,10 @@ var RELICS = [
     },
     // 한계 돌파는 설계 절차(`docs/breakthrough-design.md`)로 추천안을 확인받은 뒤 채운다.
     breakthroughEffects: {
-      basic: { kind: "none" },
-      ultimate: { kind: "none" },
-      ferocity: { kind: "none" },
-      passive: { kind: "none" }
+      basic: { kind: "chainWrap", speedPercentPerStack: 8, maxStacks: 5 },
+      ultimate: { kind: "cageIn", tauntSeconds: 2 },
+      ferocity: { kind: "ironBarSweep", radius: 200, maxTargets: 3 },
+      passive: { kind: "youngestCare", sharePercent: 15 }
     }
   },
   {
@@ -16636,10 +16753,10 @@ var RELICS = [
     },
     // 뿔이 상대를 멈칫하게 하고(II) 질주의 폭이 넓어지며(III) 폭주하면 급소가 터진다(IV).
     breakthroughEffects: {
-      basic: { kind: "shellKnock", seconds: 0.3 },
-      ultimate: { kind: "widenArea", radius: 130 },
-      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
-      passive: { kind: "none" }
+      basic: { kind: "twinHorn", sharePercent: 60 },
+      ultimate: { kind: "dustCloud", radius: 240, stacks: 2, speedPercentPerStack: 8, maxStacks: 5 },
+      ferocity: { kind: "chainSwing", radius: 260, powerPercent: 120, stunSeconds: 0.6 },
+      passive: { kind: "chainShrapnel", powerPercent: 40 }
     }
   },
   {

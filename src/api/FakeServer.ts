@@ -108,7 +108,7 @@ import { archaeologySiteAvailability } from "../core/archaeologyMap";
 import type { AbandonStrataRunRequest, ArchaeologyStateResponse, DigStrataTileRequest, DigStrataTileResponse, GrantRuneTraitRequest, GrantRuneTraitResponse, RerollRuneTraitRequest, RerollRuneTraitResponse, ResolveRuneTraitRerollRequest, ResolveRuneTraitRerollResponse, StartStrataRunRequest, UpgradeRuneTraitRequest, UpgradeRuneTraitResponse } from "./contracts";
 import { sortByRewardPriority } from "../data/rewardPriority";
 import { findItem, type WalletItemKey } from "../data/items";
-import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_TICKET_ITEM } from "../data/raid";
+import { RAID_ATTEMPTS_PER_RAID, RAID_BOSS_BALANCE, RAID_BOSS_POOL, RAID_COMPLETED_KEEP_HOURS, RAID_DIFFICULTY, raidRunStamina, RAID_SELECT_TICKET_ITEM, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, RAID_TICKET_ITEM } from "../data/raid";
 import { mockFriendRaids, mockRaidContributions, mockRaidWorldDamage, mockSummonContributions, mockSummonRaidDamage, raidBossDef, raidBossGrowth, raidBossPercentHpBasis, raidContributionBoard, raidRunRewards, raidSeasonKey, raidSeasonProgress, raidSettlement, raidWorldBossId, rollRaidSummon } from "../core/raid";
 import { battleArena } from "../core/battleArena";
 import { staminaCurrencyRecharge } from "../data/staminaRecharge";
@@ -974,7 +974,7 @@ export class FakeServer implements GameApi {
     if (select && !(RAID_BOSS_POOL as readonly string[]).includes(request.bossRelicId!)) throw new GameApiError("RAID_SUMMON_INVALID", "소환할 수 없는 보스입니다.");
     const ticketId = select ? RAID_SELECT_TICKET_ITEM : RAID_TICKET_ITEM;
     const stack = this.state.itemInventory.find((entry) => entry.itemId === ticketId);
-    if (!stack || stack.quantity <= 0) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
+    if (!stack || stack.quantity < RAID_SUMMON_TICKET_COST) throw new GameApiError("RAID_TICKET_SHORTAGE", "토벌권이 부족합니다.");
     const now = this.now();
     const { bossRelicId, difficulty } = select
       ? { bossRelicId: request.bossRelicId!, difficulty: request.difficulty! }
@@ -985,7 +985,7 @@ export class FakeServer implements GameApi {
       summonedByMe: true, myDamage: 0, attemptsUsed: 0, settled: false,
     };
     const nextState = structuredClone(this.state);
-    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? (entry.quantity > 1 ? [{ ...entry, quantity: entry.quantity - 1 }] : []) : [entry]);
+    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? (entry.quantity > RAID_SUMMON_TICKET_COST ? [{ ...entry, quantity: entry.quantity - RAID_SUMMON_TICKET_COST }] : []) : [entry]);
     nextState.raid = { instances: [...nextState.raid.instances, instance] };
     this.commitRaidState(nextState);
     const response: SummonRaidResponse = { ...this.snapshot(), raid: this.raidDto(instance, now), tickets: this.raidTickets() };

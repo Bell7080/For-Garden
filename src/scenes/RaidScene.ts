@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { RaidContributionEntryDto, RaidDto, RaidListResponse } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
-import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, raidRunStamina, type RaidDifficulty } from "../data/raid";
+import { RAID_BOSS_POOL, RAID_SUMMON_DIFFICULTIES, RAID_SUMMON_TICKET_COST, raidRunStamina, type RaidDifficulty } from "../data/raid";
 import { session } from "../state/session";
 import { getRelic } from "../data/relics";
 import { setDebugRaidStage, setDebugScene } from "../debug";
@@ -21,7 +21,7 @@ import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { RANKING_LIST, RANKING_VISIBLE_RANKS, rankingMedal, rankingRowY } from "../ui/expeditionRankingLayout";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawVignette, HOLO, HoloBar, slantedRect } from "../ui/holo";
 import {
-  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_LIST, RAID_LIST_CHROME,
+  RAID_ACTIONS, RAID_BOARD, RAID_BOARD_PLATE, RAID_BOSS_SPOT, RAID_HEADER, RAID_HP_BAR, RAID_HP_BAR_COLOR, RAID_LIST, RAID_LIST_CHROME, RAID_SUMMON_TONE,
   RAID_BOSS_PICK, RAID_DIFFICULTY_PICK, raidBoardViewport, raidBossPickHeight, raidLayerStack, raidPickHeight,
 } from "../ui/raidLayout";
 import { COLOR, textStyle } from "../ui/theme";
@@ -345,16 +345,20 @@ export class RaidScene extends Phaser.Scene {
     const content = this.content;
     if (!content) return;
     const { y, height, fontSize, select, normal } = RAID_LIST_CHROME.summon;
-    const button = (slot: { centerX: number; width: number }, label: string, enabled: boolean, onClick: () => void): void => {
+    // 판은 쓰는 토벌권의 색을 입고, 라벨 오른쪽에 그 토벌권 그림과 한 번에 드는 수가 선다.
+    const button = (slot: { centerX: number; width: number }, kind: "select" | "normal", label: string, owned: number, onClick: () => void): void => {
+      const tone = RAID_SUMMON_TONE[kind];
       const entry = new Button(this, slot.centerX, y, {
         width: slot.width, height, label, fontSize, variant: "primary",
-        accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText, onClick,
+        fill: tone.fill, accentColor: tone.edge, accentTextColor: tone.text, labelColor: tone.text,
+        cost: { icon: kind === "select" ? "item-raid-select-ticket" : "item-raid-ticket", amount: RAID_SUMMON_TICKET_COST, iconScale: 1.8, affordable: owned >= RAID_SUMMON_TICKET_COST },
+        onClick,
       });
-      entry.setEnabled(enabled);
+      entry.setEnabled(owned >= RAID_SUMMON_TICKET_COST);
       content.add(entry);
     };
-    button(select, t("raid.summon.select"), tickets.select > 0, () => this.openBossPickPopup());
-    button(normal, t("raid.summon.button"), tickets.normal > 0, () => void this.summon(undefined));
+    button(select, "select", t("raid.summon.select"), tickets.select, () => this.openBossPickPopup());
+    button(normal, "normal", t("raid.summon.button"), tickets.normal, () => void this.summon(undefined));
   }
 
   /**

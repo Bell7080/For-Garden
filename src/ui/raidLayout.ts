@@ -234,7 +234,8 @@ export function raidLayerStack(kinds: readonly RaidLayerKind[]): { centers: numb
  * 뒤로가기 자리라 소환 줄은 그 왼쪽에서 끝난다.
  */
 export const RAID_LIST_CHROME = {
-  tickets: { y: 164, size: 88, gap: 22, right: BASE_WIDTH - 60 },
+  /** 위의 스테미나 줄과 겹치지 않게 제목 줄보다 한 뼘 아래에 선다. */
+  tickets: { y: 204, size: 84, gap: 22, right: BASE_WIDTH - 60 },
   tabs: { y: 1654, width: 250, height: 76, gap: 14, left: 46 },
   summon: {
     y: BACK_SLOT.y,
@@ -244,6 +245,16 @@ export const RAID_LIST_CHROME = {
     select: { centerX: 252, width: 380 },
     normal: { centerX: 672, width: 380 },
   },
+} as const;
+
+/**
+ * 소환 버튼은 **쓰는 토벌권의 색**을 입는다 — 토벌권은 은청빛, 선택 토벌권은 호박빛이다. 버튼 안의
+ * 비용(토벌권 그림 + 소모량)과 판 색이 같은 말을 해야 어느 버튼이 어느 표를 쓰는지 그림을 보기 전에 읽힌다.
+ * `fill`은 판 바탕(짙게 눌린 같은 계열), `edge`는 윗변·밑줄, `text`는 라벨 글자다.
+ */
+export const RAID_SUMMON_TONE = {
+  normal: { fill: 0x16233f, edge: 0x8fb6f2, text: "#d6e6ff" },
+  select: { fill: 0x3a220c, edge: 0xf0a94e, text: "#ffe0ad" },
 } as const;
 
 /** 소환 줄의 오른쪽 끝이 우하단 공용 뒤로가기와 벌린 가로 간격이다. 양수여야 한다. */

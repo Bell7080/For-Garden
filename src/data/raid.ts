@@ -132,6 +132,8 @@ export const RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"] as const;
 /** 두 가지 토벌권. 가방의 재료 아이템이다(`src/data/items.ts`). */
 export const RAID_TICKET_ITEM = "raid-ticket";
 export const RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
+/** 소환 한 번에 드는 토벌권 수(두 토벌권 모두). 서버 차감과 소환 버튼의 비용 표기가 이 값을 읽는다. */
+export const RAID_SUMMON_TICKET_COST = 1;
 
 /**
  * 임시 지급: 토벌권을 만져 볼 수 있게 부트마다 이 수까지 채운다(룬 특성 임시 지급과 같은 자리).

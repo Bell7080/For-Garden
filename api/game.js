@@ -15880,14 +15880,15 @@ var RELICS = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다.
-      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, maxTargets: 2, healPercent: 30 },
+      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다. v0.391.1: 위력 30 → 26.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 26, maxTargets: 2, healPercent: 30 },
       desc: "\uBC15\uC950 \uB5BC\uAC00 \uC8FC\uC704\uC758 \uAC00\uAE4C\uC6B4 \uC801 \uB458\uC744 \uB9E4\uCD08 \uD6D1\uB294\uB2E4. \uAE30\uBCF8 \uACF5\uACA9\uACFC \uAD81\uADF9\uAE30\uAC00 \uC801\uC911\uD55C \uC801\uC5D0\uAC8C \uBC18\uD5A5\uC744 \uAC74\uB2E4. \uBC18\uD5A5\uC774 \uB4E0 \uC801\uC744 \uCE5C \uC544\uAD70\uC740 \uBCF4\uD638\uB9C9\uC744 \uB450\uB978\uB2E4."
     },
     basic: {
       id: "ikanixia-basic",
       name: "\uBC15\uC950 \uB0A0\uB9AC\uAE30",
-      power: 110,
+      // v0.391.1: 110 → 95(응태 요청 — 고배수 살짝 하향).
+      power: 95,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -15904,8 +15905,8 @@ var RELICS = [
     ultimate: {
       id: "ikanixia-ult",
       name: "\uD608\uC6D4\uC758 \uB9CC\uCC2C",
-      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다.
-      power: 90,
+      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다. v0.391.1: 90 → 80.
+      power: 80,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -19235,15 +19236,15 @@ var LATE_CHAPTER_FORMATIONS = {
   "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
   "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
   "4-10": [["koma", 0], ["ikanixia", 2]],
-  // 5장 — 지하 감금동. 회수된 삼인조(5-1) → 회수조 → 풀려난 감금조가 섞인다. 5-5 라자(부간부) · 5-10 마가사(간부)가 혼자 서는 정예다.
+  // 5장 — 지하 감금동. 회수된 삼인조(5-1) → 회수조 → 풀려난 감금조가 섞인다. 5-5 라자(부간부) · 5-10 마가사(간부)가 혼자 서는 정예다. 이카닉시아(간부)는 5-3·5-8 뒷줄에 잡졸 몫으로 선다(응태 요청).
   "5-1": [["amo", 0], ["toby", 1], ["ripa", 2]],
   "5-2": [["atra", 0], ["mir", 1], ["pulsi", 2]],
-  "5-3": [["atra", 0], ["mir", 1], ["neuri", 2]],
+  "5-3": [["atra", 0], ["mir", 1], ["ikanixia", 2]],
   "5-4": [["mir", 0], ["pulsi", 1], ["neuri", 2]],
   "5-5": [["raja", 1]],
   "5-6": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
   "5-7": [["raja", 0], ["mir", 1], ["pulsi", 2]],
-  "5-8": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
+  "5-8": [["atra", 0], ["raja", 1], ["pulsi", 2], ["ikanixia", 3]],
   "5-9": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
   "5-10": [["magasa", 1]],
   // 6장 — 중층 격리 회랑. 감금조가 앞에 서고 회수조가 받친다. 6-5 노아의 기습(정예) · 6-10 마가사·노아 투톱(정예 둘).

@@ -3094,14 +3094,15 @@ export const RELICS: RelicDef[] = [
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 반향이 남는 시간(초)을 담아 둔다.
       value: 5,
       echoLocation: { shieldMaxHpPercent: 6, capMaxHpPercent: 30 },
-      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다.
-      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 30, maxTargets: 2, healPercent: 30 },
+      // 몸 주위를 맴도는 박쥐가 초마다 가까운 둘을 훑는다 — 지속 피해와 회복의 뼈대다. v0.391.1: 위력 30 → 26.
+      batSwarm: { radius: 240, intervalSeconds: 1, powerPercent: 26, maxTargets: 2, healPercent: 30 },
       desc: "박쥐 떼가 주위의 가까운 적 둘을 매초 훑는다. 기본 공격과 궁극기가 적중한 적에게 반향을 건다. 반향이 든 적을 친 아군은 보호막을 두른다.",
     },
     basic: {
       id: "ikanixia-basic",
       name: "박쥐 날리기",
-      power: 110,
+      // v0.391.1: 110 → 95(응태 요청 — 고배수 살짝 하향).
+      power: 95,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",
@@ -3118,8 +3119,8 @@ export const RELICS: RelicDef[] = [
     ultimate: {
       id: "ikanixia-ult",
       name: "혈월의 만찬",
-      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다.
-      power: 90,
+      // 한 틱의 위력이다 — 5초 동안 매초 주위를 훑고(채널링), 입힌 피해의 일부를 돌려 받는다. 막을 깨지는 않는다. v0.391.1: 90 → 80.
+      power: 80,
       scalingStat: "ap",
       iconAssetId: "skill-icon-magical",
       effectType: "magical",

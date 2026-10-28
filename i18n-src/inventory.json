@@ -310,24 +310,24 @@
 "Реклама отменена или не готова."
 ],
 "stamina.nextRecovery": [
-"每{minutes}分钟恢复1点 · 距离下次恢复 {time}",
-"ฟื้นฟู 1 ทุก {minutes} นาที · ครั้งถัดไปใน {time}",
-"Hồi 1 mỗi {minutes} phút · lần tiếp theo sau {time}",
-"+1 setiap {minutes} menit · berikutnya dalam {time}",
-"+1 cada {minutes} min · la próxima en {time}",
-"+1 a cada {minutes} min · a próxima em {time}",
-"+1 alle {minutes} Min. · nächste in {time}",
-"+1 каждые {minutes} мин · следующее через {time}"
+"每{minutes}分钟恢复{amount}点 · 距离下次恢复 {time}",
+"ฟื้นฟู {amount} ทุก {minutes} นาที · ครั้งถัดไปใน {time}",
+"Hồi {amount} mỗi {minutes} phút · lần tiếp theo sau {time}",
+"+{amount} setiap {minutes} menit · berikutnya dalam {time}",
+"+{amount} cada {minutes} min · la próxima en {time}",
+"+{amount} a cada {minutes} min · a próxima em {time}",
+"+{amount} alle {minutes} Min. · nächste in {time}",
+"+{amount} каждые {minutes} мин · следующее через {time}"
 ],
 "stamina.regenEvery": [
-"每{minutes}分钟恢复1点",
-"ฟื้นฟู 1 ทุก {minutes} นาที",
-"Hồi 1 mỗi {minutes} phút",
-"+1 setiap {minutes} menit",
-"+1 cada {minutes} min",
-"+1 a cada {minutes} min",
-"+1 alle {minutes} Min.",
-"+1 каждые {minutes} мин"
+"每{minutes}分钟恢复{amount}点",
+"ฟื้นฟู {amount} ทุก {minutes} นาที",
+"Hồi {amount} mỗi {minutes} phút",
+"+{amount} setiap {minutes} menit",
+"+{amount} cada {minutes} min",
+"+{amount} a cada {minutes} min",
+"+{amount} alle {minutes} Min.",
+"+{amount} каждые {minutes} мин"
 ],
 "sortie.cake.name": [
 "蛋糕作战",

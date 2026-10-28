@@ -11,12 +11,12 @@ import { PLAYER_LEVEL_UP_REWARD } from "../../src/core/playerLevel";
 describe("stamina rules", () => {
   it("shares timezone, regression, long-offline, and boundary clock fixtures with excavation", () => {
     const fixture = TIME_ACCRUAL_FIXTURES;
-    // 시간대 표기가 달라도 한 시간은 12틱이며, 장기 오프라인은 최대치까지만 회복한다.
-    expect(settleStamina(0, 120, fixture.timezoneChange.lastSettledAt, new Date(fixture.timezoneChange.serverNow))).toMatchObject({ amount: 12, recovered: 12 });
+    // 시간대 표기가 달라도 한 시간은 25분 구간 두 개(+10)이며, 장기 오프라인은 최대치까지만 회복한다.
+    expect(settleStamina(0, 120, fixture.timezoneChange.lastSettledAt, new Date(fixture.timezoneChange.serverNow))).toMatchObject({ amount: 10, recovered: 10 });
     expect(settleStamina(0, 120, fixture.longOffline.lastSettledAt, new Date(fixture.longOffline.serverNow))).toMatchObject({ amount: 120, recovered: 120 });
-    // 역행은 기존 기준점을 유지하고 정확한 1시간 경계는 빠짐없이 12틱으로 계산한다.
+    // 역행은 기존 기준점을 유지하고 정확한 1시간 경계는 끝난 두 구간만 센다.
     expect(settleStamina(0, 120, fixture.clockRegression.lastSettledAt, new Date(fixture.clockRegression.serverNow))).toMatchObject({ amount: 0, recovered: 0, updatedAt: fixture.clockRegression.lastSettledAt });
-    expect(settleStamina(0, 120, fixture.expiryBoundary.lastSettledAt, new Date(fixture.expiryBoundary.serverNow))).toMatchObject({ amount: 12, recovered: 12 });
+    expect(settleStamina(0, 120, fixture.expiryBoundary.lastSettledAt, new Date(fixture.expiryBoundary.serverNow))).toMatchObject({ amount: 10, recovered: 10 });
   });
 
   it("calculates research-level maximums and the absolute cap", () => {
@@ -26,10 +26,23 @@ describe("stamina rules", () => {
     expect(staminaMaxForResearchLevel(999)).toBe(ABSOLUTE_STAMINA_MAX);
   });
 
-  it("settles offline time only at completed five-minute boundaries", () => {
+  it("settles offline time only at completed 25-minute boundaries, five at a time", () => {
     const start = "2026-09-01T00:00:00.000Z";
-    expect(settleStamina(10, 122, start, new Date("2026-09-01T00:04:59.999Z"))).toMatchObject({ amount: 10, recovered: 0, updatedAt: start });
-    expect(settleStamina(10, 122, start, new Date("2026-09-01T00:15:00.000Z"))).toMatchObject({ amount: 13, recovered: 3, updatedAt: "2026-09-01T00:15:00.000Z" });
+    expect(settleStamina(10, 122, start, new Date("2026-09-01T00:24:59.999Z"))).toMatchObject({ amount: 10, recovered: 0, updatedAt: start });
+    // 끝나지 않은 구간(남은 10분)은 기준 시각에 보존된다.
+    expect(settleStamina(10, 122, start, new Date("2026-09-01T01:25:00.000Z"))).toMatchObject({ amount: 25, recovered: 15, updatedAt: "2026-09-01T01:15:00.000Z" });
+  });
+
+  it("keeps the daily natural supply at 288", () => {
+    // 한 번에 5씩이지만 하루 자연 회복량은 예전 5분마다 1과 같다(반복 보상 승인선).
+    expect(settleStamina(0, 240, "2026-09-01T00:00:00.000Z", new Date("2026-09-01T16:00:00.000Z")).recovered).toBe(190);
+    expect(Math.round(24 * 60 / 25 * 5)).toBe(288);
+  });
+
+  it("schedules the full time by whole five-point ticks", () => {
+    // 117 → 122는 한 구간이면 찬다(마지막 구간은 상한에서 잘린다).
+    expect(staminaTiming(117, 122, "2026-09-01T00:00:00.000Z")).toEqual({ nextRecoveryAt: "2026-09-01T00:25:00.000Z", fullAt: "2026-09-01T00:25:00.000Z" });
+    expect(staminaTiming(110, 122, "2026-09-01T00:00:00.000Z").fullAt).toBe("2026-09-01T01:15:00.000Z");
   });
 
   it("stops at the dynamic maximum and reports no further schedule", () => {
@@ -63,7 +76,7 @@ describe("stamina rules", () => {
 
   it("keeps current stamina on level-up and fills the newly opened space naturally", () => {
     // 자연 회복 계산은 현재량을 직접 올리지 않고 최대치만 넓힌다. 레벨업 충전은 서버의 `spendStamina`가 맡는다.
-    expect(settleStamina(122, staminaMaxForResearchLevel(2), "2026-09-01T00:00:00.000Z", new Date("2026-09-01T00:10:00.000Z"))).toMatchObject({ amount: 124, recovered: 2 });
+    expect(settleStamina(122, staminaMaxForResearchLevel(2), "2026-09-01T00:00:00.000Z", new Date("2026-09-01T00:25:00.000Z"))).toMatchObject({ amount: 124, recovered: 2 });
   });
 });
 

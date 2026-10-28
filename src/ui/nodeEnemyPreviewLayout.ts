@@ -150,10 +150,11 @@ export const STORY_PREVIEW = {
    */
   reward: { labelGap: 20, labelSize: 24, tag: { height: 42, padX: 20, bevel: 14 }, frame: 96, gap: 118, rowGap: 16, padBottom: 30 },
   /**
-   * 반복 클리어 보상 — 초회 보상 아래 한 줄. 이름표와 작은 액자가 **한 줄에 마주 선다**. 다시 돌 때마다
-   * 받는 소량이라 초회 보상과 같은 무게로 세우지 않는다(이름표는 어둡고 액자는 한 뼘 작다).
+   * 반복 클리어 보상 — 초회 보상 아래에 **같은 양식**(이름표 줄 → 액자 줄, 같은 칸·같은 크기)으로 선다.
+   * 이름표와 작은 액자를 한 줄에 붙여 두던 때는 액자가 작아 초회 줄보다 왼쪽으로 쏠려 두 줄이 어긋나 보였다.
+   * 무게는 이름표의 색(어두운 유리)만 가른다.
    */
-  repeat: { gap: 18, frame: 72, labelSize: 22, tagHeight: 38, frameGap: 14 },
+  repeat: { gap: 26 },
 } as const;
 
 export interface StoryPreviewLayoutInput {
@@ -179,7 +180,8 @@ export interface StoryPreviewLayout {
   storyTextY?: number;
   rewardLabelY?: number;
   rewardRowY?: number;
-  /** 반복 클리어 보상 줄의 가운데. */
+  /** 반복 클리어 보상 이름표의 윗변과 액자 줄의 가운데 — 초회 보상과 같은 짜임이다. */
+  repeatLabelY?: number;
   repeatRowY?: number;
 }
 
@@ -214,14 +216,16 @@ export function storyPreviewLayout(input: StoryPreviewLayoutInput): StoryPreview
     rewardRowY = rewardLabelY + spec.reward.tag.height + spec.reward.rowGap + spec.reward.frame / 2;
     cursor = rewardRowY + spec.reward.frame / 2;
   }
+  let repeatLabelY: number | undefined;
   let repeatRowY: number | undefined;
   if ((input.repeatCount ?? 0) > 0) {
     if (input.rewardCount === 0) dividers.push(cursor);
-    repeatRowY = cursor + spec.repeat.gap + spec.repeat.frame / 2;
-    cursor = repeatRowY + spec.repeat.frame / 2;
+    repeatLabelY = cursor + (input.rewardCount > 0 ? spec.repeat.gap : spec.reward.labelGap);
+    repeatRowY = repeatLabelY + spec.reward.tag.height + spec.reward.rowGap + spec.reward.frame / 2;
+    cursor = repeatRowY + spec.reward.frame / 2;
   }
   cursor += spec.reward.padBottom;
-  return { height: cursor, titleY: spec.padTop, dividers, enemyHeaderY, enemyBodyTop, storyHeaderY, storyTextY, rewardLabelY, rewardRowY, repeatRowY };
+  return { height: cursor, titleY: spec.padTop, dividers, enemyHeaderY, enemyBodyTop, storyHeaderY, storyTextY, rewardLabelY, rewardRowY, repeatLabelY, repeatRowY };
 }
 
 /** 보상 액자 줄의 x. 판 폭 안에 들도록 간격만 좁힌다. */

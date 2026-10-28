@@ -7,18 +7,18 @@ import { STAMINA_REGEN_INTERVAL_MS } from "../../src/core/stamina";
 describe("스테미나 창의 순수 규칙", () => {
   it("은 가득 찼을 때 남은 시간 없이 회복 주기만 적는다", () => {
     // 쓰고 나면 얼마나 빨리 돌아오는지는 가득 찼을 때도 다음 조작을 정한다.
-    expect(staminaTimerLine(120, 120, new Date().toISOString(), Date.now())).toBe("5분마다 1 회복");
-    expect(staminaTimerLine(121, 120, new Date().toISOString(), Date.now())).toBe("5분마다 1 회복");
+    expect(staminaTimerLine(120, 120, new Date().toISOString(), Date.now())).toBe("25분마다 5 회복");
+    expect(staminaTimerLine(121, 120, new Date().toISOString(), Date.now())).toBe("25분마다 5 회복");
   });
 
   it("은 남은 시간을 분:초로 적고 다음 한 칸까지만 센다", () => {
     const now = Date.parse("2026-09-02T00:00:00Z");
-    // 방금 회복한 직후라면 한 구간(5분)이 통째로 남는다.
-    expect(staminaTimerLine(10, 120, "2026-09-02T00:00:00Z", now)).toBe("5분마다 1 회복 · 다음 회복까지 5:00");
+    // 방금 회복한 직후라면 한 구간(25분)이 통째로 남는다.
+    expect(staminaTimerLine(10, 120, "2026-09-02T00:00:00Z", now)).toBe("25분마다 5 회복 · 다음 회복까지 25:00");
     // 구간의 절반이 지나면 남은 절반만 센다.
-    expect(staminaTimerLine(10, 120, "2026-09-02T00:00:00Z", now + STAMINA_REGEN_INTERVAL_MS / 2)).toBe("5분마다 1 회복 · 다음 회복까지 2:30");
+    expect(staminaTimerLine(10, 120, "2026-09-02T00:00:00Z", now + STAMINA_REGEN_INTERVAL_MS / 2)).toBe("25분마다 5 회복 · 다음 회복까지 12:30");
     // 기준 시각이 없는 신규 저장도 창을 비우지 않고 한 구간을 그대로 보여 준다.
-    expect(staminaTimerLine(10, 120, "", now)).toBe("5분마다 1 회복 · 다음 회복까지 5:00");
+    expect(staminaTimerLine(10, 120, "", now)).toBe("25분마다 5 회복 · 다음 회복까지 25:00");
   });
 
   it("은 세 충전 수단이 모두 실제 서버 경계를 갖는지 확인한다", () => {

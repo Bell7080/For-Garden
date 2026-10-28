@@ -282,13 +282,12 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
         this.add(hit);
       });
     }
-    // ── 반복 클리어 보상: 이름표와 작은 액자가 한 줄에 마주 선다. 받은 표시는 없다 — 깰 때마다 받는다.
-    if (layout.repeatRowY !== undefined && sections.repeatRewards?.length) {
-      const repeat = spec.repeat;
-      const y = top + layout.repeatRowY;
-      const tagRight = this.addRewardTag(left, y, t("stageComplete.repeatClear"), "repeat");
+    // ── 반복 클리어 보상: 초회 보상과 같은 짜임(이름표 줄 → 같은 칸·같은 크기의 액자 줄)이다. 받은 표시는 없다 — 깰 때마다 받는다.
+    if (layout.repeatLabelY !== undefined && layout.repeatRowY !== undefined && sections.repeatRewards?.length) {
+      this.addRewardTag(left, top + layout.repeatLabelY + spec.reward.tag.height / 2, t("stageComplete.repeatClear"), "repeat");
+      const columns = storyPreviewRewardColumns(sections.repeatRewards.length, width);
       sections.repeatRewards.forEach((reward, index) => {
-        addStageRewardFrame(this.scene, this, tagRight + repeat.frameGap + repeat.frame / 2 + index * (repeat.frame + repeat.frameGap), y, repeat.frame, reward);
+        addStageRewardFrame(this.scene, this, columns[index], top + layout.repeatRowY!, spec.reward.frame, reward);
       });
     }
 
@@ -301,15 +300,15 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
 
   /**
    * 보상 줄의 이름표 칩 — 왼쪽 위·오른쪽 아래만 깎인 판(화면 전체의 실루엣)에 글자를 얹는다. 초회는 강조색으로
-   * 채워 판 맨 아래에서도 먼저 읽히고, 반복은 어두운 유리에 흐린 강조선만 둘러 한 단계 가볍다. 칩의 오른쪽 끝 x를 돌려준다.
+   * 채워 판 맨 아래에서도 먼저 읽히고, 반복은 어두운 유리에 흐린 강조선만 둘러 한 단계 가볍다.
    */
-  private addRewardTag(left: number, centerY: number, label: string, kind: "first" | "repeat"): number {
+  private addRewardTag(left: number, centerY: number, label: string, kind: "first" | "repeat"): void {
     const first = kind === "first";
     const spec = STORY_PREVIEW;
-    const height = first ? spec.reward.tag.height : spec.repeat.tagHeight;
+    const height = spec.reward.tag.height;
     const style = first
       ? textStyle({ role: "display", size: spec.reward.labelSize, color: "#1a1205" })
-      : textStyle({ role: "emphasis", size: spec.repeat.labelSize, color: COLOR.ink });
+      : textStyle({ role: "emphasis", size: spec.reward.labelSize, color: COLOR.ink });
     const text = this.scene.add.text(0, centerY, label, style).setOrigin(0, 0.5);
     const width = text.width + spec.reward.tag.padX * 2 + (first ? 18 : 0);
     const bevel = spec.reward.tag.bevel;
@@ -322,7 +321,6 @@ export class NodeEnemyPreview extends Phaser.GameObjects.Container {
     }
     text.setX(left + spec.reward.tag.padX + (first ? 18 : 0));
     this.add(text);
-    return left + width;
   }
 
   /** SD 발끝의 화면 y. 적 칸이 접혀 있으면 없다. */

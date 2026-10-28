@@ -44,8 +44,8 @@ export const INVENTORY_JA = {
   "stamina.watchAd": "視聴",
   "stamina.rechargeFailed": "チャージに失敗しました。しばらくしてからもう一度お試しください。",
   "stamina.adCancelled": "広告がキャンセルされたか、準備できていません。",
-  "stamina.nextRecovery": "{minutes}分ごとに1回復 · 次の回復まで {time}",
-  "stamina.regenEvery": "{minutes}分ごとに1回復",
+  "stamina.nextRecovery": "{minutes}分ごとに{amount}回復 · 次の回復まで {time}",
+  "stamina.regenEvery": "{minutes}分ごとに{amount}回復",
 
   "sortie.cake.name": "ケーキ大作戦",
   "sortie.cake.kind": "物量ダンジョン",

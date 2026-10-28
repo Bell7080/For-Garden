@@ -68,6 +68,13 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
         || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
     },
+    getWarFront: (actor) => run(actor, "getWarFront"),
+    beginWarAttack: (actor, slotId, requestId) => (parseGuildWarSlotId(slotId) ? run(actor, "beginWarAttack", [slotId], requestId) : invalid()),
+    recordWarAttack: (actor, record, requestId) => {
+      // 승패는 게임 서버가 다시 굴려 확정한 값이다. DB는 입장 기록·국면·첫 격파만 판정한다.
+      if (!Number.isSafeInteger(record?.day) || !parseGuildWarSlotId(record.slotId) || typeof record.won !== "boolean" || !isId(record.entry)) invalid();
+      return run(actor, "recordWarAttack", [{ day: record.day, slotId: record.slotId, won: record.won, entry: record.entry }], requestId);
+    },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));
       if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");

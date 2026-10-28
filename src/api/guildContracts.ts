@@ -1,6 +1,6 @@
 import type { GuildBadge } from "../core/guildBadge";
 import type { GuildJoinMode, GuildRole } from "../core/guild";
-import type { GuildWarBranch, GuildWarPhase, GuildWarSlotKind } from "../core/guildWar";
+import type { GuildWarBranch, GuildWarOutcome, GuildWarPhase, GuildWarSlotKind } from "../core/guildWar";
 import type { GuildGuardSlotUnit } from "../core/guildGuardBattle";
 
 /**
@@ -16,6 +16,7 @@ export const GUILD_ERROR_CODES = [
   "NO_PERMISSION", "ROLE_FULL", "INVALID_TARGET", "LEADER_CANNOT_LEAVE", "ALREADY_STAMPED", "PRODUCT_NOT_FOUND",
   "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST", "GUARD_LIMIT", "GUARD_NOT_ENTERED",
   "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN", "GUILD_LEVEL_LOW",
+  "WAR_NO_OPPONENT", "WAR_NO_ATTACKS", "WAR_NEW_MEMBER", "SLOT_CLOSED", "WAR_NOT_ENTERED",
 ] as const;
 export type GuildErrorCode = (typeof GUILD_ERROR_CODES)[number];
 export const isGuildErrorCode = (value: string): value is GuildErrorCode => (GUILD_ERROR_CODES as readonly string[]).includes(value);
@@ -131,6 +132,39 @@ export interface GuildWarMapState {
   canArrange: boolean;
   serverTime: number;
 }
+/** 상대 영지의 칸 하나 — 방어진 지도의 칸에 격파·열림을 더한 값. */
+export interface GuildWarFrontSlotView extends GuildWarMapSlot { captured: boolean; open: boolean }
+/** 지난 전투일 한 회차의 결과. `coin`은 내가 받은 길드 코인(공격하지 않았으면 0)이다. */
+export interface GuildWarResultView {
+  day: number; opponentName: string | null; outcome: GuildWarOutcome;
+  myPoints: number; theirPoints: number; delta: number; scoreAfter: number; coin: number;
+}
+/**
+ * 길드전 전선 — 오늘이 전투일이고 짝이 정해졌으면 상대 영지와 두 편의 점수, 내 남은 공격을 싣는다.
+ * `status`: `matched` 짝이 있다 · `bye` 홀수라 상대가 없다(부전승) · `idle` 정비일이거나 참가 조건(인원·방어진)을 못 채웠다.
+ */
+export interface GuildWarFrontView {
+  day: number; phase: GuildWarPhase; endsAt: number;
+  status: "matched" | "bye" | "idle";
+  opponent: { id: string; name: string; badge: GuildBadge; level: number; score: number } | null;
+  /** 상대 영지(`matched`일 때만 칸이 선다). */
+  slots: GuildWarFrontSlotView[];
+  /** 우리가 낸 점수와 상대가 우리 영지에서 낸 점수. */
+  myPoints: number; theirPoints: number;
+  attacksLeft: number;
+  /** 전투일이 시작되기 전에 길드에 있었는가 — 아니면 오늘은 칠 수 없다. */
+  canAttack: boolean;
+  warScore: number | null; warRank: number | null;
+  /** 가장 최근에 끝난 회차. 화면은 본 값과 날짜가 다를 때만 한 번 알린다. */
+  last: GuildWarResultView | null;
+  serverTime: number;
+}
+/** 공격 입장이 길드 백엔드에서 받는 것 — 그 칸의 방어덱 스냅샷과 이름들. 공격 한 번은 여기서 쓴다. */
+export interface GuildWarAttackTicket {
+  day: number; slotId: string; opponentName: string; defenderName: string;
+  defense: GuildGuardSlotUnit[]; attacksLeft: number;
+}
+
 /** 방어덱 게시 — 게임 서버가 보유·성장을 확인해 굳힌 값만 길드 백엔드로 넘어간다. */
 export interface GuildWarDefenseInput { slotId: string; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
 
@@ -168,16 +202,18 @@ export interface GuildApi {
   getWarMap(): Promise<GuildWarMapState>;
   /** 정비일에만. 자기 칸이거나 배치 권한(`formation`)이 있으면 비운다. */
   clearWarSlot(slotId: string): Promise<GuildWarMapState>;
+  /** 길드전 전선 — 전투일의 상대 영지·점수·남은 공격과 지난 회차 결과. */
+  getWarFront(): Promise<GuildWarFrontView>;
 }
 
 export const GUILD_API_METHODS = [
   "getGuild", "searchGuilds", "getMembers", "joinGuild", "cancelJoinRequest", "leaveGuild", "decideJoinRequest", "kickMember",
   "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop", "getGuard",
-  "getRanking", "getWarMap", "clearWarSlot",
+  "getRanking", "getWarMap", "clearWarSlot", "getWarFront",
 ] as const satisfies readonly (keyof GuildApi)[];
 export type GuildApiMethod = (typeof GUILD_API_METHODS)[number];
 export const isGuildApiMethod = (value: string): value is GuildApiMethod => (GUILD_API_METHODS as readonly string[]).includes(value);
-export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard", "getRanking", "getWarMap"];
+export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard", "getRanking", "getWarMap", "getWarFront"];
 
 /**
  * 길드 백엔드 — `GuildApi`의 모든 조작에 호출자(`actor`)를 앞세우고, 지갑이 얽힌 네 조작을 더한 것이다.
@@ -214,6 +250,14 @@ export interface GuildBackend {
   clearWarSlot(actor: GuildActor, slotId: string): Promise<GuildWarMapState>;
   /** 정비일에만, 빈 칸에만. 이미 다른 칸을 맡았으면 그 칸을 비우고 옮긴다. */
   placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState>;
+  getWarFront(actor: GuildActor): Promise<GuildWarFrontView>;
+  /** 전투일에만, 열린 칸에만. 공격 한 번을 쓰고 그 칸의 방어덱을 돌려준다. 같은 요청은 같은 표를 돌려준다. */
+  beginWarAttack(actor: GuildActor, slotId: string, requestId: string): Promise<GuildWarAttackTicket>;
+  /**
+   * 게임 서버가 다시 굴려 확정한 승패만 넘긴다(`entry`는 입장의 requestId). 이기면 그 칸을 격파한다 — 이미 격파됐거나 그 회차가
+   * 정산된 뒤면 점수는 그대로다.
+   */
+  recordWarAttack(actor: GuildActor, record: { day: number; slotId: string; won: boolean; entry: string }, requestId: string): Promise<{ captured: boolean; front: GuildWarFrontView }>;
   /** 길드를 만든다. 젬 차감은 부르는 쪽(`GameApi`)이 한 호출 안에서 확정한다. */
   createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse>;
   /** 길드장만. 바뀌었는지와 값을 치러야 했는지(첫 변경은 무료)를 돌려줘 부르는 쪽이 젬을 받을지 정한다. */

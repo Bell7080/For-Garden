@@ -46,7 +46,12 @@ export type PartyContent =
   /** 길드 수호전 — 위에 적이 없고(웨이브로 몰려온다) 여섯 칸 두 줄이다. 그날의 적 속성을 함께 든다. */
   | { content: "guildGuard"; element: Element }
   /** 길드전 방어덱 — 지도의 칸 하나에 셋을 세운다. 위에 적이 없고 저장이 곧 배치다. 시작 편성은 그 칸에 지금 선 덱이다. */
-  | { content: "guildWarDefense"; slotId: string; deck: readonly string[] };
+  | { content: "guildWarDefense"; slotId: string; deck: readonly string[] }
+  /** 길드전 공격 — 위에 상대 칸의 방어덱이 서고, 전투 시작이 공격 한 번을 쓴다. */
+  | { content: "guildWar"; slotId: string; defenderName: string; units: readonly GuildWarPartyUnit[] };
+
+/** 길드전 상대 칸의 방어덱 한 자리 — 전선(`getWarFront`)이 내려 준 공개 값 그대로다. */
+export interface GuildWarPartyUnit { relicId: string; level: number; breakthrough: number; power: number }
 
 const stringIds = (value: unknown, limit: number): string[] =>
   Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, limit) : [];
@@ -68,7 +73,7 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown; defenderName: string; units: unknown }>;
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -79,6 +84,17 @@ export function normalizePartyContent(input: unknown): PartyContent {
   }
   if (data.content === "guildWarDefense" && parseGuildWarSlotId(data.slotId)) {
     return { content: "guildWarDefense", slotId: data.slotId as string, deck: stringIds(data.deck, 3) };
+  }
+  if (data.content === "guildWar" && parseGuildWarSlotId(data.slotId) && Array.isArray(data.units) && data.units.length === 3) {
+    const units = (data.units as Partial<GuildWarPartyUnit>[]).map((unit) => ({
+      relicId: typeof unit?.relicId === "string" ? unit.relicId : "",
+      level: Number.isFinite(unit?.level) ? unit.level as number : 1,
+      breakthrough: Number.isFinite(unit?.breakthrough) ? unit.breakthrough as number : 0,
+      power: Number.isFinite(unit?.power) ? unit.power as number : 0,
+    }));
+    if (units.every(({ relicId }) => relicId.length > 0)) {
+      return { content: "guildWar", slotId: data.slotId as string, defenderName: typeof data.defenderName === "string" ? data.defenderName : "", units };
+    }
   }
   if (data.content === "guildGuard" && (GUILD_GUARD_ELEMENTS as readonly string[]).includes(data.element ?? "")) {
     return { content: "guildGuard", element: data.element as Element };
@@ -103,10 +119,13 @@ export function normalizePartyContent(input: unknown): PartyContent {
  */
 export type DefeatPartyRoute =
   | { scene: "party"; data: PartyContent }
-  | { scene: "duel"; data: { openOpponents: true } };
+  | { scene: "duel"; data: { openOpponents: true } }
+  /** 길드전 공격은 칸에 묶여 있어 길드전 판으로 돌아가 칸을 다시 고른다. */
+  | { scene: "guild"; data: { page: "war" } };
 
 export function defeatPartyRoute(input: { mode: string; tierId?: string }): DefeatPartyRoute {
   if (input.mode === "duel") return { scene: "duel", data: { openOpponents: true } };
+  if (input.mode === "guildWar") return { scene: "guild", data: { page: "war" } };
   if ((input.mode === "cake" || input.mode === "bounty") && typeof input.tierId === "string") {
     return { scene: "party", data: normalizePartyContent({ content: input.mode, tierId: input.tierId }) };
   }
@@ -148,6 +167,14 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
   if (content.content === "guildGuard") {
     const roster = guildGuardRoster(content.element);
     return { shown: [], all: [...roster.grunts, ...roster.elites], role: "swarm" };
+  }
+  if (content.content === "guildWar") {
+    // 방어덱은 게시한 순간의 레벨·돌파로 선다 — 입장이 돌려줄 스냅샷과 같은 성장 축이다(룬만 빠진다).
+    const shown = content.units.map((unit) => {
+      const base = getRelic(unit.relicId);
+      return { def: { ...base, stats: duelGrownStats(base, unit.level, unit.breakthrough) }, level: unit.level, breakthrough: unit.breakthrough, power: unit.power };
+    });
+    return { shown, all: shown.map(({ def }) => def), role: "normal", totalPower: content.units.reduce((sum, { power }) => sum + power, 0) };
   }
   if (content.content === "duel") {
     // 보이는 칸은 입장이 세울 것과 같은 성장(`duelGrownStats`)으로 선다. 가려진 칸은 상성 계산에도 들지 않는다.

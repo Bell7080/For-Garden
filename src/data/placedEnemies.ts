@@ -57,6 +57,12 @@ export function placedEnemyIndex(
       def, level: input.units[index]?.level ?? 1, breakthrough: input.units[index]?.breakthrough ?? 0,
     }]));
   }
+  // 길드전의 방어덱은 게시한 순간의 스냅샷이 레벨·돌파를 함께 굳혔다.
+  if (input.mode === "guildWar") {
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def, level: input.defense[index]?.snapshot.level ?? 1, breakthrough: input.defense[index]?.snapshot.breakthrough ?? 0,
+    }]));
+  }
   // 원정은 노드 하나가 한 레벨을 쓰고, 돌파는 그 레벨에 닿는 데 필요한 단계다.
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor)
     : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : undefined;

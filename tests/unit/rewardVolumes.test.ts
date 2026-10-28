@@ -8,6 +8,7 @@ import { DUEL_TIERS } from '../../src/core/duelArena';
 import { RAID_DIFFICULTY } from '../../src/data/raid';
 import { GUILD_GUARD } from '../../src/core/guildGuard';
 import { GUILD_GUARD_COIN, guildGuardCoin } from '../../src/core/guildGuardBattle';
+import { GUILD_WAR_COIN } from '../../src/core/guildWarAttack';
 import { EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS, EXPEDITION_TREASURE_REWARD_BALANCE, EXPEDITION_WEEKLY_RANK_POOL } from '../../src/data/expedition';
 describe('젬 보상 볼륨',()=>{
  it('일간·주간 임무 및 연구도 완료의 젬 합계를 상향한 표로 지급한다',()=>{
@@ -75,6 +76,12 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER),approvalMessage).toBe(20);
   expect(GUILD_GUARD.attemptsPerDay,approvalMessage).toBe(2);
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER)*GUILD_GUARD.attemptsPerDay*7,approvalMessage).toBeLessThanOrEqual(280);
+ });
+ // 2026-10-28 응태 승인(결정 카드 「안 A — 승30·패15·부전승20」): 길드전 전투일 코인. 전투일은 이틀에 하루라 주 최대 4번(주 120이 끝).
+ it('길드전 코인은 한 회차 30 · 주 120을 넘지 않는다',()=>{
+  expect(GUILD_WAR_COIN,approvalMessage).toEqual({win:30,loss:15,bye:20,forfeit:0});
+  const battleDays=[0,1,2,3,4,5,6].filter(d=>d%2===1).length+1;
+  expect(Math.max(...Object.values(GUILD_WAR_COIN))*battleDays,approvalMessage).toBeLessThanOrEqual(120);
  });
  // 2026-10-28 응태 승인(결정 카드 「제안한 값으로 둘 다 승인」): 길드 주간 순위 젬 1위 300 · 참여 20(주 1회),
  // 수호전 일일 길드 순위 코인 1위 30 · 참여 4(하루 1회 · 주 최대 210, 판 코인과 합쳐 주 ~210 → ~280).

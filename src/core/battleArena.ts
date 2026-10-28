@@ -33,6 +33,9 @@ export const BATTLE_ARENA = {
   liveArena: { left: 110, right: 970, top: 700, bottom: 1410 },
   // 수호전 전용 항구 광장은 화면 위 1/4부터 바닥이라 기존 전투 좌표를 그대로 수용한다(`GUILD_GUARD_ARENA`와 같은 값).
   guildGuard: { left: 110, right: 970, top: 600, bottom: 1300 },
+  // 길드전 성채 광장은 바닥이 높이 380부터 시작한다. 3대3이라 결투장과 비슷한 깊이(700~1,360)만 쓴다 — 더 넓히면 두 편이
+  // 멀리서 시작해 첫 몇 초가 걷기만 한다.
+  guildWar: { ...BASE_ARENA, top: 700 },
 } as const satisfies Record<string, Arena>;
 
 export type BattleArenaMode = keyof typeof BATTLE_ARENA;

@@ -7,17 +7,21 @@ import {
 } from "../core/guild";
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { combatPower } from "../core/combatPower";
-import { rankGuildWar } from "../core/guildWar";
+import { applyGuildWarDelta, GUILD_WAR_MIN_MEMBERS, GUILD_WAR_START_SCORE, guildWarDayNumber, guildWarPhase, guildWarScoreDelta, pairGuildsForWar, rankGuildWar } from "../core/guildWar";
+import { GUILD_WAR_COIN, guildWarAttacksLeft, guildWarCanAttack, guildWarFront, guildWarPoints, guildWarResult, type GuildWarFrontSlot, type GuildWarSide } from "../core/guildWarAttack";
+import type { GuildGuardSlotUnit } from "../core/guildGuardBattle";
+import { captureExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
+import { createInitialRelicProgress } from "../state/session";
 import { guildWarNow } from "../core/guildPages";
 import { guildWarMapSlots, parseGuildWarSlotId } from "../core/guildWarMap";
 import { guildQaClockShift } from "./guildQaClock";
 import { guildGuardDayKey, guildGuardTotal, rankGuildGuardMembers } from "../core/guildGuard";
-import { PLAYABLE_RELICS } from "../data/relics";
+import { getRelic, PLAYABLE_RELICS } from "../data/relics";
 import { GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, rankRewardGems } from "../data/competitiveRewards";
 import { rankGuildScores } from "../core/guildRankRewards";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
-  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildRankingEntry, type GuildRankingResponse, type GuildWeeklyRankAward, type GuildWarDeckEntry, type GuildWarDefenseInput, type GuildWarMapState, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildRankingEntry, type GuildRankingResponse, type GuildWeeklyRankAward, type GuildWarAttackTicket, type GuildWarDeckEntry, type GuildWarDefenseInput, type GuildWarFrontSlotView, type GuildWarFrontView, type GuildWarMapState, type GuildWarResultView, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
 } from "./guildContracts";
 
 interface MemberRow {
@@ -44,7 +48,13 @@ interface GuildRow {
   members: Map<string, MemberRow>; requests: Map<string, { actor: GuildActor; requestedAt: number }>;
   /** 방어진 지도 — 칸 id → 그 칸을 맡은 길드원의 방어덱. 한 길드원은 한 칸만 맡는다. */
   war?: Map<string, WarDefenseRow>;
+  /** 가장 최근에 정산한 길드전 회차 — 길드원마다 받은 코인을 함께 둔다. */
+  lastWar?: Omit<GuildWarResultView, "coin"> & { coinOf: Map<string, number> };
 }
+/** 한 칸의 격파 — 격파한 길드원(표본의 모의 공격이면 null)과 시각. */
+interface WarCapture { at: number; by: string | null }
+/** 한 전투일의 짝 하나. `captures`는 공격하는 길드 id → 상대 영지에서 격파한 칸. `attackers`는 그날 공격한 길드원. */
+interface WarMatch { day: number; a: string; b: string | null; captures: Map<string, Map<string, WarCapture>>; attackers: Map<string, Set<string>>; settled: boolean }
 interface WarDefenseRow { userId: string; deck: GuildWarDeckEntry[]; lineup: GuildWarDefenseInput["lineup"] | null; placedAt: number }
 
 /** 서버가 모르는 요청을 거절하는 한 줄 도우미. */
@@ -69,6 +79,10 @@ export class FakeGuildServer implements GuildBackend {
   /** 받은 순위 보상 — `week:주:id`·`guard:날:id`. 한 사람은 한 기간에 한 번만 받는다. */
   private readonly rankAwarded = new Set<string>();
   private sequence = 0;
+  /** 길드전 — 전투일(날 번호) → 짝, `날:사용자` → 쓴 공격 수, 입장했지만 아직 결과를 받지 않은 공격. */
+  private readonly warMatches = new Map<number, WarMatch[]>();
+  private readonly warAttackUsed = new Map<string, number>();
+  private readonly warPending = new Set<string>();
 
   constructor(private readonly now: () => number = Date.now, private readonly options: { seed?: boolean; levelGate?: boolean } = {}) {
     if (options.seed ?? QA_TOOLS_ENABLED) this.seedSamples();
@@ -128,6 +142,7 @@ export class FakeGuildServer implements GuildBackend {
     this.touch(me, actor);
     this.reviewLeader(guild);
     this.settleGuardRewards(actor.userId, me);
+    this.settleWars();
     return { guild, me };
   }
   /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
@@ -234,7 +249,7 @@ export class FakeGuildServer implements GuildBackend {
   async getGuild(actor: GuildActor): Promise<GuildStateResponse> {
     const guild = this.myGuild(actor);
     const me = guild?.members.get(actor.userId);
-    if (guild && me) { this.touch(me, actor); this.reviewLeader(guild); this.settleGuardRewards(actor.userId, me); }
+    if (guild && me) { this.touch(me, actor); this.reviewLeader(guild); this.settleGuardRewards(actor.userId, me); this.settleWars(); }
     return {
       guild: guild ? this.detail(guild) : null,
       me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt, guardReward: me.guardReward ? { ...me.guardReward } : null } : null,
@@ -601,6 +616,216 @@ export class FakeGuildServer implements GuildBackend {
     return this.getWarMap(actor);
   }
 
+  // ── 길드전 공격 ─────────────────────────────────────────────────────────────
+  /**
+   * 그 전투일의 짝. 그날 길드전을 처음 부르는 순간 정한다(게으른 매칭) — 인원 `GUILD_WAR_MIN_MEMBERS` 이상이고 방어덱이 하나라도
+   * 선 길드끼리, 점수 순으로 이웃과 짝짓고 지난 회차의 상대는 피한다(`pairGuildsForWar`). 운영 DB 함수도 같은 순서로 정한다.
+   */
+  private warMatchesOf(day: number): WarMatch[] {
+    const existing = this.warMatches.get(day);
+    if (existing) return existing;
+    for (const guild of this.guilds.values()) if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    const entries = [...this.guilds.values()]
+      .filter((g) => g.members.size >= GUILD_WAR_MIN_MEMBERS && this.warOf(g).size > 0)
+      .map((g) => ({ guildId: g.id, score: g.warScore ?? GUILD_WAR_START_SCORE, reachedAt: g.warReachedAt ?? 0 }));
+    const last = new Map<string, string>();
+    for (const match of this.warMatches.get(day - 2) ?? []) if (match.b) { last.set(match.a, match.b); last.set(match.b, match.a); }
+    const matches = pairGuildsForWar(entries, last).map(({ a, b }): WarMatch => ({ day, a, b, captures: new Map([[a, new Map()], ...(b ? [[b, new Map()] as const] : [])]), attackers: new Map(), settled: false }));
+    this.warMatches.set(day, matches);
+    return matches;
+  }
+  private matchOf(guildId: string, day: number): WarMatch | undefined {
+    return this.warMatchesOf(day).find((match) => match.a === guildId || match.b === guildId);
+  }
+  /** 상대 영지 — 방어덱이 선 칸과 내가(우리 길드가) 격파한 칸. */
+  private frontOf(attackerId: string, defender: GuildRow, match: WarMatch): GuildWarFrontSlot[] {
+    const captured = match.captures.get(attackerId) ?? new Map<string, WarCapture>();
+    return guildWarFront(this.level(defender), new Set(this.warOf(defender).keys()), new Set(captured.keys()));
+  }
+  /**
+   * QA 표본 길드원의 공격 — 표본이 섞인 길드는 하루가 흐르는 만큼 상대 영지를 정해진 순서로 친다. 상대 칸의 3분의 1~3분의 2쯤에서
+   * 멈춰 플레이어가 칠 칸이 남는다. 날·길드 id에서만 나오는 값이라 다시 읽어도 같은 칸이 같은 시각에 무너진다.
+   */
+  private simulateSampleAttacks(match: WarMatch): void {
+    if (!match.b) return;
+    const dayStart = match.day * 86_400_000;
+    const progress = Math.min(1, Math.max(0, (this.now() - dayStart) / 86_400_000));
+    for (const [attackerId, defenderId] of [[match.a, match.b], [match.b, match.a]] as const) {
+      const attacker = this.guilds.get(attackerId);
+      const defender = this.guilds.get(defenderId);
+      if (!attacker || !defender) continue;
+      const samples = [...attacker.members.values()].filter((m) => m.sample).length;
+      if (samples === 0) continue;
+      let h = 2166136261;
+      for (const ch of `${attackerId}:${match.day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+      h >>>= 0;
+      const total = this.warOf(defender).size;
+      const full = Math.max(1, Math.min(samples, Math.round(total * (0.34 + (h % 33) / 100))));
+      const captures = match.captures.get(attackerId)!;
+      const done = [...captures.values()].filter(({ by }) => by === null).length;
+      for (let i = done; i < full; i += 1) {
+        const at = dayStart + Math.round(86_400_000 * (i + 1) / (full + 1));
+        if (at > dayStart + progress * 86_400_000) break;
+        const next = this.frontOf(attackerId, defender, match).filter(({ open }) => open).sort((a, b) => ({ grunt: 0, elite: 1, boss: 2 })[a.kind] - ({ grunt: 0, elite: 1, boss: 2 })[b.kind] || a.branch - b.branch || a.index - b.index)[0];
+        if (!next) break;
+        captures.set(next.id, { at, by: null });
+        match.attackers.set(attackerId, (match.attackers.get(attackerId) ?? new Set()).add(`sample:${i}`));
+      }
+    }
+  }
+  private warSide(match: WarMatch, attackerId: string, defenderId: string): GuildWarSide {
+    const defender = this.guilds.get(defenderId);
+    const captures = [...(match.captures.get(attackerId)?.values() ?? [])];
+    return {
+      points: defender ? guildWarPoints(this.frontOf(attackerId, defender, match)) : 0,
+      attacks: match.attackers.get(attackerId)?.size ?? 0,
+      reachedAt: captures.length > 0 ? Math.max(...captures.map(({ at }) => at)) : Number.MAX_SAFE_INTEGER,
+    };
+  }
+  /**
+   * 끝난 전투일을 정산한다(게으른 정산). 점수 증감을 길드에 적고, 그날 한 번이라도 공격한 길드원에게 결과의 길드 코인을 넣는다.
+   * 부전승은 전투일 전에 있던 길드원 모두가 받는다(`GUILD_WAR_COIN`). 결과는 길드마다 가장 최근 회차 하나만 남긴다.
+   */
+  private settleWars(): void {
+    const today = guildWarDayNumber(this.now());
+    for (const [day, matches] of this.warMatches) {
+      if (day >= today) continue;
+      for (const match of matches) {
+        if (match.settled) continue;
+        match.settled = true;
+        this.simulateSampleAttacks(match);
+        const sides = match.b ? [[match.a, match.b], [match.b, match.a]] as const : [[match.a, null]] as const;
+        const outcomes = sides.map(([self, other]) => {
+          if (!other) return { self, other, outcome: "bye" as const, mine: 0, theirs: 0 };
+          const mine = this.warSide(match, self, other);
+          const theirs = this.warSide(match, other, self);
+          return { self, other, outcome: guildWarResult(mine, theirs), mine: mine.points, theirs: theirs.points };
+        });
+        const before = new Map(outcomes.map(({ self }) => [self, this.guilds.get(self)?.warScore ?? GUILD_WAR_START_SCORE]));
+        for (const { self, other, outcome, mine, theirs } of outcomes) {
+          const guild = this.guilds.get(self);
+          if (!guild) continue;
+          const score = before.get(self)!;
+          const delta = guildWarScoreDelta(outcome, score, other ? before.get(other) ?? GUILD_WAR_START_SCORE : score);
+          const after = applyGuildWarDelta(score, delta);
+          if (after !== guild.warScore) guild.warReachedAt = (day + 1) * 86_400_000;
+          guild.warScore = after;
+          const coinOf = new Map<string, number>();
+          const attackers = match.attackers.get(self) ?? new Set<string>();
+          for (const member of guild.members.values()) {
+            const eligible = outcome === "bye" ? guildWarCanAttack(member.joinedAt, day * 86_400_000) : attackers.has(member.userId);
+            if (!eligible || GUILD_WAR_COIN[outcome] <= 0) continue;
+            member.coin += GUILD_WAR_COIN[outcome];
+            coinOf.set(member.userId, GUILD_WAR_COIN[outcome]);
+          }
+          guild.lastWar = { day, opponentName: other ? this.guilds.get(other)?.name ?? null : null, outcome, myPoints: mine, theirPoints: theirs, delta: after - score, scoreAfter: after, coinOf };
+        }
+      }
+    }
+  }
+  private lastWarView(guild: GuildRow, userId: string): GuildWarResultView | null {
+    const last = guild.lastWar;
+    if (!last) return null;
+    const { coinOf, ...view } = last;
+    return { ...view, coin: coinOf.get(userId) ?? 0 };
+  }
+  private warAttacksUsed(day: number, userId: string): number { return this.warAttackUsed.get(`${day}:${userId}`) ?? 0; }
+
+  private frontView(guild: GuildRow, me: MemberRow): GuildWarFrontView {
+    const now = this.now();
+    const day = guildWarDayNumber(now);
+    const { phase, endsAt } = guildWarNow(now);
+    const base: GuildWarFrontView = {
+      day, phase, endsAt, status: "idle", opponent: null, slots: [], myPoints: 0, theirPoints: 0,
+      attacksLeft: guildWarAttacksLeft(this.warAttacksUsed(day, me.userId)), canAttack: false,
+      warScore: guild.warScore ?? null, warRank: this.warRankOf(guild), last: this.lastWarView(guild, me.userId), serverTime: now,
+    };
+    if (phase !== "battle") return base;
+    const match = this.matchOf(guild.id, day);
+    if (!match) return base;
+    if (!match.b) return { ...base, status: "bye" };
+    this.simulateSampleAttacks(match);
+    const opponentId = match.a === guild.id ? match.b : match.a;
+    const opponent = this.guilds.get(opponentId);
+    if (!opponent) return { ...base, status: "bye" };
+    const war = this.warOf(opponent);
+    const slots = this.frontOf(guild.id, opponent, match).map((slot): GuildWarFrontSlotView => {
+      const row = war.get(slot.id);
+      const member = row ? opponent.members.get(row.userId) : undefined;
+      return {
+        id: slot.id, branch: slot.branch, kind: slot.kind, index: slot.index, captured: slot.captured, open: slot.open,
+        holder: member ? { userId: member.userId, name: member.name, level: member.level, avatarRelicId: member.avatarRelicId, frameId: member.frameId, isMe: false } : null,
+        deck: row ? row.deck.map((entry) => ({ ...entry })) : [],
+        power: row ? row.deck.reduce((sum, entry) => sum + entry.power, 0) : 0,
+      };
+    });
+    return {
+      ...base, status: "matched",
+      opponent: { id: opponent.id, name: opponent.name, badge: { ...opponent.badge }, level: this.level(opponent), score: opponent.warScore ?? GUILD_WAR_START_SCORE },
+      slots, myPoints: this.warSide(match, guild.id, opponentId).points, theirPoints: this.warSide(match, opponentId, guild.id).points,
+      canAttack: guildWarCanAttack(me.joinedAt, day * 86_400_000),
+    };
+  }
+
+  async getWarFront(actor: GuildActor): Promise<GuildWarFrontView> {
+    const { guild, me } = this.requireGuild(actor);
+    return this.frontView(guild, me);
+  }
+
+  /** 표본 칸은 공개 덱만 들고 있어 전투에 쓸 스냅샷을 그 값으로 그 자리에서 만든다(룬 없음). */
+  private defenseLineup(row: WarDefenseRow): GuildGuardSlotUnit[] {
+    if (row.lineup) return structuredClone(row.lineup);
+    return row.deck.map(({ relicId, level, breakthrough }) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(getRelic(relicId), { ...createInitialRelicProgress(), level, breakthrough }, [], null),
+    }));
+  }
+
+  async beginWarAttack(actor: GuildActor, slotId: string, requestId: string): Promise<GuildWarAttackTicket> {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      const now = this.now();
+      const day = guildWarDayNumber(now);
+      if (guildWarPhase(day) !== "battle") return fail("WAR_LOCKED");
+      if (!parseGuildWarSlotId(slotId)) return fail("SLOT_INVALID");
+      const match = this.matchOf(guild.id, day);
+      const opponent = match?.b ? this.guilds.get(match.a === guild.id ? match.b : match.a) : undefined;
+      if (!match || !opponent) return fail("WAR_NO_OPPONENT");
+      if (!guildWarCanAttack(me.joinedAt, day * 86_400_000)) return fail("WAR_NEW_MEMBER");
+      const used = this.warAttacksUsed(day, me.userId);
+      if (guildWarAttacksLeft(used) <= 0) return fail("WAR_NO_ATTACKS");
+      this.simulateSampleAttacks(match);
+      const slot = this.frontOf(guild.id, opponent, match).find(({ id }) => id === slotId);
+      if (!slot) return fail("SLOT_INVALID");
+      if (!slot.open) return fail("SLOT_CLOSED");
+      const row = this.warOf(opponent).get(slotId)!;
+      this.warAttackUsed.set(`${day}:${me.userId}`, used + 1);
+      match.attackers.set(guild.id, (match.attackers.get(guild.id) ?? new Set()).add(me.userId));
+      this.warPending.add(`${me.userId}:${day}:${slotId}:${requestId}`);
+      return {
+        day, slotId, opponentName: opponent.name, defenderName: opponent.members.get(row.userId)?.name ?? "",
+        defense: this.defenseLineup(row), attacksLeft: guildWarAttacksLeft(used + 1),
+      };
+    });
+  }
+
+  async recordWarAttack(actor: GuildActor, record: { day: number; slotId: string; won: boolean; entry: string }, requestId: string): Promise<{ captured: boolean; front: GuildWarFrontView }> {
+    const captured = this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      const key = `${me.userId}:${record.day}:${record.slotId}:${record.entry}`;
+      if (!this.warPending.delete(key)) return fail("WAR_NOT_ENTERED");
+      if (!record.won) return false;
+      const match = this.warMatches.get(record.day)?.find((m) => m.a === guild.id || m.b === guild.id);
+      // 정산이 이미 끝났으면(자정을 넘겨 낸 판) 격파는 남기지 않는다 — 끝난 회차의 점수를 바꾸지 않는다.
+      if (!match || match.settled) return false;
+      const captures = match.captures.get(guild.id)!;
+      if (captures.has(record.slotId)) return false;
+      captures.set(record.slotId, { at: this.now(), by: me.userId });
+      return true;
+    });
+    return { captured, front: await this.getWarFront(actor) };
+  }
+
   // ── QA 전용 — 길드전·수호전 시험판(`guildQa`)이 쓰는 조회·조작. 운영 서버의 계약에는 없다. ─────────────
   /** 모든 길드의 id·이름·점수. */
   qaGuilds(): { id: string; name: string; badge: GuildBadge; level: number; memberCount: number; warScore: number | null; guardScore: number | null; warReachedAt: number }[] {
@@ -644,7 +869,7 @@ export class FakeGuildServer implements GuildBackend {
     while ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(unique))) unique = `${name} ${++n}`;
     const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
     const guild: GuildRow = { id, name: unique, badge: { ...badge }, joinMode: "open", notice: "", prosperity: 3_000, createdAt: this.now(), badgeChanges: 0, members: new Map(), requests: new Map() };
-    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now() - QA_WAR_JOIN_LEAD_MS));
     this.guilds.set(id, guild); this.userGuild.set(actor.userId, id); this.requestedBy.delete(actor.userId);
     return id;
   }
@@ -659,7 +884,7 @@ export class FakeGuildServer implements GuildBackend {
     for (const member of guild.members.values()) if (member.role === "leader") member.role = "vice";
     const vices = [...guild.members.values()].filter((m) => m.role === "vice").sort((a, b) => b.joinedAt - a.joinedAt);
     for (const extra of vices.slice(GUILD_ROLE_LIMIT.vice)) extra.role = "officer";
-    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now() - QA_WAR_JOIN_LEAD_MS));
     this.userGuild.set(actor.userId, guildId); this.requestedBy.delete(actor.userId);
     return true;
   }
@@ -675,6 +900,9 @@ function sampleGuardRecord(userId: string, level: number, day: number): { best: 
   h >>>= 0;
   return { best: h % 5 === 0 ? 0 : 80 + (h % 400) + level * (10 + (h >>> 8) % 25), at: day * 86_400_000 + (h % 80_000_000) };
 }
+
+/** QA 길드장은 이틀 전에 들어온 것으로 둔다 — 전투일에 막 들어온 길드원은 공격하지 못하므로(`guildWarCanAttack`) 곧바로 시험할 수 있게. */
+const QA_WAR_JOIN_LEAD_MS = 2 * 86_400_000;
 
 const SAMPLE_NAMES = ["하늘", "새봄", "이슬", "마루", "다온", "보람", "나래", "가람", "솔", "누리", "한결", "도담", "모아", "미르", "아라", "초롱", "온새미", "라온", "해든", "소담"];
 const SAMPLE_BIOS = ["오늘도 복원 중", "치즈케이크는 사랑입니다", "길드전 같이 해요", "느긋하게 가는 중", "수호전 개근 목표", "고고학 전문가", "잘 부탁드립니다"];

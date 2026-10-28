@@ -1116,6 +1116,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse>;
   /** 길드전 방어덱 게시 — 정비일에만, 우리 길드 지도의 빈 칸 하나에. 보유·성장은 서버가 확인해 굳힌다. */
   placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<import("./guildContracts").GuildWarMapState>;
+  /** 길드전 공격 입장 — 전투일에, 상대 영지의 열린 칸 하나를 공격덱 셋으로 친다. 공격 한 번을 여기서 쓴다. */
+  enterGuildWarAttack(request: EnterGuildWarAttackRequest): Promise<EnterGuildWarAttackResponse>;
+  /** 입장 영수증의 두 편성·시드로 판을 서버에서 다시 굴려 승패를 확정하고, 이기면 그 칸을 격파한다. */
+  submitGuildWarAttack(request: SubmitGuildWarAttackRequest): Promise<SubmitGuildWarAttackResponse>;
   /** 길드 코인으로 상점 상품을 산다. */
   buyGuildProduct(request: BuyGuildProductRequest): Promise<BuyGuildProductResponse>;
   /** 장착 수식어 목록을 확정한다. */
@@ -1339,6 +1343,26 @@ export interface EnterGuildGuardResponse {
 }
 /** 방어진 지도의 칸 하나에 렐릭 셋을 세운다. */
 export interface PlaceGuildWarDefenseRequest { requestId?: string; slotId: string; relicIds: string[] }
+/** 상대 영지의 칸 하나를 공격덱 셋으로 친다. */
+export interface EnterGuildWarAttackRequest { requestId: string; slotId: string; relicIds: string[] }
+export interface EnterGuildWarAttackResponse {
+  requestId: string;
+  seed: string;
+  slotId: string;
+  opponentName: string;
+  defenderName: string;
+  /** 입장이 굳힌 공격덱·상대 방어덱 — 서버 재현과 같은 성장 스냅샷이다. */
+  attack: import("../core/guildGuardBattle").GuildGuardSlotUnit[];
+  defense: import("../core/guildGuardBattle").GuildGuardSlotUnit[];
+  attacksLeft: number;
+}
+export interface SubmitGuildWarAttackRequest { requestId: string }
+export interface SubmitGuildWarAttackResponse {
+  outcome: import("../core/guildWarBattle").GuildWarBattleOutcome;
+  /** 이번 판으로 그 칸이 처음 무너졌는가(이미 격파됐거나 회차가 정산된 뒤면 false). */
+  captured: boolean;
+  front: import("./guildContracts").GuildWarFrontView;
+}
 /** 입장 영수증으로 판을 확정한다. 클라이언트가 말하는 점수는 없다 — 서버가 같은 시드로 다시 굴린다. */
 export interface SubmitGuildGuardRequest { requestId: string }
 export interface SubmitGuildGuardResponse {

@@ -206,8 +206,23 @@ export interface GuildGuardBattleInputDto {
   seed: string;
 }
 
+/**
+ * 길드전 공격 — 상대 영지 칸 하나의 방어덱 셋과 공격덱 셋이 맞선다. 공격 한 번은 **입장에서 이미 썼다**(`enterGuildWarAttack`).
+ * 두 편 모두 입장이 굳힌 스냅샷이고, 시드는 그 영수증의 것이라 서버가 같은 판을 다시 굴린다.
+ */
+export interface GuildWarBattleInputDto {
+  mode: "guildWar";
+  requestId: string;
+  slotId: string;
+  opponentName: string;
+  defenderName: string;
+  attack: import("./guildWarBattle").GuildWarLineup;
+  defense: import("./guildWarBattle").GuildWarLineup;
+  seed: string;
+}
+
 /** 일반 스테이지 진입과 원정·레이드·대작전·현상수배·결투 진입을 명시적으로 구분하는 전투 씬 입력 계약이다. */
-export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto | DuelBattleInputDto | GuildGuardBattleInputDto;
+export type BattleSceneInputDto = ExpeditionBattleInputDto | ExpeditionBossBattleInputDto | StageBattleInputDto | RaidBattleInputDto | CakeBattleInputDto | BountyBattleInputDto | DuelBattleInputDto | GuildGuardBattleInputDto | GuildWarBattleInputDto;
 
 /** Phaser가 생략·빈 data 또는 직전 data를 건네도 매 진입의 입력만으로 새 DTO를 만든다. */
 export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto {
@@ -225,6 +240,10 @@ export function normalizeBattleSceneInput(input?: unknown): BattleSceneInputDto 
     // 수호전은 여섯 칸과 영수증·시드가 모두 있어야 서버 재현과 같은 판이 선다.
     if (candidate.mode === "guildGuard" && typeof candidate.requestId === "string" && typeof candidate.element === "string"
       && Array.isArray(candidate.lineup) && candidate.lineup.length === 6 && typeof candidate.seed === "string") return candidate;
+    // 길드전은 두 편 셋과 영수증·시드가 모두 있어야 서버 재현과 같은 판이 선다.
+    if (candidate.mode === "guildWar" && typeof candidate.requestId === "string" && typeof candidate.slotId === "string" && typeof candidate.seed === "string"
+      && Array.isArray(candidate.attack) && candidate.attack.length === 3 && Array.isArray(candidate.defense) && candidate.defense.length === 3
+      && typeof candidate.opponentName === "string" && typeof candidate.defenderName === "string") return candidate;
     // 스토리는 돌아갈 곳 하나만 이어받는다. 모르는 값은 기본 길(지도)로 수렴시킨다.
     if (candidate.mode === "stage" && candidate.exitTo === "lobby") {
       return typeof candidate.epilogueStoryId === "string"

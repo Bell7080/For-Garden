@@ -2128,5 +2128,255 @@
     "OK",
     "OK",
     "ОК"
+  ],
+  "guild.error.WAR_NO_OPPONENT": [
+    "今天没有对战的公会",
+    "วันนี้ไม่มีกิลด์คู่ต่อสู้",
+    "Hôm nay không có bang hội đối thủ",
+    "Tidak ada guild lawan hari ini",
+    "Hoy no hay gremio rival",
+    "Hoje não há guilda adversária",
+    "Heute gibt es keine gegnerische Gilde",
+    "Сегодня нет гильдии-соперника"
+  ],
+  "guild.error.WAR_NO_ATTACKS": [
+    "今天的攻击次数已用完",
+    "ใช้การโจมตีของวันนี้หมดแล้ว",
+    "Đã dùng hết lượt tấn công hôm nay",
+    "Semua serangan hari ini sudah dipakai",
+    "Ya usaste todos los ataques de hoy",
+    "Você já usou todos os ataques de hoje",
+    "Alle heutigen Angriffe sind verbraucht",
+    "Все атаки на сегодня использованы"
+  ],
+  "guild.error.WAR_NEW_MEMBER": [
+    "战斗日开始后加入的成员需等到下一个战斗日才能攻击",
+    "สมาชิกที่เข้าหลังวันรบเริ่มจะโจมตีได้ในวันรบถัดไป",
+    "Thành viên vào sau khi ngày giao chiến bắt đầu có thể tấn công từ ngày giao chiến kế tiếp",
+    "Anggota yang bergabung setelah Hari pertempuran dimulai bisa menyerang mulai Hari pertempuran berikutnya",
+    "Si te uniste después de empezar el día de batalla, podrás atacar desde el siguiente",
+    "Quem entrou após o início do dia de batalha pode atacar a partir do próximo",
+    "Wer nach Beginn des Kampftags beigetreten ist, kann ab dem nächsten Kampftag angreifen",
+    "Вступившие после начала дня битвы смогут атаковать со следующего дня битвы"
+  ],
+  "guild.error.SLOT_CLOSED": [
+    "该格尚未开放或已被击破",
+    "ช่องนี้ยังไม่เปิดหรือถูกทำลายแล้ว",
+    "Ô này chưa mở hoặc đã bị phá",
+    "Pos ini belum terbuka atau sudah jatuh",
+    "Este puesto aún no está abierto o ya cayó",
+    "Este posto ainda não abriu ou já caiu",
+    "Dieser Posten ist noch nicht offen oder bereits gefallen",
+    "Этот пост ещё закрыт или уже пал"
+  ],
+  "guild.error.WAR_NOT_ENTERED": [
+    "没有公会战入场记录",
+    "ไม่มีบันทึกการเข้าสงครามกิลด์",
+    "Không có ghi nhận vào Chiến Bang hội",
+    "Tidak ada catatan masuk Perang Guild",
+    "No hay registro de entrada a la guerra de gremios",
+    "Não há registro de entrada na guerra de guildas",
+    "Kein Eintrittsnachweis für den Gildenkrieg",
+    "Нет записи о входе в войну гильдий"
+  ],
+  "guild.war.party.attackTitle": [
+    "公会战攻击 · {slot}",
+    "โจมตีสงครามกิลด์ · {slot}",
+    "Tấn công Chiến Bang hội · {slot}",
+    "Serangan Perang Guild · {slot}",
+    "Ataque de guerra de gremios · {slot}",
+    "Ataque de guerra de guildas · {slot}",
+    "Gildenkrieg-Angriff · {slot}",
+    "Атака войны гильдий · {slot}"
+  ],
+  "guild.war.result.captured": [
+    "击破该格 +{points}分 · 我方积分 {total}",
+    "ทำลายช่อง +{points} · คะแนนเรา {total}",
+    "Phá ô +{points} điểm · Điểm phe ta {total}",
+    "Pos jatuh +{points} · Skor kita {total}",
+    "Puesto tomado +{points} · Nuestra puntuación {total}",
+    "Posto tomado +{points} · Nossa pontuação {total}",
+    "Posten erobert +{points} · Unsere Punkte {total}",
+    "Пост взят +{points} · Наш счёт {total}"
+  ],
+  "guild.war.result.alreadyDown": [
+    "该格已被击破 · 我方积分 {total}",
+    "ช่องนี้ถูกทำลายไปแล้ว · คะแนนเรา {total}",
+    "Ô này đã bị phá trước đó · Điểm phe ta {total}",
+    "Pos itu sudah jatuh · Skor kita {total}",
+    "Ese puesto ya había caído · Nuestra puntuación {total}",
+    "Esse posto já tinha caído · Nossa pontuação {total}",
+    "Dieser Posten war schon gefallen · Unsere Punkte {total}",
+    "Этот пост уже пал · Наш счёт {total}"
+  ],
+  "guild.war.result.toWar": [
+    "返回公会战",
+    "ไปสงครามกิลด์",
+    "Về Chiến Bang hội",
+    "Ke Perang Guild",
+    "Ir a la guerra de gremios",
+    "Ir à guerra de guildas",
+    "Zum Gildenkrieg",
+    "К войне гильдий"
+  ],
+  "guild.war.front.vs": [
+    "对手 {name}",
+    "คู่ต่อสู้ {name}",
+    "Đối thủ {name}",
+    "Lawan {name}",
+    "Rival {name}",
+    "Adversário {name}",
+    "Gegner {name}",
+    "Соперник {name}"
+  ],
+  "guild.war.front.attacks": [
+    "剩余攻击 {left}/{total}",
+    "โจมตีเหลือ {left}/{total}",
+    "Lượt tấn công {left}/{total}",
+    "Serangan {left}/{total}",
+    "Ataques {left}/{total}",
+    "Ataques {left}/{total}",
+    "Angriffe {left}/{total}",
+    "Атаки {left}/{total}"
+  ],
+  "guild.war.front.newMember": [
+    "下一个战斗日起可攻击",
+    "โจมตีได้ตั้งแต่วันรบถัดไป",
+    "Tấn công từ ngày giao chiến kế tiếp",
+    "Bisa menyerang mulai Hari pertempuran berikutnya",
+    "Podrás atacar el próximo día de batalla",
+    "Pode atacar no próximo dia de batalha",
+    "Angriff ab dem nächsten Kampftag",
+    "Атака со следующего дня битвы"
+  ],
+  "guild.war.front.points": [
+    "我方 {mine} : {theirs} 对方",
+    "เรา {mine} : {theirs} คู่แข่ง",
+    "Ta {mine} : {theirs} Địch",
+    "Kita {mine} : {theirs} Lawan",
+    "Nosotros {mine} : {theirs} Rival",
+    "Nós {mine} : {theirs} Rival",
+    "Wir {mine} : {theirs} Gegner",
+    "Мы {mine} : {theirs} Они"
+  ],
+  "guild.war.front.bye": [
+    "今天没有对手，不战而胜",
+    "วันนี้ไม่มีคู่ต่อสู้ ชนะผ่าน",
+    "Hôm nay không có đối thủ, thắng mặc định",
+    "Tidak ada lawan hari ini, menang tanpa bertanding",
+    "Hoy no hay rival: victoria por incomparecencia",
+    "Hoje não há adversário: vitória por W.O.",
+    "Heute kein Gegner – kampfloser Sieg",
+    "Сегодня нет соперника — техническая победа"
+  ],
+  "guild.war.front.idle": [
+    "今天未能参加公会战",
+    "วันนี้ไม่ได้เข้าร่วมสงครามกิลด์",
+    "Hôm nay không tham gia Chiến Bang hội",
+    "Hari ini tidak ikut Perang Guild",
+    "Hoy no participas en la guerra de gremios",
+    "Hoje a guilda não participa da guerra de guildas",
+    "Heute nicht im Gildenkrieg",
+    "Сегодня гильдия не участвует в войне гильдий"
+  ],
+  "guild.war.front.captured": [
+    "已击破的格",
+    "ช่องที่ทำลายแล้ว",
+    "Ô đã bị phá",
+    "Pos ini sudah jatuh",
+    "Este puesto ya cayó",
+    "Este posto já caiu",
+    "Dieser Posten ist gefallen",
+    "Этот пост пал"
+  ],
+  "guild.war.front.closedElite": [
+    "普通格倒下一半后开放",
+    "เปิดเมื่อช่องทั่วไปถูกทำลายครึ่งหนึ่ง",
+    "Mở khi một nửa ô thường bị phá",
+    "Terbuka saat separuh pos biasa jatuh",
+    "Se abre cuando cae la mitad de los puestos normales",
+    "Abre quando metade dos postos comuns cair",
+    "Öffnet, wenn die Hälfte der normalen Posten gefallen ist",
+    "Откроется, когда падёт половина обычных постов"
+  ],
+  "guild.war.front.closedBoss": [
+    "两个精锐倒下后开放",
+    "เปิดเมื่ออีลีททั้งสองถูกทำลาย",
+    "Mở khi cả hai ô Tinh nhuệ bị phá",
+    "Terbuka saat kedua Elite jatuh",
+    "Se abre cuando caen las dos Élites",
+    "Abre quando as duas Elites caírem",
+    "Öffnet, wenn beide Elite-Posten gefallen sind",
+    "Откроется, когда падут обе Элиты"
+  ],
+  "guild.war.front.attack": [
+    "攻击",
+    "โจมตี",
+    "Tấn công",
+    "Serang",
+    "Atacar",
+    "Atacar",
+    "Angreifen",
+    "Атаковать"
+  ],
+  "guild.war.notice.title": [
+    "公会战结果",
+    "ผลสงครามกิลด์",
+    "Kết quả Chiến Bang hội",
+    "Hasil Perang Guild",
+    "Resultado de la guerra de gremios",
+    "Resultado da guerra de guildas",
+    "Gildenkrieg-Ergebnis",
+    "Итоги войны гильдий"
+  ],
+  "guild.war.notice.win": [
+    "战胜了 {name}",
+    "ชนะ {name}",
+    "Chiến thắng {name}",
+    "Menang melawan {name}",
+    "Victoria contra {name}",
+    "Vitória contra {name}",
+    "Sieg gegen {name}",
+    "Победа над {name}"
+  ],
+  "guild.war.notice.loss": [
+    "败给了 {name}",
+    "แพ้ {name}",
+    "Thất bại trước {name}",
+    "Kalah melawan {name}",
+    "Derrota contra {name}",
+    "Derrota contra {name}",
+    "Niederlage gegen {name}",
+    "Поражение от {name}"
+  ],
+  "guild.war.notice.bye": [
+    "没有对手，不战而胜",
+    "ไม่มีคู่ต่อสู้ ชนะผ่าน",
+    "Không có đối thủ, thắng mặc định",
+    "Tidak ada lawan, menang tanpa bertanding",
+    "Sin rival: victoria por incomparecencia",
+    "Sem adversário: vitória por W.O.",
+    "Kein Gegner – kampfloser Sieg",
+    "Нет соперника — техническая победа"
+  ],
+  "guild.war.notice.forfeit": [
+    "未进行攻击，按弃权处理",
+    "ไม่ได้โจมตี จึงถือว่าสละสิทธิ์",
+    "Không tấn công nên bị xử thua",
+    "Tidak ada serangan, dianggap menyerah",
+    "No hubo ataques: cuenta como abandono",
+    "Nenhum ataque feito: conta como desistência",
+    "Kein Angriff – gilt als Aufgabe",
+    "Атак не было — засчитан отказ"
+  ],
+  "guild.war.notice.detail": [
+    "比分 {mine} : {theirs} · 公会战积分 {delta} · 公会币 {coin} 枚",
+    "คะแนน {mine} : {theirs} · คะแนนสงครามกิลด์ {delta} · เหรียญกิลด์ {coin} เหรียญ",
+    "Tỉ số {mine} : {theirs} · Điểm Chiến Bang hội {delta} · {coin} xu bang hội",
+    "Skor {mine} : {theirs} · Skor Perang Guild {delta} · {coin} koin guild",
+    "Marcador {mine} : {theirs} · Puntos de guerra de gremios {delta} · {coin} monedas del gremio",
+    "Placar {mine} : {theirs} · Pontos de guerra de guildas {delta} · {coin} moedas da guilda",
+    "Stand {mine} : {theirs} · Gildenkrieg-Punkte {delta} · {coin} Gildenmünzen",
+    "Счёт {mine} : {theirs} · Очки войны гильдий {delta} · Монет гильдии: {coin}"
   ]
 }

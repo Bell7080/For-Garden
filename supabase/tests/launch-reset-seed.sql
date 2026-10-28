@@ -27,6 +27,7 @@ insert into public.coupon_codes(id, coupon_id, code_hash, code_hint, redeemed_by
   values ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', repeat('b', 64), 'AB..', '00000000-0000-0000-0000-000000000001', now());
 insert into public.coupon_redemptions(coupon_id, player_id, code_id) values ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333');
 insert into public.coupon_attempts(player_id, ok) values ('00000000-0000-0000-0000-000000000001', true);
+insert into public.coupon_web_tickets(token_hash, player_id) values ('reset-fixture-ticket', '00000000-0000-0000-0000-000000000001');
 insert into public.request_receipts(player_id, request_id, method, response) values ('00000000-0000-0000-0000-000000000001', 'request-0001', 'x', '{}');
 insert into public.support_tickets(id, source, category, subject, body, player_id) values ('44444444-4444-4444-4444-444444444444', 'game', 'bug', 's', 'b', '00000000-0000-0000-0000-000000000001');
 insert into public.support_messages(ticket_id, author_kind, body) values ('44444444-4444-4444-4444-444444444444', 'player', 'hello');
@@ -45,6 +46,19 @@ insert into public.guild_requests(guild_id, player_id, actor) values ('55555555-
 insert into public.guild_attendance(player_id, day, choice) values ('00000000-0000-0000-0000-000000000001', current_date, 'gold');
 insert into public.guild_left(player_id, left_at) values ('00000000-0000-0000-0000-000000000003', now());
 insert into public.guild_receipts(player_id, request_id, method, response) values ('00000000-0000-0000-0000-000000000001', 'request-0003', 'createGuild', '{}');
+insert into public.guild_war_defense(guild_id, slot_id, player_id, deck, lineup) values ('55555555-5555-5555-5555-555555555555', '1:grunt:0', '00000000-0000-0000-0000-000000000001', '["a","b","c"]', '[{},{},{}]');
+insert into public.guild_week_ledger(week, guild_id, player_id, contribution) values ('2026-W43', '55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001', 10);
+insert into public.guild_guard_ledger(day, guild_id, player_id, score) values (20001, '55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001', 100);
+insert into public.guild_rank_results(board, period, guild_id, rank, score) values ('week', '2026-W43', '55555555-5555-5555-5555-555555555555', 1, 10);
+insert into public.guild_rank_totals(board, period, total) values ('week', '2026-W43', 1);
+insert into public.guild_rank_awards(board, period, player_id, guild_id, rank, amount) values ('week', '2026-W43', '00000000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 1, 100);
+insert into public.guild_war_days(day) values (20001);
+insert into public.guild_war_matches(day, guild_a) values (20001, '55555555-5555-5555-5555-555555555555');
+insert into public.guild_war_captures(day, attacker, slot_id, by_player) values (20001, '55555555-5555-5555-5555-555555555555', '1:grunt:0', '00000000-0000-0000-0000-000000000001');
+insert into public.guild_war_attacks(day, player_id, guild_id, used) values (20001, '00000000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 1);
+insert into public.guild_war_admissions(player_id, request_id, day, slot_id, guild_id) values ('00000000-0000-0000-0000-000000000001', 'war-reset-fixture', 20001, '1:grunt:1', '55555555-5555-5555-5555-555555555555');
+insert into public.guild_war_results(guild_id, day, outcome, my_points, their_points, delta, score_after) values ('55555555-5555-5555-5555-555555555555', 20001, 'win', 300, 100, 25, 1025);
+insert into public.guild_war_coins(day, guild_id, player_id, coin) values (20001, '55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001', 30);
 insert into public.admin_audit_log(actor, action, target) values ('00000000-0000-0000-0000-0000000000a1', 'player_status', 'players:test');
 insert into public.website_registration_limits(fingerprint, bucket) values (repeat('c', 64), now());
 

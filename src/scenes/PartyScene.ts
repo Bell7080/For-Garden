@@ -311,7 +311,7 @@ export class PartyScene extends Phaser.Scene {
     // 출격을 누르는 순간에는 대부분 캐시에서 나온다. 기다리지 않으므로 이 화면은 막히지 않는다.
     this.prefetchBattleSds();
     // 스테미나를 쓰는 편성(스토리·레이드·현상수배·대작전)만 오른쪽 위에 남은 양을 세운다. 결투는 도전권이라 세우지 않는다.
-    const staminaContent = this.content.content !== "duel" && !this.defenseOnly && !this.guard;
+    const staminaContent = this.content.content !== "duel" && this.content.content !== "guildWar" && !this.defenseOnly && !this.guard;
     const titleText = this.add.text(cx, 70, this.title(stage), textStyle({ role: "display", size: 46 })).setOrigin(0.5, 0);
     if (staminaContent) {
       // 가운데 제목이 오른쪽 스테미나 칸(왼쪽 끝 826px)을 넘지 않게 폭을 지킨다.
@@ -677,6 +677,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
     if (content.content === "guildGuard") return t("guild.guard.party.title");
     if (content.content === "guildWarDefense") return t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) });
+    if (content.content === "guildWar") return t("guild.war.party.attackTitle", { slot: guildWarSlotLabel(content.slotId) });
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;
     if (content.content === "cake") return `${t("cake.title")}  ${getCakeOperationTier(content.tierId).name}`;
@@ -691,7 +692,7 @@ export class PartyScene extends Phaser.Scene {
     this.startButton.setEnabled(false);
 
     // 결투는 스토리 편성을 저장하지 않는다 — 공격덱은 입장이, 방어덱은 게시가 서버에 남긴다.
-    if (this.content.content === "duel" || this.defenseOnly || this.guard) {
+    if (this.content.content === "duel" || this.content.content === "guildWar" || this.defenseOnly || this.guard) {
       try {
         if (this.guard) settingsManager.update({ game: { guardFormation: [...this.picked] } });
         await this.enterBattle();
@@ -759,7 +760,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "raid") startScene(this, "raid", { raidId: content.raidId });
     else if (content.content === "duel" || content.content === "duelDefense") startScene(this, "duel");
     else if (content.content === "guildGuard") startScene(this, "guild", { page: "guard" });
-    else if (content.content === "guildWarDefense") startScene(this, "guild", { page: "war" });
+    else if (content.content === "guildWarDefense" || content.content === "guildWar") startScene(this, "guild", { page: "war" });
     else if (content.content === "bounty") startScene(this, "bounty", { tierId: content.tierId });
     else if (content.content === "cake") startScene(this, "cakeOperation", { tierId: content.tierId });
     else startScene(this, ancientStageFloor(session.selectedStageId) !== undefined ? "ancientStrata" : "stageMap");

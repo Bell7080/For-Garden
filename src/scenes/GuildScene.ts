@@ -7,6 +7,7 @@ import { guildQaClockShift } from "../api/guildQa";
 import {
   GuildApiError, isGuildErrorCode, type GuildAttendanceState, type GuildMe, type GuildMemberView, type GuildMembersResponse,
   type GuildStateResponse, type GuildSummary, type GuildGuardBoard, type GuildWarMapSlot, type GuildWarMapState,
+  type GuildWarFrontSlotView, type GuildWarFrontView,
 } from "../api/guildContracts";
 import type { GuildGuardStatusResponse } from "../api/contracts";
 import { GUILD_GUARD } from "../core/guildGuard";
@@ -21,7 +22,8 @@ import {
   DEFAULT_GUILD_BADGE, GUILD_BADGE_COLORS, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
 } from "../core/guildBadge";
 import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
-import { GUILD_WAR_MIN_MEMBERS } from "../core/guildWar";
+import { GUILD_WAR_ATTACKS_PER_MEMBER, GUILD_WAR_MIN_MEMBERS } from "../core/guildWar";
+import { drawGlyph } from "../ui/glyphs";
 import { guildAttendanceRace } from "../core/guildRace";
 import { isOnline, lastActiveAge } from "../core/social";
 import { GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, rankTableAsPool } from "../data/competitiveRewards";
@@ -153,6 +155,8 @@ export class GuildScene extends Phaser.Scene {
   private guardBoard?: GuildGuardBoard;
   private guardStatus?: GuildGuardStatusResponse;
   private warMap?: GuildWarMapState;
+  /** 전투일의 전선 — 상대 영지와 두 편 점수, 내 남은 공격. 지난 회차 결과도 함께 온다. */
+  private warFront?: GuildWarFrontView;
   /** 방어덱을 막 배치하고 돌아왔으면 한 번 알린다. */
   private entryToast = false;
   /** 들어올 때 열 큰 탭 — 수호전 결과판에서 돌아오면 수호전 쪽이 바로 선다. */
@@ -192,7 +196,7 @@ export class GuildScene extends Phaser.Scene {
   create(): void {
     setDebugScene("guild");
     this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = this.entryPage; this.tab = "info";
-    this.guardTab = "members"; this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined;
+    this.guardTab = "members"; this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined; this.warFront = undefined;
     this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
     this.ticker = undefined;
     this.backdropKey = this.page === "war" ? BACKGROUND.guildWar : this.page === "guard" ? BACKGROUND.guildGuard : BACKGROUND.guild;
@@ -255,7 +259,7 @@ export class GuildScene extends Phaser.Scene {
       if (!this.state.guild || this.browsing) this.browse = (await guildApi.searchGuilds(this.query)).guilds;
       else if (this.page === "info" && this.tab === "members") this.members = await guildApi.getMembers();
       else if (this.page === "guard") [this.guardBoard, this.guardStatus] = await Promise.all([guildApi.getGuard(), gameApi.getGuildGuard()]);
-      else if (this.page === "war") this.warMap = await guildApi.getWarMap();
+      else if (this.page === "war") [this.warMap, this.warFront] = await Promise.all([guildApi.getWarMap(), guildApi.getWarFront()]);
       if (this.state.guild && !this.stampChecked) {
         this.stampChecked = true;
         attendance = await guildApi.getAttendance();
@@ -272,6 +276,7 @@ export class GuildScene extends Phaser.Scene {
     if (attendance && !attendance.stampedToday) this.openStampBoard(attendance);
     else if (this.announceLevelUp()) return;
     else if (this.announceGuardReward()) return;
+    else if (this.announceWarResult()) return;
     else if (this.entryToast) { this.entryToast = false; this.toast(t("guild.war.placedToast"), "unlocked"); }
   }
 
@@ -616,6 +621,23 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /** 어제 수호전 길드 순위로 받은 코인을 한 번 알린다 — 본 날짜는 기기 설정에만 남긴다. 띄웠으면 true. */
+  /** 끝난 길드전 회차의 결과를 한 번 알린다 — 길드전 쪽에 들어왔을 때만, 본 날짜와 다를 때만. */
+  private announceWarResult(): boolean {
+    const last = this.page === "war" ? this.warFront?.last : undefined;
+    if (!last || this.popups.isOpen) return false;
+    if (settingsManager.get().game.guildSeen.warResult === last.day) return false;
+    settingsManager.rememberGuildSeen("warResult", last.day);
+    const delta = last.delta > 0 ? `+${last.delta}` : `${last.delta}`;
+    this.popups.confirm({
+      title: t("guild.war.notice.title"),
+      message: `${t(`guild.war.notice.${last.outcome}`, { name: last.opponentName ?? "" })}\n${t("guild.war.notice.detail", {
+        mine: last.myPoints.toLocaleString(), theirs: last.theirPoints.toLocaleString(), delta, coin: last.coin.toLocaleString(),
+      })}`,
+      confirmLabel: t("guild.guard.notice.ok"), cancelLabel: false,
+    });
+    return true;
+  }
+
   private announceGuardReward(): boolean {
     const reward = this.state?.me?.guardReward;
     if (!reward || this.popups.isOpen) return false;
@@ -1053,17 +1075,22 @@ export class GuildScene extends Phaser.Scene {
     this.tick(timer, () => t(battle ? "guild.war.battleEnds" : "guild.war.prepEnds", { time: hmText(war.endsAt - this.now) }));
     this.label(this.controls, S.side, S.controls.y, guild.warScore === null ? t("guild.war.noScore") : t("guild.war.score", { score: guild.warScore.toLocaleString(), rank: guild.warRank ?? "-" }), { role: "emphasis", size: 28, color: COLOR.ink });
     const map = this.warMap;
+    const front = this.warFront;
+    if (battle && front?.status === "matched" && front.opponent) { this.paintWarFront(front); return; }
     if (map) {
       const placed = map.slots.filter(({ holder }) => holder).length;
       this.label(this.controls, S.side + S.width, S.controls.y, t("guild.war.placed", { count: placed, total: map.slots.length }), { role: "emphasis", size: 28, color: COLOR.accentText }, [1, 0.5]);
     }
-    this.label(this.controls, BASE_WIDTH / 2, W.note, t("guild.war.members", { need: GUILD_WAR_MIN_MEMBERS, count: guild.memberCount }), {
-      role: "body", size: 28, color: guild.memberCount < GUILD_WAR_MIN_MEMBERS ? COLOR.dangerText : COLOR.inkDim,
+    const note = battle && front?.status === "bye" ? t("guild.war.front.bye")
+      : battle && front?.status === "idle" ? t("guild.war.front.idle")
+        : t("guild.war.members", { need: GUILD_WAR_MIN_MEMBERS, count: guild.memberCount });
+    this.label(this.controls, BASE_WIDTH / 2, W.note, note, {
+      role: "body", size: 28, color: !battle && guild.memberCount < GUILD_WAR_MIN_MEMBERS ? COLOR.dangerText : battle && front?.status === "bye" ? COLOR.accentText : COLOR.inkDim,
     }, [0.5, 0.5]);
-    if (map) this.paintWarMap(map);
+    if (map) this.paintWarMap(map.slots, (v, slot) => this.paintWarNode(v, map, slot));
   }
 
-  private paintWarMap(map: GuildWarMapState): void {
+  private paintWarMap<Slot extends GuildWarMapSlot>(slots: readonly Slot[], paintNode: (v: Phaser.GameObjects.Container, slot: Slot) => void): void {
     const v = this.view;
     const { width, top, bottom } = W.column;
     for (const branch of [1, 2, 3] as const) {
@@ -1076,14 +1103,14 @@ export class GuildScene extends Phaser.Scene {
       for (const index of [0, 1]) {
         const elite = guildWarNodeSpot({ branch, kind: "elite", index });
         lines.lineBetween(boss.x, boss.y + boss.size / 2, elite.x, elite.y - elite.size / 2);
-        if (map.slots.some((slot) => slot.branch === branch && slot.kind === "grunt" && slot.index === index)) {
+        if (slots.some((slot) => slot.branch === branch && slot.kind === "grunt" && slot.index === index)) {
           const grunt = guildWarNodeSpot({ branch, kind: "grunt", index });
           lines.lineBetween(elite.x, elite.y + elite.size / 2 + W.nameGap + 18, grunt.x, grunt.y - grunt.size / 2);
         }
       }
       v.add(lines);
     }
-    for (const slot of map.slots) this.paintWarNode(v, map, slot);
+    for (const slot of slots) paintNode(v, slot);
   }
 
   private paintWarNode(v: Phaser.GameObjects.Container, map: GuildWarMapState, slot: GuildWarMapSlot): void {
@@ -1117,6 +1144,98 @@ export class GuildScene extends Phaser.Scene {
       if (holder) this.openWarSlot(map, slot);
       else if (map.phase !== "prep") this.toast(t("guild.error.WAR_LOCKED"));
       else this.openWarDefense(map, slot.id);
+    });
+  }
+
+  /**
+   * 전투일의 전선 — 위 줄에 상대 길드와 내 남은 공격, 본문에 **상대 영지**(같은 기둥 지도), 밑줄에 두 편의 점수가 선다.
+   * 격파한 칸은 눌린 채 체크가, 아직 열리지 않은 칸은 자물쇠가 서고, 열린 칸만 강조 테두리를 두른다.
+   */
+  private paintWarFront(front: GuildWarFrontView): void {
+    const opponent = front.opponent!;
+    this.label(this.controls, S.side, S.controls.y, t("guild.war.front.vs", { name: opponent.name }), { role: "emphasis", size: 28, color: COLOR.ink });
+    const attacks = front.canAttack ? t("guild.war.front.attacks", { left: front.attacksLeft, total: GUILD_WAR_ATTACKS_PER_MEMBER }) : t("guild.war.front.newMember");
+    this.label(this.controls, S.side + S.width, S.controls.y, attacks, {
+      role: "emphasis", size: 28, color: !front.canAttack || front.attacksLeft <= 0 ? COLOR.dangerText : COLOR.accentText,
+    }, [1, 0.5]);
+    this.label(this.controls, BASE_WIDTH / 2, W.note, t("guild.war.front.points", { mine: front.myPoints.toLocaleString(), theirs: front.theirPoints.toLocaleString() }), {
+      role: "display", size: 32, color: front.myPoints >= front.theirPoints ? COLOR.accentText : COLOR.dangerText,
+    }, [0.5, 0.5]);
+    this.paintWarMap(front.slots, (v, slot) => this.paintFrontNode(v, front, slot));
+  }
+
+  private paintFrontNode(v: Phaser.GameObjects.Container, front: GuildWarFrontView, slot: GuildWarFrontSlotView): void {
+    const { x, y, size } = guildWarNodeSpot(slot);
+    const node = this.add.container(x, y);
+    v.add(node);
+    const edge = slot.open ? COLOR.accent : slot.kind === "boss" ? WAR_BOSS_EDGE : slot.kind === "elite" ? WAR_ELITE_EDGE : undefined;
+    const holder = slot.holder;
+    if (holder) {
+      this.plate(node, 0, 0, size + 12, size + 12, edge);
+      const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
+      const face = new ProfileAvatar(this, 0, 0, { size: Math.round(size * 0.8), frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" });
+      node.add(face);
+      if (slot.captured) {
+        face.setAlpha(0.4);
+        node.add(drawGlyph(this, "check", 0, 0, Math.round(size * 0.5), COLOR.accent, 1, 5));
+      } else if (!slot.open) {
+        face.setAlpha(0.6);
+        node.add(drawGlyph(this, "lock", size / 2 - 4, -size / 2 + 4, Math.round(size * 0.32), COLOR.inkDimHex, 0.95, 3));
+      }
+    } else {
+      // 지키는 사람이 없는 칸 — 처음부터 무너진 것으로 본다.
+      this.plate(node, 0, 0, size, size);
+      this.label(node, 0, 0, "-", { role: "display", size: Math.round(size * 0.4), color: COLOR.inkDim }, [0.5, 0.5]);
+    }
+    const name = holder ? holder.name : t("guild.war.empty");
+    const caption = this.label(node, 0, size / 2 + W.nameGap, name, {
+      role: holder ? "emphasis" : "body", size: slot.kind === "grunt" ? 20 : 24, color: slot.open ? COLOR.ink : COLOR.inkDim,
+    }, [0.5, 0.5]);
+    squeezeTextToWidth(caption, slot.kind === "grunt" ? 116 : slot.kind === "elite" ? 128 : 260);
+    if (!holder) return;
+    const hit = addClippedHit(this, node, 0, 0, size + 16, size + 16,
+      () => ({ left: 0, right: BASE_WIDTH, top: W.column.top, bottom: W.column.bottom }), { useHandCursor: true });
+    hit.on("pointerdown", () => pressIn(node));
+    hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
+    hit.on("pointerup", () => {
+      pressOut(node);
+      if (!this.canTap() || this.popups.isOpen) return;
+      this.openFrontSlot(front, slot);
+    });
+  }
+
+  /** 상대 칸의 쪽지 — 지키는 길드원과 그 덱, 칸의 상태. 열린 칸이면 공격 버튼이 편성을 연다. */
+  private openFrontSlot(front: GuildWarFrontView, slot: GuildWarFrontSlotView): void {
+    const holder = slot.holder!;
+    const status = slot.captured ? t("guild.war.front.captured")
+      : slot.open ? null
+        : t(slot.kind === "boss" ? "guild.war.front.closedBoss" : "guild.war.front.closedElite");
+    const height = 680;
+    this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true }, (body, close) => {
+      const top = -height / 2;
+      const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
+      body.add(new ProfileAvatar(this, -260, top + 170, { size: 96, frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" }));
+      body.add(squeezeTextToWidth(this.add.text(-180, top + 150, holder.name, textStyle({ role: "display", size: 36, color: COLOR.ink })).setOrigin(0, 0.5), 480));
+      this.label(body, -180, top + 200, t("friends.researchLevel", { level: holder.level }), { role: "emphasis", size: 26, color: COLOR.accentText });
+      slot.deck.forEach((entry, index) => {
+        const def = RELICS.find((candidate) => candidate.id === entry.relicId);
+        if (def) body.add(new FaceFrame(this, (index - 1) * 200, top + 340, { portraitAssetId: def.portraitAssetId, size: 150, amount: `LV.${entry.level}` }));
+      });
+      this.label(body, 0, top + 470, t("guild.war.slot.power", { power: slot.power.toLocaleString() }), { role: "emphasis", size: 30, color: COLOR.ink }, [0.5, 0.5]);
+      if (status) {
+        this.label(body, 0, top + 580, status, { role: "body", size: 28, color: slot.captured ? COLOR.accentText : COLOR.inkDim }, [0.5, 0.5]);
+        return;
+      }
+      const ready = front.canAttack && front.attacksLeft > 0;
+      addRowButton(this, body, 0, top + 580, 420, 86, t("guild.war.front.attack"), ready ? "accent" : "danger", () => FULL_CLIP, () => true, () => {
+        if (!front.canAttack) { this.toast(t("guild.error.WAR_NEW_MEMBER")); return; }
+        if (front.attacksLeft <= 0) { this.toast(t("guild.error.WAR_NO_ATTACKS")); return; }
+        close();
+        startScene(this, "party", {
+          content: "guildWar", slotId: slot.id, defenderName: holder.name,
+          units: slot.deck.map(({ relicId, level, breakthrough, power }) => ({ relicId, level, breakthrough, power })),
+        });
+      });
     });
   }
 

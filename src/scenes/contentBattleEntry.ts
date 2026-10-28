@@ -1,7 +1,7 @@
 import type Phaser from "phaser";
 import { gameApi } from "../api/FakeServer";
 import type { BountyBattleInputDto } from "../core/bountyRun";
-import type { CakeBattleInputDto, DuelBattleInputDto, GuildGuardBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
+import type { CakeBattleInputDto, DuelBattleInputDto, GuildGuardBattleInputDto, GuildWarBattleInputDto, RaidBattleInputDto } from "../core/expeditionBattle";
 import type { PartyContent } from "../data/partyContent";
 import { rememberPlayerExp } from "../managers/PlayerExpReceipts";
 import { session } from "../state/session";
@@ -26,6 +26,15 @@ export async function enterContentBattle(scene: Phaser.Scene, content: PartyCont
     startScene(scene, "battle", {
       mode: "guildGuard", requestId: admission.requestId, element: admission.element, lineup: admission.lineup, seed: admission.seed,
     } satisfies GuildGuardBattleInputDto);
+    return;
+  }
+  if (content.content === "guildWar") {
+    // 공격 한 번은 입장이 쓰고, 상대 칸의 방어덱 스냅샷을 영수증이 돌려준다.
+    const admission = await gameApi.enterGuildWarAttack({ requestId, slotId: content.slotId, relicIds: [...relicIds] });
+    startScene(scene, "battle", {
+      mode: "guildWar", requestId: admission.requestId, slotId: admission.slotId, opponentName: admission.opponentName, defenderName: admission.defenderName,
+      attack: admission.attack, defense: admission.defense, seed: admission.seed,
+    } satisfies GuildWarBattleInputDto);
     return;
   }
   if (content.content === "duel") {

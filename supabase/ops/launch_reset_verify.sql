@@ -13,7 +13,8 @@ with
     ('public.server_raids'), ('public.server_raid_members'),
     ('public.guilds'), ('public.guild_members'), ('public.guild_requests'), ('public.guild_attendance'),
     ('public.guild_left'), ('public.guild_receipts'), ('public.guild_war_defense'), ('public.guild_week_ledger'), ('public.guild_guard_ledger'),
-    ('public.guild_rank_results'), ('public.guild_rank_totals'), ('public.guild_rank_awards'), ('public.website_registration_limits')
+    ('public.guild_rank_results'), ('public.guild_rank_totals'), ('public.guild_rank_awards'), ('public.guild_war_days'), ('public.guild_war_matches'), ('public.guild_war_captures'), ('public.guild_war_attacks'),
+    ('public.guild_war_admissions'), ('public.guild_war_results'), ('public.guild_war_coins'), ('public.website_registration_limits')
   ),
   -- players와 admin_audit_log는 비운 뒤 운영자 행/초기화 기록이 새로 들어가므로 따로 본다.
   special_tables(t) as (values

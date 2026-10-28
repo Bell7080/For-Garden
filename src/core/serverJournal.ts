@@ -24,6 +24,8 @@ export interface ServerJournal {
   guildGuard?: { day: number; used: number; best: number };
   /** 수호전 입장 영수증 — 입장 순간의 편성 사본과 시드. 제출은 이것으로만 다시 굴린다. */
   guildGuardAdmissions?: Record<string, GuildGuardAdmission>;
+  /** 길드전 공격 입장 영수증 — 두 편성 사본과 시드. 제출은 이것으로만 다시 굴린다. */
+  guildWarAdmissions?: Record<string, GuildWarAdmission>;
   subscriptionMails?: Record<string, { entitlementId: string; productId: string; sentAt: string; expiresAt: string; itemId: string; amount: number }>;
 }
 
@@ -34,6 +36,18 @@ export interface GuildGuardAdmission {
   expiresAt: string;
   lineup: ({ relicId: string; snapshot: ExpeditionRelicSnapshot } | null)[];
   /** 확정된 판이면 그 결과(재전송은 같은 답을 받는다). */
+  settled?: boolean;
+}
+
+export interface GuildWarAdmission {
+  seed: string;
+  day: number;
+  slotId: string;
+  opponentName: string;
+  defenderName: string;
+  expiresAt: string;
+  attack: { relicId: string; snapshot: ExpeditionRelicSnapshot }[];
+  defense: { relicId: string; snapshot: ExpeditionRelicSnapshot }[];
   settled?: boolean;
 }
 
@@ -63,6 +77,12 @@ export function isValidServerJournal(value: unknown): value is ServerJournal {
       && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === undefined || typeof admission.settled === "boolean")
       && Array.isArray(admission.lineup) && admission.lineup.length === 6
       && admission.lineup.every((slot) => slot === null || record(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))
+    && (journal.guildWarAdmissions === undefined || record(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record(admission)
+      && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string"
+      && typeof admission.opponentName === "string" && typeof admission.defenderName === "string"
+      && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === undefined || typeof admission.settled === "boolean")
+      && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3
+        && side.every((slot) => record(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))))
     && record(journal.receipts) && record(journal.raidAdmissions)
     && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record(receipt) && typeof receipt.identity === "string" && record(receipt.result) && json(receipt.result))
     && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record(admission) && typeof admission.raidId === "string"

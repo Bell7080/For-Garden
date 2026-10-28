@@ -1333,10 +1333,40 @@ var GUILD_KO = {
   "guild.guard.party.element": "\uC624\uB298\uC758 \uC801",
   "guild.guard.party.front": "\uC55E\uC904",
   "guild.guard.party.back": "\uB4B7\uC904",
+  "guild.guard.preview.title": "\uC624\uB298\uC758 \uC801",
+  "guild.guard.preview.power": "\uCCAB \uC6E8\uC774\uBE0C \uC804\uD22C\uB825 {power}",
+  "guild.guard.preview.rule": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uB808\uBCA8 +{level} \xB7 \uC815\uC608\uB294 {every}\uC6E8\uC774\uBE0C\uB9C8\uB2E4",
+  "guild.guard.preview.level": "LV.{level}",
+  "guild.guard.preview.wave": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.battle.line": "\uC6E8\uC774\uBE0C {wave} \xB7 \uD544\uB4DC {field}/{cap}",
   "guild.guard.result.footnote": "{score}\uC810 \xB7 \uC6E8\uC774\uBE0C {wave} \xB7 \uCC98\uCE58 {kills}",
   "guild.error.GUARD_LIMIT": "\uC624\uB298 \uC218\uD638\uC804 \uB3C4\uC804\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4",
-  "guild.error.GUARD_NOT_ENTERED": "\uC218\uD638\uC804 \uC785\uC7A5 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4"
+  "guild.error.GUARD_NOT_ENTERED": "\uC218\uD638\uC804 \uC785\uC7A5 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.WAR_NO_OPPONENT": "\uC624\uB298\uC740 \uB9DE\uBD99\uC744 \uC0C1\uB300 \uAE38\uB4DC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.error.WAR_NO_ATTACKS": "\uC624\uB298 \uACF5\uACA9\uC744 \uBAA8\uB450 \uC37C\uC2B5\uB2C8\uB2E4",
+  "guild.error.WAR_NEW_MEMBER": "\uC804\uD22C\uC77C\uC774 \uC2DC\uC791\uB41C \uB4A4 \uAC00\uC785\uD558\uBA74 \uB2E4\uC74C \uC804\uD22C\uC77C\uBD80\uD130 \uACF5\uACA9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4",
+  "guild.error.SLOT_CLOSED": "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC558\uAC70\uB098 \uC774\uBBF8 \uACA9\uD30C\uB41C \uCE78\uC785\uB2C8\uB2E4",
+  "guild.error.WAR_NOT_ENTERED": "\uAE38\uB4DC\uC804 \uC785\uC7A5 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
+  "guild.war.party.attackTitle": "\uAE38\uB4DC\uC804 \uACF5\uACA9 \xB7 {slot}",
+  "guild.war.result.captured": "\uCE78 \uACA9\uD30C +{points}\uC810 \xB7 \uC6B0\uB9AC \uC810\uC218 {total}",
+  "guild.war.result.alreadyDown": "\uC774\uBBF8 \uACA9\uD30C\uB41C \uCE78\uC785\uB2C8\uB2E4 \xB7 \uC6B0\uB9AC \uC810\uC218 {total}",
+  "guild.war.result.toWar": "\uAE38\uB4DC\uC804\uC73C\uB85C",
+  "guild.war.front.vs": "\uC0C1\uB300 {name}",
+  "guild.war.front.attacks": "\uB0A8\uC740 \uACF5\uACA9 {left}/{total}",
+  "guild.war.front.newMember": "\uB2E4\uC74C \uC804\uD22C\uC77C\uBD80\uD130 \uACF5\uACA9 \uAC00\uB2A5",
+  "guild.war.front.points": "\uC6B0\uB9AC {mine} : {theirs} \uC0C1\uB300",
+  "guild.war.front.bye": "\uC624\uB298\uC740 \uB9DE\uBD99\uC744 \uC0C1\uB300\uAC00 \uC5C6\uC5B4 \uBD80\uC804\uC2B9\uC785\uB2C8\uB2E4",
+  "guild.war.front.idle": "\uC624\uB298 \uAE38\uB4DC\uC804\uC5D0 \uCC38\uAC00\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.war.front.captured": "\uACA9\uD30C\uD55C \uCE78\uC785\uB2C8\uB2E4",
+  "guild.war.front.closedElite": "\uC77C\uBC18 \uCE78 \uC808\uBC18\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
+  "guild.war.front.closedBoss": "\uC815\uC608 \uB458\uC774 \uBB34\uB108\uC9C0\uBA74 \uC5F4\uB9BD\uB2C8\uB2E4",
+  "guild.war.front.attack": "\uACF5\uACA9",
+  "guild.war.notice.title": "\uAE38\uB4DC\uC804 \uACB0\uACFC",
+  "guild.war.notice.win": "{name}\uC5D0\uAC8C \uC2B9\uB9AC\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.war.notice.loss": "{name}\uC5D0\uAC8C \uD328\uBC30\uD588\uC2B5\uB2C8\uB2E4",
+  "guild.war.notice.bye": "\uB9DE\uBD99\uC744 \uC0C1\uB300\uAC00 \uC5C6\uC5B4 \uBD80\uC804\uC2B9\uC785\uB2C8\uB2E4",
+  "guild.war.notice.forfeit": "\uACF5\uACA9\uD558\uC9C0 \uC54A\uC544 \uAE30\uAD8C \uCC98\uB9AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+  "guild.war.notice.detail": "\uC810\uC218 {mine} : {theirs} \xB7 \uAE38\uB4DC\uC804 \uC810\uC218 {delta} \xB7 \uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C"
 };
 
 // src/i18n/ko/rune.ts
@@ -2869,8 +2899,8 @@ var DUNGEON_KO = {
   "dungeon.tier.level": "LV.{level}",
   "dungeon.sweep.count": "x{count}",
   "dungeon.sweep.max": "MAX",
-  "dungeon.sweep.ad": "\uAD11\uACE0 +{count}",
-  "dungeon.sweep.adUsage": "{used}/{limit}",
+  "dungeon.sweep.ad": "\uAD11\uACE0 \uBCF4\uACE0 {count}\uAC1C \uBC1B\uAE30",
+  "dungeon.sweep.adUsage": "{left}/{limit}",
   "dungeon.sortie": "\uCD9C\uACA9",
   "dungeon.sweep": "\uC18C\uD0D5",
   "dungeon.sweep.title": "\uC18C\uD0D5 \uC644\uB8CC",
@@ -11862,7 +11892,10 @@ var BATTLE_ARENA = {
   // 결투장 몫(740~1,360)에 그대로 세웠을 때는 두 편이 코앞에서 시작해 촘촘해 보였다 — 좌우도 한 뼘씩 더 연다.
   liveArena: { left: 110, right: 970, top: 700, bottom: 1410 },
   // 수호전 전용 항구 광장은 화면 위 1/4부터 바닥이라 기존 전투 좌표를 그대로 수용한다(`GUILD_GUARD_ARENA`와 같은 값).
-  guildGuard: { left: 110, right: 970, top: 600, bottom: 1300 }
+  guildGuard: { left: 110, right: 970, top: 600, bottom: 1300 },
+  // 길드전 성채 광장은 바닥이 높이 380부터 시작한다. 3대3이라 결투장과 비슷한 깊이(700~1,360)만 쓴다 — 더 넓히면 두 편이
+  // 멀리서 시작해 첫 몇 초가 걷기만 한다.
+  guildWar: { ...BASE_ARENA, top: 700 }
 };
 function battleArena(mode) {
   return { ...BATTLE_ARENA[mode] ?? BASE_ARENA };
@@ -20285,7 +20318,7 @@ function isValidServerJournal(value) {
   const journal = value;
   const record2 = (v2) => !!v2 && typeof v2 === "object" && !Array.isArray(v2);
   const json = (v2) => v2 === null || typeof v2 === "string" || typeof v2 === "boolean" || typeof v2 === "number" && Number.isFinite(v2) || (Array.isArray(v2) ? v2.every(json) : record2(v2) && Object.values(v2).every(json));
-  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && (journal.guildGuard === void 0 || record2(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record2(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record2(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
+  return (journal.qaTenUpgrade === void 0 || typeof journal.qaTenUpgrade === "boolean") && (journal.storyChoices === void 0 || record2(journal.storyChoices) && Object.entries(journal.storyChoices).every(([id, choices]) => id.length > 0 && id.length <= 120 && record2(choices) && Object.entries(choices).every(([node, choice]) => node.length > 0 && typeof choice === "string" && choice.length > 0))) && (journal.pendingStoryBondXp === void 0 || record2(journal.pendingStoryBondXp) && Object.entries(journal.pendingStoryBondXp).every(([id, amount]) => id.length > 0 && Number.isSafeInteger(amount) && amount > 0 && amount <= BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP])) && (journal.ops === void 0 || isValidOpsJournal(journal.ops)) && (journal.combat === void 0 || record2(journal.combat) && record2(journal.combat.tickets) && record2(journal.combat.records) && json(journal.combat)) && (journal.subscriptionEntitlements === void 0 || record2(journal.subscriptionEntitlements) && Object.entries(journal.subscriptionEntitlements).every(([id, entry]) => record2(entry) && entry.entitlementId === id && typeof entry.productId === "string" && Number.isFinite(Date.parse(entry.activatedAt)) && (entry.expiresAt === null || Number.isFinite(Date.parse(entry.expiresAt))) && typeof entry.active === "boolean" && typeof entry.serverTime === "string")) && (journal.subscriptionBonusDates === void 0 || record2(journal.subscriptionBonusDates) && Object.values(journal.subscriptionBonusDates).every((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))) && (journal.subscriptionMails === void 0 || record2(journal.subscriptionMails) && Object.values(journal.subscriptionMails).every((mail) => record2(mail) && typeof mail.entitlementId === "string" && typeof mail.productId === "string" && typeof mail.itemId === "string" && Number.isFinite(Date.parse(mail.sentAt)) && Number.isFinite(Date.parse(mail.expiresAt)) && Number.isInteger(mail.amount) && mail.amount > 0)) && (journal.guildGuard === void 0 || record2(journal.guildGuard) && Number.isSafeInteger(journal.guildGuard.day) && Number.isSafeInteger(journal.guildGuard.used) && journal.guildGuard.used >= 0 && Number.isSafeInteger(journal.guildGuard.best) && journal.guildGuard.best >= 0) && (journal.guildGuardAdmissions === void 0 || record2(journal.guildGuardAdmissions) && Object.entries(journal.guildGuardAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.element === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && Array.isArray(admission.lineup) && admission.lineup.length === 6 && admission.lineup.every((slot) => slot === null || record2(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot)))) && (journal.guildWarAdmissions === void 0 || record2(journal.guildWarAdmissions) && Object.entries(journal.guildWarAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.seed === "string" && admission.seed.length <= 64 && Number.isSafeInteger(admission.day) && typeof admission.slotId === "string" && typeof admission.opponentName === "string" && typeof admission.defenderName === "string" && Number.isFinite(Date.parse(admission.expiresAt)) && (admission.settled === void 0 || typeof admission.settled === "boolean") && [admission.attack, admission.defense].every((side) => Array.isArray(side) && side.length === 3 && side.every((slot) => record2(slot) && typeof slot.relicId === "string" && isExpeditionRelicSnapshot(slot.snapshot))))) && record2(journal.receipts) && record2(journal.raidAdmissions) && Object.entries(journal.receipts).every(([id, receipt]) => id.length > 0 && record2(receipt) && typeof receipt.identity === "string" && record2(receipt.result) && json(receipt.result)) && Object.entries(journal.raidAdmissions).every(([id, admission]) => id.length > 0 && record2(admission) && typeof admission.raidId === "string" && (admission.seed === void 0 || typeof admission.seed === "string" && admission.seed.length <= 64) && (admission.admittedAt === void 0 || typeof admission.admittedAt === "string" && Number.isFinite(Date.parse(admission.admittedAt))) && (admission.replayVersion === void 0 || admission.replayVersion === 2) && Number.isFinite(admission.seasonHp) && admission.seasonHp >= 0 && Number.isFinite(Date.parse(admission.expiresAt)) && Array.isArray(admission.relics) && admission.relics.length === 3 && admission.relics.every((relic) => typeof relic.relicId === "string" && isExpeditionRelicSnapshot(relic.snapshot)));
 }
 
 // src/core/expeditionPeriods.ts
@@ -20953,7 +20986,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -21005,7 +21038,7 @@ function normalizeSettings(value) {
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward) },
+      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward), warResult: seenKey(record(g.guildSeen).warResult) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null) : [],
@@ -28760,6 +28793,13 @@ function placedEnemyIndex(input, stage, enemyDefs) {
       breakthrough: input.units[index]?.breakthrough ?? 0
     }]));
   }
+  if (input.mode === "guildWar") {
+    return new Map(enemyDefs.map((def, index) => [`enemy-${index}`, {
+      def,
+      level: input.defense[index]?.snapshot.level ?? 1,
+      breakthrough: input.defense[index]?.snapshot.breakthrough ?? 0
+    }]));
+  }
   const expeditionLevel = input.mode === "expedition" ? expeditionEnemyLevel(input.nodeType, input.floor) : input.mode === "expeditionBoss" ? expeditionEnemyLevel("boss", 20) : void 0;
   const placed = expeditionLevel === void 0 ? stageEnemyGrowth(stage) : void 0;
   return new Map(enemyDefs.map((def, index) => {
@@ -32094,6 +32134,9 @@ init_define_import_meta_env();
 
 // src/core/guildWar.ts
 init_define_import_meta_env();
+var GUILD_WAR_MIN_MEMBERS = 10;
+var GUILD_WAR_ATTACKS_PER_MEMBER = 3;
+var GUILD_WAR_START_SCORE = 1e3;
 var guildWarDayNumber = (ms) => Math.floor(ms / 864e5);
 var guildWarPhase = (dayNumber) => dayNumber % 2 === 0 ? "prep" : "battle";
 var guildWarPhaseEndsAt = (ms) => (guildWarDayNumber(ms) + 1) * 864e5;
@@ -32113,21 +32156,40 @@ function guildWarSlots(level) {
   const row = GUILD_WAR_GRUNTS[Math.min(GUILD_WAR_GRUNTS.length, Math.max(1, Math.floor(level))) - 1];
   return { grunts: { 1: row[0], 2: row[1], 3: row[2] } };
 }
+var GUILD_WAR_SLOT_SCORE = { grunt: 30, elite: 100, boss: 300 };
+var GUILD_WAR_BRANCH_SWEEP_BONUS = 150;
+var guildWarElitesOpen = (gruntCount, gruntsDown) => gruntCount === 0 || gruntsDown >= Math.ceil(gruntCount / 2);
+var guildWarBossOpen = (elitesDown) => elitesDown >= 2;
+var GUILD_WAR_SCORE = { win: 25, loss: -15, bye: 10, forfeit: -10, gapStep: 50, gapBonusMax: 10 };
+function gapSteps(selfScore, opponentScore) {
+  return Math.min(GUILD_WAR_SCORE.gapBonusMax, Math.floor(Math.abs(opponentScore - selfScore) / GUILD_WAR_SCORE.gapStep));
+}
+function guildWarScoreDelta(outcome, selfScore, opponentScore) {
+  if (outcome === "bye") return GUILD_WAR_SCORE.bye;
+  if (outcome === "forfeit") return GUILD_WAR_SCORE.forfeit;
+  if (outcome === "win") return GUILD_WAR_SCORE.win + (opponentScore > selfScore ? gapSteps(selfScore, opponentScore) : 0);
+  return GUILD_WAR_SCORE.loss - (opponentScore < selfScore ? gapSteps(selfScore, opponentScore) : 0);
+}
+var applyGuildWarDelta = (score, delta) => Math.max(0, score + delta);
 function rankGuildWar(entries) {
   return [...entries].sort((a, b) => b.score - a.score || a.reachedAt - b.reachedAt || a.guildId.localeCompare(b.guildId)).map((entry, index) => ({ ...entry, rank: index + 1 }));
 }
-
-// src/core/guildPages.ts
-init_define_import_meta_env();
-var GUILD_GUARD_ELEMENTS = ["fire", "water", "grass", "earth", "wind"];
-var guildGuardElement = (now) => {
-  const day = guildWarDayNumber(now);
-  return GUILD_GUARD_ELEMENTS[(day % GUILD_GUARD_ELEMENTS.length + GUILD_GUARD_ELEMENTS.length) % GUILD_GUARD_ELEMENTS.length];
-};
-var guildGuardEndsAt = (now) => guildWarPhaseEndsAt(now);
-function guildWarNow(now) {
-  return { phase: guildWarPhase(guildWarDayNumber(now)), endsAt: guildWarPhaseEndsAt(now) };
+function pairGuildsForWar(entries, lastOpponent = /* @__PURE__ */ new Map()) {
+  const order = rankGuildWar(entries).map((entry) => entry.guildId);
+  const met = (x, y) => lastOpponent.get(x) === y || lastOpponent.get(y) === x;
+  for (let i = 0; i + 1 < order.length; i += 2) {
+    if (!met(order[i], order[i + 1])) continue;
+    const j = i + 2;
+    if (j < order.length && !met(order[i + 1], order[j])) [order[i], order[j]] = [order[j], order[i]];
+    else if (j < order.length && !met(order[i], order[j])) [order[i + 1], order[j]] = [order[j], order[i + 1]];
+  }
+  const pairs = [];
+  for (let i = 0; i < order.length; i += 2) pairs.push({ a: order[i], b: order[i + 1] ?? null });
+  return pairs;
 }
+
+// src/core/guildWarAttack.ts
+init_define_import_meta_env();
 
 // src/core/guildWarMap.ts
 init_define_import_meta_env();
@@ -32160,6 +32222,48 @@ function normalizeGuildWarDeck(ids) {
   });
   if (new Set(deck).size !== deck.length) throw new RangeError("\uAC19\uC740 \uB810\uB9AD\uC744 \uB450 \uBC88 \uC138\uC6B8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
   return deck;
+}
+
+// src/core/guildWarAttack.ts
+var down = (slot) => slot.captured || !slot.defended;
+function guildWarFront(level, defended, captured) {
+  const slots = guildWarMapSlots(level).map((slot) => ({ ...slot, defended: defended.has(slot.id), captured: defended.has(slot.id) && captured.has(slot.id) }));
+  return slots.map((slot) => {
+    const branch = slots.filter((other) => other.branch === slot.branch);
+    const grunts = branch.filter(({ kind }) => kind === "grunt");
+    const elitesDown = branch.filter(({ kind }) => kind === "elite").filter(down).length;
+    const gate = slot.kind === "grunt" ? true : slot.kind === "elite" ? guildWarElitesOpen(grunts.length, grunts.filter(down).length) : guildWarBossOpen(elitesDown);
+    return { ...slot, open: slot.defended && !slot.captured && gate };
+  });
+}
+function guildWarPoints(front) {
+  let points = front.reduce((sum, slot) => sum + (slot.captured ? GUILD_WAR_SLOT_SCORE[slot.kind] : 0), 0);
+  for (const branch of GUILD_WAR_BRANCHES) {
+    const slots = front.filter((slot) => slot.branch === branch);
+    if (slots.length > 0 && slots.every(down) && slots.some(({ captured }) => captured)) points += GUILD_WAR_BRANCH_SWEEP_BONUS;
+  }
+  return points;
+}
+var guildWarAttacksLeft = (used) => Math.max(0, GUILD_WAR_ATTACKS_PER_MEMBER - Math.max(0, used));
+var guildWarCanAttack = (joinedAt, battleDayStart) => joinedAt < battleDayStart;
+function guildWarResult(mine, theirs) {
+  if (mine.attacks <= 0) return "forfeit";
+  if (theirs.attacks <= 0) return "win";
+  if (mine.points !== theirs.points) return mine.points > theirs.points ? "win" : "loss";
+  return mine.reachedAt < theirs.reachedAt ? "win" : "loss";
+}
+var GUILD_WAR_COIN = { win: 30, loss: 15, bye: 20, forfeit: 0 };
+
+// src/core/guildPages.ts
+init_define_import_meta_env();
+var GUILD_GUARD_ELEMENTS = ["fire", "water", "grass", "earth", "wind"];
+var guildGuardElement = (now) => {
+  const day = guildWarDayNumber(now);
+  return GUILD_GUARD_ELEMENTS[(day % GUILD_GUARD_ELEMENTS.length + GUILD_GUARD_ELEMENTS.length) % GUILD_GUARD_ELEMENTS.length];
+};
+var guildGuardEndsAt = (now) => guildWarPhaseEndsAt(now);
+function guildWarNow(now) {
+  return { phase: guildWarPhase(guildWarDayNumber(now)), endsAt: guildWarPhaseEndsAt(now) };
 }
 
 // src/api/guildQaClock.ts
@@ -32202,7 +32306,8 @@ var GUILD_API_METHODS = [
   "getGuard",
   "getRanking",
   "getWarMap",
-  "clearWarSlot"
+  "clearWarSlot",
+  "getWarFront"
 ];
 var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
 
@@ -32232,6 +32337,10 @@ var FakeGuildServer = class _FakeGuildServer {
   /** 받은 순위 보상 — `week:주:id`·`guard:날:id`. 한 사람은 한 기간에 한 번만 받는다. */
   rankAwarded = /* @__PURE__ */ new Set();
   sequence = 0;
+  /** 길드전 — 전투일(날 번호) → 짝, `날:사용자` → 쓴 공격 수, 입장했지만 아직 결과를 받지 않은 공격. */
+  warMatches = /* @__PURE__ */ new Map();
+  warAttackUsed = /* @__PURE__ */ new Map();
+  warPending = /* @__PURE__ */ new Set();
   seedSamples() {
     const roster = PLAYABLE_RELICS;
     const hash = (text) => {
@@ -32314,6 +32423,7 @@ var FakeGuildServer = class _FakeGuildServer {
     this.touch(me, actor);
     this.reviewLeader(guild);
     this.settleGuardRewards(actor.userId, me);
+    this.settleWars();
     return { guild, me };
   }
   /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
@@ -32463,6 +32573,7 @@ var FakeGuildServer = class _FakeGuildServer {
       this.touch(me, actor);
       this.reviewLeader(guild);
       this.settleGuardRewards(actor.userId, me);
+      this.settleWars();
     }
     return {
       guild: guild ? this.detail(guild) : null,
@@ -32838,6 +32949,235 @@ var FakeGuildServer = class _FakeGuildServer {
     });
     return this.getWarMap(actor);
   }
+  // ── 길드전 공격 ─────────────────────────────────────────────────────────────
+  /**
+   * 그 전투일의 짝. 그날 길드전을 처음 부르는 순간 정한다(게으른 매칭) — 인원 `GUILD_WAR_MIN_MEMBERS` 이상이고 방어덱이 하나라도
+   * 선 길드끼리, 점수 순으로 이웃과 짝짓고 지난 회차의 상대는 피한다(`pairGuildsForWar`). 운영 DB 함수도 같은 순서로 정한다.
+   */
+  warMatchesOf(day) {
+    const existing = this.warMatches.get(day);
+    if (existing) return existing;
+    for (const guild of this.guilds.values()) if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    const entries = [...this.guilds.values()].filter((g) => g.members.size >= GUILD_WAR_MIN_MEMBERS && this.warOf(g).size > 0).map((g) => ({ guildId: g.id, score: g.warScore ?? GUILD_WAR_START_SCORE, reachedAt: g.warReachedAt ?? 0 }));
+    const last = /* @__PURE__ */ new Map();
+    for (const match of this.warMatches.get(day - 2) ?? []) if (match.b) {
+      last.set(match.a, match.b);
+      last.set(match.b, match.a);
+    }
+    const matches = pairGuildsForWar(entries, last).map(({ a, b }) => ({ day, a, b, captures: new Map([[a, /* @__PURE__ */ new Map()], ...b ? [[b, /* @__PURE__ */ new Map()]] : []]), attackers: /* @__PURE__ */ new Map(), settled: false }));
+    this.warMatches.set(day, matches);
+    return matches;
+  }
+  matchOf(guildId, day) {
+    return this.warMatchesOf(day).find((match) => match.a === guildId || match.b === guildId);
+  }
+  /** 상대 영지 — 방어덱이 선 칸과 내가(우리 길드가) 격파한 칸. */
+  frontOf(attackerId, defender, match) {
+    const captured = match.captures.get(attackerId) ?? /* @__PURE__ */ new Map();
+    return guildWarFront(this.level(defender), new Set(this.warOf(defender).keys()), new Set(captured.keys()));
+  }
+  /**
+   * QA 표본 길드원의 공격 — 표본이 섞인 길드는 하루가 흐르는 만큼 상대 영지를 정해진 순서로 친다. 상대 칸의 3분의 1~3분의 2쯤에서
+   * 멈춰 플레이어가 칠 칸이 남는다. 날·길드 id에서만 나오는 값이라 다시 읽어도 같은 칸이 같은 시각에 무너진다.
+   */
+  simulateSampleAttacks(match) {
+    if (!match.b) return;
+    const dayStart = match.day * 864e5;
+    const progress = Math.min(1, Math.max(0, (this.now() - dayStart) / 864e5));
+    for (const [attackerId, defenderId] of [[match.a, match.b], [match.b, match.a]]) {
+      const attacker = this.guilds.get(attackerId);
+      const defender = this.guilds.get(defenderId);
+      if (!attacker || !defender) continue;
+      const samples = [...attacker.members.values()].filter((m) => m.sample).length;
+      if (samples === 0) continue;
+      let h = 2166136261;
+      for (const ch of `${attackerId}:${match.day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+      h >>>= 0;
+      const total = this.warOf(defender).size;
+      const full = Math.max(1, Math.min(samples, Math.round(total * (0.34 + h % 33 / 100))));
+      const captures = match.captures.get(attackerId);
+      const done = [...captures.values()].filter(({ by }) => by === null).length;
+      for (let i = done; i < full; i += 1) {
+        const at = dayStart + Math.round(864e5 * (i + 1) / (full + 1));
+        if (at > dayStart + progress * 864e5) break;
+        const next = this.frontOf(attackerId, defender, match).filter(({ open }) => open).sort((a, b) => ({ grunt: 0, elite: 1, boss: 2 })[a.kind] - { grunt: 0, elite: 1, boss: 2 }[b.kind] || a.branch - b.branch || a.index - b.index)[0];
+        if (!next) break;
+        captures.set(next.id, { at, by: null });
+        match.attackers.set(attackerId, (match.attackers.get(attackerId) ?? /* @__PURE__ */ new Set()).add(`sample:${i}`));
+      }
+    }
+  }
+  warSide(match, attackerId, defenderId) {
+    const defender = this.guilds.get(defenderId);
+    const captures = [...match.captures.get(attackerId)?.values() ?? []];
+    return {
+      points: defender ? guildWarPoints(this.frontOf(attackerId, defender, match)) : 0,
+      attacks: match.attackers.get(attackerId)?.size ?? 0,
+      reachedAt: captures.length > 0 ? Math.max(...captures.map(({ at }) => at)) : Number.MAX_SAFE_INTEGER
+    };
+  }
+  /**
+   * 끝난 전투일을 정산한다(게으른 정산). 점수 증감을 길드에 적고, 그날 한 번이라도 공격한 길드원에게 결과의 길드 코인을 넣는다.
+   * 부전승은 전투일 전에 있던 길드원 모두가 받는다(`GUILD_WAR_COIN`). 결과는 길드마다 가장 최근 회차 하나만 남긴다.
+   */
+  settleWars() {
+    const today = guildWarDayNumber(this.now());
+    for (const [day, matches] of this.warMatches) {
+      if (day >= today) continue;
+      for (const match of matches) {
+        if (match.settled) continue;
+        match.settled = true;
+        this.simulateSampleAttacks(match);
+        const sides = match.b ? [[match.a, match.b], [match.b, match.a]] : [[match.a, null]];
+        const outcomes = sides.map(([self, other]) => {
+          if (!other) return { self, other, outcome: "bye", mine: 0, theirs: 0 };
+          const mine = this.warSide(match, self, other);
+          const theirs = this.warSide(match, other, self);
+          return { self, other, outcome: guildWarResult(mine, theirs), mine: mine.points, theirs: theirs.points };
+        });
+        const before = new Map(outcomes.map(({ self }) => [self, this.guilds.get(self)?.warScore ?? GUILD_WAR_START_SCORE]));
+        for (const { self, other, outcome, mine, theirs } of outcomes) {
+          const guild = this.guilds.get(self);
+          if (!guild) continue;
+          const score = before.get(self);
+          const delta = guildWarScoreDelta(outcome, score, other ? before.get(other) ?? GUILD_WAR_START_SCORE : score);
+          const after = applyGuildWarDelta(score, delta);
+          if (after !== guild.warScore) guild.warReachedAt = (day + 1) * 864e5;
+          guild.warScore = after;
+          const coinOf = /* @__PURE__ */ new Map();
+          const attackers = match.attackers.get(self) ?? /* @__PURE__ */ new Set();
+          for (const member of guild.members.values()) {
+            const eligible2 = outcome === "bye" ? guildWarCanAttack(member.joinedAt, day * 864e5) : attackers.has(member.userId);
+            if (!eligible2 || GUILD_WAR_COIN[outcome] <= 0) continue;
+            member.coin += GUILD_WAR_COIN[outcome];
+            coinOf.set(member.userId, GUILD_WAR_COIN[outcome]);
+          }
+          guild.lastWar = { day, opponentName: other ? this.guilds.get(other)?.name ?? null : null, outcome, myPoints: mine, theirPoints: theirs, delta: after - score, scoreAfter: after, coinOf };
+        }
+      }
+    }
+  }
+  lastWarView(guild, userId) {
+    const last = guild.lastWar;
+    if (!last) return null;
+    const { coinOf, ...view } = last;
+    return { ...view, coin: coinOf.get(userId) ?? 0 };
+  }
+  warAttacksUsed(day, userId) {
+    return this.warAttackUsed.get(`${day}:${userId}`) ?? 0;
+  }
+  frontView(guild, me) {
+    const now = this.now();
+    const day = guildWarDayNumber(now);
+    const { phase, endsAt } = guildWarNow(now);
+    const base = {
+      day,
+      phase,
+      endsAt,
+      status: "idle",
+      opponent: null,
+      slots: [],
+      myPoints: 0,
+      theirPoints: 0,
+      attacksLeft: guildWarAttacksLeft(this.warAttacksUsed(day, me.userId)),
+      canAttack: false,
+      warScore: guild.warScore ?? null,
+      warRank: this.warRankOf(guild),
+      last: this.lastWarView(guild, me.userId),
+      serverTime: now
+    };
+    if (phase !== "battle") return base;
+    const match = this.matchOf(guild.id, day);
+    if (!match) return base;
+    if (!match.b) return { ...base, status: "bye" };
+    this.simulateSampleAttacks(match);
+    const opponentId = match.a === guild.id ? match.b : match.a;
+    const opponent = this.guilds.get(opponentId);
+    if (!opponent) return { ...base, status: "bye" };
+    const war = this.warOf(opponent);
+    const slots = this.frontOf(guild.id, opponent, match).map((slot) => {
+      const row = war.get(slot.id);
+      const member = row ? opponent.members.get(row.userId) : void 0;
+      return {
+        id: slot.id,
+        branch: slot.branch,
+        kind: slot.kind,
+        index: slot.index,
+        captured: slot.captured,
+        open: slot.open,
+        holder: member ? { userId: member.userId, name: member.name, level: member.level, avatarRelicId: member.avatarRelicId, frameId: member.frameId, isMe: false } : null,
+        deck: row ? row.deck.map((entry) => ({ ...entry })) : [],
+        power: row ? row.deck.reduce((sum, entry) => sum + entry.power, 0) : 0
+      };
+    });
+    return {
+      ...base,
+      status: "matched",
+      opponent: { id: opponent.id, name: opponent.name, badge: { ...opponent.badge }, level: this.level(opponent), score: opponent.warScore ?? GUILD_WAR_START_SCORE },
+      slots,
+      myPoints: this.warSide(match, guild.id, opponentId).points,
+      theirPoints: this.warSide(match, opponentId, guild.id).points,
+      canAttack: guildWarCanAttack(me.joinedAt, day * 864e5)
+    };
+  }
+  async getWarFront(actor) {
+    const { guild, me } = this.requireGuild(actor);
+    return this.frontView(guild, me);
+  }
+  /** 표본 칸은 공개 덱만 들고 있어 전투에 쓸 스냅샷을 그 값으로 그 자리에서 만든다(룬 없음). */
+  defenseLineup(row) {
+    if (row.lineup) return structuredClone(row.lineup);
+    return row.deck.map(({ relicId, level, breakthrough }) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(getRelic(relicId), { ...createInitialRelicProgress(), level, breakthrough }, [], null)
+    }));
+  }
+  async beginWarAttack(actor, slotId, requestId) {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      const now = this.now();
+      const day = guildWarDayNumber(now);
+      if (guildWarPhase(day) !== "battle") return fail2("WAR_LOCKED");
+      if (!parseGuildWarSlotId(slotId)) return fail2("SLOT_INVALID");
+      const match = this.matchOf(guild.id, day);
+      const opponent = match?.b ? this.guilds.get(match.a === guild.id ? match.b : match.a) : void 0;
+      if (!match || !opponent) return fail2("WAR_NO_OPPONENT");
+      if (!guildWarCanAttack(me.joinedAt, day * 864e5)) return fail2("WAR_NEW_MEMBER");
+      const used = this.warAttacksUsed(day, me.userId);
+      if (guildWarAttacksLeft(used) <= 0) return fail2("WAR_NO_ATTACKS");
+      this.simulateSampleAttacks(match);
+      const slot = this.frontOf(guild.id, opponent, match).find(({ id }) => id === slotId);
+      if (!slot) return fail2("SLOT_INVALID");
+      if (!slot.open) return fail2("SLOT_CLOSED");
+      const row = this.warOf(opponent).get(slotId);
+      this.warAttackUsed.set(`${day}:${me.userId}`, used + 1);
+      match.attackers.set(guild.id, (match.attackers.get(guild.id) ?? /* @__PURE__ */ new Set()).add(me.userId));
+      this.warPending.add(`${me.userId}:${day}:${slotId}:${requestId}`);
+      return {
+        day,
+        slotId,
+        opponentName: opponent.name,
+        defenderName: opponent.members.get(row.userId)?.name ?? "",
+        defense: this.defenseLineup(row),
+        attacksLeft: guildWarAttacksLeft(used + 1)
+      };
+    });
+  }
+  async recordWarAttack(actor, record2, requestId) {
+    const captured = this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      const key = `${me.userId}:${record2.day}:${record2.slotId}:${record2.entry}`;
+      if (!this.warPending.delete(key)) return fail2("WAR_NOT_ENTERED");
+      if (!record2.won) return false;
+      const match = this.warMatches.get(record2.day)?.find((m) => m.a === guild.id || m.b === guild.id);
+      if (!match || match.settled) return false;
+      const captures = match.captures.get(guild.id);
+      if (captures.has(record2.slotId)) return false;
+      captures.set(record2.slotId, { at: this.now(), by: me.userId });
+      return true;
+    });
+    return { captured, front: await this.getWarFront(actor) };
+  }
   // ── QA 전용 — 길드전·수호전 시험판(`guildQa`)이 쓰는 조회·조작. 운영 서버의 계약에는 없다. ─────────────
   /** 모든 길드의 id·이름·점수. */
   qaGuilds() {
@@ -32892,7 +33232,7 @@ var FakeGuildServer = class _FakeGuildServer {
     while ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(unique))) unique = `${name} ${++n}`;
     const id = `guild-${++this.sequence}-${Math.abs(Math.floor(this.now())).toString(36)}`;
     const guild = { id, name: unique, badge: { ...badge }, joinMode: "open", notice: "", prosperity: 3e3, createdAt: this.now(), badgeChanges: 0, members: /* @__PURE__ */ new Map(), requests: /* @__PURE__ */ new Map() };
-    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now() - QA_WAR_JOIN_LEAD_MS));
     this.guilds.set(id, guild);
     this.userGuild.set(actor.userId, id);
     this.requestedBy.delete(actor.userId);
@@ -32908,7 +33248,7 @@ var FakeGuildServer = class _FakeGuildServer {
     for (const member of guild.members.values()) if (member.role === "leader") member.role = "vice";
     const vices = [...guild.members.values()].filter((m) => m.role === "vice").sort((a, b) => b.joinedAt - a.joinedAt);
     for (const extra of vices.slice(GUILD_ROLE_LIMIT.vice)) extra.role = "officer";
-    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now()));
+    guild.members.set(actor.userId, this.newMember(actor, "leader", this.now() - QA_WAR_JOIN_LEAD_MS));
     this.userGuild.set(actor.userId, guildId);
     this.requestedBy.delete(actor.userId);
     return true;
@@ -32925,6 +33265,7 @@ function sampleGuardRecord(userId, level, day) {
   h >>>= 0;
   return { best: h % 5 === 0 ? 0 : 80 + h % 400 + level * (10 + (h >>> 8) % 25), at: day * 864e5 + h % 8e7 };
 }
+var QA_WAR_JOIN_LEAD_MS = 2 * 864e5;
 var SAMPLE_NAMES = ["\uD558\uB298", "\uC0C8\uBD04", "\uC774\uC2AC", "\uB9C8\uB8E8", "\uB2E4\uC628", "\uBCF4\uB78C", "\uB098\uB798", "\uAC00\uB78C", "\uC194", "\uB204\uB9AC", "\uD55C\uACB0", "\uB3C4\uB2F4", "\uBAA8\uC544", "\uBBF8\uB974", "\uC544\uB77C", "\uCD08\uB871", "\uC628\uC0C8\uBBF8", "\uB77C\uC628", "\uD574\uB4E0", "\uC18C\uB2F4"];
 var SAMPLE_BIOS = ["\uC624\uB298\uB3C4 \uBCF5\uC6D0 \uC911", "\uCE58\uC988\uCF00\uC774\uD06C\uB294 \uC0AC\uB791\uC785\uB2C8\uB2E4", "\uAE38\uB4DC\uC804 \uAC19\uC774 \uD574\uC694", "\uB290\uAE0B\uD558\uAC8C \uAC00\uB294 \uC911", "\uC218\uD638\uC804 \uAC1C\uADFC \uBAA9\uD45C", "\uACE0\uACE0\uD559 \uC804\uBB38\uAC00", "\uC798 \uBD80\uD0C1\uB4DC\uB9BD\uB2C8\uB2E4"];
 var roleRank = (role) => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
@@ -33046,6 +33387,48 @@ function guildGuardOutcome(state, waves) {
 }
 var GUILD_GUARD_COIN = { base: 5, perScore: 150, cap: 20 };
 var guildGuardCoin = (score) => Math.min(GUILD_GUARD_COIN.cap, GUILD_GUARD_COIN.base + Math.floor(Math.max(0, score) / GUILD_GUARD_COIN.perScore));
+
+// src/core/guildWarBattle.ts
+init_define_import_meta_env();
+function assertLineup(lineup, side) {
+  if (lineup.length !== GUILD_WAR_DECK_SIZE) throw new RangeError(`guild war ${side} lineup must have ${GUILD_WAR_DECK_SIZE} relics`);
+}
+function createGuildWarSkirmish(attack, defense, defs) {
+  assertLineup(attack, "attack");
+  assertLineup(defense, "defense");
+  const players = attack.map(({ relicId, snapshot }) => ({ ...defs(relicId), stats: { ...snapshot.stats } }));
+  const enemies = defense.map(({ relicId, snapshot }) => ({ ...defs(relicId), stats: { ...snapshot.stats } }));
+  const options = {
+    automaticUltimates: true,
+    augmentEffects: partyRuneTraitEffects(attack.map(({ relicId, snapshot }) => ({ relicId, runes: snapshot.runes }))),
+    enemyAugmentEffects: partyRuneTraitEffects(defense.map(({ relicId, snapshot }) => ({ relicId, runes: snapshot.runes }))),
+    enemyBondLevels: defense.map(({ snapshot }) => snapshot.bondLevel),
+    enemyBreakthroughs: defense.map(({ snapshot }) => snapshot.breakthrough),
+    enemyBodyScale: 1
+  };
+  return createSkirmish(
+    players,
+    enemies,
+    battleArena("guildWar"),
+    Object.fromEntries(attack.map(({ relicId, snapshot }) => [relicId, snapshot.bondLevel])),
+    Object.fromEntries(attack.map(({ relicId, snapshot }) => [relicId, snapshot.breakthrough])),
+    options
+  );
+}
+function guildWarBattleOutcome(state) {
+  return {
+    won: state.phase === "victory",
+    defendersDown: state.fighters.filter((fighter) => fighter.side === "enemy" && isPartyFighter(fighter) && fighter.hp <= 0).length,
+    seconds: Math.round(state.elapsed * 10) / 10
+  };
+}
+function replayGuildWar(attack, defense, defs, seed) {
+  const state = createGuildWarSkirmish(attack, defense, defs);
+  const rng = bossBattleRandom(seed);
+  const limit = Math.ceil((deathClockClosesBySeconds() + 10) * 1e3 / BOSS_STEP_MS);
+  for (let step2 = 0; step2 < limit && state.phase === "fight"; step2 += 1) stepSkirmish(state, BOSS_STEP_MS / 1e3, rng);
+  return guildWarBattleOutcome(state);
+}
 
 // src/data/guildGuard.ts
 init_define_import_meta_env();
@@ -33975,7 +34358,7 @@ var SettingsManager = class extends EventTarget {
     if (current[dungeon] === tierId2) return;
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId2 } } });
   }
-  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의 날짜다. */
+  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */
   rememberGuildSeen(page, key) {
     const current = this.get().game.guildSeen;
     if (current[page] === key) return;
@@ -35713,6 +36096,68 @@ var FakeServer = class {
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
     const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
     return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
+  }
+  /**
+   * 길드전 공격 입장 — 공격덱 셋을 이 순간의 성장·룬으로 굳히고, 길드 백엔드가 칸·국면·남은 공격을 판정해 상대 방어덱을 돌려준다.
+   * 공격 한 번은 여기서 쓴다. 시드도 서버가 정하고, 궁극기까지 자동이라 판의 결과는 이 영수증이 다 정한다.
+   */
+  async enterGuildWarAttack(request) {
+    await this.delay();
+    if (typeof request?.requestId !== "string" || request.requestId.length === 0 || request.requestId.length > 64) throw new GuildApiError("INVALID_REQUEST");
+    const existing = this.state.serverJournal?.guildWarAdmissions?.[request.requestId];
+    if (existing) {
+      return { requestId: request.requestId, seed: existing.seed, slotId: existing.slotId, opponentName: existing.opponentName, defenderName: existing.defenderName, attack: structuredClone(existing.attack), defense: structuredClone(existing.defense), attacksLeft: 0 };
+    }
+    let relicIds;
+    try {
+      relicIds = normalizeGuildWarDeck(Array.isArray(request.relicIds) ? request.relicIds : []);
+    } catch {
+      throw new GuildApiError("INVALID_REQUEST");
+    }
+    if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const attack = relicIds.map((relicId) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId), this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId])
+    }));
+    const ticket = await this.guildBackend.beginWarAttack(this.guildActor(), request.slotId, `warAttack:${request.requestId}`);
+    const now = this.guardNow();
+    const seed = (globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`).slice(0, 64);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const admissions = Object.fromEntries(Object.entries(journal.guildWarAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
+    admissions[request.requestId] = {
+      seed,
+      day: ticket.day,
+      slotId: ticket.slotId,
+      opponentName: ticket.opponentName,
+      defenderName: ticket.defenderName,
+      expiresAt: new Date(now + 2 * 864e5).toISOString(),
+      attack,
+      defense: structuredClone(ticket.defense)
+    };
+    journal.guildWarAdmissions = admissions;
+    this.persist({ ...this.state, serverJournal: journal });
+    this.state.serverJournal = journal;
+    return { requestId: request.requestId, seed, slotId: ticket.slotId, opponentName: ticket.opponentName, defenderName: ticket.defenderName, attack: structuredClone(attack), defense: structuredClone(ticket.defense), attacksLeft: ticket.attacksLeft };
+  }
+  /** 입장 영수증의 두 편성·시드로 판을 다시 굴려 승패를 확정하고 길드에 남긴다. 클라이언트의 승패는 받지 않는다. */
+  async submitGuildWarAttack(request) {
+    await this.delay();
+    const cached = this.readReceipt("guildWar", request?.requestId ?? "", "submit");
+    if (cached) return cached;
+    const admission = this.state.serverJournal?.guildWarAdmissions?.[request?.requestId ?? ""];
+    if (!admission || admission.settled) throw new GuildApiError("WAR_NOT_ENTERED");
+    const getDef = (id) => RELICS.find((relic) => relic.id === id);
+    const outcome = replayGuildWar(admission.attack, admission.defense, getDef, admission.seed);
+    const recorded = await this.guildBackend.recordWarAttack(this.guildActor(), { day: admission.day, slotId: admission.slotId, won: outcome.won, entry: `warAttack:${request.requestId}` }, `warRecord:${request.requestId}`);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    journal.guildWarAdmissions = { ...journal.guildWarAdmissions, [request.requestId]: { ...admission, settled: true } };
+    const result = { outcome, captured: recorded.captured, front: recorded.front };
+    const next = { ...this.state, serverJournal: journal };
+    this.recordReceipt(next, "guildWar", request.requestId, "submit", result);
+    this.persist(next);
+    this.state.serverJournal = next.serverJournal;
+    return result;
   }
   /**
    * 길드 백엔드의 멱등 키. 서버 호출 단위에서는 요청 id를 고정해(`useGuildRequestId`) 같은 재전송이 같은 키가
@@ -38339,7 +38784,9 @@ var SANDBOX_GUILD_METHODS = /* @__PURE__ */ new Set([
   "getGuildGuard",
   "enterGuildGuard",
   "submitGuildGuard",
-  "placeGuildWarDefense"
+  "placeGuildWarDefense",
+  "enterGuildWarAttack",
+  "submitGuildWarAttack"
 ]);
 var activeGameApi = localGameApi;
 var remoteMissionListeners = /* @__PURE__ */ new Set();
@@ -38834,6 +39281,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "guild.getGuard",
   "guild.getRanking",
   "guild.getWarMap",
+  "guild.getWarFront",
   "getGuildGuard"
 ]);
 var isReadMethod = (method) => READ_METHODS.has(method);
@@ -38874,6 +39322,8 @@ var SERVER_GAME_METHODS = [
   "enterGuildGuard",
   "submitGuildGuard",
   "placeGuildWarDefense",
+  "enterGuildWarAttack",
+  "submitGuildWarAttack",
   "claimAchievementRewards",
   "claimAdReward",
   "claimAttendance",
@@ -39380,6 +39830,12 @@ function createSupabaseGuildBackend(call) {
     placeWarDefense: (actor, input, requestId) => {
       if (!parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run2(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
+    },
+    getWarFront: (actor) => run2(actor, "getWarFront"),
+    beginWarAttack: (actor, slotId, requestId) => parseGuildWarSlotId(slotId) ? run2(actor, "beginWarAttack", [slotId], requestId) : invalid(),
+    recordWarAttack: (actor, record2, requestId) => {
+      if (!Number.isSafeInteger(record2?.day) || !parseGuildWarSlotId(record2.slotId) || typeof record2.won !== "boolean" || !isId(record2.entry)) invalid();
+      return run2(actor, "recordWarAttack", [{ day: record2.day, slotId: record2.slotId, won: record2.won, entry: record2.entry }], requestId);
     },
     createGuild: (actor, input, requestId) => {
       const checked = validateGuildName(String(input?.name ?? ""));

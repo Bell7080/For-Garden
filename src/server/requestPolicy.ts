@@ -39,6 +39,7 @@ export const READ_METHODS = new Set([
   "guild.getGuard",
   "guild.getRanking",
   "guild.getWarMap",
+  "guild.getWarFront",
   "getGuildGuard",
 ]);
 export const isReadMethod = (method: string): boolean =>

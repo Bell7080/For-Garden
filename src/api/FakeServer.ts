@@ -75,9 +75,10 @@ import { isGuildSandbox } from "./guildApi";
 import { guildActorFrom } from "./guildActor";
 import { GuildApiError, type GuildBackend, type GuildWarMapState } from "./guildContracts";
 import { normalizeGuildWarDeck, parseGuildWarSlotId } from "../core/guildWarMap";
-import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
+import type { BuyGuildProductRequest, BuyGuildProductResponse, ChangeGuildBadgeRequest, CreateGuildRequest, EnterGuildGuardRequest, EnterGuildGuardResponse, EnterGuildWarAttackRequest, EnterGuildWarAttackResponse, SubmitGuildWarAttackRequest, SubmitGuildWarAttackResponse, GuildGuardStatusResponse, GuildWalletResponse, PlaceGuildWarDefenseRequest, StampGuildAttendanceRequest, StampGuildAttendanceResponse, SubmitGuildGuardRequest, SubmitGuildGuardResponse } from "./contracts";
 import { GUILD_GUARD, guildGuardAttemptsLeft, guildGuardDayKey, normalizeGuildGuardFormation } from "../core/guildGuard";
 import { guildGuardCoin, replayGuildGuard } from "../core/guildGuardBattle";
+import { replayGuildWar } from "../core/guildWarBattle";
 import { guildGuardElement, guildGuardEndsAt } from "../core/guildPages";
 import { guildGuardRoster } from "../data/guildGuard";
 import { guildQaClockShift } from "./guildQaClock";
@@ -1796,6 +1797,61 @@ export class FakeServer implements GameApi {
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
     const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
     return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
+  }
+
+  /**
+   * 길드전 공격 입장 — 공격덱 셋을 이 순간의 성장·룬으로 굳히고, 길드 백엔드가 칸·국면·남은 공격을 판정해 상대 방어덱을 돌려준다.
+   * 공격 한 번은 여기서 쓴다. 시드도 서버가 정하고, 궁극기까지 자동이라 판의 결과는 이 영수증이 다 정한다.
+   */
+  async enterGuildWarAttack(request: EnterGuildWarAttackRequest): Promise<EnterGuildWarAttackResponse> {
+    await this.delay();
+    if (typeof request?.requestId !== "string" || request.requestId.length === 0 || request.requestId.length > 64) throw new GuildApiError("INVALID_REQUEST");
+    const existing = this.state.serverJournal?.guildWarAdmissions?.[request.requestId];
+    if (existing) {
+      return { requestId: request.requestId, seed: existing.seed, slotId: existing.slotId, opponentName: existing.opponentName, defenderName: existing.defenderName, attack: structuredClone(existing.attack), defense: structuredClone(existing.defense), attacksLeft: 0 };
+    }
+    let relicIds: string[];
+    try { relicIds = normalizeGuildWarDeck(Array.isArray(request.relicIds) ? request.relicIds : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
+    if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
+    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const attack = relicIds.map((relicId) => ({
+      relicId,
+      snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
+    }));
+    const ticket = await this.guildBackend.beginWarAttack(this.guildActor(), request.slotId, `warAttack:${request.requestId}`);
+    const now = this.guardNow();
+    const seed = (globalThis.crypto?.randomUUID?.() ?? `${request.requestId}:${now}`).slice(0, 64);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    const admissions = Object.fromEntries(Object.entries(journal.guildWarAdmissions ?? {}).filter(([, admission]) => Date.parse(admission.expiresAt) >= now));
+    admissions[request.requestId] = {
+      seed, day: ticket.day, slotId: ticket.slotId, opponentName: ticket.opponentName, defenderName: ticket.defenderName,
+      expiresAt: new Date(now + 2 * 86_400_000).toISOString(), attack, defense: structuredClone(ticket.defense),
+    };
+    journal.guildWarAdmissions = admissions;
+    this.persist({ ...this.state, serverJournal: journal });
+    this.state.serverJournal = journal;
+    return { requestId: request.requestId, seed, slotId: ticket.slotId, opponentName: ticket.opponentName, defenderName: ticket.defenderName, attack: structuredClone(attack), defense: structuredClone(ticket.defense), attacksLeft: ticket.attacksLeft };
+  }
+
+  /** 입장 영수증의 두 편성·시드로 판을 다시 굴려 승패를 확정하고 길드에 남긴다. 클라이언트의 승패는 받지 않는다. */
+  async submitGuildWarAttack(request: SubmitGuildWarAttackRequest): Promise<SubmitGuildWarAttackResponse> {
+    await this.delay();
+    const cached = this.readReceipt<SubmitGuildWarAttackResponse>("guildWar", request?.requestId ?? "", "submit");
+    if (cached) return cached;
+    const admission = this.state.serverJournal?.guildWarAdmissions?.[request?.requestId ?? ""];
+    if (!admission || admission.settled) throw new GuildApiError("WAR_NOT_ENTERED");
+    const getDef = (id: string) => RELICS.find((relic) => relic.id === id)!;
+    const outcome = replayGuildWar(admission.attack, admission.defense, getDef, admission.seed);
+    // 같은 요청 ID로 길드에 기록하므로 재전송이 같은 칸을 두 번 격파하지 않는다.
+    const recorded = await this.guildBackend.recordWarAttack(this.guildActor(), { day: admission.day, slotId: admission.slotId, won: outcome.won, entry: `warAttack:${request.requestId}` }, `warRecord:${request.requestId}`);
+    const journal = structuredClone(this.state.serverJournal ?? emptyServerJournal());
+    journal.guildWarAdmissions = { ...journal.guildWarAdmissions, [request.requestId]: { ...admission, settled: true } };
+    const result: SubmitGuildWarAttackResponse = { outcome, captured: recorded.captured, front: recorded.front };
+    const next = { ...this.state, serverJournal: journal };
+    this.recordReceipt(next, "guildWar", request.requestId, "submit", result);
+    this.persist(next);
+    this.state.serverJournal = next.serverJournal;
+    return result;
   }
 
   /**
@@ -4496,7 +4552,7 @@ const localGameApi = new FakeServer();
 /** 길드 샌드박스(QA)일 때 이 기기의 구현으로 돌리는 조작 — 길드 백엔드를 읽거나 길드 코인·기록을 남기는 것 전부. */
 const SANDBOX_GUILD_METHODS: ReadonlySet<string> = new Set([
   "createGuild", "changeGuildBadge", "stampGuildAttendance", "buyGuildProduct",
-  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense",
+  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense", "enterGuildWarAttack", "submitGuildWarAttack",
 ] satisfies (keyof GameApi)[]);
 let activeGameApi: GameApi = localGameApi;
 const remoteMissionListeners = new Set<() => void>();

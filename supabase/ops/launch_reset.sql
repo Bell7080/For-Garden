@@ -71,6 +71,8 @@ declare
     'public.guild_rank_results',
     'public.guild_rank_totals',
     'public.guild_rank_awards',
+    'public.guild_war_days', 'public.guild_war_matches', 'public.guild_war_captures', 'public.guild_war_attacks',
+    'public.guild_war_admissions', 'public.guild_war_results', 'public.guild_war_coins',
     'public.admin_audit_log',
     'public.website_registration_limits'
   ];

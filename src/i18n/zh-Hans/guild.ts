@@ -43,6 +43,7 @@ export const GUILD_ZH_HANS = {
   "guild.badge.icon": "图案",
   "guild.badge.iconColor": "图案颜色",
   "guild.badge.apply": "更换徽章",
+  "guild.badge.firstFree": "首次免费!",
   "guild.badge.confirmTitle": "更换徽章",
   "guild.badge.confirmMessage": "更换公会徽章。",
   "guild.badge.done": "已更换徽章",

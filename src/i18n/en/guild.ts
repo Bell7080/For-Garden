@@ -43,6 +43,7 @@ export const GUILD_EN = {
   "guild.badge.icon": "Symbol",
   "guild.badge.iconColor": "Symbol color",
   "guild.badge.apply": "Change badge",
+  "guild.badge.firstFree": "First one free!",
   "guild.badge.confirmTitle": "Change badge",
   "guild.badge.confirmMessage": "Change the guild badge.",
   "guild.badge.done": "Badge changed",

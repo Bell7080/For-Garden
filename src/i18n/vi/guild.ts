@@ -43,6 +43,7 @@ export const GUILD_VI = {
   "guild.badge.icon": "Biểu tượng",
   "guild.badge.iconColor": "Màu biểu tượng",
   "guild.badge.apply": "Đổi huy hiệu",
+  "guild.badge.firstFree": "Lần đầu miễn phí!",
   "guild.badge.confirmTitle": "Đổi huy hiệu",
   "guild.badge.confirmMessage": "Đổi huy hiệu Bang hội.",
   "guild.badge.done": "Đã đổi huy hiệu",

@@ -43,6 +43,7 @@ export const GUILD_DE = {
   "guild.badge.icon": "Symbol",
   "guild.badge.iconColor": "Symbolfarbe",
   "guild.badge.apply": "Abzeichen ändern",
+  "guild.badge.firstFree": "Erstes Mal gratis!",
   "guild.badge.confirmTitle": "Abzeichen ändern",
   "guild.badge.confirmMessage": "Gildenabzeichen ändern.",
   "guild.badge.done": "Abzeichen geändert",

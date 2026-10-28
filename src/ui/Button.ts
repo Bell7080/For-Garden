@@ -96,10 +96,15 @@ export interface ButtonOptions {
    */
   cost?: { icon: CurrencyIconKey; amount: number; affordable?: boolean; /** 20K처럼 줄여 적는다. */ abbreviate?: boolean };
   /**
-   * 비용 자리에 서는 작은 강조 표(「무료」처럼). 값이 없는 조작도 **누르는 것 위**에서 그 사실을 말한다 —
-   * 버튼 밖의 안내문으로 적으면 값을 치르는 버튼과 다른 양식이 된다. `cost`와 함께 쓰지 않는다.
+   * 비용 자리에 값 대신 서는 한 마디(「무료」처럼). 값 글자와 같은 굵기·자리라 값을 치르는 버튼과 같은
+   * 양식으로 "치르지 않는다"를 말한다 — 버튼 밖의 안내문으로 적으면 다른 양식이 된다. `cost`와 함께 쓰지 않는다.
    */
   tag?: string;
+  /**
+   * 판 오른쪽 위 모서리에 걸쳐 붙는 딱지(「첫 회 무료!」처럼). 값 자리는 그대로 두고, **왜** 그 값인지를
+   * 모서리에서 짧게 말한다. 판 밖으로 반쯤 걸쳐 비스듬히 찍혀 판의 일부가 아니라 붙인 표로 읽힌다.
+   */
+  ribbon?: string;
   /**
    * 화면에서 가장 중요한 버튼인지.
    *
@@ -244,17 +249,26 @@ export class Button extends Phaser.GameObjects.Container {
       this.updateCost(opts.cost);
     }
     if (opts.tag !== undefined && !opts.cost) {
-      // 비용과 같은 자리 — 라벨 오른쪽에 깎인 칩 하나. 강조색 면에 짙은 글자라 값 대신 "치르지 않는다"가 먼저 읽힌다.
-      const tagText = scene.add.text(0, hasSub ? -14 : 0, opts.tag, textStyle({ role: "display", size: fontSize * 0.78, color: "#0b1017" })).setOrigin(0.5);
-      const tagW = tagText.width + fontSize * 0.9;
-      const tagH = fontSize * 1.18;
-      const gap = fontSize * 0.42;
-      const total = label.width + gap + tagW;
+      // 비용과 같은 자리·같은 결의 글자 — 라벨 오른쪽에 강조색으로, 세로로만 늘인다.
+      const tagText = scene.add
+        .text(0, hasSub ? -14 : 0, opts.tag, textStyle({ role: "display", size: fontSize * 0.96, color: primary ? accentText : COLOR.ink }))
+        .setOrigin(0, 0.5)
+        .setScale(1, 1.14);
+      const gap = fontSize * 0.5;
+      const total = label.width + gap + tagText.width;
       label.setX(-total / 2 + label.width / 2);
-      const tagX = -total / 2 + label.width + gap + tagW / 2;
-      const tagShape = chipPoints(tagW, tagH, { bevel: { topLeft: tagH * 0.32, bottomRight: tagH * 0.32 } });
-      plate.add(drawLayer(scene, tagX, tagText.y, tagShape, { fill: accent, alpha: 1, edgeAlpha: 0, shadow: { x: 2, y: 3 } }));
-      plate.add(tagText.setX(tagX));
+      plate.add(tagText.setX(-total / 2 + label.width + gap));
+    }
+    if (opts.ribbon !== undefined) {
+      // 오른쪽 위 모서리에 반쯤 걸쳐 비스듬히 찍힌 딱지. 붉은 면에 흰 글자라 판의 강조색과 갈린다.
+      const ribbonText = scene.add.text(0, 0, opts.ribbon, textStyle({ role: "display", size: fontSize * 0.72, color: "#ffffff" })).setOrigin(0.5);
+      const ribbonW = ribbonText.width + fontSize * 0.9;
+      const ribbonH = fontSize * 1.15;
+      const ribbon = scene.add.container(width / 2 - ribbonW * 0.42, -height / 2 + ribbonH * 0.08).setRotation(Phaser.Math.DegToRad(6));
+      const ribbonShape = chipPoints(ribbonW, ribbonH, { bevel: { topLeft: ribbonH * 0.34, bottomRight: ribbonH * 0.34 } });
+      ribbon.add(drawLayer(scene, 0, 0, ribbonShape, { fill: COLOR.danger, alpha: 1, edge: 0xffffff, edgeAlpha: 0.55, shadow: { x: 3, y: 5 } }));
+      ribbon.add(ribbonText);
+      plate.add(ribbon);
     }
     if (opts.decorDots) plate.add(dotPattern(scene, shape, accent));
     if (hasSub) {

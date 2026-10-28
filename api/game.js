@@ -1197,6 +1197,13 @@ var GUILD_KO = {
   "guild.settings.notice": "\uACF5\uC9C0",
   "guild.settings.noticeAria": "\uAE38\uB4DC \uACF5\uC9C0 \uC785\uB825",
   "guild.settings.joinMode": "\uAC00\uC785 \uBC29\uC2DD",
+  "guild.settings.name": "\uAE38\uB4DC \uC774\uB984",
+  "guild.settings.nameAria": "\uAE38\uB4DC \uC774\uB984 \uC785\uB825",
+  "guild.settings.rename": "\uBCC0\uACBD",
+  "guild.rename.confirmTitle": "\uAE38\uB4DC \uC774\uB984 \uBCC0\uACBD",
+  "guild.rename.confirmMessage": "\uAE38\uB4DC \uC774\uB984\uC744 \u300C{name}\u300D{name!\uC73C\uB85C} \uBC14\uAFC9\uB2C8\uB2E4.",
+  "guild.rename.done": "\uAE38\uB4DC \uC774\uB984\uC744 \uBC14\uAFE8\uC2B5\uB2C8\uB2E4",
+  "guild.rename.same": "\uC9C0\uAE08\uACFC \uAC19\uC740 \uC774\uB984\uC785\uB2C8\uB2E4",
   "guild.settings.save": "\uC800\uC7A5",
   "guild.settings.saved": "\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4",
   // 멤버
@@ -32003,6 +32010,7 @@ function applyDebugCommand(target, command, rules) {
 init_define_import_meta_env();
 var GUILD_CREATE_GEMS = 2e3;
 var GUILD_BADGE_CHANGE_GEMS = 500;
+var GUILD_RENAME_GEMS = 2e3;
 var GUILD_NAME_MIN = 2;
 var GUILD_NAME_MAX = 12;
 var GUILD_NOTICE_MAX = 120;
@@ -32730,6 +32738,19 @@ var FakeGuildServer = class _FakeGuildServer {
       guild.badge = { ...badge };
       guild.badgeChanges += 1;
       return { changed: true, charged };
+    });
+  }
+  async renameGuild(actor, name, requestId) {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      if (!guildCan(me.role, "badge")) fail2("NO_PERMISSION");
+      const checked = validateGuildName(name);
+      if (!checked.ok) return fail2("NAME_INVALID");
+      if (checked.name === guild.name) return { changed: false };
+      const key = guildNameKey(checked.name);
+      if ([...this.guilds.values()].some((g) => g.id !== guild.id && guildNameKey(g.name) === key)) fail2("NAME_TAKEN");
+      guild.name = checked.name;
+      return { changed: true };
     });
   }
   attendanceOf(me) {
@@ -35959,6 +35980,21 @@ var FakeServer = class {
     }
     return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
   }
+  async renameGuild(request) {
+    await this.delay();
+    const actor = this.guildActor();
+    const current = await this.guildBackend.getGuild(actor);
+    const checked = validateGuildName(String(request?.name ?? ""));
+    if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
+    if (current.guild !== null && current.guild.name !== checked.name) this.assertGuildGems(GUILD_RENAME_GEMS);
+    const { changed } = await this.guildBackend.renameGuild(actor, checked.name, this.guildRequestId("rename"));
+    if (changed) {
+      const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_RENAME_GEMS } };
+      this.persist(next);
+      this.state.wallet = next.wallet;
+    }
+    return { ...this.snapshot(), guild: await this.guildBackend.getGuild(actor) };
+  }
   async stampGuildAttendance(_request = {}) {
     await this.delay();
     const stamped = await this.guildBackend.stampAttendance(this.guildActor(), this.guildRequestId("stamp"));
@@ -38781,6 +38817,7 @@ var localGameApi = new FakeServer();
 var SANDBOX_GUILD_METHODS = /* @__PURE__ */ new Set([
   "createGuild",
   "changeGuildBadge",
+  "renameGuild",
   "stampGuildAttendance",
   "buyGuildProduct",
   "getGuildGuard",
@@ -39318,6 +39355,7 @@ var SERVER_GAME_METHODS = [
   "buyDuelAttempt",
   "buyGuildProduct",
   "changeGuildBadge",
+  "renameGuild",
   "createGuild",
   "stampGuildAttendance",
   "getGuildGuard",
@@ -39445,7 +39483,7 @@ function createUnavailableGuildBackend() {
     throw new GuildApiError("UNAVAILABLE", "UNAVAILABLE");
   };
   const backend = {};
-  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "stampAttendance", "purchase", "recordGuard", "placeWarDefense"]) backend[name] = refuse;
+  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "renameGuild", "stampAttendance", "purchase", "recordGuard", "placeWarDefense"]) backend[name] = refuse;
   return backend;
 }
 
@@ -39849,6 +39887,11 @@ function createSupabaseGuildBackend(call) {
     changeBadge: (actor, badge, requestId) => {
       if (!isGuildBadge(badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
       return run2(actor, "changeBadge", [badge], requestId);
+    },
+    renameGuild: (actor, name, requestId) => {
+      const checked = validateGuildName(String(name ?? ""));
+      if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
+      return run2(actor, "renameGuild", [{ name: checked.name, nameKey: guildNameKey(checked.name) }], requestId);
     },
     stampAttendance: (actor, requestId) => run2(actor, "stampAttendance", [], requestId),
     purchase: (actor, productId, requestId) => {

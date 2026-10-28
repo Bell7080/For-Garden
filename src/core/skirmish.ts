@@ -13,7 +13,7 @@ import type { AttackSkill, BasicAttack, BasicAttackStep, BreakthroughEffects, Co
 import { ULTIMATE_ENERGY_MAX, ultimateEnergyCap } from "./ultimate";
 import { deriveSummonStats } from "./summonStats";
 import { PUP } from "./pup";
-import { hordeEntrySpots, type HordeSpec } from "./guildGuard";
+import { GUILD_GUARD_IDLE, hordeEntrySpots, type HordeEntrySide, type HordeSpec } from "./guildGuard";
 import { restoreCueIntensity, stealthTransition, type CombatEffectCue } from "./combatEffects";
 import {
   accumulateDamageContribution, addContribution, contributionOwnerId, contributionSnapshot, createBattleContributions, type BattleContributionRow, type BattleContributions,
@@ -42,10 +42,15 @@ export interface Arena {
 export interface Fighter extends Combatant {
   id: string;
   /**
-   * 수호전 웨이브로 들어온 몸이 아직 필드 윗변 위(화면 바깥)에 있다. 그동안만 윗변에 붙잡지 않고
-   * 걸어 내려오게 둔다 — 붙잡으면 바깥에서 몰려오는 그림이 필드 끝에서 툭 생겨나는 그림이 된다.
+   * 수호전 웨이브로 들어온 몸이 아직 필드 밖에 있다. 그동안만 필드에 붙잡지 않고 들어오게 둔다 —
+   * 붙잡으면 바깥에서 몰려오는 그림이 필드 끝에서 툭 생겨나는 그림이 된다.
    */
   hordeEntering?: boolean;
+  /** 들어오는 쪽 — 옆은 화면 밖에서 빠르게 미끄러져 들어오고, 위는 장판 끝에서 스르륵 나타나 걸어 내려온다. */
+  hordeEntry?: HordeEntrySide;
+  /** 수호전 아군이 적이 없을 때 서 있을 자리. 이미 가까우면 제자리에 선다(`GUILD_GUARD_IDLE`). */
+  idleHome?: { x: number; y: number };
+  idleReturning?: boolean;
   /** 수호전 처치 점수. 쓰러지면 한 번만 센다(`hordeCounted`). */
   hordeScore?: number;
   hordeCounted?: boolean;
@@ -1460,8 +1465,10 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
  */
 export const MAX_ENEMY_COUNT = 25;
 
-/** 수호전 웨이브가 화면 바깥에서 필드로 걸어 들어오는 최소 속도(px/초). */
+/** 수호전 웨이브가 장판 끝에서 필드로 걸어 들어오는 최소 속도(px/초). */
 const HORDE_ENTRY_SPEED = 150;
+/** 옆에서 들어오는 몸은 화면 밖에서 **슉** 미끄러져 들어온다(px/초). */
+const HORDE_SIDE_ENTRY_SPEED = 900;
 
 /** 한 줄에 서는 적의 수. 다섯을 넘는 무리는 이 폭으로 줄을 나눠 뒤로 쌓는다. */
 const HORDE_ROW = 5;
@@ -9041,13 +9048,14 @@ function separate(state: SkirmishState, dt: number): void {
 
 function clampToArena(state: SkirmishState): void {
   for (const fighter of state.fighters) {
-    fighter.x = Math.min(Math.max(fighter.x, state.arena.left), state.arena.right);
     if (fighter.hordeEntering) {
-      // 바깥에서 걸어 내려오는 중 — 윗변에 닿는 순간부터 다른 몸과 같은 땅을 쓴다.
-      if (fighter.y >= state.arena.top) fighter.hordeEntering = false;
+      // 바깥에서 들어오는 중 — 필드 안에 발을 들이는 순간부터 다른 몸과 같은 땅을 쓴다.
+      const inside = fighter.y >= state.arena.top && fighter.x >= state.arena.left && fighter.x <= state.arena.right;
+      if (inside) fighter.hordeEntering = false;
       fighter.y = Math.min(fighter.y, state.arena.bottom);
       continue;
     }
+    fighter.x = Math.min(Math.max(fighter.x, state.arena.left), state.arena.right);
     const top = Math.max(state.arena.top, fighter.leashTop ?? state.arena.top);
     fighter.y = Math.min(Math.max(fighter.y, top), state.arena.bottom);
   }
@@ -9763,12 +9771,17 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       resolveChainCollision(fighter, state, events);
       continue;
     }
-    // 수호전 웨이브가 화면 바깥에서 걸어 내려오는 중 — 필드에 들어서기 전에는 표적을 잡지도 때리지도 않는다.
-    // 바깥에서 쏘는 몸이 생기면 보이지 않는 곳에서 맞는 판이 된다. 들어오는 걸음은 조금 서두른다.
+    // 수호전 웨이브가 필드 밖에서 들어오는 중 — 필드에 들어서기 전에는 표적을 잡지도 때리지도 않는다.
+    // 바깥에서 쏘는 몸이 생기면 보이지 않는 곳에서 맞는 판이 된다. 옆에서는 화면 밖에서 빠르게 미끄러져
+    // 들어오고(슉), 위에서는 장판 끝에서 나타나 조금 서둘러 걸어 내려온다.
     if (fighter.hordeEntering) {
       fighter.targetId = null;
       fighter.engaged = false;
-      fighter.y += Math.max(HORDE_ENTRY_SPEED, fighter.def.stats.moveSpeed * 1.5) * dt;
+      if (fighter.hordeEntry === "left" || fighter.hordeEntry === "right") {
+        const dir = fighter.hordeEntry === "left" ? 1 : -1;
+        fighter.x += dir * HORDE_SIDE_ENTRY_SPEED * dt;
+        fighter.facing = dir;
+      } else fighter.y += Math.max(HORDE_ENTRY_SPEED, fighter.def.stats.moveSpeed * 1.5) * dt;
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       continue;
     }
@@ -9797,7 +9810,10 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
     const drone = fighter.def.passive.kind === "highAltitudeRecon";
     const droneAim = drone ? pickDroneTarget(state, fighter) : undefined;
     const target = droneAim ?? resolveTarget(state, fighter, reconsider);
-    if (!target) continue;
+    if (!target) {
+      if (fighter.idleHome) idleTowardHome(fighter, dt, state);
+      continue;
+    }
     if (droneAim) fighter.targetId = droneAim.id;
 
     const dx = target.x - fighter.x;
@@ -10278,6 +10294,28 @@ function fireUltimateCore(
 }
 
 /**
+ * 수호전 아군이 적이 없을 때 — 진형 자리에서 조금 앞으로 당긴 대기 자리(`idleHome`)를 기준으로 선다. 이미 그 둘레
+ * (`standRadius`) 안이면 제자리에 서고, 멀리 나가 있을 때만 돌아오되 `arriveRadius`까지 다가서면 멈춘다 — 웨이브 사이마다
+ * 원래 칸으로 꼬박꼬박 돌아가면 막 싸우던 자리를 버리고 뒤로 물러나는 그림이 된다.
+ */
+function idleTowardHome(fighter: Fighter, dt: number, state: SkirmishState): void {
+  const home = fighter.idleHome;
+  if (!home || fighter.knockback) return;
+  const dx = home.x - fighter.x;
+  const dy = home.y - fighter.y;
+  const gap = Math.hypot(dx, dy);
+  if (!fighter.idleReturning && gap > GUILD_GUARD_IDLE.standRadius) fighter.idleReturning = true;
+  if (fighter.idleReturning && gap <= GUILD_GUARD_IDLE.arriveRadius) fighter.idleReturning = false;
+  if (!fighter.idleReturning) return;
+  const step = Math.min(gap, moveSpeed(fighter, state) * dt);
+  fighter.x += (dx / gap) * step;
+  fighter.y += (dy / gap) * step;
+  if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
+  fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
+  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+}
+
+/**
  * 웨이브 몰이 한 조각 — 쓰러진 웨이브 몸의 점수를 거두고, 때가 된 웨이브를 화면 위 바깥에 세우고,
  * 필드에 선 적이 상한에 닿았는지 본다. 난수를 쓰지 않으므로 재현 난수열이 밀리지 않는다.
  */
@@ -10303,6 +10341,7 @@ function advanceHorde(state: SkirmishState, events: SkirmishEvent[]): void {
       const fighter = makeFighter(unit.def, "enemy", horde.serial, spots[i].x, spots[i].y, 0, 0, unit.bodyScale, state.enemyAugmentEffects ?? []);
       horde.serial += 1;
       fighter.hordeEntering = true;
+      fighter.hordeEntry = spots[i].from;
       fighter.hordeScore = unit.score;
       state.fighters.push(fighter);
       ids.push(fighter.id);

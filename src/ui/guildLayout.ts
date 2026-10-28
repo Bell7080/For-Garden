@@ -218,3 +218,16 @@ export function guildWarNodeSpot(slot: { branch: number; kind: "boss" | "elite" 
   if (slot.kind === "elite") return { x: x + (slot.index === 0 ? -1 : 1) * M.elite.dx, y: M.elite.y, size: M.elite.size };
   return { x: x + (slot.index % 2 === 0 ? -1 : 1) * M.grunt.dx, y: M.grunt.y + Math.floor(slot.index / 2) * M.grunt.step, size: M.grunt.size };
 }
+
+/**
+ * 수호전 쪽의 자리. 왼쪽 옆줄(정보 탭과 같은 `GUILD_INFO.rail`)에 일일 보상·길드 상점 칩이 서고, 가운데 위에 오늘 몰려올 적의
+ * 얼굴 줄, 그 아래 오늘 기록 판이 선다. 맨 아래는 원정 기록 화면과 같은 문법이다 — 출격이 가운데에 크게 서고, 그 바로 위에
+ * 길드원 순위·길드 순위 두 버튼이 나란히 선다(순위는 화면에 늘어놓지 않고 눌러서 연다).
+ */
+export const GUILD_GUARD_PAGE = {
+  centerX: (GUILD_INFO.rail.x + GUILD_INFO.rail.size / 2 + BASE_WIDTH) / 2,
+  enemies: { label: 440, y: 560, size: 128, gap: 22 },
+  record: { y: 860, width: 760, height: 300 },
+  ranking: { y: 1556, width: 330, height: 82, gap: 24 },
+  sortie: { y: 1676, width: 560, height: 124 },
+} as const;

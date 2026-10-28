@@ -122,7 +122,7 @@ export function openStoryDifficultyUnlocked(scene: Phaser.Scene, popups: PopupLa
   const tone = STORY_DIFFICULTY[difficulty];
   const height = 760;
   const reduced = motionPolicy(session.settings).nonEssentialRepeatFactor === 0;
-  return new Promise(resolve => popups.open({ width: P.width, height, title: t("storyDifficulty.unlocked.title"), dim: true, hideCloseButton: true, closeOnBackdrop: false, onClose: resolve }, (body, close) => {
+  return new Promise(resolve => popups.open({ width: P.width, height, title: t("storyDifficulty.unlocked.title"), dim: true, hideCloseButton: true, onClose: resolve }, (body, close) => {
     const top = -height / 2;
     const cardY = top + 90 + P.card.height / 2 + 20;
     // 칸 뒤로 그 난이도 색의 납작한 마름모 빛 — 동그란 후광은 쓰지 않는다.

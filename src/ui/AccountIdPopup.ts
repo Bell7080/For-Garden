@@ -42,7 +42,7 @@ export function openAccountIdPopup(scene: Phaser.Scene, layer: PopupLayer, optio
   let alive = true, busy = false;
   const retryAt: Record<AccountIdPopupTab, number> = { signIn: 0, register: 0 };
 
-  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, closeOnBackdrop: false, backButton: true, canClose: () => !busy, onClose: () => { alive = false; options.onClose?.(); } }, (body, close) => {
+  layer.open({ width: L.width, height: rows.height, title: t(options.mode === "link" ? "account.id.linkTitle" : "account.id.title"), dim: true, backButton: true, canClose: () => !busy, onClose: () => { alive = false; options.onClose?.(); } }, (body, close) => {
     const tabs = scene.add.container(0, 0);
     const view = scene.add.container(0, 0);
     body.add([tabs, view]);

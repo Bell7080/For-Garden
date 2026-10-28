@@ -9,7 +9,7 @@ import { COLOR, textStyle } from "./theme";
 /** 이메일/연동과 다른 계정 로그인은 처음부터 다른 의도로 고정한다. */
 export function openAccountEmailPopup(scene: Phaser.Scene, layer: PopupLayer, intent: "link" | "sign-in", onDone: (state: AccountState) => void, onClose?: () => void): void {
     let email = "", code = "", sent = false, busy = false, alive = true, retryAt = 0;
-    layer.open({ width: 850, height: 740, title: t("account.email.title"), dim: true, closeOnBackdrop: false, backButton: true, canClose: () => !busy, onClose: () => { alive = false; onClose?.(); } }, (body, close) => {
+    layer.open({ width: 850, height: 740, title: t("account.email.title"), dim: true, backButton: true, canClose: () => !busy, onClose: () => { alive = false; onClose?.(); } }, (body, close) => {
         const view = scene.add.container(0, 0);
         body.add(view);
         const guide = addAccountGuide(scene, body, 850, 740);

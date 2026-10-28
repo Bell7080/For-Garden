@@ -1919,15 +1919,35 @@
     "Heutige Gegner · {element}",
     "Враги дня · {element}"
   ],
-  "guild.guard.status": [
-    "剩余挑战 {left}/{total} · 今日最高 {best}",
-    "ท้าทายเหลือ {left}/{total} · สูงสุดวันนี้ {best}",
-    "Lượt còn {left}/{total} · Cao nhất hôm nay {best}",
-    "Sisa {left}/{total} · Terbaik hari ini {best}",
-    "Intentos {left}/{total} · Mejor de hoy {best}",
-    "Tentativas {left}/{total} · Melhor de hoje {best}",
-    "Versuche {left}/{total} · Heute bestes {best}",
-    "Попытки {left}/{total} · Лучшее за день {best}"
+  "guild.guard.best": [
+    "今日最高",
+    "สูงสุดวันนี้",
+    "Cao nhất hôm nay",
+    "Terbaik hari ini",
+    "Mejor de hoy",
+    "Melhor de hoje",
+    "Heute bestes",
+    "Лучшее за день"
+  ],
+  "guild.guard.attempts": [
+    "剩余挑战 {left}/{total}",
+    "ท้าทายเหลือ {left}/{total}",
+    "Lượt còn {left}/{total}",
+    "Sisa {left}/{total}",
+    "Intentos {left}/{total}",
+    "Tentativas {left}/{total}",
+    "Versuche {left}/{total}",
+    "Попытки {left}/{total}"
+  ],
+  "guild.guard.elite": [
+    "精英",
+    "หัวกะทิ",
+    "Tinh anh",
+    "Elite",
+    "Élite",
+    "Elite",
+    "Elite",
+    "Элита"
   ],
   "guild.guard.start": [
     "出击",

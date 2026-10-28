@@ -1,23 +1,24 @@
-import { RELICS } from "./relics";
+import { getRelic } from "./relics";
 import type { GuildGuardRoster } from "../core/guildGuard";
-import type { Element, RelicDef } from "../core/types";
+import type { Element } from "../core/types";
 
 /**
- * 수호전 명단 — 그날 속성의 개체들이 몰려온다.
+ * 수호전 명단 — 그날 속성의 **스토리 적군**이 몰려온다(2026-10-28 응태 요청).
  *
- * **무리**는 R 등급(적 전용 포함)과 그 속성의 레이티아 자매, **정예**는 SR·SSR이다. 레이드 보스(공유 체력 자리)와
- * 소환수를 데리고 다니는 개체(디안·모르페)는 빼고, 소환 전용 몸도 세우지 않는다 — 웨이브로 수십이 서는 판에 소환수까지
- * 붙으면 머릿수 상한이 소환수로 찬다. 개체 정의는 손대지 않고 레벨과 자리의 몫(`swarm`·`elite`)으로만 자란다.
+ * 플레이어가 쓰는 아군 개체는 세우지 않는다 — 적 전용(`enemyOnly`) 개체 가운데 스토리 관문에 서는 공멸 단원과
+ * 그 속성의 레이티아 겨울잠쥐만 쓴다. **무리**는 그 속성의 겨울잠쥐와 R급 단원, **정예**는 스토리에서 혼자 서는 정예로
+ * 나왔던 개체다(1-5 토비 · 2-7/2-9 아모·리파 · 1-10 코마 · 3-5 아트라 · 3-10 이카니시아). 레이드 보스(공유 체력 자리)는
+ * 쓰지 않는다. 개체 정의는 손대지 않고 레벨과 자리의 몫(`swarm`·`elite`)으로만 자란다.
  */
-const RAID_BOSSES = new Set(["pontos", "taboa", "sukusuino", "quetzalcoatlus"]);
-
-function eligible(def: RelicDef): boolean {
-  return def.summonOnly !== true && !RAID_BOSSES.has(def.id) && (def.summons?.length ?? 0) === 0;
-}
+export const GUILD_GUARD_ROSTER_IDS: Readonly<Record<Element, { grunts: readonly string[]; elites: readonly string[] }>> = {
+  fire: { grunts: ["raitia-fire", "pulsi"], elites: ["toby"] },
+  earth: { grunts: ["raitia-earth", "mir"], elites: ["amo"] },
+  water: { grunts: ["raitia-water", "neuri"], elites: ["ripa"] },
+  grass: { grunts: ["raitia-grass"], elites: ["koma", "atra"] },
+  wind: { grunts: ["raitia-wind"], elites: ["ikanixia"] },
+};
 
 export function guildGuardRoster(element: Element): GuildGuardRoster {
-  const pool = RELICS.filter((def) => def.element === element && eligible(def));
-  const grunts = pool.filter((def) => def.rarity === "R" || def.id.startsWith("raitia-"));
-  const elites = pool.filter((def) => (def.rarity === "SR" || def.rarity === "SSR") && !def.id.startsWith("raitia-"));
-  return { grunts, elites };
+  const ids = GUILD_GUARD_ROSTER_IDS[element];
+  return { grunts: ids.grunts.map((id) => getRelic(id)), elites: ids.elites.map((id) => getRelic(id)) };
 }

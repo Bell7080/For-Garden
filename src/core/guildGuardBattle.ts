@@ -1,7 +1,7 @@
 import { BOSS_STEP_MS, bossBattleRandom } from "./bossSimulation";
 import type { ExpeditionAugmentEffect } from "./expeditionAugments";
 import type { ExpeditionRelicSnapshot } from "./expeditionSnapshot";
-import { GUILD_GUARD, GUILD_GUARD_ARENA, guildGuardHordeSpec, guildGuardSlotSpot, type GuildGuardRoster } from "./guildGuard";
+import { GUILD_GUARD, GUILD_GUARD_ARENA, guildGuardHordeSpec, guildGuardIdleSpot, guildGuardSlotSpot, type GuildGuardRoster } from "./guildGuard";
 import { partyRuneTraitEffects } from "./runeTraitEffects";
 import { createSkirmish, stepSkirmish, type SkirmishState } from "./skirmish";
 import type { RelicDef } from "./types";
@@ -50,10 +50,12 @@ export function createGuildGuardSkirmish(lineup: GuildGuardLineup, defs: (id: st
       augmentEffects: traits,
     },
   );
-  // 뒷줄은 앞줄보다 깊이 나가지 않는다 — 자리마다 쫓아갈 수 있는 윗선이 다르다.
-  filled.forEach((_, index) => {
+  // 뒷줄은 앞줄보다 깊이 나가지 않는다 — 자리마다 쫓아갈 수 있는 윗선이 다르다. 적이 없을 때 설 자리도 칸이 정한다.
+  filled.forEach(({ slot }, index) => {
     const fighter = state.fighters.find(({ id }) => id === `player-${index}`);
-    if (fighter) fighter.leashTop = spots[index].leashTop;
+    if (!fighter) return;
+    fighter.leashTop = spots[index].leashTop;
+    fighter.idleHome = guildGuardIdleSpot(slot);
   });
   return state;
 }

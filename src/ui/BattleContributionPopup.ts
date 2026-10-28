@@ -36,7 +36,7 @@ export class BattleContributionPopup {
     const closers: Array<() => void> = [];
     this.popups.open({
       width, height, title: t("contribution.title"), titleSize: POPUP_TITLE_SIZE.workboard, dim: true, dimAlpha: 0.36,
-      closeOnBackdrop: false, hideCloseButton: true,
+      hideCloseButton: true,
       onClose: () => { for (const dispose of closers) dispose(); closers.length = 0; onClosed?.(); },
     }, (body, close) => {
       let category: ContributionCategory = "attack";

@@ -10,7 +10,9 @@ import {
   type GuildWarFrontSlotView, type GuildWarFrontView,
 } from "../api/guildContracts";
 import type { GuildGuardStatusResponse, StampGuildAttendanceResponse } from "../api/contracts";
-import { GUILD_GUARD } from "../core/guildGuard";
+import { GUILD_GUARD, guardRosterPreview } from "../core/guildGuard";
+import type { Element } from "../core/types";
+import { guildGuardRoster } from "../data/guildGuard";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
 import { consumeSceneEntry } from "./sceneEntry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -46,7 +48,7 @@ import { CURRENCY_ICON_BY_WALLET } from "../ui/currencyIcons";
 import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWidgets";
 import { addGuildBadge } from "../ui/GuildBadge";
 import {
-  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
+  GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_GUARD_PAGE as G, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
   GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarColumnX, guildWarNodeSpot,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
@@ -73,15 +75,8 @@ import { GUILD_COIN_TEXT } from "../ui/topBarSlots";
 import { COLOR, textStyle } from "../ui/theme";
 
 type GuildTab = "info" | "members";
-type GuardTab = "members" | "guilds";
-const GUARD_TABS = [
-  { key: "members", labelKey: "guild.guard.tab.members" },
-  { key: "guilds", labelKey: "guild.guard.tab.guilds" },
-] as const;
 /** 수호전 순위 줄 안의 자리 — 줄 가운데가 0이다. 등수가 맨 왼쪽, 그 오른쪽에 얼굴·뱃지가 선다. */
 const GUARD_ROW = { rankX: -420, faceX: -320, faceSize: 96, textX: -250 } as const;
-/** 수호전 쪽 위의 두 줄 — 그날 속성 · 초기화 시각, 남은 도전 · 오늘 최고와 출격 버튼. */
-const GUARD_HEAD = { start: { width: 280, height: 80 } } as const;
 const PAGES = [
   { key: "info", labelKey: "guild.page.info" },
   { key: "war", labelKey: "guild.page.war" },
@@ -153,7 +148,6 @@ export class GuildScene extends Phaser.Scene {
   private query = "";
   private page: GuildPage = "info";
   private tab: GuildTab = "info";
-  private guardTab: GuardTab = "members";
   private guardBoard?: GuildGuardBoard;
   private guardStatus?: GuildGuardStatusResponse;
   private warMap?: GuildWarMapState;
@@ -198,7 +192,7 @@ export class GuildScene extends Phaser.Scene {
   create(): void {
     setDebugScene("guild");
     this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = this.entryPage; this.tab = "info";
-    this.guardTab = "members"; this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined; this.warFront = undefined;
+    this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined; this.warFront = undefined;
     this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
     this.ticker = undefined;
     this.backdropKey = this.page === "war" ? BACKGROUND.guildWar : this.page === "guard" ? BACKGROUND.guildGuard : BACKGROUND.guild;
@@ -323,13 +317,23 @@ export class GuildScene extends Phaser.Scene {
           const from = PAGES.findIndex((candidate) => candidate.key === this.page);
           this.page = key;
           this.markSeen();
-          void this.reload().then(() => { if (this.scene.isActive()) slideTabPage(this, [this.view, this.controls], from, index); });
+          this.switchTab(from, index);
         },
       });
       if (key !== "info" && this.page !== key && guildPageHasNews(key, seen[key], this.now)) {
         this.tabRow.add(this.add.circle(x + S.pages.width / 2 - 24, S.pages.y - S.pages.height / 2 - 4, 11, RED_DOT));
       }
     });
+  }
+
+  /**
+   * 탭을 누른 그 프레임에 새 판으로 갈아 끼우고 밀어 넣는다. 받아 둔 자료로 먼저 그리고 새 자료는 뒤에서 받아
+   * 같은 자리에 다시 칠한다 — 응답을 기다린 뒤에 그리던 때는 누른 뒤 한참 옛 판이 서 있어 탭이 안 바뀐 것처럼 보였다.
+   */
+  private switchTab(from: number, index: number): void {
+    this.paint();
+    slideTabPage(this, [this.view, this.controls], from, index);
+    void this.reload(true);
   }
 
   /** 지금 연 길드전·수호전 판을 봤다고 적는다. */
@@ -347,7 +351,7 @@ export class GuildScene extends Phaser.Scene {
           if (this.tab === key || this.busy) return;
           const from = TABS.findIndex((candidate) => candidate.key === this.tab);
           this.tab = key;
-          void this.reload().then(() => { if (this.scene.isActive()) slideTabPage(this, [this.view, this.controls], from, index); });
+          this.switchTab(from, index);
         },
       });
     });
@@ -1369,69 +1373,85 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /**
-   * 수호전 쪽 — 위 두 줄에 그날 몰려올 적의 속성·초기화 시각, 남은 도전·오늘 최고와 출격 버튼이 서고, 아래 목록이
-   * 길드 안 순위(오늘 최고 점수) 또는 길드 순위(길드원 최고 점수의 합)를 흐른다. 작은 탭이 두 목록을 가른다.
+   * 수호전 쪽 — 위 줄에 그날 몰려올 적의 속성·초기화 시각이 서고, 왼쪽 옆줄에 일일 보상·길드 상점 칩, 가운데에 오늘의 적 얼굴과
+   * 내 오늘 기록이 선다. 맨 아래는 원정과 같다 — 출격이 가운데에, 그 위에 길드원 순위·길드 순위 버튼이 나란히 서서 눌러 연다.
    */
   private paintGuard(): void {
-    this.listBottom = S.body.bottom;
-    const status = this.guardStatus, board = this.guardBoard;
+    const status = this.guardStatus;
     const element = status?.element ?? guildGuardElement(this.now);
     this.controls.add(new AffinityBadge(this, S.side + 30, S.summary.y, ELEMENT_ICON[element as keyof typeof ELEMENT_ICON], 60, 0.7));
     this.label(this.controls, S.side + 74, S.summary.y, t("guild.guard.today", { element: t(`element.${element}`) }), { role: "display", size: 34, color: COLOR.dangerText });
     const timer = this.label(this.controls, S.side + S.width, S.summary.y, "", { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
     this.tick(timer, () => t("guild.guard.next", { time: hmText(guildGuardEndsAt(this.now) - this.now) }));
-    if (status) {
-      this.label(this.controls, S.side, S.controls.y, t("guild.guard.status", { left: status.attemptsLeft, total: GUILD_GUARD.attemptsPerDay, best: status.best.toLocaleString() }), { role: "emphasis", size: 28, color: COLOR.ink });
-      const { width, height } = GUARD_HEAD.start;
-      const start = new Button(this, S.side + S.width - width / 2, S.controls.y, {
-        width, height, label: t("guild.guard.start"), fontSize: 32, variant: "primary",
-        onClick: () => {
-          if (this.busy || status.attemptsLeft <= 0) return;
-          startScene(this, "party", { content: "guildGuard", element });
-        },
-      });
-      start.setEnabled(status.attemptsLeft > 0);
-      this.controls.add(start);
-    }
-    GUARD_TABS.forEach(({ key, labelKey }, index) => {
-      addCategoryTab(this, this.tabRow, {
-        x: guildTabX(index), y: S.tabs.y, width: S.tabs.width, height: S.tabs.height, label: t(labelKey), selected: this.guardTab === key,
-        onSelect: () => {
-          if (this.guardTab === key || this.busy) return;
-          const from = GUARD_TABS.findIndex((candidate) => candidate.key === this.guardTab);
-          this.guardTab = key;
-          this.view.removeAll(true);
-          this.paintGuardList(false);
-          slideTabPage(this, [this.view], from, index);
-        },
-      });
+
+    // 왼쪽 옆줄 — 정보 탭의 길드 순위·길드 상점 칩과 같은 자리·같은 양식이다.
+    this.controls.add(new RailButton(this, I.rail.x, I.rail.ranking, { icon: "rank-reward", label: t("guild.guard.reward"), size: I.rail.size, accent: true, onClick: () => { if (!this.busy) this.openGuardRewards(); } }));
+    this.controls.add(addSideShopButton(this, I.rail.x, I.rail.shop, I.rail.size, t("guild.shop.title"), () => this.openShop()));
+
+    // 오늘의 적 — 무리 먼저, 그다음 정예. 얼굴을 누르면 그 개체가 처음 서는 웨이브의 모습으로 정보창이 열린다.
+    const { entries } = guardRosterPreview(guildGuardRoster(element as Element));
+    const E = G.enemies;
+    this.label(this.controls, G.centerX, E.label, t("guild.guard.preview.title"), { role: "emphasis", size: 28, color: COLOR.inkDim }, [0.5, 0.5]);
+    const span = entries.length * E.size + (entries.length - 1) * E.gap;
+    entries.forEach((entry, index) => {
+      const x = G.centerX - span / 2 + E.size / 2 + index * (E.size + E.gap);
+      if (entry.def.portraitAssetId) this.controls.add(new FaceFrame(this, x, E.y, { portraitAssetId: entry.def.portraitAssetId, size: E.size, color: entry.role === "elite" ? COLOR.danger : undefined }));
+      this.label(this.controls, x, E.y + E.size / 2 + 24, entry.role === "elite" ? t("guild.guard.elite") : t("guild.guard.preview.level", { level: entry.level }), { role: "emphasis", size: 22, color: entry.role === "elite" ? COLOR.dangerText : COLOR.inkDim }, [0.5, 0.5]);
     });
-    const reward = new RailButton(this, guildTabX(GUARD_TABS.length - 1) + S.tabs.width / 2 + S.tabs.gap * 2 + 42, S.tabs.y, { icon: "rank-reward", label: t("guild.guard.reward"), size: 84, accent: true, onClick: () => { if (!this.busy) this.openGuardRewards(); } });
-    this.tabRow.add(reward);
-    if (board) this.paintGuardList(false);
+
+    // 오늘 기록 판 — 오늘 최고 점수를 크게, 남은 도전을 그 아래에.
+    const R = G.record;
+    this.plate(this.controls, G.centerX, R.y, R.width, R.height);
+    this.label(this.controls, G.centerX, R.y - 92, t("guild.guard.best"), { role: "emphasis", size: 28, color: COLOR.inkDim }, [0.5, 0.5]);
+    this.label(this.controls, G.centerX, R.y - 8, status ? status.best.toLocaleString() : "-", { role: "display", size: 84, color: COLOR.accentText }, [0.5, 0.5]);
+    if (status) this.label(this.controls, G.centerX, R.y + 92, t("guild.guard.attempts", { left: status.attemptsLeft, total: GUILD_GUARD.attemptsPerDay }), { role: "emphasis", size: 28, color: status.attemptsLeft > 0 ? COLOR.ink : COLOR.dangerText }, [0.5, 0.5]);
+
+    // 맨 아래 — 순위 두 버튼 위, 출격 가운데.
+    const K = G.ranking;
+    const total = K.width * 2 + K.gap;
+    this.controls.add(new Button(this, BASE_WIDTH / 2 - total / 2 + K.width / 2, K.y, { width: K.width, height: K.height, label: t("guild.guard.tab.members"), fontSize: 26, onClick: () => { if (!this.busy) this.openGuardRanking("members"); } }));
+    this.controls.add(new Button(this, BASE_WIDTH / 2 + total / 2 - K.width / 2, K.y, { width: K.width, height: K.height, label: t("guild.guard.tab.guilds"), fontSize: 26, onClick: () => { if (!this.busy) this.openGuardRanking("guilds"); } }));
+    const O = G.sortie;
+    const start = new Button(this, BASE_WIDTH / 2, O.y, {
+      width: O.width, height: O.height, label: t("guild.guard.start"), fontSize: 40, variant: "primary",
+      accentColor: COLOR.sortie, accentTextColor: COLOR.sortieText,
+      onClick: () => {
+        if (this.busy || !status || status.attemptsLeft <= 0) return;
+        startScene(this, "party", { content: "guildGuard", element });
+      },
+    });
+    start.setEnabled(Boolean(status) && (status?.attemptsLeft ?? 0) > 0);
+    this.controls.add(start);
   }
 
-  /** 수호전 순위 목록. 아직 아무도 막지 않은 날은 빈 목록 대신 한 줄 안내만 선다. */
-  private paintGuardList(keep: boolean): void {
+  /**
+   * 수호전 순위 창 — 길드원 순위(오늘 최고 점수) 또는 길드 순위(길드원 최고 점수의 합). 위 여덟 줄을 세우고, 내가 그 밖이면
+   * 맨 아래에 붙박는다. 길드 순위 창의 왼쪽 위 칩이 일일 순위 보상표를 연다.
+   */
+  private openGuardRanking(tab: "members" | "guilds"): void {
     const board = this.guardBoard;
     if (!board) return;
-    const rows = this.guardTab === "members" ? board.members : board.guilds;
-    if (rows.length === 0) {
-      this.label(this.view, BASE_WIDTH / 2, S.body.top + 120, t("guild.guard.empty"), { role: "body", size: 30, color: COLOR.inkDim }, [0.5, 0.5]);
-      return;
-    }
-    const mine = this.guardTab === "guilds" && board.mine && !board.guilds.some((entry) => entry.isMine) ? board.mine : undefined;
-    if (mine) this.listBottom = S.body.bottom - S.row.height - S.row.gap;
-    this.mountList(rows.length, keep, (row, index) => {
-      if (this.guardTab === "members") this.paintGuardMemberRow(row, board.members[index]);
-      else this.paintGuardGuildRow(row, board.guilds[index]);
+    const all = tab === "members" ? board.members : board.guilds;
+    const rows = all.slice(0, 8);
+    const mineInAll = tab === "members" ? board.members.find((entry) => entry.isMe) : board.guilds.find((entry) => entry.isMine) ?? board.mine ?? undefined;
+    const pinned = mineInAll && !rows.includes(mineInAll as never) ? mineInAll : undefined;
+    const rowGap = S.row.height + S.row.gap;
+    const lines = Math.max(1, rows.length) + (pinned ? 1 : 0);
+    const height = 240 + lines * rowGap;
+    const width = S.width + 70;
+    this.popups.open({ width, height, title: t(tab === "members" ? "guild.guard.tab.members" : "guild.guard.tab.guilds"), closeOnBackdrop: true, dim: true }, (body) => {
+      if (tab === "guilds") addRankRewardChip(this, body, -width / 2 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, { period: "weekly", onClick: () => this.openGuardRewards() });
+      if (rows.length === 0) { this.label(body, 0, 0, t("guild.guard.empty"), { role: "body", size: 30, color: COLOR.inkDim }, [0.5, 0.5]); return; }
+      const top = -height / 2 + 150 + S.row.height / 2;
+      const paint = (entry: (typeof all)[number], y: number): void => {
+        const row = this.add.container(0, y);
+        body.add(row);
+        if (tab === "members") this.paintGuardMemberRow(row, entry as GuildGuardBoard["members"][number]);
+        else this.paintGuardGuildRow(row, entry as GuildGuardBoard["guilds"][number]);
+      };
+      rows.forEach((entry, index) => paint(entry, top + index * rowGap));
+      if (pinned) paint(pinned, top + rows.length * rowGap);
     });
-    if (mine) {
-      // 내 길드가 위 50길드 밖이면 목록 아래에 붙박아 둔다.
-      const row = this.add.container(BASE_WIDTH / 2, this.listBottom + S.row.gap + S.row.height / 2);
-      this.view.add(row);
-      this.paintGuardGuildRow(row, mine);
-    }
   }
 
   private guardRank(row: Phaser.GameObjects.Container, rank: number): void {

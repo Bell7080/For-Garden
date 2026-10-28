@@ -29,7 +29,7 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer): void {
   let page = 0;
   let tickets: TicketSummary[] | null = null;
 
-  layer.open({ width: SUPPORT_POPUP.width, height, title: t("support.title"), dim: true, closeOnBackdrop: false, onClose: () => { alive = false; } }, (body) => {
+  layer.open({ width: SUPPORT_POPUP.width, height, title: t("support.title"), dim: true, onClose: () => { alive = false; } }, (body) => {
     const tabs = scene.add.container(0, top);
     const view = scene.add.container(0, top);
     body.add([tabs, view]);

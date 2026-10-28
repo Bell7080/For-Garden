@@ -219,8 +219,11 @@ export class PopupLayer {
     const single = options.cancelLabel === false;
     const tone = options.destructive ? COLOR.danger : COLOR.accent;
 
-    // 판 밖을 누르면 취소와 같다 — 확정은 언제나 버튼 하나뿐이다.
-    this.open({ width: L.width, height, title: options.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: true }, (body, close) => {
+    // 판 밖을 눌러도 닫힌다 — 묻는 창이면 취소이고, 알리기만 하는 창(버튼 하나)은 확정과 같다.
+    // 알림 뒤에 흐름이 이어지는 창이 많아, 밖을 눌러 닫았다고 그 흐름이 끊기면 화면이 멈춘 것처럼 남는다.
+    let confirmed = false;
+    const confirmOnce = (): void => { if (confirmed) return; confirmed = true; onConfirm(); };
+    this.open({ width: L.width, height, title: options.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: true, onClose: single ? confirmOnce : undefined }, (body, close) => {
       const plateHeight = confirmPlateHeight(content);
       const plateTop = -height / 2 + L.topRoom;
       const plateY = plateTop + plateHeight / 2;
@@ -263,7 +266,7 @@ export class PopupLayer {
         decorDots: true,
         ...(options.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
         // 되돌릴 수 없는 확정(판매·포기·초기화)은 밝은 확정음이 아니라 낮고 둔한 한 번이다.
-        onClick: () => { audioManager?.playUi(options.destructive ? "ui.danger" : "ui.confirm"); close(); onConfirm(); },
+        onClick: () => { audioManager?.playUi(options.destructive ? "ui.danger" : "ui.confirm"); confirmed = true; close(); onConfirm(); },
       }));
     });
   }

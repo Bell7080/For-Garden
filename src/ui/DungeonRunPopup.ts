@@ -107,7 +107,7 @@ export function openDungeonRunPopup(scene: Phaser.Scene, popups: PopupLayer, opt
   let adBusy = false;
   const title = options.mode === "auto" ? t("autoRepeat.title") : t("dungeon.sweep");
 
-  popups.open({ width: L.width, height, title, dim: true, dimAlpha: 0.66, closeOnBackdrop: false, hideCloseButton: true, backButton: true }, (body, close) => {
+  popups.open({ width: L.width, height, title, dim: true, dimAlpha: 0.66, hideCloseButton: true, backButton: true }, (body, close) => {
     const top = -height / 2;
     let view: Phaser.GameObjects.Container | undefined;
     let countLayer: Phaser.GameObjects.Container | undefined;

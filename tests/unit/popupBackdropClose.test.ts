@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /** 우편·가방·임무·이벤트 같은 작업판은 판 바깥을 눌러도 뒤로 간다. 막아야 하는 창만 예외다. */
-const BLOCKING = ["RuneTraitPopup", "SaveConflictPopup", "ExpeditionAugmentPopup", "BattleContributionPopup"];
+const BLOCKING = ["RuneTraitPopup", "SaveConflictPopup", "ExpeditionAugmentPopup"];
+/** 고를 것이 없거나 취소가 곧 닫기인 창 — 뒤로가기·X를 찾지 않아도 바깥을 눌러 닫는다. */
+const DISMISSIBLE = ["BattleContributionPopup", "StoryDifficultyPopup", "DungeonRunPopup", "SupportPopup", "StaminaPopup", "AccountEmailPopup", "AccountIdPopup", "PopupLayer"];
 
 describe("팝업 바깥 누르기", () => {
   it.each(["MailPopup", "InventoryPopup", "MissionsPopup", "LobbyEventPopup", "TradePopup", "IdleExcavationPopup"])("%s는 바깥을 누르면 닫힌다", (name) => {
@@ -15,6 +17,9 @@ describe("팝업 바깥 누르기", () => {
     const layer = readFileSync("src/ui/PopupLayer.ts", "utf8");
     const confirm = layer.slice(layer.indexOf("  confirm(options"), layer.indexOf("  private addBalanceRow"));
     expect(confirm).not.toContain("closeOnBackdrop: false");
+  });
+  it.each(DISMISSIBLE)("%s는 바깥 누르기를 막지 않는다", (name) => {
+    expect(readFileSync(`src/ui/${name}.ts`, "utf8")).not.toContain("closeOnBackdrop: false");
   });
   it("바깥 누르기를 막는 창은 선택·확정을 요구하는 창뿐이다", () => {
     for (const name of BLOCKING) expect(readFileSync(`src/ui/${name}.ts`, "utf8")).toContain("closeOnBackdrop: false");

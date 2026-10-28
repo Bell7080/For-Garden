@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { captureExpeditionRelicSnapshot } from "../../src/core/expeditionSnapshot";
-import { GUILD_GUARD, arrangeGuardFormation, buildGuardWave, guardRosterPreview, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
+import { GUILD_GUARD, GUILD_GUARD_ARENA, GUILD_GUARD_ENTRY_Y, GUILD_GUARD_SIDE_BAND, arrangeGuardFormation, guildGuardIdleSpot, hordeEntrySpots, buildGuardWave, guardRosterPreview, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
 import { GUILD_GUARD_COIN, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
 import { GUILD_GUARD_ELEMENTS } from "../../src/core/guildPages";
 import { guildGuardRoster } from "../../src/data/guildGuard";
@@ -31,6 +31,43 @@ describe("수호전 웨이브", () => {
       for (const def of [...roster.grunts, ...roster.elites]) expect(def.element).toBe(element);
       const wave = buildGuardWave(roster, 3);
       expect(wave.units.filter((unit) => unit.role === "elite")).toHaveLength(1);
+    }
+  });
+
+  it("적은 스토리 적 전용 개체뿐이다 — 아군 캐릭터가 적으로 서지 않는다", () => {
+    for (const element of GUILD_GUARD_ELEMENTS) {
+      const roster = guildGuardRoster(element);
+      expect(roster.grunts.some((def) => def.id.startsWith("raitia-")), element).toBe(true);
+      for (const def of [...roster.grunts, ...roster.elites]) expect(def.enemyOnly, def.id).toBe(true);
+    }
+  });
+
+  it("적은 위·양옆 경계에서만 들어오고 뒤(아래)에서는 오지 않는다", () => {
+    const arena = GUILD_GUARD_ARENA;
+    for (let wave = 0; wave < 6; wave += 1) {
+      const spots = hordeEntrySpots(arena, GUILD_GUARD_ENTRY_Y, 12, wave);
+      expect(spots).toHaveLength(12);
+      expect(new Set(spots.map(({ from }) => from)).size).toBe(3);
+      for (const spot of spots) {
+        if (spot.from === "top") {
+          expect(spot.y).toBeLessThanOrEqual(GUILD_GUARD_ENTRY_Y);
+          expect(spot.x).toBeGreaterThanOrEqual(arena.left);
+          expect(spot.x).toBeLessThanOrEqual(arena.right);
+        } else {
+          expect(spot.y).toBeGreaterThanOrEqual(GUILD_GUARD_SIDE_BAND.top);
+          expect(spot.y).toBeLessThanOrEqual(GUILD_GUARD_SIDE_BAND.bottom);
+          expect(spot.from === "left" ? spot.x < arena.left : spot.x > arena.right).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("적이 없을 때 서는 자리는 제 칸보다 가운데·위쪽이다", () => {
+    const centerX = (GUILD_GUARD_ARENA.left + GUILD_GUARD_ARENA.right) / 2;
+    for (let slot = 0; slot < 6; slot += 1) {
+      const home = guildGuardSlotSpot(slot), idle = guildGuardIdleSpot(slot);
+      expect(idle.y).toBeLessThan(home.y);
+      expect(Math.abs(idle.x - centerX)).toBeLessThanOrEqual(Math.abs(home.x - centerX));
     }
   });
 

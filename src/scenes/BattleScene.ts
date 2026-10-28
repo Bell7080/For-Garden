@@ -46,6 +46,7 @@ import {
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
 import { getRelic } from "../data/relics";
 import { createGuildGuardSkirmish } from "../core/guildGuardBattle";
+import { hordeEntryAlpha } from "../core/guildGuard";
 import { createGuildWarSkirmish } from "../core/guildWarBattle";
 import { GUILD_WAR_SLOT_SCORE } from "../core/guildWar";
 import { parseGuildWarSlotId } from "../core/guildWarMap";
@@ -2587,7 +2588,9 @@ export class BattleScene extends Phaser.Scene {
         flipX: fighter.facing < 0,
       });
       // 은신은 무적 표현이 아니다. SD 본체만 반투명하게 두고 피격 숫자·광역 피해 사건은 그대로 유지한다.
-      view.creature.setAlpha(fighter.stealthFor > 0 ? 0.45 : isPupFighter(fighter) ? PUP_VIEW_ALPHA : 1);
+      // 수호전 웨이브가 위 장판 끝에서 들어오는 동안은 스르륵 나타난다(옆에서 오는 몸은 화면 밖에서 출발해 처음부터 또렷하다).
+      const entryAlpha = fighter.hordeEntering ? hordeEntryAlpha(fighter, this.state.arena, this.state.horde?.spec.entryY) : 1;
+      view.creature.setAlpha((fighter.stealthFor > 0 ? 0.45 : isPupFighter(fighter) ? PUP_VIEW_ALPHA : 1) * entryAlpha);
       // 폭주 중에는 한 뼘 커진다. 자리를 다시 잡은 뒤에 곱해야 매 프레임 배율이 되돌아가지 않는다.
       if (fighter.ferocityFever) view.creature.setScale(view.creature.scaleX * FEVER.scale, view.creature.scaleY * FEVER.scale);
       // 맞은 순간의 눌림도 같은 이유로 여기서 곱한다 — 가로로 길고 세로로 꾹 눌렸다 돌아온다.
@@ -2674,9 +2677,9 @@ export class BattleScene extends Phaser.Scene {
         .setDepth(Math.round(fighter.y / 10) + DEPTH.unitBase + 1);
       // 떠 있는 동안 그림자는 땅에 남되 작고 옅어진다.
       const lift = 1 - Math.min(pose.hop / 60, 0.45);
-      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setScale(lift).setAlpha(lift);
+      view.shadow.setPosition(pose.shadowX, pose.shadowY + 4).setScale(lift).setAlpha(lift * entryAlpha);
       const barY = pose.y - unitHeight - 26;
-      view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp);
+      view.hpBar.setPosition(pose.x, barY).setDepth(DEPTH.hpBar).setValue(fighter.hp / fighter.maxHp).setAlpha(entryAlpha);
       const stunned = fighter.stunnedFor > 0;
       // 상태의 실제 소유자는 src/core/skirmish.ts이며 Phaser 시계는 표시 여부를 결정하지 않는다.
       // 상태가 바뀐 프레임에만 유지 모션을 전환한다. 매 프레임 play하면 Puppet 재생 시각이 0으로

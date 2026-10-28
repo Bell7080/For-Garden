@@ -165,6 +165,8 @@ export class GuildScene extends Phaser.Scene {
   private dragLastY = 0;
   private dragMoved = 0;
   private busy = false;
+  private backdrop?: Phaser.GameObjects.Image;
+  private backdropKey: string = BACKGROUND.guild;
 
   constructor() { super("guild"); }
 
@@ -180,8 +182,9 @@ export class GuildScene extends Phaser.Scene {
     this.guardTab = "members"; this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined;
     this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
     this.ticker = undefined;
-    addSceneBackground(this, BACKGROUND.lobby);
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.74).setDepth(-29);
+    this.backdropKey = this.page === "war" ? BACKGROUND.guildWar : this.page === "guard" ? BACKGROUND.guildGuard : BACKGROUND.guild;
+    this.backdrop = addSceneBackground(this, this.backdropKey);
+    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.50).setDepth(-29);
     this.popups = new PopupLayer(this);
     this.topBar = new TopBar(this, 40, {
       profile: false, currencies: "guild", guildCoin: () => this.state?.me?.coin ?? 0,
@@ -260,6 +263,14 @@ export class GuildScene extends Phaser.Scene {
   /* ── 그리기 ───────────────────────────────────────────────────────────── */
 
   private paint(keep = false): void {
+    const backdrop = this.inGuild && !this.browsing
+      ? this.page === "war" ? BACKGROUND.guildWar : this.page === "guard" ? BACKGROUND.guildGuard : BACKGROUND.guild
+      : BACKGROUND.guild;
+    if (backdrop !== this.backdropKey) {
+      this.backdrop?.destroy();
+      this.backdropKey = backdrop;
+      this.backdrop = addSceneBackground(this, backdrop);
+    }
     const debug = !this.state?.guild || this.browsing ? "browse" : this.page === "info" ? this.tab : this.page;
     setDebugScene("guild", debug);
     this.ticker?.remove(); this.ticker = undefined;

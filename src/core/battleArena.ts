@@ -31,7 +31,7 @@ export const BATTLE_ARENA = {
   // 실시간 아레나는 같은 결투장 원화(`duel` 틀)를 쓰되 확대 뒤 실측 바닥(약 670~1,440)을 거의 다 쓴다.
   // 결투장 몫(740~1,360)에 그대로 세웠을 때는 두 편이 코앞에서 시작해 촘촘해 보였다 — 좌우도 한 뼘씩 더 연다.
   liveArena: { left: 110, right: 970, top: 700, bottom: 1410 },
-  // 길드 수호전은 적이 화면 위 밖에서 몰려와 넓은 길을 내려온다 — 원정 필드의 길이 시작하는 곳까지 쓴다(`GUILD_GUARD_ARENA`와 같은 값).
+  // 수호전 전용 항구 광장은 화면 위 1/4부터 바닥이라 기존 전투 좌표를 그대로 수용한다(`GUILD_GUARD_ARENA`와 같은 값).
   guildGuard: { left: 110, right: 970, top: 600, bottom: 1300 },
 } as const satisfies Record<string, Arena>;
 

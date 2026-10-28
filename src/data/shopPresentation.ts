@@ -285,7 +285,7 @@ export const SHOP_STAGE_PRESENTATION: Readonly<Record<"shop" | "archaeology" | "
     // 길드 전용 점원 원화가 오기 전까지 오비가 임시로 선다. 대사는 길드 상점 문구다.
     merchant: SHOP_MERCHANT,
     lineKeys: GUILD_MERCHANT_LINE_KEYS,
-    background: BACKGROUND.lobby,
+    background: BACKGROUND.guildShop,
     titleKey: "guild.shop.title",
     tabs: GUILD_TABS,
     // 값은 길드 코인 하나라 그 칸만 세운다(`topBarSlots`의 `guild`).

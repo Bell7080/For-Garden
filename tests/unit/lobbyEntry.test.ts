@@ -29,20 +29,20 @@ describe("로비로 돌아갈 자리", () => {
 
 describe("전투 모드별 전장", () => {
   it("는 콘텐츠마다 다른 장소에 선다", () => {
-    // 같은 원화를 나눠 쓰는 것은 한 장소에서 이어지는 원정 둘과, 전용 원화가 오기 전까지 원정의 긴 길을 빌려 쓰는
-    // 길드 수호전뿐이다(무리가 화면 위에서 내려오는 길이 있는 원화가 그것 하나다).
+    // 같은 장소에서 이어지는 원정 둘과 길드전·방어덱 편성만 원화를 나눠 쓴다.
     expect(BATTLE_FIELD_BACKGROUND.cake).toBe(BACKGROUND.cakeField);
     expect(BATTLE_FIELD_BACKGROUND.bounty).toBe(BACKGROUND.bountyField);
     expect(BATTLE_FIELD_BACKGROUND.raid).toBe(BACKGROUND.raidField);
     expect(BATTLE_FIELD_BACKGROUND.expeditionBoss).toBe(BATTLE_FIELD_BACKGROUND.expedition);
     const fields = Object.values(BATTLE_FIELD_BACKGROUND);
-    expect(BATTLE_FIELD_BACKGROUND.guildGuard).toBe(BATTLE_FIELD_BACKGROUND.expedition);
+    expect(BATTLE_FIELD_BACKGROUND.guildGuard).toBe(BACKGROUND.guildGuardField);
+    expect(BATTLE_FIELD_BACKGROUND.guildWarDefense).toBe(BACKGROUND.guildWarField);
     expect(new Set(fields).size).toBe(fields.length - 2);
   });
 
   it("는 전장에 진입 화면 배경을 깔지 않는다", () => {
     // 현상수배가 `sortieBounty`(진입 화면)를 전장에 깔고 있었다. 필드 원화는 따로 있다.
-    const entries = [BACKGROUND.sortieCake, BACKGROUND.sortieBounty, BACKGROUND.sortieRaid];
+    const entries = [BACKGROUND.sortieCake, BACKGROUND.sortieBounty, BACKGROUND.sortieRaid, BACKGROUND.guildWar, BACKGROUND.guildGuard];
     for (const key of Object.values(BATTLE_FIELD_BACKGROUND)) expect(entries).not.toContain(key);
   });
 

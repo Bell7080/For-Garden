@@ -1959,16 +1959,6 @@
     "Versuche {left}/{total}",
     "Попытки {left}/{total}"
   ],
-  "guild.guard.elite": [
-    "精英",
-    "หัวกะทิ",
-    "Tinh anh",
-    "Elite",
-    "Élite",
-    "Elite",
-    "Elite",
-    "Элита"
-  ],
   "guild.guard.start": [
     "出击",
     "ออกรบ",
@@ -2070,14 +2060,14 @@
     "Боевая мощь 1-й волны {power}"
   ],
   "guild.guard.preview.rule": [
-    "每波等级 +{level} · 精英每 {every} 波出现",
-    "เลเวล +{level} ต่อคลื่น · ศัตรูชั้นยอดทุก {every} คลื่น",
-    "Mỗi đợt cấp +{level} · Tinh nhuệ mỗi {every} đợt",
-    "Level +{level} tiap gelombang · Elite tiap {every} gelombang",
-    "Nivel +{level} por oleada · Élites cada {every} oleadas",
-    "Nível +{level} por onda · Elites a cada {every} ondas",
-    "Stufe +{level} pro Welle · Elite alle {every} Wellen",
-    "Уровень +{level} за волну · Элита каждые {every} волны"
+    "每波等级 +{level} · 敌人达 {cap} 名即崩溃 · 我方治疗·护盾 -{cut}%",
+    "เลเวล +{level} ต่อคลื่น · ศัตรู {cap} ตัวแนวป้องกันแตก · ฮีล/โล่ฝ่ายเรา -{cut}%",
+    "Mỗi đợt cấp +{level} · Đủ {cap} kẻ địch là vỡ · Hồi máu/khiên phe ta -{cut}%",
+    "Level +{level} tiap gelombang · Runtuh di {cap} musuh · Pemulihan/perisai tim -{cut}%",
+    "Nivel +{level} por oleada · Cae con {cap} enemigos · Curación/escudos aliados -{cut}%",
+    "Nível +{level} por onda · Cai com {cap} inimigos · Cura/escudos aliados -{cut}%",
+    "Stufe +{level} pro Welle · Fällt bei {cap} Gegnern · Heilung/Schilde des Teams -{cut}%",
+    "Уровень +{level} за волну · Падение при {cap} врагах · Лечение/щиты союзников -{cut}%"
   ],
   "guild.guard.preview.level": [
     "LV.{level}",

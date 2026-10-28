@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { captureExpeditionRelicSnapshot } from "../../src/core/expeditionSnapshot";
-import { GUILD_GUARD, GUILD_GUARD_ARENA, GUILD_GUARD_ENTRY_Y, GUILD_GUARD_SIDE_BAND, arrangeGuardFormation, guildGuardIdleSpot, hordeEntrySpots, buildGuardWave, guardRosterPreview, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
-import { GUILD_GUARD_COIN, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
+import { GUILD_GUARD, GUILD_GUARD_ARENA, GUILD_GUARD_ENTRY_Y, GUILD_GUARD_SIDE_BAND, arrangeGuardFormation, guildGuardIdleSpot, hordeEntrySpots, buildGuardWave, guardRosterPreview, guardWaveCount, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
+import { GUILD_GUARD_COIN, createGuildGuardSkirmish, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
+import { hordeFieldCount, stepSkirmish } from "../../src/core/skirmish";
+import { guildGuardHordeSpec } from "../../src/core/guildGuard";
 import { GUILD_GUARD_ELEMENTS } from "../../src/core/guildPages";
 import { guildGuardRoster } from "../../src/data/guildGuard";
 import { getRelic } from "../../src/data/relics";
@@ -14,43 +16,40 @@ const lineup = (ids: readonly (string | null)[], level: number): GuildGuardLineu
 });
 
 describe("수호전 웨이브", () => {
-  it("웨이브마다 레벨이 오르고 정예는 셋째 웨이브부터 섞인다", () => {
+  it("웨이브마다 레벨이 오르고 한 웨이브는 붕괴 상한보다 한참 적다", () => {
     expect(guardWaveLevel(1)).toBe(GUILD_GUARD.startLevel);
     expect(guardWaveLevel(5)).toBeGreaterThan(guardWaveLevel(4));
     expect(guardWaveLevel(999)).toBe(GUILD_GUARD.maxLevel);
-    expect(guardWaveCounts(1).elites).toBe(0);
-    expect(guardWaveCounts(3).elites).toBe(1);
-    expect(guardWaveCounts(60).grunts).toBeLessThanOrEqual(GUILD_GUARD.gruntCap);
+    expect(guardWaveCount(1)).toBe(GUILD_GUARD.gruntBase);
+    expect(guardWaveCount(60)).toBe(GUILD_GUARD.gruntCap);
+    expect(GUILD_GUARD.gruntCap * 1.5).toBeLessThanOrEqual(GUILD_GUARD.overrunCap);
   });
 
-  it("다섯 속성 모두 잡졸과 정예를 그 속성에서만 고른다", () => {
+  it("다섯 속성 모두 그 속성의 명단에서만 고르고, 모두 무리로 선다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
-      expect(roster.grunts.length, element).toBeGreaterThan(0);
-      expect(roster.elites.length, element).toBeGreaterThan(0);
-      for (const def of [...roster.grunts, ...roster.elites]) expect(def.element).toBe(element);
-      const wave = buildGuardWave(roster, 3);
-      expect(wave.units.filter((unit) => unit.role === "elite")).toHaveLength(1);
+      expect(roster.units.length, element).toBeGreaterThan(0);
+      for (const def of roster.units) expect(def.element).toBe(element);
+      for (const unit of buildGuardWave(roster, 9).units) {
+        expect(unit.role).toBe("swarm");
+        expect(unit.def.encounterRole).toBe("swarm");
+      }
     }
   });
 
   it("적은 스토리 적 전용 개체뿐이다 — 아군 캐릭터가 적으로 서지 않는다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
-      expect(roster.grunts.some((def) => def.id.startsWith("raitia-")), element).toBe(true);
-      for (const def of [...roster.grunts, ...roster.elites]) expect(def.enemyOnly, def.id).toBe(true);
+      expect(roster.units.some((def) => def.id.startsWith("raitia-")), element).toBe(true);
+      for (const def of roster.units) expect(def.enemyOnly, def.id).toBe(true);
     }
   });
 
-  it("정예는 정해 둔 개체가 아니라 그날 명단에서 무작위로 고른다 — 웨이브를 돌면 명단 모두가 한 번씩 정예가 된다", () => {
+  it("누가 서는지는 명단에서 섞어 고른다 — 명단 모두가 나오고 같은 웨이브는 늘 같은 얼굴이다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
-      const picked = new Set<string>();
-      for (let index = 3; index <= 40; index += 1) {
-        for (const unit of buildGuardWave(roster, index).units) if (unit.role === "elite") picked.add(unit.def.id);
-      }
-      expect([...picked].sort(), element).toEqual([...new Set(roster.elites.map(({ id }) => id))].sort());
-      // 같은 웨이브는 늘 같은 정예다(서버 재현).
+      const picked = new Set(buildGuardWave(roster, 1).units.map((unit) => unit.def.id));
+      expect([...picked].sort(), element).toEqual([...new Set(roster.units.map(({ id }) => id))].sort());
       expect(buildGuardWave(roster, 9).units.map((unit) => unit.def.id)).toEqual(buildGuardWave(roster, 9).units.map((unit) => unit.def.id));
     }
   });
@@ -142,7 +141,7 @@ describe("수호전 재현", () => {
   }, 60_000);
 
   it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
-    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 20), getRelic, guildGuardRoster("fire"), "seed-b");
+    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 40), getRelic, guildGuardRoster("fire"), "seed-b");
     expect(outcome.kills).toBeGreaterThan(0);
   }, 60_000);
 });
@@ -156,19 +155,39 @@ describe("수호전 자동 배치", () => {
   });
 });
 
+describe("수호전 필드 카운팅과 제약", () => {
+  it("들어오는 중인 몸까지 필드에 센다 — 웨이브가 서는 순간 그 머릿수가 곧바로 잡힌다", () => {
+    const state = createGuildGuardSkirmish(lineup(["torika", null, null, null, null, null], 1), getRelic, guildGuardRoster("fire"));
+    stepSkirmish(state, 0.05);
+    const entering = state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.hordeEntering).length;
+    expect(entering).toBeGreaterThan(0);
+    expect(hordeFieldCount(state)).toBe(guardWaveCount(1));
+  });
+
+  it("쌓인 적이 상한에 닿으면 끝난다 — 버티기만 하는 탱커 하나도 쌓인 무리에 무너진다", () => {
+    const state = createGuildGuardSkirmish(lineup(["ark", null, null, null, null, null], 60), getRelic, guildGuardRoster("fire"));
+    for (let i = 0; i < 6000 && state.phase === "fight"; i += 1) stepSkirmish(state, 1 / 20);
+    expect(state.horde?.overrun).toBe(true);
+    expect(hordeFieldCount(state)).toBeGreaterThanOrEqual(GUILD_GUARD.overrunCap);
+    expect(GUILD_GUARD.overrunCap).toBe(18);
+  });
+
+  it("수호전 제약 — 아군 회복·보호막이 절반만 든다", () => {
+    expect(guildGuardHordeSpec(guildGuardRoster("fire")).allyRestorePercent).toBe(50);
+  });
+});
+
 describe("수호전 「오늘의 적」 미리보기", () => {
-  it("명단의 얼굴이 한 번씩, 처음 서는 웨이브의 레벨로 선다(무리 먼저)", () => {
+  it("명단의 얼굴이 한 번씩, 처음 서는 웨이브의 레벨로 선다", () => {
     for (const element of GUILD_GUARD_ELEMENTS) {
       const roster = guildGuardRoster(element);
       const { entries, firstWave } = guardRosterPreview(roster);
       const ids = entries.map((entry) => entry.def.id);
       expect(new Set(ids).size).toBe(ids.length);
-      const rosterIds = new Set([...roster.grunts, ...roster.elites].map((def) => def.id));
+      const rosterIds = new Set(roster.units.map((def) => def.id));
       for (const id of ids) expect(rosterIds.has(id)).toBe(true);
       expect(entries.length).toBeGreaterThan(0);
       for (const entry of entries) expect(entry.level).toBe(guardWaveLevel(entry.wave));
-      const firstElite = entries.findIndex((entry) => entry.role === "elite");
-      if (firstElite >= 0) expect(entries.slice(firstElite).every((entry) => entry.role === "elite")).toBe(true);
       expect(firstWave.index).toBe(1);
     }
   });

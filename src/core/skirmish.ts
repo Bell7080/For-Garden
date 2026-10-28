@@ -3441,7 +3441,7 @@ function grantShield(
   events?: SkirmishEvent[],
   weight = 1,
 ): number {
-  const amount = requested * deathClockSurvivalMultiplier(state.elapsed);
+  const amount = requested * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side);
   // 시들어 0이 된 막은 제공자까지 바꾸지 않는다 — 두르지 못한 것이지 덮어쓴 것이 아니다.
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
@@ -6169,7 +6169,8 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
   const before = target.hp;
   // 데스 카운트의 감쇠는 보호막과 **같은 배율**을 쓴다. 한쪽만 깎으면 남은 쪽으로 버티는
   // 편성이 그대로 살아남아, 끝나지 않는 판을 끝내려던 시계가 제 일을 하지 못한다.
-  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed));
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed)
+    * hordeRestoreMultiplier(state, target.side));
   const actual = target.hp - before;
   // 취소·과잉 회복은 actual이 0이므로 누적되지 않으며, 흡혈·자가 재생은 기본 casterId가 자신이다.
   addContribution(state.contributions, casterId, "healing", actual);
@@ -10572,6 +10573,23 @@ function idleTowardHome(fighter: Fighter, dt: number, state: SkirmishState): voi
 }
 
 /**
+ * 수호전 필드에 쌓인 적의 수 — 방어선 붕괴 판정과 화면의 `필드 n/상한`이 함께 읽는 하나의 셈이다.
+ *
+ * **살아 있는 웨이브 몸은 전부 센다** — 아직 바깥에서 들어오는 중인 몸도, 지난 웨이브에서 남은 몸도 같다. 들어오는
+ * 몸을 빼던 때는 다음 웨이브가 바깥에 줄을 서 있는 동안 필드에 쌓인 수가 실제보다 적게 읽혀 상한이 늦게 걸렸다.
+ * 소환수처럼 웨이브가 세우지 않은 몸은 세지 않는다.
+ */
+export function hordeFieldCount(state: SkirmishState): number {
+  return state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.hordeScore !== undefined && isFighterAlive(fighter)).length;
+}
+
+/** 수호전 제약 — 아군이 받는 회복·보호막을 웨이브 계약(`allyRestorePercent`)만큼만 남긴다. 다른 판은 1이다. */
+function hordeRestoreMultiplier(state: SkirmishState, side: Fighter["side"]): number {
+  const percent = state.horde?.spec.allyRestorePercent;
+  return side === "player" && percent !== undefined ? percent / 100 : 1;
+}
+
+/**
  * 웨이브 몰이 한 조각 — 쓰러진 웨이브 몸의 점수를 거두고, 때가 된 웨이브를 화면 위 바깥에 세우고,
  * 필드에 선 적이 상한에 닿았는지 본다. 난수를 쓰지 않으므로 재현 난수열이 밀리지 않는다.
  */
@@ -10607,8 +10625,7 @@ function advanceHorde(state: SkirmishState, events: SkirmishEvent[]): void {
     horde.emptySince = null;
     events.push({ kind: "hordeWave", wave: wave.index, level: wave.level, fighterIds: ids });
   }
-  // 아직 화면 바깥에서 걸어 내려오는 몸은 세지 않는다 — 방어선을 누르는 것은 필드에 들어선 무리다.
-  if (aliveFighters(state, "enemy").filter((fighter) => isPartyFighter(fighter) && !fighter.hordeEntering).length >= horde.spec.overrunCap) {
+  if (hordeFieldCount(state) >= horde.spec.overrunCap) {
     horde.overrun = true;
     settle(state, events);
   }

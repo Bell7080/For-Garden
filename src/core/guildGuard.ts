@@ -12,8 +12,8 @@ import type { Element, RelicDef } from "./types";
  * (`timeLimitSeconds`)이 있지만 그것은 "버텨냈다"로 끝나는 바닥이지 노리는 끝이 아니다.
  *
  * **세기는 레벨 하나와 자리의 몫(`ENCOUNTER_ROLE`)으로만 오른다** — 스테이지 전용 배율을 두지 않는다.
- * 무리는 `swarm`(가볍고 작게), 정예는 `elite`(혼자 서는 두꺼운 몸)로 서고, 웨이브마다 바뀌는 것은
- * 레벨과 서는 수뿐이다. 웨이브는 시간으로 오고(`waveIntervalSeconds`) 필드가 비면 조금 당겨 온다.
+ * 모든 적은 `swarm`(가볍고 작게 떼로 오는 몸)으로 선다(2026-10-28 응태 요청 — 정예 자리를 걷어 냈다). 웨이브마다
+ * 바뀌는 것은 레벨과 서는 수, 그리고 명단에서 섞어 고른 얼굴뿐이다. 웨이브는 시간으로 오고(`waveIntervalSeconds`) 필드가 비면 조금 당겨 온다.
  *
  * 난수를 쓰지 않는다 — 누가 어디서 나오는지는 웨이브 번호에서만 정해지므로 서버가 편성과 날짜만으로
  * 같은 판을 다시 굴린다.
@@ -25,8 +25,16 @@ export const GUILD_GUARD = {
   slots: 6,
   frontSlots: [0, 1, 2] as const,
   backSlots: [3, 4, 5] as const,
-  /** 필드에 동시에 선 적이 이만큼에 닿으면 방어선이 무너진 것이다. */
-  overrunCap: 32,
+  /**
+   * 필드에 쌓인 적(들어오는 중인 몸 · 지난 웨이브에서 남은 몸 포함 — `hordeFieldCount`)이 이만큼에 닿으면 방어선이
+   * 무너진 것이다(2026-10-28 응태 요청 — 32 → 18, 치즈케이크 대작전 한 판 남짓의 무리).
+   */
+  overrunCap: 18,
+  /**
+   * 수호전 제약 — 아군이 받는 회복·보호막이 이만큼(%)만 든다(2026-10-28 응태 요청 — 여섯이 서로 고쳐 주며 끝없이
+   * 버티던 판을 닫는다). 적에게는 들지 않는다.
+   */
+  allyRestorePercent: 50,
   /**
    * 웨이브 사이. 필드가 먼저 비면 `emptyFieldDelay` 뒤에 다음 웨이브를 당겨 온다. 필드가 비어 아군이 서 있는 시간이
    * 길지 않도록 짧게 둔다(2026-10-28 응태 요청 — 12초 · 1.5초 → 8초 · 0.5초).
@@ -43,17 +51,15 @@ export const GUILD_GUARD = {
   /** 웨이브가 잦아진 만큼 한 웨이브의 레벨 몫을 줄여 시간당 오르는 레벨(초당 0.25)은 예전과 같게 둔다. */
   levelPerWave: 2,
   maxLevel: 100,
-  /** 무리 머릿수: 5 + 웨이브의 삼분의 일, 상한 12. */
+  /**
+   * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
+   * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
+   */
   gruntBase: 5,
-  gruntPerWaves: 3,
-  gruntCap: 12,
-  /** 정예는 셋째 웨이브부터 세 웨이브마다. 아홉 웨이브마다 하나씩 더 선다. */
-  eliteEvery: 3,
-  eliteExtraEvery: 9,
-  /** 무리는 처치 점수 10 + 웨이브, 정예는 60 + 웨이브×5. */
+  gruntPerWaves: 4,
+  gruntCap: 10,
+  /** 처치 점수 10 + 웨이브. */
   gruntScore: 10,
-  eliteScore: 60,
-  eliteScorePerWave: 5,
 } as const;
 
 export const GUILD_GUARD_FRONT_ROWS = 2;
@@ -82,45 +88,38 @@ export interface HordeSpec {
   firstWaveAt: number;
   /** 위에서 오는 몸이 나타나는 높이 — 필드 윗변보다 위, 원화의 장판이 시작하는 끝. */
   entryY: number;
+  /** 아군이 받는 회복·보호막이 이만큼(%)만 든다. 없으면 깎지 않는다. */
+  allyRestorePercent?: number;
 }
 
-/** 속성 하나의 명단. 무리는 가벼운 몸, 정예는 SR·SSR급이다. */
+/** 속성 하나의 명단 — 그날 몰려오는 얼굴들. 모두 무리(`swarm`)로 선다. */
 export interface GuildGuardRoster {
-  grunts: readonly RelicDef[];
-  elites: readonly RelicDef[];
+  units: readonly RelicDef[];
 }
 
 export function guardWaveLevel(index: number): number {
   return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
 }
 
-export function guardWaveCounts(index: number): { grunts: number; elites: number } {
-  const grunts = Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
-  const elites = index >= GUILD_GUARD.eliteEvery && index % GUILD_GUARD.eliteEvery === 0
-    ? 1 + Math.floor((index - GUILD_GUARD.eliteEvery) / GUILD_GUARD.eliteExtraEvery)
-    : 0;
-  return { grunts, elites };
+export function guardWaveCount(index: number): number {
+  return Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
 }
 
-export function guardUnitScore(role: "grunt" | "elite", index: number): number {
-  return role === "grunt" ? GUILD_GUARD.gruntScore + index : GUILD_GUARD.eliteScore + GUILD_GUARD.eliteScorePerWave * index;
+export function guardUnitScore(index: number): number {
+  return GUILD_GUARD.gruntScore + index;
 }
 
-/** 웨이브 번호에서만 정해지는 웨이브 하나. 누가 서는지는 명단을 번호로 돌려 고른다. */
+/**
+ * 웨이브 번호에서만 정해지는 웨이브 하나. 누가 서는지는 명단에서 **섞어** 고른다 — 난수 대신 웨이브·순번을 섞은
+ * 값이라 서버 재현이 같은 얼굴을 고른다.
+ */
 export function buildGuardWave(roster: GuildGuardRoster, index: number): HordeWave {
-  if (roster.grunts.length === 0) throw new RangeError("수호전 명단에 무리가 없습니다.");
+  if (roster.units.length === 0) throw new RangeError("수호전 명단이 비었습니다.");
   const level = guardWaveLevel(index);
-  const { grunts, elites } = guardWaveCounts(index);
   const units: HordeUnit[] = [];
-  for (let i = 0; i < grunts; i += 1) {
-    const base = roster.grunts[(index * 7 + i * 3) % roster.grunts.length];
-    units.push(grownUnit(base, "swarm", level, guardUnitScore("grunt", index)));
-  }
-  for (let i = 0; i < elites && roster.elites.length > 0; i += 1) {
-    // 정예는 명단에서 웨이브마다 **무작위로** 고른다 — 난수 대신 웨이브·순번을 섞은 값이라 서버 재현이 같은 개체를 고른다.
-    const base = roster.elites[guardPick(index, i) % roster.elites.length];
-    // 정예는 무리 사이에 끼어 온다 — 줄 가운데쯤에 넣어 맨 끝에 혼자 따로 서지 않게 한다.
-    units.splice(Math.min(units.length, 2 + i * 3), 0, grownUnit(base, "elite", level, guardUnitScore("elite", index)));
+  for (let i = 0; i < guardWaveCount(index); i += 1) {
+    const base = roster.units[guardPick(index, i) % roster.units.length];
+    units.push(grownUnit(base, "swarm", level, guardUnitScore(index)));
   }
   return { index, level, units };
 }
@@ -147,10 +146,10 @@ export function buildGuardWaves(roster: GuildGuardRoster): HordeWave[] {
 }
 
 /** 미리보기 한 칸 — 그 개체가 처음 서는 웨이브의 레벨로 자란 정의다. */
-export interface GuardRosterEntry { def: RelicDef; role: "swarm" | "elite"; level: number; wave: number }
+export interface GuardRosterEntry { def: RelicDef; level: number; wave: number }
 
 /**
- * 그날 명단의 얼굴들 — 개체마다 **처음 서는 웨이브**의 모습으로 한 번씩 선다(무리 먼저, 그다음 정예). 웨이브를
+ * 그날 명단의 얼굴들 — 개체마다 **처음 서는 웨이브**의 모습으로 한 번씩 선다. 웨이브를
  * 실제로 짜는 함수(`buildGuardWave`)를 그대로 훑으므로 미리보기와 전투가 서로 다른 레벨을 말하지 않는다.
  * `firstWavePower`의 재료로 첫 웨이브도 함께 돌려준다.
  */
@@ -162,11 +161,11 @@ export function guardRosterPreview(roster: GuildGuardRoster): { entries: GuardRo
     firstWave ??= wave;
     for (const unit of wave.units) {
       if (seen.has(unit.def.id)) continue;
-      seen.set(unit.def.id, { def: unit.def, role: unit.role === "elite" ? "elite" : "swarm", level: unit.level, wave: index });
+      seen.set(unit.def.id, { def: unit.def, level: unit.level, wave: index });
     }
-    if (seen.size >= new Set([...roster.grunts, ...roster.elites].map(({ id }) => id)).size) break;
+    if (seen.size >= new Set(roster.units.map(({ id }) => id)).size) break;
   }
-  const entries = [...seen.values()].sort((a, b) => (a.role === b.role ? a.wave - b.wave : a.role === "swarm" ? -1 : 1));
+  const entries = [...seen.values()].sort((a, b) => a.wave - b.wave);
   return { entries, firstWave: firstWave! };
 }
 
@@ -229,6 +228,7 @@ export function guildGuardHordeSpec(roster: GuildGuardRoster): HordeSpec {
     emptyFieldDelay: GUILD_GUARD.emptyFieldDelay,
     firstWaveAt: GUILD_GUARD.firstWaveAt,
     entryY: GUILD_GUARD_ENTRY_Y,
+    allyRestorePercent: GUILD_GUARD.allyRestorePercent,
   };
 }
 

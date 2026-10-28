@@ -166,7 +166,7 @@ export function partyPreview(content: PartyContent, stage: BattleStageDef): Part
   // 수호전은 위에 세울 적이 없다 — 그날 속성의 명단이 자동 배치의 상성 방향만 정한다.
   if (content.content === "guildGuard") {
     const roster = guildGuardRoster(content.element);
-    return { shown: [], all: [...new Set([...roster.grunts, ...roster.elites])], role: "swarm" };
+    return { shown: [], all: [...new Set(roster.units)], role: "swarm" };
   }
   if (content.content === "guildWar") {
     // 방어덱은 게시한 순간의 레벨·돌파로 선다 — 입장이 돌려줄 스냅샷과 같은 성장 축이다(룬만 빠진다).

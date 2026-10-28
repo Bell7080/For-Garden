@@ -566,18 +566,18 @@ export class PartyScene extends Phaser.Scene {
    */
   private openGuardRoster(element: RelicDef["element"]): void {
     const { entries, firstWave } = guardRosterPreview(guildGuardRoster(element));
-    const groups = [entries.filter((entry) => entry.role === "swarm"), entries.filter((entry) => entry.role === "elite")];
+    const groups = [entries];
     const layout = guardRosterPopupLayout(groups.map((group) => group.length));
     const L = PARTY_GUARD_ROSTER;
     const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length);
     this.guardPopups ??= new PopupLayer(this, 2100);
     this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
       body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
-      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, every: GUILD_GUARD.eliteEvery }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
+      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, cap: GUILD_GUARD.overrunCap, cut: 100 - GUILD_GUARD.allyRestorePercent }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
       const nonEmpty = groups.filter((group) => group.length > 0);
       layout.sections.forEach((section, index) => {
         const group = nonEmpty[index];
-        body.add(addSectionTitle(this, -L.width / 2 + 48, section.titleY, t(group[0].role === "elite" ? "info.enemy.role.elite" : "info.enemy.role.swarm"), { size: 28 }));
+        body.add(addSectionTitle(this, -L.width / 2 + 48, section.titleY, t("info.enemy.role.swarm"), { size: 28 }));
         group.forEach((entry, at) => {
           const cell = section.cells[at];
           const face = new FaceFrame(this, cell.x, cell.y, { portraitAssetId: entry.def.portraitAssetId, size: L.face });

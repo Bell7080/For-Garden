@@ -1334,7 +1334,6 @@ var GUILD_KO = {
   "guild.guard.today": "\uC624\uB298\uC758 \uC801 \xB7 {element} \uC18D\uC131",
   "guild.guard.best": "\uC624\uB298 \uCD5C\uACE0 \uC810\uC218",
   "guild.guard.attempts": "\uB0A8\uC740 \uB3C4\uC804 {left}/{total}",
-  "guild.guard.elite": "\uC815\uC608",
   "guild.guard.start": "\uCD9C\uACA9",
   "guild.guard.tab.members": "\uAE38\uB4DC\uC6D0 \uC21C\uC704",
   "guild.guard.tab.guilds": "\uAE38\uB4DC \uC21C\uC704",
@@ -1345,7 +1344,7 @@ var GUILD_KO = {
   "guild.guard.party.back": "\uB4B7\uC904",
   "guild.guard.preview.title": "\uC624\uB298\uC758 \uC801",
   "guild.guard.preview.power": "\uCCAB \uC6E8\uC774\uBE0C \uC804\uD22C\uB825 {power}",
-  "guild.guard.preview.rule": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uB808\uBCA8 +{level} \xB7 \uC815\uC608\uB294 {every}\uC6E8\uC774\uBE0C\uB9C8\uB2E4",
+  "guild.guard.preview.rule": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uB808\uBCA8 +{level} \xB7 \uC801 {cap}\uB9C8\uB9AC\uBA74 \uBD95\uAD34 \xB7 \uC544\uAD70 \uD68C\uBCF5\xB7\uBCF4\uD638\uB9C9 -{cut}%",
   "guild.guard.preview.level": "LV.{level}",
   "guild.guard.preview.wave": "{wave}\uC6E8\uC774\uBE0C",
   "guild.guard.battle.line": "\uC6E8\uC774\uBE0C {wave} \xB7 \uD544\uB4DC {field}/{cap}",
@@ -1592,8 +1591,12 @@ var SHOP_KO = {
   "shop.purchase.price": "\uAC00\uACA9",
   "shop.purchase.count": "\uAD6C\uB9E4 \uAC1C\uC218",
   "shop.purchase.total": "\uCD1D\uAC00\uACA9",
-  "shop.purchase.remaining": "\uB0A8\uC740 \uAD6C\uB9E4 \uC81C\uD55C",
   "shop.purchase.limit": "\uAD6C\uB9E4 \uC81C\uD55C",
+  "shop.purchase.period.once": "\uACC4\uC815\uB2F9",
+  "shop.purchase.period.daily": "\uB9E4\uC77C",
+  "shop.purchase.period.weekly": "\uC8FC\uAC04",
+  "shop.purchase.period.monthly": "\uC6D4\uAC04",
+  "shop.purchase.period.none": "\uC0C1\uC2DC",
   "shop.purchase.busy": "\uCC98\uB9AC \uC911",
   "shop.purchase.buy": "\uAD6C\uB9E4",
   "shop.purchase.blocked": "\uAD6C\uB9E4\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
@@ -2437,6 +2440,8 @@ var SKILL_KO = {
   "skill.ordinal.n": "{count}\uBC88\uC9F8",
   "skill.sentence.selfGuard": "\uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC744 [[pull|\uB04C\uC5B4\uB2F9\uACA8]] {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD558\uACE0, {shield}\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "\uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%",
+  "skill.sentence.selfGuard.pullOnly": "\uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC744 [[pull|\uB04C\uC5B4\uB2F9\uAE34\uB2E4]].",
+  "skill.sentence.selfGuard.dashPull": "\uC804\uC7A5\uC5D0\uC11C \uAC00\uC7A5 \uBA3C \uC801\uC5D0\uAC8C [[charge|\uB3CC\uC9C4]]\uD55C \uB4A4 \uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC744 [[pull|\uB04C\uC5B4\uB2F9\uAE34\uB2E4]].",
   "skill.sentence.selfGuard.reset": " [[shell|\uC870\uAC00\uBE44]]\uAC00 \uACE7\uBC14\uB85C \uB2E4\uC2DC \uD130\uC9C8 \uC218 \uC788\uAC8C \uB41C\uB2E4.",
   "skill.sentence.stealthSetup": "{seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD558\uACE0 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD55C\uB2E4. \uC774\uD6C4 \uCC98\uC74C \uC801\uC911\uD558\uB294 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD655\uC815 \uCE58\uBA85\uD0C0\uAC00 \uB418\uACE0 [[def|\uBC29\uC5B4\uB825]]\uC744 \uBB34\uC2DC\uD558\uB294 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uB4E4\uC5B4\uAC04\uB2E4.{exposed}",
   "skill.sentence.stealthSetup.exposed": " \uADF8 \uACF5\uACA9\uACFC \uD568\uAED8 [[stealth|\uC740\uC2E0]]\uC774 \uD480\uB9B0\uB2E4.",
@@ -2496,6 +2501,7 @@ var SKILL_KO = {
   "skill.status.knockback": "[[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]]",
   "skill.status.stagger": "[[stagger|\uACBD\uC9C1]]\uC2DC\uD0A8\uB2E4",
   "skill.status.bleed": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC2DC\uCF1C \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uAC8C \uD55C\uB2E4",
+  "skill.status.bleedDeepen": "{seconds}\uCD08 \uB3D9\uC548 [[bleed|\uCD9C\uD608]]\uC2DC\uCF1C \uB9E4\uCD08 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uC783\uAC8C \uD558\uACE0, \uC774\uBBF8 \uCD9C\uD608 \uC911\uC778 \uC801\uC774\uBA74 \uB9E4\uCD08 {deep}%\uB97C \uC783\uACE0 \uBC1B\uB294 \uD68C\uBCF5\uB7C9\uC774 {reduction}% \uC904\uC5B4\uB4DC\uB294 \uAE4A\uC740 \uCD9C\uD608\uB85C \uAC15\uD654\uD55C\uB2E4",
   "skill.status.poison": "{seconds}\uCD08 \uB3D9\uC548 [[poison|\uC911\uB3C5]]\uC2DC\uD0A8\uB2E4",
   "skill.status.curse": "[[curse|\uC800\uC8FC]]\uB97C \uD55C \uACB9 \uC50C\uC6B4\uB2E4",
   "skill.status.chill": "[[chill|\uB454\uD654]]\uB97C \uD55C \uACB9 \uC313\uC544 \uCD5C\uB300 {stacks}\uACB9\uAE4C\uC9C0 \uACB9\uB9C8\uB2E4 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uC640 [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uB97C {percent}% \uB0AE\uCD98\uB2E4",
@@ -2534,6 +2540,7 @@ var SKILL_KO = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|\uD3ED\uC8FC]]\uC5D0 \uB4E4\uC5B4\uC11C\uB294 \uC21C\uAC04 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|\uC9D1\uC911]]\uC774 \uAC00\uB4DD \uCC28 \uC788\uB294 \uB3D9\uC548 \u300C{name}\u300D{name!\uC774} \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4.",
   "skill.clause.stunLockout": "\uAC19\uC740 \uC801\uC740 \uD55C \uBC88 \uAE30\uC808\uD55C \uB4A4 {seconds}\uCD08 \uB3D9\uC548 \uC774 \uAE30\uC808\uC744 \uB2E4\uC2DC \uBC1B\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.clause.rally": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] {every}\uBC88\uC9F8\uB9C8\uB2E4 \uC8FC\uC704\uC758 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD558\uACE0 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
   "skill.breakthrough.effect.ultimate.forestSight": "\uD6A8\uACFC \uB3D9\uC548 \uC77C\uBC18 \uACF5\uACA9\uC774 {hits}\uBC88 \uC801\uC911\uD558\uACE0, \uD6A8\uACFC\uAC00 {seconds}\uCD08 \uB354 \uC774\uC5B4\uC9C4\uB2E4.",
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
   "skill.keyword.shield.fromMaxHp": "\uD604\uC7AC \uCD5C\uB300 \uCCB4\uB825\uC5D0\uC11C {percent}%\uB97C \uBC1B\uC544 \uACC4\uC0B0\uD55C \uBCF4\uD638\uB9C9 \uC218\uCE58\uB2E4.",
@@ -2586,6 +2593,10 @@ var SKILL_KO = {
   "skill.passive.vitalAim": "\uAC19\uC740 \uC801\uC744 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC73C\uB85C \uC774\uC5B4 \uCE60 \uB54C\uB9C8\uB2E4 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 \uC313\uC5EC \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C4\uB2E4. \uD45C\uC801\uC774 \uBC14\uB00C\uBA74 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC313\uB294\uB2E4.",
   "skill.passive.wingHum": "{seconds}\uCD08\uB9C8\uB2E4 \uACF5\uACA9\uB825\uC774 \uAC00\uC7A5 \uB192\uC740 \uC544\uAD70\uC5D0\uAC8C [[resonance|\uACF5\uBA85]]\uC744 \uAC74\uB2E4. \uC9C1\uC811 \uC801\uC744 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0\uAC00 {energy} \uCC2C\uB2E4.",
   "skill.passive.workerMarch": "\uACC1\uC5D0 \uC120 \uC544\uAD70\uC774 \uB9CE\uC744\uC218\uB85D [[worker-march|\uD589\uB82C]]\uC774 \uAE38\uC5B4\uC838 \uC8FC\uB294 \uD53C\uD574\uAC00 \uCEE4\uC9C0\uACE0 \uCCB4\uB825\uC774 \uC11C\uC11C\uD788 \uCC28\uC624\uB978\uB2E4.",
+  "skill.passive.todaysIngredient": "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC744 \u300C\uC7AC\uB8CC\u300D\uB85C \uB178\uB824 \uADF8 \uC801\uC5D0\uAC8C \uC8FC\uB294 \uD53C\uD574\uAC00 {damage}% \uCEE4\uC9C4\uB2E4. \uC7AC\uB8CC\uB294 \uC4F0\uB7EC\uC9C8 \uB54C\uAE4C\uC9C0 \uBC14\uB00C\uC9C0 \uC54A\uB294\uB2E4. \uC7AC\uB8CC\uB97C \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {heal}%\uB97C \uD68C\uBCF5\uD558\uACE0 [[atk|\uACF5\uACA9\uB825]]\uC774 {attack}% \uC624\uB978\uB2E4(\uCD5C\uB300 {stacks}\uACB9).",
+  "skill.passive.flinchBlink": "\uC9E7\uC740 \uC0AC\uC774\uC5D0 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}% \uC774\uC0C1\uC744 \uC783\uC73C\uBA74 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC758 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uACE0, \uB2E4\uC74C [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uB85C \uB4E4\uC5B4\uAC04\uB2E4. \uC7AC\uC0AC\uC6A9 \uB300\uAE30 {seconds}\uCD08.",
+  "skill.passive.cellRank": "\uC790\uC2E0\uC5D0\uAC8C [[taunt|\uB3C4\uBC1C]]\uB41C \uC801\uC5D0\uAC8C \uB9DE\uC73C\uBA74 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4. {seconds}\uCD08\uC5D0 \uD55C \uBC88\uC774\uBA70, \uC774\uB807\uAC8C \uC313\uB294 \uB9C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {cap}%\uAE4C\uC9C0\uB2E4.",
+  "skill.passive.restraintLocks": "\uC790\uBB3C\uC1E0 {count}\uAC1C\uB97C \uB2E8 \uCC44 \uC2F8\uC6B4\uB2E4. \uCCB4\uB825\uC774 {thresholds}% \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C8 \uB54C\uB9C8\uB2E4 \uD558\uB098\uC529 \uD480\uB9AC\uBA70 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uC8FC\uC704 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9B0\uB2E4]]. \uD480\uB9B0 \uC790\uBB3C\uC1E0\uB9C8\uB2E4 \uC9C8\uC8FC\uAC00 {reach}% \uB354 \uBA40\uB9AC \uB098\uC544\uAC00\uACE0, \uBAA8\uB450 \uD480\uB9AC\uBA74 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC8FC\uC704\uC758 \uBAA8\uB4E0 \uC801\uC744 \uCE5C\uB2E4.",
   "skill.passive.looming": "{seconds}\uCD08\uB9C8\uB2E4 \uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC5D0\uAC8C [[intimidation|\uC704\uC555]]\uC744 \uD55C \uACB9 \uC313\uB294\uB2E4. \uD53C\uD574\uB294 \uC8FC\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.sentence.roar": "\uC8FC\uC704 \uBAA8\uB4E0 \uC801\uC744 \uACE7\uBC14\uB85C [[fear|\uACF5\uD3EC]]\uC5D0 \uBE60\uB728\uB9B0\uB2E4. {base}\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uACE0, \uACF5\uD3EC\uC5D0 \uBE60\uC9C4 \uC801 \uD55C \uBA85\uB9C8\uB2E4 {per}\uC529 \uB354\uD55C\uB2E4(\uCD5C\uB300 {max}\uBA85).",
   "skill.sentence.roar.percent": "\uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%",
@@ -2594,6 +2605,10 @@ var SKILL_KO = {
   "skill.ferocity.frenzyTail": "\uD3ED\uC8FC \uC911 \uACF5\uACA9 \uC18D\uB3C4\uAC00 {percent}% \uC624\uB974\uACE0 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]] \uD55C \uB300\uC5D0 [[vital-aim|\uACA8\uB204\uAE30]]\uAC00 {stacks}\uACB9 \uB354 \uC313\uC778\uB2E4.",
   "skill.ferocity.swiftFlight": "\uD3ED\uC8FC \uC911 [[resonance|\uACF5\uBA85]]\uC744 \uAC70\uB294 \uC8FC\uAE30\uAC00 {percent}% \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.ferocity.marchOfAnts": "\uD3ED\uC8FC \uC911 [[worker-march|\uD589\uB82C]]\uC758 \uBC18\uACBD\uC774 {radius} \uB298\uACE0 {allies}\uBA85 \uB354 \uC13C\uB2E4.",
+  "skill.ferocity.appetiteFrenzy": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB974\uACE0, \uC790\uC2E0\uC774 \uAC74 [[bleed|\uCD9C\uD608]]\uC774 \uD53C\uD574\uB97C \uC904 \uB54C\uB9C8\uB2E4 \uADF8 \uD53C\uD574\uC758 {heal}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
+  "skill.ferocity.corneredBeast": "\uD3ED\uC8FC \uC911 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {attack}%, [[move-speed|\uC774\uB3D9 \uC18D\uB3C4]]\uAC00 {move}% \uC624\uB974\uACE0 \uB4F1 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uB294 \uC7AC\uC0AC\uC6A9 \uB300\uAE30\uAC00 {seconds}\uCD08\uB85C \uC904\uC5B4\uB4E0\uB2E4.",
+  "skill.ferocity.rollCallRefusal": "\uD3ED\uC8FC \uC911 \uAD81\uADF9\uAE30\uAC00 \uB04C\uC5B4\uB2F9\uAE30\uB294 \uBC94\uC704\uAC00 {percent}% \uB113\uC5B4\uC9C0\uACE0, [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC758 \uB3C4\uBC1C\xB7\uBCF4\uD638\uB9C9\uC774 {every}\uBC88\uC9F8\uB9C8\uB2E4 \uD130\uC9C4\uB2E4.",
+  "skill.ferocity.restraintCollapse": "\uD3ED\uC8FC \uC911\uC5D0\uB294 \uB0A8\uC740 \uC790\uBB3C\uC1E0\uAC00 \uBAA8\uB450 \uD480\uB9B0 \uAC83\uC73C\uB85C \uCE5C\uB2E4. \uD3ED\uC8FC\uAC00 \uB05D\uB098\uBA74 \uC6D0\uB798 \uC218\uB85C \uB3CC\uC544\uAC04\uB2E4.",
   "skill.ferocity.huntInstinct": "\uD3ED\uC8FC \uC911 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 [[intimidation|\uC704\uC555]]\uC744 {stacks}\uACB9\uC529 \uC313\uACE0, [[fear|\uACF5\uD3EC]]\uAC00 \uD480\uB9B0 \uB4A4\uC758 \uBA74\uC5ED\uC774 {seconds}\uCD08\uB85C \uC9E7\uC544\uC9C4\uB2E4.",
   "skill.breakthrough.effect.basic.scoldTaunt": "\u300C{name}\u300D\uC5D0 \uB9DE\uC740 \uC801\uC744 {seconds}\uCD08 \uB3D9\uC548 [[taunt|\uB3C4\uBC1C]]\uD55C\uB2E4.",
   "skill.breakthrough.effect.basic.clawBleed": "\u300C{name}\u300D{name!\uC774} \uC8FC\uAE30 \uCE58\uBA85\uD0C0\uB85C \uC801\uC911\uD558\uBA74 \uB9DE\uC740 \uC801\uC5D0\uAC8C [[bleed|\uCD9C\uD608]]\uC744 \uB0A8\uAE34\uB2E4.",
@@ -3113,12 +3128,12 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-3-8-post": "\uD384\uC2DC\uC758 \uAE30\uC2B5 \uC55E\uC5D0 \uC5D8\uB77C\uAC00 \uBC29\uBCBD\uC73C\uB85C \uC120\uB2E4.",
   "recollection.summary.stage-3-9-post": "\uCE21\uBA74\uC5D0\uC11C \uB2EC\uB824\uB4E0 \uC720\uD2F0\uC640 \uC544\uD06C\uAC00 \uB450 \uC870\uB97C \uAC08\uB77C \uB193\uB294\uB2E4.",
   "recollection.summary.stage-3-10-pre": "\uB9C8\uC9C0\uB9C9 \uD640\uC5D0\uC11C \uC571\uC194\uB8E8\uD2B8 \uD33D\uC774 \uD55C \uC904\uB85C \uC120\uB2E4.",
-  "recollection.summary.stage-3-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0, \uCF54\uB9C8\uB294 \uB05D\uB0B4 \uD3B8\uC774\uB77C \uB9D0\uD558\uC9C0 \uC54A\uB294\uB2E4.",
+  "recollection.summary.stage-3-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0, \uCF54\uB9C8\uB294 \uB300\uB2F5 \uC5C6\uC774 \uBC18\uB300\uD3B8 \uD1B5\uB85C\uB85C \uAC78\uC5B4\uAC04\uB2E4.",
   "recollection.summary.stage-2-10-post": "\u300C\uB530\uB77C\uAC00\uB3C4 \uB3FC?\u300D \uC774\uC81C \uC5F0\uAD6C\uC6D0\uC774 \uB300\uB2F5\uD560 \uCC28\uB840\uB2E4.",
   "recollection.summary.stage-1-5-greenhouse-echo": "\uC228\uC5B4 \uC788\uB358 \uC628\uC2E4\uC5D0\uC11C \uAC70\uB300 \uD638\uBC15\uACFC \uC2A4\uD504\uB9C1\uD074\uB7EC\uAC00 \uC5F0\uB2EC\uC544 \uC0AC\uACE0\uB97C \uCE5C\uB2E4.",
   "recollection.summary.event-great-auk-report": "\uBD81\uB300\uC11C\uC591 \uD45C\uBCF8\uD568\uC5D0\uC11C \uD070\uBC14\uB2E4\uC1E0\uC624\uB9AC\uC758 \uACE8\uACA9 \uD45C\uC9C0\uAC00 \uB098\uC628\uB2E4.",
   "recollection.summary.stage-4-1-pre": "\uC2B9\uAC15\uC7A5\uC5D0 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uB85C \uC11C\uBA70 \uD569\uB3D9 \uCD94\uACA9\uC774 \uC2DC\uC791\uB41C\uB2E4.",
-  "recollection.summary.stage-4-4-pre": "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0\uC11C \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uAE38\uC744 \uB9C9\uACE0, \uCF54\uB9C8\uAC00 \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB77C\uACE0 \uB9D0\uD55C\uB2E4.",
+  "recollection.summary.stage-4-4-pre": "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0\uC11C \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uAE38\uC744 \uB9C9\uACE0, \uCF54\uB9C8\uAC00 \uB3CC\uC544\uAC00\uB77C\uACE0 \uB9D0\uD55C\uB2E4.",
   "recollection.summary.stage-4-10-pre": "\uC0AC\uB839\uC2E4\uC5D0\uC11C \uCF54\uB9C8\uC640 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uB098\uB780\uD788 \uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.",
   "recollection.summary.stage-4-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0 \uCF54\uB9C8\uB294 \uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB098\uC790\uACE0 \uB9D0\uD55C\uB2E4."
 };
@@ -4053,13 +4068,17 @@ var RARITY_LEVEL_GROWTH = {
   SR: 2.4,
   SSR: 2.6
 };
-var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3 };
+var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3, 2: 1.7, 3: 3 };
 var ENEMY_BIRTH_TIERS = {
   mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   pulsi: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   neuri: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   atra: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
-  ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] }
+  ikanixia: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
+  magasa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  noa: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  raja: { stage: 2, statFactor: ENEMY_BIRTH_STAGE_FACTOR[2] },
+  carno: { stage: 3, statFactor: ENEMY_BIRTH_STAGE_FACTOR[3] }
 };
 
 // src/core/relicProgression.ts
@@ -4819,8 +4838,16 @@ var GUILD_GUARD = {
   slots: 6,
   frontSlots: [0, 1, 2],
   backSlots: [3, 4, 5],
-  /** 필드에 동시에 선 적이 이만큼에 닿으면 방어선이 무너진 것이다. */
-  overrunCap: 32,
+  /**
+   * 필드에 쌓인 적(들어오는 중인 몸 · 지난 웨이브에서 남은 몸 포함 — `hordeFieldCount`)이 이만큼에 닿으면 방어선이
+   * 무너진 것이다(2026-10-28 응태 요청 — 32 → 18, 치즈케이크 대작전 한 판 남짓의 무리).
+   */
+  overrunCap: 18,
+  /**
+   * 수호전 제약 — 아군이 받는 회복·보호막이 이만큼(%)만 든다(2026-10-28 응태 요청 — 여섯이 서로 고쳐 주며 끝없이
+   * 버티던 판을 닫는다). 적에게는 들지 않는다.
+   */
+  allyRestorePercent: 50,
   /**
    * 웨이브 사이. 필드가 먼저 비면 `emptyFieldDelay` 뒤에 다음 웨이브를 당겨 온다. 필드가 비어 아군이 서 있는 시간이
    * 길지 않도록 짧게 둔다(2026-10-28 응태 요청 — 12초 · 1.5초 → 8초 · 0.5초).
@@ -4837,41 +4864,32 @@ var GUILD_GUARD = {
   /** 웨이브가 잦아진 만큼 한 웨이브의 레벨 몫을 줄여 시간당 오르는 레벨(초당 0.25)은 예전과 같게 둔다. */
   levelPerWave: 2,
   maxLevel: 100,
-  /** 무리 머릿수: 5 + 웨이브의 삼분의 일, 상한 12. */
+  /**
+   * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
+   * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
+   */
   gruntBase: 5,
-  gruntPerWaves: 3,
-  gruntCap: 12,
-  /** 정예는 셋째 웨이브부터 세 웨이브마다. 아홉 웨이브마다 하나씩 더 선다. */
-  eliteEvery: 3,
-  eliteExtraEvery: 9,
-  /** 무리는 처치 점수 10 + 웨이브, 정예는 60 + 웨이브×5. */
-  gruntScore: 10,
-  eliteScore: 60,
-  eliteScorePerWave: 5
+  gruntPerWaves: 4,
+  gruntCap: 10,
+  /** 처치 점수 10 + 웨이브. */
+  gruntScore: 10
 };
 function guardWaveLevel(index) {
   return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
 }
-function guardWaveCounts(index) {
-  const grunts = Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
-  const elites = index >= GUILD_GUARD.eliteEvery && index % GUILD_GUARD.eliteEvery === 0 ? 1 + Math.floor((index - GUILD_GUARD.eliteEvery) / GUILD_GUARD.eliteExtraEvery) : 0;
-  return { grunts, elites };
+function guardWaveCount(index) {
+  return Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
 }
-function guardUnitScore(role, index) {
-  return role === "grunt" ? GUILD_GUARD.gruntScore + index : GUILD_GUARD.eliteScore + GUILD_GUARD.eliteScorePerWave * index;
+function guardUnitScore(index) {
+  return GUILD_GUARD.gruntScore + index;
 }
 function buildGuardWave(roster, index) {
-  if (roster.grunts.length === 0) throw new RangeError("\uC218\uD638\uC804 \uBA85\uB2E8\uC5D0 \uBB34\uB9AC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  if (roster.units.length === 0) throw new RangeError("\uC218\uD638\uC804 \uBA85\uB2E8\uC774 \uBE44\uC5C8\uC2B5\uB2C8\uB2E4.");
   const level = guardWaveLevel(index);
-  const { grunts, elites } = guardWaveCounts(index);
   const units = [];
-  for (let i = 0; i < grunts; i += 1) {
-    const base = roster.grunts[(index * 7 + i * 3) % roster.grunts.length];
-    units.push(grownUnit(base, "swarm", level, guardUnitScore("grunt", index)));
-  }
-  for (let i = 0; i < elites && roster.elites.length > 0; i += 1) {
-    const base = roster.elites[guardPick(index, i) % roster.elites.length];
-    units.splice(Math.min(units.length, 2 + i * 3), 0, grownUnit(base, "elite", level, guardUnitScore("elite", index)));
+  for (let i = 0; i < guardWaveCount(index); i += 1) {
+    const base = roster.units[guardPick(index, i) % roster.units.length];
+    units.push(grownUnit(base, "swarm", level, guardUnitScore(index)));
   }
   return { index, level, units };
 }
@@ -4918,7 +4936,8 @@ function guildGuardHordeSpec(roster) {
     waveIntervalSeconds: GUILD_GUARD.waveIntervalSeconds,
     emptyFieldDelay: GUILD_GUARD.emptyFieldDelay,
     firstWaveAt: GUILD_GUARD.firstWaveAt,
-    entryY: GUILD_GUARD_ENTRY_Y
+    entryY: GUILD_GUARD_ENTRY_Y,
+    allyRestorePercent: GUILD_GUARD.allyRestorePercent
   };
 }
 function hordeEntrySpots(arena, entryY, count2, wave) {
@@ -5247,6 +5266,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     overpaint: null,
     knockback: null,
     statusHitCount: 0,
+    rallyHitCount: 0,
     augmentBleedHitCount: 0,
     augmentRuntime: {},
     augmentActionSerial: 0,
@@ -5414,6 +5434,12 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     observation: null,
     echo: null,
     aim: null,
+    ingredientId: null,
+    ingredientStacks: 0,
+    ingredientKillsPending: 0,
+    flinch: { cooldown: 0, window: 0, taken: 0, pending: false },
+    locksBroken: 0,
+    cellRankReadyAt: 0,
     barrierIn: -1,
     wingHumIn: def.passive.batSwarm?.intervalSeconds ?? def.passive.wingHum?.intervalSeconds ?? 0,
     batSwarmIn: def.passive.batSwarm?.intervalSeconds ?? 0,
@@ -5780,7 +5806,17 @@ function applyCombatStatusEffect(fighter, effect, events, state, sourceId, criti
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
-  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId, effect.healingReceivedReductionPercent);
+  if (effect.kind === "bleed") {
+    const deepen = effect.deepenOnRepeat !== void 0 && (fighter.bleed?.remaining ?? 0) > 0 ? effect.deepenOnRepeat : void 0;
+    refreshBleed(
+      fighter,
+      effect.seconds * potency,
+      effect.maxHpPercentPerSecond * (deepen?.multiplier ?? 1),
+      events,
+      sourceId,
+      deepen?.healingReceivedReductionPercent ?? effect.healingReceivedReductionPercent
+    );
+  }
   if (effect.kind === "poison") {
     const attacker = sourceId ? findFighter(state, sourceId) : void 0;
     if (attacker) {
@@ -6654,8 +6690,36 @@ function applySkillStatuses(target, skill, events, state, sourceId, critical = f
     applyCombatStatusEffect(target, effect, events, state, sourceId, critical);
   }
 }
+function basicStatusEvery(attacker) {
+  return attacker.def.basic.statusEffectEvery;
+}
+function triggerRally(attacker, state, events) {
+  const rally = attacker.def.basic.rally;
+  if (!rally || !isFighterAlive(attacker)) return;
+  const trait = attacker.def.ferocityTrait;
+  const every = attacker.ferocityFever && trait.effectId === "rollCallRefusal" ? Math.min(rally.every, trait.rallyEvery) : rally.every;
+  attacker.rallyHitCount += 1;
+  if (attacker.rallyHitCount < every) return;
+  attacker.rallyHitCount = 0;
+  for (const other of state.fighters) {
+    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > rally.tauntRadius) continue;
+    applyCombatStatusEffect(other, { kind: "taunt", seconds: rally.tauntSeconds }, events, state, attacker.id);
+    if (other.taunted?.sourceId === attacker.id) {
+      other.targetId = attacker.id;
+      other.engaged = false;
+    }
+  }
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * rally.shieldMaxHpPercent / 100)), events);
+  events.push({
+    kind: "areaImpact",
+    attackerId: attacker.id,
+    ultimate: false,
+    damageType: "physical",
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius }
+  });
+}
 function statusEffectsLandThisHit(attacker, skill, useUltimate) {
-  const every = useUltimate ? void 0 : attacker.def.basic.statusEffectEvery;
+  const every = useUltimate ? void 0 : basicStatusEvery(attacker);
   if (every === void 0 || (skill.statusEffects?.length ?? 0) === 0) return true;
   attacker.statusHitCount += 1;
   if (attacker.statusHitCount < every) return false;
@@ -6663,7 +6727,7 @@ function statusEffectsLandThisHit(attacker, skill, useUltimate) {
   return true;
 }
 function completesStatusCycle(attacker, skill, useUltimate) {
-  const every = useUltimate ? void 0 : attacker.def.basic.statusEffectEvery;
+  const every = useUltimate ? void 0 : basicStatusEvery(attacker);
   if (every === void 0 || (skill.statusEffects?.length ?? 0) === 0) return false;
   return attacker.statusHitCount + 1 >= every;
 }
@@ -6707,7 +6771,7 @@ function reloadAfterBasic(attacker, state, events) {
   return refill.reloadSeconds;
 }
 function grantShield(state, target, providerId, requested, events, weight = 1) {
-  const amount = requested * deathClockSurvivalMultiplier(state.elapsed);
+  const amount = requested * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side);
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
   target.shield.providerId = providerId;
@@ -6822,6 +6886,134 @@ function tickBatSwarm(fighter, dt, state, events) {
       area: { shape: "radial", x: fighter.x, y: fighter.y, radius }
     });
   }
+}
+function reactCellRank(target, attacker, state, events) {
+  const plan = target.def.passive.cellRank;
+  if (!plan || !isFighterAlive(target) || attacker.taunted?.sourceId !== target.id) return;
+  if (state.elapsed < target.cellRankReadyAt) return;
+  const cap = target.maxHp * plan.capMaxHpPercent / 100;
+  const room = cap - target.shield.amount;
+  if (room <= 0) return;
+  target.cellRankReadyAt = state.elapsed + plan.intervalSeconds;
+  grantShield(state, target, target.id, Math.min(room, Math.max(1, target.maxHp * plan.shieldMaxHpPercent / 100)), events);
+}
+function appetiteBleedHeal(state, sourceId, dealt, events) {
+  if (!sourceId || !(dealt > 0)) return;
+  const source = findFighter(state, sourceId);
+  const trait = source?.def.ferocityTrait;
+  if (!source || !trait || trait.effectId !== "appetiteFrenzy" || !source.ferocityFever || !isFighterAlive(source)) return;
+  pushHeal(events, source, applyHealing(state, source, dealt * trait.bleedHealPercent / 100), "ferocity");
+}
+function effectiveLocksBroken(fighter) {
+  const plan = fighter.def.passive.restraintLocks;
+  if (!plan) return 0;
+  if (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "restraintCollapse") return plan.thresholds.length;
+  return fighter.locksBroken;
+}
+function confinementAttackSpeedPercent(fighter) {
+  const locks = fighter.def.passive.restraintLocks;
+  const unlocked = locks ? effectiveLocksBroken(fighter) * locks.attackSpeedPercent : 0;
+  const trait = fighter.def.ferocityTrait;
+  const fever = fighter.ferocityFever && (trait.effectId === "appetiteFrenzy" || trait.effectId === "corneredBeast") ? trait.attackSpeedPercent : 0;
+  return unlocked + fever;
+}
+function confinementMoveSpeedPercent(fighter) {
+  const locks = fighter.def.passive.restraintLocks;
+  const unlocked = locks ? effectiveLocksBroken(fighter) * locks.moveSpeedPercent : 0;
+  const trait = fighter.def.ferocityTrait;
+  const fever = fighter.ferocityFever && trait.effectId === "corneredBeast" ? trait.moveSpeedPercent : 0;
+  return unlocked + fever;
+}
+function lockChargeReachFactor(fighter) {
+  const locks = fighter.def.passive.restraintLocks;
+  return locks ? 1 + effectiveLocksBroken(fighter) * locks.chargeReachPercentPerLock / 100 : 1;
+}
+function rollCallPull(attacker, pull2) {
+  const trait = attacker.def.ferocityTrait;
+  if (!attacker.ferocityFever || trait.effectId !== "rollCallRefusal") return pull2;
+  return { ...pull2, radius: pull2.radius * (1 + trait.pullRadiusPercent / 100) };
+}
+var FLINCH_WINDOW_SECONDS = 1;
+function noteFlinch(target, dealt) {
+  const plan = target.def.passive.flinchBlink;
+  if (!plan || target.flinch.pending || target.flinch.cooldown > 0) return;
+  if (target.flinch.window <= 0) target.flinch = { ...target.flinch, window: FLINCH_WINDOW_SECONDS, taken: 0 };
+  target.flinch.taken += dealt;
+  if (target.flinch.taken >= target.maxHp * plan.burstMaxHpPercent / 100) target.flinch.pending = true;
+}
+function flinchCooldownSeconds(fighter, base) {
+  const trait = fighter.def.ferocityTrait;
+  return fighter.ferocityFever && trait.effectId === "corneredBeast" ? Math.min(base, trait.flinchCooldownSeconds) : base;
+}
+function leapBehindNearestEnemy(fighter, state, landingDistance) {
+  const target = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && !other.hordeEntering).map((other, index) => ({ other, index, gap: distance(fighter, other) })).sort((a, b) => a.gap - b.gap || a.index - b.index)[0]?.other;
+  if (!target) return void 0;
+  const dx = target.x - fighter.x;
+  const dy = target.y - fighter.y;
+  const gap = Math.hypot(dx, dy) || 1;
+  fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
+  fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
+  fighter.targetId = target.id;
+  return target;
+}
+function dashToFarthestEnemy(fighter, landingDistance, state, events) {
+  const alive = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && !other.hordeEntering);
+  const visible = alive.filter((other) => other.stealthFor <= 0);
+  const pool = visible.length > 0 ? visible : alive;
+  if (pool.length === 0) return void 0;
+  const target = pool.reduce((best, other) => distance(fighter, other) > distance(fighter, best) ? other : best);
+  const from = { x: fighter.x, y: fighter.y };
+  const dx = fighter.x - target.x;
+  const dy = fighter.y - target.y;
+  const gap = Math.hypot(dx, dy) || 1;
+  const stop = Math.min(landingDistance, gap);
+  fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * stop));
+  fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * stop));
+  fighter.targetId = target.id;
+  events.push({ kind: "charge", fighterId: fighter.id, from, to: { x: fighter.x, y: fighter.y } });
+  return target;
+}
+function tickConfinement(fighter, dt, state) {
+  const events = [];
+  const passive = fighter.def.passive;
+  const ingredient = passive.todaysIngredient;
+  if (ingredient && fighter.ingredientKillsPending > 0) {
+    for (; fighter.ingredientKillsPending > 0; fighter.ingredientKillsPending -= 1) {
+      fighter.ingredientStacks = Math.min(ingredient.maxStacks, fighter.ingredientStacks + 1);
+      pushHeal(events, fighter, applyHealing(state, fighter, fighter.maxHp * ingredient.killHealMaxHpPercent / 100), "passive");
+    }
+    fighter.ingredientId = null;
+  }
+  const flinch = passive.flinchBlink;
+  if (flinch) {
+    fighter.flinch.cooldown = Math.max(0, fighter.flinch.cooldown - dt);
+    fighter.flinch.window = Math.max(0, fighter.flinch.window - dt);
+    const bound = fighter.stunnedFor > 0 || fighter.frozen !== null || fighter.knockback !== null;
+    if (fighter.flinch.pending && !bound) {
+      fighter.flinch = { cooldown: flinchCooldownSeconds(fighter, flinch.cooldownSeconds), window: 0, taken: 0, pending: false };
+      if (leapBehindNearestEnemy(fighter, state, flinch.landingDistance)) fighter.empoweredBasic = true;
+    }
+  }
+  const locks = passive.restraintLocks;
+  if (locks) {
+    const percent = fighter.maxHp > 0 ? fighter.hp / fighter.maxHp * 100 : 0;
+    const due = locks.thresholds.filter((threshold) => percent <= threshold).length;
+    while (fighter.locksBroken < due) {
+      fighter.locksBroken += 1;
+      for (const other of state.fighters) {
+        if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > locks.burstRadius) continue;
+        applyCombatStatusEffect(other, { kind: "knockback", ...locks.knockback }, events, state, fighter.id, false);
+      }
+      events.push({
+        kind: "areaImpact",
+        attackerId: fighter.id,
+        ultimate: false,
+        damageType: "physical",
+        area: { shape: "radial", x: fighter.x, y: fighter.y, radius: locks.burstRadius }
+      });
+    }
+  }
+  return events;
 }
 function tickRaiders(fighter, dt, state) {
   const events = [];
@@ -7524,7 +7716,10 @@ function openedBreakthrough(fighter, slot, pick2) {
   const effects = fighter.def.breakthroughEffects;
   return effects ? pick2(effects) : void 0;
 }
-function triggerBreakthroughOnKill(attacker, useUltimate, _victim) {
+function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
+  if (attacker.def.passive.todaysIngredient && victim && victim.id === attacker.ingredientId && isFighterAlive(attacker)) {
+    attacker.ingredientKillsPending += 1;
+  }
   const hum = attacker.def.passive.wingHum;
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   const haste = attacker.def.passive.killHaste;
@@ -7762,6 +7957,10 @@ function breakthroughSkillBase(attacker, useUltimate) {
   if (attacker.ferocityFever && trait.effectId === "abyssalVortex") {
     skill = { ...skill, targeting: "nearbyEnemies", radius: trait.radius };
   }
+  const locks = attacker.def.passive.restraintLocks;
+  if (locks && effectiveLocksBroken(attacker) >= locks.thresholds.length) {
+    skill = { ...skill, targeting: "nearbyEnemies", radius: locks.liberatedRadius };
+  }
   if (attacker.ferocityFever && trait.effectId === "sleepTantrum") {
     skill = {
       ...skill,
@@ -7774,6 +7973,8 @@ function breakthroughSkillBase(attacker, useUltimate) {
 }
 function bossDamageMultiplier(attacker, target, useUltimate) {
   let multiplier = 1;
+  const ingredient = attacker.def.passive.todaysIngredient;
+  if (ingredient && attacker.ingredientId === target.id) multiplier *= 1 + ingredient.damagePercent / 100;
   if (!useUltimate) {
     const basic = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
     if (basic?.kind === "coiledTarget" && target.chill) multiplier *= 1 + target.chill.stacks * basic.damagePercentPerStack / 100;
@@ -8300,7 +8501,7 @@ function attackSpeedParts(fighter, state) {
   const traitHastePercent = (fighter.traitHaste?.attackSpeedPercent ?? 0) + (state === void 0 ? 0 : warmUpAttackSpeedPercent(effectsFor(state, fighter), fighter.def.id, state.elapsed));
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
-  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100);
+  const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
   return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
@@ -8587,7 +8788,7 @@ function applyHealing(state, target, requested, casterId = target.id) {
     target.bt.healCut?.percent ?? 0
   );
   const before = target.hp;
-  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed));
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side));
   const actual = target.hp - before;
   addContribution(state.contributions, casterId, "healing", actual);
   return actual;
@@ -8613,7 +8814,7 @@ function moveSpeed(fighter, state) {
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100);
+  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
 }
 function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
@@ -8624,7 +8825,7 @@ function chargePath(attacker, state, aim, skill) {
   const gap = Math.hypot(dx, dy);
   const ux = gap < 1e-3 ? attacker.facing : dx / gap;
   const uy = gap < 1e-3 ? 0 : dy / gap;
-  const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds * (skill?.chargeReachMultiplier ?? 1);
+  const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds * (skill?.chargeReachMultiplier ?? 1) * lockChargeReachFactor(attacker);
   const arena = state.arena;
   return {
     from: { x: attacker.x, y: attacker.y },
@@ -8667,6 +8868,17 @@ function resolveTarget(state, fighter, reconsider = false) {
     const chosen2 = nextTagAndRunTarget(fighter, state, current?.id);
     fighter.targetId = chosen2?.id ?? null;
     return chosen2;
+  }
+  if (!frenzied && fighter.def.passive.todaysIngredient) {
+    const marked = fighter.ingredientId ? findFighter(state, fighter.ingredientId) : void 0;
+    const usable = (other) => other.side === wanted && other.id !== fighter.id && isFighterAlive(other) && other.stealthFor <= 0 && !other.hordeEntering;
+    const chosen2 = marked && usable(marked) ? marked : state.fighters.filter(usable).map((other, index) => ({ other, index })).sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
+    if (chosen2) {
+      fighter.ingredientId = chosen2.id;
+      if (fighter.targetId !== chosen2.id) fighter.engaged = false;
+      fighter.targetId = chosen2.id;
+      return chosen2;
+    }
   }
   let chosen;
   let bestScore = Infinity;
@@ -9337,10 +9549,11 @@ function offensiveDefinition(attacker) {
   const focused = passive.kind === "farthestFocus" ? 1 + attacker.focus * passive.value / 100 : 1;
   const converted = passive.kind === "refillMagazine" ? attacker.refillAttackRatio : 1;
   const ramped = attacker.rampFactor;
-  if (passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1) return attacker.def;
+  const fed = passive.todaysIngredient ? 1 + attacker.ingredientStacks * passive.todaysIngredient.attackPercentPerStack / 100 : 1;
+  if (passive.attackPowerPercent === void 0 && passive.criticalDamagePercent === void 0 && conditional === 1 && vandalised === 1 && focused === 1 && converted === 1 && ramped === 1 && fed === 1) return attacker.def;
   return { ...attacker.def, stats: {
     ...attacker.def.stats,
-    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped,
+    atk: attacker.def.stats.atk * (1 + (passive.attackPowerPercent ?? 0) / 100) * conditional * vandalised * focused * converted * ramped * fed,
     ap: attacker.def.stats.ap * vandalised * ramped,
     critDamage: attacker.def.stats.critDamage + (passive.criticalDamagePercent ?? 0)
   } };
@@ -9599,6 +9812,7 @@ function applyDamage(target, amount, events, state) {
   if (dealt > 0 && isFighterAlive(target)) tryTriggerDamageStealth(target, state);
   if (dealt > 0 && isFighterAlive(target) && target.def.passive.kind === "shellGuard") gainShellGuard(target, 1, state, events);
   if (dealt > 0 && isFighterAlive(target)) tryTriggerRescueShield(target, state, events);
+  if (dealt > 0 && isFighterAlive(target)) noteFlinch(target, dealt);
   return dealt;
 }
 function tryTriggerRescueShield(target, state, events) {
@@ -9729,6 +9943,7 @@ function tickBleed(fighter, dt, state, events) {
     scoreBossFixedDamage(state, fighter, amount);
     if (bleed.sourceId) addContribution(state.contributions, bleed.sourceId, "attack", hpBefore - fighter.hp, "attackPower");
     events.push({ kind: "bleed", fighterId: fighter.id, amount, started: false });
+    appetiteBleedHeal(state, bleed.sourceId, hpBefore - fighter.hp, events);
     tryTriggerEmergencyRecovery(fighter, state);
     tryTriggerLowHpVanish(fighter, state);
     state.log.push(`${fighter.def.name} \uCD9C\uD608 ${amount}`);
@@ -9737,7 +9952,7 @@ function tickBleed(fighter, dt, state, events) {
       clearDefeatedStatuses(fighter);
       events.push({ kind: "death", fighterId: fighter.id, sourceId: bleed.sourceId });
       const source = bleed.sourceId ? findFighter(state, bleed.sourceId) : void 0;
-      if (source) triggerBreakthroughOnKill(source, false);
+      if (source) triggerBreakthroughOnKill(source, false, fighter);
       state.log.push(`${fighter.def.name} \uC804\uD22C \uBD88\uB2A5`);
     }
   }
@@ -10227,6 +10442,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   if (isFighterAlive(target) && dealt > 0) triggerCombatAugments(state, target, "onDamaged", events);
   gainElation(target);
   reactPrickle(target, attacker, state, events);
+  reactCellRank(target, attacker, state, events);
   if (!useUltimate) {
     gainPrickle(attacker, attacker.def.basic.prickleGain ?? 0);
     const jab = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
@@ -10392,6 +10608,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     maybeFreezeAtMaxChill(attacker, target, events, state);
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
+  if (!useUltimate && comboHit === void 0) triggerRally(attacker, state, events);
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
     pulsePoison(target, state, events);
   }
@@ -10677,6 +10894,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     if (!resolution.ignored) gainFerocity(target, FEROCITY_RULES.hitGain, state, events);
     gainElation(target);
     reactPrickle(target, attacker, state, events);
+    reactCellRank(target, attacker, state, events);
     reactTouchBurst(target, attacker, state, events);
     reactRaiders(target, attacker, state, events, useUltimate);
     if (!useUltimate) pullStruck(attacker, target, state, events);
@@ -11331,6 +11549,7 @@ function advance(state, dt, rng, events) {
     tickShallows(fighter, dt);
     refillTauntHealBudget(fighter, dt);
     if (isFighterAlive(fighter)) events.push(...tickRaiders(fighter, dt, state));
+    if (isFighterAlive(fighter)) events.push(...tickConfinement(fighter, dt, state));
     if (isFighterAlive(fighter) && fighter.tailwindFor > 0) {
       events.push(...tickTailwind(fighter, dt, state));
       const remaining = fighter.tailwindFor - dt;
@@ -11695,7 +11914,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
     attacker.energy -= ultimateCost(state, attacker, true);
     const bigShell = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     const guardPercent = bigShell?.kind === "bigShell" ? bigShell.shieldMaxHpPercent : plan.shieldMaxHpPercent;
-    const guardShield = grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * guardPercent / 100)), events, 1.5);
+    const guardShield = plan.pullOnly ? 0 : grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * guardPercent / 100)), events, 1.5);
     if (plan.shieldFadeSeconds !== void 0 && guardShield > 0) {
       const prior = attacker.shieldFade;
       attacker.shieldFade = {
@@ -11704,8 +11923,10 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
       };
     }
     if (openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "shareShield") attacker.bt.shareShieldIn = plan.tauntSeconds;
-    const pulled = plan.pull.target === "farthest" ? hookFarthestEnemy(attacker, plan.pull, state) : pullEnemiesToward(attacker, plan.pull, state);
-    for (const other of pulled) {
+    if (plan.dashToFarthest !== void 0) dashToFarthestEnemy(attacker, plan.dashToFarthest.landingDistance, state, events);
+    const pull2 = rollCallPull(attacker, plan.pull);
+    const pulled = pull2.target === "farthest" ? hookFarthestEnemy(attacker, pull2, state) : pullEnemiesToward(attacker, pull2, state);
+    for (const other of plan.pullOnly ? [] : pulled) {
       applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);
       if (other.taunted?.sourceId === attacker.id) {
         other.targetId = attacker.id;
@@ -11800,6 +12021,13 @@ function idleTowardHome(fighter, dt, state) {
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
   fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
 }
+function hordeFieldCount(state) {
+  return state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.hordeScore !== void 0 && isFighterAlive(fighter)).length;
+}
+function hordeRestoreMultiplier(state, side) {
+  const percent = state.horde?.spec.allyRestorePercent;
+  return side === "player" && percent !== void 0 ? percent / 100 : 1;
+}
 function advanceHorde(state, events) {
   const horde = state.horde;
   if (!horde) return;
@@ -11832,7 +12060,7 @@ function advanceHorde(state, events) {
     horde.emptySince = null;
     events.push({ kind: "hordeWave", wave: wave.index, level: wave.level, fighterIds: ids });
   }
-  if (aliveFighters(state, "enemy").filter((fighter) => isPartyFighter(fighter) && !fighter.hordeEntering).length >= horde.spec.overrunCap) {
+  if (hordeFieldCount(state) >= horde.spec.overrunCap) {
     horde.overrun = true;
     settle(state, events);
   }
@@ -15942,6 +16170,365 @@ var RELICS = [
       ultimate: { kind: "widenArea", radius: 300 },
       ferocity: { kind: "bloodFever", lifeStealPoints: 12 },
       passive: { kind: "deeperMarch", regenMaxHpPercentPerAllyPerSecond: 0.6 }
+    }
+  },
+  {
+    id: "magasa",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uB9C8\uAC00\uC0AC",
+    specimenNumber: "218",
+    projectName: "ANNIHILATION CONFINEMENT 218",
+    excavationSite: "\uC774\uD130\uB110 \uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uBC30\uC2DD\uC2E4",
+    fossilRecord: "\uAC10\uAE08\uB3D9 \uBC30\uC2DD\uC2E4 \uC870\uB9AC\uB300 \uBC11\uC5D0\uC11C \uD1B1\uB2C8\uCC98\uB7FC \uAC08\uB77C\uC9C4 \uC774\uBE68 \uC5EC\uB7FF\uACFC \uC9E7\uACE0 \uAD75\uC740 \uC55E\uB2E4\uB9AC\uBF08\uAC00 \uD568\uAED8 \uAD73\uC740 \uCC44 \uD68C\uC218\uB418\uC5C8\uB2E4. \uC774\uBE68 \uC790\uAD6D\uC774 \uAC19\uC740 \uC885\uC758 \uBF08\uC5D0\uB3C4 \uB0A8\uC544 \uC788\uC5B4, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uBB34\uC5C7\uC744 \uBA39\uACE0 \uC790\uB790\uB294\uC9C0\uB97C \uBB3B\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 7,000\uB9CC \uB144 \uC804",
+      // E.C.는 무서운 일을 즐겁게 해치우는 쾌활한 청소년 후반기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 17\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.66 m",
+      weight: "54 kg"
+    },
+    catalogSummary: "\uD1B1\uB2C8 \uC774\uBE68\uACFC \uC9E7\uACE0 \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC804\uC0AC \uB9C8\uC900\uAC00\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 218. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uBC1C\uBAA9\uC5D0 \uC871\uC1C4\uB97C \uB2E8 \uCC44 \uCF67\uB178\uB798\uB97C \uBD88\uB800\uACE0, \uB9C8\uC8FC \uC120 \uC0C1\uB300\uB97C \uD558\uB098\uD558\uB098 \u300C\uC624\uB298\uC758 \uC7AC\uB8CC\u300D\uB77C \uBD88\uB800\uB2E4. \uAC00\uC7A5 \uC9C0\uCE5C \uC0C1\uB300\uBD80\uD130 \uACE0\uB974\uB294 \uC190\uC774 \uB9DD\uC124\uC774\uC9C0 \uC54A\uC558\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \u300C\uC81C\uC77C \uADC0\uD55C \uC7AC\uB8CC\u300D\uB77C\uACE0 \uB367\uBD99\uC774\uACE0 \uC785\uB9DB\uC744 \uB2E4\uC168\uB2E4.' },
+    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC2DD\uC0AC \uB2F9\uBC88\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uAC07\uD600 \uC788\uB358 \uBB34\uB9AC\uC758 \uBC25\uC744 \uB9E1\uC544 \uC654\uACE0, \uBB38\uC774 \uC5F4\uB9B0 \uB4A4\uC5D0\uB3C4 \uBB34\uB9AC\uB97C \uBA39\uC774\uB294 \uC77C\uB85C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
+    rarity: "SR",
+    portraitAssetId: "magasa",
+    origin: "\uB9C8\uC900\uAC00\uC0AC\uC6B0\uB8E8\uC2A4",
+    element: "fire",
+    role: "warrior",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* SR 띠의 아래쪽이다(2249). 쓰러뜨린 재료가 곧 회복이라 공격력에 얹고 체력은 전사 평균에 둔다. */
+    stats: {
+      hp: 1100,
+      def: 60,
+      res: 50,
+      atk: 175,
+      ap: 20,
+      attackSpeed: 105,
+      moveSpeed: 104,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uC2DD\uC695 \uD3ED\uC8FC", effectId: "appetiteFrenzy", attackSpeedPercent: 30, bleedHealPercent: 50 },
+    passive: {
+      id: "magasa-passive",
+      name: "\uC624\uB298\uC758 \uC7AC\uB8CC",
+      kind: "todaysIngredient",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 재료에게 더 주는 피해(%)를 담아 둔다.
+      value: 15,
+      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3 },
+      desc: "\uCCB4\uB825 \uBE44\uC728\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC744 \uC7AC\uB8CC\uB85C \uB178\uB9AC\uACE0, \uC7AC\uB8CC\uB97C \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uD68C\uBCF5\uD558\uBA70 \uACF5\uACA9\uB825\uC774 \uC313\uC778\uB2E4."
+    },
+    basic: {
+      id: "magasa-basic",
+      name: "\uB2E4\uC9C0\uAE30",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      statusEffectEvery: 3,
+      // 이미 피를 흘리는 적에게 다시 걸면 깊은 출혈(매초 4% · 받는 회복 -30%)이 된다.
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: 2, healingReceivedReductionPercent: 30 } }]
+    },
+    ultimate: {
+      id: "magasa-ult",
+      name: "\uB9CC\uCC2C \uC900\uBE44",
+      power: 280,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      targeting: "single",
+      // 재료를 내려친 몫이 곧 이 개체의 숨이다. 혼자 서는 정예 자리에서도 회복이 제가 친 적에게서 나온다.
+      damageHealingPercent: 25,
+      statusEffects: [{ kind: "knockback", seconds: 0.6, speed: 1100, bounces: 1 }]
+    },
+    // 깊은 출혈은 다지기가 이미 갖고 있어 평타 칸은 비워 둔다. 만찬이 더 배를 채우고(III) 폭주하면 칼끝이 급소를 찾는다(IV).
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      // 궁극기에 이미 적힌 25%에 더해진다(합 40%).
+      ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 15 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "noa",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uB178\uC544",
+    specimenNumber: "219",
+    projectName: "ANNIHILATION CONFINEMENT 219",
+    excavationSite: "\uC774\uD130\uB110 \uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uB3C5\uBC29",
+    fossilRecord: "\uAC10\uAE08\uB3D9 \uAC00\uC7A5 \uC548\uCABD \uB3C5\uBC29 \uBCBD\uC5D0 \uAE01\uD78C \uC790\uAD6D\uACFC \uD568\uAED8, \uAC00\uB298\uACE0 \uAE34 \uB4B7\uB2E4\uB9AC\uBF08\uC640 \uD718\uC5B4\uC9C4 \uBC1C\uD1B1 \uC870\uAC01\uC774 \uAD73\uC740 \uCC44 \uD68C\uC218\uB418\uC5C8\uB2E4. \uAE01\uD78C \uC790\uAD6D\uC774 \uBAA8\uB450 \uBB38 \uBC18\uB300\uCABD \uBCBD\uC5D0 \uBAB0\uB824 \uC788\uC5B4, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uBB34\uC5C7\uC5D0\uC11C \uB2EC\uC544\uB098\uB824 \uD588\uB294\uC9C0\uB97C \uC7AC\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 7,000\uB9CC \uB144 \uC804",
+      // E.C.는 겁이 많아 먼저 손톱부터 세우는 소년기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 13\uB144",
+      lifeStage: "\uC544\uC131\uCCB4",
+      height: "1.41 m",
+      weight: "34 kg"
+    },
+    catalogSummary: "\uAE38\uACE0 \uB0A0\uCE74\uB85C\uC6B4 \uC190\uD1B1\uACFC \uAC00\uB294 \uB4B7\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC554\uC0B4\uC790 \uB178\uC544\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 219. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uBAB8\uC744 \uC6C5\uD06C\uB9B0 \uCC44 "\uC624\uC9C0 \uB9C8"\uB97C \uB418\uD480\uC774\uD588\uC9C0\uB9CC, \uAC70\uB9AC\uAC00 \uC881\uD600\uC9C0\uBA74 \uB9D0\uBCF4\uB2E4 \uC190\uD1B1\uC774 \uBA3C\uC800 \uB098\uAC14\uB2E4. \uC138\uAC8C \uB9DE\uC73C\uBA74 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD280\uC5B4 \uC62C\uB77C \uC0C1\uB300\uC758 \uB4F1 \uB4A4\uB85C \uB3CC\uC544\uAC00 \uC788\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uBA74\uC11C\uB3C4 \uBA87 \uAC78\uC74C \uB5A8\uC5B4\uC838 \uB0C4\uC0C8\uB97C \uB9E1\uC558\uB2E4.' },
+    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC5D0\uC11C \uAC00\uC7A5 \uAC81 \uB9CE\uC740 \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uBC25\uC744 \uCC59\uACA8 \uC900 \uC2DD\uC0AC \uB2F9\uBC88 \uB4A4\uC5D0 \uBD99\uC5B4 \uB2E4\uB2C8\uBA70, \uBB34\uB9AC\uAC00 \uC815\uBA74\uC5D0\uC11C \uBD80\uB52A\uD788\uB294 \uC0AC\uC774 \uB4B7\uC904\uB85C \uD30C\uACE0\uB4E0\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0",
+    rarity: "SR",
+    portraitAssetId: "noa",
+    origin: "\uB178\uC544\uC0AC\uC6B0\uB8E8\uC2A4",
+    element: "wind",
+    role: "assassin",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* SR 띠의 아래쪽이다(2226). 튀어 다니는 암살자라 공격 속도·이동 속도에 얹고 체력은 낮게 둔다. */
+    stats: {
+      hp: 860,
+      def: 42,
+      res: 40,
+      atk: 195,
+      ap: 20,
+      attackSpeed: 130,
+      moveSpeed: 122,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uAD81\uC9C0\uC5D0 \uBAB0\uB9B0 \uC9D0\uC2B9", effectId: "corneredBeast", attackSpeedPercent: 35, moveSpeedPercent: 25, flinchCooldownSeconds: 3 },
+    passive: {
+      id: "noa-passive",
+      name: "\uC6C0\uCC14",
+      kind: "flinchBlink",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번에 잃어야 하는 체력 비율(%)을 담아 둔다.
+      value: 15,
+      flinchBlink: { burstMaxHpPercent: 15, cooldownSeconds: 6, landingDistance: 90 },
+      desc: "\uD55C \uBC88\uC5D0 \uD06C\uAC8C \uB2E4\uCE58\uBA74 \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC758 \uB4A4\uB85C \uB6F0\uC5B4 \uBB3C\uB7EC\uB098\uACE0, \uB2E4\uC74C \uAE30\uBCF8 \uACF5\uACA9\uC774 \uBC18\uB4DC\uC2DC \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4."
+    },
+    basic: {
+      id: "noa-basic",
+      name: "\uD560\uD034\uAE30",
+      power: 60,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      combo: { chancePercent: 100, hitCount: 2 }
+    },
+    ultimate: {
+      id: "noa-ult",
+      name: "\uC190\uD1B1 \uB09C\uBB34",
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      cost: 100,
+      // 아무도 때리지 않는다. 숨어서 가장 약한 적 곁으로 뛰어들고, 피해는 이어지는 할퀴기 한 번의 몫이다.
+      targeting: "self",
+      selfSetup: {
+        stealthSeconds: 2,
+        stealthBreaksOnBasic: true,
+        leapTarget: "lowestHpEnemy",
+        landingDistance: 80,
+        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true }
+      }
+    },
+    // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
+    breakthroughEffects: {
+      basic: { kind: "bleedingSmash" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "raja",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uB77C\uC790",
+    specimenNumber: "225",
+    projectName: "ANNIHILATION CONFINEMENT 225",
+    excavationSite: "\uC774\uD130\uB110 \uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uACF5\uC6A9 \uAC10\uBC29",
+    fossilRecord: "\uAC10\uAE08\uB3D9 \uACF5\uC6A9 \uAC10\uBC29\uC758 \uC1E0\uCC3D\uC0B4 \uBC11\uC5D0\uC11C \uB450\uAEBC\uC6B4 \uB450\uAC1C\uACE8 \uC9C0\uBD95\uACFC \uD55C\uCABD\uB9CC \uC720\uB09C\uD788 \uAD75\uC740 \uC55E\uB2E4\uB9AC\uBF08\uAC00 \uD68C\uC218\uB418\uC5C8\uB2E4. \uCC3D\uC0B4 \uBA87 \uAC1C\uAC00 \uC548\uCABD\uC5D0\uC11C \uD718\uC5B4 \uC788\uC5B4, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uAC00 \uBB34\uC5C7\uC744 \uC9C0\uD0A4\uB824\uACE0 \uCC3D\uC0B4\uC744 \uCCE4\uB294\uC9C0\uB97C \uBB3B\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 7,000\uB9CC \uB144 \uC804",
+      // E.C.는 말수가 적고 무리를 챙기는 고참형 청년기 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 19\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.84 m",
+      weight: "92 kg"
+    },
+    catalogSummary: "\uB450\uAEBC\uC6B4 \uBA38\uB9AC\uBF08\uC640 \uD55C\uCABD\uB9CC \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uD0F1\uCEE4 \uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 220. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. "\uB364\uBCBC" \uD55C \uB9C8\uB514 \uB9D0\uACE0\uB294 \uAC70\uC758 \uB9D0\uD558\uC9C0 \uC54A\uC558\uACE0, \uB2E4\uAC00\uC624\uB294 \uC0C1\uB300\uB97C \uAC74\uD2C0\uB81B \uD558\uB098\uB85C \uBC1B\uC544 \uB0C8\uB2E4. \uC790\uAE30\uC5D0\uAC8C \uB364\uBE44\uB294 \uC0C1\uB300\uAC00 \uB9CE\uC744\uC218\uB85D \uC624\uD788\uB824 \uC790\uC138\uAC00 \uB2E8\uB2E8\uD574\uC84C\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uACE0\uB294 \uC2DC\uC120\uC744 \uB3CC\uB838\uB2E4.' },
+    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC11C\uC5F4 \uC815\uB9AC\uB97C \uB9E1\uC544 \uC628 \uACE0\uCC38\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uBB34\uB9AC\uB97C \uB9C9\uB0B4\uCC98\uB7FC \uCC59\uAE30\uBA70, \uC55E\uC5D0 \uC11C\uC11C \uB364\uBE44\uB294 \uC801\uC744 \uBAA8\uB450 \uC81C\uAC8C\uB85C \uBD80\uB978\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0",
+    rarity: "R",
+    portraitAssetId: "raja",
+    origin: "\uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4",
+    element: "earth",
+    role: "tank",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* R 띠의 가운데다(2154). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다. */
+    stats: {
+      hp: 1400,
+      def: 92,
+      res: 72,
+      atk: 110,
+      ap: 20,
+      attackSpeed: 70,
+      moveSpeed: 64,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uC810\uD638 \uAC70\uBD80", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
+    passive: {
+      id: "raja-passive",
+      name: "\uAC10\uBC29 \uC11C\uC5F4",
+      kind: "cellRank",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번 맞을 때 얻는 보호막(최대 체력 %)을 담아 둔다.
+      value: 1.5,
+      cellRank: { shieldMaxHpPercent: 1.5, intervalSeconds: 1, capMaxHpPercent: 15 },
+      desc: "\uB3C4\uBC1C\uC774 \uAC78\uB9B0 \uC801\uC5D0\uAC8C \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4."
+    },
+    basic: {
+      id: "raja-basic",
+      name: "\uCCA0\uAD8C",
+      power: 100,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single",
+      // 매 타 경직, 네 번째마다 호령 — 주위를 도발하고 막을 두른다. 도발과 막은 궁극기가 아니라 이 호령이 맡는다.
+      statusEffects: [{ kind: "stagger", seconds: 0.1 }],
+      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 8 }
+    },
+    ultimate: {
+      id: "raja-ult",
+      name: "\uCCA0\uCC3D \uBD80\uC218\uAE30",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      cost: 100,
+      targeting: "self",
+      // 피해 없이 주위 적을 끌어당기기만 한다. 끌려온 적은 곧 철권의 호령에 도발된다.
+      selfGuard: { pullOnly: true, dashToFarthest: { landingDistance: 90 }, tauntSeconds: 0, pull: { radius: 360, distance: 140 }, shieldMaxHpPercent: 0 }
+    },
+    // 한계 돌파는 설계 절차(`docs/breakthrough-design.md`)로 추천안을 확인받은 뒤 채운다.
+    breakthroughEffects: {
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
+      ferocity: { kind: "none" },
+      passive: { kind: "none" }
+    }
+  },
+  {
+    id: "carno",
+    enemyOnly: true,
+    squad: "annihilation",
+    name: "\uCE74\uB974\uB178",
+    specimenNumber: "226",
+    projectName: "ANNIHILATION CONFINEMENT 226",
+    excavationSite: "\uC774\uD130\uB110 \uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4",
+    fossilRecord: "\uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4 \uBC14\uB2E5\uC5D0\uC11C \uC9E7\uC740 \uB450 \uBFD4\uC774 \uC19F\uC740 \uB450\uAC1C\uACE8\uACFC, \uBAB8\uD1B5\uC5D0 \uBD99\uC740 \uCC44 \uAD73\uC740 \uC791\uC740 \uC55E\uB2E4\uB9AC\uBF08\uAC00 \uD568\uAED8 \uD68C\uC218\uB418\uC5C8\uB2E4. \uBC14\uB2E5\uC5D0\uB294 \uC1E0\uC0AC\uC2AC \uACE0\uB9AC\uAC00 \uC5EC\uB7FF \uBC15\uD600 \uC788\uC5C8\uACE0, \uBCF5\uC6D0 \uC5F0\uAD6C\uB294 \uC774 \uAC1C\uCCB4\uB97C \uC65C \uADF8\uB9CC\uD07C \uBB36\uC5B4 \uB450\uC5B4\uC57C \uD588\uB294\uC9C0\uB97C \uBB3B\uB294 \uAC83\uC73C\uB85C \uC2DC\uC791\uD588\uB2E4.",
+    observationProfile: {
+      originYear: "\uC57D 7,000\uB9CC \uB144 \uC804",
+      // E.C.는 분노를 삼킨 채 말을 아끼는 청년기형 인상을 분류하며, 복원 경과 연도가 아니다.
+      restorationYear: "E.C. 20\uB144",
+      lifeStage: "\uC131\uCCB4",
+      height: "1.88 m",
+      weight: "78 kg"
+    },
+    catalogSummary: "\uC9E7\uC740 \uB450 \uBFD4\uACFC \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uD314\uC744 \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC758 \uC804\uC0AC \uCE74\uB974\uB178\uD0C0\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 221. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uAD6C\uC18D\uBCF5\uC758 \uC790\uBB3C\uC1E0\uB97C \uB2E8 \uCC44\uB85C\uB3C4 \uAC78\uC74C\uC774 \uBA48\uCD94\uC9C0 \uC54A\uC558\uACE0, \uB2E4\uCE60\uC218\uB85D \uC790\uBB3C\uC1E0\uAC00 \uD558\uB098\uC529 \uD130\uC838 \uB098\uAC00\uBA70 \uB354 \uBE68\uB77C\uC84C\uB2E4. \uBB38\uC744 \uC5F4\uC5B4 \uC900 \uB3D9\uB8CC\uC5D0\uAC8C\uB3C4 "\u2026\uB2A6\uC5C8\uC5B4" \uD55C \uB9C8\uB514\uBFD0\uC774\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uACE0 \uC774\uB97C \uC545\uBB3C\uC5C8\uB2E4.' },
+    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC5D0 \uBB36\uC5EC \uC788\uB358 \uAC00\uC7A5 \uC704\uD5D8\uD55C \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uBB38\uC774 \uC5F4\uB9B0 \uB4A4 \uBB34\uB9AC\uC758 \uB9E8 \uC55E\uC744 \uB2EC\uB9AC\uBA70, \uBB36\uC778 \uBAB8 \uADF8\uB300\uB85C \uAE38\uC744 \uB6AB\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    researcherTitle: "\uC5F0\uAD6C\uC6D0",
+    rarity: "SSR",
+    portraitAssetId: "carno",
+    origin: "\uCE74\uB974\uB178\uD0C0\uC6B0\uB8E8\uC2A4",
+    element: "wind",
+    role: "warrior",
+    reachTier: "melee",
+    excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
+    /* SSR 띠의 가운데다(2398). 질주가 곧 기술의 사거리라 이동 속도를 높게 두고, 자물쇠가 풀리며 빨라질 몫을 남긴다. */
+    stats: {
+      hp: 1200,
+      def: 64,
+      res: 52,
+      atk: 190,
+      ap: 20,
+      attackSpeed: 110,
+      moveSpeed: 120,
+      critChance: 10,
+      critDamage: 150,
+      energyGain: 26,
+      lifeSteal: 0,
+      ferocityGain: 0
+    },
+    ferocityTrait: { name: "\uAD6C\uC18D \uBD95\uAD34", effectId: "restraintCollapse" },
+    passive: {
+      id: "carno-passive",
+      name: "\uAD6C\uC18D\uBCF5",
+      kind: "restraintLocks",
+      iconAssetId: "skill-icon-buff",
+      effectType: "buff",
+      // Passive.value는 공용 필수 필드라, 이 패시브에서는 처음 채워진 자물쇠 수를 담아 둔다.
+      value: 4,
+      restraintLocks: {
+        thresholds: [80, 60, 40, 20],
+        attackSpeedPercent: 12,
+        moveSpeedPercent: 8,
+        burstRadius: 220,
+        knockback: { seconds: 0.6, speed: 1200, bounces: 1 },
+        liberatedRadius: 180,
+        chargeReachPercentPerLock: 15
+      },
+      desc: "\uCCB4\uB825\uC774 \uAE4E\uC77C \uB54C\uB9C8\uB2E4 \uC790\uBB3C\uC1E0\uAC00 \uD480\uB9AC\uBA70 \uBE68\uB77C\uC9C0\uACE0, \uBAA8\uB450 \uD480\uB9AC\uBA74 \uAE30\uBCF8 \uACF5\uACA9\uC774 \uC8FC\uC704\uB97C \uD729\uC4F4\uB2E4."
+    },
+    basic: {
+      id: "carno-basic",
+      name: "\uC30D\uBFD4 \uCE58\uAE30",
+      power: 110,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      targeting: "single"
+    },
+    ultimate: {
+      id: "carno-ult",
+      name: "\uAD11\uB780\uC758 \uC9C8\uC8FC",
+      power: 220,
+      iconAssetId: "skill-icon-physical",
+      effectType: "physical",
+      damageType: "physical",
+      cost: 100,
+      // 길 위의 적을 모두 친다. 나아가는 거리는 이동 속도가 정하고, 풀린 자물쇠마다 더 멀리 달린다(`restraintLocks`).
+      targeting: "chargeLine",
+      radius: 90,
+      chargeReachMultiplier: 1.4,
+      statusEffects: [{ kind: "stagger", seconds: 0.5 }],
+      // 전사의 자가 수급 — 길 위에서 들이받은 만큼 몸을 추스른다.
+      damageHealingPercent: 20
+    },
+    // 뿔이 상대를 멈칫하게 하고(II) 질주의 폭이 넓어지며(III) 폭주하면 급소가 터진다(IV).
+    breakthroughEffects: {
+      basic: { kind: "shellKnock", seconds: 0.3 },
+      ultimate: { kind: "widenArea", radius: 130 },
+      ferocity: { kind: "sharpStorm", critChancePoints: 20 },
+      passive: { kind: "none" }
     }
   },
   {
@@ -29271,7 +29858,7 @@ var STAGE_2_6_SAME_LINE = {
       ]
     },
     { id: "returnA", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uC9C1\uC774\uB2E4. \uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
-    { id: "okayB", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uC9C8\uBB38, \uC704\uC5D0\uC11C\uB294 \uC5C6\uC5C8\uB2E4. \uC544\uC9C1\uC774\uB2E4. \uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
+    { id: "okayB", speaker: "\uCF54\uB9C8", body: "\u2026\u2026\uD655\uC778\uC774 \uB05D\uB098\uBA74 \uB3CC\uB824\uC900\uB2E4.", standing: "koma", act: "recoil", nextId: "tail" },
     { id: "tail", speaker: "", body: "\uCF54\uB9C8\uB294 \uC0AC\uC6D0\uC99D\uC744 \uD488\uC5D0 \uB123\uACE0 \uC5B4\uB460 \uC18D\uC73C\uB85C \uD55C \uAC78\uC74C \uBB3C\uB7EC\uB09C\uB2E4. \uAF2C\uB9AC\uAC00 \uBC14\uB2E5\uC744 \uB0AE\uAC8C \uC4F4\uB2E4.", standing: "koma", cast: SOLO("koma") }
   ])
 };
@@ -29532,8 +30119,8 @@ var STAGE_1_10_POST = {
         { id: "talk", label: "\uB2E4\uC74C\uC5D4 \uAC19\uC774 \uC774\uC57C\uAE30\uD558\uC790", nextId: "answerB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
       ]
     },
-    { id: "answerA", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8 \uB9D0\uC740 \uC704\uC5D0\uC11C \uC544\uBB34\uB3C4 \uC548 \uD588\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
-    { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30. \uADF8\uAC83\uB3C4 \uC704\uC5D0\uC11C\uB294 \uC5C6\uB358 \uC77C\uC774\uB2E4.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "answerA", speaker: "\uCF54\uB9C8", body: "\u2026\uC2E4\uD328\uC791.", standing: "koma", act: "recoil", nextId: "leave" },
+    { id: "answerB", speaker: "\uCF54\uB9C8", body: "\u2026\uC774\uC57C\uAE30.", standing: "koma", act: "recoil", nextId: "leave" },
     { id: "leave", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0 \uAC00\uC11C \uB9D0\uD558\uACA0\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBB38 \uB108\uBA38\uB85C \uC544\uC9C1 \uAC00\uC9C0 \uC54A\uC558\uB2E4\uACE0.", standing: "koma", cast: [{ id: "torika", slot: "left" }], nextId: "crash" },
     { id: "crash", speaker: "", body: "\uACBD\uCCA9\uC9F8 \uBF51\uD78C \uBB38\uC9DD\uC774 \uB0A0\uC544\uC640 \uB545\uC5D0 \uBC15\uD78C\uB2E4.", cue: "explosion", nextId: "lexia" },
     { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uC81C\uAC00 \uC654\uC5B4\uC694! \uBB38\uC740 \uC5F4\uC5B4 \uB480\uC5B4\uC694. \uC815\uD655\uD788\uB294\u2026 \uBB38\uC9DD\uC744 \uAC00\uC838\uC654\uC5B4\uC694.", standing: "lexia", cast: ALONE("lexia"), act: "puff", nextId: "hello" },
@@ -29681,7 +30268,7 @@ var STAGE_2_8_PRE = {
     { id: "furnace", speaker: "", body: "\uAEBC\uC838 \uAC00\uB294 \uC6A9\uAD11\uB85C \uACC1. \uCF54\uB9C8\uAC00 \uCABC\uADF8\uB824 \uC549\uC544 \uBCBD\uC758 \uD3D0\uAE30 \uD45C\uC2DD\uC744 \uB2E6\uACE0 \uC788\uB2E4.", standing: "koma", cast: SOLO2("koma") },
     { id: "see", speaker: "\uCF54\uB9C8", body: "\u2026\uC654\uB098.", standing: "koma", act: "nod" },
     { id: "fight", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC2F8\uC6B0\uC2E4 \uAC74\uAC00\uC694, \uCF54\uB9C8 \uC528?", standing: "torika", cast: PAIR("koma"), act: "lean" },
-    { id: "no", speaker: "\uCF54\uB9C8", body: "\uC2F8\uC6B0\uC9C0 \uC54A\uB294\uB2E4. \uC9C0\uAE08\uC740.", standing: "koma" },
+    { id: "no", speaker: "\uCF54\uB9C8", body: "\uC2F8\uC6B0\uC9C0 \uC54A\uB294\uB2E4.", standing: "koma" },
     { id: "above", speaker: "\uCF54\uB9C8", body: "\uC704\uC5D0\uC11C\uB294 \uC544\uC9C1 \uBAA8\uB978\uB2E4. \uC774 \uD45C\uC2DD\uC744 \uB2E6\uB294 \uAC83\uB3C4. \uB108\uD76C\uAC00 \uC5EC\uAE30\uAE4C\uC9C0 \uC628 \uAC83\uB3C4.", standing: "koma", act: "shrink" },
     { id: "trio", speaker: "\uB9AC\uD30C", body: "\u2026\uCF54\uB9C8, \uB108 \uC9C0\uAE08 \uBB50 \uD558\uB294 \uAC70\uC57C? \uC704\uC5D0\uC11C \uBAA8\uB974\uB294 \uC77C\uC744 \uD574\uB3C4 \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "recoil" },
     { id: "leave", speaker: "\uCF54\uB9C8", body: "\u2026\uAC00\uB77C. \uB300\uC2E0 \uC774\uCABD\uC73C\uB85C \uC624\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "ripa", slot: "left" }], act: "nod" }
@@ -29881,8 +30468,8 @@ var STAGE_3_10_POST = {
     { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC04\uB2E4. \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uB530\uB77C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2F9\uC2E0\uC740 \uC544\uC9C1 \uBAA9\uB85D\uC5D0 \uC788\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
     { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294, \uC9C0\uC6E0\uB2E4. \uADF8\uAC74 \uB0B4\uAC00 \uC815\uD588\uB2E4.", standing: "koma", act: "shrink" },
-    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uBB34\uC2A8 \uC18C\uB9B0\uC9C0\uB294 \uBAA8\uB974\uACA0\uC5B4. \uADF8\uB798\uB3C4 \uC55E\uC73C\uB85C \uAC19\uC740 \uD3B8\uC774\uB77C\uBA74 \uD658\uC601\uC774\uC57C.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
-    { id: "koma3", speaker: "\uCF54\uB9C8", body: "\u2026\uD3B8\uC740 \uC544\uB2C8\uB2E4. \uC544\uC9C1\uC740.", standing: "koma", act: "recoil" }
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\u2026\uC9C0\uC6E0\uB2E4\uB2C8, \uBB34\uC2A8 \uC18C\uB9AC\uC57C? \uADF8\uB7FC \uB108\uB294 \uC774\uC81C \uC5B4\uB514\uB85C \uAC00\uB294\uB370?", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "koma", slot: "right" }], act: "nod" },
+    { id: "koma3", speaker: "", body: "\uB300\uB2F5\uC740 \uC5C6\uB2E4. \uCF54\uB9C8\uB294 \uAC00\uB9AC\uAC1C\uB97C \uACE0\uCCD0 \uC4F0\uACE0, \uC5F0\uAD6C\uC6D0 \uCABD\uC744 \uD55C \uBC88 \uB3CC\uC544\uBCF8 \uB4A4 \uD68C\uC218\uC870\uAC00 \uC0AC\uB77C\uC9C4 \uBC18\uB300\uD3B8 \uD1B5\uB85C\uB85C \uAC78\uC5B4\uAC04\uB2E4." }
   ])
 };
 var CHAPTER_3_STORIES = [
@@ -29916,7 +30503,7 @@ var STAGE_4_4_PRE = {
   nodes: linear([
     { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
     { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uBE44\uCF1C\uC694\u2026 \uBA85, \uBA85\uB839\uC774\uB77C\uC11C\u2026 \uC8C4, \uC8C4\uC1A1\uD574\uC694\u2026", standing: "atra", act: "tremble" },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uB839\uC774\uB2E4. \uD3B8\uC744 \uC815\uD55C \uAC74 \uC544\uB2C8\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC5EC\uAE30\uB294 \uC9C0\uB098\uAC08 \uC218 \uC5C6\uB2E4. \uB3CC\uC544\uAC00\uB77C.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
   ])
 };
 var STAGE_4_10_PRE = {
@@ -33521,7 +34108,7 @@ var GUILD_GUARD_ROSTER_IDS = {
 };
 function guildGuardRoster(element) {
   const pool = GUILD_GUARD_ROSTER_IDS[element].map((id) => getRelic(id));
-  return { grunts: pool, elites: pool };
+  return { units: pool };
 }
 
 // src/data/mileageClerk.ts

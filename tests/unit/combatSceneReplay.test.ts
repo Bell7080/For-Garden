@@ -109,6 +109,35 @@ describe("실제 전투 씬 기록 → 서버 재현", () => {
         const restored = saveManager.parse(JSON.parse(JSON.stringify(saveManager.exportData(state))));
         expect(finishCombat(restored, proof, new Date(now.getTime() + 600000)).victory).toBe(scene.state.phase === "victory");
     });
+    it("범위 안에 적이 없으면 광역 궁극기는 나가지 않고, 들어오면 나간다", () => {
+        const party = ["torika", "stella", "teku"];
+        const state = createDefaultSession();
+        state.party = party;
+        for (const id of party) {
+            state.owned.add(id);
+            state.relicProgress[id] = { ...createInitialRelicProgress(), level: 40, breakthrough: 2 };
+        }
+        const now = new Date("2026-10-21T00:00:00Z");
+        const input = { tierId: "cake-2", requestId: "cake-admission" };
+        recordBoundaryResult(state, "enterCakeOperation", [input]);
+        const lease = prepareCombat(state, { input: { mode: "cake", ...input }, stageId: "1-1" }, now, "cake-2");
+        const fresh = combatState(JSON.parse(JSON.stringify(lease)));
+        const torika = fresh.fighters.find((f) => f.def.id === "torika")!;
+        expect(torika.def.ultimate.targeting).toBe("nearbyEnemies");
+        torika.energy = 999;
+        const enemies = fresh.fighters.filter((f) => f.side !== torika.side);
+        for (const enemy of enemies) { enemy.x = fresh.arena.right; enemy.y = fresh.arena.top; }
+        torika.x = fresh.arena.left; torika.y = fresh.arena.bottom;
+        const before = JSON.stringify({ ...torika, def: undefined });
+        expect(skirmish.canFireUltimate(fresh, torika)).toBe(false);
+        // 판정은 판을 건드리지 않고, 억지로 쏴도 헛방은 아무것도 남기지 않는다.
+        expect(JSON.stringify({ ...torika, def: undefined })).toBe(before);
+        expect(skirmish.fireUltimate(fresh, torika.id, bossBattleRandom("x"))).toEqual([]);
+        expect(JSON.stringify({ ...torika, def: undefined })).toBe(before);
+        enemies[0].x = torika.x + 10; enemies[0].y = torika.y;
+        expect(skirmish.canFireUltimate(fresh, torika)).toBe(true);
+        expect(skirmish.fireUltimate(fresh, torika.id, bossBattleRandom("x")).length).toBeGreaterThan(0);
+    });
     for (const party of [["rex", "mette", "torika"], ["rex", "torika", "mette"]])
         for (const speed of [1, 2, 3])
             for (const seed of [1, 7, 42])

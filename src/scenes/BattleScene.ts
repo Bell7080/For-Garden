@@ -770,7 +770,11 @@ export class BattleScene extends Phaser.Scene {
     this.autoUltimate = this.battleInput.mode === "duel" || this.battleInput.mode === "guildGuard" || this.battleInput.mode === "guildWar" || this.autoRepeatContent() !== undefined || (this.featureOpen("auto") && battleSettings.autoUltimate);
     this.ultimateTutorial = { fighterId: "", done: false, active: false };
     this.ultimateSequenceActive = false;
+    // 같은 씬이 다음 판을 다시 세우므로 토큰을 처음부터 세지 않는다. 지난 판의 연출이 아직 기다리는 중이면
+    // 새 판의 같은 번호를 제 것으로 알고 새 판의 잠금을 풀어 버린다(자동 전투 둘째 판).
+    const previousToken = this.ultimateSequence.nextToken;
     this.ultimateSequence = createUltimateSequenceState();
+    this.ultimateSequence.nextToken = previousToken + 1;
     this.currentUltimateFighterId = null;
     this.contributionCategory = "attack";
     this.contributionRefreshAt = 0;
@@ -1476,7 +1480,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** 입력 잠금부터 정상 복구까지 한 곳에서 소유하는 유일한 궁극기 비동기 시퀀스다. */
   private async pumpUltimateQueue(): Promise<void> {
-    const next = beginNextUltimate(this.ultimateSequence);
+    const sequence = this.ultimateSequence;
+    const next = beginNextUltimate(sequence);
     if (!next) return;
     this.ultimateSequenceActive = true;
     this.currentUltimateFighterId = next.fighterId;
@@ -1580,7 +1585,8 @@ export class BattleScene extends Phaser.Scene {
       this.activeCutIn = undefined;
       // 중간에 멈춘 발돋움 트윈은 여기서 끊는다. 남겨 두면 다음 프레임의 배치와 서로 다투다
       // SD가 커진 채로 떨린다. 제 크기 복구는 syncViews가 맡는다.
-      const view = this.views.get(next.fighterId);
+      // 다음 판이 이미 섰으면 같은 ID의 새 몸이라 건드리지 않는다.
+      const view = this.ultimateSequence === sequence ? this.views.get(next.fighterId) : undefined;
       if (view) this.tweens.killTweensOf(view.creature);
       // 토큰 일치 때만 정상 속도/입력을 복구해 종료 후의 오래된 Promise가 새 연출을 풀지 못하게 한다.
       if (releaseUltimate(this.ultimateSequence, next.token)) {

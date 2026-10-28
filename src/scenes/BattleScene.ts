@@ -123,7 +123,7 @@ import { CONFIRM_DIALOG } from "../ui/confirmDialogLayout";
 import { formatBattleClock, isDeathClockRunning } from "../core/battleClock";
 import { UnitStatusChips } from "../ui/UnitStatusChips";
 import { openUnitStatusPopup } from "../ui/UnitStatusPopup";
-import { UNIT_STATUS_COLOR, unitStatusViews } from "../ui/unitStatusModel";
+import { combatBuffStatusViews, UNIT_STATUS_COLOR, unitStatusViews, type UnitStatusView } from "../ui/unitStatusModel";
 import type { StatusCueId } from "../ui/statusCueEffects";
 import { BattleProfile } from "../ui/BattleProfile";
 import { BattleContributionPanel } from "../ui/BattleContributionPanel";
@@ -1940,6 +1940,16 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** 이 전투원이 거느린 귀속 소환수를 정의 순서대로 돌려준다. 없으면 빈 배열이다. */
+  /**
+   * 머리 위 상태 줄 한 장의 목록. 프로필이 없는 몸(적·소환수)은 자기 강화도 여기에 함께 선다 —
+   * 아군은 프로필 버프 칩이 같은 목록을 이미 그리므로 겹쳐 세우지 않는다.
+   */
+  private statusViewsOf(fighter: Fighter): UnitStatusView[] {
+    const views = unitStatusViews(fighter, this.packOfView(fighter));
+    if (this.profiles.some((profile) => profile.fighter.id === fighter.id)) return views;
+    return [...views, ...combatBuffStatusViews(activeCombatBuffs(this.state, fighter.id))];
+  }
+
   private packOfView(fighter: Fighter): Fighter[] {
     if ((fighter.def.summons ?? []).length === 0) return [];
     return this.state.fighters.filter((wolf) => wolf.summonOwnerId === fighter.id && !isPupFighter(wolf));
@@ -2671,7 +2681,7 @@ export class BattleScene extends Phaser.Scene {
       // 어디까지가 체력인지 흐려진다. 순서와 색·겹·남은 시간은 순수 모델 하나가 정한다.
       // 귀속 소환수는 지휘자의 머리 위에 함께 선다. 몇 마리가 서 있는지가 이 개체의 은신과
       // 치명타를 그대로 말하므로 상태 줄이 그 자리를 맡는다.
-      const statuses = unitStatusViews(fighter, this.packOfView(fighter));
+      const statuses = this.statusViewsOf(fighter);
       view.statusChips.setPosition(pose.x, barY - BATTLE_STATUS_LAYOUT.chipRowLift)
         .setDepth(DEPTH.hpBar + 2)
         .setVisible(statuses.length > 0);
@@ -2751,7 +2761,7 @@ export class BattleScene extends Phaser.Scene {
   private openStatusList(fighterId: string): void {
     const view = this.views.get(fighterId);
     if (!view || view.dead) return;
-    openUnitStatusPopup(this, this.buffPopups, view.fighter.def.name, unitStatusViews(view.fighter, this.packOfView(view.fighter)), { x: view.statusHit.x, y: view.statusHit.y });
+    openUnitStatusPopup(this, this.buffPopups, view.fighter.def.name, this.statusViewsOf(view.fighter), { x: view.statusHit.x, y: view.statusHit.y });
   }
 
   /** 목록을 누른 시점에 코어를 다시 조회해 이미 종료된 버프가 팝업에 남지 않게 한다. */
@@ -2926,7 +2936,7 @@ export class BattleScene extends Phaser.Scene {
       // 머리 위 칩은 Canvas 안에만 있어 DOM으로 자리를 알 수 없다. 그린 그대로만 노출한다.
       statusChips: [...this.views.values()]
         .filter((view) => !view.dead)
-        .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: unitStatusViews(view.fighter, this.packOfView(view.fighter)).length }))
+        .map((view) => ({ fighterId: view.fighter.id, x: view.statusHit.x, y: view.statusHit.y, count: this.statusViewsOf(view.fighter).length }))
         .filter(({ count }) => count > 0),
       // E2E도 사용자가 보는 이동 중 클릭 영역의 중심을 그대로 눌러 입력 회귀를 확인한다.
       enemyTargets: [...this.views.values()]

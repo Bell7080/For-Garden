@@ -64,4 +64,10 @@ export const STATUS_ZH_HANS = {
   "status.sunken.detail": "移动与攻击速度 −{percent}% · 剩余{time}",
   "status.echo": "回响",
   "status.echo.detail": "剩余{time}",
+  "status.fangShave": "被啃的防御",
+  "status.fangShave.detail": "防御力 −{percent}% · 剩余{time}",
+  "status.quarry": "猎物标记",
+  "status.quarry.detail": "受到伤害 +{percent}% · 剩余{time}",
+  "status.resistShred": "抗性崩解",
+  "status.resistShred.detail": "抗性 −{amount} · 剩余{time}",
 } as const;

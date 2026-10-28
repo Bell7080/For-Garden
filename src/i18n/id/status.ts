@@ -64,4 +64,10 @@ export const STATUS_ID = {
   "status.sunken.detail": "Kecepatan gerak dan serang −{percent}% · sisa {time}",
   "status.echo": "Gema",
   "status.echo.detail": "Tersisa {time}",
+  "status.fangShave": "Pertahanan Tergerogoti",
+  "status.fangShave.detail": "Pertahanan −{percent}% · sisa {time}",
+  "status.quarry": "Tanda Mangsa",
+  "status.quarry.detail": "Kerusakan diterima +{percent}% · sisa {time}",
+  "status.resistShred": "Resistensi Runtuh",
+  "status.resistShred.detail": "Resistensi −{amount} · sisa {time}",
 } as const;

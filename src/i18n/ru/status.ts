@@ -64,4 +64,10 @@ export const STATUS_RU = {
   "status.sunken.detail": "Скорость движения и атаки −{percent}% · осталось {time}",
   "status.echo": "Эхо",
   "status.echo.detail": "Осталось {time}",
+  "status.fangShave": "Изгрызенная защита",
+  "status.fangShave.detail": "Защита −{percent}% · осталось {time}",
+  "status.quarry": "Метка добычи",
+  "status.quarry.detail": "Получаемый урон +{percent}% · осталось {time}",
+  "status.resistShred": "Сломленное сопротивление",
+  "status.resistShred.detail": "Сопротивление −{amount} · осталось {time}",
 } as const;

@@ -1,4 +1,5 @@
-import type { Fighter } from "../core/skirmish";
+import type { ActiveCombatBuff, Fighter } from "../core/skirmish";
+import { reagentResistanceReduction } from "../core/skirmish";
 import { t } from "../i18n";
 
 /**
@@ -8,7 +9,7 @@ import { t } from "../i18n";
  * 겹 수와 남은 시간을 여기서 한 번만 만들고 둘 다 이 목록만 그린다. Phaser를 들여오지 않아
  * 순서·색·문구를 테스트가 그대로 고정할 수 있다.
  */
-export type UnitStatusId = "tailwind" | "order" | "resonance" | "regeneration" | "stealth" | "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken";
+export type UnitStatusId = "tailwind" | "order" | "resonance" | "regeneration" | "stealth" | "packKuro" | "packShiro" | "packDimo" | "shell" | "scar" | "stun" | "frozen" | "frenzy" | "taunt" | "bleed" | "poison" | "reagent" | "curse" | "chill" | "submerged" | "overpaint" | "butcher" | "vandalism" | "weakpoint" | "shimmer" | "observation" | "echo" | "pressure" | "drowsy" | "sleep" | "groggy" | "intimidation" | "fear" | "plume" | "frostbite" | "biteMark" | "healCut" | "sunken" | "fangShave" | "quarry" | "resistShred" | "selfBuff";
 
 export interface UnitStatusView {
   /** 같은 상태를 제공자가 여럿 걸 수 있을 때도 HUD 객체를 덮어쓰지 않는 전투 내 키다. */
@@ -86,6 +87,13 @@ export const UNIT_STATUS_COLOR: Readonly<Record<UnitStatusId, number>> = {
   observation: 0x4fa3a8,
   // 반향은 이카닉시아 편이 읽는 표식이라 박쥐의 초음파 같은 옅은 하늘빛을 쓴다.
   echo: 0x7fb8e8,
+  // 방어가 깎인 이빨 자국은 물린 자국(biteMark)보다 옅은 뼛빛 붉은색, 받는 피해가 느는 사냥감 표식은 경고의 주황이다.
+  fangShave: 0xc96a5a,
+  quarry: 0xe0843a,
+  // 시약 반응이 깎은 저항은 시약·중독과 같은 보랏빛 계열이되 한 단계 밝다 — 반응 뒤에 남는 몫이라는 것이 읽힌다.
+  resistShred: 0x9a6ad0,
+  // 프로필이 없는 몸(적·소환수)의 자기 강화. 프로필 버프 칩과 같은 금빛이라 "이 몸이 켜 둔 강화"로 읽힌다.
+  selfBuff: 0xe8c33a,
 };
 
 function seconds(value: number): string {
@@ -335,6 +343,33 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
       detail: t("status.sunken.detail", { percent: sunk.stacks * sunk.percentPerStack, time: seconds(sunk.remaining) }),
     });
   }
+  if (fighter.bt.fangShave && fighter.bt.fangShave.remaining > 0) {
+    const fang = fighter.bt.fangShave;
+    views.push({
+      id: "fangShave", name: t("status.fangShave"), color: UNIT_STATUS_COLOR.fangShave,
+      stacks: fang.stacks,
+      remaining: fang.remaining, total: Math.max(fang.total ?? 0, fang.remaining),
+      detail: t("status.fangShave.detail", { percent: fang.stacks * fang.percentPerStack, time: seconds(fang.remaining) }),
+    });
+  }
+  if (fighter.bt.quarry && fighter.bt.quarry.remaining > 0) {
+    const quarry = fighter.bt.quarry;
+    views.push({
+      id: "quarry", name: t("status.quarry"), color: UNIT_STATUS_COLOR.quarry,
+      remaining: quarry.remaining, total: Math.max(quarry.total ?? 0, quarry.remaining),
+      detail: t("status.quarry.detail", { percent: quarry.percent, time: seconds(quarry.remaining) }),
+    });
+  }
+  const shred = reagentResistanceReduction(fighter);
+  if (shred > 0) {
+    const entries = Object.values(fighter.reagentResistanceReductions).filter((entry) => entry.remaining > 1e-9);
+    const longest = entries.reduce((best, entry) => entry.remaining > best.remaining ? entry : best, entries[0]);
+    views.push({
+      id: "resistShred", name: t("status.resistShred"), color: UNIT_STATUS_COLOR.resistShred,
+      remaining: longest.remaining, total: Math.max(longest.total, longest.remaining),
+      detail: t("status.resistShred.detail", { amount: Math.round(shred), time: seconds(longest.remaining) }),
+    });
+  }
   if (fighter.observation) {
     const observation = fighter.observation;
     views.push({
@@ -409,4 +444,27 @@ export function unitStatusViews(fighter: Fighter, pack: readonly Fighter[] = [])
     });
   }
   return views;
+}
+
+/**
+ * 프로필이 없는 몸(적·소환수)의 자기 강화를 머리 위 칩으로 옮긴다.
+ *
+ * 아군은 우하단 프로필의 버프 칩이 같은 목록을 그리지만, 적에게는 프로필이 없어 적 파치의 4타나
+ * 적 켄토의 까칠 겹이 화면 어디에도 서지 않았다. 목록은 프로필과 **같은 셀렉터**(`activeCombatBuffs`)를
+ * 그대로 읽어, 아군 칩과 적 칩이 같은 효과를 다르게 말하지 않는다.
+ */
+export function combatBuffStatusViews(buffs: readonly ActiveCombatBuff[]): UnitStatusView[] {
+  return buffs.map((buff) => {
+    const timed = buff.timing.kind === "timed" || buff.timing.kind === "ferocity" ? buff.timing : undefined;
+    return {
+      key: `buff:${buff.id}`,
+      id: "selfBuff" as const,
+      name: buff.name,
+      color: UNIT_STATUS_COLOR.selfBuff,
+      stacks: buff.stacks,
+      remaining: timed?.remainingSeconds,
+      total: timed ? Math.max(timed.totalSeconds, timed.remainingSeconds) : undefined,
+      detail: timed ? `${buff.description} · ${seconds(timed.remainingSeconds)}` : buff.description,
+    };
+  });
 }

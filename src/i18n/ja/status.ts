@@ -66,4 +66,10 @@ export const STATUS_JA = {
   "status.sunken.detail": "移動・攻撃速度 −{percent}% · 残り{time}",
   "status.echo": "反響",
   "status.echo.detail": "残り{time}",
+  "status.fangShave": "かじられた守り",
+  "status.fangShave.detail": "防御力 −{percent}% · 残り{time}",
+  "status.quarry": "獲物の印",
+  "status.quarry.detail": "被ダメージ +{percent}% · 残り{time}",
+  "status.resistShred": "抵抗崩し",
+  "status.resistShred.detail": "抵抗力 −{amount} · 残り{time}",
 } as const;

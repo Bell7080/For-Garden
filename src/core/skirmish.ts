@@ -175,9 +175,9 @@ export interface Fighter extends Combatant {
    * 순풍·광란 슬롯을 빌리지 않는다 — 그 둘은 규칙어가 제 수치와 부수 효과(광란은 표적 비우기)를
    * 갖고 있어, 다른 수치로 걸면 머리 위 표식이 말하는 것과 실제가 갈린다.
    */
-  traitHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
+  traitHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number; /** 칩의 시계가 읽는 한 바퀴(초). 계산에는 쓰지 않는다. */ total?: number } | null;
   /** 패시브 `killHaste`가 건 처치 가속. 룬 특성 가속(`traitHaste`)과 다른 슬롯이다. */
-  killHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number } | null;
+  killHaste: { remaining: number; attackSpeedPercent: number; moveSpeedPercent: number; total?: number } | null;
   /**
    * 룬 특성 「집념」이 세는 연속 타격 표적과 겹이다.
    *
@@ -195,7 +195,7 @@ export interface Fighter extends Combatant {
   traitBasicCount: number;
   traitOpeningCritsUsed: number;
   /** 룬 특성의 지속 회복. 즉시 회복 뒤 같은 양을 나눠 돌려주는 응급 처치가 쓴다. */
-  traitRegen: { remaining: number; perSecond: number } | null;
+  traitRegen: { remaining: number; perSecond: number; total?: number } | null;
   /** 주술 씨앗 주기 카운터다. 출혈 카운터와 따로 센다. */
   augmentCurseHitCount: number;
   /**
@@ -407,7 +407,7 @@ export interface Fighter extends Combatant {
     /** 패시브 돌파(`leapVeil`) — 다음 도약 은신이 다시 열리는 시각(`state.elapsed`). */
     leapVeilReadyAt: number;
     /** 적 돌파(`fangShave`) — 이 몸이 깎인 방어력의 겹·남은 시간·겹당 비율. */
-    fangShave: { remaining: number; stacks: number; percentPerStack: number } | null;
+    fangShave: { remaining: number; stacks: number; percentPerStack: number; total?: number } | null;
     /** 적 돌파(`pincerPair`) — 지금까지 센 일반 공격 적중 수. */
     pincerCount: number;
     /** 적 돌파(`doubleAmbush`) — 순간이동 뒤 남은 확정 치명타 일반 공격 수. */
@@ -433,7 +433,7 @@ export interface Fighter extends Combatant {
     /** 폭주 돌파(`doubleMag`) — 이번 폭주에서 탄창을 이미 한 번 더 채웠는지. */
     doubleMagUsed: boolean;
     /** 궁극기 돌파(`quarryMark`) — 이 적이 받는 모든 피해가 늘어나는 표식. 풀리면 null이다. */
-    quarry: { remaining: number; percent: number } | null;
+    quarry: { remaining: number; percent: number; total?: number } | null;
     /** 궁극기 돌파(`orderStrike`) — 이번 오더 동안 이미 표식이 즉시 터진 적의 ID. 오더를 새로 받으면 비운다. */
     orderStruck: string[];
     /** 평타 돌파(`farPing`)가 올려 주는 사거리(px). 열려 있지 않으면 0이다 — 매 프레임 읽는 값이라 전투가 열릴 때 한 번 굳힌다. */
@@ -4295,7 +4295,7 @@ function triggerBreakthroughOnKill(attacker: Fighter, useUltimate: boolean, _vic
   // 처치 가속(`killHaste`) — 어떤 경로로 쓰러뜨렸든 이 훅을 지나므로 평타·궁극기·지속 피해가 같은 값을 얻는다.
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
-    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
+    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent, total: haste.seconds };
   }
   if (useUltimate) {
     attacker.energy = Math.min(ULTIMATE_ENERGY_MAX,
@@ -4662,7 +4662,7 @@ function strikeEnemyBasicBreakthrough(attacker: Fighter, target: Fighter, input:
   if (!basic || !isFighterAlive(target)) return;
   if (basic.kind === "fangShave") {
     const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-    target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent };
+    target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent, total: basic.seconds };
   }
   if (basic.kind === "shellKnock") events.push(...applyStagger(target, basic.seconds * attacker.statusPotencyMultiplier, state));
   if (basic.kind === "bleedingSmash") refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
@@ -5373,6 +5373,138 @@ export function activeCombatBuffs(state: SkirmishState, fighterId: string): Acti
       timing: { kind: "conditional" },
     });
   }
+  buffs.push(...expeditionAndKitBuffs(state, fighter));
+  return buffs;
+}
+
+/** 발동형 증강의 payload가 무엇을 거는지 칩 이름 하나로 줄인다. 수치는 쪽지가 아니라 증강 카드가 말한다. */
+function triggeredPayloadLabel(payload: ExpeditionTriggeredEffect["payload"]): string {
+  if (payload.kind === "status") {
+    const names: Partial<Record<CombatStatusEffect["kind"], string>> = {
+      stun: "기절", bleed: "출혈", poison: "중독", curse: "저주", chill: "둔화", overpaint: "덧칠", concussion: "뇌진탕",
+      taunt: "도발", frenzy: "광란", pressure: "수압", drowsy: "졸음", intimidate: "위압", echo: "반향",
+    };
+    return names[payload.status.kind] ?? "상태이상";
+  }
+  const names: Record<ExpeditionTriggeredEffect["payload"]["kind"], string> = {
+    shield: "보호막", status: "상태이상", ferocity: "야성", cleanse: "정화", teamBuff: "팀 강화", regeneration: "재생",
+    stealth: "은신", frozen: "빙결", shell: "조가비", reagent: "시약", ultimateCostReduction: "궁극기 비용 감소",
+    conditionalBonusDamage: "추가 피해", lowHpDefense: "방어 강화", heal: "회복", hasteExtend: "가속 연장", haste: "가속",
+  };
+  return names[payload.kind];
+}
+
+/**
+ * 원정 증강·룬 특성과 개체 고유 카운터가 거는 **자기 쪽** 강화.
+ *
+ * 전투 계산에는 이미 들어가 있었지만 칩이 없어, 지금 무엇이 켜져 있고 몇 대째인지(파치의 4타처럼)
+ * 화면이 말하지 못하던 몫이다. 값은 전투가 쓰는 같은 필드에서 그대로 읽는다 — 셈을 다시 하지 않는다.
+ */
+function expeditionAndKitBuffs(state: SkirmishState, fighter: Fighter): ActiveCombatBuff[] {
+  const buffs: ActiveCombatBuff[] = [];
+  const push = (id: string, skillId: string, name: string, description: string, timing: ActiveCombatBuff["timing"], stacks?: number): void => {
+    buffs.push({ id: `${id}:${fighter.id}`, sourceFighterId: fighter.id, targetFighterId: fighter.id, skillId, name, description, timing,
+      ...(stacks === undefined ? {} : { stacks }) });
+  };
+  const timed = (remaining: number, total: number | undefined): ActiveCombatBuff["timing"] =>
+    ({ kind: "timed", remainingSeconds: remaining, totalSeconds: Math.max(remaining, total ?? remaining) });
+  const effects = effectsFor(state, fighter);
+  const relicId = fighter.def.id;
+  const mine = effects.filter((effect) => augmentAppliesTo(effect, relicId));
+
+  if (fighter.traitHaste) {
+    const haste = fighter.traitHaste;
+    push("trait-haste", "augment-haste", "가속", `공격 속도 +${haste.attackSpeedPercent}% · 이동 속도 +${haste.moveSpeedPercent}%`,
+      timed(haste.remaining, haste.total), fighter.traitHasteStacks > 1 ? fighter.traitHasteStacks : undefined);
+  }
+  if (fighter.killHaste) {
+    const haste = fighter.killHaste;
+    push("kill-haste", "augment-kill-haste", "처치 가속", `공격 속도 +${haste.attackSpeedPercent}% · 이동 속도 +${haste.moveSpeedPercent}%`, timed(haste.remaining, haste.total));
+  }
+  if (fighter.traitRegen) {
+    const regen = fighter.traitRegen;
+    push("trait-regen", "augment-regen", "지속 회복", `매초 체력 ${Math.round(regen.perSecond)} 회복`, timed(regen.remaining, regen.total));
+  }
+  if (fighter.augmentDefensePercent > 0 || fighter.augmentResistancePercent > 0) {
+    push("augment-guard", "augment-low-hp-defense", "방어 강화", `방어력 +${fighter.augmentDefensePercent}% · 저항력 +${fighter.augmentResistancePercent}%`, { kind: "permanent" });
+  }
+  const hpPercent = fighter.maxHp > 0 ? fighter.hp / fighter.maxHp * 100 : 0;
+  const lowHpAttack = conditionalAttackPowerMultiplier(effects, relicId, hpPercent);
+  if (lowHpAttack > 1) {
+    push("augment-low-hp-attack", "augment-low-hp-attack", "위기 분노", `체력이 낮은 동안 공격력 +${Math.round((lowHpAttack - 1) * 100)}%`, { kind: "conditional" });
+  }
+  const streak = mine.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "sameTargetStreakPercent" }> => effect.kind === "sameTargetStreakPercent");
+  if (streak.length > 0 && fighter.traitStreakStacks > 0 && fighter.traitStreakTargetId !== null) {
+    const cap = Math.max(...streak.map((effect) => effect.maxStacks));
+    const stacks = Math.min(cap, fighter.traitStreakStacks);
+    push("augment-streak", "augment-streak", "집념", `같은 적을 이어 때릴수록 피해 +${Math.round((sameTargetStreakMultiplier(effects, relicId, stacks) - 1) * 100)}% · 최대 ${cap}겹`, { kind: "conditional" }, stacks);
+  }
+  const warm = mine.filter((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "warmUpHaste" }> => effect.kind === "warmUpHaste");
+  const warmPercent = warmUpAttackSpeedPercent(effects, relicId, state.elapsed);
+  if (warm.length > 0 && warmPercent > 0) {
+    const stacks = Math.max(...warm.map((effect) => Math.min(effect.maxStacks, Math.floor(Math.max(0, state.elapsed) / effect.everySeconds))));
+    push("augment-warm-up", "augment-warm-up", "달아오름", `시간이 흐를수록 공격 속도 +${warmPercent}%`, { kind: "permanent" }, stacks);
+  }
+  const openingLeft = openingCritCount(effects, relicId) - fighter.traitOpeningCritsUsed;
+  if (openingLeft > 0) push("augment-opening-crit", "augment-opening-crit", "첫 일격", `다음 기본 공격 ${openingLeft}번은 확정 치명타`, { kind: "conditional" }, openingLeft);
+  /*
+   * N번째 기본 공격 카운터 — 파치의 4타와 같은 문법이다. 다음 한 방까지 몇 대째인지가 칩 우하단에 선다.
+   * 0이 되는 순간(방금 터졌다)은 비워 두어, 칩이 사라졌다 다시 서는 것이 곧 발동으로 읽힌다.
+   */
+  const every = (label: string, id: string, n: number, count: number, effectText: string): void => {
+    const step = n > 1 ? count % n : 0;
+    if (step > 0) push(id, id, label, `${n}번째 기본 공격마다 ${effectText}`, { kind: "conditional" }, step);
+  };
+  for (const effect of mine) {
+    if (effect.kind === "nthBasicBonusPercent") every("연타 강화", "augment-nth-basic", effect.everyN, fighter.traitBasicCount, `피해 +${effect.percent}%`);
+    if (effect.kind === "currentHpStrike") every("포식", "augment-current-hp-strike", effect.everyN, fighter.traitBasicCount, `표적 현재 체력의 ${effect.percent}% 추가 피해`);
+  }
+  const periodic = periodicCritEvery(effects, relicId);
+  if (periodic !== undefined) every("정조준", "augment-periodic-crit", periodic, fighter.traitBasicCount, "확정 치명타");
+  const bleed = bleedOnAttackEffect(effects, relicId);
+  if (bleed) every("출혈 부여", "augment-bleed-on-attack", bleed.everyNAttacks, fighter.augmentBleedHitCount, "출혈");
+  const curse = mine.find((effect): effect is Extract<ExpeditionAugmentEffect, { kind: "curseOnAttack" }> => effect.kind === "curseOnAttack");
+  if (curse) every("주술 씨앗", "augment-curse-on-attack", curse.everyNAttacks, fighter.augmentCurseHitCount, "저주");
+  // 발동형 증강의 N회 적중 카운터. 쓸 수 있는 횟수를 다 쓴 효과는 더 세지 않는다.
+  effects.forEach((effect, index) => {
+    if (effect.kind !== "triggered" || effect.everyN === undefined || effect.everyN <= 1 || !augmentAppliesTo(effect, relicId)) return;
+    const runtime = fighter.augmentRuntime[String(index)];
+    if (runtime && runtime.triggers >= effect.limits.maxTriggers) return;
+    const step = (runtime?.hits ?? 0) % effect.everyN;
+    if (step <= 0) return;
+    const label = triggeredPayloadLabel(effect.payload);
+    const unit = effect.trigger === "onDamaged" ? "피격" : effect.trigger === "onCritical" ? "치명타" : "적중";
+    push(`augment-every-${index}`, `augment-every-${index}`, label, `${effect.everyN}번째 ${unit}마다 ${label}`, { kind: "conditional" }, step);
+  });
+
+  // 개체 고유 카운터. 위 증강 카운터와 같은 칩 문법이다.
+  const aim = fighter.def.passive.vitalAim;
+  if (aim && fighter.aim && fighter.aim.stacks > 0) {
+    push("vital-aim", fighter.def.passive.id, fighter.def.passive.name, `같은 적을 겨눌수록 피해 +${fighter.aim.stacks * aim.damagePercentPerStack}%`, { kind: "conditional" }, fighter.aim.stacks);
+  }
+  if (fighter.def.passive.kind === "bleedStreak" && fighter.streakCount > 0) {
+    push("bleed-streak", fighter.def.passive.id, fighter.def.passive.name, `같은 적을 ${fighter.def.passive.value}번 이어 때리면 출혈`, { kind: "conditional" }, fighter.streakCount);
+  }
+  const pincer = openedBreakthrough(fighter, "basic", (plan) => plan.basic);
+  if (pincer?.kind === "pincerPair" && pincer.every > 1 && fighter.bt.pincerCount % pincer.every > 0) {
+    push("pincer", fighter.def.basic.id, "집게 연타", `${pincer.every}번째 공격마다 한 번 더 집는다`, { kind: "conditional" }, fighter.bt.pincerCount % pincer.every);
+  }
+  if (fighter.empoweredBasic) push("empowered-basic", fighter.def.basic.id, "다음 공격 강화", "다음 기본 공격은 확정 치명타", { kind: "conditional" });
+  if (fighter.ferocityFever && fighter.def.ferocityTrait.effectId === "adamantBody" && fighter.hastenedAttacksLeft > 0) {
+    push("hastened-attacks", fighter.def.ferocityTrait.effectId, fighter.def.ferocityTrait.name, `남은 ${fighter.hastenedAttacksLeft}번의 기본 공격이 빨라진다`, { kind: "conditional" }, fighter.hastenedAttacksLeft);
+  }
+  if (fighter.instantButcherAttacksLeft > 0) {
+    push("instant-butcher", fighter.def.basic.id, "즉시 손질", `남은 ${fighter.instantButcherAttacksLeft}번의 공격이 곧바로 손질을 터뜨린다`, { kind: "conditional" }, fighter.instantButcherAttacksLeft);
+  }
+  if (fighter.bt.undyingGuard > 0) {
+    const plan = openedBreakthrough(fighter, "passive", (effects) => effects.passive);
+    if (plan?.kind === "undyingBulwark") {
+      push("undying-guard", fighter.def.passive.id, "불멸 뒤 방벽", `방어력·저항력 +${plan.defenseResistancePercent}%`, timed(fighter.bt.undyingGuard, plan.seconds));
+    }
+  }
+  if (fighter.bt.manyEyesPercent > 0) {
+    push("many-eyes", fighter.def.passive.id, "관측 가속", `공격 속도 +${Math.round(fighter.bt.manyEyesPercent)}%`, { kind: "conditional" });
+  }
   return buffs;
 }
 
@@ -5577,9 +5709,9 @@ function applyTraitHaste(target: Fighter, payload: { attackSpeedPercent: number;
   const moveSpeedPercent = payload.moveSpeedPercent * stacks;
   const stronger = (target.traitHaste?.attackSpeedPercent ?? 0) > attackSpeedPercent;
   if (!stronger) {
-    target.traitHaste = { remaining: payload.seconds, attackSpeedPercent, moveSpeedPercent };
+    target.traitHaste = { remaining: payload.seconds, attackSpeedPercent, moveSpeedPercent, total: payload.seconds };
     target.traitHasteStacks = stacks;
-  } else target.traitHaste = { ...target.traitHaste!, remaining: Math.max(target.traitHaste!.remaining, payload.seconds) };
+  } else target.traitHaste = { ...target.traitHaste!, remaining: Math.max(target.traitHaste!.remaining, payload.seconds), total: Math.max(target.traitHaste!.total ?? 0, target.traitHaste!.remaining, payload.seconds) };
 }
 
 /** 약한 원정 태그가 이미 걸린 원본 스킬의 수치·지속시간을 낮추지 않는다. */
@@ -5698,7 +5830,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       if (owner.traitHaste === null || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const add = Math.min(payload.seconds, payload.maxExtraSeconds - owner.traitHasteExtended);
       if (add <= 0) continue;
-      owner.traitHaste = { ...owner.traitHaste, remaining: owner.traitHaste.remaining + add };
+      owner.traitHaste = { ...owner.traitHaste, remaining: owner.traitHaste.remaining + add, total: Math.max(owner.traitHaste.total ?? 0, owner.traitHaste.remaining) + add };
       owner.traitHasteExtended += add;
       continue;
     }
@@ -5759,7 +5891,7 @@ function triggerCombatAugments(state: SkirmishState, owner: Fighter, trigger: Ex
       pushHeal(events, target, amount, "passive");
       if (payload.thenOverSeconds !== undefined && payload.thenOverSeconds > 0) {
         const perSecond = target.maxHp * payload.maxHpPercent / 100 / payload.thenOverSeconds;
-        target.traitRegen = { remaining: payload.thenOverSeconds, perSecond: perSecond + (target.traitRegen?.perSecond ?? 0) };
+        target.traitRegen = { remaining: payload.thenOverSeconds, perSecond: perSecond + (target.traitRegen?.perSecond ?? 0), total: payload.thenOverSeconds };
       }
     }
   }
@@ -7819,7 +7951,7 @@ function strikeBitterTaste(attacker: Fighter, target: Fighter, wasLastDrop: bool
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (effect?.kind !== "bitterTaste" || !wasLastDrop || !isFighterAlive(target)) return;
   const stacks = Math.min(effect.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent };
+  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent, total: effect.seconds };
 }
 
 function splashAround(attacker: Fighter, target: Fighter, input: DamageInput, critical: boolean, state: SkirmishState, events: SkirmishEvent[], radius: number, percent: number, skillSlot: "basic" | "ultimate"): void {
@@ -8145,7 +8277,7 @@ function strike(
   }
   if (!useUltimate) {
     const graffiti = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-    if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent };
+    if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent, total: graffiti.seconds };
   }
   if (sutured) stitchSuture(attacker, targetHpBefore - target.hp + sutureBonusStrike(attacker, target, state, events), state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
@@ -9997,7 +10129,7 @@ function fireUltimateCore(
     // 궁극기 돌파(`quarryMark`) — 실제로 겁먹은 적에게 받는 피해 증가 표식을 남긴다(이미 있으면 시간만 새로 센다).
     const mark = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (mark?.kind === "quarryMark") {
-      for (const victim of fearedTargets) victim.bt.quarry = { remaining: mark.seconds, percent: mark.damageTakenPercent };
+      for (const victim of fearedTargets) victim.bt.quarry = { remaining: mark.seconds, percent: mark.damageTakenPercent, total: mark.seconds };
     }
     events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: true, status: "fear",
       area: { shape: "radial", x: attacker.x, y: attacker.y, radius: plan.radius } });

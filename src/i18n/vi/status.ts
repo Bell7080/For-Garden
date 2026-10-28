@@ -64,4 +64,10 @@ export const STATUS_VI = {
   "status.sunken.detail": "Tốc độ di chuyển và tấn công −{percent}% · còn {time}",
   "status.echo": "Tiếng vọng",
   "status.echo.detail": "Còn {time}",
+  "status.fangShave": "Phòng thủ bị gặm",
+  "status.fangShave.detail": "Thủ −{percent}% · còn {time}",
+  "status.quarry": "Dấu con mồi",
+  "status.quarry.detail": "Sát thương nhận vào +{percent}% · còn {time}",
+  "status.resistShred": "Kháng bị phá",
+  "status.resistShred.detail": "Kháng −{amount} · còn {time}",
 } as const;

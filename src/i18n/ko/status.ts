@@ -71,4 +71,10 @@ export const STATUS_KO = {
   "status.healCut.detail": "받는 회복 −{percent}% · {time} 남음",
   "status.sunken": "가라앉는 무게",
   "status.sunken.detail": "이동·공격 속도 −{percent}% · {time} 남음",
+  "status.fangShave": "갉인 방어",
+  "status.fangShave.detail": "방어력 −{percent}% · {time} 남음",
+  "status.quarry": "사냥감 표식",
+  "status.quarry.detail": "받는 피해 +{percent}% · {time} 남음",
+  "status.resistShred": "저항 붕괴",
+  "status.resistShred.detail": "저항력 −{amount} · {time} 남음",
 } as const;

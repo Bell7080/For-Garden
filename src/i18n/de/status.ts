@@ -64,4 +64,10 @@ export const STATUS_DE = {
   "status.sunken.detail": "Bewegungs- und Angriffstempo −{percent}% · noch {time}",
   "status.echo": "Echo",
   "status.echo.detail": "Noch {time}",
+  "status.fangShave": "Angenagte Abwehr",
+  "status.fangShave.detail": "Verteidigung −{percent}% · noch {time}",
+  "status.quarry": "Beutemal",
+  "status.quarry.detail": "Erlittener Schaden +{percent}% · noch {time}",
+  "status.resistShred": "Widerstandsbruch",
+  "status.resistShred.detail": "Widerstand −{amount} · noch {time}",
 } as const;

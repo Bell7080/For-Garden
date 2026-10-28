@@ -64,4 +64,10 @@ export const STATUS_TH = {
   "status.sunken.detail": "ความเร็วเคลื่อนที่และโจมตี −{percent}% · เหลือ {time}",
   "status.echo": "เสียงสะท้อน",
   "status.echo.detail": "เหลือ {time}",
+  "status.fangShave": "เกราะถูกแทะ",
+  "status.fangShave.detail": "พลังป้องกัน −{percent}% · เหลือ {time}",
+  "status.quarry": "เครื่องหมายเหยื่อ",
+  "status.quarry.detail": "ความเสียหายที่ได้รับ +{percent}% · เหลือ {time}",
+  "status.resistShred": "ต้านทานพังทลาย",
+  "status.resistShred.detail": "ต้านทาน −{amount} · เหลือ {time}",
 } as const;

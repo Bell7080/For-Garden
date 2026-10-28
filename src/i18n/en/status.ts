@@ -64,4 +64,10 @@ export const STATUS_EN = {
   "status.sunken.detail": "Move and attack speed −{percent}% · {time} left",
   "status.echo": "Echo",
   "status.echo.detail": "{time} remaining",
+  "status.fangShave": "Gnawed Guard",
+  "status.fangShave.detail": "Defense −{percent}% · {time} left",
+  "status.quarry": "Quarry Mark",
+  "status.quarry.detail": "Damage taken +{percent}% · {time} left",
+  "status.resistShred": "Resistance Break",
+  "status.resistShred.detail": "Resistance −{amount} · {time} left",
 } as const;

@@ -64,4 +64,10 @@ export const STATUS_ES = {
   "status.sunken.detail": "Velocidad de movimiento y ataque −{percent}% · quedan {time}",
   "status.echo": "Eco",
   "status.echo.detail": "Queda {time}",
+  "status.fangShave": "Defensa roída",
+  "status.fangShave.detail": "Defensa −{percent}% · quedan {time}",
+  "status.quarry": "Marca de presa",
+  "status.quarry.detail": "Daño recibido +{percent}% · quedan {time}",
+  "status.resistShred": "Resistencia rota",
+  "status.resistShred.detail": "Resistencia −{amount} · quedan {time}",
 } as const;

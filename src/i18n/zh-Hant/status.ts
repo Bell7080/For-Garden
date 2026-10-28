@@ -64,4 +64,10 @@ export const STATUS_ZH_HANT = {
   "status.sunken.detail": "移動與攻擊速度 −{percent}% · 剩餘{time}",
   "status.echo": "迴響",
   "status.echo.detail": "剩餘{time}",
+  "status.fangShave": "被啃的防禦",
+  "status.fangShave.detail": "防禦力 −{percent}% · 剩餘{time}",
+  "status.quarry": "獵物標記",
+  "status.quarry.detail": "受到傷害 +{percent}% · 剩餘{time}",
+  "status.resistShred": "抗性崩解",
+  "status.resistShred.detail": "抗性 −{amount} · 剩餘{time}",
 } as const;

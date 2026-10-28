@@ -51,6 +51,7 @@ import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
 import { withBusy } from "./BusyOverlay";
+import { addScrollHint } from "./ScrollHint";
 
 /** 한 팝업 안에서 현황과 편집 그리드가 교대하므로 모바일 안전 영역을 넘지 않는 고정 크기를 쓴다. */
 const PANEL = { width: 900, height: 1320 } as const;
@@ -695,6 +696,11 @@ export class IdleExcavationPopup {
     const thumbHeight = contentHeight > viewportHeight ? Math.max(54, viewportHeight * viewportHeight / contentHeight) : viewportHeight;
     const thumb = this.scene.add.rectangle(railX, GRID_VIEW.top + thumbHeight / 2, 7, thumbHeight, COLOR.accent, contentHeight > viewportHeight ? 0.7 : 0.18);
     parent.add([rail, thumb]);
+    addScrollHint(this.scene, parent, {
+      x: (GRID_VIEW.left + GRID_VIEW.right) / 2, y: (GRID_VIEW.top + GRID_VIEW.bottom) / 2,
+      width: GRID_VIEW.right - GRID_VIEW.left, height: viewportHeight, owner: thumb,
+      read: () => ({ offset: this.gridScrollY, min: minScroll }),
+    });
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);
       grid.setY(GRID_VIEW.top + this.gridScrollY);

@@ -61,6 +61,7 @@ import { loadOwnedPuppet } from "./statusPuppetLoad";
 import { sceneInfoManager, type InfoManager } from "./info";
 import { pressIn, pressOut } from "./pressFeedback";
 import { onTap } from "./tapGuard";
+import { addScrollHint } from "./ScrollHint";
 
 /**
  * 도시 한 곳의 쪽지 — **발굴 배치와 같은 구조**다.
@@ -688,6 +689,11 @@ export class InteractionCityPopup {
     syncMask();
     grid.setMask(mask.createGeometryMask());
     const ticker = this.scene.time.addEvent({ delay: 16, loop: true, callback: syncMask });
+    addScrollHint(this.scene, parent, {
+      x: (ROSTER_VIEW.left + ROSTER_VIEW.right) / 2, y: (ROSTER_VIEW.top + ROSTER_VIEW.bottom) / 2,
+      width: ROSTER_VIEW.right - ROSTER_VIEW.left, height: viewportHeight, owner: grid,
+      read: () => ({ offset: this.gridScrollY, min: minScroll }),
+    });
 
     const scrollTo = (value: number): void => {
       this.gridScrollY = Phaser.Math.Clamp(value, minScroll, 0);

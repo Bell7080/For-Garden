@@ -24,6 +24,7 @@ import type { ClipRect } from '../ui/clipRect';
 import { setDebugGridCards, setDebugGridOffset, setDebugScene } from '../debug';
 import { arenaExitRoute } from '../core/arenaExit';
 import { onTap } from "../ui/tapGuard";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /**
  * 밴픽 화면의 자리. 위가 상대, 아래가 나, 가운데가 고를 렐릭 격자, 왼쪽 띠가 서로의 밴이다.
@@ -614,6 +615,10 @@ export class ArenaRoomScene extends Phaser.Scene {
 
   private bindGridScroll(): void {
     const G = ARENA_ROOM_LAYOUT.grid;
+    addScrollHint(this, undefined, {
+      x: (G.left + 1080) / 2, y: (G.top + G.bottom) / 2, width: 1080 - G.left, height: G.bottom - G.top, depth: 45,
+      read: () => ({ offset: this.gridScroll, min: this.gridMinScroll }),
+    });
     const inside = (p: Phaser.Input.Pointer): boolean => p.worldY >= G.top && p.worldY <= G.bottom && p.worldX >= G.left - 20;
     const onDown = (p: Phaser.Input.Pointer): void => { if (!inside(p) || this.gridMinScroll === 0) return; this.dragging = true; this.dragged = 0; this.dragOrigin = this.gridScroll - p.y; };
     const onMove = (p: Phaser.Input.Pointer): void => { if (!this.dragging || !p.isDown) return; this.dragged += Math.abs(p.velocity.y); this.scrollGridTo(this.dragOrigin + p.y); };

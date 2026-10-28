@@ -1950,7 +1950,7 @@ describe("한계 돌파 — 감금조 넷(마가사·노아·라자·카르)", (
     for (const id of ["magasa", "noa", "raja", "carno"]) {
       const def = getRelic(id);
       for (const slot of SLOTS) {
-        expect(def.breakthroughEffects?.[slot].kind, `${id} ${slot}`).not.toBe("none");
+        expect(def.breakthroughEffects?.[slot]?.kind, `${id} ${slot}`).not.toBe("none");
         const text = breakthroughEffectText(def, slot);
         expect(text, `${id} ${slot}`).toBeTruthy();
         expect(text).not.toContain("skill.breakthrough");

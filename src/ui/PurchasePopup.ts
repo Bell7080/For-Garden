@@ -4,12 +4,14 @@ import { addRewardExpiryTag } from "./rewardExpiry";
 import { addListPrice, addPremiumValueBadges } from "./premiumValueBadge";
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
+import type { BuyGuildProductResponse, GameApi, ProductDto, PurchaseProductResponse } from "../api/contracts";
+import type { WalletItemKey } from "../data/items";
+import { SHOWCASE_TIER_TONE } from "./showcaseCardChrome";
 import { formatCurrency } from "../core/formatCurrency";
 import { quotePurchase, totalGrantAmount } from "../core/purchase";
 import type { Wallet } from "../core/gacha";
 import { Button } from "./Button";
-import { chipPoints, drawHairline, drawLayer, drawShapeOutline, HOLO, slantedRect } from "./holo";
+import { chipPoints, drawHairline, drawLayer, drawShapeOutline, slantedRect } from "./holo";
 import { pressIn, pressOut } from "./pressFeedback";
 import { addShowcaseFace } from "./showcaseCardFace";
 import { POPUP_BODY_BEVEL_RATIO } from "./popupGeometry";
@@ -58,20 +60,28 @@ import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 const PACKAGE = { width: 820, height: 720, frame: 150, frameGap: 22, nameY: -250, valueY: -194, frameY: -80, panelY: -120, hairlineY: 32, barWidth: 650, limitY: 90, buyY: 194, buyHeight: 104, statusY: 274 } as const;
 
 /**
- * 수량 작업판의 줄 자리.
+ * 수량 작업판의 자리.
  *
- * 값 줄이 글자에서 **액자**로 바뀌면서 한 줄이 그만큼 두꺼워졌다 — 예전 80px 간격에 78px짜리
- * 액자를 얹으면 총가격 액자가 위아래 줄과 맞닿는다. 줄 간격과 판 높이를 함께 벌린다.
+ * 위에서부터 상품 판(갱신 주기 꼬리표 · 액자 · 이름) → 한 개 값 → **수량 조절기** → 구매 제한 → 값이 곧 버튼인
+ * 총가격이다. 수량은 이 판의 단 하나뿐인 질문이라 가운데에 크고 두껍게 서고, 양옆에 −/+ 와 MIN/MAX가 마주
+ * 선다 — 줄 끝 구석에 작은 ±를 두던 때는 지금 몇 개를 고른 것인지가 값 줄들 사이에 묻혔다.
  */
 const QUANTITY = {
-  height: 920,
+  height: 940,
   /** 상품 얼굴이 서는 판. */
-  panelY: -270, panelWidth: 690, panelHeight: 230,
-  hairlineY: -110,
-  /** 값 줄 넷이 같은 간격으로 쌓인다. 줄마다 판 한 장을 깔아 액자가 줄 **안**에 선 것으로 읽힌다. */
-  rowTop: -50, rowStep: 92, rowHeight: 84, rowWidth: 690, rowLeft: -305, rowRight: 305,
-  buyY: 360, statusY: 420,
+  panelY: -285, panelWidth: 690, panelHeight: 240, frameX: -228, frame: 176, textX: -112,
+  tagY: -92, nameY: -38, grantY: 16, unitY: 66,
+  hairlineY: -135,
+  priceY: -82, rowWidth: 690, rowLeft: -305, rowRight: 305,
+  /** 수량 조절기. 가운데 수치 판과 양옆 버튼이 같은 줄에 대칭으로 선다. */
+  countLabelY: -14, countY: 66, countPlate: { width: 250, height: 112 }, countSize: 78,
+  stepX: 212, stepSize: 104, edgeX: 328, edgeWidth: 104, edgeHeight: 78,
+  limitY: 190,
+  buyY: 300, buyWidth: 690, buyHeight: 108, statusY: 390,
 } as const;
+
+/** 구매 제한 줄의 마름모 칸. 한도가 이보다 크면 칸 대신 수만 적는다. */
+const LIMIT_PIPS = { max: 10, size: 22, gap: 8 } as const;
 
 /**
  * 룬 확인판의 자리. 위에서부터 큰 룬 액자 판 → (지정 룬이면) 주 옵션 칩 → 값 → 제한 → 확정이다.
@@ -86,13 +96,8 @@ const RUNE = {
   mainLabelY: -68, mainY: -12, mainChipWidth: 128, mainChipGap: 10, chipHeight: 70,
   /** 주 옵션 줄이 서는 만큼 아래가 밀린다. */
   mainBlock: 150,
-  priceY: -50, remainingY: 42, buyY: QUANTITY.buyY, statusY: QUANTITY.statusY,
+  priceY: -50, remainingY: 50, buyY: QUANTITY.buyY, statusY: QUANTITY.statusY,
 } as const;
-
-/** 값 줄 넷의 자리. `0`이 가격, `1`이 개수, `2`가 총가격, `3`이 남은 제한이다. */
-function quantityRowY(index: number): number {
-  return QUANTITY.rowTop + index * QUANTITY.rowStep;
-}
 
 /** 신규 상점과 무역이 같은 수량·표시·요청 잠금을 쓰는 공용 구매 작업판이다. */
 export class PurchasePopup {
@@ -102,6 +107,8 @@ export class PurchasePopup {
   private pending = false;
   private message = "";
   private repaint?: () => void;
+  /** 길드 상품을 열었을 때만 선다 — 값이 지갑이 아니라 길드원 행의 코인이라 잔액을 부르는 쪽이 넘긴다. */
+  private guild?: { coin: number; onBought: (result: BuyGuildProductResponse) => void | Promise<void> };
   /** 우하단 공용 슬롯의 돌아가기. 판과 함께 만들고 함께 없앤다. */
 
   constructor(
@@ -113,8 +120,18 @@ export class PurchasePopup {
     private readonly payment?: PlatformPaymentAdapter,
   ) {}
 
+  /**
+   * 길드 상점의 진입점. 판·수량 조절기·제한 줄은 일반 상점과 같은 한 벌이고, 다른 것은 잔액(길드 코인)과
+   * 확정 경계(`buyGuildProduct`)뿐이다.
+   */
+  openGuild(product: ProductDto, coin: number, onBought: (result: BuyGuildProductResponse) => void | Promise<void>): void {
+    this.guild = { coin, onBought };
+    this.open(product, () => undefined);
+  }
+
   /** 카드는 구매를 실행하지 않고 이 진입점으로 상품 원본을 전달한다. */
   open(product: ProductDto, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
+    if (product.acquisition.kind !== "guild_coin") this.guild = undefined;
     // 카탈로그가 제안한 기본 수량도 잔액·제한 quote를 거쳐 실제 가능한 범위로 정규화된다.
     this.quantity = product.defaultQuantity; this.pending = false; this.message = "";
     this.runeMains = [];
@@ -137,13 +154,14 @@ export class PurchasePopup {
     });
   }
 
-  /** 아이콘부터 지급량·가격·수량·총가격·제한·확정 순으로 한눈에 읽히게 배치한다. */
+  /** 상품 판 → 한 개 값 → 가운데 수량 조절기 → 구매 제한 → 총가격(=확정 버튼) 순으로 한눈에 읽히게 배치한다. */
   private paint(view: Phaser.GameObjects.Container, product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
-    // 이 수량 작업판은 재화 교환만 담당하며 다른 방식은 전용 확정 경계가 연다.
-    if (product.acquisition.kind !== "currency") return;
-    const acquisition = product.acquisition;
-    const balance = this.wallet[acquisition.currency];
-    const quote = quotePurchase({ unitPrice: acquisition.amount, remaining: product.remaining, balance }, this.quantity);
+    // 이 수량 작업판은 재화·길드 코인 교환만 담당하며 다른 방식은 전용 확정 경계가 연다.
+    const pay = this.priceOf(product);
+    if (!pay) return;
+    const Q = QUANTITY;
+    const tone = purchaseTone(product);
+    const quote = quotePurchase({ unitPrice: pay.amount, remaining: product.remaining, balance: pay.balance }, this.quantity);
     this.quantity = quote.quantity;
     const grant = product.grants[0];
     const unitGrant = grant && "amount" in grant ? grant.amount : 1;
@@ -152,55 +170,112 @@ export class PurchasePopup {
     const weeklyRelic = weeklyRelicId ? getRelic(weeklyRelicId) : undefined;
     const grantLabel = weeklyRelic ? weeklyRelic.name : grant?.kind === "currency" ? currencyName(grant.currency) : grant?.kind === "item" ? findItem(grant.itemId)?.name ?? grant.name : grant && "name" in grant ? grant.name : t("shop.purchase.grant");
 
-    // 상품 그림만 사방 액자로 두고 나머지는 홀로그램 면과 구분선만 사용한다.
-    view.add(drawLayer(this.scene, 0, QUANTITY.panelY, chipPoints(QUANTITY.panelWidth, QUANTITY.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
-    // **살 것을 얼굴로 먼저 읽게 한다.** 액자를 키우고 그림이 그 안을 거의 채우게 하며, 같은
-    // 그림을 검게 한 겹 뒤에 깔아 실루엣을 띄운다. 이번에 실제로 받는 수는 가방·보상 액자와
-    // 같은 자리(우하단)에 겹쳐, 글로 적힌 줄을 읽기 전에 그림만 보고도 알 수 있게 한다.
+    // 몸판 전체가 진열 카드와 같은 면(◆ 격자 + 광휘)을 갈아입는다 — 색은 카드와 같은 갱신 주기 색이라, 누른 칸이
+    // 그대로 커져 올라온 것으로 읽힌다. 액자는 그 판 위 받침에 올라선다.
+    this.addDisplayPanel(view, Q.height, Q.panelY, Q.panelY + Q.frame / 2, { width: PACKAGE.width, accent: tone, panelWidth: Q.panelWidth, panelHeight: Q.panelHeight });
+    view.add(drawLayer(this.scene, Q.frameX, Q.panelY + Q.frame / 2 + 8, slantedRect(Q.frame * 1.3, 14, 10), { fill: 0x05080c, alpha: 0.9, edge: tone, edgeAlpha: 0.85, edgeWidth: 2, shadow: { x: 0, y: 6 } }));
+    // **살 것을 얼굴로 먼저 읽게 한다.** 이번에 실제로 받는 수는 가방·보상 액자와 같은 자리(우하단)에 겹친다.
     if (weeklyRelic) {
-      view.add(new FaceFrame(this.scene, -240, QUANTITY.panelY, {
-        portraitAssetId: weeklyRelic.portraitAssetId, size: 170, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip,
+      view.add(new FaceFrame(this.scene, Q.frameX, Q.panelY, {
+        portraitAssetId: weeklyRelic.portraitAssetId, size: Q.frame, color: RARITY_TONE[weeklyRelic.rarity].chip, gem: RARITY_TONE[weeklyRelic.rarity].chip,
         amount: formatCurrency(totalGrantAmount(unitGrant, quote.quantity)),
       }));
     } else {
-      addFramedIcon(this.scene, view, -240, QUANTITY.panelY, 170, productIconTexture(product));
+      addFramedIcon(this.scene, view, Q.frameX, Q.panelY, Q.frame, productIconTexture(product));
       // 진열대 칸과 같은 수량 글자(`addShelfAmount`) — `×` 없이 수만 선다.
-      view.add(addShelfAmount(this.scene, 170, formatCurrency(totalGrantAmount(unitGrant, quote.quantity))).setPosition(-240 + 85 - SHELF_AMOUNT.insetX, QUANTITY.panelY + 85 - SHELF_AMOUNT.insetY));
+      view.add(addShelfAmount(this.scene, Q.frame, formatCurrency(totalGrantAmount(unitGrant, quote.quantity))).setPosition(Q.frameX + Q.frame / 2 - SHELF_AMOUNT.insetX, Q.panelY + Q.frame / 2 - SHELF_AMOUNT.insetY));
       // 기한 있는 소비품은 진열대 칸과 같은 유통기한 표식을 액자 왼쪽 위에 단다.
       const expiryDays = productExpiryDays(product.grants);
-      if (expiryDays !== undefined) view.add(addExpiryDaysTag(this.scene, -240 - 85 + 4, QUANTITY.panelY - 85 + 4, expiryDays));
+      if (expiryDays !== undefined) view.add(addExpiryDaysTag(this.scene, Q.frameX - Q.frame / 2 + 4, Q.panelY - Q.frame / 2 + 4, expiryDays));
     }
-    view.add(this.scene.add.text(-125, QUANTITY.panelY - 57, product.name, textStyle({ role: "display", size: 32 })).setOrigin(0, 0.5));
+    // 이름 위에는 카드와 같은 색의 꼬리표가 갱신 주기를 먼저 말한다.
+    this.addPeriodTag(view, Q.textX, Q.panelY + Q.tagY, product.refresh, tone);
+    const name = this.scene.add.text(Q.textX, Q.panelY + Q.nameY, product.name, textStyle({ role: "display", size: 36 })).setOrigin(0, 0.5).setStroke("#000000", 5);
+    view.add(squeezeTextToWidth(name, Q.panelWidth / 2 - Q.textX - 20, 0.6));
     // 이번에 받는 수는 왼쪽 액자의 우하단이 이미 말한다 — 같은 수를 한 창에 두 번 적지 않는다.
-    view.add(this.scene.add.text(-125, QUANTITY.panelY + 3, grantLabel, textStyle({ role: "emphasis", size: 27, color: COLOR.accentText })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(-125, QUANTITY.panelY + 58, t("shop.purchase.unitGrant", { amount: formatCurrency(unitGrant) }), textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    view.add(this.scene.add.text(Q.textX, Q.panelY + Q.grantY, grantLabel, textStyle({ role: "emphasis", size: 27, color: toneCss(tone) })).setOrigin(0, 0.5).setStroke("#000000", 4));
+    view.add(this.scene.add.text(Q.textX, Q.panelY + Q.unitY, t("shop.purchase.unitGrant", { amount: formatCurrency(unitGrant) }), textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5));
 
-    view.add(drawHairline(this.scene, 0, QUANTITY.hairlineY, QUANTITY.rowWidth, { color: COLOR.accent, alpha: 0.32 }));
-    // 값은 글이 아니라 **받는 것과 같은 액자**로 선다. 재화 이름을 적지 않는 이유는 그림이
-    // 이미 어느 재화인지 말하기 때문이고, 모자란 값만 그 수가 붉어져 이유를 스스로 말한다.
-    // **값 줄만 판을 깐다.** 무역 묶음 확인판과 같은 양식이다 — 이름표와 (재화 그림 + 수)가
-    // 판 한 장의 두 끝에서 마주 본다. 개수·남은 제한은 재화가 아니라 그냥 수라, 같은 판을 깔면
-    // 네 줄이 모두 값처럼 읽혀 정작 얼마를 치르는지가 묻힌다.
-    this.addPriceRow(view, quantityRowY(0), t("shop.purchase.price"), acquisition.currency, acquisition.amount);
-    this.addValueRow(view, quantityRowY(1), t("shop.purchase.count"), formatCurrency(quote.quantity));
-    this.addPriceRow(view, quantityRowY(2), t("shop.purchase.total"), acquisition.currency, quote.totalPrice, {
-      short: balance < quote.totalPrice,
-    });
-    this.addValueRow(view, quantityRowY(3), t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
+    view.add(drawHairline(this.scene, 0, Q.hairlineY, Q.rowWidth, { color: tone, alpha: 0.4 }));
+    addPriceBar(this.scene, view, 0, Q.priceY, Q.rowWidth, t("shop.purchase.price"), pay.currency, pay.amount, { accent: tone });
 
-    // 수량 조작은 순수 모델이 계산한 실제 구매 가능 상한에서만 활성화한다.
-    const minus = new Button(this.scene, 20, quantityRowY(1), { width: 76, height: 58, label: "−", fontSize: 30, onClick: () => this.changeQuantity(product, -1) }).setEnabled(!this.pending && quote.quantity > 1);
-    const plus = new Button(this.scene, 100, quantityRowY(1), { width: 76, height: 58, label: "+", fontSize: 30, onClick: () => this.changeQuantity(product, 1) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
-    // 살 수 있는 만큼(남은 횟수·가진 재화 중 작은 쪽)을 한 번에 채운다.
-    const max = new Button(this.scene, 195, quantityRowY(1), { width: 100, height: 58, label: "MAX", fontSize: 24, onClick: () => this.changeQuantity(product, Number.MAX_SAFE_INTEGER) }).setEnabled(!this.pending && quote.quantity < quote.maxQuantity);
+    // ── 수량 조절기 ─ 가운데 큰 수 · 양옆 −/+ · 바깥 MIN/MAX. 순수 모델이 계산한 실제 구매 가능 범위에서만 켜진다.
+    view.add(this.scene.add.text(0, Q.countLabelY, t("shop.purchase.count"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(0.5));
+    const plate = slantedRect(Q.countPlate.width, Q.countPlate.height, 18);
+    view.add(drawLayer(this.scene, 0, Q.countY, plate, { fill: 0x05080c, alpha: 0.92, edge: tone, edgeAlpha: 1, edgeWidth: 4, glow: { color: tone, strength: 0.2, height: 1 } }));
+    view.add(drawShapeOutline(this.scene, 0, Q.countY, plate, { color: tone, alpha: 0.5, width: 2 }));
+    const count = this.scene.add.text(0, Q.countY, formatCurrency(quote.quantity), textStyle({ role: "display", size: Q.countSize, color: COLOR.ink })).setOrigin(0.5).setStroke("#000000", 8).setShadow(2, 4, "#04060a", 0, true, true);
+    view.add(squeezeTextToWidth(count, Q.countPlate.width - 36, 0.5));
+    const canLower = !this.pending && quote.quantity > 1;
+    const canRaise = !this.pending && quote.quantity < quote.maxQuantity;
+    const step = (x: number, label: string, delta: number, enabled: boolean, wide = false): Button => new Button(this.scene, x, Q.countY, {
+      width: wide ? Q.edgeWidth : Q.stepSize, height: wide ? Q.edgeHeight : Q.stepSize, label, fontSize: wide ? 26 : 52, accentColor: tone,
+      onClick: () => this.changeQuantity(product, delta),
+    }).setEnabled(enabled);
+    view.add([
+      step(-Q.edgeX, "MIN", -Number.MAX_SAFE_INTEGER, canLower, true),
+      step(-Q.stepX, "−", -1, canLower),
+      step(Q.stepX, "+", 1, canRaise),
+      // 살 수 있는 만큼(남은 횟수·가진 재화 중 작은 쪽)을 한 번에 채운다.
+      step(Q.edgeX, "MAX", Number.MAX_SAFE_INTEGER, canRaise, true),
+    ]);
     // 팝업 본문 원점은 화면 중앙이므로 사용자 입력 중심만 절대 좌표로 변환해 공개한다.
-    setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x + 20, y: BASE_CENTER.y + quantityRowY(1) }, plus: { x: BASE_CENTER.x + 100, y: BASE_CENTER.y + quantityRowY(1) }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + QUANTITY.buyY } } });
-    view.add([minus, plus, max]);
+    setDebugStorefrontControls({ purchase: { minus: { x: BASE_CENTER.x - Q.stepX, y: BASE_CENTER.y + Q.countY }, plus: { x: BASE_CENTER.x + Q.stepX, y: BASE_CENTER.y + Q.countY }, confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + Q.buyY } } });
+
+    this.addLimitRow(view, Q.limitY, product, tone);
+
+    // **총가격이 곧 구매 버튼이다** — 얼마를 치르는지를 보고 그 자리를 누르면 산다.
+    const short = pay.balance < quote.totalPrice;
     const canPurchase = product.purchasable && quote.valid && !this.pending;
-    const buy = new Button(this.scene, 0, QUANTITY.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase);
-    view.add(buy);
+    this.addPriceButton(view, Q.buyY, Q.buyWidth, Q.buyHeight, canPurchase, () => { void this.purchase(product, close, onPurchased); }, (button) => {
+      if (this.pending) { button.add(this.scene.add.text(0, 0, t("shop.purchase.busy"), textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5)); return; }
+      addPriceBar(this.scene, button, 0, 0, Q.buyWidth, t("shop.purchase.total"), pay.currency, quote.totalPrice, { height: Q.buyHeight, plate: false, valueSize: 52, short });
+    }, tone);
     const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !quote.valid ? t("shop.purchase.needMore") : "");
-    if (status) view.add(this.scene.add.text(0, QUANTITY.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+    if (status) view.add(this.scene.add.text(0, Q.statusY, status, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
+  }
+
+  /** 갱신 주기 꼬리표 — 진열 카드와 같은 색 판에 검은 글자. 왼쪽 끝이 `left`에 선다. */
+  private addPeriodTag(view: Phaser.GameObjects.Container, left: number, y: number, refresh: ProductDto["refresh"], tone: number): number {
+    const label = this.scene.add.text(0, 0, t(`shop.purchase.period.${refresh}`), textStyle({ role: "display", size: 22, color: "#101418" })).setOrigin(0.5);
+    const width = label.width + 36;
+    view.add(drawLayer(this.scene, left + width / 2, y, slantedRect(width, 40, 12), { fill: tone, alpha: 1 }));
+    view.add(label.setPosition(left + width / 2, y + 1));
+    return width;
+  }
+
+  /**
+   * 구매 제한 한 줄 — 「언제 몇 번까지」와 「지금 몇 번 남았나」를 함께.
+   *
+   * 왼쪽은 이름표, 오른쪽은 갱신 주기 꼬리표 → 남은 칸 마름모(채움 = 남음, 빈 칸 = 산 몫) → `남음 / 한도`다. 수만
+   * 적던 때는 다음에 언제 다시 열리는지도, 몇 번을 이미 썼는지도 한눈에 읽히지 않았다. 한도가 크면 칸 없이 수만 선다.
+   */
+  private addLimitRow(view: Phaser.GameObjects.Container, y: number, product: ProductDto, tone: number): void {
+    const Q = QUANTITY;
+    view.add(drawLayer(this.scene, 0, y, slantedRect(Q.rowWidth, 72, 16), { fill: 0x0a0f15, alpha: 0.78, shadow: false }));
+    view.add(this.scene.add.text(Q.rowLeft, y, t("shop.purchase.limit"), textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
+    const soldOut = product.remaining <= 0;
+    const value = this.scene.add.text(Q.rowRight, y, `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`, textStyle({ role: "display", size: 32, color: soldOut ? COLOR.dangerText : COLOR.ink })).setOrigin(1, 0.5).setStroke("#000000", 5);
+    view.add(value);
+    let right = Q.rowRight - value.width - 18;
+    if (product.purchaseLimit > 0 && product.purchaseLimit <= LIMIT_PIPS.max) {
+      const { size, gap } = LIMIT_PIPS;
+      const pips = this.scene.add.graphics();
+      for (let index = 0; index < product.purchaseLimit; index += 1) {
+        // 왼쪽부터 남은 칸이 차 있고, 산 만큼 오른쪽 칸이 빈다.
+        const cx = right - size / 2 - (product.purchaseLimit - 1 - index) * (size + gap);
+        const points = [new Phaser.Geom.Point(cx, y - size / 2), new Phaser.Geom.Point(cx + size / 2, y), new Phaser.Geom.Point(cx, y + size / 2), new Phaser.Geom.Point(cx - size / 2, y)];
+        if (index < product.remaining) pips.fillStyle(tone, 1).fillPoints(points, true);
+        else pips.fillStyle(0x000000, 0.5).fillPoints(points, true).lineStyle(2, tone, 0.55).strokePoints(points, true);
+      }
+      view.add(pips);
+      right -= product.purchaseLimit * (size + gap) + 10;
+    }
+    if (product.refresh !== "none") {
+      const probe = this.scene.add.text(0, 0, t(`shop.purchase.period.${product.refresh}`), textStyle({ role: "display", size: 22 }));
+      const width = probe.width + 36; probe.destroy();
+      this.addPeriodTag(view, right - width, y, product.refresh, tone);
+    }
   }
 
   /**
@@ -210,16 +285,17 @@ export class PurchasePopup {
    * 여기서는 고르지 않으면 구매가 꺼지는 것까지만 맡는다. 수량은 늘 1이다.
    */
   private paintRune(view: Phaser.GameObjects.Container, product: ProductDto, kind: "main" | "fixed", close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): void {
-    if (product.acquisition.kind !== "currency") return;
-    const acquisition = product.acquisition;
+    const pay = this.priceOf(product);
+    if (!pay) return;
     this.quantity = 1;
+    const accent = purchaseTone(product);
     const shift = kind === "main" ? RUNE.mainBlock : 0;
     const rune = product.grants.find((grant) => grant.kind === "rune");
     // 완전 랜덤 룬은 등급도 자리도 정해지지 않았다 — 색을 입히지 않고, 자리 줄 대신 등급 확률을 적는다.
     const random = rune?.kind === "rune" && rune.randomRarity === true;
     const rarity = rune?.kind === "rune" && !random ? rune.rarity : undefined;
     const part = product.runePart ?? (rune?.kind === "rune" ? rune.part : undefined) ?? 0;
-    view.add(drawLayer(this.scene, 0, RUNE.panelY, chipPoints(RUNE.panelWidth, RUNE.panelHeight, { bevel: { topLeft: 38, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+    this.addDisplayPanel(view, RUNE.height, RUNE.panelY, RUNE.panelY + RUNE.frame / 2, { width: PACKAGE.width, accent, panelWidth: RUNE.panelWidth, panelHeight: RUNE.panelHeight });
     view.add(addRuneFrame(this.scene, -215, RUNE.panelY, RUNE.frame, rarity, part, { mystery: random }));
     const tone = rarity ? runeAccentCss(rarity) : COLOR.ink;
     view.add(this.scene.add.text(-75, RUNE.panelY - 62, product.name, textStyle({ role: "display", size: 34, color: tone })).setOrigin(0, 0.5));
@@ -240,16 +316,21 @@ export class PurchasePopup {
         view.add(chip);
       });
     }
-    const balance = this.wallet[acquisition.currency];
-    view.add(drawHairline(this.scene, 0, RUNE.priceY + shift - 62, QUANTITY.rowWidth, { color: COLOR.accent, alpha: 0.32 }));
-    this.addPriceRow(view, RUNE.priceY + shift, t("shop.purchase.price"), acquisition.currency, acquisition.amount, { short: balance < acquisition.amount });
-    this.addValueRow(view, RUNE.remainingY + shift, t("shop.purchase.remaining"), `${formatCurrency(product.remaining)} / ${formatCurrency(product.purchaseLimit)}`);
+    const balance = pay.balance;
+    const short = balance < pay.amount;
+    view.add(drawHairline(this.scene, 0, RUNE.priceY + shift - 62, QUANTITY.rowWidth, { color: accent, alpha: 0.4 }));
+    addPriceBar(this.scene, view, 0, RUNE.priceY + shift, QUANTITY.rowWidth, t("shop.purchase.price"), pay.currency, pay.amount, { accent });
+    this.addLimitRow(view, RUNE.remainingY + shift, product, accent);
     const choice = kind === "main" ? runeMainChoice(this.runeMains) : undefined;
     const ready = kind !== "main" || choice !== null;
-    const canPurchase = product.purchasable && balance >= acquisition.amount && ready && !this.pending;
-    view.add(new Button(this.scene, 0, RUNE.buyY, { width: 650, height: 86, label: this.pending ? t("shop.purchase.busy") : t("shop.purchase.buy"), fontSize: 31, variant: "primary", onClick: () => { void this.purchase(product, close, onPurchased); } }).setEnabled(canPurchase));
-    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !ready ? t("shop.rune.pickMain") : balance < acquisition.amount ? t("shop.purchase.needMore") : "");
-    if (status) view.add(this.scene.add.text(0, RUNE.statusY, status, textStyle({ role: "body", size: 21, color: COLOR.inkDim })).setOrigin(0.5));
+    const canPurchase = product.purchasable && !short && ready && !this.pending;
+    this.addPriceButton(view, RUNE.buyY, QUANTITY.buyWidth, QUANTITY.buyHeight, canPurchase, () => { void this.purchase(product, close, onPurchased); }, (button) => {
+      if (this.pending) { button.add(this.scene.add.text(0, 0, t("shop.purchase.busy"), textStyle({ role: "display", size: 40, color: COLOR.accentText })).setOrigin(0.5)); return; }
+      addPriceBar(this.scene, button, 0, 0, QUANTITY.buyWidth, t("shop.purchase.buy"), pay.currency, pay.amount, { height: QUANTITY.buyHeight, plate: false, valueSize: 52, short });
+    }, accent);
+    setDebugStorefrontControls({ purchase: { confirm: { x: BASE_CENTER.x, y: BASE_CENTER.y + RUNE.buyY } } });
+    const status = this.message || (!product.purchasable ? product.disabledReason ?? t("shop.purchase.blocked") : !ready ? t("shop.rune.pickMain") : short ? t("shop.purchase.needMore") : "");
+    if (status) view.add(this.scene.add.text(0, RUNE.statusY, status, textStyle({ role: "body", size: 22, color: product.purchasable ? COLOR.inkDim : COLOR.dangerText })).setOrigin(0.5));
   }
 
   /**
@@ -282,7 +363,7 @@ export class PurchasePopup {
     });
 
     view.add(drawHairline(this.scene, 0, PACKAGE.hairlineY, 690, { color: COLOR.accent, alpha: 0.32 }));
-    this.addValueRow(view, PACKAGE.limitY, t("shop.purchase.limit"), tradePackageLimitLabel(product.refresh, product.purchaseLimit, product.remaining));
+    this.addLimitRow(view, PACKAGE.limitY, product, purchaseTone(product));
 
     // **값이 곧 구매 버튼이다.** 값 줄과 확정 버튼을 따로 세우면 같은 결정을 두 번 읽는다 — 얼마인지를 보고
     // 그 자리를 누르면 산다.
@@ -388,13 +469,14 @@ export class PurchasePopup {
    * **값이 곧 버튼인 판** — 패키지·결제 확인판의 맨 아래. 검은 판 위에 금빛 값만 세우고, 판 전체가
    * 누름을 받는다. 살 수 없으면 판이 가라앉고 누름을 받지 않는다.
    */
-  private addPriceButton(view: Phaser.GameObjects.Container, y: number, width: number, height: number, enabled: boolean, onClick: () => void, paint: (button: Phaser.GameObjects.Container) => void): void {
+  private addPriceButton(view: Phaser.GameObjects.Container, y: number, width: number, height: number, enabled: boolean, onClick: () => void, paint: (button: Phaser.GameObjects.Container) => void, accent: number = COLOR.accent): void {
     const button = this.scene.add.container(0, y);
     const shape = slantedRect(width, height, 22);
     button.add(drawLayer(this.scene, 0, 0, shape, {
-      fill: 0x06080b, alpha: 0.96, sheen: 0.04, edge: COLOR.accent, edgeAlpha: 1, edgeWidth: 4,
+      fill: 0x06080b, alpha: 0.96, sheen: 0.04, edge: accent, edgeAlpha: 1, edgeWidth: 4,
+      ...(accent === COLOR.accent ? {} : { glow: { color: accent, strength: 0.18, height: 1 } }),
     }));
-    button.add(drawShapeOutline(this.scene, 0, 0, shape, { color: COLOR.accent, alpha: 0.55, width: 2 }));
+    button.add(drawShapeOutline(this.scene, 0, 0, shape, { color: accent, alpha: 0.55, width: 2 }));
     paint(button);
     view.add(button);
     const hit = this.scene.add.zone(0, 0, width, height).setInteractive({ useHandCursor: enabled });
@@ -411,32 +493,22 @@ export class PurchasePopup {
     hit.on("pointerup", () => { pressOut(button); onClick(); });
   }
 
-  /** 재화가 아닌 값 한 줄 — **판을 깔지 않고 글자만** 이름표와 마주 세운다. */
-  private addValueRow(view: Phaser.GameObjects.Container, y: number, label: string, value: string): void {
-    view.add(this.scene.add.text(QUANTITY.rowLeft, y, label, textStyle({ role: "body", size: 24, color: COLOR.inkDim })).setOrigin(0, 0.5));
-    view.add(this.scene.add.text(QUANTITY.rowRight, y, value, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(1, 0.5));
-  }
-
   /**
-   * 값 한 줄 — 이름은 글로, 값은 **액자**로.
-   *
-   * 받는 것도 드는 것도 같은 공용 액자라 두 줄이 같은 것을 말한다는 게 한눈에 읽힌다.
+   * 값을 치르는 재화와 지금 가진 양. 지갑 재화 상품과 길드 코인 상품이 같은 작업판을 지나도록 한 곳에서 가른다.
+   * 결제 상품은 고를 것이 없어 여기 오지 않는다.
    */
-  private addPriceRow(
-    view: Phaser.GameObjects.Container,
-    y: number,
-    label: string,
-    currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"],
-    amount: number,
-    options: { short?: boolean } = {},
-  ): void {
-    addPriceBar(this.scene, view, 0, y, QUANTITY.rowWidth, label, currency, amount, { short: options.short });
+  private priceOf(product: ProductDto): { currency: WalletItemKey | "guildCoin"; amount: number; balance: number } | undefined {
+    const acquisition = product.acquisition;
+    if (acquisition.kind === "currency") return { currency: acquisition.currency, amount: acquisition.amount, balance: this.wallet[acquisition.currency] };
+    if (acquisition.kind === "guild_coin") return { currency: "guildCoin", amount: acquisition.amount, balance: this.guild?.coin ?? 0 };
+    return undefined;
   }
 
   /** 버튼 입력도 모델을 다시 통과시켜 렌더링 수치와 요청 수량이 갈리지 않게 한다. */
   private changeQuantity(product: ProductDto, delta: number): void {
-    if (this.pending || product.acquisition.kind !== "currency") return;
-    this.quantity = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity + delta).quantity;
+    const pay = this.priceOf(product);
+    if (this.pending || !pay) return;
+    this.quantity = quotePurchase({ unitPrice: pay.amount, remaining: product.remaining, balance: pay.balance }, this.quantity + delta).quantity;
     this.repaint?.();
   }
 
@@ -460,6 +532,36 @@ export class PurchasePopup {
     this.pending = false; this.repaint?.();
   }
 
+  /**
+   * 길드 상품 구매 — `buyGuildProduct`는 한 번에 하나를 확정하므로 고른 수만큼 차례로 부른다. 하나하나가 서버에서
+   * 원자 확정이라, 중간에 막혀도 이미 산 몫은 그대로 영수증에 서고 나머지는 사지 않은 채 끝난다.
+   */
+  private async purchaseGuild(product: ProductDto, quantity: number, close: () => void): Promise<void> {
+    const guild = this.guild;
+    if (!guild) return;
+    this.pending = true; this.message = ""; this.repaint?.();
+    let last: BuyGuildProductResponse | undefined;
+    let bought = 0;
+    let failure: unknown;
+    for (let index = 0; index < quantity; index += 1) {
+      try { last = await this.api.buyGuildProduct({ productId: product.id }); bought += 1; }
+      catch (error) { failure = error; break; }
+    }
+    if (!last || bought === 0) {
+      this.message = failure instanceof Error ? failure.message : t("guild.shop.failed");
+      this.pending = false; this.repaint?.();
+      return;
+    }
+    const result = last;
+    close();
+    openRewardPopup(this.scene, this.popups, {
+      title: t("shop.purchase.rewardTitle"),
+      sound: "ui.purchase",
+      items: productGrantsToRewardItems(product.grants.map((grant) => ("amount" in grant ? { ...grant, amount: totalGrantAmount(grant.amount, bought) } : grant))),
+    });
+    await guild.onBought(result);
+  }
+
   /** 새로 만난 개체의 소개 장면. 연구소와 같은 깊이·접근성 설정으로 돌고 닫힐 때까지 기다린다. */
   private async introduceRelic(relicId: string): Promise<void> {
     const { accessibility } = settingsManager.get();
@@ -470,9 +572,11 @@ export class PurchasePopup {
   private async purchase(product: ProductDto, close: () => void, onPurchased: (result: PurchaseProductResponse) => void | Promise<void>): Promise<void> {
     if (this.pending) return;
     if (product.acquisition.kind === "platform_payment") { await this.purchasePlatform(product, close, onPurchased); return; }
-    if (product.acquisition.kind !== "currency") return;
-    const quote = quotePurchase({ unitPrice: product.acquisition.amount, remaining: product.remaining, balance: this.wallet[product.acquisition.currency] }, this.quantity);
+    const pay = this.priceOf(product);
+    if (!pay) return;
+    const quote = quotePurchase({ unitPrice: pay.amount, remaining: product.remaining, balance: pay.balance }, this.quantity);
     if (!product.purchasable || !quote.valid) return;
+    if (product.acquisition.kind === "guild_coin") { await this.purchaseGuild(product, quote.quantity, close); return; }
     // 룬 상품은 고르기 전에는 사지 못한다 — 서버도 같은 이유로 거절하지만 요청을 보내기 전에 막는다.
     const runeKind = runeChoiceKind(product);
     const runeChoice = runeKind === "main" ? runeMainChoice(this.runeMains) : undefined;
@@ -511,4 +615,13 @@ const BASE_CENTER = { x: 540, y: 960 } as const;
 function currencyName(currency: Extract<ProductDto["acquisition"], { kind: "currency" }>["currency"]): string {
   // 재화 이름은 공용 표에서 읽는다 — 화면마다 다시 적으면 같은 재화가 두 이름으로 보인다.
   return t(({ fossil: "currency.fossil", amber: "currency.amber", cheesecake: "currency.cheesecake", dnaFragments: "currency.dnaFragments", gems: "currency.gems", gold: "currency.gold", rawStone: "currency.rawStone", raidSigil: "currency.raidSigil", salvageRecord: "currency.salvageRecord", duelEmblem: "currency.duelEmblem" } as const)[currency]);
+}
+
+/** 판의 색 — 진열 카드와 같은 갱신 주기 색(`SHOWCASE_TIER_TONE`)이라 누른 칸이 그대로 커져 올라온 것으로 읽힌다. */
+function purchaseTone(product: ProductDto): number {
+  return SHOWCASE_TIER_TONE[product.refresh];
+}
+
+function toneCss(tone: number): string {
+  return `#${tone.toString(16).padStart(6, "0")}`;
 }

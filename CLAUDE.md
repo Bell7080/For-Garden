@@ -391,7 +391,7 @@
 - **화면은 큰 탭 셋(정보·길드전·수호전, `GUILD_PAGES`)이 가르고 정보 안에 작은 탭(정보·멤버)이 선다.** 길드전·수호전의 붉은 점은 그 판의 주기 키(`guildPageEventKey`)가 기기에 남은 본 값(`settings.game.guildSeen` — 계정 설정에 섞지 않는다)과 다를 때만 선다. 상점·순위는 정보 왼쪽 칩, 다른 길드 찾기·탈퇴는 오른쪽 위 메뉴 칩이 연다. **길드 상점은 일반 상점과 같은 `ShopScene`(`guild` 자리)이다** — 상품은 `guildShopProducts`가 같은 `ProductDto`로 옮기고 값은 길드 코인(`guild_coin` 획득 방식), 구매는 공용 확인 창 → `buyGuildProduct`다. 출석판 위에는 나와 바로 위 길드원의 이번 주 기여가 서고 넘으면 역전 연출이 돈다(`guildAttendanceRace`). 멤버 줄을 누르면 친구 카드와 같은 `PlayerProfilePopup`이 연다(`guildMemberProfileDisplay`).
 - **QA 빌드는 임시 길드 「포가든 수호대」의 길드장으로 시작한다**(`QA_GUILD_AUTO_JOIN` — 길드 샌드박스 기본 켜짐, 길드에 얽힌 `gameApi` 조작도 이 기기가 받는다). E2E(`test`)와 일반 빌드는 끈다.
 - **배지 값은 번호가 아니라 견본으로 고른다** — 만들기·배지 창의 배지 공방(`guildSwatchSpot`)이 실제 배지 견본을 늘어놓는다. 창을 하나 더 여는 고르기 창을 다시 만들지 않는다. 값은 확정 버튼 판 안에 박고(첫 배지 변경은 값 자리에 `tag`로 「무료」, 오른쪽 위에 `ribbon` 딱지 「첫 회 무료!」), 취소는 판 밖 우하단 뒤로가기(`backButton`)다 — 값 줄·취소 버튼을 따로 세우지 않는다.
-- 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 설계 원본은 `/mnt/project-files/guild/proposal.md`.
+- 수호전·길드전·혜택 적용은 2~4단계다(`guildWar.ts`는 주기 계산만). 진행 상황·미비점·상점 구성안은 `docs/guild-plan.md`가 갖는다.
 
 ## 연구원 레벨과 플레이어 카드
 

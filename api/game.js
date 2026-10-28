@@ -2063,7 +2063,6 @@ var MISC_KO = {
   "profile.record.ancient": "\uACE0\uB300 \uC9C0\uCE35 \uCD5C\uACE0\uCE35",
   "profile.record.ancientFloor": "{floor}\uCE35",
   "profile.record.ancientMonth": "\uC774\uBC88 \uB2EC",
-  "profile.storyClears.title": "\uB09C\uC774\uB3C4\uBCC4 \uC2A4\uD1A0\uB9AC",
   "profile.storyClears.locked": "\uBBF8\uAC1C\uBC29",
   "profile.noRecord": "\uAE30\uB85D \uC5C6\uC74C",
   // 스테이지 결과

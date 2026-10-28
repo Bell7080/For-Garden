@@ -249,7 +249,6 @@ export const MISC_EN = {
   "profile.record.ancient": "Ancient Strata Best",
   "profile.record.ancientFloor": "Floor {floor}",
   "profile.record.ancientMonth": "This month",
-  "profile.storyClears.title": "Story by Difficulty",
   "profile.storyClears.locked": "Locked",
   "profile.noRecord": "No record",
   "stageComplete.contribution": "Attack · Defense · Healing",

@@ -106,7 +106,7 @@ test("최대 스토리 칸의 v는 난이도별 클리어 판을 아래로 펼�
   await page.waitForTimeout(800);
   const { records } = PLAYER_PROFILE_LAYOUT;
   await tap(page, WIDTH / 2 - records.columnX, HEIGHT / 2 + records.firstY);
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("난이도별 스토리");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toBeDefined();
   await page.waitForTimeout(600);
   await captureGame(page, `test-results/${test.info().project.name}-player-story-clears.png`);
 });

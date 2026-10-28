@@ -13,7 +13,7 @@ import { HoloBar, chipPoints, drawLayer, drawShapeOutline, HOLO, slantedRect } f
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { setDebugPlayerProfileOpen } from "../debug";
-import { compactProfileText, PLAYER_PROFILE_LAYOUT, profileProgressRatio, storyClearsPopupHeight } from "./playerProfileLayout";
+import { compactProfileText, PLAYER_PROFILE_LAYOUT, profileProgressRatio, PROFILE_RECORD_TONE, storyClearsPanelHeight, type ProfileRecordToneId } from "./playerProfileLayout";
 import { STAGES } from "../data/stages";
 import { STORY_DIFFICULTY } from "../core/storyDifficulty";
 import type { StoryClearRecord } from "../core/storyClearRecord";
@@ -424,11 +424,11 @@ export class PlayerProfilePopup {
     const arena = stats.arena ? arenaStanding(stats.arena.score) : undefined;
     // 결투장도 같은 휘장 표를 읽는다 — 점수만 공개되고 티어·단계는 지금 언어로 짓는다.
     const duel = stats.duelScore !== undefined ? duelStanding(stats.duelScore) : undefined;
-    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId; division?: number | null; expand?: boolean }[] = [
+    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId; division?: number | null; expand?: boolean; tone: ProfileRecordToneId }[] = [
       // 길드원 카드는 길드 안의 자리(직책·기여도)를 먼저 세운다 — 길드 화면에서 연 카드가 말해야 하는 것이 그것이다.
-      ...(this.profile.leadRecords ?? []),
+      ...(this.profile.leadRecords ?? []).map((record) => ({ ...record, tone: "lead" as const })),
       {
-        label: t("profile.record.story"),
+        label: t("profile.record.story"), tone: "story" as const,
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
         ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
         // 난이도별 기록이 있을 때만 v가 선다 — 보통·어려움까지 어디서 멈췄는지는 눌러서 읽는다.
@@ -436,85 +436,105 @@ export class PlayerProfilePopup {
       },
       // 고대 지층은 매달 초기화되므로 이번 달에 가장 깊이 깬 층이다 — 순위표와 같은 값.
       ...(stats.ancientFloor !== undefined ? [{
-        label: t("profile.record.ancient"),
+        label: t("profile.record.ancient"), tone: "ancient" as const,
         value: stats.ancientFloor > 0 ? t("profile.record.ancientFloor", { floor: stats.ancientFloor }) : t("profile.noRecord"),
         sub: t("profile.record.ancientMonth"),
       }] : []),
       duel && stats.duelScore !== undefined
-        ? { label: t("profile.duelTier"), value: `${t(`duel.tier.${duel.tier.id}`)} ${duelDivisionNumeral(duel.division)}`.trim(), sub: t("duel.score", { score: stats.duelScore.toLocaleString() }), tier: duel.tier.id, division: duel.division }
-        : { label: t("profile.duelTier"), value: t("profile.record.unranked") },
+        ? { label: t("profile.duelTier"), value: `${t(`duel.tier.${duel.tier.id}`)} ${duelDivisionNumeral(duel.division)}`.trim(), sub: t("duel.score", { score: stats.duelScore.toLocaleString() }), tier: duel.tier.id, division: duel.division, tone: "duel" as const }
+        : { label: t("profile.duelTier"), value: t("profile.record.unranked"), tone: "duel" as const },
       arena && stats.arena
-        ? { label: t("profile.arenaTier"), value: t(`duel.tier.${arena.tier.id}`), sub: t("arena.rp", { score: stats.arena.score.toLocaleString() }), tier: arena.tier.id }
-        : { label: t("profile.arenaTier"), value: t("profile.record.unranked") },
-      ...(stats.expedition ? [{ label: t("profile.record.expedition"), value: stats.expedition.score.toLocaleString() }] : []),
+        ? { label: t("profile.arenaTier"), value: t(`duel.tier.${arena.tier.id}`), sub: t("arena.rp", { score: stats.arena.score.toLocaleString() }), tier: arena.tier.id, tone: "arena" as const }
+        : { label: t("profile.arenaTier"), value: t("profile.record.unranked"), tone: "arena" as const },
+      ...(stats.expedition ? [{ label: t("profile.record.expedition"), value: stats.expedition.score.toLocaleString(), tone: "expedition" as const }] : []),
       ...(collection ? [{
-        label: t("profile.record.collection"),
+        label: t("profile.record.collection"), tone: "collection" as const,
         value: `${collection.owned} / ${collection.total}`,
         progress: profileProgressRatio(collection.owned, collection.total),
       }] : []),
     ].slice(0, records.rows * 2);
+    let storyToggle: { x: number; y: number } | undefined;
     tiles.forEach((tile, index) => {
       const x = (index % 2 === 0 ? -1 : 1) * records.columnX;
       const y = records.firstY + Math.floor(index / 2) * records.rowGap;
+      const tone = PROFILE_RECORD_TONE[tile.tone];
       const shape = chipPoints(records.width, records.height, { bevel: { topLeft: 20, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
-      body.add(drawLayer(this.scene, x, y, shape, { fill: 0x121a24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45 }));
+      body.add(drawLayer(this.scene, x, y, shape, { fill: 0x121a24, alpha: HOLO.glass, edge: tone.edge, edgeAlpha: 0.8 }));
+      // 같은 실루엣에 그 기록의 색을 옅게 한 겹 — 칸이 무엇의 기록인지 글을 읽기 전에 색이 먼저 말한다.
+      body.add(drawLayer(this.scene, x, y, shape, { fill: tone.edge, alpha: 0.1, shadow: false }));
+      body.add(drawLayer(this.scene, x - records.width / 2 + 13, y, slantedRect(6, records.height - 40, 5), { fill: tone.edge, alpha: 0.85, shadow: false }));
       const left = x - records.width / 2 + 30;
-      const label = this.scene.add.text(left, y + records.labelY, tile.label, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0, 0.5);
+      const label = this.scene.add.text(left, y + records.labelY, tile.label, textStyle({ role: "body", size: 22, color: tone.text })).setOrigin(0, 0.5);
       body.add(label);
       if (tile.tier) addDuelTierEmblem(this.scene, body, left + records.emblem / 2, y + records.valueY, records.emblem, tile.tier, tile.division ?? null);
       const valueX = tile.tier ? left + records.emblem + 12 : left;
       const value = this.scene.add.text(valueX, y + records.valueY, tile.value, textStyle({ role: "display", size: 32, color: tile.tier ? DUEL_TIER_COLOR[tile.tier].text : COLOR.ink })).setOrigin(0, 0.5);
       body.add(value);
       squeezeTextToWidth(value, x + records.width / 2 - 24 - valueX - (tile.expand ? PLAYER_PROFILE_LAYOUT.storyClears.chevron + 14 : 0));
-      if (tile.expand && stats.storyClears) this.addStoryClearsToggle(body, x, y, stats.storyClears);
+      if (tile.expand) storyToggle = { x, y };
       if (tile.sub) {
-        const sub = this.scene.add.text(x + records.width / 2 - 26, y + records.labelY, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5);
+        const sub = this.scene.add.text(x + records.width / 2 - 26, y + records.labelY, tile.sub, textStyle({ role: "emphasis", size: 22, color: tone.text })).setOrigin(1, 0.5);
         body.add(sub);
         // 이름표와 곁말이 한 줄을 나눠 쓴다 — 긴 언어에서 둘이 겹치지 않게 이름표 쪽을 누른다.
         squeezeTextToWidth(label, Math.max(80, records.width - 56 - sub.width - 16));
       }
       if (tile.progress !== undefined) {
         const barWidth = records.width - 60;
-        new HoloBar(this.scene, x, y + records.barY, barWidth, 10, { color: COLOR.accent, trackAlpha: 0.8 }).addTo(body).setValue(tile.progress);
+        new HoloBar(this.scene, x, y + records.barY, barWidth, 10, { color: tone.edge, trackAlpha: 0.8 }).addTo(body).setValue(tile.progress);
       }
     });
+    // 펼침은 모든 칸을 그린 뒤에 얹는다 — 펼친 판이 아래 칸들 위에 서야 한다.
+    if (storyToggle && stats.storyClears) this.addStoryClearsToggle(body, storyToggle.x, storyToggle.y, stats.storyClears);
   }
 
   /**
-   * 「최대 스토리」 칸의 v — 누르면 칸 아래로 쉬움·보통·어려움이 어디까지 깨졌는지 판이 펼쳐진다.
-   * 칸 전체가 입력면이고 v는 그 칸이 펼쳐진다는 표식이다.
+   * 「최대 스토리」 칸의 v — 누르면 **그 칸이 아래로 늘어나며** 쉬움·보통·어려움이 어디까지 깨졌는지 펼친다. 새 창이 아니라
+   * 칸의 연장이라 제목도 X도 없다. 펼친 동안 판 밖 어디를 눌러도(같은 칸을 다시 눌러도) 접힌다.
    */
   private addStoryClearsToggle(body: Phaser.GameObjects.Container, x: number, y: number, clears: readonly StoryClearRecord[]): void {
-    const { records, storyClears } = PLAYER_PROFILE_LAYOUT;
-    const chevron = drawGlyph(this.scene, "caret-down", x + records.width / 2 - 26 - storyClears.chevron / 2, y + records.valueY, storyClears.chevron, COLOR.accent);
-    body.add(chevron);
-    this.bindEdit(body, chevron, x, y, records.width, records.height, () => this.openStoryClears(body, x, y, clears));
-  }
-
-  /** 난이도 하나가 한 줄 — 난이도 이름(그 난이도의 색) · 깬 곳 / 미개방. 줄 수는 난이도 수라 장이 늘어도 판이 같다. */
-  private openStoryClears(body: Phaser.GameObjects.Container, tileX: number, tileY: number, clears: readonly StoryClearRecord[]): void {
     const { records, storyClears: L } = PLAYER_PROFILE_LAYOUT;
-    const height = storyClearsPopupHeight(clears.length);
-    const screen = { width: this.scene.scale.width, height: this.scene.scale.height };
-    const margin = 24;
-    // 칸 바로 아래에 붙는다 — 칸의 월드 좌표는 카드 본체 이동을 더해 구하고, 화면 밖으로 나가지 않게 안쪽으로 민다.
-    const cx = Phaser.Math.Clamp(body.x + tileX, L.width / 2 + margin, screen.width - L.width / 2 - margin);
-    const cy = Math.min(body.y + tileY + records.height / 2 + L.gap + height / 2, screen.height - height / 2 - margin);
-    this.layer.open({ width: L.width, height, x: cx, y: cy, title: t("profile.storyClears.title"), closeOnBackdrop: true }, (panel) => {
+    const tone = PROFILE_RECORD_TONE.story;
+    const chevron = drawGlyph(this.scene, "caret-down", x + records.width / 2 - 26 - L.chevron / 2, y + records.valueY, L.chevron, tone.edge);
+    body.add(chevron);
+    let opened: Phaser.GameObjects.GameObject[] | undefined;
+    const fold = (): void => { opened?.forEach((object) => object.destroy()); opened = undefined; chevron.setRotation(0); };
+    const unfold = (): void => {
+      const height = storyClearsPanelHeight(clears.length);
+      const top = y + records.height / 2 - 2;
+      // 판 밖을 누르면 접히는 막 — 카드 전체를 덮지만 보이지 않는다. 펼친 판보다 아래, 다른 칸보다 위에 선다.
+      const catcher = this.scene.add.rectangle(0, 0, this.scene.scale.width * 2, this.scene.scale.height * 2, 0x000000, 0).setInteractive();
+      catcher.on("pointerup", fold);
+      const panel = this.scene.add.container(x, top);
+      const shape = chipPoints(records.width, height, { bevel: { topLeft: 0, topRight: 0, bottomRight: 20, bottomLeft: 0 } });
+      panel.add(drawLayer(this.scene, 0, height / 2, shape, { fill: 0x0e141c, alpha: 0.97 }));
+      panel.add(drawLayer(this.scene, 0, height / 2, shape, { fill: tone.edge, alpha: 0.08, shadow: false }));
+      panel.add(drawLayer(this.scene, -records.width / 2 + 13, height / 2, slantedRect(6, height - 30, 5), { fill: tone.edge, alpha: 0.85, shadow: false }));
+      const rowWidth = records.width - L.padX * 2 - 16;
       clears.forEach((record, index) => {
-        const rowY = -height / 2 + L.padTop + L.rowHeight / 2 + index * (L.rowHeight + L.rowGap);
-        const tone = STORY_DIFFICULTY[record.difficulty];
-        const shape = chipPoints(L.width - L.padX * 2, L.rowHeight, { bevel: { topLeft: 16, topRight: 0, bottomRight: 16, bottomLeft: 0 } });
-        panel.add(drawLayer(this.scene, 0, rowY, shape, { fill: 0x121a24, alpha: record.open ? HOLO.glass : HOLO.glass * 0.6, edge: tone.color, edgeAlpha: record.open ? 0.7 : 0.3 }));
-        const left = -L.width / 2 + L.padX + 22;
-        panel.add(this.scene.add.text(left, rowY, t(`storyDifficulty.${record.difficulty}`), textStyle({ role: "display", size: 30, color: record.open ? tone.text : COLOR.inkDim })).setOrigin(0, 0.5));
+        const rowY = L.padTop + L.rowHeight / 2 + index * (L.rowHeight + L.rowGap);
+        const difficulty = STORY_DIFFICULTY[record.difficulty];
+        const rowShape = chipPoints(rowWidth, L.rowHeight, { bevel: { topLeft: 14, topRight: 0, bottomRight: 14, bottomLeft: 0 } });
+        // 난이도마다 제 색으로 물든 줄 — 지도의 난이도 칩과 같은 색이다. 열리지 않은 난이도는 색을 거두고 가라앉힌다.
+        panel.add(drawLayer(this.scene, 8, rowY, rowShape, record.open
+          ? { fill: difficulty.fill, alpha: 0.95, edge: difficulty.color, edgeAlpha: 0.85, shadow: false }
+          : { fill: 0x151a21, alpha: 0.9, edge: difficulty.color, edgeAlpha: 0.25, shadow: false }));
+        const rowLeft = 8 - rowWidth / 2 + 20;
+        const name = this.scene.add.text(rowLeft, rowY, t(`storyDifficulty.${record.difficulty}`), textStyle({ role: "display", size: 26, color: record.open ? difficulty.text : COLOR.inkDim })).setOrigin(0, 0.5);
+        panel.add(name);
         const stage = record.stageId ? STAGES.find(({ id }) => id === record.stageId) : undefined;
         const text = !record.open ? t("profile.storyClears.locked") : record.stageId ? compactProfileText(stage ? `${stage.id} ${stage.name}` : record.stageId, 14) : t("profile.noRecord");
-        const value = this.scene.add.text(L.width / 2 - L.padX - 22, rowY, text, (record.stageId ? textStyle({ role: "emphasis", size: 26, color: COLOR.ink }) : textStyle({ role: "body", size: 26, color: COLOR.inkDim }))).setOrigin(1, 0.5);
+        const value = this.scene.add.text(8 + rowWidth / 2 - 18, rowY, text, (record.stageId ? textStyle({ role: "emphasis", size: 24, color: COLOR.ink }) : textStyle({ role: "body", size: 24, color: COLOR.inkDim }))).setOrigin(1, 0.5);
         panel.add(value);
-        squeezeTextToWidth(value, L.width - L.padX * 2 - 44 - 120 - 24);
+        squeezeTextToWidth(value, rowWidth - 38 - name.width - 16);
       });
-    });
+      body.add([catcher, panel]);
+      opened = [catcher, panel];
+      chevron.setRotation(Math.PI);
+      // 칸 밑변에서 아래로 내려온다 — 컨테이너의 원점이 판 윗변이라 세로 배율만 키우면 위에서부터 펼쳐진다.
+      panel.setScale(1, 0);
+      this.scene.tweens.add({ targets: panel, scaleY: 1, duration: session.settings.accessibility.reduceMotion ? 0 : L.openMs, ease: "Cubic.Out" });
+    };
+    this.bindEdit(body, chevron, x, y, records.width, records.height, () => { if (opened) fold(); else unfold(); });
   }
 
   /** 레벨 잠금을 켰을 때만 — 다음에 무엇이 열리는지 한 줄. */

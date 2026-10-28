@@ -248,7 +248,6 @@ export const MISC_ID = {
   "profile.record.ancient": "Strata Kuno tertinggi",
   "profile.record.ancientFloor": "Lantai {floor}",
   "profile.record.ancientMonth": "Bulan ini",
-  "profile.storyClears.title": "Cerita per Kesulitan",
   "profile.storyClears.locked": "Belum terbuka",
   "profile.noRecord": "Tidak ada catatan",
   "stageComplete.contribution": "Serangan · Pertahanan · Penyembuhan",

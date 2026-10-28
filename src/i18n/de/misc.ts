@@ -248,7 +248,6 @@ export const MISC_DE = {
   "profile.record.ancient": "Uralte Schichten – Rekord",
   "profile.record.ancientFloor": "Ebene {floor}",
   "profile.record.ancientMonth": "Diesen Monat",
-  "profile.storyClears.title": "Story nach Schwierigkeit",
   "profile.storyClears.locked": "Gesperrt",
   "profile.noRecord": "Kein Eintrag",
   "stageComplete.contribution": "Angriff · Verteidigung · Heilung",

@@ -248,7 +248,6 @@ export const MISC_TH = {
   "profile.record.ancient": "ชั้นดินโบราณสูงสุด",
   "profile.record.ancientFloor": "ชั้น {floor}",
   "profile.record.ancientMonth": "เดือนนี้",
-  "profile.storyClears.title": "เนื้อเรื่องตามระดับความยาก",
   "profile.storyClears.locked": "ยังไม่เปิด",
   "profile.noRecord": "ไม่มีบันทึก",
   "stageComplete.contribution": "โจมตี · ป้องกัน · ฟื้นฟู",

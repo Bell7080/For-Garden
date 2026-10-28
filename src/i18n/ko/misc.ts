@@ -273,7 +273,6 @@ export const MISC_KO = {
   "profile.record.ancient": "고대 지층 최고층",
   "profile.record.ancientFloor": "{floor}층",
   "profile.record.ancientMonth": "이번 달",
-  "profile.storyClears.title": "난이도별 스토리",
   "profile.storyClears.locked": "미개방",
   "profile.noRecord": "기록 없음",
 

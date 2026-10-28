@@ -117,7 +117,7 @@ export const SKILL_VI = {
   "skill.passive.stalkerBlink": "Mỗi {seconds} giây, lóe tới kẻ địch có máu thấp nhất, và [[basic-attack|đòn đánh thường]] đầu tiên từ đó chắc chắn chí mạng.",
   "skill.passive.basicHitAttackSpeedStack": "Mỗi khi [[basic-attack|đòn đánh thường]] thật sự trúng, [[attack-speed|Tốc đánh]] tăng {value} trong trận này.",
   "skill.passive.farthestFocus": "Nhắm vào kẻ địch xa nhất trong tầm và nhận [[focus|Tập trung]] mỗi khi đòn đánh trúng.",
-  "skill.passive.adagioWeight": "Khi còn sống, [[attack-speed|Tốc đánh]] của đồng minh tăng {percent}%. Khi đồng minh dính [[crowd-control|khống chế]], lập tức giải trừ và trao [[shield|khiên]] {shield}.",
+  "skill.passive.adagioWeight": "Khi còn sống, [[attack-speed|Tốc đánh]] của đồng minh tăng {percent}%. Khi đồng minh dính [[crowd-control|khống chế]], lập tức giải trừ và trao [[shield|khiên]] {shield}. Hồi chiêu {cooldown} giây.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% Công",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "Cứ {seconds} giây, thủy triều [[knockback|hất tung]] mọi kẻ địch về phía sau.",

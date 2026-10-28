@@ -117,7 +117,7 @@ export const SKILL_EN = {
   "skill.passive.stalkerBlink": "Every {seconds}s, [[teleport|blinks]] to the enemy with the lowest HP, and the first [[basic-attack|basic attack]] from there is a guaranteed critical hit.",
   "skill.passive.basicHitAttackSpeedStack": "Each time a [[basic-attack|basic attack]] actually lands, [[attack-speed|Attack Speed]] increases by {value} for this battle.",
   "skill.passive.farthestFocus": "Aims at the farthest enemy in range and gains [[focus|Focus]] each time an attack lands.",
-  "skill.passive.adagioWeight": "While alive, raises ally [[attack-speed|Attack Speed]] by {percent}%. When an ally is caught by [[crowd-control|crowd control]], cleanses it at once and grants a {shield} [[shield|shield]].",
+  "skill.passive.adagioWeight": "While alive, raises ally [[attack-speed|Attack Speed]] by {percent}%. When an ally is caught by [[crowd-control|crowd control]], cleanses it at once and grants a {shield} [[shield|shield]]. Cooldown {cooldown}s.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% of [[atk|Attack]]",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "Every {seconds}s, the tide [[knockback|knocks back]] every enemy.",

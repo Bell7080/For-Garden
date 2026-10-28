@@ -117,7 +117,7 @@ export const SKILL_ID = {
   "skill.passive.stalkerBlink": "Setiap {seconds} dtk, berkedip ke musuh dengan HP terendah, dan [[basic-attack|serangan dasar]] pertama dari sana pasti kritis.",
   "skill.passive.basicHitAttackSpeedStack": "Setiap kali [[basic-attack|serangan dasar]] benar-benar mengenai, [[attack-speed|Kecepatan Serang]] naik {value} untuk pertarungan ini.",
   "skill.passive.farthestFocus": "Membidik musuh terjauh dalam jangkauan dan mendapat [[focus|Fokus]] setiap kali serangan mengenai.",
-  "skill.passive.adagioWeight": "Selama hidup, [[attack-speed|Kecepatan Serang]] sekutu naik {percent}%. Saat sekutu terkena [[crowd-control|kontrol massa]], langsung dibersihkan dan diberi [[shield|perisai]] {shield}.",
+  "skill.passive.adagioWeight": "Selama hidup, [[attack-speed|Kecepatan Serang]] sekutu naik {percent}%. Saat sekutu terkena [[crowd-control|kontrol massa]], langsung dibersihkan dan diberi [[shield|perisai]] {shield}. Jeda {cooldown} detik.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% Serangan",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "Setiap {seconds} detik, air pasang [[knockback|melempar]] semua musuh ke belakang.",

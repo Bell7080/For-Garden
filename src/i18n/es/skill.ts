@@ -117,7 +117,7 @@ export const SKILL_ES = {
   "skill.passive.stalkerBlink": "Cada {seconds} s, parpadea hasta el enemigo con menos PV, y su primer [[basic-attack|ataque básico]] desde allí es crítico garantizado.",
   "skill.passive.basicHitAttackSpeedStack": "Cada vez que un [[basic-attack|ataque básico]] impacta de verdad, la [[attack-speed|Velocidad de ataque]] sube {value} durante este combate.",
   "skill.passive.farthestFocus": "Apunta al enemigo más lejano a su alcance y gana [[focus|Concentración]] cada vez que un ataque impacta.",
-  "skill.passive.adagioWeight": "Mientras vive, la [[attack-speed|Velocidad de ataque]] aliada sube un {percent}%. Cuando un aliado sufre [[crowd-control|control de masas]], lo limpia al instante y le da un [[shield|escudo]] de {shield}.",
+  "skill.passive.adagioWeight": "Mientras vive, la [[attack-speed|Velocidad de ataque]] aliada sube un {percent}%. Cuando un aliado sufre [[crowd-control|control de masas]], lo limpia al instante y le da un [[shield|escudo]] de {shield}. Enfriamiento: {cooldown} s.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% del Ataque",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "Cada {seconds} s, la marea [[knockback|lanza hacia atrás]] a todos los enemigos.",

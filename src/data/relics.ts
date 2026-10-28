@@ -3901,10 +3901,10 @@ export const RELICS: RelicDef[] = [
     passive: {
       id: "mette-passive", name: "아다지오의 무게", kind: "adagioWeight",
       iconAssetId: "skill-icon-buff", effectType: "buff", value: 20,
-      teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 320, cleanseCooldownSeconds: 7,
+      teamAttackSpeedPercent: 20, cleanseShieldAttackPercent: 100, cleanseCooldownSeconds: 7,
       // kind가 adagioWeight인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "생존 중 아군 공격 속도를 20% 높인다. 아군이 군중제어에 걸리면 즉시 정화하고 공격력 200% 보호막을 부여한다.",
+      desc: "생존 중 아군 공격 속도를 20% 높인다. 아군이 군중제어에 걸리면 즉시 정화하고 공격력 100% 보호막을 부여한다. 재사용 대기 7초.",
     },
     basic: {
       id: "mette-basic", name: "스타카토", power: 100, scalingStat: "atk",

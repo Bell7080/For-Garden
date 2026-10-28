@@ -150,7 +150,7 @@ export const SKILL_KO = {
   "skill.passive.stalkerBlink": "{seconds}초마다 체력이 가장 적은 적의 곁으로 [[teleport|순간이동]]하고, 그 자리에서 내는 첫 [[basic-attack|기본 공격]]이 확정 치명타가 된다.",
   "skill.passive.basicHitAttackSpeedStack": "[[basic-attack|기본 공격]]이 실제 적중할 때마다 이번 전투 동안 [[attack-speed|공격 속도]]가 {value} 증가한다.",
   "skill.passive.farthestFocus": "사거리 안에서 가장 먼 적을 노리고, 공격이 적중할 때마다 [[focus|집중]]을 얻는다.",
-  "skill.passive.adagioWeight": "생존 중 아군 [[attack-speed|공격 속도]]를 {percent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 {shield} [[shield|보호막]]을 부여한다.",
+  "skill.passive.adagioWeight": "생존 중 아군 [[attack-speed|공격 속도]]를 {percent}% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 {shield} [[shield|보호막]]을 부여한다. 재사용 대기 {cooldown}초.",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|공격력]] {percent}%",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "{seconds}초마다 밀물이 모든 적을 [[knockback|날려버림]]으로 뒤로 민다.",

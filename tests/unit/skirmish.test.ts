@@ -884,11 +884,11 @@ describe("메테 전투 계약", () => {
     expect(currentAttackSpeed(ally, state)).toBe(ally.def.stats.attackSpeed + 25);
   });
 
-  it("는 새 기절·경직을 즉시 정화하고 메테 공격력 320% 보호막을 개체별 7초마다 부여한다", () => {
+  it("는 새 기절·경직을 즉시 정화하고 메테 공격력 100% 보호막을 개체별 7초마다 부여한다", () => {
     const { state, mette, ally } = metteBattle();
     const first = applyStun(ally, 2, state);
     expect(ally.stunnedFor).toBe(0);
-    expect(ally.shield.amount).toBe(mette.def.stats.atk * 3.2);
+    expect(ally.shield.amount).toBe(mette.def.stats.atk * 1);
     expect(first).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: mette.id }));
     expect(mette.adagioCooldownRemaining).toBe(7);
 
@@ -906,13 +906,13 @@ describe("메테 전투 계약", () => {
     const [first, second, ally] = state.fighters;
     ally.shield = { amount: 10, providerId: ally.id };
     const firstEvents = applyStun(ally, 1, state);
-    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 10 + first.def.stats.atk * 3.2 }));
+    expect(firstEvents).toContainEqual(expect.objectContaining({ kind: "shieldGranted", providerId: first.id, remaining: 10 + first.def.stats.atk * 1 }));
     expect(first.adagioCooldownRemaining).toBe(7);
     expect(second.adagioCooldownRemaining).toBe(0);
 
     applyStagger(ally, 0.1, state);
-    // 두 번째 메테도 자기 공격력의 200%를 기존 총량에 더한다.
-    expect(ally.shield.amount).toBe(10 + first.def.stats.atk * 3.2 + second.def.stats.atk * 3.2);
+    // 두 번째 메테도 자기 공격력의 100%를 기존 총량에 더한다.
+    expect(ally.shield.amount).toBe(10 + first.def.stats.atk * 1 + second.def.stats.atk * 1);
     expect(second.adagioCooldownRemaining).toBe(7);
   });
 

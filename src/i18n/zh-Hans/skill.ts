@@ -117,7 +117,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.stalkerBlink": "每{seconds}秒闪现至生命最低的敌人身边，从该处发出的首次[[basic-attack|普通攻击]]必定暴击。",
   "skill.passive.basicHitAttackSpeedStack": "每当[[basic-attack|普通攻击]]实际命中时，本场战斗[[attack-speed|攻击速度]]提升{value}。",
   "skill.passive.farthestFocus": "瞄准射程内最远的敌人，每次攻击命中时获得[[focus|专注]]。",
-  "skill.passive.adagioWeight": "存活期间，队友[[attack-speed|攻击速度]]提升{percent}%。队友受到[[crowd-control|控制]]时，立即净化并提供{shield}[[shield|护盾]]。",
+  "skill.passive.adagioWeight": "存活期间，队友[[attack-speed|攻击速度]]提升{percent}%。队友受到[[crowd-control|控制]]时，立即净化并提供{shield}[[shield|护盾]]。冷却时间{cooldown}秒。",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|攻击力]]{percent}%的",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "每{seconds}秒，涨潮会将所有敌人[[knockback|击飞]]并向后推开。",

@@ -2383,7 +2383,7 @@ var SKILL_KO = {
   "skill.passive.stalkerBlink": "{seconds}\uCD08\uB9C8\uB2E4 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uC801\uC740 \uC801\uC758 \uACC1\uC73C\uB85C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD558\uACE0, \uADF8 \uC790\uB9AC\uC5D0\uC11C \uB0B4\uB294 \uCCAB [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD655\uC815 \uCE58\uBA85\uD0C0\uAC00 \uB41C\uB2E4.",
   "skill.passive.basicHitAttackSpeedStack": "[[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uC2E4\uC81C \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 \uC774\uBC88 \uC804\uD22C \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {value} \uC99D\uAC00\uD55C\uB2E4.",
   "skill.passive.farthestFocus": "\uC0AC\uAC70\uB9AC \uC548\uC5D0\uC11C \uAC00\uC7A5 \uBA3C \uC801\uC744 \uB178\uB9AC\uACE0, \uACF5\uACA9\uC774 \uC801\uC911\uD560 \uB54C\uB9C8\uB2E4 [[focus|\uC9D1\uC911]]\uC744 \uC5BB\uB294\uB2E4.",
-  "skill.passive.adagioWeight": "\uC0DD\uC874 \uC911 \uC544\uAD70 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uB97C {percent}% \uB192\uC778\uB2E4. \uC544\uAD70\uC774 [[crowd-control|\uAD70\uC911\uC81C\uC5B4]]\uC5D0 \uAC78\uB9AC\uBA74 \uC989\uC2DC \uC815\uD654\uD558\uACE0 {shield} [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uBD80\uC5EC\uD55C\uB2E4.",
+  "skill.passive.adagioWeight": "\uC0DD\uC874 \uC911 \uC544\uAD70 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uB97C {percent}% \uB192\uC778\uB2E4. \uC544\uAD70\uC774 [[crowd-control|\uAD70\uC911\uC81C\uC5B4]]\uC5D0 \uAC78\uB9AC\uBA74 \uC989\uC2DC \uC815\uD654\uD558\uACE0 {shield} [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uBD80\uC5EC\uD55C\uB2E4. \uC7AC\uC0AC\uC6A9 \uB300\uAE30 {cooldown}\uCD08.",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|\uACF5\uACA9\uB825]] {percent}%",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "{seconds}\uCD08\uB9C8\uB2E4 \uBC00\uBB3C\uC774 \uBAA8\uB4E0 \uC801\uC744 [[knockback|\uB0A0\uB824\uBC84\uB9BC]]\uC73C\uB85C \uB4A4\uB85C \uBBFC\uB2E4.",
@@ -16703,11 +16703,11 @@ var RELICS = [
       effectType: "buff",
       value: 20,
       teamAttackSpeedPercent: 20,
-      cleanseShieldAttackPercent: 320,
+      cleanseShieldAttackPercent: 100,
       cleanseCooldownSeconds: 7,
       // kind가 adagioWeight인 패시브는 passiveDescription()이 실제 능력치로 다시 문장을 만들므로
       // 이 원문은 데이터 문서화용일 뿐 화면에는 쓰이지 않는다.
-      desc: "\uC0DD\uC874 \uC911 \uC544\uAD70 \uACF5\uACA9 \uC18D\uB3C4\uB97C 20% \uB192\uC778\uB2E4. \uC544\uAD70\uC774 \uAD70\uC911\uC81C\uC5B4\uC5D0 \uAC78\uB9AC\uBA74 \uC989\uC2DC \uC815\uD654\uD558\uACE0 \uACF5\uACA9\uB825 200% \uBCF4\uD638\uB9C9\uC744 \uBD80\uC5EC\uD55C\uB2E4."
+      desc: "\uC0DD\uC874 \uC911 \uC544\uAD70 \uACF5\uACA9 \uC18D\uB3C4\uB97C 20% \uB192\uC778\uB2E4. \uC544\uAD70\uC774 \uAD70\uC911\uC81C\uC5B4\uC5D0 \uAC78\uB9AC\uBA74 \uC989\uC2DC \uC815\uD654\uD558\uACE0 \uACF5\uACA9\uB825 100% \uBCF4\uD638\uB9C9\uC744 \uBD80\uC5EC\uD55C\uB2E4. \uC7AC\uC0AC\uC6A9 \uB300\uAE30 7\uCD08."
     },
     basic: {
       id: "mette-basic",

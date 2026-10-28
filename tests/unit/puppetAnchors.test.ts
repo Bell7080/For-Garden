@@ -58,6 +58,10 @@ import {
   PULSI_PORTRAIT_METADATA,
   NEURI_PORTRAIT_METADATA,
   MIR_PORTRAIT_METADATA,
+  MAGASA_PORTRAIT_METADATA,
+  NOA_PORTRAIT_METADATA,
+  RAJA_PORTRAIT_METADATA,
+  CARNO_PORTRAIT_METADATA,
   VENTIA_PORTRAIT_METADATA,
   VIRIA_PORTRAIT_METADATA,
 } from "../../src/puppets/assetMetadata";
@@ -388,6 +392,10 @@ const REAL_PORTRAITS = [
   { name: "펄시", metadata: PULSI_PORTRAIT_METADATA, head: { x: 736, y: 263 }, eyes: [{ x: 702, y: 216 }, { x: 765, y: 256 }] },
   { name: "네우리", metadata: NEURI_PORTRAIT_METADATA, head: { x: 470, y: 207 }, eyes: [{ x: 454, y: 206 }, { x: 514, y: 174 }] },
   { name: "미르", metadata: MIR_PORTRAIT_METADATA, head: { x: 582, y: 339 }, eyes: [{ x: 530, y: 296 }, { x: 605, y: 351 }] },
+  { name: "마가사", metadata: MAGASA_PORTRAIT_METADATA, head: { x: 613, y: 288 }, eyes: [{ x: 576, y: 247 }, { x: 636, y: 301 }] },
+  { name: "노아", metadata: NOA_PORTRAIT_METADATA, head: { x: 625, y: 372 }, eyes: [{ x: 573, y: 328 }, { x: 664, y: 365 }] },
+  { name: "라자", metadata: RAJA_PORTRAIT_METADATA, head: { x: 666, y: 239 }, eyes: [{ x: 631, y: 208 }, { x: 691, y: 235 }] },
+  { name: "카르노", metadata: CARNO_PORTRAIT_METADATA, head: { x: 574, y: 237 }, eyes: [{ x: 546, y: 215 }, { x: 610, y: 230 }] },
 ] as const;
 
 /** PortraitCard가 넘기는 것과 같은 배율 보정으로 실제 카드 잘라내기를 구한다. */

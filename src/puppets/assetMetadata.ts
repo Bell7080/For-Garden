@@ -925,17 +925,44 @@ export const MIR_SD_METADATA: Omit<PuppetAsset, "url"> = {
   content: { left: 206, top: 33, right: 1054, bottom: 1217 },
   joints: { center: [639, 565], head: [673, 489], eyes: null, feet: [[844, 1185], [577, 1198]] },
 };
-/**
- * **5장 감옥 무리·카르노 — 원화를 기다리는 임시 값.** ZIP(enemy_015~018)이 아직 없어 미르와 같은 캔버스 크기와
- * 관절을 빌려 둔다. 원화가 들어오면 그 ZIP의 alpha 경계와 관절을 실측해 이 값만 갈아 끼운다.
- */
-const AWAITING_ART_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = { ...MIR_PORTRAIT_METADATA };
-const AWAITING_ART_SD_METADATA: Omit<PuppetAsset, "url"> = { ...MIR_SD_METADATA };
-export const MAGASA_PORTRAIT_METADATA = AWAITING_ART_PORTRAIT_METADATA;
-export const MAGASA_SD_METADATA = AWAITING_ART_SD_METADATA;
-export const NOA_PORTRAIT_METADATA = AWAITING_ART_PORTRAIT_METADATA;
-export const NOA_SD_METADATA = AWAITING_ART_SD_METADATA;
-export const RAJA_PORTRAIT_METADATA = AWAITING_ART_PORTRAIT_METADATA;
-export const RAJA_SD_METADATA = AWAITING_ART_SD_METADATA;
-export const CARNO_PORTRAIT_METADATA = AWAITING_ART_PORTRAIT_METADATA;
-export const CARNO_SD_METADATA = AWAITING_ART_SD_METADATA;
+/** 5장 감금조 — ZIP(enemy_015~018 · enemySD_015~018)의 alpha 경계와 관절을 실측한 값. */
+export const MAGASA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1054, imageHeight: 1492,
+  content: { left: 19, top: 37, right: 1038, bottom: 1411 },
+  joints: { center: [572, 384], head: [613, 288], eyes: [[576, 247], [636, 301]], feet: [[585, 1747], [947, 1802]] },
+};
+export const MAGASA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 57, top: 37, right: 1023, bottom: 1216 },
+  joints: { center: [691, 552], head: [730, 452], eyes: null, feet: [[590, 1184], [873, 1189]] },
+};
+export const NOA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1054, imageHeight: 1492,
+  content: { left: 30, top: 31, right: 1017, bottom: 1422 },
+  joints: { center: [562, 435], head: [625, 372], eyes: [[573, 328], [664, 365]], feet: [[440, 1498], [912, 1446]] },
+};
+export const NOA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 82, top: 51, right: 1119, bottom: 1201 },
+  joints: { center: [653, 650], head: [719, 507], eyes: null, feet: [[505, 1194], [884, 1205]] },
+};
+export const RAJA_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1122, imageHeight: 1402,
+  content: { left: 48, top: 22, right: 1047, bottom: 1368 },
+  joints: { center: [647, 332], head: [666, 239], eyes: [[631, 208], [691, 235]], feet: [[408, 1425], [989, 1376]] },
+};
+export const RAJA_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 92, top: 61, right: 1094, bottom: 1216 },
+  joints: { center: [653, 650], head: [719, 507], eyes: null, feet: [[505, 1194], [884, 1205]] },
+};
+export const CARNO_PORTRAIT_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1085, imageHeight: 1449,
+  content: { left: 52, top: 37, right: 1038, bottom: 1418 },
+  joints: { center: [555, 316], head: [574, 237], eyes: [[546, 215], [610, 230]], feet: [[137, 1692], [925, 2065]] },
+};
+export const CARNO_SD_METADATA: Omit<PuppetAsset, "url"> = {
+  imageWidth: 1254, imageHeight: 1254,
+  content: { left: 102, top: 57, right: 1224, bottom: 1212 },
+  joints: { center: [582, 585], head: [579, 480], eyes: null, feet: [[421, 1211], [727, 1218]] },
+};

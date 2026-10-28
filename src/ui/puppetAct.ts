@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import type { DialogueAct } from "../core/dialogue";
 import type { PuppetCreature } from "../puppets/assets";
 import { audioManager } from "../managers/AudioManager";
+import { pokeAct } from "./pokeMotion";
 import { DIALOGUE_ACTS, DIALOGUE_ACT_FILL, DIALOGUE_ACT_GLOW, actGlowSteps } from "./dialogueStageLayout";
 
 /**
@@ -114,4 +115,39 @@ export function playPuppetAct(
 function paintActGlow(creature: PuppetCreature, color: number, amount: number): void {
   creature.setBodyFill(color, amount * DIALOGUE_ACT_GLOW.bodyShare);
   creature.setAfterimages(actGlowSteps(color, amount));
+}
+
+/**
+ * 「누르면 뽀용」 한 벌 — 누를 때마다 다음 몸짓(`pokeAct`)을 튼다. 로비의 애착 렐릭·정보창·적 정보창의 전신이 함께 쓴다.
+ *
+ * 제자리는 **몸짓이 돌지 않을 때의 좌표**를 그 순간 읽어 둔다 — 감상 모드처럼 원화를 옮기는 화면이 있어 고정된 자리를
+ * 들고 다니면 어긋난다. 뛰는 중에 다시 누르면 처음 읽어 둔 자리에서 다시 뛴다(뛰는 중의 좌표를 읽으면 흘러내린다).
+ * 원화를 다른 트윈으로 옮기기 전에는 `cancel`로 끊는다 — 몸짓이 idle을 멈춰 둔 채 남으면 원화가 굳는다.
+ */
+export class PuppetPoker {
+  private handle?: PuppetActHandle;
+  private rest?: PuppetActRest;
+  private count = 0;
+
+  constructor(private readonly scene: Phaser.Scene, private readonly options: { scaleAmount?: number; floorY?: () => number | undefined } = {}) {}
+
+  poke(creature: PuppetCreature, factor: number): void {
+    if (!creature.active) return;
+    const rest = this.handle && this.rest ? this.rest : { x: creature.x, y: creature.y, scale: creature.scaleY };
+    this.cancel();
+    const floorY = this.options.floorY?.();
+    this.rest = { ...rest, scaleAmount: this.options.scaleAmount, floorOffset: floorY === undefined ? 0 : floorY - rest.y };
+    const handle = playPuppetAct(this.scene, creature, this.rest, pokeAct(this.count++), factor, () => {
+      if (this.handle === handle) this.handle = undefined;
+    });
+    this.handle = handle;
+  }
+
+  /** 도는 몸짓을 끊고 제자리로 되돌린다. */
+  cancel(creature?: PuppetCreature): void {
+    const rest = this.rest;
+    this.handle?.stop();
+    if (this.handle && creature?.active && rest) creature.setPosition(rest.x, rest.y);
+    this.handle = undefined;
+  }
 }

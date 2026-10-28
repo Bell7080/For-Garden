@@ -7,6 +7,8 @@ import { Button } from "./Button";
 import Phaser from "phaser";
 import type { PuppetAsset, PuppetCreature } from "../puppets/assets";
 import { powerSavingPolicy } from "../core/settings";
+import { PuppetPoker } from "./puppetAct";
+import { INFO_PORTRAIT_SQUISH } from "./pokeMotion";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { Combatant } from "../core/combatTypes";
 import { runePartLabel, runeRarityLabel, type RunePart } from "../core/runes";
@@ -25,7 +27,6 @@ import {
   battleAssetFor,
   enableHitOnClick,
   placePuppet,
-  playMotion,
   PuppetSpawnCancelled,
   portraitAssetForSkin,
   sdAssetForSkin,
@@ -511,6 +512,8 @@ export class InfoManager {
   private currentDef?: RelicDef;
   private ownedNow = true;
   private portrait?: PuppetCreature;
+  /** 전신을 누르면 뽀용·띠용 — 로비의 애착 렐릭과 같은 한 벌. */
+  private portraitPoker?: PuppetPoker;
   private portraitWanted = false;
   private portraitRequest = 0;
   /** 지금 선 전신·SD가 어느 원화인가. 같은 원화면 다시 열 때 새로 세우지 않는다. */
@@ -613,9 +616,10 @@ export class InfoManager {
     const body = scene.add
       .rectangle(PORTRAIT_FOCUS.x, PORTRAIT_FOCUS.y, 340, 620, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
+    this.portraitPoker = new PuppetPoker(scene, { scaleAmount: INFO_PORTRAIT_SQUISH });
     body.on("pointerup", () => {
       if (!this.portrait) return;
-      playMotion(scene, this.portrait, "hit");
+      this.portraitPoker?.poke(this.portrait, motionPolicy(session.settings).nonEssentialDistanceFactor);
       audioManager?.playUi("relic.poke");
     });
     this.root.add(body);
@@ -1574,6 +1578,7 @@ export class InfoManager {
       ? portraitAssetForSkin(def.portraitAssetId, this.publicProfile.equippedSkinId)
       : relicAppearanceManager.portraitAssetFor(def.id);
     const portrait = this.portrait;
+    this.portraitPoker?.cancel(portrait);
     // 되돌아오는 트윈이 아직 돌고 있으면 여기서 끊는다. 그대로 두면 감상 중에도 원화가
     // 제자리를 향해 계속 움직인다.
     this.scene.tweens.killTweensOf(portrait);
@@ -1608,6 +1613,7 @@ export class InfoManager {
     // 원화 크기가 그대로인 이유가 여기에 있다.
     const home = this.portraitHome;
     if (portrait && home) {
+      this.portraitPoker?.cancel(portrait);
       this.scene.tweens.killTweensOf(portrait);
       this.scene.tweens.add({ targets: portrait, x: home.x, y: home.y, scale: home.scale, duration: 320, ease: "Cubic.Out" });
     }
@@ -1887,6 +1893,7 @@ export class InfoManager {
     // 정보창의 전신 애니메이션만 절전하며 탭과 입력 반응은 원래 속도를 유지한다.
     portrait.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
     if (request !== this.portraitRequest) { portrait.destroy(); return; }
+    this.portraitPoker?.cancel();
     this.portrait?.destroy();
     this.portrait = portrait;
     this.portraitUrl = asset.url;
@@ -2149,7 +2156,7 @@ export class InfoManager {
       this.closing = false;
       this.scene.tweens.killTweensOf([this.root, this.chrome]);
       this.root.setAlpha(1); this.chrome.setAlpha(1);
-      if (this.portrait) { this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
+      if (this.portrait) { this.portraitPoker?.cancel(this.portrait); this.scene.tweens.killTweensOf(this.portrait); this.portrait.setAlpha(this.portraitAlpha()); }
       if (this.figure) { this.scene.tweens.killTweensOf(this.figure); this.figure.setAlpha(this.portraitAlpha()); }
     }
     this.root.setVisible(true);

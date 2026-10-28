@@ -44,8 +44,8 @@ import { notificationManager } from "../managers/NotificationManager";
 import { MissionsPopup } from "../ui/MissionsPopup";
 import { AchievementsPopup } from "../ui/AchievementsPopup";
 import { LOBBY_PORTRAIT_SPOT, lobbyPortraitPlacement } from "../ui/portraitPlacement";
-import { LOBBY_FAVORITE_ENTRANCE, LOBBY_FAVORITE_SQUISH, lobbyFavoriteAct, lobbyFavoriteGhosts } from "../ui/lobbyFavoriteMotion";
-import { playPuppetAct, type PuppetActHandle } from "../ui/puppetAct";
+import { LOBBY_FAVORITE_ENTRANCE, LOBBY_FAVORITE_SQUISH, lobbyFavoriteGhosts } from "../ui/pokeMotion";
+import { PuppetPoker } from "../ui/puppetAct";
 import { LOBBY_ACTION_BOUNDS, LOBBY_BOND_MARK, LOBBY_DIALOGUE, LOBBY_RAIL_BOUNDS } from "../ui/lobbyLayout";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { showBondGain, type BondGain } from "../ui/bondGainMark";
@@ -186,14 +186,10 @@ export class LobbyScene extends Phaser.Scene {
   private atmosphere?: LobbyAtmosphere;
   /** 같은 방문 중 반복 터치의 대사 변형 순번이며 보상 중복 판정은 서버 날짜가 담당한다. */
   private interactionIndex = 0;
-  /** 애착 렐릭을 누른 횟수 — 몸짓 차례(`lobbyFavoriteAct`)를 고른다. */
-  private pokeIndex = 0;
-  /** 지금 도는 애착 렐릭의 몸짓. 다시 누르면 끊고 제자리에서 새로 뛴다. */
-  private favoriteAct?: PuppetActHandle;
+  /** 애착 렐릭을 누르면 뽀용·띠용 — 정보창과 같은 한 벌(`PuppetPoker`). 발끝까지 선 전신이라 바닥을 붙잡는다. */
+  private readonly favoritePoker = new PuppetPoker(this, { scaleAmount: LOBBY_FAVORITE_SQUISH, floorY: () => LOBBY_PORTRAIT_SPOT.floor });
   /** 애착 렐릭이 들어서는 연출. 끝나기 전에 누르면 곧바로 완성된 자리로 세우고 몸짓을 튼다. */
   private favoriteEntrance?: Phaser.Tweens.Tween;
-  /** 애착 렐릭의 제자리. 몸짓은 늘 여기서 시작해 여기로 끝난다(뛰는 중의 좌표를 읽으면 조금씩 흘러내린다). */
-  private favoriteRest?: { x: number; y: number; scale: number };
   private interactionPending = false;
   /** 로비의 말 한 장. 누를 때마다 갈아 끼우므로 씬이 하나만 들고 있는다. */
   private dialogue?: DialogueBubble;
@@ -1099,8 +1095,7 @@ export class LobbyScene extends Phaser.Scene {
     // 현재 가드는 종료된 씬에서 비동기 Puppet 결과가 되살아나는 것을 막고 최신 요청만 남긴다.
     if (request !== this.favoriteRequest || !this.scene.isActive()) { nextFavorite.destroy(); return; }
     // 교체가 확정된 뒤 이전 Puppet을 파괴해 로비에는 언제나 최신 외형 하나만 남긴다.
-    this.favoriteAct?.stop();
-    this.favoriteAct = undefined;
+    this.favoritePoker.cancel();
     this.favoriteEntrance?.stop();
     this.favoriteEntrance = undefined;
     this.favorite?.destroy();
@@ -1125,7 +1120,6 @@ export class LobbyScene extends Phaser.Scene {
   private fadeInFavorite(creature: PuppetCreature): void {
     const factor = motionPolicy(session.settings).nonEssentialDistanceFactor;
     const restY = creature.y;
-    this.favoriteRest = { x: creature.x, y: restY, scale: creature.scaleY };
     const { durationMs, rise } = LOBBY_FAVORITE_ENTRANCE;
     const progress = { value: 0 };
     const paint = (): void => {
@@ -1153,23 +1147,13 @@ export class LobbyScene extends Phaser.Scene {
 
   /** 누를 때마다 다음 몸짓으로 톡 반응한다. 들어서는 중이면 그 연출을 끝낸 자리에서 뛴다. */
   private pokeFavorite(creature: PuppetCreature): void {
-    const rest = this.favoriteRest;
-    if (!creature.active || !rest) return;
-    this.favoriteAct?.stop();
+    if (!creature.active) return;
     if (this.favoriteEntrance) {
-      this.favoriteEntrance.stop();
+      // 들어서는 중이면 그 연출을 끝낸 자리에서 뛴다.
+      this.favoriteEntrance.complete();
       this.favoriteEntrance = undefined;
-      creature.setAlpha(1).setAfterimages([]);
     }
-    const handle = playPuppetAct(
-      this,
-      creature,
-      { ...rest, floorOffset: LOBBY_PORTRAIT_SPOT.floor - rest.y, scaleAmount: LOBBY_FAVORITE_SQUISH },
-      lobbyFavoriteAct(this.pokeIndex++),
-      motionPolicy(session.settings).nonEssentialDistanceFactor,
-      () => { if (this.favoriteAct === handle) this.favoriteAct = undefined; },
-    );
-    this.favoriteAct = handle;
+    this.favoritePoker.poke(creature, motionPolicy(session.settings).nonEssentialDistanceFactor);
   }
 
   /** 몸짓 반응과 함께 짧은 대사 및 서버가 확정한 일일 유대 결과를 표시한다. */

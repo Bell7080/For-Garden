@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { DIALOGUE_ACTS } from "../../src/ui/dialogueStageLayout";
-import { LOBBY_FAVORITE_ACTS, LOBBY_FAVORITE_ENTRANCE, lobbyFavoriteAct, lobbyFavoriteGhosts } from "../../src/ui/lobbyFavoriteMotion";
+import { POKE_ACTS, LOBBY_FAVORITE_ENTRANCE, pokeAct, lobbyFavoriteGhosts } from "../../src/ui/pokeMotion";
 import { TITLE_EXIT_GUARD_MS, TRANSITION, transitionTiming } from "../../src/core/screenTransition";
 
 describe("로비 애착 렐릭의 등장·몸짓", () => {
   it("잔상은 들어서는 동안만 그리고 끝나면 비운다", () => {
     expect(lobbyFavoriteGhosts(0, 1)).toHaveLength(LOBBY_FAVORITE_ENTRANCE.ghosts.length);
     expect(lobbyFavoriteGhosts(1, 1)).toEqual([]);
+    // 흰빛 잔상은 눈이 부셨다 — 검은 잔상이다.
+    expect(lobbyFavoriteGhosts(0.2, 1).every((ghost) => ghost.color === 0x000000)).toBe(true);
     // 움직임 줄이기에서는 잔상이 없다.
     expect(lobbyFavoriteGhosts(0.2, 0)).toEqual([]);
   });
@@ -22,11 +24,11 @@ describe("로비 애착 렐릭의 등장·몸짓", () => {
   });
 
   it("누를 때마다 대사 화면의 몸짓을 차례로 돈다", () => {
-    for (const act of LOBBY_FAVORITE_ACTS) expect(DIALOGUE_ACTS[act]).toBeDefined();
-    expect(lobbyFavoriteAct(0)).toBe("bounce");
-    expect(lobbyFavoriteAct(1)).toBe("recoil");
-    expect(lobbyFavoriteAct(LOBBY_FAVORITE_ACTS.length)).toBe(lobbyFavoriteAct(0));
-    expect(lobbyFavoriteAct(-1)).toBe(LOBBY_FAVORITE_ACTS[LOBBY_FAVORITE_ACTS.length - 1]);
+    for (const act of POKE_ACTS) expect(DIALOGUE_ACTS[act]).toBeDefined();
+    expect(pokeAct(0)).toBe("bounce");
+    expect(pokeAct(1)).toBe("recoil");
+    expect(pokeAct(POKE_ACTS.length)).toBe(pokeAct(0));
+    expect(pokeAct(-1)).toBe(POKE_ACTS[POKE_ACTS.length - 1]);
   });
 });
 

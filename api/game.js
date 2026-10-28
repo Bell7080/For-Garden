@@ -1110,8 +1110,6 @@ var FRIENDS_KO = {
   "friends.remove.title": "\uCE5C\uAD6C \uC0AD\uC81C",
   "friends.remove.message": "{name:\uC744} \uCE5C\uAD6C\uC5D0\uC11C \uC0AD\uC81C\uD560\uAE4C\uC694?",
   "friends.remove.confirm": "\uC0AD\uC81C",
-  "friends.error.title": "\uC54C\uB9BC",
-  "friends.error.ok": "\uD655\uC778",
   "friends.error.friendLimit": "\uCE5C\uAD6C \uC218\uAC00 \uAC00\uB4DD \uCC28 \uB354 \uC218\uB77D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "friends.error.requestLimit": "\uBCF4\uB0B8 \uC2E0\uCCAD\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4.",
   "friends.error.alreadyFriend": "\uC774\uBBF8 \uCE5C\uAD6C\uC785\uB2C8\uB2E4.",
@@ -1332,7 +1330,9 @@ var GUILD_KO = {
   "guild.war.empty": "\uBE48 \uCE78",
   "guild.guard.next": "\uB2E4\uC74C \uD310\uAE4C\uC9C0 {time}",
   "guild.guard.today": "\uC624\uB298\uC758 \uC801 \xB7 {element} \uC18D\uC131",
-  "guild.guard.status": "\uB0A8\uC740 \uB3C4\uC804 {left}/{total} \xB7 \uC624\uB298 \uCD5C\uACE0 {best}",
+  "guild.guard.best": "\uC624\uB298 \uCD5C\uACE0 \uC810\uC218",
+  "guild.guard.attempts": "\uB0A8\uC740 \uB3C4\uC804 {left}/{total}",
+  "guild.guard.elite": "\uC815\uC608",
   "guild.guard.start": "\uCD9C\uACA9",
   "guild.guard.tab.members": "\uAE38\uB4DC\uC6D0 \uC21C\uC704",
   "guild.guard.tab.guilds": "\uAE38\uB4DC \uC21C\uC704",
@@ -1761,9 +1761,7 @@ var INVENTORY_KO = {
   "inventory.source.shops": "\uC0C1\uC810",
   "inventory.source.ad": "\uAD11\uACE0 \uBCF4\uC0C1",
   "inventory.useButton": "\uC0AC\uC6A9\uD558\uAE30",
-  "inventory.useDone": "\uC0AC\uC6A9 \uC644\uB8CC",
   "inventory.staminaGained": "\uC2A4\uD14C\uBBF8\uB098 +{amount}",
-  "inventory.useFailed": "\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC74C",
   "inventory.staminaFull": "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4",
   "stamina.sources": "\uD68D\uB4DD\uCC98",
   "stamina.uses": "\uC0AC\uC6A9\uCC98",
@@ -3695,14 +3693,14 @@ function canGrantRuneTraitAtLeast(trait, minimumGrade) {
 }
 var DEFAULT_LEGENDARY_EXCLUSIVE_SHARE = 0.35;
 function pickRuneTraitId(pool, grade, random, exclusiveShare = DEFAULT_LEGENDARY_EXCLUSIVE_SHARE) {
-  const eligible2 = pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
+  const eligible = pool.filter((entry) => RUNE_TRAIT_GRADES.indexOf(entry.minGrade) <= RUNE_TRAIT_GRADES.indexOf(grade));
   if (grade === "legendary") {
-    const exclusive = eligible2.filter((entry) => entry.minGrade === "legendary");
-    const general = eligible2.filter((entry) => entry.minGrade !== "legendary");
+    const exclusive = eligible.filter((entry) => entry.minGrade === "legendary");
+    const general = eligible.filter((entry) => entry.minGrade !== "legendary");
     const useExclusive = exclusive.length > 0 && (general.length === 0 || random() < exclusiveShare);
     return pick((useExclusive ? exclusive : general).map(({ id }) => id), random());
   }
-  return pick(eligible2.map(({ id }) => id), random());
+  return pick(eligible.map(({ id }) => id), random());
 }
 function pick(pool, random) {
   if (pool.length === 0) throw new RangeError("\uD2B9\uC131 \uD480\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.");
@@ -4820,22 +4818,27 @@ var GUILD_GUARD = {
   frontSlots: [0, 1, 2],
   backSlots: [3, 4, 5],
   /** 필드에 동시에 선 적이 이만큼에 닿으면 방어선이 무너진 것이다. */
-  overrunCap: 24,
-  /** 웨이브 사이. 필드가 먼저 비면 `emptyFieldDelay` 뒤에 다음 웨이브를 당겨 온다. */
-  waveIntervalSeconds: 12,
-  emptyFieldDelay: 1.5,
+  overrunCap: 32,
+  /**
+   * 웨이브 사이. 필드가 먼저 비면 `emptyFieldDelay` 뒤에 다음 웨이브를 당겨 온다. 필드가 비어 아군이 서 있는 시간이
+   * 길지 않도록 짧게 둔다(2026-10-28 응태 요청 — 12초 · 1.5초 → 8초 · 0.5초).
+   */
+  waveIntervalSeconds: 8,
+  emptyFieldDelay: 0.5,
   /** 첫 웨이브는 전원이 서고 잠깐 숨을 고른 뒤에 내려온다. */
   firstWaveAt: 0,
   /** 서버 재현 길이를 묶는 바닥. 여기까지 버티면 "버텨냄"으로 끝난다(점수는 그대로). */
   timeLimitSeconds: 300,
   /** 미리 짜 두는 웨이브 수. 시간 안에 이보다 많이 올 수 없다(당겨 와도). */
-  maxWaves: 60,
+  maxWaves: 80,
   startLevel: 1,
-  levelPerWave: 3,
+  /** 웨이브가 잦아진 만큼 한 웨이브의 레벨 몫을 줄여 시간당 오르는 레벨(초당 0.25)은 예전과 같게 둔다. */
+  levelPerWave: 2,
   maxLevel: 100,
-  /** 무리 머릿수: 3 + 웨이브의 삼분의 일, 상한 8. */
-  gruntBase: 3,
-  gruntCap: 8,
+  /** 무리 머릿수: 5 + 웨이브의 삼분의 일, 상한 12. */
+  gruntBase: 5,
+  gruntPerWaves: 3,
+  gruntCap: 12,
   /** 정예는 셋째 웨이브부터 세 웨이브마다. 아홉 웨이브마다 하나씩 더 선다. */
   eliteEvery: 3,
   eliteExtraEvery: 9,
@@ -4848,7 +4851,7 @@ function guardWaveLevel(index) {
   return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
 }
 function guardWaveCounts(index) {
-  const grunts = Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / 3));
+  const grunts = Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
   const elites = index >= GUILD_GUARD.eliteEvery && index % GUILD_GUARD.eliteEvery === 0 ? 1 + Math.floor((index - GUILD_GUARD.eliteEvery) / GUILD_GUARD.eliteExtraEvery) : 0;
   return { grunts, elites };
 }
@@ -4883,7 +4886,15 @@ function buildGuardWaves(roster) {
   return Array.from({ length: GUILD_GUARD.maxWaves }, (_, i) => buildGuardWave(roster, i + 1));
 }
 var GUILD_GUARD_ARENA = { left: 110, right: 970, top: 600, bottom: 1300 };
-var GUILD_GUARD_ENTRY_Y = -140;
+var GUILD_GUARD_ENTRY_Y = 490;
+var GUILD_GUARD_SIDE_BAND = { top: 640, bottom: 940 };
+var SIDE_ENTRY_OUTSET = 220;
+var GUILD_GUARD_IDLE = { pullX: 0.25, liftY: 110, standRadius: 230, arriveRadius: 60 };
+function guildGuardIdleSpot(slot) {
+  const spot = guildGuardSlotSpot(slot);
+  const centerX = (GUILD_GUARD_ARENA.left + GUILD_GUARD_ARENA.right) / 2;
+  return { x: Math.round(spot.x + (centerX - spot.x) * GUILD_GUARD_IDLE.pullX), y: spot.y - GUILD_GUARD_IDLE.liftY };
+}
 function guildGuardSlotSpot(slot) {
   if (!Number.isInteger(slot) || slot < 0 || slot >= GUILD_GUARD.slots) throw new RangeError("\uC218\uD638\uC804 \uCE78\uC740 0~5\uC785\uB2C8\uB2E4.");
   const column = slot % 3;
@@ -4903,14 +4914,24 @@ function guildGuardHordeSpec(roster) {
 }
 function hordeEntrySpots(arena, entryY, count2, wave) {
   const width = arena.right - arena.left;
-  const perRow = 5;
+  const sides = ["top", "left", "right"];
+  const seen = { top: 0, left: 0, right: 0 };
   return Array.from({ length: count2 }, (_, i) => {
-    const row = Math.floor(i / perRow);
-    const column = i % perRow;
-    const jitter = ((wave * 37 + i * 53) % 100 / 100 - 0.5) * 0.12;
-    const shift = row % 2 === 0 ? 0 : 0.09;
-    const ratio = Math.min(0.95, Math.max(0.05, 0.1 + 0.8 * column / (perRow - 1) + shift + jitter));
-    return { x: Math.round(arena.left + width * ratio), y: entryY - row * 90 };
+    const from = sides[(i + wave) % sides.length];
+    const k = seen[from]++;
+    const jitter = (wave * 37 + i * 53) % 100 / 100;
+    if (from === "top") {
+      const perRow = 5;
+      const row = Math.floor(k / perRow);
+      const column = k % perRow;
+      const shift = row % 2 === 0 ? 0 : 0.09;
+      const ratio = Math.min(0.95, Math.max(0.05, 0.1 + 0.8 * column / (perRow - 1) + shift + (jitter - 0.5) * 0.12));
+      return { x: Math.round(arena.left + width * ratio), y: entryY - row * 40, from };
+    }
+    const band = GUILD_GUARD_SIDE_BAND;
+    const y = Math.round(band.top + (band.bottom - band.top) * ((jitter + k * 0.37) % 1));
+    const out = SIDE_ENTRY_OUTSET + k * 90;
+    return { x: from === "left" ? arena.left - out : arena.right + out, y, from };
   });
 }
 function guildGuardDayKey(now) {
@@ -5394,6 +5415,7 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
 }
 var MAX_ENEMY_COUNT = 25;
 var HORDE_ENTRY_SPEED = 150;
+var HORDE_SIDE_ENTRY_SPEED = 900;
 var HORDE_ROW = 5;
 var HORDE_ROW_GAP = 64;
 function spawnSpots(arena, side, count2 = 3) {
@@ -10791,12 +10813,13 @@ function separate(state, dt) {
 }
 function clampToArena(state) {
   for (const fighter of state.fighters) {
-    fighter.x = Math.min(Math.max(fighter.x, state.arena.left), state.arena.right);
     if (fighter.hordeEntering) {
-      if (fighter.y >= state.arena.top) fighter.hordeEntering = false;
+      const inside = fighter.y >= state.arena.top && fighter.x >= state.arena.left && fighter.x <= state.arena.right;
+      if (inside) fighter.hordeEntering = false;
       fighter.y = Math.min(fighter.y, state.arena.bottom);
       continue;
     }
+    fighter.x = Math.min(Math.max(fighter.x, state.arena.left), state.arena.right);
     const top = Math.max(state.arena.top, fighter.leashTop ?? state.arena.top);
     fighter.y = Math.min(Math.max(fighter.y, top), state.arena.bottom);
   }
@@ -11373,7 +11396,11 @@ function advance(state, dt, rng, events) {
     if (fighter.hordeEntering) {
       fighter.targetId = null;
       fighter.engaged = false;
-      fighter.y += Math.max(HORDE_ENTRY_SPEED, fighter.def.stats.moveSpeed * 1.5) * dt;
+      if (fighter.hordeEntry === "left" || fighter.hordeEntry === "right") {
+        const dir = fighter.hordeEntry === "left" ? 1 : -1;
+        fighter.x += dir * HORDE_SIDE_ENTRY_SPEED * dt;
+        fighter.facing = dir;
+      } else fighter.y += Math.max(HORDE_ENTRY_SPEED, fighter.def.stats.moveSpeed * 1.5) * dt;
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
       continue;
     }
@@ -11392,7 +11419,10 @@ function advance(state, dt, rng, events) {
     const drone = fighter.def.passive.kind === "highAltitudeRecon";
     const droneAim = drone ? pickDroneTarget(state, fighter) : void 0;
     const target = droneAim ?? resolveTarget(state, fighter, reconsider);
-    if (!target) continue;
+    if (!target) {
+      if (fighter.idleHome) idleTowardHome(fighter, dt, state);
+      continue;
+    }
     if (droneAim) fighter.targetId = droneAim.id;
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
@@ -11745,6 +11775,22 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
   settle(state, events);
   return events;
 }
+function idleTowardHome(fighter, dt, state) {
+  const home = fighter.idleHome;
+  if (!home || fighter.knockback) return;
+  const dx = home.x - fighter.x;
+  const dy = home.y - fighter.y;
+  const gap = Math.hypot(dx, dy);
+  if (!fighter.idleReturning && gap > GUILD_GUARD_IDLE.standRadius) fighter.idleReturning = true;
+  if (fighter.idleReturning && gap <= GUILD_GUARD_IDLE.arriveRadius) fighter.idleReturning = false;
+  if (!fighter.idleReturning) return;
+  const step2 = Math.min(gap, moveSpeed(fighter, state) * dt);
+  fighter.x += dx / gap * step2;
+  fighter.y += dy / gap * step2;
+  if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
+  fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
+  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+}
 function advanceHorde(state, events) {
   const horde = state.horde;
   if (!horde) return;
@@ -11767,6 +11813,7 @@ function advanceHorde(state, events) {
       const fighter = makeFighter(unit.def, "enemy", horde.serial, spots[i].x, spots[i].y, 0, 0, unit.bodyScale, state.enemyAugmentEffects ?? []);
       horde.serial += 1;
       fighter.hordeEntering = true;
+      fighter.hordeEntry = spots[i].from;
       fighter.hordeScore = unit.score;
       state.fighters.push(fighter);
       ids.push(fighter.id);
@@ -32105,9 +32152,9 @@ var GUILD_SHOP_PRODUCTS = [
 ];
 var findGuildProduct = (id) => GUILD_SHOP_PRODUCTS.find((p) => p.id === id);
 function guildSuccessor(members) {
-  const eligible2 = members.filter((m) => m.role === "vice" || m.role === "officer");
-  eligible2.sort((a, b) => b.contributionTotal - a.contributionTotal || ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.joinedAt - b.joinedAt || a.userId.localeCompare(b.userId));
-  return eligible2[0]?.userId ?? null;
+  const eligible = members.filter((m) => m.role === "vice" || m.role === "officer");
+  eligible.sort((a, b) => b.contributionTotal - a.contributionTotal || ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.joinedAt - b.joinedAt || a.userId.localeCompare(b.userId));
+  return eligible[0]?.userId ?? null;
 }
 
 // src/core/guildBadge.ts
@@ -33069,8 +33116,8 @@ var FakeGuildServer = class _FakeGuildServer {
           const coinOf = /* @__PURE__ */ new Map();
           const attackers = match.attackers.get(self) ?? /* @__PURE__ */ new Set();
           for (const member of guild.members.values()) {
-            const eligible2 = outcome === "bye" ? guildWarCanAttack(member.joinedAt, day * 864e5) : attackers.has(member.userId);
-            if (!eligible2 || GUILD_WAR_COIN[outcome] <= 0) continue;
+            const eligible = outcome === "bye" ? guildWarCanAttack(member.joinedAt, day * 864e5) : attackers.has(member.userId);
+            if (!eligible || GUILD_WAR_COIN[outcome] <= 0) continue;
             member.coin += GUILD_WAR_COIN[outcome];
             coinOf.set(member.userId, GUILD_WAR_COIN[outcome]);
           }
@@ -33380,9 +33427,11 @@ function createGuildGuardSkirmish(lineup, defs, roster) {
       augmentEffects: traits
     }
   );
-  filled.forEach((_, index) => {
+  filled.forEach(({ slot }, index) => {
     const fighter = state.fighters.find(({ id }) => id === `player-${index}`);
-    if (fighter) fighter.leashTop = spots[index].leashTop;
+    if (!fighter) return;
+    fighter.leashTop = spots[index].leashTop;
+    fighter.idleHome = guildGuardIdleSpot(slot);
   });
   return state;
 }
@@ -33454,15 +33503,16 @@ function replayGuildWar(attack, defense, defs, seed) {
 
 // src/data/guildGuard.ts
 init_define_import_meta_env();
-var RAID_BOSSES = /* @__PURE__ */ new Set(["pontos", "taboa", "sukusuino", "quetzalcoatlus"]);
-function eligible(def) {
-  return def.summonOnly !== true && !RAID_BOSSES.has(def.id) && (def.summons?.length ?? 0) === 0;
-}
+var GUILD_GUARD_ROSTER_IDS = {
+  fire: { grunts: ["raitia-fire", "pulsi"], elites: ["toby"] },
+  earth: { grunts: ["raitia-earth", "mir"], elites: ["amo"] },
+  water: { grunts: ["raitia-water", "neuri"], elites: ["ripa"] },
+  grass: { grunts: ["raitia-grass"], elites: ["koma", "atra"] },
+  wind: { grunts: ["raitia-wind"], elites: ["ikanixia"] }
+};
 function guildGuardRoster(element) {
-  const pool = RELICS.filter((def) => def.element === element && eligible(def));
-  const grunts = pool.filter((def) => def.rarity === "R" || def.id.startsWith("raitia-"));
-  const elites = pool.filter((def) => (def.rarity === "SR" || def.rarity === "SSR") && !def.id.startsWith("raitia-"));
-  return { grunts, elites };
+  const ids = GUILD_GUARD_ROSTER_IDS[element];
+  return { grunts: ids.grunts.map((id) => getRelic(id)), elites: ids.elites.map((id) => getRelic(id)) };
 }
 
 // src/data/mileageClerk.ts

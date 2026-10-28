@@ -42,7 +42,7 @@ export interface RankChip {
 /** 왼쪽 위 「순위」 칩 + 그 오른쪽의 내 등수. 누르면 그 화면의 순위표가 열린다. */
 export function addRankChip(scene: Phaser.Scene, parent: Phaser.GameObjects.Container | null, x: number, y: number, options: RankChipOptions): RankChip {
   const size = options.size ?? RANKING_CHIP_SIZE;
-  const chip = new RailButton(scene, x, y, { icon: "arena-tier", label: t("duel.link.ranking"), size, onClick: options.onClick });
+  const chip = new RailButton(scene, x, y, { icon: "ranking", label: t("duel.link.ranking"), size, onClick: options.onClick });
   const text = scene.add.text(x + size / 2 + 18, y, "", textStyle({ role: "display", size: 30, color: options.rankColor ?? COLOR.accentText }))
     .setOrigin(0, 0.5).setStroke("#05070a", 6);
   parent?.add([chip, text]);

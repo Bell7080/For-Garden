@@ -1,8 +1,6 @@
 /** 화면 조작에 쓰는 공용 아이콘. 스킬 아이콘과 달리 캐릭터 데이터와 무관하다. */
 export const UI_ICON = {
   back: "ui-icon-back",
-  /** 로비 가방과 인벤토리 작업판을 잇는 전용 홀로그램 픽토그램. */
-  bag: "ui-icon-bag",
   /** 지층 탐사의 남은 횟수를 말하는 곡괭이. 재화가 아니라 조작 횟수다. */
   pickaxe: "ui-icon-pickaxe",
   /** 유적에 들어가는 횟수. 한 판 안에서 휘두르는 곡괭이와 같은 그림을 쓰지 않도록 발굴권(입장권) 그림으로 선다. */
@@ -21,7 +19,6 @@ export type UiIconKey = (typeof UI_ICON)[keyof typeof UI_ICON];
  */
 export const UI_ICON_ASSETS: ReadonlyArray<readonly [UiIconKey, string, number]> = [
   [UI_ICON.back, "sprites/ui/back.svg", 96],
-  [UI_ICON.bag, "sprites/ui/bag.svg", 96],
 ];
 
 /**

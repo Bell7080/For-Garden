@@ -121,7 +121,7 @@ describe("라자 「철권」·「감방 서열」·「철창 부수기」", () 
     foes[0].taunted = { remaining: 60, total: 60, sourceId: hero.id };
     run(state, 20);
     expect(hero.shield.amount).toBeGreaterThan(0);
-    expect(hero.shield.amount).toBeLessThanOrEqual(hero.maxHp * 0.15 + 1e-6);
+    expect(hero.shield.amount).toBeLessThanOrEqual(hero.maxHp * getRelic("raja").passive.cellRank!.capMaxHpPercent / 100 + 1e-6);
   });
 });
 

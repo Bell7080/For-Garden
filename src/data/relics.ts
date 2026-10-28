@@ -3689,14 +3689,14 @@ export const RELICS: RelicDef[] = [
     role: "tank",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
-    /* R 띠의 가운데다(2154). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다. */
+    /* R 띠의 위쪽이다(2197). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
     stats: {
       hp: 1400,
       def: 92,
       res: 72,
       atk: 110,
-      ap: 20,
-      attackSpeed: 70,
+      ap: 15, // v0.391.2: 공속을 올린 몫(+60)을 띠 안에 두려고 쓰지 않는 주문력에서 덜었다.
+      attackSpeed: 90, // v0.391.2 응태 요청: 70 → 90
       moveSpeed: 64,
       critChance: 10,
       critDamage: 150,
@@ -3712,21 +3712,22 @@ export const RELICS: RelicDef[] = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번 맞을 때 얻는 보호막(최대 체력 %)을 담아 둔다.
-      value: 1.5,
-      cellRank: { shieldMaxHpPercent: 1.5, intervalSeconds: 1, capMaxHpPercent: 15 },
+      value: 2.5,
+      // v0.391.2 응태 요청: 한 번 1.5% → 2.5%, 상한 15% → 20%.
+      cellRank: { shieldMaxHpPercent: 2.5, intervalSeconds: 1, capMaxHpPercent: 20 },
       desc: "도발이 걸린 적에게 맞을 때마다 보호막을 얻는다.",
     },
     basic: {
       id: "raja-basic",
       name: "철권",
-      power: 100,
+      power: 130, // v0.391.2 응태 요청: 100 → 130
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
       // 매 타 경직, 네 번째마다 호령 — 주위를 도발하고 막을 두른다. 도발과 막은 궁극기가 아니라 이 호령이 맡는다.
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
-      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 8 },
+      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 12 }, // v0.391.2: 호령 막 8% → 12%
     },
     ultimate: {
       id: "raja-ult",

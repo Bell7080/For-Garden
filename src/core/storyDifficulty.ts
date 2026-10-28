@@ -11,11 +11,11 @@ export const STORY_DIFFICULTY = {
 /**
  * **장 배율 — 장마다 오각형 다섯에 한 번 더 곱한다**(응태 결정, v0.391.0). 레벨 사다리가 60에서 멈춰
  * 4장 이후 적 하나의 전투력이 거의 평평했고(3장 3,400 → 7장 4,600), 그사이 플레이어는 룬·유대로 계속 자라
- * 5-10을 무손실로 넘겼다. 1장 1.0 · 2장 1.1 · 3장 1.2 · 4장 1.4 · 5장 1.8 · 6장 2.2 · 7장 2.6(같은 폭으로 이어 붙인 값).
+ * 5-10을 무손실로 넘겼다. 1장 1.0 · 2장 1.1 · 3장 1.2 · 4장 1.3 · 5장 1.5 · 6장 1.7 · 7장 2.0(v0.391.2 응태 조정).
  * 장마다 하나이고 관문별 예외는 두지 않는다. 난이도 배율(`statFactor`)과 곱하며 공속·이속·치명타·스킬은 바꾸지 않는다.
  * 체감하며 조정하는 값이라 이 표 하나만 고친다.
  */
-export const STORY_CHAPTER_STAT_FACTOR: Readonly<Record<number, number>> = { 2: 1.1, 3: 1.2, 4: 1.4, 5: 1.8, 6: 2.2, 7: 2.6 };
+export const STORY_CHAPTER_STAT_FACTOR: Readonly<Record<number, number>> = { 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.5, 6: 1.7, 7: 2 };
 export function storyChapterStatFactor(chapter: number | undefined): number {
   return STORY_CHAPTER_STAT_FACTOR[chapter ?? 0] ?? 1;
 }

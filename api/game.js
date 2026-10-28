@@ -16475,14 +16475,16 @@ var RELICS = [
     role: "tank",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-    /* R 띠의 가운데다(2154). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다. */
+    /* R 띠의 위쪽이다(2197). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
     stats: {
       hp: 1400,
       def: 92,
       res: 72,
       atk: 110,
-      ap: 20,
-      attackSpeed: 70,
+      ap: 15,
+      // v0.391.2: 공속을 올린 몫(+60)을 띠 안에 두려고 쓰지 않는 주문력에서 덜었다.
+      attackSpeed: 90,
+      // v0.391.2 응태 요청: 70 → 90
       moveSpeed: 64,
       critChance: 10,
       critDamage: 150,
@@ -16498,21 +16500,24 @@ var RELICS = [
       iconAssetId: "skill-icon-buff",
       effectType: "buff",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 한 번 맞을 때 얻는 보호막(최대 체력 %)을 담아 둔다.
-      value: 1.5,
-      cellRank: { shieldMaxHpPercent: 1.5, intervalSeconds: 1, capMaxHpPercent: 15 },
+      value: 2.5,
+      // v0.391.2 응태 요청: 한 번 1.5% → 2.5%, 상한 15% → 20%.
+      cellRank: { shieldMaxHpPercent: 2.5, intervalSeconds: 1, capMaxHpPercent: 20 },
       desc: "\uB3C4\uBC1C\uC774 \uAC78\uB9B0 \uC801\uC5D0\uAC8C \uB9DE\uC744 \uB54C\uB9C8\uB2E4 \uBCF4\uD638\uB9C9\uC744 \uC5BB\uB294\uB2E4."
     },
     basic: {
       id: "raja-basic",
       name: "\uCCA0\uAD8C",
-      power: 100,
+      power: 130,
+      // v0.391.2 응태 요청: 100 → 130
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
       // 매 타 경직, 네 번째마다 호령 — 주위를 도발하고 막을 두른다. 도발과 막은 궁극기가 아니라 이 호령이 맡는다.
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
-      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 8 }
+      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 12 }
+      // v0.391.2: 호령 막 8% → 12%
     },
     ultimate: {
       id: "raja-ult",
@@ -19077,7 +19082,7 @@ var STORY_DIFFICULTY = {
   normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
   hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
 };
-var STORY_CHAPTER_STAT_FACTOR = { 2: 1.1, 3: 1.2, 4: 1.4, 5: 1.8, 6: 2.2, 7: 2.6 };
+var STORY_CHAPTER_STAT_FACTOR = { 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.5, 6: 1.7, 7: 2 };
 function storyChapterStatFactor(chapter) {
   return STORY_CHAPTER_STAT_FACTOR[chapter ?? 0] ?? 1;
 }

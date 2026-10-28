@@ -124,8 +124,8 @@ describe("스토리 확장 난이도", () => {
 
   it("장 배율은 장마다 하나다", () => {
     const factor = (id: string) => getBattleStage(id).difficultyStatMultiplier ?? 1;
-    expect(["1-1", "1-10", "2-1", "3-10", "4-1", "4-10", "5-1", "5-10", "6-1", "7-10"].map(factor)).toEqual([1, 1, 1.1, 1.2, 1.4, 1.4, 1.8, 1.8, 2.2, 2.6]);
-    expect(getBattleStage(storyStageId("normal", "7-10")).difficultyStatMultiplier).toBeCloseTo(STORY_DIFFICULTY.normal.statFactor * 2.6);
+    expect(["1-1", "1-10", "2-1", "3-10", "4-1", "4-10", "5-1", "5-10", "6-1", "7-10"].map(factor)).toEqual([1, 1, 1.1, 1.2, 1.3, 1.3, 1.5, 1.5, 1.7, 2]);
+    expect(getBattleStage(storyStageId("normal", "7-10")).difficultyStatMultiplier).toBeCloseTo(STORY_DIFFICULTY.normal.statFactor * 2);
   });
 
   it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {

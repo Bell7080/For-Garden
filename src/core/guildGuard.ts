@@ -133,6 +133,30 @@ export function buildGuardWaves(roster: GuildGuardRoster): HordeWave[] {
   return Array.from({ length: GUILD_GUARD.maxWaves }, (_, i) => buildGuardWave(roster, i + 1));
 }
 
+/** 미리보기 한 칸 — 그 개체가 처음 서는 웨이브의 레벨로 자란 정의다. */
+export interface GuardRosterEntry { def: RelicDef; role: "swarm" | "elite"; level: number; wave: number }
+
+/**
+ * 그날 명단의 얼굴들 — 개체마다 **처음 서는 웨이브**의 모습으로 한 번씩 선다(무리 먼저, 그다음 정예). 웨이브를
+ * 실제로 짜는 함수(`buildGuardWave`)를 그대로 훑으므로 미리보기와 전투가 서로 다른 레벨을 말하지 않는다.
+ * `firstWavePower`의 재료로 첫 웨이브도 함께 돌려준다.
+ */
+export function guardRosterPreview(roster: GuildGuardRoster): { entries: GuardRosterEntry[]; firstWave: HordeWave } {
+  const seen = new Map<string, GuardRosterEntry>();
+  let firstWave: HordeWave | undefined;
+  for (let index = 1; index <= GUILD_GUARD.maxWaves; index += 1) {
+    const wave = buildGuardWave(roster, index);
+    firstWave ??= wave;
+    for (const unit of wave.units) {
+      if (seen.has(unit.def.id)) continue;
+      seen.set(unit.def.id, { def: unit.def, role: unit.role === "elite" ? "elite" : "swarm", level: unit.level, wave: index });
+    }
+    if (seen.size >= roster.grunts.length + roster.elites.length) break;
+  }
+  const entries = [...seen.values()].sort((a, b) => (a.role === b.role ? a.wave - b.wave : a.role === "swarm" ? -1 : 1));
+  return { entries, firstWave: firstWave! };
+}
+
 /**
  * 수호전 필드. 원정 전장 원화(위로 길게 뻗은 길)를 쓴다. 적은 윗변보다 위, 화면 바깥에서 들어와 길을 내려온다.
  * 윗변은 그 원화에서 길(바닥)이 시작하는 높이(약 550)보다 한 뼘 안쪽이다 — 더 올리면 물과 폐허 위에 선다.

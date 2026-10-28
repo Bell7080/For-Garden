@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createUnitHealthBarState, setUnitHealthValue, setUnitShield, stepUnitHealthBar } from "../../src/ui/unitHealthBarState";
+import { createUnitHealthBarState, setUnitHealthValue, setUnitShield, stepUnitHealthBar, visibleDamageTrail } from "../../src/ui/unitHealthBarState";
 
 /** Phaser 없이 체력 표시의 시간 규칙만 검증해 렌더러 변경과 전투 규칙을 분리한다. */
 describe("unit health bar state", () => {
@@ -48,6 +48,14 @@ describe("unit health bar state", () => {
     const state = setUnitHealthValue(createUnitHealthBarState(0.3), { currentHp: 80, maxHp: 100, cause: "heal" });
     expect(state.damageTrail).toBeGreaterThanOrEqual(state.target);
     expect(state.reactionLevel).toBe(0);
+  });
+
+  it("회복으로 차오르는 몫은 붉게 칠하지 않고, 깎인 몫만 붉게 칠한다", () => {
+    const state = setUnitHealthValue(createUnitHealthBarState(0.3), { currentHp: 80, maxHp: 100, cause: "heal" });
+    expect(state.shown).toBeLessThan(state.target);
+    expect(visibleDamageTrail(state)).toBe(state.shown);
+    const hit = setUnitHealthValue(createUnitHealthBarState(0.9), { currentHp: 40, maxHp: 100, damage: 50, cause: "damage" });
+    expect(visibleDamageTrail(hit)).toBeGreaterThan(hit.target);
   });
 
   it("낮은 프레임률과 반복 진행에서도 잔상이 현재 체력보다 내려가지 않는다", () => {

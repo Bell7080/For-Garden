@@ -1024,7 +1024,8 @@ export interface StartExpeditionRunRequest {
   shortcut?: "boss";
 }
 export type StartExpeditionRunResponse = { ok: true; run: ExpeditionRunState } | { ok: false; reason: StartExpeditionFailure };
-export interface CompleteExpeditionRestRequest { nodeId: string }
+/** `reviveRelicId`는 휴식에서 깨울 렐릭이다. 비우면 편성 순서상 첫 사망자를 깨운다(예전 요청과 같다). */
+export interface CompleteExpeditionRestRequest { nodeId: string; reviveRelicId?: string }
 export interface BeginExpeditionAugmentRequest { nodeId: string }
 export interface BeginExpeditionAugmentResponse { pending: ExpeditionRunState["pendingAugmentReward"] }
 export interface ChooseExpeditionAugmentRequest { selection: ExpeditionAugmentSelection }

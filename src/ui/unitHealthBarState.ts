@@ -120,6 +120,15 @@ export function unitShieldBand(shown: number, shield: number, minWidth = 0): { s
 }
 
 /** 한 프레임을 진행한다. 큰 delta도 보간을 초과시키지 않고 잔상을 현재 체력 이상으로 고정한다. */
+/**
+ * 화면에 칠할 붉은 잔상의 끝. 잔상은 늘 목표 체력 이상으로 붙잡아 두지만(`damageTrail ≥ target`), 회복으로 채움이 아직
+ * 목표까지 차오르는 동안 그 값을 그대로 칠하면 **차오를 몫이 붉게** 보여 피해를 입은 것처럼 읽힌다. 잔상이 목표보다
+ * 앞서 있을 때(=실제로 깎인 몫이 있을 때)만 그리고, 아니면 채움 아래에 숨긴다.
+ */
+export function visibleDamageTrail(state: UnitHealthBarState): number {
+  return state.damageTrail > state.target ? state.damageTrail : state.shown;
+}
+
 export function stepUnitHealthBar(state: UnitHealthBarState, deltaMs: number, motionFactor = 1): UnitHealthBarState {
   if (state.shown === state.target && state.damageTrail === state.shown && state.shield === state.shieldTarget && state.trailHold === 0 && state.reactionLeft === 0) return state;
   const seconds = Math.max(0, deltaMs) / 1000;

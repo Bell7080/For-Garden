@@ -482,6 +482,8 @@ var LOBBY_KO = {
   "ancient.trial.deadline": "\uC81C\uD55C \uC2DC\uAC04 45\uCD08 \xB7 \uC801 \uCCB4\uB825 \u221212%",
   "ancient.trial.shield": "\uC801 \uC2DC\uC791 \uBCF4\uD638\uB9C9: \uCD5C\uB300 \uCCB4\uB825\uC758 30%",
   "ancient.trial.charge": "\uC801 \uC2DC\uC791 \uAD81\uADF9\uAE30 \uAC8C\uC774\uC9C0 +50%",
+  "ancient.trial.frenzy": "\uC801 \uACF5\uACA9 \uC18D\uB3C4 +25%",
+  "ancient.trial.precision": "\uC801 \uCE58\uBA85\uD0C0 \uD655\uB960 +30%",
   "ancient.depthMultiplier": "\uC9C0\uCE35 \uBC30\uC728",
   "ancient.deepTrial": "\uC2EC\uCE35 \uC2DC\uB828 \xB7 \uBE44\uB840 \uD53C\uD574\uB294 120\uCE35 \uD658\uC0B0 \uCCB4\uB825 \uAE30\uC900",
   "ancient.requirement": "\uBA3C\uC800 {stage} \uD074\uB9AC\uC5B4",
@@ -500,6 +502,8 @@ var LOBBY_KO = {
   "ancient.trialTag.deadline": "\uCD08\uC77D\uAE30",
   "ancient.trialTag.shield": "\uACB0\uACC4",
   "ancient.trialTag.charge": "\uACFC\uCDA9\uC804",
+  "ancient.trialTag.frenzy": "\uC18D\uACF5",
+  "ancient.trialTag.precision": "\uAE09\uC18C",
   "ancient.trialLine": "\u300C{name}\u300D {effect}"
 };
 
@@ -845,8 +849,14 @@ var EXPEDITION_KO = {
   "expedition.node.boss": "\uC6D0\uC815 \uBCF4\uC2A4",
   "expedition.node.title": "{floor}\uCE35 \xB7 {type}",
   "expedition.node.rest": "\uD734\uC2DD",
-  "expedition.node.restBody": "\uC6D0\uC815\uB300\uB97C \uD68C\uBCF5\uD558\uACE0 \uC774 \uD734\uC2DD \uC9C0\uC810\uC744 \uC644\uB8CC\uD569\uB2C8\uB2E4.",
   "expedition.node.restConfirm": "\uD734\uC2DD\uD558\uAE30",
+  "expedition.rest.summary": "\uC0B4\uC544 \uC788\uB294 \uB810\uB9AD \uCCB4\uB825 +{heal}%",
+  "expedition.rest.summaryRevive": "\uC0B4\uC544 \uC788\uB294 \uB810\uB9AD \uCCB4\uB825 +{heal}%  \xB7  \uD55C \uBA85 \uBD80\uD65C (\uCCB4\uB825 {revive}%)",
+  "expedition.rest.pick": "\uAE68\uC6B8 \uB810\uB9AD\uC744 \uACE8\uB77C \uC8FC\uC138\uC694",
+  "expedition.rest.tapRevive": "\uB20C\uB7EC\uC11C \uAE68\uC6B0\uAE30",
+  "expedition.rest.revive": "\uBD80\uD65C",
+  "expedition.rest.revived": "\uBD80\uD65C!",
+  "expedition.rest.full": "\uCD5C\uB300",
   "expedition.augment.confirmed": "\uD655\uC815 \uC99D\uAC15 {count}",
   "expedition.augment.applyAll": "\uC804\uCCB4 \uC801\uC6A9",
   "expedition.augment.count": "{count}\uAC1C",
@@ -2865,8 +2875,6 @@ var DUNGEON_KO = {
   "dungeon.sweep": "\uC18C\uD0D5",
   "dungeon.sweep.title": "\uC18C\uD0D5 \uC644\uB8CC",
   "dungeon.sweep.tier": "{name} \xB7 LV.{level}",
-  "dungeon.sweep.needHave": "{need} / {have}",
-  "dungeon.sweep.stamina": "\uC2A4\uD14C\uBBF8\uB098",
   "dungeon.sweep.membership": "\uC18C\uD0D5\uAD8C \uC5C6\uC774 \uC18C\uD0D5 \uAC00\uB2A5.",
   "dungeon.sweep.ticketShort": "\uC18C\uD0D5\uAD8C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4. \uAD11\uACE0\uB97C \uBCF4\uACE0 \uC18C\uD0D5\uAD8C\uC744 \uBC1B\uC544 \uBCF4\uC138\uC694.",
   "dungeon.sweep.staminaShort": "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.",
@@ -2874,32 +2882,35 @@ var DUNGEON_KO = {
   "dungeon.sweep.expected": "\uC608\uC0C1 \uBCF4\uC0C1",
   // 물량형 던전의 편성 미리보기는 대표 얼굴만 세우므로 한꺼번에 몰려오는 수를 따로 적는다.
   "party.hordeCount": "\uC801 {count}\uAE30",
-  "dungeon.sweep.drink": "\uB4DC\uB9C1\uD06C \uC0AC\uC6A9",
-  "dungeon.sweep.drinkHeld": "\uBCF4\uC720 {count}",
-  "dungeon.sweep.recharge": "\uCDA9\uC804",
   "greatSuccess.stamp": "\uB300\uC131\uACF5",
   "greatSuccess.count": "\uB300\uC131\uACF5 \xD7{count}",
   "autoRepeat.button": "\uC790\uB3D9 \uC804\uD22C",
   "autoRepeat.title": "\uC790\uB3D9 \uC804\uD22C",
-  "autoRepeat.runs": "\uBC18\uBCF5 \uD69F\uC218",
-  "autoRepeat.runs.count": "{count}\uD68C",
-  "autoRepeat.runs.endless": "\uBB34\uC81C\uD55C",
   "autoRepeat.stopOnDefeat": "\uD328\uBC30 \uC2DC \uC911\uB2E8",
   "autoRepeat.autoDrink": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C \uC790\uB3D9 \uC0AC\uC6A9",
-  "autoRepeat.start": "\uC2DC\uC791",
   "autoRepeat.stop": "\uC911\uC9C0",
   "autoRepeat.stoppedByUser": "\uC790\uB3D9 \uC804\uD22C\uB97C \uC911\uC9C0\uD588\uC2B5\uB2C8\uB2E4.",
   "autoRepeat.chip.progress": "\uC790\uB3D9 {done}/{total}",
-  "autoRepeat.chip.endless": "\uC790\uB3D9 {done}\uD68C",
   "autoRepeat.chip.stopping": "\uC774\uBC88 \uD310 \uD6C4 \uC911\uC9C0",
   "autoRepeat.progress": "\uC790\uB3D9 \uC804\uD22C {done}/{total}",
-  "autoRepeat.progressEndless": "\uC790\uB3D9 \uC804\uD22C {done}\uD68C",
   "autoRepeat.next": "{progress} \xB7 \uB2E4\uC74C \uC804\uD22C\uAE4C\uC9C0",
   "autoRepeat.nextWithDrink": "{progress} \xB7 \uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C \uC0AC\uC6A9 \uD6C4 \uACC4\uC18D",
   "autoRepeat.stopped.done": "\uC790\uB3D9 \uC804\uD22C \uC644\uB8CC \xB7 {done}\uD310 {wins}\uC2B9",
   "autoRepeat.stopped.defeat": "\uD328\uBC30\uB85C \uC911\uB2E8 \xB7 {done}\uD310 {wins}\uC2B9",
   "autoRepeat.stopped.stamina": "\uC2A4\uD14C\uBBF8\uB098 \uBD80\uC871\uC73C\uB85C \uC911\uB2E8 \xB7 {done}\uD310 {wins}\uC2B9",
-  "autoRepeat.stopped.cancelled": "\uC790\uB3D9 \uC804\uD22C \uC911\uC9C0 \xB7 {done}\uD310 {wins}\uC2B9"
+  "autoRepeat.stopped.cancelled": "\uC790\uB3D9 \uC804\uD22C \uC911\uC9C0 \xB7 {done}\uD310 {wins}\uC2B9",
+  "dungeon.run.recharge": "\uC2A4\uD14C\uBBF8\uB098 \uCDA9\uC804",
+  "dungeon.run.held": "\uBCF4\uC720 {amount}",
+  "dungeon.run.ticketHeld": "{name} \uBCF4\uC720 {count}",
+  "dungeon.run.count": "{count} / {max}",
+  "dungeon.run.min": "MIN",
+  "dungeon.run.perRun": "1\uD68C \uC2A4\uD14C\uBBF8\uB098 {cost}",
+  "dungeon.run.cost": "\uC608\uC0C1 \uC18C\uBAA8",
+  "dungeon.run.rewardAuto": "\uC608\uC0C1 \uD68D\uB4DD \xB7 \uBAA8\uB450 \uC2B9\uB9AC \uC2DC",
+  "dungeon.run.short": "\uBD80\uC871",
+  "dungeon.run.drinks": "\uB4DC\uB9C1\uD06C \uCD5C\uB300 {count}\uBCD1 \uC0AC\uC6A9",
+  "dungeon.run.startAuto": "\uC790\uB3D9 \uC804\uD22C \uC2DC\uC791",
+  "dungeon.run.startSweep": "{count}\uD68C \uC18C\uD0D5"
 };
 
 // src/i18n/ko/duel.ts
@@ -4675,17 +4686,19 @@ function expeditionAfterBattleHealPercent(selections) {
 function applyExpeditionAfterBattleHeal(relics, healPercent) {
   return relics.map((relic) => relic.alive && relic.currentHp > 0 ? { ...relic, currentHp: Math.min(100, relic.currentHp + healPercent) } : { ...relic, currentHp: 0, alive: false });
 }
-function applyExpeditionRest(relics, healPercent = 30, revivePercent = 25) {
+function applyExpeditionRest(relics, healPercent = 30, revivePercent = 25, reviveRelicId) {
   if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return relics.map((relic) => ({ ...relic, currentHp: 0, alive: false }));
-  let revived = false;
+  const target = reviveRelicId ?? relics.find((relic) => !(relic.alive && relic.currentHp > 0))?.relicId;
   return relics.map((relic) => {
     if (relic.alive && relic.currentHp > 0) return { ...relic, currentHp: Math.min(100, relic.currentHp + healPercent), alive: true };
-    if (!revived) {
-      revived = true;
-      return { ...relic, currentHp: revivePercent, alive: true };
-    }
+    if (relic.relicId === target) return { ...relic, currentHp: revivePercent, alive: true };
     return { ...relic, currentHp: 0, alive: false };
   });
+}
+function isExpeditionReviveTarget(relics, relicId) {
+  if (!relics.some(({ alive, currentHp }) => alive && currentHp > 0)) return false;
+  const relic = relics.find((entry) => entry.relicId === relicId);
+  return !!relic && !(relic.alive && relic.currentHp > 0);
 }
 function highHpDamageMultiplier(effects, relicId, targetHpPercent) {
   const percent = effects.filter((effect) => effect.kind === "damageVsHighHpPercent" && augmentAppliesTo(effect, relicId) && targetHpPercent >= effect.aboveHpPercent).reduce((sum, effect) => sum + effect.percent, 0);
@@ -18121,14 +18134,18 @@ var ANCIENT_ENCOUNTERS = [
   { id: "duel", kind: "eliteDuo", rosters: [["mir", "ikanixia"], ["toby", "koma"], ["pulsi", "mir"], ["ikanixia", "toby"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 },
   { id: "gate", kind: "elite", rosters: [["koma"], ["mir"], ["ikanixia"], ["pulsi"]], hpBudget: 1, attackBudget: 1, defenseBudget: 1 }
 ];
-var ANCIENT_TRIAL_IDS = ["endurance", "armor", "assault", "deadline", "shield", "charge"];
+var ANCIENT_TRIAL_IDS = ["endurance", "armor", "assault", "deadline", "shield", "charge", "frenzy", "precision"];
 var ANCIENT_TRIALS = {
   endurance: { hp: 1.3, attack: 1, defense: 1, seconds: 90 },
   armor: { hp: 1, attack: 1, defense: 1.5, seconds: 90 },
   assault: { hp: 1, attack: 1.3, defense: 1, seconds: 90 },
   deadline: { hp: 0.88, attack: 1, defense: 1, seconds: 45 },
   shield: { hp: 1, attack: 1, defense: 1, seconds: 90, initialShieldPercent: 30 },
-  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 }
+  charge: { hp: 1, attack: 1, defense: 1, seconds: 90, openingEnergyPercent: 50 },
+  // 2026-10-28 응태 요청 — 공속 +25%는 평타 압박을 맹공(+30%)보다 조금 덜 올린다(궁극기 충전도 함께 빨라지므로).
+  // 치명타 +30%는 기본 10% → 40%라 평균 피해 기대치가 ×1.05 → ×1.20(약 +14%)이고, 한 방의 흔들림이 시련의 몫이다.
+  frenzy: { hp: 1, attack: 1, defense: 1, seconds: 90, attackSpeedPercent: 25 },
+  precision: { hp: 1, attack: 1, defense: 1, seconds: 90, critChancePoints: 30 }
 };
 function ancientEncounterRole(kind, index) {
   return kind === "swarm" ? "swarm" : kind === "elite" || kind === "eliteDuo" || kind === "mixed" && index === 0 ? "elite" : "normal";
@@ -18217,7 +18234,10 @@ function getAncientStrataFloor(floor, season = activeSeason) {
   });
   const enemyAugmentEffects = [
     ...trial.initialShieldPercent ? [{ kind: "initialShieldPercent", percent: trial.initialShieldPercent, scope: { kind: "all" } }] : [],
-    ...trial.openingEnergyPercent ? [{ kind: "openingEnergyPercent", percent: trial.openingEnergyPercent, scope: { kind: "all" } }] : []
+    ...trial.openingEnergyPercent ? [{ kind: "openingEnergyPercent", percent: trial.openingEnergyPercent, scope: { kind: "all" } }] : [],
+    // 공속은 능력치에 굽지 않고 증강으로 얹는다 — 굽으면 위의 공격 압박 정규화(공격 × 공속)가 그만큼 공격을 깎아 시련이 사라진다.
+    ...trial.attackSpeedPercent ? [{ kind: "attackSpeedPercent", percent: trial.attackSpeedPercent, scope: { kind: "all" } }] : [],
+    ...trial.critChancePoints ? [{ kind: "flatStat", stat: "critChance", points: trial.critChancePoints, scope: { kind: "all" } }] : []
   ];
   const band = ANCIENT_DIFFICULTY_BANDS.find((band2) => floor <= band2.last);
   return {
@@ -20897,13 +20917,13 @@ init_define_import_meta_env();
 
 // src/core/autoRepeat.ts
 init_define_import_meta_env();
-var AUTO_REPEAT_RUN_CHOICES = [5, 10, 20, 50, 0];
+var AUTO_REPEAT_MAX_RUNS = 99;
 var DEFAULT_AUTO_REPEAT_OPTIONS = { runs: 10, stopOnDefeat: true, autoDrink: false };
 function normalizeAutoRepeatOptions(value) {
   const record2 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const d = DEFAULT_AUTO_REPEAT_OPTIONS;
   return {
-    runs: AUTO_REPEAT_RUN_CHOICES.includes(record2.runs) ? record2.runs : d.runs,
+    runs: Number.isInteger(record2.runs) && record2.runs >= 1 && record2.runs <= AUTO_REPEAT_MAX_RUNS ? record2.runs : d.runs,
     stopOnDefeat: typeof record2.stopOnDefeat === "boolean" ? record2.stopOnDefeat : d.stopOnDefeat,
     autoDrink: typeof record2.autoDrink === "boolean" ? record2.autoDrink : d.autoDrink
   };
@@ -31145,13 +31165,16 @@ var ExpeditionManager = class {
     this.commit({ ...this.state.expedition, run: next });
     return true;
   }
-  /** 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다. */
-  completeRestNode(nodeId) {
+  /**
+   * 휴식 효과와 노드 방문 완료를 한 번만 저장한다. 이 메서드가 휴식 재시도의 상태 소유자다.
+   * 깨울 렐릭(`reviveRelicId`)은 화면이 고른 값이라 그대로 믿지 않는다 — 이 런의 쓰러진 편성원이 아니면 거절한다.
+   */
+  completeRestNode(nodeId, reviveRelicId) {
     const run2 = this.state.expedition.run;
     const node = run2?.nodes.find(({ id }) => id === nodeId);
-    if (!run2 || node?.type !== "rest" || run2.settled || run2.visitedNodeIds.includes(nodeId) || run2.currentNodeId !== null && !run2.nodes.find(({ id }) => id === run2.currentNodeId)?.successorIds.includes(nodeId) || run2.relics.every(({ alive }) => !alive)) return false;
+    if (!run2 || node?.type !== "rest" || run2.settled || run2.visitedNodeIds.includes(nodeId) || run2.currentNodeId !== null && !run2.nodes.find(({ id }) => id === run2.currentNodeId)?.successorIds.includes(nodeId) || run2.relics.every(({ alive }) => !alive) || reviveRelicId !== void 0 && (typeof reviveRelicId !== "string" || !isExpeditionReviveTarget(run2.relics, reviveRelicId))) return false;
     const next = structuredClone(run2);
-    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent);
+    next.relics = applyExpeditionRest(next.relics, EXPEDITION_REST_RULES.healPercent, EXPEDITION_REST_RULES.revivePercent, reviveRelicId);
     next.currentNodeId = nodeId;
     next.visitedNodeIds.push(nodeId);
     this.commit({ ...this.state.expedition, run: next });
@@ -31224,8 +31247,8 @@ var ExpeditionClient = class {
   prepareDevelopmentBossShortcut(relicIds) {
     return this.api.startExpeditionRun({ relicIds: [...relicIds], shortcut: "boss" });
   }
-  async completeRestNode(nodeId) {
-    return (await this.api.completeExpeditionRest({ nodeId })).ok;
+  async completeRestNode(nodeId, reviveRelicId) {
+    return (await this.api.completeExpeditionRest({ nodeId, ...reviveRelicId ? { reviveRelicId } : {} })).ok;
   }
   async beginAugmentReward(nodeId) {
     return (await this.api.beginExpeditionAugment({ nodeId })).pending;
@@ -34583,7 +34606,7 @@ var FakeServer = class {
   }
   async completeExpeditionRest(request) {
     await this.delay();
-    return { ok: this.expeditionRules().completeRestNode(request.nodeId) };
+    return { ok: this.expeditionRules().completeRestNode(request.nodeId, request.reviveRelicId) };
   }
   async beginExpeditionAugment(request) {
     await this.delay();

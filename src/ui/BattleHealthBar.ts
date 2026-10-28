@@ -8,6 +8,7 @@ import {
   unitShieldBand,
   setUnitHealthValue,
   stepUnitHealthBar,
+  visibleDamageTrail,
   type HealthValueInput,
   setUnitShield,
   type UnitHealthBarState,
@@ -70,7 +71,7 @@ export class BattleHealthBar {
   }
 
   private paint(): void {
-    this.trail.setValue(this.health.damageTrail, COLOR.danger);
+    this.trail.setValue(visibleDamageTrail(this.health), COLOR.danger);
     this.value.setValue(this.health.shown, COLOR.hpFill);
     const band = unitShieldBand(this.health.shown, this.health.shield);
     this.shield.setRange(band.start, band.end, COLOR.shieldFill);

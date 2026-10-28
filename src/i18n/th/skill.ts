@@ -117,7 +117,7 @@ export const SKILL_TH = {
   "skill.passive.stalkerBlink": "ทุก {seconds} วินาที [[teleport|วาร์ป]]ไปหาศัตรูที่มี HP ต่ำสุด และ[[basic-attack|การโจมตีปกติ]]ครั้งแรกจากตรงนั้นจะคริติคอลแน่นอน",
   "skill.passive.basicHitAttackSpeedStack": "ทุกครั้งที่[[basic-attack|การโจมตีปกติ]]โดนจริง [[attack-speed|ความเร็วโจมตี]]จะเพิ่มขึ้น {value} ตลอดการต่อสู้นี้",
   "skill.passive.farthestFocus": "เล็งศัตรูที่ไกลที่สุดในระยะ และได้รับ[[focus|สมาธิ]]ทุกครั้งที่โจมตีโดน",
-  "skill.passive.adagioWeight": "ขณะมีชีวิต [[attack-speed|ความเร็วโจมตี]]ของพันธมิตรเพิ่มขึ้น {percent}% เมื่อพันธมิตรโดน[[crowd-control|ควบคุม]] จะล้างทันทีและมอบ[[shield|โล่]] {shield}",
+  "skill.passive.adagioWeight": "ขณะมีชีวิต [[attack-speed|ความเร็วโจมตี]]ของพันธมิตรเพิ่มขึ้น {percent}% เมื่อพันธมิตรโดน[[crowd-control|ควบคุม]] จะล้างทันทีและมอบ[[shield|โล่]] {shield} คูลดาวน์ {cooldown} วินาที",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% ของ[[atk|พลังโจมตี]]",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "ทุก {seconds} วินาที กระแสน้ำขึ้นจะ[[knockback|ซัดกระเด็น]]ศัตรูทุกตัวถอยหลัง",

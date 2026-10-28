@@ -26,7 +26,7 @@ import { findItem } from "./items";
  * - 스토리 패스 ₩9,900 — 다이아 5,200 + 다양한 보상(합계 환산 약 9,800)
  * - 레벨 패스 ₩9,900 — 다이아 5,200 + 다양한 보상(합계 환산 약 9,500)
  * - 레이드 패스 ₩6,900 — 다이아 4,160 + 토벌권·선택 토벌권·증표·화석 등
- * - 고고학 패스 ₩7,900 — 지층 발굴 칸 누적 60회까지 진행
+ * - 고고학 패스 ₩7,900 — 지층 발굴 칸 누적 300칸까지 진행
  */
 
 /** 패스가 재는 진행도. 값은 서버가 세션에서 읽는다 — 화면이 셈하지 않는다. */
@@ -126,21 +126,21 @@ export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
     // 실제 발굴한 칸 수를 센다. 입장이나 중도 종료만으로 진행하지 않는다.
     id: "archaeology", productId: "premium-archaeology-pass", metric: "strataDigs",
     milestones: [
-      step(3, currency("gold", 5_000), item("strata-ticket", 2), currency("gems", 60)),
-      step(5, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
-      step(8, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
-      step(10, currency("gold", 10_000), currency("amber", 1), currency("gems", 150)),
-      step(13, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
-      step(15, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
-      step(18, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
-      step(20, currency("gold", 15_000), currency("amber", 1), currency("gems", 200)),
-      step(25, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
-      step(30, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
-      step(35, currency("cheesecake", 150), currency("gold", 100_000), currency("gems", 250)),
-      step(40, currency("gold", 25_000), currency("amber", 1), currency("gems", 250)),
-      step(45, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
-      step(50, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
-      step(60, currency("gems", 150), currency("amber", 3), currency("gems", 600)),
+      step(15, currency("gold", 5_000), item("strata-ticket", 2), currency("gems", 60)),
+      step(25, currency("cheesecake", 40), currency("fossil", 1), currency("gems", 90)),
+      step(40, currency("gems", 30), item("strata-ticket", 2), currency("gems", 150)),
+      step(50, currency("gold", 10_000), currency("amber", 1), currency("gems", 150)),
+      step(65, item("stamina-tonic", 1), item("strata-ticket", 2), currency("gems", 150)),
+      step(75, currency("gems", 50), currency("fossil", 2), currency("gems", 150)),
+      step(90, currency("cheesecake", 80), item("strata-ticket", 2), currency("gems", 200)),
+      step(100, currency("gold", 15_000), currency("amber", 1), currency("gems", 200)),
+      step(125, currency("fossil", 1), item("strata-ticket", 2), currency("gems", 250)),
+      step(150, currency("gems", 60), currency("fossil", 2), currency("gems", 250)),
+      step(175, currency("cheesecake", 150), currency("gold", 100_000), currency("gems", 250)),
+      step(200, currency("gold", 25_000), currency("amber", 1), currency("gems", 250)),
+      step(225, currency("gems", 80), currency("fossil", 2), currency("gems", 300)),
+      step(250, item("stamina-tonic", 1), currency("fossil", 3), currency("gems", 300)),
+      step(300, currency("gems", 150), currency("amber", 3), currency("gems", 600)),
     ],
   },
 ];

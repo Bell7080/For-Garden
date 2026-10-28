@@ -129,7 +129,7 @@ export const SKILL_JA = {
   "skill.passive.stalkerBlink": "{seconds}秒ごとに体力が最も少ない敵のそばへ[[teleport|瞬間移動]]し、そこで放つ最初の[[basic-attack|通常攻撃]]が確定クリティカルになる。",
   "skill.passive.basicHitAttackSpeedStack": "[[basic-attack|通常攻撃]]が実際に命中するたびに、この戦闘の間[[attack-speed|攻撃速度]]が{value}増加する。",
   "skill.passive.farthestFocus": "射程内で最も遠い敵を狙い、攻撃が命中するたびに[[focus|集中]]を得る。",
-  "skill.passive.adagioWeight": "生存中、味方の[[attack-speed|攻撃速度]]を{percent}%高める。味方が[[crowd-control|行動妨害]]にかかると即座に浄化し、{shield}の[[shield|シールド]]を付与する。",
+  "skill.passive.adagioWeight": "生存中、味方の[[attack-speed|攻撃速度]]を{percent}%高める。味方が[[crowd-control|行動妨害]]にかかると即座に浄化し、{shield}の[[shield|シールド]]を付与する。クールタイムは{cooldown}秒。",
   "skill.passive.adagioWeight.shieldPercent": "[[atk|攻撃力]]{percent}%",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "{seconds}秒ごとに満ち潮がすべての敵を[[knockback|吹き飛ばし]]、後ろへ押しやる。",

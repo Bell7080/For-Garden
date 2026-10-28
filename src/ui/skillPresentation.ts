@@ -620,7 +620,7 @@ function passiveHead(passive: Passive, atk?: number, guard?: { defense: number; 
     const shieldText = shield === undefined
       ? t("skill.passive.adagioWeight.shieldPercent", { percent: passive.cleanseShieldAttackPercent })
       : t("skill.passive.adagioWeight.shieldAmount", { amount: shield.term });
-    return t("skill.passive.adagioWeight", { percent: passive.teamAttackSpeedPercent, shield: shieldText });
+    return t("skill.passive.adagioWeight", { percent: passive.teamAttackSpeedPercent, shield: shieldText, cooldown: passive.cleanseCooldownSeconds ?? 0 });
   }
   if (passive.kind === "tidalSurge") {
     /*

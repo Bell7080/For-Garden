@@ -117,7 +117,7 @@ export const SKILL_RU = {
   "skill.passive.stalkerBlink": "Каждые {seconds} с перемещается к врагу с наименьшими ОЗ, и первая [[basic-attack|обычная атака]] оттуда гарантированно критическая.",
   "skill.passive.basicHitAttackSpeedStack": "Каждый раз, когда [[basic-attack|обычная атака]] действительно попадает, [[attack-speed|скорость атаки]] растёт на {value} до конца боя.",
   "skill.passive.farthestFocus": "Целится в самого дальнего врага в зоне досягаемости и получает [[focus|сосредоточенность]] при каждом попадании.",
-  "skill.passive.adagioWeight": "Пока жив, [[attack-speed|скорость атаки]] союзников растёт на {percent}%. Когда союзник попадает под [[crowd-control|контроль]], сразу очищает его и даёт [[shield|щит]] {shield}.",
+  "skill.passive.adagioWeight": "Пока жив, [[attack-speed|скорость атаки]] союзников растёт на {percent}%. Когда союзник попадает под [[crowd-control|контроль]], сразу очищает его и даёт [[shield|щит]] {shield}. Перезарядка: {cooldown} с.",
   "skill.passive.adagioWeight.shieldPercent": "{percent}% атаки",
   "skill.passive.adagioWeight.shieldAmount": "[[shield-value|{amount}]]",
   "skill.passive.tidalSurge": "Каждые {seconds} с прилив [[knockback|отбрасывает]] всех врагов назад.",

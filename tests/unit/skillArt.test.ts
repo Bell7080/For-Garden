@@ -391,9 +391,9 @@ describe("메테 스킬 표시 계약", () => {
     expect(ferocityTraitDescription(mette.ferocityTrait, { attack: 200, defense: 0 })).toBe(
       "폭주 중 아군 [[basic-attack|기본 공격]] 적중마다 [[damage-value|100]]의 피해량을 가진 [[mette-staccato|스타카토]]가 추가로 발동한다.",
     );
-    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "640" });
+    expect(passiveShieldKeyword(mette.passive, 200)).toMatchObject({ id: "shield-value", term: "200" });
     expect(passiveDescription(mette.passive, 200)).toBe(
-      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|640]] [[shield|보호막]]을 부여한다.",
+      "생존 중 아군 [[attack-speed|공격 속도]]를 20% 높인다. 아군이 [[crowd-control|군중제어]]에 걸리면 즉시 정화하고 [[shield-value|200]] [[shield|보호막]]을 부여한다. 재사용 대기 7초.",
     );
   });
 

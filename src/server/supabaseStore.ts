@@ -1,5 +1,5 @@
 import { EXPEDITION_WEEKLY_RANK_POOL } from "../data/expedition";
-import { ANCIENT_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from "../data/competitiveRewards";
+import { ANCIENT_MONTHLY_RANK_REWARDS, GUILD_WEEKLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from "../data/competitiveRewards";
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from "../core/arenaStanding";
 import { expeditionWeekKey } from "../core/expeditionBoss";
 import { duelSeasonId } from "../core/duelArena";
@@ -65,6 +65,8 @@ export function createSupabaseStore(env: Env) {
       } });
       // 고대 지층은 매달 마감한다 — 1,000위 밖은 백분율 구간이다(competitiveRewards.ts의 표준 모양).
       await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
+      // 길드 주간 순위(그 주 기여도 합) — 마이그레이션(20261112) 전의 DB에는 함수가 없으므로 실패해도 우편함은 연다.
+      await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => undefined);
       return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox;
     },
     async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },

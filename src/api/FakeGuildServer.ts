@@ -13,9 +13,11 @@ import { guildWarMapSlots, parseGuildWarSlotId } from "../core/guildWarMap";
 import { guildQaClockShift } from "./guildQaClock";
 import { guildGuardDayKey, guildGuardTotal, rankGuildGuardMembers } from "../core/guildGuard";
 import { PLAYABLE_RELICS } from "../data/relics";
+import { GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, rankRewardGems } from "../data/competitiveRewards";
+import { rankGuildScores } from "../core/guildRankRewards";
 import {
   GuildApiError, type GuildActor, type GuildAttendanceState, type GuildBackend, type GuildDetail, type GuildErrorCode, type GuildJoinRequestView,
-  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildWarDeckEntry, type GuildWarDefenseInput, type GuildWarMapState, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
+  type GuildGuardBoard, type GuildGuardGuildEntry, type GuildRankingEntry, type GuildRankingResponse, type GuildWeeklyRankAward, type GuildWarDeckEntry, type GuildWarDefenseInput, type GuildWarMapState, type GuildMemberCard, type GuildMemberView, type GuildMembersResponse, type GuildSearchResponse, type GuildShopState, type GuildStateResponse, type GuildSummary,
 } from "./guildContracts";
 
 interface MemberRow {
@@ -30,6 +32,8 @@ interface MemberRow {
   monthPurchases: Map<string, number>; purchaseMonthKey: string;
   /** 수호전 — 기록한 날(UTC 날짜 번호)과 그날 최고 점수·처음 그 점수를 낸 시각. */
   guardDay: number; guardBest: number; guardAt: number;
+  /** 가장 최근에 받은 수호전 일일 길드 순위 보상(`settleGuardRewards`). */
+  guardReward: { day: number; rank: number; coin: number } | null;
   /** QA 표본 길드원 — 수호전 기록을 날마다 정해진 값으로 채운다(`sampleGuard`). */
   sample?: boolean;
 }
@@ -56,6 +60,14 @@ export class FakeGuildServer implements GuildBackend {
   private readonly leftAt = new Map<string, number>();
   private readonly requestedBy = new Map<string, Set<string>>();
   private readonly receipts = new Map<string, unknown>();
+  /**
+   * 순위 보상의 장부 — 길드원 행은 주·날이 바뀌면 값을 비우므로(게으른 초기화) 마감 뒤에는 지난 값을 읽을 수 없다.
+   * 기여도·수호전 기록이 오를 때마다 (기간 → 길드 → 길드원) 값을 적어 두고, 마감 정산은 이 장부만 읽는다.
+   */
+  private readonly weekLedger = new Map<string, Map<string, Map<string, number>>>();
+  private readonly guardLedger = new Map<number, Map<string, Map<string, number>>>();
+  /** 받은 순위 보상 — `week:주:id`·`guard:날:id`. 한 사람은 한 기간에 한 번만 받는다. */
+  private readonly rankAwarded = new Set<string>();
   private sequence = 0;
 
   constructor(private readonly now: () => number = Date.now, private readonly options: { seed?: boolean; levelGate?: boolean } = {}) {
@@ -84,6 +96,7 @@ export class FakeGuildServer implements GuildBackend {
         const member = this.newMember({ userId, name: memberName, level, avatarRelicId: relic.id, frameId, card }, role, this.now() - i * 3_600_000);
         member.contributionTotal = 200 + (seed % 4_000); member.contributionWeek = seed % 700; member.coin = 0; member.sample = true;
         members.set(userId, member);
+        this.noteContribution(id, member);
       }
       this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 86_400_000, badgeChanges: 0, members, requests: new Map(), warScore, warReachedAt: this.now() });
       for (const userId of members.keys()) this.userGuild.set(userId, id);
@@ -102,7 +115,7 @@ export class FakeGuildServer implements GuildBackend {
       userId: actor.userId, name: actor.name, level: actor.level, role, avatarRelicId: actor.avatarRelicId, frameId: actor.frameId,
       joinedAt: at, lastActiveAt: at, coin: 0, contributionWeekKey: guildWeekKey(at), contributionWeek: 0, contributionTotal: 0,
       attendanceCount: 0, attendanceLast: null, card: actor.card ? structuredClone(actor.card) : null, purchases: new Map(), purchaseWeekKey: guildWeekKey(at), monthPurchases: new Map(), purchaseMonthKey: guildMonthKey(at),
-      guardDay: -1, guardBest: 0, guardAt: 0,
+      guardDay: -1, guardBest: 0, guardAt: 0, guardReward: null,
     };
   }
 
@@ -114,6 +127,7 @@ export class FakeGuildServer implements GuildBackend {
     if (!guild || !me) return fail("NOT_IN_GUILD");
     this.touch(me, actor);
     this.reviewLeader(guild);
+    this.settleGuardRewards(actor.userId, me);
     return { guild, me };
   }
   /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
@@ -156,6 +170,55 @@ export class FakeGuildServer implements GuildBackend {
   private gain(guild: GuildRow, me: MemberRow, gain: { prosperity?: number; contribution?: number; coin?: number }): void {
     guild.prosperity += gain.prosperity ?? 0;
     me.contributionWeek += gain.contribution ?? 0; me.contributionTotal += gain.contribution ?? 0; me.coin += gain.coin ?? 0;
+    this.noteContribution(guild.id, me);
+  }
+  private static ledgerSlot<K>(ledger: Map<K, Map<string, Map<string, number>>>, period: K, guildId: string): Map<string, number> {
+    let byGuild = ledger.get(period);
+    if (!byGuild) ledger.set(period, byGuild = new Map());
+    let byMember = byGuild.get(guildId);
+    if (!byMember) byGuild.set(guildId, byMember = new Map());
+    return byMember;
+  }
+  /** 이번 주 기여도를 장부에 적는다 — 그 주 안에서는 오르기만 하므로 덮어써도 된다. */
+  private noteContribution(guildId: string, me: MemberRow): void {
+    if (me.contributionWeek > 0) FakeGuildServer.ledgerSlot(this.weekLedger, me.contributionWeekKey, guildId).set(me.userId, me.contributionWeek);
+  }
+  private static sum(byMember: Map<string, number> | undefined): number { let total = 0; for (const value of byMember?.values() ?? []) total += value; return total; }
+  /** 그 주의 길드 순위 — 장부에 점수가 있는 길드만 선다(`rankGuildScores`). */
+  private weekStandings(week: string): { guildId: string; score: number; rank: number }[] {
+    return rankGuildScores([...(this.weekLedger.get(week) ?? new Map<string, Map<string, number>>()).entries()].map(([guildId, byMember]) => ({ guildId, score: FakeGuildServer.sum(byMember) })));
+  }
+  /**
+   * 그날의 수호전 길드 순위. 기록은 장부에서, 표본 길드원은 날짜에서 나오는 값으로, QA가 정해 둔 길드 점수(`guardScore`)를 더해
+   * 판(`getGuard`)이 그날 보여 준 합과 같게 센다.
+   */
+  private guardStandings(day: number): { guildId: string; score: number; rank: number }[] {
+    const recorded = this.guardLedger.get(day);
+    const ids = new Set<string>([...this.guilds.keys(), ...(recorded?.keys() ?? [])]);
+    return rankGuildScores([...ids].map((guildId) => {
+      const guild = this.guilds.get(guildId);
+      let score = FakeGuildServer.sum(recorded?.get(guildId));
+      for (const member of guild?.members.values() ?? []) if (member.sample) score += sampleGuardRecord(member.userId, member.level, day).best;
+      return { guildId, score: score + (guild?.guardScore ?? 0) };
+    }));
+  }
+  /**
+   * 마감된 날의 수호전 순위 보상을 길드원 행의 코인으로 넣는다. 그날 한 판이라도 기록한 날만 받고(장부에 이름이 있다),
+   * 받는 순간 어느 길드에도 없으면 넣을 행이 없어 그 몫은 사라진다. 길드원이 길드를 부를 때마다 본다.
+   */
+  private settleGuardRewards(userId: string, me: MemberRow): void {
+    const today = guildGuardDayKey(this.now());
+    for (const [day, byGuild] of this.guardLedger) {
+      if (day >= today || this.rankAwarded.has(`guard:${day}:${userId}`)) continue;
+      const played = [...byGuild.entries()].filter(([, byMember]) => byMember.has(userId)).sort((a, b) => (b[1].get(userId) ?? 0) - (a[1].get(userId) ?? 0))[0];
+      if (!played) continue;
+      this.rankAwarded.add(`guard:${day}:${userId}`);
+      const standings = this.guardStandings(day);
+      const rank = standings.find((entry) => entry.guildId === played[0])?.rank ?? standings.length + 1;
+      const coin = rankRewardGems(GUILD_GUARD_DAILY_RANK_COINS, rank, Math.max(1, standings.length));
+      me.coin += coin;
+      if (!me.guardReward || me.guardReward.day < day) me.guardReward = { day, rank, coin };
+    }
   }
   /** 같은 requestId의 재전송은 첫 응답을 그대로 돌려준다(서버 영수증 표). */
   private once<T>(actor: GuildActor, requestId: string, run: () => T): T {
@@ -171,10 +234,10 @@ export class FakeGuildServer implements GuildBackend {
   async getGuild(actor: GuildActor): Promise<GuildStateResponse> {
     const guild = this.myGuild(actor);
     const me = guild?.members.get(actor.userId);
-    if (guild && me) { this.touch(me, actor); this.reviewLeader(guild); }
+    if (guild && me) { this.touch(me, actor); this.reviewLeader(guild); this.settleGuardRewards(actor.userId, me); }
     return {
       guild: guild ? this.detail(guild) : null,
-      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,
+      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt, guardReward: me.guardReward ? { ...me.guardReward } : null } : null,
       leaveCooldownUntil: Math.max(0, (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS),
       pendingRequests: this.pendingCount(guild, me),
       requestedGuildIds: [...(this.requestedBy.get(actor.userId) ?? [])],
@@ -380,12 +443,8 @@ export class FakeGuildServer implements GuildBackend {
   /** 표본 길드원의 오늘 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
   private sampleGuard(member: MemberRow, day: number): void {
     if (!member.sample || member.guardDay === day) return;
-    let h = 2166136261;
-    for (const ch of `${member.userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-    h >>>= 0;
-    member.guardDay = day;
-    member.guardBest = h % 5 === 0 ? 0 : 80 + (h % 400) + member.level * (10 + (h >>> 8) % 25);
-    member.guardAt = day * 86_400_000 + (h % 80_000_000);
+    const record = sampleGuardRecord(member.userId, member.level, day);
+    member.guardDay = day; member.guardBest = record.best; member.guardAt = record.at;
   }
   /** 오늘의 기록만 센다 — 지난날의 최고는 0이다. */
   private guardBestOf(member: MemberRow, day: number): number {
@@ -416,13 +475,45 @@ export class FakeGuildServer implements GuildBackend {
 
   async recordGuard(actor: GuildActor, record: { day: number; score: number; coin: number }, requestId: string): Promise<{ best: number; coin: number }> {
     return this.once(actor, requestId, () => {
-      const { me } = this.requireGuild(actor);
+      const { guild, me } = this.requireGuild(actor);
       const score = Math.max(0, Math.round(record.score));
       if (me.guardDay !== record.day) { me.guardDay = record.day; me.guardBest = 0; me.guardAt = 0; }
       if (score > me.guardBest || me.guardAt === 0) { me.guardBest = Math.max(me.guardBest, score); me.guardAt = this.now(); }
       me.coin += Math.max(0, Math.round(record.coin));
+      FakeGuildServer.ledgerSlot(this.guardLedger, me.guardDay, guild.id).set(me.userId, me.guardBest);
       return { best: me.guardBest, coin: me.coin };
     });
+  }
+
+  // ── 길드 주간 순위 ─────────────────────────────────────────────────────────
+  private rankingEntry(guild: GuildRow, standing: { score: number; rank: number } | undefined, mine: string | undefined): GuildRankingEntry {
+    return { ...this.summary(guild), rank: standing?.rank ?? null, weekScore: standing?.score ?? 0, isMine: guild.id === mine };
+  }
+  async getRanking(actor: GuildActor): Promise<GuildRankingResponse> {
+    const mine = this.myGuild(actor);
+    const week = guildWeekKey(this.now());
+    const standings = this.weekStandings(week);
+    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing) => this.rankingEntry(this.guilds.get(standing.guildId)!, standing, mine?.id));
+    const mineEntry = mine ? this.rankingEntry(mine, standings.find(({ guildId }) => guildId === mine.id), mine.id) : null;
+    return { week, guilds, mine: mineEntry, total: standings.length, serverTime: this.now() };
+  }
+  /**
+   * 마감된 주의 길드 주간 순위 보상 — 그 주에 기여도가 1 이상인 길드원이 한 번씩 받는다. 여러 길드에서 기여했으면 가장 크게
+   * 기여한 길드의 몫이다. 받은 것으로 적고 돌려주며, 우편은 부르는 쪽(`FakeServer`)이 세운다.
+   */
+  async claimWeeklyRankRewards(actor: GuildActor): Promise<GuildWeeklyRankAward[]> {
+    const current = guildWeekKey(this.now());
+    const awards: GuildWeeklyRankAward[] = [];
+    for (const [week, byGuild] of [...this.weekLedger.entries()].sort(([a], [b]) => (a < b ? -1 : 1))) {
+      if (week >= current || this.rankAwarded.has(`week:${week}:${actor.userId}`)) continue;
+      const own = [...byGuild.entries()].filter(([, byMember]) => (byMember.get(actor.userId) ?? 0) > 0).sort((a, b) => (b[1].get(actor.userId) ?? 0) - (a[1].get(actor.userId) ?? 0))[0];
+      if (!own) continue;
+      this.rankAwarded.add(`week:${week}:${actor.userId}`);
+      const standings = this.weekStandings(week);
+      const rank = standings.find(({ guildId }) => guildId === own[0])!.rank;
+      awards.push({ week, guildName: this.guilds.get(own[0])?.name ?? "", rank, total: standings.length, gems: rankRewardGems(GUILD_WEEKLY_RANK_REWARDS, rank, standings.length) });
+    }
+    return awards;
   }
 
   // ── 길드전 방어진 지도 ──────────────────────────────────────────────────────
@@ -575,6 +666,14 @@ export class FakeGuildServer implements GuildBackend {
 
   /** 테스트·QA 도구용 — 한 길드에 부흥도를 얹는다. */
   addProsperityForTest(guildId: string, amount: number): void { const guild = this.guilds.get(guildId); if (guild) guild.prosperity += amount; }
+}
+
+/** 표본 길드원의 그날 수호전 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
+function sampleGuardRecord(userId: string, level: number, day: number): { best: number; at: number } {
+  let h = 2166136261;
+  for (const ch of `${userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  h >>>= 0;
+  return { best: h % 5 === 0 ? 0 : 80 + (h % 400) + level * (10 + (h >>> 8) % 25), at: day * 86_400_000 + (h % 80_000_000) };
 }
 
 const SAMPLE_NAMES = ["하늘", "새봄", "이슬", "마루", "다온", "보람", "나래", "가람", "솔", "누리", "한결", "도담", "모아", "미르", "아라", "초롱", "온새미", "라온", "해든", "소담"];

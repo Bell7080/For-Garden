@@ -431,7 +431,7 @@ export class FakeServer implements GameApi {
   }
 
   /** 읽음·수령·만료를 현재 서버 시각으로 집계한 복제본만 외부에 제공한다. */
-  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); this.applySavedMailClaims(); return this.mailListDto(); }
+  async getMails(): Promise<MailListResponse> { await this.delay(); this.rollExpedition(this.now()); this.syncSubscriptionMails(this.now()); await this.syncGuildRankMails(); this.applySavedMailClaims(); return this.mailListDto(); }
 
   /** 존재·만료·기수령을 모두 검증한 뒤 지급과 상태 변경을 한 처리로 확정한다. */
   async claimMailRewards(request: ClaimMailRewardsRequest): Promise<ClaimMailRewardsResponse> {
@@ -4320,6 +4320,25 @@ export class FakeServer implements GameApi {
     }
   }
 
+
+  /**
+   * 마감된 주의 길드 주간 순위 보상을 우편으로 세운다 — 길드 백엔드가 받을 몫을 한 번씩 꺼내 주는 경우(로컬 백엔드)만이다.
+   * 운영 서버는 우편함 조회에서 DB 함수(`server_guild_weekly_rewards`)가 우편을 직접 넣는다. 길드 저장소에 닿지 않으면 다음 조회로 미룬다.
+   */
+  private async syncGuildRankMails(): Promise<void> {
+    if (!this.guildBackend.claimWeeklyRankRewards) return;
+    const awards = await this.guildBackend.claimWeeklyRankRewards(this.guildActor()).catch(() => []);
+    for (const award of awards) {
+      const id = `guild-week:${award.week}`;
+      if (this.mails.some((mail) => mail.id === id)) continue;
+      const sentAt = new Date(`${award.week}T00:00:00.000Z`); sentAt.setUTCDate(sentAt.getUTCDate() + 7);
+      this.mails.unshift({
+        id, title: t("guild.mail.weekly.title"), sender: t("guild.mail.weekly.sender"),
+        body: t("guild.mail.weekly.body", { guild: award.guildName, rank: award.rank.toLocaleString() }),
+        sentAt: sentAt.toISOString(), expiresAt: null, read: false, claimed: false, rewards: [{ kind: "currency", currency: "gems", amount: award.gems }],
+      });
+    }
+  }
 
   /** 주입 어댑터를 우선 사용하고, 없으면 공유 세션만 브라우저에 저장해 독립 테스트 부작용을 막는다. */
   /**

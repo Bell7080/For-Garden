@@ -66,6 +66,11 @@ declare
     'public.guild_left',
     'public.guild_receipts',
     'public.guild_war_defense',
+    'public.guild_week_ledger',
+    'public.guild_guard_ledger',
+    'public.guild_rank_results',
+    'public.guild_rank_totals',
+    'public.guild_rank_awards',
     'public.admin_audit_log',
     'public.website_registration_limits'
   ];

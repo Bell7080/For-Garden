@@ -64,7 +64,7 @@ export interface GameSettings {
      */
     dungeonTiers: { bounty: string; cake: string };
     /** 길드 화면의 길드전·수호전 탭에서 마지막으로 본 판 번호(`guildPageEventKey`). 다르면 붉은 점이 선다 — 기기 선호다. */
-    guildSeen: { war: number; guard: number };
+    guildSeen: { war: number; guard: number; guardReward: number };
     /** 마지막으로 본 길드 레벨(`길드 id:레벨`, 비었으면 아직 없음). 오르면 길드 화면이 레벨업 창을 한 번 띄운다 — 기기 선호다. */
     guildLevelSeen: string;
     /** 수호전 여섯 칸 편성(앞줄 0~2 · 뒷줄 3~5, 빈 칸은 `null`). 마지막으로 출격한 편성을 다시 세운다 — 기기 선호다. */

@@ -1,7 +1,7 @@
 import { describe,it,expect } from 'vitest';
 import { MISSIONS, RESEARCH_REWARD_STAGES } from '../../src/core/missions';
 import { ACHIEVEMENT_SERIES } from '../../src/data/achievements';
-import { ANCIENT_MONTHLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from '../../src/data/competitiveRewards';
+import { ANCIENT_MONTHLY_RANK_REWARDS, GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, WEEKLY_RANK_GEMS } from '../../src/data/competitiveRewards';
 import { ANCIENT_STRATA_MAX_FLOOR, ancientFirstClearReward } from '../../src/data/ancientStrataDifficulty';
 import { ARENA_TIERS, ARENA_WEEKLY_RANK_GEMS } from '../../src/core/arenaStanding';
 import { DUEL_TIERS } from '../../src/core/duelArena';
@@ -75,5 +75,18 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER),approvalMessage).toBe(20);
   expect(GUILD_GUARD.attemptsPerDay,approvalMessage).toBe(2);
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER)*GUILD_GUARD.attemptsPerDay*7,approvalMessage).toBeLessThanOrEqual(280);
+ });
+ // 2026-10-28 응태 승인(결정 카드 「제안한 값으로 둘 다 승인」): 길드 주간 순위 젬 1위 300 · 참여 20(주 1회),
+ // 수호전 일일 길드 순위 코인 1위 30 · 참여 4(하루 1회 · 주 최대 210, 판 코인과 합쳐 주 ~210 → ~280).
+ it('길드 주간 순위 젬과 수호전 일일 순위 코인은 승인된 표를 넘지 않는다',()=>{
+  expect(GUILD_WEEKLY_RANK_REWARDS.ranks.map(r=>r.gems),approvalMessage).toEqual([300,250,200,150,120,100,80,60]);
+  expect(GUILD_WEEKLY_RANK_REWARDS.percents.map(r=>r.gems),approvalMessage).toEqual([50,40,30]);
+  expect(GUILD_WEEKLY_RANK_REWARDS.participation,approvalMessage).toBe(20);
+  expect(GUILD_GUARD_DAILY_RANK_COINS.ranks.map(r=>r.gems),approvalMessage).toEqual([30,25,20,15,12,10]);
+  expect(GUILD_GUARD_DAILY_RANK_COINS.percents.map(r=>r.gems),approvalMessage).toEqual([8,6,5]);
+  expect(GUILD_GUARD_DAILY_RANK_COINS.participation,approvalMessage).toBe(4);
+  const top=(table:typeof GUILD_WEEKLY_RANK_REWARDS)=>Math.max(...table.ranks.map(r=>r.gems),...table.percents.map(r=>r.gems),table.participation);
+  expect(top(GUILD_WEEKLY_RANK_REWARDS),approvalMessage).toBeLessThanOrEqual(300);
+  expect(top(GUILD_GUARD_DAILY_RANK_COINS)*7,approvalMessage).toBeLessThanOrEqual(210);
  });
 });

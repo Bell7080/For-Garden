@@ -58,7 +58,14 @@ export interface GuildDetail extends GuildSummary {
   /** 뱃지를 아직 한 번도 바꾸지 않았으면 처음 한 번은 무료다. */
   badgeFree: boolean;
 }
-export interface GuildMe { role: GuildRole; coin: number; contributionWeek: number; contributionTotal: number; joinedAt: number }
+export interface GuildMe {
+  role: GuildRole; coin: number; contributionWeek: number; contributionTotal: number; joinedAt: number;
+  /**
+   * 가장 최근에 받은 수호전 일일 길드 순위 보상(코인은 이미 `coin`에 들었다). 받은 적이 없으면 null이다.
+   * 화면은 본 값(`settings.game.guildSeen.guardReward`)과 날짜가 다를 때만 한 번 알린다. 예전 서버는 싣지 않는다.
+   */
+  guardReward?: { day: number; rank: number; coin: number } | null;
+}
 
 export interface GuildStateResponse {
   guild: GuildDetail | null; me: GuildMe | null;
@@ -127,6 +134,13 @@ export interface GuildWarMapState {
 /** 방어덱 게시 — 게임 서버가 보유·성장을 확인해 굳힌 값만 길드 백엔드로 넘어간다. */
 export interface GuildWarDefenseInput { slotId: string; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
 
+/** 길드 주간 순위 한 줄 — 이번 주 길드원 기여도의 합(`weekScore`)으로 줄 세운다. 점수가 없으면 등수가 없다. */
+export interface GuildRankingEntry extends GuildSummary { rank: number | null; weekScore: number; isMine: boolean }
+/** 길드 주간 순위 — 위 50길드와, 그 밖이면 따로 붙는 내 길드. `total`은 점수가 있는 길드 수(백분율 구간의 분모)다. */
+export interface GuildRankingResponse { week: string; guilds: GuildRankingEntry[]; mine: GuildRankingEntry | null; total: number; serverTime: number }
+/** 길드 주간 순위 보상 한 통(로컬 백엔드만 — 운영 서버는 DB 함수가 우편을 직접 넣는다). */
+export interface GuildWeeklyRankAward { week: string; guildName: string; rank: number; total: number; gems: number }
+
 /** 산 수(`bought`)는 그 상품의 주기(주간·월간) 안에서 센다. */
 export interface GuildShopItem { productId: string; price: number; limit: number; refresh: "weekly" | "monthly"; minGuildLevel?: number; bought: number }
 /** `guildLevel`은 레벨 칸(`minGuildLevel`)을 여는 지금 길드 레벨이다. */
@@ -149,6 +163,8 @@ export interface GuildApi {
   getAttendance(): Promise<GuildAttendanceState>;
   getShop(): Promise<GuildShopState>;
   getGuard(): Promise<GuildGuardBoard>;
+  /** 길드 주간 순위(이번 주 기여도 합). */
+  getRanking(): Promise<GuildRankingResponse>;
   getWarMap(): Promise<GuildWarMapState>;
   /** 정비일에만. 자기 칸이거나 배치 권한(`formation`)이 있으면 비운다. */
   clearWarSlot(slotId: string): Promise<GuildWarMapState>;
@@ -157,11 +173,11 @@ export interface GuildApi {
 export const GUILD_API_METHODS = [
   "getGuild", "searchGuilds", "getMembers", "joinGuild", "cancelJoinRequest", "leaveGuild", "decideJoinRequest", "kickMember",
   "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop", "getGuard",
-  "getWarMap", "clearWarSlot",
+  "getRanking", "getWarMap", "clearWarSlot",
 ] as const satisfies readonly (keyof GuildApi)[];
 export type GuildApiMethod = (typeof GUILD_API_METHODS)[number];
 export const isGuildApiMethod = (value: string): value is GuildApiMethod => (GUILD_API_METHODS as readonly string[]).includes(value);
-export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard", "getWarMap"];
+export const GUILD_READ_METHODS: readonly GuildApiMethod[] = ["getGuild", "searchGuilds", "getMembers", "getAttendance", "getShop", "getGuard", "getRanking", "getWarMap"];
 
 /**
  * 길드 백엔드 — `GuildApi`의 모든 조작에 호출자(`actor`)를 앞세우고, 지갑이 얽힌 네 조작을 더한 것이다.
@@ -183,6 +199,12 @@ export interface GuildBackend {
   getAttendance(actor: GuildActor): Promise<GuildAttendanceState>;
   getShop(actor: GuildActor): Promise<GuildShopState>;
   getGuard(actor: GuildActor): Promise<GuildGuardBoard>;
+  getRanking(actor: GuildActor): Promise<GuildRankingResponse>;
+  /**
+   * 마감된 주의 길드 주간 순위 보상을 한 번씩 꺼낸다(받은 것으로 적는다). 로컬 백엔드만 채운다 — 운영 서버는 우편함 조회
+   * (`opsInbox`)에서 DB 함수가 우편을 직접 넣으므로 이 길을 쓰지 않는다.
+   */
+  claimWeeklyRankRewards?(actor: GuildActor): Promise<GuildWeeklyRankAward[]>;
   /**
    * 수호전 한 판의 기록 — 게임 서버가 다시 굴려 확정한 점수와 그 판의 코인만 넘긴다. 오늘 최고 점수를 갱신하고 코인을
    * 길드원 행에 더한다. 돌려주는 `best`는 오늘 최고, `coin`은 더한 뒤의 보유 코인이다.

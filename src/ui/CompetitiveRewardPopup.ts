@@ -45,10 +45,16 @@ const BUNDLE_ORDER = ["gems", "salvageRecord", "gold", "cheesecake"] as const;
  * 표준 순위 보상 풀(`RankRewardPool`) 한 장 — 원정 주간·고대 지층 월간이 같은 창을 쓴다.
  * 순위 구간 → 「상위 N%」 구간 → 참여 보상 순으로 서고, 1,000위 밖의 내 구간은 참가자 수(`total`)를 알 때만 「현재」로 선다.
  */
-export function openRankPoolRewards(scene: Phaser.Scene, popups: PopupLayer, spec: { pool: RankRewardPool; period: RankRewardPeriod; rules: string; myRank?: number | null; total?: number | null }): void {
+export function openRankPoolRewards(scene: Phaser.Scene, popups: PopupLayer, spec: {
+  pool: RankRewardPool; period: RankRewardPeriod; rules: string; myRank?: number | null; total?: number | null;
+  /** 창 제목 — 비우면 기간의 보상 칩 이름(「주간 보상」)이다. 수호전 일일 표처럼 기간 밖의 표가 쓴다. */
+  title?: string;
+  /** 재화 그림을 바꿔 그린다 — 젬 칸에 길드 코인을 담는 표(`GUILD_GUARD_DAILY_RANK_COINS`)가 쓴다. */
+  textures?: Partial<Record<(typeof BUNDLE_ORDER)[number], string>>;
+}): void {
   const { pool, myRank, total } = spec;
   const bundle = (rewards: RankRewardBundle) => BUNDLE_ORDER.filter((key) => (rewards[key] ?? 0) > 0)
-    .map((key) => ({ texture: CURRENCY_ICON_BY_WALLET[key], amount: rewards[key] ?? 0 }));
+    .map((key) => ({ texture: spec.textures?.[key] ?? CURRENCY_ICON_BY_WALLET[key], amount: rewards[key] ?? 0 }));
   const lastRank = pool.ranks.at(-1)?.upTo ?? 0;
   const mine = typeof myRank === "number" && myRank > lastRank && typeof total === "number" && total > 0 ? myRank / total * 100 : null;
   const percentRow = mine === null ? -1 : pool.percents.findIndex((row) => mine <= row.upToPercent);
@@ -73,7 +79,7 @@ export function openRankPoolRewards(scene: Phaser.Scene, popups: PopupLayer, spe
       current: mine !== null && percentRow === -1,
     },
   ];
-  openRewardTable(scene, popups, { title: rankRewardLabel(spec.period), rules: spec.rules, compact: true, sections: [{ rows }] });
+  openRewardTable(scene, popups, { title: spec.title ?? rankRewardLabel(spec.period), rules: spec.rules, compact: true, sections: [{ rows }] });
 }
 
 /** 줄 이름 — 1위 · 2~3위 · 101위 이하. */

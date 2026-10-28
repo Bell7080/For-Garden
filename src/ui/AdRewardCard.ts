@@ -46,10 +46,15 @@ export function addAdRewardCard(scene: Phaser.Scene, parent: Phaser.GameObjects.
   const done = options.remaining <= 0;
   const card = scene.add.container(options.x, options.y);
   // 다른 상품 칸과 같은 전시대 겉모습(빗금·면 무늬)을 쓴다. 꼬리표는 격자 첫 줄에서 창 위로 잘리지 않게 칸 안쪽 오른쪽 위에 둔다.
-  paintShowcaseCard(scene, card, { width, height, accent: SHOWCASE_TIER_TONE.daily, dim: false, railX: -width / 2 + 34, stageY: 0 });
   const frameSize = Math.round(height * 0.4);
   const gains = [{ currency: options.currency, amount: options.amount }, ...(options.extras ?? [])];
   const gap = Math.round(frameSize * 0.2);
+  // 액자 줄 아래에 상품 칸과 같은 받침이 선다 — 액자가 여럿이면 줄 전체를 받친다.
+  const rowWidth = gains.length * frameSize + (gains.length - 1) * gap;
+  paintShowcaseCard(scene, card, {
+    width, height, accent: SHOWCASE_TIER_TONE.daily, dim: done, railX: -width / 2 + 34, stageY: 0,
+    pedestalWidth: Math.min(width - 80, rowWidth + frameSize * 0.5), gleamIndex: 0,
+  });
   gains.forEach((gain, index) => {
     const x = (index - (gains.length - 1) / 2) * (frameSize + gap);
     const frame = addFramedIcon(scene, card, x, -height * 0.2, frameSize, CURRENCY_ICON_BY_WALLET[gain.currency], { plain: true });

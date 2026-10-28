@@ -152,14 +152,21 @@ export function addPriceBar(
   /** 지갑 칸이거나 길드 코인. 길드 코인은 길드원 행이 들고 있어 지갑 키가 아니다. */
   currency: WalletItemKey | "guildCoin",
   amount: number,
-  options: { short?: boolean; height?: number; iconAlpha?: number; valueSize?: number; plate?: boolean } = {},
+  options: {
+    short?: boolean; height?: number; iconAlpha?: number; valueSize?: number; plate?: boolean;
+    /** 전시대 카드의 색. 주면 판 밑동에 그 색이 옅게 고이고 윗변 선이 그 색이 된다 — 카드와 값 줄이 한 벌로 읽힌다. */
+    accent?: number;
+  } = {},
 ): Phaser.GameObjects.Container {
   const height = options.height ?? PRICE_BAR.height;
   const bar = scene.add.container(x, y);
   // 판은 부르는 쪽이 따로 깔 수 있다(값이 곧 버튼인 구매 확인판) — 그때는 글자와 그림만 세운다.
-  if (options.plate !== false) bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
-    fill: 0x141b24, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.45,
-  }));
+  if (options.plate !== false) {
+    bar.add(drawLayer(scene, 0, 0, slantedRect(width, height), {
+      fill: 0x141b24, alpha: options.accent === undefined ? HOLO.glass : 0.92, edge: options.accent ?? COLOR.accent, edgeAlpha: options.accent === undefined ? 0.45 : 0.8,
+      ...(options.accent === undefined ? {} : { glow: { color: options.accent, strength: 0.22, height: 1 } }),
+    }));
+  }
   if (label !== undefined) {
     bar.add(scene.add.text(-width / 2 + PRICE_BAR.padX, 0, label, textStyle({ role: "body", size: PRICE_BAR.labelSize, color: COLOR.inkDim })).setOrigin(0, 0.5));
   }

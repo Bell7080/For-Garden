@@ -110,6 +110,8 @@ export const SHOP_CARD = {
   nameY: 38,
   remainingY: 82,
   price: { y: 148, height: 66, inset: 56 },
+  /** 액자 아래 받침의 폭(액자 한 변 대비). 액자보다 한 뼘 넓어야 상품이 판 위에 올라선 것으로 읽힌다. */
+  pedestalRatio: 1.5,
   /** 드래그와 탭을 가르는 거리. 이보다 많이 밀렸으면 스크롤이지 구매가 아니다. */
   dragSlop: 16,
 } as const;

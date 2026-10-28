@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import type { ProductRefresh } from "../data/products";
 import { chipPoints, drawFrameVignette, drawLayer, slantedRect } from "./holo";
+import { motionPolicy } from "../core/settings";
+import { settingsManager } from "../managers/SettingsManager";
 import { COLOR, textStyle } from "./theme";
 import { addShowcaseFace } from "./showcaseCardFace";
 
@@ -30,6 +32,21 @@ export const SHOWCASE_CARD = {
   tag: { height: 46, padX: 26, overhangY: 18, size: 24 },
   /** 몸판을 비스듬히 가로지르는 빛줄기 두 가닥 — 포장된 상품의 광택이다. */
   streaks: [{ x: 0.18, width: 46, alpha: 0.06 }, { x: 0.3, width: 16, alpha: 0.05 }],
+  /**
+   * 윗변 바로 안쪽의 유리 모서리 반사. 강조선 아래 한 뼘에 흰 실선 한 줄이 서면 면이 두께를 가진
+   * 판유리로 읽힌다 — 강조선 하나만으로는 면이 종이처럼 납작하다.
+   */
+  rim: { inset: 7, alpha: 0.16, width: 2 },
+  /**
+   * 상품이 올라서는 **받침**. 액자 아래에 얇은 판 한 장이 깔리고 그 위로 강조색 빛이 고여, 상품이
+   * 진열대 위 조명 아래에 놓인 것으로 읽힌다. 빛은 같은 판을 조금씩 키워 옅게 겹친 것이다(원 금지).
+   */
+  pedestal: { height: 16, slant: 12, glow: [{ grow: 46, rise: 20, alpha: 0.07 }, { grow: 24, rise: 11, alpha: 0.1 }, { grow: 8, rise: 4, alpha: 0.14 }] },
+  /**
+   * 가끔 면을 훑고 지나가는 빛 한 줄기 — 포장 비닐에 빛이 스치는 순간이다. 카드마다 시작을 어긋나게
+   * 두어 한꺼번에 번쩍이지 않고, 움직임 줄이기에서는 서지 않는다.
+   */
+  gleam: { width: 64, core: 18, alpha: 0.1, coreAlpha: 0.12, duration: 900, repeatDelay: 4200, stagger: 520 },
 } as const;
 
 /**
@@ -56,6 +73,10 @@ export interface ShowcaseChromeOptions {
   tagLeft?: number;
   /** 상품(액자 줄)이 놓이는 높이 — 면 무늬의 받침·빛이 이 줄을 기준으로 선다. */
   stageY?: number;
+  /** 상품 아래 받침의 폭. 주면 `stageY` 바로 아래에 받침이 선다(액자 하나가 서는 칸). */
+  pedestalWidth?: number;
+  /** 훑는 빛의 차례(목록 안 순번). 주면 그 차례만큼 늦게 시작해 칸끼리 엇갈린다. 소진 카드는 훑지 않는다. */
+  gleamIndex?: number;
 }
 
 /** 로컬 좌표 도형을 지금의 월드 좌표로 옮긴다. 팝업·스크롤 안에서 마스크가 엉뚱한 자리에 남지 않게 한다. */
@@ -68,10 +89,15 @@ function worldPoints(matrix: Phaser.GameObjects.Components.TransformMatrix, flat
   return points;
 }
 
+/** 카드의 깎임. 매진 막처럼 카드 위에 덮는 것이 같은 깎임을 읽는다. */
+export function showcaseCardBevel(width: number, height: number): { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number } {
+  const bevel = Math.min(width, height) * SHOWCASE_CARD.bevel;
+  return { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 };
+}
+
 /** 카드의 깎인 실루엣. 입력면·안쪽 장식이 같은 도형을 읽는다. */
 export function showcaseCardShape(width: number, height: number, grow = 0): number[] {
-  const bevel = Math.min(width, height) * SHOWCASE_CARD.bevel;
-  return chipPoints(width + grow, height + grow, { bevel: { topLeft: bevel, topRight: 0, bottomRight: bevel, bottomLeft: 0 } });
+  return chipPoints(width + grow, height + grow, { bevel: showcaseCardBevel(width, height) });
 }
 
 /**
@@ -109,6 +135,15 @@ export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.
     ], true);
   }
   card.add(streaks);
+  // 윗변 안쪽의 유리 모서리 반사 — 깎인 왼쪽 위를 피해 시작한다.
+  const { rim } = SHOWCASE_CARD;
+  const bevel = Math.min(width, height) * SHOWCASE_CARD.bevel;
+  const rimLine = scene.add.graphics();
+  rimLine.lineStyle(rim.width, 0xffffff, dim ? rim.alpha / 2 : rim.alpha);
+  rimLine.lineBetween(-width / 2 + bevel + rim.inset, -height / 2 + rim.inset, width / 2 - rim.inset, -height / 2 + rim.inset);
+  card.add(rimLine);
+  // 받침 — 상품이 올라서는 얇은 판과 그 위에 고인 빛.
+  if (options.pedestalWidth !== undefined && options.stageY !== undefined) addPedestal(scene, card, options.pedestalWidth, options.stageY, accent, dim);
   // ③ 네 변 비네팅 — 칩 밖으로 새지 않도록 카드의 월드 도형으로 마스킹한다.
   const maskGraphics = scene.make.graphics({});
   const syncMask = (): void => {
@@ -123,6 +158,7 @@ export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.
   });
   const cardMask = maskGraphics.createGeometryMask();
   streaks.setMask(cardMask);
+  if (!dim && options.gleamIndex !== undefined) addGleam(scene, card, width, height, options.gleamIndex, cardMask);
   card.add(drawFrameVignette(scene, 0, 0, width, height, SHOWCASE_CARD.vignette).setMask(cardMask));
   // ④ 왼쪽 빗금 한 줄. 제목표의 빗금과 같은 결로 카드를 세로로 잡아 준다.
   card.add(drawLayer(scene, options.railX - SHOWCASE_CARD.rail.inset, 0, slantedRect(SHOWCASE_CARD.rail.width, height * 0.62), {
@@ -138,4 +174,41 @@ export function paintShowcaseCard(scene: Phaser.Scene, card: Phaser.GameObjects.
     card.add(drawLayer(scene, tagX, tagY, slantedRect(tagWidth, tag.height, 14), { fill: accent, alpha: dim ? 0.45 : 1 }));
     card.add(label.setPosition(tagX, tagY + 1));
   }
+}
+
+/** 상품 받침 한 장. 판 위로 강조색 빛이 고이고, 판 윗변에 강조선 한 줄이 선다. */
+function addPedestal(scene: Phaser.Scene, card: Phaser.GameObjects.Container, width: number, stageY: number, accent: number, dim: boolean): void {
+  const { pedestal } = SHOWCASE_CARD;
+  const y = stageY + pedestal.height / 2;
+  for (const { grow, rise, alpha } of pedestal.glow) {
+    card.add(drawLayer(scene, 0, y - rise, slantedRect(width + grow, pedestal.height + rise * 2, pedestal.slant), { fill: accent, alpha: dim ? alpha / 2 : alpha, shadow: false }));
+  }
+  card.add(drawLayer(scene, 0, y, slantedRect(width, pedestal.height, pedestal.slant), {
+    fill: 0x05080c, alpha: 0.9, edge: accent, edgeAlpha: dim ? 0.4 : 0.85, edgeWidth: 2, shadow: { x: 0, y: 6 },
+  }));
+}
+
+/** 가끔 면을 훑는 빛 한 줄기. 카드 도형 마스크 안에서만 보이고, 카드가 죽으면 함께 멈춘다. */
+function addGleam(scene: Phaser.Scene, card: Phaser.GameObjects.Container, width: number, height: number, index: number, mask: Phaser.Display.Masks.GeometryMask): void {
+  if (motionPolicy(settingsManager.get()).nonEssentialRepeatFactor === 0) return;
+  const { gleam } = SHOWCASE_CARD;
+  const band = scene.add.graphics();
+  const lean = height * 0.45;
+  const strip = (w: number, alpha: number): void => {
+    band.fillStyle(0xffffff, alpha);
+    band.fillPoints([
+      new Phaser.Geom.Point(lean - w / 2, -height / 2), new Phaser.Geom.Point(lean + w / 2, -height / 2),
+      new Phaser.Geom.Point(-lean + w / 2, height / 2), new Phaser.Geom.Point(-lean - w / 2, height / 2),
+    ], true);
+  };
+  strip(gleam.width, gleam.alpha);
+  strip(gleam.core, gleam.coreAlpha);
+  const travel = width / 2 + lean + gleam.width;
+  band.setX(-travel).setMask(mask);
+  card.add(band);
+  const tween = scene.tweens.add({
+    targets: band, x: travel, duration: gleam.duration, ease: "Sine.easeInOut",
+    delay: 600 + index * gleam.stagger, repeat: -1, repeatDelay: gleam.repeatDelay,
+  });
+  card.once(Phaser.GameObjects.Events.DESTROY, () => tween.remove());
 }

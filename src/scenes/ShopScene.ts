@@ -30,6 +30,7 @@ import { addSoldOutStamp, forgetSoldOutStamp, styleLimitCount } from "../ui/sold
 import { chipPoints, drawFrameVignette, drawLayer, drawVignette, HOLO, slantedRect } from "../ui/holo";
 import { DialogueBubble } from "../ui/DialogueBubble";
 import { COLOR, textStyle } from "../ui/theme";
+import { paintShowcaseCard, showcaseCardBevel, SHOWCASE_TIER_TONE } from "../ui/showcaseCardChrome";
 import { TopBar } from "../ui/TopBar";
 import { PopupLayer } from "../ui/PopupLayer";
 import { bindCurrencyGuide, openCurrencyGuide } from "../ui/currencyGuideEntry";
@@ -575,7 +576,13 @@ export class ShopScene extends Phaser.Scene {
     const width = shopCardWidth();
     const { x, y } = shopCardSpot(index, offsetY);
     const card = this.add.container(x, y);
-    card.add(drawLayer(this, 0, 0, chipPoints(width, SHOP_CARD.height, { bevel: { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 } }), { fill: 0x182029, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.52 }));
+    // 겉모습은 무역·프리미엄과 같은 전시대 한 벌이다 — 색은 갱신 주기(매일 초록 · 주간 푸른빛 · 한 번뿐 금빛)가 정하고,
+    // 액자 아래 받침과 가끔 훑는 빛이 상품을 진열대 위의 물건으로 세운다. 매진 칸은 눌러 둔다.
+    const soldOut = product.remaining <= 0;
+    paintShowcaseCard(this, card, {
+      width, height: SHOP_CARD.height, accent: soldOut ? COLOR.inkDimHex : SHOWCASE_TIER_TONE[product.refresh], dim: soldOut,
+      railX: -width / 2 + 34, stageY: SHOP_CARD.frameY + SHOP_CARD.frame / 2, pedestalWidth: SHOP_CARD.frame * SHOP_CARD.pedestalRatio, gleamIndex: index,
+    });
     // 마일리지 파편(주간 SSR·주간 SR·일간 R)은 상품 그림이 아니라 **그 개체의 얼굴 액자**로 선다 — 무엇을 사는지가 얼굴로 먼저 읽힌다.
     const runeProduct = runeProductOf(product);
     const fragmentRelicId = product.grants.map((grant) => mileageFragmentRelicId(grant, new Date())).find((id) => id !== undefined);
@@ -614,11 +621,11 @@ export class ShopScene extends Phaser.Scene {
     if (product.acquisition.kind === "currency") {
       addPriceBar(this, card, 0, SHOP_CARD.price.y, width - SHOP_CARD.price.inset, undefined, product.acquisition.currency, product.acquisition.amount, {
         height: SHOP_CARD.price.height,
-        short: session.wallet[product.acquisition.currency] < product.acquisition.amount,
+        short: session.wallet[product.acquisition.currency] < product.acquisition.amount, accent: soldOut ? undefined : SHOWCASE_TIER_TONE[product.refresh],
       });
     } else if (product.acquisition.kind === "guild_coin") {
       addPriceBar(this, card, 0, SHOP_CARD.price.y, width - SHOP_CARD.price.inset, undefined, "guildCoin", product.acquisition.amount, {
-        height: SHOP_CARD.price.height, short: this.guildCoin < product.acquisition.amount,
+        height: SHOP_CARD.price.height, short: this.guildCoin < product.acquisition.amount, accent: soldOut ? undefined : SHOWCASE_TIER_TONE[product.refresh],
       });
     }
     // 따로 사는 것보다 이득인 상품은 무역과 같은 가치 배지가 우상단에 선다(100%를 넘는 것만 — 골드 교환소는 늘 아래다).
@@ -630,7 +637,7 @@ export class ShopScene extends Phaser.Scene {
       card.add(badge);
     }
     // 남은 횟수를 다 쓴 칸은 검은 막이 덮이고 「매진」 도장이 찍힌다 — 눌러 열어도 구매 버튼이 꺼져 있다.
-    if (product.remaining <= 0) addSoldOutStamp(this, card, width, SHOP_CARD.height, { topLeft: 36, topRight: 0, bottomRight: 28, bottomLeft: 0 }, product.id);
+    if (soldOut) addSoldOutStamp(this, card, width, SHOP_CARD.height, showcaseCardBevel(width, SHOP_CARD.height), product.id);
     else forgetSoldOutStamp(product.id);
     /*
      * **창 밖으로 흘러간 칸은 손을 받지 않는다.** GeometryMask는 그리기만 자르므로, 위로 흘러가

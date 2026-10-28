@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { LOBBY_RETURN, normalizeLobbyEntry } from "../../src/scenes/lobbyEntry";
-import { BATTLE_FIELD_BACKGROUND, battleFieldBackground, BACKGROUND, BACKGROUND_ASSETS } from "../../src/ui/backgroundAssets";
+import { BATTLE_FIELD_BACKGROUND, battleFieldBackground, BACKGROUND, BACKGROUND_ASSETS, stageMapBackground, stageFieldBackground } from "../../src/ui/backgroundAssets";
 import { BANNERS } from "../../src/data/banners";
 import { shopStagePresentation } from "../../src/data/shopPresentation";
 import { findItem } from "../../src/data/items";
@@ -28,6 +28,24 @@ describe("로비로 돌아갈 자리", () => {
 });
 
 describe("전투 모드별 전장", () => {
+  it("는 장별 지도와 편성·전투의 장소를 일치시킨다", () => {
+    for (const chapter of [1, 2]) {
+      expect(stageMapBackground(chapter)).toBe(BACKGROUND.stageMap);
+      expect(stageFieldBackground(chapter)).toBe(BACKGROUND.combat);
+    }
+    for (const chapter of [3, 4]) {
+      expect(stageMapBackground(chapter)).toBe(BACKGROUND.stageMapDeep);
+      expect(stageFieldBackground(chapter)).toBe(BACKGROUND.combatDeep);
+    }
+    for (const chapter of [5, 6]) {
+      expect(stageMapBackground(chapter)).toBe(BACKGROUND.stageMapPrisonApproach);
+      expect(stageFieldBackground(chapter)).toBe(BACKGROUND.combatPrisonApproach);
+      expect(battleFieldBackground("stage", `hard:${chapter}-1`)).toBe(BACKGROUND.combatPrisonApproach);
+    }
+    expect(stageMapBackground(7)).toBe(BACKGROUND.stageMapThirdBranch);
+    expect(stageFieldBackground(7)).toBe(BACKGROUND.combatThirdBranch);
+    expect(battleFieldBackground("stage", "7-1")).toBe(BACKGROUND.combatThirdBranch);
+  });
   it("는 콘텐츠마다 다른 장소에 선다", () => {
     // 같은 장소에서 이어지는 원정 둘과 길드전·방어덱 편성만 원화를 나눠 쓴다.
     expect(BATTLE_FIELD_BACKGROUND.cake).toBe(BACKGROUND.cakeField);

@@ -1,5 +1,6 @@
 import { fitTextToBox } from "../ui/textFit";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
+import { stageMapRow } from "../core/stageMapDirection";
 import { STORY_DIFFICULTY, isStoryDifficultyUnlocked, storyBaseStageId, storyDifficultyOf, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { storyStages, ALL_STORY_STAGES } from "../data/stages";
 import { addStoryDifficultyIcon } from "../ui/StoryDifficultyIcon";
@@ -262,7 +263,9 @@ export class StageMapScene extends Phaser.Scene {
 
   /** 노드가 서는 세로 칸. 서브는 갈라져 나온 본편 관문과 같은 높이다. */
   private rowOf(stage: StageDef, index: number): number {
-    return isSubNode(stage) ? (stage.chapterOrder ?? 1) - 1 : index;
+    const row = isSubNode(stage) ? (stage.chapterOrder ?? 1) - 1 : index;
+    const count = this.chapters().find(({ id }) => id === this.currentChapter)?.stages.length ?? 10;
+    return stageMapRow(this.currentChapter, row, count);
   }
 
   /**
@@ -273,7 +276,7 @@ export class StageMapScene extends Phaser.Scene {
     const cx = BASE_WIDTH / 2;
     const mainOffset = (row: number): number => (row % 2 === 0 ? -110 : 110);
     if (!isSubNode(stage)) return cx + mainOffset(index);
-    return cx + (mainOffset(this.rowOf(stage, index)) < 0 ? 360 : -360);
+    return cx + (mainOffset((stage.chapterOrder ?? 1) - 1) < 0 ? 360 : -360);
   }
 
   /** 서브 노드가 열려 있는가·읽었는가. 전투 관문은 클리어 기록이 말한다. */
@@ -281,7 +284,7 @@ export class StageMapScene extends Phaser.Scene {
     return stage.kind === "story" ? session.completedStoryIds.has(stage.storyId) : session.cleared.has(stage.id);
   }
 
-  /** 아래에서 위로 이어지는 노드 줄. 창 밖으로 나가는 부분은 잘라 낸다. */
+  /** 장별 원화 진행 방향으로 노드를 놓고 창 밖은 잘라 낸다. */
   private buildMap(): void {
     const cx = BASE_WIDTH / 2;
     const tone = STORY_DIFFICULTY[this.difficulty];

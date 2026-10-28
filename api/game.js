@@ -636,6 +636,8 @@ var INFO_KO = {
   "info.diary.title": "\uAD00\uCC30 \uC9C8\uBB38 {index} / {total}",
   "info.diary.locked": "{days}\uC77C \uB4A4\uC5D0 \uC5F4\uB9AC\uB294 \uC9C8\uBB38\uC774\uC5D0\uC694.",
   "info.diary.reward": "\uB2F5\uD558\uBA74 \uC82C {gems}\uAC1C\uB97C \uBC1B\uC544\uC694",
+  "info.diary.rewardDone": "\uBC1B\uC740 \uBCF4\uC0C1",
+  "info.diary.rewardReady": "\uB20C\uB7EC\uC11C \uC82C \uBC1B\uAE30",
   "info.diary.answerChip": "\uB2F5\uBCC0 {n}",
   "info.bond.level": "\uC720\uB300 {level}",
   "info.bond.ferocityGain": "\uC57C\uC131 \uC0C1\uC2B9",
@@ -3136,7 +3138,42 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-4-1-pre": "\uC2B9\uAC15\uC7A5\uC5D0 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uB85C \uC11C\uBA70 \uD569\uB3D9 \uCD94\uACA9\uC774 \uC2DC\uC791\uB41C\uB2E4.",
   "recollection.summary.stage-4-4-pre": "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0\uC11C \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uAE38\uC744 \uB9C9\uACE0, \uCF54\uB9C8\uAC00 \uB3CC\uC544\uAC00\uB77C\uACE0 \uB9D0\uD55C\uB2E4.",
   "recollection.summary.stage-4-10-pre": "\uC0AC\uB839\uC2E4\uC5D0\uC11C \uCF54\uB9C8\uC640 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uB098\uB780\uD788 \uC11C \uAE38\uC744 \uB9C9\uB294\uB2E4.",
-  "recollection.summary.stage-4-10-post": "\uD68C\uC218\uC870\uAC00 \uBB3C\uB7EC\uB098\uACE0 \uCF54\uB9C8\uB294 \uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB098\uC790\uACE0 \uB9D0\uD55C\uB2E4."
+  "recollection.summary.stage-4-10-post": "\uC0AC\uB839\uC2E4 \uC544\uB798 \uBB3B\uD600 \uC788\uB358 \uAC10\uAE08\uB3D9\uC758 \uBB38\uC774 \uB4DC\uB7EC\uB098\uACE0, \uCF54\uB9C8\uC5D0\uAC8C \uC0C8 \uBA85\uB839\uC774 \uB0B4\uB824\uC628\uB2E4.",
+  "recollection.tab.chapter5": "5\uC7A5",
+  "recollection.tab.chapter6": "6\uC7A5",
+  "recollection.tab.chapter7": "7\uC7A5",
+  "recollection.summary.stage-4-3-pre": "\uC810\uAC80 \uD1B5\uB85C\uC5D0\uC11C \uD68C\uC218\uB41C \uC0BC\uC778\uC870\uAC00 \uBA85\uB839\uC774\uB77C\uC11C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-4-6-pre": "\uB124\uC6B0\uB9AC\uAC00 \uAC19\uC740 \uAC04\uBD80\uC778 \uCF54\uB9C8\uB97C \uB0AE\uCDB0 \uBCF4\uACE0, \uB9AC\uD30C\uB294 \uC815\uB9D0 \uC2F8\uC6CC\uC57C \uD558\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
+  "recollection.summary.stage-4-8-post": "\uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uAC00 \uC9C0\uB3C4\uC5D0 \uC5C6\uB294 \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.",
+  "recollection.summary.stage-5-1-pre": "\uAC10\uAE08\uB3D9 \uC785\uAD6C\uC5D0\uC11C \uC9C0\uBD80\uC758 \uACBD\uACE0\uBB38\uACFC \uBB38\uC744 \uC9C0\uD0A4\uB294 \uC0BC\uC778\uC870\uB97C \uB9CC\uB09C\uB2E4.",
+  "recollection.summary.stage-5-3-post": "\uB378\uB85C\uD53C\uAC00 \uACF5\uBA78 \uD3EC\uD68D \uAC1C\uCCB4\uC758 \uC218\uAC10 \uBA85\uB2E8\uC744 \uCC3E\uC544\uB0B8\uB2E4.",
+  "recollection.summary.stage-5-4-post": "\uCF54\uB9C8\uAC00 \uAC10\uBC29\uC744 \uC5F4\uACE0, \uAC10\uAE08\uC870\uC758 \uB77C\uC790\uAC00 \uAC78\uC5B4 \uB098\uC628\uB2E4.",
+  "recollection.summary.stage-5-5-pre": "\uC11C\uC5F4\uC758 \uBC29\uC5D0\uC11C \uB77C\uC790\uAC00 \uD63C\uC790 \uC55E\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-5-5-post": "\uB77C\uC790\uAC00 \uBB3C\uB7EC\uB098\uACE0, \uB354 \uC544\uB798\uC5D0\uC11C \uCF67\uB178\uB798\uAC00 \uB4E4\uB824\uC628\uB2E4.",
+  "recollection.summary.stage-5-6-post": "\uCE68\uC218 \uAC10\uBC29\uC5D0\uC11C \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uD480\uB824\uB09C \uB77C\uC790\uC5D0\uAC8C \uC815\uC911\uD788 \uC778\uC0AC\uD55C\uB2E4.",
+  "recollection.summary.stage-5-8-post": "\uB204\uAD70\uAC00 \uAC07\uD78C \uAC1C\uCCB4\uB4E4\uC744 \uBAB0\uB798 \uBA39\uC774\uBA70 \uD558\uB098\uC529 \uD480\uC5B4 \uC8FC\uACE0 \uC788\uC5C8\uB2E4.",
+  "recollection.summary.stage-5-9-post": "\uB04A\uC5B4\uC9C4 \uC871\uC1C4 \uC0AC\uC774\uB85C \uAC81\uBA39\uC740 \uADF8\uB9BC\uC790 \uD558\uB098\uAC00 \uB2EC\uC544\uB09C\uB2E4.",
+  "recollection.summary.stage-5-10-pre": "\uCDE8\uC0AC\uC7A5\uC758 \uD070 \uC1A5 \uC55E\uC5D0\uC11C \uB9C8\uAC00\uC0AC\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uB9DE\uC774\uD55C\uB2E4.",
+  "recollection.summary.stage-5-10-post": "\uB9E8 \uC544\uB798 \uC790\uBB3C\uC1E0\uB294 \uC0AC\uB78C \uC190\uC73C\uB85C\uB9CC \uC5F4\uB9B0\uB2E4 \u2014 \uACF5\uBA78\uC774 \uC5F0\uAD6C\uC6D0\uC744 \uC544\uB798\uB85C \uBAAC \uC774\uC720\uAC00 \uB4DC\uB7EC\uB09C\uB2E4.",
+  "recollection.summary.stage-6-1-pre": "\uC791\uC740 \uB4DC\uB860\uC774 \uD68C\uB791\uC73C\uB85C \uB0B4\uB824\uC640 \uC704\uB85C \uAC00\uB294 \uAE38\uC744 \uC0B4\uD540\uB2E4.",
+  "recollection.summary.stage-6-3-post": "\uB9C8\uAC00\uC0AC\uAC00 \uD68C\uB791 \uAD6C\uC11D\uC5D0\uC11C \uAC10\uAE08\uC870\uB97C \uBA39\uC774\uACE0, \uC5F0\uAD6C\uC6D0 \uBAAB\uAE4C\uC9C0 \uB35C\uC5B4 \uB454\uB2E4.",
+  "recollection.summary.stage-6-4-post": "\uC2A4\uD14C\uB77C\uAC00 \uC218\uC9C1\uAC31 \uC704\uC5D0\uC11C \uB5A8\uB9AC\uB294 \uBC14\uB78C \uD558\uB098\uB97C \uC77D\uB294\uB2E4.",
+  "recollection.summary.stage-6-5-pre": "\uAC81\uC5D0 \uC9C8\uB9B0 \uB178\uC544\uAC00 \uC218\uC9C1\uAC31\uC5D0\uC11C \uB5A8\uC5B4\uC9C0\uBA70 \uB36E\uCE5C\uB2E4.",
+  "recollection.summary.stage-6-5-post": "\uC4F0\uB7EC\uC9C4 \uB178\uC544 \uC55E\uC744 \uB9C8\uAC00\uC0AC\uAC00 \uB9C9\uC544\uC11C\uBA70 \uC2DD\uAD6C\uB77C\uACE0 \uB9D0\uD55C\uB2E4.",
+  "recollection.summary.stage-6-7-post": "\uBB34\uB108\uC9C4 \uBA74\uD68C\uC2E4\uC5D0\uC11C \uD68C\uC218\uC870\uAC00 \uBD80\uB300\uC7A5\uC758 \uADC0\uD658\uC744 \uB450\uACE0 \uC774\uC57C\uAE30\uD55C\uB2E4.",
+  "recollection.summary.stage-6-8-post": "\uAD00\uC81C \uAE30\uB85D\uC758 \uCD5C\uD558\uCE35 \uC218\uAC10 \uAC1C\uCCB4 \uC774\uB984 \uCE78\uC5D0 \u300C\uCE74\uB974\u300D\uB77C\uACE0 \uC801\uD600 \uC788\uB2E4.",
+  "recollection.summary.stage-6-10-pre": "\uC704\uB85C \uC624\uB974\uB294 \uACC4\uB2E8 \uC55E\uC5D0 \uB9C8\uAC00\uC0AC\uC640 \uB178\uC544\uAC00 \uB098\uB780\uD788 \uC120\uB2E4.",
+  "recollection.summary.stage-6-10-post": "\uD68C\uB791\uC774 \uBB34\uB108\uC838 \uB9E8 \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C0\uACE0, \uC5B4\uB460 \uC18D\uC5D0\uC11C \uB0AF\uC120 \uBAA9\uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4.",
+  "recollection.summary.stage-7-1-pre": "\uB9E8 \uC544\uB798\uB85C \uB5A8\uC5B4\uC9C4 \uC5F0\uAD6C\uC6D0\uC744 \uB178\uB3C4\uB2C8\uC544\uAC00 \uBC1B\uC544 \uB0B8\uB2E4.",
+  "recollection.summary.stage-7-2-post": "\uB0C9\uB3D9 \uC218\uC6A9\uC2E4\uC774 \uC0AC\uB78C\uC744 \uAC00\uB46C \uB450\uB358 \uACF3\uC774\uC5C8\uC74C\uC744 \uB9E4\uB514\uAC00 \uC54C\uC544\uCC48\uB2E4.",
+  "recollection.summary.stage-7-4-post": "\uCF54\uB9C8\uAC00 \uC0AC\uB78C \uC190\uC744 \uB370\uB824\uC624\uB77C\uB294 \uBA85\uB839\uC744 \uBC1B\uC558\uB2E4\uACE0 \uD138\uC5B4\uB193\uB294\uB2E4.",
+  "recollection.summary.stage-7-5-pre": "\uD68C\uC218\uC870 \uC800\uC9C0\uC120\uC5D0\uC11C \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uB9C8\uC9C0\uB9C9\uC73C\uB85C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-7-5-post": "\uBB3C\uB7EC\uB098\uB294 \uC774\uCE74\uB2C9\uC2DC\uC544\uAC00 \uCF54\uB9C8\uC5D0\uAC8C \uBA85\uB839\uC744 \uAC70\uC2A4\uB97C \uC0DD\uAC01\uC774\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
+  "recollection.summary.stage-7-7-post": "\uD769\uC5B4\uC84C\uB358 \uB3D9\uB8CC\uB4E4\uC774 \uB9C8\uCE68\uB0B4 \uC5F0\uAD6C\uC6D0\uC744 \uCC3E\uC544\uB0B8\uB2E4.",
+  "recollection.summary.stage-7-8-post": "\uBCBD\uC744 \uB6AB\uACE0 \uD30C\uCE58\uC640 \uB809\uC2DC\uC544\uAC00 \uB3CC\uC544\uC628\uB2E4.",
+  "recollection.summary.stage-7-9-post": "\uBB36\uC5EC \uC788\uB358 \uBD80\uB300\uC7A5 \uCE74\uB974\uC758 \uBA85\uB839\uC744 \uCF54\uB9C8\uAC00 \uAC70\uC808\uD55C\uB2E4.",
+  "recollection.summary.stage-7-10-pre": "\uCE74\uB974\uAC00 \uCF54\uB9C8\uB97C \uBC00\uCCD0 \uB0B4\uACE0 \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C \uB2E4\uAC00\uC628\uB2E4.",
+  "recollection.summary.stage-7-10-post": "\uCE74\uB974\uAC00 \uC2A4\uC2A4\uB85C \uAD6C\uC18D\uC744 \uBD80\uC218\uACE0 \uAC10\uAE08\uC870\uC640 \uD568\uAED8 \uC704\uB85C \uB5A0\uB09C\uB2E4."
 };
 
 // src/i18n/ko/dialogue.ts
@@ -15587,7 +15624,7 @@ var RELICS = [
      * 다른 공멸 셋과 같은 층위(복원 후 관찰 · 소속 행동 · 호칭)로 채운다.
      */
     unlockRecord: { status: "recorded", text: "\uC2DD\uBCC4 \uAE30\uB85D 204. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uC5BC\uB8E9\uBB34\uB2AC \uD6C4\uB4DC \uCF54\uD2B8\uC758 \uC9C0\uD37C\uB97C \uBAA9 \uB05D\uAE4C\uC9C0 \uC62C\uB824 \uB208\uB9CC \uB4DC\uB7EC\uB0B4\uACE0 \uC11C\uBA70, \uB450 \uC190\uC740 \uB4A4\uB85C \uB3CC\uB9B0 \uCC44 \uAF2C\uB9AC \uB05D\uC774 \uD1B1\uB2C8\uCC98\uB7FC \uAC08\uB77C\uC838 \uC788\uB2E4. \uBB38\uC774 \uC5F4\uB9AC\uB294 \uC18C\uB9AC\uBCF4\uB2E4 \uBA3C\uC800 \uADF8 \uC55E\uC5D0 \uAC00 \uC788\uC5C8\uACE0, \uB9C9\uB2E4\uB978 \uAE38\uC774\uBA74 \uB418\uB3CC\uC544\uC640 \uB2E4\uB978 \uAE38\uC744 \uACE8\uB77C \uB2EC\uB838\uB2E4. \uD55C \uBC88 \uB4A4\uB97C \uBC1F\uC740 \uC0C1\uB300\uB294 \uC2DC\uC57C\uC5D0\uC11C \uC0AC\uB77C\uC838\uB3C4 \uB193\uC9C0 \uC54A\uC558\uB2E4. \uB204\uAD6C\uC758 \uC9C0\uC2DC\uB97C \uBC1B\uC544 \uBA3C\uC800 \uC6C0\uC9C1\uC774\uB294\uC9C0\uB294 \uD655\uC778\uB418\uC9C0 \uC54A\uC558\uB2E4." },
-    squadNote: "\uACF5\uBA78 \uD14C\uB7EC\uC870\uC758 \uD589\uB3D9\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uB3CC\uC785\uB85C\uAC00 \uC815\uD574\uC9C0\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uB4E4\uC5B4\uAC00 \uC548\uC744 \uBCF4\uACE0 \uC624\uBA70, \uD769\uC5B4\uC9C4 \uC801\uC744 \uD55C \uBC29\uD5A5\uC73C\uB85C \uBAB0\uC544 \uB4A4\uB530\uB974\uB294 \uB3D9\uB8CC \uC55E\uC5D0 \uC138\uC6B4\uB2E4.",
+    squadNote: "\uACF5\uBA78 \uD14C\uB7EC\uC870\uC758 \uAC04\uBD80\uB85C \uD655\uC778\uB41C\uB2E4. \uB3CC\uC785\uB85C\uAC00 \uC815\uD574\uC9C0\uAE30 \uC804\uC5D0 \uBA3C\uC800 \uB4E4\uC5B4\uAC00 \uC548\uC744 \uBCF4\uACE0 \uC624\uBA70, \uD769\uC5B4\uC9C4 \uC801\uC744 \uD55C \uBC29\uD5A5\uC73C\uB85C \uBAB0\uC544 \uB4A4\uB530\uB974\uB294 \uB3D9\uB8CC \uC55E\uC5D0 \uC138\uC6B4\uB2E4.",
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     /*
      * **중간보스는 SR급이다.** 공멸 3인조(토비·아모·리파)가 R 띠를 지키는 잡졸이라면 이쪽은
@@ -15744,9 +15781,9 @@ var RELICS = [
       height: "1.62 m",
       weight: "44 kg"
     },
-    catalogSummary: "\uB113\uC740 \uB0A0\uAC1C\uB9C9\uACFC \uC608\uBBFC\uD55C \uADC0\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uD589\uB3D9\uB300\uC7A5 \uC774\uCE74\uB85C\uB2C9\uD14C\uB9AC\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uB113\uC740 \uB0A0\uAC1C\uB9C9\uACFC \uC608\uBBFC\uD55C \uADC0\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uAC04\uBD80 \uC774\uCE74\uB85C\uB2C9\uD14C\uB9AC\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 213. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uB0A0\uAC1C\uB9C9\uC744 \uB9DD\uD1A0\uCC98\uB7FC \uC811\uC5B4 \uC5B4\uAE68\uC5D0 \uB450\uB974\uACE0 \uC11C\uBA70, \uC870\uC6A9\uD788 \uAC77\uB294\uB370\uB3C4 \uBCF5\uB3C4 \uB05D\uC758 \uC18C\uB9AC\uB97C \uBA3C\uC800 \uC54C\uC544\uCC44\uACE0 \uACE0\uAC1C\uB97C \uB3CC\uB838\uB2E4. \uC2E4\uD328\uD55C \uD300\uC758 \uB4A4\uB97C \uB530\uB77C\uAC00 \uC0AC\uB78C\uACFC \uC7A5\uBE44\uB97C \uAC70\uB450\uC5B4 \uC624\uB294 \uC77C\uC744 \uB9E1\uC73C\uBA70, \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uD558\uAC8C \uBD80\uB974\uC9C0\uB9CC \uB9D0\uB05D\uC5D0 \uC11C\uB298\uD55C \uC6C3\uC74C\uC774 \uBB3B\uC5B4 \uC788\uC5C8\uB2E4. \uD68C\uC218\uC758 \uB300\uC0C1\uC5D0 \uBB34\uC5C7\uC774 \uD3EC\uD568\uB418\uB294\uC9C0\uB294 \uD655\uC778\uB418\uC9C0 \uC54A\uC558\uB2E4.' },
-    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uD589\uB3D9\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uC791\uC804\uC5D0 \uC2E4\uD328\uD55C \uD300\uC744 \uCC3E\uC544 \uAC70\uB450\uC5B4 \uC624\uACE0, \uAC19\uC740 \uC190\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC744 \uB370\uB824\uAC00\uB294 \uC77C\uB3C4 \uB9E1\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uAC04\uBD80\uB85C \uD655\uC778\uB41C\uB2E4. \uC791\uC804\uC5D0 \uC2E4\uD328\uD55C \uD300\uC744 \uCC3E\uC544 \uAC70\uB450\uC5B4 \uC624\uACE0, \uAC19\uC740 \uC190\uC73C\uB85C \uC5F0\uAD6C\uC6D0\uC744 \uB370\uB824\uAC00\uB294 \uC77C\uB3C4 \uB9E1\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
     portraitAssetId: "ikanixia",
@@ -15757,7 +15794,7 @@ var RELICS = [
     projectile: "bat",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
     /*
-     * **행동대장이라 SR 띠의 위쪽이다.** 날개로 가르던 전사에서 박쥐 떼를 부리는 마법사로 다시 짰다 — 공격력은 거의 쓰지 않고
+     * **간부라 SR 띠의 위쪽이다.** 날개로 가르던 전사에서 박쥐 떼를 부리는 마법사로 다시 짰다 — 공격력은 거의 쓰지 않고
      * 주문력이 모든 딜을 낸다. 느리고 두꺼워서(체력·저항) 한가운데에 서서 박쥐로 훑는 자리다. 직군은 전사 그대로 둔다
      * (마법사 직군이 없다 — 케리스와 같다).
      */
@@ -15848,9 +15885,9 @@ var RELICS = [
       height: "1.74 m",
       weight: "63 kg"
     },
-    catalogSummary: "\uB9C8\uB514\uC9C4 \uC678\uACE8\uACA9\uACFC \uAE34 \uAF2C\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5 \uC544\uB974\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uB9C8\uB514\uC9C4 \uC678\uACE8\uACA9\uACFC \uAE34 \uAF2C\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uAC04\uBD80 \uC544\uB974\uD2B8\uB85C\uD50C\uB808\uC6B0\uB77C \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 214. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uC5B4\uAE68\uC640 \uB4F1\uC744 \uB36E\uC740 \uB9C8\uB514 \uC7A5\uC2DD\uC774 \uAC78\uC744 \uB54C\uB9C8\uB2E4 \uCC28\uB840\uB85C \uC6B8\uB838\uACE0, \uB300\uC7A5 \uACC1\uC5D0\uC11C \uBC18 \uAC78\uC74C \uB4A4\uB97C \uC9C0\uCF30\uB2E4. \uB204\uAC00 \uBA3C\uC800 \uB9DE\uC544\uB3C4 \uADF8 \uC55E\uC73C\uB85C \uBAB8\uC744 \uBC00\uC5B4 \uB123\uC5C8\uC73C\uBA70, \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uB418 \uB208\uC740 \uCD9C\uAD6C \uCABD\uC744 \uBCF4\uACE0 \uC788\uC5C8\uB2E4. \uB9C8\uB514\uAC00 \uAE4E\uC5EC \uB098\uAC00\uB3C4 \uC5BC\uAD74\uBE5B\uC744 \uBC14\uAFB8\uC9C0 \uC54A\uC558\uB2E4.' },
-    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uBD80\uB300\uC7A5\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uD589\uB3D9\uB300\uC7A5\uC774 \uC55E\uC73C\uB85C \uB098\uAC00\uBA74 \uADF8 \uB4A4\uB97C \uBC1B\uCCD0 \uD68C\uC218 \uB300\uC0C1 \uC55E\uC5D0 \uC120\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78 \uD68C\uC218\uC870\uC758 \uBD80\uAC04\uBD80\uB85C \uD655\uC778\uB41C\uB2E4. \uAC04\uBD80\uAC00 \uC55E\uC73C\uB85C \uB098\uAC00\uBA74 \uADF8 \uB4A4\uB97C \uBC1B\uCCD0 \uD68C\uC218 \uB300\uC0C1 \uC55E\uC5D0 \uC120\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uAE4D\uB4EF\uC774 \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
     portraitAssetId: "atra",
@@ -16190,9 +16227,9 @@ var RELICS = [
       height: "1.66 m",
       weight: "54 kg"
     },
-    catalogSummary: "\uD1B1\uB2C8 \uC774\uBE68\uACFC \uC9E7\uACE0 \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC804\uC0AC \uB9C8\uC900\uAC00\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uD1B1\uB2C8 \uC774\uBE68\uACFC \uC9E7\uACE0 \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uAC04\uBD80 \uB9C8\uC900\uAC00\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 218. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uBC1C\uBAA9\uC5D0 \uC871\uC1C4\uB97C \uB2E8 \uCC44 \uCF67\uB178\uB798\uB97C \uBD88\uB800\uACE0, \uB9C8\uC8FC \uC120 \uC0C1\uB300\uB97C \uD558\uB098\uD558\uB098 \u300C\uC624\uB298\uC758 \uC7AC\uB8CC\u300D\uB77C \uBD88\uB800\uB2E4. \uAC00\uC7A5 \uC9C0\uCE5C \uC0C1\uB300\uBD80\uD130 \uACE0\uB974\uB294 \uC190\uC774 \uB9DD\uC124\uC774\uC9C0 \uC54A\uC558\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB974\uBA70 \u300C\uC81C\uC77C \uADC0\uD55C \uC7AC\uB8CC\u300D\uB77C\uACE0 \uB367\uBD99\uC774\uACE0 \uC785\uB9DB\uC744 \uB2E4\uC168\uB2E4.' },
-    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC2DD\uC0AC \uB2F9\uBC88\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uAC07\uD600 \uC788\uB358 \uBB34\uB9AC\uC758 \uBC25\uC744 \uB9E1\uC544 \uC654\uACE0, \uBB38\uC774 \uC5F4\uB9B0 \uB4A4\uC5D0\uB3C4 \uBB34\uB9AC\uB97C \uBA39\uC774\uB294 \uC77C\uB85C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uAC04\uBD80\uC774\uC790 \uC2DD\uC0AC \uB2F9\uBC88\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uAC07\uD600 \uC788\uB358 \uBB34\uB9AC\uC758 \uBC25\uC744 \uB9E1\uC544 \uC654\uACE0, \uBB38\uC774 \uC5F4\uB9B0 \uB4A4\uC5D0\uB3C4 \uBB34\uB9AC\uB97C \uBA39\uC774\uB294 \uC77C\uB85C \uC790\uB9AC\uB97C \uC9C0\uD0A8\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0\uB2D8"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0\uB2D8",
     rarity: "SR",
     portraitAssetId: "magasa",
@@ -16279,9 +16316,9 @@ var RELICS = [
       height: "1.41 m",
       weight: "34 kg"
     },
-    catalogSummary: "\uAE38\uACE0 \uB0A0\uCE74\uB85C\uC6B4 \uC190\uD1B1\uACFC \uAC00\uB294 \uB4B7\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC554\uC0B4\uC790 \uB178\uC544\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uAE38\uACE0 \uB0A0\uCE74\uB85C\uC6B4 \uC190\uD1B1\uACFC \uAC00\uB294 \uB4B7\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uAC04\uBD80 \uB178\uC544\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 219. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uBAB8\uC744 \uC6C5\uD06C\uB9B0 \uCC44 "\uC624\uC9C0 \uB9C8"\uB97C \uB418\uD480\uC774\uD588\uC9C0\uB9CC, \uAC70\uB9AC\uAC00 \uC881\uD600\uC9C0\uBA74 \uB9D0\uBCF4\uB2E4 \uC190\uD1B1\uC774 \uBA3C\uC800 \uB098\uAC14\uB2E4. \uC138\uAC8C \uB9DE\uC73C\uBA74 \uADF8 \uC790\uB9AC\uC5D0\uC11C \uD280\uC5B4 \uC62C\uB77C \uC0C1\uB300\uC758 \uB4F1 \uB4A4\uB85C \uB3CC\uC544\uAC00 \uC788\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uBA74\uC11C\uB3C4 \uBA87 \uAC78\uC74C \uB5A8\uC5B4\uC838 \uB0C4\uC0C8\uB97C \uB9E1\uC558\uB2E4.' },
-    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC5D0\uC11C \uAC00\uC7A5 \uAC81 \uB9CE\uC740 \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uBC25\uC744 \uCC59\uACA8 \uC900 \uC2DD\uC0AC \uB2F9\uBC88 \uB4A4\uC5D0 \uBD99\uC5B4 \uB2E4\uB2C8\uBA70, \uBB34\uB9AC\uAC00 \uC815\uBA74\uC5D0\uC11C \uBD80\uB52A\uD788\uB294 \uC0AC\uC774 \uB4B7\uC904\uB85C \uD30C\uACE0\uB4E0\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uAC04\uBD80\uC774\uBA74\uC11C \uAC00\uC7A5 \uAC81 \uB9CE\uC740 \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uBC25\uC744 \uCC59\uACA8 \uC900 \uB9C8\uAC00\uC0AC \uB4A4\uC5D0 \uBD99\uC5B4 \uB2E4\uB2C8\uBA70, \uBB34\uB9AC\uAC00 \uC815\uBA74\uC5D0\uC11C \uBD80\uB52A\uD788\uB294 \uC0AC\uC774 \uB4B7\uC904\uB85C \uD30C\uACE0\uB4E0\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "SR",
     portraitAssetId: "noa",
@@ -16368,9 +16405,9 @@ var RELICS = [
       height: "1.84 m",
       weight: "92 kg"
     },
-    catalogSummary: "\uB450\uAEBC\uC6B4 \uBA38\uB9AC\uBF08\uC640 \uD55C\uCABD\uB9CC \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uD0F1\uCEE4 \uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uB450\uAEBC\uC6B4 \uBA38\uB9AC\uBF08\uC640 \uD55C\uCABD\uB9CC \uAD75\uC740 \uC55E\uB2E4\uB9AC\uB97C \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uBD80\uAC04\uBD80 \uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 220. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. "\uB364\uBCBC" \uD55C \uB9C8\uB514 \uB9D0\uACE0\uB294 \uAC70\uC758 \uB9D0\uD558\uC9C0 \uC54A\uC558\uACE0, \uB2E4\uAC00\uC624\uB294 \uC0C1\uB300\uB97C \uAC74\uD2C0\uB81B \uD558\uB098\uB85C \uBC1B\uC544 \uB0C8\uB2E4. \uC790\uAE30\uC5D0\uAC8C \uB364\uBE44\uB294 \uC0C1\uB300\uAC00 \uB9CE\uC744\uC218\uB85D \uC624\uD788\uB824 \uC790\uC138\uAC00 \uB2E8\uB2E8\uD574\uC84C\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uACE0\uB294 \uC2DC\uC120\uC744 \uB3CC\uB838\uB2E4.' },
-    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9\uC758 \uC11C\uC5F4 \uC815\uB9AC\uB97C \uB9E1\uC544 \uC628 \uACE0\uCC38\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uBB34\uB9AC\uB97C \uB9C9\uB0B4\uCC98\uB7FC \uCC59\uAE30\uBA70, \uC55E\uC5D0 \uC11C\uC11C \uB364\uBE44\uB294 \uC801\uC744 \uBAA8\uB450 \uC81C\uAC8C\uB85C \uBD80\uB978\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uBD80\uAC04\uBD80\uB85C, \uAC10\uBC29\uC758 \uC11C\uC5F4 \uC815\uB9AC\uB97C \uB9E1\uC544 \uC628 \uACE0\uCC38\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uBB34\uB9AC\uB97C \uB9C9\uB0B4\uCC98\uB7FC \uCC59\uAE30\uBA70, \uC55E\uC5D0 \uC11C\uC11C \uB364\uBE44\uB294 \uC801\uC744 \uBAA8\uB450 \uC81C\uAC8C\uB85C \uBD80\uB978\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "R",
     portraitAssetId: "raja",
@@ -16440,7 +16477,7 @@ var RELICS = [
     id: "carno",
     enemyOnly: true,
     squad: "annihilation",
-    name: "\uCE74\uB974\uB178",
+    name: "\uCE74\uB974",
     specimenNumber: "226",
     projectName: "ANNIHILATION CONFINEMENT 226",
     excavationSite: "\uC774\uD130\uB110 \uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4",
@@ -16453,9 +16490,9 @@ var RELICS = [
       height: "1.88 m",
       weight: "78 kg"
     },
-    catalogSummary: "\uC9E7\uC740 \uB450 \uBFD4\uACFC \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uD314\uC744 \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC758 \uC804\uC0AC \uCE74\uB974\uB178\uD0C0\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
+    catalogSummary: "\uC9E7\uC740 \uB450 \uBFD4\uACFC \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uD314\uC744 \uC9C0\uB2CC \uCC44 \uBCF5\uC6D0\uB41C, \uACF5\uBA78\uC758 \uBD80\uB300\uC7A5 \uCE74\uB974\uB178\uD0C0\uC6B0\uB8E8\uC2A4 \uAE30\uBC18 \uD45C\uBCF8.",
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 221. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. \uAD6C\uC18D\uBCF5\uC758 \uC790\uBB3C\uC1E0\uB97C \uB2E8 \uCC44\uB85C\uB3C4 \uAC78\uC74C\uC774 \uBA48\uCD94\uC9C0 \uC54A\uC558\uACE0, \uB2E4\uCE60\uC218\uB85D \uC790\uBB3C\uC1E0\uAC00 \uD558\uB098\uC529 \uD130\uC838 \uB098\uAC00\uBA70 \uB354 \uBE68\uB77C\uC84C\uB2E4. \uBB38\uC744 \uC5F4\uC5B4 \uC900 \uB3D9\uB8CC\uC5D0\uAC8C\uB3C4 "\u2026\uB2A6\uC5C8\uC5B4" \uD55C \uB9C8\uB514\uBFD0\uC774\uC5C8\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uACE0 \uC774\uB97C \uC545\uBB3C\uC5C8\uB2E4.' },
-    squadNote: '\uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC5D0 \uBB36\uC5EC \uC788\uB358 \uAC00\uC7A5 \uC704\uD5D8\uD55C \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uBB38\uC774 \uC5F4\uB9B0 \uB4A4 \uBB34\uB9AC\uC758 \uB9E8 \uC55E\uC744 \uB2EC\uB9AC\uBA70, \uBB36\uC778 \uBAB8 \uADF8\uB300\uB85C \uAE38\uC744 \uB6AB\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
+    squadNote: '\uACF5\uBA78\uC758 \uBD80\uB300\uC7A5\uC73C\uB85C, \uC9C0\uD558 \uAC10\uAE08\uB3D9 \uCD5C\uD558\uCE35\uC5D0 \uBB36\uC5EC \uC788\uB358 \uAC00\uC7A5 \uC704\uD5D8\uD55C \uC218\uAC10\uC790\uB85C \uD655\uC778\uB41C\uB2E4. \uB450 \uB300\uC7A5 \uB2E4\uC74C \uC790\uB9AC\uC5D0\uC11C \uAC04\uBD80\uB4E4\uC744 \uBD80\uB9AC\uACE0, \uBB38\uC774 \uC5F4\uB9B0 \uB4A4 \uBB34\uB9AC\uC758 \uB9E8 \uC55E\uC744 \uB2EC\uB9AC\uBA70, \uBB36\uC778 \uBAB8 \uADF8\uB300\uB85C \uAE38\uC744 \uB6AB\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
     rarity: "SSR",
     portraitAssetId: "carno",
@@ -19075,7 +19112,39 @@ var STORY_RECOMMENDED_LEVELS = [
   51,
   51,
   54,
-  56
+  56,
+  // 5~7장은 눈금이 60을 넘는다 — 실제 레벨은 60에서 멈추므로 이 구간은 **태생 층이 높은 개체**(회수조 ×1.3 · 감금조 ×1.7 ·
+  // 카르 ×3)가 같은 세기를 더 낮은 레벨로 선다(`tieredEnemy`). 테러조와 코마는 태생 보정이 없어 60을 넘는 자리에 세우지 않는다.
+  58,
+  59,
+  60,
+  61,
+  62,
+  63,
+  64,
+  65,
+  66,
+  68,
+  69,
+  70,
+  71,
+  72,
+  73,
+  74,
+  75,
+  76,
+  77,
+  79,
+  80,
+  81,
+  82,
+  83,
+  84,
+  85,
+  86,
+  87,
+  88,
+  90
 ];
 var CHAPTER_ONE_ELITES = {
   5: "toby",
@@ -19103,9 +19172,45 @@ var LATE_CHAPTER_FORMATIONS = {
   "4-7": [["ripa", 0], ["pulsi", 1], ["mir", 2]],
   "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
   "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
-  "4-10": [["koma", 0], ["ikanixia", 2]]
+  "4-10": [["koma", 0], ["ikanixia", 2]],
+  // 5장 — 지하 감금동. 회수된 삼인조(5-1) → 회수조 → 풀려난 감금조가 섞인다. 5-5 라자(부간부) · 5-10 마가사(간부)가 혼자 서는 정예다.
+  "5-1": [["amo", 0], ["toby", 1], ["ripa", 2]],
+  "5-2": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "5-3": [["atra", 0], ["mir", 1], ["neuri", 2]],
+  "5-4": [["mir", 0], ["pulsi", 1], ["neuri", 2]],
+  "5-5": [["raja", 1]],
+  "5-6": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
+  "5-7": [["raja", 0], ["mir", 1], ["pulsi", 2]],
+  "5-8": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
+  "5-9": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
+  "5-10": [["magasa", 1]],
+  // 6장 — 중층 격리 회랑. 감금조가 앞에 서고 회수조가 받친다. 6-5 노아의 기습(정예) · 6-10 마가사·노아 투톱(정예 둘).
+  "6-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
+  "6-2": [["atra", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
+  "6-3": [["raja", 0], ["mir", 1], ["magasa", 2]],
+  "6-4": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
+  "6-5": [["noa", 1]],
+  "6-6": [["raja", 0], ["noa", 1], ["neuri", 2]],
+  "6-7": [["atra", 0], ["noa", 1], ["pulsi", 2]],
+  "6-8": [["raja", 0], ["atra", 1], ["noa", 2], ["pulsi", 3], ["neuri", 4]],
+  "6-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
+  "6-10": [["magasa", 0], ["noa", 2]],
+  // 7장 — 최하층 구속실. 감금조 셋과 회수조가 함께 선다. 7-5 이카닉시아의 저지선(정예) · 7-10 부대장 카르(정예).
+  "7-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
+  "7-2": [["atra", 0], ["noa", 1], ["mir", 2], ["pulsi", 3]],
+  "7-3": [["raja", 0], ["noa", 1], ["magasa", 2]],
+  "7-4": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
+  "7-5": [["ikanixia", 1]],
+  "7-6": [["raja", 0], ["magasa", 1], ["noa", 2], ["neuri", 3]],
+  "7-7": [["atra", 0], ["raja", 1], ["noa", 2], ["pulsi", 3]],
+  "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3], ["neuri", 4]],
+  "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
+  "7-10": [["carno", 1]]
 };
-var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10"]);
+var STAGE_ENEMY_LEVEL_BONUS = {
+  "7-10": { carno: 2 }
+};
+var ELITE_DUO_STAGE_IDS = /* @__PURE__ */ new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 var CHAPTER_ONE_ENEMIES = STORY_RECOMMENDED_LEVELS.slice(0, 10).map((recommended, index) => {
   const chapterOrder = index + 1;
   const eliteId = CHAPTER_ONE_ELITES[chapterOrder];
@@ -19120,7 +19225,13 @@ var STORY_RUNE_REWARDS = {
   "3-5": { kind: "rune", rarity: "rare", part: 1 },
   "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
   "4-5": { kind: "rune", rarity: "rare", part: 0 },
-  "4-10": { kind: "rune", rarity: "rare", part: 1, trait: true }
+  "4-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
+  "5-5": { kind: "rune", rarity: "rare", part: 2 },
+  "5-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "6-5": { kind: "rune", rarity: "rare", part: 1 },
+  "6-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
+  "7-5": { kind: "rune", rarity: "rare", part: 0 },
+  "7-10": { kind: "rune", rarity: "rare", part: 1, trait: true }
 };
 var STORY_RAW_STONE = {
   "2-1": 30,
@@ -19128,7 +19239,13 @@ var STORY_RAW_STONE = {
   "3-1": 50,
   "3-6": 60,
   "4-1": 60,
-  "4-6": 60
+  "4-6": 60,
+  "5-1": 60,
+  "5-6": 60,
+  "6-1": 60,
+  "6-6": 60,
+  "7-1": 60,
+  "7-6": 60
 };
 function storyFirstClearBonus(id, globalOrder, chapter, chapterOrder, elite) {
   const heavy = elite || chapterOrder === 10;
@@ -19157,13 +19274,20 @@ var CHAPTER_SITUATIONS = [
     "\uACBD\uACC4\uBB38 \uC55E. \uCF54\uB9C8\uAC00 \uD640\uB85C \uAE38\uC744 \uB9C9\uACE0 \uC11C \uC788\uB2E4."
   ],
   [],
+  [],
+  [],
+  [],
+  [],
   []
 ];
 var CHAPTER_CONTENT = [
   { title: "\uC81C1\uC9C0\uBD80 \uC678\uACFD", subtitle: "\uAC80\uC5ED\uC120 \u2014 \uB3C4\uC2DC\uB85C \uB4E4\uC5B4\uAC00\uB294 \uB9C8\uC9C0\uB9C9 \uAD6C\uAC04", names: ["\uCD94\uB77D\uD558\uB294 \uBC29\uC8FC", "\uBD95\uAD34\uD55C \uC628\uC2E4", "\uCE68\uC218\uB41C \uBC30\uC591\uC2E4", "\uD45C\uBCF8 \uBCF4\uAD00\uACE0", "\uC81C1\uAD6C\uC5ED \uAD00\uC81C\uD0D1", "\uBB34\uB108\uC9C4 \uD1B5\uC2E0\uC18C", "\uD3D0\uAE30\uBB3C \uCC98\uB9AC\uC7A5", "\uC9C0\uD558 \uBC30\uC218\uB85C", "\uBD09\uC1C4\uB41C \uC815\uAC70\uC7A5", "\uAD6C\uC5ED \uACBD\uACC4\uBB38"] },
   { title: "\uC794\uD5A5 \uC9C0\uAD6C", subtitle: "\uCE68\uBB35\uD55C \uC0B0\uC5C5 \uD68C\uB791", names: ["\uC794\uD5A5 \uC9C4\uC785\uB85C", "\uB179\uC2A8 \uC870\uB9BD\uB3D9", "\uB0C9\uAC01 \uC218\uB85C", "\uB3D9\uB825 \uC911\uACC4\uC2E4", "\uD30C\uC190\uB41C \uC2B9\uAC15\uC7A5", "\uBB34\uC778 \uC0DD\uC0B0\uC120", "\uC555\uB825 \uACA9\uC2E4", "\uC7AC\uCC98\uB9AC \uC6A9\uAD11\uB85C", "\uC911\uC559 \uC6B4\uC1A1\uB85C", "\uC794\uD5A5 \uC9C0\uAD6C \uAD00\uBB38"] },
   { title: "\uC81C 3 \uAD6C\uC5ED", subtitle: "\uC2EC\uCE35 \uC815\uC6D0 \u2014 \uB3C4\uC2DC \uC544\uB798\uC758 \uBFCC\uB9AC", names: ["\uC2EC\uCE35 \uD558\uAC15\uB85C", "\uBC1C\uAD11 \uADE0\uC0AC\uAD74", "\uACE0\uB300 \uAE09\uC218\uC6D0", "\uBFCC\uB9AC \uAD00\uCE21\uC18C", "\uC720\uC804\uC790 \uC800\uC7A5\uACE0", "\uD3EC\uC790 \uD655\uC0B0\uC2E4", "\uC0DD\uCCB4 \uBC18\uC751\uB85C", "\uC2EC\uCE35 \uC5F0\uAD6C\uB3D9", "\uC815\uC6D0 \uD575\uC2EC\uBD80", "\uC2EC\uCE35 \uC815\uC6D0 \uC81C\uC5B4\uC2E4"] },
-  { title: "\uC81C 4 \uAD6C\uC5ED", subtitle: "\uD569\uB958\uC120 \u2014 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB2E4", names: ["\uD569\uB958 \uC2B9\uAC15\uC7A5", "\uB04A\uC5B4\uC9C4 \uD658\uC2B9\uB85C", "\uC810\uAC80 \uD1B5\uB85C", "\uBD09\uC778\uB41C \uC218\uC1A1 \uAC31\uB3C4", "\uD68C\uC218 \uB300\uAE30\uC2E4", "\uD3D0\uC1C4 \uACA9\uB0A9\uACE0", "\uC9C0\uD558 \uC815\uBE44\uB3D9", "\uB099\uD558 \uC2B9\uAC15\uAE30", "\uD569\uB958\uC120 \uC885\uC810", "\uCD94\uACA9 \uC0AC\uB839\uC2E4"] }
+  { title: "\uC81C 4 \uAD6C\uC5ED", subtitle: "\uD569\uB958\uC120 \u2014 \uB450 \uBB34\uB9AC\uAC00 \uD55C \uC120\uB85C\uC5D0 \uC11C\uB2E4", names: ["\uD569\uB958 \uC2B9\uAC15\uC7A5", "\uB04A\uC5B4\uC9C4 \uD658\uC2B9\uB85C", "\uC810\uAC80 \uD1B5\uB85C", "\uBD09\uC778\uB41C \uC218\uC1A1 \uAC31\uB3C4", "\uD68C\uC218 \uB300\uAE30\uC2E4", "\uD3D0\uC1C4 \uACA9\uB0A9\uACE0", "\uC9C0\uD558 \uC815\uBE44\uB3D9", "\uB099\uD558 \uC2B9\uAC15\uAE30", "\uD569\uB958\uC120 \uC885\uC810", "\uCD94\uACA9 \uC0AC\uB839\uC2E4"] },
+  { title: "\uC81C 5 \uAD6C\uC5ED", subtitle: "\uC9C0\uD558 \uAC10\uAE08\uB3D9 \u2014 \uC9C0\uBD80\uAC00 \uBB3B\uC5B4 \uB454 \uBB38", names: ["\uAC10\uAE08\uB3D9 \uC785\uAD6C", "\uAC80\uBB38 \uACA9\uC790", "\uC18C\uB4F1\uB41C \uBCF5\uB3C4", "\uC81C1 \uAC10\uBC29 \uAD6C\uC5ED", "\uC11C\uC5F4\uC758 \uBC29", "\uCE68\uC218 \uAC10\uBC29", "\uC871\uC1C4 \uBCF4\uAD00\uC2E4", "\uBC30\uC2DD \uD1B5\uB85C", "\uAD6C\uC18D \uC7A5\uCE58\uC2E4", "\uAC10\uAE08\uB3D9 \uCDE8\uC0AC\uC7A5"] },
+  { title: "\uC81C 6 \uAD6C\uC5ED", subtitle: "\uC911\uCE35 \uACA9\uB9AC \uD68C\uB791 \u2014 \uD480\uB824\uB09C \uC218\uAC10\uC790\uB4E4", names: ["\uACA9\uB9AC \uD68C\uB791 \uC785\uAD6C", "\uAD00\uCE21 \uCC3D \uBCF5\uB3C4", "\uBB34\uB108\uC9C4 \uC21C\uCC30\uB85C", "\uD658\uAE30 \uC218\uC9C1\uAC31", "\uB5A8\uB9AC\uB294 \uADF8\uB9BC\uC790", "\uC911\uCE35 \uACA9\uB0A9\uACE0", "\uBB34\uB108\uC9C4 \uBA74\uD68C\uC2E4", "\uACA9\uB9AC \uAD00\uC81C\uC2E4", "\uC2DD\uB7C9 \uCC3D\uACE0", "\uD68C\uB791 \uCD5C\uC2EC\uBD80"] },
+  { title: "\uC81C 7 \uAD6C\uC5ED", subtitle: "\uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4 \u2014 \uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0", names: ["\uCD5C\uD558\uCE35 \uD558\uAC15\uB85C", "\uB0C9\uB3D9 \uC218\uC6A9\uC2E4", "\uCE68\uBB35\uC758 \uBCF5\uB3C4", "\uBD09\uC778 \uC81C\uC5B4\uBC18", "\uD68C\uC218\uC870 \uC800\uC9C0\uC120", "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4", "\uAD6C\uC18D \uC7A5\uCE58 \uD1B5\uB85C", "\uCD5C\uD558\uCE35 \uC804\uC2E4", "\uAD6C\uC18D\uC2E4 \uBB38 \uC55E", "\uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4"] }
 ];
 var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
   const chapter = chapterIndex + 1;
@@ -19174,11 +19298,11 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
     const laterChapterIds = [...STAGE_ENEMY_FORMATION];
     const lateFormation = LATE_CHAPTER_FORMATIONS[`${chapter}-${chapterOrder}`];
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
     const laterChapterEnemies = lateFormation ? lateFormation.map(([relicId, slot]) => {
-      const enemy = tieredEnemy(relicId, laterChapterLevel, slot, chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0);
+      const levelBonus = (chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0) + (STAGE_ENEMY_LEVEL_BONUS[`${chapter}-${chapterOrder}`]?.[relicId] ?? 0);
+      const enemy = tieredEnemy(relicId, laterChapterLevel, slot, levelBonus);
       return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true } : enemy;
-    }) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot));
+    }) : laterChapterIds.map((relicId, slot) => enemyGrowth(relicId, laterChapterLevel, requiredBreakthroughForLevel(laterChapterLevel), slot));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);
@@ -20273,6 +20397,12 @@ var BACKGROUND = {
   stageMapDeep: "background-stage-map-deep",
   /** 3·4장 스테이지 전장 — 수로와 환승로다. 1·2장은 `combat`을 쓴다(`stageFieldBackground`). */
   combatDeep: "background-combat-deep",
+  /** 5·6장: 지하 설비층을 내려가 감금동 입구에 이르는 지도와 전장. */
+  stageMapPrisonApproach: "background-stage-map-prison-approach",
+  combatPrisonApproach: "background-combat-prison-approach",
+  /** 7장: 감금동 외벽 붕괴로 드러난 침수된 제3지부. */
+  stageMapThirdBranch: "background-stage-map-third-branch",
+  combatThirdBranch: "background-combat-third-branch",
   /** 고대 지층 — 입구(1~10층)와 이후 열 층 구간마다 돌아가는 반복 세 장, 전용 전장이다. */
   ancientEntry: "background-ancient-entry",
   ancientLoopA: "background-ancient-loop-a",
@@ -20298,6 +20428,10 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
   [BACKGROUND.stageMapDeep, "sprites/background/map_002.webp"],
   [BACKGROUND.combatDeep, "sprites/background/field_ch34.webp"],
+  [BACKGROUND.stageMapPrisonApproach, "sprites/background/map_ch56.webp"],
+  [BACKGROUND.combatPrisonApproach, "sprites/background/field_ch56.webp"],
+  [BACKGROUND.stageMapThirdBranch, "sprites/background/map_ch7.webp"],
+  [BACKGROUND.combatThirdBranch, "sprites/background/field_ch7.webp"],
   [BACKGROUND.ancientEntry, "sprites/background/ancient_strata_entry.webp"],
   [BACKGROUND.ancientLoopA, "sprites/background/ancient_strata_loop_a.webp"],
   [BACKGROUND.ancientLoopB, "sprites/background/ancient_strata_loop_b.webp"],
@@ -30388,10 +30522,15 @@ var STAGE_3_1_PRE = {
   backdrop: "battlefield",
   nodes: linear([
     { id: "land", speaker: "", body: "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8\uC758 \uB4A4\uB85C \uCC22\uC5B4\uC9C4 \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uCC9C\uCC9C\uD788 \uB0B4\uB824\uC120\uB2E4. \uC11C\uB450\uB974\uB294 \uAE30\uC0C9\uC774\uB77C\uACE0\uB294 \uC5C6\uB2E4.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "greet", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC218\uACE0\uD558\uC168\uC5B4\uC694, \uCF54\uB9C8 \uB2D8. \uC2E4\uD328\uD55C \uBD84\uC758 \uC5BC\uAD74\uB3C4 \uAC00\uB054\uC740 \uACF1\uB2F5\uB2C8\uB2E4.", standing: "ikanixia", act: "lean" },
+    { id: "greet", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC218\uACE0\uD558\uC168\uC5B4\uC694, \uCF54\uB9C8 \uB2D8. \uAC19\uC740 \uAC04\uBD80\uB07C\uB9AC \uC774\uB7F0 \uC790\uB9AC\uC5D0\uC11C \uBD59\uAC8C \uB418\uB2E4\uB2C8, \uC870\uAE08 \uBBFC\uB9DD\uD558\uB124\uC694.", standing: "ikanixia", act: "lean" },
     { id: "mask", speaker: "", body: "\uCF54\uB9C8\uAC00 \uC785\uC744 \uAC00\uB9B0 \uAC00\uB9AC\uAC1C\uB97C \uCC98\uC74C\uC73C\uB85C \uCC9C\uCC9C\uD788 \uB0B4\uB9B0\uB2E4.", standing: "koma", act: "recoil" },
     { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uB3FC\uC694\u2026 \uC120, \uC120\uBC30\uB294 \uC544\uC9C1\u2026 \uD68C\uC218 \uC804\uC774\uB77C\uC11C\u2026", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
-    { id: "smile", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC6B0\uB9AC \uC544\uD2B8\uB77C\uB294 \uC0C1\uB0E5\uD558\uAE30\uB3C4 \uD558\uC9C0. \uADF8\uB7FC \uC11C\uB450\uB974\uC9C0 \uC54A\uC744\uAC8C\uC694.", standing: "ikanixia", act: "nod" },
+    { id: "smile", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uC6B0\uB9AC \uC544\uD2B8\uB77C\uB294 \uC0C1\uB0E5\uD558\uAE30\uB3C4 \uD558\uC9C0. \uADF8\uB7FC \uC120\uBC30\uB294 \uB9C8\uC9C0\uB9C9\uC5D0 \uBAA8\uC2DC\uC8E0.", standing: "ikanixia", act: "nod" },
+    { id: "haul", speaker: "", body: "\uC544\uD2B8\uB77C\uC758 \uB9C8\uB514\uC9C4 \uAF2C\uB9AC \uB05D\uC5D0 \uC138 \uADF8\uB9BC\uC790\uAC00 \uBB36\uC778 \uCC44 \uB04C\uB824 \uB098\uC628\uB2E4. \uC544\uBAA8, \uD1A0\uBE44, \uB9AC\uD30C\uB2E4.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uB194, \uB194 \uBD10! \uC6B0\uB9AC \uB530\uB77C\uAC00\uAE30\uB85C \uD588\uB2E4\uB2C8\uAE4C! \uC9C4\uC9DC\uB77C\uACE0!", standing: "toby", act: "shake" },
+    { id: "rule", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC2E4\uD328\uD55C \uD300\uC740 \uAC70\uB450\uC5B4 \uC624\uB294 \uAC8C \uD68C\uC218\uC870\uC758 \uC77C\uC774\uB78D\uB2C8\uB2E4. \uC138 \uBD84\uC740 \uD55C \uBC88\uB9CC \uB354 \uC77C\uD574 \uC8FC\uC154\uC57C\uACA0\uC5B4\uC694.", standing: "ikanixia", cast: [{ id: "toby", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "lean" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\u2026\uC774\uBC88\uC5D0\uB3C4 \uC704\uC5D0\uC11C \uC815\uD588\uB124. \uC6B0\uB9AC\uAC00 \uC815\uD55C \uAC8C \uC544\uB2C8\uACE0.", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "amo", slot: "right" }], act: "shrink" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0, \uBBF8\uC548. \uB530\uB77C\uAC04\uB2E4\uACE0 \uD588\uB294\uB370, \uC544\uC9C1 \uBABB \uAC14\uC5B4.", standing: "amo", act: "tremble" },
     { id: "you", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5F0\uAD6C\uC6D0\uB2D8\uC774\uC2DC\uAD70\uC694. \uC18C\uBB38\uC740 \uB9CE\uC774 \uB4E4\uC5C8\uC5B4\uC694. \uC774\uBC88\uC5D0\uB294 \uC81C\uAC00 \uC815\uC911\uD788 \uBAA8\uC154 \uAC00\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" }
   ])
 };
@@ -30512,14 +30651,49 @@ var STAGE_4_1_PRE = {
     { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uD569\uB3D9\uC774\uB77C\uB2C8, \uC22B\uC790\uAC00 \uB298\uC5C8\uB2E4\uB294 \uC18C\uB9AC\uC796\uC544! \uADF8\uB798\uB3C4 \uD55C \uC904\uB85C \uC11C\uBA74 \uB611\uAC19\uC774 \uB6AB\uC73C\uBA74 \uB3FC!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "hop" }
   ])
 };
+var STAGE_4_3_PRE = {
+  id: "stage-4-3-pre",
+  startNodeId: "whisper",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "whisper", speaker: "\uD1A0\uBE44", body: "\uC57C, \uC6B0\uB9AC \uC9C4\uC2EC\uC73C\uB85C \uC2F8\uC6B0\uB294 \uAC70 \uC544\uB2C8\uB2E4? \u2026\uC544\uB2C8, \uC9C4\uC2EC\uC73C\uB85C \uD574\uC57C \uB3FC. \uB300\uCDA9 \uD558\uBA74 \uB610 \uB04C\uB824\uAC00.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uB4A4\uC5D0\uC11C \uBBF8\uB974\uAC00 \uC138\uACE0 \uC788\uC5B4. \uBA87 \uBC88 \uB9DE\uC558\uB294\uC9C0\uAE4C\uC9C0.", standing: "ripa", act: "shrink" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0. \uADF8\uB7EC\uB2C8\uAE4C \uC138\uAC8C \uC640. \uC6B0\uB9AC\uAC00 \uC838\uB3C4 \uC544\uBB34\uB3C4 \uBB50\uB77C \uBABB \uD558\uAC8C.", standing: "amo", act: "nod" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8, \uC800 \uC14B\u2026 \uC2F8\uC6B0\uAE30 \uC2EB\uC740 \uC5BC\uAD74\uC774\uC5D0\uC694.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "right" }], act: "tremble" }
+  ])
+};
 var STAGE_4_4_PRE = {
   id: "stage-4-4-pre",
   startNodeId: "block",
   backdrop: "battlefield",
   nodes: linear([
-    { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
+    { id: "block", speaker: "", body: "\uBD09\uC778\uB41C \uAC31\uB3C4 \uC55E\uC5D0 \uC544\uD2B8\uB77C\uC640 \uC544\uBAA8\uAC00 \uB098\uB780\uD788 \uC11C \uC788\uB2E4. \uADF8 \uB4A4\uB85C \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC9C0\uB098\uAC04\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "amo", slot: "right" }], cue: "rumble" },
     { id: "atra", speaker: "\uC544\uD2B8\uB77C", body: "\uC544, \uC548 \uBE44\uCF1C\uC694\u2026 \uBA85, \uBA85\uB839\uC774\uB77C\uC11C\u2026 \uC8C4, \uC8C4\uC1A1\uD574\uC694\u2026", standing: "atra", act: "tremble" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uB098\uB3C4. \uC5EC\uAE30\uB294 \uBE44\uCF1C \uC904 \uC218\uAC00 \uC5C6\uC5B4.", standing: "amo", act: "shrink" },
     { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC5EC\uAE30\uB294 \uC9C0\uB098\uAC08 \uC218 \uC5C6\uB2E4. \uB3CC\uC544\uAC00\uB77C.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" }
+  ])
+};
+var STAGE_4_6_PRE = {
+  id: "stage-4-6-pre",
+  startNodeId: "neuri",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uCF54\uB9C8 \uB2D8, \uC774\uBC88\uC5D0\uB294 \uAF2D \uC131\uACF5\uD574 \uC8FC\uC138\uC694. \uC800\uD76C \uAC04\uBD80\uB2D8 \uCCB4\uBA74\uB3C4 \uAC78\uB824 \uC788\uAC70\uB4E0\uC694.", standing: "neuri", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uAC19\uC740 \uAC04\uBD80\uB2E4. \uB124 \uB300\uC7A5\uD55C\uD14C \uADF8\uB807\uAC8C \uC804\uD574\uB77C.", standing: "koma", act: "lean" },
+    { id: "neuri2", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uC804\uD574 \uB4DC\uB9B4\uAC8C\uC694. \uC6C3\uC73C\uC2E4 \uAC70\uC608\uC694.", standing: "neuri", act: "lean" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\u2026\uC120\uBC30, \uC800\uCABD\uC774 \uC5F0\uAD6C\uC6D0\uC774\uC57C. \uC774\uBC88\uC5D4 \uC815\uB9D0 \uD574\uC57C \uB3FC?", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "koma", slot: "right" }], act: "shrink" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uC55E\uB9CC \uBD10\uB77C.", standing: "koma", act: "nod" }
+  ])
+};
+var STAGE_4_8_POST = {
+  id: "stage-4-8-post",
+  startNodeId: "snap",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "snap", speaker: "", body: "\uC2B9\uAC15\uAE30 \uC904\uC774 \uB04A\uC5B4\uC9C0\uB294 \uC18C\uB9AC. \uBC14\uB2E5 \uD45C\uC2DC\uB4F1\uC774 \uAE5C\uBE61\uC774\uBA70 \uC544\uB798\uB85C, \uC544\uB798\uB85C \uC22B\uC790\uB97C \uC9C0\uC6CC \uB098\uAC04\uB2E4.", cast: [{ id: "lexia", slot: "left" }, { id: "torika", slot: "right" }], cue: "explosion" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB9C8\uC2A4\uD130, \uC190\uC7A1\uC774 \uAF49 \uC7A1\uC544\uC694! \uC81C\uAC00 \uC55E\uC5D0\uC11C \uBC1B\uC744\uAC8C\uC694!", standing: "lexia", act: "shake" },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. \uADF8 \uC544\uB798\uB294 \uC9C0\uB3C4\uC5D0 \uC5C6\uB2E4. \uB5A8\uC5B4\uC9C0\uBA74 \uAC70\uAE30\uAC00 \uC5B4\uB514\uB4E0, \uC18C\uB9AC\uBD80\uD130 \uC8FD\uC5EC\uB77C.", standing: "seira", cast: [{ id: "lexia", slot: "left" }, { id: "seira", slot: "right", remote: true }], act: "nod", cue: "rumble" },
+    { id: "torika", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC9C0\uB3C4\uC5D0 \uC5C6\uB294 \uACF3\uC774\uC694? \uADF8\uB7FC \uC6B0\uB9AC\uAC00 \uCC98\uC74C \uADF8\uB9AC\uB294 \uAC70\uB124\uC694!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop" }
   ])
 };
 var STAGE_4_10_PRE = {
@@ -30539,14 +30713,394 @@ var STAGE_4_10_POST = {
   nodes: linear([
     { id: "retreat", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uC774\uB807\uAC8C\uAE4C\uC9C0 \uD558\uC168\uB294\uB370\uB3C4 \uB2FF\uC9C0 \uC54A\uB2E4\uB2C8. \uC624\uB298\uC740 \uBB3C\uB7EC\uB098\uACA0\uC2B5\uB2C8\uB2E4. \uC815\uB9D0, \uC11C\uB450\uB97C \uC774\uC720\uAC00 \uC5C6\uC73C\uB2C8\uAE4C\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
     { id: "wing", speaker: "", body: "\uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uD5C8\uACF5\uC73C\uB85C \uC62C\uB77C\uAC00\uACE0, \uD68C\uC218\uC870\uC758 \uADF8\uB9BC\uC790\uAC00 \uD558\uB098\uC529 \uC120\uB85C \uB108\uBA38\uB85C \uC0AC\uB77C\uC9C4\uB2E4.", standing: "ikanixia", leave: "blastOff", cast: [] },
-    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB09C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "shrink" }
+    { id: "floor", speaker: "", body: "\uC0AC\uB839\uC2E4 \uBC14\uB2E5\uC774 \uB0AE\uAC8C \uC6B8\uB9B0\uB2E4. \uAE08\uC774 \uAC04 \uBC14\uB2E5\uD310 \uC544\uB798\uB85C \uB179\uC2A8 \uCCA0\uBB38 \uD558\uB098\uAC00 \uB4DC\uB7EC\uB09C\uB2E4. \uBB38 \uC704\uC758 \uAE00\uC528\uB9CC\uC740 \uB610\uB837\uD558\uB2E4. \u300C\uC81C1\uC9C0\uBD80 \uC9C0\uD558 \uAC10\uAE08\uB3D9 \u2014 \uCD9C\uC785 \uAE08\uC9C0\u300D.", cue: "rumble" },
+    { id: "order", speaker: "???", body: "\u2026072. \uAC10\uAE08\uB3D9\uC744 \uC5F4\uC5B4\uB77C. \uBD80\uB300\uC7A5\uC744 \uB370\uB824\uC640\uB77C.", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB2E4\uC74C \uBAA9\uB85D\uC5D0\uC11C \uB2E4\uC2DC \uB9CC\uB09C\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "gone", speaker: "", body: "\uCF54\uB9C8\uB294 \uB300\uB2F5 \uB300\uC2E0 \uCCA0\uBB38\uC758 \uC190\uC7A1\uC774\uB97C \uC7A1\uB294\uB2E4. \uBB38\uC774 \uC5F4\uB9AC\uACE0, \uC544\uB798\uC5D0\uC11C \uCC28\uAC00\uC6B4 \uBC14\uB78C\uC774 \uC62C\uB77C\uC628\uB2E4." }
   ])
 };
 var CHAPTER_4_STORIES = [
   STAGE_4_1_PRE,
+  STAGE_4_3_PRE,
   STAGE_4_4_PRE,
+  STAGE_4_6_PRE,
+  STAGE_4_8_POST,
   STAGE_4_10_PRE,
   STAGE_4_10_POST
+];
+
+// src/data/dialogues/chapter5.ts
+init_define_import_meta_env();
+var REMOTE = (voice, other) => [
+  { id: other, slot: "left" },
+  { id: voice, slot: "right", remote: true }
+];
+var STAGE_5_1_PRE = {
+  id: "stage-5-1-pre",
+  startNodeId: "dark",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dark", speaker: "", body: "\uACC4\uB2E8 \uB05D\uC740 \uBD88\uC774 \uD558\uB098\uB3C4 \uC5C6\uB2E4. \uBCBD\uB9C8\uB2E4 \uAE01\uD78C \uC790\uAD6D\uC774 \uC22B\uC790\uCC98\uB7FC \uC904\uC9C0\uC5B4 \uC788\uB2E4.", cast: [{ id: "deina", slot: "center" }], cue: "rumble" },
+    { id: "deina", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC774 \uD45C\uC2DD\uC740 \uC6B0\uB9AC \uAC83\uC774 \uC544\uB2D9\uB2C8\uB2E4. \uC9C0\uBD80\uAC00 \uB0A8\uAE34 \uACBD\uACE0\uC608\uC694. \u300C\uC5F4\uC9C0 \uB9D0 \uAC83\u300D.", standing: "deina", act: "lean" },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uBB34\uC804 \uD655\uC778. \uAC10\uAE08\uB3D9\uC774\uB77C\uB294 \uC774\uB984\uC740 \uC9C0\uBD80 \uB3C4\uBA74 \uC5B4\uB514\uC5D0\uB3C4 \uC5C6\uC5C8\uB2E4. \uB204\uAD70\uAC00 \uC9C0\uC6E0\uB2E4\uB294 \uB73B\uC774\uB2E4.", standing: "seira", cast: REMOTE("seira", "deina"), act: "nod" },
+    { id: "trio", speaker: "\uD1A0\uBE44", body: "\uB610 \uB108\uD76C\uC57C?! \u2026\uC544\uB2C8, \uB610 \uC6B0\uB9AC\uC57C. \uBB38 \uC55E\uC744 \uC9C0\uD0A4\uB798.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
+    { id: "amo", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0. \uC5EC\uAE30\uB294 \uC624\uBA74 \uC548 \uB418\uB294 \uB370\uC57C. \uC6B0\uB9AC\uB3C4 \uB4E4\uC5B4\uAC00 \uBCF8 \uC801 \uC5C6\uC5B4.", standing: "amo", act: "tremble" }
+  ])
+};
+var STAGE_5_3_POST = {
+  id: "stage-5-3-post",
+  startNodeId: "trick",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "trick", speaker: "\uB378\uB85C\uD53C", body: "\uC9E0~ \uBC29\uAE08 \uADF8 \uC11C\uB78D\uC5D0\uC11C \uC0AC\uB77C\uC84C\uB358 \uC11C\uB958\uAC00 \uC5EC\uAE30\uC11C \uB098\uD0C0\uB0AC\uC2B5\uB2C8\uB2E4! \u2026\uC5B4, \uADFC\uB370 \uC774\uAC70 \uC7A5\uB09C\uCE60 \uC11C\uB958\uAC00 \uC544\uB2C8\uB124\uC694.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }, { id: "maki", slot: "right" }], act: "hop" },
+    { id: "list", speaker: "", body: "\uB204\uB807\uAC8C \uBC14\uB79C \uD45C\uC9C0\uC5D0 \u300C\uC218\uAC10 \uBA85\uB2E8 \u2014 \uACF5\uBA78 \uD3EC\uD68D \uAC1C\uCCB4\u300D. \uC774\uB984 \uB300\uC2E0 \uBC88\uD638\uC640 \uBB34\uAC8C\uB9CC \uC801\uD600 \uC788\uB2E4." },
+    { id: "maki", speaker: "\uB9C8\uD0A4", body: "\uCE58\uB8CC \uAE30\uB85D\uC774 \uD55C \uC904\uB3C4 \uC5C6\uC5B4\uC694. \uB2E4\uCE5C \uCC44\uB85C \uB123\uC5B4 \uB450\uAE30\uB9CC \uD588\uB2E4\uB294 \uAC70\uC608\uC694, \uC5F0\uAD6C\uC6D0\uB2D8.", standing: "maki", act: "shrink" },
+    { id: "delopi2", speaker: "\uB378\uB85C\uD53C", body: "\u2026\uC774\uAC74 \uB418\uB3CC\uB9AC\uB294 \uB9C8\uC220\uC774 \uC5C6\uB124\uC694.", standing: "delopi", act: "shrink" }
+  ])
+};
+var STAGE_5_4_POST = {
+  id: "stage-5-4-post",
+  startNodeId: "panel",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "panel", speaker: "", body: "\uBCF5\uB3C4 \uB05D \uC81C\uC5B4\uBC18 \uC55E\uC5D0 \uAC00\uB9AC\uAC1C\uB97C \uC4F4 \uADF8\uB9BC\uC790\uAC00 \uC11C \uC788\uB2E4. \uC190\uAC00\uB77D\uC774 \uB9C8\uC9C0\uB9C9 \uB2E8\uCD94 \uC704\uC5D0\uC11C \uBA48\uCD98\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uBA85\uB839\uC774\uB2E4.", standing: "koma", act: "lean" },
+    { id: "open", speaker: "", body: "\uAC10\uBC29 \uBB38\uC774 \uD55C \uCE78\uC529 \uCC28\uB840\uB85C \uC5F4\uB9B0\uB2E4. \uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uCE78\uC5D0\uC11C \uD55C\uCABD \uD314\uB9CC \uAD75\uC740 \uADF8\uB9BC\uC790\uAC00 \uCC9C\uCC9C\uD788 \uAC78\uC5B4 \uB098\uC628\uB2E4.", cast: [{ id: "koma", slot: "left" }, { id: "raja", slot: "right" }], cue: "impact" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\u2026072\uB0D0. \uB2A6\uC5C8\uB2E4.", standing: "raja", act: "nod" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uB798\uAC00 \uBA3C\uC800\uB2E4. \uAE38\uC744 \uB9C9\uC544\uB77C.", standing: "koma", act: "shrink" }
+  ])
+};
+var STAGE_5_5_PRE = {
+  id: "stage-5-5-pre",
+  startNodeId: "room",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "room", speaker: "", body: "\uBC14\uB2E5\uC5D0 \uBD84\uD544\uB85C \uADF8\uC740 \uC904\uC774 \uACB9\uACB9\uC774\uB2E4. \uAC10\uBC29 \uC548\uC5D0\uC11C \uB204\uAC00 \uB204\uAD6C \uC55E\uC5D0 \uC11C\uB294\uC9C0 \uC815\uD558\uB358 \uC790\uB9AC\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "center" }], cue: "rumble" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\uC0C8\uB85C \uC654\uC73C\uBA74 \uC11C\uC5F4\uBD80\uD130 \uC815\uD55C\uB2E4. \uB364\uBCBC.", standing: "raja", act: "lean" },
+    { id: "mosana", speaker: "\uBAA8\uC0AC\uB098", body: "\uB2F9\uC2E0\uC740 \uB4A4\uB85C. \uC800 \uD314\uC740 \uC81C\uAC00 \uBB36\uC5B4 \uB450\uACA0\uC2B5\uB2C8\uB2E4.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "raja", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_5_5_POST = {
+  id: "stage-5-5-post",
+  startNodeId: "down",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "down", speaker: "\uB77C\uC790", body: "\u2026\uC11C\uC5F4\uC740 \uB108\uD76C\uAC00 \uC704\uB2E4. \uC624\uB298\uB9CC.", standing: "raja", cast: [{ id: "raja", slot: "center" }], act: "faint" },
+    { id: "hum", speaker: "", body: "\uB354 \uAE4A\uC740 \uACF3\uC5D0\uC11C \uCF67\uB178\uB798\uAC00 \uC62C\uB77C\uC628\uB2E4. \uB0C4\uBE44 \uB69C\uAED1\uC774 \uB2EC\uADF8\uB77D\uAC70\uB9AC\uB294 \uC18C\uB9AC\uB3C4 \uC11E\uC5EC \uC788\uB2E4.", cue: "rumble" },
+    { id: "voice", speaker: "???", body: "\uB77C\uC790~ \uBC25 \uC2DD\uB294\uB2E4~ \uC190\uB2D8 \uC624\uC168\uC73C\uBA74 \uAC19\uC774 \uB370\uB824\uC624\uACE0~", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right", veiled: true }] },
+    { id: "raja2", speaker: "\uB77C\uC790", body: "\u2026\uBA3C\uC800 \uBA39\uC5B4.", standing: "raja", act: "shrink" }
+  ])
+};
+var STAGE_5_6_POST = {
+  id: "stage-5-6-post",
+  startNodeId: "water",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "water", speaker: "\uBAA8\uC0AC\uB098", body: "\uBB3C\uC774 \uD5C8\uB9AC\uAE4C\uC9C0 \uCC39\uB2C8\uB2E4. \uB2F9\uC2E0, \uC81C \uC904\uC744 \uB193\uC9C0 \uB9C8\uC2ED\uC2DC\uC624.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }], act: "lean", cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5B4\uBA38, \uB77C\uC790 \uB2D8. \uC624\uB79C\uB9CC\uC774\uC5D0\uC694. \uAC07\uD600 \uACC4\uC2E0 \uB3D9\uC548 \uD68C\uC218\uC870\uB294 \uD55C \uBC88\uB3C4 \uC78A\uC740 \uC801\uC774 \uC5C6\uB2F5\uB2C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\u2026\uAC70\uC9D3\uB9D0\uC740 \uC5EC\uC804\uD558\uAD70.", standing: "raja", act: "nod" },
+    { id: "ika2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uD6C4\uD6D7. \uADF8\uB798\uB3C4 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uBAA8\uC2DC\uB294 \uC77C\uB9CC\uD07C\uC740 \uD568\uAED8\uD558\uC2E4 \uAC70\uC8E0?", standing: "ikanixia", act: "nod" }
+  ])
+};
+var STAGE_5_8_POST = {
+  id: "stage-5-8-post",
+  startNodeId: "trays",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "trays", speaker: "", body: "\uBC30\uC2DD\uAD6C\uB9C8\uB2E4 \uBE48 \uC7C1\uBC18\uC774 \uC313\uC5EC \uC788\uB2E4. \uADF8\uB7F0\uB370 \uBA87 \uCE78\uC5D0\uB294 \uC544\uC9C1 \uB530\uB73B\uD55C \uAD6D\uADF8\uB987\uC774 \uB193\uC5EC \uC788\uB2E4.", cast: [{ id: "deina", slot: "left" }, { id: "maki", slot: "right" }] },
+    { id: "radio", speaker: "\uC2A4\uD53C\uB098", body: "\u2026\uB098\uC774\uD2B8 \uAE30\uC5B4\uB294 \uC9C0\uBD80 \uC544\uB798\uB97C \uB2E4 \uC548\uB2E4\uACE0 \uBBFF\uC5C8\uB2E4. \uC774 \uCE35\uC740 \uBAB0\uB790\uB2E4. \uC778\uC591\uD560 \uAC83\uC774 \uC544\uB2C8\uB77C \uBB3B\uC5B4 \uB454 \uAC83\uC774\uB77C\uC11C\uB2E4.", standing: "seira", cast: REMOTE("seira", "deina"), act: "shrink" },
+    { id: "luka", speaker: "\uB8E8\uCE74", body: "\uBB38 \uC7A0\uAE08 \uAE30\uB85D\uC744 \uD6D1\uC5B4\uBD24\uC5B4. \uC704\uC5D0\uC11C \uC5F4\uB9B0 \uAC8C \uC544\uB2C8\uC57C. \uC548\uC5D0\uC11C \uB204\uAC00 \uD558\uB098\uC529 \uC5F4\uACE0 \uC788\uC5B4.", standing: "luka", cast: REMOTE("luka", "maki"), act: "lean" },
+    { id: "maki", speaker: "\uB9C8\uD0A4", body: "\uADF8\uB7FC \uC774 \uAD6D\uC740\u2026 \uAC07\uD600 \uC788\uB358 \uC544\uC774\uB4E4\uC744 \uB204\uAC00 \uBA39\uC774\uACE0 \uC788\uB2E4\uB294 \uAC70\uB124\uC694.", standing: "maki", cast: [{ id: "maki", slot: "center" }], act: "nod" }
+  ])
+};
+var STAGE_5_9_POST = {
+  id: "stage-5-9-post",
+  startNodeId: "chains",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "chains", speaker: "", body: "\uB04A\uC5B4\uC9C4 \uC871\uC1C4\uB4E4\uC774 \uBC14\uB2E5\uC5D0 \uD769\uC5B4\uC838 \uC788\uB2E4. \uADF8 \uC0AC\uC774\uB85C \uC791\uC740 \uADF8\uB9BC\uC790 \uD558\uB098\uAC00 \uBAB8\uC744 \uC6C5\uD06C\uB9B0 \uCC44 \uC774\uCABD\uC744 \uBCF8\uB2E4.", cast: [{ id: "noa", slot: "center", veiled: true }], cue: "impact" },
+    { id: "noa", speaker: "???", body: "\uC624, \uC624\uC9C0 \uB9C8\u2026 \uC624\uC9C0 \uB9D0\uB77C\uB2C8\uAE4C\u2026!", standing: "noa", act: "tremble" },
+    { id: "deina", speaker: "\uB370\uC774", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uCAD3\uC9C0 \uB9C8\uC2ED\uC2DC\uC624. \uC800\uB807\uAC8C \uB5A0\uB294 \uAC83\uC774 \uC81C\uC77C \uBA3C\uC800 \uBB45\uB2C8\uB2E4.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "noa", slot: "right", veiled: true }], act: "lean" },
+    { id: "flee", speaker: "", body: "\uADF8\uB9BC\uC790\uB294 \uC190\uD1B1 \uC18C\uB9AC\uB9CC \uB0A8\uAE30\uACE0 \uCDE8\uC0AC\uC7A5 \uCABD\uC73C\uB85C \uC0AC\uB77C\uC9C4\uB2E4." }
+  ])
+};
+var STAGE_5_10_PRE = {
+  id: "stage-5-10-pre",
+  startNodeId: "kitchen",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "kitchen", speaker: "", body: "\uD070 \uC1A5\uC5D0\uC11C \uAE40\uC774 \uC624\uB978\uB2E4. \uC871\uC1C4\uB97C \uB2E8 \uBC1C\uB85C \uBC15\uC790\uB97C \uB9DE\uCD94\uBA70 \uB204\uAD70\uAC00 \uAD6D\uC790\uB97C \uC813\uACE0 \uC788\uB2E4.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], cue: "rumble" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC5B4\uC11C \uC640\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uB9C8\uCE68 \uC624\uB298 \uB4E4\uC5B4\uC628 \uC7AC\uB8CC \uC911\uC5D0 \uC81C\uC77C \uADC0\uD55C \uC190\uB2D8\uC774\uC2DC\uB124.", standing: "magasa", act: "lean" },
+    { id: "maki", speaker: "\uB9C8\uD0A4", body: "\uC5F0\uAD6C\uC6D0\uB2D8 \uADFC\uCC98\uC5D0 \uC624\uC9C0 \uB9C8\uC138\uC694. \uC9C4\uB8CC \uC608\uC57D\uC740 \uC81C\uAC00 \uBA3C\uC800 \uC7A1\uC558\uC5B4\uC694.", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "magasa", slot: "right" }], act: "shake" },
+    { id: "magasa2", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC5B4\uBA38, \uC608\uC57D\uC81C\uAD6C\uB098. \uADF8\uB7FC \uC904 \uC120 \uBD84\uBD80\uD130 \uCC28\uB840\uB85C \uB2E4\uC9C8\uAC8C\uC694~", standing: "magasa", act: "nod" }
+  ])
+};
+var STAGE_5_10_POST = {
+  id: "stage-5-10-post",
+  startNodeId: "laugh",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "laugh", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC544\uD558\uD558\u2026 \uC190\uB9DB \uC88B\uB124\uC694, \uC5F0\uAD6C\uC6D0\uB2D8 \uCABD \uC0AC\uB78C\uB4E4. \uC624\uB298\uC740 \uC81C\uAC00 \uC124\uAC70\uC9C0\uD560\uAC8C\uC694.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
+    { id: "hint", speaker: "\uB9C8\uAC00\uC0AC", body: "\uADF8\uB7F0\uB370\uC694, \uB9E8 \uC544\uB798 \uBD80\uB300\uC7A5\uB2D8 \uC790\uBB3C\uC1E0\uB294 \uC0AC\uB78C \uC190\uC774\uC5B4\uC57C \uC5F4\uB9B0\uB300\uC694. \uC5F0\uAD6C\uC6D0\uB2D8 \uAC19\uC740 \uC9C4\uC9DC \uC0AC\uB78C \uC190.", standing: "magasa", act: "lean" },
+    { id: "deina", speaker: "\uB370\uC774", body: "\u2026\uADF8\uB798\uC11C \uCC98\uC74C\uBD80\uD130 \uC544\uB798\uB85C \uBAB0\uC558\uB358 \uAC81\uB2C8\uB2E4. \uD569\uB3D9 \uCD94\uACA9\uB3C4, \uB04A\uC5B4\uC9C4 \uC2B9\uAC15\uAE30\uB3C4.", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "magasa", slot: "right" }], act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC544\uB798\uB85C \uAC00\uC9C0 \uB9C8\uB77C.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "gone", speaker: "", body: "\uADF8 \uD55C\uB9C8\uB514\uB9CC \uB0A8\uAE30\uACE0 \uCF54\uB9C8\uB294 \uB2E4\uC74C \uACC4\uB2E8\uC73C\uB85C \uB0B4\uB824\uAC04\uB2E4. \uC704\uB85C \uAC00\uB77C\uB294 \uB9D0\uC740 \uD558\uC9C0 \uC54A\uC558\uB2E4." }
+  ])
+};
+var CHAPTER_5_STORIES = [
+  STAGE_5_1_PRE,
+  STAGE_5_3_POST,
+  STAGE_5_4_POST,
+  STAGE_5_5_PRE,
+  STAGE_5_5_POST,
+  STAGE_5_6_POST,
+  STAGE_5_8_POST,
+  STAGE_5_9_POST,
+  STAGE_5_10_PRE,
+  STAGE_5_10_POST
+];
+
+// src/data/dialogues/chapter6.ts
+init_define_import_meta_env();
+var STAGE_6_1_PRE = {
+  id: "stage-6-1-pre",
+  startNodeId: "drone",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "drone", speaker: "", body: "\uD658\uAE30\uAD6C\uC5D0\uC11C \uC791\uC740 \uB4DC\uB860 \uD558\uB098\uAC00 \uC18C\uB9AC \uC5C6\uC774 \uB0B4\uB824\uC640 \uC5F0\uAD6C\uC6D0\uC758 \uB208\uB192\uC774\uC5D0\uC11C \uBA48\uCD98\uB2E4.", cast: [{ id: "morphe", slot: "center" }], cue: "rumble" },
+    { id: "morphe", speaker: "\uBAA8\uB974\uD398", body: "\uB2F4\uB2F9\uAD00 \uD655\uC778. \uC704\uAE4C\uC9C0 \uAC00\uB294 \uAE38, \uC9C0\uAE08\uBD80\uD130 \uC81C\uAC00 \uC704\uC5D0\uC11C \uBD05\uB2C8\uB2E4.", standing: "morphe", act: "nod" },
+    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uB2F4\uB2F9\uAD00\uB2D8\uC740 \uC5EC\uAE30 \uC11C \uACC4\uC138\uC694. \uB0B4\uB824\uC549\uC744 \uC790\uB9AC\uB294 \uC81C\uAC00 \uBA3C\uC800 \uB9C9\uC544 \uB458\uAC8C\uC694.", standing: "kento", cast: [{ id: "kento", slot: "left" }, { id: "stella", slot: "right" }], act: "lean" },
+    { id: "stella", speaker: "\uC2A4\uD14C\uB77C", body: "\uC120\uBC30, \uBC14\uB78C\uC774 \uC804\uBD80 \uC544\uB798\uB85C \uBE68\uB824 \uB4E4\uC5B4\uAC00\uC694. \uC774 \uD68C\uB791, \uC228\uC744 \uAC70\uAFB8\uB85C \uC26C\uC5B4\uC694.", standing: "stella", act: "tremble" }
+  ])
+};
+var STAGE_6_3_POST = {
+  id: "stage-6-3-post",
+  startNodeId: "pot",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "pot", speaker: "", body: "\uBB34\uB108\uC9C4 \uC21C\uCC30\uB85C \uD55C\uAD6C\uC11D\uC5D0\uC11C \uC791\uC740 \uBD88\uC774 \uD53C\uC5B4 \uC788\uB2E4. \uB9C8\uAC00\uC0AC\uAC00 \uC1A5\uC744 \uAC78\uACE0 \uB77C\uC790\uC5D0\uAC8C \uADF8\uB987\uC744 \uB0B4\uBBFC\uB2E4.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right" }] },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uB77C\uC790, \uB9CE\uC774 \uBA39\uC5B4. \uC55E\uC5D0 \uC11C\uB294 \uC0AC\uB78C\uC774 \uC81C\uC77C \uBA3C\uC800 \uBC30\uACE0\uD504\uC796\uC544.", standing: "magasa", act: "nod" },
+    { id: "raja", speaker: "\uB77C\uC790", body: "\u2026\uB178\uC544 \uBAAB\uC740.", standing: "raja", act: "lean" },
+    { id: "magasa2", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBC8C\uC368 \uB35C\uC5B4 \uB1A8\uC9C0~ \uC544, \uC5F0\uAD6C\uC6D0\uB2D8 \uBAAB\uB3C4 \uB0A8\uACA8 \uB480\uB294\uB370. \uC624\uC2DC\uBA74 \uAC19\uC774 \uB4DC\uC138\uC694.", standing: "magasa", act: "hop" },
+    { id: "keris", speaker: "\uCF00\uB9AC\uC2A4", body: "\u2026\uAE30\uB85D\uD588\uC2B5\uB2C8\uB2E4, \uC120\uBC30. \uC801\uC774 \uC6B0\uB9AC \uBAAB\uC758 \uADF8\uB987\uC744 \uB530\uB85C \uB35C\uC5B4 \uB454 \uAC74 \uC774\uBC88\uC774 \uCC98\uC74C\uC774\uC5D0\uC694.", standing: "keris", cast: [{ id: "keris", slot: "center" }], act: "shrink" }
+  ])
+};
+var STAGE_6_4_POST = {
+  id: "stage-6-4-post",
+  startNodeId: "wind",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wind", speaker: "\uC2A4\uD14C\uB77C", body: "\uC120\uBC30, \uBC14\uB78C\uC774 \uD558\uB098 \uB354 \uC788\uC5B4\uC694. \uC544\uC8FC \uC791\uACE0\u2026 \uACC4\uC18D \uB5A8\uB9AC\uB294 \uBC14\uB78C\uC774\uC694.", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "kento", slot: "right" }], act: "tremble", cue: "rumble" },
+    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uC2A4\uD14C\uB77C, \uB0B4 \uB4A4\uB85C. \uB5A8\uB9AC\uB294 \uAC74 \uAC81\uBA39\uC5C8\uB2E4\uB294 \uAC70\uACE0, \uAC81\uBA39\uC740 \uAC74 \uBA3C\uC800 \uB6F0\uC5B4\uB4E4\uC5B4.", standing: "kento", act: "lean" },
+    { id: "shaft", speaker: "", body: "\uD658\uAE30 \uC218\uC9C1\uAC31 \uC704\uC5D0\uC11C \uC190\uD1B1\uC774 \uAE08\uC18D\uC744 \uAE01\uB294 \uC18C\uB9AC\uAC00 \uAE38\uAC8C \uC774\uC5B4\uC9C4\uB2E4.", cue: "impact" }
+  ])
+};
+var STAGE_6_5_PRE = {
+  id: "stage-6-5-pre",
+  startNodeId: "drop",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "\uADF8\uB9BC\uC790\uAC00 \uC704\uC5D0\uC11C \uB5A8\uC5B4\uC9C4\uB2E4. \uB545\uC5D0 \uB2FF\uAE30\uB3C4 \uC804\uC5D0 \uC190\uD1B1\uC774 \uBA3C\uC800 \uACF5\uAE30\uB97C \uAC00\uB978\uB2E4.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
+    { id: "noa", speaker: "\uB178\uC544", body: "\uC624, \uC624\uC9C0 \uB9C8! \uC624\uC9C0 \uB9D0\uB77C\uB2C8\uAE4C! \u2026\uC65C \uACC4\uC18D \uC624\uB294 \uAC74\uB370!", standing: "noa", act: "fright" },
+    { id: "shute", speaker: "\uC288\uD14C", body: "\uC624\uB354, \uC800 \uC544\uC774\uB294 \uC81C\uAC00 \uBD99\uC7A1\uACA0\uC2B5\uB2C8\uB2E4. \uD55C \uBA85\uB9CC, \uB05D\uAE4C\uC9C0.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_6_5_POST = {
+  id: "stage-6-5-post",
+  startNodeId: "curl",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "curl", speaker: "\uB178\uC544", body: "\u2026\uC544\uD30C. \uADF8\uB7EC\uB2C8\uAE4C \uC624\uC9C0 \uB9D0\uB77C\uACE0 \uD588\uC796\uC544.", standing: "noa", cast: [{ id: "noa", slot: "center" }], act: "shrink" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC6B0\uB9AC \uB178\uC544\uD55C\uD14C \uBB50 \uD558\uB294 \uAC70\uC608\uC694, \uC5F0\uAD6C\uC6D0\uB2D8? \uC774 \uC544\uC774\uB294 \uC7AC\uB8CC \uC544\uB2C8\uC5D0\uC694. \uC2DD\uAD6C\uC608\uC694.", standing: "magasa", cast: [{ id: "noa", slot: "left" }, { id: "magasa", slot: "right" }], act: "lean" },
+    { id: "noa2", speaker: "\uB178\uC544", body: "\uB9C8\uAC00\uC0AC\u2026 \uB098 \uD558\uB098\uB3C4 \uC548 \uBB34\uC11C\uC6E0\uC5B4. \uC9C4\uC9DC\uC57C.", standing: "noa", act: "tremble" },
+    { id: "magasa2", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC54C\uC544, \uC54C\uC544. \uAC00\uC790. \uBC25 \uBA39\uACE0 \uB2E4\uC2DC \uD558\uC790.", standing: "magasa", act: "nod" }
+  ])
+};
+var STAGE_6_7_POST = {
+  id: "stage-6-7-post",
+  startNodeId: "glass",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "glass", speaker: "", body: "\uAE68\uC9C4 \uBA74\uD68C \uCC3D \uB108\uBA38\uC5D0 \uC758\uC790 \uB450 \uAC1C\uAC00 \uB9C8\uC8FC \uB193\uC5EC \uC788\uB2E4. \uD55C\uCABD \uC758\uC790\uC5D0\uB9CC \uC190\uD1B1\uC790\uAD6D\uC774 \uAE4A\uB2E4.", cast: [{ id: "ikanixia", slot: "left" }, { id: "neuri", slot: "right" }] },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uBD80\uB300\uC7A5\uB2D8\uC774 \uAE68\uC5B4\uB098\uC2DC\uBA74 \uC800\uD76C\uB3C4 \uC904\uC744 \uC11C\uC57C\uACA0\uC8E0. \uADF8\uBD84 \uC55E\uC5D0\uC11C\uB294 \uAC04\uBD80\uB3C4 \uC870\uC6D0\uB3C4 \uD55C \uC904\uC774\uB2C8\uAE4C\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uC800\uD76C \uAC04\uBD80\uB2D8\uC740 \uC904 \uAC19\uC740 \uAC70 \uC548 \uC11C\uC138\uC694! \u2026\uC11C\uC2DC\uB098\uC694?", standing: "neuri", act: "shake" },
+    { id: "ika2", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uD6C4\uD6D7. \uC11C\uB294 \uCC99\uC740 \uC798\uD558\uC8E0.", standing: "ikanixia", act: "nod" }
+  ])
+};
+var STAGE_6_8_POST = {
+  id: "stage-6-8-post",
+  startNodeId: "record",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "record", speaker: "\uCF00\uB9AC\uC2A4", body: "\uC120\uBC30, \uAD00\uC81C \uAE30\uB85D\uC774\uC5D0\uC694. \uCD5C\uD558\uCE35 \uAD6C\uC18D\uC2E4, \uC218\uAC10 \uAC1C\uCCB4 \uD558\uB098. \uC774\uB984 \uCE78\uC5D0\uB294\u2026 \u300C\uCE74\uB974\u300D.", standing: "keris", cast: [{ id: "keris", slot: "left" }, { id: "irna", slot: "right" }], act: "lean" },
+    { id: "keris2", speaker: "\uCF00\uB9AC\uC2A4", body: "\uB2E4\uB978 \uCE78\uC740 \uB2E4 \uBC88\uD638\uC778\uB370, \uC774 \uCE78\uB9CC \uC774\uB984\uC774\uC5D0\uC694. \uC9C0\uC6B4 \uC790\uAD6D \uC704\uC5D0 \uB2E4\uC2DC \uC801\uD600 \uC788\uC5B4\uC694.", standing: "keris", act: "shrink" },
+    { id: "irna", speaker: "\uC774\uB974\uB098", body: "\uC624\uB354, \uC704\uB85C \uAC00\uB294 \uC904\uC774 \uAC10\uACA8 \uB0B4\uB824\uAC00\uACE0 \uC788\uC2B5\uB2C8\uB2E4. \uB04A\uACA0\uC2B5\uB2C8\uB2E4.", standing: "irna", act: "nod", cue: "impact" },
+    { id: "lift", speaker: "", body: "\uCD1D\uC131 \uD55C \uBC1C. \uC544\uB798\uB85C \uB04C\uB824\uAC00\uB358 \uC9D0 \uC2B9\uAC15\uAE30\uAC00 \uBA48\uCD98\uB2E4. \uADF8 \uC548\uC5D0 \uBE48 \uAD6C\uC18D\uBCF5 \uD558\uB098\uAC00 \uAC78\uB824 \uC788\uB2E4." }
+  ])
+};
+var STAGE_6_10_PRE = {
+  id: "stage-6-10-pre",
+  startNodeId: "deep",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "deep", speaker: "", body: "\uD68C\uB791\uC758 \uB05D, \uC704\uB85C \uC624\uB974\uB294 \uACC4\uB2E8 \uC55E\uC5D0 \uB458\uC774 \uC11C \uC788\uB2E4. \uD558\uB098\uB294 \uC1A5\uC744 \uB0B4\uB824\uB193\uC558\uACE0, \uD558\uB098\uB294 \uADF8 \uB4F1 \uB4A4\uC5D0 \uBD99\uC5B4 \uC788\uB2E4.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], cue: "rumble" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC704\uB85C\uB294 \uBABB \uAC00\uC694. \uBD80\uB300\uC7A5\uB2D8\uC774 \uC544\uB798\uC5D0\uC11C \uAE30\uB2E4\uB9AC\uC2DC\uAC70\uB4E0\uC694.", standing: "magasa", act: "lean" },
+    { id: "noa", speaker: "\uB178\uC544", body: "\uB9C8\uAC00\uC0AC, \uB0B4 \uB4A4\uC5D0 \uC788\uC5B4. \u2026\uC544\uB2C8, \uB0B4\uAC00 \uB4A4\uC5D0 \uC788\uC744\uAC8C. \uADFC\uB370 \uB098\uB3C4 \uD560\uB798.", standing: "noa", act: "tremble" },
+    { id: "stella", speaker: "\uC2A4\uD14C\uB77C", body: "\uC120\uBC30, \uB458\uC758 \uBC14\uB78C\uC774 \uD558\uB098\uB85C \uBB36\uC5EC \uC788\uC5B4\uC694. \uB5BC\uC5B4 \uB193\uC73C\uBA74 \uD754\uB4E4\uB9B4 \uAC70\uC608\uC694.", standing: "stella", cast: [{ id: "stella", slot: "center" }], act: "nod" }
+  ])
+};
+var STAGE_6_10_POST = {
+  id: "stage-6-10-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uB9C8\uAC00\uC0AC", body: "\uC544\uD558\u2026 \uB458\uC774\uC11C\uB3C4 \uC548 \uB418\uB124. \uB178\uC544, \uAD1C\uCC2E\uC544?", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], act: "faint" },
+    { id: "noa", speaker: "\uB178\uC544", body: "\u2026\uC751. \uADFC\uB370 \uBC14\uB2E5\uC774, \uBC14\uB2E5\uC774 \uC774\uC0C1\uD574.", standing: "noa", act: "fright" },
+    { id: "crack", speaker: "", body: "\uD68C\uB791 \uBC14\uB2E5\uC774 \uD55C\uAC00\uC6B4\uB370\uBD80\uD130 \uAEBC\uC838 \uB0B4\uB9B0\uB2E4. \uC704\uB85C \uAC00\uB294 \uACC4\uB2E8\uC774 \uBA40\uC5B4\uC9C0\uACE0, \uBAB8\uC774 \uC5B4\uB460 \uC18D\uC73C\uB85C \uB5A8\uC5B4\uC9C4\uB2E4.", cast: [], cue: "explosion" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC190\uC744 \uC7A1\uC544\uB77C. \uB193\uCE58\uBA74 \uADF8 \uC190\uC744 \uC4F0\uAC8C \uB41C\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], act: "lean" },
+    { id: "voice", speaker: "???", body: "\u2026\uB2A6\uC5C8\uC5B4.", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right", veiled: true }], cue: "impact" }
+  ])
+};
+var CHAPTER_6_STORIES = [
+  STAGE_6_1_PRE,
+  STAGE_6_3_POST,
+  STAGE_6_4_POST,
+  STAGE_6_5_PRE,
+  STAGE_6_5_POST,
+  STAGE_6_7_POST,
+  STAGE_6_8_POST,
+  STAGE_6_10_PRE,
+  STAGE_6_10_POST
+];
+
+// src/data/dialogues/chapter7.ts
+init_define_import_meta_env();
+var STAGE_7_1_PRE = {
+  id: "stage-7-1-pre",
+  startNodeId: "wake",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wake", speaker: "", body: "\uB208\uC744 \uB728\uC790 \uCC28\uAC00\uC6B4 \uBC14\uB2E5 \uB300\uC2E0 \uB204\uAD70\uAC00\uC758 \uBB34\uB98E\uC774 \uC788\uB2E4. \uBA38\uB9AC \uC704\uC5D0\uC11C \uB0AE\uC740 \uBAA9\uC18C\uB9AC\uAC00 \uC22B\uC790\uB97C \uC138\uACE0 \uC788\uB2E4.", cast: [{ id: "nodonia", slot: "center" }] },
+    { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC544\uAC00, \uC815\uC2E0 \uB4E4\uC5C8\uC5B4? \uC14B\uAE4C\uC9C0 \uC138\uB294 \uB3D9\uC548 \uC228 \uC26C\uC5C8\uC73C\uB2C8\uAE4C \uAD1C\uCC2E\uC544. \uB2E4\uCE5C \uB370 \uBA3C\uC800 \uBCF4\uC790.", standing: "nodonia", act: "lean" },
+    { id: "terisa", speaker: "\uD14C\uB9AC\uC0AC", body: "\u2026\uC18C\uB9E4\uAC00 \uCC22\uC5B4\uC84C\uAD6C\uB098, \uC544\uAC00. \uAC78\uC73C\uBA74\uC11C \uAFF0\uB9E4 \uC904\uAC8C.", standing: "terisa", cast: [{ id: "nodonia", slot: "left" }, { id: "terisa", slot: "right" }], act: "nod" },
+    { id: "anka", speaker: "\uC548\uCE74", body: "\uC5F0\uAD6C\uC6D0 \uC528, \uC5EC\uAE30\uB294 \uC870\uC6A9\uD788 \uAC78\uC5B4\uC57C \uD574\uC694. \uC544\uB798\uC5D0 \uC790\uB294 \uCC99\uD558\uB294 \uAC8C \uB108\uBB34 \uB9CE\uC544\uC694.", standing: "anka", cast: [{ id: "anka", slot: "center" }], act: "shrink" }
+  ])
+};
+var STAGE_7_2_POST = {
+  id: "stage-7-2-post",
+  startNodeId: "cold",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "cold", speaker: "\uB9E4\uB514", body: "\uC640, \uC5EC\uAE30 \uB0C9\uC7A5\uACE0 \uC5C4\uCCAD \uD06C\uB2E4\u2026 \uC544\uC774\uC2A4\uD06C\uB9BC \uB123\uC73C\uBA74 \uBC31 \uB144\uC740 \uAC00\uACA0\uC5B4\uC694.", standing: "maddy", cast: [{ id: "maddy", slot: "left" }, { id: "meron", slot: "right" }], act: "hop" },
+    { id: "frost", speaker: "", body: "\uC131\uC5D0 \uB080 \uC720\uB9AC\uBB38 \uC548\uCABD\uC5D0 \uC190\uBC14\uB2E5 \uC790\uAD6D\uC774 \uB0A8\uC544 \uC788\uB2E4. \uBC14\uAE65\uC774 \uC544\uB2C8\uB77C \uC548\uCABD\uC5D0\uC11C \uCC0D\uD78C \uC790\uAD6D\uC774\uB2E4.", cue: "rumble" },
+    { id: "maddy2", speaker: "\uB9E4\uB514", body: "\u2026\uC544\uB2C8\uC5D0\uC694. \uC5EC\uAE30 \uB0C9\uC7A5\uACE0 \uC544\uB2C8\uC5D0\uC694, \uC5F0\uAD6C\uC6D0 \uC528. \uC0AC\uB78C\uC744 \uB123\uC5B4 \uB450\uB358 \uB370\uC608\uC694.", standing: "maddy", act: "shrink" },
+    { id: "meron", speaker: "\uBA54\uB860", body: "\u2026\uC774 \uC5BC\uAD74\uB4E4, \uB098\uC911\uC5D0 \uB2E4 \uADF8\uB824 \uB458\uAC8C\uC694. \uC544\uBB34\uB3C4 \uC548 \uADF8\uB824 \uC92C\uC744 \uD14C\uB2C8\uAE4C.", standing: "meron", act: "nod" }
+  ])
+};
+var STAGE_7_4_POST = {
+  id: "stage-7-4-post",
+  startNodeId: "panel",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "panel", speaker: "", body: "\uC81C\uC5B4\uBC18\uC758 \uB9C8\uC9C0\uB9C9 \uCE78\uC5D0\uB294 \uC190\uBC14\uB2E5 \uBAA8\uC591\uC758 \uD310\uC774 \uBC15\uD600 \uC788\uB2E4. \uADF8 \uC55E\uC5D0 \uCF54\uB9C8\uAC00 \uB4F1\uC744 \uBCF4\uC774\uACE0 \uC11C \uC788\uB2E4.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uB9E8 \uC544\uB798 \uC790\uBB3C\uC1E0\uB294 \uC0AC\uB78C \uC190\uC774\uC5B4\uC57C \uC5F4\uB9B0\uB2E4. \uB098\uB294 \uADF8 \uC190\uC744 \uB370\uB824\uC624\uB77C\uB294 \uBA85\uB839\uC744 \uBC1B\uC558\uB2E4.", standing: "koma", act: "lean" },
+    { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uADF8 \uB9D0\uC744 \uC65C \uC6B0\uB9AC \uC544\uAC00 \uC55E\uC5D0\uC11C \uD558\uB2C8? \uB370\uB824\uAC08 \uAC70\uBA74 \uC228\uACBC\uC5B4\uC57C\uC9C0.", standing: "nodonia", cast: [{ id: "nodonia", slot: "left" }, { id: "koma", slot: "right" }], act: "shake" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\u2026\uADF8\uB7EC\uB2C8\uAE4C \uD558\uB294 \uB9D0\uC774\uB2E4.", standing: "koma", act: "shrink" }
+  ])
+};
+var STAGE_7_5_PRE = {
+  id: "stage-7-5-pre",
+  startNodeId: "line",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "line", speaker: "", body: "\uC881\uC740 \uD1B5\uB85C\uB97C \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uAC00\uB4DD \uBA54\uC6B4\uB2E4. \uC774\uBC88\uC5D0\uB294 \uB0B4\uB824\uC11C\uC9C0 \uC54A\uACE0 \uCC98\uC74C\uBD80\uD130 \uADF8 \uC790\uB9AC\uC5D0 \uC11C \uC788\uC5C8\uB2E4.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
+    { id: "ika", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uC5EC\uAE30\uBD80\uD130\uB294 \uD68C\uC218\uC870\uAC00 \uBAA8\uC154 \uAC00\uACA0\uC5B4\uC694, \uC5F0\uAD6C\uC6D0\uB2D8. \uC774\uBC88\uB9CC\uD07C\uC740 \uC815\uB9D0 \uC11C\uB450\uB97C\uAC8C\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "anka", speaker: "\uC548\uCE74", body: "\uC5F0\uAD6C\uC6D0 \uC528, \uC81C \uB4A4\uC5D0 \uC788\uC5B4\uC694. \uC800 \uC0AC\uB78C \uBC15\uC218 \uC18C\uB9AC, \uC81C\uAC00 \uC7AC\uC6CC \uBCFC\uAC8C\uC694.", standing: "anka", cast: [{ id: "anka", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "nod" }
+  ])
+};
+var STAGE_7_5_POST = {
+  id: "stage-7-5-post",
+  startNodeId: "fall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "fall", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\u2026\uD6C4\uD6D7. \uC11C\uB458\uB800\uB354\uB2C8 \uC774\uB807\uAC8C \uB418\uB124\uC694. \uC5ED\uC2DC \uC800\uD55C\uD14C\uB294 \uCC9C\uCC9C\uD788\uAC00 \uB9DE\uB098 \uBD10\uC694.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "koma", slot: "right" }], act: "faint" },
+    { id: "ask", speaker: "\uC774\uCE74\uB2C9\uC2DC\uC544", body: "\uCF54\uB9C8 \uB2D8. \uC124\uB9C8 \uBA85\uB839\uC744 \uAC70\uC2A4\uB974\uC2E4 \uC0DD\uAC01\uC740 \uC544\uB2C8\uC2DC\uC8E0? \uAC19\uC740 \uAC04\uBD80\uB85C\uC11C \uBB3B\uB294 \uAC70\uC608\uC694.", standing: "ikanixia", act: "lean" },
+    { id: "koma", speaker: "", body: "\uCF54\uB9C8\uB294 \uB300\uB2F5\uD558\uC9C0 \uC54A\uB294\uB2E4. \uC774\uCE74\uB2C9\uC2DC\uC544\uC758 \uACC1\uC744 \uC9C0\uB098 \uC5F0\uAD6C\uC6D0\uBCF4\uB2E4 \uD55C \uAC78\uC74C \uC55E\uC5D0\uC11C \uAC77\uAE30 \uC2DC\uC791\uD55C\uB2E4." }
+  ])
+};
+var STAGE_7_7_POST = {
+  id: "stage-7-7-post",
+  startNodeId: "found",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "found", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8! \uCC3E\uC558\uB2E4! \uC9C4\uC9DC \uB300\uC7A5\uB2D8\uC774\uB2E4!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hopTwice", cue: "impact" },
+    { id: "dodi", speaker: "\uB3C4\uB514", body: "\uC77C\uC9C0\uC5D0 \uB2E4 \uC801\uC5C8\uC5B4\uC694, \uB300\uC7A5\uB2D8\uC774 \uC0AC\uB77C\uC9C4 \uC2DC\uAC01\uBD80\uD130 \uC804\uBD80\uC694! \uC774\uC81C \uCC3E\uC740 \uC2DC\uAC01\uB3C4 \uC801\uC744\uAC8C\uC694!", standing: "dodi", act: "hop" },
+    { id: "parua", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB300\uC7A5\uB2D8. \uC800 \uC55E, \uD070 \uAC8C \uBB36\uC5EC \uC788\uC5B4\uC694. \uC228\uC744 \uC548 \uC26C\uB294 \uCC99\uD558\uACE0 \uC788\uC5B4\uC694.", standing: "parua", cast: [{ id: "parua", slot: "center" }], act: "tremble" }
+  ])
+};
+var STAGE_7_8_POST = {
+  id: "stage-7-8-post",
+  startNodeId: "wall",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "wall", speaker: "", body: "\uC606 \uBCBD\uC774 \uC548\uCABD\uC73C\uB85C \uD130\uC838 \uB098\uC628\uB2E4. \uBA3C\uC9C0 \uC18D\uC5D0\uC11C \uBA38\uB9AC\uB97C \uAC10\uC2FC \uD30C\uCE58\uC640 \uB809\uC2DC\uC544\uAC00 \uD568\uAED8 \uB6F0\uC5B4\uB4E0\uB2E4.", cast: [{ id: "pachi", slot: "left" }, { id: "lexia", slot: "right" }], cue: "explosion" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB9C8\uC2A4\uD130, \uB2A6\uC5B4\uC11C \uBBF8\uC548\uD574\uC694! \uC704\uC5D0\uC11C\uBD80\uD130 \uBCBD\uC744 \uC138 \uAC1C\uB098 \uB6AB\uACE0 \uC654\uC5B4\uC694. \uC55E\uC740 \uC774\uC81C \uC81C\uAC00 \uC11C\uC694!", standing: "lexia", act: "hop" },
+    { id: "pachi", speaker: "\uD30C\uCE58", body: "\uB124 \uAC1C\uC57C, \uBCF4\uC2A4. \uD558\uB098\uB294 \uB809\uC2DC\uC544\uAC00 \uBB38\uC774\uB77C\uACE0 \uC6B0\uACBC\uC5B4.", standing: "pachi", act: "nod" },
+    { id: "ella", speaker: "\uC5D8\uB77C", body: "\u2026\uC2DC\uB9D0\uC11C\uB294 \uC704\uC5D0 \uC62C\uB77C\uAC00\uC11C \uD55C\uAEBC\uBC88\uC5D0 \uC4F0\uACA0\uC2B5\uB2C8\uB2E4.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "shrink" }
+  ])
+};
+var STAGE_7_9_POST = {
+  id: "stage-7-9-post",
+  startNodeId: "room",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "room", speaker: "", body: "\uBC29 \uD55C\uAC00\uC6B4\uB370\uC5D0 \uAD6C\uC18D\uBCF5\uC9F8 \uBB36\uC778 \uAC70\uAD6C\uAC00 \uC549\uC544 \uC788\uB2E4. \uC790\uBB3C\uC1E0\uAC00 \uBAB8 \uACF3\uACF3\uC5D0 \uB9E4\uB2EC\uB824 \uC228 \uC274 \uB54C\uB9C8\uB2E4 \uBD80\uB52A\uD78C\uB2E4.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "rumble" },
+    { id: "kneel", speaker: "", body: "\uB9C8\uAC00\uC0AC\uC640 \uB178\uC544, \uB77C\uC790\uAC00 \uADF8 \uC55E\uC5D0 \uB098\uB780\uD788 \uBB34\uB98E\uC744 \uAFC7\uB294\uB2E4. \uB9C8\uAC00\uC0AC\uAC00 \uBA3C\uC800 \uACE0\uAC1C\uB97C \uB4E0\uB2E4.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "center" }, { id: "noa", slot: "right" }] },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBD80\uB300\uC7A5\uB2D8, \uB2E4\uB140\uC654\uC5B4\uC694. \uBC25\uC740 \uC704\uC5D0 \uAC00\uC11C \uB530\uB73B\uD558\uAC8C \uCC28\uB824 \uB4DC\uB9B4\uAC8C\uC694.", standing: "magasa", act: "nod" },
+    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026072. \uB2A6\uC5C8\uC5B4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], act: "lean" },
+    { id: "order", speaker: "\uCE74\uB974", body: "\uC0AC\uB78C\uC744 \uB370\uB824\uC640. \uADF8 \uC190\uC744 \uC790\uBB3C\uC1E0\uC5D0 \uC5B9\uAC8C \uD574.", standing: "carno", act: "nod" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC2EB\uB2E4.", standing: "koma", act: "lean" },
+    { id: "koma2", speaker: "\uCF54\uB9C8", body: "\uB0B4 \uBC88\uD638\uB294 \uC9C0\uC6E0\uB2E4. \uBA85\uB839\uB3C4 \uAC19\uC774 \uC9C0\uC6E0\uB2E4.", standing: "koma", act: "shrink" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\u2026\uADF8\uB7FC \uB0B4\uAC00 \uC9C1\uC811 \uD55C\uB2E4.", standing: "carno", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_7_10_PRE = {
+  id: "stage-7-10-pre",
+  startNodeId: "shove",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "shove", speaker: "", body: "\uBB36\uC778 \uC5B4\uAE68 \uD558\uB098\uAC00 \uCF54\uB9C8\uB97C \uBCBD\uAE4C\uC9C0 \uBC00\uCCD0 \uB0B8\uB2E4. \uC790\uBB3C\uC1E0 \uD558\uB098\uAC00 \uD130\uC838 \uBC14\uB2E5\uC744 \uAD6C\uB978\uB2E4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], cue: "explosion" },
+    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026\uC5F0\uAD6C\uC6D0. \uBE44\uCF1C \uC124 \uAC83 \uC5C6\uB2E4. \uC190\uB9CC \uC788\uC73C\uBA74 \uB41C\uB2E4.", standing: "carno", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB9C8\uC2A4\uD130 \uC190\uC5D0\uB294 \uC544\uBB34\uB3C4 \uBABB \uB300! \uB2E4\uB4E4, \uC804\uC5F4 \uC815\uB82C!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "carno", slot: "right" }], act: "hop" },
+    { id: "nodonia", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC544\uAC00\uB294 \uB0B4 \uB4A4\uC57C. \uC800 \uC790\uBB3C\uC1E0\uAC00 \uB2E4 \uD480\uB9AC\uAE30 \uC804\uC5D0 \uB05D\uB0B4\uC790.", standing: "nodonia", cast: [{ id: "nodonia", slot: "center" }], act: "nod" }
+  ])
+};
+var STAGE_7_10_POST = {
+  id: "stage-7-10-post",
+  startNodeId: "last",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "last", speaker: "", body: "\uB9C8\uC9C0\uB9C9 \uC790\uBB3C\uC1E0\uAC00 \uD63C\uC790 \uD130\uC9C4\uB2E4. \uC190\uBC14\uB2E5 \uD310\uC740 \uB05D\uB0B4 \uC544\uBB34\uB3C4 \uAC74\uB4DC\uB9AC\uC9C0 \uC54A\uC558\uB2E4.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "explosion" },
+    { id: "carno", speaker: "\uCE74\uB974", body: "\u2026\uC190\uC740 \uD544\uC694 \uC5C6\uC5C8\uAD70. \uB9DE\uC744\uC218\uB85D \uD480\uB9AC\uB2C8\uAE4C.", standing: "carno", act: "nod" },
+    { id: "magasa", speaker: "\uB9C8\uAC00\uC0AC", body: "\uBD80\uB300\uC7A5\uB2D8, \uC704\uB85C \uAC00\uC694. \uB178\uC544\uB3C4 \uB77C\uC790\uB3C4 \uB2E4 \uB370\uB824\uAC08\uAC8C\uC694.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "carno", slot: "right" }], act: "lean" },
+    { id: "carno2", speaker: "\uCE74\uB974", body: "\uB300\uC7A5\uB4E4\uC774 \uAE30\uB2E4\uB9B0\uB2E4. \uC5F0\uAD6C\uC6D0\uC740 \uB2E4\uC74C\uC5D0 \uB370\uB824\uAC04\uB2E4.", standing: "carno", act: "lean" },
+    { id: "carno3", speaker: "\uCE74\uB974", body: "072. \uC9C0\uC6B4 \uBC88\uD638\uB294 \uB0B4\uAC00 \uB2E4\uC2DC \uC801\uB294\uB2E4.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], act: "nod" },
+    { id: "leave", speaker: "", body: "\uCE74\uB974\uAC00 \uCC9C\uC7A5\uC744 \uB6AB\uACE0 \uC704\uB85C \uC0AC\uB77C\uC9C4\uB2E4. \uAC10\uAE08\uC870\uAC00 \uCC28\uB840\uB85C \uADF8 \uB4A4\uB97C \uB530\uB978\uB2E4.", standing: "carno", leave: "blastOff", cast: [] },
+    { id: "far", speaker: "???", body: "\u2026\uAD81\uB2C8\uB974, \uCCA0\uAC11. \uBD80\uB300\uC7A5 \uADC0\uD658 \uD655\uC778.", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
+    { id: "koma", speaker: "\uCF54\uB9C8", body: "\u2026\uC704\uAE4C\uC9C0\uB294 \uAC19\uC774 \uAC04\uB2E4. \uADF8 \uB2E4\uC74C\uC740 \uBAA8\uB978\uB2E4.", standing: "koma", act: "shrink" }
+  ])
+};
+var CHAPTER_7_STORIES = [
+  STAGE_7_1_PRE,
+  STAGE_7_2_POST,
+  STAGE_7_4_POST,
+  STAGE_7_5_PRE,
+  STAGE_7_5_POST,
+  STAGE_7_7_POST,
+  STAGE_7_8_POST,
+  STAGE_7_9_POST,
+  STAGE_7_10_PRE,
+  STAGE_7_10_POST
 ];
 
 // src/data/stageStories.ts
@@ -30577,11 +31131,45 @@ var LINKS = {
   "3-9": { post: "stage-3-9-post" },
   "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
   "4-1": { pre: "stage-4-1-pre" },
+  "4-3": { pre: "stage-4-3-pre" },
   "4-4": { pre: "stage-4-4-pre" },
-  "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" }
+  "4-6": { pre: "stage-4-6-pre" },
+  "4-8": { post: "stage-4-8-post" },
+  "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" },
+  "5-1": { pre: "stage-5-1-pre" },
+  "5-3": { post: "stage-5-3-post" },
+  "5-4": { post: "stage-5-4-post" },
+  "5-5": { pre: "stage-5-5-pre", post: "stage-5-5-post" },
+  "5-6": { post: "stage-5-6-post" },
+  "5-8": { post: "stage-5-8-post" },
+  "5-9": { post: "stage-5-9-post" },
+  "5-10": { pre: "stage-5-10-pre", post: "stage-5-10-post" },
+  "6-1": { pre: "stage-6-1-pre" },
+  "6-3": { post: "stage-6-3-post" },
+  "6-4": { post: "stage-6-4-post" },
+  "6-5": { pre: "stage-6-5-pre", post: "stage-6-5-post" },
+  "6-7": { post: "stage-6-7-post" },
+  "6-8": { post: "stage-6-8-post" },
+  "6-10": { pre: "stage-6-10-pre", post: "stage-6-10-post" },
+  "7-1": { pre: "stage-7-1-pre" },
+  "7-2": { post: "stage-7-2-post" },
+  "7-4": { post: "stage-7-4-post" },
+  "7-5": { pre: "stage-7-5-pre", post: "stage-7-5-post" },
+  "7-7": { post: "stage-7-7-post" },
+  "7-8": { post: "stage-7-8-post" },
+  "7-9": { post: "stage-7-9-post" },
+  "7-10": { pre: "stage-7-10-pre", post: "stage-7-10-post" }
 };
 var STAGE_STORY_LINKS = LINKS;
-var MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES];
+var MAIN_STORY_BUNDLES = [
+  ...CHAPTER_1_STORIES,
+  ...CHAPTER_2_STORIES,
+  ...CHAPTER_3_STORIES,
+  ...CHAPTER_4_STORIES,
+  ...CHAPTER_5_STORIES,
+  ...CHAPTER_6_STORIES,
+  ...CHAPTER_7_STORIES
+];
 
 // src/data/dialogues/recollections.ts
 var TRANSLATED_STORIES = [OPENING_TRAIN, OPENING_RETREAT, GREAT_AUK_REPORT];
@@ -34221,13 +34809,14 @@ init_define_import_meta_env();
 
 // src/data/recollectionCatalog.ts
 init_define_import_meta_env();
+var RECOLLECTION_GROUPS = ["chapter1", "chapter2", "chapter3", "chapter4", "chapter5", "chapter6", "chapter7", "side"];
 function buildRecollectionEntries() {
   const entries = [
     { storyId: OPENING_TRAIN.id, group: "chapter1", titleKey: "recollection.title.openingTrain" },
     { storyId: OPENING_RETREAT.id, group: "chapter1", stageId: "1-1", titleKey: "recollection.title.openingRetreat" }
   ];
   for (const chapter of CHAPTERS) {
-    const group = chapter.id === 1 ? "chapter1" : chapter.id === 2 ? "chapter2" : chapter.id === 3 ? "chapter3" : chapter.id === 4 ? "chapter4" : void 0;
+    const group = RECOLLECTION_GROUPS.find((candidate) => candidate === `chapter${chapter.id}`);
     if (!group) continue;
     for (const stage of chapter.stages) {
       const link = STAGE_STORY_LINKS[stage.id];

@@ -1,4 +1,5 @@
 import { ancientStageFloor } from "../data/ancientStrataDifficulty";
+import { storyBaseStageId } from "../core/storyDifficulty";
 /**
  * 배경 원화의 키·파일·부트 적재 범위.
  *
@@ -146,6 +147,12 @@ export const BACKGROUND = {
   stageMapDeep: "background-stage-map-deep",
   /** 3·4장 스테이지 전장 — 수로와 환승로다. 1·2장은 `combat`을 쓴다(`stageFieldBackground`). */
   combatDeep: "background-combat-deep",
+  /** 5·6장: 지하 설비층을 내려가 감금동 입구에 이르는 지도와 전장. */
+  stageMapPrisonApproach: "background-stage-map-prison-approach",
+  combatPrisonApproach: "background-combat-prison-approach",
+  /** 7장: 감금동 외벽 붕괴로 드러난 침수된 제3지부. */
+  stageMapThirdBranch: "background-stage-map-third-branch",
+  combatThirdBranch: "background-combat-third-branch",
   /** 고대 지층 — 입구(1~10층)와 이후 열 층 구간마다 돌아가는 반복 세 장, 전용 전장이다. */
   ancientEntry: "background-ancient-entry",
   ancientLoopA: "background-ancient-loop-a",
@@ -181,6 +188,10 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.stageMap, "sprites/background/map_001.webp"],
   [BACKGROUND.stageMapDeep, "sprites/background/map_002.webp"],
   [BACKGROUND.combatDeep, "sprites/background/field_ch34.webp"],
+  [BACKGROUND.stageMapPrisonApproach, "sprites/background/map_ch56.webp"],
+  [BACKGROUND.combatPrisonApproach, "sprites/background/field_ch56.webp"],
+  [BACKGROUND.stageMapThirdBranch, "sprites/background/map_ch7.webp"],
+  [BACKGROUND.combatThirdBranch, "sprites/background/field_ch7.webp"],
   [BACKGROUND.ancientEntry, "sprites/background/ancient_strata_entry.webp"],
   [BACKGROUND.ancientLoopA, "sprites/background/ancient_strata_loop_a.webp"],
   [BACKGROUND.ancientLoopB, "sprites/background/ancient_strata_loop_b.webp"],
@@ -279,22 +290,26 @@ export const BATTLE_FIELD_BACKGROUND = {
 export function battleFieldBackground(mode: keyof typeof BATTLE_FIELD_BACKGROUND | string, stageId?: string): string {
   if (mode === "stage" && ancientStageFloor(stageId) !== undefined) return BACKGROUND.ancientField;
   if (mode === "stage" && stageId) {
-    const chapter = Number.parseInt(stageId, 10);
+    const chapter = Number.parseInt(storyBaseStageId(stageId), 10);
     if (Number.isFinite(chapter)) return stageFieldBackground(chapter);
   }
   return BATTLE_FIELD_BACKGROUND[mode as keyof typeof BATTLE_FIELD_BACKGROUND] ?? BACKGROUND.combat;
 }
 
-/** 3장부터는 심층 구역이라 지도·전장 원화가 갈린다. 1·2장은 처음 두 장 그대로다. */
+/** 1·2장 폐허 → 3·4장 온실 → 5·6장 감금동 진입 → 7장 제3지부. */
 const DEEP_CHAPTER_FROM = 3;
 
 /** 장에 맞는 스테이지 지도 원화. */
 export function stageMapBackground(chapter: number): string {
+  if (chapter >= 7) return BACKGROUND.stageMapThirdBranch;
+  if (chapter >= 5) return BACKGROUND.stageMapPrisonApproach;
   return chapter >= DEEP_CHAPTER_FROM ? BACKGROUND.stageMapDeep : BACKGROUND.stageMap;
 }
 
 /** 장에 맞는 스테이지 전장 원화. 스토리 전투가 아닌 모드는 `battleFieldBackground`가 맡는다. */
 export function stageFieldBackground(chapter: number): string {
+  if (chapter >= 7) return BACKGROUND.combatThirdBranch;
+  if (chapter >= 5) return BACKGROUND.combatPrisonApproach;
   return chapter >= DEEP_CHAPTER_FROM ? BACKGROUND.combatDeep : BACKGROUND.combat;
 }
 

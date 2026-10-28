@@ -28,8 +28,8 @@ export const EXPEDITION_COMBAT_TYPES = ["normal", "elite", "horde"] as const;
 /** 노드별 적 수와 능력치/렌더 배율의 단일 밸런스 표다. 스토리 전투의 기존 3대3에는 관여하지 않는다. */
 export const EXPEDITION_COMBAT_BALANCE = {
   normal: { enemyCount: 3, statScale: 1, bodyScale: 1 },
-  /** v0.377.1: 1.65 → 1.5(응태 요청 — 정예 코마가 너무 세다). 모든 능력치 약 9% 하향이며 코마는 그대로 선다. */
-  elite: { enemyCount: 1, statScale: 1.5, bodyScale: 1.1 },
+  /** v0.377.1: 1.65 → 1.5, v0.381.1: 1.5 → 1.25(응태 결정 — 정예 코마가 여전히 너무 세다). 코마는 그대로 선다. */
+  elite: { enemyCount: 1, statScale: 1.25, bodyScale: 1.1 },
   horde: { enemyCount: 5, statScale: 0.82, bodyScale: 0.94 },
 } as const;
 

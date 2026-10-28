@@ -17,13 +17,12 @@ describe("레이드 배치표", () => {
     expect(top).toBeGreaterThan(RAID_HP_BAR.labelY - RAID_HP_BAR.width);
   });
 
-  it("원화가 잠기는 띠가 남은 체력 줄을 덮고 목록 윗변에서 끝난다", () => {
+  it("원화가 잠기는 띠가 남은 체력 줄을 덮고 화면 밑동까지 이어진다", () => {
     // 자르지 않고 잠근다 — 자르면 그 선이 가로줄로 보이고, 그대로 두면 유리 줄 뒤로 다리가 비친다.
     expect(RAID_BOSS_SPOT.fade.top).toBeLessThan(RAID_HP_BAR.labelY);
     expect(RAID_BOSS_SPOT.fade.bottom).toBeGreaterThanOrEqual(RAID_HP_BAR.valueY);
-    expect(RAID_BOSS_SPOT.fade.bottom).toBeLessThanOrEqual(RAID_BOARD.viewport.top);
-    // 띠가 판 안쪽으로 내려가면 끝나는 자리가 판 위에 끊긴 줄로 남는다.
-    expect(RAID_BOSS_SPOT.fade.bottom).toBe(RAID_BOARD_PLATE.top);
+    // 중간에서 끝나면 끝나는 자리가 체력 줄과 기여 판 사이에 끊긴 띠로 남는다.
+    expect(RAID_BOSS_SPOT.fade.bottom).toBe(BASE_HEIGHT);
   });
 
   it("출격이 화면 가운데에 홀로 서고 뒤로가기를 침범하지 않는다", () => {

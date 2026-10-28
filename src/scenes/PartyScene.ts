@@ -218,6 +218,12 @@ export class PartyScene extends Phaser.Scene {
   private rosterViewport: { top: number; bottom: number } = ROSTER_VIEWPORT;
 
   /** 수호전은 여섯 칸 두 줄(앞줄 0~2 · 뒷줄 3~5)이다. 나머지 편성은 세 칸 한 줄이다. */
+  /** 입구의 자동 전투 창에서 넘어온 던전 편성인가 — 그 창이 시작해 둔 자동 전투가 이 단계의 것일 때만이다. */
+  private get autoEntry(): boolean {
+    const content = this.content;
+    return (content.content === "cake" || content.content === "bounty") && content.auto === true && autoRepeat.activeFor(content) !== undefined;
+  }
+
   private get guard(): boolean { return this.content.content === "guildGuard"; }
   /** 마주 선 편 없이 아군만 세워 저장하는 편성 — 결투 방어덱과 길드전 방어덱. */
   private get defenseOnly(): boolean { return this.content.content === "duelDefense" || this.content.content === "guildWarDefense"; }
@@ -378,11 +384,12 @@ export class PartyScene extends Phaser.Scene {
     this.startButton = new Button(this, cx, BACK_SLOT.y, {
       width: 560,
       height: 130,
-      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : t("party.start"),
+      label: this.content.content === "duelDefense" ? t("duel.party.saveDefense") : this.content.content === "guildWarDefense" ? t("guild.war.party.save") : this.autoEntry ? t("dungeon.run.startAuto") : t("party.start"),
       fontSize: 44,
       onClick: () => {
         // 손으로 누른 전투 시작은 자동 전투가 아니다 — 남은 자동 전투를 비우고 한 판만 들어간다.
-        if (!this.isEnteringBattle) autoRepeat.clear();
+        // 입구의 자동 전투 창에서 넘어온 편성만 예외다: 그 전투 시작이 곧 자동 전투의 첫 판이다.
+        if (!this.isEnteringBattle && !this.autoEntry) autoRepeat.clear();
         void this.beginEntry();
       },
     });

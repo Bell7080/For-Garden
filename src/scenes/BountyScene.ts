@@ -171,7 +171,7 @@ export class BountyScene extends Phaser.Scene {
     startScene(this, "party", { content: "bounty", tierId: this.selectedTierId } satisfies PartySceneData);
   }
 
-  /** 자동 전투 — 횟수 창에서 고르고 시작하면 지금 편성 그대로 첫 판에 들어간다. */
+  /** 자동 전투 — 횟수 창에서 고르고 시작하면 그 단계의 편성 화면으로 넘어가 거기서 첫 판을 연다. */
   private autoBattle(): void {
     if (this.busy) return;
     const tier = getBountyTier(this.selectedTierId);
@@ -181,8 +181,6 @@ export class BountyScene extends Phaser.Scene {
       tierName: tier.name, level: bountyRoundLevel(tier.rounds[0]),
       staminaCost: bountyRunCost(tier).staminaCost,
       reward: { icon: "currency-gold", amount: tier.rewardGold },
-      openParty: () => startScene(this, "party", { content: "bounty", tierId: tier.id } satisfies PartySceneData),
-      setBusy: (busy) => { this.busy = busy; if (this.scene.isActive()) this.refresh(); },
     });
   }
 

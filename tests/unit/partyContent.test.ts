@@ -24,6 +24,13 @@ describe("편성 화면의 콘텐츠", () => {
     }
   });
 
+  it("자동 전투 창에서 넘어온 던전 편성은 auto 표식을 지니고, 참이 아닌 값은 버린다", () => {
+    const cake = CAKE_OPERATION_TIERS[0].id;
+    expect(normalizePartyContent({ content: "cake", tierId: cake, auto: true })).toEqual({ content: "cake", tierId: cake, auto: true });
+    expect(normalizePartyContent({ content: "bounty", tierId: BOUNTY_TIERS[0].id, auto: true })).toEqual({ content: "bounty", tierId: BOUNTY_TIERS[0].id, auto: true });
+    expect(normalizePartyContent({ content: "cake", tierId: cake, auto: "yes" })).toEqual({ content: "cake", tierId: cake });
+  });
+
   it("모르는 값·없는 단계는 스토리로 수렴하고 옛 배율 값은 버린다", () => {
     expect(normalizePartyContent(undefined)).toEqual({ content: "stage" });
     expect(normalizePartyContent({ content: "cake", tierId: "없는-단계" })).toEqual({ content: "stage" });

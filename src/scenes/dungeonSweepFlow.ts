@@ -14,7 +14,8 @@ import { autoRepeat } from "../managers/AutoRepeatManager";
 import { settingsManager } from "../managers/SettingsManager";
 import type { AutoRepeatOptions } from "../core/autoRepeat";
 import type { CurrencyIconKey } from "../ui/currencyIcons";
-import { enterContentBattle } from "./contentBattleEntry";
+import { startScene } from "../ui/screenTransition";
+import type { PartySceneData } from "../data/partyContent";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { sweepTicketState, watchSweepTicketAd } from "./dungeonSweepTickets";
 
@@ -95,19 +96,16 @@ export interface DungeonAutoBattleFlow {
   level: number;
   staminaCost: number;
   reward: { icon: CurrencyIconKey; amount: number };
-  /** 편성이 비었으면 편성 화면부터 연다 — 자동 전투는 지금 편성 그대로 출격한다. */
-  openParty: () => void;
-  setBusy: (busy: boolean) => void;
 }
 
 /**
- * 던전 입구의 **자동 전투** — 횟수 창(`openDungeonRunPopup`의 `auto`)에서 횟수·옵션을 고르고 시작하면 지금
- * 편성 그대로 곧장 첫 판에 들어간다. 판 사이의 넘김은 결과판의 카운트다운이, 멈춤은 그 띠의 「중지」와
- * 전투 화면의 자동 칩이 맡는다. 입장이 거절되면 자동 전투도 시작하지 않은 것이다.
+ * 던전 입구의 **자동 전투** — 횟수 창(`openDungeonRunPopup`의 `auto`)에서 횟수·옵션을 고르고 시작하면 그
+ * 단계의 **공용 편성 화면**(`auto`)으로 넘어간다. 거기서 고른 편성으로 「자동 전투 시작」을 누르는 것이 첫 판이고,
+ * 판 사이의 넘김은 결과판의 카운트다운이, 멈춤은 그 띠의 「중지」와 전투 화면의 자동 칩이 맡는다. 편성에서
+ * 뒤로 나가면 자동 전투도 시작하지 않은 것이다(`PartyScene.leave`가 비운다).
  */
 export function openDungeonAutoBattle(flow: DungeonAutoBattleFlow): void {
   const { scene, popups } = flow;
-  if (relicCollection.validParty.length === 0) { flow.openParty(); return; }
   openDungeonRunPopup(scene, popups, {
     mode: "auto",
     tierName: flow.tierName,
@@ -120,11 +118,7 @@ export function openDungeonAutoBattle(flow: DungeonAutoBattleFlow): void {
     save: (options: AutoRepeatOptions) => settingsManager.update({ game: { autoRepeat: { ...options } } }),
     onStart: (options) => {
       autoRepeat.start(flow.content, options);
-      flow.setBusy(true);
-      void enterContentBattle(scene, flow.content).catch(() => {
-        autoRepeat.clear();
-        if (scene.scene.isActive()) flow.setBusy(false);
-      });
+      startScene(scene, "party", { ...flow.content, auto: true as const } satisfies PartySceneData);
     },
   });
 }

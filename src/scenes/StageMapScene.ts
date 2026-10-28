@@ -38,6 +38,7 @@ import { gameApi } from "../api/FakeServer";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
 import { showContentIntro } from "../ui/contentIntro";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /** 지도가 보이는 세로 구간. 위쪽 제목과 아래쪽 버튼을 침범하지 않는다. */
 const WINDOW = { top: 500, bottom: 1560 } as const;
@@ -189,6 +190,11 @@ export class StageMapScene extends Phaser.Scene {
     this.currentChapter = latest.chapter ?? 1;
     this.buildMap();
     this.enableDragScroll();
+    // 지도는 1-1이 아래에서 시작해 위로 이어진다 — 윗끝(scrollMax)이 앞이고 아래로 밀릴수록 위 관문이 보인다.
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (WINDOW.top + WINDOW.bottom) / 2, width: BASE_WIDTH, height: WINDOW.bottom - WINDOW.top, depth: 45,
+      read: () => ({ offset: this.map.y - this.scrollMax, min: this.scrollMin - this.scrollMax }),
+    });
     this.select(latest, true);
     this.refreshDifficultyButton();
     // 화면이 한 뼘 아래에서 떠오르며 들어온다. 조각마다 트윈을 걸지 않고 카메라 하나를

@@ -137,13 +137,13 @@ export function guildStampRewardPair(cellWidth: number, last: boolean): { mainX:
  * 창 높이는 쌓인 줄에서 거꾸로 구한다. 좌표는 모두 창 가운데가 0이다.
  */
 export const GUILD_EDITOR = {
-  width: 920,
-  inner: 804,
+  width: 980,
+  inner: 860,
   stage: { height: 236, badge: 196, badgeX: -282, textX: -150, bevel: 28 },
   input: { height: 80 },
   join: { width: 392, height: 76 },
   tabs: { height: 70, gap: 10, labelSize: 28 },
-  swatch: { size: 120, gap: 12, badge: 84, rows: 2 },
+  swatch: { size: 120, gap: 18, badge: 84, rows: 2 },
   /** 확정 버튼 하나 — 값(또는 「무료」)을 판 안에 박는다. 취소는 판 밖 우하단 공용 뒤로가기가 맡는다. */
   submit: { width: 560, height: 100 },
 } as const;
@@ -160,16 +160,16 @@ export interface GuildEditorSpots {
 /** 만들기(`creating`)·배지 변경 창의 줄 자리 — 위에서부터 쌓아 높이를 정한 뒤 가운데 기준으로 옮긴다. */
 export function guildEditorSpots(creating: boolean): GuildEditorSpots {
   const E = GUILD_EDITOR;
-  let y = 72;
+  let y = 100;
   const at: Record<string, number> = {};
-  at.stage = y + E.stage.height / 2; y += E.stage.height + 34;
+  at.stage = y + E.stage.height / 2; y += E.stage.height + 52;
   if (creating) {
     at.nameLabel = y + 16; at.nameInput = y + 48 + E.input.height / 2; y += 48 + E.input.height + 30;
-    at.joinLabel = y + 16; at.join = y + 48 + E.join.height / 2; y += 48 + E.join.height + 38;
+    at.joinLabel = y + 16; at.join = y + 48 + E.join.height / 2; y += 48 + E.join.height + 48;
   }
-  at.tabs = y + E.tabs.height / 2; y += E.tabs.height + 18;
-  at.gridTop = y; y += E.swatch.rows * E.swatch.size + (E.swatch.rows - 1) * E.swatch.gap + 34;
-  at.submit = y + E.submit.height / 2; y += E.submit.height + 56;
+  at.tabs = y + E.tabs.height / 2; y += E.tabs.height + 30;
+  at.gridTop = y; y += E.swatch.rows * E.swatch.size + (E.swatch.rows - 1) * E.swatch.gap + 48;
+  at.submit = y + E.submit.height / 2; y += E.submit.height + 64;
   const height = y;
   const shift = (v: number | undefined): number | undefined => (v === undefined ? undefined : v - height / 2);
   return {

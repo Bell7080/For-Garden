@@ -74,6 +74,7 @@ import { showContentIntro } from "../ui/contentIntro";
 import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES } from "../core/guildGuard";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { GuildApiError } from "../api/guildContracts";
+import { addScrollHint } from "../ui/ScrollHint";
 
 /**
  * 미리보기 전장.
@@ -846,6 +847,11 @@ export class PartyScene extends Phaser.Scene {
     content.setMask(this.rosterMask.createGeometryMask());
     this.fillRoster();
     this.bindRosterScroll();
+    addScrollHint(this, undefined, {
+      x: BASE_WIDTH / 2, y: (this.rosterViewport.top + this.rosterViewport.bottom) / 2, width: BASE_WIDTH,
+      height: this.rosterViewport.bottom - this.rosterViewport.top, depth: 45,
+      read: () => ({ offset: this.rosterScrollY, min: this.rosterMinScroll }),
+    });
   }
 
   /**

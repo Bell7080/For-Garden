@@ -117,11 +117,19 @@ export function buildGuardWave(roster: GuildGuardRoster, index: number): HordeWa
     units.push(grownUnit(base, "swarm", level, guardUnitScore("grunt", index)));
   }
   for (let i = 0; i < elites && roster.elites.length > 0; i += 1) {
-    const base = roster.elites[(index + i * 5) % roster.elites.length];
+    // 정예는 명단에서 웨이브마다 **무작위로** 고른다 — 난수 대신 웨이브·순번을 섞은 값이라 서버 재현이 같은 개체를 고른다.
+    const base = roster.elites[guardPick(index, i) % roster.elites.length];
     // 정예는 무리 사이에 끼어 온다 — 줄 가운데쯤에 넣어 맨 끝에 혼자 따로 서지 않게 한다.
     units.splice(Math.min(units.length, 2 + i * 3), 0, grownUnit(base, "elite", level, guardUnitScore("elite", index)));
   }
   return { index, level, units };
+}
+
+/** 웨이브 번호·순번에서 고르는 섞인 수(정수 해시). 같은 입력이면 늘 같은 값이다. */
+function guardPick(index: number, slot: number): number {
+  let h = Math.imul(index + 1, 0x9e3779b1) ^ Math.imul(slot + 7, 0x85ebca6b);
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 13;
+  return h >>> 0;
 }
 
 function grownUnit(base: RelicDef, role: EncounterRole, level: number, score: number): HordeUnit {
@@ -156,7 +164,7 @@ export function guardRosterPreview(roster: GuildGuardRoster): { entries: GuardRo
       if (seen.has(unit.def.id)) continue;
       seen.set(unit.def.id, { def: unit.def, role: unit.role === "elite" ? "elite" : "swarm", level: unit.level, wave: index });
     }
-    if (seen.size >= roster.grunts.length + roster.elites.length) break;
+    if (seen.size >= new Set([...roster.grunts, ...roster.elites].map(({ id }) => id)).size) break;
   }
   const entries = [...seen.values()].sort((a, b) => (a.role === b.role ? a.wave - b.wave : a.role === "swarm" ? -1 : 1));
   return { entries, firstWave: firstWave! };

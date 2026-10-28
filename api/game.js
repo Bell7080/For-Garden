@@ -1285,9 +1285,11 @@ var GUILD_KO = {
   "guild.attendance.raceRank": "{rank}\uC704",
   "guild.attendance.raceLabel": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
   "guild.attendance.overtake": "\uC5ED\uC804!",
-  "guild.shop.line1": "\uAE38\uB4DC \uCF54\uC778 \uBC1B\uC2B5\uB2C8\uB2E4. \uC774\uBC88 \uC8FC \uBB3C\uAC74\uC774\uC5D0\uC694.",
-  "guild.shop.line2": "\uB2E4\uB4E4 \uCD9C\uC11D \uB3C4\uC7A5 \uCC0D\uACE0 \uC624\uC2DC\uB354\uB77C\uACE0\uC694.",
-  "guild.shop.line3": "\uB2E4\uC74C \uC8FC\uC5D0 \uB610 \uCC44\uC6CC \uB458\uAC8C\uC694.",
+  "guild.shop.line1": "\uAE38\uB4DC \uCF54\uC778\uC740 \uD55C \uB2E2\uC529 \uC138\uC5B4\uC11C \uC8FC\uC138\uC694. \uC7A5\uBD80\uC5D0 \uC801\uC5B4\uC57C \uD558\uAC70\uB4E0\uC694.",
+  "guild.shop.line2": "\uC678\uC0C1\uC740 \uC548 \uB3FC\uC694. \uAE38\uB4DC\uC7A5\uB2D8\uC774 \uBD80\uD0C1\uD558\uC154\uB3C4 \uC548 \uB3FC\uC694.",
+  "guild.shop.line3": "\uADF8\uAC70 \uC0B4 \uAC70\uC608\uC694? \uC7A0\uAE50\uB9CC\uC694, \uB0A8\uB294 \uCF54\uC778\uBD80\uD130 \uACC4\uC0B0\uD574 \uBCFC\uAC8C\uC694.",
+  "guild.shop.line4": "\uC8FC\uAC04 \uD55C\uB3C4\uB294 \uC774\uBC88 \uC8FC\uAE4C\uC9C0\uC608\uC694. \uB2E4\uC74C \uC8FC\uB85C \uB118\uACA8 \uB4DC\uB9AC\uB294 \uAC74 \uC5C6\uC5B4\uC694.",
+  "guild.shop.line5": "\uC544\uAE4C \uADF8 \uC148, \uD55C \uB2E2 \uD2C0\uB838\uB358\uB370\uC694. \u22EF\uB2E4\uC2DC \uC138\uC5B4 \uBCF4\uC138\uC694.",
   "guild.shop.confirm": "\u300C{name}\u300D{name!\uC744} \uAD6C\uB9E4\uD560\uAE4C\uC694?",
   "guild.shop.short": "\uAE38\uB4DC \uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4",
   "guild.shop.failed": "\uAD6C\uB9E4\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
@@ -4868,10 +4870,17 @@ function buildGuardWave(roster, index) {
     units.push(grownUnit(base, "swarm", level, guardUnitScore("grunt", index)));
   }
   for (let i = 0; i < elites && roster.elites.length > 0; i += 1) {
-    const base = roster.elites[(index + i * 5) % roster.elites.length];
+    const base = roster.elites[guardPick(index, i) % roster.elites.length];
     units.splice(Math.min(units.length, 2 + i * 3), 0, grownUnit(base, "elite", level, guardUnitScore("elite", index)));
   }
   return { index, level, units };
+}
+function guardPick(index, slot) {
+  let h = Math.imul(index + 1, 2654435761) ^ Math.imul(slot + 7, 2246822507);
+  h ^= h >>> 15;
+  h = Math.imul(h, 739982445);
+  h ^= h >>> 13;
+  return h >>> 0;
 }
 function grownUnit(base, role, level, score) {
   return {
@@ -33504,15 +33513,15 @@ function replayGuildWar(attack, defense, defs, seed) {
 // src/data/guildGuard.ts
 init_define_import_meta_env();
 var GUILD_GUARD_ROSTER_IDS = {
-  fire: { grunts: ["raitia-fire", "pulsi"], elites: ["toby"] },
-  earth: { grunts: ["raitia-earth", "mir"], elites: ["amo"] },
-  water: { grunts: ["raitia-water", "neuri"], elites: ["ripa"] },
-  grass: { grunts: ["raitia-grass"], elites: ["koma", "atra"] },
-  wind: { grunts: ["raitia-wind"], elites: ["ikanixia"] }
+  fire: ["raitia-fire", "pulsi", "toby"],
+  earth: ["raitia-earth", "mir", "amo"],
+  water: ["raitia-water", "neuri", "ripa"],
+  grass: ["raitia-grass", "koma", "atra"],
+  wind: ["raitia-wind", "ikanixia"]
 };
 function guildGuardRoster(element) {
-  const ids = GUILD_GUARD_ROSTER_IDS[element];
-  return { grunts: ids.grunts.map((id) => getRelic(id)), elites: ids.elites.map((id) => getRelic(id)) };
+  const pool = GUILD_GUARD_ROSTER_IDS[element].map((id) => getRelic(id));
+  return { grunts: pool, elites: pool };
 }
 
 // src/data/mileageClerk.ts

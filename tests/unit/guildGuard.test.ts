@@ -42,6 +42,19 @@ describe("수호전 웨이브", () => {
     }
   });
 
+  it("정예는 정해 둔 개체가 아니라 그날 명단에서 무작위로 고른다 — 웨이브를 돌면 명단 모두가 한 번씩 정예가 된다", () => {
+    for (const element of GUILD_GUARD_ELEMENTS) {
+      const roster = guildGuardRoster(element);
+      const picked = new Set<string>();
+      for (let index = 3; index <= 40; index += 1) {
+        for (const unit of buildGuardWave(roster, index).units) if (unit.role === "elite") picked.add(unit.def.id);
+      }
+      expect([...picked].sort(), element).toEqual([...new Set(roster.elites.map(({ id }) => id))].sort());
+      // 같은 웨이브는 늘 같은 정예다(서버 재현).
+      expect(buildGuardWave(roster, 9).units.map((unit) => unit.def.id)).toEqual(buildGuardWave(roster, 9).units.map((unit) => unit.def.id));
+    }
+  });
+
   it("적은 위·양옆 경계에서만 들어오고 뒤(아래)에서는 오지 않는다", () => {
     const arena = GUILD_GUARD_ARENA;
     for (let wave = 0; wave < 6; wave += 1) {
@@ -129,7 +142,7 @@ describe("수호전 재현", () => {
   }, 60_000);
 
   it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
-    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 10), getRelic, guildGuardRoster("fire"), "seed-b");
+    const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 20), getRelic, guildGuardRoster("fire"), "seed-b");
     expect(outcome.kills).toBeGreaterThan(0);
   }, 60_000);
 });

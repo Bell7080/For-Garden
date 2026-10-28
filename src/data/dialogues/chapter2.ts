@@ -188,7 +188,7 @@ export const STAGE_2_9_POST: DialogueStory = {
     { id: "hole", speaker: "", body: "컨베이어가 끝나는 곳에 바닥이 없다. 폐기 표식이 붙은 상자들이 소리 없이 어둠으로 떨어진다.", standing: "dodi", cast: PAIR("dodi", "lexia") },
     { id: "dodi", speaker: "도디", body: "다들 이 아래로 흘러간 거예요. 쓸 수 없음이라고 적힌 채로…", standing: "dodi", act: "shrink" },
     { id: "lexia", speaker: "렉시아", body: "아래에는 뭐가 있어?", standing: "lexia", act: "lean" },
-    { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어. 내가 그린 거 아니야. 누군가가 아래로 향하는 길을 표시해 뒀어.", cast: VOICE("deina", "lexia", "dodi"), act: "lean" },
+    { id: "dei", speaker: "데이", body: "구멍 가장자리에 낙서 같은 화살표가 있어! 내가 그린 거 아니야, 진짜야. 누가 아래로 가는 길을 표시해 놨어.", cast: VOICE("deina", "lexia", "dodi"), act: "lean" },
     { id: "stay", speaker: "", body: "연구원은 구멍 앞에서 오래 서 있다. 대답하는 이는 없다." },
     { id: "torika", speaker: "토리카", body: "…가요, 대장님. 아직은 위에서 할 일이 있어요.", standing: "torika", cast: PAIR("lexia"), act: "nod" },
   ]),

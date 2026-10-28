@@ -11806,12 +11806,22 @@ function canFireUltimate(state, fighter) {
     return duo !== void 0 && isFighterAlive(duo);
   }
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
+  if (fighter.def.ultimate.overpaintDetonation === true) {
+    return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && (other.overpaint?.stacks ?? 0) > 0);
+  }
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
 }
 function fireUltimate(state, fighterId, rng = NO_CRIT, targetPoint) {
   const casterBefore = findFighter(state, fighterId);
   const energyBefore = casterBefore?.energy;
+  const serialBefore = casterBefore?.augmentActionSerial;
+  const targetBefore = casterBefore?.targetId;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
+  if (casterBefore && events.length === 0 && energyBefore === casterBefore.energy) {
+    casterBefore.augmentActionSerial = serialBefore;
+    casterBefore.targetId = targetBefore;
+    return events;
+  }
   if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
     casterBefore.augmentActionSerial += 1;
     triggerCombatAugments(state, casterBefore, "onUltimateCast", events);

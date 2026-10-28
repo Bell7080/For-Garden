@@ -10263,6 +10263,11 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
     return duo !== undefined && isFighterAlive(duo);
   }
   if (fighter.def.ultimate.targeting === "battlefieldAllies") return aliveFighters(state, fighter.side).length > 0;
+  // 덧칠을 터뜨리는 궁극기는 칠해 둔 적이 하나도 없으면 칠 대상이 없다(`strikeAreaAttack`). 그때 「쓸 수
+  // 있다」고 답하면 자동 궁극기가 매 틱 헛방을 쏘고, 그 헛방은 기록에 남지 않으므로 서버 재현과 갈린다.
+  if (fighter.def.ultimate.overpaintDetonation === true) {
+    return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && (other.overpaint?.stacks ?? 0) > 0);
+  }
   // 표적 고르기와 같은 규칙이다 — 숨지 않은 상대가 없으면 마지막 한 명을 노린다. 그러지
   // 않으면 게이지가 가득 찬 궁극기가 은신한 마지막 적 앞에서 영영 나가지 않는다.
   return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
@@ -10283,7 +10288,16 @@ export function fireUltimate(
 ): SkirmishEvent[] {
   const casterBefore = findFighter(state, fighterId);
   const energyBefore = casterBefore?.energy;
+  const serialBefore = casterBefore?.augmentActionSerial;
+  const targetBefore = casterBefore?.targetId;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
+  // **헛방은 판을 건드리지 않는다.** 게이지도 사건도 남기지 않은 시전은 화면이 기록하지 않으므로(서버 재현에 없다)
+  // 그 사이에 움직인 행동 일련번호·표적까지 되돌린다 — 남겨 두면 다음 증강 판정·이동이 재현과 한 틱씩 어긋난다.
+  if (casterBefore && events.length === 0 && energyBefore === casterBefore.energy) {
+    casterBefore.augmentActionSerial = serialBefore!;
+    casterBefore.targetId = targetBefore!;
+    return events;
+  }
   if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
     casterBefore.augmentActionSerial += 1;
     triggerCombatAugments(state, casterBefore, "onUltimateCast", events);

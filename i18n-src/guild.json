@@ -1978,5 +1978,105 @@
     "Nenhuma entrada de Defesa",
     "Kein Verteidigungseintritt gefunden",
     "Нет записи входа в оборону"
+  ],
+  "guild.ranking.week": [
+    "本周贡献 {value}",
+    "สัปดาห์นี้ {value}",
+    "Tuần này {value}",
+    "Minggu ini {value}",
+    "Esta semana {value}",
+    "Esta semana {value}",
+    "Diese Woche {value}",
+    "За неделю {value}"
+  ],
+  "guild.ranking.rules": [
+    "每周一 00:00(UTC)按当周公会成员贡献度总和排名。当周贡献度达到 1 以上的成员都会通过邮件领取奖励。",
+    "ทุกวันจันทร์ 00:00 (UTC) จัดอันดับกิลด์ตามผลรวมแต้มผลงานของสมาชิกในสัปดาห์นั้น สมาชิกที่มีผลงาน 1 ขึ้นไปจะได้รับรางวัลทางจดหมาย",
+    "Mỗi thứ Hai lúc 00:00 (UTC), bang hội được xếp hạng theo tổng cống hiến tuần của thành viên. Mọi thành viên có từ 1 cống hiến trong tuần đều nhận thưởng qua thư.",
+    "Setiap Senin 00:00 (UTC), guild diperingkat berdasarkan jumlah kontribusi mingguan anggotanya. Setiap anggota dengan kontribusi 1 atau lebih minggu itu menerima hadiah lewat surat.",
+    "Cada lunes a las 00:00 (UTC), los gremios se clasifican por la suma de la contribución semanal de sus miembros. Todo miembro con 1 o más de contribución esa semana recibe la recompensa por correo.",
+    "Toda segunda às 00:00 (UTC), as guildas são classificadas pela soma da contribuição semanal dos membros. Todo membro com 1 ou mais de contribuição na semana recebe a recompensa por correio.",
+    "Jeden Montag um 00:00 (UTC) werden Gilden nach der Summe des Wochenbeitrags ihrer Mitglieder gereiht. Jedes Mitglied mit mindestens 1 Beitrag in dieser Woche erhält die Belohnung per Post.",
+    "Каждый понедельник в 00:00 (UTC) гильдии ранжируются по сумме недельного вклада участников. Каждый участник с вкладом от 1 за неделю получает награду почтой."
+  ],
+  "guild.mail.weekly.title": [
+    "公会每周排名奖励",
+    "รางวัลอันดับกิลด์รายสัปดาห์",
+    "Thưởng xếp hạng tuần Bang hội",
+    "Hadiah Peringkat Mingguan Guild",
+    "Recompensa semanal de clasificación del gremio",
+    "Recompensa semanal de ranking da guilda",
+    "Wöchentliche Gildenrang-Belohnung",
+    "Еженедельная награда рейтинга гильдий"
+  ],
+  "guild.mail.weekly.sender": [
+    "公会联合",
+    "สหพันธ์กิลด์",
+    "Liên minh Bang hội",
+    "Serikat Guild",
+    "Unión de gremios",
+    "União das guildas",
+    "Gildenbund",
+    "Союз гильдий"
+  ],
+  "guild.mail.weekly.body": [
+    "上周「{guild}」获得第 {rank} 名。现发放排名奖励。",
+    "สัปดาห์ที่แล้ว {guild} ได้อันดับ {rank} ขอส่งรางวัลอันดับให้",
+    "Tuần trước, {guild} đạt hạng {rank}. Đây là phần thưởng xếp hạng.",
+    "Minggu lalu, {guild} meraih peringkat {rank}. Ini hadiah peringkatnya.",
+    "La semana pasada, {guild} quedó en el puesto {rank}. Aquí tienes la recompensa.",
+    "Na semana passada, {guild} ficou em {rank}º lugar. Aqui está a recompensa.",
+    "Letzte Woche belegte {guild} Platz {rank}. Hier ist die Ranglistenbelohnung.",
+    "На прошлой неделе «{guild}» заняла {rank}-е место. Вот награда за рейтинг."
+  ],
+  "guild.guard.reward": [
+    "每日奖励",
+    "รางวัลรายวัน",
+    "Thưởng ngày",
+    "Hadiah Harian",
+    "Recompensa diaria",
+    "Recompensa diária",
+    "Tagesbelohnung",
+    "Ежедневная награда"
+  ],
+  "guild.guard.rules": [
+    "每天 00:00(UTC)按当天公会成员最高分总和排名。当天参加守护战的成员都会获得公会币。",
+    "ทุกวัน 00:00 (UTC) จัดอันดับกิลด์ตามผลรวมคะแนนสูงสุดของสมาชิกในวันนั้น สมาชิกที่เล่นศึกพิทักษ์วันนั้นจะได้รับเหรียญกิลด์",
+    "Mỗi ngày lúc 00:00 (UTC), bang hội được xếp hạng theo tổng điểm cao nhất của thành viên trong ngày. Mọi thành viên đã chơi Thủ hộ chiến hôm đó đều nhận xu bang hội.",
+    "Setiap hari pukul 00:00 (UTC), guild diperingkat berdasarkan jumlah skor terbaik anggota hari itu. Setiap anggota yang bermain Pertahanan hari itu menerima koin guild.",
+    "Cada día a las 00:00 (UTC), los gremios se clasifican por la suma de las mejores puntuaciones de sus miembros. Todo miembro que jugó Defensa ese día recibe monedas del gremio.",
+    "Todo dia às 00:00 (UTC), as guildas são classificadas pela soma das melhores pontuações dos membros. Todo membro que jogou Defesa naquele dia recebe moedas da guilda.",
+    "Jeden Tag um 00:00 (UTC) werden Gilden nach der Summe der besten Punktzahlen ihrer Mitglieder gereiht. Jedes Mitglied, das an diesem Tag Verteidigung gespielt hat, erhält Gildenmünzen.",
+    "Каждый день в 00:00 (UTC) гильдии ранжируются по сумме лучших очков участников. Каждый участник, игравший в оборону в этот день, получает монеты гильдии."
+  ],
+  "guild.guard.notice.title": [
+    "守护战排名奖励",
+    "รางวัลอันดับศึกพิทักษ์",
+    "Thưởng xếp hạng Thủ hộ chiến",
+    "Hadiah Peringkat Pertahanan",
+    "Recompensa de clasificación de Defensa",
+    "Recompensa de ranking de Defesa",
+    "Verteidigungsrang-Belohnung",
+    "Награда рейтинга обороны"
+  ],
+  "guild.guard.notice.message": [
+    "昨天守护战中公会获得第 {rank} 名。\n获得公会币 {coin} 枚。",
+    "เมื่อวานกิลด์ได้อันดับ {rank} ในศึกพิทักษ์\nได้รับเหรียญกิลด์ {coin} เหรียญ",
+    "Hôm qua bang hội đạt hạng {rank} ở Thủ hộ chiến.\nNhận {coin} xu bang hội.",
+    "Kemarin guild meraih peringkat {rank} di Pertahanan.\nMenerima {coin} koin guild.",
+    "Ayer el gremio quedó en el puesto {rank} en Defensa.\nRecibes {coin} monedas del gremio.",
+    "Ontem a guilda ficou em {rank}º lugar na Defesa.\nVocê recebeu {coin} moedas da guilda.",
+    "Gestern belegte die Gilde Platz {rank} in der Verteidigung.\nDu erhältst {coin} Gildenmünzen.",
+    "Вчера гильдия заняла {rank}-е место в обороне.\nПолучено монет гильдии: {coin}."
+  ],
+  "guild.guard.notice.ok": [
+    "确认",
+    "ตกลง",
+    "OK",
+    "OK",
+    "Aceptar",
+    "OK",
+    "OK",
+    "ОК"
   ]
 }

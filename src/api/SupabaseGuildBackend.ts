@@ -54,6 +54,7 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
     getAttendance: (actor) => run(actor, "getAttendance"),
     getShop: (actor) => run(actor, "getShop"),
     getGuard: (actor) => run(actor, "getGuard"),
+    getRanking: (actor) => run(actor, "getRanking"),
     recordGuard: async (actor, record, requestId) => {
       const whole = (value: unknown, max: number): boolean => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= max;
       if (!whole(record?.day, 1_000_000) || !whole(record.score, 10_000_000) || !whole(record.coin, 100)) invalid();

@@ -736,7 +736,13 @@ var STATUS_KO = {
   "status.healCut": "\uD68C\uBCF5 \uC800\uD558",
   "status.healCut.detail": "\uBC1B\uB294 \uD68C\uBCF5 \u2212{percent}% \xB7 {time} \uB0A8\uC74C",
   "status.sunken": "\uAC00\uB77C\uC549\uB294 \uBB34\uAC8C",
-  "status.sunken.detail": "\uC774\uB3D9\xB7\uACF5\uACA9 \uC18D\uB3C4 \u2212{percent}% \xB7 {time} \uB0A8\uC74C"
+  "status.sunken.detail": "\uC774\uB3D9\xB7\uACF5\uACA9 \uC18D\uB3C4 \u2212{percent}% \xB7 {time} \uB0A8\uC74C",
+  "status.fangShave": "\uAC09\uC778 \uBC29\uC5B4",
+  "status.fangShave.detail": "\uBC29\uC5B4\uB825 \u2212{percent}% \xB7 {time} \uB0A8\uC74C",
+  "status.quarry": "\uC0AC\uB0E5\uAC10 \uD45C\uC2DD",
+  "status.quarry.detail": "\uBC1B\uB294 \uD53C\uD574 +{percent}% \xB7 {time} \uB0A8\uC74C",
+  "status.resistShred": "\uC800\uD56D \uBD95\uAD34",
+  "status.resistShred.detail": "\uC800\uD56D\uB825 \u2212{amount} \xB7 {time} \uB0A8\uC74C"
 };
 
 // src/i18n/ko/lab.ts
@@ -1250,6 +1256,16 @@ var GUILD_KO = {
   "guild.ranking.prosperity": "\uBD80\uD765\uB3C4 {value}",
   "guild.ranking.scores": "\uCD1D \uAE30\uC5EC {contribution} \xB7 \uAE38\uB4DC\uC804 {war} \xB7 \uC218\uD638\uC804 {guard}",
   "guild.ranking.none": "-",
+  "guild.ranking.week": "\uC774\uBC88 \uC8FC \uAE30\uC5EC {value}",
+  "guild.ranking.rules": "\uB9E4\uC8FC \uC6D4\uC694\uC77C 00:00(UTC)\uC5D0 \uADF8 \uC8FC \uAE38\uB4DC\uC6D0 \uAE30\uC5EC\uB3C4\uC758 \uD569\uC73C\uB85C \uC21C\uC704\uAC00 \uC815\uD574\uC9D1\uB2C8\uB2E4. \uADF8 \uC8FC \uAE30\uC5EC\uB3C4\uAC00 1 \uC774\uC0C1\uC778 \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uAC00 \uC6B0\uD3B8\uC73C\uB85C \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "guild.mail.weekly.title": "\uAE38\uB4DC \uC8FC\uAC04 \uC21C\uC704 \uBCF4\uC0C1",
+  "guild.mail.weekly.sender": "\uAE38\uB4DC \uC5F0\uD569",
+  "guild.mail.weekly.body": "\uC9C0\uB09C\uC8FC \u300C{guild}\u300D{guild!\uC774} {rank}\uC704\uC5D0 \uC62C\uB790\uC2B5\uB2C8\uB2E4. \uC21C\uC704 \uBCF4\uC0C1\uC744 \uBCF4\uB0B4 \uB4DC\uB9BD\uB2C8\uB2E4.",
+  "guild.guard.reward": "\uC77C\uC77C \uBCF4\uC0C1",
+  "guild.guard.rules": "\uB9E4\uC77C 00:00(UTC)\uC5D0 \uADF8\uB0A0 \uAE38\uB4DC\uC6D0 \uCD5C\uACE0 \uC810\uC218\uC758 \uD569\uC73C\uB85C \uAE38\uB4DC \uC21C\uC704\uAC00 \uC815\uD574\uC9D1\uB2C8\uB2E4. \uADF8\uB0A0 \uC218\uD638\uC804\uC744 \uD55C \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uAC00 \uAE38\uB4DC \uCF54\uC778\uC744 \uBC1B\uC2B5\uB2C8\uB2E4.",
+  "guild.guard.notice.title": "\uC218\uD638\uC804 \uC21C\uC704 \uBCF4\uC0C1",
+  "guild.guard.notice.message": "\uC5B4\uC81C \uC218\uD638\uC804\uC5D0\uC11C \uAE38\uB4DC\uAC00 {rank}\uC704\uC5D0 \uC62C\uB790\uC2B5\uB2C8\uB2E4.\n\uAE38\uB4DC \uCF54\uC778 {coin}\uAC1C\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
+  "guild.guard.notice.ok": "\uD655\uC778",
   "guild.attendance.raceRank": "{rank}\uC704",
   "guild.attendance.raceLabel": "\uC774\uBC88 \uC8FC \uAE30\uC5EC",
   "guild.attendance.overtake": "\uC5ED\uC804!",
@@ -7431,7 +7447,7 @@ function triggerBreakthroughOnKill(attacker, useUltimate, _victim) {
   if (hum && isFighterAlive(attacker)) giveEnergy(attacker, hum.energyOnKill);
   const haste = attacker.def.passive.killHaste;
   if (haste && isFighterAlive(attacker)) {
-    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent };
+    attacker.killHaste = { remaining: haste.seconds, attackSpeedPercent: haste.attackSpeedPercent, moveSpeedPercent: haste.moveSpeedPercent, total: haste.seconds };
   }
   if (useUltimate) {
     attacker.energy = Math.min(
@@ -7734,7 +7750,7 @@ function strikeEnemyBasicBreakthrough(attacker, target, input, critical, state, 
   if (!basic || !isFighterAlive(target)) return;
   if (basic.kind === "fangShave") {
     const stacks = Math.min(basic.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-    target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent };
+    target.bt.fangShave = { remaining: basic.seconds, stacks, percentPerStack: basic.defensePercent, total: basic.seconds };
   }
   if (basic.kind === "shellKnock") events.push(...applyStagger(target, basic.seconds * attacker.statusPotencyMultiplier, state));
   if (basic.kind === "bleedingSmash") refreshBleed(target, BLEED.seconds * attacker.statusPotencyMultiplier, BLEED.percentPerSecond, events, attacker.id);
@@ -8283,9 +8299,9 @@ function applyTraitHaste(target, payload, maxStacks) {
   const moveSpeedPercent = payload.moveSpeedPercent * stacks;
   const stronger = (target.traitHaste?.attackSpeedPercent ?? 0) > attackSpeedPercent;
   if (!stronger) {
-    target.traitHaste = { remaining: payload.seconds, attackSpeedPercent, moveSpeedPercent };
+    target.traitHaste = { remaining: payload.seconds, attackSpeedPercent, moveSpeedPercent, total: payload.seconds };
     target.traitHasteStacks = stacks;
-  } else target.traitHaste = { ...target.traitHaste, remaining: Math.max(target.traitHaste.remaining, payload.seconds) };
+  } else target.traitHaste = { ...target.traitHaste, remaining: Math.max(target.traitHaste.remaining, payload.seconds), total: Math.max(target.traitHaste.total ?? 0, target.traitHaste.remaining, payload.seconds) };
 }
 function strongerSharedTagActive(target, incoming) {
   const active3 = incoming.kind === "intimidate" ? target.intimidation : incoming.kind in target ? target[incoming.kind] : void 0;
@@ -8393,7 +8409,7 @@ function triggerCombatAugments(state, owner, trigger, events, hitTarget) {
       if (owner.traitHaste === null || !consumeAugmentTrigger(state, owner, key, effect)) continue;
       const add = Math.min(payload.seconds, payload.maxExtraSeconds - owner.traitHasteExtended);
       if (add <= 0) continue;
-      owner.traitHaste = { ...owner.traitHaste, remaining: owner.traitHaste.remaining + add };
+      owner.traitHaste = { ...owner.traitHaste, remaining: owner.traitHaste.remaining + add, total: Math.max(owner.traitHaste.total ?? 0, owner.traitHaste.remaining) + add };
       owner.traitHasteExtended += add;
       continue;
     }
@@ -8454,7 +8470,7 @@ function triggerCombatAugments(state, owner, trigger, events, hitTarget) {
       pushHeal(events, target, amount, "passive");
       if (payload.thenOverSeconds !== void 0 && payload.thenOverSeconds > 0) {
         const perSecond = target.maxHp * payload.maxHpPercent / 100 / payload.thenOverSeconds;
-        target.traitRegen = { remaining: payload.thenOverSeconds, perSecond: perSecond + (target.traitRegen?.perSecond ?? 0) };
+        target.traitRegen = { remaining: payload.thenOverSeconds, perSecond: perSecond + (target.traitRegen?.perSecond ?? 0), total: payload.thenOverSeconds };
       }
     }
   }
@@ -9958,7 +9974,7 @@ function strikeBitterTaste(attacker, target, wasLastDrop) {
   const effect = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
   if (effect?.kind !== "bitterTaste" || !wasLastDrop || !isFighterAlive(target)) return;
   const stacks = Math.min(effect.maxStacks, (target.bt.fangShave?.stacks ?? 0) + 1);
-  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent };
+  target.bt.fangShave = { remaining: effect.seconds, stacks, percentPerStack: effect.defensePercent, total: effect.seconds };
 }
 function splashAround(attacker, target, input, critical, state, events, radius, percent, skillSlot) {
   const damageAttacker = { ...attacker, def: offensiveDefinition(attacker) };
@@ -10191,7 +10207,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   }
   if (!useUltimate) {
     const graffiti = openedBreakthrough(attacker, "basic", (effects) => effects.basic);
-    if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent };
+    if (graffiti?.kind === "speedGraffiti") attacker.traitHaste = { remaining: graffiti.seconds, attackSpeedPercent: attacker.traitHaste?.attackSpeedPercent ?? 0, moveSpeedPercent: graffiti.moveSpeedPercent, total: graffiti.seconds };
   }
   if (sutured) stitchSuture(attacker, targetHpBefore - target.hp + sutureBonusStrike(attacker, target, state, events), state, events);
   if (!useUltimate) stealthAfterStep(attacker, state);
@@ -11545,7 +11561,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
     grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * percent / 100)), events, 1.5);
     const mark = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     if (mark?.kind === "quarryMark") {
-      for (const victim of fearedTargets) victim.bt.quarry = { remaining: mark.seconds, percent: mark.damageTakenPercent };
+      for (const victim of fearedTargets) victim.bt.quarry = { remaining: mark.seconds, percent: mark.damageTakenPercent, total: mark.seconds };
     }
     events.push({
       kind: "areaImpact",
@@ -18846,6 +18862,7 @@ var RAID_SUMMON_DIFFICULTIES = ["easy", "normal", "hard"];
 var RAID_BOSS_POOL = ["sukusuino", "taboa", "quetzalcoatlus"];
 var RAID_TICKET_ITEM = "raid-ticket";
 var RAID_SELECT_TICKET_ITEM = "raid-select-ticket";
+var RAID_SUMMON_TICKET_COST = 1;
 var RAID_TICKET_TEST_KIT = [
   { itemId: RAID_TICKET_ITEM, quantity: 3 },
   { itemId: RAID_SELECT_TICKET_ITEM, quantity: 1 }
@@ -20480,12 +20497,44 @@ var ANCIENT_MONTHLY_RANK_REWARDS = {
   percents: [{ upToPercent: 10, gems: 500 }, { upToPercent: 30, gems: 400 }, { upToPercent: 50, gems: 300 }],
   participation: 200
 };
+function rankRewardGems(table, rank, total) {
+  const byRank = table.ranks.find((row) => rank <= row.upTo);
+  if (byRank) return byRank.gems;
+  const percent = rank / Math.max(1, total) * 100;
+  return table.percents.find((row) => percent <= row.upToPercent)?.gems ?? table.participation;
+}
 function rankRewardBundle(pool, rank, total = rank) {
   const byRank = pool.ranks.find((row) => rank <= row.upTo);
   if (byRank) return { ...byRank.rewards };
   const percent = rank / Math.max(1, total) * 100;
   return { ...pool.percents.find((row) => percent <= row.upToPercent)?.rewards ?? pool.participation };
 }
+var GUILD_WEEKLY_RANK_REWARDS = {
+  ranks: [
+    { upTo: 1, gems: 300 },
+    { upTo: 2, gems: 250 },
+    { upTo: 3, gems: 200 },
+    { upTo: 10, gems: 150 },
+    { upTo: 50, gems: 120 },
+    { upTo: 100, gems: 100 },
+    { upTo: 300, gems: 80 },
+    { upTo: 1e3, gems: 60 }
+  ],
+  percents: [{ upToPercent: 10, gems: 50 }, { upToPercent: 30, gems: 40 }, { upToPercent: 50, gems: 30 }],
+  participation: 20
+};
+var GUILD_GUARD_DAILY_RANK_COINS = {
+  ranks: [
+    { upTo: 1, gems: 30 },
+    { upTo: 3, gems: 25 },
+    { upTo: 10, gems: 20 },
+    { upTo: 50, gems: 15 },
+    { upTo: 100, gems: 12 },
+    { upTo: 1e3, gems: 10 }
+  ],
+  percents: [{ upToPercent: 10, gems: 8 }, { upToPercent: 30, gems: 6 }, { upToPercent: 50, gems: 5 }],
+  participation: 4
+};
 
 // src/data/expedition.ts
 var EXPEDITION_MAP_BALANCE = {
@@ -20884,7 +20933,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -20936,7 +20985,7 @@ function normalizeSettings(value) {
       language: normalizeLanguage(g.language),
       // 단계가 실제로 있는지는 입구가 가린다 — 여기서는 짧은 문자열인지만 본다.
       dungeonTiers: { bounty: tierId(record(g.dungeonTiers).bounty), cake: tierId(record(g.dungeonTiers).cake) },
-      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard) },
+      guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null) : [],
@@ -32096,6 +32145,12 @@ var DAY_MS3 = 864e5;
 var dayShift = 0;
 var guildQaClockShift = () => QA_TOOLS_ENABLED ? dayShift * DAY_MS3 : 0;
 
+// src/core/guildRankRewards.ts
+init_define_import_meta_env();
+function rankGuildScores(entries) {
+  return entries.filter((entry) => entry.score > 0).sort((a, b) => b.score - a.score || (a.guildId < b.guildId ? -1 : a.guildId > b.guildId ? 1 : 0)).map((entry, index) => ({ ...entry, rank: index + 1 }));
+}
+
 // src/api/guildContracts.ts
 init_define_import_meta_env();
 var GuildApiError = class extends Error {
@@ -32122,6 +32177,7 @@ var GUILD_API_METHODS = [
   "getAttendance",
   "getShop",
   "getGuard",
+  "getRanking",
   "getWarMap",
   "clearWarSlot"
 ];
@@ -32131,7 +32187,7 @@ var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
 var fail2 = (code, message) => {
   throw new GuildApiError(code, message);
 };
-var FakeGuildServer = class {
+var FakeGuildServer = class _FakeGuildServer {
   constructor(now = Date.now, options = {}) {
     this.now = now;
     this.options = options;
@@ -32144,6 +32200,14 @@ var FakeGuildServer = class {
   leftAt = /* @__PURE__ */ new Map();
   requestedBy = /* @__PURE__ */ new Map();
   receipts = /* @__PURE__ */ new Map();
+  /**
+   * 순위 보상의 장부 — 길드원 행은 주·날이 바뀌면 값을 비우므로(게으른 초기화) 마감 뒤에는 지난 값을 읽을 수 없다.
+   * 기여도·수호전 기록이 오를 때마다 (기간 → 길드 → 길드원) 값을 적어 두고, 마감 정산은 이 장부만 읽는다.
+   */
+  weekLedger = /* @__PURE__ */ new Map();
+  guardLedger = /* @__PURE__ */ new Map();
+  /** 받은 순위 보상 — `week:주:id`·`guard:날:id`. 한 사람은 한 기간에 한 번만 받는다. */
+  rankAwarded = /* @__PURE__ */ new Set();
   sequence = 0;
   seedSamples() {
     const roster = PLAYABLE_RELICS;
@@ -32176,6 +32240,7 @@ var FakeGuildServer = class {
         member.coin = 0;
         member.sample = true;
         members.set(userId, member);
+        this.noteContribution(id, member);
       }
       this.guilds.set(id, { id, name, badge, joinMode, notice, prosperity, createdAt: this.now() - 30 * 864e5, badgeChanges: 0, members, requests: /* @__PURE__ */ new Map(), warScore, warReachedAt: this.now() });
       for (const userId of members.keys()) this.userGuild.set(userId, id);
@@ -32210,7 +32275,8 @@ var FakeGuildServer = class {
       purchaseMonthKey: guildMonthKey(at),
       guardDay: -1,
       guardBest: 0,
-      guardAt: 0
+      guardAt: 0,
+      guardReward: null
     };
   }
   // ── 조회 도우미 ──────────────────────────────────────────────────────────────
@@ -32224,6 +32290,7 @@ var FakeGuildServer = class {
     if (!guild || !me) return fail2("NOT_IN_GUILD");
     this.touch(me, actor);
     this.reviewLeader(guild);
+    this.settleGuardRewards(actor.userId, me);
     return { guild, me };
   }
   /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
@@ -32300,6 +32367,59 @@ var FakeGuildServer = class {
     me.contributionWeek += gain.contribution ?? 0;
     me.contributionTotal += gain.contribution ?? 0;
     me.coin += gain.coin ?? 0;
+    this.noteContribution(guild.id, me);
+  }
+  static ledgerSlot(ledger, period, guildId) {
+    let byGuild = ledger.get(period);
+    if (!byGuild) ledger.set(period, byGuild = /* @__PURE__ */ new Map());
+    let byMember = byGuild.get(guildId);
+    if (!byMember) byGuild.set(guildId, byMember = /* @__PURE__ */ new Map());
+    return byMember;
+  }
+  /** 이번 주 기여도를 장부에 적는다 — 그 주 안에서는 오르기만 하므로 덮어써도 된다. */
+  noteContribution(guildId, me) {
+    if (me.contributionWeek > 0) _FakeGuildServer.ledgerSlot(this.weekLedger, me.contributionWeekKey, guildId).set(me.userId, me.contributionWeek);
+  }
+  static sum(byMember) {
+    let total = 0;
+    for (const value of byMember?.values() ?? []) total += value;
+    return total;
+  }
+  /** 그 주의 길드 순위 — 장부에 점수가 있는 길드만 선다(`rankGuildScores`). */
+  weekStandings(week) {
+    return rankGuildScores([...(this.weekLedger.get(week) ?? /* @__PURE__ */ new Map()).entries()].map(([guildId, byMember]) => ({ guildId, score: _FakeGuildServer.sum(byMember) })));
+  }
+  /**
+   * 그날의 수호전 길드 순위. 기록은 장부에서, 표본 길드원은 날짜에서 나오는 값으로, QA가 정해 둔 길드 점수(`guardScore`)를 더해
+   * 판(`getGuard`)이 그날 보여 준 합과 같게 센다.
+   */
+  guardStandings(day) {
+    const recorded = this.guardLedger.get(day);
+    const ids = /* @__PURE__ */ new Set([...this.guilds.keys(), ...recorded?.keys() ?? []]);
+    return rankGuildScores([...ids].map((guildId) => {
+      const guild = this.guilds.get(guildId);
+      let score = _FakeGuildServer.sum(recorded?.get(guildId));
+      for (const member of guild?.members.values() ?? []) if (member.sample) score += sampleGuardRecord(member.userId, member.level, day).best;
+      return { guildId, score: score + (guild?.guardScore ?? 0) };
+    }));
+  }
+  /**
+   * 마감된 날의 수호전 순위 보상을 길드원 행의 코인으로 넣는다. 그날 한 판이라도 기록한 날만 받고(장부에 이름이 있다),
+   * 받는 순간 어느 길드에도 없으면 넣을 행이 없어 그 몫은 사라진다. 길드원이 길드를 부를 때마다 본다.
+   */
+  settleGuardRewards(userId, me) {
+    const today = guildGuardDayKey(this.now());
+    for (const [day, byGuild] of this.guardLedger) {
+      if (day >= today || this.rankAwarded.has(`guard:${day}:${userId}`)) continue;
+      const played = [...byGuild.entries()].filter(([, byMember]) => byMember.has(userId)).sort((a, b) => (b[1].get(userId) ?? 0) - (a[1].get(userId) ?? 0))[0];
+      if (!played) continue;
+      this.rankAwarded.add(`guard:${day}:${userId}`);
+      const standings = this.guardStandings(day);
+      const rank = standings.find((entry) => entry.guildId === played[0])?.rank ?? standings.length + 1;
+      const coin = rankRewardGems(GUILD_GUARD_DAILY_RANK_COINS, rank, Math.max(1, standings.length));
+      me.coin += coin;
+      if (!me.guardReward || me.guardReward.day < day) me.guardReward = { day, rank, coin };
+    }
   }
   /** 같은 requestId의 재전송은 첫 응답을 그대로 돌려준다(서버 영수증 표). */
   once(actor, requestId, run2) {
@@ -32319,10 +32439,11 @@ var FakeGuildServer = class {
     if (guild && me) {
       this.touch(me, actor);
       this.reviewLeader(guild);
+      this.settleGuardRewards(actor.userId, me);
     }
     return {
       guild: guild ? this.detail(guild) : null,
-      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,
+      me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt, guardReward: me.guardReward ? { ...me.guardReward } : null } : null,
       leaveCooldownUntil: Math.max(0, (this.leftAt.get(actor.userId) ?? 0) + GUILD_LEAVE_COOLDOWN_MS),
       pendingRequests: this.pendingCount(guild, me),
       requestedGuildIds: [...this.requestedBy.get(actor.userId) ?? []],
@@ -32529,12 +32650,10 @@ var FakeGuildServer = class {
   /** 표본 길드원의 오늘 기록 — 날짜와 id에서만 나오는 값이라 다시 읽어도 같다. */
   sampleGuard(member, day) {
     if (!member.sample || member.guardDay === day) return;
-    let h = 2166136261;
-    for (const ch of `${member.userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-    h >>>= 0;
+    const record2 = sampleGuardRecord(member.userId, member.level, day);
     member.guardDay = day;
-    member.guardBest = h % 5 === 0 ? 0 : 80 + h % 400 + member.level * (10 + (h >>> 8) % 25);
-    member.guardAt = day * 864e5 + h % 8e7;
+    member.guardBest = record2.best;
+    member.guardAt = record2.at;
   }
   /** 오늘의 기록만 센다 — 지난날의 최고는 0이다. */
   guardBestOf(member, day) {
@@ -32567,7 +32686,7 @@ var FakeGuildServer = class {
   }
   async recordGuard(actor, record2, requestId) {
     return this.once(actor, requestId, () => {
-      const { me } = this.requireGuild(actor);
+      const { guild, me } = this.requireGuild(actor);
       const score = Math.max(0, Math.round(record2.score));
       if (me.guardDay !== record2.day) {
         me.guardDay = record2.day;
@@ -32579,8 +32698,39 @@ var FakeGuildServer = class {
         me.guardAt = this.now();
       }
       me.coin += Math.max(0, Math.round(record2.coin));
+      _FakeGuildServer.ledgerSlot(this.guardLedger, me.guardDay, guild.id).set(me.userId, me.guardBest);
       return { best: me.guardBest, coin: me.coin };
     });
+  }
+  // ── 길드 주간 순위 ─────────────────────────────────────────────────────────
+  rankingEntry(guild, standing, mine) {
+    return { ...this.summary(guild), rank: standing?.rank ?? null, weekScore: standing?.score ?? 0, isMine: guild.id === mine };
+  }
+  async getRanking(actor) {
+    const mine = this.myGuild(actor);
+    const week = guildWeekKey(this.now());
+    const standings = this.weekStandings(week);
+    const guilds = standings.filter(({ guildId }) => this.guilds.has(guildId)).slice(0, 50).map((standing) => this.rankingEntry(this.guilds.get(standing.guildId), standing, mine?.id));
+    const mineEntry = mine ? this.rankingEntry(mine, standings.find(({ guildId }) => guildId === mine.id), mine.id) : null;
+    return { week, guilds, mine: mineEntry, total: standings.length, serverTime: this.now() };
+  }
+  /**
+   * 마감된 주의 길드 주간 순위 보상 — 그 주에 기여도가 1 이상인 길드원이 한 번씩 받는다. 여러 길드에서 기여했으면 가장 크게
+   * 기여한 길드의 몫이다. 받은 것으로 적고 돌려주며, 우편은 부르는 쪽(`FakeServer`)이 세운다.
+   */
+  async claimWeeklyRankRewards(actor) {
+    const current = guildWeekKey(this.now());
+    const awards = [];
+    for (const [week, byGuild] of [...this.weekLedger.entries()].sort(([a], [b]) => a < b ? -1 : 1)) {
+      if (week >= current || this.rankAwarded.has(`week:${week}:${actor.userId}`)) continue;
+      const own = [...byGuild.entries()].filter(([, byMember]) => (byMember.get(actor.userId) ?? 0) > 0).sort((a, b) => (b[1].get(actor.userId) ?? 0) - (a[1].get(actor.userId) ?? 0))[0];
+      if (!own) continue;
+      this.rankAwarded.add(`week:${week}:${actor.userId}`);
+      const standings = this.weekStandings(week);
+      const rank = standings.find(({ guildId }) => guildId === own[0]).rank;
+      awards.push({ week, guildName: this.guilds.get(own[0])?.name ?? "", rank, total: standings.length, gems: rankRewardGems(GUILD_WEEKLY_RANK_REWARDS, rank, standings.length) });
+    }
+    return awards;
   }
   // ── 길드전 방어진 지도 ──────────────────────────────────────────────────────
   warOf(guild) {
@@ -32746,6 +32896,12 @@ var FakeGuildServer = class {
     if (guild) guild.prosperity += amount;
   }
 };
+function sampleGuardRecord(userId, level, day) {
+  let h = 2166136261;
+  for (const ch of `${userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  h >>>= 0;
+  return { best: h % 5 === 0 ? 0 : 80 + h % 400 + level * (10 + (h >>> 8) % 25), at: day * 864e5 + h % 8e7 };
+}
 var SAMPLE_NAMES = ["\uD558\uB298", "\uC0C8\uBD04", "\uC774\uC2AC", "\uB9C8\uB8E8", "\uB2E4\uC628", "\uBCF4\uB78C", "\uB098\uB798", "\uAC00\uB78C", "\uC194", "\uB204\uB9AC", "\uD55C\uACB0", "\uB3C4\uB2F4", "\uBAA8\uC544", "\uBBF8\uB974", "\uC544\uB77C", "\uCD08\uB871", "\uC628\uC0C8\uBBF8", "\uB77C\uC628", "\uD574\uB4E0", "\uC18C\uB2F4"];
 var SAMPLE_BIOS = ["\uC624\uB298\uB3C4 \uBCF5\uC6D0 \uC911", "\uCE58\uC988\uCF00\uC774\uD06C\uB294 \uC0AC\uB791\uC785\uB2C8\uB2E4", "\uAE38\uB4DC\uC804 \uAC19\uC774 \uD574\uC694", "\uB290\uAE0B\uD558\uAC8C \uAC00\uB294 \uC911", "\uC218\uD638\uC804 \uAC1C\uADFC \uBAA9\uD45C", "\uACE0\uACE0\uD559 \uC804\uBB38\uAC00", "\uC798 \uBD80\uD0C1\uB4DC\uB9BD\uB2C8\uB2E4"];
 var roleRank = (role) => ({ leader: 3, vice: 2, officer: 1, member: 0 })[role];
@@ -33796,7 +33952,7 @@ var SettingsManager = class extends EventTarget {
     if (current[dungeon] === tierId2) return;
     this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId2 } } });
   }
-  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. */
+  /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의 날짜다. */
   rememberGuildSeen(page, key) {
     const current = this.get().game.guildSeen;
     if (current[page] === key) return;
@@ -34165,6 +34321,7 @@ var FakeServer = class {
     await this.delay();
     this.rollExpedition(this.now());
     this.syncSubscriptionMails(this.now());
+    await this.syncGuildRankMails();
     this.applySavedMailClaims();
     return this.mailListDto();
   }
@@ -34729,7 +34886,7 @@ var FakeServer = class {
     if (select && !RAID_BOSS_POOL.includes(request.bossRelicId)) throw new GameApiError("RAID_SUMMON_INVALID", "\uC18C\uD658\uD560 \uC218 \uC5C6\uB294 \uBCF4\uC2A4\uC785\uB2C8\uB2E4.");
     const ticketId = select ? RAID_SELECT_TICKET_ITEM : RAID_TICKET_ITEM;
     const stack = this.state.itemInventory.find((entry) => entry.itemId === ticketId);
-    if (!stack || stack.quantity <= 0) throw new GameApiError("RAID_TICKET_SHORTAGE", "\uD1A0\uBC8C\uAD8C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    if (!stack || stack.quantity < RAID_SUMMON_TICKET_COST) throw new GameApiError("RAID_TICKET_SHORTAGE", "\uD1A0\uBC8C\uAD8C\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
     const now = this.now();
     const { bossRelicId, difficulty } = select ? { bossRelicId: request.bossRelicId, difficulty: request.difficulty } : rollRaidSummon(this.random(), this.random());
     const instance = {
@@ -34745,7 +34902,7 @@ var FakeServer = class {
       settled: false
     };
     const nextState = structuredClone(this.state);
-    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? entry.quantity > 1 ? [{ ...entry, quantity: entry.quantity - 1 }] : [] : [entry]);
+    nextState.itemInventory = nextState.itemInventory.flatMap((entry) => entry.itemId === ticketId ? entry.quantity > RAID_SUMMON_TICKET_COST ? [{ ...entry, quantity: entry.quantity - RAID_SUMMON_TICKET_COST }] : [] : [entry]);
     nextState.raid = { instances: [...nextState.raid.instances, instance] };
     this.commitRaidState(nextState);
     const response = { ...this.snapshot(), raid: this.raidDto(instance, now), tickets: this.raidTickets() };
@@ -37992,6 +38149,31 @@ var FakeServer = class {
       });
     }
   }
+  /**
+   * 마감된 주의 길드 주간 순위 보상을 우편으로 세운다 — 길드 백엔드가 받을 몫을 한 번씩 꺼내 주는 경우(로컬 백엔드)만이다.
+   * 운영 서버는 우편함 조회에서 DB 함수(`server_guild_weekly_rewards`)가 우편을 직접 넣는다. 길드 저장소에 닿지 않으면 다음 조회로 미룬다.
+   */
+  async syncGuildRankMails() {
+    if (!this.guildBackend.claimWeeklyRankRewards) return;
+    const awards = await this.guildBackend.claimWeeklyRankRewards(this.guildActor()).catch(() => []);
+    for (const award of awards) {
+      const id = `guild-week:${award.week}`;
+      if (this.mails.some((mail) => mail.id === id)) continue;
+      const sentAt = /* @__PURE__ */ new Date(`${award.week}T00:00:00.000Z`);
+      sentAt.setUTCDate(sentAt.getUTCDate() + 7);
+      this.mails.unshift({
+        id,
+        title: t("guild.mail.weekly.title"),
+        sender: t("guild.mail.weekly.sender"),
+        body: t("guild.mail.weekly.body", { guild: award.guildName, rank: award.rank.toLocaleString() }),
+        sentAt: sentAt.toISOString(),
+        expiresAt: null,
+        read: false,
+        claimed: false,
+        rewards: [{ kind: "currency", currency: "gems", amount: award.gems }]
+      });
+    }
+  }
   /** 주입 어댑터를 우선 사용하고, 없으면 공유 세션만 브라우저에 저장해 독립 테스트 부작용을 막는다. */
   /**
    * 스테미나를 쓰는 **모든** 경계가 지나는 한 곳 — 쓴 만큼 연구원 경험치가 오른다(`playerLevel.ts`).
@@ -38627,6 +38809,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "guild.getAttendance",
   "guild.getShop",
   "guild.getGuard",
+  "guild.getRanking",
   "guild.getWarMap",
   "getGuildGuard"
 ]);
@@ -38997,6 +39180,7 @@ function createSupabaseStore(env) {
         ranks: ARENA_WEEKLY_RANK_GEMS.map((row) => ({ upTo: row.upTo, gems: row.gems }))
       } });
       await rpc("server_ancient_monthly_rewards", { p_player: playerId, p_rules: ANCIENT_MONTHLY_RANK_REWARDS });
+      await rpc("server_guild_weekly_rewards", { p_player: playerId, p_rules: GUILD_WEEKLY_RANK_REWARDS }).catch(() => void 0);
       return await rpc("server_ops_inbox", { p_player: playerId });
     },
     async opsAck(playerId, applied, claimedMails) {
@@ -39162,6 +39346,7 @@ function createSupabaseGuildBackend(call) {
     getAttendance: (actor) => run2(actor, "getAttendance"),
     getShop: (actor) => run2(actor, "getShop"),
     getGuard: (actor) => run2(actor, "getGuard"),
+    getRanking: (actor) => run2(actor, "getRanking"),
     recordGuard: async (actor, record2, requestId) => {
       const whole2 = (value, max) => Number.isSafeInteger(value) && value >= 0 && value <= max;
       if (!whole2(record2?.day, 1e6) || !whole2(record2.score, 1e7) || !whole2(record2.coin, 100)) invalid();

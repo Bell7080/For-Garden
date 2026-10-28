@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Ofertas",
   "shop.tab.daily": "Diario",
   "shop.tab.weekly": "Semanal",
+  "shop.tab.monthly": "Mensual",
+  "shop.tab.guildLevel": "Nivel del gremio",
   "banner.welcome.name": "Primera Investigación Restauradora",
   "banner.fossil.name": "Investigación de Fósiles",
   "banner.amber.name": "Investigación de Ámbar",

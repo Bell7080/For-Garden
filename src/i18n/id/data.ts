@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Penawaran",
   "shop.tab.daily": "Harian",
   "shop.tab.weekly": "Mingguan",
+  "shop.tab.monthly": "Bulanan",
+  "shop.tab.guildLevel": "Level Guild",
   "banner.welcome.name": "Riset Restorasi Pertama",
   "banner.fossil.name": "Riset Fosil",
   "banner.amber.name": "Riset Amber",

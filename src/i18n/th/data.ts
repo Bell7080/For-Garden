@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "ดีล",
   "shop.tab.daily": "รายวัน",
   "shop.tab.weekly": "รายสัปดาห์",
+  "shop.tab.monthly": "รายเดือน",
+  "shop.tab.guildLevel": "เลเวลกิลด์",
   "banner.welcome.name": "วิจัยฟื้นคืนครั้งแรก",
   "banner.fossil.name": "วิจัยฟอสซิล",
   "banner.amber.name": "วิจัยอำพัน",

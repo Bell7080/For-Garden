@@ -359,6 +359,26 @@
 "Wöchentlich",
 "Еженедельно"
 ],
+"shop.tab.monthly": [
+"每月",
+"รายเดือน",
+"Hằng tháng",
+"Bulanan",
+"Mensual",
+"Mensal",
+"Monatlich",
+"Ежемесячно"
+],
+"shop.tab.guildLevel": [
+"公会等级",
+"เลเวลกิลด์",
+"Cấp bang hội",
+"Level Guild",
+"Nivel del gremio",
+"Nível da guilda",
+"Gildenstufe",
+"Уровень гильдии"
+],
 "banner.welcome.name": [
 "首次复原研究",
 "วิจัยฟื้นคืนครั้งแรก",

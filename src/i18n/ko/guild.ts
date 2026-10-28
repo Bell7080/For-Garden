@@ -104,6 +104,10 @@ export const GUILD_KO = {
   "guild.shop.product.guild-gold": "골드 묶음",
   "guild.shop.product.guild-cheesecake": "치즈케이크 묶음",
   "guild.shop.product.guild-tonic": "에너지 드링크",
+  "guild.shop.product.guild-rune-rare": "희귀 룬",
+  "guild.shop.product.guild-fossil": "화석",
+  "guild.shop.product.guild-supply": "길드 보급 (대)",
+  "guild.shop.levelLock": "길드 Lv.{level} 개방",
 
   // 오류
   "guild.error.generic": "지금은 길드를 이용할 수 없습니다",
@@ -127,7 +131,7 @@ export const GUILD_KO = {
   "guild.error.LEADER_CANNOT_LEAVE": "길드장은 길드원이 남아 있으면 떠날 수 없습니다",
   "guild.error.ALREADY_STAMPED": "오늘은 이미 출석했습니다",
   "guild.error.PRODUCT_NOT_FOUND": "상품을 찾을 수 없습니다",
-  "guild.error.PRODUCT_LIMIT": "이번 주 구매 한도를 다 썼습니다",
+  "guild.error.PRODUCT_LIMIT": "구매 한도를 다 썼습니다",
   "guild.error.INSUFFICIENT_COINS": "길드 코인이 모자랍니다",
   "guild.error.INSUFFICIENT_GEMS": "젬이 모자랍니다",
   "guild.error.INVALID_REQUEST": "요청이 올바르지 않습니다",
@@ -175,6 +179,7 @@ export const GUILD_KO = {
   "guild.error.WAR_LOCKED": "전투일에는 방어진을 고칠 수 없습니다",
   "guild.error.SLOT_INVALID": "그 칸에는 세울 수 없습니다",
   "guild.error.SLOT_TAKEN": "다른 길드원이 이미 맡은 칸입니다",
+  "guild.error.GUILD_LEVEL_LOW": "길드 레벨이 부족합니다",
   "guild.war.branch": "제{n}지부",
   "guild.war.kind.boss": "우두머리",
   "guild.war.kind.elite": "정예",

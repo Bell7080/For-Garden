@@ -602,7 +602,8 @@ export class ShopScene extends Phaser.Scene {
     const room = width - 36;
     if (name.width > room) name.setScale(Math.max(0.7, room / name.width), 1);
     card.add(name);
-    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
+    // 아직 열리지 않은 칸(길드 레벨)은 남은 횟수 대신 언제 열리는지를 같은 자리에 적는다.
+    card.add(styleLimitCount(this.add.text(0, SHOP_CARD.remainingY, product.disabledReason ?? t("shop.exchangeRemaining", { remaining: formatCurrency(product.remaining), limit: formatCurrency(product.purchaseLimit) }), textStyle({ role: "emphasis", size: 27 })).setOrigin(0.5), !product.purchasable));
     // **값은 액자가 아니라 가로로 긴 줄이다**(무역 카드와 같은 한 장). 칸마다 값이 하나뿐이라
     // 작은 네모로 두면 넓은 칸 구석에 외따로 뜬 조각으로 읽힌다.
     if (product.acquisition.kind === "currency") {
@@ -655,6 +656,7 @@ export class ShopScene extends Phaser.Scene {
    */
   private confirmGuildPurchase(product: ProductDto, price: number): void {
     if (product.remaining <= 0) return;
+    if (product.disabledReason) { this.notice(product.disabledReason, true); return; }
     // 모자라면 창을 열지 않는다 — 값줄의 붉은 수가 이미 이유를 말한다.
     if (this.guildCoin < price) { this.notice(t("guild.shop.short"), true); return; }
     this.popups.confirm({

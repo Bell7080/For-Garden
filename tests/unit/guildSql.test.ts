@@ -17,9 +17,10 @@ describe("길드 SQL 표", () => {
     expect(numbers(capacities!)).toEqual(GUILD_LEVELS.map((l) => l.capacity));
   });
 
-  it("상점 상품의 값과 주간 한도가 TS 표와 같다", () => {
-    const json = /select '(\[\{"productId".*?\])'::jsonb/.exec(sql)?.[1];
-    expect(JSON.parse(json!)).toEqual(GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, weeklyLimit: p.weeklyLimit })));
+  it("상점 상품의 값·한도·주기·레벨 칸이 TS 표와 같다", () => {
+    const shopSql = readFileSync(new URL("../../supabase/migrations/20261110000000_guild_shop_tabs.sql", import.meta.url), "utf8");
+    const json = /select '(\[\{"productId".*?\])'::jsonb/.exec(shopSql)?.[1];
+    expect(JSON.parse(json!)).toEqual(GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, limit: p.limit, refresh: p.refresh, ...(p.minGuildLevel ? { minGuildLevel: p.minGuildLevel } : {}) })));
   });
 
   it("개방 레벨이 TS와 같다", () => {

@@ -15,7 +15,7 @@ export const GUILD_ERROR_CODES = [
   "GUILD_NOT_FOUND", "GUILD_FULL", "LEAVE_COOLDOWN", "REQUEST_EXISTS", "REQUEST_NOT_FOUND", "MEMBER_NOT_FOUND",
   "NO_PERMISSION", "ROLE_FULL", "INVALID_TARGET", "LEADER_CANNOT_LEAVE", "ALREADY_STAMPED", "PRODUCT_NOT_FOUND",
   "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST", "GUARD_LIMIT", "GUARD_NOT_ENTERED",
-  "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN",
+  "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN", "GUILD_LEVEL_LOW",
 ] as const;
 export type GuildErrorCode = (typeof GUILD_ERROR_CODES)[number];
 export const isGuildErrorCode = (value: string): value is GuildErrorCode => (GUILD_ERROR_CODES as readonly string[]).includes(value);
@@ -127,8 +127,10 @@ export interface GuildWarMapState {
 /** 방어덱 게시 — 게임 서버가 보유·성장을 확인해 굳힌 값만 길드 백엔드로 넘어간다. */
 export interface GuildWarDefenseInput { slotId: string; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
 
-export interface GuildShopItem { productId: string; price: number; weeklyLimit: number; bought: number }
-export interface GuildShopState { coin: number; items: GuildShopItem[]; serverTime: number }
+/** 산 수(`bought`)는 그 상품의 주기(주간·월간) 안에서 센다. */
+export interface GuildShopItem { productId: string; price: number; limit: number; refresh: "weekly" | "monthly"; minGuildLevel?: number; bought: number }
+/** `guildLevel`은 레벨 칸(`minGuildLevel`)을 여는 지금 길드 레벨이다. */
+export interface GuildShopState { coin: number; guildLevel: number; items: GuildShopItem[]; serverTime: number }
 
 /** 지갑과 무관한 길드 조작 — 클라이언트가 `guildApi`로 부른다. */
 export interface GuildApi {

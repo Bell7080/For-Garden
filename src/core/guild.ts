@@ -121,6 +121,8 @@ export const guildNameKey = (name: string): string => normalizeGuildName(name).r
 /** 서버 UTC 날짜 키(YYYY-MM-DD). */
 export const guildDateKey = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 /** 월요일 00:00 UTC에 시작하는 주의 키(그 월요일의 날짜). */
+/** 월간 상품의 주기 키 — UTC `YYYY-MM`. */
+export const guildMonthKey = (ms: number): string => new Date(ms).toISOString().slice(0, 7);
 export function guildWeekKey(ms: number): string {
   const day = new Date(ms).getUTCDay();
   return guildDateKey(ms - ((day + 6) % 7) * 86_400_000);
@@ -171,17 +173,35 @@ export function guildAttendanceView(count: number, lastDay: string | null, today
 
 /** 길드 코인 하나가 젬 몇 개 값인가 — 결투 휘장과 같은 0.5. 받는 것은 낸 값의 1.0~1.25배 안에 든다. */
 export const GUILD_COIN_GEM_VALUE = 0.5;
+/** 상점 탭 — 주간(월요일 초기화) · 월간(1일 초기화) · 길드 레벨(그 레벨부터 서는 칸, 주간 초기화). */
+export type GuildShopTab = "weekly" | "monthly" | "guildLevel";
+export type GuildShopRefresh = "weekly" | "monthly";
 export interface GuildShopProduct {
   id: string;
+  tab: GuildShopTab;
   price: number;
-  /** 한 주(월요일 초기화) 동안 살 수 있는 수. */
-  weeklyLimit: number;
-  grant: { gold?: number; cheesecake?: number; item?: { id: string; quantity: number } };
+  /** 한 주기(`refresh`) 동안 살 수 있는 수. */
+  limit: number;
+  refresh: GuildShopRefresh;
+  /** 이 길드 레벨부터 산다 — 레벨 혜택의 「상점 칸」(`guildPerks().shopSlots`)이 여는 자리. */
+  minGuildLevel?: number;
+  /** `rune`은 그 등급의 룬 하나(자리·옵션은 서버가 굴린다). */
+  grant: { gold?: number; cheesecake?: number; fossil?: number; item?: { id: string; quantity: number }; rune?: "rare" };
 }
+/**
+ * 길드 상점(2026-10-28 응태 승인 — `docs/guild-plan.md` 3장, 만능 파편은 팔지 않는다).
+ *
+ * 값은 코인 1 = 젬 0.5로 재고 받는 것이 낸 값의 1.0~1.25배 안에 든다. 주간 한도의 합(길드 레벨 칸 포함 코인 990)은 보통 주 수입(~210)의
+ * 네 배라 **다 살 수 없다** — 무엇을 살지가 선택이다. 룬은 고고학(원석 900 = 젬 180)보다 조금 비싸게(젬 225) 둔다.
+ * 화석은 월 한 개(연구 한 번 = 젬 300)뿐인 새 수급처라 승인을 받고 넣었다.
+ */
 export const GUILD_SHOP_PRODUCTS: readonly GuildShopProduct[] = [
-  { id: "guild-gold", price: 20, weeklyLimit: 5, grant: { gold: 5_500 } },
-  { id: "guild-cheesecake", price: 20, weeklyLimit: 5, grant: { cheesecake: 24 } },
-  { id: "guild-tonic", price: 90, weeklyLimit: 2, grant: { item: { id: "stamina-tonic", quantity: 1 } } },
+  { id: "guild-gold", tab: "weekly", price: 20, limit: 5, refresh: "weekly", grant: { gold: 5_500 } },
+  { id: "guild-cheesecake", tab: "weekly", price: 20, limit: 5, refresh: "weekly", grant: { cheesecake: 24 } },
+  { id: "guild-tonic", tab: "weekly", price: 90, limit: 2, refresh: "weekly", grant: { item: { id: "stamina-tonic", quantity: 1 } } },
+  { id: "guild-rune-rare", tab: "weekly", price: 450, limit: 1, refresh: "weekly", grant: { rune: "rare" } },
+  { id: "guild-fossil", tab: "monthly", price: 600, limit: 1, refresh: "monthly", grant: { fossil: 1 } },
+  { id: "guild-supply", tab: "guildLevel", price: 160, limit: 1, refresh: "weekly", minGuildLevel: 10, grant: { gold: 11_000, cheesecake: 48, item: { id: "stamina-tonic", quantity: 1 } } },
 ];
 export const findGuildProduct = (id: string): GuildShopProduct | undefined => GUILD_SHOP_PRODUCTS.find((p) => p.id === id);
 

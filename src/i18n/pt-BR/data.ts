@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Ofertas",
   "shop.tab.daily": "Diário",
   "shop.tab.weekly": "Semanal",
+  "shop.tab.monthly": "Mensal",
+  "shop.tab.guildLevel": "Nível da guilda",
   "banner.welcome.name": "Primeira Pesquisa de Restauração",
   "banner.fossil.name": "Pesquisa de Fósseis",
   "banner.amber.name": "Pesquisa de Âmbar",

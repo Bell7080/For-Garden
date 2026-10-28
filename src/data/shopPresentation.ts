@@ -165,7 +165,8 @@ const MILEAGE_TABS: readonly { id: string; label: string }[] = [
 ];
 
 /** 길드 상점은 주간 한 갈래다 — 상품이 모두 주간 한도로 돌아온다(`GUILD_SHOP_PRODUCTS`). */
-const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }];
+/** 길드 상점 탭 — id가 곧 `GuildShopProduct.tab`이다. */
+const GUILD_TABS: readonly { id: string; label: string }[] = [{ id: "weekly", label: "주간" }, { id: "monthly", label: "월간" }, { id: "guildLevel", label: "길드 레벨" }];
 
 /** 길드 상점의 임시 점원(오비)이 하는 말. 순서만 여기 있고 문장은 `src/i18n`이 갖는다. */
 const GUILD_MERCHANT_LINE_KEYS: readonly TextKey[] = ["guild.shop.line1", "guild.shop.line2", "guild.shop.line3"];

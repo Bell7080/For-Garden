@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "特惠",
   "shop.tab.daily": "每日",
   "shop.tab.weekly": "每周",
+  "shop.tab.monthly": "每月",
+  "shop.tab.guildLevel": "公会等级",
   "banner.welcome.name": "首次复原研究",
   "banner.fossil.name": "化石研究",
   "banner.amber.name": "琥珀研究",

@@ -382,6 +382,8 @@ export default {
   "shop.tab.special": "特価",
   "shop.tab.daily": "デイリー",
   "shop.tab.weekly": "ウィークリー",
+  "shop.tab.monthly": "マンスリー",
+  "shop.tab.guildLevel": "ギルドレベル",
   "banner.welcome.name": "はじめての復元研究",
   "banner.fossil.name": "化石研究",
   "banner.amber.name": "琥珀研究",

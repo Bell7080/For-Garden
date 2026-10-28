@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Angebote",
   "shop.tab.daily": "Täglich",
   "shop.tab.weekly": "Wöchentlich",
+  "shop.tab.monthly": "Monatlich",
+  "shop.tab.guildLevel": "Gildenstufe",
   "banner.welcome.name": "Erste Restaurierungsforschung",
   "banner.fossil.name": "Fossilforschung",
   "banner.amber.name": "Bernsteinforschung",

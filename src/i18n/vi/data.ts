@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Ưu đãi",
   "shop.tab.daily": "Hằng ngày",
   "shop.tab.weekly": "Hằng tuần",
+  "shop.tab.monthly": "Hằng tháng",
+  "shop.tab.guildLevel": "Cấp bang hội",
   "banner.welcome.name": "Nghiên cứu Phục hồi Sơ khởi",
   "banner.fossil.name": "Nghiên cứu Hóa thạch",
   "banner.amber.name": "Nghiên cứu Hổ phách",

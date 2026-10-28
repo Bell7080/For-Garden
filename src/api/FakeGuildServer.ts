@@ -2,8 +2,8 @@ import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { isContentUnlocked } from "../core/contentUnlock";
 import {
   GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, findGuildProduct, guildAttendanceDay, guildAttendanceView,
-  guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf, guildNameKey, guildWeekKey, validateGuildName,
-  type GuildJoinMode, type GuildRole,
+  guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf, guildMonthKey, guildNameKey, guildWeekKey, validateGuildName,
+  type GuildJoinMode, type GuildRole, type GuildShopProduct,
 } from "../core/guild";
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
 import { combatPower } from "../core/combatPower";
@@ -26,6 +26,8 @@ interface MemberRow {
   attendanceCount: number; attendanceLast: string | null;
   card: GuildMemberCard | null;
   purchases: Map<string, number>; purchaseWeekKey: string;
+  /** 월간 상품의 산 수와 그 달 키(`guildMonthKey`). */
+  monthPurchases: Map<string, number>; purchaseMonthKey: string;
   /** 수호전 — 기록한 날(UTC 날짜 번호)과 그날 최고 점수·처음 그 점수를 낸 시각. */
   guardDay: number; guardBest: number; guardAt: number;
   /** QA 표본 길드원 — 수호전 기록을 날마다 정해진 값으로 채운다(`sampleGuard`). */
@@ -99,7 +101,7 @@ export class FakeGuildServer implements GuildBackend {
     return {
       userId: actor.userId, name: actor.name, level: actor.level, role, avatarRelicId: actor.avatarRelicId, frameId: actor.frameId,
       joinedAt: at, lastActiveAt: at, coin: 0, contributionWeekKey: guildWeekKey(at), contributionWeek: 0, contributionTotal: 0,
-      attendanceCount: 0, attendanceLast: null, card: actor.card ? structuredClone(actor.card) : null, purchases: new Map(), purchaseWeekKey: guildWeekKey(at),
+      attendanceCount: 0, attendanceLast: null, card: actor.card ? structuredClone(actor.card) : null, purchases: new Map(), purchaseWeekKey: guildWeekKey(at), monthPurchases: new Map(), purchaseMonthKey: guildMonthKey(at),
       guardDay: -1, guardBest: 0, guardAt: 0,
     };
   }
@@ -121,6 +123,8 @@ export class FakeGuildServer implements GuildBackend {
     const week = guildWeekKey(now);
     if (member.contributionWeekKey !== week) { member.contributionWeekKey = week; member.contributionWeek = 0; }
     if (member.purchaseWeekKey !== week) { member.purchaseWeekKey = week; member.purchases = new Map(); }
+    const month = guildMonthKey(now);
+    if (member.purchaseMonthKey !== month) { member.purchaseMonthKey = month; member.monthPurchases = new Map(); }
   }
   private leaderOf(guild: GuildRow): MemberRow { return [...guild.members.values()].find((m) => m.role === "leader")!; }
   private level(guild: GuildRow): number { return guildLevelOf(guild.prosperity); }
@@ -338,21 +342,27 @@ export class FakeGuildServer implements GuildBackend {
     });
   }
 
-  private shopOf(me: MemberRow): GuildShopState {
-    return { coin: me.coin, items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, weeklyLimit: p.weeklyLimit, bought: me.purchases.get(p.id) ?? 0 })), serverTime: this.now() };
+  private bucketOf(me: MemberRow, product: GuildShopProduct): Map<string, number> { return product.refresh === "monthly" ? me.monthPurchases : me.purchases; }
+  private shopOf(guild: GuildRow, me: MemberRow): GuildShopState {
+    return {
+      coin: me.coin, guildLevel: this.level(guild), serverTime: this.now(),
+      items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, limit: p.limit, refresh: p.refresh, ...(p.minGuildLevel ? { minGuildLevel: p.minGuildLevel } : {}), bought: this.bucketOf(me, p).get(p.id) ?? 0 })),
+    };
   }
-  async getShop(actor: GuildActor): Promise<GuildShopState> { return this.shopOf(this.requireGuild(actor).me); }
+  async getShop(actor: GuildActor): Promise<GuildShopState> { const { guild, me } = this.requireGuild(actor); return this.shopOf(guild, me); }
 
   async purchase(actor: GuildActor, productId: string, requestId: string): Promise<{ shop: GuildShopState }> {
     return this.once(actor, requestId, () => {
       const product = findGuildProduct(productId);
       if (!product) return fail("PRODUCT_NOT_FOUND");
-      const { me } = this.requireGuild(actor);
-      const bought = me.purchases.get(product.id) ?? 0;
-      if (bought >= product.weeklyLimit) fail("PRODUCT_LIMIT");
+      const { guild, me } = this.requireGuild(actor);
+      if (product.minGuildLevel && this.level(guild) < product.minGuildLevel) fail("GUILD_LEVEL_LOW");
+      const bucket = this.bucketOf(me, product);
+      const bought = bucket.get(product.id) ?? 0;
+      if (bought >= product.limit) fail("PRODUCT_LIMIT");
       if (me.coin < product.price) fail("INSUFFICIENT_COINS");
-      me.coin -= product.price; me.purchases.set(product.id, bought + 1);
-      return { shop: this.shopOf(me) };
+      me.coin -= product.price; bucket.set(product.id, bought + 1);
+      return { shop: this.shopOf(guild, me) };
     });
   }
 

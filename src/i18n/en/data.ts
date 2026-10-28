@@ -217,6 +217,8 @@ export default {
   "shop.tab.special": "Deals",
   "shop.tab.daily": "Daily",
   "shop.tab.weekly": "Weekly",
+  "shop.tab.monthly": "Monthly",
+  "shop.tab.guildLevel": "Guild Level",
   "banner.welcome.name": "First Restoration Research",
   "banner.fossil.name": "Fossil Research",
   "banner.amber.name": "Amber Research",

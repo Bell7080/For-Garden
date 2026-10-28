@@ -203,6 +203,8 @@ export default {
   "shop.tab.special": "Выгода",
   "shop.tab.daily": "Ежедневно",
   "shop.tab.weekly": "Еженедельно",
+  "shop.tab.monthly": "Ежемесячно",
+  "shop.tab.guildLevel": "Уровень гильдии",
   "banner.welcome.name": "Исследование восстановления",
   "banner.fossil.name": "Исследование окаменелостей",
   "banner.amber.name": "Исследование янтаря",

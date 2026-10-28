@@ -919,6 +919,46 @@
     "Energydrink",
     "Энергетик"
   ],
+  "guild.shop.product.guild-rune-rare": [
+    "稀有符文",
+    "รูนหายาก",
+    "Rune hiếm",
+    "Rune Langka",
+    "Runa rara",
+    "Runa rara",
+    "Seltene Rune",
+    "Редкая руна"
+  ],
+  "guild.shop.product.guild-fossil": [
+    "化石",
+    "ฟอสซิล",
+    "Hóa thạch",
+    "Fosil",
+    "Fósil",
+    "Fóssil",
+    "Fossil",
+    "Окаменелость"
+  ],
+  "guild.shop.product.guild-supply": [
+    "公会补给（大）",
+    "เสบียงกิลด์ (ใหญ่)",
+    "Tiếp tế Bang hội (lớn)",
+    "Pasokan Guild (B)",
+    "Suministro del gremio (G)",
+    "Suprimento da guilda (G)",
+    "Gildenvorrat (G)",
+    "Припасы гильдии (Б)"
+  ],
+  "guild.shop.levelLock": [
+    "公会 Lv.{level} 开放",
+    "เปิดที่กิลด์ Lv.{level}",
+    "Mở ở Bang hội Lv.{level}",
+    "Buka di Guild Lv.{level}",
+    "Se abre en gremio Nv.{level}",
+    "Abre na guilda Nv.{level}",
+    "Ab Gilden-Lv.{level}",
+    "Откроется на ур. гильдии {level}"
+  ],
   "guild.error.generic": [
     "暂时无法使用公会",
     "ไม่สามารถใช้กิลด์ได้ในขณะนี้",
@@ -1130,14 +1170,14 @@
     "Товар не найден"
   ],
   "guild.error.PRODUCT_LIMIT": [
-    "已达本周购买上限",
-    "ถึงขีดจำกัดซื้อรายสัปดาห์แล้ว",
-    "Đã hết lượt mua tuần này",
-    "Batas pembelian mingguan tercapai",
-    "Límite semanal de compra alcanzado",
-    "Limite semanal de compra atingido",
-    "Wöchentliches Kauflimit erreicht",
-    "Достигнут недельный лимит покупок"
+    "已达到购买上限",
+    "ซื้อครบจำนวนแล้ว",
+    "Đã đạt giới hạn mua",
+    "Batas pembelian tercapai",
+    "Has alcanzado el límite de compra",
+    "Limite de compra atingido",
+    "Kauflimit erreicht",
+    "Достигнут лимит покупок"
   ],
   "guild.error.INSUFFICIENT_COINS": [
     "公会币不足",
@@ -1488,6 +1528,16 @@
     "Outro membro da guilda já ocupa este espaço",
     "Ein anderes Gildenmitglied hält dieses Feld bereits",
     "Эту ячейку уже занял другой участник гильдии"
+  ],
+  "guild.error.GUILD_LEVEL_LOW": [
+    "公会等级不足",
+    "เลเวลกิลด์ไม่พอ",
+    "Cấp bang hội chưa đủ",
+    "Level guild belum cukup",
+    "El nivel del gremio es insuficiente",
+    "O nível da guilda é insuficiente",
+    "Gildenstufe zu niedrig",
+    "Недостаточный уровень гильдии"
   ],
   "guild.war.branch": [
     "第{n}分部",

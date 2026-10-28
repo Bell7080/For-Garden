@@ -1680,12 +1680,16 @@ export class FakeServer implements GameApi {
     const now = this.now();
     const wallet = { ...this.state.wallet };
     let inventory = this.state.itemInventory;
+    let runes = this.state.runeInventory;
     if (product.grant.gold) wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + product.grant.gold);
     if (product.grant.cheesecake) wallet.cheesecake = Math.min(WALLET_CAPS.cheesecake, wallet.cheesecake + product.grant.cheesecake);
+    if (product.grant.fossil) wallet.fossil = Math.min(WALLET_CAPS.fossil, wallet.fossil + product.grant.fossil);
     if (product.grant.item) inventory = this.grantItem(inventory, product.grant.item.id, product.grant.item.quantity, now).inventory;
-    const next = { ...this.state, wallet, itemInventory: inventory };
+    // 룬의 자리·옵션은 서버 난수로 확정한다(일반 상점의 랜덤 룬과 같은 `createGrantedRune`).
+    if (product.grant.rune) runes = [...runes, this.createGrantedRune(product.grant.rune, runes)];
+    const next = { ...this.state, wallet, itemInventory: inventory, runeInventory: runes };
     this.persist(next);
-    this.state.wallet = wallet; this.state.itemInventory = inventory;
+    this.state.wallet = wallet; this.state.itemInventory = inventory; this.state.runeInventory = runes;
     return { ...this.snapshot(), shop: bought.shop, productId: product.id };
   }
 

@@ -1939,6 +1939,56 @@
     "Hinten",
     "Тыл"
   ],
+  "guild.guard.preview.title": [
+    "今日的敌人",
+    "ศัตรูวันนี้",
+    "Kẻ địch hôm nay",
+    "Musuh hari ini",
+    "Enemigos de hoy",
+    "Inimigos de hoje",
+    "Heutige Gegner",
+    "Враги дня"
+  ],
+  "guild.guard.preview.power": [
+    "第1波战斗力 {power}",
+    "พลังต่อสู้คลื่นแรก {power}",
+    "Lực chiến đợt 1 {power}",
+    "Kekuatan Tempur gelombang 1 {power}",
+    "Poder de combate de la oleada 1 {power}",
+    "Poder de Combate da onda 1 {power}",
+    "Kampfkraft Welle 1 {power}",
+    "Боевая мощь 1-й волны {power}"
+  ],
+  "guild.guard.preview.rule": [
+    "每波等级 +{level} · 精英每 {every} 波出现",
+    "เลเวล +{level} ต่อคลื่น · ศัตรูชั้นยอดทุก {every} คลื่น",
+    "Mỗi đợt cấp +{level} · Tinh nhuệ mỗi {every} đợt",
+    "Level +{level} tiap gelombang · Elite tiap {every} gelombang",
+    "Nivel +{level} por oleada · Élites cada {every} oleadas",
+    "Nível +{level} por onda · Elites a cada {every} ondas",
+    "Stufe +{level} pro Welle · Elite alle {every} Wellen",
+    "Уровень +{level} за волну · Элита каждые {every} волны"
+  ],
+  "guild.guard.preview.level": [
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}",
+    "LV.{level}"
+  ],
+  "guild.guard.preview.wave": [
+    "第 {wave} 波",
+    "คลื่น {wave}",
+    "Đợt {wave}",
+    "Gelombang {wave}",
+    "Oleada {wave}",
+    "Onda {wave}",
+    "Welle {wave}",
+    "Волна {wave}"
+  ],
   "guild.guard.battle.line": [
     "第{wave}波 · 场上 {field}/{cap}",
     "คลื่น {wave} · สนาม {field}/{cap}",

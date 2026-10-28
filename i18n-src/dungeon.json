@@ -160,24 +160,24 @@
 "MAX"
 ],
 "dungeon.sweep.ad": [
-"广告 +{count}",
-"โฆษณา +{count}",
-"Quảng cáo +{count}",
-"Iklan +{count}",
-"Anuncio +{count}",
-"Anúncio +{count}",
-"Werbung +{count}",
-"Реклама +{count}"
+"看广告领{count}张",
+"ดูโฆษณารับ {count} ใบ",
+"Xem quảng cáo nhận {count}",
+"Tonton iklan, dapat {count}",
+"Ver anuncio: +{count}",
+"Ver anúncio: +{count}",
+"Werbung ansehen: +{count}",
+"Реклама: +{count}"
 ],
 "dungeon.sweep.adUsage": [
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}",
-"{used}/{limit}"
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}",
+"{left}/{limit}"
 ],
 "greatSuccess.stamp": [
 "大成功",

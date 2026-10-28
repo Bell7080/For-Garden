@@ -48,6 +48,7 @@ export const BATTLE_RU = {
   "battle.result.saveFailed": "Не удалось сохранить итог",
   "battle.result.retry": "Повторить",
   "battle.result.nodeScore": "Очки экспедиции +{score}",
+  "battle.result.runScore": "Очки этой экспедиции {score} · Идут в недельный рекорд",
   "battle.pause.continue": "Продолжить",
   "battle.pause.toTitle": "В главное меню",
   "battle.pause.toTitleConfirm": "Возврат в главное меню. Этот бой начнётся заново.",

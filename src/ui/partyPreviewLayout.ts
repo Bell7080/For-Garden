@@ -179,3 +179,55 @@ export const PARTY_GUARD = { frontLift: 340, infoY: 196, rowLabelX: 70, rowLabel
 export function partyGuardSlotLift(slot: number): number {
   return slot < 3 ? PARTY_GUARD.frontLift : 0;
 }
+
+/**
+ * 수호전 「오늘의 적」 창 — 위에 첫 웨이브 전투력과 웨이브 규칙 두 줄, 아래에 무리·정예 얼굴이 제목표 아래 다섯씩 선다.
+ * 편성 화면 위쪽은 앞줄을 끌어올린 자리라 적 SD 줄을 세울 틈이 없어, 그날 속성 표식을 누르면 이 창이 열린다.
+ * 창 높이는 서는 얼굴 수에서 거꾸로 구한다. 좌표는 몸판 가운데 기준이다.
+ */
+export const PARTY_GUARD_ROSTER = {
+  width: 920,
+  face: 128,
+  columns: 5,
+  columnGap: 168,
+  /** 얼굴 가운데에서 다음 줄 얼굴 가운데까지(얼굴 + 레벨 · 웨이브 두 줄). */
+  rowGap: 222,
+  top: 112,
+  infoGap: 46,
+  sectionGap: 40,
+  /** 제목표 가운데에서 첫 얼굴 가운데까지. */
+  titleToFace: 116,
+  bottom: 70,
+} as const;
+
+export interface GuardRosterPopupLayout {
+  height: number;
+  info: readonly number[];
+  sections: readonly { titleY: number; cells: readonly { x: number; y: number }[] }[];
+}
+
+export function guardRosterPopupLayout(counts: readonly number[]): GuardRosterPopupLayout {
+  const L = PARTY_GUARD_ROSTER;
+  let y = L.top;
+  const info = [y, y + L.infoGap];
+  y += L.infoGap * 2 + L.sectionGap;
+  const sections = counts.filter((count) => count > 0).map((count) => {
+    const titleY = y;
+    const rows = Math.ceil(count / L.columns);
+    const cells = Array.from({ length: count }, (_, index) => {
+      const row = Math.floor(index / L.columns);
+      const inRow = Math.min(L.columns, count - row * L.columns);
+      const col = index % L.columns;
+      return { x: (col - (inRow - 1) / 2) * L.columnGap, y: titleY + L.titleToFace + row * L.rowGap };
+    });
+    y = titleY + L.titleToFace + (rows - 1) * L.rowGap + L.face / 2 + 70 + L.sectionGap;
+    return { titleY, cells };
+  });
+  const height = y - L.sectionGap + L.bottom;
+  const half = height / 2;
+  return {
+    height,
+    info: info.map((value) => value - half),
+    sections: sections.map((section) => ({ titleY: section.titleY - half, cells: section.cells.map((cell) => ({ x: cell.x, y: cell.y - half })) })),
+  };
+}

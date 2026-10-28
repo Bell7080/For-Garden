@@ -48,6 +48,7 @@ export const BATTLE_ZH_HANT = {
   "battle.result.saveFailed": "無法儲存結果",
   "battle.result.retry": "重試",
   "battle.result.nodeScore": "遠征分數 +{score}",
+  "battle.result.runScore": "本次遠征分數 {score} · 計入每週紀錄",
   "battle.pause.continue": "繼續",
   "battle.pause.toTitle": "返回標題",
   "battle.pause.toTitleConfirm": "返回標題畫面。本場戰鬥將重新開始。",

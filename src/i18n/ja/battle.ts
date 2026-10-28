@@ -51,6 +51,7 @@ export const BATTLE_JA = {
   "battle.result.saveFailed": "結果を保存できませんでした",
   "battle.result.retry": "再試行",
   "battle.result.nodeScore": "遠征スコア +{score}",
+  "battle.result.runScore": "今回の遠征スコア {score}・週間記録に反映",
   "battle.pause.continue": "続ける",
   "battle.pause.toTitle": "タイトルへ",
   "battle.pause.toTitleConfirm": "タイトルに戻ります。この戦闘は最初からやり直しになります。",

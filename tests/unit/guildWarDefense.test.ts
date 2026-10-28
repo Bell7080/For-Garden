@@ -63,3 +63,19 @@ describe("길드전 방어진 지도", () => {
     expect((await server.getWarMap(actor("lead"))).slots.every(({ holder }) => holder === null)).toBe(true);
   });
 });
+
+describe("길드장 자동 위임", () => {
+  it("14일 미접속 길드장은 기여도 1위 임원에게 넘어가고, 그 전이나 후계가 없으면 그대로다", async () => {
+    const { clock, server } = await setup();
+    const roleOf = async (userId: string) => (await server.getMembers(actor("b"))).members.find((m) => m.userId === userId)?.role;
+    clock.now += 20 * 86_400_000;
+    // 임원이 없으면 아무에게도 넘기지 않는다.
+    expect(await roleOf("lead")).toBe("leader");
+    await server.setMemberRole(actor("lead"), "c", "officer");
+    clock.now += 13 * 86_400_000;
+    expect(await roleOf("lead")).toBe("leader");
+    clock.now += 2 * 86_400_000;
+    expect(await roleOf("c")).toBe("leader");
+    expect(await roleOf("lead")).toBe("member");
+  });
+});

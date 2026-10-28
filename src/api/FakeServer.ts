@@ -68,7 +68,7 @@ import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRanking
 import { WALLET_CAPS } from "../data/economy";
 import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
-import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct } from "../core/guild";
+import { GUILD_BADGE_CHANGE_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
 import { localGuildBackend } from "./FakeGuildServer";
 import { isGuildSandbox } from "./guildApi";
@@ -118,7 +118,7 @@ import { InventoryManager } from "../managers/InventoryManager";
 import type { EnhanceRuneAllRequest, EnhanceRuneAllResponse, EngraveRuneRequest, EngraveRuneResponse, EnhanceRuneRequest, EnhanceRuneResponse, EquipRuneRequest, EquipRuneResponse, MarkRuneRequest, MarkRuneResponse, RenameRuneRequest, RenameRuneResponse, RuneInventoryDto, UnequipRuneRequest, UnequipRuneResponse, SellRunesRequest, SellRunesResponse, SynthesizeRunesRequest, SynthesizeRunesResponse } from "./contracts";
 import type { FulfillPlatformPurchaseRequest, FulfillPlatformPurchaseResponse } from "./contracts";
 import type { ActivatePassRequest, ActivatePassResponse, ClaimInstantAdRewardRequest, ClaimInstantAdRewardResponse, ClaimPassDailyBonusRequest, PassEntitlementDto, VerifyPurchaseReceiptRequest, VerifyPurchaseReceiptResponse } from "./contracts";
-import { excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
+import { EXCAVATION_CURRENCIES, excavationHarvestStatus, excavationProductionDisplayModel, excavationStorageCapacity, excavationStorageLimitSeconds, harvestIdleExcavation, settleIdleExcavation, validateExcavationFormation } from "../core/idleExcavation";
 import type { HarvestExcavationRequest, HarvestExcavationResponse, IdleExcavationResponse, SaveExcavationFormationRequest, InventoryResponse, UseConsumableRequest, UseConsumableResponse } from "./contracts";
 import type { EnterRaidRequest, EnterRaidResponse, RaidDto, RaidListResponse, RaidRewardDto, SettleRaidRequest, SettleRaidResponse, SubmitRaidDamageRequest, SubmitRaidDamageResponse, SummonRaidRequest, SummonRaidResponse } from "./contracts";
 import type { ClaimExpeditionRewardRequest, ClaimExpeditionRewardResponse, CompleteExpeditionNodeRequest, CompleteExpeditionNodeResponse, ExpeditionLeaderboardResponse, ExpeditionWeeklyBestResponse, SettleExpeditionRunRequest, SettleExpeditionRunResponse, SubmitExpeditionBossScoreRequest, SubmitExpeditionBossScoreResponse, SweepExpeditionRequest, SweepExpeditionResponse } from "./contracts";
@@ -341,7 +341,16 @@ export class FakeServer implements GameApi {
     return ids.map(id => { const relic = RELICS.find(candidate => candidate.id === id)!; return { id, element: relic.element, role: relic.role, squad: relic.squad }; });
   }
 
-  async getInteractionCities(): Promise<InteractionCitiesResponse> { await this.delay(); return { cities: INTERACTION_CITIES.map(city => ({ ...city, unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() }; }
+  /** 도시의 파견 시간은 길드 레벨 혜택을 덜어 내려보낸다 — 화면이 혜택을 다시 셈하지 않고 이 값을 그대로 적는다. */
+  async getInteractionCities(): Promise<InteractionCitiesResponse> {
+    await this.delay(); const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
+    return { cities: INTERACTION_CITIES.map(city => ({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent), unlocked: isInteractionCityUnlocked(city, this.state.cleared) })), serverTime: this.now().toISOString() };
+  }
+
+  /** 길드 레벨 혜택. 길드가 없거나 길드 저장소에 닿지 않으면 혜택 없이 진행한다 — 혜택이 막혔다고 발굴·교류까지 막지 않는다. */
+  private async currentGuildPerks(): Promise<GuildPerks> {
+    try { const { guild } = await this.guildBackend.getGuild(this.guildActor()); return guildPerks(guild?.level ?? 0); } catch { return guildPerks(0); }
+  }
 
   async getInteractionDispatch(): Promise<InteractionDispatchResponse> { await this.delay(); return this.interactionDispatchResponse(); }
 
@@ -360,6 +369,7 @@ export class FakeServer implements GameApi {
     const away = new Set(this.state.interaction.slots.flatMap((slot) => slot && !slot.claimed ? slot.party : []));
     if (request.party.some((id) => away.has(id))) throw new GameApiError("INVALID_STATE", "이미 파견 중인 렐릭입니다.");
     const error = validateInteractionFormation(request.party, this.state.owned); if (error) throw new GameApiError("INVALID_STATE", `교류 편성이 올바르지 않습니다: ${error}`);
+    const { dispatchTimeReductionPercent } = await this.currentGuildPerks();
     const now = this.now(); const traits = this.interactionTraits(request.party);
     // 돌아올 것은 출발하는 순간 모두 굴려 둔다 — 인원과 특화가 그 양을 정한다.
     const rewards = rollInteractionRewards(city, traits, this.random);
@@ -367,7 +377,7 @@ export class FakeServer implements GameApi {
     // 멈춘 테스트나 같은 밀리초의 연속 출발에서 같은 id가 나오고, 그러면 수령이 엉뚱한 파견을
     // 집는다. 계정 안에서 증가하는 번호를 함께 넣는다.
     const sequence = `${now.getTime()}-${Math.floor(this.random() * 1e9)}-${(this.interactionSequence += 1)}`;
-    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs(city)).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
+    const dispatch = { dispatchId: `interaction-${sequence}`, cityId: city.id, startedAt: now.toISOString(), completesAt: new Date(now.getTime() + interactionDurationMs({ ...city, durationMinutes: guildDispatchMinutes(city.durationMinutes, dispatchTimeReductionPercent) })).toISOString(), party: [...request.party], rewardSeed: sequence, rewards, claimed: false };
     // 수령이 끝난 자리를 먼저 재사용하고, 없으면 새 자리를 잇는다.
     const free = this.state.interaction.slots.findIndex((slot) => slot === null || slot.claimed);
     if (free >= 0) this.state.interaction.slots[free] = dispatch; else this.state.interaction.slots.push(dispatch);
@@ -1924,9 +1934,15 @@ export class FakeServer implements GameApi {
     await this.delay(); const cached = this.excavationHarvestResults.get(request.requestId);
     if (cached) return { ...cached, excavation: this.cloneExcavation(cached.excavation), wallet: { ...cached.wallet }, granted: { ...cached.granted }, discarded: { ...cached.discarded }, remaining: { ...cached.remaining }, fullBonus: { ...cached.fullBonus } };
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수확 요청 ID가 필요합니다.");
+    const { excavationBonusPercent } = await this.currentGuildPerks();
     const now = this.now(); const settled = settleIdleExcavation(this.state.idleExcavation, now, RELICS, this.state.relicProgress);
     const capacity = excavationStorageCapacity(excavationProductionDisplayModel(settled.assignedRelicIds, RELICS, this.state.relicProgress).totalsPerHour, excavationStorageLimitSeconds(settled, now));
     const result = harvestIdleExcavation(settled, this.state.wallet, capacity);
+    // 길드 레벨 혜택은 걷은 양 위에 얹는다 — 생산 속도를 바꾸지 않으므로 저장소 한도·가득 참 보너스와 섞이지 않는다.
+    for (const currency of EXCAVATION_CURRENCIES) {
+      const bonus = Math.min(guildExcavationBonus(result.granted[currency], excavationBonusPercent), Math.max(0, WALLET_CAPS[currency] - result.wallet[currency]));
+      result.granted[currency] += bonus; result.wallet[currency] += bonus;
+    }
     // 실제로 걷어 들인 것이 있을 때만 수확 임무를 센다 — 빈 손으로 누른 것은 수확이 아니다.
     const harvested = Object.values(result.granted).some((amount) => (amount ?? 0) > 0);
     const nextMissions = harvested ? applyMissionEvent(this.state.missions, { type: "excavation_harvested" }, now) : this.state.missions;

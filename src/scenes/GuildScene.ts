@@ -15,7 +15,7 @@ import { consumeSceneEntry } from "./sceneEntry";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import {
   GUILD_ATTENDANCE_CYCLE, GUILD_BADGE_CHANGE_GEMS, GUILD_CREATE_GEMS, GUILD_NAME_MAX, GUILD_NAME_MIN, GUILD_NOTICE_MAX,
-  guildAttendanceDay, guildCan, guildCanKick, guildLevelProgress, guildPerks, validateGuildName, type GuildJoinMode, type GuildRole,
+  guildAttendanceDay, guildCan, guildCanKick, guildLevelProgress, guildLevelUpNotice, guildPerks, validateGuildName, type GuildJoinMode, type GuildRole,
 } from "../core/guild";
 import {
   DEFAULT_GUILD_BADGE, GUILD_BADGE_COLORS, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
@@ -112,6 +112,16 @@ const hmText = (ms: number): string => {
 };
 
 /** 출석 한 날의 보상 그림과 수 — 판과 영수증이 같은 표(`GUILD_ATTENDANCE_CYCLE`)를 읽는다. */
+/** 그 레벨의 혜택 문구 — 정보 탭과 레벨업 창이 같은 줄을 읽는다. */
+function guildPerkLines(level: number): string[] {
+  const perks = guildPerks(level);
+  return [
+    perks.excavationBonusPercent > 0 ? t("guild.info.perkExcavation", { value: perks.excavationBonusPercent }) : "",
+    perks.dispatchTimeReductionPercent > 0 ? t("guild.info.perkDispatch", { value: perks.dispatchTimeReductionPercent }) : "",
+    perks.shopSlots > 3 ? t("guild.info.perkShop") : "",
+  ].filter(Boolean);
+}
+
 function attendanceRewardIcon(day: number): { texture: string; amount: number } {
   const { reward } = guildAttendanceDay(day);
   if (reward.gems) return { texture: CURRENCY_ICON_BY_WALLET.gems, amount: reward.gems };
@@ -257,6 +267,7 @@ export class GuildScene extends Phaser.Scene {
     this.topBar.refresh();
     this.paint(keep);
     if (attendance && !attendance.stampedToday) this.openStampBoard(attendance);
+    else if (this.announceLevelUp()) return;
     else if (this.entryToast) { this.entryToast = false; this.toast(t("guild.war.placedToast"), "unlocked"); }
   }
 
@@ -468,11 +479,7 @@ export class GuildScene extends Phaser.Scene {
     this.label(v, I.left, I.barText.y, t("guild.info.prosperity", { value: guild.prosperity.toLocaleString() }), { role: "emphasis", size: 28 });
     this.label(v, I.left + I.width, I.barText.y, progress.next === null ? t("guild.info.maxLevel") : t("guild.info.nextLevel", { value: (progress.span - progress.into).toLocaleString() }), { role: "body", size: 26, color: COLOR.inkDim }, [1, 0.5]);
 
-    const perks = guildPerks(guild.level);
-    const perkLines = [
-      perks.excavationBonusPercent > 0 ? t("guild.info.perkExcavation", { value: perks.excavationBonusPercent }) : "",
-      perks.dispatchTimeReductionPercent > 0 ? t("guild.info.perkDispatch", { value: perks.dispatchTimeReductionPercent }) : "",
-    ].filter(Boolean);
+    const perkLines = guildPerkLines(guild.level);
     (perkLines.length > 0 ? perkLines : [t("guild.info.perkNone")]).forEach((line, index) => this.label(v, I.left, I.perks.y + index * I.perks.gap, line, { role: "emphasis", size: 30, color: COLOR.accentText }));
 
     this.plate(v, I.left + I.width / 2, I.notice.y + I.notice.height / 2, I.width, I.notice.height);
@@ -585,12 +592,29 @@ export class GuildScene extends Phaser.Scene {
    * 그날 처음 들어오면 뜨는 도장판. 일곱 칸 중 지난 칸은 이미 찍혀 있고, 판이 서면 곧바로 서버에 찍고(고를 것이 없다)
    * 오늘 칸에 인장이 **쾅** 박힌 뒤 영수증으로 넘어간다. 7일차를 찍은 다음 날은 빈 판의 1일차부터 다시 돈다.
    */
+  /** 길드 레벨이 오른 뒤 처음 들어오면 한 번 알린다 — 새로 열리거나 커진 혜택만 적는다. 띄웠으면 true. */
+  private announceLevelUp(): boolean {
+    const guild = this.state?.guild;
+    if (!guild || this.popups.isOpen) return false;
+    const notice = guildLevelUpNotice(settingsManager.get().game.guildLevelSeen, guild.id, guild.level);
+    settingsManager.rememberGuildLevel(notice.key);
+    if (notice.from === null) return false;
+    const before = new Set(guildPerkLines(notice.from));
+    const gained = guildPerkLines(guild.level).filter((line) => !before.has(line));
+    this.popups.confirm({
+      title: t("guild.levelUp.title"),
+      message: [t("guild.levelUp.message", { level: guild.level }), ...gained].join("\n"),
+      confirmLabel: t("guild.levelUp.ok"), cancelLabel: false,
+    });
+    return true;
+  }
+
   private openStampBoard(attendance: GuildAttendanceState): void {
     if (this.popups.isOpen) return;
     this.busy = true;
     const today = attendance.day;
-    // X로 도중에 닫아도 화면이 잠긴 채 남지 않는다 — 도장은 서버에서 이미 찍혔고 영수증만 건너뛴다.
-    this.popups.open({ width: A.width, height: A.height, title: t("guild.attendance.title"), closeOnBackdrop: false, dim: true, onClose: () => { this.busy = false; } }, (body, close) => {
+    // 고를 것이 없는 판이라 X를 두지 않는다 — 도장이 찍히면 영수증으로, 실패하면 오류로 저절로 닫힌다.
+    this.popups.open({ width: A.width, height: A.height, title: t("guild.attendance.title"), closeOnBackdrop: false, hideCloseButton: true, dim: true, onClose: () => { this.busy = false; } }, (body, close) => {
       const cells: { x: number; y: number }[] = [];
       GUILD_ATTENDANCE_CYCLE.forEach((day, index) => {
         const slot = guildStampSlot(index);

@@ -1,8 +1,8 @@
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { isContentUnlocked } from "../core/contentUnlock";
 import {
-  GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, findGuildProduct, guildAttendanceDay, guildAttendanceView,
-  guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf, guildMonthKey, guildNameKey, guildWeekKey, validateGuildName,
+  GUILD_LEADER_TRANSFER_DAYS, GUILD_LEAVE_COOLDOWN_MS, GUILD_NOTICE_MAX, GUILD_ROLE_LIMIT, GUILD_SHOP_PRODUCTS, findGuildProduct, guildAttendanceDay, guildAttendanceView,
+  guildCan, guildCanKick, guildCapacity, guildDateKey, guildGlyphCount, guildLevelOf, guildMonthKey, guildNameKey, guildSuccessor, guildWeekKey, validateGuildName,
   type GuildJoinMode, type GuildRole, type GuildShopProduct,
 } from "../core/guild";
 import { isGuildBadge, sameGuildBadge, type GuildBadge } from "../core/guildBadge";
@@ -113,7 +113,17 @@ export class FakeGuildServer implements GuildBackend {
     const me = guild?.members.get(actor.userId);
     if (!guild || !me) return fail("NOT_IN_GUILD");
     this.touch(me, actor);
+    this.reviewLeader(guild);
     return { guild, me };
+  }
+  /** 길드장이 14일 접속하지 않았으면 기여도 1위 임원 이상에게 넘긴다(`guildSuccessor`). 길드원이 길드를 부를 때마다 본다. */
+  private reviewLeader(guild: GuildRow): void {
+    const leader = this.leaderOf(guild);
+    if (this.now() - leader.lastActiveAt < GUILD_LEADER_TRANSFER_DAYS * 86_400_000) return;
+    const heir = guildSuccessor([...guild.members.values()]);
+    if (!heir) return;
+    leader.role = "member";
+    guild.members.get(heir)!.role = "leader";
   }
   /** 호출마다 이름·레벨·마지막 접속을 최신으로 맞추고 주가 넘어갔으면 주간 기여도를 비운다. */
   private touch(member: MemberRow, actor: GuildActor): void {
@@ -161,7 +171,7 @@ export class FakeGuildServer implements GuildBackend {
   async getGuild(actor: GuildActor): Promise<GuildStateResponse> {
     const guild = this.myGuild(actor);
     const me = guild?.members.get(actor.userId);
-    if (guild && me) this.touch(me, actor);
+    if (guild && me) { this.touch(me, actor); this.reviewLeader(guild); }
     return {
       guild: guild ? this.detail(guild) : null,
       me: me ? { role: me.role, coin: me.coin, contributionWeek: me.contributionWeek, contributionTotal: me.contributionTotal, joinedAt: me.joinedAt } : null,

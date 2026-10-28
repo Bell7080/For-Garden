@@ -8299,10 +8299,13 @@ function strike(
     return;
   }
   if (useUltimate && skill.barrage && comboHit === undefined) {
+    // 시험 발사(`ultimateLands`)는 범위 판정까지만 간다. 여기로 빠지는 궁극기는 늘 무언가를 하므로 그대로 「닿는다」.
+    if (ultimateProbing) throw new UltimateProbe(true);
     fireBarrage(attacker, skill.barrage, rng, state, events);
     return;
   }
   const basicAim = useUltimate ? undefined : skill.targeting;
+  if (ultimateProbing && useUltimate && attacker.def.ultimate.targeting === "single") throw new UltimateProbe(true);
   if ((useUltimate && attacker.def.ultimate.targeting !== "single") || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== undefined && !comboHit.grantActionResources);
     return;
@@ -8950,6 +8953,8 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
   }
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== undefined
     ? aliveFighters(state, attacker.side).filter(inCircle) : [];
+  // 시험 발사는 여기서 멈춘다 — 이 아래부터가 실제로 판을 바꾸는 일이다.
+  if (ultimateProbing && useUltimate) throw new UltimateProbe(targets.length > 0 || healingTargets.length > 0);
   if (targets.length === 0 && healingTargets.length === 0) return;
 
   // 판정이 쓴 모양을 그대로 넘긴다. 돌진을 반경 하나로 줄이면 씬은 통로 대신 원을 그리게 되어
@@ -10270,7 +10275,59 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
   }
   // 표적 고르기와 같은 규칙이다 — 숨지 않은 상대가 없으면 마지막 한 명을 노린다. 그러지
   // 않으면 게이지가 가득 찬 궁극기가 은신한 마지막 적 앞에서 영영 나가지 않는다.
-  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
+  if (!state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other))) return false;
+  // 범위로 치는 궁극기는 범위 안에 아무도 없으면 헛돈다(주위에 적이 없는 광역·닿지 않는 돌진). 그때 「쓸 수 있다」고
+  // 답하면 자동 궁극기가 매 틱 헛방을 쏘고 연출만 되풀이되며, 그 헛방은 기록에 남지 않아 서버 재현과 갈린다.
+  return ultimateProbing || !probeableUltimate(fighter.def.ultimate) || ultimateLands(state, fighter);
+}
+
+/** 범위 판정까지만 가 보는 시험 발사의 신호. 판을 바꾸기 전에 던져 그 자리에서 되돌아온다. */
+class UltimateProbe {
+  constructor(readonly lands: boolean) {}
+}
+let ultimateProbing = false;
+
+/** 게이지를 쓰고 스스로 끝나는 궁극기 갈래(`fireUltimateCore` 앞쪽). 범위가 비어도 헛돌지 않는다. */
+function selfContainedUltimate(ultimate: Fighter["def"]["ultimate"]): boolean {
+  return (ultimate.targeting === "duo" && ultimate.teamBuff !== undefined)
+    || (ultimate.targeting === "battlefieldAllies" && (ultimate.teamBuff !== undefined || ultimate.healing !== undefined))
+    || ultimate.selfBulwark !== undefined || ultimate.selfVolley !== undefined || ultimate.selfRoar !== undefined
+    || ultimate.selfLullaby !== undefined || ultimate.selfGuard !== undefined || ultimate.selfSetup !== undefined;
+}
+
+/** 범위 안에 아무도 없으면 헛돌 수 있는 궁극기인가. */
+function probeableUltimate(ultimate: Fighter["def"]["ultimate"]): boolean {
+  if (selfContainedUltimate(ultimate)) return false;
+  return ultimate.targeting === "nearbyEnemies" || ultimate.targeting === "targetedCircle" || ultimate.targeting === "chargeLine"
+    || ultimate.cursedTargetsOnly !== undefined;
+}
+
+/**
+ * 지금 쓰면 무언가에 닿는가 — 실제 발사와 **같은 길**을 범위 판정까지만 걸어 본다.
+ *
+ * 같은 길을 걷는 이유는 표적 고르기·순간이동·돌진 길이를 따로 다시 셈하면 실제 발사와 갈리기 때문이다.
+ * 그 길이 바꾸는 것은 시전자 값과 (저주 궁극기의) 가장 가까운 적의 저주뿐이라 그 둘만 떠 두었다 되돌리고,
+ * 난수는 쓰지 않는다 — 화면이 이 판정을 몇 번 더 불러도 서버 재현과 같은 판이 흐른다.
+ */
+function ultimateLands(state: SkirmishState, fighter: Fighter): boolean {
+  // 판 밖의 사본(빌려준 게이지로 묻는 늑대 명령 등)은 걸어 볼 몸이 없다. 그 자리는 부르는 쪽이 자리를 옮긴 뒤 쏜다.
+  if (findFighter(state, fighter.id) !== fighter) return true;
+  const caster = fighterValues(fighter);
+  const curses = fighter.def.ultimate.cursedTargetsOnly !== undefined
+    ? state.fighters.map((other) => [other, JSON.stringify(other.curse)] as const) : [];
+  ultimateProbing = true;
+  try {
+    // 범위 판정 전에 끝나는 길은 표적이 없는 경우뿐이다.
+    const events = fireUltimateCore(state, fighter.id, NO_CRIT);
+    return events.length > 0;
+  } catch (error) {
+    if (error instanceof UltimateProbe) return error.lands;
+    throw error;
+  } finally {
+    ultimateProbing = false;
+    restoreFighterValues(fighter, caster);
+    for (const [other, curse] of curses) if (JSON.stringify(other.curse) !== curse) other.curse = JSON.parse(curse);
+  }
 }
 
 /**
@@ -10279,6 +10336,23 @@ export function canFireUltimate(state: SkirmishState, fighter: Fighter): boolean
  * 붙어 있지 않아도 즉시 나간다 — 게이지를 채워 둔 플레이어가 누른 순간에 반응해야 하기 때문이다.
  * 조건을 채우지 못하면 아무것도 바꾸지 않고 빈 목록을 돌려준다.
  */
+/** 전투원의 값을 정의(`def`) 없이 깊게 떠 둔다 — 헛방 되돌리기 전용이다. */
+function fighterValues(fighter: Fighter): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fighter)) if (key !== "def" && typeof value !== "function") values[key] = JSON.stringify(value) ?? "undefined";
+  return values;
+}
+
+/** 떠 둔 값과 달라진 칸만 되돌린다. 바뀌지 않은 칸은 같은 객체를 그대로 둔다(화면이 쥔 참조를 갈지 않는다). */
+function restoreFighterValues(fighter: Fighter, values: Record<string, string>): void {
+  const target = fighter as unknown as Record<string, unknown>;
+  for (const key of Object.keys(target)) if (key !== "def" && typeof target[key] !== "function" && !(key in values)) delete target[key];
+  for (const [key, json] of Object.entries(values)) {
+    if ((JSON.stringify(target[key]) ?? "undefined") === json) continue;
+    target[key] = json === "undefined" ? undefined : JSON.parse(json);
+  }
+}
+
 export function fireUltimate(
   state: SkirmishState,
   fighterId: string,
@@ -10288,14 +10362,14 @@ export function fireUltimate(
 ): SkirmishEvent[] {
   const casterBefore = findFighter(state, fighterId);
   const energyBefore = casterBefore?.energy;
-  const serialBefore = casterBefore?.augmentActionSerial;
-  const targetBefore = casterBefore?.targetId;
+  // 시전자의 값만 적어 둔다(정의는 바뀌지 않으므로 뺀다). 쓸 수 없는 순간은 아무것도 바꾸지 않으므로 적지 않는다.
+  const casterSnapshot = casterBefore && canFireUltimate(state, casterBefore) ? fighterValues(casterBefore) : undefined;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
-  // **헛방은 판을 건드리지 않는다.** 게이지도 사건도 남기지 않은 시전은 화면이 기록하지 않으므로(서버 재현에 없다)
-  // 그 사이에 움직인 행동 일련번호·표적까지 되돌린다 — 남겨 두면 다음 증강 판정·이동이 재현과 한 틱씩 어긋난다.
-  if (casterBefore && events.length === 0 && energyBefore === casterBefore.energy) {
-    casterBefore.augmentActionSerial = serialBefore!;
-    casterBefore.targetId = targetBefore!;
+  // **헛방은 판을 건드리지 않는다.** 게이지도 사건도 남기지 않은 시전(주위에 적이 없는 광역 궁극기 등)은 화면이
+  // 기록하지 않으므로 서버 재현에도 없다. 그 사이에 움직인 시전자의 값(행동 번호·표적·평타 간격·되찍기 시계 등)을
+  // 전부 되돌린다 — 남겨 두면 다음 평타·증강 판정이 재현과 한 틱씩 어긋나 COMBAT_REJECTED로 끝난다.
+  if (casterBefore && casterSnapshot && events.length === 0 && energyBefore === casterBefore.energy) {
+    restoreFighterValues(casterBefore, casterSnapshot);
     return events;
   }
   if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
@@ -10327,6 +10401,8 @@ function fireUltimateCore(
 
   // 순풍을 거는 궁극기도 돌파가 길게 늘린 사본을 쓴다(`longGust`).
   const teamUltimate = raiderSkillTweaks(attacker, true, attacker.def.ultimate) as typeof attacker.def.ultimate;
+  // 시험 발사는 범위로 치는 궁극기만 한다(`probeableUltimate`). 아래 갈래는 늘 게이지를 쓰므로 들어오면 곧 「닿는다」.
+  if (ultimateProbing && selfContainedUltimate(teamUltimate)) throw new UltimateProbe(true);
   if (teamUltimate.targeting === "duo" && teamUltimate.teamBuff !== undefined) {
     // 전장 전체가 아니라 듀오 한 명에게만 걸린다. 듀오가 쓰러졌으면 걸 곳이 없다.
     const duo = duoOf(attacker, state);
@@ -10523,6 +10599,7 @@ function fireUltimateCore(
    * 터지고 그 뒤에 이빨이 들어간다. 판이 하나도 없으면 터뜨릴 것도 없다.
    */
   const detonate = teamUltimate.detonateShallows;
+  if (ultimateProbing && detonate && attacker.shallowPools.length > 0) throw new UltimateProbe(true);
   if (detonate) {
     // 궁극기 돌파(`tidalEcho`) — 터진 자리마다 두 번째 파도를 예약한다. 기절은 없고 위력만 줄어든다.
     const wave = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);

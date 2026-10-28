@@ -10373,10 +10373,12 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
     return;
   }
   if (useUltimate && skill.barrage && comboHit === void 0) {
+    if (ultimateProbing) throw new UltimateProbe(true);
     fireBarrage(attacker, skill.barrage, rng, state, events);
     return;
   }
   const basicAim = useUltimate ? void 0 : skill.targeting;
+  if (ultimateProbing && useUltimate && attacker.def.ultimate.targeting === "single") throw new UltimateProbe(true);
   if (useUltimate && attacker.def.ultimate.targeting !== "single" || basicAim === "nearbyEnemies" || basicAim === "splitShot") {
     strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint, comboHit !== void 0 && !comboHit.grantActionResources);
     return;
@@ -10843,6 +10845,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     for (let fill = 0; targets2.length < forkCount; fill += 1) targets2.push(targets2[fill % distinctTargets]);
   }
   const healingTargets = ultimate?.targeting === "targetedCircle" && ultimate.allyHealingPower !== void 0 ? aliveFighters(state, attacker.side).filter(inCircle) : [];
+  if (ultimateProbing && useUltimate) throw new UltimateProbe(targets2.length > 0 || healingTargets.length > 0);
   if (targets2.length === 0 && healingTargets.length === 0) return;
   const supportiveOnly = targets2.length === 0 && healingTargets.length > 0;
   const impactArea = skill.targeting === "battlefieldEnemies" ? { shape: "battlefield" } : skill.targeting === "splitShot" ? {
@@ -11809,17 +11812,60 @@ function canFireUltimate(state, fighter) {
   if (fighter.def.ultimate.overpaintDetonation === true) {
     return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other) && (other.overpaint?.stacks ?? 0) > 0);
   }
-  return state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other));
+  if (!state.fighters.some((other) => other.side !== fighter.side && isFighterAlive(other))) return false;
+  return ultimateProbing || !probeableUltimate(fighter.def.ultimate) || ultimateLands(state, fighter);
+}
+var UltimateProbe = class {
+  constructor(lands) {
+    this.lands = lands;
+  }
+  lands;
+};
+var ultimateProbing = false;
+function selfContainedUltimate(ultimate) {
+  return ultimate.targeting === "duo" && ultimate.teamBuff !== void 0 || ultimate.targeting === "battlefieldAllies" && (ultimate.teamBuff !== void 0 || ultimate.healing !== void 0) || ultimate.selfBulwark !== void 0 || ultimate.selfVolley !== void 0 || ultimate.selfRoar !== void 0 || ultimate.selfLullaby !== void 0 || ultimate.selfGuard !== void 0 || ultimate.selfSetup !== void 0;
+}
+function probeableUltimate(ultimate) {
+  if (selfContainedUltimate(ultimate)) return false;
+  return ultimate.targeting === "nearbyEnemies" || ultimate.targeting === "targetedCircle" || ultimate.targeting === "chargeLine" || ultimate.cursedTargetsOnly !== void 0;
+}
+function ultimateLands(state, fighter) {
+  if (findFighter(state, fighter.id) !== fighter) return true;
+  const caster = fighterValues(fighter);
+  const curses = fighter.def.ultimate.cursedTargetsOnly !== void 0 ? state.fighters.map((other) => [other, JSON.stringify(other.curse)]) : [];
+  ultimateProbing = true;
+  try {
+    const events = fireUltimateCore(state, fighter.id, NO_CRIT);
+    return events.length > 0;
+  } catch (error) {
+    if (error instanceof UltimateProbe) return error.lands;
+    throw error;
+  } finally {
+    ultimateProbing = false;
+    restoreFighterValues(fighter, caster);
+    for (const [other, curse] of curses) if (JSON.stringify(other.curse) !== curse) other.curse = JSON.parse(curse);
+  }
+}
+function fighterValues(fighter) {
+  const values = {};
+  for (const [key, value] of Object.entries(fighter)) if (key !== "def" && typeof value !== "function") values[key] = JSON.stringify(value) ?? "undefined";
+  return values;
+}
+function restoreFighterValues(fighter, values) {
+  const target = fighter;
+  for (const key of Object.keys(target)) if (key !== "def" && typeof target[key] !== "function" && !(key in values)) delete target[key];
+  for (const [key, json] of Object.entries(values)) {
+    if ((JSON.stringify(target[key]) ?? "undefined") === json) continue;
+    target[key] = json === "undefined" ? void 0 : JSON.parse(json);
+  }
 }
 function fireUltimate(state, fighterId, rng = NO_CRIT, targetPoint) {
   const casterBefore = findFighter(state, fighterId);
   const energyBefore = casterBefore?.energy;
-  const serialBefore = casterBefore?.augmentActionSerial;
-  const targetBefore = casterBefore?.targetId;
+  const casterSnapshot = casterBefore && canFireUltimate(state, casterBefore) ? fighterValues(casterBefore) : void 0;
   const events = fireUltimateCore(state, fighterId, rng, targetPoint);
-  if (casterBefore && events.length === 0 && energyBefore === casterBefore.energy) {
-    casterBefore.augmentActionSerial = serialBefore;
-    casterBefore.targetId = targetBefore;
+  if (casterBefore && casterSnapshot && events.length === 0 && energyBefore === casterBefore.energy) {
+    restoreFighterValues(casterBefore, casterSnapshot);
     return events;
   }
   if (casterBefore && isFighterAlive(casterBefore) && ((energyBefore ?? 0) > casterBefore.energy || events.length > 0)) {
@@ -11840,6 +11886,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
   const attacker = findFighter(state, fighterId);
   if (!attacker || !canFireUltimate(state, attacker)) return events;
   const teamUltimate = raiderSkillTweaks(attacker, true, attacker.def.ultimate);
+  if (ultimateProbing && selfContainedUltimate(teamUltimate)) throw new UltimateProbe(true);
   if (teamUltimate.targeting === "duo" && teamUltimate.teamBuff !== void 0) {
     const duo = duoOf(attacker, state);
     if (duo === void 0 || !isFighterAlive(duo)) return events;
@@ -12022,6 +12069,7 @@ function fireUltimateCore(state, fighterId, rng = NO_CRIT, targetPoint) {
   }
   if (teamUltimate.blinkToLowestDefense === true) blinkToLowestDefenseEnemy(attacker, state);
   const detonate = teamUltimate.detonateShallows;
+  if (ultimateProbing && detonate && attacker.shallowPools.length > 0) throw new UltimateProbe(true);
   if (detonate) {
     const wave = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     for (const pool of [...attacker.shallowPools]) {

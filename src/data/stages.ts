@@ -1,6 +1,6 @@
 import { ancientStageFloor } from "./ancientStrataDifficulty";
 import { getAncientStrataFloor, getAncientStrataStage } from "../core/ancientStrataBattle";
-import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
+import { difficultyStageRewards, storyBaseStageId, STORY_DIFFICULTY, storyChapterStatFactor, storyStageId, type StoryDifficulty } from "../core/storyDifficulty";
 import { GROWTH_STAT_KEYS } from "../core/relicProgression";
 import { applyBreakthrough } from "../core/relicProgression";
 import { registerDataText } from "../i18n";
@@ -361,6 +361,8 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
       enemies,
       // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
       ...(elite ? { elite: true as const } : {}),
+      // 장 배율이 오각형 다섯에 곱해진다(`storyChapterStatFactor`). 배율 1인 장(1장)은 필드를 두지 않는다.
+      ...(storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {}),
       rewards: {
         /*
          * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
@@ -442,7 +444,7 @@ const EXTRA_STORY_STAGES: readonly BattleStageDef[] = (["normal", "hard"] as con
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map(id => storyStageId(difficulty, id));
   return { ...base, id: storyStageId(difficulty, base.id), prerequisiteStageIds,
     enemies: base.enemies.map(enemy => ({ ...enemy })),
-    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor, rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor * (base.difficultyStatMultiplier ?? 1), rewards: difficultyStageRewards(base.rewards, difficulty), situation: undefined };
 }));
 export const ALL_STORY_STAGES: readonly StageDef[] = [...STAGES, ...EXTRA_STORY_STAGES];
 const STAGE_BY_ID = new Map(ALL_STORY_STAGES.map((stage) => [stage.id, stage]));

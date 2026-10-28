@@ -19028,6 +19028,10 @@ var STORY_DIFFICULTY = {
   normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
   hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
 };
+var STORY_CHAPTER_STAT_FACTOR = { 2: 1.1, 3: 1.2, 4: 1.4, 5: 1.8, 6: 2.2, 7: 2.6 };
+function storyChapterStatFactor(chapter) {
+  return STORY_CHAPTER_STAT_FACTOR[chapter ?? 0] ?? 1;
+}
 function storyDifficultyOf(id) {
   return id?.startsWith("normal:") ? "normal" : id?.startsWith("hard:") ? "hard" : "easy";
 }
@@ -19328,6 +19332,8 @@ var CHAPTERS = CHAPTER_CONTENT.map((content, chapterIndex) => {
       enemies,
       // 혼자 서면 정예다. 화면은 이 표식으로 몸집과 표식만 바꾸고 수치는 건드리지 않는다.
       ...elite ? { elite: true } : {},
+      // 장 배율이 오각형 다섯에 곱해진다(`storyChapterStatFactor`). 배율 1인 장(1장)은 필드를 두지 않는다.
+      ...storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {},
       rewards: {
         /*
          * 초회 치즈케이크는 **난이도 검수가 딛고 선 값**이라 그대로 둔다. `stageDifficulty.test`가 관문마다
@@ -19391,7 +19397,7 @@ var EXTRA_STORY_STAGES = ["normal", "hard"].flatMap((difficulty) => STAGES.filte
     id: storyStageId(difficulty, base.id),
     prerequisiteStageIds,
     enemies: base.enemies.map((enemy) => ({ ...enemy })),
-    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor,
+    difficultyStatMultiplier: STORY_DIFFICULTY[difficulty].statFactor * (base.difficultyStatMultiplier ?? 1),
     rewards: difficultyStageRewards(base.rewards, difficulty),
     situation: void 0
   };

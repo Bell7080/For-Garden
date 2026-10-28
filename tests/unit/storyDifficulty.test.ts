@@ -122,6 +122,12 @@ describe("스토리 확장 난이도", () => {
     }
   });
 
+  it("장 배율은 장마다 하나다", () => {
+    const factor = (id: string) => getBattleStage(id).difficultyStatMultiplier ?? 1;
+    expect(["1-1", "1-10", "2-1", "3-10", "4-1", "4-10", "5-1", "5-10", "6-1", "7-10"].map(factor)).toEqual([1, 1, 1.1, 1.2, 1.4, 1.4, 1.8, 1.8, 2.2, 2.6]);
+    expect(getBattleStage(storyStageId("normal", "7-10")).difficultyStatMultiplier).toBeCloseTo(STORY_DIFFICULTY.normal.statFactor * 2.6);
+  });
+
   it("쉬움의 편성·레벨·돌파·정예를 그대로 상속하고 오각형에만 난이도 종족값을 적용한다", () => {
     for (const difficulty of ["normal", "hard"] as const) {
       for (const base of STAGES.filter(stage => stage.kind === "battle")) {
@@ -130,7 +136,11 @@ describe("스토리 확장 난이도", () => {
         expect(stage.enemies).not.toBe(base.enemies);
         const easy = getStageEnemies(base), grown = getStageEnemies(stage);
         grown.forEach((enemy, i) => {
-          for (const key of ["hp", "atk", "ap", "def", "res"] as const) expect(enemy.stats[key]).toBe(Math.round(easy[i].stats[key] * STORY_DIFFICULTY[difficulty].statFactor));
+          for (const key of ["hp", "atk", "ap", "def", "res"] as const) {
+            // 장 배율이 붙은 관문은 쉬움 값이 이미 한 번 반올림되어 있어 1~2만큼 어긋날 수 있다.
+            const factor = STORY_DIFFICULTY[difficulty].statFactor;
+            expect(Math.abs(enemy.stats[key] - easy[i].stats[key] * factor)).toBeLessThanOrEqual(base.difficultyStatMultiplier ? factor : 0.5);
+          }
           for (const key of ["attackSpeed", "moveSpeed", "critChance", "critDamage", "energyGain"] as const) expect(enemy.stats[key]).toBe(easy[i].stats[key]);
           expect(enemy.encounterRole).toBe(easy[i].encounterRole);
         });

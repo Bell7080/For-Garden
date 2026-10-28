@@ -23,6 +23,8 @@ export const PLAYER_PROFILE_LAYOUT = {
     expY: -500,
     expHeight: 18,
     expValueY: -470,
+    /** 친구 카드의 즐겨찾기·삭제 칩 — 이름줄 오른쪽 끝(`textRight`)에 붙는다. `gap`은 칩 중심 사이. */
+    marks: { size: 64, gap: 80 },
   },
   modifiers: { width: 170, height: 44, gap: 12 },
   /** 한 줄 소개 판. 따옴표 둘은 판의 장식이라 판 양 끝에 위아래로 엇갈려 찍힌다. */

@@ -30,6 +30,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 import { addSdFootShadow } from "./SdFootShadow";
+import { addMarkChip } from "./MarkChip";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -58,6 +59,14 @@ export interface ProfileAction { label: string; destructive?: boolean; onClick: 
  * **누구를 아끼는가**(애착 렐릭이 홀로그램 바닥 위에 서서 숨 쉬고, 옆에 레벨·돌파·유대·전투력),
  * **무엇을 이뤘나**(스토리 진행·원정 최고·도감·결투장)를 쌓는다. 자기 카드에만 편집이 선다.
  */
+/** 친구 카드 머리의 표식 칩 — 켜짐 색은 룬 쪽지의 즐겨찾기(금빛)와 확인 창의 파괴적 조작(붉은빛)과 같다. */
+export interface ProfileMarks {
+  favorite: boolean;
+  onToggleFavorite: () => void;
+  onRemove: () => void;
+}
+const PROFILE_MARK_ON = { favorite: 0xf2c744, remove: 0xe0605a } as const;
+
 export class PlayerProfilePopup {
   private opened = false;
 
@@ -69,7 +78,7 @@ export class PlayerProfilePopup {
     /** 자기 카드에만 온다 — 각 요소를 누르면 그 요소만 고치는 창이 열린다. 친구 카드에는 없다. */
     private readonly editors?: ProfileEditors,
     /** 친구 카드: 머리글과, 애착 렐릭을 눌렀을 때 여는 읽기 전용 정보창. */
-    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[] } = {},
+    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[]; marks?: ProfileMarks } = {},
   ) {}
 
   open(options: { instant?: boolean } = {}): void {
@@ -124,7 +133,8 @@ export class PlayerProfilePopup {
     }
 
     const left = header.textLeft;
-    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
+    // 친구 카드는 이름줄 오른쪽 끝에 표식 칩이 서므로 이름을 그만큼 짧게 끊는다.
+    const name = this.scene.add.text(left, header.nameY, compactProfileText(this.profile.displayName, this.options.marks ? 9 : 12), textStyle({ role: "display", size: 50, color: COLOR.ink }))
       .setOrigin(0, 0.5).setShadow(0, 3, "#000000", 6, false, true);
     body.add(name);
     if (this.editors) {
@@ -133,6 +143,8 @@ export class PlayerProfilePopup {
       body.add(drawGlyph(this.scene, "edit", pencilX, header.nameY, 28, COLOR.accent, 0.85));
       this.bindEdit(body, name, left + (name.width + 60) / 2, header.nameY, name.width + 70, 70, this.editors.nickname);
     }
+
+    if (this.options.marks) this.buildMarks(body, this.options.marks);
 
     // 수식어는 이름 바로 아래 한 줄. 장착한 것만 서고 비었으면 그 줄은 비어 있다.
     const { modifiers } = PLAYER_PROFILE_LAYOUT;
@@ -466,6 +478,20 @@ export class PlayerProfilePopup {
       body.add(this.scene.add.text(-270, y, line, textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
     });
   }
+  /**
+   * 친구 카드의 표식 칩 — 즐겨찾기(별)와 삭제(휴지통)가 이름줄 오른쪽 끝에 정보창·룬 쪽지와 같은 칩으로 선다.
+   * 밑동 조작 줄에는 친선전처럼 상대와 무엇을 하는 조작만 남는다.
+   */
+  private buildMarks(body: Phaser.GameObjects.Container, marks: ProfileMarks): void {
+    const { header } = PLAYER_PROFILE_LAYOUT;
+    const { size, gap } = header.marks;
+    const removeX = header.textRight - size / 2;
+    const star = addMarkChip(this.scene, body, removeX - gap, header.nameY, { glyph: "bookmark", onColor: PROFILE_MARK_ON.favorite, size, onToggle: marks.onToggleFavorite });
+    star.paint(marks.favorite);
+    const remove = addMarkChip(this.scene, body, removeX, header.nameY, { glyph: "trash", onColor: PROFILE_MARK_ON.remove, size, onToggle: marks.onRemove });
+    remove.paint(true);
+  }
+
   /** 카드 밑동의 조작 줄 — 칸 수와 상관없이 같은 폭으로 나눠 서고, 파괴적인 조작은 확인 창과 같은 붉은 판이다. */
   private buildActions(body: Phaser.GameObjects.Container): void {
     const actions = this.options.actions ?? [];

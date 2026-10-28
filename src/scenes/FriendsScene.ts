@@ -31,7 +31,7 @@ import {
   friendsChipX, friendsChipXFromRight, friendsMinScroll, friendsRowY, friendsSearchRow, friendsSortX, friendsTabX,
 } from "../ui/friendsLayout";
 import { addFriendChip, addRowButton } from "../ui/friendsWidgets";
-import { PlayerProfilePopup, type ProfileAction } from "../ui/PlayerProfilePopup";
+import { PlayerProfilePopup, type ProfileAction, type ProfileMarks } from "../ui/PlayerProfilePopup";
 import { compactProfileText } from "../ui/playerProfileLayout";
 import { PopupLayer } from "../ui/PopupLayer";
 import { pressIn, pressOut } from "../ui/pressFeedback";
@@ -516,27 +516,26 @@ export class FriendsScene extends Phaser.Scene {
     if (this.popups.isOpen) return;
     const actions: ProfileAction[] = isFriend ? [
       {label:t("arena.friend.button"),onClick:()=>{popup.close();openArenaFriendPopup(this,this.popups,{id:profile.id,name:profile.displayName,frameId:profile.frameId,favoriteRelicId:profile.favoriteRelic.relicId,level:profile.level});}},
-      {
-        label: t(favorite ? "friends.action.unfavorite" : "friends.action.favorite"),
-        onClick: () => {
-          popup.close();
-          void this.mutate(() => socialApi.setFavorite(profile.id, !favorite), true).then(() => {
-            if (this.scene.isActive()) this.openProfile(profile, true, !favorite, true);
-          });
-        },
-      },
-      {
-        label: t("friends.action.remove"), destructive: true,
-        onClick: () => this.popups.confirm({
-          title: t("friends.remove.title"), message: t("friends.remove.message", { name: profile.displayName }),
-          confirmLabel: t("friends.remove.confirm"), destructive: true,
-        }, () => { popup.close(); void this.mutate(() => socialApi.removeFriend(profile.id), true); }),
-      },
     ] : [];
+    // 즐겨찾기·삭제는 밑동 버튼이 아니라 카드 머리의 표식 칩이다(렐릭 정보창·룬 쪽지와 같은 한 장).
+    const marks: ProfileMarks | undefined = isFriend ? {
+      favorite,
+      onToggleFavorite: () => {
+        popup.close();
+        void this.mutate(() => socialApi.setFavorite(profile.id, !favorite), true).then(() => {
+          if (this.scene.isActive()) this.openProfile(profile, true, !favorite, true);
+        });
+      },
+      onRemove: () => this.popups.confirm({
+        title: t("friends.remove.title"), message: t("friends.remove.message", { name: profile.displayName }),
+        confirmLabel: t("friends.remove.confirm"), destructive: true,
+      }, () => { popup.close(); void this.mutate(() => socialApi.removeFriend(profile.id), true); }),
+    } : undefined;
     const popup = new PlayerProfilePopup(this, this.popups, friendProfileDisplay({ ...profile, lastActive: this.ageText(profile.lastActiveAt) }), () => undefined, undefined, {
       title: t("friends.profile"),
       onFavorite: () => this.info.showFriend(profile.favoriteRelic),
       actions,
+      marks,
     });
     popup.open({ instant });
   }

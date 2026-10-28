@@ -68,6 +68,24 @@ describe("player profile display", () => {
     expect(friend.competitiveStats.favoriteRelic?.breakthroughGrade).toBe(1);
   });
 
+  it("스토리 기록이 빠진 예전 공개 프로필은 그 친구의 저장에서 기록 칸을 다시 짓는다", async () => {
+    const { refreshStaleProfileRecords } = await import("../../src/server/friendProfileFallback");
+    const { saveManager } = await import("../../src/state/SaveManager");
+    const now = new Date("2026-10-27T12:00:00Z");
+    const state = createDefaultSession();
+    state.cleared = new Set(["1-1", "1-3", "ancient:5"]); state.expedition.allTimeBestScore = 900;
+    const saved = JSON.parse(JSON.stringify(saveManager.exportData(state)));
+    const stale = { id: "p-old", competitiveStats: { ancientFloor: 5, arenaScore: 1300 } };
+    const fresh = { id: "p-new", competitiveStats: { highestStage: { stageId: "2-1", displayValue: "2-1" } } };
+    const load = vi.fn(async (id: string) => id === "p-old" ? { data: saved } : null);
+    const result = { friends: [stale, fresh], incoming: [{ profile: { id: "p-missing", competitiveStats: {} } }] };
+    await refreshStaleProfileRecords(result, load, now);
+    expect(stale.competitiveStats).toMatchObject({ highestStage: { stageId: "1-3" }, expeditionScore: 900, ancientFloor: 5, arenaScore: 1300 });
+    // 이미 새 값을 실은 프로필은 저장을 읽지 않는다.
+    expect(load).not.toHaveBeenCalledWith("p-new");
+    expect(result.incoming[0].profile.competitiveStats).toEqual({});
+  });
+
   it("획득한 공개 수식어만 중복 없이 장착 상한까지 허용한다", () => {
     const catalog = [
       { id: "first", displayName: "최초의 복원", rarity: "rare" },

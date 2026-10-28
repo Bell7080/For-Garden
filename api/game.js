@@ -1090,9 +1090,6 @@ var FRIENDS_KO = {
   "friends.action.cancel": "\uCDE8\uC18C",
   "friends.action.already": "\uCE5C\uAD6C",
   "friends.action.pending": "\uB300\uAE30 \uC911",
-  "friends.action.favorite": "\uC990\uACA8\uCC3E\uAE30",
-  "friends.action.unfavorite": "\uC990\uACA8\uCC3E\uAE30 \uD574\uC81C",
-  "friends.action.remove": "\uCE5C\uAD6C \uC0AD\uC81C",
   "friends.remove.title": "\uCE5C\uAD6C \uC0AD\uC81C",
   "friends.remove.message": "{name:\uC744} \uCE5C\uAD6C\uC5D0\uC11C \uC0AD\uC81C\uD560\uAE4C\uC694?",
   "friends.remove.confirm": "\uC0AD\uC81C",
@@ -1154,6 +1151,7 @@ var GUILD_KO = {
   "guild.badge.icon": "\uBB38\uC591",
   "guild.badge.iconColor": "\uBB38\uC591\uC0C9",
   "guild.badge.apply": "\uBC30\uC9C0 \uBCC0\uACBD",
+  "guild.badge.firstFree": "\uCCAB \uD68C \uBB34\uB8CC!",
   "guild.badge.confirmTitle": "\uBC30\uC9C0 \uBCC0\uACBD",
   "guild.badge.confirmMessage": "\uAE38\uB4DC \uBC30\uC9C0\uB97C \uBC14\uAFC9\uB2C8\uB2E4.",
   "guild.badge.done": "\uBC30\uC9C0\uB97C \uBC14\uAFE8\uC2B5\uB2C8\uB2E4",
@@ -1662,7 +1660,6 @@ var MISSIONS_KO = {
 // src/i18n/ko/inventory.ts
 init_define_import_meta_env();
 var INVENTORY_KO = {
-  "stamina.back": "\uB3CC\uC544\uAC00\uAE30",
   "inventory.title": "\uAC00\uBC29",
   "inventory.tab.rune": "\uB8EC",
   "inventory.tab.currency": "\uC7AC\uD654",
@@ -1706,7 +1703,8 @@ var INVENTORY_KO = {
   "stamina.watchAd": "\uC2DC\uCCAD",
   "stamina.rechargeFailed": "\uCDA9\uC804\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "stamina.adCancelled": "\uAD11\uACE0\uAC00 \uCDE8\uC18C\uB418\uC5C8\uAC70\uB098 \uC900\uBE44\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
-  "stamina.nextRecovery": "\uB2E4\uC74C \uD68C\uBCF5\uAE4C\uC9C0 {time}",
+  "stamina.nextRecovery": "{minutes}\uBD84\uB9C8\uB2E4 {amount} \uD68C\uBCF5 \xB7 \uB2E4\uC74C \uD68C\uBCF5\uAE4C\uC9C0 {time}",
+  "stamina.regenEvery": "{minutes}\uBD84\uB9C8\uB2E4 {amount} \uD68C\uBCF5",
   "sortie.cake.name": "\uCF00\uC774\uD06C \uB300\uC791\uC804",
   "sortie.cake.kind": "\uBB3C\uB7C9 \uB358\uC804",
   "sortie.cake.goal": "\uD55C\uAEBC\uBC88\uC5D0 \uBAB0\uB824\uC624\uB294 \uC801\uC744 \uBAA8\uB450 \uCC98\uCE58",
@@ -2814,12 +2812,6 @@ var RAID_KO = {
   "raid.contribution.value": "\uB0B4 \uAE30\uC5EC {damage}",
   "raid.contribution.empty": "\uC544\uC9C1 \uC544\uBB34\uB3C4 \uBC00\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4",
   "raid.reward.title": "\uD68D\uB4DD \uBCF4\uC0C1",
-  "raid.reward.progress": "\uC804\uCCB4 \uC9C4\uD589",
-  "raid.reward.kill": "\uD1A0\uBC8C",
-  "raid.reward.killYes": "\uC131\uACF5",
-  "raid.reward.killNo": "\uC9C4\uD589 \uC911",
-  "raid.reward.killFailed": "\uC2E4\uD328",
-  "raid.reward.note": "\uB808\uC774\uB4DC\uAC00 \uB05D\uB098\uBA74 \uC644\uB8CC \uD0ED\uC5D0\uC11C \uBCF4\uC0C1\uC744 \uBC1B\uC2B5\uB2C8\uB2E4",
   "raid.result.score": "\uC810\uC218 {score}",
   "shop.loot.title": "\uC804\uB9AC\uD488 \uC0C1\uC810"
 };
@@ -20021,7 +20013,11 @@ function splitAccrualAt(window2, boundaryAt) {
 var BASE_STAMINA_MAX = 120;
 var STAMINA_PER_RESEARCH_LEVEL = 2;
 var ABSOLUTE_STAMINA_MAX = 240;
-var STAMINA_REGEN_INTERVAL_MS = 5 * 60 * 1e3;
+var STAMINA_REGEN_INTERVAL_MS = 25 * 60 * 1e3;
+var STAMINA_REGEN_AMOUNT = 5;
+function regenTicksToFill(missing) {
+  return Math.max(0, Math.ceil(missing / STAMINA_REGEN_AMOUNT));
+}
 var STAMINA_HOLD_LIMIT = 9999;
 function staminaMaxForResearchLevel(level) {
   const safeLevel = Number.isFinite(level) ? Math.max(0, Math.floor(level)) : 0;
@@ -20036,19 +20032,19 @@ function paidStaminaApplied(current, requested) {
 function settleStamina(amount, maximum, updatedAt, serverNow2) {
   const safeMaximum = Math.max(0, Math.floor(maximum));
   const safeAmount = Math.min(STAMINA_HOLD_LIMIT, Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0)));
-  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, Math.max(0, safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
+  const accrual = timeAccrualWindow(updatedAt || null, serverNow2, regenTicksToFill(safeMaximum - safeAmount) * STAMINA_REGEN_INTERVAL_MS);
   if (!accrual.accepted) return { amount: safeAmount, updatedAt, recovered: 0 };
   const nowIso = new Date(accrual.window.serverNowMs).toISOString();
   if (safeAmount >= safeMaximum || accrual.initialized) return { amount: safeAmount, updatedAt: nowIso, recovered: 0 };
   const intervals = Math.floor(accrual.window.elapsedMs / STAMINA_REGEN_INTERVAL_MS);
-  const recovered = Math.min(safeMaximum - safeAmount, intervals);
-  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + recovered * STAMINA_REGEN_INTERVAL_MS;
+  const recovered = Math.min(safeMaximum - safeAmount, intervals * STAMINA_REGEN_AMOUNT);
+  const nextUpdatedMs = safeAmount + recovered >= safeMaximum ? accrual.window.serverNowMs : accrual.window.startMs + intervals * STAMINA_REGEN_INTERVAL_MS;
   return { amount: safeAmount + recovered, updatedAt: new Date(nextUpdatedMs).toISOString(), recovered };
 }
 function staminaTiming(amount, maximum, updatedAt) {
   if (amount >= maximum) return { nextRecoveryAt: null, fullAt: null };
   const next = Date.parse(updatedAt) + STAMINA_REGEN_INTERVAL_MS;
-  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, maximum - amount - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
+  return { nextRecoveryAt: new Date(next).toISOString(), fullAt: new Date(next + Math.max(0, regenTicksToFill(maximum - amount) - 1) * STAMINA_REGEN_INTERVAL_MS).toISOString() };
 }
 
 // src/data/economy.ts
@@ -38946,6 +38942,35 @@ function createSupabaseStore(env) {
   });
 }
 
+// src/server/friendProfileFallback.ts
+init_define_import_meta_env();
+async function refreshStaleProfileRecords(result, loadSave, now) {
+  const profiles = collectProfiles(result).filter((profile) => typeof profile.id === "string" && !profile.competitiveStats?.highestStage);
+  await Promise.all(profiles.map(async (profile) => {
+    try {
+      const stored = await loadSave(profile.id);
+      if (!stored) return;
+      const fresh = publicProfile(saveManager.parse(stored.data), profile.id, now).competitiveStats;
+      profile.competitiveStats = { ...profile.competitiveStats ?? {}, ...fresh };
+    } catch {
+    }
+  }));
+}
+function collectProfiles(result) {
+  if (!result || typeof result !== "object") return [];
+  const data = result;
+  const out = [];
+  const push = (value) => {
+    if (value && typeof value === "object") out.push(value);
+  };
+  if (Array.isArray(data.friends)) data.friends.forEach(push);
+  for (const key of ["incoming", "outgoing", "users"]) {
+    const rows = data[key];
+    if (Array.isArray(rows)) rows.forEach((row) => push(row?.profile));
+  }
+  return out;
+}
+
 // src/api/RemoteSocialApi.ts
 init_define_import_meta_env();
 
@@ -39120,7 +39145,9 @@ async function handler(req, res) {
     } else if (body.method.startsWith("social.")) {
       const method = body.method.slice(7);
       if (!isSocialMethod(method)) throw new GameCallError(400, "unknown_method");
-      res.status(200).json(await store.socialCall(user.id, method, body.args ?? [], body.requestId));
+      const response = await store.socialCall(user.id, method, body.args ?? [], body.requestId);
+      if (["getFriends", "getRequests", "searchUsers", "getRecommendations"].includes(method)) await refreshStaleProfileRecords(response?.result, (id) => store.load(id), /* @__PURE__ */ new Date());
+      res.status(200).json(response);
     } else {
       res.status(200).json(await handleGameCall(user.id, body, { store, strict: true, guild, developmentTools: qaToolsAllowed(url, process.env.FORGARDEN_QA_TOOLS) }));
     }

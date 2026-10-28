@@ -612,7 +612,7 @@ export default {
   "keyword.stealth.term": "隐身",
   "keyword.stealth.description": "持续期间，单位不会成为敌人单体攻击可选择的目标。隐身解除后会重新成为目标。",
   "keyword.ingredient.term": "食材",
-  "keyword.ingredient.description": "马加萨锁定的敌人。每次攻击食材，攻击速度和移动速度提高5%（最多10层）；攻击其他敌人时全部解除。",
+  "keyword.ingredient.description": "马加萨锁定的敌人。每次攻击食材，攻击速度和移动速度提高5（最多10层）；攻击其他敌人时全部解除。",
   "keyword.transfer.term": "转移",
   "keyword.transfer.description": "以主目标在经过防御、护盾与伤害减免后实际损失的生命为基准，将其中一部分转移给其他目标。",
   "keyword.pack-hunt.term": "群猎",

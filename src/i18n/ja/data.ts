@@ -795,7 +795,7 @@ export default {
   "keyword.stealth.term": "隠密",
   "keyword.stealth.description": "続いている間、敵の単体攻撃が選ぶ標的から外れる。隠密が解けると再び標的になる。",
   "keyword.ingredient.term": "食材",
-  "keyword.ingredient.description": "マガサが狙いを付けた敵。食材を攻撃するたびに攻撃速度・移動速度が5%上がり(最大10重)、他の敵を攻撃するとすべて解除される。",
+  "keyword.ingredient.description": "マガサが狙いを付けた敵。食材を攻撃するたびに攻撃速度・移動速度が5上がり(最大10重)、他の敵を攻撃するとすべて解除される。",
   "keyword.transfer.term": "転移",
   "keyword.transfer.description": "主対象が防御・シールド・軽減をすべて通した後に実際に失った体力を基準に、その一部を別の対象へ移す。",
   "keyword.pack-hunt.term": "群れ狩り",

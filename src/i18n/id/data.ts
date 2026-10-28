@@ -612,7 +612,7 @@ export default {
   "keyword.stealth.term": "Siluman",
   "keyword.stealth.description": "Selama berlangsung, unit keluar dari target yang bisa dipilih serangan tunggal musuh. Saat Siluman pecah, ia kembali jadi target.",
   "keyword.ingredient.term": "Bahan",
-  "keyword.ingredient.description": "Musuh yang ditandai Magasa. Tiap serangan ke Bahan menaikkan kecepatan serang dan gerak 5% (maks 10 tumpukan); menyerang musuh lain menghapus semuanya.",
+  "keyword.ingredient.description": "Musuh yang ditandai Magasa. Tiap serangan ke Bahan menaikkan kecepatan serang dan gerak 5 (maks 10 tumpukan); menyerang musuh lain menghapus semuanya.",
   "keyword.transfer.term": "Alih",
   "keyword.transfer.description": "Memindahkan sebagian ke target lain berdasarkan HP yang benar-benar hilang dari target utama setelah Pertahanan, perisai, dan reduksi kerusakan diterapkan.",
   "keyword.pack-hunt.term": "Perburuan Kawanan",

@@ -3618,7 +3618,7 @@ function confinementAttackSpeedPercent(fighter: Fighter): number {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.attackSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && (trait.effectId === "appetiteFrenzy" || trait.effectId === "corneredBeast") ? trait.attackSpeedPercent : 0;
-  return unlocked + fever + ingredientHastePercent(fighter);
+  return unlocked + fever;
 }
 
 /** 감금 무리가 제 걸음을 빠르게 하는 몫(%) — 풀린 자물쇠와 「궁지에 몰린 짐승」. */
@@ -3627,13 +3627,16 @@ function confinementMoveSpeedPercent(fighter: Fighter): number {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.moveSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && trait.effectId === "corneredBeast" ? trait.moveSpeedPercent : 0;
-  return unlocked + fever + ingredientHastePercent(fighter);
+  return unlocked + fever;
 }
 
-/** 「오늘의 재료」(마가사) — 재료를 이어 때려 쌓은 공속·이속 몫(%). 두 속도가 같은 값을 얹는다. */
-export function ingredientHastePercent(fighter: Fighter): number {
+/**
+ * 「오늘의 재료」(마가사) — 재료를 이어 때려 쌓은 공속·이속 깡 수치. 두 속도의 **기본값에 더하고** 배율은 그 위에 곱한다
+ * (v0.391.7 응태 결정 — 퍼센트가 아니라 수치 5씩).
+ */
+export function ingredientHastePoints(fighter: Fighter): number {
   const plan = fighter.def.passive.todaysIngredient;
-  return plan ? fighter.ingredientHaste * plan.hastePercentPerHit : 0;
+  return plan ? fighter.ingredientHaste * plan.hastePointsPerHit : 0;
 }
 
 /** 풀린 자물쇠마다 질주가 더 멀리 나아가는 배율. 자물쇠가 없는 개체는 1이다. */
@@ -5779,7 +5782,7 @@ function expeditionAndKitBuffs(state: SkirmishState, fighter: Fighter): ActiveCo
   }
   const ingredient = fighter.def.passive.todaysIngredient;
   if (ingredient && fighter.ingredientHaste > 0) {
-    push("ingredient-haste", fighter.def.passive.id, fighter.def.passive.name, `재료를 칠수록 공격 속도·이동 속도 +${ingredientHastePercent(fighter)}%`, { kind: "conditional" }, fighter.ingredientHaste);
+    push("ingredient-haste", fighter.def.passive.id, fighter.def.passive.name, `재료를 칠수록 공격 속도·이동 속도 +${ingredientHastePoints(fighter)}`, { kind: "conditional" }, fighter.ingredientHaste);
   }
   if (fighter.def.passive.kind === "bleedStreak" && fighter.streakCount > 0) {
     push("bleed-streak", fighter.def.passive.id, fighter.def.passive.name, `같은 적을 ${fighter.def.passive.value}번 이어 때리면 출혈`, { kind: "conditional" }, fighter.streakCount);
@@ -5852,7 +5855,7 @@ function attackSpeedParts(fighter: Fighter, state?: SkirmishState): { base: numb
     * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100)
     * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100)
     * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
-  return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
+  return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 
 /** 공격 속도가 정하는 공격 간격(초). 100이 기준이다. */
@@ -6303,7 +6306,7 @@ export function moveSpeed(fighter: Fighter, state?: SkirmishState): number {
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
+  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100)
     * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100)
     * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100)
     * (1 - frostbiteSlowPercent(fighter) / 100)

@@ -6981,18 +6981,18 @@ function confinementAttackSpeedPercent(fighter) {
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.attackSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && (trait.effectId === "appetiteFrenzy" || trait.effectId === "corneredBeast") ? trait.attackSpeedPercent : 0;
-  return unlocked + fever + ingredientHastePercent(fighter);
+  return unlocked + fever;
 }
 function confinementMoveSpeedPercent(fighter) {
   const locks = fighter.def.passive.restraintLocks;
   const unlocked = locks ? effectiveLocksBroken(fighter) * locks.moveSpeedPercent : 0;
   const trait = fighter.def.ferocityTrait;
   const fever = fighter.ferocityFever && trait.effectId === "corneredBeast" ? trait.moveSpeedPercent : 0;
-  return unlocked + fever + ingredientHastePercent(fighter);
+  return unlocked + fever;
 }
-function ingredientHastePercent(fighter) {
+function ingredientHastePoints(fighter) {
   const plan = fighter.def.passive.todaysIngredient;
-  return plan ? fighter.ingredientHaste * plan.hastePercentPerHit : 0;
+  return plan ? fighter.ingredientHaste * plan.hastePointsPerHit : 0;
 }
 function lockChargeReachFactor(fighter) {
   const locks = fighter.def.passive.restraintLocks;
@@ -8609,7 +8609,7 @@ function attackSpeedParts(fighter, state) {
   const killHastePercent = fighter.killHaste?.attackSpeedPercent ?? 0;
   const slowFactor = (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressurePercent / 100) * (1 - groggyPercent / 100) * (1 - sunkenPercent / 100);
   const boostFactor = (1 + traitHastePercent / 100) * (1 + fighter.bt.manyEyesPercent / 100) * (1 + killHastePercent / 100) * (1 + teamPercent / 100) * (1 + packHuntPercent / 100) * (1 + tailwindPercent / 100) * (1 + volleyPercent / 100) * (1 + reagentDopingPercent / 100) * (1 + tidalVigorPercent / 100) * (1 + vortexPercent / 100) * (1 + tantrumPercent / 100) * (1 + confinementAttackSpeedPercent(fighter) / 100);
-  return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed, boost: boostFactor, slow: slowFactor };
+  return { base: fighter.def.stats.attackSpeed + passiveSpeedPoints + fighter.bonusAttackSpeed + ingredientHastePoints(fighter), boost: boostFactor, slow: slowFactor };
 }
 function currentAttackSpeed(fighter, state) {
   const parts = attackSpeedParts(fighter, state);
@@ -8931,7 +8931,7 @@ function moveSpeed(fighter, state) {
   const submergedPercent = controlMagnitude(fighter, fighter.submergedIn?.moveSlowPercent ?? 0);
   const hungry = feverBreakthrough(fighter);
   const hungryPercent = hungry?.kind === "hungryStride" ? hungry.moveSpeedPercent : 0;
-  return fighter.def.stats.moveSpeed * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
+  return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
 }
 function distance(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y);
@@ -16448,7 +16448,7 @@ var RELICS = [
       effectType: "physical",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 재료에게 더 주는 피해(%)를 담아 둔다.
       value: 15,
-      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePercentPerHit: 5, hasteMaxStacks: 10 },
+      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePointsPerHit: 5, hasteMaxStacks: 10 },
       desc: "\uAC00\uC7A5 \uAC00\uAE4C\uC6B4 \uC801\uC744 \uC740\uC2E0\uACFC \uBB34\uAD00\uD558\uAC8C \uC7AC\uB8CC\uB85C \uB178\uB9AC\uACE0, \uC7AC\uB8CC\uB97C \uB54C\uB9B4\uC218\uB85D \uBE68\uB77C\uC9C0\uBA70 \uC4F0\uB7EC\uB728\uB9AC\uBA74 \uD68C\uBCF5\uD558\uACE0 \uACF5\uACA9\uB825\uC774 \uC313\uC778\uB2E4."
     },
     basic: {

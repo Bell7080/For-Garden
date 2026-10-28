@@ -630,7 +630,7 @@ export default {
   "keyword.stealth.term": "Stealth",
   "keyword.stealth.description": "While it lasts, the unit drops out of the targets an enemy's single-target attack can choose. When Stealth breaks it becomes a target again.",
   "keyword.ingredient.term": "Ingredient",
-  "keyword.ingredient.description": "An enemy Magasa has marked. Each hit on the Ingredient raises Attack Speed and Move Speed by 5% (up to 10 stacks); hitting another enemy clears them all.",
+  "keyword.ingredient.description": "An enemy Magasa has marked. Each hit on the Ingredient raises Attack Speed and Move Speed by 5 (up to 10 stacks); hitting another enemy clears them all.",
   "keyword.transfer.term": "Transfer",
   "keyword.transfer.description": "Moves part of the damage to another target, based on the HP the main target actually lost after Defense, shields and damage reduction have all been applied.",
   "keyword.pack-hunt.term": "Pack Hunt",

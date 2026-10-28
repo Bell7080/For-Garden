@@ -612,7 +612,7 @@ export default {
   "keyword.stealth.term": "Sigilo",
   "keyword.stealth.description": "Mientras dura, la unidad no puede ser elegida por los ataques de objetivo único enemigos. Al romperse el Sigilo, vuelve a ser objetivo.",
   "keyword.ingredient.term": "Ingrediente",
-  "keyword.ingredient.description": "Enemigo marcado por Magasa. Cada golpe al Ingrediente sube la velocidad de ataque y de movimiento un 5% (hasta 10 cargas); golpear a otro enemigo las elimina todas.",
+  "keyword.ingredient.description": "Enemigo marcado por Magasa. Cada golpe al Ingrediente sube la velocidad de ataque y de movimiento un 5 (hasta 10 cargas); golpear a otro enemigo las elimina todas.",
   "keyword.transfer.term": "Transferencia",
   "keyword.transfer.description": "Traslada una parte a otro objetivo, tomando como base los PV que el objetivo principal perdió realmente tras aplicar Defensa, escudos y reducción de daño.",
   "keyword.pack-hunt.term": "Caza en manada",

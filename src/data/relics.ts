@@ -3535,7 +3535,7 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       // Passive.value는 공용 필수 필드라, 이 패시브에서는 재료에게 더 주는 피해(%)를 담아 둔다.
       value: 15,
-      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePercentPerHit: 5, hasteMaxStacks: 10 },
+      todaysIngredient: { damagePercent: 15, killHealMaxHpPercent: 12, attackPercentPerStack: 8, maxStacks: 3, hastePointsPerHit: 5, hasteMaxStacks: 10 },
       desc: "가장 가까운 적을 은신과 무관하게 재료로 노리고, 재료를 때릴수록 빨라지며 쓰러뜨리면 회복하고 공격력이 쌓인다.",
     },
     basic: {

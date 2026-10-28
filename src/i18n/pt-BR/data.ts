@@ -612,7 +612,7 @@ export default {
   "keyword.stealth.term": "Furtividade",
   "keyword.stealth.description": "Enquanto dura, a unidade não pode ser escolhida por ataques de alvo único inimigos. Quando a Furtividade se desfaz, volta a ser alvo.",
   "keyword.ingredient.term": "Ingrediente",
-  "keyword.ingredient.description": "Inimigo marcado por Magasa. Cada golpe no Ingrediente aumenta a velocidade de ataque e de movimento em 5% (até 10 cargas); golpear outro inimigo remove todas.",
+  "keyword.ingredient.description": "Inimigo marcado por Magasa. Cada golpe no Ingrediente aumenta a velocidade de ataque e de movimento em 5 (até 10 cargas); golpear outro inimigo remove todas.",
   "keyword.transfer.term": "Transferência",
   "keyword.transfer.description": "Move uma parte para outro alvo, com base no PV que o alvo principal realmente perdeu depois de aplicar Defesa, escudos e redução de dano.",
   "keyword.pack-hunt.term": "Caça em matilha",

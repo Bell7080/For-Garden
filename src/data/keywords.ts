@@ -179,7 +179,7 @@ export const KEYWORDS: readonly KeywordDef[] = [
   },
   {
     id: "ingredient", term: "재료", kind: "buff",
-    description: "마가사가 찍은 적이다. 재료를 때릴 때마다 공격 속도·이동 속도가 5% 오르고(최대 10겹), 다른 적을 때리면 모두 풀린다.",
+    description: "마가사가 찍은 적이다. 재료를 때릴 때마다 공격 속도·이동 속도가 5씩 오르고(최대 10겹), 다른 적을 때리면 모두 풀린다.",
   },
   {
     id: "resonance", term: "공명", kind: "buff",

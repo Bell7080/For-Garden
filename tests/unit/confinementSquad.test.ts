@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, effectiveLocksBroken, fireUltimate, ingredientHastePercent, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, createSkirmish, currentAttackSpeed, effectiveLocksBroken, fireUltimate, ingredientHastePoints, moveSpeed, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 
@@ -44,10 +44,10 @@ describe("마가사 「오늘의 재료」", () => {
     expect(hero.ingredientId).toBe(foes[1].id);
   });
 
-  it("재료를 때릴수록 공속·이속이 5%씩 오르고 다른 적을 때리면 풀린다", () => {
+  it("재료를 때릴수록 공속·이속이 5씩 오르고 다른 적을 때리면 풀린다", () => {
     const { state, hero, foes } = setup("magasa", ["toby", "amo"]);
     const plan = getRelic("magasa").passive.todaysIngredient!;
-    expect(plan.hastePercentPerHit).toBe(5);
+    expect(plan.hastePointsPerHit).toBe(5);
     foes[0].x = hero.x; foes[0].y = hero.y - 60;
     foes[0].hp = foes[0].maxHp * 50;
     foes[0].maxHp *= 50;
@@ -56,7 +56,7 @@ describe("마가사 「오늘의 재료」", () => {
     let guard = 0;
     while (hero.ingredientHaste < 2 && guard++ < 400) run(state, 0.05);
     expect(hero.ingredientId).toBe(foes[0].id);
-    expect(ingredientHastePercent(hero)).toBe(hero.ingredientHaste * 5);
+    expect(ingredientHastePoints(hero)).toBe(hero.ingredientHaste * 5);
     expect(currentAttackSpeed(hero, state)).toBeGreaterThan(before);
     expect(moveSpeed(hero, state)).toBeGreaterThan(walk);
     hero.ingredientHaste = plan.hasteMaxStacks;

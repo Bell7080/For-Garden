@@ -30,6 +30,8 @@ export interface ShowcaseFaceOptions {
   stageY?: number;
   /** 소진처럼 눌러 둔 카드 — 무늬를 반쯤만 낸다. */
   dim?: boolean;
+  /** 광휘(빛살·가운데 빛)의 세기 배율. 비우면 1 — 한 장만 크게 서는 작업판처럼 넓은 면은 낮춰 둔다. */
+  burst?: number;
 }
 
 /** 카드 면을 한 장 세운다. 부르는 쪽은 몸판 바로 위·글자 아래에 넣는다. */
@@ -45,7 +47,8 @@ function bakeFace(scene: Phaser.Scene, options: ShowcaseFaceOptions): string {
   const w = Math.max(2, Math.round(width * BAKE_SCALE));
   const h = Math.max(2, Math.round(height * BAKE_SCALE));
   const stage = (options.stageY ?? -height * 0.1) * BAKE_SCALE + h / 2;
-  const key = `showcase-face:${w}x${h}:${Math.round(stage)}:${accent.toString(16)}:${options.shape.length}`;
+  const burst = options.burst ?? 1;
+  const key = `showcase-face:${w}x${h}:${Math.round(stage)}:${accent.toString(16)}:${options.shape.length}:${burst}`;
   if (scene.textures.exists(key)) return key;
   const canvas = scene.textures.createCanvas(key, w, h);
   if (!canvas) return "__DEFAULT";
@@ -60,7 +63,7 @@ function bakeFace(scene: Phaser.Scene, options: ShowcaseFaceOptions): string {
   }
   ctx.closePath();
   ctx.clip();
-  paintBurst(ctx, w, h, stage, accent);
+  paintBurst(ctx, w, h, stage, accent, burst);
   paintLattice(ctx, w, h, accent);
   ctx.restore();
   canvas.refresh();
@@ -115,7 +118,7 @@ function paintLattice(ctx: CanvasRenderingContext2D, w: number, h: number, accen
 }
 
 /** ② 광휘 — 상품 뒤에서 강조색 빛살이 부채처럼 퍼진다. 카드가 여러 장이라 옅게 둔다. */
-function paintBurst(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, accent: number): void {
+function paintBurst(ctx: CanvasRenderingContext2D, w: number, h: number, stage: number, accent: number, strength: number): void {
   const cx = w / 2;
   const cy = stage - h * 0.12;
   const reach = Math.max(w, h) * 1.2;
@@ -124,7 +127,7 @@ function paintBurst(ctx: CanvasRenderingContext2D, w: number, h: number, stage: 
     const a0 = (i / rays) * Math.PI * 2;
     const a1 = a0 + (Math.PI * 2) / rays / 2;
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach * 0.55);
-    grad.addColorStop(0, css(accent, 0.15)); grad.addColorStop(1, css(accent, 0));
+    grad.addColorStop(0, css(accent, 0.15 * strength)); grad.addColorStop(1, css(accent, 0));
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -133,7 +136,7 @@ function paintBurst(ctx: CanvasRenderingContext2D, w: number, h: number, stage: 
     ctx.closePath(); ctx.fill();
   }
   const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.28);
-  core.addColorStop(0, css(accent, 0.18)); core.addColorStop(1, css(accent, 0));
+  core.addColorStop(0, css(accent, 0.18 * strength)); core.addColorStop(1, css(accent, 0));
   ctx.fillStyle = core; ctx.fillRect(0, 0, w, h);
   const floor = ctx.createLinearGradient(0, h * 0.55, 0, h);
   floor.addColorStop(0, "rgba(0,0,0,0)"); floor.addColorStop(1, "rgba(0,0,0,0.3)");

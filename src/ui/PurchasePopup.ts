@@ -50,6 +50,9 @@ import { addSubscriptionNoticeChip, openSubscriptionNoticePopup, subscriptionNot
 import { SUBSCRIPTION_NOTICE } from "./subscriptionNoticeLayout";
 import { fitTextToBox, squeezeTextToWidth } from "./textFit";
 
+/** 작업판 뒤 광휘의 세기 — 판 하나가 화면 한가운데를 크게 덮어 카드와 같은 세기면 빛살이 거슬린다. */
+const PURCHASE_BURST = 0.3;
+
 /**
  * 패키지 확인판의 자리.
  *
@@ -461,7 +464,7 @@ export class PurchasePopup {
     const width = options.width ?? PACKAGE.width;
     const unit = Math.min(width, popupHeight) * POPUP_BODY_BEVEL_RATIO;
     const bodyShape = chipPoints(width, popupHeight, { bevel: { topLeft: unit, topRight: 0, bottomRight: unit, bottomLeft: 0 } });
-    addShowcaseFace(this.scene, view, 0, 0, { width, height: popupHeight, shape: bodyShape, accent: options.accent ?? COLOR.accent, stageY });
+    addShowcaseFace(this.scene, view, 0, 0, { width, height: popupHeight, shape: bodyShape, accent: options.accent ?? COLOR.accent, stageY, burst: PURCHASE_BURST });
     view.add(drawLayer(this.scene, 0, y, chipPoints(options.panelWidth ?? 690, options.panelHeight ?? 330, { bevel: { topLeft: 44, topRight: 0, bottomRight: 34, bottomLeft: 0 } }), { fill: 0x000000, alpha: 0.32, shadow: false }));
   }
 

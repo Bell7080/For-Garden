@@ -206,7 +206,7 @@ export class PopupLayer {
    * 치를 것이 있으면 그 판 안에 **액자로** 선다(`costs` — 글로 「젬 2,700개」라 적으면 값이 문장에 묻힌다).
    * 버튼은 맨 글자가 아니라 **제 판을 가진 버튼 둘**이다 — 왼쪽 취소는 옅은 유리, 오른쪽 확정은 강조 판이고
    * 파괴적 조작이면 확정 판과 안쪽 판 윗변이 붉다. 알리기만 하는 창은 `cancelLabel: false`로 버튼 하나만 선다.
-   * 오른쪽 위 X는 두지 않는다 — 취소 버튼이 그 몫이고, 한 창에 닫는 길이 둘이면 무엇이 취소인지 흐려진다.
+   * 오른쪽 위 X는 두지 않는다 — 취소 버튼(과 판 밖 누르기)이 그 몫이고, 한 창에 닫는 길이 둘이면 무엇이 취소인지 흐려진다.
    * 자리와 창 높이는 `confirmDialogLayout.ts`가 쌓인 내용에서 거꾸로 구한다.
    */
   confirm(options: ConfirmOptions, onConfirm: () => void = () => undefined): void {
@@ -219,7 +219,8 @@ export class PopupLayer {
     const single = options.cancelLabel === false;
     const tone = options.destructive ? COLOR.danger : COLOR.accent;
 
-    this.open({ width: L.width, height, title: options.title, dim: true, dimAlpha: L.dimAlpha, closeOnBackdrop: false, hideCloseButton: true }, (body, close) => {
+    // 판 밖을 누르면 취소와 같다 — 확정은 언제나 버튼 하나뿐이다.
+    this.open({ width: L.width, height, title: options.title, dim: true, dimAlpha: L.dimAlpha, hideCloseButton: true }, (body, close) => {
       const plateHeight = confirmPlateHeight(content);
       const plateTop = -height / 2 + L.topRoom;
       const plateY = plateTop + plateHeight / 2;

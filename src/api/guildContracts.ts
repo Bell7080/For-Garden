@@ -262,6 +262,8 @@ export interface GuildBackend {
   createGuild(actor: GuildActor, input: { name: string; joinMode: GuildJoinMode; badge: GuildBadge }, requestId: string): Promise<GuildStateResponse>;
   /** 길드장만. 바뀌었는지와 값을 치러야 했는지(첫 변경은 무료)를 돌려줘 부르는 쪽이 젬을 받을지 정한다. */
   changeBadge(actor: GuildActor, badge: GuildBadge, requestId: string): Promise<{ changed: boolean; charged: boolean }>;
+  /** 길드장만. 이름이 실제로 바뀌었는지를 돌려줘 부르는 쪽이 젬(`GUILD_RENAME_GEMS`)을 받을지 정한다. */
+  renameGuild(actor: GuildActor, name: string, requestId: string): Promise<{ changed: boolean }>;
   /** 오늘 칸을 찍는다. 돌려주는 `day`가 지갑에 들 몫을 정한다(`guildAttendanceDay`). */
   stampAttendance(actor: GuildActor, requestId: string): Promise<{ attendance: GuildAttendanceState; day: number }>;
   purchase(actor: GuildActor, productId: string, requestId: string): Promise<{ shop: GuildShopState }>;

@@ -77,6 +77,13 @@ export const GUILD_KO = {
   "guild.settings.notice": "공지",
   "guild.settings.noticeAria": "길드 공지 입력",
   "guild.settings.joinMode": "가입 방식",
+  "guild.settings.name": "길드 이름",
+  "guild.settings.nameAria": "길드 이름 입력",
+  "guild.settings.rename": "변경",
+  "guild.rename.confirmTitle": "길드 이름 변경",
+  "guild.rename.confirmMessage": "길드 이름을 「{name}」{name!으로} 바꿉니다.",
+  "guild.rename.done": "길드 이름을 바꿨습니다",
+  "guild.rename.same": "지금과 같은 이름입니다",
   "guild.settings.save": "저장",
   "guild.settings.saved": "저장했습니다",
 

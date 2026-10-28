@@ -19,7 +19,7 @@ import { addSectionTitle } from "./SectionTitle";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addBreakthroughGradeMark, RARITY_TONE } from "./rarityMark";
-import { drawGlyph } from "./glyphs";
+import { drawGlyph, type GlyphName } from "./glyphs";
 import { battleAssetFor, enableHitOnClick, portraitAssetForSkin, sdAssetForSkin, spawnPuppet, withPuppetTexture } from "../puppets/assets";
 import { computeFaceBandFrame } from "../puppets/anchors";
 import { bakeBandTexture } from "./faceTexture";
@@ -50,7 +50,13 @@ export interface ProfileEditors {
 }
 
 /** 친구 카드 밑동의 조작 한 칸. 즐겨찾기·친구 삭제처럼 그 사람에게 하는 일이다. */
-export interface ProfileAction { label: string; destructive?: boolean; onClick: () => void }
+export interface ProfileAction {
+  label: string;
+  destructive?: boolean;
+  /** 라벨 왼쪽 선 아이콘. */
+  icon?: GlyphName;
+  onClick: () => void;
+}
 
 /**
  * 플레이어 카드 — 수집형 RPG의 프로필 한 장.
@@ -78,7 +84,11 @@ export class PlayerProfilePopup {
     /** 자기 카드에만 온다 — 각 요소를 누르면 그 요소만 고치는 창이 열린다. 친구 카드에는 없다. */
     private readonly editors?: ProfileEditors,
     /** 친구 카드: 머리글과, 애착 렐릭을 눌렀을 때 여는 읽기 전용 정보창. */
-    private readonly options: { title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[]; marks?: ProfileMarks } = {},
+    private readonly options: {
+      title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[]; marks?: ProfileMarks;
+      /** 조작 줄을 물들이는 색(길드 카드는 그 길드 배지의 색). 주면 파괴적이지 않은 조작이 이 색의 강조 판으로 선다. */
+      actionTone?: { accent: number; fill: number };
+    } = {},
   ) {}
 
   open(options: { instant?: boolean } = {}): void {
@@ -498,10 +508,25 @@ export class PlayerProfilePopup {
     if (actions.length === 0) return;
     const { actions: slot, showcase } = PLAYER_PROFILE_LAYOUT;
     const width = Math.floor((showcase.width - slot.gap * (actions.length - 1)) / actions.length);
+    const tone = this.options.actionTone;
+    if (tone) {
+      // 조작 줄이 그 무리의 것임을 위의 기록 칸과 가르는 한 줄 — 같은 색 선과 양 끝 마름모.
+      const lineY = slot.y - slot.height / 2 - 22;
+      const line = this.scene.add.graphics();
+      line.lineStyle(3, tone.accent, 0.7);
+      line.lineBetween(-showcase.width / 2 + 18, lineY, showcase.width / 2 - 18, lineY);
+      line.fillStyle(tone.accent, 0.95);
+      for (const x of [-showcase.width / 2 + 10, showcase.width / 2 - 10]) line.fillPoints([{ x, y: lineY - 9 }, { x: x + 9, y: lineY }, { x, y: lineY + 9 }, { x: x - 9, y: lineY }] as Phaser.Types.Math.Vector2Like[], true);
+      body.add(line);
+    }
     actions.forEach((action, index) => {
       const x = -showcase.width / 2 + width / 2 + index * (width + slot.gap);
+      const toned = tone && !action.destructive
+        ? { variant: "primary" as const, accentColor: tone.accent, accentTextColor: COLOR.ink, fill: tone.fill, decorDots: true }
+        : {};
       body.add(new Button(this.scene, x, slot.y, {
-        width, height: slot.height, label: action.label, fontSize: slot.fontSize,
+        width, height: slot.height, label: action.label, fontSize: slot.fontSize, icon: action.icon,
+        ...toned,
         ...(action.destructive ? DESTRUCTIVE_BUTTON_STYLE : {}),
         onClick: action.onClick,
       }));

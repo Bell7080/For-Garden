@@ -86,6 +86,11 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
       if (!isGuildBadge(badge)) throw new GuildApiError("BADGE_INVALID", "BADGE_INVALID");
       return run(actor, "changeBadge", [badge], requestId);
     },
+    renameGuild: (actor, name, requestId) => {
+      const checked = validateGuildName(String(name ?? ""));
+      if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
+      return run(actor, "renameGuild", [{ name: checked.name, nameKey: guildNameKey(checked.name) }], requestId);
+    },
     stampAttendance: (actor, requestId) => run(actor, "stampAttendance", [], requestId),
     purchase: (actor, productId, requestId) => {
       if (!findGuildProduct(productId)) throw new GuildApiError("PRODUCT_NOT_FOUND", "PRODUCT_NOT_FOUND");

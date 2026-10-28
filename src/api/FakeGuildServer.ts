@@ -412,6 +412,21 @@ export class FakeGuildServer implements GuildBackend {
     });
   }
 
+  async renameGuild(actor: GuildActor, name: string, requestId: string): Promise<{ changed: boolean }> {
+    return this.once(actor, requestId, () => {
+      const { guild, me } = this.requireGuild(actor);
+      // 이름도 뱃지처럼 길드의 얼굴이라 같은 권한(길드장)을 쓴다.
+      if (!guildCan(me.role, "badge")) fail("NO_PERMISSION");
+      const checked = validateGuildName(name);
+      if (!checked.ok) return fail("NAME_INVALID");
+      if (checked.name === guild.name) return { changed: false };
+      const key = guildNameKey(checked.name);
+      if ([...this.guilds.values()].some((g) => g.id !== guild.id && guildNameKey(g.name) === key)) fail("NAME_TAKEN");
+      guild.name = checked.name;
+      return { changed: true };
+    });
+  }
+
   private attendanceOf(me: MemberRow): GuildAttendanceState {
     const now = this.now();
     return { ...guildAttendanceView(me.attendanceCount, me.attendanceLast, guildDateKey(now)), serverTime: now };

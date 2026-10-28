@@ -709,6 +709,76 @@
     "Beitrittsregel",
     "Правила вступления"
   ],
+  "guild.settings.name": [
+    "公会名称",
+    "ชื่อกิลด์",
+    "Tên Bang hội",
+    "Nama guild",
+    "Nombre del gremio",
+    "Nome da guilda",
+    "Gildenname",
+    "Название гильдии"
+  ],
+  "guild.settings.nameAria": [
+    "输入公会名称",
+    "กรอกชื่อกิลด์",
+    "Nhập tên Bang hội",
+    "Masukkan nama guild",
+    "Escribe el nombre del gremio",
+    "Digite o nome da guilda",
+    "Gildennamen eingeben",
+    "Введите название гильдии"
+  ],
+  "guild.settings.rename": [
+    "更改",
+    "เปลี่ยน",
+    "Đổi",
+    "Ubah",
+    "Cambiar",
+    "Alterar",
+    "Ändern",
+    "Изменить"
+  ],
+  "guild.rename.confirmTitle": [
+    "更改公会名称",
+    "เปลี่ยนชื่อกิลด์",
+    "Đổi tên Bang hội",
+    "Ubah nama guild",
+    "Cambiar nombre del gremio",
+    "Alterar nome da guilda",
+    "Gilde umbenennen",
+    "Переименовать гильдию"
+  ],
+  "guild.rename.confirmMessage": [
+    "将公会名称改为“{name}”。",
+    "เปลี่ยนชื่อกิลด์เป็น “{name}”",
+    "Đổi tên Bang hội thành “{name}”.",
+    "Ubah nama guild menjadi “{name}”.",
+    "Cambiar el nombre del gremio a «{name}».",
+    "Alterar o nome da guilda para “{name}”.",
+    "Gilde in „{name}“ umbenennen.",
+    "Переименовать гильдию в «{name}»."
+  ],
+  "guild.rename.done": [
+    "已更改公会名称",
+    "เปลี่ยนชื่อกิลด์แล้ว",
+    "Đã đổi tên Bang hội",
+    "Nama guild diubah",
+    "Nombre del gremio cambiado",
+    "Nome da guilda alterado",
+    "Gilde umbenannt",
+    "Гильдия переименована"
+  ],
+  "guild.rename.same": [
+    "与当前名称相同",
+    "เป็นชื่อเดิมอยู่แล้ว",
+    "Trùng với tên hiện tại",
+    "Sama dengan nama saat ini",
+    "Es el mismo nombre actual",
+    "É o mesmo nome atual",
+    "Das ist bereits der Name",
+    "Это текущее название"
+  ],
   "guild.settings.save": [
     "保存",
     "บันทึก",

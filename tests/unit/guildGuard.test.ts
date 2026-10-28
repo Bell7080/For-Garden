@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { captureExpeditionRelicSnapshot } from "../../src/core/expeditionSnapshot";
-import { GUILD_GUARD, arrangeGuardFormation, buildGuardWave, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
+import { GUILD_GUARD, arrangeGuardFormation, buildGuardWave, guardRosterPreview, guardWaveCounts, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
 import { GUILD_GUARD_COIN, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
 import { GUILD_GUARD_ELEMENTS } from "../../src/core/guildPages";
 import { guildGuardRoster } from "../../src/data/guildGuard";
 import { getRelic } from "../../src/data/relics";
+import { PARTY_GUARD_ROSTER, guardRosterPopupLayout } from "../../src/ui/partyPreviewLayout";
 import { createInitialRelicProgress } from "../../src/state/session";
 
 const lineup = (ids: readonly (string | null)[], level: number): GuildGuardLineup => ids.map((id) => id === null ? null : {
@@ -102,5 +103,39 @@ describe("수호전 자동 배치", () => {
     const support = { ...getRelic("deina"), id: "s", role: "support" as const };
     const warrior = { ...getRelic("deina"), id: "w", role: "warrior" as const };
     expect(arrangeGuardFormation([support, tank, warrior])).toEqual(["t", "w", "s", null, null, null]);
+  });
+});
+
+describe("수호전 「오늘의 적」 미리보기", () => {
+  it("명단의 얼굴이 한 번씩, 처음 서는 웨이브의 레벨로 선다(무리 먼저)", () => {
+    for (const element of GUILD_GUARD_ELEMENTS) {
+      const roster = guildGuardRoster(element);
+      const { entries, firstWave } = guardRosterPreview(roster);
+      const ids = entries.map((entry) => entry.def.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      const rosterIds = new Set([...roster.grunts, ...roster.elites].map((def) => def.id));
+      for (const id of ids) expect(rosterIds.has(id)).toBe(true);
+      expect(entries.length).toBeGreaterThan(0);
+      for (const entry of entries) expect(entry.level).toBe(guardWaveLevel(entry.wave));
+      const firstElite = entries.findIndex((entry) => entry.role === "elite");
+      if (firstElite >= 0) expect(entries.slice(firstElite).every((entry) => entry.role === "elite")).toBe(true);
+      expect(firstWave.index).toBe(1);
+    }
+  });
+
+  it("얼굴 칸은 창 폭과 높이 안에 들고 줄끼리 겹치지 않는다", () => {
+    for (const counts of [[3, 2], [7, 0], [12, 6], [0, 4]]) {
+      const layout = guardRosterPopupLayout(counts);
+      const half = layout.height / 2;
+      for (const section of layout.sections) {
+        expect(section.titleY).toBeGreaterThan(-half);
+        for (const cell of section.cells) {
+          expect(Math.abs(cell.x) + PARTY_GUARD_ROSTER.face / 2).toBeLessThanOrEqual(PARTY_GUARD_ROSTER.width / 2);
+          expect(cell.y - PARTY_GUARD_ROSTER.face / 2).toBeGreaterThan(section.titleY);
+          expect(cell.y + PARTY_GUARD_ROSTER.face / 2 + 70).toBeLessThan(half);
+        }
+      }
+      expect(layout.sections.length).toBe(counts.filter((count) => count > 0).length);
+    }
   });
 });

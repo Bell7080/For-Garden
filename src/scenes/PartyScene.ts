@@ -18,7 +18,7 @@ import { bindLongPress } from "../ui/longPressInfo";
 import type { PuppetCreature } from "../puppets/assets";
 import { placePuppet, spawnPuppet } from "../puppets/assets";
 import { getBattleStage } from "../data/stages";
-import { ENCOUNTER_ROLE } from "../core/levelDesign";
+import { ENCOUNTER_ROLE, requiredBreakthroughForLevel } from "../core/levelDesign";
 import { addStageEliteMark } from "../ui/stageEliteMark";
 import { session } from "../state/session";
 import { gameApi } from "../api/FakeServer";
@@ -49,7 +49,7 @@ import { formationMembers, tapFormationSlot, tapRosterRelic, toFormationSlots } 
 import { prefetchBattlePuppets as prefetchBattleSds } from "../puppets/battlePrefetch";
 import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
-import { PARTY_GUARD, partyGuardSlotLift, PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_LANES, partyLaneBox, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
+import { PARTY_GUARD, PARTY_GUARD_ROSTER, guardRosterPopupLayout, partyGuardSlotLift, PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_LANES, partyLaneBox, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
 import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
@@ -70,7 +70,11 @@ import { addSdFootShadow } from "../ui/SdFootShadow";
 import { duelBlindOrder } from "../core/duelArena";
 import { withBusy } from "../ui/BusyOverlay";
 import { showContentIntro } from "../ui/contentIntro";
-import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES } from "../core/guildGuard";
+import { arrangeGuardFormation, GUILD_GUARD, GUILD_GUARD_SLOT_ROLES, guardRosterPreview } from "../core/guildGuard";
+import { guildGuardRoster } from "../data/guildGuard";
+import { FaceFrame } from "../ui/FaceFrame";
+import { drawGlyph } from "../ui/glyphs";
+import { addSectionTitle } from "../ui/SectionTitle";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { GuildApiError } from "../api/guildContracts";
 import { addScrollHint } from "../ui/ScrollHint";
@@ -239,6 +243,8 @@ export class PartyScene extends Phaser.Scene {
   private info!: CharacterInfoManager;
   /** 같은 정보창을 적 문맥으로 하나 더 둔다. 아군 창과 문맥이 섞이지 않게 창을 나눈다. */
   private enemyInfo!: EnemyInfoPopup;
+  /** 수호전 「오늘의 적」 창 — 적 정보창(2200)보다 한 층 아래라 얼굴을 누르면 정보창이 그 위에 선다. */
+  private guardPopups?: PopupLayer;
   /** 저장을 포함한 전투 진입 처리 중에는 연속 탭이 같은 처리를 다시 시작하지 못하게 한다. */
   private isEnteringBattle = false;
   /** 세 화면에서 같은 감광·드롭 칸·미리보기 수명을 사용하는 공용 표현기다. */
@@ -536,13 +542,53 @@ export class PartyScene extends Phaser.Scene {
   private paintGuardInfo(element: RelicDef["element"], y: number): void {
     const badgeX = BASE_WIDTH / 2 - PARTY_POWER_PLATE.width / 2 - 52;
     this.add.existing(new AffinityBadge(this, badgeX, y, ELEMENT_ICON[element], 60, 0.7)).setDepth(3);
-    const label = this.add.text(badgeX - 40, y, t("guild.guard.party.element"), textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
+    // 「오늘의 적」과 속성 표식이 한 덩어리로 눌린다 — 돋보기가 그 자리가 창을 연다고 말한다.
+    const glass = this.add.container(badgeX - 40 - 14, y).setDepth(3);
+    glass.add(drawGlyph(this, "magnifier", 0, 0, 26, 0x05070a, 0.85, 8));
+    glass.add(drawGlyph(this, "magnifier", 0, 0, 26, 0xff8f7a, 1, 4));
+    const label = this.add.text(badgeX - 40 - 34, y, t("guild.guard.party.element"), textStyle({ role: "emphasis", size: 24, color: COLOR.dangerText }))
       .setOrigin(1, 0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
-    squeezeTextToWidth(label, badgeX - 60);
+    squeezeTextToWidth(label, badgeX - 94);
+    const left = Math.max(8, badgeX - 74 - label.displayWidth - 12);
+    this.add.rectangle((left + badgeX + 34) / 2, y, badgeX + 34 - left, 76, 0xffffff, 0).setDepth(4)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerup", () => this.openGuardRoster(element));
     ([["guild.guard.party.front", 0], ["guild.guard.party.back", 3]] as const).forEach(([key, slot]) => {
       const text = this.add.text(PARTY_GUARD.rowLabelX, this.slotRow(slot) - PREVIEW_HEIGHT / 2, t(key), textStyle({ role: "display", size: 28, color: slot === 0 ? COLOR.dangerText : COLOR.accentText }))
         .setOrigin(0.5).setShadow(0, 3, "#05070a", 4, false, true).setDepth(3);
       squeezeTextToWidth(text, PARTY_GUARD.rowLabelWidth);
+    });
+  }
+
+  /**
+   * 수호전 「오늘의 적」 — 그날 명단의 얼굴이 처음 서는 웨이브의 레벨로 선다. 얼굴을 누르면 다른 편성 화면의 적과 같은
+   * 정보창이 그 모습 그대로 열린다. 첫 웨이브 전투력과 웨이브 규칙은 웨이브를 짜는 함수에서 그대로 읽는다.
+   */
+  private openGuardRoster(element: RelicDef["element"]): void {
+    const { entries, firstWave } = guardRosterPreview(guildGuardRoster(element));
+    const groups = [entries.filter((entry) => entry.role === "swarm"), entries.filter((entry) => entry.role === "elite")];
+    const layout = guardRosterPopupLayout(groups.map((group) => group.length));
+    const L = PARTY_GUARD_ROSTER;
+    const power = groupCombatPower(firstWave.units.map((unit) => unit.def.stats), firstWave.units.length);
+    this.guardPopups ??= new PopupLayer(this, 2100);
+    this.guardPopups.open({ width: L.width, height: layout.height, title: t("guild.guard.preview.title"), dim: true, closeOnBackdrop: true }, (body) => {
+      body.add(this.add.text(0, layout.info[0], t("guild.guard.preview.power", { power: power.toLocaleString() }), textStyle({ role: "display", size: 32, color: COLOR.dangerText })).setOrigin(0.5));
+      body.add(squeezeTextToWidth(this.add.text(0, layout.info[1], t("guild.guard.preview.rule", { level: GUILD_GUARD.levelPerWave, every: GUILD_GUARD.eliteEvery }), textStyle({ role: "body", size: 26, color: COLOR.inkDim })).setOrigin(0.5), L.width - 120));
+      const nonEmpty = groups.filter((group) => group.length > 0);
+      layout.sections.forEach((section, index) => {
+        const group = nonEmpty[index];
+        body.add(addSectionTitle(this, -L.width / 2 + 48, section.titleY, t(group[0].role === "elite" ? "info.enemy.role.elite" : "info.enemy.role.swarm"), { size: 28 }));
+        group.forEach((entry, at) => {
+          const cell = section.cells[at];
+          const face = new FaceFrame(this, cell.x, cell.y, { portraitAssetId: entry.def.portraitAssetId, size: L.face });
+          body.add(face);
+          body.add(this.add.text(cell.x, cell.y + L.face / 2 + 20, t("guild.guard.preview.level", { level: entry.level }), textStyle({ role: "display", size: 24, color: COLOR.accentText })).setOrigin(0.5).setStroke("#05070a", 4));
+          body.add(this.add.text(cell.x, cell.y + L.face / 2 + 50, t("guild.guard.preview.wave", { wave: entry.wave }), textStyle({ role: "body", size: 20, color: COLOR.inkDim })).setOrigin(0.5));
+          const hit = this.add.rectangle(cell.x, cell.y + 20, L.face + 20, L.face + 70, 0xffffff, 0).setInteractive({ useHandCursor: true });
+          hit.on("pointerup", () => this.enemyInfo.show({ def: entry.def, level: entry.level, breakthrough: requiredBreakthroughForLevel(entry.level) }));
+          body.add(hit);
+        });
+      });
     });
   }
 

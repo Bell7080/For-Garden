@@ -12,6 +12,7 @@ import { CURRENCY_ICON_BY_WALLET, type CurrencyIconKey } from "./currencyIcons";
 import { DUNGEON_RUN_POPUP, DUNGEON_RUN_TONE, dungeonRunInnerWidth, dungeonRunPopupHeight, dungeonRunRechargeCells, dungeonRunSliderSpan, runSliderRatio, runSliderValue, type DungeonRunMode } from "./dungeonRunPopupLayout";
 import { drawGlyph } from "./glyphs";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
+import { UI_ICON } from "./icons";
 import { addItemDefinitionIcon } from "./itemDefinitionIcon";
 import { addFramedIcon } from "./itemFrame";
 import type { PopupLayer } from "./PopupLayer";
@@ -211,7 +212,7 @@ export function openDungeonRunPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       });
     };
 
-    /** 소탕권 줄 — 그림 · 이름 · 가진 수, 오른쪽 끝의 광고. 멤버십이면 한 줄 안내다. */
+    /** 소탕권 줄 — 그림 · 이름 · 가진 수, 오른쪽에 남은 광고 횟수를 단 광고 그림과 「광고 보고 N개 받기」. 멤버십이면 한 줄 안내다. */
     const paintTicketLine = (parent: Phaser.GameObjects.Container, y: number, sweep: SweepRunPopupOptions): void => {
       const tickets = sweep.membership() ? undefined : sweep.tickets();
       parent.add(drawLayer(scene, 0, y, slantedRect(inner, L.branch.height - 6, 12), { fill: tone.glass, alpha: 0.9, edge: tone.accent, edgeAlpha: 0.35 }));
@@ -222,11 +223,15 @@ export function openDungeonRunPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const ticket = findItem(SWEEP_TICKET_ITEM);
       const left = -inner / 2 + 30;
       if (ticket) parent.add(addItemDefinitionIcon(scene, ticket.icon, left + L.branch.icon / 2, y, L.branch.icon));
-      parent.add(squeezeTextToWidth(scene.add.text(left + L.branch.icon + 14, y, t("dungeon.run.ticketHeld", { name: ticket?.name ?? "", count: formatCurrency(tickets.held) }), textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0, 0.5), inner - L.branch.adWidth - L.branch.icon - 90));
+      parent.add(squeezeTextToWidth(scene.add.text(left + L.branch.icon + 14, y, t("dungeon.run.ticketHeld", { name: ticket?.name ?? "", count: formatCurrency(tickets.held) }), textStyle({ role: "emphasis", size: 24, color: COLOR.ink })).setOrigin(0, 0.5), inner - L.branch.adWidth - L.branch.adGap - L.branch.icon * 2 - 100));
       const need = settleSweep(sweep.cost, count, false).ticketCost;
-      const ad = new Button(scene, inner / 2 - 20 - L.branch.adWidth / 2, y, {
+      const adX = inner / 2 - 20 - L.branch.adWidth / 2;
+      // 광고 그림 위에 남은 횟수(`3/3`)를 겹치고, 그 옆 버튼이 얼마를 받는지 말한다.
+      const adIconX = adX - L.branch.adWidth / 2 - L.branch.adGap - L.branch.icon / 2;
+      parent.add(scene.add.image(adIconX, y, UI_ICON.ad).setDisplaySize(L.branch.icon, L.branch.icon).setAlpha(tickets.adRemaining > 0 ? 1 : 0.45));
+      parent.add(scene.add.text(adIconX + L.branch.icon / 2 + 6, y + L.branch.icon / 2 + 2, t("dungeon.sweep.adUsage", { left: tickets.adRemaining, limit: tickets.adLimit }), textStyle({ role: "display", size: 20, color: tickets.adRemaining > 0 ? COLOR.ink : COLOR.inkDim })).setStroke("#000000", 5).setOrigin(1, 1));
+      const ad = new Button(scene, adX, y, {
         width: L.branch.adWidth, height: L.branch.adHeight, label: t("dungeon.sweep.ad", { count: tickets.adQuantity }), fontSize: 22,
-        sub: t("dungeon.sweep.adUsage", { used: tickets.adLimit - tickets.adRemaining, limit: tickets.adLimit }), subFontSize: 15,
         ...(tickets.held < need ? { variant: "primary" as const, accentColor: tone.accent, accentTextColor: tone.accentText } : {}),
         onClick: () => {
           if (adBusy) return;

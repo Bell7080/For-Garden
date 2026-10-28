@@ -1204,6 +1204,10 @@ var GUILD_KO = {
   "guild.shop.product.guild-gold": "\uACE8\uB4DC \uBB36\uC74C",
   "guild.shop.product.guild-cheesecake": "\uCE58\uC988\uCF00\uC774\uD06C \uBB36\uC74C",
   "guild.shop.product.guild-tonic": "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C",
+  "guild.shop.product.guild-rune-rare": "\uD76C\uADC0 \uB8EC",
+  "guild.shop.product.guild-fossil": "\uD654\uC11D",
+  "guild.shop.product.guild-supply": "\uAE38\uB4DC \uBCF4\uAE09 (\uB300)",
+  "guild.shop.levelLock": "\uAE38\uB4DC Lv.{level} \uAC1C\uBC29",
   // 오류
   "guild.error.generic": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.UNAVAILABLE": "\uC9C0\uAE08\uC740 \uAE38\uB4DC\uB97C \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -1226,7 +1230,7 @@ var GUILD_KO = {
   "guild.error.LEADER_CANNOT_LEAVE": "\uAE38\uB4DC\uC7A5\uC740 \uAE38\uB4DC\uC6D0\uC774 \uB0A8\uC544 \uC788\uC73C\uBA74 \uB5A0\uB0A0 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.ALREADY_STAMPED": "\uC624\uB298\uC740 \uC774\uBBF8 \uCD9C\uC11D\uD588\uC2B5\uB2C8\uB2E4",
   "guild.error.PRODUCT_NOT_FOUND": "\uC0C1\uD488\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
-  "guild.error.PRODUCT_LIMIT": "\uC774\uBC88 \uC8FC \uAD6C\uB9E4 \uD55C\uB3C4\uB97C \uB2E4 \uC37C\uC2B5\uB2C8\uB2E4",
+  "guild.error.PRODUCT_LIMIT": "\uAD6C\uB9E4 \uD55C\uB3C4\uB97C \uB2E4 \uC37C\uC2B5\uB2C8\uB2E4",
   "guild.error.INSUFFICIENT_COINS": "\uAE38\uB4DC \uCF54\uC778\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
   "guild.error.INSUFFICIENT_GEMS": "\uC82C\uC774 \uBAA8\uC790\uB78D\uB2C8\uB2E4",
   "guild.error.INVALID_REQUEST": "\uC694\uCCAD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4",
@@ -1274,6 +1278,7 @@ var GUILD_KO = {
   "guild.error.WAR_LOCKED": "\uC804\uD22C\uC77C\uC5D0\uB294 \uBC29\uC5B4\uC9C4\uC744 \uACE0\uCE60 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.SLOT_INVALID": "\uADF8 \uCE78\uC5D0\uB294 \uC138\uC6B8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
   "guild.error.SLOT_TAKEN": "\uB2E4\uB978 \uAE38\uB4DC\uC6D0\uC774 \uC774\uBBF8 \uB9E1\uC740 \uCE78\uC785\uB2C8\uB2E4",
+  "guild.error.GUILD_LEVEL_LOW": "\uAE38\uB4DC \uB808\uBCA8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4",
   "guild.war.branch": "\uC81C{n}\uC9C0\uBD80",
   "guild.war.kind.boss": "\uC6B0\uB450\uBA38\uB9AC",
   "guild.war.kind.elite": "\uC815\uC608",
@@ -11823,7 +11828,7 @@ var BATTLE_ARENA = {
   // 실시간 아레나는 같은 결투장 원화(`duel` 틀)를 쓰되 확대 뒤 실측 바닥(약 670~1,440)을 거의 다 쓴다.
   // 결투장 몫(740~1,360)에 그대로 세웠을 때는 두 편이 코앞에서 시작해 촘촘해 보였다 — 좌우도 한 뼘씩 더 연다.
   liveArena: { left: 110, right: 970, top: 700, bottom: 1410 },
-  // 길드 수호전은 적이 화면 위 밖에서 몰려와 넓은 길을 내려온다 — 원정 필드의 길이 시작하는 곳까지 쓴다(`GUILD_GUARD_ARENA`와 같은 값).
+  // 수호전 전용 항구 광장은 화면 위 1/4부터 바닥이라 기존 전투 좌표를 그대로 수용한다(`GUILD_GUARD_ARENA`와 같은 값).
   guildGuard: { left: 110, right: 970, top: 600, bottom: 1300 }
 };
 function battleArena(mode) {
@@ -19404,6 +19409,12 @@ init_define_import_meta_env();
 init_define_import_meta_env();
 var BACKGROUND = {
   lobby: "background-lobby",
+  guild: "background-guild",
+  guildShop: "background-guild-shop",
+  guildWar: "background-guild-war",
+  guildWarField: "background-guild-war-field",
+  guildGuard: "background-guild-guard",
+  guildGuardField: "background-guild-guard-field",
   relics: "background-relics",
   info: "background-info",
   battleArea: "background-battle-area",
@@ -19542,6 +19553,12 @@ var BACKGROUND = {
 var BACKGROUND_ASSETS = [
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
   [BACKGROUND.lobby, "sprites/background/background_001.webp"],
+  [BACKGROUND.guild, "sprites/background/guild_main.webp"],
+  [BACKGROUND.guildShop, "sprites/background/guild_shop.webp"],
+  [BACKGROUND.guildWar, "sprites/background/guild_war_stage.webp"],
+  [BACKGROUND.guildWarField, "sprites/background/guild_war_field.webp"],
+  [BACKGROUND.guildGuard, "sprites/background/guild_guard_stage.webp"],
+  [BACKGROUND.guildGuardField, "sprites/background/guild_guard_field.webp"],
   [BACKGROUND.relics, "sprites/background/background_002.webp"],
   [BACKGROUND.info, "sprites/background/background_003.webp"],
   [BACKGROUND.battleArea, "sprites/background/background_004.webp"],
@@ -19618,8 +19635,9 @@ var BATTLE_FIELD_BACKGROUND = {
   raid: BACKGROUND.raidField,
   duel: BACKGROUND.duelField,
   ancient: BACKGROUND.ancientField,
-  // 수호전은 지평선까지 이어진 길이 있는 원화라야 무리가 위에서 몰려오는 것이 읽힌다.
-  guildGuard: BACKGROUND.expeditionField
+  guildWar: BACKGROUND.guildWarField,
+  guildWarDefense: BACKGROUND.guildWarField,
+  guildGuard: BACKGROUND.guildGuardField
 };
 
 // src/data/banners.ts
@@ -31913,6 +31931,7 @@ function validateGuildName(raw) {
 }
 var guildNameKey = (name) => normalizeGuildName(name).replace(/ /g, "").toLowerCase();
 var guildDateKey = (ms) => new Date(ms).toISOString().slice(0, 10);
+var guildMonthKey = (ms) => new Date(ms).toISOString().slice(0, 7);
 function guildWeekKey(ms) {
   const day = new Date(ms).getUTCDay();
   return guildDateKey(ms - (day + 6) % 7 * 864e5);
@@ -31936,9 +31955,12 @@ function guildAttendanceView(count2, lastDay, today) {
   return { filled: base, day: base + 1, stampedToday: false };
 }
 var GUILD_SHOP_PRODUCTS = [
-  { id: "guild-gold", price: 20, weeklyLimit: 5, grant: { gold: 5500 } },
-  { id: "guild-cheesecake", price: 20, weeklyLimit: 5, grant: { cheesecake: 24 } },
-  { id: "guild-tonic", price: 90, weeklyLimit: 2, grant: { item: { id: "stamina-tonic", quantity: 1 } } }
+  { id: "guild-gold", tab: "weekly", price: 20, limit: 5, refresh: "weekly", grant: { gold: 5500 } },
+  { id: "guild-cheesecake", tab: "weekly", price: 20, limit: 5, refresh: "weekly", grant: { cheesecake: 24 } },
+  { id: "guild-tonic", tab: "weekly", price: 90, limit: 2, refresh: "weekly", grant: { item: { id: "stamina-tonic", quantity: 1 } } },
+  { id: "guild-rune-rare", tab: "weekly", price: 450, limit: 1, refresh: "weekly", grant: { rune: "rare" } },
+  { id: "guild-fossil", tab: "monthly", price: 600, limit: 1, refresh: "monthly", grant: { fossil: 1 } },
+  { id: "guild-supply", tab: "guildLevel", price: 160, limit: 1, refresh: "weekly", minGuildLevel: 10, grant: { gold: 11e3, cheesecake: 48, item: { id: "stamina-tonic", quantity: 1 } } }
 ];
 var findGuildProduct = (id) => GUILD_SHOP_PRODUCTS.find((p) => p.id === id);
 
@@ -32159,6 +32181,8 @@ var FakeGuildServer = class {
       card: actor.card ? structuredClone(actor.card) : null,
       purchases: /* @__PURE__ */ new Map(),
       purchaseWeekKey: guildWeekKey(at),
+      monthPurchases: /* @__PURE__ */ new Map(),
+      purchaseMonthKey: guildMonthKey(at),
       guardDay: -1,
       guardBest: 0,
       guardAt: 0
@@ -32193,6 +32217,11 @@ var FakeGuildServer = class {
     if (member.purchaseWeekKey !== week) {
       member.purchaseWeekKey = week;
       member.purchases = /* @__PURE__ */ new Map();
+    }
+    const month = guildMonthKey(now);
+    if (member.purchaseMonthKey !== month) {
+      member.purchaseMonthKey = month;
+      member.monthPurchases = /* @__PURE__ */ new Map();
     }
   }
   leaderOf(guild) {
@@ -32428,23 +32457,34 @@ var FakeGuildServer = class {
       return { attendance: this.attendanceOf(me), day: view.day };
     });
   }
-  shopOf(me) {
-    return { coin: me.coin, items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, weeklyLimit: p.weeklyLimit, bought: me.purchases.get(p.id) ?? 0 })), serverTime: this.now() };
+  bucketOf(me, product) {
+    return product.refresh === "monthly" ? me.monthPurchases : me.purchases;
+  }
+  shopOf(guild, me) {
+    return {
+      coin: me.coin,
+      guildLevel: this.level(guild),
+      serverTime: this.now(),
+      items: GUILD_SHOP_PRODUCTS.map((p) => ({ productId: p.id, price: p.price, limit: p.limit, refresh: p.refresh, ...p.minGuildLevel ? { minGuildLevel: p.minGuildLevel } : {}, bought: this.bucketOf(me, p).get(p.id) ?? 0 }))
+    };
   }
   async getShop(actor) {
-    return this.shopOf(this.requireGuild(actor).me);
+    const { guild, me } = this.requireGuild(actor);
+    return this.shopOf(guild, me);
   }
   async purchase(actor, productId, requestId) {
     return this.once(actor, requestId, () => {
       const product = findGuildProduct(productId);
       if (!product) return fail2("PRODUCT_NOT_FOUND");
-      const { me } = this.requireGuild(actor);
-      const bought = me.purchases.get(product.id) ?? 0;
-      if (bought >= product.weeklyLimit) fail2("PRODUCT_LIMIT");
+      const { guild, me } = this.requireGuild(actor);
+      if (product.minGuildLevel && this.level(guild) < product.minGuildLevel) fail2("GUILD_LEVEL_LOW");
+      const bucket = this.bucketOf(me, product);
+      const bought = bucket.get(product.id) ?? 0;
+      if (bought >= product.limit) fail2("PRODUCT_LIMIT");
       if (me.coin < product.price) fail2("INSUFFICIENT_COINS");
       me.coin -= product.price;
-      me.purchases.set(product.id, bought + 1);
-      return { shop: this.shopOf(me) };
+      bucket.set(product.id, bought + 1);
+      return { shop: this.shopOf(guild, me) };
     });
   }
   // ── 수호전 ─────────────────────────────────────────────────────────────────
@@ -35323,13 +35363,17 @@ var FakeServer = class {
     const now = this.now();
     const wallet = { ...this.state.wallet };
     let inventory = this.state.itemInventory;
+    let runes = this.state.runeInventory;
     if (product.grant.gold) wallet.gold = Math.min(WALLET_CAPS.gold, wallet.gold + product.grant.gold);
     if (product.grant.cheesecake) wallet.cheesecake = Math.min(WALLET_CAPS.cheesecake, wallet.cheesecake + product.grant.cheesecake);
+    if (product.grant.fossil) wallet.fossil = Math.min(WALLET_CAPS.fossil, wallet.fossil + product.grant.fossil);
     if (product.grant.item) inventory = this.grantItem(inventory, product.grant.item.id, product.grant.item.quantity, now).inventory;
-    const next = { ...this.state, wallet, itemInventory: inventory };
+    if (product.grant.rune) runes = [...runes, this.createGrantedRune(product.grant.rune, runes)];
+    const next = { ...this.state, wallet, itemInventory: inventory, runeInventory: runes };
     this.persist(next);
     this.state.wallet = wallet;
     this.state.itemInventory = inventory;
+    this.state.runeInventory = runes;
     return { ...this.snapshot(), shop: bought.shop, productId: product.id };
   }
   /** 수호전의 시계 — QA 시계 이동이 화면과 같은 날·같은 속성을 보게 한다(일반 빌드는 0). */

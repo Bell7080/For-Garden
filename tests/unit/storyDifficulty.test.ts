@@ -60,7 +60,7 @@ describe("스토리 확장 난이도", () => {
     expect(state.cleared.has("1-1")).toBe(false);
     expect((await api.completeStage("normal:1-1", true)).firstClear).toBe(false);
     expect(nextBattleStage(storyStages("normal"), "normal:1-1", id => id === "normal:1-2")?.id).toBe("normal:1-2");
-    expect(nextBattleStage(storyStages("normal"), "normal:4-10", () => true)).toBeUndefined();
+    expect(nextBattleStage(storyStages("normal"), "normal:7-10", () => true)).toBeUndefined();
   });
   it("반복·초회 재화만 25%·50% 올리고 화석과 룬 수량은 유지한다", () => {
     const rewards = getBattleStage("1-10").rewards;
@@ -90,7 +90,8 @@ describe("스토리 확장 난이도", () => {
       for (const reward of stage.rewards.firstClearBonus ?? []) {
         if (reward.kind !== "currency") continue;
         if (reward.currency === "gems") expect(reward.amount % 10).toBe(0);
-        if (reward.currency === "gold") expect(reward.amount).toBeLessThanOrEqual(12_600);
+        // 7-10 보통 난이도(정예 ×2 · 보통 ×1.5)가 가장 크다 — (300 + 69 × 100) × 2 × 1.5.
+        if (reward.currency === "gold") expect(reward.amount).toBeLessThanOrEqual(21_600);
       }
     }
     const state = createDefaultSession(); state.cleared = new Set(["4-10", "normal:4-5"]);

@@ -6,6 +6,7 @@ import { linear } from "./linear";
  *
  * 2장에서는 연구원이 코마를 쫓았고, 3장에서는 연구원이 쫓긴다. 이카닉시아의 회수조는 연구원을 해치지 않고 「데려가려」 하며,
  * 지부의 병력이 한 팀씩 합류해 길을 연다. 코마의 입장은 끝까지 모호하게 둔다(그녀의 비밀은 쓰지 않는다).
+ * 직책(`docs/lore.md` §4): 코마·이카닉시아는 같은 급의 간부, 아트라는 회수조 부간부, 삼인조와 펄시·네우리·미르는 조원이다.
  * 나이트 기어는 무전, 앱솔루트 팽(렉시아·엘라·파치·아크·유티)은 직접 선다.
  */
 
@@ -13,17 +14,27 @@ const REMOTE_PAIR = (voice: "seira" | "luka", other: "torika" | "dodi" | "lexia"
   { id: other, slot: "left" }, { id: voice, slot: "right", remote: true },
 ];
 
-/** 3-1 전 — 배턴. 코마가 무릎을 꿇은 자리에 이카닉시아가 내려선다. */
+/**
+ * 3-1 전 — 배턴. 코마가 무릎을 꿇은 자리에 이카닉시아가 내려선다.
+ *
+ * 2-10에서 삼인조는 연구원을 따라가겠다고 했다. 회수조의 「회수」는 실패한 팀을 거두어 가는 일이기도 해서, 그 셋도 함께 끌려
+ * 돌아간다 — 3장과 4장에서 셋이 다시 앞을 막는 것은 마음이 바뀌어서가 아니라 회수되었기 때문이다.
+ */
 export const STAGE_3_1_PRE: DialogueStory = {
   id: "stage-3-1-pre",
   startNodeId: "land",
   backdrop: "battlefield",
   nodes: linear([
     { id: "land", speaker: "", body: "무릎 꿇은 코마의 뒤로 찢어진 날개 망토가 천천히 내려선다. 서두르는 기색이라고는 없다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
-    { id: "greet", speaker: "이카닉시아", body: "수고하셨어요, 코마 님. 실패한 분의 얼굴도 가끔은 곱답니다.", standing: "ikanixia", act: "lean" },
+    { id: "greet", speaker: "이카닉시아", body: "수고하셨어요, 코마 님. 같은 간부끼리 이런 자리에서 뵙게 되다니, 조금 민망하네요.", standing: "ikanixia", act: "lean" },
     { id: "mask", speaker: "", body: "코마가 입을 가린 가리개를 처음으로 천천히 내린다.", standing: "koma", act: "recoil" },
     { id: "atra", speaker: "아트라", body: "아, 안 돼요… 선, 선배는 아직… 회수 전이라서…", standing: "atra", cast: [{ id: "koma", slot: "left" }, { id: "atra", slot: "center" }, { id: "ikanixia", slot: "right" }], act: "tremble" },
-    { id: "smile", speaker: "이카닉시아", body: "어머, 우리 아트라는 상냥하기도 하지. 그럼 서두르지 않을게요.", standing: "ikanixia", act: "nod" },
+    { id: "smile", speaker: "이카닉시아", body: "어머, 우리 아트라는 상냥하기도 하지. 그럼 선배는 마지막에 모시죠.", standing: "ikanixia", act: "nod" },
+    { id: "haul", speaker: "", body: "아트라의 마디진 꼬리 끝에 세 그림자가 묶인 채 끌려 나온다. 아모, 토비, 리파다.", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], cue: "impact" },
+    { id: "toby", speaker: "토비", body: "놔, 놔 봐! 우리 따라가기로 했다니까! 진짜라고!", standing: "toby", act: "shake" },
+    { id: "rule", speaker: "이카닉시아", body: "실패한 팀은 거두어 오는 게 회수조의 일이랍니다. 세 분은 한 번만 더 일해 주셔야겠어요.", standing: "ikanixia", cast: [{ id: "toby", slot: "left" }, { id: "ikanixia", slot: "right" }], act: "lean" },
+    { id: "ripa", speaker: "리파", body: "…이번에도 위에서 정했네. 우리가 정한 게 아니고.", standing: "ripa", cast: [{ id: "ripa", slot: "left" }, { id: "amo", slot: "right" }], act: "shrink" },
+    { id: "amo", speaker: "아모", body: "…연구원, 미안. 따라간다고 했는데, 아직 못 갔어.", standing: "amo", act: "tremble" },
     { id: "you", speaker: "이카닉시아", body: "연구원님이시군요. 소문은 많이 들었어요. 이번에는 제가 정중히 모셔 가겠습니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
   ]),
 };

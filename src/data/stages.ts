@@ -81,6 +81,11 @@ const STORY_RECOMMENDED_LEVELS: readonly number[] = [
   // 4장은 테러조 기준 48~56이다. 57~60은 5·6장이 쓴다 — 레벨 사다리는 60에서 멈추므로 아껴 쓴다.
   // 회수조는 태생 층이 한 띠 위라 같은 자리에서 더 낮은 레벨로 선다(`tieredEnemy`).
   48, 48, 49, 51, 51, 51, 51, 51, 54, 56,
+  // 5~7장은 눈금이 60을 넘는다 — 실제 레벨은 60에서 멈추므로 이 구간은 **태생 층이 높은 개체**(회수조 ×1.3 · 감금조 ×1.7 ·
+  // 카르 ×3)가 같은 세기를 더 낮은 레벨로 선다(`tieredEnemy`). 테러조와 코마는 태생 보정이 없어 60을 넘는 자리에 세우지 않는다.
+  58, 59, 60, 61, 62, 63, 64, 65, 66, 68,
+  69, 70, 71, 72, 73, 74, 75, 76, 77, 79,
+  80, 81, 82, 83, 84, 85, 86, 87, 88, 90,
 ];
 
 /**
@@ -101,7 +106,7 @@ const CHAPTER_ONE_ELITES: Readonly<Record<number, string>> = {
  *
  * - 2-7·2-9는 **정예 둘**이다 — 새 유형을 만들지 않고 같은 정예 자리에 둘이 서며, 체력 몫은 둘이 나눠 갖는다
  *   (`encounterHpShare`). 레벨 사다리는 그대로다.
- * - 3-5는 부부대장 아트라가 혼자 서는 정예, 3-10은 행동대장 이카닉시아가 혼자 서는 장 마감 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
+ * - 3-5는 부간부 아트라가 혼자 서는 정예, 3-10은 간부 이카닉시아가 혼자 서는 장 마감 정예, 3-6~3-9는 회수조 셋이다. 3-6·3-7은 아트라 앞 · 미르 가운데 ·
  *   펄시 뒤의 공격조이고, 3-8부터 네우리가 뒤에 서서 치유와 공명으로 받치며 가운데가 펄시로 바뀐다.
  *   네우리가 일찍 서면 바닥 파티가 3-7을 열었다(여덟 판 중 한 판) — 3장은 완전히 닫혀 있어야 해서 늦췄다.
  * 회수조는 3-2부터 옛 셋과 섞여 하나씩 드러난다(3-2 미르 · 3-3 펄시, 네우리는 3-8 — 3-4에 세우면 바닥 파티가 3-4를 열었다). 3-1은 옛 셋 그대로다.
@@ -129,10 +134,51 @@ const LATE_CHAPTER_FORMATIONS: Readonly<Record<string, readonly (readonly [strin
   "4-8": [["amo", 0], ["toby", 1], ["ripa", 2], ["mir", 3], ["pulsi", 4]],
   "4-9": [["mir", 0], ["koma", 1], ["pulsi", 2]],
   "4-10": [["koma", 0], ["ikanixia", 2]],
+  // 5장 — 지하 감금동. 회수된 삼인조(5-1) → 회수조 → 풀려난 감금조가 섞인다. 5-5 라자(부간부) · 5-10 마가사(간부)가 혼자 서는 정예다.
+  "5-1": [["amo", 0], ["toby", 1], ["ripa", 2]],
+  "5-2": [["atra", 0], ["mir", 1], ["pulsi", 2]],
+  "5-3": [["atra", 0], ["mir", 1], ["neuri", 2]],
+  "5-4": [["mir", 0], ["pulsi", 1], ["neuri", 2]],
+  "5-5": [["raja", 1]],
+  "5-6": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
+  "5-7": [["raja", 0], ["mir", 1], ["pulsi", 2]],
+  "5-8": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
+  "5-9": [["raja", 0], ["atra", 1], ["mir", 2], ["pulsi", 3]],
+  "5-10": [["magasa", 1]],
+  // 6장 — 중층 격리 회랑. 감금조가 앞에 서고 회수조가 받친다. 6-5 노아의 기습(정예) · 6-10 마가사·노아 투톱(정예 둘).
+  "6-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
+  "6-2": [["atra", 0], ["mir", 1], ["pulsi", 2], ["neuri", 3]],
+  "6-3": [["raja", 0], ["mir", 1], ["magasa", 2]],
+  "6-4": [["raja", 0], ["pulsi", 1], ["neuri", 2]],
+  "6-5": [["noa", 1]],
+  "6-6": [["raja", 0], ["noa", 1], ["neuri", 2]],
+  "6-7": [["atra", 0], ["noa", 1], ["pulsi", 2]],
+  "6-8": [["raja", 0], ["atra", 1], ["noa", 2], ["pulsi", 3], ["neuri", 4]],
+  "6-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
+  "6-10": [["magasa", 0], ["noa", 2]],
+  // 7장 — 최하층 구속실. 감금조 셋과 회수조가 함께 선다. 7-5 이카닉시아의 저지선(정예) · 7-10 부대장 카르(정예).
+  "7-1": [["raja", 0], ["magasa", 1], ["neuri", 2]],
+  "7-2": [["atra", 0], ["noa", 1], ["mir", 2], ["pulsi", 3]],
+  "7-3": [["raja", 0], ["noa", 1], ["magasa", 2]],
+  "7-4": [["atra", 0], ["raja", 1], ["pulsi", 2], ["neuri", 3]],
+  "7-5": [["ikanixia", 1]],
+  "7-6": [["raja", 0], ["magasa", 1], ["noa", 2], ["neuri", 3]],
+  "7-7": [["atra", 0], ["raja", 1], ["noa", 2], ["pulsi", 3]],
+  "7-8": [["raja", 0], ["atra", 1], ["magasa", 2], ["noa", 3], ["neuri", 4]],
+  "7-9": [["raja", 0], ["magasa", 1], ["noa", 2]],
+  "7-10": [["carno", 1]],
+};
+
+/**
+ * 관문 하나에서 **그 개체만** 눈금보다 더 높은 레벨로 서는 몫. 카르는 태생 ×3이라 7-10의 눈금에서 레벨 1로 떨어진다 — 몇 레벨을
+ * 얹어 「낮은 레벨에서도 강한 보스」로 세운다(응태 결정, 낮은 LV가 긴장을 만든다).
+ */
+const STAGE_ENEMY_LEVEL_BONUS: Readonly<Record<string, Readonly<Record<string, number>>>> = {
+  "7-10": { carno: 2 },
 };
 
 /** 정예 둘이 서는 관문. 하나만 서는 정예는 적 수로 가른다. */
-const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10"]);
+const ELITE_DUO_STAGE_IDS: ReadonlySet<string> = new Set(["2-7", "2-9", "4-4", "4-5", "4-10", "6-10"]);
 
 /**
  * 1장의 적 편성. 정예 관문만 하나가 서고 나머지는 같은 셋이 같은 자리에 선다.
@@ -176,6 +222,12 @@ const STORY_RUNE_REWARDS: Readonly<Record<string, Extract<StageBonusReward, { ki
   "3-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
   "4-5": { kind: "rune", rarity: "rare", part: 0 },
   "4-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
+  "5-5": { kind: "rune", rarity: "rare", part: 2 },
+  "5-10": { kind: "rune", rarity: "rare", part: 0, trait: true },
+  "6-5": { kind: "rune", rarity: "rare", part: 1 },
+  "6-10": { kind: "rune", rarity: "rare", part: 2, trait: true },
+  "7-5": { kind: "rune", rarity: "rare", part: 0 },
+  "7-10": { kind: "rune", rarity: "rare", part: 1, trait: true },
 };
 
 /**
@@ -192,6 +244,12 @@ const STORY_RAW_STONE: Readonly<Record<string, number>> = {
   "3-6": 60,
   "4-1": 60,
   "4-6": 60,
+  "5-1": 60,
+  "5-6": 60,
+  "6-1": 60,
+  "6-6": 60,
+  "7-1": 60,
+  "7-6": 60,
 };
 
 /**
@@ -244,6 +302,10 @@ const CHAPTER_SITUATIONS: readonly (readonly string[])[] = [
   ],
   [],
   [],
+  [],
+  [],
+  [],
+  [],
 ];
 
 const CHAPTER_CONTENT = [
@@ -251,6 +313,9 @@ const CHAPTER_CONTENT = [
   { title: "잔향 지구", subtitle: "침묵한 산업 회랑", names: ["잔향 진입로", "녹슨 조립동", "냉각 수로", "동력 중계실", "파손된 승강장", "무인 생산선", "압력 격실", "재처리 용광로", "중앙 운송로", "잔향 지구 관문"] },
   { title: "제 3 구역", subtitle: "심층 정원 — 도시 아래의 뿌리", names: ["심층 하강로", "발광 균사굴", "고대 급수원", "뿌리 관측소", "유전자 저장고", "포자 확산실", "생체 반응로", "심층 연구동", "정원 핵심부", "심층 정원 제어실"] },
   { title: "제 4 구역", subtitle: "합류선 — 두 무리가 한 선로에 서다", names: ["합류 승강장", "끊어진 환승로", "점검 통로", "봉인된 수송 갱도", "회수 대기실", "폐쇄 격납고", "지하 정비동", "낙하 승강기", "합류선 종점", "추격 사령실"] },
+  { title: "제 5 구역", subtitle: "지하 감금동 — 지부가 묻어 둔 문", names: ["감금동 입구", "검문 격자", "소등된 복도", "제1 감방 구역", "서열의 방", "침수 감방", "족쇄 보관실", "배식 통로", "구속 장치실", "감금동 취사장"] },
+  { title: "제 6 구역", subtitle: "중층 격리 회랑 — 풀려난 수감자들", names: ["격리 회랑 입구", "관측 창 복도", "무너진 순찰로", "환기 수직갱", "떨리는 그림자", "중층 격납고", "무너진 면회실", "격리 관제실", "식량 창고", "회랑 최심부"] },
+  { title: "제 7 구역", subtitle: "최하층 구속실 — 마지막 자물쇠", names: ["최하층 하강로", "냉동 수용실", "침묵의 복도", "봉인 제어반", "회수조 저지선", "얼어붙은 기록실", "구속 장치 통로", "최하층 전실", "구속실 문 앞", "최하층 구속실"] },
 ] as const;
 
 /** 챕터가 콘텐츠 소유 단위이고, 각 스테이지는 명시적인 선행 ID로 챕터 경계를 잇는다. */
@@ -276,14 +341,14 @@ export const CHAPTERS: readonly ChapterDef[] = CHAPTER_CONTENT.map((content, cha
      * 정보창이 `LV.40 / 상한 20`을 세웠다. 돌파는 늘 그 레벨이 요구하는 단계 이상이어야 한다.
      */
     const laterChapterLevel = STORY_RECOMMENDED_LEVELS[globalOrder] ?? 1;
-    const laterChapterBreakthrough = requiredBreakthroughForLevel(laterChapterLevel);
     const laterChapterEnemies = lateFormation
       ? lateFormation.map(([relicId, slot]) => {
-        const enemy = tieredEnemy(relicId, laterChapterLevel, slot, chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0);
+        const levelBonus = (chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0) + (STAGE_ENEMY_LEVEL_BONUS[`${chapter}-${chapterOrder}`]?.[relicId] ?? 0);
+        const enemy = tieredEnemy(relicId, laterChapterLevel, slot, levelBonus);
         return SOLO_ELITE_ENEMIES[`${chapter}-${chapterOrder}`]?.includes(relicId) ? { ...enemy, elite: true as const } : enemy;
       })
       : laterChapterIds.map((relicId, slot) =>
-        enemyGrowth(relicId, laterChapterLevel, laterChapterBreakthrough, slot as 0 | 1 | 2));
+        enemyGrowth(relicId, laterChapterLevel, requiredBreakthroughForLevel(laterChapterLevel), slot as 0 | 1 | 2));
     const enemies = chapter === 1 ? CHAPTER_ONE_ENEMIES[orderIndex] : laterChapterEnemies;
     const id = `${chapter}-${chapterOrder}`;
     const elite = enemies.length === 1 || ELITE_DUO_STAGE_IDS.has(id);

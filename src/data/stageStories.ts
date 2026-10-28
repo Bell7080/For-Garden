@@ -2,6 +2,9 @@ import { CHAPTER_1_STORIES } from "./dialogues/chapter1";
 import { CHAPTER_2_STORIES } from "./dialogues/chapter2";
 import { CHAPTER_3_STORIES } from "./dialogues/chapter3";
 import { CHAPTER_4_STORIES } from "./dialogues/chapter4";
+import { CHAPTER_5_STORIES } from "./dialogues/chapter5";
+import { CHAPTER_6_STORIES } from "./dialogues/chapter6";
+import { CHAPTER_7_STORIES } from "./dialogues/chapter7";
 
 /**
  * 관문에 달린 전(前)·후(後) 대사. **초회에만** 흐른다.
@@ -43,14 +46,41 @@ const LINKS: Readonly<Record<string, StageStoryLink>> = {
   "3-9": { post: "stage-3-9-post" },
   "3-10": { pre: "stage-3-10-pre", post: "stage-3-10-post" },
   "4-1": { pre: "stage-4-1-pre" },
+  "4-3": { pre: "stage-4-3-pre" },
   "4-4": { pre: "stage-4-4-pre" },
+  "4-6": { pre: "stage-4-6-pre" },
+  "4-8": { post: "stage-4-8-post" },
   "4-10": { pre: "stage-4-10-pre", post: "stage-4-10-post" },
+  "5-1": { pre: "stage-5-1-pre" },
+  "5-3": { post: "stage-5-3-post" },
+  "5-4": { post: "stage-5-4-post" },
+  "5-5": { pre: "stage-5-5-pre", post: "stage-5-5-post" },
+  "5-6": { post: "stage-5-6-post" },
+  "5-8": { post: "stage-5-8-post" },
+  "5-9": { post: "stage-5-9-post" },
+  "5-10": { pre: "stage-5-10-pre", post: "stage-5-10-post" },
+  "6-1": { pre: "stage-6-1-pre" },
+  "6-3": { post: "stage-6-3-post" },
+  "6-4": { post: "stage-6-4-post" },
+  "6-5": { pre: "stage-6-5-pre", post: "stage-6-5-post" },
+  "6-7": { post: "stage-6-7-post" },
+  "6-8": { post: "stage-6-8-post" },
+  "6-10": { pre: "stage-6-10-pre", post: "stage-6-10-post" },
+  "7-1": { pre: "stage-7-1-pre" },
+  "7-2": { post: "stage-7-2-post" },
+  "7-4": { post: "stage-7-4-post" },
+  "7-5": { pre: "stage-7-5-pre", post: "stage-7-5-post" },
+  "7-7": { post: "stage-7-7-post" },
+  "7-8": { post: "stage-7-8-post" },
+  "7-9": { post: "stage-7-9-post" },
+  "7-10": { pre: "stage-7-10-pre", post: "stage-7-10-post" },
 };
 
 export const STAGE_STORY_LINKS: Readonly<Record<string, StageStoryLink>> = LINKS;
 
 /** 회고가 모아 보여 주는 본편 대사 묶음. 관문 순서대로다. */
-export const MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES];
+export const MAIN_STORY_BUNDLES = [...CHAPTER_1_STORIES, ...CHAPTER_2_STORIES, ...CHAPTER_3_STORIES, ...CHAPTER_4_STORIES,
+  ...CHAPTER_5_STORIES, ...CHAPTER_6_STORIES, ...CHAPTER_7_STORIES];
 
 /** 아직 보지 않은 전 대사의 ID. 없으면 `undefined`. */
 export function pendingPreStory(stageId: string, completed: ReadonlySet<string>): string | undefined {

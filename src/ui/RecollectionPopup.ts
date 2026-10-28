@@ -17,7 +17,7 @@ import { shapeClipMask } from "./popupArt";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
 import { pressIn, pressOut } from "./pressFeedback";
-import { recollectionArtCrop, recollectionArtFocus, recollectionListHeight, recollectionRowAt, recollectionRowY, recollectionViewportHeight, RECOLLECTION_LAYOUT } from "./recollectionLayout";
+import { recollectionArtCrop, recollectionArtFocus, recollectionListHeight, recollectionRowAt, recollectionRowY, recollectionTabWidth, recollectionViewportHeight, RECOLLECTION_LAYOUT } from "./recollectionLayout";
 import { COLOR, textStyle } from "./theme";
 import { shrinkTextToWidth, squeezeTextToWidth } from "./textFit";
 import { addScrollHint } from "./ScrollHint";
@@ -89,10 +89,11 @@ export class RecollectionPopup {
     this.entries.forEach((entry, index) => this.addRow(entry, index));
     const tabs = this.scene.add.container(0, 0);
     const { tab } = RECOLLECTION_LAYOUT;
-    const startX = -((RECOLLECTION_GROUPS.length - 1) * (tab.width + tab.gap)) / 2;
+    const tabWidth = recollectionTabWidth(RECOLLECTION_GROUPS.length);
+    const startX = -((RECOLLECTION_GROUPS.length - 1) * (tabWidth + tab.gap)) / 2;
     RECOLLECTION_GROUPS.forEach((group, index) => {
       addCategoryTab(this.scene, tabs, {
-        x: startX + index * (tab.width + tab.gap), y: tab.y, width: tab.width, height: tab.height,
+        x: startX + index * (tabWidth + tab.gap), y: tab.y, width: tabWidth, height: tab.height,
         label: t(`recollection.tab.${group}`), selected: group === this.tab,
         onSelect: () => {
           if (group === this.tab) return;

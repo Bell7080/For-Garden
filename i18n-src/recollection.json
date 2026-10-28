@@ -620,13 +620,363 @@
     "В командной Кома и Иканиксия встают рядом, преграждая путь."
   ],
   "recollection.summary.stage-4-10-post": [
-    "回收组撤退，科马说下次名单上再见。",
-    "หน่วยกู้คืนถอนตัว โคมะบอกว่าจะพบกันอีกในรายชื่อถัดไป",
-    "Nhóm thu hồi rút lui, Koma nói sẽ gặp lại ở danh sách tiếp theo.",
-    "Regu penjemput mundur, Koma bilang mereka akan bertemu lagi di daftar berikutnya.",
-    "El grupo de recuperación se retira y Koma dice que se verán en la próxima lista.",
-    "O grupo de recuperação recua, e Koma diz que se encontrarão na próxima lista.",
-    "Der Bergungstrupp zieht sich zurück, Koma sagt, man sehe sich auf der nächsten Liste wieder.",
-    "Отряд возврата отступает, Кома говорит, что они встретятся в следующем списке."
+    "指挥室下方埋藏的监禁楼大门显露出来，柯玛接到了新的命令。",
+    "ประตูอาคารคุมขังที่ถูกฝังไว้ใต้ห้องบัญชาการปรากฏขึ้น และโคมะได้รับคำสั่งใหม่",
+    "Cánh cửa khu giam giữ bị chôn dưới phòng chỉ huy lộ ra, và Koma nhận lệnh mới.",
+    "Pintu blok penahanan yang terkubur di bawah ruang komando muncul, dan Koma menerima perintah baru.",
+    "Bajo la sala de mando aparece la puerta enterrada del bloque de reclusión, y Koma recibe una nueva orden.",
+    "Sob a sala de comando surge a porta enterrada do bloco de detenção, e Koma recebe uma nova ordem.",
+    "Unter dem Kommandoraum kommt die verschüttete Tür des Haftblocks zum Vorschein, und Koma erhält einen neuen Befehl.",
+    "Под командным пунктом открывается засыпанная дверь блока заключения, и Кома получает новый приказ."
+  ],
+  "recollection.tab.chapter5": [
+    "第5章",
+    "บทที่ 5",
+    "Chương 5",
+    "Bab 5",
+    "Capítulo 5",
+    "Capítulo 5",
+    "Kapitel 5",
+    "Глава 5"
+  ],
+  "recollection.tab.chapter6": [
+    "第6章",
+    "บทที่ 6",
+    "Chương 6",
+    "Bab 6",
+    "Capítulo 6",
+    "Capítulo 6",
+    "Kapitel 6",
+    "Глава 6"
+  ],
+  "recollection.tab.chapter7": [
+    "第7章",
+    "บทที่ 7",
+    "Chương 7",
+    "Bab 7",
+    "Capítulo 7",
+    "Capítulo 7",
+    "Kapitel 7",
+    "Глава 7"
+  ],
+  "recollection.summary.stage-4-3-pre": [
+    "检修通道里，被回收的三人组奉命挡住去路。",
+    "ในทางตรวจซ่อม สามคนที่ถูกกู้กลับมาขวางทางเพราะเป็นคำสั่ง",
+    "Trong hành lang bảo trì, bộ ba bị thu hồi chặn đường vì đó là mệnh lệnh.",
+    "Di lorong pemeriksaan, trio yang dipulangkan menghalangi jalan karena diperintah.",
+    "En el pasaje de inspección, el trío recuperado bloquea el paso porque se lo ordenaron.",
+    "Na passagem de inspeção, o trio recuperado bloqueia o caminho porque recebeu ordens.",
+    "Im Wartungsgang versperrt das zurückgeholte Trio den Weg, weil es so befohlen wurde.",
+    "В служебном проходе возвращённая троица преграждает путь — таков приказ."
+  ],
+  "recollection.summary.stage-4-6-pre": [
+    "涅乌莉看轻同为干部的柯玛，莉帕问是不是真的非打不可。",
+    "เนอูรีดูแคลนโคมะที่เป็นแกนนำเหมือนกัน ส่วนริปาถามว่าต้องสู้จริงหรือ",
+    "Neuri coi thường Koma dù cùng là cán bộ, còn Ripa hỏi có thật phải đánh không.",
+    "Neuri meremehkan Koma yang sesama perwira, dan Ripa bertanya apakah mereka sungguh harus bertarung.",
+    "Neuri menosprecia a Koma, oficial como ella, y Ripa pregunta si de verdad tienen que pelear.",
+    "Neuri menospreza Koma, oficial como ela, e Ripa pergunta se precisam mesmo lutar.",
+    "Neuri sieht auf Koma herab, obwohl sie gleichrangig sind, und Ripa fragt, ob sie wirklich kämpfen müssen.",
+    "Неури смотрит свысока на Кома, хоть та ей ровня, а Рипа спрашивает, правда ли нужно драться."
+  ],
+  "recollection.summary.stage-4-8-post": [
+    "缆绳断裂的升降机坠向地图上没有的深处。",
+    "ลิฟต์ที่สายขาดร่วงลงสู่ที่ที่ไม่มีในแผนที่",
+    "Thang máy đứt cáp rơi xuống nơi không có trên bản đồ.",
+    "Lift yang talinya putus jatuh ke kedalaman yang tak ada di peta.",
+    "El ascensor se suelta y cae hacia unas profundidades que no figuran en ningún mapa.",
+    "O elevador se solta e despenca para profundezas que nenhum mapa mostra.",
+    "Der Aufzug reißt ab und stürzt in Tiefen, die auf keiner Karte stehen.",
+    "Оборвавшийся лифт падает туда, чего нет ни на одной карте."
+  ],
+  "recollection.summary.stage-5-1-pre": [
+    "监禁楼入口处，有分部留下的警告，还有守门的三人组。",
+    "ที่ทางเข้าอาคารคุมขัง มีคำเตือนของสาขาและสามคนที่เฝ้าประตูอยู่",
+    "Ở lối vào khu giam giữ là lời cảnh báo của chi nhánh và bộ ba canh cửa.",
+    "Di pintu masuk blok penahanan ada peringatan cabang dan trio yang menjaga pintu.",
+    "En la entrada del bloque de reclusión esperan el aviso de la sede y el trío que guarda la puerta.",
+    "Na entrada do bloco de detenção estão o aviso da filial e o trio que guarda a porta.",
+    "Am Eingang des Haftblocks warten das Warnschild der Zweigstelle und das Trio, das die Tür bewacht.",
+    "У входа в блок заключения — предупреждение филиала и троица, охраняющая дверь."
+  ],
+  "recollection.summary.stage-5-3-post": [
+    "德洛皮找到了被捕获的共灭个体的收监名单。",
+    "เดโลปีพบรายชื่อผู้ถูกคุมขังของเหล่าสมาชิกกลุ่มทำลายล้างที่ถูกจับ",
+    "Delopi tìm ra danh sách giam giữ những cá thể Hủy diệt bị bắt.",
+    "Delopi menemukan daftar tahanan subjek Annihilation yang tertangkap.",
+    "Delopi encuentra la lista de reclusos de los sujetos de Aniquilación capturados.",
+    "Delopi encontra a lista de detentos dos indivíduos da Aniquilação capturados.",
+    "Delopi findet die Gefangenenliste der gefassten Vernichtungs-Individuen.",
+    "Делопи находит список заключённых — пойманных особей Уничтожения."
+  ],
+  "recollection.summary.stage-5-4-post": [
+    "柯玛打开牢房，监禁组的拉贾走了出来。",
+    "โคมะเปิดห้องขัง ราจาแห่งทีมคุมขังเดินออกมา",
+    "Koma mở các phòng giam, Raja của tổ giam giữ bước ra.",
+    "Koma membuka sel, dan Raja dari regu penahanan berjalan keluar.",
+    "Koma abre las celdas y Raja, de la escuadra de reclusión, sale caminando.",
+    "Koma abre as celas, e Raja, do esquadrão de detenção, sai andando.",
+    "Koma öffnet die Zellen, und Raja von der Haftgruppe tritt heraus.",
+    "Кома открывает камеры, и из них выходит Раджа из группы заключения."
+  ],
+  "recollection.summary.stage-5-5-pre": [
+    "在序列之间，拉贾独自挡住去路。",
+    "ในห้องลำดับชั้น ราจาขวางทางอยู่เพียงลำพัง",
+    "Trong căn phòng thứ bậc, Raja một mình chặn đường.",
+    "Di Ruang Peringkat, Raja menghalangi jalan seorang diri.",
+    "En la Sala del Rango, Raja bloquea el paso en solitario.",
+    "Na Sala da Hierarquia, Raja bloqueia o caminho sozinho.",
+    "Im Raum der Rangfolge stellt sich Raja allein in den Weg.",
+    "В комнате старшинства Раджа в одиночку преграждает путь."
+  ],
+  "recollection.summary.stage-5-5-post": [
+    "拉贾退下后，更深处传来哼歌声。",
+    "ราจาถอยไป แล้วเสียงฮัมเพลงก็ลอยขึ้นมาจากข้างล่าง",
+    "Raja lui lại, và tiếng ngân nga vọng lên từ sâu hơn.",
+    "Raja mundur, dan senandung terdengar dari bawah sana.",
+    "Raja retrocede, y desde más abajo llega un tarareo.",
+    "Raja recua, e um cantarolar sobe de mais abaixo.",
+    "Raja weicht zurück, und von weiter unten dringt ein Summen herauf.",
+    "Раджа отступает, а снизу доносится напев."
+  ],
+  "recollection.summary.stage-5-6-post": [
+    "在浸水牢房里，伊卡尼克西亚彬彬有礼地向获释的拉贾问好。",
+    "ในห้องขังที่น้ำท่วม อิคานิกเซียทักทายราจาที่ถูกปล่อยตัวอย่างสุภาพ",
+    "Trong phòng giam ngập nước, Ikanixia lịch sự chào Raja vừa được thả.",
+    "Di sel yang terendam, Ikanixia menyapa Raja yang baru bebas dengan sopan.",
+    "En las celdas inundadas, Ikanixia saluda con cortesía a Raja, recién liberado.",
+    "Nas celas alagadas, Ikanixia cumprimenta com cortesia o recém-libertado Raja.",
+    "In den gefluteten Zellen begrüßt Ikanixia den befreiten Raja ausgesucht höflich.",
+    "В затопленных камерах Иканиксия учтиво приветствует освобождённого Раджу."
+  ],
+  "recollection.summary.stage-5-8-post": [
+    "有人一直在偷偷喂养被关押的个体，并逐一放他们出来。",
+    "มีใครบางคนแอบให้อาหารผู้ถูกขังและปล่อยออกมาทีละคน",
+    "Có ai đó đã lén cho các cá thể bị giam ăn và thả họ từng người một.",
+    "Seseorang diam-diam memberi makan para tahanan dan membebaskan mereka satu per satu.",
+    "Alguien ha estado alimentando en secreto a los reclusos y liberándolos uno a uno.",
+    "Alguém vinha alimentando os presos em segredo e libertando-os um a um.",
+    "Jemand hat die Gefangenen heimlich versorgt und einen nach dem anderen befreit.",
+    "Кто-то тайком кормил узников и выпускал их одного за другим."
+  ],
+  "recollection.summary.stage-5-9-post": [
+    "断裂的镣铐之间，一道受惊的影子逃走了。",
+    "ท่ามกลางโซ่ตรวนที่ขาด เงาที่หวาดกลัวหนึ่งเงาวิ่งหนีไป",
+    "Giữa những xiềng xích đứt, một cái bóng sợ hãi bỏ chạy.",
+    "Di antara belenggu yang putus, sesosok bayangan ketakutan melarikan diri.",
+    "Entre los grilletes rotos, una sombra asustada huye.",
+    "Entre os grilhões partidos, uma sombra assustada foge.",
+    "Zwischen den zerbrochenen Fesseln flieht ein verängstigter Schatten.",
+    "Среди разорванных кандалов убегает испуганная тень."
+  ],
+  "recollection.summary.stage-5-10-pre": [
+    "炊事房的大锅前，玛嘉莎迎接研究员。",
+    "หน้าหม้อใบใหญ่ในโรงครัว มากาซาต้อนรับนักวิจัย",
+    "Bên nồi lớn trong nhà bếp, Magasa đón nhà nghiên cứu.",
+    "Di depan kuali besar di dapur, Magasa menyambut sang Periset.",
+    "Junto a la gran olla de la cocina, Magasa recibe al investigador.",
+    "Diante do grande caldeirão da cozinha, Magasa recebe o pesquisador.",
+    "Am großen Kessel in der Küche empfängt Magasa den Forscher.",
+    "У большого котла на кухне Магаса встречает исследователя."
+  ],
+  "recollection.summary.stage-5-10-post": [
+    "最底层的锁只有人手才能打开——共灭把研究员往下赶的理由浮出水面。",
+    "กุญแจชั้นล่างสุดเปิดได้ด้วยมือมนุษย์เท่านั้น — เหตุผลที่กลุ่มทำลายล้างไล่ต้อนนักวิจัยลงมาจึงเผยออก",
+    "Ổ khóa tầng đáy chỉ mở bằng tay người — lý do Hủy diệt dồn nhà nghiên cứu xuống dưới lộ ra.",
+    "Kunci terbawah hanya terbuka oleh tangan manusia — terungkap mengapa Annihilation menggiring sang Periset ke bawah.",
+    "La cerradura más profunda solo se abre con una mano humana: por eso Aniquilación empujó al investigador hacia abajo.",
+    "A fechadura mais funda só abre com mão humana — eis por que a Aniquilação empurrou o pesquisador para baixo.",
+    "Das unterste Schloss öffnet nur eine Menschenhand — deshalb trieb die Vernichtung den Forscher nach unten.",
+    "Нижний замок открывает лишь человеческая рука — вот зачем Уничтожение гнало исследователя вниз."
+  ],
+  "recollection.summary.stage-6-1-pre": [
+    "一架小型无人机降入回廊，查看通往上方的路。",
+    "โดรนตัวเล็กลงมาในทางเดินเพื่อสำรวจทางขึ้นไปข้างบน",
+    "Một chiếc drone nhỏ hạ xuống hành lang để dò đường lên trên.",
+    "Sebuah drone kecil turun ke koridor untuk mengintai jalan ke atas.",
+    "Un pequeño dron desciende al pasillo para explorar el camino hacia arriba.",
+    "Um pequeno drone desce ao corredor para sondar o caminho para cima.",
+    "Eine kleine Drohne sinkt in den Korridor, um den Weg nach oben zu erkunden.",
+    "Маленький дрон спускается в коридор, чтобы разведать путь наверх."
+  ],
+  "recollection.summary.stage-6-3-post": [
+    "玛嘉莎在回廊一角给监禁组开饭，连研究员的那份也留好了。",
+    "มากาซาเลี้ยงข้าวทีมคุมขังที่มุมทางเดิน แถมแบ่งส่วนของนักวิจัยไว้ด้วย",
+    "Ở góc hành lang, Magasa cho tổ giam giữ ăn và để dành cả phần của nhà nghiên cứu.",
+    "Di sudut koridor, Magasa memberi makan regu penahanan dan menyisihkan jatah untuk sang Periset.",
+    "En un rincón del pasillo, Magasa da de comer a la escuadra de reclusión y aparta una ración para el investigador.",
+    "Num canto do corredor, Magasa alimenta o esquadrão de detenção e separa uma porção até para o pesquisador.",
+    "In einer Ecke des Korridors verköstigt Magasa die Haftgruppe und legt sogar eine Portion für den Forscher beiseite.",
+    "В углу коридора Магаса кормит группу заключения и откладывает порцию даже для исследователя."
+  ],
+  "recollection.summary.stage-6-4-post": [
+    "丝黛拉在竖井上方察觉到一缕颤抖的风。",
+    "สเตลลาอ่านสายลมที่สั่นไหวสายหนึ่งเหนือปล่องแนวดิ่ง",
+    "Stella cảm nhận một luồng gió run rẩy phía trên giếng đứng.",
+    "Stella membaca satu embusan angin yang gemetar di atas lubang tegak.",
+    "Stella percibe un viento tembloroso sobre el pozo vertical.",
+    "Stella percebe um vento trêmulo acima do poço vertical.",
+    "Stella spürt über dem Schacht einen einzelnen zitternden Wind.",
+    "Стелла улавливает над шахтой один дрожащий ветерок."
+  ],
+  "recollection.summary.stage-6-5-pre": [
+    "惊恐的诺亚从竖井落下扑了过来。",
+    "โนอาที่หวาดกลัวร่วงลงจากปล่องแล้วกระโจนเข้าใส่",
+    "Noa hoảng sợ rơi xuống từ giếng đứng và lao tới.",
+    "Noa yang ketakutan jatuh dari lubang tegak dan menerkam.",
+    "Noa, aterrada, cae del pozo y se abalanza.",
+    "Noa, apavorada, cai do poço e ataca.",
+    "Die verängstigte Noa stürzt aus dem Schacht und greift an.",
+    "Перепуганная Ноа падает из шахты и бросается в атаку."
+  ],
+  "recollection.summary.stage-6-5-post": [
+    "玛嘉莎挡在倒下的诺亚身前，说她是家人。",
+    "มากาซายืนบังโนอาที่ล้มลงและบอกว่าเป็นครอบครัว",
+    "Magasa chắn trước Noa đang gục và gọi cô là người nhà.",
+    "Magasa berdiri melindungi Noa yang tumbang dan menyebutnya keluarga.",
+    "Magasa se planta ante Noa, caída, y dice que es de la familia.",
+    "Magasa se põe diante de Noa caída e diz que ela é da família.",
+    "Magasa stellt sich vor die gestürzte Noa und nennt sie Familie.",
+    "Магаса заслоняет упавшую Ноа и называет её семьёй."
+  ],
+  "recollection.summary.stage-6-7-post": [
+    "在倒塌的探视室里，回收组谈起了副队长的归来。",
+    "ในห้องเยี่ยมที่พังทลาย ทีมกู้คืนพูดถึงการกลับมาของรองหัวหน้าหน่วย",
+    "Trong phòng thăm nuôi đổ nát, đội thu hồi bàn về sự trở lại của phó chỉ huy.",
+    "Di ruang kunjungan yang runtuh, tim pemulihan membicarakan kembalinya wakil komandan.",
+    "En la sala de visitas derruida, el equipo de recuperación habla del regreso del subcomandante.",
+    "Na sala de visitas em ruínas, a equipe de recuperação fala do retorno do subcomandante.",
+    "Im eingestürzten Besuchsraum spricht der Bergungstrupp über die Rückkehr des Vizekommandanten.",
+    "В разрушенной комнате свиданий сборщики говорят о возвращении заместителя командира."
+  ],
+  "recollection.summary.stage-6-8-post": [
+    "管制记录中，最底层收监个体的名字栏写着「卡尔」。",
+    "ในบันทึกควบคุม ช่องชื่อของผู้ถูกขังชั้นล่างสุดเขียนว่า \"คาร์\"",
+    "Trong nhật ký điều khiển, ô tên của cá thể bị giam ở tầng đáy ghi \"Kar\".",
+    "Di catatan kendali, kolom nama tahanan lantai terbawah bertuliskan \"Kar\".",
+    "En el registro de control, la casilla de nombre del recluso del nivel más bajo dice «Kar».",
+    "No registro de controle, o campo de nome do detento do nível mais baixo diz \"Kar\".",
+    "Im Kontrollprotokoll steht im Namensfeld des Gefangenen der untersten Ebene „Kar“.",
+    "В журнале управления в графе имени узника нижнего уровня написано «Кар»."
+  ],
+  "recollection.summary.stage-6-10-pre": [
+    "通往上方的楼梯前，玛嘉莎和诺亚并肩而立。",
+    "หน้าบันไดที่ขึ้นไปข้างบน มากาซากับโนอายืนเคียงกัน",
+    "Trước cầu thang dẫn lên trên, Magasa và Noa đứng sánh vai.",
+    "Di depan tangga menuju atas, Magasa dan Noa berdiri berdampingan.",
+    "Ante la escalera que sube, Magasa y Noa se plantan hombro con hombro.",
+    "Diante da escada que sobe, Magasa e Noa ficam lado a lado.",
+    "Vor der Treppe nach oben stehen Magasa und Noa Seite an Seite.",
+    "Перед лестницей наверх Магаса и Ноа встают плечом к плечу."
+  ],
+  "recollection.summary.stage-6-10-post": [
+    "回廊崩塌，坠入最底层，黑暗中传来陌生的声音。",
+    "ทางเดินถล่มลงสู่ชั้นล่างสุด และมีเสียงแปลกหน้าดังขึ้นในความมืด",
+    "Hành lang sụp xuống tầng đáy, và một giọng nói lạ vang lên trong bóng tối.",
+    "Koridor runtuh ke dasar terdalam, dan suara asing terdengar dalam gelap.",
+    "El pasillo se derrumba hasta lo más hondo y una voz desconocida suena en la oscuridad.",
+    "O corredor desaba até o fundo, e uma voz desconhecida soa no escuro.",
+    "Der Korridor bricht in die tiefste Ebene ein, und im Dunkeln spricht eine fremde Stimme.",
+    "Коридор обрушивается на самое дно, и во тьме звучит незнакомый голос."
+  ],
+  "recollection.summary.stage-7-1-pre": [
+    "诺多尼亚接住了坠入最底层的研究员。",
+    "โนโดเนียรับนักวิจัยที่ร่วงลงมาถึงชั้นล่างสุดไว้",
+    "Nodonia đỡ lấy nhà nghiên cứu vừa rơi xuống tầng đáy.",
+    "Nodonia menangkap sang Periset yang jatuh ke dasar terdalam.",
+    "Nodonia atrapa al investigador tras su caída a lo más hondo.",
+    "Nodonia ampara o pesquisador que caiu até o fundo.",
+    "Nodonia fängt den Forscher auf, der bis in die tiefste Ebene gestürzt ist.",
+    "Нодония подхватывает исследователя, упавшего на самое дно."
+  ],
+  "recollection.summary.stage-7-2-post": [
+    "玛蒂察觉到冷冻收容室曾是关押人的地方。",
+    "แมดดี้รู้ตัวว่าห้องแช่แข็งเคยเป็นที่กักขังคน",
+    "Maddy nhận ra phòng đông lạnh từng là nơi nhốt người.",
+    "Maddy menyadari ruang pembekuan itu dulu tempat mengurung orang.",
+    "Maddy se da cuenta de que la cámara frigorífica servía para encerrar personas.",
+    "Maddy percebe que a câmara fria servia para trancar pessoas.",
+    "Maddy erkennt, dass der Kühlraum ein Ort war, an dem man Menschen einsperrte.",
+    "Мэдди понимает, что морозильная камера служила для содержания людей."
+  ],
+  "recollection.summary.stage-7-4-post": [
+    "柯玛坦白自己接到了把人手带回去的命令。",
+    "โคมะสารภาพว่าได้รับคำสั่งให้พามือมนุษย์กลับไป",
+    "Koma thú nhận cô được lệnh mang một bàn tay người về.",
+    "Koma mengaku mendapat perintah membawa pulang tangan manusia.",
+    "Koma confiesa que recibió la orden de traer una mano humana.",
+    "Koma confessa que recebeu ordens de levar uma mão humana.",
+    "Koma gesteht, dass sie eine Menschenhand zurückbringen sollte.",
+    "Кома признаётся, что получила приказ доставить человеческую руку."
+  ],
+  "recollection.summary.stage-7-5-pre": [
+    "在回收组的拦截线上，伊卡尼克西亚最后一次挡住去路。",
+    "ที่แนวสกัดของทีมกู้คืน อิคานิกเซียขวางทางเป็นครั้งสุดท้าย",
+    "Tại phòng tuyến của đội thu hồi, Ikanixia chặn đường lần cuối.",
+    "Di garis hadang tim pemulihan, Ikanixia menghalangi jalan untuk terakhir kalinya.",
+    "En la barrera del equipo de recuperación, Ikanixia bloquea el paso por última vez.",
+    "Na barreira da equipe de recuperação, Ikanixia bloqueia o caminho pela última vez.",
+    "An der Sperrlinie des Bergungstrupps stellt sich Ikanixia ein letztes Mal in den Weg.",
+    "На заграждении сборщиков Иканиксия в последний раз преграждает путь."
+  ],
+  "recollection.summary.stage-7-5-post": [
+    "撤退的伊卡尼克西亚问柯玛是否打算违抗命令。",
+    "อิคานิกเซียที่กำลังถอยถามโคมะว่าคิดจะขัดคำสั่งหรือ",
+    "Khi rút lui, Ikanixia hỏi Koma có định chống lệnh không.",
+    "Sambil mundur, Ikanixia bertanya apakah Koma berniat melawan perintah.",
+    "Al retirarse, Ikanixia pregunta a Koma si piensa desobedecer las órdenes.",
+    "Ao recuar, Ikanixia pergunta a Koma se pretende desobedecer às ordens.",
+    "Im Rückzug fragt Ikanixia Koma, ob sie sich dem Befehl widersetzen will.",
+    "Отступая, Иканиксия спрашивает Кома, не собирается ли та ослушаться приказа."
+  ],
+  "recollection.summary.stage-7-7-post": [
+    "失散的伙伴们终于找到了研究员。",
+    "เพื่อนที่กระจัดกระจายในที่สุดก็พบนักวิจัย",
+    "Những đồng đội thất lạc cuối cùng đã tìm thấy nhà nghiên cứu.",
+    "Rekan-rekan yang tercerai akhirnya menemukan sang Periset.",
+    "Los compañeros dispersos por fin encuentran al investigador.",
+    "Os companheiros dispersos enfim encontram o pesquisador.",
+    "Die versprengten Gefährten finden endlich den Forscher.",
+    "Рассеянные товарищи наконец находят исследователя."
+  ],
+  "recollection.summary.stage-7-8-post": [
+    "帕琪和蕾克希娅破墙而入，回来了。",
+    "ปาจิกับเร็กเซียทะลุกำแพงกลับมา",
+    "Pachi và Rexia phá tường quay trở lại.",
+    "Pachi dan Rexia kembali dengan menjebol dinding.",
+    "Pachi y Rexia regresan atravesando la pared.",
+    "Pachi e Rexia voltam atravessando a parede.",
+    "Pachi und Rexia kehren zurück und brechen durch die Wand.",
+    "Пачи и Рексия возвращаются, пробив стену."
+  ],
+  "recollection.summary.stage-7-9-post": [
+    "柯玛拒绝了被缚的副队长卡尔的命令。",
+    "โคมะปฏิเสธคำสั่งของคาร์ รองหัวหน้าหน่วยที่ถูกพันธนาการ",
+    "Koma từ chối mệnh lệnh của Kar, phó chỉ huy đang bị trói.",
+    "Koma menolak perintah Kar, wakil komandan yang terbelenggu.",
+    "Koma rechaza la orden de Kar, el subcomandante encadenado.",
+    "Koma recusa a ordem de Kar, o subcomandante acorrentado.",
+    "Koma verweigert den Befehl von Kar, dem gefesselten Vizekommandanten.",
+    "Кома отказывается выполнить приказ Кара, скованного заместителя командира."
+  ],
+  "recollection.summary.stage-7-10-pre": [
+    "卡尔推开柯玛，逼近研究员。",
+    "คาร์ผลักโคมะออกไปแล้วเข้าหานักวิจัย",
+    "Kar hất Koma sang bên và tiến về phía nhà nghiên cứu.",
+    "Kar menyingkirkan Koma dan mendekati sang Periset.",
+    "Kar aparta a Koma de un empujón y se acerca al investigador.",
+    "Kar empurra Koma para o lado e avança sobre o pesquisador.",
+    "Kar stößt Koma beiseite und rückt dem Forscher auf den Leib.",
+    "Кар отталкивает Кома и надвигается на исследователя."
+  ],
+  "recollection.summary.stage-7-10-post": [
+    "卡尔自行挣断束缚，带着监禁组往上离去。",
+    "คาร์ทำลายพันธนาการด้วยตัวเองแล้วจากไปข้างบนพร้อมทีมคุมขัง",
+    "Kar tự phá xiềng trói và cùng tổ giam giữ rời lên trên.",
+    "Kar mematahkan belenggunya sendiri dan pergi ke atas bersama regu penahanan.",
+    "Kar rompe él mismo sus ataduras y se marcha hacia arriba con la escuadra de reclusión.",
+    "Kar rompe as próprias amarras e parte para cima com o esquadrão de detenção.",
+    "Kar sprengt seine Fesseln selbst und zieht mit der Haftgruppe nach oben.",
+    "Кар сам разрывает оковы и уходит наверх вместе с группой заключения."
   ]
 }

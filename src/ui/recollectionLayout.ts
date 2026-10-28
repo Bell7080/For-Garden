@@ -38,6 +38,16 @@ export const RECOLLECTION_LAYOUT = {
   tab: { width: 190, height: 70, gap: 6, y: (BASE_HEIGHT - 210) / 2 - 110 },
 } as const;
 
+/**
+ * 탭 하나의 폭. 장이 늘면 탭 수도 늘어나므로 **판 안에 드는 폭으로 줄인다** — 190으로 못 박아 두었을 때는
+ * 다섯 탭까지만 판 안에 들었다. 넘치는 낱말은 공용 탭이 가로로 누른다.
+ */
+export function recollectionTabWidth(count: number): number {
+  const { popup, tab } = RECOLLECTION_LAYOUT;
+  const room = popup.width - 60 - Math.max(0, count - 1) * tab.gap;
+  return Math.min(tab.width, Math.floor(room / Math.max(1, count)));
+}
+
 /** 줄 하나의 중심 y(흐르는 목록 좌표, 창 윗변이 0). */
 export function recollectionRowY(index: number): number {
   const { layer } = RECOLLECTION_LAYOUT;

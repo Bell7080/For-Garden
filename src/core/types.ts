@@ -2966,6 +2966,24 @@ export type BasicBreakthrough = {
 } | {
   /** 일반 공격이 맞은 적에게 출혈을 남긴다(코마). 출혈은 공용 표준 값이다. 적 전용. */
   kind: "bleedingSmash";
+} | {
+  /** 출혈 중인 적에게 일반 공격 피해가 늘어난다(마가사 「간 맞추기」). 적 전용. */
+  kind: "seasoning";
+  damagePercent: number;
+} | {
+  /** 연격의 마지막 타가 맞힌 적에게 둔화를 쌓는다(노아 「발톱 걸기」). 적 전용. */
+  kind: "snagClaw";
+  speedPercentPerStack: number;
+  maxStacks: number;
+} | {
+  /** 일반 공격이 맞힌 적에게 둔화를 쌓는다(라자 「쇠사슬 감기」). 적 전용. */
+  kind: "chainWrap";
+  speedPercentPerStack: number;
+  maxStacks: number;
+} | {
+  /** 일반 공격이 표적과 가장 가까운 다른 적 한 명도 일부 피해로 친다(카르 「쌍뿔」). 적 전용. */
+  kind: "twinHorn";
+  sharePercent: number;
 } | BreakthroughNone;
 
 /**
@@ -3190,6 +3208,28 @@ export type UltimateBreakthrough = {
   /** 궁극기가 거는 순풍이 이 시간으로 늘어난다(네우리). 적 전용. */
   kind: "longGust";
   seconds: number;
+} | {
+  /** 궁극기가 맞힌 적 곁의 다른 적 한 명도 일부 피해를 받는다(마가사 「곁들임」). 적 전용. */
+  kind: "sideDish";
+  sharePercent: number;
+  radius: number;
+} | {
+  /** 궁극기로 뛰어든 자리 주변의 적이 기절한다(노아 「놀라 뛰기」). 같은 적에게 다시 걸리는 시간을 제한한다. 적 전용. */
+  kind: "startledLeap";
+  radius: number;
+  stunSeconds: number;
+  lockoutSeconds: number;
+} | {
+  /** 궁극기에 끌려온 적 전원이 곧바로 도발된다(라자 「철창 안으로」). 적 전용. */
+  kind: "cageIn";
+  tauntSeconds: number;
+} | {
+  /** 질주가 끝난 자리 주변의 적 전원에게 둔화가 쌓인다(카르 「흙먼지」). 기절은 건드리지 않는다. 적 전용. */
+  kind: "dustCloud";
+  radius: number;
+  stacks: number;
+  speedPercentPerStack: number;
+  maxStacks: number;
 } | BreakthroughNone;
 
 /**
@@ -3403,6 +3443,25 @@ export type FerocityBreakthrough = {
   kind: "quickBlink";
   /** 줄어든 주기(초). */
   cooldownSeconds: number;
+} | {
+  /** 폭주에 들어서는 순간 주변 적 전원이 출혈한다(마가사 「배식 호령」). 진입 즉발이라 궁극기와 엮지 않는다. 적 전용. */
+  kind: "servingCall";
+  radius: number;
+} | {
+  /** 폭주 중 연격이 이 수만큼 더 나간다(노아 「발톱 난무」). 위력은 그대로다. 적 전용. */
+  kind: "clawFlurry";
+  extraHits: number;
+} | {
+  /** 폭주 중 일반 공격의 경직이 맞은 적 주변의 적에게도 번진다(라자 「쇠창살 휘두르기」). 적 전용. */
+  kind: "ironBarSweep";
+  radius: number;
+  maxTargets: number;
+} | {
+  /** 폭주에 들어서는 순간 주변 적 전원이 피해를 받고 기절한다(카르 「사슬 휘두르기」). 한 번 터지는 즉발이다. 적 전용. */
+  kind: "chainSwing";
+  radius: number;
+  powerPercent: number;
+  stunSeconds: number;
 } | BreakthroughNone;
 
 /**
@@ -3645,6 +3704,22 @@ export type PassiveBreakthrough = {
   /** 박쥐 떼가 맞히는 적이 이만큼 늘어난다(이카닉시아). 적 전용. */
   kind: "swarmDeepen";
   extraTargets: number;
+} | {
+  /** 「오늘의 재료」로 노린 적이 받는 회복이 줄어든다(마가사 「소금 간」). 재료가 없으면 아무 일도 하지 않는다. 적 전용. */
+  kind: "saltedIngredient";
+  reductionPercent: number;
+} | {
+  /** 「움찔」로 뒤로 뛰는 순간 잠시 은신한다(노아 「꼬리 감추기」). 일반 공격을 치면 풀린다. 적 전용. */
+  kind: "tailHide";
+  seconds: number;
+} | {
+  /** 「감방 서열」로 막을 얻을 때 체력이 가장 낮은 다른 아군도 그 일부를 얻는다(라자 「막내 챙기기」). 적 전용. */
+  kind: "youngestCare";
+  sharePercent: number;
+} | {
+  /** 자물쇠가 풀리는 순간의 터짐이 피해도 준다(카르 「쇠사슬 파편」). 적 전용. */
+  kind: "chainShrapnel";
+  powerPercent: number;
 } | BreakthroughNone;
 
 /** 지도 노드가 공유하는 식별자와 명시적 경로 조건이다. */

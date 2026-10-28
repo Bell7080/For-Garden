@@ -33,6 +33,23 @@ type Category =
 
 const CATEGORY: Record<EffectKind, Category> = {
   none: "none",
+  // 감금조 — 마가사·노아·라자·카르(적 전용)
+  seasoning: "damage",
+  snagClaw: "control",
+  chainWrap: "control",
+  twinHorn: "damage",
+  sideDish: "damage",
+  startledLeap: "control",
+  cageIn: "control",
+  dustCloud: "control",
+  servingCall: "damage",
+  clawFlurry: "damage",
+  ironBarSweep: "control",
+  chainSwing: "control",
+  saltedIngredient: "support",
+  tailHide: "stealth",
+  youngestCare: "survival",
+  chainShrapnel: "damage",
   // 기본 공격
   periodicGuard: "survival",
   deepBleed: "damage",

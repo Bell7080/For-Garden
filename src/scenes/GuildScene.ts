@@ -794,7 +794,7 @@ export class GuildScene extends Phaser.Scene {
       body.add(new Button(this, 0, P.submit, {
         width: E.submit.width, height: E.submit.height, fontSize: 34, variant: "primary",
         label: t(creating ? "guild.create.submit" : "guild.badge.apply"),
-        ...(free ? { tag: t("product.price.free") } : { cost: { icon: CURRENCY_ICON_BY_WALLET.gems, amount: cost, affordable: session.wallet.gems >= cost } }),
+        ...(free ? { tag: t("product.price.free"), ribbon: t("guild.badge.firstFree") } : { cost: { icon: CURRENCY_ICON_BY_WALLET.gems, amount: cost, affordable: session.wallet.gems >= cost } }),
         onClick: () => {
         if (!isGuildBadge(badge)) { this.toast(t("guild.error.BADGE_INVALID")); return; }
         if (creating) {

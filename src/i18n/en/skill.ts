@@ -176,6 +176,7 @@ export const SKILL_EN = {
   "skill.sentence.selfGuard": "[[pull|Pulls in]] every enemy nearby, [[taunt|Taunts]] them for {seconds}s and gains a [[shield|shield]] equal to {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% of max HP",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Pulls in]] every enemy nearby.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Charges]] at the farthest enemy on the field, then [[pull|pulls in]] every enemy nearby.",
   "skill.sentence.selfGuard.reset": " This also resets the internal cooldown of [[shell|Shell]].",
   "skill.sentence.stealthSetup": "Enters [[stealth|Stealth]] for {seconds}s and [[teleport|teleports]] to the enemy with the lowest HP. The first [[basic-attack|basic attack]] to land afterwards always critically strikes and lands as [[fixed-damage|fixed damage]] that ignores [[def|Defense]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Stealth]] breaks with that attack.",

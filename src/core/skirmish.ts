@@ -3657,6 +3657,26 @@ function leapBehindNearestEnemy(fighter: Fighter, state: SkirmishState, landingD
   return target;
 }
 
+/**
+ * 전장에서 **가장 먼 적** 앞으로 돌진한다(라자의 궁극기). 숨은 적은 숨지 않은 적이 없을 때만 고른다.
+ * 보간 없이 같은 프레임에 옮기고 지나온 길은 `charge` 사건이 잔상으로 그린다.
+ */
+function dashToFarthestEnemy(fighter: Fighter, landingDistance: number, state: SkirmishState, events: SkirmishEvent[]): Fighter | undefined {
+  const alive = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && !other.hordeEntering);
+  const visible = alive.filter((other) => other.stealthFor <= 0);
+  const pool = visible.length > 0 ? visible : alive;
+  if (pool.length === 0) return undefined;
+  const target = pool.reduce((best, other) => distance(fighter, other) > distance(fighter, best) ? other : best);
+  const from = { x: fighter.x, y: fighter.y };
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const stop = Math.min(landingDistance, gap);
+  fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * stop));
+  fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * stop));
+  fighter.targetId = target.id;
+  events.push({ kind: "charge", fighterId: fighter.id, from, to: { x: fighter.x, y: fighter.y } });
+  return target;
+}
+
 /** 감금 무리의 시계. 공용 시계 루프가 살아 있는 개체마다 한 번 부른다. */
 function tickConfinement(fighter: Fighter, dt: number, state: SkirmishState): SkirmishEvent[] {
   const events: SkirmishEvent[] = [];
@@ -10429,6 +10449,7 @@ function fireUltimateCore(
       };
     }
     if (openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "shareShield") attacker.bt.shareShieldIn = plan.tauntSeconds;
+    if (plan.dashToFarthest !== undefined) dashToFarthestEnemy(attacker, plan.dashToFarthest.landingDistance, state, events);
     const pull = rollCallPull(attacker, plan.pull);
     const pulled = pull.target === "farthest" ? hookFarthestEnemy(attacker, pull, state) : pullEnemiesToward(attacker, pull, state);
     for (const other of plan.pullOnly ? [] : pulled) {

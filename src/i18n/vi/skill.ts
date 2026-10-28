@@ -176,6 +176,7 @@ export const SKILL_VI = {
   "skill.sentence.selfGuard": "[[pull|Kéo]] mọi kẻ địch gần đó lại, [[taunt|Khiêu khích]] chúng {seconds} giây và nhận [[shield|khiên]] bằng {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% HP tối đa",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Kéo]] mọi kẻ địch gần đó lại.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Lao tới]] kẻ địch xa nhất trên chiến trường, rồi [[pull|kéo]] mọi kẻ địch gần đó lại.",
   "skill.sentence.selfGuard.reset": " Đồng thời làm mới thời gian hồi nội tại của [[shell|Mai]].",
   "skill.sentence.stealthSetup": "Vào [[stealth|Tàng hình]] {seconds} giây và [[teleport|dịch chuyển]] tới kẻ địch có máu thấp nhất. [[basic-attack|Đòn đánh thường]] đầu tiên trúng sau đó luôn chí mạng và thành [[fixed-damage|sát thương cố định]] bỏ qua [[def|Thủ]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Tàng hình]] vỡ cùng đòn đó.",

@@ -176,6 +176,7 @@ export const SKILL_ZH_HANT = {
   "skill.sentence.selfGuard": "[[pull|拉近]]附近所有敵人，[[taunt|嘲諷]]它們{seconds}秒，並獲得相當於{shield}的[[shield|護盾]]。{reset}",
   "skill.sentence.selfGuard.shieldPercent": "最大生命的{percent}%",
   "skill.sentence.selfGuard.pullOnly": "[[pull|拉近]]附近所有敵人。",
+  "skill.sentence.selfGuard.dashPull": "向戰場上最遠的敵人[[charge|衝鋒]]，然後[[pull|拉近]]附近所有敵人。",
   "skill.sentence.selfGuard.reset": "同時重置[[shell|甲殼]]的內建冷卻。",
   "skill.sentence.stealthSetup": "進入[[stealth|隱身]]{seconds}秒，並[[teleport|瞬移]]至生命最低的敵人身邊。之後命中的首次[[basic-attack|普通攻擊]]必定暴擊，並作為無視防禦的[[fixed-damage|固定傷害]]命中。{exposed}",
   "skill.sentence.stealthSetup.exposed": "該次攻擊會解除[[stealth|隱身]]。",

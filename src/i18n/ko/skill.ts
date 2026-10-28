@@ -213,6 +213,7 @@ export const SKILL_KO = {
   "skill.sentence.selfGuard": "주위 모든 적을 [[pull|끌어당겨]] {seconds}초 동안 [[taunt|도발]]하고, {shield}만큼 [[shield|보호막]]을 얻는다.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "최대 체력의 {percent}%",
   "skill.sentence.selfGuard.pullOnly": "주위의 모든 적을 [[pull|끌어당긴다]].",
+  "skill.sentence.selfGuard.dashPull": "전장에서 가장 먼 적에게 [[charge|돌진]]한 뒤 주위의 모든 적을 [[pull|끌어당긴다]].",
   "skill.sentence.selfGuard.reset": " [[shell|조가비]]가 곧바로 다시 터질 수 있게 된다.",
   "skill.sentence.stealthSetup": "{seconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 [[def|방어력]]을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.{exposed}",
   "skill.sentence.stealthSetup.exposed": " 그 공격과 함께 [[stealth|은신]]이 풀린다.",

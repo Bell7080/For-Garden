@@ -931,7 +931,7 @@ export function skillDescription(
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
       const guard = skill.selfGuard;
-      if (guard.pullOnly) return t("skill.sentence.selfGuard.pullOnly");
+      if (guard.pullOnly) return t(guard.dashToFarthest !== undefined ? "skill.sentence.selfGuard.dashPull" : "skill.sentence.selfGuard.pullOnly");
       const shield = stats.maxHp === undefined
         ? t("skill.sentence.selfGuard.shieldPercent", { percent: guard.shieldMaxHpPercent })
         : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;

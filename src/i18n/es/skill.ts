@@ -176,6 +176,7 @@ export const SKILL_ES = {
   "skill.sentence.selfGuard": "[[pull|Atrae]] a todos los enemigos cercanos, los [[taunt|Provoca]] durante {seconds} s y obtiene un [[shield|escudo]] igual a {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "el {percent}% de los PV máx.",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Atrae]] a todos los enemigos cercanos.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Embiste]] al enemigo más lejano del campo y luego [[pull|atrae]] a todos los enemigos cercanos.",
   "skill.sentence.selfGuard.reset": " Además reinicia el enfriamiento interno del [[shell|Caparazón]].",
   "skill.sentence.stealthSetup": "Entra en [[stealth|Sigilo]] durante {seconds} s y se [[teleport|teletransporta]] al enemigo con menos PV. El primer [[basic-attack|ataque básico]] que impacte después siempre es crítico y se aplica como [[fixed-damage|daño fijo]] que ignora la [[def|Defensa]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " El [[stealth|Sigilo]] se rompe con ese ataque.",

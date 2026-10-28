@@ -176,6 +176,7 @@ export const SKILL_RU = {
   "skill.sentence.selfGuard": "[[pull|Притягивает]] всех ближних врагов, [[taunt|провоцирует]] их на {seconds} с и получает [[shield|щит]], равный {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% макс. ОЗ",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Притягивает]] всех ближних врагов.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Бросается]] к самому дальнему врагу на поле, затем [[pull|притягивает]] всех ближних врагов.",
   "skill.sentence.selfGuard.reset": " Также сбрасывает внутреннюю перезарядку [[shell|панциря]].",
   "skill.sentence.stealthSetup": "Уходит в [[stealth|невидимость]] на {seconds} с и [[teleport|телепортируется]] к врагу с наименьшими ОЗ. Первая попавшая после этого [[basic-attack|обычная атака]] всегда критическая и наносит [[fixed-damage|фиксированный урон]], игнорирующий защиту.{exposed}",
   "skill.sentence.stealthSetup.exposed": " С этой атакой [[stealth|невидимость]] спадает.",

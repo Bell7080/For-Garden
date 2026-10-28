@@ -176,6 +176,7 @@ export const SKILL_TH = {
   "skill.sentence.selfGuard": "[[pull|ดึง]]ศัตรูทั้งหมดใกล้ ๆ เข้ามา [[taunt|ยั่วยุ]] {seconds} วินาที และได้รับ[[shield|โล่]]เท่ากับ {shield}{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% ของ HP สูงสุด",
   "skill.sentence.selfGuard.pullOnly": "[[pull|ดึง]]ศัตรูทั้งหมดใกล้ ๆ เข้ามา",
+  "skill.sentence.selfGuard.dashPull": "[[charge|พุ่งชน]]ศัตรูที่อยู่ไกลที่สุดในสนาม แล้ว[[pull|ดึง]]ศัตรูทั้งหมดใกล้ ๆ เข้ามา",
   "skill.sentence.selfGuard.reset": " และรีเซ็ตคูลดาวน์ภายในของ[[shell|กระดอง]]ด้วย",
   "skill.sentence.stealthSetup": "[[stealth|ล่องหน]] {seconds} วินาที และ[[teleport|วาร์ป]]ไปหาศัตรูที่มี HP ต่ำสุด [[basic-attack|การโจมตีปกติ]]ครั้งแรกที่โดนหลังจากนั้นจะคริติคอลเสมอ และเป็น[[fixed-damage|ความเสียหายคงที่]]ที่ไม่สน[[def|พลังป้องกัน]]{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|การล่องหน]]จะหายไปพร้อมการโจมตีนั้น",

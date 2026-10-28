@@ -176,6 +176,7 @@ export const SKILL_PT_BR = {
   "skill.sentence.selfGuard": "[[pull|Puxa]] todos os inimigos próximos, os [[taunt|Provoca]] por {seconds} s e ganha um [[shield|escudo]] igual a {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% do PV máx.",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Puxa]] todos os inimigos próximos.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Investe]] contra o inimigo mais distante do campo e depois [[pull|puxa]] todos os inimigos próximos.",
   "skill.sentence.selfGuard.reset": " Também reinicia a recarga interna da [[shell|Carapaça]].",
   "skill.sentence.stealthSetup": "Entra em [[stealth|Furtividade]] por {seconds} s e se [[teleport|teleporta]] até o inimigo com menos PV. O primeiro [[basic-attack|ataque básico]] que acertar depois é sempre crítico e entra como [[fixed-damage|dano fixo]] que ignora a [[def|Defesa]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " A [[stealth|Furtividade]] se desfaz com esse ataque.",

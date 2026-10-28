@@ -100,6 +100,20 @@ describe("라자 「철권」·「감방 서열」·「철창 부수기」", () 
     expect(hero.shield.amount).toBe(0);
   });
 
+  it("궁극기는 먼저 전장에서 가장 먼 적 앞으로 돌진한 뒤 그 자리에서 끌어당긴다", () => {
+    const { state, hero, foes } = setup("raja", ["toby", "amo"]);
+    hero.x = 500; hero.y = 1_100;
+    foes[0].x = 500; foes[0].y = 900;
+    foes[1].x = 520; foes[1].y = 200;
+    for (const f of state.fighters) f.attackCooldown = Number.POSITIVE_INFINITY;
+    hero.energy = 1_000;
+    const events = fireUltimate(state, hero.id, () => 0.5);
+    expect(events.some((e) => e.kind === "charge" && e.fighterId === hero.id)).toBe(true);
+    expect(hero.y).toBeLessThan(400);
+    expect(hero.targetId).toBe(foes[1].id);
+    expect(Math.hypot(foes[1].x - hero.x, foes[1].y - hero.y)).toBeLessThanOrEqual(141);
+  });
+
   it("제게 도발된 적에게 맞을 때 막을 얻고 그 막은 상한을 넘지 않는다", () => {
     const { state, hero, foes } = setup("raja", ["toby"]);
     foes[0].x = hero.x; foes[0].y = hero.y - 60;

@@ -451,6 +451,12 @@ export type SelfGuard = {
    * 켜져 있으면 `tauntSeconds`·`shieldMaxHpPercent`는 0으로 둔다.
    */
   pullOnly?: true;
+  /**
+   * 끌어당기기 **전에** 전장에서 가장 먼 적에게 돌진한다(라자의 「철창 부수기」 — 리그 오브 레전드의 바이 궁극기처럼).
+   * 그 적 앞 `landingDistance`에 내려서 그 적을 표적으로 삼고, 끌어당김은 내려선 자리에서 시작한다.
+   * 숨은 적은 숨지 않은 적이 없을 때만 고른다.
+   */
+  dashToFarthest?: { landingDistance: number };
   /** 시전 순간, 보호막·끌어당김·도발 처리가 끝난 뒤 시전자 조가비의 내부 쿨다운만 0으로 되돌린다. */
   resetShellGuardCooldown?: true;
   /** 시전 순간 자신의 「까칠」을 이만큼 더 쌓는다(상한까지). */

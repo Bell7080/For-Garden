@@ -176,6 +176,7 @@ export const SKILL_DE = {
   "skill.sentence.selfGuard": "[[pull|Zieht]] alle Gegner in der Nähe heran, [[taunt|verspottet]] sie {seconds} s lang und erhält einen [[shield|Schild]] in Höhe von {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% des max. Lebens",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Zieht]] alle Gegner in der Nähe heran.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Stürmt]] auf den entferntesten Gegner auf dem Feld zu und [[pull|zieht]] dann alle Gegner in der Nähe heran.",
   "skill.sentence.selfGuard.reset": " Außerdem wird die interne Abklingzeit des [[shell|Panzers]] zurückgesetzt.",
   "skill.sentence.stealthSetup": "Geht {seconds} s in [[stealth|Tarnung]] und [[teleport|teleportiert]] sich zum Gegner mit dem geringsten Leben. Der erste danach treffende [[basic-attack|Normalangriff]] ist immer kritisch und trifft als [[fixed-damage|fixer Schaden]], [[def|der Verteidigung]] ignoriert.{exposed}",
   "skill.sentence.stealthSetup.exposed": " Mit diesem Angriff bricht die [[stealth|Tarnung]].",

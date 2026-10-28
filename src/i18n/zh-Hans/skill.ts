@@ -176,6 +176,7 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.selfGuard": "[[pull|拉近]]附近所有敌人，[[taunt|嘲讽]]它们{seconds}秒，并获得相当于{shield}的[[shield|护盾]]。{reset}",
   "skill.sentence.selfGuard.shieldPercent": "最大生命的{percent}%",
   "skill.sentence.selfGuard.pullOnly": "[[pull|拉近]]附近所有敌人。",
+  "skill.sentence.selfGuard.dashPull": "向战场上最远的敌人[[charge|冲锋]]，然后[[pull|拉近]]附近所有敌人。",
   "skill.sentence.selfGuard.reset": "同时重置[[shell|甲壳]]的内置冷却。",
   "skill.sentence.stealthSetup": "进入[[stealth|隐身]]{seconds}秒，并[[teleport|瞬移]]至生命最低的敌人身边。之后命中的首次[[basic-attack|普通攻击]]必定暴击，并作为无视防御的[[fixed-damage|固定伤害]]命中。{exposed}",
   "skill.sentence.stealthSetup.exposed": "该次攻击会解除[[stealth|隐身]]。",

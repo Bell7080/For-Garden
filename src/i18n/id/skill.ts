@@ -176,6 +176,7 @@ export const SKILL_ID = {
   "skill.sentence.selfGuard": "[[pull|Menarik]] semua musuh terdekat, [[taunt|Memprovokasi]] mereka selama {seconds} dtk, dan mendapat [[shield|perisai]] sebesar {shield}.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "{percent}% HP maks",
   "skill.sentence.selfGuard.pullOnly": "[[pull|Menarik]] semua musuh terdekat.",
+  "skill.sentence.selfGuard.dashPull": "[[charge|Menerjang]] musuh terjauh di medan, lalu [[pull|menarik]] semua musuh terdekat.",
   "skill.sentence.selfGuard.reset": " Ini juga mengatur ulang cooldown internal [[shell|Cangkang]].",
   "skill.sentence.stealthSetup": "Masuk [[stealth|Siluman]] selama {seconds} dtk dan [[teleport|berteleportasi]] ke musuh dengan HP terendah. [[basic-attack|Serangan dasar]] pertama yang mengenai setelahnya selalu kritis dan menjadi [[fixed-damage|kerusakan tetap]] yang mengabaikan [[def|Pertahanan]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Siluman]] pecah dengan serangan itu.",

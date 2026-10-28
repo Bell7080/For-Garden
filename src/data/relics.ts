@@ -3735,7 +3735,7 @@ export const RELICS: RelicDef[] = [
       cost: 100,
       targeting: "self",
       // 피해 없이 주위 적을 끌어당기기만 한다. 끌려온 적은 곧 철권의 호령에 도발된다.
-      selfGuard: { pullOnly: true, tauntSeconds: 0, pull: { radius: 360, distance: 140 }, shieldMaxHpPercent: 0 },
+      selfGuard: { pullOnly: true, dashToFarthest: { landingDistance: 90 }, tauntSeconds: 0, pull: { radius: 360, distance: 140 }, shieldMaxHpPercent: 0 },
     },
     // 한계 돌파는 설계 절차(`docs/breakthrough-design.md`)로 추천안을 확인받은 뒤 채운다.
     breakthroughEffects: {

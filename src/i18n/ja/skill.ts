@@ -176,6 +176,7 @@ export const SKILL_JA = {
   "skill.sentence.selfGuard": "周囲のすべての敵を[[pull|引き寄せ]]て{seconds}秒間[[taunt|挑発]]し、{shield}の[[shield|シールド]]を得る。{reset}",
   "skill.sentence.selfGuard.shieldPercent": "最大体力の{percent}%",
   "skill.sentence.selfGuard.pullOnly": "周囲のすべての敵を[[pull|引き寄せる]]。",
+  "skill.sentence.selfGuard.dashPull": "戦場で最も遠い敵へ[[charge|突進]]し、周囲のすべての敵を[[pull|引き寄せる]]。",
   "skill.sentence.selfGuard.reset": " [[shell|貝殻]]の内部クールタイムを初期化する。",
   "skill.sentence.stealthSetup": "{seconds}秒間[[stealth|隠密]]し、体力が最も低い敵へ[[teleport|瞬間移動]]する。以後、最初に命中する[[basic-attack|通常攻撃]]が確定クリティカルになり、[[def|防御力]]を無視する[[fixed-damage|固定ダメージ]]として入る。{exposed}",
   "skill.sentence.stealthSetup.exposed": " その攻撃と共に[[stealth|隠密]]が解ける。",

@@ -212,6 +212,7 @@ export const SKILL_KO = {
 
   "skill.sentence.selfGuard": "주위 모든 적을 [[pull|끌어당겨]] {seconds}초 동안 [[taunt|도발]]하고, {shield}만큼 [[shield|보호막]]을 얻는다.{reset}",
   "skill.sentence.selfGuard.shieldPercent": "최대 체력의 {percent}%",
+  "skill.sentence.selfGuard.pullOnly": "주위의 모든 적을 [[pull|끌어당긴다]].",
   "skill.sentence.selfGuard.reset": " [[shell|조가비]]가 곧바로 다시 터질 수 있게 된다.",
   "skill.sentence.stealthSetup": "{seconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 [[def|방어력]]을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.{exposed}",
   "skill.sentence.stealthSetup.exposed": " 그 공격과 함께 [[stealth|은신]]이 풀린다.",
@@ -275,6 +276,7 @@ export const SKILL_KO = {
   "skill.status.knockback": "[[knockback|날려버린다]]",
   "skill.status.stagger": "[[stagger|경직]]시킨다",
   "skill.status.bleed": "{seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 {percent}%를 잃게 한다",
+  "skill.status.bleedDeepen": "{seconds}초 동안 [[bleed|출혈]]시켜 매초 최대 체력의 {percent}%를 잃게 하고, 이미 출혈 중인 적이면 매초 {deep}%를 잃고 받는 회복량이 {reduction}% 줄어드는 깊은 출혈로 강화한다",
   "skill.status.poison": "{seconds}초 동안 [[poison|중독]]시킨다",
   "skill.status.curse": "[[curse|저주]]를 한 겹 씌운다",
   "skill.status.chill": "[[chill|둔화]]를 한 겹 쌓아 최대 {stacks}겹까지 겹마다 [[attack-speed|공격 속도]]와 [[move-speed|이동 속도]]를 {percent}% 낮춘다",
@@ -314,6 +316,7 @@ export const SKILL_KO = {
   "skill.breakthrough.effect.ferocity.feverAmbush": "[[ferocity|폭주]]에 들어서는 순간 {seconds}초 동안 [[stealth|은신]]한다.",
   "skill.breakthrough.effect.passive.fullFocusCrit": "[[focus|집중]]이 가득 차 있는 동안 「{name}」{name!이} 반드시 치명타가 된다.",
   "skill.clause.stunLockout": "같은 적은 한 번 기절한 뒤 {seconds}초 동안 이 기절을 다시 받지 않는다.",
+  "skill.clause.rally": "[[basic-attack|기본 공격]] {every}번째마다 주위의 적을 {seconds}초 동안 [[taunt|도발]]하고 최대 체력의 {percent}%만큼 [[shield|보호막]]을 얻는다.",
   "skill.breakthrough.effect.ultimate.forestSight": "효과 동안 일반 공격이 {hits}번 적중하고, 효과가 {seconds}초 더 이어진다.",
 
   // ── 정보창이 스킬 쪽지에 주입하는 문맥 사전 ─────────────────────────────
@@ -383,7 +386,7 @@ export const SKILL_KO = {
   "skill.ferocity.marchOfAnts": "폭주 중 [[worker-march|행렬]]의 반경이 {radius} 늘고 {allies}명 더 센다.",
   "skill.ferocity.appetiteFrenzy": "폭주 중 [[attack-speed|공격 속도]]가 {percent}% 오르고, 자신이 건 [[bleed|출혈]]이 피해를 줄 때마다 그 피해의 {heal}%만큼 회복한다.",
   "skill.ferocity.corneredBeast": "폭주 중 [[attack-speed|공격 속도]]가 {attack}%, [[move-speed|이동 속도]]가 {move}% 오르고 등 뒤로 뛰어 물러나는 재사용 대기가 {seconds}초로 줄어든다.",
-  "skill.ferocity.rollCallRefusal": "폭주 중 궁극기가 끌어당기는 범위가 {percent}% 넓어지고 [[basic-attack|기본 공격]]이 {every}번째마다 상태를 건다.",
+  "skill.ferocity.rollCallRefusal": "폭주 중 궁극기가 끌어당기는 범위가 {percent}% 넓어지고, [[basic-attack|기본 공격]]의 도발·보호막이 {every}번째마다 터진다.",
   "skill.ferocity.restraintCollapse": "폭주 중에는 남은 자물쇠가 모두 풀린 것으로 친다. 폭주가 끝나면 원래 수로 돌아간다.",
   "skill.ferocity.huntInstinct": "폭주 중 [[basic-attack|기본 공격]]이 [[intimidation|위압]]을 {stacks}겹씩 쌓고, [[fear|공포]]가 풀린 뒤의 면역이 {seconds}초로 짧아진다.",
   "skill.breakthrough.effect.basic.scoldTaunt": "「{name}」에 맞은 적을 {seconds}초 동안 [[taunt|도발]]한다.",

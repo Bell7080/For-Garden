@@ -2875,7 +2875,7 @@ export function buildSkillViewModel(options: {
   // 최대 체력 비례 보호막은 **퍼센트가 아니라 실제로 덮이는 값**으로 보여 준다. 성장한
   // 정의를 읽으므로 레벨·룬으로 체력이 변하면 그 숫자도 함께 변한다.
   const maxHp = attacker?.def.stats.hp;
-  const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && maxHp !== undefined
+  const guardShield = "selfGuard" in skill && skill.selfGuard !== undefined && !skill.selfGuard.pullOnly && maxHp !== undefined
     ? Math.round(maxHp * skill.selfGuard.shieldMaxHpPercent / 100) : undefined;
   // 저항력에서 나오는 막(자장가)과 회복(백색소음)도 실제 값으로 보여 준다.
   const resistance = attacker?.def.stats.res;

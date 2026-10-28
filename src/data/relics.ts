@@ -3546,7 +3546,8 @@ export const RELICS: RelicDef[] = [
       damageType: "physical",
       targeting: "single",
       statusEffectEvery: 3,
-      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2 }],
+      // 이미 피를 흘리는 적에게 다시 걸면 깊은 출혈(매초 4% · 받는 회복 -30%)이 된다.
+      statusEffects: [{ kind: "bleed", seconds: 3, maxHpPercentPerSecond: 2, deepenOnRepeat: { multiplier: 2, healingReceivedReductionPercent: 30 } }],
     },
     ultimate: {
       id: "magasa-ult",
@@ -3561,9 +3562,9 @@ export const RELICS: RelicDef[] = [
       damageHealingPercent: 25,
       statusEffects: [{ kind: "knockback", seconds: 0.6, speed: 1100, bounces: 1 }],
     },
-    // 칼집이 깊어지고(II) 만찬이 더 배를 채우며(III) 폭주하면 칼끝이 급소를 찾는다(IV). 재료 표식은 그대로다(V).
+    // 깊은 출혈은 다지기가 이미 갖고 있어 평타 칸은 비워 둔다. 만찬이 더 배를 채우고(III) 폭주하면 칼끝이 급소를 찾는다(IV).
     breakthroughEffects: {
-      basic: { kind: "deepBleed", bleedMultiplier: 1.5, healingReceivedReductionPercent: 30 },
+      basic: { kind: "none" },
       // 궁극기에 이미 적힌 25%에 더해진다(합 40%).
       ultimate: { kind: "ultimateLifeSteal", damageHealingPercent: 15 },
       ferocity: { kind: "sharpStorm", critChancePoints: 20 },
@@ -3702,7 +3703,7 @@ export const RELICS: RelicDef[] = [
       lifeSteal: 0,
       ferocityGain: 0,
     },
-    ferocityTrait: { name: "점호 거부", effectId: "rollCallRefusal", pullRadiusPercent: 40, statusEffectEvery: 3 },
+    ferocityTrait: { name: "점호 거부", effectId: "rollCallRefusal", pullRadiusPercent: 40, rallyEvery: 3 },
     passive: {
       id: "raja-passive",
       name: "감방 서열",
@@ -3722,8 +3723,9 @@ export const RELICS: RelicDef[] = [
       effectType: "physical",
       damageType: "physical",
       targeting: "single",
-      statusEffectEvery: 4,
+      // 매 타 경직, 네 번째마다 호령 — 주위를 도발하고 막을 두른다. 도발과 막은 궁극기가 아니라 이 호령이 맡는다.
       statusEffects: [{ kind: "stagger", seconds: 0.1 }],
+      rally: { every: 4, tauntSeconds: 1.5, tauntRadius: 220, shieldMaxHpPercent: 8 },
     },
     ultimate: {
       id: "raja-ult",
@@ -3732,13 +3734,13 @@ export const RELICS: RelicDef[] = [
       effectType: "buff",
       cost: 100,
       targeting: "self",
-      // 피해 없이 공용 끌어당김·도발·자기 보호막 경로를 쓴다. 도발이 걸린 적이 칠수록 「감방 서열」의 막이 쌓인다.
-      selfGuard: { tauntSeconds: 2.5, pull: { radius: 360, distance: 140 }, shieldMaxHpPercent: 20 },
+      // 피해 없이 주위 적을 끌어당기기만 한다. 끌려온 적은 곧 철권의 호령에 도발된다.
+      selfGuard: { pullOnly: true, tauntSeconds: 0, pull: { radius: 360, distance: 140 }, shieldMaxHpPercent: 0 },
     },
-    // 철권이 짧게 도발하고(II) 막이 두꺼워진다(III). 폭주와 서열은 그대로다.
+    // 한계 돌파는 설계 절차(`docs/breakthrough-design.md`)로 추천안을 확인받은 뒤 채운다.
     breakthroughEffects: {
-      basic: { kind: "scoldTaunt", tauntSeconds: 1 },
-      ultimate: { kind: "bigShell", shieldMaxHpPercent: 30 },
+      basic: { kind: "none" },
+      ultimate: { kind: "none" },
       ferocity: { kind: "none" },
       passive: { kind: "none" },
     },

@@ -32,7 +32,7 @@ export function expeditionAugmentKeywords(def: ExpeditionAugmentDef): KeywordDef
   else if (payload.kind === "teamBuff" && payload.buff.kind === "resonance") detail = `${t("augment.percent", { label: t("stat.attackSpeed"), percent: payload.buff.attackSpeedPercent })} · ${t("status.seconds", { value: payload.buff.seconds })}`;
   else {
     if (!(kind in DETAIL_KEYS)) return [];
-    detail = t(DETAIL_KEYS[kind as keyof typeof DETAIL_KEYS], { healingReceivedReductionPercent: 0, ...values });
+    detail = t(DETAIL_KEYS[kind as keyof typeof DETAIL_KEYS], { healingReceivedReductionPercent: 0, ...(values as unknown as Readonly<Record<string, string | number | undefined>>) });
   }
   const limits = t("augment.tag.limits", { max: effect.limits.maxTriggers, cooldown: effect.limits.cooldownSeconds });
   const control = expeditionControlCooldown(payload) === undefined ? "" : `\n${t("augment.tag.controlRecovery", { cap: EXPEDITION_CC_POLICY.maxSeconds, gap: EXPEDITION_CC_POLICY.recoverySeconds })}`;

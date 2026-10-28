@@ -446,6 +446,11 @@ export type SelfGuard = {
    * 다음 궁극기가 같은 막 위에 또 쌓이는 일도 함께 줄어든다(다른 보호막은 건드리지 않는다).
    */
   shieldFadeSeconds?: number;
+  /**
+   * 끌어당기기만 하고 도발·보호막은 걸지 않는다(라자의 「철창 부수기」 — 도발과 막은 기본 공격의 호령이 맡는다).
+   * 켜져 있으면 `tauntSeconds`·`shieldMaxHpPercent`는 0으로 둔다.
+   */
+  pullOnly?: true;
   /** 시전 순간, 보호막·끌어당김·도발 처리가 끝난 뒤 시전자 조가비의 내부 쿨다운만 0으로 되돌린다. */
   resetShellGuardCooldown?: true;
   /** 시전 순간 자신의 「까칠」을 이만큼 더 쌓는다(상한까지). */
@@ -662,6 +667,11 @@ export type BasicAttackStep = {
 /** 기본 공격만 가질 수 있는 추가 타격 계약이다. 일반 단타는 불필요한 확률 필드를 갖지 않는다. */
 export type BasicAttack = AttackSkill & {
   /**
+   * 실제로 나간 기본 공격 **N번째마다** 주위 적을 도발하고 자신에게 보호막을 두른다(라자의 「철권」).
+   * 상태 효과 주기(`statusEffectEvery`)와 따로 센다 — 경직은 매 타, 이 호령은 N타마다다.
+   */
+  rally?: { every: number; tauntSeconds: number; tauntRadius: number; shieldMaxHpPercent: number };
+  /**
    * 타마다 다른 걸음을 순서대로 반복한다. 없으면 늘 같은 한 방이다.
    *
    * 한 **공격 행동**마다 한 걸음씩 나아가며, 연격의 개별 적중으로는 나아가지 않는다 — 그러면
@@ -857,6 +867,11 @@ export type CombatStatusEffect =
       maxHpPercentPerSecond: number;
       /** 출혈이 유지되는 동안 대상이 받는 회복량 감소(%). */
       healingReceivedReductionPercent?: number;
+      /**
+       * 이미 출혈 중인 적에게 다시 걸면 **깊은 출혈**로 강화된다(마가사의 「다지기」). 매초 비율에 배율을 곱하고
+       * 받는 회복량을 낮춘다. 배율은 늘 이 정의의 원래 값에 곱하므로 다시 걸어도 겹쳐 불어나지 않는다.
+       */
+      deepenOnRepeat?: { multiplier: number; healingReceivedReductionPercent: number };
     }
   | {
       /**
@@ -1460,7 +1475,7 @@ export type FerocityEffectId =
   | "appetiteFrenzy"
   /** 노아 전용: 폭주 중 공격·이동 속도가 오르고 「움찔」의 재사용 대기가 짧아진다. */
   | "corneredBeast"
-  /** 라자 전용: 폭주 중 궁극기의 도발 범위가 넓어지고 경직이 더 잦아진다. */
+  /** 라자 전용: 폭주 중 궁극기의 끌어당김 범위가 넓어지고 호령이 더 잦아진다. */
   | "rollCallRefusal"
   /** 카르노 전용: 폭주 중 구속구가 모두 끊어진 것으로 본다. */
   | "restraintCollapse";
@@ -1729,10 +1744,10 @@ export type FerocityTrait = {
       flinchCooldownSeconds: number;
     }
   | {
-      /** 점호 거부(라자). 폭주 중 궁극기의 끌어당김 반경이 오르고, 기본 공격의 부가 효과가 이 타수마다 터진다. */
+      /** 점호 거부(라자). 폭주 중 궁극기의 끌어당김 반경이 오르고, 기본 공격의 호령(`rally`)이 이 타수마다 터진다. */
       effectId: "rollCallRefusal";
       pullRadiusPercent: number;
-      statusEffectEvery: number;
+      rallyEvery: number;
     }
   | {
       /** 구속 붕괴(카르노). 폭주 중 남은 구속구가 모두 끊어진 것으로 본다. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSkirmish, effectiveLocksBroken, stepSkirmish, type Arena } from "../../src/core/skirmish";
+import { applyCombatStatusEffect, createSkirmish, effectiveLocksBroken, fireUltimate, stepSkirmish, type Arena } from "../../src/core/skirmish";
 import { getRelic } from "../../src/data/relics";
 import { ENEMY_BIRTH_TIERS } from "../../src/core/rarityScaling";
 
@@ -68,17 +68,61 @@ describe("노아 「움찔」", () => {
   });
 });
 
-describe("라자 「감방 서열」", () => {
-  it("제게 도발된 적에게 맞을 때만 막을 얻고 상한을 넘지 않는다", () => {
+describe("라자 「철권」·「감방 서열」·「철창 부수기」", () => {
+  it("기본 공격은 매 타 경직이고 네 번째마다 주위를 도발하며 막을 두른다", () => {
+    const def = getRelic("raja");
+    expect(def.basic.statusEffectEvery).toBeUndefined();
+    expect(def.basic.statusEffects?.[0]?.kind).toBe("stagger");
+    const { state, hero, foes } = setup("raja", ["toby", "amo"]);
+    foes.forEach((f, i) => { f.x = hero.x + i * 30; f.y = hero.y - 60; f.attackCooldown = Number.POSITIVE_INFINITY; });
+    hero.energy = 0;
+    let guard = 0;
+    while (hero.rallyHitCount < 3 && guard++ < 400) run(state, 0.05);
+    expect(foes.every((f) => f.taunted === null)).toBe(true);
+    const shieldBefore = hero.shield.amount;
+    guard = 0;
+    while (hero.rallyHitCount !== 0 && guard++ < 400) run(state, 0.05);
+    expect(foes.every((f) => f.taunted?.sourceId === hero.id)).toBe(true);
+    expect(hero.shield.amount).toBeGreaterThan(shieldBefore);
+  });
+
+  it("궁극기는 끌어당기기만 하고 도발·보호막을 걸지 않는다", () => {
+    const def = getRelic("raja");
+    const guard = "selfGuard" in def.ultimate ? def.ultimate.selfGuard : undefined;
+    expect(guard?.pullOnly).toBe(true);
+    const { state, hero, foes } = setup("raja", ["toby"]);
+    foes[0].x = hero.x; foes[0].y = hero.y - 300;
+    for (const f of state.fighters) f.attackCooldown = Number.POSITIVE_INFINITY;
+    hero.energy = 1_000;
+    fireUltimate(state, hero.id, () => 0.5);
+    expect(foes[0].y).toBeGreaterThan(hero.y - 300);
+    expect(foes[0].taunted).toBeNull();
+    expect(hero.shield.amount).toBe(0);
+  });
+
+  it("제게 도발된 적에게 맞을 때 막을 얻고 그 막은 상한을 넘지 않는다", () => {
     const { state, hero, foes } = setup("raja", ["toby"]);
     foes[0].x = hero.x; foes[0].y = hero.y - 60;
     hero.attackCooldown = Number.POSITIVE_INFINITY; hero.energy = 0;
-    run(state, 3);
-    expect(hero.shield.amount).toBe(0);
     foes[0].taunted = { remaining: 60, total: 60, sourceId: hero.id };
     run(state, 20);
     expect(hero.shield.amount).toBeGreaterThan(0);
     expect(hero.shield.amount).toBeLessThanOrEqual(hero.maxHp * 0.15 + 1e-6);
+  });
+});
+
+describe("마가사 「다지기」 깊은 출혈", () => {
+  it("이미 출혈 중인 적에게 다시 걸면 매초 비율이 두 배가 되고 받는 회복이 준다", () => {
+    const { state, foes } = setup("magasa", ["toby"]);
+    const bleed = getRelic("magasa").basic.statusEffects![0];
+    expect(bleed.kind).toBe("bleed");
+    applyCombatStatusEffect(foes[0], bleed, [], state, undefined);
+    expect(foes[0].bleed?.percent).toBe(2);
+    applyCombatStatusEffect(foes[0], bleed, [], state, undefined);
+    expect(foes[0].bleed?.percent).toBe(4);
+    expect(foes[0].bleed?.healingReceivedReductionPercent).toBe(30);
+    applyCombatStatusEffect(foes[0], bleed, [], state, undefined);
+    expect(foes[0].bleed?.percent).toBe(4);
   });
 });
 

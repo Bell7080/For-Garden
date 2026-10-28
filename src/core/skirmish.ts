@@ -157,6 +157,8 @@ export interface Fighter extends Combatant {
   knockback: { remaining: number; vx: number; vy: number; bouncesLeft: number; chain?: { sourceId: string; hit: string[]; radius: number } } | null;
   /** `statusEffectEvery`가 있는 기본 공격이 실제로 몇 번 나갔는지. 그 주기에만 상태를 건다. */
   statusHitCount: number;
+  /** 기본 공격 호령(`BasicAttack.rally`)의 주기를 세는 타수. */
+  rallyHitCount: number;
   /** 원정 공격 출혈의 명시된 발동 주기만 세며 스킬 상태 주기와 섞지 않는다. */
   augmentBleedHitCount: number;
   /** 조건부 증강별 발동 횟수와 마지막 시각. 키는 전투 입력 배열 순번이라 저장 데이터와 분리된다. */
@@ -1289,6 +1291,7 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     overpaint: null,
     knockback: null,
     statusHitCount: 0,
+    rallyHitCount: 0,
     augmentBleedHitCount: 0,
     augmentRuntime: {},
     augmentActionSerial: 0,
@@ -2055,7 +2058,12 @@ export function applyCombatStatusEffect(fighter: Fighter, effect: CombatStatusEf
   const potency = sourceId ? findFighter(state, sourceId)?.statusPotencyMultiplier ?? 1 : 1;
   if (effect.kind === "stun") events.push(...applyStun(fighter, effect.seconds * potency, state));
   if (effect.kind === "stagger") events.push(...applyStagger(fighter, effect.seconds * potency, state));
-  if (effect.kind === "bleed") refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond, events, sourceId, effect.healingReceivedReductionPercent);
+  if (effect.kind === "bleed") {
+    // 깊은 출혈 — 이미 피를 흘리는 적에게 다시 걸면 매초 비율이 커지고 받는 회복량이 준다(마가사).
+    const deepen = effect.deepenOnRepeat !== undefined && (fighter.bleed?.remaining ?? 0) > 0 ? effect.deepenOnRepeat : undefined;
+    refreshBleed(fighter, effect.seconds * potency, effect.maxHpPercentPerSecond * (deepen?.multiplier ?? 1), events, sourceId,
+      deepen?.healingReceivedReductionPercent ?? effect.healingReceivedReductionPercent);
+  }
   if (effect.kind === "poison") {
     // 세기는 바른 쪽에서 나오므로 시전자를 찾지 못하면 바를 것도 없다.
     const attacker = sourceId ? findFighter(state, sourceId) : undefined;
@@ -3288,10 +3296,29 @@ function applySkillStatuses(target: Fighter, skill: Skill, events: SkirmishEvent
 
 /** 기본 공격이 상태를 거는 주기. 「점호 거부」(라자) 폭주 중에만 더 짧은 주기로 바뀐다. */
 function basicStatusEvery(attacker: Fighter): number | undefined {
-  const every = attacker.def.basic.statusEffectEvery;
+  return attacker.def.basic.statusEffectEvery;
+}
+
+/**
+ * 기본 공격 호령(라자의 「철권」) — 실제로 나간 기본 공격 N번째마다 주위 적을 도발하고 보호막을 두른다.
+ * 「점호 거부」 폭주 중에는 더 짧은 주기를 쓴다. 궁극기는 이 셈을 건드리지 않는다.
+ */
+function triggerRally(attacker: Fighter, state: SkirmishState, events: SkirmishEvent[]): void {
+  const rally = attacker.def.basic.rally;
+  if (!rally || !isFighterAlive(attacker)) return;
   const trait = attacker.def.ferocityTrait;
-  if (every !== undefined && attacker.ferocityFever && trait.effectId === "rollCallRefusal") return Math.min(every, trait.statusEffectEvery);
-  return every;
+  const every = attacker.ferocityFever && trait.effectId === "rollCallRefusal" ? Math.min(rally.every, trait.rallyEvery) : rally.every;
+  attacker.rallyHitCount += 1;
+  if (attacker.rallyHitCount < every) return;
+  attacker.rallyHitCount = 0;
+  for (const other of state.fighters) {
+    if (other.side === attacker.side || !isFighterAlive(other) || distance(attacker, other) > rally.tauntRadius) continue;
+    applyCombatStatusEffect(other, { kind: "taunt", seconds: rally.tauntSeconds }, events, state, attacker.id);
+    if (other.taunted?.sourceId === attacker.id) { other.targetId = attacker.id; other.engaged = false; }
+  }
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * rally.shieldMaxHpPercent / 100)), events);
+  events.push({ kind: "areaImpact", attackerId: attacker.id, ultimate: false, damageType: "physical",
+    area: { shape: "radial", x: attacker.x, y: attacker.y, radius: rally.tauntRadius } });
 }
 
 /**
@@ -8617,6 +8644,7 @@ function strike(
     // 주기이므로 같은 문 안에서 함께 돈다 — 따로 세면 두 셈이 한 박자씩 어긋난다.
     if (!useUltimate) applyBasicBreakthrough(attacker, state, events);
   }
+  if (!useUltimate && comboHit === undefined) triggerRally(attacker, state, events);
   // 기본 공격 돌파(`poisonPulse`) — 이미 독이 걸려 있던 적은 독 한 틱을 먼저 받는다. 청산하는 타격은 몰아 받으니 제외한다.
   if (!useUltimate && !encoreLiquidation && targetWasPoisoned && isFighterAlive(target) && !resolution.ignored
     && openedBreakthrough(attacker, "basic", (effects) => effects.basic)?.kind === "poisonPulse") {
@@ -10391,7 +10419,7 @@ function fireUltimateCore(
     // 불러 놓고 그 자리에서 덮는다 — 도발과 보호막이 한 조작에 든다.
     const bigShell = openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate);
     const guardPercent = bigShell?.kind === "bigShell" ? bigShell.shieldMaxHpPercent : plan.shieldMaxHpPercent;
-    const guardShield = grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * guardPercent / 100)), events, 1.5);
+    const guardShield = plan.pullOnly ? 0 : grantShield(state, attacker, attacker.id, Math.max(1, Math.round(attacker.maxHp * guardPercent / 100)), events, 1.5);
     if (plan.shieldFadeSeconds !== undefined && guardShield > 0) {
       // 이미 줄어드는 막이 있으면 두 속도를 더하고 시간은 긴 쪽을 따른다 — 새 막만 따로 깎지 않는다.
       const prior = attacker.shieldFade;
@@ -10403,7 +10431,7 @@ function fireUltimateCore(
     if (openedBreakthrough(attacker, "ultimate", (effects) => effects.ultimate)?.kind === "shareShield") attacker.bt.shareShieldIn = plan.tauntSeconds;
     const pull = rollCallPull(attacker, plan.pull);
     const pulled = pull.target === "farthest" ? hookFarthestEnemy(attacker, pull, state) : pullEnemiesToward(attacker, pull, state);
-    for (const other of pulled) {
+    for (const other of plan.pullOnly ? [] : pulled) {
       // 데이의 짧은 도발과 **같은 경로**를 지난다. 여기서 슬롯에 직접 넣으면 원정 증강의
       // 지속시간 배율이 이 도발에만 들지 않고, 더 긴 도발을 지키는 규칙도 비껴간다.
       applyCombatStatusEffect(other, { kind: "taunt", seconds: plan.tauntSeconds }, events, state, attacker.id);

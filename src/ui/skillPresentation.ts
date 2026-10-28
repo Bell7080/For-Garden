@@ -311,7 +311,7 @@ export function ferocityTraitDescription(trait: FerocityTrait, stats?: { attack:
     return t("skill.ferocity.corneredBeast", { attack: trait.attackSpeedPercent, move: trait.moveSpeedPercent, seconds: trait.flinchCooldownSeconds });
   }
   if (trait.effectId === "rollCallRefusal") {
-    return t("skill.ferocity.rollCallRefusal", { percent: trait.pullRadiusPercent, every: trait.statusEffectEvery });
+    return t("skill.ferocity.rollCallRefusal", { percent: trait.pullRadiusPercent, every: trait.rallyEvery });
   }
   if (trait.effectId === "restraintCollapse") return t("skill.ferocity.restraintCollapse");
 
@@ -931,6 +931,7 @@ export function skillDescription(
     // 버티는 궁극기. 끌어당겨 붙잡아 두고 덜 맞은 만큼을 끝나고 돌려받는다.
     if ("selfGuard" in skill && skill.selfGuard !== undefined) {
       const guard = skill.selfGuard;
+      if (guard.pullOnly) return t("skill.sentence.selfGuard.pullOnly");
       const shield = stats.maxHp === undefined
         ? t("skill.sentence.selfGuard.shieldPercent", { percent: guard.shieldMaxHpPercent })
         : `[[shield-value|${Math.round(stats.maxHp * guard.shieldMaxHpPercent / 100)}]]`;
@@ -1286,6 +1287,14 @@ function skillEffectClauses(skill: DescribedSkill, stats: SkillDescriptionStats)
  * 그 상태인지 다시 세어야 한다.
  */
 function statusClauses(skill: DescribedSkill): SkillEffectClause[] {
+  // 호령(라자)은 상태 주기와 따로 도는 제 문장이라 다른 절 뒤에 붙인다.
+  const rally = "rally" in skill ? skill.rally : undefined;
+  const clauses = statusClausesWithoutRally(skill);
+  if (rally === undefined) return clauses;
+  return [...clauses, { text: t("skill.clause.rally", { every: rally.every, seconds: rally.tauntSeconds, percent: rally.shieldMaxHpPercent }), standalone: true }];
+}
+
+function statusClausesWithoutRally(skill: DescribedSkill): SkillEffectClause[] {
   const effects = skill.statusEffects ?? [];
   const concussion = effects.find((effect) => effect.kind === "concussion");
   const stun = effects.find((effect) => effect.kind === "stun");
@@ -1346,6 +1355,10 @@ function statusEffectClause(effect: CombatStatusEffect): string | undefined {
   if (effect.kind === "stagger") return t("skill.status.stagger");
   // 날아가는 시간·속도·튕기는 횟수는 화면에서 그대로 보이는 그림이라 본문이 수로 적지 않는다.
   if (effect.kind === "knockback") return t("skill.status.knockback");
+  if (effect.kind === "bleed" && effect.deepenOnRepeat) {
+    return t("skill.status.bleedDeepen", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond,
+      deep: effect.maxHpPercentPerSecond * effect.deepenOnRepeat.multiplier, reduction: effect.deepenOnRepeat.healingReceivedReductionPercent });
+  }
   if (effect.kind === "bleed") return t("skill.status.bleed", { seconds: effect.seconds, percent: effect.maxHpPercentPerSecond });
   // 매초 얼마인지는 태그가 말한다(쓰는 개체가 하나뿐이다). 시간만 스킬마다 달라 본문이 적는다.
   if (effect.kind === "poison") return t("skill.status.poison", { seconds: effect.seconds });

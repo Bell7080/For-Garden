@@ -248,6 +248,8 @@ export const MISC_ZH_HANT = {
   "profile.record.ancient": "遠古地層最高層",
   "profile.record.ancientFloor": "第{floor}層",
   "profile.record.ancientMonth": "本月",
+  "profile.storyClears.title": "各難度劇情",
+  "profile.storyClears.locked": "未開放",
   "profile.noRecord": "無記錄",
   "stageComplete.contribution": "攻擊 · 防禦 · 治療",
   "stageComplete.tapToConfirm": "點選畫面確認",

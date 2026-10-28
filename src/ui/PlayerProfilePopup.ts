@@ -13,7 +13,10 @@ import { HoloBar, chipPoints, drawLayer, drawShapeOutline, HOLO, slantedRect } f
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, PROFILE_MODIFIER_RARITY_COLOR, textStyle } from "./theme";
 import { setDebugPlayerProfileOpen } from "../debug";
-import { compactProfileText, PLAYER_PROFILE_LAYOUT, profileProgressRatio } from "./playerProfileLayout";
+import { compactProfileText, PLAYER_PROFILE_LAYOUT, profileProgressRatio, storyClearsPopupHeight } from "./playerProfileLayout";
+import { STAGES } from "../data/stages";
+import { STORY_DIFFICULTY } from "../core/storyDifficulty";
+import type { StoryClearRecord } from "../core/storyClearRecord";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { addSectionTitle } from "./SectionTitle";
 import { AffinityBadge } from "./AffinityBadge";
@@ -421,13 +424,15 @@ export class PlayerProfilePopup {
     const arena = stats.arena ? arenaStanding(stats.arena.score) : undefined;
     // 결투장도 같은 휘장 표를 읽는다 — 점수만 공개되고 티어·단계는 지금 언어로 짓는다.
     const duel = stats.duelScore !== undefined ? duelStanding(stats.duelScore) : undefined;
-    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId; division?: number | null }[] = [
+    const tiles: { label: string; value: string; sub?: string; progress?: number; tier?: DuelTierId; division?: number | null; expand?: boolean }[] = [
       // 길드원 카드는 길드 안의 자리(직책·기여도)를 먼저 세운다 — 길드 화면에서 연 카드가 말해야 하는 것이 그것이다.
       ...(this.profile.leadRecords ?? []),
       {
         label: t("profile.record.story"),
         value: stats.highestStage ? compactProfileText(stats.highestStage.displayValue, 12) : t("profile.noRecord"),
         ...(story ? { sub: `${story.cleared} / ${story.total}`, progress: profileProgressRatio(story.cleared, story.total) } : {}),
+        // 난이도별 기록이 있을 때만 v가 선다 — 보통·어려움까지 어디서 멈췄는지는 눌러서 읽는다.
+        ...(stats.storyClears ? { expand: true } : {}),
       },
       // 고대 지층은 매달 초기화되므로 이번 달에 가장 깊이 깬 층이다 — 순위표와 같은 값.
       ...(stats.ancientFloor !== undefined ? [{
@@ -460,7 +465,8 @@ export class PlayerProfilePopup {
       const valueX = tile.tier ? left + records.emblem + 12 : left;
       const value = this.scene.add.text(valueX, y + records.valueY, tile.value, textStyle({ role: "display", size: 32, color: tile.tier ? DUEL_TIER_COLOR[tile.tier].text : COLOR.ink })).setOrigin(0, 0.5);
       body.add(value);
-      squeezeTextToWidth(value, x + records.width / 2 - 24 - valueX);
+      squeezeTextToWidth(value, x + records.width / 2 - 24 - valueX - (tile.expand ? PLAYER_PROFILE_LAYOUT.storyClears.chevron + 14 : 0));
+      if (tile.expand && stats.storyClears) this.addStoryClearsToggle(body, x, y, stats.storyClears);
       if (tile.sub) {
         const sub = this.scene.add.text(x + records.width / 2 - 26, y + records.labelY, tile.sub, textStyle({ role: "emphasis", size: 22, color: COLOR.accentText })).setOrigin(1, 0.5);
         body.add(sub);
@@ -471,6 +477,43 @@ export class PlayerProfilePopup {
         const barWidth = records.width - 60;
         new HoloBar(this.scene, x, y + records.barY, barWidth, 10, { color: COLOR.accent, trackAlpha: 0.8 }).addTo(body).setValue(tile.progress);
       }
+    });
+  }
+
+  /**
+   * 「최대 스토리」 칸의 v — 누르면 칸 아래로 쉬움·보통·어려움이 어디까지 깨졌는지 판이 펼쳐진다.
+   * 칸 전체가 입력면이고 v는 그 칸이 펼쳐진다는 표식이다.
+   */
+  private addStoryClearsToggle(body: Phaser.GameObjects.Container, x: number, y: number, clears: readonly StoryClearRecord[]): void {
+    const { records, storyClears } = PLAYER_PROFILE_LAYOUT;
+    const chevron = drawGlyph(this.scene, "caret-down", x + records.width / 2 - 26 - storyClears.chevron / 2, y + records.valueY, storyClears.chevron, COLOR.accent);
+    body.add(chevron);
+    this.bindEdit(body, chevron, x, y, records.width, records.height, () => this.openStoryClears(body, x, y, clears));
+  }
+
+  /** 난이도 하나가 한 줄 — 난이도 이름(그 난이도의 색) · 깬 곳 / 미개방. 줄 수는 난이도 수라 장이 늘어도 판이 같다. */
+  private openStoryClears(body: Phaser.GameObjects.Container, tileX: number, tileY: number, clears: readonly StoryClearRecord[]): void {
+    const { records, storyClears: L } = PLAYER_PROFILE_LAYOUT;
+    const height = storyClearsPopupHeight(clears.length);
+    const screen = { width: this.scene.scale.width, height: this.scene.scale.height };
+    const margin = 24;
+    // 칸 바로 아래에 붙는다 — 칸의 월드 좌표는 카드 본체 이동을 더해 구하고, 화면 밖으로 나가지 않게 안쪽으로 민다.
+    const cx = Phaser.Math.Clamp(body.x + tileX, L.width / 2 + margin, screen.width - L.width / 2 - margin);
+    const cy = Math.min(body.y + tileY + records.height / 2 + L.gap + height / 2, screen.height - height / 2 - margin);
+    this.layer.open({ width: L.width, height, x: cx, y: cy, title: t("profile.storyClears.title"), closeOnBackdrop: true }, (panel) => {
+      clears.forEach((record, index) => {
+        const rowY = -height / 2 + L.padTop + L.rowHeight / 2 + index * (L.rowHeight + L.rowGap);
+        const tone = STORY_DIFFICULTY[record.difficulty];
+        const shape = chipPoints(L.width - L.padX * 2, L.rowHeight, { bevel: { topLeft: 16, topRight: 0, bottomRight: 16, bottomLeft: 0 } });
+        panel.add(drawLayer(this.scene, 0, rowY, shape, { fill: 0x121a24, alpha: record.open ? HOLO.glass : HOLO.glass * 0.6, edge: tone.color, edgeAlpha: record.open ? 0.7 : 0.3 }));
+        const left = -L.width / 2 + L.padX + 22;
+        panel.add(this.scene.add.text(left, rowY, t(`storyDifficulty.${record.difficulty}`), textStyle({ role: "display", size: 30, color: record.open ? tone.text : COLOR.inkDim })).setOrigin(0, 0.5));
+        const stage = record.stageId ? STAGES.find(({ id }) => id === record.stageId) : undefined;
+        const text = !record.open ? t("profile.storyClears.locked") : record.stageId ? compactProfileText(stage ? `${stage.id} ${stage.name}` : record.stageId, 14) : t("profile.noRecord");
+        const value = this.scene.add.text(L.width / 2 - L.padX - 22, rowY, text, (record.stageId ? textStyle({ role: "emphasis", size: 26, color: COLOR.ink }) : textStyle({ role: "body", size: 26, color: COLOR.inkDim }))).setOrigin(1, 0.5);
+        panel.add(value);
+        squeezeTextToWidth(value, L.width - L.padX * 2 - 44 - 120 - 24);
+      });
     });
   }
 

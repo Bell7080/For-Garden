@@ -152,3 +152,35 @@ describe("profile modifier manager", () => {
     expect(state.equippedProfileModifierIds).toEqual(["field-pioneer"]); expect(saves.save).toHaveBeenCalledOnce();
   });
 });
+
+describe("난이도별 스토리 클리어 기록", () => {
+  it("열리지 않은 난이도는 미개방, 열린 난이도는 가장 깊이 깬 관문을 접두사 없이 싣는다", async () => {
+    const { storyClearRecords } = await import("../../src/core/storyClearRecord");
+    const { storyStages } = await import("../../src/data/stages");
+    expect(storyClearRecords(storyStages, new Set(["1-1", "1-3"]))).toEqual([
+      { difficulty: "easy", open: true, stageId: "1-3" }, { difficulty: "normal", open: false }, { difficulty: "hard", open: false },
+    ]);
+    // 쉬움 4-10을 깨면 보통이 열린다 — 열렸어도 한 관문도 깨지 않았으면 stageId가 없다.
+    const opened = storyClearRecords(storyStages, new Set(["1-1", "4-10"]));
+    expect(opened[1]).toEqual({ difficulty: "normal", open: true });
+    const deep = storyClearRecords(storyStages, new Set(["4-10", "normal:1-1", "normal:1-2", "normal:4-10", "hard:1-1"]));
+    expect(deep[1]).toEqual({ difficulty: "normal", open: true, stageId: "4-10" });
+    expect(deep[2]).toEqual({ difficulty: "hard", open: true, stageId: "1-1" });
+  });
+
+  it("자기 카드와 친구 카드가 같은 값을 읽고, 서버가 보낸 모양은 다시 거른다", async () => {
+    const { publicProfile } = await import("../../src/server/publicProfile");
+    const { friendProfileDisplay } = await import("../../src/state/playerProfile");
+    const state = createDefaultSession();
+    state.favorite = "rex"; state.cleared = new Set(["1-1", "1-2", "4-10", "normal:1-1"]);
+    const own = playerProfileDisplay(state).competitiveStats.storyClears;
+    expect(own?.map(({ difficulty, stageId }) => [difficulty, stageId])).toEqual([["easy", "4-10"], ["normal", "1-1"], ["hard", undefined]]);
+    const friend = publicProfile(state, "p1", new Date("2026-10-28T00:00:00Z"));
+    expect(friend.competitiveStats.storyClears).toEqual(own);
+    expect(friendProfileDisplay({ ...friend, lastActive: "방금" }).competitiveStats.storyClears).toEqual(own);
+    // 구버전 서버가 보내지 않았거나 모양이 틀리면 칸을 세우지 않는다.
+    expect(friendProfileDisplay({ ...friend, lastActive: "방금", competitiveStats: {} }).competitiveStats.storyClears).toBeUndefined();
+    const dirty = friendProfileDisplay({ ...friend, lastActive: "방금", competitiveStats: { storyClears: [{ difficulty: "nightmare", open: true }, { difficulty: "hard", open: false, stageId: "hard:2-1" }] } });
+    expect(dirty.competitiveStats.storyClears).toEqual([{ difficulty: "hard", open: false }]);
+  });
+});

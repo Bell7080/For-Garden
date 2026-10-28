@@ -248,6 +248,8 @@ export const MISC_VI = {
   "profile.record.ancient": "Địa tầng cổ đại cao nhất",
   "profile.record.ancientFloor": "Tầng {floor}",
   "profile.record.ancientMonth": "Tháng này",
+  "profile.storyClears.title": "Cốt truyện theo độ khó",
+  "profile.storyClears.locked": "Chưa mở",
   "profile.noRecord": "Không có hồ sơ",
   "stageComplete.contribution": "Tấn công · Phòng thủ · Hồi máu",
   "stageComplete.tapToConfirm": "Chạm màn hình để xác nhận",

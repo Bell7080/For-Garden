@@ -2063,6 +2063,8 @@ var MISC_KO = {
   "profile.record.ancient": "\uACE0\uB300 \uC9C0\uCE35 \uCD5C\uACE0\uCE35",
   "profile.record.ancientFloor": "{floor}\uCE35",
   "profile.record.ancientMonth": "\uC774\uBC88 \uB2EC",
+  "profile.storyClears.title": "\uB09C\uC774\uB3C4\uBCC4 \uC2A4\uD1A0\uB9AC",
+  "profile.storyClears.locked": "\uBBF8\uAC1C\uBC29",
   "profile.noRecord": "\uAE30\uB85D \uC5C6\uC74C",
   // 스테이지 결과
   "stageComplete.contribution": "\uACF5\uACA9 \xB7 \uBC29\uC5B4 \xB7 \uD68C\uBCF5",
@@ -18974,6 +18976,7 @@ function getAncientStrataStage(floor) {
 
 // src/core/storyDifficulty.ts
 init_define_import_meta_env();
+var STORY_DIFFICULTIES = ["easy", "normal", "hard"];
 var STORY_DIFFICULTY = {
   easy: { color: 15121495, text: "#f5d47b", fill: 3813398, reward: 1, statFactor: 1 },
   normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
@@ -19244,6 +19247,9 @@ var SIDE_BATTLE_STAGE = {
 };
 var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
 var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
+function storyStages(difficulty) {
+  return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter((stage) => stage.id.startsWith(`${difficulty}:`));
+}
 var EXTRA_STORY_STAGES = ["normal", "hard"].flatMap((difficulty) => STAGES.filter((stage) => stage.kind === "battle").map((base) => {
   const first = base.id === "1-1";
   const prerequisiteStageIds = first ? [storyStageId(difficulty === "normal" ? "easy" : "normal", "4-10")] : base.prerequisiteStageIds.map((id) => storyStageId(difficulty, id));
@@ -29018,6 +29024,16 @@ var ARENA_WEEKLY_RANK_GEMS = [
   { upTo: null, gems: 0 }
 ];
 
+// src/core/storyClearRecord.ts
+init_define_import_meta_env();
+function storyClearRecords(stagesOf, cleared) {
+  return STORY_DIFFICULTIES.map((difficulty) => {
+    const open = isStoryDifficultyUnlocked(difficulty, cleared);
+    const highest = open ? highestClearedStage(stagesOf(difficulty), cleared) : void 0;
+    return { difficulty, open, ...highest ? { stageId: storyBaseStageId(highest.id) } : {} };
+  });
+}
+
 // src/core/combatPower.ts
 init_define_import_meta_env();
 var WEIGHTS = {
@@ -29136,6 +29152,7 @@ function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__
       ...arena ? { arena: { ...arena } } : {},
       highestStage: stage ? { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } : null,
       storyProgress: { cleared: STAGES.filter(({ id }) => state.cleared.has(id)).length, total: STAGES.length },
+      storyClears: storyClearRecords(storyStages, state.cleared),
       // 장기 성취 프로필이므로 주간 초기화 값이 아닌 명시적인 역대 최고만 표시한다.
       expedition: { label: t("profile.expeditionBest"), score: Math.max(0, state.expedition.allTimeBestScore) },
       ancientFloor: ancientHighestCleared(state.cleared, ANCIENT_STRATA_MAX_FLOOR),
@@ -39877,6 +39894,8 @@ function publicProfile(state, playerId, now) {
     // 친구 카드의 기록 칸과 고대 지층 지도(친구를 그 층 노드 옆에 세운다)가 읽는다. 없는 기록은 키를 생략한다.
     competitiveStats: {
       ...stage ? { highestStage: { stageId: stage.id, displayValue: `${stage.id} ${stage.name}` } } : {},
+      // 난이도마다 어디까지 깼는지 — 5~7장이 늘어도 줄 수는 난이도 셋이다. 열리지 않은 난이도는 `open: false`로 말한다.
+      storyClears: storyClearRecords(storyStages, state.cleared),
       ...state.expedition.allTimeBestScore > 0 ? { expeditionScore: Math.floor(state.expedition.allTimeBestScore) } : {},
       ...ancientFloor > 0 ? { ancientFloor } : {},
       ...duelScore !== void 0 ? { duelScore } : {}

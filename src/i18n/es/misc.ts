@@ -248,6 +248,8 @@ export const MISC_ES = {
   "profile.record.ancient": "Récord de Estratos antiguos",
   "profile.record.ancientFloor": "Piso {floor}",
   "profile.record.ancientMonth": "Este mes",
+  "profile.storyClears.title": "Historia por dificultad",
+  "profile.storyClears.locked": "Bloqueado",
   "profile.noRecord": "Sin registro",
   "stageComplete.contribution": "Ataque · Defensa · Curación",
   "stageComplete.tapToConfirm": "Toca la pantalla para confirmar",

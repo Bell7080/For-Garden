@@ -248,6 +248,8 @@ export const MISC_ZH_HANS = {
   "profile.record.ancient": "远古地层最高层",
   "profile.record.ancientFloor": "第{floor}层",
   "profile.record.ancientMonth": "本月",
+  "profile.storyClears.title": "各难度剧情",
+  "profile.storyClears.locked": "未开放",
   "profile.noRecord": "无记录",
   "stageComplete.contribution": "攻击 · 防御 · 治疗",
   "stageComplete.tapToConfirm": "点击画面确认",

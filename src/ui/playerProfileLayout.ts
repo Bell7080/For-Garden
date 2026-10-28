@@ -53,6 +53,11 @@ export const PLAYER_PROFILE_LAYOUT = {
    * 칸 가운데에서 잰 거리다.
    */
   records: { titleY: 184, firstY: 262, rowGap: 122, rows: 3, columnX: 222, width: 426, height: 108, labelY: -30, valueY: 8, barY: 38, emblem: 46 },
+  /**
+   * 「최대 스토리」 칸을 누르면 칸 아래로 펼쳐지는 난이도별 클리어 판. 줄은 난이도마다 하나라 5~7장이 늘어도
+   * 높이가 그대로다. `chevron`은 칸 오른쪽 아래의 펼침 표식 크기, `gap`은 칸 밑변과 판 윗변 사이다.
+   */
+  storyClears: { width: 560, rowHeight: 78, rowGap: 10, padX: 26, padTop: 46, padBottom: 24, gap: 22, chevron: 26 },
   nextUnlock: { y: 600 },
   /** 친구 카드 밑동의 조작 줄(즐겨찾기·삭제). 다음 해금 줄이 없는 친구 카드가 그 자리를 쓴다. */
   actions: { y: 636, height: 88, gap: 16, fontSize: 32 },
@@ -99,3 +104,9 @@ export function avatarPickerHeight(photoCount: number, frameCount: number, modif
 
 /** 한 줄 입력 창(닉네임·한 줄 소개). */
 export const TEXT_EDITOR = { width: 900, height: 470, noticeY: -118, fieldY: -40, noteY: 26, saveY: 130, field: { width: 800, height: 84 }, save: { width: 300, height: 80 } } as const;
+
+/** 난이도별 클리어 판의 높이 — 줄 수에서 거꾸로 구한다. */
+export function storyClearsPopupHeight(rows: number): number {
+  const { rowHeight, rowGap, padTop, padBottom } = PLAYER_PROFILE_LAYOUT.storyClears;
+  return padTop + rows * rowHeight + Math.max(0, rows - 1) * rowGap + padBottom;
+}

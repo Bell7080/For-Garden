@@ -1961,6 +1961,26 @@
 "Diesen Monat",
 "В этом месяце"
 ],
+"profile.storyClears.title": [
+"各难度剧情",
+"เนื้อเรื่องตามระดับความยาก",
+"Cốt truyện theo độ khó",
+"Cerita per Kesulitan",
+"Historia por dificultad",
+"História por dificuldade",
+"Story nach Schwierigkeit",
+"Сюжет по сложности"
+],
+"profile.storyClears.locked": [
+"未开放",
+"ยังไม่เปิด",
+"Chưa mở",
+"Belum terbuka",
+"Bloqueado",
+"Bloqueado",
+"Gesperrt",
+"Закрыто"
+],
 "profile.noRecord": [
 "无记录",
 "ไม่มีบันทึก",

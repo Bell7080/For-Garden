@@ -950,7 +950,7 @@ function sampleGuardRecord(userId: string, level: number, day: number): { best: 
   let h = 2166136261;
   for (const ch of `${userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
   h >>>= 0;
-  return { best: h % 5 === 0 ? 0 : 80 + (h % 400) + level * (10 + (h >>> 8) % 25), at: day * 86_400_000 + (h % 80_000_000) };
+  return { best: h % 5 === 0 ? 0 : 240 + (h % 1200) + level * (30 + (h >>> 8) % 75), at: day * 86_400_000 + (h % 80_000_000) };
 }
 
 /** QA 길드장은 이틀 전에 들어온 것으로 둔다 — 전투일에 막 들어온 길드원은 공격하지 못하므로(`guildWarCanAttack`) 곧바로 시험할 수 있게. */

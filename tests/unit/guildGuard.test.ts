@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { captureExpeditionRelicSnapshot } from "../../src/core/expeditionSnapshot";
-import { GUILD_GUARD, GUILD_GUARD_ARENA, GUILD_GUARD_ENTRY_Y, GUILD_GUARD_SIDE_BAND, arrangeGuardFormation, guildGuardIdleSpot, hordeEntrySpots, buildGuardWave, guardRosterPreview, guardWaveCount, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
+import { GUILD_GUARD, GUILD_GUARD_ARENA, GUILD_GUARD_ENTRY_Y, GUILD_GUARD_SIDE_BAND, arrangeGuardFormation, guildGuardIdleSpot, hordeEntrySpots, buildGuardWave, guardRosterPreview, guardWaveCount, guardUnitScore, guardWaveLevel, guildGuardAttemptsLeft, guildGuardDayKey, guildGuardSlotSpot, normalizeGuildGuardFormation, rankGuildGuardMembers } from "../../src/core/guildGuard";
 import { GUILD_GUARD_COIN, createGuildGuardSkirmish, guildGuardCoin, replayGuildGuard, type GuildGuardLineup } from "../../src/core/guildGuardBattle";
 import { hordeFieldCount, stepSkirmish } from "../../src/core/skirmish";
 import { guildGuardHordeSpec } from "../../src/core/guildGuard";
@@ -23,6 +23,13 @@ describe("수호전 웨이브", () => {
     expect(guardWaveCount(1)).toBe(GUILD_GUARD.gruntBase);
     expect(guardWaveCount(60)).toBe(GUILD_GUARD.gruntCap);
     expect(GUILD_GUARD.gruntCap * 1.5).toBeLessThanOrEqual(GUILD_GUARD.overrunCap);
+  });
+
+  it("웨이브마다 레벨이 확실히 오르고, 깊이 갈수록 한 마리 점수가 가파르게 커진다", () => {
+    expect(guardWaveLevel(2) - guardWaveLevel(1)).toBe(GUILD_GUARD.levelPerWave);
+    expect(guardWaveLevel(10)).toBeGreaterThanOrEqual(GUILD_GUARD.startLevel + 36);
+    expect(guardUnitScore(1)).toBe(GUILD_GUARD.gruntScore + GUILD_GUARD.gruntScorePerWave);
+    expect(guardUnitScore(20)).toBeGreaterThan(guardUnitScore(10) * 1.5);
   });
 
   it("다섯 속성 모두 그 속성의 명단에서만 고르고, 모두 무리로 선다", () => {
@@ -112,7 +119,7 @@ describe("수호전 규칙", () => {
 
   it("코인은 한 판 5~20이다(하루 두 판 40이 끝)", () => {
     expect(guildGuardCoin(0)).toBe(GUILD_GUARD_COIN.base);
-    expect(guildGuardCoin(150)).toBe(6);
+    expect(guildGuardCoin(450)).toBe(6);
     expect(guildGuardCoin(1_000_000)).toBe(GUILD_GUARD_COIN.cap);
     expect(GUILD_GUARD_COIN.cap * GUILD_GUARD.attemptsPerDay).toBeLessThanOrEqual(40);
   });
@@ -139,6 +146,18 @@ describe("수호전 재현", () => {
     expect(strong.score).toBeGreaterThan(weak.score);
     expect(strong.waves).toBeGreaterThan(weak.waves);
   }, 60_000);
+
+  it("수호전은 데스 카운트가 없다 — 60초가 지나도 데스 카운트 틱이 돌지 않는다", () => {
+    const state = createGuildGuardSkirmish(lineup(["deina", "stella", null, null, null, null], 1), getRelic, guildGuardRoster("fire"));
+    const rng = () => 0.5;
+    const ally = state.fighters.find((f) => f.side === "player")!;
+    ally.maxHp = ally.hp = 1_000_000_000;
+    (state.horde!.spec as { overrunCap: number }).overrunCap = 1_000_000;
+    for (let i = 0; i < 70 * 20 && state.phase === "fight"; i += 1) stepSkirmish(state, 0.05, rng);
+    expect(state.elapsed).toBeGreaterThan(60);
+    expect(state.deathClockTicks).toBe(0);
+    expect(ally.hp).toBeGreaterThan(0);
+  });
 
   it("빈 칸이 있는 편성도 그 자리를 비운 채 선다", () => {
     const outcome = replayGuildGuard(lineup(["deina", null, null, null, "stella", null], 40), getRelic, guildGuardRoster("fire"), "seed-b");

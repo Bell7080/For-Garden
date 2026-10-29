@@ -1771,7 +1771,7 @@ export class BattleScene extends Phaser.Scene {
   private paintDeathClock(): void {
     const label = this.clockLabel;
     if (!label) return;
-    if (!isDeathClockRunning(this.state.elapsed)) {
+    if (this.state.horde || !isDeathClockRunning(this.state.elapsed)) {
       if (label.style.color !== COLOR.ink) label.setColor(COLOR.ink).setScale(1);
       this.deathWash?.setAlpha(0);
       this.deathClockSounded = false;

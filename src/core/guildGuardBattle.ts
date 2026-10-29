@@ -85,9 +85,10 @@ export function guildGuardOutcome(state: SkirmishState, waves: number): GuildGua
 }
 
 /**
- * 한 판의 길드 코인 — 기본 5에 점수 150마다 1, 한 판 20에서 멈춘다(하루 두 판이라 하루 40이 끝).
- * 2026-10-27 응태 승인 범위(한 판 5~20).
+ * 한 판의 길드 코인 — 기본 5에 점수 450마다 1, 한 판 20에서 멈춘다(하루 두 판이라 하루 40이 끝).
+ * 2026-10-27 응태 승인 범위(한 판 5~20). 2026-10-29 점수 곡선이 3배 안팎으로 가팔라져 150 → 450으로 함께 올렸다 —
+ * 같은 편성이 받는 코인은 그대로다.
  */
-export const GUILD_GUARD_COIN = { base: 5, perScore: 150, cap: 20 } as const;
+export const GUILD_GUARD_COIN = { base: 5, perScore: 450, cap: 20 } as const;
 export const guildGuardCoin = (score: number): number =>
   Math.min(GUILD_GUARD_COIN.cap, GUILD_GUARD_COIN.base + Math.floor(Math.max(0, score) / GUILD_GUARD_COIN.perScore));

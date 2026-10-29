@@ -48,9 +48,12 @@ export const GUILD_GUARD = {
   /** 미리 짜 두는 웨이브 수. 시간 안에 이보다 많이 올 수 없다(당겨 와도). */
   maxWaves: 80,
   startLevel: 1,
-  /** 웨이브가 잦아진 만큼 한 웨이브의 레벨 몫을 줄여 시간당 오르는 레벨(초당 0.25)은 예전과 같게 둔다. */
-  levelPerWave: 2,
-  maxLevel: 100,
+  /**
+   * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
+   * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
+   */
+  levelPerWave: 4,
+  maxLevel: 200,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -58,8 +61,9 @@ export const GUILD_GUARD = {
   gruntBase: 5,
   gruntPerWaves: 4,
   gruntCap: 10,
-  /** 처치 점수 10 + 웨이브. */
-  gruntScore: 10,
+  /** 처치 점수 30 + 웨이브 × 10 — 깊이 갈수록 한 마리 몫이 가파르게 커서 오래 끄는 것보다 한두 웨이브 더 오르는 쪽이 이득이다. */
+  gruntScore: 30,
+  gruntScorePerWave: 10,
 } as const;
 
 export const GUILD_GUARD_FRONT_ROWS = 2;
@@ -106,7 +110,7 @@ export function guardWaveCount(index: number): number {
 }
 
 export function guardUnitScore(index: number): number {
-  return GUILD_GUARD.gruntScore + index;
+  return GUILD_GUARD.gruntScore + GUILD_GUARD.gruntScorePerWave * index;
 }
 
 /**

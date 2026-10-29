@@ -71,8 +71,9 @@ describe('반복 보상 인플레이션 승인선',()=>{
   expect(ANCIENT_MONTHLY_RANK_REWARDS.participation,approvalMessage).toBe(200);
  });
  // 2026-10-27 응태 승인: 길드 수호전 한 판 코인 5~20, 하루 두 판(하루 40 · 주 280이 끝).
+ // 2026-10-29: 점수 곡선이 3배 안팎으로 가팔라져 환산 점수만 150 → 450(기본 5 · 상한 20 · 하루 횟수는 그대로 — 같은 편성의 코인은 늘지 않는다).
  it('길드 수호전 코인은 한 판 20 · 하루 40을 넘지 않는다',()=>{
-  expect(GUILD_GUARD_COIN,approvalMessage).toEqual({base:5,perScore:150,cap:20});
+  expect(GUILD_GUARD_COIN,approvalMessage).toEqual({base:5,perScore:450,cap:20});
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER),approvalMessage).toBe(20);
   expect(GUILD_GUARD.attemptsPerDay,approvalMessage).toBe(2);
   expect(guildGuardCoin(Number.MAX_SAFE_INTEGER)*GUILD_GUARD.attemptsPerDay*7,approvalMessage).toBeLessThanOrEqual(280);

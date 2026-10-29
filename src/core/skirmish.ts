@@ -3448,7 +3448,7 @@ function grantShield(
   events?: SkirmishEvent[],
   weight = 1,
 ): number {
-  const amount = requested * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side);
+  const amount = requested * survivalMultiplier(state) * hordeRestoreMultiplier(state, target.side);
   // 시들어 0이 된 막은 제공자까지 바꾸지 않는다 — 두르지 못한 것이지 덮어쓴 것이 아니다.
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
@@ -6255,7 +6255,7 @@ function applyHealing(state: SkirmishState, target: Fighter, requested: number, 
   const before = target.hp;
   // 데스 카운트의 감쇠는 보호막과 **같은 배율**을 쓴다. 한쪽만 깎으면 남은 쪽으로 버티는
   // 편성이 그대로 살아남아, 끝나지 않는 판을 끝내려던 시계가 제 일을 하지 못한다.
-  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed)
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * survivalMultiplier(state)
     * hordeRestoreMultiplier(state, target.side));
   const actual = target.hp - before;
   // 취소·과잉 회복은 actual이 0이므로 누적되지 않으며, 흡혈·자가 재생은 기본 casterId가 자신이다.
@@ -7526,8 +7526,16 @@ export function tickRegeneration(fighter: Fighter, dt: number, state?: SkirmishS
  * **아군만 맞는다.** 양쪽을 함께 깎으면 이기고 있던 판이 적의 죽음으로 끝나 "시간을 넘겨서
  * 졌다"가 아니라 "버티니까 이겼다"가 된다. 판을 닫는 값이지 승패를 주는 값이 아니다.
  */
+/**
+ * 회복·보호막이 시계 때문에 시드는 정도(0~1). 수호전은 데스 카운트가 없다(2026-10-29 응태 요청) — 60초를 넘겨도
+ * 회복·보호막이 시들지 않고, 판은 웨이브의 레벨·머릿수만으로 닫힌다.
+ */
+function survivalMultiplier(state: SkirmishState): number {
+  return state.horde ? 1 : deathClockSurvivalMultiplier(state.elapsed);
+}
+
 function tickDeathClock(state: SkirmishState, events: SkirmishEvent[]): void {
-  // 수호전은 웨이브의 레벨·머릿수가 판을 닫는다 — 데스 카운트까지 얹으면 같은 끝을 두 번 민다.
+  // 수호전은 웨이브의 레벨·머릿수가 판을 닫는다 — 데스 카운트까지 얹으면 같은 끝을 두 번 민다(회복 감쇠도 `survivalMultiplier`가 뺀다).
   if (state.horde) return;
   const due = deathClockTicksAt(state.elapsed);
   while (state.deathClockTicks < due) {

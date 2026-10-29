@@ -125,7 +125,7 @@ export const SKILL_DE = {
   "skill.passive.frenzyDrain": "Heilt sich um {percent}% des Schadens, den Gegner in [[frenzy|Raserei]] verursachen.",
   "skill.passive.impactCap": "Schaden durch einen einzelnen Treffer übersteigt nie {percent}% des max. Lebens.{shield}",
   "skill.passive.impactCap.shield": " Erhält einen [[shield|Schild]] von {percent}% des Schadens der [[concussion|Gehirnerschütterung]].",
-  "skill.passive.impactCap.shieldCap": " Ein einzelner [[shield|Schild]] übersteigt nie {percent}% des max. Lebens.",
+  "skill.passive.impactCap.shieldCap": " Das gesamte angesammelte [[shield|Schild]] übersteigt nie {percent}% des max. Lebens.",
   "skill.passive.overpaintSiphon": "Trifft ein Verbündeter einen Gegner mit [[overpaint|Übermalung]], erhält es {percent}% dieses Schadens als eigenes Leben. Erreicht die [[overpaint|Übermalung]] des Ziels das Maximum, wechselt es zu einem anderen Gegner.",
   "skill.passive.lowHpVanish": "Einmal pro Kampf erhält es bei höchstens halbem Leben {seconds} s [[stealth|Tarnung]] und fällt aus der Zielerfassung.",
   "skill.passive.lowHpStealth": "Einmal pro Kampf geht es {seconds} s in [[stealth|Tarnung]], wenn das Leben auf {percent}% oder weniger fällt.",

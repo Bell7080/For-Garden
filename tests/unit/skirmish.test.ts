@@ -3149,6 +3149,18 @@ describe("파치 정적 전투 계약", () => {
     expect(pachi.shield.amount).toBe(Math.round(pachi.maxHp * pachi.def.passive.concussionShieldCapMaxHpPercent! / 100));
   });
 
+  it("의 뇌진탕 보호막은 거듭 울려도 들고 있는 총량이 상한을 넘지 않는다", () => {
+    const { state, pachi, enemy } = pachiBattle();
+    enemy.maxHp = 1_000_000; enemy.hp = 1_000_000;
+    const cap = pachi.maxHp * pachi.def.passive.concussionShieldCapMaxHpPercent! / 100;
+    for (let hit = 0; hit < pachi.def.basic.statusEffectEvery! * 8; hit += 1) {
+      pachi.attackCooldown = 0; enemy.stunnedFor = 0;
+      stepSkirmish(state, 1 / 60);
+      expect(pachi.shield.amount).toBeLessThanOrEqual(cap + 1);
+    }
+    expect(pachi.shield.amount).toBeGreaterThan(cap * 0.9);
+  });
+
   it("의 폭주는 들어가는 순간 뇌진탕을 장전한다", () => {
     const { state, pachi, enemy } = pachiBattle();
     const trait = pachi.def.ferocityTrait;

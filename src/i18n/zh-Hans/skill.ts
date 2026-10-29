@@ -125,7 +125,7 @@ export const SKILL_ZH_HANS = {
   "skill.passive.frenzyDrain": "恢复[[frenzy|暴走]]敌人造成伤害的{percent}%。",
   "skill.passive.impactCap": "单次受到的伤害不会超过最大生命的{percent}%。{shield}",
   "skill.passive.impactCap.shield": "获得相当于[[concussion|脑震荡]]所造成伤害{percent}%的[[shield|护盾]]。",
-  "skill.passive.impactCap.shieldCap": "单个[[shield|护盾]]不会超过最大生命的{percent}%。",
+  "skill.passive.impactCap.shieldCap": "自身持有的[[shield|护盾]]总量不会超过最大生命的{percent}%。",
   "skill.passive.overpaintSiphon": "任何队友攻击[[overpaint|叠涂]]状态的敌人时，将该伤害的{percent}%转为自身生命。目标的[[overpaint|叠涂]]叠满时，切换到其他敌人。",
   "skill.passive.lowHpVanish": "每场战斗1次，生命降至一半以下时获得[[stealth|隐身]]{seconds}秒，脱离锁定。",
   "skill.passive.lowHpStealth": "每场战斗1次，生命降至{percent}%以下时进入[[stealth|隐身]]{seconds}秒。",

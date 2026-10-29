@@ -125,7 +125,7 @@ export const SKILL_VI = {
   "skill.passive.frenzyDrain": "Hồi {percent}% sát thương do kẻ địch [[frenzy|Cuồng bạo]] gây ra.",
   "skill.passive.impactCap": "Sát thương mỗi đòn nhận vào không vượt quá {percent}% HP tối đa.{shield}",
   "skill.passive.impactCap.shield": " Nhận [[shield|khiên]] bằng {percent}% sát thương [[concussion|Chấn động]] gây ra.",
-  "skill.passive.impactCap.shieldCap": " Mỗi [[shield|khiên]] không vượt quá {percent}% HP tối đa.",
+  "skill.passive.impactCap.shieldCap": " Tổng [[shield|khiên]] đang có không vượt quá {percent}% HP tối đa.",
   "skill.passive.overpaintSiphon": "Mỗi khi đồng minh bất kỳ đánh trúng kẻ địch bị [[overpaint|Tô chồng]], hồi {percent}% sát thương đó thành máu của mình. Khi [[overpaint|Tô chồng]] của mục tiêu đầy, chuyển sang kẻ địch khác.",
   "skill.passive.lowHpVanish": "Một lần mỗi trận, khi còn từ nửa máu trở xuống sẽ vào [[stealth|Tàng hình]] {seconds} giây và thoát khỏi bị nhắm.",
   "skill.passive.lowHpStealth": "Một lần mỗi trận, khi máu còn từ {percent}% trở xuống sẽ vào [[stealth|Tàng hình]] {seconds} giây.",

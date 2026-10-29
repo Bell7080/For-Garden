@@ -125,7 +125,7 @@ export const SKILL_ZH_HANT = {
   "skill.passive.frenzyDrain": "恢復[[frenzy|暴走]]敵人造成傷害的{percent}%。",
   "skill.passive.impactCap": "單次受到的傷害不會超過最大生命的{percent}%。{shield}",
   "skill.passive.impactCap.shield": "獲得相當於[[concussion|腦震盪]]所造成傷害{percent}%的[[shield|護盾]]。",
-  "skill.passive.impactCap.shieldCap": "單個[[shield|護盾]]不會超過最大生命的{percent}%。",
+  "skill.passive.impactCap.shieldCap": "自身持有的[[shield|護盾]]總量不會超過最大生命的{percent}%。",
   "skill.passive.overpaintSiphon": "任何隊友攻擊[[overpaint|疊塗]]狀態的敵人時，將該傷害的{percent}%轉為自身生命。目標的[[overpaint|疊塗]]疊滿時，切換到其他敵人。",
   "skill.passive.lowHpVanish": "每場戰鬥1次，生命降至一半以下時獲得[[stealth|隱身]]{seconds}秒，脫離鎖定。",
   "skill.passive.lowHpStealth": "每場戰鬥1次，生命降至{percent}%以下時進入[[stealth|隱身]]{seconds}秒。",

@@ -126,7 +126,7 @@ export const SKILL_EN = {
   "skill.passive.frenzyDrain": "Heals for {percent}% of the damage dealt by [[frenzy|Frenzied]] enemies.",
   "skill.passive.impactCap": "Damage taken in a single hit never exceeds {percent}% of max HP.{shield}",
   "skill.passive.impactCap.shield": " Gains a [[shield|shield]] equal to {percent}% of the damage [[concussion|Concussion]] dealt.",
-  "skill.passive.impactCap.shieldCap": " A single [[shield|shield]] never exceeds {percent}% of max HP.",
+  "skill.passive.impactCap.shieldCap": " The total [[shield|shield]] held never exceeds {percent}% of max HP.",
   "skill.passive.overpaintSiphon": "Whenever any ally hits an [[overpaint|Overpainted]] enemy, it restores {percent}% of that damage as its own HP. When the target's [[overpaint|Overpaint]] reaches max stacks, it switches to another enemy.",
   "skill.passive.lowHpVanish": "Once per battle, falling to half HP or below grants [[stealth|Stealth]] for {seconds}s, dropping it out of targeting.",
   "skill.passive.lowHpStealth": "Once per battle, enters [[stealth|Stealth]] for {seconds}s when Health falls to {percent}% or below.",

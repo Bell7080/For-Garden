@@ -125,7 +125,7 @@ export const SKILL_RU = {
   "skill.passive.frenzyDrain": "Лечится на {percent}% урона, нанесённого врагами в [[frenzy|неистовстве]].",
   "skill.passive.impactCap": "Урон от одного удара не превышает {percent}% макс. ОЗ.{shield}",
   "skill.passive.impactCap.shield": " Получает [[shield|щит]] в {percent}% урона от [[concussion|сотрясения]].",
-  "skill.passive.impactCap.shieldCap": " Один [[shield|щит]] не превышает {percent}% макс. ОЗ.",
+  "skill.passive.impactCap.shieldCap": " Суммарный [[shield|щит]] не превышает {percent}% макс. ОЗ.",
   "skill.passive.overpaintSiphon": "Когда любой союзник бьёт врага с [[overpaint|перекраской]], восстанавливает себе {percent}% этого урона. Когда [[overpaint|перекраска]] цели достигает максимума, переключается на другого врага.",
   "skill.passive.lowHpVanish": "Раз за бой, упав до половины ОЗ или ниже, уходит в [[stealth|невидимость]] на {seconds} с и перестаёт быть целью.",
   "skill.passive.lowHpStealth": "Раз за бой уходит в [[stealth|невидимость]] на {seconds} с, когда здоровье падает до {percent}% или ниже.",

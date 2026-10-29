@@ -2176,7 +2176,7 @@ function applyConcussion(
 }
 
 /**
- * 「무면허 안전제일」 — 뇌진탕이 실제로 깎은 HP의 일부를 때린 쪽의 보호막으로 돌린다.
+ * 「무면허 안전제일」 — 뇌진탕이 실제로 깎은 HP의 일부를 때린 쪽의 보호막으로 돌린다. 들고 있는 막의 총량은 상한까지만 채운다.
  *
  * 상한 패시브는 큰 한 방만 누르므로 그 사이의 잔타를 버틸 자원이 없었다. 막은 그 몫이다.
  * 대상이 쓰러진 타격에서도 두른다 — 이미 울린 피해라, 마지막 한 방만 값이 없어질 이유가 없다.
@@ -2185,9 +2185,13 @@ function grantConcussionShield(state: SkirmishState, attacker: Fighter, dealt: n
   const passive = attacker.def.passive;
   const percent = passive.concussionShieldPercent ?? 0;
   if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
-  // 상한은 자기 최대 체력에서 잰다 — 맞은 쪽 체력이 무한한 불사 보스에서도 막이 무한해지지 않는다.
+  // 상한은 한 번에 두르는 몫이 아니라 **지금 들고 있는 막의 총량**이다 — 몫마다 상한을 두면 궁극기가
+  // 통로 안의 모두를, 폭주가 튕기는 충돌마다 뇌진탕을 울려 최대 체력을 훌쩍 넘게 쌓였다.
+  // 자기 최대 체력에서 재므로 맞은 쪽 체력이 무한한 불사 보스에서도 막이 무한해지지 않는다.
   const cap = attacker.maxHp * (passive.concussionShieldCapMaxHpPercent ?? 100) / 100;
-  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
+  const room = cap - attacker.shield.amount;
+  if (room < 1) return;
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(Math.min(dealt * percent / 100, room))), events);
 }
 
 /** 지금 폭주 중이라 날려버림을 얹는 개체인가. 파치의 폭주만 이 특성을 갖는다. */

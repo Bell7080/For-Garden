@@ -125,7 +125,7 @@ export const SKILL_ID = {
   "skill.passive.frenzyDrain": "Pulih {percent}% dari kerusakan yang diberikan musuh yang [[frenzy|Mengamuk]].",
   "skill.passive.impactCap": "Kerusakan dari satu serangan tidak pernah melebihi {percent}% HP maks.{shield}",
   "skill.passive.impactCap.shield": " Mendapat [[shield|perisai]] senilai {percent}% kerusakan dari [[concussion|Gegar]].",
-  "skill.passive.impactCap.shieldCap": " Satu [[shield|perisai]] tidak pernah melebihi {percent}% HP maks.",
+  "skill.passive.impactCap.shieldCap": " Total [[shield|perisai]] yang dimiliki tidak pernah melebihi {percent}% HP maks.",
   "skill.passive.overpaintSiphon": "Setiap kali sekutu mana pun mengenai musuh yang ber-[[overpaint|Timpa Cat]], ia memulihkan {percent}% kerusakan itu sebagai HP-nya. Saat [[overpaint|Timpa Cat]] target penuh, ia beralih ke musuh lain.",
   "skill.passive.lowHpVanish": "Sekali per pertarungan, saat HP turun ke setengah atau kurang, ia masuk [[stealth|Siluman]] selama {seconds} dtk dan lepas dari bidikan.",
   "skill.passive.lowHpStealth": "Sekali per pertarungan, masuk [[stealth|Siluman]] selama {seconds} dtk saat Nyawa turun ke {percent}% atau kurang.",

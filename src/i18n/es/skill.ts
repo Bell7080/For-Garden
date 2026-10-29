@@ -125,7 +125,7 @@ export const SKILL_ES = {
   "skill.passive.frenzyDrain": "Se cura el {percent}% del daño que causan los enemigos en [[frenzy|Frenesí]].",
   "skill.passive.impactCap": "El daño recibido de un solo golpe nunca supera el {percent}% de los PV máx.{shield}",
   "skill.passive.impactCap.shield": " Obtiene un [[shield|escudo]] del {percent}% del daño que causó la [[concussion|Conmoción]].",
-  "skill.passive.impactCap.shieldCap": " Un solo [[shield|escudo]] nunca supera el {percent}% de los PV máx.",
+  "skill.passive.impactCap.shieldCap": " El total de [[shield|escudo]] acumulado nunca supera el {percent}% de los PV máx.",
   "skill.passive.overpaintSiphon": "Cada vez que un aliado golpea a un enemigo con [[overpaint|Repintado]], recupera como PV propios el {percent}% de ese daño. Cuando el [[overpaint|Repintado]] del objetivo llega al máximo, cambia a otro enemigo.",
   "skill.passive.lowHpVanish": "Una vez por combate, al bajar a la mitad de PV o menos, obtiene [[stealth|Sigilo]] durante {seconds} s y deja de ser objetivo.",
   "skill.passive.lowHpStealth": "Una vez por combate, entra en [[stealth|Sigilo]] durante {seconds} s cuando la Salud baja al {percent}% o menos.",

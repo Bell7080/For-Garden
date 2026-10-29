@@ -138,7 +138,7 @@ export const SKILL_JA = {
   "skill.passive.frenzyDrain": "[[frenzy|狂乱]]にかかった敵が与えた被害の{percent}%だけ回復する。",
   "skill.passive.impactCap": "一度に受けるダメージが最大体力の{percent}%を超えない。{shield}",
   "skill.passive.impactCap.shield": " [[concussion|脳震盪]]が与えたダメージの{percent}%分の[[shield|シールド]]を得る。",
-  "skill.passive.impactCap.shieldCap": " 一度にまとう[[shield|シールド]]は最大体力の{percent}%を超えない。",
+  "skill.passive.impactCap.shieldCap": " まとっている[[shield|シールド]]の合計は最大体力の{percent}%を超えない。",
   "skill.passive.overpaintSiphon": "すべての味方が[[overpaint|重ね塗り]]された敵に当てると、そのダメージの{percent}%分だけ自分の体力を回復する。標的の[[overpaint|重ね塗り]]が最大まで積まれると、別の敵へ標的を移す。",
   "skill.passive.lowHpVanish": "戦闘ごとに1回、体力が半分以下になると{seconds}秒間[[stealth|隠密]]して標的から外れる。",
   "skill.passive.lowHpStealth": "戦闘ごとに一度、体力が{percent}%以下になると{seconds}秒間[[stealth|隠密]]する。",

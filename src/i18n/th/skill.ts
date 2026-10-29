@@ -125,7 +125,7 @@ export const SKILL_TH = {
   "skill.passive.frenzyDrain": "ฟื้นฟู {percent}% ของความเสียหายที่ศัตรูซึ่ง[[frenzy|คลั่ง]]ทำ",
   "skill.passive.impactCap": "ความเสียหายต่อครั้งจะไม่เกิน {percent}% ของ HP สูงสุด{shield}",
   "skill.passive.impactCap.shield": " ได้รับ[[shield|โล่]]เท่ากับ {percent}% ของความเสียหายที่[[concussion|สมองกระทบกระเทือน]]ทำ",
-  "skill.passive.impactCap.shieldCap": " [[shield|โล่]]แต่ละอันจะไม่เกิน {percent}% ของ HP สูงสุด",
+  "skill.passive.impactCap.shieldCap": " [[shield|โล่]]ที่ถืออยู่รวมกันจะไม่เกิน {percent}% ของ HP สูงสุด",
   "skill.passive.overpaintSiphon": "เมื่อพันธมิตรตัวใดโจมตีศัตรูที่ติด[[overpaint|ทาทับ]] จะฟื้นฟู HP ตัวเอง {percent}% ของความเสียหายนั้น เมื่อ[[overpaint|ทาทับ]]ของเป้าหมายเต็ม จะเปลี่ยนไปหาศัตรูตัวอื่น",
   "skill.passive.lowHpVanish": "ครั้งเดียวต่อการต่อสู้ เมื่อ HP เหลือไม่เกินครึ่งจะ[[stealth|ล่องหน]] {seconds} วินาที และหลุดจากการถูกเล็ง",
   "skill.passive.lowHpStealth": "ครั้งเดียวต่อการต่อสู้ เมื่อพลังชีวิตเหลือไม่เกิน {percent}% จะ[[stealth|ล่องหน]] {seconds} วินาที",

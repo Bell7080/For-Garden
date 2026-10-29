@@ -19208,7 +19208,7 @@ var STORY_DIFFICULTY = {
   normal: { color: 15503684, text: "#ffb76e", fill: 4269849, reward: 1.25, statFactor: 2 },
   hard: { color: 15098216, text: "#ff9297", fill: 4202282, reward: 1.5, statFactor: 4 }
 };
-var STORY_CHAPTER_STAT_FACTOR = { 2: 1.05, 3: 1.1, 4: 1.15, 5: 1.2, 6: 1.3, 7: 1.4, 8: 1.5 };
+var STORY_CHAPTER_STAT_FACTOR = { 2: 1.05, 3: 1.1, 4: 1.15, 5: 1.2, 6: 1.25, 7: 1.3, 8: 1.35 };
 function storyChapterStatFactor(chapter) {
   return STORY_CHAPTER_STAT_FACTOR[chapter ?? 0] ?? 1;
 }

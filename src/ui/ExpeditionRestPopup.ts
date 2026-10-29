@@ -16,6 +16,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
 import { addSdFootShadow } from "./SdFootShadow";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 /** 휴식 창이 그리는 렐릭 한 명. 체력은 런의 퍼센트, 최대 체력은 떠날 때 굳힌 값이다. */
 export interface ExpeditionRestMember extends ExpeditionRelicHealth {
@@ -108,7 +109,7 @@ export function openExpeditionRestPopup(
         stage.add(sd);
         figure = sd;
         paint();
-      }).catch((error) => console.warn("휴식 SD 표시 실패", error));
+      }).catch((error) => logError("puppet.display", "휴식 SD 표시 실패", error));
 
       const textX = C.textX;
       const name = scene.add.text(textX, C.name.y, def.name, textStyle({ role: "display", size: C.name.size, color: COLOR.ink })).setOrigin(0, 0.5).setStroke("#05070a", 5);

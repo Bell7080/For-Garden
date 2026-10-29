@@ -46,6 +46,7 @@ import { startLiveOps } from "../managers/liveOps";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 import { audioManager } from "../managers/AudioManager";
+import { reportError } from "../managers/ErrorReporter";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -533,6 +534,7 @@ export class TitleScene extends Phaser.Scene {
               return;
             }
             console.warn("[forgarden] connect failed", connected.code, connected.detail ?? "-");
+            reportError("boot.connect", `connect failed: ${connected.code}`, { detail: connected.detail ?? "-" });
             this.entryPending = false;
             this.showConnectFailure(connected.code, connected.detail);
             tapAnywhere.once("pointerup", enter);

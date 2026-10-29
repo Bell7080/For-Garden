@@ -21,6 +21,7 @@ import { addSkipButton } from "../ui/IconButton";
 import { PopupLayer } from "../ui/PopupLayer";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { t } from "../i18n";
+import { logError, reportCatch } from "../managers/ErrorReporter";
 
 /**
  * 개발자용 건너뛰기. QA 빌드에서만 오프닝 상단에 버튼이 서고, 누르면 오프닝을 완료로 저장한 뒤
@@ -116,7 +117,7 @@ export class OpeningScene extends Phaser.Scene {
     if (this.transitioningOut) return;
     const previousNode = this.flow.current.id;
     const result = this.flow.advance(choice?.id);
-    if (choice && (result.completed || result.node?.id !== previousNode)) void storyManager.applyChoice(OPENING_TRAIN.id, previousNode, choice.id).catch(() => undefined);
+    if (choice && (result.completed || result.node?.id !== previousNode)) void storyManager.applyChoice(OPENING_TRAIN.id, previousNode, choice.id).catch(reportCatch("story.applyChoice", { storyId: OPENING_TRAIN.id }));
     // 폭파로 전장이 드러나는 순간부터 곧 싸울 SD를 읽어 둔다 — 남은 몇 마디가 그 시간을 벌어 준다.
     if (result.node?.cue === "explosion" && openingPending(storyManager.isCompleted(OPENING_TRAIN.id), session.cleared)) {
       prefetchBattlePuppets(session.party, FIXED_STAGE_ENEMIES);
@@ -164,7 +165,7 @@ export class OpeningScene extends Phaser.Scene {
       // 이기면 공멸 삼인조가 날아가는 막을 거쳐 로비로 나간다.
       startScene(this, "battle", { mode: "stage", exitTo: "lobby", epilogueStoryId: OPENING_RETREAT.id });
     } catch (error) {
-      console.error("오프닝 뒤 1-1 입장 실패", error);
+      logError("opening.enterStage", "오프닝 뒤 1-1 입장 실패", error);
       if (this.scene.isActive()) startScene(this, "lobby");
     }
   }
@@ -177,7 +178,7 @@ export class OpeningScene extends Phaser.Scene {
       await this.layer?.show(node);
     } catch (error) {
       // 로드 실패를 보고하면서도 종료된 씬에서 비동기 Puppet 결과가 되살아나는 후속 작업은 만들지 않는다.
-      console.error("오프닝 Puppet 표시 실패", error);
+      logError("puppet.display", "오프닝 Puppet 표시 실패", error);
     } finally {
       // 성공과 에셋 실패 모두 표시 시도가 정리된 뒤에만 다음 입력을 받아 Puppet 로딩 경쟁을 막는다.
       this.flow.markCurrentNodeReady();

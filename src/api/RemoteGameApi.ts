@@ -12,6 +12,7 @@ import type { Session } from "../state/session";
 import { GameApiError, type ApiErrorCode, type GameApi } from "./contracts";
 import { markRemoteStateResult } from "./resultState";
 import { reportAccountDeleted } from "./accountDeleted";
+import { apiFailureSink } from "./apiFailureSink";
 
 export interface RemoteGameApiOptions {
   endpoint?: string;
@@ -25,6 +26,14 @@ export interface RemoteGameApiOptions {
 /** 같은 조회의 답을 다시 쓰는 시간이다. 쓰기가 나가면 곧바로 비운다. */
 const READ_REUSE_MS = 1500;
 
+
+/** 서버가 규칙으로 거절한 호출이 아니라 **서버 오류·예상 밖 응답**일 때만 보고한다(재시도 소동·인증 만료·충돌 제외). */
+function reportApiFailure(method: string, error: unknown): void {
+  const status = error instanceof RemoteGameApiError ? error.status : 0;
+  const code = error instanceof RemoteGameApiError ? error.code : "";
+  if (status === 0 || status === 401 || status === 403 || status === 408 || code === "save_conflict" || code === "stale_response") return;
+  apiFailureSink.report?.(`api.${status >= 500 ? "5xx" : "4xx"}`, error, { method, status, code });
+}
 
 export class RemoteGameApiError extends Error {
   constructor(readonly status: number, readonly code: string, message?: string) { super(message ?? code); }
@@ -88,6 +97,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
           if (signal.aborted) break;
           continue;
         }
+        reportApiFailure(method, error);
         throw error;
       }
       const revision = Number((json as { revision?: unknown }).revision);
@@ -104,6 +114,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
       if (callKey) retryIds.delete(callKey);
       return json.result;
     }
+    reportApiFailure(method, lastError);
     throw lastError instanceof Error ? lastError : new RemoteGameApiError(0, "network");
   }
 

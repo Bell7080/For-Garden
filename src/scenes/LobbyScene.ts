@@ -88,6 +88,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LobbyMenuTray, LOBBY_MENU_GLYPH } from "../ui/LobbyMenuTray";
 import { RecollectionPopup } from "../ui/RecollectionPopup";
+import { logError } from "../managers/ErrorReporter";
 
 /**
  * 로비에 선 애착 렐릭의 층.
@@ -370,7 +371,7 @@ export class LobbyScene extends Phaser.Scene {
     // 로비의 조작 가능 시점은 동기 UI와 최초 애착 Puppet 시도가 모두 끝난 때다. Puppet 실패는
     // 장식 하나를 포기하는 복구 가능한 실패로 취급해 기록만 남기고, 전체 입력은 영구 대기시키지 않는다.
     void this.showFavorite()
-      .catch((error) => console.error("로비 애착 Puppet 표시 실패", error))
+      .catch((error) => logError("puppet.display", "로비 애착 Puppet 표시 실패", error))
       .finally(() => {
         // 종료된 로비의 늦은 Promise가 다음 씬을 준비 완료로 덮어쓰지 못하게 활성 상태를 확인한다.
         if (this.scene.isActive()) setDebugReady(true);
@@ -379,7 +380,7 @@ export class LobbyScene extends Phaser.Scene {
     const unsubscribeSkin = relicSkinManager.subscribe(({ relicId }) => {
       if (relicId !== session.favorite) return;
       // 종료 가드는 showFavorite 안에 유지하고, 이 호출 경계도 비동기 생성 실패를 직접 처리한다.
-      void this.showFavorite().catch((error) => console.error("로비 애착 Puppet 갱신 실패", error));
+      void this.showFavorite().catch((error) => logError("puppet.display", "로비 애착 Puppet 갱신 실패", error));
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubscribeSkin);
 

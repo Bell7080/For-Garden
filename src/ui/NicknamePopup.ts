@@ -13,6 +13,7 @@ import { addSdFootShadow } from "./SdFootShadow";
 import { TextInputField } from "./TextInputField";
 import { startPuppetHop } from "./puppetHop";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 /** 도디·파루아가 맞아 주는 이름 등록/변경창. 저장 성공 전에는 생성 절차를 완료하지 않는다. */
 export function openNicknamePopup(scene: Phaser.Scene, layer: PopupLayer, onDone: () => void, required = false): void {
@@ -52,7 +53,7 @@ export function openNicknamePopup(scene: Phaser.Scene, layer: PopupLayer, onDone
         figures.push(figure);
         shadows.push(addSdFootShadow(scene, body.x + L.sd.xs[index], body.y + L.sd.groundY, 130).setDepth(depth - .1));
         hops.push(startPuppetHop(scene, figure, index, { once: true }));
-      }).catch((error) => console.warn("닉네임 안내 SD 표시 실패", id, error));
+      }).catch((error) => logError("puppet.display", "닉네임 안내 SD 표시 실패", error, { relic: String(id) }));
     });
     body.add(scene.add.text(-L.field.width / 2, L.fieldLabelY, t("profile.edit.nickname"),
       textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0, .5));

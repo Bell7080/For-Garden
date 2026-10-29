@@ -38,6 +38,8 @@ import { setDebugWebglRestore, debugPerfEnabled, publishDebugPerf } from "./debu
 import { installCjkWrap } from "./ui/cjkWrap";
 import { installTapSlopGuard } from "./ui/tapSlopGuard";
 import { guardFrame } from "./core/frameGuard";
+import { installErrorReporter } from "./managers/ErrorReporter";
+import { logError } from "./managers/ErrorReporter";
 
 installCjkWrap();
 installTapSlopGuard();
@@ -85,6 +87,8 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, OpeningScene, LobbyScene, PvpPreviewScene, DuelScene, ArenaScene, ArenaMatchScene, ArenaRoomScene, ArenaNoticeScene, EventScene, InteractionScene, ExpeditionScene, SortiePreviewScene, RaidScene, AncientStrataScene, CakeOperationScene, BountyScene, SettingsScene, FriendsScene, GuildScene, ShopScene, PremiumScene, RelicsScene, LabScene, ArchaeologyScene, StageMapScene, StageStoryScene, PartyScene, BattleScene, EffectOverlayScene],
 });
 
+installErrorReporter();
+
 // 한 프레임의 예외가 게임 루프를 죽이지 않게 프레임 콜백을 감싼다(이유는 core/frameGuard).
 // 루프는 READY 직후 시작되므로 그 뒤 한 틱 늦게 감싼다. 로그는 같은 오류가 쏟아지지 않게 앞 몇 번만 남긴다.
 {
@@ -92,8 +96,8 @@ const game = new Phaser.Game({
     const loop = game.loop as unknown as { callback: (time: number, delta: number) => void };
     loop.callback = guardFrame(
       loop.callback,
-      (error, consecutive) => { if (consecutive <= 3) console.error("[frame] 프레임 오류", error); },
-      (error) => console.error("[frame] 같은 오류가 계속되어 화면이 멈췄을 수 있다", error),
+      (error, consecutive) => { if (consecutive <= 3) logError("frame.error", "[frame] 프레임 오류", error, { consecutive }); },
+      (error) => logError("frame.stuck", "[frame] 같은 오류가 계속되어 화면이 멈췄을 수 있다", error),
     );
   };
   if (game.isRunning) wrapLoop(); else game.events.once(Phaser.Core.Events.READY, () => { void Promise.resolve().then(wrapLoop); });

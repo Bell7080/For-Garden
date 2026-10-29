@@ -161,6 +161,7 @@ import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarnes
 import { PuppetCreationQueue } from "../puppets/creationQueue";
 import { playSceneEntrance, startScene } from "../ui/screenTransition";
 import { addSdFootShadow } from "../ui/SdFootShadow";
+import { logError, reportError } from "../managers/ErrorReporter";
 
 /** 디버프 수치 색(문자열)을 연출이 쓰는 정수 색으로 옮긴다 — 같은 상태가 숫자와 조각에서 같은 색이어야 한다. */
 const debuffColor = (id: DebuffId): number => Phaser.Display.Color.HexStringToColor(DEBUFF_TONE[id]).color;
@@ -887,7 +888,7 @@ export class BattleScene extends Phaser.Scene {
       // **무엇이 실패했는지 남긴다.** 예전에는 이유를 통째로 삼켜, 정산이 막히면 화면에 "다시
       // 시도"만 남고 눌러도 같은 자리에서 같은 이유로 막혔다 — 서버가 거절한 것인지, 이미
       // 정산된 런인지, 결과판을 그리다 터진 것인지 아무도 알 수 없었다.
-      console.error("[expedition] 보스 정산 실패", error);
+      logError("expedition.bossSettle", "[expedition] 보스 정산 실패", error);
       failBossSettlementAttempt(this.bossSettlementFailureState);
       // 점수 규칙 거절만 전투 기록 문제로 안내하고, 저장 장애는 Boot 재동기화가 필요한 상태로 분리한다.
       const reason = error instanceof ExpeditionBossSettlementError && error.causeCode === "EXPEDITION_SCORE_REJECTED"
@@ -940,6 +941,7 @@ export class BattleScene extends Phaser.Scene {
       if (!this.scene.isActive() || generation !== this.combatGeneration) return;
       const diagnostic = battleResultFailure(error, "raid");
       console.error("[raid] 피해 제출 실패", { ...diagnostic, clientVersion: packageInfo.version });
+      reportError("raid.submit", error, { ...diagnostic, mode: this.battleInput.mode });
       failBossSettlementAttempt(this.bossSettlementFailureState);
       const code = error instanceof GameApiError ? error.code : undefined;
       const reason = code === "RAID_SCORE_REJECTED" ? t("battle.settle.scoreRejected")
@@ -1285,7 +1287,7 @@ export class BattleScene extends Phaser.Scene {
           .catch((error: unknown) => {
             // 표시 파일 하나가 깨져도 코어 전투를 멈추지 않는다. 이 Fighter의 화면만 생략한다.
             // **한 마리의 실패가 나머지를 함께 지우지 않도록** 약속마다 여기서 삼킨다.
-            if (isCurrent()) console.error(`[battle] Puppet 로드 실패: ${asset.url}`, error);
+            if (isCurrent()) logError("puppet.load", `[battle] Puppet 로드 실패: ${asset.url}`, error, { asset: asset.url });
             return undefined;
           });
       });
@@ -3600,6 +3602,7 @@ export class BattleScene extends Phaser.Scene {
   private showResultFailure(retry: () => void, leave: () => void, error?: unknown, phase: BattleResultPhase = "stage"): void {
     const failure = battleResultFailure(error, phase);
     console.error("[battle-result]", { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId, clientVersion: packageInfo.version });
+    reportError(`battle.result.${phase}`, error ?? failure.reference, { ...failure, mode: this.battleInput.mode, stageId: session.selectedStageId });
     this.resultFailureUi?.destroy(true);
     const ui = this.add.container(0, 0).setDepth(5000);
     ui.add(this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.9));
@@ -3682,7 +3685,7 @@ export class BattleScene extends Phaser.Scene {
         });
       }).catch((error: unknown) => {
         // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.
-        console.error("[expedition] 노드 결과 정산 실패", error);
+        logError("expedition.nodeSettle", "[expedition] 노드 결과 정산 실패", error);
         if (this.scene.isActive()) this.showResultFailure(() => this.finishExpeditionBattle(input, won), () => startScene(this, "lobby"), error, "expedition");
       });
     }

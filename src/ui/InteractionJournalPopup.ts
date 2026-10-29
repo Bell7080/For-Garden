@@ -12,6 +12,7 @@ import { DialogueLayer } from "./DialogueLayer";
 import { NotificationDot } from "./NotificationDot";
 import type { PopupLayer } from "./PopupLayer";
 import { textStyle } from "./theme";
+import { reportCatch } from "../managers/ErrorReporter";
 
 const BLUE = 0x55b9e8;
 
@@ -53,7 +54,7 @@ export class InteractionJournalPopup {
 
   /** 일반 본문은 공용 쪽지에서, 분기형 본문은 기존 대사층과 StoryManager에서 연다. */
   private openJournal(journal: InteractionJournal): void {
-    void this.manager.markJournalRead(journal.id).catch(() => undefined);
+    void this.manager.markJournalRead(journal.id).catch(reportCatch("interaction.markJournalRead"));
     if (journal.body) {
       this.popups.open({ width: 860, height: 620, title: journal.title, titleSize: POPUP_TITLE_SIZE.workboard, dim: true, closeOnBackdrop: true, backButton: true }, (body) => body.add(this.scene.add.text(-360, -170, journal.body!, textStyle({ role: "body", size: 30, wrap: 720, lineSpacing: 12 }))));
       return;
@@ -76,7 +77,7 @@ export class InteractionJournalPopup {
     const result = active.flow.advance(choice?.id);
     const storyId = active.journal.dialogueStory?.id;
     if (!storyId) return;
-    if (choice && (result.completed || result.node?.id !== previousNode)) void storyManager.applyChoice(storyId, previousNode, choice.id).catch(() => undefined);
+    if (choice && (result.completed || result.node?.id !== previousNode)) void storyManager.applyChoice(storyId, previousNode, choice.id).catch(reportCatch("story.applyChoice", { storyId }));
     if (result.completed) {
       const finish = (): void => { void storyManager.complete(storyId).then(() => { if (this.active === active) this.active = undefined; }).catch(() => showStorySaveFailure(this.scene, this.popups, finish)); };
       finish(); return;

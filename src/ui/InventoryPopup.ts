@@ -34,6 +34,7 @@ import { attachDragScroll } from "./dragScroll";
 import { addScrollHint } from "./ScrollHint";
 import { addClippedHit } from "./clippedHit";
 import type { ClipRect } from "./clipRect";
+import { logError } from "../managers/ErrorReporter";
 
 const CATEGORIES: readonly { id: ItemCategory; labelKey: TextKey }[] = [
   { id: "rune", labelKey: "inventory.tab.rune" }, { id: "currency", labelKey: "inventory.tab.currency" }, { id: "consumable", labelKey: "inventory.tab.consumable" }, { id: "material", labelKey: "inventory.tab.material" },
@@ -334,7 +335,7 @@ export class InventoryPopup {
     }).catch((error: unknown) => {
       // 가득 찬 채로 쓰면 아무것도 빠지지 않는다. 왜 쓰이지 않았는지만 짧게 말한다(토스트가 「아직」 소리를 낸다).
       if (error instanceof GameApiError && error.code === "STAMINA_FULL") showContentToast(this.scene, t("inventory.staminaFull"), "refused");
-      else console.error("소비품 사용 실패", error);
+      else logError("inventory.useConsumable", "소비품 사용 실패", error);
     });
   }
 }

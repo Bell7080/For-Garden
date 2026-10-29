@@ -15,6 +15,7 @@ import { addSdFootShadow } from "./SdFootShadow";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate, addUnitPower } from "./unitNameplate";
+import { logError } from "../managers/ErrorReporter";
 
 /** 방어팀 미리보기의 자리. 머리 줄 → 세 칸이 선 무대 → 출격 순이고 창 높이는 그 합이다. */
 export const DUEL_DEFENSE_PREVIEW = {
@@ -110,6 +111,6 @@ function paintStage(scene: Phaser.Scene, body: Phaser.GameObjects.Container, y: 
       figures.add(puppet);
       puppet.setAlpha(0);
       scene.tweens.add({ targets: puppet, alpha: 1, duration: 220, delay: index * 80 });
-    }).catch((error) => console.warn("방어팀 SD 표시 실패", error));
+    }).catch((error) => logError("puppet.display", "방어팀 SD 표시 실패", error));
   });
 }

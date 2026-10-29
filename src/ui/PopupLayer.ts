@@ -13,6 +13,8 @@ import { audioManager } from "../managers/AudioManager";
 import { playPopupClose, playPopupOpen } from "./screenTransition";
 import { BACK_SLOT, POPUP_BACK_BUTTON_DEPTH, POPUP_BODY_BEVEL_RATIO, POPUP_CLOSE_LAYOUT, POPUP_TITLE_SIZE, tiltedPopupSize } from "./popupGeometry";
 import { pressIn, pressOut } from "./pressFeedback";
+import { logError } from "../managers/ErrorReporter";
+import { noteBreadcrumb } from "../managers/ErrorReporter";
 
 /** 제목 위계는 순수 배치표가 갖고 여기서는 다시 내보내기만 한다. */
 export { POPUP_TITLE_SIZE };
@@ -310,6 +312,7 @@ export class PopupLayer {
     build: (body: Phaser.GameObjects.Container, close: () => void) => void,
   ): Phaser.GameObjects.Container {
     const { width, height } = options;
+    if (options.title) noteBreadcrumb(`popup:${options.title}`);
     const screen = { width: this.scene.scale.width, height: this.scene.scale.height };
     const anchored = this.anchorPosition(options, screen);
     const cx = anchored?.x ?? options.x ?? screen.width / 2;
@@ -414,7 +417,7 @@ export class PopupLayer {
     try {
       build(body, close);
     } catch (error) {
-      console.error("팝업 본문을 그리다 실패했습니다.", error);
+      logError("popup.render", "팝업 본문을 그리다 실패했습니다.", error, { title: options.title ?? "" });
     }
     // 배경 원화를 까는 큰 팝업은 내용이 제목 뒤로 들어오므로, 채운 뒤 머리글을 한 번 더 맨 위로 올린다.
     this.raiseChrome(body);

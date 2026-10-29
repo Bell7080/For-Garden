@@ -10,6 +10,7 @@ import { remainingDetail } from "./itemExpiry";
 import type { PopupLayer } from "./PopupLayer";
 import { addSdFootShadow } from "./SdFootShadow";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 /**
  * 지층 초기화가 사흘 안으로 다가오면 지층에 들어올 때 한 번 뜨는 예고 창. 아모가 말풍선으로 알리며 허둥대고,
@@ -88,7 +89,7 @@ export function openAncientResetWarning(scene: Phaser.Scene, layer: PopupLayer, 
         sd.x = restX + jitter.x * L.sd.shake.distance * motion.nonEssentialDistanceFactor;
         sd.y = restY - L.sd.hop.rise * motion.nonEssentialDistanceFactor * (1 - (2 * jitter.hop - 1) ** 2);
       } }));
-    }).catch((error) => console.warn("지층 초기화 예고 SD 표시 실패", error));
+    }).catch((error) => logError("puppet.display", "지층 초기화 예고 SD 표시 실패", error));
 
     // 남은 시간 — 붉게, 초마다 다시 적는다.
     body.add(scene.add.text(0, L.timer.labelY, t("ancient.resetWarning.left"),

@@ -16,6 +16,7 @@ import { addSdFootShadow } from "./SdFootShadow";
 import { TextInputField } from "./TextInputField";
 import { startPuppetHop } from "./puppetHop";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 const COUPON_GUIDE = "torika";
 const COUPON_MAX_GLYPHS = 40;
@@ -73,7 +74,7 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
       figure.disableInteractive();
       shadow = addSdFootShadow(scene, body.x + L.sd.x, body.y + L.sd.groundY, L.sd.shadowWidth).setDepth(depth - .1);
       hop = startPuppetHop(scene, figure, 0, { once: true });
-    }).catch((error) => console.warn("쿠폰 안내 SD 표시 실패", error));
+    }).catch((error) => logError("puppet.display", "쿠폰 안내 SD 표시 실패", error));
 
     body.add(scene.add.text(-L.field.width / 2, L.fieldLabelY, t("coupon.field"),
       textStyle({ role: "emphasis", size: 28, color: COLOR.ink })).setOrigin(0, .5));

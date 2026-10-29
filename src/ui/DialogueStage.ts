@@ -48,6 +48,7 @@ import { speakerStanding } from "../data/dialogues/speakerStanding";
 import { drawVignette } from "./holo";
 import { textStyle } from "./theme";
 import { audioManager } from "../managers/AudioManager";
+import { logError } from "../managers/ErrorReporter";
 
 /**
  * 대사 데이터의 스탠딩 키 → 전신 원화. 전신이 있는 개체는 누구든 도감의 원화 표를 그대로 따르고,
@@ -239,7 +240,7 @@ export class DialogueStage {
       });
     } catch (error) {
       // 원화 한 장이 없다고 이야기가 멈추지 않는다. 그 사람만 서지 않고 대사는 이어진다.
-      console.error("대사 스탠딩 표시 실패", entry.id, error);
+      logError("dialogue.standing", "대사 스탠딩 표시 실패", error, { id: String(entry.id) });
       return undefined;
     }
     // 기다리는 사이 노드가 바뀌었거나 같은 사람이 이미 섰으면 늦게 온 쪽을 버린다.

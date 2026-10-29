@@ -29,6 +29,7 @@ import { addSectionTitle } from "./SectionTitle";
 import { addGlowStar } from "./stars";
 import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 export interface LevelUpPopupOptions {
   from: number;
@@ -145,7 +146,7 @@ function buildHero(scene: Phaser.Scene, body: Phaser.GameObjects.Container, top:
     scene.tweens.add({ targets: puppet, alpha: 1, duration: 240 });
     const hop = startPuppetHop(scene, puppet, 0);
     stage.once(Phaser.GameObjects.Events.DESTROY, () => hop.stop());
-  }).catch((error) => console.warn("레벨업 SD 표시 실패", error));
+  }).catch((error) => logError("puppet.display", "레벨업 SD 표시 실패", error));
 }
 
 /** 레벨업 보상 — 에너지 드링크 액자 + 스테미나 상한 액자. */

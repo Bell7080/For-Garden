@@ -3,6 +3,7 @@ import { motionPolicy } from "../core/settings";
 import { TITLE_EXIT_GUARD_MS, transitionTiming, type TransitionMotion } from "../core/screenTransition";
 import { session } from "../state/session";
 import { audioManager } from "../managers/AudioManager";
+import { noteScene, noteBreadcrumb } from "../managers/ErrorReporter";
 
 /**
  * 화면이 갈리는 **한 가지 방법**.
@@ -111,6 +112,7 @@ export function startNavScene(scene: Phaser.Scene, key: string, direction: -1 | 
  */
 export function startScene(scene: Phaser.Scene, key: string, data?: object): void {
   pendingRefreshKey = undefined;
+  noteScene(key);
   scene.scene.start(key, data);
 }
 
@@ -150,6 +152,7 @@ export function leaveTitle(scene: Phaser.Scene, key: string, data?: object): voi
  */
 export function restartScene(scene: Phaser.Scene, data?: object): void {
   pendingRefreshKey = scene.scene.key;
+  noteBreadcrumb(`restart:${scene.scene.key}`);
   scene.scene.restart(data);
 }
 

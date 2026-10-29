@@ -96,6 +96,7 @@ import { findItem } from "../data/items";
 import { mountRunePickerGrid } from "./runePickerGrid";
 import { runePickerSize } from "./runePickerLayout";
 import { universalFragmentTexture } from "./universalFragmentArt";
+import { reportCatch } from "../managers/ErrorReporter";
 
 export type { SkillInfoViewModel } from "./SkillPopup";
 
@@ -1727,7 +1728,7 @@ export class InfoManager {
   private async claimBondChapter(relicId: string, level: BondStoryLevel, from: PopupSource): Promise<void> {
     const chapter = relicStories.chapterViews(relicId).find((view) => view.level === level);
     if (!chapter?.unlocked || chapter.claimed) return;
-    const gems = await relicStories.claimChapter(relicId, level).catch(() => undefined);
+    const gems = await relicStories.claimChapter(relicId, level).catch(reportCatch("relicStory.claimChapter", { relicId: String(relicId) }));
     if (gems === undefined || this.currentDef?.id !== relicId || !this.popups.isOpen) return;
     // 유대 판을 받음 상태로 갈아 끼운다 — 같은 제목이라 깜빡이지 않고 그 자리에서 바뀐다.
     this.popups.closeTop();

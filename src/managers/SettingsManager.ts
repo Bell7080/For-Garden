@@ -10,6 +10,7 @@ import { adjustForQuietHours } from "../core/notificationSchedule";
 import { applyFrameRateLimit } from "../config/gameConfig";
 import { accountGameSettings, accountPartOfPatch, type SettingsPatch } from "../core/settingsOwnership";
 import { resolveServerApi, type SettingsApi } from "./serverApi";
+import { logError } from "./ErrorReporter";
 
 /** 설정 변경자가 저장과 알림을 빠뜨리지 않도록 한 공개 변경 경계다. */
 export class SettingsManager extends EventTarget {
@@ -33,7 +34,7 @@ export class SettingsManager extends EventTarget {
   private syncAccountPart(patch: SettingsPatch): void {
     const game = accountPartOfPatch(patch);
     if (!game) return;
-    this.accountSync = this.accountSync.then(() => this.api.updateAccountSettings({ game }), () => this.api.updateAccountSettings({ game })).catch((error) => { console.error("계정 설정 저장 실패", error); });
+    this.accountSync = this.accountSync.then(() => this.api.updateAccountSettings({ game }), () => this.api.updateAccountSettings({ game })).catch((error) => { logError("settings.accountSave", "계정 설정 저장 실패", error); });
   }
 
   /** 서버가 마지막으로 확정할 때까지 기다린다. 시험과 계정 전환 직전에 쓴다. */

@@ -31,6 +31,7 @@ import { NotificationDot } from "./NotificationDot";
 import { TabStripEdgeHint } from "./TabStripEdgeHint";
 import { attachTabStripDrag } from "./tabStripDrag";
 import { hiddenDotSides, nearestHiddenDot, tabStripMinScroll, tabStripScrollFor, tabStripSpotX } from "../core/tabStrip";
+import { reportError } from "../managers/ErrorReporter";
 
 const TABS: readonly AchievementTab[] = ["all", ...ACHIEVEMENT_CATEGORIES];
 
@@ -360,7 +361,7 @@ export class AchievementsPopup {
     this.claiming = true;
     try {
       let result: ClaimAchievementRewardsResponse;
-      try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch { await this.refresh().catch(() => undefined); return; }
+      try { result = await withBusy(this.scene, this.api.claimAchievementRewards(ids)); } catch (error) { reportError("achievement.claim", error); await this.refresh().catch(() => undefined); return; }
       if (!hasRemoteState(result)) session.wallet = { ...result.wallet }; this.onWalletChanged?.();
       // 지급은 이미 확정됐다. 목록/알림 재조회 실패가 영수증과 다음 수령을 막지 않는다.
       this.data = await this.api.getAchievements().catch(() => this.data);

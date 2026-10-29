@@ -14,6 +14,7 @@ import { addGlowStar } from "./stars";
 import { addRankPips } from "./StoryDifficultyIcon";
 import { Button } from "./Button";
 import { COLOR, textStyle } from "./theme";
+import { logError } from "../managers/ErrorReporter";
 
 /**
  * 난이도마다 서는 무대 — 출격판 칸과 같은 원화 버튼(`ExpeditionEntryButton`)에 **그 난이도의 색으로 물든 원화**와
@@ -85,7 +86,7 @@ function addDifficultyCard(
     // 그림자를 먼저 깔아 본체가 늘 그 위에 온다.
     if (shadow) layer.addAt(puppet, 0); else layer.add(puppet);
     return puppet;
-  }).catch((error) => { console.warn("난이도 SD 표시 실패", error); return undefined; });
+  }).catch((error) => { logError("puppet.display", "난이도 SD 표시 실패", error); return undefined; });
   void Promise.all([spawn(true), spawn(false)]).then(([shadow, body]) => {
     if (!options.hop || dim || !body || !layer.active) return;
     const hops = [startPuppetHop(scene, body, 0), ...(shadow ? [startPuppetHop(scene, shadow, 0)] : [])];

@@ -152,7 +152,7 @@ const KOREAN_ALLOWED: Readonly<Record<string, string>> = {
  * `console.*`는 개발자만 보는 기록이고, `setDebug*`가 넘기는 화면 이름은 화면에 그리지 않고
  * E2E가 어느 화면인지 확인하는 데만 쓴다 — 언어를 따라 바뀌면 그 확인이 언어마다 갈린다.
  */
-const isDeveloperLine = (line: string): boolean => /console\.|setDebug|throw new \w*Error/.test(line);
+const isDeveloperLine = (line: string): boolean => /console\.|logError\(|setDebug|throw new \w*Error/.test(line);
 
 /**
  * 모듈을 읽는 순간 굳는 문구가 있는가.

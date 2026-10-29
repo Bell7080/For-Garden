@@ -6,6 +6,7 @@ import { ACCOUNT_GUIDE } from "./accountIdPopupLayout";
 import { DialogueBubble } from "./DialogueBubble";
 import { startPuppetHop } from "./puppetHop";
 import { addSdFootShadow } from "./SdFootShadow";
+import { logError } from "../managers/ErrorReporter";
 
 export interface AccountGuide {
   /** 한 마디 띄우고 한 번 뛴다. 같은 말을 다시 불러도 다시 선다. */
@@ -81,7 +82,7 @@ export function addAccountGuide(scene: Phaser.Scene, body: Phaser.GameObjects.Co
     restY = next.y;
     shadow = addSdFootShadow(scene, body.x + sdX, body.y + top + G.sd.sink, G.sd.shadow).setDepth(depth - 0.1);
     jump();
-  }).catch((error) => console.warn("계정 안내 SD 표시 실패", error));
+  }).catch((error) => logError("puppet.display", "계정 안내 SD 표시 실패", error));
 
   return { say };
 }

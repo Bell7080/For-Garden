@@ -21,6 +21,7 @@ import { currencyRecordToRewardItems } from "./rewardPopupModel";
 import { openRewardPopup } from "./RewardPopup";
 import { UI_ICON } from "./icons";
 import { addSdFootShadow } from "./SdFootShadow";
+import { logError } from "../managers/ErrorReporter";
 
 /**
  * 돌림판 창의 자리. 바퀴가 위 절반을 갖고, 그 아래로 받침 · 남은 횟수 · 돌리기 버튼이 쌓인다.
@@ -153,7 +154,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
       if (!alive || !body.active) { figure.destroy(); return; }
       mascot = figure.setName("roulette-meron"); mascot.disableInteractive(); mascot.setDecorativeUpdateFactor(powerSavingPolicy(session.settings).idlePuppetUpdateFactor);
       mascotShadow = addSdFootShadow(scene, body.x + WHEEL.meron.x, body.y + WHEEL.meron.groundY, 132).setDepth(puppetDepth - 0.1);
-    }).catch((error) => console.warn("돌림판 메론 SD 표시 실패", error));
+    }).catch((error) => logError("puppet.display", "돌림판 메론 SD 표시 실패", error));
 
     const refresh = (): void => {
       const hasSpin = status.active && status.remaining > 0;
@@ -170,7 +171,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     };
     const publish = (): void => { managerEvents.publish("wallet", { wallet: session.wallet }); void notificationManager.refresh().catch(() => undefined); };
     const fail = (error: unknown): void => {
-      console.warn("돌림판 요청 실패", error);
+      logError("roulette.request", "돌림판 요청 실패", error);
       if (alive) { busy = false; refresh(); note.setText(t("roulette.error")); scheduleIdle(); }
     };
     /** 메론이 바퀴를 민다 — 바퀴 쪽(왼쪽)으로 기울며 한 발 다가섰다 돌아온다. `times`번 되풀이한다. */

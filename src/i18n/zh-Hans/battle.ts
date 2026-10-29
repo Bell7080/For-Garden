@@ -45,8 +45,6 @@ export const BATTLE_ZH_HANS = {
   "battle.gauge.ferocity": "野性 {value} / {max}",
   "battle.result.saveFailed": "无法保存结果",
   "battle.result.retry": "重试",
-  "battle.result.nodeScore": "远征分数 +{score}",
-  "battle.result.runScore": "本次远征分数 {score} · 计入每周记录",
   "battle.pause.continue": "继续",
   "battle.pause.toTitle": "返回标题",
   "battle.pause.toTitleConfirm": "返回标题画面。本场战斗将重新开始。",

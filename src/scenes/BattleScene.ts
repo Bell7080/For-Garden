@@ -154,7 +154,7 @@ import { growthPaths, type GrowthPath } from "../core/growthPaths";
 import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
-import { EXPEDITION_RESULT_THEME } from "../ui/stageCompleteTheme";
+import { ANCIENT_RESULT_THEME, BOUNTY_RESULT_THEME, CAKE_RESULT_THEME, EXPEDITION_RESULT_THEME, raidResultTheme, storyResultTheme, type StageCompleteTheme } from "../ui/stageCompleteTheme";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
@@ -999,6 +999,7 @@ export class BattleScene extends Phaser.Scene {
         settlement: true,
       },
       replay,
+      theme: this.resultTheme(),
       fighters: this.stageCompleteFighters(),
       onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
       onConfirm: back,
@@ -2967,7 +2968,11 @@ export class BattleScene extends Phaser.Scene {
     const fighters = this.partyFighters().map((fighter, formationOrder) => ({
       id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
     }));
-    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, this.viewFlip ? "enemy" : "player");
+    // 적 편도 같은 장부에 쌓여 있다 — 기여도 판의 「적」 보기가 그 줄을 읽는다.
+    const opponents = this.state.fighters.filter((fighter) => !this.isAlly(fighter) && isPartyFighter(fighter)).map((fighter, formationOrder) => ({
+      id: fighter.id, formationOrder, name: fighter.def.name, portraitId: fighter.def.id,
+    }));
+    this.contributionResult = createBattleContributionResult(this.state.contributions, fighters, this.viewFlip ? "enemy" : "player", opponents);
     // finish 사건만 결과 정산을 소유한다. 사망 사건은 앞서 한 번 재생됐으며 정리 과정에서 재호출하지 않는다.
     this.cancelUltimatePresentation();
     // 전투가 끝나면 궁극기 버튼도 함께 꺼진다.
@@ -3067,6 +3072,7 @@ export class BattleScene extends Phaser.Scene {
           { label: t("stageComplete.exit"), danger: true, onPress: () => { chosen = true; startScene(this, exitTo); } },
         ],
       },
+      theme: this.resultTheme(),
       replay: {
         label: t("stageComplete.replay"),
         isBlocked: () => session.wallet.stamina < battleStageStaminaCost(stage),
@@ -3143,6 +3149,7 @@ export class BattleScene extends Phaser.Scene {
       ];
       new StageCompletePopup(this, popups).open({
         clearActions,
+        theme: this.resultTheme(),
         returnHint: tutorialReturn ? t(tutorialStep === "gift" ? "tutorial.result.research" : "tutorial.result.feed") : undefined,
         reward: {
           kind: "storyClear", cheesecakeEarned: result.cheesecakeEarned, firstClear: result.firstClear,
@@ -3205,6 +3212,7 @@ export class BattleScene extends Phaser.Scene {
           ],
         },
         growth: won ? undefined : this.defeatGrowth(() => { chosen = true; }),
+        theme: this.resultTheme(),
         replay: replayable ? { label: t("stageComplete.replay"), onPress: go(() => this.replayContent({ content: "cake", tierId: input.tierId }, back)) } : undefined,
         staminaRefunded: result.staminaRefunded,
         greatSuccess: won && result.greatSuccess === true,
@@ -3375,7 +3383,7 @@ export class BattleScene extends Phaser.Scene {
     if (step.kind === "clear") {
       new StageCompletePopup(this, popups).open({
         reward: { kind: "loot", items: withGreatSuccessBonus(dungeonRewardItems(settled.granted ?? { gold: settled.goldEarned }, settled.bonusItems), settled.greatSuccessBonus) },
-        greatSuccess: settled.greatSuccess === true, autoRepeat: auto,
+        greatSuccess: settled.greatSuccess === true, autoRepeat: auto, theme: this.resultTheme(),
         replay, fighters, onOpenContribution: openContribution,
         onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
       });
@@ -3387,7 +3395,7 @@ export class BattleScene extends Phaser.Scene {
       reward: { kind: "defeat", actions: [
         ...(replay ? [] : [{ label: t("bounty.result.toBounty"), onPress: go(toBounty) }]),
       ] },
-      growth: this.defeatGrowth(() => { chosen = true; }),
+      growth: this.defeatGrowth(() => { chosen = true; }), theme: this.resultTheme(),
       replay, fighters, onOpenContribution: openContribution, staminaRefunded: settled.staminaRefunded, autoRepeat: auto,
       onConfirm: () => { if (!chosen && this.scene.isActive()) toBounty(); },
     });
@@ -3436,13 +3444,29 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     new StageCompletePopup(this, popups).open({
-      // 진 판은 받는 것이 없다 — 보상 줄 대신 강해지는 길이 선다. 편성은 결투장에서 상대를 고르며 바꾼다.
+      // 진 판은 받는 것이 없다. 강해지는 길은 세우지 않는다 — 티어 블록의 점수 감소와 한 판에 겹쳐 무엇을
+      // 읽어야 하는지 흐려진다. 편성은 결투장에서 상대를 고르며 바꾼다.
       reward: { kind: "defeat", actions: [
         { label: t("duel.result.toDuel"), onPress: go(toDuel) },
       ] },
-      standing, growth: this.defeatGrowth(() => { chosen = true; }),
+      standing,
       fighters, onOpenContribution: openContribution, onConfirm,
     });
+  }
+
+  /**
+   * 결과판의 색 한 벌(`stageCompleteTheme.ts`) — 판의 짜임은 같고 어느 콘텐츠의 결과인지는 색과 뒷배경이 말한다.
+   * 스토리는 금빛에 그 장의 전장 원화만 깔고, 지층은 구리빛, 대작전·현상수배는 입구와 같은 색, 레이드는 보스마다 다르다.
+   */
+  private resultTheme(): StageCompleteTheme | undefined {
+    const input = this.battleInput;
+    if (input.mode === "raid") return raidResultTheme(input.bossRelicId);
+    if (input.mode === "cake") return CAKE_RESULT_THEME;
+    if (input.mode === "bounty") return BOUNTY_RESULT_THEME;
+    if (input.mode !== "stage") return undefined;
+    const stageId = session.selectedStageId ?? undefined;
+    if (ancientStageFloor(stageId) !== undefined) return ANCIENT_RESULT_THEME;
+    return storyResultTheme(battleFieldBackground("stage", stageId));
   }
 
   /**
@@ -3626,10 +3650,10 @@ export class BattleScene extends Phaser.Scene {
                 // 그 영수증을 같은 판의 보상 줄이 그대로 말한다.
                 items: currencyRecordToRewardItems(settlement.granted),
                 settlement: true,
-                // 전멸한 판도 그때까지 오른 점수가 주간 기록에 든다 — 그 점수를 여기서 말한다.
-                footnote: settlement.runScore && settlement.runScore > 0 ? t("battle.result.runScore", { score: Math.floor(settlement.runScore).toLocaleString() }) : undefined,
               },
               theme: EXPEDITION_RESULT_THEME,
+              // 전멸한 판도 그때까지 오른 점수가 주간 기록에 든다 — 더해지는 몫이 아니라 집계라 `+` 없이 점수만 선다.
+              ...(settlement.runScore && settlement.runScore > 0 ? { score: { label: t("battle.settle.score"), value: settlement.runScore } } : {}),
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
               onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "lobby"); },
@@ -3648,11 +3672,10 @@ export class BattleScene extends Phaser.Scene {
           reward: {
             kind: "loot",
             items: currencyRecordToRewardItems(nodeResult.rewards),
-            // 점수 증가분은 여기서 함께 말한다 — 지도로 돌아가 합계만 보면 이번 판이 얼마를
-            // 보탰는지 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
-            footnote: nodeResult.nodeScore > 0 ? t("battle.result.nodeScore", { score: Math.floor(nodeResult.nodeScore).toLocaleString() }) : undefined,
           },
           theme: EXPEDITION_RESULT_THEME,
+          // 이 노드의 점수는 보스 정산과 같은 점수 블록(이름표 + 큰 수)으로 선다 — 집계 점수라 `+`를 붙이지 않는다.
+          ...(nodeResult.nodeScore > 0 ? { score: { label: t("expedition.nodeScore"), value: nodeResult.nodeScore } } : {}),
           fighters: this.stageCompleteFighters(),
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           onConfirm: () => startScene(this, "expedition"),

@@ -19,7 +19,7 @@ describe("결과판 충전 후 재입장", () => {
     });
     const scene = Object.assign(Object.create(Battle.prototype), {
       scene: { isActive: () => true }, battleInput: { mode: "stage" }, openingBattle: () => false,
-      stageExit: () => "stageMap", stageCompleteFighters: () => [], featureOpen: () => true,
+      stageExit: () => "stageMap", stageCompleteFighters: () => [], resultTheme: () => undefined, featureOpen: () => true,
       openStaminaCharge: blocked, retryBattle: retry,
     });
     await scene.finishStageVictory({ id: "1-2" });

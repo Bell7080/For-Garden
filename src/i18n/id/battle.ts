@@ -45,8 +45,6 @@ export const BATTLE_ID = {
   "battle.gauge.ferocity": "Keganasan {value} / {max}",
   "battle.result.saveFailed": "Tidak dapat menyimpan hasil",
   "battle.result.retry": "Coba Lagi",
-  "battle.result.nodeScore": "Skor Ekspedisi +{score}",
-  "battle.result.runScore": "Skor Ekspedisi kali ini {score} · Masuk ke rekor mingguan",
   "battle.pause.continue": "Lanjutkan",
   "battle.pause.toTitle": "Ke judul",
   "battle.pause.toTitleConfirm": "Kembali ke layar judul. Pertarungan ini akan dimulai dari awal.",

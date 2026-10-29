@@ -264,7 +264,8 @@ export class StageCompletePopup {
       // 진 판은 한 겹 더 어둡다. 판 자체를 다른 모양으로 만들지 않고 **뒤를 더 덮는 것**만으로
       // 가라앉히는 이유는, 같은 창을 보고 있다는 것이 먼저 읽혀야 하기 때문이다.
       width: WIDTH, height: HEIGHT, dim: true, dimAlpha: defeated ? 0.74 : 0.5,
-      ...(options.theme ? { accent: options.theme.accent, fill: options.theme.fill } : {}),
+      ...(options.theme?.accent !== undefined ? { accent: options.theme.accent } : {}),
+      ...(options.theme?.fill !== undefined ? { fill: options.theme.fill } : {}),
       // 영수증과 같은 계약이라 팝업 안팎 어디를 눌러도 닫히고, 별도 닫기 버튼은 두지 않는다.
       closeOnBackdrop: true, hideCloseButton: true,
       onClose: () => {
@@ -295,8 +296,8 @@ export class StageCompletePopup {
       // 기여도를 아직 열지 않은 튜토리얼 구간에서는 버튼 자체를 세우지 않는다 — 자리는 그대로 비워 둔다.
       if (!options.contributionLocked) {
         attackButton = new Button(this.scene, 0, CONTRIBUTION_Y, {
-          width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
-          ...(this.theme ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
+          width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26, icon: "bar-chart",
+          ...(this.theme?.accent !== undefined ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
           // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
           // 다시 보여준다.
           onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
@@ -368,7 +369,7 @@ export class StageCompletePopup {
   private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean, settlement = false, label?: string): void {
     const y = -HEIGHT / 2 + 108;
     // 테마가 있는 정산 판은 표제부터 제 색으로 선다 — 흰 표제면 공용 판과 무엇이 다른지가 몸판 테두리에만 남는다.
-    const settlementColor = this.theme ? this.accentText() : COLOR.ink;
+    const settlementColor = this.theme?.accentText !== undefined ? this.accentText() : COLOR.ink;
     const title = this.scene.add
       .text(0, y, settlement ? label ?? t("stageComplete.settlement") : defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: settlement ? settlementColor : defeated ? COLOR.dangerText : this.accentText() }))
       .setOrigin(0.5);
@@ -630,7 +631,7 @@ export class StageCompletePopup {
     extras.forEach((extra, index) => {
       body.add(new Button(this.scene, -total / 2 + E.width / 2 + index * (E.width + E.gap), E.y + this.shiftY, {
         width: E.width, height: E.height, label: extra.label, fontSize: E.font,
-        ...(this.theme ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
+        ...(this.theme?.accent !== undefined ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
         onClick: extra.onPress,
       }));
     });

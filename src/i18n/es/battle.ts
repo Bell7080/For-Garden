@@ -45,8 +45,6 @@ export const BATTLE_ES = {
   "battle.gauge.ferocity": "Ferocidad {value} / {max}",
   "battle.result.saveFailed": "No se pudo guardar el resultado",
   "battle.result.retry": "Reintentar",
-  "battle.result.nodeScore": "Puntuación de Expedición +{score}",
-  "battle.result.runScore": "Puntuación de esta expedición {score} · Cuenta para el récord semanal",
   "battle.pause.continue": "Continuar",
   "battle.pause.toTitle": "Al título",
   "battle.pause.toTitleConfirm": "Vuelves a la pantalla de título. Este combate empezará de nuevo.",

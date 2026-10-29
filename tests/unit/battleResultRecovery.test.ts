@@ -17,7 +17,7 @@ describe("전투 결과 UI 복구", () => {
             nextBattleStage: () => undefined, STAGES: [], storyStages: () => [], storyDifficultyOf: () => "easy", isStageUnlocked: () => true, t: (key: string) => key,
         });
         const scene = Object.assign(Object.create(Battle.prototype), {
-            scene: { isActive: () => true }, openingBattle: () => false, stageExit: () => "stageMap", stageCompleteFighters: () => [], battleInput: { mode: "stage" }, featureOpen: () => true, showResultFailure,
+            scene: { isActive: () => true }, openingBattle: () => false, stageExit: () => "stageMap", stageCompleteFighters: () => [], resultTheme: () => undefined, battleInput: { mode: "stage" }, featureOpen: () => true, showResultFailure,
         });
         await scene.finishStageVictory({ id: "3-10" });
         expect(showResultFailure).toHaveBeenCalledOnce();
@@ -78,7 +78,7 @@ describe('치즈케이크 결과 표시', () => {
       rememberPlayerExp:vi.fn(),PopupLayer:class{},dungeonRewardItems:()=>[],withGreatSuccessBonus:(items:unknown)=>items,autoRepeat:{activeFor:()=>undefined},isCakeTierUnlocked:()=>false,t:(k:string)=>k,
       StageCompletePopup:class{open=open;},
     });
-    const scene=Object.assign(Object.create(Battle.prototype),{combatGeneration:1,scene:{isActive:()=>true},stageCompleteFighters:()=>[],showResultFailure:failure});
+    const scene=Object.assign(Object.create(Battle.prototype),{combatGeneration:1,scene:{isActive:()=>true},stageCompleteFighters:()=>[],resultTheme:()=>undefined,showResultFailure:failure});
     const input={mode:'cake',tierId:'cake-1',requestId:'admission-cake'};
     await scene.finishCakeOperation(input,true);
     expect(failure).toHaveBeenCalledOnce();failure.mock.calls[0][0]();

@@ -34,7 +34,8 @@ export const MISC_KO = {
   // 전투 기여도
   "contribution.title": "전투 기여도",
   "contribution.totals": "최종 피해 {confirmed} · 전투 중 표시 {replay}",
-  "contribution.allies": "아군 기여도",
+  "contribution.side.ally": "아군",
+  "contribution.side.enemy": "적",
 
   // 원정 증강 선택
   "augment.pick.title": "증강 선택 {round} / {total}",
@@ -277,7 +278,7 @@ export const MISC_KO = {
   "profile.noRecord": "기록 없음",
 
   // 스테이지 결과
-  "stageComplete.contribution": "공격 · 방어 · 회복",
+  "stageComplete.contribution": "기여도 집계",
   "stageComplete.tapToConfirm": "화면을 눌러 확인",
   "stageComplete.firstClear": "초회 클리어 보상",
   "stageComplete.staminaRefunded": "스테미나가 반환되었습니다 (+{amount})",

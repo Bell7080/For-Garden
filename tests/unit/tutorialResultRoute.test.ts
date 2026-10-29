@@ -14,7 +14,7 @@ it.each([["1-2", "feed"], ["1-5", "gift"]])("%s 튜토리얼 결과는 후 대�
     victoryRoute: (stage: string, then: unknown) => ({ scene: "stageStory", data: { stage, then } }),
   });
   const scene = Object.assign(Object.create(Battle.prototype), { scene: { isActive: () => true }, openingBattle: () => false,
-    stageCompleteFighters: () => [], battleInput: { mode: "stage" }, featureOpen: () => true,
+    stageCompleteFighters: () => [], resultTheme: () => undefined, battleInput: { mode: "stage" }, featureOpen: () => true,
   });
   await scene.finishStageVictory({ id });
   expect(options.clearActions).toHaveLength(1);
@@ -37,7 +37,7 @@ it.each([true, false])("패배 저장이 끝나야 재도전하며 떠난 화면
   });
   const scene = Object.assign(Object.create(Battle.prototype), {
     scene: { isActive: () => active }, combatGeneration: 1, stageExit: () => "lobby", retryBattle,
-    defeatGrowth: () => undefined, stageCompleteFighters: () => [], featureOpen: () => false,
+    defeatGrowth: () => undefined, stageCompleteFighters: () => [], resultTheme: () => undefined, featureOpen: () => false,
   });
   scene.finishStageDefeat({ id: "1-1" });
   options.replay.onPress();

@@ -3,13 +3,13 @@ import { POPUP_TITLE_SIZE } from "./popupGeometry";
 import { t } from "../i18n";
 import type { BattleContributionResult, ContributionCategory } from "../core/battleContribution";
 import { getRelic } from "../data/relics";
-import { contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES } from "./battleContributionRenderModel";
+import { contributionCategoryColor, contributionCategoryLabel, contributionRenderModel, CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT } from "./battleContributionRenderModel";
+import { addCategoryTab } from "./CategoryTab";
 import { addBackButton } from "./IconButton";
 import { FaceFrame } from "./FaceFrame";
 import { HoloBar } from "./holo";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
-import { pressIn, pressOut, setPressRest } from "./pressFeedback";
 import { slideTabPage } from "./screenTransition";
 
 /**
@@ -18,7 +18,17 @@ import { slideTabPage } from "./screenTransition";
  * 얼굴 액자를 키우고 막대를 그만큼 줄인 값이 여기 한 곳에 있다 — 화면에 손으로 적으면 다섯
  * 줄 중 하나만 고쳐도 줄이 어긋난다.
  */
-const CONTRIBUTION_ROW = { faceX: -396, faceSize: 120, nameX: -316, barX: 40, barY: 74, barWidth: 640, barHeight: 16 } as const;
+const CONTRIBUTION_ROW = { faceX: -396, faceSize: 120, nameX: -316, barX: 40, barY: 74, barWidth: 640, barHeight: 16, firstY: -290, step: 156 } as const;
+
+/**
+ * 판 머리의 두 줄 — 큰 탭(공격·방어·회복)이 판 윗변 바로 아래, 그 밑에 작은 탭(아군·적)이 선다.
+ * 큰 탭은 아래의 목록을 통째로 바꾸므로 목록 쪽(`down`)으로 솟고, 작은 탭은 같은 목록의 편만 바꾼다.
+ */
+const CONTRIBUTION_TABS = {
+  category: { y: -548, width: 260, height: 84, gap: 14, labelSize: 30 },
+  side: { y: -452, width: 170, height: 54, gap: 10, labelSize: 24 },
+  totalsY: -394,
+} as const;
 
 /** 결과판 위에 쌓이며 원본 결과판이나 서버 영수증 객체를 소유·파괴하지 않는 공용 기여도 판이다. */
 export class BattleContributionPopup {
@@ -40,35 +50,54 @@ export class BattleContributionPopup {
       onClose: () => { for (const dispose of closers) dispose(); closers.length = 0; onClosed?.(); },
     }, (body, close) => {
       let category: ContributionCategory = "attack";
+      let side: "ally" | "enemy" = "ally";
+      const hasOpponents = result.opponentRows !== undefined;
+      const tabs = this.scene.add.container(0, 0); body.add(tabs);
       const content = this.scene.add.container(0, 0); body.add(content);
-      const labels = CONTRIBUTION_CATEGORIES.map((item, index) => {
-        const x = -250 + index * 250;
-        const label = this.scene.add.text(x, -535, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 30, color: COLOR.inkDim })).setOrigin(0.5);
-        const hit = this.scene.add.rectangle(x, -535, 210, 82, 0xffffff, 0).setInteractive({ useHandCursor: true });
-        // 넓은 투명 입력면은 접근성 배율에서도 글자 자체를 정확히 누를 필요가 없게 한다.
-        hit.on("pointerdown", () => pressIn(label));
-        hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
-        hit.on("pointerup", () => {
-          pressOut(label);
-          if (category === item) return;
-          const from = CONTRIBUTION_CATEGORIES.indexOf(category);
-          category = item; render();
-          slideTabPage(this.scene, [content], from, index);
+      const C = CONTRIBUTION_TABS.category; const S = CONTRIBUTION_TABS.side;
+      const paintTabs = (): void => {
+        tabs.removeAll(true);
+        CONTRIBUTION_CATEGORIES.forEach((item, index) => {
+          const color = contributionCategoryColor(item);
+          addCategoryTab(this.scene, tabs, {
+            x: (index - 1) * (C.width + C.gap), y: C.y, width: C.width, height: C.height, labelSize: C.labelSize,
+            label: contributionCategoryLabel(item), icon: CONTRIBUTION_ICON[item], selected: item === category, face: "down",
+            accent: color, accentText: CONTRIBUTION_TEXT[item],
+            onSelect: () => {
+              if (category === item) return;
+              const from = CONTRIBUTION_CATEGORIES.indexOf(category);
+              category = item; paintTabs(); render();
+              slideTabPage(this.scene, [content], from, index);
+            },
+          });
         });
-        body.add([label, hit]);
-        return label;
-      });
+        // 적 장부가 없는 판(서버 결과만 남은 판)은 편 탭을 세우지 않는다 — 고를 것이 하나뿐이다.
+        if (!hasOpponents) return;
+        (["ally", "enemy"] as const).forEach((item, index) => {
+          addCategoryTab(this.scene, tabs, {
+            x: (index - 0.5) * (S.width + S.gap), y: S.y, width: S.width, height: S.height, labelSize: S.labelSize,
+            label: t(item === "ally" ? "contribution.side.ally" : "contribution.side.enemy"), selected: item === side, face: "down",
+            ...(item === "enemy" ? { accent: COLOR.danger, accentText: COLOR.dangerText } : {}),
+            onSelect: () => {
+              if (side === item) return;
+              const from = side === "ally" ? 0 : 1;
+              side = item; paintTabs(); render();
+              slideTabPage(this.scene, [content], from, index);
+            },
+          });
+        });
+      };
       const render = (): void => {
         content.removeAll(true);
-        labels.forEach((label, index) => { const selected = CONTRIBUTION_CATEGORIES[index] === category; label.setColor(selected ? COLOR.accentText : COLOR.inkDim).setScale(selected ? 1.08 : 1); setPressRest(label, selected ? 1.08 : 1); });
-        const rows = contributionRenderModel(category, result.rows[category]);
+        const source = side === "enemy" && result.opponentRows ? result.opponentRows : result.rows;
+        const rows = contributionRenderModel(category, source[category]);
         const replayTotal = result.rows.attack.reduce((sum, row) => sum + row.total, 0);
         // 서버 보정이 있을 때만 두 기준을 병기하고 개별 막대는 행동 재생 결과를 그대로 유지한다.
-        const header = category === "attack" && result.confirmedAttackTotal !== undefined && result.confirmedAttackTotal !== replayTotal
-          ? t("contribution.totals", { confirmed: result.confirmedAttackTotal.toLocaleString(), replay: replayTotal.toLocaleString() }) : t("contribution.allies");
-        content.add(this.scene.add.text(0, -445, header, textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5));
+        const header = side === "ally" && category === "attack" && result.confirmedAttackTotal !== undefined && result.confirmedAttackTotal !== replayTotal
+          ? t("contribution.totals", { confirmed: result.confirmedAttackTotal.toLocaleString(), replay: replayTotal.toLocaleString() }) : undefined;
+        if (header) content.add(this.scene.add.text(0, CONTRIBUTION_TABS.totalsY, header, textStyle({ role: "body", size: 22, color: COLOR.inkDim })).setOrigin(0.5));
         rows.rows.slice(0, 5).forEach((row, index) => {
-          const y = -330 + index * 158;
+          const y = CONTRIBUTION_ROW.firstY + index * CONTRIBUTION_ROW.step;
           // 긴 이름은 말줄임으로 막대와 K/M 축약 수치의 고정 열을 침범하지 않는다.
           const name = row.source.name.length > 14 ? `${row.source.name.slice(0, 13)}…` : row.source.name;
           // **먼저 읽어야 하는 것은 누구인가다.** 이름만으로는 늘어선 다섯 줄에서 한눈에
@@ -82,6 +111,7 @@ export class BattleContributionPopup {
           bar.setValue(row.fill, rows.color); bar.addTo(content);
         });
       };
+      paintTabs();
       render();
       /*
        * **화면을 벗어나는 뒤로가기는 늘 쓰는 그 한 장이다**(`addBackButton`).

@@ -33,7 +33,8 @@ export const MISC_JA = {
 
   "contribution.title": "戦闘貢献度",
   "contribution.totals": "最終ダメージ {confirmed} · 戦闘中の表示 {replay}",
-  "contribution.allies": "味方の貢献度",
+  "contribution.side.ally": "味方",
+  "contribution.side.enemy": "敵",
 
   "augment.pick.title": "オーグメント選択 {round} / {total}",
   "augment.pick.targetNote": "個人オーグメントは下の遠征隊から対象を選びます",
@@ -262,7 +263,7 @@ export const MISC_JA = {
   "profile.storyClears.locked": "未開放",
   "profile.noRecord": "記録なし",
 
-  "stageComplete.contribution": "攻撃 · 防御 · 回復",
+  "stageComplete.contribution": "貢献度集計",
   "stageComplete.tapToConfirm": "画面を押して確認",
   "stageComplete.firstClear": "初回クリア報酬",
   "stageComplete.staminaRefunded": "スタミナが返還されました (+{amount})",

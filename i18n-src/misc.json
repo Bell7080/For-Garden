@@ -120,15 +120,25 @@
 "Вклад в бой"
 ],
 "contribution.totals": ["最终伤害 {confirmed} · 战斗中显示 {replay}", "ความเสียหายสุดท้าย {confirmed} · แสดงในศึก {replay}", "Sát thương cuối {confirmed} · Hiển thị trong trận {replay}", "Damage akhir {confirmed} · Tampilan pertempuran {replay}", "Daño final {confirmed} · Mostrado en combate {replay}", "Dano final {confirmed} · Exibido em batalha {replay}", "Endschaden {confirmed} · Im Kampf angezeigt {replay}", "Итоговый урон {confirmed} · Показано в бою {replay}"],
-"contribution.allies": [
-"我方贡献度",
-"การมีส่วนร่วมของพันธมิตร",
-"Đóng góp của đồng minh",
-"Kontribusi Sekutu",
-"Contribución aliada",
-"Contribuição aliada",
-"Beitrag der Verbündeten",
-"Вклад союзников"
+"contribution.side.ally": [
+"我方",
+"ฝ่ายเรา",
+"Đồng minh",
+"Sekutu",
+"Aliados",
+"Aliados",
+"Verbündete",
+"Союзники"
+],
+"contribution.side.enemy": [
+"敌方",
+"ศัตรู",
+"Kẻ địch",
+"Musuh",
+"Enemigos",
+"Inimigos",
+"Gegner",
+"Враги"
 ],
 "augment.pick.title": [
 "选择增幅 {round} / {total}",
@@ -1982,14 +1992,14 @@
 "Нет записи"
 ],
 "stageComplete.contribution": [
-"攻击 · 防御 · 治疗",
-"โจมตี · ป้องกัน · ฟื้นฟู",
-"Tấn công · Phòng thủ · Hồi máu",
-"Serangan · Pertahanan · Penyembuhan",
-"Ataque · Defensa · Curación",
-"Ataque · Defesa · Cura",
-"Angriff · Verteidigung · Heilung",
-"Атака · Защита · Лечение"
+"贡献统计",
+"สรุปการมีส่วนร่วม",
+"Thống kê đóng góp",
+"Rekap Kontribusi",
+"Resumen de contribución",
+"Resumo de contribuição",
+"Beitragsübersicht",
+"Сводка вклада"
 ],
 "stageComplete.tapToConfirm": [
 "点击画面确认",

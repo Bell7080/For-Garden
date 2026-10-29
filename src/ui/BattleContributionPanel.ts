@@ -1,12 +1,12 @@
 import Phaser from "phaser";
 import type { BattleContributionRow, ContributionCategory } from "../core/battleContribution";
-import { CONTRIBUTION_CATEGORIES, contributionCategoryLabel, contributionRenderModel } from "./battleContributionRenderModel";
+import { CONTRIBUTION_CATEGORIES, CONTRIBUTION_ICON, CONTRIBUTION_TEXT, contributionCategoryColor, contributionRenderModel } from "./battleContributionRenderModel";
+import { addCategoryTab } from "./CategoryTab";
 import { BATTLE_CONTRIBUTION_LAYOUT as L, battleContributionBounds, contributionCellX, contributionCellY, CONTRIBUTION_TOGGLE } from "./battleContributionLayout";
 import { chipPoints, drawLayer, HoloBar } from "./holo";
 import { FaceFrame } from "./FaceFrame";
 import { getRelic } from "../data/relics";
 import { COLOR, textStyle } from "./theme";
-import { pressIn, pressOut, setPressRest } from "./pressFeedback";
 
 /** 씬은 코어가 완성한 행 스냅샷만 넘기며 합산·정렬을 이 프리팹에서 다시 하지 않는다. */
 export interface BattleContributionSnapshot {
@@ -44,8 +44,8 @@ interface RowView {
 /** 전투 한 판 동안만 펼침·카테고리 상태를 소유하는 왼쪽 벽에 붙은 세로 홀로그램 기여도 판이다. */
 export class BattleContributionPanel {
   private readonly panel: Phaser.GameObjects.Container;
-  private readonly categoryHits: Phaser.GameObjects.Rectangle[] = [];
-  private readonly categoryLabels: Phaser.GameObjects.Text[] = [];
+  /** 세 분류 탭. 고를 때마다 통째로 다시 칠한다(켜진 탭만 솟고 강조선이 흐른다). */
+  private readonly categoryTabs: Phaser.GameObjects.Container;
   private readonly rows: RowView[] = [];
   private expanded = false;
   private category: ContributionCategory = "attack";
@@ -56,6 +56,7 @@ export class BattleContributionPanel {
 
   constructor(private readonly scene: Phaser.Scene, private readonly onCategory: (category: ContributionCategory) => void) {
     this.panel = scene.add.container(L.slideOutX, 0).setDepth(315);
+    this.categoryTabs = scene.add.container(0, 0);
     const shape = chipPoints(L.panel.width, L.panel.height, { bevel: { topLeft: 0, topRight: 30, bottomRight: 22, bottomLeft: 0 } });
     // drawLayer가 그림자·HOLO.glass 면·윗변 한 줄만 그려 사방 외곽선을 만들지 않는다.
     this.panel.add(drawLayer(scene, L.panel.left + L.panel.width / 2, L.panel.top + L.panel.height / 2, shape, { fill: COLOR.panel, alpha: CONTRIBUTION_PANEL_ALPHA, edge: COLOR.accent, edgeAlpha: 0.5 }));
@@ -63,17 +64,12 @@ export class BattleContributionPanel {
     this.buildRows();
   }
 
-  /** 최소 84px 폭의 직접 선택 칩 세 개를 한 줄에 두고 선택은 색·크기로만 알린다. */
+  /**
+   * 세 분류는 결과 기여도 판과 **같은 탭 한 장**(`addCategoryTab`)이다. 칸이 좁아(84px) 글자 대신
+   * 분류 아이콘(칼·방패·십자)만 세우고, 켜진 탭은 그 분류의 색으로 솟는다.
+   */
   private buildCategories(): void {
-    CONTRIBUTION_CATEGORIES.forEach((item, index) => {
-      const x = L.categories.left + L.categories.itemWidth * (index + 0.5);
-      const label = this.scene.add.text(x, L.categories.top + L.categories.height / 2, contributionCategoryLabel(item), textStyle({ role: "emphasis", size: 23, color: COLOR.inkDim })).setOrigin(0.5);
-      const hit = this.scene.add.rectangle(x, L.categories.top + L.categories.height / 2, L.categories.itemWidth, L.categories.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
-      hit.on("pointerdown", () => pressIn(label));
-      hit.on("pointerout", () => pressOut(label, "normal", { pop: false }));
-      hit.on("pointerup", () => { pressOut(label); if (!this.locked) this.selectCategory(item); });
-      this.panel.add([label, hit]); this.categoryLabels.push(label); this.categoryHits.push(hit);
-    });
+    this.panel.add(this.categoryTabs);
     this.refreshCategoryStyle();
   }
 
@@ -105,10 +101,14 @@ export class BattleContributionPanel {
   }
 
   private refreshCategoryStyle(): void {
+    this.categoryTabs.removeAll(true);
     CONTRIBUTION_CATEGORIES.forEach((item, index) => {
-      const selected = item === this.category;
-      this.categoryLabels[index].setColor(selected ? COLOR.accentText : COLOR.inkDim).setFontSize(selected ? 26 : 23).setScale(selected ? 1.04 : 1);
-      setPressRest(this.categoryLabels[index], selected ? 1.04 : 1);
+      addCategoryTab(this.scene, this.categoryTabs, {
+        x: L.categories.left + L.categories.itemWidth * (index + 0.5), y: L.categories.top + L.categories.height / 2,
+        width: L.categories.itemWidth - 6, height: L.categories.height - 12, label: "", icon: CONTRIBUTION_ICON[item],
+        selected: item === this.category, face: "down", accent: contributionCategoryColor(item), accentText: CONTRIBUTION_TEXT[item],
+        onSelect: () => { if (!this.locked) this.selectCategory(item); },
+      });
     });
   }
 

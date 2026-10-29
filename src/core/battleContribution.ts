@@ -94,6 +94,8 @@ export interface ContributionFighterView { id: string; formationOrder: number; n
 export interface BattleContributionResult {
   side: "player" | "enemy";
   rows: Record<ContributionCategory, BattleContributionRow[]>;
+  /** 마주 선 편의 세 분류. 기여도 판의 「적」 보기가 읽는다 — MVP·정산은 `rows`(제 편)만 본다. */
+  opponentRows?: Record<ContributionCategory, BattleContributionRow[]>;
   /** 재검증 점수가 행동 재생 합계와 다를 때만 결과 머리글에 병기한다. */
   confirmedAttackTotal?: number;
 }
@@ -103,15 +105,14 @@ export function createBattleContributionResult(
   contributions: BattleContributions,
   fighters: readonly ContributionFighterView[],
   side: BattleContributionResult["side"],
+  opponents?: readonly ContributionFighterView[],
 ): BattleContributionResult {
-  return {
-    side,
-    rows: {
-      attack: contributionSnapshot(contributions, fighters, "attack"),
-      defense: contributionSnapshot(contributions, fighters, "defense"),
-      healing: contributionSnapshot(contributions, fighters, "healing"),
-    },
-  };
+  const snapshot = (list: readonly ContributionFighterView[]): Record<ContributionCategory, BattleContributionRow[]> => ({
+    attack: contributionSnapshot(contributions, list, "attack"),
+    defense: contributionSnapshot(contributions, list, "defense"),
+    healing: contributionSnapshot(contributions, list, "healing"),
+  });
+  return { side, rows: snapshot(fighters), ...(opponents && opponents.length > 0 ? { opponentRows: snapshot(opponents) } : {}) };
 }
 
 /** 서버 확정 총점만 새 객체에 얹어 이미 확정한 개별 행동 재생 결과는 손대지 않는다. */

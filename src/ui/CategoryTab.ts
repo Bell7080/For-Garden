@@ -3,6 +3,7 @@ import { drawLayer, drawShapeEdge, slantedRect, toPoints } from "./holo";
 import { COLOR, textStyle } from "./theme";
 import { pressIn, pressOut } from "./pressFeedback";
 import { CATEGORY_TAB } from "./categoryTabStyle";
+import { drawGlyph, type GlyphName } from "./glyphs";
 
 /**
  * 목록을 갈아 끼우는 **전환 라벨** 한 장.
@@ -46,6 +47,14 @@ export interface CategoryTabOptions {
   face?: "up" | "down";
   /** 글자 크기. 비우면 공용 크기다 — 화면의 큰 갈래(길드의 정보·길드전·수호전)처럼 한 단계 위의 탭만 키운다. */
   labelSize?: number;
+  /**
+   * 글자 왼쪽에 서는 선 아이콘. 켜진 라벨에서는 빗금 자리를 이 아이콘이 맡는다 — 둘을 함께 세우면
+   * 표식이 두 겹이 된다. 꺼진 라벨에도 흐리게 서서 무엇을 여는 탭인지 그림이 먼저 말한다.
+   */
+  icon?: GlyphName;
+  /** 켜진 라벨의 강조색(강조선·아이콘·글자). 비우면 공용 강조색이다 — 탭마다 뜻이 다른 색을 가질 때만 준다. */
+  accent?: number;
+  accentText?: string;
   onSelect: () => void;
 }
 
@@ -71,25 +80,34 @@ export function addCategoryTab(
   }));
   if (selected) {
     // 목록과 맞닿는 변의 굵은 강조선 — 이 선이 곧 라벨이 여는 목록의 경계다.
-    tab.add(drawShapeEdge(scene, 0, faceY, face, towardList < 0 ? "top" : "bottom", { color: COLOR.accent, alpha: 0.95, width: CATEGORY_TAB.edgeWidth }));
+    tab.add(drawShapeEdge(scene, 0, faceY, face, towardList < 0 ? "top" : "bottom", { color: options.accent ?? COLOR.accent, alpha: 0.95, width: CATEGORY_TAB.edgeWidth }));
   }
 
   const label = scene.add
-    .text(0, 1, options.label, textStyle({ role: "emphasis", size: options.labelSize ?? CATEGORY_TAB.labelSize, color: selected ? COLOR.accentText : COLOR.inkDim }))
+    .text(0, 1, options.label, textStyle({ role: "emphasis", size: options.labelSize ?? CATEGORY_TAB.labelSize, color: selected ? options.accentText ?? COLOR.accentText : COLOR.inkDim }))
     .setOrigin(0.5);
   // 낱말 길이는 언어가 정하는데(`룬` 한 글자 ↔ `Consumable` 열 글자) 라벨 폭은 줄이 나눠 갖는
   // 고정값이다. 라벨을 넓히면 줄 전체가 판 밖으로 나가므로 글자만 가로로 줄인다.
-  const markRoom = selected ? CATEGORY_TAB.mark.width + CATEGORY_TAB.mark.gap : 0;
+  const iconSize = Math.round(height * CATEGORY_TAB.icon.sizeRatio);
+  const markWidth = options.icon ? iconSize : CATEGORY_TAB.mark.width;
+  const markRoom = selected || options.icon ? markWidth + CATEGORY_TAB.mark.gap : 0;
   const room = (width - CATEGORY_TAB.padX - markRoom) / CATEGORY_TAB.selectedScale;
   if (label.width > room) label.setScale(Math.max(CATEGORY_TAB.minScale, room / label.width), 1);
-  if (selected) {
+  if (options.icon) {
+    // 아이콘은 켜졌든 꺼졌든 선다 — 글자와 한 덩어리로 재서 가운데에 놓는 것은 빗금과 같다.
+    // 글자가 없는 라벨(좁은 전장 옆 판)은 아이콘만 가운데에 선다.
+    const gap = options.label ? CATEGORY_TAB.mark.gap : 0;
+    const span = label.displayWidth + markWidth + gap;
+    label.setX(-span / 2 + markWidth + gap + label.displayWidth / 2);
+    tab.add(drawGlyph(scene, options.icon, -span / 2 + markWidth / 2, 1, iconSize, selected ? options.accent ?? COLOR.accent : COLOR.inkDimHex, selected ? 1 : 0.8));
+  } else if (selected) {
     // 글자와 빗금을 한 덩어리로 재고 나서 가운데에 놓는다 — 빗금만 옆에 붙이면 글자가 오른쪽
     // 으로 밀려, 라벨을 고를 때마다 이름이 자리를 옮긴다.
     const span = label.displayWidth + CATEGORY_TAB.mark.width + CATEGORY_TAB.mark.gap;
     label.setX(-span / 2 + CATEGORY_TAB.mark.width + CATEGORY_TAB.mark.gap + label.displayWidth / 2);
     const markHeight = Math.round(height * CATEGORY_TAB.mark.heightRatio);
     const mark = scene.add.graphics();
-    mark.fillStyle(COLOR.accent, 0.95);
+    mark.fillStyle(options.accent ?? COLOR.accent, 0.95);
     mark.fillPoints(
       toPoints(slantedRect(CATEGORY_TAB.mark.width, markHeight, Math.round(CATEGORY_TAB.mark.width * 0.9)))
         .map((point) => new Phaser.Geom.Point(point.x - span / 2 + CATEGORY_TAB.mark.width / 2, point.y + 1)),

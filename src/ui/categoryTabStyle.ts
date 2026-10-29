@@ -13,5 +13,7 @@ export const CATEGORY_TAB = {
   edgeWidth: 5,
   /** 켜진 라벨의 빗금. 제목표(`addSectionTitle`)와 같은 표식이다. */
   mark: { width: 8, heightRatio: 0.44, gap: 12 },
+  /** 아이콘을 단 라벨의 아이콘 크기 — 높이에 대한 비율. */
+  icon: { sizeRatio: 0.44 },
   selectedScale: 1.06,
 } as const;

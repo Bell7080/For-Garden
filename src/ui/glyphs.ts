@@ -59,7 +59,10 @@ export type GlyphName =
   | "promote"
   | "demote"
   | "crown"
-  | "kick";
+  | "kick"
+  | "contrib-attack"
+  | "contrib-defense"
+  | "contrib-heal";
 
 function points(...pairs: number[]): Phaser.Geom.Point[] {
   const list: Phaser.Geom.Point[] = [];
@@ -138,6 +141,25 @@ export function drawGlyph(
       g.lineBetween(-r * 0.62, r * 0.7, -r * 0.62, r * 0.1);
       g.lineBetween(0, r * 0.7, 0, -r * 0.4);
       g.lineBetween(r * 0.62, r * 0.7, r * 0.62, -r * 0.9);
+      break;
+    case "contrib-attack":
+      // 기여도 공격 — 비스듬히 선 칼 한 자루(채운 날 + 코등이 + 자루). 그래프 탭 셋이 모양으로 갈린다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(r * 0.88, -r * 0.88, r * 0.62, -r * 0.18, -r * 0.28, r * 0.72, -r * 0.5, r * 0.5, r * 0.4, -r * 0.4, r * 0.18, -r * 0.62), true);
+      g.lineBetween(-r * 0.72, r * 0.22, -r * 0.08, r * 0.86);
+      g.lineBetween(-r * 0.4, r * 0.62, -r * 0.88, r * 0.9);
+      break;
+    case "contrib-defense":
+      // 기여도 방어 — 각진 방패. 안쪽 세로선이 판을 둘로 가른다.
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.78, -r * 0.82, r * 0.78, -r * 0.82, r * 0.78, r * 0.1, 0, r * 0.92, -r * 0.78, r * 0.1), true);
+      g.lineStyle(Math.max(2, size * 0.08), 0x000000, alpha * 0.45);
+      g.lineBetween(0, -r * 0.6, 0, r * 0.6);
+      break;
+    case "contrib-heal":
+      // 기여도 회복 — 굵은 십자(전장의 회복 연출과 같은 모양).
+      g.fillStyle(color, alpha);
+      g.fillPoints(points(-r * 0.28, -r * 0.88, r * 0.28, -r * 0.88, r * 0.28, -r * 0.28, r * 0.88, -r * 0.28, r * 0.88, r * 0.28, r * 0.28, r * 0.28, r * 0.28, r * 0.88, -r * 0.28, r * 0.88, -r * 0.28, r * 0.28, -r * 0.88, r * 0.28, -r * 0.88, -r * 0.28, -r * 0.28, -r * 0.28), true);
       break;
     case "expedition-normal":
       // 교차한 발굴 도구는 일반 조우를 뜻한다.

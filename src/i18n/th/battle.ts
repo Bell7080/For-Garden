@@ -45,8 +45,6 @@ export const BATTLE_TH = {
   "battle.gauge.ferocity": "ความดุร้าย {value} / {max}",
   "battle.result.saveFailed": "บันทึกผลไม่ได้",
   "battle.result.retry": "ลองอีกครั้ง",
-  "battle.result.nodeScore": "คะแนนออกสำรวจ +{score}",
-  "battle.result.runScore": "คะแนนออกสำรวจรอบนี้ {score} · นับรวมในสถิติประจำสัปดาห์",
   "battle.pause.continue": "เล่นต่อ",
   "battle.pause.toTitle": "กลับสู่หน้าชื่อเกม",
   "battle.pause.toTitleConfirm": "กลับสู่หน้าชื่อเกม การต่อสู้นี้จะเริ่มใหม่ตั้งแต่ต้น",

@@ -126,4 +126,5 @@ export const RUNE_ZH_HANT = {
   "rune.traitReroll.again": "保留當前並重新解析",
   "rune.traitReroll.upgraded": "等級已提升",
   "rune.traitReroll.pity": "升級保底 {done} / {total}",
+  "rune.traitReroll.discardHigher": "該符文的新特性等級高於當前特性。不應用直接重新解析會將其捨棄。確定要重新解析嗎？",
 } as const;

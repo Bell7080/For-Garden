@@ -187,7 +187,7 @@ export function rollStrataRuneRarity(layer: StrataLayerDefinition, tone: StrataZ
 /** 연구 재료 칸이 내놓을 아이템. 상위 아이템일수록 드물다. */
 export function rollStrataResearchItem(random: () => number): string {
   const value = roll(random);
-  return value < 0.78 ? RUNE_TRAIT_ITEMS.grant.itemId : value < 0.96 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
+  return value < 0.92 ? RUNE_TRAIT_ITEMS.grant.itemId : value < 0.99 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
 }
 
 /** 룬 칸의 등급·자리를 채운다. */

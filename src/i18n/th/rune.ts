@@ -126,4 +126,5 @@ export const RUNE_TH = {
   "rune.traitReroll.again": "คงตัวเดิมแล้วตีความใหม่",
   "rune.traitReroll.upgraded": "ระดับเพิ่มขึ้นแล้ว",
   "rune.traitReroll.pity": "การันตีเพิ่มระดับ {done} / {total}",
+  "rune.traitReroll.discardHigher": "คุณสมบัติใหม่ของรูนนี้ระดับสูงกว่าของเดิม หากตีความใหม่โดยไม่ใช้ รูนนี้จะสูญเสียคุณสมบัติใหม่ไป ต้องการตีความใหม่หรือไม่?",
 } as const;

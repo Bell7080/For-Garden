@@ -129,4 +129,5 @@ export const RUNE_EN = {
   "rune.traitReroll.again": "Keep current and reroll",
   "rune.traitReroll.upgraded": "Grade raised",
   "rune.traitReroll.pity": "Grade-up pity {done} / {total}",
+  "rune.traitReroll.discardHigher": "This Rune's new trait is a higher grade than its current one. Rerolling without applying it will discard it. Reroll anyway?",
 } as const;

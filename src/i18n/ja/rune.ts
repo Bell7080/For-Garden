@@ -131,4 +131,5 @@ export const RUNE_JA = {
   "rune.traitReroll.again": "現在を維持して再解釈",
   "rune.traitReroll.upgraded": "等級上昇",
   "rune.traitReroll.pity": "等級上昇補正 {done} / {total}",
+  "rune.traitReroll.discardHigher": "このルーンの新しい特性は、現在より高い等級です。適用せずに再解釈すると破棄されます。再解釈しますか？",
 } as const;

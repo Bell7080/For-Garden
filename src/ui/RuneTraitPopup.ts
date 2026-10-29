@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
-import { RUNE_TRAIT_RULES, type RuneTrait } from "../core/runeTraits";
+import { RUNE_TRAIT_GRADES, RUNE_TRAIT_RULES, type RuneTrait } from "../core/runeTraits";
 import { Button } from "./Button";
 import { KeywordManager } from "../managers/KeywordManager";
 import type { PopupLayer } from "./PopupLayer";
@@ -129,6 +129,14 @@ export function openRuneTraitReroll(options: {
         cost: { icon: "currency-orestone", amount: cost, affordable: session.wallet.rawStone >= cost },
         onClick: () => {
           if (busy || session.wallet.rawStone < cost) return;
+          // 더 높은 등급의 후보를 적용하지 않고 버리는 재해석은 한 번 되묻는다.
+          const discardsHigher = options.current !== null && RUNE_TRAIT_GRADES.indexOf(candidate.grade) > RUNE_TRAIT_GRADES.indexOf(options.current.grade);
+          if (discardsHigher) { popups.confirm({ title: t("rune.traitReroll.title"), message: t("rune.traitReroll.discardHigher"), confirmLabel: t("rune.traitReroll.again"), destructive: true }, run); return; }
+          run();
+        },
+      }));
+      function run(): void {
+          if (busy || session.wallet.rawStone < cost) return;
           busy = true;
           void resolve(false)
             .then(() => gameApi.rerollRuneTrait({ runeInstanceId: options.runeInstanceId, requestId: `trait-reroll-${Date.now()}` }))
@@ -144,8 +152,7 @@ export function openRuneTraitReroll(options: {
               }, RUNE_ACCENT[next.candidate.grade]);
             })
             .catch(() => { busy = false; });
-        },
-      }));
+      }
     };
     paint();
   });

@@ -51,5 +51,5 @@ export const DUEL_PRODUCTS: readonly ProductDefinition[] = [
   duel("duel-weekly-gems", "weekly", "shop-product-gems", "결투 정산 결정", 70, 2, [{ kind: "currency", currency: "gems", amount: 40 }]),
   duel("duel-weekly-tonic", "weekly", "shop-product-supplies", "고농축 투사의 음료", 170, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "에너지 드링크+", amount: 1, expiresInDays: 7 }]),
   duel("duel-monthly-refined-core", "special", "shop-product-refined-core", "정제된 고대 핵", 300, 1, [{ kind: "item", itemId: "refined-core", name: "정제된 고대 핵", amount: 1 }]),
-  duel("duel-monthly-crystal", "special", "shop-product-restoration-crystal", "완전 복원 결정", 340, 1, [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }]),
+  duel("duel-monthly-crystal", "special", "shop-product-restoration-crystal", "완전 복원 결정", 1500, 1, [{ kind: "item", itemId: "restoration-crystal", name: "완전 복원 결정", amount: 1 }]),
 ];

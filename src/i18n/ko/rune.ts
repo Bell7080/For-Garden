@@ -130,4 +130,5 @@ export const RUNE_KO = {
   "rune.traitReroll.again": "기존 유지 후 재해석",
   "rune.traitReroll.upgraded": "등급 상승",
   "rune.traitReroll.pity": "등급 상승 보정 {done} / {total}",
+  "rune.traitReroll.discardHigher": "지금 룬보다 높은 등급의 특성이 나와 있습니다. 적용하지 않고 다시 돌리면 이 특성은 사라집니다. 정말 돌리시겠습니까?",
 } as const;

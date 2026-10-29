@@ -126,4 +126,5 @@ export const RUNE_PT_BR = {
   "rune.traitReroll.again": "Manter atual e reinterpretar",
   "rune.traitReroll.upgraded": "Grau aumentado",
   "rune.traitReroll.pity": "Garantia de aumento {done} / {total}",
+  "rune.traitReroll.discardHigher": "O novo traço desta Runa tem um grau superior ao atual. Reinterpretar sem aplicá-lo vai descartá-lo. Reinterpretar mesmo assim?",
 } as const;

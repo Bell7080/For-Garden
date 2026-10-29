@@ -114,7 +114,7 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 4, teal: 5.5, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 10, teal: 12, gold: 17, deep: 21 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 1, teal: 2, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 0.7, teal: 1.4, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0, gold: 2.5, deep: 4 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.2, teal: 0.4, gold: 1, deep: 3 }, min: 100, max: 300 },
     ],
@@ -135,7 +135,7 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 5, teal: 6, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 13, teal: 15, gold: 21, deep: 26 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 2, teal: 3, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.4, teal: 2.1, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 1, gold: 3, deep: 4.5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 100, max: 300 },
     ],
@@ -162,7 +162,7 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 4.5, teal: 5.5, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 11, teal: 13, gold: 19, deep: 24 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 1.5, teal: 2.5, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.05, teal: 1.75, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0.5, gold: 2.5, deep: 4 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.25, teal: 0.5, gold: 1.2, deep: 3.2 }, min: 100, max: 300 },
     ],
@@ -188,7 +188,7 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 5.5, teal: 6, gold: 7, deep: 7 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 15, teal: 18, gold: 24, deep: 30 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 2.5, teal: 4, gold: 8.5, deep: 12.5 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.75, teal: 2.8, gold: 5.95, deep: 8.75 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0.5, teal: 1, gold: 3.5, deep: 5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.4, teal: 0.8, gold: 1.7, deep: 3.8 }, min: 100, max: 300 },
     ],
@@ -208,7 +208,7 @@ export const STRATA_LAYERS: readonly StrataLayerDefinition[] = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 6.5, teal: 7, gold: 7.5, deep: 7.5 }, min: 1, max: 2 },
       { kind: "rune", weight: { soil: 17, teal: 20, gold: 26, deep: 32 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 3, teal: 5, gold: 9, deep: 13 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 2.1, teal: 3.5, gold: 6.3, deep: 9.1 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 1, teal: 1.5, gold: 4, deep: 5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.5, teal: 1, gold: 2, deep: 4 }, min: 100, max: 300 },
     ],

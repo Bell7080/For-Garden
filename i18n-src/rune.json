@@ -789,6 +789,16 @@
 "Stufe erhöht",
 "Ранг повышен"
 ],
+"rune.traitReroll.discardHigher": [
+"该符文的新特性等级高于当前特性。不应用直接重新解析会将其舍弃。确定要重新解析吗？",
+"คุณสมบัติใหม่ของรูนนี้ระดับสูงกว่าของเดิม หากตีความใหม่โดยไม่ใช้ รูนนี้จะสูญเสียคุณสมบัติใหม่ไป ต้องการตีความใหม่หรือไม่?",
+"Đặc tính mới của Rune này có bậc cao hơn đặc tính hiện tại. Nếu diễn giải lại mà không áp dụng, đặc tính mới sẽ mất. Vẫn diễn giải lại?",
+"Sifat baru Rune ini bertingkat lebih tinggi daripada yang sekarang. Menafsir ulang tanpa menerapkannya akan membuangnya. Tetap menafsir ulang?",
+"El nuevo rasgo de esta Runa es de un grado superior al actual. Reinterpretar sin aplicarlo lo descartará. ¿Reinterpretar de todos modos?",
+"O novo traço desta Runa tem um grau superior ao atual. Reinterpretar sem aplicá-lo vai descartá-lo. Reinterpretar mesmo assim?",
+"Das neue Merkmal dieser Rune hat eine höhere Stufe als das aktuelle. Wenn du neu deutest, ohne es anzuwenden, geht es verloren. Trotzdem neu deuten?",
+"Новая особенность этой Руны выше по рангу, чем текущая. Если переосмыслить, не применив её, она будет потеряна. Всё равно переосмыслить?"
+],
 "rune.traitReroll.pity": [
 "升级保底 {done} / {total}",
 "การันตีเพิ่มระดับ {done} / {total}",

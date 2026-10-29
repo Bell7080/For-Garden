@@ -1810,13 +1810,40 @@ export class FakeServer implements GameApi {
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
     const slotId = request.slotId ?? null;
     if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
+    const { deck, lineup } = this.guildWarDeckOf(relicIds);
+    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
+  }
+
+  /** 방어덱 셋을 이 순간의 성장·룬으로 굳힌다 — 칸에 서는 덱과 대기 덱이 같은 값을 쓴다. */
+  private guildWarDeckOf(relicIds: readonly string[]) {
     const lineup = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
     }));
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
-    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
-    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
+    return { deck, lineup };
+  }
+
+  /**
+   * 길드전 대기 덱을 맞춘다 — 결투장 방어덱, 그 셋을 다 갖고 있지 않으면 가진 렐릭 중 가장 센 셋. 칸이 없는 길드원은 이 덱으로
+   * 자동 배치된다(정비일 지도 · 전투일 매칭 직전). 길드가 없거나 렐릭이 셋 안 되면 아무것도 하지 않는다.
+   */
+  async syncGuildWarStandby(): Promise<{ synced: boolean }> {
+    await this.delay();
+    const owned = [...this.state.owned].filter((id) => RELICS.some((relic) => relic.id === id && !relic.enemyOnly));
+    const defense = normalizeDuelState(this.state.duel, [...this.state.owned]).defense.filter((id) => this.state.owned.has(id));
+    const relicIds = new Set(defense).size === 3 && defense.length === 3
+      ? [...defense]
+      : [...owned].sort((a, b) => this.duelRelicPower(b) - this.duelRelicPower(a) || a.localeCompare(b)).slice(0, 3);
+    if (relicIds.length !== 3) return { synced: false };
+    try {
+      await this.guildBackend.syncWarStandby(this.guildActor(), this.guildWarDeckOf(relicIds));
+      return { synced: true };
+    } catch (error) {
+      if (error instanceof GuildApiError && error.code === "NOT_IN_GUILD") return { synced: false };
+      throw error;
+    }
   }
 
   /**
@@ -4573,7 +4600,7 @@ const localGameApi = new FakeServer();
 /** 길드 샌드박스(QA)일 때 이 기기의 구현으로 돌리는 조작 — 길드 백엔드를 읽거나 길드 코인·기록을 남기는 것 전부. */
 const SANDBOX_GUILD_METHODS: ReadonlySet<string> = new Set([
   "createGuild", "changeGuildBadge", "renameGuild", "stampGuildAttendance", "buyGuildProduct",
-  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense", "enterGuildWarAttack", "submitGuildWarAttack",
+  "getGuildGuard", "enterGuildGuard", "submitGuildGuard", "placeGuildWarDefense", "syncGuildWarStandby", "enterGuildWarAttack", "submitGuildWarAttack",
 ] satisfies (keyof GameApi)[]);
 let activeGameApi: GameApi = localGameApi;
 const remoteMissionListeners = new Set<() => void>();

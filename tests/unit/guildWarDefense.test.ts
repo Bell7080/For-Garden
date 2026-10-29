@@ -99,6 +99,47 @@ describe("길드전 방어진 지도", () => {
   });
 });
 
+describe("길드전 전원 자동 배치", () => {
+  const standby = (power: number) => ({ deck: deck("").deck.map((entry) => ({ ...entry, power })), lineup: [] });
+
+  it("정비일에 대기 덱이 들어오면 곧바로 빈 칸에 서고, 한꺼번에 채울 때는 전투력 순이다", async () => {
+    const { server } = await setup();
+    await server.syncWarStandby(actor("b"), standby(10));
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBe("1:boss:0");
+    // 이미 선 칸은 대기 덱이 바뀌어도 움직이지 않는다.
+    await server.syncWarStandby(actor("b"), standby(500));
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBe("1:boss:0");
+    await server.syncWarStandby(actor("c"), standby(50));
+    expect((await server.getWarMap(actor("c"))).mySlotId).toBe("2:boss:0");
+    expect(await code(() => server.syncWarStandby(actor("c"), { deck: standby(1).deck.slice(0, 2), lineup: [] }))).toBe("INVALID_REQUEST");
+  });
+
+  it("전투일 매칭 직전에 지도를 열지 않은 길드원도 대기 덱으로 선다", async () => {
+    const { clock, server } = await setup();
+    clock.now += 86_400_000;
+    await server.syncWarStandby(actor("b"), standby(30));
+    await server.syncWarStandby(actor("c"), standby(60));
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBeNull();
+    await server.getWarFront(actor("b"));
+    const map = await server.getWarMap(actor("b"));
+    expect(map.slots.find(({ id }) => id === "1:boss:0")?.holder?.userId).toBe("c");
+    expect(map.mySlotId).toBe("2:boss:0");
+  });
+
+  it("간부가 칸에서 뺀 길드원은 48시간 동안 다시 채우지 않고, 본인이 세우면 풀린다", async () => {
+    const { clock, server } = await setup();
+    await server.syncWarStandby(actor("b"), standby(10));
+    await server.clearWarSlot(actor("lead"), "1:boss:0");
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBeNull();
+    clock.now += 2 * 86_400_000 + 1;
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBe("1:boss:0");
+    await server.clearWarSlot(actor("lead"), "1:boss:0");
+    await server.placeWarDefense(actor("b"), { ...deck("1:elite:0") }, "self-1");
+    await server.clearWarSlot(actor("b"), "1:elite:0");
+    expect((await server.getWarMap(actor("b"))).mySlotId).toBeNull();
+  });
+});
+
 describe("길드장 자동 위임", () => {
   it("14일 미접속 길드장은 기여도 1위 임원에게 넘어가고, 그 전이나 후계가 없으면 그대로다", async () => {
     const { clock, server } = await setup();

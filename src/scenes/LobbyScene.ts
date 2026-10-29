@@ -84,6 +84,7 @@ import { addScrollHint } from "../ui/ScrollHint";
 import { consumeSceneEntry } from "./sceneEntry";
 import { normalizeLobbyEntry, type LobbyMenu } from "./lobbyEntry";
 import { prefetchIdlePuppets } from "../puppets/battlePrefetch";
+import { syncGuildWarStandbyDaily } from "../managers/GuildWarStandbySync";
 import { relicCollection } from "../managers/RelicCollectionManager";
 import { addSideShopButton, SIDE_SHOP } from "../ui/sideShop";
 import { LobbyMenuTray, LOBBY_MENU_GLYPH } from "../ui/LobbyMenuTray";
@@ -430,6 +431,7 @@ export class LobbyScene extends Phaser.Scene {
     // 읽어 두면 출격 → 편성 → 전투로 가는 길이 이미 캐시를 집는다. **들어오는 연출이 끝난
     // 뒤에 시작한다** — 화면이 움직이는 동안 일꾼을 깨우면 그 연출이 먼저 끊긴다.
     this.time.delayedCall(TRANSITION.sceneIn.duration, () => prefetchIdlePuppets(this, relicCollection.validParty));
+    this.time.delayedCall(TRANSITION.sceneIn.duration, () => syncGuildWarStandbyDaily());
   }
 
   /** TopBar가 건넨 공개 모델만 사용해 공용 레이어 기반 정보창을 연다. */

@@ -260,6 +260,11 @@ export interface GuildBackend {
    * 자동으로 선다.
    */
   placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState>;
+  /**
+   * 길드전 대기 덱을 맞춘다 — 게임 서버가 하루 한 번(결투장 방어덱, 없으면 가장 센 셋) 넘긴다. 칸이 없는 길드원은 정비일에 지도를
+   * 읽을 때와 전투일 매칭 직전에 이 덱으로 자동 배치된다. 길드가 없으면 `NOT_IN_GUILD`.
+   */
+  syncWarStandby(actor: GuildActor, input: Pick<GuildWarDefenseInput, "deck" | "lineup">): Promise<void>;
   getWarFront(actor: GuildActor): Promise<GuildWarFrontView>;
   /** 전투일에만, 열린 칸에만. 공격 한 번을 쓰고 그 칸의 방어덱을 돌려준다. 같은 요청은 같은 표를 돌려준다. */
   beginWarAttack(actor: GuildActor, slotId: string, requestId: string): Promise<GuildWarAttackTicket>;

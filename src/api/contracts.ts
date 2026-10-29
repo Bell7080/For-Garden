@@ -1120,6 +1120,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   submitGuildGuard(request: SubmitGuildGuardRequest): Promise<SubmitGuildGuardResponse>;
   /** 길드전 방어덱 게시 — 정비일에만, 우리 길드 지도의 빈 칸 하나에. 보유·성장은 서버가 확인해 굳힌다. */
   placeGuildWarDefense(request: PlaceGuildWarDefenseRequest): Promise<import("./guildContracts").GuildWarMapState>;
+  /** 길드전 대기 덱을 맞춘다(하루 한 번) — 칸이 없는 길드원은 이 덱으로 자동 배치된다. 길드가 없으면 `synced: false`. */
+  syncGuildWarStandby(): Promise<{ synced: boolean }>;
   /** 길드전 공격 입장 — 전투일에, 상대 영지의 열린 칸 하나를 공격덱 셋으로 친다. 공격 한 번을 여기서 쓴다. */
   enterGuildWarAttack(request: EnterGuildWarAttackRequest): Promise<EnterGuildWarAttackResponse>;
   /** 입장 영수증의 두 편성·시드로 판을 서버에서 다시 굴려 승패를 확정하고, 이기면 그 칸을 격파한다. */

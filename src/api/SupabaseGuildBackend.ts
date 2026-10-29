@@ -68,6 +68,10 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
         || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
     },
+    syncWarStandby: async (actor, input) => {
+      if (!Array.isArray(input?.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
+      await run(actor, "syncWarStandby", [{ deck: input.deck, lineup: input.lineup }]);
+    },
     moveWarSlot: (actor, from, to) => (parseGuildWarSlotId(from) && parseGuildWarSlotId(to) && from !== to ? run(actor, "moveWarSlot", [from, to]) : invalid()),
     autoArrangeWar: (actor) => run(actor, "autoArrangeWar"),
     getWarFront: (actor) => run(actor, "getWarFront"),

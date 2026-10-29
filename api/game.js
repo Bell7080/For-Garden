@@ -1,7 +1,12 @@
 /* 생성물: npm run build:server */
 import { createRequire as __cr } from "node:module";
 const require = __cr(import.meta.url);
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __esm = (fn, res, err) => function __init() {
   if (err) throw err[0];
   try {
@@ -10,12 +15,4933 @@ var __esm = (fn, res, err) => function __init() {
     throw err = [e], e;
   }
 };
+var __commonJS = (cb, mod) => function __require() {
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // <define:import.meta.env>
 var define_import_meta_env_default;
 var init_define_import_meta_env = __esm({
   "<define:import.meta.env>"() {
     define_import_meta_env_default = {};
+  }
+});
+
+// node_modules/tslib/tslib.es6.mjs
+var tslib_es6_exports = {};
+__export(tslib_es6_exports, {
+  __addDisposableResource: () => __addDisposableResource,
+  __assign: () => __assign,
+  __asyncDelegator: () => __asyncDelegator,
+  __asyncGenerator: () => __asyncGenerator,
+  __asyncValues: () => __asyncValues,
+  __await: () => __await,
+  __awaiter: () => __awaiter,
+  __classPrivateFieldGet: () => __classPrivateFieldGet,
+  __classPrivateFieldIn: () => __classPrivateFieldIn,
+  __classPrivateFieldSet: () => __classPrivateFieldSet,
+  __createBinding: () => __createBinding,
+  __decorate: () => __decorate,
+  __disposeResources: () => __disposeResources,
+  __esDecorate: () => __esDecorate,
+  __exportStar: () => __exportStar,
+  __extends: () => __extends,
+  __generator: () => __generator,
+  __importDefault: () => __importDefault,
+  __importStar: () => __importStar,
+  __makeTemplateObject: () => __makeTemplateObject,
+  __metadata: () => __metadata,
+  __param: () => __param,
+  __propKey: () => __propKey,
+  __read: () => __read,
+  __rest: () => __rest,
+  __rewriteRelativeImportExtension: () => __rewriteRelativeImportExtension,
+  __runInitializers: () => __runInitializers,
+  __setFunctionName: () => __setFunctionName,
+  __spread: () => __spread,
+  __spreadArray: () => __spreadArray,
+  __spreadArrays: () => __spreadArrays,
+  __values: () => __values,
+  default: () => tslib_es6_default
+});
+function __extends(d, b) {
+  if (typeof b !== "function" && b !== null)
+    throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+  extendStatics(d, b);
+  function __() {
+    this.constructor = d;
+  }
+  d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+function __rest(s, e) {
+  var t2 = {};
+  for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+    t2[p] = s[p];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function")
+    for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+      if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+        t2[p[i]] = s[p[i]];
+    }
+  return t2;
+}
+function __decorate(decorators, target, key, desc) {
+  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function __param(paramIndex, decorator) {
+  return function(target, key) {
+    decorator(target, key, paramIndex);
+  };
+}
+function __esDecorate(ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+  function accept(f) {
+    if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected");
+    return f;
+  }
+  var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+  var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+  var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+  var _, done = false;
+  for (var i = decorators.length - 1; i >= 0; i--) {
+    var context = {};
+    for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+    for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+    context.addInitializer = function(f) {
+      if (done) throw new TypeError("Cannot add initializers after decoration has completed");
+      extraInitializers.push(accept(f || null));
+    };
+    var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+    if (kind === "accessor") {
+      if (result === void 0) continue;
+      if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+      if (_ = accept(result.get)) descriptor.get = _;
+      if (_ = accept(result.set)) descriptor.set = _;
+      if (_ = accept(result.init)) initializers.unshift(_);
+    } else if (_ = accept(result)) {
+      if (kind === "field") initializers.unshift(_);
+      else descriptor[key] = _;
+    }
+  }
+  if (target) Object.defineProperty(target, contextIn.name, descriptor);
+  done = true;
+}
+function __runInitializers(thisArg, initializers, value) {
+  var useValue = arguments.length > 2;
+  for (var i = 0; i < initializers.length; i++) {
+    value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+  }
+  return useValue ? value : void 0;
+}
+function __propKey(x) {
+  return typeof x === "symbol" ? x : "".concat(x);
+}
+function __setFunctionName(f, name, prefix) {
+  if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+  return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+}
+function __metadata(metadataKey, metadataValue) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+function __awaiter(thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function(resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function(resolve, reject2) {
+    function fulfilled(value) {
+      try {
+        step2(generator.next(value));
+      } catch (e) {
+        reject2(e);
+      }
+    }
+    function rejected(value) {
+      try {
+        step2(generator["throw"](value));
+      } catch (e) {
+        reject2(e);
+      }
+    }
+    function step2(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step2((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+}
+function __generator(thisArg, body) {
+  var _ = { label: 0, sent: function() {
+    if (t2[0] & 1) throw t2[1];
+    return t2[1];
+  }, trys: [], ops: [] }, f, y, t2, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+  return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+    return this;
+  }), g;
+  function verb(n) {
+    return function(v2) {
+      return step2([n, v2]);
+    };
+  }
+  function step2(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+    while (g && (g = 0, op[0] && (_ = 0)), _) try {
+      if (f = 1, y && (t2 = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t2 = y["return"]) && t2.call(y), 0) : y.next) && !(t2 = t2.call(y, op[1])).done) return t2;
+      if (y = 0, t2) op = [op[0] & 2, t2.value];
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t2 = op;
+          break;
+        case 4:
+          _.label++;
+          return { value: op[1], done: false };
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+        case 7:
+          op = _.ops.pop();
+          _.trys.pop();
+          continue;
+        default:
+          if (!(t2 = _.trys, t2 = t2.length > 0 && t2[t2.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+          if (op[0] === 3 && (!t2 || op[1] > t2[0] && op[1] < t2[3])) {
+            _.label = op[1];
+            break;
+          }
+          if (op[0] === 6 && _.label < t2[1]) {
+            _.label = t2[1];
+            t2 = op;
+            break;
+          }
+          if (t2 && _.label < t2[2]) {
+            _.label = t2[2];
+            _.ops.push(op);
+            break;
+          }
+          if (t2[2]) _.ops.pop();
+          _.trys.pop();
+          continue;
+      }
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t2 = 0;
+    }
+    if (op[0] & 5) throw op[1];
+    return { value: op[0] ? op[1] : void 0, done: true };
+  }
+}
+function __exportStar(m, o) {
+  for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+}
+function __values(o) {
+  var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+  if (m) return m.call(o);
+  if (o && typeof o.length === "number") return {
+    next: function() {
+      if (o && i >= o.length) o = void 0;
+      return { value: o && o[i++], done: !o };
+    }
+  };
+  throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+function __read(o, n) {
+  var m = typeof Symbol === "function" && o[Symbol.iterator];
+  if (!m) return o;
+  var i = m.call(o), r, ar = [], e;
+  try {
+    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+  } catch (error) {
+    e = { error };
+  } finally {
+    try {
+      if (r && !r.done && (m = i["return"])) m.call(i);
+    } finally {
+      if (e) throw e.error;
+    }
+  }
+  return ar;
+}
+function __spread() {
+  for (var ar = [], i = 0; i < arguments.length; i++)
+    ar = ar.concat(__read(arguments[i]));
+  return ar;
+}
+function __spreadArrays() {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+  for (var r = Array(s), k = 0, i = 0; i < il; i++)
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+      r[k] = a[j];
+  return r;
+}
+function __spreadArray(to, from, pack) {
+  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+    if (ar || !(i in from)) {
+      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+      ar[i] = from[i];
+    }
+  }
+  return to.concat(ar || Array.prototype.slice.call(from));
+}
+function __await(v2) {
+  return this instanceof __await ? (this.v = v2, this) : new __await(v2);
+}
+function __asyncGenerator(thisArg, _arguments, generator) {
+  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+  var g = generator.apply(thisArg, _arguments || []), i, q = [];
+  return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function() {
+    return this;
+  }, i;
+  function awaitReturn(f) {
+    return function(v2) {
+      return Promise.resolve(v2).then(f, reject2);
+    };
+  }
+  function verb(n, f) {
+    if (g[n]) {
+      i[n] = function(v2) {
+        return new Promise(function(a, b) {
+          q.push([n, v2, a, b]) > 1 || resume(n, v2);
+        });
+      };
+      if (f) i[n] = f(i[n]);
+    }
+  }
+  function resume(n, v2) {
+    try {
+      step2(g[n](v2));
+    } catch (e) {
+      settle2(q[0][3], e);
+    }
+  }
+  function step2(r) {
+    r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject2) : settle2(q[0][2], r);
+  }
+  function fulfill(value) {
+    resume("next", value);
+  }
+  function reject2(value) {
+    resume("throw", value);
+  }
+  function settle2(f, v2) {
+    if (f(v2), q.shift(), q.length) resume(q[0][0], q[0][1]);
+  }
+}
+function __asyncDelegator(o) {
+  var i, p;
+  return i = {}, verb("next"), verb("throw", function(e) {
+    throw e;
+  }), verb("return"), i[Symbol.iterator] = function() {
+    return this;
+  }, i;
+  function verb(n, f) {
+    i[n] = o[n] ? function(v2) {
+      return (p = !p) ? { value: __await(o[n](v2)), done: false } : f ? f(v2) : v2;
+    } : f;
+  }
+}
+function __asyncValues(o) {
+  if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+  var m = o[Symbol.asyncIterator], i;
+  return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
+    return this;
+  }, i);
+  function verb(n) {
+    i[n] = o[n] && function(v2) {
+      return new Promise(function(resolve, reject2) {
+        v2 = o[n](v2), settle2(resolve, reject2, v2.done, v2.value);
+      });
+    };
+  }
+  function settle2(resolve, reject2, d, v2) {
+    Promise.resolve(v2).then(function(v3) {
+      resolve({ value: v3, done: d });
+    }, reject2);
+  }
+}
+function __makeTemplateObject(cooked, raw) {
+  if (Object.defineProperty) {
+    Object.defineProperty(cooked, "raw", { value: raw });
+  } else {
+    cooked.raw = raw;
+  }
+  return cooked;
+}
+function __importStar(mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) {
+    for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+  }
+  __setModuleDefault(result, mod);
+  return result;
+}
+function __importDefault(mod) {
+  return mod && mod.__esModule ? mod : { default: mod };
+}
+function __classPrivateFieldGet(receiver, state, kind, f) {
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+  if (kind === "m") throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldIn(state, receiver) {
+  if (receiver === null || typeof receiver !== "object" && typeof receiver !== "function") throw new TypeError("Cannot use 'in' operator on non-object");
+  return typeof state === "function" ? receiver === state : state.has(receiver);
+}
+function __addDisposableResource(env, value, async) {
+  if (value !== null && value !== void 0) {
+    if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+    var dispose, inner;
+    if (async) {
+      if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+      dispose = value[Symbol.asyncDispose];
+    }
+    if (dispose === void 0) {
+      if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+      dispose = value[Symbol.dispose];
+      if (async) inner = dispose;
+    }
+    if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+    if (inner) dispose = function() {
+      try {
+        inner.call(this);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    };
+    env.stack.push({ value, dispose, async });
+  } else if (async) {
+    env.stack.push({ async: true });
+  }
+  return value;
+}
+function __disposeResources(env) {
+  function fail3(e) {
+    env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
+    env.hasError = true;
+  }
+  var r, s = 0;
+  function next() {
+    while (r = env.stack.pop()) {
+      try {
+        if (!r.async && s === 1) return s = 0, env.stack.push(r), Promise.resolve().then(next);
+        if (r.dispose) {
+          var result = r.dispose.call(r.value);
+          if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
+            fail3(e);
+            return next();
+          });
+        } else s |= 1;
+      } catch (e) {
+        fail3(e);
+      }
+    }
+    if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
+    if (env.hasError) throw env.error;
+  }
+  return next();
+}
+function __rewriteRelativeImportExtension(path, preserveJsx) {
+  if (typeof path === "string" && /^\.\.?\//.test(path)) {
+    return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function(m, tsx, d, ext, cm) {
+      return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : d + ext + "." + cm.toLowerCase() + "js";
+    });
+  }
+  return path;
+}
+var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
+var init_tslib_es6 = __esm({
+  "node_modules/tslib/tslib.es6.mjs"() {
+    init_define_import_meta_env();
+    extendStatics = function(d, b) {
+      extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
+        d2.__proto__ = b2;
+      } || function(d2, b2) {
+        for (var p in b2) if (Object.prototype.hasOwnProperty.call(b2, p)) d2[p] = b2[p];
+      };
+      return extendStatics(d, b);
+    };
+    __assign = function() {
+      __assign = Object.assign || function __assign2(t2) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t2[p] = s[p];
+        }
+        return t2;
+      };
+      return __assign.apply(this, arguments);
+    };
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() {
+          return m[k];
+        } };
+      }
+      Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    });
+    __setModuleDefault = Object.create ? (function(o, v2) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v2 });
+    }) : function(o, v2) {
+      o["default"] = v2;
+    };
+    ownKeys = function(o) {
+      ownKeys = Object.getOwnPropertyNames || function(o2) {
+        var ar = [];
+        for (var k in o2) if (Object.prototype.hasOwnProperty.call(o2, k)) ar[ar.length] = k;
+        return ar;
+      };
+      return ownKeys(o);
+    };
+    _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error, suppressed, message) {
+      var e = new Error(message);
+      return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+    tslib_es6_default = {
+      __extends,
+      __assign,
+      __rest,
+      __decorate,
+      __param,
+      __esDecorate,
+      __runInitializers,
+      __propKey,
+      __setFunctionName,
+      __metadata,
+      __awaiter,
+      __generator,
+      __createBinding,
+      __exportStar,
+      __values,
+      __read,
+      __spread,
+      __spreadArrays,
+      __spreadArray,
+      __await,
+      __asyncGenerator,
+      __asyncDelegator,
+      __asyncValues,
+      __makeTemplateObject,
+      __importStar,
+      __importDefault,
+      __classPrivateFieldGet,
+      __classPrivateFieldSet,
+      __classPrivateFieldIn,
+      __addDisposableResource,
+      __disposeResources,
+      __rewriteRelativeImportExtension
+    };
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+var require_websocket_factory = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.WebSocketFactory = void 0;
+    var WebSocketFactory = class {
+      /**
+       * Static-only utility – prevent instantiation.
+       */
+      constructor() {
+      }
+      static detectEnvironment() {
+        var _a;
+        if (typeof WebSocket !== "undefined") {
+          return { type: "native", wsConstructor: WebSocket };
+        }
+        const gt = globalThis;
+        if (typeof globalThis !== "undefined" && typeof gt.WebSocket !== "undefined") {
+          return { type: "native", wsConstructor: gt.WebSocket };
+        }
+        const gl = typeof global !== "undefined" ? global : void 0;
+        if (gl && typeof gl.WebSocket !== "undefined") {
+          return { type: "native", wsConstructor: gl.WebSocket };
+        }
+        if (typeof globalThis !== "undefined" && typeof gt.WebSocketPair !== "undefined" && typeof globalThis.WebSocket === "undefined") {
+          return {
+            type: "cloudflare",
+            error: "Cloudflare Workers detected. WebSocket clients are not supported in Cloudflare Workers.",
+            workaround: "Use Cloudflare Workers WebSocket API for server-side WebSocket handling, or deploy to a different runtime."
+          };
+        }
+        if (typeof globalThis !== "undefined" && gt.EdgeRuntime || typeof navigator !== "undefined" && ((_a = navigator.userAgent) === null || _a === void 0 ? void 0 : _a.includes("Vercel-Edge"))) {
+          return {
+            type: "unsupported",
+            error: "Edge runtime detected (Vercel Edge/Netlify Edge). WebSockets are not supported in edge functions.",
+            workaround: "Use serverless functions or a different deployment target for WebSocket functionality."
+          };
+        }
+        const _process = globalThis["process"];
+        if (_process) {
+          const processVersions = _process["versions"];
+          if (processVersions && processVersions["node"]) {
+            return {
+              type: "unsupported",
+              error: "Node.js detected but native WebSocket not found.",
+              workaround: "Ensure you are running Node.js 22+ or provide a WebSocket implementation via the transport option."
+            };
+          }
+        }
+        return {
+          type: "unsupported",
+          error: "Unknown JavaScript runtime without WebSocket support.",
+          workaround: "Ensure you're running in a supported environment (browser, Node.js, Deno) or provide a custom WebSocket implementation."
+        };
+      }
+      /**
+       * Returns the best available WebSocket constructor for the current runtime.
+       *
+       * @category Realtime
+       *
+       * @example Example with error handling
+       * ```ts
+       * try {
+       *   const WS = WebSocketFactory.getWebSocketConstructor()
+       *   const socket = new WS('wss://example.com/socket')
+       * } catch (error) {
+       *   console.error('WebSocket not available in this environment.', error)
+       * }
+       * ```
+       */
+      static getWebSocketConstructor() {
+        const env = this.detectEnvironment();
+        if (env.wsConstructor) {
+          return env.wsConstructor;
+        }
+        let errorMessage = env.error || "WebSocket not supported in this environment.";
+        if (env.workaround) {
+          errorMessage += `
+
+Suggested solution: ${env.workaround}`;
+        }
+        throw new Error(errorMessage);
+      }
+      /**
+       * Detects whether the runtime can establish WebSocket connections.
+       *
+       * @category Realtime
+       *
+       * @example Example in a Node.js script
+       * ```ts
+       * if (!WebSocketFactory.isWebSocketSupported()) {
+       *   console.error('WebSockets are required for this script.')
+       *   process.exitCode = 1
+       * }
+       * ```
+       */
+      static isWebSocketSupported() {
+        try {
+          const env = this.detectEnvironment();
+          return env.type === "native";
+        } catch (_a) {
+          return false;
+        }
+      }
+    };
+    exports.WebSocketFactory = WebSocketFactory;
+    exports.default = WebSocketFactory;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/version.js
+var require_version = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.version = void 0;
+    exports.version = "2.118.0";
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+var require_constants = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.CONNECTION_STATE = exports.TRANSPORTS = exports.CHANNEL_EVENTS = exports.CHANNEL_STATES = exports.SOCKET_STATES = exports.MAX_PUSH_BUFFER_SIZE = exports.WS_CLOSE_NORMAL = exports.POSTGRES_CHANGES_WAIT_ERROR_GRACE = exports.DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT = exports.DEFAULT_TIMEOUT = exports.VERSION = exports.DEFAULT_VSN = exports.VSN_2_0_0 = exports.VSN_1_0_0 = exports.DEFAULT_VERSION = void 0;
+    var version_1 = require_version();
+    exports.DEFAULT_VERSION = `realtime-js/${version_1.version}`;
+    exports.VSN_1_0_0 = "1.0.0";
+    exports.VSN_2_0_0 = "2.0.0";
+    exports.DEFAULT_VSN = exports.VSN_2_0_0;
+    exports.VERSION = version_1.version;
+    exports.DEFAULT_TIMEOUT = 1e4;
+    exports.DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT = 15e3;
+    exports.POSTGRES_CHANGES_WAIT_ERROR_GRACE = 1e4;
+    exports.WS_CLOSE_NORMAL = 1e3;
+    exports.MAX_PUSH_BUFFER_SIZE = 100;
+    exports.SOCKET_STATES = {
+      connecting: 0,
+      open: 1,
+      closing: 2,
+      closed: 3
+    };
+    exports.CHANNEL_STATES = {
+      closed: "closed",
+      errored: "errored",
+      joined: "joined",
+      joining: "joining",
+      leaving: "leaving"
+    };
+    exports.CHANNEL_EVENTS = {
+      close: "phx_close",
+      error: "phx_error",
+      join: "phx_join",
+      reply: "phx_reply",
+      leave: "phx_leave",
+      access_token: "access_token"
+    };
+    exports.TRANSPORTS = {
+      websocket: "websocket"
+    };
+    exports.CONNECTION_STATE = {
+      connecting: "connecting",
+      open: "open",
+      closing: "closing",
+      closed: "closed"
+    };
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+var require_serializer = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Serializer = class {
+      constructor(allowedMetadataKeys) {
+        this.HEADER_LENGTH = 1;
+        this.USER_BROADCAST_PUSH_META_LENGTH = 6;
+        this.KINDS = { userBroadcastPush: 3, userBroadcast: 4 };
+        this.BINARY_ENCODING = 0;
+        this.JSON_ENCODING = 1;
+        this.BROADCAST_EVENT = "broadcast";
+        this.allowedMetadataKeys = [];
+        this.allowedMetadataKeys = allowedMetadataKeys !== null && allowedMetadataKeys !== void 0 ? allowedMetadataKeys : [];
+      }
+      encode(msg, callback) {
+        if (msg.event === this.BROADCAST_EVENT && !(msg.payload instanceof ArrayBuffer) && typeof msg.payload.event === "string") {
+          return callback(this._binaryEncodeUserBroadcastPush(msg));
+        }
+        let payload = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload];
+        return callback(JSON.stringify(payload));
+      }
+      _binaryEncodeUserBroadcastPush(message) {
+        var _a;
+        if (this._isArrayBuffer((_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload)) {
+          return this._encodeBinaryUserBroadcastPush(message);
+        } else {
+          return this._encodeJsonUserBroadcastPush(message);
+        }
+      }
+      _encodeBinaryUserBroadcastPush(message) {
+        var _a, _b;
+        const userPayload = (_b = (_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload) !== null && _b !== void 0 ? _b : new ArrayBuffer(0);
+        return this._encodeUserBroadcastPush(message, this.BINARY_ENCODING, userPayload);
+      }
+      _encodeJsonUserBroadcastPush(message) {
+        var _a, _b;
+        const userPayload = (_b = (_a = message.payload) === null || _a === void 0 ? void 0 : _a.payload) !== null && _b !== void 0 ? _b : {};
+        const encoder = new TextEncoder();
+        const encodedUserPayload = encoder.encode(JSON.stringify(userPayload)).buffer;
+        return this._encodeUserBroadcastPush(message, this.JSON_ENCODING, encodedUserPayload);
+      }
+      _encodeUserBroadcastPush(message, encodingType, encodedPayload) {
+        var _a, _b;
+        const encoder = new TextEncoder();
+        const topic = encoder.encode(message.topic);
+        const ref = encoder.encode((_a = message.ref) !== null && _a !== void 0 ? _a : "");
+        const joinRef = encoder.encode((_b = message.join_ref) !== null && _b !== void 0 ? _b : "");
+        const userEvent = encoder.encode(message.payload.event);
+        const rest = this.allowedMetadataKeys ? this._pick(message.payload, this.allowedMetadataKeys) : {};
+        const metadata = encoder.encode(Object.keys(rest).length === 0 ? "" : JSON.stringify(rest));
+        if (joinRef.length > 255) {
+          throw new Error(`joinRef length ${joinRef.length} exceeds maximum of 255`);
+        }
+        if (ref.length > 255) {
+          throw new Error(`ref length ${ref.length} exceeds maximum of 255`);
+        }
+        if (topic.length > 255) {
+          throw new Error(`topic length ${topic.length} exceeds maximum of 255`);
+        }
+        if (userEvent.length > 255) {
+          throw new Error(`userEvent length ${userEvent.length} exceeds maximum of 255`);
+        }
+        if (metadata.length > 255) {
+          throw new Error(`metadata length ${metadata.length} exceeds maximum of 255`);
+        }
+        const metaLength = this.USER_BROADCAST_PUSH_META_LENGTH + joinRef.length + ref.length + topic.length + userEvent.length + metadata.length;
+        const header = new ArrayBuffer(this.HEADER_LENGTH + metaLength);
+        const view = new DataView(header);
+        const bytes = new Uint8Array(header);
+        let offset = 0;
+        view.setUint8(offset++, this.KINDS.userBroadcastPush);
+        view.setUint8(offset++, joinRef.length);
+        view.setUint8(offset++, ref.length);
+        view.setUint8(offset++, topic.length);
+        view.setUint8(offset++, userEvent.length);
+        view.setUint8(offset++, metadata.length);
+        view.setUint8(offset++, encodingType);
+        bytes.set(joinRef, offset);
+        offset += joinRef.length;
+        bytes.set(ref, offset);
+        offset += ref.length;
+        bytes.set(topic, offset);
+        offset += topic.length;
+        bytes.set(userEvent, offset);
+        offset += userEvent.length;
+        bytes.set(metadata, offset);
+        offset += metadata.length;
+        var combined = new Uint8Array(header.byteLength + encodedPayload.byteLength);
+        combined.set(new Uint8Array(header), 0);
+        combined.set(new Uint8Array(encodedPayload), header.byteLength);
+        return combined.buffer;
+      }
+      decode(rawPayload, callback) {
+        if (this._isArrayBuffer(rawPayload)) {
+          let result = this._binaryDecode(rawPayload);
+          return callback(result);
+        }
+        if (typeof rawPayload === "string") {
+          const jsonPayload = JSON.parse(rawPayload);
+          const [join_ref, ref, topic, event, payload] = jsonPayload;
+          return callback({ join_ref, ref, topic, event, payload });
+        }
+        return callback({});
+      }
+      _binaryDecode(buffer) {
+        const view = new DataView(buffer);
+        const kind = view.getUint8(0);
+        const decoder = new TextDecoder();
+        switch (kind) {
+          case this.KINDS.userBroadcast:
+            return this._decodeUserBroadcast(buffer, view, decoder);
+        }
+      }
+      _decodeUserBroadcast(buffer, view, decoder) {
+        const topicSize = view.getUint8(1);
+        const userEventSize = view.getUint8(2);
+        const metadataSize = view.getUint8(3);
+        const payloadEncoding = view.getUint8(4);
+        let offset = this.HEADER_LENGTH + 4;
+        const topic = decoder.decode(buffer.slice(offset, offset + topicSize));
+        offset = offset + topicSize;
+        const userEvent = decoder.decode(buffer.slice(offset, offset + userEventSize));
+        offset = offset + userEventSize;
+        const metadata = decoder.decode(buffer.slice(offset, offset + metadataSize));
+        offset = offset + metadataSize;
+        const payload = buffer.slice(offset, buffer.byteLength);
+        const parsedPayload = payloadEncoding === this.JSON_ENCODING ? JSON.parse(decoder.decode(payload)) : payload;
+        const data = {
+          type: this.BROADCAST_EVENT,
+          event: userEvent,
+          payload: parsedPayload
+        };
+        if (metadataSize > 0) {
+          data["meta"] = JSON.parse(metadata);
+        }
+        return { join_ref: null, ref: null, topic, event: this.BROADCAST_EVENT, payload: data };
+      }
+      _isArrayBuffer(buffer) {
+        var _a;
+        return buffer instanceof ArrayBuffer || ((_a = buffer === null || buffer === void 0 ? void 0 : buffer.constructor) === null || _a === void 0 ? void 0 : _a.name) === "ArrayBuffer";
+      }
+      _pick(obj, keys) {
+        if (!obj || typeof obj !== "object") {
+          return {};
+        }
+        return Object.fromEntries(Object.entries(obj).filter(([key]) => keys.includes(key)));
+      }
+    };
+    exports.default = Serializer;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+var require_transformers = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.httpEndpointURL = exports.toTimestampString = exports.toArray = exports.toJson = exports.toNumber = exports.toBoolean = exports.convertCell = exports.convertColumn = exports.convertChangeData = exports.PostgresTypes = void 0;
+    var PostgresTypes;
+    (function(PostgresTypes2) {
+      PostgresTypes2["abstime"] = "abstime";
+      PostgresTypes2["bool"] = "bool";
+      PostgresTypes2["date"] = "date";
+      PostgresTypes2["daterange"] = "daterange";
+      PostgresTypes2["float4"] = "float4";
+      PostgresTypes2["float8"] = "float8";
+      PostgresTypes2["int2"] = "int2";
+      PostgresTypes2["int4"] = "int4";
+      PostgresTypes2["int4range"] = "int4range";
+      PostgresTypes2["int8"] = "int8";
+      PostgresTypes2["int8range"] = "int8range";
+      PostgresTypes2["json"] = "json";
+      PostgresTypes2["jsonb"] = "jsonb";
+      PostgresTypes2["money"] = "money";
+      PostgresTypes2["numeric"] = "numeric";
+      PostgresTypes2["oid"] = "oid";
+      PostgresTypes2["reltime"] = "reltime";
+      PostgresTypes2["text"] = "text";
+      PostgresTypes2["time"] = "time";
+      PostgresTypes2["timestamp"] = "timestamp";
+      PostgresTypes2["timestamptz"] = "timestamptz";
+      PostgresTypes2["timetz"] = "timetz";
+      PostgresTypes2["tsrange"] = "tsrange";
+      PostgresTypes2["tstzrange"] = "tstzrange";
+    })(PostgresTypes || (exports.PostgresTypes = PostgresTypes = {}));
+    var convertChangeData = (columns, record2, options = {}) => {
+      var _a;
+      const skipTypes = (_a = options.skipTypes) !== null && _a !== void 0 ? _a : [];
+      if (!record2) {
+        return {};
+      }
+      return Object.keys(record2).reduce((acc, rec_key) => {
+        acc[rec_key] = (0, exports.convertColumn)(rec_key, columns, record2, skipTypes);
+        return acc;
+      }, {});
+    };
+    exports.convertChangeData = convertChangeData;
+    var convertColumn = (columnName, columns, record2, skipTypes) => {
+      const column = columns.find((x) => x.name === columnName);
+      const colType = column === null || column === void 0 ? void 0 : column.type;
+      const value = record2[columnName];
+      if (colType && !skipTypes.includes(colType)) {
+        return (0, exports.convertCell)(colType, value);
+      }
+      return noop(value);
+    };
+    exports.convertColumn = convertColumn;
+    var convertCell = (type, value) => {
+      if (type.charAt(0) === "_") {
+        const dataType = type.slice(1, type.length);
+        return (0, exports.toArray)(value, dataType);
+      }
+      switch (type) {
+        case PostgresTypes.bool:
+          return (0, exports.toBoolean)(value);
+        case PostgresTypes.float4:
+        case PostgresTypes.float8:
+        case PostgresTypes.int2:
+        case PostgresTypes.int4:
+        case PostgresTypes.int8:
+        case PostgresTypes.numeric:
+        case PostgresTypes.oid:
+          return (0, exports.toNumber)(value);
+        case PostgresTypes.json:
+        case PostgresTypes.jsonb:
+          return (0, exports.toJson)(value);
+        case PostgresTypes.timestamp:
+          return (0, exports.toTimestampString)(value);
+        // Format to be consistent with PostgREST
+        case PostgresTypes.abstime:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.date:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.daterange:
+        case PostgresTypes.int4range:
+        case PostgresTypes.int8range:
+        case PostgresTypes.money:
+        case PostgresTypes.reltime:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.text:
+        case PostgresTypes.time:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.timestamptz:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.timetz:
+        // To allow users to cast it based on Timezone
+        case PostgresTypes.tsrange:
+        case PostgresTypes.tstzrange:
+          return noop(value);
+        default:
+          return noop(value);
+      }
+    };
+    exports.convertCell = convertCell;
+    var noop = (value) => {
+      return value;
+    };
+    var toBoolean = (value) => {
+      switch (value) {
+        case "t":
+          return true;
+        case "f":
+          return false;
+        default:
+          return value;
+      }
+    };
+    exports.toBoolean = toBoolean;
+    var toNumber = (value) => {
+      if (typeof value === "string") {
+        const parsedValue = parseFloat(value);
+        if (!Number.isNaN(parsedValue)) {
+          return parsedValue;
+        }
+      }
+      return value;
+    };
+    exports.toNumber = toNumber;
+    var toJson = (value) => {
+      if (typeof value === "string") {
+        try {
+          return JSON.parse(value);
+        } catch (_a) {
+          return value;
+        }
+      }
+      return value;
+    };
+    exports.toJson = toJson;
+    var toArray = (value, type) => {
+      if (typeof value !== "string") {
+        return value;
+      }
+      const lastIdx = value.length - 1;
+      const closeBrace = value[lastIdx];
+      const openBrace = value[0];
+      if (openBrace === "{" && closeBrace === "}") {
+        let arr;
+        const valTrim = value.slice(1, lastIdx);
+        try {
+          arr = JSON.parse("[" + valTrim + "]");
+        } catch (_) {
+          arr = valTrim ? valTrim.split(",") : [];
+        }
+        return arr.map((val) => (0, exports.convertCell)(type, val));
+      }
+      return value;
+    };
+    exports.toArray = toArray;
+    var toTimestampString = (value) => {
+      if (typeof value === "string") {
+        return value.replace(" ", "T");
+      }
+      return value;
+    };
+    exports.toTimestampString = toTimestampString;
+    var httpEndpointURL = (socketUrl) => {
+      const wsUrl = new URL(socketUrl);
+      wsUrl.protocol = wsUrl.protocol.replace(/^ws/i, "http");
+      wsUrl.pathname = wsUrl.pathname.replace(/\/+$/, "").replace(/\/socket\/websocket$/i, "").replace(/\/socket$/i, "").replace(/\/websocket$/i, "");
+      if (wsUrl.pathname === "" || wsUrl.pathname === "/") {
+        wsUrl.pathname = "/api/broadcast";
+      } else {
+        wsUrl.pathname = wsUrl.pathname + "/api/broadcast";
+      }
+      return wsUrl.href;
+    };
+    exports.httpEndpointURL = httpEndpointURL;
+  }
+});
+
+// node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js
+var require_phoenix_cjs = __commonJS({
+  "node_modules/@supabase/phoenix/priv/static/phoenix.cjs.js"(exports, module) {
+    "use strict";
+    init_define_import_meta_env();
+    var __defProp2 = Object.defineProperty;
+    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
+    var __getOwnPropNames2 = Object.getOwnPropertyNames;
+    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+    var __export2 = (target, all) => {
+      for (var name in all)
+        __defProp2(target, name, { get: all[name], enumerable: true });
+    };
+    var __copyProps2 = (to, from, except, desc) => {
+      if (from && typeof from === "object" || typeof from === "function") {
+        for (let key of __getOwnPropNames2(from))
+          if (!__hasOwnProp2.call(to, key) && key !== except)
+            __defProp2(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
+      }
+      return to;
+    };
+    var __toCommonJS2 = (mod) => __copyProps2(__defProp2({}, "__esModule", { value: true }), mod);
+    var phoenix_exports = {};
+    __export2(phoenix_exports, {
+      Channel: () => Channel,
+      LongPoll: () => LongPoll,
+      Presence: () => Presence,
+      Push: () => Push,
+      Serializer: () => serializer_default,
+      Socket: () => Socket,
+      Timer: () => Timer
+    });
+    module.exports = __toCommonJS2(phoenix_exports);
+    var closure = (value) => {
+      if (typeof value === "function") {
+        return (
+          /** @type {() => T} */
+          value
+        );
+      } else {
+        let closure2 = function() {
+          return value;
+        };
+        return closure2;
+      }
+    };
+    var globalSelf = typeof self !== "undefined" ? self : null;
+    var phxWindow = typeof window !== "undefined" ? window : null;
+    var global2 = globalSelf || phxWindow || globalThis;
+    var DEFAULT_VSN = "2.0.0";
+    var DEFAULT_TIMEOUT = 1e4;
+    var WS_CLOSE_NORMAL = 1e3;
+    var MAX_LONGPOLL_BATCH_SIZE = 100;
+    var SOCKET_STATES = (
+      /** @type {const} */
+      { connecting: 0, open: 1, closing: 2, closed: 3 }
+    );
+    var CHANNEL_STATES = (
+      /** @type {const} */
+      {
+        closed: "closed",
+        errored: "errored",
+        joined: "joined",
+        joining: "joining",
+        leaving: "leaving"
+      }
+    );
+    var CHANNEL_EVENTS = (
+      /** @type {const} */
+      {
+        close: "phx_close",
+        error: "phx_error",
+        join: "phx_join",
+        reply: "phx_reply",
+        leave: "phx_leave"
+      }
+    );
+    var TRANSPORTS = (
+      /** @type {const} */
+      {
+        longpoll: "longpoll",
+        websocket: "websocket"
+      }
+    );
+    var XHR_STATES = (
+      /** @type {const} */
+      {
+        complete: 4
+      }
+    );
+    var AUTH_TOKEN_PREFIX = "base64url.bearer.phx.";
+    var Push = class {
+      /**
+       * Initializes the Push
+       * @param {Channel} channel - The Channel
+       * @param {ChannelEvent} event - The event, for example `"phx_join"`
+       * @param {() => Record<string, unknown>} payload - The payload, for example `{user_id: 123}`
+       * @param {number} timeout - The push timeout in milliseconds
+       */
+      constructor(channel, event, payload, timeout) {
+        this.channel = channel;
+        this.event = event;
+        this.payload = payload || function() {
+          return {};
+        };
+        this.receivedResp = null;
+        this.timeout = timeout;
+        this.timeoutTimer = null;
+        this.recHooks = [];
+        this.sent = false;
+        this.ref = void 0;
+      }
+      /**
+       *
+       * @param {number} timeout
+       */
+      resend(timeout) {
+        this.timeout = timeout;
+        this.reset();
+        this.send();
+      }
+      /**
+       *
+       */
+      send() {
+        if (this.hasReceived("timeout")) {
+          return;
+        }
+        this.startTimeout();
+        this.sent = true;
+        this.channel.socket.push({
+          topic: this.channel.topic,
+          event: this.event,
+          payload: this.payload(),
+          ref: this.ref,
+          join_ref: this.channel.joinRef()
+        });
+      }
+      /**
+       *
+       * @param {string} status
+       * @param {(response: any) => void} callback
+       */
+      receive(status, callback) {
+        if (this.hasReceived(status)) {
+          callback(this.receivedResp.response);
+        }
+        this.recHooks.push({ status, callback });
+        return this;
+      }
+      reset() {
+        this.cancelRefEvent();
+        this.ref = null;
+        this.refEvent = null;
+        this.receivedResp = null;
+        this.sent = false;
+      }
+      destroy() {
+        this.cancelRefEvent();
+        this.cancelTimeout();
+      }
+      /**
+       * @private
+       */
+      matchReceive({ status, response, _ref }) {
+        this.recHooks.filter((h) => h.status === status).forEach((h) => h.callback(response));
+      }
+      /**
+       * @private
+       */
+      cancelRefEvent() {
+        if (!this.refEvent) {
+          return;
+        }
+        this.channel.off(this.refEvent);
+      }
+      cancelTimeout() {
+        clearTimeout(this.timeoutTimer);
+        this.timeoutTimer = null;
+      }
+      startTimeout() {
+        if (this.timeoutTimer) {
+          this.cancelTimeout();
+        }
+        this.ref = this.channel.socket.makeRef();
+        this.refEvent = this.channel.replyEventName(this.ref);
+        this.channel.on(this.refEvent, (payload) => {
+          this.cancelRefEvent();
+          this.cancelTimeout();
+          this.receivedResp = payload;
+          this.matchReceive(payload);
+        });
+        this.timeoutTimer = setTimeout(() => {
+          this.trigger("timeout", {});
+        }, this.timeout);
+      }
+      /**
+       * @private
+       */
+      hasReceived(status) {
+        return this.receivedResp && this.receivedResp.status === status;
+      }
+      trigger(status, response) {
+        this.channel.trigger(this.refEvent, { status, response });
+      }
+    };
+    var Timer = class {
+      /**
+      * @param {() => void} callback
+      * @param {(tries: number) => number} timerCalc
+      */
+      constructor(callback, timerCalc) {
+        this.callback = callback;
+        this.timerCalc = timerCalc;
+        this.timer = void 0;
+        this.tries = 0;
+      }
+      reset() {
+        this.tries = 0;
+        clearTimeout(this.timer);
+      }
+      /**
+       * Cancels any previous scheduleTimeout and schedules callback
+       */
+      scheduleTimeout() {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+          this.tries = this.tries + 1;
+          this.callback();
+        }, this.timerCalc(this.tries + 1));
+      }
+    };
+    var Channel = class {
+      /**
+       * @param {string} topic
+       * @param {Params | (() => Params)} params
+       * @param {Socket} socket
+       */
+      constructor(topic, params, socket) {
+        this.state = CHANNEL_STATES.closed;
+        this.topic = topic;
+        this.params = closure(params || {});
+        this.socket = socket;
+        this.bindings = [];
+        this.bindingRef = 0;
+        this.timeout = this.socket.timeout;
+        this.joinedOnce = false;
+        this.joinPush = new Push(this, CHANNEL_EVENTS.join, this.params, this.timeout);
+        this.pushBuffer = [];
+        this.stateChangeRefs = [];
+        this.rejoinTimer = new Timer(() => {
+          if (this.socket.isConnected()) {
+            this.rejoin();
+          }
+        }, this.socket.rejoinAfterMs);
+        this.stateChangeRefs.push(this.socket.onError(() => this.rejoinTimer.reset()));
+        this.stateChangeRefs.push(
+          this.socket.onOpen(() => {
+            this.rejoinTimer.reset();
+            if (this.isErrored()) {
+              this.rejoin();
+            }
+          })
+        );
+        this.joinPush.receive("ok", () => {
+          this.state = CHANNEL_STATES.joined;
+          this.rejoinTimer.reset();
+          this.pushBuffer.forEach((pushEvent) => pushEvent.send());
+          this.pushBuffer = [];
+        });
+        this.joinPush.receive("error", (reason) => {
+          this.state = CHANNEL_STATES.errored;
+          if (this.socket.hasLogger()) this.socket.log("channel", `error ${this.topic}`, reason);
+          if (this.socket.isConnected()) {
+            this.rejoinTimer.scheduleTimeout();
+          }
+        });
+        this.onClose(() => {
+          this.rejoinTimer.reset();
+          if (this.socket.hasLogger()) this.socket.log("channel", `close ${this.topic}`);
+          this.state = CHANNEL_STATES.closed;
+          this.socket.remove(this);
+        });
+        this.onError((reason) => {
+          if (this.socket.hasLogger()) this.socket.log("channel", `error ${this.topic}`, reason);
+          if (this.isJoining()) {
+            this.joinPush.reset();
+          }
+          this.state = CHANNEL_STATES.errored;
+          if (this.socket.isConnected()) {
+            this.rejoinTimer.scheduleTimeout();
+          }
+        });
+        this.joinPush.receive("timeout", () => {
+          if (this.socket.hasLogger()) this.socket.log("channel", `timeout ${this.topic}`, this.joinPush.timeout);
+          let leavePush = new Push(this, CHANNEL_EVENTS.leave, closure({}), this.timeout);
+          leavePush.send();
+          this.state = CHANNEL_STATES.errored;
+          this.joinPush.reset();
+          if (this.socket.isConnected()) {
+            this.rejoinTimer.scheduleTimeout();
+          }
+        });
+        this.on(CHANNEL_EVENTS.reply, (payload, ref) => {
+          this.trigger(this.replyEventName(ref), payload);
+        });
+      }
+      /**
+       * Join the channel
+       * @param {number} timeout
+       * @returns {Push}
+       */
+      join(timeout = this.timeout) {
+        if (this.joinedOnce) {
+          throw new Error("tried to join multiple times. 'join' can only be called a single time per channel instance");
+        } else {
+          this.timeout = timeout;
+          this.joinedOnce = true;
+          this.rejoin();
+          return this.joinPush;
+        }
+      }
+      /**
+       * Teardown the channel.
+       *
+       * Destroys and stops related timers.
+       */
+      teardown() {
+        this.pushBuffer.forEach((push) => push.destroy());
+        this.pushBuffer = [];
+        this.rejoinTimer.reset();
+        this.joinPush.destroy();
+        this.state = CHANNEL_STATES.closed;
+        this.bindings = [];
+      }
+      /**
+       * Hook into channel close
+       * @param {ChannelBindingCallback} callback
+       */
+      onClose(callback) {
+        this.on(CHANNEL_EVENTS.close, callback);
+      }
+      /**
+       * Hook into channel errors
+       * @param {ChannelOnErrorCallback} callback
+       * @return {number}
+       */
+      onError(callback) {
+        return this.on(CHANNEL_EVENTS.error, (reason) => callback(reason));
+      }
+      /**
+       * Subscribes on channel events
+       *
+       * Subscription returns a ref counter, which can be used later to
+       * unsubscribe the exact event listener
+       *
+       * @example
+       * const ref1 = channel.on("event", do_stuff)
+       * const ref2 = channel.on("event", do_other_stuff)
+       * channel.off("event", ref1)
+       * // Since unsubscription, do_stuff won't fire,
+       * // while do_other_stuff will keep firing on the "event"
+       *
+       * @param {string} event
+       * @param {ChannelBindingCallback} callback
+       * @returns {number} ref
+       */
+      on(event, callback) {
+        let ref = this.bindingRef++;
+        this.bindings.push({ event, ref, callback });
+        return ref;
+      }
+      /**
+       * Unsubscribes off of channel events
+       *
+       * Use the ref returned from a channel.on() to unsubscribe one
+       * handler, or pass nothing for the ref to unsubscribe all
+       * handlers for the given event.
+       *
+       * @example
+       * // Unsubscribe the do_stuff handler
+       * const ref1 = channel.on("event", do_stuff)
+       * channel.off("event", ref1)
+       *
+       * // Unsubscribe all handlers from event
+       * channel.off("event")
+       *
+       * @param {string} event
+       * @param {number} [ref]
+       */
+      off(event, ref) {
+        this.bindings = this.bindings.filter((bind) => {
+          return !(bind.event === event && (typeof ref === "undefined" || ref === bind.ref));
+        });
+      }
+      /**
+       * @private
+       */
+      canPush() {
+        return this.socket.isConnected() && this.isJoined();
+      }
+      /**
+       * Sends a message `event` to phoenix with the payload `payload`.
+       * Phoenix receives this in the `handle_in(event, payload, socket)`
+       * function. if phoenix replies or it times out (default 10000ms),
+       * then optionally the reply can be received.
+       *
+       * @example
+       * channel.push("event")
+       *   .receive("ok", payload => console.log("phoenix replied:", payload))
+       *   .receive("error", err => console.log("phoenix errored", err))
+       *   .receive("timeout", () => console.log("timed out pushing"))
+       * @param {string} event
+       * @param {Object} payload
+       * @param {number} [timeout]
+       * @returns {Push}
+       */
+      push(event, payload, timeout = this.timeout) {
+        payload = payload || {};
+        if (!this.joinedOnce) {
+          throw new Error(`tried to push '${event}' to '${this.topic}' before joining. Use channel.join() before pushing events`);
+        }
+        let pushEvent = new Push(this, event, function() {
+          return payload;
+        }, timeout);
+        if (this.canPush()) {
+          pushEvent.send();
+        } else {
+          pushEvent.startTimeout();
+          this.pushBuffer.push(pushEvent);
+        }
+        return pushEvent;
+      }
+      /** Leaves the channel
+       *
+       * Unsubscribes from server events, and
+       * instructs channel to terminate on server
+       *
+       * Triggers onClose() hooks
+       *
+       * To receive leave acknowledgements, use the `receive`
+       * hook to bind to the server ack, ie:
+       *
+       * @example
+       * channel.leave().receive("ok", () => alert("left!") )
+       *
+       * @param {number} timeout
+       * @returns {Push}
+       */
+      leave(timeout = this.timeout) {
+        this.rejoinTimer.reset();
+        this.joinPush.cancelTimeout();
+        this.state = CHANNEL_STATES.leaving;
+        let onClose = () => {
+          if (this.socket.hasLogger()) this.socket.log("channel", `leave ${this.topic}`);
+          this.trigger(CHANNEL_EVENTS.close, "leave");
+        };
+        let leavePush = new Push(this, CHANNEL_EVENTS.leave, closure({}), timeout);
+        leavePush.receive("ok", () => onClose()).receive("timeout", () => onClose());
+        leavePush.send();
+        if (!this.canPush()) {
+          leavePush.trigger("ok", {});
+        }
+        return leavePush;
+      }
+      /**
+       * Overridable message hook
+       *
+       * Receives all events for specialized message handling
+       * before dispatching to the channel callbacks.
+       *
+       * Must return the payload, modified or unmodified
+       * @type{ChannelOnMessage}
+       */
+      onMessage(_event, payload, _ref) {
+        return payload;
+      }
+      /**
+       * Overridable filter hook
+       *
+       * If this function returns `true`, `binding`'s callback will be called.
+       *
+       * @type{ChannelFilterBindings}
+       */
+      filterBindings(_binding, _payload, _ref) {
+        return true;
+      }
+      isMember(topic, event, payload, joinRef) {
+        if (this.topic !== topic) {
+          return false;
+        }
+        if (joinRef && joinRef !== this.joinRef()) {
+          if (this.socket.hasLogger()) this.socket.log("channel", "dropping outdated message", { topic, event, payload, joinRef });
+          return false;
+        } else {
+          return true;
+        }
+      }
+      joinRef() {
+        return this.joinPush.ref;
+      }
+      /**
+       * @private
+       */
+      rejoin(timeout = this.timeout) {
+        if (this.isLeaving()) {
+          return;
+        }
+        this.socket.leaveOpenTopic(this.topic);
+        this.state = CHANNEL_STATES.joining;
+        this.joinPush.resend(timeout);
+      }
+      /**
+       * @param {string} event
+       * @param {unknown} [payload]
+       * @param {?string} [ref]
+       * @param {?string} [joinRef]
+       */
+      trigger(event, payload, ref, joinRef) {
+        let handledPayload = this.onMessage(event, payload, ref, joinRef);
+        if (payload && !handledPayload) {
+          throw new Error("channel onMessage callbacks must return the payload, modified or unmodified");
+        }
+        let eventBindings = this.bindings.filter((bind) => bind.event === event && this.filterBindings(bind, payload, ref));
+        for (let i = 0; i < eventBindings.length; i++) {
+          let bind = eventBindings[i];
+          bind.callback(handledPayload, ref, joinRef || this.joinRef());
+        }
+      }
+      /**
+      * @param {string} ref
+      */
+      replyEventName(ref) {
+        return `chan_reply_${ref}`;
+      }
+      isClosed() {
+        return this.state === CHANNEL_STATES.closed;
+      }
+      isErrored() {
+        return this.state === CHANNEL_STATES.errored;
+      }
+      isJoined() {
+        return this.state === CHANNEL_STATES.joined;
+      }
+      isJoining() {
+        return this.state === CHANNEL_STATES.joining;
+      }
+      isLeaving() {
+        return this.state === CHANNEL_STATES.leaving;
+      }
+    };
+    var Ajax = class {
+      static request(method, endPoint, headers, body, timeout, ontimeout, callback) {
+        if (global2.XDomainRequest) {
+          let req = new global2.XDomainRequest();
+          return this.xdomainRequest(req, method, endPoint, body, timeout, ontimeout, callback);
+        } else if (global2.XMLHttpRequest) {
+          let req = new global2.XMLHttpRequest();
+          return this.xhrRequest(req, method, endPoint, headers, body, timeout, ontimeout, callback);
+        } else if (global2.fetch && global2.AbortController) {
+          return this.fetchRequest(method, endPoint, headers, body, timeout, ontimeout, callback);
+        } else {
+          throw new Error("No suitable XMLHttpRequest implementation found");
+        }
+      }
+      static fetchRequest(method, endPoint, headers, body, timeout, ontimeout, callback) {
+        let options = {
+          method,
+          headers,
+          body
+        };
+        let controller = null;
+        if (timeout) {
+          controller = new AbortController();
+          const _timeoutId = setTimeout(() => controller.abort(), timeout);
+          options.signal = controller.signal;
+        }
+        global2.fetch(endPoint, options).then((response) => response.text()).then((data) => this.parseJSON(data)).then((data) => callback && callback(data)).catch((err) => {
+          if (err.name === "AbortError" && ontimeout) {
+            ontimeout();
+          } else {
+            callback && callback(null);
+          }
+        });
+        return controller;
+      }
+      static xdomainRequest(req, method, endPoint, body, timeout, ontimeout, callback) {
+        req.timeout = timeout;
+        req.open(method, endPoint);
+        req.onload = () => {
+          let response = this.parseJSON(req.responseText);
+          callback && callback(response);
+        };
+        if (ontimeout) {
+          req.ontimeout = ontimeout;
+        }
+        req.onprogress = () => {
+        };
+        req.send(body);
+        return req;
+      }
+      static xhrRequest(req, method, endPoint, headers, body, timeout, ontimeout, callback) {
+        req.open(method, endPoint, true);
+        req.timeout = timeout;
+        for (let [key, value] of Object.entries(headers)) {
+          req.setRequestHeader(key, value);
+        }
+        req.onerror = () => callback && callback(null);
+        req.onreadystatechange = () => {
+          if (req.readyState === XHR_STATES.complete && callback) {
+            let response = this.parseJSON(req.responseText);
+            callback(response);
+          }
+        };
+        if (ontimeout) {
+          req.ontimeout = ontimeout;
+        }
+        req.send(body);
+        return req;
+      }
+      static parseJSON(resp) {
+        if (!resp || resp === "") {
+          return null;
+        }
+        try {
+          return JSON.parse(resp);
+        } catch {
+          console && console.log("failed to parse JSON response", resp);
+          return null;
+        }
+      }
+      static serialize(obj, parentKey) {
+        let queryStr = [];
+        for (var key in obj) {
+          if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+            continue;
+          }
+          let paramKey = parentKey ? `${parentKey}[${key}]` : key;
+          let paramVal = obj[key];
+          if (typeof paramVal === "object") {
+            queryStr.push(this.serialize(paramVal, paramKey));
+          } else {
+            queryStr.push(encodeURIComponent(paramKey) + "=" + encodeURIComponent(paramVal));
+          }
+        }
+        return queryStr.join("&");
+      }
+      static appendParams(url, params) {
+        if (Object.keys(params).length === 0) {
+          return url;
+        }
+        let prefix = url.match(/\?/) ? "&" : "?";
+        return `${url}${prefix}${this.serialize(params)}`;
+      }
+    };
+    var arrayBufferToBase64 = (buffer) => {
+      let binary = "";
+      let bytes = new Uint8Array(buffer);
+      let len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    };
+    var LongPoll = class {
+      constructor(endPoint, protocols) {
+        if (protocols && protocols.length === 2 && protocols[1].startsWith(AUTH_TOKEN_PREFIX)) {
+          this.authToken = atob(protocols[1].slice(AUTH_TOKEN_PREFIX.length));
+        }
+        this.endPoint = null;
+        this.token = null;
+        this.skipHeartbeat = true;
+        this.reqs = /* @__PURE__ */ new Set();
+        this.awaitingBatchAck = false;
+        this.currentBatch = null;
+        this.currentBatchTimer = null;
+        this.batchBuffer = [];
+        this.onopen = function() {
+        };
+        this.onerror = function() {
+        };
+        this.onmessage = function() {
+        };
+        this.onclose = function() {
+        };
+        this.pollEndpoint = this.normalizeEndpoint(endPoint);
+        this.readyState = SOCKET_STATES.connecting;
+        setTimeout(() => this.poll(), 0);
+      }
+      normalizeEndpoint(endPoint) {
+        return endPoint.replace("ws://", "http://").replace("wss://", "https://").replace(new RegExp("(.*)/" + TRANSPORTS.websocket), "$1/" + TRANSPORTS.longpoll);
+      }
+      endpointURL() {
+        return Ajax.appendParams(this.pollEndpoint, { token: this.token });
+      }
+      closeAndRetry(code, reason, wasClean) {
+        this.close(code, reason, wasClean);
+        this.readyState = SOCKET_STATES.connecting;
+      }
+      ontimeout() {
+        this.onerror("timeout");
+        this.closeAndRetry(1005, "timeout", false);
+      }
+      isActive() {
+        return this.readyState === SOCKET_STATES.open || this.readyState === SOCKET_STATES.connecting;
+      }
+      poll() {
+        const headers = { "Accept": "application/json" };
+        if (this.authToken) {
+          headers["X-Phoenix-AuthToken"] = this.authToken;
+        }
+        this.ajax("GET", headers, null, () => this.ontimeout(), (resp) => {
+          if (resp) {
+            var { status, token, messages } = resp;
+            if (status === 410 && this.token !== null) {
+              this.onerror(410);
+              this.closeAndRetry(3410, "session_gone", false);
+              return;
+            }
+            this.token = token;
+          } else {
+            status = 0;
+          }
+          switch (status) {
+            case 200:
+              messages.forEach((msg) => {
+                setTimeout(() => this.onmessage({ data: msg }), 0);
+              });
+              this.poll();
+              break;
+            case 204:
+              this.poll();
+              break;
+            case 410:
+              this.readyState = SOCKET_STATES.open;
+              this.onopen({});
+              this.poll();
+              break;
+            case 403:
+              this.onerror(403);
+              this.close(1008, "forbidden", false);
+              break;
+            case 0:
+            case 500:
+              this.onerror(500);
+              this.closeAndRetry(1011, "internal server error", 500);
+              break;
+            default:
+              throw new Error(`unhandled poll status ${status}`);
+          }
+        });
+      }
+      // we collect all pushes within the current event loop by
+      // setTimeout 0, which optimizes back-to-back procedural
+      // pushes against an empty buffer
+      send(body) {
+        if (typeof body !== "string") {
+          body = arrayBufferToBase64(body);
+        }
+        if (this.currentBatch) {
+          this.currentBatch.push(body);
+        } else if (this.awaitingBatchAck) {
+          this.batchBuffer.push(body);
+        } else {
+          this.currentBatch = [body];
+          this.currentBatchTimer = setTimeout(() => {
+            this.batchSend(this.currentBatch);
+            this.currentBatch = null;
+          }, 0);
+        }
+      }
+      batchSend(messages, offset = 0) {
+        this.awaitingBatchAck = true;
+        const next = offset + MAX_LONGPOLL_BATCH_SIZE;
+        const batch = messages.slice(offset, next);
+        this.ajax("POST", { "Content-Type": "application/x-ndjson" }, batch.join("\n"), () => this.onerror("timeout"), (resp) => {
+          if (!resp || resp.status !== 200) {
+            this.awaitingBatchAck = false;
+            this.onerror(resp && resp.status);
+            this.closeAndRetry(1011, "internal server error", false);
+          } else if (next < messages.length) {
+            this.batchSend(messages, next);
+          } else if (this.batchBuffer.length > 0) {
+            this.batchSend(this.batchBuffer);
+            this.batchBuffer = [];
+          } else {
+            this.awaitingBatchAck = false;
+          }
+        });
+      }
+      close(code, reason, wasClean) {
+        for (let req of this.reqs) {
+          req.abort();
+        }
+        this.readyState = SOCKET_STATES.closed;
+        let opts = Object.assign({ code: 1e3, reason: void 0, wasClean: true }, { code, reason, wasClean });
+        this.batchBuffer = [];
+        clearTimeout(this.currentBatchTimer);
+        this.currentBatchTimer = null;
+        if (typeof CloseEvent !== "undefined") {
+          this.onclose(new CloseEvent("close", opts));
+        } else {
+          this.onclose(opts);
+        }
+      }
+      ajax(method, headers, body, onCallerTimeout, callback) {
+        let req;
+        let ontimeout = () => {
+          this.reqs.delete(req);
+          onCallerTimeout();
+        };
+        req = Ajax.request(method, this.endpointURL(), headers, body, this.timeout, ontimeout, (resp) => {
+          this.reqs.delete(req);
+          if (this.isActive()) {
+            callback(resp);
+          }
+        });
+        this.reqs.add(req);
+      }
+    };
+    var Presence = class _Presence {
+      /**
+       * Initializes the Presence
+       * @param {Channel} channel - The Channel
+       * @param {PresenceOptions} [opts] - The options, for example `{events: {state: "state", diff: "diff"}}`
+       */
+      constructor(channel, opts = {}) {
+        let events = opts.events || /** @type {PresenceEvents} */
+        { state: "presence_state", diff: "presence_diff" };
+        this.state = /* @__PURE__ */ Object.create(null);
+        this.pendingDiffs = [];
+        this.channel = channel;
+        this.joinRef = null;
+        this.caller = {
+          onJoin: function() {
+          },
+          onLeave: function() {
+          },
+          onSync: function() {
+          }
+        };
+        this.channel.on(events.state, (newState) => {
+          let { onJoin, onLeave, onSync } = this.caller;
+          this.joinRef = this.channel.joinRef();
+          this.state = _Presence.syncState(this.state, newState, onJoin, onLeave);
+          this.pendingDiffs.forEach((diff) => {
+            this.state = _Presence.syncDiff(this.state, diff, onJoin, onLeave);
+          });
+          this.pendingDiffs = [];
+          onSync();
+        });
+        this.channel.on(events.diff, (diff) => {
+          let { onJoin, onLeave, onSync } = this.caller;
+          if (this.inPendingSyncState()) {
+            this.pendingDiffs.push(diff);
+          } else {
+            this.state = _Presence.syncDiff(this.state, diff, onJoin, onLeave);
+            onSync();
+          }
+        });
+      }
+      /**
+       * @param {PresenceOnJoin} callback
+       */
+      onJoin(callback) {
+        this.caller.onJoin = callback;
+      }
+      /**
+       * @param {PresenceOnLeave} callback
+       */
+      onLeave(callback) {
+        this.caller.onLeave = callback;
+      }
+      /**
+       * @param {PresenceOnSync} callback
+       */
+      onSync(callback) {
+        this.caller.onSync = callback;
+      }
+      /**
+       * Returns the array of presences, with selected metadata.
+       *
+       * @template [T=PresenceState]
+       * @param {((key: string, obj: PresenceState) => T)} [by]
+       *
+       * @returns {T[]}
+       */
+      list(by) {
+        return _Presence.list(this.state, by);
+      }
+      inPendingSyncState() {
+        return !this.joinRef || this.joinRef !== this.channel.joinRef();
+      }
+      // lower-level public static API
+      /**
+       * Used to sync the list of presences on the server
+       * with the client's state. An optional `onJoin` and `onLeave` callback can
+       * be provided to react to changes in the client's local presences across
+       * disconnects and reconnects with the server.
+       *
+       * @param {Record<string, PresenceState>} currentState
+       * @param {Record<string, PresenceState>} newState
+       * @param {PresenceOnJoin} onJoin
+       * @param {PresenceOnLeave} onLeave
+       *
+       * @returns {Record<string, PresenceState>}
+       */
+      static syncState(currentState, newState, onJoin, onLeave) {
+        let state = this.toNullProtoObj(this.clone(currentState));
+        newState = this.toNullProtoObj(newState);
+        let joins = /* @__PURE__ */ Object.create(null);
+        let leaves = /* @__PURE__ */ Object.create(null);
+        this.map(state, (key, presence) => {
+          if (!newState[key]) {
+            leaves[key] = presence;
+          }
+        });
+        this.map(newState, (key, newPresence) => {
+          let currentPresence = state[key];
+          if (currentPresence) {
+            let newRefs = newPresence.metas.map((m) => m.phx_ref);
+            let curRefs = currentPresence.metas.map((m) => m.phx_ref);
+            let joinedMetas = newPresence.metas.filter((m) => curRefs.indexOf(m.phx_ref) < 0);
+            let leftMetas = currentPresence.metas.filter((m) => newRefs.indexOf(m.phx_ref) < 0);
+            if (joinedMetas.length > 0) {
+              joins[key] = newPresence;
+              joins[key].metas = joinedMetas;
+            }
+            if (leftMetas.length > 0) {
+              leaves[key] = this.clone(currentPresence);
+              leaves[key].metas = leftMetas;
+            }
+          } else {
+            joins[key] = newPresence;
+          }
+        });
+        return this.syncDiff(state, { joins, leaves }, onJoin, onLeave);
+      }
+      /**
+       *
+       * Used to sync a diff of presence join and leave
+       * events from the server, as they happen. Like `syncState`, `syncDiff`
+       * accepts optional `onJoin` and `onLeave` callbacks to react to a user
+       * joining or leaving from a device.
+       *
+       * @param {Record<string, PresenceState>} state
+       * @param {PresenceDiff} diff
+       * @param {PresenceOnJoin} onJoin
+       * @param {PresenceOnLeave} onLeave
+       *
+       * @returns {Record<string, PresenceState>}
+       */
+      static syncDiff(state, diff, onJoin, onLeave) {
+        state = this.toNullProtoObj(state);
+        let { joins, leaves } = this.clone(diff);
+        if (!onJoin) {
+          onJoin = function() {
+          };
+        }
+        if (!onLeave) {
+          onLeave = function() {
+          };
+        }
+        this.map(joins, (key, newPresence) => {
+          let currentPresence = state[key];
+          state[key] = this.clone(newPresence);
+          if (currentPresence) {
+            let joinedRefs = state[key].metas.map((m) => m.phx_ref);
+            let curMetas = currentPresence.metas.filter((m) => joinedRefs.indexOf(m.phx_ref) < 0);
+            state[key].metas.unshift(...curMetas);
+          }
+          onJoin(key, currentPresence, newPresence);
+        });
+        this.map(leaves, (key, leftPresence) => {
+          let currentPresence = state[key];
+          if (!currentPresence) {
+            return;
+          }
+          let refsToRemove = leftPresence.metas.map((m) => m.phx_ref);
+          currentPresence.metas = currentPresence.metas.filter((p) => {
+            return refsToRemove.indexOf(p.phx_ref) < 0;
+          });
+          onLeave(key, currentPresence, leftPresence);
+          if (currentPresence.metas.length === 0) {
+            delete state[key];
+          }
+        });
+        return state;
+      }
+      /**
+       * Returns the array of presences, with selected metadata.
+       *
+       * @template [T=PresenceState]
+       * @param {Record<string, PresenceState>} presences
+       * @param {((key: string, obj: PresenceState) => T)} [chooser]
+       *
+       * @returns {T[]}
+       */
+      static list(presences, chooser) {
+        if (!chooser) {
+          chooser = function(key, pres) {
+            return pres;
+          };
+        }
+        return this.map(presences, (key, presence) => {
+          return chooser(key, presence);
+        });
+      }
+      // private
+      /**
+      * @template T
+      * @param {Record<string, PresenceState>} obj
+      * @param {(key: string, obj: PresenceState) => T} func
+      */
+      static map(obj, func) {
+        return Object.getOwnPropertyNames(obj).map((key) => func(key, obj[key]));
+      }
+      // Presence keys are chosen on the server and may collide with
+      // Object.prototype properties ("__proto__", "constructor", ...), so any
+      // object indexed by presence key must not have a prototype chain
+      //
+      // TODO: replace the null-prototype objects with Maps in Phoenix 2.0
+      // (breaking change for the lower-level static API)
+      static toNullProtoObj(obj) {
+        if (Object.getPrototypeOf(obj) === null) {
+          return obj;
+        }
+        let cleaned = /* @__PURE__ */ Object.create(null);
+        Object.getOwnPropertyNames(obj).forEach((key) => {
+          cleaned[key] = obj[key];
+        });
+        return cleaned;
+      }
+      /**
+      * @template T
+      * @param {T} obj
+      * @returns {T}
+      */
+      static clone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+    };
+    var serializer_default = {
+      HEADER_LENGTH: 1,
+      META_LENGTH: 4,
+      KINDS: { push: 0, reply: 1, broadcast: 2 },
+      /**
+      * @template T
+      * @param {Message<Record<string, any>>} msg
+      * @param {(msg: ArrayBuffer | string) => T} callback
+      * @returns {T}
+      */
+      encode(msg, callback) {
+        if (msg.payload.constructor === ArrayBuffer) {
+          return callback(this.binaryEncode(msg));
+        } else {
+          let payload = [msg.join_ref, msg.ref, msg.topic, msg.event, msg.payload];
+          return callback(JSON.stringify(payload));
+        }
+      },
+      /**
+      * @template T
+      * @param {ArrayBuffer | string} rawPayload
+      * @param {(msg: Message<unknown>) => T} callback
+      * @returns {T}
+      */
+      decode(rawPayload, callback) {
+        if (rawPayload.constructor === ArrayBuffer) {
+          return callback(this.binaryDecode(rawPayload));
+        } else {
+          let [join_ref, ref, topic, event, payload] = JSON.parse(rawPayload);
+          return callback({ join_ref, ref, topic, event, payload });
+        }
+      },
+      /** @private */
+      binaryEncode(message) {
+        let { join_ref, ref, event, topic, payload } = message;
+        let encoder = new TextEncoder();
+        let joinRefBytes = encoder.encode(join_ref);
+        let refBytes = encoder.encode(ref);
+        let topicBytes = encoder.encode(topic);
+        let eventBytes = encoder.encode(event);
+        this.assertFieldSize(joinRefBytes.byteLength, "join_ref");
+        this.assertFieldSize(refBytes.byteLength, "ref");
+        this.assertFieldSize(topicBytes.byteLength, "topic");
+        this.assertFieldSize(eventBytes.byteLength, "event");
+        let metaLength = this.META_LENGTH + joinRefBytes.byteLength + refBytes.byteLength + topicBytes.byteLength + eventBytes.byteLength;
+        let header = new ArrayBuffer(this.HEADER_LENGTH + metaLength);
+        let headerBytes = new Uint8Array(header);
+        let view = new DataView(header);
+        let offset = 0;
+        view.setUint8(offset++, this.KINDS.push);
+        view.setUint8(offset++, joinRefBytes.byteLength);
+        view.setUint8(offset++, refBytes.byteLength);
+        view.setUint8(offset++, topicBytes.byteLength);
+        view.setUint8(offset++, eventBytes.byteLength);
+        headerBytes.set(joinRefBytes, offset);
+        offset += joinRefBytes.byteLength;
+        headerBytes.set(refBytes, offset);
+        offset += refBytes.byteLength;
+        headerBytes.set(topicBytes, offset);
+        offset += topicBytes.byteLength;
+        headerBytes.set(eventBytes, offset);
+        offset += eventBytes.byteLength;
+        var combined = new Uint8Array(header.byteLength + payload.byteLength);
+        combined.set(headerBytes, 0);
+        combined.set(new Uint8Array(payload), header.byteLength);
+        return combined.buffer;
+      },
+      assertFieldSize(size, name) {
+        if (size > 255) {
+          throw new Error(`unable to convert ${name} to binary: must be less than or equal to 255 bytes, but is ${size} bytes`);
+        }
+      },
+      /**
+      * @private
+      */
+      binaryDecode(buffer) {
+        let view = new DataView(buffer);
+        let kind = view.getUint8(0);
+        let decoder = new TextDecoder();
+        switch (kind) {
+          case this.KINDS.push:
+            return this.decodePush(buffer, view, decoder);
+          case this.KINDS.reply:
+            return this.decodeReply(buffer, view, decoder);
+          case this.KINDS.broadcast:
+            return this.decodeBroadcast(buffer, view, decoder);
+        }
+      },
+      /** @private */
+      decodePush(buffer, view, decoder) {
+        let joinRefSize = view.getUint8(1);
+        let topicSize = view.getUint8(2);
+        let eventSize = view.getUint8(3);
+        let offset = this.HEADER_LENGTH + this.META_LENGTH - 1;
+        let joinRef = decoder.decode(buffer.slice(offset, offset + joinRefSize));
+        offset = offset + joinRefSize;
+        let topic = decoder.decode(buffer.slice(offset, offset + topicSize));
+        offset = offset + topicSize;
+        let event = decoder.decode(buffer.slice(offset, offset + eventSize));
+        offset = offset + eventSize;
+        let data = buffer.slice(offset, buffer.byteLength);
+        return { join_ref: joinRef, ref: null, topic, event, payload: data };
+      },
+      /** @private */
+      decodeReply(buffer, view, decoder) {
+        let joinRefSize = view.getUint8(1);
+        let refSize = view.getUint8(2);
+        let topicSize = view.getUint8(3);
+        let eventSize = view.getUint8(4);
+        let offset = this.HEADER_LENGTH + this.META_LENGTH;
+        let joinRef = decoder.decode(buffer.slice(offset, offset + joinRefSize));
+        offset = offset + joinRefSize;
+        let ref = decoder.decode(buffer.slice(offset, offset + refSize));
+        offset = offset + refSize;
+        let topic = decoder.decode(buffer.slice(offset, offset + topicSize));
+        offset = offset + topicSize;
+        let event = decoder.decode(buffer.slice(offset, offset + eventSize));
+        offset = offset + eventSize;
+        let data = buffer.slice(offset, buffer.byteLength);
+        let payload = { status: event, response: data };
+        return { join_ref: joinRef, ref, topic, event: CHANNEL_EVENTS.reply, payload };
+      },
+      /** @private */
+      decodeBroadcast(buffer, view, decoder) {
+        let topicSize = view.getUint8(1);
+        let eventSize = view.getUint8(2);
+        let offset = this.HEADER_LENGTH + 2;
+        let topic = decoder.decode(buffer.slice(offset, offset + topicSize));
+        offset = offset + topicSize;
+        let event = decoder.decode(buffer.slice(offset, offset + eventSize));
+        offset = offset + eventSize;
+        let data = buffer.slice(offset, buffer.byteLength);
+        return { join_ref: null, ref: null, topic, event, payload: data };
+      }
+    };
+    var Socket = class {
+      /** Initializes the Socket *
+       *
+       * For IE8 support use an ES5-shim (https://github.com/es-shims/es5-shim)
+       *
+       * @constructor
+       * @param {string} endPoint - The string WebSocket endpoint, ie, `"ws://example.com/socket"`,
+       *                                               `"wss://example.com"`
+       *                                               `"/socket"` (inherited host & protocol)
+       * @param {SocketOptions} [opts] - Optional configuration
+       */
+      constructor(endPoint, opts = {}) {
+        this.stateChangeCallbacks = { open: [], close: [], error: [], message: [] };
+        this.channels = [];
+        this.sendBuffer = [];
+        this.ref = 0;
+        this.fallbackRef = null;
+        this.timeout = opts.timeout || DEFAULT_TIMEOUT;
+        this.transport = opts.transport || global2.WebSocket || LongPoll;
+        this.conn = void 0;
+        this.primaryPassedHealthCheck = false;
+        this.longPollFallbackMs = opts.longPollFallbackMs;
+        this.fallbackTimer = null;
+        let envSessionStorage = null;
+        try {
+          envSessionStorage = global2 && global2.sessionStorage;
+        } catch {
+        }
+        this.sessionStore = opts.sessionStorage || envSessionStorage;
+        this.establishedConnections = 0;
+        this.defaultEncoder = serializer_default.encode.bind(serializer_default);
+        this.defaultDecoder = serializer_default.decode.bind(serializer_default);
+        this.closeWasClean = true;
+        this.disconnecting = false;
+        this.binaryType = opts.binaryType || "arraybuffer";
+        this.connectClock = 1;
+        this.pageHidden = false;
+        this.encode = void 0;
+        this.decode = void 0;
+        if (this.transport !== LongPoll) {
+          this.encode = opts.encode || this.defaultEncoder;
+          this.decode = opts.decode || this.defaultDecoder;
+        } else {
+          this.encode = this.defaultEncoder;
+          this.decode = this.defaultDecoder;
+        }
+        let awaitingConnectionOnPageShow = null;
+        if (phxWindow && phxWindow.addEventListener) {
+          phxWindow.addEventListener("pagehide", (_e) => {
+            if (this.conn) {
+              this.disconnect();
+              awaitingConnectionOnPageShow = this.connectClock;
+            }
+          });
+          phxWindow.addEventListener("pageshow", (_e) => {
+            if (awaitingConnectionOnPageShow === this.connectClock) {
+              awaitingConnectionOnPageShow = null;
+              this.connect();
+            }
+          });
+          phxWindow.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+              this.pageHidden = true;
+            } else {
+              this.pageHidden = false;
+              if (!this.isConnected() && !this.closeWasClean) {
+                this.teardown(() => this.connect());
+              }
+            }
+          });
+        }
+        this.heartbeatIntervalMs = opts.heartbeatIntervalMs || 3e4;
+        this.autoSendHeartbeat = opts.autoSendHeartbeat ?? true;
+        this.heartbeatCallback = opts.heartbeatCallback ?? (() => {
+        });
+        this.rejoinAfterMs = (tries) => {
+          if (opts.rejoinAfterMs) {
+            return opts.rejoinAfterMs(tries);
+          } else {
+            return [1e3, 2e3, 5e3][tries - 1] || 1e4;
+          }
+        };
+        this.reconnectAfterMs = (tries) => {
+          if (opts.reconnectAfterMs) {
+            return opts.reconnectAfterMs(tries);
+          } else {
+            return [10, 50, 100, 150, 200, 250, 500, 1e3, 2e3][tries - 1] || 5e3;
+          }
+        };
+        this.logger = opts.logger || null;
+        if (!this.logger && opts.debug) {
+          this.logger = (kind, msg, data) => {
+            console.log(`${kind}: ${msg}`, data);
+          };
+        }
+        this.longpollerTimeout = opts.longpollerTimeout || 2e4;
+        this.params = closure(opts.params || {});
+        this.endPoint = `${endPoint}/${TRANSPORTS.websocket}`;
+        this.vsn = opts.vsn || DEFAULT_VSN;
+        this.heartbeatTimeoutTimer = null;
+        this.heartbeatTimer = null;
+        this.heartbeatSentAt = null;
+        this.pendingHeartbeatRef = null;
+        this.reconnectTimer = new Timer(() => {
+          if (this.pageHidden) {
+            this.log("Not reconnecting as page is hidden!");
+            this.teardown();
+            return;
+          }
+          this.teardown(async () => {
+            if (opts.beforeReconnect) await opts.beforeReconnect();
+            this.connect();
+          });
+        }, this.reconnectAfterMs);
+        this.authToken = opts.authToken && closure(opts.authToken);
+      }
+      /**
+       * Returns the LongPoll transport reference
+       */
+      getLongPollTransport() {
+        return LongPoll;
+      }
+      /**
+       * Disconnects and replaces the active transport
+       *
+       * @param {SocketTransport} newTransport - The new transport class to instantiate
+       *
+       */
+      replaceTransport(newTransport) {
+        this.connectClock++;
+        this.closeWasClean = true;
+        clearTimeout(this.fallbackTimer);
+        this.reconnectTimer.reset();
+        if (this.conn) {
+          this.conn.close();
+          this.conn = null;
+        }
+        this.transport = newTransport;
+      }
+      /**
+       * Returns the socket protocol
+       *
+       * @returns {"wss" | "ws"}
+       */
+      protocol() {
+        return location.protocol.match(/^https/) ? "wss" : "ws";
+      }
+      /**
+       * The fully qualified socket url
+       *
+       * @returns {string}
+       */
+      endPointURL() {
+        let uri = Ajax.appendParams(
+          Ajax.appendParams(this.endPoint, this.params()),
+          { vsn: this.vsn }
+        );
+        if (uri.charAt(0) !== "/") {
+          return uri;
+        }
+        if (uri.charAt(1) === "/") {
+          return `${this.protocol()}:${uri}`;
+        }
+        return `${this.protocol()}://${location.host}${uri}`;
+      }
+      /**
+       * Disconnects the socket
+       *
+       * See https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes for valid status codes.
+       *
+       * @param {() => void} [callback] - Optional callback which is called after socket is disconnected.
+       * @param {number} [code] - A status code for disconnection (Optional).
+       * @param {string} [reason] - A textual description of the reason to disconnect. (Optional)
+       */
+      disconnect(callback, code, reason) {
+        this.connectClock++;
+        this.disconnecting = true;
+        this.closeWasClean = true;
+        clearTimeout(this.fallbackTimer);
+        this.reconnectTimer.reset();
+        this.teardown(() => {
+          this.disconnecting = false;
+          callback && callback();
+        }, code, reason);
+      }
+      /**
+       * @param {Params} [params] - [DEPRECATED] The params to send when connecting, for example `{user_id: userToken}`
+       *
+       * Passing params to connect is deprecated; pass them in the Socket constructor instead:
+       * `new Socket("/socket", {params: {user_id: userToken}})`.
+       */
+      connect(params) {
+        if (params) {
+          console && console.log("passing params to connect is deprecated. Instead pass :params to the Socket constructor");
+          this.params = closure(params);
+        }
+        if (this.conn && !this.disconnecting) {
+          return;
+        }
+        if (this.longPollFallbackMs && this.transport !== LongPoll) {
+          this.connectWithFallback(LongPoll, this.longPollFallbackMs);
+        } else {
+          this.transportConnect();
+        }
+      }
+      /**
+       * Logs the message. Override `this.logger` for specialized logging. noops by default
+       * @param {string} kind
+       * @param {string} msg
+       * @param {Object} data
+       */
+      log(kind, msg, data) {
+        this.logger && this.logger(kind, msg, data);
+      }
+      /**
+       * Returns true if a logger has been set on this socket.
+       */
+      hasLogger() {
+        return this.logger !== null;
+      }
+      /**
+       * Registers callbacks for connection open events
+       *
+       * @example socket.onOpen(function(){ console.info("the socket was opened") })
+       *
+       * @param {SocketOnOpen} callback
+       */
+      onOpen(callback) {
+        let ref = this.makeRef();
+        this.stateChangeCallbacks.open.push([ref, callback]);
+        return ref;
+      }
+      /**
+       * Registers callbacks for connection close events
+       * @param {SocketOnClose} callback
+       * @returns {string}
+       */
+      onClose(callback) {
+        let ref = this.makeRef();
+        this.stateChangeCallbacks.close.push([ref, callback]);
+        return ref;
+      }
+      /**
+       * Registers callbacks for connection error events
+       *
+       * @example socket.onError(function(error){ alert("An error occurred") })
+       *
+       * @param {SocketOnError} callback
+       * @returns {string}
+       */
+      onError(callback) {
+        let ref = this.makeRef();
+        this.stateChangeCallbacks.error.push([ref, callback]);
+        return ref;
+      }
+      /**
+       * Registers callbacks for connection message events
+       * @param {SocketOnMessage} callback
+       * @returns {string}
+       */
+      onMessage(callback) {
+        let ref = this.makeRef();
+        this.stateChangeCallbacks.message.push([ref, callback]);
+        return ref;
+      }
+      /**
+       * Sets a callback that receives lifecycle events for internal heartbeat messages.
+       * Useful for instrumenting connection health (e.g. sent/ok/timeout/disconnected).
+       * @param {HeartbeatCallback} callback
+       */
+      onHeartbeat(callback) {
+        this.heartbeatCallback = callback;
+      }
+      /**
+       * Pings the server and invokes the callback with the RTT in milliseconds
+       * @param {(timeDelta: number) => void} callback
+       *
+       * Returns true if the ping was pushed or false if unable to be pushed.
+       */
+      ping(callback) {
+        if (!this.isConnected()) {
+          return false;
+        }
+        let ref = this.makeRef();
+        let startTime = Date.now();
+        this.push({ topic: "phoenix", event: "heartbeat", payload: {}, ref });
+        let onMsgRef = this.onMessage((msg) => {
+          if (msg.ref === ref) {
+            this.off([onMsgRef]);
+            callback(Date.now() - startTime);
+          }
+        });
+        return true;
+      }
+      /**
+       * @private
+       *
+       * @param {Function}
+       */
+      transportName(transport) {
+        switch (transport) {
+          case LongPoll:
+            return "LongPoll";
+          default:
+            return transport.name;
+        }
+      }
+      /**
+       * @private
+       */
+      transportConnect() {
+        this.connectClock++;
+        this.closeWasClean = false;
+        let protocols = void 0;
+        if (this.authToken) {
+          protocols = ["phoenix", `${AUTH_TOKEN_PREFIX}${btoa(this.authToken()).replace(/=/g, "")}`];
+        }
+        this.conn = new this.transport(this.endPointURL(), protocols);
+        this.conn.binaryType = this.binaryType;
+        this.conn.timeout = this.longpollerTimeout;
+        this.conn.onopen = () => this.onConnOpen();
+        this.conn.onerror = (error) => this.onConnError(error);
+        this.conn.onmessage = (event) => this.onConnMessage(event);
+        this.conn.onclose = (event) => this.onConnClose(event);
+      }
+      getSession(key) {
+        return this.sessionStore && this.sessionStore.getItem(key);
+      }
+      storeSession(key, val) {
+        this.sessionStore && this.sessionStore.setItem(key, val);
+      }
+      connectWithFallback(fallbackTransport, fallbackThreshold = 2500) {
+        clearTimeout(this.fallbackTimer);
+        let established = false;
+        let primaryTransport = true;
+        let openRef, errorRef;
+        let fallbackTransportName = this.transportName(fallbackTransport);
+        let fallback = (reason) => {
+          this.log("transport", `falling back to ${fallbackTransportName}...`, reason);
+          this.off([openRef, errorRef]);
+          primaryTransport = false;
+          this.replaceTransport(fallbackTransport);
+          this.transportConnect();
+        };
+        if (this.getSession(`phx:fallback:${fallbackTransportName}`)) {
+          return fallback("memorized");
+        }
+        this.fallbackTimer = setTimeout(fallback, fallbackThreshold);
+        errorRef = this.onError((reason) => {
+          this.log("transport", "error", reason);
+          if (primaryTransport && !established) {
+            clearTimeout(this.fallbackTimer);
+            fallback(reason);
+          }
+        });
+        if (this.fallbackRef) {
+          this.off([this.fallbackRef]);
+        }
+        this.fallbackRef = this.onOpen(() => {
+          established = true;
+          if (!primaryTransport) {
+            let fallbackTransportName2 = this.transportName(fallbackTransport);
+            if (!this.primaryPassedHealthCheck) {
+              this.storeSession(`phx:fallback:${fallbackTransportName2}`, "true");
+            }
+            return this.log("transport", `established ${fallbackTransportName2} fallback`);
+          }
+          clearTimeout(this.fallbackTimer);
+          this.fallbackTimer = setTimeout(fallback, fallbackThreshold);
+          this.ping((rtt) => {
+            this.log("transport", "connected to primary after", rtt);
+            this.primaryPassedHealthCheck = true;
+            clearTimeout(this.fallbackTimer);
+          });
+        });
+        this.transportConnect();
+      }
+      clearHeartbeats() {
+        clearTimeout(this.heartbeatTimer);
+        clearTimeout(this.heartbeatTimeoutTimer);
+      }
+      onConnOpen() {
+        if (this.hasLogger()) this.log("transport", `connected to ${this.endPointURL()}`);
+        this.closeWasClean = false;
+        this.disconnecting = false;
+        this.establishedConnections++;
+        this.flushSendBuffer();
+        this.reconnectTimer.reset();
+        if (this.autoSendHeartbeat) {
+          this.resetHeartbeat();
+        }
+        this.triggerStateCallbacks("open");
+      }
+      /**
+       * @private
+       */
+      heartbeatTimeout() {
+        if (this.pendingHeartbeatRef) {
+          this.pendingHeartbeatRef = null;
+          this.heartbeatSentAt = null;
+          if (this.hasLogger()) {
+            this.log("transport", "heartbeat timeout. Attempting to re-establish connection");
+          }
+          try {
+            this.heartbeatCallback("timeout");
+          } catch (e) {
+            this.log("error", "error in heartbeat callback", e);
+          }
+          this.triggerChanError(new Error("heartbeat timeout"));
+          this.closeWasClean = false;
+          this.teardown(() => this.reconnectTimer.scheduleTimeout(), WS_CLOSE_NORMAL, "heartbeat timeout");
+        }
+      }
+      resetHeartbeat() {
+        if (this.conn && this.conn.skipHeartbeat) {
+          return;
+        }
+        this.pendingHeartbeatRef = null;
+        this.clearHeartbeats();
+        this.heartbeatTimer = setTimeout(() => this.sendHeartbeat(), this.heartbeatIntervalMs);
+      }
+      teardown(callback, code, reason) {
+        if (!this.conn) {
+          return callback && callback();
+        }
+        const connToClose = this.conn;
+        this.waitForBufferDone(connToClose, () => {
+          if (code) {
+            connToClose.close(code, reason || "");
+          } else {
+            connToClose.close();
+          }
+          this.waitForSocketClosed(connToClose, () => {
+            if (this.conn === connToClose) {
+              this.conn.onopen = function() {
+              };
+              this.conn.onerror = function() {
+              };
+              this.conn.onmessage = function() {
+              };
+              this.conn.onclose = function() {
+              };
+              this.conn = null;
+            }
+            callback && callback();
+          });
+        });
+      }
+      waitForBufferDone(conn, callback, tries = 1) {
+        if (tries === 5 || !conn.bufferedAmount) {
+          callback();
+          return;
+        }
+        setTimeout(() => {
+          this.waitForBufferDone(conn, callback, tries + 1);
+        }, 150 * tries);
+      }
+      waitForSocketClosed(conn, callback, tries = 1) {
+        if (tries === 5 || conn.readyState === SOCKET_STATES.closed) {
+          callback();
+          return;
+        }
+        setTimeout(() => {
+          this.waitForSocketClosed(conn, callback, tries + 1);
+        }, 150 * tries);
+      }
+      /**
+      * @param {CloseEvent} event
+      */
+      onConnClose(event) {
+        if (this.conn) this.conn.onclose = () => {
+        };
+        if (this.hasLogger()) this.log("transport", "close", event);
+        this.triggerChanError(event);
+        this.clearHeartbeats();
+        if (!this.closeWasClean) {
+          this.reconnectTimer.scheduleTimeout();
+        }
+        this.triggerStateCallbacks("close", event);
+      }
+      /**
+       * @private
+       * @param {Event} error
+       */
+      onConnError(error) {
+        if (this.hasLogger()) this.log("transport", "error", error);
+        let transportBefore = this.transport;
+        let establishedBefore = this.establishedConnections;
+        this.triggerStateCallbacks("error", error, transportBefore, establishedBefore);
+        if (transportBefore === this.transport || establishedBefore > 0) {
+          this.triggerChanError(error);
+        }
+      }
+      /**
+       * @private
+       * @param {unknown} [reason] underlying close/error event forwarded to channel error listeners
+       */
+      triggerChanError(reason) {
+        this.channels.forEach((channel) => {
+          if (!(channel.isErrored() || channel.isLeaving() || channel.isClosed())) {
+            channel.trigger(CHANNEL_EVENTS.error, reason);
+          }
+        });
+      }
+      /**
+       * @returns {string}
+       */
+      connectionState() {
+        switch (this.conn && this.conn.readyState) {
+          case SOCKET_STATES.connecting:
+            return "connecting";
+          case SOCKET_STATES.open:
+            return "open";
+          case SOCKET_STATES.closing:
+            return "closing";
+          default:
+            return "closed";
+        }
+      }
+      /**
+       * @returns {boolean}
+       */
+      isConnected() {
+        return this.connectionState() === "open";
+      }
+      /**
+       *
+       * @param {Channel} channel
+       */
+      remove(channel) {
+        this.off(channel.stateChangeRefs);
+        this.channels = this.channels.filter((c) => c !== channel);
+      }
+      /**
+       * Removes `onOpen`, `onClose`, `onError,` and `onMessage` registrations.
+       *
+       * @param {string[]} refs - list of refs returned by calls to
+       *                 `onOpen`, `onClose`, `onError,` and `onMessage`
+       */
+      off(refs) {
+        for (let key in this.stateChangeCallbacks) {
+          this.stateChangeCallbacks[key] = this.stateChangeCallbacks[key].filter(([ref]) => {
+            return refs.indexOf(ref) === -1;
+          });
+        }
+      }
+      /**
+       * Initiates a new channel for the given topic
+       *
+       * @param {string} topic
+       * @param {Params | (() => Params)} [chanParams]- Parameters for the channel
+       * @returns {Channel}
+       */
+      channel(topic, chanParams = {}) {
+        let chan = new Channel(topic, chanParams, this);
+        this.channels.push(chan);
+        return chan;
+      }
+      /**
+       * @param {Message<Record<string, any>>} data
+       */
+      push(data) {
+        if (this.hasLogger()) {
+          let { topic, event, payload, ref, join_ref } = data;
+          this.log("push", `${topic} ${event} (${join_ref}, ${ref})`, payload);
+        }
+        if (this.isConnected()) {
+          this.encode(data, (result) => this.conn.send(result));
+        } else {
+          this.sendBuffer.push(() => this.encode(data, (result) => this.conn.send(result)));
+        }
+      }
+      /**
+       * Return the next message ref, accounting for overflows
+       * @returns {string}
+       */
+      makeRef() {
+        let newRef = this.ref + 1;
+        if (newRef === this.ref) {
+          this.ref = 0;
+        } else {
+          this.ref = newRef;
+        }
+        return this.ref.toString();
+      }
+      sendHeartbeat() {
+        if (!this.isConnected()) {
+          try {
+            this.heartbeatCallback("disconnected");
+          } catch (e) {
+            this.log("error", "error in heartbeat callback", e);
+          }
+          return;
+        }
+        if (this.pendingHeartbeatRef) {
+          this.heartbeatTimeout();
+          return;
+        }
+        this.pendingHeartbeatRef = this.makeRef();
+        this.heartbeatSentAt = Date.now();
+        this.push({ topic: "phoenix", event: "heartbeat", payload: {}, ref: this.pendingHeartbeatRef });
+        try {
+          this.heartbeatCallback("sent");
+        } catch (e) {
+          this.log("error", "error in heartbeat callback", e);
+        }
+        this.heartbeatTimeoutTimer = setTimeout(() => this.heartbeatTimeout(), this.heartbeatIntervalMs);
+      }
+      flushSendBuffer() {
+        if (this.isConnected() && this.sendBuffer.length > 0) {
+          this.sendBuffer.forEach((callback) => callback());
+          this.sendBuffer = [];
+        }
+      }
+      /**
+      * @param {MessageEvent<any>} rawMessage
+      */
+      onConnMessage(rawMessage) {
+        this.decode(rawMessage.data, (msg) => {
+          let { topic, event, payload, ref, join_ref } = msg;
+          if (ref && ref === this.pendingHeartbeatRef) {
+            const latency = this.heartbeatSentAt ? Date.now() - this.heartbeatSentAt : void 0;
+            this.clearHeartbeats();
+            try {
+              this.heartbeatCallback(payload.status === "ok" ? "ok" : "error", latency);
+            } catch (e) {
+              this.log("error", "error in heartbeat callback", e);
+            }
+            this.pendingHeartbeatRef = null;
+            this.heartbeatSentAt = null;
+            if (this.autoSendHeartbeat) {
+              this.heartbeatTimer = setTimeout(() => this.sendHeartbeat(), this.heartbeatIntervalMs);
+            }
+          }
+          if (this.hasLogger()) this.log("receive", `${payload.status || ""} ${topic} ${event} ${ref && "(" + ref + ")" || ""}`.trim(), payload);
+          for (let i = 0; i < this.channels.length; i++) {
+            const channel = this.channels[i];
+            if (!channel.isMember(topic, event, payload, join_ref)) {
+              continue;
+            }
+            channel.trigger(event, payload, ref, join_ref);
+          }
+          this.triggerStateCallbacks("message", msg);
+        });
+      }
+      /**
+       * @private
+       * @template {keyof SocketStateChangeCallbacks} K
+       * @param {K} event
+       * @param {...Parameters<SocketStateChangeCallbacks[K][number][1]>} args
+       * @returns {void}
+       */
+      triggerStateCallbacks(event, ...args) {
+        try {
+          this.stateChangeCallbacks[event].forEach(([_, callback]) => {
+            try {
+              callback(...args);
+            } catch (e) {
+              this.log("error", `error in ${event} callback`, e);
+            }
+          });
+        } catch (e) {
+          this.log("error", `error triggering ${event} callbacks`, e);
+        }
+      }
+      leaveOpenTopic(topic) {
+        let dupChannel = this.channels.find((c) => c.topic === topic && (c.isJoined() || c.isJoining()));
+        if (dupChannel) {
+          if (this.hasLogger()) this.log("transport", `leaving duplicate topic "${topic}"`);
+          dupChannel.leave();
+        }
+      }
+    };
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+var require_presenceAdapter = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var phoenix_1 = require_phoenix_cjs();
+    var PresenceAdapter = class _PresenceAdapter {
+      constructor(channel, opts) {
+        const phoenixOptions = phoenixPresenceOptions(opts);
+        this.presence = new phoenix_1.Presence(channel.getChannel(), phoenixOptions);
+        this.presence.onJoin((key, currentPresence, newPresence) => {
+          const onJoinPayload = _PresenceAdapter.onJoinPayload(key, currentPresence, newPresence);
+          channel.getChannel().trigger("presence", onJoinPayload);
+        });
+        this.presence.onLeave((key, currentPresence, leftPresence) => {
+          const onLeavePayload = _PresenceAdapter.onLeavePayload(key, currentPresence, leftPresence);
+          channel.getChannel().trigger("presence", onLeavePayload);
+        });
+        this.presence.onSync(() => {
+          channel.getChannel().trigger("presence", { event: "sync" });
+        });
+      }
+      get state() {
+        return _PresenceAdapter.transformState(this.presence.state);
+      }
+      /**
+       * @private
+       * Remove 'metas' key
+       * Change 'phx_ref' to 'presence_ref'
+       * Remove 'phx_ref' and 'phx_ref_prev'
+       *
+       * @example Transform state
+       * // returns {
+       *  abc123: [
+       *    { presence_ref: '2', user_id: 1 },
+       *    { presence_ref: '3', user_id: 2 }
+       *  ]
+       * }
+       * RealtimePresence.transformState({
+       *  abc123: {
+       *    metas: [
+       *      { phx_ref: '2', phx_ref_prev: '1' user_id: 1 },
+       *      { phx_ref: '3', user_id: 2 }
+       *    ]
+       *  }
+       * })
+       *
+       */
+      static transformState(state) {
+        state = cloneState(state);
+        return Object.getOwnPropertyNames(state).reduce((newState, key) => {
+          const presences = state[key];
+          newState[key] = transformState(presences);
+          return newState;
+        }, {});
+      }
+      static onJoinPayload(key, currentPresence, newPresence) {
+        const currentPresences = parseCurrentPresences(currentPresence);
+        const newPresences = transformState(newPresence);
+        return {
+          event: "join",
+          key,
+          currentPresences,
+          newPresences
+        };
+      }
+      static onLeavePayload(key, currentPresence, leftPresence) {
+        const currentPresences = parseCurrentPresences(currentPresence);
+        const leftPresences = transformState(leftPresence);
+        return {
+          event: "leave",
+          key,
+          currentPresences,
+          leftPresences
+        };
+      }
+    };
+    exports.default = PresenceAdapter;
+    function transformState(presences) {
+      return presences.metas.map((presence) => {
+        const descriptors = Object.getOwnPropertyDescriptors(presence);
+        const transformedPresence = Object.defineProperties({}, descriptors);
+        transformedPresence["presence_ref"] = transformedPresence["phx_ref"];
+        delete transformedPresence["phx_ref"];
+        delete transformedPresence["phx_ref_prev"];
+        return transformedPresence;
+      });
+    }
+    function cloneState(state) {
+      return JSON.parse(JSON.stringify(state));
+    }
+    function phoenixPresenceOptions(opts) {
+      return (opts === null || opts === void 0 ? void 0 : opts.events) && { events: opts.events };
+    }
+    function parseCurrentPresences(currentPresences) {
+      return (currentPresences === null || currentPresences === void 0 ? void 0 : currentPresences.metas) ? transformState(currentPresences) : [];
+    }
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+var require_RealtimePresence = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.REALTIME_PRESENCE_LISTEN_EVENTS = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var presenceAdapter_1 = tslib_1.__importDefault(require_presenceAdapter());
+    var REALTIME_PRESENCE_LISTEN_EVENTS;
+    (function(REALTIME_PRESENCE_LISTEN_EVENTS2) {
+      REALTIME_PRESENCE_LISTEN_EVENTS2["SYNC"] = "sync";
+      REALTIME_PRESENCE_LISTEN_EVENTS2["JOIN"] = "join";
+      REALTIME_PRESENCE_LISTEN_EVENTS2["LEAVE"] = "leave";
+    })(REALTIME_PRESENCE_LISTEN_EVENTS || (exports.REALTIME_PRESENCE_LISTEN_EVENTS = REALTIME_PRESENCE_LISTEN_EVENTS = {}));
+    var RealtimePresence = class {
+      get state() {
+        return this.presenceAdapter.state;
+      }
+      /**
+       * Creates a Presence helper that keeps the local presence state in sync with the server.
+       *
+       * @param channel - The realtime channel to bind to.
+       * @param opts - Optional custom event names, e.g. `{ events: { state: 'state', diff: 'diff' } }`.
+       *
+       * @category Realtime
+       *
+       * @example Example for a presence channel
+       * ```ts
+       * const presence = new RealtimePresence(channel)
+       *
+       * channel.on('presence', ({ event, key }) => {
+       *   console.log(`Presence ${event} on ${key}`)
+       * })
+       * ```
+       */
+      constructor(channel, opts) {
+        this.channel = channel;
+        this.presenceAdapter = new presenceAdapter_1.default(this.channel.channelAdapter, opts);
+      }
+    };
+    exports.default = RealtimePresence;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+var require_normalizeChannelError = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.normalizeChannelError = normalizeChannelError;
+    function normalizeChannelError(reason) {
+      if (reason instanceof Error) {
+        return reason;
+      }
+      if (typeof reason === "string") {
+        return new Error(reason);
+      }
+      if (reason && typeof reason === "object") {
+        const obj = reason;
+        if (typeof obj.code === "number") {
+          const detail = typeof obj.reason === "string" && obj.reason ? ` (${obj.reason})` : "";
+          return new Error(`socket closed: ${obj.code}${detail}`, { cause: reason });
+        }
+        return new Error("channel error: transport failure", { cause: reason });
+      }
+      return new Error("channel error: connection lost");
+    }
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+var require_channelAdapter = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var constants_1 = require_constants();
+    var ChannelAdapter = class {
+      constructor(socket, topic, params) {
+        const phoenixParams = phoenixChannelParams(params);
+        this.channel = socket.getSocket().channel(topic, phoenixParams);
+        this.socket = socket;
+      }
+      get state() {
+        return this.channel.state;
+      }
+      set state(state) {
+        this.channel.state = state;
+      }
+      get joinedOnce() {
+        return this.channel.joinedOnce;
+      }
+      get joinPush() {
+        return this.channel.joinPush;
+      }
+      get rejoinTimer() {
+        return this.channel.rejoinTimer;
+      }
+      on(event, callback) {
+        return this.channel.on(event, callback);
+      }
+      off(event, refNumber) {
+        this.channel.off(event, refNumber);
+      }
+      subscribe(timeout) {
+        return this.channel.join(timeout);
+      }
+      unsubscribe(timeout) {
+        return this.channel.leave(timeout);
+      }
+      teardown() {
+        this.channel.teardown();
+      }
+      onClose(callback) {
+        this.channel.onClose(callback);
+      }
+      onError(callback) {
+        return this.channel.onError(callback);
+      }
+      push(event, payload, timeout) {
+        let push;
+        try {
+          push = this.channel.push(event, payload, timeout);
+        } catch (error) {
+          throw new Error(`tried to push '${event}' to '${this.channel.topic}' before joining. Use channel.subscribe() before pushing events`);
+        }
+        if (this.channel.pushBuffer.length > constants_1.MAX_PUSH_BUFFER_SIZE) {
+          const removedPush = this.channel.pushBuffer.shift();
+          removedPush.cancelTimeout();
+          this.socket.log("channel", `discarded push due to buffer overflow: ${removedPush.event}`, removedPush.payload());
+        }
+        return push;
+      }
+      updateJoinPayload(payload) {
+        const oldPayload = this.channel.joinPush.payload();
+        this.channel.joinPush.payload = () => Object.assign(Object.assign({}, oldPayload), payload);
+      }
+      canPush() {
+        return this.socket.isConnected() && this.state === constants_1.CHANNEL_STATES.joined;
+      }
+      isJoined() {
+        return this.state === constants_1.CHANNEL_STATES.joined;
+      }
+      isJoining() {
+        return this.state === constants_1.CHANNEL_STATES.joining;
+      }
+      isClosed() {
+        return this.state === constants_1.CHANNEL_STATES.closed;
+      }
+      isLeaving() {
+        return this.state === constants_1.CHANNEL_STATES.leaving;
+      }
+      updateFilterBindings(filterBindings) {
+        this.channel.filterBindings = filterBindings;
+      }
+      updatePayloadTransform(callback) {
+        this.channel.onMessage = callback;
+      }
+      /**
+       * @internal
+       */
+      getChannel() {
+        return this.channel;
+      }
+    };
+    exports.default = ChannelAdapter;
+    function phoenixChannelParams(options) {
+      return {
+        config: Object.assign({
+          broadcast: { ack: false, self: false },
+          presence: { key: "", enabled: false },
+          private: false
+        }, options.config)
+      };
+    }
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js
+var require_RealtimePostgresFilterBuilder = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/RealtimePostgresFilterBuilder.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.postgresChangesFilter = exports.RealtimePostgresFilterBuilder = void 0;
+    var PostgrestReservedCharsRegexp = /[,()"\\]/;
+    var needsQuoting = (value) => PostgrestReservedCharsRegexp.test(value) || value !== value.trim();
+    var quote = (value) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    var serializeScalar = (value) => {
+      const serialized = value === null ? "null" : String(value);
+      return needsQuoting(serialized) ? quote(serialized) : serialized;
+    };
+    var serializeIsValue = (value) => value === null ? "null" : String(value);
+    var serialize2 = (operator, value) => {
+      if (operator === "in") {
+        const values = Array.isArray(value) ? value : [value];
+        if (values.length === 0) {
+          throw new Error("Realtime `in` filter requires at least one value.");
+        }
+        const items = Array.from(new Set(values)).map((v2) => serializeScalar(v2)).join(",");
+        return `in.(${items})`;
+      }
+      if (operator === "is") {
+        return `is.${serializeIsValue(value)}`;
+      }
+      return `${operator}.${serializeScalar(value)}`;
+    };
+    var RealtimePostgresFilterBuilder = class {
+      constructor() {
+        this.filters = [];
+      }
+      add(column, operator, value, negate = false) {
+        const prefix = negate ? "not." : "";
+        this.filters.push(`${column}=${prefix}${serialize2(operator, value)}`);
+        return this;
+      }
+      /** Match rows where `column` equals `value` (`column=eq.value`). */
+      eq(column, value) {
+        return this.add(column, "eq", value);
+      }
+      /** Match rows where `column` does not equal `value` (`column=neq.value`). */
+      neq(column, value) {
+        return this.add(column, "neq", value);
+      }
+      /** Match rows where `column` is greater than `value` (`column=gt.value`). */
+      gt(column, value) {
+        return this.add(column, "gt", value);
+      }
+      /** Match rows where `column` is greater than or equal to `value` (`column=gte.value`). */
+      gte(column, value) {
+        return this.add(column, "gte", value);
+      }
+      /** Match rows where `column` is less than `value` (`column=lt.value`). */
+      lt(column, value) {
+        return this.add(column, "lt", value);
+      }
+      /** Match rows where `column` is less than or equal to `value` (`column=lte.value`). */
+      lte(column, value) {
+        return this.add(column, "lte", value);
+      }
+      /**
+       * Match rows where `column` is one of `values` (`column=in.(a,b,c)`).
+       * Requires at least one value; duplicates are removed. An element containing a
+       * reserved character is double-quoted (`in.("a,b",c)`), so commas inside an
+       * element are preserved. `null` is intentionally not accepted (`IN (null)`
+       * never matches in SQL) — use `is`/`not('col','is',null)` for null checks.
+       */
+      in(column, values) {
+        return this.add(column, "in", values);
+      }
+      /** Match rows where `column` matches the case-sensitive `pattern` (`column=like.pattern`). */
+      like(column, pattern) {
+        return this.add(column, "like", pattern);
+      }
+      /** Match rows where `column` matches the case-insensitive `pattern` (`column=ilike.pattern`). */
+      ilike(column, pattern) {
+        return this.add(column, "ilike", pattern);
+      }
+      /** Match rows where `column` matches the POSIX regex `pattern` (`column=match.pattern`). */
+      match(column, pattern) {
+        return this.add(column, "match", pattern);
+      }
+      /** Match rows where `column` matches the case-insensitive POSIX regex `pattern` (`column=imatch.pattern`). */
+      imatch(column, pattern) {
+        return this.add(column, "imatch", pattern);
+      }
+      /**
+       * Match rows where `column` `IS` the given value (`column=is.null`).
+       * Accepts `null`, a boolean, or the keywords `'null' | 'true' | 'false' | 'unknown'`.
+       */
+      is(column, value) {
+        return this.add(column, "is", value);
+      }
+      /** Match rows where `column` is distinct from `value` (`column=isdistinct.value`). NULL-safe inequality. */
+      isDistinct(column, value) {
+        return this.add(column, "isdistinct", value);
+      }
+      not(column, operator, value) {
+        return this.add(column, operator, value, true);
+      }
+      /**
+       * Serialize all conditions into the comma-separated (AND) filter string.
+       *
+       * Conditions are joined by commas, which the server applies as `AND`. A scalar
+       * value (or single `in` element) that contains a reserved character — `,`,
+       * `(`, `)`, `"`, `\` — or surrounding whitespace is double-quoted and escaped
+       * the way PostgREST does, so commas inside a value are preserved rather than
+       * read as a condition boundary.
+       */
+      build() {
+        return this.filters.join(",");
+      }
+      /** Alias for {@link build}; lets the builder be used wherever a string is expected. */
+      toString() {
+        return this.build();
+      }
+    };
+    exports.RealtimePostgresFilterBuilder = RealtimePostgresFilterBuilder;
+    var postgresChangesFilter = () => new RealtimePostgresFilterBuilder();
+    exports.postgresChangesFilter = postgresChangesFilter;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+var require_RealtimeChannel = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.REALTIME_CHANNEL_STATES = exports.REALTIME_SUBSCRIBE_STATES = exports.REALTIME_LISTEN_TYPES = exports.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = exports.postgresChangesFilter = exports.RealtimePostgresFilterBuilder = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var constants_1 = require_constants();
+    var RealtimePresence_1 = tslib_1.__importDefault(require_RealtimePresence());
+    var Transformers = tslib_1.__importStar(require_transformers());
+    var transformers_1 = require_transformers();
+    var normalizeChannelError_1 = require_normalizeChannelError();
+    var channelAdapter_1 = tslib_1.__importDefault(require_channelAdapter());
+    var RealtimePostgresFilterBuilder_1 = require_RealtimePostgresFilterBuilder();
+    var RealtimePostgresFilterBuilder_2 = require_RealtimePostgresFilterBuilder();
+    Object.defineProperty(exports, "RealtimePostgresFilterBuilder", { enumerable: true, get: function() {
+      return RealtimePostgresFilterBuilder_2.RealtimePostgresFilterBuilder;
+    } });
+    Object.defineProperty(exports, "postgresChangesFilter", { enumerable: true, get: function() {
+      return RealtimePostgresFilterBuilder_2.postgresChangesFilter;
+    } });
+    var REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
+    (function(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2) {
+      REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["ALL"] = "*";
+      REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["INSERT"] = "INSERT";
+      REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["UPDATE"] = "UPDATE";
+      REALTIME_POSTGRES_CHANGES_LISTEN_EVENT2["DELETE"] = "DELETE";
+    })(REALTIME_POSTGRES_CHANGES_LISTEN_EVENT || (exports.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = {}));
+    var REALTIME_LISTEN_TYPES;
+    (function(REALTIME_LISTEN_TYPES2) {
+      REALTIME_LISTEN_TYPES2["BROADCAST"] = "broadcast";
+      REALTIME_LISTEN_TYPES2["PRESENCE"] = "presence";
+      REALTIME_LISTEN_TYPES2["POSTGRES_CHANGES"] = "postgres_changes";
+      REALTIME_LISTEN_TYPES2["SYSTEM"] = "system";
+    })(REALTIME_LISTEN_TYPES || (exports.REALTIME_LISTEN_TYPES = REALTIME_LISTEN_TYPES = {}));
+    var REALTIME_SUBSCRIBE_STATES;
+    (function(REALTIME_SUBSCRIBE_STATES2) {
+      REALTIME_SUBSCRIBE_STATES2["SUBSCRIBED"] = "SUBSCRIBED";
+      REALTIME_SUBSCRIBE_STATES2["TIMED_OUT"] = "TIMED_OUT";
+      REALTIME_SUBSCRIBE_STATES2["CLOSED"] = "CLOSED";
+      REALTIME_SUBSCRIBE_STATES2["CHANNEL_ERROR"] = "CHANNEL_ERROR";
+    })(REALTIME_SUBSCRIBE_STATES || (exports.REALTIME_SUBSCRIBE_STATES = REALTIME_SUBSCRIBE_STATES = {}));
+    exports.REALTIME_CHANNEL_STATES = constants_1.CHANNEL_STATES;
+    var RealtimeChannel = class _RealtimeChannel {
+      get state() {
+        return this.channelAdapter.state;
+      }
+      set state(state) {
+        this.channelAdapter.state = state;
+      }
+      get joinedOnce() {
+        return this.channelAdapter.joinedOnce;
+      }
+      get timeout() {
+        return this.socket.timeout;
+      }
+      get joinPush() {
+        return this.channelAdapter.joinPush;
+      }
+      get rejoinTimer() {
+        return this.channelAdapter.rejoinTimer;
+      }
+      /**
+       * Creates a channel that can broadcast messages, sync presence, and listen to Postgres changes.
+       *
+       * The topic determines which realtime stream you are subscribing to. Config options let you
+       * enable acknowledgement for broadcasts, presence tracking, or private channels.
+       *
+       * @category Realtime
+       *
+       * @example Using supabase-js (recommended)
+       * ```ts
+       * import { createClient } from '@supabase/supabase-js'
+       *
+       * const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
+       * const channel = supabase.channel('room1')
+       * channel
+       *   .on('broadcast', { event: 'cursor-pos' }, (payload) => console.log(payload))
+       *   .subscribe()
+       * ```
+       *
+       * @example Standalone import for bundle-sensitive environments
+       * ```ts
+       * import RealtimeClient from '@supabase/realtime-js'
+       *
+       * const client = new RealtimeClient('https://xyzcompany.supabase.co/realtime/v1', {
+       *   params: { apikey: 'your-publishable-key' },
+       * })
+       * const channel = new RealtimeChannel('realtime:public:messages', { config: {} }, client)
+       * ```
+       */
+      constructor(topic, params = { config: {} }, socket) {
+        var _a, _b;
+        this.topic = topic;
+        this.params = params;
+        this.socket = socket;
+        this.bindings = {};
+        this.subTopic = topic.replace(/^realtime:/i, "");
+        this.params.config = Object.assign({
+          broadcast: { ack: false, self: false },
+          presence: { key: "", enabled: false },
+          private: false
+        }, params.config);
+        this.channelAdapter = new channelAdapter_1.default(this.socket.socketAdapter, topic, this.params);
+        this.presence = new RealtimePresence_1.default(this);
+        this._onClose(() => {
+          this.socket._remove(this);
+        });
+        this._updateFilterTransform();
+        this.broadcastEndpointURL = (0, transformers_1.httpEndpointURL)(this.socket.socketAdapter.endPointURL());
+        this.private = this.params.config.private || false;
+        if (!this.private && ((_b = (_a = this.params.config) === null || _a === void 0 ? void 0 : _a.broadcast) === null || _b === void 0 ? void 0 : _b.replay)) {
+          throw new Error(`tried to use replay on public channel '${this.topic}'. It must be a private channel.`);
+        }
+      }
+      /**
+       * Subscribe registers your client with the server.
+       *
+       * The optional `callback` receives a `status` and, on failure, an `err` argument.
+       * Log the full `err` so its `cause`, `name`, and any structured fields aren't hidden
+       * behind `err.message`.
+       *
+       * @category Realtime
+       *
+       * @example Handling errors
+       * ```js
+       * supabase.channel('room1').subscribe((status, err) => {
+       *   if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+       *     // Log the full error: its `cause` often holds the underlying reason.
+       *     console.error(status, err)
+       *   }
+       * })
+       * ```
+       */
+      subscribe(callback, timeout = this.timeout) {
+        var _a, _b, _c, _d;
+        if (!this.socket.isConnected()) {
+          this.socket.connect();
+        }
+        if (this.channelAdapter.isClosed()) {
+          const { config: { broadcast, presence, private: isPrivate, postgres_changes_options } } = this.params;
+          const postgres_changes = (_b = (_a = this.bindings.postgres_changes) === null || _a === void 0 ? void 0 : _a.map((r) => r.filter)) !== null && _b !== void 0 ? _b : [];
+          const presence_enabled = !!this.bindings[REALTIME_LISTEN_TYPES.PRESENCE] && this.bindings[REALTIME_LISTEN_TYPES.PRESENCE].length > 0 || ((_c = this.params.config.presence) === null || _c === void 0 ? void 0 : _c.enabled) === true;
+          const accessTokenPayload = {};
+          const config = Object.assign({ broadcast, presence: Object.assign(Object.assign({}, presence), { enabled: presence_enabled }), postgres_changes, private: isPrivate }, postgres_changes_options ? { postgres_changes_options } : {});
+          if (this.socket.accessTokenValue) {
+            accessTokenPayload.access_token = this.socket.accessTokenValue;
+          }
+          this._onError((reason) => {
+            callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, (0, normalizeChannelError_1.normalizeChannelError)(reason));
+          });
+          this._onClose(() => callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CLOSED));
+          this.updateJoinPayload(Object.assign({ config }, accessTokenPayload));
+          this._updateFilterMessage();
+          const joinTimeout = (postgres_changes_options === null || postgres_changes_options === void 0 ? void 0 : postgres_changes_options.wait) && postgres_changes.length > 0 ? Math.max(timeout, ((_d = postgres_changes_options.timeout) !== null && _d !== void 0 ? _d : constants_1.DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT) + constants_1.POSTGRES_CHANGES_WAIT_ERROR_GRACE) : timeout;
+          this.channelAdapter.subscribe(joinTimeout).receive("ok", async ({ postgres_changes: postgres_changes2 }) => {
+            if (!this.socket._isManualToken()) {
+              this.socket.setAuth();
+            }
+            if (postgres_changes2 === void 0) {
+              callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
+              return;
+            }
+            this._updatePostgresBindings(postgres_changes2, callback);
+          }).receive("error", (error) => {
+            this.state = constants_1.CHANNEL_STATES.errored;
+            const message = Object.values(error).join(", ") || "error";
+            callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, new Error(message, { cause: error }));
+          }).receive("timeout", () => {
+            callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.TIMED_OUT);
+          });
+        }
+        return this;
+      }
+      _updatePostgresBindings(postgres_changes, callback) {
+        var _a;
+        const clientPostgresBindings = this.bindings.postgres_changes;
+        const bindingsLen = (_a = clientPostgresBindings === null || clientPostgresBindings === void 0 ? void 0 : clientPostgresBindings.length) !== null && _a !== void 0 ? _a : 0;
+        const newPostgresBindings = [];
+        for (let i = 0; i < bindingsLen; i++) {
+          const clientPostgresBinding = clientPostgresBindings[i];
+          const { filter: { event, schema, table, filter } } = clientPostgresBinding;
+          const serverPostgresFilter = postgres_changes && postgres_changes[i];
+          if (serverPostgresFilter && serverPostgresFilter.event === event && _RealtimeChannel.isFilterValueEqual(serverPostgresFilter.schema, schema) && _RealtimeChannel.isFilterValueEqual(serverPostgresFilter.table, table) && _RealtimeChannel.isFilterValueEqual(serverPostgresFilter.filter, filter)) {
+            newPostgresBindings.push(Object.assign(Object.assign({}, clientPostgresBinding), { id: serverPostgresFilter.id }));
+          } else {
+            this.unsubscribe();
+            this.state = constants_1.CHANNEL_STATES.errored;
+            callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, new Error("mismatch between server and client bindings for postgres changes"));
+            return;
+          }
+        }
+        this.bindings.postgres_changes = newPostgresBindings;
+        if (this.state != constants_1.CHANNEL_STATES.errored && callback) {
+          callback(REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
+        }
+      }
+      /**
+       * Returns the current presence state for this channel.
+       *
+       * The shape is a map keyed by presence key (for example a user id) where each entry contains the
+       * tracked metadata for that user.
+       *
+       * @category Realtime
+       */
+      presenceState() {
+        return this.presence.state;
+      }
+      /**
+       * Sends the supplied payload to the presence tracker so other subscribers can see that this
+       * client is online. Use `untrack` to stop broadcasting presence for the same key.
+       *
+       * Tracking makes this client visible to other subscribers immediately, regardless of this
+       * channel's `config.presence.enabled` setting or whether it has a `presence` listener — that
+       * flag only affects whether *this* client receives presence updates from others (and, on
+       * RLS-protected channels, whether it's authorized to do so).
+       *
+       * @category Realtime
+       */
+      async track(payload, opts = {}) {
+        return await this.send({
+          type: "presence",
+          event: "track",
+          payload
+        }, opts);
+      }
+      /**
+       * Removes the current presence state for this client.
+       *
+       * @category Realtime
+       */
+      async untrack(opts = {}) {
+        return await this.send({
+          type: "presence",
+          event: "untrack"
+        }, opts);
+      }
+      /**
+       * Listen to realtime events on this channel.
+       * @category Realtime
+       *
+       * @remarks
+       * - By default, Broadcast and Presence are enabled for all projects.
+       * - By default, listening to database changes is disabled for new projects due to database performance and security concerns. You can turn it on by managing Realtime's [replication](/docs/guides/api#realtime-api-overview).
+       * - You can receive the "previous" data for updates and deletes by setting the table's `REPLICA IDENTITY` to `FULL` (e.g., `ALTER TABLE your_table REPLICA IDENTITY FULL;`).
+       * - Row level security is not applied to delete statements. When RLS is enabled and replica identity is set to full, only the primary key is sent to clients.
+       *
+       * @example Listen to broadcast messages
+       * ```js
+       * const channel = supabase.channel("room1")
+       *
+       * channel.on("broadcast", { event: "cursor-pos" }, (payload) => {
+       *   console.log("Cursor position received!", payload);
+       * }).subscribe((status) => {
+       *   if (status === "SUBSCRIBED") {
+       *     channel.send({
+       *       type: "broadcast",
+       *       event: "cursor-pos",
+       *       payload: { x: Math.random(), y: Math.random() },
+       *     });
+       *   }
+       * });
+       * ```
+       *
+       * @example Listen to presence sync
+       * ```js
+       * const channel = supabase.channel('room1')
+       * channel
+       *   .on('presence', { event: 'sync' }, () => {
+       *     console.log('Synced presence state: ', channel.presenceState())
+       *   })
+       *   .subscribe(async (status) => {
+       *     if (status === 'SUBSCRIBED') {
+       *       await channel.track({ online_at: new Date().toISOString() })
+       *     }
+       *   })
+       * ```
+       *
+       * @example Listen to presence join
+       * ```js
+       * const channel = supabase.channel('room1')
+       * channel
+       *   .on('presence', { event: 'join' }, ({ newPresences }) => {
+       *     console.log('Newly joined presences: ', newPresences)
+       *   })
+       *   .subscribe(async (status) => {
+       *     if (status === 'SUBSCRIBED') {
+       *       await channel.track({ online_at: new Date().toISOString() })
+       *     }
+       *   })
+       * ```
+       *
+       * @example Listen to presence leave
+       * ```js
+       * const channel = supabase.channel('room1')
+       * channel
+       *   .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+       *     console.log('Newly left presences: ', leftPresences)
+       *   })
+       *   .subscribe(async (status) => {
+       *     if (status === 'SUBSCRIBED') {
+       *       await channel.track({ online_at: new Date().toISOString() })
+       *       await channel.untrack()
+       *     }
+       *   })
+       * ```
+       *
+       * Registering the same `postgres_changes` filter more than once on a channel is a no-op: the
+       * duplicate is ignored and an error is logged, since the server only ever creates one
+       * subscription per distinct filter.
+       *
+       * @example Listen to all database changes
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: '*', schema: '*' }, payload => {
+       *     console.log('Change received!', payload)
+       *   })
+       *   .subscribe()
+       * ```
+       *
+       * @example Listen to a specific table
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: '*', schema: 'public', table: 'countries' }, payload => {
+       *     console.log('Change received!', payload)
+       *   })
+       *   .subscribe()
+       * ```
+       *
+       * @example Listen to inserts
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'countries' }, payload => {
+       *     console.log('Change received!', payload)
+       *   })
+       *   .subscribe()
+       * ```
+       *
+       * @exampleDescription Listen to updates
+       * By default, Supabase will send only the updated record. If you want to receive the previous values as well you can
+       * enable full replication for the table you are listening to:
+       *
+       * ```sql
+       * alter table "your_table" replica identity full;
+       * ```
+       *
+       * @example Listen to updates
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'countries' }, payload => {
+       *     console.log('Change received!', payload)
+       *   })
+       *   .subscribe()
+       * ```
+       *
+       * @exampleDescription Listen to deletes
+       * By default, Supabase does not send deleted records. If you want to receive the deleted record you can
+       * enable full replication for the table you are listening to:
+       *
+       * ```sql
+       * alter table "your_table" replica identity full;
+       * ```
+       *
+       * @example Listen to deletes
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'countries' }, payload => {
+       *     console.log('Change received!', payload)
+       *   })
+       *   .subscribe()
+       * ```
+       *
+       * @exampleDescription Listen to multiple events
+       * You can chain listeners if you want to listen to multiple events for each table.
+       *
+       * @example Listen to multiple events
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'countries' }, handleRecordInserted)
+       *   .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'countries' }, handleRecordDeleted)
+       *   .subscribe()
+       * ```
+       *
+       * @exampleDescription Listen to row level changes
+       * You can listen to individual rows using the format `{table}:{col}=eq.{val}` - where `{col}` is the column name, and `{val}` is the value which you want to match.
+       *
+       * @example Listen to row level changes
+       * ```js
+       * supabase
+       *   .channel('room1')
+       *   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'countries', filter: 'id=eq.200' }, handleRecordUpdated)
+       *   .subscribe()
+       * ```
+       */
+      on(type, filter, callback) {
+        const stateCheck = this.channelAdapter.isJoined() || this.channelAdapter.isJoining();
+        const typeCheck = type === REALTIME_LISTEN_TYPES.PRESENCE || type === REALTIME_LISTEN_TYPES.POSTGRES_CHANGES;
+        if (stateCheck && typeCheck) {
+          this.socket.log("channel", `cannot add \`${type}\` callbacks for ${this.topic} after \`subscribe()\`.`);
+          throw new Error(`cannot add \`${type}\` callbacks for ${this.topic} after \`subscribe()\`.`);
+        }
+        return this._on(type, filter, callback);
+      }
+      /**
+       * Sends a broadcast message explicitly via REST API.
+       *
+       * This method always uses the REST API endpoint regardless of WebSocket connection state.
+       * Useful when you want to guarantee REST delivery or when gradually migrating from implicit REST fallback.
+       *
+       * Payloads that are `ArrayBuffer` or `ArrayBufferView` (e.g. `Uint8Array`) are sent as
+       * `application/octet-stream`; all other payloads are JSON-encoded.
+       *
+       * @param event The name of the broadcast event
+       * @param payload Payload to be sent (required)
+       * @param opts Options including timeout
+       * @returns Promise resolving to object with success status, and error details if failed
+       *
+       * @category Realtime
+       */
+      async httpSend(event, payload, opts = {}) {
+        var _a;
+        if (payload === void 0 || payload === null) {
+          return Promise.reject(new Error("Payload is required for httpSend()"));
+        }
+        const isBinary = payload instanceof ArrayBuffer || ArrayBuffer.isView(payload);
+        const headers = {
+          apikey: this.socket.apiKey ? this.socket.apiKey : "",
+          "Content-Type": isBinary ? "application/octet-stream" : "application/json"
+        };
+        if (this.socket.accessTokenValue) {
+          headers["Authorization"] = `Bearer ${this.socket.accessTokenValue}`;
+        }
+        const url = new URL(this.broadcastEndpointURL);
+        url.pathname += `/${encodeURIComponent(this.subTopic)}/events/${encodeURIComponent(event)}`;
+        if (this.private) {
+          url.searchParams.set("private", "true");
+        }
+        const options = {
+          method: "POST",
+          headers,
+          body: isBinary ? payload : JSON.stringify(payload)
+        };
+        const response = await this._fetchWithTimeout(url.toString(), options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
+        if (response.status === 202) {
+          return { success: true };
+        }
+        if (response.status === 404) {
+          return Promise.reject(new Error("httpSend() requires Realtime server v2.97.0 or newer; the endpoint returned 404. Update your Supabase CLI to a recent version, or upgrade the Realtime server in your self-hosted setup. See https://github.com/supabase/supabase-js/blob/master/packages/core/realtime-js/migrations/httpsend-server-version.md"));
+        }
+        let errorMessage = response.statusText;
+        try {
+          const errorBody = await response.json();
+          errorMessage = errorBody.error || errorBody.message || errorMessage;
+        } catch (_b) {
+        }
+        return Promise.reject(new Error(errorMessage));
+      }
+      /**
+       * Sends a message into the channel.
+       *
+       * @param args Arguments to send to channel
+       * @param args.type The type of event to send
+       * @param args.event The name of the event being sent
+       * @param args.payload Payload to be sent
+       * @param opts Options to be used during the send process
+       *
+       * @category Realtime
+       *
+       * @remarks
+       * - When using REST you don't need to subscribe to the channel
+       * - REST calls are only available from 2.37.0 onwards
+       * - If you create a channel only to send a REST broadcast, remove it from
+       *   the client when the send completes
+       *
+       * @example Send a message via websocket
+       * ```js
+       * const channel = supabase.channel('room1')
+       *
+       * channel.subscribe((status) => {
+       *   if (status === 'SUBSCRIBED') {
+       *     channel.send({
+       *       type: 'broadcast',
+       *       event: 'cursor-pos',
+       *       payload: { x: Math.random(), y: Math.random() },
+       *     })
+       *   }
+       * })
+       * ```
+       *
+       * @exampleResponse Send a message via websocket
+       * ```js
+       * ok | timed out | error
+       * ```
+       *
+       * @example Send a message via REST
+       * ```js
+       * const channel = supabase.channel('room1')
+       *
+       * try {
+       *   await channel.httpSend('cursor-pos', { x: Math.random(), y: Math.random() })
+       * } finally {
+       *   await supabase.removeChannel(channel)
+       * }
+       * ```
+       */
+      async send(args, opts = {}) {
+        var _a, _b;
+        if (!this.channelAdapter.canPush() && args.type === "broadcast") {
+          const fallbackWarning = "Realtime send() is automatically falling back to REST API. This behavior will be deprecated in the future. Please use httpSend() explicitly for REST delivery.";
+          if (this.socket.hasLogger()) {
+            this.socket.log("channel", fallbackWarning);
+          } else {
+            console.warn(fallbackWarning);
+          }
+          const { event, payload: endpoint_payload } = args;
+          const headers = {
+            apikey: this.socket.apiKey ? this.socket.apiKey : "",
+            "Content-Type": "application/json"
+          };
+          if (this.socket.accessTokenValue) {
+            headers["Authorization"] = `Bearer ${this.socket.accessTokenValue}`;
+          }
+          const options = {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              messages: [
+                {
+                  topic: this.subTopic,
+                  event,
+                  payload: endpoint_payload,
+                  private: this.private
+                }
+              ]
+            })
+          };
+          try {
+            const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
+            await ((_b = response.body) === null || _b === void 0 ? void 0 : _b.cancel());
+            return response.ok ? "ok" : "error";
+          } catch (error) {
+            if (error instanceof Error && error.name === "AbortError") {
+              return "timed out";
+            } else {
+              return "error";
+            }
+          }
+        } else {
+          return new Promise((resolve) => {
+            var _a2, _b2, _c;
+            const push = this.channelAdapter.push(args.type, args, opts.timeout || this.timeout);
+            if (args.type === "broadcast" && !((_c = (_b2 = (_a2 = this.params) === null || _a2 === void 0 ? void 0 : _a2.config) === null || _b2 === void 0 ? void 0 : _b2.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
+              resolve("ok");
+            }
+            push.receive("ok", () => resolve("ok"));
+            push.receive("error", () => resolve("error"));
+            push.receive("timeout", () => resolve("timed out"));
+          });
+        }
+      }
+      /**
+       * Updates the payload that will be sent the next time the channel joins (reconnects).
+       * Useful for rotating access tokens or updating config without re-creating the channel.
+       *
+       * @category Realtime
+       */
+      updateJoinPayload(payload) {
+        this.channelAdapter.updateJoinPayload(payload);
+      }
+      /**
+       * Leaves the channel.
+       *
+       * Unsubscribes from server events, and instructs channel to terminate on server.
+       * Triggers onClose() hooks.
+       *
+       * To receive leave acknowledgements, use the a `receive` hook to bind to the server ack, ie:
+       * channel.unsubscribe().receive("ok", () => alert("left!") )
+       *
+       * @category Realtime
+       */
+      async unsubscribe(timeout = this.timeout) {
+        return new Promise((resolve) => {
+          this.channelAdapter.unsubscribe(timeout).receive("ok", () => resolve("ok")).receive("timeout", () => resolve("timed out")).receive("error", () => resolve("error"));
+        });
+      }
+      /**
+       * Destroys and stops related timers.
+       *
+       * @category Realtime
+       */
+      teardown() {
+        this.channelAdapter.teardown();
+      }
+      /** @internal */
+      async _fetchWithTimeout(url, options, timeout) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        const response = await this.socket.fetch(url, Object.assign(Object.assign({}, options), { signal: controller.signal }));
+        clearTimeout(id);
+        return response;
+      }
+      /** @internal */
+      _on(type, filter, callback) {
+        var _a;
+        const typeLower = type.toLocaleLowerCase();
+        const filterValue = filter === null || filter === void 0 ? void 0 : filter.filter;
+        if (filterValue instanceof RealtimePostgresFilterBuilder_1.RealtimePostgresFilterBuilder || typeof filterValue === "object" && filterValue !== null && typeof filterValue.build === "function") {
+          filter = Object.assign(Object.assign({}, filter), { filter: filterValue.build() });
+        }
+        if (typeLower === REALTIME_LISTEN_TYPES.POSTGRES_CHANGES) {
+          const duplicate = (_a = this.bindings[typeLower]) === null || _a === void 0 ? void 0 : _a.find((bind) => _RealtimeChannel.isSamePostgresFilter(bind.filter, filter));
+          if (duplicate) {
+            this.socket.log("error", `duplicate \`postgres_changes\` binding for ${this.topic} ignored`, filter);
+            return this;
+          }
+        }
+        const ref = this.channelAdapter.on(type, callback);
+        const binding = {
+          type: typeLower,
+          filter,
+          callback,
+          ref
+        };
+        if (this.bindings[typeLower]) {
+          this.bindings[typeLower].push(binding);
+        } else {
+          this.bindings[typeLower] = [binding];
+        }
+        this._updateFilterMessage();
+        return this;
+      }
+      /**
+       * Registers a callback that will be executed when the channel closes.
+       *
+       * @internal
+       */
+      _onClose(callback) {
+        this.channelAdapter.onClose(callback);
+      }
+      /**
+       * Registers a callback that will be executed when the channel encounteres an error.
+       *
+       * @internal
+       */
+      _onError(callback) {
+        this.channelAdapter.onError(callback);
+      }
+      /** @internal */
+      _updateFilterMessage() {
+        this.channelAdapter.updateFilterBindings((binding, payload, ref) => {
+          var _a, _b, _c, _d, _e, _f, _g;
+          const typeLower = binding.event.toLocaleLowerCase();
+          if (this._notThisChannelEvent(typeLower, ref)) {
+            return false;
+          }
+          const bind = (_a = this.bindings[typeLower]) === null || _a === void 0 ? void 0 : _a.find((bind2) => bind2.ref === binding.ref);
+          if (!bind) {
+            return true;
+          }
+          if (["broadcast", "presence", "postgres_changes"].includes(typeLower)) {
+            if ("id" in bind) {
+              const bindId = bind.id;
+              const bindEvent = (_b = bind.filter) === null || _b === void 0 ? void 0 : _b.event;
+              return bindId && ((_c = payload.ids) === null || _c === void 0 ? void 0 : _c.includes(bindId)) && (bindEvent === "*" || (bindEvent === null || bindEvent === void 0 ? void 0 : bindEvent.toLocaleLowerCase()) === ((_d = payload.data) === null || _d === void 0 ? void 0 : _d.type.toLocaleLowerCase()));
+            } else {
+              const bindEvent = (_f = (_e = bind === null || bind === void 0 ? void 0 : bind.filter) === null || _e === void 0 ? void 0 : _e.event) === null || _f === void 0 ? void 0 : _f.toLocaleLowerCase();
+              return bindEvent === "*" || bindEvent === ((_g = payload === null || payload === void 0 ? void 0 : payload.event) === null || _g === void 0 ? void 0 : _g.toLocaleLowerCase());
+            }
+          } else {
+            return bind.type.toLocaleLowerCase() === typeLower;
+          }
+        });
+      }
+      /** @internal */
+      _notThisChannelEvent(event, ref) {
+        const { close, error, leave, join } = constants_1.CHANNEL_EVENTS;
+        const events = [close, error, leave, join];
+        return ref && events.includes(event) && ref !== this.joinPush.ref;
+      }
+      /** @internal */
+      _updateFilterTransform() {
+        this.channelAdapter.updatePayloadTransform((event, payload, ref) => {
+          if (typeof payload === "object" && "ids" in payload) {
+            const postgresChanges = payload.data;
+            const { schema, table, commit_timestamp, type, errors } = postgresChanges;
+            const enrichedPayload = {
+              schema,
+              table,
+              commit_timestamp,
+              eventType: type,
+              new: {},
+              old: {},
+              errors
+            };
+            return Object.assign(Object.assign({}, enrichedPayload), this._getPayloadRecords(postgresChanges));
+          }
+          return payload;
+        });
+      }
+      copyBindings(other) {
+        if (this.joinedOnce) {
+          throw new Error("cannot copy bindings into joined channel");
+        }
+        for (const kind in other.bindings) {
+          for (const binding of other.bindings[kind]) {
+            this._on(binding.type, binding.filter, binding.callback);
+          }
+        }
+      }
+      /**
+       * Compares two optional filter values for equality.
+       * Treats undefined, null, and empty string as equivalent empty values.
+       * @internal
+       */
+      static isFilterValueEqual(serverValue, clientValue) {
+        const normalizedServer = serverValue !== null && serverValue !== void 0 ? serverValue : void 0;
+        const normalizedClient = clientValue !== null && clientValue !== void 0 ? clientValue : void 0;
+        return normalizedServer === normalizedClient;
+      }
+      /**
+       * Two `postgres_changes` filters are the same when the server would collapse them into a single
+       * subscription.
+       * @internal
+       */
+      static isSamePostgresFilter(a, b) {
+        var _a, _b, _c, _d;
+        const selectA = (_b = (_a = a === null || a === void 0 ? void 0 : a.select) === null || _a === void 0 ? void 0 : _a.join()) !== null && _b !== void 0 ? _b : void 0;
+        const selectB = (_d = (_c = b === null || b === void 0 ? void 0 : b.select) === null || _c === void 0 ? void 0 : _c.join()) !== null && _d !== void 0 ? _d : void 0;
+        return (a === null || a === void 0 ? void 0 : a.event) === (b === null || b === void 0 ? void 0 : b.event) && _RealtimeChannel.isFilterValueEqual(a === null || a === void 0 ? void 0 : a.schema, b === null || b === void 0 ? void 0 : b.schema) && _RealtimeChannel.isFilterValueEqual(a === null || a === void 0 ? void 0 : a.table, b === null || b === void 0 ? void 0 : b.table) && _RealtimeChannel.isFilterValueEqual(a === null || a === void 0 ? void 0 : a.filter, b === null || b === void 0 ? void 0 : b.filter) && selectA === selectB;
+      }
+      /** @internal */
+      _getPayloadRecords(payload) {
+        const records = {
+          new: {},
+          old: {}
+        };
+        if (payload.type === "INSERT" || payload.type === "UPDATE") {
+          records.new = Transformers.convertChangeData(payload.columns, payload.record);
+        }
+        if (payload.type === "UPDATE" || payload.type === "DELETE") {
+          records.old = Transformers.convertChangeData(payload.columns, payload.old_record);
+        }
+        return records;
+      }
+    };
+    exports.default = RealtimeChannel;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+var require_socketAdapter = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var phoenix_1 = require_phoenix_cjs();
+    var constants_1 = require_constants();
+    var SocketAdapter = class {
+      constructor(endPoint, options) {
+        this.socket = new phoenix_1.Socket(endPoint, options);
+      }
+      get timeout() {
+        return this.socket.timeout;
+      }
+      get endPoint() {
+        return this.socket.endPoint;
+      }
+      get transport() {
+        return this.socket.transport;
+      }
+      get heartbeatIntervalMs() {
+        return this.socket.heartbeatIntervalMs;
+      }
+      get heartbeatCallback() {
+        return this.socket.heartbeatCallback;
+      }
+      set heartbeatCallback(callback) {
+        this.socket.heartbeatCallback = callback;
+      }
+      get heartbeatTimer() {
+        return this.socket.heartbeatTimer;
+      }
+      get pendingHeartbeatRef() {
+        return this.socket.pendingHeartbeatRef;
+      }
+      get reconnectTimer() {
+        return this.socket.reconnectTimer;
+      }
+      get vsn() {
+        return this.socket.vsn;
+      }
+      get encode() {
+        return this.socket.encode;
+      }
+      get decode() {
+        return this.socket.decode;
+      }
+      get reconnectAfterMs() {
+        return this.socket.reconnectAfterMs;
+      }
+      get sendBuffer() {
+        return this.socket.sendBuffer;
+      }
+      get stateChangeCallbacks() {
+        return this.socket.stateChangeCallbacks;
+      }
+      connect() {
+        this.socket.connect();
+      }
+      disconnect(callback, code, reason, timeout = 1e4) {
+        return new Promise((resolve) => {
+          setTimeout(() => resolve("timeout"), timeout);
+          this.socket.disconnect(() => {
+            callback();
+            resolve("ok");
+          }, code, reason);
+        });
+      }
+      push(data) {
+        this.socket.push(data);
+      }
+      log(kind, msg, data) {
+        this.socket.log(kind, msg, data);
+      }
+      hasLogger() {
+        return this.socket.hasLogger();
+      }
+      makeRef() {
+        return this.socket.makeRef();
+      }
+      onOpen(callback) {
+        this.socket.onOpen(callback);
+      }
+      onClose(callback) {
+        this.socket.onClose(callback);
+      }
+      onError(callback) {
+        this.socket.onError(callback);
+      }
+      onMessage(callback) {
+        this.socket.onMessage(callback);
+      }
+      isConnected() {
+        return this.socket.isConnected();
+      }
+      isConnecting() {
+        return this.socket.connectionState() == constants_1.CONNECTION_STATE.connecting;
+      }
+      isDisconnecting() {
+        return this.socket.connectionState() == constants_1.CONNECTION_STATE.closing;
+      }
+      connectionState() {
+        return this.socket.connectionState();
+      }
+      endPointURL() {
+        return this.socket.endPointURL();
+      }
+      sendHeartbeat() {
+        this.socket.sendHeartbeat();
+      }
+      /**
+       * @internal
+       */
+      getSocket() {
+        return this.socket;
+      }
+    };
+    exports.default = SocketAdapter;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+var require_RealtimeClient = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var websocket_factory_1 = tslib_1.__importDefault(require_websocket_factory());
+    var constants_1 = require_constants();
+    var serializer_1 = tslib_1.__importDefault(require_serializer());
+    var transformers_1 = require_transformers();
+    var RealtimeChannel_1 = tslib_1.__importDefault(require_RealtimeChannel());
+    var socketAdapter_1 = tslib_1.__importDefault(require_socketAdapter());
+    var CONNECTION_TIMEOUTS = {
+      HEARTBEAT_INTERVAL: 25e3,
+      RECONNECT_DELAY: 10,
+      HEARTBEAT_TIMEOUT_FALLBACK: 100
+    };
+    var RECONNECT_INTERVALS = [1e3, 2e3, 5e3, 1e4];
+    var DEFAULT_RECONNECT_FALLBACK = 1e4;
+    function createMemorySessionStorage() {
+      const store = /* @__PURE__ */ new Map();
+      return {
+        get length() {
+          return store.size;
+        },
+        clear() {
+          store.clear();
+        },
+        getItem(key) {
+          return store.has(key) ? store.get(key) : null;
+        },
+        key(index) {
+          var _a;
+          return (_a = Array.from(store.keys())[index]) !== null && _a !== void 0 ? _a : null;
+        },
+        removeItem(key) {
+          store.delete(key);
+        },
+        setItem(key, value) {
+          store.set(key, String(value));
+        }
+      };
+    }
+    function resolveSessionStorage() {
+      try {
+        if (typeof globalThis !== "undefined" && globalThis.sessionStorage) {
+          return globalThis.sessionStorage;
+        }
+      } catch (_a) {
+      }
+      return createMemorySessionStorage();
+    }
+    var WORKER_SCRIPT = `
+  addEventListener("message", (e) => {
+    if (e.data.event === "start") {
+      setInterval(() => postMessage({ event: "keepAlive" }), e.data.interval);
+    }
+  });`;
+    var RealtimeClient2 = class {
+      get endPoint() {
+        return this.socketAdapter.endPoint;
+      }
+      get timeout() {
+        return this.socketAdapter.timeout;
+      }
+      get transport() {
+        return this.socketAdapter.transport;
+      }
+      get heartbeatCallback() {
+        return this.socketAdapter.heartbeatCallback;
+      }
+      get heartbeatIntervalMs() {
+        return this.socketAdapter.heartbeatIntervalMs;
+      }
+      get heartbeatTimer() {
+        if (this.worker) {
+          return this._workerHeartbeatTimer;
+        }
+        return this.socketAdapter.heartbeatTimer;
+      }
+      get pendingHeartbeatRef() {
+        if (this.worker) {
+          return this._pendingWorkerHeartbeatRef;
+        }
+        return this.socketAdapter.pendingHeartbeatRef;
+      }
+      get reconnectTimer() {
+        return this.socketAdapter.reconnectTimer;
+      }
+      get vsn() {
+        return this.socketAdapter.vsn;
+      }
+      get encode() {
+        return this.socketAdapter.encode;
+      }
+      get decode() {
+        return this.socketAdapter.decode;
+      }
+      get reconnectAfterMs() {
+        return this.socketAdapter.reconnectAfterMs;
+      }
+      get sendBuffer() {
+        return this.socketAdapter.sendBuffer;
+      }
+      get stateChangeCallbacks() {
+        return this.socketAdapter.stateChangeCallbacks;
+      }
+      /**
+       * Initializes the Socket.
+       *
+       * @param endPoint The string WebSocket endpoint, ie, "ws://example.com/socket", "wss://example.com", "/socket" (inherited host & protocol)
+       * @param options.transport The Websocket Transport, for example WebSocket. This can be a custom implementation
+       * @param options.timeout The default timeout in milliseconds to trigger push timeouts.
+       * @param options.params The optional params to pass when connecting.
+       * @param options.headers Deprecated: headers cannot be set on websocket connections and this option will be removed in the future.
+       * @param options.heartbeatIntervalMs The millisec interval to send a heartbeat message.
+       * @param options.heartbeatCallback The optional function to handle heartbeat status and latency.
+       * @param options.logger The optional function for specialized logging, ie: logger: (kind, msg, data) => { console.log(`${kind}: ${msg}`, data) }
+       * @param options.logLevel Sets the log level for Realtime
+       * @param options.encode The function to encode outgoing messages. Defaults to JSON: (payload, callback) => callback(JSON.stringify(payload))
+       * @param options.decode The function to decode incoming messages. Defaults to Serializer's decode.
+       * @param options.reconnectAfterMs he optional function that returns the millsec reconnect interval. Defaults to stepped backoff off.
+       * @param options.worker Use Web Worker to set a side flow. Defaults to false.
+       * @param options.workerUrl The URL of the worker script. Defaults to https://realtime.supabase.com/worker.js that includes a heartbeat event call to keep the connection alive.
+       * @param options.vsn The protocol version to use when connecting. Supported versions are "1.0.0" and "2.0.0". Defaults to "2.0.0".
+       *
+       * @category Realtime
+       *
+       * @example Using supabase-js (recommended)
+       * ```ts
+       * import { createClient } from '@supabase/supabase-js'
+       *
+       * const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
+       * const channel = supabase.channel('room1')
+       * channel
+       *   .on('broadcast', { event: 'cursor-pos' }, (payload) => console.log(payload))
+       *   .subscribe()
+       * ```
+       *
+       * @example Standalone import for bundle-sensitive environments
+       * ```ts
+       * import RealtimeClient from '@supabase/realtime-js'
+       *
+       * const client = new RealtimeClient('https://xyzcompany.supabase.co/realtime/v1', {
+       *   params: { apikey: 'your-publishable-key' },
+       * })
+       * client.connect()
+       * ```
+       */
+      constructor(endPoint, options) {
+        var _a;
+        this.channels = new Array();
+        this.accessTokenValue = null;
+        this.accessToken = null;
+        this.apiKey = null;
+        this.httpEndpoint = "";
+        this.headers = {};
+        this.params = {};
+        this.ref = 0;
+        this.serializer = new serializer_1.default();
+        this._manuallySetToken = false;
+        this._authPromise = null;
+        this._authGeneration = 0;
+        this._workerHeartbeatTimer = void 0;
+        this._pendingWorkerHeartbeatRef = null;
+        this._pendingDisconnectTimer = null;
+        this._disconnectOnEmptyChannelsAfterMs = 0;
+        this._resolveFetch = (customFetch) => {
+          if (customFetch) {
+            return (...args) => customFetch(...args);
+          }
+          return (...args) => fetch(...args);
+        };
+        if (!((_a = options === null || options === void 0 ? void 0 : options.params) === null || _a === void 0 ? void 0 : _a.apikey)) {
+          throw new Error("API key is required to connect to Realtime");
+        }
+        this.apiKey = options.params.apikey;
+        const socketAdapterOptions = this._initializeOptions(options);
+        this.socketAdapter = new socketAdapter_1.default(endPoint, socketAdapterOptions);
+        this.httpEndpoint = (0, transformers_1.httpEndpointURL)(endPoint);
+        this.fetch = this._resolveFetch(options === null || options === void 0 ? void 0 : options.fetch);
+      }
+      /**
+       * Connects the socket, unless already connected.
+       *
+       * @category Realtime
+       */
+      connect() {
+        if (this.isConnecting() || this.isDisconnecting() || this.isConnected()) {
+          return;
+        }
+        if (this.accessToken && !this._authPromise) {
+          this._setAuthSafely("connect");
+        }
+        this._setupConnectionHandlers();
+        try {
+          this.socketAdapter.connect();
+        } catch (error) {
+          const errorMessage = error.message;
+          throw new Error(`WebSocket not available: ${errorMessage}`);
+        }
+        this._handleNodeJsRaceCondition();
+      }
+      /**
+       * Returns the URL of the websocket.
+       * @returns string The URL of the websocket.
+       *
+       * @category Realtime
+       */
+      endpointURL() {
+        return this.socketAdapter.endPointURL();
+      }
+      /**
+       * Disconnects the socket.
+       *
+       * @param code A numeric status code to send on disconnect.
+       * @param reason A custom reason for the disconnect.
+       *
+       * @category Realtime
+       */
+      async disconnect(code, reason) {
+        this._cancelPendingDisconnect();
+        if (this.isDisconnecting()) {
+          return "ok";
+        }
+        return await this.socketAdapter.disconnect(() => {
+          clearInterval(this._workerHeartbeatTimer);
+          this._terminateWorker();
+        }, code, reason);
+      }
+      /**
+       * Returns all created channels
+       *
+       * @category Realtime
+       */
+      getChannels() {
+        return this.channels;
+      }
+      /**
+       * Unsubscribes, removes and tears down a single channel
+       * @param channel A RealtimeChannel instance
+       *
+       * @category Realtime
+       */
+      async removeChannel(channel) {
+        const status = await channel.unsubscribe();
+        if (status === "ok") {
+          channel.teardown();
+        }
+        return status;
+      }
+      /**
+       * Unsubscribes, removes and tears down all channels
+       *
+       * @category Realtime
+       */
+      async removeAllChannels() {
+        const promises = this.channels.map(async (channel) => {
+          const result2 = await channel.unsubscribe();
+          channel.teardown();
+          return result2;
+        });
+        const result = await Promise.all(promises);
+        await this.disconnect();
+        return result;
+      }
+      /**
+       * Logs the message.
+       *
+       * For customized logging, `this.logger` can be overridden in Client constructor.
+       *
+       * @category Realtime
+       */
+      log(kind, msg, data) {
+        this.socketAdapter.log(kind, msg, data);
+      }
+      /**
+       * Returns true if a custom `logger` has been configured on this client.
+       *
+       * @category Realtime
+       */
+      hasLogger() {
+        return this.socketAdapter.hasLogger();
+      }
+      /**
+       * Returns the current state of the socket.
+       *
+       * @category Realtime
+       */
+      connectionState() {
+        return this.socketAdapter.connectionState() || constants_1.CONNECTION_STATE.closed;
+      }
+      /**
+       * Returns `true` is the connection is open.
+       *
+       * @category Realtime
+       */
+      isConnected() {
+        return this.socketAdapter.isConnected();
+      }
+      /**
+       * Returns `true` if the connection is currently connecting.
+       *
+       * @category Realtime
+       */
+      isConnecting() {
+        return this.socketAdapter.isConnecting();
+      }
+      /**
+       * Returns `true` if the connection is currently disconnecting.
+       *
+       * @category Realtime
+       */
+      isDisconnecting() {
+        return this.socketAdapter.isDisconnecting();
+      }
+      /**
+       * Creates (or reuses) a {@link RealtimeChannel} for the provided topic.
+       *
+       * Topics are automatically prefixed with `realtime:` to match the Realtime service.
+       * If a channel with the same topic already exists it will be returned instead of creating
+       * a duplicate connection.
+       *
+       * @category Realtime
+       */
+      channel(topic, params = { config: {} }) {
+        const realtimeTopic = `realtime:${topic}`;
+        const exists = this.getChannels().find((c) => c.topic === realtimeTopic);
+        if (!exists) {
+          const chan = new RealtimeChannel_1.default(`realtime:${topic}`, params, this);
+          this._cancelPendingDisconnect();
+          this.channels.push(chan);
+          return chan;
+        } else {
+          return exists;
+        }
+      }
+      /**
+       * Push out a message if the socket is connected.
+       *
+       * If the socket is not connected, the message gets enqueued within a local buffer, and sent out when a connection is next established.
+       *
+       * @category Realtime
+       */
+      push(data) {
+        this.socketAdapter.push(data);
+      }
+      /**
+       * Sets the JWT access token used for channel subscription authorization and Realtime RLS.
+       *
+       * If param is null it will use the `accessToken` callback function or the token set on the client.
+       *
+       * On callback used, it will set the value of the token internal to the client.
+       *
+       * When a token is explicitly provided AND no `accessToken` callback is configured,
+       * it will be preserved across channel operations (including removeChannel and
+       * resubscribe) and the client stays in manual-token mode.
+       *
+       * When an `accessToken` callback IS configured, the callback is the source of truth:
+       * the client remains in callback mode and continues to refresh from it on heartbeat,
+       * even after a bootstrap/override `setAuth(token)` call.
+       *
+       * The callback is called on connect and on every heartbeat (`heartbeatIntervalMs`,
+       * default 25000ms). Its token must stay valid past the next call, or the server closes
+       * the channel at expiry with no automatic resubscribe.
+       *
+       * @param token A JWT string to override the token set on the client.
+       *
+       * @example Setting the authorization header
+       * // Use a manual token (preserved across resubscribes when no accessToken callback is set)
+       * client.realtime.setAuth('my-custom-jwt')
+       *
+       * // Switch back to using the accessToken callback
+       * client.realtime.setAuth()
+       *
+       * @category Realtime
+       */
+      async setAuth(token = null) {
+        const authGeneration = ++this._authGeneration;
+        const authPromise = this._performAuth(token, authGeneration);
+        if (authGeneration === this._authGeneration) {
+          this._authPromise = authPromise;
+        }
+        try {
+          await authPromise;
+        } finally {
+          if (this._authPromise === authPromise) {
+            this._authPromise = null;
+          }
+        }
+      }
+      /**
+       * Returns true if the current access token was explicitly set via setAuth(token),
+       * false if it was obtained via the accessToken callback.
+       * @internal
+       */
+      _isManualToken() {
+        return this._manuallySetToken;
+      }
+      /**
+       * Sends a heartbeat message if the socket is connected.
+       *
+       * @category Realtime
+       */
+      async sendHeartbeat() {
+        this.socketAdapter.sendHeartbeat();
+      }
+      /**
+       * Sets a callback that receives lifecycle events for internal heartbeat messages.
+       * Useful for instrumenting connection health (e.g. sent/ok/timeout).
+       *
+       * @category Realtime
+       */
+      onHeartbeat(callback) {
+        this.socketAdapter.heartbeatCallback = this._wrapHeartbeatCallback(callback);
+      }
+      /**
+       * Return the next message ref, accounting for overflows
+       *
+       * @internal
+       */
+      _makeRef() {
+        return this.socketAdapter.makeRef();
+      }
+      /**
+       * Removes a channel from RealtimeClient
+       *
+       * @param channel An open subscription.
+       *
+       * @internal
+       */
+      _remove(channel) {
+        this.channels = this.channels.filter((c) => c.topic !== channel.topic);
+        if (this.channels.length === 0) {
+          this.log("transport", "no channels remaining, scheduling disconnect");
+          this._schedulePendingDisconnect();
+        }
+      }
+      /** @internal */
+      _schedulePendingDisconnect() {
+        this._cancelPendingDisconnect();
+        if (this._disconnectOnEmptyChannelsAfterMs === 0) {
+          this.log("transport", "disconnecting immediately - no channels");
+          this.disconnect();
+          return;
+        }
+        this._pendingDisconnectTimer = setTimeout(() => {
+          this._pendingDisconnectTimer = null;
+          if (this.channels.length === 0) {
+            this.log("transport", "deferred disconnect fired - no channels, disconnecting");
+            this.disconnect();
+          }
+        }, this._disconnectOnEmptyChannelsAfterMs);
+        this.log("transport", `deferred disconnect scheduled in ${this._disconnectOnEmptyChannelsAfterMs}ms`);
+      }
+      /** @internal */
+      _cancelPendingDisconnect() {
+        if (this._pendingDisconnectTimer !== null) {
+          this.log("transport", "pending disconnect cancelled - channel activity detected");
+          clearTimeout(this._pendingDisconnectTimer);
+          this._pendingDisconnectTimer = null;
+        }
+      }
+      /**
+       * Perform the actual auth operation
+       * @internal
+       */
+      async _performAuth(token, authGeneration) {
+        let tokenToSend;
+        let isManualToken = false;
+        if (token) {
+          tokenToSend = token;
+          isManualToken = true;
+        } else if (this.accessToken) {
+          try {
+            tokenToSend = await this.accessToken();
+          } catch (e) {
+            this.log("error", "Error fetching access token from callback", e);
+            tokenToSend = this.accessTokenValue;
+          }
+        } else {
+          tokenToSend = this.accessTokenValue;
+        }
+        if (authGeneration !== this._authGeneration) {
+          return;
+        }
+        if (this.accessToken) {
+          this._manuallySetToken = false;
+        } else if (isManualToken) {
+          this._manuallySetToken = true;
+        }
+        if (this.accessTokenValue != tokenToSend) {
+          this.accessTokenValue = tokenToSend;
+          this.channels.forEach((channel) => {
+            const payload = {
+              access_token: tokenToSend,
+              version: constants_1.DEFAULT_VERSION
+            };
+            channel.updateJoinPayload(payload);
+            if (channel.joinedOnce && channel.channelAdapter.isJoined()) {
+              channel.channelAdapter.push(constants_1.CHANNEL_EVENTS.access_token, {
+                access_token: tokenToSend
+              });
+            }
+          });
+        }
+      }
+      /**
+       * Wait for any in-flight auth operations to complete
+       * @internal
+       */
+      async _waitForAuthIfNeeded() {
+        if (this._authPromise) {
+          await this._authPromise;
+        }
+      }
+      /**
+       * Safely call setAuth with standardized error handling
+       * @internal
+       */
+      _setAuthSafely(context = "general") {
+        if (!this._isManualToken()) {
+          this.setAuth().catch((e) => {
+            this.log("error", `Error setting auth in ${context}`, e);
+          });
+        }
+      }
+      /** @internal */
+      _setupConnectionHandlers() {
+        this.socketAdapter.onOpen(() => {
+          const authPromise = this._authPromise || (this.accessToken && !this.accessTokenValue ? this.setAuth() : Promise.resolve());
+          authPromise.catch((e) => {
+            this.log("error", "error waiting for auth on connect", e);
+          });
+          if (this.worker && !this.workerRef) {
+            this._startWorkerHeartbeat();
+          }
+        });
+        this.socketAdapter.onClose(() => {
+          if (this.worker && this.workerRef) {
+            this._terminateWorker();
+          }
+        });
+        this.socketAdapter.onMessage((message) => {
+          if (message.ref && message.ref === this._pendingWorkerHeartbeatRef) {
+            this._pendingWorkerHeartbeatRef = null;
+          }
+        });
+      }
+      /** @internal */
+      _handleNodeJsRaceCondition() {
+        if (this.socketAdapter.isConnected()) {
+          this.socketAdapter.getSocket().onConnOpen();
+        }
+      }
+      /** @internal */
+      _wrapHeartbeatCallback(heartbeatCallback) {
+        return (status, latency) => {
+          if (status === "disconnected")
+            return;
+          if (status == "sent")
+            this._setAuthSafely();
+          if (heartbeatCallback)
+            heartbeatCallback(status, latency);
+        };
+      }
+      /** @internal */
+      _startWorkerHeartbeat() {
+        if (this.workerUrl) {
+          this.log("worker", `starting worker for from ${this.workerUrl}`);
+        } else {
+          this.log("worker", `starting default worker`);
+        }
+        const objectUrl = this._workerObjectUrl(this.workerUrl);
+        this.workerRef = new Worker(objectUrl);
+        this.workerRef.onerror = (error) => {
+          this.log("worker", "worker error", error.message);
+          this._terminateWorker();
+          this.disconnect();
+        };
+        this.workerRef.onmessage = (event) => {
+          if (event.data.event === "keepAlive") {
+            this.sendHeartbeat();
+          }
+        };
+        this.workerRef.postMessage({
+          event: "start",
+          interval: this.heartbeatIntervalMs
+        });
+      }
+      /**
+       * Terminate the Web Worker and clear the reference
+       * @internal
+       */
+      _terminateWorker() {
+        if (this.workerRef) {
+          this.log("worker", "terminating worker");
+          this.workerRef.terminate();
+          this.workerRef = void 0;
+        }
+      }
+      /** @internal */
+      _workerObjectUrl(url) {
+        let result_url;
+        if (url) {
+          result_url = url;
+        } else {
+          const blob = new Blob([WORKER_SCRIPT], { type: "application/javascript" });
+          result_url = URL.createObjectURL(blob);
+        }
+        return result_url;
+      }
+      /**
+       * Initialize socket options with defaults
+       * @internal
+       */
+      _initializeOptions(options) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        this.worker = (_a = options === null || options === void 0 ? void 0 : options.worker) !== null && _a !== void 0 ? _a : false;
+        this.accessToken = (_b = options === null || options === void 0 ? void 0 : options.accessToken) !== null && _b !== void 0 ? _b : null;
+        const result = {};
+        result.timeout = (_c = options === null || options === void 0 ? void 0 : options.timeout) !== null && _c !== void 0 ? _c : constants_1.DEFAULT_TIMEOUT;
+        result.heartbeatIntervalMs = (_d = options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs) !== null && _d !== void 0 ? _d : CONNECTION_TIMEOUTS.HEARTBEAT_INTERVAL;
+        this._disconnectOnEmptyChannelsAfterMs = (_e = options === null || options === void 0 ? void 0 : options.disconnectOnEmptyChannelsAfterMs) !== null && _e !== void 0 ? _e : 2 * ((_f = options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs) !== null && _f !== void 0 ? _f : CONNECTION_TIMEOUTS.HEARTBEAT_INTERVAL);
+        result.transport = (_g = options === null || options === void 0 ? void 0 : options.transport) !== null && _g !== void 0 ? _g : websocket_factory_1.default.getWebSocketConstructor();
+        result.params = options === null || options === void 0 ? void 0 : options.params;
+        result.logger = options === null || options === void 0 ? void 0 : options.logger;
+        result.heartbeatCallback = this._wrapHeartbeatCallback(options === null || options === void 0 ? void 0 : options.heartbeatCallback);
+        result.sessionStorage = (_h = options === null || options === void 0 ? void 0 : options.sessionStorage) !== null && _h !== void 0 ? _h : resolveSessionStorage();
+        result.reconnectAfterMs = (_j = options === null || options === void 0 ? void 0 : options.reconnectAfterMs) !== null && _j !== void 0 ? _j : ((tries) => {
+          return RECONNECT_INTERVALS[tries - 1] || DEFAULT_RECONNECT_FALLBACK;
+        });
+        let defaultEncode;
+        let defaultDecode;
+        const vsn = (_k = options === null || options === void 0 ? void 0 : options.vsn) !== null && _k !== void 0 ? _k : constants_1.DEFAULT_VSN;
+        switch (vsn) {
+          case constants_1.VSN_1_0_0:
+            defaultEncode = (payload, callback) => {
+              return callback(JSON.stringify(payload));
+            };
+            defaultDecode = (payload, callback) => {
+              return callback(JSON.parse(payload));
+            };
+            break;
+          case constants_1.VSN_2_0_0:
+            defaultEncode = this.serializer.encode.bind(this.serializer);
+            defaultDecode = this.serializer.decode.bind(this.serializer);
+            break;
+          default:
+            throw new Error(`Unsupported serializer version: ${result.vsn}`);
+        }
+        result.vsn = vsn;
+        result.encode = (_l = options === null || options === void 0 ? void 0 : options.encode) !== null && _l !== void 0 ? _l : defaultEncode;
+        result.decode = (_m = options === null || options === void 0 ? void 0 : options.decode) !== null && _m !== void 0 ? _m : defaultDecode;
+        result.beforeReconnect = this._reconnectAuth.bind(this);
+        if ((options === null || options === void 0 ? void 0 : options.logLevel) || (options === null || options === void 0 ? void 0 : options.log_level)) {
+          this.logLevel = options.logLevel || options.log_level;
+          result.params = Object.assign(Object.assign({}, result.params), { log_level: this.logLevel });
+        }
+        if (this.worker) {
+          if (typeof window !== "undefined" && !window.Worker) {
+            throw new Error("Web Worker is not supported");
+          }
+          this.workerUrl = options === null || options === void 0 ? void 0 : options.workerUrl;
+          result.autoSendHeartbeat = !this.worker;
+        }
+        return result;
+      }
+      /** @internal */
+      async _reconnectAuth() {
+        await this._waitForAuthIfNeeded();
+        if (!this.isConnected()) {
+          this.connect();
+        }
+      }
+    };
+    exports.default = RealtimeClient2;
+  }
+});
+
+// node_modules/@supabase/realtime-js/dist/main/index.js
+var require_main = __commonJS({
+  "node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+    "use strict";
+    init_define_import_meta_env();
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.WebSocketFactory = exports.REALTIME_CHANNEL_STATES = exports.REALTIME_SUBSCRIBE_STATES = exports.REALTIME_PRESENCE_LISTEN_EVENTS = exports.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = exports.REALTIME_LISTEN_TYPES = exports.postgresChangesFilter = exports.RealtimePostgresFilterBuilder = exports.RealtimeClient = exports.RealtimeChannel = exports.RealtimePresence = void 0;
+    var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
+    var RealtimeClient_1 = tslib_1.__importDefault(require_RealtimeClient());
+    exports.RealtimeClient = RealtimeClient_1.default;
+    var RealtimeChannel_1 = tslib_1.__importStar(require_RealtimeChannel());
+    exports.RealtimeChannel = RealtimeChannel_1.default;
+    Object.defineProperty(exports, "RealtimePostgresFilterBuilder", { enumerable: true, get: function() {
+      return RealtimeChannel_1.RealtimePostgresFilterBuilder;
+    } });
+    Object.defineProperty(exports, "postgresChangesFilter", { enumerable: true, get: function() {
+      return RealtimeChannel_1.postgresChangesFilter;
+    } });
+    Object.defineProperty(exports, "REALTIME_LISTEN_TYPES", { enumerable: true, get: function() {
+      return RealtimeChannel_1.REALTIME_LISTEN_TYPES;
+    } });
+    Object.defineProperty(exports, "REALTIME_POSTGRES_CHANGES_LISTEN_EVENT", { enumerable: true, get: function() {
+      return RealtimeChannel_1.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT;
+    } });
+    Object.defineProperty(exports, "REALTIME_SUBSCRIBE_STATES", { enumerable: true, get: function() {
+      return RealtimeChannel_1.REALTIME_SUBSCRIBE_STATES;
+    } });
+    Object.defineProperty(exports, "REALTIME_CHANNEL_STATES", { enumerable: true, get: function() {
+      return RealtimeChannel_1.REALTIME_CHANNEL_STATES;
+    } });
+    var RealtimePresence_1 = tslib_1.__importStar(require_RealtimePresence());
+    exports.RealtimePresence = RealtimePresence_1.default;
+    Object.defineProperty(exports, "REALTIME_PRESENCE_LISTEN_EVENTS", { enumerable: true, get: function() {
+      return RealtimePresence_1.REALTIME_PRESENCE_LISTEN_EVENTS;
+    } });
+    var websocket_factory_1 = tslib_1.__importDefault(require_websocket_factory());
+    exports.WebSocketFactory = websocket_factory_1.default;
   }
 });
 
@@ -72,8 +4998,8 @@ function applyApiOriginPolicy(req, res, configured = [process.env.FORGARDEN_APP_
   else res.json(null);
   return true;
 }
-function qaToolsAllowed(url, enabled) {
-  if (enabled !== "1") return false;
+function qaToolsAllowed(url, enabled2) {
+  if (enabled2 !== "1") return false;
   try {
     return new URL(url).origin === "https://rscxzfdnbdmftortrcqt.supabase.co";
   } catch {
@@ -1516,7 +6442,8 @@ var RUNE_KO = {
   "rune.traitReroll.apply": "\uC0C8 \uD2B9\uC131 \uC801\uC6A9",
   "rune.traitReroll.again": "\uAE30\uC874 \uC720\uC9C0 \uD6C4 \uC7AC\uD574\uC11D",
   "rune.traitReroll.upgraded": "\uB4F1\uAE09 \uC0C1\uC2B9",
-  "rune.traitReroll.pity": "\uB4F1\uAE09 \uC0C1\uC2B9 \uBCF4\uC815 {done} / {total}"
+  "rune.traitReroll.pity": "\uB4F1\uAE09 \uC0C1\uC2B9 \uBCF4\uC815 {done} / {total}",
+  "rune.traitReroll.discardHigher": "\uC9C0\uAE08 \uB8EC\uBCF4\uB2E4 \uB192\uC740 \uB4F1\uAE09\uC758 \uD2B9\uC131\uC774 \uB098\uC640 \uC788\uC2B5\uB2C8\uB2E4. \uC801\uC6A9\uD558\uC9C0 \uC54A\uACE0 \uB2E4\uC2DC \uB3CC\uB9AC\uBA74 \uC774 \uD2B9\uC131\uC740 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4. \uC815\uB9D0 \uB3CC\uB9AC\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
 };
 
 // src/i18n/ko/party.ts
@@ -4924,9 +9851,12 @@ var GUILD_GUARD = {
   /** 미리 짜 두는 웨이브 수. 시간 안에 이보다 많이 올 수 없다(당겨 와도). */
   maxWaves: 80,
   startLevel: 1,
-  /** 웨이브가 잦아진 만큼 한 웨이브의 레벨 몫을 줄여 시간당 오르는 레벨(초당 0.25)은 예전과 같게 둔다. */
-  levelPerWave: 2,
-  maxLevel: 100,
+  /**
+   * 웨이브마다 레벨이 4씩 오른다(2026-10-29 응태 요청 — 2 → 4, 상한 100 → 200). 적당히 오른 웨이브에서 이미 확실히 강해져
+   * 아주 긴 웨이브를 밀지 않아도 점수가 크게 쌓이고, 상한을 풀어 깊은 웨이브에서도 계속 세진다.
+   */
+  levelPerWave: 4,
+  maxLevel: 200,
   /**
    * 머릿수: 5 + 웨이브의 사분의 일, 상한 10. 상한(18)이 치즈케이크 대작전 한 판(10~15)을 조금 넘는 무리라, 한 웨이브가
    * 그 절반 남짓이어야 "다 못 치우면 쌓인다"가 몇 웨이브에 걸쳐 일어난다(한 번에 15씩 오면 두 웨이브 만에 끝났다).
@@ -4934,8 +9864,9 @@ var GUILD_GUARD = {
   gruntBase: 5,
   gruntPerWaves: 4,
   gruntCap: 10,
-  /** 처치 점수 10 + 웨이브. */
-  gruntScore: 10
+  /** 처치 점수 30 + 웨이브 × 10 — 깊이 갈수록 한 마리 몫이 가파르게 커서 오래 끄는 것보다 한두 웨이브 더 오르는 쪽이 이득이다. */
+  gruntScore: 30,
+  gruntScorePerWave: 10
 };
 function guardWaveLevel(index) {
   return Math.min(GUILD_GUARD.maxLevel, GUILD_GUARD.startLevel + GUILD_GUARD.levelPerWave * (index - 1));
@@ -4944,7 +9875,7 @@ function guardWaveCount(index) {
   return Math.min(GUILD_GUARD.gruntCap, GUILD_GUARD.gruntBase + Math.floor(index / GUILD_GUARD.gruntPerWaves));
 }
 function guardUnitScore(index) {
-  return GUILD_GUARD.gruntScore + index;
+  return GUILD_GUARD.gruntScore + GUILD_GUARD.gruntScorePerWave * index;
 }
 function buildGuardWave(roster, index) {
   if (roster.units.length === 0) throw new RangeError("\uC218\uD638\uC804 \uBA85\uB2E8\uC774 \uBE44\uC5C8\uC2B5\uB2C8\uB2E4.");
@@ -6837,7 +11768,7 @@ function reloadAfterBasic(attacker, state, events) {
   return refill.reloadSeconds;
 }
 function grantShield(state, target, providerId, requested, events, weight = 1) {
-  const amount = requested * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side);
+  const amount = requested * survivalMultiplier(state) * hordeRestoreMultiplier(state, target.side);
   if (!(amount > 0)) return 0;
   target.shield.amount += amount;
   target.shield.providerId = providerId;
@@ -8916,7 +13847,7 @@ function applyHealing(state, target, requested, casterId = target.id) {
     saltedIngredientPercent(state, target)
   );
   const before = target.hp;
-  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * deathClockSurvivalMultiplier(state.elapsed) * hordeRestoreMultiplier(state, target.side));
+  target.hp = Math.min(target.maxHp, target.hp + Math.max(0, requested) * (1 - reduction / 100) * survivalMultiplier(state) * hordeRestoreMultiplier(state, target.side));
   const actual = target.hp - before;
   addContribution(state.contributions, casterId, "healing", actual);
   return actual;
@@ -9842,6 +14773,9 @@ function tickRegeneration(fighter, dt, state) {
   }
   if (regeneration.remaining <= EMERGENCY_RECOVERY.epsilon) fighter.regeneration = null;
   return events;
+}
+function survivalMultiplier(state) {
+  return state.horde ? 1 : deathClockSurvivalMultiplier(state.elapsed);
 }
 function tickDeathClock(state, events) {
   if (state.horde) return;
@@ -22197,7 +27131,7 @@ var STRATA_LAYERS = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 4, teal: 5.5, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 10, teal: 12, gold: 17, deep: 21 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 1, teal: 2, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 0.7, teal: 1.4, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0, gold: 2.5, deep: 4 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.2, teal: 0.4, gold: 1, deep: 3 }, min: 100, max: 300 }
     ]
@@ -22221,7 +27155,7 @@ var STRATA_LAYERS = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 5, teal: 6, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 13, teal: 15, gold: 21, deep: 26 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 2, teal: 3, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.4, teal: 2.1, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 1, gold: 3, deep: 4.5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.3, teal: 0.6, gold: 1.4, deep: 3.5 }, min: 100, max: 300 }
     ]
@@ -22251,7 +27185,7 @@ var STRATA_LAYERS = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 4.5, teal: 5.5, gold: 6.5, deep: 6.5 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 11, teal: 13, gold: 19, deep: 24 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 1.5, teal: 2.5, gold: 8, deep: 12 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.05, teal: 1.75, gold: 5.6, deep: 8.4 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0, teal: 0.5, gold: 2.5, deep: 4 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.25, teal: 0.5, gold: 1.2, deep: 3.2 }, min: 100, max: 300 }
     ]
@@ -22280,7 +27214,7 @@ var STRATA_LAYERS = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 5.5, teal: 6, gold: 7, deep: 7 }, min: 1, max: 1 },
       { kind: "rune", weight: { soil: 15, teal: 18, gold: 24, deep: 30 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 2.5, teal: 4, gold: 8.5, deep: 12.5 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 1.75, teal: 2.8, gold: 5.95, deep: 8.75 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 0.5, teal: 1, gold: 3.5, deep: 5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.4, teal: 0.8, gold: 1.7, deep: 3.8 }, min: 100, max: 300 }
     ]
@@ -22303,7 +27237,7 @@ var STRATA_LAYERS = [
       // 나오는 빈도(weight)로 기대 뽑기 수를 맞춘다. 룬의 영웅·전설 확률이 이 두 칸의 확률을 그대로 따른다.
       { kind: "fossil", weight: { soil: 6.5, teal: 7, gold: 7.5, deep: 7.5 }, min: 1, max: 2 },
       { kind: "rune", weight: { soil: 17, teal: 20, gold: 26, deep: 32 }, min: 1, max: 1 },
-      { kind: "researchItem", weight: { soil: 3, teal: 5, gold: 9, deep: 13 }, min: 1, max: 1 },
+      { kind: "researchItem", weight: { soil: 2.1, teal: 3.5, gold: 6.3, deep: 9.1 }, min: 1, max: 1 },
       { kind: "amber", weight: { soil: 1, teal: 1.5, gold: 4, deep: 5 }, min: 1, max: 1 },
       { kind: "gems", weight: { soil: 0.5, teal: 1, gold: 2, deep: 4 }, min: 100, max: 300 }
     ]
@@ -22436,7 +27370,7 @@ function rollStrataRuneRarity(layer, tone, random) {
 }
 function rollStrataResearchItem(random) {
   const value = roll(random);
-  return value < 0.78 ? RUNE_TRAIT_ITEMS.grant.itemId : value < 0.96 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
+  return value < 0.92 ? RUNE_TRAIT_ITEMS.grant.itemId : value < 0.99 ? RUNE_TRAIT_ITEMS.grantHigh.itemId : RUNE_TRAIT_ITEMS.upgrade.itemId;
 }
 function withRuneDetail(layer, tone, random) {
   return { runeRarity: rollStrataRuneRarity(layer, tone, random), runePart: Math.min(2, Math.floor(roll(random) * 3)) };
@@ -28818,8 +33752,8 @@ function migrateSavedRelicIds(input) {
       if (Array.isArray(run2.selectedAugments)) run2.selectedAugments.forEach((selection) => {
         if (selection && typeof selection === "object" && "targetRelicId" in selection) selection.targetRelicId = mapId(selection.targetRelicId);
       });
-      const pending = run2.pendingAugmentReward;
-      if (pending && Array.isArray(pending.offers)) pending.offers.forEach((offer) => {
+      const pending2 = run2.pendingAugmentReward;
+      if (pending2 && Array.isArray(pending2.offers)) pending2.offers.forEach((offer) => {
         if (offer && typeof offer === "object") offer.eligibleTargetRelicIds = mapUniqueIds(offer.eligibleTargetRelicIds);
       });
     }
@@ -31455,8 +36389,8 @@ function assertStoryChoiceReachable(story, selected, target) {
   throw new GameApiError("INVALID_STATE", "\uB3C4\uB2EC\uD558\uC9C0 \uC54A\uC740 \uC774\uC57C\uAE30 \uC120\uD0DD\uC9C0\uC785\uB2C8\uB2E4.");
 }
 function redeemDeferredStoryBond(next, acquired) {
-  const pending = next.serverJournal?.pendingStoryBondXp;
-  if (!pending || !acquired.some((id) => (pending[id] ?? 0) > 0)) return;
+  const pending2 = next.serverJournal?.pendingStoryBondXp;
+  if (!pending2 || !acquired.some((id) => (pending2[id] ?? 0) > 0)) return;
   const journal = structuredClone(next.serverJournal ?? emptyServerJournal());
   for (const id of new Set(acquired)) {
     const amount = journal.pendingStoryBondXp?.[id] ?? 0;
@@ -32363,11 +37297,11 @@ init_define_import_meta_env();
 
 // src/core/expeditionRewards.ts
 init_define_import_meta_env();
-function normalizeExpeditionPendingRewards(pending, bossDamageScore = 0) {
+function normalizeExpeditionPendingRewards(pending2, bossDamageScore = 0) {
   const normalized = {};
   for (const [currency3, rule] of Object.entries(EXPEDITION_NODE_REWARD_BALANCE)) {
     const key = currency3;
-    const raw = pending[key] ?? 0;
+    const raw = pending2[key] ?? 0;
     const cap = rule.runCap + (key === "salvageRecord" ? expeditionBossSalvage(bossDamageScore) : 0);
     const amount = Math.max(0, Math.min(cap, Math.floor(Number.isFinite(raw) ? raw : 0)));
     if (amount > 0) normalized[key] = amount;
@@ -32632,28 +37566,28 @@ var ExpeditionManager = class {
     const seed = `${run2.mapSeed}:${nodeId}:augment:1`;
     const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: run2.relics, selections: run2.selectedAugments, random: expeditionRewardRandom(seed) });
     if (offers.length === 0) return null;
-    const pending = { nodeId, seed, round: 1, totalRounds: rule.selections, offers };
-    const next = { ...structuredClone(run2), pendingAugmentReward: pending };
+    const pending2 = { nodeId, seed, round: 1, totalRounds: rule.selections, offers };
+    const next = { ...structuredClone(run2), pendingAugmentReward: pending2 };
     this.commit({ ...this.state.expedition, run: next });
-    return structuredClone(pending);
+    return structuredClone(pending2);
   }
   /** 제안에 포함된 증강만 확정하며 무리 전투는 첫 결과를 저장한 뒤 두 번째 제안을 연속 생성한다. */
   chooseAugment(selection) {
     const run2 = this.state.expedition.run;
-    const pending = run2?.pendingAugmentReward;
-    const offer = pending?.offers.find(({ augmentId }) => augmentId === selection.augmentId);
-    if (!run2 || !pending || !offer || !validateExpeditionAugmentChoice(offer, selection, run2.selectedAugments)) return false;
+    const pending2 = run2?.pendingAugmentReward;
+    const offer = pending2?.offers.find(({ augmentId }) => augmentId === selection.augmentId);
+    if (!run2 || !pending2 || !offer || !validateExpeditionAugmentChoice(offer, selection, run2.selectedAugments)) return false;
     const next = structuredClone(run2);
     next.selectedAugments.push({ ...selection });
     next.selectedAugmentIds.push(selection.augmentId);
-    if (pending.round < pending.totalRounds) {
-      const nodeType = next.nodes.find(({ id }) => id === pending.nodeId)?.type;
+    if (pending2.round < pending2.totalRounds) {
+      const nodeType = next.nodes.find(({ id }) => id === pending2.nodeId)?.type;
       const rule = nodeType ? expeditionRewardRule(nodeType) : { selections: 0, rarity: null };
       if (!rule.rarity) return false;
-      const round = pending.round + 1;
-      const seed = `${run2.mapSeed}:${pending.nodeId}:augment:${round}`;
+      const round = pending2.round + 1;
+      const seed = `${run2.mapSeed}:${pending2.nodeId}:augment:${round}`;
       const offers = generateExpeditionAugmentOffers({ rarity: rule.rarity, relics: next.relics, selections: next.selectedAugments, random: expeditionRewardRandom(seed) });
-      next.pendingAugmentReward = offers.length > 0 ? { nodeId: pending.nodeId, seed, round, totalRounds: pending.totalRounds, offers } : null;
+      next.pendingAugmentReward = offers.length > 0 ? { nodeId: pending2.nodeId, seed, round, totalRounds: pending2.totalRounds, offers } : null;
     } else next.pendingAugmentReward = null;
     this.commit({ ...this.state.expedition, run: next });
     return true;
@@ -32967,7 +37901,7 @@ var DUEL_PRODUCTS = [
   duel("duel-weekly-gems", "weekly", "shop-product-gems", "\uACB0\uD22C \uC815\uC0B0 \uACB0\uC815", 70, 2, [{ kind: "currency", currency: "gems", amount: 40 }]),
   duel("duel-weekly-tonic", "weekly", "shop-product-supplies", "\uACE0\uB18D\uCD95 \uD22C\uC0AC\uC758 \uC74C\uB8CC", 170, 2, [{ kind: "item", itemId: "stamina-tonic-large", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C+", amount: 1, expiresInDays: 7 }]),
   duel("duel-monthly-refined-core", "special", "shop-product-refined-core", "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", 300, 1, [{ kind: "item", itemId: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", amount: 1 }]),
-  duel("duel-monthly-crystal", "special", "shop-product-restoration-crystal", "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", 340, 1, [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }])
+  duel("duel-monthly-crystal", "special", "shop-product-restoration-crystal", "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", 1500, 1, [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }])
 ];
 
 // src/data/products.ts
@@ -33009,7 +37943,7 @@ var SHOP_PRODUCTS = [
   { id: "arch-amber-exchange", storefront: "archaeology", category: "weekly", iconKey: "shop-product-supplies", name: "\uD638\uBC15\uC11D", description: "", acquisition: { kind: "currency", currency: "rawStone", amount: 2500 }, grants: [{ kind: "currency", currency: "amber", amount: 1 }], defaultQuantity: 1, purchaseLimit: 5, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-ancient-core", storefront: "archaeology", category: "weekly", iconKey: "shop-product-ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", description: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 600 }, grants: [{ kind: "item", itemId: "ancient-core", name: "\uBBF8\uC9C0\uC758 \uACE0\uB300 \uD575", amount: 1 }], defaultQuantity: 1, purchaseLimit: 3, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "arch-refined-core", storefront: "archaeology", category: "special", iconKey: "shop-product-refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", description: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 1500 }, grants: [{ kind: "item", itemId: "refined-core", name: "\uC815\uC81C\uB41C \uACE0\uB300 \uD575", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "arch-restoration-crystal", storefront: "archaeology", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 4500 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "arch-restoration-crystal", storefront: "archaeology", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "rawStone", amount: 9e3 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **레이드 상점.** 값은 전부 토벌 증표라 레이드를 돈 사람만 살 수 있고, 다른 재화로 사는 길을
   // 두지 않는다 — 젬으로도 살 수 있으면 증표가 무엇을 위한 것인지 말하지 못한다. 제한은 주간이
   // 기본이고, 성장 재료만 매일 열어 꾸준히 도는 사람이 매주 몰아 사지 않게 한다.
@@ -33026,7 +37960,7 @@ var SHOP_PRODUCTS = [
   { id: "loot-salvage-orestone", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-fossil", name: "\uC778\uC591 \uAD11\uBB3C \uD68C\uC218\uBD84", description: "\uC6D0\uC11D 300\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 100 }, grants: [{ kind: "currency", currency: "rawStone", amount: 300 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-tonic", storefront: "loot", lootCategory: "expedition", category: "daily", iconKey: "shop-product-supplies", name: "\uC778\uC591 \uBCF4\uAE09 \uC74C\uB8CC", description: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 85 }, grants: [{ kind: "item", itemId: "stamina-tonic", name: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C", amount: 1, expiresInDays: 7 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "daily", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   { id: "loot-salvage-gems", storefront: "loot", lootCategory: "expedition", category: "weekly", iconKey: "shop-product-gems", name: "\uC778\uC591 \uC815\uC0B0 \uACB0\uC815", description: "\uB2E4\uC774\uC544 40\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 75 }, grants: [{ kind: "currency", currency: "gems", amount: 40 }], defaultQuantity: 1, purchaseLimit: 2, refresh: "weekly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
-  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 1e3 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
+  { id: "loot-salvage-crystal", storefront: "loot", lootCategory: "expedition", category: "special", iconKey: "shop-product-restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", description: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815 1\uAC1C", acquisition: { kind: "currency", currency: "salvageRecord", amount: 2e3 }, grants: [{ kind: "item", itemId: "restoration-crystal", name: "\uC644\uC804 \uBCF5\uC6D0 \uACB0\uC815", amount: 1 }], defaultQuantity: 1, purchaseLimit: 1, refresh: "monthly", visibleFrom: "2026-01-01T00:00:00Z", visibleUntil: "2030-01-01T00:00:00Z" },
   // **룬 칸 — 가끔만 나온다.** 주 무대는 고고학이고 다른 상점은 드물게, 조금 더 비싸게 판다.
   // 어느 기간에 어느 칸이 열리는지는 로테이션 순수 함수(`rotationOffer`)가 정하며, 값은 전부 고고학
   // 900(희귀)·3,000(영웅)원석을 기준으로 환산했다. 젬(다이아)으로는 팔지 않고 전설은 팔지 않는다.
@@ -33791,6 +38725,7 @@ var GUILD_API_METHODS = [
 var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
 
 // src/api/FakeGuildServer.ts
+var GUILD_WAR_BENCH_MS = 2 * 864e5;
 var fail2 = (code, message) => {
   throw new GuildApiError(code, message);
 };
@@ -34392,8 +39327,24 @@ var FakeGuildServer = class _FakeGuildServer {
       war.set(slot.id, { userId: member.userId, deck, lineup: null, placedAt: guild.createdAt });
     }
   }
+  /**
+   * 칸이 없는 길드원을 대기 덱으로 세운다 — 전투력 높은 순으로 자동 배치 순서의 빈 칸에. 칸에서 막 내려온 길드원은 건너뛴다.
+   * 정비일에 지도를 읽을 때와 전투일 매칭 직전에 부른다. 이미 선 칸은 움직이지 않는다(옮기는 일은 간부의 편집이다).
+   */
+  autofillWar(guild) {
+    const now = this.now();
+    const war = this.warOf(guild);
+    const placed = new Set([...war.values()].map(({ userId }) => userId));
+    const waiting = [...guild.members.values()].filter((m) => m.warStandby && !placed.has(m.userId) && !(m.warBenchAt !== void 0 && now - m.warBenchAt < GUILD_WAR_BENCH_MS)).map((m) => ({ member: m, power: m.warStandby.deck.reduce((sum, entry) => sum + entry.power, 0) })).sort((a, b) => b.power - a.power || a.member.userId.localeCompare(b.member.userId));
+    for (const { member } of waiting) {
+      const slotId = guildWarFirstOpenSlot(this.level(guild), new Set(war.keys()));
+      if (!slotId) break;
+      war.set(slotId, { userId: member.userId, deck: member.warStandby.deck.map((entry) => ({ ...entry })), lineup: structuredClone(member.warStandby.lineup), placedAt: now });
+    }
+  }
   warMapOf(guild, me) {
     if (guild.members.size > 0 && [...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    if (guildWarNow(this.now()).phase === "prep") this.autofillWar(guild);
     const now = this.now();
     const war = this.warOf(guild);
     const level = this.level(guild);
@@ -34423,6 +39374,8 @@ var FakeGuildServer = class _FakeGuildServer {
     if (!row) fail2("SLOT_INVALID");
     if (row.userId !== me.userId && !guildCan(me.role, "formation")) fail2("NO_PERMISSION");
     this.warOf(guild).delete(slotId);
+    const benched = guild.members.get(row.userId);
+    if (benched) benched.warBenchAt = this.now();
     return this.warMapOf(guild, me);
   }
   async moveWarSlot(actor, from, to) {
@@ -34471,10 +39424,17 @@ var FakeGuildServer = class _FakeGuildServer {
         slotId = slot.id;
       }
       this.dropWarDefense(guild, me.userId);
+      me.warBenchAt = void 0;
       war.set(slotId, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
       return true;
     });
     return this.getWarMap(actor);
+  }
+  async syncWarStandby(actor, input) {
+    const { guild, me } = this.requireGuild(actor);
+    if (!Array.isArray(input?.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail2("INVALID_REQUEST");
+    me.warStandby = { deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup) };
+    if (guildWarNow(this.now()).phase === "prep") this.autofillWar(guild);
   }
   // ── 길드전 공격 ─────────────────────────────────────────────────────────────
   /**
@@ -34484,7 +39444,10 @@ var FakeGuildServer = class _FakeGuildServer {
   warMatchesOf(day) {
     const existing = this.warMatches.get(day);
     if (existing) return existing;
-    for (const guild of this.guilds.values()) if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    for (const guild of this.guilds.values()) {
+      if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+      this.autofillWar(guild);
+    }
     const entries = [...this.guilds.values()].filter((g) => g.members.size >= GUILD_WAR_MIN_MEMBERS && this.warOf(g).size > 0).map((g) => ({ guildId: g.id, score: g.warScore ?? GUILD_WAR_START_SCORE, reachedAt: g.warReachedAt ?? 0 }));
     const last = /* @__PURE__ */ new Map();
     for (const match of this.warMatches.get(day - 2) ?? []) if (match.b) {
@@ -34556,23 +39519,23 @@ var FakeGuildServer = class _FakeGuildServer {
         match.settled = true;
         this.simulateSampleAttacks(match);
         const sides = match.b ? [[match.a, match.b], [match.b, match.a]] : [[match.a, null]];
-        const outcomes = sides.map(([self, other]) => {
-          if (!other) return { self, other, outcome: "bye", mine: 0, theirs: 0 };
-          const mine = this.warSide(match, self, other);
-          const theirs = this.warSide(match, other, self);
-          return { self, other, outcome: guildWarResult(mine, theirs), mine: mine.points, theirs: theirs.points };
+        const outcomes = sides.map(([self2, other]) => {
+          if (!other) return { self: self2, other, outcome: "bye", mine: 0, theirs: 0 };
+          const mine = this.warSide(match, self2, other);
+          const theirs = this.warSide(match, other, self2);
+          return { self: self2, other, outcome: guildWarResult(mine, theirs), mine: mine.points, theirs: theirs.points };
         });
-        const before = new Map(outcomes.map(({ self }) => [self, this.guilds.get(self)?.warScore ?? GUILD_WAR_START_SCORE]));
-        for (const { self, other, outcome, mine, theirs } of outcomes) {
-          const guild = this.guilds.get(self);
+        const before = new Map(outcomes.map(({ self: self2 }) => [self2, this.guilds.get(self2)?.warScore ?? GUILD_WAR_START_SCORE]));
+        for (const { self: self2, other, outcome, mine, theirs } of outcomes) {
+          const guild = this.guilds.get(self2);
           if (!guild) continue;
-          const score = before.get(self);
+          const score = before.get(self2);
           const delta = guildWarScoreDelta(outcome, score, other ? before.get(other) ?? GUILD_WAR_START_SCORE : score);
           const after = applyGuildWarDelta(score, delta);
           if (after !== guild.warScore) guild.warReachedAt = (day + 1) * 864e5;
           guild.warScore = after;
           const coinOf = /* @__PURE__ */ new Map();
-          const attackers = match.attackers.get(self) ?? /* @__PURE__ */ new Set();
+          const attackers = match.attackers.get(self2) ?? /* @__PURE__ */ new Set();
           for (const member of guild.members.values()) {
             const eligible = outcome === "bye" ? guildWarCanAttack(member.joinedAt, day * 864e5) : attackers.has(member.userId);
             if (!eligible || GUILD_WAR_COIN[outcome] <= 0) continue;
@@ -34790,7 +39753,7 @@ function sampleGuardRecord(userId, level, day) {
   let h = 2166136261;
   for (const ch of `${userId}:${day}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
   h >>>= 0;
-  return { best: h % 5 === 0 ? 0 : 80 + h % 400 + level * (10 + (h >>> 8) % 25), at: day * 864e5 + h % 8e7 };
+  return { best: h % 5 === 0 ? 0 : 240 + h % 1200 + level * (30 + (h >>> 8) % 75), at: day * 864e5 + h % 8e7 };
 }
 var QA_WAR_JOIN_LEAD_MS = 2 * 864e5;
 var SAMPLE_NAMES = ["\uD558\uB298", "\uC0C8\uBD04", "\uC774\uC2AC", "\uB9C8\uB8E8", "\uB2E4\uC628", "\uBCF4\uB78C", "\uB098\uB798", "\uAC00\uB78C", "\uC194", "\uB204\uB9AC", "\uD55C\uACB0", "\uB3C4\uB2F4", "\uBAA8\uC544", "\uBBF8\uB974", "\uC544\uB77C", "\uCD08\uB871", "\uC628\uC0C8\uBBF8", "\uB77C\uC628", "\uD574\uB4E0", "\uC18C\uB2F4"];
@@ -34914,7 +39877,7 @@ function guildGuardOutcome(state, waves) {
     phase: state.phase === "victory" ? "victory" : "defeat"
   };
 }
-var GUILD_GUARD_COIN = { base: 5, perScore: 150, cap: 20 };
+var GUILD_GUARD_COIN = { base: 5, perScore: 450, cap: 20 };
 var guildGuardCoin = (score) => Math.min(GUILD_GUARD_COIN.cap, GUILD_GUARD_COIN.base + Math.floor(Math.max(0, score) / GUILD_GUARD_COIN.perScore));
 
 // src/core/guildWarBattle.ts
@@ -35500,21 +40463,21 @@ var InventoryManager = class {
    * 소비품 경로와 같은 검증(카탈로그 대조·행 무결성)을 함께 지나야 하기 때문이다.
    */
   async rechargeStamina(api, sourceId) {
-    let pending = pendingRecharges.get(api);
-    if (!pending) {
-      pending = /* @__PURE__ */ new Map();
-      pendingRecharges.set(api, pending);
+    let pending2 = pendingRecharges.get(api);
+    if (!pending2) {
+      pending2 = /* @__PURE__ */ new Map();
+      pendingRecharges.set(api, pending2);
     }
-    const requestId = pending.get(sourceId) ?? rechargeRequestId();
-    pending.set(sourceId, requestId);
+    const requestId = pending2.get(sourceId) ?? rechargeRequestId();
+    pending2.set(sourceId, requestId);
     try {
       const response = await api.rechargeStamina({ sourceId, requestId });
       if (!hasRemoteState(response)) this.applySnapshot(response.items, response.wallet);
       else this.publishCurrentInventory();
-      pending.delete(sourceId);
+      pending2.delete(sourceId);
       return response;
     } catch (error) {
-      if (error instanceof GameApiError && error.code !== "PERSISTENCE_FAILED" || error && typeof error === "object" && "status" in error && Number(error.status) >= 400 && Number(error.status) < 500) pending.delete(sourceId);
+      if (error instanceof GameApiError && error.code !== "PERSISTENCE_FAILED" || error && typeof error === "object" && "status" in error && Number(error.status) >= 400 && Number(error.status) < 500) pending2.delete(sourceId);
       throw error;
     }
   }
@@ -35804,9 +40767,9 @@ function clockOnDate(reference, clock) {
   result.setHours(hour, minute, 0, 0);
   return result;
 }
-function adjustForQuietHours(target, enabled, start, end) {
+function adjustForQuietHours(target, enabled2, start, end) {
   const copy = new Date(target);
-  if (!enabled || start === end || !Number.isFinite(copy.getTime())) return copy;
+  if (!enabled2 || start === end || !Number.isFinite(copy.getTime())) return copy;
   const startAt = clockOnDate(copy, start);
   const endAt = clockOnDate(copy, end);
   const crossesMidnight = startAt.getTime() > endAt.getTime();
@@ -35833,6 +40796,539 @@ function applyFrameRateLimit(game, limit) {
   loop.fpsLimit = limit;
   loop.hasFpsLimit = true;
   loop._limitRate = frameLimitRate(limit);
+}
+
+// src/managers/ErrorReporter.ts
+init_define_import_meta_env();
+
+// package.json
+var package_default = {
+  name: "for-garden",
+  private: true,
+  version: "0.394.0",
+  type: "module",
+  description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
+  scripts: {
+    dev: "vite",
+    build: "tsc --noEmit && vite build",
+    "build:test": "tsc --noEmit && vite build --mode test",
+    "build:qa": "tsc --noEmit && vite build --mode qa",
+    preview: "vite preview",
+    "preview:e2e": "npm run build:test && vite preview",
+    typecheck: "tsc --noEmit",
+    test: "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:reuse": "PF_E2E_REUSE_SERVER=1 playwright test",
+    "test:e2e:smoke": "playwright test --project=functional-chromium --grep-invert @slow",
+    "test:e2e:full": "playwright test",
+    "build:server": "node scripts/build-server.mjs",
+    "test:build-isolation": "node scripts/check-build-isolation.mjs",
+    "test:release-fixtures": "node scripts/check-release-fixtures.mjs",
+    "test:launch-reset": "node scripts/check-launch-reset.mjs",
+    "test:server-db": "node scripts/check-server-db.mjs",
+    "test:account-db": "node scripts/check-account-db.mjs",
+    "test:pvp-db": "node scripts/check-pvp-db.mjs",
+    "test:content-loops": "node scripts/check-content-loops.mjs",
+    "test:arena-db": "node scripts/check-arena-db.mjs",
+    "audit:cc": "node scripts/audit-cc.mjs",
+    "audit:ancient": "node scripts/audit-ancient-strata.mjs",
+    "security:audit": "node scripts/check-security.mjs",
+    "security:android": "node scripts/check-security.mjs --android",
+    "security:ios": "node scripts/check-security.mjs --ios"
+  },
+  dependencies: {
+    "@supabase/realtime-js": "2.118.0",
+    phaser: "^3.90.0",
+    puppetforge: "github:Bell7080/WebGLE#b5af06a3bcac73b8d639e7e760812d13ee19e475"
+  },
+  devDependencies: {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^26.4.0",
+    typescript: "^5.9.2",
+    vite: "7.3.7",
+    vitest: "4.1.12"
+  }
+};
+
+// src/api/apiFailureSink.ts
+init_define_import_meta_env();
+
+// src/api/backendSession.ts
+init_define_import_meta_env();
+
+// src/core/appRuntime.ts
+init_define_import_meta_env();
+var APP_TARGET = define_import_meta_env_default?.VITE_APP_TARGET ?? "web";
+
+// src/api/arenaApi.ts
+init_define_import_meta_env();
+
+// src/core/timeoutSignal.ts
+init_define_import_meta_env();
+
+// src/core/apiBase.ts
+init_define_import_meta_env();
+
+// src/api/arenaRealtime.ts
+init_define_import_meta_env();
+var import_realtime_js = __toESM(require_main(), 1);
+
+// src/api/webOAuth.ts
+init_define_import_meta_env();
+
+// src/api/serverProgress.ts
+init_define_import_meta_env();
+
+// src/api/RemoteSocialApi.ts
+init_define_import_meta_env();
+
+// src/server/requestPolicy.ts
+init_define_import_meta_env();
+var READ_METHODS = /* @__PURE__ */ new Set([
+  "arena.get",
+  "archaeologyState",
+  "getAchievements",
+  "getAncientRanking",
+  "getAdOperationsConfig",
+  "getAsyncArenaServerState",
+  "getAttendance",
+  "getBountyStatus",
+  "getDuelRanking",
+  "getDuelStatus",
+  "getEvents",
+  "getRouletteStatus",
+  "getExpeditionLeaderboard",
+  "getExpeditionWeeklyBest",
+  "getIdleExcavation",
+  "getInteractionCities",
+  "getInteractionDispatch",
+  "getInventory",
+  "getMails",
+  "getMissions",
+  "getNotificationSignals",
+  "getPlayerState",
+  "getProducts",
+  "getProgressPasses",
+  "getRaids",
+  "getStaminaRechargeStatus",
+  "verifyPurchaseReceipt",
+  "social.getFriends",
+  "social.getRequests",
+  "social.searchUsers",
+  "social.getRecommendations",
+  "guild.getGuild",
+  "guild.searchGuilds",
+  "guild.getMembers",
+  "guild.getAttendance",
+  "guild.getShop",
+  "guild.getGuard",
+  "guild.getRanking",
+  "guild.getWarMap",
+  "guild.getWarFront",
+  "getGuildGuard"
+]);
+var isReadMethod = (method) => READ_METHODS.has(method);
+var REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
+var MAX_BODY_BYTES = 128 * 1024;
+function validCall(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const call = value;
+  return typeof call.method === "string" && call.method.length <= 64 && (call.args === void 0 || Array.isArray(call.args) && call.args.length <= 4) && (call.requestId === void 0 || typeof call.requestId === "string" && REQUEST_ID.test(call.requestId));
+}
+function requestBudget(method) {
+  if (method === "social.searchUsers") return { windowSeconds: 60, limit: 20 };
+  return { windowSeconds: 60, limit: isReadMethod(method) ? 180 : 60 };
+}
+
+// src/api/RemoteSocialApi.ts
+var SOCIAL_METHODS = [
+  "getFriends",
+  "getRequests",
+  "searchUsers",
+  "getRecommendations",
+  "sendRequest",
+  "cancelRequest",
+  "acceptRequest",
+  "declineRequest",
+  "acceptAllRequests",
+  "declineAllRequests",
+  "setFavorite",
+  "removeFriend",
+  "rentFavoriteRelic"
+];
+var isSocialMethod = (value) => SOCIAL_METHODS.includes(value);
+
+// src/api/RemoteGuildApi.ts
+init_define_import_meta_env();
+
+// src/api/RemoteGameApi.ts
+init_define_import_meta_env();
+
+// src/server/gameMethods.ts
+init_define_import_meta_env();
+var SERVER_GAME_METHODS = [
+  "getRouletteStatus",
+  "spinRoulette",
+  "unlockRouletteSpins",
+  "prepareCombat",
+  "finishCombat",
+  "abandonStrataRun",
+  "activatePass",
+  "answerRelicQuestion",
+  "applyDebugCommand",
+  "applyStoryEffect",
+  "archaeologyState",
+  "beginExpeditionAugment",
+  "breakThroughRelic",
+  "buyDuelAttempt",
+  "buyGuildProduct",
+  "changeGuildBadge",
+  "renameGuild",
+  "createGuild",
+  "stampGuildAttendance",
+  "getGuildGuard",
+  "enterGuildGuard",
+  "submitGuildGuard",
+  "placeGuildWarDefense",
+  "syncGuildWarStandby",
+  "enterGuildWarAttack",
+  "submitGuildWarAttack",
+  "claimAchievementRewards",
+  "claimAdReward",
+  "claimAttendance",
+  "claimAttendanceAd",
+  "claimDuelSeasonReward",
+  "claimExpeditionReward",
+  "claimInstantAdReward",
+  "claimInteractionDispatch",
+  "claimMailRewards",
+  "claimMissionRewards",
+  "claimPassDailyBonus",
+  "claimProgressPass",
+  "claimRelicChapter",
+  "claimRelicQuestionReward",
+  "chooseExpeditionAugment",
+  "completeBounty",
+  "completeCakeOperation",
+  "completeExpeditionNode",
+  "completeExpeditionRest",
+  "completeObservation",
+  "completeStage",
+  "completeStory",
+  "completeTutorialStep",
+  "digStrataTile",
+  "engraveRune",
+  "enhanceRune",
+  "enhanceRuneAll",
+  "enterBounty",
+  "enterCakeOperation",
+  "enterDailyRestoration",
+  "enterDuel",
+  "enterEventStage",
+  "enterRaid",
+  "enterStage",
+  "equipProfileModifiers",
+  "equipRelicSkin",
+  "equipRune",
+  "feedRelic",
+  "fulfillPlatformPurchase",
+  "getAchievements",
+  "getAdOperationsConfig",
+  "getAsyncArenaServerState",
+  "getAttendance",
+  "getAncientRanking",
+  "getBountyStatus",
+  "getDuelRanking",
+  "getDuelStatus",
+  "getEvents",
+  "getExpeditionLeaderboard",
+  "getExpeditionWeeklyBest",
+  "getIdleExcavation",
+  "getInteractionCities",
+  "getInteractionDispatch",
+  "getInventory",
+  "getMails",
+  "getMissions",
+  "getNotificationSignals",
+  "getPlayerState",
+  "getProducts",
+  "getProgressPasses",
+  "getRaids",
+  "getStaminaRechargeStatus",
+  "grantRuneTrait",
+  "harvestExcavation",
+  "deleteMails",
+  "interactInLobby",
+  "markAttendanceAutoShown",
+  "markContentIntroSeen",
+  "markInteractionJournalRead",
+  "markMailsRead",
+  "markRune",
+  "prepareExpeditionBoss",
+  "pullRelics",
+  "purchaseProduct",
+  "purchaseRelicSkin",
+  "rechargeStamina",
+  "refreshDuelOpponents",
+  "renameRune",
+  "rerollRuneTrait",
+  "resolveDuel",
+  "resolveRuneTraitReroll",
+  "saveExcavationFormation",
+  "selectArchaeologySite",
+  "sellRunes",
+  "setDuelDefense",
+  "setFavorite",
+  "setParty",
+  "setRelicBookmark",
+  "settleExpeditionRun",
+  "settleRaid",
+  "startExpeditionRun",
+  "startInteractionDispatch",
+  "startStrataRun",
+  "submitExpeditionBossScore",
+  "submitRaidDamage",
+  "summonRaid",
+  "sweepBounty",
+  "synthesizeRunes",
+  "sweepCakeOperation",
+  "sweepExpedition",
+  "unequipRune",
+  "updateAccountSettings",
+  "updatePlayerCard",
+  "upgradeRuneTrait",
+  "useConsumable",
+  "verifyPurchaseReceipt"
+];
+var METHOD_SET = new Set(SERVER_GAME_METHODS);
+function isServerGameMethod(name) {
+  return typeof name === "string" && METHOD_SET.has(name);
+}
+
+// src/api/accountDeleted.ts
+init_define_import_meta_env();
+
+// src/api/AccountApi.ts
+init_define_import_meta_env();
+var unsupportedMessage = () => t("error.account.noSdk");
+var UnsupportedAccountApi = class {
+  async getState() {
+    return { ok: true, value: { kind: "guest", provider: "guest", maskedId: "GUEST-\u2022\u2022\u2022\u2022" } };
+  }
+  async login(_request) {
+    return this.unsupported();
+  }
+  async logout() {
+    return this.unsupported();
+  }
+  async requestWithdrawal() {
+    return this.unsupported();
+  }
+  async getRemoteSaveMetadata() {
+    return this.unsupported();
+  }
+  async downloadRemoteSave() {
+    return this.unsupported();
+  }
+  async uploadRemoteSave(_data, _expectedRemote) {
+    return this.unsupported();
+  }
+  async deleteRemoteSave(_expectedRemote) {
+    return this.unsupported();
+  }
+  async mergeGuestSave(_request) {
+    return this.unsupported();
+  }
+  async registerWithId(_id, _password) {
+    return this.unsupported();
+  }
+  async signInWithId(_id, _password) {
+    return this.unsupported();
+  }
+  unsupported() {
+    return { ok: false, code: "unsupported", message: unsupportedMessage() };
+  }
+};
+var accountApi = new UnsupportedAccountApi();
+
+// src/api/webTokenStore.ts
+init_define_import_meta_env();
+
+// src/api/SupabaseAccountApi.ts
+init_define_import_meta_env();
+
+// src/core/accountCredentials.ts
+init_define_import_meta_env();
+
+// src/api/backendSession.ts
+var account = null;
+function backendAccount() {
+  return account;
+}
+
+// src/api/ClientErrorApi.ts
+init_define_import_meta_env();
+var ClientErrorApi = class {
+  constructor(rpc) {
+    this.rpc = rpc;
+  }
+  rpc;
+  async report(p) {
+    if (!this.rpc) return "unsupported";
+    const r = await this.rpc.callRpc("report_client_error", {
+      p_kind: p.kind,
+      p_code: p.code,
+      p_message: p.message,
+      p_stack: p.stack,
+      p_version: p.version,
+      p_build: p.build,
+      p_platform: p.platform,
+      p_scene: p.scene,
+      p_context: p.context,
+      p_breadcrumbs: p.breadcrumbs
+    });
+    if (!r.ok) return r.code === "unsupported" ? "unsupported" : "network";
+    const body = r.value;
+    return body?.ok === false ? "rejected" : "sent";
+  }
+};
+
+// src/core/errorReport.ts
+init_define_import_meta_env();
+var ERROR_REPORT_LIMITS = {
+  message: 500,
+  stack: 4e3,
+  code: 64,
+  scene: 48,
+  contextJson: 3e3,
+  breadcrumbsJson: 3e3,
+  breadcrumbs: 20,
+  breadcrumbText: 60,
+  /** 한 세션(탭을 연 동안)에 보낼 수 있는 총 건수. 서버의 시간당 30건보다 아래다. */
+  perSession: 20,
+  /** 같은 오류는 세션에 한 번만 보낸다. 횟수는 서버가 새 세션마다 올린다. */
+  minGapMs: 1500
+};
+function scrubText(text) {
+  return text.replace(/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/g, "[token]").replace(/\b[A-Za-z0-9_-]{32,}\b/g, "[long]").replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email]").replace(/(https?:\/\/[^\s)?#]+)[?#][^\s)]*/g, "$1");
+}
+function describeError(error) {
+  if (error instanceof Error) return { message: error.message || error.name, stack: error.stack };
+  if (typeof error === "string") return { message: error };
+  try {
+    return { message: JSON.stringify(error) ?? String(error) };
+  } catch {
+    return { message: String(error) };
+  }
+}
+function clip(text, max) {
+  if (text === void 0) return void 0;
+  return scrubText(text).slice(0, max);
+}
+function sanitizeContext(context) {
+  const out = {};
+  if (!context) return out;
+  let size = 2;
+  for (const [key, value] of Object.entries(context)) {
+    let v2;
+    if (typeof value === "number" && Number.isFinite(value)) v2 = value;
+    else if (typeof value === "boolean") v2 = value;
+    else if (typeof value === "string") v2 = scrubText(value).slice(0, 120);
+    else continue;
+    const k = key.slice(0, 40);
+    size += k.length + String(v2).length + 6;
+    if (size > ERROR_REPORT_LIMITS.contextJson - 100) break;
+    out[k] = v2;
+  }
+  return out;
+}
+var Breadcrumbs = class {
+  constructor(now = Date.now) {
+    this.now = now;
+  }
+  now;
+  items = [];
+  add(text) {
+    this.items.push({ t: this.now(), c: scrubText(text).slice(0, ERROR_REPORT_LIMITS.breadcrumbText) });
+    if (this.items.length > ERROR_REPORT_LIMITS.breadcrumbs) this.items.shift();
+  }
+  /** `[[몇 초 전, 내용], …]` — 절대 시각 대신 상대 시간이라 읽기 쉽고 기기 시계에 기대지 않는다. */
+  snapshot() {
+    const end = this.now();
+    const out = this.items.map((i) => [Math.round((end - i.t) / 100) / 10, i.c]);
+    while (out.length > 1 && JSON.stringify(out).length > ERROR_REPORT_LIMITS.breadcrumbsJson) out.shift();
+    return out;
+  }
+};
+var ReportThrottle = class {
+  constructor(now = Date.now) {
+    this.now = now;
+  }
+  now;
+  sent = 0;
+  seen = /* @__PURE__ */ new Set();
+  lastAt = -Infinity;
+  allow(signature) {
+    if (this.sent >= ERROR_REPORT_LIMITS.perSession) return false;
+    if (this.seen.has(signature)) return false;
+    const t2 = this.now();
+    if (t2 - this.lastAt < ERROR_REPORT_LIMITS.minGapMs) return false;
+    this.seen.add(signature);
+    this.lastAt = t2;
+    this.sent += 1;
+    return true;
+  }
+};
+function isNoise(message) {
+  return /ResizeObserver loop|Script error\.?$|AbortError|The play\(\) request was interrupted|NotAllowedError.*play|Load failed$|Failed to fetch$|NetworkError|network request failed/i.test(message);
+}
+
+// src/managers/ErrorReporter.ts
+var breadcrumbs = new Breadcrumbs();
+var throttle = new ReportThrottle();
+var currentScene = null;
+var pending = [];
+var PENDING_MAX = 10;
+var enabled = () => LOCAL_SAVE_FLAVOR !== "test";
+async function flush() {
+  const account2 = backendAccount();
+  if (!account2) return;
+  const api = new ClientErrorApi(account2);
+  while (pending.length > 0) {
+    const next = pending.shift();
+    const result = await api.report(next).catch(() => "network");
+    if (result === "network") return;
+  }
+}
+function reportError(code, error, context, kind = "report") {
+  try {
+    if (!enabled()) return;
+    const { message, stack } = describeError(error);
+    if (isNoise(message)) return;
+    const signature = `${code}|${message.slice(0, 80)}|${(stack ?? "").split("\n").slice(0, 2).join("|")}`;
+    if (!throttle.allow(signature)) return;
+    const payload = {
+      kind,
+      code: clip(code, ERROR_REPORT_LIMITS.code) ?? null,
+      message: clip(message, ERROR_REPORT_LIMITS.message) ?? "",
+      stack: clip(stack, ERROR_REPORT_LIMITS.stack) ?? null,
+      version: package_default.version,
+      build: LOCAL_SAVE_FLAVOR,
+      platform: "web",
+      scene: currentScene,
+      context: sanitizeContext(context),
+      breadcrumbs: breadcrumbs.snapshot()
+    };
+    if (pending.length >= PENDING_MAX) pending.shift();
+    pending.push(payload);
+    void flush();
+  } catch {
+  }
+}
+function logError(code, label, error, context) {
+  console.error(label, error);
+  reportError(code, error, { label, ...context });
 }
 
 // src/managers/SettingsManager.ts
@@ -35866,7 +41362,7 @@ var SettingsManager = class extends EventTarget {
     const game = accountPartOfPatch(patch);
     if (!game) return;
     this.accountSync = this.accountSync.then(() => this.api.updateAccountSettings({ game }), () => this.api.updateAccountSettings({ game })).catch((error) => {
-      console.error("\uACC4\uC815 \uC124\uC815 \uC800\uC7A5 \uC2E4\uD328", error);
+      logError("settings.accountSave", "\uACC4\uC815 \uC124\uC815 \uC800\uC7A5 \uC2E4\uD328", error);
     });
   }
   /** 서버가 마지막으로 확정할 때까지 기다린다. 시험과 계정 전환 직전에 쓴다. */
@@ -35920,8 +41416,8 @@ var SettingsManager = class extends EventTarget {
   }
   /** 진행 데이터와 계정 표시 상태에는 손대지 않고 사용자가 조정하는 환경설정만 기본값으로 되돌린다. */
   reset() {
-    const account = { ...this.get().account };
-    this.state.settings = { ...createDefaultSettings(), account };
+    const account2 = { ...this.get().account };
+    this.state.settings = { ...createDefaultSettings(), account: account2 };
     setTextScale(this.state.settings.accessibility.textScale);
     setFontLanguage(this.state.settings.game.language);
     setTextLanguage(this.state.settings.game.language);
@@ -36437,8 +41933,8 @@ var FakeServer = class {
   syncSubscriptionMails(now) {
     const journal = this.state.serverJournal ?? emptyServerJournal();
     const saved = journal.subscriptionMails ?? {};
-    const pending = Object.fromEntries(Object.entries(saved).filter(([, mail]) => Date.parse(mail.expiresAt) > now.getTime()));
-    let changed = Object.keys(saved).length !== Object.keys(pending).length;
+    const pending2 = Object.fromEntries(Object.entries(saved).filter(([, mail]) => Date.parse(mail.expiresAt) > now.getTime()));
+    let changed = Object.keys(saved).length !== Object.keys(pending2).length;
     const date = now.toISOString().slice(0, 10);
     for (const entitlement of this.entitlements.values()) {
       if (entitlement.expiresAt !== null && Date.parse(entitlement.expiresAt) <= now.getTime()) continue;
@@ -36447,12 +41943,12 @@ var FakeServer = class {
       const bonus = product?.passBenefit?.dailyBonus;
       if (!bonus || !("itemId" in bonus)) continue;
       const id = this.subscriptionMailId(entitlement.entitlementId, date);
-      if (pending[id] || this.state.claimedMailIds?.includes(id)) continue;
-      pending[id] = { entitlementId: entitlement.entitlementId, productId: entitlement.productId, sentAt: now.toISOString(), expiresAt: new Date(now.getTime() + 7 * 864e5).toISOString(), itemId: bonus.itemId, amount: bonus.amount };
+      if (pending2[id] || this.state.claimedMailIds?.includes(id)) continue;
+      pending2[id] = { entitlementId: entitlement.entitlementId, productId: entitlement.productId, sentAt: now.toISOString(), expiresAt: new Date(now.getTime() + 7 * 864e5).toISOString(), itemId: bonus.itemId, amount: bonus.amount };
       changed = true;
     }
-    if (changed) this.commitRaidState({ ...this.state, serverJournal: { ...journal, subscriptionMails: pending } });
-    for (const [id, mail] of Object.entries(pending)) {
+    if (changed) this.commitRaidState({ ...this.state, serverJournal: { ...journal, subscriptionMails: pending2 } });
+    for (const [id, mail] of Object.entries(pending2)) {
       if (this.mails.some((entry) => entry.id === id)) continue;
       const product = PRODUCTS.find((entry) => entry.id === mail.productId);
       this.mails.unshift({
@@ -36763,8 +42259,8 @@ var FakeServer = class {
     const mine = { playerId: this.raidContext?.playerId ?? "local-player", displayName: this.state.playerCard.nickname || t("profile.defaultName"), damage: instance.myDamage, isMe: true, favoriteRelicId: this.state.favorite, ...profileFace(this.state) };
     return {
       ...(() => {
-        const pending = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
-        return pending ? { pendingRequestId: pending[0] } : {};
+        const pending2 = Object.entries(this.state.serverJournal?.raidAdmissions ?? {}).find(([, admission]) => admission.raidId === instance.id && Date.parse(admission.expiresAt) >= now.getTime());
+        return pending2 ? { pendingRequestId: pending2[0] } : {};
       })(),
       id: instance.id,
       kind: instance.kind,
@@ -37287,9 +42783,9 @@ var FakeServer = class {
         xpGained = result.xpGained;
       } else {
         const previous = journal.pendingStoryBondXp?.[effect.relicId] ?? 0;
-        const pending = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
-        if (pending > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending };
-        xpDeferred = pending - previous;
+        const pending2 = Math.min(BOND_TOTAL_XP_BY_LEVEL[BOND_LEVEL_CAP], previous + effect.amount);
+        if (pending2 > 0) journal.pendingStoryBondXp = { ...journal.pendingStoryBondXp, [effect.relicId]: pending2 };
+        xpDeferred = pending2 - previous;
       }
     }
     const candidate = { ...this.state, relicProgress, serverJournal: journal };
@@ -37637,13 +43133,36 @@ var FakeServer = class {
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
     const slotId = request.slotId ?? null;
     if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
+    const { deck, lineup } = this.guildWarDeckOf(relicIds);
+    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
+  }
+  /** 방어덱 셋을 이 순간의 성장·룬으로 굳힌다 — 칸에 서는 덱과 대기 덱이 같은 값을 쓴다. */
+  guildWarDeckOf(relicIds) {
     const lineup = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId), this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId])
     }));
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
-    const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
-    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
+    return { deck, lineup };
+  }
+  /**
+   * 길드전 대기 덱을 맞춘다 — 결투장 방어덱, 그 셋을 다 갖고 있지 않으면 가진 렐릭 중 가장 센 셋. 칸이 없는 길드원은 이 덱으로
+   * 자동 배치된다(정비일 지도 · 전투일 매칭 직전). 길드가 없거나 렐릭이 셋 안 되면 아무것도 하지 않는다.
+   */
+  async syncGuildWarStandby() {
+    await this.delay();
+    const owned = [...this.state.owned].filter((id) => RELICS.some((relic) => relic.id === id && !relic.enemyOnly));
+    const defense = normalizeDuelState(this.state.duel, [...this.state.owned]).defense.filter((id) => this.state.owned.has(id));
+    const relicIds = new Set(defense).size === 3 && defense.length === 3 ? [...defense] : [...owned].sort((a, b) => this.duelRelicPower(b) - this.duelRelicPower(a) || a.localeCompare(b)).slice(0, 3);
+    if (relicIds.length !== 3) return { synced: false };
+    try {
+      await this.guildBackend.syncWarStandby(this.guildActor(), this.guildWarDeckOf(relicIds));
+      return { synced: true };
+    } catch (error) {
+      if (error instanceof GuildApiError && error.code === "NOT_IN_GUILD") return { synced: false };
+      throw error;
+    }
   }
   /**
    * 길드전 공격 입장 — 공격덱 셋을 이 순간의 성장·룬으로 굳히고, 길드 백엔드가 칸·국면·남은 공격을 판정해 상대 방어덱을 돌려준다.
@@ -38268,9 +43787,9 @@ var FakeServer = class {
     this.settleStaminaNow();
     const cost = battleStageStaminaCost(stage);
     if (this.state.wallet.stamina < cost) throw new GameApiError("INSUFFICIENT_STAMINA", "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const pending = this.pendingStageAdmissions.get(request.stageId) ?? /* @__PURE__ */ new Set();
-    pending.add(request.requestId);
-    this.pendingStageAdmissions.set(request.stageId, pending);
+    const pending2 = this.pendingStageAdmissions.get(request.stageId) ?? /* @__PURE__ */ new Set();
+    pending2.add(request.requestId);
+    this.pendingStageAdmissions.set(request.stageId, pending2);
     const response = { ...this.snapshot(), stageId: request.stageId, requestId: request.requestId, staminaCost: cost, refundPolicy: "charged-on-victory" };
     this.stageAdmissionResults.set(request.requestId, structuredClone(response));
     return response;
@@ -38296,8 +43815,8 @@ var FakeServer = class {
     if ((stage.ancientFloor !== void 0 || storyDifficultyOf(stage.id) !== "easy") && !isStoryStageAvailable(stage, this.state.cleared)) throw new GameApiError("STAGE_LOCKED", "\uC544\uC9C1 \uC5F4\uB9AC\uC9C0 \uC54A\uC740 \uC2A4\uD14C\uC774\uC9C0\uC785\uB2C8\uB2E4.");
     const firstClear = victory && !this.state.cleared.has(stageId);
     const nextCleared = victory ? new Set(this.state.cleared).add(stageId) : new Set(this.state.cleared);
-    const pending = this.pendingStageAdmissions.get(stageId);
-    const admissionId = pending?.values().next().value;
+    const pending2 = this.pendingStageAdmissions.get(stageId);
+    const admissionId = pending2?.values().next().value;
     const cost = admissionId ? battleStageStaminaCost(stage) : 0;
     const spent = victory && cost > 0 ? this.chargeVictoryStamina(cost) : void 0;
     const base = spent ?? { wallet: { ...this.state.wallet }, playerResearch: this.state.playerResearch, missions: this.state.missions, itemInventory: this.state.itemInventory, playerExp: void 0 };
@@ -38340,8 +43859,8 @@ var FakeServer = class {
     this.state.itemInventory = base.itemInventory;
     this.state.runeInventory = nextRunes;
     this.state.tutorial = nextTutorial;
-    if (admissionId) pending?.delete(admissionId);
-    if (pending?.size === 0) this.pendingStageAdmissions.delete(stageId);
+    if (admissionId) pending2?.delete(admissionId);
+    if (pending2?.size === 0) this.pendingStageAdmissions.delete(stageId);
     const staminaSpent = spent ? cost : 0;
     return {
       ...this.snapshot(),
@@ -38453,9 +43972,9 @@ var FakeServer = class {
     if (cached) return structuredClone(cached);
     const now = this.now();
     const run2 = this.assertCakeRun(request.tierId, request.requestId, now);
-    const pending = this.pendingCakeAdmissions.get(run2.tier.id) ?? /* @__PURE__ */ new Set();
-    pending.add(request.requestId);
-    this.pendingCakeAdmissions.set(run2.tier.id, pending);
+    const pending2 = this.pendingCakeAdmissions.get(run2.tier.id) ?? /* @__PURE__ */ new Set();
+    pending2.add(request.requestId);
+    this.pendingCakeAdmissions.set(run2.tier.id, pending2);
     const response = {
       ...this.snapshot(),
       tierId: run2.tier.id,
@@ -38500,9 +44019,9 @@ var FakeServer = class {
     this.state.missions = nextMissions;
     this.state.playerResearch = nextResearch;
     this.state.itemInventory = nextItems;
-    const pending = this.pendingCakeAdmissions.get(tier.id);
-    pending?.delete(request.requestId);
-    if (pending?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
+    const pending2 = this.pendingCakeAdmissions.get(tier.id);
+    pending2?.delete(request.requestId);
+    if (pending2?.size === 0) this.pendingCakeAdmissions.delete(tier.id);
     const response = {
       ...this.snapshot(),
       tierId: tier.id,
@@ -38867,18 +44386,18 @@ var FakeServer = class {
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const cached = this.duelResolveResults.get(request.requestId);
     if (cached) return structuredClone(cached);
-    const pending = this.pendingDuels.get(request.requestId);
-    if (!pending) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "\uC785\uC7A5\uD558\uC9C0 \uC54A\uC740 \uACB0\uD22C\uC785\uB2C8\uB2E4.");
+    const pending2 = this.pendingDuels.get(request.requestId);
+    if (!pending2) throw new GameApiError("DUEL_ADMISSION_NOT_FOUND", "\uC785\uC7A5\uD558\uC9C0 \uC54A\uC740 \uACB0\uD22C\uC785\uB2C8\uB2E4.");
     const now = this.now();
     if (this.duelContext) {
       const ticket = combatJournal(this.state).tickets[`duel:${request.requestId}`];
-      recordPlayerDefense(this.duelContext, pending.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
+      recordPlayerDefense(this.duelContext, pending2.opponentId, this.state, ticket.duel.setup.players.map((p) => p.id), request.won, now);
     }
     const duel2 = this.duelNow(now);
     const scoreBefore = duel2.score;
     const winStreak = request.won ? duel2.winStreak + 1 : 0;
     const streakBonus = request.won ? duelStreakBonus(winStreak) : 0;
-    const scoreAfter = applyDuelScore(scoreBefore, duelScoreDelta(scoreBefore, pending.opponentScore, request.won) + streakBonus);
+    const scoreAfter = applyDuelScore(scoreBefore, duelScoreDelta(scoreBefore, pending2.opponentScore, request.won) + streakBonus);
     const reached = request.won ? duelNewlyReachedTiers(scoreBefore, scoreAfter, duel2.reachedTierIds) : [];
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(request.won ? DUEL_BATTLE_REWARD.win : DUEL_BATTLE_REWARD.loss, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
@@ -38887,13 +44406,13 @@ var FakeServer = class {
     wallet.gems += gems2;
     const entry = {
       at: now.toISOString(),
-      opponentName: pending.opponentName,
-      opponentScore: pending.opponentScore,
+      opponentName: pending2.opponentName,
+      opponentScore: pending2.opponentScore,
       won: request.won,
       delta: scoreAfter - scoreBefore,
-      opponentTierId: duelStanding(pending.opponentScore).tier.id,
-      opponentFavoriteRelicId: pending.favoriteRelicId,
-      opponentUnits: pending.units.map((unit) => ({ ...unit }))
+      opponentTierId: duelStanding(pending2.opponentScore).tier.id,
+      opponentFavoriteRelicId: pending2.favoriteRelicId,
+      opponentUnits: pending2.units.map((unit) => ({ ...unit }))
     };
     const next = {
       ...duel2,
@@ -38974,9 +44493,9 @@ var FakeServer = class {
     await this.delay();
     if (!QA_TOOLS_ENABLED && !this.duelContext) throw new GameApiError("DUEL_UNAVAILABLE", t("duel.error.unavailable"));
     const duel2 = this.duelNow(this.now());
-    const pending = duel2.pendingSeasonReward;
-    const tier = pending ? getDuelTier(pending.tierId) : void 0;
-    if (!pending || !tier) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC2DC\uC98C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const pending2 = duel2.pendingSeasonReward;
+    const tier = pending2 ? getDuelTier(pending2.tierId) : void 0;
+    if (!pending2 || !tier) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC2DC\uC98C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const emblem = Math.max(0, Math.min(tier.seasonReward.duelEmblem, WALLET_CAPS.duelEmblem - wallet.duelEmblem));
     const gems2 = Math.max(0, Math.min(tier.seasonReward.gems, WALLET_CAPS.gems - wallet.gems));
@@ -38986,7 +44505,7 @@ var FakeServer = class {
     this.persist({ ...this.state, wallet, duel: next });
     this.state.wallet = wallet;
     this.state.duel = next;
-    return { ...this.snapshot(), seasonId: pending.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems2 };
+    return { ...this.snapshot(), seasonId: pending2.seasonId, tierId: tier.id, duelEmblem: emblem, gems: gems2 };
   }
   /** 정적 이벤트에 서버가 판정한 상태를 결합해 클라이언트 시계 의존을 없앤다. */
   async getEvents() {
@@ -39957,15 +45476,15 @@ var FakeServer = class {
   }
   async rerollRuneTrait(request) {
     await this.delay();
-    const pending = this.state.archaeology.pendingReroll;
-    if (pending !== null) {
-      const held = this.state.runeInventory.find(({ instanceId }) => instanceId === pending.runeInstanceId);
+    const pending2 = this.state.archaeology.pendingReroll;
+    if (pending2 !== null) {
+      const held = this.state.runeInventory.find(({ instanceId }) => instanceId === pending2.runeInstanceId);
       if (held?.trait !== void 0) {
         return {
           runeInstanceId: held.instanceId,
           current: { ...held.trait },
-          candidate: { ...pending.candidate },
-          upgraded: pending.candidate.grade !== held.trait.grade,
+          candidate: { ...pending2.candidate },
+          upgraded: pending2.candidate.grade !== held.trait.grade,
           byPity: false,
           rawStoneSpent: 0,
           wallet: { ...this.state.wallet },
@@ -39995,9 +45514,9 @@ var FakeServer = class {
   async resolveRuneTraitReroll(request) {
     await this.delay();
     const current = this.ownedRune(request.runeInstanceId);
-    const pending = this.state.archaeology.pendingReroll;
-    if (!pending || pending.runeInstanceId !== current.instanceId) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uACE0\uB97C \uC7AC\uD574\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const kept = request.keepCandidate ? pending.candidate : { ...current.trait ?? pending.candidate, upgradeMisses: pending.candidate.upgradeMisses };
+    const pending2 = this.state.archaeology.pendingReroll;
+    if (!pending2 || pending2.runeInstanceId !== current.instanceId) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uACE0\uB97C \uC7AC\uD574\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const kept = request.keepCandidate ? pending2.candidate : { ...current.trait ?? pending2.candidate, upgradeMisses: pending2.candidate.upgradeMisses };
     const rune = { ...current, trait: kept };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
@@ -40146,18 +45665,18 @@ var FakeServer = class {
    */
   syncExpeditionRankMail() {
     if (!QA_TOOLS_ENABLED) return;
-    for (const pending of expeditionRankRewardQueue(this.state.expedition)) {
-      const id = `expedition-rank:${pending.weekKey}`;
+    for (const pending2 of expeditionRankRewardQueue(this.state.expedition)) {
+      const id = `expedition-rank:${pending2.weekKey}`;
       if (this.mails.some((mail) => mail.id === id)) continue;
-      const rank = this.expeditionRank(pending.score) ?? 1;
-      const sentAt = /* @__PURE__ */ new Date(`${pending.weekKey}T00:00:00.000Z`);
+      const rank = this.expeditionRank(pending2.score) ?? 1;
+      const sentAt = /* @__PURE__ */ new Date(`${pending2.weekKey}T00:00:00.000Z`);
       sentAt.setUTCDate(sentAt.getUTCDate() + 7);
       const rewards = Object.entries(expeditionRankRewards(rank)).map(([currency3, amount]) => ({ kind: "currency", currency: currency3, amount: amount ?? 0 })).filter(({ amount }) => amount > 0);
       this.mails.unshift({
         id,
         title: t("mail.expeditionRank.title"),
         sender: t("mail.expeditionRank.sender"),
-        body: t("mail.expeditionRank.body", { rank, score: pending.score.toLocaleString() }),
+        body: t("mail.expeditionRank.body", { rank, score: pending2.score.toLocaleString() }),
         sentAt: sentAt.toISOString(),
         expiresAt: null,
         read: false,
@@ -40335,6 +45854,7 @@ var SANDBOX_GUILD_METHODS = /* @__PURE__ */ new Set([
   "enterGuildGuard",
   "submitGuildGuard",
   "placeGuildWarDefense",
+  "syncGuildWarStandby",
   "enterGuildWarAttack",
   "submitGuildWarAttack"
 ]);
@@ -40791,204 +46311,6 @@ function raidChanges(context, state) {
   });
 }
 
-// src/server/requestPolicy.ts
-init_define_import_meta_env();
-var READ_METHODS = /* @__PURE__ */ new Set([
-  "arena.get",
-  "archaeologyState",
-  "getAchievements",
-  "getAncientRanking",
-  "getAdOperationsConfig",
-  "getAsyncArenaServerState",
-  "getAttendance",
-  "getBountyStatus",
-  "getDuelRanking",
-  "getDuelStatus",
-  "getEvents",
-  "getRouletteStatus",
-  "getExpeditionLeaderboard",
-  "getExpeditionWeeklyBest",
-  "getIdleExcavation",
-  "getInteractionCities",
-  "getInteractionDispatch",
-  "getInventory",
-  "getMails",
-  "getMissions",
-  "getNotificationSignals",
-  "getPlayerState",
-  "getProducts",
-  "getProgressPasses",
-  "getRaids",
-  "getStaminaRechargeStatus",
-  "verifyPurchaseReceipt",
-  "social.getFriends",
-  "social.getRequests",
-  "social.searchUsers",
-  "social.getRecommendations",
-  "guild.getGuild",
-  "guild.searchGuilds",
-  "guild.getMembers",
-  "guild.getAttendance",
-  "guild.getShop",
-  "guild.getGuard",
-  "guild.getRanking",
-  "guild.getWarMap",
-  "guild.getWarFront",
-  "getGuildGuard"
-]);
-var isReadMethod = (method) => READ_METHODS.has(method);
-var REQUEST_ID = /^[A-Za-z0-9_.:-]{8,64}$/;
-var MAX_BODY_BYTES = 128 * 1024;
-function validCall(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const call = value;
-  return typeof call.method === "string" && call.method.length <= 64 && (call.args === void 0 || Array.isArray(call.args) && call.args.length <= 4) && (call.requestId === void 0 || typeof call.requestId === "string" && REQUEST_ID.test(call.requestId));
-}
-function requestBudget(method) {
-  if (method === "social.searchUsers") return { windowSeconds: 60, limit: 20 };
-  return { windowSeconds: 60, limit: isReadMethod(method) ? 180 : 60 };
-}
-
-// src/server/gameMethods.ts
-init_define_import_meta_env();
-var SERVER_GAME_METHODS = [
-  "getRouletteStatus",
-  "spinRoulette",
-  "unlockRouletteSpins",
-  "prepareCombat",
-  "finishCombat",
-  "abandonStrataRun",
-  "activatePass",
-  "answerRelicQuestion",
-  "applyDebugCommand",
-  "applyStoryEffect",
-  "archaeologyState",
-  "beginExpeditionAugment",
-  "breakThroughRelic",
-  "buyDuelAttempt",
-  "buyGuildProduct",
-  "changeGuildBadge",
-  "renameGuild",
-  "createGuild",
-  "stampGuildAttendance",
-  "getGuildGuard",
-  "enterGuildGuard",
-  "submitGuildGuard",
-  "placeGuildWarDefense",
-  "enterGuildWarAttack",
-  "submitGuildWarAttack",
-  "claimAchievementRewards",
-  "claimAdReward",
-  "claimAttendance",
-  "claimAttendanceAd",
-  "claimDuelSeasonReward",
-  "claimExpeditionReward",
-  "claimInstantAdReward",
-  "claimInteractionDispatch",
-  "claimMailRewards",
-  "claimMissionRewards",
-  "claimPassDailyBonus",
-  "claimProgressPass",
-  "claimRelicChapter",
-  "claimRelicQuestionReward",
-  "chooseExpeditionAugment",
-  "completeBounty",
-  "completeCakeOperation",
-  "completeExpeditionNode",
-  "completeExpeditionRest",
-  "completeObservation",
-  "completeStage",
-  "completeStory",
-  "completeTutorialStep",
-  "digStrataTile",
-  "engraveRune",
-  "enhanceRune",
-  "enhanceRuneAll",
-  "enterBounty",
-  "enterCakeOperation",
-  "enterDailyRestoration",
-  "enterDuel",
-  "enterEventStage",
-  "enterRaid",
-  "enterStage",
-  "equipProfileModifiers",
-  "equipRelicSkin",
-  "equipRune",
-  "feedRelic",
-  "fulfillPlatformPurchase",
-  "getAchievements",
-  "getAdOperationsConfig",
-  "getAsyncArenaServerState",
-  "getAttendance",
-  "getAncientRanking",
-  "getBountyStatus",
-  "getDuelRanking",
-  "getDuelStatus",
-  "getEvents",
-  "getExpeditionLeaderboard",
-  "getExpeditionWeeklyBest",
-  "getIdleExcavation",
-  "getInteractionCities",
-  "getInteractionDispatch",
-  "getInventory",
-  "getMails",
-  "getMissions",
-  "getNotificationSignals",
-  "getPlayerState",
-  "getProducts",
-  "getProgressPasses",
-  "getRaids",
-  "getStaminaRechargeStatus",
-  "grantRuneTrait",
-  "harvestExcavation",
-  "deleteMails",
-  "interactInLobby",
-  "markAttendanceAutoShown",
-  "markContentIntroSeen",
-  "markInteractionJournalRead",
-  "markMailsRead",
-  "markRune",
-  "prepareExpeditionBoss",
-  "pullRelics",
-  "purchaseProduct",
-  "purchaseRelicSkin",
-  "rechargeStamina",
-  "refreshDuelOpponents",
-  "renameRune",
-  "rerollRuneTrait",
-  "resolveDuel",
-  "resolveRuneTraitReroll",
-  "saveExcavationFormation",
-  "selectArchaeologySite",
-  "sellRunes",
-  "setDuelDefense",
-  "setFavorite",
-  "setParty",
-  "setRelicBookmark",
-  "settleExpeditionRun",
-  "settleRaid",
-  "startExpeditionRun",
-  "startInteractionDispatch",
-  "startStrataRun",
-  "submitExpeditionBossScore",
-  "submitRaidDamage",
-  "summonRaid",
-  "sweepBounty",
-  "synthesizeRunes",
-  "sweepCakeOperation",
-  "sweepExpedition",
-  "unequipRune",
-  "updateAccountSettings",
-  "updatePlayerCard",
-  "upgradeRuneTrait",
-  "useConsumable",
-  "verifyPurchaseReceipt"
-];
-var METHOD_SET = new Set(SERVER_GAME_METHODS);
-function isServerGameMethod(name) {
-  return typeof name === "string" && METHOD_SET.has(name);
-}
-
 // src/api/UnavailableGuildBackend.ts
 init_define_import_meta_env();
 function createUnavailableGuildBackend() {
@@ -41286,34 +46608,6 @@ function collectProfiles(result) {
   return out;
 }
 
-// src/api/RemoteSocialApi.ts
-init_define_import_meta_env();
-
-// src/core/apiBase.ts
-init_define_import_meta_env();
-
-// src/core/appRuntime.ts
-init_define_import_meta_env();
-var APP_TARGET = define_import_meta_env_default?.VITE_APP_TARGET ?? "web";
-
-// src/api/RemoteSocialApi.ts
-var SOCIAL_METHODS = [
-  "getFriends",
-  "getRequests",
-  "searchUsers",
-  "getRecommendations",
-  "sendRequest",
-  "cancelRequest",
-  "acceptRequest",
-  "declineRequest",
-  "acceptAllRequests",
-  "declineAllRequests",
-  "setFavorite",
-  "removeFriend",
-  "rentFavoriteRelic"
-];
-var isSocialMethod = (value) => SOCIAL_METHODS.includes(value);
-
 // src/api/SupabaseGuildBackend.ts
 init_define_import_meta_env();
 var ASSIGNABLE_ROLES = ["vice", "officer", "member"];
@@ -41383,6 +46677,10 @@ function createSupabaseGuildBackend(call) {
     placeWarDefense: (actor, input, requestId) => {
       if (input?.slotId !== null && !parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run2(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
+    },
+    syncWarStandby: async (actor, input) => {
+      if (!Array.isArray(input?.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
+      await run2(actor, "syncWarStandby", [{ deck: input.deck, lineup: input.lineup }]);
     },
     moveWarSlot: (actor, from, to) => parseGuildWarSlotId(from) && parseGuildWarSlotId(to) && from !== to ? run2(actor, "moveWarSlot", [from, to]) : invalid(),
     autoArrangeWar: (actor) => run2(actor, "autoArrangeWar"),

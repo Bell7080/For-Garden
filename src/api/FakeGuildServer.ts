@@ -40,7 +40,14 @@ interface MemberRow {
   guardReward: { day: number; rank: number; coin: number } | null;
   /** QA 표본 길드원 — 수호전 기록을 날마다 정해진 값으로 채운다(`sampleGuard`). */
   sample?: boolean;
+  /** 길드전 대기 덱 — 게임 서버가 하루 한 번 맞춰 둔다(`syncWarStandby`). 칸이 없는 길드원은 이 덱으로 자동으로 선다. */
+  warStandby?: Pick<GuildWarDefenseInput, "deck" | "lineup">;
+  /** 칸에서 내려온 시각 — `GUILD_WAR_BENCH_MS` 동안은 자동 배치가 다시 세우지 않는다. */
+  warBenchAt?: number;
 }
+
+/** 칸에서 내려온 길드원을 자동 배치가 다시 세우지 않는 동안 — 정비일·전투일 한 바퀴. 운영 DB 함수도 같은 값이다. */
+const GUILD_WAR_BENCH_MS = 2 * 86_400_000;
 interface GuildRow {
   id: string; name: string; badge: GuildBadge; joinMode: GuildJoinMode; notice: string; prosperity: number; createdAt: number; badgeChanges: number;
   /** QA 길드전·수호전 점수(`guildQa`가 정한다). 열리기 전에는 null이라 순위 줄이 「-」로 선다. */
@@ -578,8 +585,27 @@ export class FakeGuildServer implements GuildBackend {
       war.set(slot.id, { userId: member.userId, deck, lineup: null, placedAt: guild.createdAt });
     }
   }
+  /**
+   * 칸이 없는 길드원을 대기 덱으로 세운다 — 전투력 높은 순으로 자동 배치 순서의 빈 칸에. 칸에서 막 내려온 길드원은 건너뛴다.
+   * 정비일에 지도를 읽을 때와 전투일 매칭 직전에 부른다. 이미 선 칸은 움직이지 않는다(옮기는 일은 간부의 편집이다).
+   */
+  private autofillWar(guild: GuildRow): void {
+    const now = this.now();
+    const war = this.warOf(guild);
+    const placed = new Set([...war.values()].map(({ userId }) => userId));
+    const waiting = [...guild.members.values()]
+      .filter((m) => m.warStandby && !placed.has(m.userId) && !(m.warBenchAt !== undefined && now - m.warBenchAt < GUILD_WAR_BENCH_MS))
+      .map((m) => ({ member: m, power: m.warStandby!.deck.reduce((sum, entry) => sum + entry.power, 0) }))
+      .sort((a, b) => b.power - a.power || a.member.userId.localeCompare(b.member.userId));
+    for (const { member } of waiting) {
+      const slotId = guildWarFirstOpenSlot(this.level(guild), new Set(war.keys()));
+      if (!slotId) break;
+      war.set(slotId, { userId: member.userId, deck: member.warStandby!.deck.map((entry) => ({ ...entry })), lineup: structuredClone(member.warStandby!.lineup), placedAt: now });
+    }
+  }
   private warMapOf(guild: GuildRow, me: MemberRow): GuildWarMapState {
     if (guild.members.size > 0 && [...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    if (guildWarNow(this.now()).phase === "prep") this.autofillWar(guild);
     const now = this.now();
     const war = this.warOf(guild);
     const level = this.level(guild);
@@ -611,6 +637,8 @@ export class FakeGuildServer implements GuildBackend {
     if (!row) fail("SLOT_INVALID");
     if (row!.userId !== me.userId && !guildCan(me.role, "formation")) fail("NO_PERMISSION");
     this.warOf(guild).delete(slotId);
+    const benched = guild.members.get(row!.userId);
+    if (benched) benched.warBenchAt = this.now();
     return this.warMapOf(guild, me);
   }
 
@@ -662,10 +690,18 @@ export class FakeGuildServer implements GuildBackend {
         slotId = slot.id;
       }
       this.dropWarDefense(guild, me.userId);
+      me.warBenchAt = undefined;
       war.set(slotId, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
       return true;
     });
     return this.getWarMap(actor);
+  }
+
+  async syncWarStandby(actor: GuildActor, input: Pick<GuildWarDefenseInput, "deck" | "lineup">): Promise<void> {
+    const { guild, me } = this.requireGuild(actor);
+    if (!Array.isArray(input?.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail("INVALID_REQUEST");
+    me.warStandby = { deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup) };
+    if (guildWarNow(this.now()).phase === "prep") this.autofillWar(guild);
   }
 
   // ── 길드전 공격 ─────────────────────────────────────────────────────────────
@@ -676,7 +712,11 @@ export class FakeGuildServer implements GuildBackend {
   private warMatchesOf(day: number): WarMatch[] {
     const existing = this.warMatches.get(day);
     if (existing) return existing;
-    for (const guild of this.guilds.values()) if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+    for (const guild of this.guilds.values()) {
+      if ([...guild.members.values()].some((m) => m.sample)) this.seedSampleWar(guild);
+      // 정비일에 아무도 지도를 열지 않았어도 대기 덱이 있는 길드원은 선다.
+      this.autofillWar(guild);
+    }
     const entries = [...this.guilds.values()]
       .filter((g) => g.members.size >= GUILD_WAR_MIN_MEMBERS && this.warOf(g).size > 0)
       .map((g) => ({ guildId: g.id, score: g.warScore ?? GUILD_WAR_START_SCORE, reachedAt: g.warReachedAt ?? 0 }));

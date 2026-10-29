@@ -189,34 +189,54 @@ export function guildSwatchSpot(index: number, count: number, gridTop: number): 
 }
 
 /**
- * 길드전 방어진 지도 — 지부 셋이 세로 기둥 셋으로 나란히 서고, 기둥마다 위에서부터 우두머리 → 정예 둘 → 일반 칸 격자(두 줄)다.
- * 칸이 클수록 무거운 자리라 크기가 곧 위계를 말한다. 일반 칸은 레벨이 늘리므로 격자 줄 수가 늘어도 본문 안에 든다(최대 7칸 → 4줄).
+ * 길드전 방어진 지도 — 지부 하나가 한 판이고 맨 아래 **지부 탭 셋**(정보 쪽 작은 탭과 같은 자리)이 판을 가른다. 판 안에서는
+ * 칸이 줄을 서지 않고 영지 곳곳에 **진지처럼** 흩어진다: 한가운데 우두머리, 그 아래 좌우에 정예 둘, 바깥으로 일반 칸들.
+ * 일반 칸은 짝수 번이 왼쪽 정예, 홀수 번이 오른쪽 정예로 이어지고 정예 둘은 우두머리로 이어진다 — 격파 순서가 선 하나로 읽힌다.
+ * 칸이 클수록 무거운 자리라 크기가 곧 위계를 말한다. 일반 칸은 레벨이 늘려 최대 일곱이다(`GUILD_WAR_GRUNTS`).
  */
 export const GUILD_WAR_MAP = {
-  column: { width: 300, gap: 15, top: 400, bottom: 1500 },
-  header: 440,
-  boss: { y: 568, size: 136 },
-  elite: { y: 776, size: 108, dx: 66 },
-  grunt: { y: 950, size: 88, dx: 60, step: 136 },
+  /** 지도 판이 손을 받는 영역 — 위 조작 줄 아래부터 아래 버튼 줄 위까지. */
+  field: { top: 392, bottom: 1540 },
+  /** 판 맨 위 안내 한 줄(참가 조건 · 전선 점수). */
+  note: 430,
+  boss: { x: BASE_WIDTH / 2, y: 720, size: 184 },
+  elite: { y: 1000, size: 140, xs: [300, BASE_WIDTH - 300] as const },
+  /** 일반 칸 자리 — 번호 순. 짝수 번이 왼쪽, 홀수 번이 오른쪽에 선다. */
+  grunt: {
+    size: 104,
+    spots: [
+      { x: 168, y: 1262 }, { x: BASE_WIDTH - 168, y: 1262 },
+      { x: 430, y: 1408 }, { x: BASE_WIDTH - 430, y: 1408 },
+      { x: 150, y: 760 }, { x: BASE_WIDTH - 150, y: 760 },
+      { x: 330, y: 540 },
+    ] as const,
+  },
   /** 칸 아래 이름줄이 칸 밑변에서 떨어지는 거리. */
   nameGap: 22,
-  /** 아래 참가 조건 줄 — 작은 탭이 없는 쪽이라 그 자리를 쓴다. */
-  note: 1690,
+  /** 지도 아래 버튼 줄 — 방어덱 수정 · 편집(배치 권한만). 편집 중에는 자동 배치 · 완료로 바뀐다. */
+  actions: { y: 1600, width: 300, height: 80, gap: 24 },
 } as const;
 
-/** 지부 `branch`(1~3) 기둥의 가운데 x. */
-export function guildWarColumnX(branch: number): number {
-  const { width, gap } = GUILD_WAR_MAP.column;
-  return BASE_WIDTH / 2 + (branch - 2) * (width + gap);
+/** 칸 하나의 가운데와 크기 — 고른 지부 판 안의 좌표다(지부와 무관하다). */
+export function guildWarNodeSpot(slot: { kind: "boss" | "elite" | "grunt"; index: number }): { x: number; y: number; size: number } {
+  const M = GUILD_WAR_MAP;
+  if (slot.kind === "boss") return { x: M.boss.x, y: M.boss.y, size: M.boss.size };
+  if (slot.kind === "elite") return { x: M.elite.xs[slot.index === 0 ? 0 : 1], y: M.elite.y, size: M.elite.size };
+  const spot = M.grunt.spots[Math.min(slot.index, M.grunt.spots.length - 1)];
+  return { x: spot.x, y: spot.y, size: M.grunt.size };
 }
 
-/** 칸 하나의 가운데와 크기. */
-export function guildWarNodeSpot(slot: { branch: number; kind: "boss" | "elite" | "grunt"; index: number }): { x: number; y: number; size: number } {
-  const x = guildWarColumnX(slot.branch);
-  const M = GUILD_WAR_MAP;
-  if (slot.kind === "boss") return { x, y: M.boss.y, size: M.boss.size };
-  if (slot.kind === "elite") return { x: x + (slot.index === 0 ? -1 : 1) * M.elite.dx, y: M.elite.y, size: M.elite.size };
-  return { x: x + (slot.index % 2 === 0 ? -1 : 1) * M.grunt.dx, y: M.grunt.y + Math.floor(slot.index / 2) * M.grunt.step, size: M.grunt.size };
+/** 이 칸을 격파하면 이어지는(열리는) 다음 칸 — 일반 → 그 쪽 정예, 정예 → 우두머리, 우두머리는 끝이다. */
+export function guildWarNextSpot(slot: { kind: "boss" | "elite" | "grunt"; index: number }): { kind: "boss" | "elite"; index: number } | null {
+  if (slot.kind === "boss") return null;
+  if (slot.kind === "elite") return { kind: "boss", index: 0 };
+  return { kind: "elite", index: slot.index % 2 };
+}
+
+/** 아래 버튼 줄의 `index`번째(0부터) 가운데 x — `count`개를 가운데에 모은다. */
+export function guildWarActionX(index: number, count: number): number {
+  const { width, gap } = GUILD_WAR_MAP.actions;
+  return BASE_WIDTH / 2 + (index - (count - 1) / 2) * (width + gap);
 }
 
 /**

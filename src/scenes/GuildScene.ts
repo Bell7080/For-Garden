@@ -24,7 +24,8 @@ import {
   DEFAULT_GUILD_BADGE, GUILD_BADGE_COLORS, GUILD_BADGE_COLOR_IDS, GUILD_BADGE_ICONS, GUILD_BADGE_SHAPES, isGuildBadge, type GuildBadge,
 } from "../core/guildBadge";
 import { guildGuardElement, guildGuardEndsAt, guildPageEventKey, guildPageHasNews, guildWarNow, type GuildPage } from "../core/guildPages";
-import { GUILD_WAR_ATTACKS_PER_MEMBER, GUILD_WAR_MIN_MEMBERS } from "../core/guildWar";
+import { GUILD_WAR_ATTACKS_PER_MEMBER, GUILD_WAR_MIN_MEMBERS, type GuildWarBranch } from "../core/guildWar";
+import { GUILD_WAR_BRANCHES } from "../core/guildWarMap";
 import { drawGlyph, type GlyphName } from "../ui/glyphs";
 import { guildAttendanceRace } from "../core/guildRace";
 import { isOnline, lastActiveAge } from "../core/social";
@@ -49,7 +50,7 @@ import { addFriendChip, addRowButton, type RowButtonTone } from "../ui/friendsWi
 import { addGuildBadge } from "../ui/GuildBadge";
 import {
   GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_GUARD_PAGE as G, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
-  GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarColumnX, guildWarNodeSpot,
+  GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarActionX, guildWarNextSpot, guildWarNodeSpot,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, HOLO } from "../ui/holo";
@@ -109,6 +110,8 @@ const hex = (color: number): string => `#${color.toString(16).padStart(6, "0")}`
 /** 방어진 지도의 칸 결 — 우두머리 금빛, 정예 보랏빛. 일반 칸은 판 결 그대로다. */
 const WAR_BOSS_EDGE = 0xf2c14e;
 const WAR_ELITE_EDGE = 0xb48cff;
+const WAR_BOSS_TEXT = "#f2c14e";
+const WAR_ELITE_TEXT = "#c9adff";
 
 /** 길드 코인의 결 — 코인 일러스트의 금빛. 상단 줄 칸과 같은 값을 읽는다. */
 const COIN_TEXT = GUILD_COIN_TEXT;
@@ -158,6 +161,14 @@ export class GuildScene extends Phaser.Scene {
   private warMap?: GuildWarMapState;
   /** 전투일의 전선 — 상대 영지와 두 편 점수, 내 남은 공격. 지난 회차 결과도 함께 온다. */
   private warFront?: GuildWarFrontView;
+  /** 길드전 쪽에서 보는 지부 — 맨 아래 지부 탭이 고른다. */
+  private warBranch: GuildWarBranch = 1;
+  /** 배치 권한자의 편집 중인가, 그리고 옮길 칸으로 먼저 고른 칸. 고른 칸은 지부 탭을 넘겨도 남는다. */
+  private warEditing = false;
+  private warPick: string | null = null;
+  /** 이번 진입에서 자동 배치를 이미 시도했는가 — 실패해도 되풀이하지 않는다. */
+  private warAutoTried = false;
+  private warAutoPlacedToast = false;
   /** 방어덱을 막 배치하고 돌아왔으면 한 번 알린다. */
   private entryToast = false;
   /** 들어올 때 열 큰 탭 — 수호전 결과판에서 돌아오면 수호전 쪽이 바로 선다. */
@@ -201,6 +212,7 @@ export class GuildScene extends Phaser.Scene {
     setDebugScene("guild");
     this.state = undefined; this.members = undefined; this.browse = []; this.query = ""; this.page = this.entryPage; this.tab = "info";
     this.guardBoard = undefined; this.guardStatus = undefined; this.warMap = undefined; this.warFront = undefined;
+    this.warBranch = 1; this.warEditing = false; this.warPick = null; this.warAutoTried = false;
     this.browsing = false; this.stampChecked = false; this.list = undefined; this.scrollOffset = 0; this.minScroll = 0; this.busy = false;
     this.ticker = undefined;
     this.backdropKey = this.page === "war" ? BACKGROUND.guildWar : this.page === "guard" ? BACKGROUND.guildGuard : BACKGROUND.guild;
@@ -264,7 +276,10 @@ export class GuildScene extends Phaser.Scene {
       if (!this.state.guild || this.browsing) this.browse = (await guildApi.searchGuilds(this.query)).guilds;
       else if (this.page === "info" && this.tab === "members") this.members = await guildApi.getMembers();
       else if (this.page === "guard") [this.guardBoard, this.guardStatus] = await Promise.all([guildApi.getGuard(), gameApi.getGuildGuard()]);
-      else if (this.page === "war") [this.warMap, this.warFront] = await Promise.all([guildApi.getWarMap(), guildApi.getWarFront()]);
+      else if (this.page === "war") {
+        [this.warMap, this.warFront] = await Promise.all([guildApi.getWarMap(), guildApi.getWarFront()]);
+        await this.autoPlaceWar();
+      }
       if (this.state.guild && !this.stampChecked) {
         this.stampChecked = true;
         attendance = await guildApi.getAttendance();
@@ -283,6 +298,26 @@ export class GuildScene extends Phaser.Scene {
     else if (this.announceGuardReward()) return;
     else if (this.announceWarResult()) return;
     else if (this.entryToast) { this.entryToast = false; this.toast(t("guild.war.placedToast"), "unlocked"); }
+    else if (this.warAutoPlacedToast) { this.warAutoPlacedToast = false; this.toast(t("guild.war.autoPlacedToast"), "unlocked"); }
+  }
+
+  /**
+   * 기본 배치 — 정비일에 아직 칸이 없으면 결투장 방어덱으로 곧바로 선다(서버가 자동 배치 순서의 첫 빈 칸을 고른다). 덱을 못
+   * 꾸리거나 칸이 다 찼으면 조용히 넘어간다 — 그때는 「방어덱 수정」이 같은 길을 연다.
+   */
+  private async autoPlaceWar(): Promise<void> {
+    const map = this.warMap;
+    if (this.warAutoTried || !map || map.phase !== "prep" || map.mySlotId !== null || !map.slots.some(({ holder }) => !holder)) return;
+    this.warAutoTried = true;
+    try {
+      const duel = await gameApi.getDuelStatus();
+      if (duel.defense.length !== 3) return;
+      this.warMap = await gameApi.placeGuildWarDefense({ slotId: null, relicIds: [...duel.defense] });
+      this.entryToast = false;
+      this.warAutoPlacedToast = true;
+    } catch {
+      // 결투장이 아직 잠겼거나 칸이 찼다 — 기본 배치 없이 지도만 선다.
+    }
   }
 
   /* ── 그리기 ───────────────────────────────────────────────────────────── */
@@ -1170,9 +1205,12 @@ export class GuildScene extends Phaser.Scene {
   /* ── 길드전 · 수호전 ──────────────────────────────────────────────────── */
 
   /**
-   * 길드전 쪽 — 위 두 줄에 지금 국면·남은 시간과 길드전 점수·배치 현황이 서고, 본문에 **방어진 지도**가 선다. 지부 셋이
-   * 기둥 셋이고 기둥마다 우두머리 → 정예 둘 → 일반 칸이다. 정비일에 빈 칸을 누르면 그 칸의 방어덱 편성이 열리고, 찬 칸을
-   * 누르면 그 덱을 보는 쪽지가 뜬다. 전투일에는 지도를 고칠 수 없다.
+   * 길드전 쪽 — 위 두 줄에 지금 국면·남은 시간과 길드전 점수·배치 현황이 서고, 본문에 **지부 하나의 방어진**이 선다. 지부는 맨 아래
+   * 탭 셋(제1·2·3지부)이 가르고, 판 안에서는 칸이 진지처럼 흩어져 일반 → 정예 → 우두머리로 선이 이어진다.
+   *
+   * 배치는 기본이 자동이다 — 방어덱을 세우면 서버가 자동 배치 순서의 첫 빈 칸에 세우고, 처음 들어온 정비일에 아직 칸이 없으면
+   * 결투장 방어덱으로 곧바로 선다. 누구나 아래 「방어덱 수정」으로 제 덱을 고치고, 배치 권한(길드장·부길드장·간부)만 「편집」으로
+   * 칸을 옮기거나(두 칸을 차례로 누르면 옮기거나 서로 바꾼다) 전투력 순으로 다시 세운다. 전투일에는 지도를 고칠 수 없다.
    */
   private paintWar(): void {
     const guild = this.state!.guild!;
@@ -1189,75 +1227,182 @@ export class GuildScene extends Phaser.Scene {
       const placed = map.slots.filter(({ holder }) => holder).length;
       this.label(this.controls, S.side + S.width, S.controls.y, t("guild.war.placed", { count: placed, total: map.slots.length }), { role: "emphasis", size: 28, color: COLOR.accentText }, [1, 0.5]);
     }
-    const note = battle && front?.status === "bye" ? t("guild.war.front.bye")
-      : battle && front?.status === "idle" ? t("guild.war.front.idle")
-        : t("guild.war.members", { need: GUILD_WAR_MIN_MEMBERS, count: guild.memberCount });
-    this.label(this.controls, BASE_WIDTH / 2, W.note, note, {
-      role: "body", size: 28, color: !battle && guild.memberCount < GUILD_WAR_MIN_MEMBERS ? COLOR.dangerText : battle && front?.status === "bye" ? COLOR.accentText : COLOR.inkDim,
+    const editing = this.warEditing && map?.phase === "prep" && map.canArrange;
+    const note = editing ? t(this.warPick ? "guild.war.edit.pickTarget" : "guild.war.edit.pickSource")
+      : battle && front?.status === "bye" ? t("guild.war.front.bye")
+        : battle && front?.status === "idle" ? t("guild.war.front.idle")
+          : t("guild.war.members", { need: GUILD_WAR_MIN_MEMBERS, count: guild.memberCount });
+    this.label(this.view, BASE_WIDTH / 2, W.note, note, {
+      role: "body", size: 28,
+      color: editing ? COLOR.accentText : !battle && guild.memberCount < GUILD_WAR_MIN_MEMBERS ? COLOR.dangerText : battle && front?.status === "bye" ? COLOR.accentText : COLOR.inkDim,
     }, [0.5, 0.5]);
-    if (map) this.paintWarMap(map.slots, (v, slot) => this.paintWarNode(v, map, slot));
+    if (!map) return;
+    this.paintBranchTabs(map.slots, (slot) => slot.holder !== null);
+    this.paintWarField(map.slots, () => false, (v, slot) => this.paintWarNode(v, map, slot, editing));
+    this.paintWarActions(map, editing);
   }
 
-  private paintWarMap<Slot extends GuildWarMapSlot>(slots: readonly Slot[], paintNode: (v: Phaser.GameObjects.Container, slot: Slot) => void): void {
-    const v = this.view;
-    const { width, top, bottom } = W.column;
-    for (const branch of [1, 2, 3] as const) {
-      const x = guildWarColumnX(branch);
-      this.plate(v, x, (top + bottom) / 2, width, bottom - top);
-      this.label(v, x, W.header, t("guild.war.branch", { n: branch }), { role: "display", size: 34, color: COLOR.ink }, [0.5, 0.5]);
-      // 우두머리 → 정예 → 일반 칸으로 내려가는 줄기. 칸보다 뒤에 옅게 긋는다.
-      const lines = this.add.graphics().lineStyle(3, COLOR.accent, 0.28);
-      const boss = guildWarNodeSpot({ branch, kind: "boss", index: 0 });
-      for (const index of [0, 1]) {
-        const elite = guildWarNodeSpot({ branch, kind: "elite", index });
-        lines.lineBetween(boss.x, boss.y + boss.size / 2, elite.x, elite.y - elite.size / 2);
-        if (slots.some((slot) => slot.branch === branch && slot.kind === "grunt" && slot.index === index)) {
-          const grunt = guildWarNodeSpot({ branch, kind: "grunt", index });
-          lines.lineBetween(elite.x, elite.y + elite.size / 2 + W.nameGap + 18, grunt.x, grunt.y - grunt.size / 2);
-        }
-      }
-      v.add(lines);
+  /** 맨 아래 지부 탭 셋 — 정보 쪽 작은 탭과 같은 자리. 탭마다 그 지부에서 센 칸 수(배치 · 격파)를 함께 적는다. */
+  private paintBranchTabs<Slot extends GuildWarMapSlot>(slots: readonly Slot[], counted: (slot: Slot) => boolean): void {
+    for (const branch of GUILD_WAR_BRANCHES) {
+      const index = branch - 1;
+      const own = slots.filter((slot) => slot.branch === branch);
+      addCategoryTab(this, this.tabRow, {
+        x: guildTabX(index), y: S.tabs.y, width: S.tabs.width, height: S.tabs.height,
+        label: t("guild.war.branchTab", { n: branch, count: own.filter(counted).length, total: own.length }), selected: this.warBranch === branch,
+        onSelect: () => {
+          if (this.warBranch === branch || this.busy) return;
+          const from = this.warBranch - 1;
+          this.warBranch = branch;
+          this.paint(true);
+          slideTabPage(this, [this.view], from, index);
+        },
+      });
     }
-    for (const slot of slots) paintNode(v, slot);
   }
 
-  private paintWarNode(v: Phaser.GameObjects.Container, map: GuildWarMapState, slot: GuildWarMapSlot): void {
+  /**
+   * 고른 지부의 판 — 격파 순서를 잇는 선을 칸보다 먼저 긋고 칸을 얹는다. 선은 일반 → 그 쪽 정예, 정예 → 우두머리이고, 가운데에
+   * 다음 칸을 가리키는 꺾쇠가 선다. 출발 칸이 무너졌으면(`lit`) 그 선은 강조색으로 밝아진다.
+   */
+  private paintWarField<Slot extends GuildWarMapSlot>(slots: readonly Slot[], lit: (slot: Slot) => boolean, paintNode: (v: Phaser.GameObjects.Container, slot: Slot) => void): void {
+    const v = this.view;
+    const own = slots.filter((slot) => slot.branch === this.warBranch);
+    const lines = this.add.graphics();
+    v.add(lines);
+    for (const slot of own) {
+      const next = guildWarNextSpot(slot);
+      if (!next) continue;
+      const from = guildWarNodeSpot(slot);
+      const to = guildWarNodeSpot(next);
+      const on = lit(slot);
+      lines.lineStyle(10, 0x05070a, 0.55).lineBetween(from.x, from.y, to.x, to.y);
+      lines.lineStyle(4, on ? COLOR.accent : 0xffffff, on ? 0.95 : 0.32).lineBetween(from.x, from.y, to.x, to.y);
+      // 가운데의 꺾쇠 — 격파하면 어디가 열리는지 가리킨다.
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const mx = (from.x + to.x) / 2;
+      const my = (from.y + to.y) / 2;
+      const arm = 18;
+      const tip = { x: mx + Math.cos(angle) * 9, y: my + Math.sin(angle) * 9 };
+      const back = (turn: number) => ({ x: tip.x - Math.cos(angle + turn) * arm, y: tip.y - Math.sin(angle + turn) * arm });
+      const a = back(0.7);
+      const b = back(-0.7);
+      lines.lineStyle(9, 0x05070a, 0.6).beginPath().moveTo(a.x, a.y).lineTo(tip.x, tip.y).lineTo(b.x, b.y).strokePath();
+      lines.lineStyle(4, on ? COLOR.accent : 0xffffff, on ? 1 : 0.6).beginPath().moveTo(a.x, a.y).lineTo(tip.x, tip.y).lineTo(b.x, b.y).strokePath();
+    }
+    for (const slot of own) paintNode(v, slot);
+  }
+
+  /**
+   * 진지 한 칸의 뼈대 — 발밑의 납작한 땅 그림자, 판, 칸 이름표(우두머리·정예), 아래 이름줄. 지키는 사람이 있으면 그 얼굴이 서고
+   * 없으면 `empty` 글자가 선다. 돌려준 컨테이너에 상태 표식을 더 얹는다.
+   */
+  private warCamp(v: Phaser.GameObjects.Container, slot: GuildWarMapSlot, options: { edge?: number; selected?: boolean; empty: string; emptyColor: string; nameColor: string; faceAlpha?: number }): { node: Phaser.GameObjects.Container; face?: ProfileAvatar } {
     const { x, y, size } = guildWarNodeSpot(slot);
     const node = this.add.container(x, y);
     v.add(node);
-    const edge = slot.kind === "boss" ? WAR_BOSS_EDGE : slot.kind === "elite" ? WAR_ELITE_EDGE : undefined;
+    const ground = this.add.graphics();
+    const gw = size * 0.78;
+    const gy = size * 0.44;
+    ground.fillStyle(0x05070a, 0.42).fillPoints([
+      new Phaser.Math.Vector2(-gw, gy), new Phaser.Math.Vector2(0, gy - size * 0.16), new Phaser.Math.Vector2(gw, gy), new Phaser.Math.Vector2(0, gy + size * 0.16),
+    ], true);
+    node.add(ground);
+    if (options.selected) this.plate(node, 0, 0, size + 34, size + 34, COLOR.accent);
     const holder = slot.holder;
+    const edge = options.selected ? COLOR.accent : options.edge;
+    this.plate(node, 0, 0, size + (holder ? 12 : 0), size + (holder ? 12 : 0), edge);
+    let face: ProfileAvatar | undefined;
     if (holder) {
-      if (edge !== undefined) this.plate(node, 0, 0, size + 12, size + 12, edge);
       const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
-      node.add(new ProfileAvatar(this, 0, 0, { size: Math.round(size * 0.8), frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" }));
+      face = new ProfileAvatar(this, 0, 0, { size: Math.round(size * 0.8), frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" });
+      if (options.faceAlpha !== undefined) face.setAlpha(options.faceAlpha);
+      node.add(face);
     } else {
-      this.plate(node, 0, 0, size, size, edge);
-      const open = map.phase === "prep";
-      this.label(node, 0, 0, "+", { role: "display", size: Math.round(size * 0.46), color: open ? COLOR.accentText : COLOR.inkDim }, [0.5, 0.5]);
+      this.label(node, 0, 0, options.empty, { role: "display", size: Math.round(size * 0.42), color: options.emptyColor }, [0.5, 0.5]);
     }
+    if (slot.kind !== "grunt") {
+      const tag = this.label(node, 0, -size / 2 - 22, t(`guild.war.kind.${slot.kind}`), {
+        role: "display", size: slot.kind === "boss" ? 28 : 24, color: slot.kind === "boss" ? WAR_BOSS_TEXT : WAR_ELITE_TEXT,
+      }, [0.5, 0.5]);
+      tag.setStroke("#05070a", 7);
+    }
+    // 빈 우두머리·정예 칸은 머리 위 표가 이미 무슨 자리인지 말하므로 아래 이름줄을 비운다.
+    if (!holder && slot.kind !== "grunt") return { node, face };
     const name = holder ? holder.name : t(`guild.war.kind.${slot.kind}`);
-    const caption = this.label(node, 0, size / 2 + W.nameGap, name, {
-      role: holder ? "emphasis" : "body", size: slot.kind === "grunt" ? 20 : 24, color: holder?.isMe ? COLOR.accentText : holder ? COLOR.ink : COLOR.inkDim,
-    }, [0.5, 0.5]);
-    squeezeTextToWidth(caption, slot.kind === "grunt" ? 116 : slot.kind === "elite" ? 128 : 260);
-    // 지도 판 안에서만 손을 받는다 — 이 화면은 목록을 마스크로 자르므로 입력면을 직접 달지 않는다.
-    const hit = addClippedHit(this, node, 0, 0, size + 16, size + 16,
-      () => ({ left: 0, right: BASE_WIDTH, top: W.column.top, bottom: W.column.bottom }), { useHandCursor: true });
+    const caption = this.label(node, 0, size / 2 + W.nameGap, name, { role: holder ? "emphasis" : "body", size: slot.kind === "grunt" ? 22 : 26, color: options.nameColor }, [0.5, 0.5]);
+    caption.setStroke("#05070a", 6);
+    squeezeTextToWidth(caption, slot.kind === "boss" ? 300 : 190);
+    return { node, face };
+  }
+
+  /** 칸 하나에 손을 단다 — 지도 판 안에서만 받는다. */
+  private warHit(node: Phaser.GameObjects.Container, size: number, onTap: () => void): void {
+    const hit = addClippedHit(this, node, 0, 0, size + 16, size + 16, () => ({ left: 0, right: BASE_WIDTH, top: W.field.top, bottom: W.field.bottom }), { useHandCursor: true });
     hit.on("pointerdown", () => pressIn(node));
     hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
     hit.on("pointerup", () => {
       pressOut(node);
       if (!this.canTap() || this.popups.isOpen) return;
-      if (holder) this.openWarSlot(map, slot);
-      else if (map.phase !== "prep") this.toast(t("guild.error.WAR_LOCKED"), "locked");
-      else this.openWarDefense(map, slot.id);
+      onTap();
+    });
+  }
+
+  private paintWarNode(v: Phaser.GameObjects.Container, map: GuildWarMapState, slot: GuildWarMapSlot, editing: boolean): void {
+    const holder = slot.holder;
+    const prep = map.phase === "prep";
+    const { node } = this.warCamp(v, slot, {
+      edge: slot.kind === "boss" ? WAR_BOSS_EDGE : slot.kind === "elite" ? WAR_ELITE_EDGE : undefined,
+      selected: editing && this.warPick === slot.id,
+      empty: "+", emptyColor: prep && (editing ? this.warPick !== null : map.mySlotId === null) ? COLOR.accentText : COLOR.inkDim,
+      nameColor: holder?.isMe ? COLOR.accentText : holder ? COLOR.ink : COLOR.inkDim,
+    });
+    this.warHit(node, guildWarNodeSpot(slot).size, () => {
+      if (editing) { this.pickWarSlot(slot); return; }
+      if (holder) { this.openWarSlot(map, slot); return; }
+      if (!prep) { this.toast(t("guild.error.WAR_LOCKED"), "locked"); return; }
+      // 아직 칸이 없으면 그 칸에 곧바로 선다. 이미 섰으면 칸을 옮기는 것은 배치 권한의 몫이다.
+      if (map.mySlotId === null) this.openWarDefense(map, slot.id);
+      else this.toast(t(map.canArrange ? "guild.war.edit.useEdit" : "guild.war.edit.officerOnly"));
+    });
+  }
+
+  /** 편집 중 칸 고르기 — 첫 칸(사람이 선 칸)을 고르고, 둘째 칸을 누르면 옮기거나 서로 바꾼다. 같은 칸을 다시 누르면 놓는다. */
+  private pickWarSlot(slot: GuildWarMapSlot): void {
+    if (this.busy) return;
+    if (this.warPick === null) {
+      if (!slot.holder) { this.toast(t("guild.war.edit.pickSource")); return; }
+      this.warPick = slot.id;
+      this.paint(true);
+      return;
+    }
+    if (this.warPick === slot.id) { this.warPick = null; this.paint(true); return; }
+    const from = this.warPick;
+    this.warPick = null;
+    void this.act(() => guildApi.moveWarSlot(from, slot.id));
+  }
+
+  /** 지도 아래 버튼 줄 — 정비일에만 선다. 편집 중에는 자동 배치 · 완료, 아니면 방어덱 수정 · 편집(배치 권한만)이다. */
+  private paintWarActions(map: GuildWarMapState, editing: boolean): void {
+    if (map.phase !== "prep") return;
+    const { y, width, height } = W.actions;
+    const buttons: { label: string; tone: RowButtonTone; run: () => void }[] = editing
+      ? [
+        { label: t("guild.war.edit.auto"), tone: "accent", run: () => this.popups.confirm({ title: t("guild.war.edit.auto"), message: t("guild.war.edit.autoConfirm"), confirmLabel: t("guild.war.edit.auto") }, () => { void this.act(() => guildApi.autoArrangeWar()); }) },
+        { label: t("guild.war.edit.done"), tone: "neutral", run: () => { this.warEditing = false; this.warPick = null; this.paint(true); } },
+      ]
+      : [
+        { label: t("guild.war.deck.edit"), tone: "accent", run: () => this.openWarDefense(map, null) },
+        ...(map.canArrange ? [{ label: t("guild.war.edit.open"), tone: "neutral" as const, run: () => { this.warEditing = true; this.warPick = null; this.paint(true); } }] : []),
+      ];
+    buttons.forEach((button, index) => {
+      addRowButton(this, this.controls, guildWarActionX(index, buttons.length), y, width, height, button.label, button.tone, () => FULL_CLIP, () => !this.busy, button.run);
     });
   }
 
   /**
-   * 전투일의 전선 — 위 줄에 상대 길드와 내 남은 공격, 본문에 **상대 영지**(같은 기둥 지도), 밑줄에 두 편의 점수가 선다.
-   * 격파한 칸은 눌린 채 체크가, 아직 열리지 않은 칸은 자물쇠가 서고, 열린 칸만 강조 테두리를 두른다.
+   * 전투일의 전선 — 위 줄에 상대 길드와 내 남은 공격, 본문에 **상대 영지**(같은 지부 판), 판 맨 위에 두 편의 점수가 선다.
+   * 격파한 칸은 눌린 채 체크가, 아직 열리지 않은 칸은 자물쇠가 서고, 열린 칸만 강조 테두리를 두른다. 격파한 칸에서 나가는 선이 밝아진다.
    */
   private paintWarFront(front: GuildWarFrontView): void {
     const opponent = front.opponent!;
@@ -1266,50 +1411,27 @@ export class GuildScene extends Phaser.Scene {
     this.label(this.controls, S.side + S.width, S.controls.y, attacks, {
       role: "emphasis", size: 28, color: !front.canAttack || front.attacksLeft <= 0 ? COLOR.dangerText : COLOR.accentText,
     }, [1, 0.5]);
-    this.label(this.controls, BASE_WIDTH / 2, W.note, t("guild.war.front.points", { mine: front.myPoints.toLocaleString(), theirs: front.theirPoints.toLocaleString() }), {
+    this.label(this.view, BASE_WIDTH / 2, W.note, t("guild.war.front.points", { mine: front.myPoints.toLocaleString(), theirs: front.theirPoints.toLocaleString() }), {
       role: "display", size: 32, color: front.myPoints >= front.theirPoints ? COLOR.accentText : COLOR.dangerText,
     }, [0.5, 0.5]);
-    this.paintWarMap(front.slots, (v, slot) => this.paintFrontNode(v, front, slot));
+    // 빈 칸은 처음부터 무너진 것으로 보므로 격파와 함께 센다.
+    this.paintBranchTabs(front.slots, (slot) => slot.captured || slot.holder === null);
+    this.paintWarField(front.slots, (slot) => slot.captured || slot.holder === null, (v, slot) => this.paintFrontNode(v, front, slot));
   }
 
   private paintFrontNode(v: Phaser.GameObjects.Container, front: GuildWarFrontView, slot: GuildWarFrontSlotView): void {
-    const { x, y, size } = guildWarNodeSpot(slot);
-    const node = this.add.container(x, y);
-    v.add(node);
-    const edge = slot.open ? COLOR.accent : slot.kind === "boss" ? WAR_BOSS_EDGE : slot.kind === "elite" ? WAR_ELITE_EDGE : undefined;
     const holder = slot.holder;
-    if (holder) {
-      this.plate(node, 0, 0, size + 12, size + 12, edge);
-      const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
-      const face = new ProfileAvatar(this, 0, 0, { size: Math.round(size * 0.8), frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" });
-      node.add(face);
-      if (slot.captured) {
-        face.setAlpha(0.4);
-        node.add(drawGlyph(this, "check", 0, 0, Math.round(size * 0.5), COLOR.accent, 1, 5));
-      } else if (!slot.open) {
-        face.setAlpha(0.6);
-        node.add(drawGlyph(this, "lock", size / 2 - 4, -size / 2 + 4, Math.round(size * 0.32), COLOR.inkDimHex, 0.95, 3));
-      }
-    } else {
+    const { size } = guildWarNodeSpot(slot);
+    const { node } = this.warCamp(v, slot, {
+      edge: slot.open && !slot.captured ? COLOR.accent : slot.kind === "boss" ? WAR_BOSS_EDGE : slot.kind === "elite" ? WAR_ELITE_EDGE : undefined,
       // 지키는 사람이 없는 칸 — 처음부터 무너진 것으로 본다.
-      this.plate(node, 0, 0, size, size);
-      this.label(node, 0, 0, "-", { role: "display", size: Math.round(size * 0.4), color: COLOR.inkDim }, [0.5, 0.5]);
-    }
-    const name = holder ? holder.name : t("guild.war.empty");
-    const caption = this.label(node, 0, size / 2 + W.nameGap, name, {
-      role: holder ? "emphasis" : "body", size: slot.kind === "grunt" ? 20 : 24, color: slot.open ? COLOR.ink : COLOR.inkDim,
-    }, [0.5, 0.5]);
-    squeezeTextToWidth(caption, slot.kind === "grunt" ? 116 : slot.kind === "elite" ? 128 : 260);
-    if (!holder) return;
-    const hit = addClippedHit(this, node, 0, 0, size + 16, size + 16,
-      () => ({ left: 0, right: BASE_WIDTH, top: W.column.top, bottom: W.column.bottom }), { useHandCursor: true });
-    hit.on("pointerdown", () => pressIn(node));
-    hit.on("pointerout", () => pressOut(node, "normal", { pop: false }));
-    hit.on("pointerup", () => {
-      pressOut(node);
-      if (!this.canTap() || this.popups.isOpen) return;
-      this.openFrontSlot(front, slot);
+      empty: "-", emptyColor: COLOR.inkDim,
+      nameColor: slot.open && !slot.captured ? COLOR.ink : COLOR.inkDim,
+      faceAlpha: slot.captured ? 0.4 : slot.open ? undefined : 0.6,
     });
+    if (holder && slot.captured) node.add(drawGlyph(this, "check", 0, 0, Math.round(size * 0.5), COLOR.accent, 1, 5));
+    else if (holder && !slot.open) node.add(drawGlyph(this, "lock", size / 2 - 4, -size / 2 + 4, Math.round(size * 0.32), COLOR.inkDimHex, 0.95, 3));
+    if (holder) this.warHit(node, size, () => this.openFrontSlot(front, slot));
   }
 
   /** 상대 칸의 쪽지 — 지키는 길드원과 그 덱, 칸의 상태. 열린 칸이면 공격 버튼이 편성을 연다. */
@@ -1347,18 +1469,18 @@ export class GuildScene extends Phaser.Scene {
     });
   }
 
-  /** 그 칸의 방어덱 편성을 연다. 이미 다른 칸을 맡았으면 그 덱에서 시작해 옮긴다. */
-  private openWarDefense(map: GuildWarMapState, slotId: string): void {
+  /** 내 방어덱 편성을 연다 — 지금 선 덱에서 시작한다. `slotId`가 null이면 칸은 그대로(없으면 자동 배치)다. */
+  private openWarDefense(map: GuildWarMapState, slotId: string | null): void {
     const mine = map.slots.find(({ id }) => id === map.mySlotId);
     startScene(this, "party", { content: "guildWarDefense", slotId, deck: mine?.deck.map(({ relicId }) => relicId) ?? [] });
   }
 
-  /** 찬 칸의 쪽지 — 맡은 길드원과 그 덱, 정비일이면 다시 편성·비우기. */
+  /** 찬 칸의 쪽지 — 맡은 길드원과 그 덱. 정비일이면 내 칸은 방어덱 수정, 내 칸이거나 배치 권한이 있으면 비우기가 선다. */
   private openWarSlot(map: GuildWarMapState, slot: GuildWarMapSlot): void {
     const holder = slot.holder!;
     const prep = map.phase === "prep";
     const actions: { label: string; tone: RowButtonTone; run: () => void }[] = [];
-    if (prep && holder.isMe) actions.push({ label: t("guild.war.slot.replace"), tone: "accent", run: () => this.openWarDefense(map, slot.id) });
+    if (prep && holder.isMe) actions.push({ label: t("guild.war.deck.edit"), tone: "accent", run: () => this.openWarDefense(map, null) });
     if (prep && (holder.isMe || map.canArrange)) actions.push({ label: t("guild.war.slot.clear"), tone: "danger", run: () => { void this.act(() => guildApi.clearWarSlot(slot.id)); } });
     const height = 560 + (actions.length > 0 ? 120 : 0);
     this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true }, (body, close) => {

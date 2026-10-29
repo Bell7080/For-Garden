@@ -1808,14 +1808,15 @@ export class FakeServer implements GameApi {
     let relicIds: string[];
     try { relicIds = normalizeGuildWarDeck(Array.isArray(request?.relicIds) ? request.relicIds : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
-    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const slotId = request.slotId ?? null;
+    if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
     const lineup = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),
     }));
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
     const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
-    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
   }
 
   /**
@@ -1832,7 +1833,8 @@ export class FakeServer implements GameApi {
     let relicIds: string[];
     try { relicIds = normalizeGuildWarDeck(Array.isArray(request.relicIds) ? request.relicIds : []); } catch { throw new GuildApiError("INVALID_REQUEST"); }
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
-    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const slotId = request.slotId ?? null;
+    if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
     const attack = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId)!, this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId]),

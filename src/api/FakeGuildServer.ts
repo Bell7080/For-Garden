@@ -13,7 +13,7 @@ import type { GuildGuardSlotUnit } from "../core/guildGuardBattle";
 import { captureExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { createInitialRelicProgress } from "../state/session";
 import { guildWarNow } from "../core/guildPages";
-import { guildWarMapSlots, parseGuildWarSlotId } from "../core/guildWarMap";
+import { guildWarAutoArrange, guildWarFirstOpenSlot, guildWarMapSlots, guildWarSlotOpen, parseGuildWarSlotId } from "../core/guildWarMap";
 import { guildQaClockShift } from "./guildQaClock";
 import { guildGuardDayKey, guildGuardTotal, rankGuildGuardMembers } from "../core/guildGuard";
 import { getRelic, PLAYABLE_RELICS } from "../data/relics";
@@ -614,18 +614,55 @@ export class FakeGuildServer implements GuildBackend {
     return this.warMapOf(guild, me);
   }
 
+  async moveWarSlot(actor: GuildActor, from: string, to: string): Promise<GuildWarMapState> {
+    const { guild, me } = this.requireGuild(actor);
+    if (guildWarNow(this.now()).phase !== "prep") fail("WAR_LOCKED");
+    if (!guildCan(me.role, "formation")) fail("NO_PERMISSION");
+    const level = this.level(guild);
+    if (from === to || !guildWarSlotOpen(level, from) || !guildWarSlotOpen(level, to)) fail("SLOT_INVALID");
+    const war = this.warOf(guild);
+    const moving = war.get(from);
+    if (!moving) return fail("SLOT_INVALID");
+    const other = war.get(to);
+    war.set(to, moving);
+    if (other) war.set(from, other);
+    else war.delete(from);
+    return this.warMapOf(guild, me);
+  }
+
+  async autoArrangeWar(actor: GuildActor): Promise<GuildWarMapState> {
+    const { guild, me } = this.requireGuild(actor);
+    if (guildWarNow(this.now()).phase !== "prep") fail("WAR_LOCKED");
+    if (!guildCan(me.role, "formation")) fail("NO_PERMISSION");
+    const war = this.warOf(guild);
+    const rows = new Map([...war.values()].map((row) => [row.userId, row]));
+    const plan = guildWarAutoArrange(this.level(guild), [...rows.values()].map((row) => ({ userId: row.userId, power: row.deck.reduce((sum, entry) => sum + entry.power, 0) })));
+    war.clear();
+    for (const [slotId, userId] of plan) war.set(slotId, rows.get(userId)!);
+    return this.warMapOf(guild, me);
+  }
+
   async placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState> {
     this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
       if (guildWarNow(this.now()).phase !== "prep") fail("WAR_LOCKED");
-      const slot = parseGuildWarSlotId(input?.slotId);
-      if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail("SLOT_INVALID");
-      if (!Array.isArray(input.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail("INVALID_REQUEST");
+      if (!Array.isArray(input?.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail("INVALID_REQUEST");
       const war = this.warOf(guild);
-      const current = war.get(slot.id);
-      if (current && current.userId !== me.userId) fail("SLOT_TAKEN");
+      let slotId: string;
+      if (input.slotId === null) {
+        const mine = [...war.entries()].find(([, row]) => row.userId === me.userId)?.[0];
+        const open = mine ?? guildWarFirstOpenSlot(this.level(guild), new Set(war.keys()));
+        if (!open) return fail("SLOT_FULL");
+        slotId = open;
+      } else {
+        const slot = parseGuildWarSlotId(input.slotId);
+        if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail("SLOT_INVALID");
+        const current = war.get(slot.id);
+        if (current && current.userId !== me.userId) fail("SLOT_TAKEN");
+        slotId = slot.id;
+      }
       this.dropWarDefense(guild, me.userId);
-      war.set(slot.id, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
+      war.set(slotId, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
       return true;
     });
     return this.getWarMap(actor);

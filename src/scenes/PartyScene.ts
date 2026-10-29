@@ -683,7 +683,7 @@ export class PartyScene extends Phaser.Scene {
     if (content.content === "duel") return t("duel.party.attackTitle", { name: content.opponent.displayName });
     if (content.content === "duelDefense") return t("duel.party.defenseTitle");
     if (content.content === "guildGuard") return t("guild.guard.party.title");
-    if (content.content === "guildWarDefense") return t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) });
+    if (content.content === "guildWarDefense") return content.slotId ? t("guild.war.party.title", { slot: guildWarSlotLabel(content.slotId) }) : t("guild.war.party.deckTitle");
     if (content.content === "guildWar") return t("guild.war.party.attackTitle", { slot: guildWarSlotLabel(content.slotId) });
     if (content.content === "raid") return t("raid.title");
     if (content.content === "bounty") return getBountyTier(content.tierId).name;

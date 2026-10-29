@@ -1719,16 +1719,6 @@
     "Kampfkraft der Verteidigung {power}",
     "Боевая мощь обороны {power}"
   ],
-  "guild.war.slot.replace": [
-    "重新编队",
-    "จัดทีมใหม่",
-    "Sửa đội hình",
-    "Ubah Formasi",
-    "Cambiar formación",
-    "Alterar formação",
-    "Formation ändern",
-    "Изменить построение"
-  ],
   "guild.war.slot.clear": [
     "清空",
     "ล้างช่อง",
@@ -2478,5 +2468,135 @@
     "Placar {mine} : {theirs} · Pontos de guerra de guildas {delta} · {coin} moedas da guilda",
     "Stand {mine} : {theirs} · Gildenkrieg-Punkte {delta} · {coin} Gildenmünzen",
     "Счёт {mine} : {theirs} · Очки войны гильдий {delta} · Монет гильдии: {coin}"
+  ],
+  "guild.error.SLOT_FULL": [
+    "防御阵地已全部占满",
+    "ช่องแนวป้องกันเต็มหมดแล้ว",
+    "Mọi ô phòng tuyến đã kín",
+    "Semua slot pertahanan sudah terisi",
+    "Todas las casillas de defensa están ocupadas",
+    "Todos os espaços de defesa estão ocupados",
+    "Alle Verteidigungsplätze sind belegt",
+    "Все места обороны заняты"
+  ],
+  "guild.war.branchTab": [
+    "第{n}支部 {count}/{total}",
+    "สาขา {n} {count}/{total}",
+    "Chi nhánh {n} {count}/{total}",
+    "Cabang {n} {count}/{total}",
+    "Sede {n} {count}/{total}",
+    "Filial {n} {count}/{total}",
+    "Zweig {n} {count}/{total}",
+    "Филиал {n} {count}/{total}"
+  ],
+  "guild.war.deck.edit": [
+    "修改防守阵容",
+    "แก้ไขทีมป้องกัน",
+    "Sửa đội phòng thủ",
+    "Ubah Tim Bertahan",
+    "Editar defensa",
+    "Editar defesa",
+    "Verteidigung ändern",
+    "Изменить защиту"
+  ],
+  "guild.war.party.deckTitle": [
+    "公会战防守阵容",
+    "ทีมป้องกันสงครามกิลด์",
+    "Đội phòng thủ chiến bang hội",
+    "Tim Bertahan Perang Guild",
+    "Defensa de guerra de gremio",
+    "Defesa da guerra de guilda",
+    "Gildenkrieg-Verteidigung",
+    "Защита в войне гильдий"
+  ],
+  "guild.war.autoPlacedToast": [
+    "已用决斗场防守阵容部署到公会战",
+    "วางทีมป้องกันจากสนามประลองในสงครามกิลด์แล้ว",
+    "Đã bố trí vào chiến bang hội bằng đội phòng thủ đấu trường",
+    "Ditempatkan di Perang Guild dengan tim bertahan arena duel",
+    "Colocado en la guerra de gremio con tu defensa del duelo",
+    "Posicionado na guerra de guilda com sua defesa do duelo",
+    "Mit deiner Duell-Verteidigung im Gildenkrieg aufgestellt",
+    "Размещено в войне гильдий с защитой арены дуэлей"
+  ],
+  "guild.war.edit.open": [
+    "编辑",
+    "แก้ไข",
+    "Chỉnh sửa",
+    "Atur",
+    "Editar",
+    "Editar",
+    "Bearbeiten",
+    "Правка"
+  ],
+  "guild.war.edit.done": [
+    "完成",
+    "เสร็จสิ้น",
+    "Xong",
+    "Selesai",
+    "Listo",
+    "Concluir",
+    "Fertig",
+    "Готово"
+  ],
+  "guild.war.edit.auto": [
+    "自动部署",
+    "จัดวางอัตโนมัติ",
+    "Tự bố trí",
+    "Atur Otomatis",
+    "Colocación automática",
+    "Posicionamento automático",
+    "Automatisch aufstellen",
+    "Авторасстановка"
+  ],
+  "guild.war.edit.autoConfirm": [
+    "按防守战斗力重新部署所有已设置防守阵容的公会成员。由强到弱依次站上首领 → 精英 → 普通位置。",
+    "จัดสมาชิกกิลด์ทุกคนที่ตั้งทีมป้องกันใหม่ตามพลังต่อสู้ป้องกัน ผู้ที่แข็งแกร่งที่สุดจะยืนช่องหัวหน้า → ชั้นยอด → ทั่วไปตามลำดับ",
+    "Bố trí lại mọi thành viên bang hội đã đặt đội phòng thủ theo lực chiến phòng thủ. Mạnh nhất đứng ô thủ lĩnh → tinh nhuệ → thường.",
+    "Menata ulang semua anggota guild yang memasang tim bertahan berdasarkan Kekuatan Tempur pertahanan. Yang terkuat menempati slot pemimpin → elite → biasa.",
+    "Recoloca a todos los miembros del gremio con defensa según su poder de combate defensivo. Los más fuertes ocupan jefe → élite → normal.",
+    "Reposiciona todos os membros da guilda com defesa pelo Poder de Combate defensivo. Os mais fortes ocupam chefe → elite → comum.",
+    "Stellt alle Gildenmitglieder mit Verteidigung nach Kampfkraft neu auf. Die Stärksten besetzen Anführer → Elite → Normal.",
+    "Перерасставляет всех участников гильдии с защитой по боевой мощи обороны. Сильнейшие занимают места главаря → элиты → обычные."
+  ],
+  "guild.war.edit.pickSource": [
+    "请点击要移动的公会成员所在位置",
+    "แตะช่องของสมาชิกกิลด์ที่จะย้าย",
+    "Chạm vào ô của thành viên bang hội cần di chuyển",
+    "Ketuk slot anggota guild yang akan dipindah",
+    "Toca la casilla del miembro del gremio que quieres mover",
+    "Toque no espaço do membro da guilda a mover",
+    "Tippe auf den Platz des Gildenmitglieds, das du verschieben willst",
+    "Нажмите на место участника гильдии, которого нужно переместить"
+  ],
+  "guild.war.edit.pickTarget": [
+    "请点击目标位置 · 若有人则互换",
+    "แตะช่องปลายทาง · ถ้ามีคนอยู่จะสลับกัน",
+    "Chạm ô đích · Ô có người sẽ đổi chỗ",
+    "Ketuk slot tujuan · Jika terisi akan bertukar",
+    "Toca la casilla de destino · Si está ocupada, se intercambian",
+    "Toque no espaço de destino · Se ocupado, eles trocam",
+    "Tippe auf den Zielplatz · Belegte Plätze werden getauscht",
+    "Нажмите на место назначения · Занятые места меняются"
+  ],
+  "guild.war.edit.useEdit": [
+    "要移动位置请点击编辑",
+    "แตะแก้ไขเพื่อย้ายช่อง",
+    "Chạm Chỉnh sửa để di chuyển ô",
+    "Ketuk Atur untuk memindah slot",
+    "Toca Editar para mover casillas",
+    "Toque em Editar para mover espaços",
+    "Tippe auf Bearbeiten, um Plätze zu verschieben",
+    "Нажмите «Правка», чтобы переставить места"
+  ],
+  "guild.war.edit.officerOnly": [
+    "位置由公会会长与干部决定",
+    "หัวหน้ากิลด์และผู้บริหารเป็นผู้จัดช่อง",
+    "Hội trưởng bang hội và cán bộ quyết định vị trí ô",
+    "Ketua guild dan pengurus yang mengatur slot",
+    "El líder del gremio y los oficiales deciden las casillas",
+    "O líder da guilda e os oficiais decidem os espaços",
+    "Gildenleitung und Offiziere legen die Plätze fest",
+    "Места распределяют глава гильдии и офицеры"
   ]
 }

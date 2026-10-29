@@ -46,8 +46,11 @@ export type PartyContent =
   | { content: "duelDefense"; defense: readonly string[]; blindChoice: readonly string[] }
   /** 길드 수호전 — 위에 적이 없고(웨이브로 몰려온다) 여섯 칸 두 줄이다. 그날의 적 속성을 함께 든다. */
   | { content: "guildGuard"; element: Element }
-  /** 길드전 방어덱 — 지도의 칸 하나에 셋을 세운다. 위에 적이 없고 저장이 곧 배치다. 시작 편성은 그 칸에 지금 선 덱이다. */
-  | { content: "guildWarDefense"; slotId: string; deck: readonly string[] }
+  /**
+   * 길드전 방어덱 — 내 방어덱 셋을 세운다. 위에 적이 없고 저장이 곧 게시다. 시작 편성은 지금 선 덱이다. `slotId`가 null이면
+   * 칸은 그대로(없으면 자동 배치)이고, 칸을 주면 그 칸에 선다.
+   */
+  | { content: "guildWarDefense"; slotId: string | null; deck: readonly string[] }
   /** 길드전 공격 — 위에 상대 칸의 방어덱이 서고, 전투 시작이 공격 한 번을 쓴다. */
   | { content: "guildWar"; slotId: string; defenderName: string; units: readonly GuildWarPartyUnit[] };
 
@@ -74,7 +77,7 @@ function normalizeDuelOpponent(value: unknown): DuelPartyOpponent | undefined {
  * 지난 진입의 값으로 엉뚱한 던전의 편성이 뜨면 안 된다.
  */
 export function normalizePartyContent(input: unknown): PartyContent {
-  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string; deck: unknown; defenderName: string; units: unknown }>;
+  const data = (input ?? {}) as Partial<{ content: string; tierId: string; raidId: string; bossRelicId: string; difficulty: string; auto: unknown; opponent: unknown; attack: unknown; defense: unknown; blindChoice: unknown; element: string; slotId: string | null; deck: unknown; defenderName: string; units: unknown }>;
   if (data.content === "duel") {
     const opponent = normalizeDuelOpponent(data.opponent);
     if (opponent) return { content: "duel", opponent, attack: stringIds(data.attack, 3) };
@@ -83,8 +86,8 @@ export function normalizePartyContent(input: unknown): PartyContent {
     const defense = stringIds(data.defense, 3);
     return { content: "duelDefense", defense, blindChoice: stringIds(data.blindChoice, 3).filter((id) => defense.includes(id)).slice(0, 2) };
   }
-  if (data.content === "guildWarDefense" && parseGuildWarSlotId(data.slotId)) {
-    return { content: "guildWarDefense", slotId: data.slotId as string, deck: stringIds(data.deck, 3) };
+  if (data.content === "guildWarDefense" && (data.slotId === null || data.slotId === undefined || parseGuildWarSlotId(data.slotId))) {
+    return { content: "guildWarDefense", slotId: data.slotId ?? null, deck: stringIds(data.deck, 3) };
   }
   if (data.content === "guildWar" && parseGuildWarSlotId(data.slotId) && Array.isArray(data.units) && data.units.length === 3) {
     const units = (data.units as Partial<GuildWarPartyUnit>[]).map((unit) => ({

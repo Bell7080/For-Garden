@@ -15,7 +15,7 @@ export const GUILD_ERROR_CODES = [
   "GUILD_NOT_FOUND", "GUILD_FULL", "LEAVE_COOLDOWN", "REQUEST_EXISTS", "REQUEST_NOT_FOUND", "MEMBER_NOT_FOUND",
   "NO_PERMISSION", "ROLE_FULL", "INVALID_TARGET", "LEADER_CANNOT_LEAVE", "ALREADY_STAMPED", "PRODUCT_NOT_FOUND",
   "PRODUCT_LIMIT", "INSUFFICIENT_COINS", "INSUFFICIENT_GEMS", "INVALID_REQUEST", "GUARD_LIMIT", "GUARD_NOT_ENTERED",
-  "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN", "GUILD_LEVEL_LOW",
+  "WAR_LOCKED", "SLOT_INVALID", "SLOT_TAKEN", "SLOT_FULL", "GUILD_LEVEL_LOW",
   "WAR_NO_OPPONENT", "WAR_NO_ATTACKS", "WAR_NEW_MEMBER", "SLOT_CLOSED", "WAR_NOT_ENTERED",
 ] as const;
 export type GuildErrorCode = (typeof GUILD_ERROR_CODES)[number];
@@ -166,7 +166,8 @@ export interface GuildWarAttackTicket {
 }
 
 /** 방어덱 게시 — 게임 서버가 보유·성장을 확인해 굳힌 값만 길드 백엔드로 넘어간다. */
-export interface GuildWarDefenseInput { slotId: string; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
+/** `slotId`가 null이면 내 칸을 그대로 두고 덱만 바꾸며, 칸이 없으면 자동 배치 순서의 첫 빈 칸에 선다. */
+export interface GuildWarDefenseInput { slotId: string | null; deck: GuildWarDeckEntry[]; lineup: GuildGuardSlotUnit[] }
 
 /** 길드 주간 순위 한 줄 — 이번 주 길드원 기여도의 합(`weekScore`)으로 줄 세운다. 점수가 없으면 등수가 없다. */
 export interface GuildRankingEntry extends GuildSummary { rank: number | null; weekScore: number; isMine: boolean }
@@ -202,6 +203,10 @@ export interface GuildApi {
   getWarMap(): Promise<GuildWarMapState>;
   /** 정비일에만. 자기 칸이거나 배치 권한(`formation`)이 있으면 비운다. */
   clearWarSlot(slotId: string): Promise<GuildWarMapState>;
+  /** 정비일에만, 배치 권한(`formation`)만. `from` 칸의 길드원을 `to` 칸으로 옮긴다 — `to`에 누가 서 있으면 서로 바꾼다. */
+  moveWarSlot(from: string, to: string): Promise<GuildWarMapState>;
+  /** 정비일에만, 배치 권한만. 방어덱을 세운 모두를 전투력 순으로 다시 세운다(`guildWarAutoArrange`). */
+  autoArrangeWar(): Promise<GuildWarMapState>;
   /** 길드전 전선 — 전투일의 상대 영지·점수·남은 공격과 지난 회차 결과. */
   getWarFront(): Promise<GuildWarFrontView>;
 }
@@ -209,7 +214,7 @@ export interface GuildApi {
 export const GUILD_API_METHODS = [
   "getGuild", "searchGuilds", "getMembers", "joinGuild", "cancelJoinRequest", "leaveGuild", "decideJoinRequest", "kickMember",
   "setMemberRole", "transferLeader", "updateGuild", "disbandGuild", "getAttendance", "getShop", "getGuard",
-  "getRanking", "getWarMap", "clearWarSlot", "getWarFront",
+  "getRanking", "getWarMap", "clearWarSlot", "moveWarSlot", "autoArrangeWar", "getWarFront",
 ] as const satisfies readonly (keyof GuildApi)[];
 export type GuildApiMethod = (typeof GUILD_API_METHODS)[number];
 export const isGuildApiMethod = (value: string): value is GuildApiMethod => (GUILD_API_METHODS as readonly string[]).includes(value);
@@ -248,7 +253,12 @@ export interface GuildBackend {
   recordGuard(actor: GuildActor, record: { day: number; score: number; coin: number }, requestId: string): Promise<{ best: number; coin: number }>;
   getWarMap(actor: GuildActor): Promise<GuildWarMapState>;
   clearWarSlot(actor: GuildActor, slotId: string): Promise<GuildWarMapState>;
-  /** 정비일에만, 빈 칸에만. 이미 다른 칸을 맡았으면 그 칸을 비우고 옮긴다. */
+  moveWarSlot(actor: GuildActor, from: string, to: string): Promise<GuildWarMapState>;
+  autoArrangeWar(actor: GuildActor): Promise<GuildWarMapState>;
+  /**
+   * 정비일에만. 칸을 주면 빈 칸에만 서고(이미 다른 칸을 맡았으면 옮긴다), 칸이 null이면 내 칸에서 덱만 바꾸거나 첫 빈 칸에
+   * 자동으로 선다.
+   */
   placeWarDefense(actor: GuildActor, input: GuildWarDefenseInput, requestId: string): Promise<GuildWarMapState>;
   getWarFront(actor: GuildActor): Promise<GuildWarFrontView>;
   /** 전투일에만, 열린 칸에만. 공격 한 번을 쓰고 그 칸의 방어덱을 돌려준다. 같은 요청은 같은 표를 돌려준다. */

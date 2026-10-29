@@ -1347,7 +1347,8 @@ export interface EnterGuildGuardResponse {
   attemptsLeft: number;
 }
 /** 방어진 지도의 칸 하나에 렐릭 셋을 세운다. */
-export interface PlaceGuildWarDefenseRequest { requestId?: string; slotId: string; relicIds: string[] }
+/** `slotId`를 비우면 내 칸을 그대로 두고 덱만 바꾸거나, 칸이 없으면 자동 배치 순서의 첫 빈 칸에 선다. */
+export interface PlaceGuildWarDefenseRequest { requestId?: string; slotId?: string | null; relicIds: string[] }
 /** 상대 영지의 칸 하나를 공격덱 셋으로 친다. */
 export interface EnterGuildWarAttackRequest { requestId: string; slotId: string; relicIds: string[] }
 export interface EnterGuildWarAttackResponse {

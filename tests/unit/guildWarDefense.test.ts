@@ -62,6 +62,41 @@ describe("길드전 방어진 지도", () => {
     await server.leaveGuild(actor("c"));
     expect((await server.getWarMap(actor("lead"))).slots.every(({ holder }) => holder === null)).toBe(true);
   });
+
+  it("칸을 고르지 않으면 제 칸을 지키거나 자동 배치 순서의 첫 빈 칸에 선다", async () => {
+    const { server } = await setup();
+    const free = (input: GuildWarDefenseInput, power = 100): GuildWarDefenseInput => ({
+      ...input, slotId: null, deck: input.deck.map((d) => ({ ...d, power })),
+    });
+    let map = await server.placeWarDefense(actor("b"), free(deck("x")), "a1");
+    expect(map.mySlotId).toBe("1:boss:0");
+    map = await server.placeWarDefense(actor("c"), free(deck("x")), "a2");
+    expect(map.mySlotId).toBe("2:boss:0");
+    // 이미 선 칸이면 덱만 바꾼다.
+    map = await server.placeWarDefense(actor("b"), free(deck("x"), 500), "a3");
+    expect(map.mySlotId).toBe("1:boss:0");
+    expect(map.slots.find(({ id }) => id === "1:boss:0")?.power).toBe(1500);
+  });
+
+  it("옮기기·자동 배치는 배치 권한만 하고, 자동 배치는 전투력 순으로 다시 세운다", async () => {
+    const { server } = await setup();
+    const at = (slotId: string, power: number): GuildWarDefenseInput => ({
+      ...deck(slotId), deck: deck(slotId).deck.map((d) => ({ ...d, power })),
+    });
+    await server.placeWarDefense(actor("b"), at("1:boss:0", 100), "m1");
+    await server.placeWarDefense(actor("c"), at("2:boss:0", 900), "m2");
+    expect(await code(() => server.moveWarSlot(actor("c"), "1:boss:0", "2:boss:0"))).toBe("NO_PERMISSION");
+    expect(await code(() => server.autoArrangeWar(actor("b")))).toBe("NO_PERMISSION");
+    let map = await server.moveWarSlot(actor("lead"), "1:boss:0", "2:boss:0");
+    expect(map.slots.find(({ id }) => id === "1:boss:0")?.holder?.userId).toBe("c");
+    expect(map.slots.find(({ id }) => id === "2:boss:0")?.holder?.userId).toBe("b");
+    map = await server.moveWarSlot(actor("lead"), "2:boss:0", "3:elite:0");
+    expect(map.slots.find(({ id }) => id === "2:boss:0")?.holder).toBeNull();
+    await server.placeWarDefense(actor("lead"), at("1:elite:0", 500), "m3");
+    map = await server.autoArrangeWar(actor("lead"));
+    const who = (id: string) => map.slots.find((slot) => slot.id === id)?.holder?.userId ?? null;
+    expect([who("1:boss:0"), who("2:boss:0"), who("3:boss:0")]).toEqual(["c", "lead", "b"]);
+  });
 });
 
 describe("길드장 자동 위임", () => {

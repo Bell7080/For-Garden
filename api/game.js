@@ -907,8 +907,6 @@ var BATTLE_KO = {
   "battle.settle.retry": "\uACB0\uACFC \uB2E4\uC2DC \uD655\uC778",
   "battle.settle.recoverLobby": "\uB85C\uBE44\uB85C \uB3CC\uC544\uAC00\uAE30",
   "battle.settle.done": "\uC6D0\uC815 \uAD00\uCE21 \uC644\uB8CC",
-  "battle.settle.reward": "\uD68D\uB4DD \uBCF4\uC0C1",
-  "battle.settle.noReward": "\uD68D\uB4DD\uD55C \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
   "battle.settle.score": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218",
   "battle.settle.detail": "\uC0C1\uC138",
   "battle.settle.toLobby": "\uB85C\uBE44\uB85C",
@@ -932,8 +930,6 @@ var BATTLE_KO = {
   "battle.gauge.ferocity": "\uC57C\uC131 {value} / {max}",
   "battle.result.saveFailed": "\uACB0\uACFC\uB97C \uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4",
   "battle.result.retry": "\uB2E4\uC2DC \uC2DC\uB3C4",
-  "battle.result.nodeScore": "\uC6D0\uC815 \uC810\uC218 +{score}",
-  "battle.result.runScore": "\uC774\uBC88 \uC6D0\uC815 \uC810\uC218 {score} \xB7 \uC8FC\uAC04 \uAE30\uB85D \uBC18\uC601",
   "battle.pause.continue": "\uC774\uC5B4\uC11C",
   "battle.pause.toTitle": "\uD0C0\uC774\uD2C0\uB85C",
   "battle.pause.toTitleConfirm": "\uD0C0\uC774\uD2C0\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uC774 \uC804\uD22C\uB294 \uCC98\uC74C\uBD80\uD130 \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4.",
@@ -1326,8 +1322,20 @@ var GUILD_KO = {
   "guild.war.placed": "\uBC30\uCE58 {count}/{total}",
   "guild.war.slot.title": "{branch} \xB7 {kind}",
   "guild.war.slot.power": "\uBC29\uC5B4 \uC804\uD22C\uB825 {power}",
-  "guild.war.slot.replace": "\uB2E4\uC2DC \uD3B8\uC131",
   "guild.war.slot.clear": "\uBE44\uC6B0\uAE30",
+  "guild.error.SLOT_FULL": "\uBC29\uC5B4\uC9C4 \uCE78\uC774 \uBAA8\uB450 \uCC3C\uC2B5\uB2C8\uB2E4",
+  "guild.war.branchTab": "{n}\uC9C0\uBD80 {count}/{total}",
+  "guild.war.deck.edit": "\uBC29\uC5B4\uB371 \uC218\uC815",
+  "guild.war.party.deckTitle": "\uAE38\uB4DC\uC804 \uBC29\uC5B4\uB371",
+  "guild.war.autoPlacedToast": "\uACB0\uD22C\uC7A5 \uBC29\uC5B4\uB371\uC73C\uB85C \uAE38\uB4DC\uC804\uC5D0 \uBC30\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+  "guild.war.edit.open": "\uD3B8\uC9D1",
+  "guild.war.edit.done": "\uC644\uB8CC",
+  "guild.war.edit.auto": "\uC790\uB3D9 \uBC30\uCE58",
+  "guild.war.edit.autoConfirm": "\uBC29\uC5B4\uB371\uC744 \uC138\uC6B4 \uAE38\uB4DC\uC6D0 \uBAA8\uB450\uB97C \uBC29\uC5B4 \uC804\uD22C\uB825 \uC21C\uC73C\uB85C \uB2E4\uC2DC \uC138\uC6C1\uB2C8\uB2E4. \uAC15\uD55C \uC21C\uC11C\uB300\uB85C \uC6B0\uB450\uBA38\uB9AC \u2192 \uC815\uC608 \u2192 \uC77C\uBC18 \uCE78\uC5D0 \uC12D\uB2C8\uB2E4.",
+  "guild.war.edit.pickSource": "\uC62E\uAE38 \uAE38\uB4DC\uC6D0\uC758 \uCE78\uC744 \uB204\uB974\uC138\uC694",
+  "guild.war.edit.pickTarget": "\uC62E\uACA8 \uAC08 \uCE78\uC744 \uB204\uB974\uC138\uC694 \xB7 \uB204\uAC00 \uC788\uC73C\uBA74 \uC11C\uB85C \uBC14\uB01D\uB2C8\uB2E4",
+  "guild.war.edit.useEdit": "\uCE78\uC744 \uC62E\uAE30\uB824\uBA74 \uD3B8\uC9D1\uC744 \uB204\uB974\uC138\uC694",
+  "guild.war.edit.officerOnly": "\uCE78 \uBC30\uCE58\uB294 \uAE38\uB4DC\uC7A5\xB7\uAC04\uBD80\uAC00 \uC815\uD569\uB2C8\uB2E4",
   "guild.war.party.title": "\uBC29\uC5B4\uC9C4 \uBC30\uCE58 \xB7 {slot}",
   "guild.war.party.save": "\uBC30\uCE58\uD558\uAE30",
   "guild.war.placedToast": "\uBC29\uC5B4\uB371\uC744 \uBC30\uCE58\uD588\uC2B5\uB2C8\uB2E4",
@@ -1835,7 +1843,8 @@ var MISC_KO = {
   // 전투 기여도
   "contribution.title": "\uC804\uD22C \uAE30\uC5EC\uB3C4",
   "contribution.totals": "\uCD5C\uC885 \uD53C\uD574 {confirmed} \xB7 \uC804\uD22C \uC911 \uD45C\uC2DC {replay}",
-  "contribution.allies": "\uC544\uAD70 \uAE30\uC5EC\uB3C4",
+  "contribution.side.ally": "\uC544\uAD70",
+  "contribution.side.enemy": "\uC801",
   // 원정 증강 선택
   "augment.pick.title": "\uC99D\uAC15 \uC120\uD0DD {round} / {total}",
   "augment.pick.targetNote": "\uAC1C\uC778 \uC99D\uAC15\uC740 \uC544\uB798 \uC6D0\uC815\uB300\uC5D0\uC11C \uB300\uC0C1\uC744 \uACE0\uB985\uB2C8\uB2E4",
@@ -2068,7 +2077,7 @@ var MISC_KO = {
   "profile.storyClears.locked": "\uBBF8\uAC1C\uBC29",
   "profile.noRecord": "\uAE30\uB85D \uC5C6\uC74C",
   // 스테이지 결과
-  "stageComplete.contribution": "\uACF5\uACA9 \xB7 \uBC29\uC5B4 \xB7 \uD68C\uBCF5",
+  "stageComplete.contribution": "\uAE30\uC5EC\uB3C4 \uC9D1\uACC4",
   "stageComplete.tapToConfirm": "\uD654\uBA74\uC744 \uB20C\uB7EC \uD655\uC778",
   "stageComplete.firstClear": "\uCD08\uD68C \uD074\uB9AC\uC5B4 \uBCF4\uC0C1",
   "stageComplete.staminaRefunded": "\uC2A4\uD14C\uBBF8\uB098\uAC00 \uBC18\uD658\uB418\uC5C8\uC2B5\uB2C8\uB2E4 (+{amount})",
@@ -2392,7 +2401,7 @@ var SKILL_KO = {
   "skill.passive.frenzyDrain": "[[frenzy|\uAD11\uB780]]\uC5D0 \uAC78\uB9B0 \uC801\uC774 \uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uD68C\uBCF5\uD55C\uB2E4.",
   "skill.passive.impactCap": "\uD55C \uBC88\uC5D0 \uBC1B\uB294 \uD53C\uD574\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4.{shield}",
   "skill.passive.impactCap.shield": " [[concussion|\uB1CC\uC9C4\uD0D5]]\uC774 \uC785\uD78C \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uC5BB\uB294\uB2E4.",
-  "skill.passive.impactCap.shieldCap": " \uD55C \uBC88\uC5D0 \uB450\uB974\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4.",
+  "skill.passive.impactCap.shieldCap": " \uB450\uB974\uACE0 \uC788\uB294 [[shield|\uBCF4\uD638\uB9C9]]\uC758 \uCD1D\uB7C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 {percent}%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4.",
   "skill.passive.overpaintSiphon": "\uBAA8\uB4E0 \uC544\uAD70\uC774 [[overpaint|\uB367\uCE60]]\uB41C \uC801\uC744 \uB9DE\uD788\uBA74 \uADF8 \uD53C\uD574\uC758 {percent}%\uB9CC\uD07C \uC790\uC2E0\uC758 \uCCB4\uB825\uC744 \uD68C\uBCF5\uD55C\uB2E4. \uD45C\uC801\uC758 [[overpaint|\uB367\uCE60]]\uC774 \uCD5C\uB300\uB85C \uC313\uC774\uBA74 \uB2E4\uB978 \uC801\uC73C\uB85C \uD45C\uC801\uC744 \uC62E\uAE34\uB2E4.",
   "skill.passive.lowHpVanish": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 \uC808\uBC18 \uC774\uD558\uAC00 \uB418\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD574 \uD45C\uC801\uC5D0\uC11C \uBC97\uC5B4\uB09C\uB2E4.",
   "skill.passive.lowHpStealth": "\uC804\uD22C\uB2F9 \uD55C \uBC88, \uCCB4\uB825\uC774 {percent}% \uC774\uD558\uAC00 \uB418\uBA74 {seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD55C\uB2E4.",
@@ -5950,7 +5959,9 @@ function grantConcussionShield(state, attacker, dealt, events) {
   const percent = passive.concussionShieldPercent ?? 0;
   if (percent <= 0 || dealt <= 0 || !isFighterAlive(attacker)) return;
   const cap = attacker.maxHp * (passive.concussionShieldCapMaxHpPercent ?? 100) / 100;
-  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(Math.min(dealt * percent / 100, cap))), events);
+  const room = cap - attacker.shield.amount;
+  if (room < 1) return;
+  grantShield(state, attacker, attacker.id, Math.max(1, Math.round(Math.min(dealt * percent / 100, room))), events);
 }
 function knockbackSlamOf(attacker) {
   const trait = attacker.def.ferocityTrait;
@@ -14795,10 +14806,10 @@ var RELICS = [
       impactCapMaxHpPercent: 40,
       // 뇌진탕이 깎은 만큼을 안전모가 되받아 두른다. 큰 한 방은 상한이 누르고, 그 사이의
       // 잔타는 이 막이 받는다.
-      concussionShieldPercent: 60,
-      // 평범한 적에게는 걸리지 않는 선이다. 체력이 무한한 불사 보스를 때릴 때만 막을 붙잡는다.
-      concussionShieldCapMaxHpPercent: 35,
-      desc: "\uD55C \uBC29\uC5D0 \uBC1B\uB294 \uD53C\uD574\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 40%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4. \uB1CC\uC9C4\uD0D5\uC774 \uC785\uD78C \uD53C\uD574\uC758 40%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC73C\uBA70, \uD55C \uBC88\uC5D0 \uB450\uB974\uB294 \uBCF4\uD638\uB9C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 25%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4."
+      concussionShieldPercent: 40,
+      // 들고 있는 막의 총량 상한이다. 궁극기·폭주 연쇄가 몫을 거듭 얹어도 최대 체력의 30%에서 멈춘다.
+      concussionShieldCapMaxHpPercent: 30,
+      desc: "\uD55C \uBC29\uC5D0 \uBC1B\uB294 \uD53C\uD574\uAC00 \uCD5C\uB300 \uCCB4\uB825\uC758 40%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4. \uB1CC\uC9C4\uD0D5\uC774 \uC785\uD78C \uD53C\uD574\uC758 40%\uB9CC\uD07C \uBCF4\uD638\uB9C9\uC744 \uC5BB\uC73C\uBA70, \uB450\uB974\uACE0 \uC788\uB294 \uBCF4\uD638\uB9C9\uC758 \uCD1D\uB7C9\uC740 \uCD5C\uB300 \uCCB4\uB825\uC758 30%\uB97C \uB118\uC9C0 \uC54A\uB294\uB2E4."
     },
     basic: {
       id: "pachi-basic",
@@ -33666,6 +33677,7 @@ function parseGuildWarSlotId(id) {
   const max = kind === "boss" ? 1 : kind === "elite" ? 2 : Math.max(...GUILD_WAR_GRUNTS.map((row) => row[branch - 1]));
   return index < max ? { id, branch, kind, index } : null;
 }
+var guildWarSlotOpen = (level, slotId) => guildWarMapSlots(level).some((slot) => slot.id === slotId);
 function normalizeGuildWarDeck(ids) {
   if (!Array.isArray(ids) || ids.length !== GUILD_WAR_DECK_SIZE) throw new RangeError("\uBC29\uC5B4\uB371\uC740 \uC14B\uC785\uB2C8\uB2E4.");
   const deck = ids.map((id) => {
@@ -33674,6 +33686,19 @@ function normalizeGuildWarDeck(ids) {
   });
   if (new Set(deck).size !== deck.length) throw new RangeError("\uAC19\uC740 \uB810\uB9AD\uC744 \uB450 \uBC88 \uC138\uC6B8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
   return deck;
+}
+function guildWarAutoOrder(level) {
+  const slots = guildWarMapSlots(level);
+  const kindRank = { boss: 0, elite: 1, grunt: 2 };
+  return [...slots].sort((a, b) => kindRank[a.kind] - kindRank[b.kind] || a.index - b.index || a.branch - b.branch).map(({ id }) => id);
+}
+function guildWarFirstOpenSlot(level, taken) {
+  return guildWarAutoOrder(level).find((id) => !taken.has(id)) ?? null;
+}
+function guildWarAutoArrange(level, defenders) {
+  const order = guildWarAutoOrder(level);
+  const ranked = [...defenders].sort((a, b) => b.power - a.power || a.userId.localeCompare(b.userId));
+  return new Map(ranked.slice(0, order.length).map(({ userId }, index) => [order[index], userId]));
 }
 
 // src/core/guildWarAttack.ts
@@ -33759,6 +33784,8 @@ var GUILD_API_METHODS = [
   "getRanking",
   "getWarMap",
   "clearWarSlot",
+  "moveWarSlot",
+  "autoArrangeWar",
   "getWarFront"
 ];
 var isGuildApiMethod = (value) => GUILD_API_METHODS.includes(value);
@@ -34398,18 +34425,53 @@ var FakeGuildServer = class _FakeGuildServer {
     this.warOf(guild).delete(slotId);
     return this.warMapOf(guild, me);
   }
+  async moveWarSlot(actor, from, to) {
+    const { guild, me } = this.requireGuild(actor);
+    if (guildWarNow(this.now()).phase !== "prep") fail2("WAR_LOCKED");
+    if (!guildCan(me.role, "formation")) fail2("NO_PERMISSION");
+    const level = this.level(guild);
+    if (from === to || !guildWarSlotOpen(level, from) || !guildWarSlotOpen(level, to)) fail2("SLOT_INVALID");
+    const war = this.warOf(guild);
+    const moving = war.get(from);
+    if (!moving) return fail2("SLOT_INVALID");
+    const other = war.get(to);
+    war.set(to, moving);
+    if (other) war.set(from, other);
+    else war.delete(from);
+    return this.warMapOf(guild, me);
+  }
+  async autoArrangeWar(actor) {
+    const { guild, me } = this.requireGuild(actor);
+    if (guildWarNow(this.now()).phase !== "prep") fail2("WAR_LOCKED");
+    if (!guildCan(me.role, "formation")) fail2("NO_PERMISSION");
+    const war = this.warOf(guild);
+    const rows = new Map([...war.values()].map((row) => [row.userId, row]));
+    const plan = guildWarAutoArrange(this.level(guild), [...rows.values()].map((row) => ({ userId: row.userId, power: row.deck.reduce((sum, entry) => sum + entry.power, 0) })));
+    war.clear();
+    for (const [slotId, userId] of plan) war.set(slotId, rows.get(userId));
+    return this.warMapOf(guild, me);
+  }
   async placeWarDefense(actor, input, requestId) {
     this.once(actor, requestId, () => {
       const { guild, me } = this.requireGuild(actor);
       if (guildWarNow(this.now()).phase !== "prep") fail2("WAR_LOCKED");
-      const slot = parseGuildWarSlotId(input?.slotId);
-      if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail2("SLOT_INVALID");
-      if (!Array.isArray(input.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail2("INVALID_REQUEST");
+      if (!Array.isArray(input?.deck) || input.deck.length !== 3 || new Set(input.deck.map(({ relicId }) => relicId)).size !== 3) fail2("INVALID_REQUEST");
       const war = this.warOf(guild);
-      const current = war.get(slot.id);
-      if (current && current.userId !== me.userId) fail2("SLOT_TAKEN");
+      let slotId;
+      if (input.slotId === null) {
+        const mine = [...war.entries()].find(([, row]) => row.userId === me.userId)?.[0];
+        const open = mine ?? guildWarFirstOpenSlot(this.level(guild), new Set(war.keys()));
+        if (!open) return fail2("SLOT_FULL");
+        slotId = open;
+      } else {
+        const slot = parseGuildWarSlotId(input.slotId);
+        if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail2("SLOT_INVALID");
+        const current = war.get(slot.id);
+        if (current && current.userId !== me.userId) fail2("SLOT_TAKEN");
+        slotId = slot.id;
+      }
       this.dropWarDefense(guild, me.userId);
-      war.set(slot.id, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
+      war.set(slotId, { userId: me.userId, deck: input.deck.map((entry) => ({ ...entry })), lineup: structuredClone(input.lineup), placedAt: this.now() });
       return true;
     });
     return this.getWarMap(actor);
@@ -37573,14 +37635,15 @@ var FakeServer = class {
       throw new GuildApiError("INVALID_REQUEST");
     }
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
-    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const slotId = request.slotId ?? null;
+    if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
     const lineup = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId), this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId])
     }));
     const deck = lineup.map(({ relicId, snapshot }) => ({ relicId, level: snapshot.level, breakthrough: snapshot.breakthrough, power: this.duelRelicPower(relicId) }));
     const requestId = typeof request.requestId === "string" && request.requestId.length > 0 ? `war:${request.requestId}` : this.guildRequestId("war");
-    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId: request.slotId, deck, lineup }, requestId);
+    return this.guildBackend.placeWarDefense(this.guildActor(), { slotId, deck, lineup }, requestId);
   }
   /**
    * 길드전 공격 입장 — 공격덱 셋을 이 순간의 성장·룬으로 굳히고, 길드 백엔드가 칸·국면·남은 공격을 판정해 상대 방어덱을 돌려준다.
@@ -37600,7 +37663,8 @@ var FakeServer = class {
       throw new GuildApiError("INVALID_REQUEST");
     }
     if (relicIds.some((id) => !this.state.owned.has(id))) throw new GuildApiError("INVALID_REQUEST");
-    if (!parseGuildWarSlotId(request.slotId)) throw new GuildApiError("SLOT_INVALID");
+    const slotId = request.slotId ?? null;
+    if (slotId !== null && !parseGuildWarSlotId(slotId)) throw new GuildApiError("SLOT_INVALID");
     const attack = relicIds.map((relicId) => ({
       relicId,
       snapshot: captureExpeditionRelicSnapshot(RELICS.find(({ id }) => id === relicId), this.state.relicProgress[relicId] ?? createInitialRelicProgress(), this.state.runeInventory, this.state.equippedRelicSkinIds[relicId])
@@ -41317,9 +41381,11 @@ function createSupabaseGuildBackend(call) {
     getWarMap: (actor) => run2(actor, "getWarMap"),
     clearWarSlot: (actor, slotId) => parseGuildWarSlotId(slotId) ? run2(actor, "clearWarSlot", [slotId]) : invalid(),
     placeWarDefense: (actor, input, requestId) => {
-      if (!parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
+      if (input?.slotId !== null && !parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run2(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
     },
+    moveWarSlot: (actor, from, to) => parseGuildWarSlotId(from) && parseGuildWarSlotId(to) && from !== to ? run2(actor, "moveWarSlot", [from, to]) : invalid(),
+    autoArrangeWar: (actor) => run2(actor, "autoArrangeWar"),
     getWarFront: (actor) => run2(actor, "getWarFront"),
     beginWarAttack: (actor, slotId, requestId) => parseGuildWarSlotId(slotId) ? run2(actor, "beginWarAttack", [slotId], requestId) : invalid(),
     recordWarAttack: (actor, record2, requestId) => {

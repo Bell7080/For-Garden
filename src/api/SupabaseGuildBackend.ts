@@ -64,10 +64,12 @@ export function createSupabaseGuildBackend(call: GuildCaller): GuildBackend {
     clearWarSlot: (actor, slotId) => (parseGuildWarSlotId(slotId) ? run(actor, "clearWarSlot", [slotId]) : invalid()),
     placeWarDefense: (actor, input, requestId) => {
       // 덱과 스냅샷은 게임 서버가 보유·성장을 확인해 만든 값이다. DB는 칸·국면·중복만 판정한다.
-      if (!parseGuildWarSlotId(input?.slotId) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE
+      if ((input?.slotId !== null && !parseGuildWarSlotId(input?.slotId)) || !Array.isArray(input.deck) || input.deck.length !== GUILD_WAR_DECK_SIZE
         || !Array.isArray(input.lineup) || input.lineup.length !== GUILD_WAR_DECK_SIZE) invalid();
       return run(actor, "placeWarDefense", [{ slotId: input.slotId, deck: input.deck, lineup: input.lineup }], requestId);
     },
+    moveWarSlot: (actor, from, to) => (parseGuildWarSlotId(from) && parseGuildWarSlotId(to) && from !== to ? run(actor, "moveWarSlot", [from, to]) : invalid()),
+    autoArrangeWar: (actor) => run(actor, "autoArrangeWar"),
     getWarFront: (actor) => run(actor, "getWarFront"),
     beginWarAttack: (actor, slotId, requestId) => (parseGuildWarSlotId(slotId) ? run(actor, "beginWarAttack", [slotId], requestId) : invalid()),
     recordWarAttack: (actor, record, requestId) => {

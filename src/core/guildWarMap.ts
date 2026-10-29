@@ -50,3 +50,30 @@ export function normalizeGuildWarDeck(ids: readonly unknown[]): string[] {
   if (new Set(deck).size !== deck.length) throw new RangeError("같은 렐릭을 두 번 세울 수 없습니다.");
   return deck;
 }
+
+/**
+ * 자동 배치의 칸 순서 — 무거운 자리부터다. 우두머리 셋(지부 순) → 정예 여섯(지부를 돌아가며) → 일반 칸(지부를 돌아가며)이라,
+ * 전투력 순으로 세우면 가장 센 셋이 각 지부의 우두머리가 되고 남는 힘이 지부 셋에 고르게 퍼진다.
+ */
+export function guildWarAutoOrder(level: number): string[] {
+  const slots = guildWarMapSlots(level);
+  const kindRank = { boss: 0, elite: 1, grunt: 2 } as const;
+  return [...slots]
+    .sort((a, b) => kindRank[a.kind] - kindRank[b.kind] || a.index - b.index || a.branch - b.branch)
+    .map(({ id }) => id);
+}
+
+/** 아직 아무도 서지 않은 칸 중 자동 배치 순서로 가장 앞 칸. 다 찼으면 null이다. */
+export function guildWarFirstOpenSlot(level: number, taken: ReadonlySet<string>): string | null {
+  return guildWarAutoOrder(level).find((id) => !taken.has(id)) ?? null;
+}
+
+/**
+ * 방어덱을 세운 길드원 전부를 전투력 순으로 다시 세운다(`slotId → userId`). 같은 전투력은 userId 순이라 다시 불러도 같다.
+ * 칸보다 사람이 많으면 남는 사람은 빠진다 — 칸은 레벨이 정한다.
+ */
+export function guildWarAutoArrange(level: number, defenders: readonly { userId: string; power: number }[]): Map<string, string> {
+  const order = guildWarAutoOrder(level);
+  const ranked = [...defenders].sort((a, b) => b.power - a.power || a.userId.localeCompare(b.userId));
+  return new Map(ranked.slice(0, order.length).map(({ userId }, index) => [order[index], userId]));
+}

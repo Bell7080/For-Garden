@@ -133,8 +133,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // v0.308.6: 정예 체력 ×4 → ×3, 코마 체력·방어 재분배와 폭주 문턱 320, 개체별 야성 게이지 — SSR 없이는 못 깨던 1-10(42.0초)이 13.7초로 내려왔다. 띠(18~32초) 아래라 재측정이 필요하다.
   ["스토리 1-10 정예", 15, () => getStageEnemies(battleStage("1-10")), "elite", "stage", 13.7, 0.58],
   // 3-9는 회수조(아트라·펄시·네우리)로 바뀌었다 — 참조 파티가 거의 다치지 않아 잔여 체력이 띠 위로 올라갔다.
-  // v0.391.0: 3장 배율 ×1.2로 20.8초·0.97 → 25.2초·0.85.
-  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 25.2, 0.85],
+  // v0.391.0: 3장 배율 ×1.2로 20.8초·0.97 → 25.2초·0.85. v0.391.9: ×1.1로 22.6초·0.91.
+  ["스토리 3-9", 44, () => getStageEnemies(battleStage("3-9")), "normal", "stage", 22.6, 0.91],
   ["현상수배 1단계", 5, () => [bountyRoundEnemy(BOUNTY_TIERS[0].rounds[0])], "normal", "bounty", 5.6, 0.83],
   // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.
   ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds[0])], "normal", "bounty", 18.5, 0.98],

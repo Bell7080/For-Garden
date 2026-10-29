@@ -18,7 +18,7 @@ describe("문의 창 자리", () => {
 
   it("종류 칩 네 개가 좌우 여백 안에 든다", () => {
     const half = supportContentWidth() / 2;
-    for (let i = 0; i < 4; i += 1) expect(Math.abs(chipX(i, 4)) + SUPPORT_POPUP.chips.width / 2).toBeLessThanOrEqual(half);
+    for (let i = 0; i < 5; i += 1) expect(Math.abs(chipX(i, 5)) + SUPPORT_POPUP.chips.width / 2).toBeLessThanOrEqual(half);
   });
 });
 

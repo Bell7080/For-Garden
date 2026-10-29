@@ -8,7 +8,7 @@ export const SUPPORT_POPUP = {
   margin: 40,
   tabs: { y: 150, width: 300, height: 76, gap: 18 },
   /** 종류 칩 한 줄. */
-  chips: { y: 262, width: 196, height: 70, gap: 14 },
+  chips: { y: 262, width: 156, height: 70, gap: 10 },
   subject: { labelY: 340, fieldY: 420, height: 92 },
   body: { labelY: 500, fieldY: 560, height: 520 },
   counterY: 842,

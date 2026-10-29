@@ -6,6 +6,7 @@ export const SUPPORT_ZH_HANS = {
   "support.category.inquiry": "咨询",
   "support.category.bug": "错误",
   "support.category.report": "举报",
+  "support.category.privacy": "个人信息",
   "support.category.other": "其他",
   "support.field.subject": "标题",
   "support.field.body": "内容",

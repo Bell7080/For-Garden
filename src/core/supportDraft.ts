@@ -13,7 +13,7 @@ export const TICKET_MESSAGE_CLIP = 420;
 /** 상세에 보이는 최근 메시지 수. */
 export const TICKET_MESSAGE_VISIBLE = 5;
 
-export const TICKET_CATEGORIES = ["inquiry", "bug", "report", "other"] as const;
+export const TICKET_CATEGORIES = ["inquiry", "bug", "report", "privacy", "other"] as const;
 export type TicketCategoryId = (typeof TICKET_CATEGORIES)[number];
 
 export type TicketDraftProblem = "subject-empty" | "body-empty";

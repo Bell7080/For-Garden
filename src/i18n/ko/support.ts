@@ -6,6 +6,7 @@ export const SUPPORT_KO = {
   "support.category.inquiry": "문의",
   "support.category.bug": "오류",
   "support.category.report": "신고",
+  "support.category.privacy": "개인정보",
   "support.category.other": "기타",
   "support.field.subject": "제목",
   "support.field.body": "내용",

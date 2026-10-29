@@ -95,11 +95,25 @@ describe("SupabaseAccountApi", () => {
     expect(await api.uploadRemoteSave({}, null)).toMatchObject({ ok: false, code: "save-conflict" });
   });
 
-  it("소셜 로그인·탈퇴·게스트 병합은 아직 지원하지 않는다", async () => {
+  it("소셜 로그인·게스트 병합은 아직 지원하지 않는다", async () => {
     const { api } = setup(() => json(session(1, 2_000_000)));
     expect(await api.login({ provider: "google", mergeGuestProgress: false })).toMatchObject({ ok: false, code: "unsupported" });
-    expect(await api.requestWithdrawal()).toMatchObject({ ok: false, code: "unsupported" });
     expect(await api.mergeGuestSave({ requestId: "r", guestData: {}, expectedRemote: null })).toMatchObject({ ok: false, code: "guest-merge-unavailable" });
+  });
+
+  it("탈퇴는 삭제 요청 함수를 부른 뒤 이 기기의 로그인을 푼다", async () => {
+    const { api, store, calls } = setup((path) => path.includes("/rpc/request_account_deletion") ? json({ ok: true, purge_after: "2026-11-05T00:00:00Z" }) : json(session(1, 2_000_000)));
+    expect((await api.getState()).ok).toBe(true);
+    expect(await api.requestWithdrawal()).toEqual({ ok: true, value: undefined });
+    expect(calls.some((c) => c.path.endsWith("/rest/v1/rpc/request_account_deletion"))).toBe(true);
+    expect(store.value).toBeNull();
+  });
+
+  it("탈퇴 요청을 서버가 거절하면 로그인을 풀지 않는다", async () => {
+    const { api, store } = setup((path) => path.includes("/rpc/request_account_deletion") ? json({ ok: false }) : json(session(1, 2_000_000)));
+    await api.getState();
+    expect(await api.requestWithdrawal()).toMatchObject({ ok: false });
+    expect(store.value).not.toBeNull();
   });
 
   it.each([429, 503])("일시적 refresh 실패(%s)는 기존 게스트 토큰을 지우지 않는다", async (status) => {

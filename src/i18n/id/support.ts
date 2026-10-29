@@ -6,6 +6,7 @@ export const SUPPORT_ID = {
   "support.category.inquiry": "Pertanyaan",
   "support.category.bug": "Bug",
   "support.category.report": "Laporan",
+  "support.category.privacy": "Data pribadi",
   "support.category.other": "Lainnya",
   "support.field.subject": "Judul",
   "support.field.body": "Pesan",

@@ -6,6 +6,7 @@ export const SUPPORT_JA = {
   "support.category.inquiry": "質問",
   "support.category.bug": "不具合",
   "support.category.report": "通報",
+  "support.category.privacy": "個人情報",
   "support.category.other": "その他",
   "support.field.subject": "件名",
   "support.field.body": "内容",

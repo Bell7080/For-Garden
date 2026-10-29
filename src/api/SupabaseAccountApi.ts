@@ -7,7 +7,7 @@ import type { OAuthBridge } from "./webOAuth";
  * 토큰은 이 파일 밖으로 나가지 않는다 — `Session`·`SaveData`·`localStorage`에 두지 않고, 주입받은
  * 보안 저장소(`TokenStore`: 네이티브 보안 저장소 또는 HttpOnly 서버 세션 어댑터)에만 맡긴다.
  * 보안 저장소가 없는 빌드는 이 클래스를 만들지 않고 `UnsupportedAccountApi`에 머문다(성공을 흉내 내지 않는다).
- * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 PKCE 소셜 로그인·동일 UID 다중 연동을 지원한다. 탈퇴는 `unsupported`다.
+ * 게스트(익명) 계정, 아이디·비밀번호 계정(메일 인증 없음), 저장 동기화를 지원하고 PKCE 소셜 로그인·동일 UID 다중 연동을 지원한다. 탈퇴는 `request_account_deletion`(유예 뒤 삭제)이고, 유예 중 다시 로그인하면 타이틀이 `cancel_account_deletion`으로 철회한다.
  * 아이디 계정은 게스트를 **같은 유저 그대로 승격**한다(`/api/account`) — 유저 ID가 같아 서버 진행이 그대로 따라온다.
  * 이메일이 바뀌어도 아이디 별칭은 같은 UID를 가리킨다.
  */
@@ -200,7 +200,14 @@ export class SupabaseAccountApi implements AccountApi {
       return await this.adopt(result.value, generation);
     } catch { return fail("network-error", t("error.account.network")); }
   }
-  async requestWithdrawal(): Promise<AccountResult<void>> { return this.unsupported(); }
+  /** 삭제를 요청하고 이 기기의 로그인을 푼다. 유예가 지나면 서버가 계정을 지우고, 유예 중 다시 로그인하면 타이틀이 철회한다(`cancelDeletionOnLogin`). */
+  async requestWithdrawal(): Promise<AccountResult<void>> {
+    const r = await this.rpc("request_account_deletion", {});
+    if (!r.ok) return r;
+    if ((r.value as { ok?: boolean } | null)?.ok !== true) return fail("network-error", t("error.account.withdrawFailed"));
+    const out = await this.logout();
+    return out.ok ? { ok: true, value: undefined } : out;
+  }
   async mergeGuestSave(_request: GuestSaveMergeRequest): Promise<AccountResult<RemoteSaveDocument>> { return fail("guest-merge-unavailable", t("error.account.mergeUnavailable")); }
 
   async logout(): Promise<AccountResult<AccountState>> {

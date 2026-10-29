@@ -14,6 +14,9 @@ function fixture() {
     Phaser: { Scene: class {} }, Button, t: (key: string) => key,
     TITLE_LOGIN_LAYOUT: { width: 100, height: 40 }, titleLoginSlots: () => [1, 2, 3, 4, 5],
     openAccountIdPopup: id, openAccountEmailPopup: email, accountApi: { login, getState },
+    legalConsentCurrent: () => true, legalConsentKey: () => "k", openLegalConsentPopup: vi.fn(),
+    settingsManager: { get: () => ({ game: { legalConsent: "k" } }), rememberLegalConsent: vi.fn() },
+    legalConsentApi: () => ({ record: async () => ({ ok: true }) }), cancelDeletionOnLogin: async () => undefined, reportCatch: () => () => undefined,
     backendAccount: backend, checkStartupGate: startup, reconcileLaunchEpoch: reconcile, packageInfo: { version: "test" },
   });
   const scene = Object.assign(Object.create(Title.prototype), {

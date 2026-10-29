@@ -73,6 +73,12 @@ export class SettingsManager extends EventTarget {
     this.update({ game: { ancientResetSeen: day } });
   }
 
+  /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */
+  rememberLegalConsent(key: string): void {
+    if (this.get().game.legalConsent === key) return;
+    this.update({ game: { legalConsent: key } });
+  }
+
   update(patch: SettingsPatch): GameSettings {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...(patch[key as keyof GameSettings] ?? {}) }])) as unknown as GameSettings;
     this.state.settings = normalizeSettings(merged);

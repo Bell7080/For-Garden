@@ -59,6 +59,16 @@
     "Meldung",
     "Жалоба"
   ],
+  "support.category.privacy": [
+    "个人信息",
+    "ข้อมูลส่วนบุคคล",
+    "Dữ liệu cá nhân",
+    "Data pribadi",
+    "Privacidad",
+    "Privacidade",
+    "Datenschutz",
+    "Личные данные"
+  ],
   "support.category.other": [
     "其他",
     "อื่น ๆ",

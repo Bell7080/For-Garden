@@ -6,6 +6,7 @@ export const SUPPORT_PT_BR = {
   "support.category.inquiry": "Dúvida",
   "support.category.bug": "Erro",
   "support.category.report": "Denúncia",
+  "support.category.privacy": "Privacidade",
   "support.category.other": "Outro",
   "support.field.subject": "Assunto",
   "support.field.body": "Mensagem",

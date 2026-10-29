@@ -6,6 +6,7 @@ export const SUPPORT_ES = {
   "support.category.inquiry": "Consulta",
   "support.category.bug": "Error",
   "support.category.report": "Denuncia",
+  "support.category.privacy": "Privacidad",
   "support.category.other": "Otro",
   "support.field.subject": "Asunto",
   "support.field.body": "Mensaje",

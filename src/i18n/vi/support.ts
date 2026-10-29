@@ -6,6 +6,7 @@ export const SUPPORT_VI = {
   "support.category.inquiry": "Thắc mắc",
   "support.category.bug": "Lỗi",
   "support.category.report": "Báo cáo",
+  "support.category.privacy": "Dữ liệu cá nhân",
   "support.category.other": "Khác",
   "support.field.subject": "Tiêu đề",
   "support.field.body": "Nội dung",

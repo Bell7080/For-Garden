@@ -6,6 +6,7 @@ export const SUPPORT_ZH_HANT = {
   "support.category.inquiry": "諮詢",
   "support.category.bug": "錯誤",
   "support.category.report": "舉報",
+  "support.category.privacy": "個人資訊",
   "support.category.other": "其他",
   "support.field.subject": "標題",
   "support.field.body": "內容",

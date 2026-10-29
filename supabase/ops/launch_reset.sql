@@ -48,6 +48,8 @@ declare
     'public.support_messages',
     'public.support_limits',
     'public.client_errors',
+    'public.legal_consents',
+    'public.account_deletion_requests',
     'public.server_public_profiles',
     'public.server_friend_edges',
     'public.arena_signals', 'public.arena_ratings', 'public.arena_rooms', 'public.arena_seats', 'public.arena_queue', 'public.arena_receipts',

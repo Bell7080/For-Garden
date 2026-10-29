@@ -4,7 +4,7 @@
  */
 import type { AccountResult } from "./AccountApi";
 
-export type TicketCategory = "inquiry" | "bug" | "report" | "other";
+export type TicketCategory = "inquiry" | "bug" | "report" | "privacy" | "other";
 export type TicketStatus = "open" | "in_progress" | "answered" | "closed";
 export type SupportError = "unsupported" | "network" | "no_player" | "invalid_category" | "invalid_text" | "rate_limited" | "not_found" | "ticket_closed";
 

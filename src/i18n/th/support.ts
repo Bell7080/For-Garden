@@ -6,6 +6,7 @@ export const SUPPORT_TH = {
   "support.category.inquiry": "สอบถาม",
   "support.category.bug": "ข้อผิดพลาด",
   "support.category.report": "รายงาน",
+  "support.category.privacy": "ข้อมูลส่วนบุคคล",
   "support.category.other": "อื่น ๆ",
   "support.field.subject": "หัวข้อ",
   "support.field.body": "เนื้อหา",

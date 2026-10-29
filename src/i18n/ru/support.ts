@@ -6,6 +6,7 @@ export const SUPPORT_RU = {
   "support.category.inquiry": "Вопрос",
   "support.category.bug": "Ошибка",
   "support.category.report": "Жалоба",
+  "support.category.privacy": "Личные данные",
   "support.category.other": "Другое",
   "support.field.subject": "Тема",
   "support.field.body": "Сообщение",

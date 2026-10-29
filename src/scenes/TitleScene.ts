@@ -46,7 +46,10 @@ import { startLiveOps } from "../managers/liveOps";
 import { TitleActionRow } from "../ui/TitleActionRow";
 import { TITLE_LOADING_LAYOUT, TITLE_LOGIN_LAYOUT, titleLoginSlots } from "../ui/titleActionLayout";
 import { audioManager } from "../managers/AudioManager";
-import { reportError } from "../managers/ErrorReporter";
+import { reportCatch, reportError } from "../managers/ErrorReporter";
+import { legalConsentCurrent, legalConsentKey } from "../core/legalConsent";
+import { cancelDeletionOnLogin, legalConsentApi } from "../managers/LegalConsentManager";
+import { openLegalConsentPopup } from "../ui/LegalConsentPopup";
 
 /** 타이틀 로고타입(글자 대신 쓰는 그림)의 텍스처 키다. 원본은 1536×1024 비율이다. */
 const TITLE_LOGOTYPE_KEY = "title-logotype";
@@ -595,7 +598,19 @@ export class TitleScene extends Phaser.Scene {
       this.authAttempt = attempt;
       return () => { if (this.authAttempt === attempt) this.authAttempt = undefined; };
     };
-    const done = () => { if (current()) authenticated(); };
+    // 첫 로그인 앞에는 약관·처리방침 동의를 받는다. 이 판에 이미 동의한 기기는 곧장 지나간다.
+    const gated = (action: () => void) => (): void => {
+      if (legalConsentCurrent(settingsManager.get().game.legalConsent)) { action(); return; }
+      if (!this.popups) return;
+      openLegalConsentPopup(this, this.popups, () => { settingsManager.rememberLegalConsent(legalConsentKey()); action(); });
+    };
+    const done = () => {
+      if (!current()) return;
+      // 서버 기록은 기다리지 않는다 — 실패해도 기기 기록이 남아 있고 다음 로그인에서 다시 시도한다.
+      void legalConsentApi().record().catch(reportCatch("title.legalConsent"));
+      void cancelDeletionOnLogin().catch(reportCatch("title.cancelDeletion"));
+      authenticated();
+    };
     const social = (provider: "google" | "apple"): void => {
       const release = acquire();
       if (!release) return;
@@ -631,7 +646,7 @@ export class TitleScene extends Phaser.Scene {
         label: t(entry.labelKey),
         fontSize: 34,
         variant: entry.primary ? "primary" : "default",
-        onClick: entry.onClick,
+        onClick: gated(entry.onClick),
       });
       this.loginButtons.push(button);
       if (fade) {

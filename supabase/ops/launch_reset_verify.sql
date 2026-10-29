@@ -6,7 +6,7 @@ with
   reset_tables(t) as (values
     ('public.player_saves'), ('public.player_assets'), ('public.player_adjustments'), ('public.asset_ledger'), ('public.currency_log'), ('public.mail_claims'),
     ('public.coupon_redemptions'), ('public.coupon_attempts'), ('public.coupon_web_tickets'), ('public.request_receipts'),
-    ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'), ('public.client_errors'),
+    ('public.support_tickets'), ('public.support_messages'), ('public.support_limits'), ('public.client_errors'), ('public.legal_consents'), ('public.account_deletion_requests'),
     ('public.server_public_profiles'), ('public.server_friend_edges'), ('public.arena_signals'), ('public.arena_ratings'), ('public.arena_rooms'), ('public.arena_seats'), ('public.arena_queue'), ('public.arena_receipts'), ('public.server_friend_favorites'),
     ('public.server_social_wallets'), ('public.server_rate_windows'), ('public.server_social_receipts'),
     ('public.server_competitive_scores'), ('public.server_competitive_results'), ('public.server_competitive_awards'),

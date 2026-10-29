@@ -158,14 +158,16 @@
 "Depois de chegar a 100%, o [[atk|Ataque]] e o [[ap|Poder mágico]] continuam subindo {percent}% a cada segundo.",
 "Nach Erreichen von 100% steigen [[atk|Angriff]] und [[ap|Zauberkraft]] weiter um {percent}% pro Sekunde.",
 "После достижения 100% [[atk|Атака]] и [[ap|Сила магии]] продолжают расти на {percent}% в секунду."
-]]另从一开始每秒复合增长{percent}%。",
-"[[ap|พลังเวท]]ทบต้นเพิ่มขึ้นอีก {percent}% ทุกวินาทีตั้งแต่เริ่ม",
-"[[ap|Phép]] còn tăng dồn thêm {percent}% mỗi giây ngay từ đầu.",
-"[[ap|Kekuatan Magis]] juga bertambah majemuk {percent}% setiap detik sejak awal.",
-"Además, el [[ap|Poder mágico]] crece un {percent}% compuesto cada segundo desde el inicio.",
-"Além disso, o [[ap|Poder mágico]] cresce {percent}% composto a cada segundo desde o início.",
-"Außerdem wächst die [[ap|Zauberkraft]] von Anfang an jede Sekunde um {percent}% (Zinseszins).",
-"Кроме того, [[ap|Сила магии]] с самого начала растёт на {percent}% в секунду по сложному проценту."
+],
+"info.enemy.role.controlImmunity": [
+"应用韧性后，剩余时间不超过{seconds}秒的[[crowd-control|控制]]无效。",
+"[[crowd-control|การควบคุม]] ที่เหลือไม่เกิน {seconds} วินาทีหลังใช้ความทรหดจะไม่มีผล",
+"Bỏ qua [[crowd-control|Khống chế]] còn {seconds} giây trở xuống sau Kiên cường.",
+"[[crowd-control|Kontrol]] berdurasi {seconds} detik atau kurang setelah Kegigihan diabaikan.",
+"Se ignora el [[crowd-control|Control]] de {seconds} s o menos tras aplicar Tenacidad.",
+"[[crowd-control|Controle]] de {seconds}s ou menos após Tenacidade é ignorado.",
+"[[crowd-control|Kontrolle]] mit höchstens {seconds} s Dauer nach Zähigkeit wird ignoriert.",
+"[[crowd-control|Контроль]] длительностью не более {seconds} с после Стойкости игнорируется."
 ],
 "info.enemy.role.tenacity": [
 "初始拥有{base}%[[tenacity|韧性]]，每次摆脱[[crowd-control|控制]]时提升{per}%，最多{max}%。",

@@ -22,8 +22,6 @@ export const BATTLE_DE = {
   "battle.settle.retry": "Ergebnis erneut prüfen",
   "battle.settle.recoverLobby": "Zur Lobby",
   "battle.settle.done": "Expedition-Beobachtung abgeschlossen",
-  "battle.settle.reward": "Erhaltene Belohnungen",
-  "battle.settle.noReward": "Keine Belohnungen erhalten",
   "battle.settle.score": "Punkte dieser Expedition",
   "battle.settle.detail": "Details",
   "battle.settle.toLobby": "Zur Lobby",

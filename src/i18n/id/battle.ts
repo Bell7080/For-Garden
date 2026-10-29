@@ -22,8 +22,6 @@ export const BATTLE_ID = {
   "battle.settle.retry": "Periksa hasil lagi",
   "battle.settle.recoverLobby": "Kembali ke lobi",
   "battle.settle.done": "Observasi Ekspedisi Selesai",
-  "battle.settle.reward": "Hadiah diperoleh",
-  "battle.settle.noReward": "Tidak ada hadiah",
   "battle.settle.score": "Skor Ekspedisi Ini",
   "battle.settle.detail": "Detail",
   "battle.settle.toLobby": "Ke Lobi",

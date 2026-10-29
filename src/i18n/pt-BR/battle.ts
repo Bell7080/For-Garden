@@ -22,8 +22,6 @@ export const BATTLE_PT_BR = {
   "battle.settle.retry": "Verificar resultado",
   "battle.settle.recoverLobby": "Voltar ao saguão",
   "battle.settle.done": "Observação da Expedição concluída",
-  "battle.settle.reward": "Recompensas obtidas",
-  "battle.settle.noReward": "Sem recompensas",
   "battle.settle.score": "Pontuação desta Expedição",
   "battle.settle.detail": "Detalhes",
   "battle.settle.toLobby": "Ao saguão",

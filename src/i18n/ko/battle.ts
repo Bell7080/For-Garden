@@ -23,8 +23,6 @@ export const BATTLE_KO = {
   "battle.settle.retry": "결과 다시 확인",
   "battle.settle.recoverLobby": "로비로 돌아가기",
   "battle.settle.done": "원정 관측 완료",
-  "battle.settle.reward": "획득 보상",
-  "battle.settle.noReward": "획득한 보상이 없습니다",
   "battle.settle.score": "이번 원정 점수",
   "battle.settle.detail": "상세",
   "battle.settle.toLobby": "로비로",

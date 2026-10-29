@@ -22,8 +22,6 @@ export const BATTLE_ZH_HANT = {
   "battle.settle.retry": "重新確認結果",
   "battle.settle.recoverLobby": "返回大廳",
   "battle.settle.done": "遠征觀察結束",
-  "battle.settle.reward": "獲得獎勵",
-  "battle.settle.noReward": "未獲得獎勵",
   "battle.settle.score": "本次遠征分數",
   "battle.settle.detail": "詳情",
   "battle.settle.toLobby": "返回大廳",

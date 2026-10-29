@@ -72,7 +72,7 @@ import { isStageUnlocked, session } from "../state/session";
 import { addSceneBackground, battleFieldBackground } from "../ui/backgrounds";
 import { battlefieldWashBands, statusAreaColor } from "../ui/groundAreas";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
-import { chipPoints, drawGlassFade, drawHairline, drawLayer, HoloBar, HOLO } from "../ui/holo";
+import { drawGlassFade, drawHairline, HoloBar } from "../ui/holo";
 import { PortraitCard } from "../ui/PortraitCard";
 import { UnitHealthBar } from "../ui/UnitHealthBar";
 import { skillArtTint } from "../ui/skillArt";
@@ -146,18 +146,15 @@ import { attackDamagePopupRequest, DEBUFF_TONE, type DamageFlavor, type DebuffId
 import { openBattleBuffListPopup, openBattleBuffPopup, type BattleBuffListItem, type BattleBuffPopupController } from "../ui/BattleBuffPopup";
 import type { ActiveCombatDisplayEffect } from "../core/combatEffects";
 import { stepBattleScoreMotion } from "../ui/battleScoreMotion";
-import { playRankClimb } from "../ui/rankClimb";
 import { ScoreRankingHud } from "../ui/ScoreRankingHud";
 import { RANKING_VISIBLE_RANKS } from "../ui/expeditionRankingLayout";
 import type { ScoreRankPeer } from "../core/scoreRanking";
 import { stepUltimateCharge } from "../ui/ultimateChargeMotion";
-import { RewardFrame } from "../ui/RewardFrame";
 import { growthPaths, type GrowthPath } from "../core/growthPaths";
 import { contentOpen } from "../ui/contentLock";
 import { ExpeditionRankingPopup } from "../ui/ExpeditionRankingPopup";
 import { ExpeditionScoreDetailPopup } from "../ui/ExpeditionScoreDetailPopup";
-import { BOSS_RESULT_LAYOUT, bossResultUtilityBounds } from "../ui/bossResultLayout";
-import type { CurrencyIconKey } from "../ui/currencyIcons";
+import { EXPEDITION_RESULT_THEME } from "../ui/stageCompleteTheme";
 import { beginBossSettlementAttempt, bossSettlementRecoveryRoute, completeBossSettlementAttempt, createBossSettlementFailureState, failBossSettlementAttempt } from "../core/bossSettlementFailure";
 import { hasMergedBattleHit, isPlayerUltimateReadyTransition } from "../core/hapticPolicy";
 import { applyBattleTestPreset, battleRandom } from "../testSupport/battleHarness";
@@ -1017,52 +1014,42 @@ export class BattleScene extends Phaser.Scene {
     startScene(this, route.scene, route.data);
   }
 
-  /** 서버 총점과 정산 재화를 같은 결과 화면 안의 독립된 위계로 보여 준다. */
+  /**
+   * 폰토스 최종 정산 — **다른 콘텐츠와 같은 결과판**(`StageCompletePopup`)에 원정의 색 한 벌을 입힌다.
+   *
+   * 예전에는 전장을 검은 막으로 통째로 덮고 표제·보상·점수·버튼 다섯을 따로 세운 전용 화면이었다.
+   * 같은 원정의 노드 결과는 공용 판인데 마지막 정산만 다른 화면이라, 이번 판을 누가 끌었는지(MVP)도
+   * 보이지 않았다. 지금은 편성 SD·MVP → 기여도 → 주간 순위 → 정산 보상 → 최종 점수 → 세부 점수·주간
+   * 기록이 한 판에 서고, 판은 화면 아무 곳이나 눌러 닫혀 로비로 간다.
+   */
   private showBossResult(score: SubmitExpeditionBossScoreResponse, settlement: SettleExpeditionRunResponse): void {
     // 원정 환산 점수를 피해량 머리글에 넣지 않는다. 실제 HP 피해 장부만 비교한다.
     if (this.contributionResult && score.verifiedDamage !== undefined) this.contributionResult = withConfirmedAttackTotal(this.contributionResult, score.verifiedDamage);
-    // 최종판은 전장 HUD·잔존 피해 숫자까지 완전히 덮어 별도 화면처럼 읽히게 한다.
-    this.add.rectangle(BASE_WIDTH / 2, BASE_HEIGHT / 2, BASE_WIDTH, BASE_HEIGHT, COLOR.void, 0.96).setDepth(5000);
-    const layout = BOSS_RESULT_LAYOUT;
-    this.add.text(layout.title.x, layout.title.y, t("battle.settle.done"), textStyle({ role: "display", size: 60, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
-    const rewardItems = currencyRecordToRewardItems(settlement.granted);
-    // 정산 재화는 문자열로 점수에 붙이지 않고 기존 RewardFrame 액자 문법을 그대로 재사용한다.
-    drawLayer(this, BASE_WIDTH / 2, layout.rewards.top + layout.rewards.height / 2, chipPoints(layout.rewards.width, layout.rewards.height, { bevel: { topLeft: 34, bottomRight: 28 } }), { fill: 0x0d131b, alpha: HOLO.glass, edge: COLOR.accent, edgeAlpha: 0.5 }).setDepth(5001);
-    this.add.text(BASE_WIDTH / 2, layout.rewards.top + 54, t("battle.settle.reward"), textStyle({ role: "display", size: 28, color: COLOR.accentText })).setOrigin(0.5).setDepth(5002);
-    if (rewardItems.length === 0) {
-      this.add.text(BASE_WIDTH / 2, layout.rewards.top + 190, t("battle.settle.noReward"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5002);
-    } else {
-      const startX = BASE_WIDTH / 2 - ((rewardItems.length - 1) * layout.rewards.frameGap) / 2;
-      // currencyRecordToRewardItems는 이 경로에서 CurrencyIconKey만 만들며 다른 상품 글리프는 받지 않는다.
-      rewardItems.forEach((item, index) => new RewardFrame(this, startX + index * layout.rewards.frameGap, layout.rewards.top + 205, { icon: item.icon as CurrencyIconKey, amount: item.amount, size: layout.rewards.frameSize }).setDepth(5002));
-    }
-    // 기본 결과판은 최종 총점만 크게 남긴다. 구성값은 서버 영수증 그대로 별도 상세 팝업에 건넨다.
-    this.add.text(BASE_WIDTH / 2, layout.score.top + 105, t("battle.settle.score"), textStyle({ role: "body", size: 27, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
-    const scoreText = this.add.text(BASE_WIDTH / 2, layout.score.top + 225, score.runScore.toLocaleString(), textStyle({ role: "display", size: 76, color: "#ffffff", align: "center" })).setOrigin(0.5).setDepth(5001);
-    scoreText.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
-    // 이번 주 순위 — 이전 기록의 순위에서 새 순위까지 이웃을 넘으며 올라간다. 오르지 않았으면 제자리 숫자만 선다.
-    if (score.rankAfter !== null && score.rankAfter !== undefined) {
-      const rankLabel = (rank: number): string => t("raid.settle.rank", { rank });
-      this.add.text(BASE_WIDTH / 2, layout.score.top + 14, t("battle.rank.weekly"), textStyle({ role: "body", size: 25, color: COLOR.inkDim })).setOrigin(0.5).setDepth(5001);
-      const rankText = this.add.text(BASE_WIDTH / 2, layout.score.top + 58, rankLabel(score.rankAfter), textStyle({ role: "display", size: 56, color: COLOR.accentText })).setOrigin(0.5).setDepth(5001);
-      rankText.setStroke("#000000", 5).setShadow(0, 4, "#000000", 4, false, true);
-      const from = score.rankBefore ?? Math.min(100, score.rankAfter + 40);
-      if (score.improved) playRankClimb(this, rankText, from, score.rankAfter, rankLabel);
-    }
-    const popups = new PopupLayer(this, 6000);
-    // 총점 바로 아래의 작은 보조 조작만 세부 점수로 이어져 기본 화면의 정보 위계를 흐리지 않는다.
-    new Button(this, BASE_WIDTH / 2, layout.score.top + 350, { width: 160, height: 62, label: t("battle.settle.detail"), fontSize: 22, onClick: () => new ExpeditionScoreDetailPopup(this, popups).open(score) }).setDepth(5001);
-    new Button(this, BASE_WIDTH / 2, layout.lobby.top + layout.lobby.height / 2, { width: layout.lobby.width, height: layout.lobby.height, label: t("battle.settle.toLobby"), variant: "primary", onClick: () => {
-      if (this.bossLeaving) return;
-      this.bossLeaving = true;
-      // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
-      startScene(this, "boot", { destination: "lobby" });
-    } }).setDepth(5001);
-    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: layout.lobby.top + layout.lobby.height / 2 } });
-    const [weekly, contribution] = bossResultUtilityBounds();
-    // 기록과 기여도는 같은 보조 행동선에 두고, 로비 주 행동은 그 아래 독립 안전 영역에 둔다.
-    new Button(this, weekly.left + weekly.width / 2, weekly.top + weekly.height / 2, { width: weekly.width, height: weekly.height, label: t("battle.settle.weeklyRecord"), fontSize: 27, onClick: () => new ExpeditionRankingPopup(this, popups).open() }).setDepth(5001);
-    new Button(this, contribution.left + contribution.width / 2, contribution.top + contribution.height / 2, { width: contribution.width, height: contribution.height, label: t("battle.contribution"), fontSize: 27, onClick: () => this.openContributionPopup(popups) }).setDepth(5001);
+    const popups = new PopupLayer(this, 2200);
+    const rank = score.rankAfter !== null && score.rankAfter !== undefined
+      ? { label: t("battle.rank.weekly"), after: score.rankAfter, before: score.rankBefore, improved: score.improved }
+      : undefined;
+    new StageCompletePopup(this, popups).open({
+      reward: { kind: "loot", items: currencyRecordToRewardItems(settlement.granted), settlement: true },
+      title: t("battle.settle.done"),
+      theme: EXPEDITION_RESULT_THEME,
+      score: { label: t("battle.settle.score"), value: score.runScore, ...(rank ? { rank } : {}) },
+      extras: [
+        // 구성값은 서버 영수증 그대로 세부 점수 판에 건넨다. 같은 팝업 층 위에 한 겹 더 연다.
+        { label: t("battle.settle.detail"), onPress: () => new ExpeditionScoreDetailPopup(this, popups).open(score) },
+        { label: t("battle.settle.weeklyRecord"), onPress: () => new ExpeditionRankingPopup(this, popups).open() },
+      ],
+      fighters: this.stageCompleteFighters(),
+      onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
+      onConfirm: () => {
+        if (this.bossLeaving) return;
+        this.bossLeaving = true;
+        // 성공 정산은 다시 요청하지 않는다. Boot가 서버 최신본을 읽고 저장 검증·마이그레이션을 거친다.
+        startScene(this, "boot", { destination: "lobby" });
+      },
+    });
+    // 판은 화면 아무 곳이나 눌러 닫히므로, 로비로 가는 자리는 밑동의 「화면을 눌러 확인」 자리다.
+    setDebugBossResult({ visible: true, lobby: { x: BASE_WIDTH / 2, y: BASE_HEIGHT - 130 } });
   }
 
   /** 같은 PopupLayer 위에 읽기 전용 판을 쌓아 닫은 뒤 기존 결과 조작이 그대로 남게 한다. */
@@ -3642,6 +3629,7 @@ export class BattleScene extends Phaser.Scene {
                 // 전멸한 판도 그때까지 오른 점수가 주간 기록에 든다 — 그 점수를 여기서 말한다.
                 footnote: settlement.runScore && settlement.runScore > 0 ? t("battle.result.runScore", { score: Math.floor(settlement.runScore).toLocaleString() }) : undefined,
               },
+              theme: EXPEDITION_RESULT_THEME,
               fighters: this.stageCompleteFighters(),
               onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
               onConfirm: () => { if (!chosen && this.scene.isActive()) startScene(this, "lobby"); },
@@ -3664,6 +3652,7 @@ export class BattleScene extends Phaser.Scene {
             // 보탰는지 알 수 없고, 노드마다 다른 층·잔여 HP가 점수를 바꾼다는 것도 읽히지 않는다.
             footnote: nodeResult.nodeScore > 0 ? t("battle.result.nodeScore", { score: Math.floor(nodeResult.nodeScore).toLocaleString() }) : undefined,
           },
+          theme: EXPEDITION_RESULT_THEME,
           fighters: this.stageCompleteFighters(),
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
           onConfirm: () => startScene(this, "expedition"),

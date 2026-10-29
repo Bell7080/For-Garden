@@ -22,8 +22,6 @@ export const BATTLE_ES = {
   "battle.settle.retry": "Revisar resultado",
   "battle.settle.recoverLobby": "Volver al vestíbulo",
   "battle.settle.done": "Observación de Expedición completada",
-  "battle.settle.reward": "Recompensas obtenidas",
-  "battle.settle.noReward": "Sin recompensas",
   "battle.settle.score": "Puntuación de esta Expedición",
   "battle.settle.detail": "Detalles",
   "battle.settle.toLobby": "Al vestíbulo",

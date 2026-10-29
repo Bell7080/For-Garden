@@ -23,8 +23,6 @@ export const BATTLE_JA = {
   "battle.settle.retry": "結果を再確認",
   "battle.settle.recoverLobby": "ロビーに戻る",
   "battle.settle.done": "遠征観測完了",
-  "battle.settle.reward": "獲得報酬",
-  "battle.settle.noReward": "獲得報酬はありません",
   "battle.settle.score": "今回の遠征スコア",
   "battle.settle.detail": "詳細",
   "battle.settle.toLobby": "ロビーへ",

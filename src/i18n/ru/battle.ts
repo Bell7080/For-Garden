@@ -22,8 +22,6 @@ export const BATTLE_RU = {
   "battle.settle.retry": "Проверить результат",
   "battle.settle.recoverLobby": "Вернуться в холл",
   "battle.settle.done": "Наблюдение экспедиции завершено",
-  "battle.settle.reward": "Полученные награды",
-  "battle.settle.noReward": "Наград нет",
   "battle.settle.score": "Очки этой экспедиции",
   "battle.settle.detail": "Подробнее",
   "battle.settle.toLobby": "В лобби",

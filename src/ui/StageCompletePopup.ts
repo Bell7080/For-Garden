@@ -32,6 +32,9 @@ import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { playGreatSuccess, type GreatSuccessFrame } from "./greatSuccessFx";
+import { addStageCompleteBackdrop } from "./stageCompleteBackdrop";
+import { playRankClimb } from "./rankClimb";
+import { RESULT_SCORE_BLOCK, type StageCompleteTheme } from "./stageCompleteTheme";
 import { addAutoRepeatBanner, type AutoRepeatBannerOptions } from "./AutoRepeatBanner";
 
 /** 결과 화면이 넘기는 편성원 한 명. MVP 여부만 알면 카드 크기·발광은 이 프리팹이 정한다. */
@@ -138,6 +141,23 @@ export interface StageCompletePopupOptions {
    * 시간이 다 되면 `onElapsed`를 부르고 판을 닫는다 — 닫힘이 부르는 기본 길(`onConfirm`)은 부르는 쪽이 막는다.
    */
   autoRepeat?: AutoRepeatBannerOptions;
+  /**
+   * 콘텐츠의 **색 한 벌**(`stageCompleteTheme.ts`). 판의 짜임은 그대로 두고 강조색·몸판·뒷배경만
+   * 갈아 끼운다 — 원정이 제 바다빛으로 서도 같은 결과판이라는 것이 먼저 읽혀야 한다.
+   */
+  theme?: StageCompleteTheme;
+  /** 정산 판의 표제를 바꾼다(원정 최종 정산의 「원정 관측 완료」). 없으면 공용 「획득 보상」이다. */
+  title?: string;
+  /**
+   * 한 판의 **최종 점수**(원정 폰토스 정산). 있으면 보상 줄 아래 큰 수로 서고 `footnote`를 대신한다.
+   * `rank`가 있으면 경험치 블록 자리에 주간 순위가 서고, 오른 판이면 이웃을 넘으며 올라간다.
+   */
+  score?: { label: string; value: number; rank?: { label: string; after: number; before?: number | null; improved?: boolean } };
+  /**
+   * 판을 닫지 않는 **보조 조작**(세부 점수 · 주간 기록). 점수 아래 가로 한 줄로 서고, 누르면 같은
+   * 팝업 층 위에 판을 한 겹 더 연다. 판을 닫는 길은 여전히 화면 아무 곳이나 누르는 것 하나다.
+   */
+  extras?: readonly { label: string; onPress: () => void }[];
 }
 
 /** 결투 티어 블록이 경험치 블록 자리를 쓸 때 그 아래 내용이 내려서는 만큼. */
@@ -208,6 +228,11 @@ const SD = { mvp: { width: 200, height: 300 }, side: { width: 150, height: 220 }
 export class StageCompletePopup {
   /** 이번 판의 보상·버튼 줄이 내려서는 만큼. 티어 블록이 선 판만 0이 아니다. */
   private shiftY = 0;
+  /** 이번 판의 색 한 벌. 없으면 공용 금빛이다. */
+  private theme?: StageCompleteTheme;
+
+  private accent(): number { return this.theme?.accent ?? COLOR.accent; }
+  private accentText(): string { return this.theme?.accentText ?? COLOR.accentText; }
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer) {}
 
@@ -239,6 +264,7 @@ export class StageCompletePopup {
       // 진 판은 한 겹 더 어둡다. 판 자체를 다른 모양으로 만들지 않고 **뒤를 더 덮는 것**만으로
       // 가라앉히는 이유는, 같은 창을 보고 있다는 것이 먼저 읽혀야 하기 때문이다.
       width: WIDTH, height: HEIGHT, dim: true, dimAlpha: defeated ? 0.74 : 0.5,
+      ...(options.theme ? { accent: options.theme.accent, fill: options.theme.fill } : {}),
       // 영수증과 같은 계약이라 팝업 안팎 어디를 눌러도 닫히고, 별도 닫기 버튼은 두지 않는다.
       closeOnBackdrop: true, hideCloseButton: true,
       onClose: () => {
@@ -256,11 +282,13 @@ export class StageCompletePopup {
       // 기여도 그래프가 같은 popups 위에 한 겹 더 쌓이므로, 이 층의 깊이를 임의로 최상단에
       // 고정하지 않는다 — 고정하면 나중에 여는 팝업이 오히려 이 아래에 가려진다.
       // 배경 먼저 깔아 둬야 뒤에 얹는 카드·버튼이 topOnly 입력 우선순위로 자기 클릭만 받는다.
+      this.theme = options.theme;
+      if (options.theme) addStageCompleteBackdrop(this.scene, body, options.theme, WIDTH, HEIGHT);
       const closeCatcher = this.scene.add.rectangle(0, 0, WIDTH, HEIGHT, 0xffffff, 0).setInteractive({ useHandCursor: true });
       closeCatcher.on("pointerup", close);
       body.add(closeCatcher);
 
-      this.buildTitle(body, defeated, options.reward.kind === "loot" && options.reward.settlement === true);
+      this.buildTitle(body, defeated, options.reward.kind === "loot" && options.reward.settlement === true, options.title);
       // SD는 body 바깥, 팝업 층 바로 위에 화면 좌표로 세운다.
       puppetLayer = this.scene.add.container(0, 0).setDepth((body.parentContainer?.depth ?? 0) + 1);
       this.buildFighterPuppets(body, puppetLayer, puppets, () => disposed, options.fighters);
@@ -268,6 +296,7 @@ export class StageCompletePopup {
       if (!options.contributionLocked) {
         attackButton = new Button(this.scene, 0, CONTRIBUTION_Y, {
           width: 360, height: 84, label: t("stageComplete.contribution"), fontSize: 26,
+          ...(this.theme ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
           // 그래프를 보는 동안은 이 버튼이 뒤에서 겹쳐 눌리지 않도록 숨겼다가, 그래프를 닫으면
           // 다시 보여준다.
           onClick: () => { attackButton?.setVisible(false); options.onOpenContribution(() => { if (!disposed) attackButton?.setVisible(true); }); },
@@ -277,7 +306,8 @@ export class StageCompletePopup {
       // 경험치를 올린 판이면 그 블록이, 아니면(원정처럼 스테미나를 쓰지 않는 판) 얇은 구분선이 같은 자리에 선다.
       if (options.standing) addDuelStandingRow(this.scene, body, STANDING_Y, options.standing);
       else if (expReceipt) addPlayerExpGainRow(this.scene, body, EXP_ROW_Y, expReceipt);
-      else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : COLOR.accent, alpha: 0.3 }));
+      else if (options.score?.rank) this.buildRank(body, options.score.rank);
+      else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : this.accent(), alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
         if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
         else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
@@ -308,8 +338,10 @@ export class StageCompletePopup {
         if ((options.staminaRefunded ?? 0) > 0) refundToast = this.showStaminaRefundToast(options.staminaRefunded ?? 0, (body.parentContainer?.depth ?? 0) + 1);
       }
       else {
-        this.buildLoot(body, loot, options.reward.footnote, options.greatSuccess === true);
-        if (options.replay) this.buildReplay(body, close, options.replay);
+        this.buildLoot(body, loot, options.score ? undefined : options.reward.footnote, options.greatSuccess === true);
+        if (options.score) this.buildScore(body, options.score);
+        if (options.extras && options.extras.length > 0) this.buildExtras(body, options.extras);
+        else if (options.replay) this.buildReplay(body, close, options.replay);
       }
 
       // 팝업 밖(화면 고정 좌표)에 두되, 이 층 바로 위에만 머물게 한다 — 그래야 기여도 그래프가
@@ -333,10 +365,12 @@ export class StageCompletePopup {
    * 아무것도 서지 않으며, 커졌다 줄어드는 대신 조금 위에서 미끄러져 내려와 멈춘다. 글자만
    * 바꾸면 같은 축포가 진 판에서도 터진다.
    */
-  private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean, settlement = false): void {
+  private buildTitle(body: Phaser.GameObjects.Container, defeated: boolean, settlement = false, label?: string): void {
     const y = -HEIGHT / 2 + 108;
+    // 테마가 있는 정산 판은 표제부터 제 색으로 선다 — 흰 표제면 공용 판과 무엇이 다른지가 몸판 테두리에만 남는다.
+    const settlementColor = this.theme ? this.accentText() : COLOR.ink;
     const title = this.scene.add
-      .text(0, y, settlement ? t("stageComplete.settlement") : defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: settlement ? COLOR.ink : defeated ? COLOR.dangerText : COLOR.accentText }))
+      .text(0, y, settlement ? label ?? t("stageComplete.settlement") : defeated ? "Defeat" : "Victory!", textStyle({ role: "display", size: 64, color: settlement ? settlementColor : defeated ? COLOR.dangerText : this.accentText() }))
       .setOrigin(0.5);
     title.setShadow(0, 4, "#000000", 6, false, true);
     body.add(title);
@@ -353,8 +387,8 @@ export class StageCompletePopup {
     }
     title.setScale(0.5);
     this.scene.tweens.add({ targets: title, scale: 1.12, duration: 260, ease: "Back.Out", onComplete: () => this.scene.tweens.add({ targets: title, scale: 1, duration: 140, ease: "Sine.Out" }) });
-    const starLeft = drawGlyph(this.scene, "bookmark", -title.width / 2 - 44, y, 40, COLOR.accent);
-    const starRight = drawGlyph(this.scene, "bookmark", title.width / 2 + 44, y, 40, COLOR.accent);
+    const starLeft = drawGlyph(this.scene, "bookmark", -title.width / 2 - 44, y, 40, this.accent());
+    const starRight = drawGlyph(this.scene, "bookmark", title.width / 2 + 44, y, 40, this.accent());
     body.add([starLeft, starRight]);
   }
 
@@ -479,7 +513,7 @@ export class StageCompletePopup {
         adopt: (puppet) => { puppet.disableInteractive(); puppetLayer.add(puppet); puppets.add(puppet); },
       });
       const level = relicProgression.getProgress(relic.id).level;
-      body.add(this.scene.add.text(cx, SD.groundY + 34, `Lv.${level}  ${relic.name}`, textStyle({ role: "emphasis", size: slot === "mvp" ? 24 : 19, color: slot === "mvp" ? COLOR.accentText : COLOR.ink })).setOrigin(0.5));
+      body.add(this.scene.add.text(cx, SD.groundY + 34, `Lv.${level}  ${relic.name}`, textStyle({ role: "emphasis", size: slot === "mvp" ? 24 : 19, color: slot === "mvp" ? this.accentText() : COLOR.ink })).setOrigin(0.5));
       if (slot === "mvp") this.buildMvpLabel(body, cx, SD.groundY - size.height - 26);
       x += size.width + SD.gap;
     });
@@ -487,8 +521,8 @@ export class StageCompletePopup {
 
   /** "MVP!"는 승리 표제처럼 튀어 오르며 살짝 기울어져, 작은 글자여도 눈에 먼저 든다. */
   private buildMvpLabel(body: Phaser.GameObjects.Container, x: number, y: number): void {
-    const label = this.scene.add.text(x, y, "MVP!", textStyle({ role: "display", size: 42, color: COLOR.accentText })).setOrigin(0.5).setAngle(-6);
-    label.setStroke("#3b2408", 10);
+    const label = this.scene.add.text(x, y, "MVP!", textStyle({ role: "display", size: 42, color: this.accentText() })).setOrigin(0.5).setAngle(-6);
+    label.setStroke(this.theme?.deepText ?? "#3b2408", 10);
     label.setShadow(0, 4, "#000000", 4, false, true);
     label.setScale(0.5);
     this.scene.tweens.add({ targets: label, scale: 1.18, duration: 260, ease: "Back.Out", delay: 120, onComplete: () => this.scene.tweens.add({ targets: label, scale: 1.04, duration: 140, ease: "Sine.Out" }) });
@@ -567,6 +601,39 @@ export class StageCompletePopup {
     if (footnote) this.buildFootnote(body, rowY + REWARD_ROW.frame / 2 + 66, footnote);
     // 한 판의 대성공은 한 번 쾅 — 팡파레는 액자 줄 바로 위에서 터진다.
     playGreatSuccess(this.scene, body, great, 1, { x: 0, y: rowY - REWARD_ROW.frame / 2 });
+  }
+
+  /** 주간 순위 — 경험치 블록 자리에 이름표 한 줄과 큰 순위가 선다. 오른 판이면 이웃을 넘으며 올라간다. */
+  private buildRank(body: Phaser.GameObjects.Container, rank: NonNullable<NonNullable<StageCompletePopupOptions["score"]>["rank"]>): void {
+    const R = RESULT_SCORE_BLOCK.rank;
+    body.add(this.scene.add.text(0, R.labelY, rank.label, textStyle({ role: "body", size: R.labelSize, color: COLOR.inkDim })).setOrigin(0.5));
+    const format = (value: number): string => t("raid.settle.rank", { rank: value });
+    const text = this.scene.add.text(0, R.valueY, format(rank.after), textStyle({ role: "display", size: R.valueSize, color: this.accentText() })).setOrigin(0.5);
+    text.setStroke("#000000", 5).setShadow(0, 4, "#000000", 4, false, true);
+    body.add(text);
+    if (rank.improved) playRankClimb(this.scene, text, rank.before ?? Math.min(100, rank.after + 40), rank.after, format);
+  }
+
+  /** 한 판의 최종 점수. 보상 줄 아래 이름표와 큰 흰 수로 선다 — 점수는 재화가 아니라 액자를 쓰지 않는다. */
+  private buildScore(body: Phaser.GameObjects.Container, score: NonNullable<StageCompletePopupOptions["score"]>): void {
+    const S = RESULT_SCORE_BLOCK.score;
+    body.add(this.scene.add.text(0, S.labelY + this.shiftY, score.label, textStyle({ role: "body", size: S.labelSize, color: COLOR.inkDim })).setOrigin(0.5));
+    const value = this.scene.add.text(0, S.valueY + this.shiftY, Math.floor(score.value).toLocaleString(), textStyle({ role: "display", size: S.valueSize, color: COLOR.ink })).setOrigin(0.5);
+    value.setStroke("#000000", 6).setShadow(0, 4, "#000000", 4, false, true);
+    body.add(value);
+  }
+
+  /** 판을 닫지 않는 보조 조작 한 줄. 같은 폭을 나눠 가로로 선다. */
+  private buildExtras(body: Phaser.GameObjects.Container, extras: readonly { label: string; onPress: () => void }[]): void {
+    const E = RESULT_SCORE_BLOCK.extras;
+    const total = E.width * extras.length + E.gap * (extras.length - 1);
+    extras.forEach((extra, index) => {
+      body.add(new Button(this.scene, -total / 2 + E.width / 2 + index * (E.width + E.gap), E.y + this.shiftY, {
+        width: E.width, height: E.height, label: extra.label, fontSize: E.font,
+        ...(this.theme ? { accentColor: this.theme.accent, accentTextColor: COLOR.ink } : {}),
+        onClick: extra.onPress,
+      }));
+    });
   }
 
   /** 이번 판이 점수를 얼마나 보탰는가. 재화가 아니므로 액자가 아니라 글자 한 줄이다. */

@@ -22,8 +22,6 @@ export const BATTLE_TH = {
   "battle.settle.retry": "ตรวจผลอีกครั้ง",
   "battle.settle.recoverLobby": "กลับล็อบบี้",
   "battle.settle.done": "ออกสำรวจเสร็จสิ้น",
-  "battle.settle.reward": "รางวัลที่ได้รับ",
-  "battle.settle.noReward": "ไม่ได้รับรางวัล",
   "battle.settle.score": "คะแนนออกสำรวจรอบนี้",
   "battle.settle.detail": "รายละเอียด",
   "battle.settle.toLobby": "กลับล็อบบี้",

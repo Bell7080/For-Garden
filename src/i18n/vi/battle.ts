@@ -22,8 +22,6 @@ export const BATTLE_VI = {
   "battle.settle.retry": "Xác nhận lại kết quả",
   "battle.settle.recoverLobby": "Về sảnh",
   "battle.settle.done": "Viễn chinh quan sát hoàn tất",
-  "battle.settle.reward": "Thưởng nhận được",
-  "battle.settle.noReward": "Không có thưởng",
   "battle.settle.score": "Điểm Viễn chinh lần này",
   "battle.settle.detail": "Chi tiết",
   "battle.settle.toLobby": "Về sảnh",

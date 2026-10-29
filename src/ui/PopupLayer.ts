@@ -87,6 +87,10 @@ export interface PopupOptions {
    * 화면 진입은 카메라 하나가 움직이므로 판도 그 안에서 함께 들어온다.
    */
   instant?: boolean;
+  /** 몸판의 강조선 색. 콘텐츠의 색 한 벌을 입는 판(원정 결과판)만 넘긴다. 없으면 공용 금빛이다. */
+  accent?: number;
+  /** 몸판의 면 색. 없으면 공용 짙은 남색이다. */
+  fill?: number;
 }
 
 /**
@@ -334,7 +338,7 @@ export class PopupLayer {
     const shape = chipPoints(width, height, {
       bevel: { topLeft: unit * POPUP_BODY_BEVEL_RATIO, topRight: 0, bottomRight: unit * POPUP_BODY_BEVEL_RATIO, bottomLeft: 0 },
     });
-    body.add(drawLayer(this.scene, 0, 0, shape, { fill: 0x0b0f15, alpha: 0.96, edge: COLOR.accent, edgeAlpha: 0.6 }));
+    body.add(drawLayer(this.scene, 0, 0, shape, { fill: options.fill ?? 0x0b0f15, alpha: 0.96, edge: options.accent ?? COLOR.accent, edgeAlpha: 0.6 }));
     // 판 자체가 입력을 삼킨다. 몸판은 그림(Graphics)이라 입력을 받지 않으므로, 이것이 없으면
     // **판의 빈 곳이나 머리글을 누른 손이 뒤의 배경까지 내려가 팝업을 닫는다.** 판 안을 눌렀는데
     // 판이 사라지는 셈이라, 읽는 중에 손이 스치기만 해도 창이 없어졌다. 이 막이 판보다 뒤에
@@ -342,7 +346,7 @@ export class PopupLayer {
     const bodyHit = this.scene.add.rectangle(0, 0, width, height, 0xffffff, 0).setInteractive();
     if (options.closeOnBody) bodyHit.on("pointerup", () => this.close(layer));
     body.add(bodyHit);
-    body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.3, inset: 12 }));
+    body.add(drawShapeEdge(this.scene, 0, 0, shape, "bottom", { color: options.accent ?? COLOR.accent, alpha: 0.3, inset: 12 }));
     layer.add(body);
 
     // 닫기 경로(내부 X·배경·외부 뒤로가기)에 관계없이 정리 콜백은 close() 한 곳에서 정확히 한 번 돈다.

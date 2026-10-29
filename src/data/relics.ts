@@ -3681,18 +3681,18 @@ export const RELICS: RelicDef[] = [
     unlockRecord: { status: "recorded", text: "식별 기록 220. 공멸 소속으로 확인되었다. \"덤벼\" 한 마디 말고는 거의 말하지 않았고, 다가오는 상대를 건틀렛 하나로 받아 냈다. 자기에게 덤비는 상대가 많을수록 오히려 자세가 단단해졌다. 연구원에게는 \"연구원\"이라 부르고는 시선을 돌렸다." },
     squadNote: "공멸 감금조의 부간부로, 감방의 서열 정리를 맡아 온 고참으로 확인된다. 무리를 막내처럼 챙기며, 앞에 서서 덤비는 적을 모두 제게로 부른다. 연구원을 \"연구원\"이라 부른다.",
     researcherTitle: "연구원",
-    rarity: "R",
+    rarity: "SR",
     portraitAssetId: "raja",
     origin: "라자사우루스",
     element: "earth",
     role: "tank",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
-    /* R 띠의 위쪽이다(2197). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
+    /* SR 띠의 아래쪽이다(2259 — v0.391.10 응태 요청: 감금조를 SR로 맞추려 R에서 올리며 방어·저항을 13씩 얹었다). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
     stats: {
       hp: 1400,
-      def: 92,
-      res: 72,
+      def: 105,
+      res: 85,
       atk: 110,
       ap: 15, // v0.391.2: 공속을 올린 몫(+60)을 띠 안에 두려고 쓰지 않는 주문력에서 덜었다.
       attackSpeed: 90, // v0.391.2 응태 요청: 70 → 90

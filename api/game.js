@@ -16594,18 +16594,18 @@ var RELICS = [
     unlockRecord: { status: "recorded", text: '\uC2DD\uBCC4 \uAE30\uB85D 220. \uACF5\uBA78 \uC18C\uC18D\uC73C\uB85C \uD655\uC778\uB418\uC5C8\uB2E4. "\uB364\uBCBC" \uD55C \uB9C8\uB514 \uB9D0\uACE0\uB294 \uAC70\uC758 \uB9D0\uD558\uC9C0 \uC54A\uC558\uACE0, \uB2E4\uAC00\uC624\uB294 \uC0C1\uB300\uB97C \uAC74\uD2C0\uB81B \uD558\uB098\uB85C \uBC1B\uC544 \uB0C8\uB2E4. \uC790\uAE30\uC5D0\uAC8C \uB364\uBE44\uB294 \uC0C1\uB300\uAC00 \uB9CE\uC744\uC218\uB85D \uC624\uD788\uB824 \uC790\uC138\uAC00 \uB2E8\uB2E8\uD574\uC84C\uB2E4. \uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uB294 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB974\uACE0\uB294 \uC2DC\uC120\uC744 \uB3CC\uB838\uB2E4.' },
     squadNote: '\uACF5\uBA78 \uAC10\uAE08\uC870\uC758 \uBD80\uAC04\uBD80\uB85C, \uAC10\uBC29\uC758 \uC11C\uC5F4 \uC815\uB9AC\uB97C \uB9E1\uC544 \uC628 \uACE0\uCC38\uC73C\uB85C \uD655\uC778\uB41C\uB2E4. \uBB34\uB9AC\uB97C \uB9C9\uB0B4\uCC98\uB7FC \uCC59\uAE30\uBA70, \uC55E\uC5D0 \uC11C\uC11C \uB364\uBE44\uB294 \uC801\uC744 \uBAA8\uB450 \uC81C\uAC8C\uB85C \uBD80\uB978\uB2E4. \uC5F0\uAD6C\uC6D0\uC744 "\uC5F0\uAD6C\uC6D0"\uC774\uB77C \uBD80\uB978\uB2E4.',
     researcherTitle: "\uC5F0\uAD6C\uC6D0",
-    rarity: "R",
+    rarity: "SR",
     portraitAssetId: "raja",
     origin: "\uB77C\uC790\uC0AC\uC6B0\uB8E8\uC2A4",
     element: "earth",
     role: "tank",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-    /* R 띠의 위쪽이다(2197). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
+    /* SR 띠의 아래쪽이다(2259 — v0.391.10 응태 요청: 감금조를 SR로 맞추려 R에서 올리며 방어·저항을 13씩 얹었다). 맞아서 막을 쌓는 탱커라 체력·방어에 얹고 공격 속도는 느리게 둔다(v0.391.2에서 70 → 90으로 올렸다). */
     stats: {
       hp: 1400,
-      def: 92,
-      res: 72,
+      def: 105,
+      res: 85,
       atk: 110,
       ap: 15,
       // v0.391.2: 공속을 올린 몫(+60)을 띠 안에 두려고 쓰지 않는 주문력에서 덜었다.

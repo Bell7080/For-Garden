@@ -70,8 +70,18 @@ QA에서 롤백하는 임시 계정·운영자 트랜잭션으로 미인증 보�
 후속 기록 공유(v0.394.1)에서 두 환경의 적용 이력·원본 SQL 해시·함수 해시·클라이언트 역할 차단을 다시 읽어 일치함을 확인했다. DB 마이그레이션을 추가 실행하지 않았다.
 
 
-## 미적용 — 약관 동의·계정 삭제 요청·개인정보 문의 종류 (v0.395.0)
+## 적용 완료 — 약관 동의·계정 삭제 요청·개인정보 문의 (2026-10-30)
 
-원본 `supabase/migrations/20261117000000_legal_privacy_deletion.sql`. **QA·운영 모두 아직 적용하지 않았다.** `support_tickets.category`에 `privacy`를 더하고(`submit_ticket`·`web_submit_ticket` 재정의), `legal_consents`·`account_deletion_requests` 표와 `record_legal_consent`·`request_account_deletion`·`cancel_account_deletion`·`get_account_deletion`(로그인 사용자)·`purge_deleted_accounts`(서비스 역할) 함수를 만든다. 유예 일수(7)는 응태가 2026-10-30에 확정했다. 적용은 응태가 직접 한다(적용 순서: QA → 운영, 적용 뒤 이 문서에 버전·해시를 남긴다). 유예가 지난 계정을 실제로 지우려면 `purge_deleted_accounts()`를 하루 한 번 부르는 스케줄이 필요하다. 홈페이지·어드민 저장소에도 같은 파일을 복사해 두었다.
+대상 메인 `83d6b83a` (v0.395.1). 원본 `supabase/migrations/20261117000000_legal_privacy_deletion.sql`을 수정 없이 QA 검증 후 운영에 적용했다.
 
-유예가 지난 계정을 지우는 스케줄(pg_cron 사용 시, 마이그레이션 적용 뒤 SQL 편집기에서 한 번 실행): `select cron.schedule('purge-deleted-accounts', '10 3 * * *', $$select public.purge_deleted_accounts()$$);` — 매일 03:10(UTC)에 유예가 지난 계정을 지운다. pg_cron이 꺼져 있으면 운영자가 같은 함수를 하루 한 번 직접 부른다.
+- SHA-256: `07fef5afb7d21a3bbb44cbcd1325c9c149e0a33e38d11b2be793192ab25024ce`
+- QA: `20261030013449_legal_privacy_deletion`
+- 운영: `20261030013936_legal_privacy_deletion`
+
+`support_tickets.category`와 게임/웹 문의 RPC에 `privacy`를 추가하고, `legal_consents`·`account_deletion_requests` 및 동의·탈퇴 요청·취소·조회·서비스 역할용 삭제 함수를 만든다. 두 환경의 원본 SQL 해시, 관련 일곱 함수 해시, 두 표의 RLS와 권한이 일치한다. 동의/요청 RPC는 로그인 역할만, 실제 삭제와 웹 문의 RPC는 서비스 역할만 실행 가능하다. 정책 없는 RLS 안내는 직접 표 접근 대신 RPC만 사용하는 설계에 해당한다.
+
+검증은 외부 네트워크 없는 임시 PostgreSQL에서 했다. Supabase와 같은 `extensions.pgcrypto`를 준비하고 전체 마이그레이션을 적용한 뒤, 미인증/14세/문서 버전 검증, 같은 동의 재요청, 게임·웹 개인정보 문의, 정확한 7일 유예, 요청 재시도 시 기한 유지, 취소와 계정별 조회 범위, 일반 역할의 삭제 실행 차단을 확인했다. 실제 삭제 함수와 FK 정리는 이 격리 DB의 표본 계정에만 실행해 확인했으며 컨테이너는 제거했다. 원격 QA/운영에서는 실제 계정 삭제·초기화·정리 함수를 실행하지 않았다.
+
+공유 전 타입 검사·프로덕션 빌드와 전체 Vitest 444파일·5,149개가 통과했다(기존 제외 1개). 정리한 문서의 링크도 확인했다.
+
+검증 SQL과 격리 실행기는 `docs/qa/legal-privacy-migration/`에 있다. 실제 서비스의 유예 만료 삭제는 별도 스케줄 호출이 필요하다. 이번 적용에서 스케줄을 등록하거나 실행하지 않았다. 홈페이지·어드민 저장소에 복사된 동일 SQL을 공용 DB에 다시 적용하지 않는다.

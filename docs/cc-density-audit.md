@@ -91,4 +91,4 @@ npm run audit:cc -- --mode stage --stage 1-10 --party deina,torika,ella --level 
 npm run audit:cc -- --mode ancient --floor 120 --party pachi,ella,mette --equipment ceiling --targets all --duration 90 --output work/ancient-cc.json
 ```
 
-2026-10-26 검수의 엄격한 CC 경고와 단계별 결과는 [고대 지층 설계](ancient-strata-level-design.md)에 기록했다. 경고를 통과로 재분류하지 않는다.
+현재 편성·시련과 측정 한계는 [고대 지층 보고서](ancient-strata-varied-trials.md), 적의 행동 공백과 제어의 구분은 [적 AI 수정 검증](enemy-utility-ai-fix-2026-10-26.md)을 참조한다. 과거 측정의 CC 경고를 현재 엔진의 안전 통과로 재분류하지 않는다.

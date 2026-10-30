@@ -364,7 +364,9 @@ export class IdleExcavationPopup {
     const storageLeft = remainingOf(response.excavation.storageExtensionExpiresAt);
     const speedLeft = response.excavation.activeProductionMultiplier > 1 ? remainingOf(response.excavation.productionMultiplierExpiresAt) : 0;
     const extActive = storageLeft > 0, speedOn = speedLeft > 0;
-    const storageGauge2 = extActive ? new HoloBar(this.scene, 0, STORAGE_GAUGE.y + STORAGE_GAUGE.rowGap, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.excavationStorage, trackAlpha: 0.8, outline: true }).addTo(content) : undefined;
+    // 확장이 끝나도 이미 100%를 넘어 담긴 몫은 수령 전까지 남으므로, 그 몫이 있으면 둘째 줄을 계속 세운다.
+    const overflowKept = excavationStorageFillOfBase(response.excavation.unclaimed, rate, response.excavation.baseStorageSeconds, STORAGE_EXTENSION_MULTIPLIER) > 1;
+    const storageGauge2 = extActive || overflowKept ? new HoloBar(this.scene, 0, STORAGE_GAUGE.y + STORAGE_GAUGE.rowGap, STORAGE_GAUGE.width, STORAGE_GAUGE.height, { color: COLOR.excavationStorage, trackAlpha: 0.8, outline: true }).addTo(content) : undefined;
     const reveal = { v: extActive && this.storageUnfold ? 0 : 1 };
     let storageTotal = 0;
     const paintGauges = (): void => {
@@ -418,7 +420,7 @@ export class IdleExcavationPopup {
       harvestButton?.setEnabled(harvestable && !this.saving);
       // 실제로 쌓인 재화량 자체를 보관 한도와 비교한다 — 경과 시간 기준으로 계산하면 창을 열
       // 때마다 서버 정산이 일어나 기준 시각이 현재로 밀리면서 게이지가 늘 0%로 보였다.
-      storageTotal = excavationStorageFillOfBase(liveAmounts, rate, response.excavation.baseStorageSeconds, extActive ? STORAGE_EXTENSION_MULTIPLIER : 1);
+      storageTotal = excavationStorageFillOfBase(liveAmounts, rate, response.excavation.baseStorageSeconds, STORAGE_EXTENSION_MULTIPLIER);
       paintGauges();
       // 효과가 끝났거나 새로 켜졌으면 현황을 다시 그려 줄 수와 칩을 맞춘다.
       const now = Date.now();

@@ -36,6 +36,17 @@ describe("방치 발굴 순수 규칙", () => {
     expect(settle(fixture.expiryBoundary.lastSettledAt, fixture.expiryBoundary.serverNow, { activeProductionMultiplier: 2, productionMultiplierExpiresAt: fixture.expiryBoundary.expiresAt }).unclaimed.gold).toBe(2);
   });
 
+  it("보관 확장이 끝나도 이미 담긴 양은 수령 전까지 유지되고 새 생산만 기본 한도에서 멈춘다", () => {
+    const oneGoldPerHour = [{ ...RELICS[0], id: "fixture", excavationTrait: { primaryCurrency: "gold" as const, baseProductionPerHour: 0.25, efficiencyMultiplier: 1 } }];
+    const settle = (lastSettledAt: string, serverNow: string, extra: object) => settleIdleExcavation({ ...createIdleExcavationState(lastSettledAt), assignedRelicIds: ["fixture", null, null], ...extra }, new Date(serverNow), oneGoldPerHour, { fixture: progress() });
+    // 150%(12) 상태에서 확장이 이미 끝났다: 줄지도 늘지도 않는다.
+    expect(settle("2026-08-20T00:00:00.000Z", "2026-08-20T03:00:00.000Z", { unclaimed: { ...emptyExcavationAmounts(), gold: 12 }, storageExtensionExpiresAt: null }).unclaimed.gold).toBe(12);
+    // 확장 중 10시간 쌓고 10시간째에 만료, 14시간째 정산: 만료 뒤 새 생산은 기본 한도(8)를 못 넘으니 10 그대로다.
+    expect(settle("2026-08-20T00:00:00.000Z", "2026-08-20T14:00:00.000Z", { storageExtensionExpiresAt: "2026-08-20T10:00:00.000Z" }).unclaimed.gold).toBe(10);
+    // 6이 담긴 채 1시간째 만료, 5시간째 정산: 만료 전 1시간(7) 뒤 기본 한도 8까지만 오른다.
+    expect(settle("2026-08-20T00:00:00.000Z", "2026-08-20T05:00:00.000Z", { unclaimed: { ...emptyExcavationAmounts(), gold: 6 }, storageExtensionExpiresAt: "2026-08-20T01:00:00.000Z" }).unclaimed.gold).toBe(8);
+  });
+
   it("동일 캐릭터의 중복 배치를 차단한다", () => {
     expect(validateExcavationFormation(["rex", "rex", null], new Set(["rex"]))).toEqual({ valid: false, reason: "duplicate" });
   });

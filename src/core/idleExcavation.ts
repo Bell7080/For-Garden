@@ -237,7 +237,6 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
   const speedExpiryMs = state.productionMultiplierExpiresAt ? Date.parse(state.productionMultiplierExpiresAt) : accrual.window.startMs;
   const split = splitAccrualAt(accrual.window, state.productionMultiplierExpiresAt);
   const boostedSeconds = split.beforeMs / 1000;
-  const normalSeconds = split.afterMs / 1000;
   /*
    * **보관 한도는 계산 구간이 아니라 담기는 양의 상한이다.**
    *
@@ -252,11 +251,29 @@ export function settleIdleExcavation(state: IdleExcavationState, serverNow: Date
    * 일도 하지 않는다. 확장이 끝난 뒤에는 게이지의 분모(지금 기준 한도)보다 담긴 것이 많을 수
    * 있는데, 그때는 게이지가 가득으로 읽히고 담긴 것은 그대로 남는다.
    */
-  const capacity = excavationStorageCapacity(production, storageLimit);
+  /*
+   * **확장권이 정산 구간 중간에 끝나면 그 시각에서 구간을 나눈다.** 만료 전 구간은 확장 한도(2배)로,
+   * 만료 뒤 구간은 기본 한도로 막는다 — 구간 시작 기준 한도 하나로 전부 막으면 만료 뒤 시간까지
+   * 200%로 쌓였다. 이미 담긴 몫은 어느 구간에서도 줄지 않으므로 150%까지 찼다면 수령 전까지 그대로다.
+   */
+  const windowEndMs = accrual.window.effectiveEndMs;
+  const extensionEndMs = extensionActive && state.storageExtensionExpiresAt ? Math.min(windowEndMs, Date.parse(state.storageExtensionExpiresAt)) : accrual.window.startMs;
+  const boostedUntilMs = accrual.window.startMs + boostedSeconds * 1000;
+  // 구간 [fromMs, toMs]의 생산 환산 시간(초): 속도 효과가 켜져 있던 몫에만 배율을 곱한다.
+  const weightedSeconds = (fromMs: number, toMs: number): number => {
+    if (toMs <= fromMs) return 0;
+    const boosted = Math.max(0, Math.min(toMs, boostedUntilMs) - fromMs);
+    return (boosted * state.activeProductionMultiplier + (toMs - fromMs - boosted)) / 1000;
+  };
+  const extendedSeconds = weightedSeconds(accrual.window.startMs, extensionEndMs);
+  const baseSeconds = weightedSeconds(extensionEndMs, windowEndMs);
+  const extendedCapacity = excavationStorageCapacity(production, storageLimit);
+  const baseCapacity = excavationStorageCapacity(production, baseStorageSeconds);
   for (const currency of EXCAVATION_CURRENCIES) {
     const previous = unclaimed[currency] ?? 0;
-    const grown = previous + production[currency] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds);
-    unclaimed[currency] = clampExcavationStorage(previous, grown, capacity[currency]);
+    const perSecond = production[currency] / 3600;
+    const atExpiry = clampExcavationStorage(previous, previous + perSecond * extendedSeconds, extendedCapacity[currency]);
+    unclaimed[currency] = clampExcavationStorage(atExpiry, atExpiry + perSecond * baseSeconds, baseCapacity[currency]);
   }
   return { ...state, baseStorageSeconds, lastSettledAt: serverNow.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }

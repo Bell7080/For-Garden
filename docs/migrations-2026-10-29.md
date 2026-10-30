@@ -72,4 +72,6 @@ QA에서 롤백하는 임시 계정·운영자 트랜잭션으로 미인증 보�
 
 ## 미적용 — 약관 동의·계정 삭제 요청·개인정보 문의 종류 (v0.395.0)
 
-원본 `supabase/migrations/20261117000000_legal_privacy_deletion.sql`. **QA·운영 모두 아직 적용하지 않았다.** `support_tickets.category`에 `privacy`를 더하고(`submit_ticket`·`web_submit_ticket` 재정의), `legal_consents`·`account_deletion_requests` 표와 `record_legal_consent`·`request_account_deletion`·`cancel_account_deletion`·`get_account_deletion`(로그인 사용자)·`purge_deleted_accounts`(서비스 역할) 함수를 만든다. 유예 일수(7)는 초안이다. 유예가 지난 계정을 실제로 지우려면 `purge_deleted_accounts()`를 하루 한 번 부르는 스케줄이 필요하다. 홈페이지·어드민 저장소에도 같은 파일을 복사해 두었다.
+원본 `supabase/migrations/20261117000000_legal_privacy_deletion.sql`. **QA·운영 모두 아직 적용하지 않았다.** `support_tickets.category`에 `privacy`를 더하고(`submit_ticket`·`web_submit_ticket` 재정의), `legal_consents`·`account_deletion_requests` 표와 `record_legal_consent`·`request_account_deletion`·`cancel_account_deletion`·`get_account_deletion`(로그인 사용자)·`purge_deleted_accounts`(서비스 역할) 함수를 만든다. 유예 일수(7)는 응태가 2026-10-30에 확정했다. 적용은 응태가 직접 한다(적용 순서: QA → 운영, 적용 뒤 이 문서에 버전·해시를 남긴다). 유예가 지난 계정을 실제로 지우려면 `purge_deleted_accounts()`를 하루 한 번 부르는 스케줄이 필요하다. 홈페이지·어드민 저장소에도 같은 파일을 복사해 두었다.
+
+유예가 지난 계정을 지우는 스케줄(pg_cron 사용 시, 마이그레이션 적용 뒤 SQL 편집기에서 한 번 실행): `select cron.schedule('purge-deleted-accounts', '10 3 * * *', $$select public.purge_deleted_accounts()$$);` — 매일 03:10(UTC)에 유예가 지난 계정을 지운다. pg_cron이 꺼져 있으면 운영자가 같은 함수를 하루 한 번 직접 부른다.

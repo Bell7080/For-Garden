@@ -512,6 +512,8 @@ export class TitleScene extends Phaser.Scene {
       const freshTap = gesture.up(pointer.id);
       if (!freshTap) { tapAnywhere.once("pointerup", enter); return; }
       if (!current() || this.entryPending || this.authAttempt) return;
+      const begin = (): void => {
+      if (!current() || this.entryPending) return;
       this.entryPending = true;
       audioManager?.playUi("title.start");
       // 게이트 확인과 서버 연결은 네트워크라 누른 뒤 한참 아무 반응이 없어 보인다 — 공용 기다림 막을 세운다.
@@ -556,6 +558,17 @@ export class TitleScene extends Phaser.Scene {
         this.entryPending = false;
         this.showConnectFailure("network-error");
         tapAnywhere.once("pointerup", enter);
+      });
+      };
+      // 이 판의 약관에 동의하지 않은 기존 계정은 들어가기 전에 한 번 동의를 받는다. 닫으면 다시 눌러 열 수 있다.
+      if (legalConsentCurrent(settingsManager.get().game.legalConsent)) { begin(); return; }
+      if (!this.popups) return;
+      tapAnywhere.once("pointerup", enter);
+      openLegalConsentPopup(this, this.popups, () => {
+        tapAnywhere.off("pointerup", enter);
+        settingsManager.rememberLegalConsent(legalConsentKey());
+        void legalConsentApi().record().catch(reportCatch("title.legalConsent"));
+        begin();
       });
     };
     if (firstRun) {

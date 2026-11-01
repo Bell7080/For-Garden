@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
 import { RailButton } from "./RailButton";
+import { RANKING_CHIP_SIZE } from "./rankingChipLayout";
 import { COLOR, textStyle } from "./theme";
 
 /**
@@ -14,11 +15,8 @@ import { COLOR, textStyle } from "./theme";
 /** 순위 보상의 기간 — 칩 이름과 보상표 제목이 함께 바뀐다. */
 export type RankRewardPeriod = "weekly" | "monthly";
 
-/** 칩 한 변. 연구소·고고학의 상점 칩과 같은 크기다. */
-export const RANKING_CHIP_SIZE = 104;
-
-/** 순위표 창 안의 보상 칩 자리 — 판 왼쪽 변과 윗변에서 잰 칩 가운데. 결투장·아레나·고대 지층·원정 순위표가 같은 값을 쓴다. */
-export const RANKING_POPUP_REWARD_CHIP = { left: 96, top: 82 } as const;
+/** 칩 크기·순위표 안 보상 칩 자리는 Phaser 없는 배치표(`rankingChipLayout.ts`)가 갖는다 — 길드 배치표와 테스트가 같은 값을 읽는다. */
+export { RANKING_CHIP_SIZE, RANKING_POPUP_REWARD_CHIP, RANKING_POPUP_REWARD_CHIP_BOTTOM } from "./rankingChipLayout";
 
 /** 보상 칩 이름 — 보상표 창의 제목도 같은 말을 쓴다. */
 export const rankRewardLabel = (period: RankRewardPeriod): string => t(period === "monthly" ? "ranking.reward.monthly" : "ranking.reward.weekly");

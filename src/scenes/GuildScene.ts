@@ -10,7 +10,7 @@ import {
   type GuildWarFrontSlotView, type GuildWarFrontView,
 } from "../api/guildContracts";
 import type { GuildGuardStatusResponse, StampGuildAttendanceResponse } from "../api/contracts";
-import { GUILD_GUARD, guardRosterPreview } from "../core/guildGuard";
+import { GUILD_GUARD, guardRosterPreview, guardWaveCount, guardWaveLevel } from "../core/guildGuard";
 import type { Element } from "../core/types";
 import { guildGuardRoster } from "../data/guildGuard";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "../ui/Button";
@@ -33,6 +33,7 @@ import { GUILD_GUARD_DAILY_RANK_COINS, GUILD_WEEKLY_RANK_REWARDS, rankTableAsPoo
 import { RELICS } from "../data/relics";
 import { setDebugScene } from "../debug";
 import { settingsManager } from "../managers/SettingsManager";
+import { syncGuildWarStandby, syncGuildWarStandbyDaily } from "../managers/GuildWarStandbySync";
 import { guildMemberProfileDisplay, playerProfileDisplay } from "../state/playerProfile";
 import { session } from "../state/session";
 import { AffinityBadge } from "../ui/AffinityBadge";
@@ -51,6 +52,7 @@ import { addGuildBadge } from "../ui/GuildBadge";
 import {
   GUILD_ATTENDANCE as A, GUILD_EDITOR as E, guildEditorSpots, guildSwatchSpot, GUILD_GUARD_PAGE as G, GUILD_INFO as I, GUILD_ROW as R, GUILD_SCREEN as S, guildMinScroll,
   GUILD_WAR_MAP as W, guildPageX, guildRowButtonX, guildRowY, guildStampSlot, guildStampRewardPair, guildTabX, guildWarActionX, guildWarNextSpot, guildWarNodeSpot,
+  GUILD_MENU_POPUP, guildGuardTraitBarX, guildGuardTraitCellX, guildRankingRows,
 } from "../ui/guildLayout";
 import { guildWarSlotLabel } from "../ui/guildWarLabels";
 import { chipPoints, drawFrameVignette, drawLayer, drawShapeOutline, HoloBar, HOLO } from "../ui/holo";
@@ -280,6 +282,8 @@ export class GuildScene extends Phaser.Scene {
         [this.warMap, this.warFront] = await Promise.all([guildApi.getWarMap(), guildApi.getWarFront()]);
         await this.autoPlaceWar();
       }
+      // 오늘 대기 방어덱을 아직 넣지 못했으면(로비에서 넣을 때 길드가 없었던 경우 등) 길드 화면에서 넣는다.
+      if (this.state.guild) syncGuildWarStandbyDaily();
       if (this.state.guild && !this.stampChecked) {
         this.stampChecked = true;
         attendance = await guildApi.getAttendance();
@@ -302,21 +306,26 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /**
-   * 기본 배치 — 정비일에 아직 칸이 없으면 결투장 방어덱으로 곧바로 선다(서버가 자동 배치 순서의 첫 빈 칸을 고른다). 덱을 못
-   * 꾸리거나 칸이 다 찼으면 조용히 넘어간다 — 그때는 「방어덱 수정」이 같은 길을 연다.
+   * 기본 배치 — 정비일에 아직 칸이 없으면 대기 방어덱(결투장 방어덱, 그 셋을 다 갖지 않았으면 가진 렐릭 중 가장 센 셋)을
+   * 곧바로 넣어 서버가 자동 배치 순서의 첫 빈 칸에 세우게 한다. 칸이 다 찼거나 렐릭이 셋 안 되면 조용히 넘어간다 — 그때는
+   * 「방어덱 수정」이 같은 길을 연다.
+   *
+   * 예전에는 결투장 방어덱이 셋일 때만 직접 세웠고, 서버의 자동 채우기는 로비가 하루 한 번 넣는 대기 덱에만 기댔다. 그 대기
+   * 덱은 로비에 들어온 순간 길드가 없으면 그날 다시 넣지 않아, 오늘 가입한 길드원은 지도를 열어도 서지 않았다.
    */
   private async autoPlaceWar(): Promise<void> {
     const map = this.warMap;
     if (this.warAutoTried || !map || map.phase !== "prep" || map.mySlotId !== null || !map.slots.some(({ holder }) => !holder)) return;
     this.warAutoTried = true;
+    // 오늘 이미 넣었더라도 칸이 없으니 다시 넣는다 — 넣는 순간 서버가 빈 칸을 채운다.
+    if (!(await syncGuildWarStandby(Date.now(), true))) return;
     try {
-      const duel = await gameApi.getDuelStatus();
-      if (duel.defense.length !== 3) return;
-      this.warMap = await gameApi.placeGuildWarDefense({ slotId: null, relicIds: [...duel.defense] });
-      this.entryToast = false;
-      this.warAutoPlacedToast = true;
+      const next = await guildApi.getWarMap();
+      if (!this.scene.isActive()) return;
+      this.warMap = next;
+      if (next.mySlotId !== null) { this.entryToast = false; this.warAutoPlacedToast = true; }
     } catch {
-      // 결투장이 아직 잠겼거나 칸이 찼다 — 기본 배치 없이 지도만 선다.
+      // 지도를 다시 받지 못했다 — 처음 받은 지도로 선다.
     }
   }
 
@@ -403,16 +412,23 @@ export class GuildScene extends Phaser.Scene {
     if (pending > 0) this.tabRow.add(this.add.circle(guildTabX(1) + S.tabs.width / 2 - 22, S.tabs.y - S.tabs.height / 2 + 2, 9, RED_DOT));
   }
 
-  /** 오른쪽 위 작은 칩 — 길드 안이면 다른 길드 찾기·탈퇴를 여는 창, 둘러보는 중이면 돌아가기다. */
+  /**
+   * 오른쪽 위 아이콘 칩 — 길드 안이면 다른 길드 찾기·탈퇴를 여는 메뉴, 둘러보는 중이면 내 길드로 돌아가기다. 로비 레일 칩과 같은
+   * `RailButton`이라 글자 칩보다 "누르는 것"으로 먼저 읽힌다.
+   */
   private paintMenuChip(): void {
-    const { right, y, width, height } = S.menuChip;
+    const { right, y, size } = S.menuChip;
     const back = this.browsing;
-    const chip = addFriendChip(this, this.controls, right - width / 2, y, width, height, t(back ? "guild.menu.back" : "guild.menu.chip"), false, () => {
-      if (this.busy) return;
-      if (back) { this.browsing = false; void this.reload(); return; }
-      this.openGuildMenu();
+    const chip = new RailButton(this, right - size / 2, y, {
+      icon: back ? "page-prev" : "settings", label: t(back ? "guild.menu.back" : "guild.menu.chip"), size,
+      onClick: () => {
+        if (this.busy) return;
+        if (back) { this.browsing = false; void this.reload(); return; }
+        this.openGuildMenu();
+      },
     });
     chip.setDepth(1);
+    this.controls.add(chip);
   }
 
   private label(parent: Phaser.GameObjects.Container, x: number, y: number, text: string, options: Parameters<typeof textStyle>[0], origin: [number, number] = [0, 0.5]): Phaser.GameObjects.Text {
@@ -494,18 +510,41 @@ export class GuildScene extends Phaser.Scene {
     const alone = guild.memberCount === 1;
     const leaderStuck = role === "leader" && !alone;
     const leaveLabel = t(role === "leader" && alone ? "guild.info.disband" : "guild.info.leave");
-    this.popups.open({ width: 700, height: 420, title: t("guild.menu.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
-      addRowButton(this, body, 0, -40, 560, 90, t("guild.menu.browse"), "neutral", () => FULL_CLIP, () => true, () => {
+    const M = GUILD_MENU_POPUP;
+    const height = M.height + (leaderStuck ? M.noteRoom : 0);
+    this.popups.open({ width: M.width, height, title: t("guild.menu.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
+      const tileY = -height / 2 + M.tileTop + M.tile.height / 2;
+      this.menuTile(body, -(M.tile.width + M.gap) / 2, tileY, "search", t("guild.menu.browse"), "neutral", () => {
         close();
         this.browsing = true; this.query = "";
         void this.reload();
       });
-      addRowButton(this, body, 0, 80, 560, 90, leaveLabel, leaderStuck ? "disabled" : "danger", () => FULL_CLIP, () => true, () => {
+      this.menuTile(body, (M.tile.width + M.gap) / 2, tileY, "kick", leaveLabel, leaderStuck ? "disabled" : "danger", () => {
         close();
         this.confirmLeave(role === "leader" && alone);
       });
-      if (leaderStuck) this.label(body, 0, 160, t("guild.error.LEADER_CANNOT_LEAVE"), { role: "body", size: 24, color: COLOR.inkDim }, [0.5, 0.5]);
+      if (leaderStuck) this.label(body, 0, tileY + M.tile.height / 2 + M.noteRoom / 2, t("guild.error.LEADER_CANNOT_LEAVE"), { role: "body", size: 24, color: COLOR.inkDim }, [0.5, 0.5]);
     });
+  }
+
+  /**
+   * 길드 메뉴의 타일 하나 — 판 한 장에 큰 아이콘과 이름이 선다. 얇은 줄 버튼 둘이 쌓이던 때는 무엇을 하는 칸인지 글자를 읽어야
+   * 알았다. 탈퇴(해산)는 붉은 윗변과 붉은 아이콘으로 되돌릴 수 없는 조작임을 먼저 말하고, 꺼진 칸은 흐리게 선다.
+   */
+  private menuTile(body: Phaser.GameObjects.Container, x: number, y: number, icon: GlyphName, label: string, tone: "neutral" | "danger" | "disabled", onTap: () => void): void {
+    const { width, height } = GUILD_MENU_POPUP.tile;
+    const tile = this.add.container(x, y);
+    body.add(tile);
+    const tint = tone === "danger" ? COLOR.danger : tone === "disabled" ? COLOR.inkDimHex : COLOR.accent;
+    const shape = chipPoints(width, height, { bevel: { topLeft: 34, topRight: 0, bottomRight: 34, bottomLeft: 0 } });
+    tile.add(drawLayer(this, 0, 0, shape, { fill: tone === "danger" ? 0x2a1416 : 0x1a1f27, alpha: 0.94, edge: tint, edgeAlpha: tone === "disabled" ? 0.3 : 0.85 }));
+    tile.add(drawGlyph(this, icon, 0, -32, 92, tint, tone === "disabled" ? 0.45 : 1, 6));
+    tile.add(squeezeTextToWidth(this.add.text(0, height / 2 - 52, label, textStyle({ role: "display", size: 32, color: tone === "danger" ? COLOR.dangerText : tone === "disabled" ? COLOR.inkDim : COLOR.ink })).setOrigin(0.5), width - 32));
+    if (tone === "disabled") { tile.setAlpha(0.7); return; }
+    const hit = addClippedHit(this, tile, 0, 0, width, height, () => FULL_CLIP);
+    hit.on("pointerdown", () => pressIn(tile));
+    hit.on("pointerout", () => pressOut(tile, "normal", { pop: false }));
+    hit.on("pointerup", () => { pressOut(tile); onTap(); });
   }
 
   private confirmLeave(disband: boolean): void {
@@ -660,7 +699,8 @@ export class GuildScene extends Phaser.Scene {
       if (!this.scene.isActive()) return;
       const rowGap = 156;
       const lines = Math.max(1, rows.length) + (pinned ? 1 : 0);
-      const height = 260 + lines * rowGap;
+      // 첫 줄은 왼쪽 위 보상 칩 밑변 아래에서 시작한다 — 판 윗변 190에 두던 때는 칩이 1위 줄의 순위·배지를 덮었다.
+      const { height, firstRowY } = guildRankingRows(lines, rowGap - 14, rowGap, true);
       const myRank = pinned ? pinned.rank : rows.find((guild) => guild.id === mineId)?.rank ?? null;
       const score = (value: number | null | undefined): string => value === null || value === undefined ? t("guild.ranking.none") : value.toLocaleString();
       this.popups.open({ width: 940, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true }, (body) => {
@@ -684,9 +724,8 @@ export class GuildScene extends Phaser.Scene {
             contribution: score(guild.contributionTotal), war: score(guild.warScore), guard: score(guild.guardScore),
           }), textStyle({ role: "emphasis", size: 24, color: COIN_TEXT })).setOrigin(0, 0.5), 636));
         };
-        const top = -height / 2 + 190;
-        rows.forEach((guild, index) => paintRow(guild, top + index * rowGap));
-        if (pinned) paintRow(pinned, top + rows.length * rowGap);
+        rows.forEach((guild, index) => paintRow(guild, firstRowY + index * rowGap));
+        if (pinned) paintRow(pinned, firstRowY + rows.length * rowGap);
       });
     }).then(() => undefined);
   }
@@ -1382,21 +1421,29 @@ export class GuildScene extends Phaser.Scene {
     void this.act(() => guildApi.moveWarSlot(from, slot.id));
   }
 
-  /** 지도 아래 버튼 줄 — 정비일에만 선다. 편집 중에는 자동 배치 · 완료, 아니면 방어덱 수정 · 편집(배치 권한만)이다. */
+  /**
+   * 지도 아래 버튼 줄 — 정비일에만 선다. 편집 중에는 자동 배치 · 완료, 아니면 방어덱 수정 · 편집(배치 권한만)이다.
+   * 바로 아래 지부 탭과 같은 납작한 판이던 때는 탭 줄의 한 칸으로 읽혀, 아이콘이 박힌 공용 버튼으로 세운다 — 이 줄의 주 조작
+   * (방어덱 수정 · 자동 배치)은 강조 판(`primary`), 곁 조작(편집 · 완료)은 기본 판이다.
+   */
   private paintWarActions(map: GuildWarMapState, editing: boolean): void {
     if (map.phase !== "prep") return;
     const { y, width, height } = W.actions;
-    const buttons: { label: string; tone: RowButtonTone; run: () => void }[] = editing
+    const buttons: { label: string; icon: GlyphName; primary: boolean; run: () => void }[] = editing
       ? [
-        { label: t("guild.war.edit.auto"), tone: "accent", run: () => this.popups.confirm({ title: t("guild.war.edit.auto"), message: t("guild.war.edit.autoConfirm"), confirmLabel: t("guild.war.edit.auto") }, () => { void this.act(() => guildApi.autoArrangeWar()); }) },
-        { label: t("guild.war.edit.done"), tone: "neutral", run: () => { this.warEditing = false; this.warPick = null; this.paint(true); } },
+        { label: t("guild.war.edit.auto"), icon: "auto", primary: true, run: () => this.popups.confirm({ title: t("guild.war.edit.auto"), message: t("guild.war.edit.autoConfirm"), confirmLabel: t("guild.war.edit.auto") }, () => { void this.act(() => guildApi.autoArrangeWar()); }) },
+        { label: t("guild.war.edit.done"), icon: "check", primary: false, run: () => { this.warEditing = false; this.warPick = null; this.paint(true); } },
       ]
       : [
-        { label: t("guild.war.deck.edit"), tone: "accent", run: () => this.openWarDefense(map, null) },
-        ...(map.canArrange ? [{ label: t("guild.war.edit.open"), tone: "neutral" as const, run: () => { this.warEditing = true; this.warPick = null; this.paint(true); } }] : []),
+        { label: t("guild.war.deck.edit"), icon: "edit", primary: true, run: () => this.openWarDefense(map, null) },
+        ...(map.canArrange ? [{ label: t("guild.war.edit.open"), icon: "settings" as const, primary: false, run: () => { this.warEditing = true; this.warPick = null; this.paint(true); } }] : []),
       ];
     buttons.forEach((button, index) => {
-      addRowButton(this, this.controls, guildWarActionX(index, buttons.length), y, width, height, button.label, button.tone, () => FULL_CLIP, () => !this.busy, button.run);
+      this.controls.add(new Button(this, guildWarActionX(index, buttons.length), y, {
+        width, height, label: button.label, icon: button.icon, fontSize: 30,
+        ...(button.primary ? { variant: "primary" as const } : {}),
+        onClick: () => { if (!this.busy) button.run(); },
+      }));
     });
   }
 
@@ -1549,6 +1596,8 @@ export class GuildScene extends Phaser.Scene {
     this.label(this.controls, G.centerX, R.y - 8, status ? status.best.toLocaleString() : "-", { role: "display", size: 84, color: COLOR.accentText }, [0.5, 0.5]);
     if (status) this.label(this.controls, G.centerX, R.y + 92, t("guild.guard.attempts", { left: status.attemptsLeft, total: GUILD_GUARD.attemptsPerDay }), { role: "emphasis", size: 28, color: status.attemptsLeft > 0 ? COLOR.ink : COLOR.dangerText }, [0.5, 0.5]);
 
+    this.paintGuardTraits();
+
     // 맨 아래 — 순위 두 버튼 위, 출격 가운데.
     const K = G.ranking;
     const total = K.width * 2 + K.gap;
@@ -1568,6 +1617,74 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /**
+   * 수호전 특징 판 — 기록 판 바로 아래. 이 판이 무엇이 다른 판인지를 한 장에 모은다: 위에 규칙 칸 셋(아군 회복·보호막 감소,
+   * 방어선이 무너지는 적 수, 웨이브 간격), 그 아래 성장 한 줄, 맨 아래 웨이브별 적 레벨 막대. 수는 모두 `GUILD_GUARD`와
+   * 웨이브를 실제로 짜는 함수(`guardWaveLevel` · `guardWaveCount`)에서 읽어 전투와 화면이 다른 값을 말하지 않는다.
+   */
+  private paintGuardTraits(): void {
+    const T = G.traits;
+    const cx = G.centerX;
+    const top = T.top;
+    this.plate(this.controls, cx, top + T.height / 2, T.width, T.height);
+    this.label(this.controls, cx, top + T.titleY, t("guild.guard.trait.title"), { role: "emphasis", size: 28, color: COLOR.inkDim }, [0.5, 0.5]);
+
+    const cells: { icon: GlyphName; value: string; caption: string; danger: boolean }[] = [
+      { icon: "heart", value: t("guild.guard.trait.restoreValue", { percent: 100 - GUILD_GUARD.allyRestorePercent }), caption: t("guild.guard.trait.restore"), danger: true },
+      { icon: "contrib-defense", value: t("guild.guard.trait.overrunValue", { count: GUILD_GUARD.overrunCap }), caption: t("guild.guard.trait.overrun"), danger: false },
+      { icon: "speed", value: t("guild.guard.trait.intervalValue", { seconds: GUILD_GUARD.waveIntervalSeconds }), caption: t("guild.guard.trait.interval"), danger: false },
+    ];
+    const C = T.cells;
+    cells.forEach((cell, index) => {
+      const x = cx + guildGuardTraitCellX(index);
+      const y = top + C.y;
+      const tint = cell.danger ? COLOR.danger : COLOR.accent;
+      this.controls.add(drawLayer(this, x, y, chipPoints(C.width, C.height, { bevel: { topLeft: 22, topRight: 0, bottomRight: 22, bottomLeft: 0 } }), {
+        fill: cell.danger ? 0x2a1416 : 0x11151b, alpha: 0.9, edge: tint, edgeAlpha: 0.7, shadow: { x: 0, y: 4 },
+      }));
+      const left = x - C.width / 2;
+      this.controls.add(drawGlyph(this, cell.icon, left + 40, y, 44, tint, 1, 4));
+      const room = C.width - 84;
+      squeezeTextToWidth(this.label(this.controls, left + 72, y - 16, cell.value, { role: "display", size: 34, color: cell.danger ? COLOR.dangerText : COLOR.accentText }), room);
+      squeezeTextToWidth(this.label(this.controls, left + 72, y + 26, cell.caption, { role: "body", size: 20, color: COLOR.ink }), room);
+    });
+
+    squeezeTextToWidth(this.label(this.controls, cx, top + T.ruleY, t("guild.guard.trait.growth", {
+      level: GUILD_GUARD.levelPerWave, waves: GUILD_GUARD.gruntPerWaves, cap: GUILD_GUARD.gruntCap,
+    }), { role: "emphasis", size: 24, color: COLOR.ink }, [0.5, 0.5]), T.width - 48);
+
+    // 웨이브별 적 레벨 — 막대 높이가 레벨이고, 깊어질수록 강조색에서 붉은빛으로 짙어진다.
+    const B = T.bars;
+    const ticks = T.waves.map((wave) => ({ wave, level: guardWaveLevel(wave), count: guardWaveCount(wave) }));
+    const peak = Math.max(...ticks.map(({ level }) => level));
+    const base = top + B.baseline;
+    const bars = this.add.graphics();
+    this.controls.add(bars);
+    bars.lineStyle(2, 0xffffff, 0.22).lineBetween(cx - T.width / 2 + 40, base + 1, cx + T.width / 2 - 40, base + 1);
+    ticks.forEach((tick, index) => {
+      const x = cx + guildGuardTraitBarX(index, ticks.length);
+      const h = Math.max(B.minHeight, Math.round((B.maxHeight * tick.level) / peak));
+      const mix = ticks.length > 1 ? index / (ticks.length - 1) : 1;
+      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+        Phaser.Display.Color.ValueToColor(COLOR.accent), Phaser.Display.Color.ValueToColor(COLOR.danger), 100, Math.round(mix * 100),
+      );
+      const fill = Phaser.Display.Color.GetColor(color.r, color.g, color.b);
+      // 막대도 깎인 칩 모양 — 왼쪽 위만 깎아 화면의 판들과 같은 실루엣으로 선다.
+      const cut = Math.min(14, h / 2);
+      bars.fillStyle(0x000000, 0.4).fillPoints([
+        new Phaser.Math.Vector2(x - B.width / 2 + cut + 4, base - h + 4), new Phaser.Math.Vector2(x + B.width / 2 + 4, base - h + 4),
+        new Phaser.Math.Vector2(x + B.width / 2 + 4, base + 4), new Phaser.Math.Vector2(x - B.width / 2 + 4, base + 4), new Phaser.Math.Vector2(x - B.width / 2 + 4, base - h + cut + 4),
+      ], true);
+      bars.fillStyle(fill, 0.92).fillPoints([
+        new Phaser.Math.Vector2(x - B.width / 2 + cut, base - h), new Phaser.Math.Vector2(x + B.width / 2, base - h),
+        new Phaser.Math.Vector2(x + B.width / 2, base), new Phaser.Math.Vector2(x - B.width / 2, base), new Phaser.Math.Vector2(x - B.width / 2, base - h + cut),
+      ], true);
+      const levelText = this.label(this.controls, x, base - h - B.labelGap, `LV.${tick.level}`, { role: "display", size: 22, color: hex(fill) }, [0.5, 0.5]);
+      levelText.setStroke("#05070a", 5);
+      squeezeTextToWidth(this.label(this.controls, x, top + B.tickY, t("guild.guard.trait.tick", { wave: tick.wave, count: tick.count }), { role: "body", size: 19, color: COLOR.inkDim }, [0.5, 0.5]), 120);
+    });
+  }
+
+  /**
    * 수호전 순위 창 — 길드원 순위(오늘 최고 점수) 또는 길드 순위(길드원 최고 점수의 합). 위 여덟 줄을 세우고, 내가 그 밖이면
    * 맨 아래에 붙박는다. 길드 순위 창의 왼쪽 위 칩이 일일 순위 보상표를 연다.
    */
@@ -1580,12 +1697,11 @@ export class GuildScene extends Phaser.Scene {
     const pinned = mineInAll && !rows.includes(mineInAll as never) ? mineInAll : undefined;
     const rowGap = S.row.height + S.row.gap;
     const lines = Math.max(1, rows.length) + (pinned ? 1 : 0);
-    const height = 240 + lines * rowGap;
+    const { height, firstRowY: top } = guildRankingRows(lines, S.row.height - 4, rowGap, tab === "guilds");
     const width = S.width + 70;
     this.popups.open({ width, height, title: t(tab === "members" ? "guild.guard.tab.members" : "guild.guard.tab.guilds"), closeOnBackdrop: true, dim: true }, (body) => {
       if (tab === "guilds") addRankRewardChip(this, body, -width / 2 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, { period: "weekly", onClick: () => this.openGuardRewards() });
       if (rows.length === 0) { this.label(body, 0, 0, t("guild.guard.empty"), { role: "body", size: 30, color: COLOR.inkDim }, [0.5, 0.5]); return; }
-      const top = -height / 2 + 150 + S.row.height / 2;
       const paint = (entry: (typeof all)[number], y: number): void => {
         const row = this.add.container(0, y);
         body.add(row);

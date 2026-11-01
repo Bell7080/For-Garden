@@ -1,4 +1,5 @@
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { RANKING_POPUP_REWARD_CHIP_BOTTOM } from "./rankingChipLayout";
 
 /**
  * 길드 화면의 자리 — 1080×1920 기준 월드 좌표. 위에서부터 상단 재화 줄 → 제목·탈퇴 칩 → 요약 → 조작 줄 → 본문이고,
@@ -9,8 +10,11 @@ export const GUILD_SCREEN = {
   side: 75,
   width: BASE_WIDTH - 150,
   title: { x: 54, y: 168 },
-  /** 오른쪽 위 작은 칩 — 다른 길드 찾기·탈퇴를 여는 창의 입구. */
-  menuChip: { right: BASE_WIDTH - 40, y: 168, width: 170, height: 60 },
+  /**
+   * 오른쪽 위 메뉴 아이콘 칩 — 다른 길드 찾기·탈퇴를 여는 창의 입구. 글자 칩이던 때는 같은 줄의 요약 글과 무게가 같아 눌리는
+   * 것으로 읽히지 않았다 — 로비 레일 칩(`RailButton`)과 같은 아이콘 칩으로 선다. 밑변은 요약 줄(244) 위에서 끝난다.
+   */
+  menuChip: { right: BASE_WIDTH - 40, y: 166, size: 100 },
   summary: { y: 244 },
   controls: { y: 320, height: 68 },
   /** 길드가 있으면 작은 탭 위까지, 없으면 큰 탭이 없으니 화면 밑동까지 목록이 흐른다. */
@@ -21,6 +25,12 @@ export const GUILD_SCREEN = {
   /** 화면을 가르는 큰 탭(정보 · 길드전 · 수호전) — 뒤로가기(왼쪽 끝 920)를 피해 셋이 나눠 선다. */
   pages: { y: BASE_HEIGHT - 96, width: 262, height: 96, gap: 14, labelSize: 34 },
 } as const;
+
+/**
+ * 오른쪽 위 메뉴 칩이 여는 창 — 다른 길드 찾기 · 탈퇴(해산) 두 타일이 나란히 선다. 혼자 남지 않은 길드장은 탈퇴가 꺼지고
+ * 그 아래 한 줄(`noteRoom`)이 이유를 말한다. 좌표는 창 윗변에서 잰다.
+ */
+export const GUILD_MENU_POPUP = { width: 760, height: 470, tileTop: 110, tile: { width: 300, height: 280 }, gap: 40, noteRoom: 64 } as const;
 
 /** 작은 탭 `index`의 가운데 x. */
 export function guildTabX(index: number): number {
@@ -213,8 +223,11 @@ export const GUILD_WAR_MAP = {
   },
   /** 칸 아래 이름줄이 칸 밑변에서 떨어지는 거리. */
   nameGap: 22,
-  /** 지도 아래 버튼 줄 — 방어덱 수정 · 편집(배치 권한만). 편집 중에는 자동 배치 · 완료로 바뀐다. */
-  actions: { y: 1600, width: 300, height: 80, gap: 24 },
+  /**
+   * 지도 아래 버튼 줄 — 방어덱 수정 · 편집(배치 권한만). 편집 중에는 자동 배치 · 완료로 바뀐다. 바로 아래 지부 탭과 같은 납작한
+   * 판이던 때는 탭 줄의 한 칸처럼 읽혀, 아이콘이 박힌 공용 버튼(`Button`)으로 한 뼘 두껍게 선다.
+   */
+  actions: { y: 1598, width: 340, height: 88, gap: 24 },
 } as const;
 
 /** 칸 하나의 가운데와 크기 — 고른 지부 판 안의 좌표다(지부와 무관하다). */
@@ -249,6 +262,46 @@ export const GUILD_GUARD_PAGE = {
   /** 오늘의 적 — 현상수배 입구처럼 SD가 바닥(`ground`)에 서고 발밑에 레벨·이름이 선다. `spacing`은 SD 사이 간격이다. */
   enemies: { label: 430, ground: 690, height: 170, spacing: 240, nameSize: 26, nameWidth: 220 },
   record: { y: 930, width: 760, height: 300 },
+  /**
+   * 수호전 특징 판 — 기록 판 바로 아래. 위에서부터 제목 → 규칙 칸 셋(회복 감소 · 방어선 붕괴 · 웨이브 간격) → 성장 한 줄 →
+   * 웨이브별 적 레벨 막대. 좌표는 판 윗변(`top`)에서 잰다. 밑변은 순위 버튼 줄 윗변보다 위에서 끝난다.
+   */
+  traits: {
+    top: 1102, width: 760, height: 392,
+    titleY: 32,
+    cells: { y: 102, width: 236, height: 96, gap: 12 },
+    ruleY: 180,
+    bars: { baseline: 336, maxHeight: 92, minHeight: 14, width: 64, labelGap: 18, tickY: 364 },
+    /** 막대로 보여 줄 웨이브 — 처음 몇 웨이브부터 깊은 웨이브까지 오르는 폭이 한눈에 읽히게 고른다. */
+    waves: [1, 5, 10, 20, 30, 40] as const,
+  },
   ranking: { y: 1556, width: 330, height: 82, gap: 24 },
   sortie: { y: 1676, width: 560, height: 124 },
 } as const;
+
+/** 수호전 특징 판의 규칙 칸 `index`(0~2)의 가운데 x — 판 가운데 기준. */
+export function guildGuardTraitCellX(index: number): number {
+  const { width, gap } = GUILD_GUARD_PAGE.traits.cells;
+  return (index - 1) * (width + gap);
+}
+
+/** 수호전 특징 판의 웨이브 막대 `index`의 가운데 x — 판 가운데 기준, `count`개를 판 폭에 고르게 편다. */
+export function guildGuardTraitBarX(index: number, count: number): number {
+  const span = GUILD_GUARD_PAGE.traits.width - 120;
+  return count <= 1 ? 0 : -span / 2 + (span * index) / (count - 1);
+}
+
+/**
+ * 순위 창(길드 주간 순위 · 수호전 순위)의 높이와 첫 줄 가운데 — 창 가운데가 0이다. 왼쪽 위 보상 칩이 서는 창은 첫 줄을 칩
+ * **밑변 아래**에서 시작한다. 예전 길드 주간 순위는 첫 줄을 판 윗변 190에 두어 줄 윗변(119)이 칩 밑변(134)을 파고들었고,
+ * 칩이 1위 줄의 순위 숫자·배지를 덮었다.
+ */
+export const GUILD_RANKING_POPUP = { headPlain: 120, chipGap: 26, bottomPad: 60 } as const;
+
+export function guildRankingRows(lines: number, rowHeight: number, rowGap: number, withChip: boolean): { height: number; firstRowY: number; rowsTop: number } {
+  const P = GUILD_RANKING_POPUP;
+  const rowsTop = withChip ? RANKING_POPUP_REWARD_CHIP_BOTTOM + P.chipGap : P.headPlain;
+  const count = Math.max(1, lines);
+  const height = rowsTop + (count - 1) * rowGap + rowHeight + P.bottomPad;
+  return { height, rowsTop, firstRowY: -height / 2 + rowsTop + rowHeight / 2 };
+}

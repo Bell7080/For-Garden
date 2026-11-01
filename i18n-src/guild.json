@@ -1939,6 +1939,96 @@
     "Heute bestes",
     "Лучшее за день"
   ],
+  "guild.guard.trait.title": [
+    "守护战特性",
+    "ลักษณะการป้องกัน",
+    "Đặc điểm Thủ thành",
+    "Ciri Pertahanan",
+    "Rasgos de la defensa",
+    "Traços da defesa",
+    "Merkmale der Verteidigung",
+    "Особенности обороны"
+  ],
+  "guild.guard.trait.restore": [
+    "我方治疗·护盾",
+    "ฮีล·โล่ฝ่ายเรา",
+    "Hồi máu·khiên phe ta",
+    "Heal & perisai sekutu",
+    "Curación y escudo aliados",
+    "Cura e escudo aliados",
+    "Heilung & Schild Verbündeter",
+    "Лечение и щиты союзников"
+  ],
+  "guild.guard.trait.restoreValue": [
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%",
+    "-{percent}%"
+  ],
+  "guild.guard.trait.overrun": [
+    "防线崩溃",
+    "แนวป้องกันพัง",
+    "Phòng tuyến vỡ",
+    "Garis jebol",
+    "Línea rota con",
+    "Linha rompe com",
+    "Linie bricht bei",
+    "Прорыв при"
+  ],
+  "guild.guard.trait.overrunValue": [
+    "敌人 {count}",
+    "ศัตรู {count}",
+    "{count} địch",
+    "{count} musuh",
+    "{count} enemigos",
+    "{count} inimigos",
+    "{count} Gegner",
+    "{count} врагов"
+  ],
+  "guild.guard.trait.interval": [
+    "波次间隔",
+    "ช่วงเวฟ",
+    "Giãn cách đợt",
+    "Jeda gelombang",
+    "Intervalo de oleada",
+    "Intervalo de onda",
+    "Wellenabstand",
+    "Интервал волн"
+  ],
+  "guild.guard.trait.intervalValue": [
+    "{seconds}秒",
+    "{seconds} วิ",
+    "{seconds}s",
+    "{seconds} dtk",
+    "{seconds} s",
+    "{seconds} s",
+    "{seconds} s",
+    "{seconds} с"
+  ],
+  "guild.guard.trait.growth": [
+    "每波敌人 LV +{level} · 每{waves}波 +1只（最多{cap}）",
+    "ทุกเวฟ ศัตรู LV +{level} · ทุก {waves} เวฟ +1 ตัว (สูงสุด {cap})",
+    "Mỗi đợt: địch LV +{level} · cứ {waves} đợt +1 địch (tối đa {cap})",
+    "Tiap gelombang: LV musuh +{level} · +1 musuh tiap {waves} gelombang (maks {cap})",
+    "Cada oleada: LV enemigo +{level} · +1 enemigo cada {waves} oleadas (máx. {cap})",
+    "Cada onda: LV inimigo +{level} · +1 inimigo a cada {waves} ondas (máx. {cap})",
+    "Jede Welle: Gegner-LV +{level} · alle {waves} Wellen +1 Gegner (max. {cap})",
+    "Каждая волна: LV врагов +{level} · +1 враг каждые {waves} волны (макс. {cap})"
+  ],
+  "guild.guard.trait.tick": [
+    "第{wave}波 · {count}只",
+    "เวฟ {wave} · {count} ตัว",
+    "Đợt {wave} · ×{count}",
+    "Gel. {wave} · ×{count}",
+    "Oleada {wave} · ×{count}",
+    "Onda {wave} · ×{count}",
+    "Welle {wave} · ×{count}",
+    "Волна {wave} · ×{count}"
+  ],
   "guild.guard.attempts": [
     "剩余挑战 {left}/{total}",
     "ท้าทายเหลือ {left}/{total}",

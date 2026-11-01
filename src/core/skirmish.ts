@@ -1,3 +1,4 @@
+import { dHypot, dSin, dCos, dAtan2, dExp, dPow } from "./detMath";
 import { EXPEDITION_CC_POLICY, EXPEDITION_CONTROL_TAGS, controlRemaining, capExpeditionControl } from "./expeditionCcPolicy";
 import { amplifyFerocityGain } from "./bond";
 import { deathClockSurvivalMultiplier, deathClockTickPercent, deathClockTicksAt } from "./battleClock";
@@ -2227,7 +2228,7 @@ function launchKnockback(
 ): void {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const launched = beginKnockback(target, {
     remaining: trait.seconds,
     vx: (dx / gap) * trait.speed,
@@ -2782,12 +2783,12 @@ function fleeFromFear(fighter: Fighter, dt: number, rng: () => number, state: Sk
   if (threat) {
     let dirX = fighter.x - threat.x;
     let dirY = fighter.y - threat.y;
-    const gap = Math.hypot(dirX, dirY);
-    if (gap < 0.001) { dirX = Math.cos(fighter.wander); dirY = Math.sin(fighter.wander); } else { dirX /= gap; dirY /= gap; }
+    const gap = dHypot(dirX, dirY);
+    if (gap < 0.001) { dirX = dCos(fighter.wander); dirY = dSin(fighter.wander); } else { dirX /= gap; dirY /= gap; }
     // 벽에 닿았는데 벽 쪽으로 달아나려 하면 그 축을 접고 옆으로 돌아 나간다.
     const margin = FEAR_FLEE.wallMargin;
     const { left, right, top, bottom } = state.arena;
-    const side = Math.sin(fighter.wander) >= 0 ? 1 : -1;
+    const side = dSin(fighter.wander) >= 0 ? 1 : -1;
     if ((fighter.x <= left + margin && dirX < 0) || (fighter.x >= right - margin && dirX > 0)) {
       dirY = dirY === 0 ? side : Math.sign(dirY) * Math.max(Math.abs(dirY), 0.6);
       dirX = 0;
@@ -2796,14 +2797,14 @@ function fleeFromFear(fighter: Fighter, dt: number, rng: () => number, state: Sk
       dirX = dirX === 0 ? side : Math.sign(dirX) * Math.max(Math.abs(dirX), 0.6);
       dirY = 0;
     }
-    const length = Math.hypot(dirX, dirY) || 1;
+    const length = dHypot(dirX, dirY) || 1;
     const step = moveSpeed(fighter, state) * dt;
     fighter.x += dirX / length * step;
     fighter.y += dirY / length * step;
     if (Math.abs(dirX) > 0.05) fighter.facing = dirX >= 0 ? 1 : -1;
   }
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+  fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
   // 달아나는 중에도 궁극기만은 나간다. 일반 공격은 나가지 않으므로 시계가 차도 평타 자리를 쓰지 않는다.
   const autoUltimate = (!state.automaticUltimates && fighter.side === "enemy") || fighter.summonOwnerId !== null;
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
@@ -3087,8 +3088,8 @@ function dronePatrolPoint(state: SkirmishState, drone: Fighter): { x: number; y:
   const { left, right, top, bottom } = state.arena;
   const phase = state.elapsed * 0.22 + drone.wander;
   return {
-    x: (left + right) / 2 + Math.sin(phase) * (right - left) * 0.32,
-    y: (top + bottom) / 2 + Math.sin(phase * 1.7 + 1) * (bottom - top) * 0.28,
+    x: (left + right) / 2 + dSin(phase) * (right - left) * 0.32,
+    y: (top + bottom) / 2 + dSin(phase * 1.7 + 1) * (bottom - top) * 0.28,
   };
 }
 
@@ -3126,10 +3127,10 @@ function droneGoal(state: SkirmishState, drone: Fighter, target: Fighter, reach:
     if (away >= DRONE_FLEE.radius) continue;
     const weight = (DRONE_FLEE.radius - away) / DRONE_FLEE.radius;
     const norm = away > 0.001 ? away : 1;
-    pushX += (away > 0.001 ? (drone.x - other.x) / norm : Math.cos(drone.wander)) * weight;
-    pushY += (away > 0.001 ? (drone.y - other.y) / norm : Math.sin(drone.wander)) * weight;
+    pushX += (away > 0.001 ? (drone.x - other.x) / norm : dCos(drone.wander)) * weight;
+    pushY += (away > 0.001 ? (drone.y - other.y) / norm : dSin(drone.wander)) * weight;
   }
-  const threatened = Math.hypot(pushX, pushY) > 1e-6;
+  const threatened = dHypot(pushX, pushY) > 1e-6;
   if (!threatened) {
     const gap = distance(drone, target);
     return gap <= reach ? dronePatrolPoint(state, drone) : target;
@@ -3147,8 +3148,8 @@ function droneGoal(state: SkirmishState, drone: Fighter, target: Fighter, reach:
   // 벽에 몰리면 도주 방향의 옆으로 돌아 나간다. 어느 쪽으로 도는지는 개체의 위상이 정한다.
   const cornered = Math.abs(wallX) + Math.abs(wallY) > 0;
   if (cornered) {
-    const side = Math.sin(drone.wander + state.elapsed * 0.35) >= 0 ? 1 : -1;
-    const length = Math.hypot(dirX, dirY) || 1;
+    const side = dSin(drone.wander + state.elapsed * 0.35) >= 0 ? 1 : -1;
+    const length = dHypot(dirX, dirY) || 1;
     const swerveX = (-dirY / length) * DRONE_FLEE.swerve * side * length;
     const swerveY = (dirX / length) * DRONE_FLEE.swerve * side * length;
     dirX += swerveX;
@@ -3157,11 +3158,11 @@ function droneGoal(state: SkirmishState, drone: Fighter, target: Fighter, reach:
   // 사거리를 통째로 잃지 않게 표적 쪽으로 조금 당긴다.
   const toTarget = distance(drone, target);
   if (toTarget > reach * 0.85 && toTarget > 0.001) {
-    const length = Math.hypot(dirX, dirY) || 1;
+    const length = dHypot(dirX, dirY) || 1;
     dirX += ((target.x - drone.x) / toTarget) * DRONE_FLEE.hold * length;
     dirY += ((target.y - drone.y) / toTarget) * DRONE_FLEE.hold * length;
   }
-  const length = Math.hypot(dirX, dirY) || 1;
+  const length = dHypot(dirX, dirY) || 1;
   return {
     x: Math.min(Math.max(drone.x + (dirX / length) * DRONE_FLEE.lookAhead, left), right),
     y: Math.min(Math.max(drone.y + (dirY / length) * DRONE_FLEE.lookAhead, top), bottom),
@@ -3231,7 +3232,7 @@ function leapToLowestHpEnemy(fighter: Fighter, state: SkirmishState, landingDist
     .map((other, index) => ({ other, index }))
     .sort((a, b) => a.other.hp / a.other.maxHp - b.other.hp / b.other.maxHp || a.other.hp - b.other.hp || a.index - b.index)[0]?.other;
   if (!target) return undefined;
-  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = dHypot(dx, dy) || 1;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
   fighter.targetId = target.id;
@@ -3252,7 +3253,7 @@ function blinkToLowestDefenseEnemy(fighter: Fighter, state: SkirmishState): Figh
     .map((other, index) => ({ other, index, def: defensiveDefinition(other, state).def.stats.def }))
     .sort((a, b) => a.def - b.def || a.index - b.index)[0]?.other;
   if (!target) return undefined;
-  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = dHypot(dx, dy) || 1;
   const landing = fighterReach(fighter) * 0.8;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
@@ -3680,7 +3681,7 @@ function leapBehindNearestEnemy(fighter: Fighter, state: SkirmishState, landingD
     .map((other, index) => ({ other, index, gap: distance(fighter, other) }))
     .sort((a, b) => a.gap - b.gap || a.index - b.index)[0]?.other;
   if (!target) return undefined;
-  const dx = target.x - fighter.x; const dy = target.y - fighter.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = target.x - fighter.x; const dy = target.y - fighter.y; const gap = dHypot(dx, dy) || 1;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
   fighter.targetId = target.id;
@@ -3698,7 +3699,7 @@ function dashToFarthestEnemy(fighter: Fighter, landingDistance: number, state: S
   if (pool.length === 0) return undefined;
   const target = pool.reduce((best, other) => distance(fighter, other) > distance(fighter, best) ? other : best);
   const from = { x: fighter.x, y: fighter.y };
-  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = dHypot(dx, dy) || 1;
   const stop = Math.min(landingDistance, gap);
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * stop));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * stop));
@@ -4584,7 +4585,7 @@ function tauntEnemiesAround(
 ): void {
   for (const enemy of state.fighters) {
     if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
-    if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > radius) continue;
+    if (dHypot(enemy.x - fighter.x, enemy.y - fighter.y) > radius) continue;
     applyCombatStatusEffect(enemy, { kind: "taunt", seconds }, events, state, fighter.id);
   }
 }
@@ -4634,7 +4635,7 @@ function tickUltimateBreakthrough(fighter: Fighter, dt: number, state: SkirmishS
   // 위력만 줄인 같은 궁극기다. 대상·속성·상태 효과는 본 타격과 같은 계약을 그대로 읽는다.
   const input = { ...ultimate, power: ultimate.power * effect.powerPercent / 100, isCritical: false, kind: "ultimate" as const };
   const targets = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)
-    && Math.hypot(other.x - fighter.x, other.y - fighter.y) <= radius);
+    && dHypot(other.x - fighter.x, other.y - fighter.y) <= radius);
   if (targets.length === 0) return;
   // 바닥 표시는 본 타격과 같은 모양이라 "같은 기술이 다시 떨어졌다"가 읽힌다.
   events.push({ kind: "areaImpact", attackerId: fighter.id, ultimate: true, damageType: ultimate.damageType,
@@ -4744,7 +4745,7 @@ function pullStruck(attacker: Fighter, target: Fighter, state: SkirmishState, ev
   if (!plan || !isFighterAlive(target)) return;
   // 끌어당김은 「인(引)」과 같은 규칙이다 — 보간 없이 같은 프레임에 자리를 옮기므로 이동
   // 속도의 영향을 받지 않고, 끌려온 자리는 시전자에게서 정해진 거리다.
-  const dx = target.x - attacker.x; const dy = target.y - attacker.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = target.x - attacker.x; const dy = target.y - attacker.y; const gap = dHypot(dx, dy) || 1;
   if (!displaceByControl(target, attacker.x + dx / gap * plan.distance, attacker.y + dy / gap * plan.distance, state)) return;
   target.engaged = false;
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
@@ -4908,7 +4909,7 @@ function strikeBossBasicBreakthrough(attacker: Fighter, target: Fighter, input: 
   if (basic?.kind === "piercingBeak") {
     // 보스에서 표적으로 뻗는 선의 **뒤쪽**에서 선 가까이에 선 적 가운데 표적과 가장 가까운 한 명이다.
     const dx = target.x - attacker.x; const dy = target.y - attacker.y;
-    const length = Math.hypot(dx, dy) || 1;
+    const length = dHypot(dx, dy) || 1;
     const behind = aliveFighters(state, target.side).filter((other) => other.id !== target.id)
       .map((other) => {
         const along = ((other.x - attacker.x) * dx + (other.y - attacker.y) * dy) / length;
@@ -6342,7 +6343,7 @@ export function renderPose(fighter: Fighter): RenderPose {
 }
 
 function distance(a: Fighter, b: Fighter): number {
-  return Math.hypot(b.x - a.x, b.y - a.y);
+  return dHypot(b.x - a.x, b.y - a.y);
 }
 
 /**
@@ -6354,7 +6355,7 @@ function distance(a: Fighter, b: Fighter): number {
 function chargePath(attacker: Fighter, state: SkirmishState, aim: { x: number; y: number }, skill?: Pick<Skill, "chargeReachMultiplier">): { from: { x: number; y: number }; to: { x: number; y: number } } {
   const dx = aim.x - attacker.x;
   const dy = aim.y - attacker.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   // 대상이 겹쳐 서 있어 방향이 없으면 바라보는 쪽으로 그냥 달린다.
   const ux = gap < 1e-3 ? attacker.facing : dx / gap;
   const uy = gap < 1e-3 ? 0 : dy / gap;
@@ -6386,9 +6387,9 @@ function distanceToSegment(point: { x: number; y: number }, from: { x: number; y
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared < 1e-6) return Math.hypot(point.x - from.x, point.y - from.y);
+  if (lengthSquared < 1e-6) return dHypot(point.x - from.x, point.y - from.y);
   const t = Math.min(1, Math.max(0, ((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared));
-  return Math.hypot(point.x - (from.x + dx * t), point.y - (from.y + dy * t));
+  return dHypot(point.x - (from.x + dx * t), point.y - (from.y + dy * t));
 }
 
 /** 지금 노릴 상대. 이미 잡은 상대가 살아 있으면 바꾸지 않고 계속 붙는다. */
@@ -6556,7 +6557,7 @@ function tickOpeningCharge(fighter: Fighter, state: SkirmishState, events: Skirm
   fighter.openingChargeReady = false;
   const from = { x: fighter.x, y: fighter.y };
   // 착지 거리는 마키의 도약과 같은 기준을 쓴다 — 사거리보다 조금 안쪽이라 붙은 채로 선다.
-  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = fighter.x - target.x; const dy = fighter.y - target.y; const gap = dHypot(dx, dy) || 1;
   const landing = fighterReach(fighter) * 0.8;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
@@ -6709,7 +6710,7 @@ function tickTankBreakthroughs(fighter: Fighter, dt: number, state: SkirmishStat
   const closeIn = 90;
   for (const other of state.fighters) {
     if (other.side === fighter.side || !isFighterAlive(other) || (other.pressure?.stacks ?? 0) < vortex.minStacks || other.knockback !== null) continue;
-    const dx = fighter.x - other.x; const dy = fighter.y - other.y; const gap = Math.hypot(dx, dy);
+    const dx = fighter.x - other.x; const dy = fighter.y - other.y; const gap = dHypot(dx, dy);
     if (gap <= closeIn) continue;
     const move = controlMagnitude(other, Math.min(vortex.pullPerSecond * dt, gap - closeIn));
     other.x += dx / gap * move;
@@ -6824,7 +6825,7 @@ function pullEnemiesToward(caster: Fighter, pull: { radius: number; distance: nu
   const pulled: Fighter[] = [];
   for (const other of state.fighters) {
     if (other.side === caster.side || !isFighterAlive(other) || distance(caster, other) > pull.radius) continue;
-    const dx = other.x - caster.x; const dy = other.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
+    const dx = other.x - caster.x; const dy = other.y - caster.y; const gap = dHypot(dx, dy) || 1;
     if (!displaceByControl(other, caster.x + dx / gap * pull.distance, caster.y + dy / gap * pull.distance, state)) continue;
     pulled.push(other);
   }
@@ -6843,7 +6844,7 @@ function hookFarthestEnemy(caster: Fighter, pull: { radius: number; distance: nu
   const pool = visible.length > 0 ? visible : inReach;
   if (pool.length === 0) return [];
   const farthest = pool.reduce((best, other) => distance(caster, other) > distance(caster, best) ? other : best);
-  const dx = farthest.x - caster.x; const dy = farthest.y - caster.y; const gap = Math.hypot(dx, dy) || 1;
+  const dx = farthest.x - caster.x; const dy = farthest.y - caster.y; const gap = dHypot(dx, dy) || 1;
   if (!displaceByControl(farthest, caster.x + dx / gap * pull.distance, caster.y + dy / gap * pull.distance, state)) return [];
   // 끌려온 순간 이전 추적을 끊는다 — 쫓던 자리로 되돌아 걸어가지 않게.
   farthest.engaged = false;
@@ -7056,7 +7057,7 @@ export function gainFerocity(fighter: Fighter, base: number, state: SkirmishStat
       // 진입 도발도 공용 상태 경계를 지나 지속시간 배율·긴 도발 우선·사망 해제를 그대로 얻는다.
       for (const enemy of state.fighters) {
         if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
-        if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > trait.tauntRadius) continue;
+        if (dHypot(enemy.x - fighter.x, enemy.y - fighter.y) > trait.tauntRadius) continue;
         applyCombatStatusEffect(enemy, { kind: "taunt", seconds: trait.tauntDurationSeconds }, events, state, fighter.id);
       }
     }
@@ -7579,7 +7580,7 @@ export function resolveReceivedDamage(target: Fighter, rawAmount: number): Recei
      */
     const span = Math.max(Number.EPSILON, 100 - plan.maxAtHpPercent);
     const progress = Math.min(1, Math.max(0, (100 - hpPercent) / span));
-    const curved = Math.pow(progress, Math.max(Number.EPSILON, plan.curve));
+    const curved = dPow(progress, Math.max(Number.EPSILON, plan.curve));
     reduction = plan.basePercent + (plan.maxPercent - plan.basePercent) * curved;
   }
   // 기존 야성 경감도 같은 최종 경계에 합치되 중복 호출 없이 곱연산 한 번으로 확정한다.
@@ -7834,7 +7835,7 @@ function startUndying(fighter: Fighter, state: SkirmishState, events: SkirmishEv
   if (blast) {
     for (const other of state.fighters) {
       if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > blast.radius) continue;
-      const dx = other.x - fighter.x; const dy = other.y - fighter.y; const gap = Math.hypot(dx, dy) || 1;
+      const dx = other.x - fighter.x; const dy = other.y - fighter.y; const gap = dHypot(dx, dy) || 1;
       beginKnockback(other, { remaining: blast.seconds, vx: (dx / gap) * blast.speed, vy: (dy / gap) * blast.speed, bouncesLeft: blast.bounces }, events);
     }
   }
@@ -8041,7 +8042,7 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fight
   const engagedBy = (foe: Fighter): number => state.fighters.filter(
     (mate) => mate.side === fighter.side && isFighterAlive(mate) && mate.targetId === foe.id).length;
   const wetted = (foe: Fighter): boolean => fighter.shallowPools.some(
-    (pool) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
+    (pool) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
 
   /*
    * 점수는 낮을수록 좋다. **이미 젖은 적을 먼저 밀어낸다**(1000) — 그다음이 붙은 아군 수(100)고,
@@ -8063,7 +8064,7 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fight
   // 고른 적 **너머**로 나간다. 시전자와 겹쳐 서 있으면 방향이 없으므로 그 자리에 고인다.
   const dx = chosen.x - fighter.x;
   const dy = chosen.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   const inside = (value: number, low: number, high: number): number => Math.min(high, Math.max(low, value));
   const x = inside(chosen.x + (gap > 1 ? dx / gap : 0) * shallows.behindDistance, state.arena.left, state.arena.right);
   const y = inside(chosen.y + (gap > 1 ? dy / gap : 0) * shallows.behindDistance, state.arena.top, state.arena.bottom);
@@ -8075,7 +8076,7 @@ function placeShallowPool(fighter: Fighter, state: SkirmishState, around?: Fight
 function addShallowPoolAt(fighter: Fighter, x: number, y: number): void {
   const shallows = fighter.def.basic.shallows;
   if (!shallows) return;
-  const near = fighter.shallowPools.find((pool) => Math.hypot(x - pool.x, y - pool.y) < shallows.minSpacing);
+  const near = fighter.shallowPools.find((pool) => dHypot(x - pool.x, y - pool.y) < shallows.minSpacing);
   if (near) {
     near.x = x; near.y = y; near.remaining = shallows.seconds; near.total = shallows.seconds;
     return;
@@ -8087,7 +8088,7 @@ function addShallowPoolAt(fighter: Fighter, x: number, y: number): void {
 function isSubmerged(fighter: Fighter, target: Fighter): boolean {
   const shallows = fighter.def.basic.shallows;
   if (shallows === undefined) return false;
-  return fighter.shallowPools.some((pool) => Math.hypot(target.x - pool.x, target.y - pool.y) <= shallows.radius);
+  return fighter.shallowPools.some((pool) => dHypot(target.x - pool.x, target.y - pool.y) <= shallows.radius);
 }
 
 /**
@@ -8163,7 +8164,7 @@ function tickArrowEchoes(fighter: Fighter, dt: number, state: SkirmishState, eve
     const input = { ...skill, power: skill.power, isCritical: false, kind: "basic" as const };
     const targets = state.fighters
       .filter((other) => other.side !== fighter.side && isFighterAlive(other))
-      .sort((a, b) => Math.hypot(a.x - echo.x, a.y - echo.y) - Math.hypot(b.x - echo.x, b.y - echo.y))
+      .sort((a, b) => dHypot(a.x - echo.x, a.y - echo.y) - dHypot(b.x - echo.x, b.y - echo.y))
       .slice(0, Math.max(1, skill.maxTargets ?? 1));
     for (const other of targets) {
       const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
@@ -8199,7 +8200,7 @@ function leapToShallowPool(fighter: Fighter, state: SkirmishState, events: Skirm
   let chosen: (typeof fighter.shallowPools)[number] | undefined;
   let bestCount = 0;
   for (const pool of fighter.shallowPools) {
-    const caught = foes.filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius).length;
+    const caught = foes.filter((foe) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius).length;
     if (caught > bestCount) { bestCount = caught; chosen = pool; }
   }
   if (!chosen) return;
@@ -8212,8 +8213,8 @@ function leapToShallowPool(fighter: Fighter, state: SkirmishState, events: Skirm
   // 평타 돌파(`leapPuddle`) — 도약이 꽂힌 적(터진 판 안에서 가장 가까운 살아 있는 적)의 발밑에도 여울이 하나 더 깔린다.
   if (openedBreakthrough(fighter, "basic", (effects) => effects.basic)?.kind === "leapPuddle") {
     const struck = foes
-      .filter((foe) => isFighterAlive(foe) && Math.hypot(foe.x - chosen.x, foe.y - chosen.y) <= shallows.radius)
-      .sort((a, b) => Math.hypot(a.x - chosen.x, a.y - chosen.y) - Math.hypot(b.x - chosen.x, b.y - chosen.y))[0];
+      .filter((foe) => isFighterAlive(foe) && dHypot(foe.x - chosen.x, foe.y - chosen.y) <= shallows.radius)
+      .sort((a, b) => dHypot(a.x - chosen.x, a.y - chosen.y) - dHypot(b.x - chosen.x, b.y - chosen.y))[0];
     if (struck) addShallowPoolAt(fighter, struck.x, struck.y);
   }
   // 뛰어든 자리가 새 표적을 정한다. 그러지 않으면 건너온 뒤에도 옛 상대를 향해 되돌아 걷는다.
@@ -8237,7 +8238,7 @@ function burstShallowPool(
   if (!shallows) return;
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player")
-    .filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
+    .filter((foe) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
   if (foes.length === 0) return;
   for (const foe of foes) {
     const input = {
@@ -8708,7 +8709,7 @@ function strike(
   // 때린 쪽은 상대 쪽으로 쿵 들어가고, 맞은 쪽은 같은 방향으로 밀려난다.
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const power = useUltimate ? 1.4 : 1;
   attacker.dashX = (dx / gap) * SKIRMISH.lunge * power;
   attacker.dashY = (dy / gap) * SKIRMISH.lunge * power;
@@ -9008,7 +9009,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     x: Math.min(state.arena.right, Math.max(state.arena.left, requestedCenter.x)),
     y: Math.min(state.arena.bottom, Math.max(state.arena.top, requestedCenter.y)),
   } : { x: attacker.x, y: attacker.y };
-  const inCircle = (fighter: Fighter): boolean => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
+  const inCircle = (fighter: Fighter): boolean => dHypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
   // 돌진은 지금 보고 있는 방향으로 이동 속도만큼 밀고 들어가며, 그 통로 안의 적을 모두 뚫는다.
   const charge = skill.targeting === "chargeLine" ? chargePath(attacker, state, requestedCenter, skill) : undefined;
   const inCharge = (fighter: Fighter): boolean => charge !== undefined
@@ -9041,7 +9042,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     state.fighters
       // 은신은 갈래화살의 최초 단일 표적이 되는 것만 막고, 이미 정해진 광역 판정의 피해는 막지 않는다.
       .filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter))
-      .sort((a, b) => Math.hypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - Math.hypot(b.x - requestedCenter.x, b.y - requestedCenter.y))
+      .sort((a, b) => dHypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - dHypot(b.x - requestedCenter.x, b.y - requestedCenter.y))
       .slice(0, forkCount)
       .map((fighter) => fighter.id),
   );
@@ -9087,7 +9088,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
     : skill.targeting === "splitShot"
       // 갈래화살은 반경이 없다. 실제로 맞은 적들을 감싸는 크기로 그려야 "여기까지 갈라졌다"가 맞는다.
       ? { shape: "radial" as const, x: requestedCenter.x, y: requestedCenter.y,
-          radius: Math.max(SKIRMISH.spacing, ...targets.map((fighter) => Math.hypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y))) }
+          radius: Math.max(SKIRMISH.spacing, ...targets.map((fighter) => dHypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y))) }
     : charge
       ? { shape: "lane" as const, from: charge.from, to: charge.to, halfWidth: skill.radius ?? 0 }
       : (skill.radius ?? 0) > 0
@@ -9206,7 +9207,7 @@ function strikeAreaAttack(attacker: Fighter, rng: () => number, state: SkirmishS
 
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
-    const gap = Math.hypot(dx, dy) || 1;
+    const gap = dHypot(dx, dy) || 1;
     if (index === 0) {
       attacker.dashX = (dx / gap) * SKIRMISH.lunge * 1.4;
       attacker.dashY = (dy / gap) * SKIRMISH.lunge * 1.4;
@@ -9305,7 +9306,7 @@ export function orbitStep(
 ): { x: number; y: number } {
   const dx = position.x - target.x;
   const dy = position.y - target.y;
-  const gap = Math.hypot(dx, dy) || 0.001;
+  const gap = dHypot(dx, dy) || 0.001;
   const outX = dx / gap;
   const outY = dy / gap;
   // 반지름 보정은 걸음 길이를 넘지 않는다. 넘기면 한 프레임에 목표 거리로 순간이동한다.
@@ -9327,13 +9328,13 @@ export function sidestep(
   if (forward >= -allowBack) return push;
   const sideX = push.x - forward * heading.x;
   const sideY = push.y - forward * heading.y;
-  const length = Math.hypot(push.x, push.y);
+  const length = dHypot(push.x, push.y);
   // 뒤로는 상한까지만 가고, 남은 세기는 옆으로 간다 — 전체 세기는 그대로다.
   const sideAmount = Math.sqrt(Math.max(0, length * length - allowBack * allowBack));
-  const sideLength = Math.hypot(sideX, sideY);
+  const sideLength = dHypot(sideX, sideY);
   const [unitX, unitY] = sideLength < length * 0.001
     // 옆 성분이 거의 없으면(정면에서 막혔으면) 진행 방향의 수직으로 직접 세운다.
-    ? [-heading.y * (Math.sin(wander) >= 0 ? 1 : -1), heading.x * (Math.sin(wander) >= 0 ? 1 : -1)]
+    ? [-heading.y * (dSin(wander) >= 0 ? 1 : -1), heading.x * (dSin(wander) >= 0 ? 1 : -1)]
     : [sideX / sideLength, sideY / sideLength];
   return {
     x: -heading.x * allowBack + unitX * sideAmount,
@@ -9377,7 +9378,7 @@ function separate(state: SkirmishState, dt: number): void {
     if (!target || !isFighterAlive(target)) return null;
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
-    const length = Math.hypot(dx, dy);
+    const length = dHypot(dx, dy);
     if (length <= 0.001) return null;
     return { heading: { x: dx / length, y: dy / length } };
   };
@@ -9389,13 +9390,13 @@ function separate(state: SkirmishState, dt: number): void {
       if (bypassesCollision(a) || bypassesCollision(b)) continue;
       const dx = b.x - a.x;
       const dy = b.y - a.y;
-      const gap = Math.hypot(dx, dy);
+      const gap = dHypot(dx, dy);
       // 몸집만큼 자리를 차지한다 — 늑대처럼 작게 선 몸이 사람만 한 간격을 밀어내면 한 칸에 셋이
       // 서는 지휘자가 전장을 통째로 흐트러뜨린다. 보통 몸(1)끼리는 예전 간격 그대로다.
       const spacing = pairSpacing(a, b);
       if (gap >= spacing) continue;
       // 정확히 겹쳤을 때도 방향이 필요하므로 고유 위상으로 갈라 세운다.
-      const angle = gap > 0.001 ? Math.atan2(dy, dx) : a.wander;
+      const angle = gap > 0.001 ? dAtan2(dy, dx) : a.wander;
       // 기절과 경직 모두 순간 이동을 막아 밀집 정리가 행동 차단을 우회하지 않게 한다.
       const canMove = (fighter: Fighter): boolean => !fighter.engaged && fighter.targetId !== null
         && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0 && !fighter.frozen;
@@ -9406,7 +9407,7 @@ function separate(state: SkirmishState, dt: number): void {
       const share = movable[0] && movable[1] ? 0.5 : 1;
       const push = (spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
       const shove = (fighter: Fighter, sign: number, toOtherX: number, toOtherY: number): void => {
-        const raw = { x: Math.cos(angle) * push * sign, y: Math.sin(angle) * push * sign };
+        const raw = { x: dCos(angle) * push * sign, y: dSin(angle) * push * sign };
         const approach = approachOf(fighter);
         // 옆이나 뒤에서 붐비는 것은 예전처럼 곧장 밀어낸다 — 앞을 가로막은 상대에게만 돌린다.
         const blocking = approach !== null && (toOtherX * approach.heading.x + toOtherY * approach.heading.y) >= SKIRMISH.blockAheadCos;
@@ -9417,7 +9418,7 @@ function separate(state: SkirmishState, dt: number): void {
         fighter.y += step.y;
       };
       // 상대가 어느 쪽에 있는지는 두 개체에서 서로 반대다.
-      const toB = gap > 0.001 ? { x: dx / gap, y: dy / gap } : { x: Math.cos(a.wander), y: Math.sin(a.wander) };
+      const toB = gap > 0.001 ? { x: dx / gap, y: dy / gap } : { x: dCos(a.wander), y: dSin(a.wander) };
       if (movable[0]) shove(a, -1, toB.x, toB.y);
       if (movable[1]) shove(b, 1, -toB.x, -toB.y);
     }
@@ -9510,7 +9511,7 @@ function updateDuoLink(fighter: Fighter, state: SkirmishState, dt: number): void
   // 속도보다 빨리 달리지 않는다.
   const dx = duo.x - fighter.x;
   const dy = duo.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   // 평타 돌파(`farPing`)가 열려 있으면 더 멀리 떨어져 선다 — 근접 아군 곁의 광역에서 한 걸음 물러난다.
   const farPing = openedBreakthrough(fighter, "basic", (effects) => effects.basic);
   const followDistance = farPing?.kind === "farPing" ? Math.max(link.followDistance, farPing.followDistance) : link.followDistance;
@@ -9565,7 +9566,7 @@ function launchDuoBreakthrough(
     // 밀어붙이는 길을 여는 폭주라, 통로에 남은 적은 그 자리에서 튕겨 나간다.
     const dx = enemy.x - path.from.x;
     const dy = enemy.y - path.from.y;
-    const gap = Math.hypot(dx, dy) || 1;
+    const gap = dHypot(dx, dy) || 1;
     beginKnockback(enemy, { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces }, events);
   }
   duo.x = path.to.x;
@@ -9949,7 +9950,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
   }
 
   // 돌진·피격 변위는 시간이 지나면 제자리로 돌아온다. 죽은 캐릭터도 마지막 밀림은 마저 푼다.
-  const recovery = Math.exp(-SKIRMISH.recover * dt);
+  const recovery = dExp(-SKIRMISH.recover * dt);
   for (const fighter of state.fighters) {
     // 메테 개체별 쿨타임은 행동 불능과 무관하게 실제 전투 시간으로 흐른다.
     const adagioRemaining = fighter.adagioCooldownRemaining - dt;
@@ -10198,7 +10199,7 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
 
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
-    const gap = Math.hypot(dx, dy) || 0.001;
+    const gap = dHypot(dx, dy) || 0.001;
     // 세로로 거의 겹쳐 있을 때 좌우가 깜빡이지 않도록 일정 거리부터만 방향을 바꾼다.
     if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
     // 붙는 동안에도 시계가 흘러야 접촉하자마자 첫 타가 나간다.
@@ -10259,14 +10260,14 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       const goal = droneGoal(state, fighter, target, reach);
       const toX = goal.x - fighter.x;
       const toY = goal.y - fighter.y;
-      const toGap = Math.hypot(toX, toY);
+      const toGap = dHypot(toX, toY);
       if (toGap > 1e-6) {
         const advanceBy = Math.min(1, moveSpeed(fighter, state) * dt / toGap);
         fighter.x += toX * advanceBy;
         fighter.y += toY * advanceBy;
       }
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+      fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
       if (!fighter.engaged) continue;
     } else if (!fighter.engaged || runsUntilStrike) {
       const step = moveSpeed(fighter, state) * dt;
@@ -10281,17 +10282,17 @@ function advance(state: SkirmishState, dt: number, rng: () => number, events: Sk
       }
       // 달리는 동안에는 통통 튀어 오른다. 발이 땅에 닿는 순간마다 hop이 0을 지난다.
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+      fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
       if (runsUntilStrike && fighter.engaged) {
         // 이미 손이 닿는데 아직 못 때리는 시간이다. 다가설 곳이 없으므로 둘레를 돈다 —
         // 표적을 갈아탈 적이 남아 있으면 애초에 `engaged`가 풀려 이 자리로 오지 않는다.
         const orbit = orbitStep(fighter, target, step, reach * SKIRMISH.engageRatio,
-          Math.sin(fighter.wander) >= 0 ? 1 : -1);
+          dSin(fighter.wander) >= 0 ? 1 : -1);
         fighter.x = orbit.x;
         fighter.y = orbit.y;
       } else {
         // 곧장 달려들지 않고 조금씩 옆으로 흘러 여섯이 서로를 돌며 붙는다.
-        const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
+        const swirl = dSin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
         fighter.x += ((dx / gap) + (-dy / gap) * swirl) * step;
         fighter.y += ((dy / gap) + (dx / gap) * swirl) * step;
       }
@@ -10789,7 +10790,7 @@ function idleTowardHome(fighter: Fighter, dt: number, state: SkirmishState): voi
   if (!home || fighter.knockback) return;
   const dx = home.x - fighter.x;
   const dy = home.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   if (!fighter.idleReturning && gap > GUILD_GUARD_IDLE.standRadius) fighter.idleReturning = true;
   if (fighter.idleReturning && gap <= GUILD_GUARD_IDLE.arriveRadius) fighter.idleReturning = false;
   if (!fighter.idleReturning) return;
@@ -10798,7 +10799,7 @@ function idleTowardHome(fighter: Fighter, dt: number, state: SkirmishState): voi
   fighter.y += (dy / gap) * step;
   if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+  fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
 }
 
 /**

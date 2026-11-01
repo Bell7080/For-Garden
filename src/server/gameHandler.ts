@@ -3,7 +3,7 @@ import type { AncientRankingResponse, ExpeditionLeaderboardResponse } from "../a
 import { isContentUnlocked } from "../core/contentUnlock";
 import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
 import type { PlayerDuelContext, PlayerDuelChange } from "./playerDuels";
-import { prepareCombat, finishCombat } from "./combatAuthority";
+import { prepareCombat, finishCombat, CombatRejected } from "./combatAuthority";
 import { authoritativeArgs, recordBoundaryResult, verifyBossWallTime } from "./releaseBoundary";
 import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
 /**
@@ -77,7 +77,7 @@ export interface GameCallResponse {
 }
 
 export class GameCallError extends Error {
-  constructor(readonly status: number, readonly code: string, message?: string, readonly domainCode?: ApiErrorCode) { super(message ?? code); }
+  constructor(readonly status: number, readonly code: string, message?: string, readonly domainCode?: ApiErrorCode, readonly detail?: string) { super(message ?? code); }
 }
 
 export interface GameHandlerDeps {
@@ -202,7 +202,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       }
     } catch (error) {
       // 규칙이 거절한 호출은 상태를 바꾸지 않았으므로 저장하지 않고 거절 사유만 돌려준다.
-      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined);
+      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : undefined, error instanceof CombatRejected ? error.reason : undefined);
     }
     const data = saveManager.exportData(state);
     const changed = JSON.stringify(data) !== before;

@@ -7074,6 +7074,15 @@ var MISC_KO = {
   "title.saveRecovered": "\uC800\uC7A5 \uB370\uC774\uD130\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC5B4 \uC548\uC804\uD55C \uCD08\uAE30 \uC0C1\uD0DC\uB85C \uBCF5\uAD6C\uD588\uC2B5\uB2C8\uB2E4.",
   "title.subtitle": "\uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC",
   "title.enter": "\uD0ED\uD558\uC5EC \uC785\uC7A5",
+  "legal.consent.title": "\uC11C\uBE44\uC2A4 \uC774\uC6A9 \uB3D9\uC758",
+  "legal.consent.note": "\uC2DC\uC791\uD558\uAE30 \uC804\uC5D0 \uC544\uB798 \uB0B4\uC6A9\uC744 \uD655\uC778\uD558\uACE0 \uB3D9\uC758\uD574 \uC8FC\uC138\uC694.",
+  "legal.consent.terms": "[\uD544\uC218] \uC11C\uBE44\uC2A4 \uC774\uC6A9\uC57D\uAD00\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4",
+  "legal.consent.privacy": "[\uD544\uC218] \uAC1C\uC778\uC815\uBCF4 \uCC98\uB9AC\uBC29\uCE68\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4",
+  "legal.consent.age": "[\uD544\uC218] \uB9CC 14\uC138 \uC774\uC0C1\uC785\uB2C8\uB2E4",
+  "legal.consent.view": "\uBCF4\uAE30",
+  "legal.consent.underAge": "\uB9CC 14\uC138 \uBBF8\uB9CC\uC740 \uBC95\uC815\uB300\uB9AC\uC778 \uB3D9\uC758 \uC808\uCC28\uAC00 \uB9C8\uB828\uB418\uAE30 \uC804\uAE4C\uC9C0 \uC774\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "legal.consent.submit": "\uB3D9\uC758\uD558\uACE0 \uC2DC\uC791",
+  "error.account.withdrawFailed": "\uD0C8\uD1F4\uB97C \uC694\uCCAD\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "title.login.guest": "\uAC8C\uC2A4\uD2B8\uB85C \uC2DC\uC791",
   "title.login.google": "Google\uB85C \uACC4\uC18D",
   "title.login.apple": "Apple\uB85C \uACC4\uC18D",
@@ -8266,6 +8275,7 @@ var SUPPORT_KO = {
   "support.category.inquiry": "\uBB38\uC758",
   "support.category.bug": "\uC624\uB958",
   "support.category.report": "\uC2E0\uACE0",
+  "support.category.privacy": "\uAC1C\uC778\uC815\uBCF4",
   "support.category.other": "\uAE30\uD0C0",
   "support.field.subject": "\uC81C\uBAA9",
   "support.field.body": "\uB0B4\uC6A9",
@@ -8440,6 +8450,91 @@ init_define_import_meta_env();
 
 // src/core/skirmish.ts
 init_define_import_meta_env();
+
+// src/core/detMath.ts
+init_define_import_meta_env();
+var PIO2_HI = 1.5707963267341256;
+var PIO2_LO = 6077100506506192e-26;
+var TWO_OVER_PI = 0.6366197723675814;
+var LN2_HI = 0.6931471803691238;
+var LN2_LO = 19082149292705877e-26;
+var LN2 = LN2_HI + LN2_LO;
+var LOG2E = 1.4426950408889634;
+function dHypot(x, y) {
+  return Math.sqrt(x * x + y * y);
+}
+function sinCosKernel(x) {
+  const k = Math.round(x * TWO_OVER_PI);
+  const r = x - k * PIO2_HI - k * PIO2_LO;
+  const z = r * r;
+  const s = r + r * z * (-0.16666666666666632 + z * (0.00833333333332249 + z * (-1984126982985795e-19 + z * (27557313707070068e-22 + z * (-25050760253406863e-24 + z * 158969099521155e-24)))));
+  const c = 1 - 0.5 * z + z * z * (0.0416666666666666 + z * (-0.001388888888887411 + z * (2480158728947673e-20 + z * (-27557314351390663e-23 + z * (2087572321298175e-24 + z * -11359647557788195e-27)))));
+  const q = (k % 4 + 4) % 4;
+  return q === 0 ? { s, c } : q === 1 ? { s: c, c: -s } : q === 2 ? { s: -s, c: -c } : { s: -c, c: s };
+}
+function dSin(x) {
+  if (!Number.isFinite(x)) return NaN;
+  return sinCosKernel(x).s;
+}
+function dCos(x) {
+  if (!Number.isFinite(x)) return NaN;
+  return sinCosKernel(x).c;
+}
+function atanUnit(t2) {
+  const fold = t2 > 0.4142135623730951;
+  const u = fold ? (1 - t2) / (1 + t2) : t2;
+  const z = u * u;
+  let sum = 0;
+  for (let n = 16; n >= 0; n--) sum = (n % 2 === 0 ? 1 : -1) / (2 * n + 1) + z * sum;
+  const a = u * sum;
+  return fold ? 0.7853981633974483 - a : a;
+}
+function dAtan2(y, x) {
+  if (Number.isNaN(x) || Number.isNaN(y)) return NaN;
+  const ax = Math.abs(x), ay = Math.abs(y);
+  if (ax === 0 && ay === 0) return x < 0 || Object.is(x, -0) ? Object.is(y, -0) || y < 0 ? -Math.PI : Math.PI : y;
+  const a = ay <= ax ? atanUnit(ay / ax) : 1.5707963267948966 - atanUnit(ax / ay);
+  const angle = x >= 0 ? a : Math.PI - a;
+  return y < 0 || Object.is(y, -0) ? -angle : angle;
+}
+function dExp(x) {
+  if (Number.isNaN(x)) return NaN;
+  if (x > 709) return Infinity;
+  if (x < -745) return 0;
+  const k = Math.round(x * LOG2E);
+  const r = x - k * LN2_HI - k * LN2_LO;
+  let sum = 1;
+  for (let n = 14; n >= 1; n--) sum = 1 + r / n * sum;
+  let scaled = sum;
+  for (let i = 0; i < Math.abs(k); i++) scaled = k > 0 ? scaled * 2 : scaled / 2;
+  return scaled;
+}
+function dLog(x) {
+  if (Number.isNaN(x) || x < 0) return NaN;
+  if (x === 0) return -Infinity;
+  if (x === Infinity) return Infinity;
+  let m = x, e = 0;
+  while (m >= 1.4142135623730951) {
+    m /= 2;
+    e += 1;
+  }
+  while (m < 0.7071067811865476) {
+    m *= 2;
+    e -= 1;
+  }
+  const s = (m - 1) / (m + 1), z = s * s;
+  let sum = 0;
+  for (let n = 14; n >= 0; n--) sum = 1 / (2 * n + 1) + z * sum;
+  return e * LN2 + 2 * s * sum;
+}
+function dPow(base, exponent) {
+  if (exponent === 0) return 1;
+  if (base === 1) return 1;
+  if (Number.isNaN(base) || Number.isNaN(exponent)) return NaN;
+  if (base === 0) return exponent > 0 ? 0 : Infinity;
+  if (base < 0) return NaN;
+  return dExp(exponent * dLog(base));
+}
 
 // src/core/expeditionCcPolicy.ts
 init_define_import_meta_env();
@@ -10910,7 +11005,7 @@ function beginKnockback(target, flight, events) {
 function launchKnockback(target, attacker, trait, state, events) {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const launched = beginKnockback(target, {
     remaining: trait.seconds,
     vx: dx / gap * trait.speed,
@@ -11283,17 +11378,17 @@ function fleeFromFear(fighter, dt, rng, state, events) {
   if (threat) {
     let dirX = fighter.x - threat.x;
     let dirY = fighter.y - threat.y;
-    const gap = Math.hypot(dirX, dirY);
+    const gap = dHypot(dirX, dirY);
     if (gap < 1e-3) {
-      dirX = Math.cos(fighter.wander);
-      dirY = Math.sin(fighter.wander);
+      dirX = dCos(fighter.wander);
+      dirY = dSin(fighter.wander);
     } else {
       dirX /= gap;
       dirY /= gap;
     }
     const margin = FEAR_FLEE.wallMargin;
     const { left, right, top, bottom } = state.arena;
-    const side = Math.sin(fighter.wander) >= 0 ? 1 : -1;
+    const side = dSin(fighter.wander) >= 0 ? 1 : -1;
     if (fighter.x <= left + margin && dirX < 0 || fighter.x >= right - margin && dirX > 0) {
       dirY = dirY === 0 ? side : Math.sign(dirY) * Math.max(Math.abs(dirY), 0.6);
       dirX = 0;
@@ -11302,14 +11397,14 @@ function fleeFromFear(fighter, dt, rng, state, events) {
       dirX = dirX === 0 ? side : Math.sign(dirX) * Math.max(Math.abs(dirX), 0.6);
       dirY = 0;
     }
-    const length = Math.hypot(dirX, dirY) || 1;
+    const length = dHypot(dirX, dirY) || 1;
     const step2 = moveSpeed(fighter, state) * dt;
     fighter.x += dirX / length * step2;
     fighter.y += dirY / length * step2;
     if (Math.abs(dirX) > 0.05) fighter.facing = dirX >= 0 ? 1 : -1;
   }
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+  fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
   const autoUltimate = !state.automaticUltimates && fighter.side === "enemy" || fighter.summonOwnerId !== null;
   if (autoUltimate && fighter.attackCooldown <= 0 && canFireUltimate(state, fighter)) {
     const target = resolveTarget(state, fighter, false);
@@ -11543,8 +11638,8 @@ function dronePatrolPoint(state, drone) {
   const { left, right, top, bottom } = state.arena;
   const phase = state.elapsed * 0.22 + drone.wander;
   return {
-    x: (left + right) / 2 + Math.sin(phase) * (right - left) * 0.32,
-    y: (top + bottom) / 2 + Math.sin(phase * 1.7 + 1) * (bottom - top) * 0.28
+    x: (left + right) / 2 + dSin(phase) * (right - left) * 0.32,
+    y: (top + bottom) / 2 + dSin(phase * 1.7 + 1) * (bottom - top) * 0.28
   };
 }
 var FEAR_FLEE = { wallMargin: 36 };
@@ -11570,10 +11665,10 @@ function droneGoal(state, drone, target, reach) {
     if (away >= DRONE_FLEE.radius) continue;
     const weight = (DRONE_FLEE.radius - away) / DRONE_FLEE.radius;
     const norm = away > 1e-3 ? away : 1;
-    pushX += (away > 1e-3 ? (drone.x - other.x) / norm : Math.cos(drone.wander)) * weight;
-    pushY += (away > 1e-3 ? (drone.y - other.y) / norm : Math.sin(drone.wander)) * weight;
+    pushX += (away > 1e-3 ? (drone.x - other.x) / norm : dCos(drone.wander)) * weight;
+    pushY += (away > 1e-3 ? (drone.y - other.y) / norm : dSin(drone.wander)) * weight;
   }
-  const threatened = Math.hypot(pushX, pushY) > 1e-6;
+  const threatened = dHypot(pushX, pushY) > 1e-6;
   if (!threatened) {
     const gap = distance(drone, target);
     return gap <= reach ? dronePatrolPoint(state, drone) : target;
@@ -11589,8 +11684,8 @@ function droneGoal(state, drone, target, reach) {
   let dirY = pushY + wallY * 1.4;
   const cornered = Math.abs(wallX) + Math.abs(wallY) > 0;
   if (cornered) {
-    const side = Math.sin(drone.wander + state.elapsed * 0.35) >= 0 ? 1 : -1;
-    const length2 = Math.hypot(dirX, dirY) || 1;
+    const side = dSin(drone.wander + state.elapsed * 0.35) >= 0 ? 1 : -1;
+    const length2 = dHypot(dirX, dirY) || 1;
     const swerveX = -dirY / length2 * DRONE_FLEE.swerve * side * length2;
     const swerveY = dirX / length2 * DRONE_FLEE.swerve * side * length2;
     dirX += swerveX;
@@ -11598,11 +11693,11 @@ function droneGoal(state, drone, target, reach) {
   }
   const toTarget = distance(drone, target);
   if (toTarget > reach * 0.85 && toTarget > 1e-3) {
-    const length2 = Math.hypot(dirX, dirY) || 1;
+    const length2 = dHypot(dirX, dirY) || 1;
     dirX += (target.x - drone.x) / toTarget * DRONE_FLEE.hold * length2;
     dirY += (target.y - drone.y) / toTarget * DRONE_FLEE.hold * length2;
   }
-  const length = Math.hypot(dirX, dirY) || 1;
+  const length = dHypot(dirX, dirY) || 1;
   return {
     x: Math.min(Math.max(drone.x + dirX / length * DRONE_FLEE.lookAhead, left), right),
     y: Math.min(Math.max(drone.y + dirY / length * DRONE_FLEE.lookAhead, top), bottom)
@@ -11639,7 +11734,7 @@ function leapToLowestHpEnemy(fighter, state, landingDistance) {
   if (!target) return void 0;
   const dx = fighter.x - target.x;
   const dy = fighter.y - target.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
   fighter.targetId = target.id;
@@ -11650,7 +11745,7 @@ function blinkToLowestDefenseEnemy(fighter, state) {
   if (!target) return void 0;
   const dx = fighter.x - target.x;
   const dy = fighter.y - target.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const landing = fighterReach(fighter) * 0.8;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
@@ -11962,7 +12057,7 @@ function leapBehindNearestEnemy(fighter, state, landingDistance) {
   if (!target) return void 0;
   const dx = target.x - fighter.x;
   const dy = target.y - fighter.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landingDistance));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landingDistance));
   fighter.targetId = target.id;
@@ -11977,7 +12072,7 @@ function dashToFarthestEnemy(fighter, landingDistance, state, events) {
   const from = { x: fighter.x, y: fighter.y };
   const dx = fighter.x - target.x;
   const dy = fighter.y - target.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const stop = Math.min(landingDistance, gap);
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * stop));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * stop));
@@ -12767,7 +12862,7 @@ function triggerBreakthroughOnKill(attacker, useUltimate, victim) {
 function tauntEnemiesAround(fighter, radius, seconds, state, events) {
   for (const enemy of state.fighters) {
     if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
-    if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > radius) continue;
+    if (dHypot(enemy.x - fighter.x, enemy.y - fighter.y) > radius) continue;
     applyCombatStatusEffect(enemy, { kind: "taunt", seconds }, events, state, fighter.id);
   }
 }
@@ -12807,7 +12902,7 @@ function tickUltimateBreakthrough(fighter, dt, state, events) {
   const radius = "radius" in ultimate && typeof ultimate.radius === "number" ? ultimate.radius : Number.POSITIVE_INFINITY;
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
   const input = { ...ultimate, power: ultimate.power * effect.powerPercent / 100, isCritical: false, kind: "ultimate" };
-  const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && Math.hypot(other.x - fighter.x, other.y - fighter.y) <= radius);
+  const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other) && dHypot(other.x - fighter.x, other.y - fighter.y) <= radius);
   if (targets2.length === 0) return;
   events.push({
     kind: "areaImpact",
@@ -12902,7 +12997,7 @@ function pullStruck(attacker, target, state, events) {
   if (!plan || !isFighterAlive(target)) return;
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   if (!displaceByControl(target, attacker.x + dx / gap * plan.distance, attacker.y + dy / gap * plan.distance, state)) return;
   target.engaged = false;
   events.push({ kind: "combatEffect", fighterId: target.id, effect: { tag: "shieldHit", intensity: 1 } });
@@ -13040,7 +13135,7 @@ function strikeBossBasicBreakthrough(attacker, target, input, critical, state, e
   if (basic?.kind === "piercingBeak") {
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
-    const length = Math.hypot(dx, dy) || 1;
+    const length = dHypot(dx, dy) || 1;
     const behind = aliveFighters(state, target.side).filter((other) => other.id !== target.id).map((other) => {
       const along = ((other.x - attacker.x) * dx + (other.y - attacker.y) * dy) / length;
       const off = Math.abs((other.x - attacker.x) * dy - (other.y - attacker.y) * dx) / length;
@@ -13876,12 +13971,12 @@ function moveSpeed(fighter, state) {
   return (fighter.def.stats.moveSpeed + ingredientHastePoints(fighter)) * SKIRMISH.moveRate * (1 + hungryPercent / 100) * (1 - sunkenSlowPercent(fighter) / 100) * (1 + teamBonus / 100) * (1 + selfBonus / 100) * (1 + tailwindPercent / 100) * (1 + (fighter.traitHaste?.moveSpeedPercent ?? 0) / 100) * (1 + (fighter.killHaste?.moveSpeedPercent ?? 0) / 100) * (1 - frostbiteSlowPercent(fighter) / 100) * (1 - chillPercent / 100) * (1 - pressureSlowPercent(fighter) / 100) * (1 - submergedPercent / 100) * (1 + confinementMoveSpeedPercent(fighter) / 100);
 }
 function distance(a, b) {
-  return Math.hypot(b.x - a.x, b.y - a.y);
+  return dHypot(b.x - a.x, b.y - a.y);
 }
 function chargePath(attacker, state, aim, skill) {
   const dx = aim.x - attacker.x;
   const dy = aim.y - attacker.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   const ux = gap < 1e-3 ? attacker.facing : dx / gap;
   const uy = gap < 1e-3 ? 0 : dy / gap;
   const reach = moveSpeed(attacker, state) * SKIRMISH.chargeSeconds * (skill?.chargeReachMultiplier ?? 1) * lockChargeReachFactor(attacker);
@@ -13903,9 +13998,9 @@ function distanceToSegment(point, from, to) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared < 1e-6) return Math.hypot(point.x - from.x, point.y - from.y);
+  if (lengthSquared < 1e-6) return dHypot(point.x - from.x, point.y - from.y);
   const t2 = Math.min(1, Math.max(0, ((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared));
-  return Math.hypot(point.x - (from.x + dx * t2), point.y - (from.y + dy * t2));
+  return dHypot(point.x - (from.x + dx * t2), point.y - (from.y + dy * t2));
 }
 function resolveTarget(state, fighter, reconsider = false) {
   const frenzied = fighter.frenzy !== null;
@@ -13992,7 +14087,7 @@ function tickOpeningCharge(fighter, state, events) {
   const from = { x: fighter.x, y: fighter.y };
   const dx = fighter.x - target.x;
   const dy = fighter.y - target.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const landing = fighterReach(fighter) * 0.8;
   fighter.x = Math.min(state.arena.right, Math.max(state.arena.left, target.x + dx / gap * landing));
   fighter.y = Math.min(state.arena.bottom, Math.max(state.arena.top, target.y + dy / gap * landing));
@@ -14123,7 +14218,7 @@ function tickTankBreakthroughs(fighter, dt, state, events) {
     if (other.side === fighter.side || !isFighterAlive(other) || (other.pressure?.stacks ?? 0) < vortex.minStacks || other.knockback !== null) continue;
     const dx = fighter.x - other.x;
     const dy = fighter.y - other.y;
-    const gap = Math.hypot(dx, dy);
+    const gap = dHypot(dx, dy);
     if (gap <= closeIn) continue;
     const move = controlMagnitude(other, Math.min(vortex.pullPerSecond * dt, gap - closeIn));
     other.x += dx / gap * move;
@@ -14223,7 +14318,7 @@ function pullEnemiesToward(caster, pull2, state) {
     if (other.side === caster.side || !isFighterAlive(other) || distance(caster, other) > pull2.radius) continue;
     const dx = other.x - caster.x;
     const dy = other.y - caster.y;
-    const gap = Math.hypot(dx, dy) || 1;
+    const gap = dHypot(dx, dy) || 1;
     if (!displaceByControl(other, caster.x + dx / gap * pull2.distance, caster.y + dy / gap * pull2.distance, state)) continue;
     pulled.push(other);
   }
@@ -14237,7 +14332,7 @@ function hookFarthestEnemy(caster, pull2, state) {
   const farthest = pool.reduce((best, other) => distance(caster, other) > distance(caster, best) ? other : best);
   const dx = farthest.x - caster.x;
   const dy = farthest.y - caster.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   if (!displaceByControl(farthest, caster.x + dx / gap * pull2.distance, caster.y + dy / gap * pull2.distance, state)) return [];
   farthest.engaged = false;
   farthest.knockback = null;
@@ -14459,7 +14554,7 @@ function gainFerocity(fighter, base, state, events) {
     if (trait.effectId === "torikaBulwark") {
       for (const enemy of state.fighters) {
         if (enemy.side === fighter.side || !isFighterAlive(enemy)) continue;
-        if (Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) > trait.tauntRadius) continue;
+        if (dHypot(enemy.x - fighter.x, enemy.y - fighter.y) > trait.tauntRadius) continue;
         applyCombatStatusEffect(enemy, { kind: "taunt", seconds: trait.tauntDurationSeconds }, events, state, fighter.id);
       }
     }
@@ -14800,7 +14895,7 @@ function resolveReceivedDamage(target, rawAmount) {
     const hpPercent = target.maxHp <= 0 ? 100 : Math.min(100, Math.max(0, target.hp / target.maxHp * 100));
     const span = Math.max(Number.EPSILON, 100 - plan.maxAtHpPercent);
     const progress = Math.min(1, Math.max(0, (100 - hpPercent) / span));
-    const curved = Math.pow(progress, Math.max(Number.EPSILON, plan.curve));
+    const curved = dPow(progress, Math.max(Number.EPSILON, plan.curve));
     reduction = plan.basePercent + (plan.maxPercent - plan.basePercent) * curved;
   }
   if (target.ferocityFever && target.def.ferocityTrait.effectId === "damageReduction") {
@@ -14983,7 +15078,7 @@ function startUndying(fighter, state, events) {
       if (other.side === fighter.side || !isFighterAlive(other) || distance(fighter, other) > blast.radius) continue;
       const dx = other.x - fighter.x;
       const dy = other.y - fighter.y;
-      const gap = Math.hypot(dx, dy) || 1;
+      const gap = dHypot(dx, dy) || 1;
       beginKnockback(other, { remaining: blast.seconds, vx: dx / gap * blast.speed, vy: dy / gap * blast.speed, bouncesLeft: blast.bounces }, events);
     }
   }
@@ -15112,7 +15207,7 @@ function placeShallowPool(fighter, state, around) {
     (mate) => mate.side === fighter.side && isFighterAlive(mate) && mate.targetId === foe.id
   ).length;
   const wetted = (foe) => fighter.shallowPools.some(
-    (pool) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius
+    (pool) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius
   );
   let chosen = foes[0];
   let best = Infinity;
@@ -15126,7 +15221,7 @@ function placeShallowPool(fighter, state, around) {
   if (around && isFighterAlive(around)) chosen = around;
   const dx = chosen.x - fighter.x;
   const dy = chosen.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   const inside = (value, low, high) => Math.min(high, Math.max(low, value));
   const x = inside(chosen.x + (gap > 1 ? dx / gap : 0) * shallows.behindDistance, state.arena.left, state.arena.right);
   const y = inside(chosen.y + (gap > 1 ? dy / gap : 0) * shallows.behindDistance, state.arena.top, state.arena.bottom);
@@ -15135,7 +15230,7 @@ function placeShallowPool(fighter, state, around) {
 function addShallowPoolAt(fighter, x, y) {
   const shallows = fighter.def.basic.shallows;
   if (!shallows) return;
-  const near = fighter.shallowPools.find((pool) => Math.hypot(x - pool.x, y - pool.y) < shallows.minSpacing);
+  const near = fighter.shallowPools.find((pool) => dHypot(x - pool.x, y - pool.y) < shallows.minSpacing);
   if (near) {
     near.x = x;
     near.y = y;
@@ -15148,7 +15243,7 @@ function addShallowPoolAt(fighter, x, y) {
 function isSubmerged(fighter, target) {
   const shallows = fighter.def.basic.shallows;
   if (shallows === void 0) return false;
-  return fighter.shallowPools.some((pool) => Math.hypot(target.x - pool.x, target.y - pool.y) <= shallows.radius);
+  return fighter.shallowPools.some((pool) => dHypot(target.x - pool.x, target.y - pool.y) <= shallows.radius);
 }
 function refreshSubmersion(state) {
   for (const fighter of state.fighters) fighter.submergedIn = null;
@@ -15204,7 +15299,7 @@ function tickArrowEchoes(fighter, dt, state, events) {
     if (!("damageType" in skill) || skill.damageType === void 0 || skill.power === void 0) continue;
     const attacker = { ...fighter, def: offensiveDefinition(fighter) };
     const input = { ...skill, power: skill.power, isCritical: false, kind: "basic" };
-    const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).sort((a, b) => Math.hypot(a.x - echo.x, a.y - echo.y) - Math.hypot(b.x - echo.x, b.y - echo.y)).slice(0, Math.max(1, skill.maxTargets ?? 1));
+    const targets2 = state.fighters.filter((other) => other.side !== fighter.side && isFighterAlive(other)).sort((a, b) => dHypot(a.x - echo.x, a.y - echo.y) - dHypot(b.x - echo.x, b.y - echo.y)).slice(0, Math.max(1, skill.maxTargets ?? 1));
     for (const other of targets2) {
       const raw = Math.max(1, Math.round(computeDamage(attacker, defensiveDefinition(other, state), input)));
       const resolution = resolveReceivedDamage(other, raw);
@@ -15240,7 +15335,7 @@ function leapToShallowPool(fighter, state, events) {
   let chosen;
   let bestCount = 0;
   for (const pool of fighter.shallowPools) {
-    const caught = foes.filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius).length;
+    const caught = foes.filter((foe) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius).length;
     if (caught > bestCount) {
       bestCount = caught;
       chosen = pool;
@@ -15254,7 +15349,7 @@ function leapToShallowPool(fighter, state, events) {
   burstShallowPool(fighter, chosen, shallows.leapPower, state, events);
   fighter.shallowPools = fighter.shallowPools.filter((pool) => pool !== chosen);
   if (openedBreakthrough(fighter, "basic", (effects) => effects.basic)?.kind === "leapPuddle") {
-    const struck = foes.filter((foe) => isFighterAlive(foe) && Math.hypot(foe.x - chosen.x, foe.y - chosen.y) <= shallows.radius).sort((a, b) => Math.hypot(a.x - chosen.x, a.y - chosen.y) - Math.hypot(b.x - chosen.x, b.y - chosen.y))[0];
+    const struck = foes.filter((foe) => isFighterAlive(foe) && dHypot(foe.x - chosen.x, foe.y - chosen.y) <= shallows.radius).sort((a, b) => dHypot(a.x - chosen.x, a.y - chosen.y) - dHypot(b.x - chosen.x, b.y - chosen.y))[0];
     if (struck) addShallowPoolAt(fighter, struck.x, struck.y);
   }
   fighter.targetId = null;
@@ -15264,7 +15359,7 @@ function burstShallowPool(fighter, pool, power, state, events) {
   const shallows = fighter.def.basic.shallows;
   if (!shallows) return;
   const attacker = { ...fighter, def: offensiveDefinition(fighter) };
-  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player").filter((foe) => Math.hypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
+  const foes = aliveFighters(state, fighter.side === "player" ? "enemy" : "player").filter((foe) => dHypot(foe.x - pool.x, foe.y - pool.y) <= shallows.radius);
   if (foes.length === 0) return;
   for (const foe of foes) {
     const input = {
@@ -15635,7 +15730,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   }
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
-  const gap = Math.hypot(dx, dy) || 1;
+  const gap = dHypot(dx, dy) || 1;
   const power = useUltimate ? 1.4 : 1;
   attacker.dashX = dx / gap * SKIRMISH.lunge * power;
   attacker.dashY = dy / gap * SKIRMISH.lunge * power;
@@ -15862,7 +15957,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     x: Math.min(state.arena.right, Math.max(state.arena.left, requestedCenter.x)),
     y: Math.min(state.arena.bottom, Math.max(state.arena.top, requestedCenter.y))
   } : { x: attacker.x, y: attacker.y };
-  const inCircle = (fighter) => Math.hypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
+  const inCircle = (fighter) => dHypot(fighter.x - center.x, fighter.y - center.y) <= (skill.radius ?? 0);
   const charge = skill.targeting === "chargeLine" ? chargePath(attacker, state, requestedCenter, skill) : void 0;
   const inCharge = (fighter) => charge !== void 0 && distanceToSegment(fighter, charge.from, charge.to) <= (skill.radius ?? 0);
   const detonation = ultimate?.overpaintDetonation === true;
@@ -15878,7 +15973,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
   const extraForks = !useUltimate && attacker.ferocityFever && feverTrait.effectId === "extraFork" ? feverTrait.extraForks : 0;
   const forkCount = Math.max(1, (skill.maxTargets ?? 1) + extraForks);
   const splitTargetIds = skill.targeting !== "splitShot" ? void 0 : new Set(
-    state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)).sort((a, b) => Math.hypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - Math.hypot(b.x - requestedCenter.x, b.y - requestedCenter.y)).slice(0, forkCount).map((fighter) => fighter.id)
+    state.fighters.filter((fighter) => fighter.side !== attacker.side && isFighterAlive(fighter)).sort((a, b) => dHypot(a.x - requestedCenter.x, a.y - requestedCenter.y) - dHypot(b.x - requestedCenter.x, b.y - requestedCenter.y)).slice(0, forkCount).map((fighter) => fighter.id)
   );
   const arrowBreakthrough = !useUltimate && skill.targeting === "splitShot" ? openedBreakthrough(attacker, "basic", (effects) => effects.basic) : void 0;
   if (arrowBreakthrough?.kind === "arrowEcho" && skill.power !== void 0) {
@@ -15905,7 +16000,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     shape: "radial",
     x: requestedCenter.x,
     y: requestedCenter.y,
-    radius: Math.max(SKIRMISH.spacing, ...targets2.map((fighter) => Math.hypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y)))
+    radius: Math.max(SKIRMISH.spacing, ...targets2.map((fighter) => dHypot(fighter.x - requestedCenter.x, fighter.y - requestedCenter.y)))
   } : charge ? { shape: "lane", from: charge.from, to: charge.to, halfWidth: skill.radius ?? 0 } : (skill.radius ?? 0) > 0 ? { shape: "radial", x: center.x, y: center.y, radius: skill.radius ?? 0 } : void 0;
   if (impactArea) {
     events.push({
@@ -15997,7 +16092,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
     }
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
-    const gap = Math.hypot(dx, dy) || 1;
+    const gap = dHypot(dx, dy) || 1;
     if (index === 0) {
       attacker.dashX = dx / gap * SKIRMISH.lunge * 1.4;
       attacker.dashY = dy / gap * SKIRMISH.lunge * 1.4;
@@ -16062,7 +16157,7 @@ function strikeAreaAttack(attacker, rng, state, events, useUltimate, targetPoint
 function orbitStep(position, target, step2, radius, direction) {
   const dx = position.x - target.x;
   const dy = position.y - target.y;
-  const gap = Math.hypot(dx, dy) || 1e-3;
+  const gap = dHypot(dx, dy) || 1e-3;
   const outX = dx / gap;
   const outY = dy / gap;
   const pull2 = Math.max(-step2, Math.min(step2, radius - gap));
@@ -16077,10 +16172,10 @@ function sidestep(push, heading, wander, allowBack) {
   if (forward >= -allowBack) return push;
   const sideX = push.x - forward * heading.x;
   const sideY = push.y - forward * heading.y;
-  const length = Math.hypot(push.x, push.y);
+  const length = dHypot(push.x, push.y);
   const sideAmount = Math.sqrt(Math.max(0, length * length - allowBack * allowBack));
-  const sideLength = Math.hypot(sideX, sideY);
-  const [unitX, unitY] = sideLength < length * 1e-3 ? [-heading.y * (Math.sin(wander) >= 0 ? 1 : -1), heading.x * (Math.sin(wander) >= 0 ? 1 : -1)] : [sideX / sideLength, sideY / sideLength];
+  const sideLength = dHypot(sideX, sideY);
+  const [unitX, unitY] = sideLength < length * 1e-3 ? [-heading.y * (dSin(wander) >= 0 ? 1 : -1), heading.x * (dSin(wander) >= 0 ? 1 : -1)] : [sideX / sideLength, sideY / sideLength];
   return {
     x: -heading.x * allowBack + unitX * sideAmount,
     y: -heading.y * allowBack + unitY * sideAmount
@@ -16098,7 +16193,7 @@ function separate(state, dt) {
     if (!target || !isFighterAlive(target)) return null;
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
-    const length = Math.hypot(dx, dy);
+    const length = dHypot(dx, dy);
     if (length <= 1e-3) return null;
     return { heading: { x: dx / length, y: dy / length } };
   };
@@ -16109,24 +16204,24 @@ function separate(state, dt) {
       if (bypassesCollision(a) || bypassesCollision(b)) continue;
       const dx = b.x - a.x;
       const dy = b.y - a.y;
-      const gap = Math.hypot(dx, dy);
+      const gap = dHypot(dx, dy);
       const spacing = pairSpacing(a, b);
       if (gap >= spacing) continue;
-      const angle = gap > 1e-3 ? Math.atan2(dy, dx) : a.wander;
+      const angle = gap > 1e-3 ? dAtan2(dy, dx) : a.wander;
       const canMove = (fighter) => !fighter.engaged && fighter.targetId !== null && fighter.stunnedFor <= 0 && fighter.staggeredFor <= 0 && !fighter.frozen;
       const movable = [canMove(a), canMove(b)];
       if (!movable[0] && !movable[1]) continue;
       const share = movable[0] && movable[1] ? 0.5 : 1;
       const push = (spacing - gap) * share * Math.min(1, SKIRMISH.separationRate * dt);
       const shove = (fighter, sign, toOtherX, toOtherY) => {
-        const raw = { x: Math.cos(angle) * push * sign, y: Math.sin(angle) * push * sign };
+        const raw = { x: dCos(angle) * push * sign, y: dSin(angle) * push * sign };
         const approach = approachOf(fighter);
         const blocking = approach !== null && toOtherX * approach.heading.x + toOtherY * approach.heading.y >= SKIRMISH.blockAheadCos;
         const step2 = blocking && approach !== null ? sidestep(raw, approach.heading, fighter.wander, moveSpeed(fighter, state) * dt * SKIRMISH.blockBackflowRatio) : raw;
         fighter.x += step2.x;
         fighter.y += step2.y;
       };
-      const toB = gap > 1e-3 ? { x: dx / gap, y: dy / gap } : { x: Math.cos(a.wander), y: Math.sin(a.wander) };
+      const toB = gap > 1e-3 ? { x: dx / gap, y: dy / gap } : { x: dCos(a.wander), y: dSin(a.wander) };
       if (movable[0]) shove(a, -1, toB.x, toB.y);
       if (movable[1]) shove(b, 1, -toB.x, -toB.y);
     }
@@ -16189,7 +16284,7 @@ function updateDuoLink(fighter, state, dt) {
   }
   const dx = duo.x - fighter.x;
   const dy = duo.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   const farPing = openedBreakthrough(fighter, "basic", (effects) => effects.basic);
   const followDistance = farPing?.kind === "farPing" ? Math.max(link.followDistance, farPing.followDistance) : link.followDistance;
   if (gap <= followDistance) return;
@@ -16235,7 +16330,7 @@ function launchDuoBreakthrough(fighter, trait, state, events) {
     if (!isFighterAlive(enemy)) continue;
     const dx = enemy.x - path.from.x;
     const dy = enemy.y - path.from.y;
-    const gap = Math.hypot(dx, dy) || 1;
+    const gap = dHypot(dx, dy) || 1;
     beginKnockback(enemy, { remaining: trait.knockback.seconds, vx: dx / gap * trait.knockback.speed, vy: dy / gap * trait.knockback.speed, bouncesLeft: trait.knockback.bounces }, events);
   }
   duo.x = path.to.x;
@@ -16541,7 +16636,7 @@ function advance(state, dt, rng, events) {
       }
     }
   }
-  const recovery = Math.exp(-SKIRMISH.recover * dt);
+  const recovery = dExp(-SKIRMISH.recover * dt);
   for (const fighter of state.fighters) {
     const adagioRemaining = fighter.adagioCooldownRemaining - dt;
     fighter.adagioCooldownRemaining = adagioRemaining <= EMERGENCY_RECOVERY.epsilon ? 0 : adagioRemaining;
@@ -16748,7 +16843,7 @@ function advance(state, dt, rng, events) {
     if (droneAim) fighter.targetId = droneAim.id;
     const dx = target.x - fighter.x;
     const dy = target.y - fighter.y;
-    const gap = Math.hypot(dx, dy) || 1e-3;
+    const gap = dHypot(dx, dy) || 1e-3;
     if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
     fighter.attackCooldown -= dt;
     const reach = fighterReach(fighter);
@@ -16773,14 +16868,14 @@ function advance(state, dt, rng, events) {
       const goal = droneGoal(state, fighter, target, reach);
       const toX = goal.x - fighter.x;
       const toY = goal.y - fighter.y;
-      const toGap = Math.hypot(toX, toY);
+      const toGap = dHypot(toX, toY);
       if (toGap > 1e-6) {
         const advanceBy = Math.min(1, moveSpeed(fighter, state) * dt / toGap);
         fighter.x += toX * advanceBy;
         fighter.y += toY * advanceBy;
       }
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+      fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
       if (!fighter.engaged) continue;
     } else if (!fighter.engaged || runsUntilStrike) {
       const step2 = moveSpeed(fighter, state) * dt;
@@ -16792,19 +16887,19 @@ function advance(state, dt, rng, events) {
         if (passive.moveFerocityPerSecond) gainFerocity(fighter, passive.moveFerocityPerSecond * dt, state, events);
       }
       fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-      fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+      fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
       if (runsUntilStrike && fighter.engaged) {
         const orbit = orbitStep(
           fighter,
           target,
           step2,
           reach * SKIRMISH.engageRatio,
-          Math.sin(fighter.wander) >= 0 ? 1 : -1
+          dSin(fighter.wander) >= 0 ? 1 : -1
         );
         fighter.x = orbit.x;
         fighter.y = orbit.y;
       } else {
-        const swirl = Math.sin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
+        const swirl = dSin(state.elapsed * 1.7 + fighter.wander) * SKIRMISH.swirl;
         fighter.x += (dx / gap + -dy / gap * swirl) * step2;
         fighter.y += (dy / gap + dx / gap * swirl) * step2;
       }
@@ -17178,7 +17273,7 @@ function idleTowardHome(fighter, dt, state) {
   if (!home || fighter.knockback) return;
   const dx = home.x - fighter.x;
   const dy = home.y - fighter.y;
-  const gap = Math.hypot(dx, dy);
+  const gap = dHypot(dx, dy);
   if (!fighter.idleReturning && gap > GUILD_GUARD_IDLE.standRadius) fighter.idleReturning = true;
   if (fighter.idleReturning && gap <= GUILD_GUARD_IDLE.arriveRadius) fighter.idleReturning = false;
   if (!fighter.idleReturning) return;
@@ -17187,7 +17282,7 @@ function idleTowardHome(fighter, dt, state) {
   fighter.y += dy / gap * step2;
   if (Math.abs(dx) > SKIRMISH.facingDeadzone) fighter.facing = dx >= 0 ? 1 : -1;
   fighter.hopPhase += dt * SKIRMISH.hopRate * Math.PI * (fighter.def.stats.moveSpeed / 100);
-  fighter.hop = Math.abs(Math.sin(fighter.hopPhase)) * SKIRMISH.hopHeight;
+  fighter.hop = Math.abs(dSin(fighter.hopPhase)) * SKIRMISH.hopHeight;
 }
 function hordeFieldCount(state) {
   return state.fighters.filter((fighter) => fighter.side === "enemy" && fighter.hordeScore !== void 0 && isFighterAlive(fighter)).length;
@@ -26917,7 +27012,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -26974,6 +27069,8 @@ function normalizeSettings(value) {
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null) : [],
       ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
+      // 동의한 약관·처리방침의 판(`core/legalConsent.ts`의 키). 모르는 모양은 동의하지 않은 것으로 읽는다.
+      legalConsent: typeof g.legalConsent === "string" && /^[\w.:|-]{1,160}$/.test(g.legalConsent) ? g.legalConsent : "",
       // 필드가 없던 저장은 예전 모습(얼굴 없음 · 장착 룬도 보임)으로 이관한다.
       runeBag: {
         showHolder: bool(record(g.runeBag).showHolder, d.game.runeBag.showHolder),
@@ -27080,12 +27177,23 @@ function settleIdleExcavation(state, serverNow2, relics = [], progressByRelicId 
   const speedExpiryMs = state.productionMultiplierExpiresAt ? Date.parse(state.productionMultiplierExpiresAt) : accrual.window.startMs;
   const split = splitAccrualAt(accrual.window, state.productionMultiplierExpiresAt);
   const boostedSeconds = split.beforeMs / 1e3;
-  const normalSeconds = split.afterMs / 1e3;
-  const capacity = excavationStorageCapacity(production, storageLimit);
+  const windowEndMs = accrual.window.effectiveEndMs;
+  const extensionEndMs = extensionActive && state.storageExtensionExpiresAt ? Math.min(windowEndMs, Date.parse(state.storageExtensionExpiresAt)) : accrual.window.startMs;
+  const boostedUntilMs = accrual.window.startMs + boostedSeconds * 1e3;
+  const weightedSeconds = (fromMs, toMs) => {
+    if (toMs <= fromMs) return 0;
+    const boosted = Math.max(0, Math.min(toMs, boostedUntilMs) - fromMs);
+    return (boosted * state.activeProductionMultiplier + (toMs - fromMs - boosted)) / 1e3;
+  };
+  const extendedSeconds = weightedSeconds(accrual.window.startMs, extensionEndMs);
+  const baseSeconds = weightedSeconds(extensionEndMs, windowEndMs);
+  const extendedCapacity = excavationStorageCapacity(production, storageLimit);
+  const baseCapacity = excavationStorageCapacity(production, baseStorageSeconds);
   for (const currency3 of EXCAVATION_CURRENCIES) {
     const previous = unclaimed[currency3] ?? 0;
-    const grown = previous + production[currency3] / 3600 * (boostedSeconds * state.activeProductionMultiplier + normalSeconds);
-    unclaimed[currency3] = clampExcavationStorage(previous, grown, capacity[currency3]);
+    const perSecond = production[currency3] / 3600;
+    const atExpiry = clampExcavationStorage(previous, previous + perSecond * extendedSeconds, extendedCapacity[currency3]);
+    unclaimed[currency3] = clampExcavationStorage(atExpiry, atExpiry + perSecond * baseSeconds, baseCapacity[currency3]);
   }
   return { ...state, baseStorageSeconds, lastSettledAt: serverNow2.toISOString(), assignedRelicIds: [...state.assignedRelicIds], unclaimed, activeProductionMultiplier: speedExpiryMs > serverNow2.getTime() ? state.activeProductionMultiplier : 1, productionMultiplierExpiresAt: speedExpiryMs > serverNow2.getTime() ? state.productionMultiplierExpiresAt : null, storageExtensionExpiresAt: state.storageExtensionExpiresAt && new Date(state.storageExtensionExpiresAt).getTime() > serverNow2.getTime() ? state.storageExtensionExpiresAt : null, retroactiveExcavationGrantVersion: RETROACTIVE_EXCAVATION_GRANT_VERSION };
 }
@@ -34756,8 +34864,15 @@ function placedEnemyIndex(input, stage, enemyDefs) {
 }
 
 // src/server/combatAuthority.ts
-var fail = () => {
-  throw new Error("COMBAT_REJECTED");
+var CombatRejected = class extends Error {
+  constructor(reason) {
+    super("COMBAT_REJECTED");
+    this.reason = reason;
+  }
+  reason;
+};
+var fail = (reason = "unspecified") => {
+  throw new CombatRejected(reason);
 };
 function combatJournal(state) {
   const journal = state.serverJournal;
@@ -34901,19 +35016,19 @@ function prepareCombat(state, request, now, id) {
 }
 function finishCombat(state, proof, now) {
   if (!proof || typeof proof.id !== "string" || !Array.isArray(proof.actions) || proof.actions.length > MAX_COMBAT_ACTIONS || !Number.isInteger(proof.ticks) || proof.ticks < 0 || proof.ticks > MAX_COMBAT_TICKS || proof.abandoned !== void 0 && typeof proof.abandoned !== "boolean")
-    return fail();
+    return fail("proof_shape");
   const record2 = combatJournal(state).records[proof.id];
-  if (!record2 || Date.parse(record2.lease.expiresAt) < now.getTime())
-    return fail();
+  if (!record2) return fail("no_record");
+  if (Date.parse(record2.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record2.verdict) return structuredClone(record2.verdict);
-  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail();
+  if (record2.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
   if (proof.ticks * COMBAT_STEP_MS > Math.max(0, now.getTime() - Date.parse(record2.issuedAt)) * 3 + 2e3)
-    return fail();
+    return fail("too_fast");
   const battle = combatState(record2.lease), rng = bossBattleRandom(record2.lease.seed);
   let index = 0, previous = -1;
   for (const action of proof.actions) {
     if (!action || !Number.isInteger(action.tick) || action.tick < 0 || action.tick < previous || action.tick > proof.ticks || typeof action.actorId !== "string")
-      return fail();
+      return fail("action_shape");
     previous = action.tick;
   }
   for (let tick = 0; tick <= proof.ticks; tick++) {
@@ -34921,17 +35036,18 @@ function finishCombat(state, proof, now) {
       const action = proof.actions[index++], actor = battle.fighters.find(
         (f) => f.id === action.actorId && f.side === "player"
       );
-      if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
-        return fail();
+      if (!actor) return fail(`ultimate_no_actor@${tick}`);
+      if (battle.phase !== "fight") return fail(`ultimate_after_end@${tick}`);
+      if (!canFireUltimate(battle, actor)) return fail(`ultimate_not_ready@${tick}:${actor.def.id}`);
       fireUltimate(battle, actor.id, rng);
     }
     if (tick < proof.ticks) {
-      if (battle.phase !== "fight") return fail();
+      if (battle.phase !== "fight") return fail(`ended_early@${tick}/${proof.ticks}:${battle.phase}`);
       stepSkirmish(battle, COMBAT_STEP_MS / 1e3, rng);
     }
   }
-  if (index !== proof.actions.length || !proof.abandoned && battle.phase === "fight")
-    return fail();
+  if (index !== proof.actions.length) return fail("actions_left");
+  if (!proof.abandoned && battle.phase === "fight") return fail(`still_fighting@${proof.ticks}`);
   const victory = !proof.abandoned && battle.phase === "victory";
   const results = skirmishRelicResults(battle);
   const party = record2.input.input.mode === "expedition" ? record2.input.input.relics.map((r) => r.relicId) : record2.lease.setup.players.map((f) => f.id);
@@ -40805,7 +40921,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.394.0",
+  version: "0.395.3",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -41400,6 +41516,11 @@ var SettingsManager = class extends EventTarget {
   rememberAncientResetSeen(day) {
     if (this.get().game.ancientResetSeen === day) return;
     this.update({ game: { ancientResetSeen: day } });
+  }
+  /** 약관·처리방침 동의를 이 기기에 기록한다(서버 기록은 `LegalConsentApi`가 따로 남긴다). */
+  rememberLegalConsent(key) {
+    if (this.get().game.legalConsent === key) return;
+    this.update({ game: { legalConsent: key } });
   }
   update(patch) {
     const merged = Object.fromEntries(Object.entries(this.get()).map(([key, value]) => [key, { ...value, ...patch[key] ?? {} }]));
@@ -46329,15 +46450,17 @@ var StateConflictError = class extends Error {
   }
 };
 var GameCallError = class extends Error {
-  constructor(status, code, message, domainCode) {
+  constructor(status, code, message, domainCode, detail) {
     super(message ?? code);
     this.status = status;
     this.code = code;
     this.domainCode = domainCode;
+    this.detail = detail;
   }
   status;
   code;
   domainCode;
+  detail;
 };
 var unavailableGuild = createUnavailableGuildBackend();
 var chain = Promise.resolve();
@@ -46444,7 +46567,7 @@ async function run(playerId, req, deps) {
         }
       }
     } catch (error) {
-      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : void 0);
+      throw new GameCallError(422, "rejected", error instanceof Error ? error.message : String(error), error instanceof GameApiError ? error.code : void 0, error instanceof CombatRejected ? error.reason : void 0);
     }
     const data = saveManager.exportData(state);
     const changed = JSON.stringify(data) !== before;
@@ -46780,7 +46903,7 @@ async function handler(req, res) {
     }
   } catch (error) {
     if (error instanceof GameCallError) {
-      res.status(error.status).json({ ok: false, code: error.code, message: error.message, ...error.domainCode ? { domainCode: error.domainCode } : {} });
+      res.status(error.status).json({ ok: false, code: error.code, message: error.message, ...error.domainCode ? { domainCode: error.domainCode } : {}, ...error.detail ? { detail: error.detail } : {} });
       return;
     }
     res.status(503).json({ ok: false, code: "service_unavailable" });

@@ -43,8 +43,12 @@ import {
   type CombatJournal,
 } from "../core/combatProtocol";
 
-const fail = (): never => {
-  throw new Error("COMBAT_REJECTED");
+/** 거절 사유(`reason`)는 응답의 `detail`과 오류 수집(`client_errors`)에만 실려 어느 검사에서 막혔는지 알려 준다. */
+export class CombatRejected extends Error {
+  constructor(readonly reason: string) { super("COMBAT_REJECTED"); }
+}
+const fail = (reason = "unspecified"): never => {
+  throw new CombatRejected(reason);
 };
 export function combatJournal(state: Session): CombatJournal {
   const journal = state.serverJournal!;
@@ -283,18 +287,18 @@ export function finishCombat(
     proof.ticks > MAX_COMBAT_TICKS ||
     (proof.abandoned !== undefined && typeof proof.abandoned !== "boolean")
   )
-    return fail();
+    return fail("proof_shape");
   const record = combatJournal(state).records[proof.id];
-  if (!record || Date.parse(record.lease.expiresAt) < now.getTime())
-    return fail();
+  if (!record) return fail("no_record");
+  if (Date.parse(record.lease.expiresAt) < now.getTime()) return fail("lease_expired");
   if (record.verdict) return structuredClone(record.verdict);
-  if (record.lease.setup.options?.automaticUltimates && proof.actions.length) return fail();
+  if (record.lease.setup.options?.automaticUltimates && proof.actions.length) return fail("auto_ultimate_actions");
   // 공식 최대 배속보다 빨리 끝나는 제출은 재현 전에 거절한다. 일시 정지는 상한을 늘리지 않는다.
   if (
     proof.ticks * COMBAT_STEP_MS >
     Math.max(0, now.getTime() - Date.parse(record.issuedAt)) * 3 + 2000
   )
-    return fail();
+    return fail("too_fast");
   const battle = combatState(record.lease),
     rng = bossBattleRandom(record.lease.seed);
   let index = 0,
@@ -308,7 +312,7 @@ export function finishCombat(
       action.tick > proof.ticks ||
       typeof action.actorId !== "string"
     )
-      return fail();
+      return fail("action_shape");
     previous = action.tick;
   }
   for (let tick = 0; tick <= proof.ticks; tick++) {
@@ -317,20 +321,18 @@ export function finishCombat(
         actor = battle.fighters.find(
           (f) => f.id === action.actorId && f.side === "player",
         );
-      if (!actor || battle.phase !== "fight" || !canFireUltimate(battle, actor))
-        return fail();
+      if (!actor) return fail(`ultimate_no_actor@${tick}`);
+      if (battle.phase !== "fight") return fail(`ultimate_after_end@${tick}`);
+      if (!canFireUltimate(battle, actor)) return fail(`ultimate_not_ready@${tick}:${actor.def.id}`);
       fireUltimate(battle, actor.id, rng);
     }
     if (tick < proof.ticks) {
-      if (battle.phase !== "fight") return fail();
+      if (battle.phase !== "fight") return fail(`ended_early@${tick}/${proof.ticks}:${battle.phase}`);
       stepSkirmish(battle, COMBAT_STEP_MS / 1000, rng);
     }
   }
-  if (
-    index !== proof.actions.length ||
-    (!proof.abandoned && battle.phase === "fight")
-  )
-    return fail();
+  if (index !== proof.actions.length) return fail("actions_left");
+  if (!proof.abandoned && battle.phase === "fight") return fail(`still_fighting@${proof.ticks}`);
   const victory = !proof.abandoned && battle.phase === "victory";
   const results = skirmishRelicResults(battle);
   const party =

@@ -139,7 +139,8 @@ const AUDIT: readonly [string, number, () => readonly RelicDef[], EncounterRole,
   // v0.362.0: 10단계로 늘리며 최상단(LV60) 첫 라운드가 토비 → 아모로 바뀌어 8.2 → 18.5초로 길어졌다.
   ["현상수배 10단계", 60, () => [bountyRoundEnemy(BOUNTY_TIERS.find(({ order }) => order === 10)!.rounds[0])], "normal", "bounty", 18.5, 0.98],
   ["대작전 1단계", 5, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[0]), "swarm", "cake", 30.1, 0.85],
-  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 52.8, 0.79],
+  // v0.395.4: 전투 코어의 hypot·sin·cos·atan2·exp·pow를 결정적 구현(detMath)으로 바꾸자 열다섯이 엉키는 난전이 마지막 자리부터 달라져 52.8 → 57.3초로 재측정됐다.
+  ["대작전 8단계", 60, () => cakeOperationEnemies(CAKE_OPERATION_TIERS[7]), "swarm", "cake", 57.3, 0.79],
   ["원정 일반 5층", 10, () => getExpeditionEncounterEnemies("normal", 5), "normal", "expedition", 18.1, 0.95],
   // 정예가 보호막을 깨고(코마) 치유를 깎는 자리가 되어 평균이 37.3 → 29.5로 줄고 띠 안에 들었다.
   ["원정 정예 10층", 20, () => getExpeditionEncounterEnemies("elite", 10), "elite", "expedition", 12.4, 0.64],

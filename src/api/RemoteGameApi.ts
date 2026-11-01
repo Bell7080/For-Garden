@@ -32,11 +32,12 @@ function reportApiFailure(method: string, error: unknown): void {
   const status = error instanceof RemoteGameApiError ? error.status : 0;
   const code = error instanceof RemoteGameApiError ? error.code : "";
   if (status === 0 || status === 401 || status === 403 || status === 408 || code === "save_conflict" || code === "stale_response") return;
-  apiFailureSink.report?.(`api.${status >= 500 ? "5xx" : "4xx"}`, error, { method, status, code });
+  const detail = error instanceof RemoteGameApiError ? error.detail : undefined;
+  apiFailureSink.report?.(`api.${status >= 500 ? "5xx" : "4xx"}`, error, { method, status, code, ...(detail ? { detail } : {}) });
 }
 
 export class RemoteGameApiError extends Error {
-  constructor(readonly status: number, readonly code: string, message?: string) { super(message ?? code); }
+  constructor(readonly status: number, readonly code: string, message?: string, readonly detail?: string) { super(message ?? code); }
 }
 
 // 상태를 바꾸지 않는 조회는 재전송 키가 필요 없다.
@@ -80,7 +81,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
         if (signal.aborted) break;
         continue;
       }
-      const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; domainCode?: ApiErrorCode; message?: string } | null;
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; result?: unknown; state?: unknown; code?: string; domainCode?: ApiErrorCode; message?: string; detail?: string } | null;
       // 서버가 규칙으로 거절한 호출(4xx)은 끝난 일이다. 시간 초과·서버 오류(5xx)는 확정되었는지 모르므로 키를 남긴다.
       if (!res.ok || !json?.ok) {
         const retryable = res.status === 408 || res.status >= 500
@@ -89,7 +90,7 @@ export function createRemoteGameApi(options: RemoteGameApiOptions): GameApi {
         if (res.status >= 400 && res.status < 500 && !retryable && callKey) retryIds.delete(callKey);
         if (res.status === 403 && json?.code === "account_deleted") reportAccountDeleted();
         if (res.status === 422 && json?.domainCode) throw new GameApiError(json.domainCode, json.message ?? json.domainCode);
-        const error = new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message);
+        const error = new RemoteGameApiError(res.status, json?.code ?? "request_failed", json?.message, typeof json?.detail === "string" ? json.detail.slice(0, 80) : undefined);
         if (retryable && attempt === 0 && !signal.aborted) {
           lastError = error;
           // 저장 직후 게이트웨이 응답만 유실된 경우도 같은 키로 영수증을 되찾는다.

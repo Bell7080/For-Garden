@@ -2764,6 +2764,7 @@
 - 미보유 렐릭의 선택 유대는 `serverJournal.pendingStoryBondXp`에 적립하고 최초 획득의 복제 상태에서 지급·소진한다. 새 획득 경로는 `redeemDeferredStoryBond`를 같은 저장 전에 호출해야 한다. 두 장부는 선택 JSON 필드이며 구 저장은 빈 장부다. 과거 완료분의 선택을 추측해 소급 지급하지 않는다.
 
 - 친구·공유 레이드·전투 검증·속도 제한은 `docs/server-release.md`의 계약을 따른다. 새 RPC 마이그레이션을 먼저 적용한 뒤 서버/클라이언트를 같은 버전으로 배포한다.
+- **전투 코어는 엔진이 정의하는 수학 함수를 쓰지 않는다**(`src/core/detMath.ts`). `Math.hypot`·`sin`·`cos`·`atan2`·`exp`·`pow`는 V8(서버)과 JavaScriptCore(iOS)에서 마지막 자리가 달라질 수 있고, 그 한 자리가 사거리 비교를 뒤집으면 서버 재현이 어긋나 정상 승리가 `COMBAT_REJECTED`로 끝난다. `skirmish.ts`에는 `dHypot` 등 결정적 구현만 쓰며 `detMath.test`가 소스 모양으로 지킨다. 거절 사유는 응답 `detail`로 `client_errors`에 남는다.
 - 정식 서버의 승패·피해·HP·라운드는 클라이언트가 확정하지 않는다. 서버가 발급한 `CombatLease` 설정과 고정 틱 입력을 재현한다. 런타임 함수가 든 `SkirmishState`를 저장/전송하지 말고 `combatState`로 복원한다.
 - 공유 체력과 계정 보상은 따로 저장하지 않는다. `server_commit_state` 트랜잭션과 양쪽 revision 검사를 지킨다. 쓰기 요청은 requestId와 메서드/인자 바인딩을 유지한다.
 

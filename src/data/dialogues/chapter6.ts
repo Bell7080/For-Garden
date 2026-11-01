@@ -59,7 +59,7 @@ export const STAGE_6_5_PRE: DialogueStory = {
   nodes: linear([
     { id: "drop", speaker: "", body: "그림자가 위에서 떨어진다. 땅에 닿기도 전에 손톱이 먼저 공기를 가른다.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
     { id: "noa", speaker: "노아", body: "오, 오지 마! 오지 말라니까! …왜 계속 오는 건데!", standing: "noa", act: "fright" },
-    { id: "shute", speaker: "슈테", body: "오더, 저 아이는 제가 붙잡겠습니다. 한 명만, 끝까지.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
+    { id: "shute", speaker: "슈테", body: "오더, 저 아이는 내가 붙잡을게. 한 명만, 끝까지. 내 지시 믿어.", standing: "shute", cast: [{ id: "shute", slot: "left" }, { id: "noa", slot: "right" }], act: "nod" },
   ]),
 };
 

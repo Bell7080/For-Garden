@@ -27,7 +27,7 @@ export const RELIC_FIRST_MEETINGS: Readonly<Record<string, string>> = {
   maddy: "파워 냉방으로 부탁드려요.",
   terisa: "찢어진 곳이 있으면… 꿰매 줄게, 아가.",
   parua: "멀리… 멀리요! 다 보여요.",
-  shute: "그거 아니라니까? 내 오더 들어.",
+  shute: "그거 아니라니까? 내 오더 들어, 캐리해 줄게.",
   morphe: "다 띄워. 난 여기서 볼게.",
   kento: "아, 귀찮게… 담당관이야? 알았어, 용건부터 말해. 5분 안에 끝내자.",
   mosana: "…수심 확인. 당신, 줄 잡아. 놓치면 안 건져 줘.",

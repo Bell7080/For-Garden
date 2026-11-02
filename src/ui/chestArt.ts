@@ -1,58 +1,42 @@
 import Phaser from "phaser";
 
 /**
- * 보물상자의 상자 그림. 단계마다 재질이 바뀐다 — 나무·쇠 → 청동 → 은 → 칠기 → 금과 루비 →
- * 남빛과 사파이어 → 보랏빛과 에메랄드 → 진주와 장미금.
+ * 보물상자의 상자 그림. 바탕(크림·복숭아·분홍)에 어울리는 **납작한 파스텔 그림**이다 — 그러데이션·나뭇결·
+ * 리벳 같은 사실적인 결은 쓰지 않고, 둥근 면 몇 장과 같은 계열의 짙은 윤곽, 한 줄 반사만 둔다.
+ * 단계는 색이 말한다(복숭아 → 살구 → 민트 → 하늘 → 레몬 → 라일락 → 분홍 → 진주).
  *
- * 전용 원화가 없으므로 캔버스에 한 번 굽고 같은 그림을 다시 쓴다(`chestTextureKey`). 도형 몇 개를
- * 매 프레임 다시 그리는 대신 그러데이션·나뭇결·리벳·보석을 갖춘 한 장을 만든다. 윤곽은 전장의
- * 잉크선과 같은 짙은 선이다. 난수를 쓰지 않아 같은 단계는 언제나 같은 그림이다.
+ * 캔버스에 한 번 굽고 다시 쓴다(`chestTextureKey`). 난수를 쓰지 않아 같은 단계는 언제나 같은 그림이다.
  */
 export const CHEST_ART = { width: 520, height: 480 } as const;
 
-interface ChestPalette {
-  wood: readonly [string, string];
-  metal: readonly [string, string, string];
-  gems: readonly string[];
-  glow: string;
-  aura: number;
-  filigree: boolean;
-  crest: boolean;
-}
-
-const IRON = ["#d9dde3", "#858d98", "#3a3f47"] as const;
-const BRONZE = ["#ffd7a6", "#b8743c", "#5a3214"] as const;
-const SILVER = ["#ffffff", "#bccadb", "#566276"] as const;
-const GOLD = ["#fff4b8", "#e3a92c", "#764a0a"] as const;
-const ROSE_GOLD = ["#fff3ea", "#f0a59c", "#8f3f4c"] as const;
+interface ChestPalette { body: string; lid: string; accent: string; line: string }
 
 const PALETTES: readonly ChestPalette[] = [
-  { wood: ["#b27b48", "#5c391d"], metal: IRON, gems: [], glow: "#ffd9a0", aura: 0.1, filigree: false, crest: false },
-  { wood: ["#c28a52", "#663d1d"], metal: BRONZE, gems: [], glow: "#ffcf8a", aura: 0.14, filigree: false, crest: false },
-  { wood: ["#93603a", "#45271a"], metal: SILVER, gems: [], glow: "#e6f1ff", aura: 0.18, filigree: false, crest: false },
-  { wood: ["#cf4a3e", "#561313"], metal: SILVER, gems: ["#7fe3ff"], glow: "#ffd6cc", aura: 0.22, filigree: true, crest: false },
-  { wood: ["#7d4b2c", "#331b10"], metal: GOLD, gems: ["#ff3d5e"], glow: "#ffe9a0", aura: 0.27, filigree: true, crest: false },
-  { wood: ["#3f63b8", "#121b44"], metal: GOLD, gems: ["#56c8ff", "#56c8ff", "#56c8ff"], glow: "#c4e6ff", aura: 0.32, filigree: true, crest: false },
-  { wood: ["#8f55d6", "#2a1052"], metal: GOLD, gems: ["#3de08a", "#ff4f8b", "#3de08a", "#ff4f8b", "#3de08a"], glow: "#f0d8ff", aura: 0.38, filigree: true, crest: true },
-  { wood: ["#fff8f0", "#bfa7bf"], metal: ROSE_GOLD, gems: ["#ff5f8f", "#ffc94a", "#5fe3a8", "#5fb8ff", "#c38bff"], glow: "#fff0f8", aura: 0.48, filigree: true, crest: true },
+  { body: "#e9b48c", lid: "#f3caa6", accent: "#fff0c4", line: "#9a6448" },
+  { body: "#f5a982", lid: "#fac4a6", accent: "#ffe5a3", line: "#a65e44" },
+  { body: "#8fd5bd", lid: "#b6e8d6", accent: "#fff3c4", line: "#4f8f7b" },
+  { body: "#94c4ef", lid: "#bad9f6", accent: "#fff3c4", line: "#5480ad" },
+  { body: "#f3c552", lid: "#f9dc8a", accent: "#fff6da", line: "#a57a1c" },
+  { body: "#b8a2ec", lid: "#d3c4f6", accent: "#ffe28a", line: "#7660ad" },
+  { body: "#f29abd", lid: "#f8bdd5", accent: "#ffe28a", line: "#ad5a7c" },
+  { body: "#fbe9f3", lid: "#ffffff", accent: "#ffcf5a", line: "#c08aa6" },
 ];
 
-const INK = "#1d0e1b";
-// 상자의 뼈대(캔버스 좌표).
-const CX = 260, L = 92, R = 428, BODY_TOP = 236, BODY_BOTTOM = 404, DOME = 112;
-const BAND = [[L + 46, L + 80], [R - 80, R - 46]] as const;
+const CX = 260;
+const BODY = { left: 112, right: 408, top: 246, bottom: 398, radius: 30 } as const;
+const LID = { left: 100, right: 420, top: 150, bottom: 258, radius: 62 } as const;
 
 export function chestPaletteIndex(stage: number): number {
   return Math.max(0, Math.min(PALETTES.length - 1, Math.round(stage)));
 }
 
 export function chestTextureKey(stage: number, open: boolean): string {
-  return `chest-forge-${chestPaletteIndex(stage)}-${open ? "open" : "closed"}`;
+  return `chest-simple-${chestPaletteIndex(stage)}-${open ? "open" : "closed"}`;
 }
 
 /** 단계의 빛 색 — 둘레의 반짝임이 같은 색을 쓴다. */
 export function chestGlowColor(stage: number): number {
-  return Phaser.Display.Color.HexStringToColor(PALETTES[chestPaletteIndex(stage)].glow).color;
+  return Phaser.Display.Color.HexStringToColor(PALETTES[chestPaletteIndex(stage)].body).color;
 }
 
 /** 굽지 않았으면 굽고 키를 돌려준다. */
@@ -66,275 +50,96 @@ export function ensureChestTexture(scene: Phaser.Scene, stage: number, open: boo
   return key;
 }
 
-function rgba(hex: string, alpha: number): string {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
-}
-
-function bodyPath(ctx: CanvasRenderingContext2D): void {
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number | [number, number, number, number]): void {
+  const [tl, tr, br, bl] = typeof r === "number" ? [r, r, r, r] : r;
   ctx.beginPath();
-  ctx.moveTo(L, BODY_TOP); ctx.lineTo(R, BODY_TOP); ctx.lineTo(R - 6, BODY_BOTTOM); ctx.lineTo(L + 6, BODY_BOTTOM); ctx.closePath();
-}
-
-function lidPath(ctx: CanvasRenderingContext2D, lift = 0): void {
-  ctx.beginPath();
-  ctx.moveTo(L - 4, BODY_TOP - lift);
-  ctx.lineTo(L - 4, 176 - lift);
-  ctx.bezierCurveTo(L - 4, 126 - lift, L + 66, DOME - lift, CX, DOME - lift);
-  ctx.bezierCurveTo(R - 66, DOME - lift, R + 4, 126 - lift, R + 4, 176 - lift);
-  ctx.lineTo(R + 4, BODY_TOP - lift);
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br); ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl); ctx.quadraticCurveTo(x, y, x + tl, y);
   ctx.closePath();
 }
 
-/** 둥근 원통처럼 양 끝이 어두워지는 겹. */
-function cylinderShade(ctx: CanvasRenderingContext2D, top: number, bottom: number, strength: number): void {
-  const shade = ctx.createLinearGradient(L, 0, R, 0);
-  shade.addColorStop(0, `rgba(0,0,0,${strength})`);
-  shade.addColorStop(0.22, "rgba(0,0,0,0)");
-  shade.addColorStop(0.62, "rgba(255,255,255,0.06)");
-  shade.addColorStop(1, `rgba(0,0,0,${strength * 1.2})`);
-  ctx.fillStyle = shade;
-  ctx.fillRect(L - 10, top, R - L + 20, bottom - top);
+function outline(ctx: CanvasRenderingContext2D, palette: ChestPalette, width = 7): void {
+  ctx.strokeStyle = palette.line; ctx.lineWidth = width; ctx.stroke();
 }
 
-function woodFill(ctx: CanvasRenderingContext2D, palette: ChestPalette, top: number, bottom: number): void {
-  const gradient = ctx.createLinearGradient(0, top, 0, bottom);
-  gradient.addColorStop(0, palette.wood[0]);
-  gradient.addColorStop(1, palette.wood[1]);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(L - 10, top, R - L + 20, bottom - top);
-  // 나뭇결 — 물결치는 가는 선.
-  ctx.lineWidth = 2;
-  for (let line = 0; line * 9 < bottom - top; line += 1) {
-    const y = top + 6 + line * 9;
-    ctx.strokeStyle = `rgba(0,0,0,${0.07 + (line % 3) * 0.035})`;
-    ctx.beginPath();
-    for (let x = L - 10; x <= R + 10; x += 12) {
-      const wave = Math.sin(x * 0.031 + line * 1.7) * 2.4 + Math.sin(x * 0.083 + line) * 1.1;
-      if (x === L - 10) ctx.moveTo(x, y + wave); else ctx.lineTo(x, y + wave);
-    }
-    ctx.stroke();
-  }
-}
-
-function metalGradient(ctx: CanvasRenderingContext2D, palette: ChestPalette, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
-  const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
-  gradient.addColorStop(0, palette.metal[0]);
-  gradient.addColorStop(0.35, palette.metal[1]);
-  gradient.addColorStop(0.7, palette.metal[2]);
-  gradient.addColorStop(1, palette.metal[1]);
-  return gradient;
-}
-
-function rivet(ctx: CanvasRenderingContext2D, palette: ChestPalette, x: number, y: number, r = 5): void {
-  const gradient = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, 0.5, x, y, r);
-  gradient.addColorStop(0, "#ffffff");
-  gradient.addColorStop(0.35, palette.metal[0]);
-  gradient.addColorStop(1, palette.metal[2]);
-  ctx.fillStyle = gradient;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = rgba(INK, 0.7); ctx.lineWidth = 1.5; ctx.stroke();
-}
-
-function strip(ctx: CanvasRenderingContext2D, palette: ChestPalette, x: number, y: number, w: number, h: number): void {
-  ctx.fillStyle = metalGradient(ctx, palette, 0, y, 0, y + h);
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.strokeRect(x, y, w, h);
-  ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(x + 3, y + 3, w - 6, 2.5);
-}
-
-function gem(ctx: CanvasRenderingContext2D, color: string, x: number, y: number, r: number): void {
-  // 은은한 빛 → 면이 깎인 마름모 → 위쪽 반사.
-  const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4);
-  halo.addColorStop(0, rgba(color, 0.55)); halo.addColorStop(1, rgba(color, 0));
-  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, Math.PI * 2); ctx.fill();
-  const points: [number, number][] = [[x, y - r * 1.15], [x + r, y - r * 0.3], [x + r * 0.62, y + r], [x - r * 0.62, y + r], [x - r, y - r * 0.3]];
-  const body = ctx.createLinearGradient(x, y - r, x, y + r);
-  body.addColorStop(0, "#ffffff"); body.addColorStop(0.25, color); body.addColorStop(1, rgba("#000000", 0.6));
-  ctx.beginPath(); points.forEach(([px, py], index) => (index ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath();
-  ctx.fillStyle = color; ctx.fill();
-  ctx.fillStyle = body; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1;
-  ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke();
-  // 면 — 가운데 작은 오각형과 꼭짓점을 잇는 선.
-  ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.4;
+function heart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
   ctx.beginPath();
-  points.forEach(([px, py]) => { ctx.moveTo(x + (px - x) * 0.45, y + (py - y) * 0.45); ctx.lineTo(px, py); });
-  ctx.stroke();
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.beginPath(); ctx.ellipse(x - r * 0.3, y - r * 0.45, r * 0.28, r * 0.14, -0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.moveTo(x, y + size * 0.9);
+  ctx.bezierCurveTo(x - size * 1.3, y + size * 0.05, x - size * 0.75, y - size * 0.95, x, y - size * 0.35);
+  ctx.bezierCurveTo(x + size * 0.75, y - size * 0.95, x + size * 1.3, y + size * 0.05, x, y + size * 0.9);
+  ctx.closePath();
 }
 
-function filigree(ctx: CanvasRenderingContext2D, palette: ChestPalette): void {
-  // 몸통을 가로지르는 장식 띠 — 가는 쇠 띠 위에 마름모 징이 박힌다.
-  const y = BODY_TOP + 112;
-  ctx.fillStyle = metalGradient(ctx, palette, 0, y - 7, 0, y + 7);
-  ctx.fillRect(L, y - 7, R - L, 14);
-  ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(L, y - 7, R - L, 14);
-  for (let x = L + 24; x < R - 10; x += 34) {
-    if (BAND.some(([x0, x1]) => x > x0 - 10 && x < x1 + 10)) continue;
-    ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 7, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 7, y); ctx.closePath();
-    ctx.fillStyle = palette.metal[0]; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
-  }
-}
-
-function lockPlate(ctx: CanvasRenderingContext2D, palette: ChestPalette, y: number): void {
+function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string): void {
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(CX - 42, y - 40); ctx.lineTo(CX + 42, y - 40); ctx.lineTo(CX + 42, y + 26);
-  ctx.quadraticCurveTo(CX + 40, y + 50, CX, y + 66); ctx.quadraticCurveTo(CX - 40, y + 50, CX - 42, y + 26); ctx.closePath();
-  ctx.fillStyle = metalGradient(ctx, palette, CX - 42, y - 40, CX + 42, y + 66); ctx.fill();
-  ctx.strokeStyle = INK; ctx.lineWidth = 5; ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(CX - 34, y + 20); ctx.lineTo(CX - 34, y - 32); ctx.lineTo(CX + 34, y - 32); ctx.stroke();
-  if (palette.gems.length) gem(ctx, palette.gems[0], CX, y - 14, 12);
-  // 열쇠 구멍.
-  const keyY = palette.gems.length ? y + 20 : y + 6;
-  ctx.fillStyle = INK;
-  ctx.beginPath(); ctx.arc(CX, keyY, 8, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(CX - 5, keyY + 2); ctx.lineTo(CX + 5, keyY + 2); ctx.lineTo(CX + 8, keyY + 26); ctx.lineTo(CX - 8, keyY + 26); ctx.closePath(); ctx.fill();
+  ctx.moveTo(x, y - size); ctx.quadraticCurveTo(x, y, x + size, y); ctx.quadraticCurveTo(x, y, x, y + size);
+  ctx.quadraticCurveTo(x, y, x - size, y); ctx.quadraticCurveTo(x, y, x, y - size);
+  ctx.fill();
 }
 
-function crest(ctx: CanvasRenderingContext2D, palette: ChestPalette, y: number): void {
-  // 뚜껑 꼭대기의 날개 장식 — 마지막 두 단계만.
-  ctx.fillStyle = metalGradient(ctx, palette, CX - 70, y - 30, CX + 70, y + 10);
-  ctx.strokeStyle = INK; ctx.lineWidth = 4;
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(CX, y + 4);
-    ctx.bezierCurveTo(CX + side * 30, y - 6, CX + side * 56, y - 30, CX + side * 76, y - 22);
-    ctx.bezierCurveTo(CX + side * 60, y - 12, CX + side * 54, y + 2, CX + side * 30, y + 12);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-  }
-  gem(ctx, palette.gems[palette.gems.length - 1], CX, y - 4, 14);
+function paintBody(ctx: CanvasRenderingContext2D, palette: ChestPalette): void {
+  const { left, right, top, bottom, radius } = BODY;
+  roundRect(ctx, left, top, right - left, bottom - top, [8, 8, radius, radius]);
+  ctx.fillStyle = palette.body; ctx.fill();
+  // 아래 한 띠만 조금 짙게 — 납작한 그늘.
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = "rgba(120,60,60,0.12)"; ctx.fillRect(left, bottom - 34, right - left, 34);
+  ctx.restore();
+  roundRect(ctx, left, top, right - left, bottom - top, [8, 8, radius, radius]);
+  outline(ctx, palette);
 }
 
-function bands(ctx: CanvasRenderingContext2D, palette: ChestPalette, top: number, bottom: number): void {
-  for (const [x0, x1] of BAND) {
-    ctx.fillStyle = metalGradient(ctx, palette, x0, 0, x1, 0);
-    ctx.fillRect(x0, top, x1 - x0, bottom - top);
-    ctx.strokeStyle = INK; ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(x0, top); ctx.lineTo(x0, bottom); ctx.moveTo(x1, top); ctx.lineTo(x1, bottom); ctx.stroke();
-  }
+function paintLock(ctx: CanvasRenderingContext2D, palette: ChestPalette, y: number): void {
+  roundRect(ctx, CX - 40, y - 34, 80, 78, 22);
+  ctx.fillStyle = palette.accent; ctx.fill(); outline(ctx, palette, 6);
+  heart(ctx, CX, y + 4, 17);
+  ctx.fillStyle = palette.line; ctx.fill();
 }
 
 function paintChest(ctx: CanvasRenderingContext2D, palette: ChestPalette, open: boolean): void {
   ctx.clearRect(0, 0, CHEST_ART.width, CHEST_ART.height);
-  ctx.lineJoin = "round";
-  // 둘레의 빛 — 단계가 오를수록 짙다.
-  const aura = ctx.createRadialGradient(CX, 250, 30, CX, 250, 250);
-  aura.addColorStop(0, rgba(palette.glow, palette.aura + (open ? 0.3 : 0)));
-  aura.addColorStop(1, rgba(palette.glow, 0));
-  ctx.fillStyle = aura; ctx.fillRect(0, 0, CHEST_ART.width, CHEST_ART.height);
-  // 바닥 그림자.
-  const shadow = ctx.createRadialGradient(CX, BODY_BOTTOM + 14, 10, CX, BODY_BOTTOM + 14, 210);
-  shadow.addColorStop(0, "rgba(0,0,0,0.6)"); shadow.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.save(); ctx.scale(1, 0.18); ctx.fillStyle = shadow;
-  ctx.beginPath(); ctx.arc(CX, (BODY_BOTTOM + 14) / 0.18, 210, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  // 바닥 그림자 — 납작한 타원 하나.
+  ctx.fillStyle = "rgba(150,80,90,0.16)";
+  ctx.beginPath(); ctx.ellipse(CX, BODY.bottom + 10, 186, 22, 0, 0, Math.PI * 2); ctx.fill();
 
-  if (open) paintOpenLid(ctx, palette);
-  else paintLid(ctx, palette);
+  if (open) {
+    // 뒤로 젖혀진 뚜껑.
+    roundRect(ctx, LID.left + 14, 96, LID.right - LID.left - 28, 112, [54, 54, 10, 10]);
+    ctx.fillStyle = palette.lid; ctx.fill(); outline(ctx, palette);
+    roundRect(ctx, LID.left + 40, 122, LID.right - LID.left - 80, 70, [36, 36, 6, 6]);
+    ctx.fillStyle = "rgba(120,60,60,0.12)"; ctx.fill();
+    // 은은한 빛 — 단색 원 두 겹.
+    ctx.fillStyle = "rgba(255,247,214,0.55)"; ctx.beginPath(); ctx.ellipse(CX, 200, 190, 120, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.beginPath(); ctx.ellipse(CX, 214, 120, 66, 0, 0, Math.PI * 2); ctx.fill();
+    // 안쪽과 금화 더미.
+    roundRect(ctx, BODY.left + 6, BODY.top - 30, BODY.right - BODY.left - 12, 44, 22);
+    ctx.fillStyle = "#ffd76a"; ctx.fill(); outline(ctx, palette, 6);
+    const coins: readonly [number, number][] = [[-96, -34], [-50, -48], [0, -54], [48, -46], [94, -32], [-70, -18], [26, -24], [-20, -28], [72, -14]];
+    for (const [dx, dy] of coins) {
+      ctx.fillStyle = "#ffe48f"; ctx.beginPath(); ctx.ellipse(CX + dx, BODY.top + dy, 22, 11, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#d39a2b"; ctx.lineWidth = 3; ctx.stroke();
+    }
+    paintBody(ctx, palette);
+    paintLock(ctx, palette, BODY.top + 52);
+    for (const [x, y, size] of [[150, 110, 18], [372, 96, 22], [430, 196, 14], [96, 196, 12]] as const) sparkle(ctx, x, y, size, "#ffffff");
+    return;
+  }
 
-  // 몸통.
-  ctx.save(); bodyPath(ctx); ctx.clip();
-  woodFill(ctx, palette, BODY_TOP, BODY_BOTTOM);
-  // 판자 이음매.
-  for (const y of palette.filigree ? [BODY_TOP + 56] : [BODY_TOP + 56, BODY_TOP + 112]) {
-    ctx.fillStyle = "rgba(0,0,0,0.38)"; ctx.fillRect(L, y, R - L, 3);
-    ctx.fillStyle = "rgba(255,255,255,0.12)"; ctx.fillRect(L, y + 3, R - L, 2);
-  }
-  cylinderShade(ctx, BODY_TOP, BODY_BOTTOM, 0.32);
-  bands(ctx, palette, BODY_TOP, BODY_BOTTOM);
-  if (palette.filigree) filigree(ctx, palette);
-  ctx.restore();
-  bodyPath(ctx); ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke();
-
-  // 테두리 띠·모서리 쇠.
-  strip(ctx, palette, L - 10, BODY_BOTTOM - 22, R - L + 20, 24);
-  for (const side of [-1, 1]) {
-    const edge = side < 0 ? L - 10 : R + 10;
-    ctx.beginPath();
-    ctx.moveTo(edge, BODY_BOTTOM + 2); ctx.lineTo(edge, BODY_BOTTOM - 74); ctx.lineTo(edge - side * 58, BODY_BOTTOM + 2); ctx.closePath();
-    ctx.fillStyle = metalGradient(ctx, palette, edge, BODY_BOTTOM - 74, edge - side * 58, BODY_BOTTOM); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
-    rivet(ctx, palette, edge - side * 14, BODY_BOTTOM - 18);
-    ctx.beginPath();
-    ctx.moveTo(edge, BODY_TOP + 8); ctx.lineTo(edge - side * 50, BODY_TOP + 8); ctx.lineTo(edge, BODY_TOP + 60); ctx.closePath();
-    ctx.fillStyle = metalGradient(ctx, palette, edge, BODY_TOP, edge - side * 50, BODY_TOP + 60); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
-    rivet(ctx, palette, edge - side * 14, BODY_TOP + 22);
-  }
-  for (const [x0, x1] of BAND) {
-    for (let y = BODY_TOP + 34; y < BODY_BOTTOM - 30; y += 40) rivet(ctx, palette, (x0 + x1) / 2, y);
-  }
-  if (palette.gems.length >= 5) {
-    BAND.forEach(([x0, x1], index) => gem(ctx, palette.gems[(index + 1) % palette.gems.length], (x0 + x1) / 2, BODY_BOTTOM - 54, 10));
-  }
-  if (!open) {
-    strip(ctx, palette, L - 10, BODY_TOP - 12, R - L + 20, 22);
-    lockPlate(ctx, palette, BODY_TOP + 18);
-  } else {
-    strip(ctx, palette, L - 10, BODY_TOP - 6, R - L + 20, 18);
-    lockPlate(ctx, palette, BODY_TOP + 40);
-  }
-}
-
-function paintLid(ctx: CanvasRenderingContext2D, palette: ChestPalette): void {
-  ctx.save(); lidPath(ctx); ctx.clip();
-  woodFill(ctx, palette, DOME - 4, BODY_TOP);
-  cylinderShade(ctx, DOME - 4, BODY_TOP, 0.4);
-  // 둥근 뚜껑의 윗면 반사.
-  const shine = ctx.createLinearGradient(0, DOME, 0, DOME + 60);
-  shine.addColorStop(0, "rgba(255,255,255,0.28)"); shine.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = shine; ctx.fillRect(L, DOME, R - L, 60);
-  bands(ctx, palette, DOME - 4, BODY_TOP);
-  ctx.restore();
-  lidPath(ctx); ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke();
-  // 뚜껑 가장자리의 가는 반사선.
-  ctx.save(); ctx.translate(0, 10); ctx.scale(1, 1);
-  ctx.beginPath(); ctx.moveTo(L + 16, 170); ctx.bezierCurveTo(L + 18, 132, L + 80, DOME + 6, CX, DOME + 4);
-  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
-  for (const [x0, x1] of BAND) {
-    const x = (x0 + x1) / 2;
-    for (const y of [150, 196]) rivet(ctx, palette, x, y);
-  }
-  palette.gems.slice(1, 3).forEach((color, index) => gem(ctx, color, (BAND[index][0] + BAND[index][1]) / 2, 172, 11));
-  if (palette.crest) crest(ctx, palette, DOME - 2);
-}
-
-function paintOpenLid(ctx: CanvasRenderingContext2D, palette: ChestPalette): void {
-  // 젖혀진 뚜껑의 안쪽.
-  const top = BODY_TOP - 168;
-  ctx.beginPath();
-  ctx.moveTo(L - 4, BODY_TOP - 8); ctx.lineTo(L + 16, top); ctx.lineTo(R - 16, top); ctx.lineTo(R + 4, BODY_TOP - 8); ctx.closePath();
-  const inner = ctx.createLinearGradient(0, top, 0, BODY_TOP);
-  inner.addColorStop(0, palette.wood[1]); inner.addColorStop(1, rgba("#000000", 0.85));
-  ctx.fillStyle = palette.wood[1]; ctx.fill();
-  ctx.fillStyle = inner; ctx.fill();
-  ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.stroke();
-  strip(ctx, palette, L + 10, top - 6, R - L - 20, 18);
-  // 빛줄기.
-  ctx.save(); ctx.globalCompositeOperation = "lighter";
-  for (let ray = 0; ray < 7; ray += 1) {
-    const spread = (ray - 3) * 34;
-    const gradient = ctx.createLinearGradient(0, BODY_TOP, 0, 0);
-    gradient.addColorStop(0, rgba("#fff6d0", 0.85)); gradient.addColorStop(0.4, rgba(palette.glow, 0.45)); gradient.addColorStop(1, rgba(palette.glow, 0));
-    ctx.fillStyle = gradient;
-    ctx.beginPath(); ctx.moveTo(CX + spread * 0.6 - 14, BODY_TOP - 10); ctx.lineTo(CX + spread * 0.6 + 14, BODY_TOP - 10); ctx.lineTo(CX + spread * 2.4 + 24, 0); ctx.lineTo(CX + spread * 2.4 - 24, 0); ctx.closePath(); ctx.fill();
-  }
-  const core = ctx.createRadialGradient(CX, BODY_TOP - 10, 4, CX, BODY_TOP - 10, 150);
-  core.addColorStop(0, "rgba(255,248,214,0.9)"); core.addColorStop(1, "rgba(255,220,140,0)");
-  ctx.fillStyle = core; ctx.fillRect(L, BODY_TOP - 160, R - L, 160);
-  ctx.restore();
-  // 보물 더미 — 금화가 봉긋하게 쌓인다.
-  const pile = ctx.createRadialGradient(CX, BODY_TOP - 10, 6, CX, BODY_TOP - 10, 170);
-  pile.addColorStop(0, "#fff6c8"); pile.addColorStop(0.5, "#f2b53a"); pile.addColorStop(1, "#8a5410");
-  ctx.fillStyle = pile;
-  ctx.beginPath(); ctx.ellipse(CX, BODY_TOP - 2, (R - L) / 2 - 6, 30, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.stroke();
-  for (let coin = 0; coin < 14; coin += 1) {
-    const x = CX + Math.sin(coin * 2.399) * 130 * ((coin % 5) / 5 + 0.2);
-    const y = BODY_TOP - 6 - Math.abs(Math.cos(coin * 1.3)) * 18 * (1 - Math.abs(x - CX) / 170);
-    ctx.fillStyle = "#ffd257"; ctx.beginPath(); ctx.ellipse(x, y, 13, 6, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#7a4a08"; ctx.lineWidth = 2; ctx.stroke();
-  }
-  palette.gems.forEach((color, index) => gem(ctx, color, CX - 70 + index * 35, BODY_TOP - 20 - (index % 2) * 8, 9));
+  paintBody(ctx, palette);
+  // 뚜껑 — 위가 둥근 면 하나.
+  const { left, right, top, bottom, radius } = LID;
+  roundRect(ctx, left, top, right - left, bottom - top, [radius, radius, 12, 12]);
+  ctx.fillStyle = palette.lid; ctx.fill(); outline(ctx, palette);
+  // 한 줄 반사.
+  roundRect(ctx, left + 46, top + 18, 120, 14, 7);
+  ctx.fillStyle = "rgba(255,255,255,0.75)"; ctx.fill();
+  // 뚜껑과 몸통을 잇는 띠.
+  roundRect(ctx, left - 4, bottom - 22, right - left + 8, 30, 15);
+  ctx.fillStyle = palette.accent; ctx.fill(); outline(ctx, palette, 6);
+  paintLock(ctx, palette, bottom + 22);
 }

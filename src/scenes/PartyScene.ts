@@ -3,6 +3,7 @@ import { playFormationTapSound } from "../ui/formationSound";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
+import { TUTORIAL_SPOTLIGHT_DEPTH } from "../ui/TutorialSpotlight";
 import { runInfoTutorialTour } from "../ui/infoTutorialTour";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
@@ -440,6 +441,14 @@ export class PartyScene extends Phaser.Scene {
   }
 
   /**
+   * 첫 편성 안내 중에는 든 SD를 안내 막 위로 띄운다. 막 아래에 깔리면 칸을 벗어나는 순간 손에 든 렐릭이
+   * 어둠에 묻혀, 「끌어 옮긴다」는 안내가 정작 끄는 대상을 가린다.
+   */
+  private tutorialLiftDepth(): number | undefined {
+    return this.partyTutorialPhase ? TUTORIAL_SPOTLIGHT_DEPTH + 10 : undefined;
+  }
+
+  /**
    * 위쪽 시작 배치 미리보기. 적은 위에, 아군은 아래에 나란히 선다.
    *
    * **적은 노드 미리보기와 같은 양식으로 선다** — 속성·직군은 왼쪽 위 아이콘, 돌파는 오른쪽 위
@@ -533,6 +542,7 @@ export class PartyScene extends Phaser.Scene {
       // 어두워져, 끄는 동안 두 편의 무게가 먼저 사라진다.
       dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top - this.slotLift(0) + this.allyRow + 120) / 2, width: BASE_WIDTH, height: this.allyRow + 120 - PARTY_ALLY_PLATE.top + this.slotLift(0) },
       shadowOffsetY: PREVIEW_HEIGHT / 2 + 26,
+      liftDepth: () => this.tutorialLiftDepth(),
       renderPreview: ({ preview, pointer, lift }) => this.placeDragPreview(preview, pointer.x, pointer.y, lift),
       restore: () => this.restoreDragPuppets(),
     });
@@ -831,7 +841,7 @@ export class PartyScene extends Phaser.Scene {
       if (!creature || !relicId) return;
       if (entry.lifted) {
         placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2 - lift.raise, height: PREVIEW_HEIGHT * lift.scale, flipX: false });
-        creature.setDepth(20).setAlpha(FORMATION_DRAG_VISUAL.liftAlpha);
+        creature.setDepth(this.tutorialLiftDepth() ?? 20).setAlpha(FORMATION_DRAG_VISUAL.liftAlpha);
         applyLiftPose(creature, lift, COLOR.ally);
         return;
       }

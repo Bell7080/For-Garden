@@ -52,6 +52,8 @@ export interface FormationDragVisualOptions {
   renderPreview: (frame: FormationPreviewFrame) => void;
   /** 손끝(화면 좌표)에서 바닥 그림자까지의 거리. 화면의 SD 높이 절반쯤이다. */
   shadowOffsetY?: number;
+  /** 든 SD의 그림자 깊이. 튜토리얼 막 위로 SD를 띄울 때 그림자도 함께 올린다. */
+  liftDepth?: () => number | undefined;
   restore: () => void;
   /** E2E에는 데이터 대신 실제로 보이는 목적지 칸/교체 고스트 여부만 알린다. */
   onVisualState?: (state?: { hovered?: number; replacementVisible: boolean }) => void;
@@ -79,6 +81,8 @@ export function createFormationDragVisualController(options: FormationDragVisual
     const { width, height, alpha } = FORMATION_DRAG_VISUAL.shadow;
     // 높이 들수록 작고 옅게 — 들어 올린 거리가 그림자의 크기로 읽힌다.
     const k = Math.max(0.55, 1 - raise / 260);
+    const lifted = options.liftDepth?.();
+    shadow.setDepth(lifted !== undefined ? lifted - 1 : (options.zoneDepth ?? 3) + 0.5);
     shadow.clear().setPosition(x, y + (options.shadowOffsetY ?? 120)).setVisible(true);
     for (let layer = 0; layer < 4; layer += 1) {
       const f = 1 - layer * 0.22;

@@ -469,7 +469,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "spino-basic",
       name: "악어턱 물어뜯기",
-      power: 80,
+      power: 96,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -482,23 +482,23 @@ export const RELICS: RelicDef[] = [
        * 아니라 "어디에 고였나"가 아무것도 바꾸지 않았다. 지금은 **적 주위 곳곳에** 깔고 그
        * 사이를 뛰어다닌다.
        *
-       * 반경 200은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만 잠그는
+       * 반경 240(v0.400.3에 200에서 확대)은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만 잠그는
        * 판이면 "물가"가 아니라 그냥 표식이고, 난전 한 덩어리를 통째로 덮을 만큼 넓으면 근접
        * 개체가 전부 상시 둔화된다.
        *
        * `behindDistance` 120은 적을 사이에 두고 건너편이다. 도약이 곧 **적을 지나쳐 반대편으로
        * 파고드는** 걸음이 되고, 표적이 움직일 때마다 새 자리가 열린다.
        *
-       * `minSpacing` 260은 반경(200)보다 넓다 — 두 판이 서로의 안쪽에 겹치면 잠긴 적이 한
+       * `minSpacing` 300은 반경(240)보다 넓다 — 두 판이 서로의 안쪽에 겹치면 잠긴 적이 한
        * 곳에만 세어져 도약 후보가 둘로 갈리기만 한다. 이 한 줄이 판의 개수를 정하므로 상한을
        * 손으로 적지 않는다: 적이 몰려 있으면 한둘, 흩어져 있으면 셋 넷이 깔린다.
        */
       shallows: {
-        radius: 200,
+        radius: 240,
         seconds: 6,
         moveSlowPercent: 35,
         behindDistance: 120,
-        minSpacing: 260,
+        minSpacing: 300,
         /*
          * **네 번 물면 한 번 뛴다.** 공속 122(로스터 상위)에 누적 패시브까지 붙으므로 실전에서
          * 대략 2.5~3초에 한 번이고, 판이 6초 남으니 도약 한 번당 두세 곳이 깔려 있다 — 궁극기가
@@ -508,7 +508,7 @@ export const RELICS: RelicDef[] = [
          * 「전투의 환희」가 아무리 쌓여도 뛰는 횟수가 그대로라 성장과 맞물리지 않는다.
          */
         leapEveryHits: 4,
-        leapPower: 110,
+        leapPower: 140,
         // 물에 잠긴 채로 맞으면 더 아프다. 평타에는 아무 몫도 주지 않으므로, 적을 물가에
         // 가둬 두는 값이 **도약이 꽂히는 순간**에만 돌아온다.
         submergedLeapBonusPercent: 40,
@@ -535,11 +535,11 @@ export const RELICS: RelicDef[] = [
        * **여울을 몇 곳에 벌려 놓았느냐**다 — 평타로 판을 까는 일과 궁극기가 같은 축에 서고,
        * 판이 하나도 없으면 터뜨릴 것도 없다.
        *
-       * 위력 130은 도약(110)보다 한 뼘 높다. 같은 판을 터뜨리는 같은 일이되 게이지를 치른
+       * 위력 165는 도약(140)보다 한 뼘 높다(v0.400.3 버프 — 평타 80→96·도약 110→140·반경 200→240). 같은 판을 터뜨리는 같은 일이되 게이지를 치른
        * 몫만큼만 세다 — 여기를 크게 올리면 판을 까는 이유가 "궁극기 한 방을 키우려고"가 되어,
        * 뛰어다니며 터뜨리는 평상시 리듬이 궁극기를 기다리는 시간이 된다.
        */
-      detonateShallows: { power: 130 },
+      detonateShallows: { power: 165 },
       // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
     },
   },

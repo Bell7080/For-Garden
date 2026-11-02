@@ -422,7 +422,7 @@ export interface ProfileModifierSelectionDto {
 export interface SpinRouletteResponse extends PlayerStateDto {
   status: RouletteStatus; index: number; reward: RouletteReward; granted: Partial<Record<keyof Wallet, number>>;
 }
-/** 보물상자 대장간 한 걸음(받기·강화·보상)의 결과. 난수와 지급은 서버가 확정한다. */
+/** 보물상자 한 걸음(받기·강화·보상)의 결과. 난수와 지급은 서버가 확정한다. */
 export interface ChestForgeResponse extends PlayerStateDto {
   status: ChestForgeStatus;
   /** 강화의 성공 여부. 받기·보상 받기에는 없다. */
@@ -1186,7 +1186,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   getRouletteStatus(): Promise<RouletteStatus>;
   spinRoulette(request: { requestId: string }): Promise<SpinRouletteResponse>;
   unlockRouletteSpins(request: { requestId: string; verificationToken?: string }): Promise<RouletteStatus>;
-  /** 보물상자 대장간 — 코인은 이번 주에 쓴 스테미나와 1:1이다(`core/chestForge.ts`). */
+  /** 보물상자 — 코인은 이번 주에 쓴 스테미나와 1:1이다(`core/chestForge.ts`). */
   getChestForge(): Promise<ChestForgeStatus>;
   enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
   upgradeChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;

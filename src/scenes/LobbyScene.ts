@@ -603,7 +603,7 @@ export class LobbyScene extends Phaser.Scene {
       instant,
       onSelect: (event, onChanged) => {
         if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
-        if (event.destination?.kind === "chestForge") { void openChestForgePopup(this, this.popupLayer!, onChanged).catch((error) => logError("chestForge.open", "보물상자 대장간 열기 실패", error)); return; }
+        if (event.destination?.kind === "chestForge") { void openChestForgePopup(this, this.popupLayer!, onChanged).catch((error) => logError("chestForge.open", "보물상자 열기 실패", error)); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
       },

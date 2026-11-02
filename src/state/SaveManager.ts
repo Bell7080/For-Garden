@@ -711,7 +711,7 @@ export class SaveManager {
     if (!isValidAchievementState(data.achievements)) fail("업적 정보가 올바르지 않습니다.");
     if (!isValidTutorialState(data.tutorial)) fail("튜토리얼 진행 정보가 올바르지 않습니다.");
     if (data.missions.weeklyStamina !== undefined && (!Number.isInteger(data.missions.weeklyStamina) || data.missions.weeklyStamina < 0)) fail("임무 진행 정보가 올바르지 않습니다.");
-    if (!isValidChestForgeState(data.chestForge)) fail("보물상자 대장간 정보가 올바르지 않습니다.");
+    if (!isValidChestForgeState(data.chestForge)) fail("보물상자 정보가 올바르지 않습니다.");
     if (data.missions.lifetime !== undefined && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || (value as number) < 0))) fail("임무 진행 정보가 올바르지 않습니다.");
     if (data.serverJournal !== undefined && !isValidServerJournal(data.serverJournal)) fail("서버 처리 영수증이 올바르지 않습니다.");
     if (data.expedition.pendingRankRewards !== undefined && (!Array.isArray(data.expedition.pendingRankRewards)

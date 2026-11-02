@@ -87,7 +87,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     endsAt: "2026-12-31T23:59:59+09:00",
   },
   {
-    // 정기 이벤트 「보물상자 대장간」 — 코인은 이번 주에 쓴 스테미나와 1:1이고 매주 사라진다(`core/chestForge.ts`).
+    // 정기 이벤트 「보물상자」 — 코인은 이번 주에 쓴 스테미나와 1:1이고 매주 사라진다(`core/chestForge.ts`).
     id: "chest-forge",
     titleKey: "event.chestForge.title",
     subtitleKey: "event.chestForge.subtitle",

@@ -2117,7 +2117,7 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 보물상자 대장간의 세 걸음이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 강화가 성공했는데 응답만
+   * 보물상자의 세 걸음이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 강화가 성공했는데 응답만
    * 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
    */
   private async stepChestForge(kind: "enter" | "upgrade" | "claim", requestId: string): Promise<ChestForgeResponse> {

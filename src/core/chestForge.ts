@@ -1,7 +1,7 @@
 import { missionPeriodKeys, normalizeMissions, type MissionState } from "./missions";
 
 /**
- * 정기 이벤트 「보물상자 대장간」 — 코인을 내고 상자를 받아, 더 키울지(강화) 지금 열지(보상 받기)를 고른다.
+ * 정기 이벤트 「보물상자」 — 코인을 내고 상자를 받아, 더 키울지(강화) 지금 열지(보상 받기)를 고른다.
  *
  * **코인은 이번 주에 쓴 스테미나와 1:1이다.** 따로 적립하는 경계를 두지 않고, 스테미나를 쓰는 모든 경계가
  * 이미 지나는 임무 사건(`stamina_spent`)이 이번 주 몫(`MissionState.weeklyStamina`)을 센다 — 새 입장 API가

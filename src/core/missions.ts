@@ -46,7 +46,7 @@ export interface MissionState {
    */
   lifetime?: Partial<Record<MissionEvent["type"], number>>;
   /**
-   * 이번 주(`weeklyKey`)에 쓴 스테미나 — 목표에서 잘리지 않는 값이다. 보물상자 대장간의 코인이 이 수와
+   * 이번 주(`weeklyKey`)에 쓴 스테미나 — 목표에서 잘리지 않는 값이다. 보물상자의 코인이 이 수와
    * 1:1이다(`core/chestForge.ts`). 주가 바뀌면 비운다. **선택 필드다** — 도입 전 세이브는 0에서 센다.
    */
   weeklyStamina?: number;

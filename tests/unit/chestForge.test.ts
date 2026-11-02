@@ -16,7 +16,7 @@ function serverWithCoins(coins: number, random: () => number, now = MONDAY) {
   return { state, api: new FakeServer(state, { latencyMs: 0, now: () => now, random, persistSession: () => undefined }) };
 }
 
-describe("보물상자 대장간 규칙", () => {
+describe("보물상자 규칙", () => {
   it("어느 단계에서 멈춰도 기대값이 젬 환산 15~25 안이고 최종 보상은 1,000이다", () => {
     const expected = CHEST_FORGE_STAGES.map((stage, index) => chestForgeReachRate(index) * chestForgeGemValue(stage.reward));
     for (const value of expected) { expect(value).toBeGreaterThanOrEqual(15); expect(value).toBeLessThanOrEqual(25); }
@@ -40,7 +40,7 @@ describe("보물상자 대장간 규칙", () => {
   });
 });
 
-describe("보물상자 대장간 서버", () => {
+describe("보물상자 서버", () => {
   it("받기 → 강화 → 보상 받기가 코인을 쓰고 지급을 확정한다", async () => {
     const { api, state } = serverWithCoins(250, () => 0);
     const entered = await api.enterChestForge({ requestId: "a" });

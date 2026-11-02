@@ -230,7 +230,7 @@ export interface Session {
   attendance?: AttendanceState;
   /** 오늘 떨어진 토벌권 수(`core/raidTicketDrops.ts`). 선택 필드다. */
   raidTicketDrops?: RaidTicketDropState;
-  /** 보물상자 대장간의 이번 주 쓴 코인과 진행 중인 상자(`core/chestForge.ts`). 선택 필드다. */
+  /** 보물상자의 이번 주 쓴 코인과 진행 중인 상자(`core/chestForge.ts`). 선택 필드다. */
   chestForge?: ChestForgeState;
   /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
   achievements?: AchievementState;

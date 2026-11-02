@@ -862,6 +862,19 @@ export interface EnterDailyRestorationResponse extends PlayerStateDto { entriesR
 /** 클라이언트가 자체 시계를 보지 않도록 서버 시각과 판정 상태를 함께 보낸다. */
 export interface EventDto extends EventDefinition { status: "upcoming" | "active" | "ended"; }
 export interface EventListResponse { events: EventDto[]; serverTime: string; }
+/**
+ * 운영 도구(Admin)가 주간 편성한 정기 이벤트. 게임 콘텐츠 종류(`kind`)별 화면은 설계가 정해진 뒤에 붙이며,
+ * 지금은 서버가 지금 주의 편성을 그대로 전달하는 통로만 있다. 편성이 없거나 꺼져 있으면 `event`가 null이다.
+ */
+export interface RegularEventDto {
+  id: string; kind: string; variant: number; name: string; description: string;
+  currency: string; costPerPlay: number; dailyFreePlays: number;
+  /** 확률 공개용 가중치 보상표(운영 도구가 검증한 모양 그대로). */
+  rewardTable: unknown[];
+  /** 이 주의 시작(UTC 월요일, YYYY-MM-DD)과 끝(ISO). 주 경계는 게임의 임무·원정과 같은 UTC 월요일 00:00이다. */
+  weekStart: string; endsAt: string;
+}
+export interface RegularEventResponse { event: RegularEventDto | null; serverTime: string; }
 /** 입장 허가 뒤에도 기존 StageDef로 같은 전투 엔진을 사용한다. */
 export interface EnterEventStageResponse { eventId: string; stage: StageDef; serverTime: string; }
 
@@ -1242,6 +1255,8 @@ export interface GameApi extends AsyncArenaProfileApi {
   claimDuelSeasonReward(): Promise<ClaimDuelSeasonRewardResponse>;
   /** 이벤트 목록과 활성 상태는 서버 시각으로만 계산한다. */
   getEvents(): Promise<EventListResponse>;
+  /** 이번 주 정기 이벤트 편성(없으면 null). 판정은 서버가 하고 화면은 기기 시계로 기간을 다시 보지 않는다. */
+  getRegularEvent(): Promise<RegularEventResponse>;
   /** 종료된 이벤트 전투의 입장을 API 경계에서 차단한다. */
   enterEventStage(eventId: string, stageId: string): Promise<EnterEventStageResponse>;
   getMissions(): Promise<MissionListResponse>;

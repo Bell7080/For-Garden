@@ -11,6 +11,7 @@ export const READ_METHODS = new Set([
   "getDuelRanking",
   "getDuelStatus",
   "getEvents",
+  "getRegularEvent",
   "getRouletteStatus",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",

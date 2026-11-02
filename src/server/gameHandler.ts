@@ -1,5 +1,5 @@
 import { secureRandom } from "./secureRandom";
-import type { AncientRankingResponse, ExpeditionLeaderboardResponse } from "../api/contracts";
+import type { AncientRankingResponse, RegularEventDto, ExpeditionLeaderboardResponse } from "../api/contracts";
 import { isContentUnlocked } from "../core/contentUnlock";
 import { rollDuelPeriods, normalizeDuelState } from "../core/duelState";
 import type { PlayerDuelContext, PlayerDuelChange } from "./playerDuels";
@@ -37,6 +37,8 @@ export interface StateStore {
   expeditionContext?(playerId: string, now: Date): Promise<{ rank: number | null; entries: ExpeditionLeaderboardResponse["entries"] }>;
   /** 고대 지층 상시 순위(100등까지 + 내 줄). 초기화하지 않으므로 기간 키가 없다. */
   ancientRanking?(playerId: string): Promise<AncientRankingResponse>;
+  /** 운영 도구가 이번 주에 편성한 정기 이벤트. 실패하면 이벤트 없음으로 본다(게임 호출은 막지 않는다). */
+  regularEvent?(): Promise<RegularEventDto | null>;
   duelContext?(playerId: string, now: Date): Promise<PlayerDuelContext>;
   /** 운영 도구가 올린 받을 우편과 아직 반영하지 않은 재화 조정. 실패해도 게임 호출은 막지 않는다. */
   opsInbox?(playerId: string): Promise<OpsInbox>;
@@ -134,7 +136,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
@@ -143,6 +145,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       wantsDuel ? deps.store.duelContext!(playerId, now) : undefined,
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : undefined,
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : undefined,
+      req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : undefined,
     ]);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
@@ -175,6 +178,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       duelContext: duels,
       expeditionRank: expedition?.rank,
       ancientRanking: ancient,
+      ...(regular !== undefined ? { regularEvent: regular } : {}),
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true,

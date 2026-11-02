@@ -51,6 +51,7 @@ export function createSupabaseStore(env: Env) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") }) as PlayerDuelContext;
       return { ...context, changes: [] };
     },
+    async regularEvent() { return await rpc("server_regular_event", {}) as import("../api/contracts").RegularEventDto | null; },
     async identity(playerId) { return await rpc("server_player_identity", { p_player: playerId }) as { uid: string; createdAt: string }; },
     async raidContext(playerId, now) { return await rpc("server_raid_context", { p_player: playerId, p_worlds: worldRaidDefinitions(now) }) as SharedRaidContext; },
     async opsInbox(playerId) {

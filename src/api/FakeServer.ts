@@ -89,7 +89,7 @@ import { relicStoryFor } from "../data/relicStories";
 import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimRelicChapterRequest, CompleteTutorialStepRequest, CompleteTutorialStepResponse, MarkContentIntroSeenRequest, MarkContentIntroSeenResponse, ClaimRelicChapterResponse, ClaimRelicQuestionRewardRequest, ClaimRelicQuestionRewardResponse } from "./contracts";
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
-import type { EnterEventStageResponse, EventListResponse } from "./contracts";
+import type { EnterEventStageResponse, EventListResponse, RegularEventDto, RegularEventResponse } from "./contracts";
 import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse } from "./contracts";
 import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
@@ -170,6 +170,8 @@ export interface FakeServerOptions {
   expeditionRank?: number | null;
   /** 실제 DB의 고대 지층 상시 순위. 서버 호출 단위에서만 주입한다. */
   ancientRanking?: AncientRankingResponse;
+  /** 서버가 주입하는 이번 주 정기 이벤트. 서버 없이 도는 빌드는 이벤트를 만들지 않는다(null). */
+  regularEvent?: RegularEventDto | null;
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
@@ -271,6 +273,7 @@ export class FakeServer implements GameApi {
   private readonly duelContext?: PlayerDuelContext;
   private readonly remoteExpeditionRank?: number | null;
   private readonly ancientRanking?: AncientRankingResponse;
+  private readonly regularEvent: RegularEventDto | null;
 
   constructor(
     private readonly state: Session = session,
@@ -279,6 +282,7 @@ export class FakeServer implements GameApi {
     this.duelContext = options.duelContext;
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
+    this.regularEvent = options.regularEvent ?? null;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -3135,6 +3139,12 @@ export class FakeServer implements GameApi {
     await this.delay();
     const now = this.now();
     return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+  }
+
+  /** 이번 주 정기 이벤트 — 서버가 주입한 편성만 돌려주고 클라이언트가 만들어 내지 않는다. */
+  async getRegularEvent(): Promise<RegularEventResponse> {
+    await this.delay();
+    return { event: this.regularEvent ? structuredClone(this.regularEvent) : null, serverTime: this.now().toISOString() };
   }
 
   /** 이벤트·스테이지 소유 관계와 기간을 확인한 뒤에만 전투 정의를 내준다. */

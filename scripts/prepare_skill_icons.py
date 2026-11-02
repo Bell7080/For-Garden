@@ -57,6 +57,15 @@ RELICS = {
     "레이티아": "raitia",
 }
 
+# 추가 아군·회수조·감금조·소환수·코아틀은 id별 원본 폴더를 쓴다.
+# 예: python scripts/prepare_skill_icons.py output/skill-icons-complete/originals
+#     kento/passive.png · kento/basic.png · kento/ultimate.png · kento/ferocity.png
+RELICS.update({relic: relic for relic in (
+    "kento", "mosana", "anka", "irna", "ark", "yuti", "teku",
+    "ikanixia", "atra", "pulsi", "neuri", "mir", "magasa", "noa", "raja", "carno",
+    "maddy", "terisa", "shute", "morphe", "dimo", "dian", "kuro", "shiro", "quetzalcoatlus",
+)})
+
 # 적 정보창의 **역할** 아이콘. 원본 이름은 `:{번호}.png`이고 번호는 잡졸부터 불사까지의 순서다.
 # 스킬 일러스트와 같은 흰 실루엣이라 같은 규칙으로 굽고, 색은 화면이 역할 뱃지의 tint로 입힌다.
 # 이름은 `src/ui/encounterRolePresentation.ts`의 `ENCOUNTER_ROLE_ICON_ASSETS`와 같아야 한다.
@@ -160,9 +169,12 @@ def audit() -> int:
 
 
 def candidates(stem: str, slot: int) -> list[Path]:
-    """한 자리의 원본 후보. `char001skill_001` 꼴과 `스쿠스1` 꼴을 모두 받는다."""
+    """기존 낱장 이름과 `kento/passive.png` 형태의 개체별 폴더를 함께 받는다."""
     names = [f"{stem}skill_{slot:03d}", f"{stem}{slot}"]
-    return [SOURCE / f"{name}{suffix}" for name in names for suffix in (".png", ".jpeg", ".jpg", ".webp")]
+    suffixes = (".png", ".jpeg", ".jpg", ".webp")
+    return [SOURCE / f"{name}{suffix}" for name in names for suffix in suffixes] + [
+        SOURCE / stem / f"{SLOTS[slot]}{suffix}" for suffix in suffixes
+    ]
 
 
 def exists(stem: str, slot: int) -> bool:

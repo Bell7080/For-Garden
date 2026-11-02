@@ -66,11 +66,11 @@ describe("스킬 일러스트 파일", () => {
     }
   });
 
-  it("은 렐릭 하나에 네 칸을 모두 채운다", () => {
+  it("은 모든 아군·적·소환수의 네 칸을 모두 채운다", () => {
     const relics = new Set(SKILL_ART_ASSETS.map(([key]) => key));
     for (const def of RELICS) {
       const art = skillArtFor(def.id, "passive");
-      if (!art) continue;
+      expect(art, `${def.id} 패시브 아트가 없다`).toBeDefined();
       for (const slot of SKILL_ART_SLOTS) expect(relics.has(skillArtFor(def.id, slot) ?? ""), `${def.id} ${slot}`).toBe(true);
     }
   });

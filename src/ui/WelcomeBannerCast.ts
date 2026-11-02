@@ -13,7 +13,7 @@ import { textStyle } from "./theme";
 import { WELCOME_CAST, WELCOME_SPARKLE, welcomeCastNameY, welcomeSparkle } from "./welcomeCastLayout";
 
 /** 네 갈래 별 한 장 — 한 번만 굽고 색은 tint로 갈아 끼운다(매 프레임 도형을 다시 그리지 않는다). */
-const SPARKLE_TEXTURE = "welcome-sparkle";
+export const SPARKLE_TEXTURE = "welcome-sparkle";
 const SPARKLE_TEXTURE_SIZE = 64;
 
 /**
@@ -165,7 +165,7 @@ export class WelcomeBannerCast {
 }
 
 /** 네 갈래 별을 한 번 굽는다 — 가운데가 밝고 갈래 끝이 가늘다. 동그라미를 쓰지 않는다. */
-function ensureSparkleTexture(scene: Phaser.Scene): void {
+export function ensureSparkleTexture(scene: Phaser.Scene): void {
   if (scene.textures.exists(SPARKLE_TEXTURE)) return;
   const size = SPARKLE_TEXTURE_SIZE;
   const c = size / 2;

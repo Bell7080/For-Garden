@@ -6,6 +6,7 @@ import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { chipPoints, drawLayer, slantedRect } from "./holo";
 import type { LobbyEventEntry } from "./lobbyEventModel";
+import { lobbyEventClockEnd } from "../data/lobbyEvents";
 import { formatDayCountdown } from "../core/formatCountdown";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { spawnEventCardSd, type EventCardPuppet } from "./eventCardSd";
@@ -196,7 +197,7 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
       shape, bevel, accent: COLOR.event, title: t(event.titleKey), titleColor: COLOR.eventText, titleStroke: "#1a1206",
       backdrop: event.backdropKey ? { key: event.backdropKey, frame: event.backdropFrame } : undefined,
       sd: event.sd ? { ...event.sd, hop: false, inset: roulette ? CARD.roulette.sdInset : undefined } : undefined,
-      endsAt: event.endsAt,
+      endsAt: lobbyEventClockEnd(event, Date.now()),
       underlay: roulette ? () => this.paintRouletteShowcase(shape) : undefined,
       textRatio: roulette ? CARD.roulette.textRatio : undefined,
     });

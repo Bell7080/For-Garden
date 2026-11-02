@@ -13,6 +13,7 @@ export const READ_METHODS = new Set([
   "getEvents",
   "getRegularEvent",
   "getRouletteStatus",
+  "getChestForge",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",

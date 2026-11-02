@@ -1,4 +1,5 @@
 import type { RouletteReward, RouletteStatus } from "../core/roulette";
+import type { ChestForgeStatus } from "../core/chestForge";
 import { t, type TextKey } from "../i18n";
 import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
@@ -420,6 +421,14 @@ export interface ProfileModifierSelectionDto {
 /** 광고 SDK 완료 증명과 요청 재시도 멱등 키를 서버로 전달하는 요청이다. */
 export interface SpinRouletteResponse extends PlayerStateDto {
   status: RouletteStatus; index: number; reward: RouletteReward; granted: Partial<Record<keyof Wallet, number>>;
+}
+/** 보물상자 대장간 한 걸음(받기·강화·보상)의 결과. 난수와 지급은 서버가 확정한다. */
+export interface ChestForgeResponse extends PlayerStateDto {
+  status: ChestForgeStatus;
+  /** 강화의 성공 여부. 받기·보상 받기에는 없다. */
+  success?: boolean;
+  /** 보상 받기로 실제 들어간 몫(상한에서 깎인 뒤). */
+  granted?: Partial<Record<keyof Wallet, number>>;
 }
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
 /** 검증·중복·일일 제한 확인 후 지급과 저장까지 확정된 광고 보상 결과다. */
@@ -1177,6 +1186,11 @@ export interface GameApi extends AsyncArenaProfileApi {
   getRouletteStatus(): Promise<RouletteStatus>;
   spinRoulette(request: { requestId: string }): Promise<SpinRouletteResponse>;
   unlockRouletteSpins(request: { requestId: string; verificationToken?: string }): Promise<RouletteStatus>;
+  /** 보물상자 대장간 — 코인은 이번 주에 쓴 스테미나와 1:1이다(`core/chestForge.ts`). */
+  getChestForge(): Promise<ChestForgeStatus>;
+  enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
+  upgradeChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
+  claimChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;

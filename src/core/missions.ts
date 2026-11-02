@@ -45,6 +45,11 @@ export interface MissionState {
    * 세이브는 0에서 센다.
    */
   lifetime?: Partial<Record<MissionEvent["type"], number>>;
+  /**
+   * 이번 주(`weeklyKey`)에 쓴 스테미나 — 목표에서 잘리지 않는 값이다. 보물상자 대장간의 코인이 이 수와
+   * 1:1이다(`core/chestForge.ts`). 주가 바뀌면 비운다. **선택 필드다** — 도입 전 세이브는 0에서 센다.
+   */
+  weeklyStamina?: number;
 }
 
 /** 화면과 서버가 함께 쓰는 정적 임무 규격이다. */
@@ -169,6 +174,7 @@ export function normalizeMissions(state: MissionState, now: Date): MissionState 
   return {
     ...keys,
     ...(state.lifetime ? { lifetime: { ...state.lifetime } } : {}),
+    ...(!weeklyChanged && state.weeklyStamina ? { weeklyStamina: state.weeklyStamina } : {}),
     progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
     claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
     researchPoints: {
@@ -190,6 +196,7 @@ export function applyMissionEvent(state: MissionState, event: MissionEvent, now:
   const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
   if (amount <= 0) return next;
   next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
+  if (event.type === "stamina_spent") next.weeklyStamina = Math.min(LIFETIME_COUNT_CAP, (next.weeklyStamina ?? 0) + amount);
   for (const mission of MISSIONS) {
     if (mission.event !== event.type) continue;
     next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);

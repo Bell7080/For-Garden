@@ -45,10 +45,20 @@ export interface LobbyEventDef {
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
    */
   readonly destination?: LobbyEventDestination;
+  /** 매주 순환하는 정기 이벤트 — 카드의 시계가 `endsAt`이 아니라 다음 UTC 월요일 00:00(코인이 사라지는 시각)을 센다. */
+  readonly weekly?: boolean;
+}
+
+/** 카드의 시계가 세는 시각. 주간 이벤트는 다음 UTC 월요일 00:00이다. */
+export function lobbyEventClockEnd(event: Pick<LobbyEventDef, "endsAt" | "weekly">, now: number): string {
+  if (!event.weekly) return event.endsAt;
+  const today = new Date(now);
+  const daysToMonday = (8 - today.getUTCDay()) % 7 || 7;
+  return new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + daysToMonday)).toISOString();
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -75,6 +85,18 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     showcase: "roulette",
     startsAt: "2026-09-01T00:00:00+09:00",
     endsAt: "2026-12-31T23:59:59+09:00",
+  },
+  {
+    // 정기 이벤트 「보물상자 대장간」 — 코인은 이번 주에 쓴 스테미나와 1:1이고 매주 사라진다(`core/chestForge.ts`).
+    id: "chest-forge",
+    titleKey: "event.chestForge.title",
+    subtitleKey: "event.chestForge.subtitle",
+    backdropKey: BACKGROUND.interactionRustWorks,
+    destination: { kind: "chestForge" },
+    sd: { relicId: "torika", side: "right" },
+    weekly: true,
+    startsAt: "2026-11-02T00:00:00Z",
+    endsAt: "2099-12-31T23:59:59Z",
   },
 ];
 

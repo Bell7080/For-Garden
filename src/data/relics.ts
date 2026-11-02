@@ -3629,7 +3629,7 @@ export const RELICS: RelicDef[] = [
     basic: {
       id: "noa-basic",
       name: "할퀴기",
-      power: 60,
+      power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",

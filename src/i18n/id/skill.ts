@@ -179,6 +179,7 @@ export const SKILL_ID = {
   "skill.sentence.selfGuard.reset": " Ini juga mengatur ulang cooldown internal [[shell|Cangkang]].",
   "skill.sentence.stealthSetup": "Masuk [[stealth|Siluman]] selama {seconds} dtk dan [[teleport|berteleportasi]] ke musuh dengan HP terendah. [[basic-attack|Serangan dasar]] pertama yang mengenai setelahnya selalu kritis dan menjadi [[fixed-damage|kerusakan tetap]] yang mengabaikan [[def|Pertahanan]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Siluman]] pecah dengan serangan itu.",
+  "skill.sentence.stealthSetup.shieldBreak": " Serangan itu menghancurkan [[shield|Perisai]] target sebelum damage masuk.",
   "skill.sentence.volley": "Selama {seconds} dtk, [[basic-attack|serangan dasar]]-nya menjadi [[combo|Kombo]] yang mengenai {hits} kali dan [[attack-speed|Kecepatan Serang]] naik {percent}%.",
   "skill.sentence.duoOrder": "Memberi [[duo|Duo]] {percent}% [[attack-speed|Kecepatan Serang]], {chance}% Peluang Kritis, dan {lifeSteal}% curi nyawa selama {seconds} dtk.",
   "skill.sentence.tailwind": "Memberi [[tailwind|Angin Buritan]] kepada semua sekutu hidup selama {seconds} dtk.",

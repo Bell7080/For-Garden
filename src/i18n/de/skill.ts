@@ -179,6 +179,7 @@ export const SKILL_DE = {
   "skill.sentence.selfGuard.reset": " Außerdem wird die interne Abklingzeit des [[shell|Panzers]] zurückgesetzt.",
   "skill.sentence.stealthSetup": "Geht {seconds} s in [[stealth|Tarnung]] und [[teleport|teleportiert]] sich zum Gegner mit dem geringsten Leben. Der erste danach treffende [[basic-attack|Normalangriff]] ist immer kritisch und trifft als [[fixed-damage|fixer Schaden]], [[def|der Verteidigung]] ignoriert.{exposed}",
   "skill.sentence.stealthSetup.exposed": " Mit diesem Angriff bricht die [[stealth|Tarnung]].",
+  "skill.sentence.stealthSetup.shieldBreak": " Dieser Angriff zerstört den [[shield|Schild]] des Ziels, bevor der Schaden eintrifft.",
   "skill.sentence.volley": "{seconds} s lang wird sein [[basic-attack|Normalangriff]] zu einer [[combo|Kombo]] mit {hits} Treffern, und das [[attack-speed|Angriffstempo]] steigt um {percent}%.",
   "skill.sentence.duoOrder": "Gewährt dem [[duo|Duo]] {seconds} s lang {percent}% [[attack-speed|Angriffstempo]], {chance}% kritische Rate und {lifeSteal}% Lebensraub.",
   "skill.sentence.tailwind": "Gewährt allen lebenden Verbündeten {seconds} s lang [[tailwind|Rückenwind]].",

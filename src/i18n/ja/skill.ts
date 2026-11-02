@@ -180,6 +180,7 @@ export const SKILL_JA = {
   "skill.sentence.selfGuard.reset": " [[shell|貝殻]]の内部クールタイムを初期化する。",
   "skill.sentence.stealthSetup": "{seconds}秒間[[stealth|隠密]]し、体力が最も低い敵へ[[teleport|瞬間移動]]する。以後、最初に命中する[[basic-attack|通常攻撃]]が確定クリティカルになり、[[def|防御力]]を無視する[[fixed-damage|固定ダメージ]]として入る。{exposed}",
   "skill.sentence.stealthSetup.exposed": " その攻撃と共に[[stealth|隠密]]が解ける。",
+  "skill.sentence.stealthSetup.shieldBreak": " この攻撃は、命中した敵の[[shield|シールド]]をダメージが入る前にすべて破壊する。",
   "skill.sentence.volley": "{seconds}秒間、[[basic-attack|通常攻撃]]が{hits}回命中する[[combo|連撃]]になり、[[attack-speed|攻撃速度]]が{percent}%上がる。",
   "skill.sentence.duoOrder": "[[duo|デュオ]]に{seconds}秒間、[[attack-speed|攻撃速度]]{percent}%、クリティカル率{chance}%、吸血{lifeSteal}%を付与する。",
   "skill.sentence.tailwind": "すべての生存中の味方に{seconds}秒間[[tailwind|追い風]]を付与する。",

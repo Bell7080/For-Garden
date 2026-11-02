@@ -968,7 +968,9 @@ export function skillDescription(
       const setup = skill.selfSetup;
       // 은신이 언제 풀리는지는 그 한 방을 언제 쓸지 정하는 정보라 본문이 직접 말한다.
       const exposed = setup.stealthBreaksOnBasic ? t("skill.sentence.stealthSetup.exposed") : "";
-      return t("skill.sentence.stealthSetup", { seconds: setup.stealthSeconds, exposed });
+      // 강화된 그 한 방이 막을 깨는 개체(노아)만 한 문장이 더 붙는다.
+      const shieldBreak = setup.empowerNextBasic.breaksShield === true ? t("skill.sentence.stealthSetup.shieldBreak") : "";
+      return t("skill.sentence.stealthSetup", { seconds: setup.stealthSeconds, exposed }) + shieldBreak;
     }
     // 때리지 않고 손을 바꾸는 궁극기. 위력을 적지 않는 이유는 selfSetup과 같다 — 그 피해가
     // 이어질 일반 공격의 몫이라, 여기에 수를 적으면 같은 한 방이 위아래에서 두 수로 보인다.

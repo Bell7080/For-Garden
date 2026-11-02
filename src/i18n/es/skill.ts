@@ -179,6 +179,7 @@ export const SKILL_ES = {
   "skill.sentence.selfGuard.reset": " Además reinicia el enfriamiento interno del [[shell|Caparazón]].",
   "skill.sentence.stealthSetup": "Entra en [[stealth|Sigilo]] durante {seconds} s y se [[teleport|teletransporta]] al enemigo con menos PV. El primer [[basic-attack|ataque básico]] que impacte después siempre es crítico y se aplica como [[fixed-damage|daño fijo]] que ignora la [[def|Defensa]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " El [[stealth|Sigilo]] se rompe con ese ataque.",
+  "skill.sentence.stealthSetup.shieldBreak": " Ese ataque destruye el [[shield|Escudo]] del objetivo antes de que el daño le alcance.",
   "skill.sentence.volley": "Durante {seconds} s, su [[basic-attack|ataque básico]] se vuelve un [[combo|Combo]] que impacta {hits} veces y la [[attack-speed|Velocidad de ataque]] sube un {percent}%.",
   "skill.sentence.duoOrder": "Otorga al [[duo|Dúo]] un {percent}% de [[attack-speed|Velocidad de ataque]], un {chance}% de probabilidad crítica y un {lifeSteal}% de robo de vida durante {seconds} s.",
   "skill.sentence.tailwind": "Otorga [[tailwind|Viento a favor]] a todos los aliados vivos durante {seconds} s.",

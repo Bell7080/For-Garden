@@ -529,6 +529,8 @@ export type SelfSetup = {
     guaranteedCritical: true;
     /** 방어력·저항을 지나치는 고정 피해가 된다. */
     ignoresDefense: true;
+    /** 강화된 그 한 방이 박히기 전에 맞은 적의 보호막을 전부 깬다(노아). 막을 깬 몫은 피해로 세지 않는다. */
+    breaksShield?: true;
   };
 };
 

@@ -3599,14 +3599,14 @@ export const RELICS: RelicDef[] = [
     role: "assassin",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1.00 },
-    /* SR 띠의 아래쪽이다(2226). 튀어 다니는 암살자라 공격 속도·이동 속도에 얹고 체력은 낮게 둔다. */
+    /* SR 띠 안쪽이다(2316 — 응태 요청: 공격 속도 130 → 160, 2226 → 2316). 튀어 다니는 암살자라 공격 속도·이동 속도에 얹고 체력은 낮게 둔다. */
     stats: {
       hp: 860,
       def: 42,
       res: 40,
       atk: 195,
       ap: 20,
-      attackSpeed: 130,
+      attackSpeed: 160,
       moveSpeed: 122,
       critChance: 10,
       critDamage: 150,
@@ -3649,7 +3649,8 @@ export const RELICS: RelicDef[] = [
         stealthBreaksOnBasic: true,
         leapTarget: "lowestHpEnemy",
         landingDistance: 80,
-        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true },
+        // 응태 요청: 숨어 파고든 첫 할퀴기가 보호막을 깨고 박힌다 — 막으로 버티는 뒷줄을 노리는 암살자의 몫이다.
+        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true, breaksShield: true },
       },
     },
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.

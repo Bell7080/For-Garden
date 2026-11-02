@@ -179,6 +179,7 @@ export const SKILL_RU = {
   "skill.sentence.selfGuard.reset": " Также сбрасывает внутреннюю перезарядку [[shell|панциря]].",
   "skill.sentence.stealthSetup": "Уходит в [[stealth|невидимость]] на {seconds} с и [[teleport|телепортируется]] к врагу с наименьшими ОЗ. Первая попавшая после этого [[basic-attack|обычная атака]] всегда критическая и наносит [[fixed-damage|фиксированный урон]], игнорирующий защиту.{exposed}",
   "skill.sentence.stealthSetup.exposed": " С этой атакой [[stealth|невидимость]] спадает.",
+  "skill.sentence.stealthSetup.shieldBreak": " Эта атака разрушает [[shield|щит]] цели до нанесения урона.",
   "skill.sentence.volley": "На {seconds} с [[basic-attack|обычная атака]] становится [[combo|комбо]] из {hits} ударов, а [[attack-speed|скорость атаки]] растёт на {percent}%.",
   "skill.sentence.duoOrder": "Даёт [[duo|дуэту]] {percent}% [[attack-speed|скорости атаки]], {chance}% шанса крита и {lifeSteal}% вампиризма на {seconds} с.",
   "skill.sentence.tailwind": "Даёт всем живым союзникам [[tailwind|попутный ветер]] на {seconds} с.",

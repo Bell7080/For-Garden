@@ -18,7 +18,7 @@ function run(state: ReturnType<typeof setup>["state"], seconds: number) {
 }
 
 describe("감금조 정체성", () => {
-  it("넷 모두 공멸이고 태생 층은 감금 3인방 ×1.7 · 카르노 ×3이다", () => {
+  it("넷 모두 공멸이고 태생 층은 감금 3인방 ×1.85 · 카르노 ×3이다", () => {
     for (const id of ["magasa", "noa", "raja", "carno"]) {
       expect(getRelic(id).squad, id).toBe("annihilation");
       expect(getRelic(id).enemyOnly, id).toBe(true);
@@ -181,5 +181,27 @@ describe("카르노 「구속복」", () => {
     expect(effectiveLocksBroken(hero)).toBe(0);
     hero.ferocityFever = true;
     expect(effectiveLocksBroken(hero)).toBe(4);
+  });
+});
+
+describe("노아 강화 할퀴기 — 보호막 파괴", () => {
+  it("궁극기가 거는 강화 한 방은 맞은 적의 보호막을 깨고, 일반 할퀴기는 깨지 않는다", () => {
+    const def = getRelic("noa");
+    expect("selfSetup" in def.ultimate && def.ultimate.selfSetup?.empowerNextBasic.breaksShield).toBe(true);
+    for (const empowered of [true, false]) {
+      const { state, hero, foes } = setup("noa", ["toby"]);
+      hero.x = foes[0].x; hero.y = foes[0].y + 40;
+      foes[0].attackCooldown = Number.POSITIVE_INFINITY;
+      foes[0].shield.amount = 5_000; foes[0].shield.providerId = foes[0].id;
+      hero.empoweredBasic = empowered;
+      hero.attackCooldown = 0;
+      run(state, 0.1);
+      if (empowered) expect(foes[0].shield.amount).toBe(0);
+      else expect(foes[0].shield.amount).toBeGreaterThan(0);
+    }
+  });
+
+  it("공격 속도는 160이고 태생 전투력은 SR 띠 안이다", () => {
+    expect(getRelic("noa").stats.attackSpeed).toBe(160);
   });
 });

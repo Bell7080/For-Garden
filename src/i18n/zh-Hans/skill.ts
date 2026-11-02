@@ -179,6 +179,7 @@ export const SKILL_ZH_HANS = {
   "skill.sentence.selfGuard.reset": "同时重置[[shell|甲壳]]的内置冷却。",
   "skill.sentence.stealthSetup": "进入[[stealth|隐身]]{seconds}秒，并[[teleport|瞬移]]至生命最低的敌人身边。之后命中的首次[[basic-attack|普通攻击]]必定暴击，并作为无视防御的[[fixed-damage|固定伤害]]命中。{exposed}",
   "skill.sentence.stealthSetup.exposed": "该次攻击会解除[[stealth|隐身]]。",
+  "skill.sentence.stealthSetup.shieldBreak": "该次攻击会在伤害生效前破坏目标的[[shield|护盾]]。",
   "skill.sentence.volley": "{seconds}秒内，[[basic-attack|普通攻击]]变为命中{hits}次的[[combo|连击]]，[[attack-speed|攻击速度]]提升{percent}%。",
   "skill.sentence.duoOrder": "在{seconds}秒内给予[[duo|二人组]]{percent}%[[attack-speed|攻击速度]]、{chance}%暴击率与{lifeSteal}%吸血。",
   "skill.sentence.tailwind": "为所有存活队友提供[[tailwind|顺风]]，持续{seconds}秒。",

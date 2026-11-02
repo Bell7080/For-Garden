@@ -217,6 +217,7 @@ export const SKILL_KO = {
   "skill.sentence.selfGuard.reset": " [[shell|조가비]]가 곧바로 다시 터질 수 있게 된다.",
   "skill.sentence.stealthSetup": "{seconds}초 동안 [[stealth|은신]]하고 체력이 가장 낮은 적에게 [[teleport|순간이동]]한다. 이후 처음 적중하는 [[basic-attack|기본 공격]]이 확정 치명타가 되고 [[def|방어력]]을 무시하는 [[fixed-damage|고정 피해]]로 들어간다.{exposed}",
   "skill.sentence.stealthSetup.exposed": " 그 공격과 함께 [[stealth|은신]]이 풀린다.",
+  "skill.sentence.stealthSetup.shieldBreak": " 이 공격은 맞은 적의 [[shield|보호막]]을 피해가 박히기 전에 모두 파괴한다.",
   "skill.sentence.volley": "{seconds}초 동안 [[basic-attack|기본 공격]]이 {hits}번 적중하는 [[combo|연격]]이 되고, [[attack-speed|공격 속도]]가 {percent}% 오른다.",
   "skill.sentence.duoOrder": "[[duo|듀오]]에게 {seconds}초 동안 [[attack-speed|공격 속도]] {percent}%, 치명타 확률 {chance}%, 흡혈 {lifeSteal}%를 부여한다.",
   "skill.sentence.tailwind": "모든 생존 아군에게 {seconds}초 동안 [[tailwind|순풍]]을 부여한다.",

@@ -195,9 +195,9 @@ describe("적 전용 태생 단계", () => {
     }
   });
 
-  it("회수조 1.3 · 감옥 무리 1.7 · 공멸 주축 3.0", () => {
+  it("회수조 1.3 · 감옥 무리 1.85 · 공멸 주축 3.0", () => {
     for (const id of ["mir", "pulsi", "neuri", "atra", "ikanixia"]) expect(ENEMY_BIRTH_TIERS[id].statFactor, id).toBe(1.3);
-    for (const id of ["magasa", "noa", "raja"]) expect(ENEMY_BIRTH_TIERS[id].statFactor, id).toBe(1.7);
+    for (const id of ["magasa", "noa", "raja"]) expect(ENEMY_BIRTH_TIERS[id].statFactor, id).toBe(1.85);
     expect(ENEMY_BIRTH_TIERS.carno.statFactor).toBe(3);
   });
 });

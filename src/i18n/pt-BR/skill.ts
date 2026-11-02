@@ -179,6 +179,7 @@ export const SKILL_PT_BR = {
   "skill.sentence.selfGuard.reset": " Também reinicia a recarga interna da [[shell|Carapaça]].",
   "skill.sentence.stealthSetup": "Entra em [[stealth|Furtividade]] por {seconds} s e se [[teleport|teleporta]] até o inimigo com menos PV. O primeiro [[basic-attack|ataque básico]] que acertar depois é sempre crítico e entra como [[fixed-damage|dano fixo]] que ignora a [[def|Defesa]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " A [[stealth|Furtividade]] se desfaz com esse ataque.",
+  "skill.sentence.stealthSetup.shieldBreak": " Esse ataque destrói o [[shield|Escudo]] do alvo antes de o dano ser aplicado.",
   "skill.sentence.volley": "Por {seconds} s, o [[basic-attack|ataque básico]] vira um [[combo|Combo]] que acerta {hits} vezes e a [[attack-speed|Velocidade de ataque]] sobe {percent}%.",
   "skill.sentence.duoOrder": "Concede à [[duo|Dupla]] {percent}% de [[attack-speed|Velocidade de ataque]], {chance}% de chance crítica e {lifeSteal}% de roubo de vida por {seconds} s.",
   "skill.sentence.tailwind": "Concede [[tailwind|Vento a favor]] a todos os aliados vivos por {seconds} s.",

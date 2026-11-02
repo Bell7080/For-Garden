@@ -179,6 +179,7 @@ export const SKILL_TH = {
   "skill.sentence.selfGuard.reset": " และรีเซ็ตคูลดาวน์ภายในของ[[shell|กระดอง]]ด้วย",
   "skill.sentence.stealthSetup": "[[stealth|ล่องหน]] {seconds} วินาที และ[[teleport|วาร์ป]]ไปหาศัตรูที่มี HP ต่ำสุด [[basic-attack|การโจมตีปกติ]]ครั้งแรกที่โดนหลังจากนั้นจะคริติคอลเสมอ และเป็น[[fixed-damage|ความเสียหายคงที่]]ที่ไม่สน[[def|พลังป้องกัน]]{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|การล่องหน]]จะหายไปพร้อมการโจมตีนั้น",
+  "skill.sentence.stealthSetup.shieldBreak": " การโจมตีนั้นจะทำลาย[[shield|โล่]]ของเป้าหมายทั้งหมดก่อนที่ความเสียหายจะเข้า",
   "skill.sentence.volley": "เป็นเวลา {seconds} วินาที [[basic-attack|การโจมตีปกติ]]กลายเป็น[[combo|คอมโบ]]ที่โดน {hits} ครั้ง และ[[attack-speed|ความเร็วโจมตี]]เพิ่มขึ้น {percent}%",
   "skill.sentence.duoOrder": "มอบ[[attack-speed|ความเร็วโจมตี]] {percent}% อัตราคริติคอล {chance}% และการดูดเลือด {lifeSteal}% ให้[[duo|คู่หู]]เป็นเวลา {seconds} วินาที",
   "skill.sentence.tailwind": "มอบ[[tailwind|ลมส่ง]]ให้พันธมิตรที่มีชีวิตทุกตัว {seconds} วินาที",

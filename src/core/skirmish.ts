@@ -8572,6 +8572,8 @@ function strike(
   const amount = resolution.applied;
 
   const targetHpBefore = target.hp;
+  // 강화 평타가 막을 깨는 계약(노아)은 궁극기 정의가 갖는다 — 코마의 `breaksShield`와 같이 피해가 박히기 전에 깬다.
+  if (empowered && "selfSetup" in attacker.def.ultimate && attacker.def.ultimate.selfSetup?.empowerNextBasic.breaksShield === true) breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events, state);

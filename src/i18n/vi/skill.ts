@@ -179,6 +179,7 @@ export const SKILL_VI = {
   "skill.sentence.selfGuard.reset": " Đồng thời làm mới thời gian hồi nội tại của [[shell|Mai]].",
   "skill.sentence.stealthSetup": "Vào [[stealth|Tàng hình]] {seconds} giây và [[teleport|dịch chuyển]] tới kẻ địch có máu thấp nhất. [[basic-attack|Đòn đánh thường]] đầu tiên trúng sau đó luôn chí mạng và thành [[fixed-damage|sát thương cố định]] bỏ qua [[def|Thủ]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Tàng hình]] vỡ cùng đòn đó.",
+  "skill.sentence.stealthSetup.shieldBreak": " Đòn đó phá hủy hoàn toàn [[shield|Khiên]] của mục tiêu trước khi sát thương giáng xuống.",
   "skill.sentence.volley": "Trong {seconds} giây, [[basic-attack|đòn đánh thường]] thành [[combo|Liên kích]] trúng {hits} lần và [[attack-speed|Tốc đánh]] tăng {percent}%.",
   "skill.sentence.duoOrder": "Trao cho [[duo|bộ đôi]] {percent}% [[attack-speed|Tốc đánh]], {chance}% Tỉ lệ chí mạng và {lifeSteal}% Hút máu trong {seconds} giây.",
   "skill.sentence.tailwind": "Trao [[tailwind|Gió thuận]] cho mọi đồng minh còn sống trong {seconds} giây.",

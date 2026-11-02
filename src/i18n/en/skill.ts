@@ -180,6 +180,7 @@ export const SKILL_EN = {
   "skill.sentence.selfGuard.reset": " This also resets the internal cooldown of [[shell|Shell]].",
   "skill.sentence.stealthSetup": "Enters [[stealth|Stealth]] for {seconds}s and [[teleport|teleports]] to the enemy with the lowest HP. The first [[basic-attack|basic attack]] to land afterwards always critically strikes and lands as [[fixed-damage|fixed damage]] that ignores [[def|Defense]].{exposed}",
   "skill.sentence.stealthSetup.exposed": " [[stealth|Stealth]] breaks with that attack.",
+  "skill.sentence.stealthSetup.shieldBreak": " That attack destroys the target's [[shield|Shield]] before the damage lands.",
   "skill.sentence.volley": "For {seconds}s, its [[basic-attack|basic attack]] becomes a [[combo|Combo]] that lands {hits} times and [[attack-speed|Attack Speed]] rises by {percent}%.",
   "skill.sentence.duoOrder": "Grants the [[duo|Duo]] {percent}% [[attack-speed|Attack Speed]], {chance}% Critical Rate and {lifeSteal}% life steal for {seconds}s.",
   "skill.sentence.tailwind": "Grants [[tailwind|Tailwind]] to every living ally for {seconds}s.",

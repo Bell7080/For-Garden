@@ -1573,6 +1573,8 @@ export default {
   "dialogue.opening-train.wake.body": "Researcher, researcher! Open your eyes. You can see the city out the window!",
   "dialogue.opening-train.greet.speaker": "Torika",
   "dialogue.opening-train.greet.body": "I'm Torika! Starting today I'm your escort Relic. I'll stay right by your side until we arrive.",
+  "dialogue.opening-train.relicNote.body": "Relic — a humanlike restoration shaped from the revived DNA of extinct animals sealed in fossils. That is what Eternal City calls them.",
+  "dialogue.opening-train.relicNote2.body": "Revived Relics carry the strength of their ancestral species, along with an instinct that can swallow their reason: Ferocity.",
   "dialogue.opening-train.window.speaker": "Torika",
   "dialogue.opening-train.window.body": "See those towers rising like white bones? That's Eternal City, built upon the memory of extinction.",
   "dialogue.opening-train.answer.speaker": "Torika",

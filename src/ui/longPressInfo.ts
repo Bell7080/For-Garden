@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { COLOR } from "./theme";
 import { LONG_PRESS, longPressProgress } from "./longPressGauge";
+import { LONG_PRESS_RING_DEPTH, LongPressRing } from "./longPressRing";
 
 /**
  * 꾹 눌러 여는 조작 하나.
@@ -44,30 +44,19 @@ export function bindLongPress(
   /** 입력 사건이 말하는 누른 시각. 브라우저가 그 입력을 받은 때라 프레임이 밀려도 흔들리지 않는다. */
   let downAt = 0;
   let fired = false;
-  let gauge: Phaser.GameObjects.Graphics | undefined;
+  let gauge: LongPressRing | undefined;
   let ticker: (() => void) | undefined;
 
-  const stop = (): void => {
+  const stop = (burst = false): void => {
     if (ticker) { scene.events.off(Phaser.Scenes.Events.UPDATE, ticker); ticker = undefined; }
     const current = gauge;
     gauge = undefined;
-    if (!current) return;
     // 곧바로 지우지 않고 짧게 걷어야 "다 찼다"가 눈에 남는다.
-    scene.tweens.add({ targets: current, alpha: 0, duration: LONG_PRESS.fadeMs, onComplete: () => current.destroy() });
+    current?.destroy(burst);
   };
 
-  const draw = (x: number, y: number, ratio: number): void => {
-    if (!gauge) return;
-    gauge.clear();
-    gauge.lineStyle(LONG_PRESS.width, COLOR.void, 0.55);
-    gauge.strokeCircle(x, y, LONG_PRESS.radius);
-    if (ratio <= 0) return;
-    gauge.lineStyle(LONG_PRESS.width, COLOR.accent, 0.95);
-    gauge.beginPath();
-    // 12시에서 시계 방향으로 찬다 — 카드 충전·상태 시계와 같은 방향이다.
-    gauge.arc(x, y, LONG_PRESS.radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio, false);
-    gauge.strokePath();
-  };
+  // 12시에서 시계 방향으로 찬다 — 카드 충전·상태 시계와 같은 방향이다.
+  const draw = (_x: number, _y: number, ratio: number): void => { gauge?.draw(ratio); };
 
   const cancel = (): void => { stop(); startedAt = 0; downAt = 0; };
 
@@ -77,8 +66,8 @@ export function bindLongPress(
     startedAt = Date.now();
     downAt = pointer.downTime;
     stop();
-    gauge = scene.add.graphics().setDepth(options.depth ?? 900);
     const { x, y } = pointer;
+    gauge = new LongPressRing(scene, x, y, options.depth ?? LONG_PRESS_RING_DEPTH);
     draw(x, y, 0);
     ticker = () => {
       // 끌기로 넘어간 손가락은 스크롤이지 꾹 누름이 아니다. 활성 포인터를 직접 보므로
@@ -92,7 +81,7 @@ export function bindLongPress(
       draw(x, y, ratio);
       if (ratio < 1 || fired) return;
       fired = true;
-      stop();
+      stop(true);
       options.onLongPress();
     };
     scene.events.on(Phaser.Scenes.Events.UPDATE, ticker);

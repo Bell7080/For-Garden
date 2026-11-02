@@ -1586,6 +1586,8 @@ export default {
   "dialogue.opening-train.wake.body": "研究員さん、研究員さん！ 目を開けてください。窓の外に都市が見えますよ！",
   "dialogue.opening-train.greet.speaker": "トリカ",
   "dialogue.opening-train.greet.body": "わたしはトリカです！ 今日から研究員さんを守る護衛のレリックです。着くまでずっとそばにいますね。",
+  "dialogue.opening-train.relicNote.body": "レリック——化石に眠る絶滅動物のDNAをよみがえらせて生み出された、人の姿の復元体。エターナルシティは彼女たちをそう呼ぶ。",
+  "dialogue.opening-train.relicNote2.body": "よみがえったレリックは、原種の力とともに、理性を呑み込みかねない本能「野性」を抱えて生きている。",
   "dialogue.opening-train.window.speaker": "トリカ",
   "dialogue.opening-train.window.body": "あそこ、白い骨みたいにそびえる塔が見えますか？ 絶滅の記憶の上に建てた都市、エターナルシティです。",
   "dialogue.opening-train.answer.speaker": "トリカ",

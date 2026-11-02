@@ -24,6 +24,32 @@ export const FORMATION_DRAG_VISUAL = {
    * 노란 섬광 한 번으로 알리면 어디까지가 그 자리인지 읽히지 않는다. 네 모서리를 어긋나게 깎은
    * 칸을 **끄는 동안 계속** 띄워 두고, 지금 가리키는 칸만 진해진다.
    */
+  /**
+   * 「잡았다」를 몸으로 말하는 값. 커지기만 하면 확대된 그림일 뿐이라, **들어 올려지고(발밑과 그림자가
+   * 벌어진다) · 잡는 순간 한 번 톡 부풀고 · 끄는 방향으로 기울며 · 손끝에서 살랑 흔들려야** 손에 쥔
+   * 물건으로 읽힌다.
+   */
+  lift: {
+    /** 잡는 순간 부풀었다 제 크기로 내려앉는 시간(ms)과 넘치는 몫. */
+    popMs: 240,
+    popOvershoot: 0.14,
+    /** 발이 손끝보다 떠오르는 높이(px). 그림자가 그 아래 바닥에 남아 공중에 든 것으로 읽힌다. */
+    raise: 54,
+    /** 손끝에서 살랑 위아래로 떠다니는 폭(px)과 한 번 오르내리는 시간(ms). */
+    bob: 7,
+    bobMs: 900,
+    /** 끄는 속도(px/ms)가 기울기로 바뀌는 비율과 상한(rad). 빨리 끌수록 뒤로 젖혀진다. */
+    tiltPerSpeed: 0.16,
+    maxTilt: 0.26,
+    /** 가만히 쥐고 있어도 살짝 흔들리는 몫(rad). 멈춘 그림이 아니라 들린 몸이다. */
+    sway: 0.045,
+    swayMs: 1300,
+    /** 몸 둘레의 색 테두리 — 쥐고 있는 것만 두른다. */
+    rimPx: 5,
+    rimAlpha: 0.6,
+  },
+  /** 든 몸 아래 바닥에 남는 그림자. 들어 올린 높이만큼 작고 옅어진다. */
+  shadow: { width: 150, height: 34, alpha: 0.5 },
   zone: {
     /** 평소 칸. 배경이 그대로 비칠 만큼만 채운다. */
     fillAlpha: 0.14,
@@ -85,4 +111,33 @@ export function formationDragPreview(
     // 든 칸을 뺀 나머지 중 내용이 바뀐 칸만 "옮겨 왔다"로 표시한다.
     moved: slot !== from && swapped[slot] !== picked[slot],
   }));
+}
+
+export interface FormationLiftPose {
+  /** 기본 높이에 곱할 배율(`liftScale`과 잡는 순간의 부풂을 함께 담는다). */
+  scale: number;
+  /** 발을 손끝보다 들어 올릴 높이(px). */
+  raise: number;
+  /** 몸의 기울기(rad). */
+  tilt: number;
+}
+
+/**
+ * 잡은 지 `elapsedMs`, 끄는 가로 속도 `velocityX`(px/ms)일 때 든 몸의 자세.
+ * 움직임 줄이기에서는 부풂·흔들림·기울기 없이 들어 올린 자리에만 선다.
+ */
+export function formationLiftPose(elapsedMs: number, velocityX: number, reduceMotion = false): FormationLiftPose {
+  const lift = FORMATION_DRAG_VISUAL.lift;
+  const base = FORMATION_DRAG_VISUAL.liftScale;
+  if (reduceMotion) return { scale: base, raise: lift.raise, tilt: 0 };
+  const t = Math.max(0, elapsedMs);
+  // 0 → 넘침 → 제자리. 앞 40%에 부풀고 나머지에 가라앉는다.
+  const p = Math.min(1, t / lift.popMs);
+  const pop = p < 0.4 ? (p / 0.4) * lift.popOvershoot : (1 - (p - 0.4) / 0.6) * lift.popOvershoot;
+  const growIn = Math.min(1, t / (lift.popMs * 0.4));
+  const scale = 1 + (base - 1) * growIn + pop;
+  const raise = lift.raise * growIn + Math.sin((t / lift.bobMs) * Math.PI * 2) * lift.bob * growIn;
+  const drag = Math.max(-lift.maxTilt, Math.min(lift.maxTilt, -velocityX * lift.tiltPerSpeed));
+  const tilt = drag + Math.sin((t / lift.swayMs) * Math.PI * 2) * lift.sway;
+  return { scale, raise, tilt };
 }

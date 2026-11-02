@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "นักวิจัย นักวิจัย! ลืมตาสิ มองเห็นเมืองนอกหน้าต่างแล้ว!",
   "dialogue.opening-train.greet.speaker": "โทริกะ",
   "dialogue.opening-train.greet.body": "ฉันคือโทริกะ! ตั้งแต่วันนี้ฉันเป็นเรลิกคุ้มกันของเธอ จะอยู่ข้าง ๆ จนกว่าจะถึงเลยนะ",
+  "dialogue.opening-train.relicNote.body": "เรลิก — ร่างฟื้นคืนรูปมนุษย์ที่สร้างขึ้นจาก DNA ของสัตว์สูญพันธุ์ในฟอสซิล นครนิรันดร์เรียกพวกเธอเช่นนั้น",
+  "dialogue.opening-train.relicNote2.body": "เรลิกที่ฟื้นคืนมามีพลังของสายพันธุ์ดั้งเดิม พร้อมสัญชาตญาณที่อาจกลืนกินสติ นั่นคือ «ความดุร้าย»",
   "dialogue.opening-train.window.speaker": "โทริกะ",
   "dialogue.opening-train.window.body": "เห็นหอคอยที่ตั้งตระหง่านเหมือนกระดูกสีขาวไหม? นั่นคือนครนิรันดร์ที่สร้างบนความทรงจำของการสูญพันธุ์",
   "dialogue.opening-train.answer.speaker": "โทริกะ",

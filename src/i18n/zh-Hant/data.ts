@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "研究員，研究員！快睜開眼睛。窗外能看到城市了！",
   "dialogue.opening-train.greet.speaker": "託莉卡",
   "dialogue.opening-train.greet.body": "我是託莉卡！從今天起我就是你的護衛遺物。到達之前我會一直待在你身邊。",
+  "dialogue.opening-train.relicNote.body": "遺物——以化石中滅絕動物的DNA復原而成的人形復原體。永恆之城如此稱呼她們。",
+  "dialogue.opening-train.relicNote2.body": "復活的遺物繼承了原種的力量，也背負著可能吞噬理性的本能——「野性」。",
   "dialogue.opening-train.window.speaker": "託莉卡",
   "dialogue.opening-train.window.body": "看到那些像白骨一樣聳立的塔了嗎？那就是建立在滅絕記憶之上的永恆之城。",
   "dialogue.opening-train.answer.speaker": "託莉卡",

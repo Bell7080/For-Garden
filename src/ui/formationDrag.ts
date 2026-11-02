@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import { COLOR } from "./theme";
 import { audioManager } from "../managers/AudioManager";
 import { LONG_PRESS, longPressProgress } from "./longPressGauge";
+import { LONG_PRESS_RING_DEPTH, LongPressRing } from "./longPressRing";
 import { FORMATION_GESTURE, classifyFormationGesture, formationDropSlot, type FormationGestureCancelReason } from "./formationGestureRules";
 
 export interface FormationDragSlot {
@@ -58,37 +58,28 @@ export function bindFormationDrag(
   let keyboardSlot = 0;
   let destroyed = false;
 
-  let gauge: Phaser.GameObjects.Graphics | undefined;
+  let gauge: LongPressRing | undefined;
   let gaugeTicker: (() => void) | undefined;
-  const stopGauge = (): void => {
+  const stopGauge = (burst = false): void => {
     if (gaugeTicker) { scene.events.off(Phaser.Scenes.Events.UPDATE, gaugeTicker); gaugeTicker = undefined; }
     const current = gauge;
     gauge = undefined;
-    if (!current) return;
-    scene.tweens.add({ targets: current, alpha: 0, duration: LONG_PRESS.fadeMs, onComplete: () => current.destroy() });
+    current?.destroy(burst);
   };
   // 그리드 카드의 `bindLongPress`와 같은 게이지다 — 같은 꾹 누름이 화면마다 다르게 보이지 않는다.
   const startGauge = (pointer: Phaser.Input.Pointer): void => {
     stopGauge();
-    const g = scene.add.graphics().setDepth(900);
-    gauge = g;
     const { x, y } = pointer;
+    const ring = new LongPressRing(scene, x, y, LONG_PRESS_RING_DEPTH);
+    gauge = ring;
     const begin = scene.time.now;
-    const draw = (ratio: number): void => {
-      g.clear();
-      g.lineStyle(LONG_PRESS.width, COLOR.void, 0.55);
-      g.strokeCircle(x, y, LONG_PRESS.radius);
-      if (ratio <= 0) return;
-      g.lineStyle(LONG_PRESS.width, COLOR.accent, 0.95);
-      g.beginPath();
-      g.arc(x, y, LONG_PRESS.radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio, false);
-      g.strokePath();
-    };
-    draw(0);
     gaugeTicker = () => {
       const now = scene.input.activePointer;
       if (!now.isDown || Phaser.Math.Distance.Between(x, y, now.x, now.y) > LONG_PRESS.moveSlop) { stopGauge(); return; }
-      draw(longPressProgress(scene.time.now - begin, FORMATION_GESTURE.longPressMs));
+      const ratio = longPressProgress(scene.time.now - begin, FORMATION_GESTURE.longPressMs);
+      ring.draw(ratio);
+      // 다 찬 순간 한 번 부풀며 걷힌다 — 손을 떼면 열린다.
+      if (ratio >= 1) stopGauge(true);
     };
     scene.events.on(Phaser.Scenes.Events.UPDATE, gaugeTicker);
   };

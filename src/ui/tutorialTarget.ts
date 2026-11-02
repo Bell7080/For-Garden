@@ -1,13 +1,15 @@
 import Phaser from "phaser";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { t } from "../i18n";
-import { TutorialSpotlight } from "./TutorialSpotlight";
+import { TutorialSpotlight, type TutorialSpotlightOptions } from "./TutorialSpotlight";
 
 type Rect = { x: number; y: number; width: number; height: number };
 /** 실제 입력 대상의 수명을 따라간다. 다른 창이 가리면 걷고 돌아오면 다시 가리킨다. */
 export function followTutorialTarget(scene: Phaser.Scene, options: {
   enabled: () => boolean; rect: () => Rect | undefined; text: () => string;
   blocked?: () => boolean; onSkip?: () => void;
+  /** 끌어 옮길 길이 있는 칸은 휘어진 화살표로 그 길을 긋는다. */
+  guide?: () => TutorialSpotlightOptions["guide"];
 }): () => void {
   let stopped = false, spotlight: TutorialSpotlight | undefined, signature = "";
   let waiting: Phaser.GameObjects.Rectangle | undefined;
@@ -28,10 +30,11 @@ export function followTutorialTarget(scene: Phaser.Scene, options: {
     else {
       waiting?.destroy(); waiting = undefined;
       const text = options.text();
-      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text]);
+      const guide = options.guide?.();
+      const next = JSON.stringify([rect.x, rect.y, rect.width, rect.height, text, guide]);
       if (next !== signature) {
         clear(); signature = next;
-        spotlight = new TutorialSpotlight(scene, { rect, text, side: rect.y < 700 ? "below" : "above", onSkip: options.onSkip, skipLabel: t("tutorial.skip") });
+        spotlight = new TutorialSpotlight(scene, { rect, text, guide, side: rect.y < 700 ? "below" : "above", onSkip: options.onSkip, skipLabel: t("tutorial.skip") });
       }
     }
   };

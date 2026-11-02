@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "Hey, aufwachen! Mach die Augen auf. Man sieht die Stadt draußen vor dem Fenster!",
   "dialogue.opening-train.greet.speaker": "Torika",
   "dialogue.opening-train.greet.body": "Ich bin Torika! Ab heute bin ich dein Begleit-Relikt. Ich bleibe an deiner Seite, bis wir ankommen.",
+  "dialogue.opening-train.relicNote.body": "Relikt – ein menschengestaltiges Restaurat, geformt aus der DNA ausgestorbener Tiere in Fossilien. So nennt die Ewige Stadt sie.",
+  "dialogue.opening-train.relicNote2.body": "Wiedererweckte Relikte tragen die Kraft ihrer Urart in sich – und einen Instinkt, der ihre Vernunft verschlingen kann: die «Wildheit».",
   "dialogue.opening-train.window.speaker": "Torika",
   "dialogue.opening-train.window.body": "Siehst du die Türme, die wie weiße Knochen aufragen? Das ist die Ewige Stadt, erbaut auf der Erinnerung an das Aussterben.",
   "dialogue.opening-train.answer.speaker": "Torika",

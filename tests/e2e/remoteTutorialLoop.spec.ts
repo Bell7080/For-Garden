@@ -92,6 +92,8 @@ test("1-1 광장 → 출격 → 1-2 편성 이동·길게 눌러 정보 확인",
   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.waitForTimeout(1200);await page.mouse.up();
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').info.isOpen), {timeout:15000}).toBe(true);
   await captureGame(page,info.outputPath('formation-information.png'));
+  // 정보창 버튼 안내를 한 칸씩 넘긴 뒤, 마지막 칸이 가리키는 뒤로가기로 나간다.
+  for(let i=0;i<7;i++){await page.waitForTimeout(600);await tap(page,540,700);}
   await tap(page,974,1800);
   await expect.poll(()=>page.evaluate(()=>(window as any).__TUTORIAL_GAME.scene.getScene('party').partyTutorialPhase)).toBe('start');
   expect(server.calls.filter(c=>c.status!==200)).toEqual([]);

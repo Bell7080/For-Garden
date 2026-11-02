@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "Periset, periset! Buka matamu. Kotanya terlihat dari jendela!",
   "dialogue.opening-train.greet.speaker": "Torika",
   "dialogue.opening-train.greet.body": "Aku Torika! Mulai hari ini aku Relik pengawalmu. Aku akan tetap di sisimu sampai kita tiba.",
+  "dialogue.opening-train.relicNote.body": "Relik — sosok restorasi berwujud manusia yang dibentuk dari DNA hewan punah di dalam fosil. Begitulah Kota Abadi menyebut mereka.",
+  "dialogue.opening-train.relicNote2.body": "Relik yang dihidupkan kembali membawa kekuatan spesies asalnya, bersama naluri yang bisa menelan akal sehat: «Keganasan».",
   "dialogue.opening-train.window.speaker": "Torika",
   "dialogue.opening-train.window.body": "Lihat menara-menara yang menjulang seperti tulang putih itu? Itulah Kota Abadi, dibangun di atas kenangan kepunahan.",
   "dialogue.opening-train.answer.speaker": "Torika",

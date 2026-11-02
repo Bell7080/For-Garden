@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "Ei, acorde! Abra os olhos! Dá para ver a cidade pela janela!",
   "dialogue.opening-train.greet.speaker": "Torika",
   "dialogue.opening-train.greet.body": "Eu sou a Torika! A partir de hoje sou sua Relíquia de escolta. Vou ficar do seu lado até chegarmos.",
+  "dialogue.opening-train.relicNote.body": "Relíquia: uma restauração de forma humana criada a partir do DNA de animais extintos guardado em fósseis. É assim que a Cidade Eterna as chama.",
+  "dialogue.opening-train.relicNote2.body": "As Relíquias revividas carregam a força da espécie original e um instinto capaz de engolir a razão: a «Ferocidade».",
   "dialogue.opening-train.window.speaker": "Torika",
   "dialogue.opening-train.window.body": "Vê aquelas torres que se erguem como ossos brancos? É a Cidade Eterna, construída sobre a memória da extinção.",
   "dialogue.opening-train.answer.speaker": "Torika",

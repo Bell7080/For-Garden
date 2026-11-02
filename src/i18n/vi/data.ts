@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "Nhà nghiên cứu ơi, nhà nghiên cứu! Mở mắt ra đi. Nhìn thấy thành phố ngoài cửa sổ rồi!",
   "dialogue.opening-train.greet.speaker": "Torika",
   "dialogue.opening-train.greet.body": "Mình là Torika! Từ hôm nay mình là Di vật hộ tống của bạn. Mình sẽ ở ngay cạnh bạn cho tới khi đến nơi.",
+  "dialogue.opening-train.relicNote.body": "Di vật — những thể phục hồi mang hình người, được tạo nên từ DNA của loài vật tuyệt chủng trong hóa thạch. Thành phố Vĩnh Hằng gọi họ như thế.",
+  "dialogue.opening-train.relicNote2.body": "Những Di vật được hồi sinh mang sức mạnh của loài gốc, cùng một bản năng có thể nuốt chửng lý trí: «Dã tính».",
   "dialogue.opening-train.window.speaker": "Torika",
   "dialogue.opening-train.window.body": "Thấy những ngọn tháp vươn lên như xương trắng kia không? Đó là Thành phố Vĩnh Hằng, xây trên ký ức của sự tuyệt chủng.",
   "dialogue.opening-train.answer.speaker": "Torika",

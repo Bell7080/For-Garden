@@ -39,7 +39,11 @@ export const OPENING_TRAIN: DialogueStory = {
   nodes: [
     // ── 열차 안: 토리카 ───────────────────────────────────────────────
     { id: "wake", speaker: "???", body: "연구원님, 연구원님! 눈 좀 떠 보세요. 창밖에 도시가 보여요!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
-    { id: "greet", speaker: "토리카", body: "저는 토리카예요! 오늘부터 연구원님을 지키는 호위 렐릭이에요. 도착할 때까지 옆에 꼭 붙어 있을게요.", standing: "torika", act: "nod", nextId: "window" },
+    { id: "greet", speaker: "토리카", body: "저는 토리카예요! 오늘부터 연구원님을 지키는 호위 렐릭이에요. 도착할 때까지 옆에 꼭 붙어 있을게요.", standing: "torika", act: "nod", nextId: "relicNote" },
+    // 토리카가 스스로 「렐릭」이라 부르는 순간, 그 말이 무엇인지 지문이 한 번 짚는다. 캐릭터가 자기소개처럼
+    // 풀어 말하면 첫 만남의 대사가 설명서가 된다 — 무대 밖의 목소리가 맡는다.
+    { id: "relicNote", speaker: "", body: "렐릭 — 화석 속 멸종 동물의 DNA를 되살려 빚어낸 인간형 복원체. 이터널 시티는 그들을 그렇게 부른다.", nextId: "relicNote2" },
+    { id: "relicNote2", speaker: "", body: "되살아난 렐릭은 원종의 힘과 함께, 이성을 삼킬 수 있는 본능 「야성」을 안고 살아간다.", nextId: "window" },
     { id: "window", speaker: "토리카", body: "저기, 하얀 뼈처럼 솟은 탑들 보이세요? 멸종의 기억 위에 세운 도시, 이터널 시티예요.", standing: "torika", act: "lean", nextId: "answer" },
     {
       id: "answer", speaker: "토리카", body: "도착하면 제일 먼저 뭘 하고 싶으세요?", standing: "torika",

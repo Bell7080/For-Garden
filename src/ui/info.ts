@@ -37,6 +37,7 @@ import {
 } from "../puppets/assets";
 import { addSceneBackground, BACKGROUND } from "./backgrounds";
 import { addBackButton, IconButton } from "./IconButton";
+import { BACK_BUTTON_SIZE, BACK_SLOT } from "./popupGeometry";
 import { chipPoints, drawGlassFade, drawHairline, drawLayer, drawShapeEdge, drawShapeInnerGlow, drawVignette, HOLO, perspectiveRect, slantedRect, toPoints } from "./holo";
 import { drawGlyph } from "./glyphs";
 import { PopupLayer, POPUP_TITLE_SIZE } from "./PopupLayer";
@@ -599,6 +600,40 @@ export class InfoManager {
     return this.feedPopupOpen ? this.feedOneTutorialHit?.getBounds() : undefined;
   }
   private feedOneTutorialHit?: Phaser.GameObjects.Rectangle;
+  private tourPanels?: Record<"level" | "bond" | "stat" | "gem", Phaser.GameObjects.Container>;
+
+  /**
+   * 첫 편성 안내가 정보창을 한 칸씩 짚어 갈 자리(씬 좌표)와 그 말. 순서는 왼쪽 위 → 왼쪽 아래 → 오른쪽
+   * 기둥 위에서 아래 — 눈이 창을 한 번 훑는 순서다. 마지막은 늘 뒤로가기다(`tutorialBackBounds`).
+   */
+  tutorialTourTargets(): { rect: { x: number; y: number; width: number; height: number }; textKey: TextKey }[] {
+    if (!this.isOpen || !this.tourPanels) return [];
+    const box = (b: Phaser.Geom.Rectangle) => ({ x: b.x, y: b.y, width: b.width, height: b.height });
+    const union = (objects: readonly Phaser.GameObjects.GameObject[]) => {
+      const bounds = objects.filter((o) => (o as unknown as Phaser.GameObjects.Components.Visible).visible !== false)
+        .map((o) => (o as unknown as { getBounds(): Phaser.Geom.Rectangle }).getBounds());
+      if (!bounds.length) return undefined;
+      const x = Math.min(...bounds.map((b) => b.x)), y = Math.min(...bounds.map((b) => b.y));
+      return { x, y, width: Math.max(...bounds.map((b) => b.right)) - x, height: Math.max(...bounds.map((b) => b.bottom)) - y };
+    };
+    const steps: { rect: { x: number; y: number; width: number; height: number } | undefined; textKey: TextKey }[] = [
+      // 즐겨찾기·애착·관찰 일지 칩 줄. 칩 핸들이 판을 내주지 않아 자리로 잡는다(84·176·268, y 300).
+      { rect: { x: 36, y: 254, width: 280, height: 92 }, textKey: "tutorial.info.badges" },
+      { rect: union(this.skillIcons), textKey: "tutorial.info.skills" },
+      { rect: box(this.tourPanels.level.getBounds()), textKey: "tutorial.info.level" },
+      { rect: this.breakButton?.container.visible ? box(this.breakButton.container.getBounds()) : undefined, textKey: "tutorial.info.break" },
+      { rect: box(this.tourPanels.bond.getBounds()), textKey: "tutorial.info.bond" },
+      { rect: box(this.tourPanels.stat.getBounds()), textKey: "tutorial.info.stats" },
+      { rect: box(this.tourPanels.gem.getBounds()), textKey: "tutorial.info.rune" },
+    ];
+    return steps.filter((step): step is { rect: NonNullable<typeof step.rect>; textKey: TextKey } => step.rect !== undefined && step.rect.width > 0);
+  }
+
+  /** 정보창을 닫는 뒤로가기 버튼 자리. 안내의 마지막 칸이 이곳을 가리킨다. */
+  tutorialBackBounds(): { x: number; y: number; width: number; height: number } {
+    const size = BACK_BUTTON_SIZE;
+    return { x: BACK_SLOT.x - size / 2, y: BACK_SLOT.y - size / 2, width: size, height: size };
+  }
 
   /**
    * `baseDepth`는 창 전체가 서는 층이다. 팝업 위에서 여는 창(발굴 배치처럼 팝업 안의 그리드를
@@ -680,6 +715,7 @@ export class InfoManager {
     const bondPanel = this.addPanel(COLUMN.x, 706, COLUMN.width, 144);
     const statPanel = this.addPanel(COLUMN.x, 1024, COLUMN.width, 396);
     const gemPanel = this.addPanel(COLUMN.x, 1398, COLUMN.width, 292);
+    this.tourPanels = { level: levelPanel, bond: bondPanel, stat: statPanel, gem: gemPanel };
     // 친구·적에게는 유대와 룬 판을 세우지 않는다.
     bondPanel.setVisible(this.capabilities.showBond);
     gemPanel.setVisible(this.capabilities.mutateProgress);

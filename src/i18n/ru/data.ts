@@ -1537,6 +1537,8 @@ export default {
   "dialogue.opening-train.wake.body": "Исследователь, исследователь! Открой глаза. В окне уже виден город!",
   "dialogue.opening-train.greet.speaker": "Торика",
   "dialogue.opening-train.greet.body": "Я Торика! С сегодняшнего дня я твой Реликт сопровождения. Буду рядом, пока не приедем.",
+  "dialogue.opening-train.relicNote.body": "Реликт — восстановленное существо в человеческом облике, созданное из ДНК вымерших животных, найденной в окаменелостях. Так их называет Вечный город.",
+  "dialogue.opening-train.relicNote2.body": "Возрождённые Реликты несут силу своего древнего вида — и инстинкт, способный поглотить разум: «Ярость».",
   "dialogue.opening-train.window.speaker": "Торика",
   "dialogue.opening-train.window.body": "Видишь башни, что встают, словно белые кости? Это Вечный город, построенный на памяти о вымирании.",
   "dialogue.opening-train.answer.speaker": "Торика",

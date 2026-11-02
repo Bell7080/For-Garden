@@ -49,7 +49,7 @@ import { BACK_SLOT } from "./IconButton";
 import { moveFormationSlot } from "../core/formation";
 import { bindFormationDrag, type FormationDragSlot } from "./formationDrag";
 import { FORMATION_DRAG_VISUAL } from "./formationDragVisual";
-import { createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
+import { applyLiftPose, clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "./formationDragVisualController";
 import { withBusy } from "./BusyOverlay";
 import { addScrollHint } from "./ScrollHint";
 
@@ -821,7 +821,8 @@ export class IdleExcavationPopup {
     this.formationDragVisual = createFormationDragVisualController({
       scene: this.scene, slots: dragSlots, formation: () => formation, color: COLOR.accent,
       zoneDepth: SD_DEPTH - 1, dimDepth: SD_DEPTH - 2,
-      renderPreview: ({ preview, pointer }) => formation.forEach((relicId, index) => {
+      shadowOffsetY: 245 / 2 + 26,
+      renderPreview: ({ preview, pointer, lift }) => formation.forEach((relicId, index) => {
         if (!relicId) return;
         const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
         const lifted = preview[index]?.lifted;
@@ -829,15 +830,17 @@ export class IdleExcavationPopup {
         // 포인터는 화면 좌표이므로 드래그 중일 때만 SD 레이어의 로컬 좌표로 역변환한다.
         const localPointer = layerScreenToLocal(this.sdContainer, pointer.x, pointer.y);
         const x = lifted ? localPointer.x : -250 + (target < 0 ? index : target) * 250;
-        const groundY = lifted ? localPointer.y + 245 / 2 : STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
-        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x, groundY, height: lifted ? 205 * FORMATION_DRAG_VISUAL.liftScale : 205 });
+        const groundY = lifted ? localPointer.y + 245 / 2 - lift.raise : STATUS_HERO.slotY + SLOT_GROUND_OFFSET;
+        placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x, groundY, height: lifted ? 205 * lift.scale : 205 });
         puppet.setDepth(lifted ? SD_DEPTH + 2 : SD_DEPTH).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
+        if (lifted) applyLiftPose(puppet, lift, COLOR.accent); else clearLiftPose(puppet);
       }),
       restore: () => formation.forEach((relicId, index) => {
         if (!relicId) return;
         const puppet = this.sdPuppetByRelicId.get(relicId); if (!puppet) return;
         placePuppet(puppet, this.puppetLoader.assetFor(relicId), { x: -250 + index * 250, groundY: STATUS_HERO.slotY + SLOT_GROUND_OFFSET, height: 205 });
         puppet.setDepth(SD_DEPTH).setAlpha(1);
+        clearLiftPose(puppet);
       }),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "excavation", ...state } : undefined),
     });

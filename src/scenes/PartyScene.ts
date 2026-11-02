@@ -3,6 +3,7 @@ import { playFormationTapSound } from "../ui/formationSound";
 import { storyBaseStageId, storyDifficultyOf } from "../core/storyDifficulty";
 import { TAP_DRAG_SLOP } from "../core/tapGuard";
 import { followTutorialTarget } from "../ui/tutorialTarget";
+import { runInfoTutorialTour } from "../ui/infoTutorialTour";
 import { tutorialManager } from "../managers/TutorialManager";
 import Phaser from "phaser";
 import { t } from "../i18n";
@@ -52,7 +53,8 @@ import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelectio
 import { PARTY_GUARD, PARTY_GUARD_ROSTER, guardRosterPopupLayout, partyGuardSlotLift, PARTY_ALLY_PLATE, PARTY_DEFENSE, PARTY_LANES, partyLaneBox, PARTY_POWER_PLATE, partyDefenseAllyRow, PARTY_PREVIEW, PARTY_PREVIEW_COLUMNS, partyAllyGroundOffset, partyAllyPlateBox, partyAllySlotBox, partyPreviewEnemyColumns, partyPreviewEnemyScale } from "../ui/partyPreviewLayout";
 import { bindFormationDrag } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
-import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
+import { applyLiftPose, clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
+import type { FormationLiftPose } from "../ui/formationDragVisual";
 import { PopupLayer } from "../ui/PopupLayer";
 import { StaminaPopup } from "../ui/StaminaPopup";
 import { TopBar } from "../ui/TopBar";
@@ -187,7 +189,7 @@ export class PartyScene extends Phaser.Scene {
   /** 아군 자리의 속성·돌파 표식과 이름줄. 편성이 바뀔 때마다 통째로 다시 그린다. */
   private allyMarks?: Phaser.GameObjects.Container;
   private startButton!: Button;
-  private partyTutorialPhase?: "move" | "hold" | "start";
+  private partyTutorialPhase?: "move" | "hold" | "tour" | "start";
   private hint!: Phaser.GameObjects.Text;
   /** 자동 배치와 자리별 방향 표식이 함께 참조하는 이번 스테이지의 적 정의다. */
   private enemies: RelicDef[] = [];
@@ -234,6 +236,17 @@ export class PartyScene extends Phaser.Scene {
   private slotX(slot: number): number { return PREVIEW_COLUMNS[slot % 3]; }
   /** 그 칸의 SD가 발을 딛는 줄. */
   private slotRow(slot: number): number { return PARTY_PREVIEW.allyRow - this.slotLift(slot); }
+  /**
+   * 첫 편성 안내의 화살표 길: 서 있는 렐릭 하나에서 옆 칸으로. 가운데가 서 있으면 오른쪽으로 옮기는 길을
+   * 보인다 — 한 번 그어 본 길을 손이 그대로 따라 하면 된다.
+   */
+  private moveTutorialGuide(): { from: { x: number; y: number }; to: { x: number; y: number } } | undefined {
+    const filled = [1, 0, 2].find((slot) => this.picked[slot]);
+    if (filled === undefined) return undefined;
+    const target = filled === 2 ? 1 : filled + 1;
+    const a = this.slotBox(filled), b = this.slotBox(target);
+    return { from: { x: a.x, y: a.y - a.height * 0.05 }, to: { x: b.x - b.width * 0.12, y: b.y - b.height * 0.05 } };
+  }
   private slotBox(slot: number): ReturnType<typeof partyAllySlotBox> { return partyAllySlotBox(slot % 3, this.slotLift(slot)); }
   private ready(): boolean {
     const count = formationMembers(this.picked).length;
@@ -413,14 +426,16 @@ export class PartyScene extends Phaser.Scene {
       blocked: () => this.info.isOpen,
       rect: () => {
         if (this.partyTutorialPhase === "start") return this.startButton.getBounds();
+        if (this.partyTutorialPhase === "tour") return undefined;
         const boxes = this.allySlots.map(slot => slot.hit.getBounds());
         if (!boxes.length) return undefined;
         if (this.partyTutorialPhase === "hold") return boxes.find((_, i) => this.picked[i] !== null);
         const x = Math.min(...boxes.map(b => b.x)), y = Math.min(...boxes.map(b => b.y));
         return { x, y, width: Math.max(...boxes.map(b => b.right)) - x, height: Math.max(...boxes.map(b => b.bottom)) - y };
       },
+      guide: () => this.partyTutorialPhase === "move" ? this.moveTutorialGuide() : undefined,
       text: () => this.partyTutorialPhase === "move" ? t("tutorial.party.move") : this.partyTutorialPhase === "hold" ? t("tutorial.party.hold") : t("tutorial.party.start"),
-      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "hold" : this.partyTutorialPhase === "hold" ? "start" : undefined; },
+      onSkip: () => { this.partyTutorialPhase = this.partyTutorialPhase === "move" ? "hold" : this.partyTutorialPhase === "hold" || this.partyTutorialPhase === "tour" ? "start" : undefined; },
     });
   }
 
@@ -517,7 +532,8 @@ export class PartyScene extends Phaser.Scene {
       // 감광은 아군 칸이 사는 띠만 덮는다. 대치선부터 덮으면 그 위에 걸터앉은 전투력 판까지 함께
       // 어두워져, 끄는 동안 두 편의 무게가 먼저 사라진다.
       dimBounds: { x: BASE_WIDTH / 2, y: (PARTY_ALLY_PLATE.top - this.slotLift(0) + this.allyRow + 120) / 2, width: BASE_WIDTH, height: this.allyRow + 120 - PARTY_ALLY_PLATE.top + this.slotLift(0) },
-      renderPreview: ({ preview, pointer }) => this.placeDragPreview(preview, pointer.x, pointer.y),
+      shadowOffsetY: PREVIEW_HEIGHT / 2 + 26,
+      renderPreview: ({ preview, pointer, lift }) => this.placeDragPreview(preview, pointer.x, pointer.y, lift),
       restore: () => this.restoreDragPuppets(),
     });
     // 보유 카드의 상세 정보 장기 누름과 겹치지 않도록 드래그 시작점은 이 상단 SD 입력면뿐이다.
@@ -530,7 +546,16 @@ export class PartyScene extends Phaser.Scene {
       // 뒤 자리는 당겨지지 않는다 — 2번을 비워도 3번은 3번에 그대로 선다.
       tap: (slot) => this.tapSlot(slot),
       // 자리에 세워 둔 SD도 그리드 카드와 같은 손짓으로 상세가 열린다.
-      longPress: (slot) => { const id = this.picked[slot]; if (id) { if (this.partyTutorialPhase === "hold") this.partyTutorialPhase = "start"; this.info.showRelic(getRelic(id)); } },
+      longPress: (slot) => {
+        const id = this.picked[slot];
+        if (!id) return;
+        this.info.showRelic(getRelic(id));
+        // 첫 편성 안내: 연 정보창을 한 칸씩 짚고, 뒤로가기로 닫으면 출전 안내로 넘어간다.
+        if (this.partyTutorialPhase === "hold") {
+          this.partyTutorialPhase = "tour";
+          runInfoTutorialTour(this, this.info, () => { if (this.partyTutorialPhase === "tour") this.partyTutorialPhase = "start"; });
+        }
+      },
       drop: (from, to) => {
         this.dragVisual?.endDrag();
         this.picked = moveFormationSlot(this.picked, from, to);
@@ -694,7 +719,7 @@ export class PartyScene extends Phaser.Scene {
   /** 전투 시작 — 손으로 누른 한 판과 자동 전투의 첫 판이 같은 길을 지난다. */
   private async beginEntry(): Promise<void> {
     // 첫 유효 클릭에서 즉시 잠가 같은 프레임의 빠른 연속 입력도 한 번만 처리한다.
-    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || !this.ready()) return;
+    if (this.isEnteringBattle || this.info?.isOpen || this.partyTutorialPhase === "move" || this.partyTutorialPhase === "hold" || this.partyTutorialPhase === "tour" || !this.ready()) return;
     this.isEnteringBattle = true;
     this.startButton.setEnabled(false);
 
@@ -799,16 +824,18 @@ export class PartyScene extends Phaser.Scene {
   }
 
   /** 공용 컨트롤러가 계산한 슬롯 결과를 기존 화면 좌표 Puppet 배치기로 그린다. */
-  private placeDragPreview(preview: import("../ui/formationDragVisual").FormationSlotPreview[], x: number, y: number): void {
+  private placeDragPreview(preview: import("../ui/formationDragVisual").FormationSlotPreview[], x: number, y: number, lift: FormationLiftPose): void {
     preview.forEach((entry, index) => {
       const creature = this.allySlots[index].creature;
       const relicId = this.picked[index];
       if (!creature || !relicId) return;
       if (entry.lifted) {
-        placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2, height: PREVIEW_HEIGHT * FORMATION_DRAG_VISUAL.liftScale, flipX: false });
+        placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x, groundY: y + PREVIEW_HEIGHT / 2 - lift.raise, height: PREVIEW_HEIGHT * lift.scale, flipX: false });
         creature.setDepth(20).setAlpha(FORMATION_DRAG_VISUAL.liftAlpha);
+        applyLiftPose(creature, lift, COLOR.ally);
         return;
       }
+      clearLiftPose(creature);
       const target = preview.findIndex((other) => other.relicId === relicId);
       const at = target < 0 ? index : target;
       placePuppet(creature, relicAppearanceManager.battleAssetFor(relicId), { x: this.slotX(at), groundY: this.slotRow(at), height: PREVIEW_HEIGHT, flipX: false });
@@ -823,6 +850,7 @@ export class PartyScene extends Phaser.Scene {
       if (!slot.creature || !relicId) return;
       placePuppet(slot.creature, relicAppearanceManager.battleAssetFor(relicId), { x: this.slotX(index), groundY: this.slotRow(index), height: PREVIEW_HEIGHT, flipX: false });
       slot.creature.setDepth(-10).setAlpha(1);
+      clearLiftPose(slot.creature);
     });
   }
 

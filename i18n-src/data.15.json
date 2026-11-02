@@ -279,6 +279,26 @@
 "Ich bin Torika! Ab heute bin ich dein Begleit-Relikt. Ich bleibe an deiner Seite, bis wir ankommen.",
 "Я Торика! С сегодняшнего дня я твой Реликт сопровождения. Буду рядом, пока не приедем."
 ],
+"dialogue.opening-train.relicNote.body": [
+"遗物——以化石中灭绝动物的DNA复原而成的人形复原体。永恒之城如此称呼她们。",
+"เรลิก — ร่างฟื้นคืนรูปมนุษย์ที่สร้างขึ้นจาก DNA ของสัตว์สูญพันธุ์ในฟอสซิล นครนิรันดร์เรียกพวกเธอเช่นนั้น",
+"Di vật — những thể phục hồi mang hình người, được tạo nên từ DNA của loài vật tuyệt chủng trong hóa thạch. Thành phố Vĩnh Hằng gọi họ như thế.",
+"Relik — sosok restorasi berwujud manusia yang dibentuk dari DNA hewan punah di dalam fosil. Begitulah Kota Abadi menyebut mereka.",
+"Reliquia: una restauración de forma humana creada a partir del ADN de animales extintos guardado en fósiles. Así las llama la Ciudad Eterna.",
+"Relíquia: uma restauração de forma humana criada a partir do DNA de animais extintos guardado em fósseis. É assim que a Cidade Eterna as chama.",
+"Relikt – ein menschengestaltiges Restaurat, geformt aus der DNA ausgestorbener Tiere in Fossilien. So nennt die Ewige Stadt sie.",
+"Реликт — восстановленное существо в человеческом облике, созданное из ДНК вымерших животных, найденной в окаменелостях. Так их называет Вечный город."
+],
+"dialogue.opening-train.relicNote2.body": [
+"复活的遗物继承了原种的力量，也背负着可能吞噬理性的本能——「野性」。",
+"เรลิกที่ฟื้นคืนมามีพลังของสายพันธุ์ดั้งเดิม พร้อมสัญชาตญาณที่อาจกลืนกินสติ นั่นคือ «ความดุร้าย»",
+"Những Di vật được hồi sinh mang sức mạnh của loài gốc, cùng một bản năng có thể nuốt chửng lý trí: «Dã tính».",
+"Relik yang dihidupkan kembali membawa kekuatan spesies asalnya, bersama naluri yang bisa menelan akal sehat: «Keganasan».",
+"Las Reliquias revividas llevan la fuerza de su especie original y un instinto capaz de devorar su razón: la «Ferocidad».",
+"As Relíquias revividas carregam a força da espécie original e um instinto capaz de engolir a razão: a «Ferocidade».",
+"Wiedererweckte Relikte tragen die Kraft ihrer Urart in sich – und einen Instinkt, der ihre Vernunft verschlingen kann: die «Wildheit».",
+"Возрождённые Реликты несут силу своего древнего вида — и инстинкт, способный поглотить разум: «Ярость»."
+],
 "dialogue.opening-train.window.speaker": [
 "托莉卡",
 "โทริกะ",

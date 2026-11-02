@@ -70,7 +70,7 @@ import { moveFormationSlot } from "../core/formation";
 import { addFormationRemoveChip, addFormationSlotPlate, addFormationSlotSelection } from "../ui/formationSlotChrome";
 import { bindFormationDrag, type FormationDragSlot } from "../ui/formationDrag";
 import { FORMATION_DRAG_VISUAL } from "../ui/formationDragVisual";
-import { createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
+import { applyLiftPose, clearLiftPose, createFormationDragVisualController, type FormationDragVisualController } from "../ui/formationDragVisualController";
 import { consumeSceneEntry } from "./sceneEntry";
 import { playSceneEntrance, startScene, restartScene } from "../ui/screenTransition";
 import { LOBBY_RETURN } from "./lobbyEntry";
@@ -1039,16 +1039,18 @@ export class ExpeditionScene extends Phaser.Scene {
     this.formationDragVisual = createFormationDragVisualController({
       scene: this, slots: dragSlots, formation: () => this.selected, color: COLOR.sortie,
       zoneDepth: 3, dimDepth: 1,
-      renderPreview: ({ preview, pointer }) => {
+      shadowOffsetY: FORMATION.height / 2 + 26,
+      renderPreview: ({ preview, pointer, lift }) => {
         this.selected.forEach((relicId, index) => {
           if (!relicId) return;
           const puppet = this.formationPuppets.get(relicId); if (!puppet) return;
           const lifted = preview[index]?.lifted;
           const target = preview.findIndex((entry) => entry.relicId === relicId);
           const x = lifted ? pointer.x : FORMATION.firstX + (target < 0 ? index : target) * FORMATION.stepX;
-          const groundY = lifted ? pointer.y + FORMATION.height / 2 : FORMATION.y + FORMATION.groundOffset;
-          placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * FORMATION_DRAG_VISUAL.liftScale : 250 });
+          const groundY = lifted ? pointer.y + FORMATION.height / 2 - lift.raise : FORMATION.y + FORMATION.groundOffset;
+          placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x, groundY, height: lifted ? 250 * lift.scale : 250 });
           puppet.setDepth(lifted ? 20 : 2).setAlpha(lifted ? FORMATION_DRAG_VISUAL.liftAlpha : target === index ? 1 : FORMATION_DRAG_VISUAL.previewAlpha);
+          if (lifted) applyLiftPose(puppet, lift, COLOR.sortie); else clearLiftPose(puppet);
         });
       },
       restore: () => this.selected.forEach((relicId, index) => {
@@ -1056,6 +1058,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const puppet = this.formationPuppets.get(relicId); if (!puppet) return;
         placePuppet(puppet, relicAppearanceManager.sdAssetFor(relicId), { x: FORMATION.firstX + index * FORMATION.stepX, groundY: FORMATION.y + FORMATION.groundOffset, height: 250 });
         puppet.setDepth(2).setAlpha(1);
+        clearLiftPose(puppet);
       }),
       onVisualState: (state) => setDebugFormationDragVisual(state ? { owner: "expedition", ...state } : undefined),
     });

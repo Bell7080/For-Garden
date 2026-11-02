@@ -121,6 +121,14 @@ export interface Banner {
    * 10연만 남는다. 할인은 10연만 여는 배너에만 둔다.
    */
   tenOnly?: boolean;
+  /**
+   * 기간 한정 배너의 열리는 시각(ISO). 없으면 처음부터 열려 있다.
+   * **천장은 배너마다 따로 센다** — 새 픽업은 제 `pityGroupId`를 쓰고 이전 픽업의 천장·픽업 확정을
+   * 이어받지 않는다(응태 결정, 2026-11-02). 이월은 첫 복원 연구 → 화석 연구의 `carryoverTo`뿐이다.
+   */
+  startsAt?: string;
+  /** 기간 한정 배너가 닫히는 시각(ISO, 이 시각부터 닫힘). 없으면 닫히지 않는다. */
+  endsAt?: string;
 }
 
 /** 천장·10연 보정을 제외한 독립 슬롯 기준의 배너 기대값이다. */
@@ -223,6 +231,14 @@ export function pullPayment(wallet: Pick<Wallet, "fossil" | "amber" | "gems">, b
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
   const gems = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems, affordable: wallet.gems >= gems };
+}
+
+/** 기간이 열려 있는가. 시각은 서버 시계로 넘기고 화면은 기기 시계로 다시 판정하지 않는다. */
+export function bannerActive(banner: Pick<Banner, "startsAt" | "endsAt">, now: Date): boolean {
+  const t = now.getTime();
+  if (banner.startsAt !== undefined && t < Date.parse(banner.startsAt)) return false;
+  if (banner.endsAt !== undefined && t >= Date.parse(banner.endsAt)) return false;
+  return true;
 }
 
 /** 횟수 제한이 있는 배너에서 남은 횟수. 제한이 없으면 무한이다. */

@@ -10,7 +10,7 @@ import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
-import { bannerAcceptsCount, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
+import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
 import { MILEAGE_OVERFLOW_BY_RARITY, mileageForPull } from "../core/mileage";
 import { BANNERS } from "../data/banners";
@@ -2317,6 +2317,7 @@ export class FakeServer implements GameApi {
     if (!isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared)) throw new GameApiError("INVALID_STATE", "1-5 클리어 후 연구소가 열립니다.");
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "존재하지 않는 배너입니다.");
+    if (!bannerActive(banner, this.now())) throw new GameApiError("BANNER_NOT_ACTIVE", "진행 중인 연구가 아닙니다.");
     const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     // 10연 전용·계정당 횟수 제한은 재화보다 먼저 본다 — 화면이 버튼을 감춰도 요청은 올 수 있다.
     if (!bannerAcceptsCount(banner, request.count, currentPity)) {

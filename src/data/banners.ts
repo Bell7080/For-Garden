@@ -57,7 +57,10 @@ const STANDARD_GRAY_REWARDS = [
   { kind: "cheesecake", min: 60, max: 150, weight: 1 },
 ] as const;
 
-/** 교체 배너가 같은 값을 쓰면 천장과 픽업 확정이 이월되는 명시적 운영 그룹이다. */
+/**
+ * 같은 값을 쓰는 배너끼리만 천장·픽업 확정을 나눠 쓰는 운영 그룹이다. **새 픽업은 그룹을 새로 만든다** —
+ * 이전 픽업의 천장은 이월하지 않는다(`banners.test`가 픽업 배너마다 그룹이 다른지 지킨다).
+ */
 export const PITY_GROUP = { WELCOME: "welcome", STANDARD: "standard-fossil", LIMITED_PICKUP: "limited-pickup" } as const;
 
 /**

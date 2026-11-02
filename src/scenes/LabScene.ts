@@ -5,7 +5,8 @@ import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import { setDebugResearchBoard, setDebugScene } from "../debug";
 import { gameApi } from "../api/FakeServer";
 import { GameApiError, type PullResultDto } from "../api/contracts";
-import { bannerAcceptsCount, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
+import { bannerAcceptsCount, bannerActive, bannerGuaranteePending, bannerPullsRemaining, canPull, pullCost, pullPayment, type Banner, type GachaPityState, type ResearchGrade } from "../core/gacha";
+import { serverNow } from "../api/serverClock";
 import { ResearchPresentationController, highestRarity, researchSlotViews, showcaseRelicIds } from "../core/researchPresentation";
 import { consumeSceneEntry } from "./sceneEntry";
 import { BANNERS, LIMITED_RELIC_IDS } from "../data/banners";
@@ -131,7 +132,7 @@ export class LabScene extends Phaser.Scene {
    * 순서는 데이터 순서 그대로다 — 첫 복원 연구가 맨 앞이라 처음 들어온 사람이 먼저 만난다.
    */
   private get banners(): Banner[] {
-    return BANNERS.filter((banner) => bannerPullsRemaining(banner, this.pityOf(banner)) > 0);
+    return BANNERS.filter((banner) => bannerActive(banner, serverNow()) && bannerPullsRemaining(banner, this.pityOf(banner)) > 0);
   }
 
   private get banner(): Banner {

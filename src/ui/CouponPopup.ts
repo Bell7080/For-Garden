@@ -6,36 +6,57 @@ import { notificationManager } from "../managers/NotificationManager";
 import { getRelic } from "../data/relics";
 import { sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { openCouponPage } from "../scenes/policyNavigation";
-import { Button } from "./Button";
-import { COUPON_POPUP as L, couponCardMainX } from "./couponPopupLayout";
-import { chipPoints, drawLayer } from "./holo";
+import { COUPON_POPUP as L, COUPON_TONE as TONE } from "./couponPopupLayout";
 import { drawGlyph } from "./glyphs";
-import { EFFECT_TEXTURE, ensureEffectTextures } from "./effectTextures";
+import { paintCouponBackdrop } from "./couponBackdrop";
 import { SPARKLE_TEXTURE, ensureSparkleTexture } from "./WelcomeBannerCast";
+import { RouletteSpinButton } from "./RouletteSpinButton";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
-import { UI_ICON } from "./icons";
 import type { PopupLayer } from "./PopupLayer";
 import { pressIn, pressOut } from "./pressFeedback";
 import { addSdFootShadow } from "./SdFootShadow";
 import { TextInputField } from "./TextInputField";
 import { startPuppetHop } from "./puppetHop";
-import { COLOR, textStyle } from "./theme";
+import { textStyle } from "./theme";
 import { logError } from "../managers/ErrorReporter";
 
 const COUPON_GUIDE = "torika";
 const COUPON_MAX_GLYPHS = 40;
+/** 창 맨 위의 굵은 제목 글자. 「RESOURCE」처럼 어느 언어에서나 같은 표식이라 번역하지 않는다. */
+const COUPON_WORDMARK = "COUPON";
 
 export function couponErrorKey(error: CouponError): TextKey {
   return `coupon.error.${error}` as TextKey;
+}
+
+/** 글자 높이를 따라 색이 흐르게 칠한다. */
+function paintGradient(text: Phaser.GameObjects.Text, stops: readonly [string, string, string]): void {
+  const gradient = text.context.createLinearGradient(0, 0, 0, text.height);
+  gradient.addColorStop(0, stops[0]);
+  gradient.addColorStop(0.55, stops[1]);
+  gradient.addColorStop(1, stops[2]);
+  text.setFill(gradient);
+}
+
+/** 굵은 외곽선 + 제 색 테 + 크림 면의 말랑한 판 — 돌림판 버튼과 같은 장난감 결. */
+function drawCandyPlate(scene: Phaser.Scene, x: number, y: number, width: number, height: number, radius: number, rim: number, outline: number): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics({ x, y });
+  g.fillStyle(0x000000, 0.18).fillRoundedRect(-width / 2 + 6, -height / 2 + 12, width, height, radius);
+  g.fillStyle(TONE.ink, 1).fillRoundedRect(-width / 2 - outline, -height / 2 - outline, width + outline * 2, height + outline * 2, radius + outline);
+  g.fillStyle(TONE.rim, 1).fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+  g.fillStyle(TONE.cream, 1).fillRoundedRect(-width / 2 + rim, -height / 2 + rim, width - rim * 2, height - rim * 2, radius - rim);
+  g.fillStyle(0xffffff, 0.85).fillRoundedRect(-width / 2 + radius * 0.8, -height / 2 + rim + 8, width - radius * 1.6, 8, 4);
+  return g;
 }
 
 /**
  * 토리카가 맞아 주는 쿠폰 등록창. 코드는 서버 경계(`couponApi().redeem`)만 지나고, 보상은 우편함으로 간다 —
  * 이 창은 지갑을 바꾸지 않는다. 등록이 끝나면 창을 닫고 영수증을 띄운 뒤 우편 점을 다시 읽는다.
  *
- * 생김새는 **선물 받는 자리**다: 금빛 기운 위에 토리카가 서고 쿠폰 몇 장이 둥실 떠다니며, 코드 칸은
- * 절취선이 그어진 쿠폰 한 장 안에 선다. 토리카를 누르면 톡 뛰며 반짝인다. 움직임 줄이기에서는 멈춘 채 선다.
+ * 생김새는 가챠·이벤트 판과 같은 **밝은 사탕 결**이다. 그림 대신 굵은 COUPON 글자가 무엇을 하는 창인지
+ * 먼저 말하고, 받을 것(젬·골드·치즈케이크)은 배경 가장자리에만 흩어진다. 토리카를 누르면 톡 뛰며 반짝인다.
+ * 움직임 줄이기에서는 모두 멈춘 채 선다.
  *
  * 홈페이지 길을 위해 창이 열릴 때 연결 티켓을 미리 받아 둔다. 누르는 순간 받으면 그 사이 손짓이 끊겨
  * 브라우저가 새 창을 막는다.
@@ -57,54 +78,52 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
     body.once(Phaser.GameObjects.Events.DESTROY, cleanup);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
     const depth = (body.parentContainer?.depth ?? 0) + 1;
-    ensureEffectTextures(scene);
     ensureSparkleTexture(scene);
+    paintCouponBackdrop(scene, body, animate);
 
-    // 무대: 토리카 뒤의 금빛 기운 + 반짝임 + 떠다니는 쿠폰.
-    const glow = scene.add.image(L.stage.x, L.stage.y, EFFECT_TEXTURE.glow).setTint(L.stage.color).setAlpha(L.stage.alpha).setDisplaySize(L.stage.size, L.stage.size);
-    body.add(glow);
-    if (animate) scene.tweens.add({ targets: glow, alpha: L.stage.alpha * 0.6, duration: 1600, ease: "Sine.InOut", yoyo: true, repeat: -1 });
-    const twinkle = (star: Phaser.GameObjects.Image, delay: number): void => {
-      const scale = star.scaleX;
-      if (!animate) { star.setAlpha(0.5); return; }
-      star.setAlpha(0).setScale(scale * 0.3);
-      scene.tweens.add({ targets: star, alpha: 0.95, scale, angle: 45, duration: 700, yoyo: true, ease: "Sine.InOut", delay, repeat: -1, repeatDelay: 500 });
-    };
+    // 굵은 제목 글자 — 아래로 떨어지는 그림자 + 짙은 자두빛 획 + 흐르는 색. 숨 쉬듯 살짝 부푼다.
+    const { wordmark } = L;
+    const markStyle = textStyle({ role: "display", size: wordmark.size });
+    const mark = scene.add.container(0, wordmark.y).setAngle(wordmark.angle);
+    const markShadow = scene.add.text(0, wordmark.shadowY, COUPON_WORDMARK, markStyle).setOrigin(.5).setColor(TONE.inkText).setStroke(TONE.inkText, wordmark.stroke).setLetterSpacing(4);
+    const markFace = scene.add.text(0, 0, COUPON_WORDMARK, markStyle).setOrigin(.5).setStroke(TONE.inkText, wordmark.stroke).setLetterSpacing(4);
+    paintGradient(markFace, wordmark.gradient);
+    mark.add([markShadow, markFace]);
+    body.add(mark);
+    if (animate) scene.tweens.add({ targets: mark, scale: 1.04, duration: 1100, ease: "Sine.InOut", yoyo: true, repeat: -1 });
+
     for (const spot of L.sparkles) {
       const star = scene.add.image(spot.x, spot.y, SPARKLE_TEXTURE).setTint(spot.color).setDisplaySize(spot.size, spot.size);
       body.add(star);
-      twinkle(star, spot.delay);
-    }
-    for (const spot of L.tickets) {
-      const art = scene.add.image(spot.x, spot.y, UI_ICON.ticket).setDisplaySize(spot.size, spot.size).setAngle(spot.angle);
-      body.add(art);
-      if (animate) scene.tweens.add({ targets: art, y: spot.y - 14, angle: spot.angle + 8, duration: 1300, ease: "Sine.InOut", yoyo: true, repeat: -1, delay: spot.delay });
+      const scale = star.scaleX;
+      if (!animate) { star.setAlpha(0.7); continue; }
+      star.setAlpha(0).setScale(scale * 0.3);
+      scene.tweens.add({ targets: star, alpha: 1, scale, angle: 45, duration: 700, yoyo: true, ease: "Sine.InOut", delay: spot.delay, repeat: -1, repeatDelay: 500 });
     }
 
-    // 크림빛 말풍선: 꼬리가 왼쪽 토리카 얼굴 쪽으로 내민다. 판과 같은 깎임(왼쪽 위·오른쪽 아래)을 쓴다.
+    // 말풍선: 흰 면 + 분홍 테 + 자두빛 외곽선, 꼬리는 토리카 쪽.
     const { bubble } = L;
     const bubbleBox = scene.add.container(bubble.x, bubble.y);
-    const hw = bubble.width / 2, hh = bubble.height / 2, cut = 22;
-    bubbleBox.add(drawLayer(scene, 0, 0, [
-      -hw, -hh + cut, -hw + cut, -hh, hw, -hh, hw, hh - cut, hw - cut, hh, -hw, hh,
-      -hw, 16, -hw - bubble.tail, 2, -hw, -20,
-    ], { fill: bubble.fill, alpha: 0.98 }));
-    bubbleBox.add(scene.add.text(0, 0, t("coupon.greeting"),
-      textStyle({ role: "emphasis", size: 30, color: bubble.ink, align: "center", wrap: bubble.width - 60, lineSpacing: 10 })).setOrigin(.5));
+    const tail = scene.add.graphics();
+    const tx = -bubble.width / 2;
+    tail.fillStyle(TONE.ink, 1).fillTriangle(tx + 12, -14, tx - bubble.tail - 9, 18, tx + 12, 40);
+    tail.fillStyle(TONE.rim, 1).fillTriangle(tx + 12, -6, tx - bubble.tail, 18, tx + 12, 32);
+    bubbleBox.add([tail, drawCandyPlate(scene, 0, 0, bubble.width, bubble.height, bubble.radius, bubble.rim, 5)]);
+    bubbleBox.add(scene.add.text(0, 2, t("coupon.greeting"),
+      textStyle({ role: "display", size: 30, color: TONE.inkText, align: "center", wrap: bubble.width - 60, lineSpacing: 10 })).setOrigin(.5));
     body.add(bubbleBox);
-    if (animate) scene.tweens.add({ targets: bubbleBox, y: bubble.y - bubble.bob, duration: 1500, ease: "Sine.InOut", yoyo: true, repeat: -1 });
+    if (animate) scene.tweens.add({ targets: bubbleBox, y: bubble.y - 6, duration: 1500, ease: "Sine.InOut", yoyo: true, repeat: -1 });
 
     body.add(scene.add.text(L.sd.x, L.name.y, getRelic(COUPON_GUIDE).name,
-      textStyle({ role: "display", size: 24, color: COLOR.accentText })).setOrigin(.5).setStroke("#05070a", 6));
-    // 토리카를 누르면 톡 뛰며 반짝인다 — 고를 것은 없고 손에 반응만 준다.
+      textStyle({ role: "display", size: 26, color: "#ffffff" })).setOrigin(.5).setStroke(TONE.inkText, 7));
     const guideHit = scene.add.rectangle(L.sd.x, L.sd.groundY - L.sd.height / 2, L.sd.height * 0.7, L.sd.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     guideHit.on("pointerup", () => {
       if (!figure || disposed) return;
       hop?.stop();
       hop = startPuppetHop(scene, figure, 0, { once: true });
-      for (const [index, spot] of L.sparkles.slice(0, 3).entries()) {
+      for (let index = 0; index < 3; index += 1) {
         const burst = scene.add.image(L.sd.x + (index - 1) * 70, L.sd.groundY - L.sd.height * 0.8 - (index % 2) * 30, SPARKLE_TEXTURE)
-          .setTint(spot.color).setDisplaySize(spot.size * 1.3, spot.size * 1.3).setAlpha(0);
+          .setTint(index === 1 ? 0xfff3a6 : 0xffffff).setDisplaySize(40, 40).setAlpha(0);
         body.add(burst);
         scene.tweens.add({ targets: burst, alpha: 1, y: burst.y - 30, angle: 90, duration: 260, yoyo: true, delay: index * 70, onComplete: () => burst.destroy() });
       }
@@ -121,30 +140,16 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
       hop = startPuppetHop(scene, figure, 0, { once: true });
     }).catch((error) => logError("puppet.display", "쿠폰 안내 SD 표시 실패", error));
 
-    // 쿠폰 한 장: 왼쪽 귀퉁이에 쿠폰 그림, 점선 절취선, 오른쪽 본판에 코드 칸.
+    // 코드 카드.
     const { card } = L;
-    const cardHalfW = card.width / 2, cardHalfH = card.height / 2, cardCut = 28;
-    body.add(drawLayer(scene, 0, card.y, chipPoints(card.width, card.height, { bevel: { topLeft: cardCut, bottomRight: cardCut } }),
-      { fill: card.fill, alpha: 0.96, edge: card.accent, edgeAlpha: 0.9, glow: { color: card.accent, strength: 0.16 } }));
-    const perforation = -cardHalfW + card.stub;
-    body.add(drawLayer(scene, 0, card.y, [
-      -cardHalfW, -cardHalfH + cardCut, -cardHalfW + cardCut, -cardHalfH, perforation, -cardHalfH, perforation, cardHalfH, -cardHalfW, cardHalfH,
-    ], { fill: card.accent, alpha: 0.12, shadow: false }));
-    const dots = scene.add.graphics({ x: perforation, y: card.y });
-    dots.fillStyle(card.accent, 0.55);
-    for (let dy = -cardHalfH + 18; dy <= cardHalfH - 12; dy += 22) dots.fillPoints([{ x: 0, y: dy - 5 }, { x: 3, y: dy }, { x: 0, y: dy + 5 }, { x: -3, y: dy }], true);
-    body.add(dots);
-    const stubArt = scene.add.image(-cardHalfW + card.stub / 2, card.y, UI_ICON.ticket).setDisplaySize(L.stubTicket.size, L.stubTicket.size).setAngle(L.stubTicket.angle);
-    body.add(stubArt);
-    if (animate) scene.tweens.add({ targets: stubArt, angle: L.stubTicket.angle + 10, duration: 900, ease: "Sine.InOut", yoyo: true, repeat: -1 });
-
-    const mainX = couponCardMainX();
-    body.add(scene.add.text(mainX - L.field.width / 2, card.y + L.labelY, t("coupon.field"),
-      textStyle({ role: "emphasis", size: 28, color: COLOR.accentText })).setOrigin(0, .5));
-    const error = scene.add.text(0, L.errorY, "", textStyle({ role: "body", size: 24, color: COLOR.dangerText, align: "center", wrap: card.width })).setOrigin(.5);
-    let submit: Button | undefined;
-    const field = new TextInputField(scene, mainX, card.y + L.fieldY, { ...L.field,
-      value: "", maxGlyphs: COUPON_MAX_GLYPHS, ariaLabel: t("coupon.field"), fontSize: 34, placeholder: "XXXX-XXXX-XXXX", autocomplete: "off",
+    body.add(drawCandyPlate(scene, 0, card.y, card.width, card.height, card.radius, card.rim, card.outline));
+    body.add(scene.add.text(-L.field.width / 2, card.y + L.labelY, t("coupon.field"),
+      textStyle({ role: "display", size: 30, color: TONE.inkText })).setOrigin(0, .5));
+    const error = scene.add.text(0, L.errorY, "", textStyle({ role: "emphasis", size: 26, color: TONE.danger, align: "center", wrap: card.width })).setOrigin(.5).setStroke("#ffffff", 6);
+    let submit: RouletteSpinButton | undefined;
+    const field = new TextInputField(scene, 0, card.y + L.fieldY, { ...L.field,
+      value: "", maxGlyphs: COUPON_MAX_GLYPHS, ariaLabel: t("coupon.field"), fontSize: 38, placeholder: "XXXX-XXXX-XXXX", autocomplete: "off",
+      palette: { fill: TONE.fieldFill, fillAlpha: 1, ink: TONE.inkText, placeholder: TONE.placeholder, accent: TONE.fieldAccent },
       onChange: (value) => {
         // 코드는 대문자로만 발급된다 — 소문자로 적어도 보이는 글자가 곧 등록될 글자가 되게 맞춘다.
         const upper = value.toUpperCase();
@@ -155,13 +160,13 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
     });
     body.add([field, error]);
     const notice = scene.add.text(0, L.noticeY, t("coupon.notice"),
-      textStyle({ role: "body", size: 25, color: COLOR.inkDim, align: "center", wrap: card.width })).setOrigin(.5);
+      textStyle({ role: "emphasis", size: 25, color: TONE.soft, align: "center", wrap: card.width })).setOrigin(.5);
     const mailSize = 30, mailGap = 12;
     notice.x = (mailSize + mailGap) / 2;
-    body.add([drawGlyph(scene, "mail", notice.x - notice.width / 2 - mailGap - mailSize / 2, L.noticeY, mailSize, 0xd8b978, 0.9), notice]);
+    body.add([drawGlyph(scene, "mail", notice.x - notice.width / 2 - mailGap - mailSize / 2, L.noticeY, mailSize, TONE.ink, 0.7, 3), notice]);
 
-    submit = new Button(scene, 0, L.submitY, { ...L.submit,
-      label: t("coupon.submit"), fontSize: 34, variant: "primary", art: UI_ICON.ticket, decorDots: true,
+    submit = new RouletteSpinButton(scene, 0, L.submitY, { ...L.submit,
+      label: t("coupon.submit"),
       onClick: () => {
         if (pending || disposed || !couponCodeReady(field.value)) return;
         pending = true; submit!.setEnabled(false); field.blur();
@@ -184,11 +189,11 @@ export function openCouponPopup(scene: Phaser.Scene, layer: PopupLayer): void {
 
     // 홈페이지 길: 같은 계정의 UID·닉네임이 채워진 쿠폰 페이지가 열린다. 지구 표식 + 밑줄로 링크임을 말한다.
     const web = scene.add.container(0, L.webY);
-    const webLabel = scene.add.text(0, 0, t("coupon.web"), textStyle({ role: "emphasis", size: 26, color: COLOR.accentText })).setOrigin(.5);
+    const webLabel = scene.add.text(0, 0, t("coupon.web"), textStyle({ role: "display", size: 27, color: TONE.inkText })).setOrigin(.5);
     const globeSize = 30, globeGap = 12;
     webLabel.x = (globeSize + globeGap) / 2;
-    const globe = drawGlyph(scene, "globe", webLabel.x - webLabel.width / 2 - globeGap - globeSize / 2, 0, globeSize, 0xd8b978, 1);
-    const underline = scene.add.rectangle(webLabel.x, webLabel.height / 2 + 4, webLabel.width, 2, 0xd8b978, 0.55);
+    const globe = drawGlyph(scene, "globe", webLabel.x - webLabel.width / 2 - globeGap - globeSize / 2, 0, globeSize, TONE.ink, 1, 3);
+    const underline = scene.add.rectangle(webLabel.x, webLabel.height / 2 + 4, webLabel.width, 3, TONE.rim, 1);
     web.add([globe, webLabel, underline]);
     const webHit = scene.add.rectangle(0, L.webY, L.webHit.width, L.webHit.height, 0xffffff, 0).setInteractive({ useHandCursor: true });
     webHit.on("pointerdown", () => pressIn(web));

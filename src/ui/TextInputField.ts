@@ -22,6 +22,11 @@ export interface TextInputFieldOptions {
   placeholder?: string;
   /** 글자 앞에 서는 선 아이콘(검색 칸의 돋보기). 그만큼 글자가 오른쪽으로 물러난다. */
   icon?: GlyphName;
+  /**
+   * 칸의 색 한 벌. 밝은 이벤트 판(쿠폰 등록창)처럼 어두운 칸이 어울리지 않는 자리만 넘긴다.
+   * 없으면 판보다 한 톤 밝은 어두운 면 + 흰 글자다.
+   */
+  palette?: { fill: number; fillAlpha?: number; ink: string; placeholder: string; accent: number };
 }
 
 /**
@@ -52,31 +57,34 @@ export class TextInputField extends Phaser.GameObjects.Container {
     const { width, height } = options;
     const shape = slantedRect(width, height, 16);
     // 판보다 한 톤 밝은 면이라야 "여기에 쓴다"가 읽힌다 — 판과 같은 어둠이면 밑줄만 떠 있다.
-    this.add(drawLayer(scene, 0, 0, shape, { fill: 0x1c2633, alpha: 0.96, shadow: false }));
-    this.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: COLOR.accent, alpha: 0.7, width: 3 }));
-    if (options.icon) this.add(drawGlyph(scene, options.icon, -width / 2 + 32, 1, Math.min(32, height * 0.5), COLOR.accent, 0.8, 3));
+    const palette = options.palette;
+    const ink = palette?.ink ?? COLOR.ink;
+    const accent = palette?.accent ?? COLOR.accent;
+    this.add(drawLayer(scene, 0, 0, shape, { fill: palette?.fill ?? 0x1c2633, alpha: palette?.fillAlpha ?? 0.96, shadow: false }));
+    this.add(drawShapeEdge(scene, 0, 0, shape, "bottom", { color: accent, alpha: palette ? 1 : 0.7, width: palette ? 4 : 3 }));
+    if (options.icon) this.add(drawGlyph(scene, options.icon, -width / 2 + 32, 1, Math.min(32, height * 0.5), accent, 0.8, 3));
     const left = -width / 2 + (options.icon ? 60 : 28);
     const fontSize = options.fontSize ?? 30;
     if (options.placeholder) {
-      this.placeholderText = scene.add.text(left, options.multiline ? -height / 2 + 16 : 0, options.placeholder, textStyle({ role: "body", size: Math.round(fontSize * 0.9), color: COLOR.inkDim }))
+      this.placeholderText = scene.add.text(left, options.multiline ? -height / 2 + 16 : 0, options.placeholder, textStyle({ role: "body", size: Math.round(fontSize * 0.9), color: palette?.placeholder ?? COLOR.inkDim }))
         .setOrigin(0, options.multiline ? 0 : 0.5);
       this.add(this.placeholderText);
     }
     if (options.multiline) {
-      const style = textStyle({ role: "emphasis", size: fontSize, color: COLOR.ink, lineSpacing: Math.round(fontSize * 0.25), wrap: width - 56 });
+      const style = textStyle({ role: "emphasis", size: fontSize, color: ink, lineSpacing: Math.round(fontSize * 0.25), wrap: width - 56 });
       this.text = scene.add.text(left, -height / 2 + 16, "", style).setOrigin(0, 0);
       this.text.setWordWrapWidth(width - 56, true);
-      this.measure = scene.add.text(0, 0, "", textStyle({ role: "emphasis", size: fontSize, color: COLOR.ink })).setVisible(false);
+      this.measure = scene.add.text(0, 0, "", textStyle({ role: "emphasis", size: fontSize, color: ink })).setVisible(false);
       // 줄 간격은 글꼴 지표·접근성 배율에 따라 달라지므로 두 줄을 재서 실제 보폭을 구한다.
       this.text.setText("M"); const one = this.text.height;
       this.text.setText("M\nM"); this.lineHeight = Math.max(1, this.text.height - one);
       this.text.setText("");
       this.visibleLines = Math.max(1, Math.floor((height - 28) / this.lineHeight));
-      this.caret = scene.add.rectangle(left, -height / 2 + 16, 3, fontSize * 1.1, COLOR.accent, 1).setOrigin(0, 0).setVisible(false);
+      this.caret = scene.add.rectangle(left, -height / 2 + 16, 3, fontSize * 1.1, accent, 1).setOrigin(0, 0).setVisible(false);
       this.add([this.text, this.measure, this.caret]);
     } else {
-      this.text = scene.add.text(left, 0, "", textStyle({ role: "emphasis", size: fontSize, color: COLOR.ink })).setOrigin(0, 0.5);
-      this.caret = scene.add.rectangle(left, 0, 3, height * 0.5, COLOR.accent, 1).setVisible(false);
+      this.text = scene.add.text(left, 0, "", textStyle({ role: "emphasis", size: fontSize, color: ink })).setOrigin(0, 0.5);
+      this.caret = scene.add.rectangle(left, 0, 3, height * 0.5, accent, 1).setVisible(false);
       this.add([this.text, this.caret]);
     }
 

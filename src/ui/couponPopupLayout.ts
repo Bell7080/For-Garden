@@ -1,44 +1,47 @@
 /**
- * 쿠폰 등록창의 자리. 위는 토리카가 선 **무대**(금빛 기운·반짝임·떠다니는 쿠폰), 가운데는 코드를
- * 적는 **쿠폰 한 장**(왼쪽 귀퉁이 + 점선 절취선 + 코드 칸), 아래는 등록 버튼과 홈페이지 길이다.
- * 닫기는 판 밖 우하단 공용 뒤로가기라 오른쪽 위 X를 두지 않는다.
+ * 쿠폰 등록창의 자리 — 이벤트 판(보물상자 대장간)과 같은 밝은 사탕 결이다.
+ *
+ * 맨 위에 굵은 **COUPON** 글자가 이 창이 무엇인지 그림 없이 말하고, 그 아래 토리카와 말풍선,
+ * 가운데에 코드를 적는 말랑한 카드, 아래에 등록 버튼과 홈페이지 길이 선다. 젬·골드·치즈케이크는
+ * 판 가장자리에만 흩어져 글과 버튼을 가리지 않는다. 닫기는 판 밖 우하단 공용 뒤로가기다.
  */
 export const COUPON_POPUP = {
-  width: 900, height: 1010,
-  /** 토리카 뒤에 은은하게 번지는 금빛 기운. */
-  stage: { x: -230, y: -270, size: 460, color: 0xffc95a, alpha: 0.22 },
-  sd: { x: -230, groundY: -150, height: 270, shadowWidth: 150 },
-  name: { y: -112 },
-  /** 크림빛 말풍선 — 꼬리가 토리카 얼굴 쪽으로 내민다. */
-  bubble: { x: 120, y: -300, width: 470, height: 170, tail: 30, fill: 0xfff4dc, ink: "#3b2a12", bob: 6 },
-  /** 무대에 떠다니는 쿠폰 세 장(x·y·크기·기울기·박자). */
-  tickets: [
-    { x: -400, y: -400, size: 64, angle: -16, delay: 0 },
-    { x: -70, y: -410, size: 52, angle: 14, delay: 420 },
-    { x: 340, y: -170, size: 58, angle: -8, delay: 820 },
-  ],
-  /** 네 갈래 반짝임(x·y·크기·색·박자). 난수 없이 자리를 정한다. */
-  sparkles: [
-    { x: -360, y: -230, size: 34, color: 0xffe08a, delay: 0 },
-    { x: -100, y: -300, size: 26, color: 0xffb3d9, delay: 500 },
-    { x: -320, y: -440, size: 22, color: 0x9fe4ff, delay: 900 },
-    { x: 330, y: -420, size: 30, color: 0xffe08a, delay: 300 },
-    { x: 200, y: -175, size: 22, color: 0xffb3d9, delay: 1200 },
-    { x: -150, y: -180, size: 20, color: 0x9fe4ff, delay: 700 },
-  ],
-  /** 코드를 적는 쿠폰 한 장. 왼쪽 귀퉁이(`stub`)와 본판 사이를 점선 절취선이 가른다. */
-  card: { y: 30, width: 800, height: 240, fill: 0x2b2110, stub: 170, accent: 0xffc95a },
-  stubTicket: { size: 96, angle: -14 },
-  labelY: -60,
-  field: { width: 560, height: 96 },
+  width: 900, height: 1150,
+  /** 크림 → 분홍으로 흐르는 바탕과 물방울 무늬. */
+  backdrop: { top: 0xfff4dc, bottom: 0xffd6e6, dot: 0xffffff, dotAlpha: 0.38, dotGap: 56, dotRadius: 5 },
+  /** 굵은 제목 글자. 흐르는 색 + 짙은 자두빛 획 + 아래로 떨어지는 그림자. */
+  wordmark: { y: -400, size: 124, angle: -4, gradient: ["#fffbe8", "#ffc247", "#ff6f91"] as const, stroke: 16, shadowY: 10 },
+  sd: { x: -250, groundY: -60, height: 230, shadowWidth: 140 },
+  name: { y: -28 },
+  bubble: { x: 120, y: -160, width: 470, height: 150, radius: 34, tail: 30, rim: 6 },
+  /** 코드를 적는 카드. 사탕 결의 굵은 외곽선 + 분홍 테 + 크림 면. */
+  card: { y: 120, width: 780, height: 210, radius: 40, rim: 9, outline: 5 },
+  labelY: -50,
+  field: { width: 680, height: 92 },
   fieldY: 26,
-  errorY: 182, noticeY: 230,
-  submitY: 330, submit: { width: 680, height: 104, fill: 0x5a3b0c },
-  webY: 432, webHit: { width: 520, height: 80 },
+  errorY: 258, noticeY: 304,
+  submitY: 400, submit: { width: 640, height: 112, tone: 0xffb36b },
+  webY: 528, webHit: { width: 520, height: 76 },
+  /** 판 가장자리에 흩어지는 보상 그림(x·y·재화·크기·기울기). 글이 서는 가운데는 비운다. */
+  loot: [
+    [-395, -470, "gems", 86, -16], [395, -470, "gold", 92, 14], [-405, -270, "gold", 70, 10], [400, -300, "cheesecake", 78, -12],
+    [-410, 0, "cheesecake", 74, -8], [410, 20, "gems", 70, 12], [-400, 330, "gems", 80, 14], [405, 330, "gold", 84, -14],
+    [-380, 500, "gold", 66, -6], [380, 500, "cheesecake", 72, 8], [-240, -500, "cheesecake", 54, 8], [250, -330, "gems", 52, -10],
+  ] as const,
+  /** 네 갈래 반짝임(x·y·크기·색·박자). */
+  sparkles: [
+    { x: -320, y: -440, size: 30, color: 0xffffff, delay: 0 },
+    { x: 330, y: -400, size: 26, color: 0xfff3a6, delay: 450 },
+    { x: -180, y: -330, size: 18, color: 0xffffff, delay: 900 },
+    { x: 220, y: -460, size: 20, color: 0xffffff, delay: 1300 },
+    { x: 340, y: -90, size: 22, color: 0xfff3a6, delay: 700 },
+    { x: -120, y: -110, size: 18, color: 0xffffff, delay: 1100 },
+  ],
 } as const;
 
-/** 쿠폰 본판(귀퉁이를 뺀 쪽)의 가운데 x. 코드 칸과 이름표가 이 줄에 선다. */
-export function couponCardMainX(): number {
-  const { card } = COUPON_POPUP;
-  return card.stub / 2;
-}
+/** 이 창이 쓰는 사탕 결의 색. 보물상자·돌림판과 같은 짙은 자두빛 외곽선을 쓴다. */
+export const COUPON_TONE = {
+  ink: 0x4a2337, inkText: "#4a2337", soft: "#8a5a6e",
+  rim: 0xff8fb8, cream: 0xfff6e4, accentText: "#e2602a", danger: "#d64545",
+  fieldFill: 0xffffff, placeholder: "#c9a6b4", fieldAccent: 0xff8fb8,
+} as const;

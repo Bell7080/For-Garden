@@ -50,7 +50,7 @@ const CARD = {
    */
   roulette: { radius: 150, /** 바퀴 가운데의 x(카드 가운데 기준). */ x: 110, sdInset: 95, textRatio: 0.42, pushMs: 1700, rain: { count: 9, size: 34, alpha: 0.36, fallMs: 6400 } } as const,
   /**
-   * 보물상자 장면 — 상자는 카드 밑변에 살짝 묻혀 앉고 토리카가 그 오른쪽에서 가끔 상자를 콩 두드린다. 글 폭은 돌림판과 같다.
+   * 보물상자 장면 — 상자는 카드 밑변에 살짝 묻혀 앉고 티아가 그 오른쪽에서 가끔 상자를 콩 두드린다. 글 폭은 돌림판과 같다.
    */
   chestForge: { x: 120, chestHeight: 150, sink: 18, sdInset: 95, textRatio: 0.42, bonkMs: 2000, rain: { count: 8, size: 40, alpha: 0.42, fallMs: 6800 } } as const,
   /** 출석 카드의 진행 마름모 줄(부제 자리). */
@@ -270,7 +270,7 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     this.sdReady = showcase.attachPusher;
   }
 
-  /** 보물상자 장면 — 그리는 일은 `chestCardShowcase`가 맡고, 카드는 토리카가 도착하면 넘겨주기만 한다. */
+  /** 보물상자 장면 — 그리는 일은 `chestCardShowcase`가 맡고, 카드는 티아가 도착하면 넘겨주기만 한다. */
   private paintChestShowcase(shape: number[]): void {
     const { width, height } = this.options;
     const showcase = addChestCardShowcase(this.scene, this, shape, { width, height, ...CARD.chestForge });

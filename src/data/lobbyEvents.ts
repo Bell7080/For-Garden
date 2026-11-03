@@ -94,7 +94,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     subtitleKey: "event.chestForge.subtitle",
     backdropKey: BACKGROUND.interactionRustWorks,
     destination: { kind: "chestForge" },
-    sd: { relicId: "torika", side: "right" },
+    sd: { relicId: "tia", side: "right" },
     showcase: "chestForge",
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",

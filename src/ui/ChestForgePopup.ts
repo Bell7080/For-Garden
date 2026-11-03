@@ -55,7 +55,8 @@ const FORGE = {
 /** 보물상자 전용 이벤트 코인 그림(`currencyIcons`). 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다. */
 const CHEST_COIN_ICON = "currency-treasure-chest-coin";
 /** 창 안에서 상자 곁을 지키는 SD — 로비 이벤트 카드와 같은 개체다(`lobbyEvents`의 `chest-forge`). */
-const CHEST_FORGE_SD = "torika";
+/** 반짝이는 것을 주워 와 「보급품」이라 우기는 티아 — 보물을 모으는 상자 이벤트의 얼굴이다. */
+const CHEST_FORGE_SD = "tia";
 
 const INK = "#5b3426";
 const INK_SOFT = "#8a6150";

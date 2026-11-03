@@ -39,7 +39,7 @@ export interface LobbyEventDef {
    * 카드 위에 세우는 움직이는 장면. `roulette`는 카드 밑변에서 반쯤 솟은 돌림판이 돌고 재화가 내리며, SD가 그 옆에서
    * 바퀴를 민다(행운의 돌림판). 비우면 원화 + SD만 선다.
    */
-  readonly showcase?: "roulette" | "chestForge" | "delophyHunt";
+  readonly showcase?: "roulette" | "chestForge" | "delophyHunt" | "shuteFishing";
   /**
    * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
@@ -123,6 +123,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     backdropKey: BACKGROUND.eventShuteCard,
     destination: { kind: "shuteFishing" },
     sd: { relicId: "shute", side: "right" },
+    showcase: "shuteFishing",
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",
     endsAt: "2099-12-31T23:59:59Z",

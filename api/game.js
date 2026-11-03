@@ -5455,12 +5455,11 @@ var LOBBY_KO = {
   "shuteFishing.difficulty.normal": "\uBCF4\uD1B5",
   "shuteFishing.difficulty.hard": "\uC5B4\uB824\uC6C0",
   "shuteFishing.difficulty.extreme": "\uB9E4\uC6B0 \uC5B4\uB824\uC6C0",
-  "shuteFishing.detail": "\uBB3C\uACE0\uAE30 {fish}\uB9C8\uB9AC \xB7 \uAE30\uD68C {misses}\uBC88",
-  "shuteFishing.hint.easy": "\uB290\uAE0B\uD55C \uD15C\uD3EC",
-  "shuteFishing.hint.normal": "\uD15C\uD3EC\uAC00 \uC62C\uB77C\uAC00",
-  "shuteFishing.hint.hard": "\uBE60\uB974\uACE0 \uCE78\uC774 \uC881\uC544",
-  "shuteFishing.hint.extreme": "\uBCF4\uC2A4\uACE1\uC774 \uB298 \uB300\uBC15\uC774\uC57C",
-  "shuteFishing.jackpotNote": "\uAC00\uB054 \uB300\uBC15 \uBB3C\uACE0\uAE30\uAC00 \uBB3C\uB824. \uD074\uC218\uB85D \uBE60\uB974\uACE0 \uC881\uC544!",
+  "shuteFishing.hint.easy": "{fish}\uACE1 \xB7 \uB290\uAE0B\uD55C \uD15C\uD3EC",
+  "shuteFishing.hint.normal": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 500",
+  "shuteFishing.hint.hard": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 1,000 \uB178\uB824",
+  "shuteFishing.hint.extreme": "{fish}\uACE1 \xB7 \uBCF4\uC2A4\uACE1 \uC82C 1,000",
+  "shuteFishing.jackpotNote": "\uB4E4\uC5B4\uAC00\uBA74 \uC14B\uB9AC\uC2A4\uD2B8\uAC00 \uC815\uD574\uC838. \uB4A4\uB85C \uAC08\uC218\uB85D, \uB9C8\uC9C0\uB9C9 \uBCF4\uC2A4\uACE1\uC77C\uC218\uB85D \uBCF4\uBB3C\uC774 \uCEE4!",
   "shuteFishing.collected": "\uB09A\uC740 \uBCF4\uBB3C",
   "shuteFishing.tap": "\uD0ED!",
   "shuteFishing.catch": "\uCE90\uCE58 {count}/{need}",
@@ -5469,6 +5468,8 @@ var LOBBY_KO = {
   "shuteFishing.judge.miss": "MISS",
   "shuteFishing.ready": "\uBE5B\uB098\uB294 \uCE78\uC5D0\uC11C \uD0ED!",
   "shuteFishing.landed": "\uB09A\uC558\uB2E4!",
+  "shuteFishing.combo": "{count} COMBO",
+  "shuteFishing.boss": "BOSS",
   "shuteFishing.cleared": "\uD480\uCF64\uBCF4! \uADF8\uB7ED\uC800\uB7ED\uC774\uB124.",
   "shuteFishing.out": "\uAC8C\uC784 \uC624\uBC84!",
   "shuteFishing.reward": "\uB9AC\uB4EC \uB09A\uC2DC \uBCF4\uC0C1",
@@ -10606,6 +10607,8 @@ function makeFighter(def, side, index, x, y, bondLevel = 0, breakthrough = 0, bo
     prickle: null,
     fortress: null,
     bulwark: null,
+    // 객체 모양을 처음부터 고정한다 — 첫 조각에서야 속성이 붙으면 모든 몸의 모양이 바뀌어 전투 계산 전체가 느려진다.
+    deathAnnounced: void 0,
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
@@ -17437,6 +17440,36 @@ function advanceHorde(state, events) {
     settle(state, events);
   }
 }
+function announceSilentDeaths(state, events, from) {
+  for (const fighter of state.fighters) {
+    if (isFighterAlive(fighter)) {
+      fighter.deathAnnounced = false;
+      continue;
+    }
+    if (fighter.deathAnnounced) continue;
+    const silent = fighter.deathAnnounced === false && !hasDeathEvent(events, from, fighter.id);
+    fighter.deathAnnounced = true;
+    if (!silent) continue;
+    clearDefeatedStatuses(fighter);
+    events.push({ kind: "death", fighterId: fighter.id });
+  }
+}
+function hasDeathEvent(events, from, id) {
+  for (let index = from; index < events.length; index += 1) {
+    const event = events[index];
+    if (event.kind === "death" && event.fighterId === id) return true;
+  }
+  return false;
+}
+function pruneFallenHorde(state) {
+  let write = 0;
+  for (const fighter of state.fighters) {
+    if (fighter.hordeCounted && !isFighterAlive(fighter)) continue;
+    state.fighters[write] = fighter;
+    write += 1;
+  }
+  state.fighters.length = write;
+}
 function stepSkirmish(state, dt, rng = NO_CRIT) {
   const events = state.initialEvents.splice(0);
   if (state.phase !== "fight" || dt <= 0) return events;
@@ -17451,6 +17484,7 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step2, rng, events);
+    announceSilentDeaths(state, events, before);
     if (state.horde && state.phase === "fight") advanceHorde(state, events);
     if (state.automaticUltimates) {
       for (const fighter of state.fighters) {
@@ -17491,6 +17525,7 @@ function stepSkirmish(state, dt, rng = NO_CRIT) {
     state.phase = state.horde ? "victory" : "defeat";
     events.push({ kind: "finish", phase: state.phase });
   }
+  if (state.horde) pruneFallenHorde(state);
   for (const fighter of state.fighters) {
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);
     if (tag) events.push({ kind: "combatEffect", fighterId: fighter.id, effect: { tag, intensity: 1 } });
@@ -25189,6 +25224,9 @@ function chestOfferSlots(round) {
   return round >= CHEST_FORGE.rounds - 1 ? [SLOT.safe, SLOT.mid, SLOT.spicy, SLOT.special] : [SLOT.safe, SLOT.mid, SLOT.spicy];
 }
 var GEM_VALUE = { gold: 1 / 500, cheesecake: 2, stamina: 0.83, rawStone: 5, gems: 1, fossil: 300, amber: 300 };
+function chestCurrencyGemValue(currency3) {
+  return GEM_VALUE[currency3];
+}
 function chestCard(id, box = CHEST_BOXES[0]) {
   const card = CHEST_CARDS.find((entry) => entry.id === id);
   return card ? chestBoxCard(card, box) : void 0;
@@ -25559,19 +25597,15 @@ var SHUTE_FISHING = {
   /** 판 전체에서 이만큼 미스하면 아웃이다. */
   maxMisses: 3
 };
-var MIN_WINDOW_MS = 80;
+var MIN_WINDOW_MS = 110;
 var PERFECT_RATIO = 0.4;
 var TEMPO_STEP = 0.05;
 var MAX_PRESS_MS = 12e4;
-var FISH_TIER_ORDER = ["common", "fine", "rare", "jackpot"];
-function fishTierRank(tier) {
-  return FISH_TIER_ORDER.indexOf(tier);
-}
 var FISH_TIER_FEEL = {
   common: { catches: 3, speed: 1, width: 1 },
-  fine: { catches: 3, speed: 0.92, width: 0.9 },
-  rare: { catches: 4, speed: 0.84, width: 0.8 },
-  jackpot: { catches: 5, speed: 0.76, width: 0.7 }
+  fine: { catches: 3, speed: 0.92, width: 0.92 },
+  rare: { catches: 4, speed: 0.86, width: 0.85 },
+  jackpot: { catches: 5, speed: 0.8, width: 0.78 }
 };
 var FISH_TREASURES = [
   { id: "gold-s", tier: "common", currency: "gold", amount: 25e3, weight: 1 },
@@ -25595,44 +25629,45 @@ var FISH_TREASURES = [
 function fishTreasure(id) {
   return FISH_TREASURES.find((treasure) => treasure.id === id);
 }
-var RARE_SURE = ["gems-m", "gems-l", "fossil", "amber"];
+function fishTreasureGemValue(treasure) {
+  return chestCurrencyGemValue(treasure.currency) * treasure.amount;
+}
 var FISHING_DIFFICULTIES = [
   {
     id: "easy",
     entryCost: 100,
     fish: 3,
-    sweepMs: 1250,
-    zone: 0.24,
-    tierWeights: { common: 52, fine: 42, rare: 4, jackpot: 2.5 },
-    guaranteed: RARE_SURE
+    sweepMs: 1300,
+    zone: 0.34,
+    tierWeights: { common: 58, fine: 42, rare: 0 },
+    boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]]
   },
   {
     id: "normal",
     entryCost: 200,
     fish: 4,
-    sweepMs: 1050,
-    zone: 0.19,
-    tierWeights: { common: 10, fine: 44, rare: 34, jackpot: 12 },
-    guaranteed: RARE_SURE
+    sweepMs: 1120,
+    zone: 0.29,
+    tierWeights: { common: 20, fine: 50, rare: 30 },
+    boss: [["jackpot-500", 1]]
   },
   {
     id: "hard",
     entryCost: 300,
     fish: 5,
-    sweepMs: 880,
-    zone: 0.16,
-    tierWeights: { common: 2, fine: 26, rare: 50, jackpot: 22 },
-    guaranteed: RARE_SURE
+    sweepMs: 960,
+    zone: 0.25,
+    tierWeights: { common: 0, fine: 45, rare: 55 },
+    boss: [["jackpot-500", 5], ["jackpot-1000", 1]]
   },
-  // 매우 어려움은 마지막 곡이 늘 대박이다 — 대박은 판마다 한 마리까지라 남은 물고기는 값진 쪽에서만 뽑는다.
   {
     id: "extreme",
     entryCost: 400,
     fish: 6,
-    sweepMs: 740,
-    zone: 0.14,
-    tierWeights: { common: 0, fine: 14, rare: 86, jackpot: 0 },
-    guaranteed: ["jackpot-500", "jackpot-1000"]
+    sweepMs: 820,
+    zone: 0.22,
+    tierWeights: { common: 10, fine: 52, rare: 38 },
+    boss: [["jackpot-1000", 1]]
   }
 ];
 function fishingDifficulty(id) {
@@ -25665,16 +25700,17 @@ function pickWeighted3(entries, random) {
   return entries[entries.length - 1][0];
 }
 function rollFishingFish(difficulty, random) {
+  const boss = pickWeighted3(difficulty.boss, random);
   const picked = [];
-  const sure = FISH_TREASURES.filter((treasure) => difficulty.guaranteed.includes(treasure.id));
-  if (sure.length) picked.push(pickWeighted3(sure.map((treasure) => [treasure, treasure.weight]), random));
-  while (picked.length < difficulty.fish) {
-    const tiers2 = FISH_TIER_ORDER.filter((tier2) => difficulty.tierWeights[tier2] > 0 && !(tier2 === "jackpot" && picked.some((treasure) => treasure.tier === "jackpot")) && FISH_TREASURES.some((treasure) => treasure.tier === tier2 && !picked.includes(treasure)));
-    const tier = pickWeighted3(tiers2.map((entry) => [entry, difficulty.tierWeights[entry]]), random);
-    const pool = FISH_TREASURES.filter((treasure) => treasure.tier === tier && !picked.includes(treasure));
+  const tiers2 = ["common", "fine", "rare"];
+  while (picked.length < difficulty.fish - 1) {
+    const open = tiers2.filter((tier2) => difficulty.tierWeights[tier2] > 0 && FISH_TREASURES.some((treasure) => treasure.tier === tier2 && treasure.id !== boss && !picked.includes(treasure)));
+    const tier = pickWeighted3(open.map((entry) => [entry, difficulty.tierWeights[entry]]), random);
+    const pool = FISH_TREASURES.filter((treasure) => treasure.tier === tier && treasure.id !== boss && !picked.includes(treasure));
     picked.push(pickWeighted3(pool.map((treasure) => [treasure, treasure.weight]), random));
   }
-  return picked.map((treasure, index) => ({ treasure, index })).sort((a, b) => fishTierRank(a.treasure.tier) - fishTierRank(b.treasure.tier) || a.index - b.index).map(({ treasure }) => treasure.id);
+  const ordered = picked.map((treasure, index) => ({ treasure, index })).sort((a, b) => fishTreasureGemValue(a.treasure) - fishTreasureGemValue(b.treasure) || a.index - b.index).map(({ treasure }) => treasure.id);
+  return [...ordered, boss];
 }
 function rollFishCatches(difficulty, treasureId, random) {
   const treasure = fishTreasure(treasureId);
@@ -41781,7 +41817,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.404.0",
+  version: "0.404.3",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

@@ -55,24 +55,32 @@ describe("슈테의 리듬 낚시 규칙", () => {
     }
   });
 
-  it("판마다 값진 보물이 하나 물리고, 대박은 한 판에 한 마리까지, 매우 어려움은 마지막 곡이 늘 대박이다", () => {
+  it("셋리스트는 뒤로 갈수록 좋아지고, 마지막 보스곡이 난이도에 맞춰 가장 크며, 대박은 보스곡에서만 나온다", () => {
     const random = lcg(42);
+    const bossValues: number[] = [];
     for (const difficulty of FISHING_DIFFICULTIES) {
-      for (let run = 0; run < 400; run += 1) {
+      let bossTotal = 0;
+      const runs = 400;
+      for (let run = 0; run < runs; run += 1) {
         const fish = rollFishingFish(difficulty, random);
         expect(fish).toHaveLength(difficulty.fish);
         expect(new Set(fish).size).toBe(fish.length);
+        const values = fish.map((id) => fishingRunGemValue([id]));
+        for (let index = 1; index < values.length; index += 1) expect(values[index], difficulty.id).toBeGreaterThanOrEqual(values[index - 1]);
         const tiers = fish.map((id) => fishTreasure(id)!.tier);
-        expect(tiers.filter((tier) => tier === "jackpot").length).toBeLessThanOrEqual(1);
-        expect(tiers.some((tier) => tier === "rare" || tier === "jackpot")).toBe(true);
-        if (difficulty.id === "extreme") expect(tiers[tiers.length - 1]).toBe("jackpot");
+        expect(tiers.slice(0, -1)).not.toContain("jackpot");
+        expect(difficulty.boss.map(([id]) => id)).toContain(fish[fish.length - 1]);
+        bossTotal += values[values.length - 1];
       }
+      bossValues.push(bossTotal / runs);
     }
+    for (let index = 1; index < bossValues.length; index += 1) expect(bossValues[index]).toBeGreaterThan(bossValues[index - 1]);
+    expect(FISHING_DIFFICULTIES.find((entry) => entry.id === "extreme")!.boss.every(([id]) => fishTreasure(id)!.tier === "jackpot")).toBe(true);
     const jackpots = FISH_TREASURES.filter((treasure) => treasure.tier === "jackpot");
     for (const treasure of jackpots) expect(treasure.currency === "gems" && treasure.amount >= 300 && treasure.amount <= 1000).toBe(true);
   });
 
-  it("물고기마다 캐치는 3~5번이고, 어떤 캐치도 판정 창이 80ms보다 짧지 않다", () => {
+  it("물고기마다 캐치는 3~5번이고, 어떤 캐치도 판정 창이 MIN_WINDOW_MS보다 짧지 않다", () => {
     const random = lcg(9);
     for (const difficulty of FISHING_DIFFICULTIES) {
       for (const treasure of FISH_TREASURES) {

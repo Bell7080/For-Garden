@@ -11,7 +11,8 @@ import { chestCurrencyGemValue, type ChestCardCurrency } from "./chestForge";
  * **운이 아니라 손이 정한다.** 바늘은 일정한 속도로 0 → 1 → 0을 오가는 삼각파 하나뿐이고(`gaugePosition`), 구간·속도는
  * 판을 열 때 서버가 정해 그대로 보낸다 — 화면에 보이는 그대로가 판정이다. 판정 창(바늘이 구간을 지나는 시간)은 어느
  * 난이도·어느 물고기에서도 `MIN_WINDOW_MS` 아래로 내려가지 않는다. 값진 물고기일수록 **캐치가 많고, 빠르고, 구간이 좁다** —
- * 그래서 좋은 보물(젬·화석)이 어렵다. 판 안의 물고기는 쉬운 것부터 큰 것 순으로 물린다(마지막 곡이 보스곡).
+ * 그래서 좋은 보물(젬·화석)이 어렵다. 셋리스트는 판을 여는 순간 정해지고 쉬운 것부터 큰 것 순으로 물린다 — 마지막 곡이
+ * **보스곡**이고, 보스곡의 보물은 난이도마다 따로 짠 표(`boss`)에서 나와 앞의 곡보다 훨씬 크다.
  *
  * 판정은 서버가 한다: 화면은 바늘이 출발한 뒤 누르기까지 걸린 시간(ms)만 보내고, 서버가 같은 삼각파로 위치를 구해
  * 구간과 견준다. 바늘의 움직임이 시간의 함수 하나라 통신 지연은 판정에 들지 않는다.
@@ -21,7 +22,8 @@ import { chestCurrencyGemValue, type ChestCardCurrency } from "./chestForge";
  *
  * **보상은 이벤트 보상 예산을 따른다**(`eventRewardBudget.ts`의 정규 — 코인 100당 젬 환산). 모든 물고기를 낚는 완벽한
  * 판이 곧 상한이므로 난이도마다 **판에 물리는 보물의 기대 총가치**를 그 선 안에 두고, 입장값에 정확히 비례하게 짠다
- * (200은 100의 2배, 300은 3배, 400은 4배 — `shuteFishing.test`). 대박(젬 500·1,000)은 수치를 깎지 않고 물릴 확률로 묶는다.
+ * (200은 100의 2배, 300은 3배, 400은 4배 — `shuteFishing.test`). 대박(젬 500·1,000)은 보스곡 자리에서만 나오고, 수치를
+ * 깎지 않고 보스 표의 가중치로 묶는다.
  */
 export const SHUTE_FISHING = {
   id: "shute-fishing",
@@ -30,7 +32,7 @@ export const SHUTE_FISHING = {
 } as const;
 
 /** 바늘이 빛나는 구간을 지나는 가장 짧은 시간(ms). 이보다 짧아지면 사람의 손으로 맞출 수 없어 운이 된다. */
-export const MIN_WINDOW_MS = 80;
+export const MIN_WINDOW_MS = 110;
 /** 구간의 가운데 이 비율 안이면 PERFECT — 표시만 다르고 보상은 같다. */
 export const PERFECT_RATIO = 0.4;
 /** 한 번 캐치할 때마다 바늘이 이만큼(비율) 빨라진다 — 박자가 쌓일수록 템포가 올라간다. */
@@ -48,9 +50,9 @@ export function fishTierRank(tier: FishTier): number { return FISH_TIER_ORDER.in
  */
 export const FISH_TIER_FEEL: Readonly<Record<FishTier, { catches: number; speed: number; width: number }>> = {
   common: { catches: 3, speed: 1, width: 1 },
-  fine: { catches: 3, speed: 0.92, width: 0.9 },
-  rare: { catches: 4, speed: 0.84, width: 0.8 },
-  jackpot: { catches: 5, speed: 0.76, width: 0.7 },
+  fine: { catches: 3, speed: 0.92, width: 0.92 },
+  rare: { catches: 4, speed: 0.86, width: 0.85 },
+  jackpot: { catches: 5, speed: 0.8, width: 0.78 },
 };
 
 export interface FishTreasure {
@@ -95,35 +97,35 @@ export interface FishingDifficulty {
   readonly id: FishingDifficultyId;
   /** 판을 여는 값(코인). */
   readonly entryCost: number;
-  /** 한 판에 물리는 물고기 수. */
+  /** 한 판에 물리는 물고기 수(마지막 한 마리가 보스다). */
   readonly fish: number;
   /** 바늘이 게이지 한쪽 끝에서 다른 끝까지 가는 시간(ms) — 흔한 물고기의 첫 캐치 기준. */
   readonly sweepMs: number;
   /** 빛나는 구간의 폭(게이지 전체에 대한 비율) — 흔한 물고기 기준. */
   readonly zone: number;
-  /** 물고기 한 마리를 뽑는 등급 가중치. 어려울수록 값진 쪽으로 기운다. */
-  readonly tierWeights: Readonly<Record<FishTier, number>>;
-  /** 판마다 반드시 한 마리 물리는 맛있는 보물(가중치는 보물표의 `weight`). 나머지는 `tierWeights`로 뽑는다. */
-  readonly guaranteed: readonly string[];
+  /** 보스 앞 물고기를 뽑는 등급 가중치. 대박은 여기서 나오지 않고 보스 자리에서만 나온다. */
+  readonly tierWeights: Readonly<Record<Exclude<FishTier, "jackpot">, number>>;
+  /** 마지막 곡(보스)의 보물과 가중치 — 난이도마다 훨씬 좋게 짠다. */
+  readonly boss: readonly (readonly [string, number])[];
 }
 
 /**
  * 난이도 표(값은 여기 하나). 어려울수록 ① 물고기가 많고 ② 바늘이 빠르며 ③ 구간이 좁고 ④ 값진 물고기가 물릴 몫이 크다.
- * 판에 물리는 기대 총가치는 입장값에 정확히 비례한다 — 100 : 200 : 300 : 400 = 1 : 2 : 3 : 4배.
+ * 판에 물리는 기대 총가치는 입장값에 비례한다 — 100 : 200 : 300 : 400 = 1 : 2 : 3 : 4배.
+ *
+ * 판을 열면 셋리스트가 팅팅 정해지고 **뒤로 갈수록 좋아지며 마지막 곡(보스)이 난이도에 맞춰 훨씬 좋다**(응태 2026-11-03):
+ * 쉬움은 젬 300·화석·호박석, 보통은 젬 500, 어려움은 젬 500~1,000, 매우 어려움은 늘 젬 1,000이다.
+ * 구간 폭은 "너무 어렵다"(응태 2026-11-03)는 말에 처음보다 1.4배 남짓 넓혔다.
  */
-/** 쉬움~어려움이 판마다 하나 꼭 무는 값진 보물(젬·화석·호박석). */
-const RARE_SURE = ["gems-m", "gems-l", "fossil", "amber"] as const;
-
 export const FISHING_DIFFICULTIES: readonly FishingDifficulty[] = [
-  { id: "easy", entryCost: 100, fish: 3, sweepMs: 1250, zone: 0.24,
-    tierWeights: { common: 52, fine: 42, rare: 4, jackpot: 2.5 }, guaranteed: RARE_SURE },
-  { id: "normal", entryCost: 200, fish: 4, sweepMs: 1050, zone: 0.19,
-    tierWeights: { common: 10, fine: 44, rare: 34, jackpot: 12 }, guaranteed: RARE_SURE },
-  { id: "hard", entryCost: 300, fish: 5, sweepMs: 880, zone: 0.16,
-    tierWeights: { common: 2, fine: 26, rare: 50, jackpot: 22 }, guaranteed: RARE_SURE },
-  // 매우 어려움은 마지막 곡이 늘 대박이다 — 대박은 판마다 한 마리까지라 남은 물고기는 값진 쪽에서만 뽑는다.
-  { id: "extreme", entryCost: 400, fish: 6, sweepMs: 740, zone: 0.14,
-    tierWeights: { common: 0, fine: 14, rare: 86, jackpot: 0 }, guaranteed: ["jackpot-500", "jackpot-1000"] },
+  { id: "easy", entryCost: 100, fish: 3, sweepMs: 1300, zone: 0.34,
+    tierWeights: { common: 58, fine: 42, rare: 0 }, boss: [["gems-l", 3], ["fossil", 2], ["amber", 2], ["jackpot-500", 1]] },
+  { id: "normal", entryCost: 200, fish: 4, sweepMs: 1120, zone: 0.29,
+    tierWeights: { common: 20, fine: 50, rare: 30 }, boss: [["jackpot-500", 1]] },
+  { id: "hard", entryCost: 300, fish: 5, sweepMs: 960, zone: 0.25,
+    tierWeights: { common: 0, fine: 45, rare: 55 }, boss: [["jackpot-500", 5], ["jackpot-1000", 1]] },
+  { id: "extreme", entryCost: 400, fish: 6, sweepMs: 820, zone: 0.22,
+    tierWeights: { common: 10, fine: 52, rare: 38 }, boss: [["jackpot-1000", 1]] },
 ];
 export function fishingDifficulty(id: unknown): FishingDifficulty | undefined { return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
 
@@ -167,25 +169,25 @@ function pickWeighted<T>(entries: readonly (readonly [T, number])[], random: () 
 }
 
 /**
- * 한 판에 물릴 물고기를 뽑는다. 맛있는 보물 한 마리(`guaranteed`)가 먼저 물리고, 같은 보물은 한 판에 한 마리만,
- * 대박은 한 판에 한 마리까지다. 물리는 차례는 **흔한 것부터 값진 것 순**이다 — 판이 갈수록 박자가 빨라지고 마지막이 보스곡이다.
+ * 한 판에 물릴 물고기를 뽑는다. 보스 앞 물고기는 등급 가중치로 뽑아 **흔한 것부터 값진 것 순**으로 세우고(같은 보물은 한 판에
+ * 한 마리만), 마지막에 보스 한 마리가 선다 — 판이 갈수록 박자가 빨라지고 보상이 좋아지며, 마지막이 보스곡이다.
  */
 export function rollFishingFish(difficulty: FishingDifficulty, random: () => number): string[] {
+  const boss = pickWeighted(difficulty.boss, random);
   const picked: FishTreasure[] = [];
-  const sure = FISH_TREASURES.filter((treasure) => difficulty.guaranteed.includes(treasure.id));
-  if (sure.length) picked.push(pickWeighted(sure.map((treasure) => [treasure, treasure.weight] as const), random));
-  while (picked.length < difficulty.fish) {
-    const tiers = FISH_TIER_ORDER.filter((tier) => difficulty.tierWeights[tier] > 0
-      && !(tier === "jackpot" && picked.some((treasure) => treasure.tier === "jackpot"))
-      && FISH_TREASURES.some((treasure) => treasure.tier === tier && !picked.includes(treasure)));
-    const tier = pickWeighted(tiers.map((entry) => [entry, difficulty.tierWeights[entry]] as const), random);
-    const pool = FISH_TREASURES.filter((treasure) => treasure.tier === tier && !picked.includes(treasure));
+  const tiers = (["common", "fine", "rare"] as const);
+  while (picked.length < difficulty.fish - 1) {
+    const open = tiers.filter((tier) => difficulty.tierWeights[tier] > 0
+      && FISH_TREASURES.some((treasure) => treasure.tier === tier && treasure.id !== boss && !picked.includes(treasure)));
+    const tier = pickWeighted(open.map((entry) => [entry, difficulty.tierWeights[entry]] as const), random);
+    const pool = FISH_TREASURES.filter((treasure) => treasure.tier === tier && treasure.id !== boss && !picked.includes(treasure));
     picked.push(pickWeighted(pool.map((treasure) => [treasure, treasure.weight] as const), random));
   }
-  return picked
+  const ordered = picked
     .map((treasure, index) => ({ treasure, index }))
-    .sort((a, b) => fishTierRank(a.treasure.tier) - fishTierRank(b.treasure.tier) || a.index - b.index)
+    .sort((a, b) => fishTreasureGemValue(a.treasure) - fishTreasureGemValue(b.treasure) || a.index - b.index)
     .map(({ treasure }) => treasure.id);
+  return [...ordered, boss];
 }
 
 /**

@@ -12,6 +12,8 @@ import { attendanceManager } from "../managers/AttendanceManager";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
 import { LobbyEventCard } from "./LobbyEventCard";
 import { openAttendancePopup } from "./AttendancePopup";
+import { attachDragScroll } from "./dragScroll";
+import { addScrollHint } from "./ScrollHint";
 import { lobbyEventEntries, lobbyEventListLayout } from "./lobbyEventModel";
 
 export interface LobbyEventPopupOptions {
@@ -60,6 +62,10 @@ export class LobbyEventPopup {
     }, (body, close) => {
       this.closeAction = close;
       const cards = new Map<string, LobbyEventCard>();
+      // 카드가 많아 판이 상한에 닿으면 카드 줄만 판 안에서 흐른다(제목표·뒤로가기는 가리지 않는다).
+      const content = this.scene.add.container(0, 0);
+      body.add(content);
+      this.attachScroll(body, content, layout);
       let refreshing = false;
       const refresh = async (): Promise<void> => {
         if (refreshing || !body.active) return;
@@ -106,11 +112,45 @@ export class LobbyEventPopup {
             });
           },
         });
-        body.add(card);
+        content.add(card);
         cards.set(lobbyEventEntryId(entry), card);
         card.setActionRequired(actionable.has(lobbyEventEntryId(entry)));
       });
     });
+  }
+
+  /** 카드 줄을 끌어서 흐르게 한다. 마스크는 팝업이 떠오르는 동안에도 어긋나지 않게 매 프레임 월드 자리로 맞춘다. */
+  private attachScroll(body: Phaser.GameObjects.Container, content: Phaser.GameObjects.Container, layout: ReturnType<typeof lobbyEventListLayout>): void {
+    const { scroll } = layout;
+    if (!scroll.enabled) return;
+    const viewHeight = scroll.bottom - scroll.top;
+    const centerY = (scroll.top + scroll.bottom) / 2;
+    const shape = this.scene.add.rectangle(0, 0, layout.width, viewHeight, 0xffffff).setVisible(false);
+    const mask = shape.createGeometryMask();
+    content.setMask(mask);
+    const sync = (): void => {
+      if (!body.active || !shape.active) return;
+      const matrix = body.getWorldTransformMatrix();
+      const center = matrix.transformPoint(0, centerY);
+      shape.setPosition(center.x, center.y).setSize(layout.width * body.scaleX, viewHeight * body.scaleY);
+    };
+    this.scene.events.on(Phaser.Scenes.Events.PRE_RENDER, sync);
+    sync();
+    // 마스크는 이 판이 죽을 때 함께 푼다(닫히는 연출 동안에도 판은 아직 그려진다).
+    body.once(Phaser.GameObjects.Events.DESTROY, () => {
+      this.scene.events.off(Phaser.Scenes.Events.PRE_RENDER, sync);
+      if (content.active) content.clearMask(false);
+      mask.destroy();
+      shape.destroy();
+    });
+    let offset = 0;
+    const drag = this.scene.add.rectangle(0, centerY, layout.width, viewHeight, 0xffffff, 0).setVisible(false);
+    body.add(drag);
+    attachDragScroll(this.scene, {
+      owner: drag, root: body, bounds: () => drag.getBounds(),
+      onDelta: (dy) => { offset = Phaser.Math.Clamp(offset + dy, scroll.min, 0); content.y = offset; },
+    });
+    addScrollHint(this.scene, body, { x: 0, y: centerY, width: layout.width, height: viewHeight, owner: drag, read: () => ({ offset, min: scroll.min }) });
   }
 
   /** 로비 공용 뒤로가기가 부르는 단일 종료점이다. */

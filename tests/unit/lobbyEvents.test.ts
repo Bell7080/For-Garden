@@ -57,4 +57,24 @@ describe("로비 이벤트", () => {
     expect(one.height).toBe(full.height);
     expect(one.centers[0]).toBeCloseTo(full.centers[1]);
   });
+
+  it("카드가 많아도 판은 1080×1920 화면보다 길어지지 않고 넘치면 판 안에서 흐른다", () => {
+    const full = lobbyEventListLayout(6, 6);
+    expect(full.height).toBeLessThanOrEqual(1640);
+    expect(full.scroll.enabled).toBe(true);
+    expect(full.scroll.min).toBeLessThan(0);
+    // 맨 위로 둔 첫 카드는 흐르는 영역 안에서 시작하고, 끝까지 밀면 마지막 카드가 영역 안에 든다.
+    expect(full.centers[0] - full.cardHeight / 2).toBeGreaterThanOrEqual(full.scroll.top);
+    expect(full.centers[5] + full.cardHeight / 2 + full.scroll.min).toBeLessThanOrEqual(full.scroll.bottom);
+    // 상한 안에 드는 적은 수는 예전처럼 흐르지 않는다.
+    expect(lobbyEventListLayout(3, 3).scroll.enabled).toBe(false);
+  });
+});
+
+import { retryUrl } from "../../src/core/retryUrl";
+describe("로딩 재시도 주소", () => {
+  it("실패한 응답이 캐시에서 돌아오지 않도록 retry 표식을 붙인다", () => {
+    expect(retryUrl("sprites/a.webp", 1)).toBe("sprites/a.webp?retry=1");
+    expect(retryUrl("a.svg?v=3", 2)).toBe("a.svg?v=3&retry=2");
+  });
 });

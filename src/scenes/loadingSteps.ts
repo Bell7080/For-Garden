@@ -19,6 +19,7 @@ import { SQUAD_EMBLEM_ASSETS } from "../data/factions";
 import { SHOP_PRODUCT_ICON_ASSETS } from "../data/shopCatalog";
 import { PLAYABLE_RELICS } from "../data/relics";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
+import { retryUrl } from "../core/retryUrl";
 import { preloadResearchCinematic } from "../ui/ResearchCinematic";
 import { preloadSsrOmen } from "../ui/SsrOmenCinematic";
 
@@ -38,7 +39,34 @@ export interface LoadingStep {
   run(scene: Phaser.Scene): Promise<void>;
 }
 
-/** Phaser 로더는 콜백식이라 단계 하나를 기다릴 수 있게 감싼다. */
+/** 일시적인 네트워크 끊김으로 실패한 파일을 다시 받는 횟수. */
+export const LOAD_RETRY_ROUNDS = 2;
+
+/**
+ * 실패한 파일을 같은 종류로 다시 줄 세운다. 키가 같아 이미 올라온 것은 Phaser가 건너뛴다.
+ * 이미지·SVG·소리만 다루는 이유는 이 로딩 단계가 그 셋만 읽기 때문이다.
+ */
+function requeueFailed(scene: Phaser.Scene, failed: readonly Phaser.Loader.File[], round: number): number {
+  let queued = 0;
+  for (const file of failed) {
+    const url = typeof file.url === "string" ? retryUrl(file.url.replace(/[?&]retry=\d+$/, ""), round) : undefined;
+    if (!url || scene.textures.exists(file.key) || scene.cache.audio.exists(file.key)) continue;
+    if (file.type === "image") scene.load.image(file.key, url);
+    else if (file.type === "svg") scene.load.svg(file.key, url, { width: file.config?.width, height: file.config?.height });
+    else if (file.type === "audio") scene.load.audio(file.key, url);
+    else continue;
+    queued += 1;
+  }
+  return queued;
+}
+
+/**
+ * Phaser 로더는 콜백식이라 단계 하나를 기다릴 수 있게 감싼다.
+ *
+ * 파일 하나가 실패해도 `complete`는 온다. 예전에는 그대로 넘어가 그 아이콘·원화가 **그 접속이 끝날 때까지
+ * 영영 없었다** — 부팅 순간의 짧은 끊김 하나가 "가끔 일러스트가 안 뜬다"가 된 것이다. 실패한 파일은
+ * 단계를 끝내기 전에 두 번 더 받아 본다.
+ */
 function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
   return new Promise((resolve) => {
     queue();
@@ -46,8 +74,25 @@ function loadWithPhaser(scene: Phaser.Scene, queue: () => void): Promise<void> {
       resolve();
       return;
     }
-    // 파일 하나가 실패해도 complete는 온다. 여기서 멈추지 않고 다음 단계로 넘어간다.
-    scene.load.once("complete", () => resolve());
+    let failed: Phaser.Loader.File[] = [];
+    let round = 0;
+    const onError = (file: Phaser.Loader.File): void => { failed.push(file); };
+    const onComplete = (): void => {
+      if (failed.length > 0 && round < LOAD_RETRY_ROUNDS && scene.scene.isActive()) {
+        round += 1;
+        const batch = failed;
+        failed = [];
+        if (requeueFailed(scene, batch, round) > 0) {
+          scene.load.once("complete", onComplete);
+          scene.load.start();
+          return;
+        }
+      }
+      scene.load.off("loaderror", onError);
+      resolve();
+    };
+    scene.load.on("loaderror", onError);
+    scene.load.once("complete", onComplete);
     scene.load.start();
   });
 }

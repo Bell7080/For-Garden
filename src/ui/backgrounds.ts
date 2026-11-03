@@ -28,7 +28,22 @@ const pendingLoads = new Map<string, Promise<boolean>>();
  * 실패해도 던지지 않고 `false`만 돌려준다 — 원화 한 장이 없다고 그 화면의 조작까지 막지
  * 않는다는 로딩 단계의 태도를 그대로 쓴다.
  */
-export function ensureBackgroundTexture(scene: Phaser.Scene, key: string): Promise<boolean> {
+export async function ensureBackgroundTexture(scene: Phaser.Scene, key: string): Promise<boolean> {
+  // 일시적인 끊김, 또는 먼저 읽던 다른 화면이 닫히며 함께 끊긴 읽기를 다시 받아 본다.
+  // 재시도가 없던 때는 한 번 실패한 원화가 빈 화면(알파 0)으로 남았다.
+  for (let round = 0; round <= BACKGROUND_RETRY_ROUNDS; round += 1) {
+    if (await loadBackgroundOnce(scene, key, round)) return true;
+    if (!BACKGROUND_PATHS[key] || scene.sys.settings.status >= Phaser.Scenes.SHUTDOWN) return false;
+    await new Promise((resolve) => setTimeout(resolve, BACKGROUND_RETRY_DELAY_MS * (round + 1)));
+  }
+  return scene.textures.exists(key);
+}
+
+/** 실패한 배경 원화를 다시 받는 횟수와 첫 대기. */
+export const BACKGROUND_RETRY_ROUNDS = 2;
+const BACKGROUND_RETRY_DELAY_MS = 600;
+
+function loadBackgroundOnce(scene: Phaser.Scene, key: string, round: number): Promise<boolean> {
   if (scene.textures.exists(key)) return Promise.resolve(true);
   const path = BACKGROUND_PATHS[key];
   if (!path) return Promise.resolve(false);
@@ -48,7 +63,8 @@ export function ensureBackgroundTexture(scene: Phaser.Scene, key: string): Promi
     scene.load.once(`filecomplete-image-${key}`, () => done(true));
     scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, onError);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, onShutdown);
-    scene.load.image(key, path);
+    // 다시 받을 때는 실패한 응답이 캐시에서 돌아오지 않도록 주소를 바꾼다.
+    scene.load.image(key, round > 0 ? `${path}${path.includes("?") ? "&" : "?"}retry=${round}` : path);
     scene.load.start();
   });
   pendingLoads.set(key, job);

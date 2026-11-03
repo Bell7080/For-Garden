@@ -62,6 +62,13 @@ const BASE = {
   cardGap: 88,
   /** 카드가 하나도 없을 때도 판이 납작하게 찌그러지지 않는 최소 칸 수. */
   minRows: 2,
+  /**
+   * 판 높이의 상한. 카드가 여섯 장이면 쌓은 높이가 2,000px을 넘어 1080×1920 화면보다 길어지므로
+   * (제목표·상단 재화 줄·뒤로가기를 가린다) 그 위로는 판 안에서 흐르게 한다.
+   */
+  maxHeight: 1640,
+  /** 흐르는 영역이 제목표 아래에서 시작하는 높이(판 윗변 기준). 첫 카드 SD의 머리가 잘리지 않을 만큼 위로 연다. */
+  viewportTop: 104,
 } as const;
 
 export interface LobbyEventListLayout {
@@ -71,6 +78,8 @@ export interface LobbyEventListLayout {
   cardHeight: number;
   /** 카드 `count`장이 창 안에서 설 중심 y(창 가운데가 0). */
   centers: number[];
+  /** 카드가 상한을 넘겨 판 안에서 흘러야 하는지, 그 영역(창 가운데 0 기준)과 가장 아래까지 밀 수 있는 거리(≤ 0). */
+  scroll: { enabled: boolean; top: number; bottom: number; min: number };
 }
 
 /**
@@ -79,16 +88,23 @@ export interface LobbyEventListLayout {
  */
 export function lobbyEventListLayout(count: number, capacity = count): LobbyEventListLayout {
   const rows = Math.max(BASE.minRows, capacity, count);
-  const height = BASE.topPad + rows * BASE.cardHeight + (rows - 1) * BASE.cardGap + BASE.bottomPad;
+  const fullHeight = BASE.topPad + rows * BASE.cardHeight + (rows - 1) * BASE.cardGap + BASE.bottomPad;
+  const height = Math.min(fullHeight, BASE.maxHeight);
   const top = -height / 2 + BASE.topPad;
   const stack = count * BASE.cardHeight + Math.max(0, count - 1) * BASE.cardGap;
   const start = top + Math.max(0, (height - BASE.topPad - BASE.bottomPad - stack) / 2);
+  const centers = Array.from({ length: count }, (_, index) => start + BASE.cardHeight / 2 + index * (BASE.cardHeight + BASE.cardGap));
+  const viewTop = -height / 2 + BASE.viewportTop;
+  const viewBottom = height / 2 - BASE.bottomPad + 40;
+  const lastBottom = (centers[count - 1] ?? top) + BASE.cardHeight / 2 + 40;
+  const min = Math.min(0, viewBottom - lastBottom);
   return {
     width: BASE.width,
     height,
     cardWidth: BASE.width - BASE.padX * 2,
     cardHeight: BASE.cardHeight,
-    centers: Array.from({ length: count }, (_, index) => start + BASE.cardHeight / 2 + index * (BASE.cardHeight + BASE.cardGap)),
+    centers,
+    scroll: { enabled: fullHeight > BASE.maxHeight && min < 0, top: viewTop, bottom: viewBottom, min },
   };
 }
 

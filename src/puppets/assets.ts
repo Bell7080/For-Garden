@@ -1093,7 +1093,7 @@ async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
   if (!pending) {
     // ZIP의 원본 격자와 모든 deform 가중치를 그대로 캐시한다. 인게임용 재샘플링은 하지 않는다.
     // 렌더러 모듈은 실제 Puppet 로딩 시점에만 평가해 순수 resolver 단위 테스트가 DOM을 요구하지 않게 한다.
-    pending = (async () => {
+    const attempt = async (): Promise<Puppet> => {
       const { parsePuppetOffThread } = await import("./puppetParsePool");
       const parsed = await parsePuppetOffThread(asset.url);
       const { Puppet } = await import("puppetforge/phaser");
@@ -1102,11 +1102,26 @@ async function loadPuppet(asset: PuppetAsset): Promise<Puppet> {
       const { registerDecodedTexture } = await import("./IndexedPuppetCreature");
       registerDecodedTexture(puppet.name, parsed.bitmap);
       return puppet;
-    })();
+    };
+    // **실패한 약속을 캐시에 남기지 않는다.** 한 번의 네트워크 끊김이 거부된 약속으로 `loaded`에 굳으면
+    // 그 개체는 접속이 끝날 때까지 일러스트·SD가 영영 뜨지 않았다(새로고침이 유일한 복구였다).
+    // 일꾼 경로와 메인 스레드 경로가 이미 한 번씩 시도한 뒤라, 여기서는 잠깐 쉬고 한 번 더 받아 본다.
+    pending = attempt().catch(async (error) => {
+      await new Promise((resolve) => setTimeout(resolve, PUPPET_RETRY_DELAY_MS));
+      try {
+        return await attempt();
+      } catch {
+        throw error;
+      }
+    });
     loaded.set(asset.url, pending);
+    pending.catch(() => { if (loaded.get(asset.url) === pending) loaded.delete(asset.url); });
   }
   return pending;
 }
+
+/** 묶음을 다시 받기 전에 쉬는 시간. 망이 막 끊겼다 돌아오는 순간을 비껴간다. */
+const PUPPET_RETRY_DELAY_MS = 800;
 
 /**
  * 타이틀 로딩이 진행 칸을 나눠 보여줄 수 있도록 묶음을 두 무리로 갈라 둔다.
@@ -1129,7 +1144,8 @@ export const PUPPET_PRELOAD_GROUPS: ReadonlyArray<readonly PuppetAsset[]> = [
 export async function preloadPuppetAssets(
   group: readonly PuppetAsset[] = PUPPET_PRELOAD_GROUPS.flat(),
 ): Promise<void> {
-  await Promise.all(group.map(loadPuppet));
+  // 한 묶음이 실패해도 나머지는 계속 읽는다 — 실패한 묶음은 캐시에서 빠져 쓰는 순간 다시 받는다.
+  await Promise.allSettled(group.map(loadPuppet));
 }
 
 export interface SpawnOptions {

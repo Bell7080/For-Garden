@@ -37,6 +37,19 @@ describe("델로피의 보물 찾기 규칙", () => {
     }
   });
 
+  it("덜 섞이는 흔한·좋은 등급에도 젬이 있어 젬을 하나도 못 받는 판이 드물다(응태 2026-11-03)", () => {
+    for (const difficulty of HUNT_DIFFICULTIES) {
+      const random = lcg(difficulty.pairs * 31);
+      let withEasyGem = 0;
+      const runs = 4000;
+      for (let index = 0; index < runs; index += 1) {
+        const pairs = rollHuntPairs(difficulty, random);
+        if (pairs.some((id) => { const treasure = huntTreasure(id)!; return treasure.currency === "gems" && (treasure.tier === "common" || treasure.tier === "fine"); })) withEasyGem += 1;
+      }
+      expect(withEasyGem / runs, difficulty.id).toBeGreaterThan(0.45);
+    }
+  });
+
   it("어려울수록 비싸고 쌍이 많으며 더 많이 섞인다", () => {
     for (let index = 1; index < HUNT_DIFFICULTIES.length; index += 1) {
       const a = HUNT_DIFFICULTIES[index - 1], b = HUNT_DIFFICULTIES[index];
@@ -141,7 +154,7 @@ describe("정규 이벤트 순환", () => {
 
 describe("델로피의 보물 찾기 서버 경계", () => {
   it("코인이 모자라거나 차례가 아닌 주에는 입장할 수 없다", async () => {
-    await expect(serverWithCoins(199, () => 0).api.enterDelophyHunt({ requestId: "a", difficulty: "easy" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    await expect(serverWithCoins(huntDifficulty("easy")!.entryCost - 1, () => 0).api.enterDelophyHunt({ requestId: "a", difficulty: "easy" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
     await expect(serverWithCoins(1000, () => 0, TIA_WEEK).api.enterDelophyHunt({ requestId: "a", difficulty: "easy" })).rejects.toMatchObject({ code: "EVENT_NOT_ACTIVE" });
     await expect(serverWithCoins(1000, () => 0).api.enterDelophyHunt({ requestId: "a", difficulty: "nope" as never })).rejects.toBeDefined();
   });
@@ -163,10 +176,10 @@ describe("델로피의 보물 찾기 서버 경계", () => {
   it("입장 → 짝 맞추기 → 보상 지급, 같은 요청은 한 번만 처리하고 진행 중에는 다시 입장할 수 없다", async () => {
     const { state, api } = serverWithCoins(1000, lcg(5));
     const entered = await api.enterDelophyHunt({ requestId: "enter", difficulty: "easy" });
-    expect(entered.status.coins).toBe(1000 - 200);
+    expect(entered.status.coins).toBe(1000 - huntDifficulty("easy")!.entryCost);
     expect(entered.show?.layout).toHaveLength(6);
     const again = await api.enterDelophyHunt({ requestId: "enter", difficulty: "easy" });
-    expect(again.status.coins).toBe(800);
+    expect(again.status.coins).toBe(1000 - huntDifficulty("easy")!.entryCost);
     await expect(api.enterDelophyHunt({ requestId: "other", difficulty: "easy" })).rejects.toMatchObject({ code: "INVALID_STATE" });
     const before = JSON.stringify(state.wallet);
 
@@ -198,6 +211,6 @@ describe("델로피의 보물 찾기 서버 경계", () => {
     }
     expect(result?.flip).toMatchObject({ finished: true, cleared: false });
     expect(result?.status.run).toBeNull();
-    expect(result?.status.coins).toBe(800);
+    expect(result?.status.coins).toBe(1000 - huntDifficulty("easy")!.entryCost);
   });
 });

@@ -15,7 +15,7 @@ import { chestCurrencyGemValue, type ChestCardCurrency } from "./chestForge";
  * **코인은 이번 주에 쓴 스테미나와 1:1이다**(`chestForge.ts`와 같은 임무 사건). 두 정규 이벤트는 주마다 교대하므로
  * 장부(`DelophyHuntState`)를 따로 둔다.
  *
- * **보상은 이벤트 보상 예산을 따른다**(`eventRewardBudget.ts`의 정규 — 코인 100당 젬 환산 160). 짝을 전부 맞추는
+ * **보상은 이벤트 보상 예산을 따른다**(`eventRewardBudget.ts`의 정규 — 코인 100당 젬 환산). 짝을 전부 맞추는
  * 완벽한 판이 곧 상한이므로, 난이도마다 **판에 놓이는 보물의 기대 총가치**를 그 선 안에 두고 사람이 실제로 맞추는
  * 몫은 그보다 훨씬 작다. 화끈한 한 칸(젬 1,000·3,000)은 수치를 깎지 않고 판에 놓일 확률로 묶는다.
  */
@@ -44,20 +44,22 @@ export interface HuntTreasure {
 
 /**
  * 보물표. 젬 환산(`TRADE_GEM_RATE`): 골드 500 · 치즈케이크 2 · 원석 5 · 스테미나 0.83 · 화석/호박석 300.
- * 원석은 고고학이 주 수급처라 가장 흔한 등급에만 둔다(`rawStoneSupply.test`). 화석·호박석·젬 큰 몫은 모두가 노리는
+ * 흔한·좋은 등급도 던전 몇 판으로 대신할 수 없는 양으로 둔다(응태 2026-11-03 — "선택할 이유가 없다"), 흔한 등급에도 젬
+ * 한 쌍을 두어 젬을 하나도 못 받는 판을 줄인다. 원석은 고고학이 주 수급처라 가장 흔한 등급에만 둔다(`rawStoneSupply.test`). 화석·호박석·젬 큰 몫은 모두가 노리는
  * 것이라 rare 이상에 두어 가장 어렵게 섞인다.
  */
 export const HUNT_TREASURES: readonly HuntTreasure[] = [
-  { id: "gold-s", tier: "common", currency: "gold", amount: 8_000, weight: 1 },
-  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 8, weight: 1 },
-  { id: "stamina-s", tier: "common", currency: "stamina", amount: 20, weight: 1 },
-  { id: "stone-s", tier: "common", currency: "rawStone", amount: 4, weight: 1 },
-  { id: "gold-m", tier: "fine", currency: "gold", amount: 25_000, weight: 1 },
-  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 25, weight: 1 },
-  { id: "gems-s", tier: "fine", currency: "gems", amount: 50, weight: 1 },
-  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 60, weight: 1 },
+  { id: "gold-s", tier: "common", currency: "gold", amount: 20_000, weight: 1 },
+  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 20, weight: 1 },
+  { id: "stamina-s", tier: "common", currency: "stamina", amount: 40, weight: 1 },
+  { id: "stone-s", tier: "common", currency: "rawStone", amount: 8, weight: 1 },
+  { id: "gems-xs", tier: "common", currency: "gems", amount: 30, weight: 1 },
+  { id: "gold-m", tier: "fine", currency: "gold", amount: 60_000, weight: 1 },
+  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 60, weight: 1 },
+  { id: "gems-s", tier: "fine", currency: "gems", amount: 80, weight: 1 },
+  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 120, weight: 1 },
   { id: "gems-m", tier: "rare", currency: "gems", amount: 150, weight: 3 },
-  { id: "gems-l", tier: "rare", currency: "gems", amount: 200, weight: 2 },
+  { id: "gems-l", tier: "rare", currency: "gems", amount: 250, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
   { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1_000, weight: 4 },
@@ -97,12 +99,12 @@ export interface HuntDifficulty {
  * 판에 놓이는 기대 총가치는 `chestForge.test`와 같은 방식으로 `delophyHunt.test`가 정규 예산 안인지 잰다.
  */
 export const HUNT_DIFFICULTIES: readonly HuntDifficulty[] = [
-  { id: "easy", entryCost: 200, pairs: 3, memorizeMs: 4200, swaps: 6, moveMs: 640, doubleChance: 0, arc: false, dive: false, jackpotMoves: 0,
+  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 4200, swaps: 6, moveMs: 640, doubleChance: 0, arc: false, dive: false, jackpotMoves: 0,
     tierWeights: { common: 46, fine: 38, rare: 16, jackpot: 0 } },
-  { id: "normal", entryCost: 300, pairs: 4, memorizeMs: 3800, swaps: 11, moveMs: 480, doubleChance: 0.15, arc: true, dive: false, jackpotMoves: 5,
+  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 3800, swaps: 11, moveMs: 480, doubleChance: 0.15, arc: true, dive: false, jackpotMoves: 5,
     tierWeights: { common: 36, fine: 39, rare: 24, jackpot: 0.8 } },
-  { id: "hard", entryCost: 400, pairs: 5, memorizeMs: 3400, swaps: 17, moveMs: 380, doubleChance: 0.3, arc: true, dive: true, jackpotMoves: 8,
-    tierWeights: { common: 30, fine: 38, rare: 30, jackpot: 1.5 } },
+  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3400, swaps: 17, moveMs: 380, doubleChance: 0.3, arc: true, dive: true, jackpotMoves: 8,
+    tierWeights: { common: 32, fine: 39, rare: 27, jackpot: 1.5 } },
 ];
 export function huntDifficulty(id: unknown): HuntDifficulty | undefined { return HUNT_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
 /** 카드 한 줄에 놓이는 열 수 — 두 줄로 깔리도록 쌍의 수와 같다. */

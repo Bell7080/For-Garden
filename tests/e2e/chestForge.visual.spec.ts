@@ -43,7 +43,7 @@ test("보물상자 — 마지막 카드를 고르는 화면", async ({ page }, i
   await startAfterOpening(page, s => {
     s.settings.game.language = "ko"; s.settings.accessibility.reduceMotion = true;
     s.missions = applyMissionEvent(s.missions, { type: "stamina_spent", amount: 1340 }, now);
-    s.chestForge = { weekKey: missionPeriodKeys(now).weeklyKey, spent: 300, run: { round: 4, offer: rollChestOffer(4, () => 0.97), collected: { gold: 40_000, gems: 100, cheesecake: 10 } } };
+    s.chestForge = { weekKey: missionPeriodKeys(now).weeklyKey, spent: 300, run: { box: "grand", round: 4, offer: rollChestOffer(4, () => 0.97), collected: { gold: 40_000, gems: 100, cheesecake: 10 } } };
   });
   await sourceScene(page, "window.__FORGE_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('lobby');");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");

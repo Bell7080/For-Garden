@@ -312,6 +312,13 @@ export class ChestStage {
   }
 }
 
+/**
+ * 카드 한 장의 연출 속도 — 집기·뒤집기·도장·날아가기·깨지기를 한 비율로 당긴다(응태 요청 2026-11-03: "성공인지 실패인지
+ * 나오는 연출이 길다"). 상자 열기·등급 오르기는 한 판에 한 번이라 그대로 둔다.
+ */
+const CARD_PACE = 0.55;
+function cardPace(ms: number): number { return Math.round(ms * CARD_PACE); }
+
 /** 카드를 집어 든다 — 떠올라 부르르 떨며 등급 빛이 모인다(지이이잉). */
 export async function chargeCard(scene: Phaser.Scene, row: Phaser.GameObjects.Container, holder: Phaser.GameObjects.Container,
   width: number, height: number, tone: number, flair: number): Promise<Phaser.GameObjects.Graphics> {
@@ -322,9 +329,9 @@ export async function chargeCard(scene: Phaser.Scene, row: Phaser.GameObjects.Co
   row.addAt(glow, row.getIndex(holder));
   audioManager?.playUi("settle.lift");
   const lift = -36 * motion.distance;
-  scene.tweens.add({ targets: [holder, glow], y: lift, duration: 170, ease: "Back.Out" });
-  scene.tweens.add({ targets: holder, scale: 1.1, duration: 170, ease: "Back.Out" });
-  scene.tweens.add({ targets: glow, alpha: 1, scale: 1.12, duration: 520, ease: "Sine.In" });
+  scene.tweens.add({ targets: [holder, glow], y: lift, duration: cardPace(170), ease: "Back.Out" });
+  scene.tweens.add({ targets: holder, scale: 1.1, duration: cardPace(170), ease: "Back.Out" });
+  scene.tweens.add({ targets: glow, alpha: 1, scale: 1.12, duration: cardPace(520), ease: "Sine.In" });
   // 빛 조각이 사방에서 카드로 빨려 든다.
   const pull = 6 + flair * 2;
   for (let index = 0; index < pull; index += 1) {
@@ -334,11 +341,11 @@ export async function chargeCard(scene: Phaser.Scene, row: Phaser.GameObjects.Co
     drawSparkle(sparkle, 0, 0, 9 + hash01(index * 3) * 6, index % 2 ? 0xffffff : tone, 1);
     sparkle.setAlpha(0);
     row.add(sparkle);
-    scene.tweens.add({ targets: sparkle, x: holder.x, y: lift, alpha: { from: 0.2, to: 1 }, scale: { from: 1, to: 0.3 }, duration: 420, delay: 80 + index * 30, ease: "Cubic.In", onComplete: () => sparkle.destroy() });
+    scene.tweens.add({ targets: sparkle, x: holder.x, y: lift, alpha: { from: 0.2, to: 1 }, scale: { from: 1, to: 0.3 }, duration: cardPace(420), delay: 80 + index * 30, ease: "Cubic.In", onComplete: () => sparkle.destroy() });
   }
-  await waitFx(scene, 170);
+  await waitFx(scene, cardPace(170));
   const baseX = holder.x;
-  await tweenTo(scene, { targets: holder, x: { from: baseX - 4 * motion.distance, to: baseX + 4 * motion.distance }, duration: 28, yoyo: true, repeat: 7, ease: "Sine.InOut" });
+  await tweenTo(scene, { targets: holder, x: { from: baseX - 4 * motion.distance, to: baseX + 4 * motion.distance }, duration: cardPace(28), yoyo: true, repeat: 3, ease: "Sine.InOut" });
   holder.setX(baseX);
   return glow;
 }
@@ -347,16 +354,16 @@ export async function chargeCard(scene: Phaser.Scene, row: Phaser.GameObjects.Co
 export async function flipCard(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, width: number, height: number,
   repaint: () => void, success: boolean): Promise<void> {
   const motion = chestFxMotion();
-  await tweenTo(scene, { targets: holder, scaleX: 0, duration: 90, ease: "Sine.In" });
+  await tweenTo(scene, { targets: holder, scaleX: 0, duration: cardPace(90), ease: "Sine.In" });
   repaint();
   audioManager?.playUi(success ? "rune.success" : "rune.fail");
   if (motion.flash) {
     const flash = scene.add.graphics();
     flash.fillStyle(0xffffff, 1).fillRoundedRect(-width / 2, -height / 2, width, height, 26);
     holder.add(flash);
-    scene.tweens.add({ targets: flash, alpha: 0, duration: 260, ease: "Cubic.Out", onComplete: () => flash.destroy() });
+    scene.tweens.add({ targets: flash, alpha: 0, duration: cardPace(260), ease: "Cubic.Out", onComplete: () => flash.destroy() });
   }
-  await tweenTo(scene, { targets: holder, scaleX: success ? 1.14 : 1.04, scaleY: success ? 1.14 : 1.04, duration: 180, ease: "Back.Out" });
+  await tweenTo(scene, { targets: holder, scaleX: success ? 1.14 : 1.04, scaleY: success ? 1.14 : 1.04, duration: cardPace(180), ease: "Back.Out" });
 }
 
 /** 도장(쾅!) — 크게 떠 있다가 내려찍히며 먼지가 튀고 카드가 움찔한다. */
@@ -374,7 +381,7 @@ export async function stampCard(scene: Phaser.Scene, holder: Phaser.GameObjects.
   stamp.add([face, text]);
   stamp.setScale(2.6).setAlpha(0);
   holder.add(stamp);
-  await tweenTo(scene, { targets: stamp, scale: 1, alpha: 1, duration: 120, ease: "Quad.In" });
+  await tweenTo(scene, { targets: stamp, scale: 1, alpha: 1, duration: cardPace(120), ease: "Quad.In" });
   audioManager?.playUi("attendance.stamp");
   if (motion.shake > 0) scene.cameras.main.shake(success ? 110 + flair * 25 : 140, (success ? 0.0035 + flair * 0.0012 : 0.005) * motion.shake);
   // 먼지 — 도장 둘레로 짧게 퍼진다.
@@ -383,10 +390,10 @@ export async function stampCard(scene: Phaser.Scene, holder: Phaser.GameObjects.
     const puff = scene.add.graphics({ x: Math.cos(angle) * stampWidth * 0.42, y: 18 + Math.sin(angle) * stampHeight * 0.5 });
     puff.fillStyle(success ? 0xffffff : 0xd9d2cf, 0.9).fillCircle(0, 0, 9 + hash01(index) * 6);
     holder.add(puff);
-    scene.tweens.add({ targets: puff, x: puff.x * 1.6, y: 18 + (puff.y - 18) * 1.7, alpha: 0, scale: 1.6, duration: 360, ease: "Cubic.Out", onComplete: () => puff.destroy() });
+    scene.tweens.add({ targets: puff, x: puff.x * 1.6, y: 18 + (puff.y - 18) * 1.7, alpha: 0, scale: 1.6, duration: cardPace(360), ease: "Cubic.Out", onComplete: () => puff.destroy() });
   }
   const base = holder.scaleX;
-  await tweenTo(scene, { targets: holder, scaleX: base * 0.93, scaleY: base * 0.93, duration: 60, yoyo: true, ease: "Quad.Out" });
+  await tweenTo(scene, { targets: holder, scaleX: base * 0.93, scaleY: base * 0.93, duration: cardPace(60), yoyo: true, ease: "Quad.Out" });
 }
 
 /** 실패 카드가 파사삭 깨진다 — 카드를 조각으로 갈라 사방으로 흩고 떨어뜨린다. */
@@ -420,7 +427,7 @@ export async function shatterCard(scene: Phaser.Scene, row: Phaser.GameObjects.C
       const push = (70 + hash01(seed * 5) * 120) * Math.max(0.5, motion.distance);
       const tx = cx + mx + (mx / length) * push, ty = cy + my + (my / length) * push * 0.6;
       shards.push(new Promise((resolve) => {
-        scene.tweens.addCounter({ from: 0, to: 1, duration: 620 + hash01(seed) * 200, ease: "Linear", onUpdate: (tween) => {
+        scene.tweens.addCounter({ from: 0, to: 1, duration: cardPace(620) + hash01(seed) * 200, ease: "Linear", onUpdate: (tween) => {
           const t = tween.getValue() ?? 0;
           const outT = 1 - (1 - t) * (1 - t);
           shard.setPosition(cx + mx + (tx - cx - mx) * outT, cy + my + (ty - cy - my) * outT + 260 * t * t * motion.distance);
@@ -430,7 +437,7 @@ export async function shatterCard(scene: Phaser.Scene, row: Phaser.GameObjects.C
       }));
     }
   }
-  burstSparkles(scene, row, cx, cy, { count: 10, radius: 150, size: 10, colors: [0xffffff, 0xd8d2cf], seed: 71, duration: 420 });
+  burstSparkles(scene, row, cx, cy, { count: 10, radius: 150, size: 10, colors: [0xffffff, 0xd8d2cf], seed: 71, duration: cardPace(420) });
   await Promise.all(shards);
 }
 
@@ -451,16 +458,16 @@ export async function flyCardToChest(scene: Phaser.Scene, page: Phaser.GameObjec
     }
     page.addAt(rays, page.getIndex(holder));
     rays.setScale(0.3);
-    scene.tweens.add({ targets: rays, scale: 1, angle: 50, alpha: { from: 1, to: 0 }, duration: 760, ease: "Cubic.Out", onComplete: () => rays.destroy() });
+    scene.tweens.add({ targets: rays, scale: 1, angle: 50, alpha: { from: 1, to: 0 }, duration: cardPace(760), ease: "Cubic.Out", onComplete: () => rays.destroy() });
     if (flair >= 4 && motion.flash) {
       const flash = scene.add.rectangle(0, 0, 2400, 3200, 0xfff6d0, 0.85);
       page.add(flash);
-      scene.tweens.add({ targets: flash, alpha: 0, duration: 420, ease: "Cubic.Out", onComplete: () => flash.destroy() });
+      scene.tweens.add({ targets: flash, alpha: 0, duration: cardPace(420), ease: "Cubic.Out", onComplete: () => flash.destroy() });
     }
     burstSparkles(scene, page, from.x, from.y, { count: 10 + flair * 3, radius: 200, size: 16, colors, seed: 41, rise: 30 });
-    await tweenTo(scene, { targets: holder, scale: holder.scaleX * 1.12, duration: 160, yoyo: true, hold: 160, ease: "Back.Out" });
+    await tweenTo(scene, { targets: holder, scale: holder.scaleX * 1.12, duration: cardPace(160), yoyo: true, hold: cardPace(160), ease: "Back.Out" });
   } else {
-    await waitFx(scene, 220);
+    await waitFx(scene, cardPace(220));
   }
   const startScale = holder.scaleX;
   const side = from.x === to.x ? 120 : Math.sign(from.x - to.x) * 160;
@@ -470,7 +477,7 @@ export async function flyCardToChest(scene: Phaser.Scene, page: Phaser.GameObjec
   const trailEvery = flair >= 4 ? 24 : flair >= 2 ? 40 : flair >= 1 ? 70 : 0;
   let lastTrail = 0, trailIndex = 0;
   await new Promise<void>((resolve) => {
-    scene.tweens.addCounter({ from: 0, to: 1, duration: 460 + flair * 70, ease: "Sine.InOut", onUpdate: (tween) => {
+    scene.tweens.addCounter({ from: 0, to: 1, duration: cardPace(460) + flair * 70, ease: "Sine.InOut", onUpdate: (tween) => {
       const t = tween.getValue() ?? 0;
       const u = 1 - t;
       const x = u * u * from.x + 2 * u * t * control.x + t * t * to.x;
@@ -484,7 +491,7 @@ export async function flyCardToChest(scene: Phaser.Scene, page: Phaser.GameObjec
         const sparkle = scene.add.graphics({ x, y });
         drawSparkle(sparkle, 0, 0, 8 + flair * 3 + hash01(trailIndex) * 6, colors[trailIndex % colors.length], 1);
         page.addAt(sparkle, page.getIndex(holder));
-        scene.tweens.add({ targets: sparkle, alpha: 0, scale: 0.2, y: y + 20, angle: 90, duration: 380 + flair * 60, ease: "Quad.Out", onComplete: () => sparkle.destroy() });
+        scene.tweens.add({ targets: sparkle, alpha: 0, scale: 0.2, y: y + 20, angle: 90, duration: cardPace(380) + flair * 60, ease: "Quad.Out", onComplete: () => sparkle.destroy() });
       }
     }, onComplete: () => resolve() });
   });

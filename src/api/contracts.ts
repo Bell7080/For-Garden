@@ -1,5 +1,5 @@
 import type { RouletteReward, RouletteStatus } from "../core/roulette";
-import type { ChestForgeRun, ChestForgeStatus } from "../core/chestForge";
+import type { ChestBoxId, ChestForgeRun, ChestForgeStatus } from "../core/chestForge";
 import type { DelophyHuntStatus, HuntDifficultyId, HuntFlip, HuntMove, HuntRun } from "../core/delophyHunt";
 import { t, type TextKey } from "../i18n";
 import type { OpsNotice } from "../core/opsInbox";
@@ -1206,7 +1206,7 @@ export interface GameApi extends AsyncArenaProfileApi {
   unlockRouletteSpins(request: { requestId: string; verificationToken?: string }): Promise<RouletteStatus>;
   /** 보물상자 — 코인은 이번 주에 쓴 스테미나와 1:1이다(`core/chestForge.ts`). */
   getChestForge(): Promise<ChestForgeStatus>;
-  enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
+  enterChestForge(request: { requestId: string; box: ChestBoxId }): Promise<ChestForgeResponse>;
   pickChestCard(request: { requestId: string; index: number }): Promise<ChestForgeResponse>;
   /** 델로피의 보물 찾기 — 코인은 보물상자와 같이 이번 주에 쓴 스테미나와 1:1이고, 두 이벤트는 주마다 교대한다(`core/delophyHunt.ts`). */
   getDelophyHunt(): Promise<DelophyHuntStatus>;

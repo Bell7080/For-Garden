@@ -5,7 +5,7 @@ import { createDefaultSession } from "../../src/state/session";
 import { applyMissionEvent } from "../../src/core/missions";
 import {
   CHEST_GRADE_MAX, chestBestCard, chestCardFlair, chestCollectedValue, chestGrade, chestGradeProgress, rollChestCard, type ChestCardCurrency,
-  CHEST_CARDS, CHEST_FORGE, CHEST_FORGE_BUDGET, chestBoxExpectedValue, chestCard, chestCardGemValue, chestForgeStatus, chestOfferSlots,
+  CHEST_BOXES, CHEST_CARDS, CHEST_FORGE, CHEST_FORGE_BUDGET, chestBox, chestGradeThresholds, chestBoxExpectedValue, chestCard, chestCardGemValue, chestForgeStatus, chestOfferSlots,
   createEmptyChestForgeState, normalizeChestForgeState, rollChestOffer,
 } from "../../src/core/chestForge";
 
@@ -20,12 +20,26 @@ function serverWithCoins(coins: number, random: () => number, now = MONDAY) {
 
 describe("보물상자 카드 규칙", () => {
   it("상자 하나의 최선 기대값이 정규 이벤트 예산(코인 100당) 안이다", () => {
+    for (const box of CHEST_BOXES) {
+      expect(chestBoxExpectedValue(undefined, box) / box.entryCost * 100).toBeLessThanOrEqual(CHEST_FORGE_BUDGET.gemValuePer100Stamina);
+    }
     const best = chestBoxExpectedValue();
-    expect(best / CHEST_FORGE.entryCost * 100).toBeLessThanOrEqual(CHEST_FORGE_BUDGET.gemValuePer100Stamina);
     // 늘 안전 카드만 골라도 빈손은 아니고, 도박을 고를수록 기대값이 크다(2026-11-03 안전 카드 상향으로 3배 → 2.5배).
     const safe = chestBoxExpectedValue((cards) => cards[0]);
     expect(safe).toBeGreaterThan(100);
     expect(best).toBeGreaterThan(safe * 2.5);
+  });
+
+  it("큰 상자일수록 코인 하나당 기대값이 크고, 300 코인 상자는 100 코인 상자의 3배를 넘는다", () => {
+    const [small, large, grand] = CHEST_BOXES.map((box) => ({ box, ev: chestBoxExpectedValue(undefined, box) }));
+    expect(small.box.entryCost).toBe(100); expect(large.box.entryCost).toBe(200); expect(grand.box.entryCost).toBe(300);
+    expect(large.ev / large.box.entryCost).toBeGreaterThan(small.ev / small.box.entryCost);
+    expect(grand.ev / grand.box.entryCost).toBeGreaterThan(large.ev / large.box.entryCost);
+    expect(grand.ev).toBeGreaterThan(small.ev * 3);
+    // 위험 대비 큰 보상 — 큰 상자는 같은 카드의 확률이 낮고 수량이 크다.
+    const safe = chestCard("safe-gold", grand.box)!, base = chestCard("safe-gold")!;
+    expect(safe.chance).toBeLessThan(base.chance); expect(safe.amount).toBeGreaterThan(base.amount * 3);
+    expect(chestGradeThresholds(grand.box)[0]).toBeGreaterThan(chestGradeThresholds(small.box)[0]);
   });
 
   it("등급이 오를수록 받을 확률은 낮고 한 장의 기대값은 크다", () => {
@@ -97,9 +111,9 @@ describe("보물상자 등급", () => {
 
 describe("보물상자 서버", () => {
   it("상자를 열고 다섯 번 고르면 성공한 카드만 지급되고 상자가 닫힌다", async () => {
-    const { api, state } = serverWithCoins(CHEST_FORGE.entryCost + 50, () => 0);
-    const entered = await api.enterChestForge({ requestId: "a" });
-    expect(entered.status).toMatchObject({ coins: 50, run: { round: 0, collected: {} } });
+    const { api, state } = serverWithCoins(150, () => 0);
+    const entered = await api.enterChestForge({ requestId: "a", box: "small" });
+    expect(entered.status).toMatchObject({ coins: 50, run: { box: "small", round: 0, collected: {} } });
     const goldBefore = state.wallet.gold;
     let last = entered;
     for (let round = 0; round < CHEST_FORGE.rounds; round += 1) {
@@ -113,8 +127,8 @@ describe("보물상자 서버", () => {
 
   it("실패한 카드만 놓치고, 같은 처리 ID는 다시 굴리지 않는다", async () => {
     let roll = 0;
-    const { api, state } = serverWithCoins(CHEST_FORGE.entryCost, () => roll);
-    await api.enterChestForge({ requestId: "a" });
+    const { api, state } = serverWithCoins(100, () => roll);
+    await api.enterChestForge({ requestId: "a", box: "small" });
     roll = 0.99; // 95% 카드도 0.99에서는 실패한다.
     const gemsBefore = state.wallet.gems;
     const failed = await api.pickChestCard({ requestId: "b", index: 0 });
@@ -129,10 +143,26 @@ describe("보물상자 서버", () => {
   });
 
   it("코인이 모자라거나 이미 연 상자가 있으면 열지 못한다", async () => {
-    await expect(serverWithCoins(CHEST_FORGE.entryCost - 1, () => 0).api.enterChestForge({ requestId: "a" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    await expect(serverWithCoins(299, () => 0).api.enterChestForge({ requestId: "a", box: "grand" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    await expect(serverWithCoins(600, () => 0).api.enterChestForge({ requestId: "a", box: "huge" as never })).rejects.toMatchObject({ code: "INVALID_STATE" });
     const { api } = serverWithCoins(600, () => 0);
-    await api.enterChestForge({ requestId: "a" });
-    await expect(api.enterChestForge({ requestId: "b" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await api.enterChestForge({ requestId: "a", box: "small" });
+    await expect(api.enterChestForge({ requestId: "b", box: "small" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
+  it("300 코인 상자는 키운 수량을 지급하고, 종류 없는 예전 상자는 작은 상자로 읽는다", async () => {
+    const { api, state } = serverWithCoins(300, () => 0);
+    const entered = await api.enterChestForge({ requestId: "a", box: "grand" });
+    expect(entered.status.coins).toBe(0);
+    const id = entered.status.run!.offer[0];
+    const before = { ...state.wallet };
+    const picked = await api.pickChestCard({ requestId: "p", index: 0 });
+    const card = chestCard(id, chestBox("grand"))!;
+    expect(picked.pick?.granted).toBe(Math.min(card.amount, card.amount));
+    expect(state.wallet[card.currency] - before[card.currency]).toBe(picked.pick?.granted);
+    expect(picked.status.run?.box).toBe("grand");
+    const legacy = normalizeChestForgeState({ weekKey: "2026-11-02", spent: 200, run: { round: 1, offer: rollChestOffer(1, () => 0), collected: {} } });
+    expect(legacy.run?.box).toBeUndefined();
   });
 });
 

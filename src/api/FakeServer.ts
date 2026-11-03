@@ -7,7 +7,7 @@ import {
   rollHuntLayout, rollHuntMoves, rollHuntPairs, type DelophyHuntState, type HuntDifficultyId,
 } from "../core/delophyHunt";
 import { isRegularEventActive } from "../core/regularEventRotation";
-import { CHEST_FORGE, chestCard, chestForgeStatus, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestForgeState } from "../core/chestForge";
+import { CHEST_FORGE, chestBox, chestCard, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
@@ -2140,7 +2140,7 @@ export class FakeServer implements GameApi {
    * 보물상자의 두 걸음(상자 열기·카드 고르기)이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 뒤집기가
    * 성공했는데 응답만 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
    */
-  private async stepChestForge(kind: "enter" | "pick", requestId: string, index = 0): Promise<ChestForgeResponse> {
+  private async stepChestForge(kind: "enter" | "pick", requestId: string, index = 0, boxId?: string): Promise<ChestForgeResponse> {
     await this.delay();
     if (!requestId) throw new GameApiError("INVALID_STATE", "처리 ID가 없습니다.");
     const cached = this.readReceipt<Omit<ChestForgeResponse, keyof PlayerStateDto>>("chestForge", requestId, kind);
@@ -2153,12 +2153,14 @@ export class FakeServer implements GameApi {
     if (kind === "enter") {
       if (!this.allEventsOpen() && !isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 상자가 있습니다.");
-      if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
-      next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
+      const box = chestBox(boxId);
+      if (!box) throw new GameApiError("INVALID_STATE", "고를 수 없는 상자입니다.");
+      if (before.coins < box.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
+      next.chestForge = { ...ledger, spent: ledger.spent + box.entryCost, run: { box: box.id, round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
     } else {
       const run = ledger.run;
       if (!run) throw new GameApiError("INVALID_STATE", "연 상자가 없습니다.");
-      const card = Number.isInteger(index) ? chestCard(run.offer[index] ?? "") : undefined;
+      const card = Number.isInteger(index) ? chestCard(run.offer[index] ?? "", chestRunBox(run)) : undefined;
       if (!card) throw new GameApiError("INVALID_STATE", "고를 수 없는 카드입니다.");
       const success = rollChestCard(card, this.random);
       let granted = 0;
@@ -2172,7 +2174,7 @@ export class FakeServer implements GameApi {
       if (granted > 0) collected[card.currency] = (collected[card.currency] ?? 0) + granted;
       const round = run.round + 1;
       const finished = round >= CHEST_FORGE.rounds;
-      next.chestForge = { ...ledger, run: finished ? null : { round, offer: rollChestOffer(round, this.random), collected } };
+      next.chestForge = { ...ledger, run: finished ? null : { ...(run.box ? { box: run.box } : {}), round, offer: rollChestOffer(round, this.random), collected } };
       pick = { index, cardId: card.id, success, granted, ...(finished ? { total: collected } : {}) };
     }
     const status = chestForgeStatus(next.missions, next.chestForge, now);
@@ -2182,7 +2184,7 @@ export class FakeServer implements GameApi {
     return { ...this.snapshot(), status, ...(pick ? { pick } : {}) };
   }
 
-  async enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse> { return this.stepChestForge("enter", request.requestId); }
+  async enterChestForge(request: { requestId: string; box: ChestBoxId }): Promise<ChestForgeResponse> { return this.stepChestForge("enter", request.requestId, 0, request.box); }
   async pickChestCard(request: { requestId: string; index: number }): Promise<ChestForgeResponse> { return this.stepChestForge("pick", request.requestId, request.index); }
 
   async getDelophyHunt() {

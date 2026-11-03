@@ -5,8 +5,8 @@ import { gameApi } from "../api/FakeServer";
 import type { ChestForgeResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import {
-  CHEST_CARDS, CHEST_FORGE, CHEST_GRADE_MAX, CHEST_GRADE_THRESHOLDS, chestCard, chestCardFlair, chestCollectedValue,
-  type ChestCard, type ChestCardCurrency, type ChestCardTier, type ChestForgeRun, type ChestForgeStatus,
+  CHEST_BOXES, CHEST_CARDS, CHEST_FORGE, CHEST_GRADE_MAX, CHEST_GRADE_THRESHOLDS, chestCard, chestCardFlair, chestCollectedValue, chestRunBox,
+  type ChestBox, type ChestBoxId, type ChestCard, type ChestCardCurrency, type ChestCardTier, type ChestForgeRun, type ChestForgeStatus,
 } from "../core/chestForge";
 import { motionPolicy } from "../core/settings";
 import { audioManager } from "../managers/AudioManager";
@@ -45,7 +45,7 @@ const FORGE = {
   height: 1540,
   coinY: -684,
   resetY: -640,
-  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 168, buttonY: 520, howToY: 382, sd: { x: 286, groundY: -112, height: 330 } },
+  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 140, buttonY: 520, howToY: 334, sd: { x: 286, groundY: -112, height: 330 } },
   /**
    * 카드 쪽 — 위에 모은 보상, 가운데 상자와 그 곁에서 응원하는 티아, 아래에 카드. 아래에서 집은 카드가 위의 상자로 날아
    * 들어간다. 상자 아래 게이지가 다음 등급까지 얼마 남았는지 말한다(상자 몸 밑변은 `chestY` + 130).
@@ -58,7 +58,8 @@ const FORGE = {
   card: { width: 196, height: 300, gap: 18, icon: 112 },
   preview: { width: 200, height: 300, gap: 14 },
   collected: { size: 84, gap: 104 },
-  button: { height: 136, wide: 640 },
+  /** 상자 세 개(100·200·300 코인) — 나란히 선 연구 버튼, 위에 보상 배율 한 줄. */
+  button: { height: 136, width: 272, gap: 18, captionY: -100 },
   /** 상단 이벤트 코인 칸 — 상단 재화 줄과 같은 `addCurrencyChip` 한 칸이다. */
   coinChip: { width: 260, height: 66 },
   howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 22, sd: { x: -250, height: 300 } },
@@ -162,6 +163,14 @@ function paintCard(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, ca
   }
 }
 
+/**
+ * 상자의 등급 게이지가 읽는 값 — 큰 상자는 문턱도 그만큼 높으므로(`chestGradeThresholds`), 모은 몫을 작은 상자 기준으로
+ * 되돌려 넘긴다. 상자 연출은 작은 상자의 문턱 하나만 안다.
+ */
+function stageValue(collected: ChestForgeRun["collected"], box: ChestBox): number {
+  return chestCollectedValue(collected) / (box.reward * box.chance);
+}
+
 /** 트럼프 카드의 결 — 거의 각진 모서리, 안쪽 테까지의 여백, 모서리 표시 글자 크기. */
 const TRUMP = { radius: 9, inset: 11, cornerSize: 22 } as const;
 
@@ -262,9 +271,17 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       holder.setAngle((index - (highlights.length - 1) / 2) * 3);
       introPage.add(holder);
     });
-    // 연구소의 연구 버튼과 같은 한 장 — 위에 「상자 열기」, 아래에 드는 값(코인 그림 × 300).
-    const enter = new ResearchPullButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: t("chestForge.enter"), tone: 0x8fc6f0, onClick: () => void enterBox() });
-    introPage.add(enter);
+    // 연구소의 연구 버튼과 같은 한 장을 상자마다 — 위에 상자 이름, 아래에 드는 값(코인 그림 × 100/200/300).
+    // 버튼 위의 한 줄이 보상 배율을 말한다(큰 상자일수록 카드 확률이 조금 낮은 것은 카드 앞면의 %가 말한다).
+    const BOX_LABEL: Record<ChestBoxId, TextKey> = { small: "chestForge.box.small", large: "chestForge.box.large", grand: "chestForge.box.grand" };
+    const BOX_TONE: Record<ChestBoxId, number> = { small: 0x9fdcc4, large: 0x8fc6f0, grand: 0xffd36e };
+    const enters = CHEST_BOXES.map((box, index) => {
+      const x = (index - (CHEST_BOXES.length - 1) / 2) * (FORGE.button.width + FORGE.button.gap);
+      const button = new ResearchPullButton(scene, x, FORGE.intro.buttonY, { width: FORGE.button.width, height: FORGE.button.height, label: t(BOX_LABEL[box.id]), tone: BOX_TONE[box.id], onClick: () => void enterBox(box) });
+      const caption = scene.add.text(x, FORGE.intro.buttonY + FORGE.button.captionY, t("chestForge.box.reward", { mult: box.reward.toLocaleString() }), textStyle({ role: "display", size: 26, color: box.id === "grand" ? "#9a6c08" : ACCENT })).setOrigin(0.5).setStroke(OUTLINE, 7);
+      introPage.add([caption, button]);
+      return { box, button };
+    });
     introPage.add(addHowToButton(scene, 0, FORGE.intro.howToY, () => openChestHowTo(scene, popups)));
 
     // 카드 쪽 — 위에 카드, 아래에 상자와 SD, 맨 아래 모은 보상.
@@ -287,7 +304,7 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       pickChest?.destroy();
       pickChest = new ChestStage(scene, chestLayer, 0, FORGE.pick.chestY, FORGE.pick.chestScale, { gaugeY: FORGE.pick.gaugeY });
       chestLayer.sendToBack(pickChest.root);
-      void pickChest.setValue(chestCollectedValue(status.run?.collected ?? {}), { animate: false });
+      void pickChest.setValue(stageValue(status.run?.collected ?? {}, chestRunBox(status.run)), { animate: false });
     };
 
     const note = scene.add.text(0, FORGE.rulesY, t("chestForge.rules"), textStyle({ role: "body", size: 21, color: INK_SOFT, wrap: 820, align: "center" })).setOrigin(0.5);
@@ -322,7 +339,7 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       const offer = status.run?.offer ?? [];
       const { width, height, gap } = FORGE.card;
       offer.forEach((id, index) => {
-        const card = chestCard(id);
+        const card = chestCard(id, chestRunBox(status.run));
         if (!card) return;
         const x = (index - (offer.length - 1) / 2) * (width + gap);
         const holder = scene.add.container(x, 0);
@@ -346,8 +363,10 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       resetText.setText(t("chestForge.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); pickPage.setVisible(running);
-      enter.setCost([{ iconKey: CHEST_COIN_ICON, amount: CHEST_FORGE.entryCost, short: status.coins < CHEST_FORGE.entryCost }]);
-      enter.setEnabled(!busy && status.coins >= CHEST_FORGE.entryCost);
+      for (const { box, button } of enters) {
+        button.setCost([{ iconKey: CHEST_COIN_ICON, amount: box.entryCost, short: status.coins < box.entryCost }]);
+        button.setEnabled(!busy && status.coins >= box.entryCost);
+      }
       if (running) { paintRound(); paintCollected(status.run?.collected ?? {}); }
     };
 
@@ -365,10 +384,10 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       }
     };
 
-    async function enterBox(): Promise<void> {
+    async function enterBox(box: ChestBox): Promise<void> {
       if (busy) return;
       busy = true; refresh();
-      const result = await request("enter", (requestId) => gameApi.enterChestForge({ requestId }));
+      const result = await request(`enter-${box.id}`, (requestId) => gameApi.enterChestForge({ requestId, box: box.id }));
       busy = false;
       if (!result) { if (alive) refresh(); return; }
       status = result.status;
@@ -412,7 +431,8 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
      */
     async function pick(index: number): Promise<void> {
       if (busy || !status.run) return;
-      const card = chestCard(status.run.offer[index] ?? "");
+      const box = chestRunBox(status.run);
+      const card = chestCard(status.run.offer[index] ?? "", box);
       if (!card) return;
       busy = true;
       const holder = cardHolders[index];
@@ -436,26 +456,26 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       const collected = result.status.run?.collected ?? outcome.total ?? {};
       if (holder) {
         await flipCard(scene, holder, width, height, () => paintCard(scene, holder, card, width, height, outcome.success ? "win" : "miss"), outcome.success);
-        await waitFx(scene, 120);
+        await waitFx(scene, 40);
         await stampCard(scene, holder, width, outcome.success, t(outcome.success ? "chestForge.win" : "chestForge.miss"), flair);
         glow?.destroy();
         if (outcome.success) {
-          await waitFx(scene, 260);
+          await waitFx(scene, 90);
           const from = { x: holder.x, y: FORGE.pick.cardsY + holder.y };
           tia.cheer(flair >= 3 ? 2 : 1);
           await flyCardToChest(scene, pickPage, holder, from, pickChest?.mouth() ?? { x: 0, y: FORGE.pick.chestY }, flair);
           if (!alive) return;
           pickChest?.gulp(flair);
           paintCollected(collected, card.currency);
-          await pickChest?.setValue(chestCollectedValue(collected));
+          await pickChest?.setValue(stageValue(collected, box));
         } else {
-          await waitFx(scene, 300);
+          await waitFx(scene, 90);
           tia.flinch();
           await shatterCard(scene, cardsRow, holder, width, height);
         }
       }
       if (!alive) { status = result.status; return; }
-      await waitFx(scene, 240);
+      await waitFx(scene, 100);
       status = result.status;
       if (status.run) {
         busy = false;
@@ -510,8 +530,8 @@ function addHowToButton(scene: Phaser.Scene, x: number, y: number, onClick: () =
  */
 export function openChestHowTo(scene: Phaser.Scene, popups: PopupLayer): void {
   const { width, bubbleWidth, wrap, lineGap, sd } = FORGE.howTo;
-  const keys: TextKey[] = ["chestForge.howTo.1", "chestForge.howTo.2", "chestForge.howTo.3", "chestForge.howTo.4"];
-  const lines = keys.map((key) => scene.add.text(0, 0, t(key, { count: CHEST_FORGE.entryCost.toLocaleString() }), textStyle({ role: "body", size: 27, color: INK, wrap, lineSpacing: 6 })).setOrigin(0, 0));
+  const keys: TextKey[] = ["chestForge.howTo.1", "chestForge.howTo.2", "chestForge.howTo.3", "chestForge.howTo.4", "chestForge.howTo.5"];
+  const lines = keys.map((key) => scene.add.text(0, 0, t(key, { count: CHEST_BOXES[0].entryCost.toLocaleString() }), textStyle({ role: "body", size: 27, color: INK, wrap, lineSpacing: 6 })).setOrigin(0, 0));
   const textHeight = lines.reduce((sum, line) => sum + line.height, 0) + lineGap * (lines.length - 1);
   const bubblePad = 40, tail = 46, top = 70;
   const bubbleHeight = textHeight + bubblePad * 2;

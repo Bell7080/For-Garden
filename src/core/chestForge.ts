@@ -17,11 +17,33 @@ import { EVENT_REWARD_BUDGET } from "./eventRewardBudget";
  */
 export const CHEST_FORGE = {
   id: "chest-forge",
-  /** 상자 하나를 여는 값(코인). */
-  entryCost: 200,
   /** 상자 하나에서 고르는 횟수. */
   rounds: 5,
 } as const;
+
+/**
+ * 상자 세 가지(응태 결정, 2026-11-03) — 100 코인 상자가 카드표 그대로이고, 200·300 코인 상자는 **모든 카드의 수량을
+ * 키우는 대신 받을 확률을 조금 깎는다**(위험 대비 큰 보상). 기대값은 수량 배율 × 확률 배율이라 200은 약 2.2배, 300은
+ * 약 3.4배 — 코인 하나당으로도 큰 상자일수록 낫다("300개는 확실히 3배치"). 카드 고르기·나오는 확률은 셋이 같다.
+ */
+export type ChestBoxId = "small" | "large" | "grand";
+export interface ChestBox {
+  readonly id: ChestBoxId;
+  /** 상자 하나를 여는 값(코인). */
+  readonly entryCost: number;
+  /** 카드 수량 배율. */
+  readonly reward: number;
+  /** 받을 확률 배율(카드 앞면의 % 자체가 이 배율로 낮아진다). */
+  readonly chance: number;
+}
+export const CHEST_BOXES: readonly ChestBox[] = [
+  { id: "small", entryCost: 100, reward: 1, chance: 1 },
+  { id: "large", entryCost: 200, reward: 2.4, chance: 0.92 },
+  { id: "grand", entryCost: 300, reward: 4, chance: 0.85 },
+];
+export function chestBox(id: unknown): ChestBox | undefined { return CHEST_BOXES.find((box) => box.id === id); }
+/** 진행 중인 상자의 종류 — 상자 종류가 생기기 전에 연 상자는 카드표 그대로였으므로 작은 상자로 읽는다. */
+export function chestRunBox(run: { box?: ChestBoxId } | null | undefined): ChestBox { return chestBox(run?.box) ?? CHEST_BOXES[0]; }
 
 export type ChestCardTier = "safe" | "mid" | "risk" | "big" | "jackpot";
 export type ChestCardCurrency = "gold" | "cheesecake" | "stamina" | "rawStone" | "gems" | "fossil" | "amber";
@@ -72,7 +94,17 @@ const GEM_VALUE: Record<ChestCardCurrency, number> = { gold: 1 / 500, cheesecake
 /** 재화 한 단위의 젬 환산값 — 다른 정규 이벤트의 공급 상한도 같은 시세를 읽는다. */
 export function chestCurrencyGemValue(currency: ChestCardCurrency): number { return GEM_VALUE[currency]; }
 export function chestCardGemValue(card: ChestCard): number { return GEM_VALUE[card.currency] * card.amount; }
-export function chestCard(id: string): ChestCard | undefined { return CHEST_CARDS.find((card) => card.id === id); }
+export function chestCard(id: string, box: ChestBox = CHEST_BOXES[0]): ChestCard | undefined {
+  const card = CHEST_CARDS.find((entry) => entry.id === id);
+  return card ? chestBoxCard(card, box) : undefined;
+}
+/** 상자 종류가 적용된 카드 — 수량은 깔끔한 단위로(골드 1,000 · 나머지 정수), 확률은 정수 %로 반올림한다. */
+export function chestBoxCard(card: ChestCard, box: ChestBox): ChestCard {
+  if (box.reward === 1 && box.chance === 1) return card;
+  const raw = card.amount * box.reward;
+  const amount = card.currency === "gold" ? Math.round(raw / 1_000) * 1_000 : Math.max(1, Math.round(raw));
+  return { ...card, amount, chance: Math.max(1, Math.round(card.chance * box.chance)) };
+}
 
 function clampRoll(random: () => number): number {
   const raw = random();
@@ -103,7 +135,7 @@ export function rollChestCard(card: ChestCard, random: () => number): boolean {
  * 상자 하나의 기대값(젬 환산). `pick`이 놓인 카드 중 무엇을 고를지 정한다 — 기본은 기대값이 가장 큰 카드라
  * 공급의 위쪽 끝이다. 자리는 서로 독립이라 모든 조합을 그대로 센다.
  */
-export function chestBoxExpectedValue(pick: (cards: readonly ChestCard[]) => ChestCard = bestCard): number {
+export function chestBoxExpectedValue(pick: (cards: readonly ChestCard[]) => ChestCard = bestCard, box: ChestBox = CHEST_BOXES[0]): number {
   let total = 0;
   for (let round = 0; round < CHEST_FORGE.rounds; round += 1) {
     let combos: { cards: ChestCard[]; p: number }[] = [{ cards: [], p: 1 }];
@@ -111,7 +143,7 @@ export function chestBoxExpectedValue(pick: (cards: readonly ChestCard[]) => Che
       const weightTotal = slot.reduce((sum, [, weight]) => sum + weight, 0);
       const options = slot.flatMap(([tier, weight]) => {
         const cards = CHEST_CARDS.filter((card) => card.tier === tier);
-        return cards.map((card) => ({ card, p: weight / weightTotal / cards.length }));
+        return cards.map((card) => ({ card: chestBoxCard(card, box), p: weight / weightTotal / cards.length }));
       });
       combos = combos.flatMap((combo) => options.map((option) => ({ cards: [...combo.cards, option.card], p: combo.p * option.p })));
     }
@@ -142,15 +174,21 @@ export function chestCollectedValue(collected: Partial<Record<ChestCardCurrency,
   return (Object.entries(collected) as [ChestCardCurrency, number | undefined][])
     .reduce((sum, [currency, amount]) => sum + (GEM_VALUE[currency] ?? 0) * Math.max(0, amount ?? 0), 0);
 }
-export function chestGrade(value: number): number {
-  return CHEST_GRADE_THRESHOLDS.filter((threshold) => value >= threshold).length;
+/** 상자 종류에 맞춘 문턱 — 기대값이 늘어난 만큼(수량 × 확률 배율) 문턱도 함께 늘어 큰 상자도 같은 비율로 화려해진다. */
+export function chestGradeThresholds(box: ChestBox = CHEST_BOXES[0]): readonly number[] {
+  const scale = box.reward * box.chance;
+  return CHEST_GRADE_THRESHOLDS.map((threshold) => Math.round(threshold * scale));
+}
+export function chestGrade(value: number, box: ChestBox = CHEST_BOXES[0]): number {
+  return chestGradeThresholds(box).filter((threshold) => value >= threshold).length;
 }
 /** 상자 아래 게이지 — 지금 등급과 다음 문턱까지 찬 비율(0~1). 마지막 등급이면 1이다. */
-export function chestGradeProgress(value: number): { grade: number; ratio: number } {
-  const grade = chestGrade(value);
+export function chestGradeProgress(value: number, box: ChestBox = CHEST_BOXES[0]): { grade: number; ratio: number } {
+  const thresholds = chestGradeThresholds(box);
+  const grade = chestGrade(value, box);
   if (grade >= CHEST_GRADE_MAX) return { grade, ratio: 1 };
-  const from = grade === 0 ? 0 : CHEST_GRADE_THRESHOLDS[grade - 1];
-  const to = CHEST_GRADE_THRESHOLDS[grade];
+  const from = grade === 0 ? 0 : thresholds[grade - 1];
+  const to = thresholds[grade];
   return { grade, ratio: Math.max(0, Math.min(1, (value - from) / (to - from))) };
 }
 
@@ -158,6 +196,8 @@ export function chestGradeProgress(value: number): { grade: number; ratio: numbe
 export const CHEST_FORGE_BUDGET = EVENT_REWARD_BUDGET.regular;
 
 export interface ChestForgeRun {
+  /** 상자 종류. 없으면 작은 상자다(종류가 생기기 전에 연 상자). */
+  box?: ChestBoxId;
   /** 지금 고르는 차례(0부터). */
   round: number;
   /** 지금 놓인 카드(`CHEST_CARDS`의 ID). */
@@ -191,7 +231,8 @@ function normalizeRun(value: unknown): ChestForgeRun | null {
   for (const [currency, amount] of Object.entries(raw)) {
     if ((CURRENCIES as readonly string[]).includes(currency) && Number.isInteger(amount) && (amount as number) > 0) collected[currency as ChestCardCurrency] = amount as number;
   }
-  return { round: round as number, offer, collected };
+  const box = chestBox(source.box);
+  return { ...(box ? { box: box.id } : {}), round: round as number, offer, collected };
 }
 
 /** 예전 강화형 장부(`stage`)는 진행 중인 상자 없이 읽는다 — 그 상자는 이번 주 코인만 쓴 채 끝난다. */

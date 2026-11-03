@@ -222,7 +222,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       introPage.add(scene.add.text(0, y + HUNT.button.height / 2 + 34, `${t("delophyHunt.detail", { pairs: difficulty.pairs, misses: DELOPHY_HUNT.maxMisses })} · ${t(HINT_KEY[difficulty.id])}`,
         textStyle({ role: "body", size: 23, color: INK, wrap: 800, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 6));
     });
-    introPage.add(scene.add.text(0, HUNT.intro.noteY, t("delophyHunt.jackpotNote"), textStyle({ role: "emphasis", size: 24, color: ACCENT, wrap: 820, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 6));
+    introPage.add(scene.add.text(0, HUNT.intro.noteY, t("delophyHunt.jackpotNote"), textStyle({ role: "emphasis", size: 24, color: ACCENT, wrap: 600, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 6));
     new DelophyCheerleader(scene, introPage, HUNT.intro.sd);
 
     // 판 쪽.

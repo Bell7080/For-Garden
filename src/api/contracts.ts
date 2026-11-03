@@ -1,5 +1,6 @@
 import type { RouletteReward, RouletteStatus } from "../core/roulette";
 import type { ChestForgeRun, ChestForgeStatus } from "../core/chestForge";
+import type { DelophyHuntStatus, HuntDifficultyId, HuntFlip, HuntMove, HuntRun } from "../core/delophyHunt";
 import { t, type TextKey } from "../i18n";
 import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
@@ -432,6 +433,19 @@ export interface ChestForgeResponse extends PlayerStateDto {
     granted: number;
     /** 마지막 고르기였다면 이 상자에서 받은 전부. */
     total?: ChestForgeRun["collected"];
+  };
+}
+/** 델로피의 보물 찾기 한 걸음(판 열기·카드 뒤집기)의 결과. 짝의 정체·난수·지급은 서버가 확정한다. */
+export interface DelophyHuntResponse extends PlayerStateDto {
+  status: DelophyHuntStatus;
+  /** 판 열기의 결과 — 앞면으로 보여 줄 처음 배치와 섞는 길. 정답(섞인 뒤의 배치)은 담지 않는다. */
+  show?: { layout: string[]; moves: HuntMove[] };
+  /** 카드 뒤집기의 결과. 판 열기에는 없다. */
+  flip?: HuntFlip & {
+    /** 짝을 맞췄을 때 실제 들어간 몫(상한에서 깎인 뒤). */
+    granted?: { currency: string; amount: number };
+    /** 판이 끝났다면 이 판에서 받은 전부. */
+    total?: HuntRun["collected"];
   };
 }
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
@@ -1194,6 +1208,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   getChestForge(): Promise<ChestForgeStatus>;
   enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse>;
   pickChestCard(request: { requestId: string; index: number }): Promise<ChestForgeResponse>;
+  /** 델로피의 보물 찾기 — 코인은 보물상자와 같이 이번 주에 쓴 스테미나와 1:1이고, 두 이벤트는 주마다 교대한다(`core/delophyHunt.ts`). */
+  getDelophyHunt(): Promise<DelophyHuntStatus>;
+  enterDelophyHunt(request: { requestId: string; difficulty: HuntDifficultyId }): Promise<DelophyHuntResponse>;
+  flipDelophyCard(request: { requestId: string; slot: number }): Promise<DelophyHuntResponse>;
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;

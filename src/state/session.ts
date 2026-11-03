@@ -7,6 +7,7 @@ import type { DuelState } from "../core/duelState";
 import { createEmptyAttendanceState, type AttendanceState } from "../core/attendance";
 import { emptyServerJournal, type ServerJournal } from "../core/serverJournal";
 import { createEmptyChestForgeState, type ChestForgeState } from "../core/chestForge";
+import { createEmptyDelophyHuntState, type DelophyHuntState } from "../core/delophyHunt";
 import { createEmptyRaidTicketDropState, type RaidTicketDropState } from "../core/raidTicketDrops";
 import { createEmptyTutorialState, type TutorialState } from "../core/tutorial";
 import { createEmptyAchievementState, type AchievementState } from "../core/achievementState";
@@ -232,6 +233,8 @@ export interface Session {
   raidTicketDrops?: RaidTicketDropState;
   /** 보물상자의 이번 주 쓴 코인과 진행 중인 상자(`core/chestForge.ts`). 선택 필드다. */
   chestForge?: ChestForgeState;
+  /** 델로피의 보물 찾기의 이번 주 쓴 코인과 진행 중인 판(`core/delophyHunt.ts`). 선택 필드다. */
+  delophyHunt?: DelophyHuntState;
   /** 업적에서 받은 단계와 최고 보유 골드(`core/achievements.ts`). 선택 필드다. */
   achievements?: AchievementState;
   /** 첫 플레이 튜토리얼에서 마친 칸(`core/tutorial.ts`). 선택 필드이며 도입 전 저장은 클리어 기록에서 시작점을 정한다. */
@@ -476,6 +479,7 @@ export interface SaveData {
   attendance: AttendanceState;
   raidTicketDrops: RaidTicketDropState;
   chestForge: ChestForgeState;
+  delophyHunt: DelophyHuntState;
   achievements: AchievementState;
   tutorial: TutorialState;
   serverJournal?: ServerJournal;
@@ -621,6 +625,7 @@ export function createDefaultSession(): Session {
     serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
     chestForge: createEmptyChestForgeState(),
+    delophyHunt: createEmptyDelophyHuntState(),
     achievements: createEmptyAchievementState(),
     tutorial: createEmptyTutorialState(),
   };

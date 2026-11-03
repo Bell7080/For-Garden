@@ -58,7 +58,7 @@ export function lobbyEventClockEnd(event: Pick<LobbyEventDef, "endsAt" | "weekly
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" } | { readonly kind: "delophyHunt" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -97,6 +97,19 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     destination: { kind: "chestForge" },
     sd: { relicId: "tia", side: "right" },
     showcase: "chestForge",
+    weekly: true,
+    startsAt: "2026-11-02T00:00:00Z",
+    endsAt: "2099-12-31T23:59:59Z",
+  },
+  {
+    // 정기 이벤트 「델로피의 보물 찾기」 — 티아의 보물상자 다음 주에 서는 교대 이벤트다(`core/regularEventRotation.ts`).
+    // 코인은 같은 이번 주 스테미나이고, 같은 그림 두 장을 찾는 카드 게임이라 원화는 보랏빛 도시 안쪽을 쓴다.
+    id: "delophy-hunt",
+    titleKey: "event.delophyHunt.title",
+    subtitleKey: "event.delophyHunt.subtitle",
+    backdropKey: BACKGROUND.interactionDoppelUpper,
+    destination: { kind: "delophyHunt" },
+    sd: { relicId: "delophy", side: "right" },
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",
     endsAt: "2099-12-31T23:59:59Z",

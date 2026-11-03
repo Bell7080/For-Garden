@@ -1,5 +1,6 @@
 import type { AttendanceTrackDto } from "../api/contracts";
 import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
+import { isRegularEventActive } from "../core/regularEventRotation";
 
 /**
  * 로비 이벤트 판의 순수 규칙 — 무엇이 서고, 얼마나 남았고, 판이 얼마나 큰가.
@@ -8,9 +9,9 @@ import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
  * 위해서다. 무역 전시장(`tradePackageLayout`)과 같은 문법으로 창 높이를 카드 수에서 거꾸로 구한다.
  */
 
-/** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트는 서지 않는다. */
+/** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트와 이번 주 차례가 아닌 정규 이벤트는 서지 않는다. */
 export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS): LobbyEventDef[] {
-  return events.filter((event) => Date.parse(event.startsAt) <= now && now < Date.parse(event.endsAt));
+  return events.filter((event) => Date.parse(event.startsAt) <= now && now < Date.parse(event.endsAt) && isRegularEventActive(event.id, now));
 }
 
 /**

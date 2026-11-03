@@ -1,7 +1,12 @@
 import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
-import type { ChestForgeResponse, SpinRouletteResponse } from "./contracts";
+import type { ChestForgeResponse, DelophyHuntResponse, SpinRouletteResponse } from "./contracts";
+import {
+  DELOPHY_HUNT, HuntFlipError, applyHuntMoves, delophyHuntStatus, flipHuntSlot, huntDifficulty, huntTreasure, normalizeDelophyHuntState, rollDelophyHuntWeek,
+  rollHuntLayout, rollHuntMoves, rollHuntPairs, type DelophyHuntState, type HuntDifficultyId,
+} from "../core/delophyHunt";
+import { isRegularEventActive } from "../core/regularEventRotation";
 import { CHEST_FORGE, chestCard, chestForgeStatus, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, consumeCombat } from "../server/combatAuthority";
@@ -2131,6 +2136,7 @@ export class FakeServer implements GameApi {
     const next = structuredClone(this.state);
     let pick: ChestForgeResponse["pick"];
     if (kind === "enter") {
+      if (!isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 상자가 있습니다.");
       if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
       next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
@@ -2163,6 +2169,74 @@ export class FakeServer implements GameApi {
 
   async enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse> { return this.stepChestForge("enter", request.requestId); }
   async pickChestCard(request: { requestId: string; index: number }): Promise<ChestForgeResponse> { return this.stepChestForge("pick", request.requestId, request.index); }
+
+  async getDelophyHunt() {
+    return delophyHuntStatus(this.state.missions, normalizeDelophyHuntState(this.state.delophyHunt), this.now());
+  }
+
+  /**
+   * 델로피의 보물 찾기의 두 걸음(판 열기·카드 뒤집기)이 지나는 한 곳. 판 열기는 쌍·처음 배치·섞는 길·정답 배치를 한 번에
+   * 정해 정답만 장부에 두고, 뒤집기는 슬롯만 받아 서버의 정답과 견준다. 같은 처리 ID는 영수증을 돌려준다.
+   */
+  private async stepDelophyHunt(kind: "enter" | "flip", requestId: string, identity: string, input: { difficulty?: HuntDifficultyId; slot?: number }): Promise<DelophyHuntResponse> {
+    await this.delay();
+    if (!requestId) throw new GameApiError("INVALID_STATE", "처리 ID가 없습니다.");
+    const cached = this.readReceipt<Omit<DelophyHuntResponse, keyof PlayerStateDto>>("delophyHunt", requestId, identity);
+    if (cached) return { ...cached, ...this.snapshot(), status: await this.getDelophyHunt() };
+    const now = this.now();
+    const ledger: DelophyHuntState = rollDelophyHuntWeek(normalizeDelophyHuntState(this.state.delophyHunt), now);
+    const before = delophyHuntStatus(this.state.missions, ledger, now);
+    const next = structuredClone(this.state);
+    let show: DelophyHuntResponse["show"];
+    let flip: DelophyHuntResponse["flip"];
+    if (kind === "enter") {
+      if (!isRegularEventActive(DELOPHY_HUNT.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
+      const difficulty = huntDifficulty(input.difficulty);
+      if (!difficulty) throw new GameApiError("INVALID_STATE", "알 수 없는 난이도입니다.");
+      if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 판이 있습니다.");
+      if (before.coins < difficulty.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
+      const pairs = rollHuntPairs(difficulty, this.random);
+      const layout = rollHuntLayout(pairs, this.random);
+      const moves = rollHuntMoves(layout, difficulty, this.random);
+      next.delophyHunt = { ...ledger, spent: ledger.spent + difficulty.entryCost,
+        run: { difficulty: difficulty.id, pairs, layout: applyHuntMoves(layout, moves), found: [], misses: 0, first: null, collected: {} } };
+      show = { layout, moves };
+    } else {
+      const run = ledger.run;
+      if (!run) throw new GameApiError("INVALID_STATE", "연 판이 없습니다.");
+      let stepped: ReturnType<typeof flipHuntSlot>;
+      try { stepped = flipHuntSlot(run, input.slot); } catch (error) {
+        if (error instanceof HuntFlipError) throw new GameApiError("INVALID_STATE", error.message);
+        throw error;
+      }
+      const result = stepped.flip;
+      let collected = run.collected;
+      let granted: { currency: string; amount: number } | undefined;
+      if (result.step === "match") {
+        const treasure = huntTreasure(result.id)!;
+        const wallet = { ...this.state.wallet };
+        const amount = Math.max(0, Math.min(treasure.amount, WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
+        wallet[treasure.currency] += amount;
+        next.wallet = wallet;
+        granted = { currency: treasure.currency, amount };
+        if (amount > 0) collected = { ...collected, [treasure.currency]: (collected[treasure.currency] ?? 0) + amount };
+      }
+      next.delophyHunt = { ...ledger, run: result.finished ? null : { ...stepped.run, collected } };
+      flip = { ...result, ...(granted ? { granted } : {}), ...(result.finished ? { total: collected } : {}) };
+    }
+    const status = delophyHuntStatus(next.missions, next.delophyHunt!, now);
+    this.recordReceipt(next, "delophyHunt", requestId, identity, { status, ...(show ? { show } : {}), ...(flip ? { flip } : {}) });
+    this.persist(next);
+    this.state.delophyHunt = next.delophyHunt; this.state.wallet = next.wallet; this.state.serverJournal = next.serverJournal;
+    return { ...this.snapshot(), status, ...(show ? { show } : {}), ...(flip ? { flip } : {}) };
+  }
+
+  async enterDelophyHunt(request: { requestId: string; difficulty: HuntDifficultyId }): Promise<DelophyHuntResponse> {
+    return this.stepDelophyHunt("enter", request.requestId, `enter:${String(request.difficulty)}`, { difficulty: request.difficulty });
+  }
+  async flipDelophyCard(request: { requestId: string; slot: number }): Promise<DelophyHuntResponse> {
+    return this.stepDelophyHunt("flip", request.requestId, `flip:${String(request.slot)}`, { slot: request.slot });
+  }
 
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {

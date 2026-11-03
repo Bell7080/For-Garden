@@ -69,6 +69,8 @@ export function chestOfferSlots(round: number): readonly (readonly (readonly [Ch
 }
 
 const GEM_VALUE: Record<ChestCardCurrency, number> = { gold: 1 / 500, cheesecake: 2, stamina: 0.83, rawStone: 5, gems: 1, fossil: 300, amber: 300 };
+/** 재화 한 단위의 젬 환산값 — 다른 정규 이벤트의 공급 상한도 같은 시세를 읽는다. */
+export function chestCurrencyGemValue(currency: ChestCardCurrency): number { return GEM_VALUE[currency]; }
 export function chestCardGemValue(card: ChestCard): number { return GEM_VALUE[card.currency] * card.amount; }
 export function chestCard(id: string): ChestCard | undefined { return CHEST_CARDS.find((card) => card.id === id); }
 

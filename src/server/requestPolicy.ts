@@ -14,6 +14,7 @@ export const READ_METHODS = new Set([
   "getRegularEvent",
   "getRouletteStatus",
   "getChestForge",
+  "getDelophyHunt",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",

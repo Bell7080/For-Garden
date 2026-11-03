@@ -10,6 +10,8 @@ import { RELICS } from "../data/relics";
 import { findItem, ITEMS, type ItemCategory, type ItemDefinition, type WalletItemKey } from "../data/items";
 import type { Session } from "../state/session";
 import { managerEvents, type ManagerEvents } from "./ManagerEvents";
+import { isRegularEventActive } from "../core/regularEventRotation";
+import { QA_ALL_EVENTS } from "../core/buildFlavor";
 
 /** 가방 UI와 순수 배치 테스트가 공유하는 두 열 카드 계약이다. */
 export const INVENTORY_LAYOUT = {
@@ -77,12 +79,38 @@ export type InventoryDisplayItem =
 /** 씬의 직접 상태 변경을 막고 세 저장 모델을 표시 모델로만 합성한다. */
 const pendingRecharges = new WeakMap<GameApi, Map<string, string>>();
 
+/**
+ * 이번 주 정규 이벤트 코인을 가방 칸으로 — 쓴 스테미나와 1:1로 쌓이고(서버 이벤트 상태) 이벤트 주가 끝나는 시각(`resetsAt`)에
+ * 사라지므로 그 시각이 곧 묶음의 기한이다. 언제 얻었든 같은 주의 끝에 함께 사라진다. 이번 주 차례가 아닌 이벤트의 코인은
+ * 세우지 않는다(QA 빌드는 둘 다 연다). 조회가 실패한 이벤트는 빼 둔다.
+ */
+async function eventCoinStacks(api: GameApi): Promise<readonly EventCoinStack[]> {
+  const now = Date.now();
+  const sources: { itemId: string; eventId: string; read: () => Promise<{ coins: number; resetsAt: string }> }[] = [
+    { itemId: "tia-treasure-coin", eventId: "chest-forge", read: () => api.getChestForge() },
+    { itemId: "delopi-thief-coin", eventId: "delophy-hunt", read: () => api.getDelophyHunt() },
+  ];
+  const rows = await Promise.all(sources.map(async ({ itemId, eventId, read }) => {
+    if (!QA_ALL_EVENTS && !isRegularEventActive(eventId, now)) return undefined;
+    const status = await Promise.resolve().then(read).catch(() => undefined);
+    return status && status.coins > 0 ? { itemId, quantity: status.coins, expiresAt: status.resetsAt } : undefined;
+  }));
+  return rows.filter((row): row is EventCoinStack => row !== undefined);
+}
+
+interface EventCoinStack { itemId: string; quantity: number; expiresAt: string }
+
 export class InventoryManager {
+  /** 가방에 세울 이번 주 정규 이벤트 코인(`eventCoinStacks`). 저장하지 않고 조회마다 새로 받는다. */
+  private eventCoins: readonly EventCoinStack[] = [];
+
   constructor(private readonly state: Session, private readonly events: ManagerEvents = managerEvents) {}
 
   /** 조회와 세 저장 소유자의 반영을 한 비동기 경계로 묶어 서로 다른 시점의 행이 섞이지 않게 한다. */
   async refresh(api: GameApi): Promise<void> {
-    const response = await api.getInventory();
+    // 정규 이벤트 코인은 저장 스택이 아니라 이벤트 상태에서 읽는다 — 같은 조회 경계에서 함께 받아 둔다.
+    const [response, coins] = await Promise.all([api.getInventory(), eventCoinStacks(api)]);
+    this.eventCoins = coins;
     if (!hasRemoteState(response)) this.applySnapshot(response.items);
     else this.publishCurrentInventory();
   }
@@ -289,6 +317,10 @@ export class InventoryManager {
     const ticket = findItem(STRATA_TICKET_ITEM);
     const charges = this.state.archaeology?.charges ?? 0;
     if (ticket?.category === category && charges > 0) rows.push({ kind: "stack", category, id: ticket.id, definition: ticket, quantity: charges });
+    for (const coin of this.eventCoins) {
+      const definition = findItem(coin.itemId);
+      if (definition?.category === category) rows.push({ kind: "stack", category, id: coin.itemId, definition, quantity: coin.quantity, lot: { quantity: coin.quantity, expiresAt: coin.expiresAt } });
+    }
     return rows;
   }
 }

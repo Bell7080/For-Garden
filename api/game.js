@@ -5389,7 +5389,11 @@ var LOBBY_KO = {
   "event.chestForge.subtitle": "\uD2F0\uC544\uAC00 \uBAA8\uC544 \uB454 \uBC18\uC9DD\uC774\uB97C \uAEBC\uB0B4 \uAC00\uC694!",
   "chestForge.intro": "\uCF54\uC778\uC73C\uB85C \uC0C1\uC790\uB97C \uC5F4\uACE0 \uCE74\uB4DC \uB2E4\uC12F \uC7A5\uC744 \uACE8\uB77C \uB4A4\uC9D1\uC73C\uC138\uC694. \uC2E4\uD328\uD55C \uCE74\uB4DC\uB9CC \uB193\uCCD0\uC694!",
   "chestForge.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC\uC694 \xB7 {date} \uCD08\uAE30\uD654",
-  "chestForge.enter": "\uC0C1\uC790 \uC5F4\uAE30",
+  "chestForge.box.small": "\uC791\uC740 \uC0C1\uC790",
+  "chestForge.box.large": "\uD070 \uC0C1\uC790",
+  "chestForge.box.grand": "\uD669\uAE08 \uC0C1\uC790",
+  "chestForge.box.reward": "\uBCF4\uC0C1 \xD7{mult}",
+  "chestForge.howTo.5": "\uD070 \uC0C1\uC790\uC77C\uC218\uB85D \uCE74\uB4DC \uD655\uB960\uC740 \uC870\uAE08 \uB0AE\uC9C0\uB9CC \uBCF4\uC0C1\uC774 \uD6E8\uC52C \uCEE4\uC694. \uD669\uAE08 \uC0C1\uC790\uB294 \uBB34\uB824 4\uBC30\uC608\uC694!",
   "chestForge.howTo.4": "\uD655\uB960\uC774 \uB0AE\uC740 \uCE74\uB4DC\uC77C\uC218\uB85D \uBCF4\uC0C1\uC774 \uCEE4\uC694. \uB300\uBC15 \uCE74\uB4DC\uB97C \uB178\uB824 \uBCFC\uAE4C\uC694? \uCCA8\uBC99\uCCA8\uBC99!",
   "chestForge.howTo.3": "\uC2E4\uD328\uD55C \uCE74\uB4DC\uB294 \uADF8 \uBCF4\uC0C1\uB9CC \uBABB \uBC1B\uC544\uC694. \uD558\uB098 \uC2E4\uD328\uD574\uB3C4 \uB2E4\uB978 \uCE74\uB4DC\uC5D0\uC11C \uBAA8\uC740 \uBCF4\uC0C1\uC740 \uC804\uBD80 \uAC00\uC838\uAC08 \uC218 \uC788\uC5B4\uC694!",
   "chestForge.howTo.2": "\uCE74\uB4DC\uB97C \uD55C \uC7A5\uC529 \uB2E4\uC12F \uBC88 \uACE8\uB77C \uB4A4\uC9D1\uC5B4\uC694. \uC131\uACF5\uD558\uBA74 \uBC18\uC9DD\uBC18\uC9DD \uBCF4\uC0C1\uC774 \uC0C1\uC790\uC5D0 \uC3D9 \uB4E4\uC5B4\uAC00\uC694!",
@@ -25102,8 +25106,8 @@ function claimableMissionIds(state) {
 init_define_import_meta_env();
 var EVENT_REWARD_BUDGET = {
   regular: {
-    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290(보물상자 약 244 · 델로피 쉬움 완벽한 판 약 285). */
-    gemValuePer100Stamina: 290
+    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290 → 560 — "보물상자 보상은 지금을 100 코인으로, 300은 확실히 3배치"(100 코인 상자 약 488 · 300 코인 상자 약 556). */
+    gemValuePer100Stamina: 560
   },
   limited: {}
 };
@@ -25111,11 +25115,20 @@ var EVENT_REWARD_BUDGET = {
 // src/core/chestForge.ts
 var CHEST_FORGE = {
   id: "chest-forge",
-  /** 상자 하나를 여는 값(코인). */
-  entryCost: 200,
   /** 상자 하나에서 고르는 횟수. */
   rounds: 5
 };
+var CHEST_BOXES = [
+  { id: "small", entryCost: 100, reward: 1, chance: 1 },
+  { id: "large", entryCost: 200, reward: 2.4, chance: 0.92 },
+  { id: "grand", entryCost: 300, reward: 4, chance: 0.85 }
+];
+function chestBox(id) {
+  return CHEST_BOXES.find((box) => box.id === id);
+}
+function chestRunBox(run2) {
+  return chestBox(run2?.box) ?? CHEST_BOXES[0];
+}
 var CHEST_CARDS = [
   { id: "safe-gold", tier: "safe", currency: "gold", amount: 15e3, chance: 95 },
   { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 15, chance: 95 },
@@ -25144,8 +25157,15 @@ function chestOfferSlots(round) {
   return round >= CHEST_FORGE.rounds - 1 ? [SLOT.safe, SLOT.mid, SLOT.spicy, SLOT.special] : [SLOT.safe, SLOT.mid, SLOT.spicy];
 }
 var GEM_VALUE = { gold: 1 / 500, cheesecake: 2, stamina: 0.83, rawStone: 5, gems: 1, fossil: 300, amber: 300 };
-function chestCard(id) {
-  return CHEST_CARDS.find((card) => card.id === id);
+function chestCard(id, box = CHEST_BOXES[0]) {
+  const card = CHEST_CARDS.find((entry) => entry.id === id);
+  return card ? chestBoxCard(card, box) : void 0;
+}
+function chestBoxCard(card, box) {
+  if (box.reward === 1 && box.chance === 1) return card;
+  const raw = card.amount * box.reward;
+  const amount = card.currency === "gold" ? Math.round(raw / 1e3) * 1e3 : Math.max(1, Math.round(raw));
+  return { ...card, amount, chance: Math.max(1, Math.round(card.chance * box.chance)) };
 }
 function clampRoll(random) {
   const raw = random();
@@ -25189,7 +25209,8 @@ function normalizeRun(value) {
   for (const [currency3, amount] of Object.entries(raw)) {
     if (CURRENCIES.includes(currency3) && Number.isInteger(amount) && amount > 0) collected[currency3] = amount;
   }
-  return { round, offer, collected };
+  const box = chestBox(source.box);
+  return { ...box ? { box: box.id } : {}, round, offer, collected };
 }
 function normalizeChestForgeState(value) {
   const source = value && typeof value === "object" ? value : {};
@@ -25205,6 +25226,9 @@ function isValidChestForgeState(value) {
 function rollChestForgeWeek(state, now) {
   const { weeklyKey } = missionPeriodKeys(now);
   return state.weekKey === weeklyKey ? { ...state } : { weekKey: weeklyKey, spent: 0, run: state.run };
+}
+function chestForgePlayable(status) {
+  return status.run !== null || status.coins >= Math.min(...CHEST_BOXES.map((box) => box.entryCost));
 }
 function chestForgeStatus(missions, ledger, now) {
   const current = normalizeMissions(missions, now);
@@ -25263,7 +25287,8 @@ var HUNT_DIFFICULTIES = [
     arc: false,
     dive: false,
     jackpotMoves: 0,
-    tierWeights: { common: 46, fine: 38, rare: 16, jackpot: 0 }
+    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 0 },
+    guaranteed: ["gems-m"]
   },
   {
     id: "normal",
@@ -25276,7 +25301,8 @@ var HUNT_DIFFICULTIES = [
     arc: true,
     dive: false,
     jackpotMoves: 6,
-    tierWeights: { common: 36, fine: 39, rare: 24, jackpot: 0.8 }
+    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 0.8 },
+    guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   },
   {
     id: "hard",
@@ -25289,7 +25315,8 @@ var HUNT_DIFFICULTIES = [
     arc: true,
     dive: true,
     jackpotMoves: 10,
-    tierWeights: { common: 32, fine: 39, rare: 27, jackpot: 1.5 }
+    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 1.5 },
+    guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   }
 ];
 function huntDifficulty(id) {
@@ -25313,6 +25340,8 @@ function randomInt(count2, random) {
 }
 function rollHuntPairs(difficulty, random) {
   const picked = [];
+  const sure = HUNT_TREASURES.filter((treasure) => difficulty.guaranteed.includes(treasure.id));
+  if (sure.length) picked.push(pickWeighted2(sure.map((treasure) => [treasure, treasure.weight]), random));
   while (picked.length < difficulty.pairs) {
     const tiers2 = HUNT_TIER_ORDER.filter((tier2) => difficulty.tierWeights[tier2] > 0 && !(tier2 === "jackpot" && picked.some((treasure) => treasure.tier === "jackpot")) && HUNT_TREASURES.some((treasure) => treasure.tier === tier2 && !picked.includes(treasure)));
     const tier = pickWeighted2(tiers2.map((entry) => [entry, difficulty.tierWeights[entry]]), random);
@@ -25472,6 +25501,9 @@ function isValidDelophyHuntState(value) {
 function rollDelophyHuntWeek(state, now) {
   const { weeklyKey } = missionPeriodKeys(now);
   return state.weekKey === weeklyKey ? { ...state } : { weekKey: weeklyKey, spent: 0, run: state.run };
+}
+function delophyHuntPlayable(status) {
+  return status.run !== null || status.coins >= Math.min(...HUNT_DIFFICULTIES.map(({ entryCost }) => entryCost));
 }
 function delophyHuntStatus(missions, ledger, now) {
   const current = normalizeMissions(missions, now);
@@ -26699,6 +26731,10 @@ var ITEMS = [
   { id: "universal-fragment-r", name: "\uB9CC\uB2A5 R \uD30C\uD3B8", description: "\uC5B4\uB290 R \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-r" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "universal-fragment-sr", name: "\uB9CC\uB2A5 SR \uD30C\uD3B8", description: "\uC5B4\uB290 SR \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-sr" }, maxStack: 999, useEffect: { kind: "none" } },
   { id: "universal-fragment-ssr", name: "\uB9CC\uB2A5 SSR \uD30C\uD3B8", description: "\uC5B4\uB290 SSR \uB810\uB9AD\uC758 \uD55C\uACC4 \uB3CC\uD30C\uC5D0\uB098 \uC4F8 \uC218 \uC788\uB294 \uD30C\uD3B8\uC785\uB2C8\uB2E4. \uADF8 \uB810\uB9AD\uC758 \uD30C\uD3B8\uC774 \uBAA8\uC790\uB784 \uB54C\uB9CC \uBAA8\uC790\uB780 \uB9CC\uD07C \uC18C\uBAA8\uB429\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-universal-fragment-ssr" }, maxStack: 999, useEffect: { kind: "none" } },
+  // 정규 이벤트 코인 둘 — 이번 주에 쓴 스테미나와 1:1이고 이벤트 주(UTC 월요일)가 끝나면 사라진다. 저장 스택이 아니라
+  // 서버 이벤트 상태에서 읽어 가방에 세우는 칸이라(`InventoryManager.list`) 기한도 그 주의 끝에 맞춰진다.
+  { id: "tia-treasure-coin", name: "\uD2F0\uC544\uC758 \uBCF4\uBB3C \uCF54\uC778", description: "\uD2F0\uC544\uC758 \uBCF4\uBB3C\uC0C1\uC790\uC5D0\uC11C \uC0C1\uC790\uB97C \uC5EC\uB294 \uCF54\uC778\uC785\uB2C8\uB2E4. \uC2A4\uD14C\uBBF8\uB098\uB97C \uC4F4 \uB9CC\uD07C \uC313\uC774\uACE0 \uC774\uBCA4\uD2B8 \uC8FC\uAC00 \uB05D\uB098\uBA74 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "currency-treasure-chest-coin" }, maxStack: 1e9, expiresInDays: 7, useEffect: { kind: "none" } },
+  { id: "delopi-thief-coin", name: "\uB378\uB85C\uD53C\uC758 \uB3C4\uB451 \uCF54\uC778", description: "\uB378\uB85C\uD53C\uC758 \uBCF4\uBB3C \uCC3E\uAE30\uC5D0\uC11C \uD310\uC744 \uC5EC\uB294 \uCF54\uC778\uC785\uB2C8\uB2E4. \uC2A4\uD14C\uBBF8\uB098\uB97C \uC4F4 \uB9CC\uD07C \uC313\uC774\uACE0 \uC774\uBCA4\uD2B8 \uC8FC\uAC00 \uB05D\uB098\uBA74 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "currency-delopi-thief-coin" }, maxStack: 1e9, expiresInDays: 7, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
   // 자리라 몇 주치가 쌓여도 버려지면 안 된다.
@@ -37789,6 +37825,9 @@ var REWARD_PRIORITY = [
   "duelEmblem",
   "raidSigil",
   "salvageRecord",
+  // 정규 이벤트 코인 — 그 주 이벤트에서만 쓴다
+  "tia-treasure-coin",
+  "delopi-thief-coin",
   // 단품 — 만능 파편은 렐릭 파편과 같은 돌파 재료라 그 바로 앞이다.
   "universal-fragment-ssr",
   "universal-fragment-sr",
@@ -41072,6 +41111,19 @@ function runeRelicRank(holderOrder, rune) {
 var DEFAULT_INVENTORY_SORT = { key: "relic", direction: "asc" };
 var RARITY_ORDER2 = { uncommon: 0, rare: 1, epic: 2, legendary: 3 };
 var pendingRecharges = /* @__PURE__ */ new WeakMap();
+async function eventCoinStacks(api) {
+  const now = Date.now();
+  const sources = [
+    { itemId: "tia-treasure-coin", eventId: "chest-forge", read: () => api.getChestForge() },
+    { itemId: "delopi-thief-coin", eventId: "delophy-hunt", read: () => api.getDelophyHunt() }
+  ];
+  const rows = await Promise.all(sources.map(async ({ itemId, eventId, read }) => {
+    if (!QA_ALL_EVENTS && !isRegularEventActive(eventId, now)) return void 0;
+    const status = await Promise.resolve().then(read).catch(() => void 0);
+    return status && status.coins > 0 ? { itemId, quantity: status.coins, expiresAt: status.resetsAt } : void 0;
+  }));
+  return rows.filter((row) => row !== void 0);
+}
 var InventoryManager = class {
   constructor(state, events = managerEvents) {
     this.state = state;
@@ -41079,9 +41131,12 @@ var InventoryManager = class {
   }
   state;
   events;
+  /** 가방에 세울 이번 주 정규 이벤트 코인(`eventCoinStacks`). 저장하지 않고 조회마다 새로 받는다. */
+  eventCoins = [];
   /** 조회와 세 저장 소유자의 반영을 한 비동기 경계로 묶어 서로 다른 시점의 행이 섞이지 않게 한다. */
   async refresh(api) {
-    const response = await api.getInventory();
+    const [response, coins] = await Promise.all([api.getInventory(), eventCoinStacks(api)]);
+    this.eventCoins = coins;
     if (!hasRemoteState(response)) this.applySnapshot(response.items);
     else this.publishCurrentInventory();
   }
@@ -41263,6 +41318,10 @@ var InventoryManager = class {
     const ticket = findItem(STRATA_TICKET_ITEM);
     const charges = this.state.archaeology?.charges ?? 0;
     if (ticket?.category === category && charges > 0) rows.push({ kind: "stack", category, id: ticket.id, definition: ticket, quantity: charges });
+    for (const coin of this.eventCoins) {
+      const definition = findItem(coin.itemId);
+      if (definition?.category === category) rows.push({ kind: "stack", category, id: coin.itemId, definition, quantity: coin.quantity, lot: { quantity: coin.quantity, expiresAt: coin.expiresAt } });
+    }
     return rows;
   }
 };
@@ -41442,7 +41501,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.403.10",
+  version: "0.403.13",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -44107,7 +44166,7 @@ var FakeServer = class {
    * 보물상자의 두 걸음(상자 열기·카드 고르기)이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 뒤집기가
    * 성공했는데 응답만 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
    */
-  async stepChestForge(kind, requestId, index = 0) {
+  async stepChestForge(kind, requestId, index = 0, boxId) {
     await this.delay();
     if (!requestId) throw new GameApiError("INVALID_STATE", "\uCC98\uB9AC ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const cached = this.readReceipt("chestForge", requestId, kind);
@@ -44120,12 +44179,14 @@ var FakeServer = class {
     if (kind === "enter") {
       if (!this.allEventsOpen() && !isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC9C0\uAE08\uC740 \uC5F4\uB824 \uC788\uC9C0 \uC54A\uC740 \uC774\uBCA4\uD2B8\uC785\uB2C8\uB2E4.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uC5F0 \uC0C1\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
-      if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-      next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
+      const box = chestBox(boxId);
+      if (!box) throw new GameApiError("INVALID_STATE", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uC0C1\uC790\uC785\uB2C8\uB2E4.");
+      if (before.coins < box.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+      next.chestForge = { ...ledger, spent: ledger.spent + box.entryCost, run: { box: box.id, round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
     } else {
       const run2 = ledger.run;
       if (!run2) throw new GameApiError("INVALID_STATE", "\uC5F0 \uC0C1\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-      const card = Number.isInteger(index) ? chestCard(run2.offer[index] ?? "") : void 0;
+      const card = Number.isInteger(index) ? chestCard(run2.offer[index] ?? "", chestRunBox(run2)) : void 0;
       if (!card) throw new GameApiError("INVALID_STATE", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uCE74\uB4DC\uC785\uB2C8\uB2E4.");
       const success = rollChestCard(card, this.random);
       let granted = 0;
@@ -44139,7 +44200,7 @@ var FakeServer = class {
       if (granted > 0) collected[card.currency] = (collected[card.currency] ?? 0) + granted;
       const round = run2.round + 1;
       const finished = round >= CHEST_FORGE.rounds;
-      next.chestForge = { ...ledger, run: finished ? null : { round, offer: rollChestOffer(round, this.random), collected } };
+      next.chestForge = { ...ledger, run: finished ? null : { ...run2.box ? { box: run2.box } : {}, round, offer: rollChestOffer(round, this.random), collected } };
       pick2 = { index, cardId: card.id, success, granted, ...finished ? { total: collected } : {} };
     }
     const status = chestForgeStatus(next.missions, next.chestForge, now);
@@ -44151,7 +44212,7 @@ var FakeServer = class {
     return { ...this.snapshot(), status, ...pick2 ? { pick: pick2 } : {} };
   }
   async enterChestForge(request) {
-    return this.stepChestForge("enter", request.requestId);
+    return this.stepChestForge("enter", request.requestId, 0, request.box);
   }
   async pickChestCard(request) {
     return this.stepChestForge("pick", request.requestId, request.index);
@@ -45335,6 +45396,17 @@ var FakeServer = class {
     void this.notificationScheduler?.scheduleNotification({ id: `daily-mission:${resetAt.toISOString()}`, kind: "dailyMission", title: t("mail.daily.title"), body: t("mail.daily.body"), expiresAt: resetAt });
     return this.missionListDto(normalized);
   }
+  /**
+   * 코인이 모여 지금 할 수 있는 정규 이벤트(보물상자·보물 찾기) — 로비 이벤트 입구의 점과 이벤트 판의 점·정렬이 같은 규칙을 읽는다.
+   * 이번 주 차례가 아닌 이벤트는 세지 않는다(QA 빌드의 개발 서버는 모두 연다).
+   */
+  playableRegularEventIds(now) {
+    const open = (id) => this.allEventsOpen() || isRegularEventActive(id, now);
+    const ids = [];
+    if (open(CHEST_FORGE.id) && chestForgePlayable(chestForgeStatus(this.state.missions, normalizeChestForgeState(this.state.chestForge), now))) ids.push(CHEST_FORGE.id);
+    if (open(DELOPHY_HUNT.id) && delophyHuntPlayable(delophyHuntStatus(this.state.missions, normalizeDelophyHuntState(this.state.delophyHunt), now))) ids.push(DELOPHY_HUNT.id);
+    return ids;
+  }
   /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */
   async getNotificationSignals() {
     await this.delay();
@@ -45347,7 +45419,7 @@ var FakeServer = class {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage) => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map((row) => this.raidDto(row, now)).filter((row) => row.status === "completed" && !row.settled && row.settlement.some((reward) => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {

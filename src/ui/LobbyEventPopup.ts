@@ -1,5 +1,7 @@
 import { gameApi } from "../api/FakeServer";
 import { ROULETTE, type RouletteStatus } from "../core/roulette";
+import { CHEST_FORGE, chestForgePlayable } from "../core/chestForge";
+import { DELOPHY_HUNT, delophyHuntPlayable } from "../core/delophyHunt";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { lobbyEventEntryId, prioritizeLobbyEvents } from "./lobbyEventModel";
@@ -31,6 +33,15 @@ export interface LobbyEventPopupOptions {
  * 것만 가운데로 모아 세운다(무역 전시장과 같은 규칙). 출석 카드를 누르면 판 위에 출석 판이 겹쳐 열리고,
  * 받으면 그 카드의 빨간 점·진행 마름모가 그 자리에서 바뀐다.
  */
+/**
+ * 코인이 모여 지금 할 수 있는 정규 이벤트 ID — 서버 알림 신호(`playableRegularEventIds`)와 같은 판정(`chestForgePlayable`·
+ * `delophyHuntPlayable`)이다. 이번 주 차례인지는 판에 서는 카드 목록이 이미 거른다. 조회가 실패하면 그 이벤트만 빼 둔다.
+ */
+async function playableRegularEvents(): Promise<string[]> {
+  const [chest, hunt] = await Promise.all([gameApi.getChestForge().catch(() => undefined), gameApi.getDelophyHunt().catch(() => undefined)]);
+  return [...(chest && chestForgePlayable(chest) ? [CHEST_FORGE.id] : []), ...(hunt && delophyHuntPlayable(hunt) ? [DELOPHY_HUNT.id] : [])];
+}
+
 export class LobbyEventPopup {
   private closeAction?: () => void;
   private opening = false;
@@ -41,18 +52,20 @@ export class LobbyEventPopup {
     if (this.closeAction || this.opening) return;
     this.opening = true;
     // 출석은 서버가 오늘에 맞춰 넘긴 줄만 선다. 조회가 실패하면 기간 이벤트만 세운다.
-    void Promise.all([attendanceManager.status().then(({ tracks }) => tracks, () => [] as AttendanceTrackDto[]), gameApi.getRouletteStatus().catch(() => undefined)]).then(([tracks, roulette]) => {
+    void Promise.all([attendanceManager.status().then(({ tracks }) => tracks, () => [] as AttendanceTrackDto[]), gameApi.getRouletteStatus().catch(() => undefined), playableRegularEvents()]).then(([tracks, roulette, playable]) => {
       this.opening = false;
       if (!this.scene.sys.isActive()) return;
-      this.build(tracks, roulette);
+      this.build(tracks, roulette, playable);
     });
   }
 
-  private build(tracks: readonly AttendanceTrackDto[], roulette?: RouletteStatus): void {
+  private build(tracks: readonly AttendanceTrackDto[], roulette?: RouletteStatus, playable: readonly string[] = []): void {
     const now = Date.now();
     let entries = lobbyEventEntries(tracks, now);
     let actionable = new Set(tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
     if (roulette?.active && (roulette.remaining > 0 || roulette.bonusAvailable)) actionable.add(ROULETTE.id);
+    // 코인이 한 판 값만큼 모인 정규 이벤트도 점이 서고 위로 올라온다.
+    for (const id of playable) actionable.add(id);
     entries = prioritizeLobbyEvents(entries, actionable);
     const layout = lobbyEventListLayout(entries.length, ATTENDANCE_TRACK_IDS.length + LOBBY_EVENTS.length);
     this.popups.open({
@@ -71,10 +84,11 @@ export class LobbyEventPopup {
         if (refreshing || !body.active) return;
         refreshing = true;
         try {
-          const [attendance, roulette] = await Promise.all([attendanceManager.status(), gameApi.getRouletteStatus()]);
+          const [attendance, roulette, playable] = await Promise.all([attendanceManager.status(), gameApi.getRouletteStatus(), playableRegularEvents()]);
           if (!body.active) return;
           const ready = new Set(attendance.tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
           if (roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) ready.add(ROULETTE.id);
+          for (const id of playable) ready.add(id);
           const completed = [...actionable].some(id => !ready.has(id));
           actionable = ready;
           const sorted = prioritizeLobbyEvents(entries, ready);

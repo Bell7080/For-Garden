@@ -386,6 +386,11 @@ export interface DelophyHuntStatus {
   resetsAt: string;
 }
 
+/** 지금 판을 열 수 있는가 — 진행 중인 판이 있거나 코인이 가장 싼 난이도 값 이상이다(로비 이벤트 점·정렬). */
+export function delophyHuntPlayable(status: Pick<DelophyHuntStatus, "coins" | "run">): boolean {
+  return status.run !== null || status.coins >= Math.min(...HUNT_DIFFICULTIES.map(({ entryCost }) => entryCost));
+}
+
 export function delophyHuntStatus(missions: MissionState, ledger: DelophyHuntState, now: Date): DelophyHuntStatus {
   const current = normalizeMissions(missions, now);
   const state = rollDelophyHuntWeek(ledger, now);

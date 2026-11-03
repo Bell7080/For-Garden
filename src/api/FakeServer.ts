@@ -3,11 +3,11 @@ import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf 
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
 import type { ChestForgeResponse, DelophyHuntResponse, SpinRouletteResponse } from "./contracts";
 import {
-  DELOPHY_HUNT, HuntFlipError, applyHuntMoves, delophyHuntStatus, flipHuntSlot, huntDifficulty, huntTreasure, normalizeDelophyHuntState, rollDelophyHuntWeek,
+  DELOPHY_HUNT, HuntFlipError, applyHuntMoves, delophyHuntPlayable, delophyHuntStatus, flipHuntSlot, huntDifficulty, huntTreasure, normalizeDelophyHuntState, rollDelophyHuntWeek,
   rollHuntLayout, rollHuntMoves, rollHuntPairs, type DelophyHuntState, type HuntDifficultyId,
 } from "../core/delophyHunt";
 import { isRegularEventActive } from "../core/regularEventRotation";
-import { CHEST_FORGE, chestBox, chestCard, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
+import { CHEST_FORGE, chestBox, chestCard, chestForgePlayable, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
@@ -3317,6 +3317,18 @@ export class FakeServer implements GameApi {
     return this.missionListDto(normalized);
   }
 
+  /**
+   * 코인이 모여 지금 할 수 있는 정규 이벤트(보물상자·보물 찾기) — 로비 이벤트 입구의 점과 이벤트 판의 점·정렬이 같은 규칙을 읽는다.
+   * 이번 주 차례가 아닌 이벤트는 세지 않는다(QA 빌드의 개발 서버는 모두 연다).
+   */
+  private playableRegularEventIds(now: Date): string[] {
+    const open = (id: string): boolean => this.allEventsOpen() || isRegularEventActive(id, now);
+    const ids: string[] = [];
+    if (open(CHEST_FORGE.id) && chestForgePlayable(chestForgeStatus(this.state.missions, normalizeChestForgeState(this.state.chestForge), now))) ids.push(CHEST_FORGE.id);
+    if (open(DELOPHY_HUNT.id) && delophyHuntPlayable(delophyHuntStatus(this.state.missions, normalizeDelophyHuntState(this.state.delophyHunt), now))) ids.push(DELOPHY_HUNT.id);
+    return ids;
+  }
+
   /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */
   async getNotificationSignals() {
     await this.delay();
@@ -3330,7 +3342,7 @@ export class FakeServer implements GameApi {
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */

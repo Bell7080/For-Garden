@@ -266,6 +266,11 @@ export interface ChestForgeStatus {
   resetsAt: string;
 }
 
+/** 지금 상자를 열 수 있는가 — 진행 중인 상자가 있거나 코인이 한 번 값 이상이다(로비 이벤트 점·정렬). */
+export function chestForgePlayable(status: Pick<ChestForgeStatus, "coins" | "run">): boolean {
+  return status.run !== null || status.coins >= Math.min(...CHEST_BOXES.map((box) => box.entryCost));
+}
+
 export function chestForgeStatus(missions: MissionState, ledger: ChestForgeState, now: Date): ChestForgeStatus {
   const current = normalizeMissions(missions, now);
   const state = rollChestForgeWeek(ledger, now);

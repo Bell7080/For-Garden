@@ -15,6 +15,7 @@ import { ITEM_ICON_ASSETS, ITEM_RASTER_ICON_ASSETS } from "../../src/ui/itemIcon
 import { UI_ICON_ASSETS, UI_RASTER_ICON_ASSETS } from "../../src/ui/icons";
 import { EXCAVATION_TRAIT_ICON_ASSETS } from "../../src/ui/excavationIcons";
 import { SKILL_ICON_ASSETS } from "../../src/ui/skillIcons";
+import { CURRENCY_ICON_ASSETS } from "../../src/ui/currencyIcons";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -37,7 +38,9 @@ describe("inventory", () => {
   });
   it("모든 정적 item asset이 공용 로딩 표와 실제 배포 파일에 일대일 대응한다", () => {
     // 정적 정의가 늘 때 로더 등록이나 배포 파일 한쪽만 빠지는 회귀를 빌드 전에 잡는다.
-    const definedKeys = ITEMS.flatMap(({ icon }) => icon.kind === "asset" ? [icon.key] : []);
+    // 정규 이벤트 코인처럼 재화 그림을 그대로 쓰는 아이템은 재화 표가 이미 읽는다 — 같은 키를 두 번 싣지 않는다.
+    const currencyKeys = new Set<string>(CURRENCY_ICON_ASSETS.map(([key]) => key));
+    const definedKeys = ITEMS.flatMap(({ icon }) => icon.kind === "asset" && !currencyKeys.has(icon.key) ? [icon.key] : []);
     const loadedKeys = [...ITEM_ICON_ASSETS, ...ITEM_RASTER_ICON_ASSETS].map(([key]) => key);
     expect([...loadedKeys].sort()).toEqual([...definedKeys].sort());
     for (const [, path] of [...ITEM_ICON_ASSETS, ...ITEM_RASTER_ICON_ASSETS]) expect(existsSync(resolve("public", path))).toBe(true);

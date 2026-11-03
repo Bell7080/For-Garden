@@ -24,6 +24,8 @@ export const REWARD_PRIORITY: readonly string[] = [
   "rawStone", "dnaFragments",
   // 콘텐츠 전리품 증표 — 쓰는 곳이 한정되어 후순위다
   "duelEmblem", "raidSigil", "salvageRecord",
+  // 정규 이벤트 코인 — 그 주 이벤트에서만 쓴다
+  "tia-treasure-coin", "delopi-thief-coin",
   // 단품 — 만능 파편은 렐릭 파편과 같은 돌파 재료라 그 바로 앞이다.
   "universal-fragment-ssr", "universal-fragment-sr", "universal-fragment-r",
   // 단품 — 파편·룬·장식은 재화가 아니라 한 점씩 받는 물건이라 가장 마지막이다

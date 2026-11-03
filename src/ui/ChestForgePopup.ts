@@ -26,7 +26,7 @@ import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
-import { RouletteSpinButton } from "./RouletteSpinButton";
+import { ResearchPullButton } from "./ResearchPullButton";
 import { drawSparkle } from "./rouletteWheel";
 import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
@@ -45,7 +45,7 @@ const FORGE = {
   height: 1540,
   coinY: -684,
   resetY: -640,
-  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 190, buttonY: 510, howToY: 398, sd: { x: 286, groundY: -112, height: 330 } },
+  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 168, buttonY: 520, howToY: 382, sd: { x: 286, groundY: -112, height: 330 } },
   /**
    * 카드 쪽 — 위에 모은 보상, 가운데 상자와 그 곁에서 응원하는 티아, 아래에 카드. 아래에서 집은 카드가 위의 상자로 날아
    * 들어간다. 상자 아래 게이지가 다음 등급까지 얼마 남았는지 말한다(상자 몸 밑변은 `chestY` + 130).
@@ -56,9 +56,9 @@ const FORGE = {
     openY: -200, openGrow: 1.3 },
   rulesY: 640,
   card: { width: 196, height: 300, gap: 18, icon: 112 },
-  preview: { width: 168, height: 250, gap: 20 },
+  preview: { width: 200, height: 300, gap: 14 },
   collected: { size: 84, gap: 104 },
-  button: { height: 116, wide: 720 },
+  button: { height: 136, wide: 640 },
   /** 상단 이벤트 코인 칸 — 상단 재화 줄과 같은 `addCurrencyChip` 한 칸이다. */
   coinChip: { width: 260, height: 66 },
   howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 22, sd: { x: -250, height: 300 } },
@@ -262,8 +262,8 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       holder.setAngle((index - (highlights.length - 1) / 2) * 3);
       introPage.add(holder);
     });
-    const enter = new RouletteSpinButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: t("chestForge.enter"), tone: 0x8fc6f0,
-      price: { iconKey: CHEST_COIN_ICON, amount: CHEST_FORGE.entryCost.toLocaleString() }, onClick: () => void enterBox() });
+    // 연구소의 연구 버튼과 같은 한 장 — 위에 「상자 열기」, 아래에 드는 값(코인 그림 × 300).
+    const enter = new ResearchPullButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: t("chestForge.enter"), tone: 0x8fc6f0, onClick: () => void enterBox() });
     introPage.add(enter);
     introPage.add(addHowToButton(scene, 0, FORGE.intro.howToY, () => openChestHowTo(scene, popups)));
 
@@ -346,6 +346,7 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       resetText.setText(t("chestForge.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); pickPage.setVisible(running);
+      enter.setCost([{ iconKey: CHEST_COIN_ICON, amount: CHEST_FORGE.entryCost, short: status.coins < CHEST_FORGE.entryCost }]);
       enter.setEnabled(!busy && status.coins >= CHEST_FORGE.entryCost);
       if (running) { paintRound(); paintCollected(status.run?.collected ?? {}); }
     };

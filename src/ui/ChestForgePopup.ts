@@ -1,15 +1,17 @@
 import Phaser from "phaser";
 import { t } from "../i18n";
+import type { TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import type { ChestForgeResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
-import { CHEST_FORGE, CHEST_FORGE_MAX_STAGE, CHEST_FORGE_STAGES, type ChestForgeStatus } from "../core/chestForge";
+import { CHEST_CARDS, CHEST_FORGE, chestCard, type ChestCard, type ChestCardTier, type ChestForgeStatus } from "../core/chestForge";
 import { motionPolicy } from "../core/settings";
 import { audioManager } from "../managers/AudioManager";
 import { logError } from "../managers/ErrorReporter";
 import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
-import { chestGlowColor, ensureChestTexture } from "./chestArt";
+import { ensureChestTexture } from "./chestArt";
+import { addClippedHit } from "./clippedHit";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { addFramedIcon } from "./itemFrame";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
@@ -18,31 +20,48 @@ import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
 import { RouletteSpinButton } from "./RouletteSpinButton";
 import { drawSparkle } from "./rouletteWheel";
+import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
 /**
  * 보물상자 창의 자리. 두 쪽이다.
- * - **첫 쪽**: 상자가 없을 때. 코인 → 안내 → 상자 → 작은 확률표 → 결제 버튼 하나.
- * - **강화 쪽**: 상자를 받은 뒤. 작은 확률표 → 지금 단계의 보상(상자 위에 떠 있다) → 상자 → 단계·확률 → 보상 받기/강화.
- * 확률표는 단계마다 오를 확률을 늘 공개한다. 바탕은 밝은 크림빛에 보상 그림이 흩어진 무늬다.
+ * - **첫 쪽**: 상자가 없을 때. 코인 → 안내 → 상자 → 대박 카드 미리보기 → 상자 열기 버튼 하나.
+ * - **카드 쪽**: 상자를 연 뒤. 몇 번째 선택인지 → 모은 보상 → 앞면으로 놓인 카드 3~4장 → 안내.
+ * 카드마다 받을 확률이 앞면에 적혀 있고, 카드가 나오는 확률은 아래 안내 줄이 말한다.
  */
 const FORGE = {
   width: 940,
   height: 1540,
   coinY: -684,
   resetY: -640,
-  intro: { textY: -560, chestY: -150, chestScale: 0.92, ratesY: 250, buttonY: 520 },
-  forge: { ratesY: -540, rewardY: -300, chestY: 30, chestScale: 1, stageY: 310, chanceY: 356, buttonY: 520 },
+  intro: { textY: -560, chestY: -250, chestScale: 0.9, previewY: 180, buttonY: 500 },
+  pick: { roundY: -560, collectedLabelY: -480, collectedY: -390, cardsY: 10, hintY: 300, chestY: 450, chestScale: 0.42 },
   rulesY: 650,
-  rates: { width: 820, height: 92, column: 102 },
-  reward: { size: 100, gap: 150 },
-  button: { width: 400, height: 116, gap: 430, wide: 720 },
+  card: { width: 196, height: 300, gap: 18, icon: 112 },
+  preview: { width: 168, height: 250, gap: 20 },
+  collected: { size: 84, gap: 104 },
+  button: { height: 116, wide: 720 },
 } as const;
 
 const INK = "#5b3426";
 const INK_SOFT = "#8a6150";
 const ACCENT = "#e2602a";
 const OUTLINE = "#ffffff";
+
+/** 등급의 색 — 바탕과 같은 파스텔 결. 대박만 금빛이다. */
+const TIER_TONE: Record<ChestCardTier, { face: number; deep: number; ink: string }> = {
+  safe: { face: 0x9fdcc4, deep: 0x4f8f7b, ink: "#3f7a66" },
+  mid: { face: 0xa6cdf2, deep: 0x5480ad, ink: "#46709c" },
+  risk: { face: 0xf7b08f, deep: 0xb0603f, ink: "#a1532f" },
+  big: { face: 0xc6b2f0, deep: 0x7660ad, ink: "#6a52a3" },
+  jackpot: { face: 0xffd55e, deep: 0xb07f12, ink: "#9a6c08" },
+};
+function tierLabel(tier: ChestCardTier): string {
+  const keys: Record<ChestCardTier, TextKey> = {
+    safe: "chestForge.tier.safe", mid: "chestForge.tier.mid", risk: "chestForge.tier.risk", big: "chestForge.tier.big", jackpot: "chestForge.tier.jackpot",
+  };
+  return t(keys[tier]);
+}
 
 /** 바탕 — 크림 → 복숭아 → 분홍으로 흐르는 밝은 면에 물방울과 보상 그림이 흩어진다. */
 function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, mask: Phaser.Display.Masks.GeometryMask, motion: number): void {
@@ -74,36 +93,56 @@ function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, 
   });
 }
 
-/** 작은 확률표 — 단계 여덟 칸에 오를 확률. 지금 단계 칸이 물든다. */
-function addRateStrip(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, y: number): (stage: number | null) => void {
-  const { width, height, column } = FORGE.rates;
-  const panel = scene.add.graphics();
-  parent.add(panel);
-  parent.add(scene.add.text(-width / 2 + 8, y - height / 2 - 22, t("chestForge.chanceHeader"), textStyle({ role: "emphasis", size: 20, color: INK_SOFT })).setOrigin(0, 0.5));
-  const left = -(column * (CHEST_FORGE_MAX_STAGE + 1)) / 2;
-  const highlight = scene.add.graphics();
-  parent.add(highlight);
-  for (let stage = 0; stage <= CHEST_FORGE_MAX_STAGE; stage += 1) {
-    const x = left + column * stage + column / 2;
-    parent.add(scene.add.text(x, y - 18, t("chestForge.stage", { stage }), textStyle({ role: "emphasis", size: 18, color: INK_SOFT })).setOrigin(0.5));
-    parent.add(scene.add.text(x, y + 16, stage === 0 ? "—" : `${CHEST_FORGE_STAGES[stage].chance}%`, textStyle({ role: "display", size: 24, color: stage === 0 ? INK_SOFT : INK })).setOrigin(0.5));
+/**
+ * 카드 한 장. 앞면은 등급 띠 → 보상 액자(수량) → 받을 확률. 뒤집은 면은 받았으면 같은 보상과 「획득!」, 놓쳤으면 잿빛 「꽝」이다.
+ * 대박 카드는 둘레에 반짝임이 붙는다.
+ */
+function paintCard(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, card: ChestCard, width: number, height: number, face: "front" | "win" | "miss"): void {
+  holder.removeAll(true);
+  const tone = TIER_TONE[card.tier];
+  const radius = 26;
+  const g = scene.add.graphics();
+  const miss = face === "miss";
+  g.fillStyle(0x7a3a2a, 0.16).fillRoundedRect(-width / 2 + 4, -height / 2 + 10, width, height, radius);
+  g.fillStyle(miss ? 0x9a8f8c : tone.deep, 1).fillRoundedRect(-width / 2 - 4, -height / 2 - 4, width + 8, height + 8, radius + 4);
+  g.fillStyle(miss ? 0xd8d2cf : tone.face, 1).fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+  g.fillStyle(0xffffff, miss ? 0.55 : 0.88).fillRoundedRect(-width / 2 + 12, -height / 2 + 52, width - 24, height - 64, radius - 10);
+  g.fillStyle(0xffffff, 0.6).fillRoundedRect(-width / 2 + 22, -height / 2 + 12, width * 0.36, 8, 4);
+  holder.add(g);
+  const head = scene.add.text(0, -height / 2 + 30, tierLabel(card.tier), textStyle({ role: "display", size: 26, color: "#ffffff" })).setOrigin(0.5).setStroke(miss ? "#8a7f7c" : tone.ink, 6);
+  shrinkTextToWidth(head, width - 30, { minSize: 18 });
+  holder.add(head);
+  const iconY = -height / 2 + 52 + (height - 64) * 0.4;
+  if (miss) {
+    holder.add(scene.add.text(0, iconY + 10, t("chestForge.miss"), textStyle({ role: "display", size: 52, color: "#8a7f7c" })).setOrigin(0.5).setStroke(OUTLINE, 8));
+    return;
   }
-  panel.fillStyle(0x000000, 0.06).fillRoundedRect(-width / 2, y - height / 2 + 5, width, height, 22);
-  panel.fillStyle(0xffffff, 0.78).fillRoundedRect(-width / 2, y - height / 2, width, height, 22);
-  return (current) => {
-    highlight.clear();
-    if (current === null) return;
-    const x = left + column * current;
-    highlight.fillStyle(0xffb36b, 0.45).fillRoundedRect(x + 4, y - height / 2 + 6, column - 8, height - 12, 16);
-  };
+  const icon = Math.min(FORGE.card.icon, width * 0.6);
+  addFramedIcon(scene, holder, 0, iconY, icon, CURRENCY_ICON_BY_WALLET[card.currency], { amount: formatCurrency(card.amount), amountRatio: 0.3 });
+  const footY = height / 2 - 40;
+  if (face === "win") {
+    holder.add(scene.add.text(0, footY, t("chestForge.win"), textStyle({ role: "display", size: 34, color: ACCENT })).setOrigin(0.5).setStroke(OUTLINE, 8));
+  } else {
+    const pill = scene.add.graphics();
+    pill.fillStyle(tone.deep, 1).fillRoundedRect(-58, footY - 24, 116, 48, 24);
+    holder.add(pill);
+    holder.add(scene.add.text(0, footY, `${card.chance}%`, textStyle({ role: "display", size: 30, color: "#ffffff" })).setOrigin(0.5));
+  }
+  if (card.tier === "jackpot" || face === "win") {
+    const sparkle = scene.add.graphics();
+    for (const [x, y, size] of [[-width / 2 + 6, -height / 2 + 70, 16], [width / 2 - 8, -height / 2 + 120, 12], [width / 2 - 14, height / 2 - 92, 18]] as const) {
+      drawSparkle(sparkle, x, y, size, card.tier === "jackpot" ? 0xffe38a : 0xffffff, 1);
+    }
+    holder.add(sparkle);
+  }
 }
 
-/** 보물상자 — 받기·강화·보상 받기는 모두 서버가 확정한다. 창을 닫아도 진행 중인 상자는 남는다. */
+/** 보물상자 — 상자 열기·카드 고르기는 모두 서버가 확정한다. 창을 닫아도 진행 중인 상자는 남는다. */
 export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLayer, onChanged: () => void): Promise<void> {
   let status: ChestForgeStatus = await gameApi.getChestForge();
   if (!scene.scene.isActive()) return;
   let busy = false, alive = true;
-  let pendingRequest: { kind: "enter" | "upgrade" | "claim"; requestId: string } | undefined;
+  let pendingRequest: { key: string; requestId: string } | undefined;
   const motion = (): number => motionPolicy(session.settings).nonEssentialDistanceFactor;
   popups.open({ width: FORGE.width, height: FORGE.height, title: t("event.chestForge.title"), dim: true,
     closeOnBackdrop: true, canClose: () => !busy,
@@ -119,66 +158,87 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
     const resetText = scene.add.text(0, FORGE.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
     body.add([coinIcon, coinText, resetText]);
 
-    // 첫 쪽.
+    // 첫 쪽 — 상자와 대박 카드 미리보기.
     const introPage = scene.add.container(0, 0);
     body.add(introPage);
     introPage.add(scene.add.text(0, FORGE.intro.textY, t("chestForge.intro"), textStyle({ role: "emphasis", size: 27, color: INK, wrap: 780, align: "center" })).setOrigin(0.5));
-    const introChest = scene.add.image(0, FORGE.intro.chestY, ensureChestTexture(scene, 0, false)).setScale(FORGE.intro.chestScale);
+    const introChest = scene.add.image(0, FORGE.intro.chestY, ensureChestTexture(scene, 7, false)).setScale(FORGE.intro.chestScale);
     introPage.add(introChest);
     if (motion() > 0) scene.tweens.add({ targets: introChest, y: FORGE.intro.chestY - 14 * motion(), duration: 1400, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    addRateStrip(scene, introPage, FORGE.intro.ratesY);
-    const enter = new RouletteSpinButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: "", tone: 0xffb36b, onClick: () => void step("enter") });
+    const highlights = [...CHEST_CARDS].filter((card) => card.tier === "jackpot" || card.tier === "big").sort((a, b) => Number(b.tier === "jackpot") - Number(a.tier === "jackpot") || b.amount - a.amount).slice(0, 4);
+    const { width: pw, height: ph, gap: pg } = FORGE.preview;
+    introPage.add(scene.add.text(0, FORGE.intro.previewY - ph / 2 - 34, t("chestForge.jackpotHeader"), textStyle({ role: "display", size: 30, color: INK })).setOrigin(0.5).setStroke(OUTLINE, 8));
+    highlights.forEach((card, index) => {
+      const holder = scene.add.container((index - (highlights.length - 1) / 2) * (pw + pg), FORGE.intro.previewY);
+      paintCard(scene, holder, card, pw, ph, "front");
+      holder.setAngle((index - (highlights.length - 1) / 2) * 3);
+      introPage.add(holder);
+    });
+    const enter = new RouletteSpinButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: "", tone: 0xffb36b, onClick: () => void enterBox() });
     introPage.add(enter);
 
-    // 강화 쪽.
-    const forgePage = scene.add.container(0, 0);
-    body.add(forgePage);
-    const paintRates = addRateStrip(scene, forgePage, FORGE.forge.ratesY);
-    const sparkles = scene.add.graphics({ x: 0, y: FORGE.forge.chestY });
-    const chest = scene.add.image(0, FORGE.forge.chestY, ensureChestTexture(scene, 0, false)).setScale(FORGE.forge.chestScale);
-    forgePage.add([sparkles, chest]);
-    if (motion() > 0) scene.tweens.add({ targets: sparkles, alpha: { from: 1, to: 0.35 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    // 지금 단계의 보상 — 상자 위에 말풍선처럼 떠 있다.
-    const rewardFloat = scene.add.container(0, FORGE.forge.rewardY);
-    forgePage.add(rewardFloat);
-    if (motion() > 0) scene.tweens.add({ targets: rewardFloat, y: FORGE.forge.rewardY - 10 * motion(), duration: 1300, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-    const stageText = scene.add.text(0, FORGE.forge.stageY, "", textStyle({ role: "display", size: 44, color: INK })).setOrigin(0.5).setStroke(OUTLINE, 10);
-    const chanceText = scene.add.text(0, FORGE.forge.chanceY, "", textStyle({ role: "emphasis", size: 26, color: ACCENT, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 6);
-    const claim = new RouletteSpinButton(scene, -FORGE.button.gap / 2, FORGE.forge.buttonY, { width: FORGE.button.width, height: FORGE.button.height, label: t("chestForge.claim"), tone: 0x6fd6b0, onClick: () => void step("claim") });
-    const upgrade = new RouletteSpinButton(scene, FORGE.button.gap / 2, FORGE.forge.buttonY, { width: FORGE.button.width, height: FORGE.button.height, label: "", tone: 0xff8fb8, onClick: () => void step("upgrade") });
-    forgePage.add([stageText, chanceText, claim, upgrade]);
+    // 카드 쪽.
+    const pickPage = scene.add.container(0, 0);
+    body.add(pickPage);
+    const roundText = scene.add.text(0, FORGE.pick.roundY, "", textStyle({ role: "display", size: 40, color: INK })).setOrigin(0.5).setStroke(OUTLINE, 10);
+    const dots = scene.add.graphics();
+    pickPage.add([roundText, dots]);
+    pickPage.add(scene.add.text(0, FORGE.pick.collectedLabelY, t("chestForge.collected"), textStyle({ role: "emphasis", size: 24, color: INK_SOFT })).setOrigin(0.5));
+    const collectedRow = scene.add.container(0, FORGE.pick.collectedY);
+    const cardsRow = scene.add.container(0, FORGE.pick.cardsY);
+    const hint = scene.add.text(0, FORGE.pick.hintY, t("chestForge.pickHint"), textStyle({ role: "emphasis", size: 28, color: ACCENT })).setOrigin(0.5).setStroke(OUTLINE, 6);
+    const pickChest = scene.add.image(0, FORGE.pick.chestY, ensureChestTexture(scene, 7, true)).setScale(FORGE.pick.chestScale);
+    pickPage.add([collectedRow, cardsRow, hint, pickChest]);
+    if (motion() > 0) scene.tweens.add({ targets: hint, alpha: { from: 1, to: 0.45 }, duration: 800, yoyo: true, repeat: -1, ease: "Sine.InOut" });
 
     const note = scene.add.text(0, FORGE.rulesY, t("chestForge.rules"), textStyle({ role: "body", size: 21, color: INK_SOFT, wrap: 820, align: "center" })).setOrigin(0.5);
     body.add(note);
 
-    const paintRewards = (stage: number): void => {
-      rewardFloat.removeAll(true);
-      const { size, gap } = FORGE.reward;
-      const bubble = scene.add.graphics();
-      const w = gap * 2 + size + 60, h = size + 44;
-      bubble.fillStyle(0x000000, 0.08).fillRoundedRect(-w / 2, -h / 2 + 6, w, h, 30);
-      bubble.fillStyle(0xffffff, 0.9).fillRoundedRect(-w / 2, -h / 2, w, h, 30);
-      bubble.fillTriangle(-18, h / 2 - 1, 18, h / 2 - 1, 0, h / 2 + 22);
-      rewardFloat.add(bubble);
-      const reward = CHEST_FORGE_STAGES[stage].reward;
-      ([["gold", reward.gold], ["cheesecake", reward.cheesecake], ["gems", reward.gems]] as const).forEach(([currency, amount], index) => {
-        addFramedIcon(scene, rewardFloat, (index - 1) * gap, 0, size, CURRENCY_ICON_BY_WALLET[currency], { amount: formatCurrency(amount), amountRatio: 0.3 });
+    let cardHolders: Phaser.GameObjects.Container[] = [];
+    const paintCollected = (): void => {
+      collectedRow.removeAll(true);
+      const entries = Object.entries(status.run?.collected ?? {}).filter(([, amount]) => (amount ?? 0) > 0) as [keyof typeof CURRENCY_ICON_BY_WALLET, number][];
+      const { size, gap } = FORGE.collected;
+      if (!entries.length) {
+        collectedRow.add(scene.add.text(0, 0, "—", textStyle({ role: "display", size: 34, color: INK_SOFT })).setOrigin(0.5));
+        return;
+      }
+      entries.forEach(([currency, amount], index) => {
+        addFramedIcon(scene, collectedRow, (index - (entries.length - 1) / 2) * gap, 0, size, CURRENCY_ICON_BY_WALLET[currency], { amount: formatCurrency(amount), amountRatio: 0.3 });
       });
     };
-    const paintSparkles = (stage: number): void => {
-      sparkles.clear();
-      const color = chestGlowColor(stage);
-      const count = 2 + stage;
-      for (let index = 0; index < count; index += 1) {
-        const angle = -Math.PI / 2 + (index - (count - 1) / 2) * 0.5;
-        const radius = 200 + (index % 2) * 40;
-        drawSparkle(sparkles, Math.cos(angle) * radius * 1.15, -30 + Math.sin(angle) * radius * 0.7 + 40, 12 + (index % 3) * 6, color, 0.95);
-        drawSparkle(sparkles, Math.cos(angle) * radius * 1.15, -30 + Math.sin(angle) * radius * 0.7 + 40, 6 + (index % 3) * 3, 0xffffff, 1);
+    const paintRound = (): void => {
+      const round = status.run?.round ?? 0;
+      roundText.setText(t("chestForge.round", { round: round + 1, total: CHEST_FORGE.rounds }));
+      dots.clear();
+      for (let index = 0; index < CHEST_FORGE.rounds; index += 1) {
+        const x = (index - (CHEST_FORGE.rounds - 1) / 2) * 34, y = FORGE.pick.roundY + 42;
+        dots.fillStyle(index <= round ? 0xff8f6b : 0xffffff, index <= round ? 1 : 0.8).fillCircle(x, y, index === round ? 10 : 8);
       }
     };
-    const showChest = (stage: number, open = false): void => {
-      chest.setTexture(ensureChestTexture(scene, stage, open));
-      paintSparkles(stage);
+    const paintOffer = (enterFrom = false): void => {
+      cardsRow.removeAll(true);
+      cardHolders = [];
+      const offer = status.run?.offer ?? [];
+      const { width, height, gap } = FORGE.card;
+      offer.forEach((id, index) => {
+        const card = chestCard(id);
+        if (!card) return;
+        const x = (index - (offer.length - 1) / 2) * (width + gap);
+        const holder = scene.add.container(x, 0);
+        paintCard(scene, holder, card, width, height, "front");
+        cardsRow.add(holder);
+        // 창이 흐르지 않아 창 전체가 손을 받는 자리다. 카드 면은 뒤집을 때 다시 그려지므로 입력면은 줄에 따로 세운다.
+        const hit = addClippedHit(scene, cardsRow, x, 0, width, height, () => ({ left: 0, right: scene.scale.width, top: 0, bottom: scene.scale.height }), { useHandCursor: true });
+        hit.on("pointerover", () => { if (!busy) holder.setScale(1.05); });
+        hit.on("pointerout", () => { if (!busy) holder.setScale(1); });
+        hit.on("pointerup", () => void pick(index));
+        cardHolders.push(holder);
+        if (enterFrom && motion() > 0) {
+          holder.setAlpha(0).setY(60 * motion()).setScale(0.9);
+          scene.tweens.add({ targets: holder, alpha: 1, y: 0, scale: 1, duration: 300, delay: index * 80, ease: "Back.Out" });
+        }
+      });
     };
 
     const refresh = (): void => {
@@ -186,97 +246,82 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       const total = 52 + 12 + coinText.width;
       coinIcon.setX(-total / 2 + 26); coinText.setX(-total / 2 + 64);
       resetText.setText(t("chestForge.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
-      const running = status.stage !== null;
-      introPage.setVisible(!running); forgePage.setVisible(running);
+      const running = status.run !== null;
+      introPage.setVisible(!running); pickPage.setVisible(running);
       enter.setLabel(t("chestForge.enter", { count: CHEST_FORGE.entryCost }));
       enter.setEnabled(!busy && status.coins >= CHEST_FORGE.entryCost);
-      if (running) {
-        const stage = status.stage!;
-        showChest(stage);
-        paintRewards(stage);
-        paintRates(stage);
-        stageText.setText(t("chestForge.stage", { stage }));
-        chanceText.setText(status.nextChance === null ? t("chestForge.max") : t("chestForge.chance", { rate: status.nextChance }));
-      }
-      upgrade.setLabel(status.nextChance === null ? t("chestForge.maxShort") : t("chestForge.upgrade", { rate: status.nextChance }));
-      upgrade.setEnabled(!busy && running && status.nextChance !== null);
-      claim.setEnabled(!busy && running);
+      if (running) { paintRound(); paintCollected(); }
     };
 
     const publish = (): void => managerEvents.publish("wallet", { wallet: session.wallet });
-    const resetChest = (): void => { chest.setAlpha(1).setAngle(0).setScale(FORGE.forge.chestScale).setPosition(0, FORGE.forge.chestY); };
-    /** 상자가 받침 위로 톡 떨어지며 나타난다. */
-    const playArrive = (done: () => void): void => {
-      const distance = motion();
-      if (distance <= 0) { done(); return; }
-      chest.setY(FORGE.forge.chestY - 180 * distance).setAlpha(0);
-      scene.tweens.add({ targets: chest, y: FORGE.forge.chestY, alpha: 1, duration: 420, ease: "Bounce.Out", onComplete: done });
-    };
-    /** 강화 성공 — 부르르 떨다 번쩍이며 다음 재질로 바뀐다. 실패 — 떨다 기울며 흐려진다. */
-    const playUpgrade = (success: boolean, nextStage: number, done: () => void): void => {
-      const distance = 10 * motion();
-      if (distance <= 0) { if (success) showChest(nextStage); done(); return; }
-      scene.tweens.add({ targets: chest, x: { from: -distance, to: distance }, duration: 55, yoyo: true, repeat: 6, onComplete: () => {
-        chest.setX(0);
-        if (!alive) return;
-        if (success) {
-          const flash = scene.add.graphics({ x: 0, y: FORGE.forge.chestY });
-          flash.fillStyle(0xffffff, 0.85).fillEllipse(0, 0, 460, 340);
-          forgePage.add(flash);
-          showChest(nextStage);
-          scene.tweens.add({ targets: flash, alpha: 0, scale: 1.5, duration: 460, onComplete: () => flash.destroy() });
-          scene.tweens.add({ targets: chest, scale: { from: FORGE.forge.chestScale * 1.2, to: FORGE.forge.chestScale }, duration: 360, ease: "Back.Out", onComplete: done });
-        } else {
-          scene.tweens.add({ targets: chest, alpha: 0, angle: 10, y: FORGE.forge.chestY + 40, scale: FORGE.forge.chestScale * 0.85, duration: 520, onComplete: done });
-        }
-      } });
-    };
-
-    async function step(kind: "enter" | "upgrade" | "claim"): Promise<void> {
-      if (busy) return;
-      busy = true; refresh();
-      const stageBefore = status.stage ?? 0;
-      let result: ChestForgeResponse;
+    const request = async (key: string, call: (requestId: string) => Promise<ChestForgeResponse>): Promise<ChestForgeResponse | undefined> => {
       try {
-        if (pendingRequest?.kind !== kind) pendingRequest = { kind, requestId: crypto.randomUUID() };
-        const request = { requestId: pendingRequest.requestId };
-        result = kind === "enter" ? await gameApi.enterChestForge(request) : kind === "upgrade" ? await gameApi.upgradeChestForge(request) : await gameApi.claimChestForge(request);
+        if (pendingRequest?.key !== key) pendingRequest = { key, requestId: crypto.randomUUID() };
+        const result = await call(pendingRequest.requestId);
         pendingRequest = undefined;
+        return result;
       } catch (error) {
         logError("chestForge.request", "보물상자 요청 실패", error);
-        if (alive) { busy = false; refresh(); note.setText(t("chestForge.error")); }
-        return;
+        if (alive) note.setText(t("chestForge.error"));
+        return undefined;
       }
-      if (!alive) { status = result.status; return; }
+    };
+
+    async function enterBox(): Promise<void> {
+      if (busy) return;
+      busy = true; refresh();
+      const result = await request("enter", (requestId) => gameApi.enterChestForge({ requestId }));
+      busy = false;
+      if (!result) { if (alive) refresh(); return; }
+      status = result.status;
+      if (!alive) return;
       note.setText(t("chestForge.rules"));
-      const finish = (): void => { if (!alive) return; busy = false; resetChest(); refresh(); };
-      if (kind === "enter") {
-        status = result.status;
-        refresh();
-        audioManager?.playUi("roulette.tick");
-        playArrive(finish);
-      } else if (kind === "upgrade") {
-        audioManager?.playUi(result.success ? "roulette.win" : "roulette.tick");
-        // 연출이 끝날 때까지 지금 모습을 지킨다 — 실패하면 상자가 사라진 뒤에 첫 쪽으로 돌아간다.
-        playUpgrade(result.success === true, result.status.stage ?? stageBefore, () => {
-          status = result.status;
-          if (alive) note.setText(t(result.success ? "chestForge.success" : "chestForge.broken"));
-          finish();
-        });
-      } else {
-        publish();
-        showChest(stageBefore, true);
-        audioManager?.playUi("roulette.win");
-        const items = currencyRecordToRewardItems(result.granted ?? {});
-        scene.tweens.add({ targets: rewardFloat, alpha: 0, scale: 1.2, duration: 360 });
-        scene.time.delayedCall(520, () => {
-          status = result.status;
-          rewardFloat.setAlpha(1).setScale(1);
-          finish();
-          if (alive && items.length) openRewardPopup(scene, popups, { title: t("chestForge.reward"), titleSize: 36, dimAlpha: 0.66, items });
-        });
-      }
+      audioManager?.playUi("roulette.tick");
+      refresh();
+      paintOffer(true);
     }
+
+    /** 카드 한 장을 뒤집는다 — 좁아졌다가 결과 면으로 넓어지고, 나머지 카드는 흐려진다. */
+    async function pick(index: number): Promise<void> {
+      if (busy || !status.run) return;
+      const card = chestCard(status.run.offer[index] ?? "");
+      if (!card) return;
+      busy = true;
+      const holder = cardHolders[index];
+      holder?.setScale(1);
+      const result = await request(`pick-${status.run.round}-${index}`, (requestId) => gameApi.pickChestCard({ requestId, index }));
+      if (!result?.pick) { busy = false; if (alive) refresh(); return; }
+      if (!alive) { status = result.status; return; }
+      const outcome = result.pick;
+      if (outcome.success) publish();
+      const { width, height } = FORGE.card;
+      const done = (): void => {
+        status = result.status;
+        busy = false;
+        if (!alive) return;
+        refresh();
+        if (status.run) { paintOffer(true); return; }
+        const items = currencyRecordToRewardItems(outcome.total ?? {});
+        if (items.length) openRewardPopup(scene, popups, { title: t("chestForge.reward"), titleSize: 36, dimAlpha: 0.66, items });
+      };
+      const reveal = (): void => {
+        if (!holder) return;
+        paintCard(scene, holder, card, width, height, outcome.success ? "win" : "miss");
+        audioManager?.playUi(outcome.success ? "roulette.win" : "roulette.tick");
+        cardHolders.forEach((other, otherIndex) => { if (otherIndex !== index) other.setAlpha(0.35); });
+      };
+      const distance = motion();
+      if (distance <= 0 || !holder) { reveal(); scene.time.delayedCall(700, done); return; }
+      scene.tweens.add({ targets: holder, y: -24 * distance, duration: 140, ease: "Sine.Out" });
+      scene.tweens.add({ targets: holder, scaleX: 0, duration: 160, delay: 140, ease: "Sine.In", onComplete: () => {
+        reveal();
+        scene.tweens.add({ targets: holder, scaleX: outcome.success ? 1.12 : 1, scaleY: outcome.success ? 1.12 : 1, duration: 200, ease: "Back.Out", onComplete: () => {
+          scene.time.delayedCall(outcome.success ? 750 : 600, done);
+        } });
+      } });
+    }
+
     refresh();
+    if (status.run) paintOffer();
   });
 }

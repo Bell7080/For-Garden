@@ -4,7 +4,8 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { applyMissionEvent } from "../../src/core/missions";
 import {
-  CHEST_FORGE, CHEST_FORGE_MAX_STAGE, CHEST_FORGE_STAGES, chestForgeGemValue, chestForgeReachRate, chestForgeStatus, createEmptyChestForgeState,
+  CHEST_CARDS, CHEST_FORGE, CHEST_FORGE_BUDGET, chestBoxExpectedValue, chestCard, chestCardGemValue, chestForgeStatus, chestOfferSlots,
+  createEmptyChestForgeState, normalizeChestForgeState, rollChestOffer,
 } from "../../src/core/chestForge";
 
 void SettingsManager;
@@ -16,62 +17,94 @@ function serverWithCoins(coins: number, random: () => number, now = MONDAY) {
   return { state, api: new FakeServer(state, { latencyMs: 0, now: () => now, random, persistSession: () => undefined }) };
 }
 
-describe("보물상자 규칙", () => {
-  it("어느 단계에서 멈춰도 기대값이 젬 환산 15~25 안이고 최종 보상은 1,000이다", () => {
-    const expected = CHEST_FORGE_STAGES.map((stage, index) => chestForgeReachRate(index) * chestForgeGemValue(stage.reward));
-    for (const value of expected) { expect(value).toBeGreaterThanOrEqual(15); expect(value).toBeLessThanOrEqual(25); }
-    expect(chestForgeGemValue(CHEST_FORGE_STAGES[CHEST_FORGE_MAX_STAGE].reward)).toBe(1000);
-    // 보상은 단계가 오를수록 커지고 확률은 줄어든다.
-    for (let index = 1; index < CHEST_FORGE_STAGES.length; index += 1) {
-      expect(chestForgeGemValue(CHEST_FORGE_STAGES[index].reward)).toBeGreaterThan(chestForgeGemValue(CHEST_FORGE_STAGES[index - 1].reward));
-      if (index > 1) expect(CHEST_FORGE_STAGES[index].chance).toBeLessThan(CHEST_FORGE_STAGES[index - 1].chance);
-    }
-    // 한 판 최선 기대값이 코인 100(= 스테미나 100 ≈ 젬 83)의 35%를 넘지 않는다.
-    expect(Math.max(...expected)).toBeLessThan(CHEST_FORGE.entryCost * 0.83 * 0.35);
+describe("보물상자 카드 규칙", () => {
+  it("상자 하나의 최선 기대값이 정규 이벤트 예산(코인 100당) 안이다", () => {
+    const best = chestBoxExpectedValue();
+    expect(best / CHEST_FORGE.entryCost * 100).toBeLessThanOrEqual(CHEST_FORGE_BUDGET.gemValuePer100Stamina);
+    // 늘 안전 카드만 골라도 빈손은 아니고, 도박을 고를수록 기대값이 크다.
+    const safe = chestBoxExpectedValue((cards) => cards[0]);
+    expect(safe).toBeGreaterThan(100);
+    expect(best).toBeGreaterThan(safe * 3);
   });
 
-  it("코인은 이번 주에 쓴 스테미나와 같고, 주가 바뀌면 사라진다", () => {
+  it("등급이 오를수록 받을 확률은 낮고 한 장의 기대값은 크다", () => {
+    const order = ["safe", "mid", "risk", "big", "jackpot"] as const;
+    const ev = (tier: string) => Math.max(...CHEST_CARDS.filter((card) => card.tier === tier).map((card) => chestCardGemValue(card) * card.chance / 100));
+    const chance = (tier: string) => Math.max(...CHEST_CARDS.filter((card) => card.tier === tier).map((card) => card.chance));
+    for (let index = 1; index < order.length; index += 1) {
+      expect(chance(order[index])).toBeLessThan(chance(order[index - 1]) + 1);
+      expect(ev(order[index])).toBeGreaterThan(ev(order[index - 1]));
+    }
+    // 원석은 고고학이 주 수급처라 안전 카드에만 선다.
+    expect(CHEST_CARDS.filter((card) => card.currency === "rawStone").every((card) => card.tier === "safe")).toBe(true);
+  });
+
+  it("1~4번째는 세 장, 마지막은 네 장이고 자리마다 정한 등급만 나온다", () => {
+    for (let round = 0; round < CHEST_FORGE.rounds; round += 1) {
+      for (const roll of [0, 0.5, 0.999]) {
+        const offer = rollChestOffer(round, () => roll);
+        expect(offer).toHaveLength(round === CHEST_FORGE.rounds - 1 ? 4 : 3);
+        offer.forEach((id, slot) => expect(chestOfferSlots(round)[slot].map(([tier]) => tier)).toContain(chestCard(id)!.tier));
+      }
+    }
+  });
+
+  it("코인은 이번 주에 쓴 스테미나와 같고, 주가 바뀌면 사라지며 예전 강화형 장부는 상자 없이 읽힌다", () => {
     const state = createDefaultSession();
     const missions = applyMissionEvent(applyMissionEvent(state.missions, { type: "stamina_spent", amount: 700 }, MONDAY), { type: "stamina_spent", amount: 800 }, MONDAY);
-    // 주간 임무 진행(목표 600)에서 잘리지 않는다.
     expect(chestForgeStatus(missions, createEmptyChestForgeState(), MONDAY).coins).toBe(1500);
-    expect(chestForgeStatus(missions, { weekKey: "2026-11-02", spent: 300, stage: null }, MONDAY).coins).toBe(1200);
-    expect(chestForgeStatus(missions, { weekKey: "2026-11-02", spent: 300, stage: 2 }, new Date("2026-11-09T00:00:01Z"))).toMatchObject({ coins: 0, stage: 2, weekKey: "2026-11-09" });
+    expect(chestForgeStatus(missions, { weekKey: "2026-11-02", spent: 300, run: null }, MONDAY).coins).toBe(1200);
+    const run = { round: 2, offer: rollChestOffer(2, () => 0), collected: { gold: 10_000 } };
+    expect(chestForgeStatus(missions, { weekKey: "2026-11-02", spent: 300, run }, new Date("2026-11-09T00:00:01Z"))).toMatchObject({ coins: 0, run, weekKey: "2026-11-09" });
+    expect(normalizeChestForgeState({ weekKey: "2026-11-02", spent: 100, stage: 3 })).toEqual({ weekKey: "2026-11-02", spent: 100, run: null });
   });
 });
 
 describe("보물상자 서버", () => {
-  it("받기 → 강화 → 보상 받기가 코인을 쓰고 지급을 확정한다", async () => {
-    const { api, state } = serverWithCoins(250, () => 0);
+  it("상자를 열고 다섯 번 고르면 성공한 카드만 지급되고 상자가 닫힌다", async () => {
+    const { api, state } = serverWithCoins(350, () => 0);
     const entered = await api.enterChestForge({ requestId: "a" });
-    expect(entered.status).toMatchObject({ coins: 150, stage: 0, nextChance: 100 });
-    const upgraded = await api.upgradeChestForge({ requestId: "b" });
-    expect(upgraded.success).toBe(true);
-    expect(upgraded.status.stage).toBe(1);
+    expect(entered.status).toMatchObject({ coins: 50, run: { round: 0, collected: {} } });
     const goldBefore = state.wallet.gold;
-    const claimed = await api.claimChestForge({ requestId: "c" });
-    expect(claimed.granted).toEqual({ gold: 4000, cheesecake: 4, gems: 2 });
-    expect(state.wallet.gold).toBe(goldBefore + 4000);
-    expect(claimed.status.stage).toBeNull();
+    let last = entered;
+    for (let round = 0; round < CHEST_FORGE.rounds; round += 1) {
+      const card = chestCard(last.status.run!.offer[0])!;
+      last = await api.pickChestCard({ requestId: `p${round}`, index: 0 });
+      expect(last.pick).toMatchObject({ index: 0, cardId: card.id, success: true });
+    }
+    expect(last.status.run).toBeNull();
+    expect(last.pick?.total?.gold).toBe(state.wallet.gold - goldBefore);
   });
 
-  it("실패하면 상자가 깨지고, 같은 처리 ID는 다시 굴리지 않는다", async () => {
+  it("실패한 카드만 놓치고, 같은 처리 ID는 다시 굴리지 않는다", async () => {
     let roll = 0;
-    const { api } = serverWithCoins(100, () => roll);
+    const { api, state } = serverWithCoins(300, () => roll);
     await api.enterChestForge({ requestId: "a" });
-    await api.upgradeChestForge({ requestId: "b" });
-    roll = 0.95; // 2단계 90%는 0.95에서 실패한다.
-    const failed = await api.upgradeChestForge({ requestId: "c" });
-    expect(failed.success).toBe(false);
-    expect(failed.status.stage).toBeNull();
+    roll = 0.99; // 95% 카드도 0.99에서는 실패한다.
+    const gemsBefore = state.wallet.gems;
+    const failed = await api.pickChestCard({ requestId: "b", index: 0 });
+    expect(failed.pick).toMatchObject({ success: false, granted: 0 });
+    expect(failed.status.run?.round).toBe(1);
     roll = 0;
-    const replay = await api.upgradeChestForge({ requestId: "c" });
-    expect(replay.success).toBe(false);
-    await expect(api.claimChestForge({ requestId: "d" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+    const replay = await api.pickChestCard({ requestId: "b", index: 0 });
+    expect(replay.pick?.success).toBe(false);
+    expect(replay.status.run?.round).toBe(1);
+    expect(state.wallet.gems).toBe(gemsBefore);
+    await expect(api.pickChestCard({ requestId: "c", index: 9 })).rejects.toMatchObject({ code: "INVALID_STATE" });
   });
 
-  it("코인이 모자라면 받지 못한다", async () => {
-    const { api } = serverWithCoins(99, () => 0);
-    await expect(api.enterChestForge({ requestId: "a" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+  it("코인이 모자라거나 이미 연 상자가 있으면 열지 못한다", async () => {
+    await expect(serverWithCoins(299, () => 0).api.enterChestForge({ requestId: "a" })).rejects.toMatchObject({ code: "INSUFFICIENT_CURRENCY" });
+    const { api } = serverWithCoins(600, () => 0);
+    await api.enterChestForge({ requestId: "a" });
+    await expect(api.enterChestForge({ requestId: "b" })).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+});
+
+describe("보물상자 저장", () => {
+  it("받은 차례대로 쌓인 모은 보상도 저장 검증을 지난다", async () => {
+    const { isValidChestForgeState } = await import("../../src/core/chestForge");
+    const run = { round: 1, offer: rollChestOffer(1, () => 0), collected: { gems: 100, gold: 10_000 } };
+    expect(isValidChestForgeState({ weekKey: "2026-11-02", spent: 300, run })).toBe(true);
   });
 });

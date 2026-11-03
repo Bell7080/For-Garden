@@ -2,7 +2,7 @@ import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
 import type { ChestForgeResponse, SpinRouletteResponse } from "./contracts";
-import { CHEST_FORGE, CHEST_FORGE_MAX_STAGE, CHEST_FORGE_STAGES, chestForgeStatus, normalizeChestForgeState, rollChestForgeUpgrade, rollChestForgeWeek, type ChestForgeState } from "../core/chestForge";
+import { CHEST_FORGE, chestCard, chestForgeStatus, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
 import { combatJournal, consumeCombat } from "../server/combatAuthority";
 import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
@@ -2117,10 +2117,10 @@ export class FakeServer implements GameApi {
   }
 
   /**
-   * 보물상자의 세 걸음이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 강화가 성공했는데 응답만
-   * 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
+   * 보물상자의 두 걸음(상자 열기·카드 고르기)이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 뒤집기가
+   * 성공했는데 응답만 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
    */
-  private async stepChestForge(kind: "enter" | "upgrade" | "claim", requestId: string): Promise<ChestForgeResponse> {
+  private async stepChestForge(kind: "enter" | "pick", requestId: string, index = 0): Promise<ChestForgeResponse> {
     await this.delay();
     if (!requestId) throw new GameApiError("INVALID_STATE", "처리 ID가 없습니다.");
     const cached = this.readReceipt<Omit<ChestForgeResponse, keyof PlayerStateDto>>("chestForge", requestId, kind);
@@ -2129,39 +2129,40 @@ export class FakeServer implements GameApi {
     const ledger: ChestForgeState = rollChestForgeWeek(normalizeChestForgeState(this.state.chestForge), now);
     const before = chestForgeStatus(this.state.missions, ledger, now);
     const next = structuredClone(this.state);
-    let success: boolean | undefined;
-    let granted: ChestForgeResponse["granted"];
+    let pick: ChestForgeResponse["pick"];
     if (kind === "enter") {
-      if (ledger.stage !== null) throw new GameApiError("INVALID_STATE", "이미 받은 상자가 있습니다.");
+      if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 상자가 있습니다.");
       if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
-      next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, stage: 0 };
-    } else if (kind === "upgrade") {
-      if (ledger.stage === null || ledger.stage >= CHEST_FORGE_MAX_STAGE) throw new GameApiError("INVALID_STATE", "강화할 상자가 없습니다.");
-      success = rollChestForgeUpgrade(ledger.stage, this.random);
-      next.chestForge = { ...ledger, stage: success ? ledger.stage + 1 : null };
+      next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
     } else {
-      if (ledger.stage === null) throw new GameApiError("INVALID_STATE", "받을 상자가 없습니다.");
-      const reward = CHEST_FORGE_STAGES[ledger.stage].reward;
-      const wallet = { ...this.state.wallet };
-      granted = {};
-      for (const [currency, amount] of [["gold", reward.gold], ["cheesecake", reward.cheesecake], ["gems", reward.gems]] as const) {
-        const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - wallet[currency]));
-        wallet[currency] += applied;
-        if (applied > 0) granted[currency] = applied;
+      const run = ledger.run;
+      if (!run) throw new GameApiError("INVALID_STATE", "연 상자가 없습니다.");
+      const card = Number.isInteger(index) ? chestCard(run.offer[index] ?? "") : undefined;
+      if (!card) throw new GameApiError("INVALID_STATE", "고를 수 없는 카드입니다.");
+      const success = rollChestCard(card, this.random);
+      let granted = 0;
+      if (success) {
+        const wallet = { ...this.state.wallet };
+        granted = Math.max(0, Math.min(card.amount, WALLET_CAPS[card.currency] - wallet[card.currency]));
+        wallet[card.currency] += granted;
+        next.wallet = wallet;
       }
-      next.wallet = wallet;
-      next.chestForge = { ...ledger, stage: null };
+      const collected = { ...run.collected };
+      if (granted > 0) collected[card.currency] = (collected[card.currency] ?? 0) + granted;
+      const round = run.round + 1;
+      const finished = round >= CHEST_FORGE.rounds;
+      next.chestForge = { ...ledger, run: finished ? null : { round, offer: rollChestOffer(round, this.random), collected } };
+      pick = { index, cardId: card.id, success, granted, ...(finished ? { total: collected } : {}) };
     }
     const status = chestForgeStatus(next.missions, next.chestForge, now);
-    this.recordReceipt(next, "chestForge", requestId, kind, { status, ...(success !== undefined ? { success } : {}), ...(granted ? { granted } : {}) });
+    this.recordReceipt(next, "chestForge", requestId, kind, { status, ...(pick ? { pick } : {}) });
     this.persist(next);
     this.state.chestForge = next.chestForge; this.state.wallet = next.wallet; this.state.serverJournal = next.serverJournal;
-    return { ...this.snapshot(), status, ...(success !== undefined ? { success } : {}), ...(granted ? { granted } : {}) };
+    return { ...this.snapshot(), status, ...(pick ? { pick } : {}) };
   }
 
   async enterChestForge(request: { requestId: string }): Promise<ChestForgeResponse> { return this.stepChestForge("enter", request.requestId); }
-  async upgradeChestForge(request: { requestId: string }): Promise<ChestForgeResponse> { return this.stepChestForge("upgrade", request.requestId); }
-  async claimChestForge(request: { requestId: string }): Promise<ChestForgeResponse> { return this.stepChestForge("claim", request.requestId); }
+  async pickChestCard(request: { requestId: string; index: number }): Promise<ChestForgeResponse> { return this.stepChestForge("pick", request.requestId, request.index); }
 
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {

@@ -7,7 +7,7 @@ import { relicCollection } from "../managers/RelicCollectionManager";
 import { session } from "../state/session";
 import type { PopupLayer } from "../ui/PopupLayer";
 import { dungeonRewardItems, openRewardPopup } from "../ui/RewardPopup";
-import { withGreatSuccessBonus } from "../ui/rewardPopupModel";
+import { eventCoinRewardItems, withGreatSuccessBonus } from "../ui/rewardPopupModel";
 import { openDungeonRunPopup } from "../ui/DungeonRunPopup";
 import { playSweepSkirmish } from "../ui/SweepSkirmish";
 import { autoRepeat } from "../managers/AutoRepeatManager";
@@ -129,12 +129,12 @@ async function run(flow: DungeonSweepFlow, count: number): Promise<void> {
   const heroId = session.favorite && session.owned.has(session.favorite) ? session.favorite : relicCollection.validParty[0] ?? session.favorite;
   const skirmish = playSweepSkirmish(scene, { heroId, enemyId: flow.enemyId, count, fieldKey: flow.fieldKey, depth: SKIRMISH_DEPTH });
   // 응답이 오는 대로 확정된 보상을 넘긴다 — 그 뒤의 타격부터 그 아이콘이 튀어나온다.
-  const request = flow.request(count).then((result) => { skirmish.setRewards(dungeonRewardItems(result.granted, result.bonusItems)); return result; });
+  const request = flow.request(count).then((result) => { skirmish.setRewards([...dungeonRewardItems(result.granted, result.bonusItems), ...eventCoinRewardItems(result.playerExp)]); return result; });
   try {
     const [result] = await Promise.all([request, skirmish.done]);
     if (!scene.scene.isActive()) return;
     // 대성공이 얹은 몫은 액자에 따로 실어, 영수증이 그 판 수만큼 쾅쾅 맥동하며 수를 올린다.
-    const items = withGreatSuccessBonus(dungeonRewardItems(result.granted, result.bonusItems), result.greatSuccessBonus);
+    const items = [...withGreatSuccessBonus(dungeonRewardItems(result.granted, result.bonusItems), result.greatSuccessBonus), ...eventCoinRewardItems(result.playerExp)];
     openRewardPopup(scene, popups, { title: t("dungeon.sweep.title"), items, playerExp: result.playerExp, greatSuccessCount: result.greatSuccessCount ?? 0 });
   } catch {
     skirmish.close();

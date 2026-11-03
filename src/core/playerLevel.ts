@@ -95,6 +95,11 @@ export interface PlayerExpReceipt {
   levelsGained: number;
   /** 레벨업으로 실제로 가방에 들어간 것. 쌓을 한도에 걸려 깎였으면 깎인 뒤의 수다. */
   levelUpItems: { itemId: string; quantity: number; expiresInDays?: number }[];
+  /**
+   * 이 처리가 실제로 쓴 스테미나. 만렙이면 `granted`가 0이라 그 값으로는 쓴 양을 알 수 없다 —
+   * 정규 이벤트 코인(이번 주에 쓴 스테미나와 1:1)을 결과판에 세울 때 이 값을 읽는다. 옛 영수증엔 없다.
+   */
+  stamina?: number;
 }
 
 /** 경험치 줄이 한 레벨 안에서 몇 할 찼는가(0~1). 만렙은 가득 찬 줄이다. */

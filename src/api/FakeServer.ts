@@ -4621,7 +4621,7 @@ export class FakeServer implements GameApi {
     const missions = applyMissionEvent(this.state.missions, { type: "stamina_spent", amount: cost }, this.now());
     return {
       wallet: { ...this.state.wallet, stamina: this.state.wallet.stamina - cost }, playerResearch: grant.progress, missions, itemInventory,
-      playerExp: { before: normalizePlayerLevel(before), after: { ...grant.progress }, granted: grant.granted, levelsGained: grant.levelsGained, levelUpItems },
+      playerExp: { before: normalizePlayerLevel(before), after: { ...grant.progress }, granted: grant.granted, levelsGained: grant.levelsGained, levelUpItems, stamina: Math.max(0, Math.floor(cost)) },
     };
   }
 

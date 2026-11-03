@@ -5,6 +5,7 @@ import { createDefaultSettings } from "../../src/core/settings";
 import { createArchaeologyState } from "../../src/core/strataDig";
 import { CAKE_OPERATION_TIERS, cakeOperationRunCost, getCakeOperationTier } from "../../src/data/cakeOperation";
 import { SWEEP_TICKET_ITEM } from "../../src/core/dungeonShortcut";
+import { eventCoinRewardItems } from "../../src/ui/rewardPopupModel";
 
 const NOW = () => new Date("2026-09-19T12:00:00Z");
 
@@ -142,6 +143,12 @@ describe("FakeServer 치즈케이크 대작전", () => {
     expect(swept.staminaSpent).toBe(COST * 3);
     expect((await server.getChestForge()).coins - before).toBe(swept.staminaSpent);
     expect((await server.getDelophyHunt()).coins - before).toBe(swept.staminaSpent);
+    // 영수증도 쓴 스테미나를 싣고, 소탕 영수증은 그만큼의 이번 주 이벤트 코인 액자를 세운다.
+    expect(swept.playerExp.stamina).toBe(swept.staminaSpent);
+    expect(eventCoinRewardItems(swept.playerExp, new Date("2026-11-03T00:00:00Z"))).toEqual([{ icon: "currency-treasure-chest-coin", amount: swept.staminaSpent }]);
+    expect(eventCoinRewardItems(swept.playerExp, new Date("2026-11-10T00:00:00Z"))).toEqual([{ icon: "currency-delopi-thief-coin", amount: swept.staminaSpent }]);
+    expect(eventCoinRewardItems(undefined)).toEqual([]);
+    expect(eventCoinRewardItems({ stamina: 0 })).toEqual([]);
   });
 
   it("멤버십이면 소탕권 없이 소탕한다", async () => {

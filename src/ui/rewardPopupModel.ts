@@ -5,6 +5,23 @@ import type { ProductGrant } from "../data/shopCatalog";
 import type { CurrencyIconKey } from "./currencyIcons";
 import type { GlyphName } from "./glyphs";
 import { sortRewardItems } from "./rewardOrder";
+import { activeRegularEventId } from "../core/regularEventRotation";
+
+/** 교대 정규 이벤트마다 제 코인 그림. 코인은 둘 다 이번 주에 쓴 스테미나다. */
+export const REGULAR_EVENT_COIN_ICON: Readonly<Record<string, string>> = {
+  "chest-forge": "currency-treasure-chest-coin",
+  "delophy-hunt": "currency-delopi-thief-coin",
+};
+
+/**
+ * 스테미나를 쓴 처리가 함께 쌓은 정규 이벤트 코인 한 칸 — 코인은 쓴 스테미나와 1:1이다(`missions.weeklyStamina`).
+ * 결과판·소탕 영수증이 같은 함수를 지나며, 그림은 이번 주에 선 교대 이벤트의 코인이다. 쓴 것이 없으면 빈 목록.
+ */
+export function eventCoinRewardItems(receipt: { stamina?: number } | undefined, now: number | Date = Date.now()): RewardPopupItem[] {
+  const amount = Math.floor(receipt?.stamina ?? 0);
+  const icon = REGULAR_EVENT_COIN_ICON[activeRegularEventId(now)];
+  return amount > 0 && icon ? [{ icon, amount }] : [];
+}
 
 /** Phaser 없이 검증할 수 있는 공용 보상 액자 한 칸의 표시 계약이다. */
 export interface RewardPopupItem {

@@ -12,7 +12,7 @@ import { chipPoints, drawHairline, drawInnerVignette, drawLayer, drawShapeOutlin
 import { drawGlyph } from "./glyphs";
 import { addFramedIcon } from "./itemFrame";
 import { addRewardExpiryTag } from "./rewardExpiry";
-import type { RewardPopupItem } from "./rewardPopupModel";
+import { eventCoinRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import type { PopupLayer } from "./PopupLayer";
 import { COLOR, textStyle } from "./theme";
@@ -246,10 +246,12 @@ export class StageCompletePopup {
     this.shiftY = options.standing ? STANDING_SHIFT : 0;
     // 이 판의 입장이 올린 경험치. 진 판도 스테미나를 썼으므로 함께 선다. 한 번 꺼내면 비워진다.
     const expReceipt = takePlayerExp();
-    const loot = options.reward.kind === "loot" ? options.reward.items.filter(({ amount }) => amount > 0) : [];
+    // 쓴 스테미나만큼 함께 쌓인 정규 이벤트 코인(1:1) — 진 판은 스테미나를 쓰지 않으므로 영수증도 코인도 없다.
+    const coins = eventCoinRewardItems(expReceipt);
+    const loot = options.reward.kind === "loot" ? [...options.reward.items.filter(({ amount }) => amount > 0), ...coins] : [];
     const clearRewards = options.reward.kind === "storyClear" && options.reward.firstClear ? options.reward.firstClearRewards ?? [] : [];
     const shownRewards = options.reward.kind === "storyClear"
-      ? (clearRewards.length > 0 ? clearRewards.length : Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0)
+      ? (clearRewards.length > 0 ? clearRewards.length : Math.floor(options.reward.cheesecakeEarned) > 0 ? 1 : 0) + coins.length
       : loot.length;
     let hint: Phaser.GameObjects.Text | undefined;
     let autoBanner: { destroy: () => void } | undefined;
@@ -310,8 +312,8 @@ export class StageCompletePopup {
       else if (options.score?.rank) this.buildRank(body, options.score.rank);
       else body.add(drawHairline(this.scene, 0, EXP_ROW_Y, WIDTH - 140, { color: defeated ? COLOR.danger : this.accent(), alpha: 0.3 }));
       if (options.reward.kind === "storyClear") {
-        if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards);
-        else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear);
+        if (clearRewards.length > 0) this.buildFirstClearRewards(body, clearRewards, coins);
+        else this.buildClearReward(body, Math.floor(options.reward.cheesecakeEarned), options.reward.firstClear, coins);
         if (options.returnHint) body.add(this.scene.add.text(0, 455, options.returnHint, textStyle({ role: "body", size: 24, wrap: WIDTH - 140, align: "center", color: COLOR.accentText })).setOrigin(.5));
         if (options.clearActions) this.buildClearActions(body, close, options.clearActions);
         else if (options.replay) this.buildReplay(body, close, options.replay);
@@ -531,15 +533,21 @@ export class StageCompletePopup {
   }
 
   /** RewardPopup과 같은 액자 하나로, 스토리 클리어의 치즈케이크 한 종류를 보여 준다. */
-  private buildClearReward(body: Phaser.GameObjects.Container, cheesecake: number, firstClear: boolean): void {
-    if (cheesecake <= 0) return;
+  private buildClearReward(body: Phaser.GameObjects.Container, cheesecake: number, firstClear: boolean, extras: readonly RewardPopupItem[] = []): void {
+    if (cheesecake <= 0) {
+      this.buildExtraFrames(body, extras, 0, REWARD_ROW.gap, REWARD_ROW.frame);
+      return;
+    }
     const size = REWARD_ROW.frame;
+    // 함께 받은 코인이 있으면 치즈케이크가 왼쪽으로 반 칸 비켜서고 그 옆에 코인 액자가 선다.
+    const cx = -(extras.length * REWARD_ROW.gap) / 2;
+    this.buildExtraFrames(body, extras, cx + REWARD_ROW.gap, REWARD_ROW.gap, size);
     const frame = chipPoints(size, size, { bevel: { topLeft: size * 0.215, topRight: 0, bottomRight: size * 0.215, bottomLeft: 0 } });
-    body.add(drawLayer(this.scene, 0, REWARD_ROW.y, frame, { fill: 0x101722, alpha: 0.98 }));
-    body.add(this.scene.add.image(0, REWARD_ROW.y, "currency-cheesecake").setDisplaySize(size * 0.76, size * 0.76));
-    body.add(drawInnerVignette(this.scene, 0, REWARD_ROW.y, frame, { strength: 0.62 }));
-    body.add(drawShapeOutline(this.scene, 0, REWARD_ROW.y, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
-    const amount = this.scene.add.text(size / 2 - 11, REWARD_ROW.y + size / 2 - 9, formatCurrency(cheesecake), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
+    body.add(drawLayer(this.scene, cx, REWARD_ROW.y, frame, { fill: 0x101722, alpha: 0.98 }));
+    body.add(this.scene.add.image(cx, REWARD_ROW.y, "currency-cheesecake").setDisplaySize(size * 0.76, size * 0.76));
+    body.add(drawInnerVignette(this.scene, cx, REWARD_ROW.y, frame, { strength: 0.62 }));
+    body.add(drawShapeOutline(this.scene, cx, REWARD_ROW.y, frame, { color: COLOR.accent, alpha: 0.82, width: 3 }));
+    const amount = this.scene.add.text(cx + size / 2 - 11, REWARD_ROW.y + size / 2 - 9, formatCurrency(cheesecake), textStyle({ role: "display", size: 30, color: COLOR.accentText })).setOrigin(1, 1);
     amount.setStroke("#000000", 6); amount.setShadow(2, 3, "#000000", 2, false, true);
     body.add(amount);
     body.add(this.scene.add.text(0, REWARD_ROW.y + size / 2 + 33, firstClear ? t("stageComplete.firstClear") : t("stageComplete.repeatClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
@@ -549,10 +557,12 @@ export class StageCompletePopup {
    * 첫 승리의 초회 보상 전부 — 노드 미리보기에서 본 **같은 액자**(`addStageRewardFrame`)가 같은 순서로
    * 선다. 미리보기에서 본 줄이 그대로 손에 들어왔다는 것이 읽혀야 한다.
    */
-  private buildFirstClearRewards(body: Phaser.GameObjects.Container, rewards: readonly StageFirstClearReward[]): void {
-    const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, rewards.length - 1));
+  private buildFirstClearRewards(body: Phaser.GameObjects.Container, rewards: readonly StageFirstClearReward[], extras: readonly RewardPopupItem[] = []): void {
+    const total = rewards.length + extras.length;
+    const gap = Math.min(REWARD_ROW.gap, (WIDTH - 140 - REWARD_ROW.frame) / Math.max(1, total - 1));
     const frame = Math.min(REWARD_ROW.frame, gap - 14);
-    const startX = -((rewards.length - 1) * gap) / 2;
+    const startX = -((total - 1) * gap) / 2;
+    this.buildExtraFrames(body, extras, startX + rewards.length * gap, gap, frame);
     rewards.forEach((reward, index) => {
       const x = startX + index * gap;
       addStageRewardFrame(this.scene, body, x, REWARD_ROW.y, frame, reward);
@@ -564,6 +574,13 @@ export class StageCompletePopup {
       body.add(hit);
     });
     body.add(this.scene.add.text(0, REWARD_ROW.y + frame / 2 + 33, t("stageComplete.firstClear"), textStyle({ role: "body", size: 18, color: COLOR.inkDim })).setOrigin(0.5));
+  }
+
+  /** 결과판 보상 줄 끝에 덧붙는 액자(정규 이벤트 코인) — 액자는 공용 프리팹 한 장이다. */
+  private buildExtraFrames(body: Phaser.GameObjects.Container, items: readonly RewardPopupItem[], startX: number, gap: number, frame: number): void {
+    items.forEach((item, index) => {
+      addFramedIcon(this.scene, body, startX + index * gap, REWARD_ROW.y, frame, typeof item.icon === "string" ? item.icon : "", { amount: formatCurrency(item.amount) });
+    });
   }
 
   /**

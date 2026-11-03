@@ -44,3 +44,17 @@ test("델로피의 보물 찾기 — 진행 중 판", async ({ page }, info) => 
   await setup(page, true);
   await captureGame(page, info.outputPath("delophy-play.png"));
 });
+
+test("델로피의 보물 찾기 — 게임 방법", async ({ page }, info) => {
+  test.skip(process.env.PF_E2E_REMOTE_LOOP !== "1", "소스 서버 전용");
+  await setup(page, false);
+  await page.evaluate(async () => {
+    const root = "/src/";
+    const ui = await import(/* @vite-ignore */root + "ui/DelophyHuntPopup.ts");
+    const layers = await import(/* @vite-ignore */root + "ui/PopupLayer.ts");
+    const scene = (window as any).__FORGE_GAME.scene.getScene("lobby");
+    ui.openDelophyHowTo(scene, new layers.PopupLayer(scene, 3100));
+  });
+  await page.waitForTimeout(1500);
+  await captureGame(page, info.outputPath("delophy-howto.png"));
+});

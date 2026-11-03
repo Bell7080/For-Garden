@@ -1,6 +1,7 @@
 import type { AttendanceTrackDto } from "../api/contracts";
 import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
 import { isRegularEventActive } from "../core/regularEventRotation";
+import { QA_ALL_EVENTS } from "../core/buildFlavor";
 
 /**
  * 로비 이벤트 판의 순수 규칙 — 무엇이 서고, 얼마나 남았고, 판이 얼마나 큰가.
@@ -10,7 +11,9 @@ import { isRegularEventActive } from "../core/regularEventRotation";
  */
 
 /** 지금 열려 있는 이벤트만 정의 순서대로 돌려준다. 시작 전·끝난 이벤트와 이번 주 차례가 아닌 정규 이벤트는 서지 않는다. */
-export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS): LobbyEventDef[] {
+export function activeLobbyEvents(now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS, allEvents: boolean = QA_ALL_EVENTS): LobbyEventDef[] {
+  // QA 빌드는 기한·교대와 상관없이 모두 세운다(`QA_ALL_EVENTS`).
+  if (allEvents) return [...events];
   return events.filter((event) => Date.parse(event.startsAt) <= now && now < Date.parse(event.endsAt) && isRegularEventActive(event.id, now));
 }
 

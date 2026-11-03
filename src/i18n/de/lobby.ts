@@ -110,7 +110,6 @@ export const LOBBY_DE = {
   "delophyHunt.hint.normal": "Schnell, Karten wechseln manchmal die Höhe",
   "delophyHunt.hint.hard": "Sehr schnell, Karten verstecken sich hinter anderen",
   "delophyHunt.jackpotNote": "Ab Normal versteckt sich manchmal eine Jackpot-Karte. Je besser der Schatz, desto wilder das Mischen.",
-  "delophyHunt.enter": "{name} · Mit {count} Münzen starten",
   "delophyHunt.collected": "Gefundene Schätze",
   "delophyHunt.phase.memorize": "Merk es dir!",
   "delophyHunt.phase.shuffle": "Mischen…",

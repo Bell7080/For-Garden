@@ -110,7 +110,6 @@ export const LOBBY_ZH_HANT = {
   "delophyHunt.hint.normal": "洗牌很快，偶爾會改變高度",
   "delophyHunt.hint.hard": "極快，卡牌會躲到其他卡牌後面",
   "delophyHunt.jackpotNote": "普通及以上難度偶爾會藏著大獎卡。越好的寶物洗得越兇。",
-  "delophyHunt.enter": "{name} · 用{count}枚硬幣開始",
   "delophyHunt.collected": "已找到的寶物",
   "delophyHunt.phase.memorize": "請記住！",
   "delophyHunt.phase.shuffle": "洗牌中…",

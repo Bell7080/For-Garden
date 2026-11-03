@@ -146,6 +146,20 @@ describe("델로피의 보물 찾기 서버 경계", () => {
     await expect(serverWithCoins(1000, () => 0).api.enterDelophyHunt({ requestId: "a", difficulty: "nope" as never })).rejects.toBeDefined();
   });
 
+  it("QA 디버그 도구는 정규 이벤트 코인을 이번 주 몫으로 더한다(두 이벤트 공용)", async () => {
+    const { api } = serverWithCoins(100, () => 0);
+    await expect(api.applyDebugCommand({ kind: "eventCoins", amount: 500 })).resolves.toMatchObject({ changed: 1 });
+    expect((await api.getDelophyHunt()).coins).toBe(600);
+    expect((await api.getChestForge()).coins).toBe(600);
+    const off = new FakeServer(createDefaultSession(), { latencyMs: 0, now: () => DELOPHY_WEEK, random: () => 0, persistSession: () => undefined, developmentTools: false });
+    await expect(off.applyDebugCommand({ kind: "eventCoins", amount: 500 })).rejects.toMatchObject({ code: "DEBUG_TOOLS_DISABLED" });
+  });
+
+  it("QA 빌드는 로비 이벤트를 기한·교대와 상관없이 모두 세운다", () => {
+    const all = activeLobbyEvents(TIA_WEEK.getTime(), undefined, true).map((event) => event.id);
+    expect(all).toEqual(expect.arrayContaining(["chest-forge", "delophy-hunt"]));
+  });
+
   it("입장 → 짝 맞추기 → 보상 지급, 같은 요청은 한 번만 처리하고 진행 중에는 다시 입장할 수 없다", async () => {
     const { state, api } = serverWithCoins(1000, lcg(5));
     const entered = await api.enterDelophyHunt({ requestId: "enter", difficulty: "easy" });

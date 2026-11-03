@@ -20,3 +20,10 @@ export const TUTORIAL_ENABLED: boolean = import.meta.env?.MODE !== "qa";
  * 운영 서버의 길드는 건드리지 않고 길드만 이 기기의 샌드박스로 돈다(`guildApi.setGuildSandbox`).
  */
 export const QA_GUILD_AUTO_JOIN: boolean = QA_TOOLS_ENABLED && import.meta.env?.MODE !== "test";
+
+/**
+ * QA 빌드에서는 로비 이벤트를 기한·주간 교대와 상관없이 모두 세운다(응태 요청, 2026-11-03) — 정규 이벤트가 주마다 하나씩만
+ * 서면 다른 쪽을 시험하려고 한 주를 기다려야 한다. 일반 빌드는 기간·교대를 그대로 지킨다. **E2E·단위 테스트(`test`)는 끈다** —
+ * 기간·교대 규칙 자체를 검사한다.
+ */
+export const QA_ALL_EVENTS: boolean = QA_TOOLS_ENABLED && import.meta.env?.MODE !== "test";

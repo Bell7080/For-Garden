@@ -14,7 +14,7 @@ import { BOND_TOTAL_XP_BY_LEVEL, BOND_LEVEL_CAP } from "../core/bond";
 import { assertStoryUnlocked, resolveStoryChoice, assertStoryChoiceReachable, redeemDeferredStoryBond } from "./storyAuthority";
 import type { SharedRaidContext } from "../server/sharedRaids";
 import { serverNow } from "./serverClock";
-import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
+import { QA_ALL_EVENTS, QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { PLACEHOLDER_AD_ENABLED, TEMP_AD_REWARD_ENABLED, placeholderAdToken, tempAdToken } from "../core/tempAd";
 import { bannerAcceptsCount, bannerActive, canPull, carryoverTenAvailable, carryoverTensOnClose, pull, resolveAcquisitions, spend } from "../core/gacha";
 import { socialApi } from "./FakeSocialServer";
@@ -37,7 +37,7 @@ import { bountyRunCost, isBountyTierCleared, isBountyTierUnlocked, markBountyTie
 import { BOUNTY, getBountyTier, type BountyTierDef } from "../data/bounty";
 import { BREAKTHROUGH_CAP, breakthroughFragmentSpend, canBreakThrough, UNIVERSAL_FRAGMENT_ITEM, canFeedRelic, feedRelic as calculateFeed, FEED_UNIT, nextBreakthrough, relicLevelCap, BREAKTHROUGH_GRADE_CAP, breakthroughGrade } from "../core/relicProgression";
 import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond";
-import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
+import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
@@ -1548,9 +1548,24 @@ export class FakeServer implements GameApi {
    * QA 디버그 창의 조정 명령. 개발 도구가 꺼진 서버(일반 빌드·환경 변수 없음)는 아무것도 바꾸지 않고 거절한다.
    * 로컬 변경은 다음 서버 응답이 덮어쓰므로, 서버 모드에서도 반드시 이 경계를 지나야 남는다.
    */
+  /** QA 빌드의 개발 서버는 로비 이벤트를 기한·주간 교대와 상관없이 연다(`QA_ALL_EVENTS`). 정식 서버는 늘 거짓이다. */
+  private allEventsOpen(): boolean {
+    return QA_ALL_EVENTS && this.developmentTools;
+  }
+
   async applyDebugCommand(command: DebugCommand): Promise<DebugCommandResponse> {
     await this.delay();
     if (!this.developmentTools) throw new GameApiError("DEBUG_TOOLS_DISABLED", "개발 도구가 꺼진 서버입니다.");
+    if (command.kind === "eventCoins") {
+      // 정규 이벤트 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다 — 그 몫만 올린다(보물상자·보물 찾기 공용).
+      const amount = Math.max(0, Math.floor(command.amount));
+      if (amount <= 0) return { ok: true, changed: 0 };
+      const missions = normalizeMissions(this.state.missions, this.now());
+      const candidate = { ...this.state, missions: { ...missions, weeklyStamina: Math.min(LIFETIME_COUNT_CAP, (missions.weeklyStamina ?? 0) + amount) } };
+      this.persist(candidate);
+      this.state.missions = candidate.missions;
+      return { ok: true, changed: 1 };
+    }
     if (command.kind === "tenUpgrade") {
       // 서버 모드에서는 클라이언트 플래그가 뽑기에 닿지 않으므로 표식을 서버 장부에 남긴다.
       const candidate = { ...this.state, serverJournal: { ...(this.state.serverJournal ?? emptyServerJournal()), qaTenUpgrade: true } };
@@ -2098,7 +2113,7 @@ export class FakeServer implements GameApi {
     if (cached) return { ...cached, ...this.snapshot() };
     const now = this.now();
     const status = await this.getRouletteStatus();
-    if (!status.active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
+    if (!status.active && !this.allEventsOpen()) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
     if (!request.requestId || this.state.dailyAdRewards.requestIds.includes(request.requestId)) throw new GameApiError("AD_REQUEST_DUPLICATE", "이미 처리한 회전입니다.");
     if (status.remaining <= 0) throw new GameApiError("AD_DAILY_LIMIT", "남은 회전 횟수가 없습니다.");
     const index = rouletteIndex(this.random);
@@ -2136,7 +2151,7 @@ export class FakeServer implements GameApi {
     const next = structuredClone(this.state);
     let pick: ChestForgeResponse["pick"];
     if (kind === "enter") {
-      if (!isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
+      if (!this.allEventsOpen() && !isRegularEventActive(CHEST_FORGE.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 상자가 있습니다.");
       if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
       next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
@@ -2190,7 +2205,7 @@ export class FakeServer implements GameApi {
     let show: DelophyHuntResponse["show"];
     let flip: DelophyHuntResponse["flip"];
     if (kind === "enter") {
-      if (!isRegularEventActive(DELOPHY_HUNT.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
+      if (!this.allEventsOpen() && !isRegularEventActive(DELOPHY_HUNT.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
       const difficulty = huntDifficulty(input.difficulty);
       if (!difficulty) throw new GameApiError("INVALID_STATE", "알 수 없는 난이도입니다.");
       if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 판이 있습니다.");
@@ -2299,7 +2314,7 @@ export class FakeServer implements GameApi {
 
   /** 무료 수령을 먼저 받아야 열리는 광고 슬롯(일간 보급의 추가 몫)은 그 상품의 오늘 몫이 소진됐을 때만 받는다. */
   private assertAdPrerequisite(slot: AdRewardSlot, now: Date): void {
-    if (slot.id === ROULETTE.adSlot && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
+    if (slot.id === ROULETTE.adSlot && !this.allEventsOpen() && !rouletteStatus(this.state.dailyAdRewards, now).active) throw new GameApiError("EVENT_NOT_ACTIVE", "이벤트가 종료되었습니다.");
     if (!slot.requiresClaimedProductId) return;
     const product = PRODUCTS.find(({ id }) => id === slot.requiresClaimedProductId);
     if (!product || this.remaining(product, now) > 0) throw new GameApiError("AD_PREREQUISITE", "먼저 무료 보급을 받아야 합니다.");

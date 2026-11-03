@@ -110,7 +110,6 @@ export const LOBBY_PT_BR = {
   "delophyHunt.hint.normal": "Rápido; às vezes as cartas mudam de altura",
   "delophyHunt.hint.hard": "Muito rápido; as cartas se escondem atrás de outras",
   "delophyHunt.jackpotNote": "A partir do Normal, pode haver uma carta de jackpot escondida. Quanto melhor o tesouro, mais feroz o embaralhar.",
-  "delophyHunt.enter": "{name} · Começar com {count} moedas",
   "delophyHunt.collected": "Tesouros encontrados",
   "delophyHunt.phase.memorize": "Memorize!",
   "delophyHunt.phase.shuffle": "Embaralhando…",

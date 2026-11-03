@@ -108,7 +108,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     subtitleKey: "event.delophyHunt.subtitle",
     backdropKey: BACKGROUND.eventDelopiCard,
     destination: { kind: "delophyHunt" },
-    sd: { relicId: "delophy", side: "right" },
+    sd: { relicId: "delopi", side: "right" },
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",
     endsAt: "2099-12-31T23:59:59Z",

@@ -23,7 +23,9 @@ export type DebugCommand =
   | { kind: "universalFragments"; amount: number }
   | { kind: "unlockStories" }
   /** 다음 10연 한 번의 마지막 칸을 승급 찬스로 굳힌다. 세션 모양이 아니라 서버 장부의 표식이라 `FakeServer`가 따로 처리한다. */
-  | { kind: "tenUpgrade" };
+  | { kind: "tenUpgrade" }
+  /** 정규 이벤트 코인(이번 주에 쓴 스테미나 몫)을 더한다. 미션 장부라 `FakeServer`가 따로 처리한다. */
+  | { kind: "eventCoins"; amount: number };
 
 export interface DebugCommandResponse {
   ok: boolean;
@@ -78,6 +80,7 @@ function integer(value: number, min: number, max: number): number {
 export function applyDebugCommand(target: DebugTarget, command: DebugCommand, rules: DebugRules): number {
   switch (command.kind) {
     case "tenUpgrade": return 0;
+    case "eventCoins": return 0;
     case "currency": {
       if (!(command.key in rules.walletCaps)) throw new Error("알 수 없는 재화입니다.");
       const cap = rules.walletCaps[command.key];

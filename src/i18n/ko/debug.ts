@@ -15,6 +15,7 @@ export const DEBUG_KO = {
   "settings.debug.menu.relicFragments": "캐릭터 파편 지급",
   "settings.debug.menu.breakthroughSet": "돌파 재료 세트 지급",
   "settings.debug.menu.universalFragments": "만능 파편 지급 (R·SR·SSR)",
+  "settings.debug.menu.eventCoins": "이벤트 코인 지급 (보물상자·보물 찾기)",
   "settings.debug.menu.tenUpgrade": "다음 10연 승급 찬스 강제",
   "settings.debug.tenUpgradeArmed": "다음 10연 한 번의 마지막 칸이 승급 찬스로 SSR이 됩니다.",
   "settings.debug.menu.guildQa": "길드 시험 (임시 길드·길드전·수호전)",

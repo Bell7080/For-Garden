@@ -30,7 +30,7 @@ const setup = async (page: import("@playwright/test").Page, withRun: boolean) =>
   await sourceScene(page, "window.__FORGE_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('lobby');");
   await page.waitForFunction(() => window.__PF_DEBUG?.scene === "lobby");
   await open(page);
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(6000);
 };
 
 test("델로피의 보물 찾기 — 난이도 고르기", async ({ page }, info) => {

@@ -110,7 +110,6 @@ export const LOBBY_ES = {
   "delophyHunt.hint.normal": "Rápido; a veces las cartas cambian de altura",
   "delophyHunt.hint.hard": "Muy rápido; las cartas se esconden tras otras",
   "delophyHunt.jackpotNote": "Desde Normal puede esconderse una carta de premio gordo. Cuanto mejor el tesoro, más feroz el barajado.",
-  "delophyHunt.enter": "{name} · Empezar con {count} monedas",
   "delophyHunt.collected": "Tesoros hallados",
   "delophyHunt.phase.memorize": "¡Memoriza!",
   "delophyHunt.phase.shuffle": "Barajando…",

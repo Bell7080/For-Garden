@@ -24,7 +24,6 @@ import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
-import { RouletteSpinButton } from "./RouletteSpinButton";
 import { drawSparkle } from "./rouletteWheel";
 import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
@@ -48,17 +47,17 @@ const HUNT = {
   resetY: -618,
   /** 가운데 델로피 — 두 쪽이 같은 자리에 서서 카드를 돌린다. */
   dealer: { x: 0, groundY: 118, height: 400, orbitRx: 250, orbitRy: 62, orbitCardWidth: 84 },
-  intro: { textY: -500, detailY: 200, noteY: 300, howToY: 384, pickerY: 520, pipsY: 606, arrowX: 392 },
+  intro: { textY: -500, detailY: 200, noteY: 300, howToY: 384, pickerY: 520, pipsY: 606, arrowX: 366 },
   play: { livesY: -556, collectedLabelY: -492, collectedY: -424, phaseY: -338, boardY: 410, areaWidth: 860, maxCardWidth: 190 },
   button: { width: 620, height: 112 },
   noteY: 738,
-  howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 22, sd: { x: -250, height: 300 } },
+  howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 26, sd: { x: -250, height: 300 } },
 } as const;
 
 /** 보물 찾기 전용 이벤트 코인 그림(`currencyIcons`). 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다. */
 const COIN_ICON = "currency-delopi-thief-coin";
 /** 창 안에서 판 곁을 지키는 SD — 로비 이벤트 카드와 같은 개체다(`lobbyEvents`의 `delophy-hunt`). */
-const HUNT_SD = "delophy";
+const HUNT_SD = "delopi";
 
 /** 델로피의 결 — 진홍·검정 줄무늬 커튼, 양피지 바탕, 금빛 열쇠와 마름모 카드. 글은 짙은 자두 검정, 강조는 진홍이다. */
 const INK = "#2a1530";
@@ -67,8 +66,8 @@ const ACCENT = "#b4233f";
 const OUTLINE = "#fff6e4";
 const DELO = { cream: 0xfff3da, ink: 0x2a1530, crimson: 0xb4233f, crimsonDeep: 0x7d1630, gold: 0xffd55e, goldDeep: 0xb07f12, shade: 0x2a1530 } as const;
 
-/** 난이도의 색 — 쉬움은 민트, 보통은 하늘, 어려움은 분홍. 버튼의 테와 눌린 두께가 이 색이다. */
-const DIFFICULTY_TONE: Record<HuntDifficultyId, number> = { easy: 0x8fd6b4, normal: 0x9fc2f2, hard: 0xf2a0c4 };
+/** 난이도의 색 — 델로피의 결 안에서 쉬움은 금빛, 보통은 장미, 어려움은 짙은 진홍. 넘김 점과 반짝이가 이 색이다. */
+const DIFFICULTY_TONE: Record<HuntDifficultyId, number> = { easy: 0xf0c76a, normal: 0xe0607a, hard: 0xa01d3c };
 
 /** 보물 등급의 색 — 카드 앞면의 테와 면. 대박만 금빛이다. */
 const TIER_TONE: Record<HuntTier, { face: number; deep: number }> = {
@@ -281,6 +280,106 @@ class DelophyDealer {
   }
 }
 
+/**
+ * 난이도 단추 — 델로피의 카드처럼 진홍 면에 금빛 안쪽 테, 양 끝의 금빛 마름모. 왼쪽 마름모 수가 난이도(1~3)이고,
+ * 오른쪽 짙은 알약이 드는 코인을 말한다. 누를 수 있는 동안은 금빛 테가 천천히 숨 쉬고, 누르면 두께만큼 내려앉는다.
+ * 돌림판의 사탕 알약(`RouletteSpinButton`)을 빌려 쓰지 않는 이유는 이 창의 결(마술 무대)과 어긋나서다.
+ */
+class DelophyPickButton extends Phaser.GameObjects.Container {
+  private readonly face: Phaser.GameObjects.Container;
+  private readonly label: Phaser.GameObjects.Text;
+  private readonly priceText: Phaser.GameObjects.Text;
+  private readonly pill: Phaser.GameObjects.Graphics;
+  private readonly coin: Phaser.GameObjects.Image;
+  private readonly glow: Phaser.GameObjects.Graphics;
+  private pulse?: Phaser.Tweens.Tween;
+  private enabled = true;
+  private static readonly DEPTH = 12;
+  constructor(scene: Phaser.Scene, x: number, y: number, private readonly options: { width: number; height: number; level: number; onClick: () => void }) {
+    super(scene, x, y);
+    const { width, height, level } = options;
+    const depth = DelophyPickButton.DEPTH, radius = 22, ink = 5;
+    const base = scene.add.graphics();
+    base.fillStyle(DELO.shade, 0.32).fillRoundedRect(-width / 2 + 6, -height / 2 + depth + 10, width, height, radius);
+    base.fillStyle(DELO.ink, 1).fillRoundedRect(-width / 2 - ink, -height / 2 - ink, width + ink * 2, height + depth + ink * 2, radius + ink);
+    base.fillStyle(DELO.crimsonDeep, 1).fillRoundedRect(-width / 2, -height / 2 + depth, width, height, radius);
+    this.add(base);
+    this.face = scene.add.container(0, 0);
+    const plate = scene.add.graphics();
+    plate.fillStyle(DELO.crimson, 1).fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+    // 위쪽 절반을 한 톤 밝게 — 평평한 면에 결을 준다(광택이 아니라 두 층의 색면).
+    plate.fillStyle(0xd23a55, 1).fillRoundedRect(-width / 2, -height / 2, width, height * 0.5, { tl: radius, tr: radius, bl: 0, br: 0 });
+    // 옅은 마름모 무늬 — 카드 뒷면과 같은 결을 단추에도 아주 옅게.
+    plate.fillStyle(0xffffff, 0.06);
+    for (let column = 0; column < 9; column += 1) plate.fillPoints(diamond(-width / 2 + 60 + column * 62, 0, 26, height * 0.36), true);
+    this.face.add(plate);
+    this.glow = scene.add.graphics();
+    this.glow.lineStyle(3, DELO.gold, 1).strokeRoundedRect(-width / 2 + 9, -height / 2 + 9, width - 18, height - 18, radius - 8);
+    this.face.add(this.glow);
+    const marks = scene.add.graphics();
+    for (const side of [-1, 1]) {
+      const cx = side * (width / 2 - 10);
+      marks.fillStyle(DELO.ink, 1).fillPoints(diamond(cx, 0, 13, 19), true);
+      marks.fillStyle(DELO.gold, 1).fillPoints(diamond(cx, 0, 9, 14), true);
+    }
+    // 난이도 마름모 — 쉬움 하나, 보통 둘, 어려움 셋.
+    for (let index = 0; index < 3; index += 1) {
+      const cx = -width / 2 + 52 + index * 26, on = index < level;
+      marks.fillStyle(DELO.ink, on ? 1 : 0.45).fillPoints(diamond(cx, 0, 11, 16), true);
+      marks.fillStyle(on ? DELO.gold : DELO.crimsonDeep, 1).fillPoints(diamond(cx, 0, 7, 11), true);
+    }
+    this.face.add(marks);
+    this.label = scene.add.text(0, 0, "", textStyle({ role: "display", size: Math.round(height * 0.36), color: OUTLINE })).setOrigin(0.5).setStroke("#5a0f22", 8);
+    this.pill = scene.add.graphics();
+    this.coin = scene.add.image(0, 0, COIN_ICON).setDisplaySize(height * 0.42, height * 0.42);
+    this.priceText = scene.add.text(0, 0, "", textStyle({ role: "display", size: Math.round(height * 0.28), color: "#ffe38a" })).setOrigin(0, 0.5);
+    this.face.add([this.label, this.pill, this.coin, this.priceText]);
+    this.add(this.face);
+    const hit = addClippedHit(scene, this, 0, depth / 2, width, height + depth, () => ({ left: 0, right: scene.scale.width, top: 0, bottom: scene.scale.height }), { useHandCursor: true });
+    hit.on("pointerdown", () => { if (this.enabled) this.face.setY(depth * 0.7); });
+    hit.on("pointerout", () => this.face.setY(0));
+    hit.on("pointerup", () => { this.face.setY(0); if (this.enabled) options.onClick(); });
+    this.setSize(width, height + depth);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => this.pulse?.remove());
+    this.syncPulse();
+  }
+  setContent(name: string, price: number): this {
+    const { width, height } = this.options;
+    this.label.setScale(1).setText(name);
+    this.priceText.setText(price.toLocaleString());
+    const pillHeight = height * 0.56, coin = height * 0.42, pad = 14;
+    const pillWidth = pad + coin + 8 + this.priceText.width + pad + 4;
+    const pillRight = width / 2 - 34, pillLeft = pillRight - pillWidth;
+    this.pill.clear();
+    this.pill.fillStyle(DELO.ink, 0.92).fillRoundedRect(pillLeft, -pillHeight / 2, pillWidth, pillHeight, pillHeight / 2);
+    this.pill.lineStyle(2, DELO.gold, 0.8).strokeRoundedRect(pillLeft, -pillHeight / 2, pillWidth, pillHeight, pillHeight / 2);
+    this.coin.setPosition(pillLeft + pad + coin / 2, 0);
+    this.priceText.setPosition(pillLeft + pad + coin + 8, 1);
+    // 이름은 난이도 마름모와 값 알약 사이의 가운데.
+    const left = -width / 2 + 52 + 2 * 26 + 24;
+    shrinkTextToWidth(this.label, pillLeft - 20 - left);
+    this.label.setX((left + pillLeft - 12) / 2);
+    return this;
+  }
+  setEnabled(enabled: boolean): this {
+    if (this.enabled === enabled) return this;
+    this.enabled = enabled;
+    this.setAlpha(enabled ? 1 : 0.55);
+    this.syncPulse();
+    return this;
+  }
+  override setVisible(value: boolean): this {
+    super.setVisible(value);
+    if (this.glow) this.syncPulse();
+    return this;
+  }
+  private syncPulse(): void {
+    const alive = this.enabled && chestFxMotion().loops;
+    if (alive && !this.pulse) this.pulse = this.scene.tweens.add({ targets: this.glow, alpha: { from: 1, to: 0.35 }, duration: 900, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    else if (!alive && this.pulse) { this.pulse.remove(); this.pulse = undefined; this.glow.setAlpha(1); }
+  }
+}
+
 /** 카드 한 장 — 처음 배치의 번호(`card`)가 정체이고, 지금 선 자리는 섞이면서 바뀐다. */
 interface HuntCardView { holder: Phaser.GameObjects.Container; treasure: HuntTreasure; slot: number; up: boolean; found: boolean }
 
@@ -322,7 +421,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
     let swiping = false;
     const picker = scene.add.container(0, HUNT.intro.pickerY);
     const buttons = HUNT_DIFFICULTIES.map((entry, index) => {
-      const button = new RouletteSpinButton(scene, 0, 0, { width: HUNT.button.width, height: HUNT.button.height, label: "", tone: DIFFICULTY_TONE[entry.id], iconKey: COIN_ICON,
+      const button = new DelophyPickButton(scene, 0, 0, { width: HUNT.button.width, height: HUNT.button.height, level: index + 1,
         onClick: () => {
           const pointer = scene.input.activePointer;
           if (Math.abs(pointer.upX - pointer.downX) > 36) return;
@@ -366,9 +465,10 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
     for (const direction of [-1, 1] as const) {
       const arrow = scene.add.container(direction * HUNT.intro.arrowX, HUNT.intro.pickerY + 6);
       const g = scene.add.graphics();
-      g.fillStyle(DELO.shade, 0.28).fillPoints([new Phaser.Geom.Point(-direction * 22 + 3, 0 + 8), new Phaser.Geom.Point(direction * 22 + 3, -38 + 8), new Phaser.Geom.Point(direction * 22 + 3, 38 + 8)], true);
-      g.fillStyle(DELO.ink, 1).fillPoints([new Phaser.Geom.Point(-direction * 30, 0), new Phaser.Geom.Point(direction * 26, -46), new Phaser.Geom.Point(direction * 26, 46)], true);
-      g.fillStyle(DELO.gold, 1).fillPoints([new Phaser.Geom.Point(-direction * 20, 0), new Phaser.Geom.Point(direction * 18, -34), new Phaser.Geom.Point(direction * 18, 34)], true);
+      // 끝이 바깥(넘길 쪽)을 향하는 금빛 삼각형 — 짙은 테 + 아래로 떨어지는 그림자.
+      g.fillStyle(DELO.shade, 0.28).fillPoints([new Phaser.Geom.Point(direction * 30 + 3, 8), new Phaser.Geom.Point(-direction * 24 + 3, -38), new Phaser.Geom.Point(-direction * 24 + 3, 54)], true);
+      g.fillStyle(DELO.ink, 1).fillPoints([new Phaser.Geom.Point(direction * 32, 0), new Phaser.Geom.Point(-direction * 26, -48), new Phaser.Geom.Point(-direction * 26, 48)], true);
+      g.fillStyle(DELO.gold, 1).fillPoints([new Phaser.Geom.Point(direction * 20, 0), new Phaser.Geom.Point(-direction * 18, -35), new Phaser.Geom.Point(-direction * 18, 35)], true);
       const zone = addClippedHit(scene, arrow, 0, 0, 110, 150, () => ({ left: 0, right: scene.scale.width, top: 0, bottom: scene.scale.height }), { useHandCursor: true });
       zone.on("pointerdown", () => pressIn(arrow));
       zone.on("pointerout", () => pressOut(arrow, "normal", { pop: false }));
@@ -518,7 +618,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       const current = buttons[pick].entry;
       detailText.setText(`${t("delophyHunt.detail", { pairs: current.pairs, misses: DELOPHY_HUNT.maxMisses })} · ${t(HINT_KEY[current.id])}`);
       buttons.forEach(({ entry, button }, index) => {
-        button.setLabel(t("delophyHunt.enter", { name: t(DIFFICULTY_KEY[entry.id]), count: entry.entryCost }));
+        button.setContent(t(DIFFICULTY_KEY[entry.id]), entry.entryCost);
         button.setEnabled(index === pick && !busy && !running && status.coins >= entry.entryCost);
       });
       arrows.forEach((arrow, index) => arrow.setAlpha((index === 0 ? pick > 0 : pick < buttons.length - 1) && !busy ? 1 : 0.3));
@@ -688,7 +788,9 @@ export function openDelophyHowTo(scene: Phaser.Scene, popups: PopupLayer): void 
   const { width, bubbleWidth, wrap, lineGap, sd } = HUNT.howTo;
   const keys: TextKey[] = ["delophyHunt.howTo.1", "delophyHunt.howTo.2", "delophyHunt.howTo.3", "delophyHunt.howTo.4"];
   const lines = keys.map((key) => scene.add.text(0, 0, t(key), textStyle({ role: "body", size: 27, color: INK, wrap, lineSpacing: 6 })).setOrigin(0, 0));
-  const textHeight = lines.reduce((sum, line) => sum + line.height, 0) + lineGap * (lines.length - 1);
+  // 번호 마름모가 한 줄 글보다 크다 — 한 줄짜리 항목도 마름모 높이만큼은 자리를 갖게 해 위아래 번호가 붙지 않게 한다.
+  const rowHeight = (line: Phaser.GameObjects.Text): number => Math.max(line.height, 56);
+  const textHeight = lines.reduce((sum, line) => sum + rowHeight(line), 0) + lineGap * (lines.length - 1);
   const bubblePad = 40, tail = 46, top = 70;
   const bubbleHeight = textHeight + bubblePad * 2;
   const height = top + bubbleHeight + tail + sd.height + 30;
@@ -717,7 +819,7 @@ export function openDelophyHowTo(scene: Phaser.Scene, popups: PopupLayer): void 
       marks.fillStyle(DELO.ink, 1).fillPoints(diamond(textX - 38, cy, 22, 26), true);
       marks.fillStyle(index === 3 ? DELO.goldDeep : DELO.crimson, 1).fillPoints(diamond(textX - 38, cy, 18, 22), true);
       body.add(scene.add.text(textX - 38, cy + 1, String(index + 1), textStyle({ role: "display", size: 22, color: "#ffffff" })).setOrigin(0.5));
-      y += line.height + lineGap;
+      y += rowHeight(line) + lineGap;
     });
     drawSparkle(marks, bx + bubbleWidth - 18, by + 8, 20, DELO.gold);
     drawSparkle(marks, bx + 14, by + bubbleHeight - 10, 14, 0xffffff);

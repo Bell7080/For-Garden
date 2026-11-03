@@ -120,7 +120,6 @@ export const LOBBY_JA = {
   "delophyHunt.hint.normal": "速く、ときどき高さが変わる",
   "delophyHunt.hint.hard": "超高速、カードの裏にかくれる",
   "delophyHunt.jackpotNote": "ふつう以上では大当たりカードがひそむことも。良いお宝ほど激しくシャッフルされます。",
-  "delophyHunt.enter": "{name} · コイン{count}枚で開始",
   "delophyHunt.collected": "見つけたお宝",
   "delophyHunt.phase.memorize": "よく覚えて！",
   "delophyHunt.phase.shuffle": "シャッフル中…",

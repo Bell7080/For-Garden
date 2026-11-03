@@ -12,6 +12,7 @@ import { addPopupBackgroundImage } from "./backgrounds";
 import { spawnEventCardSd, type EventCardPuppet } from "./eventCardSd";
 import { addChestCardShowcase } from "./chestCardShowcase";
 import { addRouletteCardShowcase } from "./rouletteCardShowcase";
+import { addDelophyCardShowcase } from "./delophyCardShowcase";
 import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
 import { NotificationDot } from "./NotificationDot";
@@ -53,6 +54,10 @@ const CARD = {
    * 보물상자 장면 — 상자는 카드 밑변에 살짝 묻혀 앉고 티아가 그 오른쪽에서 가끔 상자를 콩 두드린다. 글 폭은 돌림판과 같다.
    */
   chestForge: { x: 120, chestHeight: 150, sink: 18, sdInset: 95, textRatio: 0.42, bonkMs: 2000, rain: { count: 8, size: 40, alpha: 0.42, fallMs: 6800 } } as const,
+  /**
+   * 델로피 장면 — 엎은 카드 세 장이 카드 밑변에 부채꼴로 앉고, 델로피가 그 오른쪽에서 가끔 두 장을 바꿔 놓거나 한 장을 슬쩍 뒤집는다.
+   */
+  delophyHunt: { x: 105, cardWidth: 86, spread: 80, sink: 22, sdInset: 95, textRatio: 0.42, shuffleMs: 1500, rain: { count: 8, size: 40, alpha: 0.42, fallMs: 6800 } } as const,
   /** 출석 카드의 진행 마름모 줄(부제 자리). */
   pips: { gap: 30, half: 9, labelSize: 22 },
 } as const;
@@ -204,7 +209,8 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
       sd: event.sd ? { ...event.sd, hop: false, inset: showcase?.sdInset } : undefined,
       endsAt: lobbyEventClockEnd(event, Date.now()),
       underlay: event.showcase === "roulette" ? () => this.paintRouletteShowcase(shape)
-        : event.showcase === "chestForge" ? () => this.paintChestShowcase(shape) : undefined,
+        : event.showcase === "chestForge" ? () => this.paintChestShowcase(shape)
+          : event.showcase === "delophyHunt" ? () => this.paintDelophyShowcase(shape) : undefined,
       textRatio: showcase?.textRatio,
     });
     const subtitle = this.scene.add.text(left, lineY, t(event.subtitleKey), textStyle({ role: "body", size: CARD.subtitleSize, color: COLOR.ink }))
@@ -275,6 +281,13 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     const { width, height } = this.options;
     const showcase = addChestCardShowcase(this.scene, this, shape, { width, height, ...CARD.chestForge });
     this.sdReady = showcase.attachBonker;
+  }
+
+  /** 델로피 장면 — 그리는 일은 `delophyCardShowcase`가 맡고, 카드는 델로피가 도착하면 넘겨주기만 한다. */
+  private paintDelophyShowcase(shape: number[]): void {
+    const { width, height } = this.options;
+    const showcase = addDelophyCardShowcase(this.scene, this, shape, { width, height, ...CARD.delophyHunt });
+    this.sdReady = showcase.attachShuffler;
   }
 
   /** 남은 기간 시계 — 글 줄 맨 아래 왼쪽(`x`가 글의 왼쪽 끝). 초마다 갈아 끼우고 카드와 함께 멈춘다. */

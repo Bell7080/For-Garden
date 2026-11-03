@@ -24,7 +24,7 @@ import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import type { PopupLayer } from "./PopupLayer";
 import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
-import { drawSparkle } from "./rouletteWheel";
+import { addCurrencyRain, drawSparkle } from "./rouletteWheel";
 import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
 import { addCurrencyChip } from "./CurrencyChip";
@@ -32,6 +32,7 @@ import { pressIn, pressOut } from "./pressFeedback";
 import { shrinkTextToWidth } from "./textFit";
 import type { TextKey } from "../i18n";
 import { COLOR, textStyle } from "./theme";
+import { DELO, DELOPHY_COIN_ICON, diamond, paintBack } from "./delophyCardArt";
 
 /**
  * 델로피의 보물 찾기 창의 자리. 두 쪽이고 가운데에는 늘 카드를 돌리는 델로피가 선다(`DelophyDealer`).
@@ -55,7 +56,7 @@ const HUNT = {
 } as const;
 
 /** 보물 찾기 전용 이벤트 코인 그림(`currencyIcons`). 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다. */
-const COIN_ICON = "currency-delopi-thief-coin";
+const COIN_ICON = DELOPHY_COIN_ICON;
 /** 창 안에서 판 곁을 지키는 SD — 로비 이벤트 카드와 같은 개체다(`lobbyEvents`의 `delophy-hunt`). */
 const HUNT_SD = "delopi";
 
@@ -64,7 +65,6 @@ const INK = "#2a1530";
 const INK_SOFT = "#7a5a66";
 const ACCENT = "#b4233f";
 const OUTLINE = "#fff6e4";
-const DELO = { cream: 0xfff3da, ink: 0x2a1530, crimson: 0xb4233f, crimsonDeep: 0x7d1630, gold: 0xffd55e, goldDeep: 0xb07f12, shade: 0x2a1530 } as const;
 
 /** 난이도의 색 — 델로피의 결 안에서 쉬움은 금빛, 보통은 장미, 어려움은 짙은 진홍. 넘김 점과 반짝이가 이 색이다. */
 const DIFFICULTY_TONE: Record<HuntDifficultyId, number> = { easy: 0xf0c76a, normal: 0xe0607a, hard: 0xa01d3c };
@@ -96,47 +96,10 @@ export function huntSlotPosition(difficulty: HuntDifficulty, slot: number): { x:
 }
 
 /** 델로피의 커튼 무대 바탕. 장식은 가장자리에만 둔다. */
-function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, mask: Phaser.Display.Masks.GeometryMask, motion: number): void {
+function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, mask: Phaser.Display.Masks.GeometryMask): void {
   addEventPopupBackdrop(scene, body, BACKGROUND.eventDelopiPopup, HUNT.width, HUNT.height);
-  const coins: readonly [number, number, number][] = [[-400, -360, -12], [400, -100, 12], [-400, 20, 8]];
-  coins.forEach(([x, y, angle], index) => {
-    const coin = scene.add.image(x, y, COIN_ICON).setDisplaySize(64, 64).setAngle(angle).setAlpha(0.4).setMask(mask);
-    body.add(coin);
-    if (motion > 0) scene.tweens.add({ targets: coin, y: y - 10 * motion, duration: 1700 + index * 230, yoyo: true, repeat: -1, ease: "Sine.InOut" });
-  });
-}
-
-const diamond = (cx: number, cy: number, rx: number, ry: number): Phaser.Geom.Point[] =>
-  [new Phaser.Geom.Point(cx, cy - ry), new Phaser.Geom.Point(cx + rx, cy), new Phaser.Geom.Point(cx, cy + ry), new Phaser.Geom.Point(cx - rx, cy)];
-
-/**
- * 카드의 뒷면 — 양피지 테두리 안에 진홍·검정 마름모 무늬(커튼·배경 카드와 같은 결), 가운데에 금빛 마름모 문장.
- * 모든 카드가 같아야 정체가 드러나지 않는다.
- */
-function paintBack(scene: Phaser.Scene, holder: Phaser.GameObjects.Container, width: number, height: number): void {
-  holder.removeAll(true);
-  const g = scene.add.graphics();
-  const left = -width / 2, top = -height / 2, radius = Math.max(8, width * 0.06), rim = Math.max(8, width * 0.055);
-  g.fillStyle(DELO.shade, 0.28).fillRoundedRect(left + 4, top + 10, width, height, radius);
-  g.fillStyle(DELO.ink, 1).fillRoundedRect(left - 3, top - 3, width + 6, height + 6, radius + 3);
-  g.fillStyle(DELO.cream, 1).fillRoundedRect(left, top, width, height, radius);
-  const ix = left + rim, iy = top + rim, iw = width - rim * 2, ih = height - rim * 2;
-  g.fillStyle(DELO.ink, 1).fillRect(ix, iy, iw, ih);
-  // 마름모 격자 — 칸 안에 온전히 드는 것만 진홍으로 채운다(가장자리는 검정이 남아 틀이 된다).
-  const cell = Math.max(24, Math.round(width * 0.2));
-  const columns = Math.floor(iw / cell), rows = Math.floor(ih / cell);
-  const offsetX = ix + (iw - columns * cell) / 2, offsetY = iy + (ih - rows * cell) / 2;
-  for (let row = 0; row < rows; row += 1) for (let column = 0; column < columns; column += 1) {
-    if ((row + column) % 2 === 0) g.fillStyle(DELO.crimson, 1).fillPoints(diamond(offsetX + (column + 0.5) * cell, offsetY + (row + 0.5) * cell, cell * 0.5, cell * 0.5), true);
-    else g.fillStyle(DELO.crimsonDeep, 1).fillPoints(diamond(offsetX + (column + 0.5) * cell, offsetY + (row + 0.5) * cell, cell * 0.5, cell * 0.5), true);
-  }
-  g.lineStyle(2, DELO.gold, 0.9).strokeRect(ix + 5, iy + 5, iw - 10, ih - 10);
-  const er = Math.min(iw, ih) * 0.3;
-  g.fillStyle(DELO.ink, 1).fillPoints(diamond(0, 0, er * 0.9, er * 1.2), true);
-  g.fillStyle(DELO.gold, 1).fillPoints(diamond(0, 0, er * 0.78, er * 1.06), true);
-  g.fillStyle(DELO.crimson, 1).fillPoints(diamond(0, 0, er * 0.44, er * 0.6), true);
-  drawSparkle(g, 0, 0, er * 0.5, 0xffffff, 1);
-  holder.add(g);
+  // 뒤로 도둑 코인이 천천히 내린다(로비 카드·티아·돌림판과 같은 코인 비). 판 위 글을 가리지 않게 옅게 둔다.
+  addCurrencyRain(scene, body, { left: -HUNT.width / 2 + 40, right: HUNT.width / 2 - 40, top: -HUNT.height / 2 + 10, bottom: HUNT.height / 2 - 10, keys: [COIN_ICON], count: 7, size: 54, alpha: 0.22, fallMs: 8600 }).setMask(mask);
 }
 
 /**
@@ -391,7 +354,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
   }, (body) => {
     const shape = popupArtShape(HUNT.width, HUNT.height);
     const mask = popupBodyShapeMask(scene, body, shape);
-    paintBackdrop(scene, body, mask, motion());
+    paintBackdrop(scene, body, mask);
 
     const coinText = addCurrencyChip(scene, 0, HUNT.coinY, COIN_ICON, { parent: body, width: 280, height: 66, rollKey: "delophyHunt:coins" });
     const resetText = scene.add.text(0, HUNT.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
@@ -609,6 +572,49 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       return Promise.all(jobs).then(() => undefined);
     };
 
+    /** 델로피 손(가운데)에서 카드가 한 장씩 휙휙 날아와 제자리에 앉는다. 짧게 끝난다(열 장도 0.6초 안). */
+    const dealIn = async (): Promise<void> => {
+      if (motion() <= 0 || !difficulty) return;
+      const from = { x: HUNT.dealer.x, y: HUNT.dealer.groundY - HUNT.dealer.height * 0.46 - HUNT.play.boardY };
+      const jobs = views.map((view, index) => new Promise<void>((resolve) => {
+        const target = huntSlotPosition(difficulty!, view.slot);
+        view.holder.setPosition(from.x, from.y).setScale(0.35).setAngle(index % 2 ? 160 : -160).setAlpha(0);
+        scene.tweens.add({ targets: view.holder, x: target.x, y: target.y, scale: 1, angle: 0, alpha: 1, duration: 230, delay: index * 34, ease: "Back.Out",
+          onStart: () => { if (index % 2 === 0) audioManager?.playUi("roulette.tick"); }, onComplete: () => resolve() });
+      }));
+      await Promise.all(jobs);
+    };
+    /**
+     * 끝난 뒤 — 찾은 보물 카드가 위의 「찾은 보물」 줄로 휙 빨려 들어가고, 델로피 머리 위에서 도둑 코인이 팡 터져 쏟아진다.
+     * 못 찾았으면 아무것도 날지 않는다. 0.8초 안에 끝난다.
+     */
+    const collectFound = async (cleared: boolean): Promise<void> => {
+      const found = views.filter((view) => view.found);
+      if (motion() <= 0 || !found.length) return;
+      const targetY = HUNT.play.collectedY - HUNT.play.boardY;
+      found.forEach((view, index) => {
+        boardLayer.bringToTop(view.holder);
+        scene.tweens.add({ targets: view.holder, x: view.holder.x * 0.3, y: targetY, scale: 0.3, angle: index % 2 ? 12 : -12, alpha: 0, duration: 300, delay: index * 40, ease: "Cubic.In",
+          onComplete: () => { if (index === found.length - 1 && collectedRow.active) scene.tweens.add({ targets: collectedRow, scale: { from: 1.18, to: 1 }, duration: 260, ease: "Back.Out" }); } });
+      });
+      const originY = HUNT.dealer.groundY - HUNT.dealer.height * 0.9;
+      const count = cleared ? 16 : 9;
+      for (let index = 0; index < count; index += 1) {
+        const angle = -Math.PI / 2 + ((index / (count - 1)) - 0.5) * 2.2;
+        const reach = 170 + ((index * 37) % 7) * 22;
+        const coin = scene.add.image(HUNT.dealer.x, originY, COIN_ICON).setDisplaySize(52, 52);
+        stage.add(coin);
+        const size = coin.scale;
+        const peakX = HUNT.dealer.x + Math.cos(angle) * reach, peakY = originY + Math.sin(angle) * reach * 0.8;
+        scene.tweens.add({ targets: coin, x: peakX, y: peakY, angle: (index % 2 ? 1 : -1) * 200, duration: 280, delay: index * 14, ease: "Quad.Out", onComplete: () => {
+          scene.tweens.add({ targets: coin, x: peakX + Math.cos(angle) * 40, y: peakY + 260, scale: size * 0.7, alpha: 0, angle: coin.angle + 160, duration: 380, ease: "Quad.In", onComplete: () => coin.destroy() });
+        } });
+      }
+      burstSparkles(scene, stage, HUNT.dealer.x, originY, { count: 10, radius: 140, size: 14, colors: [0xffffff, 0xffe38a, 0xd6c2ff, 0xff9fb4], seed: 41, rise: 30 });
+      audioManager?.playUi(cleared ? "rune.success" : "augment.lock");
+      await waitFx(scene, 700);
+    };
+
     const buildBoard = (layout: readonly string[], faceUp: boolean): void => {
       boardLayer.removeAll(true);
       views = [];
@@ -676,6 +682,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       paintLives(0); paintCollected({});
       buildBoard(result.show.layout, false);
       refresh();
+      await dealIn();
       // 보여 주기 → 엎기 → 섞기 → 찾기. 이 흐름이 도는 동안 창은 닫히지 않는다(busy).
       phaseText.setText(t("delophyHunt.phase.memorize"));
       await turnAll(true);
@@ -703,7 +710,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       interactive = false;
       phaseText.setText(t(cleared ? "delophyHunt.cleared" : "delophyHunt.out"));
       if (cleared) cheer.cheer(3); else cheer.flinch();
-      await waitFx(scene, 900);
+      await Promise.all([collectFound(cleared), waitFx(scene, 800)]);
       if (!alive) return;
       const items = currencyRecordToRewardItems(total);
       if (items.length) await new Promise<void>((resolve) => openRewardPopup(scene, popups, { title: t("delophyHunt.reward"), titleSize: 36, dimAlpha: 0.66, items, onConfirm: resolve }));

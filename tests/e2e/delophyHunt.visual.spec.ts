@@ -58,3 +58,26 @@ test("델로피의 보물 찾기 — 게임 방법", async ({ page }, info) => {
   await page.waitForTimeout(1500);
   await captureGame(page, info.outputPath("delophy-howto.png"));
 });
+
+test("델로피의 보물 찾기 — 로비 이벤트 카드", async ({ page }, info) => {
+  test.skip(process.env.PF_E2E_REMOTE_LOOP !== "1", "소스 서버 전용");
+  await installGameHandleProbe(page);
+  await startAfterOpening(page, s => { s.settings.game.language = "ko"; });
+  await sourceScene(page, "window.__FORGE_GAME=this.game;this.game.scene.stop('title');this.game.scene.start('lobby');");
+  await page.waitForFunction(() => window.__PF_DEBUG?.scene === "lobby");
+  await page.evaluate(async () => {
+    const root = "/src/";
+    const cards = await import(/* @vite-ignore */root + "ui/LobbyEventCard.ts");
+    const events = await import(/* @vite-ignore */root + "data/lobbyEvents.ts");
+    const scene = (window as any).__FORGE_GAME.scene.getScene("lobby");
+    const shade = scene.add.rectangle(540, 960, 1080, 1920, 0x05070a, 0.85).setDepth(4000);
+    void shade;
+    for (const [index, id] of (["delophy-hunt", "chest-forge"] as const).entries()) {
+      const event = events.findLobbyEvent(id);
+      const card = new cards.LobbyEventCard(scene, 540, 700 + index * 360, { width: 960, height: 300, entry: { kind: "event", event }, now: Date.now(), onClick: () => {} });
+      scene.add.existing(card); card.setDepth(4001);
+    }
+  });
+  await page.waitForTimeout(5000);
+  await captureGame(page, info.outputPath("delophy-lobby-card.png"));
+});

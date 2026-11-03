@@ -28,7 +28,7 @@ import { BACKGROUND } from "./backgroundAssets";
 import { addEventPopupBackdrop } from "./eventBackdrop";
 import { addCurrencyChip } from "./CurrencyChip";
 import { pressIn, pressOut } from "./pressFeedback";
-import { SHUTE_TONE, chamferPoints, drawHazard, drawSignalRings, drawStud, paintShuteGauge, shuteGaugeTrack } from "./shuteFishingStyle";
+import { SHUTE_TONE, chamferPoints, drawBulbOutline, drawSignalRings, drawStud, paintShuteGauge, shuteGaugeTrack } from "./shuteFishingStyle";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
@@ -160,7 +160,7 @@ class ShuteBeat {
 }
 
 /**
- * 난이도 단추 — 슈테가 쥔 검은 패드처럼 왼쪽 위·오른쪽 아래를 깎은 검은 판, 윗변에 노랑·검정 경고 띠, 아래로 노란
+ * 난이도 단추 — 슈테가 쥔 검은 패드처럼 왼쪽 위·오른쪽 아래를 깎은 검은 판, 안쪽에 시안 네온 테, 아래로 노란
  * 두께. 위 줄의 삼각 스터드 수가 난이도(1~4)이고, 이름 아래에 곡 수와 보스곡 안내, 오른쪽 시안 알약이 드는 코인이다.
  * 누를 수 있는 동안 안쪽 시안 테가 박자처럼 숨 쉰다.
  */
@@ -188,7 +188,6 @@ class FishingPickButton extends Phaser.GameObjects.Container {
     const plate = scene.add.graphics();
     plate.fillStyle(SHUTE_TONE.ink, 1).fillPoints(chamferPoints(left, top, width, height, cut), true);
     plate.fillStyle(SHUTE_TONE.inkSoft, 1).fillRect(left + 12, top + height * 0.52, width - 24, 2);
-    drawHazard(plate, left + cut + 2, top + 6, width - cut - 10, 14, 10);
     for (let index = 0; index < 4; index += 1) drawStud(plate, left + 34 + index * 30, top + 44, 20, index < level, tone);
     this.face.add(plate);
     this.glow = scene.add.graphics();
@@ -329,7 +328,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     const note = scene.add.text(0, FISH.height / 2 - 70, "", textStyle({ role: "body", size: 21, color: INK_SOFT, wrap: 760, align: "center" })).setOrigin(0.5).setStroke(OUTLINE, 4);
     body.add(note);
 
-    // 「탭!」 단추 — 노란 패드에 양 끝 경고 줄무늬. 누르는 순간(pointerdown)에 판정한다. 확정 입력은 보통 pointerup이지만
+    let flowTapBulbs = (): void => undefined;
+    // 「탭!」 단추 — 노란 패드 테두리를 따라 전광 전구가 돌고, 누를 때마다 켜진 전구가 한 칸씩 흐른다. 누르는 순간(pointerdown)에 판정한다. 확정 입력은 보통 pointerup이지만
     // 리듬 판정은 손가락이 닿는 순간이 박자라서, 떼는 순간을 쓰면 누르고 떼는 사이(100ms 남짓)만큼 늘 늦게 판정된다.
     {
       const { width, height } = FISH.play.tap;
@@ -341,17 +341,19 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       const face = scene.add.container(0, 0);
       const plate = scene.add.graphics();
       plate.fillStyle(SHUTE_TONE.yellow, 1).fillPoints(chamferPoints(left, top, width, height, cut), true);
-      const band = 78;
-      drawHazard(plate, left + cut, top + 12, band - cut + 14, height - 24, 14);
-      drawHazard(plate, -left - band - 14, top + 12, band - cut + 14, height - 24, 14);
-      plate.fillStyle(0xffffff, 0.35).fillRect(left + band + 10, top + 14, width - band * 2 - 20, height * 0.18);
-      for (const sx of [-1, 1]) drawStud(plate, sx * (width / 2 - band - 46), 4, 26, true, SHUTE_TONE.ivory);
+      plate.fillStyle(0xffffff, 0.3).fillPoints(chamferPoints(left + 26, top + 24, width - 52, height * 0.22, 14), true);
+      const bulbs = scene.add.graphics();
+      const bulbPath = chamferPoints(left + 14, top + 14, width - 28, height - 28, cut - 10);
+      let lit = 0;
+      const paintBulbs = (): void => { bulbs.clear(); drawBulbOutline(bulbs, bulbPath, { spacing: 44, size: 7, colors: [SHUTE_TONE.ivory, SHUTE_TONE.cyan], lit }); };
+      paintBulbs();
       const label = scene.add.text(0, 2, t("shuteFishing.tap"), textStyle({ role: "display", size: 66, color: INK })).setOrigin(0.5).setStroke(OUTLINE, 6);
-      shrinkTextToWidth(label, width - band * 2 - 140);
-      face.add([plate, label]);
+      shrinkTextToWidth(label, width - 120);
+      face.add([plate, bulbs, label]);
+      flowTapBulbs = () => { lit = lit >= 0.5 ? 0 : 1; paintBulbs(); };
       tap.add([g, face]);
       const hit = addClippedHit(scene, tap, 0, 7, width + 120, height + 160, anywhere(scene), { useHandCursor: true });
-      hit.on("pointerdown", () => { face.setY(10); void press(); });
+      hit.on("pointerdown", () => { face.setY(10); flowTapBulbs(); void press(); });
       hit.on("pointerup", () => face.setY(0));
       hit.on("pointerout", () => face.setY(0));
     }
@@ -411,8 +413,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
           const plate = scene.add.graphics();
           const bw = 92, bh = 30, by = size / 2 + 22;
           plate.fillStyle(SHUTE_TONE.ink, 1).fillPoints(chamferPoints(-bw / 2, by - bh / 2, bw, bh, 8), true);
-          drawHazard(plate, -bw / 2 + 10, by - bh / 2 + 4, 14, bh - 8, 5);
-          drawHazard(plate, bw / 2 - 24, by - bh / 2 + 4, 14, bh - 8, 5);
+          plate.lineStyle(2, SHUTE_TONE.yellow, 1).strokePoints(chamferPoints(-bw / 2 + 3, by - bh / 2 + 3, bw - 6, bh - 6, 6), true);
           holder.add(plate);
           holder.add(scene.add.text(0, by + 1, t("shuteFishing.boss"), textStyle({ role: "display", size: 18, color: "#ffc93c" })).setOrigin(0.5));
         }
@@ -604,7 +605,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
         const { y, width, height, gap } = FISH.play.lineup;
         const band = scene.add.graphics();
         band.fillStyle(SHUTE_TONE.ink, 0.7).fillPoints(chamferPoints(-FISH.width / 2 + 30, y - height / 2 - 26, FISH.width - 60, height + 52, 26), true);
-        drawHazard(band, -FISH.width / 2 + 56, y - height / 2 - 18, FISH.width - 112, 8, 8);
+        drawBulbOutline(band, chamferPoints(-FISH.width / 2 + 42, y - height / 2 - 14, FISH.width - 84, height + 28, 18), { spacing: 52, size: 6 });
         lineup.add(band);
         band.setAlpha(0);
         scene.tweens.add({ targets: band, alpha: 1, duration: 140 });
@@ -728,7 +729,6 @@ export function openShuteFishingHowTo(scene: Phaser.Scene, popups: PopupLayer): 
     bubble.fillTriangle(tailX - 34, tailBase - 6, tailX + 30, tailBase - 6, tailX - 18, tailBase + tail + 4);
     bubble.fillStyle(SHUTE_TONE.ivory, 1).fillRoundedRect(bx, by, bubbleWidth, bubbleHeight, 34);
     bubble.fillTriangle(tailX - 28, tailBase - 8, tailX + 24, tailBase - 8, tailX - 16, tailBase + tail - 4);
-    drawHazard(bubble, bx + 40, by + 8, bubbleWidth - 80, 10, 9);
     const marks = scene.add.graphics();
     body.add([bubble, marks]);
     let y = by + bubblePad;

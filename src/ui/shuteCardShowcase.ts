@@ -7,7 +7,7 @@ import { burstSparkles } from "./chestForgeFx";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { shapeClipMask } from "./popupArt";
 import { addCurrencyRain } from "./rouletteWheel";
-import { SHUTE_TONE, paintShuteGauge } from "./shuteFishingStyle";
+import { SHUTE_TONE, paintShuteGauge, shuteGaugeTrack } from "./shuteFishingStyle";
 
 /** 리듬 낚시 이벤트 코인 그림 — 비와 창의 코인 칩이 같은 그림이다. */
 export const SHUTE_EVENT_COIN_ICON = "currency-shute-rhythm-coin";
@@ -81,8 +81,8 @@ export function addShuteCardShowcase(
 
   /** 칸 자리에서 보물 하나가 위로 튀어 올랐다 녹는다. */
   const popTreasure = (seed: number): void => {
-    const innerWidth = spec.gaugeWidth - spec.gaugeHeight * 1.2;
-    const fromX = spec.x - innerWidth / 2 + ZONE_CENTERS[zone % ZONE_CENTERS.length] * innerWidth;
+    const track = shuteGaugeTrack(spec.gaugeWidth, spec.gaugeHeight);
+    const fromX = spec.x + track.left + ZONE_CENTERS[zone % ZONE_CENTERS.length] * track.width;
     const icon = scene.add.image(fromX, gaugeY - 10, POP_ICONS[seed % POP_ICONS.length]).setDisplaySize(46, 46);
     stage.add(icon);
     const size = icon.scale;

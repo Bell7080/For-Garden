@@ -26,6 +26,8 @@ import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
 import { RouletteSpinButton } from "./RouletteSpinButton";
 import { drawSparkle } from "./rouletteWheel";
+import { BACKGROUND } from "./backgroundAssets";
+import { addEventPopupBackdrop } from "./eventBackdrop";
 import { textStyle } from "./theme";
 
 /**
@@ -46,7 +48,7 @@ const HUNT = {
 } as const;
 
 /** 보물 찾기 전용 이벤트 코인 그림(`currencyIcons`). 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다. */
-const COIN_ICON = "currency-delophy-coin";
+const COIN_ICON = "currency-delopi-thief-coin";
 /** 창 안에서 판 곁을 지키는 SD — 로비 이벤트 카드와 같은 개체다(`lobbyEvents`의 `delophy-hunt`). */
 const HUNT_SD = "delophy";
 
@@ -86,33 +88,14 @@ export function huntSlotPosition(difficulty: HuntDifficulty, slot: number): { x:
   return { x: (column - (columns - 1) / 2) * (width + gap), y: (row - 0.5) * (height + gap) };
 }
 
-/** 바탕 — 보랏빛 밤 → 연보랏빛 안개. 가장자리에 카드 무늬가 떠 있고 아래에 별가루가 깔린다. */
+/** 델로피의 보랏빛 바탕. 장식은 가장자리에만 둔다. */
 function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, mask: Phaser.Display.Masks.GeometryMask, motion: number): void {
-  const { width, height } = HUNT;
-  const left = -width / 2, top = -height / 2;
-  const base = scene.add.graphics();
-  base.fillGradientStyle(DELO.top, DELO.top, DELO.bottom, DELO.bottom, 1).fillRect(left, top, width, height);
-  // 비스듬한 보랏빛 띠 — 마술사의 망토 결.
-  [0xe9d4ff, 0xd6dcff, 0xffd9f0].forEach((color, index) => {
-    const y0 = top + 300 + index * 420;
-    base.fillStyle(color, 0.4).fillPoints([
-      new Phaser.Geom.Point(left, y0), new Phaser.Geom.Point(left + width, y0 - 280), new Phaser.Geom.Point(left + width, y0 - 160), new Phaser.Geom.Point(left, y0 + 140),
-    ], true);
-  });
-  for (let ring = 6; ring > 0; ring -= 1) base.fillStyle(0xffffff, 0.08).fillEllipse(0, -80, 300 + ring * 110, 260 + ring * 90);
-  // 별가루 — 네 갈래 별. 자리는 번호에서 정한다.
-  for (let index = 0; index < 30; index += 1) {
-    const x = left + 40 + ((index * 0.618034) % 1) * (width - 80);
-    const y = top + 60 + ((index * 0.381966 + index * 0.07) % 1) * (height - 120);
-    drawSparkle(base, x, y, 7 + (index * 5) % 11, index % 3 === 0 ? DELO.gold : 0xffffff, 0.7);
-  }
-  body.add(base.setMask(mask));
-  // 가장자리의 이벤트 코인 — 글과 카드를 가리지 않는 자리에만 둔다.
-  const coins: readonly [number, number, number, number][] = [[-400, -690, 84, 14], [400, -680, 78, -12], [-410, 120, 70, 8], [410, 200, 86, -10], [-380, 660, 80, -14], [390, 650, 74, 12]];
-  coins.forEach(([x, y, size, angle], index) => {
-    const coin = scene.add.image(x, y, COIN_ICON).setDisplaySize(size, size).setAngle(angle).setAlpha(0.72).setMask(mask);
+  addEventPopupBackdrop(scene, body, BACKGROUND.eventDelopiPopup, HUNT.width, HUNT.height);
+  const coins: readonly [number, number, number][] = [[-400, -360, -12], [400, -100, 12], [-400, 300, 8]];
+  coins.forEach(([x, y, angle], index) => {
+    const coin = scene.add.image(x, y, COIN_ICON).setDisplaySize(64, 64).setAngle(angle).setAlpha(0.4).setMask(mask);
     body.add(coin);
-    if (motion > 0) scene.tweens.add({ targets: coin, y: y - 12 * motion, angle: angle - 8, duration: 1500 + index * 230, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: 200 + index * 140 });
+    if (motion > 0) scene.tweens.add({ targets: coin, y: y - 10 * motion, duration: 1700 + index * 230, yoyo: true, repeat: -1, ease: "Sine.InOut" });
   });
 }
 

@@ -26,6 +26,8 @@ import { openRewardPopup } from "./RewardPopup";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
 import { RouletteSpinButton } from "./RouletteSpinButton";
 import { drawSparkle } from "./rouletteWheel";
+import { BACKGROUND } from "./backgroundAssets";
+import { addEventPopupBackdrop } from "./eventBackdrop";
 import { shrinkTextToWidth } from "./textFit";
 import { textStyle } from "./theme";
 
@@ -87,59 +89,14 @@ function tierLabel(tier: ChestCardTier): string {
   return t(keys[tier]);
 }
 
-/**
- * 바탕 — 티아의 물가. 은빛 하늘 → 연보랏빛으로 흐르는 면에 무지갯빛 베일 결이 비스듬히 지나고, 거품이 떠오르며 아래로
- * 잔물결이 친다. 보상 그림이 가장자리에 흩어진다.
- */
+/** 티아의 물빛 베일·은색 별 바탕. 장식은 가장자리에만 둔다. */
 function paintBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container, mask: Phaser.Display.Masks.GeometryMask, motion: number): void {
-  const { width, height } = FORGE;
-  const left = -width / 2, top = -height / 2;
-  const base = scene.add.graphics();
-  base.fillGradientStyle(TIA.sky, TIA.sky, TIA.lilac, TIA.lilac, 1).fillRect(left, top, width, height);
-  // 무지갯빛 베일 — 옅은 분홍·민트·보라 띠가 비스듬히 겹친다(베일의 홀로그램 결).
-  TIA.veil.forEach((color, index) => {
-    const y0 = top + 260 + index * 380;
-    base.fillStyle(color, 0.42).fillPoints([
-      new Phaser.Geom.Point(left, y0), new Phaser.Geom.Point(left + width, y0 - 300), new Phaser.Geom.Point(left + width, y0 - 180), new Phaser.Geom.Point(left, y0 + 120),
-    ], true);
-  });
-  // 상자 뒤로 번지는 물빛.
-  for (let ring = 6; ring > 0; ring -= 1) base.fillStyle(0xffffff, 0.09).fillEllipse(0, -150, 300 + ring * 110, 260 + ring * 90);
-  // 거품 — 고리와 작은 반사광. 자리는 번호에서 정한다.
-  for (let index = 0; index < 34; index += 1) {
-    const x = left + 40 + ((index * 0.618034) % 1) * (width - 80);
-    const y = top + 60 + ((index * 0.381966 + index * 0.07) % 1) * (height - 120);
-    const r = 6 + (index * 7) % 15;
-    base.lineStyle(2, 0xffffff, 0.55).strokeCircle(x, y, r);
-    base.fillStyle(0xffffff, 0.5).fillCircle(x - r * 0.35, y - r * 0.35, Math.max(2, r * 0.22));
-  }
-  // 아래 잔물결 세 겹.
-  for (let wave = 0; wave < 3; wave += 1) {
-    const baseY = top + height - 150 + wave * 52;
-    const points: Phaser.Geom.Point[] = [new Phaser.Geom.Point(left, top + height)];
-    for (let x = 0; x <= width; x += 24) points.push(new Phaser.Geom.Point(left + x, baseY + Math.sin((x / width) * Math.PI * 4 + wave * 1.3) * 12));
-    points.push(new Phaser.Geom.Point(left + width, top + height));
-    base.fillStyle(wave === 2 ? TIA.deep : 0x9fc3e6, wave === 2 ? 0.16 : 0.18 + wave * 0.06).fillPoints(points, true);
-  }
-  body.add(base.setMask(mask));
-  // 흩어진 보상들 — 가장자리에만 두어 글과 버튼을 가리지 않는다.
-  const spots: readonly [number, number, keyof typeof CURRENCY_ICON_BY_WALLET, number, number][] = [
-    [-410, -700, "gold", 105, -18], [410, -690, "gems", 93, 14], [-410, -300, "cheesecake", 99, 12], [410, -260, "gold", 87, -10],
-    [-420, -20, "gems", 81, -8], [420, 40, "cheesecake", 105, 16], [-410, 390, "cheesecake", 90, -14], [410, 380, "gems", 99, 10],
-    [-360, 470, "gold", 84, 20], [370, 470, "gold", 96, -16], [-250, -470, "gems", 60, 8], [260, -440, "cheesecake", 66, -8],
-    [-300, 140, "gold", 63, 6], [300, 170, "gems", 60, -10],
-  ];
-  // 사이사이에 이벤트 코인도 몇 닢 섞는다.
-  const coins: readonly [number, number, number, number][] = [[-370, -560, 78, 14], [380, -120, 72, -12], [-380, 250, 84, 8], [250, 560, 66, -6]];
-  coins.forEach(([x, y, size, angle], index) => {
-    const coin = scene.add.image(x, y, CHEST_COIN_ICON).setDisplaySize(size, size).setAngle(angle).setAlpha(0.75).setMask(mask);
+  addEventPopupBackdrop(scene, body, BACKGROUND.eventTiaPopup, FORGE.width, FORGE.height);
+  const coins: readonly [number, number, number][] = [[-400, -360, -12], [400, -100, 12], [-400, 300, 8]];
+  coins.forEach(([x, y, angle], index) => {
+    const coin = scene.add.image(x, y, CHEST_COIN_ICON).setDisplaySize(64, 64).setAngle(angle).setAlpha(0.4).setMask(mask);
     body.add(coin);
-    if (motion > 0) scene.tweens.add({ targets: coin, y: y - 12 * motion, angle: angle - 8, duration: 1500 + index * 230, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: 200 + index * 140 });
-  });
-  spots.forEach(([x, y, currency, size, angle], index) => {
-    const icon = scene.add.image(x, y, CURRENCY_ICON_BY_WALLET[currency]).setDisplaySize(size, size).setAngle(angle).setAlpha(0.7).setMask(mask);
-    body.add(icon);
-    if (motion > 0) scene.tweens.add({ targets: icon, y: y - 10 * motion, angle: angle + 6, duration: 1600 + (index % 5) * 260, yoyo: true, repeat: -1, ease: "Sine.InOut", delay: index * 110 });
+    if (motion > 0) scene.tweens.add({ targets: coin, y: y - 10 * motion, duration: 1700 + index * 230, yoyo: true, repeat: -1, ease: "Sine.InOut" });
   });
 }
 

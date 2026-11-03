@@ -12,6 +12,12 @@ import type { AncientBackdrop } from "../core/ancientStrata";
 
 /** 화면 용도별 배경 키. 파일 번호와 실제 사용처의 대응을 한 곳에서 관리한다. */
 export const BACKGROUND = {
+  eventTiaCard: "background-event-tia-card",
+  eventTiaPopup: "background-event-tia-popup",
+  eventRouletteCard: "background-event-roulette-card",
+  eventRoulettePopup: "background-event-roulette-popup",
+  eventDelopiCard: "background-event-delopi-card",
+  eventDelopiPopup: "background-event-delopi-popup",
   lobby: "background-lobby",
   guild: "background-guild",
   guildShop: "background-guild-shop",
@@ -171,6 +177,12 @@ export const BACKGROUND = {
  * `BACKGROUND_BOOT_KEYS`뿐이다.
  */
 export const BACKGROUND_ASSETS = [
+  [BACKGROUND.eventTiaCard, "sprites/events/tia-card.webp"],
+  [BACKGROUND.eventTiaPopup, "sprites/events/tia-popup.webp"],
+  [BACKGROUND.eventRouletteCard, "sprites/events/roulette-card.webp"],
+  [BACKGROUND.eventRoulettePopup, "sprites/events/roulette-popup.webp"],
+  [BACKGROUND.eventDelopiCard, "sprites/events/delopi-card.webp"],
+  [BACKGROUND.eventDelopiPopup, "sprites/events/delopi-popup.webp"],
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
   [BACKGROUND.lobby, "sprites/background/background_001.webp"],
   [BACKGROUND.guild, "sprites/background/guild_main.webp"],

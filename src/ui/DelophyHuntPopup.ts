@@ -532,23 +532,22 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
 
     /** 카드의 가로를 접었다 펴며 앞·뒤를 갈아 끼운다(스스로 도는 착시). */
     const TURN_MS = 90;
-    /** 접기만 — 고른 카드는 서버 답을 기다리는 동안 먼저 접혀 손이 닿는 순간 반응한다. */
-    const fold = async (view: HuntCardView): Promise<void> => {
-      scene.tweens.killTweensOf(view.holder);
-      scene.tweens.add({ targets: view.holder, scaleX: 0.02, duration: TURN_MS, ease: "Quad.In" });
-      await waitFx(scene, TURN_MS);
-    };
-    const turn = async (view: HuntCardView, up: boolean, found = false, folded = false): Promise<void> => {
-      if (!difficulty) return;
+    /**
+     * 카드의 가로를 접었다 펴며 앞·뒤를 갈아 끼운다 — 접힘이 끝나는 바로 그 프레임에 그림을 바꾸고 이어서 편다.
+     * 씬 타이머(`waitFx`)로 두 박자를 기다리면 바쁜 프레임에 그만큼 늦게 깨어나 접힌 채 멈춘 것처럼 보였다.
+     */
+    const turn = (view: HuntCardView, up: boolean, found = false): Promise<void> => new Promise((resolve) => {
+      if (!difficulty || !view.holder.active) { resolve(); return; }
       const { width, height } = huntCardSize(difficulty);
-      const duration = TURN_MS;
-      if (!folded) await fold(view);
-      if (!view.holder.active) return;
-      if (up) paintFace(scene, view.holder, view.treasure, width, height, found); else paintBack(scene, view.holder, width, height);
-      view.up = up; view.found = found;
-      scene.tweens.add({ targets: view.holder, scaleX: 1, duration, ease: "Quad.Out" });
-      await waitFx(scene, duration);
-    };
+      scene.tweens.killTweensOf(view.holder);
+      view.holder.setScale(view.holder.scaleX, 1);
+      scene.tweens.add({ targets: view.holder, scaleX: 0.02, duration: TURN_MS, ease: "Quad.In", onComplete: () => {
+        if (!view.holder.active) { resolve(); return; }
+        if (up) paintFace(scene, view.holder, view.treasure, width, height, found); else paintBack(scene, view.holder, width, height);
+        view.up = up; view.found = found;
+        scene.tweens.add({ targets: view.holder, scaleX: 1, duration: TURN_MS, ease: "Quad.Out", onComplete: () => resolve() });
+      } });
+    });
     const turnAll = async (up: boolean): Promise<void> => {
       const stagger = views.map((view, index) => waitFx(scene, index * 45).then(() => turn(view, up)));
       await Promise.all(stagger);
@@ -694,18 +693,17 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       const view = viewAt(slot);
       if (!view || view.up) return;
       busy = true;
-      // 접기와 서버 확인을 나란히 — 손이 닿는 순간 카드가 반응하고, 기다림은 접힌 동안 지나간다.
-      const folding = fold(view);
+      // 손이 닿는 순간 살짝 눌린다 — 접어 두고 답을 기다리면 그동안 접힌 채 멈춘 것처럼 보였다. 답이 오면 한 번에 뒤집는다.
+      view.holder.setScale(0.94);
       const result = await request(`flip-${status.run?.misses ?? 0}-${status.run?.found.length ?? 0}-${slot}`, (requestId) => gameApi.flipDelophyCard({ requestId, slot }));
-      await folding;
       if (!result?.flip) {
-        if (view.holder.active) scene.tweens.add({ targets: view.holder, scaleX: 1, duration: TURN_MS, ease: "Quad.Out" });
+        if (view.holder.active) view.holder.setScale(1);
         busy = false; if (alive) refresh(); return;
       }
       const flip = result.flip;
       if (!alive) { status = result.status; busy = false; return; }
       if (flip.id !== view.treasure.id) view.treasure = huntTreasure(flip.id) ?? view.treasure;
-      await turn(view, true, false, true);
+      await turn(view, true);
       if (flip.step === "first") { status = result.status; busy = false; refresh(); return; }
       const other = viewAt(flip.firstSlot ?? -1);
       const { width } = huntCardSize(difficulty);

@@ -37,17 +37,33 @@ describe("델로피의 보물 찾기 규칙", () => {
     }
   });
 
-  it("덜 섞이는 흔한·좋은 등급에도 젬이 있어 젬을 하나도 못 받는 판이 드물다(응태 2026-11-03)", () => {
+  it("어느 판에도 젬·화석·호박석 중 하나가 놓여 맛있는 것을 하나도 못 보는 판이 없다(응태 2026-11-03)", () => {
     for (const difficulty of HUNT_DIFFICULTIES) {
       const random = lcg(difficulty.pairs * 31);
-      let withEasyGem = 0;
-      const runs = 4000;
-      for (let index = 0; index < runs; index += 1) {
+      for (let index = 0; index < 2000; index += 1) {
         const pairs = rollHuntPairs(difficulty, random);
-        if (pairs.some((id) => { const treasure = huntTreasure(id)!; return treasure.currency === "gems" && (treasure.tier === "common" || treasure.tier === "fine"); })) withEasyGem += 1;
+        expect(pairs.some((id) => ["gems", "fossil", "amber"].includes(huntTreasure(id)!.currency)), difficulty.id).toBe(true);
       }
-      expect(withEasyGem / runs, difficulty.id).toBeGreaterThan(0.45);
     }
+  });
+
+  it("판마다 맛있는 보물 한 쌍이 놓이고, 판의 기대 가치는 입장값에 비례한다(200은 2배·300은 3배)", () => {
+    const boardValue = (index: number): number => {
+      const difficulty = HUNT_DIFFICULTIES[index];
+      const random = lcg(1000 + index);
+      let total = 0;
+      for (let run = 0; run < 6000; run += 1) {
+        const pairs = rollHuntPairs(difficulty, random);
+        expect(pairs.some((id) => difficulty.guaranteed.includes(id)), difficulty.id).toBe(true);
+        total += huntPairsGemValue(pairs);
+      }
+      return total / 6000;
+    };
+    const values = HUNT_DIFFICULTIES.map((_, index) => boardValue(index));
+    HUNT_DIFFICULTIES.forEach((difficulty, index) => {
+      const ratio = difficulty.entryCost / HUNT_DIFFICULTIES[0].entryCost;
+      expect(values[index] / values[0], difficulty.id).toBeGreaterThanOrEqual(ratio * 0.95);
+    });
   });
 
   it("어려울수록 비싸고 쌍이 많으며 더 많이 섞인다", () => {

@@ -92,19 +92,22 @@ export interface HuntDifficulty {
   readonly jackpotMoves: number;
   /** 보물 한 쌍을 뽑는 등급 가중치. 어려울수록 값진 쪽으로 기운다. */
   readonly tierWeights: Readonly<Record<HuntTier, number>>;
+  /** 판마다 반드시 한 쌍 놓이는 맛있는 보물(가중치는 보물표의 `weight`). 나머지 쌍은 `tierWeights`로 뽑는다. */
+  readonly guaranteed: readonly string[];
 }
 
 /**
  * 난이도 표(값은 여기 하나). 어려울수록 ① 쌍이 늘고 ② 더 많이, 더 빠르게 섞이며 ③ 값진 보물이 놓일 몫이 커진다.
- * 판에 놓이는 기대 총가치는 `chestForge.test`와 같은 방식으로 `delophyHunt.test`가 정규 예산 안인지 잰다.
+ * 판에 놓이는 기대 총가치는 입장값에 비례한다 — 200은 100의 약 2배, 300은 약 3배(응태 2026-11-03: "300개는 확실히 3배치 보상").
+ * `delophyHunt.test`가 정규 예산 안인지와 그 배수를 함께 잰다.
  */
 export const HUNT_DIFFICULTIES: readonly HuntDifficulty[] = [
   { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 4200, swaps: 10, moveMs: 440, doubleChance: 0.1, arc: false, dive: false, jackpotMoves: 0,
-    tierWeights: { common: 46, fine: 38, rare: 16, jackpot: 0 } },
+    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 0 }, guaranteed: ["gems-m"] },
   { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 3800, swaps: 16, moveMs: 340, doubleChance: 0.3, arc: true, dive: false, jackpotMoves: 6,
-    tierWeights: { common: 36, fine: 39, rare: 24, jackpot: 0.8 } },
+    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 0.8 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
   { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3400, swaps: 26, moveMs: 270, doubleChance: 0.5, arc: true, dive: true, jackpotMoves: 10,
-    tierWeights: { common: 32, fine: 39, rare: 27, jackpot: 1.5 } },
+    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 1.5 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
 ];
 export function huntDifficulty(id: unknown): HuntDifficulty | undefined { return HUNT_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
 /** 카드 한 줄에 놓이는 열 수 — 두 줄로 깔리도록 쌍의 수와 같다. */
@@ -122,9 +125,11 @@ function pickWeighted<T>(entries: readonly (readonly [T, number])[], random: () 
 }
 function randomInt(count: number, random: () => number): number { return Math.min(count - 1, Math.floor(clampRoll(random) * count)); }
 
-/** 한 판에 놓일 보물 쌍을 뽑는다. 같은 보물은 한 판에 한 쌍만, 대박은 한 판에 한 쌍까지다. */
+/** 한 판에 놓일 보물 쌍을 뽑는다. 맛있는 보물 한 쌍(`guaranteed`)이 먼저 놓이고, 같은 보물은 한 판에 한 쌍만, 대박은 한 판에 한 쌍까지다. */
 export function rollHuntPairs(difficulty: HuntDifficulty, random: () => number): string[] {
   const picked: HuntTreasure[] = [];
+  const sure = HUNT_TREASURES.filter((treasure) => difficulty.guaranteed.includes(treasure.id));
+  if (sure.length) picked.push(pickWeighted(sure.map((treasure) => [treasure, treasure.weight] as const), random));
   while (picked.length < difficulty.pairs) {
     const tiers = HUNT_TIER_ORDER.filter((tier) => difficulty.tierWeights[tier] > 0
       && !(tier === "jackpot" && picked.some((treasure) => treasure.tier === "jackpot"))

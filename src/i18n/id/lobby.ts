@@ -75,7 +75,7 @@ export const LOBBY_ID = {
   "chestForge.box.large": "Peti besar",
   "chestForge.box.grand": "Peti emas",
   "chestForge.box.reward": "Hadiah ×{mult}",
-  "chestForge.howTo.5": "Makin besar petinya, peluang kartunya sedikit lebih kecil, tapi hadiahnya jauh lebih besar. Peti emas sampai 4 kali lipat!",
+  "chestForge.howTo.5": "Peti besar hadiahnya 2 kali lipat, peti emas 3 kali lipat! Peluang kartunya tetap sama.",
   "chestForge.howTo.4": "Makin kecil peluang kartunya, makin besar hadiahnya. Mau coba incar kartu jackpot? Byur byur!",
   "chestForge.howTo.3": "Kartu yang gagal cuma kehilangan hadiahnya sendiri. Walau satu gagal, hadiah dari kartu lain tetap dibawa pulang semua!",
   "chestForge.howTo.2": "Pilih satu kartu lalu balik, lima kali. Kalau berhasil, hadiah berkilau langsung masuk ke peti!",

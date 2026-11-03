@@ -85,7 +85,7 @@ export const LOBBY_JA = {
   "chestForge.box.large": "大きな宝箱",
   "chestForge.box.grand": "黄金の宝箱",
   "chestForge.box.reward": "報酬 ×{mult}",
-  "chestForge.howTo.5": "大きな宝箱ほどカードの確率は少し下がるけど、報酬はずっと大きくなります。黄金の宝箱はなんと4倍！",
+  "chestForge.howTo.5": "大きな宝箱は報酬2倍、黄金の宝箱は3倍！カードの確率は同じです。",
   "chestForge.howTo.4": "確率が低いカードほど、ごほうびは大きいんです。大当たりをねらってみます？チャプチャプ！",
   "chestForge.howTo.3": "失敗したカードは、そのごほうびだけもらえません。ひとつ失敗しても、ほかのカードで集めたものは全部持って帰れますよ！",
   "chestForge.howTo.2": "カードを1枚ずつ、5回えらんでめくってね。成功したらキラキラのごほうびが宝箱にポンッと入りますよ！",

@@ -75,7 +75,7 @@ export const LOBBY_ZH_HANT = {
   "chestForge.box.large": "大寶箱",
   "chestForge.box.grand": "黃金寶箱",
   "chestForge.box.reward": "獎勵 ×{mult}",
-  "chestForge.howTo.5": "寶箱越大，卡的機率會稍低一些，但獎勵會大得多。黃金寶箱足足有4倍喔！",
+  "chestForge.howTo.5": "大寶箱獎勵2倍，黃金寶箱3倍！卡的機率都一樣喔。",
   "chestForge.howTo.4": "機率越低的卡，獎勵就越大。要不要試試大獎卡？嘩啦嘩啦！",
   "chestForge.howTo.3": "失敗的卡只會拿不到那一份獎勵。就算失敗一次，其他卡收集到的獎勵也能全部帶走喔！",
   "chestForge.howTo.2": "每次選一張卡翻開，一共選五次。成功的話，閃閃發亮的獎勵就會撲通一下裝進寶箱！",

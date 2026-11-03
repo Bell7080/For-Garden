@@ -80,7 +80,7 @@ export const LOBBY_EN = {
   "chestForge.box.large": "Big Chest",
   "chestForge.box.grand": "Golden Chest",
   "chestForge.box.reward": "Rewards ×{mult}",
-  "chestForge.howTo.5": "The bigger the chest, the slightly lower the card odds, but the rewards are much bigger. The Golden Chest gives 4×!",
+  "chestForge.howTo.5": "The Big Chest doubles the rewards, and the Golden Chest triples them! Card odds stay the same.",
   "chestForge.howTo.4": "The lower a card's chance, the bigger its reward. Shall we aim for a jackpot? Splish-splash!",
   "chestForge.howTo.3": "A failed card only loses its own reward. Even if one fails, you keep everything the other cards collected!",
   "chestForge.howTo.2": "Pick a card and flip it, five times in a row. Each success drops a sparkly reward into the chest!",

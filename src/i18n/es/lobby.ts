@@ -75,7 +75,7 @@ export const LOBBY_ES = {
   "chestForge.box.large": "Cofre grande",
   "chestForge.box.grand": "Cofre dorado",
   "chestForge.box.reward": "Premios ×{mult}",
-  "chestForge.howTo.5": "Cuanto más grande el cofre, un poco menor la probabilidad de las cartas, pero los premios son mucho mayores. ¡El cofre dorado da 4 veces más!",
+  "chestForge.howTo.5": "¡El cofre grande da el doble de premios y el cofre dorado, el triple! Las probabilidades de las cartas no cambian.",
   "chestForge.howTo.4": "Cuanto menor la probabilidad, mayor el premio. ¿Vamos a por el premio gordo? ¡Chapoteo!",
   "chestForge.howTo.3": "Una carta fallida solo pierde su propio premio. ¡Aunque falles una, te llevas todo lo que juntaron las demás!",
   "chestForge.howTo.2": "Elige una carta y dale la vuelta, cinco veces. ¡Cada acierto mete un premio brillante en el cofre!",

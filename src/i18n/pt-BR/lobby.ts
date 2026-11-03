@@ -75,7 +75,7 @@ export const LOBBY_PT_BR = {
   "chestForge.box.large": "Baú grande",
   "chestForge.box.grand": "Baú dourado",
   "chestForge.box.reward": "Prêmios ×{mult}",
-  "chestForge.howTo.5": "Quanto maior o baú, um pouco menor a chance das cartas, mas os prêmios são bem maiores. O baú dourado dá 4 vezes mais!",
+  "chestForge.howTo.5": "O baú grande dá o dobro de prêmios e o baú dourado, o triplo! A chance das cartas é a mesma.",
   "chestForge.howTo.4": "Quanto menor a chance, maior o prêmio. Vamos tentar o prêmio máximo? Tchibum!",
   "chestForge.howTo.3": "Uma carta que falha só perde o próprio prêmio. Mesmo errando uma, você leva tudo o que as outras juntaram!",
   "chestForge.howTo.2": "Escolha uma carta e vire, cinco vezes. Cada acerto põe um prêmio brilhante no baú!",

@@ -75,7 +75,7 @@ export const LOBBY_ZH_HANS = {
   "chestForge.box.large": "大宝箱",
   "chestForge.box.grand": "黄金宝箱",
   "chestForge.box.reward": "奖励 ×{mult}",
-  "chestForge.howTo.5": "宝箱越大，卡的概率会稍低一些，但奖励会大得多。黄金宝箱足足有4倍哦！",
+  "chestForge.howTo.5": "大宝箱奖励2倍，黄金宝箱3倍！卡的概率都一样哦。",
   "chestForge.howTo.4": "概率越低的卡，奖励就越大。要不要试试大奖卡？哗啦哗啦！",
   "chestForge.howTo.3": "失败的卡只会拿不到那一份奖励。就算失败一次，其他卡收集到的奖励也能全部带走哦！",
   "chestForge.howTo.2": "每次选一张卡翻开，一共选五次。成功的话，闪闪发亮的奖励就会扑通一下装进宝箱！",

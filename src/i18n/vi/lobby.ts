@@ -75,7 +75,7 @@ export const LOBBY_VI = {
   "chestForge.box.large": "Rương lớn",
   "chestForge.box.grand": "Rương vàng",
   "chestForge.box.reward": "Thưởng ×{mult}",
-  "chestForge.howTo.5": "Rương càng lớn thì tỉ lệ lá bài hơi thấp hơn, nhưng thưởng to hơn nhiều. Rương vàng tận 4 lần đó!",
+  "chestForge.howTo.5": "Rương lớn thưởng gấp 2, rương vàng gấp 3! Tỉ lệ lá bài vẫn như cũ.",
   "chestForge.howTo.4": "Lá bài tỉ lệ càng thấp thì thưởng càng to. Mình thử nhắm lá độc đắc nhé? Tõm tõm!",
   "chestForge.howTo.3": "Lá bài thất bại chỉ mất phần thưởng của chính nó thôi. Dù hụt một lá, phần thưởng từ các lá khác vẫn mang về hết!",
   "chestForge.howTo.2": "Chọn từng lá bài rồi lật lên, tất cả năm lần. Thành công là phần thưởng lấp lánh rơi tõm vào rương!",

@@ -75,7 +75,7 @@ export const LOBBY_DE = {
   "chestForge.box.large": "Große Truhe",
   "chestForge.box.grand": "Goldene Truhe",
   "chestForge.box.reward": "Belohnung ×{mult}",
-  "chestForge.howTo.5": "Je größer die Truhe, desto etwas geringer die Kartenchance, aber die Belohnungen sind viel größer. Die goldene Truhe gibt sogar das Vierfache!",
+  "chestForge.howTo.5": "Die große Truhe gibt doppelte Belohnungen, die goldene Truhe dreifache! Die Kartenchancen bleiben gleich.",
   "chestForge.howTo.4": "Je kleiner die Chance, desto größer die Belohnung. Wollen wir den Jackpot versuchen? Plitsch-platsch!",
   "chestForge.howTo.3": "Eine Niete kostet nur ihre eigene Belohnung. Auch wenn eine danebengeht, bleibt alles, was die anderen Karten gesammelt haben!",
   "chestForge.howTo.2": "Wähl fünfmal hintereinander eine Karte und dreh sie um. Jeder Treffer landet als Glitzerbelohnung in der Truhe!",

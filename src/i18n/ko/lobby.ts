@@ -86,7 +86,7 @@ export const LOBBY_KO = {
   "chestForge.box.large": "큰 상자",
   "chestForge.box.grand": "황금 상자",
   "chestForge.box.reward": "보상 ×{mult}",
-  "chestForge.howTo.5": "큰 상자일수록 카드 확률은 조금 낮지만 보상이 훨씬 커요. 황금 상자는 무려 4배예요!",
+  "chestForge.howTo.5": "큰 상자는 보상이 2배, 황금 상자는 3배예요! 카드 확률은 똑같아요.",
   "chestForge.howTo.4": "확률이 낮은 카드일수록 보상이 커요. 대박 카드를 노려 볼까요? 첨벙첨벙!",
   "chestForge.howTo.3": "실패한 카드는 그 보상만 못 받아요. 하나 실패해도 다른 카드에서 모은 보상은 전부 가져갈 수 있어요!",
   "chestForge.howTo.2": "카드를 한 장씩 다섯 번 골라 뒤집어요. 성공하면 반짝반짝 보상이 상자에 쏙 들어가요!",

@@ -22,9 +22,9 @@ export const CHEST_FORGE = {
 } as const;
 
 /**
- * 상자 세 가지(응태 결정, 2026-11-03) — 100 코인 상자가 카드표 그대로이고, 200·300 코인 상자는 **모든 카드의 수량을
- * 키우는 대신 받을 확률을 조금 깎는다**(위험 대비 큰 보상). 기대값은 수량 배율 × 확률 배율이라 200은 약 2.2배, 300은
- * 약 3.4배 — 코인 하나당으로도 큰 상자일수록 낫다("300개는 확실히 3배치"). 카드 고르기·나오는 확률은 셋이 같다.
+ * 상자 세 가지(응태 결정, 2026-11-03) — 100 코인 상자가 카드표 그대로이고, 200·300 코인 상자는 **모든 카드의 수량이
+ * 정확히 2배·3배**다. 확률은 셋이 같다("2.4배 같은 애매한 단위 말고 1·2·3배 — 큰 걸 뽑는 사람은 귀찮은 걸 피하려는
+ * 것"). 큰 상자는 여러 번 열 것을 한 번에 끝내는 몫이다.
  */
 export type ChestBoxId = "small" | "large" | "grand";
 export interface ChestBox {
@@ -38,8 +38,8 @@ export interface ChestBox {
 }
 export const CHEST_BOXES: readonly ChestBox[] = [
   { id: "small", entryCost: 100, reward: 1, chance: 1 },
-  { id: "large", entryCost: 200, reward: 2.4, chance: 0.92 },
-  { id: "grand", entryCost: 300, reward: 4, chance: 0.85 },
+  { id: "large", entryCost: 200, reward: 2, chance: 1 },
+  { id: "grand", entryCost: 300, reward: 3, chance: 1 },
 ];
 export function chestBox(id: unknown): ChestBox | undefined { return CHEST_BOXES.find((box) => box.id === id); }
 /** 진행 중인 상자의 종류 — 상자 종류가 생기기 전에 연 상자는 카드표 그대로였으므로 작은 상자로 읽는다. */

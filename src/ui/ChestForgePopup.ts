@@ -272,7 +272,7 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       introPage.add(holder);
     });
     // 연구소의 연구 버튼과 같은 한 장을 상자마다 — 위에 상자 이름, 아래에 드는 값(코인 그림 × 100/200/300).
-    // 버튼 위의 한 줄이 보상 배율을 말한다(큰 상자일수록 카드 확률이 조금 낮은 것은 카드 앞면의 %가 말한다).
+    // 버튼 위의 한 줄이 보상 배율(×1·×2·×3)을 말한다. 카드 확률은 셋이 같다.
     const BOX_LABEL: Record<ChestBoxId, TextKey> = { small: "chestForge.box.small", large: "chestForge.box.large", grand: "chestForge.box.grand" };
     const BOX_TONE: Record<ChestBoxId, number> = { small: 0x9fdcc4, large: 0x8fc6f0, grand: 0xffd36e };
     const enters = CHEST_BOXES.map((box, index) => {

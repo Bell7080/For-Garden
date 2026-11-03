@@ -30,15 +30,16 @@ describe("보물상자 카드 규칙", () => {
     expect(best).toBeGreaterThan(safe * 2.5);
   });
 
-  it("큰 상자일수록 코인 하나당 기대값이 크고, 300 코인 상자는 100 코인 상자의 3배를 넘는다", () => {
+  it("200·300 코인 상자는 같은 확률에 수량만 정확히 2배·3배다", () => {
     const [small, large, grand] = CHEST_BOXES.map((box) => ({ box, ev: chestBoxExpectedValue(undefined, box) }));
     expect(small.box.entryCost).toBe(100); expect(large.box.entryCost).toBe(200); expect(grand.box.entryCost).toBe(300);
-    expect(large.ev / large.box.entryCost).toBeGreaterThan(small.ev / small.box.entryCost);
-    expect(grand.ev / grand.box.entryCost).toBeGreaterThan(large.ev / large.box.entryCost);
-    expect(grand.ev).toBeGreaterThan(small.ev * 3);
-    // 위험 대비 큰 보상 — 큰 상자는 같은 카드의 확률이 낮고 수량이 크다.
-    const safe = chestCard("safe-gold", grand.box)!, base = chestCard("safe-gold")!;
-    expect(safe.chance).toBeLessThan(base.chance); expect(safe.amount).toBeGreaterThan(base.amount * 3);
+    // 수량은 정확히 2배·3배, 확률은 같다 — 기대값도 그대로 2배·3배다.
+    expect(large.ev).toBeCloseTo(small.ev * 2, 6);
+    expect(grand.ev).toBeCloseTo(small.ev * 3, 6);
+    for (const card of CHEST_CARDS) {
+      expect(chestCard(card.id, grand.box)).toMatchObject({ amount: card.amount * 3, chance: card.chance });
+      expect(chestCard(card.id, large.box)).toMatchObject({ amount: card.amount * 2, chance: card.chance });
+    }
     expect(chestGradeThresholds(grand.box)[0]).toBeGreaterThan(chestGradeThresholds(small.box)[0]);
   });
 

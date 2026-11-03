@@ -12,8 +12,8 @@
  */
 export const EVENT_REWARD_BUDGET = {
   regular: {
-    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 보물상자 카드형이 약 155(2026-11-02 응태 결정). */
-    gemValuePer100Stamina: 160,
+    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290(보물상자 약 244 · 델로피 쉬움 완벽한 판 약 285). */
+    gemValuePer100Stamina: 290,
   },
   limited: {} as Record<string, { readonly totalGemValue: number }>,
 } as const;

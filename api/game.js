@@ -5385,6 +5385,26 @@ var LOBBY_KO = {
   "roulette.bonusUsed": "\uC624\uB298 \uD68C\uC804 \uC644\uB8CC",
   "roulette.ended": "\uC774\uBCA4\uD2B8\uAC00 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
   "roulette.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "event.chestForge.title": "\uBCF4\uBB3C\uC0C1\uC790",
+  "event.chestForge.subtitle": "\uCE74\uB4DC\uB97C \uB4A4\uC9D1\uC5B4 \uBCF4\uC0C1\uC744 \uBAA8\uC73C\uC138\uC694!",
+  "chestForge.intro": "\uCF54\uC778\uC73C\uB85C \uC0C1\uC790\uB97C \uC5F4\uACE0 \uCE74\uB4DC \uB2E4\uC12F \uC7A5\uC744 \uACE8\uB77C \uB4A4\uC9D1\uC73C\uC138\uC694. \uC2E4\uD328\uD55C \uCE74\uB4DC\uB9CC \uB193\uCCD0\uC694!",
+  "chestForge.coins": "\uC774\uBCA4\uD2B8 \uCF54\uC778 {count}",
+  "chestForge.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC\uC694 \xB7 {date} \uCD08\uAE30\uD654",
+  "chestForge.enter": "\uCF54\uC778 {count}\uAC1C\uB85C \uC0C1\uC790 \uC5F4\uAE30",
+  "chestForge.round": "{round} / {total}\uBC88\uC9F8 \uC120\uD0DD",
+  "chestForge.collected": "\uBAA8\uC740 \uBCF4\uC0C1",
+  "chestForge.pickHint": "\uCE74\uB4DC\uB97C \uD55C \uC7A5 \uACE8\uB77C \uB4A4\uC9D1\uC73C\uC138\uC694",
+  "chestForge.tier.safe": "\uC548\uC804",
+  "chestForge.tier.mid": "\uBCF4\uD1B5",
+  "chestForge.tier.risk": "\uB3C4\uBC15",
+  "chestForge.tier.big": "\uB300\uD615",
+  "chestForge.tier.jackpot": "\uB300\uBC15",
+  "chestForge.win": "\uD68D\uB4DD!",
+  "chestForge.miss": "\uAF5D",
+  "chestForge.jackpotHeader": "\uB300\uBC15 \uCE74\uB4DC",
+  "chestForge.rules": "\uB3C4\uBC15 \uC790\uB9AC\uC758 10%\uB294 \uB300\uD615 \uCE74\uB4DC, \uB9C8\uC9C0\uB9C9 \uB124 \uBC88\uC9F8 \uC790\uB9AC\uB294 \uB300\uD615 90% \xB7 \uB300\uBC15 10% \uCE74\uB4DC\uAC00 \uB098\uC640\uC694.",
+  "chestForge.reward": "\uBCF4\uBB3C\uC0C1\uC790 \uBCF4\uC0C1",
+  "chestForge.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
   "roulette.intro": "\uCCAB \uD68C\uC804\uC740 \uBB34\uB8CC! \uC774\uD6C4 \uAD11\uACE0\uB97C \uBCFC \uB54C\uB9C8\uB2E4 \uD55C \uBC88\uC529, \uD558\uB8E8 3\uD68C \uB354 \uB3CC\uB9B4 \uC218 \uC788\uC5B4\uC694.",
   "roulette.rates.basis": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310 \xB7 1\uD68C \uD68C\uC804 \uAE30\uC900",
@@ -5818,6 +5838,15 @@ var BATTLE_KO = {
   "tutorial.party.move": "\uB810\uB9AD\uC744 \uB2E4\uB978 \uCE78\uC73C\uB85C \uB04C\uC5B4 \uD3B8\uC131\uC744 \uBC14\uAFD4 \uBCF4\uC138\uC694.",
   "tutorial.party.hold": "\uD3B8\uC131\uB41C \uB810\uB9AD\uC744 \uAFB9 \uB20C\uB7EC \uC815\uBCF4\uB97C \uD655\uC778\uD574 \uBCF4\uC138\uC694.",
   "tutorial.party.start": "\uD3B8\uC131\uC774 \uC900\uBE44\uB410\uC5B4\uC694. \uCD9C\uC804\uD574 \uBCFC\uAE4C\uC694?",
+  "tutorial.info.badges": "\uC990\uACA8\uCC3E\uAE30\xB7\uC560\uCC29\xB7\uAD00\uCC30 \uC77C\uC9C0\uC608\uC694. \uC544\uB07C\uB294 \uB810\uB9AD\uC744 \uD45C\uC2DC\uD558\uACE0 \uAE30\uB85D\uC744 \uC77D\uC5B4 \uBCF4\uC138\uC694.",
+  "tutorial.info.skills": "\uD328\uC2DC\uBE0C\xB7\uC77C\uBC18 \uACF5\uACA9\xB7\uAD81\uADF9\uAE30\xB7\uD3ED\uC8FC\uC608\uC694. \uB204\uB974\uBA74 \uC2A4\uD0AC \uC124\uBA85\uC774 \uC5F4\uB824\uC694.",
+  "tutorial.info.level": "\uCE58\uC988\uCF00\uC774\uD06C\uB97C \uAE09\uC5EC\uD574 \uB808\uBCA8\uC744 \uC62C\uB824\uC694.",
+  "tutorial.info.break": "\uAC19\uC740 \uB810\uB9AD\uC744 \uB2E4\uC2DC \uB9CC\uB098\uBA74 \uD30C\uD3B8\uC774 \uC313\uC5EC\uC694. \uD55C\uACC4 \uB3CC\uD30C\uB85C \uB808\uBCA8 \uC0C1\uD55C\uC744 \uC5F4\uC5B4\uC694.",
+  "tutorial.info.bond": "\uC720\uB300\uB294 \uD568\uAED8 \uC2F8\uC6B8\uC218\uB85D \uAE4A\uC5B4\uC838\uC694. \uB192\uC744\uC218\uB85D \uD3ED\uC8FC\uAC00 \uBE68\uB9AC \uCC3E\uC544\uC640\uC694.",
+  "tutorial.info.stats": "\uB2A5\uB825\uCE58 \uC624\uAC01\uD615\uC774\uC5D0\uC694. \uB113\uC744\uC218\uB85D \uC804\uD22C\uB825\uC774 \uB192\uACE0, \uB3CB\uBCF4\uAE30\uB85C \uC815\uD655\uD55C \uC218\uCE58\uB97C \uBD10\uC694.",
+  "tutorial.info.rune": "\uB8EC\uC744 \uC138 \uCE78\uC5D0 \uB07C\uC6CC \uB2A5\uB825\uCE58\uB97C \uB354 \uC62C\uB824\uC694.",
+  "tutorial.info.done": "\uC548\uB0B4\uB294 \uC5EC\uAE30\uAE4C\uC9C0\uC608\uC694! \uB4A4\uB85C\uAC00\uAE30\uB97C \uB20C\uB7EC \uD3B8\uC131\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
+  "tutorial.info.next": "\uD654\uBA74\uC744 \uB20C\uB7EC \uACC4\uC18D \xB7 {step}/{total}",
   "tutorial.relics.bulk": "\uAC15\uD654 \uBC84\uD2BC\uC744 \uAFB9 \uB20C\uB7EC \uC989\uC2DC \uAC15\uD654 \uBA54\uB274\uB97C \uC5F4\uC5B4 \uBCF4\uC138\uC694.",
   "tutorial.relics.one": "1\uB808\uBCA8 \uAC15\uD654\uB97C \uB20C\uB7EC \uD1A0\uB9AC\uCE74\uB97C \uD55C \uB808\uBCA8 \uC62C\uB824 \uBCF4\uC138\uC694.",
   "tutorial.relics.return": "\uAC15\uD654\uB97C \uB9C8\uCCE4\uC5B4\uC694. \uAD11\uC7A5\uC73C\uB85C \uB3CC\uC544\uAC00\uC138\uC694.",
@@ -6269,6 +6298,15 @@ var GUILD_KO = {
   "guild.guard.next": "\uB2E4\uC74C \uD310\uAE4C\uC9C0 {time}",
   "guild.guard.today": "\uC624\uB298\uC758 \uC801 \xB7 {element} \uC18D\uC131",
   "guild.guard.best": "\uC624\uB298 \uCD5C\uACE0 \uC810\uC218",
+  "guild.guard.trait.title": "\uC218\uD638\uC804 \uD2B9\uC9D5",
+  "guild.guard.trait.restore": "\uC544\uAD70 \uD68C\uBCF5\xB7\uBCF4\uD638\uB9C9",
+  "guild.guard.trait.restoreValue": "-{percent}%",
+  "guild.guard.trait.overrun": "\uBC29\uC5B4\uC120 \uBD95\uAD34",
+  "guild.guard.trait.overrunValue": "\uC801 {count}",
+  "guild.guard.trait.interval": "\uC6E8\uC774\uBE0C \uAC04\uACA9",
+  "guild.guard.trait.intervalValue": "{seconds}\uCD08",
+  "guild.guard.trait.growth": "\uC6E8\uC774\uBE0C\uB9C8\uB2E4 \uC801 LV +{level} \xB7 {waves}\uC6E8\uC774\uBE0C\uB9C8\uB2E4 +1\uB9C8\uB9AC (\uCD5C\uB300 {cap})",
+  "guild.guard.trait.tick": "{wave}\uC6E8\uC774\uBE0C \xB7 {count}\uB9C8\uB9AC",
   "guild.guard.attempts": "\uB0A8\uC740 \uB3C4\uC804 {left}/{total}",
   "guild.guard.start": "\uCD9C\uACA9",
   "guild.guard.tab.members": "\uAE38\uB4DC\uC6D0 \uC21C\uC704",
@@ -7393,6 +7431,7 @@ var SKILL_KO = {
   "skill.sentence.selfGuard.reset": " [[shell|\uC870\uAC00\uBE44]]\uAC00 \uACE7\uBC14\uB85C \uB2E4\uC2DC \uD130\uC9C8 \uC218 \uC788\uAC8C \uB41C\uB2E4.",
   "skill.sentence.stealthSetup": "{seconds}\uCD08 \uB3D9\uC548 [[stealth|\uC740\uC2E0]]\uD558\uACE0 \uCCB4\uB825\uC774 \uAC00\uC7A5 \uB0AE\uC740 \uC801\uC5D0\uAC8C [[teleport|\uC21C\uAC04\uC774\uB3D9]]\uD55C\uB2E4. \uC774\uD6C4 \uCC98\uC74C \uC801\uC911\uD558\uB294 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 \uD655\uC815 \uCE58\uBA85\uD0C0\uAC00 \uB418\uACE0 [[def|\uBC29\uC5B4\uB825]]\uC744 \uBB34\uC2DC\uD558\uB294 [[fixed-damage|\uACE0\uC815 \uD53C\uD574]]\uB85C \uB4E4\uC5B4\uAC04\uB2E4.{exposed}",
   "skill.sentence.stealthSetup.exposed": " \uADF8 \uACF5\uACA9\uACFC \uD568\uAED8 [[stealth|\uC740\uC2E0]]\uC774 \uD480\uB9B0\uB2E4.",
+  "skill.sentence.stealthSetup.shieldBreak": " \uC774 \uACF5\uACA9\uC740 \uB9DE\uC740 \uC801\uC758 [[shield|\uBCF4\uD638\uB9C9]]\uC744 \uD53C\uD574\uAC00 \uBC15\uD788\uAE30 \uC804\uC5D0 \uBAA8\uB450 \uD30C\uAD34\uD55C\uB2E4.",
   "skill.sentence.volley": "{seconds}\uCD08 \uB3D9\uC548 [[basic-attack|\uAE30\uBCF8 \uACF5\uACA9]]\uC774 {hits}\uBC88 \uC801\uC911\uD558\uB294 [[combo|\uC5F0\uACA9]]\uC774 \uB418\uACE0, [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]]\uAC00 {percent}% \uC624\uB978\uB2E4.",
   "skill.sentence.duoOrder": "[[duo|\uB4C0\uC624]]\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 [[attack-speed|\uACF5\uACA9 \uC18D\uB3C4]] {percent}%, \uCE58\uBA85\uD0C0 \uD655\uB960 {chance}%, \uD761\uD608 {lifeSteal}%\uB97C \uBD80\uC5EC\uD55C\uB2E4.",
   "skill.sentence.tailwind": "\uBAA8\uB4E0 \uC0DD\uC874 \uC544\uAD70\uC5D0\uAC8C {seconds}\uCD08 \uB3D9\uC548 [[tailwind|\uC21C\uD48D]]\uC744 \uBD80\uC5EC\uD55C\uB2E4.",
@@ -9153,7 +9192,7 @@ var RARITY_LEVEL_GROWTH = {
   SR: 2.4,
   SSR: 2.6
 };
-var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3, 2: 1.7, 3: 3 };
+var ENEMY_BIRTH_STAGE_FACTOR = { 0: 1, 1: 1.3, 2: 1.85, 3: 3 };
 var ENEMY_BIRTH_TIERS = {
   mir: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
   pulsi: { stage: 1, statFactor: ENEMY_BIRTH_STAGE_FACTOR[1] },
@@ -15612,6 +15651,7 @@ function strike(attacker, target, rng, state, events, useUltimate, comboHit, tar
   const resolution = resolveReceivedDamage(target, rawAmount);
   const amount = resolution.applied;
   const targetHpBefore = target.hp;
+  if (empowered && "selfSetup" in attacker.def.ultimate && attacker.def.ultimate.selfSetup?.empowerNextBasic.breaksShield === true) breakShield(target, events);
   const shieldBefore = target.shield.amount;
   const shieldProviderId = target.shield.providerId;
   const dealt = applyDamage(target, amount, events, state);
@@ -18414,7 +18454,7 @@ var RELICS = [
     basic: {
       id: "spino-basic",
       name: "\uC545\uC5B4\uD131 \uBB3C\uC5B4\uB72F\uAE30",
-      power: 80,
+      power: 96,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -18427,23 +18467,23 @@ var RELICS = [
        * 아니라 "어디에 고였나"가 아무것도 바꾸지 않았다. 지금은 **적 주위 곳곳에** 깔고 그
        * 사이를 뛰어다닌다.
        *
-       * 반경 200은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만 잠그는
+       * 반경 240(v0.400.3에 200에서 확대)은 붙어 싸우는 거리(`SKIRMISH.reach` 172)보다 조금 넓다 — 표적 하나만 잠그는
        * 판이면 "물가"가 아니라 그냥 표식이고, 난전 한 덩어리를 통째로 덮을 만큼 넓으면 근접
        * 개체가 전부 상시 둔화된다.
        *
        * `behindDistance` 120은 적을 사이에 두고 건너편이다. 도약이 곧 **적을 지나쳐 반대편으로
        * 파고드는** 걸음이 되고, 표적이 움직일 때마다 새 자리가 열린다.
        *
-       * `minSpacing` 260은 반경(200)보다 넓다 — 두 판이 서로의 안쪽에 겹치면 잠긴 적이 한
+       * `minSpacing` 300은 반경(240)보다 넓다 — 두 판이 서로의 안쪽에 겹치면 잠긴 적이 한
        * 곳에만 세어져 도약 후보가 둘로 갈리기만 한다. 이 한 줄이 판의 개수를 정하므로 상한을
        * 손으로 적지 않는다: 적이 몰려 있으면 한둘, 흩어져 있으면 셋 넷이 깔린다.
        */
       shallows: {
-        radius: 200,
+        radius: 240,
         seconds: 6,
         moveSlowPercent: 35,
         behindDistance: 120,
-        minSpacing: 260,
+        minSpacing: 300,
         /*
          * **네 번 물면 한 번 뛴다.** 공속 122(로스터 상위)에 누적 패시브까지 붙으므로 실전에서
          * 대략 2.5~3초에 한 번이고, 판이 6초 남으니 도약 한 번당 두세 곳이 깔려 있다 — 궁극기가
@@ -18453,7 +18493,7 @@ var RELICS = [
          * 「전투의 환희」가 아무리 쌓여도 뛰는 횟수가 그대로라 성장과 맞물리지 않는다.
          */
         leapEveryHits: 4,
-        leapPower: 110,
+        leapPower: 140,
         // 물에 잠긴 채로 맞으면 더 아프다. 평타에는 아무 몫도 주지 않으므로, 적을 물가에
         // 가둬 두는 값이 **도약이 꽂히는 순간**에만 돌아온다.
         submergedLeapBonusPercent: 40
@@ -18480,11 +18520,11 @@ var RELICS = [
        * **여울을 몇 곳에 벌려 놓았느냐**다 — 평타로 판을 까는 일과 궁극기가 같은 축에 서고,
        * 판이 하나도 없으면 터뜨릴 것도 없다.
        *
-       * 위력 130은 도약(110)보다 한 뼘 높다. 같은 판을 터뜨리는 같은 일이되 게이지를 치른
+       * 위력 165는 도약(140)보다 한 뼘 높다(v0.400.3 버프 — 평타 80→96·도약 110→140·반경 200→240). 같은 판을 터뜨리는 같은 일이되 게이지를 치른
        * 몫만큼만 세다 — 여기를 크게 올리면 판을 까는 이유가 "궁극기 한 방을 키우려고"가 되어,
        * 뛰어다니며 터뜨리는 평상시 리듬이 궁극기를 기다리는 시간이 된다.
        */
-      detonateShallows: { power: 130 }
+      detonateShallows: { power: 165 }
       // attackSpeedPower가 있는 궁극기는 skillDescription()이 구조화 필드로 다시 문장을 만들므로
     }
   },
@@ -21552,14 +21592,14 @@ var RELICS = [
     role: "assassin",
     reachTier: "melee",
     excavationTrait: { primaryCurrency: "gold", baseProductionPerHour: 112.5, efficiencyMultiplier: 1 },
-    /* SR 띠의 아래쪽이다(2226). 튀어 다니는 암살자라 공격 속도·이동 속도에 얹고 체력은 낮게 둔다. */
+    /* SR 띠 안쪽이다(2316 — 응태 요청: 공격 속도 130 → 160, 2226 → 2316). 튀어 다니는 암살자라 공격 속도·이동 속도에 얹고 체력은 낮게 둔다. */
     stats: {
       hp: 860,
       def: 42,
       res: 40,
       atk: 195,
       ap: 20,
-      attackSpeed: 130,
+      attackSpeed: 160,
       moveSpeed: 122,
       critChance: 10,
       critDamage: 150,
@@ -21582,7 +21622,7 @@ var RELICS = [
     basic: {
       id: "noa-basic",
       name: "\uD560\uD034\uAE30",
-      power: 60,
+      power: 100,
       iconAssetId: "skill-icon-physical",
       effectType: "physical",
       damageType: "physical",
@@ -21602,7 +21642,8 @@ var RELICS = [
         stealthBreaksOnBasic: true,
         leapTarget: "lowestHpEnemy",
         landingDistance: 80,
-        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true }
+        // 응태 요청: 숨어 파고든 첫 할퀴기가 보호막을 깨고 박힌다 — 막으로 버티는 뒷줄을 노리는 암살자의 몫이다.
+        empowerNextBasic: { guaranteedCritical: true, ignoresDefense: true, breaksShield: true }
       }
     },
     // 손톱이 피를 내고(II) 폭주하면 급소가 더 자주 터진다(IV). 은신과 움찔이 이미 생존 몫이라 나머지는 비운다.
@@ -24892,6 +24933,256 @@ function migrateTutorialV50(value) {
   return normalizeTutorialState({ ...raw, completedStepIds: prefix });
 }
 
+// src/core/chestForge.ts
+init_define_import_meta_env();
+
+// src/core/missions.ts
+init_define_import_meta_env();
+var MISSIONS = [
+  { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
+  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
+  { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
+  { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
+  { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
+  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
+  { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
+  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
+  { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
+  { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
+  { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
+  { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
+  { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
+  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" }
+];
+for (const mission of MISSIONS) {
+  registerDataText(mission, "title", `mission.${mission.id}.title`);
+}
+var RESEARCH_REWARD_STAGES = {
+  daily: [
+    { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
+    { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
+    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
+    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
+    { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
+  ],
+  weekly: [
+    { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
+    { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
+    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
+    { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
+    { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
+  ]
+};
+function maxResearchPoints(period) {
+  return RESEARCH_REWARD_STAGES[period].at(-1)?.threshold ?? 0;
+}
+function mergeMissionRewards(rewards) {
+  const merged = /* @__PURE__ */ new Map();
+  for (const { currency: currency3, amount } of rewards) if (amount > 0) merged.set(currency3, (merged.get(currency3) ?? 0) + amount);
+  return [...merged].map(([currency3, amount]) => ({ currency: currency3, amount }));
+}
+function researchStageClaimId(period, stageId) {
+  return `${period}:${stageId}`;
+}
+function missionPeriodKeys(now) {
+  const dailyKey = now.toISOString().slice(0, 10);
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const daysFromMonday = (monday.getUTCDay() + 6) % 7;
+  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
+  return { dailyKey, weeklyKey: monday.toISOString().slice(0, 10) };
+}
+function normalizeMissions(state, now) {
+  const researchPoints = state.researchPoints ?? { daily: 0, weekly: 0 };
+  const claimedResearchStageIds = state.claimedResearchStageIds ?? [];
+  const keys = missionPeriodKeys(now);
+  const dailyChanged = state.dailyKey !== keys.dailyKey;
+  const weeklyChanged = state.weeklyKey !== keys.weeklyKey;
+  if (!dailyChanged && !weeklyChanged) return { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...researchPoints }, claimedResearchStageIds: [...claimedResearchStageIds] };
+  const resetIds = new Set(MISSIONS.filter((mission) => mission.period === "daily" ? dailyChanged : weeklyChanged).map((mission) => mission.id));
+  return {
+    ...keys,
+    ...state.lifetime ? { lifetime: { ...state.lifetime } } : {},
+    ...!weeklyChanged && state.weeklyStamina ? { weeklyStamina: state.weeklyStamina } : {},
+    progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
+    claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
+    researchPoints: {
+      daily: dailyChanged ? 0 : researchPoints.daily,
+      weekly: weeklyChanged ? 0 : researchPoints.weekly
+    },
+    claimedResearchStageIds: claimedResearchStageIds.filter((id) => !(dailyChanged && id.startsWith("daily:")) && !(weeklyChanged && id.startsWith("weekly:")))
+  };
+}
+var LIFETIME_COUNT_CAP = 1e9;
+function applyMissionEvent(state, event, now) {
+  const next = normalizeMissions(state, now);
+  if (event.type === "battle_completed" && !event.victory) return next;
+  const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
+  if (amount <= 0) return next;
+  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
+  if (event.type === "stamina_spent") next.weeklyStamina = Math.min(LIFETIME_COUNT_CAP, (next.weeklyStamina ?? 0) + amount);
+  for (const mission of MISSIONS) {
+    if (mission.event !== event.type) continue;
+    next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
+  }
+  return next;
+}
+function claimResearchStages(state, period, stageIds) {
+  const stages = RESEARCH_REWARD_STAGES[period];
+  const requested = stageIds ?? stages.map(({ id }) => id);
+  const claimedStageIds = [...new Set(requested)].filter((id) => {
+    const stage = stages.find((candidate) => candidate.id === id);
+    return stage !== void 0 && state.researchPoints[period] >= stage.threshold && !state.claimedResearchStageIds.includes(researchStageClaimId(period, id));
+  });
+  const ids = claimedStageIds.map((id) => researchStageClaimId(period, id));
+  return {
+    state: { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...state.researchPoints }, claimedResearchStageIds: [...state.claimedResearchStageIds, ...ids] },
+    claimedStageIds,
+    rewards: mergeMissionRewards(claimedStageIds.flatMap((id) => stages.find((stage) => stage.id === id)?.rewards ?? []))
+  };
+}
+function researchPointsForClaim(claimedMissionIds) {
+  const gained = { daily: 0, weekly: 0 };
+  for (const id of new Set(claimedMissionIds)) {
+    const mission = MISSIONS.find((candidate) => candidate.id === id);
+    if (mission) gained[mission.period] += mission.researchPoints;
+  }
+  return gained;
+}
+function addResearchPoints(state, gained) {
+  return {
+    ...state,
+    progress: { ...state.progress },
+    claimedIds: [...state.claimedIds],
+    claimedResearchStageIds: [...state.claimedResearchStageIds],
+    researchPoints: {
+      daily: Math.min(maxResearchPoints("daily"), state.researchPoints.daily + gained.daily),
+      weekly: Math.min(maxResearchPoints("weekly"), state.researchPoints.weekly + gained.weekly)
+    }
+  };
+}
+function claimableMissionIds(state) {
+  return MISSIONS.filter((mission) => (state.progress[mission.id] ?? 0) >= mission.target && !state.claimedIds.includes(mission.id)).map((mission) => mission.id);
+}
+
+// src/core/eventRewardBudget.ts
+init_define_import_meta_env();
+var EVENT_REWARD_BUDGET = {
+  regular: {
+    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 보물상자 카드형이 약 155(2026-11-02 응태 결정). */
+    gemValuePer100Stamina: 160
+  },
+  limited: {}
+};
+
+// src/core/chestForge.ts
+var CHEST_FORGE = {
+  id: "chest-forge",
+  /** 상자 하나를 여는 값(코인). */
+  entryCost: 300,
+  /** 상자 하나에서 고르는 횟수. */
+  rounds: 5
+};
+var CHEST_CARDS = [
+  { id: "safe-gold", tier: "safe", currency: "gold", amount: 1e4, chance: 95 },
+  { id: "safe-cheesecake", tier: "safe", currency: "cheesecake", amount: 10, chance: 95 },
+  { id: "safe-stamina", tier: "safe", currency: "stamina", amount: 20, chance: 95 },
+  { id: "safe-stone", tier: "safe", currency: "rawStone", amount: 10, chance: 95 },
+  { id: "mid-gold", tier: "mid", currency: "gold", amount: 3e4, chance: 80 },
+  { id: "mid-cheesecake", tier: "mid", currency: "cheesecake", amount: 30, chance: 80 },
+  { id: "mid-gems", tier: "mid", currency: "gems", amount: 30, chance: 80 },
+  { id: "mid-stamina", tier: "mid", currency: "stamina", amount: 60, chance: 80 },
+  { id: "risk-gems", tier: "risk", currency: "gems", amount: 100, chance: 60 },
+  { id: "risk-cheesecake", tier: "risk", currency: "cheesecake", amount: 80, chance: 60 },
+  { id: "risk-gold", tier: "risk", currency: "gold", amount: 8e4, chance: 60 },
+  { id: "big-gems", tier: "big", currency: "gems", amount: 300, chance: 30 },
+  { id: "big-fossil", tier: "big", currency: "fossil", amount: 1, chance: 35 },
+  { id: "big-amber", tier: "big", currency: "amber", amount: 1, chance: 35 },
+  { id: "jackpot-gems", tier: "jackpot", currency: "gems", amount: 1e3, chance: 30 },
+  { id: "jackpot-gems-max", tier: "jackpot", currency: "gems", amount: 3e3, chance: 10 }
+];
+var SLOT = {
+  safe: [["safe", 1]],
+  mid: [["mid", 1]],
+  spicy: [["risk", 90], ["big", 10]],
+  special: [["big", 90], ["jackpot", 10]]
+};
+function chestOfferSlots(round) {
+  return round >= CHEST_FORGE.rounds - 1 ? [SLOT.safe, SLOT.mid, SLOT.spicy, SLOT.special] : [SLOT.safe, SLOT.mid, SLOT.spicy];
+}
+var GEM_VALUE = { gold: 1 / 500, cheesecake: 2, stamina: 0.83, rawStone: 5, gems: 1, fossil: 300, amber: 300 };
+function chestCard(id) {
+  return CHEST_CARDS.find((card) => card.id === id);
+}
+function clampRoll(random) {
+  const raw = random();
+  return Math.min(1 - Number.EPSILON, Math.max(0, Number.isFinite(raw) ? raw : 0));
+}
+function pickWeighted(entries, random) {
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll3 = clampRoll(random) * total;
+  for (const [value, weight] of entries) {
+    if (roll3 < weight) return value;
+    roll3 -= weight;
+  }
+  return entries[entries.length - 1][0];
+}
+function rollChestOffer(round, random) {
+  return chestOfferSlots(round).map((slot) => {
+    const tier = pickWeighted(slot, random);
+    const cards = CHEST_CARDS.filter((card) => card.tier === tier);
+    return cards[Math.min(cards.length - 1, Math.floor(clampRoll(random) * cards.length))].id;
+  });
+}
+function rollChestCard(card, random) {
+  return clampRoll(random) < card.chance / 100;
+}
+var CHEST_FORGE_BUDGET = EVENT_REWARD_BUDGET.regular;
+function createEmptyChestForgeState() {
+  return { weekKey: "", spent: 0, run: null };
+}
+var CURRENCIES = ["gold", "cheesecake", "stamina", "rawStone", "gems", "fossil", "amber"];
+function normalizeRun(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const round = source.round;
+  if (!Number.isInteger(round) || round < 0 || round >= CHEST_FORGE.rounds) return null;
+  const offer = Array.isArray(source.offer) ? source.offer.filter((id) => typeof id === "string" && !!chestCard(id)) : [];
+  if (offer.length !== chestOfferSlots(round).length) return null;
+  const collected = {};
+  const raw = source.collected && typeof source.collected === "object" ? source.collected : {};
+  for (const [currency3, amount] of Object.entries(raw)) {
+    if (CURRENCIES.includes(currency3) && Number.isInteger(amount) && amount > 0) collected[currency3] = amount;
+  }
+  return { round, offer, collected };
+}
+function normalizeChestForgeState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    weekKey: typeof source.weekKey === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.weekKey) ? source.weekKey : "",
+    spent: Number.isInteger(source.spent) && source.spent >= 0 ? source.spent : 0,
+    run: normalizeRun(source.run)
+  };
+}
+function isValidChestForgeState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeChestForgeState(value)) === JSON.stringify(value);
+}
+function rollChestForgeWeek(state, now) {
+  const { weeklyKey } = missionPeriodKeys(now);
+  return state.weekKey === weeklyKey ? { ...state } : { weekKey: weeklyKey, spent: 0, run: state.run };
+}
+function chestForgeStatus(missions, ledger, now) {
+  const current = normalizeMissions(missions, now);
+  const state = rollChestForgeWeek(ledger, now);
+  const earned = current.weeklyStamina ?? 0;
+  return {
+    weekKey: state.weekKey,
+    coins: Math.max(0, earned - state.spent),
+    earned,
+    run: state.run ? structuredClone(state.run) : null,
+    resetsAt: new Date(Date.parse(`${state.weekKey}T00:00:00.000Z`) + 7 * 864e5).toISOString()
+  };
+}
+
 // src/core/raidTicketDrops.ts
 init_define_import_meta_env();
 
@@ -25079,132 +25370,6 @@ var ACHIEVEMENT_SERIES = [
   { id: "allied-party", category: "feat", metric: "partySquads", tiers: tiers([3], [gems(10)]), hidden: true },
   { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
 ];
-
-// src/core/missions.ts
-init_define_import_meta_env();
-var MISSIONS = [
-  { id: "daily-battle", period: "daily", title: "\uC804\uD22C \uC2B9\uB9AC 1\uD68C", target: 1, reward: { currency: "gold", amount: 5e3 }, researchPoints: 20, event: "battle_completed" },
-  { id: "daily-excavate", period: "daily", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "relic_research_completed" },
-  { id: "daily-salary", period: "daily", title: "\uAE09\uC5EC 1\uD68C", target: 1, reward: { currency: "cheesecake", amount: 20 }, researchPoints: 20, event: "salary_given" },
-  { id: "daily-lobby", period: "daily", title: "\uB85C\uBE44 \uAD50\uB958 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "lobby_interaction" },
-  { id: "daily-stamina", period: "daily", title: "\uC2A4\uD14C\uBBF8\uB098 60 \uC0AC\uC6A9", target: 60, reward: { currency: "cheesecake", amount: 30 }, researchPoints: 20, event: "stamina_spent" },
-  { id: "daily-harvest", period: "daily", title: "\uBC1C\uAD74 \uC218\uD655 1\uD68C", target: 1, reward: { currency: "gems", amount: 50 }, researchPoints: 20, event: "excavation_harvested" },
-  { id: "daily-dispatch", period: "daily", title: "\uAD50\uB958 \uD30C\uACAC 1\uD68C", target: 1, reward: { currency: "gold", amount: 3e3 }, researchPoints: 20, event: "interaction_dispatched" },
-  { id: "weekly-daily", period: "weekly", title: "\uC77C\uC77C \uC784\uBB34 20\uD68C \uC644\uB8CC", target: 20, reward: { currency: "gems", amount: 250 }, researchPoints: 150, event: "daily_mission_claimed" },
-  { id: "weekly-battle", period: "weekly", title: "\uC804\uD22C \uC2B9\uB9AC 20\uD68C", target: 20, reward: { currency: "gold", amount: 3e4 }, researchPoints: 100, event: "battle_completed" },
-  { id: "weekly-excavate", period: "weekly", title: "\uC5F0\uAD6C\uC18C \uCE90\uB9AD\uD130 \uC5F0\uAD6C 10\uD68C", target: 10, reward: { currency: "fossil", amount: 1 }, researchPoints: 100, event: "relic_research_completed" },
-  { id: "weekly-stamina", period: "weekly", title: "\uC2A4\uD14C\uBBF8\uB098 600 \uC0AC\uC6A9", target: 600, reward: { currency: "cheesecake", amount: 150 }, researchPoints: 100, event: "stamina_spent" },
-  { id: "weekly-dispatch", period: "weekly", title: "\uAD50\uB958 \uD30C\uACAC 5\uD68C", target: 5, reward: { currency: "dnaFragments", amount: 10 }, researchPoints: 100, event: "interaction_dispatched" },
-  { id: "weekly-salary", period: "weekly", title: "\uAE09\uC5EC 10\uD68C", target: 10, reward: { currency: "cheesecake", amount: 100 }, researchPoints: 50, event: "salary_given" },
-  { id: "weekly-harvest", period: "weekly", title: "\uBC1C\uAD74 \uC218\uD655 5\uD68C", target: 5, reward: { currency: "gems", amount: 150 }, researchPoints: 50, event: "excavation_harvested" }
-];
-for (const mission of MISSIONS) {
-  registerDataText(mission, "title", `mission.${mission.id}.title`);
-}
-var RESEARCH_REWARD_STAGES = {
-  daily: [
-    { id: "research-20", threshold: 20, rewards: [{ currency: "gold", amount: 1e4 }] },
-    { id: "research-40", threshold: 40, rewards: [{ currency: "cheesecake", amount: 30 }] },
-    { id: "research-60", threshold: 60, rewards: [{ currency: "gems", amount: 100 }] },
-    { id: "research-80", threshold: 80, rewards: [{ currency: "gems", amount: 150 }] },
-    { id: "research-100", threshold: 100, rewards: [{ currency: "fossil", amount: 1 }] }
-  ],
-  weekly: [
-    { id: "research-100", threshold: 100, rewards: [{ currency: "gold", amount: 5e4 }] },
-    { id: "research-200", threshold: 200, rewards: [{ currency: "cheesecake", amount: 150 }] },
-    { id: "research-300", threshold: 300, rewards: [{ currency: "gems", amount: 500 }] },
-    { id: "research-400", threshold: 400, rewards: [{ currency: "dnaFragments", amount: 20 }] },
-    { id: "research-500", threshold: 500, rewards: [{ currency: "fossil", amount: 5 }] }
-  ]
-};
-function maxResearchPoints(period) {
-  return RESEARCH_REWARD_STAGES[period].at(-1)?.threshold ?? 0;
-}
-function mergeMissionRewards(rewards) {
-  const merged = /* @__PURE__ */ new Map();
-  for (const { currency: currency3, amount } of rewards) if (amount > 0) merged.set(currency3, (merged.get(currency3) ?? 0) + amount);
-  return [...merged].map(([currency3, amount]) => ({ currency: currency3, amount }));
-}
-function researchStageClaimId(period, stageId) {
-  return `${period}:${stageId}`;
-}
-function missionPeriodKeys(now) {
-  const dailyKey = now.toISOString().slice(0, 10);
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const daysFromMonday = (monday.getUTCDay() + 6) % 7;
-  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
-  return { dailyKey, weeklyKey: monday.toISOString().slice(0, 10) };
-}
-function normalizeMissions(state, now) {
-  const researchPoints = state.researchPoints ?? { daily: 0, weekly: 0 };
-  const claimedResearchStageIds = state.claimedResearchStageIds ?? [];
-  const keys = missionPeriodKeys(now);
-  const dailyChanged = state.dailyKey !== keys.dailyKey;
-  const weeklyChanged = state.weeklyKey !== keys.weeklyKey;
-  if (!dailyChanged && !weeklyChanged) return { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...researchPoints }, claimedResearchStageIds: [...claimedResearchStageIds] };
-  const resetIds = new Set(MISSIONS.filter((mission) => mission.period === "daily" ? dailyChanged : weeklyChanged).map((mission) => mission.id));
-  return {
-    ...keys,
-    ...state.lifetime ? { lifetime: { ...state.lifetime } } : {},
-    progress: Object.fromEntries(Object.entries(state.progress).filter(([id]) => !resetIds.has(id))),
-    claimedIds: state.claimedIds.filter((id) => !resetIds.has(id)),
-    researchPoints: {
-      daily: dailyChanged ? 0 : researchPoints.daily,
-      weekly: weeklyChanged ? 0 : researchPoints.weekly
-    },
-    claimedResearchStageIds: claimedResearchStageIds.filter((id) => !(dailyChanged && id.startsWith("daily:")) && !(weeklyChanged && id.startsWith("weekly:")))
-  };
-}
-var LIFETIME_COUNT_CAP = 1e9;
-function applyMissionEvent(state, event, now) {
-  const next = normalizeMissions(state, now);
-  if (event.type === "battle_completed" && !event.victory) return next;
-  const amount = "count" in event ? event.count : "amount" in event ? event.amount : 1;
-  if (amount <= 0) return next;
-  next.lifetime = { ...next.lifetime, [event.type]: Math.min(LIFETIME_COUNT_CAP, (next.lifetime?.[event.type] ?? 0) + amount) };
-  for (const mission of MISSIONS) {
-    if (mission.event !== event.type) continue;
-    next.progress[mission.id] = Math.min(mission.target, (next.progress[mission.id] ?? 0) + amount);
-  }
-  return next;
-}
-function claimResearchStages(state, period, stageIds) {
-  const stages = RESEARCH_REWARD_STAGES[period];
-  const requested = stageIds ?? stages.map(({ id }) => id);
-  const claimedStageIds = [...new Set(requested)].filter((id) => {
-    const stage = stages.find((candidate) => candidate.id === id);
-    return stage !== void 0 && state.researchPoints[period] >= stage.threshold && !state.claimedResearchStageIds.includes(researchStageClaimId(period, id));
-  });
-  const ids = claimedStageIds.map((id) => researchStageClaimId(period, id));
-  return {
-    state: { ...state, progress: { ...state.progress }, claimedIds: [...state.claimedIds], researchPoints: { ...state.researchPoints }, claimedResearchStageIds: [...state.claimedResearchStageIds, ...ids] },
-    claimedStageIds,
-    rewards: mergeMissionRewards(claimedStageIds.flatMap((id) => stages.find((stage) => stage.id === id)?.rewards ?? []))
-  };
-}
-function researchPointsForClaim(claimedMissionIds) {
-  const gained = { daily: 0, weekly: 0 };
-  for (const id of new Set(claimedMissionIds)) {
-    const mission = MISSIONS.find((candidate) => candidate.id === id);
-    if (mission) gained[mission.period] += mission.researchPoints;
-  }
-  return gained;
-}
-function addResearchPoints(state, gained) {
-  return {
-    ...state,
-    progress: { ...state.progress },
-    claimedIds: [...state.claimedIds],
-    claimedResearchStageIds: [...state.claimedResearchStageIds],
-    researchPoints: {
-      daily: Math.min(maxResearchPoints("daily"), state.researchPoints.daily + gained.daily),
-      weekly: Math.min(maxResearchPoints("weekly"), state.researchPoints.weekly + gained.weekly)
-    }
-  };
-}
-function claimableMissionIds(state) {
-  return MISSIONS.filter((mission) => (state.progress[mission.id] ?? 0) >= mission.target && !state.claimedIds.includes(mission.id)).map((mission) => mission.id);
-}
 
 // src/core/achievementState.ts
 function createEmptyAchievementState() {
@@ -27737,6 +27902,7 @@ function createDefaultSession() {
     attendance: createEmptyAttendanceState(),
     serverJournal: emptyServerJournal(),
     raidTicketDrops: createEmptyRaidTicketDropState(),
+    chestForge: createEmptyChestForgeState(),
     achievements: createEmptyAchievementState(),
     tutorial: createEmptyTutorialState()
   };
@@ -33995,6 +34161,7 @@ var SaveManager = class {
       claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...state.raidTicketDrops ?? createEmptyRaidTicketDropState() },
+      chestForge: { ...state.chestForge ?? createEmptyChestForgeState() },
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
       tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal())
@@ -34093,12 +34260,13 @@ var SaveManager = class {
     const claimedMailIds = Array.isArray(legacy.claimedMailIds) ? [...new Set(legacy.claimedMailIds.filter((id) => typeof id === "string"))] : [];
     const attendance = normalizeAttendanceState(legacy.attendance);
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
+    const chestForge = normalizeChestForgeState(legacy.chestForge);
     const achievements = normalizeAchievementState(legacy.achievements);
     const tutorial = legacy.tutorial === void 0 ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? legacy.clearedStageIds.filter((id) => typeof id === "string") : []) : Number(legacy.saveVersion ?? 0) <= 50 ? migrateTutorialV50(legacy.tutorial) : normalizeTutorialState(legacy.tutorial);
     const savedBounty = legacy.bounty;
     const bounty = { clearedTierIds: savedBounty?.clearedTierIds ?? [] };
     const savedMissions = legacy.missions;
-    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [], ...savedMissions?.lifetime && typeof savedMissions.lifetime === "object" ? { lifetime: Object.fromEntries(Object.entries(savedMissions.lifetime).filter(([, value]) => Number.isInteger(value) && value >= 0)) } : {} };
+    const missions = { dailyKey: savedMissions?.dailyKey ?? "", weeklyKey: savedMissions?.weeklyKey ?? "", progress: savedMissions?.progress ?? {}, claimedIds: savedMissions?.claimedIds ?? [], researchPoints: clampResearchPoints(savedMissions?.researchPoints), claimedResearchStageIds: savedMissions?.claimedResearchStageIds ?? [], ...savedMissions?.lifetime && typeof savedMissions.lifetime === "object" ? { lifetime: Object.fromEntries(Object.entries(savedMissions.lifetime).filter(([, value]) => Number.isInteger(value) && value >= 0)) } : {}, ...Number.isInteger(savedMissions?.weeklyStamina) && savedMissions.weeklyStamina > 0 ? { weeklyStamina: savedMissions.weeklyStamina } : {} };
     const productPurchases = legacy.productPurchases && typeof legacy.productPurchases === "object" ? legacy.productPurchases : {};
     const savedAds = legacy.dailyAdRewards;
     const claimsBySlot = savedAds?.claimsBySlot && typeof savedAds.claimsBySlot === "object" ? { ...savedAds.claimsBySlot } : {};
@@ -34163,10 +34331,10 @@ var SaveManager = class {
     const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
+    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, achievements, tutorial };
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, achievements, tutorial };
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, achievements, tutorial };
   }
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data) {
@@ -34247,6 +34415,8 @@ var SaveManager = class {
     if (!isValidRaidTicketDropState(data.raidTicketDrops)) fail3("\uD1A0\uBC8C\uAD8C \uD68D\uB4DD \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidAchievementState(data.achievements)) fail3("\uC5C5\uC801 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidTutorialState(data.tutorial)) fail3("\uD29C\uD1A0\uB9AC\uC5BC \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (data.missions.weeklyStamina !== void 0 && (!Number.isInteger(data.missions.weeklyStamina) || data.missions.weeklyStamina < 0)) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidChestForgeState(data.chestForge)) fail3("\uBCF4\uBB3C\uC0C1\uC790 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail3("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail3("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -34327,6 +34497,7 @@ var SaveManager = class {
       attendance: cloneAttendanceState(data.attendance),
       serverJournal: structuredClone(data.serverJournal ?? emptyServerJournal()),
       raidTicketDrops: { ...data.raidTicketDrops },
+      chestForge: { ...data.chestForge },
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed } },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
     };
@@ -35107,7 +35278,11 @@ var OPENING_TRAIN = {
   nodes: [
     // ── 열차 안: 토리카 ───────────────────────────────────────────────
     { id: "wake", speaker: "???", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC5F0\uAD6C\uC6D0\uB2D8! \uB208 \uC880 \uB5A0 \uBCF4\uC138\uC694. \uCC3D\uBC16\uC5D0 \uB3C4\uC2DC\uAC00 \uBCF4\uC5EC\uC694!", standing: "torika", cast: [{ id: "torika", slot: "center" }], act: "hop", nextId: "greet" },
-    { id: "greet", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uB294 \uD1A0\uB9AC\uCE74\uC608\uC694! \uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC9C0\uD0A4\uB294 \uD638\uC704 \uB810\uB9AD\uC774\uC5D0\uC694. \uB3C4\uCC29\uD560 \uB54C\uAE4C\uC9C0 \uC606\uC5D0 \uAF2D \uBD99\uC5B4 \uC788\uC744\uAC8C\uC694.", standing: "torika", act: "nod", nextId: "window" },
+    { id: "greet", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uB294 \uD1A0\uB9AC\uCE74\uC608\uC694! \uC624\uB298\uBD80\uD130 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC9C0\uD0A4\uB294 \uD638\uC704 \uB810\uB9AD\uC774\uC5D0\uC694. \uB3C4\uCC29\uD560 \uB54C\uAE4C\uC9C0 \uC606\uC5D0 \uAF2D \uBD99\uC5B4 \uC788\uC744\uAC8C\uC694.", standing: "torika", act: "nod", nextId: "relicNote" },
+    // 토리카가 스스로 「렐릭」이라 부르는 순간, 그 말이 무엇인지 지문이 한 번 짚는다. 캐릭터가 자기소개처럼
+    // 풀어 말하면 첫 만남의 대사가 설명서가 된다 — 무대 밖의 목소리가 맡는다.
+    { id: "relicNote", speaker: "", body: "\uB810\uB9AD \u2014 \uD654\uC11D \uC18D \uBA78\uC885 \uB3D9\uBB3C\uC758 DNA\uB97C \uB418\uC0B4\uB824 \uBE5A\uC5B4\uB0B8 \uC778\uAC04\uD615 \uBCF5\uC6D0\uCCB4. \uC774\uD130\uB110 \uC2DC\uD2F0\uB294 \uADF8\uB4E4\uC744 \uADF8\uB807\uAC8C \uBD80\uB978\uB2E4.", nextId: "relicNote2" },
+    { id: "relicNote2", speaker: "", body: "\uB418\uC0B4\uC544\uB09C \uB810\uB9AD\uC740 \uC6D0\uC885\uC758 \uD798\uACFC \uD568\uAED8, \uC774\uC131\uC744 \uC0BC\uD0AC \uC218 \uC788\uB294 \uBCF8\uB2A5 \u300C\uC57C\uC131\u300D\uC744 \uC548\uACE0 \uC0B4\uC544\uAC04\uB2E4.", nextId: "window" },
     { id: "window", speaker: "\uD1A0\uB9AC\uCE74", body: "\uC800\uAE30, \uD558\uC580 \uBF08\uCC98\uB7FC \uC19F\uC740 \uD0D1\uB4E4 \uBCF4\uC774\uC138\uC694? \uBA78\uC885\uC758 \uAE30\uC5B5 \uC704\uC5D0 \uC138\uC6B4 \uB3C4\uC2DC, \uC774\uD130\uB110 \uC2DC\uD2F0\uC608\uC694.", standing: "torika", act: "lean", nextId: "answer" },
     {
       id: "answer",
@@ -36557,6 +36732,12 @@ function pullPayment(wallet, banner, count2, pity) {
   const tickets = Math.max(0, Math.min(cost, wallet[banner.currency]));
   const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
+}
+function bannerActive(banner, now) {
+  const t2 = now.getTime();
+  if (banner.startsAt !== void 0 && t2 < Date.parse(banner.startsAt)) return false;
+  if (banner.endsAt !== void 0 && t2 >= Date.parse(banner.endsAt)) return false;
+  return true;
 }
 function bannerPullsRemaining(banner, pity) {
   if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
@@ -40921,7 +41102,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.395.4",
+  version: "0.402.1",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -41013,7 +41194,9 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "getDuelRanking",
   "getDuelStatus",
   "getEvents",
+  "getRegularEvent",
   "getRouletteStatus",
+  "getChestForge",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",
@@ -41087,6 +41270,9 @@ var SERVER_GAME_METHODS = [
   "getRouletteStatus",
   "spinRoulette",
   "unlockRouletteSpins",
+  "getChestForge",
+  "enterChestForge",
+  "pickChestCard",
   "prepareCombat",
   "finishCombat",
   "abandonStrataRun",
@@ -41158,6 +41344,7 @@ var SERVER_GAME_METHODS = [
   "getDuelRanking",
   "getDuelStatus",
   "getEvents",
+  "getRegularEvent",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",
@@ -41632,6 +41819,7 @@ var FakeServer = class {
     this.duelContext = options.duelContext;
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
+    this.regularEvent = options.regularEvent ?? null;
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -41764,6 +41952,7 @@ var FakeServer = class {
   duelContext;
   remoteExpeditionRank;
   ancientRanking;
+  regularEvent;
   /** 저장에 남은 수령 기록을 우편 목록에 옮긴다. 세션이 통째로 바뀐 뒤(부트)에도 첫 조회 전에 다시 지난다. */
   applySavedMailClaims() {
     const claimed = new Set(this.state.claimedMailIds ?? []);
@@ -43554,6 +43743,61 @@ var FakeServer = class {
     this.rouletteResults.set(request.requestId, result);
     return result;
   }
+  async getChestForge() {
+    return chestForgeStatus(this.state.missions, normalizeChestForgeState(this.state.chestForge), this.now());
+  }
+  /**
+   * 보물상자의 두 걸음(상자 열기·카드 고르기)이 지나는 한 곳. 같은 처리 ID는 영수증을 돌려준다 — 뒤집기가
+   * 성공했는데 응답만 잃었을 때 다시 눌러 한 번 더 굴리지 않게 한다.
+   */
+  async stepChestForge(kind, requestId, index = 0) {
+    await this.delay();
+    if (!requestId) throw new GameApiError("INVALID_STATE", "\uCC98\uB9AC ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const cached = this.readReceipt("chestForge", requestId, kind);
+    if (cached) return { ...cached, ...this.snapshot(), status: await this.getChestForge() };
+    const now = this.now();
+    const ledger = rollChestForgeWeek(normalizeChestForgeState(this.state.chestForge), now);
+    const before = chestForgeStatus(this.state.missions, ledger, now);
+    const next = structuredClone(this.state);
+    let pick2;
+    if (kind === "enter") {
+      if (ledger.run) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uC5F0 \uC0C1\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4.");
+      if (before.coins < CHEST_FORGE.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+      next.chestForge = { ...ledger, spent: ledger.spent + CHEST_FORGE.entryCost, run: { round: 0, offer: rollChestOffer(0, this.random), collected: {} } };
+    } else {
+      const run2 = ledger.run;
+      if (!run2) throw new GameApiError("INVALID_STATE", "\uC5F0 \uC0C1\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      const card = Number.isInteger(index) ? chestCard(run2.offer[index] ?? "") : void 0;
+      if (!card) throw new GameApiError("INVALID_STATE", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uCE74\uB4DC\uC785\uB2C8\uB2E4.");
+      const success = rollChestCard(card, this.random);
+      let granted = 0;
+      if (success) {
+        const wallet = { ...this.state.wallet };
+        granted = Math.max(0, Math.min(card.amount, WALLET_CAPS[card.currency] - wallet[card.currency]));
+        wallet[card.currency] += granted;
+        next.wallet = wallet;
+      }
+      const collected = { ...run2.collected };
+      if (granted > 0) collected[card.currency] = (collected[card.currency] ?? 0) + granted;
+      const round = run2.round + 1;
+      const finished = round >= CHEST_FORGE.rounds;
+      next.chestForge = { ...ledger, run: finished ? null : { round, offer: rollChestOffer(round, this.random), collected } };
+      pick2 = { index, cardId: card.id, success, granted, ...finished ? { total: collected } : {} };
+    }
+    const status = chestForgeStatus(next.missions, next.chestForge, now);
+    this.recordReceipt(next, "chestForge", requestId, kind, { status, ...pick2 ? { pick: pick2 } : {} });
+    this.persist(next);
+    this.state.chestForge = next.chestForge;
+    this.state.wallet = next.wallet;
+    this.state.serverJournal = next.serverJournal;
+    return { ...this.snapshot(), status, ...pick2 ? { pick: pick2 } : {} };
+  }
+  async enterChestForge(request) {
+    return this.stepChestForge("enter", request.requestId);
+  }
+  async pickChestCard(request) {
+    return this.stepChestForge("pick", request.requestId, request.index);
+  }
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request) {
     await this.delay();
@@ -43775,6 +44019,7 @@ var FakeServer = class {
     if (!isContentUnlocked("lab", this.state.playerResearch.level, true, this.state.cleared)) throw new GameApiError("INVALID_STATE", "1-5 \uD074\uB9AC\uC5B4 \uD6C4 \uC5F0\uAD6C\uC18C\uAC00 \uC5F4\uB9BD\uB2C8\uB2E4.");
     const banner = BANNERS.find((candidate) => candidate.id === request.bannerId);
     if (!banner) throw new GameApiError("BANNER_NOT_FOUND", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uBC30\uB108\uC785\uB2C8\uB2E4.");
+    if (!bannerActive(banner, this.now())) throw new GameApiError("BANNER_NOT_ACTIVE", "\uC9C4\uD589 \uC911\uC778 \uC5F0\uAD6C\uAC00 \uC544\uB2D9\uB2C8\uB2E4.");
     const currentPity = this.state.gachaPityByGroup[banner.pityGroupId] ?? { pullsSinceSsr: 0, pickupGuaranteed: false };
     if (!bannerAcceptsCount(banner, request.count, currentPity)) {
       throw new GameApiError("BANNER_LIMIT_REACHED", "\uC774 \uC5F0\uAD6C\uB294 \uB354 \uC9C4\uD589\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
@@ -44633,6 +44878,11 @@ var FakeServer = class {
     await this.delay();
     const now = this.now();
     return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+  }
+  /** 이번 주 정기 이벤트 — 서버가 주입한 편성만 돌려주고 클라이언트가 만들어 내지 않는다. */
+  async getRegularEvent() {
+    await this.delay();
+    return { event: this.regularEvent ? structuredClone(this.regularEvent) : null, serverTime: this.now().toISOString() };
   }
   /** 이벤트·스테이지 소유 관계와 기간을 확인한 뒤에만 전투 정의를 내준다. */
   async enterEventStage(eventId, stageId) {
@@ -46496,7 +46746,7 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
@@ -46504,7 +46754,8 @@ async function run(playerId, req, deps) {
       wantsOps ? deps.store.opsInbox(playerId).catch(() => null) : null,
       wantsDuel ? deps.store.duelContext(playerId, now) : void 0,
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0,
-      req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0
+      req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0,
+      req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : void 0
     ]);
     if (cached !== void 0) {
       const receipt = cached;
@@ -46536,6 +46787,7 @@ async function run(playerId, req, deps) {
       duelContext: duels,
       expeditionRank: expedition?.rank,
       ancientRanking: ancient,
+      ...regular !== void 0 ? { regularEvent: regular } : {},
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true
@@ -46637,6 +46889,9 @@ function createSupabaseStore(env) {
     async duelContext(playerId, now) {
       const context = await rpc("server_duel_context", { p_player: playerId, p_season: duelSeasonId(now), p_level: contentUnlockLevel("duel") });
       return { ...context, changes: [] };
+    },
+    async regularEvent() {
+      return await rpc("server_regular_event", {});
     },
     async identity(playerId) {
       return await rpc("server_player_identity", { p_player: playerId });

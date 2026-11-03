@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { CHEST_ART_ASSETS } from "../ui/chestArt";
 import { preloadPuppetAssets, PUPPET_PRELOAD_GROUPS } from "../puppets/assets";
 import { BACKGROUND_ASSETS, BACKGROUND_BOOT_KEYS } from "../ui/backgrounds";
 import { loadGameFonts } from "../ui/fonts";
@@ -61,6 +62,7 @@ const SVG_BAKE = { skill: 256, uiScale: 2 } as const;
 
 /** 배경이 아닌 콘텐츠 원화의 중앙 로딩 표. 진입 액자와 관찰 일지가 이 표만 사용한다. */
 const CONTENT_ART_ASSETS = [
+  ...CHEST_ART_ASSETS,
   // Content1_001은 출격 선택판의 스토리 입구 안에서만 보이는 작전 일러스트다.
   ["content-story-entry", "sprites/content/Content1_001.webp"],
   // Content2_001은 로비 출격 메뉴에서 원정 진입점을 구별하는 버튼 일러스트다.

@@ -46,7 +46,14 @@ test("보물상자 — 마지막 카드를 고르는 화면", async ({ page }, i
   });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("보물상자");
   await page.waitForTimeout(1500);
-  await captureGame(page, info.outputPath("chest-forge-stage4.png"));
+  const loaded = await page.evaluate(async () => {
+    const art = await import(/* @vite-ignore */"/src/"+"ui/chestArt.ts");
+    const scene = (window as any).__FORGE_GAME.scene.getScene("lobby");
+    return art.CHEST_ART_ASSETS.every(([key]: readonly [string, string]) => scene.textures.exists(key))
+      && scene.textures.exists(art.chestTextureKey(7, true));
+  });
+  expect(loaded).toBe(true);
+  await captureGame(page, info.outputPath("chest-forge-cards-open.png"));
 });
 
 test("보물상자 — 단계별 상자 그림 원본", async ({ page }, info) => {

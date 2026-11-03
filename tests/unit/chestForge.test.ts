@@ -4,6 +4,7 @@ import { FakeServer } from "../../src/api/FakeServer";
 import { createDefaultSession } from "../../src/state/session";
 import { applyMissionEvent } from "../../src/core/missions";
 import {
+  CHEST_GRADE_MAX, chestBestCard, chestCardFlair, chestCollectedValue, chestGrade, chestGradeProgress, rollChestCard, type ChestCardCurrency,
   CHEST_CARDS, CHEST_FORGE, CHEST_FORGE_BUDGET, chestBoxExpectedValue, chestCard, chestCardGemValue, chestForgeStatus, chestOfferSlots,
   createEmptyChestForgeState, normalizeChestForgeState, rollChestOffer,
 } from "../../src/core/chestForge";
@@ -57,6 +58,40 @@ describe("보물상자 카드 규칙", () => {
     const run = { round: 2, offer: rollChestOffer(2, () => 0), collected: { gold: 10_000 } };
     expect(chestForgeStatus(missions, { weekKey: "2026-11-02", spent: 300, run }, new Date("2026-11-09T00:00:01Z"))).toMatchObject({ coins: 0, run, weekKey: "2026-11-09" });
     expect(normalizeChestForgeState({ weekKey: "2026-11-02", spent: 100, stage: 3 })).toEqual({ weekKey: "2026-11-02", spent: 100, run: null });
+  });
+});
+
+describe("보물상자 등급", () => {
+  /** 시드 고정 난수 — 같은 분포를 언제나 같은 값으로 잰다. */
+  function seeded(seed: number): () => number {
+    let state = seed >>> 0;
+    return () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 2 ** 32; };
+  }
+  it("문턱은 최선으로 고른 상자의 최종 가치 분포에서 정한 자리에 선다", () => {
+    const random = seeded(7);
+    const boxes = 20_000;
+    const reached = [0, 0, 0, 0, 0];
+    for (let box = 0; box < boxes; box += 1) {
+      const collected: Partial<Record<ChestCardCurrency, number>> = {};
+      for (let round = 0; round < CHEST_FORGE.rounds; round += 1) {
+        const card = chestBestCard(rollChestOffer(round, random).map((id) => chestCard(id)!));
+        if (rollChestCard(card, random)) collected[card.currency] = (collected[card.currency] ?? 0) + card.amount;
+      }
+      reached[chestGrade(chestCollectedValue(collected))] += 1;
+    }
+    const atLeast = (grade: number) => reached.slice(grade).reduce((sum, count) => sum + count, 0) / boxes;
+    expect(atLeast(1)).toBeGreaterThan(0.85);
+    expect(atLeast(2)).toBeGreaterThan(0.5); expect(atLeast(2)).toBeLessThan(0.72);
+    expect(atLeast(3)).toBeGreaterThan(0.15); expect(atLeast(3)).toBeLessThan(0.32);
+    expect(atLeast(4)).toBeGreaterThan(0.02); expect(atLeast(4)).toBeLessThan(0.08);
+  });
+  it("모은 몫으로 등급과 다음 문턱까지의 비율을 구하고, 화려함은 카드 등급 차례다", () => {
+    expect(chestGrade(0)).toBe(0);
+    expect(chestGradeProgress(75)).toEqual({ grade: 0, ratio: 0.5 });
+    expect(chestGrade(chestCollectedValue({ gems: 100, gold: 25_000 }))).toBe(1);
+    expect(chestGradeProgress(5_000)).toEqual({ grade: CHEST_GRADE_MAX, ratio: 1 });
+    expect(chestCardFlair(chestCard("safe-gold")!)).toBe(0);
+    expect(chestCardFlair(chestCard("jackpot-gems-max")!)).toBe(4);
   });
 });
 

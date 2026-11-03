@@ -228,6 +228,8 @@ export interface CurrencyRainOptions {
   alpha: number;
   /** 한 장이 위에서 아래까지 지나는 시간(ms). */
   fallMs: number;
+  /** 내리는 그림(텍스처 키) — 비우면 돌림판의 재화 여섯이다. 이벤트 코인처럼 한 장만 내려도 된다. */
+  keys?: readonly string[];
 }
 
 /** 내리는 재화 — 바퀴가 주는 것들이 반짝이며 천천히 쏟아진다. */
@@ -245,10 +247,11 @@ export function addCurrencyRain(scene: Phaser.Scene, parent: Phaser.GameObjects.
   parent.add(layer);
   const span = options.bottom - options.top;
   const width = options.right - options.left;
+  const keys = options.keys?.length ? options.keys : ROULETTE_RAIN_KEYS;
   const drops = Array.from({ length: options.count }, (_, index) => {
     const lane = (index * 0.618034) % 1;
     const size = options.size * (0.72 + ((index * 37) % 10) / 22);
-    const image = scene.add.image(options.left + lane * width, 0, ROULETTE_RAIN_KEYS[index % ROULETTE_RAIN_KEYS.length])
+    const image = scene.add.image(options.left + lane * width, 0, keys[index % keys.length])
       .setDisplaySize(size, size).setAlpha(options.alpha * (0.7 + ((index * 53) % 10) / 33));
     layer.add(image);
     return { image, baseX: image.x, phase: (index * 0.377) % 1, speed: 0.78 + ((index * 29) % 10) / 22, sway: 10 + ((index * 17) % 10) * 2, spin: (index % 2 ? 1 : -1) * (40 + ((index * 13) % 10) * 9) };

@@ -39,7 +39,7 @@ export interface LobbyEventDef {
    * 카드 위에 세우는 움직이는 장면. `roulette`는 카드 밑변에서 반쯤 솟은 돌림판이 돌고 재화가 내리며, SD가 그 옆에서
    * 바퀴를 민다(행운의 돌림판). 비우면 원화 + SD만 선다.
    */
-  readonly showcase?: "roulette";
+  readonly showcase?: "roulette" | "chestForge";
   /**
    * 카드를 눌렀을 때 가는 곳. 비워 두면 이벤트 화면(`EventScene`)이다. 이미 있는 콘텐츠를 알리는
    * 이벤트는 새 씬을 만들지 않고 그 콘텐츠로 곧장 잇는다(예: 픽업 모집).
@@ -88,12 +88,14 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
   },
   {
     // 정기 이벤트 「보물상자」 — 코인은 이번 주에 쓴 스테미나와 1:1이고 매주 사라진다(`core/chestForge.ts`).
+    // 돌림판은 늘 서는 고정 이벤트이고, 보물상자는 다른 정기 이벤트들과 번갈아 서는 교대 이벤트다.
     id: "chest-forge",
     titleKey: "event.chestForge.title",
     subtitleKey: "event.chestForge.subtitle",
     backdropKey: BACKGROUND.interactionRustWorks,
     destination: { kind: "chestForge" },
     sd: { relicId: "torika", side: "right" },
+    showcase: "chestForge",
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",
     endsAt: "2099-12-31T23:59:59Z",

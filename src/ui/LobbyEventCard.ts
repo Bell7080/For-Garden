@@ -10,6 +10,7 @@ import { lobbyEventClockEnd } from "../data/lobbyEvents";
 import { formatDayCountdown } from "../core/formatCountdown";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { spawnEventCardSd, type EventCardPuppet } from "./eventCardSd";
+import { addChestCardShowcase } from "./chestCardShowcase";
 import { addRouletteCardShowcase } from "./rouletteCardShowcase";
 import { pressIn, pressOut } from "./pressFeedback";
 import { startPuppetHop } from "./puppetHop";
@@ -48,6 +49,10 @@ const CARD = {
    * 글은 바퀴에 닿지 않도록 카드 폭의 `textRatio`까지만 쓴다.
    */
   roulette: { radius: 150, /** 바퀴 가운데의 x(카드 가운데 기준). */ x: 110, sdInset: 95, textRatio: 0.42, pushMs: 1700, rain: { count: 9, size: 34, alpha: 0.36, fallMs: 6400 } } as const,
+  /**
+   * 보물상자 장면 — 상자는 카드 밑변에 살짝 묻혀 앉고 토리카가 그 오른쪽에서 가끔 상자를 콩 두드린다. 글 폭은 돌림판과 같다.
+   */
+  chestForge: { x: 120, chestHeight: 150, sink: 18, sdInset: 95, textRatio: 0.42, bonkMs: 2000, rain: { count: 8, size: 40, alpha: 0.42, fallMs: 6800 } } as const,
   /** 출석 카드의 진행 마름모 줄(부제 자리). */
   pips: { gap: 30, half: 9, labelSize: 22 },
 } as const;
@@ -192,14 +197,15 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
   private paintEvent(shape: number[], bevel: number): void {
     if (this.options.entry.kind !== "event") return;
     const event = this.options.entry.event;
-    const roulette = event.showcase === "roulette";
+    const showcase = event.showcase ? CARD[event.showcase] : undefined;
     const { left, lineY, textWidth } = this.paintStandard({
       shape, bevel, accent: COLOR.event, title: t(event.titleKey), titleColor: COLOR.eventText, titleStroke: "#1a1206",
       backdrop: event.backdropKey ? { key: event.backdropKey, frame: event.backdropFrame } : undefined,
-      sd: event.sd ? { ...event.sd, hop: false, inset: roulette ? CARD.roulette.sdInset : undefined } : undefined,
+      sd: event.sd ? { ...event.sd, hop: false, inset: showcase?.sdInset } : undefined,
       endsAt: lobbyEventClockEnd(event, Date.now()),
-      underlay: roulette ? () => this.paintRouletteShowcase(shape) : undefined,
-      textRatio: roulette ? CARD.roulette.textRatio : undefined,
+      underlay: event.showcase === "roulette" ? () => this.paintRouletteShowcase(shape)
+        : event.showcase === "chestForge" ? () => this.paintChestShowcase(shape) : undefined,
+      textRatio: showcase?.textRatio,
     });
     const subtitle = this.scene.add.text(left, lineY, t(event.subtitleKey), textStyle({ role: "body", size: CARD.subtitleSize, color: COLOR.ink }))
       .setOrigin(0, 0.5)
@@ -262,6 +268,13 @@ export class LobbyEventCard extends Phaser.GameObjects.Container {
     const { width, height } = this.options;
     const showcase = addRouletteCardShowcase(this.scene, this, shape, { width, height, ...CARD.roulette });
     this.sdReady = showcase.attachPusher;
+  }
+
+  /** 보물상자 장면 — 그리는 일은 `chestCardShowcase`가 맡고, 카드는 토리카가 도착하면 넘겨주기만 한다. */
+  private paintChestShowcase(shape: number[]): void {
+    const { width, height } = this.options;
+    const showcase = addChestCardShowcase(this.scene, this, shape, { width, height, ...CARD.chestForge });
+    this.sdReady = showcase.attachBonker;
   }
 
   /** 남은 기간 시계 — 글 줄 맨 아래 왼쪽(`x`가 글의 왼쪽 끝). 초마다 갈아 끼우고 카드와 함께 멈춘다. */

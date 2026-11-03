@@ -121,6 +121,37 @@ function bestCard(cards: readonly ChestCard[]): ChestCard {
   return cards.reduce((best, card) => (chestCardGemValue(card) * card.chance > chestCardGemValue(best) * best.chance ? card : best));
 }
 
+/** 놓인 카드 중 기대값(젬 환산 × 확률)이 가장 큰 카드. 공급 상한과 상자 등급 문턱을 재는 기준 선택이다. */
+export function chestBestCard(cards: readonly ChestCard[]): ChestCard { return bestCard(cards); }
+
+/** 등급의 차례 — 아래일수록 흔하고 위일수록 값이 크다. 카드가 상자에 들어가는 연출의 화려함이 이 차례를 그대로 쓴다. */
+export const CHEST_TIER_ORDER: readonly ChestCardTier[] = ["safe", "mid", "risk", "big", "jackpot"];
+export function chestCardFlair(card: ChestCard): number { return Math.max(0, CHEST_TIER_ORDER.indexOf(card.tier)); }
+
+/**
+ * 상자 등급 문턱 — 이 상자에서 **지금까지 모은 몫**의 젬 환산 가치가 넘을 때마다 상자가 한 단계 화려해진다.
+ * 기대값이 가장 큰 카드를 고르는 상자 20만 번 모의의 최종 가치 분포에서 잡았다: 150은 열에 아홉이 닿는 첫 단계,
+ * 350은 중앙값 조금 아래, 600은 상위 4분의 1, 900은 상위 4% 남짓(사실상 대형 둘이나 대박)이다.
+ * 모은 몫은 줄지 않으므로 등급도 내려가지 않는다. 값을 바꾸면 `chestForge.test`의 분포 띠를 함께 다시 잰다.
+ */
+export const CHEST_GRADE_THRESHOLDS = [150, 350, 600, 900] as const;
+export const CHEST_GRADE_MAX = CHEST_GRADE_THRESHOLDS.length;
+export function chestCollectedValue(collected: Partial<Record<ChestCardCurrency, number>>): number {
+  return (Object.entries(collected) as [ChestCardCurrency, number | undefined][])
+    .reduce((sum, [currency, amount]) => sum + (GEM_VALUE[currency] ?? 0) * Math.max(0, amount ?? 0), 0);
+}
+export function chestGrade(value: number): number {
+  return CHEST_GRADE_THRESHOLDS.filter((threshold) => value >= threshold).length;
+}
+/** 상자 아래 게이지 — 지금 등급과 다음 문턱까지 찬 비율(0~1). 마지막 등급이면 1이다. */
+export function chestGradeProgress(value: number): { grade: number; ratio: number } {
+  const grade = chestGrade(value);
+  if (grade >= CHEST_GRADE_MAX) return { grade, ratio: 1 };
+  const from = grade === 0 ? 0 : CHEST_GRADE_THRESHOLDS[grade - 1];
+  const to = CHEST_GRADE_THRESHOLDS[grade];
+  return { grade, ratio: Math.max(0, Math.min(1, (value - from) / (to - from))) };
+}
+
 /** 정규 이벤트 예산 — 상자 하나의 최선 기대값이 코인(= 스테미나) 100당 상한을 넘지 않는다. */
 export const CHEST_FORGE_BUDGET = EVENT_REWARD_BUDGET.regular;
 

@@ -15,6 +15,8 @@ import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
 import { ChestStage, burstSparkles, chargeCard, chestFxMotion, flipCard, flyCardToChest, shatterCard, stampCard, waitFx } from "./chestForgeFx";
 import { addClippedHit } from "./clippedHit";
+import { addCurrencyChip } from "./CurrencyChip";
+import { pressIn, pressOut } from "./pressFeedback";
 import { CURRENCY_ICON_BY_WALLET } from "./currencyIcons";
 import { addFramedIcon } from "./itemFrame";
 import { playMotion, sdAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
@@ -43,7 +45,7 @@ const FORGE = {
   height: 1540,
   coinY: -684,
   resetY: -640,
-  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 190, buttonY: 510, sd: { x: 286, groundY: -112, height: 330 } },
+  intro: { textY: -560, chestY: -250, chestScale: 0.82, previewY: 190, buttonY: 510, howToY: 398, sd: { x: 286, groundY: -112, height: 330 } },
   /**
    * 카드 쪽 — 위에 모은 보상, 가운데 상자와 그 곁에서 응원하는 티아, 아래에 카드. 아래에서 집은 카드가 위의 상자로 날아
    * 들어간다. 상자 아래 게이지가 다음 등급까지 얼마 남았는지 말한다(상자 몸 밑변은 `chestY` + 130).
@@ -57,6 +59,9 @@ const FORGE = {
   preview: { width: 168, height: 250, gap: 20 },
   collected: { size: 84, gap: 104 },
   button: { height: 116, wide: 720 },
+  /** 상단 이벤트 코인 칸 — 상단 재화 줄과 같은 `addCurrencyChip` 한 칸이다. */
+  coinChip: { width: 260, height: 66 },
+  howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 22, sd: { x: -250, height: 300 } },
 } as const;
 
 /** 보물상자 전용 이벤트 코인 그림(`currencyIcons`). 코인은 지갑이 아니라 이번 주에 쓴 스테미나에서 나온다. */
@@ -223,10 +228,9 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
     paintBackdrop(scene, body, mask, motion());
 
     // 위 — 코인과 초기화 시각은 두 쪽이 함께 쓴다.
-    const coinIcon = scene.add.image(0, FORGE.coinY, CHEST_COIN_ICON).setDisplaySize(52, 52);
-    const coinText = scene.add.text(0, FORGE.coinY, "", textStyle({ role: "display", size: 38, color: ACCENT })).setOrigin(0, 0.5).setStroke(OUTLINE, 8);
-    const resetText = scene.add.text(0, FORGE.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
-    body.add([coinIcon, coinText, resetText]);
+    const coinText = addCurrencyChip(scene, 0, FORGE.coinY, CHEST_COIN_ICON, { parent: body, ...FORGE.coinChip, rollKey: "chestForge:coins" });
+    const resetText = scene.add.text(0, FORGE.resetY + 10, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
+    body.add(resetText);
 
     // 첫 쪽 — 등급을 갈아입는 상자, 그 옆의 SD, 대박 카드 미리보기.
     const introPage = scene.add.container(0, 0);
@@ -258,8 +262,10 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
       holder.setAngle((index - (highlights.length - 1) / 2) * 3);
       introPage.add(holder);
     });
-    const enter = new RouletteSpinButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: "", tone: 0x8fc6f0, iconKey: CHEST_COIN_ICON, onClick: () => void enterBox() });
+    const enter = new RouletteSpinButton(scene, 0, FORGE.intro.buttonY, { width: FORGE.button.wide, height: FORGE.button.height, label: t("chestForge.enter"), tone: 0x8fc6f0,
+      price: { iconKey: CHEST_COIN_ICON, amount: CHEST_FORGE.entryCost.toLocaleString() }, onClick: () => void enterBox() });
     introPage.add(enter);
+    introPage.add(addHowToButton(scene, 0, FORGE.intro.howToY, () => openChestHowTo(scene, popups)));
 
     // 카드 쪽 — 위에 카드, 아래에 상자와 SD, 맨 아래 모은 보상.
     const pickPage = scene.add.container(0, 0);
@@ -336,13 +342,10 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
     };
 
     const refresh = (): void => {
-      coinText.setText(t("chestForge.coins", { count: status.coins.toLocaleString() }));
-      const total = 52 + 12 + coinText.width;
-      coinIcon.setX(-total / 2 + 26); coinText.setX(-total / 2 + 64);
+      coinText.setText(status.coins.toLocaleString());
       resetText.setText(t("chestForge.reset", { date: new Date(status.resetsAt).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) }));
       const running = status.run !== null;
       introPage.setVisible(!running); pickPage.setVisible(running);
-      enter.setLabel(t("chestForge.enter", { count: CHEST_FORGE.entryCost }));
       enter.setEnabled(!busy && status.coins >= CHEST_FORGE.entryCost);
       if (running) { paintRound(); paintCollected(status.run?.collected ?? {}); }
     };
@@ -468,5 +471,108 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
 
     refresh();
     if (status.run) { buildPickChest(); paintOffer(); }
+  });
+}
+
+/**
+ * 「게임 방법!」 — 상자 열기 위에 앉는 작은 말풍선 단추. 눌러야 하는 조작이 아니라 궁금할 때 여는 안내라 열기 버튼보다
+ * 한참 작고 가볍다(흰 면 + 남색 테 + 물음표 방울).
+ */
+function addHowToButton(scene: Phaser.Scene, x: number, y: number, onClick: () => void): Phaser.GameObjects.Container {
+  const root = scene.add.container(x, y);
+  const label = scene.add.text(0, 0, t("chestForge.howTo.button"), textStyle({ role: "emphasis", size: 26, color: INK })).setOrigin(0, 0.5);
+  shrinkTextToWidth(label, 300);
+  const height = 56, badge = 20, pad = 18;
+  const width = pad + badge * 2 + 10 + label.displayWidth + pad;
+  const g = scene.add.graphics();
+  g.fillStyle(TIA.navy, 0.18).fillRoundedRect(-width / 2 + 3, -height / 2 + 6, width, height, height / 2);
+  g.fillStyle(TIA.navy, 1).fillRoundedRect(-width / 2 - 3, -height / 2 - 3, width + 6, height + 6, height / 2 + 3);
+  g.fillStyle(0xffffff, 1).fillRoundedRect(-width / 2, -height / 2, width, height, height / 2);
+  const bx = -width / 2 + pad + badge;
+  g.fillStyle(0x4f86c6, 1).fillCircle(bx, 0, badge);
+  g.fillStyle(0xffffff, 0.45).fillCircle(bx - badge * 0.35, -badge * 0.35, badge * 0.28);
+  const mark = scene.add.text(bx, 1, "?", textStyle({ role: "display", size: 28, color: "#ffffff" })).setOrigin(0.5);
+  label.setX(bx + badge + 10);
+  const sparkle = scene.add.graphics();
+  drawSparkle(sparkle, width / 2 - 2, -height / 2 + 4, 13, 0xffd36e);
+  root.add([g, mark, label, sparkle]);
+  const hit = addClippedHit(scene, root, 0, 0, width + 20, height + 20, () => ({ left: 0, right: scene.scale.width, top: 0, bottom: scene.scale.height }), { useHandCursor: true });
+  hit.on("pointerdown", () => pressIn(root));
+  hit.on("pointerout", () => pressOut(root, "normal", { pop: false }));
+  hit.on("pointerup", () => { pressOut(root); onClick(); });
+  if (chestFxMotion().loops) scene.tweens.add({ targets: sparkle, alpha: { from: 1, to: 0.25 }, duration: 700, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+  return root;
+}
+
+/**
+ * 게임 방법 쪽지 — 티아가 말풍선으로 직접 들려준다. 판 높이는 말풍선 글을 먼저 재서 거꾸로 구한다.
+ */
+export function openChestHowTo(scene: Phaser.Scene, popups: PopupLayer): void {
+  const { width, bubbleWidth, wrap, lineGap, sd } = FORGE.howTo;
+  const keys: TextKey[] = ["chestForge.howTo.1", "chestForge.howTo.2", "chestForge.howTo.3", "chestForge.howTo.4"];
+  const lines = keys.map((key) => scene.add.text(0, 0, t(key, { count: CHEST_FORGE.entryCost.toLocaleString() }), textStyle({ role: "body", size: 27, color: INK, wrap, lineSpacing: 6 })).setOrigin(0, 0));
+  const textHeight = lines.reduce((sum, line) => sum + line.height, 0) + lineGap * (lines.length - 1);
+  const bubblePad = 40, tail = 46, top = 70;
+  const bubbleHeight = textHeight + bubblePad * 2;
+  const height = top + bubbleHeight + tail + sd.height + 30;
+  popups.open({ width, height, title: t("chestForge.howTo.title"), dim: true, dimAlpha: 0.35, closeOnBackdrop: true, closeOnBody: true }, (body) => {
+    const shape = popupArtShape(width, height);
+    const mask = popupBodyShapeMask(scene, body, shape);
+    const left = -width / 2, upper = -height / 2;
+    const base = scene.add.graphics();
+    base.fillGradientStyle(TIA.sky, TIA.sky, TIA.lilac, TIA.lilac, 1).fillRect(left, upper, width, height);
+    TIA.veil.forEach((color, index) => {
+      const y0 = upper + 120 + index * 260;
+      base.fillStyle(color, 0.4).fillPoints([
+        new Phaser.Geom.Point(left, y0), new Phaser.Geom.Point(left + width, y0 - 220), new Phaser.Geom.Point(left + width, y0 - 140), new Phaser.Geom.Point(left, y0 + 80),
+      ], true);
+    });
+    for (let index = 0; index < 14; index += 1) {
+      const x = left + 30 + ((index * 0.618034) % 1) * (width - 60);
+      const y = upper + 30 + ((index * 0.381966 + index * 0.07) % 1) * (height - 60);
+      const r = 5 + (index * 7) % 12;
+      base.lineStyle(2, 0xffffff, 0.6).strokeCircle(x, y, r);
+    }
+    body.add(base.setMask(mask));
+
+    // 말풍선 — 흰 면 + 남색 테, 꼬리는 아래의 티아를 가리킨다.
+    const bx = -bubbleWidth / 2, by = upper + top;
+    const tailX = sd.x + 70, tailBase = by + bubbleHeight;
+    const bubble = scene.add.graphics();
+    bubble.fillStyle(TIA.navy, 0.16).fillRoundedRect(bx + 6, by + 10, bubbleWidth, bubbleHeight, 34);
+    bubble.fillStyle(TIA.navy, 1).fillRoundedRect(bx - 4, by - 4, bubbleWidth + 8, bubbleHeight + 8, 38);
+    bubble.fillTriangle(tailX - 34, tailBase - 6, tailX + 30, tailBase - 6, tailX - 18, tailBase + tail + 4);
+    bubble.fillStyle(0xffffff, 1).fillRoundedRect(bx, by, bubbleWidth, bubbleHeight, 34);
+    bubble.fillTriangle(tailX - 28, tailBase - 8, tailX + 24, tailBase - 8, tailX - 16, tailBase + tail - 4);
+    const stars = scene.add.graphics();
+    body.add([bubble, stars]);
+    let y = by + bubblePad;
+    const textX = bx + 84;
+    lines.forEach((line, index) => {
+      line.setPosition(textX, y);
+      body.add(line);
+      const cy = y + 18;
+      stars.fillStyle(index === 2 ? 0xff8fb4 : 0x4f86c6, 1).fillCircle(textX - 38, cy, 17);
+      body.add(scene.add.text(textX - 38, cy + 1, String(index + 1), textStyle({ role: "display", size: 22, color: "#ffffff" })).setOrigin(0.5));
+      y += line.height + lineGap;
+    });
+    drawSparkle(stars, bx + bubbleWidth - 18, by + 8, 20, 0xffd36e);
+    drawSparkle(stars, bx + 14, by + bubbleHeight - 10, 14, 0x9fc3e6);
+
+    // 티아 — 말풍선 아래에서 통통 뛰며 설명한다. 옆에는 이벤트 코인과 작은 상자.
+    const groundY = height / 2 - 30;
+    const tia = new TiaCheerleader(scene, body, { x: sd.x, groundY, height: sd.height });
+    void tia;
+    const coin = scene.add.image(sd.x + 230, groundY - 90, CHEST_COIN_ICON).setDisplaySize(110, 110).setAngle(-10);
+    const coinSmall = scene.add.image(sd.x + 360, groundY - 50, CHEST_COIN_ICON).setDisplaySize(76, 76).setAngle(14);
+    const cards = scene.add.container(sd.x + 470, groundY - 120);
+    const sample = [...CHEST_CARDS].find((card) => card.tier === "jackpot") ?? CHEST_CARDS[0];
+    paintCard(scene, cards, sample, 120, 180, "front");
+    cards.setAngle(8);
+    body.add([coin, coinSmall, cards]);
+    if (chestFxMotion().loops) {
+      scene.tweens.add({ targets: [coin, coinSmall], y: "-=12", duration: 900, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+      scene.tweens.add({ targets: cards, angle: 2, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.InOut" });
+    }
   });
 }

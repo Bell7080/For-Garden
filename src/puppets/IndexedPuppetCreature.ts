@@ -220,6 +220,16 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
    * 지나간 만큼을 한꺼번에 따라잡지 않는다(따라잡으면 풀리는 순간 자세가 툭 튄다).
    */
   private animationFrozen = false;
+  /**
+   * 자세를 빌려 오는 개체. 있으면 제 재생기를 굴리지 않고 그 개체가 계산한 정점을 그대로 쓴다.
+   *
+   * 같은 묶음·같은 동작을 같은 순간에 시작한 개체들은 어차피 **매 프레임 같은 정점**을 만든다 —
+   * 대작전 미리보기의 열다섯은 다섯 자매가 셋씩 되풀이되는데, 한 몸에 정점이 1만 6천 개라 열다섯이
+   * 저마다 스키닝하면 그것만으로 한 프레임을 넘겼다. 정점은 Puppet 로컬 좌표라 자리·크기·뒤집기는
+   * 그릴 때의 행렬이 맡고, 빌려 와도 그림은 바뀌지 않는다.
+   */
+  private poseLeader?: IndexedPuppetCreature;
+  private mirroredLeaderVersion = -1;
 
   private constructor(scene: Phaser.Scene, puppet: Puppet, textureKey: string) {
     super(scene, 0, 0, textureKey);
@@ -281,6 +291,19 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     return this;
   }
 
+  /**
+   * `leader`의 자세를 빌려 그린다(`undefined`면 다시 제 재생기를 굴린다). 같은 묶음이어야 하고,
+   * 같은 동작을 같은 순간에 시작한 개체끼리만 묶는다 — 그래야 빌려도 원래 그렸을 그림과 같다.
+   * 이끄는 개체가 사라지면 제 재생기로 돌아간다.
+   */
+  followPose(leader: IndexedPuppetCreature | undefined): this {
+    if (leader === this) leader = undefined;
+    if (leader && leader.puppet.name !== this.puppet.name) throw new Error(`다른 묶음의 자세는 빌릴 수 없습니다: ${leader.puppet.name} → ${this.puppet.name}`);
+    this.poseLeader = leader;
+    this.mirroredLeaderVersion = -1;
+    return this;
+  }
+
   /** 전투 개체는 호출하지 않는 opt-in 장식 예산 경계다. */
   setDecorativeUpdateFactor(factor: number): this {
     this.decorativeUpdateFactor = Phaser.Math.Clamp(factor, 0, 1);
@@ -306,6 +329,19 @@ export class IndexedPuppetCreature extends Phaser.GameObjects.Image {
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
     // 멈춘 동안은 시간만 흘려보낸다. 위에서 벽시계를 먼저 갱신했으므로 풀린 뒤 따라잡지 않는다.
     if (this.animationFrozen || !this.visible || this.alpha <= 0) return;
+    const leader = this.poseLeader;
+    if (leader) {
+      if (leader.active) {
+        // 이끄는 개체가 새 자세를 계산했을 때만 넘겨받는다 — 올리기(bufferSubData)도 그때만 돈다.
+        if (leader.poseVersion !== this.mirroredLeaderVersion) {
+          this.mirroredLeaderVersion = leader.poseVersion;
+          this.positions = leader.positions;
+          this.poseVersion += 1;
+        }
+        return;
+      }
+      this.poseLeader = undefined;
+    }
     this.decorativeUpdateCredit += this.decorativeUpdateFactor;
     if (this.decorativeUpdateCredit < 1) return;
     this.decorativeUpdateCredit -= 1;

@@ -3,13 +3,13 @@ import { BASE_WIDTH } from "../config/gameConfig";
 import { formatCurrency } from "../core/formatCurrency";
 import type { Element, RelicDef, Role } from "../core/types";
 import { t } from "../i18n";
-import { battleAssetFor, spawnPuppet } from "../puppets/assets";
+import { battleAssetFor, spawnPuppet, type PuppetCreature } from "../puppets/assets";
 import { AffinityBadge } from "./AffinityBadge";
 import { ELEMENT_ICON, ROLE_ICON } from "./affinityIcons";
 import { addPopupBackgroundImage } from "./backgrounds";
 import { Button } from "./Button";
 import type { CurrencyIconKey } from "./currencyIcons";
-import { DUNGEON_LOBBY, dungeonActionButtonWidth, dungeonActionButtonX, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
+import { DUNGEON_LOBBY, dungeonActionButtonWidth, dungeonActionButtonX, dungeonLineupSpawnOrder, dungeonLineupSpot, dungeonStripChipX, dungeonSummaryCard } from "./dungeonLobbyLayout";
 import type { DungeonTheme } from "./dungeonTheme";
 import { DUNGEON_RUN_TONE } from "./dungeonRunPopupLayout";
 import { EnemyInfoPopup } from "./EnemyInfoPopup";
@@ -25,6 +25,18 @@ import { squeezeTextToWidth } from "./textFit";
 import { COLOR, textStyle } from "./theme";
 import { addUnitNameplate, addUnitPower } from "./unitNameplate";
 import { addBreakthroughGradeMark } from "./rarityMark";
+import { PuppetCreationQueue } from "../puppets/creationQueue";
+import { powerSavingPolicy } from "../core/settings";
+import { session } from "../state/session";
+
+/** 걷히는 줄의 SD를 그 자세로 멈춘다. */
+function freezeLineup(lineup: Phaser.GameObjects.Container): void {
+  lineup.each((child: Phaser.GameObjects.GameObject) => {
+    // Puppet 개체는 `spawnPuppet`이 늦게 읽어 오므로 클래스를 정적으로 끌어오지 않고 모양으로 가린다.
+    if ("setAnimationFrozen" in child) (child as PuppetCreature).setAnimationFrozen(true);
+    else if (child instanceof Phaser.GameObjects.Container) freezeLineup(child);
+  });
+}
 
 /** 무대에 서는 적 하나. */
 export interface DungeonLineupUnit {
@@ -260,23 +272,19 @@ export class DungeonLobby {
     this.stage.addAt(lineup, this.stage.getIndex(this.stageChrome));
     this.lineup = lineup;
     const count = tier.lineup.length;
-    // 앞줄(가운데·짝수 자리)이 뒷줄 위에 그려지도록 뒤쪽부터 세운다.
+    // 앞줄(가운데·짝수 자리)이 뒷줄 위에 그려지도록 뒤쪽부터 자리(빈 칸)를 세운다.
     const order = tier.lineup.map((_unit, index) => index).sort((a, b) => dungeonLineupSpot(a, count).ground - dungeonLineupSpot(b, count).ground);
+    const slots: Phaser.GameObjects.Container[] = [];
+    for (const index of order) {
+      slots[index] = scene.add.container(0, 0);
+      figures.add(slots[index]);
+    }
+    this.spawnLineupFigures(tier, request, slots);
     for (const index of order) {
       const unit = tier.lineup[index];
       const spot = dungeonLineupSpot(index, count);
       const { height } = spot;
       addSdFootShadow(scene, spot.x, spot.ground, height * 0.72, ground);
-      const slot = scene.add.container(0, 0);
-      figures.add(slot);
-      void spawnPuppet(scene, battleAssetFor(unit.relicId), {
-        x: spot.x, groundY: spot.ground, height, depth: 0, flipX: true,
-        isStale: () => request !== this.lineupRequest || !slot.active,
-      }).then((puppet) => {
-        if (request !== this.lineupRequest || !slot.active) { puppet.destroy(); return; }
-        puppet.disableInteractive();
-        slot.add(puppet);
-      }).catch(() => undefined);
       // **적을 누르면 정보창이 열린다** — 편성·전투 화면과 같은 규칙. 뒷줄부터 세우므로 겹친 자리는
       // 앞줄 입력면이 위에서 먼저 받는다. 잠긴 단계도 누가 기다리는지 볼 수 있다.
       const tap = scene.add.rectangle(spot.x, spot.ground - height / 2, height * (spot.crowd ? 0.62 : 0.86), height + 40, 0xffffff, 0)
@@ -307,11 +315,63 @@ export class DungeonLobby {
     }
     scene.tweens.add({ targets: lineup, x: 0, alpha: 1, duration: 200, ease: "Cubic.Out" });
     if (previous) {
+      // 걷히는 줄은 그 자리에서 멈춘다 — 0.16초 동안 옛 줄과 새 줄이 함께 움직이면 넘기는 순간
+      // 서른 몸을 스키닝한다. 멈춘 자세로 옅어져도 그 사이에 읽히는 차이가 없다.
+      freezeLineup(previous);
       scene.tweens.add({
         targets: previous, x: -direction * 80, alpha: 0, duration: 160, ease: "Cubic.In",
         onComplete: () => previous.destroy(),
       });
     }
+  }
+
+  /**
+   * 그 단계의 SD를 세운다. **앞줄부터, 프레임 예산으로 나눠**(`PuppetCreationQueue` — 8ms) 세우고
+   * 전원이 준비된 뒤 **함께** 드러낸다. 열다섯을 한 프레임에 만들던 때는 단계를 넘길 때마다 화면이
+   * 멎었고, 도착하는 대로 세우면 하나씩 쏙, 쏙 선다(전투 진입과 같은 규칙).
+   *
+   * **같은 개체는 한 몸만 자세를 계산한다**(`followPose`). 대작전은 다섯 자매가 셋씩 되풀이되고
+   * SD 한 몸이 정점 1만 6천 개라, 열다섯이 저마다 스키닝하던 것이 이 화면의 렉이었다. 모두 멈춘 채
+   * 서서 같은 순간에 풀리므로 같은 개체끼리는 원래도 같은 자세였다 — 빌려 와도 그림이 같다.
+   */
+  private spawnLineupFigures(tier: DungeonLobbyTier, request: number, slots: readonly Phaser.GameObjects.Container[]): void {
+    const { scene } = this;
+    const count = tier.lineup.length;
+    const current = () => request === this.lineupRequest;
+    const queue = new PuppetCreationQueue({ isCurrent: current });
+    const policy = powerSavingPolicy(session.settings).idlePuppetUpdateFactor;
+    const spawnOrder = dungeonLineupSpawnOrder(count);
+    const arrivals = spawnOrder.map((index) => {
+      const unit = tier.lineup[index];
+      const spot = dungeonLineupSpot(index, count);
+      const slot = slots[index];
+      return spawnPuppet(scene, battleAssetFor(unit.relicId), {
+        x: spot.x, groundY: spot.ground, height: spot.height, depth: 0, flipX: true,
+        creationQueue: queue, startPaused: true,
+        isStale: () => !current() || !slot.active,
+      }).then((puppet) => {
+        if (!current() || !slot.active) { puppet.destroy(); return undefined; }
+        puppet.disableInteractive();
+        puppet.setDecorativeUpdateFactor(policy);
+        slot.add(puppet);
+        return puppet;
+      });
+    });
+    void Promise.allSettled(arrivals).then((results) => {
+      // 기다리는 사이 단계가 바뀌었으면 이미 걷히는 줄이라 드러낼 이유가 없다.
+      if (!current()) return;
+      // 세운 차례가 앞줄부터라 개체마다 처음 선 몸(대표 얼굴)이 자세를 계산하고 나머지가 빌린다.
+      const leaders = new Map<string, PuppetCreature>();
+      results.forEach((result, at) => {
+        if (result.status !== "fulfilled" || !result.value?.active) return;
+        const puppet = result.value;
+        const relicId = tier.lineup[spawnOrder[at]].relicId;
+        const leader = leaders.get(relicId);
+        if (leader) puppet.followPose(leader);
+        else leaders.set(relicId, puppet);
+        puppet.setVisible(true).setAnimationFrozen(false);
+      });
+    });
   }
 
   /* ── 난이도 줄 ─────────────────────────────────────────────────────────── */

@@ -126,6 +126,15 @@ export function dungeonLineupSpot(index: number, count: number): DungeonLineupSp
   return { x: (at - (rowCount - 1) / 2) * row.step + shift, ground: row.ground, height: row.sd, crowd: true, labeled: false };
 }
 
+/**
+ * 적을 **세우는** 차례 — 앞줄(대표 얼굴)부터. 그리는 차례(뒷줄부터 — 앞줄이 위에 겹친다)와 다르다.
+ * 세우는 일은 프레임 예산으로 나뉘므로 먼저 읽혀야 하는 얼굴이 먼저 선다.
+ */
+export function dungeonLineupSpawnOrder(count: number): number[] {
+  return Array.from({ length: count }, (_, index) => index)
+    .sort((a, b) => dungeonLineupSpot(b, count).ground - dungeonLineupSpot(a, count).ground || a - b);
+}
+
 /** 요약 카드의 윗변. */
 export function dungeonSummaryTop(): number {
   return DUNGEON_LOBBY.summary.y - DUNGEON_LOBBY.summary.height / 2;

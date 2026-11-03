@@ -22,6 +22,16 @@ test("보물상자 팝업 모바일 배치", async ({ page }, info) => {
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("티아의 보물상자");
   await page.waitForTimeout(1500);
   await captureGame(page, info.outputPath("chest-forge-empty.png"));
+  await page.evaluate(async () => {
+    const root = "/src/";
+    const ui = await import(/* @vite-ignore */root+"ui/ChestForgePopup.ts");
+    const layers = await import(/* @vite-ignore */root+"ui/PopupLayer.ts");
+    const scene = (window as any).__FORGE_GAME.scene.getScene("lobby");
+    ui.openChestHowTo(scene, new layers.PopupLayer(scene, 3100));
+  });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("게임 방법");
+  await page.waitForTimeout(1500);
+  await captureGame(page, info.outputPath("chest-forge-howto.png"));
 });
 
 test("보물상자 — 마지막 카드를 고르는 화면", async ({ page }, info) => {

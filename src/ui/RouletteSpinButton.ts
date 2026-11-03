@@ -13,6 +13,11 @@ export interface RouletteSpinButtonOptions {
   tone: number;
   /** 글 왼쪽에 서는 그림(광고 아이콘). */
   iconKey?: string;
+  /**
+   * 글 오른쪽에 붙는 값표 — 짙은 알약 안에 재화 그림 + 수(`(코인) 300`). 무엇을 얼마 내는지를 문장이 아니라
+   * 상점의 값 줄처럼 그림과 수로 말한다.
+   */
+  price?: { iconKey: string; amount: string };
   onClick: () => void;
 }
 
@@ -28,6 +33,8 @@ export class RouletteSpinButton extends Phaser.GameObjects.Container {
   private readonly badge: Phaser.GameObjects.Container;
   private readonly badgeText: Phaser.GameObjects.Text;
   private readonly icon?: Phaser.GameObjects.Image;
+  private readonly price?: Phaser.GameObjects.Container;
+  private readonly priceWidth: number = 0;
   private breathe?: Phaser.Tweens.Tween;
   private enabled = true;
 
@@ -67,6 +74,21 @@ export class RouletteSpinButton extends Phaser.GameObjects.Container {
     }
     this.label = scene.add.text(0, 0, options.label, textStyle({ role: "display", size: Math.round(height * 0.3), color: ROULETTE_TONE.inkText })).setOrigin(0.5);
     this.face.add(this.label);
+    if (options.price) {
+      const pillHeight = Math.round(height * 0.56);
+      const iconSize = Math.round(pillHeight * 0.86);
+      const amount = scene.add.text(0, 0, options.price.amount, textStyle({ role: "display", size: Math.round(pillHeight * 0.56), color: "#ffffff" })).setOrigin(0, 0.5).setStroke(ROULETTE_TONE.inkText, 5);
+      const pad = pillHeight * 0.22;
+      this.priceWidth = iconSize * 0.78 + 6 + amount.width + pad * 2;
+      const pill = scene.add.graphics();
+      pill.fillStyle(ROULETTE_TONE.ink, 1).fillRoundedRect(-this.priceWidth / 2 - 3, -pillHeight / 2 - 3, this.priceWidth + 6, pillHeight + 6, pillHeight / 2 + 3);
+      pill.fillStyle(Phaser.Display.Color.ValueToColor(tone).darken(34).color, 1).fillRoundedRect(-this.priceWidth / 2, -pillHeight / 2, this.priceWidth, pillHeight, pillHeight / 2);
+      pill.fillStyle(0xffffff, 0.22).fillRoundedRect(-this.priceWidth / 2 + pillHeight * 0.4, -pillHeight / 2 + 5, this.priceWidth - pillHeight * 0.8, 6, 3);
+      const coin = scene.add.image(-this.priceWidth / 2 + pad * 0.4 + iconSize / 2, 0, options.price.iconKey).setDisplaySize(iconSize, iconSize);
+      amount.setX(coin.x + iconSize * 0.4 + 6);
+      this.price = scene.add.container(0, 0, [pill, coin, amount]);
+      this.face.add(this.price);
+    }
 
     this.badge = scene.add.container(width / 2 - radius * 0.25, -height / 2 + 6);
     const badgePlate = scene.add.graphics();
@@ -122,11 +144,13 @@ export class RouletteSpinButton extends Phaser.GameObjects.Container {
   private layoutLabel(): void {
     const { width, height } = this.options;
     const iconWidth = this.icon ? height * 0.48 + 14 : 0;
+    const priceGap = this.price ? height * 0.2 : 0;
     this.label.setScale(1);
-    shrinkTextToWidth(this.label, width - height * 1.3 - iconWidth);
-    const total = iconWidth + this.label.displayWidth;
+    shrinkTextToWidth(this.label, width - height * 1.3 - iconWidth - this.priceWidth - priceGap);
+    const total = iconWidth + this.label.displayWidth + priceGap + this.priceWidth;
     if (this.icon) this.icon.setX(-total / 2 + height * 0.24);
     this.label.setX(-total / 2 + iconWidth + this.label.displayWidth / 2);
+    this.price?.setX(total / 2 - this.priceWidth / 2);
   }
 
   private syncBreath(): void {

@@ -14,9 +14,11 @@ import { RouletteSpinButton } from "./RouletteSpinButton";
 import { addCurrencyRain, addRouletteWheel, drawSparkle, ROULETTE_TONE, type RouletteWheelParts } from "./rouletteWheel";
 import { openRouletteRates } from "./RouletteRatesPopup";
 import { addRatesLink } from "./sideShop";
+import { BACKGROUND } from "./backgroundAssets";
+import { addEventPopupBackdrop } from "./eventBackdrop";
 import { popupArtShape, popupBodyShapeMask } from "./popupArt";
 import type { PopupLayer } from "./PopupLayer";
-import { COLOR, textStyle } from "./theme";
+import { textStyle } from "./theme";
 import { currencyRecordToRewardItems } from "./rewardPopupModel";
 import { openRewardPopup } from "./RewardPopup";
 import { UI_ICON } from "./icons";
@@ -46,25 +48,12 @@ const WHEEL = {
   idlePushMs: 2600,
 } as const;
 
-/** 판 바탕 — 어두운 자두빛 단색 위에 사탕 줄무늬와 바퀴 뒤로 도는 햇살, 흩어진 반짝이. 내용보다 먼저 읽히지 않게 옅게. */
+/** 메론의 남색 천·별 장식 바탕. 중앙은 비우고 바퀴 뒤 햇살만 옅게 남긴다. */
 function addBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container): Phaser.GameObjects.Graphics {
   const { width, height } = WHEEL;
   const shape = popupArtShape(width, height);
   const mask = popupBodyShapeMask(scene, body, shape);
-  const base = scene.add.graphics();
-  base.fillStyle(0x2a1426, 0.82).fillPoints(shape.reduce<Phaser.Geom.Point[]>((points, value, index) => {
-    if (index % 2 === 0) points.push(new Phaser.Geom.Point(value, shape[index + 1])); return points;
-  }, []), true);
-  // 비스듬한 사탕 줄무늬.
-  base.fillStyle(0xff8fb8, 0.07);
-  for (let x = -width - height; x < width + height; x += 120) {
-    base.fillPoints([new Phaser.Geom.Point(x, -height / 2), new Phaser.Geom.Point(x + 56, -height / 2), new Phaser.Geom.Point(x + 56 + height * 0.6, height / 2), new Phaser.Geom.Point(x + height * 0.6, height / 2)], true);
-  }
-  // 물방울 점 — 줄마다 반 칸씩 어긋난다.
-  for (let row = 0, y = -height / 2 + 40; y < height / 2; y += 96, row += 1) {
-    for (let x = -width / 2 + 30 + (row % 2) * 48; x < width / 2; x += 96) base.fillStyle(0xffe7a3, 0.08).fillCircle(x, y, 5);
-  }
-  body.add(base.setMask(mask));
+  addEventPopupBackdrop(scene, body, BACKGROUND.eventRoulettePopup, width, height);
   // 바퀴 뒤로 천천히 도는 햇살.
   const burst = scene.add.graphics({ x: 0, y: WHEEL.centerY });
   const rays = 18;
@@ -76,7 +65,7 @@ function addBackdrop(scene: Phaser.Scene, body: Phaser.GameObjects.Container): P
   }
   body.add(burst.setMask(mask));
   // 재화 비 — 판 안에서만 내린다.
-  addCurrencyRain(scene, body, { left: -width / 2 + 40, right: width / 2 - 40, top: -height / 2 + 10, bottom: height / 2 - 10, count: 16, size: 58, alpha: 0.42, fallMs: 9000 }).setMask(mask);
+  addCurrencyRain(scene, body, { left: -width / 2 + 40, right: width / 2 - 40, top: -height / 2 + 10, bottom: height / 2 - 10, count: 6, size: 48, alpha: 0.18, fallMs: 9000 }).setMask(mask);
   // 흩어진 반짝이.
   const sparkles = scene.add.graphics();
   [[-360, -420, 18], [372, -470, 14], [-392, 40, 12], [-300, 200, 16], [400, -120, 11], [-410, -230, 10]].forEach(([x, y, size]) => drawSparkle(sparkles, x, y, size, 0xfff3a6, 0.75));
@@ -129,7 +118,7 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     body.once(Phaser.GameObjects.Events.DESTROY, cleanupVisuals);
     const burst = addBackdrop(scene, body);
     if (loops()) burstSpin = scene.tweens.add({ targets: burst, angle: 360, duration: 40000, repeat: -1 });
-    body.add(scene.add.text(0, WHEEL.introY, t("roulette.intro"), textStyle({ role: "body", size: 26, color: COLOR.ink, wrap: 800, align: "center" })).setOrigin(.5));
+    body.add(scene.add.text(0, WHEEL.introY, t("roulette.intro"), textStyle({ role: "body", size: 26, color: "#283752", wrap: 800, align: "center" })).setOrigin(.5));
     body.add(addRatesLink(scene, WHEEL.rates.x, WHEEL.rates.y, t("lab.rates"), () => openRouletteRates(scene, popups)));
 
     addStand(scene, body);
@@ -138,14 +127,14 @@ export async function openRoulettePopup(scene: Phaser.Scene, popups: PopupLayer,
     const { wheel } = wheelParts;
 
     const remaining = scene.add.text(0, WHEEL.remainingY, "", textStyle({ role: "display", size: 36, color: "#ffe7a3" })).setOrigin(.5).setStroke(ROULETTE_TONE.inkText, 8);
-    const note = scene.add.text(0, WHEEL.noteY, "", textStyle({ role: "body", size: 23, color: COLOR.inkDim, wrap: 760, align: "center" })).setOrigin(.5);
+    const note = scene.add.text(0, WHEEL.noteY, "", textStyle({ role: "body", size: 23, color: "#50617b", wrap: 760, align: "center" })).setOrigin(.5);
     body.add([remaining, note]);
     const { y: buttonY, width: buttonWidth, height: buttonHeight } = WHEEL.button;
     const spin = new RouletteSpinButton(scene, 0, buttonY, { width: buttonWidth, height: buttonHeight, label: t("roulette.spin"), tone: 0x6fd6b0, onClick: () => void doSpin() });
     const ad = new RouletteSpinButton(scene, 0, buttonY, { width: buttonWidth, height: buttonHeight, label: t("roulette.adBonus"), tone: ROULETTE_TONE.rim, iconKey: UI_ICON.ad, onClick: () => void unlockAndSpin() });
     const member = new RouletteSpinButton(scene, 0, buttonY, { width: buttonWidth, height: buttonHeight, label: t("roulette.memberBonus"), tone: ROULETTE_TONE.rim, onClick: () => void unlockAndSpin() });
     body.add([spin, ad, member]);
-    body.add(scene.add.text(0, WHEEL.rulesY, t("roulette.rules"), textStyle({ role: "body", size: 21, color: COLOR.inkDim, wrap: 790, align: "center" })).setOrigin(.5));
+    body.add(scene.add.text(0, WHEEL.rulesY, t("roulette.rules"), textStyle({ role: "body", size: 21, color: "#50617b", wrap: 790, align: "center" })).setOrigin(.5));
 
     const puppetDepth = (body.parentContainer?.depth ?? popups.baseDepth) + 1;
     void spawnPuppet(scene, sdAssetFor("meron"), {

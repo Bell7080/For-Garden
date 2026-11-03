@@ -19,16 +19,16 @@ export const ROULETTE_TONE = {
   slices: [0xffe7a3, 0xffbfd6, 0xc4f0dd, 0xffd8f0, 0xcfe2ff, 0xffd2b8, 0xe2d4ff, 0xbfeaf5],
   jackpot: 0xffc93f,
   jackpotRay: 0xfff4c2,
-  rim: 0xff8fb8,
-  rimDark: 0xc95a86,
+  rim: 0x879bc9,
+  rimDark: 0x46567e,
   cream: 0xfff6e4,
   /** 장난감 결의 굵은 외곽선 — 검정보다 부드러운 짙은 자두빛. */
-  ink: 0x4a2337,
-  inkText: "#4a2337",
+  ink: 0x28334f,
+  inkText: "#28334f",
   bulbOn: 0xfff3a6,
-  bulbOff: 0xb8577f,
-  pointer: 0xff5f94,
-  hub: 0xff8fb8,
+  bulbOff: 0x64769e,
+  pointer: 0xffce73,
+  hub: 0x879bc9,
 } as const;
 
 export interface RouletteWheelOptions {

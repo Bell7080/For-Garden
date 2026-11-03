@@ -79,7 +79,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     id: "research-roulette",
     titleKey: "event.roulette.title",
     subtitleKey: "event.roulette.subtitle",
-    backdropKey: BACKGROUND.interactionDoppelParlor,
+    backdropKey: BACKGROUND.eventRouletteCard,
     destination: { kind: "roulette" },
     sd: { relicId: "meron", side: "right" },
     showcase: "roulette",
@@ -92,8 +92,7 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     id: "chest-forge",
     titleKey: "event.chestForge.title",
     subtitleKey: "event.chestForge.subtitle",
-    // 티아의 물가 — 물에 잠긴 도시 원경의 푸른빛이 티아 SD의 은빛·남색과 어울린다.
-    backdropKey: BACKGROUND.expeditionRanking,
+    backdropKey: BACKGROUND.eventTiaCard,
     destination: { kind: "chestForge" },
     sd: { relicId: "tia", side: "right" },
     showcase: "chestForge",

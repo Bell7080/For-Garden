@@ -55,6 +55,11 @@ export interface Fighter extends Combatant {
   /** 수호전 처치 점수. 쓰러지면 한 번만 센다(`hordeCounted`). */
   hordeScore?: number;
   hordeCounted?: boolean;
+  /**
+   * 이 몸의 쓰러짐을 사건(`death`)으로 이미 알렸는가(`announceSilentDeaths`). 살아 있으면 false로 돌아가고,
+   * 한 번도 서 본 적 없이 쓰러진 채 열린 자리(새끼 늑대)는 undefined라 알리지 않는다.
+   */
+  deathAnnounced?: boolean;
   /** 이 높이보다 위로는 나서지 않는다(수호전 두 줄 진형). */
   leashTop?: number;
   side: Side;
@@ -1440,6 +1445,8 @@ function makeFighter(def: RelicDef, side: Side, index: number, x: number, y: num
     prickle: null,
     fortress: null,
     bulwark: null,
+    // 객체 모양을 처음부터 고정한다 — 첫 조각에서야 속성이 붙으면 모든 몸의 모양이 바뀌어 전투 계산 전체가 느려진다.
+    deathAnnounced: undefined,
     empoweredBasic: false,
     // 폭주가 켜진 뒤 온전한 1초가 지나야 첫 파동이 발생한다.
     pontusRageTickIn: 1,
@@ -10864,6 +10871,57 @@ function advanceHorde(state: SkirmishState, events: SkirmishEvent[]): void {
 }
 
 /**
+ * 사망 사건 없이 쓰러진 몸을 붙잡아 이 조각의 끝에서 대신 알린다.
+ *
+ * 사망 사건은 피해를 넣은 자리마다 따로 쏜다(`applyDamage`는 쏘지 않는다) — 그래서 그 자리를 하나라도 빠뜨리면
+ * 코어에서는 죽었는데 화면은 끝내 모르는 몸이 생긴다. 노도니아처럼 아군 몫을 대신 받다 쓰러지는 길
+ * (`shareWithBulwark`)이 그랬고, 화면에는 체력 0인 몸이 전장에 선 채로 남았다. 자리마다 고치는 대신 모든 몸을
+ * 한 번 훑어 **쓰러졌는데 아직 알리지 않은** 몸만 여기서 알린다. 이미 사건을 낸 몸은 건너뛴다.
+ */
+function announceSilentDeaths(state: SkirmishState, events: SkirmishEvent[], from: number): void {
+  for (const fighter of state.fighters) {
+    if (isFighterAlive(fighter)) {
+      fighter.deathAnnounced = false;
+      continue;
+    }
+    if (fighter.deathAnnounced) continue;
+    // 한 번도 서 본 적 없는 자리(쓰러진 채 열리는 새끼 늑대)는 쓰러진 것이 아니라 아직 부르지 않은 것이다.
+    // 이번 조각에 이미 사망 사건을 낸 몸도 다시 알리지 않는다 — 쓰러지는 순간에만 훑으므로 드물다.
+    const silent = fighter.deathAnnounced === false && !hasDeathEvent(events, from, fighter.id);
+    fighter.deathAnnounced = true;
+    if (!silent) continue;
+    clearDefeatedStatuses(fighter);
+    events.push({ kind: "death", fighterId: fighter.id });
+  }
+}
+
+function hasDeathEvent(events: SkirmishEvent[], from: number, id: string): boolean {
+  for (let index = from; index < events.length; index += 1) {
+    const event = events[index];
+    if (event.kind === "death" && event.fighterId === id) return true;
+  }
+  return false;
+}
+
+/**
+ * 수호전에서 쓰러져 점수까지 거둔 웨이브 몸을 판에서 걷어 낸다.
+ *
+ * 웨이브는 끝없이 몸을 더하는데 쓰러진 몸이 `fighters`에 그대로 남으면, 표적 고르기·밀어내기·`findFighter`처럼
+ * 몸 전부를 훑는 모든 계산이 웨이브가 깊어질수록 무거워진다(후반에는 살아 있는 몸 스물 남짓에 시체 백오십).
+ * 다시 서지 않는 몸만 걷는다 — 아군·소환수·아직 점수를 거두지 않은 몸은 남긴다. 화면은 몸을 객체로 들고 있어
+ * 걷어 낸 뒤에도 마지막 날아가는 연출을 그대로 그린다. 서버 재현도 같은 함수라 두 쪽 판이 갈리지 않는다.
+ */
+function pruneFallenHorde(state: SkirmishState): void {
+  let write = 0;
+  for (const fighter of state.fighters) {
+    if (fighter.hordeCounted && !isFighterAlive(fighter)) continue;
+    state.fighters[write] = fighter;
+    write += 1;
+  }
+  state.fighters.length = write;
+}
+
+/**
  * 시간을 dt초만큼 굴린다.
  *
  * 프레임이 길어져도 한 번에 통째로 적분하지 않고 잘게 나눈다. 그러지 않으면 서로를 지나쳐
@@ -10888,6 +10946,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
       if (fighter.def.passive.kind === "refillMagazine") fighter.refillAttackRatio = refillAttackRatio(fighter, state);
     }
     advance(state, step, rng, events);
+    announceSilentDeaths(state, events, before);
     if (state.horde && state.phase === "fight") advanceHorde(state, events);
     if (state.automaticUltimates) {
       // 화면의 배속·프레임·컷인 대기열과 무관하게 양쪽이 같은 함수/준비 조건을 쓴다.
@@ -10931,6 +10990,7 @@ export function stepSkirmish(state: SkirmishState, dt: number, rng: () => number
     state.phase = state.horde ? "victory" : "defeat";
     events.push({ kind: "finish", phase: state.phase });
   }
+  if (state.horde) pruneFallenHorde(state);
   // 타이머 값 자체가 아니라 호출 전후 경계를 비교해 진입·연장·해제를 명확히 구분한다.
   for (const fighter of state.fighters) {
     const tag = stealthTransition(stealthBefore.get(fighter.id) ?? 0, fighter.stealthFor);

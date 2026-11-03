@@ -1333,8 +1333,15 @@ export class BattleScene extends Phaser.Scene {
           this.openStatusList(fighter.id);
         });
       this.views.set(fighter.id, { creature, asset, fighter, infoHit, shadow, hpBar, statusChips, statusHit, stunShown: false, feverTint, feverAt: 0, feverEndedAt: undefined, feverTinted: false, afterimageShown: false, tint, squashAt: -Infinity, squashDir: 1, spinDir: 1, wallHits: 0, dead: false });
+      // 수호전 웨이브 몸이 SD를 읽는 사이에 이미 쓰러졌으면 세우지 않는다 — 사망 사건은 몸이 서기 전에 지나가,
+      // 그대로 세우면 쓰러진 몸이 체력 0으로 전장에 선 채 남는다. 다시 서지 않는 몸이라 그 자리에서 놓는다.
+      if (!isFighterAlive(fighter) && fighter.hordeScore !== undefined) {
+        this.disposeView(fighter.id);
+        continue;
+      }
       // 새끼 늑대 자리는 쓰러진 채로 열린다 — 부르는 순간 `packSummon`이 일으켜 세울 때까지 보이지 않는다.
-      if (fighter.hp <= 0 && isPupFighter(fighter)) {
+      // 늦게 도착한 다른 몸도 이미 쓰러져 있으면 같은 자리에 숨겨 둔다(다시 서면 `packSummon`이 일으킨다).
+      if (!isFighterAlive(fighter)) {
         const idle = this.views.get(fighter.id);
         if (idle) {
           idle.dead = true;
@@ -2499,10 +2506,31 @@ export class BattleScene extends Phaser.Scene {
           alpha: 0,
           duration: DEATH_FLIGHT.vanishMs,
           ease: "Back.In",
-          onComplete: () => view.creature.setVisible(false),
+          onComplete: () => {
+            view.creature.setVisible(false);
+            // 수호전 웨이브 몸은 다시 서지 않는다 — 숨겨만 두면 웨이브마다 SD·체력 바·입력면이 쌓여
+            // 후반에는 백 구가 넘는 시체가 GPU 버퍼와 매 프레임 동기화를 함께 붙잡는다. 별이 된 순간 놓는다.
+            if (view.fighter.hordeScore !== undefined && this.views.get(fighterId) === view) this.disposeView(fighterId);
+          },
         });
       },
     });
+  }
+
+  /** 다시 서지 않는 몸의 화면 조각을 모두 놓는다. 전투 계산은 이미 그 몸을 걷어 냈거나 곧 걷어 낸다. */
+  private disposeView(fighterId: string): void {
+    const view = this.views.get(fighterId);
+    this.enemySnapshots.delete(fighterId);
+    if (!view) return;
+    this.views.delete(fighterId);
+    this.combatEffects.remove(fighterId);
+    this.tweens.killTweensOf(view.creature);
+    view.creature.destroy();
+    view.shadow.destroy();
+    view.hpBar.destroy();
+    if (view.statusChips.scene) view.statusChips.destroy(true);
+    view.statusHit.destroy();
+    view.infoHit?.destroy();
   }
 
   /**
@@ -2573,6 +2601,8 @@ export class BattleScene extends Phaser.Scene {
     const outlineDirections = feverOutlineDirections(this.state.fighters.filter(isFighterAlive).length);
     const feverMarks: Parameters<EffectManager["syncFeverMarks"]>[0][number][] = [];
     this.views.forEach((view) => {
+      // 사망 사건을 놓친 몸도 여기서 붙잡는다 — 코어가 쓰러뜨렸는데 화면만 모르면 시체가 선 채로 남는다.
+      if (!view.dead && !isFighterAlive(view.fighter)) this.playDeath(view.fighter.id);
       if (view.dead) return;
       const { fighter } = view;
       const unitHeight = UNIT_HEIGHT * fighter.bodyScale;

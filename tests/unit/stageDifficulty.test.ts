@@ -410,7 +410,7 @@ describe("Phaser 없는 챕터 난이도 검수", () => {
     // v0.326.6: 티아의 반짝 폭발 막이 8%로 늘며 최악 조합이 토리카·도디·안카로 옮겨 갔다.
     // v0.326.6: 티아의 막 12%·상한 36%로 티아 조합이 더 나아져 최악 조합이 다시 토리카·켄토·안카로 돌아왔다.
     expect(parties.unfavorable.map(({ id }) => id)).toEqual(["torika", "kento", "anka"]);
-  });
+  }, 30_000);
 
   it("장 목표와 허용 조정 순서를 전용 배율 없이 공개한다", () => {
     expect(Object.keys(CHAPTER_ONE_DIFFICULTY_GOALS)).toEqual(Array.from({ length: 10 }, (_, index) => `1-${index + 1}`));

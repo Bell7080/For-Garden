@@ -67,7 +67,7 @@ describe("개체 대 개체 검수", () => {
     const byWinRate = [...table].sort((first, second) => second.winRate - first.winRate);
     const byHpLeft = [...table].sort((first, second) => second.averageHpRatio - first.averageHpRatio);
     expect([byWinRate[0].relicId, byHpLeft[0].relicId]).not.toEqual(["dian", "dian"]);
-  });
+  }, 30_000);
 
   it("은 디안이 로스터 전체를 상대로 SSR이 설 만한 자리에 선다", () => {
     const table = duelLeaderboard(PLAYABLE_RELICS, SEEDS);

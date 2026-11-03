@@ -92,7 +92,8 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     id: "chest-forge",
     titleKey: "event.chestForge.title",
     subtitleKey: "event.chestForge.subtitle",
-    backdropKey: BACKGROUND.interactionRustWorks,
+    // 티아의 물가 — 물에 잠긴 도시 원경의 푸른빛이 티아 SD의 은빛·남색과 어울린다.
+    backdropKey: BACKGROUND.expeditionRanking,
     destination: { kind: "chestForge" },
     sd: { relicId: "tia", side: "right" },
     showcase: "chestForge",

@@ -170,7 +170,7 @@ export class ChestStage {
       const to = CHEST_GRADE_THRESHOLDS[index];
       const fill = Math.max(0, Math.min(1, (value - from) / (to - from)));
       const x = -width / 2 + index * (segment + gap);
-      gauge.fillStyle(0x7a3a2a, 0.18).fillRoundedRect(x, y + 4, segment, height, height / 2);
+      gauge.fillStyle(0x22344f, 0.16).fillRoundedRect(x, y + 4, segment, height, height / 2);
       gauge.fillStyle(0xffffff, 0.85).fillRoundedRect(x, y, segment, height, height / 2);
       if (fill > 0) gauge.fillStyle(CHEST_GRADE_LOOKS[index + 1].glow, 1).fillRoundedRect(x, y, Math.max(height, segment * fill), height, height / 2);
       if (fill >= 1) drawSparkle(gauge, x + segment - 2, y + 1, 12, 0xffffff, 0.95);

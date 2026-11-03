@@ -113,7 +113,7 @@ export const LOBBY_VI = {
   "delophyHunt.hint.easy": "Xáo chậm",
   "delophyHunt.hint.normal": "Xáo nhanh, đôi khi thẻ đổi độ cao",
   "delophyHunt.hint.hard": "Cực nhanh, thẻ chui ra sau thẻ khác",
-  "delophyHunt.jackpotNote": "Từ mức Thường trở lên đôi khi có thẻ trúng lớn ẩn mình. Kho báu càng tốt càng xáo dữ.",
+  "delophyHunt.jackpotNote": "Đôi khi có thẻ trúng lớn ẩn mình. Kho báu càng tốt càng xáo dữ.",
   "delophyHunt.collected": "Kho báu đã tìm",
   "delophyHunt.phase.memorize": "Hãy ghi nhớ!",
   "delophyHunt.phase.shuffle": "Đang xáo…",

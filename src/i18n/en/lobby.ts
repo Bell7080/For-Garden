@@ -118,7 +118,7 @@ export const LOBBY_EN = {
   "delophyHunt.hint.easy": "Slow shuffle",
   "delophyHunt.hint.normal": "Fast, cards sometimes change height",
   "delophyHunt.hint.hard": "Very fast, cards hide behind others",
-  "delophyHunt.jackpotNote": "Jackpot cards may hide on Normal or higher. Better treasures shuffle more fiercely.",
+  "delophyHunt.jackpotNote": "Jackpot cards sometimes hide. Better treasures shuffle more fiercely.",
   "delophyHunt.collected": "Treasures Found",
   "delophyHunt.phase.memorize": "Memorize them!",
   "delophyHunt.phase.shuffle": "Shuffling…",

@@ -113,7 +113,7 @@ export const LOBBY_ID = {
   "delophyHunt.hint.easy": "Diacak pelan",
   "delophyHunt.hint.normal": "Cepat, kartu kadang berubah ketinggian",
   "delophyHunt.hint.hard": "Sangat cepat, kartu bersembunyi di balik kartu lain",
-  "delophyHunt.jackpotNote": "Di tingkat Normal ke atas, kartu jackpot kadang tersembunyi. Harta lebih bagus diacak lebih liar.",
+  "delophyHunt.jackpotNote": "Kartu jackpot kadang tersembunyi. Harta lebih bagus diacak lebih liar.",
   "delophyHunt.collected": "Harta Ditemukan",
   "delophyHunt.phase.memorize": "Ingat baik-baik!",
   "delophyHunt.phase.shuffle": "Mengacak…",

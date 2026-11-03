@@ -113,7 +113,7 @@ export const LOBBY_TH = {
   "delophyHunt.hint.easy": "สับช้า ๆ",
   "delophyHunt.hint.normal": "สับเร็ว บางครั้งการ์ดเปลี่ยนความสูง",
   "delophyHunt.hint.hard": "เร็วมาก การ์ดซ่อนอยู่หลังใบอื่น",
-  "delophyHunt.jackpotNote": "ระดับปานกลางขึ้นไปอาจมีการ์ดแจ็กพอตซ่อนอยู่ สมบัติยิ่งดียิ่งสับดุเดือด",
+  "delophyHunt.jackpotNote": "อาจมีการ์ดแจ็กพอตซ่อนอยู่ สมบัติยิ่งดียิ่งสับดุเดือด",
   "delophyHunt.collected": "สมบัติที่หาได้",
   "delophyHunt.phase.memorize": "จำให้ดี!",
   "delophyHunt.phase.shuffle": "กำลังสับ…",

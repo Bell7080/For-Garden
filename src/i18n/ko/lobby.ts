@@ -124,7 +124,7 @@ export const LOBBY_KO = {
   "delophyHunt.hint.easy": "천천히 섞여요",
   "delophyHunt.hint.normal": "빠르고 가끔 높이가 바뀌어요",
   "delophyHunt.hint.hard": "아주 빠르고 카드 뒤로 숨어요",
-  "delophyHunt.jackpotNote": "보통 이상에서는 가끔 대박 카드가 숨어 있어요. 좋은 보물일수록 더 사납게 섞여요.",
+  "delophyHunt.jackpotNote": "가끔 대박 카드가 숨어 있어요. 좋은 보물일수록 더 사납게 섞여요.",
   "delophyHunt.collected": "찾은 보물",
   "delophyHunt.phase.memorize": "잘 기억해 두세요!",
   "delophyHunt.phase.shuffle": "섞는 중…",

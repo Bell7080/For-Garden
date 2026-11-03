@@ -62,7 +62,9 @@ export const HUNT_TREASURES: readonly HuntTreasure[] = [
   { id: "gems-l", tier: "rare", currency: "gems", amount: 250, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
-  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1_000, weight: 4 },
+  { id: "jackpot-300", tier: "jackpot", currency: "gems", amount: 300, weight: 6 },
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 500, weight: 4 },
+  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1_000, weight: 3 },
   { id: "jackpot-3000", tier: "jackpot", currency: "gems", amount: 3_000, weight: 1 },
 ];
 export function huntTreasure(id: string): HuntTreasure | undefined { return HUNT_TREASURES.find((treasure) => treasure.id === id); }
@@ -102,12 +104,12 @@ export interface HuntDifficulty {
  * `delophyHunt.test`가 정규 예산 안인지와 그 배수를 함께 잰다.
  */
 export const HUNT_DIFFICULTIES: readonly HuntDifficulty[] = [
-  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 4200, swaps: 10, moveMs: 440, doubleChance: 0.1, arc: false, dive: false, jackpotMoves: 0,
-    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 0 }, guaranteed: ["gems-m"] },
-  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 3800, swaps: 16, moveMs: 340, doubleChance: 0.3, arc: true, dive: false, jackpotMoves: 6,
-    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 0.8 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
-  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3400, swaps: 26, moveMs: 270, doubleChance: 0.5, arc: true, dive: true, jackpotMoves: 10,
-    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 1.5 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
+  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 5000, swaps: 10, moveMs: 440, doubleChance: 0.1, arc: false, dive: false, jackpotMoves: 4,
+    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 5 }, guaranteed: ["gems-m"] },
+  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 4000, swaps: 16, moveMs: 340, doubleChance: 0.3, arc: true, dive: false, jackpotMoves: 6,
+    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 11 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
+  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3000, swaps: 26, moveMs: 270, doubleChance: 0.5, arc: true, dive: true, jackpotMoves: 10,
+    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 16 }, guaranteed: ["gems-m", "gems-l", "fossil", "amber"] },
 ];
 export function huntDifficulty(id: unknown): HuntDifficulty | undefined { return HUNT_DIFFICULTIES.find((difficulty) => difficulty.id === id); }
 /** 카드 한 줄에 놓이는 열 수 — 두 줄로 깔리도록 쌍의 수와 같다. */

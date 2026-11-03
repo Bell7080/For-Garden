@@ -113,7 +113,7 @@ export const LOBBY_ZH_HANS = {
   "delophyHunt.hint.easy": "慢慢洗牌",
   "delophyHunt.hint.normal": "洗牌很快，偶尔会改变高度",
   "delophyHunt.hint.hard": "极快，卡牌会躲到其他卡牌后面",
-  "delophyHunt.jackpotNote": "普通及以上难度偶尔会藏着大奖卡。越好的宝物洗得越凶。",
+  "delophyHunt.jackpotNote": "偶尔会藏着大奖卡。越好的宝物洗得越凶。",
   "delophyHunt.collected": "已找到的宝物",
   "delophyHunt.phase.memorize": "请记住！",
   "delophyHunt.phase.shuffle": "洗牌中…",

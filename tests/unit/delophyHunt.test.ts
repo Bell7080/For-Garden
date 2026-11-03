@@ -77,14 +77,18 @@ describe("델로피의 보물 찾기 규칙", () => {
     expect(huntDifficulty("nope")).toBeUndefined();
   });
 
-  it("원석은 평범한 보물에만, 대박은 쉬움에 나오지 않는다", () => {
+  it("원석은 평범한 보물에만, 젬 300~3,000 대박 카드는 모든 난이도에서 가끔 놓이고 어려울수록 자주 놓인다", () => {
     expect(HUNT_TREASURES.filter((t) => t.currency === "rawStone").every((t) => t.tier === "common")).toBe(true);
-    const easy = HUNT_DIFFICULTIES[0];
-    expect(easy.tierWeights.jackpot).toBe(0);
-    const random = lcg(7);
-    for (let index = 0; index < 500; index += 1) {
-      expect(rollHuntPairs(easy, random).some((id) => huntTreasure(id)?.tier === "jackpot")).toBe(false);
-    }
+    expect(HUNT_TREASURES.filter((t) => t.tier === "jackpot").every((t) => t.currency === "gems" && t.amount >= 300)).toBe(true);
+    const share = HUNT_DIFFICULTIES.map((difficulty, index) => {
+      const random = lcg(70 + index);
+      let hit = 0;
+      for (let run = 0; run < 3000; run += 1) if (rollHuntPairs(difficulty, random).some((id) => huntTreasure(id)?.tier === "jackpot")) hit += 1;
+      return hit / 3000;
+    });
+    expect(share[0]).toBeGreaterThan(0.05);
+    expect(share[1]).toBeGreaterThan(share[0]);
+    expect(share[2]).toBeGreaterThan(share[1]);
   });
 
   it("섞는 길은 서로 다른 슬롯끼리만, 너무 빠르지 않게 움직이고 배치를 보존한다", () => {
@@ -110,7 +114,7 @@ describe("델로피의 보물 찾기 규칙", () => {
           let touched = 0;
           for (const move of moves) {
             const hit = move.swaps.some(([x, y]) => jackpotIds.has(replay[x]) || jackpotIds.has(replay[y]));
-            if (hit) { touched += 1; expect(move.style).not.toBe("slide"); }
+            if (hit) { touched += 1; if (difficulty.arc) expect(move.style).not.toBe("slide"); }
             for (const [x, y] of move.swaps) [replay[x], replay[y]] = [replay[y], replay[x]];
           }
           expect(touched).toBeGreaterThanOrEqual(difficulty.jackpotMoves);

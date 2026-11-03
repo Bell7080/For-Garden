@@ -113,7 +113,7 @@ export const LOBBY_RU = {
   "delophyHunt.hint.easy": "Медленное перемешивание",
   "delophyHunt.hint.normal": "Быстро, карты иногда меняют высоту",
   "delophyHunt.hint.hard": "Очень быстро, карты прячутся за другими",
-  "delophyHunt.jackpotNote": "Начиная с обычного уровня может прятаться карта джекпота. Чем лучше сокровище, тем яростнее перемешивание.",
+  "delophyHunt.jackpotNote": "Иногда прячется карта джекпота. Чем лучше сокровище, тем яростнее перемешивание.",
   "delophyHunt.collected": "Найденные сокровища",
   "delophyHunt.phase.memorize": "Запоминай!",
   "delophyHunt.phase.shuffle": "Перемешиваю…",

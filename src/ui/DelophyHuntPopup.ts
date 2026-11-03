@@ -48,7 +48,7 @@ const HUNT = {
   /** 가운데 델로피 — 두 쪽이 같은 자리에 서서 카드를 돌린다. */
   dealer: { x: 0, groundY: 118, height: 400, orbitRx: 250, orbitRy: 62, orbitCardWidth: 84 },
   intro: { textY: -500, detailY: 200, noteY: 300, howToY: 384, pickerY: 520, pipsY: 606, arrowX: 366 },
-  play: { livesY: -556, collectedLabelY: -492, collectedY: -424, phaseY: -338, boardY: 410, areaWidth: 860, maxCardWidth: 190 },
+  play: { livesY: -556, collectedLabelY: -492, collectedY: -424, phaseY: -338, countdownX: 336, boardY: 410, areaWidth: 860, maxCardWidth: 190 },
   button: { width: 620, height: 112 },
   noteY: 738,
   howTo: { width: 820, bubbleWidth: 720, wrap: 600, lineGap: 26, sd: { x: -250, height: 300 } },
@@ -499,7 +499,28 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
     const boardLayer = scene.add.container(0, HUNT.play.boardY);
     const collectedLabel = scene.add.text(0, HUNT.play.collectedLabelY, t("delophyHunt.collected"), textStyle({ role: "emphasis", size: 24, color: INK_SOFT })).setOrigin(0.5).setStroke(OUTLINE, 5);
     const collectedRow = scene.add.container(0, HUNT.play.collectedY);
-    playPage.add([lives, phaseText, boardLayer, collectedLabel, collectedRow]);
+    // 외우는 동안 섞기까지 남은 초 — 진홍 마름모 위의 큰 금빛 숫자. 손이 언제 바빠질지 미리 안다.
+    const countdown = scene.add.container(HUNT.play.countdownX, HUNT.play.phaseY).setVisible(false);
+    const countdownPlate = scene.add.graphics();
+    countdownPlate.fillStyle(DELO.ink, 1).fillPoints(diamond(0, 0, 50, 58), true);
+    countdownPlate.fillStyle(DELO.crimson, 1).fillPoints(diamond(0, 0, 44, 52), true);
+    countdownPlate.lineStyle(3, DELO.gold, 1).strokePoints(diamond(0, 0, 36, 44), true);
+    const countdownText = scene.add.text(0, 2, "", textStyle({ role: "display", size: 46, color: "#ffe38a" })).setOrigin(0.5).setStroke("#2a1530", 8);
+    countdown.add([countdownPlate, countdownText]);
+    playPage.add([lives, phaseText, boardLayer, collectedLabel, collectedRow, countdown]);
+    /** 외우는 시간을 1초씩 세며 기다린다 — 숫자가 바뀔 때마다 톡 튄다. */
+    const countDownMemorize = async (ms: number): Promise<void> => {
+      countdown.setVisible(true);
+      let left = ms;
+      while (left > 0 && alive) {
+        countdownText.setText(String(Math.ceil(left / 1000)));
+        if (motion() > 0) { scene.tweens.killTweensOf(countdown); countdown.setScale(1.25); scene.tweens.add({ targets: countdown, scale: 1, duration: 220, ease: "Back.Out" }); }
+        const step = left % 1000 || 1000;
+        await waitFx(scene, step);
+        left -= step;
+      }
+      countdown.setVisible(false);
+    };
     const note = scene.add.text(0, HUNT.height / 2 - 70, "", textStyle({ role: "body", size: 21, color: INK_SOFT, wrap: 820, align: "center" })).setOrigin(0.5);
     body.add(note);
     const cheer = dealer;
@@ -658,7 +679,7 @@ export async function openDelophyHuntPopup(scene: Phaser.Scene, popups: PopupLay
       // 보여 주기 → 엎기 → 섞기 → 찾기. 이 흐름이 도는 동안 창은 닫히지 않는다(busy).
       phaseText.setText(t("delophyHunt.phase.memorize"));
       await turnAll(true);
-      await waitFx(scene, picked.memorizeMs);
+      await countDownMemorize(picked.memorizeMs);
       if (!alive) { busy = false; return; }
       await turnAll(false);
       await waitFx(scene, 260);

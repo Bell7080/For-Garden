@@ -26,7 +26,7 @@ export const DELOPHY_HUNT = {
 } as const;
 
 /** 한 번 섞는 움직임의 가장 빠른 길이(ms). 이보다 빨라지면 눈으로 따라갈 수 없어 운이 된다. */
-export const MIN_MOVE_MS = 300;
+export const MIN_MOVE_MS = 260;
 
 export type HuntTier = "common" | "fine" | "rare" | "jackpot";
 export const HUNT_TIER_ORDER: readonly HuntTier[] = ["common", "fine", "rare", "jackpot"];
@@ -99,11 +99,11 @@ export interface HuntDifficulty {
  * 판에 놓이는 기대 총가치는 `chestForge.test`와 같은 방식으로 `delophyHunt.test`가 정규 예산 안인지 잰다.
  */
 export const HUNT_DIFFICULTIES: readonly HuntDifficulty[] = [
-  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 4200, swaps: 6, moveMs: 640, doubleChance: 0, arc: false, dive: false, jackpotMoves: 0,
+  { id: "easy", entryCost: 100, pairs: 3, memorizeMs: 4200, swaps: 10, moveMs: 440, doubleChance: 0.1, arc: false, dive: false, jackpotMoves: 0,
     tierWeights: { common: 46, fine: 38, rare: 16, jackpot: 0 } },
-  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 3800, swaps: 11, moveMs: 480, doubleChance: 0.15, arc: true, dive: false, jackpotMoves: 5,
+  { id: "normal", entryCost: 200, pairs: 4, memorizeMs: 3800, swaps: 16, moveMs: 340, doubleChance: 0.3, arc: true, dive: false, jackpotMoves: 6,
     tierWeights: { common: 36, fine: 39, rare: 24, jackpot: 0.8 } },
-  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3400, swaps: 17, moveMs: 380, doubleChance: 0.3, arc: true, dive: true, jackpotMoves: 8,
+  { id: "hard", entryCost: 300, pairs: 5, memorizeMs: 3400, swaps: 26, moveMs: 270, doubleChance: 0.5, arc: true, dive: true, jackpotMoves: 10,
     tierWeights: { common: 32, fine: 39, rare: 27, jackpot: 1.5 } },
 ];
 export function huntDifficulty(id: unknown): HuntDifficulty | undefined { return HUNT_DIFFICULTIES.find((difficulty) => difficulty.id === id); }

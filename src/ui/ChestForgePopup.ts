@@ -153,7 +153,7 @@ export async function openChestForgePopup(scene: Phaser.Scene, popups: PopupLaye
     paintBackdrop(scene, body, mask, motion());
 
     // 위 — 코인과 초기화 시각은 두 쪽이 함께 쓴다.
-    const coinIcon = scene.add.image(0, FORGE.coinY, CURRENCY_ICON_BY_WALLET.gold).setDisplaySize(52, 52).setTint(0xffb36b);
+    const coinIcon = scene.add.image(0, FORGE.coinY, "currency-treasure-chest-coin").setDisplaySize(52, 52);
     const coinText = scene.add.text(0, FORGE.coinY, "", textStyle({ role: "display", size: 38, color: ACCENT })).setOrigin(0, 0.5).setStroke(OUTLINE, 8);
     const resetText = scene.add.text(0, FORGE.resetY, "", textStyle({ role: "body", size: 21, color: INK_SOFT, align: "center", wrap: 840 })).setOrigin(0.5);
     body.add([coinIcon, coinText, resetText]);

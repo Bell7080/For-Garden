@@ -89,6 +89,7 @@ async function eventCoinStacks(api: GameApi): Promise<readonly EventCoinStack[]>
   const sources: { itemId: string; eventId: string; read: () => Promise<{ coins: number; resetsAt: string }> }[] = [
     { itemId: "tia-treasure-coin", eventId: "chest-forge", read: () => api.getChestForge() },
     { itemId: "delopi-thief-coin", eventId: "delophy-hunt", read: () => api.getDelophyHunt() },
+    { itemId: "shute-rhythm-coin", eventId: "shute-fishing", read: () => api.getShuteFishing() },
   ];
   const rows = await Promise.all(sources.map(async ({ itemId, eventId, read }) => {
     if (!QA_ALL_EVENTS && !isRegularEventActive(eventId, now)) return undefined;

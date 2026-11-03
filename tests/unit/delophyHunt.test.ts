@@ -155,10 +155,11 @@ describe("델로피의 보물 찾기 규칙", () => {
 });
 
 describe("정규 이벤트 순환", () => {
-  it("티아와 델로피가 한 주씩 번갈아 서고, 순환 밖 이벤트는 늘 열려 있다", () => {
+  it("티아·델로피·슈테가 한 주씩 차례로 서고, 순환 밖 이벤트는 늘 열려 있다", () => {
     expect(activeRegularEventId(TIA_WEEK)).toBe("chest-forge");
     expect(activeRegularEventId(DELOPHY_WEEK)).toBe("delophy-hunt");
-    expect(activeRegularEventId(new Date("2026-11-16T00:00:00Z"))).toBe("chest-forge");
+    expect(activeRegularEventId(new Date("2026-11-16T00:00:00Z"))).toBe("shute-fishing");
+    expect(activeRegularEventId(new Date("2026-11-23T00:00:00Z"))).toBe("chest-forge");
     expect(isRegularEventActive("research-roulette", DELOPHY_WEEK)).toBe(true);
     expect(isRegularEventActive("chest-forge", DELOPHY_WEEK)).toBe(false);
   });

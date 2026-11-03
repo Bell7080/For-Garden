@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "เหรียญสำหรับเปิดหีบในหีบสมบัติของเทีย สะสมตามสตามินาที่ใช้ และจะหายไปเมื่อสัปดาห์กิจกรรมสิ้นสุด",
   "item.delopi-thief-coin.name": "เหรียญโจรของเดโลพี",
   "item.delopi-thief-coin.description": "เหรียญสำหรับเริ่มเกมในการล่าสมบัติของเดโลพี สะสมตามสตามินาที่ใช้ และจะหายไปเมื่อสัปดาห์กิจกรรมสิ้นสุด",
+  "item.shute-rhythm-coin.name": "เหรียญจังหวะของชูเตะ",
+  "item.shute-rhythm-coin.description": "เหรียญสำหรับเริ่มเกมในตกปลาจังหวะของชูเตะ สะสมตามสตามินาที่ใช้ และจะหายไปเมื่อสัปดาห์กิจกรรมสิ้นสุด",
   "item.universal-fragment-r.name": "เศษสากล R",
   "item.universal-fragment-r.description": "ใช้ทะลุขีดจำกัดของเรลิก R ตัวใดก็ได้ จะถูกใช้เฉพาะส่วนที่เศษของเรลิกนั้นไม่พอเท่านั้น",
   "item.universal-fragment-sr.name": "เศษสากล SR",

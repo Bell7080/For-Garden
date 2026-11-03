@@ -5393,7 +5393,7 @@ var LOBBY_KO = {
   "chestForge.box.large": "\uD070 \uC0C1\uC790",
   "chestForge.box.grand": "\uD669\uAE08 \uC0C1\uC790",
   "chestForge.box.reward": "\uBCF4\uC0C1 \xD7{mult}",
-  "chestForge.howTo.5": "\uD070 \uC0C1\uC790\uC77C\uC218\uB85D \uCE74\uB4DC \uD655\uB960\uC740 \uC870\uAE08 \uB0AE\uC9C0\uB9CC \uBCF4\uC0C1\uC774 \uD6E8\uC52C \uCEE4\uC694. \uD669\uAE08 \uC0C1\uC790\uB294 \uBB34\uB824 4\uBC30\uC608\uC694!",
+  "chestForge.howTo.5": "\uD070 \uC0C1\uC790\uB294 \uBCF4\uC0C1\uC774 2\uBC30, \uD669\uAE08 \uC0C1\uC790\uB294 3\uBC30\uC608\uC694! \uCE74\uB4DC \uD655\uB960\uC740 \uB611\uAC19\uC544\uC694.",
   "chestForge.howTo.4": "\uD655\uB960\uC774 \uB0AE\uC740 \uCE74\uB4DC\uC77C\uC218\uB85D \uBCF4\uC0C1\uC774 \uCEE4\uC694. \uB300\uBC15 \uCE74\uB4DC\uB97C \uB178\uB824 \uBCFC\uAE4C\uC694? \uCCA8\uBC99\uCCA8\uBC99!",
   "chestForge.howTo.3": "\uC2E4\uD328\uD55C \uCE74\uB4DC\uB294 \uADF8 \uBCF4\uC0C1\uB9CC \uBABB \uBC1B\uC544\uC694. \uD558\uB098 \uC2E4\uD328\uD574\uB3C4 \uB2E4\uB978 \uCE74\uB4DC\uC5D0\uC11C \uBAA8\uC740 \uBCF4\uC0C1\uC740 \uC804\uBD80 \uAC00\uC838\uAC08 \uC218 \uC788\uC5B4\uC694!",
   "chestForge.howTo.2": "\uCE74\uB4DC\uB97C \uD55C \uC7A5\uC529 \uB2E4\uC12F \uBC88 \uACE8\uB77C \uB4A4\uC9D1\uC5B4\uC694. \uC131\uACF5\uD558\uBA74 \uBC18\uC9DD\uBC18\uC9DD \uBCF4\uC0C1\uC774 \uC0C1\uC790\uC5D0 \uC3D9 \uB4E4\uC5B4\uAC00\uC694!",
@@ -5431,7 +5431,7 @@ var LOBBY_KO = {
   "delophyHunt.hint.easy": "\uCC9C\uCC9C\uD788 \uC11E\uC5EC\uC694",
   "delophyHunt.hint.normal": "\uBE60\uB974\uACE0 \uAC00\uB054 \uB192\uC774\uAC00 \uBC14\uB00C\uC5B4\uC694",
   "delophyHunt.hint.hard": "\uC544\uC8FC \uBE60\uB974\uACE0 \uCE74\uB4DC \uB4A4\uB85C \uC228\uC5B4\uC694",
-  "delophyHunt.jackpotNote": "\uBCF4\uD1B5 \uC774\uC0C1\uC5D0\uC11C\uB294 \uAC00\uB054 \uB300\uBC15 \uCE74\uB4DC\uAC00 \uC228\uC5B4 \uC788\uC5B4\uC694. \uC88B\uC740 \uBCF4\uBB3C\uC77C\uC218\uB85D \uB354 \uC0AC\uB0A9\uAC8C \uC11E\uC5EC\uC694.",
+  "delophyHunt.jackpotNote": "\uAC00\uB054 \uB300\uBC15 \uCE74\uB4DC\uAC00 \uC228\uC5B4 \uC788\uC5B4\uC694. \uC88B\uC740 \uBCF4\uBB3C\uC77C\uC218\uB85D \uB354 \uC0AC\uB0A9\uAC8C \uC11E\uC5EC\uC694.",
   "delophyHunt.collected": "\uCC3E\uC740 \uBCF4\uBB3C",
   "delophyHunt.phase.memorize": "\uC798 \uAE30\uC5B5\uD574 \uB450\uC138\uC694!",
   "delophyHunt.phase.shuffle": "\uC11E\uB294 \uC911\u2026",
@@ -5441,6 +5441,38 @@ var LOBBY_KO = {
   "delophyHunt.out": "\uC544\uC6C3!",
   "delophyHunt.reward": "\uBCF4\uBB3C \uCC3E\uAE30 \uBCF4\uC0C1",
   "delophyHunt.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
+  "event.shuteFishing.title": "\uC288\uD14C\uC758 \uB9AC\uB4EC \uB09A\uC2DC",
+  "event.shuteFishing.subtitle": "\uBC15\uC790 \uB9DE\uCDB0 \uB09A\uC544 \uC62C\uB824!",
+  "shuteFishing.intro": "\uBC14\uB298\uC774 \uBE5B\uB098\uB294 \uCE78\uC5D0 \uB4E4\uC5B4\uC62C \uB54C \uB20C\uB7EC\uC11C \uBB3C\uACE0\uAE30\uB97C \uB09A\uC544. \uBBF8\uC2A4 \uC138 \uBC88\uC774\uBA74 \uAC8C\uC784 \uC624\uBC84!",
+  "shuteFishing.howTo.title": "\uAC8C\uC784 \uBC29\uBC95",
+  "shuteFishing.howTo.button": "\uAC8C\uC784 \uBC29\uBC95!",
+  "shuteFishing.howTo.1": "\uC624\uB354, \uB9AC\uB4EC \uB09A\uC2DC \uD55C \uD310 \u3131? \uCF54\uC778\uC73C\uB85C \uB09C\uC774\uB3C4 \uACE8\uB77C\uC11C \uC2DC\uC791\uD574.",
+  "shuteFishing.howTo.2": "\uBC14\uB298\uC774 \uC88C\uC6B0\uB85C \uC654\uB2E4 \uAC14\uB2E4 \uD574. \uBE5B\uB098\uB294 \uCE78\uC5D0 \uB4E4\uC5B4\uC628 \uC21C\uAC04 \uD0ED\uD558\uBA74 \uCE90\uCE58! \uBB3C\uACE0\uAE30\uB9C8\uB2E4 3~5\uBC88 \uCE90\uCE58\uD574\uC57C \uB09A\uC5EC.",
+  "shuteFishing.howTo.3": "\uCE78 \uBC16\uC5D0\uC11C \uB204\uB974\uBA74 \uBBF8\uC2A4. \uD310 \uC804\uCCB4\uC5D0\uC11C \uC138 \uBC88 \uBBF8\uC2A4\uD558\uBA74 \uB05D\uC774\uC9C0\uB9CC \uC774\uBBF8 \uB09A\uC740 \uAC74 \uC138\uC774\uBE0C\uB3FC.",
+  "shuteFishing.howTo.4": "\uD070 \uBB3C\uACE0\uAE30\uC77C\uC218\uB85D \uBC15\uC790\uAC00 \uBE60\uB974\uACE0 \uCE78\uC774 \uC881\uC544. \uB9C8\uC9C0\uB9C9 \uACE1\uC774 \uBCF4\uC2A4\uACE1\uC774\uB2C8\uAE4C \uC9D1\uC911\uD574. \uB809 \uD551\uACC4\uB294 \uC548 \uBC1B\uC544.",
+  "shuteFishing.reset": "\uCF54\uC778\uC740 \uC774\uAE34 \uC804\uD22C\uC5D0\uC11C \uC4F4 \uC2A4\uD14C\uBBF8\uB098\uB9CC\uD07C \uC313\uC5EC \xB7 {date} \uCD08\uAE30\uD654",
+  "shuteFishing.difficulty.easy": "\uC26C\uC6C0",
+  "shuteFishing.difficulty.normal": "\uBCF4\uD1B5",
+  "shuteFishing.difficulty.hard": "\uC5B4\uB824\uC6C0",
+  "shuteFishing.difficulty.extreme": "\uB9E4\uC6B0 \uC5B4\uB824\uC6C0",
+  "shuteFishing.detail": "\uBB3C\uACE0\uAE30 {fish}\uB9C8\uB9AC \xB7 \uAE30\uD68C {misses}\uBC88",
+  "shuteFishing.hint.easy": "\uB290\uAE0B\uD55C \uD15C\uD3EC",
+  "shuteFishing.hint.normal": "\uD15C\uD3EC\uAC00 \uC62C\uB77C\uAC00",
+  "shuteFishing.hint.hard": "\uBE60\uB974\uACE0 \uCE78\uC774 \uC881\uC544",
+  "shuteFishing.hint.extreme": "\uBCF4\uC2A4\uACE1\uC774 \uB298 \uB300\uBC15\uC774\uC57C",
+  "shuteFishing.jackpotNote": "\uAC00\uB054 \uB300\uBC15 \uBB3C\uACE0\uAE30\uAC00 \uBB3C\uB824. \uD074\uC218\uB85D \uBE60\uB974\uACE0 \uC881\uC544!",
+  "shuteFishing.collected": "\uB09A\uC740 \uBCF4\uBB3C",
+  "shuteFishing.tap": "\uD0ED!",
+  "shuteFishing.catch": "\uCE90\uCE58 {count}/{need}",
+  "shuteFishing.judge.perfect": "PERFECT",
+  "shuteFishing.judge.good": "GOOD",
+  "shuteFishing.judge.miss": "MISS",
+  "shuteFishing.ready": "\uBE5B\uB098\uB294 \uCE78\uC5D0\uC11C \uD0ED!",
+  "shuteFishing.landed": "\uB09A\uC558\uB2E4!",
+  "shuteFishing.cleared": "\uD480\uCF64\uBCF4! \uADF8\uB7ED\uC800\uB7ED\uC774\uB124.",
+  "shuteFishing.out": "\uAC8C\uC784 \uC624\uBC84!",
+  "shuteFishing.reward": "\uB9AC\uB4EC \uB09A\uC2DC \uBCF4\uC0C1",
+  "shuteFishing.error": "\uCC98\uB9AC\uD558\uC9C0 \uBABB\uD588\uC5B4\uC694. \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   "roulette.reward": "\uB3CC\uB9BC\uD310 \uBCF4\uC0C1",
   "roulette.intro": "\uCCAB \uD68C\uC804\uC740 \uBB34\uB8CC! \uC774\uD6C4 \uAD11\uACE0\uB97C \uBCFC \uB54C\uB9C8\uB2E4 \uD55C \uBC88\uC529, \uD558\uB8E8 3\uD68C \uB354 \uB3CC\uB9B4 \uC218 \uC788\uC5B4\uC694.",
   "roulette.rates.basis": "\uD589\uC6B4\uC758 \uB3CC\uB9BC\uD310 \xB7 1\uD68C \uD68C\uC804 \uAE30\uC900",
@@ -25106,7 +25138,7 @@ function claimableMissionIds(state) {
 init_define_import_meta_env();
 var EVENT_REWARD_BUDGET = {
   regular: {
-    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290 → 560 — "보물상자 보상은 지금을 100 코인으로, 300은 확실히 3배치"(100 코인 상자 약 488 · 300 코인 상자 약 556). */
+    /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290 → 560 — "보물상자 보상은 지금을 100 코인으로, 300은 확실히 3배치"(세 상자 모두 코인 100당 약 488). */
     gemValuePer100Stamina: 560
   },
   limited: {}
@@ -25120,8 +25152,8 @@ var CHEST_FORGE = {
 };
 var CHEST_BOXES = [
   { id: "small", entryCost: 100, reward: 1, chance: 1 },
-  { id: "large", entryCost: 200, reward: 2.4, chance: 0.92 },
-  { id: "grand", entryCost: 300, reward: 4, chance: 0.85 }
+  { id: "large", entryCost: 200, reward: 2, chance: 1 },
+  { id: "grand", entryCost: 300, reward: 3, chance: 1 }
 ];
 function chestBox(id) {
   return CHEST_BOXES.find((box) => box.id === id);
@@ -25269,7 +25301,9 @@ var HUNT_TREASURES = [
   { id: "gems-l", tier: "rare", currency: "gems", amount: 250, weight: 2 },
   { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
   { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
-  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1e3, weight: 4 },
+  { id: "jackpot-300", tier: "jackpot", currency: "gems", amount: 300, weight: 6 },
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 500, weight: 4 },
+  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1e3, weight: 3 },
   { id: "jackpot-3000", tier: "jackpot", currency: "gems", amount: 3e3, weight: 1 }
 ];
 function huntTreasure(id) {
@@ -25280,42 +25314,42 @@ var HUNT_DIFFICULTIES = [
     id: "easy",
     entryCost: 100,
     pairs: 3,
-    memorizeMs: 4200,
+    memorizeMs: 5e3,
     swaps: 10,
     moveMs: 440,
     doubleChance: 0.1,
     arc: false,
     dive: false,
-    jackpotMoves: 0,
-    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 0 },
+    jackpotMoves: 4,
+    tierWeights: { common: 58, fine: 42, rare: 0, jackpot: 5 },
     guaranteed: ["gems-m"]
   },
   {
     id: "normal",
     entryCost: 200,
     pairs: 4,
-    memorizeMs: 3800,
+    memorizeMs: 4e3,
     swaps: 16,
     moveMs: 340,
     doubleChance: 0.3,
     arc: true,
     dive: false,
     jackpotMoves: 6,
-    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 0.8 },
+    tierWeights: { common: 36, fine: 50, rare: 12, jackpot: 11 },
     guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   },
   {
     id: "hard",
     entryCost: 300,
     pairs: 5,
-    memorizeMs: 3400,
+    memorizeMs: 3e3,
     swaps: 26,
     moveMs: 270,
     doubleChance: 0.5,
     arc: true,
     dive: true,
     jackpotMoves: 10,
-    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 1.5 },
+    tierWeights: { common: 24, fine: 44, rare: 30, jackpot: 16 },
     guaranteed: ["gems-m", "gems-l", "fossil", "amber"]
   }
 ];
@@ -25514,6 +25548,240 @@ function delophyHuntStatus(missions, ledger, now) {
     coins: Math.max(0, earned - state.spent),
     earned,
     run: state.run ? huntPublicRun(state.run) : null,
+    resetsAt: new Date(Date.parse(`${state.weekKey}T00:00:00.000Z`) + 7 * 864e5).toISOString()
+  };
+}
+
+// src/core/shuteFishing.ts
+init_define_import_meta_env();
+var SHUTE_FISHING = {
+  id: "shute-fishing",
+  /** 판 전체에서 이만큼 미스하면 아웃이다. */
+  maxMisses: 3
+};
+var MIN_WINDOW_MS = 80;
+var PERFECT_RATIO = 0.4;
+var TEMPO_STEP = 0.05;
+var MAX_PRESS_MS = 12e4;
+var FISH_TIER_ORDER = ["common", "fine", "rare", "jackpot"];
+function fishTierRank(tier) {
+  return FISH_TIER_ORDER.indexOf(tier);
+}
+var FISH_TIER_FEEL = {
+  common: { catches: 3, speed: 1, width: 1 },
+  fine: { catches: 3, speed: 0.92, width: 0.9 },
+  rare: { catches: 4, speed: 0.84, width: 0.8 },
+  jackpot: { catches: 5, speed: 0.76, width: 0.7 }
+};
+var FISH_TREASURES = [
+  { id: "gold-s", tier: "common", currency: "gold", amount: 25e3, weight: 1 },
+  { id: "cheesecake-s", tier: "common", currency: "cheesecake", amount: 25, weight: 1 },
+  { id: "stamina-s", tier: "common", currency: "stamina", amount: 50, weight: 1 },
+  { id: "stone-s", tier: "common", currency: "rawStone", amount: 10, weight: 1 },
+  { id: "gems-xs", tier: "common", currency: "gems", amount: 40, weight: 1 },
+  { id: "gold-m", tier: "fine", currency: "gold", amount: 7e4, weight: 1 },
+  { id: "cheesecake-m", tier: "fine", currency: "cheesecake", amount: 70, weight: 1 },
+  { id: "gems-s", tier: "fine", currency: "gems", amount: 100, weight: 1 },
+  { id: "stamina-m", tier: "fine", currency: "stamina", amount: 150, weight: 1 },
+  { id: "gems-m", tier: "rare", currency: "gems", amount: 200, weight: 3 },
+  { id: "gold-l", tier: "rare", currency: "gold", amount: 15e4, weight: 1 },
+  { id: "cheesecake-l", tier: "rare", currency: "cheesecake", amount: 150, weight: 1 },
+  { id: "gems-l", tier: "rare", currency: "gems", amount: 300, weight: 2 },
+  { id: "fossil", tier: "rare", currency: "fossil", amount: 1, weight: 2 },
+  { id: "amber", tier: "rare", currency: "amber", amount: 1, weight: 2 },
+  { id: "jackpot-500", tier: "jackpot", currency: "gems", amount: 500, weight: 3 },
+  { id: "jackpot-1000", tier: "jackpot", currency: "gems", amount: 1e3, weight: 1 }
+];
+function fishTreasure(id) {
+  return FISH_TREASURES.find((treasure) => treasure.id === id);
+}
+var RARE_SURE = ["gems-m", "gems-l", "fossil", "amber"];
+var FISHING_DIFFICULTIES = [
+  {
+    id: "easy",
+    entryCost: 100,
+    fish: 3,
+    sweepMs: 1250,
+    zone: 0.24,
+    tierWeights: { common: 52, fine: 42, rare: 4, jackpot: 2.5 },
+    guaranteed: RARE_SURE
+  },
+  {
+    id: "normal",
+    entryCost: 200,
+    fish: 4,
+    sweepMs: 1050,
+    zone: 0.19,
+    tierWeights: { common: 10, fine: 44, rare: 34, jackpot: 12 },
+    guaranteed: RARE_SURE
+  },
+  {
+    id: "hard",
+    entryCost: 300,
+    fish: 5,
+    sweepMs: 880,
+    zone: 0.16,
+    tierWeights: { common: 2, fine: 26, rare: 50, jackpot: 22 },
+    guaranteed: RARE_SURE
+  },
+  // 매우 어려움은 마지막 곡이 늘 대박이다 — 대박은 판마다 한 마리까지라 남은 물고기는 값진 쪽에서만 뽑는다.
+  {
+    id: "extreme",
+    entryCost: 400,
+    fish: 6,
+    sweepMs: 740,
+    zone: 0.14,
+    tierWeights: { common: 0, fine: 14, rare: 86, jackpot: 0 },
+    guaranteed: ["jackpot-500", "jackpot-1000"]
+  }
+];
+function fishingDifficulty(id) {
+  return FISHING_DIFFICULTIES.find((difficulty) => difficulty.id === id);
+}
+function gaugePosition(sweepMs, elapsedMs) {
+  if (!(sweepMs > 0) || !Number.isFinite(elapsedMs) || elapsedMs <= 0) return 0;
+  const phase = elapsedMs / sweepMs % 2;
+  return phase <= 1 ? phase : 2 - phase;
+}
+function judgeCatch(spec, elapsedMs) {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs > MAX_PRESS_MS) return { judgment: "miss", position: 0 };
+  const position = gaugePosition(spec.sweepMs, elapsedMs);
+  const offset = Math.abs(position - spec.center);
+  const half = spec.width / 2;
+  const judgment = offset <= half * PERFECT_RATIO + 1e-9 ? "perfect" : offset <= half + 1e-9 ? "good" : "miss";
+  return { judgment, position };
+}
+function clampRoll3(random) {
+  const raw = random();
+  return Math.min(1 - Number.EPSILON, Math.max(0, Number.isFinite(raw) ? raw : 0));
+}
+function pickWeighted3(entries, random) {
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll3 = clampRoll3(random) * total;
+  for (const [value, weight] of entries) {
+    if (roll3 < weight) return value;
+    roll3 -= weight;
+  }
+  return entries[entries.length - 1][0];
+}
+function rollFishingFish(difficulty, random) {
+  const picked = [];
+  const sure = FISH_TREASURES.filter((treasure) => difficulty.guaranteed.includes(treasure.id));
+  if (sure.length) picked.push(pickWeighted3(sure.map((treasure) => [treasure, treasure.weight]), random));
+  while (picked.length < difficulty.fish) {
+    const tiers2 = FISH_TIER_ORDER.filter((tier2) => difficulty.tierWeights[tier2] > 0 && !(tier2 === "jackpot" && picked.some((treasure) => treasure.tier === "jackpot")) && FISH_TREASURES.some((treasure) => treasure.tier === tier2 && !picked.includes(treasure)));
+    const tier = pickWeighted3(tiers2.map((entry) => [entry, difficulty.tierWeights[entry]]), random);
+    const pool = FISH_TREASURES.filter((treasure) => treasure.tier === tier && !picked.includes(treasure));
+    picked.push(pickWeighted3(pool.map((treasure) => [treasure, treasure.weight]), random));
+  }
+  return picked.map((treasure, index) => ({ treasure, index })).sort((a, b) => fishTierRank(a.treasure.tier) - fishTierRank(b.treasure.tier) || a.index - b.index).map(({ treasure }) => treasure.id);
+}
+function rollFishCatches(difficulty, treasureId, random) {
+  const treasure = fishTreasure(treasureId);
+  const feel = FISH_TIER_FEEL[treasure?.tier ?? "common"];
+  const catches = [];
+  let previous = -1;
+  for (let index = 0; index < feel.catches; index += 1) {
+    const sweepMs = Math.round(difficulty.sweepMs * feel.speed * (1 - TEMPO_STEP * index));
+    const width = Math.max(difficulty.zone * feel.width, MIN_WINDOW_MS / sweepMs);
+    const margin = width / 2 + 0.06;
+    let center = margin + clampRoll3(random) * (1 - margin * 2);
+    if (previous >= 0 && Math.abs(center - previous) < width) center = center < 0.5 ? Math.min(1 - margin, center + 0.4) : Math.max(margin, center - 0.4);
+    previous = center;
+    catches.push({ center: Math.round(center * 1e3) / 1e3, width: Math.round(width * 1e3) / 1e3, sweepMs });
+  }
+  return catches;
+}
+var SHUTE_FISHING_BUDGET = EVENT_REWARD_BUDGET.regular;
+var FishingReelError = class extends Error {
+};
+function reelFishing(run2, elapsedMs) {
+  if (typeof elapsedMs !== "number" || !Number.isFinite(elapsedMs) || elapsedMs < 0) throw new FishingReelError("\uC62C\uBC14\uB974\uC9C0 \uC54A\uC740 \uC785\uB825\uC785\uB2C8\uB2E4.");
+  const spec = run2.catches[run2.index]?.[run2.caught];
+  if (!spec) throw new FishingReelError("\uB09A\uC744 \uBB3C\uACE0\uAE30\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+  const { judgment, position } = judgeCatch(spec, elapsedMs);
+  if (judgment === "miss") {
+    const misses = run2.misses + 1;
+    const finished = misses >= SHUTE_FISHING.maxMisses;
+    return { run: { ...run2, misses }, reel: { judgment, position, fishIndex: run2.index, caught: run2.caught, misses, finished, cleared: false } };
+  }
+  const caught = run2.caught + 1;
+  const need = run2.catches[run2.index].length;
+  if (caught < need) return { run: { ...run2, caught }, reel: { judgment, position, fishIndex: run2.index, caught, misses: run2.misses, finished: false, cleared: false } };
+  const landed = run2.fish[run2.index];
+  const index = run2.index + 1;
+  const cleared = index >= run2.fish.length;
+  return {
+    run: { ...run2, index, caught: 0 },
+    reel: { judgment, position, fishIndex: run2.index, caught, misses: run2.misses, landed, finished: cleared, cleared }
+  };
+}
+function createEmptyShuteFishingState() {
+  return { weekKey: "", spent: 0, run: null };
+}
+var CURRENCIES3 = ["gold", "cheesecake", "stamina", "rawStone", "gems", "fossil", "amber"];
+function normalizeCatch(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const { center, width, sweepMs } = source;
+  if (typeof center !== "number" || typeof width !== "number" || typeof sweepMs !== "number") return null;
+  if (!(center >= 0 && center <= 1 && width > 0 && width <= 1 && Number.isInteger(sweepMs) && sweepMs > 0)) return null;
+  return { center, width, sweepMs };
+}
+function normalizeRun3(value) {
+  if (!value || typeof value !== "object") return null;
+  const source = value;
+  const difficulty = fishingDifficulty(source.difficulty);
+  if (!difficulty) return null;
+  const fish = Array.isArray(source.fish) ? source.fish.filter((id) => typeof id === "string" && !!fishTreasure(id)) : [];
+  if (fish.length !== difficulty.fish || new Set(fish).size !== fish.length) return null;
+  const rawCatches = Array.isArray(source.catches) ? source.catches : [];
+  if (rawCatches.length !== fish.length) return null;
+  const catches = [];
+  for (const entry of rawCatches) {
+    if (!Array.isArray(entry) || entry.length === 0) return null;
+    const row = entry.map(normalizeCatch);
+    if (row.some((spec) => spec === null)) return null;
+    catches.push(row);
+  }
+  const { index, caught, misses } = source;
+  if (!Number.isInteger(index) || index < 0 || index >= fish.length) return null;
+  if (!Number.isInteger(caught) || caught < 0 || caught >= catches[index].length) return null;
+  if (!Number.isInteger(misses) || misses < 0 || misses >= SHUTE_FISHING.maxMisses) return null;
+  const collected = {};
+  const raw = source.collected && typeof source.collected === "object" ? source.collected : {};
+  for (const [currency3, amount] of Object.entries(raw)) {
+    if (CURRENCIES3.includes(currency3) && Number.isInteger(amount) && amount > 0) collected[currency3] = amount;
+  }
+  return { difficulty: difficulty.id, fish, catches, index, caught, misses, collected };
+}
+function normalizeShuteFishingState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    weekKey: typeof source.weekKey === "string" && /^\d{4}-\d{2}-\d{2}$/.test(source.weekKey) ? source.weekKey : "",
+    spent: Number.isInteger(source.spent) && source.spent >= 0 ? source.spent : 0,
+    run: normalizeRun3(source.run)
+  };
+}
+function isValidShuteFishingState(value) {
+  return !!value && typeof value === "object" && JSON.stringify(normalizeShuteFishingState(value)) === JSON.stringify(value);
+}
+function rollShuteFishingWeek(state, now) {
+  const { weeklyKey } = missionPeriodKeys(now);
+  return state.weekKey === weeklyKey ? { ...state } : { weekKey: weeklyKey, spent: 0, run: state.run };
+}
+function shuteFishingPlayable(status) {
+  return status.run !== null || status.coins >= Math.min(...FISHING_DIFFICULTIES.map(({ entryCost }) => entryCost));
+}
+function shuteFishingStatus(missions, ledger, now) {
+  const current = normalizeMissions(missions, now);
+  const state = rollShuteFishingWeek(ledger, now);
+  const earned = current.weeklyStamina ?? 0;
+  return {
+    weekKey: state.weekKey,
+    coins: Math.max(0, earned - state.spent),
+    earned,
+    run: state.run ? structuredClone(state.run) : null,
     resetsAt: new Date(Date.parse(`${state.weekKey}T00:00:00.000Z`) + 7 * 864e5).toISOString()
   };
 }
@@ -26004,6 +26272,8 @@ var BACKGROUND = {
   eventRoulettePopup: "background-event-roulette-popup",
   eventDelopiCard: "background-event-delopi-card",
   eventDelopiPopup: "background-event-delopi-popup",
+  eventShuteCard: "background-event-shute-card",
+  eventShutePopup: "background-event-shute-popup",
   lobby: "background-lobby",
   guild: "background-guild",
   guildShop: "background-guild-shop",
@@ -26159,6 +26429,8 @@ var BACKGROUND_ASSETS = [
   [BACKGROUND.eventRoulettePopup, "sprites/events/roulette-popup.webp"],
   [BACKGROUND.eventDelopiCard, "sprites/events/delopi-card.webp"],
   [BACKGROUND.eventDelopiPopup, "sprites/events/delopi-popup.webp"],
+  [BACKGROUND.eventShuteCard, "sprites/events/shute-card.webp"],
+  [BACKGROUND.eventShutePopup, "sprites/events/shute-layer.webp"],
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
   [BACKGROUND.lobby, "sprites/background/background_001.webp"],
   [BACKGROUND.guild, "sprites/background/guild_main.webp"],
@@ -26734,6 +27006,7 @@ var ITEMS = [
   // 정규 이벤트 코인 둘 — 이번 주에 쓴 스테미나와 1:1이고 이벤트 주(UTC 월요일)가 끝나면 사라진다. 저장 스택이 아니라
   // 서버 이벤트 상태에서 읽어 가방에 세우는 칸이라(`InventoryManager.list`) 기한도 그 주의 끝에 맞춰진다.
   { id: "tia-treasure-coin", name: "\uD2F0\uC544\uC758 \uBCF4\uBB3C \uCF54\uC778", description: "\uD2F0\uC544\uC758 \uBCF4\uBB3C\uC0C1\uC790\uC5D0\uC11C \uC0C1\uC790\uB97C \uC5EC\uB294 \uCF54\uC778\uC785\uB2C8\uB2E4. \uC2A4\uD14C\uBBF8\uB098\uB97C \uC4F4 \uB9CC\uD07C \uC313\uC774\uACE0 \uC774\uBCA4\uD2B8 \uC8FC\uAC00 \uB05D\uB098\uBA74 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "currency-treasure-chest-coin" }, maxStack: 1e9, expiresInDays: 7, useEffect: { kind: "none" } },
+  { id: "shute-rhythm-coin", name: "\uC288\uD14C\uC758 \uB9AC\uB4EC \uCF54\uC778", description: "\uC288\uD14C\uC758 \uB9AC\uB4EC \uB09A\uC2DC\uC5D0\uC11C \uD310\uC744 \uC5EC\uB294 \uCF54\uC778\uC785\uB2C8\uB2E4. \uC2A4\uD14C\uBBF8\uB098\uB97C \uC4F4 \uB9CC\uD07C \uC313\uC774\uACE0 \uC774\uBCA4\uD2B8 \uC8FC\uAC00 \uB05D\uB098\uBA74 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "currency-shute-rhythm-coin" }, maxStack: 1e9, expiresInDays: 7, useEffect: { kind: "none" } },
   { id: "delopi-thief-coin", name: "\uB378\uB85C\uD53C\uC758 \uB3C4\uB451 \uCF54\uC778", description: "\uB378\uB85C\uD53C\uC758 \uBCF4\uBB3C \uCC3E\uAE30\uC5D0\uC11C \uD310\uC744 \uC5EC\uB294 \uCF54\uC778\uC785\uB2C8\uB2E4. \uC2A4\uD14C\uBBF8\uB098\uB97C \uC4F4 \uB9CC\uD07C \uC313\uC774\uACE0 \uC774\uBCA4\uD2B8 \uC8FC\uAC00 \uB05D\uB098\uBA74 \uC0AC\uB77C\uC9D1\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "currency-delopi-thief-coin" }, maxStack: 1e9, expiresInDays: 7, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "\uC18C\uD0D5\uAD8C", description: "\uC774\uBBF8 \uC774\uAE34 \uB358\uC804 \uB2E8\uACC4\uB97C \uC804\uD22C \uC5C6\uC774 \uD55C \uBC88 \uC18C\uD0D5\uD569\uB2C8\uB2E4.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는
@@ -28255,6 +28528,7 @@ function createDefaultSession() {
     raidTicketDrops: createEmptyRaidTicketDropState(),
     chestForge: createEmptyChestForgeState(),
     delophyHunt: createEmptyDelophyHuntState(),
+    shuteFishing: createEmptyShuteFishingState(),
     achievements: createEmptyAchievementState(),
     tutorial: createEmptyTutorialState()
   };
@@ -34515,6 +34789,7 @@ var SaveManager = class {
       raidTicketDrops: { ...state.raidTicketDrops ?? createEmptyRaidTicketDropState() },
       chestForge: { ...state.chestForge ?? createEmptyChestForgeState() },
       delophyHunt: structuredClone(state.delophyHunt ?? createEmptyDelophyHuntState()),
+      shuteFishing: structuredClone(state.shuteFishing ?? createEmptyShuteFishingState()),
       achievements: normalizeAchievementState(state.achievements ?? createEmptyAchievementState()),
       tutorial: normalizeTutorialState(state.tutorial ?? createEmptyTutorialState()),
       serverJournal: structuredClone(state.serverJournal ?? emptyServerJournal())
@@ -34615,6 +34890,7 @@ var SaveManager = class {
     const raidTicketDrops = normalizeRaidTicketDropState(legacy.raidTicketDrops);
     const chestForge = normalizeChestForgeState(legacy.chestForge);
     const delophyHunt = normalizeDelophyHuntState(legacy.delophyHunt);
+    const shuteFishing = normalizeShuteFishingState(legacy.shuteFishing);
     const achievements = normalizeAchievementState(legacy.achievements);
     const tutorial = legacy.tutorial === void 0 ? legacyTutorialState(Array.isArray(legacy.clearedStageIds) ? legacy.clearedStageIds.filter((id) => typeof id === "string") : []) : Number(legacy.saveVersion ?? 0) <= 50 ? migrateTutorialV50(legacy.tutorial) : normalizeTutorialState(legacy.tutorial);
     const savedBounty = legacy.bounty;
@@ -34685,10 +34961,10 @@ var SaveManager = class {
     const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
     const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, achievements, tutorial };
+    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, achievements, tutorial };
+    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
   }
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data) {
@@ -34772,6 +35048,7 @@ var SaveManager = class {
     if (data.missions.weeklyStamina !== void 0 && (!Number.isInteger(data.missions.weeklyStamina) || data.missions.weeklyStamina < 0)) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidChestForgeState(data.chestForge)) fail3("\uBCF4\uBB3C\uC0C1\uC790 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (!isValidDelophyHuntState(data.delophyHunt)) fail3("\uB378\uB85C\uD53C\uC758 \uBCF4\uBB3C \uCC3E\uAE30 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
+    if (!isValidShuteFishingState(data.shuteFishing)) fail3("\uC288\uD14C\uC758 \uB9AC\uB4EC \uB09A\uC2DC \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.missions.lifetime !== void 0 && (typeof data.missions.lifetime !== "object" || data.missions.lifetime === null || Object.values(data.missions.lifetime).some((value) => !Number.isInteger(value) || value < 0))) fail3("\uC784\uBB34 \uC9C4\uD589 \uC815\uBCF4\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.serverJournal !== void 0 && !isValidServerJournal(data.serverJournal)) fail3("\uC11C\uBC84 \uCC98\uB9AC \uC601\uC218\uC99D\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
     if (data.expedition.pendingRankRewards !== void 0 && (!Array.isArray(data.expedition.pendingRankRewards) || data.expedition.pendingRankRewards.some((reward) => !reward || typeof reward.weekKey !== "string" || !Number.isInteger(reward.score) || reward.score <= 0 || typeof reward.achievedAt !== "string") || new Set([data.expedition.pendingRankReward, ...data.expedition.pendingRankRewards].filter(Boolean).map((reward) => reward.weekKey)).size !== data.expedition.pendingRankRewards.length + (data.expedition.pendingRankReward ? 1 : 0))) fail3("\uC6D0\uC815 \uC8FC\uAC04 \uBCF4\uC0C1 \uB300\uAE30\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
@@ -34854,6 +35131,7 @@ var SaveManager = class {
       raidTicketDrops: { ...data.raidTicketDrops },
       chestForge: { ...data.chestForge },
       delophyHunt: structuredClone(data.delophyHunt),
+      shuteFishing: structuredClone(data.shuteFishing),
       achievements: { ...data.achievements, claimed: { ...data.achievements.claimed } },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
     };
@@ -35076,7 +35354,7 @@ function playerProfileDisplay(state, equippedModifiers = [], arena, now = /* @__
 
 // src/core/regularEventRotation.ts
 init_define_import_meta_env();
-var REGULAR_EVENT_CYCLE = ["chest-forge", "delophy-hunt"];
+var REGULAR_EVENT_CYCLE = ["chest-forge", "delophy-hunt", "shute-fishing"];
 var ROTATION_ANCHOR = Date.UTC(2026, 10, 2);
 var WEEK_MS = 7 * 864e5;
 function regularEventWeekIndex(now) {
@@ -37828,6 +38106,7 @@ var REWARD_PRIORITY = [
   // 정규 이벤트 코인 — 그 주 이벤트에서만 쓴다
   "tia-treasure-coin",
   "delopi-thief-coin",
+  "shute-rhythm-coin",
   // 단품 — 만능 파편은 렐릭 파편과 같은 돌파 재료라 그 바로 앞이다.
   "universal-fragment-ssr",
   "universal-fragment-sr",
@@ -41115,7 +41394,8 @@ async function eventCoinStacks(api) {
   const now = Date.now();
   const sources = [
     { itemId: "tia-treasure-coin", eventId: "chest-forge", read: () => api.getChestForge() },
-    { itemId: "delopi-thief-coin", eventId: "delophy-hunt", read: () => api.getDelophyHunt() }
+    { itemId: "delopi-thief-coin", eventId: "delophy-hunt", read: () => api.getDelophyHunt() },
+    { itemId: "shute-rhythm-coin", eventId: "shute-fishing", read: () => api.getShuteFishing() }
   ];
   const rows = await Promise.all(sources.map(async ({ itemId, eventId, read }) => {
     if (!QA_ALL_EVENTS && !isRegularEventActive(eventId, now)) return void 0;
@@ -41501,7 +41781,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.403.13",
+  version: "0.404.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -41597,6 +41877,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "getRouletteStatus",
   "getChestForge",
   "getDelophyHunt",
+  "getShuteFishing",
   "getExpeditionLeaderboard",
   "getExpeditionWeeklyBest",
   "getIdleExcavation",
@@ -41676,6 +41957,9 @@ var SERVER_GAME_METHODS = [
   "getDelophyHunt",
   "enterDelophyHunt",
   "flipDelophyCard",
+  "getShuteFishing",
+  "enterShuteFishing",
+  "reelShuteFishing",
   "prepareCombat",
   "finishCombat",
   "abandonStrataRun",
@@ -44289,6 +44573,75 @@ var FakeServer = class {
   async flipDelophyCard(request) {
     return this.stepDelophyHunt("flip", request.requestId, `flip:${String(request.slot)}`, { slot: request.slot });
   }
+  async getShuteFishing() {
+    return shuteFishingStatus(this.state.missions, normalizeShuteFishingState(this.state.shuteFishing), this.now());
+  }
+  /**
+   * 슈테의 리듬 낚시의 두 걸음(판 열기·캐치)이 지나는 한 곳. 판 열기는 물고기와 캐치마다의 구간·속도를 정해 장부에 두고,
+   * 캐치는 바늘이 출발한 뒤 누르기까지 걸린 시간만 받아 서버가 같은 삼각파로 판정한다. 같은 처리 ID는 영수증을 돌려준다.
+   */
+  async stepShuteFishing(kind, requestId, identity, input) {
+    await this.delay();
+    if (!requestId) throw new GameApiError("INVALID_STATE", "\uCC98\uB9AC ID\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const cached = this.readReceipt("shuteFishing", requestId, identity);
+    if (cached) return { ...cached, ...this.snapshot(), status: await this.getShuteFishing() };
+    const now = this.now();
+    const ledger = rollShuteFishingWeek(normalizeShuteFishingState(this.state.shuteFishing), now);
+    const before = shuteFishingStatus(this.state.missions, ledger, now);
+    const next = structuredClone(this.state);
+    let reel;
+    if (kind === "enter") {
+      if (!this.allEventsOpen() && !isRegularEventActive(SHUTE_FISHING.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC9C0\uAE08\uC740 \uC5F4\uB824 \uC788\uC9C0 \uC54A\uC740 \uC774\uBCA4\uD2B8\uC785\uB2C8\uB2E4.");
+      const difficulty = fishingDifficulty(input.difficulty);
+      if (!difficulty) throw new GameApiError("INVALID_STATE", "\uC54C \uC218 \uC5C6\uB294 \uB09C\uC774\uB3C4\uC785\uB2C8\uB2E4.");
+      if (ledger.run) throw new GameApiError("INVALID_STATE", "\uC774\uBBF8 \uC5F0 \uD310\uC774 \uC788\uC2B5\uB2C8\uB2E4.");
+      if (before.coins < difficulty.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCF54\uC778\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+      const fish = rollFishingFish(difficulty, this.random);
+      const catches = fish.map((id) => rollFishCatches(difficulty, id, this.random));
+      next.shuteFishing = {
+        ...ledger,
+        spent: ledger.spent + difficulty.entryCost,
+        run: { difficulty: difficulty.id, fish, catches, index: 0, caught: 0, misses: 0, collected: {} }
+      };
+    } else {
+      const run2 = ledger.run;
+      if (!run2) throw new GameApiError("INVALID_STATE", "\uC5F0 \uD310\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+      let stepped;
+      try {
+        stepped = reelFishing(run2, input.elapsedMs);
+      } catch (error) {
+        if (error instanceof FishingReelError) throw new GameApiError("INVALID_STATE", error.message);
+        throw error;
+      }
+      const result = stepped.reel;
+      let collected = run2.collected;
+      let granted;
+      if (result.landed) {
+        const treasure = fishTreasure(result.landed);
+        const wallet = { ...this.state.wallet };
+        const amount = Math.max(0, Math.min(treasure.amount, WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
+        wallet[treasure.currency] += amount;
+        next.wallet = wallet;
+        granted = { currency: treasure.currency, amount };
+        if (amount > 0) collected = { ...collected, [treasure.currency]: (collected[treasure.currency] ?? 0) + amount };
+      }
+      next.shuteFishing = { ...ledger, run: result.finished ? null : { ...stepped.run, collected } };
+      reel = { ...result, ...granted ? { granted } : {}, ...result.finished ? { total: collected } : {} };
+    }
+    const status = shuteFishingStatus(next.missions, next.shuteFishing, now);
+    this.recordReceipt(next, "shuteFishing", requestId, identity, { status, ...reel ? { reel } : {} });
+    this.persist(next);
+    this.state.shuteFishing = next.shuteFishing;
+    this.state.wallet = next.wallet;
+    this.state.serverJournal = next.serverJournal;
+    return { ...this.snapshot(), status, ...reel ? { reel } : {} };
+  }
+  async enterShuteFishing(request) {
+    return this.stepShuteFishing("enter", request.requestId, `enter:${String(request.difficulty)}`, { difficulty: request.difficulty });
+  }
+  async reelShuteFishing(request) {
+    return this.stepShuteFishing("reel", request.requestId, `reel:${String(request.elapsedMs)}`, { elapsedMs: request.elapsedMs });
+  }
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request) {
     await this.delay();
@@ -45405,6 +45758,7 @@ var FakeServer = class {
     const ids = [];
     if (open(CHEST_FORGE.id) && chestForgePlayable(chestForgeStatus(this.state.missions, normalizeChestForgeState(this.state.chestForge), now))) ids.push(CHEST_FORGE.id);
     if (open(DELOPHY_HUNT.id) && delophyHuntPlayable(delophyHuntStatus(this.state.missions, normalizeDelophyHuntState(this.state.delophyHunt), now))) ids.push(DELOPHY_HUNT.id);
+    if (open(SHUTE_FISHING.id) && shuteFishingPlayable(shuteFishingStatus(this.state.missions, normalizeShuteFishingState(this.state.shuteFishing), now))) ids.push(SHUTE_FISHING.id);
     return ids;
   }
   /** 우편의 실제 읽음 상태를 공용 알림 신호에 합성한다. */

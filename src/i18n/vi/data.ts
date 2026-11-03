@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "Xu để mở rương trong Rương kho báu của Tia. Tích lũy bằng lượng Thể lực đã dùng và biến mất khi tuần sự kiện kết thúc.",
   "item.delopi-thief-coin.name": "Xu trộm của Delopi",
   "item.delopi-thief-coin.description": "Xu để bắt đầu ván Săn kho báu của Delopi. Tích lũy bằng lượng Thể lực đã dùng và biến mất khi tuần sự kiện kết thúc.",
+  "item.shute-rhythm-coin.name": "Xu nhịp điệu của Shute",
+  "item.shute-rhythm-coin.description": "Xu để bắt đầu ván Câu cá nhịp điệu của Shute. Tích lũy bằng lượng Thể lực đã dùng và biến mất khi tuần sự kiện kết thúc.",
   "item.universal-fragment-r.name": "Mảnh vạn năng R",
   "item.universal-fragment-r.description": "Dùng cho đột phá giới hạn của bất kỳ di vật R nào. Chỉ tiêu hao phần còn thiếu khi mảnh riêng của di vật đó không đủ.",
   "item.universal-fragment-sr.name": "Mảnh vạn năng SR",

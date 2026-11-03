@@ -3,7 +3,7 @@
  * 코인이 이번 주에 쓴 스테미나라 두 이벤트가 같은 주에 서면 숙제가 겹치므로 한 주에 하나만 연다.
  * 순서는 이 배열 하나가 갖는다 — 새 정규 이벤트는 여기 한 줄을 더하면 차례에 끼어든다.
  */
-export const REGULAR_EVENT_CYCLE: readonly string[] = ["chest-forge", "delophy-hunt"];
+export const REGULAR_EVENT_CYCLE: readonly string[] = ["chest-forge", "delophy-hunt", "shute-fishing"];
 
 /** 첫 칸(티아의 보물상자)이 처음 선 주의 월요일 00:00(UTC). */
 const ROTATION_ANCHOR = Date.UTC(2026, 10, 2);

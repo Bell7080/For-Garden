@@ -18,7 +18,8 @@ export type CurrencyIconKey =
   | "currency-duel-emblem"
   | "currency-guild-coin"
   | "currency-treasure-chest-coin"
-  | "currency-delopi-thief-coin";
+  | "currency-delopi-thief-coin"
+  | "currency-shute-rhythm-coin";
 
 export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, string]> = [
   ["currency-gems", "/sprites/currency/crystal.webp"],
@@ -38,6 +39,7 @@ export const CURRENCY_ICON_ASSETS: ReadonlyArray<readonly [CurrencyIconKey, stri
   ["currency-guild-coin", "/sprites/currency/guild-coin.webp"],
   ["currency-treasure-chest-coin", "/sprites/currency/tia-treasure-coin.webp"],
   ["currency-delopi-thief-coin", "/sprites/currency/delopi-thief-coin.webp"],
+  ["currency-shute-rhythm-coin", "/sprites/currency/shute-timing-coin.webp"],
 ];
 
 /** 저장 지갑 키를 실제 구운 WebP 텍스처로 바꾸는 공용 단일 매핑이다. */

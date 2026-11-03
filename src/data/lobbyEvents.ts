@@ -58,7 +58,7 @@ export function lobbyEventClockEnd(event: Pick<LobbyEventDef, "endsAt" | "weekly
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" } | { readonly kind: "delophyHunt" };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" } | { readonly kind: "delophyHunt" } | { readonly kind: "shuteFishing" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -109,6 +109,19 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     backdropKey: BACKGROUND.eventDelopiCard,
     destination: { kind: "delophyHunt" },
     sd: { relicId: "delopi", side: "right" },
+    weekly: true,
+    startsAt: "2026-11-02T00:00:00Z",
+    endsAt: "2099-12-31T23:59:59Z",
+  },
+  {
+    // 정기 이벤트 「슈테의 리듬 낚시」 — 델로피의 보물 찾기 다음 주에 서는 교대 이벤트다(`core/regularEventRotation.ts`).
+    // 코인은 같은 이번 주 스테미나이고, 움직이는 바늘을 박자에 맞춰 누르는 리듬 게임이다.
+    id: "shute-fishing",
+    titleKey: "event.shuteFishing.title",
+    subtitleKey: "event.shuteFishing.subtitle",
+    backdropKey: BACKGROUND.eventShuteCard,
+    destination: { kind: "shuteFishing" },
+    sd: { relicId: "shute", side: "right" },
     weekly: true,
     startsAt: "2026-11-02T00:00:00Z",
     endsAt: "2099-12-31T23:59:59Z",

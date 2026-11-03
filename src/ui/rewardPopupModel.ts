@@ -7,10 +7,11 @@ import type { GlyphName } from "./glyphs";
 import { sortRewardItems } from "./rewardOrder";
 import { activeRegularEventId } from "../core/regularEventRotation";
 
-/** 교대 정규 이벤트마다 제 코인 그림. 코인은 둘 다 이번 주에 쓴 스테미나다. */
+/** 교대 정규 이벤트마다 제 코인 그림. 코인은 모두 이번 주에 쓴 스테미나다. */
 export const REGULAR_EVENT_COIN_ICON: Readonly<Record<string, string>> = {
   "chest-forge": "currency-treasure-chest-coin",
   "delophy-hunt": "currency-delopi-thief-coin",
+  "shute-fishing": "currency-shute-rhythm-coin",
 };
 
 /**

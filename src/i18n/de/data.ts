@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "Münze zum Öffnen von Truhen in Tias Schatztruhe. Du erhältst so viele, wie du Ausdauer verbrauchst; sie verfallen am Ende der Eventwoche.",
   "item.delopi-thief-coin.name": "Delopis Diebesmünze",
   "item.delopi-thief-coin.description": "Münze zum Starten von Runden in Delopis Schatzsuche. Du erhältst so viele, wie du Ausdauer verbrauchst; sie verfallen am Ende der Eventwoche.",
+  "item.shute-rhythm-coin.name": "Shutes Rhythmusmünze",
+  "item.shute-rhythm-coin.description": "Münze zum Starten von Runden in Shutes Rhythmus-Angeln. Du erhältst so viele, wie du Ausdauer verbrauchst; sie verfallen am Ende der Eventwoche.",
   "item.universal-fragment-r.name": "Universal-R-Splitter",
   "item.universal-fragment-r.description": "Für den Grenzdurchbruch jedes R-Relikts nutzbar. Wird nur verbraucht, um fehlende eigene Splitter dieses Relikts auszugleichen.",
   "item.universal-fragment-sr.name": "Universal-SR-Splitter",

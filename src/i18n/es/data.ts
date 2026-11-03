@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "Moneda para abrir cofres en el Cofre del tesoro de Tia. Se acumula según la Estamina gastada y desaparece al terminar la semana del evento.",
   "item.delopi-thief-coin.name": "Moneda ladrona de Delopi",
   "item.delopi-thief-coin.description": "Moneda para empezar partidas de la Búsqueda del tesoro de Delopi. Se acumula según la Estamina gastada y desaparece al terminar la semana del evento.",
+  "item.shute-rhythm-coin.name": "Moneda rítmica de Shute",
+  "item.shute-rhythm-coin.description": "Moneda para empezar partidas de La pesca rítmica de Shute. Se acumula según la Estamina gastada y desaparece al terminar la semana del evento.",
   "item.universal-fragment-r.name": "Fragmento universal R",
   "item.universal-fragment-r.description": "Sirve para la ruptura de límite de cualquier reliquia R. Solo se consume para cubrir lo que falte de los fragmentos propios de esa reliquia.",
   "item.universal-fragment-sr.name": "Fragmento universal SR",

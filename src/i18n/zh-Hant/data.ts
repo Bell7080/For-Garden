@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "在蒂婭的寶箱中開啟寶箱的硬幣。消耗多少體力就積累多少，活動周結束時消失。",
   "item.delopi-thief-coin.name": "德洛皮的盜賊硬幣",
   "item.delopi-thief-coin.description": "在德洛皮的尋寶中開局的硬幣。消耗多少體力就積累多少，活動周結束時消失。",
+  "item.shute-rhythm-coin.name": "修特的節奏硬幣",
+  "item.shute-rhythm-coin.description": "在修特的節奏釣魚中開局的硬幣。消耗多少體力就積累多少，活動周結束時消失。",
   "item.universal-fragment-r.name": "萬能R碎片",
   "item.universal-fragment-r.description": "可用於任意R遺物的極限突破。僅在該遺物自身碎片不足時，消耗不足的部分。",
   "item.universal-fragment-sr.name": "萬能SR碎片",

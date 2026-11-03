@@ -1,11 +1,15 @@
 import { profileFace } from "../state/playerProfile";
 import { isStoryStageAvailable, newlyUnlockedStoryDifficulty, storyDifficultyOf } from "../core/storyDifficulty";
 import { ROULETTE, ROULETTE_REWARDS, rouletteIndex, rouletteStatus } from "../core/roulette";
-import type { ChestForgeResponse, DelophyHuntResponse, SpinRouletteResponse } from "./contracts";
+import type { ChestForgeResponse, DelophyHuntResponse, ShuteFishingResponse, SpinRouletteResponse } from "./contracts";
 import {
   DELOPHY_HUNT, HuntFlipError, applyHuntMoves, delophyHuntPlayable, delophyHuntStatus, flipHuntSlot, huntDifficulty, huntTreasure, normalizeDelophyHuntState, rollDelophyHuntWeek,
   rollHuntLayout, rollHuntMoves, rollHuntPairs, type DelophyHuntState, type HuntDifficultyId,
 } from "../core/delophyHunt";
+import {
+  FishingReelError, SHUTE_FISHING, fishTreasure, fishingDifficulty, normalizeShuteFishingState, reelFishing, rollFishCatches, rollFishingFish,
+  rollShuteFishingWeek, shuteFishingPlayable, shuteFishingStatus, type FishingDifficultyId, type ShuteFishingState,
+} from "../core/shuteFishing";
 import { isRegularEventActive } from "../core/regularEventRotation";
 import { CHEST_FORGE, chestBox, chestCard, chestForgePlayable, chestForgeStatus, chestRunBox, normalizeChestForgeState, rollChestCard, rollChestForgeWeek, rollChestOffer, type ChestBoxId, type ChestForgeState } from "../core/chestForge";
 import { duelParticipant, duelCombatSetup, recordPlayerDefense, type PlayerDuelContext } from "../server/playerDuels";
@@ -2255,6 +2259,71 @@ export class FakeServer implements GameApi {
     return this.stepDelophyHunt("flip", request.requestId, `flip:${String(request.slot)}`, { slot: request.slot });
   }
 
+  async getShuteFishing() {
+    return shuteFishingStatus(this.state.missions, normalizeShuteFishingState(this.state.shuteFishing), this.now());
+  }
+
+  /**
+   * 슈테의 리듬 낚시의 두 걸음(판 열기·캐치)이 지나는 한 곳. 판 열기는 물고기와 캐치마다의 구간·속도를 정해 장부에 두고,
+   * 캐치는 바늘이 출발한 뒤 누르기까지 걸린 시간만 받아 서버가 같은 삼각파로 판정한다. 같은 처리 ID는 영수증을 돌려준다.
+   */
+  private async stepShuteFishing(kind: "enter" | "reel", requestId: string, identity: string, input: { difficulty?: FishingDifficultyId; elapsedMs?: number }): Promise<ShuteFishingResponse> {
+    await this.delay();
+    if (!requestId) throw new GameApiError("INVALID_STATE", "처리 ID가 없습니다.");
+    const cached = this.readReceipt<Omit<ShuteFishingResponse, keyof PlayerStateDto>>("shuteFishing", requestId, identity);
+    if (cached) return { ...cached, ...this.snapshot(), status: await this.getShuteFishing() };
+    const now = this.now();
+    const ledger: ShuteFishingState = rollShuteFishingWeek(normalizeShuteFishingState(this.state.shuteFishing), now);
+    const before = shuteFishingStatus(this.state.missions, ledger, now);
+    const next = structuredClone(this.state);
+    let reel: ShuteFishingResponse["reel"];
+    if (kind === "enter") {
+      if (!this.allEventsOpen() && !isRegularEventActive(SHUTE_FISHING.id, now)) throw new GameApiError("EVENT_NOT_ACTIVE", "지금은 열려 있지 않은 이벤트입니다.");
+      const difficulty = fishingDifficulty(input.difficulty);
+      if (!difficulty) throw new GameApiError("INVALID_STATE", "알 수 없는 난이도입니다.");
+      if (ledger.run) throw new GameApiError("INVALID_STATE", "이미 연 판이 있습니다.");
+      if (before.coins < difficulty.entryCost) throw new GameApiError("INSUFFICIENT_CURRENCY", "코인이 부족합니다.");
+      const fish = rollFishingFish(difficulty, this.random);
+      const catches = fish.map((id) => rollFishCatches(difficulty, id, this.random));
+      next.shuteFishing = { ...ledger, spent: ledger.spent + difficulty.entryCost,
+        run: { difficulty: difficulty.id, fish, catches, index: 0, caught: 0, misses: 0, collected: {} } };
+    } else {
+      const run = ledger.run;
+      if (!run) throw new GameApiError("INVALID_STATE", "연 판이 없습니다.");
+      let stepped: ReturnType<typeof reelFishing>;
+      try { stepped = reelFishing(run, input.elapsedMs); } catch (error) {
+        if (error instanceof FishingReelError) throw new GameApiError("INVALID_STATE", error.message);
+        throw error;
+      }
+      const result = stepped.reel;
+      let collected = run.collected;
+      let granted: { currency: string; amount: number } | undefined;
+      if (result.landed) {
+        const treasure = fishTreasure(result.landed)!;
+        const wallet = { ...this.state.wallet };
+        const amount = Math.max(0, Math.min(treasure.amount, WALLET_CAPS[treasure.currency] - wallet[treasure.currency]));
+        wallet[treasure.currency] += amount;
+        next.wallet = wallet;
+        granted = { currency: treasure.currency, amount };
+        if (amount > 0) collected = { ...collected, [treasure.currency]: (collected[treasure.currency] ?? 0) + amount };
+      }
+      next.shuteFishing = { ...ledger, run: result.finished ? null : { ...stepped.run, collected } };
+      reel = { ...result, ...(granted ? { granted } : {}), ...(result.finished ? { total: collected } : {}) };
+    }
+    const status = shuteFishingStatus(next.missions, next.shuteFishing!, now);
+    this.recordReceipt(next, "shuteFishing", requestId, identity, { status, ...(reel ? { reel } : {}) });
+    this.persist(next);
+    this.state.shuteFishing = next.shuteFishing; this.state.wallet = next.wallet; this.state.serverJournal = next.serverJournal;
+    return { ...this.snapshot(), status, ...(reel ? { reel } : {}) };
+  }
+
+  async enterShuteFishing(request: { requestId: string; difficulty: FishingDifficultyId }): Promise<ShuteFishingResponse> {
+    return this.stepShuteFishing("enter", request.requestId, `enter:${String(request.difficulty)}`, { difficulty: request.difficulty });
+  }
+  async reelShuteFishing(request: { requestId: string; elapsedMs: number }): Promise<ShuteFishingResponse> {
+    return this.stepShuteFishing("reel", request.requestId, `reel:${String(request.elapsedMs)}`, { elapsedMs: request.elapsedMs });
+  }
+
   /** 광고 완료, 멱등 키, UTC 일일 제한을 검사한 뒤 지급과 저장을 한 번에 확정한다. */
   async claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse> {
     await this.delay();
@@ -3326,6 +3395,7 @@ export class FakeServer implements GameApi {
     const ids: string[] = [];
     if (open(CHEST_FORGE.id) && chestForgePlayable(chestForgeStatus(this.state.missions, normalizeChestForgeState(this.state.chestForge), now))) ids.push(CHEST_FORGE.id);
     if (open(DELOPHY_HUNT.id) && delophyHuntPlayable(delophyHuntStatus(this.state.missions, normalizeDelophyHuntState(this.state.delophyHunt), now))) ids.push(DELOPHY_HUNT.id);
+    if (open(SHUTE_FISHING.id) && shuteFishingPlayable(shuteFishingStatus(this.state.missions, normalizeShuteFishingState(this.state.shuteFishing), now))) ids.push(SHUTE_FISHING.id);
     return ids;
   }
 

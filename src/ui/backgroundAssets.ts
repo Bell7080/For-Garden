@@ -18,6 +18,8 @@ export const BACKGROUND = {
   eventRoulettePopup: "background-event-roulette-popup",
   eventDelopiCard: "background-event-delopi-card",
   eventDelopiPopup: "background-event-delopi-popup",
+  eventShuteCard: "background-event-shute-card",
+  eventShutePopup: "background-event-shute-popup",
   lobby: "background-lobby",
   guild: "background-guild",
   guildShop: "background-guild-shop",
@@ -183,6 +185,8 @@ export const BACKGROUND_ASSETS = [
   [BACKGROUND.eventRoulettePopup, "sprites/events/roulette-popup.webp"],
   [BACKGROUND.eventDelopiCard, "sprites/events/delopi-card.webp"],
   [BACKGROUND.eventDelopiPopup, "sprites/events/delopi-popup.webp"],
+  [BACKGROUND.eventShuteCard, "sprites/events/shute-card.webp"],
+  [BACKGROUND.eventShutePopup, "sprites/events/shute-layer.webp"],
   // 일반 배경 스프라이트는 PuppetForge 번들과 분리한 공용 자산 경로에서 읽는다.
   [BACKGROUND.lobby, "sprites/background/background_001.webp"],
   [BACKGROUND.guild, "sprites/background/guild_main.webp"],

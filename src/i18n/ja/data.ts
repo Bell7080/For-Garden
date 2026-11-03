@@ -341,6 +341,8 @@ export default {
   "item.tia-treasure-coin.description": "ティアの宝箱で箱を開けるコインです。使ったスタミナの分だけたまり、イベント週が終わると消えます。",
   "item.delopi-thief-coin.name": "デロピの泥棒コイン",
   "item.delopi-thief-coin.description": "デロピの宝探しでゲームを始めるコインです。使ったスタミナの分だけたまり、イベント週が終わると消えます。",
+  "item.shute-rhythm-coin.name": "シュテのリズムコイン",
+  "item.shute-rhythm-coin.description": "シュテのリズム釣りでゲームを始めるコインです。使ったスタミナの分だけたまり、イベント週が終わると消えます。",
   "item.universal-fragment-r.name": "万能R欠片",
   "item.universal-fragment-r.description": "どのRレリックの限界突破にも使える欠片です。そのレリックの欠片が足りない時だけ、足りない分を消費します。",
   "item.universal-fragment-sr.name": "万能SR欠片",

@@ -1,6 +1,7 @@
 import type { RouletteReward, RouletteStatus } from "../core/roulette";
 import type { ChestBoxId, ChestForgeRun, ChestForgeStatus } from "../core/chestForge";
 import type { DelophyHuntStatus, HuntDifficultyId, HuntFlip, HuntMove, HuntRun } from "../core/delophyHunt";
+import type { FishingDifficultyId, FishingReel, FishingRun, ShuteFishingStatus } from "../core/shuteFishing";
 import { t, type TextKey } from "../i18n";
 import type { OpsNotice } from "../core/opsInbox";
 import type { RaidDifficulty } from "../data/raid";
@@ -446,6 +447,17 @@ export interface DelophyHuntResponse extends PlayerStateDto {
     granted?: { currency: string; amount: number };
     /** 판이 끝났다면 이 판에서 받은 전부. */
     total?: HuntRun["collected"];
+  };
+}
+/** 슈테의 리듬 낚시 한 걸음(판 열기·캐치)의 결과. 판정·난수·지급은 서버가 확정한다. */
+export interface ShuteFishingResponse extends PlayerStateDto {
+  status: ShuteFishingStatus;
+  /** 캐치의 결과. 판 열기에는 없다. */
+  reel?: FishingReel & {
+    /** 물고기를 낚았을 때 실제 들어간 몫(상한에서 깎인 뒤). */
+    granted?: { currency: string; amount: number };
+    /** 판이 끝났다면 이 판에서 받은 전부. */
+    total?: FishingRun["collected"];
   };
 }
 export interface ClaimAdRewardRequest { slotId: string; verificationToken: string; requestId: string; }
@@ -1212,6 +1224,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   getDelophyHunt(): Promise<DelophyHuntStatus>;
   enterDelophyHunt(request: { requestId: string; difficulty: HuntDifficultyId }): Promise<DelophyHuntResponse>;
   flipDelophyCard(request: { requestId: string; slot: number }): Promise<DelophyHuntResponse>;
+  getShuteFishing(): Promise<ShuteFishingStatus>;
+  enterShuteFishing(request: { requestId: string; difficulty: FishingDifficultyId }): Promise<ShuteFishingResponse>;
+  /** 바늘이 출발한 뒤 누르기까지 걸린 시간(ms)만 보낸다 — 판정은 서버가 같은 삼각파로 한다. */
+  reelShuteFishing(request: { requestId: string; elapsedMs: number }): Promise<ShuteFishingResponse>;
   claimAdReward(request: ClaimAdRewardRequest): Promise<ClaimAdRewardResponse>;
   /** 임시 보상 이전과 런 완료 표시를 하나의 원자 저장으로 확정한다. */
   settleExpeditionRun(request: SettleExpeditionRunRequest): Promise<SettleExpeditionRunResponse>;

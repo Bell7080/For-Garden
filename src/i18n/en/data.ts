@@ -176,6 +176,8 @@ export default {
   "item.tia-treasure-coin.description": "A coin for opening chests in Tia's Treasure Chest. You earn as much as the Stamina you spend, and it disappears when the event week ends.",
   "item.delopi-thief-coin.name": "Delopi's Thief Coin",
   "item.delopi-thief-coin.description": "A coin for starting rounds of Delopi's Treasure Hunt. You earn as much as the Stamina you spend, and it disappears when the event week ends.",
+  "item.shute-rhythm-coin.name": "Shute's Rhythm Coin",
+  "item.shute-rhythm-coin.description": "A coin for starting rounds of Shute's Rhythm Fishing. You earn as much as the Stamina you spend, and it disappears when the event week ends.",
   "item.universal-fragment-r.name": "Universal R Shard",
   "item.universal-fragment-r.description": "A shard usable for the limit break of any R relic. Consumed only to cover a shortfall of that relic's own shards.",
   "item.universal-fragment-sr.name": "Universal SR Shard",

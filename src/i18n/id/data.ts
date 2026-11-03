@@ -162,6 +162,8 @@ export default {
   "item.tia-treasure-coin.description": "Koin untuk membuka peti di Peti Harta Tia. Terkumpul sebanyak Stamina yang dipakai dan hilang saat pekan event berakhir.",
   "item.delopi-thief-coin.name": "Koin Pencuri Delopi",
   "item.delopi-thief-coin.description": "Koin untuk memulai permainan Perburuan Harta Delopi. Terkumpul sebanyak Stamina yang dipakai dan hilang saat pekan event berakhir.",
+  "item.shute-rhythm-coin.name": "Koin Ritme Shute",
+  "item.shute-rhythm-coin.description": "Koin untuk memulai permainan Mancing Ritme Shute. Terkumpul sebanyak Stamina yang dipakai dan hilang saat pekan event berakhir.",
   "item.universal-fragment-r.name": "Serpihan Universal R",
   "item.universal-fragment-r.description": "Dapat dipakai untuk terobosan batas relik R mana pun. Hanya terpakai untuk menutup kekurangan serpihan relik itu sendiri.",
   "item.universal-fragment-sr.name": "Serpihan Universal SR",

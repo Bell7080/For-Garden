@@ -2,6 +2,7 @@ import { audioManager } from "../managers/AudioManager";
 import { openRoulettePopup } from "../ui/RoulettePopup";
 import { openChestForgePopup } from "../ui/ChestForgePopup";
 import { openDelophyHuntPopup } from "../ui/DelophyHuntPopup";
+import { openShuteFishingPopup } from "../ui/ShuteFishingPopup";
 import { nicknameCreationRequired } from "../core/playerCard";
 import { ARENA_TONE } from "../ui/arenaTheme";
 import { addArenaMascots } from "../ui/ArenaMascots";
@@ -606,6 +607,7 @@ export class LobbyScene extends Phaser.Scene {
         if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
         if (event.destination?.kind === "chestForge") { void openChestForgePopup(this, this.popupLayer!, onChanged).catch((error) => logError("chestForge.open", "보물상자 열기 실패", error)); return; }
         if (event.destination?.kind === "delophyHunt") { void openDelophyHuntPopup(this, this.popupLayer!, onChanged).catch((error) => logError("delophyHunt.open", "델로피의 보물 찾기 열기 실패", error)); return; }
+        if (event.destination?.kind === "shuteFishing") { void openShuteFishingPopup(this, this.popupLayer!, onChanged).catch((error) => logError("shuteFishing.open", "슈테의 리듬 낚시 열기 실패", error)); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
       },

@@ -85,6 +85,7 @@ export const ITEMS = [
   // 정규 이벤트 코인 둘 — 이번 주에 쓴 스테미나와 1:1이고 이벤트 주(UTC 월요일)가 끝나면 사라진다. 저장 스택이 아니라
   // 서버 이벤트 상태에서 읽어 가방에 세우는 칸이라(`InventoryManager.list`) 기한도 그 주의 끝에 맞춰진다.
   { id: "tia-treasure-coin", name: "티아의 보물 코인", description: "티아의 보물상자에서 상자를 여는 코인입니다. 스테미나를 쓴 만큼 쌓이고 이벤트 주가 끝나면 사라집니다.", category: "material", icon: { kind: "asset", key: "currency-treasure-chest-coin" }, maxStack: 1_000_000_000, expiresInDays: 7, useEffect: { kind: "none" } },
+  { id: "shute-rhythm-coin", name: "슈테의 리듬 코인", description: "슈테의 리듬 낚시에서 판을 여는 코인입니다. 스테미나를 쓴 만큼 쌓이고 이벤트 주가 끝나면 사라집니다.", category: "material", icon: { kind: "asset", key: "currency-shute-rhythm-coin" }, maxStack: 1_000_000_000, expiresInDays: 7, useEffect: { kind: "none" } },
   { id: "delopi-thief-coin", name: "델로피의 도둑 코인", description: "델로피의 보물 찾기에서 판을 여는 코인입니다. 스테미나를 쓴 만큼 쌓이고 이벤트 주가 끝나면 사라집니다.", category: "material", icon: { kind: "asset", key: "currency-delopi-thief-coin" }, maxStack: 1_000_000_000, expiresInDays: 7, useEffect: { kind: "none" } },
   { id: "sweep-ticket", name: "소탕권", description: "이미 이긴 던전 단계를 전투 없이 한 번 소탕합니다.", category: "material", icon: { kind: "asset", key: "item-sweep-ticket" }, maxStack: 999, useEffect: { kind: "none" } },
   // 전리품 상점의 두 증표. 상한을 두지 않는 이유가 곧 지갑에 둔 이유다 — 가끔 들어가 터는

@@ -2,6 +2,7 @@ import { gameApi } from "../api/FakeServer";
 import { ROULETTE, type RouletteStatus } from "../core/roulette";
 import { CHEST_FORGE, chestForgePlayable } from "../core/chestForge";
 import { DELOPHY_HUNT, delophyHuntPlayable } from "../core/delophyHunt";
+import { SHUTE_FISHING, shuteFishingPlayable } from "../core/shuteFishing";
 import { motionPolicy } from "../core/settings";
 import { session } from "../state/session";
 import { lobbyEventEntryId, prioritizeLobbyEvents } from "./lobbyEventModel";
@@ -38,8 +39,14 @@ export interface LobbyEventPopupOptions {
  * `delophyHuntPlayable`)이다. 이번 주 차례인지는 판에 서는 카드 목록이 이미 거른다. 조회가 실패하면 그 이벤트만 빼 둔다.
  */
 async function playableRegularEvents(): Promise<string[]> {
-  const [chest, hunt] = await Promise.all([gameApi.getChestForge().catch(() => undefined), gameApi.getDelophyHunt().catch(() => undefined)]);
-  return [...(chest && chestForgePlayable(chest) ? [CHEST_FORGE.id] : []), ...(hunt && delophyHuntPlayable(hunt) ? [DELOPHY_HUNT.id] : [])];
+  const [chest, hunt, fishing] = await Promise.all([
+    gameApi.getChestForge().catch(() => undefined), gameApi.getDelophyHunt().catch(() => undefined), gameApi.getShuteFishing().catch(() => undefined),
+  ]);
+  return [
+    ...(chest && chestForgePlayable(chest) ? [CHEST_FORGE.id] : []),
+    ...(hunt && delophyHuntPlayable(hunt) ? [DELOPHY_HUNT.id] : []),
+    ...(fishing && shuteFishingPlayable(fishing) ? [SHUTE_FISHING.id] : []),
+  ];
 }
 
 export class LobbyEventPopup {

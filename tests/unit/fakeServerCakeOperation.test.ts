@@ -133,6 +133,17 @@ describe("FakeServer 치즈케이크 대작전", () => {
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 0, requestId: "sweep-5" })).rejects.toMatchObject({ code: "INVALID_STATE" });
   });
 
+  it("소탕으로 쓴 스테미나도 정규 이벤트 코인으로 1:1 쌓인다(보물상자·보물 찾기 공용)", async () => {
+    const state = makeSession(100, 0); state.itemInventory = [{ itemId: SWEEP_TICKET_ITEM, quantity: 5 }];
+    state.playerResearch = { level: 20, experience: 0, experienceToNext: 1 };
+    const server = make(state);
+    const before = (await server.getChestForge()).coins;
+    const swept = await server.sweepCakeOperation({ tierId: TIER.id, count: 3, requestId: "sweep-coins" });
+    expect(swept.staminaSpent).toBe(COST * 3);
+    expect((await server.getChestForge()).coins - before).toBe(swept.staminaSpent);
+    expect((await server.getDelophyHunt()).coins - before).toBe(swept.staminaSpent);
+  });
+
   it("멤버십이면 소탕권 없이 소탕한다", async () => {
     const state = makeSession(100, 0); const server = make(state);
     await expect(server.sweepCakeOperation({ tierId: TIER.id, count: 1, requestId: "sweep-6" })).rejects.toMatchObject({ code: "SWEEP_TICKET_SHORTAGE" });

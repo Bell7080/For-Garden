@@ -227,7 +227,12 @@ export class GuildScene extends Phaser.Scene {
       onCurrency: (currency) => openCurrencyGuide({ scene: this, popups: this.popups }, currency),
     });
     this.add.text(S.title.x, S.title.y, t("guild.title"), textStyle({ role: "display", size: 52 })).setOrigin(0, 0.5).setShadow(0, 4, "#05070a", 6, false, true);
-    addBackButton(this, () => startScene(this, "lobby"));
+    // 다른 길드를 둘러보는 중이면 로비가 아니라 내 길드 화면으로 돌아간다 — 둘러보기는 같은 씬 안의 한 쪽이라
+    // 우하단 뒤로가기도 한 단계 앞(내 길드)으로 간다. 로비로 튕기면 길드에서 나간 것처럼 읽혔다.
+    addBackButton(this, () => {
+      if (this.browsing && this.inGuild) { if (this.busy) return; this.browsing = false; void this.reload(); return; }
+      startScene(this, "lobby");
+    });
     this.view = this.add.container(0, 0);
     this.controls = this.add.container(0, 0);
     this.tabRow = this.add.container(0, 0);
@@ -413,19 +418,14 @@ export class GuildScene extends Phaser.Scene {
   }
 
   /**
-   * 오른쪽 위 아이콘 칩 — 길드 안이면 다른 길드 찾기·탈퇴를 여는 메뉴, 둘러보는 중이면 내 길드로 돌아가기다. 로비 레일 칩과 같은
+   * 오른쪽 위 아이콘 칩 — 다른 길드 찾기·탈퇴를 여는 메뉴. 둘러보는 중에는 서지 않고 우하단 뒤로가기가 내 길드로 돌아간다. 로비 레일 칩과 같은
    * `RailButton`이라 글자 칩보다 "누르는 것"으로 먼저 읽힌다.
    */
   private paintMenuChip(): void {
     const { right, y, size } = S.menuChip;
-    const back = this.browsing;
     const chip = new RailButton(this, right - size / 2, y, {
-      icon: back ? "page-prev" : "settings", label: t(back ? "guild.menu.back" : "guild.menu.chip"), size,
-      onClick: () => {
-        if (this.busy) return;
-        if (back) { this.browsing = false; void this.reload(); return; }
-        this.openGuildMenu();
-      },
+      icon: "settings", label: t("guild.menu.chip"), size,
+      onClick: () => { if (!this.busy) this.openGuildMenu(); },
     });
     chip.setDepth(1);
     this.controls.add(chip);
@@ -458,7 +458,6 @@ export class GuildScene extends Phaser.Scene {
   private paintBrowse(keep: boolean): void {
     this.listBottom = S.body.browseBottom;
     const looking = this.browsing && this.inGuild;
-    if (looking) this.paintMenuChip();
     const cooldown = (this.state?.leaveCooldownUntil ?? 0) - this.now;
     const summary = !looking && cooldown > 0 ? t("guild.browse.cooldown", { time: hmText(cooldown) }) : this.query ? t("guild.browse.results", { count: this.browse.length }) : t("guild.browse.summary");
     this.label(this.controls, S.side, S.summary.y, summary, { role: "body", size: 28, color: !looking && cooldown > 0 ? COLOR.dangerText : COLOR.inkDim });
@@ -512,7 +511,7 @@ export class GuildScene extends Phaser.Scene {
     const leaveLabel = t(role === "leader" && alone ? "guild.info.disband" : "guild.info.leave");
     const M = GUILD_MENU_POPUP;
     const height = M.height + (leaderStuck ? M.noteRoom : 0);
-    this.popups.open({ width: M.width, height, title: t("guild.menu.title"), closeOnBackdrop: true, dim: true }, (body, close) => {
+    this.popups.open({ width: M.width, height, title: t("guild.menu.title"), closeOnBackdrop: true, dim: true, backButton: true }, (body, close) => {
       const tileY = -height / 2 + M.tileTop + M.tile.height / 2;
       this.menuTile(body, -(M.tile.width + M.gap) / 2, tileY, "search", t("guild.menu.browse"), "neutral", () => {
         close();
@@ -703,7 +702,7 @@ export class GuildScene extends Phaser.Scene {
       const { height, firstRowY } = guildRankingRows(lines, rowGap - 14, rowGap, true);
       const myRank = pinned ? pinned.rank : rows.find((guild) => guild.id === mineId)?.rank ?? null;
       const score = (value: number | null | undefined): string => value === null || value === undefined ? t("guild.ranking.none") : value.toLocaleString();
-      this.popups.open({ width: 940, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true }, (body) => {
+      this.popups.open({ width: 940, height, title: t("guild.ranking.title"), closeOnBackdrop: true, dim: true, backButton: true }, (body) => {
         addRankRewardChip(this, body, -470 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, {
           period: "weekly",
           onClick: () => openRankPoolRewards(this, this.popups, { pool: rankTableAsPool(GUILD_WEEKLY_RANK_REWARDS), period: "weekly", rules: t("guild.ranking.rules"), myRank, total }),
@@ -1208,7 +1207,7 @@ export class GuildScene extends Phaser.Scene {
     const M = MEMBER_MANAGE;
     const kickGap = actions.some((action) => action.group === "kick") && actions.length > 1 ? M.kickGap : 0;
     const height = M.top + M.header + actions.length * (M.button.height + M.button.gap) - M.button.gap + kickGap + M.bottom;
-    this.popups.open({ width: M.width, height, title: t("guild.members.actionTitle", { name: member.name }), closeOnBackdrop: true, dim: true }, (body, close) => {
+    this.popups.open({ width: M.width, height, title: t("guild.members.actionTitle", { name: member.name }), closeOnBackdrop: true, dim: true, backButton: true }, (body, close) => {
       const top = -height / 2;
       // ── 머리 — 사람 한 장. 판 윗변에 길드 색 선을 한 줄 긋고 오른쪽 끝에 우리 배지를 세운다.
       const headY = top + M.top + M.header / 2 - 14;
@@ -1488,7 +1487,7 @@ export class GuildScene extends Phaser.Scene {
       : slot.open ? null
         : t(slot.kind === "boss" ? "guild.war.front.closedBoss" : "guild.war.front.closedElite");
     const height = 680;
-    this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true }, (body, close) => {
+    this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true, backButton: true }, (body, close) => {
       const top = -height / 2;
       const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
       body.add(new ProfileAvatar(this, -260, top + 170, { size: 96, frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" }));
@@ -1530,7 +1529,7 @@ export class GuildScene extends Phaser.Scene {
     if (prep && holder.isMe) actions.push({ label: t("guild.war.deck.edit"), tone: "accent", run: () => this.openWarDefense(map, null) });
     if (prep && (holder.isMe || map.canArrange)) actions.push({ label: t("guild.war.slot.clear"), tone: "danger", run: () => { void this.act(() => guildApi.clearWarSlot(slot.id)); } });
     const height = 560 + (actions.length > 0 ? 120 : 0);
-    this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true }, (body, close) => {
+    this.popups.open({ width: 760, height, title: guildWarSlotLabel(slot.id), closeOnBackdrop: true, dim: true, backButton: true }, (body, close) => {
       const top = -height / 2;
       const relic = RELICS.find((candidate) => candidate.id === holder.avatarRelicId);
       body.add(new ProfileAvatar(this, -260, top + 170, { size: 96, frameId: holder.frameId, portraitAssetId: relic?.portraitAssetId, fallback: Array.from(holder.name.trim())[0] ?? "?" }));
@@ -1699,7 +1698,7 @@ export class GuildScene extends Phaser.Scene {
     const lines = Math.max(1, rows.length) + (pinned ? 1 : 0);
     const { height, firstRowY: top } = guildRankingRows(lines, S.row.height - 4, rowGap, tab === "guilds");
     const width = S.width + 70;
-    this.popups.open({ width, height, title: t(tab === "members" ? "guild.guard.tab.members" : "guild.guard.tab.guilds"), closeOnBackdrop: true, dim: true }, (body) => {
+    this.popups.open({ width, height, title: t(tab === "members" ? "guild.guard.tab.members" : "guild.guard.tab.guilds"), closeOnBackdrop: true, dim: true, backButton: true }, (body) => {
       if (tab === "guilds") addRankRewardChip(this, body, -width / 2 + RANKING_POPUP_REWARD_CHIP.left, -height / 2 + RANKING_POPUP_REWARD_CHIP.top, { period: "weekly", onClick: () => this.openGuardRewards() });
       if (rows.length === 0) { this.label(body, 0, 0, t("guild.guard.empty"), { role: "body", size: 30, color: COLOR.inkDim }, [0.5, 0.5]); return; }
       const paint = (entry: (typeof all)[number], y: number): void => {

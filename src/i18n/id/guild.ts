@@ -137,7 +137,6 @@ export const GUILD_ID = {
   "guild.page.guard": "Pertahanan Guild",
   "guild.menu.chip": "Menu Guild",
   "guild.menu.title": "Menu Guild",
-  "guild.menu.back": "Kembali",
   "guild.menu.browse": "Cari guild lain",
   "guild.ranking.title": "Peringkat Guild",
   "guild.shop.title": "Toko Guild",

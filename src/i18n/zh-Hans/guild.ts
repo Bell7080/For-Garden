@@ -137,7 +137,6 @@ export const GUILD_ZH_HANS = {
   "guild.page.guard": "公会守护战",
   "guild.menu.chip": "公会菜单",
   "guild.menu.title": "公会菜单",
-  "guild.menu.back": "返回",
   "guild.menu.browse": "查找其他公会",
   "guild.ranking.title": "公会排名",
   "guild.shop.title": "公会商店",

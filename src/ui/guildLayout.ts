@@ -14,7 +14,7 @@ export const GUILD_SCREEN = {
    * 오른쪽 위 메뉴 아이콘 칩 — 다른 길드 찾기·탈퇴를 여는 창의 입구. 글자 칩이던 때는 같은 줄의 요약 글과 무게가 같아 눌리는
    * 것으로 읽히지 않았다 — 로비 레일 칩(`RailButton`)과 같은 아이콘 칩으로 선다. 밑변은 요약 줄(244) 위에서 끝난다.
    */
-  menuChip: { right: BASE_WIDTH - 40, y: 166, size: 100 },
+  menuChip: { right: BASE_WIDTH - 40, y: 176, size: 100 },
   summary: { y: 244 },
   controls: { y: 320, height: 68 },
   /** 길드가 있으면 작은 탭 위까지, 없으면 큰 탭이 없으니 화면 밑동까지 목록이 흐른다. */

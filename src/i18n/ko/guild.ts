@@ -151,7 +151,6 @@ export const GUILD_KO = {
   "guild.page.guard": "수호전",
   "guild.menu.chip": "길드 메뉴",
   "guild.menu.title": "길드 메뉴",
-  "guild.menu.back": "돌아가기",
   "guild.menu.browse": "다른 길드 찾기",
   "guild.ranking.title": "길드 순위",
   "guild.shop.title": "길드 상점",

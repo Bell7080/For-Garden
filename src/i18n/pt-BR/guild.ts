@@ -137,7 +137,6 @@ export const GUILD_PT_BR = {
   "guild.page.guard": "Defesa da guilda",
   "guild.menu.chip": "Menu da guilda",
   "guild.menu.title": "Menu da guilda",
-  "guild.menu.back": "Voltar",
   "guild.menu.browse": "Procurar outras guildas",
   "guild.ranking.title": "Ranking de guildas",
   "guild.shop.title": "Loja da guilda",

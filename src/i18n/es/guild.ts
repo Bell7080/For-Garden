@@ -137,7 +137,6 @@ export const GUILD_ES = {
   "guild.page.guard": "Defensa del gremio",
   "guild.menu.chip": "Menú del gremio",
   "guild.menu.title": "Menú del gremio",
-  "guild.menu.back": "Volver",
   "guild.menu.browse": "Buscar otros gremios",
   "guild.ranking.title": "Clasificación de gremios",
   "guild.shop.title": "Tienda del gremio",

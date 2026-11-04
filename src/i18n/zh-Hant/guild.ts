@@ -137,7 +137,6 @@ export const GUILD_ZH_HANT = {
   "guild.page.guard": "公會守護戰",
   "guild.menu.chip": "公會選單",
   "guild.menu.title": "公會選單",
-  "guild.menu.back": "返回",
   "guild.menu.browse": "查詢其他公會",
   "guild.ranking.title": "公會排名",
   "guild.shop.title": "公會商店",

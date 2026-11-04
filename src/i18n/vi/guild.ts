@@ -137,7 +137,6 @@ export const GUILD_VI = {
   "guild.page.guard": "Trận Hộ vệ Bang hội",
   "guild.menu.chip": "Menu Bang hội",
   "guild.menu.title": "Menu Bang hội",
-  "guild.menu.back": "Quay lại",
   "guild.menu.browse": "Tìm Bang hội khác",
   "guild.ranking.title": "Xếp hạng Bang hội",
   "guild.shop.title": "Cửa hàng Bang hội",

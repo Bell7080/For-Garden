@@ -137,7 +137,6 @@ export const GUILD_TH = {
   "guild.page.guard": "ศึกพิทักษ์กิลด์",
   "guild.menu.chip": "เมนูกิลด์",
   "guild.menu.title": "เมนูกิลด์",
-  "guild.menu.back": "กลับ",
   "guild.menu.browse": "ค้นหากิลด์อื่น",
   "guild.ranking.title": "อันดับกิลด์",
   "guild.shop.title": "ร้านค้ากิลด์",

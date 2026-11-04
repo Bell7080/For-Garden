@@ -137,7 +137,6 @@ export const GUILD_JA = {
   "guild.page.guard": "ギルド守護戦",
   "guild.menu.chip": "ギルドメニュー",
   "guild.menu.title": "ギルドメニュー",
-  "guild.menu.back": "戻る",
   "guild.menu.browse": "他のギルドを探す",
   "guild.ranking.title": "ギルドランキング",
   "guild.shop.title": "ギルドショップ",

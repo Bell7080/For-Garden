@@ -137,7 +137,6 @@ export const GUILD_EN = {
   "guild.page.guard": "Guild Guard",
   "guild.menu.chip": "Guild Menu",
   "guild.menu.title": "Guild Menu",
-  "guild.menu.back": "Back",
   "guild.menu.browse": "Find Other Guilds",
   "guild.ranking.title": "Guild Ranking",
   "guild.shop.title": "Guild Shop",

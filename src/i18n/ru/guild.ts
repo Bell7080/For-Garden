@@ -137,7 +137,6 @@ export const GUILD_RU = {
   "guild.page.guard": "Защита гильдии",
   "guild.menu.chip": "Меню гильдии",
   "guild.menu.title": "Меню гильдии",
-  "guild.menu.back": "Назад",
   "guild.menu.browse": "Найти другие гильдии",
   "guild.ranking.title": "Рейтинг гильдий",
   "guild.shop.title": "Магазин гильдии",

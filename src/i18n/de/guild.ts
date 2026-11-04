@@ -137,7 +137,6 @@ export const GUILD_DE = {
   "guild.page.guard": "Gildenwacht",
   "guild.menu.chip": "Gildenmenü",
   "guild.menu.title": "Gildenmenü",
-  "guild.menu.back": "Zurück",
   "guild.menu.browse": "Andere Gilden suchen",
   "guild.ranking.title": "Gildenrangliste",
   "guild.shop.title": "Gildenshop",

@@ -128,6 +128,9 @@ function paintOdds(scene: Phaser.Scene, parent: Phaser.GameObjects.Container, sl
     percent,
     color: index === 0 ? TRAIT_NONE_COLOR : RUNE_ACCENT[RUNE_TRAIT_GRADES[index - 1]],
   })).filter((row) => row.percent > 0);
+  // 특성 줄도 등급 줄처럼 노려볼 칸 하나가 일렁인다 — 나올 수 있는 가장 높은 특성 등급이다.
+  const topTrait = traitRows.length > 0 && traitRows[traitRows.length - 1].color !== TRAIT_NONE_COLOR ? traitRows[traitRows.length - 1] : undefined;
+  if (topTrait) topTrait.highlight = true;
   // 같은 확률을 다시 그릴 때(칸 하나를 빼고 다시 넣는 등)는 차오르지 않는다 — 바뀐 것이 없는데 움직이면 새로 연 판처럼 읽힌다.
   const signature = JSON.stringify([rarityRows, traitRows].map((rows) => rows.map(({ percent }) => percent)));
   const animate = signature !== lastOddsSignature && motionPolicy(session.settings).nonEssentialRepeatFactor > 0;
@@ -150,12 +153,12 @@ let lastOddsSignature = "";
  * 확률 한 줄 — 이름표, 등급색이 칸을 나눠 갖는 게이지 하나, 그 아래 칸마다의 범례.
  *
  * 게이지는 공용 `HoloBar`의 문법(기울기·짙은 홈·흰 외곽선·아래 그림자)을 그대로 쓴다. 칸마다
- * `HoloBar`를 한 장씩 덧대 구간만 칠하고(`setRange`), 경계는 흰 빗금이 가른다. 등급이 오르는 칸만
- * 안개가 일렁여 "노려볼 칸"이 먼저 읽힌다.
+ * `HoloBar`를 한 장씩 덧대 구간만 칠하고(`setRange`), 경계는 흰 빗금이 가른다. 노려볼 칸 하나만
+ * 안개가 일렁여 먼저 읽힌다 — 등급 줄은 한 등급 오르는 칸, 특성 줄은 나올 수 있는 가장 높은 특성 칸이다.
  */
 function addOddsGauge(
   scene: Phaser.Scene, parent: Phaser.GameObjects.Container, left: number, right: number, top: number,
-  spot: { label: number; bar: number; legend: number }, label: string, rows: readonly OddsRow[], animate: boolean, phase: number,
+  spot: { label: number; bar: number; name: number; percent: number }, label: string, rows: readonly OddsRow[], animate: boolean, phase: number,
 ): void {
   parent.add(scene.add.text(left, top + spot.label, label, textStyle({ role: "emphasis", size: RUNE_SYNTHESIS.oddsLabelSize, color: COLOR.ink })).setOrigin(0, 0.5));
   const total = right - left;
@@ -193,21 +196,23 @@ function addOddsGauge(
     fill(1);
   }
 
-  // 범례 — 칸마다 같은 폭을 나눠 갖고, 등급색 칸 · 이름 · 굵은 퍼센트가 한 덩어리로 선다.
+  // 범례 — 칸마다 같은 폭을 나눠 갖고, 칸 가운데에 `■ 이름`이 서고 그 아래 굵은 퍼센트가 선다.
   const cell = total / rows.length;
+  const room = cell - RUNE_SYNTHESIS.oddsCellGap;
   rows.forEach((row, index) => {
-    const legend = scene.add.container(left + cell * index, top + spot.legend);
+    const cx = left + cell * (index + 0.5);
     const swatchSize = RUNE_SYNTHESIS.oddsSwatch;
-    legend.add(drawLayer(scene, swatchSize / 2, 0, slantedRect(swatchSize, swatchSize, 6), { fill: row.color, alpha: 1, edge: 0xffffff, edgeAlpha: 0.6 }));
-    const name = scene.add.text(swatchSize + 10, 0, row.label, textStyle({ role: "emphasis", size: RUNE_SYNTHESIS.oddsNameSize, color: COLOR.ink })).setOrigin(0, 0.5);
-    const percent = scene.add.text(0, 0, `${row.percent}%`, textStyle({ role: "display", size: RUNE_SYNTHESIS.oddsPercentSize, color: `#${(row.color === TRAIT_NONE_COLOR ? 0xc3ccd4 : row.color).toString(16).padStart(6, "0")}` }))
-      .setOrigin(0, 0.5).setStroke("#05070a", 6);
-    const room = cell - 16;
-    // 이름과 수가 칸을 넘으면 이름만 누른다 — 읽어야 하는 것은 수다.
-    squeezeTextToWidth(name, Math.max(40, room - swatchSize - 10 - percent.width - 10));
-    percent.setX(name.x + name.displayWidth + 10);
-    legend.add([name, percent]);
-    parent.add(legend);
+    const nameY = top + spot.name;
+    const name = scene.add.text(0, nameY, row.label, textStyle({ role: "emphasis", size: RUNE_SYNTHESIS.oddsNameSize, color: COLOR.ink })).setOrigin(0, 0.5);
+    // 이름이 칸을 넘으면 가로로만 누른다 — 칸마다 글자 크기가 갈리면 덜 중요한 칸처럼 읽힌다.
+    squeezeTextToWidth(name, Math.max(40, room - swatchSize - 8));
+    const nameStart = cx - (swatchSize + 8 + name.displayWidth) / 2;
+    name.setX(nameStart + swatchSize + 8);
+    const swatch = drawLayer(scene, nameStart + swatchSize / 2, nameY, slantedRect(swatchSize, swatchSize, 6), { fill: row.color, alpha: 1, edge: 0xffffff, edgeAlpha: 0.6 });
+    const percent = scene.add.text(cx, top + spot.percent, `${row.percent}%`, textStyle({ role: "display", size: RUNE_SYNTHESIS.oddsPercentSize, color: `#${(row.color === TRAIT_NONE_COLOR ? 0xc3ccd4 : row.color).toString(16).padStart(6, "0")}` }))
+      .setOrigin(0.5).setStroke("#05070a", 6);
+    squeezeTextToWidth(percent, room);
+    parent.add([swatch, name, percent]);
   });
 }
 

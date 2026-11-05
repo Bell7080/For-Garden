@@ -18,7 +18,7 @@ import { linear } from "./linear";
 export const STAGE_7_1_PRE: DialogueStory = {
   id: "stage-7-1-pre",
   startNodeId: "wake",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "wake", speaker: "", body: "눈을 뜨자 차가운 바닥 대신 누군가의 무릎이 있다. 머리 위에서 낮은 목소리가 숫자를 세고 있다.", cast: [{ id: "nodonia", slot: "center" }] },
     { id: "nodonia", speaker: "노도니아", body: "아가, 정신 들었어? 셋까지 세는 동안 숨 쉬었으니까 괜찮아. 다친 데 먼저 보자.", standing: "nodonia", act: "lean" },
@@ -31,7 +31,7 @@ export const STAGE_7_1_PRE: DialogueStory = {
 export const STAGE_7_2_POST: DialogueStory = {
   id: "stage-7-2-post",
   startNodeId: "cold",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "cold", speaker: "매디", body: "와, 여기 냉장고 엄청 크다… 아이스크림 넣으면 백 년은 가겠어요.", standing: "maddy", cast: [{ id: "maddy", slot: "left" }, { id: "meron", slot: "right" }], act: "hop" },
     { id: "frost", speaker: "", body: "성에 낀 유리문 안쪽에 손바닥 자국이 남아 있다. 바깥이 아니라 안쪽에서 찍힌 자국이다.", cue: "rumble" },
@@ -44,7 +44,7 @@ export const STAGE_7_2_POST: DialogueStory = {
 export const STAGE_7_4_POST: DialogueStory = {
   id: "stage-7-4-post",
   startNodeId: "panel",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "panel", speaker: "", body: "제어반의 마지막 칸에는 손바닥 모양의 판이 박혀 있다. 그 앞에 코마가 등을 보이고 서 있다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "koma", speaker: "코마", body: "…맨 아래 자물쇠는 사람 손이어야 열린다. 나는 그 손을 데려오라는 명령을 받았다.", standing: "koma", act: "lean" },
@@ -57,7 +57,7 @@ export const STAGE_7_4_POST: DialogueStory = {
 export const STAGE_7_5_PRE: DialogueStory = {
   id: "stage-7-5-pre",
   startNodeId: "line",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "line", speaker: "", body: "좁은 통로를 날개 망토가 가득 메운다. 이번에는 내려서지 않고 처음부터 그 자리에 서 있었다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "여기부터는 회수조가 모셔 가겠어요, 연구원님. 이번만큼은 정말 서두를게요.", standing: "ikanixia", act: "lean" },
@@ -69,7 +69,7 @@ export const STAGE_7_5_PRE: DialogueStory = {
 export const STAGE_7_5_POST: DialogueStory = {
   id: "stage-7-5-post",
   startNodeId: "fall",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "fall", speaker: "이카닉시아", body: "…후훗. 서둘렀더니 이렇게 되네요. 역시 저한테는 천천히가 맞나 봐요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "koma", slot: "right" }], act: "faint" },
     { id: "ask", speaker: "이카닉시아", body: "코마 님. 설마 명령을 거스르실 생각은 아니시죠? 같은 간부로서 묻는 거예요.", standing: "ikanixia", act: "lean" },
@@ -81,7 +81,7 @@ export const STAGE_7_5_POST: DialogueStory = {
 export const STAGE_7_7_POST: DialogueStory = {
   id: "stage-7-7-post",
   startNodeId: "found",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "found", speaker: "토리카", body: "대장님! 찾았다! 진짜 대장님이다!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], act: "hopTwice", cue: "impact" },
     { id: "dodi", speaker: "도디", body: "일지에 다 적었어요, 대장님이 사라진 시각부터 전부요! 이제 찾은 시각도 적을게요!", standing: "dodi", act: "hop" },
@@ -93,7 +93,7 @@ export const STAGE_7_7_POST: DialogueStory = {
 export const STAGE_7_8_POST: DialogueStory = {
   id: "stage-7-8-post",
   startNodeId: "wall",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "wall", speaker: "", body: "옆 벽이 안쪽으로 터져 나온다. 먼지 속에서 머리를 감싼 파치와 렉시아가 함께 뛰어든다.", cast: [{ id: "pachi", slot: "left" }, { id: "lexia", slot: "right" }], cue: "explosion" },
     { id: "lexia", speaker: "렉시아", body: "마스터, 늦어서 미안해요! 위에서부터 벽을 세 개나 뚫고 왔어요. 앞은 이제 제가 서요!", standing: "lexia", act: "hop" },
@@ -106,7 +106,7 @@ export const STAGE_7_8_POST: DialogueStory = {
 export const STAGE_7_9_POST: DialogueStory = {
   id: "stage-7-9-post",
   startNodeId: "room",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "room", speaker: "", body: "방 한가운데에 구속복째 묶인 거구가 앉아 있다. 자물쇠가 몸 곳곳에 매달려 숨 쉴 때마다 부딪힌다.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "rumble" },
     { id: "kneel", speaker: "", body: "마가사와 노아, 라자가 그 앞에 나란히 무릎을 꿇는다. 마가사가 먼저 고개를 든다.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "center" }, { id: "noa", slot: "right" }] },
@@ -123,7 +123,7 @@ export const STAGE_7_9_POST: DialogueStory = {
 export const STAGE_7_10_PRE: DialogueStory = {
   id: "stage-7-10-pre",
   startNodeId: "shove",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "shove", speaker: "", body: "묶인 어깨 하나가 코마를 벽까지 밀쳐 낸다. 자물쇠 하나가 터져 바닥을 구른다.", standing: "carno", cast: [{ id: "koma", slot: "left" }, { id: "carno", slot: "right" }], cue: "explosion" },
     { id: "carno", speaker: "카르", body: "…연구원. 비켜 설 것 없다. 손만 있으면 된다.", standing: "carno", act: "lean" },
@@ -136,7 +136,7 @@ export const STAGE_7_10_PRE: DialogueStory = {
 export const STAGE_7_10_POST: DialogueStory = {
   id: "stage-7-10-post",
   startNodeId: "last",
-  backdrop: "battlefield",
+  backdrop: "thirdBranchField",
   nodes: linear([
     { id: "last", speaker: "", body: "마지막 자물쇠가 혼자 터진다. 손바닥 판은 끝내 아무도 건드리지 않았다.", standing: "carno", cast: [{ id: "carno", slot: "center" }], cue: "explosion" },
     { id: "carno", speaker: "카르", body: "…손은 필요 없었군. 맞을수록 풀리니까.", standing: "carno", act: "nod" },

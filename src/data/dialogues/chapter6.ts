@@ -16,7 +16,7 @@ import { linear } from "./linear";
 export const STAGE_6_1_PRE: DialogueStory = {
   id: "stage-6-1-pre",
   startNodeId: "drone",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "drone", speaker: "", body: "환기구에서 작은 드론 하나가 소리 없이 내려와 연구원의 눈높이에서 멈춘다.", cast: [{ id: "morphe", slot: "center" }], cue: "rumble" },
     { id: "morphe", speaker: "모르페", body: "담당관 확인. 위까지 가는 길, 지금부터 제가 위에서 봅니다.", standing: "morphe", act: "nod" },
@@ -29,7 +29,7 @@ export const STAGE_6_1_PRE: DialogueStory = {
 export const STAGE_6_3_POST: DialogueStory = {
   id: "stage-6-3-post",
   startNodeId: "pot",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "pot", speaker: "", body: "무너진 순찰로 한구석에서 작은 불이 피어 있다. 마가사가 솥을 걸고 라자에게 그릇을 내민다.", cast: [{ id: "raja", slot: "left" }, { id: "magasa", slot: "right" }] },
     { id: "magasa", speaker: "마가사", body: "라자, 많이 먹어. 앞에 서는 사람이 제일 먼저 배고프잖아.", standing: "magasa", act: "nod" },
@@ -43,7 +43,7 @@ export const STAGE_6_3_POST: DialogueStory = {
 export const STAGE_6_4_POST: DialogueStory = {
   id: "stage-6-4-post",
   startNodeId: "wind",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "wind", speaker: "스테라", body: "선배, 바람이 하나 더 있어요. 아주 작고… 계속 떨리는 바람이요.", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "kento", slot: "right" }], act: "tremble", cue: "rumble" },
     { id: "kento", speaker: "켄토", body: "스테라, 내 뒤로. 떨리는 건 겁먹었다는 거고, 겁먹은 건 먼저 뛰어들어.", standing: "kento", act: "lean" },
@@ -55,7 +55,7 @@ export const STAGE_6_4_POST: DialogueStory = {
 export const STAGE_6_5_PRE: DialogueStory = {
   id: "stage-6-5-pre",
   startNodeId: "drop",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "drop", speaker: "", body: "그림자가 위에서 떨어진다. 땅에 닿기도 전에 손톱이 먼저 공기를 가른다.", standing: "noa", cast: [{ id: "noa", slot: "center" }], cue: "impact" },
     { id: "noa", speaker: "노아", body: "오, 오지 마! 오지 말라니까! …왜 계속 오는 건데!", standing: "noa", act: "fright" },
@@ -67,7 +67,7 @@ export const STAGE_6_5_PRE: DialogueStory = {
 export const STAGE_6_5_POST: DialogueStory = {
   id: "stage-6-5-post",
   startNodeId: "curl",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "curl", speaker: "노아", body: "…아파. 그러니까 오지 말라고 했잖아.", standing: "noa", cast: [{ id: "noa", slot: "center" }], act: "shrink" },
     { id: "magasa", speaker: "마가사", body: "우리 노아한테 뭐 하는 거예요, 연구원님? 이 아이는 재료 아니에요. 식구예요.", standing: "magasa", cast: [{ id: "noa", slot: "left" }, { id: "magasa", slot: "right" }], act: "lean" },
@@ -80,7 +80,7 @@ export const STAGE_6_5_POST: DialogueStory = {
 export const STAGE_6_7_POST: DialogueStory = {
   id: "stage-6-7-post",
   startNodeId: "glass",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "glass", speaker: "", body: "깨진 면회 창 너머에 의자 두 개가 마주 놓여 있다. 한쪽 의자에만 손톱자국이 깊다.", cast: [{ id: "ikanixia", slot: "left" }, { id: "neuri", slot: "right" }] },
     { id: "ika", speaker: "이카닉시아", body: "부대장님이 깨어나시면 저희도 줄을 서야겠죠. 그분 앞에서는 간부도 조원도 한 줄이니까요.", standing: "ikanixia", act: "lean" },
@@ -93,7 +93,7 @@ export const STAGE_6_7_POST: DialogueStory = {
 export const STAGE_6_8_POST: DialogueStory = {
   id: "stage-6-8-post",
   startNodeId: "record",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "record", speaker: "케리스", body: "선배, 관제 기록이에요. 최하층 구속실, 수감 개체 하나. 이름 칸에는… 「카르」.", standing: "keris", cast: [{ id: "keris", slot: "left" }, { id: "irna", slot: "right" }], act: "lean" },
     { id: "keris2", speaker: "케리스", body: "다른 칸은 다 번호인데, 이 칸만 이름이에요. 지운 자국 위에 다시 적혀 있어요.", standing: "keris", act: "shrink" },
@@ -106,7 +106,7 @@ export const STAGE_6_8_POST: DialogueStory = {
 export const STAGE_6_10_PRE: DialogueStory = {
   id: "stage-6-10-pre",
   startNodeId: "deep",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "deep", speaker: "", body: "회랑의 끝, 위로 오르는 계단 앞에 둘이 서 있다. 하나는 솥을 내려놓았고, 하나는 그 등 뒤에 붙어 있다.", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], cue: "rumble" },
     { id: "magasa", speaker: "마가사", body: "연구원님, 위로는 못 가요. 부대장님이 아래에서 기다리시거든요.", standing: "magasa", act: "lean" },
@@ -119,7 +119,7 @@ export const STAGE_6_10_PRE: DialogueStory = {
 export const STAGE_6_10_POST: DialogueStory = {
   id: "stage-6-10-post",
   startNodeId: "fall",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "fall", speaker: "마가사", body: "아하… 둘이서도 안 되네. 노아, 괜찮아?", standing: "magasa", cast: [{ id: "magasa", slot: "left" }, { id: "noa", slot: "right" }], act: "faint" },
     { id: "noa", speaker: "노아", body: "…응. 근데 바닥이, 바닥이 이상해.", standing: "noa", act: "fright" },

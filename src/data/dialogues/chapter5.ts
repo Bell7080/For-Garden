@@ -21,7 +21,7 @@ const REMOTE = (voice: "seira" | "luka", other: DialogueStandingAsset): readonly
 export const STAGE_5_1_PRE: DialogueStory = {
   id: "stage-5-1-pre",
   startNodeId: "dark",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "dark", speaker: "", body: "계단 끝은 불이 하나도 없다. 벽마다 긁힌 자국이 숫자처럼 줄지어 있다.", cast: [{ id: "deina", slot: "center" }], cue: "rumble" },
     { id: "deina", speaker: "데이", body: "연구원님, 이 표시 우리 거 아니야! 지부 사람이 남긴 경고야. 「열지 말 것」이래.", standing: "deina", act: "lean" },
@@ -35,7 +35,7 @@ export const STAGE_5_1_PRE: DialogueStory = {
 export const STAGE_5_3_POST: DialogueStory = {
   id: "stage-5-3-post",
   startNodeId: "trick",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "trick", speaker: "델로피", body: "짠~ 방금 그 서랍에서 사라졌던 서류가 여기서 나타났습니다! …어, 근데 이거 장난칠 서류가 아니네요.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }, { id: "maki", slot: "right" }], act: "hop" },
     { id: "list", speaker: "", body: "누렇게 바랜 표지에 「수감 명단 — 공멸 포획 개체」. 이름 대신 번호와 무게만 적혀 있다." },
@@ -48,7 +48,7 @@ export const STAGE_5_3_POST: DialogueStory = {
 export const STAGE_5_4_POST: DialogueStory = {
   id: "stage-5-4-post",
   startNodeId: "panel",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "panel", speaker: "", body: "복도 끝 제어반 앞에 가리개를 쓴 그림자가 서 있다. 손가락이 마지막 단추 위에서 멈춘다.", standing: "koma", cast: [{ id: "koma", slot: "center" }], cue: "alarm" },
     { id: "koma", speaker: "코마", body: "…명령이다.", standing: "koma", act: "lean" },
@@ -62,7 +62,7 @@ export const STAGE_5_4_POST: DialogueStory = {
 export const STAGE_5_5_PRE: DialogueStory = {
   id: "stage-5-5-pre",
   startNodeId: "room",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "room", speaker: "", body: "바닥에 분필로 그은 줄이 겹겹이다. 감방 안에서 누가 누구 앞에 서는지 정하던 자리다.", standing: "raja", cast: [{ id: "raja", slot: "center" }], cue: "rumble" },
     { id: "raja", speaker: "라자", body: "새로 왔으면 서열부터 정한다. 덤벼.", standing: "raja", act: "lean" },
@@ -74,7 +74,7 @@ export const STAGE_5_5_PRE: DialogueStory = {
 export const STAGE_5_5_POST: DialogueStory = {
   id: "stage-5-5-post",
   startNodeId: "down",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "down", speaker: "라자", body: "…서열은 너희가 위다. 오늘만.", standing: "raja", cast: [{ id: "raja", slot: "center" }], act: "faint" },
     { id: "hum", speaker: "", body: "더 깊은 곳에서 콧노래가 올라온다. 냄비 뚜껑이 달그락거리는 소리도 섞여 있다.", cue: "rumble" },
@@ -87,7 +87,7 @@ export const STAGE_5_5_POST: DialogueStory = {
 export const STAGE_5_6_POST: DialogueStory = {
   id: "stage-5-6-post",
   startNodeId: "water",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "water", speaker: "모사나", body: "물이 허리까지 찹니다. 당신, 제 줄을 놓지 마십시오.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }], act: "lean", cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "어머, 라자 님. 오랜만이에요. 갇혀 계신 동안 회수조는 한 번도 잊은 적이 없답니다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
@@ -100,7 +100,7 @@ export const STAGE_5_6_POST: DialogueStory = {
 export const STAGE_5_8_POST: DialogueStory = {
   id: "stage-5-8-post",
   startNodeId: "trays",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "trays", speaker: "", body: "배식구마다 빈 쟁반이 쌓여 있다. 그런데 몇 칸에는 아직 따뜻한 국그릇이 놓여 있다.", cast: [{ id: "deina", slot: "left" }, { id: "maki", slot: "right" }] },
     { id: "radio", speaker: "스피나", body: "…나이트 기어는 지부 아래를 다 안다고 믿었다. 이 층은 몰랐다. 인양할 것이 아니라 묻어 둔 것이라서다.", standing: "seira", cast: REMOTE("seira", "deina"), act: "shrink" },
@@ -113,7 +113,7 @@ export const STAGE_5_8_POST: DialogueStory = {
 export const STAGE_5_9_POST: DialogueStory = {
   id: "stage-5-9-post",
   startNodeId: "chains",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "chains", speaker: "", body: "끊어진 족쇄들이 바닥에 흩어져 있다. 그 사이로 작은 그림자 하나가 몸을 웅크린 채 이쪽을 본다.", cast: [{ id: "noa", slot: "center", veiled: true }], cue: "impact" },
     { id: "noa", speaker: "???", body: "오, 오지 마… 오지 말라니까…!", standing: "noa", act: "tremble" },
@@ -126,7 +126,7 @@ export const STAGE_5_9_POST: DialogueStory = {
 export const STAGE_5_10_PRE: DialogueStory = {
   id: "stage-5-10-pre",
   startNodeId: "kitchen",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "kitchen", speaker: "", body: "큰 솥에서 김이 오른다. 족쇄를 단 발로 박자를 맞추며 누군가 국자를 젓고 있다.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], cue: "rumble" },
     { id: "magasa", speaker: "마가사", body: "어서 와요, 연구원님. 마침 오늘 들어온 재료 중에 제일 귀한 손님이시네.", standing: "magasa", act: "lean" },
@@ -139,7 +139,7 @@ export const STAGE_5_10_PRE: DialogueStory = {
 export const STAGE_5_10_POST: DialogueStory = {
   id: "stage-5-10-post",
   startNodeId: "laugh",
-  backdrop: "battlefield",
+  backdrop: "prisonField",
   nodes: linear([
     { id: "laugh", speaker: "마가사", body: "아하하… 손맛 좋네요, 연구원님 쪽 사람들. 오늘은 제가 설거지할게요.", standing: "magasa", cast: [{ id: "magasa", slot: "center" }], act: "faint" },
     { id: "hint", speaker: "마가사", body: "그런데요, 맨 아래 부대장님 자물쇠는 사람 손이어야 열린대요. 연구원님 같은 진짜 사람 손.", standing: "magasa", act: "lean" },

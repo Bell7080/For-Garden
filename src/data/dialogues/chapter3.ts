@@ -23,7 +23,7 @@ const REMOTE_PAIR = (voice: "seira" | "luka", other: "torika" | "dodi" | "lexia"
 export const STAGE_3_1_PRE: DialogueStory = {
   id: "stage-3-1-pre",
   startNodeId: "land",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "land", speaker: "", body: "무릎 꿇은 코마의 뒤로 찢어진 날개 망토가 천천히 내려선다. 서두르는 기색이라고는 없다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
     { id: "greet", speaker: "이카닉시아", body: "수고하셨어요, 코마 님. 같은 간부끼리 이런 자리에서 뵙게 되다니, 조금 민망하네요.", standing: "ikanixia", act: "lean" },
@@ -43,7 +43,7 @@ export const STAGE_3_1_PRE: DialogueStory = {
 export const STAGE_3_4_POST: DialogueStory = {
   id: "stage-3-4-post",
   startNodeId: "radio",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "radio", speaker: "스피나", body: "…무전 확인. 3번 통로의 조명을 내렸다. 눈이 적응하면 오른쪽으로 빠져라.", standing: "seira", cast: REMOTE_PAIR("seira", "torika"), act: "nod", cue: "alarm" },
     { id: "luka", speaker: "루카", body: "문 잠금은 내가 풀어 놨어. 대신 소리는 내지 마. 쟤네 귀가 좋거든.", standing: "luka", cast: REMOTE_PAIR("luka", "dodi"), act: "lean" },
@@ -56,7 +56,7 @@ export const STAGE_3_4_POST: DialogueStory = {
 export const STAGE_3_5_PRE: DialogueStory = {
   id: "stage-3-5-pre",
   startNodeId: "block",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "block", speaker: "", body: "통로 한복판에 소매로 얼굴을 반쯤 가린 아트라가 서 있다. 한 걸음도 비키지 않는다.", standing: "atra", cast: [{ id: "atra", slot: "center" }], cue: "rumble" },
     { id: "stutter", speaker: "아트라", body: "그, 그러니까… 같이 가, 가 주시면… 아프지 않아요.", standing: "atra", act: "tremble" },
@@ -69,7 +69,7 @@ export const STAGE_3_5_PRE: DialogueStory = {
 export const STAGE_3_5_POST: DialogueStory = {
   id: "stage-3-5-post",
   startNodeId: "down",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "down", speaker: "아트라", body: "…아, 아프지 않아요. 지, 진짜… 지네는 마디가 많아서… 괜, 괜찮아요…", standing: "atra", cast: [{ id: "atra", slot: "center" }], act: "faint" },
     { id: "koma", speaker: "코마", body: "…그만 일어나라.", standing: "koma", cast: [{ id: "atra", slot: "left" }, { id: "koma", slot: "right" }], act: "lean" },
@@ -82,7 +82,7 @@ export const STAGE_3_5_POST: DialogueStory = {
 export const STAGE_3_6_POST: DialogueStory = {
   id: "stage-3-6-post",
   startNodeId: "dead",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "dead", speaker: "", body: "막다른 길. 눈앞에는 격벽이 천장까지 서 있다. 등 뒤에서는 회수조의 발소리가 가까워진다.", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "right" }], cue: "alarm" },
     { id: "mir", speaker: "미르", body: "연구원님~ 거기 계셨네요! 같이 가요! 저희가 모실게요!", standing: "mir", cast: [{ id: "mir", slot: "center" }], act: "hop" },
@@ -97,7 +97,7 @@ export const STAGE_3_6_POST: DialogueStory = {
 export const STAGE_3_8_POST: DialogueStory = {
   id: "stage-3-8-post",
   startNodeId: "ambush",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "ambush", speaker: "펄시", body: "깜짝 선물이야, 연구원! 받아!", standing: "pulsi", cast: [{ id: "pulsi", slot: "right" }, { id: "torika", slot: "left" }], act: "hop", cue: "impact" },
     { id: "block", speaker: "엘라", body: "…연구원님, 뒤로. 이쪽은 제가 막겠습니다.", standing: "ella", cast: [{ id: "ella", slot: "center" }], act: "lean" },
@@ -110,7 +110,7 @@ export const STAGE_3_8_POST: DialogueStory = {
 export const STAGE_3_9_POST: DialogueStory = {
   id: "stage-3-9-post",
   startNodeId: "split",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "split", speaker: "네우리", body: "어흠, 그건 그렇고… 어머, 왼쪽에서 오는 저 소리는 뭘까요?", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "mir", slot: "right" }], act: "lean", cue: "rumble" },
     { id: "yuti", speaker: "유티", body: "보, 보스! 아니 연구원님! 제가 옆에서 갈라 놓을게요!", standing: "yuti", cast: [{ id: "yuti", slot: "center" }], act: "bounce", cue: "impact" },
@@ -123,7 +123,7 @@ export const STAGE_3_9_POST: DialogueStory = {
 export const STAGE_3_10_PRE: DialogueStory = {
   id: "stage-3-10-pre",
   startNodeId: "hall",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "hall", speaker: "", body: "회수 구간의 마지막 홀. 높은 천장에서 날개 그림자가 천천히 내려온다.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "여기까지 오셨군요, 연구원님. 이제 쫓는 시간은 끝이에요. 제 앞에 서 주세요.", standing: "ikanixia", act: "lean" },
@@ -137,7 +137,7 @@ export const STAGE_3_10_PRE: DialogueStory = {
 export const STAGE_3_10_POST: DialogueStory = {
   id: "stage-3-10-post",
   startNodeId: "fall",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "fall", speaker: "이카닉시아", body: "…후훗. 오늘은 여기까지로 해 두죠. 아쉽지만 서두를 이유는 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
     { id: "wing", speaker: "", body: "날개 망토가 천천히 허공으로 올라간다. 회수조의 그림자가 하나씩 따라 사라진다.", standing: "ikanixia", leave: "blastOff", cast: [] },

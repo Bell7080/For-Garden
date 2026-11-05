@@ -14,7 +14,7 @@ import { linear } from "./linear";
 export const STAGE_4_1_PRE: DialogueStory = {
   id: "stage-4-1-pre",
   startNodeId: "radio",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "radio", speaker: "", body: "승강장 스피커에서 낮은 안내가 흐른다. 「합동 추격 개시. 대상 확보 후 코마 조 복귀.」", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], cue: "alarm" },
     { id: "ika", speaker: "이카닉시아", body: "두 무리가 한 선로에 서는 일이 흔하지는 않죠. 서두를 이유는 없지만, 이번에는 누구도 놓치지 않을 거예요.", standing: "ikanixia", act: "lean" },
@@ -26,7 +26,7 @@ export const STAGE_4_1_PRE: DialogueStory = {
 export const STAGE_4_3_PRE: DialogueStory = {
   id: "stage-4-3-pre",
   startNodeId: "whisper",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "whisper", speaker: "토비", body: "야, 우리 진심으로 싸우는 거 아니다? …아니, 진심으로 해야 돼. 대충 하면 또 끌려가.", standing: "toby", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "shake" },
     { id: "ripa", speaker: "리파", body: "뒤에서 미르가 세고 있어. 몇 번 맞았는지까지.", standing: "ripa", act: "shrink" },
@@ -39,7 +39,7 @@ export const STAGE_4_3_PRE: DialogueStory = {
 export const STAGE_4_4_PRE: DialogueStory = {
   id: "stage-4-4-pre",
   startNodeId: "block",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "block", speaker: "", body: "봉인된 갱도 앞에 아트라와 아모가 나란히 서 있다. 그 뒤로 가리개를 쓴 그림자가 지나간다.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "amo", slot: "right" }], cue: "rumble" },
     { id: "atra", speaker: "아트라", body: "아, 안 비켜요… 명, 명령이라서… 죄, 죄송해요…", standing: "atra", act: "tremble" },
@@ -52,7 +52,7 @@ export const STAGE_4_4_PRE: DialogueStory = {
 export const STAGE_4_6_PRE: DialogueStory = {
   id: "stage-4-6-pre",
   startNodeId: "neuri",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "neuri", speaker: "네우리", body: "코마 님, 이번에는 꼭 성공해 주세요. 저희 간부님 체면도 걸려 있거든요.", standing: "neuri", cast: [{ id: "koma", slot: "left" }, { id: "neuri", slot: "right" }], act: "nod" },
     { id: "koma", speaker: "코마", body: "…같은 간부다. 네 대장한테 그렇게 전해라.", standing: "koma", act: "lean" },
@@ -66,7 +66,7 @@ export const STAGE_4_6_PRE: DialogueStory = {
 export const STAGE_4_8_POST: DialogueStory = {
   id: "stage-4-8-post",
   startNodeId: "snap",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "snap", speaker: "", body: "승강기 줄이 끊어지는 소리. 바닥 표시등이 깜빡이며 아래로, 아래로 숫자를 지워 나간다.", cast: [{ id: "lexia", slot: "left" }, { id: "torika", slot: "right" }], cue: "explosion" },
     { id: "lexia", speaker: "렉시아", body: "마스터, 손잡이 꽉 잡아요! 제가 앞에서 받을게요!", standing: "lexia", act: "shake" },
@@ -79,7 +79,7 @@ export const STAGE_4_8_POST: DialogueStory = {
 export const STAGE_4_10_PRE: DialogueStory = {
   id: "stage-4-10-pre",
   startNodeId: "end",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "end", speaker: "", body: "사령실 문이 열린다. 가리개를 쓴 코마와 날개 망토의 이카닉시아가 한 걸음 사이를 두고 서 있다.", standing: "ikanixia", cast: [{ id: "koma", slot: "left" }, { id: "ikanixia", slot: "right" }], cue: "rumble" },
     { id: "ika", speaker: "이카닉시아", body: "코마 님이 앞에 서 주시니 든든하네요. 저는 뒤에서 천천히 하겠습니다.", standing: "ikanixia", act: "nod" },
@@ -91,7 +91,7 @@ export const STAGE_4_10_PRE: DialogueStory = {
 export const STAGE_4_10_POST: DialogueStory = {
   id: "stage-4-10-post",
   startNodeId: "retreat",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "retreat", speaker: "이카닉시아", body: "…이렇게까지 하셨는데도 닿지 않다니. 오늘은 물러나겠습니다. 정말, 서두를 이유가 없으니까요.", standing: "ikanixia", cast: [{ id: "ikanixia", slot: "center" }], act: "lean" },
     { id: "wing", speaker: "", body: "날개 망토가 허공으로 올라가고, 회수조의 그림자가 하나씩 선로 너머로 사라진다.", standing: "ikanixia", leave: "blastOff", cast: [] },

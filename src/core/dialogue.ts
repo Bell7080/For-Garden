@@ -84,7 +84,11 @@ export type DialogueCue = "rumble" | "alarm" | "explosion" | "impact";
 export type DialogueLeave = "blastOff";
 
 /** 이야기의 배경. 키와 원화의 대응은 `dialogueStageLayout.ts`의 표가 갖는다. */
-export type DialogueBackdrop = "train" | "battlefield" | "relics";
+/**
+ * 장마다 싸우는 무대가 다르므로 대사 무대도 그 장의 전장을 쓴다 — `battlefield`(1·2장) · `deepField`(3·4장 심층 정원·합류선) ·
+ * `prisonField`(5·6장 감금동·격리 회랑) · `thirdBranchField`(7장 최하층). 원화는 그 장의 전투 전장(`stageFieldBackground`)과 같다.
+ */
+export type DialogueBackdrop = "train" | "battlefield" | "deepField" | "prisonField" | "thirdBranchField" | "relics";
 
 /**
  * 선택 결과는 실행 함수가 아니라 제한된 명령만 가진다.

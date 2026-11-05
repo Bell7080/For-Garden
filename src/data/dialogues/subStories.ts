@@ -81,7 +81,7 @@ export const STAGE_2_9_SECOND_CHASE: DialogueStory = {
 export const STAGE_3_5_BEHIND_SLEEVE: DialogueStory = {
   id: "stage-3-5-behind-sleeve",
   startNodeId: "hide",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "hide", speaker: "", body: "전투가 끝난 폐관. 소매 뒤에서 눈만 내놓은 아트라가 연구원을 올려다본다. 쓰러지지도, 물러서지도 않는다.", standing: "atra", cast: SOLO("atra") },
     { id: "list", speaker: "아트라", body: "그, 그게… 저, 저는 목록이 있어요. 마음에 드는 사람… 이름 적는 목록.", standing: "atra", act: "tremble" },
@@ -97,7 +97,7 @@ export const STAGE_3_5_BEHIND_SLEEVE: DialogueStory = {
 export const STAGE_3_8_APOLOGY: DialogueStory = {
   id: "stage-3-8-apology",
   startNodeId: "wall",
-  backdrop: "battlefield",
+  backdrop: "deepField",
   nodes: linear([
     { id: "wall", speaker: "", body: "파치가 뚫어 놓은 벽의 파편 더미 곁. 엘라가 양손에 서류를 든 채 한숨을 쉰다.", standing: "ella", cast: [{ id: "ella", slot: "left" }, { id: "pachi", slot: "right" }], act: "lean" },
     { id: "report", speaker: "엘라", body: "연구원님, 벽 건은 제가 시말서로 정리해 두겠습니다. 이번 달 열두 번째 장이에요.", standing: "ella", act: "nod" },

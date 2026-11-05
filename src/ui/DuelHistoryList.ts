@@ -46,8 +46,9 @@ export function paintDuelHistory(scene: Phaser.Scene, parent: Phaser.GameObjects
   // 마스크는 그것이 자르는 목록과 같은 목숨을 산다.
   list.once(Phaser.GameObjects.Events.DESTROY, () => { list.clearMask(true); maskShape.destroy(); });
   const clip = { left: BASE_WIDTH / 2 - ROW_WIDTH / 2, right: BASE_WIDTH / 2 + ROW_WIDTH / 2, top: H.top, bottom: H.bottom };
+  // 입력면을 꺼 두면 안 된다 — 끌기 판정(`attachDragScroll`의 root)은 누른 자리의 맨 위 개체가 이 화면 안인지를 보는데,
+  // 줄에는 손을 받는 개체가 없어 판정이 비고, 그러면 스크롤이 막혀 목록이 내려가지 않았다.
   const hit = addClippedHit(scene, parent, BASE_WIDTH / 2, H.top + viewport / 2, ROW_WIDTH, viewport, () => clip, { useHandCursor: false });
-  hit.disableInteractive();
   let offset = 0;
   const move = (delta: number): void => { offset = Phaser.Math.Clamp(offset + delta, minY, 0); list.y = H.top + offset; };
   attachDragScroll(scene, { owner: hit, root: parent, bounds: () => new Phaser.Geom.Rectangle(clip.left, clip.top, clip.right - clip.left, clip.bottom - clip.top), onDelta: move });

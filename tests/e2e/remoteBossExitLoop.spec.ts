@@ -69,14 +69,11 @@ for (const mode of ['raid','expedition'] as const) test(`${mode}: 실제 일시�
     }
     expect(fixture.calls.filter(c=>c.status===503)).toHaveLength(2);
     expect(fixture.calls.filter(c=>c.status!==200&&c.status!==503)).toEqual([]);expect(errors).toEqual([]);
-    // 원정 전용 최종판의 보조 조작까지 생성된 뒤 캡처하고 실제 로비 복귀를 누른다.
-    if(mode==='expedition') await expect.poll(()=>page.evaluate(()=>{
-      const scene=(window as any).__BOSS_SCENE;
-      return scene.children.list.some((v:any)=>v.labelText?.text==='로비로'&&v.bg?.input?.enabled);
-    })).toBe(true);
+    // 결과판은 화면 아무 곳이나 눌러 닫힌다 — 「로비로」 버튼을 걷어 낸 뒤로는 밑동의 「화면을 눌러 확인」 자리가 로비로 가는 길이다.
     await captureGame(page,info.outputPath(`${mode}-partial-confirmed.png`));
     if(mode==='expedition'){
-      await clickButton(page,'로비로');
+      const lobby=(await page.evaluate(()=>window.__PF_DEBUG?.bossResult?.lobby))!;
+      await tap(page,lobby.x,lobby.y);
       await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.scene),{timeout:45000}).toBe('lobby');
       expect(fixture.state().expedition.run).toBeNull();
     }

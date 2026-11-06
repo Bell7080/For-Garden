@@ -4,6 +4,8 @@ import { withBusy } from "../ui/BusyOverlay";
 import { t, type TextKey } from "../i18n";
 import { gameApi } from "../api/FakeServer";
 import { guildApi } from "../api/guildApi";
+import { GuildApiError } from "../api/guildContracts";
+import { reportError } from "../managers/ErrorReporter";
 import type { ProductDto, PurchaseProductResponse } from "../api/contracts";
 import { formatCurrency } from "../core/formatCurrency";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
@@ -488,8 +490,21 @@ export class ShopScene extends Phaser.Scene {
     this.gridHolder.setMask(this.viewportMask.createGeometryMask());
   }
 
-  /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
+  /**
+   * 목록을 다시 읽는다. **실패를 삼키지 않고 잡는다** — `void`로 흘려 보내면 길드를 떠난 뒤의 길드 상점처럼
+   * 응답이 거절될 때 잡히지 않은 예외가 되어 오류 기록에도 남지 않는다. 길드에 없으면 길드 화면(가입 목록)으로 보낸다.
+   */
   private async refresh(): Promise<void> {
+    try {
+      await this.loadProducts();
+    } catch (error) {
+      reportError("shop.refresh", error, { storefront: this.storefront });
+      if (this.scene.isActive() && error instanceof GuildApiError && error.code === "NOT_IN_GUILD") startScene(this, "guild");
+    }
+  }
+
+  /** 서버의 storefront 경계를 신뢰하되 독립 상점 씬에서는 shop 상품만 렌더링한다. */
+  private async loadProducts(): Promise<void> {
     if (this.storefront === "guild") {
       // 길드 상품은 코인이 길드원 행에 있어 상품 표가 아니라 길드 상점 상태에서 같은 모양으로 옮긴다.
       const shop = await withBusy(this, guildApi.getShop());

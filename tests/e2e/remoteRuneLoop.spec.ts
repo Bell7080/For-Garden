@@ -13,15 +13,17 @@ test('세공 응답 도중 누른 버튼은 살아 있고, 닫은 창의 대기 
  await sourceScene(page,"window.__OPEN_CRAFT(this.game.scene.getScene('title'));");
  await expect.poll(()=>page.evaluate(()=>window.__PF_DEBUG?.popupTitles)).toContain('룬 세공');
  const layout=runeCraftLayout({mainCount:2,subCount:0}),top=RUNE_CRAFT_PANEL.centerY-layout.height/2;
- await tap(page,270,top+RUNE_CRAFT_PANEL.firstMainY);await tap(page,540,top+layout.buttonY);
+ // 세공 버튼은 일괄 세공과 나란히 서서 가운데에서 왼쪽으로 비켜 있다(`button.pairOffset`).
+ const craftX=540-RUNE_CRAFT_PANEL.button.pairOffset;
+ await tap(page,270,top+RUNE_CRAFT_PANEL.firstMainY);await tap(page,craftX,top+layout.buttonY);
  await expect.poll(()=>page.evaluate(()=>(window as any).__CRAFT.calls)).toBe(1);
  // 첫 응답이 돌아오는 동안 같은 버튼을 누른 채 유지한다.
- const point=gamePoint(await canvasBox(page),540,top+layout.buttonY);await page.mouse.move(point.x,point.y);await page.mouse.down();
+ const point=gamePoint(await canvasBox(page),craftX,top+layout.buttonY);await page.mouse.move(point.x,point.y);await page.mouse.down();
  await page.evaluate(()=>{const w=window as any;const found:any[]=[];const walk=(v:any)=>{if(v.constructor.name==='Button'&&v.labelText?.text==='세공')found.push(v);for(const c of v.list??[])walk(c);};walk({list:w.__CRAFT.scene.children.list});w.__CRAFT.button=found.at(-1);w.__CRAFT.resolve();});
  await expect.poll(()=>page.evaluate(async()=>{const root='/src/';const m=await import(/* @vite-ignore */root+'state/session.ts');return Object.values(m.session.runeInventory[0].enhancementHistory).flat().length;})).toBe(1);
  expect(await page.evaluate(()=>(window as any).__CRAFT.button.active)).toBe(true);
  await page.mouse.up();await expect.poll(()=>page.evaluate(()=>(window as any).__CRAFT.calls)).toBe(2);
- await tap(page,540,top+layout.buttonY); // 3번째는 대기열
+ await tap(page,craftX,top+layout.buttonY); // 3번째는 대기열
  await page.evaluate(()=>(window as any).__CRAFT.popups.closeTop());
  await page.evaluate(()=>(window as any).__CRAFT.resolve());
  await expect.poll(()=>page.evaluate(async()=>{const root='/src/';const m=await import(/* @vite-ignore */root+'state/session.ts');return Object.values(m.session.runeInventory[0].enhancementHistory).flat().length;})).toBe(2);

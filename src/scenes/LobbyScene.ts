@@ -12,6 +12,7 @@ import Phaser from "phaser";
 import { shapeClipMask } from "../ui/popupArt";
 import type { PuppetCreature } from "../puppets/assets";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
+import { SORTIE_ENTRY_SPOT, SORTIE_MENU_PANEL } from "../ui/sortieMenuLayout";
 import { bindDebugReadyLifecycle, setDebugReady, setDebugScene, setDebugStorefrontControls } from "../debug";
 import { getRelic } from "../data/relics";
 import { spawnPuppet } from "../puppets/assets";
@@ -130,7 +131,7 @@ const ATTENDANCE_AUTO_POPUP = import.meta.env?.MODE !== "test";
 const ATTENDANCE_AUTO_WAIT = { stepMs: 400, tries: 60 } as const;
 
 const SORTIE_MENU = {
-  panel: { width: 980, height: 1330, offsetY: -75 },
+  panel: SORTIE_MENU_PANEL,
   shop: { gap: 28, pad: 20, cell: SIDE_SHOP.screen.size, cellGap: 16 },
   motionDelay: 2600,
   dimAlpha: 0.42,
@@ -704,7 +705,7 @@ export class LobbyScene extends Phaser.Scene {
       this.sortieSdLayer = this.add.container(0, 0).setName("sortie-entry-sd").setDepth(SORTIE_SD_DEPTH);
       const entries: SortieEntry[] = [
         {
-          y: -455, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
+          y: SORTIE_ENTRY_SPOT.story.y, width: 800, height: 220, label: t("lobby.sortie.story"), status: t("lobby.sortie.story.status"), artKey: "content-story-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: ENEMY_SD_ASSETS[0], sdScale: 0.9,
           onClick: () => { close(); startScene(this, "stageMap"); },
         },
@@ -712,18 +713,18 @@ export class LobbyScene extends Phaser.Scene {
         // 두 던전은 각자의 전용 원화를 칩 실루엣에 물려 세운다. 같은 그림을 나눠 쓰면 나란히 선
         // 두 버튼이 한 콘텐츠의 두 갈래처럼 읽힌다.
         {
-          x: -204, y: -169, width: 392, height: 200, content: "cakeOperation", label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
+          x: SORTIE_ENTRY_SPOT.cake.x, y: SORTIE_ENTRY_SPOT.cake.y, width: 392, height: 200, content: "cakeOperation", label: t("lobby.sortie.cake"), labelSize: 38, status: t("lobby.sortie.cake.status"), split: "left",
           artKey: "content-cake-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "cakeOperation"); },
         },
         {
-          x: 204, y: -169, width: 392, height: 200, content: "bounty", label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
+          x: SORTIE_ENTRY_SPOT.bounty.x, y: SORTIE_ENTRY_SPOT.bounty.y, width: 392, height: 200, content: "bounty", label: t("lobby.sortie.bounty"), labelSize: 38, status: t("lobby.sortie.bounty.status"), split: "right",
           artKey: "content-bounty-entry", accentColor: EXCHANGE_BLUE, accentTextColor: "#9fd0f0",
           onClick: () => { close(); startScene(this, "bounty"); },
         },
         // 레이드는 일일 던전 아래에서 독립된 전체 폭 콘텐츠로 읽히게 한다.
         {
-          content: "raid", y: 107, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
+          content: "raid", y: SORTIE_ENTRY_SPOT.raid.y, width: 800, height: 200, label: t("lobby.sortie.raid"), status: t("lobby.sortie.raid.status"),
           artKey: "content-raid-entry",
           // 지금 월드 폭주에 서 있는 보스가 왼쪽에 선다(스토리 칸과 같은 쪽·같은 크기). 서버와 같은 날짜 키로 구한다.
           sd: battleAssetFor(raidWorldBossId(raidSeasonKey(new Date()))),
@@ -733,12 +734,12 @@ export class LobbyScene extends Phaser.Scene {
         // 전용 프리팹이 Content2_001 원화, 주황 출격 위계, 확대 피드백을 한 입력면으로 유지한다.
         // 원정만 SD가 오른쪽에 서고 글자가 왼쪽 아래로 간다 — 20층 보스가 판 밖을 보는 자리다.
         {
-          content: "expedition", y: 398, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
+          content: "expedition", y: SORTIE_ENTRY_SPOT.expedition.y, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
         // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 4-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
         {
-          content: "ancient", y: 689, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
+          content: "ancient", y: SORTIE_ENTRY_SPOT.ancient.y, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,
           onClick: () => { close(); startScene(this, "ancientStrata"); },
         },

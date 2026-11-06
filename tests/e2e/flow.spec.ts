@@ -18,6 +18,9 @@ import { BATTLE_SPEEDS } from "../../src/core/battleControls";
 import { staminaPopupLayout, STAMINA_CELL } from "../../src/ui/staminaPopupLayout";
 import { currencyGuide } from "../../src/data/currencyGuide";
 import { CONTENT_STAMINA_COSTS } from "../../src/data/contentCosts";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const STORY_ENTRY = sortieEntryScreenPoint("story");
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -87,7 +90,7 @@ async function enterParty(page: Page, prepare?: Parameters<typeof startAfterOpen
   // 선택판은 SD를 읽어 오므로 열릴 때까지 기다린 뒤 누른다 — 열리기 전에 누르면 허공을 친다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
   // 출격 선택판에서 스토리를 골라 기존 메인 작전 지도로 이어 간다.
-  await tap(page, BASE_WIDTH / 2, 550);
+  await tap(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도는 열려 있는 가장 뒤쪽 스테이지를 이미 골라 둔다. 출전만 누르면 편성으로 넘어간다.
@@ -342,9 +345,12 @@ test("관찰 일지는 발굴 기록을 접어 두고 질문을 옆쪽으로 넘
 test("출전 전 지도와 편성에서도 같은 적 분석창이 열린다", async ({ page }) => {
   await startAfterOpening(page);
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  // 로비가 서고 출격판이 열린 뒤에 누른다 — 기다리지 않으면 들어오는 연출 중의 누름이 허공을 친다.
+  await expect.poll(() => scene(page)).toBe("lobby");
   await tap(page, ...SORTIE);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
   // 출격 선택판은 스토리와 원정을 분리하므로 지도 검증은 스토리를 명시해 들어간다.
-  await tap(page, BASE_WIDTH / 2, 550);
+  await tap(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 지도의 적 편성 팝업에서 첫 칸을 누른다. 성장 입력이 없는 적 전용 창이 떠야 한다.

@@ -5,6 +5,9 @@ import { captureGame, tap, tapUntil } from "./canvasInput";
 import { settingsTabX } from "../../src/ui/settingsLayout";
 import { LOBBY_RAIL_BOUNDS } from "../../src/ui/lobbyLayout";
 import { GUILD_EDITOR, GUILD_SCREEN, guildEditorSpots, guildSwatchSpot } from "../../src/ui/guildLayout";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const STORY_ENTRY = sortieEntryScreenPoint("story");
 
 test("영어 길드 배지는 목록에서 모양과 색을 골라도 편집창을 유지한다", async ({ page }, testInfo) => {
   await startAfterOpening(page, (saved) => {
@@ -94,6 +97,8 @@ test.describe(`${language} 화면 훑기`, () => {
     await startAfterOpening(page, (session) => {
       session.settings.game.language = language;
       session.wallet.gems = 9000;
+      // 연구소는 1-5를 깨야 열린다(CONTENT_STAGE_UNLOCKS).
+      session.cleared.add("1-5");
     });
     await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
     await expect.poll(() => scene(page)).toBe("lobby");
@@ -114,7 +119,7 @@ test.describe(`${language} 화면 훑기`, () => {
     await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
     await expect.poll(() => scene(page)).toBe("lobby");
     await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-    await tap(page, BASE_WIDTH / 2, 550);
+    await tap(page, STORY_ENTRY.x, STORY_ENTRY.y);
     await expect.poll(() => scene(page)).toBe("stageMap");
     await captureGame(page, `${OUT}/${language}/08-stageMap.png`);
     await tapUntil(page, BASE_WIDTH / 2, BASE_HEIGHT - 180, async () => (await scene(page)) === "party");

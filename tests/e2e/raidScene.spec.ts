@@ -5,6 +5,9 @@ import { captureGame, tap, waitForDebugState } from "./canvasInput";
 import { RAID_ACTIONS, RAID_BOSS_PICK, RAID_BOSS_SPOT, RAID_DIFFICULTY_PICK, RAID_LIST_CHROME, raidBossPickHeight, raidLayerStack, raidPickHeight } from "../../src/ui/raidLayout";
 import { RAID_BOSS_POOL } from "../../src/data/raid";
 import { getRelic } from "../../src/data/relics";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const RAID_ENTRY = sortieEntryScreenPoint("raid");
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -23,7 +26,7 @@ test("레이드는 목록에서 월드 폭주 판으로 들어가고 출격이 �
 
   await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245); // 출격
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
-  await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2 - 75 + 107); // 레이드 (출격판 중심 -75 + 칸 107)
+  await tap(page, RAID_ENTRY.x, RAID_ENTRY.y); // 레이드
   await expect.poll(() => scene(page)).toBe("raid");
   // 레이드는 먼저 **목록**을 연다 — 맨 위가 오늘의 월드 폭주 층이다.
   await waitForDebugState(page, () => window.__PF_DEBUG?.raidStage, "list", { timeout: 20_000 });

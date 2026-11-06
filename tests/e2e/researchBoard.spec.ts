@@ -70,6 +70,8 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
   if (process.env.PF_E2E_INPUT_DIAGNOSTIC === "1") await installGameHandleProbe(page);
   await startAfterOpening(page, (session) => {
+    // 연구소는 1-5 클리어로 열린다(`CONTENT_STAGE_UNLOCKS`).
+    session.cleared.add("1-5");
     session.wallet.fossil = 10;
     // 실제 천장 규칙으로 신규 SSR 소개를 보장한다. 전역 난수나 연출 자체는 대체하지 않는다.
     const welcome = BANNERS.find(banner => banner.id === "welcome")!;
@@ -125,7 +127,7 @@ test("10연 결과는 뒤집힌 칸으로 깔리고 눌러야 열린다", async 
 });
 
 test("한 장은 가운데에 크게 한 칸만 깔린다", async ({ page }) => {
-  await startAfterOpening(page, (session) => { session.wallet.fossil = 1; });
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); session.wallet.fossil = 1; });
   await tap(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await tapUntil(page, (BASE_WIDTH * 7) / 10, NAV_TOP + 90, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "lab");
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lab");

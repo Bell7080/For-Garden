@@ -1,4 +1,6 @@
 import { createCompletedTutorialState } from "../../src/core/tutorial";
+import { legalConsentKey } from "../../src/core/legalConsent";
+import { LEGAL_CONSENT_POPUP, legalConsentRowY } from "../../src/ui/legalConsentLayout";
 import { LOCAL_SAVE_STORAGE_KEYS } from "../../src/core/saveStorage";
 import type { Page } from "@playwright/test";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
@@ -28,6 +30,8 @@ function completedOpeningSave(prepare?: (session: Session) => void): string {
   session.completedStoryIds.add(OPENING_TRAIN.id);
   session.cleared.add("1-1");
   session.playerCard.nickname = "테스트연구원";
+  // 약관 동의는 기기 기록이라 저장에 함께 실린다. 비우면 타이틀을 누를 때마다 동의창이 먼저 떠 모든 화면 검사가 타이틀에 갇힌다.
+  session.settings.game.legalConsent = legalConsentKey();
   // 첫 플레이 튜토리얼은 끝난 상태로 시작한다 — 전투 조작·로비 안내가 화면별 검사를 가리지 않게.
   session.tutorial = createCompletedTutorialState();
   // 콘텐츠가 연구원 레벨로 잠겨 있으므로 화면별 E2E는 기본으로 모두 열린 만렙에서 시작한다. 잠금을 확인하는 편만 prepare에서 되돌린다.
@@ -55,4 +59,21 @@ export async function startAfterOpening(page: Page, prepare?: (session: Session)
   );
   await page.goto("/");
   await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+}
+
+/**
+ * 저장 없이 시작하는 편이 타이틀을 누른 뒤 뜨는 약관 동의창을 통과한다.
+ *
+ * 세 칸을 켜고 「동의하고 시작」을 누른다. 자리는 `legalConsentLayout` 한 표에서 읽는다 — 동의창은 화면 가운데에
+ * 서므로 몸 좌표에 화면 중심만 더하면 된다. 창이 뜨지 않았으면(이미 동의) 아무것도 하지 않는다.
+ */
+export async function acceptLegalConsent(page: Page): Promise<void> {
+  const { tap } = await import("./canvasInput");
+  const opened = await page.waitForFunction(() => (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0 || window.__PF_DEBUG?.scene !== "title", undefined, { timeout: 15_000 })
+    .then(() => page.evaluate(() => window.__PF_DEBUG?.scene === "title" && (window.__PF_DEBUG?.popupTitles?.length ?? 0) > 0))
+    .catch(() => false);
+  if (!opened) return;
+  const cx = 540, cy = 960, L = LEGAL_CONSENT_POPUP;
+  for (const index of [0, 1, 2]) await tap(page, cx + L.row.boxX + (index < 2 ? 250 : 320), cy + legalConsentRowY(index));
+  await tap(page, cx, cy + L.submitY);
 }

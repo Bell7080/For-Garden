@@ -2,6 +2,9 @@ import { test, expect, type Page } from "@playwright/test";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap, waitForDebugState } from "./canvasInput";
 import { ENEMY_INFO } from "../../src/ui/enemyInfoLayout";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const STORY_ENTRY = sortieEntryScreenPoint("story");
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -17,7 +20,7 @@ test("적을 누르면 정보창을 줄인 팝업이 열린다", async ({ page }
 
   await tap(page, BASE_WIDTH - 290, BASE_HEIGHT - 180 - 245); // 출격
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
-  await tap(page, BASE_WIDTH / 2, 550); // 스토리
+  await tap(page, STORY_ENTRY.x, STORY_ENTRY.y); // 스토리
   await expect.poll(() => scene(page)).toBe("stageMap");
 
   // 미리보기 SD가 실제로 붙은 뒤에 누른다 — 판이 비동기로 그려지기 때문이다.

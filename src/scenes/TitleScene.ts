@@ -20,7 +20,7 @@ import {
 import { LOADING_STEPS, refreshTextTextures, runLoadingSteps } from "./loadingSteps";
 import { addSceneBackground, BACKGROUND } from "../ui/backgrounds";
 import { drawCornerShroud, drawVignette } from "../ui/holo";
-import packageInfo from "../../package.json";
+import packageInfo from "../../package.json" with { type: "json" };
 import { reconcileLaunchEpoch } from "../api/launchEpoch";
 import { checkStartupGate, type StartupGateResult } from "../api/startupGate";
 import { leaveTitle, startScene } from "../ui/screenTransition";

@@ -4,6 +4,9 @@ import { clearFormationSlot, gridCardPoint, placeInFormationSlot } from "./forma
 import { BASE_HEIGHT, BASE_WIDTH } from "../../src/config/gameConfig";
 import { startAfterOpening } from "./openingSave";
 import { captureGame, tap as tapGame, tapUntil, waitForDebugState } from "./canvasInput";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const STORY_ENTRY = sortieEntryScreenPoint("story");
 
 /** 타이틀에서 기본 작전의 편성 화면까지 공용 UI만 눌러 이동한다. */
 async function openParty(page: Page): Promise<void> {
@@ -12,7 +15,7 @@ async function openParty(page: Page): Promise<void> {
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판은 SD를 읽어 오므로 열릴 때까지 기다린 뒤 누른다.
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.popupTitles)).toContain("출격");
-  await tapGame(page, BASE_WIDTH / 2, 550);
+  await tapGame(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");

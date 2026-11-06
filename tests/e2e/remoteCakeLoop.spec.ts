@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { installGameHandleProbe } from './gameDiagnostics';
 import { startAfterOpening } from './openingSave';
 import { expeditionWeekKey } from '../../src/core/expeditionBoss';
+import { EXPEDITION_BEST_SCORE_REWARD_STAGES } from '../../src/data/expedition';
 import { sourceScene } from './sourceScene';
 
 test('디안 없는 치즈케이크 원격 전투·결과 저장·복귀와 설정 계정 오류 후 입력 복구',async({page})=>{
@@ -47,7 +48,8 @@ test('디안 없는 치즈케이크 원격 전투·결과 저장·복귀와 설�
     await popup.open();await (popup as any).claim();
   });
   expect(fixture.calls.filter((x:any)=>x.method==='claimExpeditionReward'&&x.status===200)).toHaveLength(1);
-  expect(fixture.state().expedition.claimedRewardStageIds).toHaveLength(10);
+  // 받을 단계 수는 표에서 다시 센다 — 임계값이 다시 잡히자(×1.5) 10으로 적어 둔 수가 7과 갈렸다.
+  expect(fixture.state().expedition.claimedRewardStageIds).toHaveLength(EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage=>stage.threshold<=28000).length);
   expect(fixture.state().cakeOperation.clearedIndex).toBeGreaterThanOrEqual(0);expect(errors).toEqual([]);
  } finally{console.log('cake-browser-final',await page.evaluate(()=>{const g=(window as any).__CAKE_GAME;if(!g)return {};const b=g.scene.getScene('battle');return {active:b.scene.isActive(),spawned:b.spawned,phase:b.state?.phase,elapsed:b.state?.elapsed,ticks:b.combatTicks,debug:window.__PF_DEBUG?.scene,popups:window.__PF_DEBUG?.popupTitles,failed:!!b.resultFailureUi?.active};}).catch(()=>null));await rm(dir,{recursive:true,force:true});}
 });

@@ -7,7 +7,7 @@ import { openStoryDifficultyUnlocked } from "../ui/StoryDifficultyPopup";
 import { arenaCall } from "../api/arenaApi";
 import { arenaExitRoute } from "../core/arenaExit";
 import { battleResultFailure, type BattleResultPhase } from "../core/battleResultFailure";
-import packageInfo from "../../package.json";
+import packageInfo from "../../package.json" with { type: "json" };
 import { QA_TOOLS_ENABLED } from "../core/buildFlavor";
 import { expeditionBossDamageScore } from "../core/expeditionScore";
 import { BOSS_STEP_MS, bossBattleRandom } from "../core/bossSimulation";

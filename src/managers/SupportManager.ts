@@ -1,4 +1,4 @@
-import packageInfo from "../../package.json";
+import packageInfo from "../../package.json" with { type: "json" };
 import { backendAccount } from "../api/backendSession";
 import { SupportApi } from "../api/SupportApi";
 

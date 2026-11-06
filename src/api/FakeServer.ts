@@ -1875,7 +1875,8 @@ export class FakeServer implements GameApi {
       await this.guildBackend.syncWarStandby(this.guildActor(), this.guildWarDeckOf(relicIds));
       return { synced: true };
     } catch (error) {
-      if (error instanceof GuildApiError && error.code === "NOT_IN_GUILD") return { synced: false };
+      // 길드 저장소가 없는 서버(`UNAVAILABLE`)도 길드가 없는 것과 같다 — 로비가 하루 한 번 부르는 일이라 거절로 새면 안 된다.
+      if (error instanceof GuildApiError && (error.code === "NOT_IN_GUILD" || error.code === "UNAVAILABLE")) return { synced: false };
       throw error;
     }
   }

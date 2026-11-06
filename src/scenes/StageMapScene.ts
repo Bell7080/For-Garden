@@ -246,14 +246,20 @@ export class StageMapScene extends Phaser.Scene {
   private showChapter(chapterId: number): void {
     const chapter = this.chapters().find(({ id }) => id === chapterId);
     if (!chapter || (chapter.prerequisiteStageId && !session.cleared.has(chapter.prerequisiteStageId))) return;
+    this.rebuildChapter(chapterId);
+    const target = [...chapter.stages].reverse().find((stage) => isStageUnlocked(stage.id)) ?? chapter.stages[0];
+    this.select(target, true);
+  }
+
+  /** 그 구역의 지도를 새로 세운다. 고르는 일은 부르는 쪽이 한다. */
+  private rebuildChapter(chapterId: number): void {
     this.currentChapter = chapterId;
     this.enemyPreview.dismiss();
     this.storyPreview.dismiss();
+    this.tweens.killTweensOf(this.map);
     this.map.destroy(true);
     this.nodes.clear();
     this.buildMap();
-    const target = [...chapter.stages].reverse().find((stage) => isStageUnlocked(stage.id)) ?? chapter.stages[0];
-    this.select(target, true);
   }
 
   /** 그 구역의 지도 노드 — 본편 관문에 서브(SUB)를 더한 것이다. 본편 순서는 그대로 둔다. */
@@ -407,6 +413,7 @@ export class StageMapScene extends Phaser.Scene {
     if (!this.enemyPreview || !this.selected) return;
     const chapterStages = this.chapterStages(this.currentChapter);
     const index = chapterStages.findIndex((stage) => stage.id === this.selected);
+    if (index < 0) return;
     const nodeY = this.map.y - this.rowOf(chapterStages[index], index) * NODE_GAP;
     const visible = isEnemyPreviewNodeVisible(nodeY, WINDOW.top, WINDOW.bottom);
     if (chapterStages[index]?.kind === "story") this.storyPreview.trackNode(nodeY, visible);
@@ -419,6 +426,9 @@ export class StageMapScene extends Phaser.Scene {
     resumeStageId = stage.id;
     // 저장의 전투 선택에는 스토리 노드를 넣지 않아 BattleScene이 잘못 열 가능성을 없앤다.
     if (stage.kind === "battle") selectStoryStage(stage.id);
+    // 다른 구역의 관문을 고르면 그 구역 지도로 먼저 옮긴다. 지금 지도에 없는 관문은 줄 번호가 -1이라
+    // 미리보기를 따라 세우는 자리(`trackSelectedPreview`)가 없는 노드를 읽다 멈췄다.
+    if (stage.chapter !== undefined && stage.chapter !== this.currentChapter) this.rebuildChapter(stage.chapter);
     const index = this.chapterStages(this.currentChapter).findIndex((candidate) => candidate.id === stage.id);
     for (const [id, node] of this.nodes) {
       const chosen = id === stage.id;

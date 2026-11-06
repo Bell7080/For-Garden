@@ -1,4 +1,4 @@
-import packageInfo from "../../package.json";
+import packageInfo from "../../package.json" with { type: "json" };
 import { apiFailureSink } from "../api/apiFailureSink";
 import { backendAccount } from "../api/backendSession";
 import { ClientErrorApi, type ClientErrorPayload } from "../api/ClientErrorApi";

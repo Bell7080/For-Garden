@@ -1,7 +1,7 @@
 import { E2E_SAVE_STORAGE_KEY } from "./openingSave";
 import { captureGameFailure, installGameHandleProbe } from "./gameDiagnostics";
 import { test, expect } from "@playwright/test";
-import { startAfterOpening } from "./openingSave";
+import { acceptLegalConsent, startAfterOpening } from "./openingSave";
 import { clearFormationSlot } from "./formationSlotTap";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../../src/ui/portraitGrid";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
@@ -13,6 +13,10 @@ import { EXPEDITION_LAYOUT, expeditionNodePosition, focusExpeditionFloor } from 
 const MAP_VIEW = EXPEDITION_LAYOUT.map;
 import { BACK_SLOT } from "../../src/ui/popupGeometry";
 import { settingsChoiceRowY, settingsRowY, settingsSupportActionY, settingsTabX } from "../../src/ui/settingsLayout";
+import { sortieEntryScreenPoint } from "../../src/ui/sortieMenuLayout";
+/** 출격판 칸 자리는 화면과 같은 표(`sortieMenuLayout`)에서 읽는다. */
+const STORY_ENTRY = sortieEntryScreenPoint("story");
+const EXPEDITION_ENTRY = sortieEntryScreenPoint("expedition");
 
 const BASE_WIDTH = 1080;
 const BASE_HEIGHT = 1920;
@@ -80,7 +84,7 @@ async function enterParty(page: import("@playwright/test").Page): Promise<void> 
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판의 스토리 항목을 거쳐 메인 작전 지도로 이동한다.
-  await tapGame(page, BASE_WIDTH / 2, 550);
+  await tapGame(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
@@ -94,7 +98,7 @@ test("색각 보조 표식은 1080×1920 편성 카드와 상성 앵커에서 �
   });
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
-  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 550);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
@@ -130,6 +134,8 @@ test("세로형 첫 방문은 오프닝을 끝내고 중복 입력 없이 1-1 �
 
   // 로딩이 끝나면 화면 아무 곳이나 눌러 넘어간다. 저장이 없으면 오프닝 스토리가 먼저다.
   await canvas.click();
+  // 저장이 없는 첫 방문은 약관 동의창이 먼저 선다. 세 칸을 켜고 시작해야 오프닝으로 넘어간다.
+  await acceptLegalConsent(page);
   await expect
     .poll(() => page.evaluate(() => window.__PF_DEBUG?.scene))
     .toBe("opening");
@@ -224,7 +230,7 @@ test("출격 선택판에서 원정대 3기를 골라 진행 중 상태로 저�
 
   // 잔잔한 출격 선택판에서 원정을 고르면 별도 준비 씬으로 이동한다.
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 1403);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 원정의 첫 화면은 주간 기록이다. 순위와 기록 보상을 먼저 보고 출격으로 편성을 연다.
   await waitForDebugState(page, () => (window.__PF_DEBUG?.puppetContainers?.expedition ?? 0) >= 1, true, { timeout: 60_000 });
@@ -301,7 +307,7 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 1403);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
   await captureGame(page, `test-results/${test.info().project.name}-expedition-augment-popup.png`);
@@ -322,7 +328,7 @@ test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
-  await tapGame(page, BASE_WIDTH / 2, 1403);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   await tapGame(page, bossPoint.x, bossPoint.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.enemyPreview !== undefined)).toBe(true);
@@ -356,7 +362,7 @@ test("원정 전투 노드는 지도 안 공용 편성판을 붙이고 적 상�
   await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
   // 출격 선택판은 로비 위 PopupLayer이므로 씬 이름은 유지된다. 판의 입력 생성만 잠시 기다린다.
   await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.includes("출격"), true);
-  await tapGame(page, BASE_WIDTH / 2, 1403);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 실제 지도 포커스 계산이 반영된 첫 도달 노드의 화면 좌표를 선택한다.
   await tapGame(page, reachableX, reachableY);
@@ -658,19 +664,21 @@ test("피해 숫자 토글을 끄면 전투 피해 팝업 Text 객체를 만들�
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
 
   // 메인 작전의 기본 편성을 그대로 출격시켜 실제 HP 피해가 난 뒤에도 수치 풀이 비었는지 본다.
-  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, BASE_WIDTH / 2, 550);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425); await tapGame(page, STORY_ENTRY.x, STORY_ENTRY.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("stageMap");
   await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT - 180);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("party");
   await tapGame(page, BASE_WIDTH / 2, BACK_SLOT.y);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
   const initialEnemyHp = (await page.evaluate(() => window.__PF_DEBUG?.battle?.enemyHp))!;
-  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.enemyHp)).toBeLessThan(initialEnemyHp);
+  // 전원의 SD가 서고(모바일 에뮬레이션은 디코드가 느리다) 시작 숨 고르기·접근까지 지나야 첫 피해가 난다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.battle?.enemyHp), { timeout: 30_000 }).toBeLessThan(initialEnemyHp);
   expect(await page.evaluate(() => window.__PF_DEBUG?.battle?.allocatedNumberCount)).toBe(0);
 });
 
 test("핵심 콘텐츠의 설정은 고고학·렐릭·연구소·프리미엄 섹션으로 되돌아간다", async ({ page }) => {
-  await startAfterOpening(page, (session) => { session.cleared.add("1-10"); }); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  // 연구소는 1-5, 고고학은 1-10을 깨야 열린다(CONTENT_STAGE_UNLOCKS).
+  await startAfterOpening(page, (session) => { session.cleared.add("1-5"); session.cleared.add("1-10"); }); await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
   // 하단 내비게이션의 네 콘텐츠를 순회하며 각 TopBar 설정과 공용 뒤로가기의 왕복을 검증한다.
   const destinations = [

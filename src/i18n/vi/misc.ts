@@ -230,6 +230,7 @@ export const MISC_VI = {
   "profile.edit.error.tooShort": "Nhập ít nhất {min} ký tự",
   "profile.edit.error.tooLong": "Tối đa {max} ký tự",
   "profile.edit.error.invalidCharacter": "Có ký tự không dùng được",
+  "profile.edit.error.banned": "Có từ không được phép dùng",
   "profile.levelUp.title": "Nhà nghiên cứu lên cấp",
   "profile.levelUp.stamina": "Thể lực tối đa +{amount}",
   "profile.levelUp.rewards": "Phần thưởng lên cấp",

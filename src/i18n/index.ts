@@ -1,5 +1,5 @@
 /** 화면이 문구를 고르는 공개 진입점. 표의 생김새는 `catalog.ts`가 갖는다. */
-export { t, setTextLanguage, loadTextCatalog, languagesWithCatalog, type Catalog, type TextKey } from "./catalog";
+export { t, textLanguage, setTextLanguage, loadTextCatalog, languagesWithCatalog, type Catalog, type TextKey } from "./catalog";
 
 /**
  * 정적 콘텐츠(`src/data`)의 문구는 다른 경계를 쓴다 — 한국어는 데이터 파일에 그대로 두고

@@ -51,6 +51,8 @@ export const SYSTEM_RU = {
   "ops.notice.loss": "Списано: {name} — {amount}.",
   "ops.notice.mail": "Почта: новых писем — {count}.",
   "ops.notice.reason": "Причина: {reason}",
+  "ops.notice.nicknameReset": "Ваш никнейм сброшен согласно правилам сервиса. Выберите новый.",
+  "ops.notice.bioReset": "Ваше описание сброшено согласно правилам сервиса.",
   "ops.deleted.title": "Уведомление об аккаунте",
   "ops.deleted.body": "Аккаунт удалён.\nВозврат на титульный экран.",
   "mail.launch.body": "Спасибо, что играете в нашу игру! В честь начала исследований отправляем особые припасы.",

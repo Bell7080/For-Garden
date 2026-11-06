@@ -255,6 +255,7 @@ export const MISC_KO = {
   "profile.edit.error.tooShort": "{min}자 이상 입력해 주세요",
   "profile.edit.error.tooLong": "{max}자까지 쓸 수 있습니다",
   "profile.edit.error.invalidCharacter": "쓸 수 없는 글자가 있습니다",
+  "profile.edit.error.banned": "쓸 수 없는 단어가 들어 있습니다",
   "profile.levelUp.title": "연구원 레벨 상승",
   "profile.levelUp.stamina": "스테미나 상한 +{amount}",
   "profile.levelUp.rewards": "레벨업 보상",

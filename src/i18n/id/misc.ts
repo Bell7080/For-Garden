@@ -230,6 +230,7 @@ export const MISC_ID = {
   "profile.edit.error.tooShort": "Masukkan minimal {min} karakter",
   "profile.edit.error.tooLong": "Maksimal {max} karakter",
   "profile.edit.error.invalidCharacter": "Berisi karakter yang tidak dapat digunakan",
+  "profile.edit.error.banned": "Berisi kata yang tidak boleh digunakan",
   "profile.levelUp.title": "Level Periset Naik",
   "profile.levelUp.stamina": "Stamina maks +{amount}",
   "profile.levelUp.rewards": "Hadiah Naik Level",

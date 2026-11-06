@@ -15,7 +15,7 @@ import type { CombatPrepare, CombatProof } from "../core/combatProtocol";
 import { GameApiError, type ApiErrorCode } from "../api/contracts";
 import { FakeServer } from "../api/FakeServer";
 import { saveManager } from "../state/SaveManager";
-import { applyOpsAdjustments, drainOpsNotices, isOpsMailId, opsMailUuid, type OpsAppliedAdjustment, type OpsInbox } from "../core/opsInbox";
+import { applyOpsAdjustments, applyOpsProfileActions, noticeOpsBanners, drainOpsNotices, isOpsMailId, opsMailUuid, type OpsAppliedAdjustment, type OpsInbox } from "../core/opsInbox";
 import { createDefaultSession, type Session } from "../state/session";
 import { publicProfile } from "./publicProfile";
 import { raidChanges, type SharedRaidContext, type SharedRaidChange } from "./sharedRaids";
@@ -44,6 +44,10 @@ export interface StateStore {
   opsInbox?(playerId: string): Promise<OpsInbox>;
   /** 상태 확정 뒤 반영한 조정과 수령한 우편을 운영 표에 표시한다(실패해도 상태는 이미 확정이다). */
   opsAck?(playerId: string, applied: OpsAppliedAdjustment[], claimedMails: string[]): Promise<void>;
+  /** 반영한 프로필 강제 초기화를 운영 표에 표시한다. */
+  opsProfileAck?(playerId: string, ids: string[]): Promise<void>;
+  /** 운영 DB의 금칙어. 닉네임을 바꿀 때만 읽고, 실패하면 빈 목록이다. */
+  bannedWords?(): Promise<string[]>;
   findReceipt(playerId: string, requestId: string): Promise<unknown | undefined>;
   /** 상태와 영수증을 한 트랜잭션으로 확정한다. 읽은 revision이 달라졌으면 `StateConflictError`를 던진다. */
   commit(input: {
@@ -136,7 +140,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     const now = deps.now?.() ?? new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : undefined,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : undefined,
@@ -146,6 +150,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : undefined,
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : undefined,
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : undefined,
+      req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : undefined,
     ]);
     if (cached !== undefined) {
       const receipt = cached as GameCallResponse & { _requestFingerprint?: string };
@@ -179,6 +184,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       expeditionRank: expedition?.rank,
       ancientRanking: ancient,
       ...(regular !== undefined ? { regularEvent: regular } : {}),
+      ...(bannedWords ? { bannedWords } : {}),
       guild: deps.guild ?? unavailableGuild,
       playerId,
       developmentTools: deps.developmentTools === true,
@@ -187,8 +193,11 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
     if (req.requestId) server.useGuildRequestId(req.requestId);
     const claimedBefore = new Set(state.claimedMailIds ?? []);
     let applied: OpsAppliedAdjustment[] = [];
+    let profileActions: string[] = [];
     if (ops) {
       applied = applyOpsAdjustments(state, ops.adjustments, now);
+      profileActions = applyOpsProfileActions(state, ops.profileActions ?? [], now);
+      noticeOpsBanners(state, ops.banners ?? [], now);
       server.attachOpsMails(ops.mails, ops.patchNotes ?? []);
     }
     let result: unknown;
@@ -227,6 +236,7 @@ async function run(playerId: string, req: GameCallRequest, deps: GameHandlerDeps
       });
       const claimedMails = (state.claimedMailIds ?? []).filter((id) => isOpsMailId(id) && !claimedBefore.has(id)).map(opsMailUuid);
       if ((applied.length > 0 || claimedMails.length > 0) && deps.store.opsAck) await deps.store.opsAck(playerId, applied, claimedMails).catch(() => undefined);
+      if (profileActions.length > 0 && deps.store.opsProfileAck) await deps.store.opsProfileAck(playerId, profileActions).catch(() => undefined);
       return { ...response, revision: committed.revision };
     } catch (error) {
       if (error instanceof StateConflictError && attempt < attempts) continue;

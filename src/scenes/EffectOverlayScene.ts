@@ -5,7 +5,7 @@ import { setOverlayEffects } from "../managers/overlayEffects";
 import { setTempAdPlayer } from "../platform/rewardedAds";
 import { playTempAdPopup } from "../ui/TempAdPopup";
 import { PopupLayer } from "../ui/PopupLayer";
-import { opsNoticeReceipt } from "../ui/opsNoticeText";
+import { opsNoticeMessages, opsNoticeReceipt } from "../ui/opsNoticeText";
 import { openRewardPopup } from "../ui/RewardPopup";
 import { managerEvents } from "../managers/ManagerEvents";
 import { onAccountDeleted } from "../api/accountDeleted";
@@ -84,13 +84,20 @@ export class EffectOverlayScene extends Phaser.Scene {
     const popups = new PopupLayer(this, 3000);
     let showing = false;
     type Receipt = ReturnType<typeof opsNoticeReceipt>;
-    let queued: Receipt[] = [];
+    type Message = { title: string; message: string };
+    let queued: (Receipt | Message)[] = [];
     const flush = (): void => {
       if (showing || queued.length === 0) return;
-      const next = queued.shift() as Receipt;
+      const entry = queued.shift() as Receipt | Message;
       showing = true;
       this.scene.bringToTop();
       const done = (): void => { showing = false; flush(); };
+      // 공지 배너·프로필 초기화는 글 한 장으로 알린다.
+      if ("message" in entry) {
+        popups.confirm({ title: entry.title, message: entry.message, confirmLabel: t("settings.action.confirm"), cancelLabel: false }, done);
+        return;
+      }
+      const next = entry;
       // 회수된 몫은 글줄로, 받은 몫은 보상 팝업과 같은 액자·수량으로 보여 준다. 사유는 아래에 적는다.
       const showGains = (): void => {
         if (next.items.length === 0) { done(); return; }
@@ -101,8 +108,8 @@ export class EffectOverlayScene extends Phaser.Scene {
     };
     const offNotice = managerEvents.subscribe("opsNotice", ({ notices }) => {
       const receipt = opsNoticeReceipt(notices);
-      if (receipt.items.length === 0 && receipt.losses.length === 0) return;
-      queued.push(receipt);
+      if (receipt.items.length > 0 || receipt.losses.length > 0) queued.push(receipt);
+      queued.push(...opsNoticeMessages(notices));
       flush();
     });
     const offDeleted = onAccountDeleted(() => {

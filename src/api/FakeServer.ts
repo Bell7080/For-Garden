@@ -76,7 +76,7 @@ import { setActiveAncientSeason } from "../core/ancientStrataBattle";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
 import type { AncientRankingResponse, ClaimDuelSeasonRewardResponse, DuelRankingResponse, DuelStatusResponse, EnterDuelRequest, EnterDuelResponse, ResolveDuelRequest, ResolveDuelResponse, SetDuelDefenseRequest } from "./contracts";
 import { WALLET_CAPS } from "../data/economy";
-import { isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
+import { containsBannedWord, isOpsMailId, markMailsDeleted, markOpsMailsRead, opsMailToDto, opsPatchNoteToDto, type OpsMailSource, type OpsPatchNoteSource } from "../core/opsInbox";
 import { applyDebugCommand, type DebugCommand, type DebugCommandResponse, type DebugTarget } from "../core/debugCommand";
 import { GUILD_BADGE_CHANGE_GEMS, GUILD_RENAME_GEMS, guildAttendanceDay, GUILD_CREATE_GEMS, findGuildProduct, guildDispatchMinutes, guildExcavationBonus, guildPerks, type GuildPerks, validateGuildName } from "../core/guild";
 import { sameGuildBadge } from "../core/guildBadge";
@@ -182,6 +182,8 @@ export interface FakeServerOptions {
   ancientRanking?: AncientRankingResponse;
   /** 서버가 주입하는 이번 주 정기 이벤트. 서버 없이 도는 빌드는 이벤트를 만들지 않는다(null). */
   regularEvent?: RegularEventDto | null;
+  /** 운영 DB의 금칙어. 닉네임을 바꿀 때 서버가 주입한다. 없으면 검사하지 않는다. */
+  bannedWords?: readonly string[];
   random?: () => number;
   /** 실제 서버 시각 대신 테스트에서 UTC 경계를 주입하는 날짜 공급자다. */
   now?: () => Date;
@@ -284,6 +286,7 @@ export class FakeServer implements GameApi {
   private readonly remoteExpeditionRank?: number | null;
   private readonly ancientRanking?: AncientRankingResponse;
   private readonly regularEvent: RegularEventDto | null;
+  private readonly bannedWords: readonly string[];
 
   constructor(
     private readonly state: Session = session,
@@ -293,6 +296,7 @@ export class FakeServer implements GameApi {
     this.remoteExpeditionRank = options.expeditionRank;
     this.ancientRanking = options.ancientRanking;
     this.regularEvent = options.regularEvent ?? null;
+    this.bannedWords = options.bannedWords ?? [];
     this.developmentTools = options.developmentTools ?? QA_TOOLS_ENABLED;
     this.latencyMs = options.latencyMs ?? 180;
     this.random = options.random ?? (QA_TOOLS_ENABLED ? qaRandom : Math.random);
@@ -1636,6 +1640,7 @@ export class FakeServer implements GameApi {
         if (problem) return { ok: false, reason: problem };
         const nickname = cleanNickname(request.value);
         if (nickname === card.nickname) return { ok: true, card: { ...card } };
+        if (containsBannedWord(nickname, this.bannedWords)) return { ok: false, reason: "banned" };
         const now = this.now();
         if (nicknameLockedUntil(card, now)) return { ok: false, reason: "nicknameCooldown" };
         next = { ...card, nickname, nicknameChangedAt: card.nickname === "" ? card.nicknameChangedAt : now.toISOString() };

@@ -12,6 +12,8 @@ import { GameCallError, StateConflictError, type StateStore } from "./gameHandle
 
 /** v2 함수가 없는 운영 DB에 넘기는 예전 원정 인양 기록 표(`WEEKLY_RANK_GEMS`와 같은 줄). 마이그레이션이 적용되면 지운다. */
 const LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80] as const;
+/** 금칙어는 자주 바뀌지 않는다 — 함수 인스턴스 안에서 5분 동안 같은 목록을 쓴다. */
+let bannedWordsCache: { at: number; words: string[] } | undefined;
 
 interface Env { url: string; serviceKey: string; fetchImpl?: typeof fetch }
 
@@ -71,6 +73,14 @@ export function createSupabaseStore(env: Env) {
       return await rpc("server_ops_inbox", { p_player: playerId }) as OpsInbox;
     },
     async opsAck(playerId, applied, claimedMails) { await rpc("server_ops_ack", { p_player: playerId, p_applied: applied, p_claimed_mails: claimedMails }); },
+    async opsProfileAck(playerId, ids) { await rpc("server_profile_actions_ack", { p_player: playerId, p_ids: ids }); },
+    async bannedWords() {
+      // 닉네임을 바꿀 때만 읽는다. 5분 동안은 같은 목록을 쓰고, 마이그레이션 전 DB에는 함수가 없으므로 빈 목록이다.
+      if (bannedWordsCache && Date.now() - bannedWordsCache.at < 300_000) return bannedWordsCache.words;
+      const words = await rpc("server_banned_words", {}).then((value) => Array.isArray(value) ? value.filter((w): w is string => typeof w === "string") : [], () => [] as string[]);
+      bannedWordsCache = { at: Date.now(), words };
+      return words;
+    },
     async load(playerId) {
       const r = (await rpc("server_load_state", { p_player: playerId })) as { revision: string; data: unknown } | null;
       return r ? { revision: r.revision, data: r.data } : null;

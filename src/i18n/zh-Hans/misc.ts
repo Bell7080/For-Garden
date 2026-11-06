@@ -230,6 +230,7 @@ export const MISC_ZH_HANS = {
   "profile.edit.error.tooShort": "请至少输入{min}个字符",
   "profile.edit.error.tooLong": "最多{max}个字符",
   "profile.edit.error.invalidCharacter": "含有无法使用的字符",
+  "profile.edit.error.banned": "含有无法使用的词语",
   "profile.levelUp.title": "研究员等级提升",
   "profile.levelUp.stamina": "体力上限 +{amount}",
   "profile.levelUp.rewards": "升级奖励",

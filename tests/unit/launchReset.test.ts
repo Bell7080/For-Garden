@@ -34,6 +34,13 @@ const WEBSITE_TABLES = [
   "public.website_notice_translations",
   "public.website_preregistrations",
   "public.website_registration_limits",
+  // For-Garden-Admin 마이그레이션이 만드는 표.
+  "public.player_daily_activity",
+  "public.website_faqs",
+  "public.patch_notes",
+  "public.recurring_mails",
+  "public.event_contents",
+  "public.event_rotation",
 ];
 
 describe("출시 초기화 표 분류", () => {

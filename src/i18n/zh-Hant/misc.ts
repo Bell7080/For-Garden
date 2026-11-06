@@ -230,6 +230,7 @@ export const MISC_ZH_HANT = {
   "profile.edit.error.tooShort": "請至少輸入{min}個字元",
   "profile.edit.error.tooLong": "最多{max}個字元",
   "profile.edit.error.invalidCharacter": "含有無法使用的字元",
+  "profile.edit.error.banned": "含有無法使用的詞語",
   "profile.levelUp.title": "研究員等級提升",
   "profile.levelUp.stamina": "體力上限 +{amount}",
   "profile.levelUp.rewards": "升級獎勵",

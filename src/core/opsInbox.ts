@@ -17,7 +17,11 @@ export interface OpsMailSource { id: string; title: string; body: string; reward
 export interface OpsAdjustmentSource { id: string; asset: string; delta: number; note?: string | null; createdAt: string; }
 /** 어드민이 올린 패치노트. 게임의 우편함에서는 첨부 없는 「패치노트」 탭의 안내 한 통이 된다. */
 export interface OpsPatchNoteSource { id: string; version: string; title: string; releasedAt: string; items: { kind: string; text: string }[]; note: string; }
-export interface OpsInbox { mails: OpsMailSource[]; adjustments: OpsAdjustmentSource[]; patchNotes?: OpsPatchNoteSource[]; }
+/** 운영자가 건 프로필 강제 초기화(부적절한 닉네임·소개). 다음 서버 호출에서 저장을 비우고 한 번 알린다. */
+export interface OpsProfileActionSource { id: string; kind: "nickname_reset" | "bio_reset"; reason?: string | null; createdAt: string; }
+/** 기간 안에 접속한 플레이어에게 한 번 띄우는 공지 팝업. 번역은 운영자가 직접 적은 언어만 있다(없으면 원문). */
+export interface OpsBannerSource { id: string; title: string; body: string; translations?: Record<string, { title?: string; body?: string }> | null; startsAt: string; endsAt: string; }
+export interface OpsInbox { mails: OpsMailSource[]; adjustments: OpsAdjustmentSource[]; patchNotes?: OpsPatchNoteSource[]; profileActions?: OpsProfileActionSource[]; banners?: OpsBannerSource[]; }
 /** 서버가 확정한 조정의 결과 — DB 원장에 실제 반영량과 잔액이 남는다. */
 export interface OpsAppliedAdjustment { id: string; applied: number; balance: number; }
 
@@ -25,7 +29,10 @@ export interface OpsAppliedAdjustment { id: string; applied: number; balance: nu
 export type OpsNotice =
   | { kind: "asset"; asset: keyof Wallet; delta: number; note?: string; at: string }
   | { kind: "item"; itemId: string; delta: number; note?: string; at: string }
-  | { kind: "mail"; title: string; at: string };
+  | { kind: "mail"; title: string; at: string }
+  /** 운영자가 닉네임(`nickname`)이나 한 줄 소개(`bio`)를 비웠다. */
+  | { kind: "profile"; field: "nickname" | "bio"; note?: string; at: string }
+  | { kind: "banner"; id: string; title: string; body: string; translations?: Record<string, { title?: string; body?: string }>; at: string };
 
 export interface OpsJournal {
   /** 이미 지갑에 반영한 조정 ID(확정 뒤 DB 표시가 실패해도 두 번 반영되지 않는다). */
@@ -34,6 +41,8 @@ export interface OpsJournal {
   /** 플레이어가 지운 우편 ID(운영 우편이 아닌 것도 포함). */
   deletedMails?: string[];
   announcedMails: string[];
+  /** 이미 띄운 공지 배너 ID. */
+  seenBanners?: string[];
   notices: OpsNotice[];
 }
 
@@ -51,8 +60,10 @@ export function isValidOpsJournal(value: unknown): value is OpsJournal {
   if (!value || typeof value !== "object") return false;
   const ops = value as OpsJournal;
   const ids = (v: unknown): boolean => Array.isArray(v) && v.every((id) => typeof id === "string");
-  return ids(ops.appliedAdjustments) && ids(ops.readMails) && (ops.deletedMails === undefined || ids(ops.deletedMails)) && ids(ops.announcedMails) && Array.isArray(ops.notices)
-    && ops.notices.every((n) => !!n && typeof n === "object" && ((n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta)) || (n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta)) || (n.kind === "mail" && typeof n.title === "string")));
+  return ids(ops.appliedAdjustments) && ids(ops.readMails) && (ops.deletedMails === undefined || ids(ops.deletedMails)) && ids(ops.announcedMails)
+    && (ops.seenBanners === undefined || ids(ops.seenBanners)) && Array.isArray(ops.notices)
+    && ops.notices.every((n) => !!n && typeof n === "object" && ((n.kind === "asset" && typeof n.asset === "string" && Number.isFinite(n.delta)) || (n.kind === "item" && typeof n.itemId === "string" && Number.isFinite(n.delta)) || (n.kind === "mail" && typeof n.title === "string")
+      || (n.kind === "profile" && (n.field === "nickname" || n.field === "bio")) || (n.kind === "banner" && typeof n.id === "string" && typeof n.title === "string" && typeof n.body === "string")));
 }
 
 /** 저장의 운영 기록을 꺼낸다. 없으면 만들어 붙인다. */
@@ -139,6 +150,54 @@ export function opsPatchNoteToDto(source: OpsPatchNoteSource, text: { sender: st
   const lines = source.items.filter((item) => item.text.trim()).map((item) => `${text.kinds[item.kind] ?? text.kinds.etc ?? ""} ${item.text.trim()}`.trim());
   const body = [...lines, ...(source.note.trim() ? ["", source.note.trim()] : [])].join("\n");
   return { id, title: text.title, sender: text.sender, body, sentAt: source.releasedAt, expiresAt: null, read: readIds.has(id), claimed: false, rewards: [] };
+}
+
+/**
+ * 프로필 강제 초기화를 저장에 반영한다. 닉네임을 비우면 다음 로비에서 이름을 새로 정하는 창이 다시 선다
+ * (`nicknameCreationRequired`) — 처음 정하는 이름이라 이레 주기에 걸리지 않는다. 돌려주는 ID는 DB가 처리 표시를 남길 때 쓴다.
+ */
+export function applyOpsProfileActions(state: Session, actions: readonly OpsProfileActionSource[], now: Date): string[] {
+  if (actions.length === 0) return [];
+  const journal = opsJournalOf(state);
+  const done: string[] = [];
+  for (const action of actions) {
+    const field: "nickname" | "bio" | undefined = action.kind === "nickname_reset" ? "nickname" : action.kind === "bio_reset" ? "bio" : undefined;
+    done.push(action.id);
+    if (!field || state.playerCard[field] === "") continue;
+    state.playerCard = { ...state.playerCard, [field]: "" };
+    journal.notices = [...journal.notices, { kind: "profile" as const, field, ...(action.reason ? { note: action.reason } : {}), at: now.toISOString() }].slice(-NOTICE_KEEP);
+  }
+  return done;
+}
+
+/** 기간 안의 공지 배너 중 아직 띄우지 않은 것을 한 번씩 소식으로 쌓는다. */
+export function noticeOpsBanners(state: Session, banners: readonly OpsBannerSource[], now: Date): void {
+  if (banners.length === 0) return;
+  const journal = opsJournalOf(state);
+  const seen = new Set(journal.seenBanners ?? []);
+  const at = now.getTime();
+  for (const banner of banners) {
+    if (seen.has(banner.id) || !(Date.parse(banner.startsAt) <= at && at < Date.parse(banner.endsAt))) continue;
+    seen.add(banner.id);
+    journal.seenBanners = tail([...(journal.seenBanners ?? []), banner.id]);
+    const translations = banner.translations && typeof banner.translations === "object" ? banner.translations : undefined;
+    journal.notices = [...journal.notices, { kind: "banner" as const, id: banner.id, title: banner.title, body: banner.body, ...(translations ? { translations } : {}), at: now.toISOString() }].slice(-NOTICE_KEEP);
+  }
+}
+
+/** 공지 배너의 제목·본문을 지금 언어로 고른다. 그 언어를 운영자가 적지 않았으면 원문이다. */
+export function opsBannerText(notice: Extract<OpsNotice, { kind: "banner" }>, language: string): { title: string; body: string } {
+  const variant = notice.translations?.[language];
+  return { title: variant?.title?.trim() || notice.title, body: variant?.body?.trim() || notice.body };
+}
+
+/** 금칙어 검사 — 공백을 지우고 대소문자를 무시한 부분 일치다. 금칙어는 운영 DB(`banned_words`)가 갖는다. */
+export function containsBannedWord(value: string, words: readonly string[]): boolean {
+  const flat = value.toLowerCase().replace(/\s+/gu, "");
+  return words.some((word) => {
+    const w = word.toLowerCase().replace(/\s+/gu, "");
+    return w.length > 0 && flat.includes(w);
+  });
 }
 
 /** 읽음 표시를 저장에 남긴다. */

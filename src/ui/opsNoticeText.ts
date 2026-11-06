@@ -1,6 +1,6 @@
 import { findItem } from "../data/items";
-import type { OpsNotice } from "../core/opsInbox";
-import { t, type TextKey } from "../i18n";
+import { opsBannerText, type OpsNotice } from "../core/opsInbox";
+import { t, textLanguage, type TextKey } from "../i18n";
 import { currencyRecordToRewardItems, productGrantsToRewardItems, type RewardPopupItem } from "./rewardPopupModel";
 
 /**
@@ -12,7 +12,7 @@ export function opsNoticeLines(notices: readonly OpsNotice[]): string[] {
   let mails = 0;
   for (const notice of notices) {
     if (notice.kind === "mail") mails += 1;
-    else if (notice.kind === "item") continue;
+    else if (notice.kind === "item" || notice.kind === "profile" || notice.kind === "banner") continue;
     else totals.set(notice.asset, (totals.get(notice.asset) ?? 0) + notice.delta);
   }
   const lines: string[] = [];
@@ -36,7 +36,7 @@ export function opsNoticeReceipt(notices: readonly OpsNotice[]): { items: Reward
   const net = new Map<string, number>();
   const reasons: string[] = [];
   for (const notice of notices) {
-    if (notice.kind === "mail") continue;
+    if (notice.kind === "mail" || notice.kind === "profile" || notice.kind === "banner") continue;
     const key = notice.kind === "item" ? `item:${notice.itemId}` : notice.asset;
     net.set(key, (net.get(key) ?? 0) + notice.delta);
     if (notice.note && !reasons.includes(notice.note)) reasons.push(notice.note);
@@ -53,4 +53,23 @@ export function opsNoticeReceipt(notices: readonly OpsNotice[]): { items: Reward
   }
   const items = [...currencyRecordToRewardItems(gains), ...productGrantsToRewardItems([...itemGains].map(([itemId, amount]) => ({ kind: "item" as const, itemId, name: itemId, amount })))];
   return { items, losses, reason: reasons.length ? t("ops.notice.reason", { reason: reasons.join(" / ").slice(0, 40) }) : "" };
+}
+
+/**
+ * 글로만 알리는 운영 소식 — 공지 배너(운영자가 적은 제목·본문)와 프로필 강제 초기화 안내.
+ * 배너는 지금 언어의 번역이 있으면 그것을, 없으면 원문을 쓴다.
+ */
+export function opsNoticeMessages(notices: readonly OpsNotice[]): { title: string; message: string }[] {
+  const out: { title: string; message: string }[] = [];
+  for (const notice of notices) {
+    if (notice.kind === "banner") {
+      const text = opsBannerText(notice, textLanguage());
+      out.push({ title: text.title, message: text.body });
+    } else if (notice.kind === "profile") {
+      const lines = [t(notice.field === "nickname" ? "ops.notice.nicknameReset" : "ops.notice.bioReset")];
+      if (notice.note) lines.push(t("ops.notice.reason", { reason: notice.note.slice(0, 40) }));
+      out.push({ title: t("ops.notice.title"), message: lines.join("\n") });
+    }
+  }
+  return out;
 }

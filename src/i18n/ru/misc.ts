@@ -230,6 +230,7 @@ export const MISC_RU = {
   "profile.edit.error.tooShort": "Введите не меньше {min} символов",
   "profile.edit.error.tooLong": "Не больше {max} символов",
   "profile.edit.error.invalidCharacter": "Есть недопустимые символы",
+  "profile.edit.error.banned": "Содержит недопустимое слово",
   "profile.levelUp.title": "Уровень исследователя повышен",
   "profile.levelUp.stamina": "Макс. выносливость +{amount}",
   "profile.levelUp.rewards": "Награды за уровень",

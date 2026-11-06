@@ -241,6 +241,7 @@ export const MISC_JA = {
   "profile.edit.error.tooShort": "{min}文字以上入力してください",
   "profile.edit.error.tooLong": "{max}文字まで入力できます",
   "profile.edit.error.invalidCharacter": "使用できない文字が含まれています",
+  "profile.edit.error.banned": "使用できない言葉が含まれています",
   "profile.levelUp.title": "研究員レベルアップ",
   "profile.levelUp.stamina": "スタミナ上限 +{amount}",
   "profile.levelUp.rewards": "レベルアップ報酬",

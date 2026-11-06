@@ -70,6 +70,8 @@ export const SYSTEM_KO = {
   "ops.notice.loss": "{name} {amount}개가 회수되었습니다.",
   "ops.notice.mail": "새 우편 {count}통이 도착했습니다.",
   "ops.notice.reason": "사유: {reason}",
+  "ops.notice.nicknameReset": "운영 정책에 따라 닉네임이 초기화되었습니다. 새 닉네임을 정해 주세요.",
+  "ops.notice.bioReset": "운영 정책에 따라 한 줄 소개가 초기화되었습니다.",
   "ops.deleted.title": "계정 안내",
   "ops.deleted.body": "계정이 삭제되었습니다.\n타이틀 화면으로 돌아갑니다.",
   "mail.launch.body": "저희 게임을 플레이해 주셔서 감사합니다! 연구 시작을 축하하며 특별한 물자를 보냅니다.",

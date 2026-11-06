@@ -51,6 +51,8 @@ export const SYSTEM_EN = {
   "ops.notice.loss": "{amount} {name} has been withdrawn.",
   "ops.notice.mail": "{count} new mail(s) arrived.",
   "ops.notice.reason": "Reason: {reason}",
+  "ops.notice.nicknameReset": "Your nickname was reset under our operating policy. Please choose a new one.",
+  "ops.notice.bioReset": "Your bio was reset under our operating policy.",
   "ops.deleted.title": "Account Notice",
   "ops.deleted.body": "Your account has been deleted.\\nReturning to the title screen.",
   "mail.launch.body": "Thank you for playing our game! Here are special supplies to celebrate the start of your research.",

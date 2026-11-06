@@ -51,6 +51,8 @@ export const SYSTEM_ES = {
   "ops.notice.loss": "Se han retirado {amount} de {name}.",
   "ops.notice.mail": "Han llegado {count} correos nuevos.",
   "ops.notice.reason": "Motivo: {reason}",
+  "ops.notice.nicknameReset": "Tu apodo se ha restablecido según la política del servicio. Elige uno nuevo.",
+  "ops.notice.bioReset": "Tu presentación se ha restablecido según la política del servicio.",
   "ops.deleted.title": "Aviso de cuenta",
   "ops.deleted.body": "Tu cuenta ha sido eliminada.\nVolviendo a la pantalla de título.",
   "mail.launch.body": "¡Gracias por jugar a nuestro juego! Te enviamos suministros especiales para celebrar el inicio de tu investigación.",

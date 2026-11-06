@@ -73,7 +73,7 @@ export function openNicknamePopup(scene: Phaser.Scene, layer: PopupLayer, onDone
     const count = scene.add.text(L.field.width / 2, L.countY, "", textStyle({ role: "body", size: 23, color: COLOR.inkDim })).setOrigin(1, .5);
     const error = scene.add.text(-L.field.width / 2, L.countY, "", textStyle({ role: "body", size: 23, color: COLOR.dangerText, wrap: 580 })).setOrigin(0, .5);
     const problemText = (problem: string): string => t(problem === "tooShort" ? "profile.edit.error.tooShort"
-      : problem === "tooLong" ? "profile.edit.error.tooLong" : "profile.edit.error.invalidCharacter",
+      : problem === "tooLong" ? "profile.edit.error.tooLong" : problem === "banned" ? "profile.edit.error.banned" : "profile.edit.error.invalidCharacter",
     { min: NICKNAME_MIN_LENGTH, max: NICKNAME_MAX_LENGTH });
     let save: Button | undefined;
     const field = new TextInputField(scene, 0, L.fieldY, { ...L.field,

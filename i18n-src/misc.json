@@ -3241,5 +3241,6 @@
 "Die höchste Merkmalsstufe der Einsätze wählt die Zeile. Jede weitere Rune mit Merkmal verschiebt {shift}% von „Kein Merkmal“ auf diese Stufe.",
 "Строку определяет высшая черта среди вложенных рун. Каждая дополнительная руна с чертой переносит {shift}% из «Без черты» в этот уровень."
 ],
-  "profile.unlock.achievementTier": ["领取成就「{name}」第{tier}阶段奖励","รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"","Nhận thưởng bậc {tier} của thành tựu \"{name}\"","Klaim hadiah tingkat {tier} pencapaian \"{name}\"","Reclama el nivel {tier} del logro «{name}»","Resgate o nível {tier} da conquista \"{name}\"","Hole Stufe {tier} des Erfolgs „{name}“ ab","Получите награду за ступень {tier} достижения «{name}»"]
+  "profile.unlock.achievementTier": ["领取成就「{name}」第{tier}阶段奖励","รับรางวัลขั้น {tier} ของความสำเร็จ \"{name}\"","Nhận thưởng bậc {tier} của thành tựu \"{name}\"","Klaim hadiah tingkat {tier} pencapaian \"{name}\"","Reclama el nivel {tier} del logro «{name}»","Resgate o nível {tier} da conquista \"{name}\"","Hole Stufe {tier} des Erfolgs „{name}“ ab","Получите награду за ступень {tier} достижения «{name}»"],
+"profile.edit.error.banned": ["含有无法使用的词语", "มีคำที่ใช้ไม่ได้", "Có từ không được phép dùng", "Berisi kata yang tidak boleh digunakan", "Contiene una palabra no permitida", "Contém uma palavra não permitida", "Enthält ein unzulässiges Wort", "Содержит недопустимое слово"]
 }

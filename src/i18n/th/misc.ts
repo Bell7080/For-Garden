@@ -230,6 +230,7 @@ export const MISC_TH = {
   "profile.edit.error.tooShort": "กรอกอย่างน้อย {min} ตัวอักษร",
   "profile.edit.error.tooLong": "ไม่เกิน {max} ตัวอักษร",
   "profile.edit.error.invalidCharacter": "มีตัวอักษรที่ใช้ไม่ได้",
+  "profile.edit.error.banned": "มีคำที่ใช้ไม่ได้",
   "profile.levelUp.title": "นักวิจัยเลเวลอัป",
   "profile.levelUp.stamina": "สตามินาสูงสุด +{amount}",
   "profile.levelUp.rewards": "รางวัลเลเวลอัป",

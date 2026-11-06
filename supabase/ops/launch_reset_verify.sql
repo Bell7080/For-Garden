@@ -14,19 +14,21 @@ with
     ('public.guilds'), ('public.guild_members'), ('public.guild_requests'), ('public.guild_attendance'),
     ('public.guild_left'), ('public.guild_receipts'), ('public.guild_war_defense'), ('public.guild_week_ledger'), ('public.guild_guard_ledger'),
     ('public.guild_rank_results'), ('public.guild_rank_totals'), ('public.guild_rank_awards'), ('public.guild_war_days'), ('public.guild_war_matches'), ('public.guild_war_captures'), ('public.guild_war_attacks'),
-    ('public.guild_war_admissions'), ('public.guild_war_results'), ('public.guild_war_coins'), ('public.website_registration_limits')
+    ('public.guild_war_admissions'), ('public.guild_war_results'), ('public.guild_war_coins'), ('public.website_registration_limits'),
+    ('public.player_profile_actions'), ('public.server_competitive_bans'), ('public.purchase_records'), ('public.player_daily_activity')
   ),
   -- players와 admin_audit_log는 비운 뒤 운영자 행/초기화 기록이 새로 들어가므로 따로 본다.
   special_tables(t) as (values
     ('public.players'), ('public.admin_audit_log')
   ),
   ops_tables(t) as (values
-    ('public.mails'), ('public.coupons'), ('public.coupon_codes')
+    ('public.mails'), ('public.coupons'), ('public.coupon_codes'), ('public.ops_banners')
   ),
   keep_tables(t) as (values
     ('public.account_login_ids'),
     ('public.admin_roles'), ('public.app_config'), ('public.reward_assets'), ('public.currency_alert_rules'),
-    ('public.website_notices'), ('public.website_notice_translations'), ('public.website_preregistrations')
+    ('public.website_notices'), ('public.website_notice_translations'), ('public.website_preregistrations'),
+    ('public.banned_words'), ('public.website_faqs'), ('public.patch_notes'), ('public.recurring_mails'), ('public.event_contents'), ('public.event_rotation')
   ),
   count_of as (
     select t, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %s', t), false, true, '')))[1]::text::bigint as n

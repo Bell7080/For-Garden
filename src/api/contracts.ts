@@ -128,7 +128,7 @@ export type UpdatePlayerCardRequest =
   | { kind: "bio"; value: string }
   | { kind: "frame"; frameId: string }
   | { kind: "avatar"; relicId: string };
-export type PlayerCardFailureReason = NicknameProblem | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned";
+export type PlayerCardFailureReason = NicknameProblem | "banned" | "nicknameCooldown" | "frameLocked" | "unknownFrame" | "notOwned";
 export type UpdatePlayerCardResponse = { ok: true; card: PlayerCardState } | { ok: false; reason: PlayerCardFailureReason };
 /** 장착 수식어 전체를 한 번에 바꾼다. 획득하지 않았거나 상한(3)을 넘으면 거절한다. */
 export interface EquipProfileModifiersRequest { modifierIds: string[]; }

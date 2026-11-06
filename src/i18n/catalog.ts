@@ -44,6 +44,9 @@ const loaded = new Map<LanguageId, Catalog>([[DEFAULT_LANGUAGE, KO]]);
 let active: LanguageId = DEFAULT_LANGUAGE;
 
 /** 번역 표를 가진 언어. 저장 검증과 설정 화면의 계약이 어긋나지 않았는지 테스트가 대조한다. */
+/** 지금 화면 문구의 언어. 운영자가 직접 적은 번역(공지 배너)을 고를 때 쓴다. */
+export function textLanguage(): LanguageId { return active; }
+
 export function languagesWithCatalog(): ReadonlyArray<LanguageId> {
   return [DEFAULT_LANGUAGE, ...Object.keys(LOADERS) as LanguageId[]];
 }

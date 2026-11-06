@@ -51,6 +51,8 @@ export const SYSTEM_ZH_HANS = {
   "ops.notice.loss": "已回收{name}{amount}个。",
   "ops.notice.mail": "收到{count}封新邮件。",
   "ops.notice.reason": "原因:{reason}",
+  "ops.notice.nicknameReset": "根据运营政策，你的昵称已被重置。请设置新的昵称。",
+  "ops.notice.bioReset": "根据运营政策，你的个人简介已被重置。",
   "ops.deleted.title": "账号通知",
   "ops.deleted.body": "账号已被删除。\n将返回标题画面。",
   "mail.launch.body": "感谢您游玩我们的游戏！谨以这份特别物资庆祝研究开始。",

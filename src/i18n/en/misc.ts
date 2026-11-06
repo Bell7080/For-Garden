@@ -231,6 +231,7 @@ export const MISC_EN = {
   "profile.edit.error.tooShort": "Enter at least {min} characters",
   "profile.edit.error.tooLong": "Up to {max} characters",
   "profile.edit.error.invalidCharacter": "Contains characters that can't be used",
+  "profile.edit.error.banned": "Contains a word that can't be used",
   "profile.levelUp.title": "Researcher Level Up",
   "profile.levelUp.stamina": "Stamina Max +{amount}",
   "profile.levelUp.rewards": "Level-up Rewards",

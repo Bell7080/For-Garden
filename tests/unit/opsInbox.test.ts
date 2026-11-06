@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { applyOpsAdjustments, drainOpsNotices, isValidOpsJournal, opsJournalOf, opsMailToDto, opsPatchNoteToDto } from "../../src/core/opsInbox";
+import { applyOpsAdjustments, applyOpsProfileActions, containsBannedWord, drainOpsNotices, isValidOpsJournal, noticeOpsBanners, opsBannerText, opsJournalOf, opsMailToDto, opsPatchNoteToDto, type OpsNotice } from "../../src/core/opsInbox";
+import { FakeServer } from "../../src/api/FakeServer";
 import { handleGameCall, StateConflictError, type StateStore, type StoredState } from "../../src/server/gameHandler";
 import type { OpsInbox } from "../../src/core/opsInbox";
 import { createDefaultSession } from "../../src/state/session";
 import { mailTabOf } from "../../src/ui/mailPopupLayout";
-import { opsNoticeLines, opsNoticeReceipt } from "../../src/ui/opsNoticeText";
+import { opsNoticeLines, opsNoticeMessages, opsNoticeReceipt } from "../../src/ui/opsNoticeText";
 
 const now = new Date("2026-10-18T00:00:00Z");
 const adj = (id: string, asset: string, delta: number) => ({ id, asset, delta, createdAt: now.toISOString() });
@@ -112,5 +113,47 @@ describe("어드민 패치노트 우편", () => {
     expect(dto.rewards).toEqual([]);
     expect(dto.body).toBe("[수정] 우편 삭제 수정\n[기타] 기타\n\n감사합니다");
     expect(mailTabOf(dto)).toBe("patch");
+  });
+});
+
+describe("운영 제재·공지 배너", () => {
+  it("닉네임 강제 초기화는 저장을 비우고 한 번 알리며 이미 빈 이름이면 알리지 않는다", () => {
+    const s = createDefaultSession();
+    s.playerCard = { ...s.playerCard, nickname: "나쁜이름", bio: "소개" };
+    const done = applyOpsProfileActions(s, [{ id: "p1", kind: "nickname_reset", reason: "부적절한 닉네임", createdAt: now.toISOString() }], now);
+    expect(done).toEqual(["p1"]);
+    expect(s.playerCard.nickname).toBe("");
+    expect(s.playerCard.bio).toBe("소개");
+    expect(applyOpsProfileActions(s, [{ id: "p2", kind: "nickname_reset", createdAt: now.toISOString() }], now)).toEqual(["p2"]);
+    const notices = drainOpsNotices(s);
+    expect(notices).toEqual([{ kind: "profile", field: "nickname", note: "부적절한 닉네임", at: now.toISOString() }]);
+    expect(isValidOpsJournal(opsJournalOf(s))).toBe(true);
+    expect(opsNoticeMessages(notices)).toHaveLength(1);
+  });
+
+  it("공지 배너는 기간 안에서 한 번만 띄우고 지금 언어의 번역을 고른다", () => {
+    const s = createDefaultSession();
+    const banner = { id: "b1", title: "점검 안내", body: "오늘 점검", translations: { en: { title: "Maintenance", body: "" } }, startsAt: "2026-10-17T00:00:00Z", endsAt: "2026-10-19T00:00:00Z" };
+    const ended = { ...banner, id: "b2", endsAt: "2026-10-17T12:00:00Z" };
+    noticeOpsBanners(s, [banner, ended], now);
+    noticeOpsBanners(s, [banner], now);
+    const notices = drainOpsNotices(s);
+    expect(notices).toHaveLength(1);
+    expect(isValidOpsJournal({ ...opsJournalOf(s), notices })).toBe(true);
+    const notice = notices[0] as Extract<OpsNotice, { kind: "banner" }>;
+    expect(opsBannerText(notice, "en")).toEqual({ title: "Maintenance", body: "오늘 점검" });
+    expect(opsBannerText(notice, "ja")).toEqual({ title: "점검 안내", body: "오늘 점검" });
+  });
+
+  it("금칙어는 공백·대소문자를 무시한 부분 일치로 거른다", () => {
+    expect(containsBannedWord("Bad Word12", ["badword"])).toBe(true);
+    expect(containsBannedWord("착한이름", ["badword", " "])).toBe(false);
+  });
+
+  it("닉네임 변경은 서버가 주입한 금칙어를 거절한다", async () => {
+    const s = createDefaultSession();
+    const server = new FakeServer(s, { latencyMs: 0, bannedWords: ["운영자"], persistSession: () => undefined, now: () => now });
+    expect(await server.updatePlayerCard({ kind: "nickname", value: "가짜운영자" })).toEqual({ ok: false, reason: "banned" });
+    expect((await server.updatePlayerCard({ kind: "nickname", value: "연구원" })).ok).toBe(true);
   });
 });

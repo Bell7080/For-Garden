@@ -230,6 +230,7 @@ export const MISC_DE = {
   "profile.edit.error.tooShort": "Mindestens {min} Zeichen eingeben",
   "profile.edit.error.tooLong": "Höchstens {max} Zeichen",
   "profile.edit.error.invalidCharacter": "Enthält unzulässige Zeichen",
+  "profile.edit.error.banned": "Enthält ein unzulässiges Wort",
   "profile.levelUp.title": "Forscher-Levelaufstieg",
   "profile.levelUp.stamina": "Ausdauer max. +{amount}",
   "profile.levelUp.rewards": "Level-up-Belohnungen",

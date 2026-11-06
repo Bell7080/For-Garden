@@ -51,6 +51,8 @@ export const SYSTEM_DE = {
   "ops.notice.loss": "{amount} {name} wurden abgezogen.",
   "ops.notice.mail": "Neue Post eingetroffen ({count}).",
   "ops.notice.reason": "Grund: {reason}",
+  "ops.notice.nicknameReset": "Dein Spitzname wurde gemäß unseren Richtlinien zurückgesetzt. Bitte wähle einen neuen.",
+  "ops.notice.bioReset": "Deine Kurzvorstellung wurde gemäß unseren Richtlinien zurückgesetzt.",
   "ops.deleted.title": "Kontohinweis",
   "ops.deleted.body": "Das Konto wurde gelöscht.\nZurück zum Titelbildschirm.",
   "mail.launch.body": "Danke, dass du unser Spiel spielst! Zum Forschungsstart schicken wir dir besondere Vorräte.",

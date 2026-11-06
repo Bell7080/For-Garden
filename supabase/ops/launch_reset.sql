@@ -77,12 +77,15 @@ declare
     'public.guild_war_days', 'public.guild_war_matches', 'public.guild_war_captures', 'public.guild_war_attacks',
     'public.guild_war_admissions', 'public.guild_war_results', 'public.guild_war_coins',
     'public.admin_audit_log',
-    'public.website_registration_limits'
+    'public.website_registration_limits',
+    'public.player_profile_actions', 'public.server_competitive_bans', 'public.purchase_records',
+    'public.player_daily_activity' -- 어드민 마이그레이션(ops_console_v2)이 만든다.
   ];
   ops_tables text[] := array[
     'public.mails',
     'public.coupons',
-    'public.coupon_codes'
+    'public.coupon_codes',
+    'public.ops_banners'
   ];
   keep_tables text[] := array[
     'public.account_login_ids', -- 인증 계정에 종속: 운영자 것은 보존, 삭제 계정은 Auth FK를 따라 제거.
@@ -92,7 +95,10 @@ declare
     'public.currency_alert_rules',
     'public.website_notices',
     'public.website_notice_translations',
-    'public.website_preregistrations'
+    'public.website_preregistrations',
+    'public.banned_words',
+    -- 아래는 어드민 마이그레이션이 만드는 운영 설정·공개 기록이다.
+    'public.website_faqs', 'public.patch_notes', 'public.recurring_mails', 'public.event_contents', 'public.event_rotation'
   ];
   keep_buckets text[] := array['notice-images'];
   confirm_phrase constant text := 'RESET-FORGARDEN-LAUNCH';

@@ -189,6 +189,7 @@ export const MISC_ZH_HANT = {
   "profile.title": "玩家資訊",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "已複製UID",
+  "profile.report": "舉報",
   "profile.researchDays": "研究第{days}天",
   "profile.section.favorite": "最愛遺物",
   "profile.section.records": "研究記錄",

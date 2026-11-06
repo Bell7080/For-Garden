@@ -1451,6 +1451,16 @@
 "UID kopiert",
 "UID скопирован"
 ],
+"profile.report": [
+"举报",
+"รายงาน",
+"Báo cáo",
+"Laporkan",
+"Denunciar",
+"Denunciar",
+"Melden",
+"Пожаловаться"
+],
 "profile.researchDays": [
 "研究第{days}天",
 "วิจัยวันที่ {days}",

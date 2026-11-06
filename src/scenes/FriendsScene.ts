@@ -536,6 +536,7 @@ export class FriendsScene extends Phaser.Scene {
       onFavorite: () => this.info.showFriend(profile.favoriteRelic),
       actions,
       marks,
+      report: true,
     });
     popup.open({ instant });
   }

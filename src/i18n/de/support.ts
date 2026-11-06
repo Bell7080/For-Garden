@@ -58,4 +58,6 @@ export const SUPPORT_DE = {
   "coupon.error.no_player": "Konto nicht gefunden.",
   "coupon.error.network": "Verbindung fehlgeschlagen. Bitte versuche es gleich noch einmal.",
   "coupon.error.unsupported": "Gutscheine können gerade nicht eingelöst werden.",
+  "support.report.target": "Gemeldet · {name} (UID {uid})",
+  "support.report.subject": "Meldung: {name}",
 } as const;

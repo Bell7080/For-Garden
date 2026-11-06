@@ -58,4 +58,6 @@ export const SUPPORT_ES = {
   "coupon.error.no_player": "No se encontró la cuenta.",
   "coupon.error.network": "Error de conexión. Inténtalo de nuevo en un momento.",
   "coupon.error.unsupported": "Ahora no se pueden canjear cupones.",
+  "support.report.target": "Denunciado · {name} (UID {uid})",
+  "support.report.subject": "Denuncia: {name}",
 } as const;

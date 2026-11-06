@@ -18,13 +18,17 @@ type Tab = "compose" | "mine";
  * 고객 문의 창. 작성(종류·제목·여러 줄 내용)과 내 문의(목록·상세·답글)를 한 판에서 라벨로 가른다.
  * 접수·조회는 `supportApi()` 경계만 지나고, 길이·속도 제한은 서버가 마지막으로 검증한다.
  */
-export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer): void {
+/** 다른 플레이어의 카드에서 연 신고 — 종류는 신고로 굳고, 대상 UID는 접수에 함께 실린다. */
+export interface SupportReportTarget { uid: number; name: string }
+
+export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer, options: { report?: SupportReportTarget } = {}): void {
   const height = supportPopupHeight();
   const top = -height / 2;
   let alive = true;
   let tab: Tab = "compose";
-  let category: TicketCategoryId = "inquiry";
-  let subject = "";
+  const report = options.report;
+  let category: TicketCategoryId = report ? "report" : "inquiry";
+  let subject = report ? t("support.report.subject", { name: report.name }) : "";
   let bodyText = "";
   let page = 0;
   let tickets: TicketSummary[] | null = null;
@@ -59,7 +63,9 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer): void {
 
     const paintCompose = (): void => {
       const c = SUPPORT_POPUP;
-      TICKET_CATEGORIES.forEach((id, index) => {
+      if (report) {
+        view.add(scene.add.text(-supportContentWidth() / 2, c.chips.y, t("support.report.target", { name: report.name, uid: report.uid }), textStyle({ role: "emphasis", size: 26, color: COLOR.ink })).setOrigin(0, 0.5));
+      } else TICKET_CATEGORIES.forEach((id, index) => {
         addCategoryTab(scene, view, {
           x: chipX(index, TICKET_CATEGORIES.length), y: c.chips.y, width: c.chips.width, height: c.chips.height, label: t(`support.category.${id}` as TextKey), selected: category === id, face: "down",
           onSelect: () => { if (category === id) return; category = id; paint(); },
@@ -78,10 +84,10 @@ export function openSupportPopup(scene: Phaser.Scene, layer: PopupLayer): void {
         // 비어 있으면 서버를 부르지 않고 같은 오류 문구로 알린다(서버도 같은 판정을 한다).
         if (ticketDraftProblem({ subject, body: bodyText })) { failure("invalid_text"); return; }
         submit.setEnabled(false);
-        void supportApi().submit({ category, subject: subject.trim(), body: bodyText.trim() }).then((result) => {
+        void supportApi().submit({ category, subject: subject.trim(), body: bodyText.trim(), reportedUid: report?.uid }).then((result) => {
           if (!alive) return;
           if (!result.ok) { submit.setEnabled(true); failure(result.error); return; }
-          subject = ""; bodyText = ""; tickets = null; page = 0;
+          subject = report ? t("support.report.subject", { name: report.name }) : ""; bodyText = ""; tickets = null; page = 0;
           notice(t("support.sent.title"), t("support.sent.body", { no: result.value.ticketNo }));
           paint();
         });

@@ -58,4 +58,6 @@ export const SUPPORT_TH = {
   "coupon.error.no_player": "ไม่พบข้อมูลบัญชี",
   "coupon.error.network": "เชื่อมต่อไม่สำเร็จ โปรดลองใหม่ภายหลัง",
   "coupon.error.unsupported": "ไม่สามารถแลกคูปองได้ในขณะนี้",
+  "support.report.target": "ผู้ถูกรายงาน · {name} (UID {uid})",
+  "support.report.subject": "รายงาน {name}",
 } as const;

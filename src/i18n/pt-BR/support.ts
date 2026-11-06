@@ -58,4 +58,6 @@ export const SUPPORT_PT_BR = {
   "coupon.error.no_player": "Conta não encontrada.",
   "coupon.error.network": "Falha na conexão. Tente novamente em instantes.",
   "coupon.error.unsupported": "Não é possível resgatar cupons agora.",
+  "support.report.target": "Denunciado · {name} (UID {uid})",
+  "support.report.subject": "Denúncia: {name}",
 } as const;

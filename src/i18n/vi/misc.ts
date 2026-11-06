@@ -189,6 +189,7 @@ export const MISC_VI = {
   "profile.title": "Thông tin người chơi",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "Đã sao chép UID",
+  "profile.report": "Báo cáo",
   "profile.researchDays": "Nghiên cứu ngày {days}",
   "profile.section.favorite": "Di vật Yêu thích",
   "profile.section.records": "Hồ sơ Nghiên cứu",

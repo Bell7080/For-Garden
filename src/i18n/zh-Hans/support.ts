@@ -58,4 +58,6 @@ export const SUPPORT_ZH_HANS = {
   "coupon.error.no_player": "未找到账号信息。",
   "coupon.error.network": "连接失败，请稍后再试。",
   "coupon.error.unsupported": "目前无法兑换优惠券。",
+  "support.report.target": "举报对象 · {name}（UID {uid}）",
+  "support.report.subject": "举报 {name}",
 } as const;

@@ -597,5 +597,25 @@
     "Não é possível resgatar cupons agora.",
     "Gutscheine können gerade nicht eingelöst werden.",
     "Сейчас купоны активировать нельзя."
+  ],
+  "support.report.target": [
+    "举报对象 · {name}（UID {uid}）",
+    "ผู้ถูกรายงาน · {name} (UID {uid})",
+    "Đối tượng báo cáo · {name} (UID {uid})",
+    "Yang dilaporkan · {name} (UID {uid})",
+    "Denunciado · {name} (UID {uid})",
+    "Denunciado · {name} (UID {uid})",
+    "Gemeldet · {name} (UID {uid})",
+    "Жалоба на · {name} (UID {uid})"
+  ],
+  "support.report.subject": [
+    "举报 {name}",
+    "รายงาน {name}",
+    "Báo cáo {name}",
+    "Laporan {name}",
+    "Denuncia: {name}",
+    "Denúncia: {name}",
+    "Meldung: {name}",
+    "Жалоба: {name}"
   ]
 }

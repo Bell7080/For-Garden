@@ -190,6 +190,7 @@ export const MISC_EN = {
   "profile.title": "Player Info",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID copied",
+  "profile.report": "Report",
   "profile.researchDays": "Research day {days}",
   "profile.section.favorite": "Favorite Relic",
   "profile.section.records": "Research Records",

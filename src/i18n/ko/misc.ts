@@ -212,6 +212,7 @@ export const MISC_KO = {
   "profile.title": "플레이어 정보",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID를 복사했습니다",
+  "profile.report": "신고",
   "profile.researchDays": "연구 {days}일째",
   "profile.section.favorite": "애착 렐릭",
   "profile.section.records": "연구 기록",

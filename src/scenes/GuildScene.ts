@@ -1150,7 +1150,7 @@ export class GuildScene extends Phaser.Scene {
       label: action.label, icon: action.icon, destructive: action.tone === "danger", onClick: () => { popup.close(); action.run(); },
     }));
     const popup = new PlayerProfilePopup(this, this.popups, guildMemberProfileDisplay(member, lastActive, records), () => undefined, undefined, {
-      title: t("guild.profile.title"), actionTone: tone,
+      title: t("guild.profile.title"), actionTone: tone, report: !member.isMe,
       actions: actions.length > 3 ? [{ label: t("guild.members.manage"), icon: "settings", onClick: () => { popup.close(); this.openMemberActions(member); } }] : actions,
     });
     popup.open();

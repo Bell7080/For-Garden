@@ -189,6 +189,7 @@ export const MISC_ZH_HANS = {
   "profile.title": "玩家信息",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "已复制UID",
+  "profile.report": "举报",
   "profile.researchDays": "研究第{days}天",
   "profile.section.favorite": "最爱遗物",
   "profile.section.records": "研究记录",

@@ -189,6 +189,7 @@ export const MISC_PT_BR = {
   "profile.title": "Informações do jogador",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID copiado",
+  "profile.report": "Denunciar",
   "profile.researchDays": "Dia {days} de pesquisa",
   "profile.section.favorite": "Relíquia favorita",
   "profile.section.records": "Registros de pesquisa",

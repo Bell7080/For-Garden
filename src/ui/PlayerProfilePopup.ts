@@ -34,6 +34,7 @@ import { Button, DESTRUCTIVE_BUTTON_STYLE } from "./Button";
 import { PlayerLevelTreePopup } from "./PlayerLevelTreePopup";
 import { addSdFootShadow } from "./SdFootShadow";
 import { addMarkChip } from "./MarkChip";
+import { openSupportPopup } from "./SupportPopup";
 
 /** 희귀도는 theme 의미 토큰 표만 거치므로 DTO가 임의 색 문자열을 주입할 수 없다. */
 function modifierColor(modifier: PublicProfileModifier): number {
@@ -91,6 +92,8 @@ export class PlayerProfilePopup {
       title?: string; onFavorite?: () => void; actions?: readonly ProfileAction[]; marks?: ProfileMarks;
       /** 조작 줄을 물들이는 색(길드 카드는 그 길드 배지의 색). 주면 파괴적이지 않은 조작이 이 색의 강조 판으로 선다. */
       actionTone?: { accent: number; fill: number };
+      /** 다른 사람의 카드에만 켠다 — UID 줄 오른쪽 끝의 「신고」가 카드를 닫고 그 사람을 대상으로 한 신고 창을 연다. */
+      report?: boolean;
     } = {},
   ) {}
 
@@ -175,7 +178,16 @@ export class PlayerProfilePopup {
       void navigator.clipboard?.writeText(this.profile.displayId).then(() => uid.setText(t("profile.uidCopied")), () => undefined);
       this.scene.time.delayedCall(1200, () => { if (uid.active) uid.setText(t("profile.uid", { uid: this.profile.displayId })); });
     });
-    if (this.profile.researchDays !== undefined) {
+    const reportUid = Number(this.profile.displayId);
+    if (this.options.report && !this.editors && /^\d{1,15}$/.test(this.profile.displayId)) {
+      const report = this.scene.add.text(header.textRight, header.uidY, t("profile.report"), textStyle({ role: "emphasis", size: 24, color: COLOR.inkDim })).setOrigin(1, 0.5);
+      body.add(report);
+      report.setInteractive({ useHandCursor: true }).on("pointerup", () => {
+        const target = { uid: reportUid, name: this.profile.displayName };
+        this.close();
+        openSupportPopup(this.scene, this.layer, { report: target });
+      });
+    } else if (this.profile.researchDays !== undefined) {
       body.add(this.scene.add.text(header.textRight, header.uidY, t("profile.researchDays", { days: this.profile.researchDays.toLocaleString() }), textStyle({ role: "emphasis", size: 24, color: COLOR.accentText })).setOrigin(1, 0.5));
     }
 

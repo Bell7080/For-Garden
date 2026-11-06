@@ -189,6 +189,7 @@ export const MISC_RU = {
   "profile.title": "Сведения об игроке",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID скопирован",
+  "profile.report": "Пожаловаться",
   "profile.researchDays": "День исследований {days}",
   "profile.section.favorite": "Любимый реликт",
   "profile.section.records": "Записи исследований",

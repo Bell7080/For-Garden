@@ -58,4 +58,6 @@ export const SUPPORT_RU = {
   "coupon.error.no_player": "Аккаунт не найден.",
   "coupon.error.network": "Ошибка соединения. Повторите чуть позже.",
   "coupon.error.unsupported": "Сейчас купоны активировать нельзя.",
+  "support.report.target": "Жалоба на · {name} (UID {uid})",
+  "support.report.subject": "Жалоба: {name}",
 } as const;

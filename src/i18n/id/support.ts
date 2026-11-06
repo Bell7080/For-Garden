@@ -58,4 +58,6 @@ export const SUPPORT_ID = {
   "coupon.error.no_player": "Info akun tidak ditemukan.",
   "coupon.error.network": "Koneksi gagal. Coba lagi nanti.",
   "coupon.error.unsupported": "Kupon tidak dapat ditukar saat ini.",
+  "support.report.target": "Yang dilaporkan · {name} (UID {uid})",
+  "support.report.subject": "Laporan {name}",
 } as const;

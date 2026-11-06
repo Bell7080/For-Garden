@@ -58,4 +58,6 @@ export const SUPPORT_VI = {
   "coupon.error.no_player": "Không tìm thấy thông tin tài khoản.",
   "coupon.error.network": "Kết nối thất bại. Vui lòng thử lại sau.",
   "coupon.error.unsupported": "Hiện không thể đổi mã quà.",
+  "support.report.target": "Đối tượng báo cáo · {name} (UID {uid})",
+  "support.report.subject": "Báo cáo {name}",
 } as const;

@@ -58,4 +58,6 @@ export const SUPPORT_JA = {
   "coupon.error.no_player": "アカウント情報が見つかりません。",
   "coupon.error.network": "接続に失敗しました。しばらくしてから再度お試しください。",
   "coupon.error.unsupported": "現在はクーポンを登録できません。",
+  "support.report.target": "通報対象 · {name}（UID {uid}）",
+  "support.report.subject": "{name}の通報",
 } as const;

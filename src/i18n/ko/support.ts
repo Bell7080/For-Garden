@@ -58,4 +58,6 @@ export const SUPPORT_KO = {
   "coupon.error.no_player": "계정 정보를 찾지 못했습니다.",
   "coupon.error.network": "연결에 실패했습니다. 잠시 후 다시 시도해 주세요.",
   "coupon.error.unsupported": "지금은 쿠폰을 등록할 수 없습니다.",
+  "support.report.target": "신고 대상 · {name} (UID {uid})",
+  "support.report.subject": "{name} 신고",
 } as const;

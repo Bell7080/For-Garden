@@ -58,4 +58,6 @@ export const SUPPORT_EN = {
   "coupon.error.no_player": "Account not found.",
   "coupon.error.network": "Connection failed. Please try again shortly.",
   "coupon.error.unsupported": "Coupons can't be redeemed right now.",
+  "support.report.target": "Reporting · {name} (UID {uid})",
+  "support.report.subject": "Report: {name}",
 } as const;

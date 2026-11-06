@@ -200,6 +200,7 @@ export const MISC_JA = {
   "profile.title": "プレイヤー情報",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UIDをコピーしました",
+  "profile.report": "通報",
   "profile.researchDays": "研究{days}日目",
   "profile.section.favorite": "お気に入りレリック",
   "profile.section.records": "研究記録",

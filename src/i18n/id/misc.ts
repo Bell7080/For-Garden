@@ -189,6 +189,7 @@ export const MISC_ID = {
   "profile.title": "Info Pemain",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID disalin",
+  "profile.report": "Laporkan",
   "profile.researchDays": "Riset hari ke-{days}",
   "profile.section.favorite": "Relik Favorit",
   "profile.section.records": "Catatan Riset",

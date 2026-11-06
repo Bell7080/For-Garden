@@ -189,6 +189,7 @@ export const MISC_TH = {
   "profile.title": "ข้อมูลผู้เล่น",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "คัดลอก UID แล้ว",
+  "profile.report": "รายงาน",
   "profile.researchDays": "วิจัยวันที่ {days}",
   "profile.section.favorite": "เรลิกคนโปรด",
   "profile.section.records": "บันทึกการวิจัย",

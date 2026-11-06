@@ -58,4 +58,6 @@ export const SUPPORT_ZH_HANT = {
   "coupon.error.no_player": "找不到帳號資訊。",
   "coupon.error.network": "連線失敗，請稍後再試。",
   "coupon.error.unsupported": "目前無法兌換優惠券。",
+  "support.report.target": "舉報對象 · {name}（UID {uid}）",
+  "support.report.subject": "舉報 {name}",
 } as const;

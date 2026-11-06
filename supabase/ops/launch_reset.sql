@@ -79,7 +79,8 @@ declare
     'public.admin_audit_log',
     'public.website_registration_limits',
     'public.player_profile_actions', 'public.server_competitive_bans', 'public.purchase_records',
-    'public.player_daily_activity' -- 어드민 마이그레이션(ops_console_v2)이 만든다.
+    'public.player_daily_activity', -- 어드민 마이그레이션(ops_console_v2)이 만든다.
+    'public.ops_anomaly_acks' -- 어드민 ops_console_v4. 테스트 기간 기록을 보고 남긴 확인이라 함께 비운다.
   ];
   ops_tables text[] := array[
     'public.mails',
@@ -98,7 +99,8 @@ declare
     'public.website_preregistrations',
     'public.banned_words',
     -- 아래는 어드민 마이그레이션이 만드는 운영 설정·공개 기록이다.
-    'public.website_faqs', 'public.patch_notes', 'public.recurring_mails', 'public.event_contents', 'public.event_rotation'
+    'public.website_faqs', 'public.patch_notes', 'public.recurring_mails', 'public.event_contents', 'public.event_rotation',
+    'public.ops_anomaly_rules' -- 어드민 ops_console_v4의 이상 징후 문턱(운영 설정).
   ];
   keep_buckets text[] := array['notice-images'];
   confirm_phrase constant text := 'RESET-FORGARDEN-LAUNCH';

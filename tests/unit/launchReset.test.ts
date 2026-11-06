@@ -41,6 +41,8 @@ const WEBSITE_TABLES = [
   "public.recurring_mails",
   "public.event_contents",
   "public.event_rotation",
+  "public.ops_anomaly_rules",
+  "public.ops_anomaly_acks",
 ];
 
 describe("출시 초기화 표 분류", () => {

@@ -39,6 +39,30 @@ export const BGM_TRACKS: Readonly<Record<BgmTrackId, BgmTrack>> = {
 };
 
 /**
+ * 슈테의 리듬 낚시 곡 — 판 위에서만 흐르므로 씬 표(`BGM_TRACKS`)가 아니라 따로 둔다.
+ * **곡 파일이 아직 저장소에 없다**(ElevenLabs에서 만들었고 Flow `ctkObrdUKZM0JYDhiNsZ`, 받아 오는 길이 막혀 있다).
+ * 파일을 `public/audio/bgm/`에 넣으면 `FISHING_BGM_READY`만 켠다 — 그 전에는 지금 흐르는 곡을 그대로 둔다.
+ */
+export const FISHING_BGM_READY = false;
+
+export const FISHING_BGM_TRACKS: Readonly<Record<"easy" | "normal" | "hard" | "extreme" | "boss", BgmTrack>> = {
+  // 슈테의 리듬 낚시 — 화면 여덟 장 앞의 게이머 아이라 칩튠이다. 난이도마다 바늘이 한 번 쓸고 가는 시간
+  // (`FISHING_DIFFICULTIES.sweepMs`)이 두 박이 되게 BPM을 맞췄다(1300ms → 92 · 1120 → 107 · 960 → 125 · 820 → 146).
+  // 씬이 아니라 판(`ShuteFishingPopup`)이 `holdBgm`으로 잠깐 잡았다가 놓는다. 보스 물고기는 난이도와 무관하게 보스곡.
+  easy: { key: "bgm-fishing-easy", path: "audio/bgm/bgm-fishing-easy.mp3", gain: 0.85 },
+  normal: { key: "bgm-fishing-normal", path: "audio/bgm/bgm-fishing-normal.mp3", gain: 0.85 },
+  hard: { key: "bgm-fishing-hard", path: "audio/bgm/bgm-fishing-hard.mp3", gain: 0.85 },
+  extreme: { key: "bgm-fishing-extreme", path: "audio/bgm/bgm-fishing-extreme.mp3", gain: 0.85 },
+  boss: { key: "bgm-fishing-boss", path: "audio/bgm/bgm-fishing-boss.mp3", gain: 0.85 },
+};
+
+/** 리듬 낚시의 지금 물고기에 흐를 곡 — 보스 물고기(판의 마지막)는 보스곡, 나머지는 난이도의 곡. 파일이 없으면 없음. */
+export function fishingBgmTrack(difficulty: "easy" | "normal" | "hard" | "extreme", boss: boolean): BgmTrack | undefined {
+  if (!FISHING_BGM_READY) return undefined;
+  return FISHING_BGM_TRACKS[boss ? "boss" : difficulty];
+}
+
+/**
  * **씬 키**(Phaser `super("key")`)로 찾는다 — 클래스 이름이 아니다. 한때 클래스 이름으로 적어 두어 어느 씬도 맞지
  * 않았고, 부트에서 건 타이틀 곡 하나가 게임 내내 흘렀다(`bgmPlan.test`가 실제 씬 키와 대조한다).
  * 아레나 안내(`arenaNotice`)는 늘 켜져 있는 겹이라 표에 두지 않는다.

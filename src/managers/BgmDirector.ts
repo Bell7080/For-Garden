@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { bgmTrackForScene } from "../core/bgmPlan";
+import { bgmTrackForScene, type BgmTrack } from "../core/bgmPlan";
 import { audioManager } from "./AudioManager";
 
 /**
@@ -11,10 +11,29 @@ import { audioManager } from "./AudioManager";
  * 앞 곡과 새 곡이 잠깐 함께 올라 모바일에서 탭이 죽을 수 있었다. 흘려 재생하면 곡당 몇 MB만 들고 기다림이 없다.
  * 자동 재생이 막힌 브라우저는 첫 입력에서 다시 튼다.
  */
+let activeDirector: BgmDirector | undefined;
+
+/**
+ * 씬이 아니라 화면 위의 판이 잠깐 곡을 잡는다(슈테의 리듬 낚시). 잡는 동안 씬이 바뀌어도 그 곡을 지키고,
+ * `releaseBgm`이 놓으면 지금 씬의 곡으로 돌아간다. 감독이 없는 빌드(E2E)에서는 아무것도 하지 않는다.
+ */
+export function holdBgm(track: BgmTrack): void { activeDirector?.hold(track); }
+export function releaseBgm(): void { activeDirector?.release(); }
+
 export class BgmDirector {
   private readonly registered = new Set<string>();
+  private sceneTrack?: BgmTrack;
+  private held?: BgmTrack;
 
-  constructor(private readonly game: Phaser.Game, private readonly enabled = true) {}
+  constructor(private readonly game: Phaser.Game, private readonly enabled = true) { activeDirector = this; }
+
+  hold(track: BgmTrack): void { this.held = track; this.play(track); }
+
+  release(): void {
+    if (!this.held) return;
+    this.held = undefined;
+    if (this.sceneTrack) this.play(this.sceneTrack);
+  }
 
   /** 모든 등록된 씬의 시작·재개 사건에 연결한다. 설정·효과 겹침 층은 표에 없어 곡이 그대로다. */
   attach(): void {
@@ -40,7 +59,13 @@ export class BgmDirector {
 
   private request(sceneKey: string, data?: unknown): void {
     const track = bgmTrackForScene(sceneKey, data);
-    if (!track || !this.enabled || !audioManager) return;
+    if (!track) return;
+    this.sceneTrack = track;
+    if (!this.held) this.play(track);
+  }
+
+  private play(track: BgmTrack): void {
+    if (!this.enabled || !audioManager) return;
     if (!this.registered.has(track.key)) {
       audioManager.registerStream(track.key, `${import.meta.env.BASE_URL}${track.path}`);
       this.registered.add(track.key);

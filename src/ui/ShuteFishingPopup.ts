@@ -10,6 +10,8 @@ import {
 import type { ChestCardCurrency } from "../core/chestForge";
 import { motionPolicy } from "../core/settings";
 import { audioManager } from "../managers/AudioManager";
+import { holdBgm, releaseBgm } from "../managers/BgmDirector";
+import { fishingBgmTrack } from "../core/bgmPlan";
 import { logError } from "../managers/ErrorReporter";
 import { managerEvents } from "../managers/ManagerEvents";
 import { session } from "../state/session";
@@ -278,7 +280,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
   const motion = (): number => motionPolicy(session.settings).nonEssentialDistanceFactor;
   popups.open({ width: FISH.width, height: FISH.height, title: t("event.shuteFishing.title"), dim: true,
     closeOnBackdrop: true, canClose: () => !busy,
-    onClose: () => { alive = false; onChanged(); },
+    onClose: () => { alive = false; releaseBgm(); onChanged(); },
   }, (body) => {
     const shape = popupArtShape(FISH.width, FISH.height);
     const mask = popupBodyShapeMask(scene, body, shape);
@@ -497,6 +499,8 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
       if (!run || !spec || !treasure) { current = undefined; return; }
       current = { spec, tier: treasure.tier, startedAt: performance.now() };
       frozenAt = undefined;
+      const fishingTrack = fishingBgmTrack(run.difficulty, run.index === run.fish.length - 1);
+      if (fishingTrack) holdBgm(fishingTrack);
       playShute.setTempo(spec.sweepMs);
     };
     const tick = (): void => {
@@ -596,6 +600,7 @@ export async function openShuteFishingPopup(scene: Phaser.Scene, popups: PopupLa
     /** 다 끝난 뒤 — 이번 판에 낚은 보물이 카드로 늘어서고, 받은 몫을 알린 뒤 첫 쪽으로 돌아간다. */
     async function finish(total: Partial<Record<ChestCardCurrency, number>>, cleared: boolean): Promise<void> {
       current = undefined;
+      releaseBgm();
       judgeText.setText(t(cleared ? "shuteFishing.cleared" : "shuteFishing.out")).setColor(cleared ? JUDGE_COLOR.perfect : "#ff5a6e").setAlpha(1).setScale(1);
       scene.tweens.killTweensOf(judgeText);
       if (cleared) { playShute.cheer(3); audioManager?.playUi("success.fanfare"); } else playShute.flinch();

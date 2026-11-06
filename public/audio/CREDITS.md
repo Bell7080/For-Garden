@@ -28,7 +28,13 @@
 | `bgm/bgm-boss.mp3` | 약 2분 57초 | 레이드·원정 보스 전투 |
 | `bgm/bgm-shop.mp3` | 약 2분 29초 | 상점·프리미엄 상점 |
 
-화면과 곡의 대응은 `src/core/bgmPlan.ts`의 `SCENE_TRACK` 한 표가 갖는다.
+| `bgm/bgm-fishing-easy.mp3` | 1분 | 슈테의 리듬 낚시 쉬움 — 92 BPM 칩튠 로파이 (생성 ID `PMcuaIDgBp3sj33gmmRN`, v0.405.1) |
+| `bgm/bgm-fishing-normal.mp3` | 1분 | 리듬 낚시 보통 — 107 BPM 칩튠 팝 (생성 ID `AD2VrX53UG5vU67QUZL9`) |
+| `bgm/bgm-fishing-hard.mp3` | 1분 | 리듬 낚시 어려움 — 125 BPM 칩튠 일렉트로 (생성 ID `EYszZ3eDMSTCkrBmsCA3`) |
+| `bgm/bgm-fishing-extreme.mp3` | 1분 | 리듬 낚시 매우 어려움 — 146 BPM 고속 칩튠 (생성 ID `q4AMoBYlJdJlrBjg1UFO`) |
+| `bgm/bgm-fishing-boss.mp3` | 1분 | 리듬 낚시 보스 물고기 — 125 BPM 단조 보스 칩튠 (생성 ID `3Bj7bgvNJD7oZzmF55iX`) |
+
+화면과 곡의 대응은 `src/core/bgmPlan.ts`의 `SCENE_TRACK` 한 표가 갖는다. 리듬 낚시 곡 다섯은 Flow `ctkObrdUKZM0JYDhiNsZ`(2026-11-05)에서 만들었고, 음량만 -14.4 LUFS로 내리고 128 kbps로 다시 구웠다(끝 겹쳐 녹이기는 박자가 두 겹이 되어 하지 않았다). 판(`ShuteFishingPopup`)이 `holdBgm`으로 잡는다.
 
 ### 효과음
 

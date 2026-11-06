@@ -40,10 +40,11 @@ export const BGM_TRACKS: Readonly<Record<BgmTrackId, BgmTrack>> = {
 
 /**
  * 슈테의 리듬 낚시 곡 — 판 위에서만 흐르므로 씬 표(`BGM_TRACKS`)가 아니라 따로 둔다.
- * **곡 파일이 아직 저장소에 없다**(ElevenLabs에서 만들었고 Flow `ctkObrdUKZM0JYDhiNsZ`, 받아 오는 길이 막혀 있다).
- * 파일을 `public/audio/bgm/`에 넣으면 `FISHING_BGM_READY`만 켠다 — 그 전에는 지금 흐르는 곡을 그대로 둔다.
+ * 곡은 ElevenLabs Flow `ctkObrdUKZM0JYDhiNsZ`에서 만들었다(출처는 `public/audio/CREDITS.md`). 파일을 다른 배경음과 같은
+ * -14.4 LUFS · 128 kbps로 구웠으므로 `gain`은 다섯 곡이 같다. 끝을 앞머리에 겹쳐 녹이지 않았다 — 겹치면 첫 박이 두 겹이 된다.
+ * `FISHING_BGM_READY`를 끄면 판이 곡을 잡지 않고 지금 흐르는 곡을 그대로 둔다.
  */
-export const FISHING_BGM_READY = false;
+export const FISHING_BGM_READY = true;
 
 export const FISHING_BGM_TRACKS: Readonly<Record<"easy" | "normal" | "hard" | "extreme" | "boss", BgmTrack>> = {
   // 슈테의 리듬 낚시 — 화면 여덟 장 앞의 게이머 아이라 칩튠이다. 난이도마다 바늘이 한 번 쓸고 가는 시간

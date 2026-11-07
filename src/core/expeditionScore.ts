@@ -1,4 +1,4 @@
-import { EXPEDITION_NODE_SCORE_MULTIPLIERS, EXPEDITION_SCORE_BALANCE } from "../data/expedition";
+import { EXPEDITION_NODE_SCORE_MULTIPLIERS, EXPEDITION_SCORE_BALANCE, EXPEDITION_SWEEP_MIN_WEEKLY_SCORE } from "../data/expedition";
 import type { ExpeditionNodeType } from "./expeditionMap";
 
 /** 서버가 검증 가능한 일반 노드 종료 스냅샷만 담으며 재화 RNG는 의도적으로 제외한다. */
@@ -30,4 +30,9 @@ export function calculateExpeditionNodeScore(input: ExpeditionNodeScoreInput): n
 export function expeditionBossDamageScore(totalDamage: number): number {
   if (!Number.isFinite(totalDamage) || totalDamage <= 0) return 0;
   return Math.round(totalDamage * EXPEDITION_SCORE_BALANCE.bossDamagePerPoint);
+}
+
+/** 소탕을 열 만한 이번 주 최고 점수인가 — 0이거나 75% 몫을 받을 만큼 걸어 보지 않았으면 닫힌다. 화면·서버 공용. */
+export function expeditionSweepScoreReady(weeklyBestScore: number): boolean {
+  return Number.isFinite(weeklyBestScore) && weeklyBestScore >= EXPEDITION_SWEEP_MIN_WEEKLY_SCORE;
 }

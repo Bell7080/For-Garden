@@ -143,7 +143,7 @@ import { resolveExpeditionBossBattle } from "../core/expeditionBoss";
 import { type ExpeditionRewardCurrency, EXPEDITION_BOSS_BALANCE, EXPEDITION_BEST_SCORE_REWARD_STAGES, EXPEDITION_DAILY_POLICY, expeditionBossSalvage, expeditionRankRewards, EXPEDITION_MAP_BALANCE, EXPEDITION_NODE_REWARD_BALANCE, EXPEDITION_SWEEP_REWARDS } from "../data/expedition";
 import { getExpeditionNodeEnemies, expeditionBossGrowth, expeditionNodeRole } from "../data/expeditionEnemies";
 import { calculateExpeditionNodeRewards, calculateExpeditionRunScore, normalizeExpeditionPendingRewards } from "../core/expeditionRewards";
-import { calculateExpeditionNodeScore, expeditionBossDamageScore } from "../core/expeditionScore";
+import { calculateExpeditionNodeScore, expeditionBossDamageScore, expeditionSweepScoreReady } from "../core/expeditionScore";
 import { RelicProgressionManager } from "../managers/RelicProgressionManager";
 import { normalizeExpeditionState, rollExpeditionPeriods, expeditionRankRewardQueue } from "../core/expeditionPeriods";
 import { emptyServerJournal } from "../core/serverJournal";
@@ -151,7 +151,7 @@ import { addItemLot, isValidLotStack, lotExpiresAt, purgeExpiredLots, removeItem
 import { grantPlayerExperience, normalizePlayerLevel, PLAYER_LEVEL_UP_REWARD, playerExpForStamina, type PlayerExpReceipt } from "../core/playerLevel";
 import { isExpeditionRelicSnapshot, captureExpeditionRelicSnapshot } from "../core/expeditionSnapshot";
 import { partyRuneTraitEffects } from "../core/runeTraitEffects";
-import type { ExpeditionAugmentEffect } from "../core/expeditionAugments";
+import { applyExpeditionAfterBattleHeal, expeditionAfterBattleHealPercent, type ExpeditionAugmentEffect } from "../core/expeditionAugments";
 import { expeditionBattleEffects } from "../core/expeditionBattle";
 import { settingsManager } from "../managers/SettingsManager";
 import { nextUtcDay } from "../core/notificationSchedule";
@@ -1319,12 +1319,17 @@ export class FakeServer implements GameApi {
     next.normalNodeScoreTotal += nodeScore;
     const score = calculateExpeditionRunScore(next);
     next.runScore = score.runScore; next.bestScore = score.runScore;
-    next.relics.forEach((relic, index) => { relic.currentHp = request.relicHp[index]; relic.alive = relic.currentHp > 0; });
+    // 전투 후 회복 증강(현장 수복·재생 프로토콜)은 **점수를 매긴 뒤** 서버가 저장 HP에만 얹는다 —
+    // 클라이언트가 보낸 HP를 그대로 저장하던 때는 이 증강을 골라도 다음 노드에 아무것도 남지 않았다.
+    // 쓰러진 렐릭은 되살리지 않고, 보스·보물·휴식은 전투 노드가 아니라 회복하지 않는다.
+    const afterBattleHealPercent = scoreBearingNode ? expeditionAfterBattleHealPercent(run.selectedAugments) : 0;
+    const storedHp = applyExpeditionAfterBattleHeal(run.relics.map(({ relicId }, index) => ({ relicId, currentHp: request.relicHp[index], alive: request.relicHp[index] > 0 })), afterBattleHealPercent);
+    next.relics.forEach((relic, index) => { relic.currentHp = storedHp[index].currentHp; relic.alive = relic.currentHp > 0; });
     for (const [currency, amount] of Object.entries(rewards)) next.pendingRewards[currency] = (next.pendingRewards[currency] ?? 0) + amount;
     const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency) => (next.pendingRewards[currency] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency as keyof typeof EXPEDITION_NODE_REWARD_BALANCE].runCap);
     next.lastNodeRewards = { nodeId: node.id, nodeScore, rewards, cappedCurrencies };
     const expedition = { ...this.state.expedition, run: next };
-    const response = { runId: run.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
+    const response = { runId: run.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, afterBattleHealPercent, alreadyCompleted: false };
     const candidate = { ...this.state, expedition };
     this.recordReceipt(candidate, "expeditionNode", request.requestId, identity, response);
     this.commitRaidState(candidate);
@@ -1346,7 +1351,8 @@ export class FakeServer implements GameApi {
     if (this.state.expedition.run) throw new GameApiError("EXPEDITION_ALREADY_ACTIVE", "진행 중인 원정이 있어 소탕할 수 없습니다.");
     const weekly = this.rollExpedition(this.now());
     if (weekly.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) throw new GameApiError("EXPEDITION_DAILY_LIMIT", "오늘의 원정 기회를 모두 사용했습니다.");
-    if (weekly.allTimeBestScore <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "소탕할 기준 점수가 없습니다.");
+    // 소탕의 기준은 **이번 주** 최고 점수다 — 주가 바뀌어 0이거나 75% 몫을 받을 만큼 걸어 보지 않았으면 닫는다.
+    if (!expeditionSweepScoreReady(weekly.bestScore)) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "소탕할 기준 점수가 없습니다.");
     const wallet = { ...this.state.wallet }; const granted: Record<string, number> = {};
     for (const [currency, amount] of Object.entries(EXPEDITION_SWEEP_REWARDS)) {
       const key = currency as keyof Session["wallet"];

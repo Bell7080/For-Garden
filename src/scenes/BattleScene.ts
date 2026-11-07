@@ -3711,7 +3711,11 @@ export class BattleScene extends Phaser.Scene {
           ...(nodeResult.nodeScore > 0 ? { score: { label: t("expedition.nodeScore"), value: nodeResult.nodeScore } } : {}),
           fighters: this.stageCompleteFighters(),
           onOpenContribution: (onClosed) => this.openContributionPopup(popups, onClosed),
-          onConfirm: () => startScene(this, "expedition"),
+          // 전투 후 회복이 얹혔으면 지도 HUD가 **전투가 끝난 체력**에서 차오르며 오른 양을 띄운다 —
+          // 휴식과 같은 연출(`restRecap`)이다. 회복이 없으면 그대로 선다.
+          onConfirm: () => startScene(this, "expedition", (nodeResult.afterBattleHealPercent ?? 0) > 0
+            ? { restRecap: results.map(({ relicId, currentHp, alive }) => ({ relicId, currentHp, alive })) }
+            : undefined),
         });
       }).catch((error: unknown) => {
         // 두 정산 모두 같은 영수증으로 멱등이라 다시 시도해도 두 번 쌓이지 않는다. 삼키면 판이 아무것도 없이 멈춘다.

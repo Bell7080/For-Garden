@@ -238,5 +238,17 @@ export const EXPEDITION_SWEEP_REWARDS = {
   fossil: 0,
 } as const;
 
+/**
+ * 소탕을 여는 **이번 주 최고 점수**의 바닥.
+ *
+ * 소탕은 평균 경로 전투 전리품의 75%를 고정으로 준다 — 그러니 이번 주에 적어도 그만큼 걸어 본 판이
+ * 있어야 한다. 20층 길의 75%인 15층까지 일반 교전을 체력 절반으로 깬 점수(약 2,970점)를 깔끔한
+ * 단위로 올린 값이고, 기록 보상 길의 첫 마디(3,000)와 같다. 주가 바뀌어 최고 점수가 0이 되면
+ * 그 주에 한 번 직접 가 보기 전까지 소탕은 닫힌다(응태 요청, 2026-11-07).
+ */
+export const EXPEDITION_SWEEP_MIN_WEEKLY_SCORE = 3_000;
+/** 위 바닥을 재는 층 — 20층의 75%. */
+export const EXPEDITION_SWEEP_SCORE_FLOORS = 15;
+
 /** 보스 단계 이름을 언어별로 덮어쓸 수 있게 등록한다. */
 EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));

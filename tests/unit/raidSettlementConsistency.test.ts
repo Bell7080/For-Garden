@@ -120,7 +120,7 @@ describe("레이드·원정 정산의 실제 지급량과 재접속", () => {
   });
   it("원정 소탕도 저장 실패·재접속에서 같은 요청이 하루 횟수와 보상을 두 번 쓰지 않는다", async () => {
     const h = setup(); await h.api().getExpeditionLeaderboard();
-    h.state.expedition.allTimeBestScore = 50000; h.state.wallet.gold = WALLET_CAPS.gold - 1;
+    h.state.expedition.allTimeBestScore = 50000; h.state.expedition.bestScore = 50000; h.state.wallet.gold = WALLET_CAPS.gold - 1;
     h.fail(true);
     await expect(h.api().sweepExpedition({ requestId: "sweep" })).rejects.toMatchObject({ code: "PERSISTENCE_FAILED" });
     expect(h.state.expedition.playsToday).toBe(0);

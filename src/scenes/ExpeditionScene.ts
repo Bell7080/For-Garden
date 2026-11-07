@@ -13,7 +13,7 @@ import { GameApiError } from "../api/contracts";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { ExpeditionMapNode } from "../core/expeditionMap";
 import { getRelic } from "../data/relics";
-import { setDebugExpeditionFormation, setDebugFormationDragVisual, setDebugScene } from "../debug";
+import { setDebugExpeditionFormation, setDebugExpeditionSweepEnabled, setDebugFormationDragVisual, setDebugScene } from "../debug";
 import { relicAppearanceManager } from "../managers/RelicAppearanceManager";
 import { showExpeditionRelic } from "../ui/expeditionRelicInfo";
 import { expeditionManager, type StartExpeditionFailure } from "../managers/ExpeditionManager";
@@ -44,6 +44,7 @@ import { EXPEDITION_LAYOUT, expeditionBackgroundFor, type ExpeditionBackgroundSt
 import { ExpeditionMapView } from "../ui/ExpeditionMapView";
 import { type ExpeditionAugmentSelection } from "../core/expeditionRewards";
 import type { ExpeditionBattleInputDto, ExpeditionBossBattleInputDto } from "../core/expeditionBattle";
+import { expeditionSweepScoreReady } from "../core/expeditionScore";
 import { ExpeditionAugmentPopup, type AugmentTargetPicker } from "../ui/ExpeditionAugmentPopup";
 import { expeditionAugmentBadges, type AugmentBadgeView } from "../ui/expeditionAugmentBadges";
 import { ExpeditionAugmentStatusPopup } from "../ui/ExpeditionAugmentStatusPopup";
@@ -723,7 +724,10 @@ export class ExpeditionScene extends Phaser.Scene {
     }).setEnabled(status.canStartRun).setDepth(12);
     // 소탕은 원정 기회를 그대로 소비하므로 남은 횟수와 참조할 역대 최고점이 모두 있어야 누를 수 있다.
     this.sweepButton = new Button(this, sweepX, actions.y, { width: actions.sweepWidth, height: actions.height, label: t("expedition.sweep"), fontSize: 32, onClick: () => this.confirmSweep() }).setDepth(12);
-    this.sweepButton.setEnabled(status.canStartRun && status.allTimeBestScore > 0);
+    // 이번 주 최고 점수가 0이거나 75% 몫을 받을 만큼이 아니면 소탕은 꺼진다(서버도 같은 함수로 거절한다).
+    const sweepReady = status.canStartRun && expeditionSweepScoreReady(status.bestScore);
+    this.sweepButton.setEnabled(sweepReady);
+    setDebugExpeditionSweepEnabled(sweepReady);
   }
 
   /** 도시 원경에는 인물이 없으므로 실측 alpha bounds를 쓰는 폰토스를 기록 화면의 유일한 주 피사체로 세운다. */

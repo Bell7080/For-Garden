@@ -471,7 +471,8 @@ export interface SettleExpeditionRunResponse extends PlayerStateDto { runId: str
 /** 클라이언트는 실제 보상이 아닌 전투 결과만 제출하며, requestId는 재시도를 묶는다. */
 export interface CompleteExpeditionNodeRequest { requestId: string; runId: string; nodeId: string; relicHp: number[]; }
 /** 서버가 결정한 증가분·확정 점수·상한 상태를 돌려줘 HUD가 저장 결과를 그대로 그린다. */
-export interface CompleteExpeditionNodeResponse { runId: string; nodeId: string; nodeScore: number; rewards: Record<string, number>; pendingRewards: Record<string, number>; cappedCurrencies: string[]; alreadyCompleted: boolean; }
+/** `afterBattleHealPercent`는 이 전투 뒤 저장 HP에 얹힌 전투 후 회복(%)이다 — 0이면 회복이 없었다. 옛 영수증에는 없다. */
+export interface CompleteExpeditionNodeResponse { runId: string; nodeId: string; nodeScore: number; rewards: Record<string, number>; pendingRewards: Record<string, number>; cappedCurrencies: string[]; afterBattleHealPercent?: number; alreadyCompleted: boolean; }
 
 /** 인증된 서버 응답에서만 내려오는 슬롯별 운영 정책이며 앱 번들의 정적 표를 운영 기준으로 쓰지 않는다. */
 export interface AdSlotOperationsDto {

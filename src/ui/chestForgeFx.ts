@@ -119,6 +119,9 @@ export class ChestStage {
 
   /** 상자 등급의 결 — 빛무리 진하기, 햇살, 둘레의 반짝임. */
   private paintLook(open: boolean): void {
+    // 연출을 기다리는 사이 판이 닫혀 상자가 부서졌으면 칠할 것이 없다 — 부서진 그림의 `scene`은
+    // undefined라 `setTexture`가 `reading 'sys'`로 터졌다(client_errors).
+    if (!this.image.scene) return;
     const grade = this.grade;
     const glow = chestGlowColor(grade);
     const scale = this.scaleFor(grade);
@@ -203,6 +206,7 @@ export class ChestStage {
     if (!quiet) audioManager?.playUi("rune.engrave");
     const old = this.scaleFor(this.grade);
     await tweenTo(scene, { targets: this.image, scaleX: old * 0.86, scaleY: old * 1.12, duration: 110, ease: "Quad.Out" });
+    if (!this.image.scene) return;
     this.grade = nextGrade;
     this.paintLook(false);
     const scale = this.scaleFor(nextGrade);

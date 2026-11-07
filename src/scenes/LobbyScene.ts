@@ -1172,6 +1172,8 @@ export class LobbyScene extends Phaser.Scene {
     this.interactionPending = true;
     audioManager?.playUi("relic.poke");
     void gameApi.interactInLobby(relicId).then((result) => {
+      // 응답을 기다리는 사이 로비를 떠났으면 그릴 자리가 없다(유대는 서버가 이미 확정했다).
+      if (!this.sys.isActive()) return;
       const progress = result.relicProgress[relicId];
       const dialogue = bondDialogue(relicId, progress.bondLevel, this.interactionIndex++);
       this.showLine(getRelic(relicId).name, dialogue.text, { xp: result.bondXpEarned, levels: result.bondLevelsGained }, dialogue.id);
@@ -1191,7 +1193,9 @@ export class LobbyScene extends Phaser.Scene {
   private showLine(name: string, line: string, gain: BondGain, dialogueId: string): void {
     if (!this.dialogue) {
       this.dialogue = new DialogueBubble(this, { ...LOBBY_DIALOGUE, y: LOBBY_DIALOGUE.bottom, depth: 500 });
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dialogue?.hideNow());
+      // 씬이 내려가면 띠도 함께 부서진다 — 참조를 비우지 않으면 로비로 다시 들어온 뒤 첫 대사가
+      // 부서진 띠의 `scene`(undefined)을 읽어 `reading 'tweens'`로 터졌다(client_errors 최다 항목).
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.dialogue?.hideNow(); this.dialogue = undefined; });
     }
     this.dialogue.say(name, line);
     // 대사 ID는 번역/분석 추적용으로 객체에 남기되 플레이어 화면에는 노출하지 않는다.

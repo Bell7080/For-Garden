@@ -6,8 +6,10 @@ import { clearFormationSlot } from "./formationSlotTap";
 import { formationRosterColumnX, formationRosterGrid, PORTRAIT_GRID_MASK_GAP, portraitGridFirstRowY } from "../../src/ui/portraitGrid";
 import { OPENING_TRAIN } from "../../src/data/dialogues/openingTrain";
 import { canvasBox, captureGame, gamePoint, tap, tapUntil, waitForCanvasInputFrame, waitForDebugState } from "./canvasInput";
-import { ExpeditionManager } from "../../src/managers/ExpeditionManager";
-import { EXPEDITION_LAYOUT, expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
+import { ExpeditionManager, expeditionWeekKey } from "../../src/managers/ExpeditionManager";
+import { EXPEDITION_AUGMENT_POPUP, EXPEDITION_LAYOUT, expeditionAugmentCardX, expeditionNodePosition, focusExpeditionFloor } from "../../src/ui/expeditionLayout";
+import { EXPEDITION_SWEEP_MIN_WEEKLY_SCORE } from "../../src/data/expedition";
+import { createInitialRelicProgress } from "../../src/state/session";
 
 /** 지도가 실제로 쓰는 세로 안전 영역. 좌표를 손으로 적으면 배치표를 고친 날 노드를 빗나간다. */
 const MAP_VIEW = EXPEDITION_LAYOUT.map;
@@ -311,6 +313,88 @@ test("저장된 전투 전 증강 후보는 지도보다 먼저 복원된다", a
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
   // 닫기 없는 선택 작업판과 세 후보가 복원된 상태를 시각 회귀 자료로 남긴다.
   await captureGame(page, `test-results/${test.info().project.name}-expedition-augment-popup.png`);
+});
+
+test("원정 소탕은 이번 주 최고 점수가 바닥에 닿아야 켜진다", async ({ page }) => {
+  await startAfterOpening(page, (session) => {
+    // 역대 최고는 높아도 이번 주 점수가 바닥 아래면 소탕은 닫힌다.
+    const weekKey = expeditionWeekKey(new Date());
+    Object.assign(session.expedition, { weekKey, allTimeBestScore: 90_000, bestScore: EXPEDITION_SWEEP_MIN_WEEKLY_SCORE - 1, playsToday: 0, run: null });
+  });
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.includes("출격"), true);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionSweepEnabled)).toBe(false);
+  // 같은 저장에 이번 주 점수만 바닥으로 올리고 다시 들어오면 켜진다.
+  await page.evaluate(([saveKey, score]) => {
+    const value = JSON.parse(localStorage.getItem(saveKey as string)!);
+    value.expedition.bestScore = score;
+    localStorage.setItem(saveKey as string, JSON.stringify(value));
+  }, [E2E_SAVE_STORAGE_KEY, EXPEDITION_SWEEP_MIN_WEEKLY_SCORE] as const);
+  await page.reload();
+  await page.waitForFunction(() => window.__PF_DEBUG?.ready === true);
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.includes("출격"), true);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionSweepEnabled)).toBe(true);
+});
+
+test("원정 전투 후 회복 증강은 이긴 뒤 지도 HUD를 차오르게 하고 저장 HP에 얹힌다", async ({ page }) => {
+  test.setTimeout(240_000);
+  await startAfterOpening(page, (session) => {
+    const party = [...session.owned].slice(0, 3);
+    // 1층 교전을 확실히 이기도록 떠나기 전에 만렙으로 굳힌다(원정은 떠난 순간의 성장으로 싸운다).
+    for (const id of party) session.relicProgress[id] = { ...createInitialRelicProgress(), level: 60, breakthrough: 4 };
+    const manager = new ExpeditionManager(session, { save: () => undefined }, () => new Date());
+    manager.start(party);
+    const run = session.expedition.run!;
+    // 체력을 절반으로 낮춰 두면 이긴 뒤 회복(현장 수복 8% + 고를 재생 프로토콜 16%)이 반드시 보인다.
+    run.relics.forEach((relic) => { relic.currentHp = 50; relic.alive = true; });
+    run.selectedAugments.push({ augmentId: "field-repair" }); run.selectedAugmentIds.push("field-repair");
+    const node = run.nodes.find(({ floor, type }) => floor === 1 && type === "normal") ?? run.nodes.find(({ floor, type }) => floor === 1 && ["elite", "horde"].includes(type))!;
+    manager.beginAugmentReward(node.id, node.type);
+    // 제안은 재생 프로토콜(전체) 한 장뿐이다 — 고르면 곧바로 이 노드의 전투로 들어간다.
+    // `beginAugmentReward`가 런을 새 사본으로 저장하므로 지금의 런에서 고친다.
+    const current = session.expedition.run!;
+    current.pendingAugmentReward = { ...current.pendingAugmentReward!, round: 1, totalRounds: 1, offers: [{ augmentId: "regrowth-protocol", eligibleTargetRelicIds: [] }] };
+  });
+  await tapGame(page, BASE_WIDTH / 2, BASE_HEIGHT / 2);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("lobby");
+  await waitForDebugState(page, () => window.__PF_DEBUG?.storefrontControls?.lobby !== undefined, true);
+  await tapGame(page, BASE_WIDTH - 290, BASE_HEIGHT - 425);
+  await waitForDebugState(page, () => window.__PF_DEBUG?.popupTitles?.includes("출격"), true);
+  await tapGame(page, EXPEDITION_ENTRY.x, EXPEDITION_ENTRY.y);
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("expedition");
+  // 저장된 제안이 지도보다 먼저 열린다. 한 장을 고르고 확정한다.
+  await waitForDebugState(page, () => (window.__PF_DEBUG?.popupTitles ?? []).some((title) => title.startsWith("증강")), true);
+  const cardY = EXPEDITION_AUGMENT_POPUP.centerY + EXPEDITION_AUGMENT_POPUP.card.y;
+  // 판이 펼쳐지는 동안의 누름은 빠질 수 있어 카드 → 확정을 전투가 열릴 때까지 되풀이한다.
+  for (let attempt = 0; attempt < 6 && (await page.evaluate(() => window.__PF_DEBUG?.scene)) !== "battle"; attempt += 1) {
+    await page.waitForTimeout(600);
+    await tapGame(page, BASE_WIDTH / 2 + expeditionAugmentCardX(0, 1), cardY);
+    await page.waitForTimeout(400);
+    await tapGame(page, BASE_WIDTH / 2, EXPEDITION_AUGMENT_POPUP.centerY + EXPEDITION_AUGMENT_POPUP.confirm.y);
+    await page.waitForTimeout(1_200);
+  }
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.scene)).toBe("battle");
+  await tapGame(page, BASE_WIDTH - 335, 1288); await tapGame(page, BASE_WIDTH - 335, 1288);
+  // 결과판은 화면 어디를 눌러도 닫히고 지도로 돌아간다.
+  await tapUntil(page, BASE_WIDTH / 2, 300, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "expedition", { attempts: 120, gapMs: 1_500 });
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionHpRecap?.length ?? 0), { timeout: 15_000 }).toBeGreaterThan(0);
+  const recap = (await page.evaluate(() => window.__PF_DEBUG?.expeditionHpRecap))!;
+  for (const entry of recap) expect(entry.toHp).toBeGreaterThan(entry.fromHp);
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-after-battle-heal.png`);
+  // 저장의 HP는 회복이 얹힌 값이다 — 살아 있는 렐릭은 모두 24% 이상 차 있다.
+  const saved = await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).expedition.run.relics as Array<{ currentHp: number; alive: boolean }>, E2E_SAVE_STORAGE_KEY);
+  expect(saved.filter(({ alive }) => alive).every(({ currentHp }) => currentHp >= 24)).toBe(true);
 });
 
 test("폰토스 종료 결과판에서 로비로 이동하면 원정은 비활성이다", async ({ page }) => {

@@ -66,6 +66,8 @@ export class DialogueBubble extends Phaser.GameObjects.Container {
    * 바꿀 때마다 아래 여백이 어긋나지 않는다.
    */
   say(name: string, line: string, options: { holdMs?: number; slideX?: number } = {}): void {
+    // 부서진 띠(씬이 내려간 뒤 늦게 도착한 대사)는 그릴 장면이 없다.
+    if (!this.scene) return;
     const generation = ++this.generation;
     // 띠는 잠깐 떴다 스스로 사라져 캡처 사이로 빠져나간다 — 검사 채널이 실제로 섰는지를 남긴다.
     setDebugBubble({ name, body: line });

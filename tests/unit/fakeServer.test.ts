@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { stageFirstClearRewards } from "../../src/core/stageRewards";
 import { STAGES, getBattleStage } from "../../src/data/stages";
-import { expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
+import { EXPEDITION_SWEEP_MIN_WEEKLY_SCORE, EXPEDITION_SWEEP_SCORE_FLOORS, expeditionBossSalvage, expeditionRankRewards } from "../../src/data/expedition";
+import { calculateExpeditionNodeScore } from "../../src/core/expeditionScore";
 import { FakeServer } from "../../src/api/FakeServer";
 import { rotationOffer } from "../../src/core/shopRotation";
 import { rotationSlot } from "../../src/data/runeRotation";
@@ -1096,6 +1097,27 @@ describe("FakeServer 원정 정산", () => {
     await expect(server.completeExpeditionNode({ ...request, requestId: "node-forged-retry" })).rejects.toMatchObject({ code: "EXPEDITION_RUN_NOT_FOUND" });
   });
 
+  it("전투 후 회복 증강은 점수를 매긴 뒤 저장 HP에만 얹히고 쓰러진 렐릭은 되살리지 않는다", async () => {
+    const state = makeSession();
+    const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
+    manager.start(["torika", "rex", "dodo"]);
+    const run = state.expedition.run!;
+    const node = run.nodes.find(({ floor, type }) => floor === 1 && ["normal", "elite", "horde"].includes(type))!;
+    // 재생 프로토콜(16%) + 현장 수복(8%) = 24%. 런에 이미 고른 것으로 둔다.
+    run.selectedAugments.push({ augmentId: "regrowth-protocol" }, { augmentId: "field-repair" });
+    const plain = structuredClone(state);
+    const server = new FakeServer(state, { latencyMs: 0, random: () => 0.5, now: () => new Date("2026-08-25T12:00:00Z") });
+    const response = await server.completeExpeditionNode({ requestId: "heal-node", runId: run.runId, nodeId: node.id, relicHp: [40, 90, 0] });
+    expect(response.afterBattleHealPercent).toBe(24);
+    expect(state.expedition.run!.relics.map(({ currentHp, alive }) => [currentHp, alive])).toEqual([[64, true], [100, true], [0, false]]);
+    // 노드 점수는 회복 전 체력으로 매긴다 — 회복이 점수를 부풀리지 않는다.
+    plain.expedition.run!.selectedAugments = [];
+    const unhealed = await new FakeServer(plain, { latencyMs: 0, random: () => 0.5, now: () => new Date("2026-08-25T12:00:00Z") })
+      .completeExpeditionNode({ requestId: "heal-node", runId: run.runId, nodeId: node.id, relicHp: [40, 90, 0] });
+    expect(unhealed.afterBattleHealPercent).toBe(0);
+    expect(response.nodeScore).toBe(unhealed.nodeScore);
+  });
+
   it("일반 노드 점수는 재화 합계가 아니라 전투 결과로 계산되고 재요청에도 한 번만 쌓인다", async () => {
     const state = makeSession();
     const manager = new (await import("../../src/managers/ExpeditionManager")).ExpeditionManager(state, { save: () => undefined }, () => new Date("2026-08-25T12:00:00Z"));
@@ -1258,7 +1280,8 @@ describe("FakeServer 원정 정산", () => {
   describe("소탕", () => {
     it("평균 경로의 75% 고정표만 즉시 지급하고 점수는 남기지 않는다", async () => {
       const state = makeSession();
-      state.expedition.allTimeBestScore = 10_000;
+      // 소탕의 기준은 이번 주(2026-08-24 주) 최고 점수다.
+      Object.assign(state.expedition, { allTimeBestScore: 10_000, bestScore: 10_000, weekKey: "2026-08-24", dayKey: "2026-08-25" });
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
       const goldBefore = state.wallet.gold;
 
@@ -1270,12 +1293,13 @@ describe("FakeServer 원정 정산", () => {
       expect(result.granted.fossil).toBe(0);
       expect(state.wallet.gold).toBe(goldBefore + result.granted.gold!);
       expect(state.expedition.playsToday).toBe(1);
-      expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(0);
+      // 소탕은 점수를 남기지 않는다 — 이번 주 최고 점수는 소탕 전 그대로다.
+      expect((await server.getExpeditionWeeklyBest()).bestScore).toBe(10_000);
     });
 
     it("같은 요청 ID는 두 번째 호출에서도 같은 응답을 반환하고 다시 지급하지 않는다", async () => {
       const state = makeSession();
-      state.expedition.allTimeBestScore = 10_000;
+      Object.assign(state.expedition, { allTimeBestScore: 10_000, bestScore: 10_000, weekKey: "2026-08-24", dayKey: "2026-08-25" });
       const server = new FakeServer(state, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") });
       const first = await server.sweepExpedition({ requestId: "sweep-idem" });
       const second = await server.sweepExpedition({ requestId: "sweep-idem" });
@@ -1283,9 +1307,24 @@ describe("FakeServer 원정 정산", () => {
       expect(state.expedition.playsToday).toBe(1);
     });
 
-    it("참조할 역대 최고점이 없으면 거부한다", async () => {
+    it("이번 주 최고 점수가 0이거나 75% 몫의 바닥에 못 미치면 거부한다", async () => {
       const server = new FakeServer(makeSession(), { latencyMs: 0 });
       await expect(server.sweepExpedition({ requestId: "sweep-none" })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REQUIRED" });
+      // 역대 최고가 높아도 이번 주 점수가 바닥 아래면 닫힌다.
+      const low = makeSession();
+      Object.assign(low.expedition, { allTimeBestScore: 90_000, bestScore: EXPEDITION_SWEEP_MIN_WEEKLY_SCORE - 1, weekKey: "2026-08-24", dayKey: "2026-08-25" });
+      await expect(new FakeServer(low, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") }).sweepExpedition({ requestId: "sweep-low" })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REQUIRED" });
+      // 지난주 점수는 주가 넘어가며 0이 되므로 이번 주에는 쓰지 못한다.
+      const stale = makeSession();
+      Object.assign(stale.expedition, { allTimeBestScore: 90_000, bestScore: 90_000, weekKey: "2026-08-17", dayKey: "2026-08-23" });
+      await expect(new FakeServer(stale, { latencyMs: 0, now: () => new Date("2026-08-25T12:00:00Z") }).sweepExpedition({ requestId: "sweep-stale" })).rejects.toMatchObject({ code: "EXPEDITION_SCORE_REQUIRED" });
+    });
+
+    it("소탕 바닥은 15층(20층의 75%)까지 일반 교전을 체력 절반으로 깬 점수 이상이다", () => {
+      let score = 0;
+      for (let floor = 1; floor <= EXPEDITION_SWEEP_SCORE_FLOORS; floor += 1) score += calculateExpeditionNodeScore({ floor, nodeType: "normal", remainingHpPercent: 50, cleared: true });
+      expect(EXPEDITION_SWEEP_MIN_WEEKLY_SCORE).toBeGreaterThanOrEqual(score);
+      expect(EXPEDITION_SWEEP_MIN_WEEKLY_SCORE - score).toBeLessThan(500);
     });
 
     it("진행 중인 원정이 있으면 거부한다", async () => {

@@ -152,6 +152,10 @@ export interface DebugState {
    * `selectedSlot`은 지금 고른 칸이다. 칸은 한 번 누르면 **고르고**, 고른 칸을 한 번 더 누르면 **뺀다**
    * (`tapFormationSlot`) — E2E가 두 걸음을 각각 확인하려면 고른 칸이 보여야 한다.
    */
+  /** 원정 지도 HUD가 차오르는 연출(휴식·전투 후 회복)을 실제로 띄운 렐릭과 그 체력(전·후 실수치). */
+  /** 원정 기록 화면의 소탕 버튼이 켜져 있는가(이번 주 최고 점수 바닥). */
+  expeditionSweepEnabled?: boolean;
+  expeditionHpRecap?: Array<{ relicId: string; fromHp: number; toHp: number }>;
   expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }>; selectedSlot?: number };
   /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */
   formationDragVisual?: { owner: "party" | "expedition" | "excavation"; hovered?: number; replacementVisible: boolean };
@@ -380,6 +384,18 @@ export function setDebugRaidStage(stage: DebugState["raidStage"]): void {
 export function setDebugParty(party: DebugState["party"]): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().party = party;
+}
+
+/** 원정 소탕 버튼이 켜졌는지 E2E에 알린다. */
+export function setDebugExpeditionSweepEnabled(enabled: boolean | undefined): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().expeditionSweepEnabled = enabled;
+}
+
+/** 원정 지도 HUD의 체력 차오름 연출이 누구에게 얼마로 돌았는지 E2E에 알린다. */
+export function setDebugExpeditionHpRecap(recap: DebugState["expeditionHpRecap"]): void {
+  if (!QA_TOOLS_ENABLED) return;
+  ensure().expeditionHpRecap = recap;
 }
 
 /** 원정 렐릭 ID 대신 슬롯 좌표와 표시 인원수만 E2E에 전달한다. */

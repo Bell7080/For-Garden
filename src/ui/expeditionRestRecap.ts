@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
+import { setDebugExpeditionHpRecap } from "../debug";
 import { t } from "../i18n";
 import { EffectManager } from "../managers/EffectManager";
 import { session } from "../state/session";
@@ -24,7 +25,7 @@ export const REST_RECAP = {
 } as const;
 
 /**
- * 휴식을 마치고 지도가 다시 서면, HUD 카드가 **휴식 전 체력에서 차오르며** 오른 양을 `+N`으로 띄운다.
+ * 휴식을 마치거나 전투 후 회복 증강이 든 전투를 이기고 지도가 다시 서면, HUD 카드가 **휴식 전 체력에서 차오르며** 오른 양을 `+N`으로 띄운다.
  * 깨어난 렐릭은 반투명 카드가 밝아지고 「부활!」이 함께 선다. 체력은 이미 서버가 확정했다 — 이 함수는
  * 보여 주기만 하고 값을 바꾸지 않는다.
  */
@@ -37,6 +38,7 @@ export function playExpeditionRestRecap(
   const motion = motionPolicy(session.settings);
   const effects = new EffectManager(scene, { depth: 1400, damageNumbers: true, motion });
   const profiles: BattleProfile[] = [];
+  const shownRecap: Array<{ relicId: string; fromHp: number; toHp: number }> = [];
   let index = 0;
   for (const next of after) {
     const prev = before.find(({ relicId }) => relicId === next.relicId);
@@ -48,6 +50,7 @@ export function playExpeditionRestRecap(
     const revived = !prev.alive && next.alive;
     if (toHp <= fromHp && !revived) continue;
     profiles.push(profile);
+    shownRecap.push({ relicId: next.relicId, fromHp, toHp });
     const order = index++;
     scene.time.delayedCall(REST_RECAP.delayMs + order * REST_RECAP.staggerMs, () => {
       if (!profile.active) return;
@@ -70,6 +73,7 @@ export function playExpeditionRestRecap(
       });
     });
   }
+  setDebugExpeditionHpRecap(shownRecap);
   if (profiles.length === 0) { effects.destroy(); return; }
   // 지도 화면에는 프레임마다 HUD를 돌리는 일이 없으므로, 바가 따라오는 동안만 걸음을 대신 넘긴다.
   const step = (_time: number, delta: number): void => profiles.forEach((profile) => profile.active && profile.stepHealth(delta));

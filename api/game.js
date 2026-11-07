@@ -7045,6 +7045,7 @@ var MISC_KO = {
   "profile.title": "\uD50C\uB808\uC774\uC5B4 \uC815\uBCF4",
   "profile.uid": "UID {uid}",
   "profile.uidCopied": "UID\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4",
+  "profile.report": "\uC2E0\uACE0",
   "profile.researchDays": "\uC5F0\uAD6C {days}\uC77C\uC9F8",
   "profile.section.favorite": "\uC560\uCC29 \uB810\uB9AD",
   "profile.section.records": "\uC5F0\uAD6C \uAE30\uB85D",
@@ -8436,7 +8437,9 @@ var SUPPORT_KO = {
   "coupon.error.account_restricted": "\uC774\uC6A9\uC774 \uC81C\uD55C\uB41C \uACC4\uC815\uC740 \uCFE0\uD3F0\uC744 \uB4F1\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "coupon.error.no_player": "\uACC4\uC815 \uC815\uBCF4\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
   "coupon.error.network": "\uC5F0\uACB0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
-  "coupon.error.unsupported": "\uC9C0\uAE08\uC740 \uCFE0\uD3F0\uC744 \uB4F1\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+  "coupon.error.unsupported": "\uC9C0\uAE08\uC740 \uCFE0\uD3F0\uC744 \uB4F1\uB85D\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "support.report.target": "\uC2E0\uACE0 \uB300\uC0C1 \xB7 {name} (UID {uid})",
+  "support.report.subject": "{name} \uC2E0\uACE0"
 };
 
 // src/i18n/ko/debug.ts
@@ -27620,6 +27623,7 @@ var EXPEDITION_SWEEP_REWARDS = {
   salvageRecord: 60,
   fossil: 0
 };
+var EXPEDITION_SWEEP_MIN_WEEKLY_SCORE = 3e3;
 EXPEDITION_BOSS_BALANCE.phases.forEach((phase, index) => registerDataText(phase, "label", `expedition.phase.${index}`));
 
 // src/core/expeditionBoss.ts
@@ -41716,6 +41720,9 @@ function expeditionBossDamageScore(totalDamage) {
   if (!Number.isFinite(totalDamage) || totalDamage <= 0) return 0;
   return Math.round(totalDamage * EXPEDITION_SCORE_BALANCE.bossDamagePerPoint);
 }
+function expeditionSweepScoreReady(weeklyBestScore) {
+  return Number.isFinite(weeklyBestScore) && weeklyBestScore >= EXPEDITION_SWEEP_MIN_WEEKLY_SCORE;
+}
 
 // src/managers/SettingsManager.ts
 init_define_import_meta_env();
@@ -41852,7 +41859,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.406.0",
+  version: "0.407.3",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
@@ -43699,15 +43706,17 @@ var FakeServer = class {
     const score = calculateExpeditionRunScore(next);
     next.runScore = score.runScore;
     next.bestScore = score.runScore;
+    const afterBattleHealPercent = scoreBearingNode ? expeditionAfterBattleHealPercent(run2.selectedAugments) : 0;
+    const storedHp = applyExpeditionAfterBattleHeal(run2.relics.map(({ relicId }, index) => ({ relicId, currentHp: request.relicHp[index], alive: request.relicHp[index] > 0 })), afterBattleHealPercent);
     next.relics.forEach((relic, index) => {
-      relic.currentHp = request.relicHp[index];
+      relic.currentHp = storedHp[index].currentHp;
       relic.alive = relic.currentHp > 0;
     });
     for (const [currency3, amount] of Object.entries(rewards)) next.pendingRewards[currency3] = (next.pendingRewards[currency3] ?? 0) + amount;
     const cappedCurrencies = Object.keys(EXPEDITION_NODE_REWARD_BALANCE).filter((currency3) => (next.pendingRewards[currency3] ?? 0) >= EXPEDITION_NODE_REWARD_BALANCE[currency3].runCap);
     next.lastNodeRewards = { nodeId: node.id, nodeScore, rewards, cappedCurrencies };
     const expedition = { ...this.state.expedition, run: next };
-    const response = { runId: run2.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, alreadyCompleted: false };
+    const response = { runId: run2.runId, nodeId: node.id, nodeScore, rewards, pendingRewards: { ...next.pendingRewards }, cappedCurrencies, afterBattleHealPercent, alreadyCompleted: false };
     const candidate = { ...this.state, expedition };
     this.recordReceipt(candidate, "expeditionNode", request.requestId, identity, response);
     this.commitRaidState(candidate);
@@ -43727,7 +43736,7 @@ var FakeServer = class {
     if (this.state.expedition.run) throw new GameApiError("EXPEDITION_ALREADY_ACTIVE", "\uC9C4\uD589 \uC911\uC778 \uC6D0\uC815\uC774 \uC788\uC5B4 \uC18C\uD0D5\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const weekly = this.rollExpedition(this.now());
     if (weekly.playsToday >= EXPEDITION_DAILY_POLICY.maxPlaysPerDay) throw new GameApiError("EXPEDITION_DAILY_LIMIT", "\uC624\uB298\uC758 \uC6D0\uC815 \uAE30\uD68C\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-    if (weekly.allTimeBestScore <= 0) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "\uC18C\uD0D5\uD560 \uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (!expeditionSweepScoreReady(weekly.bestScore)) throw new GameApiError("EXPEDITION_SCORE_REQUIRED", "\uC18C\uD0D5\uD560 \uAE30\uC900 \uC810\uC218\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const wallet = { ...this.state.wallet };
     const granted = {};
     for (const [currency3, amount] of Object.entries(EXPEDITION_SWEEP_REWARDS)) {
@@ -44244,7 +44253,7 @@ var FakeServer = class {
       await this.guildBackend.syncWarStandby(this.guildActor(), this.guildWarDeckOf(relicIds));
       return { synced: true };
     } catch (error) {
-      if (error instanceof GuildApiError && error.code === "NOT_IN_GUILD") return { synced: false };
+      if (error instanceof GuildApiError && (error.code === "NOT_IN_GUILD" || error.code === "UNAVAILABLE")) return { synced: false };
       throw error;
     }
   }
@@ -47614,12 +47623,25 @@ function raidChanges(context, state) {
 
 // src/api/UnavailableGuildBackend.ts
 init_define_import_meta_env();
+var SERVER_ONLY_METHODS = {
+  createGuild: true,
+  changeBadge: true,
+  renameGuild: true,
+  stampAttendance: true,
+  purchase: true,
+  recordGuard: true,
+  placeWarDefense: true,
+  syncWarStandby: true,
+  beginWarAttack: true,
+  recordWarAttack: true,
+  claimWeeklyRankRewards: true
+};
 function createUnavailableGuildBackend() {
   const refuse = async () => {
     throw new GuildApiError("UNAVAILABLE", "UNAVAILABLE");
   };
   const backend = {};
-  for (const name of [...GUILD_API_METHODS, "createGuild", "changeBadge", "renameGuild", "stampAttendance", "purchase", "recordGuard", "placeWarDefense"]) backend[name] = refuse;
+  for (const name of [...GUILD_API_METHODS, ...Object.keys(SERVER_ONLY_METHODS)]) backend[name] = refuse;
   return backend;
 }
 

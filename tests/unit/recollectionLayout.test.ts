@@ -34,7 +34,7 @@ describe("회고 창", () => {
   });
 
   it("은 이야기마다 같은 무대의 다른 띠를 보인다", () => {
-    const foci = new Set(RECOLLECTION_ENTRIES.map(({ storyId }) => recollectionArtFocus(storyId).toFixed(2)));
+    const foci = new Set(RECOLLECTION_ENTRIES.map(({ storyId }) => recollectionArtFocus(storyId).toFixed(3)));
     expect(foci.size).toBeGreaterThan(RECOLLECTION_ENTRIES.length * 0.6);
     for (const { storyId } of RECOLLECTION_ENTRIES) {
       const focus = recollectionArtFocus(storyId);

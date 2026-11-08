@@ -404,6 +404,10 @@ export const SUB_STORY_STAGES: readonly StageDef[] = [
   subStory("2-9", "side-story", "두 번째 추격", "stage-2-9-second-chase"),
   subStory("3-5", "side-story", "소매 뒤의 마음", "stage-3-5-behind-sleeve"),
   subStory("3-8", "side-story", "시말서", "stage-3-8-apology"),
+  subStory("4-3", "side-story", "배관 뒤 쉬는 시간", "stage-4-3-break-time"),
+  subStory("5-8", "side-story", "막내 몫", "stage-5-8-youngest-share"),
+  subStory("6-7", "side-story", "손톱자국", "stage-6-7-claw-marks"),
+  subStory("7-3", "side-story", "꿰맨 소매", "stage-7-3-mended-sleeve"),
 ];
 
 /**
@@ -432,8 +436,41 @@ export const SIDE_BATTLE_STAGE: BattleStageDef = {
   },
 };
 
+/**
+ * 2장 이후의 전투 서브 — 1-8과 같은 **정예 둘** 변칙이다. 레벨은 선행 본편 관문의 권장 레벨보다 한 칸 낮은 눈금에서
+ * 태생 층대로 내려 서고(`tieredEnemy`), 4장 회수조 가산과 장 배율도 본편과 같은 규칙을 그대로 받는다 — 서브라고 새 손잡이를
+ * 만들지 않는다. 보상은 1-8과 같이 젬 50 하나다.
+ */
+function sideBattle(anchor: string, name: string, formation: readonly (readonly [string, 0 | 1 | 2])[]): BattleStageDef {
+  const [chapter, order] = anchor.split("-").map(Number);
+  const reference = (STORY_RECOMMENDED_LEVELS[(chapter - 1) * 10 + order - 1] ?? 1) - 1;
+  const bonus = chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0;
+  return {
+    kind: "battle", sub: true, elite: true,
+    id: `${anchor}-side-battle`, name, chapter, chapterOrder: order,
+    prerequisiteStageIds: [anchor],
+    enemies: formation.map(([relicId, slot]) => tieredEnemy(relicId, reference, slot, bonus)),
+    ...(storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {}),
+    rewards: {
+      firstClearCheesecake: 0,
+      repeatClearCheesecake: 0,
+      firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }],
+    },
+  };
+}
+
+/** 장마다 하나씩 — 본편에서 스쳐 간 공멸의 둘이 그 자리의 뒷이야기로 길을 막는다(`stageStories`의 앞뒤 대사). */
+export const SIDE_BATTLE_STAGES: readonly BattleStageDef[] = [
+  sideBattle("2-4", "꺼진 중계실", [["toby", 0], ["ripa", 2]]),
+  sideBattle("3-3", "급수원 점수 내기", [["mir", 0], ["pulsi", 2]]),
+  sideBattle("4-7", "네우리의 장부", [["pulsi", 0], ["neuri", 2]]),
+  sideBattle("5-2", "녹슨 열쇠꾸러미", [["atra", 0], ["mir", 2]]),
+  sideBattle("6-4", "어제의 서열", [["raja", 0], ["pulsi", 2]]),
+  sideBattle("7-6", "얼어붙은 이름표", [["atra", 0], ["neuri", 2]]),
+];
+
 /** 지도에 서는 서브 전부 — 이야기와 전투를 함께 센다. */
-export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
+export const SUB_STAGES: readonly StageDef[] = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE, ...SIDE_BATTLE_STAGES];
 
 /** 전투와 서브가 같은 고유 ID 공간에서 저장 검증과 지도 조회를 공유한다. */
 export const STAGES: readonly StageDef[] = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];

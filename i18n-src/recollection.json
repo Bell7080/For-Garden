@@ -978,5 +978,165 @@
     "Kar rompe as próprias amarras e parte para cima com o esquadrão de detenção.",
     "Kar sprengt seine Fesseln selbst und zieht mit der Haftgruppe nach oben.",
     "Кар сам разрывает оковы и уходит наверх вместе с группой заключения."
+  ],
+  "recollection.summary.stage-2-4-side-pre": [
+    "熄灯的中继室里，托比和莉帕在编号墙前拦住去路。",
+    "ในห้องถ่ายทอดที่ดับไป โทบีกับริปาขวางทางหน้ากำแพงตัวเลข",
+    "Trong phòng chuyển tiếp tắt đèn, Toby và Ripa chặn đường trước bức tường số.",
+    "Di ruang relai yang padam, Toby dan Ripa menghalangi jalan di depan dinding nomor.",
+    "En la sala de relé apagada, Toby y Ripa cierran el paso ante un muro de números.",
+    "Na sala de retransmissão apagada, Toby e Ripa bloqueiam o caminho diante de uma parede de números.",
+    "Im erloschenen Relaisraum versperren Toby und Ripa den Weg vor einer Wand voller Nummern.",
+    "В погасшей ретрансляционной Тоби и Рипа преграждают путь у стены с номерами."
+  ],
+  "recollection.summary.stage-2-4-side-post": [
+    "墙上的点是不能再用的编号，线是被转走的编号。",
+    "จุดบนกำแพงคือหมายเลขที่ใช้ไม่ได้แล้ว ส่วนเส้นคือหมายเลขที่ถูกย้ายไป",
+    "Dấu chấm trên tường là số không còn dùng được, đường kẻ là số đã bị chuyển đi.",
+    "Titik di dinding adalah nomor yang tak bisa dipakai lagi, garisnya nomor yang dipindahkan.",
+    "Los puntos del muro eran números inservibles; las líneas, números trasladados.",
+    "Os pontos na parede eram números inutilizáveis; as linhas, números transferidos.",
+    "Die Punkte an der Wand waren unbrauchbare Nummern, die Linien verlegte.",
+    "Точки на стене — номера, которыми больше нельзя пользоваться, а линии — переведённые номера."
+  ],
+  "recollection.summary.stage-3-3-side-pre": [
+    "水源前，米尔和帕尔希拿研究员打起了积分赌约。",
+    "หน้าแหล่งน้ำ มีร์กับพัลซีพนันแต้มกันโดยมีนักวิจัยเป็นเดิมพัน",
+    "Trước nguồn nước, Mir và Pulsi đấu điểm lấy nhà nghiên cứu làm cược.",
+    "Di depan sumber air, Mir dan Pulsi bertaruh skor dengan sang Periset sebagai taruhannya.",
+    "Ante la toma de agua, Mir y Pulsi apuestan puntos con el investigador de por medio.",
+    "Diante da fonte de água, Mir e Pulsi apostam pontos com o pesquisador em jogo.",
+    "An der Wasserquelle schließen Mir und Pulsi eine Punktewette um den Forscher ab.",
+    "У водозабора Мир и Пульси затевают спор на очки за исследователя."
+  ],
+  "recollection.summary.stage-3-3-side-post": [
+    "一直空着的积分板第一栏写上了「跑到了最后」。",
+    "ช่องแรกของกระดานคะแนนที่ว่างมาตลอดถูกเขียนว่า「วิ่งจนสุดทาง」",
+    "Ô đầu tiên của bảng điểm trống trơn được ghi: «Đã chạy đến cùng».",
+    "Di kolom pertama papan skor yang kosong akhirnya tertulis: «Berlari sampai akhir».",
+    "En la primera casilla del marcador vacío por fin se lee: «Corrió hasta el final».",
+    "Na primeira casa do placar vazio enfim se lê: «Correu até o fim».",
+    "In das erste Feld der leeren Punktetafel wird endlich „Bis zum Ende gelaufen“ geschrieben.",
+    "В первой графе пустого табло наконец появляется: «Бежала до конца»."
+  ],
+  "recollection.summary.stage-4-3-break-time": [
+    "在管道后休息的三人组问，那个约定还算数吗。",
+    "สามสหายที่พักอยู่หลังท่อถามว่าสัญญานั้นยังใช้ได้อยู่ไหม",
+    "Bộ ba nghỉ sau đường ống hỏi lời hứa ấy còn hiệu lực không.",
+    "Trio yang beristirahat di balik pipa bertanya apakah janji itu masih berlaku.",
+    "Descansando tras las tuberías, el trío pregunta si aquella promesa sigue en pie.",
+    "Descansando atrás dos canos, o trio pergunta se aquela promessa ainda vale.",
+    "Hinter den Rohren rastend fragt das Trio, ob jenes Versprechen noch gilt.",
+    "Отдыхая за трубами, троица спрашивает, в силе ли ещё то обещание."
+  ],
+  "recollection.summary.stage-4-7-side-pre": [
+    "涅乌莉翻开账本，只有柯玛那一栏写着「保留」。",
+    "เนอูรีเปิดสมุดบัญชี มีแต่ช่องของโคมะที่เขียนว่า「รอไว้ก่อน」",
+    "Neuri mở sổ, chỉ có ô của Koma ghi chữ «tạm hoãn».",
+    "Neuri membuka buku catatan; hanya baris Koma yang bertuliskan «ditunda».",
+    "Neuri abre el libro de cuentas; solo la fila de Koma dice «pendiente».",
+    "Neuri abre o livro-razão; só a linha de Koma diz «pendente».",
+    "Neuri schlägt das Kontobuch auf; nur in Komas Zeile steht „zurückgestellt“.",
+    "Неури раскрывает гроссбух: лишь в графе Комы значится «отложено»."
+  ],
+  "recollection.summary.stage-4-7-side-post": [
+    "掉落的账本一角只留着一行「072——保留」。",
+    "มุมสมุดบัญชีที่หล่นอยู่เหลือเพียงบรรทัดเดียว「072 — รอไว้ก่อน」",
+    "Góc sổ rơi lại chỉ còn một dòng: «072 — tạm hoãn».",
+    "Di sobekan buku catatan hanya tersisa satu baris: «072 — ditunda».",
+    "En la esquina caída del libro solo quedaba una línea: «072 — pendiente».",
+    "No canto caído do livro restava só uma linha: «072 — pendente».",
+    "Auf der abgerissenen Ecke des Kontobuchs stand nur eine Zeile: „072 — zurückgestellt“.",
+    "На оторванном уголке гроссбуха осталась лишь строчка: «072 — отложено»."
+  ],
+  "recollection.summary.stage-5-2-side-pre": [
+    "阿特拉攥着生锈的钥匙串挡住去路。",
+    "อาทรากำพวงกุญแจขึ้นสนิมไว้แน่นแล้วขวางทาง",
+    "Atra siết chặt chùm chìa khóa gỉ sét và chặn đường.",
+    "Atra menggenggam rangkaian kunci berkarat dan menghalangi jalan.",
+    "Atra aferra un llavero oxidado y cierra el paso.",
+    "Atra agarra um molho de chaves enferrujado e bloqueia o caminho.",
+    "Atra umklammert einen rostigen Schlüsselbund und versperrt den Weg.",
+    "Атра сжимает ржавую связку ключей и преграждает путь."
+  ],
+  "recollection.summary.stage-5-2-side-post": [
+    "钥匙串最底下的位置是空的——那扇门要用人手打开。",
+    "ช่องล่างสุดของพวงกุญแจว่างอยู่ ประตูบานนั้นเปิดได้ด้วยมือคน",
+    "Chỉ chỗ cuối chùm chìa là trống — cánh cửa ấy mở bằng tay người.",
+    "Hanya tempat paling bawah yang kosong—pintu itu dibuka dengan tangan manusia.",
+    "Solo el último hueco del llavero estaba vacío: esa puerta se abre con mano humana.",
+    "Só o último lugar do molho estava vazio: aquela porta se abre com mão humana.",
+    "Nur der unterste Platz am Bund war leer – jene Tür öffnet eine Menschenhand.",
+    "Пустым было лишь последнее место на связке — ту дверь открывает человеческая рука."
+  ],
+  "recollection.summary.stage-5-8-youngest-share": [
+    "拉贾端着汤，总会给老幺留一份。",
+    "ราจาขนซุปไปพลางเก็บส่วนของน้องเล็กไว้เสมอ",
+    "Raja bưng canh và luôn để dành phần của đứa út.",
+    "Sambil membawa sup, Raja selalu menyisihkan jatah si bungsu.",
+    "Mientras lleva la sopa, Raja siempre aparta la parte del más pequeño.",
+    "Levando a sopa, Raja sempre separa a parte do caçula.",
+    "Beim Suppetragen legt Raja stets den Anteil des Jüngsten beiseite.",
+    "Разнося суп, Раджа всегда откладывает долю младшего."
+  ],
+  "recollection.summary.stage-6-4-side-pre": [
+    "拉贾搬出昨天的序列，挡在前面。",
+    "ราจายกลำดับชั้นของเมื่อวานขึ้นมาแล้วยืนขวาง",
+    "Raja đưa ra thứ bậc của hôm qua và đứng chắn lối.",
+    "Raja menyodorkan urutan kemarin dan berdiri menghadang.",
+    "Raja esgrime el rango de ayer y se planta en el camino.",
+    "Raja exibe a hierarquia de ontem e se planta no caminho.",
+    "Raja hält die Rangfolge von gestern hoch und stellt sich in den Weg.",
+    "Раджа выставляет вчерашний порядок и встаёт на пути."
+  ],
+  "recollection.summary.stage-6-4-side-post": [
+    "拉贾总站在前面，不是为了序列，而是为了诺亚。",
+    "เหตุที่ราจายืนหน้าเสมอไม่ใช่ลำดับชั้น แต่เป็นโนอา",
+    "Raja luôn đứng phía trước không vì thứ bậc, mà vì Noa.",
+    "Raja selalu berdiri di depan bukan karena urutan, melainkan karena Noa.",
+    "Raja siempre va delante no por el rango, sino por Noa.",
+    "Raja sempre fica na frente não pela hierarquia, mas por Noa.",
+    "Raja steht immer vorn – nicht wegen der Rangfolge, sondern wegen Noa.",
+    "Раджа всегда стоит впереди не из-за порядка, а из-за Ноа."
+  ],
+  "recollection.summary.stage-6-7-claw-marks": [
+    "诺亚躲在满是爪痕的椅子下，等着玛嘉莎。",
+    "โนอาซ่อนอยู่ใต้เก้าอี้ที่เต็มไปด้วยรอยเล็บ เฝ้ารอมากาซา",
+    "Noa trốn dưới chiếc ghế đầy vết móng, chờ Magasa.",
+    "Noa bersembunyi di bawah kursi penuh bekas cakaran, menunggu Magasa.",
+    "Noa se esconde bajo una silla llena de arañazos, esperando a Magasa.",
+    "Noa se esconde sob uma cadeira cheia de arranhões, esperando Magasa.",
+    "Noa versteckt sich unter einem zerkratzten Stuhl und wartet auf Magasa.",
+    "Ноа прячется под исцарапанным стулом и ждёт Магасу."
+  ],
+  "recollection.summary.stage-7-3-mended-sleeve": [
+    "特丽莎为研究员缝袖子时，有人走在前面抹去墙上的编号。",
+    "ระหว่างที่เทริสาเย็บแขนเสื้อให้นักวิจัย มีใครบางคนเดินนำหน้าไปพลางขูดหมายเลขบนผนังออก",
+    "Khi Terisa khâu tay áo cho nhà nghiên cứu, có ai đó đi trước cào xóa số trên tường.",
+    "Saat Terisa menjahit lengan baju sang Periset, seseorang di depan menggores habis nomor di dinding.",
+    "Mientras Terisa remienda la manga del investigador, alguien por delante raspa los números de las paredes.",
+    "Enquanto Terisa remenda a manga do pesquisador, alguém à frente raspa os números das paredes.",
+    "Während Terisa den Ärmel des Forschers flickt, kratzt jemand weiter vorn die Nummern von den Wänden.",
+    "Пока Териса зашивает рукав исследователя, кто-то впереди соскребает номера со стен."
+  ],
+  "recollection.summary.stage-7-6-side-pre": [
+    "冻结的记录室里，涅乌莉把记录统统装走，阿特拉在写着名字的抽屉前犹豫。",
+    "ในห้องบันทึกที่แข็งตัว เนอูรีกวาดเอกสารใส่ถุง ส่วนอาทรารีรออยู่หน้าลิ้นชักที่มีชื่อเขียนไว้",
+    "Trong phòng lưu trữ đóng băng, Neuri gom hết hồ sơ, còn Atra ngập ngừng trước ngăn kéo ghi tên.",
+    "Di ruang arsip yang membeku, Neuri mengemasi catatan, sementara Atra ragu di depan laci bertuliskan nama.",
+    "En la sala de registros congelada, Neuri embolsa los archivos y Atra duda ante los cajones con nombres.",
+    "Na sala de registros congelada, Neuri ensaca os arquivos e Atra hesita diante das gavetas com nomes.",
+    "Im gefrorenen Aktenraum sackt Neuri die Akten ein, während Atra vor den beschrifteten Schubladen zögert.",
+    "В замёрзшем архиве Неури сгребает записи, а Атра медлит у ящиков с именами."
+  ],
+  "recollection.summary.stage-7-6-side-post": [
+    "阿特拉把偷偷留下的一块名牌放到梅隆面前。",
+    "อาทราวางป้ายชื่อที่แอบเก็บไว้หนึ่งแผ่นลงตรงหน้าเมรอน",
+    "Atra đặt trước mặt Meron một tấm bảng tên đã lén giữ lại.",
+    "Atra meletakkan di depan Meron sebuah papan nama yang diam-diam ia simpan.",
+    "Atra deja ante Meron una placa con nombre que guardó a escondidas.",
+    "Atra deixa diante de Meron um crachá que guardou escondido.",
+    "Atra legt vor Meron ein Namensschild ab, das sie heimlich beiseitegelegt hat.",
+    "Атра кладёт перед Мероном бирку с именем, которую тайком припрятала."
   ]
 }

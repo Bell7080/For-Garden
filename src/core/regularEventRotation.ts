@@ -5,9 +5,9 @@
  */
 export const REGULAR_EVENT_CYCLE: readonly string[] = ["chest-forge", "delophy-hunt", "shute-fishing"];
 
-/** 첫 칸(티아의 보물상자)이 처음 선 주의 월요일 00:00(UTC). */
-const ROTATION_ANCHOR = Date.UTC(2026, 10, 2);
-const WEEK_MS = 7 * 86_400_000;
+/** 첫 칸(티아의 보물상자)이 처음 선 주의 월요일 00:00(UTC). 홈페이지 이벤트 피드(`scripts/build-site-events.mjs`)도 이 값을 내보낸다. */
+export const ROTATION_ANCHOR = Date.UTC(2026, 10, 2);
+export const WEEK_MS = 7 * 86_400_000;
 
 /** `now`가 속한 UTC 주가 앵커 주에서 몇 번째인지(앵커 이전도 순환에 맞춰 0 이상으로 접는다). */
 export function regularEventWeekIndex(now: number | Date): number {

@@ -346,6 +346,16 @@ export function requiredBreakthroughForLevel(level: number): number {
   return step + 1;
 }
 
+/**
+ * 화면에 세울 돌파 등급 — 돌파 사다리를 넘는 레벨(수호전 웨이브는 200까지 오른다)은 마지막 단계로 본다.
+ * `requiredBreakthroughForLevel`은 콘텐츠 사다리의 막힌 문을 잡으려 던지지만, 이미 정해진 적의 레벨을
+ * 그리는 자리에서 던지면 전투 프레임이 통째로 멈춘다(오류 보고: 수호전 16웨이브 이후 `onHordeWave`).
+ */
+export function shownBreakthroughForLevel(level: number): number {
+  const top = BREAKTHROUGH_STEPS[BREAKTHROUGH_STEPS.length - 1]?.levelCap ?? RELIC_LEVEL_CAP;
+  return level > top ? BREAKTHROUGH_STEPS.length : requiredBreakthroughForLevel(level);
+}
+
 /** 실측값이 그 유형의 목표 띠 안에 드는지. 검수가 같은 판정을 쓰도록 순수 함수로 둔다. */
 export function isEncounterOnTarget(role: EncounterRole, measured: { ttkSeconds: number; remainingHp: number }): boolean {
   const spec = ENCOUNTER_ROLE[role];

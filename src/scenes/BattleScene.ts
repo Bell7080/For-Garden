@@ -52,7 +52,7 @@ import { createGuildWarSkirmish } from "../core/guildWarBattle";
 import { GUILD_WAR_SLOT_SCORE } from "../core/guildWar";
 import { parseGuildWarSlotId } from "../core/guildWarMap";
 import { guildGuardRoster } from "../data/guildGuard";
-import { requiredBreakthroughForLevel } from "../core/levelDesign";
+import { shownBreakthroughForLevel } from "../core/levelDesign";
 import { GUILD_COIN_ICON } from "../ui/priceTag";
 import type { GuildGuardBattleInputDto, GuildWarBattleInputDto } from "../core/expeditionBattle";
 import type { SubmitGuildGuardResponse, SubmitGuildWarAttackResponse } from "../api/contracts";
@@ -3559,7 +3559,7 @@ export class BattleScene extends Phaser.Scene {
     this.guardWave = event.wave;
     for (const id of event.fighterIds) {
       const fighter = this.state.fighters.find((entry) => entry.id === id);
-      if (fighter) this.enemySnapshots.set(id, { def: fighter.def, level: event.level, breakthrough: requiredBreakthroughForLevel(event.level) });
+      if (fighter) this.enemySnapshots.set(id, { def: fighter.def, level: event.level, breakthrough: shownBreakthroughForLevel(event.level) });
     }
     void this.spawnFighters(true);
     if (event.wave > 1) audioManager?.playSfx("battle.summon");

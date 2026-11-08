@@ -156,6 +156,8 @@ export interface DebugState {
   /** 원정 기록 화면의 소탕 버튼이 켜져 있는가(이번 주 최고 점수 바닥). */
   expeditionSweepEnabled?: boolean;
   expeditionHpRecap?: Array<{ relicId: string; fromHp: number; toHp: number }>;
+  /** 원정 지도 HUD의 HP 글자가 굴러 오르며 거친 서로 다른 글자 수 — 한 번에 바뀌면 1이다. */
+  expeditionHpRollSteps?: number;
   expeditionFormation?: { selectedCount: number; slots: Array<{ x: number; y: number }>; selectedSlot?: number };
   /** 공용 드래그 표현의 사용자 가시 상태이며 렐릭 ID나 확정 배열은 포함하지 않는다. */
   formationDragVisual?: { owner: "party" | "expedition" | "excavation"; hovered?: number; replacementVisible: boolean };
@@ -396,6 +398,13 @@ export function setDebugExpeditionSweepEnabled(enabled: boolean | undefined): vo
 export function setDebugExpeditionHpRecap(recap: DebugState["expeditionHpRecap"]): void {
   if (!QA_TOOLS_ENABLED) return;
   ensure().expeditionHpRecap = recap;
+  ensure().expeditionHpRollSteps = 0;
+}
+
+export function noteDebugExpeditionHpRollStep(): void {
+  if (!QA_TOOLS_ENABLED) return;
+  const state = ensure();
+  state.expeditionHpRollSteps = (state.expeditionHpRollSteps ?? 0) + 1;
 }
 
 /** 원정 렐릭 ID 대신 슬롯 좌표와 표시 인원수만 E2E에 전달한다. */

@@ -352,7 +352,10 @@ export class SaveManager {
       cakeOperation: { ...state.cakeOperation },
       relicStory: cloneRelicStory(state.relicStory),
       progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
-      duel: state.duel ? cloneDuelState(state.duel) : normalizeDuelState(undefined, [...state.owned]),
+      // 저장 직전에 **지금 보유 목록으로 다시 맞춘다.** 계정을 바꾸거나 서버 상태를 받아 보유가 줄면
+      // 방어덱·공격덱에 없는 렐릭이 남아 검증이 저장 전체를 막았다(오류 보고: 부트의 「결투장 진행 정보」).
+      // 이미 맞는 값이면 그대로 나온다.
+      duel: normalizeDuelState(state.duel, [...state.owned]),
       claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...(state.raidTicketDrops ?? createEmptyRaidTicketDropState()) },

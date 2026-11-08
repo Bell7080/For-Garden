@@ -2,11 +2,12 @@ import { hasRemoteState } from "../api/resultState";
 import { setDebugMissionsPeriod } from "../debug";
 import Phaser from "phaser";
 import { t } from "../i18n";
-import type { GameApi, MissionDto, ClaimMissionRewardsResponse, MissionListResponse, ResearchRewardStageDto } from "../api/contracts";
+import { GameApiError, type GameApi, type MissionDto, type ClaimMissionRewardsResponse, type MissionListResponse, type ResearchRewardStageDto } from "../api/contracts";
 import { gameApi } from "../api/FakeServer";
 import { BASE_HEIGHT, BASE_WIDTH } from "../config/gameConfig";
 import type { MissionPeriod } from "../core/missions";
 import { notificationManager } from "../managers/NotificationManager";
+import { logError } from "../managers/ErrorReporter";
 import { session } from "../state/session";
 import { motionPolicy } from "../core/settings";
 import { Button } from "./Button";
@@ -70,6 +71,8 @@ export class MissionsPopup {
   /** 줄마다 지금 서 있는 자리(임무 ID → y). 다시 그릴 때 줄이 여기서 새 자리로 옮겨 간다. */
   private rowPositions = new Map<string, number>();
   private readonly claims: MissionClaimController;
+  /** 수령 하나가 응답·목록 갱신까지 끝나기 전에는 다음 수령을 받지 않는다(`runClaim`). */
+  private claiming = false;
   private readonly api: GameApi;
 
   constructor(private readonly scene: Phaser.Scene, private readonly popups: PopupLayer, api: GameApi = gameApi, private readonly onWalletChanged?: () => void, private readonly onClose?: () => void) {
@@ -284,6 +287,9 @@ export class MissionsPopup {
     const from = Math.min(this.rollFrom ?? to, to);
     this.rollFrom = undefined;
     const paint = (points: number): void => {
+      // 수령 뒤 목록을 다시 그리면 이 줄은 부서지는데 굴리던 트윈은 숫자 객체를 붙잡고 계속 돈다.
+      // 부서진 글자에 `setText`를 부르면 텍스처가 없어 프레임이 터진다(오류 보고 `glTexture`).
+      if (!value.active) return;
       bar.setValue(points / Math.max(1, research.maxPoints));
       value.setText(`${Math.round(points)}`);
       maxLabel.setX(value.x + value.width + 10);
@@ -376,12 +382,33 @@ export class MissionsPopup {
    * 열린 마디는 제 액자가 숨 쉬며 따로 부르고, 누르면 그때 받는다. 한 번 누른 손에 두 보상이 섞여
    * 들어오면 무엇을 받았는지 읽히지 않는다. 모두 받기만 둘을 함께 걷는다.
    */
-  private async claimOne(id: string): Promise<void> { const result = await this.claims.claim([id], this.period, []); if (result) await this.applyClaim(result); }
+  private async claimOne(id: string): Promise<void> { await this.runClaim(() => this.claims.claim([id], this.period, [])); }
   private async claimAll(): Promise<void> {
-    const ids = this.missions.filter((mission) => mission.period === this.period).map(missionDisplayModel).filter((mission) => mission.claimable).map((mission) => mission.id);
-    const result = await this.claims.claim(ids, this.period); if (result) await this.applyClaim(result);
+    await this.runClaim(() => {
+      const ids = this.missions.filter((mission) => mission.period === this.period).map(missionDisplayModel).filter((mission) => mission.claimable).map((mission) => mission.id);
+      return this.claims.claim(ids, this.period);
+    });
   }
-  private async claimStage(id: string): Promise<void> { const result = await this.claims.claim([], this.period, [id]); if (result) await this.applyClaim(result); }
+  private async claimStage(id: string): Promise<void> { await this.runClaim(() => this.claims.claim([], this.period, [id])); }
+
+  /**
+   * 수령은 **한 번에 하나**다. 액자 하나를 받은 응답이 목록을 다시 그리기 전에 모두 받기를 누르면,
+   * 아직 받지 않은 것으로 보이는 그 임무가 다시 실려 서버가 「이미 수령한 임무」로 거절했다(오류 보고).
+   * 앞선 수령이 목록까지 고친 뒤에야 다음 누름을 받고, 그래도 어긋나 거절되면 목록을 다시 읽어 맞춘다.
+   */
+  private async runClaim(request: () => Promise<ClaimMissionRewardsResponse | undefined>): Promise<void> {
+    if (this.claiming) return;
+    this.claiming = true;
+    try {
+      const result = await request();
+      if (result) await this.applyClaim(result);
+    } catch (error) {
+      if (!(error instanceof GameApiError) || error.code !== "MISSION_ALREADY_CLAIMED") { logError("missions.claim", "임무 수령 실패", error); return; }
+      const latest = await this.api.getMissions(); this.missions = latest.missions; this.research = latest.research;
+      this.render();
+      await notificationManager.refresh();
+    } finally { this.claiming = false; }
+  }
 
   /** 응답 스냅샷으로 목록·알림·지갑을 함께 갱신한 뒤 서버가 확정한 지급분만 영수증에 싣는다. */
   private async applyClaim(result: ClaimMissionRewardsResponse): Promise<void> {

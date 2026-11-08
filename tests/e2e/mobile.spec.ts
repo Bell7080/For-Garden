@@ -389,8 +389,14 @@ test("원정 전투 후 회복 증강은 이긴 뒤 지도 HUD를 차오르게 �
   // 결과판은 화면 어디를 눌러도 닫히고 지도로 돌아간다.
   await tapUntil(page, BASE_WIDTH / 2, 300, async () => (await page.evaluate(() => window.__PF_DEBUG?.scene)) === "expedition", { attempts: 120, gapMs: 1_500 });
   await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionHpRecap?.length ?? 0), { timeout: 15_000 }).toBeGreaterThan(0);
+  // 굴러 오르는 도중을 한 장 남긴다(들어오는 연출 0.42초 뒤에 시작해 0.9초 동안 오른다).
+  await page.waitForTimeout(650);
+  await captureGame(page, `test-results/${test.info().project.name}-expedition-after-battle-heal-rolling.png`);
   const recap = (await page.evaluate(() => window.__PF_DEBUG?.expeditionHpRecap))!;
   for (const entry of recap) expect(entry.toHp).toBeGreaterThan(entry.fromHp);
+  // HP 글자는 한 번에 바뀌지 않고 여러 숫자를 거쳐 굴러 오른다.
+  await expect.poll(() => page.evaluate(() => window.__PF_DEBUG?.expeditionHpRollSteps ?? 0), { timeout: 10_000 }).toBeGreaterThan(recap.length * 3);
+  await page.waitForTimeout(1_600);
   await captureGame(page, `test-results/${test.info().project.name}-expedition-after-battle-heal.png`);
   // 저장의 HP는 회복이 얹힌 값이다 — 살아 있는 렐릭은 모두 24% 이상 차 있다.
   const saved = await page.evaluate((saveKey) => JSON.parse(localStorage.getItem(saveKey)!).expedition.run.relics as Array<{ currentHp: number; alive: boolean }>, E2E_SAVE_STORAGE_KEY);

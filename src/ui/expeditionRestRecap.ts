@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import { motionPolicy } from "../core/settings";
-import { setDebugExpeditionHpRecap } from "../debug";
+import { noteDebugExpeditionHpRollStep, setDebugExpeditionHpRecap } from "../debug";
 import { t } from "../i18n";
 import { EffectManager } from "../managers/EffectManager";
 import { session } from "../state/session";
 import type { BattleProfile } from "./BattleProfile";
 import { COLOR, textStyle } from "./theme";
+import { ROLL } from "./RollingValue";
 
 /** 휴식 직전의 한 렐릭 — 런의 퍼센트 체력과 생존 여부. */
 export interface ExpeditionRestRecapEntry { relicId: string; currentHp: number; alive: boolean }
@@ -18,6 +19,8 @@ export const REST_RECAP = {
   staggerMs: 140,
   gain: { size: 46, rise: 92, holdMs: 900, fadeMs: 420 },
   revive: { size: 38, gap: 50 },
+  /** HP 글자가 전투 직후 값에서 회복된 값까지 굴러 오르는 시간과, 오르는 동안 한 번 부푸는 세기. */
+  roll: { ms: 900, punch: 1.18, punchMs: 140, settleMs: 420 },
   /** 체력 바가 따라오는 동안만 프레임을 돌린다. */
   stepForMs: 1800,
   /** 회복 기운의 세기 — 오른 양이 최대 체력의 몇 %인지(10%가 1)에서 나온다. */
@@ -54,8 +57,10 @@ export function playExpeditionRestRecap(
     const order = index++;
     scene.time.delayedCall(REST_RECAP.delayMs + order * REST_RECAP.staggerMs, () => {
       if (!profile.active) return;
-      profile.setMeters(toHp, maxHp, 0, false);
+      // 바만 차고 글자가 한 번에 바뀌면 얼마나 올랐는지 숫자로 읽히지 않는다 — HP 글자도 바와 함께 굴러 오른다.
+      profile.setMeters(fromHp, maxHp, 0, false);
       profile.setHealthTarget(toHp, maxHp, "heal");
+      rollHpLabel(scene, profile.hpLabel, fromHp, toHp, maxHp, session.settings.accessibility.reduceMotion);
       const bounds = profile.card.getBounds();
       const percent = (toHp - fromHp) / maxHp * 100;
       effects.combat("heal", bounds.centerX, bounds.centerY, { color: COLOR.hpFill, intensity: Math.max(0.6, percent * REST_RECAP.intensityPerPercent) });
@@ -83,4 +88,29 @@ export function playExpeditionRestRecap(
   const stop = (): void => { if (stopped) return; stopped = true; scene.events.off(Phaser.Scenes.Events.UPDATE, step); effects.destroy(); };
   scene.time.delayedCall(total, stop);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stop);
+}
+
+/** HP 글자를 `from`에서 `to`까지 굴린다. 오르는 동안 회복 빛으로 물들고 한 번 부풀었다 가라앉는다. */
+function rollHpLabel(scene: Phaser.Scene, label: Phaser.GameObjects.Text, fromHp: number, toHp: number, maxHp: number, still: boolean): void {
+  let last = "";
+  const paint = (hp: number): void => {
+    if (!label.active) return;
+    const text = `HP ${Math.round(hp)} / ${Math.round(maxHp)}`;
+    if (text === last) return;
+    last = text; label.setText(text); noteDebugExpeditionHpRollStep();
+  };
+  if (still || toHp <= fromHp) { paint(toHp); return; }
+  const base = String(label.style.color ?? COLOR.hpText);
+  const counter = { hp: fromHp };
+  label.setColor(ROLL.gain);
+  scene.tweens.add({
+    targets: counter, hp: toHp, duration: REST_RECAP.roll.ms, ease: "Cubic.Out",
+    onUpdate: () => paint(counter.hp),
+    onComplete: () => { paint(toHp); if (label.active) label.setColor(base); },
+  });
+  const { punch, punchMs, settleMs } = REST_RECAP.roll;
+  scene.tweens.chain({ targets: label, tweens: [
+    { scaleX: punch, scaleY: punch, duration: punchMs, ease: "Quad.Out" },
+    { scaleX: 1, scaleY: 1, duration: settleMs, ease: "Elastic.Out", easeParams: [1, 0.35] },
+  ] });
 }

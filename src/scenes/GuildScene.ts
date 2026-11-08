@@ -68,7 +68,7 @@ import { EnemyInfoPopup } from "../ui/EnemyInfoPopup";
 import { addSdFootShadow } from "../ui/SdFootShadow";
 import { addUnitNameplate } from "../ui/unitNameplate";
 import { battleAssetFor, spawnPuppet } from "../puppets/assets";
-import { requiredBreakthroughForLevel } from "../core/levelDesign";
+import { shownBreakthroughForLevel } from "../core/levelDesign";
 import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { GUILD_COIN_ICON } from "../ui/priceTag";
 import { RailButton } from "../ui/RailButton";
@@ -1585,7 +1585,7 @@ export class GuildScene extends Phaser.Scene {
       }).catch(() => undefined);
       addUnitNameplate(this, this.controls, x, E.ground + 22, entry.level, entry.def.name, E.nameSize, E.nameWidth);
       addClippedHit(this, this.controls, x, E.ground - E.height / 2 + 20, E.height * 0.86, E.height + 80, () => FULL_CLIP, { useHandCursor: true })
-        .on("pointerup", () => { if (!this.busy) this.guardEnemyInfo.show({ def: entry.def, level: entry.level, breakthrough: requiredBreakthroughForLevel(entry.level) }); });
+        .on("pointerup", () => { if (!this.busy) this.guardEnemyInfo.show({ def: entry.def, level: entry.level, breakthrough: shownBreakthroughForLevel(entry.level) }); });
     });
 
     // 오늘 기록 판 — 오늘 최고 점수를 크게, 남은 도전을 그 아래에.

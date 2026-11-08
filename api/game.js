@@ -34858,7 +34858,10 @@ var SaveManager = class {
       cakeOperation: { ...state.cakeOperation },
       relicStory: cloneRelicStory(state.relicStory),
       progressPasses: cloneProgressPasses(state.progressPasses ?? createEmptyProgressPassState()),
-      duel: state.duel ? cloneDuelState(state.duel) : normalizeDuelState(void 0, [...state.owned]),
+      // 저장 직전에 **지금 보유 목록으로 다시 맞춘다.** 계정을 바꾸거나 서버 상태를 받아 보유가 줄면
+      // 방어덱·공격덱에 없는 렐릭이 남아 검증이 저장 전체를 막았다(오류 보고: 부트의 「결투장 진행 정보」).
+      // 이미 맞는 값이면 그대로 나온다.
+      duel: normalizeDuelState(state.duel, [...state.owned]),
       claimedMailIds: [...new Set(state.claimedMailIds ?? [])],
       attendance: cloneAttendanceState(state.attendance ?? createEmptyAttendanceState()),
       raidTicketDrops: { ...state.raidTicketDrops ?? createEmptyRaidTicketDropState() },
@@ -41859,7 +41862,7 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.407.3",
+  version: "0.407.4",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {

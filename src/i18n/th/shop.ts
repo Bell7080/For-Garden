@@ -135,4 +135,6 @@ export const SHOP_TH = {
   "shop.premium.firstPayment.title": "ของขวัญชำระเงินครั้งแรก",
   "shop.premium.firstPayment.note": "รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
   "shop.premium.firstPayment.hint": "คุณจะได้รับพร้อมการชำระเงินครั้งแรกของสินค้าใดก็ได้",
+  "shop.purchase.period.season": "ซีซัน",
+  "shop.premium.pass.metric.seasonPoints": "คะแนนวิจัยซีซัน {progress} / {goal}",
 } as const;

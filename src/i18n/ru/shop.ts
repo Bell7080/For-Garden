@@ -135,4 +135,6 @@ export const SHOP_RU = {
   "shop.premium.firstPayment.title": "Подарок за первую покупку",
   "shop.premium.firstPayment.note": "Выдаётся вместе с первой покупкой любого товара",
   "shop.premium.firstPayment.hint": "Вы получите это вместе с первой покупкой любого товара.",
+  "shop.purchase.period.season": "Сезон",
+  "shop.premium.pass.metric.seasonPoints": "Исследования сезона {progress} / {goal}",
 } as const;

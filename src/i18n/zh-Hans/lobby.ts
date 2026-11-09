@@ -209,4 +209,7 @@ export const LOBBY_ZH_HANS = {
   "ancient.trialLine": "「{name}」{effect}",
   "event.newbieGrowth.title": "7日成长指南",
   "event.newbieGrowth.subtitle": "每天五个目标，SR遗物自选！",
+  "lobby.pass.mission.seasonPoints": "赛季研究度达到 {threshold}",
+  "lobby.pass.mission.lead.seasonPoints": "收集任务研究度即可提升等级",
+  "lobby.pass.season.ends": "赛季结束 {time}",
 } as const;

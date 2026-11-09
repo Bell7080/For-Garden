@@ -437,4 +437,5 @@ export const MISC_ID = {
   "profile.edit.frameGift": "Terbatas",
   "profile.unlock.gift.firstPayment": "Didapat dari Hadiah Pembelian Pertama",
   "profile.unlock.gift.seasonPass": "Hadiah Season Pass tingkat 30",
+  "trade.tag.season": "Musim",
 } as const;

@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Wähle ein SR-Relikt aus. Hast du es schon, erhältst du stattdessen 1 seiner Splitter.",
   "profileFrame.patron.name": "Zeichen des ersten Förderers",
   "profileFrame.season.name": "Flügel der Saison",
+  "product.premium-season-pass.name": "Saisonpass",
+  "trade.refresh.season": "Saison",
 };

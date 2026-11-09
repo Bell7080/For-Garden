@@ -459,4 +459,5 @@ export const MISC_JA = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "初回決済ギフトで受け取れます",
   "profile.unlock.gift.seasonPass": "シーズンパス30段階報酬",
+  "trade.tag.season": "シーズン",
 } as const;

@@ -437,4 +437,5 @@ export const MISC_RU = {
   "profile.edit.frameGift": "Ограничено",
   "profile.unlock.gift.firstPayment": "Выдаётся как подарок за первую покупку",
   "profile.unlock.gift.seasonPass": "Награда 30-го уровня сезонного пропуска",
+  "trade.tag.season": "Сезон",
 } as const;

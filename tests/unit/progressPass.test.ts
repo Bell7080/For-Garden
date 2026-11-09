@@ -76,7 +76,8 @@ describe("로비 패스 창 모델", () => {
   });
 
   it("열다섯 줄은 창 안에서 흐르고, 처음 여는 자리는 그 범위 안이다", () => {
-    for (const pass of PROGRESS_PASSES) expect(pass.milestones).toHaveLength(15);
+    // 시즌 패스만 30단계다(시즌 길은 `seasonPass.test`가 따로 지킨다).
+    for (const pass of PROGRESS_PASSES) expect(pass.milestones).toHaveLength(pass.seasonal ? 30 : 15);
     const view = passPopupViewport();
     expect(passPopupContentHeight(15)).toBeGreaterThan(view.height);
     expect(passPopupMinScroll(15)).toBe(view.height - passPopupContentHeight(15));
@@ -242,7 +243,8 @@ describe("패스 탭 줄의 오른쪽 잘림", () => {
 
 describe("패스 유료 칸의 짜임", () => {
   it("마디마다 다양한 보상 하나 + 다이아 고정이고, 길 끝의 다이아가 가장 크다", () => {
-    for (const pass of PROGRESS_PASSES) {
+    // 시즌 패스는 마디마다 다이아 100에 띄엄띄엄 얹는 짜임이다(승인한 표 — `seasonPass.test`).
+    for (const pass of PROGRESS_PASSES.filter(({ seasonal }) => !seasonal)) {
       for (const { rewards } of pass.milestones) {
         expect(rewards, pass.id).toHaveLength(2);
         expect(rewards[0]!.kind === "currency" && rewards[0]!.currency === "gems", pass.id).toBe(false);

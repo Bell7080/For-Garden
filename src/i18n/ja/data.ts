@@ -6318,4 +6318,6 @@ export default {
   "item.sr-select-ticket.description": "SRレリックを1体選んで迎えます。すでにいるレリックを選ぶと、その欠片1個になります。",
   "profileFrame.patron.name": "初後援の証",
   "profileFrame.season.name": "シーズンの翼",
+  "product.premium-season-pass.name": "シーズンパス",
+  "trade.refresh.season": "シーズン",
 };

@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "选择一名SR遗物带回。若选择已拥有的遗物，则改为获得1个该遗物的碎片。",
   "profileFrame.patron.name": "首次赞助之证",
   "profileFrame.season.name": "赛季之翼",
+  "product.premium-season-pass.name": "赛季通行证",
+  "trade.refresh.season": "赛季",
 };

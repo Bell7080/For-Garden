@@ -135,4 +135,6 @@ export const SHOP_PT_BR = {
   "shop.premium.firstPayment.title": "Presente da primeira compra",
   "shop.premium.firstPayment.note": "Incluído na sua primeira compra de qualquer item",
   "shop.premium.firstPayment.hint": "Você receberá com sua primeira compra de qualquer item.",
+  "shop.purchase.period.season": "Temporada",
+  "shop.premium.pass.metric.seasonPoints": "Pesquisa da temporada {progress} / {goal}",
 } as const;

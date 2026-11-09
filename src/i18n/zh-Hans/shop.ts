@@ -135,4 +135,6 @@ export const SHOP_ZH_HANS = {
   "shop.premium.firstPayment.title": "首次付费礼物",
   "shop.premium.firstPayment.note": "任意商品首次付费时一并发放",
   "shop.premium.firstPayment.hint": "首次购买任意商品时将一并获得。",
+  "shop.purchase.period.season": "赛季",
+  "shop.premium.pass.metric.seasonPoints": "赛季研究度 {progress} / {goal}",
 } as const;

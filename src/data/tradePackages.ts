@@ -84,7 +84,7 @@ export function tradePackageValuePercent(acquisition: ProductAcquisition, grants
 
 /** 갱신 주기를 말하는 이름표. 같은 말이 카드와 구매 확인에서 갈리지 않게 한 곳에 둔다. */
 const REFRESH_LABEL: Readonly<Record<ProductRefresh, string>> = {
-  once: "계정당", daily: "매일", weekly: "주간", monthly: "월간", none: "상시",
+  once: "계정당", daily: "매일", weekly: "주간", monthly: "월간", none: "상시", season: "시즌",
 };
 
 /**

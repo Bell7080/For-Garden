@@ -215,4 +215,7 @@ export const LOBBY_KO = {
   "ancient.trialLine": "「{name}」 {effect}",
   "event.newbieGrowth.title": "7일 성장 가이드",
   "event.newbieGrowth.subtitle": "매일 다섯 목표, SR 렐릭 선택권!",
+  "lobby.pass.mission.seasonPoints": "시즌 연구도 {threshold} 달성",
+  "lobby.pass.mission.lead.seasonPoints": "임무 연구도를 모으면 레벨이 오릅니다",
+  "lobby.pass.season.ends": "시즌 종료 {time}",
 } as const;

@@ -593,9 +593,11 @@ export interface ProgressPassMilestoneDto {
  * 세션에서 잰다 — 화면이 클리어 수나 레벨을 다시 세지 않는다.
  */
 export interface ProgressPassDto {
-  id: "story" | "level" | "raid" | "archaeology";
+  id: "story" | "level" | "raid" | "archaeology" | "season";
   productId: string;
-  metric: "storyClears" | "playerLevel" | "raidRuns" | "strataDigs";
+  metric: "storyClears" | "playerLevel" | "raidRuns" | "strataDigs" | "seasonPoints";
+  /** 시즌 패스만 — 이번 시즌 키와 끝나는 시각. */
+  season?: { key: string; endsAt: string };
   progress: number;
   goal: number;
   owned: boolean;

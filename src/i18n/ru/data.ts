@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Выберите один SR-реликт. Если он уже есть, вы получите 1 его фрагмент.",
   "profileFrame.patron.name": "Знак первого покровителя",
   "profileFrame.season.name": "Крылья сезона",
+  "product.premium-season-pass.name": "Сезонный пропуск",
+  "trade.refresh.season": "Сезон",
 };

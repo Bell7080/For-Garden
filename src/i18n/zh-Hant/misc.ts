@@ -437,4 +437,5 @@ export const MISC_ZH_HANT = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "透過首次付費禮物獲得",
   "profile.unlock.gift.seasonPass": "賽季通行證第30級獎勵",
+  "trade.tag.season": "賽季",
 } as const;

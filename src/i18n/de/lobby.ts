@@ -209,4 +209,7 @@ export const LOBBY_DE = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "7-Tage-Wachstumsguide",
   "event.newbieGrowth.subtitle": "Fünf Ziele am Tag, wähle ein SR-Relikt!",
+  "lobby.pass.mission.seasonPoints": "Erreiche {threshold} Saison-Forschung",
+  "lobby.pass.mission.lead.seasonPoints": "Sammle Missionsforschung, um aufzusteigen",
+  "lobby.pass.season.ends": "Saisonende {time}",
 } as const;

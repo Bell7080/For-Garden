@@ -437,4 +437,5 @@ export const MISC_VI = {
   "profile.edit.frameGift": "Giới hạn",
   "profile.unlock.gift.firstPayment": "Nhận từ Quà nạp lần đầu",
   "profile.unlock.gift.seasonPass": "Thưởng Season Pass bậc 30",
+  "trade.tag.season": "Mùa",
 } as const;

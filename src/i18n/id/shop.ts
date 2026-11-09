@@ -135,4 +135,6 @@ export const SHOP_ID = {
   "shop.premium.firstPayment.title": "Hadiah Pembelian Pertama",
   "shop.premium.firstPayment.note": "Diberikan bersama pembelian pertama apa pun",
   "shop.premium.firstPayment.hint": "Kamu akan menerimanya pada pembelian pertama apa pun.",
+  "shop.purchase.period.season": "Musim",
+  "shop.premium.pass.metric.seasonPoints": "Riset Musim {progress} / {goal}",
 } as const;

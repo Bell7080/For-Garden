@@ -437,4 +437,5 @@ export const MISC_ZH_HANS = {
   "profile.edit.frameGift": "限定",
   "profile.unlock.gift.firstPayment": "通过首次付费礼物获得",
   "profile.unlock.gift.seasonPass": "赛季通行证第30级奖励",
+  "trade.tag.season": "赛季",
 } as const;

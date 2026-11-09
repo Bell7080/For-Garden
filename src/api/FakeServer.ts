@@ -46,6 +46,7 @@ import { BOND_XP_REWARD, grantBondXp, grantDailyLobbyBondXp } from "../core/bond
 import { MISSIONS, RESEARCH_REWARD_STAGES, maxResearchPoints, mergeMissionRewards, type MissionReward, addResearchPoints, applyMissionEvent, claimResearchStages, claimableMissionIds, normalizeMissions, LIFETIME_COUNT_CAP, researchPointsForClaim, researchStageClaimId, type MissionPeriod } from "../core/missions";
 import { CHAPTERS, DAILY_RESTORATION, getStage, STAGES, SUB_STORY_GEM_REWARDS } from "../data/stages";
 import { PROGRESS_PASSES, findProgressPass, type ProgressPassDefinition } from "../data/progressPasses";
+import { addSeasonPoints, currentSeasonProgress, rollSeasonPassState, seasonEndsAt, seasonKey } from "../core/seasonPass";
 import { claimableProgressPassFreeThresholds, claimableProgressPassThresholds, progressPassFreeStates, progressPassGoal, progressPassMilestoneStates } from "../core/progressPass";
 import { stageFirstClearRewards } from "../core/stageRewards";
 import { battleStageStaminaCost } from "../data/contentCosts";
@@ -3540,9 +3541,12 @@ export class FakeServer implements GameApi {
     const mission = credit(missionRewards);
     const research = credit(mergeMissionRewards(researchRewards));
     // 임무/업적 보상과 그 조건으로 열린 수식어를 같은 nextState와 단 한 번의 persist로 확정한다.
-    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet }, { claimedIds: uniqueIds, claimedResearchStageIds });
+    // 임무 연구도는 시즌 패스의 단계도 함께 올린다 — 새 카운터를 두지 않고 같은 수령이 같은 수를 더한다.
+    const rolledPasses = rollSeasonPassState(this.state.progressPasses ?? createEmptyProgressPassState(), this.now());
+    const nextPasses = { ...rolledPasses, season: addSeasonPoints(rolledPasses.season, Object.values(researchPointsForClaim(uniqueIds)).reduce((sum, points) => sum + points, 0), this.now()) };
+    const nextState = ProfileModifierManager.applyRewardReceipt({ ...this.state, missions: nextMissions, wallet: nextWallet, progressPasses: nextPasses }, { claimedIds: uniqueIds, claimedResearchStageIds });
     this.persist(nextState);
-    this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds;
+    this.state.missions = nextMissions; this.state.wallet = nextWallet; this.state.earnedProfileModifierIds = nextState.earnedProfileModifierIds; this.state.progressPasses = nextPasses;
     return { ...this.snapshot(), claimedIds: uniqueIds, claimedResearchStageIds, rewards: { mission, research }, granted: mergeMissionRewards([...mission, ...research]) };
   }
 
@@ -3707,7 +3711,9 @@ export class FakeServer implements GameApi {
     if (!request.requestId) throw new GameApiError("INVALID_STATE", "수령 요청 ID가 필요합니다.");
     const pass = findProgressPass(request.passId);
     if (!pass) throw new GameApiError("PASS_NOT_FOUND", "존재하지 않는 패스입니다.");
-    const passes = this.state.progressPasses ?? createEmptyProgressPassState();
+    const now = this.now();
+    const saved = this.state.progressPasses ?? createEmptyProgressPassState();
+    const passes = pass.seasonal ? rollSeasonPassState(saved, now, pass.id) : saved;
     const owned = this.progressPassOwned(pass);
     const progress = this.progressPassProgress(pass, this.state);
     const claimed = passes.claimed[pass.id] ?? [];
@@ -3715,7 +3721,6 @@ export class FakeServer implements GameApi {
     const thresholds = claimableProgressPassThresholds(pass, progress, owned, claimed);
     const freeThresholds = claimableProgressPassFreeThresholds(pass, progress, freeClaimed);
     if (thresholds.length === 0 && freeThresholds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
-    const now = this.now();
     const grants = pass.milestones.flatMap(({ threshold, free, rewards }) => [
       ...(freeThresholds.includes(threshold) ? free : []),
       ...(thresholds.includes(threshold) ? rewards : []),
@@ -3728,18 +3733,27 @@ export class FakeServer implements GameApi {
       claimed: { ...passes.claimed, [pass.id]: merge(claimed, thresholds) },
       freeClaimed: { ...(passes.freeClaimed ?? {}), [pass.id]: merge(freeClaimed, freeThresholds) },
     };
-    const nextState: Session = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses };
+    // 프로필 장식(시즌 테두리)은 재화 지급 경로가 건너뛴다 — 선물 테두리로 계정에 새긴다.
+    const decorations = grants.flatMap((grant) => grant.kind === "profile_decoration" ? [grant] : []);
+    const giftFrames = [...new Set([...(this.state.achievements?.giftFrames ?? []), ...decorations.map(({ decorationId }) => decorationId)])];
+    const achievements = decorations.length > 0 ? { ...(this.state.achievements ?? normalizeAchievementState(undefined)), giftFrames } : this.state.achievements;
+    const nextState: Session = { ...this.state, wallet: nextWallet, itemInventory: applied.items, progressPasses: nextPasses, ...(achievements ? { achievements } : {}) };
     this.persist(nextState);
     this.state.wallet = nextWallet; this.state.itemInventory = applied.items; this.state.progressPasses = nextPasses;
+    if (achievements) this.state.achievements = achievements;
+    const granted = [...applied.granted, ...decorations.map((grant) => ({ kind: "profile_decoration" as const, decorationId: grant.decorationId, name: grant.name }))];
     const response: ClaimProgressPassResponse = {
-      ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, claimedFreeThresholds: freeThresholds, granted: applied.granted, passes: this.progressPassDtos(this.state),
+      ...this.snapshot(), passId: pass.id, claimedThresholds: thresholds, claimedFreeThresholds: freeThresholds, granted, passes: this.progressPassDtos(this.state),
     };
     this.progressPassClaims.set(request.requestId, structuredClone(response));
     return response;
   }
 
   private progressPassOwned(pass: ProgressPassDefinition): boolean {
-    return (this.state.productPurchases[pass.productId]?.count ?? 0) > 0;
+    const record = this.state.productPurchases[pass.productId];
+    // 시즌 패스는 이번 시즌에 산 기록만 연다 — 지난 시즌의 구매가 다음 시즌 길을 열지 않는다.
+    if (pass.seasonal) return record?.periodKey === seasonKey(this.now()) && record.count > 0;
+    return (record?.count ?? 0) > 0;
   }
 
   /** 패스가 재는 진행도 — 스토리는 본편 관문 클리어 수, 레벨은 연구원 레벨, 레이드는 입장 수다. */
@@ -3747,20 +3761,25 @@ export class FakeServer implements GameApi {
     if (pass.metric === "storyClears") return CHAPTERS.reduce((sum, { stages }) => sum + stages.filter(({ id }) => state.cleared.has(id)).length, 0);
     if (pass.metric === "playerLevel") return state.playerResearch.level;
     if (pass.metric === "strataDigs") return state.missions.lifetime?.strata_tile_dug ?? 0;
+    if (pass.metric === "seasonPoints") return currentSeasonProgress(state.progressPasses?.season, this.now()).points;
     return state.progressPasses?.raidRuns ?? 0;
   }
 
   private progressPassDtos(state: Session): ProgressPassDto[] {
     // 아이템 이름은 게터라 펼쳐 복사하면 사라진다 — 값으로 옮겨 담는다.
     const cloneGrant = (reward: ProductGrant): ProductGrant => ({ ...reward, ...(reward.kind === "item" ? { name: reward.name } : {}) });
+    const now = this.now();
     return PROGRESS_PASSES.map((pass) => {
       const progress = this.progressPassProgress(pass, state);
       const owned = this.progressPassOwned(pass);
-      const claimed = state.progressPasses?.claimed[pass.id] ?? [];
+      const saved = state.progressPasses ?? createEmptyProgressPassState();
+      const passes = pass.seasonal ? rollSeasonPassState(saved, now, pass.id) : saved;
+      const claimed = passes.claimed[pass.id] ?? [];
       const states = progressPassMilestoneStates(pass, progress, owned, claimed);
-      const freeStates = progressPassFreeStates(pass, progress, state.progressPasses?.freeClaimed?.[pass.id] ?? []);
+      const freeStates = progressPassFreeStates(pass, progress, passes.freeClaimed?.[pass.id] ?? []);
       return {
         id: pass.id, productId: pass.productId, metric: pass.metric, progress, goal: progressPassGoal(pass), owned,
+        ...(pass.seasonal ? { season: { key: seasonKey(now), endsAt: seasonEndsAt(now) } } : {}),
         milestones: pass.milestones.map(({ threshold, free, rewards }, index) => ({
           threshold, free: free.map(cloneGrant), freeState: freeStates[index]!, rewards: rewards.map(cloneGrant), state: states[index]!,
         })),
@@ -4289,6 +4308,7 @@ export class FakeServer implements GameApi {
     }
     // 월간은 UTC 달 하나가 곧 주기다. 달 길이가 달라도 키가 바뀌는 자리는 한 번뿐이다.
     if (product.refresh === "monthly") return day.slice(0, 7);
+    if (product.refresh === "season") return seasonKey(now);
     return product.refresh === "once" ? "account" : "permanent";
   }
 

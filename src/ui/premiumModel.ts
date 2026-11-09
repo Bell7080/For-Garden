@@ -25,7 +25,9 @@ export function premiumCategoryOf(product: ProductDto): PremiumCategory {
 /** 라벨은 storefront 검증을 통과한 상품 중 그 갈래만 새 배열로 반환한다. */
 export function productsForPremiumCategory(products: readonly ProductDto[], category: PremiumCategory): ProductDto[] {
   const sharedPass = (product: ProductDto): boolean => product.id === "premium-raid-pass" || product.id === "premium-archaeology-pass";
-  return premiumModel(products).filter((product) => premiumCategoryOf(product) === category || (category === "pass" && sharedPass(product)))
+  // 시즌 패스는 사는 순간 받는 것이 없어 상점 카드가 빈 판이 된다 — 패스 창에서만 연다.
+  return premiumModel(products).filter((product) => !progressPassForProduct(product.id)?.seasonal)
+    .filter((product) => premiumCategoryOf(product) === category || (category === "pass" && sharedPass(product)))
     .sort((a, b) => category === "subscription" ? subscriptionOrder(a) - subscriptionOrder(b) : 0);
 }
 

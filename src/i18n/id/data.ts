@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Pilih satu Relik SR untuk dibawa pulang. Jika memilih Relik yang sudah dimiliki, kamu mendapat 1 Serpihannya.",
   "profileFrame.patron.name": "Tanda Pendukung Pertama",
   "profileFrame.season.name": "Sayap Musim",
+  "product.premium-season-pass.name": "Season Pass",
+  "trade.refresh.season": "Musim",
 };

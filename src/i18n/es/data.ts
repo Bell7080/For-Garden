@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Elige una Reliquia SR para traer. Si ya la tienes, recibirás 1 de sus Fragmentos.",
   "profileFrame.patron.name": "Insignia del primer mecenas",
   "profileFrame.season.name": "Alas de la temporada",
+  "product.premium-season-pass.name": "Pase de temporada",
+  "trade.refresh.season": "Temporada",
 };

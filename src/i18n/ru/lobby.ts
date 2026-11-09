@@ -209,4 +209,7 @@ export const LOBBY_RU = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "7-дневный гид по развитию",
   "event.newbieGrowth.subtitle": "Пять целей в день — выбор SR-реликта!",
+  "lobby.pass.mission.seasonPoints": "Наберите {threshold} очков исследований сезона",
+  "lobby.pass.mission.lead.seasonPoints": "Собирайте очки исследований за задания, чтобы повышать уровень",
+  "lobby.pass.season.ends": "Конец сезона {time}",
 } as const;

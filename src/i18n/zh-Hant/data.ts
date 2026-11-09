@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "選擇一名SR遺物帶回。若選擇已擁有的遺物，則改為獲得1個該遺物的碎片。",
   "profileFrame.patron.name": "首次贊助之證",
   "profileFrame.season.name": "賽季之翼",
+  "product.premium-season-pass.name": "賽季通行證",
+  "trade.refresh.season": "賽季",
 };

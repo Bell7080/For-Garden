@@ -100,7 +100,8 @@ export type ProductGrant =
  * `monthly`는 고고학의 상위 특성 아이템이 쓴다 — 주간으로 두면 한 달에 넷이 되어, 특성 등급을
  * 상시 과금으로 밀어 올리는 길이 열린다.
  */
-export type ProductRefresh = "none" | "daily" | "weekly" | "monthly" | "once";
+/** `season`은 시즌 패스의 28일 주기다(`core/seasonPass.ts` — 키 `S1`·`S2`…). */
+export type ProductRefresh = "none" | "daily" | "weekly" | "monthly" | "once" | "season";
 
 /** 상품 그림은 영속 ID와 분리해 최종 원화 교체가 구매 기록에 영향을 주지 않게 한다. */
 export type ShopProductIconKey =

@@ -437,4 +437,5 @@ export const MISC_PT_BR = {
   "profile.edit.frameGift": "Limitado",
   "profile.unlock.gift.firstPayment": "Obtido com o Presente da primeira compra",
   "profile.unlock.gift.seasonPass": "Recompensa do nível 30 do passe de temporada",
+  "trade.tag.season": "Temporada",
 } as const;

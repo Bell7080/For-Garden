@@ -34,10 +34,11 @@ import { addSectionTitle } from "./SectionTitle";
 import { paintShowcaseCard, showcaseCardShape } from "./showcaseCardChrome";
 import { COLOR, textStyle } from "./theme";
 import { squeezeTextToWidth } from "./textFit";
+import { remainingDetail } from "./itemExpiry";
 
 /** 패스마다의 색. 게이지·유료 칸·탭이 같은 값을 읽는다 — 스토리는 금빛, 레벨은 초록, 레이드는 보랏빛. */
 export const PROGRESS_PASS_TONE: Readonly<Record<ProgressPassDto["id"], number>> = {
-  story: 0xe0a83e, level: 0x6fc47f, raid: 0xb48ce0, archaeology: 0xd08a5a,
+  story: 0xe0a83e, level: 0x6fc47f, raid: 0xb48ce0, archaeology: 0xd08a5a, season: 0x9fe3ff,
 };
 
 /** 진행도 한 줄(「스토리 클리어 12 / 30」). */
@@ -145,6 +146,11 @@ export async function openPassPopup(scene: Phaser.Scene, popups: PopupLayer, opt
       const headerWidth = headerRight + inner / 2;
       head.add(scene.add.text(headerRight, top + H.levelY + 6, progressPassProgressLabel(pass), textStyle({ role: "emphasis", size: H.progressSize, color: COLOR.inkDim }))
         .setOrigin(1, 0.5));
+      // 시즌 패스만 끝나는 때가 있다 — 레벨 줄 위에 작고 흐리게 남은 시간을 적는다(넘어가면 받은 칸이 비워진다).
+      if (pass.season) {
+        head.add(scene.add.text(headerRight, top + H.levelY - 44, t("lobby.pass.season.ends", { time: remainingDetail(pass.season.endsAt) }), textStyle({ role: "emphasis", size: 22, color: COLOR.inkDim }))
+          .setOrigin(1, 0.5));
+      }
       const gauge = new HoloBar(scene, -inner / 2 + headerWidth / 2, top + H.gaugeY, headerWidth, H.gaugeHeight, { color: tone, trackAlpha: 0.85, outline: true, ticks: Math.max(0, level.max - 1) });
       gauge.setValue(level.fill);
       head.add([...gauge.objects]);

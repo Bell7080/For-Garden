@@ -139,4 +139,6 @@ export const SHOP_KO = {
   "shop.premium.firstPayment.title": "첫 결제 선물",
   "shop.premium.firstPayment.note": "어떤 상품이든 첫 결제에 함께 지급",
   "shop.premium.firstPayment.hint": "어떤 상품이든 처음 결제하면 함께 받습니다.",
+  "shop.purchase.period.season": "시즌",
+  "shop.premium.pass.metric.seasonPoints": "시즌 연구도 {progress} / {goal}",
 } as const;

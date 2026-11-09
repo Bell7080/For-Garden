@@ -136,4 +136,6 @@ export const SHOP_JA = {
   "shop.premium.firstPayment.title": "初回決済ギフト",
   "shop.premium.firstPayment.note": "どの商品でも初回決済で一緒にお届け",
   "shop.premium.firstPayment.hint": "どの商品でも初めて決済すると一緒に受け取れます。",
+  "shop.purchase.period.season": "シーズン",
+  "shop.premium.pass.metric.seasonPoints": "シーズン研究度 {progress} / {goal}",
 } as const;

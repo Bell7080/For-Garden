@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "เลือกเรลิก SR หนึ่งตัวมาอยู่ด้วย หากเลือกตัวที่มีอยู่แล้วจะได้รับเศษของเรลิกนั้น 1 ชิ้นแทน",
   "profileFrame.patron.name": "เครื่องหมายผู้สนับสนุนแรก",
   "profileFrame.season.name": "ปีกแห่งซีซัน",
+  "product.premium-season-pass.name": "ซีซันพาส",
+  "trade.refresh.season": "ซีซัน",
 };

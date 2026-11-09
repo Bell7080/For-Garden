@@ -209,4 +209,7 @@ export const LOBBY_PT_BR = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "Guia de crescimento de 7 dias",
   "event.newbieGrowth.subtitle": "Cinco metas por dia, escolha uma Relíquia SR!",
+  "lobby.pass.mission.seasonPoints": "Alcance {threshold} de pesquisa da temporada",
+  "lobby.pass.mission.lead.seasonPoints": "Junte pesquisa de missões para subir de nível",
+  "lobby.pass.season.ends": "A temporada termina {time}",
 } as const;

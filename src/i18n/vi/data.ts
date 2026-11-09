@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Chọn một Di vật SR để đưa về. Nếu chọn Di vật đã có, bạn nhận 1 Mảnh của nó.",
   "profileFrame.patron.name": "Dấu ấn Tài trợ Đầu",
   "profileFrame.season.name": "Đôi cánh Mùa giải",
+  "product.premium-season-pass.name": "Season Pass",
+  "trade.refresh.season": "Mùa",
 };

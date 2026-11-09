@@ -1,5 +1,7 @@
 import type { ProductGrant } from "./products";
 import { findItem } from "./items";
+import { findProfileFrame } from "./profileFrames";
+import { SEASON_TIER_POINTS, SEASON_TIERS } from "../core/seasonPass";
 
 /**
  * 진행 패스 — **사는 순간이 아니라 걸어가는 만큼 받는다.**
@@ -30,7 +32,7 @@ import { findItem } from "./items";
  */
 
 /** 패스가 재는 진행도. 값은 서버가 세션에서 읽는다 — 화면이 셈하지 않는다. */
-export type ProgressPassMetric = "storyClears" | "playerLevel" | "raidRuns" | "strataDigs";
+export type ProgressPassMetric = "storyClears" | "playerLevel" | "raidRuns" | "strataDigs" | "seasonPoints";
 
 export interface ProgressPassMilestone {
   /** 이 마디에 닿는 진행도. 길 안에서 오름차순이고 겹치지 않는다. */
@@ -42,11 +44,13 @@ export interface ProgressPassMilestone {
 }
 
 export interface ProgressPassDefinition {
-  id: "story" | "level" | "raid" | "archaeology";
+  id: "story" | "level" | "raid" | "archaeology" | "season";
   /** 이 길을 여는 결제 상품. */
   productId: string;
   metric: ProgressPassMetric;
   milestones: readonly ProgressPassMilestone[];
+  /** 시즌마다 다시 도는 길 — 구매 기록과 받은 칸이 시즌 키(`core/seasonPass.ts`)로 갈린다. */
+  seasonal?: true;
 }
 
 export type ProgressPassId = ProgressPassDefinition["id"];
@@ -60,7 +64,34 @@ const item = (itemId: string, amount: number): ProductGrant => ({
 /** 마디 하나 — 무료 칸 하나와 유료 칸들. */
 const step = (threshold: number, free: ProductGrant, ...rewards: ProductGrant[]): ProgressPassMilestone => ({ threshold, free: [free], rewards });
 
+/**
+ * 시즌 패스 — 28일 · 30단계 · 유료 ₩9,900(응태 승인 2026-11-09, 8번 설계안).
+ *
+ * 무료 줄은 단계마다 골드·치즈케이크가 번갈아 서고 10·20·30단계가 화석 1이다. 유료 줄은 단계마다 젬 100(합 3,000)에
+ * 화석 8 · 호박석 2 · 만능 SR 파편 1 · 에너지 드링크+ 6을 흩어 얹고, 30단계에 시즌 테두리(「시즌의 날개」)가 선다.
+ * 단계 하나는 연구도 `SEASON_TIER_POINTS`다. 표를 고치면 `seasonPass.test`의 합계를 함께 고친다.
+ */
+const SEASON_PAID_EXTRA: Readonly<Record<number, ProductGrant>> = {
+  2: item("stamina-tonic-large", 1), 3: currency("fossil", 1), 5: item("stamina-tonic-large", 1), 6: currency("fossil", 1),
+  8: item("stamina-tonic-large", 1), 9: currency("fossil", 1), 11: item("stamina-tonic-large", 1), 12: currency("fossil", 1),
+  14: currency("amber", 1), 16: currency("fossil", 1), 18: item("stamina-tonic-large", 1), 19: currency("fossil", 1),
+  21: item("universal-fragment-sr", 1), 22: currency("fossil", 1), 24: item("stamina-tonic-large", 1), 26: currency("fossil", 1),
+  28: currency("amber", 1),
+  30: { kind: "profile_decoration", decorationId: "season", get name(): string { return findProfileFrame("season")?.displayName ?? "season"; } },
+};
+
+const seasonMilestones = (): ProgressPassMilestone[] => Array.from({ length: SEASON_TIERS }, (_, index) => {
+  const tier = index + 1;
+  const free = tier % 10 === 0 ? currency("fossil", 1) : tier % 2 === 1 ? currency("gold", 5_000) : currency("cheesecake", 40);
+  const extra = SEASON_PAID_EXTRA[tier];
+  return { threshold: tier * SEASON_TIER_POINTS, free: [free], rewards: [currency("gems", 100), ...(extra ? [extra] : [])] };
+});
+
+export const SEASON_PASS: ProgressPassDefinition = { id: "season", productId: "premium-season-pass", metric: "seasonPoints", milestones: seasonMilestones(), seasonal: true };
+
 export const PROGRESS_PASSES: readonly ProgressPassDefinition[] = [
+  // 시즌 패스는 맨 앞이다 — 다 받아도 다음 시즌에 다시 사는 유일한 길이라 창을 열면 먼저 선다.
+  SEASON_PASS,
   {
     // 스토리 클리어 수가 곧 관문 순서다(본편이 한 줄로 이어진다) — 화면은 문턱을 「1-1 클리어」처럼 관문 이름으로 읽는다.
     id: "story", productId: "premium-story-pass", metric: "storyClears",

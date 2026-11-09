@@ -482,4 +482,5 @@ export const MISC_KO = {
   "profile.edit.frameGift": "한정",
   "profile.unlock.gift.firstPayment": "첫 결제 선물로 받습니다",
   "profile.unlock.gift.seasonPass": "시즌 패스 30단계 보상",
+  "trade.tag.season": "시즌",
 } as const;

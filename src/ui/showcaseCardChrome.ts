@@ -55,7 +55,7 @@ export const SHOWCASE_CARD = {
  * 놓치면 안 되는 것인지 보인다.
  */
 export const SHOWCASE_TIER_TONE: Readonly<Record<ProductRefresh, number>> = {
-  once: 0xe0a83e, weekly: 0x7fb4ec, monthly: 0xb48ce0, daily: 0x6fc47f, none: 0xd8b978,
+  once: 0xe0a83e, weekly: 0x7fb4ec, monthly: 0xb48ce0, daily: 0x6fc47f, none: 0xd8b978, season: 0x9fe3ff,
 };
 
 export interface ShowcaseChromeOptions {

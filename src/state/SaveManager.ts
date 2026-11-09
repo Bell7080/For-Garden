@@ -739,6 +739,9 @@ export class SaveManager {
       const valid = new Set(pass?.milestones.map(({ threshold }) => threshold) ?? []);
       if (!pass || !Array.isArray(thresholds) || new Set(thresholds).size !== thresholds.length || thresholds.some((value) => !valid.has(value))) throw new SaveDataError("진행 패스 수령 정보가 올바르지 않습니다.");
     }
+    if (passes.season !== undefined && (!passes.season || typeof passes.season.key !== "string" || !/^S\d+$/.test(passes.season.key) || !Number.isSafeInteger(passes.season.points) || passes.season.points < 0)) {
+      throw new SaveDataError("시즌 패스 진행 정보가 올바르지 않습니다.");
+    }
   }
 
   /** 답변은 보유한 개체의 실제 질문·선택지만, 한 질문에 한 번만 허용한다. 읽은 장은 정해진 유대 레벨만 허용한다. */
@@ -811,7 +814,7 @@ export class SaveManager {
 
 function cloneProgressPasses(passes: SaveData["progressPasses"]): SaveData["progressPasses"] {
   const copy = (table: Record<string, number[]>) => Object.fromEntries(Object.entries(table).map(([id, thresholds]) => [id, [...thresholds]]));
-  return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed) };
+  return { raidRuns: passes.raidRuns, claimed: copy(passes.claimed), freeClaimed: copy(passes.freeClaimed), ...(passes.season ? { season: { ...passes.season } } : {}) };
 }
 
 /** 모양이 깨진 값은 비워 두고 검증이 나머지를 맡는다 — 구 저장은 필드가 통째로 없다. */
@@ -831,7 +834,9 @@ function normalizeProgressPasses(value: unknown, legacyLevelThresholds = false):
         ? (oldLevels.indexOf(threshold) + 1) * 2 : threshold);
       return [id, [...new Set(thresholds)].filter((threshold) => valid.has(threshold))];
     }));
-  return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed) };
+  const season = source.season && typeof source.season === "object" && typeof source.season.key === "string" && /^S\d+$/.test(source.season.key)
+    && Number.isSafeInteger(source.season.points) && source.season.points >= 0 ? { key: source.season.key, points: source.season.points } : undefined;
+  return { raidRuns, claimed: table(source.claimed), freeClaimed: table(source.freeClaimed), ...(season ? { season } : {}) };
 }
 
 function cloneRelicStory(story: SaveData["relicStory"]): SaveData["relicStory"] {

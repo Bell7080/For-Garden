@@ -257,6 +257,8 @@ export interface ProgressPassState {
   claimed: Record<string, number[]>;
   /** 받은 무료 칸. 유료 칸과 따로 센다 — 무료를 먼저 받고 나중에 패스를 열 수 있다. */
   freeClaimed: Record<string, number[]>;
+  /** 이번 시즌 패스의 진행(연구도). 키가 지금 시즌과 다르면 0에서 다시 시작하고 받은 칸도 비운다(`rollSeasonPassState`). */
+  season?: { key: string; points: number };
 }
 
 export function createEmptyProgressPassState(): ProgressPassState {

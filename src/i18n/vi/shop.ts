@@ -135,4 +135,6 @@ export const SHOP_VI = {
   "shop.premium.firstPayment.title": "Quà nạp lần đầu",
   "shop.premium.firstPayment.note": "Nhận kèm lần nạp đầu với bất kỳ gói nào",
   "shop.premium.firstPayment.hint": "Bạn sẽ nhận được khi nạp lần đầu với bất kỳ gói nào.",
+  "shop.purchase.period.season": "Mùa",
+  "shop.premium.pass.metric.seasonPoints": "Điểm nghiên cứu mùa {progress} / {goal}",
 } as const;

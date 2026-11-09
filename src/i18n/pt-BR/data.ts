@@ -6280,4 +6280,6 @@ export default {
   "item.sr-select-ticket.description": "Escolha uma Relíquia SR para trazer. Se já a tiver, receberá 1 de seus Fragmentos.",
   "profileFrame.patron.name": "Insígnia do primeiro patrono",
   "profileFrame.season.name": "Asas da temporada",
+  "product.premium-season-pass.name": "Passe de temporada",
+  "trade.refresh.season": "Temporada",
 };

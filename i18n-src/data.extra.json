@@ -34,5 +34,7 @@
 "item.sr-select-ticket.name": ["SR遗物自选券", "สิทธิ์เลือกเรลิก SR", "Phiếu chọn Di vật SR", "Tiket Pilih Relik SR", "Selector de Reliquia SR", "Seletor de Relíquia SR", "SR-Relikt-Wahlschein", "Выбор SR-реликта"],
 "item.sr-select-ticket.description": ["选择一名SR遗物带回。若选择已拥有的遗物，则改为获得1个该遗物的碎片。", "เลือกเรลิก SR หนึ่งตัวมาอยู่ด้วย หากเลือกตัวที่มีอยู่แล้วจะได้รับเศษของเรลิกนั้น 1 ชิ้นแทน", "Chọn một Di vật SR để đưa về. Nếu chọn Di vật đã có, bạn nhận 1 Mảnh của nó.", "Pilih satu Relik SR untuk dibawa pulang. Jika memilih Relik yang sudah dimiliki, kamu mendapat 1 Serpihannya.", "Elige una Reliquia SR para traer. Si ya la tienes, recibirás 1 de sus Fragmentos.", "Escolha uma Relíquia SR para trazer. Se já a tiver, receberá 1 de seus Fragmentos.", "Wähle ein SR-Relikt aus. Hast du es schon, erhältst du stattdessen 1 seiner Splitter.", "Выберите один SR-реликт. Если он уже есть, вы получите 1 его фрагмент."],
 "profileFrame.patron.name": ["首次赞助之证", "เครื่องหมายผู้สนับสนุนแรก", "Dấu ấn Tài trợ Đầu", "Tanda Pendukung Pertama", "Insignia del primer mecenas", "Insígnia do primeiro patrono", "Zeichen des ersten Förderers", "Знак первого покровителя"],
-"profileFrame.season.name": ["赛季之翼", "ปีกแห่งซีซัน", "Đôi cánh Mùa giải", "Sayap Musim", "Alas de la temporada", "Asas da temporada", "Flügel der Saison", "Крылья сезона"]
+"profileFrame.season.name": ["赛季之翼", "ปีกแห่งซีซัน", "Đôi cánh Mùa giải", "Sayap Musim", "Alas de la temporada", "Asas da temporada", "Flügel der Saison", "Крылья сезона"],
+"product.premium-season-pass.name": ["赛季通行证", "ซีซันพาส", "Season Pass", "Season Pass", "Pase de temporada", "Passe de temporada", "Saisonpass", "Сезонный пропуск"],
+"trade.refresh.season": ["赛季", "ซีซัน", "Mùa", "Musim", "Temporada", "Temporada", "Saison", "Сезон"]
 }

@@ -209,4 +209,7 @@ export const LOBBY_ID = {
   "ancient.trialLine": "{name}: {effect}",
   "event.newbieGrowth.title": "Panduan Tumbuh 7 Hari",
   "event.newbieGrowth.subtitle": "Lima target harian, pilih Relik SR!",
+  "lobby.pass.mission.seasonPoints": "Capai Riset Musim {threshold}",
+  "lobby.pass.mission.lead.seasonPoints": "Kumpulkan poin riset misi untuk naik level",
+  "lobby.pass.season.ends": "Musim berakhir {time}",
 } as const;

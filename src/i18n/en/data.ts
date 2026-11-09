@@ -6305,4 +6305,6 @@ export default {
   "item.sr-select-ticket.description": "Pick one SR Relic to bring home. If you already have it, you get 1 of its Shards instead.",
   "profileFrame.patron.name": "Patron's Token",
   "profileFrame.season.name": "Wings of the Season",
+  "product.premium-season-pass.name": "Season Pass",
+  "trade.refresh.season": "Season",
 };

@@ -58,7 +58,7 @@ export function lobbyEventClockEnd(event: Pick<LobbyEventDef, "endsAt" | "weekly
 }
 
 /** 이벤트 카드가 여는 곳. */
-export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" } | { readonly kind: "delophyHunt" } | { readonly kind: "shuteFishing" };
+export type LobbyEventDestination = { readonly kind: "lab"; readonly bannerId: string } | { readonly kind: "roulette" } | { readonly kind: "chestForge" } | { readonly kind: "delophyHunt" } | { readonly kind: "shuteFishing" } | { readonly kind: "newbieGrowth" };
 
 /** 목록에 서는 순서가 곧 이 배열의 순서다. */
 export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
@@ -129,6 +129,23 @@ export const LOBBY_EVENTS: readonly LobbyEventDef[] = [
     endsAt: "2099-12-31T23:59:59Z",
   },
 ];
+
+/**
+ * 신규 7일 성장 가이드의 카드(`data/newbieGrowth.ts`). 계정마다 기간이 달라 공용 목록(`LOBBY_EVENTS`)에 넣지 않는다 —
+ * 서버가 이 계정에 열려 있다고 답할 때만 이벤트 판이 출석 바로 아래에 세우고, 기간은 그 응답의 끝 시각으로 덮는다.
+ * 홈페이지 이벤트 피드에도 서지 않는다.
+ */
+export const NEWBIE_GROWTH_LOBBY_EVENT: LobbyEventDef = {
+  id: "newbie-growth",
+  titleKey: "event.newbieGrowth.title",
+  subtitleKey: "event.newbieGrowth.subtitle",
+  backdropKey: BACKGROUND.recruitWelcome,
+  backdropFrame: { zoom: 1.1, offsetX: 0, offsetY: 120 },
+  sd: { relicId: "torika", side: "right" },
+  destination: { kind: "newbieGrowth" },
+  startsAt: "2026-01-01T00:00:00Z",
+  endsAt: "2099-12-31T23:59:59Z",
+};
 
 /** ID로 이벤트를 찾는다. 모르는 ID는 `undefined` — 화면이 로비로 되돌아간다. */
 export function findLobbyEvent(id: unknown): LobbyEventDef | undefined {

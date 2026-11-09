@@ -207,4 +207,6 @@ export const LOBBY_TH = {
   "ancient.trialTag.frenzy": "จู่โจมเร็ว",
   "ancient.trialTag.precision": "จุดตาย",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "คู่มือเติบโต 7 วัน",
+  "event.newbieGrowth.subtitle": "5 เป้าหมายทุกวัน เลือกเรลิก SR!",
 } as const;

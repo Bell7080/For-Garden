@@ -51,9 +51,11 @@ export type LobbyEventEntry =
   | { readonly kind: "attendance"; readonly track: AttendanceTrackDto }
   | { readonly kind: "event"; readonly event: LobbyEventDef };
 
-export function lobbyEventEntries(tracks: readonly AttendanceTrackDto[], now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS): LobbyEventEntry[] {
+export function lobbyEventEntries(tracks: readonly AttendanceTrackDto[], now: number, events: readonly LobbyEventDef[] = LOBBY_EVENTS, personal: readonly LobbyEventDef[] = []): LobbyEventEntry[] {
   return [
     ...tracks.map((track) => ({ kind: "attendance", track }) as const),
+    // 계정마다 기간이 다른 카드(신규 성장 가이드)는 서버가 연 것만 넘어오므로 다시 거르지 않고 출석 바로 아래에 세운다.
+    ...personal.map((event) => ({ kind: "event", event }) as const),
     ...activeLobbyEvents(now, events).map((event) => ({ kind: "event", event }) as const),
   ];
 }

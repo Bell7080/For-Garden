@@ -1,3 +1,4 @@
+import { ANCIENT_UNLOCK_STAGE } from "./contentUnlock";
 import { getRelic } from "../data/relics";
 import { getBattleStage, getStageEnemies } from "../data/stages";
 import { ancientStageId, ANCIENT_DIFFICULTY_BANDS, ancientFirstClearReward, ANCIENT_PERCENT_HP_BASIS_CAP_FLOOR, ANCIENT_STRATA_ENEMY_LEVEL, ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
@@ -111,7 +112,7 @@ export function createAncientStrataSkirmish(floor: number, players: readonly Rel
 export function getAncientStrataStage(floor: number): BattleStageDef {
   const d = getAncientStrataFloor(floor);
   return { kind: "battle", id: ancientStageId(floor), name: `B${floor}`, ancientFloor: floor, sub: true,
-    prerequisiteStageIds: [floor === 1 ? "4-10" : ancientStageId(floor-1)],
+    prerequisiteStageIds: [floor === 1 ? ANCIENT_UNLOCK_STAGE : ancientStageId(floor-1)],
     enemies: d.enemies.map((enemy,index)=>({ relicId:enemy.id,level:d.level,breakthrough:0,formationSlot:index as 0|1|2|3|4,
       ...(enemy.encounterRole === "elite" ? { elite:true as const } : {}) })),
     ...(d.encounterKind === "elite" || d.encounterKind === "eliteDuo" ? { elite:true as const } : {}),

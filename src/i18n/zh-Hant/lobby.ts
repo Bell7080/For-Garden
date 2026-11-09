@@ -207,4 +207,6 @@ export const LOBBY_ZH_HANT = {
   "ancient.trialTag.frenzy": "速攻",
   "ancient.trialTag.precision": "要害",
   "ancient.trialLine": "「{name}」{effect}",
+  "event.newbieGrowth.title": "7日成長指南",
+  "event.newbieGrowth.subtitle": "每天五個目標，SR遺物自選！",
 } as const;

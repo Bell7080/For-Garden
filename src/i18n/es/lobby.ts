@@ -207,4 +207,6 @@ export const LOBBY_ES = {
   "ancient.trialTag.frenzy": "Celeridad",
   "ancient.trialTag.precision": "Punto débil",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "Guía de crecimiento de 7 días",
+  "event.newbieGrowth.subtitle": "¡Cinco metas al día, elige una Reliquia SR!",
 } as const;

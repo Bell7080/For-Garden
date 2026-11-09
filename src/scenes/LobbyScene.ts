@@ -1,5 +1,6 @@
 import { audioManager } from "../managers/AudioManager";
 import { openRoulettePopup } from "../ui/RoulettePopup";
+import { openNewbieGrowthPopup } from "../ui/NewbieGrowthPopup";
 import { openChestForgePopup } from "../ui/ChestForgePopup";
 import { openDelophyHuntPopup } from "../ui/DelophyHuntPopup";
 import { openShuteFishingPopup } from "../ui/ShuteFishingPopup";
@@ -608,6 +609,7 @@ export class LobbyScene extends Phaser.Scene {
         if (event.destination?.kind === "roulette") { void openRoulettePopup(this, this.popupLayer!, onChanged).catch(() => undefined); return; }
         if (event.destination?.kind === "chestForge") { void openChestForgePopup(this, this.popupLayer!, onChanged).catch((error) => logError("chestForge.open", "보물상자 열기 실패", error)); return; }
         if (event.destination?.kind === "delophyHunt") { void openDelophyHuntPopup(this, this.popupLayer!, onChanged).catch((error) => logError("delophyHunt.open", "델로피의 보물 찾기 열기 실패", error)); return; }
+        if (event.destination?.kind === "newbieGrowth") { void openNewbieGrowthPopup(this, this.popupLayer!, onChanged).catch((error) => logError("newbieGrowth.open", "성장 가이드 열기 실패", error)); return; }
         if (event.destination?.kind === "shuteFishing") { void openShuteFishingPopup(this, this.popupLayer!, onChanged).catch((error) => logError("shuteFishing.open", "슈테의 리듬 낚시 열기 실패", error)); return; }
         if (event.destination?.kind === "lab") startScene(this, "lab", { bannerId: event.destination.bannerId });
         else startScene(this, "event", { eventId: event.id });
@@ -737,7 +739,7 @@ export class LobbyScene extends Phaser.Scene {
           content: "expedition", y: SORTIE_ENTRY_SPOT.expedition.y, width: 800, height: 230, status: this.expeditionStatus(status), sdSide: "right", sd: PONTOS_SD_ASSET,
           onClick: () => { close(); startScene(this, "expedition"); },
         },
-        // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 4-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
+        // 고대 지층은 맨 아래 전체 폭 칸이다. 쉬움 3-10 클리어로 열리고 실제 입장은 순차 해금과 서버 검증을 거친다.
         {
           content: "ancient", y: SORTIE_ENTRY_SPOT.ancient.y, width: 800, height: 200, label: t("lobby.sortie.ancient"), status: t("lobby.sortie.ancient.status"), artKey: "content-ancient-entry",
           accentColor: EXCHANGE_BLUE, accentTextColor: COLOR.exchangeText, sd: battleAssetFor("amo"), sdScale: 0.9,

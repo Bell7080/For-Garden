@@ -803,7 +803,7 @@ export class SaveManager {
       chestForge: { ...data.chestForge },
       delophyHunt: structuredClone(data.delophyHunt),
       shuteFishing: structuredClone(data.shuteFishing),
-      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed } },
+      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...(data.achievements.growth ? { growth: [...data.achievements.growth] } : {}) },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...(data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {}) },
     };
   }

@@ -620,5 +620,7 @@
 "Escave casas para subir de nível",
 "Grabe Felder aus, um aufzusteigen",
 "Раскапывайте клетки для повышения уровня"
-]
+],
+  "event.newbieGrowth.title": ["7日成长指南", "คู่มือเติบโต 7 วัน", "Hướng dẫn phát triển 7 ngày", "Panduan Tumbuh 7 Hari", "Guía de crecimiento de 7 días", "Guia de crescimento de 7 dias", "7-Tage-Wachstumsguide", "7-дневный гид по развитию"],
+  "event.newbieGrowth.subtitle": ["每天五个目标，SR遗物自选！", "5 เป้าหมายทุกวัน เลือกเรลิก SR!", "Năm mục tiêu mỗi ngày, chọn Di vật SR!", "Lima target harian, pilih Relik SR!", "¡Cinco metas al día, elige una Reliquia SR!", "Cinco metas por dia, escolha uma Relíquia SR!", "Fünf Ziele am Tag, wähle ein SR-Relikt!", "Пять целей в день — выбор SR-реликта!"]
 }

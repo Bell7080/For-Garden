@@ -207,4 +207,6 @@ export const LOBBY_ZH_HANS = {
   "ancient.trialTag.frenzy": "速攻",
   "ancient.trialTag.precision": "要害",
   "ancient.trialLine": "「{name}」{effect}",
+  "event.newbieGrowth.title": "7日成长指南",
+  "event.newbieGrowth.subtitle": "每天五个目标，SR遗物自选！",
 } as const;

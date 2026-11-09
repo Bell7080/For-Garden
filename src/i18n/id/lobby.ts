@@ -207,4 +207,6 @@ export const LOBBY_ID = {
   "ancient.trialTag.frenzy": "Serbuan Kilat",
   "ancient.trialTag.precision": "Titik Lemah",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "Panduan Tumbuh 7 Hari",
+  "event.newbieGrowth.subtitle": "Lima target harian, pilih Relik SR!",
 } as const;

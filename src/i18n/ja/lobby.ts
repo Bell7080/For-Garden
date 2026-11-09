@@ -212,4 +212,6 @@ export const LOBBY_JA = {
   "ancient.trialTag.frenzy": "速攻",
   "ancient.trialTag.precision": "急所",
   "ancient.trialLine": "「{name}」 {effect}",
+  "event.newbieGrowth.title": "7日間成長ガイド",
+  "event.newbieGrowth.subtitle": "毎日5つの目標、SRレリック選択券！",
 } as const;

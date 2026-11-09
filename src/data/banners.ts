@@ -17,7 +17,7 @@ import { BACKGROUND } from "../ui/backgroundAssets";
 export const LIMITED_RELIC_IDS: ReadonlySet<string> = new Set(["dian"]);
 
 /** 정적 렐릭 희귀도를 기준으로 구성해 등급 결정 후 다른 등급이 섞이지 않게 한다. 한정 개체는 뺀다. */
-const STANDARD_POOLS = Object.fromEntries(
+export const STANDARD_POOLS = Object.fromEntries(
   (["R", "SR", "SSR"] satisfies RelicRarity[]).map((rarity) => [
     rarity,
     PLAYABLE_RELICS.filter((relic) => relic.rarity === rarity && !LIMITED_RELIC_IDS.has(relic.id)).map((relic) => relic.id),

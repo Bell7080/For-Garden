@@ -101,9 +101,11 @@ import type { AnswerRelicQuestionRequest, AnswerRelicQuestionResponse, ClaimReli
 import { EVENTS, findEventByProductId, findEventByStageId } from "../data/events";
 import type { EventDefinition } from "../data/events/types";
 import type { EnterEventStageResponse, EventListResponse, RegularEventDto, RegularEventResponse } from "./contracts";
-import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse } from "./contracts";
+import type { AchievementListResponse, AchievementSeriesDto, ClaimAchievementRewardsResponse, ClaimNewbieGrowthRequest, ClaimNewbieGrowthResponse, NewbieGrowthResponse } from "./contracts";
 import { achievementFacts, claimAchievements, claimableAchievementCount, claimableTierCount, normalizeAchievementState } from "../core/achievements";
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
+import { NEWBIE_GROWTH_GOALS, NEWBIE_GROWTH_MILESTONES } from "../data/newbieGrowth";
+import { claimNewbieGrowth as calculateNewbieGrowthClaim, newbieGrowthClaimableCount, newbieGrowthClaimedGoalCount, newbieGrowthFacts, newbieGrowthGoalState, newbieGrowthMilestoneState, newbieGrowthSrChoices, newbieGrowthWindow, type NewbieGrowthFacts } from "../core/newbieGrowth";
 import { assertValidRuneInstance, canEngraveRune, canEnhanceRune, generateRune, runeBatchEnhancementTargets, runePartLabel, RUNE_MAIN_STAT_KEYS, type RuneMainStatKey, type RunePart, engraveRune as applyRuneEngraving, enhanceRune as applyRuneEnhancement, runeEnhancementAttempts, runeEnhancementIncrease, type RuneInstance, type RuneRarity } from "../core/runes";
 import { runeBatchEnhancementGoldCost, runeEnhancementGoldCost, runeSellValue } from "../data/runes";
 import { rotationOffer, rotationRunePart } from "../core/shopRotation";
@@ -1554,7 +1556,9 @@ export class FakeServer implements GameApi {
   async setFavorite(request: SetFavoriteRequest): Promise<RelicMarkResponse> {
     await this.delay();
     if (!this.state.owned.has(request.relicId) || !PLAYABLE_RELICS.some(({ id }) => id === request.relicId)) return { ok: false };
-    this.persist({ ...this.state, favorite: request.relicId });
+    // 신규 성장 가이드의 「애착 렐릭 정하기」는 직접 정한 순간을 센다 — 기본 애착은 세지 않는다.
+    const achievements = { ...normalizeAchievementState(this.state.achievements), favoriteChosen: true as const };
+    this.persist({ ...this.state, favorite: request.relicId, achievements });
     this.state.favorite = request.relicId;
     return { ok: true };
   }
@@ -3425,11 +3429,13 @@ export class FakeServer implements GameApi {
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
+    const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
     const roulette = rouletteStatus(this.state.dailyAdRewards, now);
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter(stage => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map(row => this.raidDto(row, now)).filter(row => row.status === "completed" && !row.settled && row.settlement.some(reward => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
 
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
@@ -3519,6 +3525,101 @@ export class FakeServer implements GameApi {
       completedSeriesIds: claim.completedSeriesIds,
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
       granted,
+    };
+  }
+
+  /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
+  private async newbieGuildJoined(): Promise<boolean> {
+    if (this.state.achievements?.guildJoined) return true;
+    try { const { guild } = await this.guildBackend.getGuild(this.guildActor()); return guild !== undefined && guild !== null; } catch { return false; }
+  }
+
+  private newbieGrowthFactsOf(state: Session, guildJoined: boolean): NewbieGrowthFacts {
+    const achievements = normalizeAchievementState(state.achievements);
+    const brokenThrough = PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id) && (state.relicProgress[id]?.breakthrough ?? 0) > 0).length;
+    return newbieGrowthFacts(achievementFacts(state), { ...achievements, ...(guildJoined ? { guildJoined: true as const } : {}) }, brokenThrough);
+  }
+
+  private newbieGrowthDto(state: Session, facts: NewbieGrowthFacts, now: Date): NewbieGrowthResponse {
+    const window = newbieGrowthWindow(this.newbieGrowthStart(state), now);
+    const claimed = new Set(normalizeAchievementState(state.achievements).growth ?? []);
+    return {
+      active: window.active, day: window.day, ...(window.nextDayAt ? { nextDayAt: window.nextDayAt } : {}), endsAt: window.endsAt,
+      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], state: newbieGrowthGoalState(goal, facts, claimed, window.day) })),
+      milestones: NEWBIE_GROWTH_MILESTONES.map((milestone) => ({ id: milestone.id, goals: milestone.goals, reward: { ...milestone.reward }, state: newbieGrowthMilestoneState(milestone, claimed) })),
+      claimedGoals: newbieGrowthClaimedGoalCount(claimed),
+      claimableCount: window.active ? newbieGrowthClaimableCount(facts, claimed, window.day) : 0,
+      srChoices: [...newbieGrowthSrChoices()],
+    };
+  }
+
+  /** 7일 가이드가 시작된 시각 — 계정 카드의 연구 개시일. QA 빌드의 개발 서버는 기한과 상관없이 오늘 시작한 것처럼 연다. */
+  private newbieGrowthStart(state: Session): string | undefined {
+    if (this.allEventsOpen()) return new Date(this.now().getTime() - 6 * 86_400_000).toISOString();
+    return state.playerCard.createdAt || undefined;
+  }
+
+  /** 신규 7일 성장 가이드 — 목표 값·상태와 받을 수를 서버가 판정한다. */
+  async getNewbieGrowth(): Promise<NewbieGrowthResponse> {
+    await this.delay();
+    return this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), this.now());
+  }
+
+  /**
+   * 닿은 목표와 그로 열린 마디를 받는다. 젬·화석·호박석은 상한까지만 넣고, SR 선택권은 고른 렐릭을 처음 만났으면 그 렐릭을,
+   * 이미 가졌으면 그 렐릭 파편 한 장을 준다(돌파를 끝낸 렐릭은 고를 수 없다). 수령 표시·지급·렐릭을 한 번의 persist로 확정한다.
+   */
+  async claimNewbieGrowth(request: ClaimNewbieGrowthRequest): Promise<ClaimNewbieGrowthResponse> {
+    await this.delay();
+    const now = this.now();
+    const window = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
+    if (!window.active) throw new GameApiError("EVENT_NOT_ACTIVE", "신규 성장 가이드 기간이 끝났습니다.");
+    for (const id of request.goalIds ?? []) if (!NEWBIE_GROWTH_GOALS.some((goal) => goal.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "존재하지 않는 목표입니다.");
+    const srRelicId = request.srRelicId;
+    if (srRelicId !== undefined) {
+      if (!newbieGrowthSrChoices().includes(srRelicId)) throw new GameApiError("RELIC_NOT_FOUND", "고를 수 없는 렐릭입니다.");
+      const progress = this.state.relicProgress[srRelicId];
+      if (this.state.owned.has(srRelicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "이미 돌파를 끝마친 렐릭입니다.");
+    }
+    const guildJoined = await this.newbieGuildJoined();
+    const facts = this.newbieGrowthFactsOf(this.state, guildJoined);
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const claimed = new Set(achievements.growth ?? []);
+    const claim = calculateNewbieGrowthClaim(facts, claimed, window.day, { goalIds: request.goalIds, includeSrSelect: srRelicId !== undefined });
+    if (claim.goalIds.length === 0 && claim.milestoneIds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "받을 보상이 없습니다.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency] - nextWallet[currency]));
+      nextWallet[currency] += applied;
+      return { currency, amount: applied };
+    });
+    const nextOwned = new Set(this.state.owned);
+    const nextProgress = { ...this.state.relicProgress };
+    const nextFragments = { ...this.state.relicFragments };
+    let nextRelicStory = this.state.relicStory;
+    const newRelicIds: string[] = [];
+    let srFragmentRelicId: string | undefined;
+    if (claim.srSelect && srRelicId) {
+      if (nextOwned.has(srRelicId)) {
+        nextFragments[srRelicId] = (nextFragments[srRelicId] ?? 0) + 1;
+        srFragmentRelicId = srRelicId;
+      } else {
+        nextOwned.add(srRelicId);
+        newRelicIds.push(srRelicId);
+        if (!nextProgress[srRelicId]) nextProgress[srRelicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+        if (!(srRelicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [srRelicId]: now.toISOString() } };
+      }
+    }
+    const nextAchievements = { ...achievements, growth: [...claimed, ...claim.goalIds, ...claim.milestoneIds], ...(guildJoined ? { guildJoined: true as const } : {}) };
+    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, owned: nextOwned, relicProgress: nextProgress, relicFragments: nextFragments, relicStory: nextRelicStory };
+    redeemDeferredStoryBond(candidate, newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
+    this.state.wallet = nextWallet; this.state.achievements = candidate.achievements; this.state.owned = nextOwned; this.state.relicProgress = nextProgress;
+    this.state.relicFragments = nextFragments; this.state.relicStory = nextRelicStory;
+    return {
+      ...this.snapshot(), growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now), granted, newRelicIds,
+      ...(srFragmentRelicId ? { srFragmentRelicId } : {}),
     };
   }
 

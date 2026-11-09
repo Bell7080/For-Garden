@@ -9,7 +9,8 @@ import { lobbyEventEntryId, prioritizeLobbyEvents } from "./lobbyEventModel";
 import Phaser from "phaser";
 import { t } from "../i18n";
 import type { AttendanceTrackDto } from "../api/contracts";
-import { LOBBY_EVENTS, type LobbyEventDef } from "../data/lobbyEvents";
+import { LOBBY_EVENTS, NEWBIE_GROWTH_LOBBY_EVENT, type LobbyEventDef } from "../data/lobbyEvents";
+import type { NewbieGrowthResponse } from "../api/contracts";
 import { ATTENDANCE_TRACK_IDS } from "../core/attendance";
 import { attendanceManager } from "../managers/AttendanceManager";
 import { POPUP_TITLE_SIZE, PopupLayer } from "./PopupLayer";
@@ -49,6 +50,11 @@ async function playableRegularEvents(): Promise<string[]> {
   ];
 }
 
+/** 이 계정에 열린 신규 성장 가이드 카드 — 서버가 열려 있다고 답할 때만 서고, 카드 시계는 그 응답의 끝 시각을 센다. */
+function newbieGrowthEvents(growth: NewbieGrowthResponse | undefined): LobbyEventDef[] {
+  return growth?.active ? [{ ...NEWBIE_GROWTH_LOBBY_EVENT, endsAt: growth.endsAt }] : [];
+}
+
 export class LobbyEventPopup {
   private closeAction?: () => void;
   private opening = false;
@@ -59,22 +65,23 @@ export class LobbyEventPopup {
     if (this.closeAction || this.opening) return;
     this.opening = true;
     // 출석은 서버가 오늘에 맞춰 넘긴 줄만 선다. 조회가 실패하면 기간 이벤트만 세운다.
-    void Promise.all([attendanceManager.status().then(({ tracks }) => tracks, () => [] as AttendanceTrackDto[]), gameApi.getRouletteStatus().catch(() => undefined), playableRegularEvents()]).then(([tracks, roulette, playable]) => {
+    void Promise.all([attendanceManager.status().then(({ tracks }) => tracks, () => [] as AttendanceTrackDto[]), gameApi.getRouletteStatus().catch(() => undefined), playableRegularEvents(), gameApi.getNewbieGrowth().catch(() => undefined)]).then(([tracks, roulette, playable, growth]) => {
       this.opening = false;
       if (!this.scene.sys.isActive()) return;
-      this.build(tracks, roulette, playable);
+      this.build(tracks, roulette, playable, growth);
     });
   }
 
-  private build(tracks: readonly AttendanceTrackDto[], roulette?: RouletteStatus, playable: readonly string[] = []): void {
+  private build(tracks: readonly AttendanceTrackDto[], roulette?: RouletteStatus, playable: readonly string[] = [], growth?: NewbieGrowthResponse): void {
     const now = Date.now();
-    let entries = lobbyEventEntries(tracks, now);
+    let entries = lobbyEventEntries(tracks, now, LOBBY_EVENTS, newbieGrowthEvents(growth));
     let actionable = new Set(tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
     if (roulette?.active && (roulette.remaining > 0 || roulette.bonusAvailable)) actionable.add(ROULETTE.id);
     // 코인이 한 판 값만큼 모인 정규 이벤트도 점이 서고 위로 올라온다.
     for (const id of playable) actionable.add(id);
+    if (growth?.active && growth.claimableCount > 0) actionable.add(NEWBIE_GROWTH_LOBBY_EVENT.id);
     entries = prioritizeLobbyEvents(entries, actionable);
-    const layout = lobbyEventListLayout(entries.length, ATTENDANCE_TRACK_IDS.length + LOBBY_EVENTS.length);
+    const layout = lobbyEventListLayout(entries.length, ATTENDANCE_TRACK_IDS.length + LOBBY_EVENTS.length + newbieGrowthEvents(growth).length);
     this.popups.open({
       width: layout.width, height: layout.height, title: t("event.title"), titleSize: POPUP_TITLE_SIZE.workboard,
       dim: true, closeOnBackdrop: true, hideCloseButton: true, instant: this.options.instant,
@@ -91,11 +98,12 @@ export class LobbyEventPopup {
         if (refreshing || !body.active) return;
         refreshing = true;
         try {
-          const [attendance, roulette, playable] = await Promise.all([attendanceManager.status(), gameApi.getRouletteStatus(), playableRegularEvents()]);
+          const [attendance, roulette, playable, growth] = await Promise.all([attendanceManager.status(), gameApi.getRouletteStatus(), playableRegularEvents(), gameApi.getNewbieGrowth().catch(() => undefined)]);
           if (!body.active) return;
           const ready = new Set(attendance.tracks.filter(track => track.claimableToday).map(track => `attendance:${track.id}`));
           if (roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) ready.add(ROULETTE.id);
           for (const id of playable) ready.add(id);
+          if (growth?.active && growth.claimableCount > 0) ready.add(NEWBIE_GROWTH_LOBBY_EVENT.id);
           const completed = [...actionable].some(id => !ready.has(id));
           actionable = ready;
           const sorted = prioritizeLobbyEvents(entries, ready);

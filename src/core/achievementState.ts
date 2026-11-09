@@ -1,6 +1,7 @@
 import { ACHIEVEMENT_SERIES } from "../data/achievements";
 import { LIFETIME_COUNT_CAP } from "./missions";
 import { ANCIENT_STRATA_MAX_FLOOR } from "../data/ancientStrataDifficulty";
+import { NEWBIE_GROWTH_CLAIM_IDS } from "../data/newbieGrowth";
 
 /*
  * 업적 저장 모양만 따로 둔다 — `state/session.ts`가 읽는 파일이라 렐릭·스테이지 표처럼 무거운 데이터를
@@ -17,6 +18,12 @@ export interface AchievementState {
   goldPeak: number;
   /** 월간 지층 초기화와 무관하게 유지하는 최고 도달 기록. 구 저장은 현재 층으로 보충한다. */
   ancientFloorPeak?: number;
+  /** 신규 7일 성장 가이드에서 받은 목표·마디 ID(`data/newbieGrowth.ts`). 선택 필드다. */
+  growth?: string[];
+  /** 애착 렐릭을 직접 정한 적이 있다 — 기본 애착은 세지 않으므로 `setFavorite`이 처음 바꿀 때 켠다. */
+  favoriteChosen?: true;
+  /** 길드에 든 적이 있다 — 탈퇴해도 목표가 되돌아가지 않게 서버가 처음 본 순간 굳힌다. */
+  guildJoined?: true;
 }
 
 export function createEmptyAchievementState(): AchievementState { return { claimed: {}, goldPeak: 0 }; }
@@ -33,7 +40,11 @@ export function normalizeAchievementState(value: unknown): AchievementState {
     if (count > 0) claimed[series.id] = count;
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
-  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}) };
+  const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id): id is string => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
+  return {
+    claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...(ancientFloorPeak > 0 ? { ancientFloorPeak } : {}),
+    ...(growth.length > 0 ? { growth } : {}), ...(source.favoriteChosen === true ? { favoriteChosen: true as const } : {}), ...(source.guildJoined === true ? { guildJoined: true as const } : {}),
+  };
 }
 
 export function isValidAchievementState(value: unknown): value is AchievementState {
@@ -41,6 +52,9 @@ export function isValidAchievementState(value: unknown): value is AchievementSta
   const state = value as AchievementState;
   if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
   if (state.ancientFloorPeak !== undefined && (!Number.isInteger(state.ancientFloorPeak) || state.ancientFloorPeak < 0 || state.ancientFloorPeak > ANCIENT_STRATA_MAX_FLOOR)) return false;
+  if (state.growth !== undefined && (!Array.isArray(state.growth) || state.growth.some((id) => typeof id !== "string" || !NEWBIE_GROWTH_CLAIM_IDS.has(id)))) return false;
+  if (state.favoriteChosen !== undefined && state.favoriteChosen !== true) return false;
+  if (state.guildJoined !== undefined && state.guildJoined !== true) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);

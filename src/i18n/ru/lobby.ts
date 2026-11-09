@@ -207,4 +207,6 @@ export const LOBBY_RU = {
   "ancient.trialTag.frenzy": "Шквал",
   "ancient.trialTag.precision": "Уязвимость",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "7-дневный гид по развитию",
+  "event.newbieGrowth.subtitle": "Пять целей в день — выбор SR-реликта!",
 } as const;

@@ -9,6 +9,8 @@ import type { AcquisitionResult, GachaPityState, QuantityRewardKind, Wallet } fr
 import type { RelicProgress, RelicSkinId, Stats } from "../core/types";
 import type { MissionPeriod, MissionReward } from "../core/missions";
 import type { AchievementCategory, AchievementMetric } from "../data/achievements";
+import type { NewbieGrowthMetric, NewbieGrowthMilestoneReward } from "../data/newbieGrowth";
+import type { NewbieGrowthGoalState, NewbieGrowthMilestoneState } from "../core/newbieGrowth";
 import type { PassBenefitDefinition, LootCategory, PremiumCategory, ProductAcquisition, ProductGrant, ProductRefresh, ProductStorefront, ShopCategory, ShopProductIconKey } from "../data/products";
 /** storefront와 상점 카테고리는 클라이언트·서버가 함께 쓰는 공용 계약으로 다시 공개한다. */
 export type { PremiumCategory, ProductStorefront, ShopCategory } from "../data/products";
@@ -648,6 +650,37 @@ export interface AchievementSeriesDto {
 export interface AchievementListResponse { series: AchievementSeriesDto[]; claimableCount: number; completedTiers: number; totalTiers: number; earnedModifierCount: number; totalModifierCount: number; }
 /** 업적 수령 뒤의 상태. 받은 단계·끝난 업적·열린 수식어와 실제 지급분(상한에 깎인 뒤)을 싣는다. */
 export interface ClaimAchievementRewardsResponse extends PlayerStateDto { claimedTiers: Record<string, number[]>; completedSeriesIds: string[]; newModifierIds: string[]; granted: MissionReward[]; }
+/** 신규 7일 성장 가이드 — 목표 하나(`data/newbieGrowth.ts`). 값과 판정은 서버가 낸다. */
+export interface NewbieGrowthGoalDto { id: string; day: number; metric: NewbieGrowthMetric; target: number; value: number; state: NewbieGrowthGoalState }
+export interface NewbieGrowthMilestoneDto { id: string; goals: number; reward: NewbieGrowthMilestoneReward; state: NewbieGrowthMilestoneState }
+export interface NewbieGrowthResponse {
+  /** 계정 생성부터 14일 동안만 참이다. */
+  active: boolean;
+  /** 지금 열린 마지막 날(1~7). */
+  day: number;
+  nextDayAt?: string;
+  endsAt: string;
+  goals: NewbieGrowthGoalDto[];
+  milestones: NewbieGrowthMilestoneDto[];
+  claimedGoals: number;
+  claimableCount: number;
+  /** SR 선택권으로 고를 수 있는 렐릭. */
+  srChoices: string[];
+}
+export interface ClaimNewbieGrowthRequest {
+  /** 생략하면 닿은 목표를 모두 받는다. 빈 배열이면 목표는 받지 않는다(마디만). */
+  goalIds?: string[];
+  /** SR 선택권 마디를 받을 때 고른 렐릭. */
+  srRelicId?: string;
+}
+export interface ClaimNewbieGrowthResponse extends PlayerStateDto {
+  growth: NewbieGrowthResponse;
+  granted: MissionReward[];
+  /** SR 선택권으로 처음 만난 렐릭 — 화면이 새 캐릭터 연출을 돈다. */
+  newRelicIds: string[];
+  /** SR 선택권으로 이미 가진 렐릭을 골랐으면 그 렐릭 파편 한 장이 들어간다. */
+  srFragmentRelicId?: string;
+}
 
 /** 상품 목록은 정적 정의에 서버가 계산한 현재 구매 가능 횟수를 결합한다. */
 export interface ProductDto { id: string; storefront: ProductStorefront; category: ShopCategory; lootCategory?: LootCategory; premiumCategory?: PremiumCategory; iconKey: ShopProductIconKey; name: string; description: string; acquisition: ProductAcquisition; grants: readonly ProductGrant[]; defaultQuantity: number; passBenefit?: PassBenefitDefinition; purchaseLimit: number; refresh: ProductRefresh; remaining: number; purchasable: boolean; disabledReason?: string; firstPurchaseBonus?: readonly ProductGrant[]; /** 서버가 구매 기록에서 판정한 값 — 아직 첫 구매 보너스를 받지 않았는가. */ firstBonusAvailable?: boolean; /** 룬 상품이 이 기간에 내놓는 룬의 자리. 서버가 로테이션 칸에서 정해 내려 주며, 사는 쪽은 고르지 않는다. */ runePart?: RunePart; /** 활성 구독이면 만료 시각(null은 영구)과 오늘 몫 수령 여부. */ subscription?: { expiresAt: string | null; dailyBonusClaimed: boolean }; /** 노출이 끝나는 시각 — 한정 상품의 남은 시간이 읽는다. */ visibleUntil?: string; }
@@ -1326,6 +1359,10 @@ export interface GameApi extends AsyncArenaProfileApi {
   getAchievements(): Promise<AchievementListResponse>;
   /** ID를 생략하면 닿은 모든 업적 단계를 한 저장 처리로 받는다. 마지막 단계를 받은 업적은 수식어도 연다. */
   claimAchievementRewards(seriesIds?: string[]): Promise<ClaimAchievementRewardsResponse>;
+  /** 신규 7일 성장 가이드의 목표·마디와 받을 수를 조회한다. */
+  getNewbieGrowth(): Promise<NewbieGrowthResponse>;
+  /** 닿은 목표와 그로 열린 마디를 한 저장 처리로 받는다. SR 선택권은 `srRelicId`가 함께 와야 받는다. */
+  claimNewbieGrowth(request: ClaimNewbieGrowthRequest): Promise<ClaimNewbieGrowthResponse>;
   /** 서버 시각과 구매 이력을 반영한 공용 카탈로그를 조회한다. */
   getProducts(storefront: ProductStorefront): Promise<ProductListResponse>;
   /** 인게임 재화 상품만 구매한다. 유료 상품은 플랫폼 결제/영수증 검증 경계를 사용해야 한다. */

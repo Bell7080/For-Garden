@@ -207,4 +207,6 @@ export const LOBBY_VI = {
   "ancient.trialTag.frenzy": "Tốc Công",
   "ancient.trialTag.precision": "Tử Huyệt",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "Hướng dẫn phát triển 7 ngày",
+  "event.newbieGrowth.subtitle": "Năm mục tiêu mỗi ngày, chọn Di vật SR!",
 } as const;

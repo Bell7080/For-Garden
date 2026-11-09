@@ -11,7 +11,7 @@ export const SERVER_GAME_METHODS = [
   "claimInteractionDispatch", "claimMailRewards", "claimMissionRewards", "claimPassDailyBonus", "claimProgressPass", "claimRelicChapter",
   "claimRelicQuestionReward", "chooseExpeditionAugment", "completeBounty", "completeCakeOperation", "completeExpeditionNode", "completeExpeditionRest", "completeObservation", "completeStage", "completeStory", "completeTutorialStep", "digStrataTile",
   "engraveRune", "enhanceRune", "enhanceRuneAll", "enterBounty", "enterCakeOperation", "enterDailyRestoration", "enterDuel", "enterEventStage", "enterRaid",
-  "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
+  "enterStage", "equipProfileModifiers", "equipRelicSkin", "equipRune", "feedRelic", "fulfillPlatformPurchase", "getAchievements", "getNewbieGrowth", "claimNewbieGrowth", "getAdOperationsConfig", "getAsyncArenaServerState", "getAttendance",
   "getAncientRanking", "getBountyStatus", "getDuelRanking", "getDuelStatus", "getEvents", "getRegularEvent", "getExpeditionLeaderboard", "getExpeditionWeeklyBest",
   "getIdleExcavation", "getInteractionCities", "getInteractionDispatch", "getInventory", "getMails", "getMissions", "getNotificationSignals",
   "getPlayerState", "getProducts", "getProgressPasses", "getRaids", "getStaminaRechargeStatus", "grantRuneTrait", "harvestExcavation",

@@ -207,4 +207,6 @@ export const LOBBY_DE = {
   "ancient.trialTag.frenzy": "Raserei",
   "ancient.trialTag.precision": "Schwachpunkt",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "7-Tage-Wachstumsguide",
+  "event.newbieGrowth.subtitle": "Fünf Ziele am Tag, wähle ein SR-Relikt!",
 } as const;

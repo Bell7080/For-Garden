@@ -207,4 +207,6 @@ export const LOBBY_EN = {
   "ancient.trialTag.frenzy": "Blitz",
   "ancient.trialTag.precision": "Weak Point",
   "ancient.trialLine": "{name}: {effect}",
+  "event.newbieGrowth.title": "7-Day Growth Guide",
+  "event.newbieGrowth.subtitle": "Five goals a day, pick an SR Relic!",
 } as const;

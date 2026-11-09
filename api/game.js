@@ -5519,7 +5519,9 @@ var LOBBY_KO = {
   "ancient.trialTag.charge": "\uACFC\uCDA9\uC804",
   "ancient.trialTag.frenzy": "\uC18D\uACF5",
   "ancient.trialTag.precision": "\uAE09\uC18C",
-  "ancient.trialLine": "\u300C{name}\u300D {effect}"
+  "ancient.trialLine": "\u300C{name}\u300D {effect}",
+  "event.newbieGrowth.title": "7\uC77C \uC131\uC7A5 \uAC00\uC774\uB4DC",
+  "event.newbieGrowth.subtitle": "\uB9E4\uC77C \uB2E4\uC12F \uBAA9\uD45C, SR \uB810\uB9AD \uC120\uD0DD\uAD8C!"
 };
 
 // src/i18n/ko/common.ts
@@ -6568,7 +6570,9 @@ var PARTY_KO = {
   "party.needExactlyThree": "\uB810\uB9AD 3\uBA85\uC744 \uC120\uD0DD\uD574\uC57C \uC804\uD22C\uB97C \uC2DC\uC791\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
   "party.noDuplicate": "\uAC19\uC740 \uB810\uB9AD\uC744 \uC911\uBCF5 \uD3B8\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
   "party.selected": "\uC120\uD0DD\uD55C \uB810\uB9AD",
-  "party.notOwned": "{name:\uC744} \uBCF4\uC720\uD558\uACE0 \uC788\uC9C0 \uC54A\uC544 \uD3B8\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+  "party.notOwned": "{name:\uC744} \uBCF4\uC720\uD558\uACE0 \uC788\uC9C0 \uC54A\uC544 \uD3B8\uC131\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  "party.preset.default": "\uD3B8\uC131 {index}",
+  "party.preset.rename": "\uD3B8\uC131 \uC774\uB984"
 };
 
 // src/i18n/ko/expeditionReward.ts
@@ -8195,6 +8199,22 @@ var RECOLLECTION_KO = {
   "recollection.summary.stage-2-9-second-chase": "\uACE7\uAC8C \uB09C \uAE38\uC758 \uB05D\uC5D0\uC11C \uCF54\uB9C8\uB294 \uC81C\uAC00 \uBBF8\uB07C\uC600\uC74C\uC744 \uC548\uB2E4.",
   "recollection.summary.stage-3-5-behind-sleeve": "\uC18C\uB9E4 \uB4A4\uC758 \uB208\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uC774\uB984\uC744 \uBAA9\uB85D\uC5D0 \uC801\uB294\uB2E4.",
   "recollection.summary.stage-3-8-apology": "\uBD80\uC11C\uC9C4 \uBCBD \uC55E\uC5D0\uC11C \uC2DC\uB9D0\uC11C\uAC00 \uB610 \uD55C \uC7A5 \uB298\uC5B4\uB09C\uB2E4.",
+  "recollection.summary.stage-2-4-side-pre": "\uAEBC\uC9C4 \uC911\uACC4\uC2E4\uC758 \uBC88\uD638 \uBCBD \uC55E\uC5D0\uC11C \uD1A0\uBE44\uC640 \uB9AC\uD30C\uAC00 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-2-4-side-post": "\uBCBD\uC758 \uC810\uC740 \uC4F8 \uC218 \uC5C6\uAC8C \uB41C \uBC88\uD638, \uC120\uC740 \uC62E\uACA8 \uAC04 \uBC88\uD638\uC600\uB2E4.",
+  "recollection.summary.stage-3-3-side-pre": "\uAE09\uC218\uC6D0 \uC55E\uC5D0\uC11C \uBBF8\uB974\uC640 \uD384\uC2DC\uAC00 \uC5F0\uAD6C\uC6D0\uC744 \uB450\uACE0 \uC810\uC218 \uB0B4\uAE30\uB97C \uAC74\uB2E4.",
+  "recollection.summary.stage-3-3-side-post": "\uB05D\uB0B4 \uBE44\uC5B4 \uC788\uB358 \uC810\uC218\uD310\uC758 \uCCAB \uCE78\uC5D0 \u300C\uB05D\uAE4C\uC9C0 \uB6F0\uC5C8\uC74C\u300D\uC774 \uC801\uD78C\uB2E4.",
+  "recollection.summary.stage-4-3-break-time": "\uBC30\uAD00 \uB4A4\uC5D0\uC11C \uC26C\uB358 \uC0BC\uC778\uC870\uAC00 \uADF8 \uC57D\uC18D\uC774 \uC544\uC9C1 \uC720\uD6A8\uD558\uB0D0\uACE0 \uBB3B\uB294\uB2E4.",
+  "recollection.summary.stage-4-7-side-pre": "\uB124\uC6B0\uB9AC\uAC00 \uC7A5\uBD80\uB97C \uD3BC\uCE58\uACE0, \uCF54\uB9C8\uC758 \uCE78\uC5D0\uB9CC \u300C\uBCF4\uB958\u300D\uAC00 \uC801\uD600 \uC788\uB2E4.",
+  "recollection.summary.stage-4-7-side-post": "\uB5A8\uC5B4\uC9C4 \uC7A5\uBD80 \uADC0\uD241\uC774\uC5D0\uB294 \u300C072 \u2014 \uBCF4\uB958\u300D \uD55C \uC904\uB9CC \uB0A8\uC544 \uC788\uC5C8\uB2E4.",
+  "recollection.summary.stage-5-2-side-pre": "\uC544\uD2B8\uB77C\uAC00 \uB179\uC2A8 \uC5F4\uC1E0\uAFB8\uB7EC\uBBF8\uB97C \uC6C0\uCF1C\uC950\uACE0 \uAE38\uC744 \uB9C9\uB294\uB2E4.",
+  "recollection.summary.stage-5-2-side-post": "\uAFB8\uB7EC\uBBF8 \uB9E8 \uC544\uB798 \uC790\uB9AC\uB9CC \uBE44\uC5B4 \uC788\uC5C8\uB2E4. \uADF8 \uBB38\uC740 \uC0AC\uB78C \uC190\uC73C\uB85C \uC5F0\uB2E4.",
+  "recollection.summary.stage-5-8-youngest-share": "\uB77C\uC790\uAC00 \uAD6D\uC744 \uB098\uB974\uBA70 \uB9C9\uB0B4 \uBAAB\uC744 \uAF2D \uB0A8\uACA8 \uB454\uB2E4.",
+  "recollection.summary.stage-6-4-side-pre": "\uB77C\uC790\uAC00 \uC5B4\uC81C\uC758 \uC11C\uC5F4\uC744 \uB4E4\uC774\uBC00\uBA70 \uC55E\uC744 \uB9C9\uC544\uC120\uB2E4.",
+  "recollection.summary.stage-6-4-side-post": "\uB77C\uC790\uAC00 \uB298 \uC55E\uC5D0 \uC11C\uB294 \uAE4C\uB2ED\uC740 \uC11C\uC5F4\uC774 \uC544\uB2C8\uB77C \uB178\uC544\uC600\uB2E4.",
+  "recollection.summary.stage-6-7-claw-marks": "\uB178\uC544\uAC00 \uC190\uD1B1\uC790\uAD6D \uB09C \uC758\uC790 \uBC11\uC5D0 \uC228\uC5B4 \uB9C8\uAC00\uC0AC\uB97C \uAE30\uB2E4\uB9B0\uB2E4.",
+  "recollection.summary.stage-7-3-mended-sleeve": "\uD14C\uB9AC\uC0AC\uAC00 \uC5F0\uAD6C\uC6D0\uC758 \uC18C\uB9E4\uB97C \uAFF0\uB9E4\uB294 \uB3D9\uC548, \uB204\uAD70\uAC00 \uC55E\uC11C \uAC00\uBA70 \uBCBD\uC758 \uBC88\uD638\uB97C \uC9C0\uC6B4\uB2E4.",
+  "recollection.summary.stage-7-6-side-pre": "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4\uC5D0\uC11C \uB124\uC6B0\uB9AC\uAC00 \uAE30\uB85D\uC744 \uC4F8\uC5B4 \uB2F4\uACE0, \uC544\uD2B8\uB77C\uB294 \uC774\uB984 \uC801\uD78C \uC11C\uB78D \uC55E\uC5D0\uC11C \uBA38\uBB47\uAC70\uB9B0\uB2E4.",
+  "recollection.summary.stage-7-6-side-post": "\uC544\uD2B8\uB77C\uAC00 \uBAB0\uB798 \uBE7C \uB454 \uC774\uB984\uD45C \uD558\uB098\uB97C \uBA54\uB860 \uC55E\uC5D0 \uB0B4\uB824\uB193\uB294\uB2E4.",
   "recollection.summary.stage-3-1-pre": "\uBB34\uB98E \uAFC7\uC740 \uCF54\uB9C8 \uB4A4\uB85C \uB0A0\uAC1C \uB9DD\uD1A0\uAC00 \uB0B4\uB824\uC120\uB2E4.",
   "recollection.summary.stage-3-4-post": "\uB098\uC774\uD2B8 \uAE30\uC5B4\uAC00 \uC870\uBA85\uC744 \uB0B4\uB9AC\uACE0 \uD1F4\uB85C\uB97C \uC5F0\uB2E4.",
   "recollection.summary.stage-3-5-pre": "\uD1B5\uB85C \uD55C\uBCF5\uD310\uC5D0\uC11C \uC544\uD2B8\uB77C\uAC00 \uC18C\uB9E4 \uB4A4\uB85C \uC55E\uC744 \uB9C9\uB294\uB2E4.",
@@ -8374,7 +8394,28 @@ var ACHIEVEMENT_KO = {
   "achievement.objective.nicknameSet": "\uB2C9\uB124\uC784 \uC815\uD558\uAE30",
   "achievement.objective.partySameElement": "\uAC19\uC740 \uC18D\uC131 \uC14B\uC73C\uB85C \uD3B8\uC131",
   "achievement.objective.partySquads": "\uC11C\uB85C \uB2E4\uB978 \uC2A4\uCFFC\uB4DC {value}\uACF3\uC758 \uB810\uB9AD\uC73C\uB85C \uD3B8\uC131",
-  "achievement.objective.partySsr": "SSR \uB810\uB9AD {value}\uBA85\uC73C\uB85C \uD3B8\uC131"
+  "achievement.objective.partySsr": "SSR \uB810\uB9AD {value}\uBA85\uC73C\uB85C \uD3B8\uC131",
+  "newbieGrowth.title": "7\uC77C \uC131\uC7A5 \uAC00\uC774\uB4DC",
+  "newbieGrowth.eyebrow": "\uC2E0\uADDC \uC9C0\uC6D0 \uC774\uBCA4\uD2B8",
+  "newbieGrowth.tagline": "\uB9E4\uC77C \uB2E4\uC12F \uBAA9\uD45C\uB97C \uB530\uB77C\uAC00\uBA74 SR \uB810\uB9AD \uD55C \uBA85!",
+  "newbieGrowth.endsIn": "{time} \uB0A8\uC74C",
+  "newbieGrowth.progress": "\uB2EC\uC131\uD55C \uBAA9\uD45C",
+  "newbieGrowth.day": "{day}\uC77C\uCC28",
+  "newbieGrowth.dayOpensIn": "{time} \uB4A4 \uC5F4\uB9BD\uB2C8\uB2E4",
+  "newbieGrowth.claimAll": "\uBAA8\uB450 \uBC1B\uAE30",
+  "newbieGrowth.rewardTitle": "\uC131\uC7A5 \uAC00\uC774\uB4DC \uBCF4\uC0C1",
+  "newbieGrowth.objective.favoriteChosen": "\uC560\uCC29 \uB810\uB9AD \uC815\uD558\uAE30",
+  "newbieGrowth.objective.guildJoined": "\uAE38\uB4DC \uAC00\uC785\uD558\uAE30",
+  "newbieGrowth.objective.relicsBrokenThrough": "\uB810\uB9AD {value}\uBA85 \uD55C\uACC4 \uB3CC\uD30C",
+  "newbieGrowth.sr.label": "SR \uC120\uD0DD",
+  "newbieGrowth.sr.title": "SR \uB810\uB9AD \uC120\uD0DD\uAD8C",
+  "newbieGrowth.sr.hint": "\uB370\uB824\uC62C \uB810\uB9AD \uD55C \uBA85\uC744 \uACE0\uB974\uC138\uC694. \uC774\uBBF8 \uD568\uAED8\uD55C\uB2E4\uBA74 \uD30C\uD3B8 1\uAC1C\uAC00 \uB429\uB2C8\uB2E4.",
+  "newbieGrowth.sr.owned": "\uBCF4\uC720 \uC911 \xB7 \uD30C\uD3B8",
+  "newbieGrowth.sr.maxed": "\uB3CC\uD30C \uC644\uB8CC",
+  "newbieGrowth.sr.confirm": "\u300C{name}\u300D{name!\uC744} \uB370\uB824\uC62C\uAE4C\uC694?",
+  "newbieGrowth.sr.confirmOwned": "\u300C{name}\u300D\uC758 \uD30C\uD3B8 1\uAC1C\uB97C \uBC1B\uC744\uAE4C\uC694?",
+  "newbieGrowth.sr.confirmLabel": "\uBC1B\uAE30",
+  "newbieGrowth.sr.fragmentDone": "\u300C{name}\u300D\uC758 \uD30C\uD3B8 1\uAC1C\uB97C \uBC1B\uC558\uC2B5\uB2C8\uB2E4."
 };
 
 // src/i18n/ko/support.ts
@@ -11309,9 +11350,9 @@ function conductPressure(burst, effect, attacker, state) {
   if (plan?.kind !== "pressureConduct" || !isFighterAlive(attacker)) return;
   const next = state.fighters.filter((other) => other.side === burst.side && other.id !== burst.id && isFighterAlive(other) && other.pressureLockFor <= 0).reduce((best, other) => !best || distance(burst, other) < distance(burst, best) ? other : best, void 0);
   if (!next) return;
-  const current = next.pressure?.stacks ?? 0;
-  const stacks = Math.min(effect.maxStacks - 1, current + plan.stacks);
-  if (stacks <= current) return;
+  const current2 = next.pressure?.stacks ?? 0;
+  const stacks = Math.min(effect.maxStacks - 1, current2 + plan.stacks);
+  if (stacks <= current2) return;
   next.pressure = { stacks, remaining: effect.seconds, total: effect.seconds, sourceId: attacker.id, effect };
 }
 function catchSalvage(fighter, state, events) {
@@ -13903,17 +13944,17 @@ function triggerCombatAugments(state, owner, trigger, events, hitTarget) {
     }
     if (payload.kind === "teamBuff") {
       if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
-      const current = owner.tailwindFor > 0 ? owner.tailwind : null;
+      const current2 = owner.tailwindFor > 0 ? owner.tailwind : null;
       const incoming = payload.buff;
-      const protectedBuff = current && (current.attackSpeedPercent > incoming.attackSpeedPercent || current.kind === "order" && (incoming.kind !== "order" || current.criticalChancePoints > incoming.criticalChancePoints || current.lifeStealPoints > incoming.lifeStealPoints) || current.kind === "tailwind" && (incoming.kind !== "tailwind" || current.moveSpeedPercent > incoming.moveSpeedPercent || (current.maxHpRegenPercentPerSecond ?? 0) > (incoming.maxHpRegenPercentPerSecond ?? 0)));
+      const protectedBuff = current2 && (current2.attackSpeedPercent > incoming.attackSpeedPercent || current2.kind === "order" && (incoming.kind !== "order" || current2.criticalChancePoints > incoming.criticalChancePoints || current2.lifeStealPoints > incoming.lifeStealPoints) || current2.kind === "tailwind" && (incoming.kind !== "tailwind" || current2.moveSpeedPercent > incoming.moveSpeedPercent || (current2.maxHpRegenPercentPerSecond ?? 0) > (incoming.maxHpRegenPercentPerSecond ?? 0)));
       if (!protectedBuff) applyTeamBuff(owner, { ...incoming, ...incoming.kind === "resonance" ? { sourceId: owner.id } : {} });
       continue;
     }
     if (payload.kind === "regeneration") {
       if (!consumeAugmentTrigger(state, owner, key, effect)) continue;
-      const current = owner.regeneration;
-      if (current && current.percentPerTick > payload.maxHpPercentPerSecond) continue;
-      owner.regeneration = { remaining: current?.percentPerTick === payload.maxHpPercentPerSecond ? Math.max(current.remaining, payload.seconds) : payload.seconds, tickIn: current?.tickIn ?? 1, percentPerTick: payload.maxHpPercentPerSecond };
+      const current2 = owner.regeneration;
+      if (current2 && current2.percentPerTick > payload.maxHpPercentPerSecond) continue;
+      owner.regeneration = { remaining: current2?.percentPerTick === payload.maxHpPercentPerSecond ? Math.max(current2.remaining, payload.seconds) : payload.seconds, tickIn: current2?.tickIn ?? 1, percentPerTick: payload.maxHpPercentPerSecond };
       continue;
     }
     if (payload.kind === "stealth") {
@@ -14131,11 +14172,11 @@ function resolveTarget(state, fighter, reconsider = false) {
       return tauntSource;
     }
   }
-  const current = fighter.targetId ? findFighter(state, fighter.targetId) : void 0;
-  const keepable = current !== void 0 && current.side === wanted && current.id !== fighter.id && isFighterAlive(current) && current.stealthFor <= 0 && !current.hordeEntering;
-  if (keepable && !reconsider) return current;
+  const current2 = fighter.targetId ? findFighter(state, fighter.targetId) : void 0;
+  const keepable = current2 !== void 0 && current2.side === wanted && current2.id !== fighter.id && isFighterAlive(current2) && current2.stealthFor <= 0 && !current2.hordeEntering;
+  if (keepable && !reconsider) return current2;
   if (!frenzied && fighter.def.passive.kind === "tagAndRun") {
-    const chosen2 = nextTagAndRunTarget(fighter, state, current?.id);
+    const chosen2 = nextTagAndRunTarget(fighter, state, current2?.id);
     fighter.targetId = chosen2?.id ?? null;
     return chosen2;
   }
@@ -17902,6 +17943,44 @@ init_define_import_meta_env();
 
 // src/core/ancientStrataBattle.ts
 init_define_import_meta_env();
+
+// src/core/contentUnlock.ts
+init_define_import_meta_env();
+var CONTENT_UNLOCKS = [
+  { id: "excavation", level: 2 },
+  { id: "shop", level: 3 },
+  { id: "trade", level: 3 },
+  { id: "cakeOperation", level: 3 },
+  { id: "bounty", level: 3 },
+  { id: "friends", level: 4 },
+  { id: "interaction", level: 5 },
+  { id: "duel", level: 6 },
+  { id: "guild", level: 7 },
+  { id: "raid", level: 8 },
+  { id: "expedition", level: 9 }
+];
+var ANCIENT_UNLOCK_STAGE = "3-10";
+var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10", ancient: ANCIENT_UNLOCK_STAGE };
+var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
+var CONTENT_LEVEL_GATES_ENABLED = true;
+function contentUnlockLevel(id) {
+  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
+}
+function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
+  if (!gates) return true;
+  const stage = CONTENT_STAGE_UNLOCKS[id];
+  if (stage !== void 0) return clearedStages.has(stage);
+  return playerLevel >= contentUnlockLevel(id);
+}
+function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
+}
+function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
+  if (!gates) return void 0;
+  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
+  return void 0;
+}
 
 // src/data/relics.ts
 init_define_import_meta_env();
@@ -24272,10 +24351,10 @@ function ancientSeasonIndex(season) {
   return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : 0;
 }
 function rollAncientSeason(season, cleared, now) {
-  const current = ancientSeasonKey(now);
-  if (season === current) return null;
-  if (!season) return { season: current, cleared: new Set(cleared) };
-  return { season: current, cleared: new Set([...cleared].filter((id) => !/^ancient:\d+$/.test(id))) };
+  const current2 = ancientSeasonKey(now);
+  if (season === current2) return null;
+  if (!season) return { season: current2, cleared: new Set(cleared) };
+  return { season: current2, cleared: new Set([...cleared].filter((id) => !/^ancient:\d+$/.test(id))) };
 }
 var ANCIENT_RESET_WARNING_MS = 3 * 864e5;
 
@@ -24374,7 +24453,7 @@ function getAncientStrataStage(floor) {
     name: `B${floor}`,
     ancientFloor: floor,
     sub: true,
-    prerequisiteStageIds: [floor === 1 ? "4-10" : ancientStageId(floor - 1)],
+    prerequisiteStageIds: [floor === 1 ? ANCIENT_UNLOCK_STAGE : ancientStageId(floor - 1)],
     enemies: d.enemies.map((enemy, index) => ({
       relicId: enemy.id,
       level: d.level,
@@ -24733,7 +24812,11 @@ var SUB_STORY_STAGES = [
   subStory("2-6", "side-story", "\uAC19\uC740 \uC904", "stage-2-6-same-line"),
   subStory("2-9", "side-story", "\uB450 \uBC88\uC9F8 \uCD94\uACA9", "stage-2-9-second-chase"),
   subStory("3-5", "side-story", "\uC18C\uB9E4 \uB4A4\uC758 \uB9C8\uC74C", "stage-3-5-behind-sleeve"),
-  subStory("3-8", "side-story", "\uC2DC\uB9D0\uC11C", "stage-3-8-apology")
+  subStory("3-8", "side-story", "\uC2DC\uB9D0\uC11C", "stage-3-8-apology"),
+  subStory("4-3", "side-story", "\uBC30\uAD00 \uB4A4 \uC26C\uB294 \uC2DC\uAC04", "stage-4-3-break-time"),
+  subStory("5-8", "side-story", "\uB9C9\uB0B4 \uBAAB", "stage-5-8-youngest-share"),
+  subStory("6-7", "side-story", "\uC190\uD1B1\uC790\uAD6D", "stage-6-7-claw-marks"),
+  subStory("7-3", "side-story", "\uAFF0\uB9E8 \uC18C\uB9E4", "stage-7-3-mended-sleeve")
 ];
 var SUB_GEM_REWARD = 50;
 var SUB_STORY_GEM_REWARDS = Object.fromEntries(
@@ -24755,7 +24838,37 @@ var SIDE_BATTLE_STAGE = {
     firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }]
   }
 };
-var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE];
+function sideBattle(anchor, name, formation) {
+  const [chapter, order] = anchor.split("-").map(Number);
+  const reference = (STORY_RECOMMENDED_LEVELS[(chapter - 1) * 10 + order - 1] ?? 1) - 1;
+  const bonus = chapter === 4 ? CHAPTER_FOUR_RAIDER_LEVEL_BONUS : 0;
+  return {
+    kind: "battle",
+    sub: true,
+    elite: true,
+    id: `${anchor}-side-battle`,
+    name,
+    chapter,
+    chapterOrder: order,
+    prerequisiteStageIds: [anchor],
+    enemies: formation.map(([relicId, slot]) => tieredEnemy(relicId, reference, slot, bonus)),
+    ...storyChapterStatFactor(chapter) !== 1 ? { difficultyStatMultiplier: storyChapterStatFactor(chapter) } : {},
+    rewards: {
+      firstClearCheesecake: 0,
+      repeatClearCheesecake: 0,
+      firstClearBonus: [{ kind: "currency", currency: "gems", amount: SUB_GEM_REWARD }]
+    }
+  };
+}
+var SIDE_BATTLE_STAGES = [
+  sideBattle("2-4", "\uAEBC\uC9C4 \uC911\uACC4\uC2E4", [["toby", 0], ["ripa", 2]]),
+  sideBattle("3-3", "\uAE09\uC218\uC6D0 \uC810\uC218 \uB0B4\uAE30", [["mir", 0], ["pulsi", 2]]),
+  sideBattle("4-7", "\uB124\uC6B0\uB9AC\uC758 \uC7A5\uBD80", [["pulsi", 0], ["neuri", 2]]),
+  sideBattle("5-2", "\uB179\uC2A8 \uC5F4\uC1E0\uAFB8\uB7EC\uBBF8", [["atra", 0], ["mir", 2]]),
+  sideBattle("6-4", "\uC5B4\uC81C\uC758 \uC11C\uC5F4", [["raja", 0], ["pulsi", 2]]),
+  sideBattle("7-6", "\uC5BC\uC5B4\uBD99\uC740 \uC774\uB984\uD45C", [["atra", 0], ["neuri", 2]])
+];
+var SUB_STAGES = [...SUB_STORY_STAGES, SIDE_BATTLE_STAGE, ...SIDE_BATTLE_STAGES];
 var STAGES = [...CHAPTERS.flatMap(({ stages }) => stages), ...SUB_STAGES];
 function storyStages(difficulty) {
   return difficulty === "easy" ? STAGES : EXTRA_STORY_STAGES.filter((stage) => stage.id.startsWith(`${difficulty}:`));
@@ -25181,7 +25294,10 @@ var EVENT_REWARD_BUDGET = {
     /** 쓴 스테미나(= 정규 이벤트 코인) 100당 최선 기대값의 젬 환산 상한. 2026-11-03 응태 결정으로 160 → 290 → 560 — "보물상자 보상은 지금을 100 코인으로, 300은 확실히 3배치"(세 상자 모두 코인 100당 약 488). */
     gemValuePer100Stamina: 560
   },
-  limited: {}
+  limited: {
+    /** 신규 7일 성장 가이드 — 목표 35개 × 젬 50(1,750) + 화석 8 · 호박석 3(연구 한 번 = 젬 300, 3,300) = 5,050. SR 선택권은 이 셈 밖의 마지막 마디다. 2026-11-09 응태 승인. */
+    "newbie-growth": { totalGemValue: 5050 }
+  }
 };
 
 // src/core/chestForge.ts
@@ -25306,9 +25422,9 @@ function chestForgePlayable(status) {
   return status.run !== null || status.coins >= Math.min(...CHEST_BOXES.map((box) => box.entryCost));
 }
 function chestForgeStatus(missions, ledger, now) {
-  const current = normalizeMissions(missions, now);
+  const current2 = normalizeMissions(missions, now);
   const state = rollChestForgeWeek(ledger, now);
-  const earned = current.weeklyStamina ?? 0;
+  const earned = current2.weeklyStamina ?? 0;
   return {
     weekKey: state.weekKey,
     coins: Math.max(0, earned - state.spent),
@@ -25583,9 +25699,9 @@ function delophyHuntPlayable(status) {
   return status.run !== null || status.coins >= Math.min(...HUNT_DIFFICULTIES.map(({ entryCost }) => entryCost));
 }
 function delophyHuntStatus(missions, ledger, now) {
-  const current = normalizeMissions(missions, now);
+  const current2 = normalizeMissions(missions, now);
   const state = rollDelophyHuntWeek(ledger, now);
-  const earned = current.weeklyStamina ?? 0;
+  const earned = current2.weeklyStamina ?? 0;
   return {
     weekKey: state.weekKey,
     coins: Math.max(0, earned - state.spent),
@@ -25815,9 +25931,9 @@ function shuteFishingPlayable(status) {
   return status.run !== null || status.coins >= Math.min(...FISHING_DIFFICULTIES.map(({ entryCost }) => entryCost));
 }
 function shuteFishingStatus(missions, ledger, now) {
-  const current = normalizeMissions(missions, now);
+  const current2 = normalizeMissions(missions, now);
   const state = rollShuteFishingWeek(ledger, now);
-  const earned = current.weeklyStamina ?? 0;
+  const earned = current2.weeklyStamina ?? 0;
   return {
     weekKey: state.weekKey,
     coins: Math.max(0, earned - state.spent),
@@ -26015,6 +26131,29 @@ var ACHIEVEMENT_SERIES = [
   { id: "ssr-party", category: "feat", metric: "partySsr", tiers: tiers([3], [gems(10)]), hidden: true }
 ];
 
+// src/data/newbieGrowth.ts
+init_define_import_meta_env();
+var NEWBIE_GROWTH_DAYS = 7;
+var NEWBIE_GROWTH_WINDOW_DAYS = 14;
+var NEWBIE_GROWTH_GOAL_GEMS = 50;
+var DAY_GOALS = [
+  [["storyStagesCleared", 5], ["favoriteChosen", 1], ["feedings", 3], ["researchPulls", 10], ["harvests", 1]],
+  [["storyStagesCleared", 10], ["maxRelicLevel", 10], ["archaeologySitesCompleted", 1], ["dailyMissionsClaimed", 5], ["staminaSpent", 100]],
+  [["storyStagesCleared", 15], ["maxRelicLevel", 15], ["cakeTiersCleared", 1], ["bountyTiersCleared", 1], ["runesOwned", 3]],
+  [["storyStagesCleared", 20], ["maxRelicLevel", 20], ["playerLevel", 7], ["dispatches", 1], ["observationAnswers", 1]],
+  [["storyStagesCleared", 25], ["guildJoined", 1], ["relicsBrokenThrough", 1], ["enhancedRunes", 1], ["duelWins", 1]],
+  [["maxRelicLevel", 25], ["raidRuns", 1], ["researchPulls", 20], ["staminaSpent", 600], ["archaeologySitesCompleted", 3]],
+  [["storyStagesCleared", 30], ["ancientFloorPeak", 5], ["maxRelicLevel", 30], ["playerLevel", 15], ["researchPulls", 30]]
+];
+var NEWBIE_GROWTH_GOALS = DAY_GOALS.flatMap((goals, index) => goals.map(([metric, target], order) => ({ id: `d${index + 1}-${order + 1}`, day: index + 1, metric, target })));
+var NEWBIE_GROWTH_MILESTONES = [
+  { id: "m10", goals: 10, reward: { kind: "currency", currency: "fossil", amount: 3 } },
+  { id: "m20", goals: 20, reward: { kind: "currency", currency: "amber", amount: 3 } },
+  { id: "m30", goals: 30, reward: { kind: "currency", currency: "fossil", amount: 5 } },
+  { id: "m35", goals: 35, reward: { kind: "srSelect" } }
+];
+var NEWBIE_GROWTH_CLAIM_IDS = /* @__PURE__ */ new Set([...NEWBIE_GROWTH_GOALS.map(({ id }) => id), ...NEWBIE_GROWTH_MILESTONES.map(({ id }) => id)]);
+
 // src/core/achievementState.ts
 function createEmptyAchievementState() {
   return { claimed: {}, goldPeak: 0 };
@@ -26029,13 +26168,24 @@ function normalizeAchievementState(value) {
     if (count2 > 0) claimed[series.id] = count2;
   }
   const ancientFloorPeak = Math.min(ANCIENT_STRATA_MAX_FLOOR, whole(source.ancientFloorPeak));
-  return { claimed, goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)), ...ancientFloorPeak > 0 ? { ancientFloorPeak } : {} };
+  const growth = Array.isArray(source.growth) ? [...new Set(source.growth.filter((id) => typeof id === "string" && NEWBIE_GROWTH_CLAIM_IDS.has(id)))] : [];
+  return {
+    claimed,
+    goldPeak: Math.min(LIFETIME_COUNT_CAP, whole(source.goldPeak)),
+    ...ancientFloorPeak > 0 ? { ancientFloorPeak } : {},
+    ...growth.length > 0 ? { growth } : {},
+    ...source.favoriteChosen === true ? { favoriteChosen: true } : {},
+    ...source.guildJoined === true ? { guildJoined: true } : {}
+  };
 }
 function isValidAchievementState(value) {
   if (!value || typeof value !== "object") return false;
   const state = value;
   if (!Number.isInteger(state.goldPeak) || state.goldPeak < 0) return false;
   if (state.ancientFloorPeak !== void 0 && (!Number.isInteger(state.ancientFloorPeak) || state.ancientFloorPeak < 0 || state.ancientFloorPeak > ANCIENT_STRATA_MAX_FLOOR)) return false;
+  if (state.growth !== void 0 && (!Array.isArray(state.growth) || state.growth.some((id) => typeof id !== "string" || !NEWBIE_GROWTH_CLAIM_IDS.has(id)))) return false;
+  if (state.favoriteChosen !== void 0 && state.favoriteChosen !== true) return false;
+  if (state.guildJoined !== void 0 && state.guildJoined !== true) return false;
   if (!state.claimed || typeof state.claimed !== "object") return false;
   return Object.entries(state.claimed).every(([id, count2]) => {
     const series = ACHIEVEMENT_SERIES.find((candidate) => candidate.id === id);
@@ -26969,8 +27119,8 @@ function staminaMaxForResearchLevel(level) {
 function staminaMaxForPlayer(player) {
   return staminaMaxForResearchLevel(player.playerResearch.level);
 }
-function paidStaminaApplied(current, requested) {
-  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current));
+function paidStaminaApplied(current2, requested) {
+  return Math.max(0, Math.min(requested, STAMINA_HOLD_LIMIT - current2));
 }
 function settleStamina(amount, maximum, updatedAt, serverNow2) {
   const safeMaximum = Math.max(0, Math.floor(maximum));
@@ -27838,6 +27988,44 @@ function highestClearedStage(stages, cleared) {
 // src/core/settings.ts
 init_define_import_meta_env();
 
+// src/core/partyPresets.ts
+init_define_import_meta_env();
+var PARTY_PRESET_COUNT = 5;
+var PARTY_PRESET_SLOTS = 3;
+var PARTY_PRESET_NAME_MAX = 10;
+var ID_MAX = 64;
+var graphemes = (value) => {
+  const Segmenter = Intl.Segmenter;
+  return Segmenter ? Array.from(new Segmenter(void 0, { granularity: "grapheme" }).segment(value), ({ segment }) => segment) : Array.from(value);
+};
+function normalizePresetName(value) {
+  if (typeof value !== "string") return "";
+  const flat = value.replace(/[\r\n\t]+/g, " ").trim();
+  return graphemes(flat).slice(0, PARTY_PRESET_NAME_MAX).join("");
+}
+function emptyPreset() {
+  return { name: "", slots: Array.from({ length: PARTY_PRESET_SLOTS }, () => null) };
+}
+function normalizePartyPresets(value) {
+  const list = Array.isArray(value) ? value : [];
+  return Array.from({ length: PARTY_PRESET_COUNT }, (_unused, index) => {
+    const raw = list[index];
+    if (!raw || typeof raw !== "object") return emptyPreset();
+    const seen = /* @__PURE__ */ new Set();
+    const rawSlots = Array.isArray(raw.slots) ? raw.slots : [];
+    const slots = Array.from({ length: PARTY_PRESET_SLOTS }, (_slot, slot) => {
+      const id = rawSlots[slot];
+      if (typeof id !== "string" || id.length === 0 || id.length > ID_MAX || seen.has(id)) return null;
+      seen.add(id);
+      return id;
+    });
+    return { name: normalizePresetName(raw.name), slots };
+  });
+}
+function normalizePresetIndex(value) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value < PARTY_PRESET_COUNT ? value : 0;
+}
+
 // src/core/autoRepeat.ts
 init_define_import_meta_env();
 var AUTO_REPEAT_MAX_RUNS = 99;
@@ -27876,7 +28064,7 @@ function createDefaultSettings() {
     // 현재 대사는 보이스의 보조 자막이 아니라 필수 진행 정보이므로 숨김 설정을 제공하지 않는다.
     accessibility: { textScale: 1, reduceMotion: false, reduceFlashes: false, colorAssist: false },
     // 궁극기 스킵은 연출 품질이 아니라 전투 조작이며 기본적으로 완전한 시퀀스를 보여 준다.
-    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
+    game: { battleSpeed: 1, autoUltimate: false, formationRoleHint: true, skipUltimatePresentation: false, textSpeed: 1, language: DEFAULT_LANGUAGE, dungeonTiers: { bounty: "", cake: "" }, guildSeen: { war: 0, guard: 0, guardReward: 0, warResult: 0 }, guildLevelSeen: "", guardFormation: [], partyPresets: normalizePartyPresets([]), partyPresetIndex: 0, ancientResetSeen: "", legalConsent: "", runeBag: { showHolder: false, showEquipped: true, trait: "all", bookmarkedOnly: false }, autoRepeat: { ...DEFAULT_AUTO_REPEAT_OPTIONS } },
     // 이름을 적어 두지 않는다 — 저장에 굳으면 언어를 바꿔도 그 줄만 옛 언어로 남는다.
     // 빈 값은 화면이 부를 때 `profile.guest`로 메운다.
     account: { provider: "guest", displayId: "" }
@@ -27931,6 +28119,8 @@ function normalizeSettings(value) {
       guildSeen: { war: seenKey(record(g.guildSeen).war), guard: seenKey(record(g.guildSeen).guard), guardReward: seenKey(record(g.guildSeen).guardReward), warResult: seenKey(record(g.guildSeen).warResult) },
       guildLevelSeen: typeof g.guildLevelSeen === "string" && /^[\w-]{1,64}:\d{1,2}$/.test(g.guildLevelSeen) ? g.guildLevelSeen : "",
       // 보유·중복은 편성 화면이 다시 가린다 — 여기서는 여섯 칸 이하의 짧은 ID·빈 칸인지만 본다.
+      partyPresets: normalizePartyPresets(g.partyPresets),
+      partyPresetIndex: normalizePresetIndex(g.partyPresetIndex),
       guardFormation: Array.isArray(g.guardFormation) ? g.guardFormation.slice(0, 6).map((id) => typeof id === "string" && id.length > 0 && id.length <= 64 ? id : null) : [],
       ancientResetSeen: typeof g.ancientResetSeen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.ancientResetSeen) ? g.ancientResetSeen : "",
       // 동의한 약관·처리방침의 판(`core/legalConsent.ts`의 키). 모르는 모양은 동의하지 않은 것으로 읽는다.
@@ -35038,11 +35228,11 @@ var SaveManager = class {
     const savedFragments = Number(legacy.saveVersion) >= 17 && legacy.relicFragments && typeof legacy.relicFragments === "object" ? legacy.relicFragments : void 0;
     const relicFragments = savedFragments ?? Object.fromEntries(Object.entries(savedProgress).map(([id, progress]) => [id, progress.awakening ?? 0]).filter(([, count2]) => count2 > 0));
     const itemInventory = repairLegacyLotStacks((Array.isArray(legacy.itemInventory) ? legacy.itemInventory : []).filter((stack) => stack?.itemId !== "raid-sigil"));
-    const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current } = legacy;
-    if (legacy.saveVersion === void 0) return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
+    const { ownedHeartGemIds: _oldOwned, runeSlotsByRelicId: _oldSlots, ...current2 } = legacy;
+    if (legacy.saveVersion === void 0) return { ...current2, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, wallet, relicProgress, completedStoryIds, observationRecords, bookmarkedRelicIds, saveVersion: CURRENT_SAVE_VERSION, relicFragments, gachaPityByGroup: normalizedPity, dailyContent, bounty, dailyAdRewards, missions, productPurchases, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
     const supported = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, CURRENT_SAVE_VERSION];
     if (!supported.includes(legacy.saveVersion)) throw new SaveDataError(`\uC9C0\uC6D0\uD558\uC9C0 \uC54A\uB294 \uC800\uC7A5 \uBC84\uC804\uC785\uB2C8\uB2E4: ${String(legacy.saveVersion)}`);
-    return { ...current, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
+    return { ...current2, ownedRelicSkinIds, equippedRelicSkinIds, discoveredInteractionJournalIds, readInteractionJournalIds, interaction, staminaUpdatedAt, earnedProfileModifierIds, equippedProfileModifierIds, playerResearch, playerCard, idleExcavation, archaeology, settings, saveVersion: CURRENT_SAVE_VERSION, wallet, relicProgress, relicFragments, completedStoryIds, observationRecords, bookmarkedRelicIds, dailyContent, bounty, dailyAdRewards, missions, productPurchases, gachaPityByGroup: normalizedPity, runeInventory, itemInventory, expedition, cakeOperation, raid, relicStory, progressPasses, duel: duel2, claimedMailIds, attendance, raidTicketDrops, chestForge, delophyHunt, shuteFishing, achievements, tutorial };
   }
   /** 콘텐츠 ID와 교차 필드 불변식까지 검사해 부분 손상을 조용히 전파하지 않는다. */
   validate(data) {
@@ -35210,7 +35400,7 @@ var SaveManager = class {
       chestForge: { ...data.chestForge },
       delophyHunt: structuredClone(data.delophyHunt),
       shuteFishing: structuredClone(data.shuteFishing),
-      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed } },
+      achievements: { ...data.achievements, claimed: { ...data.achievements.claimed }, ...data.achievements.growth ? { growth: [...data.achievements.growth] } : {} },
       tutorial: { completedStepIds: [...data.tutorial.completedStepIds], ...data.tutorial.seenIntroIds ? { seenIntroIds: [...data.tutorial.seenIntroIds] } : {} }
     };
   }
@@ -35317,43 +35507,6 @@ var WEIGHTS = {
 };
 function combatPower(stats) {
   return Math.round(Object.keys(WEIGHTS).reduce((sum, key) => sum + stats[key] * WEIGHTS[key], 0));
-}
-
-// src/core/contentUnlock.ts
-init_define_import_meta_env();
-var CONTENT_UNLOCKS = [
-  { id: "excavation", level: 2 },
-  { id: "shop", level: 3 },
-  { id: "trade", level: 3 },
-  { id: "cakeOperation", level: 3 },
-  { id: "bounty", level: 3 },
-  { id: "friends", level: 4 },
-  { id: "interaction", level: 5 },
-  { id: "duel", level: 6 },
-  { id: "guild", level: 7 },
-  { id: "raid", level: 8 },
-  { id: "expedition", level: 9 }
-];
-var CONTENT_STAGE_UNLOCKS = { lab: "1-5", archaeology: "1-10", ancient: "4-10" };
-var ALL_GATED_CONTENT = [...CONTENT_UNLOCKS.map((entry) => entry.id), ...Object.keys(CONTENT_STAGE_UNLOCKS)];
-var CONTENT_LEVEL_GATES_ENABLED = true;
-function contentUnlockLevel(id) {
-  return CONTENT_UNLOCKS.find((entry) => entry.id === id)?.level ?? 1;
-}
-function isContentUnlocked(id, playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED, clearedStages = /* @__PURE__ */ new Set()) {
-  if (!gates) return true;
-  const stage = CONTENT_STAGE_UNLOCKS[id];
-  if (stage !== void 0) return clearedStages.has(stage);
-  return playerLevel >= contentUnlockLevel(id);
-}
-function nextContentUnlock(playerLevel, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  return CONTENT_UNLOCKS.find((entry) => entry.level > playerLevel);
-}
-function nextStageUnlock(clearedStages, gates = CONTENT_LEVEL_GATES_ENABLED) {
-  if (!gates) return void 0;
-  for (const [id, stageId] of Object.entries(CONTENT_STAGE_UNLOCKS)) if (!clearedStages.has(stageId)) return { id, stageId };
-  return void 0;
 }
 
 // src/state/playerProfile.ts
@@ -36246,14 +36399,375 @@ var STAGE_1_8_SIDE_POST = {
     { id: "pick", speaker: "\uD1A0\uB9AC\uCE74", body: "\uBB3C\uB860\uC774\uC8E0! \uBC18\uC9DD\uBC18\uC9DD\uD574\uC11C \uC90D\uB294 \uBCF4\uB78C\uC774 \uC788\uB124\uC694.", standing: "torika", act: "hop" }
   ])
 };
+var STAGE_2_4_SIDE_PRE = {
+  id: "stage-2-4-side-pre",
+  startNodeId: "dark",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "dark", speaker: "", body: "\uBD88\uC774 \uB4E4\uC5B4\uC654\uB358 \uC911\uACC4\uC2E4\uC774 \uB2E4\uC2DC \uAE5C\uBE61, \uAEBC\uC9C4\uB2E4. \uC5B4\uB460 \uC18D\uC5D0\uC11C \uCC28\uB2E8\uAE30 \uB0B4\uB824\uAC00\uB294 \uC18C\uB9AC\uAC00 \uB450 \uBC88 \uB09C\uB2E4.", standing: "toby", cast: [{ id: "toby", slot: "left" }, { id: "ripa", slot: "right" }], cue: "rumble" },
+    { id: "toby", speaker: "\uD1A0\uBE44", body: "\uC774\uBC88\uC5D4 \uB0B4\uAC00 \uB0B4\uB9B0 \uAC70 \uB9DE\uC544! \uBD88 \uCF1C\uC838 \uC788\uC73C\uBA74 \uB108\uB124\uAC00 \uC6B0\uB9AC \uC5BC\uAD74\uBD80\uD130 \uBCF4\uC796\uC544!", standing: "toby", act: "rage" },
+    { id: "ripa", speaker: "\uB9AC\uD30C", body: "\uC544\uBAA8\uB294 \uD63C\uC790 \uBA3C\uC800 \uAC14\uC5B4. \uADF8\uB798\uC11C \uC624\uB298\uC740 \uC6B0\uB9AC \uB458\uC774\uC57C. \uC5BC\uAD74 \uB35C \uBCF4\uC774\uB294 \uCABD\uC774 \uB0AB\uAC70\uB4E0.", standing: "ripa", act: "lean" },
+    { id: "wall", speaker: "\uB3C4\uB514", body: "\uB300\uC7A5\uB2D8, \uC800 \uBCBD\uC774\uC694. \uD45C\uC2DD \uC544\uB798\uC5D0 \uBC88\uD638\uAC00 \uBE7C\uACE1\uD574\uC694. \uBD88\uC774 \uAEBC\uC9C0\uBA74 \uD558\uB098\uB3C4 \uC548 \uBCF4\uC5EC\uC694.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "hop" },
+    { id: "guard", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uC800 \uB458, \uBCBD\uC744 \uB4F1\uC9C0\uACE0 \uC11C \uC788\uC5B4\uC694. \uC800\uAC78 \uC9C0\uD0A4\uB294 \uAC70\uC608\uC694.", standing: "parua", act: "lean" },
+    { id: "why", speaker: "\uB9AC\uD30C", body: "\uC9C0\uD0A4\uB294 \uAC70 \uC544\uB2C8\uC57C. \uADF8\uB0E5\u2026 \uC6B0\uB9AC \uBC88\uD638 \uC606\uC5D0 \uBB50\uB77C\uACE0 \uC801\uD614\uB294\uC9C0 \uB108\uB124\uAC00 \uBA3C\uC800 \uBCF4\uB294 \uAC8C \uC2EB\uC5B4\uC11C.", standing: "ripa", cast: [{ id: "toby", slot: "left" }, { id: "ripa", slot: "right" }], act: "shrink" },
+    { id: "go", speaker: "\uD1A0\uBE44", body: "\uB9D0 \uB9CE\uB2E4! \uC774\uAE30\uBA74 \uBD88 \uCF1C \uC8FC\uACE0, \uC9C0\uBA74 \uADF8\uB0E5 \uC9C0\uB098\uAC00! \uAC04\uB2E4!", standing: "toby", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_2_4_SIDE_POST = {
+  id: "stage-2-4-side-post",
+  startNodeId: "light",
+  backdrop: "battlefield",
+  nodes: linear([
+    { id: "light", speaker: "", body: "\uCC28\uB2E8\uAE30\uAC00 \uC62C\uB77C\uAC00\uACE0 \uC911\uACC4\uC2E4\uC5D0 \uBD88\uC774 \uB3CC\uC544\uC628\uB2E4. \uBCBD \uD55C \uBA74\uC744 \uBC88\uD638\uAC00 \uBE7C\uACE1\uD788 \uCC44\uC6B0\uACE0 \uC788\uB2E4. \uBC88\uD638\uB9C8\uB2E4 \uC810 \uC544\uB2C8\uBA74 \uC120\uC774 \uBD99\uC5B4 \uC788\uB2E4.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }] },
+    { id: "read", speaker: "\uB3C4\uB514", body: "\uC810\uC740 \u300C\uC4F8 \uC218 \uC5C6\uC74C\u300D, \uC120\uC740 \u300C\uC62E\uAE40\u300D\u2026 \uB300\uC7A5\uB2D8, \uC120\uC774 \uBD99\uC740 \uBC88\uD638\uAC00 \uD6E8\uC52C \uC801\uC5B4\uC694.", standing: "dodi", act: "lean" },
+    { id: "mine", speaker: "\uB9AC\uD30C", body: "\u2026\uB0B4 \uBC88\uD638\uC5D0\uB294 \uC120\uC774 \uC788\uB124. \uC62E\uACA8\uC84C\uB300. \uC5B4\uB514\uB85C \uC62E\uACA8\uC84C\uB294\uC9C0\uB294 \uC548 \uC801\uD600 \uC788\uACE0.", standing: "ripa", cast: [{ id: "toby", slot: "left" }, { id: "ripa", slot: "right" }], act: "lean" },
+    { id: "dots", speaker: "\uD1A0\uBE44", body: "\uADF8\uB7FC \uB41C \uAC70\uC796\uC544! \uC62E\uACA8\uC84C\uC73C\uB2C8\uAE4C \uC9C0\uAE08 \uC5EC\uAE30 \uC788\uB294 \uAC70\uACE0! \u2026\uC810 \uBD99\uC740 \uC560\uB4E4\uC740 \uC5B4\uB514 \uAC14\uB294\uB370?", standing: "toby", act: "tremble" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC544\uBB34\uB3C4 \uB300\uB2F5\uD558\uC9C0 \uC54A\uB294\uB2E4. \uC5F0\uAD6C\uC6D0\uC774 \uBCBD \uC55E\uC73C\uB85C \uD55C \uAC78\uC74C \uB2E4\uAC00\uC120\uB2E4.",
+      standing: "ripa",
+      choices: [
+        { id: "write", label: "\uBC88\uD638\uB97C \uC804\uBD80 \uC801\uC5B4 \uB450\uC790", nextId: "writeA", effect: { type: "bondXp", relicId: "dodo", amount: 3 } },
+        { id: "dot", label: "\uC810\uC774 \uBD99\uC740 \uBC88\uD638\uB3C4 \uCC3E\uC544\uBCF4\uC790", nextId: "dotB", effect: { type: "bondXp", relicId: "parua", amount: 3 } }
+      ]
+    },
+    { id: "writeA", speaker: "\uB3C4\uB514", body: "\uB124! \uD558\uB098\uB3C4 \uC548 \uBE7C\uACE0 \uC77C\uC9C0\uC5D0 \uC62E\uAE38\uAC8C\uC694. \uBCBD\uC774 \uC9C0\uC6CC\uC838\uB3C4 \uC5EC\uAE30 \uB0A8\uC544 \uC788\uAC8C\uC694.", standing: "dodi", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "nod", nextId: "again" },
+    { id: "dotB", speaker: "\uD30C\uB8E8\uC544", body: "\u2026\uB124. \uC810\uC774 \uBD99\uC5C8\uB2E4\uACE0 \uB05D\uB09C \uAC74 \uC544\uB2C8\uC5D0\uC694. \uC544\uBAA8 \uC528\uB3C4 \uC810\uC774\uC5C8\uC796\uC544\uC694.", standing: "parua", cast: [{ id: "torika", slot: "left" }, { id: "dodi", slot: "center" }, { id: "parua", slot: "right" }], act: "nod", nextId: "again" },
+    { id: "again", speaker: "\uB9AC\uD30C", body: "\u2026\uC774\uC0C1\uD55C \uC5F0\uAD6C\uC6D0\uC774\uC57C. \uB2E4\uC74C\uC5D0 \uB610 \uBD88 \uB044\uBA74, \uADF8\uB550 \uAC19\uC774 \uC77D\uC5B4 \uC918.", standing: "ripa", cast: [{ id: "toby", slot: "left" }, { id: "ripa", slot: "right" }], act: "hop" },
+    { id: "amo", speaker: "\uD1A0\uBE44", body: "\uC77D\uAE34 \uBB58 \uC77D\uC5B4! \uAC00\uC790, \uB9AC\uD30C. \uC544\uBAA8 \uD63C\uC790 \uB450\uBA74 \uB610 \uD63C\uC790 \uB2E4 \uC9CA\uC5B4\uC9C4\uB2E8 \uB9D0\uC774\uC57C.", standing: "toby", act: "nod" }
+  ])
+};
+var STAGE_3_3_SIDE_PRE = {
+  id: "stage-3-3-side-pre",
+  startNodeId: "count",
+  backdrop: "deepField",
+  nodes: linear([
+    { id: "count", speaker: "", body: "\uACE0\uB300 \uAE09\uC218\uC6D0\uC758 \uBB3C\uC774 \uBC1C\uBAA9\uAE4C\uC9C0 \uCC30\uB791\uC778\uB2E4. \uC218\uC870 \uB458\uB808\uC5D0 \uBBF8\uB974\uC640 \uD384\uC2DC\uAC00 \uCABC\uADF8\uB824 \uC549\uC544 \uC190\uAC00\uB77D\uC73C\uB85C \uBB34\uC5B8\uAC00\uB97C \uC138\uACE0 \uC788\uB2E4.", standing: "mir", cast: [{ id: "mir", slot: "left" }, { id: "pulsi", slot: "right" }] },
+    { id: "first", speaker: "\uBBF8\uB974", body: "\uADF8\uB7EC\uB2C8\uAE4C \uC81C\uAC00 \uBA3C\uC800 \uBD24\uC796\uC544\uC694! \uC5F0\uAD6C\uC6D0\uB2D8 \uBAA8\uC154 \uAC00\uBA74 \uADF8 \uC810\uC218\uB294 \uC81C \uAC70\uC608\uC694!", standing: "mir", act: "hop" },
+    { id: "catch", speaker: "\uD384\uC2DC", body: "\uBA3C\uC800 \uBCF8 \uAC74 \uC0C1\uAD00\uC5C6\uC5B4. \uBA3C\uC800 \uC7A1\uB294 \uCABD\uC774 \uC774\uAE30\uB294 \uAC70\uC57C. \uAE5C\uC9DD \uC120\uBB3C\uB3C4 \uB0B4\uAC00 \uBA3C\uC800 \uC900\uBE44\uD588\uACE0.", standing: "pulsi", act: "lean" },
+    { id: "lexia", speaker: "\uB809\uC2DC\uC544", body: "\uB098\uB97C \uC55E\uC5D0 \uB450\uACE0 \uB9C8\uC2A4\uD130\uB97C \uC810\uC218\uB85C \uB098\uB204\uB294 \uAC70\uC57C? \uBC30\uC9F1 \uD558\uB098\uB294 \uCE6D\uCC2C\uD574 \uC904\uAC8C!", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "mir", slot: "center" }, { id: "pulsi", slot: "right" }], act: "rage" },
+    { id: "double", speaker: "\uBBF8\uB974", body: "\uC557, \uB809\uC2DC\uC544 \uB2D8\uB3C4 \uC810\uC218\uAC00 \uAF64 \uB192\uC544\uC694! \uAC19\uC774 \uBAA8\uC2DC\uBA74 \uB450 \uBC30\uC608\uC694!", standing: "mir", act: "bounce" },
+    { id: "bet", speaker: "\uD384\uC2DC", body: "\uC88B\uB124. \uADF8\uB7FC \uB458 \uB2E4 \uAC78\uACE0 \uD558\uC790. \uC9C0\uB294 \uCABD\uC774 \uC624\uB298 \uC800\uB141 \uC124\uAC70\uC9C0\uC57C.", standing: "pulsi", act: "puff", cue: "impact" }
+  ])
+};
+var STAGE_3_3_SIDE_POST = {
+  id: "stage-3-3-side-post",
+  startNodeId: "splash",
+  backdrop: "deepField",
+  nodes: linear([
+    { id: "splash", speaker: "", body: "\uBB3C\uBCF4\uB77C\uAC00 \uAC00\uB77C\uC549\uB294\uB2E4. \uBBF8\uB974\uC640 \uD384\uC2DC\uAC00 \uB4F1\uC744 \uB9DE\uB304 \uCC44 \uC8FC\uC800\uC549\uC544 \uC228\uC744 \uBAB0\uC544\uC270\uB2E4.", standing: "mir", cast: [{ id: "mir", slot: "left" }, { id: "pulsi", slot: "right" }] },
+    { id: "zero", speaker: "\uBBF8\uB974", body: "\uC5D0\uC774, \uB458 \uB2E4 \uB193\uCCE4\uC5B4\uC694\u2026 \uB124\uC6B0\uB9AC\uD55C\uD14C \uB610 \u300C0\uC810\u300D\uC774\uB77C\uACE0 \uC801\uD788\uACA0\uB2E4.", standing: "mir", act: "squash" },
+    { id: "praise", speaker: "\uD384\uC2DC", body: "\uAD1C\uCC2E\uC544. \uC5B4\uCC28\uD53C \uC810\uC218 \uBAA8\uC544\uB3C4 \uAC04\uBD80\uB2D8\uC740 \uCE6D\uCC2C \uD55C \uBC88 \uC548 \uD574 \uC8FC\uC796\uC544.", standing: "pulsi", act: "shrink" },
+    { id: "someday", speaker: "\uBBF8\uB974", body: "\uADF8\uB798\uB3C4 \uBAA8\uC73C\uBA74\u2026 \uC5B8\uC820\uAC00 \u300C\uC798\uD588\uC5B4\uC694\u300D \uD55C \uBC88\uC740 \uB4E4\uC744\uC9C0\uB3C4 \uBAA8\uB974\uC796\uC544\uC694.", standing: "mir", act: "lean" },
+    { id: "radio", speaker: "\uB8E8\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uBB34\uC804\uC774\uC57C. \uC7E4\uB124 \uC810\uC218\uD310\uC774 \uBC29\uAE08 \uBB3C\uC5D0 \uB5A0\uB0B4\uB824\uC640\uC11C \uC8FC\uC6E0\uC5B4. \uADFC\uB370 \uCE78\uC774 \uC804\uBD80 \uBE44\uC5B4 \uC788\uC5B4. \uB204\uAC00 \uB9E4\uAE34 \uD754\uC801\uB3C4 \uC5C6\uACE0.", standing: "luka", remote: true },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC816\uC740 \uC810\uC218\uD310\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uC190\uC5D0 \uB4E4\uC5B4\uC628\uB2E4.",
+      standing: "mir",
+      choices: [
+        { id: "return", label: "\uADF8\uB300\uB85C \uB3CC\uB824\uC900\uB2E4", nextId: "returnA", effect: { type: "bondXp", relicId: "rex", amount: 3 } },
+        { id: "fill", label: "\uCCAB \uCE78\uC744 \uCC44\uC6CC \uC900\uB2E4", nextId: "fillB", effect: { type: "bondXp", relicId: "luka", amount: 3 } }
+      ]
+    },
+    { id: "returnA", speaker: "\uB809\uC2DC\uC544", body: "\uC790, \uB3CC\uB824\uC904\uAC8C. \uB2E4\uC74C\uC5D4 \uC810\uC218 \uB9D0\uACE0 \uC81C\uB300\uB85C \uB364\uBCBC. \uADF8\uB7FC \uB098\uB3C4 \uC81C\uB300\uB85C \uC0C1\uB300\uD574 \uC904\uAC8C.", standing: "lexia", cast: [{ id: "lexia", slot: "left" }, { id: "mir", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod", nextId: "laugh" },
+    { id: "fillB", speaker: "\uB8E8\uCE74", body: "\u2026\uADF8\uB7FC \u300C\uB05D\uAE4C\uC9C0 \uB6F0\uC5C8\uC74C\u300D\uC774\uB77C\uACE0 \uC801\uC5B4 \uB46C. \uCCAB \uCE78\uC740 \uADF8\uAC70\uBA74 \uB3FC.", standing: "luka", remote: true, nextId: "laugh" },
+    { id: "laugh", speaker: "\uBBF8\uB974", body: "\u2026\uD5E4\uD5E4. \uC5F0\uAD6C\uC6D0\uB2D8 \uCABD\uC740 \uC810\uC218\uB97C \uC774\uC0C1\uD558\uAC8C \uC8FC\uB124\uC694. \uB2E4\uC74C\uC5D0 \uB610 \uBAA8\uC2DC\uB7EC \uC62C\uAC8C\uC694!", standing: "mir", cast: [{ id: "mir", slot: "left" }, { id: "pulsi", slot: "right" }], act: "hopTwice" },
+    { id: "gone", speaker: "", body: "\uB450 \uADF8\uB9BC\uC790\uAC00 \uBB3C\uC744 \uD280\uAE30\uBA70 \uD1B5\uB85C \uB108\uBA38\uB85C \uC0AC\uB77C\uC9C4\uB2E4. \uD384\uC2DC\uAC00 \uD55C \uBC88 \uB4A4\uB3CC\uC544\uBCF8 \uAC83\uC740 \uC544\uBB34\uB3C4 \uBCF4\uC9C0 \uBABB\uD588\uB2E4.", standing: "pulsi", cast: [] }
+  ])
+};
+var STAGE_4_3_BREAK_TIME = {
+  id: "stage-4-3-break-time",
+  startNodeId: "hide",
+  backdrop: "deepField",
+  nodes: linear([
+    { id: "hide", speaker: "", body: "\uC810\uAC80 \uD1B5\uB85C \uB05D, \uBC30\uAD00 \uB4A4 \uC881\uC740 \uD2C8. \uC2F8\uC6C0\uC774 \uB05D\uB09C \uC0BC\uC778\uC870\uAC00 \uBAB8\uC744 \uC6C5\uD06C\uB9AC\uACE0 \uC549\uC544 \uC788\uB2E4. \uB9AC\uD30C\uAC00 \uC544\uBAA8\uC758 \uD314\uC5D0 \uBD95\uB300\uB97C \uAC10\uB294\uB2E4.", standing: "ripa", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }] },
+    { id: "wrap", speaker: "\uB9AC\uD30C", body: "\uAC00\uB9CC\uD788 \uC788\uC5B4, \uC544\uBAA8. \uBBF8\uB974\uAC00 \uC138\uB7EC \uC624\uAE30 \uC804\uC5D0 \uB2E4 \uAC10\uC544\uC57C \uD574. \uB2E4\uCE5C \uB370\uB3C4 \uC810\uC218\uB798.", standing: "ripa", act: "lean" },
+    { id: "why", speaker: "\uD1A0\uBE44", body: "\u2026\uC57C, \uC5F0\uAD6C\uC6D0. \uC65C \uB530\uB77C\uC654\uC5B4. \uC9C4\uC2EC\uC73C\uB85C \uD558\uB77C\uACE0 \uD574\uC11C \uC9C4\uC2EC\uC73C\uB85C \uD588\uC796\uC544.", standing: "toby", act: "shrink" },
+    { id: "thanks", speaker: "\uC544\uBAA8", body: "\u2026\uB355\uBD84\uC5D0 \uC548 \uD63C\uB0AC\uC5B4. \uC5F0\uAD6C\uC6D0\uC774 \uC138\uAC8C \uC640 \uC918\uC11C. \uACE0\uB9C8\uC6CC.", standing: "amo", act: "nod" },
+    { id: "snack", speaker: "\uD1A0\uB9AC\uCE74", body: "\uB300\uC7A5\uB2D8\uC774 \uAC04\uC2DD \uCC59\uACA8 \uC624\uC168\uC5B4\uC694. \uC14B\uC774 \uB098\uB220 \uB4DC\uC138\uC694!", standing: "torika", cast: [{ id: "torika", slot: "left" }, { id: "amo", slot: "center" }, { id: "toby", slot: "right" }], act: "hop" },
+    { id: "smell", speaker: "\uD1A0\uBE44", body: "\u2026\uCE58\uC988\uCF00\uC774\uD06C\uB2E4. \uC794\uD5A5 \uC9C0\uAD6C \uB54C \uADF8 \uC0C1\uC790\uB791 \uAC19\uC740 \uB0C4\uC0C8.", standing: "toby", act: "lean" },
+    { id: "ask", speaker: "\uC544\uBAA8", body: "\u2026\uC5F0\uAD6C\uC6D0. \uADF8\uB54C \uB530\uB77C\uAC00\uB3C4 \uB418\uB0D0\uACE0 \uBB3C\uC5C8\uB358 \uAC70. \uC544\uC9C1 \uC720\uD6A8\uD574?", standing: "amo", act: "lean" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC544\uBAA8\uAC00 \uBD95\uB300 \uAC10\uAE34 \uD314\uC744 \uBB34\uB98E\uC5D0 \uC62C\uB9B0 \uCC44 \uB300\uB2F5\uC744 \uAE30\uB2E4\uB9B0\uB2E4.",
+      standing: "amo",
+      choices: [
+        { id: "keep", label: "\uADF8 \uC57D\uC18D\uC740 \uADF8\uB300\uB85C\uC57C", nextId: "keepA", effect: { type: "bondXp", relicId: "torika", amount: 3 } },
+        { id: "next", label: "\uB2E4\uC74C\uC5D4 \uAF2D \uB370\uB824\uAC08\uAC8C", nextId: "nextB", effect: { type: "bondXp", relicId: "dodo", amount: 3 } }
+      ]
+    },
+    { id: "keepA", speaker: "\uC544\uBAA8", body: "\u2026\uADF8\uB807\uAD6C\uB098. \uADF8\uB7FC \uC624\uB298\uB3C4 \uB04C\uB824\uAC00\uB294 \uAC8C \uC544\uB2C8\uB77C, \uC7A0\uAE50 \uB5A8\uC5B4\uC838 \uC788\uB294 \uAC70\uC57C.", standing: "amo", act: "nod", nextId: "steps" },
+    { id: "nextB", speaker: "\uC544\uBAA8", body: "\u2026\uB2E4\uC74C. \uADF8 \uB9D0, \uC704\uC5D0\uC11C\uB294 \uD55C \uBC88\uB3C4 \uC548 \uD574 \uC92C\uC5B4.", standing: "amo", act: "shrink", nextId: "steps" },
+    { id: "steps", speaker: "\uB9AC\uD30C", body: "\uC27F. \uBC1C\uC18C\uB9AC. \uBBF8\uB974\uAC00 \uC138\uB7EC \uC628\uB2E4.", standing: "ripa", cast: [{ id: "amo", slot: "left" }, { id: "toby", slot: "center" }, { id: "ripa", slot: "right" }], act: "fright", cue: "rumble" },
+    { id: "run", speaker: "\uD1A0\uBE44", body: "\uBE68\uB9AC \uAC00! \uC6B0\uB9AC\uB791 \uAC19\uC774 \uC270 \uAC70 \uB4E4\uD0A4\uBA74 \uB108\uB124\uB3C4 \uC810\uC218 \uAE4E\uC5EC!", standing: "toby", act: "rage" },
+    { id: "roll", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uD2C8\uC744 \uBE60\uC838\uB098\uC624\uC790 \uB4F1 \uB4A4\uC5D0\uC11C \u300C\uC14B, \uB2E4 \uC788\uC5B4\uC694?\u300D \uD558\uB294 \uBC1D\uC740 \uBAA9\uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4. \u300C\uB124\uC5D0.\u300D \uC138 \uBAA9\uC18C\uB9AC\uAC00 \uD55C\uAEBC\uBC88\uC5D0 \uB300\uB2F5\uD55C\uB2E4.", standing: "toby", cast: [] }
+  ])
+};
+var STAGE_4_7_SIDE_PRE = {
+  id: "stage-4-7-side-pre",
+  startNodeId: "ledger",
+  backdrop: "deepField",
+  nodes: linear([
+    { id: "ledger", speaker: "", body: "\uC9C0\uD558 \uC815\uBE44\uB3D9 \uD55C\uAD6C\uC11D. \uACF5\uAD6C \uC120\uBC18 \uC704\uC5D0 \uB124\uC6B0\uB9AC\uAC00 \uAC78\uD130\uC549\uC544 \uB450\uAEBC\uC6B4 \uC7A5\uBD80\uB97C \uB118\uAE34\uB2E4. \uD384\uC2DC\uAC00 \uADF8 \uC606\uC5D0\uC11C \uD558\uD488\uC744 \uD55C\uB2E4.", standing: "neuri", cast: [{ id: "neuri", slot: "left" }, { id: "pulsi", slot: "right" }] },
+    { id: "hold", speaker: "\uB124\uC6B0\uB9AC", body: "\uCF54\uB9C8 \uB2D8, \uC774\uBC88 \uC8FC\uC5D0\uB3C4 \u300C\uD655\uBCF4 \uC2E4\uD328\u300D\u2026 \uC5B4\uBA38, \uC774 \uCE78\uC740 \uB610 \u300C\uBCF4\uB958\u300D\uB124\uC694. \uBCF4\uB958\uAC00 \uBC8C\uC368 \uBA87 \uBC88\uC9F8\uC77C\uAE4C\uC694.", standing: "neuri", act: "lean" },
+    { id: "fun", speaker: "\uD384\uC2DC", body: "\uADF8\uAC70 \uC704\uC5D0 \uADF8\uB300\uB85C \uC62C\uB9AC\uBA74 \uCF54\uB9C8\uB294 \uB05D\uC774\uC796\uC544. \uC7AC\uBC0C\uACA0\uB2E4.", standing: "pulsi", act: "puff" },
+    { id: "trick", speaker: "\uB378\uB85C\uD53C", body: "\uC9E0~ \uADF8 \uC7A5\uBD80, \uC81C\uAC00 \uC9C0\uAE08\uBD80\uD130 \uC0AC\uB77C\uC9C0\uAC8C \uD574 \uBCFC\uAC8C\uC694. \uC5F0\uAD6C\uC6D0\uB2D8, \uBC15\uC218 \uC900\uBE44\uD574 \uC8FC\uC138\uC694.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }, { id: "neuri", slot: "center" }, { id: "pulsi", slot: "right" }], act: "hop" },
+    { id: "write", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uB9C8\uC220\uC0AC\uB2D8\uC774\uC2DC\uB124\uC694. \uADF8\uB7FC \uC0AC\uB77C\uC9C0\uAE30 \uC804\uC5D0 \uC5F0\uAD6C\uC6D0\uB2D8 \uC774\uB984\uBD80\uD130 \uC801\uC5B4 \uB458\uAC8C\uC694. \u300C\uD655\uBCF4 \uC644\uB8CC\u300D\uB85C\uC694.", standing: "neuri", act: "nod" },
+    { id: "door", speaker: "\uB8E8\uCE74", body: "\uC5F0\uAD6C\uC6D0\uB2D8, \uC815\uBE44\uB3D9 \uB4B7\uBB38\uC740 \uC5F4\uC5B4 \uB1A8\uC5B4. \uB378\uB85C\uD53C\uAC00 \uC7A5\uBD80 \uB09A\uC544\uCC44\uBA74 \uADF8\uCABD\uC73C\uB85C \uB6F0\uC5B4. \uC18C\uB9AC\uB294 \uB0B4\uC9C0 \uB9D0\uACE0.", standing: "luka", remote: true },
+    { id: "gift", speaker: "\uD384\uC2DC", body: "\uB3C4\uB9DD\uCE60 \uAD6C\uBA4D\uAE4C\uC9C0 \uB2E4 \uB9CC\uB4E4\uC5B4 \uB1A8\uB124. \uC88B\uC544, \uAE5C\uC9DD \uC120\uBB3C\uC740 \uC774\uCABD\uC774 \uBA3C\uC800\uC57C!", standing: "pulsi", act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_4_7_SIDE_POST = {
+  id: "stage-4-7-side-post",
+  startNodeId: "paper",
+  backdrop: "deepField",
+  nodes: linear([
+    { id: "paper", speaker: "", body: "\uACF5\uAD6C \uC120\uBC18\uC774 \uC4F0\uB7EC\uC9C0\uACE0 \uC885\uC774\uAC00 \uB208\uCC98\uB7FC \uD769\uB0A0\uB9B0\uB2E4. \uB378\uB85C\uD53C\uC758 \uC190\uC5D0 \uC7A5\uBD80 \uD55C \uAD8C\uC774 \uB4E4\uB824 \uC788\uB2E4.", standing: "delopi", cast: [{ id: "delopi", slot: "left" }, { id: "neuri", slot: "right" }] },
+    { id: "look", speaker: "\uB378\uB85C\uD53C", body: "\uC0AC\uB77C\uC84C\uB2E4 \uB098\uD0C0\uB0AC\uC2B5\uB2C8\uB2E4~ \u2026\uC5B4, \uADFC\uB370 \uC774 \uC7A5\uBD80, \uC7A5\uB09C\uCE60 \uB370\uAC00 \uC5C6\uB124\uC694. \uCF54\uB9C8 \uCE78\uB9CC \uC804\uBD80 \u300C\uBCF4\uB958\u300D\uC608\uC694.", standing: "delopi", act: "lean" },
+    { id: "mean", speaker: "\uB8E8\uCE74", body: "\uBCF4\uB958\uB77C\uB294 \uAC74 \uB370\uB824\uC62C \uC218 \uC788\uC5C8\uB294\uB370 \uC548 \uB370\uB824\uC654\uB2E4\uB294 \uB73B\uC774\uC57C. \uC5F4 \uBC88\uB3C4 \uB118\uAC8C.", standing: "luka", remote: true },
+    { id: "back", speaker: "\uB124\uC6B0\uB9AC", body: "\u2026\uC5B4\uD760. \uB3CC\uB824\uC8FC\uC138\uC694. \uADF8\uAC74 \uC800\uD76C \uAC04\uBD80\uB2D8\uAED8 \uC62C\uB9B4 \uC7A5\uBD80\uC608\uC694.", standing: "neuri", cast: [{ id: "delopi", slot: "left" }, { id: "neuri", slot: "right" }], act: "shrink" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uB378\uB85C\uD53C\uAC00 \uC7A5\uBD80\uB97C \uB4E0 \uCC44 \uC5F0\uAD6C\uC6D0\uC744 \uB3CC\uC544\uBCF8\uB2E4.",
+      standing: "delopi",
+      choices: [
+        { id: "give", label: "\uC7A5\uBD80\uB97C \uB3CC\uB824\uC900\uB2E4", nextId: "giveA", effect: { type: "bondXp", relicId: "delopi", amount: 3 } },
+        { id: "tear", label: "\uCF54\uB9C8\uC758 \uCE78\uB9CC \uB5BC\uC5B4 \uB454\uB2E4", nextId: "tearB", effect: { type: "bondXp", relicId: "luka", amount: 3 } }
+      ]
+    },
+    { id: "giveA", speaker: "\uB378\uB85C\uD53C", body: "\uB124, \uB3CC\uB824\uB4DC\uB9B4\uAC8C\uC694. \uB300\uC2E0 \uB9C8\uC220 \uD558\uB098\uB294 \uB0A8\uACA8 \uB480\uC5B4\uC694. \uD3B4 \uBCF4\uC2DC\uBA74 \uC544\uC2E4 \uAC70\uC608\uC694.", standing: "delopi", act: "nod", nextId: "neuri" },
+    { id: "tearB", speaker: "\uB378\uB85C\uD53C", body: "\uCC22\uB294 \uAC74 \uB9C8\uC220\uC774 \uC544\uB2C8\uB77C\uC11C\uC694\u2026 \uADF8 \uB300\uC2E0 \uC774 \uD55C \uC7A5\uB9CC \uC4F1, \uC0AC\uB77C\uC9C0\uAC8C \uD574 \uB4DC\uB9B4\uAC8C\uC694.", standing: "delopi", act: "hop", nextId: "neuri" },
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uD6C4\uD6D7\u2026 \uC624\uB298 \uC77C\uC740 \u300C\uBCF4\uB958\u300D\uB85C \uC801\uC5B4 \uB458\uAC8C\uC694. \uC800\uB3C4 \uD55C \uBC88\uCBE4\uC740 \uC368 \uBCF4\uACE0 \uC2F6\uC5C8\uAC70\uB4E0\uC694.", standing: "neuri", act: "lean" },
+    { id: "left", speaker: "", body: "\uB124\uC6B0\uB9AC\uC640 \uD384\uC2DC\uAC00 \uB4B7\uBB38 \uBC18\uB300\uD3B8\uC73C\uB85C \uC0AC\uB77C\uC9C4\uB2E4. \uBC14\uB2E5\uC5D0 \uB5A8\uC5B4\uC9C4 \uC885\uC774 \uD55C \uC7A5\uC5D0 \u300C072 \u2014 \uBCF4\uB958\u300D\uB77C\uB294 \uAE00\uC528\uAC00 \uB0A8\uC544 \uC788\uB2E4.", standing: "delopi", cast: [] }
+  ])
+};
+var STAGE_5_2_SIDE_PRE = {
+  id: "stage-5-2-side-pre",
+  startNodeId: "keys",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "keys", speaker: "", body: "\uAC80\uBB38 \uACA9\uC790 \uC55E. \uC544\uD2B8\uB77C\uAC00 \uD5C8\uB9AC\uC5D0 \uB9E4\uB2E8 \uC5F4\uC1E0\uAFB8\uB7EC\uBBF8\uB97C \uC18C\uB9E4 \uC18D\uC5D0 \uAC10\uCD94\uBA70 \uB4B7\uAC78\uC74C\uC9C8 \uCE5C\uB2E4. \uADF8 \uB4A4\uC5D0 \uBBF8\uB974\uAC00 \uD314\uC9F1\uC744 \uB07C\uACE0 \uC11C \uC788\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "mir", slot: "right" }] },
+    { id: "no", speaker: "\uC544\uD2B8\uB77C", body: "\uC774, \uC774\uAC74 \uBABB \uB4DC\uB824\uC694\u2026 \uAC10, \uAC10\uBC29 \uC5F4\uC1E0\uB77C\uC11C\u2026 \uC120\uBC30\uAC00 \uB9E1\uACA8 \uB454 \uAC70\uB77C\uC11C\u2026", standing: "atra", act: "tremble" },
+    { id: "score", speaker: "\uBBF8\uB974", body: "\uC544\uD2B8\uB77C, \uADF8\uAC70 \uB4E4\uACE0 \uC788\uC73C\uBA74 \uC810\uC218 \uB450 \uBC30\uB798\uC694! \uC5F0\uAD6C\uC6D0\uB2D8\uAE4C\uC9C0 \uBAA8\uC2DC\uBA74 \uC138 \uBC30!", standing: "mir", act: "bounce" },
+    { id: "salvage", speaker: "\uBAA8\uC0AC\uB098", body: "\uB2F9\uC2E0\uC740 \uB4A4\uB85C. \uC800 \uC5F4\uC1E0\uB294 \uC778\uC591\uD55C\uB2E4. \uBB3C\uAC74\uC740 \uC81C\uC790\uB9AC\uC5D0 \uC788\uC5B4\uC57C \uD55C\uB2E4.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "atra", slot: "center" }, { id: "mir", slot: "right" }], act: "nod" },
+    { id: "list", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uB9AC\uACE0\u2026 \uC5F0\uAD6C\uC6D0\uB2D8 \uC774\uB984, \uC544\uC9C1 \uC81C \uBAA9\uB85D\uC5D0 \uC788\uC5B4\uC694. \uC9C0, \uC9C0\uC6B0\uC9C0 \uC54A\uC558\uC5B4\uC694.", standing: "atra", act: "shrink" },
+    { id: "go", speaker: "\uBBF8\uB974", body: "\uADF8\uB7FC \uBAA9\uB85D\uB300\uB85C \uBAA8\uC154 \uAC00\uC694! \uAC04\uB2E4\uC544!", standing: "mir", act: "hop", cue: "impact" }
+  ])
+};
+var STAGE_5_2_SIDE_POST = {
+  id: "stage-5-2-side-post",
+  startNodeId: "drop",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "drop", speaker: "", body: "\uC1E0\uACE0\uB9AC\uAC00 \uB04A\uC5B4\uC9C0\uBA70 \uC5F4\uC1E0\uAFB8\uB7EC\uBBF8\uAC00 \uBC14\uB2E5\uC744 \uAD6C\uB978\uB2E4. \uBAA8\uC0AC\uB098\uAC00 \uD5C8\uB9AC\uB97C \uAD7D\uD600 \uADF8\uAC83\uC744 \uC90D\uB294\uB2E4.", standing: "mosana", cast: [{ id: "mosana", slot: "left" }, { id: "atra", slot: "right" }] },
+    { id: "numbers", speaker: "\uBAA8\uC0AC\uB098", body: "\uC5F4\uC1E0\uB9C8\uB2E4 \uBC88\uD638\uAC00 \uC0C8\uACA8\uC838 \uC788\uB2E4. \uAC10\uBC29 \uBC88\uD638\uC640 \uAC19\uB2E4.", standing: "mosana", act: "lean" },
+    { id: "empty", speaker: "\uBAA8\uC0AC\uB098", body: "\u2026\uD558\uB098\uAC00 \uBE44\uC5C8\uB2E4. \uB9E8 \uC544\uB798 \uCE78. \uACE0\uB9AC\uC5D0 \uAC78\uC5C8\uB358 \uC790\uAD6D\uB9CC \uB0A8\uC558\uB2E4.", standing: "mosana" },
+    { id: "hand", speaker: "\uC544\uD2B8\uB77C", body: "\uADF8, \uADF8\uAC74 \uC6D0\uB798 \uC5C6\uC5B4\uC694\u2026 \uB9E8 \uC544\uB798 \uBB38\uC740 \uC5F4\uC1E0\uB85C \uC548 \uC5F4\uB9B0\uB300\uC694. \uC0AC, \uC0AC\uB78C \uC190\uC774\uC5B4\uC57C \uD55C\uB300\uC694\u2026", standing: "atra", act: "tremble" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uBAA8\uC0AC\uB098\uAC00 \uC5F4\uC1E0\uAFB8\uB7EC\uBBF8\uB97C \uB4E0 \uCC44 \uC5F0\uAD6C\uC6D0\uC758 \uB300\uB2F5\uC744 \uAE30\uB2E4\uB9B0\uB2E4.",
+      standing: "mosana",
+      choices: [
+        { id: "return", label: "\uC5F4\uC1E0\uB97C \uB3CC\uB824\uC900\uB2E4", nextId: "returnA", effect: { type: "bondXp", relicId: "mosana", amount: 3 } },
+        { id: "erase", label: "\uBAA9\uB85D\uC5D0\uC11C \uC774\uB984\uC744 \uC9C0\uC6CC \uB2EC\uB77C\uACE0 \uD55C\uB2E4", nextId: "eraseB", effect: { type: "bondXp", relicId: "mosana", amount: 3 } }
+      ]
+    },
+    { id: "returnA", speaker: "\uBAA8\uC0AC\uB098", body: "\uAC00\uC838\uAC00\uB77C. \uC778\uC591\uC740 \uAEBC\uB0B8 \uBB3C\uAC74\uC744 \uC8FC\uC778\uC5D0\uAC8C \uB3CC\uB824\uC8FC\uB294 \uC77C\uC774\uB2E4.", standing: "mosana", act: "nod", nextId: "atraA" },
+    { id: "atraA", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uACE0, \uACE0\uB9D9\uC2B5\uB2C8\uB2E4. \uADF8\uB798\uB3C4 \uBAA9\uB85D\uC5D0\uC11C\uB294 \uC548 \uC9C0\uC6B8 \uAC70\uC608\uC694.", standing: "atra", act: "nod", nextId: "mir" },
+    { id: "eraseB", speaker: "\uC544\uD2B8\uB77C", body: "\uC2DC, \uC2EB\uC5B4\uC694\u2026 \uC9C0\uC6B0\uBA74\u2026 \uC5F0\uAD6C\uC6D0\uB2D8\uC744 \uC544\uBB34\uB3C4 \uAE30\uC5B5 \uC548 \uD558\uC796\uC544\uC694.", standing: "atra", act: "recoil", nextId: "mir" },
+    { id: "mir", speaker: "\uBBF8\uB974", body: "\uC544\uD2B8\uB77C, \uC5F4\uC1E0 \uCC3E\uC558\uC73C\uBA74 \uB410\uC5B4\uC694! \uC810\uC218\uB294 \uBC18\uB9CC \uC8FC\uC138\uC694!", standing: "mir", cast: [{ id: "atra", slot: "left" }, { id: "mir", slot: "right" }], act: "hop" },
+    { id: "ring", speaker: "", body: "\uB450 \uADF8\uB9BC\uC790\uAC00 \uAC10\uBC29 \uC0AC\uC774 \uC5B4\uB460\uC73C\uB85C \uBB3C\uB7EC\uB09C\uB2E4. \uBAA8\uC0AC\uB098\uB294 \uBE48 \uACE0\uB9AC\uB97C \uC624\uB798 \uB4E4\uC5EC\uB2E4\uBCF8\uB2E4.", standing: "mosana", cast: [{ id: "mosana", slot: "center" }] }
+  ])
+};
+var STAGE_5_8_YOUNGEST_SHARE = {
+  id: "stage-5-8-youngest-share",
+  startNodeId: "tray",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "tray", speaker: "", body: "\uBC30\uC2DD \uD1B5\uB85C \uB05D \uBAA8\uD241\uC774. \uB77C\uC790\uAC00 \uC7C1\uBC18 \uD558\uB098\uC5D0 \uAD6D\uADF8\uB987\uC744 \uB2E4\uC12F \uAC1C\uB098 \uC62C\uB9B0 \uCC44 \uD55C \uCE78\uC529 \uBC30\uC2DD\uAD6C\uC5D0 \uBC00\uC5B4 \uB123\uACE0 \uC788\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "center" }] },
+    { id: "dont", speaker: "\uB77C\uC790", body: "\u2026\uBCF4\uC9C0 \uB9C8\uB77C. \uBC30\uC2DD \uC2DC\uAC04\uC774\uB2E4.", standing: "raja", act: "shrink" },
+    { id: "burn", speaker: "\uB9C8\uD0A4", body: "\uADF8 \uAD6D, \uB124\uAC00 \uB053\uC778 \uAC70\uB0E5? \uC544\uB2C8\uB2E4\uB0E5. \uC190\uC5D0 \uD654\uC0C1 \uC790\uAD6D\uC774 \uC5C6\uB2E4\uB0E5. \uB053\uC778 \uC0AC\uB78C\uC740 \uB530\uB85C \uC788\uB2E4\uB0E5.", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "lean" },
+    { id: "carry", speaker: "\uB77C\uC790", body: "\u2026\uB9C8\uAC00\uC0AC\uB2E4. \uB098\uB294 \uB098\uB974\uAE30\uB9CC \uD55C\uB2E4. \uC55E\uC5D0 \uC11C\uB294 \uCABD\uC774 \uB098\uB974\uB294 \uAC8C \uB9DE\uB2E4.", standing: "raja", act: "nod" },
+    { id: "last", speaker: "\uB370\uC774", body: "\uADF8\uB7FC \uB9C8\uC9C0\uB9C9 \uADF8\uB987\uC740 \uB204\uAD6C \uAC70\uC57C? \uADF8 \uCE78 \uBE44\uC5B4 \uC788\uB294\uB370!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "hop" },
+    { id: "youngest", speaker: "\uB77C\uC790", body: "\uB9C9\uB0B4 \uBAAB\uC774\uB2E4. \uAC81\uC774 \uB9CE\uC544\uC11C \uC0AC\uB78C\uC774 \uC788\uC73C\uBA74 \uC548 \uB098\uC628\uB2E4. \u2026\uADF8\uB798\uC11C \uB298 \uC2DD\uC740 \uAC78 \uBA39\uB294\uB2E4.", standing: "raja", act: "lean" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uBE48 \uBC30\uC2DD\uAD6C \uC55E\uC5D0 \uADF8\uB987 \uD558\uB098\uAC00 \uB193\uC778\uB2E4. \uAE40\uC774 \uC544\uC9C1 \uC624\uB978\uB2E4.",
+      standing: "raja",
+      choices: [
+        { id: "step", label: "\uADF8\uB987\uC744 \uB450\uACE0 \uBB3C\uB7EC\uB098 \uC900\uB2E4", nextId: "stepA", effect: { type: "bondXp", relicId: "deina", amount: 3 } },
+        { id: "cover", label: "\uC2DD\uC9C0 \uC54A\uAC8C \uB36E\uC5B4 \uB454\uB2E4", nextId: "coverB", effect: { type: "bondXp", relicId: "maki", amount: 3 } }
+      ]
+    },
+    { id: "stepA", speaker: "\uB370\uC774", body: "\uC54C\uC558\uC5B4, \uC6B0\uB9AC \uC800\uCABD \uBCF4\uACE0 \uC788\uC744\uAC8C! \uC9C4\uC9DC\uB85C \uC548 \uBCFC\uAC8C, \uC190\uAC00\uB77D \uC0AC\uC774\uB85C\uB3C4!", standing: "deina", cast: [{ id: "deina", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
+    { id: "coverB", speaker: "\uB9C8\uD0A4", body: "\uB69C\uAED1\uC744 \uB36E\uC5B4 \uB450\uBA74 \uBC18 \uC2DC\uAC04\uC740 \uB530\uB73B\uD558\uB2E4\uB0E5. \uC758\uC0AC\uAC00 \uD558\uB294 \uB9D0\uC774\uB2C8\uAE4C \uBBFF\uC5B4\uB77C\uB0E5.", standing: "maki", cast: [{ id: "maki", slot: "left" }, { id: "raja", slot: "right" }], act: "nod", nextId: "rank" },
+    { id: "rank", speaker: "\uB77C\uC790", body: "\u2026\uC11C\uC5F4\uC740 \uB108\uD76C\uAC00 \uC704\uB2E4. \uD558\uB8E8 \uB354.", standing: "raja", act: "nod" },
+    { id: "pull", speaker: "", body: "\uBAA8\uD241\uC774\uB97C \uB3CC\uC544 \uB098\uC62C \uB54C \uB4F1 \uB4A4\uC5D0\uC11C \uC544\uC8FC \uC791\uC740 \uC190\uD1B1 \uC18C\uB9AC\uAC00 \uB09C\uB2E4. \uBE48 \uCE78\uC758 \uADF8\uB987\uC774 \uCC9C\uCC9C\uD788 \uC548\uCABD\uC73C\uB85C \uB04C\uB824 \uB4E4\uC5B4\uAC04\uB2E4.", standing: "raja", cast: [] }
+  ])
+};
+var STAGE_6_4_SIDE_PRE = {
+  id: "stage-6-4-side-pre",
+  startNodeId: "line",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "line", speaker: "", body: "\uD658\uAE30 \uC218\uC9C1\uAC31 \uC544\uB798, \uBC14\uB78C\uC774 \uAC70\uAFB8\uB85C \uBE68\uB824 \uC62C\uB77C\uAC04\uB2E4. \uBC14\uB2E5\uC5D0 \uBD84\uD544\uB85C \uC0C8 \uC904\uC774 \uADF8\uC5B4\uC838 \uC788\uACE0, \uADF8 \uC904 \uC55E\uC5D0 \uB77C\uC790\uAC00 \uC11C \uC788\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "pulsi", slot: "right" }] },
+    { id: "daily", speaker: "\uB77C\uC790", body: "\uC11C\uC5F4\uC740 \uADF8\uB0A0\uADF8\uB0A0 \uB2E4\uC2DC \uC815\uD55C\uB2E4. \uC5B4\uC81C\uB294 \uB108\uD76C\uAC00 \uC704\uC600\uB2E4. \uC624\uB298\uC740 \uBAA8\uB978\uB2E4.", standing: "raja", act: "nod" },
+    { id: "fun", speaker: "\uD384\uC2DC", body: "\uB098\uB294 \uC11C\uC5F4 \uAC19\uC740 \uAC70 \uBAB0\uB77C. \uC7AC\uBC0C\uC5B4 \uBCF4\uC5EC\uC11C \uB530\uB77C\uC654\uC744 \uBFD0\uC774\uC57C.", standing: "pulsi", act: "lean" },
+    { id: "kento", speaker: "\uCF04\uD1A0", body: "\uB2F4\uB2F9\uAD00\uC740 \uC904 \uB4A4\uC5D0 \uC788\uC5B4. \uC11C\uC5F4\uC774\uB4E0 \uBB50\uB4E0 \uC55E\uC740 \uB0B4\uAC00 \uBC1B\uC544.", standing: "kento", cast: [{ id: "kento", slot: "left" }, { id: "raja", slot: "center" }, { id: "pulsi", slot: "right" }], act: "nod" },
+    { id: "wind", speaker: "\uC2A4\uD14C\uB77C", body: "\uC120\uBC30, \uC800 \uD314 \uCABD \uBC14\uB78C\uC774 \uBB34\uAC70\uC6CC\uC694. \uCCAB \uD55C \uBC29\uC774 \uC81C\uC77C \uC140 \uAC70\uC608\uC694.", standing: "stella", cast: [{ id: "kento", slot: "left" }, { id: "stella", slot: "right" }], act: "lean" },
+    { id: "cross", speaker: "\uB77C\uC790", body: "\uB364\uBCBC. \uC904\uC744 \uB118\uB294 \uCABD\uC774 \uC55E\uC774\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "pulsi", slot: "right" }], act: "rage", cue: "impact" }
+  ])
+};
+var STAGE_6_4_SIDE_POST = {
+  id: "stage-6-4-side-post",
+  startNodeId: "smudge",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "smudge", speaker: "", body: "\uBD84\uD544 \uC904\uC774 \uBC1C\uC790\uAD6D\uC5D0 \uBC18\uCBE4 \uC9C0\uC6CC\uC84C\uB2E4. \uB77C\uC790\uAC00 \uC904 \uB4A4\uB85C \uD55C \uAC78\uC74C \uBB3C\uB7EC\uB098 \uC549\uB294\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "kento", slot: "right" }] },
+    { id: "today", speaker: "\uB77C\uC790", body: "\u2026\uC624\uB298\uB3C4 \uB108\uD76C\uAC00 \uC704\uB2E4.", standing: "raja", act: "shrink" },
+    { id: "again", speaker: "\uCF04\uD1A0", body: "\uBA87 \uBC88\uC774\uB4E0 \uC640. \uC904\uC740 \uB9E4\uC77C \uADF8\uC5B4\uB3C4 \uB3FC. \uC55E\uC740 \uB0B4\uAC00 \uC124 \uAC70\uB2C8\uAE4C.", standing: "kento", act: "nod" },
+    { id: "reason", speaker: "\uB77C\uC790", body: "\u2026\uC55E\uC5D0 \uC11C\uB294 \uC774\uC720\uAC00 \uC788\uB098.", standing: "raja", act: "lean" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uB77C\uC790\uC758 \uBB3C\uC74C\uC774 \uC5F0\uAD6C\uC6D0 \uCABD\uC73C\uB85C \uB118\uC5B4\uC628\uB2E4.",
+      standing: "raja",
+      choices: [
+        { id: "kento", label: "\uCF04\uD1A0\uC5D0\uAC8C \uB300\uB2F5\uC744 \uB9E1\uAE34\uB2E4", nextId: "kentoA", effect: { type: "bondXp", relicId: "kento", amount: 3 } },
+        { id: "ask", label: "\uB77C\uC790\uC5D0\uAC8C \uB418\uBB3B\uB294\uB2E4", nextId: "askB", effect: { type: "bondXp", relicId: "stella", amount: 3 } }
+      ]
+    },
+    { id: "kentoA", speaker: "\uCF04\uD1A0", body: "\uB4A4\uC5D0 \uC788\uB294 \uC0AC\uB78C\uC774 \uC548 \uB2E4\uCE58\uB2C8\uAE4C. \uADF8\uAC70\uBA74 \uCDA9\uBD84\uD574.", standing: "kento", act: "nod", nextId: "noa" },
+    { id: "askB", speaker: "\uC2A4\uD14C\uB77C", body: "\uC120\uBC30\uAC00 \uBB3C\uC5B4\uBD10\uC694. \uB77C\uC790 \uC528\uB294 \uC65C \uB298 \uC55E\uC5D0 \uC11C\uC694?", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "raja", slot: "right" }], act: "lean", nextId: "noa" },
+    { id: "noa", speaker: "\uB77C\uC790", body: "\u2026\uC55E\uC774 \uBC84\uD2F0\uBA74 \uB178\uC544\uAC00 \uC548 \uB098\uC640\uB3C4 \uB41C\uB2E4. \uAC81 \uB9CE\uC740 \uC560\uB294 \uB4A4\uC5D0 \uC788\uC5B4\uC57C \uD55C\uB2E4.", standing: "raja", cast: [{ id: "raja", slot: "left" }, { id: "kento", slot: "right" }], act: "nod" },
+    { id: "same", speaker: "\uB77C\uC790", body: "\uAC19\uC740 \uC774\uC720\uAD70. \uB0B4\uC77C \uB2E4\uC2DC \uADF8\uC5B4 \uB454\uB2E4.", standing: "raja" },
+    { id: "up", speaker: "", body: "\uB77C\uC790\uAC00 \uBC14\uB78C\uC744 \uAC70\uC2AC\uB7EC \uC218\uC9C1\uAC31 \uC704\uB85C \uC62C\uB77C\uAC04\uB2E4. \uC704\uCABD \uC5B4\uB518\uAC00\uC5D0\uC11C \uC791\uAC8C \uB5A8\uB9AC\uB294 \uC228\uC18C\uB9AC\uAC00 \uADF8\uB97C \uB9DE\uB294\uB2E4.", standing: "raja", cast: [] }
+  ])
+};
+var STAGE_6_7_CLAW_MARKS = {
+  id: "stage-6-7-claw-marks",
+  startNodeId: "chair",
+  backdrop: "prisonField",
+  nodes: linear([
+    { id: "chair", speaker: "", body: "\uBB34\uB108\uC9C4 \uBA74\uD68C\uC2E4. \uC190\uD1B1\uC790\uAD6D\uC774 \uAE4A\uAC8C \uB09C \uC758\uC790 \uBC11\uC5D0 \uC791\uC740 \uBAB8 \uD558\uB098\uAC00 \uC6C5\uD06C\uB824 \uC228\uC5B4 \uC788\uB2E4.", standing: "noa", cast: [{ id: "noa", slot: "center" }] },
+    { id: "mine", speaker: "\uB178\uC544", body: "\uC624, \uC624\uC9C0 \uB9C8\u2026 \uC5EC\uAE30 \uB0B4 \uC790\uB9AC\uC57C. \uB9C8\uAC00\uC0AC\uAC00 \uC62C \uB54C\uAE4C\uC9C0 \uC5EC\uAE30 \uC788\uB294 \uAC70\uC57C.", standing: "noa", act: "tremble" },
+    { id: "marks", speaker: "\uCF00\uB9AC\uC2A4", body: "\u2026\uC120\uBC30, \uC190\uD1B1\uC790\uAD6D\uC774\uC694. \uC624\uB798\uB41C \uAC83\uBD80\uD130 \uC0C8\uAC83\uAE4C\uC9C0 \uACB9\uACB9\uC774\uC5D0\uC694. \uAC19\uC740 \uC790\uB9AC\uC5D0\uC11C \uBA87 \uBC88\uC774\uACE0 \uAE30\uB2E4\uB9B0 \uC790\uAD6D\uC774\uC5D0\uC694.", standing: "keris", cast: [{ id: "keris", slot: "left" }, { id: "noa", slot: "right" }], act: "lean" },
+    { id: "comes", speaker: "\uB178\uC544", body: "\uB9C8\uAC00\uC0AC\uB294 \uAF2D \uC640. \uB2A6\uC5B4\uB3C4 \uC640. \uADF8\uB7EC\uB2C8\uAE4C \uC5EC\uAE30\uC11C \uAE30\uB2E4\uB9AC\uBA74 \uB3FC. \u2026\uBB34\uC12D\uC9C0 \uC54A\uC544.", standing: "noa", act: "shrink" },
+    { id: "wind", speaker: "\uC2A4\uD14C\uB77C", body: "\uBC14\uB78C\uC774 \uACC4\uC18D \uB5A8\uB824\uC694, \uC120\uBC30. \uBB34\uC12D\uC9C0 \uC54A\uB2E4\uACE0 \uD560 \uB54C \uC81C\uC77C \uB9CE\uC774 \uB5A8\uB824\uC694.", standing: "stella", cast: [{ id: "stella", slot: "left" }, { id: "noa", slot: "right" }], act: "lean" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC758\uC790 \uBC11\uC758 \uB208\uC774 \uC5F0\uAD6C\uC6D0\uC758 \uBC1C\uB05D\uB9CC \uBCF8\uB2E4.",
+      standing: "noa",
+      choices: [
+        { id: "sit", label: "\uC606\uC5D0 \uC870\uC6A9\uD788 \uC549\uB294\uB2E4", nextId: "sitA", effect: { type: "bondXp", relicId: "keris", amount: 3 } },
+        { id: "wait", label: "\uB9C8\uAC00\uC0AC\uAC00 \uC62C \uB54C\uAE4C\uC9C0\uB9CC \uAC19\uC774 \uAE30\uB2E4\uB9B0\uB2E4", nextId: "waitB", effect: { type: "bondXp", relicId: "stella", amount: 3 } }
+      ]
+    },
+    { id: "sitA", speaker: "", body: "\uC5F0\uAD6C\uC6D0\uC774 \uC758\uC790 \uC606 \uBC14\uB2E5\uC5D0 \uB4F1\uC744 \uB300\uACE0 \uC549\uB294\uB2E4. \uB178\uC544\uB294 \uC544\uBB34 \uB9D0\uB3C4 \uD558\uC9C0 \uC54A\uC9C0\uB9CC, \uC190\uD1B1\uC774 \uC758\uC790\uB97C \uAE01\uB294 \uC18C\uB9AC\uAC00 \uBA4E\uB294\uB2E4.", standing: "noa", nextId: "pot" },
+    { id: "waitB", speaker: "\uB178\uC544", body: "\u2026\uB9C8\uAC00\uC0AC \uC62C \uB54C\uAE4C\uC9C0\uB9CC\uC774\uC57C. \uADF8\uB2E4\uC74C\uC5D4 \uC624\uC9C0 \uB9C8.", standing: "noa", act: "nod", nextId: "pot" },
+    { id: "pot", speaker: "", body: "\uD1B5\uB85C \uC800\uD3B8\uC5D0\uC11C \uB0C4\uBE44 \uB69C\uAED1\uC774 \uB2EC\uADF8\uB77D\uAC70\uB9AC\uB294 \uC18C\uB9AC\uAC00 \uAC00\uAE4C\uC6CC\uC9C4\uB2E4.", standing: "noa", cast: [{ id: "keris", slot: "left" }, { id: "noa", slot: "right" }] },
+    { id: "go", speaker: "\uB178\uC544", body: "\uC654\uB2E4\u2026! \uB108, \uB108\uD76C\uB294 \uAC00. \uB9C8\uAC00\uC0AC\uAC00 \uBCF4\uBA74 \uB610 \uC7AC\uB8CC \uC598\uAE30\uD55C\uB2E8 \uB9D0\uC774\uC57C.", standing: "noa", act: "hop" },
+    { id: "record", speaker: "\uCF00\uB9AC\uC2A4", body: "\u2026\uAE30\uB85D\uD588\uC2B5\uB2C8\uB2E4, \uC120\uBC30. \uC774 \uC758\uC790\uB294 \uB2E4\uC74C\uC5D0 \uC9C0\uB0A0 \uB54C\uB3C4 \uBD80\uC218\uC9C0 \uC54A\uC744\uAC8C\uC694.", standing: "keris", act: "nod" }
+  ])
+};
+var STAGE_7_3_MENDED_SLEEVE = {
+  id: "stage-7-3-mended-sleeve",
+  startNodeId: "quiet",
+  backdrop: "thirdBranchField",
+  nodes: linear([
+    { id: "quiet", speaker: "", body: "\uCE68\uBB35\uC758 \uBCF5\uB3C4. \uBC1C\uC18C\uB9AC\uAC00 \uBC14\uB2E5\uC5D0 \uB2FF\uAE30\uB3C4 \uC804\uC5D0 \uC5B4\uB460\uC774 \uBA39\uC5B4 \uBC84\uB9B0\uB2E4. \uD14C\uB9AC\uC0AC\uAC00 \uAC78\uC74C\uC744 \uB2A6\uCD94\uACE0 \uC5F0\uAD6C\uC6D0\uC758 \uCC22\uC5B4\uC9C4 \uC18C\uB9E4\uB97C \uB04C\uC5B4\uB2F9\uAE34\uB2E4.", standing: "terisa", cast: [{ id: "terisa", slot: "left" }, { id: "nodonia", slot: "right" }] },
+    { id: "sewn", speaker: "\uD14C\uB9AC\uC0AC", body: "\u2026\uB2E4 \uAFF0\uB9F8\uC5B4, \uC544\uAC00. \uC774\uBC88\uC5D4 \uC548 \uD480\uB824.", standing: "terisa", act: "nod" },
+    { id: "count", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC798\uD588\uC5B4, \uD14C\uB9AC\uC0AC. \uC544\uAC00, \uD314 \uB4E4\uC5B4 \uBCF4\uB834. \uC14B \uC140 \uB3D9\uC548 \uC548 \uC544\uD504\uBA74 \uB41C \uAC70\uC57C.", standing: "nodonia", act: "lean" },
+    { id: "wall", speaker: "\uC548\uCE74", body: "\uC5F0\uAD6C\uC6D0 \uC528\u2026 \uC800 \uC55E \uBCBD \uC880 \uBCF4\uC138\uC694. \uAE01\uD78C \uC790\uAD6D\uC774\uC694\u2026 \uC22B\uC790\uB97C \uC9C0\uC6B4 \uAC70\uC608\uC694.", standing: "anka", cast: [{ id: "anka", slot: "left" }, { id: "terisa", slot: "center" }, { id: "nodonia", slot: "right" }], act: "lean" },
+    { id: "ahead", speaker: "", body: "\uBCBD\uB9C8\uB2E4 \uC0C8\uACA8\uC9C4 \uBC88\uD638 \uAC00\uC6B4\uB370 \uBA87 \uAC1C\uB9CC \uB0A0\uCE74\uB86D\uAC8C \uAE01\uD600 \uC788\uB2E4. \uC790\uAD6D\uC740 \uC544\uC9C1 \uC0C8\uAC83\uC774\uACE0, \uC5F0\uAD6C\uC6D0\uC758 \uAC78\uC74C\uBCF4\uB2E4 \uAF2D \uD55C \uCE78\uC529 \uC55E\uC11C \uC788\uB2E4.", standing: "anka" },
+    { id: "path", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC55E\uC5D0\uC11C \uB204\uAC00 \uAE38\uC744 \uB2E6\uC73C\uBA70 \uAC00\uB294\uAD6C\uB098. \uC544\uAC00\uAC00 \uC9C0\uB098\uAC08 \uAE38\uC5D0\uC11C \uBC88\uD638\uB9CC \uACE8\uB77C\uC11C.", standing: "nodonia", act: "nod" },
+    { id: "shadow", speaker: "\uD14C\uB9AC\uC0AC", body: "\u2026\uAC00\uB9AC\uAC1C \uC4F4 \uC560\uC57C. \uC544\uAE4C \uADF8\uB9BC\uC790 \uBD24\uC5B4.", standing: "terisa" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uBCF5\uB3C4 \uC800\uD3B8\uC5D0\uC11C \uC1E0\uB97C \uAE01\uB294 \uC18C\uB9AC\uAC00 \uD55C \uBC88 \uB354 \uB09C\uB2E4.",
+      standing: "terisa",
+      choices: [
+        { id: "catch", label: "\uB530\uB77C\uC7A1\uC544 \uB9D0\uC744 \uAC74\uB2E4", nextId: "catchA", effect: { type: "bondXp", relicId: "nodonia", amount: 3 } },
+        { id: "follow", label: "\uBAA8\uB978 \uCC99 \uB4A4\uB530\uB77C\uAC04\uB2E4", nextId: "followB", effect: { type: "bondXp", relicId: "terisa", amount: 3 } }
+      ]
+    },
+    { id: "catchA", speaker: "\uB178\uB3C4\uB2C8\uC544", body: "\uC548 \uB3FC, \uC544\uAC00. \uCAD3\uC73C\uBA74 \uC228\uB294 \uC560\uC57C. \uADF8 \uC560\uAC00 \uB2E6\uC544 \uB454 \uAE38\uB85C\uB9CC \uAC77\uC790\uAFB8\uB098.", standing: "nodonia", act: "shake", nextId: "hush" },
+    { id: "followB", speaker: "\uD14C\uB9AC\uC0AC", body: "\u2026\uC751. \uADF8\uAC8C \uB098\uC544. \uC800 \uC560\uB3C4 \uB4E4\uD0A4\uAE30 \uC2EB\uC5B4\uD574.", standing: "terisa", act: "nod", nextId: "hush" },
+    { id: "hush", speaker: "\uC548\uCE74", body: "\uADF8\uB7FC \uC870\uC6A9\uD788 \uAC78\uC5B4\uC694, \uC5F0\uAD6C\uC6D0 \uC528\u2026 \uADF8 \uC560 \uBC1C\uC18C\uB9AC\uAE4C\uC9C0 \uAE68\uC6B0\uC9C0 \uC54A\uAC8C\uC694.", standing: "anka", act: "nod" },
+    { id: "last", speaker: "", body: "\uBCF5\uB3C4 \uB05D\uC5D0\uC11C \uB9C8\uC9C0\uB9C9 \uBC88\uD638 \uD558\uB098\uAC00 \uAE01\uD600 \uB098\uAC04\uB2E4. \u300C072\u300D\uC600\uB358 \uC790\uB9AC\uB2E4.", standing: "anka", cast: [] }
+  ])
+};
+var STAGE_7_6_SIDE_PRE = {
+  id: "stage-7-6-side-pre",
+  startNodeId: "drawers",
+  backdrop: "thirdBranchField",
+  nodes: linear([
+    { id: "drawers", speaker: "", body: "\uC5BC\uC5B4\uBD99\uC740 \uAE30\uB85D\uC2E4. \uB124\uC6B0\uB9AC\uAC00 \uC131\uC5D0 \uB080 \uC11C\uB78D\uC744 \uD558\uB098\uC529 \uBE7C\uB0B4 \uC790\uB8E8\uC5D0 \uC3DF\uC544\uBD93\uB294\uB2E4. \uC544\uD2B8\uB77C\uAC00 \uADF8 \uACC1\uC5D0\uC11C \uBA38\uBB47\uAC70\uB9B0\uB2E4.", standing: "neuri", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }] },
+    { id: "order", speaker: "\uB124\uC6B0\uB9AC", body: "\uAC04\uBD80\uB2D8 \uB9D0\uC500\uC774\uC5D0\uC694. \uB0C9\uB3D9 \uC218\uC6A9\uC2E4 \uAE30\uB85D\uC740 \uC804\uBD80 \uD68C\uC218. \uB0A8\uACA8 \uB450\uBA74 \uC704\uC5D0\uC11C \uACE4\uB780\uD574\uD558\uC2E0\uB300\uC694.", standing: "neuri", act: "nod" },
+    { id: "faces", speaker: "\uBA54\uB860", body: "\uC800, \uC800\uAE30\uC694\u2026 \uADF8 \uC11C\uB78D, \uC5BC\uAD74 \uC0AC\uC9C4 \uB4E4\uC5B4 \uC788\uB294 \uAC70\uC8E0\u2026? \uC544\uC9C1 \uB2E4 \uBABB \uADF8\uB838\uB294\uB370\uC694\u2026?", standing: "meron", cast: [{ id: "meron", slot: "left" }, { id: "maddy", slot: "right" }], act: "shrink" },
+    { id: "cold", speaker: "\uB9E4\uB514", body: "\uC5F0\uAD6C\uC6D0 \uC528, \uD30C\uC6CC \uB0C9\uBC29\uC740 \uC81C \uC804\uBB38\uC774\uC5D0\uC694. \uC800 \uC790\uB8E8\uC9F8 \uC5BC\uB824\uC11C \uBABB \uAC00\uC838\uAC00\uAC8C \uD560\uAC8C\uC694!", standing: "maddy", act: "bounce" },
+    { id: "names", speaker: "\uC544\uD2B8\uB77C", body: "\uB124, \uB124\uC6B0\uB9AC\u2026 \uC774\uAC74 \uADF8\uB0E5 \uB450\uBA74 \uC548 \uB420\uAE4C\uC694\u2026 \uC774, \uC774\uB984\uC774 \uC801\uD600 \uC788\uB294\uB370\u2026", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }], act: "tremble" },
+    { id: "erase", speaker: "\uB124\uC6B0\uB9AC", body: "\uC5B4\uBA38, \uC544\uD2B8\uB77C. \uC774\uB984\uC740 \uD68C\uC218\uC870\uAC00 \uC81C\uC77C \uC798 \uC9C0\uC6B0\uC796\uC544\uC694. \uC790, \uC5F0\uAD6C\uC6D0\uB2D8\uBD80\uD130 \uC815\uC911\uD788.", standing: "neuri", act: "lean", cue: "impact" }
+  ])
+};
+var STAGE_7_6_SIDE_POST = {
+  id: "stage-7-6-side-post",
+  startNodeId: "burst",
+  backdrop: "thirdBranchField",
+  nodes: linear([
+    { id: "burst", speaker: "", body: "\uC790\uB8E8\uAC00 \uD130\uC838 \uC5BC\uC5B4\uBD99\uC740 \uC885\uC774\uAC00 \uBC14\uB2E5\uC5D0 \uD769\uC5B4\uC9C4\uB2E4. \uBA54\uB860\uC774 \uBB34\uB98E\uC744 \uAFC7\uACE0 \uD55C \uC7A5\uC529 \uC8FC\uC6CC \uD488\uC5D0 \uC548\uB294\uB2E4.", standing: "meron", cast: [{ id: "meron", slot: "left" }, { id: "maddy", slot: "right" }] },
+    { id: "safe", speaker: "\uBA54\uB860", body: "\u2026\uB2E4\uD589\uC774\uC5D0\uC694. \uC5BC\uAD74\uC774 \uB2E4 \uB0A8\uC544 \uC788\uC5B4\uC694. \uC774\uB984\uB3C4\uC694.", standing: "meron", act: "nod" },
+    { id: "fridge", speaker: "\uB9E4\uB514", body: "\uB179\uC9C0 \uC54A\uAC8C \uACC4\uC18D \uCC28\uAC11\uAC8C \uD574 \uB458\uAC8C\uC694, \uC5F0\uAD6C\uC6D0 \uC528. \uC774\uAC8C \uB0C9\uC7A5\uACE0\uAC00 \uD574\uC57C \uD560 \uC9C4\uC9DC \uC77C\uC774\uC5D0\uC694.", standing: "maddy", act: "nod" },
+    { id: "tag", speaker: "", body: "\uC544\uD2B8\uB77C\uAC00 \uC18C\uB9E4 \uC18D\uC5D0\uC11C \uC131\uC5D0 \uB080 \uC774\uB984\uD45C \uD558\uB098\uB97C \uAEBC\uB0B4 \uBA54\uB860 \uC55E\uC5D0 \uC870\uC2EC\uC2A4\uB7FD\uAC8C \uB0B4\uB824\uB193\uB294\uB2E4.", standing: "atra", cast: [{ id: "atra", slot: "left" }, { id: "meron", slot: "right" }] },
+    { id: "kept", speaker: "\uC544\uD2B8\uB77C", body: "\uC774, \uC774\uAC83\uB3C4\uC694\u2026 \uC544\uAE4C \uBAB0\uB798 \uBE7C \uB480\uC5B4\uC694. \uC774, \uC774\uB984\uC740 \uC9C0\uC6B0\uBA74 \uC548 \uB3FC\uC694. \uC81C \uBAA9\uB85D\uB3C4\u2026 \uADF8\uB798\uC11C \uC788\uB294 \uAC70\uC608\uC694.", standing: "atra", act: "shrink" },
+    {
+      id: "choose",
+      speaker: "",
+      body: "\uC544\uD2B8\uB77C\uAC00 \uC18C\uB9E4 \uB4A4\uB85C \uB2E4\uC2DC \uC5BC\uAD74\uC744 \uBC18\uCBE4 \uC228\uAE34\uB2E4.",
+      standing: "atra",
+      choices: [
+        { id: "thanks", label: "\uACE0\uB9D9\uB2E4\uACE0 \uB9D0\uD55C\uB2E4", nextId: "thanksA", effect: { type: "bondXp", relicId: "meron", amount: 3 } },
+        { id: "ask", label: "\uBAA9\uB85D \uC774\uC57C\uAE30\uB97C \uB354 \uBB3B\uB294\uB2E4", nextId: "askB", effect: { type: "bondXp", relicId: "maddy", amount: 3 } }
+      ]
+    },
+    { id: "thanksA", speaker: "\uC544\uD2B8\uB77C", body: "\uACE0, \uACE0\uB9D9\uB2E4\uB294 \uB9D0\uC740\u2026 \uBAA9\uB85D\uC5D0 \uC801\uB294 \uC0AC\uB78C\uD55C\uD14C \uD558\uB294 \uAC8C \uC544\uB2CC\uB370\uC694\u2026", standing: "atra", act: "recoil", nextId: "neuri" },
+    { id: "askB", speaker: "\uC544\uD2B8\uB77C", body: "\u2026\uC544\uBB34\uB3C4 \uC548 \uC801\uC5B4 \uC8FC\uBA74, \uC5C6\uC5C8\uB358 \uAC8C \uB3FC\uC694. \uADF8, \uADF8\uB798\uC11C \uC81C\uAC00 \uC801\uC5B4\uC694. \uB9C8\uC74C\uC5D0 \uB4DC\uB294 \uC0AC\uB78C\uBD80\uD130\u2026", standing: "atra", act: "lean", nextId: "neuri" },
+    { id: "neuri", speaker: "\uB124\uC6B0\uB9AC", body: "\uC544\uD2B8\uB77C, \uAC00\uC694. \uAC04\uBD80\uB2D8\uAED8\uB294 \u300C\uAE30\uB85D \uC190\uC0C1\u300D\uC774\uB77C\uACE0 \uC62C\uB9B4\uAC8C\uC694. \u2026\uC5BC\uC5C8\uC73C\uB2C8\uAE4C \uAC70\uC9D3\uB9D0\uC740 \uC544\uB2C8\uC8E0.", standing: "neuri", cast: [{ id: "atra", slot: "left" }, { id: "neuri", slot: "right" }], act: "lean" },
+    { id: "draw", speaker: "\uBA54\uB860", body: "\u2026\uC774 \uC5BC\uAD74\uB4E4\uC774\uB791, \uC544\uD2B8\uB77C \uC528 \uC5BC\uAD74\uB3C4 \uAC19\uC774 \uADF8\uB824 \uB458\uAC8C\uC694.", standing: "meron", cast: [{ id: "meron", slot: "center" }], act: "nod" }
+  ])
+};
 var SUB_STORIES = [
   STAGE_1_8_SIDE_PRE,
   STAGE_1_8_SIDE_POST,
   STAGE_2_3_LOST_BADGE,
+  STAGE_2_4_SIDE_PRE,
+  STAGE_2_4_SIDE_POST,
   STAGE_2_6_SAME_LINE,
   STAGE_2_9_SECOND_CHASE,
+  STAGE_3_3_SIDE_PRE,
+  STAGE_3_3_SIDE_POST,
   STAGE_3_5_BEHIND_SLEEVE,
-  STAGE_3_8_APOLOGY
+  STAGE_3_8_APOLOGY,
+  STAGE_4_3_BREAK_TIME,
+  STAGE_4_7_SIDE_PRE,
+  STAGE_4_7_SIDE_POST,
+  STAGE_5_2_SIDE_PRE,
+  STAGE_5_2_SIDE_POST,
+  STAGE_5_8_YOUNGEST_SHARE,
+  STAGE_6_4_SIDE_PRE,
+  STAGE_6_4_SIDE_POST,
+  STAGE_6_7_CLAW_MARKS,
+  STAGE_7_3_MENDED_SLEEVE,
+  STAGE_7_6_SIDE_PRE,
+  STAGE_7_6_SIDE_POST
 ];
 
 // src/data/stageStories.ts
@@ -37274,6 +37788,12 @@ var LINKS = {
   "1-7": { pre: "stage-1-7-pre" },
   "1-8": { pre: "stage-1-8-pre" },
   "1-8-side-battle": { pre: "stage-1-8-side-pre", post: "stage-1-8-side-post" },
+  "2-4-side-battle": { pre: "stage-2-4-side-pre", post: "stage-2-4-side-post" },
+  "3-3-side-battle": { pre: "stage-3-3-side-pre", post: "stage-3-3-side-post" },
+  "4-7-side-battle": { pre: "stage-4-7-side-pre", post: "stage-4-7-side-post" },
+  "5-2-side-battle": { pre: "stage-5-2-side-pre", post: "stage-5-2-side-post" },
+  "6-4-side-battle": { pre: "stage-6-4-side-pre", post: "stage-6-4-side-post" },
+  "7-6-side-battle": { pre: "stage-7-6-side-pre", post: "stage-7-6-side-post" },
   "1-9": { pre: "stage-1-9-pre", post: "stage-1-9-post" },
   "1-10": { pre: "stage-1-10-pre", post: "stage-1-10-post" },
   "2-1": { pre: "stage-2-1-pre" },
@@ -37442,6 +37962,48 @@ function placeholderAdToken(slotId) {
 
 // src/core/gacha.ts
 init_define_import_meta_env();
+
+// src/core/liveSchedule.ts
+init_define_import_meta_env();
+var LIVE_SCHEDULE_KINDS = ["banner", "product", "event", "lobby"];
+var current = [];
+var OPEN_START = "2000-01-01T00:00:00.000Z";
+var OPEN_END = "2099-12-31T23:59:59.000Z";
+var isTime = (value) => typeof value === "string" && value.length <= 40 && Number.isFinite(Date.parse(value));
+function parseLiveSchedule(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const r = row;
+    if (!LIVE_SCHEDULE_KINDS.includes(r.kind)) continue;
+    if (typeof r.id !== "string" || r.id.length === 0 || r.id.length > 96) continue;
+    const startsAt = r.startsAt === null || r.startsAt === void 0 ? null : isTime(r.startsAt) ? new Date(r.startsAt).toISOString() : void 0;
+    const endsAt = r.endsAt === null || r.endsAt === void 0 ? null : isTime(r.endsAt) ? new Date(r.endsAt).toISOString() : void 0;
+    if (startsAt === void 0 || endsAt === void 0) continue;
+    out.push({ kind: r.kind, id: r.id, startsAt, endsAt, enabled: r.enabled !== false });
+  }
+  return out;
+}
+function setLiveSchedule(raw) {
+  current = parseLiveSchedule(raw);
+}
+function liveSchedule() {
+  return current;
+}
+function scheduledWindow(kind, id, def, entries = current) {
+  const entry = entries.find((row) => row.kind === kind && row.id === id);
+  if (!entry) return { ...def.startsAt !== void 0 ? { startsAt: def.startsAt } : {}, ...def.endsAt !== void 0 ? { endsAt: def.endsAt } : {}, enabled: true, overridden: false };
+  return { ...entry.startsAt !== null ? { startsAt: entry.startsAt } : {}, ...entry.endsAt !== null ? { endsAt: entry.endsAt } : {}, enabled: entry.enabled, overridden: true };
+}
+function windowOpen(window2, now) {
+  if (!window2.enabled) return false;
+  if (window2.startsAt !== void 0 && now < Date.parse(window2.startsAt)) return false;
+  if (window2.endsAt !== void 0 && now >= Date.parse(window2.endsAt)) return false;
+  return true;
+}
+
+// src/core/gacha.ts
 var TEN_PULL_SR_UPGRADE_CHANCE = 0.02;
 function carryoverTenAvailable(banner, pity) {
   return banner.carryoverTenCost !== void 0 && (pity?.discountTens ?? 0) > 0;
@@ -37463,11 +38025,9 @@ function pullPayment(wallet, banner, count2, pity) {
   const gems2 = (cost - tickets) * RESEARCH_TICKET_GEM_PRICE;
   return { tickets, gems: gems2, affordable: wallet.gems >= gems2 };
 }
-function bannerActive(banner, now) {
-  const t2 = now.getTime();
-  if (banner.startsAt !== void 0 && t2 < Date.parse(banner.startsAt)) return false;
-  if (banner.endsAt !== void 0 && t2 >= Date.parse(banner.endsAt)) return false;
-  return true;
+function bannerActive(banner, now, schedule = liveSchedule()) {
+  const window2 = banner.id === void 0 ? { ...banner, enabled: true, overridden: false } : scheduledWindow("banner", banner.id, banner, schedule);
+  return windowOpen(window2, now.getTime());
 }
 function bannerPullsRemaining(banner, pity) {
   if (banner.pullLimit === void 0) return Number.POSITIVE_INFINITY;
@@ -38683,9 +39243,9 @@ var ExpeditionManager = class {
    * 지난주 최고 기록은 순위 보상 대기로 옮겨 간다 — 여기서 0으로 지우기만 하면 그 주의 보상이 사라진다.
    */
   normalizeWeek() {
-    const current = normalizeExpeditionState(this.state.expedition);
-    const next = rollExpeditionPeriods(current, this.serverNow());
-    if (next !== current || !("dayKey" in this.state.expedition)) this.commit(next);
+    const current2 = normalizeExpeditionState(this.state.expedition);
+    const next = rollExpeditionPeriods(current2, this.serverNow());
+    if (next !== current2 || !("dayKey" in this.state.expedition)) this.commit(next);
   }
 };
 var ExpeditionClient = class {
@@ -38736,9 +39296,9 @@ var expeditionManager = new ExpeditionClient();
 
 // src/core/settingsOwnership.ts
 init_define_import_meta_env();
-var ACCOUNT_GAME_SETTING_KEYS = ["battleSpeed", "autoUltimate", "formationRoleHint", "skipUltimatePresentation", "textSpeed", "dungeonTiers"];
+var ACCOUNT_GAME_SETTING_KEYS = ["battleSpeed", "autoUltimate", "formationRoleHint", "skipUltimatePresentation", "textSpeed", "dungeonTiers", "partyPresets", "partyPresetIndex"];
 function accountGameSettings(game) {
-  return { battleSpeed: game.battleSpeed, autoUltimate: game.autoUltimate, formationRoleHint: game.formationRoleHint, skipUltimatePresentation: game.skipUltimatePresentation, textSpeed: game.textSpeed, dungeonTiers: { ...game.dungeonTiers } };
+  return { battleSpeed: game.battleSpeed, autoUltimate: game.autoUltimate, formationRoleHint: game.formationRoleHint, skipUltimatePresentation: game.skipUltimatePresentation, textSpeed: game.textSpeed, dungeonTiers: { ...game.dungeonTiers }, partyPresets: game.partyPresets.map((preset) => ({ name: preset.name, slots: [...preset.slots] })), partyPresetIndex: game.partyPresetIndex };
 }
 function accountPartOfPatch(patch) {
   const game = patch.game;
@@ -38882,7 +39442,28 @@ function mileage(id, category, iconKey, name, description, price, limit, grants)
     visibleUntil: UNTIL
   };
 }
+var MILEAGE_PICKUP_PRICE = 300;
+function pickupProducts() {
+  return BANNERS.flatMap((banner) => (banner.pickupRelicIds.SSR ?? []).map((relicId) => ({
+    id: `mileage-pickup-${banner.id}-${relicId}`,
+    storefront: "mileage",
+    category: "weekly",
+    iconKey: "shop-product-enhancement",
+    name: "\uD55C\uC815 \uD53D\uC5C5 \uB810\uB9AD",
+    description: "\uD55C\uC815 \uD53D\uC5C5 \uB810\uB9AD \xB7 \uBCF4\uC720 \uC2DC \uD30C\uD3B8 1\uAC1C",
+    acquisition: { kind: "currency", currency: "dnaFragments", amount: MILEAGE_PICKUP_PRICE },
+    grants: [{ kind: "relic_fragment", relicId, amount: 1 }],
+    defaultQuantity: 1,
+    purchaseLimit: 1,
+    refresh: "none",
+    visibleFrom: FROM,
+    visibleUntil: UNTIL,
+    bannerId: banner.id
+  })));
+}
 var MILEAGE_PRODUCTS = [
+  // 한정 픽업 렐릭이 주간 구역의 맨 앞, 그 뒤가 그 주의 SSR 파편이다.
+  ...pickupProducts(),
   // 주간 — 그 주의 SSR 파편이 맨 앞이다.
   mileage("mileage-weekly-ssr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SSR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC \uC810\uC6D0\uC758 \uD30C\uD3B8 1\uAC1C", 200, 1, [{ kind: "weekly_ssr_fragment", amount: 1 }]),
   mileage("mileage-weekly-sr", "weekly", "shop-product-enhancement", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8", "\uC774\uBC88 \uC8FC SR \uD30C\uD3B8 1\uAC1C", 40, 1, [{ kind: "rotating_fragment", rarity: "SR", period: "weekly", amount: 1 }]),
@@ -40313,10 +40894,10 @@ var FakeGuildServer = class _FakeGuildServer {
    * 기여한 길드의 몫이다. 받은 것으로 적고 돌려주며, 우편은 부르는 쪽(`FakeServer`)이 세운다.
    */
   async claimWeeklyRankRewards(actor) {
-    const current = guildWeekKey(this.now());
+    const current2 = guildWeekKey(this.now());
     const awards = [];
     for (const [week, byGuild] of [...this.weekLedger.entries()].sort(([a], [b]) => a < b ? -1 : 1)) {
-      if (week >= current || this.rankAwarded.has(`week:${week}:${actor.userId}`)) continue;
+      if (week >= current2 || this.rankAwarded.has(`week:${week}:${actor.userId}`)) continue;
       const own = [...byGuild.entries()].filter(([, byMember]) => (byMember.get(actor.userId) ?? 0) > 0).sort((a, b) => (b[1].get(actor.userId) ?? 0) - (a[1].get(actor.userId) ?? 0))[0];
       if (!own) continue;
       this.rankAwarded.add(`week:${week}:${actor.userId}`);
@@ -40452,8 +41033,8 @@ var FakeGuildServer = class _FakeGuildServer {
       } else {
         const slot = parseGuildWarSlotId(input.slotId);
         if (!slot || !guildWarMapSlots(this.level(guild)).some(({ id }) => id === slot.id)) return fail2("SLOT_INVALID");
-        const current = war.get(slot.id);
-        if (current && current.userId !== me.userId) fail2("SLOT_TAKEN");
+        const current2 = war.get(slot.id);
+        if (current2 && current2.userId !== me.userId) fail2("SLOT_TAKEN");
         slotId = slot.id;
       }
       this.dropWarDefense(guild, me.userId);
@@ -40748,8 +41329,8 @@ var FakeGuildServer = class _FakeGuildServer {
   }
   /** 호출자가 길드에 없으면 새로 만들고(길드장), 있으면 그 길드를 돌려준다. 젬·레벨 조건은 보지 않는다. */
   qaEnsureGuild(actor, badge, name = "QA \uC5F0\uD569") {
-    const current = this.userGuild.get(actor.userId);
-    if (current && this.guilds.has(current)) return current;
+    const current2 = this.userGuild.get(actor.userId);
+    if (current2 && this.guilds.has(current2)) return current2;
     let unique = name;
     let n = 1;
     while ([...this.guilds.values()].some((g) => guildNameKey(g.name) === guildNameKey(unique))) unique = `${name} ${++n}`;
@@ -41006,6 +41587,7 @@ function mileageRotatingFragmentId(rarity, period, now) {
 function mileageFragmentRelicId(grant, now) {
   if (grant.kind === "weekly_ssr_fragment") return mileageWeeklyClerkId(now);
   if (grant.kind === "rotating_fragment") return mileageRotatingFragmentId(grant.rarity, grant.period, now);
+  if (grant.kind === "relic_fragment") return grant.relicId;
   return void 0;
 }
 
@@ -41193,6 +41775,71 @@ function claimAchievements(state, facts, seriesIds) {
     if (reached === series.tiers.length) completedSeriesIds.push(series.id);
   }
   return { state: { ...state, claimed }, claimedTiers, completedSeriesIds, rewards: mergeMissionRewards(rewards) };
+}
+
+// src/core/newbieGrowth.ts
+init_define_import_meta_env();
+var DAY_MS5 = 864e5;
+function newbieGrowthFacts(facts, achievements, relicsBrokenThrough) {
+  const extra = {
+    favoriteChosen: achievements.favoriteChosen ? 1 : 0,
+    guildJoined: achievements.guildJoined ? 1 : 0,
+    relicsBrokenThrough
+  };
+  return { ...facts, ...extra };
+}
+function newbieGrowthWindow(createdAt, now) {
+  const start = createdAt ? Date.parse(createdAt) : Number.NaN;
+  if (!Number.isFinite(start)) return { active: false, day: 0, endsAt: (/* @__PURE__ */ new Date(0)).toISOString() };
+  const elapsed = Math.max(0, now.getTime() - start);
+  const end = start + NEWBIE_GROWTH_WINDOW_DAYS * DAY_MS5;
+  const active3 = now.getTime() < end;
+  const day = active3 ? Math.min(NEWBIE_GROWTH_DAYS, Math.floor(elapsed / DAY_MS5) + 1) : 0;
+  return { active: active3, day, ...active3 && day < NEWBIE_GROWTH_DAYS ? { nextDayAt: new Date(start + day * DAY_MS5).toISOString() } : {}, endsAt: new Date(end).toISOString() };
+}
+function newbieGrowthGoalState(goal, facts, claimed, openDay) {
+  if (claimed.has(goal.id)) return "claimed";
+  if (goal.day > openDay) return "locked";
+  return facts[goal.metric] >= goal.target ? "claimable" : "progress";
+}
+function newbieGrowthClaimedGoalCount(claimed) {
+  return NEWBIE_GROWTH_GOALS.filter(({ id }) => claimed.has(id)).length;
+}
+function newbieGrowthMilestoneState(milestone, claimed) {
+  if (claimed.has(milestone.id)) return "claimed";
+  return newbieGrowthClaimedGoalCount(claimed) >= milestone.goals ? "claimable" : "progress";
+}
+function newbieGrowthClaimableCount(facts, claimed, openDay) {
+  const goals = NEWBIE_GROWTH_GOALS.filter((goal) => newbieGrowthGoalState(goal, facts, claimed, openDay) === "claimable").length;
+  const milestones = NEWBIE_GROWTH_MILESTONES.filter((milestone) => newbieGrowthMilestoneState(milestone, claimed) === "claimable").length;
+  return goals + milestones;
+}
+function claimNewbieGrowth(facts, claimed, openDay, options = {}) {
+  const requested = options.goalIds ? new Set(options.goalIds) : void 0;
+  const next = new Set(claimed);
+  const goalIds = [];
+  for (const goal of NEWBIE_GROWTH_GOALS) {
+    if (requested && !requested.has(goal.id)) continue;
+    if (newbieGrowthGoalState(goal, facts, next, openDay) !== "claimable") continue;
+    next.add(goal.id);
+    goalIds.push(goal.id);
+  }
+  const rewards = goalIds.length > 0 ? [{ currency: "gems", amount: goalIds.length * NEWBIE_GROWTH_GOAL_GEMS }] : [];
+  const milestoneIds = [];
+  let srSelect = false;
+  for (const milestone of NEWBIE_GROWTH_MILESTONES) {
+    if (newbieGrowthMilestoneState(milestone, next) !== "claimable") continue;
+    if (milestone.reward.kind === "srSelect") {
+      if (!options.includeSrSelect) continue;
+      srSelect = true;
+    } else rewards.push({ currency: milestone.reward.currency, amount: milestone.reward.amount });
+    next.add(milestone.id);
+    milestoneIds.push(milestone.id);
+  }
+  return { goalIds, milestoneIds, rewards, srSelect };
+}
+function newbieGrowthSrChoices() {
+  return STANDARD_POOLS.SR;
 }
 
 // src/core/shopRotation.ts
@@ -41862,14 +42509,14 @@ init_define_import_meta_env();
 var package_default = {
   name: "for-garden",
   private: true,
-  version: "0.407.4",
+  version: "0.413.0",
   type: "module",
   description: "For - Garden \u2014 \uC774\uD130\uB110 \uC2DC\uD2F0. \uBA78\uC885 \uB3D9\uBB3C \uBCF5\uC6D0 \uC5F0\uAD6C \uB3C4\uC2DC\uB97C \uBB34\uB300\uB85C \uD55C \uC138\uB85C\uD615 \uBAA8\uBC14\uC77C \uC218\uC9D1\uD615 RPG.",
   scripts: {
     dev: "vite",
-    build: "tsc --noEmit && vite build",
+    build: "tsc --noEmit && vite build && node scripts/build-site-events.mjs && node scripts/build-site-schedule.mjs",
     "build:test": "tsc --noEmit && vite build --mode test",
-    "build:qa": "tsc --noEmit && vite build --mode qa",
+    "build:qa": "tsc --noEmit && vite build --mode qa && node scripts/build-site-events.mjs && node scripts/build-site-schedule.mjs",
     preview: "vite preview",
     "preview:e2e": "npm run build:test && vite preview",
     typecheck: "tsc --noEmit",
@@ -41946,6 +42593,7 @@ var READ_METHODS = /* @__PURE__ */ new Set([
   "arena.get",
   "archaeologyState",
   "getAchievements",
+  "getNewbieGrowth",
   "getAncientRanking",
   "getAdOperationsConfig",
   "getAsyncArenaServerState",
@@ -42104,6 +42752,8 @@ var SERVER_GAME_METHODS = [
   "feedRelic",
   "fulfillPlatformPurchase",
   "getAchievements",
+  "getNewbieGrowth",
+  "claimNewbieGrowth",
   "getAdOperationsConfig",
   "getAsyncArenaServerState",
   "getAttendance",
@@ -42452,15 +43102,15 @@ var SettingsManager = class extends EventTarget {
   /** 섹션 단위 부분 변경을 합친 뒤 보정·저장·이벤트를 항상 같은 순서로 수행한다. */
   /** 던전 입구에서 고른 단계를 기억한다. 같은 값이면 저장하지 않는다. */
   rememberDungeonTier(dungeon, tierId2) {
-    const current = this.get().game.dungeonTiers;
-    if (current[dungeon] === tierId2) return;
-    this.update({ game: { dungeonTiers: { ...current, [dungeon]: tierId2 } } });
+    const current2 = this.get().game.dungeonTiers;
+    if (current2[dungeon] === tierId2) return;
+    this.update({ game: { dungeonTiers: { ...current2, [dungeon]: tierId2 } } });
   }
   /** 길드전·수호전 탭에서 지금 판을 봤다고 적는다 — 붉은 점이 꺼진다. `guardReward`는 알린 수호전 순위 보상의, `warResult`는 알린 길드전 결과의 날짜다. */
   rememberGuildSeen(page, key) {
-    const current = this.get().game.guildSeen;
-    if (current[page] === key) return;
-    this.update({ game: { guildSeen: { ...current, [page]: key } } });
+    const current2 = this.get().game.guildSeen;
+    if (current2[page] === key) return;
+    this.update({ game: { guildSeen: { ...current2, [page]: key } } });
   }
   /** 지금 길드 레벨을 봤다고 적는다(`guildLevelUpNotice`의 키). */
   rememberGuildLevel(key) {
@@ -42531,9 +43181,9 @@ var SettingsManager = class extends EventTarget {
     const apply = async () => {
       const previous = this.get().notifications;
       result = this.update({ notifications: patch });
-      const current = result.notifications;
+      const current2 = result.notifications;
       const kinds = ["staminaFull", "dailyMission"];
-      const targets2 = !current.enabled ? kinds : kinds.filter((kind) => previous[kind] && !current[kind]);
+      const targets2 = !current2.enabled ? kinds : kinds.filter((kind) => previous[kind] && !current2[kind]);
       for (const kind of targets2) await this.cancelNotification(kind);
       result = this.get();
     };
@@ -42921,8 +43571,8 @@ var FakeServer = class {
   /* ── 출석 ─────────────────────────────────────────────────────────────────── */
   /** 오늘에 맞춰 넘긴 출석 상태. 바뀌었으면 저장까지 확정한다(신규 출석의 시작일이 처음 정해지는 자리다). */
   attendanceNow(now) {
-    const current = normalizeAttendanceState(this.state.attendance);
-    const rolled = rollAttendance(current, now);
+    const current2 = normalizeAttendanceState(this.state.attendance);
+    const rolled = rollAttendance(current2, now);
     if (JSON.stringify(rolled) !== JSON.stringify(this.state.attendance)) this.commitRaidState({ ...this.state, attendance: rolled });
     return rolled;
   }
@@ -43080,9 +43730,9 @@ var FakeServer = class {
   /** 계정의 환경설정만 받는다. 허용 목록 밖의 키와 범위 밖의 값은 정규화가 버리거나 기본값으로 돌린다. */
   async updateAccountSettings(request) {
     await this.delay();
-    const current = normalizeSettings(this.state.settings);
+    const current2 = normalizeSettings(this.state.settings);
     const patch = accountPartOfPatch({ game: request?.game ?? {} }) ?? {};
-    const settings = normalizeSettings({ ...current, game: { ...current.game, ...patch } });
+    const settings = normalizeSettings({ ...current2, game: { ...current2.game, ...patch } });
     this.persist({ ...this.state, settings });
     this.state.settings = settings;
     return { game: accountGameSettings(settings.game) };
@@ -43935,7 +44585,8 @@ var FakeServer = class {
   async setFavorite(request) {
     await this.delay();
     if (!this.state.owned.has(request.relicId) || !PLAYABLE_RELICS.some(({ id }) => id === request.relicId)) return { ok: false };
-    this.persist({ ...this.state, favorite: request.relicId });
+    const achievements = { ...normalizeAchievementState(this.state.achievements), favoriteChosen: true };
+    this.persist({ ...this.state, favorite: request.relicId, achievements });
     this.state.favorite = request.relicId;
     return { ok: true };
   }
@@ -44070,8 +44721,8 @@ var FakeServer = class {
   async changeGuildBadge(request) {
     await this.delay();
     const actor = this.guildActor();
-    const current = await this.guildBackend.getGuild(actor);
-    const differs = current.guild !== null && !current.guild.badgeFree && !sameGuildBadge(current.guild.badge, request.badge);
+    const current2 = await this.guildBackend.getGuild(actor);
+    const differs = current2.guild !== null && !current2.guild.badgeFree && !sameGuildBadge(current2.guild.badge, request.badge);
     if (differs) this.assertGuildGems(GUILD_BADGE_CHANGE_GEMS);
     const { charged } = await this.guildBackend.changeBadge(actor, request.badge, this.guildRequestId("badge"));
     if (charged) {
@@ -44084,10 +44735,10 @@ var FakeServer = class {
   async renameGuild(request) {
     await this.delay();
     const actor = this.guildActor();
-    const current = await this.guildBackend.getGuild(actor);
+    const current2 = await this.guildBackend.getGuild(actor);
     const checked = validateGuildName(String(request?.name ?? ""));
     if (!checked.ok) throw new GuildApiError("NAME_INVALID", "NAME_INVALID");
-    if (current.guild !== null && current.guild.name !== checked.name) this.assertGuildGems(GUILD_RENAME_GEMS);
+    if (current2.guild !== null && current2.guild.name !== checked.name) this.assertGuildGems(GUILD_RENAME_GEMS);
     const { changed } = await this.guildBackend.renameGuild(actor, checked.name, this.guildRequestId("rename"));
     if (changed) {
       const next = { ...this.state, wallet: { ...this.state.wallet, gems: this.state.wallet.gems - GUILD_RENAME_GEMS } };
@@ -44350,15 +45001,15 @@ var FakeServer = class {
   async equipRelicSkin(request) {
     await this.delay();
     if (!this.state.owned.has(request.relicId)) return { ok: false };
-    const current = this.state.equippedRelicSkinIds[request.relicId];
+    const current2 = this.state.equippedRelicSkinIds[request.relicId];
     const next = { ...this.state.equippedRelicSkinIds };
     if (request.skinId === void 0) {
-      if (current === void 0) return { ok: false };
+      if (current2 === void 0) return { ok: false };
       delete next[request.relicId];
     } else {
       const skin = getRelicSkin(request.skinId);
       if (!this.state.ownedRelicSkinIds.has(request.skinId) || skin?.relicId !== request.relicId) return { ok: false };
-      if (current === request.skinId) return { ok: true };
+      if (current2 === request.skinId) return { ok: true };
       next[request.relicId] = request.skinId;
     }
     this.persist({ ...this.state, equippedRelicSkinIds: next });
@@ -44514,8 +45165,8 @@ var FakeServer = class {
     const wallet = { ...this.state.wallet };
     const before = wallet[reward.currency];
     wallet[reward.currency] = Math.min(WALLET_CAPS[reward.currency], before + reward.amount);
-    const current = this.state.dailyAdRewards.date === status.date ? this.state.dailyAdRewards : { date: status.date, claimsBySlot: {}, requestIds: [] };
-    const dailyAdRewards = { date: status.date, claimsBySlot: { ...current.claimsBySlot, [ROULETTE.counter]: status.used + 1 }, requestIds: [...current.requestIds, request.requestId] };
+    const current2 = this.state.dailyAdRewards.date === status.date ? this.state.dailyAdRewards : { date: status.date, claimsBySlot: {}, requestIds: [] };
+    const dailyAdRewards = { date: status.date, claimsBySlot: { ...current2.claimsBySlot, [ROULETTE.counter]: status.used + 1 }, requestIds: [...current2.requestIds, request.requestId] };
     this.persist({ ...this.state, wallet, dailyAdRewards });
     this.state.wallet = wallet;
     this.state.dailyAdRewards = dailyAdRewards;
@@ -44737,12 +45388,12 @@ var FakeServer = class {
     if (!request.verificationToken || !await this.verifyAdToken(request.verificationToken, slot.id)) throw new GameApiError("AD_TOKEN_INVALID", "\uAD11\uACE0 \uC644\uB8CC\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const now = this.now();
     const date = now.toISOString().slice(0, 10);
-    const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
-    const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
+    const current2 = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
+    const dailyClaims = current2.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "\uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uAD11\uACE0 \uBCF4\uC0C1\uC744 \uBAA8\uB450 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.");
     this.assertAdPrerequisite(slot, now);
     const nextClaims = dailyClaims + 1;
-    const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
+    const nextAds = { date, claimsBySlot: { ...current2.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current2.requestIds, request.requestId] };
     const walletBefore = { ...this.state.wallet };
     const applied = this.applyAdReward(slot.reward, now);
     const duelToday = slot.reward.kind === "duel_attempt" ? this.duelNow(now) : void 0;
@@ -44855,8 +45506,8 @@ var FakeServer = class {
     const nextWallet = { ...this.state.wallet };
     const applied = this.applyProductGrants(product, 1, nextWallet, this.state.itemInventory.map((entry) => ({ ...entry })), now, bonus);
     const periodKey = this.productPeriodKey(product, now);
-    const current = this.state.productPurchases[product.id];
-    const count2 = (current?.periodKey === periodKey ? current.count : 0) + 1;
+    const current2 = this.state.productPurchases[product.id];
+    const count2 = (current2?.periodKey === periodKey ? current2.count : 0) + 1;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet;
@@ -44911,8 +45562,8 @@ var FakeServer = class {
     const product = PRODUCTS.find(({ id }) => id === stored.productId);
     if (!request.requestId || !product?.passBenefit?.instantAdRewards) throw new GameApiError("PASS_NOT_FOUND", "\uAD11\uACE0 \uC989\uC2DC \uC218\uB839 \uAD8C\uB9AC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const date = now.toISOString().slice(0, 10);
-    const current = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
-    const dailyClaims = current.claimsBySlot[slot.id] ?? 0;
+    const current2 = this.state.dailyAdRewards.date === date ? this.state.dailyAdRewards : { date, claimsBySlot: {}, requestIds: [] };
+    const dailyClaims = current2.claimsBySlot[slot.id] ?? 0;
     if (dailyClaims >= slot.dailyLimitUtc) throw new GameApiError("AD_DAILY_LIMIT", "\uC624\uB298 \uBC1B\uC744 \uC218 \uC788\uB294 \uAD11\uACE0 \uBCF4\uC0C1\uC744 \uBAA8\uB450 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.");
     this.assertAdPrerequisite(slot, now);
     const rawBonus = product.passBenefit.dailyBonus;
@@ -44922,7 +45573,7 @@ var FakeServer = class {
     const nextWallet = applied.wallet;
     if (bonus) nextWallet.gems = Math.min(WALLET_CAPS.gems, nextWallet.gems + bonus.amount);
     const nextClaims = dailyClaims + 1;
-    const nextAds = { date, claimsBySlot: { ...current.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current.requestIds, request.requestId] };
+    const nextAds = { date, claimsBySlot: { ...current2.claimsBySlot, [slot.id]: nextClaims }, requestIds: [...current2.requestIds, request.requestId] };
     const candidate = structuredClone(this.state);
     candidate.wallet = nextWallet;
     candidate.idleExcavation = applied.excavation;
@@ -45020,11 +45671,11 @@ var FakeServer = class {
   /** 서버가 보유·상한·치즈케이크를 검증하고 차감과 성장 반영을 한 저장 단위로 확정한다. */
   async feedRelic(relicId, feeds = 1) {
     await this.delay();
-    const current = this.state.relicProgress[relicId];
-    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
-    if (current.level >= relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uC774\uBBF8 \uCD5C\uB300 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
-    if (!canFeedRelic(current, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const result = feedRelic(current, this.state.wallet.cheesecake, feeds);
+    const current2 = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    if (current2.level >= relicLevelCap(current2.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uC774\uBBF8 \uCD5C\uB300 \uB808\uBCA8\uC785\uB2C8\uB2E4.");
+    if (!canFeedRelic(current2, this.state.wallet.cheesecake)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uCE58\uC988\uCF00\uC774\uD06C\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const result = feedRelic(current2, this.state.wallet.cheesecake, feeds);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
     const nextWallet = { ...this.state.wallet, cheesecake: result.cheesecake };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "salary_given", count: result.feeds }, this.now());
@@ -45041,19 +45692,19 @@ var FakeServer = class {
    */
   async breakThroughRelic(relicId) {
     await this.delay();
-    const current = this.state.relicProgress[relicId];
-    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
-    const step2 = nextBreakthrough(current.breakthrough);
+    const current2 = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    const step2 = nextBreakthrough(current2.breakthrough);
     if (!step2) throw new GameApiError("RELIC_MAX_LEVEL", "\uB354 \uB6AB\uC744 \uCC9C\uC7A5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (current.level < relicLevelCap(current.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uB808\uBCA8\uC744 \uC0C1\uD55C\uAE4C\uC9C0 \uC62C\uB824\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (current2.level < relicLevelCap(current2.breakthrough)) throw new GameApiError("RELIC_MAX_LEVEL", "\uB808\uBCA8\uC744 \uC0C1\uD55C\uAE4C\uC9C0 \uC62C\uB824\uC57C \uB3CC\uD30C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
     const held = this.state.relicFragments[relicId] ?? 0;
     const rarity = RELICS.find(({ id }) => id === relicId)?.rarity ?? "R";
     const universalItem = UNIVERSAL_FRAGMENT_ITEM[rarity];
     const universal = this.state.itemInventory.find((stack) => stack.itemId === universalItem)?.quantity ?? 0;
-    if (!canBreakThrough(rarity, current, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const spend2 = breakthroughFragmentSpend(rarity, current.breakthrough, held, universal);
-    const breakthrough = current.breakthrough + 1;
-    const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current, breakthrough } };
+    if (!canBreakThrough(rarity, current2, held, this.state.wallet.cheesecake, universal)) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uB3CC\uD30C \uC7AC\uB8CC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+    const spend2 = breakthroughFragmentSpend(rarity, current2.breakthrough, held, universal);
+    const breakthrough = current2.breakthrough + 1;
+    const nextProgress = { ...this.state.relicProgress, [relicId]: { ...current2, breakthrough } };
     const nextFragments = { ...this.state.relicFragments, [relicId]: held - spend2.own };
     const nextItems = spend2.universal > 0 ? removeItemLot(this.state.itemInventory, universalItem, spend2.universal) : this.state.itemInventory;
     if (!nextItems) throw new GameApiError("INSUFFICIENT_ITEMS", "\uB9CC\uB2A5 \uD30C\uD3B8\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
@@ -45358,10 +46009,10 @@ var FakeServer = class {
   /** 서버 UTC 날짜를 기준으로 해당 렐릭의 하루 첫 로비 상호작용만 보상한다. */
   async interactInLobby(relicId) {
     await this.delay();
-    const current = this.state.relicProgress[relicId];
-    if (!this.state.owned.has(relicId) || !current) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    const current2 = this.state.relicProgress[relicId];
+    if (!this.state.owned.has(relicId) || !current2) throw new GameApiError("RELIC_NOT_FOUND", "\uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
     const utcDate = this.now().toISOString().slice(0, 10);
-    const result = grantDailyLobbyBondXp(current, utcDate);
+    const result = grantDailyLobbyBondXp(current2, utcDate);
     const nextProgress = { ...this.state.relicProgress, [relicId]: result.progress };
     const nextMissions = applyMissionEvent(this.state.missions, { type: "lobby_interaction" }, this.now());
     this.persist({ ...this.state, relicProgress: nextProgress, missions: nextMissions });
@@ -45504,8 +46155,8 @@ var FakeServer = class {
       return next2;
     }
     if (!QA_TOOLS_ENABLED) return this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
-    const current = this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
-    let next = rollDuelPeriods(current, now);
+    const current2 = this.state.duel ?? normalizeDuelState(void 0, [...this.state.owned]);
+    let next = rollDuelPeriods(current2, now);
     const pool = duelNpcPool(next.seasonId);
     if (next.candidateIds.length !== DUEL_OPPONENT_COUNT || next.candidateIds.some((id) => !pool.some((npc) => npc.id === id)) || duelAllOpponentsFought(next.candidateIds, next.foughtIds)) {
       next = { ...next, candidateIds: pickDuelOpponents(pool, next.score, this.random, next.candidateIds).map(({ id }) => id), foughtIds: [] };
@@ -45515,7 +46166,7 @@ var FakeServer = class {
     next = defended.state;
     const wallet = { ...this.state.wallet };
     wallet.gems += Math.max(0, Math.min(defended.reachedTiers.reduce((sum, tier) => sum + tier.firstReachGems, 0), WALLET_CAPS.gems - wallet.gems));
-    if (JSON.stringify(next) !== JSON.stringify(current) || wallet.gems !== this.state.wallet.gems) {
+    if (JSON.stringify(next) !== JSON.stringify(current2) || wallet.gems !== this.state.wallet.gems) {
       this.persist({ ...this.state, wallet, duel: next });
       this.state.wallet = wallet;
       this.state.duel = next;
@@ -45807,7 +46458,10 @@ var FakeServer = class {
   async getEvents() {
     await this.delay();
     const now = this.now();
-    return { events: EVENTS.map((event) => ({ ...event, status: this.eventStatus(event, now) })), serverTime: now.toISOString() };
+    return { events: EVENTS.map((event) => {
+      const window2 = scheduledWindow("event", event.id, event);
+      return { ...event, startsAt: window2.startsAt ?? OPEN_START, endsAt: window2.endsAt ?? OPEN_END, status: this.eventStatus(event, now) };
+    }), serverTime: now.toISOString() };
   }
   /** 이번 주 정기 이벤트 — 서버가 주입한 편성만 돌려주고 클라이언트가 만들어 내지 않는다. */
   async getRegularEvent() {
@@ -45855,11 +46509,13 @@ var FakeServer = class {
     const mail = this.mailListDto();
     const claimablePassCount = this.progressPassDtos(this.state).reduce((sum, pass) => sum + pass.milestones.filter((stage) => stage.freeState === "claimable" || stage.state === "claimable").length, 0);
     const claimableAchievements = claimableAchievementCount(normalizeAchievementState(this.state.achievements), achievementFacts(this.state));
+    const growth = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
+    const claimableGrowth = growth.active ? this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), now).claimableCount : 0;
     const roulette = rouletteStatus(this.state.dailyAdRewards, now);
     const expedition = this.rollExpedition(now);
     const claimableExpeditionCount = EXPEDITION_BEST_SCORE_REWARD_STAGES.filter((stage) => expedition.bestScore >= stage.threshold && !expedition.claimedRewardStageIds.includes(stage.id)).length;
     const claimableRaidCount = this.raidInstances(now).map((row) => this.raidDto(row, now)).filter((row) => row.status === "completed" && !row.settled && row.settlement.some((reward) => reward.amount > 0)).length;
-    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length, unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
+    return { claimableExpeditionCount, claimableRaidCount, claimableAchievementCount: claimableAchievements, claimableMailCount: mail.claimableCount, claimablePassCount, pendingFriendRequestCount: socialApi.pendingRequestCount(), unseenEventCount: attendance.tracks.filter(({ claimableToday }) => claimableToday).length + Number(roulette.active && (roulette.remaining > 0 || roulette.bonusAvailable)) + this.playableRegularEventIds(now).length + Number(claimableGrowth > 0), unreadMailCount: mail.unreadCount, freeSupplyCategories: this.freeSupplyCategories(now) };
   }
   /** 받을 수 있는 무료 보급이 남은 프리미엄 탭 — 목록의 `purchasable`과 같은 판정을 읽는다. */
   freeSupplyCategories(now) {
@@ -45923,8 +46579,8 @@ var FakeServer = class {
   async claimAchievementRewards(seriesIds) {
     await this.delay();
     for (const id of seriesIds ?? []) if (!ACHIEVEMENT_SERIES.some((series) => series.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC5C5\uC801\uC785\uB2C8\uB2E4.");
-    const current = normalizeAchievementState(this.state.achievements);
-    const claim = claimAchievements(current, achievementFacts(this.state), seriesIds);
+    const current2 = normalizeAchievementState(this.state.achievements);
+    const claim = claimAchievements(current2, achievementFacts(this.state), seriesIds);
     if (claim.rewards.length === 0 && Object.keys(claim.claimedTiers).length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uC5C5\uC801 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
     const nextWallet = { ...this.state.wallet };
     const granted = claim.rewards.map(({ currency: currency3, amount }) => {
@@ -45944,6 +46600,110 @@ var FakeServer = class {
       completedSeriesIds: claim.completedSeriesIds,
       newModifierIds: nextState.earnedProfileModifierIds.filter((id) => !before.has(id)),
       granted
+    };
+  }
+  /** 길드에 든 적이 있는가 — 굳힌 값이 먼저이고, 아니면 지금 소속을 본다(조회 실패는 아직 아님으로 둔다). */
+  async newbieGuildJoined() {
+    if (this.state.achievements?.guildJoined) return true;
+    try {
+      const { guild } = await this.guildBackend.getGuild(this.guildActor());
+      return guild !== void 0 && guild !== null;
+    } catch {
+      return false;
+    }
+  }
+  newbieGrowthFactsOf(state, guildJoined) {
+    const achievements = normalizeAchievementState(state.achievements);
+    const brokenThrough = PLAYABLE_RELICS.filter(({ id }) => state.owned.has(id) && (state.relicProgress[id]?.breakthrough ?? 0) > 0).length;
+    return newbieGrowthFacts(achievementFacts(state), { ...achievements, ...guildJoined ? { guildJoined: true } : {} }, brokenThrough);
+  }
+  newbieGrowthDto(state, facts, now) {
+    const window2 = newbieGrowthWindow(this.newbieGrowthStart(state), now);
+    const claimed = new Set(normalizeAchievementState(state.achievements).growth ?? []);
+    return {
+      active: window2.active,
+      day: window2.day,
+      ...window2.nextDayAt ? { nextDayAt: window2.nextDayAt } : {},
+      endsAt: window2.endsAt,
+      goals: NEWBIE_GROWTH_GOALS.map((goal) => ({ id: goal.id, day: goal.day, metric: goal.metric, target: goal.target, value: facts[goal.metric], state: newbieGrowthGoalState(goal, facts, claimed, window2.day) })),
+      milestones: NEWBIE_GROWTH_MILESTONES.map((milestone) => ({ id: milestone.id, goals: milestone.goals, reward: { ...milestone.reward }, state: newbieGrowthMilestoneState(milestone, claimed) })),
+      claimedGoals: newbieGrowthClaimedGoalCount(claimed),
+      claimableCount: window2.active ? newbieGrowthClaimableCount(facts, claimed, window2.day) : 0,
+      srChoices: [...newbieGrowthSrChoices()]
+    };
+  }
+  /** 7일 가이드가 시작된 시각 — 계정 카드의 연구 개시일. QA 빌드의 개발 서버는 기한과 상관없이 오늘 시작한 것처럼 연다. */
+  newbieGrowthStart(state) {
+    if (this.allEventsOpen()) return new Date(this.now().getTime() - 6 * 864e5).toISOString();
+    return state.playerCard.createdAt || void 0;
+  }
+  /** 신규 7일 성장 가이드 — 목표 값·상태와 받을 수를 서버가 판정한다. */
+  async getNewbieGrowth() {
+    await this.delay();
+    return this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, await this.newbieGuildJoined()), this.now());
+  }
+  /**
+   * 닿은 목표와 그로 열린 마디를 받는다. 젬·화석·호박석은 상한까지만 넣고, SR 선택권은 고른 렐릭을 처음 만났으면 그 렐릭을,
+   * 이미 가졌으면 그 렐릭 파편 한 장을 준다(돌파를 끝낸 렐릭은 고를 수 없다). 수령 표시·지급·렐릭을 한 번의 persist로 확정한다.
+   */
+  async claimNewbieGrowth(request) {
+    await this.delay();
+    const now = this.now();
+    const window2 = newbieGrowthWindow(this.newbieGrowthStart(this.state), now);
+    if (!window2.active) throw new GameApiError("EVENT_NOT_ACTIVE", "\uC2E0\uADDC \uC131\uC7A5 \uAC00\uC774\uB4DC \uAE30\uAC04\uC774 \uB05D\uB0AC\uC2B5\uB2C8\uB2E4.");
+    for (const id of request.goalIds ?? []) if (!NEWBIE_GROWTH_GOALS.some((goal) => goal.id === id)) throw new GameApiError("NOTHING_TO_CLAIM", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uBAA9\uD45C\uC785\uB2C8\uB2E4.");
+    const srRelicId = request.srRelicId;
+    if (srRelicId !== void 0) {
+      if (!newbieGrowthSrChoices().includes(srRelicId)) throw new GameApiError("RELIC_NOT_FOUND", "\uACE0\uB97C \uC218 \uC5C6\uB294 \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+      const progress = this.state.relicProgress[srRelicId];
+      if (this.state.owned.has(srRelicId) && progress && breakthroughGrade(progress.breakthrough) >= BREAKTHROUGH_GRADE_CAP) throw new GameApiError("RELIC_MAX_BREAKTHROUGH", "\uC774\uBBF8 \uB3CC\uD30C\uB97C \uB05D\uB9C8\uCE5C \uB810\uB9AD\uC785\uB2C8\uB2E4.");
+    }
+    const guildJoined = await this.newbieGuildJoined();
+    const facts = this.newbieGrowthFactsOf(this.state, guildJoined);
+    const achievements = normalizeAchievementState(this.state.achievements);
+    const claimed = new Set(achievements.growth ?? []);
+    const claim = claimNewbieGrowth(facts, claimed, window2.day, { goalIds: request.goalIds, includeSrSelect: srRelicId !== void 0 });
+    if (claim.goalIds.length === 0 && claim.milestoneIds.length === 0) throw new GameApiError("NOTHING_TO_CLAIM", "\uBC1B\uC744 \uBCF4\uC0C1\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const nextWallet = { ...this.state.wallet };
+    const granted = claim.rewards.map(({ currency: currency3, amount }) => {
+      const applied = Math.max(0, Math.min(amount, WALLET_CAPS[currency3] - nextWallet[currency3]));
+      nextWallet[currency3] += applied;
+      return { currency: currency3, amount: applied };
+    });
+    const nextOwned = new Set(this.state.owned);
+    const nextProgress = { ...this.state.relicProgress };
+    const nextFragments = { ...this.state.relicFragments };
+    let nextRelicStory = this.state.relicStory;
+    const newRelicIds = [];
+    let srFragmentRelicId;
+    if (claim.srSelect && srRelicId) {
+      if (nextOwned.has(srRelicId)) {
+        nextFragments[srRelicId] = (nextFragments[srRelicId] ?? 0) + 1;
+        srFragmentRelicId = srRelicId;
+      } else {
+        nextOwned.add(srRelicId);
+        newRelicIds.push(srRelicId);
+        if (!nextProgress[srRelicId]) nextProgress[srRelicId] = grantBondXp(createInitialRelicProgress(), BOND_XP_REWARD.firstAcquisition).progress;
+        if (!(srRelicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [srRelicId]: now.toISOString() } };
+      }
+    }
+    const nextAchievements = { ...achievements, growth: [...claimed, ...claim.goalIds, ...claim.milestoneIds], ...guildJoined ? { guildJoined: true } : {} };
+    const candidate = { ...this.state, wallet: nextWallet, achievements: nextAchievements, owned: nextOwned, relicProgress: nextProgress, relicFragments: nextFragments, relicStory: nextRelicStory };
+    redeemDeferredStoryBond(candidate, newRelicIds);
+    this.persist(candidate);
+    this.state.serverJournal = candidate.serverJournal;
+    this.state.wallet = nextWallet;
+    this.state.achievements = candidate.achievements;
+    this.state.owned = nextOwned;
+    this.state.relicProgress = nextProgress;
+    this.state.relicFragments = nextFragments;
+    this.state.relicStory = nextRelicStory;
+    return {
+      ...this.snapshot(),
+      growth: this.newbieGrowthDto(this.state, this.newbieGrowthFactsOf(this.state, guildJoined), now),
+      granted,
+      newRelicIds,
+      ...srFragmentRelicId ? { srFragmentRelicId } : {}
     };
   }
   achievementListDto(state) {
@@ -46075,6 +46835,7 @@ var FakeServer = class {
       const paymentUnavailable = product.acquisition.kind === "platform_payment" && !this.paymentVerificationAvailable;
       return {
         ...product,
+        visibleUntil: this.productWindow(product).endsAt,
         remaining,
         purchasable: remaining > 0 && !paymentUnavailable,
         disabledReason: paymentUnavailable ? t("product.unavailable.payment") : remaining <= 0 ? t("error.purchase.limit") : void 0,
@@ -46127,7 +46888,7 @@ var FakeServer = class {
     }
     nextRunes.push(...grantedRunes);
     for (const grant of product.grants) {
-      if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment") continue;
+      if (grant.kind !== "weekly_ssr_fragment" && grant.kind !== "rotating_fragment" && !(grant.kind === "relic_fragment" && product.storefront === "mileage")) continue;
       const fragmentRelicId = mileageFragmentRelicId(grant, now);
       if (!fragmentRelicId) throw new GameApiError("PRODUCT_NOT_VISIBLE", "\uD604\uC7AC \uAD50\uD658\uD560 \uC218 \uC788\uB294 \uD30C\uD3B8\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
       const progress = this.state.relicProgress[fragmentRelicId];
@@ -46150,8 +46911,8 @@ var FakeServer = class {
       if (!(row.relicId in nextRelicStory.metAt)) nextRelicStory = { ...nextRelicStory, metAt: { ...nextRelicStory.metAt, [row.relicId]: now.toISOString() } };
     }
     const periodKey = this.productPeriodKey(product, now);
-    const current = this.state.productPurchases[product.id];
-    const count2 = (current?.periodKey === periodKey ? current.count : 0) + quantity;
+    const current2 = this.state.productPurchases[product.id];
+    const count2 = (current2?.periodKey === periodKey ? current2.count : 0) + quantity;
     const nextPurchases = { ...this.state.productPurchases, [product.id]: { periodKey, count: count2 } };
     const candidate = { ...this.state, wallet: nextWallet, runeInventory: nextRunes, itemInventory: nextItems, productPurchases: nextPurchases, relicFragments: nextFragments, owned: nextOwned, relicProgress: nextProgress, relicStory: nextRelicStory };
     redeemDeferredStoryBond(candidate, newRelicIds);
@@ -46227,14 +46988,14 @@ var FakeServer = class {
   /** 검증 뒤 서버 난수로 한 번 판정하고 골드·룬을 새 상태에 함께 저장한다. */
   async enhanceRune(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
-    const optionExists = [...current.mainStats, ...current.subStats].some(({ key }) => key === request.statId);
+    const current2 = this.ownedRune(request.runeInstanceId);
+    const optionExists = [...current2.mainStats, ...current2.subStats].some(({ key }) => key === request.statId);
     if (!optionExists) throw new GameApiError("RUNE_STAT_EXHAUSTED", "\uB8EC\uC5D0 \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB2A5\uB825\uCE58\uC785\uB2C8\uB2E4.");
-    if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
-    if (!canEnhanceRune(current, request.statId)) throw new GameApiError("RUNE_STAT_EXHAUSTED", "\uC774 \uB2A5\uB825\uCE58\uC758 \uAC15\uD654 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
-    const goldSpent = runeEnhancementGoldCost(current.rarity, runeEnhancementAttempts(current));
+    if (current2.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
+    if (!canEnhanceRune(current2, request.statId)) throw new GameApiError("RUNE_STAT_EXHAUSTED", "\uC774 \uB2A5\uB825\uCE58\uC758 \uAC15\uD654 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4.");
+    const goldSpent = runeEnhancementGoldCost(current2.rarity, runeEnhancementAttempts(current2));
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uB8EC \uAC15\uD654\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const rune = enhanceRune(current, request.statId, runeEnhancementIncrease(current.rarity, request.statId), this.random());
+    const rune = enhanceRune(current2, request.statId, runeEnhancementIncrease(current2.rarity, request.statId), this.random());
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextWallet = { ...this.state.wallet, gold: this.state.wallet.gold - goldSpent };
     const nextState = { ...this.state, wallet: nextWallet, runeInventory: nextRunes };
@@ -46247,12 +47008,12 @@ var FakeServer = class {
   /** 남은 세공을 위 줄부터 전부 판정한다. 골드는 총액을 먼저 확인해 한 번에 빼고 저장도 한 번만 한다. */
   async enhanceRuneAll(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
-    if (current.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
-    const targets2 = runeBatchEnhancementTargets(current);
-    const goldSpent = runeBatchEnhancementGoldCost(current);
+    const current2 = this.ownedRune(request.runeInstanceId);
+    if (current2.enhancementComplete) throw new GameApiError("RUNE_ENHANCEMENT_COMPLETE", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654\uB97C \uC644\uB8CC\uD55C \uB8EC\uC785\uB2C8\uB2E4.");
+    const targets2 = runeBatchEnhancementTargets(current2);
+    const goldSpent = runeBatchEnhancementGoldCost(current2);
     if (this.state.wallet.gold < goldSpent) throw new GameApiError("INSUFFICIENT_GOLD", "\uB8EC \uAC15\uD654\uC5D0 \uD544\uC694\uD55C \uACE8\uB4DC\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    let rune = current;
+    let rune = current2;
     const results = [];
     for (const statKey of targets2) {
       rune = enhanceRune(rune, statKey, runeEnhancementIncrease(rune.rarity, statKey), this.random());
@@ -46269,10 +47030,10 @@ var FakeServer = class {
   /** 일반 강화 완료와 미각인 상태를 확인하고 대상 옵션에 각인 결과 하나만 추가한다. */
   async engraveRune(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
-    if (!canEngraveRune(current)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654 \uC644\uB8CC \uD6C4 \uAC01\uC778 \uC804 \uB8EC\uB9CC \uAC01\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
-    if (![...current.mainStats, ...current.subStats].some(({ key }) => key === request.statId)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "\uB8EC\uC5D0 \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB2A5\uB825\uCE58\uC785\uB2C8\uB2E4.");
-    const rune = engraveRune(current, { statKey: request.statId, valueAdded: runeEnhancementIncrease(current.rarity, request.statId) });
+    const current2 = this.ownedRune(request.runeInstanceId);
+    if (!canEngraveRune(current2)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "\uBAA8\uB4E0 \uC77C\uBC18 \uAC15\uD654 \uC644\uB8CC \uD6C4 \uAC01\uC778 \uC804 \uB8EC\uB9CC \uAC01\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
+    if (![...current2.mainStats, ...current2.subStats].some(({ key }) => key === request.statId)) throw new GameApiError("RUNE_ENGRAVING_NOT_ALLOWED", "\uB8EC\uC5D0 \uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uB2A5\uB825\uCE58\uC785\uB2C8\uB2E4.");
+    const rune = engraveRune(current2, { statKey: request.statId, valueAdded: runeEnhancementIncrease(current2.rarity, request.statId) });
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextState = { ...this.state, runeInventory: nextRunes };
     this.persist(nextState);
@@ -46282,10 +47043,10 @@ var FakeServer = class {
   /** 이름을 trim한 뒤 빈 값·길이·제어문자를 서버 경계에서 거부한다. */
   async renameRune(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
+    const current2 = this.ownedRune(request.runeInstanceId);
     const name = request.name.trim();
     if (!name || [...name].length > MAX_RUNE_NAME_LENGTH || /[\u0000-\u001F\u007F-\u009F]/u.test(name)) throw new GameApiError("INVALID_RUNE_NAME", `\uB8EC \uC774\uB984\uC740 \uC81C\uC5B4\uBB38\uC790 \uC5C6\uC774 1~${MAX_RUNE_NAME_LENGTH}\uAE00\uC790\uC5EC\uC57C \uD569\uB2C8\uB2E4.`);
-    const rune = { ...current, customName: name };
+    const rune = { ...current2, customName: name };
     assertValidRuneInstance(rune);
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
     const nextState = { ...this.state, runeInventory: nextRunes };
@@ -46301,11 +47062,11 @@ var FakeServer = class {
    */
   async markRune(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
+    const current2 = this.ownedRune(request.runeInstanceId);
     const rune = {
-      ...current,
-      locked: request.locked ?? current.locked ?? false,
-      bookmarked: request.bookmarked ?? current.bookmarked ?? false
+      ...current2,
+      locked: request.locked ?? current2.locked ?? false,
+      bookmarked: request.bookmarked ?? current2.bookmarked ?? false
     };
     assertValidRuneInstance(rune);
     const nextRunes = this.state.runeInventory.map((candidate) => candidate.instanceId === rune.instanceId ? rune : candidate);
@@ -46353,11 +47114,11 @@ var FakeServer = class {
   async completeTutorialStep(request) {
     await this.delay();
     if (!isTutorialStepId(request.stepId)) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uD29C\uD1A0\uB9AC\uC5BC \uB2E8\uACC4\uC785\uB2C8\uB2E4.");
-    const current = normalizeTutorialState(this.state.tutorial);
-    if (isTutorialStepDone(current, request.stepId)) return { tutorial: current, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
-    if (!canCompleteTutorialStep(current, request.stepId)) throw new GameApiError("INVALID_STATE", "\uC55E \uB2E8\uACC4\uB97C \uBA3C\uC800 \uB9C8\uCCD0\uC57C \uD569\uB2C8\uB2E4.");
+    const current2 = normalizeTutorialState(this.state.tutorial);
+    if (isTutorialStepDone(current2, request.stepId)) return { tutorial: current2, wallet: { ...this.state.wallet }, serverTime: this.now().toISOString() };
+    if (!canCompleteTutorialStep(current2, request.stepId)) throw new GameApiError("INVALID_STATE", "\uC55E \uB2E8\uACC4\uB97C \uBA3C\uC800 \uB9C8\uCCD0\uC57C \uD569\uB2C8\uB2E4.");
     if (request.stepId === "gift" && !this.state.cleared.has("1-5")) throw new GameApiError("INVALID_STATE", "1-5 \uD074\uB9AC\uC5B4 \uD6C4 \uC5F0\uAD6C \uC9C0\uC6D0\uD488\uC744 \uBC1B\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4.");
-    const tutorial = { ...current, completedStepIds: [...current.completedStepIds, request.stepId] };
+    const tutorial = { ...current2, completedStepIds: [...current2.completedStepIds, request.stepId] };
     const reward = TUTORIAL_REWARDS[request.stepId];
     const fossil = reward ? Math.max(0, Math.min(reward.fossil, WALLET_CAPS.fossil - this.state.wallet.fossil)) : 0;
     const nextWallet = { ...this.state.wallet, fossil: this.state.wallet.fossil + fossil };
@@ -46370,9 +47131,9 @@ var FakeServer = class {
   async markContentIntroSeen(request) {
     await this.delay();
     if (!isContentIntroId(request.introId)) throw new GameApiError("INVALID_STATE", "\uC874\uC7AC\uD558\uC9C0 \uC54A\uB294 \uC548\uB0B4\uC785\uB2C8\uB2E4.");
-    const current = normalizeTutorialState(this.state.tutorial);
-    if (!isContentIntroSeen(current, request.introId)) {
-      const tutorial = normalizeTutorialState({ ...current, seenIntroIds: [...current.seenIntroIds ?? [], request.introId] });
+    const current2 = normalizeTutorialState(this.state.tutorial);
+    if (!isContentIntroSeen(current2, request.introId)) {
+      const tutorial = normalizeTutorialState({ ...current2, seenIntroIds: [...current2.seenIntroIds ?? [], request.introId] });
       this.persist({ ...this.state, tutorial });
       this.state.tutorial = tutorial;
     }
@@ -46489,15 +47250,30 @@ var FakeServer = class {
     return { inventory: this.runeInventoryDto() };
   }
   /** 노출 판정은 클라이언트 시간이 아니라 주입 가능한 서버 시간만 사용한다. */
+  /** 상품 노출 기간 — 서버 운영 일정(`live_schedule`)이 정의의 기간을 덮고, 배너에 묶인 상품은 그 배너 기간 안으로 줄인다. */
+  productWindow(product) {
+    const own = scheduledWindow("product", product.id, { startsAt: product.visibleFrom, endsAt: product.visibleUntil });
+    const banner = product.bannerId !== void 0 ? BANNERS.find(({ id }) => id === product.bannerId) : void 0;
+    if (product.bannerId === void 0) return own;
+    if (!banner) return { enabled: false };
+    const linked = scheduledWindow("banner", banner.id, banner);
+    const later = (a, b) => a === void 0 ? b : b === void 0 ? a : Date.parse(a) >= Date.parse(b) ? a : b;
+    const earlier = (a, b) => a === void 0 ? b : b === void 0 ? a : Date.parse(a) <= Date.parse(b) ? a : b;
+    const startsAt = later(own.startsAt, linked.startsAt);
+    const endsAt = earlier(own.endsAt, linked.endsAt);
+    return { ...startsAt !== void 0 ? { startsAt } : {}, ...endsAt !== void 0 ? { endsAt } : {}, enabled: own.enabled && linked.enabled };
+  }
   isVisible(product, now) {
-    if (!(now >= new Date(product.visibleFrom) && now < new Date(product.visibleUntil))) return false;
+    if (!windowOpen({ ...this.productWindow(product), overridden: false }, now.getTime())) return false;
     const slot = product.rotationSlot ? rotationSlot(product.rotationSlot) : void 0;
     return !product.rotationSlot || slot !== void 0 && rotationOffer(slot, this.productPeriodKey(product, now)) === product.id;
   }
   /** 시작 포함·종료 제외 규칙을 주입된 서버 시각 한 곳에서 계산한다. */
   eventStatus(event, now) {
-    if (now < new Date(event.startsAt)) return "upcoming";
-    return now < new Date(event.endsAt) ? "active" : "ended";
+    const window2 = scheduledWindow("event", event.id, event);
+    if (!window2.enabled) return "ended";
+    if (window2.startsAt !== void 0 && now < new Date(window2.startsAt)) return "upcoming";
+    return window2.endsAt === void 0 || now < new Date(window2.endsAt) ? "active" : "ended";
   }
   /** 이벤트 전투와 구매가 공유하는 기간 가드다. */
   assertEventActive(event, now) {
@@ -46771,15 +47547,15 @@ var FakeServer = class {
   }
   async grantRuneTrait(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
+    const current2 = this.ownedRune(request.runeInstanceId);
     const entry = [RUNE_TRAIT_ITEMS.grant, RUNE_TRAIT_ITEMS.grantHigh].find(({ itemId }) => itemId === request.itemId);
     if (!entry) throw new GameApiError("RUNE_TRAIT_ITEM_INVALID", "\uD2B9\uC131\uC744 \uBD80\uC5EC\uD560 \uC218 \uC788\uB294 \uC544\uC774\uD15C\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
-    if (entry === RUNE_TRAIT_ITEMS.grantHigh && !canGrantRuneTraitAtLeast(current.trait, entry.minimumGrade)) {
+    if (entry === RUNE_TRAIT_ITEMS.grantHigh && !canGrantRuneTraitAtLeast(current2.trait, entry.minimumGrade)) {
       throw new GameApiError("RUNE_TRAIT_GRADE_REACHED", "\uC774\uBBF8 \uADF8 \uB4F1\uAE09 \uC774\uC0C1\uC758 \uD2B9\uC131\uC785\uB2C8\uB2E4.");
     }
     this.consumeTraitItem(entry.itemId);
     const trait = grantRuneTrait({ pool: RUNE_TRAIT_POOL, minimumGrade: entry.minimumGrade, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
-    const rune = { ...current, trait };
+    const rune = { ...current2, trait };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
     if (this.state.archaeology.pendingReroll?.runeInstanceId === rune.instanceId) this.state.archaeology.pendingReroll = null;
@@ -46806,17 +47582,17 @@ var FakeServer = class {
       }
       this.state.archaeology.pendingReroll = null;
     }
-    const current = this.ownedRune(request.runeInstanceId);
-    if (current.trait === void 0) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uC7AC\uD574\uC11D\uD560 \uD2B9\uC131\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const cost = RUNE_TRAIT_RULES.rerollCost[current.trait.grade];
+    const current2 = this.ownedRune(request.runeInstanceId);
+    if (current2.trait === void 0) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uC7AC\uD574\uC11D\uD560 \uD2B9\uC131\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const cost = RUNE_TRAIT_RULES.rerollCost[current2.trait.grade];
     if (this.state.wallet.rawStone < cost) throw new GameApiError("INSUFFICIENT_CURRENCY", "\uC7AC\uD574\uC11D\uC5D0 \uD544\uC694\uD55C \uC6D0\uC11D\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
-    const outcome = rerollRuneTrait({ trait: current.trait, pool: RUNE_TRAIT_POOL, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
+    const outcome = rerollRuneTrait({ trait: current2.trait, pool: RUNE_TRAIT_POOL, random: this.random, exclusiveShare: LEGENDARY_EXCLUSIVE_SHARE });
     this.state.wallet = { ...this.state.wallet, rawStone: this.state.wallet.rawStone - cost };
-    this.state.archaeology.pendingReroll = { runeInstanceId: current.instanceId, candidate: outcome.candidate };
+    this.state.archaeology.pendingReroll = { runeInstanceId: current2.instanceId, candidate: outcome.candidate };
     this.persist(this.state);
     return {
-      runeInstanceId: current.instanceId,
-      current: { ...current.trait },
+      runeInstanceId: current2.instanceId,
+      current: { ...current2.trait },
       candidate: { ...outcome.candidate },
       upgraded: outcome.upgraded,
       byPity: outcome.byPity,
@@ -46826,11 +47602,11 @@ var FakeServer = class {
   }
   async resolveRuneTraitReroll(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
+    const current2 = this.ownedRune(request.runeInstanceId);
     const pending2 = this.state.archaeology.pendingReroll;
-    if (!pending2 || pending2.runeInstanceId !== current.instanceId) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uACE0\uB97C \uC7AC\uD574\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    const kept = request.keepCandidate ? pending2.candidate : { ...current.trait ?? pending2.candidate, upgradeMisses: pending2.candidate.upgradeMisses };
-    const rune = { ...current, trait: kept };
+    if (!pending2 || pending2.runeInstanceId !== current2.instanceId) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uACE0\uB97C \uC7AC\uD574\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    const kept = request.keepCandidate ? pending2.candidate : { ...current2.trait ?? pending2.candidate, upgradeMisses: pending2.candidate.upgradeMisses };
+    const rune = { ...current2, trait: kept };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
     this.state.archaeology.pendingReroll = null;
@@ -46839,12 +47615,12 @@ var FakeServer = class {
   }
   async upgradeRuneTrait(request) {
     await this.delay();
-    const current = this.ownedRune(request.runeInstanceId);
+    const current2 = this.ownedRune(request.runeInstanceId);
     if (request.itemId !== RUNE_TRAIT_ITEMS.upgrade.itemId) throw new GameApiError("RUNE_TRAIT_ITEM_INVALID", "\uB4F1\uAE09\uC744 \uC62C\uB9B4 \uC218 \uC788\uB294 \uC544\uC774\uD15C\uC774 \uC544\uB2D9\uB2C8\uB2E4.");
-    if (current.trait === void 0) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uB4F1\uAE09\uC744 \uC62C\uB9B4 \uD2B9\uC131\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
-    if (!canUpgradeRuneTraitGrade(current.trait)) throw new GameApiError("RUNE_TRAIT_MAX_GRADE", "\uC804\uC124 \uD2B9\uC131\uC740 \uB354 \uC62C\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (current2.trait === void 0) throw new GameApiError("RUNE_TRAIT_NOT_FOUND", "\uB4F1\uAE09\uC744 \uC62C\uB9B4 \uD2B9\uC131\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.");
+    if (!canUpgradeRuneTraitGrade(current2.trait)) throw new GameApiError("RUNE_TRAIT_MAX_GRADE", "\uC804\uC124 \uD2B9\uC131\uC740 \uB354 \uC62C\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
     this.consumeTraitItem(request.itemId);
-    const rune = { ...current, trait: upgradeRuneTraitGrade(current.trait) };
+    const rune = { ...current2, trait: upgradeRuneTraitGrade(current2.trait) };
     assertValidRuneInstance(rune);
     this.replaceRune(rune);
     this.persist(this.state);
@@ -46958,9 +47734,9 @@ var FakeServer = class {
    * 순위 보상 대기로 옮겨 가고, 그 대기가 우편함에 순위 보상 한 통으로 선다(`syncExpeditionRankMail`).
    */
   rollExpedition(now) {
-    const current = normalizeExpeditionState(this.state.expedition);
-    const next = rollExpeditionPeriods(current, now);
-    if (next !== current || !("dayKey" in this.state.expedition)) this.commitRaidState({ ...this.state, expedition: next });
+    const current2 = normalizeExpeditionState(this.state.expedition);
+    const next = rollExpeditionPeriods(current2, now);
+    if (next !== current2 || !("dayKey" in this.state.expedition)) this.commitRaidState({ ...this.state, expedition: next });
     this.syncExpeditionRankMail();
     return this.state.expedition;
   }
@@ -47701,7 +48477,7 @@ async function run(playerId, req, deps) {
     const now = deps.now?.() ?? /* @__PURE__ */ new Date();
     const wantsOps = OPS_SYNC_METHODS.has(req.method) && deps.store.opsInbox;
     const wantsDuel = /^(getDuelStatus|refreshDuelOpponents|setDuelDefense|enterDuel|resolveDuel|buyDuelAttempt|getDuelRanking|claimDuelSeasonReward)$/.test(req.method) && deps.store.duelContext;
-    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords] = await Promise.all([
+    const [cached, stored, identity, context, ops, duels, expedition, ancient, regular, bannedWords, schedule] = await Promise.all([
       req.requestId ? deps.store.findReceipt(playerId, req.requestId) : void 0,
       deps.store.load(playerId),
       deps.store.identity ? deps.store.identity(playerId) : void 0,
@@ -47711,8 +48487,10 @@ async function run(playerId, req, deps) {
       /^(getExpeditionWeeklyBest|getExpeditionLeaderboard)$/.test(req.method) && deps.store.expeditionContext ? deps.store.expeditionContext(playerId, now) : void 0,
       req.method === "getAncientRanking" && deps.store.ancientRanking ? deps.store.ancientRanking(playerId) : void 0,
       req.method === "getRegularEvent" && deps.store.regularEvent ? deps.store.regularEvent().catch(() => null) : void 0,
-      req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0
+      req.method === "updatePlayerCard" && deps.store.bannedWords ? deps.store.bannedWords().catch(() => []) : void 0,
+      deps.store.liveSchedule ? deps.store.liveSchedule().catch(() => void 0) : void 0
     ]);
+    if (schedule !== void 0) setLiveSchedule(schedule);
     if (cached !== void 0) {
       const receipt = cached;
       if (receipt._requestFingerprint !== fingerprint && receipt._requestFingerprint !== legacyFingerprint) throw new GameCallError(409, "request_id_conflict");
@@ -47814,6 +48592,7 @@ async function run(playerId, req, deps) {
 init_define_import_meta_env();
 var LEGACY_EXPEDITION_RANK_SALVAGE = [400, 320, 250, 180, 130, 80];
 var bannedWordsCache;
+var scheduleCache;
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -47882,6 +48661,12 @@ function createSupabaseStore(env) {
       const words = await rpc("server_banned_words", {}).then((value) => Array.isArray(value) ? value.filter((w) => typeof w === "string") : [], () => []);
       bannedWordsCache = { at: Date.now(), words };
       return words;
+    },
+    async liveSchedule() {
+      if (scheduleCache && Date.now() - scheduleCache.at < 6e4) return scheduleCache.rows;
+      const rows = await rpc("server_live_schedule", {}).then((value) => value ?? [], () => scheduleCache?.rows ?? []);
+      scheduleCache = { at: Date.now(), rows };
+      return rows;
     },
     async load(playerId) {
       const r = await rpc("server_load_state", { p_player: playerId });

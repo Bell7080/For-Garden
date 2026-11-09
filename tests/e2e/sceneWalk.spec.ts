@@ -34,7 +34,7 @@ async function walk(page: Page, visits: readonly Visit[]): Promise<void> {
   await installGameHandleProbe(page);
   await startAfterOpening(page, (session) => {
     session.settings.game.language = "ko";
-    // 스테이지 클리어로 열리는 콘텐츠(연구소 1-5 · 고고학 1-10 · 고대 지층 4-10)도 열린 채로 본다.
+    // 스테이지 클리어로 열리는 콘텐츠(연구소 1-5 · 고고학 1-10 · 고대 지층 3-10)도 열린 채로 본다.
     for (const stage of ["1-5", "1-10", "4-10"]) session.cleared.add(stage);
   });
   for (const target of visits) await visit(page, target, errors);

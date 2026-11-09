@@ -1,3 +1,4 @@
+import { ANCIENT_UNLOCK_STAGE } from "../core/contentUnlock";
 import { ANCIENT_TRIAL_THEME } from "../ui/ancientTrialTheme";
 import { CONTENT_STAMINA_COSTS } from "../data/contentCosts";
 import Phaser from "phaser";
@@ -276,7 +277,7 @@ export class AncientStrataScene extends Phaser.Scene {
         this.selectedNodeY = point.y;
         this.selectedFloor=floor;
         const unlocked=isStageUnlocked(ancientStageId(floor));
-        this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?"4-10":`B${floor-1}`}));
+        this.startButton.setEnabled(unlocked).setLabel(unlocked?t("stageMap.sortie"):t("ancient.requirement",{stage:floor===1?ANCIENT_UNLOCK_STAGE:`B${floor-1}`}));
         this.enemyPreview?.showAt(point.y + map.y, { title: `B${floor}`,
           situation: `${t("ancient.depthMultiplier")} · ${t("stat.hp")} ×${multiplier.hp.toFixed(2)} · ${t("stat.atk")}/${t("stat.ap")} ×${multiplier.attack.toFixed(2)} · ${t("stat.def")}/${t("stat.res")} ×${multiplier.defense.toFixed(2)}`,
           enemies: definition.enemies, growth: definition.enemies.map(() => ({ level: definition.level, breakthrough: definition.breakthrough })),

@@ -213,4 +213,6 @@ export const LOBBY_KO = {
   "ancient.trialTag.frenzy": "속공",
   "ancient.trialTag.precision": "급소",
   "ancient.trialLine": "「{name}」 {effect}",
+  "event.newbieGrowth.title": "7일 성장 가이드",
+  "event.newbieGrowth.subtitle": "매일 다섯 목표, SR 렐릭 선택권!",
 } as const;
